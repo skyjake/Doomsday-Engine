@@ -30,13 +30,9 @@
 #define __DOOMSDAY_UINIT_H__
 
 #include "dd_pinit.h"
-#include "sys_dylib.h"
 
 typedef struct {
     boolean         userDirOk;
-
-    lt_dlhandle     hInstGame; // Instance handle to the game library.
-    lt_dlhandle     hInstPlug[MAX_PLUGS]; // Instance handle to all other libs.
     GETGAMEAPI      GetGameAPI;
 } application_t;
 

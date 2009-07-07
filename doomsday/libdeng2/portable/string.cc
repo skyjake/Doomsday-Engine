@@ -25,6 +25,7 @@
 #include <vector>
 #include <sstream>
 #include <iomanip>
+#include <algorithm>
 
 #ifdef UNIX
 #   include <strings.h> // strcasecmp
@@ -46,7 +47,7 @@ String::String(const char* cStr) : string(cStr)
 
 String::String(const IByteArray& array)
 {
-	duint len = array.size();
+	Size len = array.size();
 	Byte* buffer = new Byte[len + 1];
 	array.get(0, buffer, len);
     buffer[len] = 0;
@@ -57,9 +58,24 @@ String::String(const IByteArray& array)
 String::String(const String& other) : string(other)
 {}
 
-String String::concatenatePath(const std::string& other) const
+bool String::beginsWith(const std::string& s) const
 {
-    if(!other.empty() && other[0] == '/')
+    if(size() < s.size())
+    {
+        // This is too short to be a match.
+        return false;
+    }
+    return std::equal(s.begin(), s.end(), begin());
+}
+
+bool String::contains(const std::string& s) const
+{
+    return find(s) != npos;
+}
+
+String String::concatenatePath(const std::string& other, char dirChar) const
+{
+    if(!other.empty() && other[0] == dirChar)
     {
         // The other begins with a slash, therefore it's an absolute path.
         // Use it as is.
@@ -68,12 +84,25 @@ String String::concatenatePath(const std::string& other) const
 
     String result = *this;
     // Do a path combination. Check for a slash.
-    if(!empty() && *rbegin() != '/')
+    if(!empty() && *rbegin() != dirChar)
     {
-        result += '/';
+        result += dirChar;
     }
     result += other;
     return result;
+}
+
+String String::concatenateNativePath(const std::string& nativePath) const
+{
+#ifdef UNIX
+    return concatenatePath(nativePath);
+#endif
+
+#ifdef WIN32
+    /// @todo Check for "(drive-letter):" and "(drive-letter):\".
+
+    return concatenatePath(nativePath, '\\');
+#endif
 }
 
 String String::strip() const
@@ -103,12 +132,32 @@ String String::rightStrip() const
     return result;
 }
 
-duint String::size() const
+String String::lower() const
+{
+    std::ostringstream result;
+    for(String::const_iterator i = begin(); i != end(); ++i)
+    {
+        result << char(std::tolower(*i));
+    }
+    return result.str();
+}
+
+String String::upper() const
+{    
+    std::ostringstream result;
+    for(String::const_iterator i = begin(); i != end(); ++i)
+    {
+        result << char(std::toupper(*i));
+    }
+    return result.str();
+}
+
+String::Size String::size() const
 {
 	return std::string::size();
 }
 
-void String::get(Offset at, Byte* values, duint count) const
+void String::get(Offset at, Byte* values, Size count) const
 {
 	if(at + count > size())
 	{
@@ -118,7 +167,7 @@ void String::get(Offset at, Byte* values, duint count) const
 	memcpy(values, c_str() + at, count);
 }
 
-void String::set(Offset at, const Byte* values, duint count)
+void String::set(Offset at, const Byte* values, Size count)
 {
 	replace(at, count, reinterpret_cast<const char*>(values));
 }

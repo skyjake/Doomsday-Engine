@@ -1,45 +1,29 @@
-## deng build scripts. 
-## Copyright © 2006 - 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
-## This file is licensed under the GNU GPLv3 or any later versions,
-##
-## the deng build scripts is free software; you can redistribute it and/or
-## modify it under the terms of the GNU General Public License as published by
-## the Free Software Foundation; either version 3 of the License, or
-## (at your option) any later version.
-##
-## the deng build scripts is distributed in the hope that it will be useful,
-## but WITHOUT ANY WARRANTY; without even the implied warranty of
-## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-## GNU General Public License for more details.
-##
-## You should have received a copy of the GNU General Public License
-## along with the deng build scripts; if not, write to the Free Software
-## Foundation, Inc., 51 Franklin St, Fifth Floor, 
-## Boston, MA  02110-1301  USA
-##
-################################################################################
+# The Doomsday Engine Project -- doom64
+#
+# Copyright (c) 2009 Jaakko Keränen <jaakko.keranen@iki.fi>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-INCLUDE_DIRECTORIES ( ${CMAKE_SOURCE_DIR}/plugins/common/include )
-FILE(GLOB COMMON_PLUGIN_SOURCES ${CMAKE_SOURCE_DIR}/plugins/common/src/*.c)
-
-################################################################################
-######################## Doom64TC Game Plugin ##################################
-
-ADD_DEFINITIONS (-D__JDOOM64__ )
-#ADD_DEFINITIONS (-D__JDOOM__ )
+ADD_DEFINITIONS ( -D__JDOOM64__ )
 
 INCLUDE_DIRECTORIES ( include )
 
-FILE(GLOB DOOM64TC_SOURCES src/*.c)
+FILE ( GLOB SOURCES src/*.c include/*.h )
 
-ADD_LIBRARY (jdoom64 SHARED ${DOOM64TC_SOURCES} ${COMMON_PLUGIN_SOURCES} )
+ADD_LIBRARY ( deng_doom64 SHARED ${SOURCES} ${COMMON_GAME_SOURCES} )
 
-IF (APPLE)
-	SET_TARGET_PROPERTIES (jdoom64 PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
-ENDIF (APPLE)
+TARGET_LINK_LIBRARIES ( deng_doom64 deng )
 
-################################################################################
-######################## Install Targets  ######################################
-INSTALL(TARGETS jdoom64
-RUNTIME DESTINATION ${bindir}
-LIBRARY DESTINATION ${libdir} )
+INSTALL ( TARGETS deng_doom64 
+    RUNTIME DESTINATION ${PLUGIN_BINARY_DIR}
+    LIBRARY DESTINATION ${PLUGIN_BINARY_DIR} )

@@ -116,17 +116,14 @@ void Cl_LocalCommand(void)
     //s->forwardMove = cl->lastCmd->forwardMove * 2048;
     
     P_GetControlState(consolePlayer, CTL_WALK, &vel, &off);
-    s->forwardMove = (off + vel) * 2048;
+    s->forwardMove = (off + vel) * 16;
 
-    s->sideMove = cl->lastCmd->sideMove * 2048;
+    //s->sideMove = cl->lastCmd->sideMove * 2048;
+    
+    P_GetControlState(consolePlayer, CTL_SIDESTEP, &vel, &off);
+    s->sideMove = (off + vel) * 16;
+    
     s->angle = ddpl->mo->angle; //ddpl->clAngle; /* $unifiedangles */
-#if _DEBUG
-    if(s->forwardMove || s->sideMove)
-    {
-        Con_Message("Cl_LocalCommand: fwd=%i sd=%i\n", s->forwardMove, s->sideMove);
-    }
-    VERBOSE2(Con_Message("Cl_LocalCommand: angle=%x\n", s->angle));
-#endif
     s->turnDelta = 0;
 }
 
@@ -354,9 +351,9 @@ void Cl_MovePlayer(int plrNum)
             float       mul = (airborne? airThrust : cplrThrustMul);
 
             if(st->forwardMove)
-                Cl_ThrustMul(mo, st->angle, FIX2FLT(st->forwardMove), mul);
+                Cl_ThrustMul(mo, st->angle, st->forwardMove, mul);
             if(st->sideMove)
-                Cl_ThrustMul(mo, st->angle - ANG90, FIX2FLT(st->sideMove), mul);
+                Cl_ThrustMul(mo, st->angle - ANG90, st->sideMove, mul);
         }
         // Turn delta on move prediction angle.
         st->angle += st->turnDelta;

@@ -32,10 +32,14 @@ namespace de
 	class PUBLIC_API IByteArray
 	{
 	public:
+	    /// Invalid offset was used in set() or get(). @ingroup errors
 		DEFINE_ERROR(OffsetError);
 		
+        /// Size of the array is indicated with this type.
+        typedef dsize Size;
+
 		/// Array elements are indexed using this type.
-		typedef duint Offset;
+		typedef dsize Offset;
 		
 		/// The elements of the array must be of type Byte.
 		typedef dbyte Byte;
@@ -44,17 +48,17 @@ namespace de
 		virtual ~IByteArray() {}
 
 		/// Returns the length of the array.
-		virtual duint size() const = 0;
+        virtual Size size() const = 0;
 		
 		/// Get elements from the array.  Raises an OffsetError if the
 		/// offset is invalid.
-		virtual void get(Offset at, Byte* values, duint count) const = 0;
+		virtual void get(Offset at, Byte* values, Size count) const = 0;
 		
 		/// Set the array elements starting from location @c at to the
 		/// given values.  If the offset is exactly at the end of the
 		/// array, the array is grown by @c count.  An illegal offset
 		/// causes an OffsetError exception.
-		virtual void set(Offset at, const Byte* values, duint count) = 0;
+		virtual void set(Offset at, const Byte* values, Size count) = 0;
 	};
 }
 

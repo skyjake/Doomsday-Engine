@@ -72,8 +72,9 @@ boolean verbose;
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-void DP_Initialize(void)
+PUBLIC_API void deng_InitializePlugin(void)
 {
+    printf("deng_InitializePlugin: WAD Map Converter\n");
     Plug_AddHook(HOOK_MAP_CONVERT, ConvertMapHook);
 }
 
@@ -83,6 +84,7 @@ void DP_Initialize(void)
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
+    /*
     switch(fdwReason)
     {
     case DLL_PROCESS_ATTACH:
@@ -93,7 +95,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     default:
         break;
     }
-
+    */
     return TRUE;
 }
 #endif

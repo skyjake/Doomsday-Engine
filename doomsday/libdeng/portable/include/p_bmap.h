@@ -36,8 +36,8 @@
 #define MAPBMASK        (MAPBLOCKSIZE-1)
 #define MAPBTOFRAC      (MAPBLOCKSHIFT-FRACBITS)
 
-byte bmapShowDebug;
-float bmapDebugSize;
+extern byte bmapShowDebug;
+extern float bmapDebugSize;
 
 // Alloc/dealloc:
 blockmap_t*     P_BlockmapCreate(const pvec2_t min, const pvec2_t max,

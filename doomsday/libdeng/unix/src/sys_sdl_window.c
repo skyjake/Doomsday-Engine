@@ -757,10 +757,6 @@ extern boolean usingFog;
             UI_LoadTextures();
         }
     }
-    else
-    {
-        Sys_ChangeVideoMode(window->width, window->height, window->normal.bpp);
-    }
 
     // If the window dimensions have changed, update any sub-systems
     // which need to respond.

@@ -35,11 +35,10 @@ namespace de
 	class PUBLIC_API String : public std::string, public IByteArray
 	{
 	public:
-	    /// This exception is thrown if an encoding conversion fails.	    
+	    /// Encoding conversion failed. @ingroup errors
         DEFINE_ERROR(ConversionError);
 
-	    /// This exception is thrown when an error is encountered in 
-	    /// string pattern replacements.
+	    /// An error was encountered in string pattern replacement. @ingroup errors
         DEFINE_ERROR(IllegalPatternError);
 
 	    /**
@@ -49,8 +48,7 @@ namespace de
 	    class IPatternArg 
 	    {
         public:
-            /// This exception is thrown if an incompatible type is requested
-            /// in asText() or asNumber().
+            /// An incompatible type is requested in asText() or asNumber(). @ingroup errors
             DEFINE_ERROR(TypeError);
 	        
 	    public:
@@ -69,8 +67,18 @@ namespace de
 		String(const IByteArray& array);
 		String(const String& other);
 
+        /// Checks if the string begins with the substring @c s.
+        bool beginsWith(const std::string& s) const;
+
+        /// Checks if the string contains the substring @c s.
+        bool contains(const std::string& s) const;
+
         /// Does a path concatenation on this string and the argument.
-        String concatenatePath(const std::string& path) const;
+        String concatenatePath(const std::string& path, char dirChar = '/') const;
+        
+        /// Does a path concatenation on a native path. The directory separator 
+        /// character depends on the platform.
+        String concatenateNativePath(const std::string& nativePath) const;
 
         /// Removes whitespace from the beginning and end of the string.
         /// @return Copy of the string without whitespace.
@@ -84,10 +92,16 @@ namespace de
         /// @return Copy of the string without whitespace.
         String rightStrip() const;
 
+        /// Returns a lower-case version of the string.
+        String lower() const;
+
+        /// Returns an upper-case version of the string.
+        String upper() const;
+
 		// The IByteArray interface:
-		duint size() const;
-		void get(Offset at, Byte* values, duint count) const;
-		void set(Offset at, const Byte* values, duint count);	
+		Size size() const;
+		void get(Offset at, Byte* values, Size count) const;
+		void set(Offset at, const Byte* values, Size count);	
 	
 		/// Converts the string to a wide-character STL wstring.
         std::wstring wide() const;

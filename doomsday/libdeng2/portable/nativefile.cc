@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- dengsv
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,35 +17,31 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
-
-#include "server.h"
-#include "doomsday.h"
+#include "de/nativefile.h"
 
 using namespace de;
 
-Server::Server(const CommandLine& commandLine)
-    : App(commandLine)
-{}
-
-Server::~Server()
-{}
-
-dint Server::mainLoop()
+NativeFile::NativeFile(const std::string& name, const std::string& nativePath, const Mode& mode)
+    : File(name), nativePath_(nativePath), mode_(mode), size_(0)
 {
-    // For our testing purposes, let's modify the command line to launch Doom1 E1M1 
-    // in dedicated server mode.
-    
-    CommandLine& args = commandLine();
-    
-    args.append("-dedicated");
-    args.append("-cmd");
-    args.append("net-port-control 13209; net-port-data 13210; after 30 \"net init\"; after 40 \"net server start\"");
-    args.append("-userdir");
-    args.append("serverdir");
-    
-    return DD_Entry(0, NULL);
+    std::cout << "NativeFile: " << name << ": " << nativePath << "\n";
 }
+
+NativeFile::~NativeFile()
+{}
+
+void NativeFile::setSize(Size newSize)
+{
+    size_ = newSize;
+}
+
+NativeFile::Size NativeFile::size() const
+{
+    return size_;
+}
+
+void NativeFile::get(Offset at, Byte* values, Size count) const
+{}
+
+void NativeFile::set(Offset at, const Byte* values, Size count)
+{}

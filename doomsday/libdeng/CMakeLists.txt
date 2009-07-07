@@ -38,7 +38,7 @@ IF ( WIN32 )
         $ENV{PLATFORMSDKDIR}/include 
         $ENV{DXDIR}/include )
     
-    FILE ( GLOB WIN_SOURCES win32/src/*.c win32/include/*.h )
+    FILE ( GLOB WIN_SOURCES win32/src/*.c win32/src/*.cc win32/include/*.h )
     SET ( SOURCES ${SOURCES} ${WIN_SOURCES} )
 ENDIF ( WIN32 )
 
@@ -56,7 +56,7 @@ IF ( UNIX )
     INCLUDE_DIRECTORIES ( unix/include )
 
     FILE ( GLOB UNIX_SOURCES 
-        unix/src/*.c unix/include/*.h
+        unix/src/*.c unix/src/*.cc unix/include/*.h
         ../external/lzss/unix/src/*.c )
     SET ( SOURCES ${SOURCES} ${UNIX_SOURCES} )
 ENDIF ( UNIX )
@@ -74,27 +74,23 @@ TARGET_LINK_LIBRARIES ( deng deng2
 IF ( WIN32 )
     TARGET_LINK_LIBRARIES ( deng 
         wsock32 winmm
-        "$ENV{DXDIR}/lib/dinput8.lib" 
-        "$ENV{DXDIR}/lib/dxguid.lib"
+        "${DXLIBDIR}/dinput8.lib" 
+        "${DXLIBDIR}/dxguid.lib"
         "${CMAKE_SOURCE_DIR}/external/lzss/win32/lzss.lib" )
         
     SET_TARGET_PROPERTIES ( deng PROPERTIES LINK_FLAGS "/NODEFAULTLIB:LIBCMT" )
-
-    # Install DLLs to the binary directory.
-    INSTALL ( FILES 
-        ${SDLDIR}/lib/SDL.dll
-        ${SDLMIXERDIR}/lib/SDL_mixer.dll
-        ${SDLNETDIR}/lib/SDL_net.dll
-        ../external/libpng/lib/libpng13.dll 
-        ../external/zlib/lib/zlib1.dll
-        ../external/lzss/win32/lzss.dll
-        DESTINATION ${DENG_BINARY_DIR} )
 ENDIF ( WIN32 )
     
 IF ( APPLE )
     TARGET_LINK_LIBRARIES ( deng ${QUICKTIME_LIBRARY} )
 ENDIF ( APPLE )
 
+# Installation.
 INSTALL ( TARGETS deng 
-    RUNTIME DESTINATION bin 
-    LIBRARY DESTINATION bin )
+    RUNTIME DESTINATION ${DENG_BINARY_DIR} 
+    LIBRARY DESTINATION ${DENG_BINARY_DIR} )
+
+IF ( APPLE )
+    # Make sure the library is found inside the bundle.
+    SET_TARGET_PROPERTIES ( deng PROPERTIES INSTALL_NAME_DIR "@executable_path/../MacOS")
+ENDIF ( APPLE )

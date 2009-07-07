@@ -20,6 +20,19 @@ FILE ( GLOB SOURCES portable/*.cc portable/*.h include/de/*.h )
 
 ADD_LIBRARY ( deng2 SHARED ${SOURCES} )
 
+# Installation.
 INSTALL ( TARGETS deng2 
-    RUNTIME DESTINATION bin 
-    LIBRARY DESTINATION bin )
+    RUNTIME DESTINATION ${DENG_BINARY_DIR} 
+    LIBRARY DESTINATION ${DENG_BINARY_DIR} )
+    
+# Documentation.
+IF ( DOXYGEN_FOUND )
+    ADD_CUSTOM_TARGET ( deng2docs
+        ${DOXYGEN_EXECUTABLE} 
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
+ENDIF ( DOXYGEN_FOUND )
+
+IF ( APPLE )
+    # Make sure the library is found inside the bundle.
+    SET_TARGET_PROPERTIES ( deng2 PROPERTIES INSTALL_NAME_DIR "@executable_path/../MacOS")
+ENDIF ( APPLE )

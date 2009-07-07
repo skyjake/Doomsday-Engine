@@ -31,6 +31,12 @@
 #include <ctype.h>
 #include <math.h>
 
+/*
+#ifdef UNIX
+#   include <SDL.h>
+#endif
+*/
+
 #include "doomsday.h"
 #include "de_base.h"
 #include "de_console.h"
@@ -964,7 +970,12 @@ void DD_ReadKeyboard(void)
 
     // Read the new keyboard events.
     if(isDedicated)
-        numkeyevs = I_GetConsoleKeyEvents(keyevs, KBDQUESIZE);
+    {
+        numkeyevs = 0; //I_GetConsoleKeyEvents(keyevs, KBDQUESIZE);
+#ifdef UNIX
+        SDL_PumpEvents();
+#endif        
+    }
     else
         numkeyevs = I_GetKeyEvents(keyevs, KBDQUESIZE);
 
@@ -1053,6 +1064,17 @@ float I_FilterMouse(float pos, float* accumulation, float ticLength)
 void I_SetUIMouseMode(boolean on)
 {
     uiMouseMode = on;
+    
+#ifdef UNIX
+    {
+        boolean isFullScreen = true;
+        Sys_GetWindowFullscreen(1, &isFullScreen);
+        if(!isFullScreen)
+        {
+            SDL_WM_GrabInput(on? SDL_GRAB_OFF : SDL_GRAB_ON);
+        }
+    }
+#endif
 }
 
 /**

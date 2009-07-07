@@ -26,17 +26,23 @@
 
 #include <de/deng.h>
 #include <de/Error>
+#include <de/String>
 
 namespace de
 {
     /**
      * Stores and provides access to the command line arguments passed
      * to an application at launch.
+     *
+     * @ingroup core
      */
     class PUBLIC_API CommandLine
     {
     public:
+        /// Tried to access an argument that does not exist. @ingroup errors
         DEFINE_ERROR(OutOfRangeError);
+
+        /// Execution of the command line failed. @ingroup errors
         DEFINE_ERROR(ExecuteError);
         
     public:
@@ -72,6 +78,7 @@ namespace de
          * Inserts a new argument to the list of arguments at index @c pos.
          * 
          * @param pos  Index at which the new argument will be at.
+         * @param arg  Argument to insert.
          */
         void insert(duint pos, const std::string& arg);
 
@@ -128,7 +135,7 @@ namespace de
          * - -cmd "echo ""this is a command""" => [-cmd] [echo "this is a command"]
          * - Hello" My"Friend => [Hello MyFriend]
          * - @@test.rsp [reads contents of test.rsp]
-         * - @@\"Program Files"\test.rsp [reads contents of "\Program Files\test.rsp"]
+         * - @@\"Program Files"\\test.rsp [reads contents of "\Program Files\test.rsp"]
          *
          * @param cmdLine  String containing the arguments.
          */ 

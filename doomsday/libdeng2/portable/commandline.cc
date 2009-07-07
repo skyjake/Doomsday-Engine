@@ -33,8 +33,6 @@
 #include <sstream>
 #include <cctype>
 
-#include <doomsday.h>
-
 using namespace de;
 
 CommandLine::CommandLine(int argc, char** v)

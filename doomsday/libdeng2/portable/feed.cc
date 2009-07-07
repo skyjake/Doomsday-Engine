@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- dengsv
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,35 +17,12 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
-
-#include "server.h"
-#include "doomsday.h"
+#include "de/feed.h"
 
 using namespace de;
 
-Server::Server(const CommandLine& commandLine)
-    : App(commandLine)
+Feed::Feed()
 {}
 
-Server::~Server()
+Feed::~Feed()
 {}
-
-dint Server::mainLoop()
-{
-    // For our testing purposes, let's modify the command line to launch Doom1 E1M1 
-    // in dedicated server mode.
-    
-    CommandLine& args = commandLine();
-    
-    args.append("-dedicated");
-    args.append("-cmd");
-    args.append("net-port-control 13209; net-port-data 13210; after 30 \"net init\"; after 40 \"net server start\"");
-    args.append("-userdir");
-    args.append("serverdir");
-    
-    return DD_Entry(0, NULL);
-}

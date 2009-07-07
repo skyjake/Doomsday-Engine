@@ -18,6 +18,10 @@
  */
 
 #include "server.h"
+#include <de/Folder>
+#include <de/DirectoryFeed>
+#include <de/FS>
+#include <de/Library>
 
 using namespace de;
 

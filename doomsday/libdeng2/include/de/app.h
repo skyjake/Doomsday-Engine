@@ -23,18 +23,33 @@
 #include <de/deng.h>
 #include <de/Error>
 #include <de/CommandLine>
+#include <de/FS>
+
+/**
+ * @defgroup core Core
+ *
+ * These classes contain the core functionality of libdeng2.
+ */
 
 namespace de
 {
+    class Library;
+    
     /**
      * The application. 
      *
      * @note This is a singleton class. Only one instance per process is allowed.
+     *
+     * @ingroup core
      */
     class PUBLIC_API App
     {
     public:
+        /// Only one instance of App is allowed. @ingroup errors
         DEFINE_ERROR(TooManyInstancesError);
+
+        /// The App instance has not been created but someone is trying to access it. 
+        /// @ingroup errors
         DEFINE_ERROR(NoInstanceError);
         
     public:
@@ -50,6 +65,23 @@ namespace de
          * Returns the command line arguments specified at the start of the application.
          */
         CommandLine& commandLine() { return commandLine_; }
+
+        /** 
+         * Returns the file system.
+         */
+        FS& fileSystem();
+
+        /**
+         * Returns the game library.
+         *
+         * @return The game library, or @c NULL if one is not loaded at the moment.
+         */
+        Library* game();
+
+        /**
+         * Loads the basic plugins (named "dengplugin_").
+         */
+        void loadPlugins();
         
         /**
          * Main loop of the application. To be defined by a derived class.
@@ -58,14 +90,21 @@ namespace de
          */
         virtual dint mainLoop() = 0;
 
+    public:
         /**
          * Returns the singleton App instance. With this the App can be accessed
          * anywhere.
          */
-        static App& the();
+        static App& app();
         
     private:
         CommandLine commandLine_;
+        
+        /// The file system.
+        FS* fs_;
+
+        // The game library.
+        Library* game_;
         
         static App* singleton_;
     };

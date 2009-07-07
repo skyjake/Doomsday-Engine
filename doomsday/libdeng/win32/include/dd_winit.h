@@ -39,9 +39,6 @@ typedef struct {
     LPCSTR          className;
     BOOL            suspendMsgPump; // Set to true to disable checking windows msgs.
     BOOL            userDirOk;
-
-    HINSTANCE       hInstGame; // Instance handle to the game DLL.
-    HINSTANCE       hInstPlug[MAX_PLUGS]; // Instances to plugin DLLs.
     GETGAMEAPI      GetGameAPI;
 } application_t;
 

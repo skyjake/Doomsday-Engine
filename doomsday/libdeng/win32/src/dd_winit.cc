@@ -41,6 +41,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <de/App>
+#include <de/Library>
+
+using namespace de;
+
+extern "C" {
+
 #include "resource.h"
 
 #include "de_base.h"
@@ -72,10 +79,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 uint windowIDX = 0; // Main window.
+application_t app;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-application_t app;
 
 // CODE --------------------------------------------------------------------
 
@@ -159,28 +165,10 @@ static void determineGlobalPaths(application_t *app)
     Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
 }
 
-static boolean loadGamePlugin(application_t *app, const char *libPath)
+static boolean loadGamePlugin(application_t *app)
 {
-    if(!libPath || !app)
-        return false;
-
-    // Now, load the library and get the API/exports.
-    app->hInstGame = LoadLibrary(libPath);
-    if(!app->hInstGame)
-    {
-        DD_ErrorBox(true, "loadGamePlugin: Loading of %s failed (error %i).\n",
-                    libPath, (int) GetLastError());
-        return false;
-    }
-
     // Get the function.
-    app->GetGameAPI = (GETGAMEAPI) GetProcAddress(app->hInstGame, "GetGameAPI");
-    if(!app->GetGameAPI)
-    {
-        DD_ErrorBox(true, "loadGamePlugin: Failed to get address of "
-                          "GetGameAPI (error %i).\n", (int) GetLastError());
-        return false;
-    }
+    app->GetGameAPI = reinterpret_cast<GETGAMEAPI>(App::app().game()->address("GetGameAPI"));
 
     // Do the API transfer.
     DD_InitAPI();
@@ -189,73 +177,7 @@ static boolean loadGamePlugin(application_t *app, const char *libPath)
     return true;
 }
 
-/**
- * Loads the given plugin.
- *
- * @return              @c true, if the plugin was loaded succesfully.
- */
-static int loadPlugin(application_t *app, const char *filename)
-{
-    int                 i;
-
-    // Find the first empty plugin instance.
-    for(i = 0; app->hInstPlug[i]; ++i);
-
-    // Try to load it.
-    if(!(app->hInstPlug[i] = LoadLibrary(filename)))
-        return FALSE;           // Failed!
-
-    // That was all; the plugin registered itself when it was loaded.
-    return TRUE;
-}
-
-/**
- * Loads all the plugins from the startup directory.
- */
-static int loadAllPlugins(application_t *app)
-{
-    long                hFile;
-    struct _finddata_t  fd;
-    char                plugfn[256];
-    const char*         libPath = ".";
-
-    // TODO: All this is temporary.
-
-    sprintf(plugfn, "%sdengplugin_*.dll", ddBinDir.path);
-    printf("Trying %s\n", plugfn);
-    if((hFile = _findfirst(plugfn, &fd)) == -1L)
-    {        
-        if(ArgCheckWith("-libdir", 1))
-        {
-            libPath = ArgNext();
-            sprintf(plugfn, "%s\\dengplugin_*.dll", libPath);
-            Dir_FixSlashes(plugfn, 256);
-            printf("Trying %s\n", plugfn);
-            if((hFile = _findfirst(plugfn, &fd)) == -1L)
-            {
-                printf("Not found.\n");
-                return TRUE;
-            }
-        }
-    }
-
-    do {
-        sprintf(plugfn, "%s\\%s", libPath, fd.name);
-        Dir_FixSlashes(plugfn, 256);
-        loadPlugin(app, plugfn);
-    }
-    while(!_findnext(hFile, &fd));
-
-    return TRUE;
-}
-
 static int initTimingSystem(void)
-{
-    // Nothing to do.
-    return TRUE;
-}
-
-static int initPluginSystem(void)
 {
     // Nothing to do.
     return TRUE;
@@ -298,24 +220,15 @@ int DD_Entry(int argc, char* argv[])
 
         DD_ComposeMainWindowTitle(buf);
 
-        // First we need to locate the game lib name among the command line
-        // arguments.
-        DD_CheckArg("-game", &libName);
-
         // Was a game library specified?
-        if(!libName)
+        if(!App::app().game())
         {
             DD_ErrorBox(true, "loadGamePlugin: No game library was specified.\n");
         }
         else
         {
-            char                libPath[256];
-
             // Determine our basedir and other global paths.
             determineGlobalPaths(&app);
-
-            // Compose the full path to the game library.
-            _snprintf(libPath, 255, "%s%s", ddBinDir.path, libName);
 
             if(!DD_EarlyInit())
             {
@@ -325,23 +238,14 @@ int DD_Entry(int argc, char* argv[])
             {
                 DD_ErrorBox(true, "Error initalizing timing system.");
             }
-            else if(!initPluginSystem())
-            {
-                DD_ErrorBox(true, "Error initializing plugin system.");
-            }
             else if(!initDGL())
             {
                 DD_ErrorBox(true, "Error initializing DGL.");
             }
             // Load the game plugin.
-            else if(!loadGamePlugin(&app, libPath))
+            else if(!loadGamePlugin(&app))
             {
                 DD_ErrorBox(true, "Error loading game library.");
-            }
-            // Load all other plugins that are found.
-            else if(!loadAllPlugins(&app))
-            {
-                DD_ErrorBox(true, "Error loading plugins.");
             }
             // Initialize the memory zone.
             else if(!Z_Init())
@@ -527,15 +431,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
  */
 void DD_Shutdown(void)
 {
-    int         i;
-
     // Shutdown all subsystems.
     DD_ShutdownAll();
-
-    FreeLibrary(app.hInstGame);
-    for(i = 0; app.hInstPlug[i]; ++i)
-        FreeLibrary(app.hInstPlug[i]);
-
-    app.hInstGame = NULL;
-    memset(app.hInstPlug, 0, sizeof(app.hInstPlug));
 }
+
+} // extern "C"

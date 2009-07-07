@@ -18,9 +18,32 @@ INCLUDE_DIRECTORIES ( ../libdeng/api common/include ../external/lzss/portable/in
 
 FILE ( GLOB COMMON_GAME_SOURCES common/src/*.c )
 
-SUBDIRS ( doom heretic hexen dehread wadmapconverter )
+# Building the plugins is optional.
+OPTION ( ENABLE_DOOM "Build the Doom game plugin" ON )
+OPTION ( ENABLE_HERETIC "Build the Heretic game plugin" ON )
+OPTION ( ENABLE_HEXEN "Build the Hexen game plugin" ON )
+OPTION ( ENABLE_DOOM64 "Build the Doom64 game plugin" ON )
 
-SET ( PLUGIN_BINARY_DIR ${DENG_BINARY_DIR}/plugins )
+IF ( ENABLE_DOOM )
+    SUBDIRS ( doom )
+ENDIF ()
 
-#INSTALL ( TARGETS deng_doom deng_heretic heng_hexen dengplugin_dehread dengplugin_wadmapconverter 
-#    LIBRARY DESTINATION bin/plugins )
+IF ( ENABLE_HERETIC )
+    SUBDIRS ( heretic )
+ENDIF ()
+
+IF ( ENABLE_HEXEN )
+    SUBDIRS ( hexen )
+ENDIF ()
+
+IF ( ENABLE_DOOM64 )
+    SUBDIRS ( jdoom64 )
+ENDIF ()
+
+SUBDIRS ( dehread wadmapconverter )
+
+IF ( APPLE )
+    SET ( PLUGIN_BINARY_DIR ${DENG_BINARY_DIR} )
+ELSE ()
+    SET ( PLUGIN_BINARY_DIR ${DENG_BINARY_DIR}/plugins )
+ENDIF ()

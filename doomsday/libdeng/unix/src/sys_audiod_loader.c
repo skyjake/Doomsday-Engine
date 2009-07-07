@@ -31,10 +31,6 @@
 
 #include <string.h>
 
-#ifdef UNIX
-#  include "sys_dylib.h"
-#endif
-
 #include "de_console.h"
 
 #include "s_main.h"
@@ -64,17 +60,19 @@ audiointerface_cd_t audiodExternalICD;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static lt_dlhandle handle = NULL;
+//static lt_dlhandle handle = NULL;
 
 // CODE --------------------------------------------------------------------
 
 static void* Imp(const char* fn)
 {
-    return lt_dlsym(handle, fn);
+    //return lt_dlsym(handle, fn);
+    return 0;
 }
 
 void Sys_ShutdownAudioDriver(void)
 {
+    /*
     if(!audioDriver)
         return;
 
@@ -85,7 +83,7 @@ void Sys_ShutdownAudioDriver(void)
     {
         lt_dlclose(handle);
         handle = NULL;
-    }
+    }*/
 }
 
 static audiodriver_t* importExternal(void)
@@ -94,6 +92,8 @@ static audiodriver_t* importExternal(void)
 
     // Clear everything.
     memset(d, 0, sizeof(*d));
+    
+    /*
 
     d->Init = Imp("DS_Init");
     d->Shutdown = Imp("DS_Shutdown");
@@ -148,7 +148,8 @@ static audiodriver_t* importExternal(void)
         i->gen.Stop = Imp("DM_CDAudio_Stop");
         i->Play = Imp("DM_CDAudio_Play");
     }
-
+    */
+    
     return d;
 }
 
@@ -162,6 +163,7 @@ static audiodriver_t* importExternal(void)
  */
 audiodriver_t* Sys_LoadAudioDriver(const char* name)
 {
+    /*
     filename_t          fn;
 
 #ifdef MACOSX
@@ -179,4 +181,7 @@ audiodriver_t* Sys_LoadAudioDriver(const char* name)
     }
 
     return importExternal();
+    */
+    
+    return 0;
 }

@@ -24,8 +24,16 @@
 #include <stdexcept>
 #include <de/deng.h>
 
+/**
+ * @defgroup errors Exceptions
+ *
+ * These are exceptions thrown by libdeng2 when an error occurs.
+ */
 namespace de
 {
+    /**
+     * Base class for error exceptions thrown by libdeng2.
+     */
 	class PUBLIC_API Error : public std::runtime_error
 	{
 	public:
@@ -41,14 +49,13 @@ namespace de
  * of the caught errors.
  */
 #define DEFINE_SUB_ERROR(Parent, Name) \
-	class PUBLIC_API Name : public Parent \
-	{ \
+	class PUBLIC_API Name : public Parent { \
 	public: \
 		Name(const std::string& message) \
 			: Parent("-", message) {} \
 		Name(const std::string& where, const std::string& message) \
 			: Parent(where, message) {}							   \
-	}
+    };    
 
 /**
  * Define a top-level exception class.
