@@ -1052,6 +1052,18 @@ float I_FilterMouse(float pos, float* accumulation, float ticLength)
 void I_SetUIMouseMode(boolean on)
 {
     uiMouseMode = on;
+    
+#ifdef UNIX
+    {
+        // Release mouse grab when in windowed mode.
+        boolean isFullScreen = true;
+        Sys_GetWindowFullscreen(1, &isFullScreen);
+        if(!isFullScreen)
+        {
+            SDL_WM_GrabInput(on? SDL_GRAB_OFF : SDL_GRAB_ON);
+        }
+    }
+#endif    
 }
 
 /**
