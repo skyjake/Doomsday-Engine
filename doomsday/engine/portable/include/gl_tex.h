@@ -69,5 +69,5 @@ int             DrawRealPatch(byte* buffer, int texwidth, int texheight,
                               int origy, boolean maskZero,
                               boolean checkForAlpha);
 boolean         ImageHasAlpha(image_t *image);
-
+void            GL_TranslatePatch(lumppatch_t* patch, byte* transTable);
 #endif

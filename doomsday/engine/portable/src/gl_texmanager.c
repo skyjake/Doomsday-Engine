@@ -89,10 +89,6 @@ void            GLTexture_ReleaseTextures(gltexture_t* tex);
 
 void            GLTexture_SetMinMode(gltexture_t* tex, int minMode);
 
-#if _DEBUG
-void            GL_TranslatePatch(lumppatch_t* patch, byte* transTable);
-#endif
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void GL_SetTexCoords(float* tc, int wid, int hgt);
