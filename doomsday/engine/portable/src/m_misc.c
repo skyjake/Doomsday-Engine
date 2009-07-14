@@ -956,7 +956,7 @@ void M_WriteCommented(FILE *file, const char* text)
 {
     char*               buff = M_Malloc(strlen(text) + 1), *line;
 
-    strncpy(buff, text, strlen(text));
+    strcpy(buff, text);
     line = strtok(buff, "\n");
     while(line)
     {
