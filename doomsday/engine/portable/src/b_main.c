@@ -446,7 +446,7 @@ D_CMD(BindEventToCommand)
 
     if(b)
     {
-        Con_Printf("Binding %i created.\n", b->bid);
+        VERBOSE( Con_Printf("Binding %i created.\n", b->bid) );
     }
 
     return (b != NULL);
@@ -458,7 +458,7 @@ D_CMD(BindControlToDevice)
 
     if(b)
     {
-        Con_Printf("Binding %i created.\n", b->bid);
+        VERBOSE( Con_Printf("Binding %i created.\n", b->bid) );
     }
 
     return (b != NULL);

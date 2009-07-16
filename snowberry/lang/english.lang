@@ -390,7 +390,7 @@ enable-gamma: Use color adjustments
 enable-highres-textures: Use external textures
 enable-highres-patches: Use external patches
 
-texture-compression: Texture compression
+texture-compression: Use texture compression
 disable-genmips: Disable SGIS_generate_mipmap
 
 zbuffer-depth: Z-buffer depth
@@ -404,7 +404,7 @@ texture-depth-32: 32-bit
 texture-options: Texture Options
 extres-with-pwad: Allow external with PWADs
 disable-anisotropic-filter: Disable Anisotropic filtering
-paletted-textures: Paletted textures
+paletted-textures: Use paletted (256-color) textures
 
 maximum-texture-size: Maximum size
 maximum-texture-size-unlimited: Hardware
