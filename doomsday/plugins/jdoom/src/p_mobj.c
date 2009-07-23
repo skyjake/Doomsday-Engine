@@ -848,7 +848,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
 
     switch(type)
     {
-    case MT_SPIDER: // 68, Arachnotron
+    case MT_BABY: // 68, Arachnotron
     case MT_VILE: // 64, Archvile
     case MT_BOSSBRAIN: // 88, Boss Brain
     case MT_BOSSSPIT: // 89, Boss Shooter
