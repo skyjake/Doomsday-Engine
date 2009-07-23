@@ -51,19 +51,12 @@
 #include "g_common.h"
 #include "p_actor.h"
 #include "p_start.h"
+#include "p_player.h"
 
 // MACROS ------------------------------------------------------------------
 
 #define MESSAGETICS             (4 * TICSPERSEC)
 #define CAMERA_FRICTION_THRESHOLD (.4f)
-
-#if __JDOOM64__
-#define NUM_WEAPON_SLOTS        (8)
-#elif __JDOOM__ || __JHERETIC__
-#define NUM_WEAPON_SLOTS        (7)
-#elif __JHEXEN__
-#define NUM_WEAPON_SLOTS        (4)
-#endif
 
 // TYPES -------------------------------------------------------------------
 
@@ -226,6 +219,38 @@ weapontype_t P_WeaponSlotCycle(weapontype_t type, boolean prev)
     }
 
     return type;
+}
+
+/**
+ * Iterate the weapons of a given weapon slot.
+ *
+ * @param slot          Weapon slot number.
+ * @param reverse       Iff @c = true, the traversal is done in reverse.
+ * @param callback      Ptr to the callback to make for each element.
+ *                      If the callback returns @c 0, iteration ends.
+ * @param context       Passed as an argument to @a callback.
+ *
+ * @return              Non-zero if no weapon is bound to the slot @a slot,
+ *                      or callback @a callback signals an end to iteration.
+ */
+int P_IterateWeaponsInSlot(byte slot, boolean reverse,
+                           int (*callback) (weapontype_t, void* context),
+                           void* context)
+{
+    int                 result = 1;
+
+    if(slot <= NUM_WEAPON_SLOTS)
+    {
+        uint                i = 0;
+        const weaponslotinfo_t* sl = &weaponSlots[slot];
+
+        while(i < sl->num &&
+             (result = callback(sl->types[reverse ? sl->num - 1 - i : i],
+                                context)) != 0)
+            i++;
+    }
+
+    return result;
 }
 
 /**

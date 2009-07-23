@@ -39,6 +39,14 @@
 #  include "jhexen.h"
 #endif
 
+#if __JDOOM64__
+#define NUM_WEAPON_SLOTS        (8)
+#elif __JDOOM__ || __JHERETIC__
+#define NUM_WEAPON_SLOTS        (7)
+#elif __JHEXEN__
+#define NUM_WEAPON_SLOTS        (4)
+#endif
+
 #if __JHEXEN__
 void            P_InitPlayerClassInfo(void);
 #endif
@@ -48,6 +56,11 @@ void            P_FreeWeaponSlots(void);
 
 boolean         P_SetWeaponSlot(weapontype_t type, byte slot);
 byte            P_GetWeaponSlot(weapontype_t type);
+
+int             P_IterateWeaponsInSlot(byte slot, boolean reverse,
+                                       int (*callback) (weapontype_t, void* context),
+                                        void* context);
+// A specialized iterator for weapon slot cycling.
 weapontype_t    P_WeaponSlotCycle(weapontype_t type, boolean prev);
 
 int             P_GetPlayerNum(player_t* plr);

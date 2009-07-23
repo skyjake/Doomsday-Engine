@@ -437,6 +437,7 @@ void G_PreInit(void)
     cfg.moveBlock = false;
     cfg.fallOff = true;
     cfg.fixOuchFace = true;
+    cfg.fixStatusbarOwnedWeapons = true;
 
     cfg.statusbarScale = 20; // Full size.
     cfg.statusbarOpacity = 1;

@@ -1086,6 +1086,7 @@ static menuitem_t GameplayItems[] = {
     {ITT_EFUNC, 0, "ZOMBIE PLAYERS CAN EXIT MAPS :", M_ToggleVar, 0, NULL,
         "game-zombiescanexit"},
     {ITT_EFUNC, 0, "FIX OUCH FACE :", M_ToggleVar, 0, NULL, "hud-face-ouchfix"},
+    {ITT_EFUNC, 0, "FIX WEAPON SLOT DISPLAY :", M_ToggleVar, 0, NULL, "hud-status-weaponslots-ownedfix"}
 # endif
 #endif
 };
@@ -1115,7 +1116,7 @@ static menu_t GameplayDef = {
 #if __JDOOM64__
     17, GameplayItems,
 #elif __JDOOM__
-    18, GameplayItems,
+    19, GameplayItems,
 #else
     12, GameplayItems,
 #endif
@@ -1127,7 +1128,7 @@ static menu_t GameplayDef = {
 #if __JDOOM64__
     0, 17
 #elif __JDOOM__
-    0, 18
+    0, 19
 #else
     0, 12
 #endif
@@ -3059,6 +3060,7 @@ void M_DrawGameplay(void)
 # endif
 # if __JDOOM__
     M_WriteMenuText(menu, idx++, yesno[cfg.fixOuchFace != 0]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.fixStatusbarOwnedWeapons != 0]);
 # endif
 #endif
 }

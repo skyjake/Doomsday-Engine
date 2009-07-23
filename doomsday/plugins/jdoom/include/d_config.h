@@ -143,6 +143,7 @@ typedef struct jdoom_config_s {
     byte            zombiesCanExit; // Zombie players can exit levels.
     byte            fallOff; // Objects fall under their own weight.
     byte            fixOuchFace;
+    byte            fixStatusbarOwnedWeapons;
 
     byte            counterCheat;
     float           counterCheatScale;

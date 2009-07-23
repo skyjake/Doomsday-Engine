@@ -186,7 +186,6 @@ cvar_t gameCVars[] = {
     {"game-objects-falloff", 0, CVT_BYTE, &cfg.fallOff, 0, 1},
     {"game-zclip", 0, CVT_BYTE, &cfg.moveCheckZ, 0, 1},
     {"game-corpse-sliding", 0, CVT_BYTE, &cfg.slidingCorpses, 0, 1},
-    {"hud-face-ouchfix", 0, CVT_BYTE, &cfg.fixOuchFace, 0, 1},
 
 // Game state
     {"game-fastmonsters", 0, CVT_BYTE, &cfg.fastMonsters, 0, 1},

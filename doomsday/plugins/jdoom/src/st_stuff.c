@@ -284,8 +284,11 @@ cvar_t sthudCVars[] =
     {"hud-color-a", 0, CVT_FLOAT, &cfg.hudColor[3], 0, 1},
     {"hud-icon-alpha", 0, CVT_FLOAT, &cfg.hudIconAlpha, 0, 1},
 
+    {"hud-face-ouchfix", 0, CVT_BYTE, &cfg.fixOuchFace, 0, 1},
+
     {"hud-status-alpha", 0, CVT_FLOAT, &cfg.statusbarOpacity, 0, 1},
     {"hud-status-icon-a", 0, CVT_FLOAT, &cfg.statusbarCounterAlpha, 0, 1},
+    {"hud-status-weaponslots-ownedfix", 0, CVT_BYTE, &cfg.fixStatusbarOwnedWeapons, 0, 1},
 
     // HUD icons
     {"hud-face", 0, CVT_BYTE, &cfg.hudShown[HUD_FACE], 0, 1},
@@ -877,11 +880,34 @@ void ST_doPaletteStuff(int player)
         plr->plr->flags &= ~DDPF_VIEW_FILTER;
 }
 
+typedef struct {
+    hudstate_t*     hud;
+    int             slot;
+    float           alpha;
+} drawownedweapondisply_params_t;
+
+int drawOwnedWeaponDisplay(weapontype_t type, void* context)
+{
+    drawownedweapondisply_params_t* params =
+        (drawownedweapondisply_params_t*) context;
+    const player_t*     plr = &players[params->hud - hudStates];
+
+    if(cfg.fixStatusbarOwnedWeapons)
+    {
+        if(!plr->weapons[type].owned)
+            return 1; // Continue iteration.
+    }
+
+    STlib_DrawMultiIcon(&params->hud->wArms[params->slot],
+                        plr->weapons[type].owned ? 1 : 0, params->alpha);
+
+    return 0; // Stop iteration.
+}
+
 static void drawWidgets(hudstate_t* hud)
 {
     int                 i;
     float               alpha = hud->statusbarCounterAlpha;
-    player_t*           plr = &players[hud - hudStates];
 
     STlib_DrawNum(&hud->wReadyWeapon, alpha);
 
@@ -898,7 +924,21 @@ static void drawWidgets(hudstate_t* hud)
     {
         for(i = 0; i < 6; ++i)
         {
-            STlib_DrawMultiIcon(&hud->wArms[i], plr->weapons[i + 1].owned ? 1 : 0, alpha);
+            int                 result;
+            drawownedweapondisply_params_t params;
+
+            params.hud = hud;
+            params.slot = i;
+            params.alpha = alpha;
+
+            result =
+                P_IterateWeaponsInSlot(i+1, true, drawOwnedWeaponDisplay,
+                                       &params);
+
+            if(cfg.fixStatusbarOwnedWeapons && result)
+            {   // No weapon bound to slot is owned by player.
+                STlib_DrawMultiIcon(&hud->wArms[i], 0, alpha);
+            }
         }
     }
     else
