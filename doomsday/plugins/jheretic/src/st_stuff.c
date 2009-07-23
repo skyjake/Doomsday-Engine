@@ -110,7 +110,6 @@ typedef struct {
     int             currentAmmoIconIdx; // Current ammo icon index.
     boolean         keyBoxes[3]; // Holds key-type for each key box on bar.
     int             fragsCount; // Number of frags so far in deathmatch.
-    boolean         fragsOn; // !deathmatch.
     boolean         blended; // Whether to use alpha blending.
 
     int             tomePlay;
@@ -122,12 +121,12 @@ typedef struct {
     int             oldHealth;
 
     // Widgets:
-    st_multicon_t   wCurrentAmmoIcon; // Current ammo icon.
+    st_multiicon_t  wCurrentAmmoIcon; // Current ammo icon.
     st_number_t     wReadyWeapon; // Ready-weapon.
     st_number_t     wFrags; // In deathmatch only, summary of frags stats.
     st_number_t     wHealth; // Health.
     st_number_t     wArmor; // Armor.
-    st_binicon_t    wKeyBoxes[3]; // Owned keys.
+    st_icon_t       wKeyBoxes[3]; // Owned keys.
 } hudstate_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -491,8 +490,6 @@ void ST_updateWidgets(int player)
         hud->currentAmmoIconIdx = -1;
     }
 
-    hud->wReadyWeapon.data = plr->readyWeapon;
-
     // Update keycard multiple widgets.
     for(i = 0; i < 3; ++i)
     {
@@ -500,7 +497,6 @@ void ST_updateWidgets(int player)
     }
 
     // Used by wFrags widget.
-    hud->fragsOn = deathmatch && hud->statusbarActive;
     hud->fragsCount = 0;
 
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -621,10 +617,9 @@ void ST_doPaletteStuff(int player)
 
 static void drawWidgets(hudstate_t* hud)
 {
-    int                 i;
-    int                 player = hud - hudStates;
+    int                 i, player = hud - hudStates;
     player_t*           plr = &players[player];
-    boolean             refresh = true;
+    float               alpha = hud->statusbarCounterAlpha;
 
     hud->oldHealth = -1;
     if(!Hu_InventoryIsOpen(player))
@@ -635,19 +630,22 @@ static void drawWidgets(hudstate_t* hud)
 
         // Frags.
         if(deathmatch)
-            STlib_updateNum(&hud->wFrags, refresh);
+            STlib_DrawNum(&hud->wFrags, alpha);
         else
-            STlib_updateNum(&hud->wHealth, refresh);
+            STlib_DrawNum(&hud->wHealth, alpha);
 
         // Draw armor.
-        STlib_updateNum(&hud->wArmor, refresh);
+        STlib_DrawNum(&hud->wArmor, alpha);
 
         // Draw keys.
         for(i = 0; i < 3; ++i)
-            STlib_updateBinIcon(&hud->wKeyBoxes[i], refresh);
+        {
+            if(hud->keyBoxes[i])
+                STlib_DrawIcon(&hud->wKeyBoxes[i], alpha);
+        }
 
-        STlib_updateNum(&hud->wReadyWeapon, refresh);
-        STlib_updateMultIcon(&hud->wCurrentAmmoIcon, refresh);
+        STlib_DrawNum(&hud->wReadyWeapon, alpha);
+        STlib_DrawMultiIcon(&hud->wCurrentAmmoIcon, hud->currentAmmoIconIdx, alpha);
 
         // Current inventory item.
         if((readyItem = P_InventoryReadyItem(player)) != IIT_NONE)
@@ -663,7 +661,7 @@ static void drawWidgets(hudstate_t* hud)
                 patch = P_GetInvItem(readyItem-1)->patchLump;
             }
 
-            DGL_Color4f(1, 1, 1, hud->statusbarCounterAlpha);
+            DGL_Color4f(1, 1, 1, alpha);
             GL_DrawPatch_CS(ST_INVITEMX, ST_INVITEMY, patch);
 
             if(!(hud->currentInvItemFlash > 0))
@@ -673,14 +671,13 @@ static void drawWidgets(hudstate_t* hud)
 
                 if(count > 1)
                     Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, ST_INVITEMCX,
-                                    ST_INVITEMCY, hud->statusbarCounterAlpha);
+                                    ST_INVITEMCY, alpha);
             }
         }
     }
     else
     {   // Draw Inventory.
-        Hu_InventoryDraw2(player, ST_INVENTORYX, ST_INVENTORYY,
-                          hud->statusbarCounterAlpha);
+        Hu_InventoryDraw2(player, ST_INVENTORYX, ST_INVENTORYY, alpha);
     }
 }
 
@@ -1282,9 +1279,8 @@ void ST_createWidgets(int player)
         if(!weaponInfo[plr->readyWeapon][plr->class].mode[lvl].ammoType[ammoType])
             continue; // Weapon does not take this ammo.
 
-        STlib_initNum(&hud->wReadyWeapon, ST_AMMOX, ST_AMMOY, iNumbers,
-                      &plr->ammo[ammoType].owned, &hud->statusbarActive,
-                      ST_AMMOWIDTH, &hud->statusbarCounterAlpha);
+        STlib_InitNum(&hud->wReadyWeapon, ST_AMMOX, ST_AMMOY, iNumbers,
+                      &plr->ammo[ammoType].owned, ST_AMMOWIDTH, 1);
 
         found = true;
     }
@@ -1294,50 +1290,35 @@ void ST_createWidgets(int player)
         // if weaponInfo[plr->readyWeapon].ammo == am_noammo
         // ...obviously a bug.
 
-        //STlib_initNum(&wReadyWeapon, ST_AMMOX, ST_AMMOY, iNumbers,
+        //STlib_InitNum(&wReadyWeapon, ST_AMMOX, ST_AMMOY, iNumbers,
         //              &plr->ammo[weaponinfo[plr->readyWeapon].ammo],
         //              &statusbarActive, ST_AMMOWIDTH, &statusbarCounterAlpha);
 
         // Ready weapon ammo.
-        STlib_initNum(&hud->wReadyWeapon, ST_AMMOX, ST_AMMOY, iNumbers, &largeammo,
-                      &hud->statusbarActive, ST_AMMOWIDTH, &hud->statusbarCounterAlpha);
+        STlib_InitNum(&hud->wReadyWeapon, ST_AMMOX, ST_AMMOY, iNumbers, &largeammo,
+                      ST_AMMOWIDTH, 1);
     }
 
     // Ready weapon icon
-    STlib_initMultIcon(&hud->wCurrentAmmoIcon, ST_AMMOICONX, ST_AMMOICONY,
-                       ammoIcons, &hud->currentAmmoIconIdx,
-                       &hud->statusbarActive, &hud->statusbarCounterAlpha);
-
-    // The last weapon type.
-    hud->wReadyWeapon.data = plr->readyWeapon;
+    STlib_InitMultiIcon(&hud->wCurrentAmmoIcon, ST_AMMOICONX, ST_AMMOICONY,
+                        ammoIcons, 1);
 
     // Health num.
-    STlib_initNum(&hud->wHealth, ST_HEALTHX, ST_HEALTHY, iNumbers,
-                  &plr->health, &hud->statusbarActive, ST_HEALTHWIDTH,
-                  &hud->statusbarCounterAlpha);
+    STlib_InitNum(&hud->wHealth, ST_HEALTHX, ST_HEALTHY, iNumbers,
+                  &plr->health, ST_HEALTHWIDTH, 1);
 
     // Armor percentage - should be colored later.
-    STlib_initNum(&hud->wArmor, ST_ARMORX, ST_ARMORY, iNumbers,
-                  &plr->armorPoints, &hud->statusbarActive, ST_ARMORWIDTH,
-                  &hud->statusbarCounterAlpha);
+    STlib_InitNum(&hud->wArmor, ST_ARMORX, ST_ARMORY, iNumbers,
+                  &plr->armorPoints, ST_ARMORWIDTH, 1);
 
     // Frags sum.
-    STlib_initNum(&hud->wFrags, ST_FRAGSX, ST_FRAGSY, iNumbers,
-                  &hud->fragsCount, &hud->fragsOn, ST_FRAGSWIDTH,
-                  &hud->statusbarCounterAlpha);
+    STlib_InitNum(&hud->wFrags, ST_FRAGSX, ST_FRAGSY, iNumbers,
+                  &hud->fragsCount, ST_FRAGSWIDTH, 1);
 
     // KeyBoxes 0-2.
-    STlib_initBinIcon(&hud->wKeyBoxes[0], ST_KEY0X, ST_KEY0Y, &keys[0],
-                      &hud->keyBoxes[0], &hud->keyBoxes[0], 0,
-                      &hud->statusbarCounterAlpha);
-
-    STlib_initBinIcon(&hud->wKeyBoxes[1], ST_KEY1X, ST_KEY1Y, &keys[1],
-                      &hud->keyBoxes[1], &hud->keyBoxes[1], 0,
-                      &hud->statusbarCounterAlpha);
-
-    STlib_initBinIcon(&hud->wKeyBoxes[2], ST_KEY2X, ST_KEY2Y, &keys[2],
-                      &hud->keyBoxes[2], &hud->keyBoxes[2], 0,
-                      &hud->statusbarCounterAlpha);
+    STlib_InitIcon(&hud->wKeyBoxes[0], ST_KEY0X, ST_KEY0Y, &keys[0], 1);
+    STlib_InitIcon(&hud->wKeyBoxes[1], ST_KEY1X, ST_KEY1Y, &keys[1], 1);
+    STlib_InitIcon(&hud->wKeyBoxes[2], ST_KEY2X, ST_KEY2Y, &keys[2], 1);
 }
 
 void ST_Start(int player)

@@ -65,7 +65,6 @@ typedef struct {
     boolean         firstTime;  // ST_Start() has just been called.
     boolean         blended; // Whether to use alpha blending.
     boolean         statusbarActive; // Whether the HUD is on.
-    boolean         statusbarFragsOn; // !deathmatch.
     int             currentFragsCount; // Number of frags so far in deathmatch.
 
     // Widgets:
@@ -168,7 +167,6 @@ void ST_updateWidgets(int player)
     hudstate_t*         hud = &hudStates[player];
 
     // Used by wFrags widget.
-    hud->statusbarFragsOn = deathmatch && hud->statusbarActive;
     hud->currentFragsCount = 0;
 
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -260,10 +258,8 @@ void ST_doPaletteStuff(int player)
 
 static void drawWidgets(hudstate_t* hud)
 {
-    // Used by wFrags widget.
-    hud->statusbarFragsOn = deathmatch && hud->statusbarActive;
-
-    STlib_updateNum(&hud->wFrags, true);
+    if(deathmatch)
+        STlib_DrawNum(&hud->wFrags, hud->alpha);
 }
 
 void ST_doRefresh(int player)
@@ -389,7 +385,7 @@ void ST_doFullscreenStuff(int player)
     {
         sprintf(buf, "HEALTH");
         pos = M_StringWidth(buf, GF_FONTA)/2;
-		M_WriteText2(HUDBORDERX, h_height - HUDBORDERY - M_StringHeight("A", GF_FONTA) - 4,
+        M_WriteText2(HUDBORDERX, h_height - HUDBORDERY - M_StringHeight("A", GF_FONTA) - 4,
                      buf, GF_FONTA, 1, 1, 1, iconalpha);
 
         sprintf(buf, "%i", plr->health);
@@ -481,7 +477,7 @@ Draw_EndZoom();
         sprintf(buf, "ARMOR");
         w = M_StringWidth(buf, GF_FONTA);
         M_WriteText2(h_width - w - HUDBORDERX,
-					 h_height - HUDBORDERY - M_StringHeight("A", GF_FONTA) - 4,
+                     h_height - HUDBORDERY - M_StringHeight("A", GF_FONTA) - 4,
                      buf, GF_FONTA, 1, 1, 1, iconalpha);
 
         sprintf(buf, "%i", plr->armorPoints);
@@ -588,8 +584,8 @@ void ST_createWidgets(int player)
     hudstate_t*         hud = &hudStates[player];
 
     // Frags sum.
-    STlib_initNum(&hud->wFrags, ST_FRAGSX, ST_FRAGSY, tallnum, &hud->currentFragsCount,
-                  &hud->statusbarFragsOn, ST_FRAGSWIDTH, &hud->alpha);
+    STlib_InitNum(&hud->wFrags, ST_FRAGSX, ST_FRAGSY, tallnum, &hud->currentFragsCount,
+                  ST_FRAGSWIDTH, 1);
 }
 
 void ST_Start(int player)

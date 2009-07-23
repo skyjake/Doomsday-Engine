@@ -36,66 +36,54 @@
  */
 typedef struct {
     int             x, y; // Upper right-hand corner of the number (right-justified).
-    int             width; // Max # of digits in number.
-    int             oldnum; // Last number value.
-    float*          alpha; // Pointer to alpha.
+    int             maxDigits; // Max # of digits in number.
+    float           alpha;
     int*            num; // Pointer to current value.
-    boolean*        on; // Pointer to boolean stating whether to update number.
     dpatch_t*       p; // List of patches for 0-9.
-    int             data; // User data.
 } st_number_t;
+
+void            STlib_InitNum(st_number_t* n, int x, int y, dpatch_t* pl,
+                              int* num, int maxDigits, float alpha);
+void            STlib_DrawNum(st_number_t* n, float alpha);
 
 /**
  * Percent widget
  * "child" of number widget, or, more precisely, contains a number widget.
  */
 typedef struct {
-    // number information
-    st_number_t     n;
-
-    // percent sign graphic
-    dpatch_t*       p;
+    st_number_t     n; // Number.
+    dpatch_t*       p; // Percent sign graphic.
 } st_percent_t;
 
-/**
- * Multiple Icon widget.
- */
-typedef struct {
-    int             x, y; // Center-justified location of icons.
-    int             oldIconNum; // Last icon number.
-    int*            iconNum; // Pointer to current icon.
-    float*          alpha; // Pointer to alpha.
-    boolean*        on; // Pointer to boolean stating whether to update icon.
-    dpatch_t*       p; // List of icons.
-    int             data; // User data.
-} st_multicon_t;
+void            STlib_InitPercent(st_percent_t* p, int x, int y,
+                                  dpatch_t* pl, int* num,
+                                  dpatch_t* percent, float alpha);
+void            STlib_DrawPercent(st_percent_t* per, float alpha);
 
 /**
- * Binary Icon widget.
+ * Icon widget.
  */
 typedef struct {
     int             x, y; // Center-justified location of icon.
-    int             oldval; // Last icon value.
-    boolean*        val; // Pointer to current icon status.
-    float*          alpha; // Pointer to alpha.
-    boolean*        on; // Pointer to boolean stating whether to update icon.
+    float           alpha;
     dpatch_t*       p; // Icon.
-    int             data; // User data.
-} st_binicon_t;
+} st_icon_t;
 
-void            STlib_initNum(st_number_t* n, int x, int y, dpatch_t* pl,
-                              int* num, boolean* on, int width, float* alpha);
-void            STlib_updateNum(st_number_t* n, boolean refresh);
-void            STlib_initPercent(st_percent_t* p, int x, int y,
-                                  dpatch_t* pl, int* num, boolean* on,
-                                  dpatch_t* percent, float* alpha);
-void            STlib_updatePercent(st_percent_t* per, int refresh);
-void            STlib_initMultIcon(st_multicon_t* mi, int x, int y,
-                                   dpatch_t* il, int* inum, boolean* on,
-                                   float* alpha);
-void            STlib_updateMultIcon(st_multicon_t* mi, boolean refresh);
-void            STlib_initBinIcon(st_binicon_t* b, int x, int y, dpatch_t* i,
-                                  boolean* val, boolean* on, int d, float* alpha);
-void            STlib_updateBinIcon(st_binicon_t* bi, boolean refresh);
+void            STlib_InitIcon(st_icon_t* b, int x, int y,
+                               dpatch_t* i, float alpha);
+void            STlib_DrawIcon(st_icon_t* bi, float alpha);
+
+/**
+ * Multi Icon widget.
+ */
+typedef struct {
+    int             x, y; // Center-justified location of icons.
+    float           alpha;
+    dpatch_t*       p; // List of icons.
+} st_multiicon_t;
+
+void            STlib_InitMultiIcon(st_multiicon_t* mi, int x, int y,
+                                    dpatch_t* il, float alpha);
+void            STlib_DrawMultiIcon(st_multiicon_t* mi, int icon, float alpha);
 
 #endif

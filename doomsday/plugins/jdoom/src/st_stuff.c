@@ -203,8 +203,6 @@ typedef struct {
     boolean         firstTime; // ST_Start() has just been called.
     boolean         blended; // Whether to use alpha blending.
     boolean         statusbarActive; // Whether the main status bar is active.
-    boolean         statusbarArmsOn; // !deathmatch && statusbarActive.
-    boolean         statusbarFragsOn; // !deathmatch.
     int             currentFragsCount; // Number of frags so far in deathmatch.
     int             keyBoxes[3]; // Holds key-type for each key box on bar.
 
@@ -220,9 +218,9 @@ typedef struct {
     st_number_t     wReadyWeapon; // Ready-weapon widget.
     st_number_t     wFrags; // In deathmatch only, summary of frags stats.
     st_percent_t    wHealth; // Health widget.
-    st_multicon_t   wArms[6]; // Weapon ownership widgets.
-    st_multicon_t   wFaces; // Face status widget.
-    st_multicon_t   wKeyBoxes[3]; // Keycard widgets.
+    st_multiicon_t  wArms[6]; // Weapon ownership widgets.
+    st_multiicon_t  wFaces; // Face status widget.
+    st_multiicon_t  wKeyBoxes[3]; // Keycard widgets.
     st_percent_t    wArmor; // Armor widget.
     st_number_t     wAmmo[NUM_AMMO_TYPES]; // Ammo widgets.
     st_number_t     wMaxAmmo[NUM_AMMO_TYPES]; // Max ammo widgets.
@@ -378,7 +376,7 @@ static void drawStatusBarBackground(int player, float width, float height)
         // Up to faceback if deathmatch, else ST_ARMS.
         x = 0;
         y = 0;
-        w = width * (float) (hud->statusbarArmsOn ? armsBGX : ST_FX) / ST_WIDTH;
+        w = width * (float) ((hud->statusbarActive && !deathmatch) ? armsBGX : ST_FX) / ST_WIDTH;
         h = height * (float) ST_HEIGHT / ST_HEIGHT;
         cw = w / width;
 
@@ -777,8 +775,6 @@ void ST_updateWidgets(int player)
         hud->wReadyWeapon.num = &largeAmmo;
     }
 
-    hud->wReadyWeapon.data = plr->readyWeapon;
-
     // Update keycard multiple widgets.
     for(i = 0; i < 3; ++i)
     {
@@ -791,11 +787,7 @@ void ST_updateWidgets(int player)
     // Refresh everything if this is him coming back to life.
     ST_updateFaceWidget(player);
 
-    // Used by wArms[] widgets.
-    hud->statusbarArmsOn = hud->statusbarActive && !deathmatch;
-
     // Used by wFrags widget.
-    hud->statusbarFragsOn = deathmatch && hud->statusbarActive;
     hud->currentFragsCount = 0;
 
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -888,35 +880,39 @@ void ST_doPaletteStuff(int player)
 static void drawWidgets(hudstate_t* hud)
 {
     int                 i;
-    int                 player = hud - hudStates;
-    boolean             refresh = true;
+    float               alpha = hud->statusbarCounterAlpha;
+    player_t*           plr = &players[hud - hudStates];
 
-    // Used by wArms[] widgets.
-    hud->statusbarArmsOn = hud->statusbarActive && !deathmatch;
-
-    // Used by wFrags widget.
-    hud->statusbarFragsOn = deathmatch && hud->statusbarActive;
-
-    STlib_updateNum(&hud->wReadyWeapon, refresh);
+    STlib_DrawNum(&hud->wReadyWeapon, alpha);
 
     for(i = 0; i < 4; ++i)
     {
-        STlib_updateNum(&hud->wAmmo[i], refresh);
-        STlib_updateNum(&hud->wMaxAmmo[i], refresh);
+        STlib_DrawNum(&hud->wAmmo[i], alpha);
+        STlib_DrawNum(&hud->wMaxAmmo[i], alpha);
     }
 
-    STlib_updatePercent(&hud->wHealth, refresh);
-    STlib_updatePercent(&hud->wArmor, refresh);
+    STlib_DrawPercent(&hud->wHealth, alpha);
+    STlib_DrawPercent(&hud->wArmor, alpha);
 
-    for(i = 0; i < 6; ++i)
-        STlib_updateMultIcon(&hud->wArms[i], refresh);
+    if(!deathmatch)
+    {
+        for(i = 0; i < 6; ++i)
+        {
+            STlib_DrawMultiIcon(&hud->wArms[i], plr->weapons[i + 1].owned ? 1 : 0, alpha);
+        }
+    }
+    else
+        STlib_DrawNum(&hud->wFrags, alpha);
 
-    STlib_updateMultIcon(&hud->wFaces, refresh);
+    STlib_DrawMultiIcon(&hud->wFaces, hud->faceIndex, alpha);
 
     for(i = 0; i < 3; ++i)
-        STlib_updateMultIcon(&hud->wKeyBoxes[i], refresh);
-
-    STlib_updateNum(&hud->wFrags, refresh);
+    {
+        if(hud->keyBoxes[i] != -1)
+        {
+            STlib_DrawMultiIcon(&hud->wKeyBoxes[i], hud->keyBoxes[i], alpha);
+        }
+    }
 }
 
 void ST_doRefresh(int player)
@@ -1426,60 +1422,47 @@ void ST_createWidgets(int player)
         found = true;
     }
 
-    STlib_initNum(&hud->wReadyWeapon, ST_READYAMMOX, ST_READYAMMOY, tallNum,
-                  ptr, &hud->statusbarActive, ST_READYAMMOWIDTH,
-                  &hud->statusbarCounterAlpha);
-
-    // Last weapon type.
-    hud->wReadyWeapon.data = plr->readyWeapon;
+    STlib_InitNum(&hud->wReadyWeapon, ST_READYAMMOX, ST_READYAMMOY, tallNum,
+                  ptr, ST_READYAMMOWIDTH, 1);
 
     // Health percentage.
-    STlib_initPercent(&hud->wHealth, ST_HEALTHX, ST_HEALTHY, tallNum,
-                      &plr->health, &hud->statusbarActive, &tallPercent,
-                      &hud->statusbarCounterAlpha);
+    STlib_InitPercent(&hud->wHealth, ST_HEALTHX, ST_HEALTHY, tallNum,
+                      &plr->health, &tallPercent, 1);
 
     // Weapons owned.
     for(i = 0; i < 6; ++i)
     {
-        STlib_initMultIcon(&hud->wArms[i], ST_ARMSX + (i % 3) * ST_ARMSXSPACE,
-                           ST_ARMSY + (i / 3) * ST_ARMSYSPACE, arms[i],
-                           (int *) &plr->weapons[i + 1].owned,
-                           &hud->statusbarArmsOn, &hud->statusbarCounterAlpha);
+        STlib_InitMultiIcon(&hud->wArms[i], ST_ARMSX + (i % 3) * ST_ARMSXSPACE,
+                            ST_ARMSY + (i / 3) * ST_ARMSYSPACE, arms[i], 1);
     }
 
     // Frags sum.
-    STlib_initNum(&hud->wFrags, ST_FRAGSX, ST_FRAGSY, tallNum, &hud->currentFragsCount,
-                  &hud->statusbarFragsOn, ST_FRAGSWIDTH, &hud->statusbarCounterAlpha);
+    STlib_InitNum(&hud->wFrags, ST_FRAGSX, ST_FRAGSY, tallNum,
+                  &hud->currentFragsCount, ST_FRAGSWIDTH, 1);
 
     // Faces.
-    STlib_initMultIcon(&hud->wFaces, ST_FACESX, ST_FACESY, faces, &hud->faceIndex,
-                       &hud->statusbarActive, &hud->statusbarCounterAlpha);
+    STlib_InitMultiIcon(&hud->wFaces, ST_FACESX, ST_FACESY, faces, 1);
 
     // Armor percentage - should be colored later.
-    STlib_initPercent(&hud->wArmor, ST_ARMORX, ST_ARMORY, tallNum,
-                      &plr->armorPoints, &hud->statusbarActive, &tallPercent,
-                      &hud->statusbarCounterAlpha);
+    STlib_InitPercent(&hud->wArmor, ST_ARMORX, ST_ARMORY, tallNum,
+                      &plr->armorPoints, &tallPercent, 1);
 
     // Keyboxes 0-2.
-    STlib_initMultIcon(&hud->wKeyBoxes[0], ST_KEY0X, ST_KEY0Y, keys, &hud->keyBoxes[0],
-                       &hud->statusbarActive, &hud->statusbarCounterAlpha);
+    STlib_InitMultiIcon(&hud->wKeyBoxes[0], ST_KEY0X, ST_KEY0Y, keys, 1);
 
-    STlib_initMultIcon(&hud->wKeyBoxes[1], ST_KEY1X, ST_KEY1Y, keys, &hud->keyBoxes[1],
-                       &hud->statusbarActive, &hud->statusbarCounterAlpha);
+    STlib_InitMultiIcon(&hud->wKeyBoxes[1], ST_KEY1X, ST_KEY1Y, keys, 1);
 
-    STlib_initMultIcon(&hud->wKeyBoxes[2], ST_KEY2X, ST_KEY2Y, keys, &hud->keyBoxes[2],
-                       &hud->statusbarActive, &hud->statusbarCounterAlpha);
+    STlib_InitMultiIcon(&hud->wKeyBoxes[2], ST_KEY2X, ST_KEY2Y, keys, 1);
 
     // Ammo count and max (all four kinds).
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
-        STlib_initNum(&hud->wAmmo[i], ammoPos[i].x, ammoPos[i].y, shortNum,
-                      &plr->ammo[i].owned, &hud->statusbarActive, ST_AMMOWIDTH,
-                      &hud->statusbarCounterAlpha);
+        STlib_InitNum(&hud->wAmmo[i], ammoPos[i].x, ammoPos[i].y, shortNum,
+                      &plr->ammo[i].owned, ST_AMMOWIDTH, 1);
 
-        STlib_initNum(&hud->wMaxAmmo[i], ammoMaxPos[i].x, ammoMaxPos[i].y,
-                      shortNum, &plr->ammo[i].max, &hud->statusbarActive,
-                      ST_MAXAMMOWIDTH, &hud->statusbarCounterAlpha);
+        STlib_InitNum(&hud->wMaxAmmo[i], ammoMaxPos[i].x, ammoMaxPos[i].y,
+                      shortNum, &plr->ammo[i].max,
+                      ST_MAXAMMOWIDTH, 1);
     }
 }
 

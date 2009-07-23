@@ -119,7 +119,6 @@ typedef struct {
     int             manaACount;
     int             manaBCount;
     int             fragsCount; // Number of frags so far in deathmatch.
-    boolean         fragsOn; // !deathmatch.
     boolean         blended; // Whether to use alpha blending.
 
     int             healthMarker;
@@ -127,12 +126,12 @@ typedef struct {
     int             oldHealth;
 
     // Widgets:
-    st_multicon_t   wManaA; // Current mana A icon.
-    st_multicon_t   wManaB; // Current mana B icon.
+    st_multiicon_t  wManaA; // Current mana A icon.
+    st_multiicon_t  wManaB; // Current mana B icon.
     st_number_t     wManaACount; // Current mana A count.
     st_number_t     wManaBCount; // Current mana B count.
-    st_multicon_t   wManaAVial; // Current mana A vial.
-    st_multicon_t   wManaBVial; // Current mana B vial.
+    st_multiicon_t  wManaAVial; // Current mana A vial.
+    st_multiicon_t  wManaBVial; // Current mana B vial.
     st_number_t     wFrags; // In deathmatch only, summary of frags stats.
     st_number_t     wHealth; // Health.
     st_number_t     wArmor; // Armor.
@@ -918,45 +917,40 @@ void ST_createWidgets(int player)
     hudstate_t*         hud = &hudStates[player];
 
     // Health num.
-    STlib_initNum(&hud->wHealth, ST_HEALTHX, ST_HEALTHY, dpINumbers,
-                  &plr->health, &hud->statusbarActive, ST_HEALTHWIDTH,
-                  &hud->statusbarCounterAlpha);
+    STlib_InitNum(&hud->wHealth, ST_HEALTHX, ST_HEALTHY, dpINumbers,
+                  &plr->health, ST_HEALTHWIDTH, 1);
 
     // Frags sum.
-    STlib_initNum(&hud->wFrags, ST_FRAGSX, ST_FRAGSY, dpINumbers,
-                  &hud->fragsCount, &hud->fragsOn, ST_FRAGSWIDTH,
-                  &hud->statusbarCounterAlpha);
+    STlib_InitNum(&hud->wFrags, ST_FRAGSX, ST_FRAGSY, dpINumbers,
+                  &hud->fragsCount, ST_FRAGSWIDTH, 1);
 
     // Armor num - should be colored later.
-    STlib_initNum(&hud->wArmor, ST_ARMORX, ST_ARMORY, dpINumbers,
-                  &hud->armorLevel, &hud->statusbarActive, ST_ARMORWIDTH,
-                  &hud->statusbarCounterAlpha);
+    STlib_InitNum(&hud->wArmor, ST_ARMORX, ST_ARMORY, dpINumbers,
+                  &hud->armorLevel, ST_ARMORWIDTH, 1);
 
     // ManaA count.
-    STlib_initNum(&hud->wManaACount, ST_MANAAX, ST_MANAAY,
-                  dpSmallNumbers, &hud->manaACount, &hud->statusbarActive,
-                  ST_MANAAWIDTH, &hud->statusbarCounterAlpha);
+    STlib_InitNum(&hud->wManaACount, ST_MANAAX, ST_MANAAY,
+                  dpSmallNumbers, &hud->manaACount, ST_MANAAWIDTH, 1);
 
     // ManaB count.
-    STlib_initNum(&hud->wManaBCount, ST_MANABX, ST_MANABY,
-                  dpSmallNumbers, &hud->manaBCount, &hud->statusbarActive,
-                  ST_MANABWIDTH, &hud->statusbarCounterAlpha);
+    STlib_InitNum(&hud->wManaBCount, ST_MANABX, ST_MANABY,
+                  dpSmallNumbers, &hud->manaBCount, ST_MANABWIDTH, 1);
 
     // Current mana A icon.
-    STlib_initMultIcon(&hud->wManaA, ST_MANAAICONX, ST_MANAAICONY, dpManaAIcons,
-                       &hud->manaAIcon, &hud->statusbarActive, &hud->statusbarCounterAlpha);
+    STlib_InitMultiIcon(&hud->wManaA, ST_MANAAICONX, ST_MANAAICONY,
+                        dpManaAIcons, 1);
 
     // Current mana B icon.
-    STlib_initMultIcon(&hud->wManaB, ST_MANABICONX, ST_MANABICONY, dpManaBIcons,
-                       &hud->manaBIcon, &hud->statusbarActive, &hud->statusbarCounterAlpha);
+    STlib_InitMultiIcon(&hud->wManaB, ST_MANABICONX, ST_MANABICONY,
+                        dpManaBIcons, 1);
 
     // Current mana A vial.
-    STlib_initMultIcon(&hud->wManaAVial, ST_MANAAVIALX, ST_MANAAVIALY, dpManaAVials,
-                       &hud->manaAVial, &hud->statusbarActive, &hud->statusbarCounterAlpha);
+    STlib_InitMultiIcon(&hud->wManaAVial, ST_MANAAVIALX, ST_MANAAVIALY,
+                        dpManaAVials, 1);
 
     // Current mana B vial.
-    STlib_initMultIcon(&hud->wManaBVial, ST_MANABVIALX, ST_MANABVIALY, dpManaBVials,
-                       &hud->manaBVial, &hud->statusbarActive, &hud->statusbarCounterAlpha);
+    STlib_InitMultiIcon(&hud->wManaBVial, ST_MANABVIALX, ST_MANABVIALY,
+                        dpManaBVials, 1);
 }
 
 void ST_Start(int player)
@@ -1031,8 +1025,6 @@ void ST_updateWidgets(int player)
         hud->statusbarCounterAlpha = 1.0f;
 
     // Used by w_frags widget.
-    hud->fragsOn = deathmatch && hud->statusbarActive;
-
     hud->fragsCount = 0;
 
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -1233,7 +1225,7 @@ static void drawWidgets(hudstate_t* hud)
 {
     int                 player = hud - hudStates;
     player_t*           plr = &players[player];
-    boolean             refresh = true;
+    float               alpha = hud->statusbarCounterAlpha;
 
     hud->oldHealth = -1;
     if(!Hu_InventoryIsOpen(player))
@@ -1244,31 +1236,31 @@ static void drawWidgets(hudstate_t* hud)
 
             // Frags
             if(deathmatch)
-                STlib_updateNum(&hud->wFrags, refresh);
+                STlib_DrawNum(&hud->wFrags, alpha);
             else
-                STlib_updateNum(&hud->wHealth, refresh);
+                STlib_DrawNum(&hud->wHealth, alpha);
 
-            STlib_updateNum(&hud->wArmor, refresh);
+            STlib_DrawNum(&hud->wArmor, alpha);
 
             if(hud->manaACount > 0)
-                STlib_updateNum(&hud->wManaACount, refresh);
+                STlib_DrawNum(&hud->wManaACount, alpha);
 
             if(hud->manaBCount > 0)
-                STlib_updateNum(&hud->wManaBCount, refresh);
+                STlib_DrawNum(&hud->wManaBCount, alpha);
 
-            STlib_updateMultIcon(&hud->wManaA, refresh);
-            STlib_updateMultIcon(&hud->wManaB, refresh);
-            STlib_updateMultIcon(&hud->wManaAVial, refresh);
-            STlib_updateMultIcon(&hud->wManaBVial, refresh);
+            STlib_DrawMultiIcon(&hud->wManaA, hud->manaAIcon, alpha);
+            STlib_DrawMultiIcon(&hud->wManaB, hud->manaBIcon, alpha);
+            STlib_DrawMultiIcon(&hud->wManaAVial, hud->manaAVial, alpha);
+            STlib_DrawMultiIcon(&hud->wManaBVial, hud->manaBVial, alpha);
 
             // Draw the mana bars
             DGL_SetNoMaterial();
             DGL_DrawRect(95, 165, 3,
                          22 - (22 * plr->ammo[AT_BLUEMANA].owned) / MAX_MANA,
-                         0, 0, 0, hud->statusbarCounterAlpha);
+                         0, 0, 0, alpha);
             DGL_DrawRect(103, 165, 3,
                          22 - (22 * plr->ammo[AT_GREENMANA].owned) / MAX_MANA,
-                         0, 0, 0, hud->statusbarCounterAlpha);
+                         0, 0, 0, alpha);
 
             // Current inventory item.
             if((readyItem = P_InventoryReadyItem(player)) != IIT_NONE)
@@ -1284,7 +1276,7 @@ static void drawWidgets(hudstate_t* hud)
                     patch = P_GetInvItem(readyItem-1)->patchLump;
                 }
 
-                DGL_Color4f(1, 1, 1, hud->statusbarCounterAlpha);
+                DGL_Color4f(1, 1, 1, alpha);
                 GL_DrawPatch_CS(ST_INVITEMX, ST_INVITEMY, patch);
 
                 if(!(hud->currentInvItemFlash > 0))
@@ -1294,7 +1286,7 @@ static void drawWidgets(hudstate_t* hud)
 
                     if(count > 1)
                         Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, ST_INVITEMCX,
-                                        ST_INVITEMCY, hud->statusbarCounterAlpha);
+                                        ST_INVITEMCY, alpha);
                 }
             }
         }
@@ -1305,8 +1297,7 @@ static void drawWidgets(hudstate_t* hud)
     }
     else
     {   // Draw Inventory
-        Hu_InventoryDraw2(player, ST_INVENTORYX, ST_INVENTORYY,
-                          hud->statusbarCounterAlpha);
+        Hu_InventoryDraw2(player, ST_INVENTORYX, ST_INVENTORYY, alpha);
     }
 }
 

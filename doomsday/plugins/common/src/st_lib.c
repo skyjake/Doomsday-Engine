@@ -66,28 +66,24 @@
 
 // CODE --------------------------------------------------------------------
 
-void STlib_initNum(st_number_t* n, int x, int y, dpatch_t* pl, int* num,
-                   boolean* on, int width, float* alpha)
+void STlib_InitNum(st_number_t* n, int x, int y, dpatch_t* pl, int* num,
+                   int maxDigits, float alpha)
 {
     n->x = x;
     n->y = y;
-    n->oldnum = 0;
-    n->width = width;
+    n->maxDigits = maxDigits;
     n->alpha = alpha;
     n->num = num;
-    n->on = on;
     n->p = pl;
 }
 
-void STlib_drawNum(st_number_t* n, boolean refresh)
+void STlib_DrawNum(st_number_t* n, float alpha)
 {
-    int                 numdigits = n->width;
+    int                 numdigits = n->maxDigits;
     int                 num = *n->num;
     int                 w = n->p[0].width;
     int                 x = n->x;
     int                 neg;
-
-    n->oldnum = *n->num;
 
     neg = num < 0;
 
@@ -110,88 +106,65 @@ void STlib_drawNum(st_number_t* n, boolean refresh)
 
     // In the special case of 0, you draw 0.
     if(!num)
-        WI_DrawPatch(x - w, n->y, 1, 1, 1, *n->alpha, &n->p[0],
+        WI_DrawPatch(x - w, n->y, 1, 1, 1, n->alpha * alpha, &n->p[0],
                      NULL, false, ALIGN_LEFT);
 
     // Draw the number.
     while(num && numdigits--)
     {
         x -= w;
-        WI_DrawPatch(x, n->y, 1, 1, 1, *n->alpha, &n->p[num % 10],
+        WI_DrawPatch(x, n->y, 1, 1, 1, n->alpha * alpha, &n->p[num % 10],
                      NULL, false, ALIGN_LEFT);
         num /= 10;
     }
 
     // Draw a minus sign if necessary.
     if(neg)
-        WI_DrawPatch(x - 8, n->y, 1, 1, 1, *n->alpha, &huMinus,
+        WI_DrawPatch(x - 8, n->y, 1, 1, 1, n->alpha * alpha, &huMinus,
                      NULL, false, ALIGN_LEFT);
 }
 
-void STlib_updateNum(st_number_t* n, boolean refresh)
+void STlib_InitPercent(st_percent_t* p, int x, int y, dpatch_t* pl,
+                       int* num, dpatch_t* percent, float alpha)
 {
-    if(*n->on)
-        STlib_drawNum(n, refresh);
-}
-
-void STlib_initPercent(st_percent_t* p, int x, int y, dpatch_t* pl, int* num,
-                       boolean* on, dpatch_t* percent, float* alpha)
-{
-    STlib_initNum(&p->n, x, y, pl, num, on, 3, alpha);
+    STlib_InitNum(&p->n, x, y, pl, num, 3, alpha);
     p->p = percent;
 }
 
-void STlib_updatePercent(st_percent_t* per, int refresh)
+void STlib_DrawPercent(st_percent_t* per, float alpha)
 {
-    if(refresh && *per->n.on)
-        WI_DrawPatch(per->n.x, per->n.y, 1, 1, 1, *per->n.alpha, per->p,
-                     NULL, false, ALIGN_LEFT);
+    WI_DrawPatch(per->n.x, per->n.y, 1, 1, 1, per->n.alpha * alpha, per->p,
+                 NULL, false, ALIGN_LEFT);
 
-    STlib_updateNum(&per->n, refresh);
+    STlib_DrawNum(&per->n, alpha);
 }
 
-void STlib_initMultIcon(st_multicon_t* i, int x, int y, dpatch_t* il,
-                        int* iconNum, boolean* on, float* alpha)
-{
-    i->x = x;
-    i->y = y;
-    i->oldIconNum = -1;
-    i->alpha = alpha;
-    i->iconNum = iconNum;
-    i->on = on;
-    i->p = il;
-}
-
-void STlib_updateMultIcon(st_multicon_t* mi, boolean refresh)
-{
-    if(*mi->on && (mi->oldIconNum != *mi->iconNum || refresh) &&
-       *mi->iconNum != -1)
-    {
-        WI_DrawPatch(mi->x, mi->y, 1, 1, 1, *mi->alpha,
-                     &mi->p[*mi->iconNum], NULL, false, ALIGN_LEFT);
-        mi->oldIconNum = *mi->iconNum;
-    }
-}
-
-void STlib_initBinIcon(st_binicon_t* b, int x, int y, dpatch_t* i,
-                       boolean* val, boolean* on, int d, float* alpha)
+void STlib_InitIcon(st_icon_t* b, int x, int y, dpatch_t* i, float alpha)
 {
     b->x = x;
     b->y = y;
-    b->val = val;
     b->alpha = alpha;
-    b->oldval = 0;
-    b->on = on;
     b->p = i;
-    b->data =d;
 }
 
-void STlib_updateBinIcon(st_binicon_t* bi, boolean refresh)
+void STlib_DrawIcon(st_icon_t* bi, float alpha)
 {
-    if(*bi->on && (bi->oldval != *bi->val || refresh))
-    {
-        WI_DrawPatch(bi->x, bi->y, 1, 1, 1, *bi->alpha, bi->p,
-                     NULL, false, ALIGN_LEFT);
-        bi->oldval = *bi->val;
-    }
+    WI_DrawPatch(bi->x, bi->y, 1, 1, 1, bi->alpha * alpha, bi->p, NULL,
+                 false, ALIGN_LEFT);
+}
+
+void STlib_InitMultiIcon(st_multiicon_t* i, int x, int y, dpatch_t* il,
+                         float alpha)
+{
+    i->x = x;
+    i->y = y;
+    i->alpha = alpha;
+    i->p = il;
+}
+
+void STlib_DrawMultiIcon(st_multiicon_t* mi, int iconNum, float alpha)
+{
+    if(iconNum >= 0)
+        WI_DrawPatch(mi->x, mi->y, 1, 1, 1, mi->alpha * alpha,
+                     &mi->p[iconNum], NULL, false, ALIGN_LEFT);
 }
