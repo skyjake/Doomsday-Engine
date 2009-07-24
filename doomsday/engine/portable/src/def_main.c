@@ -162,7 +162,7 @@ void Def_Init(void)
     {
         const char*         arg = Argv(p);
 
-        if(stricmp(arg, "-def") && stricmp(arg, "-defs"))
+        if(ArgRecognize("-def", arg) && ArgRecognize("-defs", arg))
             continue;
 
         while(c < MAX_READ && ++p != Argc() && !ArgIsOption(p))
