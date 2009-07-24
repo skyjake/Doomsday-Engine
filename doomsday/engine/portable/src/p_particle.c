@@ -1045,8 +1045,8 @@ static void P_MoveParticle(ptcgen_t* gen, particle_t* pt)
         {
             delta[VX] = FIX2FLT(pt->pos[VX]) - gen->source->pos[VX];
             delta[VY] = FIX2FLT(pt->pos[VY]) - gen->source->pos[VY];
-            delta[VZ] = P_GetParticleZ(pt) - gen->source->pos[VZ] +
-                FIX2FLT(gen->center[VZ]);
+            delta[VZ] = P_GetParticleZ(pt) - (gen->source->pos[VZ] +
+                FIX2FLT(gen->center[VZ]));
         }
         else
         {
