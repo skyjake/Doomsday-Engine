@@ -489,6 +489,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
 {
     boolean             withDyn = false;
     int                 normal = 0, dyn = 1;
+    GLenum              normalTarget, dynTarget;
 
     // Do we have a dynamic light to blend with?
     // This only happens when multitexturing is enabled.
@@ -558,6 +559,9 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
     }
     GL_BlendMode(params->blendMode);
 
+    normalTarget = normal? GL_TEXTURE1 : GL_TEXTURE0;
+    dynTarget = dyn? GL_TEXTURE1 : GL_TEXTURE0;
+
     // Draw one quad. This is obviously not a very efficient way to render
     // lots of masked walls, but since 3D models and sprites must be
     // rendered interleaved with masked walls, there's not much that can be
@@ -566,42 +570,36 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
     {
         glBegin(GL_QUADS);
             glColor4fv(params->vertices[0].color);
-            glMultiTexCoord2fARB(normal, params->texCoord[0][0],
-                                 params->texCoord[1][1]);
+            glMultiTexCoord2fARB(normalTarget, params->texCoord[0][0], params->texCoord[1][1]);
 
-            glMultiTexCoord2fARB(dyn, params->modTexCoord[0][0],
-                                 params->modTexCoord[1][1]);
+            glMultiTexCoord2fARB(dynTarget, params->modTexCoord[0][0], params->modTexCoord[1][1]);
 
             glVertex3f(params->vertices[0].pos[VX],
                          params->vertices[0].pos[VZ],
                          params->vertices[0].pos[VY]);
 
             glColor4fv(params->vertices[1].color);
-            glMultiTexCoord2fvARB(normal, params->texCoord[0]);
+            glMultiTexCoord2fARB(normalTarget, params->texCoord[0][0], params->texCoord[0][1]);
 
-            glMultiTexCoord2fARB(dyn, params->modTexCoord[0][0],
-                                 params->modTexCoord[1][0]);
+            glMultiTexCoord2fARB(dynTarget, params->modTexCoord[0][0], params->modTexCoord[1][0]);
 
             glVertex3f(params->vertices[1].pos[VX],
                          params->vertices[1].pos[VZ],
                          params->vertices[1].pos[VY]);
 
             glColor4fv(params->vertices[3].color);
-            glMultiTexCoord2fARB(normal, params->texCoord[1][0],
-                                 params->texCoord[0][1]);
+            glMultiTexCoord2fARB(normalTarget, params->texCoord[1][0], params->texCoord[0][1]);
 
-            glMultiTexCoord2fARB(dyn, params->modTexCoord[0][1],
-                                 params->modTexCoord[1][0]);
+            glMultiTexCoord2fARB(dynTarget, params->modTexCoord[0][1], params->modTexCoord[1][0]);
 
             glVertex3f(params->vertices[3].pos[VX],
                          params->vertices[3].pos[VZ],
                          params->vertices[3].pos[VY]);
 
             glColor4fv(params->vertices[2].color);
-            glMultiTexCoord2fvARB(normal, params->texCoord[1]);
+			glMultiTexCoord2fARB(normalTarget, params->texCoord[1][0], params->texCoord[1][1]);
 
-            glMultiTexCoord2fARB(dyn, params->modTexCoord[0][1],
-                                 params->modTexCoord[1][1]);
+            glMultiTexCoord2fARB(dynTarget, params->modTexCoord[0][1], params->modTexCoord[1][1]);
 
             glVertex3f(params->vertices[2].pos[VX],
                          params->vertices[2].pos[VZ],
@@ -617,30 +615,28 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
     {
         glBegin(GL_QUADS);
             glColor4fv(params->vertices[0].color);
-            glMultiTexCoord2fARB(normal, params->texCoord[0][0],
-                               params->texCoord[1][1]);
+            glTexCoord2f(params->texCoord[0][0], params->texCoord[1][1]);
 
             glVertex3f(params->vertices[0].pos[VX],
                         params->vertices[0].pos[VZ],
                         params->vertices[0].pos[VY]);
 
             glColor4fv(params->vertices[1].color);
-            glMultiTexCoord2fvARB(normal, params->texCoord[0]);
+            glTexCoord2f(params->texCoord[0][0], params->texCoord[0][1]);
 
             glVertex3f(params->vertices[1].pos[VX],
                         params->vertices[1].pos[VZ],
                         params->vertices[1].pos[VY]);
 
             glColor4fv(params->vertices[3].color);
-            glMultiTexCoord2fARB(normal, params->texCoord[1][0],
-                               params->texCoord[0][1]);
+            glTexCoord2f(params->texCoord[1][0], params->texCoord[0][1]);
 
             glVertex3f(params->vertices[3].pos[VX],
                         params->vertices[3].pos[VZ],
                         params->vertices[3].pos[VY]);
 
             glColor4fv(params->vertices[2].color);
-            glMultiTexCoord2fvARB(normal, params->texCoord[1]);
+            glTexCoord2f(params->texCoord[1][0], params->texCoord[1][1]);
 
             glVertex3f(params->vertices[2].pos[VX],
                         params->vertices[2].pos[VZ],
