@@ -14,7 +14,7 @@
  * (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+l * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
@@ -350,11 +350,16 @@ void G_IdentifyVersion(void)
            "-");
 }
 
+DENG_EXPORT const char* deng_LibraryType(void)
+{
+    return "deng-plugin/game";
+}
+
 /**
  * Pre Engine Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void G_PreInit(void)
+DENG_EXPORT void deng_InitializePlugin(void)
 {
     int                 i;
 
@@ -510,9 +515,6 @@ void G_PreInit(void)
     cfg.weaponOrder[8] = WT_FIRST;
 
     cfg.berserkAutoSwitch = true;
-
-    // Do the common pre init routine;
-    G_CommonPreInit();
 }
 
 /**
@@ -699,7 +701,7 @@ void G_PostInit(void)
     }
 }
 
-void G_Shutdown(void)
+DENG_EXPORT void deng_ShutdownPlugin(void)
 {
     Hu_MsgShutdown();
     Hu_UnloadData();

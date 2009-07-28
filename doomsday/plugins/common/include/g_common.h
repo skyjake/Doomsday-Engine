@@ -44,7 +44,15 @@
 # include "jstrife.h"
 #endif
 
+// Common public functions.
+DENG_EXPORT int          deng_GetInteger(int id);
+DENG_EXPORT const char*  deng_GetString(int id);
+DENG_EXPORT void*        deng_GetAddress(int id);
+DENG_EXPORT void         G_CommonPreInit(void);
+
 #define OBSOLETE        CVF_HIDE|CVF_NO_ARCHIVE
+
+#define DENG2_CLIENT    (Get(DD_DENG2_CLIENT))
 
 enum {
     JOYAXIS_NONE,
@@ -57,7 +65,6 @@ enum {
 extern boolean singledemo;
 
 void            G_Register(void);
-void            G_PreInit(void);
 void            G_PostInit(void);
 void            G_StartTitle(void);
 
@@ -81,4 +88,5 @@ DEFCC( CCmdSetCamera );
 DEFCC( CCmdSetViewLock );
 DEFCC( CCmdLocalMessage );
 DEFCC( CCmdExitLevel );
+
 #endif

@@ -60,7 +60,6 @@ extern char *baseDefault;
 extern char exrnWADs[];
 extern char exrnWADs2[];
 
-void            G_Shutdown(void);
 void            G_EndFrame(void);
 boolean         G_SetGameMode(gamemode_t mode);
 void            G_DetectIWADs(void);

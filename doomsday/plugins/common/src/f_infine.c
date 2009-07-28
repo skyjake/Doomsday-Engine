@@ -2014,7 +2014,7 @@ void FIC_If(void)
     // Generic game mode string checking.
     else if(!strnicmp(fiToken, "mode:", 5))
     {
-        val = !stricmp(fiToken + 5, (char *) G_GetVariable(DD_GAME_MODE));
+        val = !stricmp(fiToken + 5, (char *) deng_GetString(DD_GAME_MODE));
     }
 #if __JDOOM__
     // Game modes.

@@ -346,11 +346,7 @@ extern boolean  modifiedgame;
 void            H2_Main(void);
 
 void            G_IdentifyVersion(void);
-void            G_CommonPreInit(void);
 void            G_CommonPostInit(void);
-
-int             G_GetInteger(int id);
-void*           G_GetVariable(int id);
 
 void            G_DeathMatchSpawnPlayer(int playernum);
 int             G_GetMapNumber(int episode, int map);
@@ -376,7 +372,6 @@ void            G_StopDemo(void);
 void            G_DemoEnds(void);
 void            G_DemoAborted(void);
 
-void            G_Ticker(timespan_t ticLength);
 boolean         G_Responder(event_t* ev);
 
 void            P_Init(void);

@@ -518,8 +518,8 @@ void P_MobjMoveXY(mobj_t* mo)
        mo->mom[MY] > -STANDSPEED && mo->mom[MY] < STANDSPEED)
     {
         // If in a walking frame, stop moving.
-        if((unsigned) ((player->plr->mo->state - STATES) - PCLASS_INFO(player->class)->runState) < 4)
-            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
+        if((unsigned) ((player->plr->mo->state - STATES) - PCLASS_INFO(player->class_)->runState) < 4)
+            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
     }
 
     if((!player || (player->plr->cmd.forwardMove == 0 && player->plr->cmd.sideMove == 0)) &&
@@ -1260,7 +1260,7 @@ void P_SpawnPlayer(spawnspot_t* spot, int plrnum)
 
     P_SetupPsprites(p); // Setup gun psprite.
 
-    p->class = PCLASS_PLAYER;
+    p->class_ = PCLASS_PLAYER;
 
     if(deathmatch)
     {   // Give all keys in death match mode.

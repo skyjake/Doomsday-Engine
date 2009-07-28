@@ -101,7 +101,7 @@ float HU_PSpriteYOffset(player_t *pl)
 #if __JDOOM__ || __JDOOM64__
     float       offy = (cfg.plrViewHeight - 41) * 2;
 #else
-    float       offy = PSpriteSY[pl->class][pl->readyWeapon];
+    float       offy = PSpriteSY[pl->class_][pl->readyWeapon];
 #endif
 
 #if !__JDOOM64__
@@ -155,7 +155,7 @@ void HU_UpdatePlayerSprite(int pnum)
         }
         else
 #elif __JHEXEN__
-        if(pl->powers[PT_INVULNERABILITY] && pl->class == PCLASS_CLERIC)
+        if(pl->powers[PT_INVULNERABILITY] && pl->class_ == PCLASS_CLERIC)
         {
             if(pl->powers[PT_INVULNERABILITY] > 4 * 32)
             {

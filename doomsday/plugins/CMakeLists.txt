@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-INCLUDE_DIRECTORIES ( ../libdeng/api common/include ../external/lzss/portable/include )
+INCLUDE_DIRECTORIES ( ../libdeng/api ../libdeng2/include common/include 
+    ../external/lzss/portable/include )
 
-FILE ( GLOB COMMON_GAME_SOURCES common/src/*.c )
+FILE ( GLOB COMMON_GAME_SOURCES common/src/*.c common/src/*.cc common/include/*.h )
 
 # Building the plugins is optional.
 OPTION ( ENABLE_DOOM "Build the Doom game plugin" ON )
@@ -40,7 +41,7 @@ IF ( ENABLE_DOOM64 )
     SUBDIRS ( jdoom64 )
 ENDIF ()
 
-SUBDIRS ( dehread wadmapconverter )
+SUBDIRS ( sdlopengl dehread wadmapconverter )
 
 IF ( APPLE )
     SET ( PLUGIN_BINARY_DIR ${DENG_BINARY_DIR} )

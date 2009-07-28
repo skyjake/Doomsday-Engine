@@ -72,7 +72,7 @@ typedef enum {
 typedef struct player_s {
     ddplayer_t*     plr; // Pointer to the engine's player data.
     playerstate_t   playerState;
-    playerclass_t   class; // Player class type.
+    playerclass_t   class_; // Player class type.
     playerbrain_t   brain;
 
     float           viewOffset[3];

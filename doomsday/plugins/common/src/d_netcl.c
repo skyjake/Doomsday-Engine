@@ -734,7 +734,7 @@ void NetCl_UpdatePlayerInfo(byte *data)
     cfg.playerColor[num] = NetCl_ReadByte();
 #if __JHEXEN__ || __JHERETIC__
     cfg.playerClass[num] = NetCl_ReadByte();
-    players[num].class = cfg.playerClass[num];
+    players[num].class_ = cfg.playerClass[num];
 #endif
 
 #if __JDOOM__ || __JSTRIFE__ || __JDOOM64__

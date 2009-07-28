@@ -20,10 +20,10 @@ INCLUDE_DIRECTORIES ( include )
 
 FILE ( GLOB SOURCES src/*.c include/*.h )
 
-ADD_LIBRARY ( deng_heretic SHARED ${SOURCES} ${COMMON_GAME_SOURCES} )
+ADD_LIBRARY ( dengplugin_heretic SHARED ${SOURCES} ${COMMON_GAME_SOURCES} )
 
-TARGET_LINK_LIBRARIES ( deng_heretic deng )
+TARGET_LINK_LIBRARIES ( dengplugin_heretic deng )
 
-INSTALL ( TARGETS deng_heretic 
+INSTALL ( TARGETS dengplugin_heretic 
     RUNTIME DESTINATION ${PLUGIN_BINARY_DIR}
     LIBRARY DESTINATION ${PLUGIN_BINARY_DIR} )

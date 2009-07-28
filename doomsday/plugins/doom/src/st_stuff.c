@@ -765,7 +765,7 @@ void ST_updateWidgets(int player)
     found = false;
     for(ammoType=0; ammoType < NUM_AMMO_TYPES && !found; ++ammoType)
     {
-        if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammoType])
+        if(!weaponInfo[plr->readyWeapon][plr->class_].mode[0].ammoType[ammoType])
             continue; // Weapon does not use this type of ammo.
 
         //// \todo Only supports one type of ammo per weapon
@@ -1087,7 +1087,7 @@ void ST_doFullscreenStuff(int player)
         //// for each type of ammo this weapon takes.
         for(ammoType = 0; ammoType < NUM_AMMO_TYPES; ++ammoType)
         {
-            if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammoType])
+            if(!weaponInfo[plr->readyWeapon][plr->class_].mode[0].ammoType[ammoType])
                 continue;
 
             spr = ammoSprite[ammoType];
@@ -1419,7 +1419,7 @@ void ST_createWidgets(int player)
     found = false;
     for(ammoType = 0; ammoType < NUM_AMMO_TYPES && !found; ++ammoType)
     {
-        if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammoType])
+        if(!weaponInfo[plr->readyWeapon][plr->class_].mode[0].ammoType[ammoType])
             continue; // Weapon does not take this ammo.
 
         ptr = &plr->ammo[ammoType].owned;

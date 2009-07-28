@@ -59,7 +59,6 @@ extern int mapStartTic;
 extern int gsvMapMusic;
 
 void            G_Register(void);
-void            G_CommonPreInit(void);
 void            G_CommonPostInit(void);
 void            R_InitRefresh(void);
 
@@ -97,7 +96,6 @@ void            G_LeaveMap(int map, int position, boolean secret);
 
 void            G_WorldDone(void);
 
-void            G_Ticker(timespan_t ticLength);
 boolean         G_Responder(event_t* ev);
 
 void            G_ScreenShot(void);

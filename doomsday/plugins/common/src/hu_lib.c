@@ -177,7 +177,7 @@ void HUlib_drawText(hu_text_t* it, gamefontid_t font)
 {
     hu_textline_t*		l = &it->l;
 
-    if(!*it->on)
+    if(!it->on || !*it->on)
         return;
 
     HUlib_drawTextLine(l, font, true);

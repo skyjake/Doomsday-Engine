@@ -50,12 +50,9 @@ extern boolean monsterInfight;
 extern char *borderLumps[];
 
 void            G_PostInit(void);
-void            G_PreInit(void);
 void            G_DetectIWADs(void);
 void            G_IdentifyVersion(void);
-void            G_Shutdown(void);
 void            G_EndFrame(void);
-void            G_Ticker(timespan_t ticLength);
 
 boolean         G_SetGameMode(gamemode_t mode);
 

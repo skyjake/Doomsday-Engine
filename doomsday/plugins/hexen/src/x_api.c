@@ -64,7 +64,7 @@ game_import_t gi;
 /**
  * Get a 32-bit integer value.
  */
-int G_GetInteger(int id)
+int deng_GetInteger(int id)
 {
     switch(id)
     {
@@ -78,13 +78,8 @@ int G_GetInteger(int id)
     return 0;
 }
 
-/**
- * Get a pointer to the value of a variable. Added for 64-bit support.
- */
-void *G_GetVariable(int id)
+const char* deng_GetString(int id)
 {
-    static float        bob[2];
-
     switch(id)
     {
     case DD_GAME_NAME:
@@ -108,6 +103,22 @@ void *G_GetVariable(int id)
     case DD_VERSION_LONG:
         return GAME_VERSION_TEXTLONG "\n" GAME_DETAILS;
 
+    default:
+        break;
+    }
+
+    // ID not recognized, return NULL.
+    return 0;
+}
+/**
+ * Get a pointer to the value of a variable.
+ */
+void *deng_GetAddress(int id)
+{
+    static float        bob[2];
+
+    switch(id)
+    {
     case DD_ACTION_LINK:
         return actionlinks;
 
@@ -146,10 +157,10 @@ game_export_t *GetGameAPI(game_import_t *imports)
 
     // Fill in the data for the exports.
     gx.apiSize = sizeof(gx);
-    gx.PreInit = G_PreInit;
+    //gx.PreInit = G_PreInit;
     gx.PostInit = G_PostInit;
-    gx.Shutdown = G_Shutdown;
-    gx.Ticker = G_Ticker;
+    //gx.Shutdown = G_Shutdown;
+    //gx.Ticker = G_Ticker;
     gx.G_Drawer = G_Display;
     gx.G_Drawer2 = G_Display2;
     gx.PrivilegedResponder = (boolean (*)(event_t *)) G_PrivilegedResponder;
@@ -161,8 +172,8 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.ConsoleBackground = G_ConsoleBg;
     gx.UpdateState = G_UpdateState;
 #undef Get
-    gx.GetInteger = G_GetInteger;
-    gx.GetVariable = G_GetVariable;
+    //gx.GetInteger = G_GetInteger;
+    //gx.GetVariable = G_GetVariable;
 
     gx.NetServerStart = D_NetServerStarted;
     gx.NetServerStop = D_NetServerClose;

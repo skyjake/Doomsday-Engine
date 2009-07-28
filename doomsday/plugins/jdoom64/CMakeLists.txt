@@ -1,6 +1,6 @@
 # The Doomsday Engine Project -- doom64
 #
-# Copyright (c) 2009 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
+# Copyright (c) 2009 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,10 +20,10 @@ INCLUDE_DIRECTORIES ( include )
 
 FILE ( GLOB SOURCES src/*.c include/*.h )
 
-ADD_LIBRARY ( deng_doom64 SHARED ${SOURCES} ${COMMON_GAME_SOURCES} )
+ADD_LIBRARY ( dengplugin_doom64 SHARED ${SOURCES} ${COMMON_GAME_SOURCES} )
 
-TARGET_LINK_LIBRARIES ( deng_doom64 deng )
+TARGET_LINK_LIBRARIES ( dengplugin_doom64 deng )
 
-INSTALL ( TARGETS deng_doom64 
+INSTALL ( TARGETS dengplugin_doom64 
     RUNTIME DESTINATION ${PLUGIN_BINARY_DIR}
     LIBRARY DESTINATION ${PLUGIN_BINARY_DIR} )

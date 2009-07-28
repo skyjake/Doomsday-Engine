@@ -48,6 +48,7 @@
 #  include "jstrife.h"
 #endif
 
+#include "g_common.h"
 #include "dmu_lib.h"
 #include "r_common.h"
 #include "p_mapsetup.h"
@@ -574,7 +575,7 @@ int P_SetupMapWorker(void* ptr)
     P_SpawnPlayers();
 
     // Set up world state.
-    P_SpawnSpecials();
+    if(!DENG2_CLIENT) P_SpawnSpecials();
 
     // Preload graphics.
     if(precache)

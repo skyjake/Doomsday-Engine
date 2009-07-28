@@ -441,6 +441,7 @@ void G_CommonPreInit(void)
     if(gi.version < DOOMSDAY_VERSION)
         Con_Error(GAME_NICENAME " requires at least Doomsday " DOOMSDAY_VERSION_TEXT
                   "!\n");
+          
 #ifdef TIC_DEBUG
     rndDebugfile = fopen("rndtrace.txt", "wt");
 #endif
@@ -523,7 +524,7 @@ void R_SetTranslation(mobj_t* mo)
         {
             tclass = 1;
 
-            if(mo->player->class == PCLASS_FIGHTER)
+            if(mo->player->class_ == PCLASS_FIGHTER)
             {   // Fighter's colors are a bit different.
                 if(tmap == 0)
                     tmap = 2;
@@ -996,7 +997,7 @@ void G_UpdateGSVarsForPlayer(player_t* pl)
 #endif
         // armor
 #if __JHEXEN__
-    gsvArmor = FixedDiv(PCLASS_INFO(pl->class)->autoArmorSave +
+    gsvArmor = FixedDiv(PCLASS_INFO(pl->class_)->autoArmorSave +
                         pl->armorPoints[ARMOR_ARMOR] +
                         pl->armorPoints[ARMOR_SHIELD] +
                         pl->armorPoints[ARMOR_HELMET] +
@@ -1046,7 +1047,7 @@ void G_UpdateGSVarsForPlayer(player_t* pl)
  *
  * @param ticLength     How long this tick is, in seconds.
  */
-void G_Ticker(timespan_t ticLength)
+DENG_EXPORT void deng_Ticker(timespan_t ticLength)
 {
     static gamestate_t  oldGameState = -1;
     static trigger_t    fixed = {1.0 / TICSPERSEC};
@@ -1455,7 +1456,7 @@ void G_PlayerReborn(int player)
     p->colorMap = cfg.playerColor[player];
 #endif
 #if __JHEXEN__
-    p->class = cfg.playerClass[player];
+    p->class_ = cfg.playerClass[player];
 #endif
     p->useDown = p->attackDown = true; // Don't do anything immediately.
     p->playerState = PST_LIVE;
@@ -2666,7 +2667,7 @@ void G_DoScreenShot(void)
     char*               numPos;
 
     // Use game mode as the file name base.
-    sprintf(name, "%s-", (char *) G_GetVariable(DD_GAME_MODE));
+    sprintf(name, "%s-", (char *) deng_GetString(DD_GAME_MODE));
     numPos = name + strlen(name);
 
     // Find an unused file name.

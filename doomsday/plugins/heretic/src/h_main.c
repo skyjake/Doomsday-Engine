@@ -242,11 +242,16 @@ void G_IdentifyVersion(void)
     }
 }
 
+DENG_EXPORT const char* deng_LibraryType(void)
+{
+    return "deng-plugin/game";
+}
+
 /**
  * Pre Engine Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void G_PreInit(void)
+DENG_EXPORT void deng_InitializePlugin(void)
 {
     int                 i;
 
@@ -413,13 +418,6 @@ void G_PreInit(void)
     cfg.ringFilter = 1;
     cfg.tomeCounter = 10;
     cfg.tomeSound = 3;
-
-    // Shareware WAD has different border background
-    if(W_CheckNumForName("E2M1") == -1)
-        borderLumps[0] = "FLOOR04";
-
-    // Do the common pre init routine;
-    G_CommonPreInit();
 }
 
 /**
@@ -431,6 +429,10 @@ void G_PostInit(void)
     int                 e, m, p;
     filename_t          file;
     char                mapStr[6];
+
+    // Shareware WAD has different border background
+    if(W_CheckNumForName("E2M1") == -1)
+        borderLumps[0] = "FLOOR04";
 
     if(W_CheckNumForName("E2M1") == -1)
         // Can't find episode 2 maps, must be the shareware WAD.
@@ -578,7 +580,7 @@ void G_PostInit(void)
     }
 }
 
-void G_Shutdown(void)
+DENG_EXPORT void deng_ShutdownPlugin(void)
 {
     Hu_MsgShutdown();
     Hu_UnloadData();

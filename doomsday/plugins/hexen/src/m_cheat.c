@@ -655,7 +655,7 @@ static void CheatWeaponsFunc(player_t *player, cheat_t *cheat)
 
     for(i = 0; i < NUMARMOR; ++i)
     {
-        player->armorPoints[i] = PCLASS_INFO(player->class)->armorIncrement[i];
+        player->armorPoints[i] = PCLASS_INFO(player->class_)->armorIncrement[i];
     }
 
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)

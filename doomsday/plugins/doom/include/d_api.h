@@ -38,9 +38,6 @@
 extern game_import_t gi;
 extern game_export_t gx;
 
-int             G_GetInteger(int id);
-void           *G_GetVariable(int id);
-
-PUBLIC_API game_export_t  *GetGameAPI(game_import_t *imports);
+DENG_EXPORT game_export_t  *GetGameAPI(game_import_t *imports);
 
 #endif

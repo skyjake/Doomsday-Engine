@@ -689,10 +689,10 @@ explode:
         if(player)
         {
             if((unsigned)
-               ((player->plr->mo->state - STATES) - PCLASS_INFO(player->class)->runState) <
+               ((player->plr->mo->state - STATES) - PCLASS_INFO(player->class_)->runState) <
                4)
             {
-                P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
+                P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
             }
         }
         mo->mom[MX] = 0;
@@ -851,7 +851,7 @@ void P_MobjMoveZ(mobj_t *mo)
                         // Fix DOOM bug - dead players grunting when hitting the ground
                         // (e.g., after an archvile attack)
                         if(mo->player->health > 0)
-                            switch(mo->player->class)
+                            switch(mo->player->class_)
                             {
                             case PCLASS_FIGHTER:
                                 S_StartSound(SFX_PLAYER_FIGHTER_GRUNT, mo);
@@ -987,7 +987,7 @@ static void PlayerLandedOnThing(mobj_t *mo, mobj_t *onmobj)
     else if(mo->mom[MZ] < -P_GetGravity() * 12 && !mo->player->morphTics)
     {
         S_StartSound(SFX_PLAYER_LAND, mo);
-        switch(mo->player->class)
+        switch(mo->player->class_)
         {
         case PCLASS_FIGHTER:
             S_StartSound(SFX_PLAYER_FIGHTER_GRUNT, mo);
@@ -1355,22 +1355,22 @@ void P_SpawnPlayer(spawnspot_t* spot, int playernum)
 
     if(randomClassParm && deathmatch)
     {
-        p->class = P_Random() % 3;
-        if(p->class == cfg.playerClass[playernum])
+        p->class_ = P_Random() % 3;
+        if(p->class_ == cfg.playerClass[playernum])
         {
-            p->class = (p->class + 1) % 3;
+            p->class_ = (p->class_ + 1) % 3;
         }
 
-        cfg.playerClass[playernum] = p->class;
+        cfg.playerClass[playernum] = p->class_;
         NetSv_SendPlayerInfo(playernum, DDSP_ALL_PLAYERS);
     }
     else
     {
-        p->class = cfg.playerClass[playernum];
+        p->class_ = cfg.playerClass[playernum];
     }
 
     /* $unifiedangles */
-    mobj = P_SpawnMobj3fv(PCLASS_INFO(p->class)->mobjType, pos,
+    mobj = P_SpawnMobj3fv(PCLASS_INFO(p->class_)->mobjType, pos,
                           (spot? spot->angle : 0), spawnFlags);
 
     // With clients all player mobjs are remote, even the CONSOLEPLAYER.
@@ -1382,7 +1382,7 @@ void P_SpawnPlayer(spawnspot_t* spot, int playernum)
     }
 
     // Set translation table data.
-    if(p->class == PCLASS_FIGHTER && (p->colorMap == 0 || p->colorMap == 2))
+    if(p->class_ == PCLASS_FIGHTER && (p->colorMap == 0 || p->colorMap == 2))
     {
         // The first type should be blue, and the third should be the
         // Fighter's original gold color
@@ -2215,7 +2215,7 @@ boolean P_HealRadius(player_t* player)
     params.origin[VY] = pmo->pos[VY];
     params.maxDistance = HEAL_RADIUS_DIST;
 
-    switch(player->class)
+    switch(player->class_)
     {
     case PCLASS_FIGHTER:
         DD_IterateThinkers(P_MobjThinker, radiusGiveArmor, &params);

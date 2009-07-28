@@ -138,7 +138,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
         // Give some of each of the ammo types used by this weapon.
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponInfo[weapon][player->class].mode[lvl].ammoType[i])
+            if(!weaponInfo[weapon][player->class_].mode[lvl].ammoType[i])
                 continue;   // Weapon does not take this type of ammo.
 
             if(P_GiveAmmo(player, i, getWeaponAmmo[weapon]))
@@ -159,7 +159,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon)
         // Give some of each of the ammo types used by this weapon.
         for(i = 0; i < NUM_AMMO_TYPES; ++i)
         {
-            if(!weaponInfo[weapon][player->class].mode[lvl].ammoType[i])
+            if(!weaponInfo[weapon][player->class_].mode[lvl].ammoType[i])
                 continue;   // Weapon does not take this type of ammo.
 
             if(P_GiveAmmo(player, i, getWeaponAmmo[weapon]))

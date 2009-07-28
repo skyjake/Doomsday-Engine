@@ -411,6 +411,10 @@ void P_SpawnThings(void)
     for(i = 0; i < numthings; ++i)
     {
         th = &things[i];
+        if(DENG2_CLIENT)
+        {
+            if(th->type < 1 || th->type > 4) continue;
+        }
 #if __JDOOM__
         // Do not spawn cool, new stuff if !commercial
         spawn = true;

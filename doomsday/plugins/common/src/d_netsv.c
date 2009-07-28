@@ -351,10 +351,10 @@ void NetSv_Ticker(void)
         if(!players[i].plr->inGame)
             continue;
 
-        if(oldClasses[i] != players[i].class)
+        if(oldClasses[i] != players[i].class_)
         {
-            oldClasses[i] = players[i].class;
-            NetSv_SendPlayerClass(i, players[i].class);
+            oldClasses[i] = players[i].class_;
+            NetSv_SendPlayerClass(i, players[i].class_);
         }
     }
 #endif
