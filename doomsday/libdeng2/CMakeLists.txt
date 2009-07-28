@@ -14,11 +14,43 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-INCLUDE_DIRECTORIES ( include ${CMAKE_SOURCE_DIR}/libdeng/api )
+# Version numbering.
+ADD_DEFINITIONS ( 
+    -DLIBDENG2_MAJOR_VERSION=${LIBDENG2_MAJOR_VERSION}
+    -DLIBDENG2_MINOR_VERSION=${LIBDENG2_MINOR_VERSION}
+    -DLIBDENG2_PATCHLEVEL=${LIBDENG2_PATCHLEVEL}
+    -DLIBDENG2_RELEASE_LABEL="${LIBDENG2_RELEASE_LABEL}" )
 
-FILE ( GLOB SOURCES portable/*.cc portable/*.h include/de/*.h )
+MESSAGE ( STATUS "libdeng2 version ${LIBDENG2_RELEASE_LABEL} ${LIBDENG2_MAJOR_VERSION}.${LIBDENG2_MINOR_VERSION}.${LIBDENG2_PATCHLEVEL}")
+
+# Generate revision.h.
+IF ( Subversion_FOUND )
+    Subversion_WC_INFO ( ${CMAKE_SOURCE_DIR} ROOT )
+    MESSAGE( STATUS "Revision: ${ROOT_WC_REVISION}" )
+    FILE ( WRITE include/de/revision.h "#define LIBDENG2_REVISION ${ROOT_WC_REVISION}\n" )
+ENDIF ( Subversion_FOUND )
+
+# Configuration.
+IF ( WIN32 )
+    # Tell Windows to export symbols.
+    ADD_DEFINITIONS ( -DLIBDENG2_EXPORTS )
+ENDIF ()
+# Configure behavior for waiting on socket activity.
+IF ( APPLE OR WIN32 )
+    ADD_DEFINITIONS ( -DLIBDENG2_SOCKET_RECV_TIMEOUT=10000 )
+ELSE ()
+    ADD_DEFINITIONS ( -DLIBDENG2_SOCKET_RECV_TIMEOUT=100 )
+ENDIF ()
+
+INCLUDE_DIRECTORIES ( include ${CMAKE_SOURCE_DIR}/libdeng/api 
+    ${SDL_INCLUDE_DIR} ${SDLNET_INCLUDE_DIR} ${ZLIB_INCLUDE_DIR} )
+
+# Sources.
+FILE ( GLOB_RECURSE SOURCES portable/*.cc portable/*.h include/de/*.h )
 
 ADD_LIBRARY ( deng2 SHARED ${SOURCES} )
+
+TARGET_LINK_LIBRARIES ( deng2 ${SDL_LIBRARY} ${SDLNET_LIBRARY} ${ZLIB_LIBRARY} )
 
 # Installation.
 INSTALL ( TARGETS deng2 

@@ -34,11 +34,12 @@ namespace de
     /**
      * Base class for error exceptions thrown by libdeng2.
      */
-	class PUBLIC_API Error : public std::runtime_error
+	class LIBDENG2_API Error : public std::runtime_error
 	{
 	public:
 		Error(const std::string& where, const std::string& message)
 			: std::runtime_error(std::string("(") + where + ") " + message) {}
+        virtual void raise() const { throw *this; }
 	};
 }
 	
@@ -49,12 +50,13 @@ namespace de
  * of the caught errors.
  */
 #define DEFINE_SUB_ERROR(Parent, Name) \
-	class PUBLIC_API Name : public Parent { \
+	class Name : public Parent { \
 	public: \
 		Name(const std::string& message) \
 			: Parent("-", message) {} \
 		Name(const std::string& where, const std::string& message) \
 			: Parent(where, message) {}							   \
+        virtual void raise() const { throw *this; } \
     };    
 
 /**
