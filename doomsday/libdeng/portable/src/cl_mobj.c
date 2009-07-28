@@ -104,6 +104,7 @@ cmhash_t *Cl_MobjHash(thid_t id)
  */
 void Cl_LinkMobj(clmobj_t *cmo, thid_t id)
 {
+#if 0
     cmhash_t   *hash = Cl_MobjHash(id);
 
     // Set the ID.
@@ -121,6 +122,7 @@ void Cl_LinkMobj(clmobj_t *cmo, thid_t id)
     {
         hash->first = cmo;
     }
+#endif
 }
 
 /**
@@ -128,16 +130,9 @@ void Cl_LinkMobj(clmobj_t *cmo, thid_t id)
  */
 void Cl_UnlinkMobj(clmobj_t *cmo)
 {
+#if 0
     cmhash_t   *hash = Cl_MobjHash(cmo->mo.thinker.id);
-/*
-#ifdef _DEBUG
-if(cmo->flags & CLMF_HIDDEN)
-{
-    Con_Printf("Cl_UnlinkMobj: Hidden mobj %i unlinked.\n",
-    cmo->mo.thinker.id);
-}
-#endif
-*/
+
     if(hash->first == cmo)
         hash->first = cmo->next;
     if(hash->last == cmo)
@@ -146,6 +141,7 @@ if(cmo->flags & CLMF_HIDDEN)
         cmo->next->prev = cmo->prev;
     if(cmo->prev)
         cmo->prev->next = cmo->next;
+#endif
 }
 
 /**
@@ -154,6 +150,7 @@ if(cmo->flags & CLMF_HIDDEN)
  */
 clmobj_t *Cl_FindMobj(thid_t id)
 {
+#if 0
     cmhash_t   *hash = Cl_MobjHash(id);
     clmobj_t   *cmo;
 
@@ -163,6 +160,7 @@ clmobj_t *Cl_FindMobj(thid_t id)
         if(cmo->mo.thinker.id == id)
             return cmo;
     }
+#endif
 
     // Not found!
     return NULL;
@@ -176,6 +174,7 @@ clmobj_t *Cl_FindMobj(thid_t id)
  */
 boolean Cl_MobjIterator(boolean (*callback) (clmobj_t *, void *), void *parm)
 {
+#if 0
     clmobj_t   *cmo;
     int         i;
 
@@ -187,6 +186,7 @@ boolean Cl_MobjIterator(boolean (*callback) (clmobj_t *, void *), void *parm)
                 return false;
         }
     }
+#endif
     return true;
 }
 
@@ -207,6 +207,7 @@ void Cl_UnsetMobjPosition(clmobj_t *cmo)
  */
 void Cl_SetMobjPosition(clmobj_t *cmo)
 {
+#if 0
     mobj_t *mo = &cmo->mo;
 
     if((cmo->flags & (CLMF_HIDDEN | CLMF_UNPREDICTABLE)) || mo->dPlayer)
@@ -220,6 +221,7 @@ void Cl_SetMobjPosition(clmobj_t *cmo)
     P_MobjLink(mo,
                 (mo->ddFlags & DDMF_DONTDRAW ? 0 : DDLINK_SECTOR) |
                 (mo->ddFlags & DDMF_SOLID ? DDLINK_BLOCKMAP : 0));
+#endif
 }
 
 /**
@@ -227,6 +229,7 @@ void Cl_SetMobjPosition(clmobj_t *cmo)
  */
 void Cl_SetMobjState(mobj_t *mo, int stnum)
 {
+#if 0
     if(stnum < 0)
         return;
     do
@@ -242,6 +245,7 @@ void Cl_SetMobjState(mobj_t *mo, int stnum)
         mo->type = stateOwners[stnum] - mobjInfo;
     else
         mo->type = 0;
+#endif
 }
 
 /**
@@ -249,6 +253,7 @@ void Cl_SetMobjState(mobj_t *mo, int stnum)
  */
 void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
 {
+#if 0
     mobj_t     *mo = &cmo->mo;
     boolean     onFloor = false, inCeiling = false;
 
@@ -310,6 +315,7 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
 #  endif
     }
 #endif
+#endif
 }
 
 /**
@@ -319,6 +325,8 @@ void Cl_CheckMobj(clmobj_t *cmo, boolean justCreated)
  */
 void Cl_UpdateRealPlayerMobj(mobj_t *mo, mobj_t *clmo, int flags)
 {
+#if 0
+
 #if _DEBUG
 if(!mo || !clmo)
 {
@@ -366,6 +374,7 @@ VERBOSE( Con_Message("Cl_UpdateRealPlayerMobj: mo=%p angle=%x\n", mo, mo->angle)
     mo->visAngle = clmo->angle >> 16;
 
     //if(flags & MDF_FLAGS) CON_Printf("Cl_RMD: ddf=%x\n", mo->ddFlags);
+#endif
 }
 
 /**
@@ -378,6 +387,7 @@ VERBOSE( Con_Message("Cl_UpdateRealPlayerMobj: mo=%p angle=%x\n", mo, mo->angle)
  */
 int Cl_ReadMobjDelta(void)
 {
+#if 0
     thid_t      id = Msg_ReadShort();   // Read the ID.
     clmobj_t   *cmo;
     boolean     linked = true;
@@ -518,6 +528,7 @@ if(d->pos[VX] == 0 && d->pos[VY] == 0)
         // Players have real mobjs. The client mobj is hidden (unlinked).
         Cl_UpdateRealPlayerMobj(d->dPlayer->mo, d, df);
     }
+#endif
 
     // Continue reading.
     return true;
@@ -542,6 +553,7 @@ void Cl_InitClientMobjs(void)
  */
 void Cl_DestroyClientMobjs(void)
 {
+#if 0
     int                 i;
     clmobj_t*           cmo;
 
@@ -556,6 +568,7 @@ void Cl_DestroyClientMobjs(void)
     }
 
     Cl_Reset();
+#endif
 }
 
 /**
@@ -577,6 +590,7 @@ void Cl_Reset(void)
  */
 void Cl_MobjMove(clmobj_t* cmo)
 {
+#if 0
     mobj_t*             mo = &cmo->mo;
     boolean             collided = false;
     float               gravity = FIX2FLT(mapGravity);
@@ -667,6 +681,7 @@ void Cl_MobjMove(clmobj_t* cmo)
     {
         mo->pos[VZ] = mo->ceilingZ - mo->height;
     }
+#endif
 }
 
 /**
@@ -674,6 +689,7 @@ void Cl_MobjMove(clmobj_t* cmo)
  */
 void Cl_MobjAnimate(mobj_t *mo)
 {
+#if 0
     if(!mo->state || mo->tics < 0)
         return;                 // In stasis.
 
@@ -697,6 +713,7 @@ void Cl_MobjAnimate(mobj_t *mo)
             mo->tics = -1;
         }
     }
+#endif
 }
 
 /**
@@ -704,6 +721,7 @@ void Cl_MobjAnimate(mobj_t *mo)
  */
 void Cl_PredictMovement(void)
 {
+#if 0
     clmobj_t           *cmo, *next = NULL;
     int                 i;
     int                 moCount = 0;
@@ -779,6 +797,7 @@ if(verbose >= 2)
     }
 }
 #endif
+#endif
 }
 
 /**
@@ -786,14 +805,16 @@ if(verbose >= 2)
  */
 clmobj_t *Cl_CreateMobj(thid_t id)
 {
+#if 0
     clmobj_t   *cmo = Z_Calloc(sizeof(*cmo), PU_MAP, 0);
 
     cmo->mo.ddFlags |= DDMF_REMOTE;
     cmo->time = Sys_GetRealTime();
     Cl_LinkMobj(cmo, id);
     P_SetMobjID(id, true);      // Mark this ID as used.
+#endif
 
-    return cmo;
+    return NULL /*cmo*/;
 }
 
 /**
@@ -801,6 +822,7 @@ clmobj_t *Cl_CreateMobj(thid_t id)
  */
 void Cl_DestroyMobj(clmobj_t *cmo)
 {
+#if 0
     // Stop any sounds originating from this mobj.
     S_StopSound(0, &cmo->mo);
 
@@ -809,6 +831,7 @@ void Cl_DestroyMobj(clmobj_t *cmo)
     Cl_UnsetMobjPosition(cmo);
     Cl_UnlinkMobj(cmo);
     Z_Free(cmo);
+#endif
 }
 
 /**
@@ -819,6 +842,7 @@ void Cl_DestroyMobj(clmobj_t *cmo)
  */
 boolean Cl_RevealMobj(clmobj_t *cmo)
 {
+#if 0
     // Check that we know enough about the clmobj.
     if(cmo->mo.dPlayer != &ddPlayers[consolePlayer].shared &&
        (!(cmo->flags & CLMF_KNOWN_X) ||
@@ -851,6 +875,7 @@ VERBOSE2( Con_Printf("Cl_RevealMobj: Revealing id %i, state %p (%i)\n",
                      cmo->mo.state - states) );
 #endif
 
+#endif
     return true;
 }
 
@@ -862,6 +887,8 @@ VERBOSE2( Con_Printf("Cl_RevealMobj: Revealing id %i, state %p (%i)\n",
  */
 void Cl_ReadMobjDelta2(boolean skip)
 {
+#if 0
+    
     boolean     needsLinking = false, justCreated = false;
     clmobj_t   *cmo = NULL;
     mobj_t     *d;
@@ -1076,6 +1103,7 @@ void Cl_ReadMobjDelta2(boolean skip)
             Cl_UpdateRealPlayerMobj(d->dPlayer->mo, d, df);
         }
     }
+#endif
 }
 
 /**
@@ -1084,6 +1112,7 @@ void Cl_ReadMobjDelta2(boolean skip)
  */
 void Cl_ReadNullMobjDelta2(boolean skip)
 {
+#if 0
     clmobj_t   *cmo;
     thid_t      id;
 
@@ -1122,4 +1151,5 @@ Con_Printf("Cl_ReadNullMobjDelta2: Null %i\n", id);
     // The mobj will soon time out and be permanently removed.
     cmo->time = Sys_GetRealTime();
     cmo->flags |= CLMF_UNPREDICTABLE | CLMF_NULLED;
+#endif
 }

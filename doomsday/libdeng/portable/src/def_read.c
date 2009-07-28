@@ -668,7 +668,7 @@ static boolean DED_CheckCondition(const char* cond, boolean expected)
     else if(isalnum(cond[0]))
     {
         // Then it must be a game mode.
-        value = !stricmp(cond, (char *) gx.GetVariable(DD_GAME_MODE));
+        value = !stricmp(cond, game_GetString(DD_GAME_MODE));
     }
 
     return value == expected;

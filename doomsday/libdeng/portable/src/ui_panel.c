@@ -849,8 +849,8 @@ void CP_VideoModeInfo(ui_object_t *ob)
         if(!Sys_GetWindowFullscreen(windowIDX, &fullscreen))
             return;
 
-        sprintf(buf, "%i x %i x %i (%s)", theWindow->width,
-                theWindow->height, theWindow->normal.bpp,
+        sprintf(buf, "%i x %i x %i (%s)", DD_WindowWidth(),
+                DD_WindowHeight(), DD_WindowBPP(),
                 (fullscreen? "fullscreen" : "windowed"));
     }
 
@@ -873,8 +873,8 @@ void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
     sprintf(ob->text, "%i x %i x %i (%s)", w, h, bpp,
             fullscreen? "fullscreen" : "windowed");
 
-    if(w == theWindow->width && h == theWindow->height &&
-       bpp == theWindow->normal.bpp &&
+    if(w == DD_WindowWidth() && h == DD_WindowHeight() &&
+       bpp == DD_WindowBPP() &&
        fullscreen == cFullscreen)
         ob->flags |= UIF_DISABLED;
     else
@@ -920,9 +920,11 @@ void CP_SetVidMode(ui_object_t *ob)
 
     ob->flags |= UIF_DISABLED;
 
+#if 0
     Sys_SetWindow(windowIDX, 0, 0, x, y, bpp,
                  (panel_fullscreen? DDWF_FULLSCREEN : 0),
                  DDSW_NOVISIBLE|DDSW_NOCENTER);
+#endif
 }
 
 void CP_VidModeChanged(ui_object_t *ob)
@@ -1213,14 +1215,14 @@ D_CMD(OpenPanel)
 
         ob = UI_FindObject(ob_panel, CPG_VIDEO, CPID_RES_LIST);
         list = ob->data;
-        list->selection = UI_ListFindItem(ob, RES(theWindow->width, theWindow->height));
+        list->selection = UI_ListFindItem(ob, RES(DD_WindowWidth(), DD_WindowHeight()));
         if(list->selection == -1)
         {
             // Then use a reasonable default.
             list->selection = UI_ListFindItem(ob, RES(640, 480));
         }
         panel_fullscreen = cFullscreen;
-        panel_bpp = (theWindow->normal.bpp == 32? 1 : 0);
+        panel_bpp = (DD_WindowBPP() == 32? 1 : 0);
         CP_ResolutionList(ob);
     }
 

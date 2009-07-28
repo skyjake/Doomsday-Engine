@@ -24,12 +24,20 @@
  */
 
 /**
- * <file name>: <short summary>
+ * dd_gameapi.cc: C Wrappers for Game Library API Calls
  *
- * <description>
+ * This is for convenience only, so that all source files need not be
+ * converted to C++ within libdeng.
  */
 
 // HEADER FILES ------------------------------------------------------------
+
+#include "dd_gameapi.h"
+
+#include <de/App>
+#include <de/Library>
+
+using namespace de;
 
 // MACROS ------------------------------------------------------------------
 
@@ -48,3 +56,33 @@
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
+
+int game_GetInteger(int id)
+{
+    return App::game().SYMBOL(deng_GetInteger)(id);
+}
+
+const char* game_GetString(int id)
+{
+    return App::game().SYMBOL(deng_GetString)(id);
+}
+
+void* game_GetAddress(int id)
+{
+    return App::game().SYMBOL(deng_GetAddress)(id);
+}
+
+void game_Ticker(double tickLength)
+{
+    App::game().SYMBOL(deng_Ticker)(tickLength);
+}
+
+void game_Call(const char* funcName)
+{
+    typedef void (*func_t)(void);
+    func_t ptr = App::game().symbol<func_t>(funcName);
+    if(ptr)
+    {
+        ptr();
+    }
+}

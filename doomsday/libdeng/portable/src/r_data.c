@@ -1346,7 +1346,7 @@ typedef struct {
 
                 texDef = storage;
                 texDef->patchCount = texDefNumPatches[i];
-                strncpy(texDef->name, mtexture->name, 8);
+                strncpy(texDef->name, (const char*)mtexture->name, 8);
                 strupr(texDef->name);
                 texDef->width = SHORT(mtexture->width);
                 texDef->height = SHORT(mtexture->height);
@@ -1378,7 +1378,7 @@ typedef struct {
 
                 texDef = storage;
                 texDef->patchCount = texDefNumPatches[i];
-                strncpy(texDef->name, smtexture->name, 8);
+                strncpy(texDef->name, (const char*)smtexture->name, 8);
                 strupr(texDef->name);
                 texDef->width = SHORT(smtexture->width);
                 texDef->height = SHORT(smtexture->height);

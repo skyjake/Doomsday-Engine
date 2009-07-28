@@ -23,13 +23,19 @@
  */
 
 /**
- * p_materialmanager.c: Materials manager.
+ * p_materialmanager.cc: Materials manager.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <de/App>
+#include <de/Zone>
+
+using namespace de;
+
 #include <ctype.h> // For tolower()
 
+extern "C" {
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -38,6 +44,7 @@
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_audio.h" // For texture, environmental audio properties.
+}
 
 // MACROS ------------------------------------------------------------------
 
@@ -92,7 +99,8 @@ static boolean initedOk = false;
  * 5) Super-fast look up by public material identifier.
  * 6) Fast look up by material name (a hashing scheme is used).
  */
-static zblockset_t* materialsBlockSet;
+typedef Zone::Allocator<material_t> Allocator;
+static Allocator* allocator;
 static material_t* materialsHead; // Head of the linked list of materials.
 
 static materialbind_t* materialBinds;
@@ -223,9 +231,9 @@ static void newMaterialNameBinding(material_t* mat, const char* name,
     if(++numMaterialBinds > maxMaterialBinds)
     {   // Allocate more memory.
         maxMaterialBinds += MATERIALS_BLOCK_ALLOC;
-        materialBinds =
+        materialBinds = static_cast<materialbind_t*>(
             Z_Realloc(materialBinds, sizeof(*materialBinds) * maxMaterialBinds,
-                      PU_STATIC);
+                      PU_STATIC));
     }
 
     // Add the new material to the end.
@@ -247,8 +255,7 @@ void P_InitMaterialManager(void)
     if(initedOk)
         return; // Already been here.
 
-    materialsBlockSet = Z_BlockCreate(sizeof(material_t),
-                                      MATERIALS_BLOCK_ALLOC, PU_STATIC);
+    allocator = new Allocator(App::memory(), MATERIALS_BLOCK_ALLOC);
     materialsHead = NULL;
 
     materialBinds = NULL;
@@ -269,8 +276,8 @@ void P_ShutdownMaterialManager(void)
     if(!initedOk)
         return;
 
-    Z_BlockDestroy(materialsBlockSet);
-    materialsBlockSet = NULL;
+    delete allocator;
+    allocator = NULL;
     materialsHead = NULL;
 
     // Destroy the bindings.
@@ -335,7 +342,7 @@ static material_t* createMaterial(short width, short height, byte flags,
                                   ded_material_t* def, gltextureid_t tex)
 {
     uint                i;
-    material_t*         mat = Z_BlockNewElement(materialsBlockSet);
+    material_t*         mat = allocator->allocate();
 
     memset(mat, 0, sizeof(*mat));
     mat->header.type = DMU_MATERIAL;
@@ -867,7 +874,7 @@ D_CMD(ListMaterials)
 
     if(argc > 1)
     {
-        mnamespace = atoi(argv[1]);
+        mnamespace = material_namespace_t(atoi(argv[1]));
         if(mnamespace < MN_FIRST)
         {
             mnamespace = MN_ANY;
@@ -950,8 +957,8 @@ int R_CreateAnimGroup(int flags)
     animgroup_t*        group;
 
     // Allocating one by one is inefficient, but it doesn't really matter.
-    groups =
-        Z_Realloc(groups, sizeof(animgroup_t) * (numgroups + 1), PU_STATIC);
+    groups = static_cast<animgroup_t*>(
+        Z_Realloc(groups, sizeof(animgroup_t) * (numgroups + 1), PU_STATIC));
 
     // Init the new group.
     group = &groups[numgroups];
@@ -1009,9 +1016,9 @@ void R_AddToAnimGroup(int groupNum, materialnum_t num, int tics,
     mat->inAnimGroup = true;
 
     // Allocate a new animframe.
-    group->frames =
+    group->frames = static_cast<animframe_t*>(
         Z_Realloc(group->frames, sizeof(animframe_t) * ++group->count,
-                  PU_STATIC);
+                  PU_STATIC));
 
     frame = &group->frames[group->count - 1];
 

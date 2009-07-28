@@ -879,7 +879,7 @@ static boolean drawGeneratorOrigin(ptcgen_t* gen, void* context)
         if(alpha > 0)
         {
             char                buf[80];
-            float               scale = dist / (theWindow->width / 2);
+            float               scale = dist / (DD_WindowWidth() / 2);
 
             glMatrixMode(GL_MODELVIEW);
             glPushMatrix();

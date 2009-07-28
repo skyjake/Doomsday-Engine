@@ -129,9 +129,6 @@ void Sys_Shutdown(void)
 {
     Sys_ShutdownTimer();
 
-    if(gx.Shutdown)
-        gx.Shutdown();
-
     Net_Shutdown();
     Huff_Shutdown();
     // Let's shut down sound first, so Windows' HD-hogging doesn't jam
@@ -146,7 +143,7 @@ void Sys_Shutdown(void)
 
 int Sys_CriticalMessage(char *msg)
 {
-#ifdef WIN32
+#ifdef NEVER_DO_THIS //WIN32
     char        buf[256];
     int         ret;
     HWND        hWnd = Sys_GetWindowHandle(windowIDX);
@@ -192,16 +189,19 @@ void Sys_Sleep(int millisecs)
 
 void Sys_ShowCursor(boolean show)
 {
-#ifdef WIN32
+    // This is the video subsystem's responsibility.
+/*#ifdef WIN32
     ShowCursor(show);
 #endif
-#ifdef UNIX
-    SDL_ShowCursor(show ? SDL_ENABLE : SDL_DISABLE);
-#endif
+#ifdef UNIX*/
+//    SDL_ShowCursor(show ? SDL_ENABLE : SDL_DISABLE);
+//#endif
 }
 
 void Sys_HideMouse(void)
 {
+    // This is the video subsystem's responsibility.
+    /*
 #ifdef WIN32
     if(novideo)
         return;
@@ -210,20 +210,12 @@ void Sys_HideMouse(void)
 #endif
 #ifdef UNIX
     Sys_ShowCursor(false);
-#endif
-}
-
-/**
- * Called when Doomsday should quit (will be deferred until convienent).
- */
-void Sys_Quit(void)
-{
-    appShutdown = true;
+#endif*/
 }
 
 void Sys_MessageBox(const char *msg, boolean iserror)
 {
-#ifdef WIN32
+#ifdef NEVER_DO_THIS //WIN32
     if(!isDedicated)
     {
         char    title[300];
@@ -248,8 +240,7 @@ void Sys_MessageBox(const char *msg, boolean iserror)
     {
         fprintf(stderr, "%s %s\n", iserror ? "**ERROR**" : "---", msg);
     }
-#endif
-#ifdef UNIX
+#else
     fprintf(stderr, "%s %s\n", iserror ? "**ERROR**" : "---", msg);
 #endif
 }

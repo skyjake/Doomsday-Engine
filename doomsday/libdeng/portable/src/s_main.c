@@ -619,7 +619,7 @@ void S_Drawer(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glOrtho(0, DD_WindowWidth(), DD_WindowHeight(), 0, -1, 1);
 
     Sfx_DebugInfo();
 

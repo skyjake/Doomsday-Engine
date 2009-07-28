@@ -175,8 +175,8 @@ void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
     allowEscape = !noescape;
 
     // Init cursor to the center of the screen.
-    uiCX = theWindow->width / 2;
-    uiCY = theWindow->height / 2;
+    uiCX = DD_WindowWidth() / 2;
+    uiCY = DD_WindowHeight() / 2;
     uiMoved = false;
 }
 
@@ -423,12 +423,12 @@ void UI_InitPage(ui_page_t *page, ui_object_t *objects)
  */
 int UI_AvailableWidth(void)
 {
-    return theWindow->width - UI_BORDER * 4;
+    return DD_WindowWidth() - UI_BORDER * 4;
 }
 
 int UI_AvailableHeight(void)
 {
-    return theWindow->height - UI_BORDER * 4;
+    return DD_WindowHeight() - UI_BORDER * 4;
 }
 
 /**
@@ -539,16 +539,16 @@ int UI_Responder(ddevent_t *ev)
             uiCX += ev->axis.pos;
             if(uiCX < 0)
                 uiCX = 0;
-            if(uiCX >= theWindow->width)
-                uiCX = theWindow->width - 1;
+            if(uiCX >= DD_WindowWidth())
+                uiCX = DD_WindowWidth() - 1;
         }
         else if(ev->axis.id == 1) // yaxis.
         {
             uiCY += ev->axis.pos;
             if(uiCY < 0)
                 uiCY = 0;
-            if(uiCY >= theWindow->height)
-                uiCY = theWindow->height - 1;
+            if(uiCY >= DD_WindowHeight())
+                uiCY = DD_WindowHeight() - 1;
         }
     }
 
@@ -610,7 +610,7 @@ void UI_Drawer(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glOrtho(0, DD_WindowWidth(), DD_WindowHeight(), 0, -1, 1);
 
     // Call the active page's drawer.
     uiCurrentPage->drawer(uiCurrentPage);
@@ -620,12 +620,12 @@ void UI_Drawer(void)
     {
         float           width, height, scale;
 
-        if(theWindow->width >= theWindow->height)
-            scale = (theWindow->width / UI_WIDTH) *
-                (theWindow->height / (float) theWindow->width);
+        if(DD_WindowWidth() >= DD_WindowHeight())
+            scale = (DD_WindowWidth() / UI_WIDTH) *
+                (DD_WindowHeight() / (float) DD_WindowWidth());
         else
-            scale = (theWindow->height / UI_HEIGHT) *
-                (theWindow->width / (float) theWindow->height);
+            scale = (DD_WindowHeight() / UI_HEIGHT) *
+                (DD_WindowWidth() / (float) DD_WindowHeight());
 
         width = UICURSORWIDTH * scale * uiCursorWidthMul;
         height = UICURSORHEIGHT * scale * uiCursorHeightMul;
@@ -922,7 +922,7 @@ void UIPage_Drawer(ui_page_t *page)
 
     // Draw background?
     if(page->background)
-        UI_DrawDDBackground(0, 0, theWindow->width, theWindow->height, uiAlpha);
+        UI_DrawDDBackground(0, 0, DD_WindowWidth(), DD_WindowHeight(), uiAlpha);
 
     // Draw title?
     //if(page->header)

@@ -59,7 +59,7 @@
 
 // A helpful macro that changes the origin of the screen
 // coordinate system.
-#define FLIP(y) (theWindow->height - (y+1))
+#define FLIP(y) (DD_WindowHeight() - (y+1))
 
 typedef enum arraytype_e {
     AR_VERTEX,

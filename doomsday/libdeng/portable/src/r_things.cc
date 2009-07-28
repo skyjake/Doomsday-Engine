@@ -41,6 +41,12 @@
 #include <math.h>
 #include <assert.h>
 
+#include <de/App>
+#include <de/Zone>
+
+using namespace de;
+
+extern "C" {
 #include "de_base.h"
 #include "de_console.h"
 #include "de_network.h"
@@ -49,10 +55,13 @@
 #include "de_render.h"
 #include "de_graphics.h"
 #include "de_misc.h"
-
 #include "def_main.h"
-
 #include "m_stack.h"
+
+void getLightingParams(float x, float y, float z, subsector_t* ssec,
+                       float distance, boolean fullBright,
+                       float ambientColor[3], uint* vLightListIdx);
+}
 
 // MACROS ------------------------------------------------------------------
 
@@ -142,7 +151,8 @@ static const float worldLight[3] = {-.400891f, -.200445f, .601336f};
 // Tempory storage, used when reading sprite definitions.
 static int numSpriteRecords;
 static spriterecord_t* spriteRecords;
-static zblockset_t* spriteRecordBlockSet, *spriteRecordFrameBlockSet;
+static Zone::Allocator<spriterecord_t>* recordAllocator;
+static Zone::Allocator<spriterecord_frame_t>* recordFrameAllocator;
 
 // CODE --------------------------------------------------------------------
 
@@ -190,9 +200,9 @@ static uint newVLightList(boolean sortByDist)
         if(!newNum)
             newNum = 2;
 
-        vLightLinkLists =
+        vLightLinkLists = static_cast<vlightlist_t*>(
             Z_Realloc(vLightLinkLists, newNum * sizeof(vlightlist_t),
-                      PU_MAP);
+                      PU_MAP));
         numVLightLinkLists = newNum;
     }
 
@@ -210,7 +220,7 @@ static vlightnode_t* newVLightNode(void)
     // Have we run out of nodes?
     if(vLightCursor == NULL)
     {
-        node = Z_Malloc(sizeof(vlightnode_t), PU_STATIC, NULL);
+        node = static_cast<vlightnode_t*>(Z_Malloc(sizeof(vlightnode_t), PU_STATIC, NULL));
 
         // Link the new node to the list.
         node->nextUsed = vLightFirst;
@@ -343,10 +353,8 @@ void R_PreInitSprites(void)
      */
     numSpriteRecords = 0;
     spriteRecords = NULL;
-    spriteRecordBlockSet = Z_BlockCreate(sizeof(spriterecord_t), 64,
-                                         PU_STATIC),
-    spriteRecordFrameBlockSet = Z_BlockCreate(sizeof(spriterecord_frame_t),
-                                              256, PU_STATIC);
+    recordAllocator = new Zone::Allocator<spriterecord_t>(App::memory(), 64);
+    recordFrameAllocator = new Zone::Allocator<spriterecord_frame_t>(App::memory(), 256);
     for(i = 0; i < numLumps; ++i)
     {
         const char*         name = W_LumpName(i);
@@ -401,7 +409,7 @@ void R_PreInitSprites(void)
 
         if(!rec)
         {   // An entirely new sprite.
-            rec = Z_BlockNewElement(spriteRecordBlockSet);
+            rec = recordAllocator->allocate();
             strncpy(rec->name, name, 4);
             rec->name[4] = '\0';
             rec->numFrames = 0;
@@ -427,7 +435,7 @@ void R_PreInitSprites(void)
 
         if(!sprFrame)
         {   // A new frame.
-            sprFrame = Z_BlockNewElement(spriteRecordFrameBlockSet);
+            sprFrame = recordFrameAllocator->allocate();
             link = true;
         }
 
@@ -468,8 +476,10 @@ void R_PreInitSprites(void)
         spritetex_t*        storage;
         spriterecord_t*     rec = spriteRecords;
 
-        spriteTextures = Z_Malloc(sizeof(spritetex_t*) * numSpriteTextures, PU_SPRITE, 0);
-        storage = Z_Malloc(sizeof(spritetex_t) * numSpriteTextures, PU_SPRITE, 0);
+        spriteTextures = static_cast<spritetex_t**>(
+            Z_Malloc(sizeof(spritetex_t*) * numSpriteTextures, PU_SPRITE, 0));
+        storage = static_cast<spritetex_t*>(
+            Z_Malloc(sizeof(spritetex_t) * numSpriteTextures, PU_SPRITE, 0));
 
         do
         {
@@ -520,7 +530,7 @@ static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
         spriteframe_t       sprTemp[MAX_FRAMES];
         int                 maxFrame;
 
-        sprites = Z_Malloc(numSprites * sizeof(*sprites), PU_STATIC, NULL);
+        sprites = static_cast<spritedef_t*>(Z_Malloc(numSprites * sizeof(*sprites), PU_STATIC, NULL));
 
         for(n = 0; n < num; ++n)
         {
@@ -601,8 +611,8 @@ static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
             strncpy(sprDef->name, rec->name, 4);
             sprDef->name[4] = '\0';
             sprDef->numFrames = maxFrame;
-            sprDef->spriteFrames =
-                Z_Malloc(maxFrame * sizeof(spriteframe_t), PU_SPRITE, NULL);
+            sprDef->spriteFrames = static_cast<spriteframe_t*>(
+                Z_Malloc(maxFrame * sizeof(spriteframe_t), PU_SPRITE, NULL));
             memcpy(sprDef->spriteFrames, sprTemp,
                    maxFrame * sizeof(spriteframe_t));
         }
@@ -642,11 +652,10 @@ void R_InitSprites(void)
      */
     max = MAX_OF(numSpriteRecords, countSprNames.num);
     n = max-1;
-    list = M_Calloc(sizeof(spriterecord_t*) * max);
+    list = static_cast<spriterecord_t**>(M_Calloc(sizeof(spriterecord_t*) * max));
     rec = spriteRecords;
-    do
-    {
-        int                 idx = Def_GetSpriteNum(rec->name);
+    do {
+        int idx = Def_GetSpriteNum(rec->name);
         list[idx == -1? n-- : idx] = rec;
     } while((rec = rec->next));
     /// \kludge end
@@ -657,10 +666,10 @@ void R_InitSprites(void)
     M_Free(list);
 
     // We are now done with the sprite records.
-    Z_BlockDestroy(spriteRecordBlockSet);
-    spriteRecordBlockSet = NULL;
-    Z_BlockDestroy(spriteRecordFrameBlockSet);
-    spriteRecordFrameBlockSet = NULL;
+    delete recordAllocator;
+    recordAllocator = NULL;
+    delete recordFrameAllocator;
+    recordFrameAllocator = NULL;
     numSpriteRecords = 0;
 
     VERBOSE(Con_Message("R_InitSprites: Done in %.2f seconds.\n",
@@ -1017,9 +1026,10 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->vLightListIdx = vLightListIdx;
 }
 
-void setupModelParamsForVisSprite(rendmodelparams_t *params,
+extern "C" void setupModelParamsForVisSprite(rendmodelparams_t *params,
                                   float x, float y, float z, float distance,
-                                  float visOffX, float visOffY, float visOffZ, float gzt, float yaw, float yawAngleOffset, float pitch, float pitchAngleOffset,
+                                  float visOffX, float visOffY, float visOffZ, float gzt, float yaw, 
+                                  float yawAngleOffset, float pitch, float pitchAngleOffset,
                                   struct modeldef_s* mf, struct modeldef_s* nextMF, float inter,
                                   float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
                                   uint vLightListIdx,

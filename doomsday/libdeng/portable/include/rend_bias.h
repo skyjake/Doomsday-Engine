@@ -79,6 +79,7 @@ struct rvertex_s;
 struct rcolor_s;
 
 extern int      useBias; // Bias lighting enabled.
+extern int      numSources;
 extern unsigned int currentTimeSB;
 
 void            SB_Register(void);

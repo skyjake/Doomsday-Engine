@@ -34,9 +34,19 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <de/App>
+#include <de/Zone>
+
+using namespace de;
+
+#include "dd_export.h"
+BEGIN_EXTERN_C
+
 #include "de_base.h"
 #include "de_bsp.h"
 #include "de_misc.h"
+
+END_EXTERN_C
 
 #include <stdlib.h>
 #include <ctype.h>
@@ -59,27 +69,28 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static zblockset_t *hEdgeBlockSet;
-static boolean hEdgeAllocatorInited = false;
+static Zone::Allocator<hedge_t>* allocator;
 
 // CODE --------------------------------------------------------------------
 
 static __inline hedge_t *allocHEdge(void)
 {
-    if(hEdgeAllocatorInited)
-    {   // Use the block allocator.
-        hedge_t            *hEdge = Z_BlockNewElement(hEdgeBlockSet);
+    if(allocator)
+    {   
+        // Use the block allocator.
+        hedge_t* hEdge = allocator->allocate();
         memset(hEdge, 0, sizeof(hedge_t));
         return hEdge;
     }
 
-    return M_Calloc(sizeof(hedge_t));
+    return (hedge_t*) M_Calloc(sizeof(hedge_t));
 }
 
 static __inline void freeHEdge(hedge_t *hEdge)
 {
-    if(hEdgeAllocatorInited)
-    {   // Ignore, it'll be free'd along with the block allocator.
+    if(allocator)
+    {   
+        // Ignore, it'll be free'd along with the block allocator.
         return;
     }
 
@@ -88,7 +99,7 @@ static __inline void freeHEdge(hedge_t *hEdge)
 
 static __inline edgetip_t *allocEdgeTip(void)
 {
-    return M_Calloc(sizeof(edgetip_t));
+    return (edgetip_t*) M_Calloc(sizeof(edgetip_t));
 }
 
 static __inline void freeEdgeTip(edgetip_t *tip)
@@ -101,11 +112,10 @@ static __inline void freeEdgeTip(edgetip_t *tip)
  */
 void BSP_InitHEdgeAllocator(void)
 {
-    if(hEdgeAllocatorInited)
+    if(allocator)
         return; // Already been here.
 
-    hEdgeBlockSet = Z_BlockCreate(sizeof(hedge_t), 512, PU_STATIC);
-    hEdgeAllocatorInited = true;
+    allocator = App::memory().newAllocator<hedge_t>(512);
 }
 
 /**
@@ -113,12 +123,10 @@ void BSP_InitHEdgeAllocator(void)
  */
 void BSP_ShutdownHEdgeAllocator(void)
 {
-    if(hEdgeAllocatorInited)
+    if(allocator)
     {
-        Z_BlockDestroy(hEdgeBlockSet);
-        hEdgeBlockSet = NULL;
-
-        hEdgeAllocatorInited = false;
+        App::memory().deleteBatch(allocator);
+        allocator = NULL;
     }
 }
 

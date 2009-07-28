@@ -251,6 +251,7 @@ void P_ThinkerRemove(thinker_t* th)
         // Flag the ID as free.
         P_SetMobjID(th->id, false);
 
+#if 0
         // If the state of the mobj is the NULL state, this is a
         // predictable mobj removal (result of animation reaching its
         // end) and shouldn't be included in netGame deltas.
@@ -261,6 +262,7 @@ void P_ThinkerRemove(thinker_t* th)
                 Sv_MobjRemoved(th->id);
             }
         }
+#endif
     }
 
     th->function = (think_t) - 1;

@@ -54,4 +54,13 @@ void            DD_GameUpdate(int flags);
 void            DD_AutoLoad(void);
 void            DD_CheckTimeDemo(void);
 const char*     value_Str(int val);
+
+// Wrappers.
+int             DD_WindowWidth(void);
+int             DD_WindowHeight(void);
+int             DD_WindowBPP(void);
+boolean         GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void *buffer);
+boolean         Sys_SetWindowTitle(uint idx, const char *title);
+boolean         Sys_GetWindowFullscreen(uint idx, boolean *fullscreen);
+
 #endif

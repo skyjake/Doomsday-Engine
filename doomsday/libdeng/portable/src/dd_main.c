@@ -128,6 +128,8 @@ filename_t bindingsConfigFileName;
 filename_t defsFileName, topDefsFileName;
 filename_t ddBasePath = "";     // Doomsday root directory is at...?
 
+int isDeng2Client = false;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static char *wadFiles[MAXWADFILES];
@@ -329,10 +331,10 @@ void DD_AutoLoad(void)
  */
 int DD_Main(void)
 {
+/*
     int             winWidth, winHeight, winBPP, winX, winY;
     uint            winFlags = DDWF_VISIBLE | DDWF_CENTER;
     boolean         noCenter = false;
-    int             exitCode;
 
     // By default, use the resolution defined in (default).cfg.
     winX = 0;
@@ -374,14 +376,14 @@ int DD_Main(void)
 
     if(ArgExists("-nofullscreen") || ArgExists("-window"))
         winFlags &= ~DDWF_FULLSCREEN;
-
+*/
 
     if(!isDedicated)
     {
-        if(!Sys_SetWindow(windowIDX, winX, winY, winWidth, winHeight, winBPP,
+/*        if(!Sys_SetWindow(windowIDX, winX, winY, winWidth, winHeight, winBPP,
                       winFlags, 0))
             return -1;
-
+*/
         if(!GL_EarlyInit())
         {
             Sys_CriticalMessage("GL_EarlyInit() failed.");
@@ -433,23 +435,17 @@ int DD_Main(void)
     // Final preparations for using the console UI.
     Con_InitUI();
 
-    // Start the game loop.
-    exitCode = DD_GameLoop();
-
-    // Time to shutdown.
-
-    if(netGame)
-    {   // Quit netGame if one is in progress.
-        Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect",
-                    true, false);
+    // Limit the frame rate to 35 when running in dedicated mode.
+    if(isDedicated)
+    {
+        maxFrameRate = 35;
     }
 
-    Demo_StopPlayback();
-    Con_SaveDefaults();
-    Sys_Shutdown();
-    B_Shutdown();
+    // Start the game loop.
+    //exitCode = DD_GameLoop();
 
-    return exitCode;
+    //return exitCode;
+    return 0;
 }
 
 static int DD_StartupWorker(void *parm)
@@ -498,8 +494,7 @@ static int DD_StartupWorker(void *parm)
 
     DAM_Init();
 
-    if(gx.PreInit)
-        gx.PreInit();
+    game_Call("G_CommonPreInit");
 
     Con_SetProgress(40);
 
@@ -891,7 +886,8 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&gameDrawHUD, 0},
     {&upscaleAndSharpenPatches, &upscaleAndSharpenPatches},
     {&symbolicEchoMode, &symbolicEchoMode},
-    {&GL_state.maxTexUnits, 0}
+    {&GL_state.maxTexUnits, 0},
+    {&isDeng2Client, &isDeng2Client}
 };
 /* *INDENT-ON* */
 
@@ -918,10 +914,10 @@ int DD_GetInteger(int ddvalue)
             return -1;
         }
         case DD_WINDOW_WIDTH:
-            return theWindow? theWindow->width : 640;
+            return DD_WindowWidth();
 
         case DD_WINDOW_HEIGHT:
-            return theWindow? theWindow->height : 480;
+            return DD_WindowHeight();
 
         default:
             break;
@@ -1096,10 +1092,11 @@ void* DD_GetVariable(int ddvalue)
 
         case DD_TORCH_ADDITIVE:
             return &torchAdditive;
-#ifdef WIN32
+
+/*#ifdef WIN32
         case DD_WINDOW_HANDLE:
             return Sys_GetWindowHandle(windowIDX);
-#endif
+#endif*/
 
         // We have to separately calculate the 35 Hz ticks.
         case DD_GAMETIC:

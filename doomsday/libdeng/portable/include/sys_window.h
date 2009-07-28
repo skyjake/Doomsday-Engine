@@ -29,6 +29,7 @@
 #ifndef __DOOMSDAY_SYS_WINDOW_H__
 #define __DOOMSDAY_SYS_WINDOW_H__
 
+#if 0
 #include "de_base.h"
 
 #if defined(UNIX)
@@ -152,6 +153,8 @@ void            Sys_SetConWindowCmdLine(uint idx, const char *text,
  */
 #if defined(WIN32)
 HWND            Sys_GetWindowHandle(uint idx);
+#endif
+
 #endif
 
 #endif

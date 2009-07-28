@@ -486,13 +486,13 @@ void MPIUpdateServerList(void)
 
             // Is this suitable?
             if(info.version != DOOMSDAY_VERSION ||
-               stricmp(info.gameMode, gx.GetVariable(DD_GAME_MODE)) || !info.canJoin)
+               stricmp(info.gameMode, game_GetString(DD_GAME_MODE)) || !info.canJoin)
             {
                 Con_Message("Server %s filtered out:\n", info.name);
                 Con_Message("  remote = %i, local = %i\n", info.version,
                     DOOMSDAY_VERSION);
                 Con_Message("  remote = %s, local = %s\n",
-                            info.gameMode, (char *) gx.GetVariable(DD_GAME_MODE));
+                            info.gameMode, game_GetString(DD_GAME_MODE));
                 Con_Message("  can join = %i\n", info.canJoin);
                 continue;
             }

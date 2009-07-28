@@ -157,7 +157,7 @@ const char* P_GenerateUniqueMapID(const char* mapID)
 
     snprintf(uid, 255, "%s|%s|%s|%s", mapID,
             base, (W_IsFromIWAD(lump) ? "iwad" : "pwad"),
-            (char *) gx.GetVariable(DD_GAME_MODE));
+            game_GetString(DD_GAME_MODE));
 
     strlwr(uid);
     return uid;

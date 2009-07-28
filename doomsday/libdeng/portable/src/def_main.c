@@ -111,7 +111,7 @@ xgclass_t* xgClassLinks;
  */
 static int GetXGClasses(void)
 {
-    xgClassLinks = (xgclass_t *) gx.GetVariable(DD_XGFUNC_LINK);
+    xgClassLinks = (xgclass_t *) game_GetAddress(DD_XGFUNC_LINK);
     if(!xgClassLinks)
     {
         memset(&nullXgClassLinks, 0, sizeof(nullXgClassLinks));
@@ -356,7 +356,7 @@ acfnptr_t Def_GetActionPtr(const char* name)
     // Action links are provided by the Game, who owns the actual
     // action functions.
     actionlink_t*       link =
-        (actionlink_t *) gx.GetVariable(DD_ACTION_LINK);
+        (actionlink_t *) game_GetAddress(DD_ACTION_LINK);
 
     if(!name || !name[0])
         return 0;

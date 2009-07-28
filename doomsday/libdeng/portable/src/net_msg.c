@@ -59,6 +59,7 @@
 
 // CODE --------------------------------------------------------------------
 
+#if 0
 void Msg_Begin(int type)
 {
     netBuffer.cursor = netBuffer.msg.data;
@@ -224,3 +225,4 @@ boolean Msg_End(void)
 
     return false;
 }
+#endif

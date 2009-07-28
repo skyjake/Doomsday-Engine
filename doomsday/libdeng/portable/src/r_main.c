@@ -198,8 +198,8 @@ int R_GetViewPort(int player, int* x, int* y, int* w, int* h)
  */
 void R_ViewPortPlacement(viewport_t* port, int x, int y)
 {
-    float               w = theWindow->width / (float) gridCols;
-    float               h = theWindow->height / (float) gridRows;
+    float               w = DD_WindowWidth() / (float) gridCols;
+    float               h = DD_WindowHeight() / (float) gridRows;
 
     port->x = x * w;
     port->y = y * h;
@@ -548,6 +548,10 @@ END_PROF( PROF_MOBJ_INIT_ADD );
  */
 void R_BeginWorldFrame(void)
 {
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
+
     R_ClearSectorFlags();
 
     R_InterpolateWatchedPlanes(watchedPlaneList, resetNextViewer);
@@ -581,6 +585,10 @@ void R_BeginWorldFrame(void)
         // Link objs to all contacted surfaces.
         R_LinkObjs();
     }
+
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
 }
 
 /**
@@ -588,6 +596,10 @@ void R_BeginWorldFrame(void)
  */
 void R_EndWorldFrame(void)
 {
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
+
     if(!freezeRLs)
     {
         // Wrap up with Source, Bias lights.
@@ -769,12 +781,12 @@ void R_UseViewPort(viewport_t* port)
 {
     if(!port)
     {
-        glViewport(0, FLIP(0 + theWindow->height - 1), theWindow->width, theWindow->height);
+        //glViewport(0, FLIP(0 + DD_WindowHeight() - 1), DD_WindowWidth(), DD_WindowHeight());
     }
     else
     {
         currentPort = port;
-        glViewport(port->x, FLIP(port->y + port->height - 1), port->width, port->height);
+        //glViewport(port->x, FLIP(port->y + port->height - 1), port->width, port->height);
     }
 }
 

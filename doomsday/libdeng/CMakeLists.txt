@@ -32,8 +32,9 @@ FILE ( GLOB SOURCES
 
 # Platform-specific configuration.
 IF ( WIN32 )
-    ADD_DEFINITIONS ( -DWIN32_GAMMA )
-
+    # Tell Windows to export.
+    ADD_DEFINITIONS ( -DDENG_EXPORTS )
+    
     INCLUDE_DIRECTORIES ( win32/include
         $ENV{PLATFORMSDKDIR}/include 
         $ENV{DXDIR}/include )
@@ -45,7 +46,7 @@ ENDIF ( WIN32 )
 IF ( APPLE )
     INCLUDE_DIRECTORIES ( ${QUICKTIME_INCLUDE_DIR} )
     
-    FILE ( GLOB MAC_SOURCES mac/src/*.m mac/src/*.c mac/include/*.h )
+    FILE ( GLOB MAC_SOURCES mac/src/*.c )
     SET ( SOURCES ${SOURCES} ${MAC_SOURCES} )
 ENDIF ( APPLE )
 

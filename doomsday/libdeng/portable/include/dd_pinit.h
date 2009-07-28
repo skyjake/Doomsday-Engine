@@ -37,7 +37,7 @@
 
 void            DD_ShutdownAll(void);
 int             DD_CheckArg(char* tag, const char** value);
-void            DD_ErrorBox(boolean error, char* format, ...) PRINTF_F(2,3);
+void            DD_ErrorBox(boolean error, const char* format, ...) PRINTF_F(2,3);
 void            DD_ComposeMainWindowTitle(char* title);
 boolean         DD_EarlyInit(void);
 void            DD_InitAPI(void);

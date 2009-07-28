@@ -1012,7 +1012,7 @@ static boolean rendBlockSubsector(subsector_t* ssec, void* data)
         float               length, dx, dy;
         float               normal[2], unit[2];
         float               scale = MAX_OF(bmapDebugSize, 1);
-        float               width = (theWindow->width / 16) / scale;
+        float               width = (DD_WindowWidth() / 16) / scale;
 
         dx = end[VX] - start[VX];
         dy = end[VY] - start[VY];
@@ -1189,8 +1189,8 @@ static void drawInfoBox2(float minX, float minY, float maxX, float maxY,
     int                 x, y;
     char                buf[80];
 
-    x = theWindow->width - 10 - w;
-    y = theWindow->height - 10 - h;
+    x = DD_WindowWidth() - 10 - w;
+    y = DD_WindowHeight() - 10 - h;
 
     UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM),
                   UI_Color(UIC_BG_LIGHT), .5f, .5f);
@@ -1268,7 +1268,7 @@ static void drawBlockInfoBox(uint vBlock[2])
         }
     }
 
-    drawInfoBox(theWindow->width / 2, 30,
+    drawInfoBox(DD_WindowWidth() / 2, 30,
                 blockIdx, vBlock[VX], vBlock[VY], lineCount, moCount, poCount);
 }
 
@@ -1285,7 +1285,7 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
     float               scale, radius;
     vec2_t              start, end, box[2];
 
-    scale = bmapDebugSize / MAX_OF(theWindow->height / 100, 1);
+    scale = bmapDebugSize / MAX_OF(DD_WindowHeight() / 100, 1);
 
     if(followMobj)
     {   // Determine the mobj's block.
@@ -1308,9 +1308,9 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glOrtho(0, DD_WindowWidth(), DD_WindowHeight(), 0, -1, 1);
 
-    glTranslatef((theWindow->width / 2), (theWindow->height / 2), 0);
+    glTranslatef((DD_WindowWidth() / 2), (DD_WindowHeight() / 2), 0);
     glScalef(scale, -scale, 1);
 
     if(followMobj)
@@ -1578,7 +1578,7 @@ void P_BlockmapDebug(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glOrtho(0, DD_WindowWidth(), DD_WindowHeight(), 0, -1, 1);
 
     if(followMobj && bmapShowDebug != 3)
     {

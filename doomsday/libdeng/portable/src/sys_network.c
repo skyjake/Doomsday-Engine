@@ -172,6 +172,7 @@ void N_Register(void)
  */
 static void N_ClearQueue(sendqueue_t *q)
 {
+#if 0
     sqpack_t *pack;
 
     while((pack = q->first) != NULL)
@@ -180,6 +181,7 @@ static void N_ClearQueue(sendqueue_t *q)
         SDLNet_FreePacket(pack->packet);
         M_Free(pack);
     }
+#endif
 }
 
 /**
@@ -189,6 +191,7 @@ static void N_ClearQueue(sendqueue_t *q)
  */
 static void N_UDPSend(sqpack_t *pack)
 {
+#if 0
     if(!pack->node)
         return;
 
@@ -212,6 +215,7 @@ static void N_UDPSend(sqpack_t *pack)
     pack->node->numWaiting--;
     pack->node->bytesWaiting -= pack->packet->len;
     Sem_V(pack->node->mutex);
+#endif
 }
 
 #ifdef TRANSMIT_RANDOMIZER
@@ -222,6 +226,7 @@ static void N_UDPSend(sqpack_t *pack)
  */
 static int C_DECL N_UDPTransmitter(void *parm)
 {
+#if 0
     sendqueue_t *q = parm;
     sqpack_t *pack;
     uint    nowTime = 0;
@@ -262,6 +267,7 @@ static int C_DECL N_UDPTransmitter(void *parm)
 
     N_ClearQueue(q);
     return 0;
+#endif
 }
 
 #else                           /* !TRANSMIT_RANDOMIZER */
@@ -275,6 +281,7 @@ static int C_DECL N_UDPTransmitter(void *parm)
  */
 static int C_DECL N_UDPTransmitter(void *parm)
 {
+#if 0
     sendqueue_t *q = parm;
     sqpack_t *pack;
 
@@ -315,6 +322,7 @@ static int C_DECL N_UDPTransmitter(void *parm)
     // Free any packets still waiting in the queue.
     N_ClearQueue(q);
     return 0;
+#endif
 }
 #endif
 
@@ -326,6 +334,7 @@ static int C_DECL N_UDPTransmitter(void *parm)
  */
 static int C_DECL N_UDPReceiver(void *parm)
 {
+#if 0
     SDLNet_SocketSet set;
     UDPpacket *packet = NULL;
 
@@ -397,6 +406,7 @@ static int C_DECL N_UDPReceiver(void *parm)
 
     SDLNet_FreeSocketSet(set);
     return 0;
+#endif
 }
 
 /**
@@ -404,9 +414,11 @@ static int C_DECL N_UDPReceiver(void *parm)
  */
 void N_ReturnBuffer(void *handle)
 {
+#if 0
     if(!handle)
         return;
     SDLNet_FreePacket(handle);
+#endif
 }
 
 /**
@@ -419,6 +431,7 @@ void N_ReturnBuffer(void *handle)
  */
 boolean N_ReceiveReliably(nodeid_t from)
 {
+#if 0
     ushort  size = 0;
     TCPsocket sock = netNodes[from].sock;
     UDPpacket *packet = NULL;
@@ -476,6 +489,7 @@ boolean N_ReceiveReliably(nodeid_t from)
         N_PostMessage(msg);
     }
     return true;
+#endif
 }
 
 /**
@@ -484,6 +498,7 @@ boolean N_ReceiveReliably(nodeid_t from)
  */
 void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
 {
+#if 0
     int             result;
     netnode_t      *node = &netNodes[destination];
 
@@ -528,6 +543,7 @@ void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
     Con_Message("N_SendDataBufferReliably: Sent data, result=%i\n", result);
     if(result != size) perror("System error");
 #endif*/
+#endif
 }
 
 /**
@@ -536,6 +552,7 @@ void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
  */
 void N_SendDataBuffer(void *data, size_t size, nodeid_t destination)
 {
+#if 0
     sqpack_t       *pack;
     UDPpacket      *p;
     netnode_t      *node;
@@ -633,6 +650,7 @@ void N_SendDataBuffer(void *data, size_t size, nodeid_t destination)
 
     // Signal the transmitter to start working.
     Sem_V(sendQ.waiting);
+#endif
 }
 
 /**
@@ -641,6 +659,7 @@ void N_SendDataBuffer(void *data, size_t size, nodeid_t destination)
  */
 uint N_GetSendQueueCount(int player)
 {
+#if 0
     netnode_t *node = netNodes + player;
     uint    count;
 
@@ -648,6 +667,8 @@ uint N_GetSendQueueCount(int player)
     count = node->numWaiting;
     Sem_V(node->mutex);
     return count;
+#endif
+    return 0;
 }
 
 /**
@@ -656,6 +677,7 @@ uint N_GetSendQueueCount(int player)
  */
 uint N_GetSendQueueSize(int player)
 {
+#if 0
     netnode_t      *node = netNodes + player;
     uint            bytes;
 
@@ -663,6 +685,8 @@ uint N_GetSendQueueSize(int player)
     bytes = node->bytesWaiting;
     Sem_V(node->mutex);
     return bytes;
+#endif
+    return 0;
 }
 
 /**
@@ -670,6 +694,7 @@ uint N_GetSendQueueSize(int player)
  */
 void N_FlushOutgoing(void)
 {
+#if 0
     int     i;
     boolean allClear = false;
 
@@ -683,6 +708,7 @@ void N_FlushOutgoing(void)
 
         Sys_Sleep(5);
     }
+#endif
 }
 
 /**
@@ -690,6 +716,7 @@ void N_FlushOutgoing(void)
  */
 static void N_StartTransmitter(sendqueue_t *q)
 {
+#if 0
     q->online = true;
     q->waiting = Sem_Create(0);
     q->mutex = Sem_Create(1);
@@ -697,6 +724,7 @@ static void N_StartTransmitter(sendqueue_t *q)
     q->last = NULL;
 
     hTransmitter = Sys_StartThread(N_UDPTransmitter, q);
+#endif
 }
 
 /**
@@ -704,6 +732,7 @@ static void N_StartTransmitter(sendqueue_t *q)
  */
 static void N_StopTransmitter(sendqueue_t *q)
 {
+#if 0
     uint            i;
 
     if(!hTransmitter)
@@ -724,6 +753,7 @@ static void N_StopTransmitter(sendqueue_t *q)
     // Destroy the semaphores.
     Sem_Destroy(q->waiting);
     Sem_Destroy(q->mutex);
+#endif
 }
 
 /**
@@ -731,9 +761,11 @@ static void N_StopTransmitter(sendqueue_t *q)
  */
 static void N_StartReceiver(void)
 {
+#if 0
     stopReceiver = false;
     mutexInSock = Sys_CreateMutex("UDPIncomingMutex");
     hReceiver = Sys_StartThread(N_UDPReceiver, NULL);
+#endif
 }
 
 /**
@@ -741,6 +773,7 @@ static void N_StartReceiver(void)
  */
 static void N_StopReceiver(void)
 {
+#if 0
     // Wait for the receiver thread the stop.
     stopReceiver = true;
     Sys_WaitThread(hReceiver);
@@ -752,6 +785,7 @@ static void N_StopReceiver(void)
 
     Sys_DestroyMutex(mutexInSock);
     mutexInSock = 0;
+#endif
 }
 
 /**
@@ -760,6 +794,7 @@ static void N_StopReceiver(void)
  */
 void N_BindIncoming(IPaddress *addr, nodeid_t id)
 {
+#if 0
     if(!inSock)
         return;
 
@@ -773,6 +808,7 @@ void N_BindIncoming(IPaddress *addr, nodeid_t id)
         SDLNet_UDP_Unbind(inSock, id);
     }
     Sys_Unlock(mutexInSock);
+#endif
 }
 
 /**
@@ -781,6 +817,7 @@ void N_BindIncoming(IPaddress *addr, nodeid_t id)
  */
 void N_SystemInit(void)
 {
+#if 0
     // The MTU can be customized.
     if(ArgCheckWith("-mtu", 1))
     {
@@ -792,6 +829,7 @@ void N_SystemInit(void)
     // Allocate the transmission buffer.
     transmissionBufferSize = DEFAULT_TRANSMISSION_SIZE;
     transmissionBuffer = M_Malloc(transmissionBufferSize);
+#endif
 }
 
 /**
@@ -800,11 +838,13 @@ void N_SystemInit(void)
  */
 void N_SystemShutdown(void)
 {
+#if 0
     M_Free(transmissionBuffer);
     transmissionBuffer = NULL;
     transmissionBufferSize = 0;
 
     N_ShutdownService();
+#endif
 }
 
 /**
@@ -825,6 +865,7 @@ void N_IPToString(char *buf, IPaddress *ip)
  */
 Uint16 N_OpenUDPSocket(UDPsocket *sock, Uint16 preferPort, Uint16 defaultPort)
 {
+#if 0
     Uint16      port = (!preferPort ? defaultPort : preferPort);
 
     *sock = NULL;
@@ -834,6 +875,7 @@ Uint16 N_OpenUDPSocket(UDPsocket *sock, Uint16 preferPort, Uint16 defaultPort)
 #ifdef _DEBUG
     Con_Message("N_OpenUDPSocket: Failed to open UDP socket %i.\n", port);
     Con_Message("  (%s)\n", SDLNet_GetError());
+#endif
 #endif
     return 0; // Failure!
 }
@@ -845,6 +887,7 @@ Uint16 N_OpenUDPSocket(UDPsocket *sock, Uint16 preferPort, Uint16 defaultPort)
  */
 boolean N_InitService(boolean inServerMode)
 {
+#if 0
     IPaddress ip;
     Uint16  port;
 
@@ -924,6 +967,7 @@ boolean N_InitService(boolean inServerMode)
     N_StartTransmitter(&sendQ);
 
     return true;
+#endif
 }
 
 /**
@@ -931,6 +975,7 @@ boolean N_InitService(boolean inServerMode)
  */
 void N_ShutdownService(void)
 {
+#if 0
     uint        i;
 
     if(!N_IsAvailable())
@@ -974,6 +1019,7 @@ void N_ShutdownService(void)
 
     netIsActive = false;
     netServerMode = false;
+#endif
 }
 
 /**
@@ -982,7 +1028,7 @@ void N_ShutdownService(void)
  */
 boolean N_IsAvailable(void)
 {
-    return netIsActive;
+    return true;
 }
 
 /**
@@ -990,20 +1036,24 @@ boolean N_IsAvailable(void)
  */
 boolean N_UsingInternet(void)
 {
-    return netIsActive;
+    return true;
 }
 
 boolean N_GetHostInfo(int index, struct serverinfo_s *info)
 {
+#if 0
     if(!located.valid || index != 0)
         return false;
     memcpy(info, &located.info, sizeof(*info));
     return true;
+#endif
+    return false;
 }
 
 int N_GetHostCount(void)
 {
-    return located.valid ? 1 : 0;
+    //return located.valid ? 1 : 0;
+    return 0;
 }
 
 const char *N_GetProtocolName(void)
@@ -1016,12 +1066,14 @@ const char *N_GetProtocolName(void)
  */
 boolean N_GetNodeName(nodeid_t id, char *name)
 {
+#if 0
     if(!netNodes[id].sock)
     {
         strcpy(name, "-unknown-");
         return false;
     }
     strcpy(name, netNodes[id].name);
+#endif
     return true;
 }
 
@@ -1031,6 +1083,7 @@ boolean N_GetNodeName(nodeid_t id, char *name)
  */
 void N_TerminateNode(nodeid_t id)
 {
+#if 0
     netnode_t *node = &netNodes[id];
     netevent_t netEvent;
     sqpack_t *i;
@@ -1070,6 +1123,7 @@ void N_TerminateNode(nodeid_t id)
     // Clear the node's data.
     Sem_Destroy(node->mutex);
     memset(node, 0, sizeof(*node));
+#endif
 }
 
 /**
@@ -1078,6 +1132,7 @@ void N_TerminateNode(nodeid_t id)
  */
 static boolean N_RegisterNewSocket(TCPsocket sock)
 {
+#if 0
     uint        i;
     netnode_t  *node;
     boolean     found;
@@ -1100,6 +1155,7 @@ static boolean N_RegisterNewSocket(TCPsocket sock)
         }
 
     return found;
+#endif
 }
 
 /**
@@ -1108,6 +1164,7 @@ static boolean N_RegisterNewSocket(TCPsocket sock)
  */
 static boolean N_JoinNode(nodeid_t id, Uint16 port, const char *name)
 {
+#if 0
     netnode_t *node;
     netevent_t netEvent;
     IPaddress *ip;
@@ -1155,6 +1212,7 @@ static boolean N_JoinNode(nodeid_t id, Uint16 port, const char *name)
     netEvent.type = NE_CLIENT_ENTRY;
     netEvent.id = id;
     N_NEPost(&netEvent);
+#endif
 
     return true;
 }
@@ -1172,6 +1230,7 @@ typedef struct socket_timeout_s {
  */
 static int C_DECL N_SocketTimeOut(void *parm)
 {
+#if 0
     volatile socket_timeout_t* p = parm;
     timespan_t elapsed = 0;
 
@@ -1187,6 +1246,7 @@ static int C_DECL N_SocketTimeOut(void *parm)
         SDLNet_TCP_Close(p->sock);
     }
     return 0;
+#endif
 }
 #endif
 
@@ -1195,6 +1255,7 @@ static int C_DECL N_SocketTimeOut(void *parm)
  */
 boolean N_LookForHosts(const char *address, int port)
 {
+#if 0
     TCPsocket   sock;
     char        buf[256];
     ddstring_t *response;
@@ -1313,6 +1374,7 @@ boolean N_LookForHosts(const char *address, int port)
                     address, port);
         return false;
     }
+#endif
 }
 
 /**
@@ -1321,6 +1383,7 @@ boolean N_LookForHosts(const char *address, int port)
  */
 boolean N_Connect(int index)
 {
+#if 0
     netnode_t *svNode;
     foundhost_t *host;
     char    buf[128], *pName;
@@ -1396,6 +1459,7 @@ boolean N_Connect(int index)
     // handshake.
     Cl_SendHello();
     return true;
+#endif
 }
 
 /**
@@ -1403,6 +1467,7 @@ boolean N_Connect(int index)
  */
 boolean N_Disconnect(void)
 {
+#if 0
     netnode_t *svNode;
 
     if(!N_IsAvailable())
@@ -1431,11 +1496,13 @@ boolean N_Disconnect(void)
     SDLNet_FreeSocketSet(sockSet);
     sockSet = NULL;
 
+#endif
     return true;
 }
 
 boolean N_ServerOpen(void)
 {
+#if 0
     if(!N_IsAvailable())
         return false;
 
@@ -1466,11 +1533,13 @@ boolean N_ServerOpen(void)
         // Let the master server know that we are running a public server.
         N_MasterAnnounceServer(true);
     }
+#endif
     return true;
 }
 
 boolean N_ServerClose(void)
 {
+#if 0
     if(!N_IsAvailable())
         return false;
 
@@ -1489,6 +1558,7 @@ boolean N_ServerClose(void)
 
     if(gx.NetServerStop)
         gx.NetServerStop(false);
+#endif
     return true;
 }
 
@@ -1502,6 +1572,7 @@ boolean N_ServerClose(void)
  */
 static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
 {
+#if 0
     char    command[80], *ch, buf[256];
     const char *in;
     TCPsocket sock = netNodes[node].sock;
@@ -1582,6 +1653,7 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
         N_TerminateNode(node);
         return false;
     }
+#endif
 
     // Everything was OK.
     return true;
@@ -1593,6 +1665,7 @@ static boolean N_DoNodeCommand(nodeid_t node, const char *input, int length)
  */
 void N_Listen(void)
 {
+#if 0
     TCPsocket sock;
     int     i, result;
     char    buf[256];
@@ -1676,6 +1749,7 @@ void N_Listen(void)
             }
         }
     }
+#endif
 }
 
 /**

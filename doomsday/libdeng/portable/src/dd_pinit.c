@@ -83,7 +83,7 @@ int DD_CheckArg(char* tag, const char** value)
     return 1;
 }
 
-void DD_ErrorBox(boolean error, char* format, ...)
+void DD_ErrorBox(boolean error, const char* format, ...)
 {
     char                buff[200];
     va_list             args;
@@ -110,17 +110,9 @@ void DD_ErrorBox(boolean error, char* format, ...)
  */
 void DD_ComposeMainWindowTitle(char* title)
 {
-    if(__gx.GetVariable)
-    {
-        char*               gameName = (char*) __gx.GetVariable(DD_GAME_ID);
-        sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT "%s : %s",
-                (isDedicated? " (Dedicated)" : ""), gameName);
-    }
-    else
-    {
-        sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT "%s",
-                (isDedicated? " (Dedicated)" : ""));
-    }
+    sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT "%s : %s",
+            (isDedicated? " (Dedicated)" : ""), 
+            game_GetString(DD_GAME_ID));
 }
 
 void SetGameImports(game_import_t* imp)
@@ -236,7 +228,7 @@ boolean DD_EarlyInit(void)
     }
 
     // Bring the window manager online.
-    Sys_InitWindowManager();
+    //Sys_InitWindowManager();
 
     return true;
 }
@@ -266,8 +258,7 @@ void DD_ShutdownAll(void)
     R_Shutdown();
     Def_Destroy();
     F_ShutdownDirec();
-    Z_Shutdown();
-    Sys_ShutdownWindowManager();
+    //Sys_ShutdownWindowManager();
 
     // Close the message output file.
     if(outFile)

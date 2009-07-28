@@ -174,7 +174,7 @@ static void printDGLConfiguration(void)
 #endif
 }
 
-#ifdef WIN32
+#ifdef NEVER_DO_THIS //WIN32
 static void testMultisampling(HDC hDC)
 {
     int             pixelFormat;
@@ -368,11 +368,13 @@ boolean Sys_PreInitGL(void)
     memset(&GL_state_ext, 0, sizeof(GL_state_ext));
     memset(&GL_state_texture, 0, sizeof(GL_state_texture));
 
+    /*
 #ifdef WIN32
     // We want to be able to use multisampling if available so lets create a
     // dummy window and see what pixel formats we have.
     createDummyWindow(&app);
 #endif
+    */
 
     GL_state_texture.dumpTextures =
         (ArgCheck("-dumptextures")? true : false);
@@ -410,6 +412,8 @@ boolean Sys_InitGL(void)
 
         firstTimeInit = false;
     }
+
+    Sys_InitGLState();
 
     return true;
 }
@@ -728,9 +732,13 @@ void Sys_PrintGLExtensions(void)
 void Sys_CheckGLError(void)
 {
 #ifdef _DEBUG
-    GLenum  error;
-
-    if((error = glGetError()) != GL_NO_ERROR)
-        Con_Error("OpenGL error: %i\n", error);
+    if(!isDedicated)
+    {
+        GLenum  error;
+        if((error = glGetError()) != GL_NO_ERROR)
+        {
+            Con_Error("OpenGL error: %i\n", error);
+        }
+    }
 #endif
 }

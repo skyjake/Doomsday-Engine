@@ -28,22 +28,23 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-extern "C" {
+#include <de/App>
+#include <de/CommandLine>
+
+using namespace de;
+
+#include "dd_export.h"
+BEGIN_EXTERN_C
 #include "de_base.h"
 #include "de_console.h"
 #include "de_misc.h"
-}
+END_EXTERN_C
 #include "doomsday.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-
-#include <de/App>
-#include <de/CommandLine>
-
-using namespace de;
 
 // MACROS ------------------------------------------------------------------
 

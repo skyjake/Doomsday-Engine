@@ -91,6 +91,7 @@ static size_t numSentBytes;
  */
 void N_Init(void)
 {
+#if 0
     // Create a mutex for the message queue.
     msgMutex = Sys_CreateMutex(MSG_MUTEX_NAME);
 
@@ -99,6 +100,7 @@ void N_Init(void)
     N_SockInit();
     N_MasterInit();
     N_SystemInit();             // Platform dependent stuff.
+#endif
 }
 
 /**
@@ -107,6 +109,7 @@ void N_Init(void)
  */
 void N_Shutdown(void)
 {
+#if 0
     N_SystemShutdown();
     N_MasterShutdown();
     N_SockShutdown();
@@ -121,6 +124,7 @@ void N_Shutdown(void)
     {
         Con_Execute(CMDS_DDAY, "huffman", false, false);
     }
+#endif
 }
 
 /**
@@ -130,10 +134,12 @@ void N_Shutdown(void)
  */
 boolean N_LockQueue(boolean doAcquire)
 {
+#if 0
     if(doAcquire)
         Sys_Lock(msgMutex);
     else
         Sys_Unlock(msgMutex);
+#endif
     return true;
 }
 
@@ -145,6 +151,7 @@ boolean N_LockQueue(boolean doAcquire)
  */
 void N_PostMessage(netmessage_t *msg)
 {
+#if 0
     N_LockQueue(true);
 
     // This will be the latest message.
@@ -167,6 +174,7 @@ void N_PostMessage(netmessage_t *msg)
     msgCount++;
 
     N_LockQueue(false);
+#endif
 }
 
 /**
@@ -183,6 +191,7 @@ netmessage_t *N_GetMessage(void)
 {
     // This is the message we'll return.
     netmessage_t *msg = NULL;
+#if 0
 
     N_LockQueue(true);
     if(msgHead != NULL)
@@ -210,6 +219,7 @@ netmessage_t *N_GetMessage(void)
     {
         msg->player = N_IdentifyPlayer(msg->sender);
     }
+#endif
     return msg;
 }
 
@@ -218,11 +228,13 @@ netmessage_t *N_GetMessage(void)
  */
 void N_ReleaseMessage(netmessage_t *msg)
 {
+#if 0
     if(msg->handle)
     {
         N_ReturnBuffer(msg->handle);
     }
     M_Free(msg);
+#endif
 }
 
 /**
@@ -230,6 +242,7 @@ void N_ReleaseMessage(netmessage_t *msg)
  */
 void N_ClearMessages(void)
 {
+#if 0
     netmessage_t *msg;
 
     while((msg = N_GetMessage()) != NULL)
@@ -238,6 +251,7 @@ void N_ClearMessages(void)
     // The queue is now empty.
     msgHead = msgTail = NULL;
     msgCount = 0;
+#endif
 }
 
 /**
@@ -249,6 +263,7 @@ void N_ClearMessages(void)
  */
 void N_SendPacket(int flags)
 {
+#if 0
     uint                i, dest = 0;
     void               *data;
     size_t              size;
@@ -317,6 +332,7 @@ Con_Message("N_SendPacket: Sending %ul bytes reliably to %i.\n", size, dest));
         // as possible.
         N_SendDataBuffer(data, size, dest);
     }
+#endif
 }
 
 /**
@@ -324,6 +340,7 @@ Con_Message("N_SendPacket: Sending %ul bytes reliably to %i.\n", size, dest));
  */
 uint N_IdentifyPlayer(nodeid_t id)
 {
+#if 0
     uint                i;
     boolean             found;
 
@@ -347,6 +364,7 @@ uint N_IdentifyPlayer(nodeid_t id)
 
     // Clients receive messages only from the server.
     return 0;
+#endif
 }
 
 /**
@@ -359,6 +377,7 @@ uint N_IdentifyPlayer(nodeid_t id)
  */
 netmessage_t *N_GetNextMessage(void)
 {
+#if 0
     netmessage_t       *msg;
 
     while((msg = N_GetMessage()) != NULL)
@@ -382,6 +401,7 @@ netmessage_t *N_GetNextMessage(void)
             return msg;
         }
     }
+#endif
     return NULL; // There are no more messages.
 }
 
@@ -392,6 +412,7 @@ netmessage_t *N_GetNextMessage(void)
  */
 boolean N_GetPacket(void)
 {
+#if 0
     netmessage_t *msg;
 
     // If there are net events pending, let's not return any packets
@@ -432,6 +453,7 @@ boolean N_GetPacket(void)
     if(netBuffer.player == -1)
         return false;
 
+#endif
     return true;
 }
 
@@ -449,6 +471,7 @@ void N_PrintBufferInfo(void)
  */
 void N_PrintHuffmanStats(void)
 {
+#if 0
     if(numOutBytes == 0)
     {
         Con_Printf("Huffman efficiency: Nothing has been sent yet.\n");
@@ -459,6 +482,7 @@ void N_PrintHuffmanStats(void)
                    "bytes)\n", 100 - (100.0f * numSentBytes) / numOutBytes,
                    numOutBytes, numSentBytes);
     }
+#endif
 }
 
 /**

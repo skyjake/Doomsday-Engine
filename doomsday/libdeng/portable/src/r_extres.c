@@ -148,7 +148,7 @@ static void initClassDataPaths(void)
     int                 i;
     filename_t          filePath;
     // A string that identifies the game mode (e.g. doom2-plut).
-    const char*         gameMode = gx.GetVariable(DD_GAME_MODE);
+    const char*         gameMode = game_GetString(DD_GAME_MODE);
 
     VERBOSE(
     Con_Message("initDataPaths: %s\n", M_PrettyPath(Str_Text(dataPath))));

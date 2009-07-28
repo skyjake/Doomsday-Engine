@@ -57,7 +57,9 @@
  */
 mislink_t *Sv_MRHash(pool_t *pool, thid_t id)
 {
+#if 0
     return &pool->misHash[(unsigned) id % POOL_MISSILE_HASH_SIZE];
+#endif
 }
 
 /**
@@ -66,6 +68,7 @@ mislink_t *Sv_MRHash(pool_t *pool, thid_t id)
  */
 misrecord_t *Sv_MRFind(pool_t *pool, thid_t id)
 {
+#if 0
     mislink_t *hash = Sv_MRHash(pool, id);
     misrecord_t *mis;
 
@@ -78,6 +81,7 @@ misrecord_t *Sv_MRFind(pool_t *pool, thid_t id)
         }
     }
     return NULL;
+#endif
 }
 
 /**
@@ -85,6 +89,7 @@ misrecord_t *Sv_MRFind(pool_t *pool, thid_t id)
  */
 void Sv_MRAdd(pool_t *pool, const mobjdelta_t *delta)
 {
+#if 0
     thid_t  id = delta->delta.id;
     mislink_t *hash = Sv_MRHash(pool, id);
     misrecord_t *mis;
@@ -121,6 +126,7 @@ if(!(delta->mo.ddFlags & DDMF_MISSILE))
        mis->momy = delta->mo.momy;
        mis->momz = delta->mo.momz;
      */
+#endif
 }
 
 /**
@@ -129,6 +135,7 @@ if(!(delta->mo.ddFlags & DDMF_MISSILE))
  */
 void Sv_MRRemove(pool_t *pool, thid_t id)
 {
+#if 0
     mislink_t *hash = Sv_MRHash(pool, id);
     misrecord_t *mis;
 
@@ -150,6 +157,7 @@ void Sv_MRRemove(pool_t *pool, thid_t id)
             break;
         }
     }
+#endif
 }
 
 /**
@@ -157,8 +165,9 @@ void Sv_MRRemove(pool_t *pool, thid_t id)
  */
 int Sv_MRCheck(pool_t *pool, const mobjdelta_t *mobj)
 {
-    misrecord_t *mis;
     int         exclude = 0;
+#if 0
+    misrecord_t *mis;
 
 #ifdef _DEBUG
 if(!(mobj->mo.ddFlags & DDMF_MISSILE))
@@ -181,5 +190,6 @@ if(!(mobj->mo.ddFlags & DDMF_MISSILE))
     if(!(mobj->delta.flags & MDF_MOM_Z))
         exclude |= MDF_POS_Z;
 
+#endif
     return exclude;
 }

@@ -34,6 +34,7 @@
 #include "dd_def.h"
 #include "dd_share.h"
 #include "dd_api.h"
+#include "dd_gameapi.h"
 #include "dd_plugin.h"
 #include "dd_wad.h"
 #include "dd_zone.h"

@@ -3,8 +3,9 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
+ *                    (add more authors here)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,19 +24,22 @@
  */
 
 /**
- * sys_console.h: Win32 Console
+ * dd_gameapi.h: C Wrappers for Game Library Calls
  */
 
-#ifndef __DOOMSDAY_WINCONSOLE_H__
-#define __DOOMSDAY_WINCONSOLE_H__
+#ifndef __DOOMSDAY_GAME_WRAPPER_H__
+#define __DOOMSDAY_GAME_WRAPPER_H__
 
-#include "sys_input.h"
+#include "dd_export.h"
 
-#if 0
-void            Sys_ConInputInit(void);
-void            Sys_ConInputShutdown(void);
+BEGIN_EXTERN_C
 
-size_t          I_GetConsoleKeyEvents(keyevent_t *evbuf, size_t bufsize);
-#endif
+int         game_GetInteger(int id);
+const char* game_GetString(int id);
+void*       game_GetAddress(int id);
+void        game_Ticker(double tickLength);
+void        game_Call(const char* funcName);
+
+END_EXTERN_C
 
 #endif

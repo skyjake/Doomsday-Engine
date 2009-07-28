@@ -95,6 +95,7 @@ void            MPE_PruneRedundantMapData(editmap_t *map, int flags);
 boolean         MPE_RegisterUnclosedSectorNear(sector_t *sec, double x, double y);
 void            MPE_PrintUnclosedSectorList(void);
 void            MPE_FreeUnclosedSectorList(void);
+void            MPE_BuildSectorLineLists(gamemap_t *map);
 
 gamemap_t      *MPE_GetLastBuiltMap(void);
 vertex_t       *createVertex(void);

@@ -92,6 +92,7 @@ static int lastTransmitTic = 0;
  */
 void Sv_TransmitFrame(void)
 {
+#if 0
     int                 i, cTime, numInGame, pCount;
 
     // Obviously clients don't transmit anything.
@@ -151,10 +152,6 @@ void Sv_TransmitFrame(void)
         }
         clients[i].lastTransmit = cTime;
 
-        /*#if _DEBUG
-           ST_Message("gt:%i (%i) -> cl%i\n", gametic, ctime, i);
-           #endif */
-
         if(clients[i].ready && clients[i].updateCount > 0)
         {
             // A frame will be sent to this client. If the client
@@ -165,6 +162,7 @@ void Sv_TransmitFrame(void)
             Sv_SendFrame(i);
         }
     }
+#endif
 }
 
 /**
@@ -172,6 +170,7 @@ void Sv_TransmitFrame(void)
  */
 void Sv_Shutdown(void)
 {
+#if 0
 #ifdef _DEBUG
 if(totalFrameCount > 0)
 {
@@ -187,6 +186,7 @@ if(totalFrameCount > 0)
 #endif
 
     Sv_ShutdownPools();
+#endif
 }
 
 /**
@@ -194,6 +194,7 @@ if(totalFrameCount > 0)
  */
 void Sv_WriteMobjDelta(const void* deltaPtr)
 {
+#if 0
     const mobjdelta_t*  delta = deltaPtr;
     const dt_mobj_t*    d = &delta->mo;
     int                 df = delta->delta.flags;
@@ -343,6 +344,7 @@ if((df & 0xffff) == 0)
 
     if(df & MDFC_FADETARGET)
         Msg_WriteByte((byte)(d->visTarget +1));
+#endif
 }
 
 /**
@@ -350,6 +352,7 @@ if((df & 0xffff) == 0)
  */
 void Sv_WritePlayerDelta(const void* deltaPtr)
 {
+#if 0
     const playerdelta_t* delta = deltaPtr;
     const dt_player_t*  d = &delta->player;
     const ddpsprite_t*  psp;
@@ -435,6 +438,7 @@ void Sv_WritePlayerDelta(const void* deltaPtr)
             }
         }
     }
+#endif
 }
 
 /**
@@ -442,6 +446,7 @@ void Sv_WritePlayerDelta(const void* deltaPtr)
  */
 void Sv_WriteSectorDelta(const void* deltaPtr)
 {
+#if 0
     const sectordelta_t* delta = deltaPtr;
     const dt_sector_t*  d = &delta->sector;
     int                 df = delta->delta.flags, spd;
@@ -554,6 +559,7 @@ VERBOSE( Con_Printf("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f\n",
         Msg_WriteShort(d->planes[PLN_CEILING].glow < 0 ? 0 :
                        d->planes[PLN_CEILING].glow > 1 ? DDMAXSHORT :
                        (short)(d->planes[PLN_CEILING].glow * DDMAXSHORT));
+#endif
 }
 
 /**
@@ -561,6 +567,7 @@ VERBOSE( Con_Printf("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f\n",
  */
 void Sv_WriteSideDelta(const void* deltaPtr)
 {
+#if 0
     const sidedelta_t*  delta = deltaPtr;
     const dt_side_t*    d = &delta->side;
     int                 df = delta->delta.flags;
@@ -609,6 +616,7 @@ void Sv_WriteSideDelta(const void* deltaPtr)
 
     if(df & SIDF_FLAGS)
         Msg_WriteByte(d->flags);
+#endif
 }
 
 /**
@@ -616,6 +624,7 @@ void Sv_WriteSideDelta(const void* deltaPtr)
  */
 void Sv_WritePolyDelta(const void* deltaPtr)
 {
+#if 0
     const polydelta_t*  delta = deltaPtr;
     const dt_poly_t*    d = &delta->po;
     int                 df = delta->delta.flags;
@@ -649,6 +658,7 @@ void Sv_WritePolyDelta(const void* deltaPtr)
         Msg_WriteShort(d->destAngle >> 16);
     if(df & PODF_ANGSPEED)
         Msg_WriteShort(d->angleSpeed >> 16);
+#endif
 }
 
 /**
@@ -656,6 +666,7 @@ void Sv_WritePolyDelta(const void* deltaPtr)
  */
 void Sv_WriteSoundDelta(const void* deltaPtr)
 {
+#if 0
     const sounddelta_t* delta = deltaPtr;
     int                 df = delta->delta.flags;
 
@@ -696,6 +707,7 @@ void Sv_WriteSoundDelta(const void* deltaPtr)
             Msg_WriteByte(delta->volume * 127 + 0.5f);
         }
     }
+#endif
 }
 
 /**
@@ -703,6 +715,7 @@ void Sv_WriteSoundDelta(const void* deltaPtr)
  */
 void Sv_WriteDeltaHeader(byte type, const delta_t* delta)
 {
+#if 0
 #ifdef _DEBUG
 if(type >= NUM_DELTA_TYPES)
 {
@@ -732,6 +745,7 @@ if(type >= NUM_DELTA_TYPES)
         // needed in the situation where the set is lost.
         Msg_WriteByte(delta->resend);
     }
+#endif
 }
 
 /**
@@ -739,6 +753,7 @@ if(type >= NUM_DELTA_TYPES)
  */
 void Sv_WriteDelta(const delta_t* delta)
 {
+#if 0
     byte                type = delta->type;
 #ifdef _NETDEBUG
     int                 lengthOffset;
@@ -815,6 +830,7 @@ writeDeltaLength:
     Msg_WriteLong(endOffset - lengthOffset);
     Msg_SetOffset(endOffset);
 #endif
+#endif
 }
 
 /**
@@ -824,6 +840,7 @@ writeDeltaLength:
  */
 size_t Sv_GetMaxFrameSize(int playerNumber)
 {
+#if 0
     size_t              size = MINIMUM_FRAME_SIZE +
         FRAME_SIZE_FACTOR * clients[playerNumber].bandwidthRating;
 
@@ -832,6 +849,8 @@ size_t Sv_GetMaxFrameSize(int playerNumber)
         size = maxDatagramSize;
 
     return size;
+#endif
+    return 0;
 }
 
 /**
@@ -853,6 +872,7 @@ byte Sv_GetNewResendID(pool_t* pool)
  */
 void Sv_SendFrame(int plrNum)
 {
+#if 0
     pool_t*             pool = Sv_GetPool(plrNum);
     byte                oldResend;
     delta_t*            delta;
@@ -984,4 +1004,5 @@ if(delta->state == DELTA_UNACKED)
 
     // Now a frame has been sent.
     pool->isFirst = false;
+#endif
 }

@@ -94,6 +94,7 @@ static DGLuint texScreenshot; // Captured screenshot of the latest frame.
 int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
              void* workerData)
 {
+#if 0
     int                 result = 0;
 
     if(!busyInited)
@@ -126,7 +127,16 @@ int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
     // Start the busy worker thread, which will proces things in the
     // background while we keep the user occupied with nice animations.
     busyThread = Sys_StartThread(worker, workerData);
+#endif
 
+    int result = worker(workerData);
+    if(!(isDedicated || (busyMode & BUSYF_NO_UPLOADS)))
+    {
+        GL_UploadDeferredContent(0);
+    }
+    return result;
+    
+#if 0
     // Wait for the busy thread to stop.
     Con_BusyLoop();
 
@@ -151,8 +161,8 @@ int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
     {
         GL_UploadDeferredContent(0);
     }
-
     return result;
+#endif
 }
 
 /**
@@ -162,8 +172,9 @@ int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
  */
 void Con_BusyWorkerError(const char* message)
 {
-    busyError = message;
-    Con_BusyWorkerEnd();
+    //busyError = message;
+    //Con_BusyWorkerEnd();
+    Con_Error(message);
 }
 
 /**
@@ -172,12 +183,14 @@ void Con_BusyWorkerError(const char* message)
  */
 void Con_BusyWorkerEnd(void)
 {
+#if 0
     if(!busyInited)
         return;
 
     Sys_Lock(busy_Mutex);
     busyDone = true;
     Sys_Unlock(busy_Mutex);
+#endif
 }
 
 boolean Con_IsBusy(void)
@@ -185,6 +198,7 @@ boolean Con_IsBusy(void)
     return busyInited;
 }
 
+#if 0
 static void Con_BusyLoadTextures(void)
 {
     image_t             image;
@@ -254,12 +268,14 @@ static void Con_BusyDeleteTextures(void)
     // Don't release this yet if doing a wipe.
     Con_ReleaseScreenshotTexture();
 }
+#endif
 
 /**
  * Take a screenshot and store it as a texture.
  */
 void Con_AcquireScreenshotTexture(void)
 {
+#if 0
     int                 oldMaxTexSize = GL_state.maxTexSize;
     byte*               frame;
 #ifdef _DEBUG
@@ -290,14 +306,18 @@ void Con_AcquireScreenshotTexture(void)
     printf("Con_AcquireScreenshotTexture: Took %.2f seconds.\n",
            Sys_GetRealSeconds() - startTime);
 #endif
+#endif
 }
 
 void Con_ReleaseScreenshotTexture(void)
 {
+#if 0
     glDeleteTextures(1, (const GLuint*) &texScreenshot);
     texScreenshot = 0;
+#endif
 }
 
+#if 0
 /**
  * The busy thread main function. Runs until busyDone set to true.
  */
@@ -347,10 +367,18 @@ static void Con_BusyLoop(void)
         glPopMatrix();
     }
 
+#if _DEBUG
+    Sys_CheckGLError();
+#endif
+
     if(verbose)
     {
         Con_Message("Con_Busy: Was busy for %.2lf seconds.\n", busyTime);
     }
+
+#if _DEBUG
+    Sys_CheckGLError();
+#endif
 }
 
 /**
@@ -601,7 +629,15 @@ static void Con_BusyDrawer(void)
 {
     float               pos = 0;
 
+#if _DEBUG
+    Sys_CheckGLError();
+#endif
+
     Con_DrawScreenshotBackground(0, 0, theWindow->width, theWindow->height);
+
+#if _DEBUG
+    Sys_CheckGLError();
+#endif
 
     // Indefinite activity?
     if(busyMode & BUSYF_ACTIVITY)
@@ -615,216 +651,20 @@ static void Con_BusyDrawer(void)
     }
     Con_BusyDrawIndicator(theWindow->width/2, theWindow->height/2, theWindow->height/12, pos);
 
+#if _DEBUG
+    Sys_CheckGLError();
+#endif
+
     // Output from the console?
     if(busyMode & BUSYF_CONSOLE_OUTPUT)
     {
         Con_BusyDrawConsoleOutput();
     }
 
+#if _DEBUG
+    Sys_CheckGLError();
+#endif
+
     Sys_UpdateWindow(windowIDX);
-}
-
-#if 0
-/*
- * The startup screen mode is used during engine startup.  In startup
- * mode, the whole screen is used for console output.
- */
-void Con_StartupInit(void)
-{
-    static boolean firstTime = true;
-
-    if(novideo)
-        return;
-
-    GL_InitVarFont();
-    fontHgt = FR_SingleLineHeight("Doomsday!");
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, glScreenWidth, glScreenHeight, 0, -1, 1);
-
-    if(firstTime)
-    {
-        titleText = "Doomsday " DOOMSDAY_VERSION_TEXT " Startup";
-        firstTime = false;
-    }
-    else
-    {
-        titleText = "Doomsday " DOOMSDAY_VERSION_TEXT;
-    }
-
-    // Load graphics.
-    startupLogo = GL_PrepareExtTexture(DDRC_GRAPHICS, "Background", LGM_GRAYSCALE,
-        false, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/, GL_CLAMP_TO_EDGE,
-        GL_CLAMP_TO_EDGE, 0);
-}
-
-void Con_StartupDone(void)
-{
-    if(isDedicated)
-        return;
-    titleText = "Doomsday " DOOMSDAY_VERSION_TEXT;
-    glDeleteTextures(1, (const GLuint*) &startupLogo);
-    startupLogo = 0;
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    GL_ShutdownVarFont();
-
-    // Update the secondary title and the game status.
-    strncpy(secondaryTitleText, (char *) gx.GetVariable(DD_GAME_ID),
-            sizeof(secondaryTitleText) - 1);
-    strncpy(statusText, (char *) gx.GetVariable(DD_GAME_MODE),
-            sizeof(statusText) - 1);
-}
-
-/**
- * Background with the "The Doomsday Engine" text superimposed.
- *
- * @param alpha         Alpha level to use when drawing the background.
- */
-void Con_DrawStartupBackground(float alpha)
-{
-    float               mul = (startupLogo ? 1.5f : 1.0f);
-    ui_color_t*         dark = UI_COL(UIC_BG_DARK),
-                       *light = UI_COL(UIC_BG_LIGHT);
-
-    // Background gradient picture.
-    glBindTexture(GL_TEXTURE_2D, startupLogo);
-    if(alpha < 1.0)
-    {
-        glEnable(GL_BLEND);
-        GL_BlendMode(BM_NORMAL);
-    }
-    else
-    {
-        glDisable(GL_BLEND);
-    }
-    glBegin(GL_QUADS);
-        // Top color.
-        glColor4f(dark->red * mul, dark->green * mul, dark->blue * mul, alpha);
-        glTexCoord2f(0, 0);
-        glVertex2f(0, 0);
-        glTexCoord2f(1, 0);
-        glVertex2f(glScreenWidth, 0);
-        // Bottom color.
-        glColor4f(light->red * mul, light->green * mul, light->blue * mul, alpha);
-        glTexCoord2f(1, 1);
-        glVertex2f(glScreenWidth, glScreenHeight);
-        glTexCoord2f(0, 1);
-        glVertex2f(0, glScreenHeight);
-    glEnd();
-    glEnable(GL_BLEND);
-}
-
-/*
- * Draws the title bar of the console.
- *
- * @return  Title bar height.
- */
-int Con_DrawTitle(float alpha)
-{
-    int width = 0;
-    int height = UI_FontHeight();
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    FR_SetFont(glFontVariable[GLFS_BOLD]);
-    height = FR_TextHeight("W") + UI_ScreenW(UI_BORDER);
-    UI_DrawTitleEx(titleText, height, alpha);
-    if(secondaryTitleText[0])
-    {
-        width = FR_TextWidth(titleText) + FR_TextWidth("  ");
-        FR_SetFont(glFontVariable[GLFS_LIGHT]);
-        UI_TextOutEx(secondaryTitleText, UI_ScreenW(UI_BORDER) + width, height / 2,
-                     false, true, UI_COL(UIC_TEXT), .75f * alpha);
-    }
-    if(statusText[0])
-    {
-        width = FR_TextWidth(statusText);
-        FR_SetFont(glFontVariable[GLFS_LIGHT]);
-        UI_TextOutEx(statusText, glScreenWidth - UI_ScreenW(UI_BORDER) - width, height / 2,
-                     false, true, UI_COL(UIC_TEXT), .75f * alpha);
-    }
-
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-
-    FR_SetFont(glFontFixed);
-    return height;
-}
-
-/*
- * Draw the background and the current console output.
- */
-void Con_DrawStartupScreen(int show)
-{
-    int         vislines, y, x;
-    int         topy;
-    uint        i, count;
-    cbuffer_t  *buffer;
-    static cbline_t **lines = NULL;
-    static int  bufferSize = 0;
-    cbline_t   *line;
-
-    // Print the messages in the console.
-    if(ui_active)
-        return;
-
-    //glMatrixMode(GL_PROJECTION);
-    //glLoadIdentity();
-    //glOrtho(0, glScreenWidth, glScreenHeight, 0, -1, 1);
-
-    Con_DrawStartupBackground(1.0);
-
-    // Draw the title.
-    topy = Con_DrawTitle(1.0);
-
-    topy += UI_ScreenW(UI_BORDER);
-    vislines = (glScreenHeight - topy + fontHgt / 2) / fontHgt;
-    y = topy;
-
-    buffer = Con_GetConsoleBuffer();
-    if(vislines > 0)
-    {
-        // Need to enlarge the buffer?
-        if(vislines > bufferSize)
-        {
-            lines = Z_Realloc(lines, sizeof(cbline_t *) * (vislines + 1),
-                              PU_STATIC);
-            bufferSize = vislines;
-        }
-
-        count = Con_BufferGetLines(buffer, vislines, -vislines, lines);
-        if(count > 0)
-        {
-            for(i = 0; i < count - 1; ++i)
-            {
-                line = lines[i];
-
-                if(!line)
-                    break;
-                if(line->flags & CBLF_RULER)
-                {
-                    Con_DrawRuler(y, fontHgt, 1);
-                }
-                else
-                {
-                    if(!line->text)
-                        continue;
-
-                    x = (line->flags & CBLF_CENTER ?
-                            (glScreenWidth - FR_TextWidth(line->text)) / 2 : 3);
-                    //glColor3f(0, 0, 0);
-                    //FR_TextOut(line->text, x + 1, y + 1);
-                    glColor3f(1, 1, 1);
-                    FR_CustomShadowTextOut(line->text, x, y, 1, 1, 1);
-                }
-                y += fontHgt;
-            }
-        }
-    }
 }
 #endif

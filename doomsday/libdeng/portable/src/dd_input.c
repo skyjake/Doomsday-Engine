@@ -31,11 +31,7 @@
 #include <ctype.h>
 #include <math.h>
 
-/*
-#ifdef UNIX
-#   include <SDL.h>
-#endif
-*/
+#include <SDL.h>
 
 #include "doomsday.h"
 #include "de_base.h"
@@ -873,10 +869,10 @@ static void dispatchEvents(timespan_t ticLength)
  */
 static void postEvents(timespan_t ticLength)
 {
-    DD_ReadKeyboard();
-
     if(!isDedicated)
-    {   // In dedicated mode, we don't do mice or joysticks.
+    {   
+        // In dedicated mode, we don't do mice or joysticks.
+        DD_ReadKeyboard();
         DD_ReadMouse(ticLength);
         DD_ReadJoystick();
     }
@@ -1065,16 +1061,20 @@ void I_SetUIMouseMode(boolean on)
 {
     uiMouseMode = on;
     
-#ifdef UNIX
     {
         boolean isFullScreen = true;
         Sys_GetWindowFullscreen(1, &isFullScreen);
         if(!isFullScreen)
         {
             SDL_WM_GrabInput(on? SDL_GRAB_OFF : SDL_GRAB_ON);
+            //SDL_ShowCursor(on? SDL_ENABLE : SDL_DISABLE);
+        }
+        else
+        {
+            SDL_WM_GrabInput(SDL_GRAB_ON);
+            //SDL_ShowCursor(SDL_DISABLE);
         }
     }
-#endif
 }
 
 /**
@@ -1143,8 +1143,8 @@ void DD_ReadMouse(timespan_t ticLength)
     if(uiMouseMode)
     {
         // Scale the movement depending on screen resolution.
-        xpos *= MAX_OF(1, theWindow->width / 800.0f);
-        ypos *= MAX_OF(1, theWindow->height / 600.0f);
+        xpos *= MAX_OF(1, DD_WindowWidth() / 800.0f);
+        ypos *= MAX_OF(1, DD_WindowHeight() / 600.0f);
     }
     else
     {

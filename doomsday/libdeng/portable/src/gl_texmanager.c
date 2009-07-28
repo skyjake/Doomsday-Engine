@@ -3218,9 +3218,9 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
         if(!didDefer)
         {
 #ifdef _DEBUG
-Con_Message("GLTexture_Prepare: Uploaded \"%s\" (%i) while not busy! "
+VERBOSE( Con_Message("GLTexture_Prepare: Uploaded \"%s\" (%i) while not busy! "
             "Should be precached in busy mode?\n", texInst->tex->name,
-            texInst->id);
+            texInst->id) );
 #endif
         }
 

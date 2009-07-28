@@ -23,13 +23,19 @@
  */
 
 /**
- * rend_bias.c: Light/Shadow Bias
+ * rend_bias.cc: Light/Shadow Bias
  *
  * Calculating macro-scale lighting on the fly.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <de/App>
+#include <de/Zone>
+
+using namespace de;
+
+extern "C" {
 #include "de_base.h"
 #include "de_edit.h"
 #include "de_system.h"
@@ -39,6 +45,7 @@
 #include "de_defs.h"
 #include "de_misc.h"
 #include "p_sight.h"
+}
 
 #include <math.h>
 
@@ -98,7 +105,7 @@ static float biasAmount;
 
 // Head of the biassurface list for the current map.
 static biassurface_t* surfaces = NULL;
-static zblockset_t* biasSurfaceBlockSet = NULL;
+static Zone::Allocator<biassurface_t>* allocator = NULL;
 
 // CODE --------------------------------------------------------------------
 
@@ -107,6 +114,8 @@ static zblockset_t* biasSurfaceBlockSet = NULL;
  */
 void SB_Register(void)
 {
+    allocator = 0;
+    
     C_VAR_INT("rend-bias", &useBias, 0, 0, 1);
 
     C_VAR_FLOAT("rend-bias-min", &biasMin, 0, 0, 1);
@@ -125,24 +134,11 @@ void SB_Register(void)
 
 static __inline biassurface_t* allocBiasSurface(void)
 {
-    if(biasSurfaceBlockSet)
-    {   // Use the block allocator.
-        biassurface_t*      bsuf = Z_BlockNewElement(biasSurfaceBlockSet);
-        memset(bsuf, 0, sizeof(*bsuf));
-        return bsuf;
-    }
-
-    return M_Calloc(sizeof(biassurface_t));
-}
-
-static __inline void freeBiasSurface(biassurface_t* bsuf)
-{
-    if(biasSurfaceBlockSet)
-    {   // Ignore, it'll be free'd along with the block allocator.
-        return;
-    }
-
-    M_Free(bsuf);
+    assert(allocator != NULL);
+    
+    biassurface_t* bsuf = allocator->allocate();
+    memset(bsuf, 0, sizeof(*bsuf));
+    return bsuf;
 }
 
 biassurface_t* SB_CreateSurface(void)
@@ -187,7 +183,9 @@ void SB_DestroySurface(biassurface_t* bsuf)
     }
 
     Z_Free(bsuf->illum);
-    Z_Free(bsuf);
+
+    // Can't free, it's in the (MAP_STATIC) batch. -jk
+    //Z_Free(bsuf);
 }
 
 /**
@@ -331,10 +329,7 @@ void SB_InitForMap(const char* uniqueID)
     // Start with no sources whatsoever.
     numSources = 0;
 
-    if(biasSurfaceBlockSet)
-        Z_BlockDestroy(biasSurfaceBlockSet);
-
-    biasSurfaceBlockSet = Z_BlockCreate(sizeof(biassurface_t), 512, PU_STATIC);
+    allocator = App::memory().newAllocator<biassurface_t>(512, Zone::MAP);
     surfaces = NULL;
 
     // Check all the loaded Light definitions for any matches.
@@ -385,7 +380,7 @@ void SB_InitForMap(const char* uniqueID)
     }
 
     // Allocate and initialize the vertexillum_ts.
-    illums = Z_Calloc(sizeof(vertexillum_t) * numVertIllums, PU_MAP, 0);
+    illums = App::memory().allocateClear<vertexillum_t>(numVertIllums, Zone::MAP);
     for(i = 0; i < numVertIllums; ++i)
         SB_InitVertexIllum(&illums[i]);
 

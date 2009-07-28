@@ -74,6 +74,7 @@ void Sys_ShutdownTimer(void)
     timeEndPeriod(1);
 #endif
     Sys_DestroyMutex(timer_Mutex);
+    timer_Mutex = 0;
 }
 
 void Sys_InitTimer(void)

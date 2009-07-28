@@ -28,11 +28,18 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <de/App>
+#include <de/Zone>
+
+using namespace de;
+
+extern "C" {
 #include "de_base.h"
 #include "de_console.h"
 #include "de_refresh.h"
 #include "de_misc.h"
 #include "de_play.h"
+}
 
 // MACROS ------------------------------------------------------------------
 
@@ -50,7 +57,8 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static zblockset_t *shadowLinksBlockSet;
+typedef Zone::Allocator<shadowlink_t> Allocator;
+static Allocator *allocator;
 
 // CODE --------------------------------------------------------------------
 
@@ -188,18 +196,16 @@ static void linkShadowLineDefToSSec(linedef_t *line, byte side,
     shadowlink_t           *link;
 
 #ifdef _DEBUG
-// Check the links for dupes!
-{
-shadowlink_t *i;
-
-for(i = subsector->shadows; i; i = i->next)
-    if(i->lineDef == line && i->side == side)
-        Con_Error("R_LinkShadow: Already here!!\n");
-}
+    // Check the links for dupes!
+    for(shadowlink_t *i = subsector->shadows; i; i = i->next)
+    {
+        if(i->lineDef == line && i->side == side)
+            Con_Error("R_LinkShadow: Already here!!\n");
+    }
 #endif
 
     // We'll need to allocate a new link.
-    link = Z_BlockNewElement(shadowLinksBlockSet);
+    link = allocator->allocate();
 
     // The links are stored into a linked list.
     link->next = subsector->shadows;
@@ -274,7 +280,7 @@ void R_InitSectorShadows(void)
      *    shadow edges cross one of the subsector's edges (not parallel),
      *    link the linedef to the subsector.
      */
-    shadowLinksBlockSet = Z_BlockCreate(sizeof(shadowlink_t), 1024, PU_MAP);
+    allocator = App::memory().newAllocator<shadowlink_t>(1024, Zone::MAP);
 
     for(i = 0; i < numLineDefs; ++i)
     {

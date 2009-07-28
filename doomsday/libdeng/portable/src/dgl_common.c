@@ -346,18 +346,6 @@ void GL_BlendOp(int op)
     glBlendEquationEXT(op);
 }
 
-boolean GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void *buffer)
-{
-    if(format != DGL_RGB)
-        return false;
-
-    // y+height-1 is the bottom edge of the rectangle. It's
-    // flipped to change the origin.
-    glReadPixels(x, FLIP(y + height - 1), width, height, GL_RGB,
-                 GL_UNSIGNED_BYTE, buffer);
-    return true;
-}
-
 void GL_EnableTexUnit(byte id)
 {
     GL_ActiveTexture(GL_TEXTURE0 + id);
@@ -420,6 +408,10 @@ void GL_SetMultisample(boolean on)
         glEnable(GL_MULTISAMPLE_ARB);
     else
         glDisable(GL_MULTISAMPLE_ARB);
+#endif
+
+#ifdef _DEBUG
+    Sys_CheckGLError();
 #endif
 }
 
@@ -562,6 +554,10 @@ void DGL_DisableTexUnit(byte id)
 
 int DGL_Enable(int cap)
 {
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
+
     switch(cap)
     {
     case DGL_TEXTURING:
@@ -591,11 +587,19 @@ int DGL_Enable(int cap)
         return 0;
     }
 
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
+
     return 1;
 }
 
 void DGL_Disable(int cap)
 {
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
+
     switch(cap)
     {
     case DGL_TEXTURING:
@@ -622,6 +626,10 @@ void DGL_Disable(int cap)
     default:
         break;
     }
+
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
 }
 
 void DGL_BlendOp(int op)

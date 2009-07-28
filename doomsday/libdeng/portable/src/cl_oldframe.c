@@ -73,6 +73,7 @@ static byte acks[MAX_ACKS];
  */
 void Cl_ReadDeltaSet(void)
 {
+#if 0
     byte        present = Msg_ReadByte();
     byte        set = Msg_ReadByte();
 
@@ -92,6 +93,7 @@ void Cl_ReadDeltaSet(void)
         while(Cl_ReadSideDelta());
     if(present & BIT(DT_POLY))
         while(Cl_ReadPolyDelta());
+#endif
 }
 
 /**
@@ -102,6 +104,7 @@ void Cl_ReadDeltaSet(void)
  */
 void Cl_FrameReceived(void)
 {
+#if 0
     int         i, frametime;
 
     gotFrame = true;
@@ -127,4 +130,5 @@ if(!gameReady)
 
     // Reset the predict counter.
     predicted_tics = 0;
+#endif
 }

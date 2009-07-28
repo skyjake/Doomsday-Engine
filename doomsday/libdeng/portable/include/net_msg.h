@@ -29,6 +29,7 @@
 #ifndef __DOOMSDAY_NETMESSAGE_H__
 #define __DOOMSDAY_NETMESSAGE_H__
 
+#if 0
 void            Msg_Begin(int type);
 void            Msg_WriteByte(byte b);
 void            Msg_WriteShort(short w);
@@ -46,5 +47,6 @@ size_t          Msg_Offset(void);
 void            Msg_SetOffset(size_t offset);
 size_t          Msg_MemoryLeft(void);
 boolean         Msg_End(void);
+#endif
 
 #endif

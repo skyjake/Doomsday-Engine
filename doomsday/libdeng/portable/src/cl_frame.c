@@ -88,6 +88,7 @@ static int      resendHistoryIdx;
  */
 void Cl_InitFrame(void)
 {
+#if 0
     gotFrame = false;           // Nothing yet...
 
     // -1 denotes an invalid entry.
@@ -102,6 +103,7 @@ void Cl_InitFrame(void)
     latestSet = 0;
     latestSetOrdinal = 0;
     setOrdinalBase = 256;
+#endif
 }
 
 /**
@@ -109,11 +111,13 @@ void Cl_InitFrame(void)
  */
 void Cl_ResetFrame(void)
 {
+#if 0
     gotFrame = false;
 
     // All frames received before the PSV_FIRST_FRAME2 are ignored.
     // They must be from the wrong map.
     gotFirstFrame = false;
+#endif
 }
 
 /**
@@ -121,10 +125,12 @@ void Cl_ResetFrame(void)
  */
 void Cl_HistoryAdd(byte set)
 {
+#if 0
     setHistory[historyIdx++] = set;
 
     if(historyIdx >= SET_HISTORY_SIZE)
         historyIdx -= SET_HISTORY_SIZE;
+#endif
 }
 
 /**
@@ -133,6 +139,7 @@ void Cl_HistoryAdd(byte set)
  */
 boolean Cl_HistoryCheck(byte set)
 {
+#if 0
     uint        i;
 
     for(i = 0; i < SET_HISTORY_SIZE; ++i)
@@ -140,6 +147,7 @@ boolean Cl_HistoryCheck(byte set)
         if(setHistory[i] == set)
             return true;
     }
+#endif
     return false;
 }
 
@@ -148,10 +156,12 @@ boolean Cl_HistoryCheck(byte set)
  */
 void Cl_ResendHistoryAdd(byte id)
 {
+#if 0
     resendHistory[resendHistoryIdx++] = id;
 
     if(resendHistoryIdx >= RESEND_HISTORY_SIZE)
         resendHistoryIdx -= RESEND_HISTORY_SIZE;
+#endif
 }
 
 /**
@@ -159,6 +169,7 @@ void Cl_ResendHistoryAdd(byte id)
  */
 boolean Cl_ResendHistoryCheck(byte id)
 {
+#if 0
     uint        i;
 
     for(i = 0; i < RESEND_HISTORY_SIZE; ++i)
@@ -166,6 +177,7 @@ boolean Cl_ResendHistoryCheck(byte id)
         if(resendHistory[i] == id)
             return true;
     }
+#endif
     return false;
 }
 
@@ -176,6 +188,7 @@ boolean Cl_ResendHistoryCheck(byte id)
  */
 uint Cl_ConvertSetToOrdinal(byte set)
 {
+#if 0
     uint        ordinal = 0;
 
     if(latestSet > 185 && set < 70)
@@ -199,6 +212,8 @@ VERBOSE2( Con_Printf("Cl_ConvertSetToOrdinal: Wraparound, now base is %i.\n",
         latestSet = set;
     }
     return ordinal;
+#endif
+    return 0;
 }
 
 /**
@@ -206,6 +221,7 @@ VERBOSE2( Con_Printf("Cl_ConvertSetToOrdinal: Wraparound, now base is %i.\n",
  */
 void Cl_Frame2Received(int packetType)
 {
+#if 0
     byte        set = Msg_ReadByte(), oldSet, resend, deltaType;
     byte        resendAcks[300];
     int         i, numResendAcks = 0;
@@ -428,4 +444,5 @@ VERBOSE2( Con_Printf("\n") );
 #endif
     }
     Net_SendBuffer(0, 0);
+#endif
 }

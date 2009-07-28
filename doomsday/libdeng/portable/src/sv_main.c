@@ -91,9 +91,9 @@ void Sv_GetInfo(serverinfo_t *info)
 
     // Let's figure out what we want to tell about ourselves.
     info->version = DOOMSDAY_VERSION;
-    strncpy(info->game, gx.GetVariable(DD_GAME_ID), sizeof(info->game) - 1);
-    strncpy(info->gameMode, gx.GetVariable(DD_GAME_MODE), sizeof(info->gameMode) - 1);
-    strncpy(info->gameConfig, gx.GetVariable(DD_GAME_CONFIG),
+    strncpy(info->game, game_GetString(DD_GAME_ID), sizeof(info->game) - 1);
+    strncpy(info->gameMode, game_GetString(DD_GAME_MODE), sizeof(info->gameMode) - 1);
+    strncpy(info->gameConfig, game_GetString(DD_GAME_CONFIG),
             sizeof(info->gameConfig) - 1);
     strncpy(info->name, serverName, sizeof(info->name) - 1);
     strncpy(info->description, serverInfo, sizeof(info->description) - 1);
@@ -336,6 +336,7 @@ void Sv_FixLocalAngles(boolean clearFixAnglesFlag)
 
 void Sv_HandlePacket(void)
 {
+#if 0
     ident_t             id;
     int                 i, mask, from = netBuffer.player;
     player_t           *plr = &ddPlayers[from];
@@ -387,7 +388,7 @@ Con_Message("Sv_HandlePacket: length=%i\n", netBuffer.length);
         {
             // Check the game mode (max 16 chars).
             Msg_Read(buf, 16);
-            if(strnicmp(buf, gx.GetVariable(DD_GAME_MODE), 16))
+            if(strnicmp(buf, game_GetString(DD_GAME_MODE), 16))
             {
                 Con_Printf("  Bad Game ID: %-.16s\n", buf);
                 N_TerminateClient(from);
@@ -497,6 +498,7 @@ Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
                   (int) netBuffer.msg.type);
         break;
     }
+#endif
 }
 
 /**
@@ -505,6 +507,7 @@ Con_Printf("Sv_HandlePacket: OK (\"ready!\") from client %i "
  */
 void Sv_Login(void)
 {
+#if 0
     if(netRemoteUser)
     {
         Sv_SendText(netBuffer.player, SV_CONSOLE_FLAGS,
@@ -526,6 +529,7 @@ void Sv_Login(void)
     Msg_Begin(PKT_LOGIN);
     Msg_WriteByte(true);        // Yes, you're logged in.
     Net_SendBuffer(netRemoteUser, SPF_ORDERED);
+#endif
 }
 
 /**
@@ -534,6 +538,7 @@ void Sv_Login(void)
  */
 void Sv_ExecuteCommand(void)
 {
+#if 0
     int         flags;
     byte        cmdSource;
     unsigned short len;
@@ -574,6 +579,7 @@ void Sv_ExecuteCommand(void)
         return;
     }
     Con_Execute(cmdSource, (char *) netBuffer.cursor, silent, true);
+#endif
 }
 
 /**
@@ -581,6 +587,7 @@ void Sv_ExecuteCommand(void)
  */
 void Sv_GetPackets(void)
 {
+#if 0
     int         netconsole;
     int         start, num, i;
     client_t   *sender;
@@ -731,6 +738,7 @@ Con_Message("PCL_ACK_PLAYER_FIX: (%i) Angles %i (%i), pos %i (%i), mom %i (%i).\
             }
         }
     }
+#endif
 }
 
 /**
@@ -739,6 +747,7 @@ Con_Message("PCL_ACK_PLAYER_FIX: (%i) Angles %i (%i), pos %i (%i), mom %i (%i).\
  */
 boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
 {
+#if 0
     int                 i;
 
     Con_Message("Sv_PlayerArrives: '%s' has arrived.\n", name);
@@ -780,6 +789,7 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
         }
     }
 
+#endif
     return false;
 }
 
@@ -788,6 +798,7 @@ boolean Sv_PlayerArrives(unsigned int nodeID, char *name)
  */
 void Sv_PlayerLeaves(unsigned int nodeID)
 {
+#if 0
     int                 i, plrNum = -1;
     boolean             wasInGame;
     player_t           *plr;
@@ -843,6 +854,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
 
     // This client no longer has an ID number.
     cl->id = 0;
+#endif
 }
 
 /**
@@ -850,6 +862,7 @@ void Sv_PlayerLeaves(unsigned int nodeID)
  */
 void Sv_Handshake(int plrNum, boolean newPlayer)
 {
+#if 0
     int                 i;
     handshake_packet_t  shake;
     playerinfo_packet_t info;
@@ -912,6 +925,7 @@ Con_Message("Sv_Handshake: plmask=%x\n", USHORT(shake.playerMask));
     }
 
     ddPlayers[plrNum].shared.flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
+#endif
 }
 
 void Sv_StartNetGame(void)
@@ -970,10 +984,12 @@ void Sv_StartNetGame(void)
 
 void Sv_SendText(int to, int con_flags, char *text)
 {
+#if 0
     Msg_Begin(PSV_CONSOLE_TEXT);
     Msg_WriteLong(con_flags & ~CBLF_TRANSMIT);
     Msg_Write(text, strlen(text) + 1);
     Net_SendBuffer(to, SPF_ORDERED);
+#endif
 }
 
 /**
@@ -982,6 +998,7 @@ void Sv_SendText(int to, int con_flags, char *text)
  */
 void Sv_Kick(int who)
 {
+#if 0
     if(!clients[who].connected)
         return;
 
@@ -989,10 +1006,12 @@ void Sv_Kick(int who)
     Msg_Begin(PSV_SERVER_CLOSE);
     Net_SendBuffer(who, SPF_ORDERED);
     //ddPlayers[who].shared.inGame = false;
+#endif
 }
 
 void Sv_SendPlayerFixes(int plrNum)
 {
+#if 0
     int                 fixes = 0;
     player_t           *plr = &ddPlayers[plrNum];
     ddplayer_t         *ddpl = &plr->shared;
@@ -1062,10 +1081,12 @@ Con_Message("Sv_SendPlayerFixes: Sent momentum (%i): %f, %f, %f\n",
     Net_SendBuffer(plrNum, SPF_ORDERED | SPF_CONFIRM);
 
     ddpl->flags &= ~(DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM);
+#endif
 }
 
 void Sv_Ticker(void)
 {
+#if 0
     int                 i;
 
     // Note last angles for all players.
@@ -1087,6 +1108,7 @@ void Sv_Ticker(void)
         // Increment counter, send new data.
         Sv_SendPlayerFixes(i);
     }
+#endif
 }
 
 /**
@@ -1094,6 +1116,7 @@ void Sv_Ticker(void)
  */
 int Sv_GetNumPlayers(void)
 {
+#if 0
     int                 i, count;
 
     // Clients can't count.
@@ -1109,6 +1132,7 @@ int Sv_GetNumPlayers(void)
     }
 
     return count;
+#endif
 }
 
 /**
@@ -1116,6 +1140,7 @@ int Sv_GetNumPlayers(void)
  */
 int Sv_GetNumConnected(void)
 {
+#if 0
     int                 i, count = 0;
 
     // Clients can't count.
@@ -1127,6 +1152,7 @@ int Sv_GetNumConnected(void)
             count++;
 
     return count;
+#endif
 }
 
 /**
@@ -1135,6 +1161,7 @@ int Sv_GetNumConnected(void)
  */
 boolean Sv_CheckBandwidth(int playerNumber)
 {
+#if 0
     client_t           *client = &clients[playerNumber];
     uint                qSize = N_GetSendQueueSize(playerNumber);
     uint                limit = 400;
@@ -1169,10 +1196,12 @@ boolean Sv_CheckBandwidth(int playerNumber)
 
     // New messages will not be sent if there's too much already.
     return qSize <= 10 * limit;
+#endif
 }
 
 void Sv_PlaceMobj(mobj_t* mo, float x, float y, float z, boolean onFloor)
 {
+#if 0
     P_CheckPosXYZ(mo, x, y, z);
 
     P_MobjUnlink(mo);
@@ -1187,6 +1216,7 @@ void Sv_PlaceMobj(mobj_t* mo, float x, float y, float z, boolean onFloor)
     {
         mo->pos[VZ] = mo->floorZ;
     }
+#endif
 }
 
 /**
@@ -1196,6 +1226,7 @@ void Sv_PlaceMobj(mobj_t* mo, float x, float y, float z, boolean onFloor)
  */
 void Sv_ClientCoords(int plrNum)
 {
+#if 0
     player_t           *plr = &ddPlayers[plrNum];
     ddplayer_t         *ddpl = &plr->shared;
     mobj_t             *mo = ddpl->mo;
@@ -1237,6 +1268,7 @@ void Sv_ClientCoords(int plrNum)
             Sv_PlaceMobj(mo, clientPos[VX], clientPos[VY], clientPos[VZ], onFloor);
         }
     }
+#endif
 }
 
 /**
@@ -1244,6 +1276,7 @@ void Sv_ClientCoords(int plrNum)
  */
 D_CMD(Logout)
 {
+#if 0
     // Only servers can execute this command.
     if(!netRemoteUser || !isServer)
         return false;
@@ -1256,4 +1289,5 @@ D_CMD(Logout)
     Net_SendBuffer(netRemoteUser, SPF_ORDERED);
     netRemoteUser = 0;
     return true;
+#endif
 }

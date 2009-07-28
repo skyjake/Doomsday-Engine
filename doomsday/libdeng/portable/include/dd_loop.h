@@ -29,17 +29,16 @@
 #ifndef __DOOMSDAY_BASELOOP_H__
 #define __DOOMSDAY_BASELOOP_H__
 
-extern boolean appShutdown;
 #ifdef WIN32
 extern boolean suspendMsgPump;
 #endif
 
+extern int maxFrameRate;
 extern int rFrameCount;
 extern timespan_t sysTime, gameTime, demoTime, ddMapTime;
 extern trigger_t sharedFixedTrigger;
 
 void            DD_RegisterLoop(void);
-int             DD_GameLoop(void);
 void            DD_DrawAndBlit(void);
 void            DD_StartFrame(void);
 void            DD_EndFrame(void);

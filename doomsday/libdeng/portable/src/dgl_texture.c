@@ -407,7 +407,7 @@ void GL_GetColorPaletteRGB(DGLuint id, DGLubyte rgb[3], ushort idx)
             Con_Message("GL_GetColorPaletteRGB: Warning, color idx %u "
                         "out of range in palette %u.\n", idx, id))
 
-        idx = MINMAX_OF(0, idx, pal->num) * 3;
+        idx = MIN_OF(idx, pal->num) * 3;
         rgb[CR] = pal->data[idx];
         rgb[CG] = pal->data[idx + 1];
         rgb[CB] = pal->data[idx + 2];
@@ -428,7 +428,7 @@ boolean GL_PalettizeImage(byte* out, int outformat, DGLuint palid,
 
         for(i = 0; i < numPixels; ++i, in += inSize, out += outSize)
         {
-            ushort          idx = MINMAX_OF(0, (*in), pal->num) * 3;
+            ushort          idx = MIN_OF((*in), pal->num) * 3;
 
             if(gammaCorrect)
             {
@@ -522,8 +522,7 @@ void GL_DeSaturatePalettedImage(byte* buffer, DGLuint palid, int width,
     max = 0;
     for(i = 0; i < numpels; ++i)
     {
-        const DGLubyte*     rgb = &pal->data[
-            MINMAX_OF(0, buffer[i], pal->num) * 3];
+        const DGLubyte*     rgb = &pal->data[MIN_OF(buffer[i], pal->num) * 3];
         int                 temp;
 
         temp = (2 * (int)rgb[CR] + 4 * (int)rgb[CG] + 3 * (int)rgb[CB]) / 9;
@@ -533,8 +532,7 @@ void GL_DeSaturatePalettedImage(byte* buffer, DGLuint palid, int width,
 
     for(i = 0; i < numpels; ++i)
     {
-        const DGLubyte*     rgb = &pal->data[
-            MINMAX_OF(0, buffer[i], pal->num) * 3];
+        const DGLubyte*     rgb = &pal->data[MIN_OF(buffer[i], pal->num) * 3];
         int                 temp;
 
         // Calculate a weighted average.

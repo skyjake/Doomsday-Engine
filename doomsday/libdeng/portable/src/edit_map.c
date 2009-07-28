@@ -53,6 +53,8 @@ typedef struct usecrecord_s {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
+void MPE_BuildSectorLineLists(gamemap_t *map);
+
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -601,6 +603,7 @@ boolean MPE_Begin(const char *name)
 
     if(name && name[0])
     {
+        memset(map->name, 0, sizeof(map->name));
         strncpy(map->name, name, 8);
     }
 
@@ -652,97 +655,6 @@ static void buildSectorSSecLists(gamemap_t *map)
     {
         hardenSectorSSecList(map, i);
     }
-}
-
-static void buildSectorLineLists(gamemap_t *map)
-{
-    typedef struct linelink_s {
-        linedef_t      *line;
-        struct linelink_s *next;
-    } linelink_t;
-
-    uint                i, j;
-    linedef_t          *li;
-    sector_t           *sec;
-
-    zblockset_t        *lineLinksBlockSet;
-    linelink_t        **sectorLineLinks;
-    uint                totallinks;
-
-    Con_Message(" Build line tables...\n");
-
-    // build line tables for each sector.
-    lineLinksBlockSet = Z_BlockCreate(sizeof(linelink_t), 512, PU_STATIC);
-    sectorLineLinks = M_Calloc(sizeof(linelink_t*) * map->numSectors);
-    totallinks = 0;
-    for(i = 0, li = map->lineDefs; i < map->numLineDefs; ++i, li++)
-    {
-        uint        secIDX;
-        linelink_t *link;
-
-        if(li->L_frontside)
-        {
-            link = Z_BlockNewElement(lineLinksBlockSet);
-
-            secIDX = li->L_frontsector - map->sectors;
-            link->line = li;
-
-            link->next = sectorLineLinks[secIDX];
-            sectorLineLinks[secIDX] = link;
-            li->L_frontsector->lineDefCount++;
-            totallinks++;
-        }
-
-        if(li->L_backside && li->L_backsector != li->L_frontsector)
-        {
-            link = Z_BlockNewElement(lineLinksBlockSet);
-
-            secIDX = li->L_backsector - map->sectors;
-            link->line = li;
-
-            link->next = sectorLineLinks[secIDX];
-            sectorLineLinks[secIDX] = link;
-            li->L_backsector->lineDefCount++;
-            totallinks++;
-        }
-    }
-
-    // Harden the sector line links into arrays.
-    {
-    linedef_t    **linebuffer;
-    linedef_t    **linebptr;
-
-    linebuffer = Z_Malloc((totallinks + map->numSectors) * sizeof(linedef_t*),
-                          PU_MAPSTATIC, 0);
-    linebptr = linebuffer;
-
-    for(i = 0, sec = map->sectors; i < map->numSectors; ++i, sec++)
-    {
-        if(sectorLineLinks[i])
-        {
-            linelink_t *link = sectorLineLinks[i];
-            sec->lineDefs = linebptr;
-            j = 0;
-            while(link)
-            {
-                sec->lineDefs[j++] = link->line;
-                link = link->next;
-            }
-            sec->lineDefs[j] = NULL; // terminate.
-            sec->lineDefCount = j;
-            linebptr += j + 1;
-        }
-        else
-        {
-            sec->lineDefs = NULL;
-            sec->lineDefCount = 0;
-        }
-    }
-    }
-
-    // Free temporary storage.
-    Z_BlockDestroy(lineLinksBlockSet);
-    M_Free(sectorLineLinks);
 }
 
 /**
@@ -1843,7 +1755,7 @@ boolean MPE_End(void)
         return false;
     }
 
-    buildSectorLineLists(gamemap);
+    MPE_BuildSectorLineLists(gamemap);
     finishLineDefs(gamemap);
     finishSectors(gamemap);
     updateMapBounds(gamemap);

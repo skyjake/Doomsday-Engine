@@ -145,6 +145,7 @@ static linedef_t** sideOwners;
  */
 void Sv_InitPools(void)
 {
+#if 0
     uint                i;
     sector_t*           sec;
     uint                startTime;
@@ -235,6 +236,7 @@ void Sv_InitPools(void)
     Con_Message("Sv_InitPools: World registered, done in %.2f seconds.\n",
                 (Sys_GetRealTime() - startTime) / 1000.0f);
 #endif
+#endif
 }
 
 /**
@@ -249,6 +251,7 @@ void Sv_ShutdownPools(void)
  */
 void Sv_InitPoolForClient(uint clientNumber)
 {
+#if 0
     // Free everything that might exist in the pool.
     Sv_DrainPool(clientNumber);
 
@@ -260,6 +263,7 @@ void Sv_InitPoolForClient(uint clientNumber)
     // The first frame is processed a bit more thoroughly than the others
     // (e.g. *all* sides are compared, not just a portion).
     pools[clientNumber].isFirst = true;
+#endif
 }
 
 /**
@@ -277,6 +281,8 @@ uint Sv_RegisterHashFunction(thid_t id)
 {
     return (uint) id & REG_MOBJ_HASH_FUNCTION_MASK;
 }
+
+#if 0
 
 /**
  * @return              Pointer to the register-mobj, if it already exists.
@@ -2172,11 +2178,6 @@ void Sv_NewNullDeltas(cregister_t* reg, boolean doUpdate, pool_t** targets)
 
                 Sv_AddDeltaToPools(&null, targets);
 
-                /*#ifdef _DEBUG
-                   Con_Printf("New null: %i, %s\n", obj->mo.thinker.id,
-                   defs.states[obj->mo.state - states].id);
-                   #endif */
-
                 if(doUpdate)
                 {
                     // Keep the register up to date.
@@ -2956,3 +2957,4 @@ uint Sv_CountUnackedDeltas(uint clientNumber)
     }
     return count;
 }
+#endif

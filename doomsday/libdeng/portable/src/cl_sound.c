@@ -58,6 +58,7 @@
  */
 void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
 {
+#if 0
     int                 sound = 0, soundFlags = 0;
     byte                flags = 0;
     clmobj_t           *cmo = NULL;
@@ -175,10 +176,6 @@ void Cl_ReadSoundDelta2(deltatype_t type, boolean skip)
             cmo->flags |= CLMF_HIDDEN | CLMF_SOUND;
             cmo->sound = sound;
             cmo->volume = volume;
-            /*#ifdef _DEBUG
-               Con_Printf("Cl_ReadSoundDelta2(%i): Queueing: id=%i snd=%i vol=%.2f\n",
-               type, mobjId, sound, volume);
-               #endif */
             // The sound will be started when the clmobj is unhidden.
             return;
         }
@@ -198,9 +195,6 @@ Con_Printf("Cl_ReadSoundDelta2(%i): Insufficient data, snd=%i\n",
         // from the real player mobj.
         if(cmo && cmo == clPlayerStates[consolePlayer].cmo)
         {
-            /*#ifdef _DEBUG
-               Con_Printf("Cl_ReadSoundDelta2(%i): ViewMobj sound...\n", type);
-               #endif */
             emitter = ddPlayers[consolePlayer].shared.mo;
         }
 
@@ -212,16 +206,6 @@ Con_Printf("Cl_ReadSoundDelta2(%i): Insufficient data, snd=%i\n",
         }
 
         S_LocalSoundAtVolume(sound | soundFlags, emitter, volume);
-/*#
-ifdef _DEBUG
-Con_Printf("Cl_ReadSoundDelta2(%i): Start snd=%i [%x] vol=%.2f",
-           type, sound, flags, volume);
-if(cmo) Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
-else if(sector) Con_Printf(", sector=%i\n", GET_SECTOR_IDX(sector));
-else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
-else Con_Printf("\n");
-#endif
-*/
     }
     else if(sound >= 0)
     {
@@ -230,19 +214,9 @@ else Con_Printf("\n");
         if(emitter)
         {
             S_StopSound(sound, emitter);
-
-/*
-#ifdef _DEBUG
-Con_Printf("Cl_ReadSoundDelta2(%i): Stop sound %i",
-           type, sound);
-if(cmo)  Con_Printf(", mo=%i\n", cmo->mo.thinker.id);
-else if(sector) Con_Printf(", sector=%i\n", GET_SECTOR_IDX(sector));
-else if(poly) Con_Printf(", poly=%i\n", GET_POLYOBJ_IDX(poly));
-else Con_Printf("\n");
-#endif
-*/
         }
     }
+#endif
 }
 
 /**
@@ -250,6 +224,7 @@ else Con_Printf("\n");
  */
 void Cl_Sound(void)
 {
+#if 0
     int         sound, volume = 127;
     float       pos[3];
     byte        flags;
@@ -329,4 +304,5 @@ Con_Printf("Cl_Sound: NULL orig sound %i\n", sound);
 #endif
         S_LocalSoundAtVolume(sound, NULL, volume / 127.0f);
     }
+#endif
 }

@@ -331,7 +331,11 @@ int FR_PrepareFont(const char* name)
     strcpy(buf, fontpath);
     strcat(buf, name);
     strcat(buf, ".dfn");
-    if(ArgCheck("-gdifonts") || (file = F_Open(buf, "rb")) == NULL)
+    if((file = F_Open(buf, "rb")) == NULL)
+    {
+        return false;
+    }
+/*    if(ArgCheck("-gdifonts") || (file = F_Open(buf, "rb")) == NULL)
     {
         boolean             retVal = false;
 #ifdef WIN32
@@ -384,7 +388,7 @@ int FR_PrepareFont(const char* name)
 #endif
         // The font was not found.
         return retVal;
-    }
+    }*/
 
     VERBOSE2(Con_Printf("FR_PrepareFont: %s\n", M_PrettyPath(buf)));
 

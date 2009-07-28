@@ -93,9 +93,9 @@ boolean GL_NewList(DGLuint list, int mode)
 {
     // We enter a New/End list section.
 #ifdef _DEBUG
-if(inList)
-    Con_Error("OpenGL: already inList");
-Sys_CheckGLError();
+    if(inList)
+        Con_Error("OpenGL: already inList");
+    Sys_CheckGLError();
 #endif
 
     if(list)
@@ -115,6 +115,9 @@ Con_Error("OpenGL: List %u already in use.", (unsigned int) list);
 
     glNewList(list, mode == DGL_COMPILE? GL_COMPILE : GL_COMPILE_AND_EXECUTE);
     inList = list;
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
     return true;
 }
 
@@ -137,11 +140,19 @@ void GL_CallList(DGLuint list)
         return; // We do not consider zero a valid list id.
 
     glCallList(list);
+
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
 }
 
 void GL_DeleteLists(DGLuint list, int range)
 {
     glDeleteLists(list, range);
+
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
 }
 
 void GL_EnableArrays(int vertices, int colors, int coords)
@@ -156,6 +167,10 @@ void GL_EnableArrays(int vertices, int colors, int coords)
             glEnableClientState(GL_VERTEX_ARRAY);
     }
 
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
+
     if(colors)
     {
         if(GL_state.noArrays)
@@ -163,6 +178,10 @@ void GL_EnableArrays(int vertices, int colors, int coords)
         else
             glEnableClientState(GL_COLOR_ARRAY);
     }
+
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
 
     for(i = 0; i < GL_state.maxTexUnits && i < MAX_TEX_UNITS; i++)
     {
@@ -182,6 +201,9 @@ void GL_EnableArrays(int vertices, int colors, int coords)
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             }
         }
+#ifdef _DEBUG
+        Sys_CheckGLError();
+#endif
     }
 
 #ifdef _DEBUG
@@ -539,17 +561,33 @@ void DGL_DrawLine(float x1, float y1, float x2, float y2, float r, float g,
                   float b, float a)
 {
     GL_DrawLine(x1, y1, x2, y2, r, g, b, a);
+
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
 }
 
 void DGL_DrawRect(float x, float y, float w, float h, float r, float g,
                   float b, float a)
 {
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
+
     GL_DrawRect(x, y, w, h, r, g, b, a);
+
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
 }
 
 void DGL_DrawRectTiled(float x, float y, float w, float h, int tw, int th)
 {
     GL_DrawRectTiled(x, y, w, h, tw, th);
+
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
 }
 
 void DGL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th,
@@ -557,4 +595,8 @@ void DGL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th,
                           float ch)
 {
     GL_DrawCutRectTiled(x, y, w, h, tw, th, txoff, tyoff, cx, cy, cw, ch);
+
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
 }

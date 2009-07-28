@@ -96,6 +96,7 @@ void Cl_InitPlayers(void)
  */
 void Cl_LocalCommand(void)
 {
+#if 0
     client_t           *cl = &clients[consolePlayer];
     player_t           *plr = &ddPlayers[consolePlayer];
     ddplayer_t         *ddpl = &plr->shared;
@@ -125,6 +126,7 @@ void Cl_LocalCommand(void)
     
     s->angle = ddpl->mo->angle; //ddpl->clAngle; /* $unifiedangles */
     s->turnDelta = 0;
+#endif
 }
 
 /**
@@ -136,6 +138,7 @@ void Cl_LocalCommand(void)
  */
 int Cl_ReadPlayerDelta(void)
 {
+#if 0
     int                 df, psdf, i, idx;
     int                 num = Msg_ReadByte();
     short               junk;
@@ -279,6 +282,7 @@ Con_Message("Cl_RPlD: pl=%i => moid=%i\n", num, s->mobjId);
             }
         }
     }
+#endif
 
     // Continue reading.
     return true;
@@ -289,11 +293,13 @@ Con_Message("Cl_RPlD: pl=%i => moid=%i\n", num, s->mobjId);
  */
 void Cl_ThrustMul(mobj_t *mo, angle_t angle, float move, float thmul)
 {
+#if 0
     // Make a fine angle.
     angle >>= ANGLETOFINESHIFT;
     move *= thmul;
     mo->mom[MX] += move * FIX2FLT(fineCosine[angle]);
     mo->mom[MY] += move * FIX2FLT(finesine[angle]);
+#endif
 }
 
 void Cl_Thrust(mobj_t *mo, angle_t angle, float move)
@@ -309,6 +315,7 @@ void Cl_Thrust(mobj_t *mo, angle_t angle, float move)
  */
 void Cl_MovePlayer(int plrNum)
 {
+#if 0
     player_t           *plr;
     ddplayer_t         *ddpl;
     clplayerstate_t    *st;
@@ -362,6 +369,7 @@ void Cl_MovePlayer(int plrNum)
 
     // Mirror changes in the (hidden) client mobj.
     Cl_UpdatePlayerPos(plrNum);
+#endif
 }
 
 /**
@@ -370,6 +378,7 @@ void Cl_MovePlayer(int plrNum)
  */
 void Cl_UpdatePlayerPos(int plrNum)
 {
+#if 0
     player_t           *plr;
     mobj_t             *clmo, *mo;
     clplayerstate_t    *s;
@@ -395,10 +404,12 @@ void Cl_UpdatePlayerPos(int plrNum)
     clmo->mom[MX] = mo->mom[MX];
     clmo->mom[MY] = mo->mom[MY];
     clmo->mom[MZ] = mo->mom[MZ];
+#endif
 }
 
 void Cl_CoordsReceived(void)
 {
+#if 0
     if(playback)
         return;
 
@@ -411,10 +422,12 @@ Con_Printf("Cl_CoordsReceived\n");
     fixTics = fixSpeed;
     fixPos[VX] /= fixSpeed;
     fixPos[VY] /= fixSpeed;
+#endif
 }
 
 void Cl_HandlePlayerFix(void)
 {
+#if 0
     player_t           *plr = &ddPlayers[consolePlayer];
     clmobj_t           *clmo = clPlayerStates[consolePlayer].cmo;
     ddplayer_t         *ddpl = &plr->shared;
@@ -523,6 +536,7 @@ Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
     Msg_WriteLong(ddpl->fixAcked.pos);
     Msg_WriteLong(ddpl->fixAcked.mom);
     Net_SendBuffer(0, SPF_ORDERED | SPF_CONFIRM);
+#endif
 }
 
 /**
@@ -538,6 +552,7 @@ Con_Message("  Applying to clmobj %i...\n", clmo->mo.thinker.id);
  */
 void Cl_MoveLocalPlayer(float dx, float dy, float z, boolean onground)
 {
+#if 0
     player_t           *plr = &ddPlayers[consolePlayer];
     ddplayer_t         *ddpl = &plr->shared;
     mobj_t             *mo = ddpl->mo;
@@ -588,68 +603,8 @@ void Cl_MoveLocalPlayer(float dx, float dy, float z, boolean onground)
     }
 
     Cl_UpdatePlayerPos(consolePlayer);
-}
-
-/**
- * Animates the player sprites based on their states (up, down, etc.)
- */
-#if 0 // Currently unused.
-void Cl_MovePsprites(void)
-{
-    ddplayer_t         *pl = &players[consolePlayer].shared;
-    ddpsprite_t        *psp = pl->pSprites;
-    int                 i;
-
-    for(i = 0; i < 2; ++i)
-        if(psp[i].tics > 0)
-            psp[i].tics--;
-
-    switch(psp->state)
-    {
-    case DDPSP_UP:
-        pspY -= pspMoveSpeed;
-        if(pspY <= TOP_PSPY)
-        {
-            pspY = TOP_PSPY;
-            psp->state = DDPSP_BOBBING;
-        }
-        psp->y = pspY;
-        break;
-
-    case DDPSP_DOWN:
-        pspY += pspMoveSpeed;
-        if(pspY > BOTTOM_PSPY)
-            pspY = BOTTOM_PSPY;
-        psp->y = pspY;
-        break;
-
-    case DDPSP_FIRE:
-        pspY = TOP_PSPY;
-        //psp->x = 0;
-        psp->y = pspY;
-        break;
-
-    case DDPSP_BOBBING:
-        pspY = TOP_PSPY;
-        // Get bobbing from the Game DLL.
-        psp->x = *((float*) gx.GetVariable(DD_PSPRITE_BOB_X));
-        psp->y = *((float*) gx.GetVariable(DD_PSPRITE_BOB_Y));
-        break;
-    }
-
-    if(psp->state != DDPSP_BOBBING)
-    {
-        if(psp->offX)
-            psp->x = psp->offX;
-        if(psp->offY)
-            psp->y = psp->offY;
-    }
-
-    // The other psprite gets the same coords.
-    psp[1].x = psp->x;
-    psp[1].y = psp->y;
-}
 #endif
+}
 
 /**
  * Reads a single PSV_FRAME2 player delta from the message buffer and
@@ -657,6 +612,7 @@ void Cl_MovePsprites(void)
  */
 void Cl_ReadPlayerDelta2(boolean skip)
 {
+#if 0
     static player_t     dummyPlayer;
     static clplayerstate_t dummyClState;
 
@@ -837,6 +793,7 @@ Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
             }
         }
     }
+#endif
 }
 
 /**
@@ -847,6 +804,7 @@ Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
  */
 boolean Cl_IsFreeToMove(int plrNum)
 {
+#if 0
     mobj_t*             mo = ddPlayers[plrNum].shared.mo;
 
     if(!mo)
@@ -854,4 +812,6 @@ boolean Cl_IsFreeToMove(int plrNum)
 
     return (mo->pos[VZ] >= mo->floorZ &&
             mo->pos[VZ] + mo->height <= mo->ceilingZ);
+#endif
+        return false;
 }

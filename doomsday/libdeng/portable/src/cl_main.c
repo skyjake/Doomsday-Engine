@@ -63,7 +63,7 @@ extern int gotFrame;
 
 ident_t clientID;
 boolean handshakeReceived = false;
-int gameReady = false;
+int gameReady = true; //false;
 int serverTime;
 boolean netLoggedIn = false; // Logged in to the server.
 int clientPaused = false; // Set by the server.
@@ -107,11 +107,15 @@ void Cl_InitID(void)
 
 int Cl_GameReady(void)
 {
+#if 0
     return (handshakeReceived && gameReady);
+#endif
+    return false;
 }
 
 void Cl_CleanUp(void)
 {
+#if 0
     Con_Printf("Cl_CleanUp.\n");
 
     clientPaused = false;
@@ -121,6 +125,7 @@ void Cl_CleanUp(void)
     Cl_InitPlayers();
     Cl_RemoveMovers();
     GL_SetFilter(false);
+#endif
 }
 
 /**
@@ -129,6 +134,7 @@ void Cl_CleanUp(void)
  */
 void Cl_SendHello(void)
 {
+#if 0
     char                buf[256];
 
     Msg_Begin(PCL_HELLO2);
@@ -136,7 +142,7 @@ void Cl_SendHello(void)
 
     // The game mode is included in the hello packet.
     memset(buf, 0, sizeof(buf));
-    strncpy(buf, (char *) gx.GetVariable(DD_GAME_MODE), sizeof(buf) - 1);
+    strncpy(buf, game_GetString(DD_GAME_MODE), sizeof(buf) - 1);
 
 #ifdef _DEBUG
 Con_Message("Cl_SendHello: game mode = %s\n", buf);
@@ -144,10 +150,12 @@ Con_Message("Cl_SendHello: game mode = %s\n", buf);
 
     Msg_Write(buf, 16);
     Net_SendBuffer(0, SPF_ORDERED);
+#endif
 }
 
 void Cl_AnswerHandshake(handshake_packet_t* pShake)
 {
+#if 0
     int                 i;
     handshake_packet_t  shake;
 
@@ -214,10 +222,12 @@ void Cl_AnswerHandshake(handshake_packet_t* pShake)
     DD_ResetTimer();
 
     Con_Executef(CMDS_DDAY, true, "setcon %i", consolePlayer);
+#endif
 }
 
 void Cl_HandlePlayerInfo(playerinfo_packet_t* info)
 {
+#if 0
     player_t*           plr;
     boolean             present;
 
@@ -239,13 +249,16 @@ void Cl_HandlePlayerInfo(playerinfo_packet_t* info)
         // This is a new player! Let the game know about this.
         gx.NetPlayerEvent(info->console, DDPE_ARRIVAL, 0);
     }
+#endif
 }
 
 void Cl_PlayerLeaves(int plrNum)
 {
+#if 0
     Con_Printf("Cl_PlayerLeaves: player %i has left.\n", plrNum);
     ddPlayers[plrNum].shared.inGame = false;
     gx.NetPlayerEvent(plrNum, DDPE_EXIT, 0);
+#endif
 }
 
 /**
@@ -254,6 +267,7 @@ void Cl_PlayerLeaves(int plrNum)
  */
 void Cl_GetPackets(void)
 {
+#if 0
     int                 i;
 
     // All messages come from the server.
@@ -380,6 +394,7 @@ Con_Printf("Cl_GetPackets: Packet (type %i) was discarded!\n",
             }
         }
     }
+#endif
 }
 
 /**
@@ -387,6 +402,7 @@ Con_Printf("Cl_GetPackets: Packet (type %i) was discarded!\n",
  */
 void Cl_Ticker(void)
 {
+#if 0
     //static trigger_t fixed = { 1.0 / 35 };
     static int  ticSendTimer = 0;
 
@@ -405,6 +421,7 @@ void Cl_Ticker(void)
         ticSendTimer = 0;
         Net_SendCommands();
     }
+#endif
 }
 
 /**
@@ -412,6 +429,7 @@ void Cl_Ticker(void)
  */
 D_CMD(Login)
 {
+#if 0
     // Only clients can log in.
     if(!isClient)
         return false;
@@ -423,5 +441,6 @@ D_CMD(Login)
     else
         Msg_Write(argv[1], strlen(argv[1]) + 1);
     Net_SendBuffer(0, SPF_ORDERED);
+#endif
     return true;
 }

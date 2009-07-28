@@ -169,6 +169,7 @@ void Cl_RemoveActivePoly(polymover_t *mover)
  */
 void Cl_MoverThinker(mover_t *mover)
 {
+#if 0
     float              *current = mover->current, original = *current;
     boolean             remove = false;
     boolean             freeMove;
@@ -208,10 +209,12 @@ void Cl_MoverThinker(mover_t *mover)
     {
         Cl_RemoveActiveMover(mover);
     }
+#endif
 }
 
 void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
 {
+#if 0
     sector_t           *sector;
     int                 i;
     mover_t            *mov;
@@ -270,10 +273,12 @@ void Cl_AddMover(uint sectornum, clmovertype_t type, float dest, float speed)
             P_ThinkerAdd(&mov->thinker, true);
             break;
         }
+#endif
 }
 
 void Cl_PolyMoverThinker(polymover_t* mover)
 {
+#if 0
     polyobj_t*          poly = mover->poly;
     float               dx, dy;
     float               dist;
@@ -322,20 +327,24 @@ void Cl_PolyMoverThinker(polymover_t* mover)
     // Can we get rid of this mover?
     if(!mover->move && !mover->rotate)
         Cl_RemoveActivePoly(mover);
+#endif
 }
 
 polymover_t* Cl_FindActivePoly(uint number)
 {
+#if 0
     uint                i;
 
     for(i = 0; i < MAX_MOVERS; ++i)
         if(activepolys[i] && activepolys[i]->number == number)
             return activepolys[i];
     return NULL;
+#endif
 }
 
 polymover_t* Cl_NewPolyMover(uint number)
 {
+#if 0
     polymover_t*        mover;
     polyobj_t*          poly = polyObjs[number];
 
@@ -347,10 +356,12 @@ polymover_t* Cl_NewPolyMover(uint number)
     // \fixme Do these need to be public?
     P_ThinkerAdd(&mover->thinker, true);
     return mover;
+#endif
 }
 
 void Cl_SetPolyMover(uint number, int move, int rotate)
 {
+#if 0
     polymover_t*        mover;
 
     // Try to find an existing mover.
@@ -362,6 +373,7 @@ void Cl_SetPolyMover(uint number, int move, int rotate)
         mover->move = true;
     if(rotate)
         mover->rotate = true;
+#endif
 }
 
 /**
@@ -388,6 +400,7 @@ void Cl_RemoveMovers(void)
 
 mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)
 {
+#if 0
     int                 i;
 
     for(i = 0; i < MAX_MOVERS; ++i)
@@ -396,6 +409,7 @@ mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)
         {
             return activemovers[i];
         }
+#endif
     return NULL;
 }
 
@@ -405,6 +419,7 @@ mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)
  */
 int Cl_ReadLumpDelta(void)
 {
+#if 0
     lumpnum_t           num = (lumpnum_t) Msg_ReadPackedShort();
     char                name[9];
 
@@ -419,6 +434,7 @@ int Cl_ReadLumpDelta(void)
 
     // Set up translation.
     Cl_SetLumpTranslation(num, name);
+#endif
     return true;
 }
 
@@ -428,6 +444,7 @@ int Cl_ReadLumpDelta(void)
  */
 void Cl_ReadSectorDelta2(int deltaType, boolean skip)
 {
+#if 0
     static sector_t     dummy; // Used when skipping.
     static plane_t*     dummyPlaneArray[2];
     static plane_t      dummyPlanes[2];
@@ -637,6 +654,7 @@ if(num >= numSectors)
         Cl_AddMover(num, MVT_CEILING, sec->planes[PLN_CEILING]->target,
                     sec->planes[PLN_CEILING]->speed);
     }
+#endif
 }
 
 /**
@@ -644,6 +662,7 @@ if(num >= numSectors)
  */
 void Cl_ReadSideDelta2(int deltaType, boolean skip)
 {
+#if 0
     unsigned short      num;
 
     int                 df, topMat = 0, midMat = 0, botMat = 0;
@@ -798,6 +817,7 @@ Con_Printf("Cl_ReadSideDelta2: Lineflag %i: %02x\n",
 #endif
         }
     }
+#endif
 }
 
 /**
@@ -806,6 +826,7 @@ Con_Printf("Cl_ReadSideDelta2: Lineflag %i: %02x\n",
  */
 void Cl_ReadPolyDelta2(boolean skip)
 {
+#if 0
     int                 df;
     unsigned short      num;
     polyobj_t          *po;
@@ -859,4 +880,5 @@ if(num >= numPolyObjs)
     Cl_SetPolyMover(num, df & (PODF_DEST_X | PODF_DEST_Y | PODF_SPEED),
                     df & (PODF_DEST_ANGLE | PODF_ANGSPEED |
                           PODF_PERPETUAL_ROTATE));
+#endif
 }

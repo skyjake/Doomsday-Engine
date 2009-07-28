@@ -69,6 +69,7 @@
  */
 int Cl_ReadSectorDelta(void)
 {
+#if 0
     short               num = Msg_ReadPackedShort();
     sector_t*           sec;
     int                 df;
@@ -196,6 +197,7 @@ if(!mat)
                     sec->planes[PLN_CEILING]->speed);
     }
 
+#endif
     // Continue reading.
     return true;
 }
@@ -210,6 +212,7 @@ if(!mat)
  */
 int Cl_ReadSideDelta(void)
 {
+#if 0
     short               num = Msg_ReadPackedShort(); // \fixme we support > 32768 sidedefs!
     sidedef_t*          sid;
     int                 df;
@@ -308,6 +311,7 @@ Con_Printf("lineflag %i: %02x\n", GET_LINE_IDX(line),
 
     // Continue reading.
     return true;
+#endif
 }
 
 /**
@@ -319,6 +323,7 @@ Con_Printf("lineflag %i: %02x\n", GET_LINE_IDX(line),
  */
 int Cl_ReadPolyDelta(void)
 {
+#if 0
     int                 df;
     short               num = Msg_ReadPackedShort();
     polyobj_t*          po;
@@ -353,6 +358,7 @@ int Cl_ReadPolyDelta(void)
     Cl_SetPolyMover(num, df & (PODF_DEST_X | PODF_DEST_Y | PODF_SPEED),
                     df & (PODF_DEST_ANGLE | PODF_ANGSPEED |
                           PODF_PERPETUAL_ROTATE));
+#endif
 
     // Continue reading.
     return true;

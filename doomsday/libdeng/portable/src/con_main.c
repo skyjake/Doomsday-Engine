@@ -131,8 +131,6 @@ static void Con_SplitIntoSubCommands(const char *command,
 static void Con_ClearExecBuffer(void);
 static void Con_DestroyMatchedWordList(void);
 
-static void updateDedicatedConsoleCmdLine(void);
-
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -419,10 +417,15 @@ void Con_Shutdown(void)
     VERBOSE(Con_Printf("Con_Shutdown: Shuting down the console...\n"));
 
     Con_DestroyBuffer(histBuf); // The console history buffer.
+    histBuf = 0; 
     Con_DestroyBuffer(oldCmds); // The old commands buffer.
+    oldCmds = 0; 
 
     if(prbuff)
+    {
         M_Free(prbuff); // Free the print buffer.
+        prbuff = 0;
+    }
 
     Con_DestroyMatchedWordList();
     Con_DestroyDatabases();
@@ -450,6 +453,7 @@ static void Con_Send(const char *command, byte src, int silent)
 {
     ushort          len = (ushort) (strlen(command) + 1);
 
+#if 0
     Msg_Begin(PKT_COMMAND2);
     // Mark high bit for silent commands.
     Msg_WriteShort(len | (silent ? 0x8000 : 0));
@@ -458,6 +462,7 @@ static void Con_Send(const char *command, byte src, int silent)
     Msg_Write(command, len);
     // Send it reliably.
     Net_SendBuffer(0, SPF_ORDERED);
+#endif
 }
 
 static void Con_QueueCmd(const char *singleCmd, timespan_t atSecond,
@@ -575,7 +580,7 @@ void Con_SetMaxLineLength(void)
 {
     int         cw = FR_TextWidth("A");
     int         length;
-    float       winWidth = theWindow->width? theWindow->width : 640;
+    float       winWidth = DD_WindowWidth();
 
     if(!cw)
     {
@@ -994,7 +999,10 @@ static void Con_DestroyMatchedWordList(void)
 {
     // Free the matched words array.
     if(matchedWordCount)
+    {
         M_Free(matchedWords);
+        matchedWords = 0;
+    }
 }
 
 /**
@@ -1243,19 +1251,6 @@ static void updateCmdLine(void)
     matchedWordListGood = false;
 }
 
-static void updateDedicatedConsoleCmdLine(void)
-{
-    int         flags = 0;
-
-    if(!isDedicated)
-        return;
-
-    if(cmdInsMode)
-        flags |= CLF_CURSOR_LARGE;
-
-    Sys_SetConWindowCmdLine(windowIDX, cmdLine, cmdCursor+1, flags);
-}
-
 void Con_Open(int yes)
 {
     // The console cannot be closed in dedicated mode.
@@ -1375,7 +1370,6 @@ boolean Con_Responder(ddevent_t* ev)
             ocPos--;
         // Update the command line.
         updateCmdLine();
-        updateDedicatedConsoleCmdLine();
         return true;
 
     case DDKEY_DOWNARROW:
@@ -1390,7 +1384,6 @@ boolean Con_Responder(ddevent_t* ev)
             ocPos++;
 
         updateCmdLine();
-        updateDedicatedConsoleCmdLine();
         return true;
     }
     case DDKEY_PGUP:
@@ -1446,7 +1439,6 @@ boolean Con_Responder(ddevent_t* ev)
         complPos = 0;
         matchedWordListGood = false;
         Rend_ConsoleCursorResetBlink();
-        updateDedicatedConsoleCmdLine();
         return true;
 
     case DDKEY_INS:
@@ -1454,7 +1446,6 @@ boolean Con_Responder(ddevent_t* ev)
             break;
 
         cmdInsMode = !cmdInsMode; // Toggle text insert mode.
-        updateDedicatedConsoleCmdLine();
         return true;
 
     case DDKEY_DEL:
@@ -1468,7 +1459,6 @@ boolean Con_Responder(ddevent_t* ev)
             complPos = cmdCursor;
             matchedWordListGood = false;
             Rend_ConsoleCursorResetBlink();
-            updateDedicatedConsoleCmdLine();
         }
         return true;
 
@@ -1484,7 +1474,6 @@ boolean Con_Responder(ddevent_t* ev)
             complPos = cmdCursor;
             matchedWordListGood = false;
             Rend_ConsoleCursorResetBlink();
-            updateDedicatedConsoleCmdLine();
         }
         return true;
 
@@ -1512,7 +1501,6 @@ boolean Con_Responder(ddevent_t* ev)
         }
 
         Rend_ConsoleCursorResetBlink();
-        updateDedicatedConsoleCmdLine();
         }
         return true;
 
@@ -1529,7 +1517,6 @@ boolean Con_Responder(ddevent_t* ev)
         }
         complPos = cmdCursor;
         Rend_ConsoleCursorResetBlink();
-        updateDedicatedConsoleCmdLine();
         break;
 
     case DDKEY_RIGHTARROW:
@@ -1552,7 +1539,6 @@ boolean Con_Responder(ddevent_t* ev)
                         cmdLine[cmdCursor] = line->text[cmdCursor];
                         cmdCursor++;
                         matchedWordListGood = false;
-                        updateDedicatedConsoleCmdLine();
                     }
                 }
             }
@@ -1567,7 +1553,6 @@ boolean Con_Responder(ddevent_t* ev)
 
         complPos = cmdCursor;
         Rend_ConsoleCursorResetBlink();
-        updateDedicatedConsoleCmdLine();
         break;
 
     case DDKEY_F5:
@@ -1596,7 +1581,6 @@ boolean Con_Responder(ddevent_t* ev)
             complPos = 0;
             matchedWordListGood = false;
             Rend_ConsoleCursorResetBlink();
-            updateDedicatedConsoleCmdLine();
             return true;
         }
 
@@ -1628,7 +1612,6 @@ boolean Con_Responder(ddevent_t* ev)
         complPos = cmdCursor;   //strlen(cmdLine);
         matchedWordListGood = false;
         Rend_ConsoleCursorResetBlink();
-        updateDedicatedConsoleCmdLine();
         return true;
     }
     }
@@ -1651,12 +1634,13 @@ void Con_AddRuler(void)
         for(i = 0; i < 7; ++i)
         {
             fprintf(outFile, "----------");
+            /*
             if(isDedicated)
-                Sys_ConPrint(windowIDX, "----------", 0);
+                Sys_ConPrint(windowIDX, "----------", 0);*/
         }
         fprintf(outFile, "\n");
-        if(isDedicated)
-            Sys_ConPrint(windowIDX, "\n", 0);
+/*        if(isDedicated)
+            Sys_ConPrint(windowIDX, "\n", 0);*/
     }
 }
 
@@ -1676,7 +1660,7 @@ void conPrintf(int flags, const char *format, va_list args)
     // Format the message to prbuff.
     vsnprintf(prbuff, PRBUFF_SIZE, format, args);
 
-    if(consoleDump)
+    if(consoleDump && outFile)
         fprintf(outFile, "%s", prbuff);
 
     // Servers might have to send the text to a number of clients.
@@ -1690,7 +1674,7 @@ void conPrintf(int flags, const char *format, va_list args)
 
     if(isDedicated)
     {
-        Sys_ConPrint(windowIDX, prbuff, flags);
+        //Sys_ConPrint(windowIDX, prbuff, flags);
     }
     else
     {
@@ -1792,7 +1776,7 @@ void Con_Error(const char *error, ...)
     // Already in an error?
     if(!ConsoleInited || errorInProgress)
     {
-        fprintf(outFile, "Con_Error: Stack overflow imminent, aborting...\n");
+        if(outFile) fprintf(outFile, "Con_Error: Stack overflow imminent, aborting...\n");
 
         va_start(argptr, error);
         vsnprintf(buff, sizeof(buff), error, argptr);
@@ -1812,7 +1796,7 @@ void Con_Error(const char *error, ...)
     va_start(argptr, error);
     vsnprintf(err, sizeof(err), error, argptr);
     va_end(argptr);
-    fprintf(outFile, "%s\n", err);
+    if(outFile) fprintf(outFile, "%s\n", err);
 
     strcpy(buff, "");
     if(histBuf != NULL)
@@ -1871,7 +1855,7 @@ void Con_AbnormalShutdown(const char* message)
     DD_Shutdown();
 
     // Open Doomsday.out in a text editor.
-    fflush(outFile); // Make sure all the buffered stuff goes into the file.
+    if(outFile) fflush(outFile); // Make sure all the buffered stuff goes into the file.
     Sys_OpenTextEditor("doomsday.out");
 
     // Get outta here.
@@ -1966,7 +1950,7 @@ D_CMD(Clear)
 D_CMD(Version)
 {
     Con_Printf("Doomsday Engine %s (" __TIME__ ")\n", DOOMSDAY_VERSIONTEXT);
-    Con_Printf("Game DLL: %s\n", (char *) gx.GetVariable(DD_VERSION_LONG));
+    Con_Printf("Game DLL: %s\n", game_GetString(DD_VERSION_LONG));
     Con_Printf("%s\n", DOOMSDAY_PROJECTURL);
     return true;
 }

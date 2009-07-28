@@ -28,12 +28,6 @@
 #ifndef __DOOMSDAY_ZONE_H__
 #define __DOOMSDAY_ZONE_H__
 
-/**
- * Define this to force all memory blocks to be allocated from
- * the real heap. Useful when debugging memory-related problems.
- */
-//#define FAKE_MEMORY_ZONE 1
-
 #define PU_REFRESHTEX   11 // Textures/Flats/refresh.
 #define PU_REFRESHCM    12 // Colormap.
 #define PU_REFRESHTRANS 13
@@ -42,14 +36,15 @@
 #define PU_MODEL        16
 #define PU_SPRITE       20
 
-int             Z_Init(void);
-void            Z_Shutdown(void);
 void            Z_EnableFastMalloc(boolean isEnabled);
 void            Z_ChangeUser(void* ptr, void* newUser);
 void*           Z_GetUser(void* ptr);
 int             Z_GetTag(void* ptr);
 size_t          Z_FreeMemory(void);
 
+#define Z_ChangeTag(p,t) Z_ChangeTag2(p,t)
+
+/*
 typedef struct memblock_s {
     size_t          size; // Including header and possibly tiny fragments.
     void**          user; // NULL if a free block.
@@ -80,8 +75,8 @@ typedef struct zblockset_s {
 zblockset_t*    Z_BlockCreate(size_t sizeOfElement, uint batchSize, int tag);
 void            Z_BlockDestroy(zblockset_t* set);
 void*           Z_BlockNewElement(zblockset_t* set);
-
-#ifdef FAKE_MEMORY_ZONE
+*/
+/*
 // Fake memory zone allocates memory from the real heap.
 #define Z_ChangeTag(p,t) Z_ChangeTag2(p,t)
 
@@ -97,6 +92,6 @@ if (( (memblock_t *)( (byte *)(p) - sizeof(memblock_t)))->id!=0x1d4a11) \
 Z_ChangeTag2(p,t); \
 };
 #endif
-
+*/
 
 #endif

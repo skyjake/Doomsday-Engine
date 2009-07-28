@@ -1114,6 +1114,9 @@ void Sfx_Shutdown(void)
     sfxAvail = false;
     allowRefresh = false;
 
+    // Wait for refresh to finish.
+    Sys_WaitThread(refreshHandle);
+
     // Destroy the sample cache.
     Sfx_ShutdownCache();
 

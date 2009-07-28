@@ -82,7 +82,7 @@ typedef unsigned short gramp_t[3 * 256];
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 D_CMD(Fog);
-D_CMD(SetBPP);
+//D_CMD(SetBPP);
 D_CMD(SetRes);
 D_CMD(ToggleFullscreen);
 
@@ -149,7 +149,7 @@ void GL_Register(void)
 
     // Ccmds
     C_CMD_FLAGS("fog", NULL, Fog, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("setbpp", "i", SetBPP, CMDF_NO_DEDICATED);
+//    C_CMD_FLAGS("setbpp", "i", SetBPP, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setres", "ii", SetRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("setvidramp", "", UpdateGammaRamp, CMDF_NO_DEDICATED);
     C_CMD("togglefullscreen", "", ToggleFullscreen);
@@ -175,7 +175,7 @@ void GL_DoUpdate(void)
     // Blit screen to video.
     if(renderWireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    Sys_UpdateWindow(windowIDX);
+    //Sys_UpdateWindow(windowIDX);
     if(renderWireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -403,9 +403,9 @@ void GL_SetGamma(void)
 
 const char* GL_ChooseFixedFont(void)
 {
-    if(theWindow->width < 300)
+    if(DD_WindowWidth() < 300)
         return "console11";
-    if(theWindow->width > 768)
+    if(DD_WindowWidth() > 768)
         return "console18";
     return "console14";
 }
@@ -442,13 +442,13 @@ void GL_InitFont(void)
 
     Con_SetMaxLineLength();
 
-    FR_PrepareFont(GL_ChooseVariableFont(GLFS_NORMAL, theWindow->width, theWindow->height));
+    FR_PrepareFont(GL_ChooseVariableFont(GLFS_NORMAL, DD_WindowWidth(), DD_WindowHeight()));
     glFontVariable[GLFS_NORMAL] = FR_GetCurrent();
 
-    FR_PrepareFont(GL_ChooseVariableFont(GLFS_BOLD, theWindow->width, theWindow->height));
+    FR_PrepareFont(GL_ChooseVariableFont(GLFS_BOLD, DD_WindowWidth(), DD_WindowHeight()));
     glFontVariable[GLFS_BOLD] = FR_GetCurrent();
 
-    FR_PrepareFont(GL_ChooseVariableFont(GLFS_LIGHT, theWindow->width, theWindow->height));
+    FR_PrepareFont(GL_ChooseVariableFont(GLFS_LIGHT, DD_WindowWidth(), DD_WindowHeight()));
     glFontVariable[GLFS_LIGHT] = FR_GetCurrent();
 
     FR_SetFont(glFontFixed);
@@ -492,7 +492,7 @@ void GL_InitVarFont(void)
         if(i == GLFS_BOLD || i == GLFS_LIGHT)
             continue;
 
-        FR_PrepareFont(GL_ChooseVariableFont(i, theWindow->width, theWindow->height));
+        FR_PrepareFont(GL_ChooseVariableFont(i, DD_WindowWidth(), DD_WindowHeight()));
         glFontVariable[i] = FR_GetCurrent();
         VERBOSE2(Con_Message("GL_InitVarFont: Variable font = %i.\n",
                              glFontVariable[i]));
@@ -556,12 +556,14 @@ boolean GL_EarlyInit(void)
 
         Con_Message("  Using restricted texture w/h ratio (1:8).\n");
         ratioLimit = 8;
+#if 0        
         Sys_GetWindowBPP(windowIDX, &bpp);
         if(bpp == 32)
         {
             Con_Message("  Warning: Are you sure your video card accelerates"
                         " a 32 bit mode?\n");
         }
+#endif        
     }
     // Set a custom maximum size?
     if(ArgCheckWith("-maxtex", 1))
@@ -724,19 +726,19 @@ void GL_SwitchTo3DState(boolean push_state, viewport_t* port)
     glEnable(GL_DEPTH_TEST);
 
 #if 0
-    viewpx = viewwindowx * theWindow->width / 320, viewpy =
-        viewwindowy * theWindow->height / 200;
+    viewpx = viewwindowx * DD_WindowWidth() / 320, viewpy =
+        viewwindowy * DD_WindowHeight() / 200;
     // Set the viewport.
     if(viewheight != SCREENHEIGHT)
     {
-        viewpw = viewwidth * theWindow->width / 320;
-        viewph = viewheight * theWindow->height / 200 + 1;
+        viewpw = viewwidth * DD_WindowWidth() / 320;
+        viewph = viewheight * DD_WindowHeight() / 200 + 1;
         glViewport(viewpx, FLIP(viewpy + viewph - 1), viewpw, viewph);
     }
     else
     {
-        viewpw = theWindow->width;
-        viewph = theWindow->height;
+        viewpw = DD_WindowWidth();
+        viewph = DD_WindowHeight();
     }
 #endif
 
@@ -746,7 +748,7 @@ void GL_SwitchTo3DState(boolean push_state, viewport_t* port)
     viewpy = port->y + viewwindowy / 200.0f * port->height;
     viewpw = port->width * viewwidth / 320.0f;
     viewph = port->height * viewheight / 200.0f;
-    glViewport(viewpx, FLIP(viewpy + viewph - 1), viewpw, viewph);
+    //glViewport(viewpx, FLIP(viewpy + viewph - 1), viewpw, viewph);
 
     // The 3D projection matrix.
     GL_ProjectionMatrix();
@@ -770,8 +772,8 @@ void GL_Restore2DState(int step)
         break;
 
     case 2: // After Restore Step 2 nothing special happens.
-        glViewport(currentView.x, FLIP(currentView.y + currentView.height - 1),
-                   currentView.width, currentView.height);
+        //glViewport(currentView.x, FLIP(currentView.y + currentView.height - 1),
+        //           currentView.width, currentView.height);
         break;
 
     case 3: // After Restore Step 3 we're back in 2D rendering mode.
@@ -890,8 +892,8 @@ unsigned char* GL_GrabScreen(void)
 {
     unsigned char*      buffer = 0;
 
-    buffer = M_Malloc(theWindow->width * theWindow->height * 3);
-    GL_Grab(0, 0, theWindow->width, theWindow->height, DGL_RGB, buffer);
+    buffer = M_Malloc(DD_WindowWidth() * DD_WindowHeight() * 3);
+    GL_Grab(0, 0, DD_WindowWidth(), DD_WindowHeight(), DGL_RGB, buffer);
     return buffer;
 }
 
@@ -973,13 +975,16 @@ D_CMD(SetRes)
 {
     int                 width = atoi(argv[1]), height = atoi(argv[2]);
 
+#if 0
     return Sys_SetWindow(windowIDX, 0, 0, width, height, 0, 0,
                          DDSW_NOVISIBLE|DDSW_NOCENTER|DDSW_NOFULLSCREEN|
                          DDSW_NOBPP);
+#endif                        
 }
 
 D_CMD(ToggleFullscreen)
 {
+#if 0
     boolean             fullscreen;
 
     if(!Sys_GetWindowFullscreen(windowIDX, &fullscreen))
@@ -989,6 +994,7 @@ D_CMD(ToggleFullscreen)
         Sys_SetWindow(windowIDX, 0, 0, 0, 0, 0,
                       (!fullscreen? DDWF_FULLSCREEN : 0),
                       DDSW_NOCENTER|DDSW_NOSIZE|DDSW_NOBPP|DDSW_NOVISIBLE);
+#endif
     return true;
 }
 
@@ -999,6 +1005,7 @@ D_CMD(UpdateGammaRamp)
     return true;
 }
 
+#if 0
 D_CMD(SetBPP)
 {
     int                 bpp = atoi(argv[1]);
@@ -1013,6 +1020,7 @@ D_CMD(SetBPP)
                         DDSW_NOCENTER|DDSW_NOSIZE|DDSW_NOFULLSCREEN|
                         DDSW_NOVISIBLE);
 }
+#endif
 
 D_CMD(Fog)
 {

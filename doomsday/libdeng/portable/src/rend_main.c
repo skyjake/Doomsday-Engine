@@ -3599,7 +3599,7 @@ static boolean drawVertex1(linedef_t* li, void* context)
 
         if(dist3D < MAX_VERTEX_POINT_DIST)
         {
-            drawVertexIndex(vtx, pos[VZ], dist3D / (theWindow->width / 2),
+            drawVertexIndex(vtx, pos[VZ], dist3D / (DD_WindowWidth() / 2),
                             1 - dist3D / MAX_VERTEX_POINT_DIST);
         }
     }
@@ -3722,7 +3722,7 @@ void Rend_Vertexes(void)
                 float               alpha, scale;
 
                 alpha = 1 - dist / MAX_VERTEX_POINT_DIST;
-                scale = dist / (theWindow->width / 2);
+                scale = dist / (DD_WindowWidth() / 2);
 
                 drawVertexIndex(vtx, pos[VZ], scale, alpha);
             }
@@ -3944,7 +3944,7 @@ void R_DrawLightRange(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glOrtho(0, DD_WindowWidth(), DD_WindowHeight(), 0, -1, 1);
 
     glTranslatef(BORDER, BORDER, 0);
 
@@ -4177,7 +4177,7 @@ static void Rend_RenderBoundingBoxes(void)
             if(mo == ddPlayers[consolePlayer].shared.mo)
                 continue; // We don't want the console player.
 
-            alpha = 1 - ((M_Distance(mo->pos, eye)/(theWindow->width/2))/4);
+            alpha = 1 - ((M_Distance(mo->pos, eye)/(DD_WindowWidth()/2))/4);
 
             if(alpha < .25f)
                 alpha = .25f; // Don't make them totally invisible.

@@ -157,6 +157,7 @@ boolean N_NEGet(netevent_t *nev)
  */
 void N_NETicker(void)
 {
+#if 0
     masteraction_t act;
     int         i, num;
 
@@ -218,6 +219,7 @@ void N_NETicker(void)
             break;
         }
     }
+#endif
 }
 
 /**
@@ -226,6 +228,7 @@ void N_NETicker(void)
  */
 void N_Update(void)
 {
+#if 0
     netevent_t  nevent;
     char        name[256];
 
@@ -264,6 +267,7 @@ void N_Update(void)
             break;
         }
     }
+#endif
 }
 
 /**
@@ -272,6 +276,7 @@ void N_Update(void)
  */
 void N_TerminateClient(int console)
 {
+#if 0
     if(!N_IsAvailable() || !clients[console].connected || !netServerMode)
         return;
 
@@ -279,4 +284,5 @@ void N_TerminateClient(int console)
                 clients[console].name, console);
 
     N_TerminateNode(clients[console].nodeID);
+#endif
 }

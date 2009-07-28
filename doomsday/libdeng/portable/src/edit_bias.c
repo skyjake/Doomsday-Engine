@@ -411,7 +411,7 @@ static boolean SBE_Save(const char *name)
 
     // Since there can be quite a lot of these, make sure we'll skip
     // the ones that are definitely not suitable.
-    fprintf(file, "SkipIf Not %s\n", (char *) gx.GetVariable(DD_GAME_MODE));
+    fprintf(file, "SkipIf Not %s\n", game_GetString(DD_GAME_MODE));
 
     s = SB_GetSource(0);
     for(i = 0; i < numSources; ++i, ++s)
@@ -655,8 +655,8 @@ static void SBE_InfoBox(source_t *s, int rightX, char *title, float alpha)
     char                buf[80];
     ui_color_t          color;
 
-    x = theWindow->width - 10 - w - rightX;
-    y = theWindow->height - 10 - h;
+    x = DD_WindowWidth() - 10 - w - rightX;
+    y = DD_WindowHeight() - 10 - h;
 
     eye[0] = vx;
     eye[1] = vz;
@@ -806,14 +806,14 @@ void SBE_DrawHUD(void)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glOrtho(0, DD_WindowWidth(), DD_WindowHeight(), 0, -1, 1);
 
     // Overall stats: numSources / MAX (left)
     sprintf(buf, "%i / %i (%i free)", numSources, MAX_BIAS_LIGHTS,
             MAX_BIAS_LIGHTS - numSources);
     w = FR_TextWidth(buf) + 16;
     h = FR_TextHeight(buf) + 16;
-    y = theWindow->height - 10 - h;
+    y = DD_WindowHeight() - 10 - h;
     SBE_DrawBox(10, y, w, h, 0);
     UI_TextOutEx(buf, 18, y + h / 2, false, true,
                  UI_Color(UIC_TITLE), alpha);
@@ -836,7 +836,7 @@ void SBE_DrawHUD(void)
 
     if(SBE_GetGrabbed() || SBE_GetNearest())
     {
-        SBE_DrawLevelGauge(20, theWindow->height/2 - 255/2, 255);
+        SBE_DrawLevelGauge(20, DD_WindowHeight()/2 - 255/2, 255);
     }
 
     glMatrixMode(GL_PROJECTION);
@@ -883,7 +883,7 @@ static void SBE_DrawIndex(source_t *src)
     eye[0] = vx;
     eye[1] = vz;
     eye[2] = vy;
-    scale = M_Distance(src->pos, eye) / (theWindow->width / 2);
+    scale = M_Distance(src->pos, eye) / (DD_WindowWidth() / 2);
 
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);

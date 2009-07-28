@@ -69,6 +69,7 @@ static void Sv_IdentifySoundOrigin(mobj_t **origin, sector_t **sector,
 {
     *sector = NULL;
     *poly = NULL;
+#if 0
 
     if(*origin && !(*origin)->thinker.id)
     {
@@ -90,6 +91,7 @@ static void Sv_IdentifySoundOrigin(mobj_t **origin, sector_t **sector,
 #endif
         *origin = NULL;
     }
+#endif
 }
 
 /**
@@ -98,6 +100,7 @@ static void Sv_IdentifySoundOrigin(mobj_t **origin, sector_t **sector,
 void Sv_SoundAtVolume(int soundIDAndFlags, mobj_t *origin, float volume,
                       int toPlr)
 {
+#if 0
     int                 soundID = (soundIDAndFlags & ~DDSF_FLAG_MASK);
     sector_t           *sector;
     polyobj_t          *poly;
@@ -134,6 +137,7 @@ void Sv_SoundAtVolume(int soundIDAndFlags, mobj_t *origin, float volume,
     Sv_NewSoundDelta(soundID, origin, sector, poly, volume,
                      (soundIDAndFlags & DDSF_REPEAT) != 0,
                      targetPlayers);
+#endif
 }
 
 /**
@@ -142,6 +146,7 @@ void Sv_SoundAtVolume(int soundIDAndFlags, mobj_t *origin, float volume,
  */
 void Sv_StopSound(int sound_id, mobj_t *origin)
 {
+#if 0
     sector_t   *sector;
     polyobj_t  *poly;
 
@@ -150,13 +155,8 @@ void Sv_StopSound(int sound_id, mobj_t *origin)
 
     Sv_IdentifySoundOrigin(&origin, &sector, &poly);
 
-    /*#ifdef _DEBUG
-       Con_Printf("Sv_StopSound: id=%i origin=%i(%p) sec=%i poly=%i\n",
-       sound_id, origin? origin->thinker.id : 0, origin,
-       sector, poly);
-       #endif */
-
     // Send the stop sound delta to everybody.
     // Volume zero means silence.
     Sv_NewSoundDelta(sound_id, origin, sector, poly, 0, false, -1);
+#endif
 }

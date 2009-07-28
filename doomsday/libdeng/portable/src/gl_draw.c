@@ -80,14 +80,14 @@ void GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
 
     // Setup offset and scale.
     // Scale the offsets to match the resolution.
-    glTranslatef(offx * theWindow->width / 320.0f,
-                 offy * theWindow->height / 200.0f, 0);
+    glTranslatef(offx * DD_WindowWidth() / 320.0f,
+                 offy * DD_WindowHeight() / 200.0f, 0);
     glScalef(scalex, scaley, 1);
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+    glOrtho(0, DD_WindowWidth(), DD_WindowHeight(), 0, -1, 1);
 
     GL_SetRawImage(lump, false, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     raw = R_GetRawTex(lump);
@@ -102,7 +102,7 @@ void GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
         // Bottom texture coordinate.
         tcb = 1;
     }
-    pixelBorder = raw->width * theWindow->width / 320;
+    pixelBorder = raw->width * DD_WindowWidth() / 320;
 
     // The first part is rendered in any case.
     glBegin(GL_QUADS);
@@ -111,9 +111,9 @@ void GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
         glTexCoord2f(1, 0);
         glVertex2f(pixelBorder, 0);
         glTexCoord2f(1, tcb);
-        glVertex2f(pixelBorder, theWindow->height);
+        glVertex2f(pixelBorder, DD_WindowHeight());
         glTexCoord2f(0, tcb);
-        glVertex2f(0, theWindow->height);
+        glVertex2f(0, DD_WindowHeight());
     glEnd();
 
     if(isTwoPart)
@@ -124,11 +124,11 @@ void GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
             glTexCoord2f(0, 0);
             glVertex2f(pixelBorder, 0);
             glTexCoord2f(1, 0);
-            glVertex2f(theWindow->width, 0);
+            glVertex2f(DD_WindowWidth(), 0);
             glTexCoord2f(1, tcb);
-            glVertex2f(theWindow->width, theWindow->height);
+            glVertex2f(DD_WindowWidth(), DD_WindowHeight());
             glTexCoord2f(0, tcb);
-            glVertex2f(pixelBorder, theWindow->height);
+            glVertex2f(pixelBorder, DD_WindowHeight());
         glEnd();
     }
 

@@ -399,7 +399,7 @@ void DAM_GetCachedMapDir(char* dir,  int mainLump, size_t len)
 
     // The cached map directory is relative to the runtime directory.
     snprintf(dir, len, "%s%s\\%s-%04X\\", mapCacheDir,
-            (char*) gx.GetVariable(DD_GAME_MODE),
+            game_GetString(DD_GAME_MODE),
             base, identifier);
 
     M_TranslatePath(dir, dir, len);

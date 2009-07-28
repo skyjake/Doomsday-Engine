@@ -56,6 +56,7 @@
 
 void Net_ShowPingSummary(int player)
 {
+#if 0
     client_t           *cl = clients + player;
     pinger_t           *ping = &cl->ping;
     float               avgTime = 0, loss;
@@ -77,10 +78,12 @@ void Net_ShowPingSummary(int player)
     loss = 1 - goodCount / (float) ping->total;
     Con_Printf("Plr %i (%s): average ping %.0f ms, loss %.0f%%.\n", player,
                cl->name, avgTime * 1000, loss * 100);
+#endif
 }
 
 void Net_SendPing(int player, int count)
 {
+#if 0
     client_t           *cl = clients + player;
 
     // Valid destination?
@@ -121,11 +124,13 @@ void Net_SendPing(int player, int count)
     netBuffer.length = netBuffer.cursor - netBuffer.msg.data;
     netBuffer.player = player;
     N_SendPacket(10000);
+#endif
 }
 
 // Called when a ping packet comes in.
 void Net_PingResponse(void)
 {
+#if 0
     client_t           *cl = &clients[netBuffer.player];
     int                 time = Msg_ReadLong();
 
@@ -146,10 +151,12 @@ void Net_PingResponse(void)
         // Not ours, just respond.
         Net_SendBuffer(netBuffer.player, 10000);
     }
+#endif
 }
 
 D_CMD(Ping)
 {
+#if 0
     int                 dest, count = 4;
 
     if(!netGame)
@@ -184,5 +191,6 @@ D_CMD(Ping)
         return false;
 
     Net_SendPing(dest, count);
+#endif
     return true;
 }

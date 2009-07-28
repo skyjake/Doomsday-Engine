@@ -136,6 +136,7 @@ void Demo_Init(void)
  */
 boolean Demo_BeginRecording(const char* fileName, int plrNum)
 {
+#if 0
     filename_t          buf;
     client_t*           cl = &clients[plrNum];
     player_t*           plr = &ddPlayers[plrNum];
@@ -180,6 +181,7 @@ boolean Demo_BeginRecording(const char* fileName, int plrNum)
         // Request a new one from the server.
         Cl_SendHello();
     }
+#endif
 
     // The operation is a success.
     return true;
@@ -187,6 +189,7 @@ boolean Demo_BeginRecording(const char* fileName, int plrNum)
 
 void Demo_PauseRecording(int playerNum)
 {
+#if 0
     client_t       *cl = clients + playerNum;
 
     // A demo is not being recorded?
@@ -195,6 +198,7 @@ void Demo_PauseRecording(int playerNum)
     // All packets will be written for the same tic.
     writeInfo[playerNum].pausetime = SECONDS_TO_TICKS(demoTime);
     cl->recordPaused = true;
+#endif
 }
 
 /**
@@ -202,6 +206,7 @@ void Demo_PauseRecording(int playerNum)
  */
 void Demo_ResumeRecording(int playerNum)
 {
+#if 0
     client_t       *cl = clients + playerNum;
 
     // Not recording or not paused?
@@ -213,6 +218,7 @@ void Demo_ResumeRecording(int playerNum)
     // have to make it appear the pause never happened; begintime is
     // moved forwards.
     writeInfo[playerNum].begintime += DEMOTIC - writeInfo[playerNum].pausetime;
+#endif
 }
 
 /**
@@ -220,6 +226,7 @@ void Demo_ResumeRecording(int playerNum)
  */
 void Demo_StopRecording(int playerNum)
 {
+#if 0
     client_t       *cl = clients + playerNum;
 
     // A demo is not being recorded?
@@ -230,10 +237,12 @@ void Demo_StopRecording(int playerNum)
     lzClose(cl->demo);
     cl->demo = 0;
     cl->recording = false;
+#endif
 }
 
 void Demo_WritePacket(int playerNum)
 {
+#if 0
     LZFILE         *file;
     demopacket_header_t hdr;
     demotimer_t    *inf = writeInfo + playerNum;
@@ -302,19 +311,23 @@ void Demo_WritePacket(int playerNum)
     // Write the packet itself.
     lzPutC(netBuffer.msg.type, file);
     lzWrite(netBuffer.msg.data, (long) netBuffer.length, file);
+#endif
 }
 
 void Demo_BroadcastPacket(void)
 {
+#if 0
     int                 i;
 
     // Write packet to all recording demo files.
     for(i = 0; i < DDMAXPLAYERS; ++i)
         Demo_WritePacket(i);
+#endif
 }
 
 boolean Demo_BeginPlayback(const char* fileName)
 {
+#if 0
     filename_t          buf;
     int                 i;
 
@@ -352,11 +365,13 @@ boolean Demo_BeginPlayback(const char* fileName)
     if(ArgCheck("-timedemo"))
         r_framecounter = 0;
 
+#endif
     return true;
 }
 
 void Demo_StopPlayback(void)
 {
+#if 0
     float           diff;
 
     if(!playback)
@@ -387,10 +402,12 @@ void Demo_StopPlayback(void)
     // "Play demo once" mode?
     if(ArgCheck("-playdemo"))
         Sys_Quit();
+#endif
 }
 
 boolean Demo_ReadPacket(void)
 {
+#if 0
     static byte     ptime;
     int             nowtime = DEMOTIC;
     demopacket_header_t hdr;
@@ -429,14 +446,10 @@ boolean Demo_ReadPacket(void)
     lzRead(netBuffer.msg.data, (long) netBuffer.length, playdemo);
     netBuffer.cursor = netBuffer.msg.data;
 
-/*#if _DEBUG
-Con_Printf("RDP: pt=%i ang=%i ld=%i len=%i type=%i\n", ptime,
-           hdr.angle, hdr.lookdir, hdr.length, netBuffer.msg.type);
-#endif*/
-
     // Read the next packet time.
     ptime = lzGetC(playdemo);
 
+#endif
     return true;
 }
 
@@ -445,6 +458,7 @@ Con_Printf("RDP: pt=%i ang=%i ld=%i len=%i type=%i\n", ptime,
  */
 void Demo_WriteLocalCamera(int plrNum)
 {
+#if 0
     player_t           *plr = &ddPlayers[plrNum];
     ddplayer_t         *ddpl = &plr->shared;
     mobj_t             *mo = ddpl->mo;
@@ -488,6 +502,7 @@ void Demo_WriteLocalCamera(int plrNum)
         writeInfo[plrNum].fov = fieldOfView;
     }
     Net_SendBuffer(plrNum, SPF_DONT_SEND);
+#endif
 }
 
 /**
@@ -496,6 +511,7 @@ void Demo_WriteLocalCamera(int plrNum)
  */
 void Demo_ReadLocalCamera(void)
 {
+#if 0
     ddplayer_t         *pl = &ddPlayers[consolePlayer].shared;
     mobj_t             *mo = pl->mo;
     int                 flags;
@@ -580,6 +596,7 @@ void Demo_ReadLocalCamera(void)
         pl->viewZ = z; // Might get an unsynced frame is not set right now.
         posDelta[VX] = posDelta[VY] = posDelta[VZ] = 0;
     }
+#endif
 }
 
 /**
@@ -587,6 +604,7 @@ void Demo_ReadLocalCamera(void)
  */
 void Demo_Ticker(timespan_t time)
 {
+#if 0
     static trigger_t        fixed = { 1 / 35.0, 0 };
 
     if(!M_RunTrigger(&fixed, time))
@@ -626,6 +644,7 @@ void Demo_Ticker(timespan_t time)
             }
         }
     }
+#endif
 }
 
 D_CMD(PlayDemo)
@@ -636,6 +655,7 @@ D_CMD(PlayDemo)
 
 D_CMD(RecordDemo)
 {
+#if 0
     int                 plnum = consolePlayer;
 
     if(argc == 3 && isClient)
@@ -663,10 +683,13 @@ D_CMD(RecordDemo)
     Con_Printf("Recording demo of player %i to \"%s\".\n", plnum, argv[1]);
 
     return Demo_BeginRecording(argv[1], plnum);
+#endif
+    return false;
 }
 
 D_CMD(PauseDemo)
 {
+#if 0
     int         plnum = consolePlayer;
 
     if(argc >= 2)
@@ -687,11 +710,13 @@ D_CMD(PauseDemo)
         Demo_PauseRecording(plnum);
         Con_Printf("Demo recording of player %i paused.\n", plnum);
     }
+#endif
     return true;
 }
 
 D_CMD(StopDemo)
 {
+#if 0
     int         plnum = consolePlayer;
 
     if(argc > 2)
@@ -716,6 +741,7 @@ D_CMD(StopDemo)
     }
     else
         Demo_StopRecording(plnum);
+#endif
     return true;
 }
 

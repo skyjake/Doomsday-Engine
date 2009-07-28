@@ -306,7 +306,7 @@ void DD_InitHelp(void)
 
     // Ccmd help (game-specific).
     sprintf(helpFileName, "}data\\%s\\conhelp.txt",
-            (char *) gx.GetVariable(DD_GAME_NAME));
+            game_GetString(DD_GAME_NAME));
     M_TranslatePath(helpFileName, helpFileName, FILENAME_T_MAXLEN);
     DH_ReadStrings(helpFileName);
 

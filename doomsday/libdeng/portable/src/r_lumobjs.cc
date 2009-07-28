@@ -23,13 +23,19 @@
  */
 
 /**
- * r_lumobjs.c: Lumobj (luminous object) management.
+ * r_lumobjs.cc: Lumobj (luminous object) management.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
 
+#include <de/App>
+#include <de/Zone>
+
+using namespace de;
+
+extern "C" {
 #include "de_base.h"
 #include "de_refresh.h"
 #include "de_render.h"
@@ -37,6 +43,7 @@
 #include "de_misc.h"
 #include "de_play.h"
 #include "de_defs.h"
+}
 
 // MACROS ------------------------------------------------------------------
 
@@ -89,7 +96,9 @@ byte devDrawLums = false; // Display active lumobjs?
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static zblockset_t* luminousBlockSet = NULL;
+typedef Zone::Allocator<lumobj_t> Allocator;
+static Allocator* allocator = NULL;
+
 static uint numLuminous = 0, maxLuminous = 0;
 static lumobj_t** luminousList = NULL;
 static float* luminousDist = NULL;
@@ -123,7 +132,7 @@ static lumlistnode_t* allocListNode(void)
 
     if(listNodeCursor == NULL)
     {
-        ln = Z_Malloc(sizeof(*ln), PU_STATIC, 0);
+        ln = static_cast<lumlistnode_t*>(Z_Malloc(sizeof(*ln), PU_STATIC, 0));
 
         // Link to the list of list nodes.
         ln->nextUsed = listNodeFirst;
@@ -167,11 +176,11 @@ static uint lumToIndex(const lumobj_t* lum)
 void LO_InitForMap(void)
 {
     // First initialize the subsector links (root pointers).
-    subLumObjList =
-        Z_Calloc(sizeof(*subLumObjList) * numSSectors, PU_MAPSTATIC, 0);
+    subLumObjList = static_cast<lumlistnode_t**>(
+        Z_Calloc(sizeof(*subLumObjList) * numSSectors, PU_MAPSTATIC, 0));
 
     maxLuminous = 0;
-    luminousBlockSet = NULL; // Will have already been free'd.
+    allocator = NULL; // Will have already been free'd.
 }
 
 /**
@@ -180,7 +189,7 @@ void LO_InitForMap(void)
  */
 void LO_Clear(void)
 {
-    Z_BlockDestroy(luminousBlockSet);
+    allocator = NULL;
 
     if(luminousList)
         M_Free(luminousList);
@@ -245,28 +254,28 @@ static lumobj_t* allocLumobj(void)
     {
         uint                i, newMax = maxLuminous + LUMOBJ_BATCH_SIZE;
 
-        if(!luminousBlockSet)
+        if(!allocator)
         {
-            luminousBlockSet =
-                Z_BlockCreate(sizeof(lumobj_t), LUMOBJ_BATCH_SIZE, PU_MAP);
+            // The allocator will be automatically freed.
+            allocator = App::memory().newAllocator<lumobj_t>(LUMOBJ_BATCH_SIZE, Zone::MAP);
         }
 
-        luminousList =
-            M_Realloc(luminousList, sizeof(lumobj_t*) * newMax);
+        luminousList = static_cast<lumobj_t**>(
+            M_Realloc(luminousList, sizeof(lumobj_t*) * newMax));
 
         // Add the new lums to the end of the list.
         for(i = maxLuminous; i < newMax; ++i)
-            luminousList[i] = Z_BlockNewElement(luminousBlockSet);
+            luminousList[i] = allocator->allocate();
 
         maxLuminous = newMax;
 
         // Resize the associated buffers used for per-frame stuff.
-        luminousDist =
-            M_Realloc(luminousDist, sizeof(*luminousDist) * maxLuminous);
-        luminousClipped =
-            M_Realloc(luminousClipped, sizeof(*luminousClipped) * maxLuminous);
-        luminousOrder =
-            M_Realloc(luminousOrder, sizeof(*luminousOrder) * maxLuminous);
+        luminousDist = static_cast<float*>(
+            M_Realloc(luminousDist, sizeof(*luminousDist) * maxLuminous));
+        luminousClipped = static_cast<byte*>(
+            M_Realloc(luminousClipped, sizeof(*luminousClipped) * maxLuminous));
+        luminousOrder = static_cast<unsigned int*>(
+            M_Realloc(luminousOrder, sizeof(*luminousOrder) * maxLuminous));
     }
 
     lum = luminousList[numLuminous - 1];
@@ -738,7 +747,7 @@ typedef struct lumobjiterparams_s {
 boolean LOIT_RadiusLumobjs(void* ptr, void* data)
 {
     const lumobj_t*  lum = (const lumobj_t*) ptr;
-    lumobjiterparams_t* params = data;
+    lumobjiterparams_t* params = (lumobjiterparams_t*) data;
     float           dist =
         P_ApproxDistance(lum->pos[VX] - params->origin[VX],
                          lum->pos[VY] - params->origin[VY]);
