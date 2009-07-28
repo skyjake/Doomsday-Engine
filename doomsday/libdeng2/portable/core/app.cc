@@ -298,7 +298,6 @@ Version App::version()
     ver.major = LIBDENG2_MAJOR_VERSION;
     ver.minor = LIBDENG2_MINOR_VERSION;
     ver.patchlevel = LIBDENG2_PATCHLEVEL;
-    ver.revision = LIBDENG2_REVISION;
     return ver;
 }
 

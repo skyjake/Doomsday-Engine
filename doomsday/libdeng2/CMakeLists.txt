@@ -23,13 +23,6 @@ ADD_DEFINITIONS (
 
 MESSAGE ( STATUS "libdeng2 version ${LIBDENG2_RELEASE_LABEL} ${LIBDENG2_MAJOR_VERSION}.${LIBDENG2_MINOR_VERSION}.${LIBDENG2_PATCHLEVEL}")
 
-# Generate revision.h.
-IF ( Subversion_FOUND )
-    Subversion_WC_INFO ( ${CMAKE_SOURCE_DIR} ROOT )
-    MESSAGE( STATUS "Revision: ${ROOT_WC_REVISION}" )
-    FILE ( WRITE include/de/revision.h "#define LIBDENG2_REVISION ${ROOT_WC_REVISION}\n" )
-ENDIF ( Subversion_FOUND )
-
 # Configuration.
 IF ( WIN32 )
     # Tell Windows to export symbols.

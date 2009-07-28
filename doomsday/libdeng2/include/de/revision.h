@@ -1,1 +1,0 @@
-#define LIBDENG2_REVISION 

@@ -236,7 +236,6 @@ void ServerApp::replyStatus(const de::Address& to)
     array.add(new NumberValue(v.major));
     array.add(new NumberValue(v.minor));
     array.add(new NumberValue(v.patchlevel));
-    array.add(new NumberValue(v.revision));
     
     // The sessions.
     Record& sub = rec.addRecord("sessions");

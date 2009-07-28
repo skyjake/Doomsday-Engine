@@ -18,7 +18,7 @@ CMAKE_MINIMUM_REQUIRED ( VERSION 2.6 )
 
 # Version numbers.
 # Note: This is the place for all version numbers.
-SET ( LIBDENG2_RELEASE_LABEL    SVN )
+SET ( LIBDENG2_RELEASE_LABEL    Dev )
 SET ( LIBDENG2_MAJOR_VERSION    2 )
 SET ( LIBDENG2_MINOR_VERSION    0 )
 SET ( LIBDENG2_PATCHLEVEL       0 )
@@ -88,7 +88,6 @@ FIND_PACKAGE ( SDL_image REQUIRED )
 FIND_PACKAGE ( SDL_net REQUIRED )
 FIND_PACKAGE ( SDL_ttf REQUIRED )
 FIND_PACKAGE ( PythonInterp REQUIRED )
-#FIND_PACKAGE ( Subversion )
 FIND_PACKAGE ( Doxygen )
 
 # Set up project-wide variables and definitions.
