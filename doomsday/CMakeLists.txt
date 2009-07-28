@@ -88,7 +88,7 @@ FIND_PACKAGE ( SDL_image REQUIRED )
 FIND_PACKAGE ( SDL_net REQUIRED )
 FIND_PACKAGE ( SDL_ttf REQUIRED )
 FIND_PACKAGE ( PythonInterp REQUIRED )
-FIND_PACKAGE ( Subversion )
+#FIND_PACKAGE ( Subversion )
 FIND_PACKAGE ( Doxygen )
 
 # Set up project-wide variables and definitions.
