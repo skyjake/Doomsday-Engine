@@ -68,14 +68,25 @@ boolean verbose;
 
 // CODE --------------------------------------------------------------------
 
+DENG_EXPORT const char* deng_LibraryType(void)
+{
+    return "deng-plugin/generic";
+}
+
 /**
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-PUBLIC_API void deng_InitializePlugin(void)
+DENG_EXPORT void deng_InitializePlugin(void)
 {
     printf("deng_InitializePlugin: WAD Map Converter\n");
     Plug_AddHook(HOOK_MAP_CONVERT, ConvertMapHook);
+}
+
+DENG_EXPORT void deng_ShutdownPlugin(void)
+{
+    printf("deng_ShutdownPlugin: WAD Map Converter\n");
+    Plug_RemoveHook(HOOK_MAP_CONVERT, ConvertMapHook);
 }
 
 #ifdef WIN32
