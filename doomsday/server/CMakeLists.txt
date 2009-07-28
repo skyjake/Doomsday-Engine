@@ -16,16 +16,30 @@
 
 INCLUDE_DIRECTORIES ( 
     ${CMAKE_SOURCE_DIR}/libdeng2/include 
-    ${CMAKE_SOURCE_DIR}/libdeng/api )
+    ${CMAKE_SOURCE_DIR}/libdeng/api 
+    ${CMAKE_SOURCE_DIR}/support/include
+    ${SDL_INCLUDE_DIR} )
 
 FILE ( GLOB SOURCES src/*.cc src/*.h )
 
-ADD_EXECUTABLE ( dengsv ${SOURCES} )
+ADD_EXECUTABLE ( dengsv ${SOURCES} ${APP_SUPPORT_SOURCES} )
 
 TARGET_LINK_LIBRARIES ( dengsv deng2 deng )
 
+IF ( WIN32 )
+    SET_TARGET_PROPERTIES ( dengsv PROPERTIES LINK_FLAGS "/NODEFAULTLIB:msvcrt /SUBSYSTEM:console" ) #/SUBSYSTEM:windows" )
+ENDIF ( WIN32 )
+
 IF ( APPLE )
+    # The server binary goes under Resources as it's not a GUI application.
     INSTALL ( TARGETS dengsv RUNTIME DESTINATION ${DENG_DATA_DIR} )
 ELSE ()
     INSTALL ( TARGETS dengsv RUNTIME DESTINATION ${DENG_BINARY_DIR} )
 ENDIF ()
+
+# Documentation.
+IF ( DOXYGEN_FOUND )
+    ADD_CUSTOM_TARGET ( serverdocs
+        ${DOXYGEN_EXECUTABLE} 
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} )
+ENDIF ( DOXYGEN_FOUND )

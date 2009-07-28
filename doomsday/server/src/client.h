@@ -17,23 +17,33 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SERVER_H
-#define SERVER_H
+#ifndef CLIENT_H
+#define CLIENT_H
 
-#include <de/App>
+#include <de/types.h>
+#include <de/net.h>
 
 /**
- * The server application.
+ * Represents a network connection to a remote party.
  */
-class Server : public de::App
+class Client : public de::MuxLink
 {
 public:
-    Server(const de::CommandLine& commandLine);
-    ~Server();
+    /// Client has administration rights. Granted to local users automatically.
+    DEFINE_FINAL_FLAG(ADMIN, 0, Rights);
     
-    de::dint mainLoop();
+public:
+    Client(const de::Address& address);
+    Client(de::Socket* socket);
     
-private:
+    /**
+     * Grants the client whatever rights it should have.
+     */
+    void grantRights();
+    
+public:
+    /// Access rights of the client.
+    Rights rights;
 };
 
-#endif /* SERVER_H */
+#endif /* CLIENT_H */

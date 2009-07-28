@@ -17,35 +17,25 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
-
-#include "server.h"
-#include "doomsday.h"
+#include "client.h"
 
 using namespace de;
 
-Server::Server(const CommandLine& commandLine)
-    : App(commandLine)
-{}
-
-Server::~Server()
-{}
-
-dint Server::mainLoop()
+Client::Client(const de::Address& address) : de::MuxLink(address) 
 {
-    // For our testing purposes, let's modify the command line to launch Doom1 E1M1 
-    // in dedicated server mode.
-    
-    CommandLine& args = commandLine();
-    
-    args.append("-dedicated");
-    args.append("-cmd");
-    args.append("net-port-control 13209; net-port-data 13210; after 30 \"net init\"; after 40 \"net server start\"");
-    args.append("-userdir");
-    args.append("serverdir");
-    
-    return DD_Entry(0, NULL);
+    grantRights();
+}
+
+Client::Client(de::Socket* socket) : de::MuxLink(socket) 
+{
+    grantRights();
+}
+
+void Client::grantRights()
+{
+    /// Local clients get the admin rights automatically.
+    if(peerAddress().matches(Address("127.0.0.1")))
+    {
+        rights.set(ADMIN_BIT);
+    }
 }

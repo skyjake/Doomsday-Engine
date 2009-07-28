@@ -17,20 +17,16 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "server.h"
-#include <de/Folder>
-#include <de/DirectoryFeed>
-#include <de/FS>
-#include <de/Library>
+#include <dengmain.h>
+#include "serverapp.h"
 
 using namespace de;
 
-int main(int argc, char** argv)
+int deng_Main(int argc, char** argv)
 {
     try
     {
-        Server server(CommandLine(argc, argv));
-        return server.mainLoop();
+        return ServerApp(CommandLine(argc, argv)).mainLoop();
     }
     catch(const Error& error)
     {
