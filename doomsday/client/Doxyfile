@@ -1,0 +1,7 @@
+@INCLUDE = ../doxygen/common.doxy
+
+PROJECT_NAME           = dengcl
+PROJECT_NUMBER         = 2.0.0
+OUTPUT_DIRECTORY       = ../doxygen/dengcl
+INPUT                  = src
+INCLUDE_PATH           = ../libdeng2/include
