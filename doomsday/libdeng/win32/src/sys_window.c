@@ -30,6 +30,8 @@
  * The availabilty of features and behavioral traits can be queried for.
  */
 
+#if 0
+
 // HEADER FILES ------------------------------------------------------------
 
 #define WIN32_LEAN_AND_MEAN
@@ -1306,6 +1308,10 @@ boolean Sys_SetWindow(uint idx, int newX, int newY, int newWidth, int newHeight,
  */
 void Sys_UpdateWindow(uint idx)
 {
+#if _DEBUG
+    Sys_CheckGLError();
+#endif
+
     if(winManagerInited)
     {
         ddwindow_t         *window = getWindow(idx - 1);
@@ -1320,15 +1326,27 @@ void Sys_UpdateWindow(uint idx)
                 if(GL_state.forceFinishBeforeSwap)
                 {
                     glFinish();
+#if _DEBUG
+                    Sys_CheckGLError();
+#endif
                 }
 
                 // Swap buffers.
                 glFlush();
+
+#if _DEBUG
+                Sys_CheckGLError();
+#endif
+
                 SwapBuffers(hdc);
                 ReleaseDC(window->hWnd, hdc);
             }
         }
     }
+
+#if _DEBUG
+    Sys_CheckGLError();
+#endif
 }
 
 /**
@@ -1470,3 +1488,5 @@ HWND Sys_GetWindowHandle(uint idx)
 
     return NULL;
 }
+
+#endif 0

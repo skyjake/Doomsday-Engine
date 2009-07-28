@@ -127,7 +127,7 @@ static void determineGlobalPaths(application_t *app)
 
 static boolean loadGamePlugin(application_t *app)
 {
-    app->GetGameAPI = reinterpret_cast<GETGAMEAPI>(App::app().game()->address("GetGameAPI"));
+    app->GetGameAPI = reinterpret_cast<GETGAMEAPI>(App::game().address("GetGameAPI"));
 
     // Do the API transfer.
     DD_InitAPI();
@@ -140,7 +140,13 @@ static int initTimingSystem(void)
 {
     // For timing, we use SDL under *nix, so get it initialized.
     // SDL_Init() returns zero on success.
-    return !SDL_Init(SDL_INIT_TIMER | (isDedicated? SDL_INIT_VIDEO : 0));
+    if(SDL_InitSubSystem(SDL_INIT_TIMER) == -1)
+        return false;
+        
+    if(isDedicated && SDL_InitSubSystem(SDL_INIT_VIDEO) == -1)
+        return false;
+        
+    return true;
 }
 
 static int initDGL(void)
@@ -148,15 +154,9 @@ static int initDGL(void)
     return Sys_PreInitGL();
 }
 
-#ifdef MACOSX
-// The OS X build has its own entry point in mac/src/SDLmain.m
-int main(int argc, char* argv[])
-#else
 int DD_Entry(int argc, char* argv[])
-#endif
 {
-    int                 exitCode = 0;
-    boolean             doShutdown = true;
+    //int                 exitCode = 0;
     char                buf[256];
 
     DD_InitCommandLineAliases();
@@ -170,86 +170,89 @@ int DD_Entry(int argc, char* argv[])
 
     DD_ComposeMainWindowTitle(buf);
 
-    // Was a game library specified?
-    if(!App::app().game())
+    // Determine our basedir, and other global paths.
+    determineGlobalPaths(&app);
+
+    if(!DD_EarlyInit())
     {
-        DD_ErrorBox(true, "loadGamePlugin: No game library was specified.\n");
+        DD_ErrorBox(true, "Error during early init.");
+    }
+    else if(!initTimingSystem())
+    {
+        DD_ErrorBox(true, "Error initalizing timing system.");
+    }
+    // Load the rendering DLL.
+    else if(!initDGL())
+    {
+        DD_ErrorBox(true, "Error initializing DGL.");
+    }
+    // Load the game plugin.
+    else if(!loadGamePlugin(&app))
+    {
+        DD_ErrorBox(true, "Error loading game library.");
     }
     else
     {
-        // Determine our basedir, and other global paths.
-        determineGlobalPaths(&app);
-
-        if(!DD_EarlyInit())
+        /*
+        if(0 == (windowIDX =
+            Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, 
+                isDedicated? WT_CONSOLE : WT_NORMAL, buf, NULL)))
         {
-            DD_ErrorBox(true, "Error during early init.");
+            DD_ErrorBox(true, "Error creating main window.");
         }
-        else if(!initTimingSystem())
+        else*/
+        if(!Sys_InitGL())
         {
-            DD_ErrorBox(true, "Error initalizing timing system.");
-        }
-        // Load the rendering DLL.
-        else if(!initDGL())
-        {
-            DD_ErrorBox(true, "Error initializing DGL.");
-        }
-        // Load the game plugin.
-        else if(!loadGamePlugin(&app))
-        {
-            DD_ErrorBox(true, "Error loading game library.");
-        }
-        // Init memory zone.
-        else if(!Z_Init())
-        {
-            DD_ErrorBox(true, "Error initializing memory zone.");
+            DD_ErrorBox(true, "Error initializing OpenGL.");
         }
         else
-        {
-            if(0 == (windowIDX =
-                Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, 
-                    isDedicated? WT_CONSOLE : WT_NORMAL, buf, NULL)))
-            {
-                DD_ErrorBox(true, "Error creating main window.");
-            }
-            else if(!Sys_InitGL())
-            {
-                DD_ErrorBox(true, "Error initializing OpenGL.");
-            }
-            else
-            {   // All initialization complete.
-                doShutdown = false;
+        {   // All initialization complete.
+            //doShutdown = false;
 
-                // Append the main window title with the game name and ensure it
-                // is the at the foreground, with focus.
-                DD_ComposeMainWindowTitle(buf);
-                Sys_SetWindowTitle(windowIDX, buf);
+            // Append the main window title with the game name and ensure it
+            // is the at the foreground, with focus.
+            DD_ComposeMainWindowTitle(buf);
+            Sys_SetWindowTitle(windowIDX, buf);
 
-               // \todo Set foreground window and focus.
-            }
+           // \todo Set foreground window and focus.
         }
     }
 
-    if(!doShutdown)
+/*
+    //if(!doShutdown)
     {   // Fire up the engine. The game loop will also act as the message pump.
         exitCode = DD_Main();
     }
-    DD_Shutdown();
+    //DD_Shutdown();
 
     // Bye!
     return exitCode;
+    */
+    
+    DD_Main();
+    return 0;
 }
 
 /**
- * Shuts down the engine.
+ * Shuts down the engine. Called after main loop finishes.
  */
 void DD_Shutdown(void)
 {
-    int                 i;
+#if 0
+    if(netGame)
+    {   // Quit netGame if one is in progress.
+        Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect",
+                    true, false);
+    }
+#endif
+
+    Demo_StopPlayback();
+    Con_SaveDefaults();
+    Sys_Shutdown();
+    B_Shutdown();
 
     // Shutdown all subsystems.
     DD_ShutdownAll();
-
-    SDL_Quit();
 }
 
 } /* extern "C" */

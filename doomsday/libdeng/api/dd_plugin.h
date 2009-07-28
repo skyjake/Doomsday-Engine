@@ -43,8 +43,8 @@ enum                               // Hook types.
     NUM_HOOK_TYPES
 };
 
-PUBLIC_API int             Plug_AddHook(int hook_type, hookfunc_t hook);
-PUBLIC_API int             Plug_RemoveHook(int hook_type, hookfunc_t hook);
+DENG_API int             Plug_AddHook(int hook_type, hookfunc_t hook);
+DENG_API int             Plug_RemoveHook(int hook_type, hookfunc_t hook);
 
 // Plug_DoHook is used by the engine to call all functions
 // registered to a hook.

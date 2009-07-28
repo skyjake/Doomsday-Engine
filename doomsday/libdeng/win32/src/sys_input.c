@@ -28,6 +28,8 @@
  * Keyboard, mouse and joystick input using DirectInput.
  */
 
+#if 0
+
 // HEADER FILES ------------------------------------------------------------
 
 #define WIN32_LEAN_AND_MEAN
@@ -1056,4 +1058,6 @@ D_CMD(KeyMap)
     DD_LoadKeymap(argv[1]);
     return true;
 }
+#endif
+
 #endif

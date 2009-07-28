@@ -23,6 +23,8 @@
  * Boston, MA  02110-1301  USA
  */
 
+#if 0
+
 /**
  * sys_sdl_window.c: Cross-platform, SDL-based window management.
  *
@@ -984,3 +986,5 @@ HWND Sys_GetWindowHandle(uint idx)
     return window->hWnd;
 }
 #endif
+
+#endif 0

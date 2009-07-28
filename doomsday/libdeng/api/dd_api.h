@@ -63,12 +63,12 @@ typedef struct {
     size_t          apiSize; // sizeof(game_export_t)
 
     // Base-level.
-    void          (*PreInit) (void);
+    //void          (*PreInit) (void);
     void          (*PostInit) (void);
-    void          (*Shutdown) (void);
+    //void          (*Shutdown) (void);
     void          (*UpdateState) (int step);
-    int           (*GetInteger) (int id);
-    void         *(*GetVariable) (int id);
+    //int           (*GetInteger) (int id);
+    //void         *(*GetVariable) (int id);
 
     // Networking.
     int           (*NetServerStart) (int before);
@@ -83,7 +83,7 @@ typedef struct {
     void         *(*NetReadCommands) (size_t pktLength, void* data);
 
     // Tickers.
-    void          (*Ticker) (timespan_t ticLength);
+    //void          (*Ticker) (timespan_t ticLength);
 
     // Responders.
     boolean       (*PrivilegedResponder) (event_t* ev);

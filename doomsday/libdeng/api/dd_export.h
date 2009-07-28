@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright Â© 2009 Jaakko KerÃ¤nen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,11 +30,25 @@
 
 // The calling convention.
 #if defined(WIN32)
-#   define _DECALL      __cdecl
-#   define PUBLIC_API   __declspec(dllexport)
+#   define _DECALL  __cdecl
+#   ifdef DENG_EXPORTS
+#       define DENG_API __declspec(dllexport)
+#   else
+#       define DENG_API __declspec(dllimport)
+#   endif
+#   define DENG_EXPORT __declspec(dllexport)
 #else
 #   define _DECALL
-#   define PUBLIC_API
+#   define DENG_API
+#   define DENG_EXPORT
+#endif
+
+#ifdef __cplusplus
+#   define BEGIN_EXTERN_C extern "C" {
+#   define END_EXTERN_C }
+#else
+#   define BEGIN_EXTERN_C
+#   define END_EXTERN_C
 #endif
 
 #endif

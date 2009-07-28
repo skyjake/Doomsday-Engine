@@ -22,6 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
+#if 0
 /**
  * sys_console.c: Std input handling - Win32 specific
  */
@@ -309,3 +310,4 @@ size_t I_GetConsoleKeyEvents(keyevent_t *evbuf, size_t bufsize)
 
     return n;
 }
+#endif

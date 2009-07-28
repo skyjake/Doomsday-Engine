@@ -30,6 +30,11 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <de/App>
+#include <de/Library>
+
+using namespace de;
+
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_DCOM
 #define STRICT
@@ -40,11 +45,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <de/App>
-#include <de/Library>
-
-using namespace de;
 
 extern "C" {
 
@@ -70,7 +70,7 @@ extern "C" {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+//LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -87,11 +87,11 @@ application_t app;
 
 BOOL InitApplication(application_t *app)
 {
+#if 0
     WNDCLASSEX          wcex;
 
     if(GetClassInfoEx(app->hInstance, app->className, &wcex))
         return TRUE; // Already registered a window class.
-
     // Initialize a window class for our window.
     ZeroMemory(&wcex, sizeof(wcex));
     wcex.cbSize = sizeof(wcex);
@@ -111,197 +111,11 @@ BOOL InitApplication(application_t *app)
 
     // Register our window class.
     return RegisterClassEx(&wcex);
-}
-
-static void determineGlobalPaths(application_t *app)
-{
-    if(!app)
-        return;
-
-    // Where are we?
-#if defined(DENG_LIBRARY_DIR)
-# if !defined(_DEBUG)
-#pragma message("!!!WARNING: DENG_LIBRARY_DIR defined in non-debug build!!!")
-# endif
 #endif
-
-#if defined(DENG_LIBRARY_DIR)
-    _snprintf(ddBinDir.path, 254, "%s", DENG_LIBRARY_DIR);
-    if(ddBinDir.path[strlen(ddBinDir.path)] != '\\')
-        sprintf(ddBinDir.path, "%s\\", ddBinDir.path);
-    Dir_MakeAbsolute(ddBinDir.path);
-    ddBinDir.drive = toupper(ddBinDir.path[0]) - 'A' + 1;
-#else
-    {
-    char                path[256];
-    GetModuleFileName(app->hInstance, path, 255);
-    Dir_FileDir(path, &ddBinDir);
-    }
-#endif
-
-    // The -userdir option sets the working directory.
-    if(ArgCheckWith("-userdir", 1))
-    {
-        Dir_MakeDir(ArgNext(), &ddRuntimeDir);
-        app->userDirOk = Dir_ChDir(&ddRuntimeDir);
-    }
-
-    // The current working directory is the runtime dir.
-    Dir_GetDir(&ddRuntimeDir);
-
-    // The standard base directory is two levels upwards.
-    if(ArgCheck("-stdbasedir"))
-    {
-        strncpy(ddBasePath, "..\\..\\", FILENAME_T_MAXLEN);
-    }
-
-    if(ArgCheckWith("-basedir", 1))
-    {
-        strncpy(ddBasePath, ArgNext(), FILENAME_T_MAXLEN);
-        Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
-    }
-
-    Dir_MakeAbsolute(ddBasePath, FILENAME_T_MAXLEN);
-    Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
-}
-
-static boolean loadGamePlugin(application_t *app)
-{
-    // Get the function.
-    app->GetGameAPI = reinterpret_cast<GETGAMEAPI>(App::app().game()->address("GetGameAPI"));
-
-    // Do the API transfer.
-    DD_InitAPI();
-
-    // Everything seems to be working...
-    return true;
-}
-
-static int initTimingSystem(void)
-{
-    // Nothing to do.
     return TRUE;
 }
 
-static int initDGL(void)
-{
-    return Sys_PreInitGL();
-}
-
-int DD_Entry(int argc, char* argv[])
-{
-    BOOL                doShutdown = TRUE;
-    int                 exitCode = 0;
-    int                 lnCmdShow = SW_SHOW;
-
-    DD_InitCommandLineAliases();
-
-    memset(&app, 0, sizeof(app));
-    app.hInstance = GetModuleHandle(NULL);
-    app.className = TEXT(MAINWCLASS);
-    app.userDirOk = true;
-
-    if(!InitApplication(&app))
-    {
-        DD_ErrorBox(true, "Couldn't initialize application.");
-    }
-    else
-    {
-        char                buf[256];
-        const char*         libName = NULL;
-
-        // Initialize COM.
-        CoInitialize(NULL);
-
-        // First order of business: are we running in dedicated mode?
-        if(ArgCheck("-dedicated"))
-            isDedicated = true;
-        novideo = ArgCheck("-novideo") || isDedicated;
-
-        DD_ComposeMainWindowTitle(buf);
-
-        // Was a game library specified?
-        if(!App::app().game())
-        {
-            DD_ErrorBox(true, "loadGamePlugin: No game library was specified.\n");
-        }
-        else
-        {
-            // Determine our basedir and other global paths.
-            determineGlobalPaths(&app);
-
-            if(!DD_EarlyInit())
-            {
-                DD_ErrorBox(true, "Error during early init.");
-            }
-            else if(!initTimingSystem())
-            {
-                DD_ErrorBox(true, "Error initalizing timing system.");
-            }
-            else if(!initDGL())
-            {
-                DD_ErrorBox(true, "Error initializing DGL.");
-            }
-            // Load the game plugin.
-            else if(!loadGamePlugin(&app))
-            {
-                DD_ErrorBox(true, "Error loading game library.");
-            }
-            // Initialize the memory zone.
-            else if(!Z_Init())
-            {
-                DD_ErrorBox(true, "Error initializing memory zone.");
-            }
-            else if(isDedicated)
-            {
-                // We're done.
-                doShutdown = FALSE;
-            }
-            else 
-            {
-                if(0 == (windowIDX =
-                    Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0,
-                                     (isDedicated ? WT_CONSOLE : WT_NORMAL),
-                                     buf, &lnCmdShow)))
-                {
-                    DD_ErrorBox(true, "Error creating main window.");
-                }
-                else if(!Sys_InitGL())
-                {
-                    DD_ErrorBox(true, "Error initializing OpenGL.");
-                }
-                else
-                {   // All initialization complete.
-                    doShutdown = FALSE;
-
-                    // Append the main window title with the game name and ensure it
-                    // is the at the foreground, with focus.
-                    DD_ComposeMainWindowTitle(buf);
-                    Sys_SetWindowTitle(windowIDX, buf);
-
-                   // SetForegroundWindow(win->hWnd);
-                   // SetFocus(win->hWnd);
-                }
-            }
-        }
-    }
-
-    if(!doShutdown)
-    {   // Fire up the engine. The game loop will also act as the message pump.
-        exitCode = DD_Main();
-    }
-    DD_Shutdown();
-
-    // No more use of COM beyond this point.
-    CoUninitialize();
-
-    // Unregister our window class.
-    UnregisterClass(app.className, app.hInstance);
-
-    // Bye!
-    return exitCode;
-}
-
+#if 0
 /**
  * All messages go to the default window message processor.
  */
@@ -314,14 +128,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch(msg)
     {
     case WM_SIZE:
-        if(!appShutdown)
+        //if(!appShutdown)
         {
             switch(wParam)
             {
             case SIZE_MAXIMIZED:
+                /*
                 Sys_SetWindow(windowIDX, 0, 0, 0, 0, 0, DDWF_FULLSCREEN,
                              DDSW_NOBPP|DDSW_NOSIZE|DDSW_NOMOVE|DDSW_NOCENTER);
                 forwardMsg = FALSE;
+                */
                 break;
 
             default:
@@ -398,7 +214,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_ACTIVATE:
-        if(!appShutdown)
+        //if(!appShutdown)
         {
             if(LOWORD(wParam) == WA_ACTIVE ||
                (!HIWORD(wParam) && LOWORD(wParam) == WA_CLICKACTIVE))
@@ -425,14 +241,207 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
     return result;
 }
+#endif
+
+static void determineGlobalPaths(application_t *app)
+{
+    if(!app)
+        return;
+
+    // Where are we?
+#if defined(DENG_LIBRARY_DIR)
+# if !defined(_DEBUG)
+#pragma message("!!!WARNING: DENG_LIBRARY_DIR defined in non-debug build!!!")
+# endif
+#endif
+
+#if defined(DENG_LIBRARY_DIR)
+    _snprintf(ddBinDir.path, 254, "%s", DENG_LIBRARY_DIR);
+    if(ddBinDir.path[strlen(ddBinDir.path)] != '\\')
+        sprintf(ddBinDir.path, "%s\\", ddBinDir.path);
+    Dir_MakeAbsolute(ddBinDir.path);
+    ddBinDir.drive = toupper(ddBinDir.path[0]) - 'A' + 1;
+#else
+    {
+    char                path[256];
+    GetModuleFileName(app->hInstance, path, 255);
+    Dir_FileDir(path, &ddBinDir);
+    }
+#endif
+
+    // The -userdir option sets the working directory.
+    if(ArgCheckWith("-userdir", 1))
+    {
+        Dir_MakeDir(ArgNext(), &ddRuntimeDir);
+        app->userDirOk = Dir_ChDir(&ddRuntimeDir);
+    }
+
+    // The current working directory is the runtime dir.
+    Dir_GetDir(&ddRuntimeDir);
+
+    // The standard base directory is two levels upwards.
+    if(ArgCheck("-stdbasedir"))
+    {
+        strncpy(ddBasePath, "..\\..\\", FILENAME_T_MAXLEN);
+    }
+
+    if(ArgCheckWith("-basedir", 1))
+    {
+        strncpy(ddBasePath, ArgNext(), FILENAME_T_MAXLEN);
+        Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
+    }
+
+    Dir_MakeAbsolute(ddBasePath, FILENAME_T_MAXLEN);
+    Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
+}
+
+static boolean loadGamePlugin(application_t *app)
+{
+    // Get the function.
+    app->GetGameAPI = reinterpret_cast<GETGAMEAPI>(App::game().address("GetGameAPI"));
+
+    // Do the API transfer.
+    DD_InitAPI();
+
+    // Everything seems to be working...
+    return true;
+}
+
+static int initTimingSystem(void)
+{
+    // Nothing to do.
+    return TRUE;
+}
+
+static int initDGL(void)
+{
+    return Sys_PreInitGL();
+}
+
+int DD_Entry(int argc, char* argv[])
+{
+    BOOL                doShutdown = TRUE;
+    int                 exitCode = 0;
+    int                 lnCmdShow = SW_SHOW;
+
+    DD_InitCommandLineAliases();
+
+    memset(&app, 0, sizeof(app));
+    app.hInstance = GetModuleHandle(NULL);
+    //app.className = TEXT(MAINWCLASS);
+    app.userDirOk = true;
+
+    if(!InitApplication(&app))
+    {
+        DD_ErrorBox(true, "Couldn't initialize application.");
+    }
+    else
+    {
+        char                buf[256];
+        const char*         libName = NULL;
+
+        // Initialize COM.
+        CoInitialize(NULL);
+
+        // First order of business: are we running in dedicated mode?
+        if(ArgCheck("-dedicated"))
+            isDedicated = true;
+        novideo = ArgCheck("-novideo") || isDedicated;
+
+        DD_ComposeMainWindowTitle(buf);
+
+        // Was a game library specified?
+        if(!App::app().hasGame())
+        {
+            DD_ErrorBox(true, "loadGamePlugin: No game library was specified.\n");
+        }
+        else
+        {
+            // Determine our basedir and other global paths.
+            determineGlobalPaths(&app);
+
+            if(!DD_EarlyInit())
+            {
+                DD_ErrorBox(true, "Error during early init.");
+            }
+            else if(!initTimingSystem())
+            {
+                DD_ErrorBox(true, "Error initalizing timing system.");
+            }
+            else if(!initDGL())
+            {
+                DD_ErrorBox(true, "Error initializing DGL.");
+            }
+            // Load the game plugin.
+            else if(!loadGamePlugin(&app))
+            {
+                DD_ErrorBox(true, "Error loading game library.");
+            }
+            else if(isDedicated)
+            {
+                // We're done.
+                doShutdown = FALSE;
+            }
+            else 
+            {
+                /*
+                if(0 == (windowIDX =
+                    Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0,
+                                     (isDedicated ? WT_CONSOLE : WT_NORMAL),
+                                     buf, &lnCmdShow)))
+                {
+                    DD_ErrorBox(true, "Error creating main window.");
+                }
+                else */
+                if(!Sys_InitGL())
+                {
+                    DD_ErrorBox(true, "Error initializing OpenGL.");
+                }
+                else
+                {   // All initialization complete.
+                    doShutdown = FALSE;
+
+                    // Append the main window title with the game name and ensure it
+                    // is the at the foreground, with focus.
+                    DD_ComposeMainWindowTitle(buf);
+                    Sys_SetWindowTitle(windowIDX, buf);
+
+                   // SetForegroundWindow(win->hWnd);
+                   // SetFocus(win->hWnd);
+                }
+            }
+        }
+    }
+
+    if(!doShutdown)
+    {   // Fire up the engine. The game loop will also act as the message pump.
+        exitCode = DD_Main();
+    }
+    return exitCode;
+}
 
 /**
  * Shuts down the engine.
  */
 void DD_Shutdown(void)
 {
+    Demo_StopPlayback();
+    Con_SaveDefaults();
+    Sys_Shutdown();
+    B_Shutdown();
+
     // Shutdown all subsystems.
     DD_ShutdownAll();
+
+    // No more use of COM beyond this point.
+    CoUninitialize();
+
+    // Unregister our window class.
+#if 0
+    UnregisterClass(app.className, app.hInstance);
+#endif
+
+    // Bye!
 }
 
 } // extern "C"
