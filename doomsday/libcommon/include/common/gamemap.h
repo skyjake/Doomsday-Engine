@@ -17,40 +17,23 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef LIBCOMMON_GAMEMAP_H
+#define LIBCOMMON_GAMEMAP_H
+
+#include "common.h"
+
+#include <de/Map>
+
 /**
- * @file gamemap.cc  Game plugin's derivation of the Map.
+ * Base class for the game plugins' Map.
  */
-
-#define __ACTION_LINK_H__
-
-#include "gamemap.h"
-
-extern "C" {
-#include "g_common.h"
-}
-
-using namespace de;
-
-GameMap::GameMap(const std::string& name) : Map(name)
+class LIBCOMMON_API GameMap : public de::Map
 {
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    G_InitNew(SM_MEDIUM, 1, 1);
-#endif
-}
-
-GameMap::~GameMap()
-{}
-
-void GameMap::operator << (Reader& from)
-{
-    bool wasVoid = isVoid();
+public:
+    GameMap(const std::string& name);
+    ~GameMap();
     
-    Map::operator << (from);
-    
-    if(wasVoid)
-    {
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        G_InitNew(SM_MEDIUM, 1, 1);
-#endif
-    }
-}
+    void operator << (de::Reader& from);    
+};
+
+#endif /* LIBCOMMON_GAMEMAP_H */

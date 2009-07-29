@@ -17,16 +17,12 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @file gameworld.cc  Game plugin's derivation of the World.
- */
-
-#include "gameworld.h"
+#include "common/GameUser"
 
 using namespace de;
 
-GameWorld::GameWorld()
+GameUser::GameUser()
 {}
 
-GameWorld::~GameWorld()
+GameUser::~GameUser()
 {}

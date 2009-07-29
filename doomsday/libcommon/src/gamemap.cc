@@ -17,16 +17,40 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @file gameuser.cc  Game plugin's derivation of the User.
- */
+#define __ACTION_LINK_H__
 
-#include "gameuser.h"
+#include "common/GameMap"
+
+/*
+extern "C" {
+#include "g_common.h"
+}
+*/
 
 using namespace de;
 
-GameUser::GameUser()
+GameMap::GameMap(const std::string& name) : Map(name)
+{
+/*#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    G_InitNew(SM_MEDIUM, 1, 1);
+#endif*/
+}
+
+GameMap::~GameMap()
 {}
 
-GameUser::~GameUser()
-{}
+void GameMap::operator << (Reader& from)
+{
+    /*
+    bool wasVoid = isVoid();
+    
+    Map::operator << (from);
+    
+    if(wasVoid)
+    {
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+        G_InitNew(SM_MEDIUM, 1, 1);
+#endif
+    }
+    */
+}

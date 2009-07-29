@@ -17,16 +17,17 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @file gameworld.h  Game plugin's derivation of the World.
- */
+#ifndef LIBCOMMON_GAMEWORLD_H
+#define LIBCOMMON_GAMEWORLD_H
 
-#ifndef GAMEWORLD_H
-#define GAMEWORLD_H
+#include "common.h"
 
 #include <de/World>
 
-class GameWorld : public de::World
+/**
+ * Base class for the game plugins' World.
+ */
+class LIBCOMMON_API GameWorld : public de::World
 {
 public:
     GameWorld();
@@ -36,4 +37,4 @@ public:
 private:
 };
 
-#endif /* GAMEWORLD_H */
+#endif /* LIBCOMMON_GAMEWORLD_H */

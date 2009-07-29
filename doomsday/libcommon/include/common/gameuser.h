@@ -17,22 +17,24 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef LIBCOMMON_GAMEUSER_H
+#define LIBCOMMON_GAMEUSER_H
+
+#include "common.h"
+
+#include <de/User>
+
 /**
- * @file gamemap.h  Game plugin's derivation of the Map.
+ * Base class for the game plugins' User.
  */
-
-#ifndef GAMEMAP_H
-#define GAMEMAP_H
-
-#include <de/Map>
-
-class GameMap : public de::Map
+class LIBCOMMON_API GameUser : public de::User
 {
 public:
-    GameMap(const std::string& name);
-    ~GameMap();
+    GameUser();
     
-    void operator << (de::Reader& from);    
+    ~GameUser();
+    
+private:
 };
 
-#endif /* GAMEMAP_H */
+#endif /* LIBCOMMON_GAMEUSER_H */

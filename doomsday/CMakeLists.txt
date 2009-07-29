@@ -23,6 +23,11 @@ SET ( LIBDENG2_MAJOR_VERSION    2 )
 SET ( LIBDENG2_MINOR_VERSION    0 )
 SET ( LIBDENG2_PATCHLEVEL       0 )
 
+SET ( LIBCOMMON_RELEASE_LABEL   Dev )
+SET ( LIBCOMMON_MAJOR_VERSION   1 )
+SET ( LIBCOMMON_MINOR_VERSION   0 )
+SET ( LIBCOMMON_PATCHLEVEL      0 )
+
 SET ( CMAKE_INSTALL_PREFIX ./install CACHE PATH "Path where to install for packaging." )
 
 PROJECT ( deng )
@@ -198,4 +203,4 @@ IF ( DOXYGEN_FOUND )
 ENDIF ( DOXYGEN_FOUND )
 
 # The real work is done in the subdirectories.
-SUBDIRS ( libdeng libdeng2 server client plugins tests )
+SUBDIRS ( libdeng libdeng2 server client libcommon plugins tests )

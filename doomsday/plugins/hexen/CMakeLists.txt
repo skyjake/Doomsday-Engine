@@ -16,13 +16,13 @@
 
 ADD_DEFINITIONS ( -D__JHEXEN__ )
 
-INCLUDE_DIRECTORIES ( include )
+INCLUDE_DIRECTORIES ( include ${CMAKE_SOURCE_DIR}/libcommon/include )
 
 FILE ( GLOB SOURCES src/*.c include/*.h )
 
 ADD_LIBRARY ( dengplugin_hexen SHARED ${SOURCES} ${COMMON_GAME_SOURCES} )
 
-TARGET_LINK_LIBRARIES ( dengplugin_hexen deng )
+TARGET_LINK_LIBRARIES ( dengplugin_hexen common deng )
 
 INSTALL ( TARGETS dengplugin_hexen 
     RUNTIME DESTINATION ${PLUGIN_BINARY_DIR}

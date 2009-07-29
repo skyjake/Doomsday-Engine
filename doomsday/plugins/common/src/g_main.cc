@@ -23,9 +23,9 @@
 
 #include "dd_export.h"
 #include "g_main.h"
-#include "gameworld.h"
-#include "gamemap.h"
-#include "gameuser.h"
+#include <common/GameWorld>
+#include <common/GameMap>
+#include <common/GameUser>
 
 using namespace de;
 

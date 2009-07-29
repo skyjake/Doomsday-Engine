@@ -17,23 +17,12 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @file gameuser.h  Game plugin's derivation of the User.
- */
+#include "common/GameWorld"
 
-#ifndef GAMEUSER_H
-#define GAMEUSER_H
+using namespace de;
 
-#include <de/User>
+GameWorld::GameWorld()
+{}
 
-class GameUser : public de::User
-{
-public:
-    GameUser();
-    
-    ~GameUser();
-    
-private:
-};
-
-#endif /* GAMEUSER_H */
+GameWorld::~GameWorld()
+{}

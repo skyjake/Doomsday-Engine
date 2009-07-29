@@ -16,13 +16,13 @@
 
 ADD_DEFINITIONS ( -D__JDOOM__ )
 
-INCLUDE_DIRECTORIES ( include )
+INCLUDE_DIRECTORIES ( include ${CMAKE_SOURCE_DIR}/libcommon/include )
 
 FILE ( GLOB SOURCES src/*.c include/*.h )
 
 ADD_LIBRARY ( dengplugin_doom SHARED ${SOURCES} ${COMMON_GAME_SOURCES} )
 
-TARGET_LINK_LIBRARIES ( dengplugin_doom deng )
+TARGET_LINK_LIBRARIES ( dengplugin_doom common deng )
 
 INSTALL ( TARGETS dengplugin_doom 
     RUNTIME DESTINATION ${PLUGIN_BINARY_DIR}
