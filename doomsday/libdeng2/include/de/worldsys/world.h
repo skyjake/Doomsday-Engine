@@ -26,7 +26,7 @@
 #include <string>
 
 /**
- * @defgroup World
+ * @defgroup world World
  * 
  * The world subsystem takes care of the game world and the players in the world.
  */

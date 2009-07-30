@@ -22,8 +22,10 @@
  * - @ref core
  * - @ref fs
  * - @ref net
- *      - @ref protocol
+ * - @ref protocol
  * - @ref video
+ * - @ref audio
+ * - @ref world
  *
  * <h3>Supporting Modules</h3>
  * - @ref types
@@ -78,7 +80,7 @@
 namespace de 
 {
     /**
-     * @defgroup types Basic Data Types
+     * @defgroup types Basic Types
      * 
      * Basic data types.
      * 

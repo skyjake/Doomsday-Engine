@@ -33,7 +33,7 @@ File::File(const String& fileName)
 {
     source_ = this;
     
-    // Create the default set of info variables.
+    // Create the default set of info variables common to all files.
     info_.add(new Variable("name", new AccessorValue(*this, AccessorValue::NAME),
         Variable::TEXT | Variable::READ_ONLY | Variable::NO_SERIALIZE));
     info_.add(new Variable("path", new AccessorValue(*this, AccessorValue::PATH),

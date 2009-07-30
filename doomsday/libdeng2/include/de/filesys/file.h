@@ -35,9 +35,12 @@ namespace de
     /**
      * Base class for all files stored in the file system.
      * 
-     * @note Subclasses must call deindex() in their destructors so that
-     *       the instances indexed under the subclasses' type are removed
-     *       from the index also.
+     * Subclasses have some special requirements for their destructors:
+     * - deindex() must be called in all subclass destructors so that
+     *   the instances indexed under the subclasses' type are removed
+     *   from the file system's index also.
+     * - The file must be automatically flushed before it gets destroyed
+     *   (see flush()).
      *
      * @ingroup fs
      */
@@ -80,7 +83,7 @@ namespace de
         };
         
         /**
-         * Special text value that accesses the properties of the file.
+         * Special text value that accesses the properties of a file.
          *
          * @ingroup fs
          */
@@ -91,7 +94,7 @@ namespace de
             /// information of the owning file. @ingroup errors
             DEFINE_ERROR(CannotSerializeError);
             
-            /// Propert of the file to access.
+            /// Property of the file to access.
             enum Property {
                 NAME,
                 PATH,
@@ -152,8 +155,8 @@ namespace de
         virtual void deindex();
         
         /**
-         * Commits any buffered changes to the content of the file. Called automatically
-         * before the File instance is deleted.
+         * Commits any buffered changes to the content of the file. All subclasses
+         * of File must make sure they flush themselves right before they get deleted.
          */
         virtual void flush();
 
