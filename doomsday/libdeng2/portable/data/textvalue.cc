@@ -32,7 +32,6 @@
 
 using namespace de;
 using std::list;
-using std::string;
 using std::ostringstream;
 
 TextValue::TextValue(const Text& initialValue)
@@ -156,12 +155,12 @@ void TextValue::modulo(const Value& value)
     value_ = substitutePlaceholders(value_, args);
 }
 
-string TextValue::substitutePlaceholders(const std::string& pattern, const std::list<const Value*>& args)
+String TextValue::substitutePlaceholders(const String& pattern, const std::list<const Value*>& args)
 {
     ostringstream result;
     list<const Value*>::const_iterator arg = args.begin();
     
-    for(string::const_iterator i = pattern.begin(); i != pattern.end(); ++i)
+    for(String::const_iterator i = pattern.begin(); i != pattern.end(); ++i)
     {
         char ch = *i;
         

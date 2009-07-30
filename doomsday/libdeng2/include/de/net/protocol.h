@@ -40,6 +40,7 @@ namespace de
     class Packet;
     class Record;
     class RecordPacket;
+    class String;
     
     /**
      * The protocol is responsible for recognizing an incoming data packet and
@@ -128,7 +129,7 @@ namespace de
          * @param type     Type of reply.
          * @param message  Optional message (human readable).
          */
-        void reply(Transceiver& to, Reply type, const std::string& message);
+        void reply(Transceiver& to, Reply type, const String& message);
 
     private:
         typedef std::list<Constructor> Constructors;

@@ -30,15 +30,15 @@
 using namespace de;
 
 /// Name of the default video subsystem.
-static const std::string DEFAULT_VIDEO = "sdlopengl";
+static const String DEFAULT_VIDEO = "sdlopengl";
 
 /// Name of the default audio subsystem.
-static const std::string DEFAULT_AUDIO = "fmod";
+static const String DEFAULT_AUDIO = "fmod";
 
 // This will be set when the app is constructed.
 App* App::singleton_ = 0;
 
-App::App(const CommandLine& commandLine, const std::string& defaultVideo, const std::string& defaultAudio)
+App::App(const CommandLine& commandLine, const String& defaultVideo, const String& defaultAudio)
     : commandLine_(commandLine), 
       memory_(0), 
       fs_(0), 
@@ -97,7 +97,7 @@ App::App(const CommandLine& commandLine, const std::string& defaultVideo, const 
         memoryPtr.release();
         fsPtr.release();
         
-        std::cout << "libdeng2 App " << LIBDENG2_VERSION << " initialized.\n";
+        std::cout << "libdeng2::App " << LIBDENG2_VERSION << " initialized.\n";
     }
     catch(const Error& err)
     {
@@ -127,13 +127,13 @@ App::~App()
 void App::loadPlugins()
 {
     // Names of preferred plugins.
-    std::string gameName = "doom"; /// @todo There is no default game, really...
+    String gameName = "doom"; /// @todo There is no default game, really...
     commandLine_.getParameter("--game", gameName);
     
-    std::string videoName = defaultVideo_.empty()? DEFAULT_VIDEO : defaultVideo_;
+    String videoName = defaultVideo_.empty()? DEFAULT_VIDEO : defaultVideo_;
     commandLine_.getParameter("--video", videoName);
     
-    std::string audioName = defaultAudio_.empty()? DEFAULT_AUDIO : defaultAudio_;
+    String audioName = defaultAudio_.empty()? DEFAULT_AUDIO : defaultAudio_;
     commandLine_.getParameter("--audio", audioName);
 
     // Get the index of libraries.
@@ -146,7 +146,7 @@ void App::loadPlugins()
         if(libFile.name().contains("dengplugin_"))
         {
             // Initialize the plugin.
-            std::string type = libFile.library().type();
+            String type = libFile.library().type();
 
             // What kind of a library do we have?
             if(type == "deng-plugin/game")

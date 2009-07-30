@@ -134,7 +134,7 @@ namespace de
         DEFINE_ERROR(ReadOnlyError);
         
     public:
-        File(const std::string& name = "");
+        File(const String& name = "");
         
         /**
          * When destroyed, a file is automatically removed from its parent folder 

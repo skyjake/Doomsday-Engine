@@ -38,11 +38,17 @@ namespace de
 	class LIBDENG2_API String : public std::string, public IByteArray, public IBlock
 	{
 	public:
+	    /// Error related to String operations (note: shadows de::Error). @ingroup errors
+        DEFINE_ERROR(Error);
+	    
 	    /// Encoding conversion failed. @ingroup errors
-        DEFINE_ERROR(ConversionError);
+        DEFINE_SUB_ERROR(Error, ConversionError);
 
 	    /// An error was encountered in string pattern replacement. @ingroup errors
-        DEFINE_ERROR(IllegalPatternError);
+        DEFINE_SUB_ERROR(Error, IllegalPatternError);
+        
+        /// Invalid record member name. @ingroup errors
+        DEFINE_SUB_ERROR(Error, InvalidMemberError);
 
 	    /**
 	     * Data argument for the pattern formatter.
@@ -66,25 +72,33 @@ namespace de
 	    
 	public:
 		String(const std::string& text = "");
-        String(const char* cStr);
-		String(const IByteArray& array);
 		String(const String& other);
+		String(const IByteArray& array);
+        String(const char* cStr);
+        String(const char* cStr, size_type length);
+        String(size_type length, const char& ch);
+        String(const std::string& str, size_type index, size_type length);
+        String(iterator start, iterator end);
+        String(const_iterator start, const_iterator end);
 
         /// Checks if the string begins with the substring @a s.
-        bool beginsWith(const std::string& s) const;
+        bool beginsWith(const String& s) const;
 
         /// Checks if the string ends with the substring @a s.
-        bool endsWith(const std::string& s) const;
+        bool endsWith(const String& s) const;
 
         /// Checks if the string contains the substring @a s.
-        bool contains(const std::string& s) const;
+        bool contains(const String& s) const;
 
         /// Does a path concatenation on this string and the argument.
-        String concatenatePath(const std::string& path, char dirChar = '/') const;
-        
+        String concatenatePath(const String& path, char dirChar = '/') const;
+
         /// Does a path concatenation on a native path. The directory separator 
         /// character depends on the platform.
-        String concatenateNativePath(const std::string& nativePath) const;
+        String concatenateNativePath(const String& nativePath) const;
+
+        /// Does a record member concatenation on a variable name.
+        String concatenateMember(const String& member) const;
 
         /// Removes whitespace from the beginning and end of the string.
         /// @return Copy of the string without whitespace.
@@ -120,7 +134,7 @@ namespace de
 	
     public:
         /// Extracts the base name from the string (includes extension).
-        static String fileName(const std::string& path);
+        static String fileName(const String& path);
         
         /**
          * Extracts the file name extension from a path. A valid extension
@@ -132,13 +146,13 @@ namespace de
          * @return The extension, including the period in the beginning. 
          * An empty string is returned if the string contains no period.
          */
-        static String fileNameExtension(const std::string& path);
+        static String fileNameExtension(const String& path);
         
         /// Extracts the path of the string.
-        static String fileNamePath(const std::string& path);
+        static String fileNamePath(const String& path);
 
         /// Routine for string to wstring conversions.
-        static std::wstring stringToWide(const std::string& str);
+        static std::wstring stringToWide(const String& str);
         
         /// Routine for wstring to string conversions.
         static String wideToString(const std::wstring& str);
@@ -149,7 +163,7 @@ namespace de
          * @return 0, if @a a and @a b are identical. Positive, if @a a > @a b.
          *         Negative, if @a a < @a b.
          */
-        static dint compareWithCase(const std::string& a, const std::string& b);
+        static dint compareWithCase(const String& a, const String& b);
         
         /**
          * Compare two strings (case insensitive).
@@ -157,7 +171,7 @@ namespace de
          * @return 0, if @a a and @a b are identical. Positive, if @a a > @a b.
          *         Negative, if @a a < @a b.
          */
-        static dint compareWithoutCase(const std::string& a, const std::string& b);
+        static dint compareWithoutCase(const String& a, const String& b);
 
         /**
          * Advances the iterator until a nonspace character is encountered.
@@ -165,7 +179,7 @@ namespace de
          * @param i  Iterator to advance.
          * @param end  End of the string. Will not advance past this.
          */
-        static void skipSpace(std::string::const_iterator& i, const std::string::const_iterator& end);
+        static void skipSpace(String::const_iterator& i, const String::const_iterator& end);
         
         /**
          * Formats data according to formatting instructions. Outputs a
@@ -179,12 +193,12 @@ namespace de
          *
          * @return  Formatted argument as a string.
          */
-        static String patternFormat(std::string::const_iterator& formatIter, 
-            const std::string::const_iterator& formatEnd, 
+        static String patternFormat(String::const_iterator& formatIter, 
+            const String::const_iterator& formatEnd, 
             const IPatternArg& arg);
             
-        static void advanceFormat(std::string::const_iterator& i, 
-            const std::string::const_iterator& end);
+        static void advanceFormat(String::const_iterator& i, 
+            const String::const_iterator& end);
 	};
 }
 

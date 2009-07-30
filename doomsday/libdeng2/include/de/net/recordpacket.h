@@ -37,7 +37,7 @@ namespace de
     class LIBDENG2_API RecordPacket : public Packet
     {
     public:
-        RecordPacket(const std::string& label = "");
+        RecordPacket(const String& label = "");
         virtual ~RecordPacket();
 
         /// Returns the caption of the packet.
@@ -74,7 +74,7 @@ namespace de
          *
          * @return  Variable.
          */
-        const Variable& operator [] (const std::string& variableName) const;
+        const Variable& operator [] (const String& variableName) const;
 
         /**
          * Convenience method that returns a variable's value as text from
@@ -84,7 +84,7 @@ namespace de
          *
          * @return  Variable's value as text.
          */
-        String valueAsText(const std::string& variableName) const;
+        String valueAsText(const String& variableName) const;
 
         // Implements ISerializable.
         void operator >> (Writer& to) const;

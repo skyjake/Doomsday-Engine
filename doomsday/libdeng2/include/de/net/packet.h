@@ -22,8 +22,7 @@
 
 #include "../ISerializable"
 #include "../Address"
-
-#include <string>
+#include "../String"
 
 namespace de
 {
@@ -44,7 +43,7 @@ namespace de
         /// Length of a type identifier.
         static const duint TYPE_SIZE = 4;
         
-        typedef std::string Type;
+        typedef String Type;
         
     public:
         /**

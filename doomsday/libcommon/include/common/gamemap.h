@@ -30,7 +30,7 @@
 class LIBCOMMON_API GameMap : public de::Map
 {
 public:
-    GameMap(const std::string& name);
+    GameMap(const de::String& name);
     ~GameMap();
     
     void operator << (de::Reader& from);    

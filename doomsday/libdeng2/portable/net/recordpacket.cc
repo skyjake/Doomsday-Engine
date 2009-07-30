@@ -27,7 +27,7 @@ using namespace de;
 
 static const char* RECORD_PACKET_TYPE = "RECO";
 
-RecordPacket::RecordPacket(const std::string& label) : Packet(RECORD_PACKET_TYPE), label_(label), record_(0)
+RecordPacket::RecordPacket(const String& label) : Packet(RECORD_PACKET_TYPE), label_(label), record_(0)
 {
     record_ = new Record();
 }
@@ -50,12 +50,12 @@ Record* RecordPacket::give()
     return detached;
 }
 
-const Variable& RecordPacket::operator [] (const std::string& variableName) const
+const Variable& RecordPacket::operator [] (const String& variableName) const
 {
     return (*record_)[variableName];
 }
 
-String RecordPacket::valueAsText(const std::string& variableName) const
+String RecordPacket::valueAsText(const String& variableName) const
 {
     return (*record_)[variableName].value().asText();
 }

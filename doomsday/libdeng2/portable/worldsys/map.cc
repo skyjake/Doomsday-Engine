@@ -23,7 +23,7 @@
 
 using namespace de;
 
-Map::Map(const std::string& name) : name_(name)
+Map::Map(const String& name) : name_(name)
 {}
 
 Map::~Map()

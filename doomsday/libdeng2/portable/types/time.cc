@@ -129,7 +129,7 @@ Time::Delta Time::operator - (const Time& earlierTime) const
     return seconds;
 }
 
-std::string Time::asText() const
+String Time::asText() const
 {
     std::ostringstream os;
     os << time_ << "." << std::setw(6) << std::setfill('0') << micro_;

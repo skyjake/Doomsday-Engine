@@ -29,7 +29,7 @@ extern "C" {
 
 using namespace de;
 
-GameMap::GameMap(const std::string& name) : Map(name)
+GameMap::GameMap(const de::String& name) : Map(name)
 {
 /*#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     G_InitNew(SM_MEDIUM, 1, 1);

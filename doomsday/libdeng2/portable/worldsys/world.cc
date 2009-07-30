@@ -37,7 +37,7 @@ World::~World()
     delete map_;
 }
 
-void World::loadMap(const std::string& name)
+void World::loadMap(const String& name)
 {
     assert(map_ != NULL);
     delete map_;

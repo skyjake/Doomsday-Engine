@@ -20,9 +20,10 @@
 #ifndef LIBDENG2_ERROR_H
 #define LIBDENG2_ERROR_H
 
+#include "deng.h"
+
 #include <string>
 #include <stdexcept>
-#include <de/deng.h>
 
 /**
  * @defgroup errors Exceptions

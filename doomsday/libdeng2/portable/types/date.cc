@@ -53,7 +53,7 @@ Date::Date(const Time& at) : microSeconds(at.micro_)
     dayOfYear = t.tm_yday;
 }
 
-std::string Date::asText() const
+String Date::asText() const
 {
     std::ostringstream os;
     os << *this;

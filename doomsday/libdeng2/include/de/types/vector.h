@@ -24,6 +24,7 @@
 #include "../ISerializable"
 #include "../Writer"
 #include "../Reader"
+#include "../String"
 
 #include <sstream>
 #include <cmath>
@@ -54,7 +55,7 @@ namespace de
         operator Vector2<ddouble> () const {
             return Vector2<ddouble>(ddouble(x), ddouble(y));
         }
-        operator std::string () const {
+        operator String () const {
             return asText();
         }
         Vector2 operator + (const Vector2& other) const {
@@ -97,7 +98,7 @@ namespace de
         ddouble length() const { 
             return std::sqrt(ddouble(x*x + y*y)); 
         }
-        std::string asText() const { 
+        String asText() const { 
             std::ostringstream s;
             s << *this;
             return s.str();
@@ -149,7 +150,7 @@ namespace de
         operator Vector3<ddouble> () const {
             return Vector3<ddouble>(Vector2<Type>::x, Vector2<Type>::y, z);
         }
-        operator std::string () const {
+        operator String () const {
             return asText();
         }
         Vector3 operator + (const Vector3& other) const {
@@ -194,7 +195,7 @@ namespace de
         }
         ddouble length() const { return std::sqrt(Vector2<Type>::x*Vector2<Type>::x +
             Vector2<Type>::y*Vector2<Type>::y + z*z); }
-        std::string asText() const { 
+        String asText() const { 
             std::ostringstream os;
             os << *this;
             return os.str();
@@ -249,7 +250,7 @@ namespace de
         operator Vector4<ddouble> () const {
             return Vector4<ddouble>(Vector3<Type>::x, Vector3<Type>::y, Vector3<Type>::z, w);
         }
-        operator std::string () const {
+        operator String () const {
             return asText();
         }
         Vector4 operator + (const Vector4& other) const {
@@ -297,7 +298,7 @@ namespace de
         bool operator <= (const Vector4& other) const {
             return Vector3<Type>::operator <= (other) && w <= other.w;
         }
-        std::string asText() const { 
+        String asText() const { 
             std::ostringstream os;
             os << *this;
             return os.str();

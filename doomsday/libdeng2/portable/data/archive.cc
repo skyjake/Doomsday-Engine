@@ -373,15 +373,15 @@ Archive::Archive(const IByteArray& archive) : source_(&archive)
         
         // Collect subdirectories.
         /*
-        std::string iter = fileName;
+        String iter = fileName;
         while(true)
         {
-            std::string entryDir = String::fileName(String::fileNamePath(iter));
+            String entryDir = String::fileName(String::fileNamePath(iter));
             if(entryDir.empty())
             {
                 break;
             }
-            std::string parentDir = String::fileNamePath(String::fileNamePath(iter));
+            String parentDir = String::fileNamePath(String::fileNamePath(iter));
             iter = String::fileNamePath(iter);
             subDirs_[parentDir].insert(entryDir);
         }
@@ -417,7 +417,7 @@ File::Status Archive::status(const String& path) const
     return info;
 }
 
-void Archive::read(const std::string& path, IBlock& uncompressedData) const
+void Archive::read(const String& path, IBlock& uncompressedData) const
 {
     Index::const_iterator found = index_.find(path);
     if(found == index_.end())
@@ -483,7 +483,7 @@ void Archive::read(const std::string& path, IBlock& uncompressedData) const
             /// size listed in the central directory.
             throw InflateError("Archive::readEntry", 
                 "Failure due to " + 
-                std::string((result == Z_DATA_ERROR ? "corrupt data in archive" :
+                String((result == Z_DATA_ERROR ? "corrupt data in archive" :
                 "zlib error")) + ": " + stream.msg);
         }
 

@@ -55,7 +55,7 @@ namespace de
         void divide(const Value& value);
         void modulo(const Value& divisor);
         
-        static std::string substitutePlaceholders(const std::string& pattern, 
+        static String substitutePlaceholders(const String& pattern, 
             const std::list<const Value*>& args);
         
         // Implements ISerializable.

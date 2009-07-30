@@ -73,13 +73,13 @@ void CommandLine::clear()
     pointers_.push_back(0);
 }
 
-void CommandLine::append(const std::string& arg)
+void CommandLine::append(const String& arg)
 {
     arguments_.push_back(arg);
     pointers_.insert(pointers_.end() - 1, arguments_.rbegin()->c_str());
 }
 
-void CommandLine::insert(duint pos, const std::string& arg)
+void CommandLine::insert(duint pos, const String& arg)
 {
     if(pos > arguments_.size())
     {
@@ -101,7 +101,7 @@ void CommandLine::remove(duint pos)
     pointers_.erase(pointers_.begin() + pos);
 }
 
-dint CommandLine::check(const std::string& arg, dint numParams) const
+dint CommandLine::check(const String& arg, dint numParams) const
 {
     // Do a search for arg.
     Arguments::const_iterator i = arguments_.begin();
@@ -127,7 +127,7 @@ dint CommandLine::check(const std::string& arg, dint numParams) const
     return i - arguments_.begin();
 }
 
-bool CommandLine::getParameter(const std::string& arg, std::string& param) const
+bool CommandLine::getParameter(const String& arg, String& param) const
 {
     dint pos = check(arg, 1);
     if(pos > 0)
@@ -138,7 +138,7 @@ bool CommandLine::getParameter(const std::string& arg, std::string& param) const
     return false;
 }
 
-dint CommandLine::has(const std::string& arg) const
+dint CommandLine::has(const String& arg) const
 {
     dint howMany = 0;
     
@@ -163,7 +163,7 @@ bool CommandLine::isOption(duint pos) const
     return isOption(arguments_[pos]);
 }
 
-bool CommandLine::isOption(const std::string& arg)
+bool CommandLine::isOption(const String& arg)
 {
     return !(arg.empty() || arg[0] != '-');
 }
@@ -174,9 +174,9 @@ const char* const* CommandLine::argv() const
     return &pointers_[0];
 }
 
-void CommandLine::parse(const std::string& cmdLine)
+void CommandLine::parse(const String& cmdLine)
 {
-    std::string::const_iterator i = cmdLine.begin();
+    String::const_iterator i = cmdLine.begin();
 
     // This is unset if we encounter a terminator token.
     bool isDone = false;
@@ -197,7 +197,7 @@ void CommandLine::parse(const std::string& cmdLine)
             String::skipSpace(++i, cmdLine.end());
         }
 
-        std::string word;
+        String word;
 
         while(i != cmdLine.end() && (quote || !std::isspace(*i)))
         {
@@ -257,12 +257,12 @@ void CommandLine::parse(const std::string& cmdLine)
     }
 }
 
-void CommandLine::alias(const std::string& full, const std::string& alias)
+void CommandLine::alias(const String& full, const String& alias)
 {
     aliases_[full].push_back(alias);
 }
 
-bool CommandLine::matches(const std::string& full, const std::string& fullOrAlias) const
+bool CommandLine::matches(const String& full, const String& fullOrAlias) const
 {
     if(!String::compareWithoutCase(full, fullOrAlias))
     {
@@ -307,7 +307,7 @@ void CommandLine::execute(char** envs) const
 #endif    
 
 #ifdef WIN32
-    std::string quotedCmdLine;
+    String quotedCmdLine;
     for(Arguments::const_iterator i = arguments_.begin() + 1; i != arguments_.end(); ++i)
     {
         quotedCmdLine += "\"" + *i + "\" ";

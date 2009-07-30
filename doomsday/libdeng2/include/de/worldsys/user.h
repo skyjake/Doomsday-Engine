@@ -60,14 +60,14 @@ namespace de
         /**
          * Returns the name of the player.
          */
-        const std::string name() const;
+        const String name() const;
 
         /**
          * Sets the name of the user.
          *
          * @param name  Name of the user.
          */
-        void setName(const std::string& name);
+        void setName(const String& name);
         
         // Implements ISerializable.
         void operator >> (Writer& to) const;

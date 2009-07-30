@@ -53,7 +53,7 @@ namespace de
         bool contains(const Corner& point) const {
             return point >= topLeft && point <= bottomRight;
         }
-        std::string asText() const { 
+        String asText() const { 
             return "[" + topLeft.asText() + ", " + bottomRight.asText() + "]";
         }
         Corner topRight() const {

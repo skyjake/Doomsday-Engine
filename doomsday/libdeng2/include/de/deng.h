@@ -108,7 +108,7 @@ namespace de
     //@}
 }
 
-#include <de/Error>
+#include "Error"
 #include "version.h"
 
 #endif /* LIBDENG2_H */

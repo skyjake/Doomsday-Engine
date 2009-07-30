@@ -44,7 +44,7 @@ ServerApp::ServerApp(const de::CommandLine& arguments)
 
     // Start listening.
     duint16 port = DEFAULT_LISTEN_PORT;
-    std::string param;
+    String param;
     if(args.getParameter("--port", param))
     {
         std::istringstream(param) >> port;

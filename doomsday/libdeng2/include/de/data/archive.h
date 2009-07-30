@@ -115,7 +115,7 @@ namespace de
          * @param path              Path of the entry within the archive.
          * @param uncompressedData  Data is written here.
          */
-        void read(const std::string& path, IBlock& uncompressedData) const;
+        void read(const String& path, IBlock& uncompressedData) const;
 
         /**
          * Adds an entry to the archive. It will remain uncompressed in memory.

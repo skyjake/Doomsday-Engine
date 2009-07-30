@@ -115,7 +115,7 @@ void FS::deindex(File& file)
     removeFromIndex(typeIndex_[TYPE_NAME(file)], file);
 }
 
-const FS::Index& FS::indexFor(const std::string& typeName) const
+const FS::Index& FS::indexFor(const String& typeName) const
 {
     TypeIndex::const_iterator found = typeIndex_.find(typeName);
     if(found != typeIndex_.end())

@@ -65,7 +65,7 @@ namespace de
          * added to the end of the list of elements.
          * param text Text to add to the array.
          */
-        void add(const std::string& text);
+        void add(const String& text);
         
         /**
          * Pops the last element and gives its ownership to the caller.

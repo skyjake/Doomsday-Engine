@@ -38,7 +38,7 @@ public:
     SDLOpenGLVideo& sdlVideo() const;
     
     void setMode(de::Flag modeFlags, bool yes = true);
-    void setTitle(const std::string& title);
+    void setTitle(const de::String& title);
     
 protected:
     void setSDLVideoMode();

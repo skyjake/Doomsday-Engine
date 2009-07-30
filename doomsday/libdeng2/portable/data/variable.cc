@@ -30,7 +30,7 @@
 
 using namespace de;
 
-Variable::Variable(const std::string& name, Value* initial, const Mode& m)
+Variable::Variable(const String& name, Value* initial, const Mode& m)
     : mode(m), name_(name), value_(0)
 {
     verifyName(name_);
@@ -103,9 +103,9 @@ void Variable::verifyValid(const Value& v) const
     }
 }
 
-void Variable::verifyName(const std::string& s)
+void Variable::verifyName(const String& s)
 {
-    if(s.find('.') != std::string::npos)
+    if(s.find('.') != String::npos)
     {
         /// @throw NameError The name cannot contain periods '.'.
         throw NameError("Variable::verifyName", "Name contains '.': " + s);

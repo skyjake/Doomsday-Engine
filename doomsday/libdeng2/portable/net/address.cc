@@ -18,10 +18,10 @@
  */
 
 #include "de/Address"
+#include "de/String"
 #include "../sdl.h"
 
 #include <cstring>
-#include <string>
 #include <sstream>
 
 using namespace de;
@@ -29,7 +29,7 @@ using namespace de;
 Address::Address(duint32 ip, duint16 port) : ip_(ip), port_(port)
 {}
 
-Address::Address(const std::string& address, duint16 port)
+Address::Address(const String& address, duint16 port)
 {
     set(address, port);
 }
@@ -39,15 +39,14 @@ bool Address::operator == (const Address& other) const
     return ip_ == other.ip_ && port_ == other.port_;
 }
 
-void Address::set(const std::string& address, duint16 port)
+void Address::set(const String& address, duint16 port)
 {
-    using std::string;
     using std::istringstream;
 
-    string hostName;
+    String hostName;
 
-    string::size_type pos = address.find(':');
-    if(pos != string::npos)
+    String::size_type pos = address.find(':');
+    if(pos != String::npos)
     {
         hostName = address.substr(0, pos); 
 
@@ -78,7 +77,7 @@ bool Address::matches(const Address& other, duint32 mask)
     return (ip_ & mask) == (other.ip_ & mask);
 }
 
-std::string Address::asText() const
+String Address::asText() const
 {
     std::ostringstream os;
     os << *this;

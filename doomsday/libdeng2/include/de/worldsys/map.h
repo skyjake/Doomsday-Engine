@@ -49,7 +49,7 @@ namespace de
          *      becomes a blank map that is expected to be deserialized from
          *      somewhere.
          */
-        Map(const std::string& name = "");
+        Map(const String& name = "");
         
         virtual ~Map();
 

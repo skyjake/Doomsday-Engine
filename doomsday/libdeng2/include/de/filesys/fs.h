@@ -74,10 +74,10 @@ namespace de
         /// between them. @ingroup errors
         DEFINE_ERROR(AmbiguousError);
         
-        typedef std::multimap<std::string, File*> Index;
+        typedef std::multimap<String, File*> Index;
         typedef std::pair<Index::iterator, Index::iterator> IndexRange;
         typedef std::pair<Index::const_iterator, Index::const_iterator> ConstIndexRange;
-        typedef std::pair<std::string, File*> IndexEntry;
+        typedef std::pair<String, File*> IndexEntry;
         typedef std::list<File*> FoundFiles;
         
     public:
@@ -163,7 +163,7 @@ namespace de
          * FS::Index& nativeFileIndex = App::fileSystem().indexFor(TYPE_NAME(NativeFile));
          * @endcode
          */
-        const Index& indexFor(const std::string& typeIdentifier) const;
+        const Index& indexFor(const String& typeIdentifier) const;
         
         /**
          * Adds a file to the main index.
@@ -185,7 +185,7 @@ namespace de
         
         /// Index of file types. Each entry in the index is another index of names 
         /// to file instances.
-        typedef std::map<std::string, Index> TypeIndex;
+        typedef std::map<String, Index> TypeIndex;
         TypeIndex typeIndex_;
 
         /// The root folder of the entire file system.

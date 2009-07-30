@@ -34,12 +34,12 @@ User::User()
 User::~User()
 {}
 
-const std::string User::name() const
+const String User::name() const
 {
     return info_["name"].value().asText();
 }
 
-void User::setName(const std::string& name)
+void User::setName(const String& name)
 {
     info_["name"] = new TextValue(name);
 }

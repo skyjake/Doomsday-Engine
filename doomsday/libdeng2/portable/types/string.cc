@@ -37,12 +37,7 @@
 
 using namespace de;
 
-using std::string;
-
-String::String(const std::string& text) : string(text)
-{}
-
-String::String(const char* cStr) : string(cStr)
+String::String(const std::string& text) : std::string(text)
 {}
 
 String::String(const IByteArray& array)
@@ -55,10 +50,29 @@ String::String(const IByteArray& array)
     delete [] buffer;
 }
 
-String::String(const String& other) : string(other)
+String::String(const String& other) : std::string(other)
 {}
 
-bool String::beginsWith(const std::string& s) const
+String::String(const char* cStr) : std::string(cStr)
+{}
+
+String::String(const char* cStr, size_type length) : std::string(cStr, length)
+{}
+
+String::String(size_type length, const char& ch) : std::string(length, ch)
+{}
+
+String::String(const std::string& str, size_type index, size_type length)
+    : std::string(str, index, length)
+{}
+
+String::String(iterator start, iterator end) : std::string(start, end)
+{}
+
+String::String(const_iterator start, const_iterator end) : std::string(start, end)
+{}
+
+bool String::beginsWith(const String& s) const
 {
     if(size() < s.size())
     {
@@ -68,7 +82,7 @@ bool String::beginsWith(const std::string& s) const
     return std::equal(s.begin(), s.end(), begin());
 }
 
-bool String::endsWith(const std::string& s) const
+bool String::endsWith(const String& s) const
 {
     if(size() < s.size())
     {
@@ -78,12 +92,12 @@ bool String::endsWith(const std::string& s) const
     return std::equal(s.begin(), s.end(), s.end() - s.size());
 }
 
-bool String::contains(const std::string& s) const
+bool String::contains(const String& s) const
 {
     return find(s) != npos;
 }
 
-String String::concatenatePath(const std::string& other, char dirChar) const
+String String::concatenatePath(const String& other, char dirChar) const
 {
     if(!other.empty() && other[0] == dirChar)
     {
@@ -102,7 +116,7 @@ String String::concatenatePath(const std::string& other, char dirChar) const
     return result;
 }
 
-String String::concatenateNativePath(const std::string& nativePath) const
+String String::concatenateNativePath(const String& nativePath) const
 {
 #ifdef UNIX
     return concatenatePath(nativePath);
@@ -113,6 +127,15 @@ String String::concatenateNativePath(const std::string& nativePath) const
 
     return concatenatePath(nativePath, '\\');
 #endif
+}
+
+String String::concatenateMember(const String& member) const
+{
+    if(member.size() && member.at(0) == '.')
+    {
+        throw InvalidMemberError("String::concatenateMember", "Invalid: '" + member + "'");
+    }
+    return concatenatePath(member, '.');
 }
 
 String String::strip() const
@@ -192,7 +215,7 @@ std::wstring String::wide() const
     return stringToWide(*this);
 }
 
-std::wstring String::stringToWide(const std::string& str)
+std::wstring String::stringToWide(const String& str)
 {
     duint inputSize = str.size();
     const dbyte* input = reinterpret_cast<const dbyte*>(str.c_str());
@@ -321,7 +344,7 @@ String String::wideToString(const std::wstring& str)
     return output;
 }
 
-void String::advanceFormat(std::string::const_iterator& i, const std::string::const_iterator& end)
+void String::advanceFormat(String::const_iterator& i, const String::const_iterator& end)
 {
     ++i;
     if(i == end)
@@ -331,8 +354,8 @@ void String::advanceFormat(std::string::const_iterator& i, const std::string::co
     }
 }
 
-String String::patternFormat(std::string::const_iterator& formatIter, 
-    const std::string::const_iterator& formatEnd, const IPatternArg& arg)
+String String::patternFormat(String::const_iterator& formatIter, 
+    const String::const_iterator& formatEnd, const IPatternArg& arg)
 {
     advanceFormat(formatIter, formatEnd);
 
@@ -346,7 +369,7 @@ String String::patternFormat(std::string::const_iterator& formatIter,
     if(*formatIter == '%')
     {
         // Escaped.
-        return std::string(1, *formatIter);
+        return String(1, *formatIter);
     }
     if(*formatIter == '-')
     {
@@ -354,7 +377,7 @@ String String::patternFormat(std::string::const_iterator& formatIter,
         rightAlign = false;
         advanceFormat(formatIter, formatEnd);
     }
-    std::string::const_iterator k = formatIter;
+    String::const_iterator k = formatIter;
     while(std::isdigit(*formatIter))
     {
         advanceFormat(formatIter, formatEnd);
@@ -362,7 +385,7 @@ String String::patternFormat(std::string::const_iterator& formatIter,
     if(k != formatIter)
     {
         // Got the minWidth.
-        minWidth = std::atoi(std::string(k, formatIter).c_str());
+        minWidth = std::atoi(String(k, formatIter).c_str());
     }
     if(*formatIter == '.')
     {
@@ -373,7 +396,7 @@ String String::patternFormat(std::string::const_iterator& formatIter,
         {
             advanceFormat(formatIter, formatEnd);
         }
-        maxWidth = std::atoi(std::string(k, formatIter).c_str());
+        maxWidth = std::atoi(String(k, formatIter).c_str());
     }
     
     // Finally, the type formatting.
@@ -404,11 +427,11 @@ String String::patternFormat(std::string::const_iterator& formatIter,
         
     default:
         throw IllegalPatternError("Log::Entry::str", 
-            "Unknown format character '" + std::string(1, *formatIter) + "'");
+            "Unknown format character '" + String(1, *formatIter) + "'");
     }
     
     // Align and fit.
-    std::string value = valueStr.str();
+    String value = valueStr.str();
     if(maxWidth && value.size() > maxWidth)
     {
         // Cut it.
@@ -417,7 +440,7 @@ String String::patternFormat(std::string::const_iterator& formatIter,
     if(value.size() < minWidth)
     {
         // Pad it.
-        std::string padding = std::string(minWidth - value.size(), ' ');
+        String padding = String(minWidth - value.size(), ' ');
         if(rightAlign)
         {
             value = padding + value;
@@ -430,27 +453,27 @@ String String::patternFormat(std::string::const_iterator& formatIter,
     return value;
 }
 
-String String::fileName(const std::string& path)
+String String::fileName(const String& path)
 {
-    string::size_type pos = path.find_last_of('/');
+    size_type pos = path.find_last_of('/');
 
-    if(pos != string::npos)
+    if(pos != npos)
     {
         return path.substr(pos + 1);
     }
     return path;
 }
 
-String String::fileNameExtension(const std::string& path)
+String String::fileNameExtension(const String& path)
 {
-    string::size_type pos = path.find_last_of('.');
-    string::size_type slashPos = path.find_last_of('/');
+    size_type pos = path.find_last_of('.');
+    size_type slashPos = path.find_last_of('/');
     
-    if(pos != string::npos && pos > 0)
+    if(pos != npos && pos > 0)
     {
         // If there is a directory included, make sure there it at least
         // one character's worth of file name before the period.
-        if(slashPos == string::npos || pos > slashPos + 1)
+        if(slashPos == npos || pos > slashPos + 1)
         {
             return path.substr(pos);
         }
@@ -458,28 +481,28 @@ String String::fileNameExtension(const std::string& path)
     return "";
 }
 
-String String::fileNamePath(const std::string& path)
+String String::fileNamePath(const String& path)
 {
-    string::size_type pos = path.find_last_of('/');
+    size_type pos = path.find_last_of('/');
     
-    if(pos != string::npos)
+    if(pos != npos)
     {
         return path.substr(0, pos);
     }
     return "";
 }
 
-dint String::compareWithCase(const std::string& a, const std::string& b)
+dint String::compareWithCase(const String& a, const String& b)
 {
     return a.compare(b);
 }
 
-dint String::compareWithoutCase(const std::string& a, const std::string& b)
+dint String::compareWithoutCase(const String& a, const String& b)
 {
     return strcasecmp(a.c_str(), b.c_str());
 }
 
-void String::skipSpace(std::string::const_iterator& i, const std::string::const_iterator& end)
+void String::skipSpace(String::const_iterator& i, const String::const_iterator& end)
 {
     while(i != end && std::isspace(*i)) ++i;
 }

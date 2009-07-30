@@ -32,7 +32,7 @@ using namespace de;
 
 const char* Library::DEFAULT_TYPE = "library/generic";
 
-Library::Library(const std::string& nativePath)
+Library::Library(const String& nativePath)
     : handle_(0), type_(DEFAULT_TYPE)
 {
     std::cout << "Loading library: " << nativePath << "\n";
@@ -85,7 +85,7 @@ Library::~Library()
     }
 }
 
-void* Library::address(const std::string& name)
+void* Library::address(const String& name)
 {
     if(!handle_)
     {

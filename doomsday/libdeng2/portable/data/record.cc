@@ -78,42 +78,42 @@ Variable* Record::remove(Variable& variable)
     return &variable;
 }
 
-Variable& Record::addNumber(const std::string& name, const Value::Number& number)
+Variable& Record::addNumber(const String& name, const Value::Number& number)
 {
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
     return add(new Variable(name, new NumberValue(number), Variable::NUMBER));
 }
 
-Variable& Record::addText(const std::string& name, const Value::Text& text)
+Variable& Record::addText(const String& name, const Value::Text& text)
 {
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
     return add(new Variable(name, new TextValue(text), Variable::TEXT));
 }
 
-Variable& Record::addArray(const std::string& name)
+Variable& Record::addArray(const String& name)
 {
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
     return add(new Variable(name, new ArrayValue(), Variable::ARRAY));
 }
 
-Variable& Record::addDictionary(const std::string& name)
+Variable& Record::addDictionary(const String& name)
 {
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
     return add(new Variable(name, new DictionaryValue(), Variable::DICTIONARY));
 }
 
-Variable& Record::addBlock(const std::string& name)
+Variable& Record::addBlock(const String& name)
 {
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
     return add(new Variable(name, new BlockValue(), Variable::BLOCK));
 }
     
-Record& Record::add(const std::string& name, Record* subrecord)
+Record& Record::add(const String& name, Record* subrecord)
 {
     std::auto_ptr<Record> sub(subrecord);
     /// @throw Variable::NameError Subrecord names must be valid variable names.
@@ -127,12 +127,12 @@ Record& Record::add(const std::string& name, Record* subrecord)
     return *subrecord;
 }
 
-Record& Record::addRecord(const std::string& name)
+Record& Record::addRecord(const String& name)
 {
     return add(name, new Record());
 }
 
-Record* Record::remove(const std::string& name)
+Record* Record::remove(const String& name)
 {
     Subrecords::iterator found = subrecords_.find(name);
     if(found != subrecords_.end())
@@ -144,16 +144,16 @@ Record* Record::remove(const std::string& name)
     throw NotFoundError("Record::remove", "Subrecord '" + name + "' not found");
 }
     
-Variable& Record::operator [] (const std::string& name)
+Variable& Record::operator [] (const String& name)
 {
     return const_cast<Variable&>((*const_cast<const Record*>(this))[name]);
 }
     
-const Variable& Record::operator [] (const std::string& name) const
+const Variable& Record::operator [] (const String& name) const
 {
     // Path notation allows looking into subrecords.
-    std::string::size_type pos = name.find('.');
-    if(pos != std::string::npos)
+    String::size_type pos = name.find('.');
+    if(pos != String::npos)
     {
         return subrecord(name.substr(0, pos))[name.substr(pos + 1)];
     }
@@ -166,16 +166,16 @@ const Variable& Record::operator [] (const std::string& name) const
     throw NotFoundError("Record::operator []", "Variable '" + name + "' not found");
 }
 
-Record& Record::subrecord(const std::string& name)
+Record& Record::subrecord(const String& name)
 {
     return const_cast<Record&>((const_cast<const Record*>(this))->subrecord(name));
 }
 
-const Record& Record::subrecord(const std::string& name) const
+const Record& Record::subrecord(const String& name) const
 {
     // Path notation allows looking into subrecords.
-    std::string::size_type pos = name.find('.');
-    if(pos != std::string::npos)
+    String::size_type pos = name.find('.');
+    if(pos != String::npos)
     {
         return subrecord(name.substr(0, pos)).subrecord(name.substr(pos + 1));
     }
@@ -188,7 +188,7 @@ const Record& Record::subrecord(const std::string& name) const
     throw NotFoundError("Record::subrecords", "Subrecord '" + name + "' not found");
 }
     
-std::string Record::asText(const std::string& prefix, List* lines) const
+String Record::asText(const String& prefix, List* lines) const
 {
     // Recursive calls to collect all variables in the record.
     if(lines)
@@ -202,7 +202,7 @@ std::string Record::asText(const std::string& prefix, List* lines) const
         // Collect lines from subrecords.
         for(Subrecords::const_iterator i = subrecords_.begin(); i != subrecords_.end(); ++i)
         {
-            i->second->asText(i->first + ".", lines);
+            i->second->asText(i->first.concatenateMember(""), lines);
         }
         return "";
     }
@@ -213,7 +213,7 @@ std::string Record::asText(const std::string& prefix, List* lines) const
     Vector2ui maxLength;
 
     // Collect.
-    asText("", &allLines);
+    asText(prefix, &allLines);
     
     // Sort and find maximum length.
     allLines.sort();

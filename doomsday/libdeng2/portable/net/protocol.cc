@@ -81,7 +81,7 @@ void Protocol::decree(Transceiver& to, const CommandPacket& command, RecordPacke
 
 void Protocol::reply(Transceiver& to, Reply type, Record* record)
 {
-    std::string label;
+    String label;
     switch(type)
     {
     case OK:
@@ -104,7 +104,7 @@ void Protocol::reply(Transceiver& to, Reply type, Record* record)
     to << packet;
 }
 
-void Protocol::reply(Transceiver& to, Reply type, const std::string& message)
+void Protocol::reply(Transceiver& to, Reply type, const String& message)
 {
     Record* rec = new Record();
     if(!message.empty())

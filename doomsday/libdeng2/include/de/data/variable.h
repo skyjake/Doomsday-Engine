@@ -84,7 +84,7 @@ namespace de
          *      a NoneValue will be created for the variable.
          * @param mode  Mode flags.
          */
-        Variable(const std::string& name = "", Value* initial = 0, const Mode& mode = DEFAULT_MODE);
+        Variable(const String& name = "", Value* initial = 0, const Mode& mode = DEFAULT_MODE);
             
         virtual ~Variable();
         
@@ -169,7 +169,7 @@ namespace de
          *
          * @param s  Name to test.
          */
-        static void verifyName(const std::string& s);
+        static void verifyName(const String& s);
         
         // Implements ISerializable.
         void operator >> (Writer& to) const;

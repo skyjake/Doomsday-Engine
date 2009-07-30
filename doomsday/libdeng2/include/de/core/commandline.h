@@ -71,7 +71,7 @@ namespace de
          *
          * @param arg  Argument to append.
          */
-        void append(const std::string& arg);
+        void append(const String& arg);
 
         /**
          * Inserts a new argument to the list of arguments at index @a pos.
@@ -79,7 +79,7 @@ namespace de
          * @param pos  Index at which the new argument will be at.
          * @param arg  Argument to insert.
          */
-        void insert(duint pos, const std::string& arg);
+        void insert(duint pos, const String& arg);
 
         /**
          * Removes an argument by index.
@@ -98,7 +98,7 @@ namespace de
          *
          * @return  Index of the argument, if found. Otherwise zero.
          */
-        dint check(const std::string& arg, dint count = 0) const;
+        dint check(const String& arg, dint count = 0) const;
 
         /**
          * Gets the parameter for an argument.
@@ -109,7 +109,7 @@ namespace de
          * @return  @c true, if parameter was successfully returned.
          *      Otherwise @c false, in which case @a param is not modified.
          */
-        bool getParameter(const std::string& arg, std::string& param) const;
+        bool getParameter(const String& arg, String& param) const;
 
         /**
          * Determines whether @a arg exists in the list of arguments.
@@ -118,7 +118,7 @@ namespace de
          *
          * @return  Number of times @a arg is found in the arguments.
          */
-        dint has(const std::string& arg) const;
+        dint has(const String& arg) const;
 
         /**
          * Determines whether an argument is an option, i.e., it begins with a hyphen.
@@ -128,9 +128,9 @@ namespace de
         /**
          * Determines whether an argument is an option, i.e., it begins with a hyphen.
          */
-        static bool isOption(const std::string& arg);
+        static bool isOption(const String& arg);
 
-        const std::string& at(duint pos) const { return arguments_.at(pos); }
+        const String& at(duint pos) const { return arguments_.at(pos); }
 
         /**
          * Returns a list of pointers to the arguments. The list contains
@@ -149,7 +149,7 @@ namespace de
          *
          * @param cmdLine  String containing the arguments.
          */ 
-        void parse(const std::string& cmdLine);
+        void parse(const String& cmdLine);
         
         /**
          * Defines a new alias for a full argument.
@@ -157,9 +157,9 @@ namespace de
          * @param full  The full argument, e.g., "--help"
          * @param alias  Alias for the full argument, e.g., "-h"
          */
-        void alias(const std::string& full, const std::string& alias);
+        void alias(const String& full, const String& alias);
 
-        bool matches(const std::string& full, const std::string& fullOrAlias) const;
+        bool matches(const String& full, const String& fullOrAlias) const;
         
         /**
          * Spawns a new process using the command line. The first argument
@@ -171,13 +171,13 @@ namespace de
         void execute(char** envs) const;
         
     private:
-        typedef std::vector<std::string> Arguments;
+        typedef std::vector<String> Arguments;
         Arguments arguments_;
     
         typedef std::vector<const char*> ArgumentPointers;
         ArgumentPointers pointers_;
         
-        typedef std::map<std::string, Arguments> Aliases;
+        typedef std::map<String, Arguments> Aliases;
         Aliases aliases_;
     };
 }

@@ -63,7 +63,7 @@ namespace de
          *                    current working directory.
          * @param mode        Access mode for the file.
          */
-        NativeFile(const std::string& name, const std::string& nativePath, const Mode& mode = 0);
+        NativeFile(const String& name, const String& nativePath, const Mode& mode = 0);
         
         virtual ~NativeFile();
 

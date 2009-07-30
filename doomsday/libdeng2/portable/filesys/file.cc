@@ -28,7 +28,7 @@
 
 using namespace de;
 
-File::File(const std::string& fileName)
+File::File(const String& fileName)
     : parent_(0), originFeed_(0), name_(fileName)
 {
     source_ = this;
@@ -48,6 +48,7 @@ File::File(const std::string& fileName)
 
 File::~File()
 {
+    flush();    
     if(parent_)
     {
         // Remove from parent folder.

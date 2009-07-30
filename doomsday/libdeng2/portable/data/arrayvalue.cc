@@ -188,7 +188,7 @@ void ArrayValue::add(Value* value)
     elements_.push_back(value);
 }
 
-void ArrayValue::add(const std::string& text)
+void ArrayValue::add(const String& text)
 {
     add(new TextValue(text));
 }

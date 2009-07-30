@@ -80,7 +80,7 @@ namespace de
          *
          * @param nameAfterUnderscore  Part of the name following underscore.
          */
-        bool hasUnderscoreName(const std::string& nameAfterUnderscore) const;
+        bool hasUnderscoreName(const String& nameAfterUnderscore) const;
 
     public:
         /**

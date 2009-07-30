@@ -49,7 +49,7 @@ namespace de
          *
          * @param nativePath  Path of the native directory.
          */
-        DirectoryFeed(const std::string& nativePath);
+        DirectoryFeed(const String& nativePath);
         
         virtual ~DirectoryFeed();
         
@@ -63,7 +63,7 @@ namespace de
          *
          * @param nativePath  New path to use as the working directory.
          */
-        static void changeWorkingDir(const std::string& nativePath);
+        static void changeWorkingDir(const String& nativePath);
 
         /**
          * Determines whether a native path exists.
@@ -72,7 +72,7 @@ namespace de
          *
          * @return @c true if the path exists, @c false otherwise.
          */
-        static bool exists(const std::string& nativePath);
+        static bool exists(const String& nativePath);
 
         /**
          * Determines the status of a file in the directory.
@@ -83,11 +83,11 @@ namespace de
          *
          * @return  Status of the file.
          */
-        static File::Status fileStatus(const std::string& nativePath);
+        static File::Status fileStatus(const String& nativePath);
 
     protected:
-        void populateSubFolder(Folder& folder, const std::string& entryName);
-        void populateFile(Folder& folder, const std::string& entryName);
+        void populateSubFolder(Folder& folder, const String& entryName);
+        void populateFile(Folder& folder, const String& entryName);
 
     private:
         const String nativePath_;

@@ -82,8 +82,8 @@ namespace de
          * @param defaultAudio  Name of the default audio subsystem. "none" if the audio
          *      subsystem should not be used. Leave blank to use the built-in default.
          */
-        App(const CommandLine& commandLine, const std::string& defaultVideo = "", 
-            const std::string& defaultAudio = "");
+        App(const CommandLine& commandLine, const String& defaultVideo = "", 
+            const String& defaultAudio = "");
             
         virtual ~App();
 
@@ -239,11 +239,11 @@ namespace de
         
         /// The video subsystem. Can be NULL.
         Video* video_;
-        std::string defaultVideo_;
+        String defaultVideo_;
         
         /// The audio subsystem. Can be NULL.
         Audio* audio_;
-        std::string defaultAudio_;
+        String defaultAudio_;
         
         /// @c true while the main loop is running.
         bool runMainLoop_;

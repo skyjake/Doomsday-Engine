@@ -21,6 +21,7 @@
 #define LIBDENG2_RECORD_H
 
 #include "../ISerializable"
+#include "../String"
 #include "../Variable"
 #include "../Value"
 
@@ -47,9 +48,9 @@ namespace de
         /// All variables and subrecords in the record must have a name. @ingroup errors
         DEFINE_ERROR(UnnamedError);
         
-        typedef std::map<std::string, Variable*> Members;
-        typedef std::map<std::string, Record*> Subrecords;
-        typedef std::pair<std::string, std::string> KeyValue;
+        typedef std::map<String, Variable*> Members;
+        typedef std::map<String, Record*> Subrecords;
+        typedef std::pair<String, String> KeyValue;
         typedef std::list<KeyValue> List;
         
     public:
@@ -89,7 +90,7 @@ namespace de
          *
          * @return  The number variable.
          */
-        Variable& addNumber(const std::string& variableName, const Value::Number& number);
+        Variable& addNumber(const String& variableName, const Value::Number& number);
         
         /**
          * Adds a text variable to the record. The variable is set up to only accept
@@ -100,7 +101,7 @@ namespace de
          *
          * @return  The text variable.
          */
-        Variable& addText(const std::string& variableName, const Value::Text& text);
+        Variable& addText(const String& variableName, const Value::Text& text);
         
         /**
          * Adds an array variable to the record. The variable is set up to only accept
@@ -110,7 +111,7 @@ namespace de
          *
          * @return  The array variable.
          */
-        Variable& addArray(const std::string& variableName);
+        Variable& addArray(const String& variableName);
 
         /**
          * Adds a dictionary variable to the record. The variable is set up to only accept
@@ -120,7 +121,7 @@ namespace de
          *
          * @return  The dictionary variable.
          */
-        Variable& addDictionary(const std::string& variableName);
+        Variable& addDictionary(const String& variableName);
         
         /**
          * Adds a block variable to the record. The variable is set up to only accept
@@ -130,7 +131,7 @@ namespace de
          *
          * @return  The block variable.
          */
-        Variable& addBlock(const std::string& variableName);
+        Variable& addBlock(const String& variableName);
         
         /**
          * Adds a new subrecord to the record. 
@@ -141,7 +142,7 @@ namespace de
          *
          * @return @a subrecord, for convenience.
          */
-        Record& add(const std::string& name, Record* subrecord);
+        Record& add(const String& name, Record* subrecord);
 
         /**
          * Adds a new empty subrecord to the record.
@@ -150,7 +151,7 @@ namespace de
          *
          * @return  The new subrecord.
          */
-        Record& addRecord(const std::string& name);
+        Record& addRecord(const String& name);
 
         /**
          * Removes a subrecord from the record.
@@ -159,7 +160,7 @@ namespace de
          *
          * @return  Caller gets ownership of the removed record.
          */
-        Record* remove(const std::string& name);
+        Record* remove(const String& name);
         
         /**
          * Looks up a variable in the record. Variables in subrecords can be accessed
@@ -169,7 +170,7 @@ namespace de
          *
          * @return  Variable.
          */
-        Variable& operator [] (const std::string& name);
+        Variable& operator [] (const String& name);
         
         /**
          * Looks up a variable in the record. Variables in subrecords can be accessed
@@ -179,7 +180,7 @@ namespace de
          *
          * @return  Variable (non-modifiable).
          */
-        const Variable& operator [] (const std::string& name) const;
+        const Variable& operator [] (const String& name) const;
 
         /**
          * Looks up a subrecord in the record.
@@ -188,7 +189,7 @@ namespace de
          *
          * @return  Subrecord.
          */
-        Record& subrecord(const std::string& name);
+        Record& subrecord(const String& name);
 
         /**
          * Looks up a subrecord in the record.
@@ -197,7 +198,7 @@ namespace de
          *
          * @return  Subrecord (non-modifiable).
          */
-        const Record& subrecord(const std::string& name) const;
+        const Record& subrecord(const String& name) const;
 
         /**
          * Returns a non-modifiable map of the members.
@@ -218,7 +219,7 @@ namespace de
          *
          * @return  Text representation.
          */
-        std::string asText(const std::string& prefix = "", List* lines = 0) const;
+        String asText(const String& prefix = "", List* lines = 0) const;
 
         /**
          * Convenience template for getting the value of a variable in a 
@@ -229,7 +230,7 @@ namespace de
          * @return  Value cast to a specific value type.
          */
         template <typename ValueType>
-        const ValueType& value(const std::string& name) const {
+        const ValueType& value(const String& name) const {
             return (*this)[name].value<ValueType>();
         }
         

@@ -42,7 +42,7 @@ namespace de
         /**
          * Forms a textual representation of the date.
          */
-        std::string asText() const;
+        String asText() const;
         
         /**
          * Converts the date back to a Time.

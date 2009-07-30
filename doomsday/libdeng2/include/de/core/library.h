@@ -128,7 +128,7 @@ namespace de
          * 
          * @param nativePath  Path of the shared library to load.
          */
-        Library(const std::string& nativePath);
+        Library(const String& nativePath);
         
         /**
          * Unloads the shared library.
@@ -139,7 +139,7 @@ namespace de
          * Returns the type identifier of the library. This affects how libdeng2
          * will treat the library.
          */
-        const std::string& type() const { return type_; }
+        const String& type() const { return type_; }
 
         /**
          * Gets the address of an exported symbol. This will always return a valid
@@ -149,10 +149,10 @@ namespace de
          *
          * @return  A pointer to the symbol.
          */
-        void* address(const std::string& name);
+        void* address(const String& name);
         
         template <typename Type>
-        Type symbol(const std::string& name) {
+        Type symbol(const String& name) {
             return reinterpret_cast<Type>(address(name));
         }
                 
@@ -160,7 +160,7 @@ namespace de
         /// Handle to the shared library.
         void* handle_;
         
-        typedef std::map<std::string, void*> Symbols;
+        typedef std::map<String, void*> Symbols;
         Symbols symbols_;
         
         /// Type identifier for the library (e.g., "deng-plugin/generic").

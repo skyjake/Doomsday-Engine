@@ -42,7 +42,7 @@ void GLWindow::setMode(Flag modeFlags, bool yes)
     //setSDLVideoMode();
 }
 
-void GLWindow::setTitle(const std::string& title)
+void GLWindow::setTitle(const String& title)
 {
     SDL_WM_SetCaption(title.c_str(), 0);
 }

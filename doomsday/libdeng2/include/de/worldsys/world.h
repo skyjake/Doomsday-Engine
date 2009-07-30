@@ -55,7 +55,7 @@ namespace de
          *
          * @param name  Name of the map.
          */
-        virtual void loadMap(const std::string& name);
+        virtual void loadMap(const String& name);
         
         const Record& info() const { return info_; }
 

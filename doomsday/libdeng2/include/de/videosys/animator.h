@@ -88,7 +88,7 @@ namespace de
             return now();
         }
 
-        operator std::string () const {
+        operator String () const {
             std::ostringstream os;
             os << now();
             return os.str();

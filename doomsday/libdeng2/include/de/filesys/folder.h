@@ -50,7 +50,7 @@ namespace de
         typedef std::list<Feed*> Feeds;
         
     public:
-        Folder(const std::string& name = "");
+        Folder(const String& name = "");
         
         virtual ~Folder();
     
@@ -132,7 +132,7 @@ namespace de
          * @return  The removed file object. Ownership of the object is given to
          * the caller.
          */
-        File* remove(const std::string& name);
+        File* remove(const String& name);
 
         template <typename Type>
         Type* remove(Type* fileObject) {
@@ -186,7 +186,7 @@ namespace de
                     
     private:
         /// A map of file names to file instances.
-        typedef std::map<std::string, File*> Contents;
+        typedef std::map<String, File*> Contents;
         Contents contents_;
         
         /// Feeds provide content for the folder.

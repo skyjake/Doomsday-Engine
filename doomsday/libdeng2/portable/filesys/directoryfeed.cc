@@ -41,7 +41,7 @@
 
 using namespace de;
 
-DirectoryFeed::DirectoryFeed(const std::string& nativePath) : nativePath_(nativePath) {}
+DirectoryFeed::DirectoryFeed(const String& nativePath) : nativePath_(nativePath) {}
 
 DirectoryFeed::~DirectoryFeed()
 {}
@@ -58,7 +58,7 @@ void DirectoryFeed::populate(Folder& folder)
     struct dirent* entry;
     while((entry = readdir(dir)) != 0)   
     {
-        const std::string entryName = entry->d_name;
+        const String entryName = entry->d_name;
         switch(entry->d_type)
         {
         case DT_DIR:
@@ -80,7 +80,7 @@ void DirectoryFeed::populate(Folder& folder)
     {
         do
         {
-            const std::string entryName = fd.name;
+            const String entryName = fd.name;
             if(fd.attrib & _A_SUBDIR)
             {
                 populateSubFolder(folder, entryName);
@@ -96,7 +96,7 @@ void DirectoryFeed::populate(Folder& folder)
 #endif
 }
 
-void DirectoryFeed::populateSubFolder(Folder& folder, const std::string& entryName)
+void DirectoryFeed::populateSubFolder(Folder& folder, const String& entryName)
 {
     if(entryName != "." && entryName != "..")
     {
@@ -131,7 +131,7 @@ void DirectoryFeed::populateSubFolder(Folder& folder, const std::string& entryNa
     }
 }
 
-void DirectoryFeed::populateFile(Folder& folder, const std::string& entryName)
+void DirectoryFeed::populateFile(Folder& folder, const String& entryName)
 {
     if(folder.has(entryName))
     {
@@ -203,7 +203,7 @@ bool DirectoryFeed::prune(File& file) const
     return false;
 }
 
-void DirectoryFeed::changeWorkingDir(const std::string& nativePath)
+void DirectoryFeed::changeWorkingDir(const String& nativePath)
 {
 #ifdef UNIX
     if(chdir(nativePath.c_str()))
@@ -223,7 +223,7 @@ void DirectoryFeed::changeWorkingDir(const std::string& nativePath)
 #endif
 }
 
-bool DirectoryFeed::exists(const std::string& nativePath)
+bool DirectoryFeed::exists(const String& nativePath)
 {
 #ifdef UNIX
     struct stat s;
@@ -235,7 +235,7 @@ bool DirectoryFeed::exists(const std::string& nativePath)
 #endif
 }
 
-File::Status DirectoryFeed::fileStatus(const std::string& nativePath)
+File::Status DirectoryFeed::fileStatus(const String& nativePath)
 {
 #ifdef UNIX
     // Get file status information.

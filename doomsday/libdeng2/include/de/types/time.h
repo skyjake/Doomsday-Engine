@@ -21,8 +21,8 @@
 #define LIBDENG2_TIME_H
 
 #include "../deng.h"
+#include "../String"
 
-#include <string>
 #include <ctime>
 
 namespace de
@@ -167,7 +167,7 @@ namespace de
         /**
          * Makes a text representation of the time (default is seconds since the epoch).
          */
-        std::string asText() const;
+        String asText() const;
         
         /**
          * Converts the time into a Date.

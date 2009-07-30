@@ -22,10 +22,10 @@
 
 #include "../deng.h"
 
-#include <string>
-
 namespace de
 {
+    class String;
+    
     /**
      * IP address.
      *
@@ -46,7 +46,7 @@ namespace de
          * @param address  Network address. E.g., "localhost" or "127.0.0.1".
          * @param port  Port number.
          */
-        Address(const std::string& address, duint16 port = 0);
+        Address(const String& address, duint16 port = 0);
 
         /**
          * Checks two addresses for equality.
@@ -66,7 +66,7 @@ namespace de
          * @param address  Address to resolve. E.g., "localhost" or "127.0.0.1".
          * @param port  Port port.
          */
-        void set(const std::string& address, duint16 port);
+        void set(const String& address, duint16 port);
 
         duint32 ip() const { return ip_; }
         
@@ -88,7 +88,7 @@ namespace de
         /**
          * Converts the address to text.
          */
-        std::string asText() const;
+        String asText() const;
 
     private:
         duint32 ip_;

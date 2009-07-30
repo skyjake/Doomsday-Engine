@@ -23,7 +23,7 @@
 
 using namespace de;
 
-Folder::Folder(const std::string& name)
+Folder::Folder(const String& name)
     : File(name)
 {}
 

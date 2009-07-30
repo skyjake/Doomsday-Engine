@@ -19,10 +19,9 @@
 
 #include "de/Socket"
 #include "de/Message"
+#include "de/String"
 #include "../internal.h"
 #include "../sdl.h"
-
-#include <string>
 
 using namespace de;
 
@@ -41,7 +40,7 @@ Socket::Socket(const Address& address) : socket_(0), socketSet_(0)
     {
         /// @throw ConnectionError Opening the socket to @a address failed.
         throw ConnectionError("Socket::Socket", "Failed to connect: " +
-            std::string(SDLNet_GetError()));
+            String(SDLNet_GetError()));
     }
 
     initialize();
@@ -151,7 +150,7 @@ void Socket::send(const IByteArray& packet, duint channel)
     if(sentBytes != packetSize)
     {
         /// @throw DisconnectedError All the data was not sent successfully.
-        throw DisconnectedError("Socket::operator << ", std::string(SDLNet_GetError()));
+        throw DisconnectedError("Socket::operator << ", String(SDLNet_GetError()));
     }
 }
 

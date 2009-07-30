@@ -94,7 +94,7 @@ namespace de
          *
          * @param title  Title text.
          */
-        virtual void setTitle(const std::string& title) = 0;
+        virtual void setTitle(const String& title) = 0;
 
         /**
          * Draws the contents of the window.

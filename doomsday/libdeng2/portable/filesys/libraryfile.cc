@@ -68,7 +68,7 @@ void LibraryFile::unload()
     }
 }
 
-bool LibraryFile::hasUnderscoreName(const std::string& nameAfterUnderscore) const
+bool LibraryFile::hasUnderscoreName(const String& nameAfterUnderscore) const
 {
     return name().contains("_" + nameAfterUnderscore + ".");
 }
