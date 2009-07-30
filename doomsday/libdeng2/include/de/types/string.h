@@ -35,32 +35,32 @@ namespace de
      *
      * @ingroup types
      */
-	class LIBDENG2_API String : public std::string, public IByteArray, public IBlock
-	{
-	public:
-	    /// Error related to String operations (note: shadows de::Error). @ingroup errors
+    class LIBDENG2_API String : public std::string, public IByteArray, public IBlock
+    {
+    public:
+        /// Error related to String operations (note: shadows de::Error). @ingroup errors
         DEFINE_ERROR(Error);
-	    
-	    /// Encoding conversion failed. @ingroup errors
+        
+        /// Encoding conversion failed. @ingroup errors
         DEFINE_SUB_ERROR(Error, ConversionError);
 
-	    /// An error was encountered in string pattern replacement. @ingroup errors
+        /// An error was encountered in string pattern replacement. @ingroup errors
         DEFINE_SUB_ERROR(Error, IllegalPatternError);
         
         /// Invalid record member name. @ingroup errors
         DEFINE_SUB_ERROR(Error, InvalidMemberError);
 
-	    /**
-	     * Data argument for the pattern formatter.
-	     * @see String::patternFormat()
-	     */
-	    class IPatternArg 
-	    {
+        /**
+         * Data argument for the pattern formatter.
+         * @see String::patternFormat()
+         */
+        class IPatternArg 
+        {
         public:
             /// An incompatible type is requested in asText() or asNumber(). @ingroup errors
             DEFINE_ERROR(TypeError);
-	        
-	    public:
+            
+        public:
             virtual ~IPatternArg() {}
             
             /// Returns the value of the argument as a text string.
@@ -69,11 +69,11 @@ namespace de
             /// Returns the value of the argument as a number.
             virtual ddouble asNumber() const = 0;
         };
-	    
-	public:
-		String(const std::string& text = "");
-		String(const String& other);
-		String(const IByteArray& array);
+        
+    public:
+        String(const std::string& text = "");
+        String(const String& other);
+        String(const IByteArray& array);
         String(const char* cStr);
         String(const char* cStr, size_type length);
         String(size_type length, const char& ch);
@@ -118,20 +118,20 @@ namespace de
         /// Returns an upper-case version of the string.
         String upper() const;
 
-		/// Converts the string to a wide-character STL wstring.
+        /// Converts the string to a wide-character STL wstring.
         std::wstring wide() const;
 
-		// Implements IByteArray.
+        // Implements IByteArray.
         Size size() const;
-		void get(Offset at, Byte* values, Size count) const;
-		void set(Offset at, const Byte* values, Size count);	
-		
+        void get(Offset at, Byte* values, Size count) const;
+        void set(Offset at, const Byte* values, Size count);    
+        
         // Implements IBlock.
         void clear() { std::string::clear(); }
         void copyFrom(const IByteArray& array, Offset at, Size count);
         void resize(Size size) { std::string::resize(size); }
         const Byte* data() const { return reinterpret_cast<const Byte*>(std::string::data()); }
-	
+    
     public:
         /// Extracts the base name from the string (includes extension).
         static String fileName(const String& path);
@@ -199,7 +199,7 @@ namespace de
             
         static void advanceFormat(String::const_iterator& i, 
             const String::const_iterator& end);
-	};
+    };
 }
 
 #endif /* LIBDENG2_STRING_H */
