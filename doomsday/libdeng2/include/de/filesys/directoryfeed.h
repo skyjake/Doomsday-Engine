@@ -54,8 +54,8 @@ namespace de
         virtual ~DirectoryFeed();
         
         void populate(Folder& folder);
-
         bool prune(File& file) const;
+        File* newFile(const String& name);
 
     public:
         /**

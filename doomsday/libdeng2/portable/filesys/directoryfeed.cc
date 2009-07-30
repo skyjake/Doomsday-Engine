@@ -189,6 +189,19 @@ bool DirectoryFeed::prune(File& file) const
     return false;
 }
 
+File* DirectoryFeed::newFile(const String& name)
+{
+    String newPath = nativePath_.concatenateNativePath(name);
+    if(exists(newPath))
+    {
+        /// @throw AlreadyExistsError  The file @a name already exists in the native directory.
+        throw AlreadyExistsError("DirectoryFeed::newFile", name + ": already exists");
+    }
+    File* file = new NativeFile(name, newPath);
+    file->setOriginFeed(this);
+    return file;
+}
+
 void DirectoryFeed::changeWorkingDir(const String& nativePath)
 {
 #ifdef UNIX

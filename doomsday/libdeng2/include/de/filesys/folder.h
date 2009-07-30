@@ -47,6 +47,9 @@ namespace de
         /// File path did not point to a file. @ingroup errors
         DEFINE_ERROR(NotFoundError);
         
+        /// Creating a new file was unsuccessful. @ingroup errors
+        DEFINE_ERROR(NewFileError);
+        
         typedef std::list<Feed*> Feeds;
         
     public:
@@ -92,6 +95,17 @@ namespace de
          * Destroys the contents of the folder. All contained file objects are deleted.
          */
         void clear();
+
+        /**
+         * Creates a new file in the folder. The feeds attached to the folder will 
+         * decide what kind of file is actually created. The new file is added to
+         * the file system's index.
+         *
+         * @param name  Name of the new file.         
+         *
+         * @return  The created file.
+         */
+        File& newFile(const String& name);
 
         /**
          * Checks whether the folder contains a file.

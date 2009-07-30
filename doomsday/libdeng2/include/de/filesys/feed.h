@@ -28,6 +28,7 @@ namespace de
 {
     class File;
     class Folder;
+    class String;
     
     /**
      * Base class for feeds that generate File and Folder instances.
@@ -45,6 +46,11 @@ namespace de
      */
     class LIBDENG2_API Feed
     {
+    public:
+        /// Tried to create a new file that already exists in the native file
+        /// system. @ingroup errors
+        DEFINE_ERROR(AlreadyExistsError);
+        
     public:
         Feed();
         
@@ -71,6 +77,16 @@ namespace de
          *      @c false.
          */
         virtual bool prune(File& file) const = 0;
+        
+        /**
+         * Creates a new file with a given name and sets the new file's origin feed
+         * to this feed.
+         *
+         * @param name  Name of the new file.
+         *
+         * @return  The new file. Caller gets ownership.
+         */
+        virtual File* newFile(const String& name);
     };
 };
 

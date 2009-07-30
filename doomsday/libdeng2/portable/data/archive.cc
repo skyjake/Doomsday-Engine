@@ -378,6 +378,27 @@ Archive::~Archive()
     clear();
 }
 
+void Archive::cache(bool detachFromSource)
+{
+    if(!source_)
+    {
+        // Nothing to read from.
+        return;
+    }    
+    for(Index::iterator i = index_.begin(); i != index_.end(); ++i)
+    {
+        Entry& entry = i->second;
+        if(!entry.data && !entry.compressedData)
+        {
+            entry.compressedData = new Block(*source_, entry.offset, entry.sizeInArchive);
+        }
+    }
+    if(detachFromSource)
+    {
+        source_ = 0;
+    }
+}
+
 bool Archive::has(const String& path) const
 {
     return index_.find(path) != index_.end();
@@ -388,17 +409,14 @@ void Archive::listFiles(Names& names, const String& folder) const
     names.clear();
     
     String prefix = folder.empty()? "" : folder.concatenatePath("");
-    std::cout << "PREFIX " << prefix << "\n";
     for(Index::const_iterator i = index_.begin(); i != index_.end(); ++i)
     {
         if(i->first.beginsWith(prefix))
         {
             String relative = i->first.substr(prefix.size());
-            std::cout << "testing " << relative << "\n";
             if(relative.fileNamePath().empty())
             {
                 // This is a file in the folder.
-                std::cout << "This is a file: " << relative << "\n";
                 names.insert(relative);
             }
         }
@@ -418,7 +436,6 @@ void Archive::listFolders(Names& names, const String& folder) const
             if(!relative.empty() && relative.fileNamePath().empty())
             {
                 // This is a subfolder in the folder.
-                std::cout << "This is a folder: " << relative << "\n";
                 names.insert(relative);
             }
         }
@@ -501,14 +518,19 @@ void Archive::read(const String& path, IBlock& uncompressedData) const
         uncompressedData.copyFrom(*entry.data, 0, entry.data->size());
         return;
     }
-
-    // Must have a source archive for reading.
-    assert(source_ != NULL);
     
     if(entry.compression == NO_COMPRESSION)
     {
         // Just read it, then.
-        uncompressedData.copyFrom(*source_, entry.offset, entry.size);
+        if(entry.compressedData)
+        {
+            uncompressedData.copyFrom(*entry.compressedData, 0, entry.size);
+        }
+        else
+        {
+            assert(source_ != NULL);
+            uncompressedData.copyFrom(*source_, entry.offset, entry.size);
+        }
     }
     else
     {
@@ -516,11 +538,15 @@ void Archive::read(const String& path, IBlock& uncompressedData) const
         uncompressedData.resize(entry.size);
 
         // Take a copy of the compressed data for zlib.
-        Block compressedData(*source_, entry.offset, entry.sizeInArchive);
+        if(!entry.compressedData)
+        {
+            assert(source_ != NULL);
+            entry.compressedData = new Block(*source_, entry.offset, entry.sizeInArchive);
+        }
 
         z_stream stream;
         std::memset(&stream, 0, sizeof(stream));
-        stream.next_in = const_cast<IByteArray::Byte*>(compressedData.data());
+        stream.next_in = const_cast<IByteArray::Byte*>(entry.compressedData->data());
         stream.avail_in = entry.sizeInArchive;
         stream.zalloc = Z_NULL;
         stream.zfree = Z_NULL;
@@ -577,10 +603,8 @@ void Archive::remove(const String& path)
     Index::iterator found = index_.find(path);
     if(found != index_.end())
     {
-        if(found->second.data)
-        {
-            delete found->second.data;
-        }
+        delete found->second.data;
+        delete found->second.compressedData;
         index_.erase(found);
         modified_ = true;
         return;
@@ -594,10 +618,8 @@ void Archive::clear()
     // Free uncompressed data.
     for(Index::iterator i = index_.begin(); i != index_.end(); ++i)
     {
-        if(i->second.data)
-        {
-            delete i->second.data;
-        }
+        delete i->second.data;
+        delete i->second.compressedData;
     }
     index_.clear();
     modified_ = true;
@@ -630,13 +652,19 @@ void Archive::operator >> (Writer& to) const
         header.fileNameSize = i->first.size();
 
         // Can we use the data already in the source archive?
-        if(source_ && !(entry.data && entry.mustCompress))
+        if((entry.compressedData || source_) && !(entry.data && entry.mustCompress))
         {
             // Yes, we can.
             writer << header << FixedByteArray(i->first);
             IByteArray::Offset newOffset = writer.offset();
-            writer << FixedByteArray(*source_, entry.offset, entry.sizeInArchive);
-            
+            if(entry.compressedData)
+            {
+                writer << FixedByteArray(*entry.compressedData);
+            }
+            else
+            {
+                writer << FixedByteArray(*source_, entry.offset, entry.sizeInArchive);
+            }            
             // Written to new location.
             entry.offset = newOffset;
         }

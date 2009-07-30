@@ -48,6 +48,12 @@ namespace de
 
         void clear();
 
+        /// Returns the archive of the file.
+        Archive& archive() { return archive_; }
+
+        /// Returns the archive of the file (non-modifiable).
+        const Archive& archive() const { return archive_; }
+
         // Implements IByteArray.
 		void get(Offset at, Byte* values, Size count) const;
 		void set(Offset at, const Byte* values, Size count);

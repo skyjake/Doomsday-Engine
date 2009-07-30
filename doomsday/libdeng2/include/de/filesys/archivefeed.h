@@ -55,6 +55,7 @@ namespace de
 
         void populate(Folder& folder);
         bool prune(File& file) const;
+        File* newFile(const String& name);
 
         /**
          * Returns the archive that the feed accesses.

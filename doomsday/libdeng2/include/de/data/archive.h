@@ -94,6 +94,16 @@ namespace de
         virtual ~Archive();
 
         /**
+         * Loads a copy of the compressed data into memory for all the entries that
+         * don't already have uncompressed data stored. 
+         *
+         * @param detachFromSource  If @c true, the archive becomes a standalone 
+         *                          archive that no longer needs the source byte
+         *                          array to remain in existence.
+         */
+        void cache(bool detachFromSource = true);
+
+        /**
          * Determines whether the archive contains an entry.
          *
          * @param path  Path of the entry.
@@ -149,7 +159,8 @@ namespace de
         Block& entryBlock(const String& path);
 
         /**
-         * Reads and decompresses an entry from the archive.
+         * Reads and decompresses an entry from the archive. The compressed data
+         * for the entry is kept cached after the call.
          *
          * @param path              Path of the entry within the archive.
          * @param uncompressedData  Data is written here.
@@ -215,9 +226,10 @@ namespace de
             Time modifiedAt;        ///< Latest modification timestamp.
             bool mustCompress;      ///< True if the data must be compressed when writing.
             Block* data;            ///< Uncompressed data. Can be @c NULL.
+            mutable Block* compressedData; ///< Cached copy of the compressed data. Can be @c NULL.
             
             Entry() : offset(0), size(0), sizeInArchive(0), compression(0), crc32(0),
-                localHeaderOffset(0), mustCompress(false), data(0) {}
+                localHeaderOffset(0), mustCompress(false), data(0), compressedData(0) {}
         };
         typedef std::map<String, Entry> Index;
         

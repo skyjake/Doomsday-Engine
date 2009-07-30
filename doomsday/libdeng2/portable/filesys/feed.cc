@@ -26,3 +26,9 @@ Feed::Feed()
 
 Feed::~Feed()
 {}
+
+File* Feed::newFile(const String& /*name*/)
+{
+    // By default feeds can't create files.
+    return 0;
+}

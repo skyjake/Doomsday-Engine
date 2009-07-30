@@ -54,6 +54,23 @@ void Folder::clear()
     contents_.clear();
 }
 
+File& Folder::newFile(const String& name)
+{
+    // The first feed able to create a file will get the honors.
+    for(Feeds::iterator i = feeds_.begin(); i != feeds_.end(); ++i)
+    {
+        File* file = (*i)->newFile(name);
+        if(file)
+        {
+            add(file);
+            fileSystem().index(*file);
+            return *file;
+        }
+    }
+    /// @throw NewFileError All feeds of this folder failed to create a file.
+    throw NewFileError("Folder::newFile", "Unable to create new file in folder '" + path() + "'");
+}
+
 bool Folder::has(const String& name) const
 {
     return (contents_.find(name.lower()) != contents_.end());

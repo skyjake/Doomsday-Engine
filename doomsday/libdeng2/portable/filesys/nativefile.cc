@@ -48,15 +48,9 @@ void NativeFile::close()
 
 void NativeFile::clear()
 {
-    if(!mode_[WRITE_BIT])
-    {
-        /// @throw ReadOnlyError  Mode flags allow reading only.
-        throw ReadOnlyError("NativeFile::clear", "Only reading allowed");
-    }
-    
-    Mode oldMode = mode_;
     close();
-    mode_.set(TRUNCATE_BIT);
+    Mode oldMode = mode_;
+    mode_ |= WRITE | TRUNCATE;
     output();
     mode_ = oldMode;
 }

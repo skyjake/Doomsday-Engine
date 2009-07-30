@@ -41,28 +41,31 @@ int deng_Main(int argc, char** argv)
         Reader(b, littleEndianByteOrder) >> v;
         cout << std::hex << v << std::dec << "\n";
 
-        NativeFile& zipFile = app.fileSystem().find<NativeFile>("test.zip");
+        Folder& zip = app.fileSystem().find<Folder>("test.zip");
         
-        cout << "Here's the file's info:\n";
-        cout << zipFile.info();
+        cout << "Here's test.zip's info:\n";
+        cout << zip.info();
         
-        Archive arch(zipFile);
-        File::Status stats = arch.status("hello.txt");
+        const File& hello = zip.locate<File>("hello.txt");
+        File::Status stats = hello.status();
         cout << "hello.txt size: " << stats.size << " bytes, modified at " << Date(stats.modifiedAt) << endl;
         
-        String content;
-        arch.read("hello.txt", content);
+        String content(hello);
         cout << "The contents: \"" << content << "\"" << endl;
-        
+
         // Make a second entry.
-        arch.add("world.txt", content);    
-        
+        File& worldTxt = zip.newFile("world.txt");
+        Writer(worldTxt) << FixedByteArray(content);
+
         // This won't appear in the file system unless FS::refresh() is called.
         NativeFile zipFile2("test2.zip", 
-            zipFile.nativePath().fileNameNativePath().concatenateNativePath("test2.zip"),
-            NativeFile::TRUNCATE);
+            /*zipFile.nativePath().fileNameNativePath().concatenateNativePath(*/"test2.zip"/*)*/,
+            NativeFile::WRITE | NativeFile::TRUNCATE);
+        Archive arch;
+        arch.add("world.txt", content);
         Writer(zipFile2) << arch;
         cout << "Wrote " << zipFile2.nativePath() << endl;
+        cout << zipFile2.info();
     }
     catch(const Error& err)
     {

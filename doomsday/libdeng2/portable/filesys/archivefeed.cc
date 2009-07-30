@@ -34,9 +34,7 @@ ArchiveFeed::ArchiveFeed(File& archiveFile) : file_(archiveFile), archive_(0), p
 
 ArchiveFeed::ArchiveFeed(ArchiveFeed& parentFeed, const String& basePath)
     : file_(parentFeed.file_), archive_(0), basePath_(basePath), parentFeed_(&parentFeed)
-{
-    std::cout << "Subfeed with path " << basePath_ << "\n";
-}
+{}
 
 ArchiveFeed::~ArchiveFeed()
 {
@@ -46,6 +44,11 @@ ArchiveFeed::~ArchiveFeed()
         if(archive_->modified())
         {
             std::cout << "Updating archive in " << file_.name() << "\n";
+
+            // Make sure we have either a compressed or uncompressed version of
+            // each entry in memory before destroying the source file.
+            archive_->cache();
+
             file_.clear();
             Writer(file_) << *archive_;
         }        
@@ -119,6 +122,21 @@ bool ArchiveFeed::prune(File& file) const
 {
     /// @todo  Prune based on entry status.
     return true;
+}
+
+File* ArchiveFeed::newFile(const String& name)
+{
+    String newEntry = basePath_.concatenatePath(name);
+    if(archive().has(newEntry))
+    {
+        /// @throw AlreadyExistsError  The entry @a name already exists in the archive.
+        throw AlreadyExistsError("ArchiveFeed::newFile", name + ": already exists");
+    }
+    // Add an empty entry.
+    archive().add(newEntry, String());
+    File* file = new ArchiveFile(name, archive(), newEntry);
+    file->setOriginFeed(this);
+    return file;
 }
 
 Archive& ArchiveFeed::archive()
