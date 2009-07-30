@@ -48,7 +48,7 @@ void Packet::operator << (Reader& from)
     
     // Having been constructed as a specific type, the identifier is already
     // set and cannot change. Let's check if it's the correct one.
-    if(String::compareWithCase(type_, ident))
+    if(type_.compareWithCase(ident))
     {
         throw InvalidTypeError("Packet::operator <<", "Invalid ID");
     }
@@ -63,5 +63,5 @@ bool Packet::checkType(Reader& from, const String& type)
     from >> ident[0] >> ident[1] >> ident[2] >> ident[3];
     ident[4] = 0;
     from.rewind(4);
-    return !String::compareWithCase(type, ident);
+    return !type.compareWithCase(ident);
 }

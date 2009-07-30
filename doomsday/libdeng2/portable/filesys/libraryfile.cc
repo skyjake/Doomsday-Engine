@@ -27,15 +27,13 @@ LibraryFile::LibraryFile(File* source)
     : File(source->name()), library_(0)
 {
     assert(source != 0);
-    setSource(source);
+    setSource(source); // takes ownership
 }
 
 LibraryFile::~LibraryFile()
 {
-    deindex();
-    
+    deindex();    
     delete library_;
-    delete source();
 }
 
 Library& LibraryFile::library()
@@ -59,7 +57,7 @@ Library& LibraryFile::library()
     return *library_;
 }
 
-void LibraryFile::unload()
+void LibraryFile::clear()
 {
     if(library_)
     {
@@ -77,19 +75,19 @@ bool LibraryFile::recognize(const File& file)
 {
 #if defined(MACOSX)
     if(file.name().beginsWith("libdengplugin_") &&
-        String::fileNameExtension(file.name()) == ".dylib")
+        file.name().fileNameExtension() == ".dylib")
     {
         return true;
     }
 #elif defined(UNIX)
     if(file.name().beginsWith("libdengplugin_") &&
-        String::fileNameExtension(file.name()) == ".so")
+        file.name().fileNameExtension() == ".so")
     {
         return true;
     }
 #elif defined(WIN32)
     if(file.name().beginsWith("dengplugin_") &&
-        String::fileNameExtension(file.name()) == ".dll")
+        file.name().fileNameExtension() == ".dll")
     {
         return true;
     }

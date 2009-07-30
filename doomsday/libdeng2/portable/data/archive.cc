@@ -250,10 +250,10 @@ struct CentralEnd : public ISerializable {
     }
 };
 
-Archive::Archive() : source_(0)
+Archive::Archive() : source_(0), modified_(false)
 {}
 
-Archive::Archive(const IByteArray& archive) : source_(&archive)
+Archive::Archive(const IByteArray& archive) : source_(&archive), modified_(false)
 {
     Reader reader(archive, littleEndianByteOrder);
     
@@ -370,22 +370,6 @@ Archive::Archive(const IByteArray& archive) : source_(&archive)
 
         // Back to the central directory.
         reader.setOffset(posInCentral);
-        
-        // Collect subdirectories.
-        /*
-        String iter = fileName;
-        while(true)
-        {
-            String entryDir = String::fileName(String::fileNamePath(iter));
-            if(entryDir.empty())
-            {
-                break;
-            }
-            String parentDir = String::fileNamePath(String::fileNamePath(iter));
-            iter = String::fileNamePath(iter);
-            subDirs_[parentDir].insert(entryDir);
-        }
-        */
     }
 }
 
@@ -397,6 +381,48 @@ Archive::~Archive()
 bool Archive::has(const String& path) const
 {
     return index_.find(path) != index_.end();
+}
+
+void Archive::listFiles(Names& names, const String& folder) const
+{
+    names.clear();
+    
+    String prefix = folder.empty()? "" : folder.concatenatePath("");
+    std::cout << "PREFIX " << prefix << "\n";
+    for(Index::const_iterator i = index_.begin(); i != index_.end(); ++i)
+    {
+        if(i->first.beginsWith(prefix))
+        {
+            String relative = i->first.substr(prefix.size());
+            std::cout << "testing " << relative << "\n";
+            if(relative.fileNamePath().empty())
+            {
+                // This is a file in the folder.
+                std::cout << "This is a file: " << relative << "\n";
+                names.insert(relative);
+            }
+        }
+    }
+}
+
+void Archive::listFolders(Names& names, const String& folder) const
+{
+    names.clear();
+    
+    String prefix = folder.empty()? "" : folder.concatenatePath("");
+    for(Index::const_iterator i = index_.begin(); i != index_.end(); ++i)
+    {
+        if(i->first.beginsWith(prefix))
+        {
+            String relative = String(i->first.substr(prefix.size())).fileNamePath();
+            if(!relative.empty() && relative.fileNamePath().empty())
+            {
+                // This is a subfolder in the folder.
+                std::cout << "This is a folder: " << relative << "\n";
+                names.insert(relative);
+            }
+        }
+    }    
 }
 
 File::Status Archive::status(const String& path) const
@@ -415,6 +441,40 @@ File::Status Archive::status(const String& path) const
         found->second.size,
         found->second.modifiedAt);
     return info;
+}
+
+const Block& Archive::entryBlock(const String& path) const
+{
+    Index::const_iterator found = index_.find(path);
+    if(found == index_.end())
+    {
+        /// @throw NotFoundError  @a path was not found in the archive.
+        throw NotFoundError("Archive::block",
+            "Entry '" + path + "' cannot not found in the archive");
+    }
+    
+    // We'll need to modify the entry.
+    Entry& entry = const_cast<Entry&>(found->second);
+    if(entry.data)
+    {
+        // Got it.
+        return *entry.data;
+    }
+    std::auto_ptr<Block> cached(new Block);
+    read(path, *cached.get());
+    entry.data = cached.release();
+    return *entry.data;
+}
+
+Block& Archive::entryBlock(const String& path)
+{
+    const Block& block = const_cast<const Archive*>(this)->entryBlock(path);
+    
+    // Mark for recompression.
+    index_.find(path)->second.mustCompress = true;
+    modified_ = true;
+    
+    return const_cast<Block&>(block);
 }
 
 void Archive::read(const String& path, IBlock& uncompressedData) const
@@ -503,11 +563,13 @@ void Archive::add(const String& path, const IByteArray& data)
     entry.size = data.size();
     entry.modifiedAt = Time();
     entry.data = new Block(data);
+    entry.mustCompress = true;
     entry.compression = NO_COMPRESSION; // Will be updated.
     entry.crc32 = crc32(0L, Z_NULL, 0);
     entry.crc32 = crc32(entry.crc32, entry.data->data(), entry.data->size());
     // The rest of the data gets updated when the archive is written.
     index_[path] = entry;
+    modified_ = true;
 }
 
 void Archive::remove(const String& path)
@@ -520,6 +582,7 @@ void Archive::remove(const String& path)
             delete found->second.data;
         }
         index_.erase(found);
+        modified_ = true;
         return;
     }
     /// @throw NotFoundError  The path does not exist in the archive.
@@ -537,6 +600,7 @@ void Archive::clear()
         }
     }
     index_.clear();
+    modified_ = true;
 }
 
 void Archive::operator >> (Writer& to) const
@@ -566,7 +630,7 @@ void Archive::operator >> (Writer& to) const
         header.fileNameSize = i->first.size();
 
         // Can we use the data already in the source archive?
-        if(source_ && !entry.data)
+        if(source_ && !(entry.data && entry.mustCompress))
         {
             // Yes, we can.
             writer << header << FixedByteArray(i->first);
@@ -668,7 +732,7 @@ void Archive::operator >> (Writer& to) const
 bool Archive::recognize(const File& file)
 {
     // For now, just check the name.
-    String ext = String::fileNameExtension(file.name()).lower();
+    String ext = file.name().fileNameExtension().lower();
     return (ext == ".pack" || ext == ".demo" || ext == ".save" || ext == ".addon" ||
             ext == ".box" || ext == ".pk3" || ext == ".zip");
 }

@@ -264,7 +264,7 @@ void CommandLine::alias(const String& full, const String& alias)
 
 bool CommandLine::matches(const String& full, const String& fullOrAlias) const
 {
-    if(!String::compareWithoutCase(full, fullOrAlias))
+    if(!full.compareWithoutCase(fullOrAlias))
     {
         // They are, in fact, the same.
         return true;
@@ -275,7 +275,7 @@ bool CommandLine::matches(const String& full, const String& fullOrAlias) const
     {
         for(Arguments::const_iterator i = found->second.begin(); i != found->second.end(); ++i)
         {
-            if(!String::compareWithoutCase(*i, fullOrAlias))
+            if(i->compareWithoutCase(fullOrAlias))
             {
                 // Found it among the aliases.
                 return true;

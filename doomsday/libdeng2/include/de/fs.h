@@ -1,3 +1,5 @@
+#include "ArchiveFeed"
+#include "ArchiveFile"
 #include "DirectoryFeed"
 #include "Feed"
 #include "File"

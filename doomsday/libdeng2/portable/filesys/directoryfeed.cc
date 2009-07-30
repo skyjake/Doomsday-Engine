@@ -101,33 +101,23 @@ void DirectoryFeed::populateSubFolder(Folder& folder, const String& entryName)
     if(entryName != "." && entryName != "..")
     {
         String subFeedPath = nativePath_.concatenateNativePath(entryName);
-        Folder* subFolder = folder.locate<Folder>(entryName);
-        if(!subFolder)
+        Folder& subFolder = folder.fileSystem().getFolder(folder.path().concatenatePath(entryName));
+
+        // It may already be fed by a DirectoryFeed.
+        for(Folder::Feeds::const_iterator i = subFolder.feeds().begin();
+            i != subFolder.feeds().end(); ++i)
         {
-            // This folder does not exist yet. Let's create it.
-            subFolder = new Folder(entryName);
-            folder.add(subFolder);
-            folder.fileSystem().index(*subFolder);
-        }
-        else
-        {        
-            // The folder already exists. It may also already be fed by a DirectoryFeed.
-            for(Folder::Feeds::const_iterator i = subFolder->feeds().begin();
-                i != subFolder->feeds().end(); ++i)
+            const DirectoryFeed* dirFeed = dynamic_cast<const DirectoryFeed*>(*i);
+            if(dirFeed && dirFeed->nativePath_ == subFeedPath)
             {
-                const DirectoryFeed* dirFeed = dynamic_cast<const DirectoryFeed*>(*i);
-                if(dirFeed && dirFeed->nativePath_ == subFeedPath)
-                {
-                    // Already got this fed. Nothing else needs done.
-                    std::cout << "Feed for " << subFeedPath << " already there.\n";
-                    return;
-                }
+                // Already got this fed. Nothing else needs done.
+                std::cout << "Feed for " << subFeedPath << " already there.\n";
+                return;
             }
         }
 
         // Add a new feed.
-        DirectoryFeed* feed = new DirectoryFeed(subFeedPath);
-        subFolder->attach(feed);
+        subFolder.attach(new DirectoryFeed(subFeedPath));
     }
 }
 
@@ -143,20 +133,16 @@ void DirectoryFeed::populateFile(Folder& folder, const String& entryName)
 
     // Protect against errors.
     std::auto_ptr<NativeFile> nativeFile(new NativeFile(entryName, entryPath));
+    nativeFile->setStatus(fileStatus(entryPath));
 
-    File* file = folder.fileSystem().interpret(nativeFile.get());
-    file->setStatus(fileStatus(entryPath));
+    File* file = folder.fileSystem().interpret(nativeFile.release());
+    folder.add(file);
 
     // We will decide on pruning this.
     file->setOriginFeed(this);
-    
-    folder.add(file);
         
     // Include files the main index.
     folder.fileSystem().index(*file);
-    
-    // We're in the clear.
-    nativeFile.release();
 }
 
 bool DirectoryFeed::prune(File& file) const

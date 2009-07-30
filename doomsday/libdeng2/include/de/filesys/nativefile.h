@@ -67,6 +67,8 @@ namespace de
         
         virtual ~NativeFile();
 
+        void clear();
+
         /**
          * Returns the native path of the file.
          */
@@ -78,7 +80,7 @@ namespace de
         const Mode& mode() const { return mode_; }
         
         /**
-         * Changes the mode of the file. For example, using TRUNCATE as the
+         * Changes the mode of the file. For example, using <code>WRITE | TRUNCATE</code> as the
          * mode would empty the contents of the file and open it in writing mode.
          *
          * @param newMode  Mode.

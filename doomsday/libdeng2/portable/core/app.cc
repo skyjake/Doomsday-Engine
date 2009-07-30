@@ -81,7 +81,7 @@ App::App(const CommandLine& commandLine, const String& defaultVideo, const Strin
         // line argument. The working directory needs to be changed.
         if(commandLine_.count() >= 2 && String(commandLine_.at(1)).beginsWith("-psn"))
         {
-            DirectoryFeed::changeWorkingDir(String::fileNamePath(commandLine_.at(0)) + "/..");
+            DirectoryFeed::changeWorkingDir(commandLine_.at(0).fileNamePath() + "/..");
         }
 #endif
     
@@ -160,7 +160,7 @@ void App::loadPlugins()
                 else
                 {
                     // Not the right game.
-                    libFile.unload();
+                    libFile.clear();
                     continue;
                 }
             }
@@ -175,7 +175,7 @@ void App::loadPlugins()
                 else
                 {
                     // Not the right one.
-                    libFile.unload();
+                    libFile.clear();
                     continue;
                 }
             }
@@ -190,7 +190,7 @@ void App::loadPlugins()
                 else
                 {
                     // Not the right one.
-                    libFile.unload();
+                    libFile.clear();
                     continue;
                 }
             }      
@@ -215,7 +215,7 @@ void App::unloadGame()
     // Unload the game first.
     if(gameLib_)
     {
-        gameLib_->unload();
+        gameLib_->clear();
         gameLib_ = 0;
     }
 }
@@ -233,8 +233,7 @@ void App::unloadPlugins()
         LibraryFile& libFile = *static_cast<LibraryFile*>(i->second);
         if(libFile.name().contains("dengplugin_"))
         {
-            // Initialize the plugin.
-            libFile.unload();
+            libFile.clear();
             std::cout << "App::unloadPlugins() unloaded " << libFile.path() << "\n";
         }
     }

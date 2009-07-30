@@ -48,7 +48,13 @@ File::File(const String& fileName)
 
 File::~File()
 {
-    flush();    
+    flush();   
+    if(source_ != this) 
+    {
+        // If we own a source, get rid of it.
+        delete source_;
+        source_ = 0;
+    }
     if(parent_)
     {
         // Remove from parent folder.
@@ -65,6 +71,9 @@ void File::deindex()
 void File::flush()
 {}
 
+void File::clear()
+{}
+
 FS& File::fileSystem()
 {
     return App::fileSystem();
@@ -72,9 +81,6 @@ FS& File::fileSystem()
 
 void File::setOriginFeed(Feed* feed)
 {
-    // Folders should never have an origin feed.
-    assert(!dynamic_cast<Folder*>(this));
-
     originFeed_ = feed;
 }
 
@@ -90,6 +96,11 @@ const String File::path() const
         
 void File::setSource(File* source)
 {
+    if(source_ != this)
+    {
+        // Delete the old source.
+        delete source_;
+    }
     source_ = source;
 }        
         
@@ -135,14 +146,13 @@ const File::Status& File::status() const
 
 File::Size File::size() const
 {
-    return 0;
+    return status().size;
 }
 
 void File::get(Offset at, Byte* values, Size count) const
 {
     if(at >= size() || at + count > size())
     {
-        /// @throw IByteArray::OffsetError  Attempted to read past bounds of file.
         throw OffsetError("File::get", "Out of range");
     }
 }

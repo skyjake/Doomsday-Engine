@@ -121,20 +121,8 @@ namespace de
         /// Converts the string to a wide-character STL wstring.
         std::wstring wide() const;
 
-        // Implements IByteArray.
-        Size size() const;
-        void get(Offset at, Byte* values, Size count) const;
-        void set(Offset at, const Byte* values, Size count);    
-        
-        // Implements IBlock.
-        void clear() { std::string::clear(); }
-        void copyFrom(const IByteArray& array, Offset at, Size count);
-        void resize(Size size) { std::string::resize(size); }
-        const Byte* data() const { return reinterpret_cast<const Byte*>(std::string::data()); }
-    
-    public:
         /// Extracts the base name from the string (includes extension).
-        static String fileName(const String& path);
+        String fileName() const;
         
         /**
          * Extracts the file name extension from a path. A valid extension
@@ -146,24 +134,21 @@ namespace de
          * @return The extension, including the period in the beginning. 
          * An empty string is returned if the string contains no period.
          */
-        static String fileNameExtension(const String& path);
+        String fileNameExtension() const;
         
         /// Extracts the path of the string.
-        static String fileNamePath(const String& path);
+        String fileNamePath(char dirChar = '/') const;
 
-        /// Routine for string to wstring conversions.
-        static std::wstring stringToWide(const String& str);
-        
-        /// Routine for wstring to string conversions.
-        static String wideToString(const std::wstring& str);
-        
+        /// Extracts the path of the string, using native directory separators.
+        String fileNameNativePath() const;
+
         /**
          * Compare two strings (case sensitive).
          *
          * @return 0, if @a a and @a b are identical. Positive, if @a a > @a b.
          *         Negative, if @a a < @a b.
          */
-        static dint compareWithCase(const String& a, const String& b);
+        dint compareWithCase(const String& str) const;
         
         /**
          * Compare two strings (case insensitive).
@@ -171,8 +156,26 @@ namespace de
          * @return 0, if @a a and @a b are identical. Positive, if @a a > @a b.
          *         Negative, if @a a < @a b.
          */
-        static dint compareWithoutCase(const String& a, const String& b);
+        dint compareWithoutCase(const String& str) const;
+        
+        // Implements IByteArray.
+        Size size() const;
+        void get(Offset at, Byte* values, Size count) const;
+        void set(Offset at, const Byte* values, Size count);    
+        
+        // Implements IBlock.
+        void clear() { std::string::clear(); }
+        void copyFrom(const IByteArray& array, Offset at, Size count);
+        void resize(Size size) { std::string::resize(size); }
+        const Byte* data() const { return reinterpret_cast<const Byte*>(std::string::data()); }
 
+    public:    
+        /// wstring to String conversion.
+        static String wideToString(const std::wstring& str);
+        
+        /// String to wstring conversion. @see wide()
+        static std::wstring stringToWide(const String& str);
+        
         /**
          * Advances the iterator until a nonspace character is encountered.
          * 

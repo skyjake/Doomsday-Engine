@@ -59,7 +59,7 @@ int deng_Main(int argc, char** argv)
         
         // This won't appear in the file system unless FS::refresh() is called.
         NativeFile zipFile2("test2.zip", 
-            String::fileNamePath(zipFile.nativePath()).concatenateNativePath("test2.zip"),
+            zipFile.nativePath().fileNameNativePath().concatenateNativePath("test2.zip"),
             NativeFile::TRUNCATE);
         Writer(zipFile2) << arch;
         cout << "Wrote " << zipFile2.nativePath() << endl;

@@ -344,6 +344,68 @@ String String::wideToString(const std::wstring& str)
     return output;
 }
 
+String String::fileName() const
+{
+    size_type pos = find_last_of('/');
+    if(pos != npos)
+    {
+        return substr(pos + 1);
+    }
+    return *this;
+}
+
+String String::fileNameExtension() const
+{
+    size_type pos = find_last_of('.');
+    size_type slashPos = find_last_of('/');    
+    if(pos != npos && pos > 0)
+    {
+        // If there is a directory included, make sure there it at least
+        // one character's worth of file name before the period.
+        if(slashPos == npos || pos > slashPos + 1)
+        {
+            return substr(pos);
+        }
+    }
+    return "";
+}
+
+String String::fileNamePath(char dirChar) const
+{
+    size_type pos = find_last_of(dirChar);
+    if(pos != npos)
+    {
+        return substr(0, pos);
+    }
+    return "";
+}
+
+String String::fileNameNativePath() const
+{
+#ifdef UNIX
+    return fileNamePath();
+#endif
+
+#ifdef WIN32
+    return fileNamePath('\\');
+#endif    
+}
+
+dint String::compareWithCase(const String& str) const
+{
+    return compare(str);
+}
+
+dint String::compareWithoutCase(const String& str) const
+{
+    return strcasecmp(c_str(), str.c_str());
+}
+
+void String::skipSpace(String::const_iterator& i, const String::const_iterator& end)
+{
+    while(i != end && std::isspace(*i)) ++i;
+}
+
 void String::advanceFormat(String::const_iterator& i, const String::const_iterator& end)
 {
     ++i;
@@ -451,58 +513,4 @@ String String::patternFormat(String::const_iterator& formatIter,
         }
     }
     return value;
-}
-
-String String::fileName(const String& path)
-{
-    size_type pos = path.find_last_of('/');
-
-    if(pos != npos)
-    {
-        return path.substr(pos + 1);
-    }
-    return path;
-}
-
-String String::fileNameExtension(const String& path)
-{
-    size_type pos = path.find_last_of('.');
-    size_type slashPos = path.find_last_of('/');
-    
-    if(pos != npos && pos > 0)
-    {
-        // If there is a directory included, make sure there it at least
-        // one character's worth of file name before the period.
-        if(slashPos == npos || pos > slashPos + 1)
-        {
-            return path.substr(pos);
-        }
-    }
-    return "";
-}
-
-String String::fileNamePath(const String& path)
-{
-    size_type pos = path.find_last_of('/');
-    
-    if(pos != npos)
-    {
-        return path.substr(0, pos);
-    }
-    return "";
-}
-
-dint String::compareWithCase(const String& a, const String& b)
-{
-    return a.compare(b);
-}
-
-dint String::compareWithoutCase(const String& a, const String& b)
-{
-    return strcasecmp(a.c_str(), b.c_str());
-}
-
-void String::skipSpace(String::const_iterator& i, const String::const_iterator& end)
-{
-    while(i != end && std::isspace(*i)) ++i;
 }

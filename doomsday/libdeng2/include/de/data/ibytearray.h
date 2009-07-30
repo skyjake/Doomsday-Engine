@@ -50,14 +50,30 @@ namespace de
         /// Returns the length of the array.
         virtual Size size() const = 0;
         
-        /// Get elements from the array.  Raises an OffsetError if the
-        /// offset is invalid.
+        /**
+         * Gets bytes from the array.
+         *
+         * @param at      Start offset of region to read.
+         * @param values  Bytes are written here.
+         * @param count   Number of bytes to read.
+         *
+         * @throw IByteArray::OffsetError  Region's start or end goes outside the bounds of the array.
+         */
         virtual void get(Offset at, Byte* values, Size count) const = 0;
         
-        /// Set the array elements starting from location @a at to the
-        /// given values.  If the offset is exactly at the end of the
-        /// array, the array is grown by @a count.  An illegal offset
-        /// causes an OffsetError exception.
+        /**
+         * Sets the bytes starting from location @a at to the given values.  
+         * The array grows to fit the written region. For example, if the offset 
+         * is exactly at the end of the array, the array is grown 
+         * by @a count.  
+         *
+         * @param at      Start offset of region to write.
+         * @param values  Bytes to write.
+         * @param count   Number of bytes to write.
+         *
+         * @throw IByteArray::OffsetError  @a at is past the end of the array. For example,
+         * attempting to write to offset 1 when the array is empty.
+         */
         virtual void set(Offset at, const Byte* values, Size count) = 0;
     };
 }

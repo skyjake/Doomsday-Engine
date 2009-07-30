@@ -72,6 +72,8 @@ namespace de
         /// There is an error during compression. @ingroup errors
         DEFINE_ERROR(DeflateError);
         
+        typedef std::set<String> Names;
+        
     public:
         /**
          * Constructs an empty Archive.
@@ -101,6 +103,24 @@ namespace de
         bool has(const String& path) const;
 
         /**
+         * List the files in a specific folder of the archive.
+         *
+         * @param names   Entry names collected to this set. The names are
+          *               relative to @a folder.
+         * @param folder  Folder path to look in.
+         */
+        void listFiles(Names& names, const String& folder = "") const;
+
+        /**
+         * List the folders in a specific folder of the archive.
+         *
+         * @param names   Folder entry names collected to this set. The names are
+         *                relative to @a folder.
+         * @param folder  Folder path to look in.
+         */
+        void listFolders(Names& names, const String& folder = "") const;
+
+        /**
          * Returns information about the specified path. 
          *
          * @param path  Path of the entry within the archive.
@@ -108,6 +128,25 @@ namespace de
          * @return Type, size, and other metadata about the entry.
          */
         File::Status status(const String& path) const;
+
+        /**
+         * Returns the uncompressed data of an entry for read-only access. 
+         * The data is uncompressed and cached if a cached copy doesn't already exist. 
+         * The cached data will not need to be recompressed if the archive is written.
+         *
+         * @param path  Entry path.
+         */
+        const Block& entryBlock(const String& path) const;
+
+        /**
+         * Returns the uncompressed data of an entry for read and write access. 
+         * The data is uncompressed and cached if a cached copy doesn't already exist. 
+         * The data is marked for recompression if the archive is written (since
+         * the caller is free to modify the contents of the returned block).
+         *
+         * @param path  Entry path. The entry must already exist in the archive.
+         */
+        Block& entryBlock(const String& path);
 
         /**
          * Reads and decompresses an entry from the archive.
@@ -137,6 +176,11 @@ namespace de
          * Clears the index of the archive. All entries are deleted.
          */
         void clear();
+
+        /**
+         * Determines if the archive has been modified.
+         */
+        bool modified() const { return modified_; }
 
         /**
          * Writes the archive to a Writer. Uncompressed entries are compressed 
@@ -169,9 +213,11 @@ namespace de
             duint32 crc32;          ///< CRC32 checksum.
             dsize localHeaderOffset;///< Offset of the local file header.
             Time modifiedAt;        ///< Latest modification timestamp.
+            bool mustCompress;      ///< True if the data must be compressed when writing.
             Block* data;            ///< Uncompressed data. Can be @c NULL.
             
-            Entry() : offset(0), size(0), sizeInArchive(0), compression(0), data(0) {}
+            Entry() : offset(0), size(0), sizeInArchive(0), compression(0), crc32(0),
+                localHeaderOffset(0), mustCompress(false), data(0) {}
         };
         typedef std::map<String, Entry> Index;
         
@@ -181,6 +227,9 @@ namespace de
         typedef std::set<String> DirNames;
         typedef std::map<String, DirNames> SubDirs;
         mutable SubDirs subDirs_;
+        
+        /// Contents of the archive has been modified.
+        bool modified_;
     };
 }
 

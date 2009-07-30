@@ -87,7 +87,7 @@ File* Folder::remove(File* file)
     return file;
 }
 
-File* Folder::locateFile(const String& path) const
+File* Folder::tryLocateFile(const String& path) const
 {
     if(path.empty())
     {
@@ -97,7 +97,7 @@ File* Folder::locateFile(const String& path) const
     if(path[0] == '/')
     {
         // Route back to the root of the file system.
-        return fileSystem().root().locateFile(path.substr(1));
+        return fileSystem().root().tryLocateFile(path.substr(1));
     }
 
     // Extract the next component.
@@ -119,7 +119,7 @@ File* Folder::locateFile(const String& path) const
     // Check for some special cases.
     if(component == ".")
     {
-        return locateFile(remainder);
+        return tryLocateFile(remainder);
     }
     if(component == "..")
     {
@@ -128,7 +128,7 @@ File* Folder::locateFile(const String& path) const
             // Can't go there.
             return 0;
         }
-        return parent()->locateFile(remainder);
+        return parent()->tryLocateFile(remainder);
     }
     
     // Do we have a folder for this?
@@ -139,7 +139,7 @@ File* Folder::locateFile(const String& path) const
         if(subFolder)
         {
             // Continue recursively to the next component.
-            return subFolder->locateFile(remainder);
+            return subFolder->tryLocateFile(remainder);
         }
     }
     

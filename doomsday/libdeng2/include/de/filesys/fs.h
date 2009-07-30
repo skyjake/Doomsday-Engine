@@ -123,11 +123,11 @@ namespace de
             found.remove_if(internal::cannotCastFileTo<Type>);
             if(found.size() > 1) {
                 /// @throw AmbiguousError  More than one file matches the conditions.
-                throw AmbiguousError("FS::find", "More than one file found");
+                throw AmbiguousError("FS::find", "More than one file found matching '" + path + "'");
             }
             if(found.empty()) {
                 /// @throw NotFoundError  No files found matching the condition.
-                throw NotFoundError("FS::find", "No files found");
+                throw NotFoundError("FS::find", "No files found matching '" + path + "'");
             }
             return *dynamic_cast<Type*>(found.front());
         }
@@ -135,12 +135,14 @@ namespace de
         /**
          * Creates an interpreter for the data in a file. 
          *
-         * @param sourceData  File with the source data.
+         * @param sourceData  File with the source data. While interpreting, ownership
+         *                    of the file is given to de::FS.
          *
          * @return  If the format of the source data was recognized, returns a new File
          *          that can be used for accessing the data. Ownership of the @a sourceData 
          *          will be transferred to the new interpreter File instance.
-         *          If the format was not recognized, @a sourceData is returned as is.
+         *          If the format was not recognized, @a sourceData is returned as is
+         *          and ownership is returned to the caller.
          */
         File* interpret(File* sourceData);
         

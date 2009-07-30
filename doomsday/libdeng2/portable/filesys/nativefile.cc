@@ -46,6 +46,21 @@ void NativeFile::close()
     }
 }
 
+void NativeFile::clear()
+{
+    if(!mode_[WRITE_BIT])
+    {
+        /// @throw ReadOnlyError  Mode flags allow reading only.
+        throw ReadOnlyError("NativeFile::clear", "Only reading allowed");
+    }
+    
+    Mode oldMode = mode_;
+    close();
+    mode_.set(TRUNCATE_BIT);
+    output();
+    mode_ = oldMode;
+}
+
 NativeFile::Size NativeFile::size() const
 {
     return status().size;
@@ -114,17 +129,13 @@ std::ofstream& NativeFile::output()
     if(!out_)
     {
         // Are we allowed to output?
-        if(!mode_[WRITE_BIT] && !mode_[TRUNCATE_BIT])
+        if(!mode_[WRITE_BIT])
         {
             /// @throw ReadOnlyError  Mode flags allow reading only.
             throw ReadOnlyError("NativeFile::output", "Only reading allowed");
         }
         
-        std::ios::openmode bits = std::ios::binary;
-        if(mode_[WRITE_BIT])
-        {
-            bits |= std::ios::out;
-        }
+        std::ios::openmode bits = std::ios::binary | std::ios::out;
         if(mode_[TRUNCATE_BIT])
         {
             bits |= std::ios::trunc;

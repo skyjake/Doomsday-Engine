@@ -143,9 +143,12 @@ namespace de
          * When destroyed, a file is automatically removed from its parent folder 
          * and deindexed from the file system.
          *
+         * The source file of this file will be destroyed also.
+         *
          * @note  Subclasses must call deindex() in their destructors so that
          *        the instances indexed under the subclasses' type are removed
-         *        from the index also.
+         *        from the index also. Flushing should also be done automatically
+         *        as necessary in the subclass.
          */
         virtual ~File();
 
@@ -159,6 +162,11 @@ namespace de
          * of File must make sure they flush themselves right before they get deleted.
          */
         virtual void flush();
+        
+        /**
+         * Empties the contents of the file.
+         */
+        virtual void clear();
 
         /// Returns a reference to the application's file system.
         static FS& fileSystem();
@@ -197,9 +205,10 @@ namespace de
          * Sets the source file of this file. The source is where this file is getting
          * its data from. File interpreters use this to access their uninterpreted data.
          * By default all files use themselves as the source, so there is always a
-         * valid source for every file.
+         * valid source for every file. If another file is being used as the source,
+         * the source is not typically indexed to the file system.
          *
-         * @param source  Source file.
+         * @param source  Source file. The file takes ownership of @a source.
          */ 
         void setSource(File* source);
         
@@ -243,7 +252,7 @@ namespace de
         /// Returns the file information.
         Record& info() { return info_; }
 
-        // Implements ISerializable.
+        // Implements IByteArray.
         Size size() const;
 		void get(Offset at, Byte* values, Size count) const;
 		void set(Offset at, const Byte* values, Size count);

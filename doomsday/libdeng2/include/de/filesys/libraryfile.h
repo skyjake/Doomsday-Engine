@@ -73,7 +73,7 @@ namespace de
         /**
          * Unloads the library.
          */
-        void unload();
+        void clear();
         
         /**
          * Checks whether the name of the library file matches.

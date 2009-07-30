@@ -91,7 +91,7 @@ namespace de
         /**
          * Destroys the contents of the folder. All contained file objects are deleted.
          */
-        virtual void clear();
+        void clear();
 
         /**
          * Checks whether the folder contains a file.
@@ -158,11 +158,11 @@ namespace de
          * 
          * @return  The located file, or @c NULL if the path was not found.
          */
-        virtual File* locateFile(const String& path) const;
+        virtual File* tryLocateFile(const String& path) const;
         
         template <typename Type>
-        Type* locate(const String& path) const {
-            return dynamic_cast<Type*>(locateFile(path));
+        Type* tryLocate(const String& path) const {
+            return dynamic_cast<Type*>(tryLocateFile(path));
         }
 
         /**
@@ -174,12 +174,12 @@ namespace de
          * @return  The found file.
          */
         template <typename Type>
-        Type& find(const String& path) const {
-            Type* found = locate<Type>(path);
+        Type& locate(const String& path) const {
+            Type* found = tryLocate<Type>(path);
             if(!found) {
                 /// @throw NotFoundError  Path didn't exist, or the located file had
                 /// an incompatible type.
-                throw NotFoundError("FS::find", path +": path was not found or had incompatible type");
+                throw NotFoundError("Folder::locate", path +": path was not found or had incompatible type");
             }
             return *found;
         }

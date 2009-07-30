@@ -20,6 +20,8 @@
 #include "de/FS"
 #include "de/LibraryFile"
 #include "de/DirectoryFeed"
+#include "de/ArchiveFeed"
+#include "de/Archive"
 
 using namespace de;
 
@@ -40,27 +42,57 @@ void FS::refresh()
 
 Folder& FS::getFolder(const String& path)
 {
-    return root_;
+    Folder* subFolder = root_.tryLocate<Folder>(path);
+    if(!subFolder)
+    {
+        // This folder does not exist yet. Let's create it.
+        Folder& parentFolder = getFolder(path.fileNamePath());
+        subFolder = new Folder(path.fileName());
+        parentFolder.add(subFolder);
+        index(*subFolder);
+    }
+    return *subFolder;
 }
 
 File* FS::interpret(File* sourceData)
 {
-    if(LibraryFile::recognize(*sourceData))
+    /// @todo  One should be able to define new interpreters dynamically.
+    
+    try
     {
-        std::cout << "Interpreted " << sourceData->name() << " as a shared library\n";
+        if(LibraryFile::recognize(*sourceData))
+        {
+            std::cout << "Interpreted " << sourceData->name() << " as a shared library\n";
         
-        // It is a shared library intended for Doomsday.
-        return new LibraryFile(sourceData);
+            // It is a shared library intended for Doomsday.
+            return new LibraryFile(sourceData);
+        }
+        if(Archive::recognize(*sourceData))
+        {
+            std::cout << "Interpreted " << sourceData->name() << " as a ZIP archive\n";
+        
+            // It is a ZIP archive. The folder will own the source file.
+            std::auto_ptr<Folder> zip(new Folder(sourceData->name()));
+            zip->setSource(sourceData);    
+            zip->attach(new ArchiveFeed(*sourceData));
+            return zip.release();
+        }
     }
-
+    catch(const Error& err)
+    {
+        std::cout << "FS::interpret: " << err.what() << "\n";
+        // We were given responsibility of the source file.
+        delete sourceData;
+        err.raise();
+    }
     return sourceData;
 }
 
 void FS::find(const String& path, FoundFiles& found) const
 {
     found.clear();
-    String baseName = String::fileName(path).lower();
-    String dir = String::fileNamePath(path).lower();
+    String baseName = path.fileName().lower();
+    String dir = path.fileNamePath().lower();
     if(!dir.beginsWith("/"))
     {
         // Always begin with a slash. We don't want to match partial folder names.
