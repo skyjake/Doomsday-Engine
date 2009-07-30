@@ -28,7 +28,6 @@
 #include "de/BlockValue"
 #include "de/Vector"
 
-#include <list>
 #include <iomanip>
 
 using namespace de;
@@ -189,6 +188,49 @@ const Record& Record::subrecord(const std::string& name) const
     throw NotFoundError("Record::subrecords", "Subrecord '" + name + "' not found");
 }
     
+std::string Record::asText(const std::string& prefix, List* lines) const
+{
+    // Recursive calls to collect all variables in the record.
+    if(lines)
+    {
+        // Collect lines from this record.
+        for(Members::const_iterator i = members_.begin(); i != members_.end(); ++i)
+        {
+            KeyValue kv(prefix + i->first, i->second->value().asText());
+            lines->push_back(kv);
+        }
+        // Collect lines from subrecords.
+        for(Subrecords::const_iterator i = subrecords_.begin(); i != subrecords_.end(); ++i)
+        {
+            i->second->asText(i->first + ".", lines);
+        }
+        return "";
+    }
+
+    // Top level of the recursion.
+    std::ostringstream os;
+    List allLines;
+    Vector2ui maxLength;
+
+    // Collect.
+    asText("", &allLines);
+    
+    // Sort and find maximum length.
+    allLines.sort();
+    for(List::iterator i = allLines.begin(); i != allLines.end(); ++i)
+    {
+        maxLength = maxLength.max(Vector2ui(i->first.size(), i->second.size()));
+    }
+    
+    // Print aligned.
+    for(List::iterator i = allLines.begin(); i != allLines.end(); ++i)
+    {
+        os << std::setw(maxLength.x) << i->first << ": " << i->second << "\n";
+    }
+
+    return os.str();    
+}
+    
 void Record::operator >> (Writer& to) const
 {
     to << duint32(members_.size());
@@ -228,34 +270,8 @@ void Record::operator << (Reader& from)
         add(subName, sub.release());
     }
 }
-    
+
 std::ostream& de::operator << (std::ostream& os, const Record& record)
 {
-    typedef std::pair<std::string, std::string> KeyValue;
-    typedef std::list<KeyValue> List;
-    
-    List lines;
-    Vector2ui maxLength;
-    
-    for(Record::Members::const_iterator i = record.members().begin(); 
-        i != record.members().end(); ++i)
-    {
-        KeyValue kv(i->first, i->second->value().asText());
-        lines.push_back(kv);
-        maxLength = maxLength.max(Vector2ui(kv.first.size(), kv.second.size()));
-    }
-    
-    for(List::iterator i = lines.begin(); i != lines.end(); ++i)
-    {
-        os << std::setw(maxLength.x) << i->first << ": " << i->second << "\n";
-    }
-
-    for(Record::Subrecords::const_iterator i = record.subrecords().begin();
-        i != record.subrecords().end(); ++i)
-    {
-        os << "Subrecord '" + i->first + "':\n";
-        os << *i->second;
-        os << "End subrecord '" + i->first + "'\n";
-    }
-    return os;
+    return os << record.asText();
 }
