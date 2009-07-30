@@ -26,6 +26,7 @@
 
 #include <iostream>
 #include <map>
+#include <list>
 
 namespace de
 {
@@ -48,6 +49,8 @@ namespace de
         
         typedef std::map<std::string, Variable*> Members;
         typedef std::map<std::string, Record*> Subrecords;
+        typedef std::pair<std::string, std::string> KeyValue;
+        typedef std::list<KeyValue> List;
         
     public:
         Record();
@@ -205,6 +208,17 @@ namespace de
          * Returns a non-modifiable map of the subrecords.
          */
         const Subrecords& subrecords() const { return subrecords_; }
+
+        /**
+         * Creates a text representation of the record. Each variable name is 
+         * prefixed with @a prefix.
+         *
+         * @param prefix  Prefix for each variable name.
+         * @param lines  NULL (used for recursion into subrecords).
+         *
+         * @return  Text representation.
+         */
+        std::string asText(const std::string& prefix = "", List* lines = 0) const;
 
         /**
          * Convenience template for getting the value of a variable in a 
