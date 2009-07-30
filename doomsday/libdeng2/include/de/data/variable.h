@@ -55,18 +55,20 @@ namespace de
         //@{
         /// Variable's value cannot change.
         DEFINE_FLAG(READ_ONLY, 0);
+        /// Variable cannot be serialized.
+        DEFINE_FLAG(NO_SERIALIZE, 1);
         /// NoneValue allowed as value.
-        DEFINE_FLAG(NONE, 1);
+        DEFINE_FLAG(NONE, 2);
         /// NumberValue allowed as value.
-        DEFINE_FLAG(NUMBER, 2);
+        DEFINE_FLAG(NUMBER, 3);
         /// TextValue allowed as value.
-        DEFINE_FLAG(TEXT, 3);
+        DEFINE_FLAG(TEXT, 4);
         /// ArrayValue allowed as value.
-        DEFINE_FLAG(ARRAY, 4);
+        DEFINE_FLAG(ARRAY, 5);
         /// DictionaryValue allowed as value.
-        DEFINE_FLAG(DICTIONARY, 5);
+        DEFINE_FLAG(DICTIONARY, 6);
         /// BlockValue allowed as value.
-        DEFINE_FINAL_FLAG(BLOCK, 6, Mode);
+        DEFINE_FINAL_FLAG(BLOCK, 7, Mode);
         //@}
         
         /// The default mode allows reading and writing all types of values, 
@@ -77,7 +79,7 @@ namespace de
         /**
          * Constructs a new variable.
          *
-         * @param name  Name for the variable. Any forward slashes (/) are not allowed.
+         * @param name  Name for the variable. Any periods (.) are not allowed.
          * @param initial  Initial value. Variable gets ownership. If no value is given here,
          *      a NoneValue will be created for the variable.
          * @param mode  Mode flags.

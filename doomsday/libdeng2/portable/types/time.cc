@@ -18,6 +18,7 @@
  */
 
 #include "de/Time"
+#include "de/Date"
 #include "../sdl.h"
 
 #include <cmath>
@@ -133,6 +134,11 @@ std::string Time::asText() const
     std::ostringstream os;
     os << time_ << "." << std::setw(6) << std::setfill('0') << micro_;
     return os.str();
+}
+
+Date Time::asDate() const
+{
+    return Date(*this);
 }
 
 std::ostream& de::operator << (std::ostream& os, const Time& t)

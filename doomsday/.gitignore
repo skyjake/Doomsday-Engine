@@ -1,4 +1,5 @@
 .DS_Store
+Makefile
 Doomsday.tmproj
 mybuild
 myrelease

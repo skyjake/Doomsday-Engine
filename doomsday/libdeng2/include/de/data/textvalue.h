@@ -62,6 +62,10 @@ namespace de
         void operator >> (Writer& to) const;
         void operator << (Reader& from);
         
+    protected:
+        /// Changes the text of the value.
+        void setValue(const Text& text);
+        
     private:
         Text value_;
     };

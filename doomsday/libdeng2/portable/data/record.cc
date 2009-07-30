@@ -153,7 +153,7 @@ Variable& Record::operator [] (const std::string& name)
 const Variable& Record::operator [] (const std::string& name) const
 {
     // Path notation allows looking into subrecords.
-    std::string::size_type pos = name.find('/');
+    std::string::size_type pos = name.find('.');
     if(pos != std::string::npos)
     {
         return subrecord(name.substr(0, pos))[name.substr(pos + 1)];
@@ -175,7 +175,7 @@ Record& Record::subrecord(const std::string& name)
 const Record& Record::subrecord(const std::string& name) const
 {
     // Path notation allows looking into subrecords.
-    std::string::size_type pos = name.find('/');
+    std::string::size_type pos = name.find('.');
     if(pos != std::string::npos)
     {
         return subrecord(name.substr(0, pos)).subrecord(name.substr(pos + 1));

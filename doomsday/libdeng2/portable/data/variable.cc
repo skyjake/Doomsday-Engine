@@ -105,16 +105,19 @@ void Variable::verifyValid(const Value& v) const
 
 void Variable::verifyName(const std::string& s)
 {
-    if(s.find('/') != std::string::npos)
+    if(s.find('.') != std::string::npos)
     {
-        /// @throw NameError The name cannot contain forward slashes '/'.
-        throw NameError("Variable::verifyName", "Name contains '/': " + s);
+        /// @throw NameError The name cannot contain periods '.'.
+        throw NameError("Variable::verifyName", "Name contains '.': " + s);
     }
 }
 
 void Variable::operator >> (Writer& to) const
 {
-    to << name_ << duint32(mode.to_ulong()) << *value_;
+    if(!mode[NO_SERIALIZE_BIT])
+    {
+        to << name_ << duint32(mode.to_ulong()) << *value_;
+    }
 }
 
 void Variable::operator << (Reader& from)

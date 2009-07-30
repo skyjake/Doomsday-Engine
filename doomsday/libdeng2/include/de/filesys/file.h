@@ -23,6 +23,8 @@
 #include "../IByteArray"
 #include "../String"
 #include "../Time"
+#include "../Record"
+#include "../TextValue"
 
 namespace de
 {
@@ -77,6 +79,56 @@ namespace de
             Type type_;
         };
         
+        /**
+         * Special text value that accesses the properties of the file.
+         *
+         * @ingroup fs
+         */
+        class AccessorValue : public TextValue
+        {
+        public:
+            /// Accessor values cannot be serialized as they just mirror the 
+            /// information of the owning file. @ingroup errors
+            DEFINE_ERROR(CannotSerializeError);
+            
+            /// Propert of the file to access.
+            enum Property {
+                NAME,
+                PATH,
+                TYPE,
+                SIZE,
+                MODIFIED_AT
+            };
+            
+        public:
+            AccessorValue(File& owner, Property prop);
+            
+            /// Update the text content of the accessor.
+            void update() const;
+            
+            /// Returns a TextValue with the text content of the accessor,
+            /// except for the SIZE property, which is duplicated as a NumberValue.
+            Value* duplicate() const;
+
+            Number asNumber() const;
+            Text asText() const;
+            dsize size() const;
+            bool isTrue() const;
+            dint compare(const Value& value) const;
+            void sum(const Value& value);
+            void multiply(const Value& value);
+            void divide(const Value& value);
+            void modulo(const Value& divisor);
+            
+            // Implements ISerializable.
+            void operator >> (Writer& to) const;
+            void operator << (Reader& from);
+            
+        private:
+            File& owner_;
+            Property prop_;
+        };
+        
     public:
         /// An attempt was made to write to a read-only file.  @ingroup errors
         DEFINE_ERROR(ReadOnlyError);
@@ -94,13 +146,22 @@ namespace de
          */
         virtual ~File();
 
+        /**
+         * Remove this file from its file system's index.
+         */
+        virtual void deindex();
+        
+        /**
+         * Commits any buffered changes to the content of the file. Called automatically
+         * before the File instance is deleted.
+         */
+        virtual void flush();
+
         /// Returns a reference to the application's file system.
         static FS& fileSystem();
         
         /// Returns the name of the file.
-        const String& name() const {
-            return name_;
-        }
+        const String& name() const { return name_; }
 
         /**
          * Sets the parent folder of this file.
@@ -173,11 +234,13 @@ namespace de
          */
         const String path() const;
 
-        /**
-         * Remove this file from its file system's index.
-         */
-        void deindex();
-        
+        /// Returns the file information (const).
+        const Record& info() const { return info_; }
+
+        /// Returns the file information.
+        Record& info() { return info_; }
+
+        // Implements ISerializable.
         Size size() const;
 		void get(Offset at, Byte* values, Size count) const;
 		void set(Offset at, const Byte* values, Size count);
@@ -198,6 +261,9 @@ namespace de
         
         /// Status of the file.
         Status status_;
+        
+        /// File information.
+        Record info_;
     }; 
 }
 

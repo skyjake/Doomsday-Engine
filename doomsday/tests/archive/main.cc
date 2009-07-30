@@ -42,6 +42,10 @@ int deng_Main(int argc, char** argv)
         cout << std::hex << v << std::dec << "\n";
 
         NativeFile& zipFile = app.fileSystem().find<NativeFile>("test.zip");
+        
+        cout << "Here's the file's info:\n";
+        cout << zipFile.info();
+        
         Archive arch(zipFile);
         File::Status stats = arch.status("hello.txt");
         cout << "hello.txt size: " << stats.size << " bytes, modified at " << Date(stats.modifiedAt) << endl;

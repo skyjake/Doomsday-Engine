@@ -21,6 +21,10 @@
 #include "de/App"
 #include "de/FS"
 #include "de/Folder"
+#include "de/Date"
+#include "de/NumberValue"
+
+#include <sstream>
 
 using namespace de;
 
@@ -28,6 +32,18 @@ File::File(const std::string& fileName)
     : parent_(0), originFeed_(0), name_(fileName)
 {
     source_ = this;
+    
+    // Create the default set of info variables.
+    info_.add(new Variable("name", new AccessorValue(*this, AccessorValue::NAME),
+        Variable::TEXT | Variable::READ_ONLY | Variable::NO_SERIALIZE));
+    info_.add(new Variable("path", new AccessorValue(*this, AccessorValue::PATH),
+        Variable::TEXT | Variable::READ_ONLY | Variable::NO_SERIALIZE));
+    info_.add(new Variable("type", new AccessorValue(*this, AccessorValue::TYPE),
+        Variable::TEXT | Variable::READ_ONLY | Variable::NO_SERIALIZE));
+    info_.add(new Variable("size", new AccessorValue(*this, AccessorValue::SIZE),
+        Variable::TEXT | Variable::READ_ONLY | Variable::NO_SERIALIZE));
+    info_.add(new Variable("modifiedAt", new AccessorValue(*this, AccessorValue::MODIFIED_AT),
+        Variable::TEXT | Variable::READ_ONLY | Variable::NO_SERIALIZE));
 }
 
 File::~File()
@@ -44,6 +60,9 @@ void File::deindex()
 {
     fileSystem().deindex(*this);
 }
+
+void File::flush()
+{}
 
 FS& File::fileSystem()
 {
@@ -122,11 +141,126 @@ void File::get(Offset at, Byte* values, Size count) const
 {
     if(at >= size() || at + count > size())
     {
+        /// @throw IByteArray::OffsetError  Attempted to read past bounds of file.
         throw OffsetError("File::get", "Out of range");
     }
 }
 
 void File::set(Offset at, const Byte* values, Size count)
 {
+    /// @throw ReadOnlyError  File is in read-only mode.
     throw ReadOnlyError("File::set", "File can only be read");
+}
+
+File::AccessorValue::AccessorValue(File& owner, Property prop) : owner_(owner), prop_(prop)
+{
+    update();
+}
+
+void File::AccessorValue::update() const
+{
+    // We need to alter the text value.
+    AccessorValue* nonConst = const_cast<AccessorValue*>(this);
+    
+    std::ostringstream os;
+    
+    switch(prop_)
+    {
+    case NAME:
+        nonConst->setValue(owner_.name());
+        break;
+        
+    case PATH:
+        nonConst->setValue(owner_.path());
+        break;
+
+    case TYPE:
+        nonConst->setValue(owner_.status().type() == File::Status::FILE? "file" : "folder");
+        break;
+
+    case SIZE:
+        os << owner_.status().size;
+        nonConst->setValue(os.str());
+        break;
+
+    case MODIFIED_AT:
+        os << owner_.status().modifiedAt.asDate();
+        nonConst->setValue(os.str());
+        break;
+    }
+}
+
+Value* File::AccessorValue::duplicate() const
+{
+    if(prop_ == SIZE)
+    {
+        return new NumberValue(asNumber());
+    }
+    return new TextValue(asText());
+}
+
+Value::Number File::AccessorValue::asNumber() const
+{
+    update();
+    return TextValue::asNumber();
+}
+
+Value::Text File::AccessorValue::asText() const
+{
+    update();
+    return TextValue::asText();
+}
+
+dsize File::AccessorValue::size() const
+{
+    update();
+    return TextValue::size();
+}
+
+bool File::AccessorValue::isTrue() const
+{
+    update();
+    return TextValue::isTrue();
+}
+
+dint File::AccessorValue::compare(const Value& value) const
+{
+    update();
+    return TextValue::compare(value);
+}
+
+void File::AccessorValue::sum(const Value& value)
+{
+    /// @throw ArithmeticError  Attempted to modify the value of the accessor.
+    throw ArithmeticError("File::AccessorValue::sum", "File accessor values cannot be modified");
+}
+
+void File::AccessorValue::multiply(const Value& value)
+{
+    /// @throw ArithmeticError  Attempted to modify the value of the accessor.
+    throw ArithmeticError("File::AccessorValue::multiply", "File accessor values cannot be modified");
+}
+
+void File::AccessorValue::divide(const Value& value)
+{
+    /// @throw ArithmeticError  Attempted to modify the value of the accessor.
+    throw ArithmeticError("File::AccessorValue::divide", "File accessor values cannot be modified");
+}
+
+void File::AccessorValue::modulo(const Value& divisor)
+{
+    /// @throw ArithmeticError  Attempted to modify the value of the accessor.
+    throw ArithmeticError("File::AccessorValue::modulo", "File accessor values cannot be modified");
+}
+
+void File::AccessorValue::operator >> (Writer& to) const
+{
+    /// @throw CannotSerializeError  Attempted to serialize the accessor.
+    throw CannotSerializeError("File::AccessorValue::operator >>", "File accessor cannot be serialized");
+}
+
+void File::AccessorValue::operator << (Reader& from)
+{
+    /// @throw CannotSerializeError  Attempted to deserialize the accessor.
+    throw CannotSerializeError("File::AccessorValue::operator <<", "File accessor cannot be deserialized");
 }

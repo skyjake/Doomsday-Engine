@@ -27,6 +27,8 @@
 
 namespace de
 {
+    class Date;
+    
     /**
      * The Time class represents a single time measurement. It represents
      * one absolute point in time (since the epoch).  Instances of Time should be
@@ -166,6 +168,11 @@ namespace de
          * Makes a text representation of the time (default is seconds since the epoch).
          */
         std::string asText() const;
+        
+        /**
+         * Converts the time into a Date.
+         */
+        Date asDate() const;
 
     public:
         static void sleep(const Time::Delta& delta) { delta.sleep(); }

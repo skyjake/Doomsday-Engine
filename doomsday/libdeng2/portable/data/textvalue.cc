@@ -200,3 +200,8 @@ void TextValue::operator << (Reader& from)
     }
     from >> value_;
 }
+
+void TextValue::setValue(const Text& text)
+{
+    value_ = text;
+}
