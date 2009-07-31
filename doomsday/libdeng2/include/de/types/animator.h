@@ -34,7 +34,7 @@ namespace de
     /**
      * Provides a way to gradually move between target values.
      *
-     * @ingroup video
+     * @ingroup types
      */
     class LIBDENG2_API Animator : public ISerializable
     {
@@ -175,7 +175,7 @@ namespace de
     /**
      * 2D vector animator.
      *
-     * @ingroup video
+     * @ingroup types
      */
     class LIBDENG2_API AnimatorVector2 : public Vector2<Animator>
     {
@@ -217,30 +217,59 @@ namespace de
         void setObserver(Animator::IObserver* observer);
     };
 
-    /** @todo Implement the 3D vector animator. */
+    /**
+     * 3D vector animator.
+     *
+     * @ingroup types
+     */
+    class LIBDENG2_API AnimatorVector3 : public AnimatorVector2
+    {
+    public:
+        AnimatorVector3() : AnimatorVector2() {}
 
+        AnimatorVector3(const IClock& clock, Animator::ValueType initialX = 0.0, 
+            Animator::ValueType initialY = 0.0, Animator::ValueType initialZ = 0.0) 
+                : AnimatorVector2(clock, initialX, initialY) {
+            z.setClock(clock);
+            z.set(initialZ);
+        }
+
+        void set(const Vector3f& v, const Time::Delta& transition = 0.0) {
+            AnimatorVector2::set(v, transition);
+            z.set(v.z, transition);
+        }
+
+        Vector3f now() const {
+            return Vector3f(dfloat(x.now()), dfloat(y.now()), dfloat(z.now()));
+        }
+
+        Vector3f target() const {
+            return Vector3f(dfloat(x.target()), dfloat(y.target()), dfloat(z.target()));
+        }
+        
+    public:
+        Animator z;
+    };
+    
     /**
      * 4D vector animator.
      *
-     * @ingroup video
+     * @ingroup types
      */
-    class LIBDENG2_API AnimatorVector4 : public AnimatorVector2
+    class LIBDENG2_API AnimatorVector4 : public AnimatorVector3
     {
     public:
-        AnimatorVector4() : AnimatorVector2() {}
+        AnimatorVector4() : AnimatorVector3() {}
 
         AnimatorVector4(const IClock& clock, Animator::ValueType initialX = 0.0, 
             Animator::ValueType initialY = 0.0, Animator::ValueType initialZ = 0.0, 
-            Animator::ValueType initialW = 0.0) : AnimatorVector2(clock, initialX, initialY) {
-            z.setClock(clock);
-            z.set(initialZ);
+            Animator::ValueType initialW = 0.0) : AnimatorVector3(clock, initialX, initialY, initialZ) {
             w.setClock(clock);
             w.set(initialW);
         }
 
         void set(const Vector4f& v, const Time::Delta& transition = 0.0) {
-            AnimatorVector2::set(v, transition);
-            z.set(v.z, transition);
+            AnimatorVector3::set(v, transition);
             w.set(v.w, transition);
         }
 
@@ -255,14 +284,13 @@ namespace de
         }
         
     public:
-        Animator z;
         Animator w;
     };
 
     /**
      * Rectangle animator.
      *
-     * @ingroup video
+     * @ingroup types
      */ 
     class LIBDENG2_API AnimatorRectangle : public Rectangle<AnimatorVector2>
     {

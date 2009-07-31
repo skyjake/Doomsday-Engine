@@ -22,12 +22,16 @@
 
 #include "../ISerializable"
 #include "../Enumerator"
-#include "../Vector"
+#include "../Animator"
 
 namespace de
 {
+    class Thing;
+    class User;
+    class Record;
+    
     /**
-     * Movable entity within in a map, represented by a sprite or a 3D model.
+     * Movable entity within in a map, represented by a sprite, 3D model, or wall segments.
      *
      * @ingroup world
      */
@@ -49,7 +53,33 @@ namespace de
         Id id_;
         
         /// Position of the object's origin.
-        Vector3f pos_;
+        AnimatorVector3 pos_;
+
+        /// Location of the origin within the object's local space.
+        AnimatorVector3 origin_;
+
+        /// Current speed.
+        Vector3f momentum_;
+        
+        /// Rotation angles for the object (yaw, pitch, roll).
+        AnimatorVector3 angles_;
+
+        /// Optional physical representation of the object (modified state).
+        /// E.g., a user that is only a spectator doesn't have a Thing.
+        Thing* thing_;
+
+        /// Time when the object was created.
+        Time bornAt_;
+
+        /// Another object this one is resting on.
+        Object* onObject_;
+
+        /// This is set only if this object is the representation of a user.
+        User* user_;
+
+        /// Optional extra information specific to this object (assigned 
+        /// in a script, for example).
+        Record* info_;
     };
 }
 

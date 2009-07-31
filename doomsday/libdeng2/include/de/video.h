@@ -1,4 +1,3 @@
-#include "Animator"
 #include "Image"
 #include "Surface"
 #include "Video"

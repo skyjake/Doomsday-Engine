@@ -51,7 +51,7 @@ namespace de
         DEFINE_ERROR(NewFileError);
         
         /**
-         * Special text value that accesses the properties of a file.
+         * Accesses the properties of a Folder.
          *
          * @ingroup fs
          */

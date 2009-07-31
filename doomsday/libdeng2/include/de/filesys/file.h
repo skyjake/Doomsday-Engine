@@ -81,7 +81,7 @@ namespace de
         };
         
         /**
-         * Special text value that accesses the properties of a file.
+         * Accesses the properties of a File.
          *
          * @ingroup fs
          */
