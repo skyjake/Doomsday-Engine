@@ -14,8 +14,6 @@
 #include <stdint.h>
 typedef uint64_t      io_user_reference_t; 
 
-//#include "doomsday.h"
-
 #include <dengmain.h>
 
 #import <SDL.h>
@@ -24,13 +22,9 @@ typedef uint64_t      io_user_reference_t;
 @interface SDLMain : NSObject
 @end
 
-//#import <AppKit/NSWindowController.h>
-
 // Argument passed to the main() function.
 static int mainArgc;
 static char** mainArgv;
-
-//static NSAutoreleasePool *pool;
 
 // Return value from deng_Main().
 static int dengMainResult;
@@ -51,8 +45,6 @@ static int dengMainResult;
  */
 - (void)terminate:(id)sender
 {
-    //printf("SDLApplication terminate: sending SDL_QUIT\n");
-    
     /* Post a SDL_QUIT event */
     SDL_Event event;
     event.type = SDL_QUIT;
@@ -131,7 +123,6 @@ void setupWindowMenu(void)
 
 - (NSApplicationTerminateReply) applicationShouldTerminate: (NSApplication *)sender
 {
-    //printf("applicationShouldTerminate\n");
     return YES;
 }
 
