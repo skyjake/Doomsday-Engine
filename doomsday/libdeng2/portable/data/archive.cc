@@ -586,13 +586,10 @@ void Archive::add(const String& path, const IByteArray& data)
         remove(path);
     }
     Entry entry;
-    entry.size = data.size();
-    entry.modifiedAt = Time();
     entry.data = new Block(data);
+    entry.modifiedAt = Time();
     entry.mustCompress = true;
     entry.compression = NO_COMPRESSION; // Will be updated.
-    entry.crc32 = crc32(0L, Z_NULL, 0);
-    entry.crc32 = crc32(entry.crc32, entry.data->data(), entry.data->size());
     // The rest of the data gets updated when the archive is written.
     index_[path] = entry;
     modified_ = true;
@@ -635,6 +632,7 @@ void Archive::operator >> (Writer& to) const
     for(Index::const_iterator i = index_.begin(); i != index_.end(); ++i)
     {
         Entry& entry = const_cast<Entry&>(i->second);
+        updateEntry(entry);
         
         // This is where the local file header is located.
         entry.localHeaderOffset = writer.offset();
@@ -652,7 +650,7 @@ void Archive::operator >> (Writer& to) const
         header.fileNameSize = i->first.size();
 
         // Can we use the data already in the source archive?
-        if((entry.compressedData || source_) && !(entry.data && entry.mustCompress))
+        if((entry.compressedData || source_) && !entry.mustCompress)
         {
             // Yes, we can.
             writer << header << FixedByteArray(i->first);
@@ -763,4 +761,13 @@ bool Archive::recognize(const File& file)
     String ext = file.name().fileNameExtension().lower();
     return (ext == ".pack" || ext == ".demo" || ext == ".save" || ext == ".addon" ||
             ext == ".box" || ext == ".pk3" || ext == ".zip");
+}
+
+void Archive::updateEntry(Entry& entry) const
+{
+    if(entry.data)
+    {
+        entry.size = entry.data->size();
+        entry.crc32 = crc32(0L, entry.data->data(), entry.data->size());
+    }
 }

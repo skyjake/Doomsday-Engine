@@ -213,9 +213,6 @@ namespace de
         static bool recognize(const File& file);
         
     private:
-        /// Source data provided at construction.
-        const IByteArray* source_;
-        
         struct Entry {
             dsize offset;           ///< Offset from the start of the archive file.
             dsize size;             ///< Uncompressed size.
@@ -232,13 +229,16 @@ namespace de
                 localHeaderOffset(0), mustCompress(false), data(0), compressedData(0) {}
         };
         typedef std::map<String, Entry> Index;
+
+        /// Recalculates CRC32 of @a entry.
+        void updateEntry(Entry& entry) const;
+        
+    private:
+        /// Source data provided at construction.
+        const IByteArray* source_;
         
         /// Index maps entry paths to their metadata.
         Index index_;
-
-        typedef std::set<String> DirNames;
-        typedef std::map<String, DirNames> SubDirs;
-        mutable SubDirs subDirs_;
         
         /// Contents of the archive has been modified.
         bool modified_;
