@@ -24,7 +24,7 @@
 #include "../String"
 #include "../Time"
 #include "../Record"
-#include "../TextValue"
+#include "../AccessorValue"
 
 namespace de
 {
@@ -36,11 +36,9 @@ namespace de
      * Base class for all files stored in the file system.
      * 
      * Subclasses have some special requirements for their destructors:
-     * - deindex() must be called in all subclass destructors so that
-     *   the instances indexed under the subclasses' type are removed
-     *   from the file system's index also.
-     * - The file must be automatically flushed before it gets destroyed
-     *   (see flush()).
+     * - deindex() must be called in all subclass destructors so that the instances 
+     *   indexed under the subclasses' type are removed from the file system's index also.
+     * - The file must be automatically flushed before it gets destroyed (see flush()).
      *
      * @ingroup fs
      */
@@ -87,13 +85,9 @@ namespace de
          *
          * @ingroup fs
          */
-        class AccessorValue : public TextValue
+        class Accessor : public AccessorValue
         {
         public:
-            /// Accessor values cannot be serialized as they just mirror the 
-            /// information of the owning file. @ingroup errors
-            DEFINE_ERROR(CannotSerializeError);
-            
             /// Property of the file to access.
             enum Property {
                 NAME,
@@ -104,28 +98,14 @@ namespace de
             };
             
         public:
-            AccessorValue(File& owner, Property prop);
+            Accessor(File& owner, Property prop);
             
             /// Update the text content of the accessor.
             void update() const;
             
             /// Returns a TextValue with the text content of the accessor,
             /// except for the SIZE property, which is duplicated as a NumberValue.
-            Value* duplicate() const;
-
-            Number asNumber() const;
-            Text asText() const;
-            dsize size() const;
-            bool isTrue() const;
-            dint compare(const Value& value) const;
-            void sum(const Value& value);
-            void multiply(const Value& value);
-            void divide(const Value& value);
-            void modulo(const Value& divisor);
-            
-            // Implements ISerializable.
-            void operator >> (Writer& to) const;
-            void operator << (Reader& from);
+            Value* duplicateContent() const;
             
         private:
             File& owner_;

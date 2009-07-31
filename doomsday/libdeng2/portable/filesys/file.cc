@@ -34,16 +34,12 @@ File::File(const String& fileName)
     source_ = this;
     
     // Create the default set of info variables common to all files.
-    info_.add(new Variable("name", new AccessorValue(*this, AccessorValue::NAME),
-        Variable::TEXT | Variable::READ_ONLY | Variable::NO_SERIALIZE));
-    info_.add(new Variable("path", new AccessorValue(*this, AccessorValue::PATH),
-        Variable::TEXT | Variable::READ_ONLY | Variable::NO_SERIALIZE));
-    info_.add(new Variable("type", new AccessorValue(*this, AccessorValue::TYPE),
-        Variable::TEXT | Variable::READ_ONLY | Variable::NO_SERIALIZE));
-    info_.add(new Variable("size", new AccessorValue(*this, AccessorValue::SIZE),
-        Variable::TEXT | Variable::READ_ONLY | Variable::NO_SERIALIZE));
-    info_.add(new Variable("modifiedAt", new AccessorValue(*this, AccessorValue::MODIFIED_AT),
-        Variable::TEXT | Variable::READ_ONLY | Variable::NO_SERIALIZE));
+    info_.add(new Variable("name", new Accessor(*this, Accessor::NAME), Accessor::VARIABLE_MODE));
+    info_.add(new Variable("path", new Accessor(*this, Accessor::PATH), Accessor::VARIABLE_MODE));
+    info_.add(new Variable("type", new Accessor(*this, Accessor::TYPE), Accessor::VARIABLE_MODE));
+    info_.add(new Variable("size", new Accessor(*this, Accessor::SIZE), Accessor::VARIABLE_MODE));
+    info_.add(new Variable("modifiedAt", new Accessor(*this, Accessor::MODIFIED_AT),
+        Accessor::VARIABLE_MODE));
 }
 
 File::~File()
@@ -163,18 +159,17 @@ void File::set(Offset at, const Byte* values, Size count)
     throw ReadOnlyError("File::set", "File can only be read");
 }
 
-File::AccessorValue::AccessorValue(File& owner, Property prop) : owner_(owner), prop_(prop)
+File::Accessor::Accessor(File& owner, Property prop) : owner_(owner), prop_(prop)
 {
     update();
 }
 
-void File::AccessorValue::update() const
+void File::Accessor::update() const
 {
-    // We need to alter the text value.
-    AccessorValue* nonConst = const_cast<AccessorValue*>(this);
+    // We need to alter the value content.
+    Accessor* nonConst = const_cast<Accessor*>(this);
     
-    std::ostringstream os;
-    
+    std::ostringstream os;    
     switch(prop_)
     {
     case NAME:
@@ -201,77 +196,11 @@ void File::AccessorValue::update() const
     }
 }
 
-Value* File::AccessorValue::duplicate() const
+Value* File::Accessor::duplicateContent() const
 {
     if(prop_ == SIZE)
     {
         return new NumberValue(asNumber());
     }
-    return new TextValue(asText());
-}
-
-Value::Number File::AccessorValue::asNumber() const
-{
-    update();
-    return TextValue::asNumber();
-}
-
-Value::Text File::AccessorValue::asText() const
-{
-    update();
-    return TextValue::asText();
-}
-
-dsize File::AccessorValue::size() const
-{
-    update();
-    return TextValue::size();
-}
-
-bool File::AccessorValue::isTrue() const
-{
-    update();
-    return TextValue::isTrue();
-}
-
-dint File::AccessorValue::compare(const Value& value) const
-{
-    update();
-    return TextValue::compare(value);
-}
-
-void File::AccessorValue::sum(const Value& value)
-{
-    /// @throw ArithmeticError  Attempted to modify the value of the accessor.
-    throw ArithmeticError("File::AccessorValue::sum", "File accessor values cannot be modified");
-}
-
-void File::AccessorValue::multiply(const Value& value)
-{
-    /// @throw ArithmeticError  Attempted to modify the value of the accessor.
-    throw ArithmeticError("File::AccessorValue::multiply", "File accessor values cannot be modified");
-}
-
-void File::AccessorValue::divide(const Value& value)
-{
-    /// @throw ArithmeticError  Attempted to modify the value of the accessor.
-    throw ArithmeticError("File::AccessorValue::divide", "File accessor values cannot be modified");
-}
-
-void File::AccessorValue::modulo(const Value& divisor)
-{
-    /// @throw ArithmeticError  Attempted to modify the value of the accessor.
-    throw ArithmeticError("File::AccessorValue::modulo", "File accessor values cannot be modified");
-}
-
-void File::AccessorValue::operator >> (Writer& to) const
-{
-    /// @throw CannotSerializeError  Attempted to serialize the accessor.
-    throw CannotSerializeError("File::AccessorValue::operator >>", "File accessor cannot be serialized");
-}
-
-void File::AccessorValue::operator << (Reader& from)
-{
-    /// @throw CannotSerializeError  Attempted to deserialize the accessor.
-    throw CannotSerializeError("File::AccessorValue::operator <<", "File accessor cannot be deserialized");
+    return new TextValue(*this);
 }

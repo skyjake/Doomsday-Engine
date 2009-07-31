@@ -50,6 +50,29 @@ namespace de
         /// Creating a new file was unsuccessful. @ingroup errors
         DEFINE_ERROR(NewFileError);
         
+        /**
+         * Special text value that accesses the properties of a file.
+         *
+         * @ingroup fs
+         */
+        class Accessor : public AccessorValue
+        {
+        public:
+            /// Property of the file to access.
+            enum Property {
+                CONTENT_SIZE
+            };
+            
+        public:
+            Accessor(Folder& owner, Property prop);
+            void update() const;
+            Value* duplicateContent() const;
+            
+        private:
+            Folder& owner_;
+            Property prop_;
+        };
+        
         typedef std::list<Feed*> Feeds;
         
     public:

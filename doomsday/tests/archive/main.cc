@@ -46,6 +46,9 @@ int deng_Main(int argc, char** argv)
         cout << "Here's test.zip's info:\n";
         cout << zip.info();
         
+        cout << "Root's info:\n";
+        cout << app.fileSystem().root().info();
+        
         const File& hello = zip.locate<File>("hello.txt");
         File::Status stats = hello.status();
         cout << "hello.txt size: " << stats.size << " bytes, modified at " << Date(stats.modifiedAt) << endl;

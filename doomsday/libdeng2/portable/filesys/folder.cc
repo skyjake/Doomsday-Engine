@@ -20,12 +20,20 @@
 #include "de/Folder"
 #include "de/Feed"
 #include "de/FS"
+#include "de/NumberValue"
+
+#include <sstream>
 
 using namespace de;
 
-Folder::Folder(const String& name)
-    : File(name)
-{}
+Folder::Folder(const String& name) : File(name)
+{
+    setStatus(Status::FOLDER);
+    
+    // Standard info.
+    info().add(new Variable("contentSize", new Accessor(*this, Accessor::CONTENT_SIZE),
+        Accessor::VARIABLE_MODE));
+}
 
 Folder::~Folder()
 {
@@ -234,4 +242,27 @@ void Folder::populate()
             folder->populate();
         }
     }
+}
+
+Folder::Accessor::Accessor(Folder& owner, Property prop) : owner_(owner), prop_(prop)
+{}
+
+void Folder::Accessor::update() const
+{
+    // We need to alter the value content.
+    Accessor* nonConst = const_cast<Accessor*>(this);
+    
+    std::ostringstream os;
+    switch(prop_)
+    {
+    case CONTENT_SIZE:
+        os << owner_.contents_.size();
+        nonConst->setValue(os.str());
+        break;
+    }    
+}
+
+Value* Folder::Accessor::duplicateContent() const
+{
+    return new NumberValue(asNumber());
 }
