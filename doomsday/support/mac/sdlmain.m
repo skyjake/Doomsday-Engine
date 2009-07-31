@@ -12,7 +12,7 @@
  */
 
 #include <stdint.h>
-typedef uint64_t      io_user_reference_t; 
+typedef uint64_t io_user_reference_t; 
 
 #include <dengmain.h>
 
@@ -84,9 +84,9 @@ void setupAppleMenu(void)
 
 void setupWindowMenu(void)
 {
-    NSMenu		*windowMenu;
-    NSMenuItem	*windowMenuItem;
-    NSMenuItem	*menuItem;
+    NSMenu      *windowMenu;
+    NSMenuItem  *windowMenuItem;
+    NSMenuItem  *menuItem;
 
     windowMenu = [[NSMenu alloc] initWithTitle:@"Window"];
     
@@ -137,8 +137,8 @@ void setupWindowMenu(void)
  */
 int main(int argc, char *argv[])
 {
-    NSAutoreleasePool	*pool = [[NSAutoreleasePool alloc] init];
-    SDLMain				*sdlMain;
+    NSAutoreleasePool   *pool = [[NSAutoreleasePool alloc] init];
+    SDLMain             *sdlMain;
 
     mainArgc = argc;
     mainArgv = argv;
