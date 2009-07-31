@@ -199,10 +199,10 @@ GOTO Done
 copy "%SDL_LIB%\SDL.dll" .
 copy "%SDLNET_LIB%\SDL_net.dll" .
 copy "%SDLMIXER_LIB%\SDL_mixer.dll" .
-copy "%SDLMIXER_LIB%\ogg.dll" .
 copy "%SDLMIXER_LIB%\smpeg.dll" .
-copy "%SDLMIXER_LIB%\vorbis.dll" .
-copy "%SDLMIXER_LIB%\vorbisfile.dll" .
+copy "%SDLMIXER_LIB%\libogg-0.dll" .
+copy "%SDLMIXER_LIB%\libvorbis-0.dll" .
+copy "%SDLMIXER_LIB%\libvorbisfile-3.dll" .
 copy "%EAX_DLL%\eax.dll" .
 copy "%DENG_ENGINE_DIR%\doc\LICENSE" license.txt
 GOTO Done

@@ -1,1 +1,5 @@
 vcconfig.bat
+*.pk3
+*.dll
+obj
+bin

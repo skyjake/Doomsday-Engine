@@ -15,3 +15,4 @@ REM -- Make the executable.
 REM -- Additional binary dependencies.
 ECHO Copying dependencies to ./dist...
 copy "%PYTHON_DIR%"\DLLs\MSVCP90.dll dist
+copy "%PYTHON_DIR%"\DLLs\MSVCR90.dll dist
