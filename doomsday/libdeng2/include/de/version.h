@@ -25,7 +25,7 @@
 /**
  * @file version.h
  *
- * Header file for version numbering.
+ * Version numbering.
  */ 
 
 #define LIBDENG2_TO_STRING(s) #s

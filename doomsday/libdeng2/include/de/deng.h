@@ -36,9 +36,8 @@
 /**
  * @file deng.h
  *
- * Header file that contains common definitions, constants, and types that
- * will be used by libdeng2. The deng types should be used instead of the 
- * standard C++ types.
+ * Contains common definitions, constants, and types that will be used by libdeng2. 
+ * The deng types should be used instead of the standard C++ types.
  */ 
 
 #ifndef LIBDENG2_H
