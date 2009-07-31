@@ -1,0 +1,20 @@
+# Doomsday Engine test script.
+
+def myFunction(a, b)
+    print "a", a; print "b", b
+    c = a + b
+    return c
+end
+
+c = 5
+print myFunction(10, c)
+
+print "c in the global scope:", c
+if c == 5
+    print "Yes sir that's right!"
+else
+    print "No my good man!"
+end
+
+if c == 5: print "Oh my!"
+else: print "Yowza!"

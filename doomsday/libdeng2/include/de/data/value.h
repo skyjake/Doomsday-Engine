@@ -32,6 +32,8 @@
 
 namespace de
 {
+    class Evaluator;
+    
     /**
      * The base class for all runtime values.  This is an abstract class.
      *
@@ -198,6 +200,16 @@ namespace de
          * the result in this value.
          */
         virtual void modulo(const Value& divisor);
+        
+        /**
+         * Applies the call operator on the value. 
+         *
+         * @param evaluator  Evaluator making the call.
+         * @param arguments  Arguments of the call.
+         *
+         * @return  Result of the call operator, which can be anything.
+         */
+        virtual void call(Evaluator& evaluator, const Value& arguments);
         
     public:
         /**

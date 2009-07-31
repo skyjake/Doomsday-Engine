@@ -169,7 +169,9 @@ namespace de
         void resize(Size size) { std::string::resize(size); }
         const Byte* data() const { return reinterpret_cast<const Byte*>(std::string::data()); }
 
-    public:    
+    public:
+        static dint compareWithCase(const char* a, const char* b, dsize count);
+            
         /// wstring to String conversion.
         static String wideToString(const std::wstring& str);
         

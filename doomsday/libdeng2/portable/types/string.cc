@@ -401,6 +401,11 @@ dint String::compareWithoutCase(const String& str) const
     return strcasecmp(c_str(), str.c_str());
 }
 
+dint String::compareWithCase(const char* a, const char* b, dsize count)
+{
+    return strncasecmp(a, b, count);
+}
+
 void String::skipSpace(String::const_iterator& i, const String::const_iterator& end)
 {
     while(i != end && std::isspace(*i)) ++i;

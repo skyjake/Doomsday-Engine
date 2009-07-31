@@ -46,6 +46,7 @@ namespace de
         
     public:
         Vector2(Type a = 0, Type b = 0) : x(a), y(b) {}
+        Vector2(const Type* ab) : x(ab[0], ab[1]) {}
 
         /// Conversion operator to a float vector.
         operator Vector2<dfloat> () const {
@@ -109,6 +110,12 @@ namespace de
         Vector2 max(const Vector2& other) const {
             return Vector2(de::max(x, other.x), de::max(y, other.y));
         }
+        Type min() const {
+            return de::min(x, y);
+        }
+        Type max() const {
+            return de::max(x, y);
+        }
         // Implements ISerializable.
         void operator >> (Writer& to) const {
             to << x << y;
@@ -141,6 +148,7 @@ namespace de
     public:
         Vector3(Type a = 0, Type b = 0, Type c = 0) : Vector2<Type>(a, b), z(c) {}
         Vector3(const Vector2<Type>& v2) : Vector2<Type>(v2), z(0) {}
+        Vector3(const Type* abc) : Vector2<Type>(abc), z(abc[2]) {}
         
         /// Conversion operator to a float vector.
         operator Vector3<dfloat> () const {
@@ -208,6 +216,12 @@ namespace de
             return Vector3(de::max(Vector2<Type>::x, other.x), de::max(Vector2<Type>::y, other.y), 
                 de::max(z, other.z));
         }
+        Type min() const {
+            return de::min(z, Vector2<Type>::min());
+        }
+        Type max() const {
+            return de::max(z, Vector2<Type>::max());
+        }
         // Implements ISerializable.
         void operator >> (Writer& to) const {
             Vector2<Type>::operator >> (to);
@@ -241,6 +255,7 @@ namespace de
     public:
         Vector4(Type a = 0, Type b = 0, Type c = 0, Type d = 0) : Vector3<Type>(a, b, c), w(d) {}
         Vector4(const Vector3<Type>& v3) : Vector3<Type>(v3), w(0) {}
+        Vector4(const Type* abcd) : Vector3<Type>(abcd), w(abcd[3]) {}
 
         /// Conversion operator to a float vector.
         operator Vector4<dfloat> () const {
@@ -310,6 +325,12 @@ namespace de
         Vector4 max(const Vector4& other) const {
             return Vector4(de::max(Vector3<Type>::x, other.x), de::max(Vector3<Type>::y, other.y),
                 de::max(Vector3<Type>::z, other.z), de::max(w, other.w));
+        }
+        Type min() const {
+            return de::min(w, Vector3<Type>::min());
+        }
+        Type max() const {
+            return de::max(w, Vector3<Type>::max());
         }
         // Implements ISerializable.
         void operator >> (Writer& to) const {

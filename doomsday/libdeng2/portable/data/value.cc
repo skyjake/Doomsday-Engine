@@ -140,6 +140,12 @@ void Value::modulo(const Value& divisor)
     throw ArithmeticError("Value::modulo", "Modulo not defined");
 }
 
+void Value::call(Process& process, const Value& arguments)
+{
+    /// @throw IllegalError Value cannot be called.
+    throw IllegalError("Value::call", "Value cannot be called");
+}
+
 Value* Value::constructFrom(Reader& reader)
 {
     Value* result = 0;

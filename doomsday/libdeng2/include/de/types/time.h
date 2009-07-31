@@ -150,10 +150,19 @@ namespace de
 
         /**
          * Difference between this time and the current point of time.
+         * Returns positive deltas if current time is past this time.
          *
          * @return  Delta.
          */
         Delta since() const { return deltaTo(Time()); }
+
+        /**
+         * Difference between current time and this time.
+         * Returns positive deltas if current time is before this time.
+         *
+         * @return  Delta.
+         */
+        Delta until() const { return Time().deltaTo(*this); }
         
         /**
          * Difference to a later point in time.
