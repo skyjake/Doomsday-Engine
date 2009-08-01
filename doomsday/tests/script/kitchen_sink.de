@@ -42,9 +42,15 @@ print 'len({1:2, 3:5, 8:13}) =', len({1:2, 3:5, 8:13})
 print 'dictkeys({1:2, 3:5, 8:13}) =', dictkeys({1:2, 3:5, 8:13})
 print 'dictvalues({1:2, 3:5, 8:13}) =', dictvalues({1:2, 3:5, 8:13})
 
-# Section 2: Statements & Compounds
+# Section 2: Operator Expressions
+# -------------------------------
+# - all the operators
+# - special stuff like / with text
+
+
+# Section 3: Statements & Compounds
 # ---------------------------------
-# 2.0: if/elif/else.
+# 3.0: if/elsif/else.
 if True
     print 'Regular compound.'
 else
@@ -68,11 +74,13 @@ end
 
 print
 
-# 2.1: Assignment and basic variable usage.
+# 3.1: Assignment and basic variable usage.
+print 'Assigning 10 to i...'
 i = 10
-print i
+print '...and i ==', i
+print
 
-# 2.2: while, break.
+# 3.2: while, break.
 while True
     print "I won't stay here."
     break
@@ -82,19 +90,15 @@ print "Out of the while."
 
 while False: print "Never going in."
 
-# 2.3: for.
-#for i in ['planes', 'trains', 'automobiles']
-#    print "I would like:", i
-#end
+print
 
+# 3.3: for.
+for i in ['planes', 'trains', 'automobiles']
+    print "I would like:", i
+end
+print 'Value of i after the "for" loop is', i
 
-
-# - break, continue
-
-# Section 3: Operator Expressions
-# -------------------------------
-# - all the operators
-# - special stuff like / with text
+# 3.4: break, continue.
 
 # Section 4: Scopes
 # -----------------
@@ -114,5 +118,5 @@ while False: print "Never going in."
 
 # Section 6: Script Return Value
 # ------------------------------
-# 5.0: Returning value from the script, final expression.
+# 6.0: Returning value from the script, final expression.
 "I am the return value."

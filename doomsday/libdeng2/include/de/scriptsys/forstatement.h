@@ -28,7 +28,6 @@
 
 namespace de
 {
-    class NameExpression;
     class Expression;
     
     /**
@@ -37,7 +36,7 @@ namespace de
     class ForStatement : public Statement
     {
     public:
-        ForStatement(NameExpression* iter, Expression* iteration) 
+        ForStatement(Expression* iter, Expression* iteration) 
             : iterator_(iter), iteration_(iteration) {}
         
         ~ForStatement();
@@ -50,7 +49,7 @@ namespace de
         void execute(Context& context) const;
 
     private:
-        NameExpression* iterator_;
+        Expression* iterator_;
         Expression* iteration_;
         Compound compound_;
     };

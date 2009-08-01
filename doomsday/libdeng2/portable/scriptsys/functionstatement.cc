@@ -30,7 +30,7 @@
 
 using namespace de;
 
-FunctionStatement::FunctionStatement(NameExpression* identifier)
+FunctionStatement::FunctionStatement(Expression* identifier)
     : identifier_(identifier)
 {
     function_ = new Function();

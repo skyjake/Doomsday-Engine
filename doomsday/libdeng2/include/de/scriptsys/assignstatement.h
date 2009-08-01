@@ -28,8 +28,6 @@
 
 namespace de
 {
-    class NameExpression;
-    
     /**
      * Assigns a value to a variable.
      *
@@ -54,7 +52,7 @@ namespace de
          *                the assignment. 
          * @param value   Expression that determines the value of the variable.
          */
-        AssignStatement(NameExpression* target, const Indices& index, Expression* value);
+        AssignStatement(Expression* target, const Indices& index, Expression* value);
         
         ~AssignStatement();
         

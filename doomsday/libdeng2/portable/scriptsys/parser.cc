@@ -226,7 +226,7 @@ ForStatement* Parser::parseForStatement()
             "Expected 'in' to follow " + statementRange_.firstToken().asText());
     }
     
-    auto_ptr<NameExpression> iter(parseNameExpression(statementRange_.between(1, inPos),
+    auto_ptr<Expression> iter(parseExpression(statementRange_.between(1, inPos),
         NAME_BY_REFERENCE | ALLOW_NEW_VARIABLES | LOOKUP_LOCAL_ONLY));
     Expression* iterable = parseExpression(statementRange_.between(inPos + 1, colonPos));
     
@@ -264,7 +264,7 @@ FunctionStatement* Parser::parseFunctionStatement()
 
     // The function must have a name that is not already in use in the scope.
     auto_ptr<FunctionStatement> statement(new FunctionStatement(
-        parseNameExpression(statementRange_.between(1, pos), 
+        parseExpression(statementRange_.between(1, pos), 
         LOOKUP_LOCAL_ONLY | NAME_BY_REFERENCE | REQUIRE_NEW_VARIABLE)));
 
     // Collect the argument names.
@@ -329,7 +329,7 @@ AssignStatement* Parser::parseAssignStatement()
             bracketPos = nameEndPos - 1;
         }
 
-        auto_ptr<NameExpression> lValue(parseNameExpression(statementRange_.endingTo(nameEndPos), flags));
+        auto_ptr<Expression> lValue(parseExpression(statementRange_.endingTo(nameEndPos), flags));
         auto_ptr<Expression> rValue(parseExpression(statementRange_.startingFrom(pos + 1)));
 
         AssignStatement* st = new AssignStatement(lValue.get(), indices, rValue.get());
@@ -577,7 +577,7 @@ Expression* Parser::parseCallExpression(const TokenRange& nameRange, const Token
             return new BuiltInExpression(BuiltInExpression::DICTIONARY_VALUES, args.release());
         }
     }
-    auto_ptr<NameExpression> identifier(parseNameExpression(nameRange, NAME_BY_REFERENCE));
+    auto_ptr<Expression> identifier(parseExpression(nameRange, NAME_BY_REFERENCE));
     return new OperatorExpression(CALL, identifier.release(), args.release());
 }
 
@@ -613,19 +613,6 @@ OperatorExpression* Parser::parseOperatorExpression(Operator op, const TokenRang
     }
 }
 
-NameExpression* Parser::parseNameExpression(const TokenRange& range, const ExpressionFlags& flags)
-{
-    NameExpression::Flags nameFlags;
-    
-    if(flags[NAME_BY_VALUE_BIT]) nameFlags |= NameExpression::BY_VALUE;
-    if(flags[NAME_BY_REFERENCE_BIT]) nameFlags |= NameExpression::BY_REFERENCE;
-    if(flags[LOOKUP_LOCAL_ONLY_BIT]) nameFlags |= NameExpression::LOCAL_ONLY;
-    if(flags[ALLOW_NEW_VARIABLES_BIT]) nameFlags |= NameExpression::NEW_VARIABLE;
-    if(flags[REQUIRE_NEW_VARIABLE_BIT]) nameFlags |= NameExpression::NOT_IN_SCOPE;
-    
-    return new NameExpression(parseExpression(range), nameFlags);
-}
-
 Expression* Parser::parseTokenExpression(const TokenRange& range, const ExpressionFlags& flags)
 {
     if(!range.size())
@@ -658,7 +645,16 @@ Expression* Parser::parseTokenExpression(const TokenRange& range, const Expressi
     case TokenBuffer::Token::IDENTIFIER:
         if(range.size() == 1)
         {
-            return new NameExpression(new ConstantExpression(new TextValue(range.token(0).str())), flags);
+            NameExpression::Flags nameFlags;
+
+            if(flags[NAME_BY_VALUE_BIT]) nameFlags |= NameExpression::BY_VALUE;
+            if(flags[NAME_BY_REFERENCE_BIT]) nameFlags |= NameExpression::BY_REFERENCE;
+            if(flags[LOOKUP_LOCAL_ONLY_BIT]) nameFlags |= NameExpression::LOCAL_ONLY;
+            if(flags[ALLOW_NEW_VARIABLES_BIT]) nameFlags |= NameExpression::NEW_VARIABLE;
+            if(flags[REQUIRE_NEW_VARIABLE_BIT]) nameFlags |= NameExpression::NOT_IN_SCOPE;
+            
+            return new NameExpression(new ConstantExpression(new TextValue(range.token(0).str())), 
+                nameFlags);
         }
         else
         {

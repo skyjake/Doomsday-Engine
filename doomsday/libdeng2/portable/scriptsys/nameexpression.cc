@@ -27,7 +27,9 @@ using namespace de;
 
 NameExpression::NameExpression(Expression* identifier, const Flags& flags) 
     : identifier_(identifier), flags_(flags)
-{}
+{
+    std::cout << "NameEx: flags=" << flags.to_string() << "\n";
+}
 
 NameExpression::~NameExpression()
 {
@@ -42,7 +44,7 @@ void NameExpression::push(Evaluator& evaluator, Record* names) const
 
 Value* NameExpression::evaluate(Evaluator& evaluator) const
 {
-    //LOG_AS("NameExpression::evaluator");
+    //std::cout << "NameExpression::evaluator: " << flags_.to_string() << "\n";
     //LOG_DEBUG("path = %s, scope = %x") << path_ << evaluator.names();
     
     // We are expecting a text value for the identifier.

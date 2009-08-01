@@ -121,9 +121,6 @@ namespace de
             const TokenRange& leftSide, const TokenRange& rightSide, 
             const ExpressionFlags& rightFlags = NAME_BY_VALUE);
 
-        NameExpression* parseNameExpression(const TokenRange& range, 
-            const ExpressionFlags& flags = NAME_BY_VALUE);
-
         Expression* parseTokenExpression(const TokenRange& range, 
             const ExpressionFlags& flags = NAME_BY_VALUE);
 

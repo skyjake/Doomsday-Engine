@@ -30,7 +30,6 @@
 
 namespace de
 {
-    class NameExpression;
     class Expression;
     
     /**
@@ -39,7 +38,7 @@ namespace de
     class FunctionStatement : public Statement
     {
     public:
-        FunctionStatement(NameExpression* identifier);
+        FunctionStatement(Expression* identifier);
         
         ~FunctionStatement();
 
@@ -51,7 +50,7 @@ namespace de
         void execute(Context& context) const;
         
     private:
-        NameExpression* identifier_;
+        Expression* identifier_;
         
         // The statement holds one reference to the function.
         Function* function_;

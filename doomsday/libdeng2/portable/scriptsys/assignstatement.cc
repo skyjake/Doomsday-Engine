@@ -26,7 +26,7 @@
 
 using namespace de;
 
-AssignStatement::AssignStatement(NameExpression* target, const Indices& indices, Expression* value) 
+AssignStatement::AssignStatement(Expression* target, const Indices& indices, Expression* value) 
     : indexCount_(0)
 {
     args_.add(target);

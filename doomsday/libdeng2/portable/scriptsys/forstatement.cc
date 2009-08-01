@@ -19,7 +19,6 @@
 
 #include "de/ForStatement"
 #include "de/Expression"
-#include "de/NameExpression"
 #include "de/Context"
 #include "de/Evaluator"
 #include "de/Process"
