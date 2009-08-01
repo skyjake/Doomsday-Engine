@@ -51,7 +51,7 @@ void PrintStatement::execute(Context& context) const
     }
     
     /// @todo  Use the standard Doomsday output stream.
-    std::cout << os.str();
+    std::cout << os.str() << "\n";
     
     context.proceed();
 }

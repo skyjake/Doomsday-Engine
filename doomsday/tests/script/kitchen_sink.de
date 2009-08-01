@@ -22,15 +22,73 @@
 
 # Section 1: Basic Expressions
 # ----------------------------
-# - basic data types
-# - print
-print 5
+# 1.0: Printing basic types (number, text, array, dictionary).
+print 5, 5.5 #, -3.141592657
+print 0x100, 0X123
+print "Hello", 'World'
+print """I can span
+newlines."""
+print [1, 2, 3]
+print {'a': 'b', 1: ['b', {5:6, 6:7}], ['array', 'as', 'key']: 'oh my'}
+print 
+
+# 1.1: Constants: True, False, None.
+print True, False, None
+print
+
+# 1.2: Built-in functions: len(), dictkeys(), dictvalues().
+print 'len([1, 2, 3, 4]) =', len([1, 2, 3, 4])
+print 'len({1:2, 3:5, 8:13}) =', len({1:2, 3:5, 8:13})
+print 'dictkeys({1:2, 3:5, 8:13}) =', dictkeys({1:2, 3:5, 8:13})
+print 'dictvalues({1:2, 3:5, 8:13}) =', dictvalues({1:2, 3:5, 8:13})
 
 # Section 2: Statements & Compounds
 # ---------------------------------
-# - if/elif/else
-# - while
-# - for
+# 2.0: if/elif/else.
+if True
+    print 'Regular compound.'
+else
+    print "You won't see this."
+end
+
+if True: print "One statement compound."
+else: print "Not printed."
+    
+if True
+    print "Compound A"
+    if False
+        print "Compound B"
+    else: print "Compound C"
+end
+
+if False: print "Lots of useless stuff here"
+elsif True
+    print "From the elsif"
+end
+
+print
+
+# 2.1: Assignment and basic variable usage.
+i = 10
+print i
+
+# 2.2: while, break.
+while True
+    print "I won't stay here."
+    break
+    print "Jumped over me."
+end
+print "Out of the while."
+
+while False: print "Never going in."
+
+# 2.3: for.
+#for i in ['planes', 'trains', 'automobiles']
+#    print "I would like:", i
+#end
+
+
+
 # - break, continue
 
 # Section 3: Operator Expressions

@@ -38,9 +38,12 @@ int deng_Main(int argc, char** argv)
 
         Script testScript(app.fileSystem().findSingle("kitchen_sink.de"));
         Process proc(testScript);
+        std::cout << "Script parsing is complete! Executing...\n"
+            << "------------------------------------------------------------------------------\n";
         proc.execute();
         
-        std::cout << "Final result value is: " << proc.context().evaluator().result().asText() << "\n";
+        std::cout << "------------------------------------------------------------------------------\n"
+            << "Final result value is: " << proc.context().evaluator().result().asText() << "\n";
     }
     catch(const Error& err)
     {

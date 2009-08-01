@@ -67,7 +67,8 @@ namespace de
         DEFINE_SUB_ERROR(SyntaxError, MissingColonError);
         
         DEFINE_FLAG(HAS_CONDITION, 0);
-        DEFINE_FINAL_FLAG(IGNORE_EXTRA_BEFORE_COLON, 1, CompoundFlags);
+        DEFINE_FLAG(STAY_AT_CLOSING_STATEMENT, 1);
+        DEFINE_FINAL_FLAG(IGNORE_EXTRA_BEFORE_COLON, 2, CompoundFlags);
 
         DEFINE_FLAG(NAME_BY_VALUE, 0);
         DEFINE_FLAG(NAME_BY_REFERENCE, 1);
@@ -103,7 +104,7 @@ namespace de
         ExpressionStatement* parseExpressionStatement();
         
         /// Parse a range of tokens as a comma-separated argument list:
-        ArrayExpression* parseArray(const TokenRange& range, const char* separator = ",");
+        ArrayExpression* parseList(const TokenRange& range, const char* separator = ",");
 
         /// Parse a range of tokens as an operator-based expression.
         Expression* parseExpression(const TokenRange& range, 

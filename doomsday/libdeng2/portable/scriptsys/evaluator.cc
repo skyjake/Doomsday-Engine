@@ -104,7 +104,10 @@ bool Evaluator::hasResult() const
 
 Value& Evaluator::result()
 {
-    assert(!results_.empty());
+    if(results_.empty())
+    {
+        return noResult_;
+    }
     return *results_.front();
 }
 

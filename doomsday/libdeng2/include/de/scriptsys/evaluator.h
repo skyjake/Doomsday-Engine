@@ -21,6 +21,7 @@
 #define LIBDENG2_EVALUATOR_H
 
 #include "../deng.h"
+#include "../NoneValue"
 
 #include <vector>
 #include <list>
@@ -161,6 +162,9 @@ namespace de
         
         Expressions stack_;
         Results results_;
+        
+        /// Returned when there is no result to give.
+        NoneValue noResult_;
     };
 }
 

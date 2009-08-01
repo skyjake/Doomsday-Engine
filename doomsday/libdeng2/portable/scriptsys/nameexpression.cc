@@ -34,7 +34,7 @@ NameExpression::~NameExpression()
     delete identifier_;
 }
 
-void NameExpression::push(Evaluator& evaluator, Record* names)
+void NameExpression::push(Evaluator& evaluator, Record* names) const
 {
     Expression::push(evaluator, names);
     identifier_->push(evaluator);

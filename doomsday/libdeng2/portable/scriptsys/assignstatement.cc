@@ -44,19 +44,18 @@ AssignStatement::~AssignStatement()
 void AssignStatement::execute(Context& context) const
 {
     Evaluator& eval = context.evaluator();
-    eval.evaluate(&args_);
-    std::auto_ptr<ArrayValue> results(static_cast<ArrayValue*>(eval.popResult()));
+    ArrayValue& results = eval.evaluateTo<ArrayValue>(&args_);
 
-    RefValue* ref = dynamic_cast<RefValue*>(results->elements()[0]);
+    RefValue* ref = dynamic_cast<RefValue*>(results.elements()[0]);
     if(!ref)
     {
         throw LeftValueError("AssignStatement::execute",
-            "Cannot assign into '" + results->elements()[0]->asText() + "'");
+            "Cannot assign into '" + results.elements()[0]->asText() + "'");
     }
 
     // The new value that will be assigned to the destination.
     // Ownership of this instance will be given to the variable.
-    std::auto_ptr<Value> value(results->pop()); 
+    std::auto_ptr<Value> value(results.pop()); 
 
     if(indexCount_ > 0)
     {

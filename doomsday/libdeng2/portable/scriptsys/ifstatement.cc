@@ -29,12 +29,13 @@ IfStatement::~IfStatement()
     for(Branches::iterator i = branches_.begin(); i != branches_.end(); ++i)
     {
         delete i->condition;
+        delete i->compound;
     }
 }
 
 void IfStatement::newBranch()
 {
-    branches_.push_back(Branch());
+    branches_.push_back(Branch(new Compound()));
 }
 
 void IfStatement::setBranchCondition(Expression* condition)
@@ -44,7 +45,7 @@ void IfStatement::setBranchCondition(Expression* condition)
 
 Compound& IfStatement::branchCompound()
 {
-    return branches_.back().compound;
+    return *branches_.back().compound;
 }
 
 void IfStatement::execute(Context& context) const
@@ -55,7 +56,7 @@ void IfStatement::execute(Context& context) const
     {
         if(eval.evaluate(i->condition).isTrue())
         {
-            context.start(i->compound.firstStatement(), next());
+            context.start(i->compound->firstStatement(), next());
             return;
         }
     }

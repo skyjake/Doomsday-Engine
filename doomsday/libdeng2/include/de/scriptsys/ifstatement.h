@@ -23,7 +23,7 @@
 #include "../Statement"
 #include "../Compound"
 
-#include <vector>
+#include <list>
 
 namespace de
 {
@@ -64,10 +64,10 @@ namespace de
     private:
         struct Branch {
             Expression* condition;
-            Compound compound;
-            Branch() : condition(0) {}
+            Compound* compound;
+            Branch(Compound* c = 0) : condition(0), compound(c) {}
         };
-        typedef std::vector<Branch> Branches;
+        typedef std::list<Branch> Branches;
 
         Branches branches_;
         Compound elseCompound_;

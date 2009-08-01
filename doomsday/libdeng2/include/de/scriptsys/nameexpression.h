@@ -60,7 +60,7 @@ namespace de
         NameExpression(Expression* identifier, const Flags& flags = BY_VALUE);
         ~NameExpression();
 
-        void push(Evaluator& evaluator, Record* names = 0);
+        void push(Evaluator& evaluator, Record* names = 0) const;
         
         Value* evaluate(Evaluator& evaluator) const;
         

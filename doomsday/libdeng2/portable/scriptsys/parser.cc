@@ -74,7 +74,7 @@ duint Parser::nextStatement()
     // Begin with the whole thing.
     statementRange_ = TokenRange(tokens_);
 
-    std::cout << "Next statement: '" << statementRange_.asText() << "'";
+    std::cout << "Next statement: '" << statementRange_.asText() << "'\n";
     
     return result;
 }
@@ -83,10 +83,9 @@ void Parser::parseCompound(Compound& compound)
 {
     while(statementRange_.size() > 0) 
     {
-        if(statementRange_.firstToken().equals("elif") || 
-            (statementRange_.size() == 1 && 
-                (statementRange_.firstToken().equals("end") ||
-                 statementRange_.firstToken().equals("else"))))
+        if(statementRange_.firstToken().equals("elsif") ||
+           statementRange_.firstToken().equals("else") ||
+           (statementRange_.size() == 1 && statementRange_.firstToken().equals("end")))
         {
             // End of compound.
             break;
@@ -96,27 +95,37 @@ void Parser::parseCompound(Compound& compound)
         // Figure out what it is and generate the correct statement(s)
         // and expressions.
         parseStatement(compound);
-    } 
+    }
 }
 
 void Parser::parseStatement(Compound& compound)
 {
     const TokenBuffer::Token& firstToken = statementRange_.firstToken();
 
-    // Built-in statements: print, if/else, for, while, def.
+    // Statements with a compound: if, for, while, def.
     if(firstToken.equals("if"))
     {
         compound.add(parseIfStatement());
+        return;
     }
     else if(firstToken.equals("while"))
     {
         compound.add(parseWhileStatement());
+        return;
     }
     else if(firstToken.equals("for"))
     {
         compound.add(parseForStatement());
+        return;
     }
-    else if(firstToken.equals("continue"))
+    else if(firstToken.equals("def"))
+    {
+        compound.add(parseFunctionStatement());
+        return;
+    }
+    
+    // Statements without a compound (must advance to next statement manually).
+    if(firstToken.equals("continue"))
     {
         compound.add(new JumpStatement(JumpStatement::CONTINUE));
     }
@@ -144,10 +153,6 @@ void Parser::parseStatement(Compound& compound)
     {
         compound.add(parsePrintStatement());
     }
-    else if(firstToken.equals("def"))
-    {
-        compound.add(parseFunctionStatement());
-    }
     else if(statementRange_.hasBracketless("=") || statementRange_.hasBracketless(":="))
     {
         compound.add(parseAssignStatement());
@@ -156,37 +161,45 @@ void Parser::parseStatement(Compound& compound)
     {
         compound.add(parseExpressionStatement());
     }
-
     // We've fully parsed the current set of tokens, get the next statement.
     nextStatement();
 }
 
 IfStatement* Parser::parseIfStatement()
 {
+    // The "end" keyword is necessary in the full form.
+    bool expectEnd = !statementRange_.has(":");
+    
     auto_ptr<IfStatement> statement(new IfStatement());
-
     statement->newBranch();
     statement->setBranchCondition(
-        parseConditionalCompound(statement->branchCompound(), HAS_CONDITION));
+        parseConditionalCompound(statement->branchCompound(), 
+            HAS_CONDITION | STAY_AT_CLOSING_STATEMENT));
     
-    while(statementRange_.beginsWith("elif"))
+    while(statementRange_.beginsWith("elsif"))
     {
+        expectEnd = !statementRange_.has(":");
         statement->newBranch();
         statement->setBranchCondition(
-            parseConditionalCompound(statement->branchCompound(), HAS_CONDITION));
+            parseConditionalCompound(statement->branchCompound(), 
+                HAS_CONDITION | STAY_AT_CLOSING_STATEMENT));
     }
     
     if(statementRange_.beginsWith("else"))
     {
-        parseConditionalCompound(statement->elseCompound());
+        expectEnd = !statementRange_.has(":");
+        parseConditionalCompound(statement->elseCompound(), STAY_AT_CLOSING_STATEMENT);
     }
     
-    if(statementRange_.size() != 1 || !statementRange_.firstToken().equals("end"))
+    if(expectEnd) 
     {
-        throw UnexpectedTokenError("Parser::parseIfStatement", "Expected 'end', but got " + 
-            statementRange_.firstToken().asText());
+        if(statementRange_.size() != 1 || !statementRange_.firstToken().equals("end"))
+        {
+            throw UnexpectedTokenError("Parser::parseIfStatement", "Expected \"end\", but got " + 
+                statementRange_.firstToken().asText());
+        }
+        nextStatement();
     }
-
     return statement.release(); 
 }
 
@@ -227,8 +240,16 @@ ForStatement* Parser::parseForStatement()
 
 PrintStatement* Parser::parsePrintStatement()
 {    
-    // Parse the arguments of the print statement, as a standard argument list.
-    ArrayExpression* args = parseArray(statementRange_.startingFrom(1));
+    ArrayExpression* args = 0;
+    if(statementRange_.size() == 1) // Just the keyword.
+    {
+        args = new ArrayExpression();
+    }
+    else
+    {
+        // Parse the arguments of the print statement.
+        args = parseList(statementRange_.startingFrom(1));
+    }
     return new PrintStatement(args);    
 }
 
@@ -371,13 +392,17 @@ Expression* Parser::parseConditionalCompound(Compound& compound, const CompoundF
     }
     else
     {
+        nextStatement();
         parseCompound(compound);
+        if(!flags[STAY_AT_CLOSING_STATEMENT_BIT])
+        {
+            nextStatement();
+        }
     }
-    
     return condition.release();
 }
 
-ArrayExpression* Parser::parseArray(const TokenRange& range, const char* separator)
+ArrayExpression* Parser::parseList(const TokenRange& range, const char* separator)
 {
     auto_ptr<ArrayExpression> exp(new ArrayExpression);
     if(range.size() > 0)
@@ -450,7 +475,7 @@ ArrayExpression* Parser::parseArrayExpression(const TokenRange& range)
             "Expected brackets for the array expression beginning at " + 
             range.firstToken().asText());
     }    
-    return parseArray(range.between(1, range.size() - 1));
+    return parseList(range.between(1, range.size() - 1));
 }
 
 DictionaryExpression* Parser::parseDictionaryExpression(const TokenRange& range)
@@ -579,7 +604,7 @@ OperatorExpression* Parser::parseOperatorExpression(Operator op, const TokenRang
             
         // Binary operation.
         auto_ptr<Expression> leftOperand(parseExpression(leftSide, leftFlags));
-        auto_ptr<Expression> rightOperand(op == SLICE? parseArray(rightSide, ":") :
+        auto_ptr<Expression> rightOperand(op == SLICE? parseList(rightSide, ":") :
             parseExpression(rightSide, rightFlags));
         OperatorExpression* x = new OperatorExpression(op, leftOperand.get(), rightOperand.get());
         rightOperand.release();
