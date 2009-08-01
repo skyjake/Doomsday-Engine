@@ -17,8 +17,8 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "dcompound.hh"
-#include "dstatement.hh"
+#include "de/Compound"
+#include "de/Statement"
 
 using namespace de;
 

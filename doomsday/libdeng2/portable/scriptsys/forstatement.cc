@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,65 +17,48 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "dforstatement.hh"
-#include "dexpression.hh"
-#include "dcontext.hh"
-#include "devaluator.hh"
-#include "dprocess.hh"
-#include "dvalue.hh"
-#include "dvariable.hh"
+#include "de/ForStatement"
+#include "de/Expression"
+#include "de/NameExpression"
+#include "de/Context"
+#include "de/Evaluator"
+#include "de/Process"
+#include "de/Value"
+#include "de/Variable"
+#include "de/RefValue"
 
 using namespace de;
 
 ForStatement::~ForStatement()
 {
+    delete iterator_;
     delete iteration_;
-    compound_.destroy();
 }
 
 void ForStatement::execute(Context& context) const
 {
     Evaluator& eval = context.evaluator();
-    
     if(!context.iterationValue())
     {
-        if(eval.evaluate(iteration_))
-        {
-            // We now have the iterated value.
-            context.setIterationValue(eval.popResult());
-        }
+        eval.evaluate(iteration_);
+        // We now have the iterated value.
+        context.setIterationValue(eval.popResult());
     }
-    
-    if(context.iterationValue())
-    {            
-        // The variable gets ownership of this value.
-        Value* nextValue = context.iterationValue()->next();
-            
-        if(nextValue)
-        {
-            // Assign the variable specified in the path.
-            Variable* var = 0;
-            try 
-            {
-                var = context.names().node<Variable>(path_);
-            }
-            catch(const Folder::NotFoundError&) {}
-            if(var)
-            {
-                var->setValue(nextValue);
-            }
-            else
-            {
-                // Create a new variable.
-                context.process().newVariable(context.names(), path_, nextValue);            
-            }
-            // Let's begin the compound.
-            context.start(compound_.firstStatement(), this, this, this);
-        }
-        else
-        {
-            context.setIterationValue(NULL);
-            context.proceed();
-        }            
+
+    // The variable gets ownership of this value.
+    Value* nextValue = context.iterationValue()->next();
+    if(nextValue)
+    {
+        // Assign the variable specified.
+        RefValue& ref = eval.evaluateTo<RefValue>(iterator_);
+        ref.assign(nextValue);
+        
+        // Let's begin the compound.
+        context.start(compound_.firstStatement(), this, this, this);
     }
+    else
+    {
+        context.setIterationValue(NULL);
+        context.proceed();
+    }            
 }

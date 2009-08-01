@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,20 +17,23 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "dmethod.hh"
-#include "dtextvalue.hh"
-#include "darrayvalue.hh"
-#include "ddictionaryvalue.hh"
+#include "de/Function"
+#include "de/TextValue"
+#include "de/ArrayValue"
+#include "de/DictionaryValue"
 
 #include <sstream>
 
 using namespace de;
 
-Method::Method(const std::string& name, const Arguments& args, const Defaults& defaults, const Statement* firstStatement) 
-    : Node(name), arguments_(args), defaults_(defaults), firstStatement_(firstStatement)
+Function::Function()
 {}
 
-Method::~Method()
+Function::Function(const Arguments& args, const Defaults& defaults) 
+    : arguments_(args), defaults_(defaults)
+{}
+
+Function::~Function()
 {
     // Delete the default argument values.
     for(Defaults::iterator i = defaults_.begin(); i != defaults_.end(); ++i)
@@ -39,7 +42,28 @@ Method::~Method()
     }
 }
 
-void Method::mapArgumentValues(const ArrayValue& args, ArgumentValues& values)
+String Function::asText() const
+{
+    std::ostringstream os;
+    os << "(function " << this << " (";
+    for(Arguments::const_iterator i = arguments_.begin(); i != arguments_.end(); ++i)
+    {
+        if(i != arguments_.begin())
+        {
+            os << ", ";
+        }
+        os << *i;
+        Defaults::const_iterator def = defaults_.find(*i);
+        if(def != defaults_.end())
+        {
+            os << "=" << def->second->asText();
+        }
+    }
+    os << ")";
+    return os.str();
+}
+
+void Function::mapArgumentValues(const ArrayValue& args, ArgumentValues& values)
 {
     const DictionaryValue* labeledArgs = dynamic_cast<const DictionaryValue*>(
         args.elements().front());
@@ -56,10 +80,10 @@ void Method::mapArgumentValues(const ArrayValue& args, ArgumentValues& values)
         {
             if(labeledArgs->contains(TextValue(*k)))
             {
-                throw WrongArgumentsError("Method::mapArgumentValues",
-                    "In call to method '" + name() + 
-                    "', more than one value has been given for '" + 
-                    *k + "'");
+                /// @throw WrongArgumentsError An argument has been given more than one value.
+                throw WrongArgumentsError("Function::mapArgumentValues",
+                    "More than one value has been given for '" + 
+                    *k + "' in function call");
             }
             ++k;
         }
@@ -87,9 +111,9 @@ void Method::mapArgumentValues(const ArrayValue& args, ArgumentValues& values)
                 }
                 else
                 {
-                    throw WrongArgumentsError("Method::mapArgumentValues",
-                        "In call to method '" + name() + "', the value of argument '" + 
-                        *i + "' has not been defined");
+                    /// @throw WrongArgumentsError Argument is missing a value.
+                    throw WrongArgumentsError("Function::mapArgumentValues",
+                        "The value of argument '" + *i + "' has not been defined in function call");
                 }
             }
         }
@@ -98,18 +122,18 @@ void Method::mapArgumentValues(const ArrayValue& args, ArgumentValues& values)
     // Check that the number of arguments matches what we expect.
     if(values.size() != arguments_.size())
     {
-        std::ostringstream message;
-        message << "Method '" + name() + "' expects " << 
-            arguments_.size() << " arguments, but it was given " <<
-            values.size();
-        throw WrongArgumentsError("Method::mapArgumentValues", message.str());
+        std::ostringstream os;
+        os << "Expected " << arguments_.size() << " arguments, but got " <<
+            values.size() << " arguments in function call";
+        /// @throw WrongArgumentsError  Wrong number of argument specified.
+        throw WrongArgumentsError("Function::mapArgumentValues", os.str());
     }    
 }
 
-bool Method::callNative(Context& context, Object& self, const ArgumentValues& args)
+bool Function::callNative(Context& context, const ArgumentValues& args)
 {
     assert(args.size() == arguments_.size());    
     
-    // Do non-native method call.
+    // Do non-native function call.
     return false;
 }

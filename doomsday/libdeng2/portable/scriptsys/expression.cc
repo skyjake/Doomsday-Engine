@@ -1,7 +1,7 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2009 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2009 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,20 +17,15 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "dexpression.hh"
-#include "devaluator.hh"
+#include "de/Expression"
+#include "de/Evaluator"
 
 using namespace de;
 
 Expression::~Expression()
 {}
 
-void Expression::push(Evaluator& evaluator, Object* names) const
+void Expression::push(Evaluator& evaluator, Record* names) const
 {
-	evaluator.push(this, names);
-}
-
-Value* Expression::evaluate(Evaluator& stack) const
-{
-	return NULL;
+    evaluator.push(this, names);
 }

@@ -109,6 +109,11 @@ void FS::find(const String& path, FoundFiles& found) const
     }
 }
 
+File& FS::findSingle(const String& path) const
+{
+    return find<File>(path);
+}
+
 void FS::index(File& file)
 {
     const String lowercaseName = file.name().lower();

@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,49 +17,48 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DMETHODSTATEMENT_HH
-#define DMETHODSTATEMENT_HH
+#ifndef LIBDENG2_FUNCTIONSTATEMENT_H
+#define LIBDENG2_FUNCTIONSTATEMENT_H
 
-#include "dstatement.hh"
-#include "dmethod.hh"
-#include "dcompound.hh"
-#include "ddictionaryexpression.hh"
+#include "de/Statement"
+#include "de/Function"
+#include "de/Compound"
+#include "de/DictionaryExpression"
+#include "de/String"
 
 #include <list>
-#include <string>
 
 namespace de
 {
+    class NameExpression;
     class Expression;
     
-/**
- * MethodStatement creates a new method when it is executed.
- */
-    class MethodStatement : public Statement
+    /**
+     * FunctionStatement creates a new function when it is executed.
+     */
+    class FunctionStatement : public Statement
     {
     public:
-        MethodStatement(const std::string& path);
+        FunctionStatement(NameExpression* identifier);
         
-        ~MethodStatement();
+        ~FunctionStatement();
 
-        const std::string& path() { return path_; }
+        void addArgument(const String& argName, Expression* defaultValue = 0);
 
-        void addArgument(const std::string& argName, Expression* defaultValue = 0);
-
-        /// Returns the statement compound of the method.
-        Compound& compound() { return compound_; }
+        /// Returns the statement compound of the function.
+        Compound& compound();
         
         void execute(Context& context) const;
         
     private:
-        std::string path_;
-        Compound compound_;
-
-        Method::Arguments arguments_;
+        NameExpression* identifier_;
         
+        // The statement holds one reference to the function.
+        Function* function_;
+    
         /// Expression that evaluates into the default values of the method.
         DictionaryExpression defaults_;
     };
 }
 
-#endif /* DMETHODSTATEMENT_HH */
+#endif /* LIBDENG2_FUNCTIONSTATEMENT_H */

@@ -115,9 +115,14 @@ namespace de
         void set(const Value& v);
         
         /**
-         * Returns the value of the variable.
+         * Returns the value of the variable (non-modifiable).
          */
         const Value& value() const;
+        
+        /**
+         * Returns the value of the variable.
+         */
+        Value& value();
 
         /**
          * Returns the value of the variable.
@@ -188,6 +193,13 @@ namespace de
              * @param newValue  New value of the variable.
              */
             virtual void variableValueChanged(Variable& variable, const Value& newValue) = 0;
+            
+            /**
+             * The variable is about to be deleted.
+             *
+             * @param variable  Variable.
+             */
+            virtual void variableBeingDeleted(Variable& variable) = 0;
         };
         
         typedef Observers<IObserver> Audience;

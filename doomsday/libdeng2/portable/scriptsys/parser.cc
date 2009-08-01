@@ -69,12 +69,12 @@ void Parser::parse(const String& input, Script& output)
 
 duint Parser::nextStatement()
 {
-    duint result = analyzer_.getStatement(tokens_, currentIndent_);
+    duint result = analyzer_.getStatement(tokens_);
     
     // Begin with the whole thing.
     statementRange_ = TokenRange(tokens_);
 
-    std::cout << "Next statement: '" << statementRange_.str() << "'";
+    std::cout << "Next statement: '" << statementRange_.asText() << "'";
     
     return result;
 }
@@ -86,7 +86,7 @@ void Parser::parseCompound(Compound& compound)
         if(statementRange_.firstToken().equals("elif") || 
             (statementRange_.size() == 1 && 
                 (statementRange_.firstToken().equals("end") ||
-                 statementRange_.firstToken().equals("else"))
+                 statementRange_.firstToken().equals("else"))))
         {
             // End of compound.
             break;
@@ -214,10 +214,10 @@ ForStatement* Parser::parseForStatement()
     }
     
     auto_ptr<NameExpression> iter(parseNameExpression(statementRange_.between(1, inPos),
-        NAME_BY_REFERENCE | ALLOW_NEW_VARIABLES | LOCAL_LOOKUP_ONLY));
+        NAME_BY_REFERENCE | ALLOW_NEW_VARIABLES | LOOKUP_LOCAL_ONLY));
     Expression* iterable = parseExpression(statementRange_.between(inPos + 1, colonPos));
     
-    auto_ptr<ForStatement> statement(new ForStatement(iter, iterable));
+    auto_ptr<ForStatement> statement(new ForStatement(iter.release(), iterable));
 
     // Parse the statements of the method.
     parseConditionalCompound(statement->compound(), IGNORE_EXTRA_BEFORE_COLON);
@@ -234,7 +234,6 @@ PrintStatement* Parser::parsePrintStatement()
 
 FunctionStatement* Parser::parseFunctionStatement()
 {
-    dint colonPos = statementRange_.find(":");
     dint pos = statementRange_.find("(");
     if(pos < 0)
     {
@@ -243,9 +242,9 @@ FunctionStatement* Parser::parseFunctionStatement()
     }
 
     // The function must have a name that is not already in use in the scope.
-    auto_ptr<MethodStatement> statement(new MethodStatement(
+    auto_ptr<FunctionStatement> statement(new FunctionStatement(
         parseNameExpression(statementRange_.between(1, pos), 
-        NAME_BY_REFERENCE | REQUIRE_NEW_VARIABLE)));
+        LOOKUP_LOCAL_ONLY | NAME_BY_REFERENCE | REQUIRE_NEW_VARIABLE)));
 
     // Collect the argument names.
     TokenRange argRange = statementRange_.between(pos + 1, statementRange_.closingBracket(pos));
@@ -271,7 +270,7 @@ FunctionStatement* Parser::parseFunctionStatement()
             else
             {
                 throw UnexpectedTokenError("Parser::parseFunctionStatement",
-                    "'" + delim.str() + "' was unexpected in argument definition at " +
+                    "'" + delim.asText() + "' was unexpected in argument definition at " +
                     argRange.firstToken().asText());
             }
         }
@@ -309,7 +308,7 @@ AssignStatement* Parser::parseAssignStatement()
             bracketPos = nameEndPos - 1;
         }
 
-        auto_ptr<Expression> lValue(parseExpression(statementRange_.endingTo(nameEndPos), flags));
+        auto_ptr<NameExpression> lValue(parseNameExpression(statementRange_.endingTo(nameEndPos), flags));
         auto_ptr<Expression> rValue(parseExpression(statementRange_.startingFrom(pos + 1)));
 
         AssignStatement* st = new AssignStatement(lValue.get(), indices, rValue.get());
@@ -327,6 +326,7 @@ AssignStatement* Parser::parseAssignStatement()
             delete *i;
         }
         err.raise();
+        return 0; // not reached
     }
 }
 
@@ -337,8 +337,6 @@ ExpressionStatement* Parser::parseExpressionStatement()
 
 Expression* Parser::parseConditionalCompound(Compound& compound, const CompoundFlags& flags)
 {
-    duint level = currentIndent_;
-    
     // keyword [expr] ":" statement
     // keyword [expr] "\n" compound
     
@@ -348,7 +346,7 @@ Expression* Parser::parseConditionalCompound(Compound& compound, const CompoundF
     dint colon = range.find(":");
     
     auto_ptr<Expression> condition;
-    if(flags & HAS_CONDITION)
+    if(flags[HAS_CONDITION_BIT])
     {
         TokenRange conditionRange = range.between(1, colon);
         if(conditionRange.empty())
@@ -358,13 +356,13 @@ Expression* Parser::parseConditionalCompound(Compound& compound, const CompoundF
         }
         condition = auto_ptr<Expression>(parseExpression(conditionRange));
     }
-    else if(colon > 0 && (colon > 1 && !(flags & IGNORE_EXTRA_BEFORE_COLON)))
+    else if(colon > 0 && (colon > 1 && !flags[IGNORE_EXTRA_BEFORE_COLON_BIT]))
     {
         throw UnexpectedTokenError("Parser::parseConditionalCompound",
             range.token(1).asText() + " was unexpected");
     }
     
-    if(colon > 0 && colon < range.size() - 1)
+    if(colon > 0 && colon < dint(range.size()) - 1)
     {
         // The colon is not the last token. There must be a statement 
         // continuing on the same line.
@@ -477,7 +475,7 @@ DictionaryExpression* Parser::parseDictionaryExpression(const TokenRange& range)
             if(colonPos < 0)
             {
                 throw MissingTokenError("Parser::parseDictionaryExpression",
-                    "Colon is missing from '" + delim.str() + "' at " +
+                    "Colon is missing from '" + delim.asText() + "' at " +
                     delim.firstToken().asText());
             }
             
@@ -491,8 +489,8 @@ DictionaryExpression* Parser::parseDictionaryExpression(const TokenRange& range)
 
 Expression* Parser::parseCallExpression(const TokenRange& nameRange, const TokenRange& argumentRange)
 {
-    std::cerr << "call name: " << nameRange.str() << "\n";
-    std::cerr << "call args: " << argumentRange.str() << "\n";
+    std::cerr << "call name: " << nameRange.asText() << "\n";
+    std::cerr << "call args: " << argumentRange.asText() << "\n";
     
     if(!argumentRange.firstToken().equals("(") || 
          argumentRange.closingBracket(0) < argumentRange.size() - 1)
@@ -524,7 +522,7 @@ Expression* Parser::parseCallExpression(const TokenRange& nameRange, const Token
                     !delim.token(1).equals("="))
                 {
                     throw UnexpectedTokenError("Parser::parseCallExpression",
-                        "Labeled argument '" + delim.str() + "' is malformed");
+                        "Labeled argument '" + delim.asText() + "' is malformed");
                 }
                 // Create a dictionary entry for this.
                 Expression* value = parseExpression(delim.startingFrom(2));
@@ -561,7 +559,7 @@ Expression* Parser::parseCallExpression(const TokenRange& nameRange, const Token
 OperatorExpression* Parser::parseOperatorExpression(Operator op, const TokenRange& leftSide, 
     const TokenRange& rightSide, const ExpressionFlags& rightFlags)
 {
-    std::cerr << "left: " << leftSide.str() << ", right: " << rightSide.str() << "\n";
+    std::cerr << "left: " << leftSide.asText() << ", right: " << rightSide.asText() << "\n";
     
     if(leftSide.empty())
     {
@@ -594,11 +592,11 @@ NameExpression* Parser::parseNameExpression(const TokenRange& range, const Expre
 {
     NameExpression::Flags nameFlags;
     
-    if(flags & NAME_BY_VALUE) nameFlags |= NameExpression::BY_VALUE;
-    if(flags & NAME_BY_REFERENCE) nameFlags |= NameExpression::BY_REFERENCE;
-    if(flags & LOOKUP_LOCAL_ONLY) nameFlags |= NameExpression::LOCAL_ONLY;
-    if(flags & ALLOW_NEW_VARIABLES) nameFlags |= NameExpression::NEW_VARIABLE;
-    if(flags & REQUIRE_NEW_VARIABLE) nameFlags |= NameExpression::NOT_IN_SCOPE;
+    if(flags[NAME_BY_VALUE_BIT]) nameFlags |= NameExpression::BY_VALUE;
+    if(flags[NAME_BY_REFERENCE_BIT]) nameFlags |= NameExpression::BY_REFERENCE;
+    if(flags[LOOKUP_LOCAL_ONLY_BIT]) nameFlags |= NameExpression::LOCAL_ONLY;
+    if(flags[ALLOW_NEW_VARIABLES_BIT]) nameFlags |= NameExpression::NEW_VARIABLE;
+    if(flags[REQUIRE_NEW_VARIABLE_BIT]) nameFlags |= NameExpression::NOT_IN_SCOPE;
     
     return new NameExpression(parseExpression(range), nameFlags);
 }
@@ -640,18 +638,18 @@ Expression* Parser::parseTokenExpression(const TokenRange& range, const Expressi
         else
         {
             throw UnexpectedTokenError("Parser::parseTokenExpression", 
-                "Unexpected token " + range.at(1).asText());
+                "Unexpected token " + range.token(1).asText());
         }
         
     case TokenBuffer::Token::LITERAL_STRING_APOSTROPHE:
     case TokenBuffer::Token::LITERAL_STRING_QUOTED:
     case TokenBuffer::Token::LITERAL_STRING_LONG:
         return new ConstantExpression(
-            new TextValue(HawLex::unescapeStringToken(token)));
+            new TextValue(ScriptLex::unescapeStringToken(token)));
 
     case TokenBuffer::Token::LITERAL_NUMBER:
         return new ConstantExpression(
-            new NumberValue(HawLex::tokenToNumber(token)));
+            new NumberValue(ScriptLex::tokenToNumber(token)));
         
     default:
         throw UnexpectedTokenError("Parser::parseTokenExpression",
@@ -682,7 +680,7 @@ Operator Parser::findLowestOperator(const TokenRange& range, TokenRange& leftSid
     Operator lowestOp = NONE;
     int lowestRank = MAX_RANK;
 
-    for(int i = 0, continueFrom = 0; i < range.size(); i = continueFrom)
+    for(duint i = 0, continueFrom = 0; i < range.size(); i = continueFrom)
     {
         continueFrom = i + 1;
         

@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,18 +17,21 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DDICTIONARYEXPRESSION_HH
-#define DDICTIONARYEXPRESSION_HH
+#ifndef LIBDENG2_DICTIONARYEXPRESSION_H
+#define LIBDENG2_DICTIONARYEXPRESSION_H
 
-#include "dexpression.hh"
+#include "../Expression"
 
-#include <map>
+#include <vector>
 
 namespace de
 {
-   class DictionaryExpression : public Expression
-   {
-   public:
+    /**
+     * Evaluates arguments and forms a dictionary out of the results.
+     */
+    class DictionaryExpression : public Expression
+    {
+    public:
         DictionaryExpression();
         ~DictionaryExpression();
 
@@ -41,7 +44,7 @@ namespace de
          */
         void add(Expression* key, Expression* value);
 
-   		void push(Evaluator& evaluator, Object* names = 0) const;
+        void push(Evaluator& evaluator, Record* names = 0) const;
 
         /**
          * Collects the result keys and values of the arguments and puts them 
@@ -51,13 +54,13 @@ namespace de
          *
          * @return DictionaryValue with the results of the argument evaluations.
          */
-   		Value* evaluate(Evaluator& evaluator) const;
+        Value* evaluate(Evaluator& evaluator) const;
 
-   	private:
+    private:
         typedef std::pair<Expression*, Expression*> ExpressionPair;
-   		typedef std::vector<ExpressionPair> Arguments;
-   		Arguments arguments_;
+        typedef std::vector<ExpressionPair> Arguments;
+        Arguments arguments_;
     };
 }
 
-#endif /* DDICTIONARYEXPRESSION_HH */
+#endif /* LIBDENG2_DICTIONARYEXPRESSION_H */

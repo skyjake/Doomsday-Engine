@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,21 +17,17 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "dassignstatement.hh"
-#include "dcontext.hh"
-#include "dexpression.hh"
-#include "dnameexpression.hh"
-#include "darrayvalue.hh"
-#include "dvariablevalue.hh"
-#include "dvariable.hh"
-#include "dprocess.hh"
+#include "de/AssignStatement"
+#include "de/Context"
+#include "de/Expression"
+#include "de/NameExpression"
+#include "de/ArrayValue"
+#include "de/RefValue"
 
-#include <memory>
-
-using std::auto_ptr;
 using namespace de;
 
-AssignStatement::AssignStatement(Expression* target, const Indices& indices, Expression* value) : indexCount_(0)
+AssignStatement::AssignStatement(NameExpression* target, const Indices& indices, Expression* value) 
+    : indexCount_(0)
 {
     args_.add(target);
     indexCount_ = indices.size();
@@ -47,49 +43,46 @@ AssignStatement::~AssignStatement()
 
 void AssignStatement::execute(Context& context) const
 {
-	Evaluator& eval = context.evaluator();
+    Evaluator& eval = context.evaluator();
+    eval.evaluate(&args_);
+    std::auto_ptr<ArrayValue> results(static_cast<ArrayValue*>(eval.popResult()));
 
-    if(eval.evaluate(&args_))
+    RefValue* ref = dynamic_cast<RefValue*>(results->elements()[0]);
+    if(!ref)
     {
-        auto_ptr<ArrayValue> results(static_cast<ArrayValue*>(eval.popResult()));
-        VariableValue* ref = dynamic_cast<VariableValue*>(results->elements()[0]);
-        if(!ref)
-        {
-            throw IllegalTargetError("AssignStatement::execute",
-                "Cannot assign into '" + results->elements()[0]->asText() + "'");
-        }
-
-        // The new value that will be assigned to the destination.
-        // Ownership of this instance will be given to the variable.
-        auto_ptr<Value> value(results->pop()); 
-
-        if(indexCount_ > 0)
-        {
-            Value* target = &ref->variable().value();
-
-            for(dint i = 0; i < indexCount_; ++i)
-            {   
-                auto_ptr<Value> index(results->pop()); // Not released -- will be destroyed.
-                if(i < indexCount_ - 1)
-                {
-                    // Move into a subelement.
-                    target = target->element(*index.get());
-                }
-                else
-                {
-                    // The last one does the setting.
-                    target->setElement(*index.get(), value.get());                    
-                }
-            }
-        }
-        else
-        {
-            // Extract the value from the results array (no copies).
-            ref->variable().setValue(value.get());
-        }
-
-        value.release();
-        
-        context.proceed();
+        throw LeftValueError("AssignStatement::execute",
+            "Cannot assign into '" + results->elements()[0]->asText() + "'");
     }
+
+    // The new value that will be assigned to the destination.
+    // Ownership of this instance will be given to the variable.
+    std::auto_ptr<Value> value(results->pop()); 
+
+    if(indexCount_ > 0)
+    {
+        throw Error("AssignStatement::execute", "Assignment indexing not implemented");
+/*        Value* target = &ref->variable().value();
+
+        for(dint i = 0; i < indexCount_; ++i)
+        {   
+            auto_ptr<Value> index(results->pop()); // Not released -- will be destroyed.
+            if(i < indexCount_ - 1)
+            {
+                // Move into a subelement.
+                target = target->element(*index.get());
+            }
+            else
+            {
+                // The last one does the setting.
+                target->setElement(*index.get(), value.get());                    
+            }
+        }*/
+    }
+    else
+    {
+        // Extract the value from the results array (no copies).
+        ref->assign(value.release());
+    }
+
+    context.proceed();
 }

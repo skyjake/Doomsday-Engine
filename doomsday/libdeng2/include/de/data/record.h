@@ -63,6 +63,11 @@ namespace de
         void clear();
         
         /**
+         * Determines if the record contains a variable names @a variableName.
+         */
+        bool has(const String& variableName) const;
+        
+        /**
          * Adds a new variable to the record. 
          *
          * @param variable  Variable to add. Record gets ownership. 

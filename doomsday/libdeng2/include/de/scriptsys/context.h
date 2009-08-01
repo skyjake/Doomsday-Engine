@@ -41,7 +41,7 @@ namespace de
         
         enum Type {
             PROCESS,
-            METHOD_CALL
+            FUNCTION_CALL
         };
 
     public:

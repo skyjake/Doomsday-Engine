@@ -46,7 +46,7 @@ namespace de
          */
         void add(Expression* arg);
 
-        void push(Evaluator& evaluator, Object* names = 0) const;
+        void push(Evaluator& evaluator, Record* names = 0) const;
 
         /**
          * Collects the result values of the arguments and puts them 

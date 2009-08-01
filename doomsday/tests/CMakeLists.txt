@@ -36,6 +36,7 @@ IF ( ENABLE_TESTS )
         archive
         basiclink 
         record
+        script
         sdlwindow
         stoploop 
         vectors 

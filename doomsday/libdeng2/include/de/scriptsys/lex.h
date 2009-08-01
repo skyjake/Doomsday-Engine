@@ -60,7 +60,7 @@ namespace de
             
         private:
             Lex& lex_;
-            duint originalMode_;
+            Mode originalMode_;
         };
         
     public:

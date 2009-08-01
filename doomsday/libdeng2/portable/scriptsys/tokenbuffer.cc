@@ -135,11 +135,6 @@ void TokenBuffer::newToken(duint line)
     forming_ = &tokens_.back();
 }
 
-void TokenBuffer::cancelToken()
-{
-    
-}
-
 void TokenBuffer::appendChar(duchar c)
 {
     assert(forming_ != 0);
@@ -151,7 +146,7 @@ void TokenBuffer::appendChar(duchar c)
     // token to a new pool. If the pool is new, or there are no tokens
     // in it yet, we can resize the pool in place.
     Pool& fp = pools_[formPool_];
-    if(forming_->end() - fp.chars >= fp.size)
+    if(forming_->end() - fp.chars >= dint(fp.size))
     {
         // The pool is full. Find a new pool and move the token.
         std::string tok = forming_->str();

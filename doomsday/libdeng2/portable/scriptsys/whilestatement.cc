@@ -37,7 +37,7 @@ void WhileStatement::execute(Context& context) const
     if(eval.evaluate(loopCondition_).isTrue())
     {
         // Continue and break jump points are defined within a while compound.
-        context.start(compound_.firstStatement(), this, this, next());
+        context.start(compound_.firstStatement(), this, this, this);
     }
     else
     {

@@ -26,7 +26,7 @@
 
 using namespace de;
 
-ScriptLex::ScriptLex(const std::string& input) : Lex(input)
+ScriptLex::ScriptLex(const String& input) : Lex(input)
 {}
 
 duint ScriptLex::getStatement(TokenBuffer& output)
@@ -68,7 +68,7 @@ duint ScriptLex::getStatement(TokenBuffer& output)
             {
                 // A statement ending character? Open brackets prevent the statement
                 // from ending here.
-                if(Vector3i(backetLevel).min() > 0)
+                if(Vector3i(bracketLevel).min() > 0)
                     continue;
                 else
                     break;

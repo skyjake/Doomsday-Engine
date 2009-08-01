@@ -45,6 +45,7 @@ Variable::Variable(const String& name, Value* initial, const Mode& m)
 
 Variable::~Variable()
 {
+    FOR_EACH_OBSERVER(o, observers) o->variableBeingDeleted(*this);
     delete value_;
 }
 
@@ -74,6 +75,12 @@ void Variable::set(const Value& v)
 }
 
 const Value& Variable::value() const
+{
+    assert(value_ != 0);
+    return *value_;
+}
+
+Value& Variable::value()
 {
     assert(value_ != 0);
     return *value_;

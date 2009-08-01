@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,20 +17,20 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DEXPRESSIONSTATEMENT_HH
-#define DEXPRESSIONSTATEMENT_HH
+#ifndef LIBDENG2_EXPRESSIONSTATEMENT_H
+#define LIBDENG2_EXPRESSIONSTATEMENT_H
 
-#include "dstatement.hh"
+#include "../Statement"
 
 namespace de
 {
     class Expression;
     
-/**
- * ExpressionStatement is a Statement that evaluates an expression but
- * does not store the result anywhere. An example of this would be a 
- * statement that just does a single method call.
- */
+    /**
+     * ExpressionStatement is a Statement that evaluates an expression but
+     * does not store the result anywhere. An example of this would be a 
+     * statement that just does a single method call.
+     */
     class ExpressionStatement : public Statement
     {
     public:
@@ -45,4 +45,4 @@ namespace de
     };
 }
 
-#endif /* DEXPRESSIONSTATEMENT_HH */
+#endif /* LIBDENG2_EXPRESSIONSTATEMENT_H */

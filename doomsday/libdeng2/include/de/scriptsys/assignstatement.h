@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,14 +17,12 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
  
-#ifndef DASSIGNSTATEMENT_HH
-#define DASSIGNSTATEMENT_HH
+#ifndef LIBDENG2_ASSIGNSTATEMENT_H
+#define LIBDENG2_ASSIGNSTATEMENT_H
 
-#include "deng.hh"
-#include "../derror.hh"
-#include "dstatement.hh"
-#include "darrayexpression.hh"
-
+#include "../deng.h"
+#include "../Statement"
+#include "../ArrayExpression"
 #include <string>
 #include <vector>
 
@@ -32,17 +30,16 @@ namespace de
 {
     class NameExpression;
     
-/**
- * Assignments are perhaps the most fundamental statements.
- * They assign a value to a variable, and also create new variables
- * if one with the specified identifier does not yet exist.
- */
+    /**
+     * Assigns a value to a variable.
+     *
+     * @ingroup script
+     */
     class AssignStatement : public Statement
     {
     public:
-        /// This exception is thrown if trying to assign into something other
-        /// than a variable reference (VariableValue).
-        DEFINE_ERROR(IllegalTargetError);
+        /// Trying to assign into something other than a reference (RefValue). @ingroup errors
+        DEFINE_ERROR(LeftValueError);
         
         typedef std::vector<Expression*> Indices;
         
@@ -51,13 +48,13 @@ namespace de
          * Constructor. Statement takes ownership of the expressions 
          * @c target and @c value.
          *
-         * @param target  Expression that resolves to a Variable reference (VariableValue).
+         * @param target  Expression that resolves to a reference (RefValue).
          * @param indices Expressions that determine element indices into existing
          *                element-based values. Empty, if there is no indices for
          *                the assignment. 
          * @param value   Expression that determines the value of the variable.
          */
-        AssignStatement(Expression* target, const Indices& index, Expression* value);
+        AssignStatement(NameExpression* target, const Indices& index, Expression* value);
         
         ~AssignStatement();
         
@@ -69,4 +66,4 @@ namespace de
     };
 }
 
-#endif /* DASSIGNSTATEMENT_HH */
+#endif /* LIBDENG2_ASSIGNSTATEMENT_H */

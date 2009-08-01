@@ -138,9 +138,9 @@ TokenRange TokenRange::between(duint startPos, duint endPos) const
 dint TokenRange::find(const char* token, dint startPos) const
 {
     duint len = size();
-    assert(startPos >= 0 && startPos <= len);
+    assert(startPos >= 0 && startPos <= dint(len));
 
-    for(dint i = startPos; i < len; ++i)
+    for(dint i = startPos; i < dint(len); ++i)
     {
         if(tokens_->at(start_ + i).equals(token))
             return i;
@@ -160,9 +160,9 @@ dint TokenRange::findBracketless(const char* token, dint startPos) const
 
 dint TokenRange::findIndexSkippingBrackets(const char* token, dint startIndex) const
 {
-    assert(startIndex >= start_ && startIndex <= end_);
+    assert(startIndex >= dint(start_) && startIndex <= dint(end_));
     
-    for(dint i = startIndex; i < end_; ++i)
+    for(duint i = startIndex; i < end_; ++i)
     {
         const TokenBuffer::Token& t = tokens_->at(i);
         if(t.equals("(") || t.equals("[") || t.equals("{"))
@@ -240,7 +240,7 @@ duint TokenRange::closingBracket(duint openBracketPos) const
     bracketTokens(token(openBracketPos), openingToken, closingToken);
     
     int level = 1;
-    for(int i = tokenIndex(openBracketPos + 1); i < end_; ++i)
+    for(dint i = tokenIndex(openBracketPos + 1); i < dint(end_); ++i)
     {
         const TokenBuffer::Token& token = tokens_->at(i);
         if(token.equals(closingToken))
@@ -258,8 +258,8 @@ duint TokenRange::closingBracket(duint openBracketPos) const
     }
     /// @throw MismatchedBracketError  Cannot find a closing bracket.
     throw MismatchedBracketError("TokenRange::closingBracket",
-        "Could not find closing bracket for '" + std::string(openingToken) +
-        "' within '" + str() + "'");
+        "Could not find closing bracket for '" + String(openingToken) +
+        "' within '" + asText() + "'");
 }
 
 duint TokenRange::openingBracket(duint closeBracketPos) const
@@ -284,13 +284,13 @@ duint TokenRange::openingBracket(duint closeBracketPos) const
     /// @throw MismatchedBracketError  Cannot find an opening bracket.
     throw MismatchedBracketError("TokenRange::openingBracket",
         "Could not find opening bracket for '" + std::string(token(closeBracketPos).str()) +
-        "' within '" + str() + "'");
+        "' within '" + asText() + "'");
 }
 
 String TokenRange::asText() const
 {
     std::ostringstream os;
-    for(int i = start_; i < end_; ++i)
+    for(duint i = start_; i < end_; ++i)
     {
         if(i > start_) 
         {

@@ -36,11 +36,11 @@ int deng_Main(int argc, char** argv)
         CommandLine args(argc, argv);
         TestApp app(args);
 
-        Script testScript(app.fileSystem().find<File>("test.de"));
+        Script testScript(app.fileSystem().findSingle("kitchen_sink.de"));
         Process proc(testScript);
         proc.execute();
         
-        /// @todo The result value?
+        std::cout << "Final result value is: " << proc.context().evaluator().result().asText() << "\n";
     }
     catch(const Error& err)
     {

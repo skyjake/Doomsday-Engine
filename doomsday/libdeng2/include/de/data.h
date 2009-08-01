@@ -5,6 +5,7 @@
 #include "BlockValue"
 #include "ByteOrder"
 #include "ByteSubArray"
+#include "Counted"
 #include "DictionaryValue"
 #include "FIFO"
 #include "FixedByteArray"

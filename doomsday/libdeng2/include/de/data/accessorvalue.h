@@ -33,10 +33,6 @@ namespace de
     class AccessorValue : public TextValue
     {
     public:
-        /// Accessor values cannot be serialized as they just mirror the 
-        /// information of the owning file. @ingroup errors
-        DEFINE_ERROR(CannotSerializeError);
-
         /// Mode to use for variables that have an accessor value.
         static const Flag VARIABLE_MODE = Variable::TEXT | Variable::READ_ONLY | 
             Variable::NO_SERIALIZE;

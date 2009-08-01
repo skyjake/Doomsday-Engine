@@ -18,7 +18,6 @@
  */
 
 #include "de/Process"
-#include "de/Stopwatch"
 #include "de/Variable"
 #include "de/ArrayValue"
 #include "de/TextValue"
@@ -56,6 +55,11 @@ Process::~Process()
     {
         delete *i;
     }
+}
+
+duint Process::depth() const
+{
+    return stack_.size();
 }
 
 void Process::run(const Script& script)
@@ -137,22 +141,21 @@ void Process::execute(const Time::Delta& timeBox)
         */
     }
 
-    // Is the process sleeping?
-    if(sleepUntil_.until() > 0)
-    {
-        // We'll be back later.
-        return;
-    }
-
     try
     {
         Time startedAt;
+
+        // We will execute until this depth is complete.
+        duint startDepth = depth();
+        
         // Execute the next command(s).
-        while(sleepUntil_.until() < 0 && state_ == RUNNING)
+        while(state_ == RUNNING)
         {
             if(!context().execute())
             {
                 finish();
+                // Time to break execution?
+                if(depth() < startDepth) break;
             }
             if(startedAt.since() > MAX_EXECUTION_TIME)
             {
@@ -170,22 +173,24 @@ void Process::execute(const Time::Delta& timeBox)
     }
 }
 
-Context& Process::context()
+Context& Process::context(duint downDepth)
 {
-    return *stack_.back();
+    assert(downDepth < depth());
+    return **(stack_.rbegin() + downDepth);
 }
 
 void Process::finish(Value* returnValue)
 {
-    assert(stack_.size() >= 1);
+    assert(depth() >= 1);
 
     // Move one level downwards in the context stack.
-    if(stack_.size() > 1)
+    if(depth() > 1)
     {
         // Finish the topmost context.
         Context* topmost = stack_.back();
         stack_.pop_back();
-        
+
+        // Return value one level down.
         if(topmost->type() == Context::FUNCTION_CALL)
         {
             context().evaluator().pushResult(returnValue? returnValue : new NoneValue());
@@ -212,65 +217,36 @@ void Process::setWorkingPath(const String& newWorkingPath)
     workingPath_ = newWorkingPath;
 }
 
-#if 0
-Variable* Process::newVariable(Folder& names, const std::string& path, Value* initialValue)
+void Process::call(Function& function, const ArrayValue& arguments)
 {
-    Object* object = dynamic_cast<Object*>(getContainingFolder(names, path));
-    
-    string variableName = Folder::extractNode(path);
-    if(object->has(variableName))
-    {
-        throw AlreadyExistsError("Process::newVariable",
-            "'" + variableName + "' already exists in '" + Folder::extractFolder(path) + "'");
-    }
-    
-    Variable* variable = new Variable(variableName, initialValue);
-    object->add(variable);
-    return variable;
-}
-
-Method* Process::newMethod(const std::string& path, const Method::Arguments& arguments, const Method::Defaults& defaults, const Statement* firstStatement)
-{
-    Object* object = dynamic_cast<Object*>(
-        getContainingFolder(stack_.back()->names(), path));
-    
-    string methodName = Folder::extractNode(path);
-    if(object->has(methodName))
-    {
-        throw AlreadyExistsError("Process::newMethod",
-            "'" + methodName + "' already exists in '" + Folder::extractFolder(path) + "'");
-    }
-
-    Method* method = new Method(methodName, arguments, defaults, firstStatement);
-    object->add(method);
-    return method;
-}
-
-void Process::call(Method& method, Object& self, const ArrayValue* arguments)
-{
-    assert(arguments != NULL);
-    
     // First map the argument values.
-    Method::ArgumentValues argValues;
-    method.mapArgumentValues(*arguments, argValues);
+    Function::ArgumentValues argValues;
+    function.mapArgumentValues(arguments, argValues);
     
-    if(!method.callNative(context(), self, argValues))
+    if(!function.callNative(context(), argValues))
     {
         // Create a new context.
-        stack_.push_back(new Context(Context::METHOD_CALL, this));
-
-        Method::ArgumentValues::const_iterator b = argValues.begin();
-        Method::Arguments::const_iterator a = method.arguments().begin();
-        for(; b != argValues.end() && a != method.arguments().end(); ++b, ++a)
+        stack_.push_back(new Context(Context::FUNCTION_CALL, this));
+        
+        // Create local variables for the arguments in the new context.
+        Function::ArgumentValues::const_iterator b = argValues.begin();
+        Function::Arguments::const_iterator a = function.arguments().begin();
+        for(; b != argValues.end() && a != function.arguments().end(); ++b, ++a)
         {
-            newVariable(context().names(), *a, (*b)->duplicate());
+            context().names().add(new Variable(*a, (*b)->duplicate()));
         }
-    
-        // Initialize the variables of the context.
-        newVariable(context().names(), "self", new ObjectValue(&self));
-    
-        // Start executing the method.
-        context().start(method.firstStatement());
+        
+        // Execute the function.
+        execute();
     }
 }
-#endif
+
+void Process::namespaces(Namespaces& spaces)
+{
+    spaces.clear();
+    
+    for(ContextStack::reverse_iterator i = stack_.rbegin(); i != stack_.rend(); ++i)
+    {
+        spaces.push_back(&(*i)->names());
+    }
+}

@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,41 +17,57 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DNAMEEXPRESSION_HH
-#define DNAMEEXPRESSION_HH
+#ifndef LIBDENG2_NAMEEXPRESSION_H
+#define LIBDENG2_NAMEEXPRESSION_H
 
-#include "../derror.hh"
-#include "dexpression.hh"
+#include "../Expression"
+#include "../Flag"
 
 namespace de
 {
-/**
- * A NameExpression locates a named node in the namespaces, and creates 
- * an appropriate value to refer to that node.
- */
+    /**
+     * Locates a variable in the namespaces, and creates an appropriate value to
+     * refer to that node.
+     */
     class NameExpression : public Expression
     {
     public:
-        /// This exception is thrown if the path does not specify an 
-        /// existing node.
+        /// Identifier is not text. @ingroup errors
+        DEFINE_ERROR(IdentifierError);
+
+        /// Variable already exists when it was required not to. @ingroup errors
+        DEFINE_ERROR(AlreadyExistsError);
+
+        /// The identifier does not specify an existing variable. @ingroup errors
         DEFINE_ERROR(NotFoundError);
+
+        /// Evaluates to a value.
+        DEFINE_FLAG(BY_VALUE, 0);
         
-        enum Flags {
-            BY_VALUE        = 0x0,  ///< Results in a value.
-            BY_REFERENCE    = 0x1,  ///< Results in a reference.
-            LOCAL_ONLY      = 0x2,  ///< Look for object in local namespace only.
-            NEW_VARIABLE    = 0x4,  ///< If missing, create a new variable.
-        };
+        /// Evaluates to a reference.
+        DEFINE_FLAG(BY_REFERENCE, 1);
+        
+        /// Look for object in local namespace only. 
+        DEFINE_FLAG(LOCAL_ONLY, 2);
+        
+        /// If missing, create a new variable.
+        DEFINE_FLAG(NEW_VARIABLE, 3);
+
+        /// Must create a new variable.
+        DEFINE_FINAL_FLAG(NOT_IN_SCOPE, 4, Flags);
         
     public:
-        NameExpression(const std::string& path, int flags = BY_VALUE);
+        NameExpression(Expression* identifier, const Flags& flags = BY_VALUE);
+        ~NameExpression();
+
+        void push(Evaluator& evaluator, Record* names = 0);
         
         Value* evaluate(Evaluator& evaluator) const;
         
     private:
-        std::string path_;
-        int flags_;
+        Expression* identifier_;
+        Flags flags_;
     };
 }
 
-#endif /* DNAMEEXPRESSION_HH */
+#endif /* LIBDENG2_NAMEEXPRESSION_H */

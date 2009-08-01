@@ -46,7 +46,7 @@ namespace de
         
     public:
         Vector2(Type a = 0, Type b = 0) : x(a), y(b) {}
-        Vector2(const Type* ab) : x(ab[0], ab[1]) {}
+        Vector2(const Type* ab) : x(ab[0]), y(ab[1]) {}
 
         /// Conversion operator to a float vector.
         operator Vector2<dfloat> () const {

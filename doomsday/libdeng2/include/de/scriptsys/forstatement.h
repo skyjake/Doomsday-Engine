@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,28 +17,29 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DFORSTATEMENT_HH
-#define DFORSTATEMENT_HH
+#ifndef LIBDENG2_FORSTATEMENT_H
+#define LIBDENG2_FORSTATEMENT_H
 
-#include "dstatement.hh"
-#include "dcompound.hh"
+#include "../Statement"
+#include "../Compound"
+#include "../String"
 
 #include <string>
 
 namespace de
 {
+    class NameExpression;
     class Expression;
     
-/**
- * For statement keeps looping until the iterable value runs out of
- * elements.
- */
-	class ForStatement : public Statement
-	{
-	public:
-	    ForStatement(const std::string& path, Expression* iteration) 
-	        : path_(path), iteration_(iteration) {}
-	    
+    /**
+     * Keeps looping until the iterable value runs out of elements.
+     */
+    class ForStatement : public Statement
+    {
+    public:
+        ForStatement(NameExpression* iter, Expression* iteration) 
+            : iterator_(iter), iteration_(iteration) {}
+        
         ~ForStatement();
         
         /// Returns the compound of the statement.
@@ -46,13 +47,13 @@ namespace de
             return compound_;
         }
         
-		void execute(Context& context) const;
+        void execute(Context& context) const;
 
-	private:
-        std::string path_;
-		Expression* iteration_;
-		Compound compound_;
-	};
+    private:
+        NameExpression* iterator_;
+        Expression* iteration_;
+        Compound compound_;
+    };
 }
 
-#endif /* DFORSTATEMENT_HH */
+#endif /* LIBDENG2_FORSTATEMENT_H */

@@ -76,8 +76,8 @@ namespace de
         DEFINE_FINAL_FLAG(ALLOW_NEW_VARIABLES, 4, ExpressionFlags);
         
     public:
-        HawParser();
-        ~HawParser();
+        Parser();
+        ~Parser();
         
         // Implements IParser.
         void parse(const String& input, Script& output);

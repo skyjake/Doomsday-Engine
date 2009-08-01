@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,10 +17,10 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "dexpressionstatement.hh"
-#include "dexpression.hh"
-#include "dcontext.hh"
-#include "devaluator.hh"
+#include "de/ExpressionStatement"
+#include "de/Expression"
+#include "de/Context"
+#include "de/Evaluator"
 
 using namespace de;
 
@@ -31,8 +31,6 @@ ExpressionStatement::~ExpressionStatement()
 
 void ExpressionStatement::execute(Context& context) const
 {
-    if(context.evaluator().evaluate(expression_))
-    {
-        context.proceed();
-    }    
+    context.evaluator().evaluate(expression_);
+    context.proceed();
 }

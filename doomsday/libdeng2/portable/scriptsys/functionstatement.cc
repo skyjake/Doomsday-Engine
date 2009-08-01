@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,52 +17,63 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "dmethodstatement.hh"
-#include "dmethod.hh"
-#include "dcontext.hh"
-#include "dprocess.hh"
-#include "dconstantexpression.hh"
-#include "dtextvalue.hh"
-#include "darrayvalue.hh"
-#include "ddictionaryvalue.hh"
+#include "de/FunctionStatement"
+#include "de/Function"
+#include "de/Context"
+#include "de/NameExpression"
+#include "de/ConstantExpression"
+#include "de/TextValue"
+#include "de/ArrayValue"
+#include "de/DictionaryValue"
+#include "de/FunctionValue"
+#include "de/RefValue"
 
 using namespace de;
 
-MethodStatement::MethodStatement(const std::string& path)
-    : path_(path)
-{}
-
-MethodStatement::~MethodStatement()
+FunctionStatement::FunctionStatement(NameExpression* identifier)
+    : identifier_(identifier)
 {
-    compound_.destroy();
+    function_ = new Function();
 }
 
-void MethodStatement::addArgument(const std::string& argName, Expression* defaultValue)
+FunctionStatement::~FunctionStatement()
 {
-    arguments_.push_back(argName);
-    
+    delete identifier_;
+    function_->release();
+}
+
+Compound& FunctionStatement::compound()
+{
+    return function_->compound();
+}
+
+void FunctionStatement::addArgument(const String& argName, Expression* defaultValue)
+{
+    function_->arguments().push_back(argName);
     if(defaultValue)
     {
         defaults_.add(new ConstantExpression(new TextValue(argName)), defaultValue);
     }
 }
 
-void MethodStatement::execute(Context& context) const
+void FunctionStatement::execute(Context& context) const
 {
     Evaluator& eval = context.evaluator();
 
+    // Variable that will store the function.
+    RefValue& ref = eval.evaluateTo<RefValue>(identifier_);
+
     // Evaluate the argument default values.
-    if(eval.evaluate(&defaults_))
+    eval.evaluate(&defaults_);
+    DictionaryValue* dict = static_cast<DictionaryValue*>(&eval.result());
+    for(DictionaryValue::Elements::const_iterator i = dict->elements().begin(); 
+        i != dict->elements().end(); ++i)
     {
-        Method::Defaults defaults;
-        DictionaryValue* dict = static_cast<DictionaryValue*>(&eval.result());
-        for(DictionaryValue::Elements::const_iterator i = dict->elements().begin(); 
-            i != dict->elements().end(); ++i)
-        {
-            defaults[i->first.value->asText()] = i->second->duplicate();
-        }
-        
-        context.process().newMethod(path_, arguments_, defaults, compound_.firstStatement());
-        context.proceed();
+        function_->defaults()[i->first.value->asText()] = i->second->duplicate();
     }
+        
+    // The value takes a reference to the function.
+    ref.assign(new FunctionValue(function_));
+    
+    context.proceed();
 }

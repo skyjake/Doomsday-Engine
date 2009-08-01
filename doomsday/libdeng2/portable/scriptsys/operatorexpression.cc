@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,19 +17,15 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "doperatorexpression.hh"
-#include "devaluator.hh"
-#include "dvalue.hh"
-#include "dnumbervalue.hh"
-#include "darrayvalue.hh"
-#include "dobjectvalue.hh"
-#include "dvariable.hh"
-#include "dvariablevalue.hh"
-#include "dmath.hh"
+#include "de/OperatorExpression"
+#include "de/Evaluator"
+#include "de/Value"
+#include "de/Numbervalue"
+#include "de/Arrayvalue"
+#include "de/RefValue"
+#include "de/NoneValue"
+#include "de/math.h"
 
-#include <memory>
-
-using std::auto_ptr;
 using namespace de;
 
 OperatorExpression::OperatorExpression(Operator op, Expression* operand)
@@ -58,19 +54,19 @@ OperatorExpression::~OperatorExpression()
     delete rightOperand_;
 }
 
-void OperatorExpression::push(Evaluator& evaluator, Object* names) const
+void OperatorExpression::push(Evaluator& evaluator, Record* names) const
 {
-	Expression::push(evaluator);
-	
-	if(op_ == MEMBER)
-	{
-	    // The MEMBER operator works a bit differently. Just push the left side
-	    // now. We'll push the other side when we've found out what is the 
-	    // scope defined by the result of the left side (which must be an ObjectValue).
+    Expression::push(evaluator);
+    
+    if(op_ == MEMBER)
+    {
+        // The MEMBER operator works a bit differently. Just push the left side
+        // now. We'll push the other side when we've found out what is the 
+        // scope defined by the result of the left side (which must be a RefValue).
         leftOperand_->push(evaluator, names);
-	}
-	else
-	{
+    }
+    else
+    {
         rightOperand_->push(evaluator);
         if(leftOperand_)
         {
@@ -86,6 +82,7 @@ Value* OperatorExpression::newBooleanValue(bool isTrue)
 
 Value* OperatorExpression::evaluate(Evaluator& evaluator) const
 {
+#if 0
     // Get the operands.
     Value* rightValue = (op_ == MEMBER? 0 : evaluator.popResult());
     Value* leftValue = (leftOperand_? evaluator.popResult() : 0);
@@ -326,4 +323,6 @@ Value* OperatorExpression::evaluate(Evaluator& evaluator) const
     if(result != leftValue) delete leftValue;
     
     return result;
+#endif
+    return new NoneValue();
 }

@@ -23,7 +23,7 @@
 
 using namespace de;
 
-Context::Context(Type type, Process* owner, Object* names, Object* container)
+Context::Context(Type type, Process* owner)
     : type_(type), owner_(owner), evaluator_(*this)
 {}
 

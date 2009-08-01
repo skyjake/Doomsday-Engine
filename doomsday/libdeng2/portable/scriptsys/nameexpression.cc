@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,105 +17,96 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "dnameexpression.hh"
-#include "dobject.hh"
-#include "dmethod.hh"
-#include "devaluator.hh"
-#include "dprocess.hh"
-#include "dmethodvalue.hh"
-#include "dobjectvalue.hh"
-#include "dvariablevalue.hh"
-#include "dobject.hh"
-#include "dnodeobject.hh"
-#include "dvariable.hh"
-#include "dkernel.hh"
-#include "dlog.hh"
+#include "de/NameExpression"
+#include "de/Evaluator"
+#include "de/Process"
+#include "de/TextValue"
+#include "de/RefValue"
 
 using namespace de;
 
-NameExpression::NameExpression(const std::string& path, int flags) 
-    : path_(path), flags_(flags)
+NameExpression::NameExpression(Expression* identifier, const Flags& flags) 
+    : identifier_(identifier), flags_(flags)
 {}
+
+NameExpression::~NameExpression()
+{
+    delete identifier_;
+}
+
+void NameExpression::push(Evaluator& evaluator, Record* names)
+{
+    Expression::push(evaluator, names);
+    identifier_->push(evaluator);
+}
 
 Value* NameExpression::evaluate(Evaluator& evaluator) const
 {
-    LOG_AS("NameExpression::evaluator");
-    LOG_DEBUG("path = %s, scope = %x") << path_ << evaluator.names();
+    //LOG_AS("NameExpression::evaluator");
+    //LOG_DEBUG("path = %s, scope = %x") << path_ << evaluator.names();
     
-    Process& proc = evaluator.process();
-    Process::FolderNodePair ptr(NULL, NULL);
-    
-    Folder* localScope = (evaluator.names()? evaluator.names() : &evaluator.context().names());
-    
-    if(flags_ & LOCAL_ONLY)
+    // We are expecting a text value for the identifier.
+    std::auto_ptr<Value> ident(evaluator.popResult());
+    TextValue* name = dynamic_cast<TextValue*>(ident.get());
+    if(!name)
     {
-        // Just look in the local namespace.
-        ptr = proc.findNodeInNames(path_, localScope);
+        /// @throw IdentifierError  Identifier is not text.
+        throw IdentifierError("NameExpression::evaluator", "Identifier should be a text value");
     }
-    else
+
+    // Collect the namespaces to search.
+    Evaluator::Namespaces spaces;
+    evaluator.namespaces(spaces);
+    
+    Variable* variable = 0;
+    
+    for(Evaluator::Namespaces::iterator i = spaces.begin(); i != spaces.end(); ++i)
     {
-        // Look everywhere (except when the scope is set).
-        // The Folder of the pair is the value of "self".
-        ptr = proc.findNodeInNames(path_, evaluator.names());
+        Record& ns = **i;
+        if(ns.has(*name))
+        {
+            // The name exists in this namespace.
+            variable = &ns[*name];
+            break;
+        }
+        if(flags_[LOCAL_ONLY_BIT])
+        {
+            break;
+        }
+    }
+
+    // If a new variable is required and one is in scope, we cannot continue.
+    if(variable && (flags_[NOT_IN_SCOPE_BIT]))
+    {
+        throw AlreadyExistsError("NameExpression::evaluate", "Variable '" + name->asText() + 
+            "' already exists");
     }
 
     // If nothing is found and we are permitted to create new variables, do so.
-    // Used for assignment into new variables.
-    if(!ptr.first && !ptr.second && (flags_ & NEW_VARIABLE))
+    // Occurs when assigning into new variables.
+    if(!variable && (flags_[NEW_VARIABLE_BIT]))
     {
-        Variable* var = proc.newVariable(*localScope, path_, new ObjectValue());
-        ptr = Process::FolderNodePair(
-            Process::getContainingFolder(*localScope, path_), var);
+        variable = new Variable(*name);
+        
+        // Add it to the local namespace.
+        spaces.front()->add(variable);
     }
 
-    Variable* var = dynamic_cast<Variable*>(ptr.second);
-    if(var)
+    // We should now have the variable.
+    if(variable)
     {
-        if(flags_ & BY_REFERENCE)
+        if(flags_[BY_REFERENCE_BIT])
         {
-            // Reference to the variable itself.
-            return new VariableValue(*var);
+            // Reference to the variable.
+            return new RefValue(variable);
         }
         else
         {
             // Variables evaluate to their values.
-            return var->value().duplicate();
+            return variable->value().duplicate();
         }
     }
     
-    Method* method = dynamic_cast<Method*>(ptr.second);
-    if(method)
-    {
-        assert(ptr.first != NULL);
-
-        // The self object must be an Object.
-        // At this stage, the folder is probably a variable, so we need
-        // to use the object that represents the contents of the folder.
-        // The same logic is used when looking for nodes.
-        Object* self = dynamic_cast<Object*>(ptr.first);
-        assert(self != NULL);
-
-        return new MethodValue(*method, *self);
-    }
-    
-    // Check for a special method: object instantion.
-    Object* cls = dynamic_cast<Object*>(ptr.second);
-    if(cls && cls->instantiable())
-    {
-        return new ObjectValue(cls);           
-    }        
-    
-    // It's a node, still?
-    if(ptr.second)
-    {
-        Object* object =
-            proc.kernel().names().node<NodeObject>("Node")->instantiate(
-                ptr.second->path(), evaluator.context());
-        Value* value = evaluator.popResult();
-        // The value now has a reference, we don't need one.
-        object->release();
-        return value;
-    }
-
-    throw NotFoundError("NameExpression::evaluate", "Node '" + path_ + "' does not exist");
+    throw NotFoundError("NameExpression::evaluate", "Identifier '" + name->asText() + 
+        "' does not exist");
 }

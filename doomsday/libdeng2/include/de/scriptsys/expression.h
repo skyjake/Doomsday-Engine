@@ -1,7 +1,7 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2009 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2004-2009 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,29 +17,27 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DEXPRESSION_HH
-#define DEXPRESSION_HH
-
-#include <vector>
+#ifndef LIBDENG2_EXPRESSION_H
+#define LIBDENG2_EXPRESSION_H
 
 namespace de
 {
-	class Evaluator;
-	class Value;
-    class Object;
+    class Evaluator;
+    class Value;
+    class Record;
 
-/**
- * Base class for expressions.
- */
-	class Expression
-	{
-	public:
-		virtual ~Expression();
+    /**
+     * Base class for expressions.
+     */
+    class Expression
+    {
+    public:
+        virtual ~Expression();
 
-		virtual void push(Evaluator& evaluator, Object* names = 0) const;
-		
-		virtual Value* evaluate(Evaluator& evaluator) const = 0;
-	};
+        virtual void push(Evaluator& evaluator, Record* names = 0) const;
+        
+        virtual Value* evaluate(Evaluator& evaluator) const = 0;
+    };
 }
 
-#endif
+#endif /* LIBDENG2_EXPRESSION_H */

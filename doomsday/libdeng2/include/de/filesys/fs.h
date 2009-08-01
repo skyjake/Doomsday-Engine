@@ -103,12 +103,21 @@ namespace de
         Folder& getFolder(const String& path);
 
         /**
-         * Finds a file based on a full or partial path.
+         * Finds all files matching a full or partial path.
          *
          * @param path   Path or file name to look for.
          * @param found  Set of files that match the result.
          */ 
         void find(const String& path, FoundFiles& found) const;
+        
+        /**
+         * Finds a single file matching a full or partial path.
+         *
+         * @param path   Path or file name to look for.
+         * 
+         * @return  The found file.
+         */
+        File& findSingle(const String& path) const;
         
         /**
          * Finds a file of a specific type.

@@ -20,7 +20,10 @@
 #ifndef LIBDENG2_EVALUATOR_H
 #define LIBDENG2_EVALUATOR_H
 
+#include "../deng.h"
+
 #include <vector>
+#include <list>
 
 namespace de
 {
@@ -28,12 +31,21 @@ namespace de
     class Process;
     class Expression;
     class Value;
+    class Record;
     
     /**
      * Stack for evaluating expressions.
+     *
+     * @ingroup script
      */
     class Evaluator
     {
+    public:
+        /// Result is of wrong type. @ingroup errors
+        DEFINE_ERROR(ResultTypeError);
+        
+        typedef std::list<Record*> Namespaces;
+    
     public:
         Evaluator(Context& owner);
         ~Evaluator();
@@ -59,6 +71,16 @@ namespace de
          */
         Value& evaluate(const Expression* expression);
 
+        template <typename Type>
+        Type& evaluateTo(const Expression* expr) {
+            Type* r = dynamic_cast<Type*>(&evaluate(expr));
+            if(!r) {
+                throw ResultTypeError("Evaluator::result<Type>", 
+                    "Result type is not compatible with Type");
+            }
+            return *r;
+        }
+
         /**
          * Determines the namespace for the currently evaluated expression.
          * Those expressions whose operation depends on the current
@@ -69,6 +91,14 @@ namespace de
          *          expressions should assume that all namespaces are available.
          */
         Record* names() const;
+
+        /**
+         * Collect the namespaces currently visible.
+         *
+         * @param spaces  List of namespaces. The order is important: the earlier
+         *                namespaces shadow the subsequent ones.
+         */
+        void namespaces(Namespaces& spaces);
 
         /**
          * Insert the given expression to the top of the expression stack.
@@ -106,7 +136,7 @@ namespace de
          * @return  The final result of the evaluation. 
          */
         Value& result();
-        
+                
     private:
         void clearNames();
         void clearResults();

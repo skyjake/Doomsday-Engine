@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,19 +17,23 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DBUILTINEXPRESSION_HH
-#define DBUILTINEXPRESSION_HH
+#ifndef LIBDENG2_BUILTINEXPRESSION_H
+#define LIBDENG2_BUILTINEXPRESSION_H
 
-#include "../derror.hh"
-#include "dexpression.hh"
+#include "../deng.h"
+#include "../Expression"
 
 namespace de
 {
+    /**
+     * Evaluates a built-in function on the argument(s).
+     *
+     * @ingroup script
+     */
     class BuiltInExpression : public Expression
     {
     public:
-        /// This exception is thrown if a wrong number of arguments
-        /// is given to one of the built-in methods.
+        /// A wrong number of arguments is given to one of the built-in methods. @ingroup errors
         DEFINE_ERROR(WrongArgumentsError);
         
         /// Type of the built-in expression.
@@ -44,9 +48,9 @@ namespace de
         
         ~BuiltInExpression();
         
-		void push(Evaluator& evaluator, Object* names = 0) const;
+        void push(Evaluator& evaluator, Record* names = 0) const;
 
-		Value* evaluate(Evaluator& evaluator) const;
+        Value* evaluate(Evaluator& evaluator) const;
         
     private:  
         Type type_;
@@ -54,4 +58,4 @@ namespace de
     };
 }
 
-#endif /* DBUILTINEXPRESSION_HH */
+#endif /* LIBDENG2_BUILTINEXPRESSION_H */

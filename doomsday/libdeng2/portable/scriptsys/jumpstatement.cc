@@ -48,7 +48,7 @@ void JumpStatement::execute(Context& context) const
     case BREAK:
         if(arg_)
         {
-            context.jumpBreak(eval.evaluate(arg_).result().asNumber());
+            context.jumpBreak(eval.evaluate(arg_).asNumber());
         }
         else
         {

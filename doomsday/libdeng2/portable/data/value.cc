@@ -140,7 +140,14 @@ void Value::modulo(const Value& divisor)
     throw ArithmeticError("Value::modulo", "Modulo not defined");
 }
 
-void Value::call(Process& process, const Value& arguments)
+void Value::assign(Value* value)
+{
+    delete value;
+    /// @throw IllegalError Cannot assign to value.
+    throw IllegalError("Value::assign", "Cannot assign to value");
+}
+
+void Value::call(Process& process, const Value& arguments) const
 {
     /// @throw IllegalError Value cannot be called.
     throw IllegalError("Value::call", "Value cannot be called");

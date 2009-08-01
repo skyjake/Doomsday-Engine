@@ -31,27 +31,27 @@ PrintStatement::PrintStatement(ArrayExpression* arguments) : arg_(arguments)
 
 void PrintStatement::execute(Context& context) const
 {
-    ArrayValue& value = static_cast<ArrayValue&>(context.evaluator().evalute(arg_));
+    ArrayValue& value = context.evaluator().evaluateTo<ArrayValue>(arg_);
 
     std::ostringstream os;
     bool isFirst = true;
             
-    for(ArrayValue::Elements::const_iterator i = value->elements().begin();
-        i != value->elements().end(); ++i)
+    for(ArrayValue::Elements::const_iterator i = value.elements().begin();
+        i != value.elements().end(); ++i)
     {
        if(!isFirst)
        {
-           output << " ";
+           os << " ";
        }
        else
        {
            isFirst = false;
        }
-       output << (*i)->asText();
+       os << (*i)->asText();
     }
     
     /// @todo  Use the standard Doomsday output stream.
-    std::cout << output.str();
+    std::cout << os.str();
     
     context.proceed();
 }

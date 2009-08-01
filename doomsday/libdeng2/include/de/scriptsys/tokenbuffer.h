@@ -26,6 +26,8 @@
 
 namespace de
 {
+    class String;
+    
     /** 
      * Buffer of tokens, used as an efficient way to compile and store tokens.
      * Does its own memory management: tokens are allocated out of large blocks 

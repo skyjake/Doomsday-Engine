@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,25 +17,26 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DCONSTANTEXPRESSION_HH
-#define DCONSTANTEXPRESSION_HH
+#ifndef LIBDENG2_CONSTANTEXPRESSION_H
+#define LIBDENG2_CONSTANTEXPRESSION_H
 
-#include "dexpression.hh"
-#include "dvalue.hh"
+#include "../Expression"
+#include "../Value"
 
 namespace de
 {
-/**
- * ConstantExpression is an expression that always evaluates to a constant
- * value. It is used for storing the constant values in scripts. 
- */
+    /**
+     * ConstantExpression is an expression that always evaluates to a constant
+     * value. It is used for storing the constant values in scripts. 
+     */
     class ConstantExpression : public Expression
     {
     public:
         /**
          * Constructor. 
-         * @param value Value of the expression. The expression takes 
-         * ownership of the value object.
+         *
+         * @param value  Value of the expression. The expression takes 
+         *               ownership of the value object.
          */ 
         ConstantExpression(Value* value);
         
@@ -53,4 +54,4 @@ namespace de
     };
 }
 
-#endif /* DCONSTANTEXPRESSION_HH */
+#endif /* LIBDENG2_CONSTANTEXPRESSION_H */

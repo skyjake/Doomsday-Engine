@@ -32,7 +32,7 @@
 
 namespace de
 {
-    class Evaluator;
+    class Process;
     
     /**
      * The base class for all runtime values.  This is an abstract class.
@@ -51,6 +51,9 @@ namespace de
         
         /// An illegal arithmetic operation is attempted (e.g., division by text). @ingroup errors
         DEFINE_SUB_ERROR(IllegalError, ArithmeticError);
+
+        /// Value cannot be serialized. @ingroup errors
+        DEFINE_SUB_ERROR(IllegalError, CannotSerializeError);
 
         // Types used by all values:
         typedef ddouble Number;     /**< Numbers are in double-precision. */
@@ -202,14 +205,21 @@ namespace de
         virtual void modulo(const Value& divisor);
         
         /**
+         * Assign value. Only supported by reference values.
+         *
+         * @param value  Value to assign. Referenced object gets ownership.
+         */
+        virtual void assign(Value* value);
+        
+        /**
          * Applies the call operator on the value. 
          *
-         * @param evaluator  Evaluator making the call.
+         * @param process    Process where the call is made.
          * @param arguments  Arguments of the call.
          *
          * @return  Result of the call operator, which can be anything.
          */
-        virtual void call(Evaluator& evaluator, const Value& arguments);
+        virtual void call(Process& process, const Value& arguments) const;
         
     public:
         /**

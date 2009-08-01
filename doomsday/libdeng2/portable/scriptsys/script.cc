@@ -32,9 +32,7 @@ Script::Script(const String& source)
 }
 
 Script::~Script()
-{
-    compound_.destroy();
-}
+{}
 
 const Statement* Script::firstStatement() const
 {

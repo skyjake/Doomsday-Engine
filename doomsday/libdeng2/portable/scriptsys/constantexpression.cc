@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,9 +17,9 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "dconstantexpression.hh"
-#include "dnumbervalue.hh"
-#include "dobjectvalue.hh"
+#include "de/ConstantExpression"
+#include "de/NumberValue"
+#include "de/NoneValue"
 
 using namespace de;
 
@@ -31,7 +31,7 @@ ConstantExpression::~ConstantExpression()
     delete value_;
 }
 
-Value* ConstantExpression::evaluate(Evaluator& /*evaluator*/) const
+Value* ConstantExpression::evaluate(Evaluator&) const
 {
     assert(value_ != 0);
     return value_->duplicate();
@@ -39,7 +39,7 @@ Value* ConstantExpression::evaluate(Evaluator& /*evaluator*/) const
 
 ConstantExpression* ConstantExpression::None()
 {
-    return new ConstantExpression(new ObjectValue());
+    return new ConstantExpression(new NoneValue());
 }        
 
 ConstantExpression* ConstantExpression::True()

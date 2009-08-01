@@ -66,9 +66,11 @@ Value& Evaluator::evaluate(const Expression* expression)
         stack_.pop_back();
         clearNames();
         names_ = top.names;
-        pushResult(top.first->evaluate(*this));
+        pushResult(top.expression->evaluate(*this));
     }
-    
+
+    // During function call evaluation the process's context changes. We should
+    // now be back at the level we started from.
     assert(&process().context() == &context_);
 
     // Exactly one value should remain in the result stack: the result of the
@@ -78,6 +80,21 @@ Value& Evaluator::evaluate(const Expression* expression)
     clearNames();
     current_ = NULL;
     return result();
+}
+
+void Evaluator::namespaces(Namespaces& spaces)
+{
+    if(names_)
+    {
+        // A specific namespace has been defined.
+        spaces.clear();
+        spaces.push_back(names_);
+    }
+    else
+    {
+        // Collect namespaces from the process's call stack.
+        process().namespaces(spaces);
+    }
 }
 
 bool Evaluator::hasResult() const
@@ -91,7 +108,7 @@ Value& Evaluator::result()
     return *results_.front();
 }
 
-void Evaluator::push(const Expression* expression, Names* names)
+void Evaluator::push(const Expression* expression, Record* names)
 {
     stack_.push_back(ScopedExpression(expression, names));
 }
@@ -119,7 +136,6 @@ void Evaluator::clearNames()
 {
     if(names_)
     {
-        names_->release();
         names_ = 0;
     }
 }
@@ -142,6 +158,6 @@ void Evaluator::clearStack()
         ScopedExpression top = stack_.back();
         stack_.pop_back();
         clearNames();
-        names_ = top.second;
+        names_ = top.names;
     }
 }

@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,15 +17,13 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ddictionaryexpression.hh"
-#include "ddictionaryvalue.hh"
-#include "devaluator.hh"
+#include "de/DictionaryExpression"
+#include "de/DictionaryValue"
+#include "de/Evaluator"
 
-#include <memory>
 #include <list>
 
 using namespace de;
-using std::auto_ptr;
 
 DictionaryExpression::DictionaryExpression()
 {}
@@ -46,29 +44,29 @@ void DictionaryExpression::add(Expression* key, Expression* value)
     arguments_.push_back(ExpressionPair(key, value));
 }
 
-void DictionaryExpression::push(Evaluator& evaluator, Object* names) const
+void DictionaryExpression::push(Evaluator& evaluator, Record* names) const
 {
-	Expression::push(evaluator, names);
-	
-	// The arguments in reverse order (so they are evaluated in
-	// natural order, i.e., the same order they are in the source).
-	for(Arguments::const_reverse_iterator i = arguments_.rbegin();
-		i != arguments_.rend(); ++i)
-	{
+    Expression::push(evaluator, names);
+    
+    // The arguments in reverse order (so they are evaluated in
+    // natural order, i.e., the same order they are in the source).
+    for(Arguments::const_reverse_iterator i = arguments_.rbegin();
+        i != arguments_.rend(); ++i)
+    {
         i->second->push(evaluator);
         i->first->push(evaluator);
-	}    
+    }    
 }
 
 Value* DictionaryExpression::evaluate(Evaluator& evaluator) const
 {
-    auto_ptr<DictionaryValue> dict(new DictionaryValue);
+    std::auto_ptr<DictionaryValue> dict(new DictionaryValue);
     
     std::list<Value*> keys, values;
     
     // Collect the right number of results into the array.
-	for(Arguments::const_reverse_iterator i = arguments_.rbegin();
-		i != arguments_.rend(); ++i)
+    for(Arguments::const_reverse_iterator i = arguments_.rbegin();
+        i != arguments_.rend(); ++i)
     {
         values.push_back(evaluator.popResult());
         keys.push_back(evaluator.popResult());

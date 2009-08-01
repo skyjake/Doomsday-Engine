@@ -18,6 +18,7 @@
  */
 
 #include "de/Operator"
+#include "de/String"
 
 using namespace de;
 

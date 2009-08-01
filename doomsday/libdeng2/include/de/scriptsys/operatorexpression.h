@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- Hawthorn
+ * The Doomsday Engine Project -- libdeng2
  *
  * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,39 +17,40 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DOPERATOREXPRESSION_HH
-#define DOPERATOREXPRESSION_HH
+#ifndef LIBDENG2_OPERATOREXPRESSION_H
+#define LIBDENG2_OPERATOREXPRESSION_H
 
-#include "../derror.hh"
-#include "doperator.hh"
-#include "dexpression.hh"
+#include "../deng.h"
+#include "../Operator"
+#include "../Expression"
 
 namespace de
 {
     class Evaluator;
     class Value;
 
-/**
- * Expression that evaluates the results of unary and binary operators. 
- * This includes, for example, arithmetic operators, text concatenation,
- * and logical expressions.
- */    
+    /**
+     * Evaluates the results of unary and binary operators. 
+     * This includes, for example, arithmetic operators, text concatenation,
+     * and logical expressions.
+     *
+     * @ingroup script
+     */    
     class OperatorExpression : public Expression
     {
     public:
-        /// This exception is thrown if an unary operation is attempted even
-        /// though the selected operation cannot be unary.
+        /// A unary operation is attempted even though the selected operation cannot
+        /// be unary. @ingroup errors
         DEFINE_ERROR(NonUnaryError);
         
-        /// This exception is thrown if a binary operation is attempted even
-        /// though the selected operation cannot be binary.
+        /// A binary operation is attempted even though the selected operation cannot be binary.
+        /// @ingroup errors
         DEFINE_ERROR(NonBinaryError);
         
-        /// This exception is thrown if the MEMBER operator receives a 
-        /// non-Object scope on the left side.
-        DEFINE_ERROR(NonObjectScopeError);
+        /// The MEMBER operator receives a non-Record scope on the left side. @ingroup errors
+        DEFINE_ERROR(ScopeError);
         
-        /// This exception is thrown if the SLICE operator has invalid arguments.
+        /// The SLICE operator has invalid arguments. @ingroup errors
         DEFINE_ERROR(SliceError);
         
     public:
@@ -70,9 +71,9 @@ namespace de
 
         ~OperatorExpression();
 
-		void push(Evaluator& evaluator, Object* names = 0) const;
+        void push(Evaluator& evaluator, Record* names = 0) const;
 
-		Value* evaluate(Evaluator& evaluator) const;
+        Value* evaluate(Evaluator& evaluator) const;
         
     private:
         /// Used to create return values of boolean operations.
@@ -85,4 +86,4 @@ namespace de
     };
 }
 
-#endif /* DOPERATOREXPRESSION_HH */
+#endif /* LIBDENG2_OPERATOREXPRESSION_H */

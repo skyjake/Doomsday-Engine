@@ -26,7 +26,7 @@
 #include "../Function"
 #include "../String"
 
-#include <utility>
+#include <list>
 
 namespace de
 {
@@ -42,10 +42,6 @@ namespace de
     class Process
     {
     public:
-        /// A variable or function with the same name already exists when a new one is
-        /// being created. @ingroup errors
-        DEFINE_ERROR(AlreadyExistsError);
-        
         /// The process is running while an operation is attempted that requires the 
         /// process to be stopped. @ingroup errors
         DEFINE_ERROR(NotStoppedError);
@@ -66,6 +62,8 @@ namespace de
             STOPPED     /**< The process has reached the end of the
                          *   script or has been terminated. */
         };
+        
+        typedef std::list<Record*> Namespaces;
 
     public:
         /**
@@ -78,6 +76,9 @@ namespace de
         virtual ~Process();
 
         State state() const { return state_; }
+
+        /// Determines the current depth of the call stack.
+        duint depth() const;
 
         /**
          * Starts running the given script. Note that the process must be
@@ -130,36 +131,26 @@ namespace de
         const String& workingPath() const;
 
         /**
-         * Creates a new variable in the location specified in the path.
+         * Return an execution context. By default returns the topmost context.
          *
-         * @param names  Namespace where the variable is to be created.
-         * @param path  Path of the variable. Also contains the name of the variable.
-         * @param initialValue  Initial value of the variable. The 
-         *      variable takes owernship of the Value.
+         * @param downDepth  How many levels to go down. There are depth() levels
+         *                   in the context stack.
          *
-         * @return The new Variable.
+         * @return  Context at @a downDepth.
          */
-        //Variable* newVariable(Folder& names, const std::string& path, Value* initialValue);
-
-        /**
-         * Creates a new method in location specified in the path.
-         *
-         * @param path          Path of the method. Also specifies the name of the method.
-         * @param arguments     Argument names for the method. Default values within
-         *                      the map are owned by the new Method.
-         * @param defaults      Default values for some or all of the arguments.
-         * @param firstStatement  First statement of the method.
-         * 
-         * @return The new Method.
-         */
-        //Method* newMethod(const std::string& path, const Method::Arguments& arguments, 
-        //    const Method::Defaults& defaults, const Statement* firstStatement);
-
-        /// Return the current topmost execution context.
-        Context& context();
-        
+        Context& context(duint downDepth = 0);
+                
         /// A method call.
-        //void call(Method& method, Object& self, const ArrayValue* arguments = 0);
+        void call(Function& function, const ArrayValue& arguments);
+        
+        /**
+         * Collects the namespaces currently visible. This includes the process's
+         * own stack and the global namespaces.
+         *
+         * @param spaces  The namespaces are collected here. The order is important:
+         *                earlier namespaces shadow the subsequent ones.
+         */
+        void namespaces(Namespaces& spaces);
         
     private:
         State state_;
@@ -172,10 +163,6 @@ namespace de
         /// given to workingFile() are located in relation to this
         /// folder. Initial value is the root folder.
         String workingPath_;
-        
-        /// The time left to sleep.  If this is larger than zero, the
-        /// process will not continue until enough time has elapsed. 
-        Time sleepUntil_;
 
         /// @c true, if the process has not executed a single statement yet.
         bool firstExecute_;
