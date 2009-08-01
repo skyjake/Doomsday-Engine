@@ -77,6 +77,12 @@ print 'Dictionary:', {'a':'A', 'b':'B'} - 'a'
 subsection('Operators: /')
 print 'Path concatenation:', 'folder' / 'filename.ext', 'folder/' / 'filename.ext'
 
+subsection('Operators: slice.')
+fullArray = [1, 2, 3, 4, 5, 6, 7]
+print 'full:', fullArray
+print 'sliced:', fullArray[2:4], fullArray[3:], fullArray[:3]
+print 'nega-sliced:', fullArray[-4:-2]
+
 # Section 3: Statements & Compounds
 # ---------------------------------
 begin_section('if/elsif/else statements.')
@@ -149,6 +155,35 @@ end
 
 # Section 4: Scopes
 # -----------------
+begin_section('Creating a record.')
+record myrec
+print len(myrec)
+
+subsection('Creating variables into a record.')
+myrec.newMember = 100
+print len(myrec)
+print 'myrec.newMember =', myrec.newMember
+print "Here's the record:"
+print myrec
+
+subsection('Creating a subrecord.')
+record myrec.subrec
+print len(myrec), len(myrec.subrec)
+myrec.subrec.something = 200
+print 'myrec.subrec.something =', myrec.subrec.something
+print "Here's the record:"
+print myrec
+
+subsection('Checking whether members exist in record.')
+print 'subrec' in myrec, 'newMember' in myrec, 'not-there' in myrec.subrec
+
+subsection('Having two variables reference the same record.')
+reference = myrec
+print len(reference)
+reference.otherMember = 150
+print "Here's the record:"
+print myrec
+
 # - accessing variables in different scopes
 # - assigning to variables =, :=
 # - creating variables in a scope (populating record)
