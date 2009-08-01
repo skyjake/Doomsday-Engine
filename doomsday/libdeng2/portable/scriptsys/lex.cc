@@ -157,6 +157,11 @@ bool Lex::isNumeric(duchar c)
     return std::isdigit(c);
 }
 
+bool Lex::isHexNumeric(duchar c)
+{
+    return std::isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+}
+
 bool Lex::isAlphaNumeric(duchar c)
 {
     return std::isalnum(c) || c == '_' || c == '@';

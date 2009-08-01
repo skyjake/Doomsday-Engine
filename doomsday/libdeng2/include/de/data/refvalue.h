@@ -62,8 +62,8 @@ namespace de
         Number asNumber() const;
         Text asText() const;
         dsize size() const;
-        const Value* element(const Value& index) const;
-        Value* element(const Value& index);
+        const Value& element(const Value& index) const;
+        Value& element(const Value& index);
         void setElement(const Value& index, Value* elementValue);
         bool contains(const Value& value) const;
         Value* begin();

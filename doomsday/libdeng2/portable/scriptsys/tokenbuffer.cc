@@ -54,8 +54,8 @@ bool TokenBuffer::Token::beginsWith(const char* str) const
 String TokenBuffer::Token::asText() const
 {
     std::ostringstream os;
-    os << "\"" << String(reinterpret_cast<const char*>(begin_), end_ - begin_) << 
-        "\" (on line " << line_ << ")"; 
+    os << "'" << String(reinterpret_cast<const char*>(begin_), end_ - begin_) << 
+        "' (on line " << line_ << ")"; 
     return os.str();
 }
 

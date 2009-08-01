@@ -18,25 +18,41 @@
 # THE KITCHEN SINK
 # ================
 # This script tests *all* features of the Doomsday Script Language.
-# Behold all its power and glory.
+# Behold its power and glory.
+
+secNum = 0
+subSecNum = 0
+
+def print_section(msg): print "\n" + "." * 78 + "\n%i.%i: %s\n" % [secNum, subSecNum, msg]
+
+def begin_section(msg)
+    secNum += 1
+    subSecNum := 0
+    print_section(msg)
+end
+
+def subsection(msg)
+    subSecNum += 1
+    print_section(msg)
+end
 
 # Section 1: Basic Expressions
 # ----------------------------
-# 1.0: Printing basic types (number, text, array, dictionary).
-print 5, 5.5 #, -3.141592657
+begin_section('Basic types (number, text, array, dictionary).')
+print 5, 5.5, -3.141592657
 print 0x100, 0X123
 print "Hello", 'World'
 print """I can span
 newlines."""
 print [1, 2, 3]
+print [1, [2, 3], 4]
 print {'a': 'b', 1: ['b', {5:6, 6:7}], ['array', 'as', 'key']: 'oh my'}
-print 
 
-# 1.1: Constants: True, False, None.
-print True, False, None
-print
+subsection('Constants: True, False, None, Pi.')
+print True, False, None, Pi
 
-# 1.2: Built-in functions: len(), dictkeys(), dictvalues().
+subsection('Built-in functions: len(), dictkeys(), dictvalues().')
+print 'len("abcd") =', len("abcd")
 print 'len([1, 2, 3, 4]) =', len([1, 2, 3, 4])
 print 'len({1:2, 3:5, 8:13}) =', len({1:2, 3:5, 8:13})
 print 'dictkeys({1:2, 3:5, 8:13}) =', dictkeys({1:2, 3:5, 8:13})
@@ -46,59 +62,90 @@ print 'dictvalues({1:2, 3:5, 8:13}) =', dictvalues({1:2, 3:5, 8:13})
 # -------------------------------
 # - all the operators
 # - special stuff like / with text
+begin_section('Operators: +')
+print 'Arithmetic:', 1 + 1, -.5 + .5
+print 'Larger than 32-bit:', 0xffffffffff + 0xffffffffff
+print 'Text:', 'Hello' + 'World'
+print 'Array:', [1, 2, 3] + ['a', 'b', 'c']
+print 'Dictionary:', {1:2, 3:4} + {'a':'b', 'c':'d'}
 
+subsection('Operators: -')
+print 'Arithmetic:', 1 - 1, -.5 - .5
+print 'Larger than 32-bit:', 0xffffffffff - 0xffffffffff
+print 'Dictionary:', {'a':'A', 'b':'B'} - 'a'
+
+subsection('Operators: /')
+print 'Path concatenation:', 'folder' / 'filename.ext', 'folder/' / 'filename.ext'
 
 # Section 3: Statements & Compounds
 # ---------------------------------
-# 3.0: if/elsif/else.
+begin_section('if/elsif/else statements.')
 if True
     print 'Regular compound.'
 else
     print "You won't see this."
 end
-
 if True: print "One statement compound."
 else: print "Not printed."
-    
 if True
     print "Compound A"
     if False
         print "Compound B"
     else: print "Compound C"
 end
-
 if False: print "Lots of useless stuff here"
 elsif True
     print "From the elsif"
 end
 
-print
-
-# 3.1: Assignment and basic variable usage.
+subsection('Assign statement and basic variable usage.')
 print 'Assigning 10 to i...'
 i = 10
 print '...and i ==', i
-print
+i = 'abc'
+print "Now i ==", i
 
-# 3.2: while, break.
+subsection('while statement.')
+i = 5
+while i > 0
+    print 'Still looping because %i > 0' % i
+    i -= 1
+end
+
+subsection('break statement.')
 while True
     print "I won't stay here."
     break
     print "Jumped over me."
 end
 print "Out of the while."
-
 while False: print "Never going in."
+while True
+    while True
+        print "Uh-oh, now I'm in trouble!"
+        break 2
+    end
+end
+print "Guess again!"
 
-print
-
-# 3.3: for.
+subsection('for statement.')
 for i in ['planes', 'trains', 'automobiles']
     print "I would like:", i
 end
 print 'Value of i after the "for" loop is', i
 
-# 3.4: break, continue.
+subsection('continue statement.')
+i = 3
+while i > 0
+    print 'i =', i
+    i -= 1
+    if i == 1: continue
+    print 'Bottom of loop.'
+end
+for i in ['planes', 'trains', 'automobiles']
+    if i == 'trains': continue
+    print i, 'are cool!'
+end
 
 # Section 4: Scopes
 # -----------------
@@ -109,7 +156,10 @@ print 'Value of i after the "for" loop is', i
 
 # Section 5: Functions
 # --------------------
-# - defining
+begin_section('Defining a function (empty body).')
+#def func1(): return
+#func1()
+
 # - argument passing
 # - default values
 # - defining in scope
@@ -118,5 +168,6 @@ print 'Value of i after the "for" loop is', i
 
 # Section 6: Script Return Value
 # ------------------------------
-# 6.0: Returning value from the script, final expression.
+begin_section('Returning value from the script: the final expression.')
+
 "I am the return value."

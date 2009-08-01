@@ -72,9 +72,10 @@ namespace de
 
         DEFINE_FLAG(NAME_BY_VALUE, 0);
         DEFINE_FLAG(NAME_BY_REFERENCE, 1);
-        DEFINE_FLAG(LOOKUP_LOCAL_ONLY, 2);
+        DEFINE_FLAG(LOCAL_NAMESPACE_ONLY, 2);
         DEFINE_FLAG(REQUIRE_NEW_VARIABLE, 3);
-        DEFINE_FINAL_FLAG(ALLOW_NEW_VARIABLES, 4, ExpressionFlags);
+        DEFINE_FLAG(ALLOW_NEW_RECORDS, 4);
+        DEFINE_FINAL_FLAG(ALLOW_NEW_VARIABLES, 5, ExpressionFlags);
         
     public:
         Parser();
@@ -94,6 +95,8 @@ namespace de
         WhileStatement* parseWhileStatement();
                 
         ForStatement* parseForStatement();
+                
+        ExpressionStatement* parseRecordStatement();
                 
         PrintStatement* parsePrintStatement();
 

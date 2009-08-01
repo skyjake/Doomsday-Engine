@@ -117,6 +117,10 @@ namespace de
         /// @param c Character to check.
         static bool isNumeric(duchar c);
         
+        /// Determine whether a character is hexadecimal numeric.
+        /// @param c Character to check.
+        static bool isHexNumeric(duchar c);
+        
         /// Determine whether a character is alphanumeric.
         /// @param c Character to check.
         static bool isAlphaNumeric(duchar c);

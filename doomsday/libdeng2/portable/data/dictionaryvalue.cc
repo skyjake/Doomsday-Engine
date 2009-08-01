@@ -106,7 +106,7 @@ dsize DictionaryValue::size() const
     return elements_.size();
 }
 
-const Value* DictionaryValue::element(const Value& index) const
+const Value& DictionaryValue::element(const Value& index) const
 {
     Elements::const_iterator i = elements_.find(ValueRef(&index));
     if(i == elements_.end())
@@ -114,12 +114,12 @@ const Value* DictionaryValue::element(const Value& index) const
         throw KeyError("DictionaryValue::element",
             "Key '" + index.asText() + "' does not exist in the dictionary");
     }
-    return i->second;
+    return *i->second;
 }
 
-Value* DictionaryValue::element(const Value& index)
+Value& DictionaryValue::element(const Value& index)
 {
-    return const_cast<Value*>(const_cast<const DictionaryValue*>(this)->element(index));
+    return const_cast<Value&>(const_cast<const DictionaryValue*>(this)->element(index));
 }
 
 void DictionaryValue::setElement(const Value& index, Value* value)

@@ -24,6 +24,7 @@
 #include "../String"
 #include "../Variable"
 #include "../Value"
+#include "../Observers"
 
 #include <iostream>
 #include <map>
@@ -53,6 +54,15 @@ namespace de
         typedef std::pair<String, String> KeyValue;
         typedef std::list<KeyValue> List;
         
+        /// Observer interface.
+        class IObserver {
+        public:
+            virtual ~IObserver() {}
+            virtual void recordBeingDeleted(Record& record) = 0;
+        };
+        typedef Observers<IObserver> Audience;
+        Audience observers;
+        
     public:
         Record();
         virtual ~Record();
@@ -63,9 +73,19 @@ namespace de
         void clear();
         
         /**
-         * Determines if the record contains a variable names @a variableName.
+         * Determines if the record contains a variable or a subrecord named @a variableName.
          */
-        bool has(const String& variableName) const;
+        bool has(const String& name) const;
+
+        /**
+         * Determines if the record contains a variable named @a variableName.
+         */
+        bool hasMember(const String& variableName) const;
+
+        /**
+         * Determines if the record contains a subrecord named @a subrecordName.
+         */
+        bool hasSubrecord(const String& subrecordName) const;
         
         /**
          * Adds a new variable to the record. 

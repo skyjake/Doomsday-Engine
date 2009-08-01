@@ -21,6 +21,7 @@
 #define LIBDENG2_NAMEEXPRESSION_H
 
 #include "../Expression"
+#include "../String"
 #include "../Flag"
 
 namespace de
@@ -53,19 +54,20 @@ namespace de
         /// If missing, create a new variable.
         DEFINE_FLAG(NEW_VARIABLE, 3);
 
+        /// If missing, create a new record.
+        DEFINE_FLAG(NEW_RECORD, 4);
+
         /// Must create a new variable.
-        DEFINE_FINAL_FLAG(NOT_IN_SCOPE, 4, Flags);
-        
+        DEFINE_FINAL_FLAG(NOT_IN_SCOPE, 5, Flags);
+
     public:
-        NameExpression(Expression* identifier, const Flags& flags = BY_VALUE);
+        NameExpression(const String& identifier, const Flags& flags = BY_VALUE);
         ~NameExpression();
 
-        void push(Evaluator& evaluator, Record* names = 0) const;
-        
         Value* evaluate(Evaluator& evaluator) const;
         
     private:
-        Expression* identifier_;
+        String identifier_;
         Flags flags_;
     };
 }

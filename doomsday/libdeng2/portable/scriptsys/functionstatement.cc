@@ -61,19 +61,19 @@ void FunctionStatement::execute(Context& context) const
     Evaluator& eval = context.evaluator();
 
     // Variable that will store the function.
-    RefValue& ref = eval.evaluateTo<RefValue>(identifier_);
+    eval.evaluateTo<RefValue>(identifier_);
+    std::auto_ptr<RefValue> ref(eval.popResultAs<RefValue>());
 
     // Evaluate the argument default values.
-    eval.evaluate(&defaults_);
-    DictionaryValue* dict = static_cast<DictionaryValue*>(&eval.result());
-    for(DictionaryValue::Elements::const_iterator i = dict->elements().begin(); 
-        i != dict->elements().end(); ++i)
+    DictionaryValue& dict = eval.evaluateTo<DictionaryValue>(&defaults_);
+    for(DictionaryValue::Elements::const_iterator i = dict.elements().begin(); 
+        i != dict.elements().end(); ++i)
     {
         function_->defaults()[i->first.value->asText()] = i->second->duplicate();
     }
         
     // The value takes a reference to the function.
-    ref.assign(new FunctionValue(function_));
+    ref->assign(new FunctionValue(function_));
     
     context.proceed();
 }

@@ -110,7 +110,8 @@ duint ScriptLex::getStatement(TokenBuffer& output)
                 output.setType(TokenBuffer::Token::LITERAL_NUMBER);
 
                 // Read until a non-numeric character is found.
-                while(isNumeric((c = peek())) || (!isHex && !gotPoint && c == '.') || 
+                while(isNumeric((c = peek())) || (isHex && isHexNumeric(c)) || 
+                    (!isHex && !gotPoint && c == '.') || 
                     (isHex && !gotX && (c == 'x' || c == 'X')))
                 {
                     // Just one decimal point.
@@ -327,6 +328,8 @@ bool ScriptLex::isKeyword(const TokenBuffer::Token& token)
     {
         "end",
         "def",
+        "record",
+        "del",
         "if", 
         "elsif",
         "else",
@@ -343,6 +346,7 @@ bool ScriptLex::isKeyword(const TokenBuffer::Token& token)
         "None",
         "True",
         "False",
+        "Pi",
         0
     };
     
@@ -465,7 +469,7 @@ ddouble ScriptLex::tokenToNumber(const TokenBuffer::Token& token)
 
     if(token.beginsWith("0x") || token.beginsWith("0X"))
     {
-        duint number = 0;
+        duint64 number = 0;
         is >> std::hex >> number;
         return number;
     }

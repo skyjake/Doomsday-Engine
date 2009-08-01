@@ -20,6 +20,7 @@
 #include "de/ConstantExpression"
 #include "de/NumberValue"
 #include "de/NoneValue"
+#include "de/math.h"
 
 using namespace de;
 
@@ -50,4 +51,9 @@ ConstantExpression* ConstantExpression::True()
 ConstantExpression* ConstantExpression::False()
 {
     return new ConstantExpression(new NumberValue(NumberValue::FALSE));
+}
+
+ConstantExpression* ConstantExpression::Pi()
+{
+    return new ConstantExpression(new NumberValue(PI));
 }

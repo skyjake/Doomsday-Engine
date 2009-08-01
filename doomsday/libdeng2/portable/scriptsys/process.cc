@@ -237,6 +237,7 @@ void Process::call(Function& function, const ArrayValue& arguments)
         }
         
         // Execute the function.
+        context().start(function.compound().firstStatement());
         execute();
     }
 }

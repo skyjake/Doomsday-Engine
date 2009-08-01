@@ -37,6 +37,7 @@ Record::Record()
 
 Record::~Record()
 {
+    FOR_EACH_OBSERVER(o, observers) o->recordBeingDeleted(*this);
     clear();
 }
 
@@ -60,10 +61,21 @@ void Record::clear()
     }
 }
 
-bool Record::has(const String& variableName) const
+bool Record::has(const String& name) const
+{
+    return hasMember(name) || hasSubrecord(name);
+}
+
+bool Record::hasMember(const String& variableName) const
 {
     Members::const_iterator found = members_.find(variableName);
     return found != members_.end();
+}
+
+bool Record::hasSubrecord(const String& subrecordName) const
+{
+    Subrecords::const_iterator found = subrecords_.find(subrecordName);
+    return found != subrecords_.end();
 }
 
 Variable& Record::add(Variable* variable)

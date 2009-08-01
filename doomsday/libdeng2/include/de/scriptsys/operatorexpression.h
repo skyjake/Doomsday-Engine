@@ -47,6 +47,9 @@ namespace de
         /// @ingroup errors
         DEFINE_ERROR(NonBinaryError);
         
+        /// Attempt to assign to a value that cannot be assigned to. @ingroup errors
+        DEFINE_ERROR(NotAssignableError);
+        
         /// The MEMBER operator receives a non-Record scope on the left side. @ingroup errors
         DEFINE_ERROR(ScopeError);
         
@@ -74,8 +77,19 @@ namespace de
         void push(Evaluator& evaluator, Record* names = 0) const;
 
         Value* evaluate(Evaluator& evaluator) const;
+
+        /**
+         * Verifies that @a value can be used as the l-value of an operator that
+         * does assignment.
+         *
+         * @param value  Value to check.
+         */
+        static void verifyAssignable(Value* value);
         
     private:
+        /// Performs the slice operation (Python semantics).
+        Value* performSlice(Value* leftValue, Value* rightValue) const;
+
         /// Used to create return values of boolean operations.
         static Value* newBooleanValue(bool isTrue);
                 

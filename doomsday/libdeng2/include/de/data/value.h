@@ -100,15 +100,34 @@ namespace de
         /**
          * Get a specific element of the value.  This is meaningful with 
          * arrays and dictionaries.
+         *
+         * @param index  Index of the element.
+         * 
+         * @return  Element value (non-modifiable).
          */
-        virtual const Value* element(const Value& index) const;
+        virtual const Value& element(const Value& index) const;
 
         /**
          * Get a specific element of the value.  This is meaningful with 
          * arrays and dictionaries. This method is non-const, meaning that
          * the returned value can be modified.
+         *
+         * @param index  Index of the element.
+         *
+         * @return  Element value (modifiable).
          */
-        virtual Value* element(const Value& index);
+        virtual Value& element(const Value& index);
+
+        /**
+         * Duplicates an element of the value. This is necessary when the 
+         * value its is immutable: one can take copies of the contained 
+         * elements but it is not possible to access the originals them directly.
+         *
+         * @param index  Index of the element.
+         *
+         * @return  Duplicate of the element value. Caller gets ownership.
+         */
+        virtual Value* duplicateElement(const Value& index) const;
         
         /**
          * Set a specific element of the value. This is meaningful only with

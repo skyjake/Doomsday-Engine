@@ -20,6 +20,7 @@
 #include "Observers"
 #include "Reader"
 #include "Record"
+#include "RecordValue"
 #include "TextValue"
 #include "Value"
 #include "Variable"

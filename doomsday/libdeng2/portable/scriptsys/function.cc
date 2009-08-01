@@ -99,7 +99,7 @@ void Function::mapArgumentValues(const ArrayValue& args, ArgumentValues& values)
         {
             try 
             {
-                values.push_back(labeledArgs->element(TextValue(*i)));
+                values.push_back(&labeledArgs->element(TextValue(*i)));
             }
             catch(const DictionaryValue::KeyError&)
             {

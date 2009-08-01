@@ -55,16 +55,21 @@ dsize Value::size() const
 	throw IllegalError("Value::size", "Size is meaningless");
 }
 
-const Value* Value::element(const Value& index) const
+const Value& Value::element(const Value& index) const
 {
     /// @throw IllegalError Value cannot be indexed.
 	throw IllegalError("Value::element", "Value cannot be indexed");
 }
 
-Value* Value::element(const Value& index)
+Value& Value::element(const Value& index)
 {
     /// @throw IllegalError Value cannot be indexed.
     throw IllegalError("Value::element", "Value cannot be indexed");
+}
+
+Value* Value::duplicateElement(const Value& index) const
+{
+    return element(index).duplicate();
 }
 
 void Value::setElement(const Value& index, Value* elementValue)

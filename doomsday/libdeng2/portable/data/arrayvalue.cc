@@ -79,7 +79,7 @@ dsize ArrayValue::size() const
     return elements_.size();
 }
 
-const Value* ArrayValue::element(const Value& indexValue) const
+const Value& ArrayValue::element(const Value& indexValue) const
 {
     const NumberValue* v = dynamic_cast<const NumberValue*>(&indexValue);
     if(!v)
@@ -89,12 +89,12 @@ const Value* ArrayValue::element(const Value& indexValue) const
     }
     dint index = v->as<dint>();
     Elements::const_iterator elem = indexToIterator(index);
-    return *elem;
+    return **elem;
 }
 
-Value* ArrayValue::element(const Value& index)
+Value& ArrayValue::element(const Value& index)
 {
-    return const_cast<Value*>(const_cast<const ArrayValue*>(this)->element(index));
+    return const_cast<Value&>(const_cast<const ArrayValue*>(this)->element(index));
 }
 
 void ArrayValue::setElement(const Value& indexValue, Value* value)

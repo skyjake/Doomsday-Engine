@@ -23,6 +23,7 @@
 #include "de/Numbervalue"
 #include "de/Arrayvalue"
 #include "de/RefValue"
+#include "de/RecordValue"
 #include "de/NoneValue"
 #include "de/math.h"
 
@@ -62,7 +63,7 @@ void OperatorExpression::push(Evaluator& evaluator, Record* names) const
     {
         // The MEMBER operator works a bit differently. Just push the left side
         // now. We'll push the other side when we've found out what is the 
-        // scope defined by the result of the left side (which must be a RefValue).
+        // scope defined by the result of the left side (which must be a RecordValue).
         leftOperand_->push(evaluator, names);
     }
     else
@@ -80,242 +81,165 @@ Value* OperatorExpression::newBooleanValue(bool isTrue)
     return new NumberValue(isTrue? NumberValue::TRUE : NumberValue::FALSE);
 }
 
+void OperatorExpression::verifyAssignable(Value* value)
+{
+    if(!dynamic_cast<RefValue*>(value))
+    {
+        throw NotAssignableError("OperatorExpression::verifyAssignable",
+            "Cannot assign to: " + value->asText());
+    }
+}
+
 Value* OperatorExpression::evaluate(Evaluator& evaluator) const
 {
-#if 0
     // Get the operands.
     Value* rightValue = (op_ == MEMBER? 0 : evaluator.popResult());
     Value* leftValue = (leftOperand_? evaluator.popResult() : 0);
     Value* result = (leftValue? leftValue : rightValue);
 
-    switch(op_)
+    try
     {
-    case PLUS:
-        std::cerr << "lval:" << leftValue->asText() << ", rval:" << rightValue->asText() << "\n";
-        if(leftValue)
+        switch(op_)
         {
-            leftValue->sum(*rightValue);
-        }
-        else
-        {
-            // Unary plus is defined as a no-op.
-        }
-        break;
-        
-    case PLUS_ASSIGN:
-        std::cerr << "lval:" << leftValue->asText() << ", rval:" << rightValue->asText() << "\n";
-        leftValue->dereference().sum(*rightValue);
-        break;    
-        
-    case MINUS:
-        if(leftValue)
-        {
-            leftValue->subtract(*rightValue);
-        }
-        else
-        {
-            // Negation.
-            rightValue->negate();
-        }
-        break;
-        
-    case MINUS_ASSIGN:
-        leftValue->dereference().subtract(*rightValue);
-        break;    
-        
-    case DIVIDE:
-        leftValue->divide(*rightValue);
-        break;
-
-    case DIVIDE_ASSIGN:
-        leftValue->dereference().divide(*rightValue);
-        break;    
-        
-    case MULTIPLY:
-        leftValue->multiply(*rightValue);
-        break;
-
-    case MULTIPLY_ASSIGN:
-        leftValue->dereference().multiply(*rightValue);
-        break;    
-        
-    case MODULO:
-        leftValue->modulo(*rightValue);
-        break;
-
-    case MODULO_ASSIGN:
-        leftValue->dereference().modulo(*rightValue);
-        break;    
-        
-    case NOT:
-        result = newBooleanValue(rightValue->isFalse());
-        break;
-        
-    case EQUAL:
-        result = newBooleanValue(!leftValue->compare(*rightValue));
-        break;
-
-    case NOT_EQUAL:
-        result = newBooleanValue(leftValue->compare(*rightValue) != 0);
-        break;
-
-    case LESS:
-        result = newBooleanValue(leftValue->compare(*rightValue) < 0);
-        break;
-
-    case GREATER:
-        result = newBooleanValue(leftValue->compare(*rightValue) > 0);
-        break;
-
-    case LEQUAL:
-        result = newBooleanValue(leftValue->compare(*rightValue) <= 0);
-        break;
-
-    case GEQUAL:
-        result = newBooleanValue(leftValue->compare(*rightValue) >= 0);
-        break;
-        
-    case IN:
-        result = newBooleanValue(rightValue->contains(*leftValue));
-        break;
-        
-    case CALL:
-        leftValue->call(evaluator.process(), *rightValue);
-        // Result comes from whatever is being called.
-        result = 0;
-        break;
-        
-    case MEMBER:
-        {
-            const ObjectValue* objectValue = 
-                dynamic_cast<const ObjectValue*>(leftValue);
-            if(!objectValue)
+        case PLUS:
+            if(leftValue)
             {
-                throw NonObjectScopeError("OperatorExpression::evaluate",
-                    "Left side of " + operatorToText(op_) + " must evaluate to an ObjectValue");
+                leftValue->sum(*rightValue);
             }
-            // Now that we know what is the scope, push the rest of the expression.
-            // The evaluator will hold onto an object reference.
-            rightOperand_->push(evaluator, objectValue->object());
+            else
+            {
+                // Unary plus is a no-op.
+            }
+            break;
+
+        case PLUS_ASSIGN:
+            verifyAssignable(leftValue);
+            leftValue->sum(*rightValue);
+            break;    
+
+        case MINUS:
+            if(leftValue)
+            {
+                leftValue->subtract(*rightValue);
+            }
+            else
+            {
+                // Negation.
+                rightValue->negate();
+            }
+            break;
+
+        case MINUS_ASSIGN:
+            verifyAssignable(leftValue);
+            leftValue->subtract(*rightValue);
+            break;    
+
+        case DIVIDE:
+            leftValue->divide(*rightValue);
+            break;
+
+        case DIVIDE_ASSIGN:
+            verifyAssignable(leftValue);
+            leftValue->divide(*rightValue);
+            break;    
+
+        case MULTIPLY:
+            leftValue->multiply(*rightValue);
+            break;
+
+        case MULTIPLY_ASSIGN:
+            verifyAssignable(leftValue);
+            leftValue->multiply(*rightValue);
+            break;    
+
+        case MODULO:
+            leftValue->modulo(*rightValue);
+            break;
+
+        case MODULO_ASSIGN:
+            verifyAssignable(leftValue);
+            leftValue->modulo(*rightValue);
+            break;    
+
+        case NOT:
+            result = newBooleanValue(rightValue->isFalse());
+            break;
+
+        case EQUAL:
+            result = newBooleanValue(!leftValue->compare(*rightValue));
+            break;
+
+        case NOT_EQUAL:
+            result = newBooleanValue(leftValue->compare(*rightValue) != 0);
+            break;
+
+        case LESS:
+            result = newBooleanValue(leftValue->compare(*rightValue) < 0);
+            break;
+
+        case GREATER:
+            result = newBooleanValue(leftValue->compare(*rightValue) > 0);
+            break;
+
+        case LEQUAL:
+            result = newBooleanValue(leftValue->compare(*rightValue) <= 0);
+            break;
+
+        case GEQUAL:
+            result = newBooleanValue(leftValue->compare(*rightValue) >= 0);
+            break;
+
+        case IN:
+            result = newBooleanValue(rightValue->contains(*leftValue));
+            break;
+
+        case CALL:
+            leftValue->call(evaluator.process(), *rightValue);
+            // Result comes from whatever is being called.
+            result = 0;
+            break;
+
+        case INDEX:
+            std::cerr << "lval:" << leftValue->asText() << ", rval:" << rightValue->asText() << "\n";
+            result = leftValue->duplicateElement(*rightValue);
+            break;
+
+        case SLICE:
+            result = performSlice(leftValue, rightValue);
+            break;
+
+        case MEMBER: 
+        {
+            const RecordValue* recValue = dynamic_cast<const RecordValue*>(leftValue);
+            if(!recValue)
+            {
+                throw ScopeError("OperatorExpression::evaluate",
+                    "Left side of " + operatorToText(op_) + " must evaluate to a record");
+            }
+            
+            // Now that we know what the scope is, push the rest of the expression
+            // for evaluation (in this specific scope).
+            rightOperand_->push(evaluator, recValue->record());
+            
+            // Cleanup.
+            delete leftValue;
+            assert(rightValue == NULL);
+
             // The MEMBER operator does not evaluate to any result. 
             // Whatever is on the right side will be the result.
-            delete objectValue;
-            assert(rightValue == NULL);
             return NULL;
         }
-        
-    case INDEX:
-        std::cerr << "lval:" << leftValue->asText() << ", rval:" << rightValue->asText() << "\n";
-        result = leftValue->element(*rightValue)->duplicate();
-        break;
-        
-    case SLICE:
-        {
-            assert(rightValue->size() >= 2);
-            
-            const ArrayValue* args = dynamic_cast<ArrayValue*>(rightValue);
-            assert(args != NULL); // Parser makes sure.
 
-            auto_ptr<ArrayValue> slice(new ArrayValue());
-            
-            // Determine the stepping of the slice.
-            dint step = 1;
-            if(args->size() >= 3)
-            {
-                step = args->elements()[2]->asNumber();
-                if(!step)
-                {
-                    throw SliceError("OperatorExpression::evaluate",
-                        operatorToText(op_) + " cannot use zero as step");
-                }
-            }
-
-            dint leftSize = leftValue->size();
-            dint begin = 0;
-            dint end = leftSize;
-            bool unspecifiedStart = false;
-            bool unspecifiedEnd = false;
-            
-            // Check the start index of the slice.
-            const Value* startValue = args->elements()[0];
-            if(dynamic_cast<const NumberValue*>(startValue))
-            {
-                begin = startValue->asNumber();
-            }
-            else if(dynamic_cast<const ObjectValue*>(startValue))
-            {
-                if(startValue->compare(ObjectValue()))
-                {
-                    throw SliceError("OperatorExpression::evaluate",
-                        operatorToText(op_) + " requires a number value for the slice start "
-                        "(got an object)");
-                }
-                unspecifiedStart = true;
-            }
-            else
-            {
-                throw SliceError("OperatorExpression::evaluate",
-                    operatorToText(op_) + " requires a number value for the slice start");
-            }
-
-            // Check the end index of the slice.
-            const Value* endValue = args->elements()[1];
-            if(dynamic_cast<const NumberValue*>(endValue))
-            {
-                end = endValue->asNumber();
-            }
-            else if(dynamic_cast<const ObjectValue*>(endValue))
-            {
-                if(endValue->compare(ObjectValue()))
-                {
-                    throw SliceError("OperatorExpression::evaluate",
-                        operatorToText(op_) + " requires a number value for the slice end "
-                        "(got an object)");
-                }
-                unspecifiedEnd = true;
-            }
-            else
-            {
-                throw SliceError("OperatorExpression::evaluate",
-                    operatorToText(op_) + " requires a number value for the slice end");
-            }
-
-            // Convert them to positive indices.
-            if(begin < 0)
-            {
-                begin += leftSize;
-            }
-            if(end < 0)
-            {
-                end += leftSize;
-            }
-            if(end > begin && step < 0 || begin > end && step > 0)
-            {
-                // The step goes to the wrong direction.
-                begin = end = 0;
-            }
-
-            // Full reverse range?
-            if(unspecifiedStart && unspecifiedEnd && step < 0)
-            {
-                begin = leftSize - 1;
-                end = -1;
-            }
-            
-            begin = clamp(0, begin, leftSize - 1);
-            end = clamp(-1, end, leftSize);
-                        
-            for(dint i = begin; (end >= begin && i < end) || (begin > end && i > end); i += step)
-            {
-                slice->add(leftValue->element(NumberValue(i))->duplicate());
-            }        
-        
-            result = slice.release();
-            break;
+        default:
+            throw Error("OperatorExpression::evaluate", 
+                "Operator " + operatorToText(op_) + " not implemented");
         }
-        
-    default:
-        throw std::logic_error("Operator " + operatorToText(op_) + " not implemented");
+    }
+    catch(const Error& err)
+    {
+        delete rightValue;
+        delete leftValue;
+        err.raise();
     }
 
     // Delete the unnecessary values.
@@ -323,6 +247,87 @@ Value* OperatorExpression::evaluate(Evaluator& evaluator) const
     if(result != leftValue) delete leftValue;
     
     return result;
-#endif
-    return new NoneValue();
+}
+
+Value* OperatorExpression::performSlice(Value* leftValue, Value* rightValue) const
+{
+    assert(rightValue->size() >= 2);
+
+    const ArrayValue* args = dynamic_cast<ArrayValue*>(rightValue);
+    assert(args != NULL); // Parser makes sure.
+
+    // The resulting slice of leftValue's elements.
+    std::auto_ptr<ArrayValue> slice(new ArrayValue());
+
+    // Determine the stepping of the slice.
+    dint step = 1;
+    if(args->size() >= 3)
+    {
+        step = args->elements()[2]->asNumber();
+        if(!step)
+        {
+            throw SliceError("OperatorExpression::evaluate",
+                operatorToText(op_) + " cannot use zero as step");
+        }
+    }
+
+    dint leftSize = leftValue->size();
+    dint begin = 0;
+    dint end = leftSize;
+    bool unspecifiedStart = false;
+    bool unspecifiedEnd = false;
+
+    // Check the start index of the slice.
+    const Value* startValue = args->elements()[0];
+    if(dynamic_cast<const NoneValue*>(startValue))
+    {
+        unspecifiedStart = true;
+    }
+    else
+    {
+        begin = dint(startValue->asNumber());
+    }
+
+    // Check the end index of the slice.
+    const Value* endValue = args->elements()[1];
+    if(dynamic_cast<const NoneValue*>(endValue))
+    {
+        unspecifiedEnd = true;
+    }
+    else
+    {
+        end = dint(endValue->asNumber());
+    }
+
+    // Convert them to positive indices.
+    if(begin < 0)
+    {
+        begin += leftSize;
+    }
+    if(end < 0)
+    {
+        end += leftSize;
+    }
+    if(end > begin && step < 0 || begin > end && step > 0)
+    {
+        // The step goes to the wrong direction.
+        begin = end = 0;
+    }
+
+    // Full reverse range?
+    if(unspecifiedStart && unspecifiedEnd && step < 0)
+    {
+        begin = leftSize - 1;
+        end = -1;
+    }
+
+    begin = clamp(0, begin, leftSize - 1);
+    end = clamp(-1, end, leftSize);
+
+    for(dint i = begin; (end >= begin && i < end) || (begin > end && i > end); i += step)
+    {
+        slice->add(leftValue->duplicateElement(NumberValue(i)));
+    }        
+
+    return slice.release();
 }

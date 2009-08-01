@@ -125,7 +125,11 @@ void Parser::parseStatement(Compound& compound)
     }
     
     // Statements without a compound (must advance to next statement manually).
-    if(firstToken.equals("continue"))
+    if(firstToken.equals("record"))
+    {
+        compound.add(parseRecordStatement());
+    }
+    else if(firstToken.equals("continue"))
     {
         compound.add(new JumpStatement(JumpStatement::CONTINUE));
     }
@@ -195,7 +199,7 @@ IfStatement* Parser::parseIfStatement()
     {
         if(statementRange_.size() != 1 || !statementRange_.firstToken().equals("end"))
         {
-            throw UnexpectedTokenError("Parser::parseIfStatement", "Expected \"end\", but got " + 
+            throw UnexpectedTokenError("Parser::parseIfStatement", "Expected 'end', but got " + 
                 statementRange_.firstToken().asText());
         }
         nextStatement();
@@ -215,8 +219,8 @@ WhileStatement* Parser::parseWhileStatement()
 
 ForStatement* Parser::parseForStatement()
 {
-    // "for" by-ref-name-expr "in" expr ":" statement
-    // "for" by-ref-name-expr "in" expr "\n" compound
+    // "for" by-ref-expr "in" expr ":" statement
+    // "for" by-ref-expr "in" expr "\n" compound
     
     dint colonPos = statementRange_.find(":");
     dint inPos = statementRange_.find("in");
@@ -227,7 +231,7 @@ ForStatement* Parser::parseForStatement()
     }
     
     auto_ptr<Expression> iter(parseExpression(statementRange_.between(1, inPos),
-        NAME_BY_REFERENCE | ALLOW_NEW_VARIABLES | LOOKUP_LOCAL_ONLY));
+        NAME_BY_REFERENCE | ALLOW_NEW_VARIABLES | LOCAL_NAMESPACE_ONLY));
     Expression* iterable = parseExpression(statementRange_.between(inPos + 1, colonPos));
     
     auto_ptr<ForStatement> statement(new ForStatement(iter.release(), iterable));
@@ -236,6 +240,19 @@ ForStatement* Parser::parseForStatement()
     parseConditionalCompound(statement->compound(), IGNORE_EXTRA_BEFORE_COLON);
     
     return statement.release();
+}
+
+ExpressionStatement* Parser::parseRecordStatement()
+{
+    // "record" name-expr
+    
+    if(statementRange_.size() < 2)
+    {
+        throw MissingTokenError("Parser::parseRecordStatement",
+            "Expected identifier to follow " + statementRange_.firstToken().asText());
+    }    
+    return new ExpressionStatement(parseExpression(statementRange_.startingFrom(1),
+        ALLOW_NEW_RECORDS | LOCAL_NAMESPACE_ONLY));
 }
 
 PrintStatement* Parser::parsePrintStatement()
@@ -265,7 +282,7 @@ FunctionStatement* Parser::parseFunctionStatement()
     // The function must have a name that is not already in use in the scope.
     auto_ptr<FunctionStatement> statement(new FunctionStatement(
         parseExpression(statementRange_.between(1, pos), 
-        LOOKUP_LOCAL_ONLY | NAME_BY_REFERENCE | REQUIRE_NEW_VARIABLE)));
+            LOCAL_NAMESPACE_ONLY | NAME_BY_REFERENCE | ALLOW_NEW_VARIABLES | REQUIRE_NEW_VARIABLE)));
 
     // Collect the argument names.
     TokenRange argRange = statementRange_.between(pos + 1, statementRange_.closingBracket(pos));
@@ -305,12 +322,12 @@ FunctionStatement* Parser::parseFunctionStatement()
 
 AssignStatement* Parser::parseAssignStatement()
 {
-    ExpressionFlags flags = ALLOW_NEW_VARIABLES | NAME_BY_REFERENCE | LOOKUP_LOCAL_ONLY;
+    ExpressionFlags flags = ALLOW_NEW_VARIABLES | NAME_BY_REFERENCE | LOCAL_NAMESPACE_ONLY;
     dint pos = statementRange_.find("=");
     if(pos < 0)
     {
         pos = statementRange_.find(":=");
-        flags &= ~LOOKUP_LOCAL_ONLY;
+        flags &= ~LOCAL_NAMESPACE_ONLY;
     }
     
     // Has indices been specified?
@@ -638,6 +655,10 @@ Expression* Parser::parseTokenExpression(const TokenRange& range, const Expressi
         {
             return ConstantExpression::None();
         }
+        else if(token.equals("Pi"))
+        {
+            return ConstantExpression::Pi();
+        }
     }
 
     switch(token.type())
@@ -649,12 +670,12 @@ Expression* Parser::parseTokenExpression(const TokenRange& range, const Expressi
 
             if(flags[NAME_BY_VALUE_BIT]) nameFlags |= NameExpression::BY_VALUE;
             if(flags[NAME_BY_REFERENCE_BIT]) nameFlags |= NameExpression::BY_REFERENCE;
-            if(flags[LOOKUP_LOCAL_ONLY_BIT]) nameFlags |= NameExpression::LOCAL_ONLY;
+            if(flags[LOCAL_NAMESPACE_ONLY_BIT]) nameFlags |= NameExpression::LOCAL_ONLY;
+            if(flags[ALLOW_NEW_RECORDS_BIT]) nameFlags |= NameExpression::NEW_RECORD;
             if(flags[ALLOW_NEW_VARIABLES_BIT]) nameFlags |= NameExpression::NEW_VARIABLE;
             if(flags[REQUIRE_NEW_VARIABLE_BIT]) nameFlags |= NameExpression::NOT_IN_SCOPE;
             
-            return new NameExpression(new ConstantExpression(new TextValue(range.token(0).str())), 
-                nameFlags);
+            return new NameExpression(range.token(0).str(), nameFlags);
         }
         else
         {

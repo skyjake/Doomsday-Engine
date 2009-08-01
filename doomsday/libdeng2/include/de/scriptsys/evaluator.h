@@ -126,6 +126,21 @@ namespace de
         Value* popResult();
         
         /**
+         * Pop a value off of the result stack, making sure it has a specific type.
+         *
+         * @return  Value resulting from expression evaluation. Caller
+         *          gets ownership of the returned object.
+         */
+        template <typename Type>
+        Type* popResultAs() {
+            if(!dynamic_cast<Type*>(&result())) {
+                throw ResultTypeError("Evaluator::result<Type>", 
+                    "Result type is not compatible with Type");
+            }
+            return dynamic_cast<Type*>(popResult());
+        }
+        
+        /**
          * Determines whether a final result has been evaluated.
          */
         bool hasResult() const;

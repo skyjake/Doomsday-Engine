@@ -20,6 +20,7 @@
 #include "de/NumberValue"
 #include "de/Writer"
 #include "de/Reader"
+#include "de/math.h"
 
 #include <sstream>
 
@@ -56,15 +57,7 @@ dint NumberValue::compare(const Value& value) const
     const NumberValue* other = dynamic_cast<const NumberValue*>(&value);
     if(other)
     {
-        if(value_ < other->value_)
-        {
-            return -1;
-        }
-        else if(value_ > other->value_)
-        {
-            return 1;
-        }
-        return 0;
+        return cmp(value_, other->value_);
     }    
     return Value::compare(value);
 }

@@ -80,12 +80,12 @@ dsize RefValue::size() const
     return dereference().size();
 }
 
-const Value* RefValue::element(const Value& index) const
+const Value& RefValue::element(const Value& index) const
 {
     return dereference().element(index);
 }
 
-Value* RefValue::element(const Value& index)
+Value& RefValue::element(const Value& index)
 {
     return dereference().element(index);
 }

@@ -77,8 +77,8 @@ namespace de
         Value* duplicate() const;
         Text asText() const;
         dsize size() const;     
-        const Value* element(const Value& index) const; 
-        Value* element(const Value& index); 
+        const Value& element(const Value& index) const; 
+        Value& element(const Value& index); 
         void setElement(const Value& index, Value* value);
         bool contains(const Value& value) const;
         Value* begin();

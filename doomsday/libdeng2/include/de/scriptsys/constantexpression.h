@@ -48,6 +48,7 @@ namespace de
         static ConstantExpression* None();        
         static ConstantExpression* True();
         static ConstantExpression* False();
+        static ConstantExpression* Pi();
 
     private:
         Value* value_;

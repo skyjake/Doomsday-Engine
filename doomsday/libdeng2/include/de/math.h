@@ -30,8 +30,7 @@ namespace de
     /// Absolute value.
     template <typename Type>
     inline Type abs(const Type& a) {
-        if(a < 0.0)
-        {
+        if(a < 0.0) {
             return -a;
         }
         return a;
@@ -64,6 +63,14 @@ namespace de
     inline ddouble fequal(ddouble a, ddouble b) {
         return abs(a - b) < EPSILON;
     }    
+
+    /// General comparison function.
+    template <typename Type>
+    inline dint cmp(const Type& a, const Type& b) {
+        if(a < b) return -1;
+        if(a > b) return 1;
+        return 0;
+    }
 }
 
 #endif /* LIBDENG2_MATH_H */

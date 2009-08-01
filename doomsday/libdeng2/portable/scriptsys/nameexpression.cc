@@ -22,54 +22,42 @@
 #include "de/Process"
 #include "de/TextValue"
 #include "de/RefValue"
+#include "de/RecordValue"
 
 using namespace de;
 
-NameExpression::NameExpression(Expression* identifier, const Flags& flags) 
+NameExpression::NameExpression(const String& identifier, const Flags& flags) 
     : identifier_(identifier), flags_(flags)
-{
-    std::cout << "NameEx: flags=" << flags.to_string() << "\n";
-}
+{}
 
 NameExpression::~NameExpression()
-{
-    delete identifier_;
-}
-
-void NameExpression::push(Evaluator& evaluator, Record* names) const
-{
-    Expression::push(evaluator, names);
-    identifier_->push(evaluator);
-}
+{}
 
 Value* NameExpression::evaluate(Evaluator& evaluator) const
 {
     //std::cout << "NameExpression::evaluator: " << flags_.to_string() << "\n";
     //LOG_DEBUG("path = %s, scope = %x") << path_ << evaluator.names();
     
-    // We are expecting a text value for the identifier.
-    std::auto_ptr<Value> ident(evaluator.popResult());
-    TextValue* name = dynamic_cast<TextValue*>(ident.get());
-    if(!name)
-    {
-        /// @throw IdentifierError  Identifier is not text.
-        throw IdentifierError("NameExpression::evaluator", "Identifier should be a text value");
-    }
-
     // Collect the namespaces to search.
     Evaluator::Namespaces spaces;
     evaluator.namespaces(spaces);
     
     Variable* variable = 0;
+    Record* record = 0;
     
     for(Evaluator::Namespaces::iterator i = spaces.begin(); i != spaces.end(); ++i)
     {
         Record& ns = **i;
-        if(ns.has(*name))
+        if(ns.hasMember(identifier_))
         {
-            // The name exists in this namespace.
-            variable = &ns[*name];
+            // The name exists in this namespace (as a variable).
+            variable = &ns[identifier_];
             break;
+        }
+        if(ns.hasSubrecord(identifier_))
+        {
+            // The name exists in this namespace (as a record).
+            record = &ns.subrecord(identifier_);
         }
         if(flags_[LOCAL_ONLY_BIT])
         {
@@ -77,26 +65,25 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
         }
     }
 
-    // If a new variable is required and one is in scope, we cannot continue.
-    if(variable && (flags_[NOT_IN_SCOPE_BIT]))
+    // If a new variable/record is required and one is in scope, we cannot continue.
+    if((variable || record) && flags_[NOT_IN_SCOPE_BIT])
     {
-        throw AlreadyExistsError("NameExpression::evaluate", "Variable '" + name->asText() + 
-            "' already exists");
+        throw AlreadyExistsError("NameExpression::evaluate", 
+            "Identifier '" + identifier_ + "' already exists");
     }
 
     // If nothing is found and we are permitted to create new variables, do so.
     // Occurs when assigning into new variables.
-    if(!variable && (flags_[NEW_VARIABLE_BIT]))
+    if(!variable && !record && flags_[NEW_VARIABLE_BIT])
     {
-        variable = new Variable(*name);
+        variable = new Variable(identifier_);
         
         // Add it to the local namespace.
         spaces.front()->add(variable);
     }
-
-    // We should now have the variable.
     if(variable)
     {
+        // Variables can be referred to by reference or value.
         if(flags_[BY_REFERENCE_BIT])
         {
             // Reference to the variable.
@@ -108,7 +95,19 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
             return variable->value().duplicate();
         }
     }
+
+    // We may be permitted to create a new record.
+    if(!record && flags_[NEW_RECORD_BIT])
+    {
+        // Add it to the local namespace.
+        record = &spaces.front()->addRecord(identifier_);
+    }
+    if(record)
+    {
+        // Records can only be referenced.
+        return new RecordValue(record);
+    }
     
-    throw NotFoundError("NameExpression::evaluate", "Identifier '" + name->asText() + 
+    throw NotFoundError("NameExpression::evaluate", "Identifier '" + identifier_ + 
         "' does not exist");
 }
