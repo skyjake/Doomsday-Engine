@@ -23,6 +23,8 @@
 #include "de/TextValue"
 #include "de/ArrayValue"
 #include "de/DictionaryValue"
+#include "de/RefValue"
+#include "de/RecordValue"
 
 using namespace de;
 
@@ -74,7 +76,7 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Argument must be a dictionary");
         }
-        ArrayValue* array = new ArrayValue;
+        ArrayValue* array = new ArrayValue();
         for(DictionaryValue::Elements::const_iterator i = dict->elements().begin();
             i != dict->elements().end(); ++i)
         {
@@ -89,8 +91,101 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
         }
         return array;
     }
+    
+    case RECORD_MEMBERS:    
+    case RECORD_SUBRECORDS:
+    {
+        if(argValue->size() != 2)
+        {
+            throw WrongArgumentsError("BuiltInExpression::evaluate",
+                "Expected exactly one argument for " +
+                std::string(type_ == RECORD_MEMBERS? 
+                    "RECORD_MEMBERS" : "RECORD_SUBRECORDS"));
+        }
+        
+        RecordValue* rec = dynamic_cast<RecordValue*>(argValue->elements()[1]);
+        if(!rec)
+        {
+            throw WrongArgumentsError("BuiltInExpression::evaluate",
+                "Argument must be a record");
+        }
+        DictionaryValue* dict = new DictionaryValue();
+        if(type_ == RECORD_MEMBERS)
+        {
+            for(Record::Members::const_iterator i = rec->dereference().members().begin();
+                i != rec->dereference().members().end(); ++i)
+            {
+                dict->add(new TextValue(i->first), new RefValue(i->second));
+            }
+        }
+        else
+        {
+            for(Record::Subrecords::const_iterator i = rec->dereference().subrecords().begin();
+                i != rec->dereference().subrecords().end(); ++i)
+            {
+                dict->add(new TextValue(i->first), new RecordValue(i->second));
+            }
+        }
+        return dict;
+    }
+    
+    case AS_NUMBER:
+        if(argValue->size() != 2)
+        {
+            throw WrongArgumentsError("BuiltInExpression::evaluate",
+                "Expected exactly one argument for AS_NUMBER");
+        }
+        return new NumberValue(argValue->elements()[1]->asNumber());
+
+    case AS_TEXT:
+        if(argValue->size() != 2)
+        {
+            throw WrongArgumentsError("BuiltInExpression::evaluate",
+                "Expected exactly one argument for AS_TEXT");
+        }
+        return new TextValue(argValue->elements()[1]->asText());
+        
+    case LOCAL_NAMESPACE:
+    {
+        // Collect the namespaces to search.
+        Evaluator::Namespaces spaces;
+        evaluator.namespaces(spaces);
+        if(argValue->size() != 1)
+        {
+            throw WrongArgumentsError("BuiltInExpression::evaluate",
+                "No arguments expected for LOCAL_NAMESPACE");
+        }
+        return new RecordValue(spaces.front());
+    }
         
     default:
         assert(false);
     }
+}
+
+BuiltInExpression::Type BuiltInExpression::findType(const String& identifier)
+{
+    struct {
+        const char* str;
+        Type type;
+    } types[] = {
+        { "len",        LENGTH },
+        { "dictkeys",   DICTIONARY_KEYS },
+        { "dictvalues", DICTIONARY_VALUES },
+        { "Text",       AS_TEXT },
+        { "Number",     AS_NUMBER },
+        { "locals",     LOCAL_NAMESPACE },
+        { "members",    RECORD_MEMBERS },
+        { "subrecords", RECORD_SUBRECORDS },
+        { NULL,         NONE }
+    };
+    
+    for(duint i = 0; types[i].str; ++i)
+    {
+        if(identifier == types[i].str)
+        {
+            return types[i].type;
+        }
+    }
+    return NONE;
 }

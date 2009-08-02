@@ -141,23 +141,24 @@ void Process::execute(const Time::Delta& timeBox)
         */
     }
 
+    // We will execute until this depth is complete.
+    duint startDepth = depth();
+    if(startDepth == 1)
+    {
+        // Mark the start time.
+        startedAt_ = Time();
+    }
+
     try
     {
-        Time startedAt;
-
-        // We will execute until this depth is complete.
-        duint startDepth = depth();
-        
         // Execute the next command(s).
-        while(state_ == RUNNING)
+        while(state_ == RUNNING && depth() >= startDepth)
         {
             if(!context().execute())
             {
                 finish();
-                // Time to break execution?
-                if(depth() < startDepth) break;
             }
-            if(startedAt.since() > MAX_EXECUTION_TIME)
+            if(false && startedAt_.since() > MAX_EXECUTION_TIME)
             {
                 /// @throw HangError  Execution takes too long.
                 throw HangError("Process::execute", 
@@ -167,9 +168,16 @@ void Process::execute(const Time::Delta& timeBox)
     }
     catch(const Error& err)
     {
-        std::cout << "Process::execute:" << err.what() << "\n";
-        std::cout << "Stopping process.\n";
-        stop();
+        if(startDepth == 1)
+        {
+            std::cout << "Process::execute:" << err.what() << "\n";
+            std::cout << "Stopping process.\n";
+            stop();
+        }
+        else
+        {
+            err.raise();
+        }
     }
 }
 

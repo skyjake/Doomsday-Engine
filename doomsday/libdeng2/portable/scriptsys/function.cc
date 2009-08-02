@@ -45,7 +45,7 @@ Function::~Function()
 String Function::asText() const
 {
     std::ostringstream os;
-    os << "(function " << this << " (";
+    os << "[Function " << this << " (";
     for(Arguments::const_iterator i = arguments_.begin(); i != arguments_.end(); ++i)
     {
         if(i != arguments_.begin())
@@ -59,7 +59,7 @@ String Function::asText() const
             os << "=" << def->second->asText();
         }
     }
-    os << ")";
+    os << ")]";
     return os.str();
 }
 

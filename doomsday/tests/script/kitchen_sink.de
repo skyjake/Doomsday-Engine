@@ -23,22 +23,22 @@
 secNum = 0
 subSecNum = 0
 
-def print_section(msg): print "\n" + "_" * 78 + "\n%i.%i: %s\n" % [secNum, subSecNum, msg]
+def printSection(msg): print "\n" + "_" * 78 + "\n%i.%i: %s\n" % [secNum, subSecNum, msg]
 
-def begin_section(msg)
+def beginSection(msg)
     secNum += 1
     subSecNum := 0
-    print_section(msg)
+    printSection(msg)
 end
 
 def subsection(msg)
     subSecNum += 1
-    print_section(msg)
+    printSection(msg)
 end
 
 # Section 1: Basic Expressions
 # ----------------------------
-begin_section('Basic types (number, text, array, dictionary).')
+beginSection('Basic types (number, text, array, dictionary).')
 print 5, 5.5, -3.141592657
 print 0x100, 0X123
 print "Hello", 'World'
@@ -58,11 +58,14 @@ print 'len({1:2, 3:5, 8:13}) =', len({1:2, 3:5, 8:13})
 print 'dictkeys({1:2, 3:5, 8:13}) =', dictkeys({1:2, 3:5, 8:13})
 print 'dictvalues({1:2, 3:5, 8:13}) =', dictvalues({1:2, 3:5, 8:13})
 
+subsection('Built-in functions: Text(), Number().')
+print Text(123), Number("123")
+
 # Section 2: Operator Expressions
 # -------------------------------
 # - all the operators
 # - special stuff like / with text
-begin_section('Operators: +')
+beginSection('Operators: +')
 print 'Numbers:', 1 + 1, -.5 + .5
 print 'Larger than 32-bit:', 0xffffffffff + 0xffffffffff
 print 'Text:', 'Hello' + 'World'
@@ -141,7 +144,7 @@ if not 'jet' in transports: print "No jet."
 
 # Section 3: Statements & Compounds
 # ---------------------------------
-begin_section('if/elsif/else statements.')
+beginSection('if/elsif/else statements.')
 if True
     print 'Regular compound.'
 else
@@ -187,6 +190,18 @@ array[2]['Three'] = '300'
 print array
 print originalArray
 
+subsection('Delete statement: deleting identifiers.')
+def funky()
+    i = 1
+    k = 2
+    print locals()
+    del i
+    print 'After deletion:'
+    print locals()
+end
+funky()
+del funky
+
 subsection('while statement.')
 i = 5
 while i > 0
@@ -229,9 +244,9 @@ for i in ['planes', 'trains', 'automobiles']
     print i, 'are cool!'
 end
 
-# Section 4: Scopes
-# -----------------
-begin_section('Creating a record.')
+# Section 4: Records
+# ------------------
+beginSection('Creating a record.')
 record myrec
 print len(myrec)
 
@@ -253,6 +268,16 @@ print myrec
 subsection('Checking whether members exist in record.')
 print 'subrec' in myrec, 'newMember' in myrec, 'not-there' in myrec.subrec
 
+subsection('Built-in functions: members(), subrecords().')
+print 'members of myrec:', members(myrec)
+print 'subrecords of myrec:', subrecords(myrec)
+
+subsection('Alternative ways to access members and subrecords.')
+print myrec['newMember']
+print myrec['subrec']
+print myrec['subrec']['something']
+print members(myrec)['newMember']
+
 subsection('Having two variables reference the same record.')
 reference = myrec
 print len(reference)
@@ -260,25 +285,127 @@ reference.otherMember = 150
 print "Here's the record:"
 print myrec
 
-# - accessing variables in different scopes
-# - assigning to variables =, :=
-# - creating variables in a scope (populating record)
-# - variables created by for
+subsection('Deleting members from record.')
+print 'Before deleting:'
+print myrec
+del myrec.subrec.something
+print 'After deleting:'
+print myrec
+print "subrec isn't gone, though: len(myrec.subrec) =", len(myrec.subrec)
+
+subsection('Deleting a record pointed to be two variables.')
+record soonDeleted
+reference = soonDeleted
+del soonDeleted
+# This would cause an exception.
+#print reference
+del reference
 
 # Section 5: Functions
 # --------------------
-begin_section('Defining a function (empty body).')
-#def func1(): return
-#func1()
+beginSection('Defining a function (empty body).')
+def func1(): return
+func1()
+def func1b()
+end
+func1b()
 
-# - argument passing
-# - default values
-# - defining in scope
-# - copying the funcvalue to another variable
-# - passing func as callback parameter
+subsection('Returning values from the function.')
+def func2(): return 'World'
+print 'Hello', func2()
+def func2b(a)
+    if a
+        return "It is true!"
+    else
+        return "Nay, it is false."
+    end
+end
+print func2b(1), func2b(''), func2b(True), func2b(False)
 
-# Section 6: Script Return Value
+subsection('Passing arguments.')
+a = 'At process scope.'
+def func3(a, b, c)
+    print 'There arguments were:', a, b, c
+    return b
+end
+print func3(1, 2, 3)
+print a
+
+subsection('Default values to function arguments.')
+def func4(a, b='default', c=100)
+    print 'Given:', a, b, c
+end
+func4(1)
+func4(1, 2)
+func4([1,2], c='world', b='hello')
+print 'func4 =', func4
+
+subsection('Defining function in a record.')
+def myrec.func5(a, b)
+    return a + b
+end
+print myrec.func5("The record is\n", Text(myrec))
+
+subsection('Defining a function within a function.')
+def func6():
+    print 'Inside func6.'
+    print 'func2() =', func2()
+    def func2(): return 'Shadows the global level.'
+    print 'func2() =', func2()
+end
+func6()
+print 'func2() =', func2()
+
+subsection("Accessing function's locals within a subfunction.")
+def func7():
+    a = 100
+    print 'Inside func7: a =', a
+    def func()
+        print 'Inside func: a =', a
+    end
+    func()
+end
+func7()
+
+subsection('Reference to function.')
+reference = func2
+print 'func2() =', func2()
+print 'reference() =', reference()
+print 'reference =', reference
+
+subsection('Callback function as argument.')
+def doCallback(a, b, cb)
+    print cb(a, b)
+end
+doCallback(10, 15, myrec.func5)
+
+subsection('Returning a local function from a function.')
+def testfun()
+    def returningFunc()
+        print 'I come from another place.'
+    end
+    return returningFunc
+end
+testfun()()
+ar = [testfun]
+ar[0]()()
+
+# Section 6: Scopes
+# - accessing variables in different scopes
+# - assigning to variables =, :=
+beginSection('Built-in function locals() returns the local namespace as a record.')
+print 'At global level:'
+print locals()
+print 
+print 'Within a function:'
+def func8()
+    justMe = "Function's local namespace."
+    print locals()
+end
+func8()
+
+# Section 7: Script Return Value
 # ------------------------------
-begin_section('Returning value from the script: the final expression.')
+beginSection('Returning value from the script: the final expression.')
 
 "I am the return value."

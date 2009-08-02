@@ -22,6 +22,7 @@
 
 #include "../deng.h"
 #include "../Expression"
+#include "../String"
 
 namespace de
 {
@@ -38,9 +39,15 @@ namespace de
         
         /// Type of the built-in expression.
         enum Type {
+            NONE,
             LENGTH, ///< Evaluate the length of an value (by calling size()).
             DICTIONARY_KEYS,
-            DICTIONARY_VALUES
+            DICTIONARY_VALUES,
+            RECORD_MEMBERS,
+            RECORD_SUBRECORDS,
+            AS_TEXT,
+            AS_NUMBER,
+            LOCAL_NAMESPACE         
         };
         
     public:
@@ -51,6 +58,12 @@ namespace de
         void push(Evaluator& evaluator, Record* names = 0) const;
 
         Value* evaluate(Evaluator& evaluator) const;
+
+    public:
+        /**
+         * Checks if the identifier is one of the built-in functions.
+         */
+        static Type findType(const String& identifier);
         
     private:  
         Type type_;

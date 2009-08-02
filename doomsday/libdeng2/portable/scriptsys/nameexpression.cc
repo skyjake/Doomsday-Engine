@@ -42,6 +42,7 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
     Evaluator::Namespaces spaces;
     evaluator.namespaces(spaces);
     
+    Record* foundInNamespace = 0;
     Variable* variable = 0;
     Record* record = 0;
     
@@ -52,12 +53,14 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
         {
             // The name exists in this namespace (as a variable).
             variable = &ns[identifier_];
+            foundInNamespace = &ns;
             break;
         }
         if(ns.hasSubrecord(identifier_))
         {
             // The name exists in this namespace (as a record).
             record = &ns.subrecord(identifier_);
+            foundInNamespace = &ns;
         }
         if(flags_[LOCAL_ONLY_BIT])
         {
@@ -70,6 +73,24 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
     {
         throw AlreadyExistsError("NameExpression::evaluate", 
             "Identifier '" + identifier_ + "' already exists");
+    }
+    
+    if(flags_[DELETE_BIT])
+    {
+        if(!variable && !record)
+        {
+            throw NotFoundError("NameExpression::evaluate", 
+                "Cannot delete nonexistent identifier '" + identifier_ + "'");
+        }
+        if(variable)
+        {
+            delete foundInNamespace->remove(*variable);
+        }
+        else if(record)
+        {
+            delete foundInNamespace->remove(identifier_);
+        }
+        return new NoneValue();
     }
 
     // If nothing is found and we are permitted to create new variables, do so.

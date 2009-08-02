@@ -248,7 +248,8 @@ String Record::asText(const String& prefix, List* lines) const
     // Print aligned.
     for(List::iterator i = allLines.begin(); i != allLines.end(); ++i)
     {
-        os << std::setw(maxLength.x) << i->first << ": " << i->second << "\n";
+        if(i != allLines.begin()) os << "\n";
+        os << std::setw(maxLength.x) << i->first << ": " << i->second;
     }
 
     return os.str();    

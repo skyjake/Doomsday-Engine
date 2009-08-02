@@ -56,9 +56,12 @@ namespace de
 
         /// If missing, create a new record.
         DEFINE_FLAG(NEW_RECORD, 4);
+        
+        /// Identifier must exist and will be deleted.
+        DEFINE_FLAG(DELETE, 5);
 
         /// Must create a new variable.
-        DEFINE_FINAL_FLAG(NOT_IN_SCOPE, 5, Flags);
+        DEFINE_FINAL_FLAG(NOT_IN_SCOPE, 6, Flags);
 
     public:
         NameExpression(const String& identifier, const Flags& flags = BY_VALUE);

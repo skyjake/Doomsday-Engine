@@ -166,6 +166,9 @@ namespace de
 
         /// @c true, if the process has not executed a single statement yet.
         bool firstExecute_;
+        
+        /// Time when execution was started at depth 1.
+        Time startedAt_;
     };
 }
 

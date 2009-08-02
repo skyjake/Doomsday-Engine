@@ -75,7 +75,8 @@ namespace de
         DEFINE_FLAG(LOCAL_NAMESPACE_ONLY, 2);
         DEFINE_FLAG(REQUIRE_NEW_VARIABLE, 3);
         DEFINE_FLAG(ALLOW_NEW_RECORDS, 4);
-        DEFINE_FINAL_FLAG(ALLOW_NEW_VARIABLES, 5, ExpressionFlags);
+        DEFINE_FLAG(DELETE_IDENTIFIER, 5);
+        DEFINE_FINAL_FLAG(ALLOW_NEW_VARIABLES, 6, ExpressionFlags);
         
     public:
         Parser();
@@ -98,6 +99,8 @@ namespace de
                 
         ExpressionStatement* parseRecordStatement();
                 
+        ExpressionStatement* parseDeleteStatement();
+
         PrintStatement* parsePrintStatement();
 
         FunctionStatement* parseFunctionStatement();

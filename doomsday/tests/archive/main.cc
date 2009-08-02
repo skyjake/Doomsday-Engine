@@ -44,10 +44,10 @@ int deng_Main(int argc, char** argv)
         Folder& zip = app.fileSystem().find<Folder>("test.zip");
         
         cout << "Here's test.zip's info:\n";
-        cout << zip.info();
+        cout << zip.info() << "\n";
         
         cout << "Root's info:\n";
-        cout << app.fileSystem().root().info();
+        cout << app.fileSystem().root().info() << "\n";
         
         const File& hello = zip.locate<File>("hello.txt");
         File::Status stats = hello.status();
@@ -68,7 +68,7 @@ int deng_Main(int argc, char** argv)
         arch.add("world.txt", content);
         Writer(zipFile2) << arch;
         cout << "Wrote " << zipFile2.nativePath() << endl;
-        cout << zipFile2.info();
+        cout << zipFile2.info() << "\n";
     }
     catch(const Error& err)
     {

@@ -129,6 +129,10 @@ void Parser::parseStatement(Compound& compound)
     {
         compound.add(parseRecordStatement());
     }
+    else if(firstToken.equals("del"))
+    {
+        compound.add(parseDeleteStatement());
+    }
     else if(firstToken.equals("continue"))
     {
         compound.add(new JumpStatement(JumpStatement::CONTINUE));
@@ -253,6 +257,19 @@ ExpressionStatement* Parser::parseRecordStatement()
     }    
     return new ExpressionStatement(parseExpression(statementRange_.startingFrom(1),
         ALLOW_NEW_RECORDS | LOCAL_NAMESPACE_ONLY));
+}
+
+ExpressionStatement* Parser::parseDeleteStatement()
+{
+    // "del" name-expr
+    
+    if(statementRange_.size() < 2)
+    {
+        throw MissingTokenError("Parser::parseDeleteStatement",
+            "Expected identifier to follow " + statementRange_.firstToken().asText());
+    }    
+    return new ExpressionStatement(parseExpression(statementRange_.startingFrom(1),
+        DELETE_IDENTIFIER | LOCAL_NAMESPACE_ONLY));
 }
 
 PrintStatement* Parser::parsePrintStatement()
@@ -581,17 +598,10 @@ Expression* Parser::parseCallExpression(const TokenRange& nameRange, const Token
     // Check for some built-in methods, which are usable everywhere.
     if(nameRange.size() == 1)
     {
-        if(nameRange.firstToken().equals("len"))
+        BuiltInExpression::Type builtIn = BuiltInExpression::findType(nameRange.firstToken().str());
+        if(builtIn != BuiltInExpression::NONE)
         {
-            return new BuiltInExpression(BuiltInExpression::LENGTH, args.release());
-        }
-        if(nameRange.firstToken().equals("dictkeys"))
-        {
-            return new BuiltInExpression(BuiltInExpression::DICTIONARY_KEYS, args.release());
-        }
-        if(nameRange.firstToken().equals("dictvalues"))
-        {
-            return new BuiltInExpression(BuiltInExpression::DICTIONARY_VALUES, args.release());
+            return new BuiltInExpression(builtIn, args.release());
         }
     }
     auto_ptr<Expression> identifier(parseExpression(nameRange, NAME_BY_REFERENCE));
@@ -674,6 +684,7 @@ Expression* Parser::parseTokenExpression(const TokenRange& range, const Expressi
             if(flags[ALLOW_NEW_RECORDS_BIT]) nameFlags |= NameExpression::NEW_RECORD;
             if(flags[ALLOW_NEW_VARIABLES_BIT]) nameFlags |= NameExpression::NEW_VARIABLE;
             if(flags[REQUIRE_NEW_VARIABLE_BIT]) nameFlags |= NameExpression::NOT_IN_SCOPE;
+            if(flags[DELETE_IDENTIFIER_BIT]) nameFlags |= NameExpression::DELETE;
             
             return new NameExpression(range.token(0).str(), nameFlags);
         }
@@ -735,7 +746,8 @@ Operator Parser::findLowestOperator(const TokenRange& range, TokenRange& leftSid
         if(token.equals("("))
         {
             continueFrom = range.closingBracket(i) + 1;
-            if(previousOp == NONE && i > 0)
+            if((previousOp == NONE || previousOp == INDEX || previousOp == SLICE ||
+                previousOp == PARENTHESIS || previousOp == CALL) && i > 0)
             {
                 // The previous token was not an operator, but there 
                 // was something before this one. It must be a function
@@ -754,7 +766,7 @@ Operator Parser::findLowestOperator(const TokenRange& range, TokenRange& leftSid
         {
             continueFrom = range.closingBracket(i) + 1;
             if((previousOp == NONE || previousOp == PARENTHESIS ||
-                previousOp == INDEX || previousOp == SLICE) && i > 0)
+                previousOp == INDEX || previousOp == SLICE || previousOp == CALL) && i > 0)
             {
                 if(range.between(i + 1, continueFrom - 1).has(":"))
                 {
