@@ -134,9 +134,9 @@ namespace de
          * arrays and dictionaries, which are composed out of modifiable 
          * elements.
          *
-         * @param index  Index of the element.
+         * @param index         Index of the element.
          * @param elementValue  New value for the element. This value will take
-         *               ownership of @a elementValue.
+         *                      ownership of @a elementValue.
          */
         virtual void setElement(const Value& index, Value* elementValue);
 

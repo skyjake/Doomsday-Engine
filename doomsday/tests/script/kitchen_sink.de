@@ -160,19 +160,32 @@ elsif True
     print "From the elsif"
 end
 
-subsection('Assign statement and basic variable usage.')
+subsection('Assign statement.')
 print 'Assigning 10 to i...'
 i = 10
 print '...and i ==', i
 i = 'abc'
 print "Now i ==", i
 
-subsection('Assignment into elements.')
+subsection('Assign statement: assigning into elements.')
 array = [1, 2, 3, 4]
+originalArray = array # by value
 print array
-print 'Replacing element 1...'
 array[1] = 100
 print array
+array[1] = ['a', 'b', 'c']
+print array
+array[1][1] = 'Bee'
+print array
+array[1] = {1:2, 'Three':4}
+print array
+array[1][4] = 'Four'
+print array
+array[2] = array[1]
+print array
+array[2]['Three'] = '300'
+print array
+print originalArray
 
 subsection('while statement.')
 i = 5

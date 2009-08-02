@@ -59,23 +59,24 @@ void AssignStatement::execute(Context& context) const
 
     if(indexCount_ > 0)
     {
-        throw Error("AssignStatement::execute", "Assignment indexing not implemented");
-/*        Value* target = &ref->variable().value();
+        // The value we will be modifying.
+        Value* target = &ref->dereference();
 
         for(dint i = 0; i < indexCount_; ++i)
         {   
-            auto_ptr<Value> index(results->pop()); // Not released -- will be destroyed.
+            // Get the evaluated index.
+            std::auto_ptr<Value> index(results.pop()); // Not released -- will be destroyed.
             if(i < indexCount_ - 1)
             {
-                // Move into a subelement.
-                target = target->element(*index.get());
+                // Switch targets to a subelement.
+                target = &target->element(*index.get());
             }
             else
             {
-                // The last one does the setting.
-                target->setElement(*index.get(), value.get());                    
+                // The setting is done with final value. Ownership transferred.
+                target->setElement(*index.get(), value.release());
             }
-        }*/
+        }
     }
     else
     {
