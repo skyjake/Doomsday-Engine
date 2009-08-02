@@ -293,7 +293,7 @@ print 'After deleting:'
 print myrec
 print "subrec isn't gone, though: len(myrec.subrec) =", len(myrec.subrec)
 
-subsection('Deleting a record pointed to be two variables.')
+subsection('Deleting a record pointed to by two variables.')
 record soonDeleted
 reference = soonDeleted
 del soonDeleted
@@ -325,7 +325,7 @@ print func2b(1), func2b(''), func2b(True), func2b(False)
 subsection('Passing arguments.')
 a = 'At process scope.'
 def func3(a, b, c)
-    print 'There arguments were:', a, b, c
+    print 'The arguments were:', a, b, c
     return b
 end
 print func3(1, 2, 3)
