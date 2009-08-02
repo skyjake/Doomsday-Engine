@@ -23,7 +23,7 @@
 secNum = 0
 subSecNum = 0
 
-def print_section(msg): print "\n" + "." * 78 + "\n%i.%i: %s\n" % [secNum, subSecNum, msg]
+def print_section(msg): print "\n" + "_" * 78 + "\n%i.%i: %s\n" % [secNum, subSecNum, msg]
 
 def begin_section(msg)
     secNum += 1
@@ -63,25 +63,81 @@ print 'dictvalues({1:2, 3:5, 8:13}) =', dictvalues({1:2, 3:5, 8:13})
 # - all the operators
 # - special stuff like / with text
 begin_section('Operators: +')
-print 'Arithmetic:', 1 + 1, -.5 + .5
+print 'Numbers:', 1 + 1, -.5 + .5
 print 'Larger than 32-bit:', 0xffffffffff + 0xffffffffff
 print 'Text:', 'Hello' + 'World'
 print 'Array:', [1, 2, 3] + ['a', 'b', 'c']
 print 'Dictionary:', {1:2, 3:4} + {'a':'b', 'c':'d'}
 
 subsection('Operators: -')
-print 'Arithmetic:', 1 - 1, -.5 - .5
+print 'Numbers:', 1 - 1, -.5 - .5
 print 'Larger than 32-bit:', 0xffffffffff - 0xffffffffff
 print 'Dictionary:', {'a':'A', 'b':'B'} - 'a'
 
+subsection('Operators: *')
+print 'Numbers:', 1 * 2, 2.5 * 4, (2 + 6) * 45
+print 'Text:', 'Word' * 3, 'Longword' * 3.5
+
 subsection('Operators: /')
+print 'Numbers:', 2 / 2, 10 / 4, 1 / 0
 print 'Path concatenation:', 'folder' / 'filename.ext', 'folder/' / 'filename.ext'
+
+subsection('Operators: %')
+print 'Numbers:', 7 % 3
+print 'String formatting:', \
+    '%s with "%3i" arguments. Hex %x, capital hex %X, float %f, precision %.10f.' % [
+        'Formatted', 2, 240, 240, Pi, Pi]
+print 'More formatting: Width and precision: "%10.5f"' % Pi
+
+subsection('Operators: +=, -=, *=, /=, %=')
+a = 1
+print 'a =', a
+print 'a =', a += 3
+print 'a =', a -= 3
+print 'a =', a *= 100
+print 'a =', a /= 10
+print 'a =', a %= 3
+print 'a =', a
+path = '/some/path/'
+print 'path =', path
+print 'path =', path /= 'filename.ext'
+
+subsection('Operators: []')
+transports = ['plains', 'trains', 'automobiles', 'bicycles']
+print transports[2]
+xlat = {'hi': 'hello', 'globe': 'world'}
+print xlat['hi'], xlat['globe']
+matrix = [[1, 2], [3, 4]]
+print 'Two level indexing:', matrix[0][1], matrix[1][1]
+matrix2 = [matrix, matrix]
+print 'Three level indexing:', matrix2[1][1][0], 'from', matrix2
 
 subsection('Operators: slice.')
 fullArray = [1, 2, 3, 4, 5, 6, 7]
-print 'full:', fullArray
-print 'sliced:', fullArray[2:4], fullArray[3:], fullArray[:3]
-print 'nega-sliced:', fullArray[-4:-2]
+print 'Full:', fullArray
+print 'Sliced:', fullArray[2:4], fullArray[3:], fullArray[:3]
+print 'Nega-sliced:', fullArray[-4:-2]
+print 'Reversing:', fullArray[::-1]
+print 'Reverse slice:', fullArray[4:2:-1]
+print 'Stepping:', fullArray[::2], fullArray[1:6:2]
+
+subsection('Operators: not.')
+print not True
+print not False
+print not 'Is this true?'
+
+subsection('Operators: comparisons.')
+print 1 > 3, 1 < 3
+print "hello" > "world", "hello" < "world"
+print 'hello' == 'hello'
+print 2 >= 2, 4 >= 2, 2 <= 2, 4 <= 2
+print True == True
+print True != False
+
+subsection('Operators: in.')
+print 'transports =', transports
+if 'bicycles' in transports: print "Got a bicycle."
+if not 'jet' in transports: print "No jet."
 
 # Section 3: Statements & Compounds
 # ---------------------------------
@@ -110,6 +166,13 @@ i = 10
 print '...and i ==', i
 i = 'abc'
 print "Now i ==", i
+
+subsection('Assignment into elements.')
+array = [1, 2, 3, 4]
+print array
+print 'Replacing element 1...'
+array[1] = 100
+print array
 
 subsection('while statement.')
 i = 5

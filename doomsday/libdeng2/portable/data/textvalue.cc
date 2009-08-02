@@ -106,19 +106,22 @@ void TextValue::multiply(const Value& value)
         throw ArithmeticError("Value::multiply", "Value cannot be multiplied");
     }
     
-    dint factor = dint(std::floor(other->asNumber()));
+    ddouble factor = other->asNumber();
     
-    if(factor < 1)
+    if(factor <= 0)
     {
         value_.clear();
     }
     else
     {
         ostringstream os;
-        while(factor-- > 0)
+        while(factor-- > 1)
         {
             os << value_;
         }
+        // The remainder.
+        dint remain = dint(std::floor((factor + 1) * value_.size() + .5));
+        os << value_.substr(0, remain);
         value_ = os.str();
     }
 }

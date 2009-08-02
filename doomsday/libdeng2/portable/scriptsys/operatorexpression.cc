@@ -200,7 +200,6 @@ Value* OperatorExpression::evaluate(Evaluator& evaluator) const
             break;
 
         case INDEX:
-            std::cerr << "lval:" << leftValue->asText() << ", rval:" << rightValue->asText() << "\n";
             result = leftValue->duplicateElement(*rightValue);
             break;
 

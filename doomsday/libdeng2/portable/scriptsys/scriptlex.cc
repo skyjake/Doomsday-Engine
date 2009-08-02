@@ -68,7 +68,7 @@ duint ScriptLex::getStatement(TokenBuffer& output)
             {
                 // A statement ending character? Open brackets prevent the statement
                 // from ending here.
-                if(Vector3i(bracketLevel).min() > 0)
+                if(Vector3i(bracketLevel).max() > 0)
                     continue;
                 else
                     break;
