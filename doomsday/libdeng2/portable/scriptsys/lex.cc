@@ -144,25 +144,25 @@ duint Lex::countLineStartSpace() const
 
 bool Lex::isWhite(duchar c)
 {
-    return std::isspace(c);
+    return std::isspace(c) != 0;
 }
 
 bool Lex::isAlpha(duchar c)
 {
-    return std::isalpha(c);   
+    return std::isalpha(c) != 0;   
 }
 
 bool Lex::isNumeric(duchar c)
 {
-    return std::isdigit(c);
+    return std::isdigit(c) != 0;
 }
 
 bool Lex::isHexNumeric(duchar c)
 {
-    return std::isdigit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+    return isNumeric(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
 
 bool Lex::isAlphaNumeric(duchar c)
 {
-    return std::isalnum(c) || c == '_' || c == '@';
+    return std::isalnum(c) != 0 || c == '_' || c == '@';
 }

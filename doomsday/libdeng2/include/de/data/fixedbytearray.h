@@ -30,7 +30,7 @@ namespace de
      *
      * @ingroup data
      */
-    class FixedByteArray : public ByteSubArray
+    class LIBDENG2_API FixedByteArray : public ByteSubArray
     {
     public:
         /**

@@ -39,7 +39,7 @@ namespace de
      *
      * @ingroup script
      */
-    class Evaluator
+    class LIBDENG2_API Evaluator
     {
     public:
         /// Result is of wrong type. @ingroup errors

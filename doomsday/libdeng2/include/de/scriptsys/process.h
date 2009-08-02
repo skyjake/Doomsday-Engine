@@ -39,7 +39,7 @@ namespace de
      * 
      * @ingroup script
      */
-    class Process
+    class LIBDENG2_API Process
     {
     public:
         /// The process is running while an operation is attempted that requires the 

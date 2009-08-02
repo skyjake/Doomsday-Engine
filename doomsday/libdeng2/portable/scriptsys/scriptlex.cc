@@ -186,7 +186,7 @@ duint ScriptLex::getStatement(TokenBuffer& output)
                 "Character '" + String(1, c) + "' was unexpected");
         }
     }
-    catch(const OutOfInputError& error)
+    catch(const OutOfInputError&)
     {
         // Open brackets left?
         for(int i = 0; i < MAX_BRACKETS; ++i)
@@ -437,7 +437,7 @@ String ScriptLex::unescapeStringToken(const TokenBuffer::Token& token)
                 std::istringstream is(std::string(reinterpret_cast<const char*>(ptr + 1), 2));
                 duint code = ' ';
                 is >> std::setbase(16) >> code;
-                c = code;
+                c = duchar(code);
                 ptr += 2; 
             }
             else
@@ -471,7 +471,7 @@ ddouble ScriptLex::tokenToNumber(const TokenBuffer::Token& token)
     {
         duint64 number = 0;
         is >> std::hex >> number;
-        return number;
+        return ddouble(number);
     }
     else
     {

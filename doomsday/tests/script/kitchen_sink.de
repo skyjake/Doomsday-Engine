@@ -106,7 +106,7 @@ print 'path =', path
 print 'path =', path /= 'filename.ext'
 
 subsection('Operators: []')
-transports = ['plains', 'trains', 'automobiles', 'bicycles']
+transports = ['planes', 'trains', 'automobiles', 'bicycles']
 print transports[2]
 xlat = {'hi': 'hello', 'globe': 'world'}
 print xlat['hi'], xlat['globe']

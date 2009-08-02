@@ -33,6 +33,7 @@
 
 #ifdef WIN32
 #   define strcasecmp _stricmp
+#   define strncasecmp _strnicmp
 #endif
 
 using namespace de;
