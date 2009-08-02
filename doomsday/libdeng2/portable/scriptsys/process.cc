@@ -158,7 +158,7 @@ void Process::execute(const Time::Delta& timeBox)
             {
                 finish();
             }
-            if(false && startedAt_.since() > MAX_EXECUTION_TIME)
+            if(startedAt_.since() > MAX_EXECUTION_TIME)
             {
                 /// @throw HangError  Execution takes too long.
                 throw HangError("Process::execute", 
