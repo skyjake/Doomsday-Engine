@@ -161,6 +161,7 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
     default:
         assert(false);
     }
+    return NULL;
 }
 
 BuiltInExpression::Type BuiltInExpression::findType(const String& identifier)

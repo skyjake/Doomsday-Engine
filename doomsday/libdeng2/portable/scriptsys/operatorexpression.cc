@@ -262,7 +262,7 @@ Value* OperatorExpression::performSlice(Value* leftValue, Value* rightValue) con
     dint step = 1;
     if(args->size() >= 3)
     {
-        step = args->elements()[2]->asNumber();
+        step = dint(args->elements()[2]->asNumber());
         if(!step)
         {
             throw SliceError("OperatorExpression::evaluate",

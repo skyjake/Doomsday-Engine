@@ -1,0 +1,6 @@
+vcconfig.bat
+*.txt
+*.dll
+*.pk3
+bin
+obj

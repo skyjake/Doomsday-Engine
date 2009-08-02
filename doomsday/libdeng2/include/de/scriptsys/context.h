@@ -33,7 +33,7 @@ namespace de
      *
      * @ingroup script
      */
-    class Context
+    class LIBDENG2_API Context
     {
     public:
         /// Attempting a jump when there is no suitable target (continue or break). @ingroup errors
