@@ -20,6 +20,8 @@
 #include "de/RecordValue"
 #include "de/TextValue"
 #include "de/RefValue"
+#include "de/NoneValue"
+#include "de/Writer"
 #include "de/math.h"
 
 using namespace de;
@@ -128,8 +130,8 @@ dint RecordValue::compare(const Value& value) const
 
 void RecordValue::operator >> (Writer& to) const
 {
-    // Should never happen.
-    assert(false);
+    // Record references can't be serialized.
+    to << NoneValue();
 }
 
 void RecordValue::operator << (Reader& from)

@@ -22,9 +22,10 @@
 
 import sections
 
-# Section 1: Basic Expressions
-# ----------------------------
-sections.begin('Basic types (number, text, array, dictionary).')
+# ---------------------------------------------------------------------------
+sections.begin('BASIC EXPRESSIONS')
+
+sections.subsection('Basic types (number, text, array, dictionary).')
 print 5, 5.5, -3.141592657
 print 0x100, 0X123
 print "Hello", 'World'
@@ -47,11 +48,10 @@ print 'dictvalues({1:2, 3:5, 8:13}) =', dictvalues({1:2, 3:5, 8:13})
 sections.subsection('Built-in functions: Text(), Number().')
 print Text(123), Number("123")
 
-# Section 2: Operator Expressions
-# -------------------------------
-# - all the operators
-# - special stuff like / with text
-sections.begin('Operators: +')
+# ---------------------------------------------------------------------------
+sections.begin('OPERATOR EXPRESSIONS')
+
+sections.subsection('Operators: +')
 print 'Numbers:', 1 + 1, -.5 + .5
 print 'Larger than 32-bit:', 0xffffffffff + 0xffffffffff
 print 'Text:', 'Hello' + 'World'
@@ -128,9 +128,10 @@ print 'transports =', transports
 if 'bicycles' in transports: print "Got a bicycle."
 if not 'jet' in transports: print "No jet."
 
-# Section 3: Statements & Compounds
-# ---------------------------------
-sections.begin('if/elsif/else statements.')
+# ---------------------------------------------------------------------------
+sections.begin('STATEMENTS & COMPOUNDS')
+
+sections.subsection('if/elsif/else statements.')
 if True
     print 'Regular compound.'
 else
@@ -230,9 +231,10 @@ for i in ['planes', 'trains', 'automobiles']
     print i, 'are cool!'
 end
 
-# Section 4: Records
-# ------------------
-sections.begin('Creating a record.')
+# ---------------------------------------------------------------------------
+sections.begin('RECORDS')
+
+sections.subsection('Creating a record.')
 record myrec
 print len(myrec)
 
@@ -287,9 +289,10 @@ del soonDeleted
 #print reference
 del reference
 
-# Section 5: Functions
-# --------------------
-sections.begin('Defining a function (empty body).')
+# ---------------------------------------------------------------------------
+sections.begin('FUNCTIONS')
+
+sections.subsection('Defining a function (empty body).')
 def func1(): return
 func1()
 def func1b()
@@ -379,10 +382,26 @@ testfun()()
 ar = [testfun]
 ar[0]()()
 
-# Section 6: Scopes
-# - accessing variables in different scopes
-# - assigning to variables =, :=
-sections.begin('Built-in function locals() returns the local namespace as a record.')
+# ---------------------------------------------------------------------------
+sections.begin('SCOPES')
+
+sections.subsection('Global assignment with :=.')
+a = 1
+print 'a =', a
+def normalAssign()
+    a = 2
+    print 'in normalAssign(), a =', a
+end
+normalAssign()
+print 'a =', a
+def globalAssign()
+    a := 2
+    print 'in globalAssign(), a =', a
+end
+globalAssign()
+print 'a =', a
+
+sections.subsection('Built-in function locals() returns the local namespace as a record.')
 print 'At global level:'
 print locals()
 print 
@@ -395,10 +414,11 @@ func8()
 
 sections.subsection('Importing modules: built-in module Config.')
 import Config
-print locals()
+print "Here's the Config:"
+print Config
 
-# Section 7: Script Return Value
-# ------------------------------
-sections.begin('Returning value from the script: the final expression.')
+# ---------------------------------------------------------------------------
+sections.begin('SCRIPT RETURN VALUE')
 
+sections.subsection('Returning value from the script: the final expression.')
 "I am the return value."

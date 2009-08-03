@@ -19,7 +19,9 @@
 secNum = 0
 subSecNum = 0
 
-def printSection(msg): print "\n" + "_" * 78 + "\n%i.%i: %s\n" % [secNum, subSecNum, msg]
+def printSection(msg): print "\n" + "=" * 78 + "\nSECTION %i: %s" % [secNum, msg]
+
+def printSubsection(msg): print "\n" + "_" * 78 + "\n%i.%i: %s\n" % [secNum, subSecNum, msg]
 
 def begin(msg)
     secNum += 1
@@ -29,5 +31,5 @@ end
 
 def subsection(msg)
     subSecNum += 1
-    printSection(msg)
+    printSubsection(msg)
 end
