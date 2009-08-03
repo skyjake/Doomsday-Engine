@@ -177,6 +177,15 @@ array[2]['Three'] = '300'
 print array
 print originalArray
 
+sections.subsection('Assign statement: weak assignment with ?=.')
+print "'z' in locals():", 'z' in locals()
+z ?= 3
+print "'z' in locals():", 'z' in locals()
+print 'z =', z
+print 'Trying weak assignment: z ?= 10'
+z ?= 10
+print 'z =', z
+
 sections.subsection('Delete statement: deleting identifiers.')
 def funky()
     i = 1

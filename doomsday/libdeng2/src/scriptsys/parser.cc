@@ -165,7 +165,8 @@ void Parser::parseStatement(Compound& compound)
     {
         compound.add(parsePrintStatement());
     }
-    else if(statementRange_.hasBracketless("=") || statementRange_.hasBracketless(":="))
+    else if(statementRange_.hasBracketless("=") || statementRange_.hasBracketless(":=") ||
+        statementRange_.hasBracketless("?="))
     {
         compound.add(parseAssignStatement());
     }
@@ -361,8 +362,13 @@ AssignStatement* Parser::parseAssignStatement()
     dint pos = statementRange_.find("=");
     if(pos < 0)
     {
-        pos = statementRange_.find(":=");
         flags &= ~LOCAL_NAMESPACE_ONLY;
+        pos = statementRange_.find(":=");
+        if(pos < 0)
+        {
+            pos = statementRange_.find("?=");
+            flags |= THROWAWAY_IF_IN_SCOPE;
+        }
     }
     
     // Has indices been specified?
@@ -379,6 +385,12 @@ AssignStatement* Parser::parseAssignStatement()
                 statementRange_.between(startPos + 1, bracketPos));
             indices.push_back(indexExpr);
             bracketPos = nameEndPos - 1;
+        }
+        
+        if(indices.size() > 0 && flags[THROWAWAY_IF_IN_SCOPE_BIT])
+        {
+            throw SyntaxError("Parser::parseAssignStatement",
+                "Weak assignment cannot be used with indices");
         }
 
         auto_ptr<Expression> lValue(parseExpression(statementRange_.endingTo(nameEndPos), flags));
@@ -704,6 +716,7 @@ Expression* Parser::parseTokenExpression(const TokenRange& range, const Expressi
             if(flags[ALLOW_NEW_VARIABLES_BIT]) nameFlags |= NameExpression::NEW_VARIABLE;
             if(flags[REQUIRE_NEW_IDENTIFIER_BIT]) nameFlags |= NameExpression::NOT_IN_SCOPE;
             if(flags[IMPORT_NAMESPACE_BIT]) nameFlags |= NameExpression::IMPORT;
+            if(flags[THROWAWAY_IF_IN_SCOPE_BIT]) nameFlags |= NameExpression::THROWAWAY_IF_IN_SCOPE;
             if(flags[DELETE_IDENTIFIER_BIT]) nameFlags |= NameExpression::DELETE;
             
             return new NameExpression(range.token(0).str(), nameFlags);

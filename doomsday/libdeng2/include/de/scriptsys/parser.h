@@ -77,7 +77,8 @@ namespace de
         DEFINE_FLAG(ALLOW_NEW_RECORDS, 4);
         DEFINE_FLAG(DELETE_IDENTIFIER, 5);
         DEFINE_FLAG(IMPORT_NAMESPACE, 6);
-        DEFINE_FINAL_FLAG(ALLOW_NEW_VARIABLES, 7, ExpressionFlags);
+        DEFINE_FLAG(THROWAWAY_IF_IN_SCOPE, 7);
+        DEFINE_FINAL_FLAG(ALLOW_NEW_VARIABLES, 8, ExpressionFlags);
         
     public:
         Parser();

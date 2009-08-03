@@ -63,8 +63,12 @@ namespace de
         /// Imports an external namespace into the local namespace (as a reference).
         DEFINE_FLAG(IMPORT, 6);
 
+        /// If the identifier is in scope, returns a reference to the process's 
+        /// throwaway variable.
+        DEFINE_FLAG(THROWAWAY_IF_IN_SCOPE, 7);
+
         /// Must create a new variable.
-        DEFINE_FINAL_FLAG(NOT_IN_SCOPE, 7, Flags);
+        DEFINE_FINAL_FLAG(NOT_IN_SCOPE, 8, Flags);
 
     public:
         NameExpression(const String& identifier, const Flags& flags = BY_VALUE);

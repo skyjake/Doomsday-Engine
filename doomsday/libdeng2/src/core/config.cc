@@ -20,11 +20,28 @@
 #include "de/Config"
 #include "de/App"
 #include "de/Folder"
+#include "de/ArrayValue"
+#include "de/NumberValue"
 
 using namespace de;
 
 Config::Config() : configPath_("/config")
 {
+    // Current version.
+    std::auto_ptr<ArrayValue> version(new ArrayValue());
+    version->add(new NumberValue(LIBDENG2_MAJOR_VERSION));
+    version->add(new NumberValue(LIBDENG2_MINOR_VERSION));
+    version->add(new NumberValue(LIBDENG2_PATCHLEVEL));
+
+    // If we already have a saved copy of the config, read it.
+    
+    // If the saved config is from a different version, rerun the script.
+    // Otherwise, we're done.
+        
+    // The version of libdeng2 is automatically included.
+    config_.globals().add(new Variable("__version__", version.release(), 
+        Variable::ARRAY | Variable::READ_ONLY));
+
     // Read the configuration. Everything under the config path.
     Folder& f = App::fileSystem().getFolder(configPath_);
     for(Folder::Contents::const_iterator i = f.contents().begin(); i != f.contents().end(); ++i)
