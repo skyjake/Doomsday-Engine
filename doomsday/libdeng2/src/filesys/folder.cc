@@ -62,6 +62,85 @@ void Folder::clear()
     contents_.clear();
 }
 
+void Folder::populate()
+{
+    // Prune the existing files first.
+    for(Contents::iterator i = contents_.begin(); i != contents_.end(); )
+    {
+        // By default we will NOT prune if there are no feeds attached to the folder.
+        // In this case the files were probably created manually, so we shouldn't
+        // touch them.
+        bool mustPrune = false;
+
+        File* file = i->second;
+        
+        // If the file has a designated feed, ask it about pruning.
+        if(file->originFeed() && file->originFeed()->prune(*file))
+        {
+            std::cout << "Pruning " << file->path() << "\n";
+            mustPrune = true;
+        }
+        else if(!file->originFeed())
+        {
+            // There is no designated feed, ask all feeds of this folder.
+            // If even one of the feeds thinks that the file is out of date,
+            // it will be pruned.
+            for(Feeds::iterator f = feeds_.begin(); f != feeds_.end(); ++f)
+            {
+                if((*f)->prune(*file))
+                {
+                    std::cout << "Pruning " << file->path() << "\n";
+                    mustPrune = true;
+                    break;
+                }
+            }
+        }
+
+        if(mustPrune)
+        {
+            // It needs to go.
+            contents_.erase(i++);
+            delete file;
+        }
+        else
+        {
+            ++i;
+        }
+    }
+    
+    // Populate with new/updated ones.
+    for(Feeds::reverse_iterator i = feeds_.rbegin(); i != feeds_.rend(); ++i)
+    {
+        (*i)->populate(*this);
+    }
+    
+    // Call populate on subfolders.
+    for(Contents::iterator i = contents_.begin(); i != contents_.end(); ++i)
+    {
+        Folder* folder = dynamic_cast<Folder*>(i->second);
+        if(folder)
+        {
+            folder->populate();
+        }
+    }
+}
+
+const Folder::Contents& Folder::contents() const
+{
+    return contents_;
+}
+
+void Folder::attach(Feed* feed)
+{
+    feeds_.push_back(feed);
+}
+
+Feed* Folder::detach(Feed& feed)
+{
+    feeds_.remove(&feed);
+    return &feed;
+}
+
 File& Folder::newFile(const String& name)
 {
     // The first feed able to create a file will get the honors.
@@ -170,78 +249,6 @@ File* Folder::tryLocateFile(const String& path) const
     
     // Dead end.
     return 0;
-}
-
-void Folder::attach(Feed* feed)
-{
-    feeds_.push_back(feed);
-}
-
-Feed* Folder::detach(Feed& feed)
-{
-    feeds_.remove(&feed);
-    return &feed;
-}
-
-void Folder::populate()
-{
-    // Prune the existing files first.
-    for(Contents::iterator i = contents_.begin(); i != contents_.end(); )
-    {
-        // By default we will prune if there are no feeds left attached to the folder.
-        bool mustPrune = feeds_.empty();
-
-        File* file = i->second;
-        
-        // If the file has a designated feed, ask it about pruning.
-        if(file->originFeed() && file->originFeed()->prune(*file))
-        {
-            std::cout << "Pruning " << file->path() << "\n";
-            mustPrune = true;
-        }
-        else if(!file->originFeed())
-        {
-            // There is no designated feed, ask all feeds of this folder.
-            // If even one of the feeds thinks that the file is out of date,
-            // it will be pruned.
-            for(Feeds::iterator f = feeds_.begin(); f != feeds_.end(); ++f)
-            {
-                if((*f)->prune(*file))
-                {
-                    std::cout << "Pruning " << file->path() << "\n";
-                    mustPrune = true;
-                    break;
-                }
-            }
-        }
-
-        if(mustPrune)
-        {
-            // It needs to go.
-            contents_.erase(i++);
-            delete file;
-        }
-        else
-        {
-            ++i;
-        }
-    }
-    
-    // Populate with new/updated ones.
-    for(Feeds::reverse_iterator i = feeds_.rbegin(); i != feeds_.rend(); ++i)
-    {
-        (*i)->populate(*this);
-    }
-    
-    // Call populate on subfolders.
-    for(Contents::iterator i = contents_.begin(); i != contents_.end(); ++i)
-    {
-        Folder* folder = dynamic_cast<Folder*>(i->second);
-        if(folder)
-        {
-            folder->populate();
-        }
-    }
 }
 
 Folder::Accessor::Accessor(Folder& owner, Property prop) : owner_(owner), prop_(prop)

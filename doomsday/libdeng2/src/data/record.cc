@@ -249,7 +249,20 @@ String Record::asText(const String& prefix, List* lines) const
     for(List::iterator i = allLines.begin(); i != allLines.end(); ++i)
     {
         if(i != allLines.begin()) os << "\n";
-        os << std::setw(maxLength.x) << i->first << ": " << i->second;
+        os << std::setw(maxLength.x) << i->first << ": ";
+        // Print the value line by line.
+        String::size_type pos = 0;
+        while(pos != String::npos)
+        {
+            String::size_type next = i->second.find('\n', pos);
+            if(pos > 0)
+            {
+                os << std::setw(maxLength.x) << "" << "  ";
+            }
+            os << i->second.substr(pos, next != String::npos? next - pos + 1 : next);
+            pos = next;
+            if(pos != String::npos) pos++;
+        }
     }
 
     return os.str();    

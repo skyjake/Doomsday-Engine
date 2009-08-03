@@ -73,10 +73,11 @@ namespace de
         DEFINE_FLAG(NAME_BY_VALUE, 0);
         DEFINE_FLAG(NAME_BY_REFERENCE, 1);
         DEFINE_FLAG(LOCAL_NAMESPACE_ONLY, 2);
-        DEFINE_FLAG(REQUIRE_NEW_VARIABLE, 3);
+        DEFINE_FLAG(REQUIRE_NEW_IDENTIFIER, 3);
         DEFINE_FLAG(ALLOW_NEW_RECORDS, 4);
         DEFINE_FLAG(DELETE_IDENTIFIER, 5);
-        DEFINE_FINAL_FLAG(ALLOW_NEW_VARIABLES, 6, ExpressionFlags);
+        DEFINE_FLAG(IMPORT_NAMESPACE, 6);
+        DEFINE_FINAL_FLAG(ALLOW_NEW_VARIABLES, 7, ExpressionFlags);
         
     public:
         Parser();
@@ -97,6 +98,8 @@ namespace de
                 
         ForStatement* parseForStatement();
                 
+        ExpressionStatement* parseImportStatement();
+                
         ExpressionStatement* parseRecordStatement();
                 
         ExpressionStatement* parseDeleteStatement();
@@ -110,7 +113,8 @@ namespace de
         ExpressionStatement* parseExpressionStatement();
         
         /// Parse a range of tokens as a comma-separated argument list:
-        ArrayExpression* parseList(const TokenRange& range, const char* separator = ",");
+        ArrayExpression* parseList(const TokenRange& range, const char* separator = ",",
+            const ExpressionFlags& flags = NAME_BY_VALUE);
 
         /// Parse a range of tokens as an operator-based expression.
         Expression* parseExpression(const TokenRange& range, 

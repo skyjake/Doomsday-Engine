@@ -125,7 +125,11 @@ void Parser::parseStatement(Compound& compound)
     }
     
     // Statements without a compound (must advance to next statement manually).
-    if(firstToken.equals("record"))
+    if(firstToken.equals("import"))
+    {
+        compound.add(parseImportStatement());
+    }
+    else if(firstToken.equals("record"))
     {
         compound.add(parseRecordStatement());
     }
@@ -246,9 +250,23 @@ ForStatement* Parser::parseForStatement()
     return statement.release();
 }
 
+ExpressionStatement* Parser::parseImportStatement()
+{
+    // "import" name-expr
+    if(statementRange_.size() < 2)
+    {
+        throw MissingTokenError("Parser::parseImportStatement",
+            "Expected identifier to follow " + statementRange_.firstToken().asText());
+    }    
+    return new ExpressionStatement(parseList(statementRange_.startingFrom(1), ",",
+        IMPORT_NAMESPACE | ALLOW_NEW_RECORDS | REQUIRE_NEW_IDENTIFIER | LOCAL_NAMESPACE_ONLY));
+}
+
 ExpressionStatement* Parser::parseRecordStatement()
 {
     // "record" name-expr
+
+    /// @todo  Use parseList() as in parseImportStatement().
     
     if(statementRange_.size() < 2)
     {
@@ -299,7 +317,7 @@ FunctionStatement* Parser::parseFunctionStatement()
     // The function must have a name that is not already in use in the scope.
     auto_ptr<FunctionStatement> statement(new FunctionStatement(
         parseExpression(statementRange_.between(1, pos), 
-            LOCAL_NAMESPACE_ONLY | NAME_BY_REFERENCE | ALLOW_NEW_VARIABLES | REQUIRE_NEW_VARIABLE)));
+            LOCAL_NAMESPACE_ONLY | NAME_BY_REFERENCE | ALLOW_NEW_VARIABLES | REQUIRE_NEW_IDENTIFIER)));
 
     // Collect the argument names.
     TokenRange argRange = statementRange_.between(pos + 1, statementRange_.closingBracket(pos));
@@ -436,7 +454,8 @@ Expression* Parser::parseConditionalCompound(Compound& compound, const CompoundF
     return condition.release();
 }
 
-ArrayExpression* Parser::parseList(const TokenRange& range, const char* separator)
+ArrayExpression* Parser::parseList(const TokenRange& range, const char* separator, 
+    const ExpressionFlags& flags)
 {
     auto_ptr<ArrayExpression> exp(new ArrayExpression);
     if(range.size() > 0)
@@ -445,7 +464,7 @@ ArrayExpression* Parser::parseList(const TokenRange& range, const char* separato
         TokenRange delim = range.undefinedRange();
         while(range.getNextDelimited(separator, delim))
         {
-            exp->add(parseExpression(delim));
+            exp->add(parseExpression(delim, flags));
         }
     }
     return exp.release();
@@ -683,7 +702,8 @@ Expression* Parser::parseTokenExpression(const TokenRange& range, const Expressi
             if(flags[LOCAL_NAMESPACE_ONLY_BIT]) nameFlags |= NameExpression::LOCAL_ONLY;
             if(flags[ALLOW_NEW_RECORDS_BIT]) nameFlags |= NameExpression::NEW_RECORD;
             if(flags[ALLOW_NEW_VARIABLES_BIT]) nameFlags |= NameExpression::NEW_VARIABLE;
-            if(flags[REQUIRE_NEW_VARIABLE_BIT]) nameFlags |= NameExpression::NOT_IN_SCOPE;
+            if(flags[REQUIRE_NEW_IDENTIFIER_BIT]) nameFlags |= NameExpression::NOT_IN_SCOPE;
+            if(flags[IMPORT_NAMESPACE_BIT]) nameFlags |= NameExpression::IMPORT;
             if(flags[DELETE_IDENTIFIER_BIT]) nameFlags |= NameExpression::DELETE;
             
             return new NameExpression(range.token(0).str(), nameFlags);

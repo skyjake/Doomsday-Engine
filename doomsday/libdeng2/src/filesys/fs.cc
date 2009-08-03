@@ -26,9 +26,7 @@
 using namespace de;
 
 FS::FS()
-{
-    root_.attach(new DirectoryFeed("."));
-}
+{}
 
 FS::~FS()
 {}

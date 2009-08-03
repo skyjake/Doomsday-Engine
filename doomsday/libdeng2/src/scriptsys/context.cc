@@ -23,12 +23,27 @@
 
 using namespace de;
 
-Context::Context(Type type, Process* owner)
-    : type_(type), owner_(owner), evaluator_(*this)
-{}
+Context::Context(Type type, Process* owner, Record* globals)
+    : type_(type), owner_(owner), evaluator_(*this), names_(globals)
+{
+    if(globals)
+    {
+        assert(type_ == GLOBAL_NAMESPACE);
+    }
+    if(!names_)
+    {
+        assert(type_ != GLOBAL_NAMESPACE);
+        // Create a private empty namespace.
+        names_ = new Record();
+    }
+}
 
 Context::~Context()
 {
+    if(type_ != GLOBAL_NAMESPACE)
+    {
+        delete names_;
+    }        
     reset();
 }
 
@@ -39,7 +54,7 @@ Evaluator& Context::evaluator()
 
 Record& Context::names() 
 {
-    return names_;
+    return *names_;
 }
 
 void Context::start(const Statement* statement, const Statement* fallback, 

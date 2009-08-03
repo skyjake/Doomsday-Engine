@@ -20,25 +20,11 @@
 # This script tests *all* features of the Doomsday Script Language.
 # Behold its power and glory.
 
-secNum = 0
-subSecNum = 0
-
-def printSection(msg): print "\n" + "_" * 78 + "\n%i.%i: %s\n" % [secNum, subSecNum, msg]
-
-def beginSection(msg)
-    secNum += 1
-    subSecNum := 0
-    printSection(msg)
-end
-
-def subsection(msg)
-    subSecNum += 1
-    printSection(msg)
-end
+import sections
 
 # Section 1: Basic Expressions
 # ----------------------------
-beginSection('Basic types (number, text, array, dictionary).')
+sections.begin('Basic types (number, text, array, dictionary).')
 print 5, 5.5, -3.141592657
 print 0x100, 0X123
 print "Hello", 'World'
@@ -48,51 +34,51 @@ print [1, 2, 3]
 print [1, [2, 3], 4]
 print {'a': 'b', 1: ['b', {5:6, 6:7}], ['array', 'as', 'key']: 'oh my'}
 
-subsection('Constants: True, False, None, Pi.')
+sections.subsection('Constants: True, False, None, Pi.')
 print True, False, None, Pi
 
-subsection('Built-in functions: len(), dictkeys(), dictvalues().')
+sections.subsection('Built-in functions: len(), dictkeys(), dictvalues().')
 print 'len("abcd") =', len("abcd")
 print 'len([1, 2, 3, 4]) =', len([1, 2, 3, 4])
 print 'len({1:2, 3:5, 8:13}) =', len({1:2, 3:5, 8:13})
 print 'dictkeys({1:2, 3:5, 8:13}) =', dictkeys({1:2, 3:5, 8:13})
 print 'dictvalues({1:2, 3:5, 8:13}) =', dictvalues({1:2, 3:5, 8:13})
 
-subsection('Built-in functions: Text(), Number().')
+sections.subsection('Built-in functions: Text(), Number().')
 print Text(123), Number("123")
 
 # Section 2: Operator Expressions
 # -------------------------------
 # - all the operators
 # - special stuff like / with text
-beginSection('Operators: +')
+sections.begin('Operators: +')
 print 'Numbers:', 1 + 1, -.5 + .5
 print 'Larger than 32-bit:', 0xffffffffff + 0xffffffffff
 print 'Text:', 'Hello' + 'World'
 print 'Array:', [1, 2, 3] + ['a', 'b', 'c']
 print 'Dictionary:', {1:2, 3:4} + {'a':'b', 'c':'d'}
 
-subsection('Operators: -')
+sections.subsection('Operators: -')
 print 'Numbers:', 1 - 1, -.5 - .5
 print 'Larger than 32-bit:', 0xffffffffff - 0xffffffffff
 print 'Dictionary:', {'a':'A', 'b':'B'} - 'a'
 
-subsection('Operators: *')
+sections.subsection('Operators: *')
 print 'Numbers:', 1 * 2, 2.5 * 4, (2 + 6) * 45
 print 'Text:', 'Word' * 3, 'Longword' * 3.5
 
-subsection('Operators: /')
+sections.subsection('Operators: /')
 print 'Numbers:', 2 / 2, 10 / 4, 1 / 0
 print 'Path concatenation:', 'folder' / 'filename.ext', 'folder/' / 'filename.ext'
 
-subsection('Operators: %')
+sections.subsection('Operators: %')
 print 'Numbers:', 7 % 3
 print 'String formatting:', \
     '%s with "%3i" arguments. Hex %x, capital hex %X, float %f, precision %.10f.' % [
         'Formatted', 2, 240, 240, Pi, Pi]
 print 'More formatting: Width and precision: "%10.5f"' % Pi
 
-subsection('Operators: +=, -=, *=, /=, %=')
+sections.subsection('Operators: +=, -=, *=, /=, %=')
 a = 1
 print 'a =', a
 print 'a =', a += 3
@@ -105,7 +91,7 @@ path = '/some/path/'
 print 'path =', path
 print 'path =', path /= 'filename.ext'
 
-subsection('Operators: []')
+sections.subsection('Operators: []')
 transports = ['planes', 'trains', 'automobiles', 'bicycles']
 print transports[2]
 xlat = {'hi': 'hello', 'globe': 'world'}
@@ -115,7 +101,7 @@ print 'Two level indexing:', matrix[0][1], matrix[1][1]
 matrix2 = [matrix, matrix]
 print 'Three level indexing:', matrix2[1][1][0], 'from', matrix2
 
-subsection('Operators: slice.')
+sections.subsection('Operators: slice.')
 fullArray = [1, 2, 3, 4, 5, 6, 7]
 print 'Full:', fullArray
 print 'Sliced:', fullArray[2:4], fullArray[3:], fullArray[:3]
@@ -124,12 +110,12 @@ print 'Reversing:', fullArray[::-1]
 print 'Reverse slice:', fullArray[4:2:-1]
 print 'Stepping:', fullArray[::2], fullArray[1:6:2]
 
-subsection('Operators: not.')
+sections.subsection('Operators: not.')
 print not True
 print not False
 print not 'Is this true?'
 
-subsection('Operators: comparisons.')
+sections.subsection('Operators: comparisons.')
 print 1 > 3, 1 < 3
 print "hello" > "world", "hello" < "world"
 print 'hello' == 'hello'
@@ -137,14 +123,14 @@ print 2 >= 2, 4 >= 2, 2 <= 2, 4 <= 2
 print True == True
 print True != False
 
-subsection('Operators: in.')
+sections.subsection('Operators: in.')
 print 'transports =', transports
 if 'bicycles' in transports: print "Got a bicycle."
 if not 'jet' in transports: print "No jet."
 
 # Section 3: Statements & Compounds
 # ---------------------------------
-beginSection('if/elsif/else statements.')
+sections.begin('if/elsif/else statements.')
 if True
     print 'Regular compound.'
 else
@@ -163,14 +149,14 @@ elsif True
     print "From the elsif"
 end
 
-subsection('Assign statement.')
+sections.subsection('Assign statement.')
 print 'Assigning 10 to i...'
 i = 10
 print '...and i ==', i
 i = 'abc'
 print "Now i ==", i
 
-subsection('Assign statement: assigning into elements.')
+sections.subsection('Assign statement: assigning into elements.')
 array = [1, 2, 3, 4]
 originalArray = array # by value
 print array
@@ -190,7 +176,7 @@ array[2]['Three'] = '300'
 print array
 print originalArray
 
-subsection('Delete statement: deleting identifiers.')
+sections.subsection('Delete statement: deleting identifiers.')
 def funky()
     i = 1
     k = 2
@@ -202,14 +188,14 @@ end
 funky()
 del funky
 
-subsection('while statement.')
+sections.subsection('while statement.')
 i = 5
 while i > 0
     print 'Still looping because %i > 0' % i
     i -= 1
 end
 
-subsection('break statement.')
+sections.subsection('break statement.')
 while True
     print "I won't stay here."
     break
@@ -225,13 +211,13 @@ while True
 end
 print "Guess again!"
 
-subsection('for statement.')
+sections.subsection('for statement.')
 for i in ['planes', 'trains', 'automobiles']
     print "I would like:", i
 end
 print 'Value of i after the "for" loop is', i
 
-subsection('continue statement.')
+sections.subsection('continue statement.')
 i = 3
 while i > 0
     print 'i =', i
@@ -246,18 +232,18 @@ end
 
 # Section 4: Records
 # ------------------
-beginSection('Creating a record.')
+sections.begin('Creating a record.')
 record myrec
 print len(myrec)
 
-subsection('Creating variables into a record.')
+sections.subsection('Creating variables into a record.')
 myrec.newMember = 100
 print len(myrec)
 print 'myrec.newMember =', myrec.newMember
 print "Here's the record:"
 print myrec
 
-subsection('Creating a subrecord.')
+sections.subsection('Creating a subrecord.')
 record myrec.subrec
 print len(myrec), len(myrec.subrec)
 myrec.subrec.something = 200
@@ -265,27 +251,27 @@ print 'myrec.subrec.something =', myrec.subrec.something
 print "Here's the record:"
 print myrec
 
-subsection('Checking whether members exist in record.')
+sections.subsection('Checking whether members exist in record.')
 print 'subrec' in myrec, 'newMember' in myrec, 'not-there' in myrec.subrec
 
-subsection('Built-in functions: members(), subrecords().')
+sections.subsection('Built-in functions: members(), subrecords().')
 print 'members of myrec:', members(myrec)
 print 'subrecords of myrec:', subrecords(myrec)
 
-subsection('Alternative ways to access members and subrecords.')
+sections.subsection('Alternative ways to access members and subrecords.')
 print myrec['newMember']
 print myrec['subrec']
 print myrec['subrec']['something']
 print members(myrec)['newMember']
 
-subsection('Having two variables reference the same record.')
+sections.subsection('Having two variables reference the same record.')
 reference = myrec
 print len(reference)
 reference.otherMember = 150
 print "Here's the record:"
 print myrec
 
-subsection('Deleting members from record.')
+sections.subsection('Deleting members from record.')
 print 'Before deleting:'
 print myrec
 del myrec.subrec.something
@@ -293,7 +279,7 @@ print 'After deleting:'
 print myrec
 print "subrec isn't gone, though: len(myrec.subrec) =", len(myrec.subrec)
 
-subsection('Deleting a record pointed to by two variables.')
+sections.subsection('Deleting a record pointed to by two variables.')
 record soonDeleted
 reference = soonDeleted
 del soonDeleted
@@ -303,14 +289,14 @@ del reference
 
 # Section 5: Functions
 # --------------------
-beginSection('Defining a function (empty body).')
+sections.begin('Defining a function (empty body).')
 def func1(): return
 func1()
 def func1b()
 end
 func1b()
 
-subsection('Returning values from the function.')
+sections.subsection('Returning values from the function.')
 def func2(): return 'World'
 print 'Hello', func2()
 def func2b(a)
@@ -322,7 +308,7 @@ def func2b(a)
 end
 print func2b(1), func2b(''), func2b(True), func2b(False)
 
-subsection('Passing arguments.')
+sections.subsection('Passing arguments.')
 a = 'At process scope.'
 def func3(a, b, c)
     print 'The arguments were:', a, b, c
@@ -331,7 +317,7 @@ end
 print func3(1, 2, 3)
 print a
 
-subsection('Default values to function arguments.')
+sections.subsection('Default values to function arguments.')
 def func4(a, b='default', c=100)
     print 'Given:', a, b, c
 end
@@ -340,13 +326,13 @@ func4(1, 2)
 func4([1,2], c='world', b='hello')
 print 'func4 =', func4
 
-subsection('Defining function in a record.')
+sections.subsection('Defining function in a record.')
 def myrec.func5(a, b)
     return a + b
 end
 print myrec.func5("The record is\n", Text(myrec))
 
-subsection('Defining a function within a function.')
+sections.subsection('Defining a function within a function.')
 def func6():
     print 'Inside func6.'
     print 'func2() =', func2()
@@ -356,7 +342,7 @@ end
 func6()
 print 'func2() =', func2()
 
-subsection("Accessing function's locals within a subfunction.")
+sections.subsection("Accessing function's locals within a subfunction.")
 def func7():
     a = 100
     print 'Inside func7: a =', a
@@ -367,23 +353,26 @@ def func7():
 end
 func7()
 
-subsection('Reference to function.')
+sections.subsection('Reference to function.')
 reference = func2
 print 'func2() =', func2()
 print 'reference() =', reference()
 print 'reference =', reference
 
-subsection('Callback function as argument.')
+sections.subsection('Callback function as argument.')
 def doCallback(a, b, cb)
     print cb(a, b)
 end
 doCallback(10, 15, myrec.func5)
 
-subsection('Returning a local function from a function.')
+sections.subsection('Returning a local function from a function.')
+a = 'Process scope.'
 def testfun()
+    a = 'testfun() scope.'
     def returningFunc()
-        print 'I come from another place.'
+        print 'I come from another place.', a
     end
+    returningFunc()
     return returningFunc
 end
 testfun()()
@@ -393,7 +382,7 @@ ar[0]()()
 # Section 6: Scopes
 # - accessing variables in different scopes
 # - assigning to variables =, :=
-beginSection('Built-in function locals() returns the local namespace as a record.')
+sections.begin('Built-in function locals() returns the local namespace as a record.')
 print 'At global level:'
 print locals()
 print 
@@ -404,8 +393,12 @@ def func8()
 end
 func8()
 
+sections.subsection('Importing modules: built-in module Config.')
+import Config
+print locals()
+
 # Section 7: Script Return Value
 # ------------------------------
-beginSection('Returning value from the script: the final expression.')
+sections.begin('Returning value from the script: the final expression.')
 
 "I am the return value."

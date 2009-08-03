@@ -23,6 +23,7 @@
 #include "../Counted"
 #include "../String"
 #include "../Compound"
+#include "../Record"
 
 #include <list>
 #include <map>
@@ -43,7 +44,7 @@ namespace de
      *
      * @ingroup script
      */
-    class Function : public Counted
+    class Function : public Counted, public Record::IObserver
     {
     public:
         /// An incorrect number of arguments is given in a function call. @ingroup errors
@@ -82,6 +83,18 @@ namespace de
         const Defaults& defaults() const { return defaults_; }
       
         void mapArgumentValues(const ArrayValue& args, ArgumentValues& values);
+
+        /**
+         * Sets the global namespace of the function. This is the namespace 
+         * where the function was initially created.
+         */
+        void setGlobals(Record* globals);
+
+        /**
+         * Returns the global namespace of the function.
+         * Return @c NULL when the originating namespace has been deleted.
+         */
+        Record* globals();
         
         /**
          * Perform a native call of the function. 
@@ -99,6 +112,9 @@ namespace de
          */
         virtual bool callNative(Context& context, const ArgumentValues& args);
         
+        // Implements Record::IObserver.
+        void recordBeingDeleted(Record& record);
+        
     private:
         /// Argument names.
         Arguments arguments_;
@@ -108,6 +124,11 @@ namespace de
         
         /// The statements of this function.
         Compound compound_;
+        
+        /// Namespace where the function was created. This global namespace is
+        /// used always when executing the function, regardless of where the
+        /// function is called.
+        Record* globals_;
     };
 }
 

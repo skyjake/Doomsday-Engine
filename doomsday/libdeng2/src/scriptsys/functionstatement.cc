@@ -27,6 +27,7 @@
 #include "de/DictionaryValue"
 #include "de/FunctionValue"
 #include "de/RefValue"
+#include "de/Process"
 
 using namespace de;
 
@@ -59,6 +60,9 @@ void FunctionStatement::addArgument(const String& argName, Expression* defaultVa
 void FunctionStatement::execute(Context& context) const
 {
     Evaluator& eval = context.evaluator();
+
+    // Set the function's namespace.
+    function_->setGlobals(&context.process().globals());
 
     // Variable that will store the function.
     eval.evaluateTo<RefValue>(identifier_);

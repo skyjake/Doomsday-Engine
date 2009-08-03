@@ -41,6 +41,7 @@ namespace de
         
         enum Type {
             PROCESS,
+            GLOBAL_NAMESPACE,
             FUNCTION_CALL
         };
 
@@ -48,10 +49,11 @@ namespace de
         /**
          * Constructor.
          *
-         * @param type   Type of the execution context.
-         * @param owner  Process that owns the context.
+         * @param type     Type of the execution context.
+         * @param owner    Process that owns the context.
+         * @param globals  Optionally a global namespace. Lookups will stop here.
          */
-        Context(Type type, Process* owner);
+        Context(Type type, Process* owner, Record* globals = 0);
         
         virtual ~Context();
 
@@ -198,7 +200,7 @@ namespace de
         Evaluator evaluator_;
         
         /// The local namespace of this context.
-        Record names_;
+        Record* names_;
     };
 }
 

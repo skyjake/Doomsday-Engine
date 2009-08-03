@@ -36,12 +36,14 @@
 
 namespace de
 {
+    class Audio;
+    class Config;
+    class ISubsystem;
     class Library;
     class LibraryFile;
-    class Zone;
-    class ISubsystem;
+    class Module;
     class Video;
-    class Audio;
+    class Zone;
     
     /**
      * The application. This is an abstract class. Subclasses will need to define
@@ -71,6 +73,9 @@ namespace de
 
         /// There was a problem with SDL. Contains the SDL error message. @ingroup errors
         DEFINE_ERROR(SDLError);
+        
+        /// The object or resource that was being looked for was not found. @ingroup errors
+        DEFINE_ERROR(NotFoundError);
         
     public:
         /**
@@ -149,6 +154,11 @@ namespace de
          */
         virtual void stop(dint code = 0);
         
+        /**
+         * Deletes all loaded modules.
+         */
+        void clearModules();
+        
         // Implements IClock.
         const Time& now() const { return currentTime_; }
         
@@ -179,6 +189,11 @@ namespace de
          * Returns the file system.
          */
         static FS& fileSystem();
+
+        /**
+         * Returns the configuration.
+         */
+        static Config& config();
 
         /**
          * Returns the network protocol.
@@ -214,6 +229,16 @@ namespace de
          * Returns the amount of time since the creation of the App.
          */
         static Time::Delta uptime();
+        
+        /**
+         * Imports a script module that is located on the import path.
+         *
+         * @param name      Name of the module.
+         * @param fromPath  Absolute path of the script doing the importing.
+         * 
+         * @return  The imported module.
+         */
+        static Record& importModule(const String& name, const String& fromPath = "");
 
     private:
         CommandLine commandLine_;
@@ -227,6 +252,9 @@ namespace de
         /// The file system.
         FS* fs_;
 
+        /// The configuration.
+        Config* config_;
+        
         /// Protocol for incoming packets.
         Protocol protocol_;
 
@@ -244,6 +272,10 @@ namespace de
         /// The audio subsystem. Can be NULL.
         Audio* audio_;
         String defaultAudio_;
+
+        /// Modules.
+        typedef std::map<String, Module*> Modules;
+        Modules modules_;
         
         /// @c true while the main loop is running.
         bool runMainLoop_;

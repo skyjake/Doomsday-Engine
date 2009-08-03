@@ -33,6 +33,8 @@
 
 namespace de
 {
+    class File;
+    
     /**
      * Contains statements and expressions which are ready to be executed.
      * A Script instance is built from a the source code text, which is parsed and
@@ -47,10 +49,24 @@ namespace de
         /// Constructs an empty script with no statements.
         Script();
         
-        /// Parses the source into statements.
+        /**
+         * Parses the source into statements.
+         *
+         * @param source  Script source.
+         */
         Script(const String& source);
         
+        /**
+         * Parses the source file info statements. The path of the source file
+         * is saved and used when importing modules.
+         *
+         * @param file  Source file.
+         */
+        Script(const File& file);
+        
         virtual ~Script();
+
+        const String& path() const { return path_; }
 
         /// Returns the statement that begins the script. This is where
         /// a process begins the execution of a script.
@@ -64,6 +80,10 @@ namespace de
         
     private:
         Compound compound_;
+        
+        /// File path where the script was loaded. Will be visible in the namespace
+        /// of the process executing the script.
+        String path_;
     };
 }
 

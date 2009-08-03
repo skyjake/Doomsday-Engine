@@ -28,32 +28,36 @@
 using namespace de;
 using std::auto_ptr;
     
-/// If execution continues for longer this, a HangError is thrown.
+/// If execution continues for longer than this, a HangError is thrown.
 static const Time::Delta MAX_EXECUTION_TIME = 10;
 
-Process::Process(const Script& script) : state_(STOPPED), firstExecute_(true)
+Process::Process() : state_(STOPPED), workingPath_("/")
 {
-    // Place the first context on the stack. This bottommost context
-    // is never removed from the stack. Its namespace is the local namespace
+    // Push the first context on the stack. This bottommost context
+    // is never popped from the stack. Its namespace is the global namespace
     // of the process.
     stack_.push_back(new Context(Context::PROCESS, this));
+}
 
-    // Initially use the root folder as the cwd.
-    workingPath_ = "/";
+Process::Process(const Script& script) : state_(STOPPED), workingPath_("/")
+{
+    stack_.push_back(new Context(Context::PROCESS, this));
 
     // If a script is provided, start running it automatically.
-    if(script.firstStatement())
-    {
-        state_ = RUNNING;
-        context().start(script.firstStatement());
-    }
+    run(script);
 }
 
 Process::~Process()
 {
-    for(ContextStack::reverse_iterator i = stack_.rbegin(); i != stack_.rend(); ++i)
+    clearStack();
+}
+
+void Process::clearStack(duint downToLevel)
+{
+    while(depth() > downToLevel)
     {
-        delete *i;
+        delete stack_.back();
+        stack_.pop_back();
     }
 }
 
@@ -69,9 +73,23 @@ void Process::run(const Script& script)
         throw NotStoppedError("Process::run", 
             "When a new script is started the process must be stopped first");
     }
-    
     state_ = RUNNING;
+    
+    // Make sure the stack is clear except for the process context.
+    clearStack(1);
+    
     context().start(script.firstStatement());
+    
+    // Set up the automatic variables.
+    Record& ns = globals();
+    if(ns.has("__file__"))
+    {
+        ns["__file__"].set(TextValue(script.path()));
+    }
+    else
+    {
+        ns.add(new Variable("__file__", new TextValue(script.path()), Variable::TEXT));
+    }
 }
 
 void Process::suspend(bool suspended)
@@ -116,30 +134,6 @@ void Process::execute(const Time::Delta& timeBox)
     }
     
     //LOG_AS_STRING("Process " + name());
-    
-    // On the first time execute is called, we need to do some extra 
-    // preparations.
-    if(firstExecute_)
-    {
-        firstExecute_ = false;
-
-        /*
-        // Create a variable that provides access to the Process node itself.
-        Object* object = 
-            kernel().names().node<NodeObject>("Process")->instantiate(path(), context());
-        newVariable(context().names(), "PROC", new ObjectValue(object));
-        object->release();
-        
-        // Some other convenient built-in variables.
-        object = kernel().names().node<NodeObject>("Node")->instantiate("/", context());
-        newVariable(context().names(), "ROOT", new ObjectValue(object));
-        object->release();
-        
-        object = kernel().names().node<NodeObject>("Node")->instantiate("/ui", context());
-        newVariable(context().names(), "UI", new ObjectValue(object));
-        object->release();
-        */
-    }
 
     // We will execute until this depth is complete.
     duint startDepth = depth();
@@ -198,12 +192,18 @@ void Process::finish(Value* returnValue)
         Context* topmost = stack_.back();
         stack_.pop_back();
 
-        // Return value one level down.
+        // Pop the global namespace as well, if present.
+        if(context().type() == Context::GLOBAL_NAMESPACE)
+        {
+            delete stack_.back();
+            stack_.pop_back();
+        }
+
         if(topmost->type() == Context::FUNCTION_CALL)
         {
+            // Return value to the new topmost level.
             context().evaluator().pushResult(returnValue? returnValue : new NoneValue());
         }
-        
         delete topmost;
     }
     else
@@ -233,6 +233,14 @@ void Process::call(Function& function, const ArrayValue& arguments)
     
     if(!function.callNative(context(), argValues))
     {
+        // If the function resides in another process's namespace, push
+        // that namespace on the stack first.
+        if(function.globals() && function.globals() != &globals())
+        {
+            stack_.push_back(new Context(Context::GLOBAL_NAMESPACE, this, 
+                function.globals()));
+        }
+        
         // Create a new context.
         stack_.push_back(new Context(Context::FUNCTION_CALL, this));
         
@@ -256,6 +264,17 @@ void Process::namespaces(Namespaces& spaces)
     
     for(ContextStack::reverse_iterator i = stack_.rbegin(); i != stack_.rend(); ++i)
     {
-        spaces.push_back(&(*i)->names());
+        Context& context = **i;
+        spaces.push_back(&context.names());
+        if(context.type() == Context::GLOBAL_NAMESPACE)
+        {
+            // This shadows everything below.
+            break;
+        }
     }
+}
+
+Record& Process::globals()
+{
+    return stack_[0]->names();
 }

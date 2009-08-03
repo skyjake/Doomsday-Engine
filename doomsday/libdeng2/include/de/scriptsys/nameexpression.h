@@ -27,8 +27,8 @@
 namespace de
 {
     /**
-     * Locates a variable in the namespaces, and creates an appropriate value to
-     * refer to that node.
+     * Responsible for referencing, creating, and deleting variables and record
+     * references based an textual identifier.
      */
     class NameExpression : public Expression
     {
@@ -59,9 +59,12 @@ namespace de
         
         /// Identifier must exist and will be deleted.
         DEFINE_FLAG(DELETE, 5);
+        
+        /// Imports an external namespace into the local namespace (as a reference).
+        DEFINE_FLAG(IMPORT, 6);
 
         /// Must create a new variable.
-        DEFINE_FINAL_FLAG(NOT_IN_SCOPE, 6, Flags);
+        DEFINE_FINAL_FLAG(NOT_IN_SCOPE, 7, Flags);
 
     public:
         NameExpression(const String& identifier, const Flags& flags = BY_VALUE);

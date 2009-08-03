@@ -18,13 +18,16 @@
  */
 
 #include "de/App"
-#include "de/Zone"
-#include "de/LibraryFile"
-#include "de/Library"
+#include "de/Config"
+#include "de/ArrayValue"
 #include "de/DirectoryFeed"
+#include "de/Library"
+#include "de/LibraryFile"
+#include "de/Module"
 #include "de/ISubsystem"
-#include "de/Video"
 #include "de/Audio"
+#include "de/Video"
+#include "de/Zone"
 #include "../sdl.h"
 
 using namespace de;
@@ -42,6 +45,7 @@ App::App(const CommandLine& commandLine, const String& defaultVideo, const Strin
     : commandLine_(commandLine), 
       memory_(0), 
       fs_(0), 
+      config_(0),
       gameLib_(0), 
       video_(0), 
       defaultVideo_(defaultVideo), 
@@ -76,7 +80,7 @@ App::App(const CommandLine& commandLine, const String& defaultVideo, const Strin
         std::auto_ptr<Zone> memoryPtr(new Zone());
         memory_ = memoryPtr.get();
 
-#ifdef MACOSX
+#if defined(MACOSX)
         // When the application is started through Finder, we get a special command
         // line argument. The working directory needs to be changed.
         if(commandLine_.count() >= 2 && String(commandLine_.at(1)).beginsWith("-psn"))
@@ -88,7 +92,34 @@ App::App(const CommandLine& commandLine, const String& defaultVideo, const Strin
         // Now we can proceed with the members.
         std::auto_ptr<FS> fsPtr(new FS());
         fs_ = fsPtr.get();
+
+        // Initialize the built-in folders.
+#if defined(MACOSX)
+        fs_->getFolder("/bin").attach(new DirectoryFeed("MacOS"));
+        fs_->getFolder("/data").attach(new DirectoryFeed("Resources"));
+        fs_->getFolder("/config").attach(new DirectoryFeed("Resources/config"));
+        fs_->getFolder("/modules").attach(new DirectoryFeed("Resources/modules"));
+#endif
+
+#if defined(UNIX) && !defined(MACOSX)
+        fs_->getFolder("/bin").attach(new DirectoryFeed("bin"));
+        fs_->getFolder("/data").attach(new DirectoryFeed("data"));
+        fs_->getFolder("/config").attach(new DirectoryFeed("data/config"));
+        fs_->getFolder("/modules").attach(new DirectoryFeed("data/modules"));
+#endif
+
+#ifdef WIN32
+        fs_->getFolder("/bin").attach(new DirectoryFeed("bin"));
+        fs_->getFolder("/data").attach(new DirectoryFeed("data"));
+        fs_->getFolder("/config").attach(new DirectoryFeed("data\\config"));
+        fs_->getFolder("/modules").attach(new DirectoryFeed("data\\modules"));
+#endif
+
         fs_->refresh();
+        
+        // The configuration.
+        std::auto_ptr<Config> configPtr(new Config());
+        config_ = configPtr.get();
         
         // Load the basic plugins.
         loadPlugins();
@@ -96,6 +127,7 @@ App::App(const CommandLine& commandLine, const String& defaultVideo, const Strin
         // Successful construction without errors, so drop our guard.
         memoryPtr.release();
         fsPtr.release();
+        configPtr.release();
         
         std::cout << "libdeng2::App " << LIBDENG2_VERSION << " initialized.\n";
     }
@@ -110,12 +142,18 @@ App::App(const CommandLine& commandLine, const String& defaultVideo, const Strin
 App::~App()
 {
     clearSubsystems();
-    
+    clearModules();
+
+    delete config_;
+    config_ = 0;
+
     // Deleting the file system will unload everything owned by the files, including 
-    // all plugin libraries.
+    // all remaining plugin libraries.
     delete fs_;
+    fs_ = 0;
     
     delete memory_;
+    memory_ = 0;
  
     // Shut down SDL.
     SDLNet_Quit();
@@ -199,6 +237,15 @@ void App::loadPlugins()
                 libFile.library().type() << "]\n";
         }
     }
+}
+
+void App::clearModules()
+{
+    for(Modules::iterator i = modules_.begin(); i != modules_.end(); ++i)
+    {
+        delete i->second;
+    }
+    modules_.clear();
 }
 
 void App::clearSubsystems()
@@ -319,6 +366,13 @@ FS& App::fileSystem()
     return *self.fs_; 
 }
 
+Config& App::config()
+{
+    App& self = app();
+    assert(self.config_ != 0);
+    return *self.config_; 
+}
+
 Protocol& App::protocol()
 {
     return app().protocol_;
@@ -359,4 +413,52 @@ bool App::hasVideo()
 Time::Delta App::uptime()
 {
     return app().initializedAt_.since();
+}
+
+Record& App::importModule(const String& name, const String& fromPath)
+{
+    App& self = app();
+    
+    // There are some special modules.
+    if(name == "Config")
+    {
+        return self.config().names();
+    }
+    
+    // Maybe we already have this module?
+    Modules::iterator found = self.modules_.find(name);
+    if(found != self.modules_.end())
+    {
+        return found->second->names();
+    }
+    
+    // Try the local folder first?
+    if(!fromPath.empty())
+    {
+        String p = fromPath.fileNamePath().concatenatePath(name) + ".de";
+        File* found = fileSystem().root().tryLocateFile(p);
+        if(found)
+        {
+            Module* module = new Module(*found);
+            self.modules_[name] = module;
+            return module->names();
+        }
+    }
+    
+    // Search the import path (it's an array value in Config).
+    ArrayValue& importPath = config().names()["importPath"].value<ArrayValue>();
+    for(ArrayValue::Elements::const_iterator i = importPath.elements().begin();
+        i != importPath.elements().end(); ++i)
+    {
+        String p = (*i)->asText().concatenatePath(name);
+        File* found = fileSystem().root().tryLocateFile(p);
+        if(found)
+        {
+            Module* module = new Module(*found);
+            self.modules_[name] = module;
+            return module->names();
+        }
+    }
+    
+    throw NotFoundError("App::importModule", "Cannot find module '" + name + "'");
 }

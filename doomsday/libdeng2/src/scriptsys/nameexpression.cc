@@ -23,6 +23,8 @@
 #include "de/TextValue"
 #include "de/RefValue"
 #include "de/RecordValue"
+#include "de/App"
+#include "de/Module"
 
 using namespace de;
 
@@ -75,6 +77,15 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
             "Identifier '" + identifier_ + "' already exists");
     }
     
+    // Should we import a namespace?
+    if(flags_[IMPORT_BIT])
+    {
+        // We will return a reference to this namespace.
+        record = &App::importModule(identifier_,
+            evaluator.process().globals()["__file__"].value().asText());
+    }
+    
+    // Should we delete the identifier?
     if(flags_[DELETE_BIT])
     {
         if(!variable && !record)
@@ -82,6 +93,7 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
             throw NotFoundError("NameExpression::evaluate", 
                 "Cannot delete nonexistent identifier '" + identifier_ + "'");
         }
+        assert(foundInNamespace != 0);
         if(variable)
         {
             delete foundInNamespace->remove(*variable);
@@ -118,10 +130,18 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
     }
 
     // We may be permitted to create a new record.
-    if(!record && flags_[NEW_RECORD_BIT])
+    if(flags_[NEW_RECORD_BIT])
     {
-        // Add it to the local namespace.
-        record = &spaces.front()->addRecord(identifier_);
+        if(!record)
+        {
+            // Add it to the local namespace.
+            record = &spaces.front()->addRecord(identifier_);
+        }
+        else
+        {
+            // Create a variable referencing the record.
+            spaces.front()->add(new Variable(identifier_, new RecordValue(record)));
+        }
     }
     if(record)
     {

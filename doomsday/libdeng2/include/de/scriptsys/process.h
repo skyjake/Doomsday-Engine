@@ -67,9 +67,17 @@ namespace de
 
     public:
         /**
+         * Constructs a new process. The process is initialized to STOPPED state.
+         */
+        Process();
+        
+        /**
          * Constructs a new process. The process is initialized to RUNNING state.
          *
-         * @param script  Script to run.
+         * @param script  Script to run. No reference to the script is retained
+         *                apart from pointing to its statements. The script instance
+         *                must remain in existence while the process is running,
+         *                as it is the owner of the statements.
          */
         Process(const Script& script);
         
@@ -84,7 +92,10 @@ namespace de
          * Starts running the given script. Note that the process must be
          * in the FINISHED state for this to be a valid operation.
          *
-         * @param script  Script to run.
+         * @param script  Script to run. No reference to the script is retained
+          *               apart from pointing to its statements. The script instance
+          *               must remain in existence while the process is running,
+          *               as it is the owner of the statements.
          */
         void run(const Script& script);
 
@@ -140,7 +151,15 @@ namespace de
          */
         Context& context(duint downDepth = 0);
                 
-        /// A method call.
+        /**
+         * Performs a function call. A new context is created on the context 
+         * stack and the function's statements are executed on the new stack.
+         * After the call is finished, the result value is pushed to the
+         * calling context's evaluator.
+         *
+         * @param function   Function to call.
+         * @param arguments  Arguments for the function.
+         */
         void call(Function& function, const ArrayValue& arguments);
         
         /**
@@ -151,10 +170,20 @@ namespace de
          *                earlier namespaces shadow the subsequent ones.
          */
         void namespaces(Namespaces& spaces);
+
+        /**
+         * Returns the global namespace of the process. This is always the 
+         * bottommost context in the stack.
+         */
+        Record& globals();
+        
+    protected:
+        /// Pops contexts off the stack until depth @a downToLevel is reached.
+        void clearStack(duint downToLevel = 0);
         
     private:
         State state_;
-
+        
         // The execution environment.
         typedef std::vector<Context*> ContextStack;
         ContextStack stack_;
@@ -163,9 +192,6 @@ namespace de
         /// given to workingFile() are located in relation to this
         /// folder. Initial value is the root folder.
         String workingPath_;
-
-        /// @c true, if the process has not executed a single statement yet.
-        bool firstExecute_;
         
         /// Time when execution was started at depth 1.
         Time startedAt_;

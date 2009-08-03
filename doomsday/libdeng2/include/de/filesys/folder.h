@@ -74,6 +74,7 @@ namespace de
         };
         
         typedef std::list<Feed*> Feeds;
+        typedef std::map<String, File*> Contents;
         
     public:
         Folder(const String& name = "");
@@ -91,6 +92,11 @@ namespace de
          * native hard drive directory.
          */
         virtual void populate();
+
+        /**
+         * Provides direct read-only access to the content of the folder.
+         */
+        const Contents& contents() const;
 
         /**
          * Attach a feed to the folder. The feed will provide content for the folder.
@@ -220,10 +226,9 @@ namespace de
             }
             return *found;
         }
-                    
+        
     private:
         /// A map of file names to file instances.
-        typedef std::map<String, File*> Contents;
         Contents contents_;
         
         /// Feeds provide content for the folder.

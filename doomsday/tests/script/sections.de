@@ -14,6 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-DENG2_TEST_EXECUTABLE ( test_script )
+# Module for printing and numbering sections.
 
-INSTALL ( FILES kitchen_sink.de sections.de DESTINATION ${DENG_DATA_DIR} )
+secNum = 0
+subSecNum = 0
+
+def printSection(msg): print "\n" + "_" * 78 + "\n%i.%i: %s\n" % [secNum, subSecNum, msg]
+
+def begin(msg)
+    secNum += 1
+    subSecNum := 0
+    printSection(msg)
+end
+
+def subsection(msg)
+    subSecNum += 1
+    printSection(msg)
+end

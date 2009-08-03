@@ -26,11 +26,11 @@
 
 using namespace de;
 
-Function::Function()
+Function::Function() : globals_(0)
 {}
 
 Function::Function(const Arguments& args, const Defaults& defaults) 
-    : arguments_(args), defaults_(defaults)
+    : arguments_(args), defaults_(defaults), globals_(0)
 {}
 
 Function::~Function()
@@ -39,6 +39,11 @@ Function::~Function()
     for(Defaults::iterator i = defaults_.begin(); i != defaults_.end(); ++i)
     {
         delete i->second;
+    }
+    if(globals_)
+    {
+        // Stop observing the namespace.
+        globals_->observers.remove(this);
     }
 }
 
@@ -130,10 +135,35 @@ void Function::mapArgumentValues(const ArrayValue& args, ArgumentValues& values)
     }    
 }
 
+void Function::setGlobals(Record* globals)
+{
+    if(!globals_)
+    {
+        globals_ = globals;
+        globals_->observers.add(this);
+    }
+    else if(globals_ != globals)
+    {
+        std::cerr << "Function::setGlobals: WARNING! Function was offered a different namespace.\n";
+    }
+}
+
+Record* Function::globals()
+{
+    return globals_;
+}
+
 bool Function::callNative(Context& context, const ArgumentValues& args)
 {
     assert(args.size() == arguments_.size());    
     
     // Do non-native function call.
     return false;
+}
+
+void Function::recordBeingDeleted(Record& record)
+{
+    // The namespace of the record is being deleted.
+    assert(globals_ == &record);
+    globals_ = 0;
 }
