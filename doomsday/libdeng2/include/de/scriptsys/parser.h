@@ -70,8 +70,8 @@ namespace de
         DEFINE_FLAG(STAY_AT_CLOSING_STATEMENT, 1);
         DEFINE_FINAL_FLAG(IGNORE_EXTRA_BEFORE_COLON, 2, CompoundFlags);
 
-        DEFINE_FLAG(NAME_BY_VALUE, 0);
-        DEFINE_FLAG(NAME_BY_REFERENCE, 1);
+        DEFINE_FLAG(BY_VALUE, 0);
+        DEFINE_FLAG(BY_REFERENCE, 1);
         DEFINE_FLAG(LOCAL_NAMESPACE_ONLY, 2);
         DEFINE_FLAG(REQUIRE_NEW_IDENTIFIER, 3);
         DEFINE_FLAG(ALLOW_NEW_RECORDS, 4);
@@ -115,11 +115,11 @@ namespace de
         
         /// Parse a range of tokens as a comma-separated argument list:
         ArrayExpression* parseList(const TokenRange& range, const char* separator = ",",
-            const ExpressionFlags& flags = NAME_BY_VALUE);
+            const ExpressionFlags& flags = BY_VALUE);
 
         /// Parse a range of tokens as an operator-based expression.
         Expression* parseExpression(const TokenRange& range, 
-            const ExpressionFlags& flags = NAME_BY_VALUE);
+            const ExpressionFlags& flags = BY_VALUE);
 
         ArrayExpression* parseArrayExpression(const TokenRange& range);
 
@@ -130,10 +130,10 @@ namespace de
 
         OperatorExpression* parseOperatorExpression(Operator op, 
             const TokenRange& leftSide, const TokenRange& rightSide, 
-            const ExpressionFlags& rightFlags = NAME_BY_VALUE);
+            const ExpressionFlags& rightFlags = BY_VALUE);
 
         Expression* parseTokenExpression(const TokenRange& range, 
-            const ExpressionFlags& flags = NAME_BY_VALUE);
+            const ExpressionFlags& flags = BY_VALUE);
 
         Operator findLowestOperator(const TokenRange& range, 
             TokenRange& leftSide, TokenRange& rightSide);

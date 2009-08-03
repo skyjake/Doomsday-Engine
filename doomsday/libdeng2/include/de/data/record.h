@@ -65,6 +65,14 @@ namespace de
         
     public:
         Record();
+        
+        /**
+         * Constructs a copy of another record.
+         *
+         * @param other  Record to copy.
+         */
+        Record(const Record& other);
+        
         virtual ~Record();
 
         /**

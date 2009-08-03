@@ -43,6 +43,10 @@ Variable::Variable(const String& name, Value* initial, const Mode& m)
     value_ = v.release();
 }
 
+Variable::Variable(const Variable& other) 
+    : mode(other.mode), name_(other.name_), value_(other.value_->duplicate())
+{}
+
 Variable::~Variable()
 {
     FOR_EACH_OBSERVER(o, observers) o->variableBeingDeleted(*this);

@@ -35,6 +35,18 @@ using namespace de;
 Record::Record()
 {}
 
+Record::Record(const Record& other)
+{
+    for(Members::const_iterator i = other.members_.begin(); i != other.members_.end(); ++i)
+    {
+        members_[i->first] = new Variable(*i->second);
+    }
+    for(Subrecords::const_iterator i = other.subrecords_.begin(); i != other.subrecords_.end(); ++i)
+    {
+        subrecords_[i->first] = new Record(*i->second);
+    }    
+}
+
 Record::~Record()
 {
     FOR_EACH_OBSERVER(o, observers) o->recordBeingDeleted(*this);

@@ -86,9 +86,14 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
     // Should we import a namespace?
     if(flags_[IMPORT_BIT])
     {
-        // We will return a reference to this namespace.
         record = &App::importModule(identifier_,
             evaluator.process().globals()["__file__"].value().asText());
+            
+        // Take a copy if requested.
+        if(flags_[BY_VALUE_BIT])
+        {
+            record = &spaces.front()->add(identifier_, new Record(*record));
+        }
     }
     
     // Should we delete the identifier?

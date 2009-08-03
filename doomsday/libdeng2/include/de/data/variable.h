@@ -86,6 +86,13 @@ namespace de
          */
         Variable(const String& name = "", Value* initial = 0, const Mode& mode = DEFAULT_MODE);
             
+        /**
+         * Constructs a copy of another variable.
+         *
+         * @param other  Variable to copy.
+         */
+        Variable(const Variable& other);
+            
         virtual ~Variable();
         
         /**

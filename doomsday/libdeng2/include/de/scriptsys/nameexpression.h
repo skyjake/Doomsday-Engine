@@ -42,7 +42,8 @@ namespace de
         /// The identifier does not specify an existing variable. @ingroup errors
         DEFINE_ERROR(NotFoundError);
 
-        /// Evaluates to a value.
+        /// Evaluates to a value. In conjunction with IMPORT, causes the imported
+        /// record to be copied to the local namespace.
         DEFINE_FLAG(BY_VALUE, 0);
         
         /// Evaluates to a reference.

@@ -240,7 +240,7 @@ ForStatement* Parser::parseForStatement()
     }
     
     auto_ptr<Expression> iter(parseExpression(statementRange_.between(1, inPos),
-        NAME_BY_REFERENCE | ALLOW_NEW_VARIABLES | LOCAL_NAMESPACE_ONLY));
+        BY_REFERENCE | ALLOW_NEW_VARIABLES | LOCAL_NAMESPACE_ONLY));
     Expression* iterable = parseExpression(statementRange_.between(inPos + 1, colonPos));
     
     auto_ptr<ForStatement> statement(new ForStatement(iter.release(), iterable));
@@ -253,14 +253,23 @@ ForStatement* Parser::parseForStatement()
 
 ExpressionStatement* Parser::parseImportStatement()
 {
-    // "import" name-expr
+    // "import" ["record"] name-expr ["," name-expr]*
     if(statementRange_.size() < 2)
     {
         throw MissingTokenError("Parser::parseImportStatement",
             "Expected identifier to follow " + statementRange_.firstToken().asText());
-    }    
-    return new ExpressionStatement(parseList(statementRange_.startingFrom(1), ",",
-        IMPORT_NAMESPACE | ALLOW_NEW_RECORDS | REQUIRE_NEW_IDENTIFIER | LOCAL_NAMESPACE_ONLY));
+    }
+    dint startAt = 1;
+    ExpressionFlags flags = IMPORT_NAMESPACE | ALLOW_NEW_RECORDS | 
+        REQUIRE_NEW_IDENTIFIER | LOCAL_NAMESPACE_ONLY;
+    if(statementRange_.size() >= 3 && statementRange_.token(1).equals("record"))
+    {
+        // Take a copy of the imported record instead of referencing it.
+        flags |= BY_VALUE;
+        flags &= ~ALLOW_NEW_RECORDS; // don't create a variable referencing it
+        startAt = 2;
+    }
+    return new ExpressionStatement(parseList(statementRange_.startingFrom(startAt), ",", flags));
 }
 
 ExpressionStatement* Parser::parseRecordStatement()
@@ -318,7 +327,7 @@ FunctionStatement* Parser::parseFunctionStatement()
     // The function must have a name that is not already in use in the scope.
     auto_ptr<FunctionStatement> statement(new FunctionStatement(
         parseExpression(statementRange_.between(1, pos), 
-            LOCAL_NAMESPACE_ONLY | NAME_BY_REFERENCE | ALLOW_NEW_VARIABLES | REQUIRE_NEW_IDENTIFIER)));
+            LOCAL_NAMESPACE_ONLY | BY_REFERENCE | ALLOW_NEW_VARIABLES | REQUIRE_NEW_IDENTIFIER)));
 
     // Collect the argument names.
     TokenRange argRange = statementRange_.between(pos + 1, statementRange_.closingBracket(pos));
@@ -358,7 +367,7 @@ FunctionStatement* Parser::parseFunctionStatement()
 
 AssignStatement* Parser::parseAssignStatement()
 {
-    ExpressionFlags flags = ALLOW_NEW_VARIABLES | NAME_BY_REFERENCE | LOCAL_NAMESPACE_ONLY;
+    ExpressionFlags flags = ALLOW_NEW_VARIABLES | BY_REFERENCE | LOCAL_NAMESPACE_ONLY;
     dint pos = statementRange_.find("=");
     if(pos < 0)
     {
@@ -635,7 +644,7 @@ Expression* Parser::parseCallExpression(const TokenRange& nameRange, const Token
             return new BuiltInExpression(builtIn, args.release());
         }
     }
-    auto_ptr<Expression> identifier(parseExpression(nameRange, NAME_BY_REFERENCE));
+    auto_ptr<Expression> identifier(parseExpression(nameRange, BY_REFERENCE));
     return new OperatorExpression(CALL, identifier.release(), args.release());
 }
 
@@ -654,10 +663,10 @@ OperatorExpression* Parser::parseOperatorExpression(Operator op, const TokenRang
     }
     else
     {
-        ExpressionFlags leftFlags = NAME_BY_VALUE;
+        ExpressionFlags leftFlags = BY_VALUE;
         if(leftOperandByReference(op))
         {
-            leftFlags = NAME_BY_REFERENCE;
+            leftFlags = BY_REFERENCE;
         }
             
         // Binary operation.
@@ -709,8 +718,8 @@ Expression* Parser::parseTokenExpression(const TokenRange& range, const Expressi
         {
             NameExpression::Flags nameFlags;
 
-            if(flags[NAME_BY_VALUE_BIT]) nameFlags |= NameExpression::BY_VALUE;
-            if(flags[NAME_BY_REFERENCE_BIT]) nameFlags |= NameExpression::BY_REFERENCE;
+            if(flags[BY_VALUE_BIT]) nameFlags |= NameExpression::BY_VALUE;
+            if(flags[BY_REFERENCE_BIT]) nameFlags |= NameExpression::BY_REFERENCE;
             if(flags[LOCAL_NAMESPACE_ONLY_BIT]) nameFlags |= NameExpression::LOCAL_ONLY;
             if(flags[ALLOW_NEW_RECORDS_BIT]) nameFlags |= NameExpression::NEW_RECORD;
             if(flags[ALLOW_NEW_VARIABLES_BIT]) nameFlags |= NameExpression::NEW_VARIABLE;
