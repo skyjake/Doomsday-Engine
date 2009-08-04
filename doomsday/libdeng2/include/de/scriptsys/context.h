@@ -130,6 +130,13 @@ namespace de
          */
         void setIterationValue(Value* value);
         
+        /**
+         * Returns the throwaway variable. This can be used for dumping 
+         * values that are not needed. For instance, the weak assignment operator
+         * will use this when the identifier already exists.
+         */
+        Variable& throwaway() { return throwaway_; }
+        
     private:
         /**
          * Information about the control flow is stored within a stack of 
@@ -201,6 +208,8 @@ namespace de
         
         /// The local namespace of this context.
         Record* names_;
+        
+        Variable throwaway_;
     };
 }
 

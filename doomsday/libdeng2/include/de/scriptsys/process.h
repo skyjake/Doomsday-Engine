@@ -177,13 +177,6 @@ namespace de
          */
         Record& globals();
         
-        /**
-         * Returns the process's throwaway variable. This can be used for dumping 
-         * values that are not needed. For instance, the weak assignment operator
-         *  will use this when the identifier already exists.
-         */
-        Variable& throwaway() { return throwaway_; }
-        
     protected:
         /// Pops contexts off the stack until depth @a downToLevel is reached.
         void clearStack(duint downToLevel = 0);
@@ -202,8 +195,6 @@ namespace de
         
         /// Time when execution was started at depth 1.
         Time startedAt_;
-        
-        Variable throwaway_;
     };
 }
 

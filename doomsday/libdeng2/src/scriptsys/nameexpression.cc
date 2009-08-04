@@ -73,7 +73,7 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
     if(variable && flags_[THROWAWAY_IF_IN_SCOPE_BIT])
     {
         foundInNamespace = 0;
-        variable = &evaluator.process().throwaway();
+        variable = &evaluator.context().throwaway();
     }
 
     // If a new variable/record is required and one is in scope, we cannot continue.
