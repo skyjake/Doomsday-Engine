@@ -25,7 +25,10 @@
 
 using namespace de;
 
-Config::Config() : configPath_("/config")
+Config::Config() : configPath_("/config/libdeng2.de")
+{}
+
+void Config::read()
 {
     // Current version.
     std::auto_ptr<ArrayValue> version(new ArrayValue());
@@ -42,20 +45,38 @@ Config::Config() : configPath_("/config")
     config_.globals().add(new Variable("__version__", version.release(), 
         Variable::ARRAY | Variable::READ_ONLY));
 
-    // Read the configuration. Everything under the config path.
-    Folder& f = App::fileSystem().getFolder(configPath_);
-    for(Folder::Contents::const_iterator i = f.contents().begin(); i != f.contents().end(); ++i)
-    {
-        if(i->second->name().fileNameExtension() == ".de")
-        {
-            Script script(*i->second);
-            config_.run(script);
-            config_.execute();
-        }
-    }
+    // Read the main configuration. 
+    Script script(App::fileSystem().root().locate<File>(configPath_));
+    config_.run(script);
+    config_.execute();
 }
 
 Record& Config::names()
 {
     return config_.globals();
+}
+
+Value& Config::get(const String& name)
+{
+    return config_.globals()[name].value();
+}
+
+dint Config::geti(const String& name)
+{
+    return dint(get(name).asNumber());
+}
+
+duint Config::getui(const String& name)
+{
+    return duint(get(name).asNumber());
+}
+
+ddouble Config::getd(const String& name)
+{
+    return get(name).asNumber();
+}
+
+String Config::gets(const String& name)
+{
+    return get(name).asText();
 }

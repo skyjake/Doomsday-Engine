@@ -57,6 +57,10 @@ dint NumberValue::compare(const Value& value) const
     const NumberValue* other = dynamic_cast<const NumberValue*>(&value);
     if(other)
     {
+        if(fequal(value_, other->value_))
+        {
+            return 0;
+        }
         return cmp(value_, other->value_);
     }    
     return Value::compare(value);

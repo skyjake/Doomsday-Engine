@@ -32,12 +32,6 @@
 
 using namespace de;
 
-/// Name of the default video subsystem.
-static const String DEFAULT_VIDEO = "sdlopengl";
-
-/// Name of the default audio subsystem.
-static const String DEFAULT_AUDIO = "fmod";
-
 // This will be set when the app is constructed.
 App* App::singleton_ = 0;
 
@@ -120,6 +114,7 @@ App::App(const CommandLine& commandLine, const String& defaultVideo, const Strin
         // The configuration.
         std::auto_ptr<Config> configPtr(new Config());
         config_ = configPtr.get();
+        config_->read();
         
         // Load the basic plugins.
         loadPlugins();
@@ -168,10 +163,10 @@ void App::loadPlugins()
     String gameName = "doom"; /// @todo There is no default game, really...
     commandLine_.getParameter("--game", gameName);
     
-    String videoName = defaultVideo_.empty()? DEFAULT_VIDEO : defaultVideo_;
+    String videoName = defaultVideo_.empty()? config().gets("video.default") : defaultVideo_;
     commandLine_.getParameter("--video", videoName);
     
-    String audioName = defaultAudio_.empty()? DEFAULT_AUDIO : defaultAudio_;
+    String audioName = defaultAudio_.empty()? config().gets("audio.default") : defaultAudio_;
     commandLine_.getParameter("--audio", audioName);
 
     // Get the index of libraries.
@@ -432,26 +427,29 @@ Record& App::importModule(const String& name, const String& fromPath)
         return found->second->names();
     }
     
-    // Try the local folder first?
-    if(!fromPath.empty())
-    {
-        String p = fromPath.fileNamePath().concatenatePath(name) + ".de";
-        File* found = fileSystem().root().tryLocateFile(p);
-        if(found)
-        {
-            Module* module = new Module(*found);
-            self.modules_[name] = module;
-            return module->names();
-        }
-    }
-    
     // Search the import path (it's an array value in Config).
     ArrayValue& importPath = config().names()["importPath"].value<ArrayValue>();
     for(ArrayValue::Elements::const_iterator i = importPath.elements().begin();
         i != importPath.elements().end(); ++i)
     {
-        String p = (*i)->asText().concatenatePath(name);
-        File* found = fileSystem().root().tryLocateFile(p);
+        String p;
+        if((*i)->asText().empty())
+        {
+            if(!fromPath.empty())
+            {
+                // Try the local folder.
+                p = fromPath.fileNamePath().concatenatePath(name);
+            }
+            else
+            {
+                continue;
+            }
+        }
+        else
+        {
+            p = (*i)->asText().concatenatePath(name);
+        }
+        File* found = fileSystem().root().tryLocateFile(p + ".de");
         if(found)
         {
             Module* module = new Module(*found);

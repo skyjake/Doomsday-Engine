@@ -15,9 +15,4 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-# Main configuration for libdeng2.
-# Read by all applications.
-
-importPath = ['', '/modules']
-
-import record video, audio
+default ?= 'fmod'
