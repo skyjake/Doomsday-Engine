@@ -446,13 +446,23 @@ import Config
 print "Here's the Config:"
 print Config
 
+sections.subsection('Serializing namespaces.')
+sns = serialize(locals())
+print 'sns =', sns
+print 'That deserializes into:'
+dsns = deserialize(sns)
+print dsns
+print 'Calling deserialized function...'
+print dsns.func3(1, 2, 3)
+del dsns
+
 sections.subsection('Importing modules: import record.')
 print 'Getting rid of the imported sections module (which is just a reference).'
 print "Note that this has no effect on sections's own namespace."
 del sections
 print 'import record sections'
 import record sections
-print 'The sections namespace has become a local record and can be serialized.'
+print 'The sections namespace has become a local record.'
 print locals()
 
 # ---------------------------------------------------------------------------

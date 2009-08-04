@@ -75,6 +75,6 @@ void Compound::operator << (Reader& from)
     clear();
     while(count--)
     {
-        statements_.push_back(Statement::constructFrom(from));
+        add(Statement::constructFrom(from));
     }
 }

@@ -25,6 +25,7 @@
 #include "de/DictionaryValue"
 #include "de/BlockValue"
 #include "de/FunctionValue"
+#include "de/RecordValue"
 #include "de/Reader"
 
 using namespace de;
@@ -169,31 +170,35 @@ Value* Value::constructFrom(Reader& reader)
     switch(id)
     {
     case NONE:
-        result.reset(new NoneValue());
+        result.reset(new NoneValue);
         break;
         
     case NUMBER:
-        result.reset(new NumberValue());
+        result.reset(new NumberValue);
         break;
         
     case TEXT:
-        result.reset(new TextValue());
+        result.reset(new TextValue);
         break;
         
     case ARRAY:
-        result.reset(new ArrayValue());
+        result.reset(new ArrayValue);
         break;
         
     case DICTIONARY:
-        result.reset(new DictionaryValue());
+        result.reset(new DictionaryValue);
         break;
         
     case BLOCK:
-        result.reset(new BlockValue());
+        result.reset(new BlockValue);
         break;
         
     case FUNCTION:
-        result.reset(new FunctionValue());
+        result.reset(new FunctionValue);
+        break;
+
+    case RECORD:
+        result.reset(new RecordValue(new Record, RecordValue::OWNS_RECORD));
         break;
         
     default:

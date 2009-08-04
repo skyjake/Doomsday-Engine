@@ -80,7 +80,7 @@ void JumpStatement::execute(Context& context) const
 
 void JumpStatement::operator >> (Writer& to) const
 {
-    to << SerialId(JUMP);    
+    to << SerialId(JUMP);
     duint8 header = duint8(type_);
     if(arg_)
     {

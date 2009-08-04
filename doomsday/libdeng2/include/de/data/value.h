@@ -260,7 +260,8 @@ namespace de
             ARRAY,
             DICTIONARY,
             BLOCK,
-            FUNCTION
+            FUNCTION,
+            RECORD
         };
     };
 }

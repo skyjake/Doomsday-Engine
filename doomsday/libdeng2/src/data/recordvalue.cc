@@ -22,24 +22,32 @@
 #include "de/RefValue"
 #include "de/NoneValue"
 #include "de/Writer"
+#include "de/Reader"
 #include "de/math.h"
 
 using namespace de;
 
-RecordValue::RecordValue(Record* record) : record_(record)
+RecordValue::RecordValue(Record* record, const Ownership& o) : record_(record), ownership_(o)
 {
-    if(record_)
+    assert(record_ != NULL);
+    if(!ownership_[OWNS_RECORD_BIT])
     {
+        // If we don't own it, someone may delete the record.
         record_->observers.add(this);
     }
 }
 
 RecordValue::~RecordValue()
 {
-    if(record_)
+    if(ownership_[OWNS_RECORD_BIT])
+    {
+        delete record_;
+    }
+    else if(record_)
     {
         record_->observers.remove(this);
     }
+    
 }
 
 void RecordValue::verify() const
@@ -130,18 +138,25 @@ dint RecordValue::compare(const Value& value) const
 
 void RecordValue::operator >> (Writer& to) const
 {
-    // Record references can't be serialized.
-    to << NoneValue();
+    to << SerialId(RECORD) << dereference();
 }
 
 void RecordValue::operator << (Reader& from)
 {
-    // Should never happen.
-    assert(false);
+    SerialId id;
+    from >> id;
+    if(id != RECORD)
+    {
+        /// @throw DeserializationError The identifier that species the type of the 
+        /// serialized value was invalid.
+        throw DeserializationError("RecordValue::operator <<", "Invalid ID");
+    }
+    from >> dereference();
 }
 
 void RecordValue::recordBeingDeleted(Record& record)
 {
     assert(record_ == &record);
+    assert(!ownership_[OWNS_RECORD_BIT]);
     record_ = 0;
 }

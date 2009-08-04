@@ -43,13 +43,16 @@ namespace de
         /// The index used for accessing the record is of the wrong type. @ingroup errors
         DEFINE_ERROR(IllegalIndexError);
         
+        /// The value has ownership of the record.
+        DEFINE_FINAL_FLAG(OWNS_RECORD, 0, Ownership);
+        
     public:
         /**
          * Constructs a new reference to a record.
          *
          * @param record  Record.
          */
-        RecordValue(Record* record = 0);
+        RecordValue(Record* record, const Ownership& ownership = 0);
         
         virtual ~RecordValue();
         
@@ -79,6 +82,7 @@ namespace de
         
     public:
         Record* record_;
+        Ownership ownership_;
     };
 }
 

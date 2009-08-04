@@ -34,13 +34,13 @@ AssignStatement::AssignStatement() : indexCount_(0)
 AssignStatement::AssignStatement(Expression* target, const Indices& indices, Expression* value) 
     : indexCount_(0)
 {
-    args_.add(target);
+    args_.add(value);
     indexCount_ = indices.size();
-    for(Indices::const_iterator i = indices.begin(); i != indices.end(); ++i)
+    for(Indices::const_reverse_iterator i = indices.rbegin(); i != indices.rend(); ++i)
     {
         args_.add(*i);
     }
-    args_.add(value);
+    args_.add(target);
 }
 
 AssignStatement::~AssignStatement()
@@ -51,11 +51,14 @@ void AssignStatement::execute(Context& context) const
     Evaluator& eval = context.evaluator();
     ArrayValue& results = eval.evaluateTo<ArrayValue>(&args_);
 
-    RefValue* ref = dynamic_cast<RefValue*>(results.elements()[0]);
+    // We want to pop the value to assign as the first element.
+    results.reverse();
+
+    RefValue* ref = dynamic_cast<RefValue*>(results.elements().front());
     if(!ref)
     {
         throw LeftValueError("AssignStatement::execute",
-            "Cannot assign into '" + results.elements()[0]->asText() + "'");
+            "Cannot assign into '" + results.at(0).asText() + "'");
     }
 
     // The new value that will be assigned to the destination.
