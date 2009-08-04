@@ -1,4 +1,4 @@
-# The Doomsday Engine Project -- libdeng2
+# The Doomsday Engine Project -- dengsv
 #
 # Copyright (c) 2009 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
@@ -15,9 +15,5 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-# Main configuration for libdeng2.
-# Read by all applications.
-
-importPath = ['', '/modules']
-
-import record video, audio
+# The TCP port used for listening to incoming connections.
+listenPort ?= 13209

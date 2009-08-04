@@ -33,7 +33,7 @@
 using namespace de;
 
 ClientApp::ClientApp(const de::CommandLine& arguments)
-    : App(arguments), localServer_(0), session_(0)
+    : App(arguments, "/config/client.de"), localServer_(0), session_(0)
 {        
     CommandLine& args = commandLine();
     

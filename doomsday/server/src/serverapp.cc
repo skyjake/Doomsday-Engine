@@ -38,12 +38,12 @@
 using namespace de;
 
 ServerApp::ServerApp(const de::CommandLine& arguments)
-    : App(arguments, "none", "none"), listenSocket_(0), session_(0)
+    : App(arguments, "/config/server.de"), listenSocket_(0), session_(0)
 {
     CommandLine& args = commandLine();
 
     // Start listening.
-    duint16 port = DEFAULT_LISTEN_PORT;
+    duint16 port = config().getui("net.listenPort");
     String param;
     if(args.getParameter("--port", param))
     {

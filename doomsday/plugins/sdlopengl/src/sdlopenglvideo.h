@@ -19,6 +19,7 @@
 
 #include <de/Video>
 #include <de/Surface>
+#include <de/Config>
 
 /**
  * Video subsystem implemented using SDL and OpenGL.
@@ -46,4 +47,5 @@ public:
     void update(const de::Time::Delta& elapsed);
 
 private:
+    de::Config config_;
 };

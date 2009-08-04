@@ -25,7 +25,7 @@
 
 using namespace de;
 
-Config::Config() : configPath_("/config/libdeng2.de")
+Config::Config(const String& path) : configPath_(path)
 {}
 
 void Config::read()

@@ -1,4 +1,4 @@
-# The Doomsday Engine Project -- libdeng2
+# The Doomsday Engine Project -- dengsv
 #
 # Copyright (c) 2009 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
@@ -15,4 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-default ?= 'sdlopengl'
+# Configuration for the server app.
+
+import record deng
+
+# The rest of server's configuration files are here.
+deng.importPath += ['/config/server']
+
+# Server doesn't use audio or video.
+deng.audio = 'none'
+deng.video = 'none'
+
+import record net

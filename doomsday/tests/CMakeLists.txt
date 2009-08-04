@@ -41,4 +41,6 @@ IF ( ENABLE_TESTS )
         stoploop 
         vectors 
         )
+        
+    INSTALL ( FILES testapp.de DESTINATION ${DENG_DATA_DIR}/config )
 ENDIF ()

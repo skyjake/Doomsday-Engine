@@ -35,7 +35,12 @@ namespace de
     class Config
     {
     public:
-        Config();
+        /**
+         * Constructs a new configuration.
+         *
+         * @param path  Name of the configuration file to read.
+         */
+        Config(const String& path);
 
         /// Read configuration from files.
         void read();
@@ -61,7 +66,7 @@ namespace de
         Record& names();
         
     private:
-        /// Directory where to read configuration files. Defaults to /config.
+        /// Configuration file name.
         String configPath_;
         
         /// The configuration namespace.

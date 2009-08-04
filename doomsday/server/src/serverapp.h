@@ -26,8 +26,6 @@
 class Session;
 class Client;
 
-#define DEFAULT_LISTEN_PORT 13209
-
 /**
  * @defgroup client Client
  * The server application.

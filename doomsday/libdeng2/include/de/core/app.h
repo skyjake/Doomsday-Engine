@@ -82,13 +82,10 @@ namespace de
          * Constructs the application.
          * 
          * @param commandLine  Command line arguments.
-         * @param defaultVideo  Name of the default video subsystem. "none" if the video
-         *      subsystem should not be used. Leave blank to use the built-in default.
-         * @param defaultAudio  Name of the default audio subsystem. "none" if the audio
-         *      subsystem should not be used. Leave blank to use the built-in default.
+         * @param configPath   Path of the configuration file. The application's 
+         *                     configuration must "import record deng".
          */
-        App(const CommandLine& commandLine, const String& defaultVideo = "", 
-            const String& defaultAudio = "");
+        App(const CommandLine& commandLine, const String& configPath);
             
         virtual ~App();
 
@@ -267,11 +264,9 @@ namespace de
         
         /// The video subsystem. Can be NULL.
         Video* video_;
-        String defaultVideo_;
         
         /// The audio subsystem. Can be NULL.
         Audio* audio_;
-        String defaultAudio_;
 
         /// Modules.
         typedef std::map<String, Module*> Modules;

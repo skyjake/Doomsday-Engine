@@ -35,16 +35,14 @@ using namespace de;
 // This will be set when the app is constructed.
 App* App::singleton_ = 0;
 
-App::App(const CommandLine& commandLine, const String& defaultVideo, const String& defaultAudio)
+App::App(const CommandLine& commandLine, const String& configPath)
     : commandLine_(commandLine), 
       memory_(0), 
       fs_(0), 
       config_(0),
       gameLib_(0), 
       video_(0), 
-      defaultVideo_(defaultVideo), 
       audio_(0),
-      defaultAudio_(defaultAudio),
       runMainLoop_(true), 
       firstIteration_(true), 
       exitCode_(0)
@@ -92,27 +90,27 @@ App::App(const CommandLine& commandLine, const String& defaultVideo, const Strin
         fs_->getFolder("/bin").attach(new DirectoryFeed("MacOS"));
         fs_->getFolder("/data").attach(new DirectoryFeed("Resources"));
         fs_->getFolder("/config").attach(new DirectoryFeed("Resources/config"));
-        fs_->getFolder("/modules").attach(new DirectoryFeed("Resources/modules"));
+        //fs_->getFolder("/modules").attach(new DirectoryFeed("Resources/modules"));
 #endif
 
 #if defined(UNIX) && !defined(MACOSX)
         fs_->getFolder("/bin").attach(new DirectoryFeed("bin"));
         fs_->getFolder("/data").attach(new DirectoryFeed("data"));
         fs_->getFolder("/config").attach(new DirectoryFeed("data/config"));
-        fs_->getFolder("/modules").attach(new DirectoryFeed("data/modules"));
+        //fs_->getFolder("/modules").attach(new DirectoryFeed("data/modules"));
 #endif
 
 #ifdef WIN32
         fs_->getFolder("/bin").attach(new DirectoryFeed("bin"));
         fs_->getFolder("/data").attach(new DirectoryFeed("data"));
         fs_->getFolder("/config").attach(new DirectoryFeed("data\\config"));
-        fs_->getFolder("/modules").attach(new DirectoryFeed("data\\modules"));
+        //fs_->getFolder("/modules").attach(new DirectoryFeed("data\\modules"));
 #endif
 
         fs_->refresh();
         
         // The configuration.
-        std::auto_ptr<Config> configPtr(new Config());
+        std::auto_ptr<Config> configPtr(new Config(configPath));
         config_ = configPtr.get();
         config_->read();
         
@@ -163,10 +161,10 @@ void App::loadPlugins()
     String gameName = "doom"; /// @todo There is no default game, really...
     commandLine_.getParameter("--game", gameName);
     
-    String videoName = defaultVideo_.empty()? config().gets("video.default") : defaultVideo_;
+    String videoName = config().gets("deng.video");
     commandLine_.getParameter("--video", videoName);
     
-    String audioName = defaultAudio_.empty()? config().gets("audio.default") : defaultAudio_;
+    String audioName = config().gets("deng.audio");
     commandLine_.getParameter("--audio", audioName);
 
     // Get the index of libraries.
@@ -426,11 +424,21 @@ Record& App::importModule(const String& name, const String& fromPath)
     {
         return found->second->names();
     }
+
+    // Fall back on the default if the libdeng2 module hasn't been imported yet.
+    std::auto_ptr<ArrayValue> defaultImportPath(new ArrayValue);
+    defaultImportPath->add("");    
+    ArrayValue* importPath = defaultImportPath.get();
+    try
+    {
+        importPath = &config().names()["deng.importPath"].value<ArrayValue>();
+    }
+    catch(const Record::NotFoundError&)
+    {}
     
-    // Search the import path (it's an array value in Config).
-    ArrayValue& importPath = config().names()["importPath"].value<ArrayValue>();
-    for(ArrayValue::Elements::const_iterator i = importPath.elements().begin();
-        i != importPath.elements().end(); ++i)
+    // Search the import path (array of paths).
+    for(ArrayValue::Elements::const_iterator i = importPath->elements().begin();
+        i != importPath->elements().end(); ++i)
     {
         String p;
         if((*i)->asText().empty())

@@ -37,6 +37,9 @@ ELSE ()
     INSTALL ( TARGETS dengsv RUNTIME DESTINATION ${DENG_BINARY_DIR} )
 ENDIF ()
 
+INSTALL ( FILES config/server.de DESTINATION ${DENG_DATA_DIR}/config )
+INSTALL ( FILES config/net.de DESTINATION ${DENG_DATA_DIR}/config/server )
+
 # Documentation.
 IF ( DOXYGEN_FOUND )
     ADD_CUSTOM_TARGET ( serverdocs

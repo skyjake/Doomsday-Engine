@@ -32,6 +32,8 @@ ENDIF ( WIN32 )
 
 INSTALL ( TARGETS dengcl RUNTIME DESTINATION ${DENG_BINARY_DIR} )
 
+INSTALL ( FILES config/client.de DESTINATION ${DENG_DATA_DIR}/config )
+
 # Documentation.
 IF ( DOXYGEN_FOUND )
     ADD_CUSTOM_TARGET ( clientdocs

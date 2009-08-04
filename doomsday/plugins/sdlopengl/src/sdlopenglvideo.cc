@@ -20,25 +20,32 @@
 #include "sdlopenglvideo.h"
 #include "glwindow.h"
 
+#include <de/App>
 #include <SDL.h>
 
 using namespace de;
 
-SDLOpenGLVideo::SDLOpenGLVideo()
+SDLOpenGLVideo::SDLOpenGLVideo() : config_("/config/sdlopengl.de")
 {
     std::cout << "SDLOpenGLVideo\n";
+    config_.read();
     
     if(SDL_InitSubSystem(SDL_INIT_VIDEO))
     {
         throw SDLError("SDLOpenGLVideo::SDLOpenGLVideo", SDL_GetError());
     }
     
-    /// @todo Consult the application's configuration for default window settings.
-
     Window::Placement place;
     Window::Mode mode;
-    
-    place.setSize(Vector2ui(640, 480));
+
+    Config& cfg = App::config();
+    place.topLeft = Vector2ui(cfg.getui("window.x"), cfg.getui("window.y"));
+    place.setSize(Vector2ui(cfg.getui("window.width"), cfg.getui("window.height")));
+
+    if(cfg.get("window.fullscreen").isTrue())
+    {
+        mode.set(Window::FULLSCREEN_BIT);
+    }
 
     // Create the main window. 
     setMainWindow(newWindow(place, mode));
