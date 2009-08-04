@@ -22,6 +22,8 @@
 #include "de/Evaluator"
 #include "de/Context"
 #include "de/Value"
+#include "de/Writer"
+#include "de/Reader"
 
 using namespace de;
 
@@ -43,4 +45,26 @@ void WhileStatement::execute(Context& context) const
     {
         context.proceed();
     }
+}
+
+void WhileStatement::operator >> (Writer& to) const
+{
+    to << SerialId(WHILE) << *loopCondition_ << compound_;
+}
+
+void WhileStatement::operator << (Reader& from)
+{
+    SerialId id;
+    from >> id;
+    if(id != WHILE)
+    {
+        /// @throw DeserializationError The identifier that species the type of the 
+        /// serialized statement was invalid.
+        throw DeserializationError("WhileStatement::operator <<", "Invalid ID");
+    }
+    delete loopCondition_;
+    loopCondition_ = 0;
+    loopCondition_ = Expression::constructFrom(from);
+    
+    from >> compound_;
 }

@@ -33,6 +33,8 @@ namespace de
      *
      * This is an interface for parsers. A concrete Parser implementation 
      * uses a specific syntax for the input text.
+     *
+     * @ingroup script
      */
     class IParser
     {

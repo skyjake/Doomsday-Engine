@@ -28,6 +28,8 @@
 #include "de/FunctionValue"
 #include "de/RefValue"
 #include "de/Process"
+#include "de/Writer"
+#include "de/Reader"
 
 using namespace de;
 
@@ -80,4 +82,26 @@ void FunctionStatement::execute(Context& context) const
     ref->assign(new FunctionValue(function_));
     
     context.proceed();
+}
+
+void FunctionStatement::operator >> (Writer& to) const
+{
+    to << SerialId(FUNCTION) << *identifier_ << *function_ << defaults_;
+}
+
+void FunctionStatement::operator << (Reader& from)
+{
+    SerialId id;
+    from >> id;
+    if(id != FUNCTION)
+    {
+        /// @throw DeserializationError The identifier that species the type of the 
+        /// serialized statement was invalid.
+        throw DeserializationError("FunctionStatement::operator <<", "Invalid ID");
+    }
+    delete identifier_;
+    identifier_ = 0;
+    identifier_ = Expression::constructFrom(from);
+
+    from >> *function_ >> defaults_;
 }

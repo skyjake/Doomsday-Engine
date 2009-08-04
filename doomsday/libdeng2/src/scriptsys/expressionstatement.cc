@@ -21,6 +21,8 @@
 #include "de/Expression"
 #include "de/Context"
 #include "de/Evaluator"
+#include "de/Writer"
+#include "de/Reader"
 
 using namespace de;
 
@@ -33,4 +35,24 @@ void ExpressionStatement::execute(Context& context) const
 {
     context.evaluator().evaluate(expression_);
     context.proceed();
+}
+
+void ExpressionStatement::operator >> (Writer& to) const
+{
+    to << SerialId(EXPRESSION) << *expression_;
+}
+
+void ExpressionStatement::operator << (Reader& from)
+{
+    SerialId id;
+    from >> id;
+    if(id != EXPRESSION)
+    {
+        /// @throw DeserializationError The identifier that species the type of the 
+        /// serialized statement was invalid.
+        throw DeserializationError("ExpressionStatement::operator <<", "Invalid ID");
+    }
+    delete expression_;
+    expression_ = 0;
+    expression_ = Expression::constructFrom(from);
 }

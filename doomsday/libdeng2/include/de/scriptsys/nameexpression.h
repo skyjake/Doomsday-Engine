@@ -29,6 +29,8 @@ namespace de
     /**
      * Responsible for referencing, creating, and deleting variables and record
      * references based an textual identifier.
+     *
+     * @ingroup script
      */
     class NameExpression : public Expression
     {
@@ -42,6 +44,8 @@ namespace de
         /// The identifier does not specify an existing variable. @ingroup errors
         DEFINE_ERROR(NotFoundError);
 
+        // Note: the flags below are serialized as is, so don't change the existing values.
+        
         /// Evaluates to a value. In conjunction with IMPORT, causes the imported
         /// record to be copied to the local namespace.
         DEFINE_FLAG(BY_VALUE, 0);
@@ -49,33 +53,38 @@ namespace de
         /// Evaluates to a reference.
         DEFINE_FLAG(BY_REFERENCE, 1);
         
-        /// Look for object in local namespace only. 
-        DEFINE_FLAG(LOCAL_ONLY, 2);
-        
         /// If missing, create a new variable.
-        DEFINE_FLAG(NEW_VARIABLE, 3);
+        DEFINE_FLAG(NEW_VARIABLE, 2);
 
         /// If missing, create a new record.
-        DEFINE_FLAG(NEW_RECORD, 4);
+        DEFINE_FLAG(NEW_RECORD, 3);
         
         /// Identifier must exist and will be deleted.
-        DEFINE_FLAG(DELETE, 5);
+        DEFINE_FLAG(DELETE, 4);
         
         /// Imports an external namespace into the local namespace (as a reference).
-        DEFINE_FLAG(IMPORT, 6);
+        DEFINE_FLAG(IMPORT, 5);
 
+        /// Look for object in local namespace only. 
+        DEFINE_FLAG(LOCAL_ONLY, 6);
+        
         /// If the identifier is in scope, returns a reference to the process's 
         /// throwaway variable.
         DEFINE_FLAG(THROWAWAY_IF_IN_SCOPE, 7);
 
-        /// Must create a new variable.
+        /// Identifier must not already exist in scope.
         DEFINE_FINAL_FLAG(NOT_IN_SCOPE, 8, Flags);
 
     public:
+        NameExpression();
         NameExpression(const String& identifier, const Flags& flags = BY_VALUE);
         ~NameExpression();
 
         Value* evaluate(Evaluator& evaluator) const;
+
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);                 
         
     private:
         String identifier_;

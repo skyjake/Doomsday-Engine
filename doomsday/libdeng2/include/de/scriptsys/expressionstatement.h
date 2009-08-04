@@ -30,15 +30,26 @@ namespace de
      * ExpressionStatement is a Statement that evaluates an expression but
      * does not store the result anywhere. An example of this would be a 
      * statement that just does a single method call.
+     *
+     * @ingroup script
      */
     class ExpressionStatement : public Statement
     {
     public:
-        ExpressionStatement(Expression* expression) : expression_(expression) {}
+        /**
+         * Constructs a new expression statement.
+         *
+         * @param expression  Statement gets ownership.
+         */ 
+        ExpressionStatement(Expression* expression = 0) : expression_(expression) {}
         
         ~ExpressionStatement();
         
         void execute(Context& context) const;
+        
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);         
         
     private:
         Expression* expression_;

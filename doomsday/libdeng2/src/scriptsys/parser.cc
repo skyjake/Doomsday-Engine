@@ -254,6 +254,7 @@ ForStatement* Parser::parseForStatement()
 ExpressionStatement* Parser::parseImportStatement()
 {
     // "import" ["record"] name-expr ["," name-expr]*
+ 
     if(statementRange_.size() < 2)
     {
         throw MissingTokenError("Parser::parseImportStatement",
@@ -274,29 +275,27 @@ ExpressionStatement* Parser::parseImportStatement()
 
 ExpressionStatement* Parser::parseRecordStatement()
 {
-    // "record" name-expr
+    // "record" name-expr ["," name-expr]*
 
-    /// @todo  Use parseList() as in parseImportStatement().
-    
     if(statementRange_.size() < 2)
     {
         throw MissingTokenError("Parser::parseRecordStatement",
             "Expected identifier to follow " + statementRange_.firstToken().asText());
     }    
-    return new ExpressionStatement(parseExpression(statementRange_.startingFrom(1),
+    return new ExpressionStatement(parseList(statementRange_.startingFrom(1), ",",
         ALLOW_NEW_RECORDS | LOCAL_NAMESPACE_ONLY));
 }
 
 ExpressionStatement* Parser::parseDeleteStatement()
 {
-    // "del" name-expr
+    // "del" name-expr ["," name-expr]*
     
     if(statementRange_.size() < 2)
     {
         throw MissingTokenError("Parser::parseDeleteStatement",
             "Expected identifier to follow " + statementRange_.firstToken().asText());
     }    
-    return new ExpressionStatement(parseExpression(statementRange_.startingFrom(1),
+    return new ExpressionStatement(parseList(statementRange_.startingFrom(1), ",",
         DELETE_IDENTIFIER | LOCAL_NAMESPACE_ONLY));
 }
 

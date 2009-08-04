@@ -23,10 +23,15 @@
 #include "de/TextValue"
 #include "de/RefValue"
 #include "de/RecordValue"
+#include "de/Writer"
+#include "de/Reader"
 #include "de/App"
 #include "de/Module"
 
 using namespace de;
+
+NameExpression::NameExpression()
+{}
 
 NameExpression::NameExpression(const String& identifier, const Flags& flags) 
     : identifier_(identifier), flags_(flags)
@@ -162,4 +167,25 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
     
     throw NotFoundError("NameExpression::evaluate", "Identifier '" + identifier_ + 
         "' does not exist");
+}
+
+void NameExpression::operator >> (Writer& to) const
+{
+    to << SerialId(NAME) << identifier_ << duint16(flags_.to_ulong());
+}
+
+void NameExpression::operator << (Reader& from)
+{
+    SerialId id;
+    from >> id;
+    if(id != NAME)
+    {
+        /// @throw DeserializationError The identifier that species the type of the 
+        /// serialized expression was invalid.
+        throw DeserializationError("NameExpression::operator <<", "Invalid ID");
+    }
+    from >> identifier_;
+    duint16 f;
+    from >> f;
+    flags_ = f;
 }

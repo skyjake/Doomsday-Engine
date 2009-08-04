@@ -20,9 +20,14 @@
 #include "de/ConstantExpression"
 #include "de/NumberValue"
 #include "de/NoneValue"
+#include "de/Writer"
+#include "de/Reader"
 #include "de/math.h"
 
 using namespace de;
+
+ConstantExpression::ConstantExpression() : value_(0)
+{}
 
 ConstantExpression::ConstantExpression(Value* value) : value_(value) 
 {}
@@ -56,4 +61,24 @@ ConstantExpression* ConstantExpression::False()
 ConstantExpression* ConstantExpression::Pi()
 {
     return new ConstantExpression(new NumberValue(PI));
+}
+
+void ConstantExpression::operator >> (Writer& to) const
+{
+    to << SerialId(CONSTANT) << *value_;
+}
+
+void ConstantExpression::operator << (Reader& from)
+{
+    SerialId id;
+    from >> id;
+    if(id != CONSTANT)
+    {
+        /// @throw DeserializationError The identifier that species the type of the 
+        /// serialized expression was invalid.
+        throw DeserializationError("ConstantExpression::operator <<", "Invalid ID");
+    }
+    delete value_;
+    value_ = 0;
+    value_ = Value::constructFrom(from);
 }

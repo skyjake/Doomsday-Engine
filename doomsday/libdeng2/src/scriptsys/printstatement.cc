@@ -21,13 +21,25 @@
 #include "de/Context"
 #include "de/ArrayValue"
 #include "de/ArrayExpression"
+#include "de/Writer"
+#include "de/Reader"
 
 #include <sstream>
 
 using namespace de;
 
 PrintStatement::PrintStatement(ArrayExpression* arguments) : arg_(arguments)
-{}
+{
+    if(!arg_)
+    {
+        arg_ = new ArrayExpression();
+    }
+}
+
+PrintStatement::~PrintStatement()
+{
+    delete arg_;
+}
 
 void PrintStatement::execute(Context& context) const
 {
@@ -54,4 +66,22 @@ void PrintStatement::execute(Context& context) const
     std::cout << os.str() << "\n";
     
     context.proceed();
+}
+
+void PrintStatement::operator >> (Writer& to) const
+{
+    to << SerialId(PRINT) << *arg_;
+}
+
+void PrintStatement::operator << (Reader& from)
+{
+    SerialId id;
+    from >> id;
+    if(id != PRINT)
+    {
+        /// @throw DeserializationError The identifier that species the type of the 
+        /// serialized statement was invalid.
+        throw DeserializationError("PrintStatement::operator <<", "Invalid ID");
+    }
+    from >> *arg_;
 }

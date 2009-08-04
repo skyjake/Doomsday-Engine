@@ -38,19 +38,24 @@ namespace de
         DEFINE_ERROR(WrongArgumentsError);
         
         /// Type of the built-in expression.
+        /// @note  These are serialied as is, so do not change the existing values.
         enum Type {
-            NONE,
-            LENGTH, ///< Evaluate the length of an value (by calling size()).
-            DICTIONARY_KEYS,
-            DICTIONARY_VALUES,
-            RECORD_MEMBERS,
-            RECORD_SUBRECORDS,
-            AS_TEXT,
-            AS_NUMBER,
-            LOCAL_NAMESPACE         
+            NONE = 0,
+            LENGTH = 1, ///< Evaluate the length of an value (by calling size()).
+            DICTIONARY_KEYS = 2,
+            DICTIONARY_VALUES = 3,
+            RECORD_MEMBERS = 4,
+            RECORD_SUBRECORDS = 5,
+            AS_TEXT = 6,
+            AS_NUMBER = 7,
+            LOCAL_NAMESPACE = 8,
+            SERIALIZE = 9,
+            DESERIALIZE = 10
         };
         
     public:
+        BuiltInExpression();
+        
         BuiltInExpression(Type type, Expression* argument);
         
         ~BuiltInExpression();
@@ -58,6 +63,10 @@ namespace de
         void push(Evaluator& evaluator, Record* names = 0) const;
 
         Value* evaluate(Evaluator& evaluator) const;
+
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);         
 
     public:
         /**

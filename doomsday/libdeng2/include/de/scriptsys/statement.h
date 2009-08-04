@@ -20,15 +20,23 @@
 #ifndef LIBDENG2_STATEMENT_H
 #define LIBDENG2_STATEMENT_H
 
+#include "../ISerializable"
+
 namespace de
 {
     class Context;
     
     /**
      * The Statement class is the abstract base class for all statements.
+     *
+     * @ingroup script
      */
-    class Statement
+    class Statement : public ISerializable
     {
+    public:
+        /// Deserialization of a statement failed. @ingroup errors
+        DEFINE_ERROR(DeserializationError);
+        
     public:
         Statement() : next_(0) {}
         
@@ -39,7 +47,31 @@ namespace de
         Statement* next() const { return next_; }
         
         void setNext(Statement* statement) { next_ = statement; }
-       
+
+    public:
+        /**
+         * Constructs a statement by deserializing one from a reader.
+         *
+         * @param from  Reader.
+         *
+         * @return  The deserialized statement. Caller gets ownership.
+         */
+        static Statement* constructFrom(Reader& from);
+
+    protected:
+        typedef dbyte SerialId;
+        
+        enum SerialIds {
+            ASSIGN,
+            EXPRESSION,
+            FOR,
+            FUNCTION,
+            IF,
+            JUMP,
+            PRINT,
+            WHILE
+        };
+                
     private:
         /// Pointer to the statement that follows this one, or NULL if
         /// this is the final statement.

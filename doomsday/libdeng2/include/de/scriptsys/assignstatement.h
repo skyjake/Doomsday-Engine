@@ -42,6 +42,8 @@ namespace de
         typedef std::vector<Expression*> Indices;
         
     public:
+        AssignStatement();
+        
         /**
          * Constructor. Statement takes ownership of the expressions 
          * @c target and @c value.
@@ -57,6 +59,10 @@ namespace de
         ~AssignStatement();
         
         void execute(Context& context) const;
+        
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);         
         
     private:
         ArrayExpression args_;

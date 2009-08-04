@@ -92,6 +92,7 @@ Value& Variable::value()
 
 bool Variable::isValid(const Value& v) const
 {
+    /// @todo  Make sure this actually works and add func, record, ref.
     if((dynamic_cast<const NoneValue*>(&v) && !mode[NONE_BIT]) ||
         (dynamic_cast<const NumberValue*>(&v) && !mode[NUMBER_BIT]) ||
         (dynamic_cast<const TextValue*>(&v) && !mode[TEXT_BIT]) ||

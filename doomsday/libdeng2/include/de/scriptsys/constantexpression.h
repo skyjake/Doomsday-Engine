@@ -28,10 +28,14 @@ namespace de
     /**
      * ConstantExpression is an expression that always evaluates to a constant
      * value. It is used for storing the constant values in scripts. 
+     *
+     * @ingroup script
      */
     class ConstantExpression : public Expression
     {
     public:
+        ConstantExpression();
+        
         /**
          * Constructor. 
          *
@@ -43,6 +47,10 @@ namespace de
         ~ConstantExpression();
         
         Value* evaluate(Evaluator& evaluator) const;
+
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);         
         
     public:
         static ConstantExpression* None();        

@@ -21,16 +21,24 @@
 #include "de/Context"
 #include "de/Expression"
 #include "de/Value"
+#include "de/Writer"
+#include "de/Reader"
 
 using namespace de;
 
 IfStatement::~IfStatement()
+{
+    clear();
+}
+
+void IfStatement::clear()
 {
     for(Branches::iterator i = branches_.begin(); i != branches_.end(); ++i)
     {
         delete i->condition;
         delete i->compound;
     }
+    branches_.clear();
 }
 
 void IfStatement::newBranch()
@@ -68,4 +76,44 @@ void IfStatement::execute(Context& context) const
     {
         context.proceed();
     }
+}
+
+void IfStatement::operator >> (Writer& to) const
+{
+    to << SerialId(IF);
+    
+    // Branches.
+    to << duint16(branches_.size());
+    for(Branches::const_iterator i = branches_.begin(); i != branches_.end(); ++i)
+    {
+        assert(i->condition != NULL);
+        to << *i->condition << *i->compound;
+    }
+
+    to << elseCompound_;
+}
+
+void IfStatement::operator << (Reader& from)
+{
+    SerialId id;
+    from >> id;
+    if(id != IF)
+    {
+        /// @throw DeserializationError The identifier that species the type of the 
+        /// serialized statement was invalid.
+        throw DeserializationError("IfStatement::operator <<", "Invalid ID");
+    }
+    clear();
+    
+    // Branches.
+    duint16 count;
+    from >> count;
+    while(count--)
+    {
+        newBranch();
+        setBranchCondition(Expression::constructFrom(from));
+        from >> branchCompound();
+    }
+    
+    from >> elseCompound_;
 }

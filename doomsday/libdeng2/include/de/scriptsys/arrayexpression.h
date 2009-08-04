@@ -31,12 +31,16 @@ namespace de
     
     /**
      * Evaluates into an ArrayValue.
+     *
+     * @ingroup script
      */
     class ArrayExpression : public Expression
     {
     public:
         ArrayExpression();
         ~ArrayExpression();
+
+        void clear();
 
         /**
          * Adds an argument expression to the array expression.
@@ -55,6 +59,10 @@ namespace de
          * @return ArrayValue with the results of the argument evaluations.
          */
         Value* evaluate(Evaluator& evaluator) const;
+        
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);         
         
     private:
         typedef std::vector<Expression*> Arguments;

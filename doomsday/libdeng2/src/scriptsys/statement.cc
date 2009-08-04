@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,64 +17,64 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "de/Expression"
-#include "de/Evaluator"
-#include "de/ArrayExpression"
-#include "de/BuiltInExpression"
-#include "de/ConstantExpression"
-#include "de/DictionaryExpression"
-#include "de/NameExpression"
-#include "de/OperatorExpression"
-#include "de/Writer"
+#include "de/Statement"
+#include "de/AssignStatement"
+#include "de/ExpressionStatement"
+#include "de/ForStatement"
+#include "de/FunctionStatement"
+#include "de/IfStatement"
+#include "de/JumpStatement"
+#include "de/PrintStatement"
+#include "de/WhileStatement"
 #include "de/Reader"
 
 using namespace de;
 
-Expression::~Expression()
-{}
-
-void Expression::push(Evaluator& evaluator, Record* names) const
-{
-    evaluator.push(this, names);
-}
-
-Expression* Expression::constructFrom(Reader& reader)
+Statement* Statement::constructFrom(Reader& reader)
 {
     SerialId id;
     reader >> id;
     reader.rewind(sizeof(id));
     
-    std::auto_ptr<Expression> result;
+    std::auto_ptr<Statement> result;
     switch(id)
     {
-    case ARRAY:
-        result.reset(new ArrayExpression());
+    case ASSIGN:
+        result.reset(new AssignStatement());
         break;
         
-    case BUILT_IN:
-        result.reset(new BuiltInExpression());
+    case EXPRESSION:
+        result.reset(new ExpressionStatement());
         break;
         
-    case CONSTANT:
-        result.reset(new ConstantExpression());
+    case FOR:
+        result.reset(new ForStatement());
         break;
         
-    case DICTIONARY:
-        result.reset(new DictionaryExpression());
+    case FUNCTION:
+        result.reset(new FunctionStatement());
         break;
-
-    case NAME:
-        result.reset(new NameExpression());
+        
+    case IF:
+        result.reset(new IfStatement());
         break;
-
-    case OPERATOR:
-        result.reset(new OperatorExpression());
+        
+    case JUMP:
+        result.reset(new JumpStatement());
+        break;
+        
+    case PRINT:
+        result.reset(new PrintStatement());
+        break;
+        
+    case WHILE:
+        result.reset(new WhileStatement());
         break;
                 
     default:
         /// @throw DeserializationError The identifier that species the type of the 
-        /// serialized expression was invalid.
-        throw DeserializationError("Expression::constructFrom", "Invalid expression identifier");
+        /// serialized statement was invalid.
+        throw DeserializationError("Statement::constructFrom", "Invalid statement identifier");
     }
 
     // Deserialize it.

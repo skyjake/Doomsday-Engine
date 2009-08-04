@@ -20,8 +20,15 @@
 #include "de/FunctionValue"
 #include "de/Process"
 #include "de/ArrayValue"
+#include "de/Writer"
+#include "de/Reader"
 
 using namespace de;
+
+FunctionValue::FunctionValue() : func_(new Function())
+{
+    // We now hold the only reference to the function.
+}
 
 FunctionValue::FunctionValue(Function* func) : func_(func->ref<Function>())
 {}
@@ -83,10 +90,18 @@ void FunctionValue::call(Process& process, const Value& arguments) const
 
 void FunctionValue::operator >> (Writer& to) const
 {
-    throw CannotSerializeError("FunctionValue::operator >>", "Cannot serialize function values");
+    to << SerialId(FUNCTION) << *func_;
 }
 
 void FunctionValue::operator << (Reader& from)
 {
-    assert(false);
+    SerialId id;
+    from >> id;
+    if(id != FUNCTION)
+    {
+        /// @throw DeserializationError The identifier that species the type of the 
+        /// serialized value was invalid.
+        throw DeserializationError("FunctionValue::operator <<", "Invalid ID");
+    }
+    from >> *func_;
 }

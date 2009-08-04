@@ -25,8 +25,13 @@
 #include "de/Value"
 #include "de/Variable"
 #include "de/RefValue"
+#include "de/Writer"
+#include "de/Reader"
 
 using namespace de;
+
+ForStatement::ForStatement() : iterator_(0), iteration_(0)
+{}
 
 ForStatement::~ForStatement()
 {
@@ -60,4 +65,30 @@ void ForStatement::execute(Context& context) const
         context.setIterationValue(NULL);
         context.proceed();
     }            
+}
+
+void ForStatement::operator >> (Writer& to) const
+{
+    to << SerialId(FOR) << *iterator_ << *iteration_ << compound_;
+}
+
+void ForStatement::operator << (Reader& from)
+{
+    SerialId id;
+    from >> id;
+    if(id != FOR)
+    {
+        /// @throw DeserializationError The identifier that species the type of the 
+        /// serialized statement was invalid.
+        throw DeserializationError("ForStatement::operator <<", "Invalid ID");
+    }
+    delete iterator_; 
+    delete iteration_;
+    iterator_ = 0;
+    iteration_ = 0;
+    
+    iterator_ = Expression::constructFrom(from);
+    iteration_ = Expression::constructFrom(from);
+    
+    from >> compound_;
 }

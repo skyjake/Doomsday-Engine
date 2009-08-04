@@ -25,9 +25,17 @@
 #include "de/RefValue"
 #include "de/RecordValue"
 #include "de/NoneValue"
+#include "de/Writer"
+#include "de/Reader"
 #include "de/math.h"
 
 using namespace de;
+
+#define HAS_LEFT_OPERAND    0x80
+#define OPERATOR_MASK       0x7f
+
+OperatorExpression::OperatorExpression() : op_(NONE), leftOperand_(0), rightOperand_(0)
+{}
 
 OperatorExpression::OperatorExpression(Operator op, Expression* operand)
     : op_(op), leftOperand_(0), rightOperand_(operand)
@@ -246,6 +254,47 @@ Value* OperatorExpression::evaluate(Evaluator& evaluator) const
     if(result != leftValue) delete leftValue;
     
     return result;
+}
+
+void OperatorExpression::operator >> (Writer& to) const
+{
+    to << SerialId(OPERATOR);
+    duint8 header = op_;
+    if(leftOperand_)
+    {
+        header |= HAS_LEFT_OPERAND;
+    }
+    to << header << *rightOperand_;
+    if(leftOperand_)
+    {
+        to << *leftOperand_;
+    }
+}
+
+void OperatorExpression::operator << (Reader& from)
+{
+    SerialId id;
+    from >> id;
+    if(id != OPERATOR)
+    {
+        /// @throw DeserializationError The identifier that species the type of the 
+        /// serialized expression was invalid.
+        throw DeserializationError("OperatorExpression::operator <<", "Invalid ID");
+    }
+    duint8 header;
+    from >> header;
+    op_ = Operator(header & OPERATOR_MASK);
+
+    delete leftOperand_;
+    delete rightOperand_;
+    leftOperand_ = 0;
+    rightOperand_ = 0;
+    
+    rightOperand_ = Expression::constructFrom(from);
+    if(header & HAS_LEFT_OPERAND)
+    {
+        leftOperand_ = Expression::constructFrom(from);
+    }
 }
 
 Value* OperatorExpression::performSlice(Value* leftValue, Value* rightValue) const

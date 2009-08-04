@@ -21,6 +21,8 @@
 #include "de/Evaluator"
 #include "de/Expression"
 #include "de/ArrayValue"
+#include "de/Writer"
+#include "de/Reader"
 
 using namespace de;
 
@@ -28,11 +30,15 @@ ArrayExpression::ArrayExpression()
 {}
 
 ArrayExpression::~ArrayExpression()
+{}
+
+void ArrayExpression::clear()
 {
     for(Arguments::iterator i = arguments_.begin(); i != arguments_.end(); ++i)
     {
         delete *i;
     }
+    arguments_.clear();
 }
 
 void ArrayExpression::add(Expression* arg)
@@ -57,10 +63,38 @@ Value* ArrayExpression::evaluate(Evaluator& evaluator) const
 {
     // Collect the right number of results into the array.
     ArrayValue* value = new ArrayValue;
-    for(int count = arguments_.size(); count > 0; --count)
+    for(dint count = arguments_.size(); count > 0; --count)
     {
         value->add(evaluator.popResult());
     }
     value->reverse();
     return value;
+}
+
+void ArrayExpression::operator >> (Writer& to) const
+{
+    to << SerialId(ARRAY) << duint16(arguments_.size());
+    for(Arguments::const_iterator i = arguments_.begin(); i != arguments_.end(); ++i)
+    {
+        to << **i;
+    }
+}
+
+void ArrayExpression::operator << (Reader& from)
+{
+    SerialId id;
+    from >> id;
+    if(id != ARRAY)
+    {
+        /// @throw DeserializationError The identifier that species the type of the 
+        /// serialized expression was invalid.
+        throw DeserializationError("ArrayExpression::operator <<", "Invalid ID");
+    }
+    duint16 count;
+    from >> count;
+    clear();
+    while(count--)
+    {
+        arguments_.push_back(Expression::constructFrom(from));
+    }
 }

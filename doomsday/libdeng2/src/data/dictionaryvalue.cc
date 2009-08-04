@@ -254,8 +254,10 @@ void DictionaryValue::operator << (Reader& from)
     duint count = 0;
     from >> count;
     clear();
-    while(count-- > 0)
+    while(count--)
     {
-        add(Value::constructFrom(from), Value::constructFrom(from));
+        std::auto_ptr<Value> key(Value::constructFrom(from));
+        std::auto_ptr<Value> value(Value::constructFrom(from));
+        add(key.release(), value.release());
     }
 }

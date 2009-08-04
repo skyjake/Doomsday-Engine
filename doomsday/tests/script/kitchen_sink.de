@@ -48,6 +48,14 @@ print 'dictvalues({1:2, 3:5, 8:13}) =', dictvalues({1:2, 3:5, 8:13})
 sections.subsection('Built-in functions: Text(), Number().')
 print Text(123), Number("123")
 
+sections.subsection('Built-in functions: serialize() and deserialize().')
+a = [1, 'One', {1:'One'}]
+print 'a =', a
+b = serialize(a)
+print 'serialize(a) =', b
+print 'deserialize(serialize(a)) =', deserialize(b)
+del a, b
+
 # ---------------------------------------------------------------------------
 sections.begin('OPERATOR EXPRESSIONS')
 
@@ -295,6 +303,11 @@ del soonDeleted
 # This would cause an exception.
 #print reference
 del reference
+
+sections.subsection('Serializing records.')
+print 'serialize(myrec) =', serialize(myrec)
+print 'deserialize(serialize(myrec)) ='
+print deserialize(serialize(myrec))
 
 # ---------------------------------------------------------------------------
 sections.begin('FUNCTIONS')

@@ -20,6 +20,8 @@
 #include "de/DictionaryExpression"
 #include "de/DictionaryValue"
 #include "de/Evaluator"
+#include "de/Writer"
+#include "de/Reader"
 
 #include <list>
 
@@ -30,11 +32,17 @@ DictionaryExpression::DictionaryExpression()
 
 DictionaryExpression::~DictionaryExpression()
 {
+    clear();
+}
+
+void DictionaryExpression::clear()
+{
     for(Arguments::iterator i = arguments_.begin(); i != arguments_.end(); ++i)
     {
         delete i->first;
         delete i->second;
     }
+    arguments_.clear();
 }
 
 void DictionaryExpression::add(Expression* key, Expression* value)
@@ -82,4 +90,34 @@ Value* DictionaryExpression::evaluate(Evaluator& evaluator) const
     }
     
     return dict.release();
+}
+
+void DictionaryExpression::operator >> (Writer& to) const
+{
+    to << SerialId(DICTIONARY) << duint16(arguments_.size());
+    for(Arguments::const_iterator i = arguments_.begin(); i != arguments_.end(); ++i)
+    {
+        to << *i->first << *i->second;
+    }
+}
+
+void DictionaryExpression::operator << (Reader& from)
+{
+    SerialId id;
+    from >> id;
+    if(id != DICTIONARY)
+    {
+        /// @throw DeserializationError The identifier that species the type of the 
+        /// serialized expression was invalid.
+        throw DeserializationError("DictionaryExpression::operator <<", "Invalid ID");
+    }
+    duint16 count;
+    from >> count;
+    clear();
+    while(count--)
+    {
+        std::auto_ptr<Expression> key(Expression::constructFrom(from));
+        std::auto_ptr<Expression> value(Expression::constructFrom(from));
+        arguments_.push_back(ExpressionPair(key.release(), value.release()));
+    }
 }
