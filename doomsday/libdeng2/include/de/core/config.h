@@ -36,7 +36,25 @@ namespace de
     {
     public:
         Config();
-        
+
+        /// Read configuration from files.
+        void read();
+
+        /// Returns the value of @a name as a Value.
+        Value& get(const String& name);
+
+        /// Returns the value of @a name as an integer.
+        dint geti(const String& name);
+
+        /// Returns the value of @a name as an unsigned integer.
+        duint getui(const String& name);
+
+        /// Returns the value of @a name as a double-precision floating point number.
+        ddouble getd(const String& name);
+
+        /// Returns the value of @a name as a string.
+        String gets(const String& name);
+    
         /**
          * Returns the configuration namespace.
          */
