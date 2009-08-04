@@ -32,10 +32,14 @@ namespace de
     
     /**
      * Keeps looping until the iterable value runs out of elements.
+     *
+     * @ingroup script
      */
     class ForStatement : public Statement
     {
     public:
+        ForStatement();
+        
         ForStatement(Expression* iter, Expression* iteration) 
             : iterator_(iter), iteration_(iteration) {}
         
@@ -47,6 +51,10 @@ namespace de
         }
         
         void execute(Context& context) const;
+
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);         
 
     private:
         Expression* iterator_;

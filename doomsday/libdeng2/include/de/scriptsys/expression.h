@@ -20,6 +20,8 @@
 #ifndef LIBDENG2_EXPRESSION_H
 #define LIBDENG2_EXPRESSION_H
 
+#include "../ISerializable"
+
 namespace de
 {
     class Evaluator;
@@ -28,15 +30,43 @@ namespace de
 
     /**
      * Base class for expressions.
+     *
+     * @ingroup script
      */
-    class Expression
+    class Expression : public ISerializable
     {
+    public:
+        /// Deserialization of an expression failed. @ingroup errors
+        DEFINE_ERROR(DeserializationError);
+                
     public:
         virtual ~Expression();
 
         virtual void push(Evaluator& evaluator, Record* names = 0) const;
         
         virtual Value* evaluate(Evaluator& evaluator) const = 0;
+        
+    public:
+        /**
+         * Constructs an expression by deserializing one from a reader.
+         *
+         * @param from  Reader.
+         *
+         * @return  The deserialized expression. Caller gets ownership.
+         */
+        static Expression* constructFrom(Reader& reader);
+
+    protected:
+        typedef dbyte SerialId;
+        
+        enum SerialIds {
+            ARRAY,
+            BUILT_IN,
+            CONSTANT,
+            DICTIONARY,
+            NAME,
+            OPERATOR
+        };
     };
 }
 

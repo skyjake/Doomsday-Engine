@@ -34,11 +34,13 @@ namespace de
     
     /**
      * FunctionStatement creates a new function when it is executed.
+     *
+     * @ingroup script
      */
     class FunctionStatement : public Statement
     {
     public:
-        FunctionStatement(Expression* identifier);
+        FunctionStatement(Expression* identifier = 0);
         
         ~FunctionStatement();
 
@@ -49,6 +51,10 @@ namespace de
         
         void execute(Context& context) const;
         
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);         
+
     private:
         Expression* identifier_;
         

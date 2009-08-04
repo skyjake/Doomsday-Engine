@@ -28,6 +28,8 @@ namespace de
     
     /**
      * Jumps within the current context, i.e., local jumps.
+     *
+     * @ingroup script
      */
     class JumpStatement : public Statement
     {
@@ -40,11 +42,17 @@ namespace de
         };
         
     public:
+        JumpStatement();
+        
         JumpStatement(Type type, Expression* countArgument = 0);
         
         ~JumpStatement();
         
         void execute(Context& context) const;
+        
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);         
         
     private:        
         Type type_;

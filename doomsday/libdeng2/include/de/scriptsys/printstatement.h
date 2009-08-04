@@ -28,6 +28,8 @@ namespace de
 
     /**
      * Prints arguments to standard output.
+     *
+     * @ingroup script
      */
     class PrintStatement : public Statement
     {
@@ -38,9 +40,15 @@ namespace de
          * @param arguments  Array expression that contains all the arguments
          *                   of the print statement. Ownership transferred to the statement.
          */
-        PrintStatement(ArrayExpression* arguments);
+        PrintStatement(ArrayExpression* arguments = 0);
+
+        ~PrintStatement();
         
         void execute(Context& context) const;
+        
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);         
         
     private:
         ArrayExpression* arg_;

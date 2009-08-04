@@ -31,11 +31,15 @@ namespace de
     
     /**
      * Branching statement for conditionally executing one or more compounds.
+     *
+     * @ingroup script
      */
     class IfStatement : public Statement
     {
     public:
         ~IfStatement();
+        
+        void clear();
 
         /** 
          * Add a new branch to the statement.
@@ -60,6 +64,10 @@ namespace de
         }
 
         void execute(Context& context) const;
+
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);         
 
     private:
         struct Branch {

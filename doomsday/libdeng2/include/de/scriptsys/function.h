@@ -20,6 +20,7 @@
 #ifndef LIBDENG2_FUNCTION_H
 #define LIBDENG2_FUNCTION_H
 
+#include "../ISerializable"
 #include "../Counted"
 #include "../String"
 #include "../Compound"
@@ -40,18 +41,18 @@ namespace de
      * Set of statements ready for execution. The argument list defines what kind of
      * arguments can be passed to the function and what are the default values for
      * the arguments. Functions are reference-counted so that they exist as long as
-     * other objects use them (FunctionStatement, FunctionValue).
+     * other objects need them (FunctionStatement, FunctionValue).
      *
      * @ingroup script
      */
-    class Function : public Counted, public Record::IObserver
+    class Function : public Counted, public ISerializable, public Record::IObserver
     {
     public:
         /// An incorrect number of arguments is given in a function call. @ingroup errors
         DEFINE_ERROR(WrongArgumentsError);
 
-        typedef std::list<std::string> Arguments;
-        typedef std::map<std::string, Value*> Defaults;
+        typedef std::list<String> Arguments;
+        typedef std::map<String, Value*> Defaults;
         typedef std::list<const Value*> ArgumentValues;
         
     public:
@@ -111,6 +112,10 @@ namespace de
          *         return value into the evaluator.
          */
         virtual bool callNative(Context& context, const ArgumentValues& args);
+        
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);         
         
         // Implements Record::IObserver.
         void recordBeingDeleted(Record& record);

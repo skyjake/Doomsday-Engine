@@ -21,6 +21,8 @@
 #include "de/TextValue"
 #include "de/ArrayValue"
 #include "de/DictionaryValue"
+#include "de/Writer"
+#include "de/Reader"
 
 #include <sstream>
 
@@ -159,6 +161,58 @@ bool Function::callNative(Context& context, const ArgumentValues& args)
     
     // Do non-native function call.
     return false;
+}
+
+void Function::operator >> (Writer& to) const
+{
+    // Number of arguments.
+    to << duint16(arguments_.size());
+
+    // Argument names.
+    for(Arguments::const_iterator i = arguments_.begin(); i != arguments_.end(); ++i)
+    {
+        to << *i;
+    }
+    
+    // Number of default values.
+    to << duint16(defaults_.size());
+    
+    // Default values.
+    for(Defaults::const_iterator i = defaults_.begin(); i != defaults_.end(); ++i)
+    {
+        to << i->first << *i->second;        
+    }
+    
+    // The statements of the function.
+    to << compound_;        
+}
+
+void Function::operator << (Reader& from)
+{
+    duint16 count = 0;
+    
+    // Argument names.
+    from >> count;
+    arguments_.clear();
+    while(count--)
+    {
+        String argName;
+        from >> argName;
+        arguments_.push_back(argName);
+    }
+    
+    // Default values.
+    from >> count;
+    defaults_.clear();
+    while(count--)
+    {
+        String name;
+        from >> name;
+        defaults_[name] = Value::constructFrom(from);
+    }
+    
+    // The statements.
+    from >> compound_;
 }
 
 void Function::recordBeingDeleted(Record& record)

@@ -24,6 +24,13 @@ namespace de
 {
     class String;
     
+    /**
+     * Operators. 
+     * 
+     * @note  These are serialized as is, so don't change the existing values.
+     *
+     * @ingroup script
+     */
     enum Operator {
         NONE = 0,
         NOT,

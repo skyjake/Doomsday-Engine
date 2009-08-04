@@ -24,6 +24,7 @@
 #include "de/ArrayValue"
 #include "de/DictionaryValue"
 #include "de/BlockValue"
+#include "de/FunctionValue"
 #include "de/Reader"
 
 using namespace de;
@@ -160,36 +161,39 @@ void Value::call(Process& process, const Value& arguments) const
 
 Value* Value::constructFrom(Reader& reader)
 {
-    Value* result = 0;
-
     SerialId id;
     reader >> id;
     reader.rewind(sizeof(id));
     
+    std::auto_ptr<Value> result;
     switch(id)
     {
     case NONE:
-        result = new NoneValue();
+        result.reset(new NoneValue());
         break;
         
     case NUMBER:
-        result = new NumberValue();
+        result.reset(new NumberValue());
         break;
         
     case TEXT:
-        result = new TextValue();
+        result.reset(new TextValue());
         break;
         
     case ARRAY:
-        result = new ArrayValue();
+        result.reset(new ArrayValue());
         break;
         
     case DICTIONARY:
-        result = new DictionaryValue();
+        result.reset(new DictionaryValue());
         break;
         
     case BLOCK:
-        result = new BlockValue();
+        result.reset(new BlockValue());
+        break;
+        
+    case FUNCTION:
+        result.reset(new FunctionValue());
         break;
         
     default:
@@ -199,6 +203,6 @@ Value* Value::constructFrom(Reader& reader)
     }
 
     // Deserialize it.
-    reader >> *result;
-    return result;
+    reader >> *result.get();
+    return result.release();
 }

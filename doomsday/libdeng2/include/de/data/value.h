@@ -259,7 +259,8 @@ namespace de
             TEXT,
             ARRAY,
             DICTIONARY,
-            BLOCK
+            BLOCK,
+            FUNCTION
         };
     };
 }

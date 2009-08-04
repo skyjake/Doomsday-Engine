@@ -29,6 +29,8 @@ namespace de
     
     /**
      * A while statement keeps looping as long as the loop condition evaluates to True.
+     *
+     * @ingroup script
      */
     class WhileStatement : public Statement
     {
@@ -45,6 +47,10 @@ namespace de
         }
         
         void execute(Context& context) const;
+
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);         
 
     private:
         Expression* loopCondition_;

@@ -304,7 +304,7 @@ void ArrayValue::operator << (Reader& from)
     duint count = 0;
     from >> count;
     clear();
-    while(count-- > 0)
+    while(count--)
     {
         add(Value::constructFrom(from));
     }

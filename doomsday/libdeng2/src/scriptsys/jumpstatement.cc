@@ -23,8 +23,16 @@
 #include "de/Process"
 #include "de/Expression"
 #include "de/Value"
+#include "de/Writer"
+#include "de/Reader"
 
 using namespace de;
+
+#define HAS_ARG     0x80
+#define TYPE_MASK   0x7f
+ 
+JumpStatement::JumpStatement() : type_(RETURN), arg_(0)
+{}
  
 JumpStatement::JumpStatement(Type type, Expression* countArgument) 
     : type_(type), arg_(countArgument) 
@@ -67,5 +75,41 @@ void JumpStatement::execute(Context& context) const
             context.process().finish();
         }
         break;
+    }
+}
+
+void JumpStatement::operator >> (Writer& to) const
+{
+    to << SerialId(JUMP);    
+    duint8 header = duint8(type_);
+    if(arg_)
+    {
+        header |= HAS_ARG;
+    }
+    to << header;
+    if(arg_)
+    {
+        to << *arg_;
+    }
+}
+
+void JumpStatement::operator << (Reader& from)
+{
+    SerialId id;
+    from >> id;
+    if(id != JUMP)
+    {
+        /// @throw DeserializationError The identifier that species the type of the 
+        /// serialized statement was invalid.
+        throw DeserializationError("JumpStatement::operator <<", "Invalid ID");
+    }
+    duint8 header;
+    from >> header;
+    type_ = Type(header & TYPE_MASK);
+    if(header & HAS_ARG)
+    {
+        delete arg_;
+        arg_ = 0;
+        arg_ = Expression::constructFrom(from);
     }
 }

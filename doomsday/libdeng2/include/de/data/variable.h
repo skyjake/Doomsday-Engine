@@ -68,12 +68,19 @@ namespace de
         /// DictionaryValue allowed as value.
         DEFINE_FLAG(DICTIONARY, 6);
         /// BlockValue allowed as value.
-        DEFINE_FINAL_FLAG(BLOCK, 7, Mode);
+        DEFINE_FLAG(BLOCK, 7);
+        /// FunctionValue allowed as value.
+        DEFINE_FLAG(FUNCTION, 8);
+        /// RecordValue allowed as value.
+        DEFINE_FLAG(RECORD, 9);
+        /// RefValue allowed as value.
+        DEFINE_FINAL_FLAG(REF, 10, Mode);
         //@}
         
         /// The default mode allows reading and writing all types of values, 
         /// including NoneValue.
-        static const Flag DEFAULT_MODE = NONE | NUMBER | TEXT | ARRAY | DICTIONARY | BLOCK;
+        static const Flag DEFAULT_MODE = NONE | NUMBER | TEXT | ARRAY | DICTIONARY | BLOCK |
+            FUNCTION | RECORD | REF;
         
     public:
         /**

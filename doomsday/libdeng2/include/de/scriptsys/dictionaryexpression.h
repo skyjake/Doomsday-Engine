@@ -28,12 +28,16 @@ namespace de
 {
     /**
      * Evaluates arguments and forms a dictionary out of the results.
+     *
+     * @ingroup script
      */
     class DictionaryExpression : public Expression
     {
     public:
         DictionaryExpression();
         ~DictionaryExpression();
+        
+        void clear();
 
         /**
          * Adds an key/value pair to the array expression. Ownership of
@@ -55,6 +59,10 @@ namespace de
          * @return DictionaryValue with the results of the argument evaluations.
          */
         Value* evaluate(Evaluator& evaluator) const;
+
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);         
 
     private:
         typedef std::pair<Expression*, Expression*> ExpressionPair;

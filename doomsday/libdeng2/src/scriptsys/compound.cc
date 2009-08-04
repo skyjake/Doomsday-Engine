@@ -19,6 +19,8 @@
 
 #include "de/Compound"
 #include "de/Statement"
+#include "de/Writer"
+#include "de/Reader"
 
 using namespace de;
 
@@ -27,10 +29,16 @@ Compound::Compound()
 
 Compound::~Compound()
 {
+    clear();
+}
+
+void Compound::clear()
+{
     for(Statements::iterator i = statements_.begin(); i != statements_.end(); ++i)
     {
         delete *i;
     }
+    statements_.clear();
 }
 
 const Statement* Compound::firstStatement() const
@@ -49,4 +57,24 @@ void Compound::add(Statement* statement)
         statements_.back()->setNext(statement);
     }
     statements_.push_back(statement);
+}
+
+void Compound::operator >> (Writer& to) const
+{
+    to << duint32(statements_.size());
+    for(Statements::const_iterator i = statements_.begin(); i != statements_.end(); ++i)
+    {
+        to << **i;
+    }
+}
+
+void Compound::operator << (Reader& from)
+{
+    duint32 count;
+    from >> count;
+    clear();
+    while(count--)
+    {
+        statements_.push_back(Statement::constructFrom(from));
+    }
 }

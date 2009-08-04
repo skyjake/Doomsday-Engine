@@ -22,6 +22,7 @@
 #define LIBDENG2_COMPOUND_H
 
 #include "../deng.h"
+#include "../ISerializable"
 
 #include <list>
 
@@ -31,8 +32,10 @@ namespace de
     
     /**
      * A series of statements.
+     *
+     * @ingroup script
      */
-    class Compound
+    class Compound : public ISerializable
     {
     public:
         Compound();
@@ -57,6 +60,15 @@ namespace de
          */
         void add(Statement* statement);
         
+        /**
+         * Deletes all statements.
+         */
+        void clear();
+        
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);         
+                
     private:
         typedef std::list<Statement*> Statements;
         Statements statements_;

@@ -25,6 +25,8 @@
 #include "de/data/byteorder.h"
 #include "../sdl.h"
 
+#include <sstream>
+
 using namespace de;
 
 Reader::Reader(const IByteArray& source, const ByteOrder& byteOrder, IByteArray::Offset offset)
@@ -168,9 +170,11 @@ void Reader::seek(dint count)
 
 void Reader::rewind(dint count)
 {
-    if(IByteArray::Offset(offset_ + count) >= source_.size())
+    if(IByteArray::Offset(offset_ - count) >= source_.size())
     {
-        throw IByteArray::OffsetError("Reader::rewind", "Rewound past bounds of source data");
+        std::ostringstream os;
+        os << "(count: " << count << ", offset: " << offset_ << ", size: " << source_.size() << ")";
+        throw IByteArray::OffsetError("Reader::rewind", "Rewound past bounds of source data " + os.str());
     }
     offset_ -= count;
 }

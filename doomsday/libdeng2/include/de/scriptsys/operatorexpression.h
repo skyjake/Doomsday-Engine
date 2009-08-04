@@ -57,6 +57,8 @@ namespace de
         DEFINE_ERROR(SliceError);
         
     public:
+        OperatorExpression();
+        
         /**
          * Constructor for unary operations (+, -).
          * @param op Operation to perform.
@@ -85,6 +87,10 @@ namespace de
          * @param value  Value to check.
          */
         static void verifyAssignable(Value* value);
+
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);         
         
     private:
         /// Performs the slice operation (Python semantics).

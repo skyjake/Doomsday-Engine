@@ -23,8 +23,13 @@
 #include "de/NameExpression"
 #include "de/ArrayValue"
 #include "de/RefValue"
+#include "de/Writer"
+#include "de/Reader"
 
 using namespace de;
+
+AssignStatement::AssignStatement() : indexCount_(0)
+{}
 
 AssignStatement::AssignStatement(Expression* target, const Indices& indices, Expression* value) 
     : indexCount_(0)
@@ -85,4 +90,27 @@ void AssignStatement::execute(Context& context) const
     }
 
     context.proceed();
+}
+
+void AssignStatement::operator >> (Writer& to) const
+{
+    to << SerialId(ASSIGN) << duint8(indexCount_) << args_;    
+}
+
+void AssignStatement::operator << (Reader& from)
+{
+    SerialId id;
+    from >> id;
+    if(id != ASSIGN)
+    {
+        /// @throw DeserializationError The identifier that species the type of the 
+        /// serialized statement was invalid.
+        throw DeserializationError("AssignStatement::operator <<", "Invalid ID");
+    }
+    // Number of indices in assignment.
+    duint8 count;
+    from >> count;
+    indexCount_ = count;
+    
+    from >> args_;
 }

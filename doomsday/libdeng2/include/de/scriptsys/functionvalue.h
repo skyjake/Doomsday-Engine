@@ -27,10 +27,13 @@ namespace de
 {
     /**
      * Holds a reference to a function and provides a way to call the function.
+     *
+     * @ingroup script
      */
     class FunctionValue : public Value
     {
     public:
+        FunctionValue();
         FunctionValue(Function* func);
         ~FunctionValue();
         

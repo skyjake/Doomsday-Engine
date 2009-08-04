@@ -25,8 +25,14 @@
 #include "de/DictionaryValue"
 #include "de/RefValue"
 #include "de/RecordValue"
+#include "de/BlockValue"
+#include "de/Writer"
+#include "de/Reader"
 
 using namespace de;
+
+BuiltInExpression::BuiltInExpression() : type_(NONE), arg_(0)
+{}
 
 BuiltInExpression::BuiltInExpression(Type type, Expression* argument)
     : type_(type), arg_(argument)
@@ -46,23 +52,23 @@ void BuiltInExpression::push(Evaluator& evaluator, Record*) const
 Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
 {
     std::auto_ptr<Value> value(evaluator.popResult());
-    ArrayValue* argValue = dynamic_cast<ArrayValue*>(value.get());
-    assert(argValue != NULL); // must be an array
+    ArrayValue* args = dynamic_cast<ArrayValue*>(value.get());
+    assert(args != NULL); // must be an array
     
     switch(type_)
     {
     case LENGTH:
-        if(argValue->size() != 2)
+        if(args->size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for LENGTH");
         }
-        return new NumberValue(argValue->elements()[1]->size());
+        return new NumberValue(args->at(1).size());
         
     case DICTIONARY_KEYS:
     case DICTIONARY_VALUES:
     {
-        if(argValue->size() != 2)
+        if(args->size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for " +
@@ -70,7 +76,7 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
                     "DICTIONARY_KEYS" : "DICTIONARY_VALUES"));
         }
         
-        DictionaryValue* dict = dynamic_cast<DictionaryValue*>(argValue->elements()[1]);
+        const DictionaryValue* dict = dynamic_cast<const DictionaryValue*>(&args->at(1));
         if(!dict)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
@@ -95,7 +101,7 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
     case RECORD_MEMBERS:    
     case RECORD_SUBRECORDS:
     {
-        if(argValue->size() != 2)
+        if(args->size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for " +
@@ -103,7 +109,7 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
                     "RECORD_MEMBERS" : "RECORD_SUBRECORDS"));
         }
         
-        RecordValue* rec = dynamic_cast<RecordValue*>(argValue->elements()[1]);
+        const RecordValue* rec = dynamic_cast<const RecordValue*>(&args->at(1));
         if(!rec)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
@@ -130,32 +136,68 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
     }
     
     case AS_NUMBER:
-        if(argValue->size() != 2)
+        if(args->size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for AS_NUMBER");
         }
-        return new NumberValue(argValue->elements()[1]->asNumber());
+        return new NumberValue(args->at(1).asNumber());
 
     case AS_TEXT:
-        if(argValue->size() != 2)
+        if(args->size() != 2)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for AS_TEXT");
         }
-        return new TextValue(argValue->elements()[1]->asText());
+        return new TextValue(args->at(1).asText());
         
     case LOCAL_NAMESPACE:
     {
         // Collect the namespaces to search.
         Evaluator::Namespaces spaces;
         evaluator.namespaces(spaces);
-        if(argValue->size() != 1)
+        if(args->size() != 1)
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "No arguments expected for LOCAL_NAMESPACE");
         }
         return new RecordValue(spaces.front());
+    }
+    
+    case SERIALIZE:
+    {
+        if(args->size() != 2)
+        {
+            throw WrongArgumentsError("BuiltInExpression::evaluate",
+                "Expected exactly one argument for SERIALIZE");
+        }
+        std::auto_ptr<BlockValue> data(new BlockValue);
+        Writer(*data.get()) << args->at(1);
+        return data.release();
+    }
+    
+    case DESERIALIZE:
+    {
+        if(args->size() != 2)
+        {
+            throw WrongArgumentsError("BuiltInExpression::evaluate",
+                "Expected exactly one argument for DESERIALIZE");
+        }
+        const BlockValue* block = dynamic_cast<const BlockValue*>(&args->at(1));
+        if(block)
+        {
+            Reader reader(*block);
+            return Value::constructFrom(reader);
+        }
+        // Alternatively allow deserializing from a text value.
+        const TextValue* text = dynamic_cast<const TextValue*>(&args->at(1));
+        if(text)
+        {
+            Reader reader(*text);
+            return Value::constructFrom(reader);
+        }
+        throw WrongArgumentsError("BuiltInExpression::evaluate",
+            "deserialize() can operate only on block and text values");
     }
         
     default:
@@ -164,21 +206,46 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
     return NULL;
 }
 
+void BuiltInExpression::operator >> (Writer& to) const
+{
+    to << SerialId(BUILT_IN) << duint8(type_) << *arg_;
+}
+
+void BuiltInExpression::operator << (Reader& from)
+{
+    SerialId id;
+    from >> id;
+    if(id != BUILT_IN)
+    {
+        /// @throw DeserializationError The identifier that species the type of the 
+        /// serialized expression was invalid.
+        throw DeserializationError("BuiltInExpression::operator <<", "Invalid ID");
+    }
+    duint8 t;
+    from >> t;
+    type_ = Type(t);
+    delete arg_;
+    arg_ = 0;
+    arg_ = Expression::constructFrom(from);
+}
+
 BuiltInExpression::Type BuiltInExpression::findType(const String& identifier)
 {
     struct {
         const char* str;
         Type type;
     } types[] = {
-        { "len",        LENGTH },
-        { "dictkeys",   DICTIONARY_KEYS },
-        { "dictvalues", DICTIONARY_VALUES },
-        { "Text",       AS_TEXT },
-        { "Number",     AS_NUMBER },
-        { "locals",     LOCAL_NAMESPACE },
-        { "members",    RECORD_MEMBERS },
-        { "subrecords", RECORD_SUBRECORDS },
-        { NULL,         NONE }
+        { "len",            LENGTH },
+        { "dictkeys",       DICTIONARY_KEYS },
+        { "dictvalues",     DICTIONARY_VALUES },
+        { "Text",           AS_TEXT },
+        { "Number",         AS_NUMBER },
+        { "locals",         LOCAL_NAMESPACE },
+        { "members",        RECORD_MEMBERS },
+        { "subrecords",     RECORD_SUBRECORDS },
+        { "serialize",      SERIALIZE },
+        { "deserialize",    DESERIALIZE },
+        { NULL,             NONE }
     };
     
     for(duint i = 0; types[i].str; ++i)
