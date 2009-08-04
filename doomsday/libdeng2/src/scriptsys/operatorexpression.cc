@@ -20,8 +20,8 @@
 #include "de/OperatorExpression"
 #include "de/Evaluator"
 #include "de/Value"
-#include "de/Numbervalue"
-#include "de/Arrayvalue"
+#include "de/NumberValue"
+#include "de/ArrayValue"
 #include "de/RefValue"
 #include "de/RecordValue"
 #include "de/NoneValue"
@@ -356,7 +356,7 @@ Value* OperatorExpression::performSlice(Value* leftValue, Value* rightValue) con
     {
         end += leftSize;
     }
-    if(end > begin && step < 0 || begin > end && step > 0)
+    if((end > begin && step < 0) || (begin > end && step > 0))
     {
         // The step goes to the wrong direction.
         begin = end = 0;
