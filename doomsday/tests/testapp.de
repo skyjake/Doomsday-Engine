@@ -17,7 +17,7 @@
 
 # Configuration for the test application.
 
-import record deng
+import deng
 
 # No audio or video, please.
 deng.audio = 'none'

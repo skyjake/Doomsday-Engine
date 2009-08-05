@@ -17,10 +17,10 @@
 
 # Configuration for the server app.
 
-import record deng
+import deng
 
 # Server doesn't use audio or video.
 deng.audio = 'none'
 deng.video = 'none'
 
-import record net
+import net

@@ -26,6 +26,7 @@
 #include "de/ArrayValue"
 #include "de/DictionaryValue"
 #include "de/BlockValue"
+#include "de/RecordValue"
 #include "de/Vector"
 
 #include <iomanip>
@@ -190,7 +191,14 @@ const Variable& Record::operator [] (const String& name) const
     String::size_type pos = name.find('.');
     if(pos != String::npos)
     {
-        return subrecord(name.substr(0, pos))[name.substr(pos + 1)];
+        String subName = name.substr(0, pos);
+        String remaining = name.substr(pos + 1);
+        if(hasMember(subName))
+        {
+            // It is a variable. If it has a RecordValue then we can descend into it.
+            return value<RecordValue>(subName).dereference()[remaining];
+        }
+        return subrecord(subName)[remaining];
     }
     
     Members::const_iterator found = members_.find(name);
