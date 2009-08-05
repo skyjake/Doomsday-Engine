@@ -101,7 +101,7 @@ duint ScriptLex::getStatement(TokenBuffer& output)
             }
 
             // Is it a number literal?
-            if(c == '.' && isNumeric(peek()) || isNumeric(c))
+            if((c == '.' && isNumeric(peek())) || isNumeric(c))
             {
                 bool gotPoint = (c == '.');
                 bool isHex = (c == '0' && (peek() == 'x' || peek() == 'X'));
