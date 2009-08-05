@@ -33,35 +33,35 @@ SenderThread::~SenderThread()
 
 void SenderThread::run()
 {
-	while(!shouldStopNow())
-	{
-		try
-		{
-			// Wait for new outgoing messages.
-			buffer_.wait(10);
+    while(!shouldStopNow())
+    {
+        try
+        {
+            // Wait for new outgoing messages.
+            buffer_.wait(10);
 
-			// There is a new outgoing message. We'll keep it in the FIFO
-			// until it has been sent.
-			const PacketType* data = buffer_.peek();
-			if(data)
-			{
-			    // Write this to the socket.
+            // There is a new outgoing message. We'll keep it in the FIFO
+            // until it has been sent.
+            const PacketType* data = buffer_.peek();
+            if(data)
+            {
+                // Write this to the socket.
                 socket_.mode.set(Socket::CHANNEL_1_BIT, data->channel() == 1);
                 socket_ << *data;
 
-			    // The packet can be discarded.
+                // The packet can be discarded.
                 delete buffer_.get();
             }
-		}
-		catch(const Waitable::TimeOutError&)
-		{
-			// No need to react, let's try again.
+        }
+        catch(const Waitable::TimeOutError&)
+        {
+            // No need to react, let's try again.
             //std::cerr << "SenderThread: Outgoing buffer wait timeout.\n";
-		}
+        }
         catch(const Waitable::WaitError&)
         {
             std::cerr << "SenderThread: Socket closed.\n";
             stop();
         }
-	}			
+    }           
 }

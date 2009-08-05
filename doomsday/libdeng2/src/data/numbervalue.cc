@@ -37,14 +37,14 @@ Value* NumberValue::duplicate() const
 
 Value::Number NumberValue::asNumber() const
 {
-	return value_;
+    return value_;
 }
 
 Value::Text NumberValue::asText() const
 {
-	std::ostringstream str;
-	str << value_;
-	return str.str();
+    std::ostringstream str;
+    str << value_;
+    return str.str();
 }
 
 bool NumberValue::isTrue() const

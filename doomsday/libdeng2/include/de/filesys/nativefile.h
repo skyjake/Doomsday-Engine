@@ -67,8 +67,8 @@ namespace de
 
         // Implements IByteArray.
         Size size() const;
-		void get(Offset at, Byte* values, Size count) const;
-		void set(Offset at, const Byte* values, Size count);
+        void get(Offset at, Byte* values, Size count) const;
+        void set(Offset at, const Byte* values, Size count);
         
     protected:
         /// Returns the input stream.

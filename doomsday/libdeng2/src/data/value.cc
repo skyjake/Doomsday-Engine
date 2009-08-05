@@ -36,7 +36,7 @@ Value::~Value()
 Value::Number Value::asNumber() const
 {
     /// @throw ConversionError Value cannot be converted to number.
-	throw ConversionError("Value::asNumber", "Illegal conversion");
+    throw ConversionError("Value::asNumber", "Illegal conversion");
 }
 
 Value::Number Value::asSafeNumber(const Number& defaultValue) const
@@ -54,13 +54,13 @@ Value::Number Value::asSafeNumber(const Number& defaultValue) const
 dsize Value::size() const
 {
     /// @throw IllegalError Size is meaningless.
-	throw IllegalError("Value::size", "Size is meaningless");
+    throw IllegalError("Value::size", "Size is meaningless");
 }
 
 const Value& Value::element(const Value& index) const
 {
     /// @throw IllegalError Value cannot be indexed.
-	throw IllegalError("Value::element", "Value cannot be indexed");
+    throw IllegalError("Value::element", "Value cannot be indexed");
 }
 
 Value& Value::element(const Value& index)
@@ -83,7 +83,7 @@ void Value::setElement(const Value& index, Value* elementValue)
 bool Value::contains(const Value& value) const
 {
     /// @throw IllegalError Value cannot contain other values.
-	throw IllegalError("Value::contains", "Value is not a container");
+    throw IllegalError("Value::contains", "Value is not a container");
 }
 
 Value* Value::begin()

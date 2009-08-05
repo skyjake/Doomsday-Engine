@@ -121,9 +121,9 @@ IF ( APPLE )
 
     ADD_DEFINITIONS ( -DMACOSX )
     IF ( ${CMAKE_OSX_SYSROOT} STREQUAL /Developer/SDKs/MacOSX10.4u.sdk )
-	    SET ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.4" )
-	    SET ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.4" )
-	ENDIF ()
+        SET ( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mmacosx-version-min=10.4" )
+        SET ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmacosx-version-min=10.4" )
+    ENDIF ()
 
     SET ( APP_SUPPORT_SOURCES ${CMAKE_SOURCE_DIR}/support/mac/sdlmain.m )
 ENDIF ( APPLE )
