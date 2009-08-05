@@ -82,8 +82,7 @@ namespace de
          * Constructs the application.
          * 
          * @param commandLine  Command line arguments.
-         * @param configPath   Path of the configuration file. The application's 
-         *                     configuration must "import record deng".
+         * @param configPath   Path of the configuration file.
          */
         App(const CommandLine& commandLine, const String& configPath);
             

@@ -436,6 +436,8 @@ Record& App::importModule(const String& name, const String& fromPath)
     {
         return found->second->names();
     }
+    
+    /// @todo  Move this path searching logic to FS.
 
     // Fall back on the default if the libdeng2 module hasn't been imported yet.
     std::auto_ptr<ArrayValue> defaultImportPath(new ArrayValue);
