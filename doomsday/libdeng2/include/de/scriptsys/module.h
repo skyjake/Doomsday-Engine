@@ -27,6 +27,7 @@ namespace de
     class File;
     class Process;
     class Record;
+    class Script;
     
     /**
      * Modules are scripts that are loaded from the file system and then stay
@@ -45,6 +46,14 @@ namespace de
          * Constructs a new module. The source script is loaded from a 
          * file and executed.
          *
+         * @param sourcePath  Path of the source file.
+         */
+        Module(const String& sourcePath);
+        
+        /**
+         * Constructs a new module. The source script is loaded from a 
+         * file and executed.
+         *
          * @param sourceFile  Script source file.
          */
         Module(const File& sourceFile);
@@ -57,6 +66,9 @@ namespace de
         /// Returns the namespace of the module. The import statement gives access
         /// to this.
         Record& names();
+
+    protected:
+        void initialize(const Script& script);
         
     private:
         /// Path of the script source file. Used to identify whether a script has

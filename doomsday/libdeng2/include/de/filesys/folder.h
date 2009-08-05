@@ -128,11 +128,11 @@ namespace de
         /**
          * Creates a new file in the folder. The feeds attached to the folder will 
          * decide what kind of file is actually created. The new file is added to
-         * the file system's index.
+         * the file system's index. 
          *
          * @param name  Name of the new file.         
          *
-         * @return  The created file.
+         * @return  The created file (write mode enabled).
          */
         File& newFile(const String& name);
 

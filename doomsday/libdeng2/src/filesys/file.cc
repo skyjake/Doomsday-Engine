@@ -68,7 +68,9 @@ void File::flush()
 {}
 
 void File::clear()
-{}
+{
+    verifyWriteAccess();
+}
 
 FS& File::fileSystem()
 {
@@ -106,7 +108,7 @@ const File* File::source() const
     {
         return source_->source();
     }
-    return const_cast<const File*>(source_);
+    return source_;
 }
 
 File* File::source()
@@ -123,7 +125,7 @@ void File::setStatus(const Status& status)
     // The source file status is the official one.
     if(this != source_)
     {
-        source()->setStatus(status);
+        source_->setStatus(status);
     }
     else
     {
@@ -138,6 +140,36 @@ const File::Status& File::status() const
         return source_->status();
     }
     return status_;
+}
+
+void File::setMode(const Mode& newMode)
+{
+    if(this != source_)
+    {
+        source_->setMode(newMode);
+    }
+    else
+    {
+        mode_ = newMode;
+    }
+}
+
+const File::Mode& File::mode() const 
+{
+    if(this != source_)
+    {
+        return source_->mode();
+    }
+    return mode_;
+}
+
+void File::verifyWriteAccess()
+{
+    if(!mode()[WRITE_BIT])
+    {
+        /// @throw ReadOnlyError  File is in read-only mode.
+        throw ReadOnlyError("File::verifyWriteAccess", path() + " is in read-only mode");
+    }
 }
 
 File::Size File::size() const
@@ -155,8 +187,7 @@ void File::get(Offset at, Byte* values, Size count) const
 
 void File::set(Offset at, const Byte* values, Size count)
 {
-    /// @throw ReadOnlyError  File is in read-only mode.
-    throw ReadOnlyError("File::set", "File can only be read");
+    verifyWriteAccess();
 }
 
 File::Accessor::Accessor(File& owner, Property prop) : owner_(owner), prop_(prop)

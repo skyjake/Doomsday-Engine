@@ -34,6 +34,8 @@ ArchiveFile::~ArchiveFile()
 
 void ArchiveFile::clear()
 {
+    File::clear();
+    
     archive().entryBlock(entryPath_).clear();
     
     // Update status.
@@ -50,6 +52,8 @@ void ArchiveFile::get(Offset at, Byte* values, Size count) const
 
 void ArchiveFile::set(Offset at, const Byte* values, Size count)
 {
+    verifyWriteAccess();
+    
     // The entry will be marked for recompression (due to non-const access).
     Block& entryBlock = archive().entryBlock(entryPath_);
     entryBlock.set(at, values, count);

@@ -47,7 +47,7 @@ int deng_Main(int argc, char** argv)
         cout << zip.info() << "\n";
         
         cout << "Root's info:\n";
-        cout << app.fileSystem().root().info() << "\n";
+        cout << app.fileRoot().info() << "\n";
         
         const File& hello = zip.locate<File>("hello.txt");
         File::Status stats = hello.status();
@@ -57,18 +57,22 @@ int deng_Main(int argc, char** argv)
         cout << "The contents: \"" << content << "\"" << endl;
 
         // Make a second entry.
+        zip.setMode(File::WRITE);
         File& worldTxt = zip.newFile("world.txt");
         Writer(worldTxt) << FixedByteArray(content);
 
+        // Usually we aren't allowed to write to the data folder.
+        zip.parent()->setMode(File::WRITE);
+
         // This won't appear in the file system unless FS::refresh() is called.
-        NativeFile zipFile2("test2.zip", 
-            /*zipFile.nativePath().fileNameNativePath().concatenateNativePath(*/"test2.zip"/*)*/,
-            NativeFile::WRITE | NativeFile::TRUNCATE);
+        // newFile() doesn't interpret anything, just makes a plain file.
+        File& zip2 = zip.parent()->newFile("test2.zip");
+        zip2.setMode(File::WRITE | File::TRUNCATE);
         Archive arch;
         arch.add("world.txt", content);
-        Writer(zipFile2) << arch;
-        cout << "Wrote " << zipFile2.nativePath() << endl;
-        cout << zipFile2.info() << "\n";
+        Writer(zip2) << arch;
+        cout << "Wrote " << zip2.path() << endl;
+        cout << zip2.info() << "\n";
     }
     catch(const Error& err)
     {

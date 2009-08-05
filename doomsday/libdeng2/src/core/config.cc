@@ -46,7 +46,7 @@ void Config::read()
         Variable::ARRAY | Variable::READ_ONLY));
 
     // Read the main configuration. 
-    Script script(App::fileSystem().root().locate<File>(configPath_));
+    Script script(App::fileRoot().locate<File>(configPath_));
     config_.run(script);
     config_.execute();
 }

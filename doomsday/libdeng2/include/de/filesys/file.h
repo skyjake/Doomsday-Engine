@@ -45,6 +45,16 @@ namespace de
     class LIBDENG2_API File : public IByteArray
     {
     public:
+        /// I/O to the native file failed. @ingroup errors
+        DEFINE_ERROR(IOError);
+
+        /// Only reading is allowed from the file. @ingroup errors
+        DEFINE_SUB_ERROR(IOError, ReadOnlyError);
+        
+        // Mode flags.
+        DEFINE_FLAG(WRITE, 0);
+        DEFINE_FINAL_FLAG(TRUNCATE, 1, Mode);
+
         /**
          * Stores the status of a file (size, time of last modification).
          */
@@ -113,12 +123,6 @@ namespace de
         };
         
     public:
-        /// An attempt was made to write to a read-only file.  @ingroup errors
-        DEFINE_ERROR(ReadOnlyError);
-        
-    public:
-        File(const String& name = "");
-        
         /**
          * When destroyed, a file is automatically removed from its parent folder 
          * and deindexed from the file system.
@@ -226,17 +230,43 @@ namespace de
          */
         const String path() const;
 
+        /**
+         * Returns the mode of the file.
+         */
+        const Mode& mode() const;
+        
+        /**
+         * Changes the mode of the file. For example, using <code>WRITE|TRUNCATE</code> as the
+         * mode would empty the contents of the file and open it in writing mode.
+         *
+         * @param newMode  Mode.
+         */
+        virtual void setMode(const Mode& newMode);
+
         /// Returns the file information (const).
         const Record& info() const { return info_; }
 
         /// Returns the file information.
         Record& info() { return info_; }
+        
+        /**
+         * Makes sure that the file has write access.
+         */
+        void verifyWriteAccess();
 
         // Implements IByteArray.
         Size size() const;
 		void get(Offset at, Byte* values, Size count) const;
 		void set(Offset at, const Byte* values, Size count);
-        
+    
+    protected:
+        /**
+         * Constructs a new file. By default files are in read-only mode.
+         *
+         * @param name  Name of the file.
+         */
+        File(const String& name = "");
+    
     private:
         /// The parent folder.
         Folder* parent_;
@@ -253,6 +283,9 @@ namespace de
         
         /// Status of the file.
         Status status_;
+        
+        /// Mode flags.
+        Mode mode_;    
         
         /// File information.
         Record info_;

@@ -20,14 +20,26 @@
 #include "de/Module"
 #include "de/File"
 #include "de/Process"
+#include "de/App"
+#include "de/Folder"
 #include "de/Script"
 
 using namespace de;
 
+Module::Module(const String& sourcePath) : sourcePath_(sourcePath), process_(0)
+{
+    // Load the script.
+    initialize(Script(App::fileRoot().locate<File>(sourcePath)));
+}
+
 Module::Module(const File& sourceFile) : sourcePath_(sourceFile.path()), process_(0)
 {
-    // Load and execute the script.
-    Script script(sourceFile);
+    initialize(Script(sourceFile));
+}
+
+void Module::initialize(const Script& script)
+{
+    // Execute the script.
     std::auto_ptr<Process> proc(new Process(script));
     proc->execute();
     process_ = proc.release();

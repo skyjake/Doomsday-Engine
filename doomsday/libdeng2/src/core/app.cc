@@ -359,6 +359,13 @@ FS& App::fileSystem()
     return *self.fs_; 
 }
 
+Folder& App::fileRoot()
+{
+    App& self = app();
+    assert(self.fs_ != 0);
+    return self.fs_->root();
+}
+
 Config& App::config()
 {
     App& self = app();
@@ -479,7 +486,7 @@ Record& App::importModule(const String& name, const String& fromPath)
         }
         if(!found)
         {
-            found = fileSystem().root().tryLocateFile(p + ".de");
+            found = fileRoot().tryLocateFile(p + ".de");
         }
         if(found)
         {

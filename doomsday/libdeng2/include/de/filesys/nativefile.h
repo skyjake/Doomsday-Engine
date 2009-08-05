@@ -37,22 +37,12 @@ namespace de
     class LIBDENG2_API NativeFile : public File
     {
     public:
-        /// I/O to the native file failed. @ingroup errors
-        DEFINE_ERROR(IOError);
-
-        /// Only reading is allowed from the file. @ingroup errors
-        DEFINE_SUB_ERROR(IOError, ReadOnlyError);
-
         /// Input from the native file failed. @ingroup errors
         DEFINE_SUB_ERROR(IOError, InputError);
         
         /// Output to the native file failed. @ingroup errors
         DEFINE_SUB_ERROR(IOError, OutputError);
         
-        // Mode flags.
-        DEFINE_FLAG(WRITE, 0);
-        DEFINE_FINAL_FLAG(TRUNCATE, 1, Mode);
-
     public:
         /**
          * Constructs a NativeFile that accesses a file in the native file system
@@ -61,9 +51,8 @@ namespace de
          * @param name        Name of the file object.
          * @param nativePath  Path in the native file system to access. Relative to the
          *                    current working directory.
-         * @param mode        Access mode for the file.
          */
-        NativeFile(const String& name, const String& nativePath, const Mode& mode = 0);
+        NativeFile(const String& name, const String& nativePath);
         
         virtual ~NativeFile();
 
@@ -74,17 +63,6 @@ namespace de
          */
         const String& nativePath() const { return nativePath_; }
 
-        /**
-         * Returns the mode of the file.
-         */
-        const Mode& mode() const { return mode_; }
-        
-        /**
-         * Changes the mode of the file. For example, using <code>WRITE | TRUNCATE</code> as the
-         * mode would empty the contents of the file and open it in writing mode.
-         *
-         * @param newMode  Mode.
-         */
         void setMode(const Mode& newMode);
 
         // Implements IByteArray.
@@ -105,9 +83,6 @@ namespace de
     private:
         /// Path of the native file in the OS file system.
         String nativePath_;
-        
-        /// Mode flags.
-        Mode mode_;    
         
         /// Input stream.
         mutable std::ifstream* in_;

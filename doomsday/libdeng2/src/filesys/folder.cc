@@ -143,12 +143,17 @@ Feed* Folder::detach(Feed& feed)
 
 File& Folder::newFile(const String& name)
 {
+    verifyWriteAccess();
+    
     // The first feed able to create a file will get the honors.
     for(Feeds::iterator i = feeds_.begin(); i != feeds_.end(); ++i)
     {
         File* file = (*i)->newFile(name);
         if(file)
         {
+            // Allow writing to the new file.
+            file->setMode(WRITE);
+            
             add(file);
             fileSystem().index(*file);
             return *file;

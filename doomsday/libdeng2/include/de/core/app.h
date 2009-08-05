@@ -186,6 +186,11 @@ namespace de
          * Returns the file system.
          */
         static FS& fileSystem();
+        
+        /**
+         * Returns the root folder of the file system.
+         */
+        static Folder& fileRoot();
 
         /**
          * Returns the configuration.

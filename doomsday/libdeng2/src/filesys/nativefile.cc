@@ -22,8 +22,8 @@
 
 using namespace de;
 
-NativeFile::NativeFile(const String& name, const String& nativePath, const Mode& m)
-    : File(name), nativePath_(nativePath), mode_(m), in_(0), out_(0)
+NativeFile::NativeFile(const String& name, const String& nativePath)
+    : File(name), nativePath_(nativePath), in_(0), out_(0)
 {}
 
 NativeFile::~NativeFile()
@@ -48,11 +48,12 @@ void NativeFile::close()
 
 void NativeFile::clear()
 {
-    close();
-    Mode oldMode = mode_;
-    mode_ |= WRITE | TRUNCATE;
+    File::clear();
+    
+    Mode oldMode = mode();
+    setMode(WRITE | TRUNCATE);
     output();
-    mode_ = oldMode;
+    File::setMode(oldMode);
 }
 
 NativeFile::Size NativeFile::size() const
@@ -98,7 +99,7 @@ void NativeFile::set(Offset at, const Byte* values, Size count)
 void NativeFile::setMode(const Mode& newMode)
 {
     close();
-    mode_ = newMode;
+    File::setMode(newMode);
 }
 
 std::ifstream& NativeFile::input() const
@@ -123,14 +124,10 @@ std::ofstream& NativeFile::output()
     if(!out_)
     {
         // Are we allowed to output?
-        if(!mode_[WRITE_BIT])
-        {
-            /// @throw ReadOnlyError  Mode flags allow reading only.
-            throw ReadOnlyError("NativeFile::output", "Only reading allowed");
-        }
+        verifyWriteAccess();
         
         std::ios::openmode bits = std::ios::binary | std::ios::out;
-        if(mode_[TRUNCATE_BIT])
+        if(mode()[TRUNCATE_BIT])
         {
             bits |= std::ios::trunc;
         }
@@ -142,7 +139,7 @@ std::ofstream& NativeFile::output()
             /// @throw OutputError  Opening the output stream failed.
             throw OutputError("NativeFile::output", "Failed to write " + nativePath_);
         }
-        if(mode_[TRUNCATE_BIT])
+        if(mode()[TRUNCATE_BIT])
         {
             Status st = status();
             st.size = 0;
