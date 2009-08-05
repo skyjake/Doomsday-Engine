@@ -38,7 +38,7 @@
 using namespace de;
 
 ServerApp::ServerApp(const de::CommandLine& arguments)
-    : App(arguments, "/config/server.de"), listenSocket_(0), session_(0)
+    : App(arguments, "/config/server/server.de"), listenSocket_(0), session_(0)
 {
     CommandLine& args = commandLine();
 

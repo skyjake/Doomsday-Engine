@@ -408,6 +408,11 @@ Time::Delta App::uptime()
     return app().initializedAt_.since();
 }
 
+static int sortFilesByModifiedAt(const File* a, const File* b)
+{
+    return cmp(a->status().modifiedAt, b->status().modifiedAt);
+}
+
 Record& App::importModule(const String& name, const String& fromPath)
 {
     App& self = app();
@@ -428,6 +433,7 @@ Record& App::importModule(const String& name, const String& fromPath)
     // Fall back on the default if the libdeng2 module hasn't been imported yet.
     std::auto_ptr<ArrayValue> defaultImportPath(new ArrayValue);
     defaultImportPath->add("");    
+    defaultImportPath->add("*"); // Newest module with a matching name.
     ArrayValue* importPath = defaultImportPath.get();
     try
     {
@@ -440,24 +446,41 @@ Record& App::importModule(const String& name, const String& fromPath)
     for(ArrayValue::Elements::const_iterator i = importPath->elements().begin();
         i != importPath->elements().end(); ++i)
     {
+        String dir = (*i)->asText();
         String p;
-        if((*i)->asText().empty())
+        FS::FoundFiles matching;
+        File* found = 0;
+        if(dir.empty())
         {
             if(!fromPath.empty())
             {
                 // Try the local folder.
-                p = fromPath.fileNamePath().concatenatePath(name);
+                p = fromPath.fileNamePath().concatenatePath(name);            
             }
             else
             {
                 continue;
             }
         }
+        else if(dir == "*")
+        {
+            fileSystem().find(name + ".de", matching);
+            if(matching.empty())
+            {
+                continue;
+            }
+            matching.sort(sortFilesByModifiedAt);
+            found = matching.back();
+            std::cout << "Chose " << found->path() << " out of " << matching.size() << " candidates.\n";
+        }
         else
         {
-            p = (*i)->asText().concatenatePath(name);
+            p = dir.concatenatePath(name);
         }
-        File* found = fileSystem().root().tryLocateFile(p + ".de");
+        if(!found)
+        {
+            found = fileSystem().root().tryLocateFile(p + ".de");
+        }
         if(found)
         {
             Module* module = new Module(*found);

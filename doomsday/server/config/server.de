@@ -19,9 +19,6 @@
 
 import record deng
 
-# The rest of server's configuration files are here.
-deng.importPath += ['/config/server']
-
 # Server doesn't use audio or video.
 deng.audio = 'none'
 deng.video = 'none'
