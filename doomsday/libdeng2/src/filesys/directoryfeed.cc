@@ -111,7 +111,7 @@ void DirectoryFeed::populateSubFolder(Folder& folder, const String& entryName)
     if(entryName != "." && entryName != "..")
     {
         String subFeedPath = nativePath_.concatenateNativePath(entryName);
-        Folder& subFolder = folder.fileSystem().getFolder(folder.path().concatenatePath(entryName));
+        Folder& subFolder = folder.fileSystem().getFolder(folder.path() / entryName);
 
         if(mode_[ALLOW_WRITE_BIT])
         {
@@ -219,6 +219,28 @@ File* DirectoryFeed::newFile(const String& name)
     File* file = new NativeFile(name, newPath);
     file->setOriginFeed(this);
     return file;
+}
+
+void DirectoryFeed::removeFile(const String& name)
+{
+    String path = nativePath_.concatenateNativePath(name);
+    if(!exists(path))
+    {
+        /// @throw NotFoundError  The file @a name does not exist in the native directory.
+        throw NotFoundError("DirectoryFeed::removeFile", name + ": not found");
+    }
+    
+#ifdef UNIX
+    if(unlink(path.c_str()))
+    {
+        /// @throw RemoveError  Failed to remove the native file.
+        throw RemoveError("DirectoryFeed::removeFile", name + ": " + strerror(errno));
+    }
+#endif
+
+#ifdef WIN32
+    some code that fails to build
+#endif
 }
 
 void DirectoryFeed::changeWorkingDir(const String& nativePath)

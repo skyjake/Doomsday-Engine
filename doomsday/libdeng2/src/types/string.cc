@@ -98,6 +98,11 @@ bool String::contains(const String& s) const
     return find(s) != npos;
 }
 
+String String::operator / (const String& path) const
+{
+    return concatenatePath(path);
+}
+
 String String::concatenatePath(const String& other, char dirChar) const
 {
     if(!other.empty() && other[0] == dirChar)
@@ -358,10 +363,10 @@ String String::fileName() const
 String String::fileNameWithoutExtension() const
 {
     String name = fileName();
-    size_type pos = find_last_of('.');
+    size_type pos = name.find_last_of('.');
     if(pos != npos && pos > 0)
     {
-        return substr(0, pos);
+        return name.substr(0, pos);
     }
     return name;
 }

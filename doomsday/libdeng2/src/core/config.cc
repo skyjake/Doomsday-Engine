@@ -22,11 +22,20 @@
 #include "de/Folder"
 #include "de/ArrayValue"
 #include "de/NumberValue"
+#include "de/Reader"
+#include "de/Writer"
 
 using namespace de;
 
 Config::Config(const String& path) : configPath_(path)
-{}
+{
+    writtenConfigPath_ = String("/home") / configPath_.fileNameWithoutExtension() + ".config";
+}
+
+Config::~Config()
+{
+    write();
+}
 
 void Config::read()
 {
@@ -36,7 +45,22 @@ void Config::read()
     version->add(new NumberValue(LIBDENG2_MINOR_VERSION));
     version->add(new NumberValue(LIBDENG2_PATCHLEVEL));
 
-    // If we already have a saved copy of the config, read it.
+    try
+    {
+        // If we already have a saved copy of the config, read it.
+        File& file = App::fileRoot().locate<File>(writtenConfigPath_);
+        Reader(file) >> names();
+        
+        // Check the version.
+        if(!names()["__version__"].value().compare(*version))
+        {
+            // Versions match.
+            std::cout << writtenConfigPath_ << " matches version " << version->asText() << "\n";
+            return;
+        }
+    }
+    catch(const Folder::NotFoundError&)
+    {}
     
     // If the saved config is from a different version, rerun the script.
     // Otherwise, we're done.
@@ -49,6 +73,12 @@ void Config::read()
     Script script(App::fileRoot().locate<File>(configPath_));
     config_.run(script);
     config_.execute();
+}
+
+void Config::write()
+{
+    File& file = App::fileRoot().replaceFile(writtenConfigPath_);
+    Writer(file) << names();    
 }
 
 Record& Config::names()

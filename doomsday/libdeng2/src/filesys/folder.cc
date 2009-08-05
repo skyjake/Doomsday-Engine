@@ -130,25 +130,26 @@ const Folder::Contents& Folder::contents() const
     return contents_;
 }
 
-void Folder::attach(Feed* feed)
+File& Folder::newFile(const String& newPath, bool replaceExisting)
 {
-    feeds_.push_back(feed);
-}
-
-Feed* Folder::detach(Feed& feed)
-{
-    feeds_.remove(&feed);
-    return &feed;
-}
-
-File& Folder::newFile(const String& name)
-{
+    String path = newPath.fileNamePath();
+    if(!path.empty())
+    {
+        // Locate the folder where the file will be created in.
+        return locate<Folder>(path).newFile(newPath.fileName(), replaceExisting);
+    }
+    
     verifyWriteAccess();
+
+    if(replaceExisting && has(newPath))
+    {
+        removeFile(newPath);
+    }
     
     // The first feed able to create a file will get the honors.
     for(Feeds::iterator i = feeds_.begin(); i != feeds_.end(); ++i)
     {
-        File* file = (*i)->newFile(name);
+        File* file = (*i)->newFile(newPath);
         if(file)
         {
             // Allow writing to the new file.
@@ -159,8 +160,37 @@ File& Folder::newFile(const String& name)
             return *file;
         }
     }
+
     /// @throw NewFileError All feeds of this folder failed to create a file.
-    throw NewFileError("Folder::newFile", "Unable to create new file in folder '" + path() + "'");
+    throw NewFileError("Folder::newFile", "Unable to create new file '" + newPath + 
+        "' in folder '" + Folder::path() + "'");
+}
+
+File& Folder::replaceFile(const String& newPath)
+{
+    return newFile(newPath, true);
+}
+
+void Folder::removeFile(const String& removePath)
+{
+    String path = removePath.fileNamePath();
+    if(!path.empty())
+    {
+        // Locate the folder where the file will be removed.
+        return locate<Folder>(path).removeFile(removePath.fileName());
+    }
+    
+    verifyWriteAccess();
+    
+    // It should now be in this folder.
+    File& file = locate<File>(removePath);
+    
+    // The origin feed will do the real removing.
+    if(file.originFeed())
+    {
+        file.originFeed()->removeFile(removePath);
+    }
+    delete &file;
 }
 
 bool Folder::has(const String& name) const
@@ -182,18 +212,18 @@ File& Folder::add(File* file)
     return *file;
 }
 
-File* Folder::remove(File* file)
+File* Folder::remove(File& file)
 {
     for(Contents::iterator i = contents_.begin(); i != contents_.end(); ++i)
     {
-        if(i->second == file)
+        if(i->second == &file)
         {
             contents_.erase(i);
             break;
         }
     }    
-    file->setParent(0);
-    return file;
+    file.setParent(0);
+    return &file;
 }
 
 File* Folder::tryLocateFile(const String& path) const
@@ -254,6 +284,17 @@ File* Folder::tryLocateFile(const String& path) const
     
     // Dead end.
     return 0;
+}
+
+void Folder::attach(Feed* feed)
+{
+    feeds_.push_back(feed);
+}
+
+Feed* Folder::detach(Feed& feed)
+{
+    feeds_.remove(&feed);
+    return &feed;
 }
 
 Folder::Accessor::Accessor(Folder& owner, Property prop) : owner_(owner), prop_(prop)

@@ -46,10 +46,11 @@ namespace de
     class Zone;
     
     /**
-     * The application. This is an abstract class. Subclasses will need to define
-     * the iterate() method that performs tasks while the main loop is running.
+     * The application. Subclasses need to define the iterate() method that performs
+     * tasks while the main loop is running.
      *
      * @note This is a singleton class. Only one instance per process is allowed.
+     *       Most functionality is provided through static member functions.
      *
      * @ingroup core
      */
@@ -85,9 +86,11 @@ namespace de
          * @param configPath     Path of the configuration file. The application's 
          *                       configuration must <tt>import deng</tt>.
          * @param homeSubFolder  Folder under the native home directory where the app
-         *                       will store the data it writes. (Note that <tt>/data</tt> is read-only.)
+         *                       will store the data it writes. (Note that 
+         *                       <tt>/data</tt> is read-only.)
          */
-        App(const CommandLine& commandLine, const String& configPath, const String& homeSubFolder = "");
+        App(const CommandLine& commandLine, const String& configPath, 
+            const String& homeSubFolder = "");
             
         virtual ~App();
 
@@ -193,6 +196,11 @@ namespace de
          * Returns the root folder of the file system.
          */
         static Folder& fileRoot();
+
+        /**
+         * Returns the /home folder.
+         */
+        static Folder& homeFolder();
 
         /**
          * Returns the configuration.

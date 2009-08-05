@@ -141,10 +141,11 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
 App::~App()
 {
     clearSubsystems();
-    clearModules();
 
     delete config_;
     config_ = 0;
+
+    clearModules();
 
     // Deleting the file system will unload everything owned by the files, including 
     // all remaining plugin libraries.
@@ -372,6 +373,13 @@ Folder& App::fileRoot()
     return self.fs_->root();
 }
 
+Folder& App::homeFolder()
+{
+    App& self = app();
+    assert(self.fs_ != 0);
+    return self.fs_->root().locate<Folder>("/home");
+}
+
 Config& App::config()
 {
     App& self = app();
@@ -470,7 +478,7 @@ Record& App::importModule(const String& name, const String& fromPath)
             if(!fromPath.empty())
             {
                 // Try the local folder.
-                p = fromPath.fileNamePath().concatenatePath(name);            
+                p = fromPath.fileNamePath() / name;            
             }
             else
             {
@@ -490,7 +498,7 @@ Record& App::importModule(const String& name, const String& fromPath)
         }
         else
         {
-            p = dir.concatenatePath(name);
+            p = dir / name;
         }
         if(!found)
         {

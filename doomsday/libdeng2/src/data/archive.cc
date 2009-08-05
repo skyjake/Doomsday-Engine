@@ -408,7 +408,7 @@ void Archive::listFiles(Names& names, const String& folder) const
 {
     names.clear();
     
-    String prefix = folder.empty()? "" : folder.concatenatePath("");
+    String prefix = folder.empty()? "" : folder / "";
     for(Index::const_iterator i = index_.begin(); i != index_.end(); ++i)
     {
         if(i->first.beginsWith(prefix))
@@ -427,7 +427,7 @@ void Archive::listFolders(Names& names, const String& folder) const
 {
     names.clear();
     
-    String prefix = folder.empty()? "" : folder.concatenatePath("");
+    String prefix = folder.empty()? "" : folder / "";
     for(Index::const_iterator i = index_.begin(); i != index_.end(); ++i)
     {
         if(i->first.beginsWith(prefix))

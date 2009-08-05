@@ -32,7 +32,7 @@ LocalServer::LocalServer(de::duint16 listenOnPort) : listenOnPort_(listenOnPort)
 #if defined(WIN32)
     svArgs.insert(0, "dengsv.exe");
 #elif defined(MACOSX)
-    svArgs.insert(0, svArgs.at(0).fileNamePath().concatenatePath("../Resources/dengsv"));
+    svArgs.insert(0, svArgs.at(0).fileNamePath() / "../Resources/dengsv");
 #else
     svArgs.insert(0, "./dengsv");
 #endif

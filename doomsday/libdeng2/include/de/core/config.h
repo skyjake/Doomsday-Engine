@@ -42,8 +42,16 @@ namespace de
          */
         Config(const String& path);
 
+        /**
+         * Destructor. The configuration is automatically saved.
+         */
+        virtual ~Config();
+
         /// Read configuration from files.
         void read();
+        
+        /// Writes the configuration to /home.
+        void write();
 
         /// Returns the value of @a name as a Value.
         Value& get(const String& name);
@@ -68,6 +76,9 @@ namespace de
     private:
         /// Configuration file name.
         String configPath_;
+        
+        /// Path where the configuration is written.
+        String writtenConfigPath_;
         
         /// The configuration namespace.
         Process config_;

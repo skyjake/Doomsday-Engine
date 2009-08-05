@@ -133,7 +133,7 @@ void TextValue::divide(const Value& value)
     {
         throw ArithmeticError("TextValue::divide", "Text cannot be divided");
     }
-    value_ = value_.concatenatePath(other->value_);
+    value_ = value_ / other->value_;
 }
 
 void TextValue::modulo(const Value& value)

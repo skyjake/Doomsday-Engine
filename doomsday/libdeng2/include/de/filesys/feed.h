@@ -87,6 +87,13 @@ namespace de
          * @return  The new file. Caller gets ownership.
          */
         virtual File* newFile(const String& name);
+        
+        /**
+         * Removes a file with the given name.
+         *
+         * @param name  Name of the removed file.
+         */
+        virtual void removeFile(const String& name);
     };
 };
 

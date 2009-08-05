@@ -46,6 +46,9 @@ namespace de
         /// Creating a directory failed. @ingroup errors
         DEFINE_ERROR(CreateDirError);
         
+        /// Failed to remove a file. @ingroup errors
+        DEFINE_ERROR(RemoveError);
+        
         /// Opens all files and folders in write mode.
         DEFINE_FLAG(ALLOW_WRITE, 0);
         
@@ -66,6 +69,7 @@ namespace de
         void populate(Folder& folder);
         bool prune(File& file) const;
         File* newFile(const String& name);
+        void removeFile(const String& name);
 
     public:
         /**

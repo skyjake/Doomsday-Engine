@@ -32,3 +32,6 @@ File* Feed::newFile(const String& /*name*/)
     // By default feeds can't create files.
     return 0;
 }
+
+void Feed::removeFile(const String& /*name*/)
+{}

@@ -75,7 +75,7 @@ void ArchiveFeed::populate(Folder& folder)
             return;
         }
         
-        String entry = basePath_.concatenatePath(*i);
+        String entry = basePath_ / *i;
         
         std::auto_ptr<ArchiveFile> archFile(new ArchiveFile(*i, archive(), entry));
         // Use the status of the entry within the archive.
@@ -97,8 +97,8 @@ void ArchiveFeed::populate(Folder& folder)
     
     for(Archive::Names::iterator i = names.begin(); i != names.end(); ++i)
     {
-        String subBasePath = basePath_.concatenatePath(*i);
-        Folder& subFolder = folder.fileSystem().getFolder(folder.path().concatenatePath(*i));
+        String subBasePath = basePath_ / *i;
+        Folder& subFolder = folder.fileSystem().getFolder(folder.path() / *i);
         
         // Does it already have the appropriate feed?
         for(Folder::Feeds::const_iterator i = subFolder.feeds().begin();
@@ -126,7 +126,7 @@ bool ArchiveFeed::prune(File& file) const
 
 File* ArchiveFeed::newFile(const String& name)
 {
-    String newEntry = basePath_.concatenatePath(name);
+    String newEntry = basePath_ / name;
     if(archive().has(newEntry))
     {
         /// @throw AlreadyExistsError  The entry @a name already exists in the archive.
@@ -137,6 +137,12 @@ File* ArchiveFeed::newFile(const String& name)
     File* file = new ArchiveFile(name, archive(), newEntry);
     file->setOriginFeed(this);
     return file;
+}
+
+void ArchiveFeed::removeFile(const String& name)
+{
+    String entryPath = basePath_ / name;
+    archive().remove(entryPath);
 }
 
 Archive& ArchiveFeed::archive()

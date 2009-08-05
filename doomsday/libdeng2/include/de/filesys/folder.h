@@ -97,29 +97,7 @@ namespace de
          * Provides direct read-only access to the content of the folder.
          */
         const Contents& contents() const;
-
-        /**
-         * Attach a feed to the folder. The feed will provide content for the folder.
-         *
-         * @param feed  Feed to attach to the folder. The folder gets ownership of the feed.
-         */
-        void attach(Feed* feed);
-        
-        /**
-         * Detaches a feed from the folder. The feed object is not deleted.
-         *
-         * @param feed  Feed to detach from the folder.
-         *
-         * @return  The Feed object. Ownership is returned to the caller.
-         */
-        Feed* detach(Feed& feed);
-
-        /**
-         * Provides access to the list of Feeds for this folder. The feeds are responsible
-         * for creating File and Folder instances in the folder.
-         */
-        const Feeds& feeds() const { return feeds_; }
-        
+      
         /**
          * Destroys the contents of the folder. All contained file objects are deleted.
          */
@@ -130,11 +108,28 @@ namespace de
          * decide what kind of file is actually created. The new file is added to
          * the file system's index. 
          *
-         * @param name  Name of the new file.         
+         * @param name             Name or path of the new file, relative to this folder.
+         * @param replaceExisting  Replacing existing file with the same name.
          *
          * @return  The created file (write mode enabled).
          */
-        File& newFile(const String& name);
+        File& newFile(const String& name, bool replaceExisting = false);
+
+        /**
+         * Creates a new file in the folder, replacing an existing file with the 
+         * same name. Same as calling <code>newFile(name, true)</code>.
+         *
+         * @param name  Name or path of the new file, relative to this folder.
+         */
+        File& replaceFile(const String& name);
+
+        /**
+         * Removes a file from a folder. If it has an origin feed, the feed will be
+         * asked to remove the file as well.
+         *
+         * @param name  Name or path of file to remove, relative to this folder.
+         */
+        void removeFile(const String& name);
 
         /**
          * Checks whether the folder contains a file.
@@ -180,7 +175,7 @@ namespace de
         template <typename Type>
         Type* remove(Type* fileObject) {
             assert(fileObject != 0);
-            remove(static_cast<File*>(fileObject));
+            remove(*static_cast<File*>(fileObject));
             return fileObject;
         }
 
@@ -191,7 +186,7 @@ namespace de
          * @return  The removed file object. Ownership of the object is given to
          * the caller.
          */
-        virtual File* remove(File* file);
+        virtual File* remove(File& file);
 
         /**
          * Locates a file in this folder or in one of its subfolders. Looks recursively
@@ -226,6 +221,28 @@ namespace de
             }
             return *found;
         }
+
+        /**
+         * Attach a feed to the folder. The feed will provide content for the folder.
+         *
+         * @param feed  Feed to attach to the folder. The folder gets ownership of the feed.
+         */
+        void attach(Feed* feed);
+        
+        /**
+         * Detaches a feed from the folder. The feed object is not deleted.
+         *
+         * @param feed  Feed to detach from the folder.
+         *
+         * @return  The Feed object. Ownership is returned to the caller.
+         */
+        Feed* detach(Feed& feed);
+
+        /**
+         * Provides access to the list of Feeds for this folder. The feeds are responsible
+         * for creating File and Folder instances in the folder.
+         */
+        const Feeds& feeds() const { return feeds_; }
         
     private:
         /// A map of file names to file instances.

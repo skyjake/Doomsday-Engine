@@ -87,7 +87,7 @@ const String File::path() const
     String thePath = name();
     for(Folder* i = parent_; i; i = i->parent_)
     {
-        thePath = i->name().concatenatePath(thePath);
+        thePath = i->name() / thePath;
     }
     return "/" + thePath;
 }

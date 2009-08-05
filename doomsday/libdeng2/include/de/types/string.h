@@ -93,6 +93,9 @@ namespace de
         /// Does a path concatenation on this string and the argument.
         String concatenatePath(const String& path, char dirChar = '/') const;
 
+        /// Does a path concatenation on this string and the argument.
+        String operator / (const String& path) const;
+
         /// Does a path concatenation on a native path. The directory separator 
         /// character depends on the platform.
         String concatenateNativePath(const String& nativePath) const;
