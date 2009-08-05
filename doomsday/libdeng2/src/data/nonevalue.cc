@@ -33,7 +33,7 @@ Value* NoneValue::duplicate() const
 
 Value::Text NoneValue::asText() const
 {
-	return "(none)";
+    return "(none)";
 }
 
 bool NoneValue::isTrue() const

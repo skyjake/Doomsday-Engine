@@ -25,7 +25,7 @@
 class TestApp : public de::App
 {
 public:
-    TestApp(const de::CommandLine& args) : de::App(args, "/config/testapp.de") {
+    TestApp(const de::CommandLine& args) : de::App(args, "/config/testapp.de", "testapp") {
         std::cout << "TestApp constructed.\n";
     }
     

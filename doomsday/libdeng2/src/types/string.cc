@@ -355,6 +355,17 @@ String String::fileName() const
     return *this;
 }
 
+String String::fileNameWithoutExtension() const
+{
+    String name = fileName();
+    size_type pos = find_last_of('.');
+    if(pos != npos && pos > 0)
+    {
+        return substr(0, pos);
+    }
+    return name;
+}
+
 String String::fileNameExtension() const
 {
     size_type pos = find_last_of('.');

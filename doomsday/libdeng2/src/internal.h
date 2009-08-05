@@ -32,17 +32,17 @@
  */
 namespace de
 {
-	namespace internal
-	{
-		/// Convert an Address to SDL_net's IPaddress.
-		void convertAddress(const Address& address, IPaddress* ip);
+    namespace internal
+    {
+        /// Convert an Address to SDL_net's IPaddress.
+        void convertAddress(const Address& address, IPaddress* ip);
 
         /// Convert SDL_Net's IPaddress to an Address.
         Address convertAddress(const IPaddress* ip);
 
-		/// Create an SDL surface.
+        /// Create an SDL surface.
         SDL_Surface* createSDLSurface(duint flags, duint width, duint height, duint bitsPerPixel);
-	}
+    }
 }
 
 #endif /* LIBDENG2_INTERNAL_H */

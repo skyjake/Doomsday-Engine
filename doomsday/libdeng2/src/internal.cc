@@ -21,21 +21,21 @@
 
 namespace de
 {
-	void internal::convertAddress(const Address& address, IPaddress* ip)
-	{
-		SDLNet_Write32(address.ip(), &ip->host);
-		SDLNet_Write16(address.port(), &ip->port);
-	}
-	
-	Address internal::convertAddress(const IPaddress* ip)
-	{
+    void internal::convertAddress(const Address& address, IPaddress* ip)
+    {
+        SDLNet_Write32(address.ip(), &ip->host);
+        SDLNet_Write16(address.port(), &ip->port);
+    }
+    
+    Address internal::convertAddress(const IPaddress* ip)
+    {
         duint32 host;
         SDLNet_Write32(ip->host, &host);
         duint16 port;
         SDLNet_Write16(ip->port, &port);
         
         return Address(host, port);
-	}
+    }
 
     SDL_Surface* internal::createSDLSurface(duint flags, duint width, duint height, duint bitsPerPixel)
     {

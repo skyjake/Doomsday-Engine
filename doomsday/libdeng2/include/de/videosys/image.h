@@ -51,18 +51,18 @@ namespace de
     public:        
         Image();
         
-		/** 
-		 * Defines the image.
-		 *
-		 * @param format    Pixel format of the image data.
-		 * @param dims      Width and height of the image in pixels.
-		 * @param data      Data buffer containing the pixels of the image.
-		 * @param dataSize  Number of bytes in the data buffer.
-		 * @param linePitchBytes  Bytes per each line.
-		 */
+        /** 
+         * Defines the image.
+         *
+         * @param format    Pixel format of the image data.
+         * @param dims      Width and height of the image in pixels.
+         * @param data      Data buffer containing the pixels of the image.
+         * @param dataSize  Number of bytes in the data buffer.
+         * @param linePitchBytes  Bytes per each line.
+         */
         void set(Format format, const Dimensions& dims, const Byte* data, Size dataSize,
             duint linePitchBytes = 0);
-		
+        
         Format format() const;
         
         /// Width of the image.

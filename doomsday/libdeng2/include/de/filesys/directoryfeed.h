@@ -43,13 +43,23 @@ namespace de
         /// An error occurred changing the working directory. @ingroup errors
         DEFINE_ERROR(WorkingDirError);
         
+        /// Creating a directory failed. @ingroup errors
+        DEFINE_ERROR(CreateDirError);
+        
+        /// Opens all files and folders in write mode.
+        DEFINE_FLAG(ALLOW_WRITE, 0);
+        
+        /// Creates the native directory if not does not exist.
+        DEFINE_FINAL_FLAG(CREATE_IF_MISSING, 1, Mode);
+        
     public:
         /**
          * Constructs a DirectoryFeed that accesses a directory in the native file system.
          *
          * @param nativePath  Path of the native directory.
+         * @param mode        Feed mode.
          */
-        DirectoryFeed(const String& nativePath);
+        DirectoryFeed(const String& nativePath, const Mode& mode = 0);
         
         virtual ~DirectoryFeed();
         
@@ -64,6 +74,13 @@ namespace de
          * @param nativePath  New path to use as the working directory.
          */
         static void changeWorkingDir(const String& nativePath);
+
+        /**
+         * Creates a native directory relative to the current working directory.
+         *
+         * @param nativePath  Native directory to create.
+         */
+        static void createDir(const String& nativePath);
 
         /**
          * Determines whether a native path exists.
@@ -91,6 +108,7 @@ namespace de
 
     private:
         const String nativePath_;
+        Mode mode_;
     };
 }
 

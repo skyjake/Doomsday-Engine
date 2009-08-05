@@ -55,8 +55,8 @@ namespace de
         const Archive& archive() const { return archive_; }
 
         // Implements IByteArray.
-		void get(Offset at, Byte* values, Size count) const;
-		void set(Offset at, const Byte* values, Size count);
+        void get(Offset at, Byte* values, Size count) const;
+        void set(Offset at, const Byte* values, Size count);
         
     private:
         Archive& archive_;

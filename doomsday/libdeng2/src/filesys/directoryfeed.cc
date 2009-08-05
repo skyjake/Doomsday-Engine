@@ -41,13 +41,23 @@
 
 using namespace de;
 
-DirectoryFeed::DirectoryFeed(const String& nativePath) : nativePath_(nativePath) {}
+DirectoryFeed::DirectoryFeed(const String& nativePath, const Mode& mode) 
+    : nativePath_(nativePath), mode_(mode) {}
 
 DirectoryFeed::~DirectoryFeed()
 {}
 
 void DirectoryFeed::populate(Folder& folder)
 {
+    if(mode_[ALLOW_WRITE_BIT])
+    {
+        folder.setMode(File::WRITE);
+    }
+    if(mode_[CREATE_IF_MISSING_BIT] && !exists(nativePath_))
+    {
+        createDir(nativePath_);
+    }
+    
 #ifdef UNIX
     DIR* dir = opendir(nativePath_.empty()? "." : nativePath_.c_str());
     if(!dir)
@@ -103,6 +113,11 @@ void DirectoryFeed::populateSubFolder(Folder& folder, const String& entryName)
         String subFeedPath = nativePath_.concatenateNativePath(entryName);
         Folder& subFolder = folder.fileSystem().getFolder(folder.path().concatenatePath(entryName));
 
+        if(mode_[ALLOW_WRITE_BIT])
+        {
+            subFolder.setMode(File::WRITE);
+        }
+
         // It may already be fed by a DirectoryFeed.
         for(Folder::Feeds::const_iterator i = subFolder.feeds().begin();
             i != subFolder.feeds().end(); ++i)
@@ -116,8 +131,8 @@ void DirectoryFeed::populateSubFolder(Folder& folder, const String& entryName)
             }
         }
 
-        // Add a new feed.
-        subFolder.attach(new DirectoryFeed(subFeedPath));
+        // Add a new feed. Mode inherited.
+        subFolder.attach(new DirectoryFeed(subFeedPath, mode_));
     }
 }
 
@@ -131,9 +146,13 @@ void DirectoryFeed::populateFile(Folder& folder, const String& entryName)
     
     String entryPath = nativePath_.concatenateNativePath(entryName);
 
-    // Protect against errors.
+    // Open the native file.
     std::auto_ptr<NativeFile> nativeFile(new NativeFile(entryName, entryPath));
     nativeFile->setStatus(fileStatus(entryPath));
+    if(mode_[ALLOW_WRITE_BIT])
+    {
+        nativeFile->setMode(File::WRITE);
+    }
 
     File* file = folder.fileSystem().interpret(nativeFile.release());
     folder.add(file);
@@ -220,6 +239,30 @@ void DirectoryFeed::changeWorkingDir(const String& nativePath)
             nativePath + ": " + strerror(errno));
     }
 #endif
+}
+
+void DirectoryFeed::createDir(const String& nativePath)
+{
+    String parentPath = nativePath.fileNameNativePath();
+    if(!parentPath.empty() && !exists(parentPath))
+    {
+        createDir(parentPath);
+    }
+    
+#ifdef UNIX
+    if(mkdir(nativePath.c_str(), 0755))
+    {
+        /// @throw CreateDirError Failed to create directory @a nativePath.
+        throw CreateDirError("DirectoryFeed::createDir", nativePath + ": " + strerror(errno));
+    }
+#endif
+
+#ifdef WIN32
+    if(_mkdir(nativePath.c_str()))  
+    {
+        throw CreateDirError("DirectoryFeed::createDir", nativePath + ": " + strerror(errno));
+    }
+#endif    
 }
 
 bool DirectoryFeed::exists(const String& nativePath)
