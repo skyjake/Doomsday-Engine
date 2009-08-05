@@ -35,7 +35,7 @@ using namespace de;
 // This will be set when the app is constructed.
 App* App::singleton_ = 0;
 
-App::App(const CommandLine& commandLine, const String& configPath)
+App::App(const CommandLine& commandLine, const String& configPath, const String& homeSubFolder)
     : commandLine_(commandLine), 
       memory_(0), 
       fs_(0), 
@@ -106,6 +106,12 @@ App::App(const CommandLine& commandLine, const String& configPath)
         fs_->getFolder("/config").attach(new DirectoryFeed("data\\config"));
         //fs_->getFolder("/modules").attach(new DirectoryFeed("data\\modules"));
 #endif
+
+        /// @todo  /home should really be under the native user home dir (~/.deng2, 
+        /// C:\Documents and Settings\..., ~/Library/Application Support/Doomsday2/)
+        fs_->getFolder("/home").attach(new DirectoryFeed(
+            String("home").concatenateNativePath(homeSubFolder), 
+            DirectoryFeed::ALLOW_WRITE | DirectoryFeed::CREATE_IF_MISSING));
 
         fs_->refresh();
         

@@ -124,6 +124,9 @@ namespace de
         /// Extracts the base name from the string (includes extension).
         String fileName() const;
         
+        /// Extracts the base name from the string (does not include extension).
+        String fileNameWithoutExtension() const;
+        
         /**
          * Extracts the file name extension from a path. A valid extension
          * is the part of a file name after a period where the file name

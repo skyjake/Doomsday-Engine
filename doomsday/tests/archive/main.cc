@@ -56,17 +56,20 @@ int deng_Main(int argc, char** argv)
         String content(hello);
         cout << "The contents: \"" << content << "\"" << endl;
 
-        // Make a second entry.
-        zip.setMode(File::WRITE);
-        File& worldTxt = zip.newFile("world.txt");
-        Writer(worldTxt) << FixedByteArray(content);
-
-        // Usually we aren't allowed to write to the data folder.
-        zip.parent()->setMode(File::WRITE);
+        try
+        {
+            // Make a second entry.
+            File& worldTxt = zip.newFile("world.txt");
+            Writer(worldTxt) << FixedByteArray(content);
+        }
+        catch(const File::IOError&)
+        {
+            cout << "Cannot change files in read-only mode.\n";
+        }
 
         // This won't appear in the file system unless FS::refresh() is called.
         // newFile() doesn't interpret anything, just makes a plain file.
-        File& zip2 = zip.parent()->newFile("test2.zip");
+        File& zip2 = app.fileRoot().locate<Folder>("/home").newFile("test2.zip");
         zip2.setMode(File::WRITE | File::TRUNCATE);
         Archive arch;
         arch.add("world.txt", content);

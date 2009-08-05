@@ -1,4 +1,4 @@
-# The Doomsday Engine Project -- dengsv
+# The Doomsday Engine Project -- dengcl
 #
 # Copyright (c) 2009 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
@@ -15,10 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-# Configuration for the server app.
-
-import deng, net
-
-# Server doesn't use audio or video.
-deng.audio = 'none'
-deng.video = 'none'
+# The TCP port the client uses for the local server 
+# (for sessions happening on the local computer).
+localServerPort ?= 13209

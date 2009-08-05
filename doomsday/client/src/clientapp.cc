@@ -33,7 +33,7 @@
 using namespace de;
 
 ClientApp::ClientApp(const de::CommandLine& arguments)
-    : App(arguments, "/config/client.de"), localServer_(0), session_(0)
+    : App(arguments, "/config/client/client.de", "client"), localServer_(0), session_(0)
 {        
     CommandLine& args = commandLine();
     
@@ -54,7 +54,7 @@ ClientApp::ClientApp(const de::CommandLine& arguments)
     args.append("../../data/doom.pk3");
 #endif
 
-    const duint16 SERVER_PORT = 13209;
+    const duint16 SERVER_PORT = config().getui("net.localServerPort");
 
     std::auto_ptr<LocalServer> svPtr(new LocalServer(SERVER_PORT));
     localServer_ = svPtr.get();

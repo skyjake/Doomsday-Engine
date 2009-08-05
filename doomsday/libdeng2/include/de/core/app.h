@@ -81,11 +81,13 @@ namespace de
         /**
          * Constructs the application.
          * 
-         * @param commandLine  Command line arguments.
-         * @param configPath   Path of the configuration file. The application's 
-         *                     configuration must "import record deng".
+         * @param commandLine    Command line arguments.
+         * @param configPath     Path of the configuration file. The application's 
+         *                       configuration must <tt>import deng</tt>.
+         * @param homeSubFolder  Folder under <tt>/home</tt> where the app will store the data
+         *                       it writes. (Note that <tt>/data</tt> is read-only.)
          */
-        App(const CommandLine& commandLine, const String& configPath);
+        App(const CommandLine& commandLine, const String& configPath, const String& homeSubFolder = "");
             
         virtual ~App();
 
