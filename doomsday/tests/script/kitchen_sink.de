@@ -159,6 +159,7 @@ elsif True
     print "From the elsif"
 end
 if True: print 'Everything on one line.'; else: print 'Goes unseen.'
+if False; print 'Goes unseen again.'; else; print 'And with semicolons (requires "end").'; end
 
 sections.subsection('Assign statement.')
 print 'Assigning 10 to i...'
