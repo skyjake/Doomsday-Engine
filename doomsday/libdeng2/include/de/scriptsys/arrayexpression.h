@@ -42,6 +42,8 @@ namespace de
 
         void clear();
 
+        dsize size() const { return arguments_.size(); }
+
         /**
          * Adds an argument expression to the array expression.
          *
@@ -51,6 +53,15 @@ namespace de
         void add(Expression* arg);
 
         void push(Evaluator& evaluator, Record* names = 0) const;
+
+        /**
+         * Returns one of the expressions in the array.
+         *
+         * @param pos  Index.
+         *
+         * @return  Expression.
+         */
+        const Expression& at(dint pos) const;
 
         /**
          * Collects the result values of the arguments and puts them 

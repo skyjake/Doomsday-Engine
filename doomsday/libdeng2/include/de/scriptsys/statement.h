@@ -63,12 +63,14 @@ namespace de
         
         enum SerialIds {
             ASSIGN,
+            CATCH,
             EXPRESSION,
+            FLOW,
             FOR,
             FUNCTION,
             IF,
-            JUMP,
             PRINT,
+            TRY,
             WHILE
         };
                 

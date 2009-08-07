@@ -103,7 +103,7 @@ void Session::processCommand(Client& sender, const de::CommandPacket& packet)
     catch(const Error& err)
     {
         // No go, pal.
-        App::protocol().reply(sender, Protocol::FAILURE, err.what());
+        App::protocol().reply(sender, Protocol::FAILURE, err.asText());
     }
 }
 

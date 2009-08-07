@@ -33,3 +33,7 @@ def subsection(msg)
     subSecNum += 1
     printSubsection(msg)
 end
+
+def throwError()
+    throw 'Thrown from the sections module.'
+end

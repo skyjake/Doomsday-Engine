@@ -17,7 +17,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "de/JumpStatement"
+#include "de/FlowStatement"
 #include "de/Evaluator"
 #include "de/Context"
 #include "de/Process"
@@ -31,24 +31,28 @@ using namespace de;
 #define HAS_ARG     0x80
 #define TYPE_MASK   0x7f
  
-JumpStatement::JumpStatement() : type_(RETURN), arg_(0)
+FlowStatement::FlowStatement() : type_(PASS), arg_(0)
 {}
  
-JumpStatement::JumpStatement(Type type, Expression* countArgument) 
+FlowStatement::FlowStatement(Type type, Expression* countArgument) 
     : type_(type), arg_(countArgument) 
 {}
  
-JumpStatement::~JumpStatement()
+FlowStatement::~FlowStatement()
 {
     delete arg_;
 }
          
-void JumpStatement::execute(Context& context) const
+void FlowStatement::execute(Context& context) const
 {
     Evaluator& eval = context.evaluator();
     
     switch(type_)
     {
+    case PASS:
+        context.proceed();
+        break;
+        
     case CONTINUE:
         context.jumpContinue();
         break;
@@ -75,12 +79,23 @@ void JumpStatement::execute(Context& context) const
             context.process().finish();
         }
         break;
+        
+    case THROW:
+        if(arg_)
+        {
+            throw Error("thrown in script", eval.evaluate(arg_).asText());
+        }   
+        else
+        {
+            /// @todo  Rethrow the current error.
+            context.proceed();
+        }     
     }
 }
 
-void JumpStatement::operator >> (Writer& to) const
+void FlowStatement::operator >> (Writer& to) const
 {
-    to << SerialId(JUMP);
+    to << SerialId(FLOW);
     duint8 header = duint8(type_);
     if(arg_)
     {
@@ -93,15 +108,15 @@ void JumpStatement::operator >> (Writer& to) const
     }
 }
 
-void JumpStatement::operator << (Reader& from)
+void FlowStatement::operator << (Reader& from)
 {
     SerialId id;
     from >> id;
-    if(id != JUMP)
+    if(id != FLOW)
     {
         /// @throw DeserializationError The identifier that species the type of the 
         /// serialized statement was invalid.
-        throw DeserializationError("JumpStatement::operator <<", "Invalid ID");
+        throw DeserializationError("FlowStatement::operator <<", "Invalid ID");
     }
     duint8 header;
     from >> header;

@@ -115,13 +115,13 @@ void ClientApp::iterate()
     }
     catch(const UserSession::SessionEndedError& err)
     {
-        std::cout << "Session ended: " << err.what() << "\n";
+        std::cout << "Session ended: " << err.asText() << "\n";
         delete session_;
         session_ = 0;
     }
     catch(const Link::DisconnectedError& err)
     {
-        std::cout << "Disconnected from server: " << err.what() << "\n";
+        std::cout << "Disconnected from server: " << err.asText() << "\n";
         delete session_;
         session_ = 0;
     }

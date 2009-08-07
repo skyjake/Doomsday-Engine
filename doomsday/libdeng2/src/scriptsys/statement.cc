@@ -19,12 +19,14 @@
 
 #include "de/Statement"
 #include "de/AssignStatement"
+#include "de/CatchStatement"
 #include "de/ExpressionStatement"
 #include "de/ForStatement"
 #include "de/FunctionStatement"
 #include "de/IfStatement"
-#include "de/JumpStatement"
+#include "de/FlowStatement"
 #include "de/PrintStatement"
+#include "de/TryStatement"
 #include "de/WhileStatement"
 #include "de/Reader"
 
@@ -40,35 +42,43 @@ Statement* Statement::constructFrom(Reader& reader)
     switch(id)
     {
     case ASSIGN:
-        result.reset(new AssignStatement());
+        result.reset(new AssignStatement);
+        break;
+        
+    case CATCH:
+        result.reset(new CatchStatement);
         break;
         
     case EXPRESSION:
-        result.reset(new ExpressionStatement());
+        result.reset(new ExpressionStatement);
+        break;
+        
+    case FLOW:
+        result.reset(new FlowStatement);
         break;
         
     case FOR:
-        result.reset(new ForStatement());
+        result.reset(new ForStatement);
         break;
         
     case FUNCTION:
-        result.reset(new FunctionStatement());
+        result.reset(new FunctionStatement);
         break;
         
     case IF:
-        result.reset(new IfStatement());
-        break;
-        
-    case JUMP:
-        result.reset(new JumpStatement());
+        result.reset(new IfStatement);
         break;
         
     case PRINT:
-        result.reset(new PrintStatement());
+        result.reset(new PrintStatement);
         break;
         
+    case TRY:
+        result.reset(new TryStatement);
+        break;    
+        
     case WHILE:
-        result.reset(new WhileStatement());
+        result.reset(new WhileStatement);
         break;
                 
     default:

@@ -105,10 +105,12 @@ namespace de
                 
         ExpressionStatement* parseDeleteStatement();
 
-        PrintStatement* parsePrintStatement();
-
         FunctionStatement* parseFunctionStatement();
         
+        void parseTryCatchSequence(Compound& compound);
+                
+        PrintStatement* parsePrintStatement();
+
         AssignStatement* parseAssignStatement();
 
         ExpressionStatement* parseExpressionStatement();

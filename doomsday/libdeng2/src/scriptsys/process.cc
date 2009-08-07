@@ -22,6 +22,8 @@
 #include "de/ArrayValue"
 #include "de/TextValue"
 #include "de/NoneValue"
+#include "de/TryStatement"
+#include "de/CatchStatement"
 
 #include <sstream>
 
@@ -132,8 +134,6 @@ void Process::execute(const Time::Delta& timeBox)
         // The process is not active.
         return;
     }
-    
-    //LOG_AS_STRING("Process " + name());
 
     // We will execute until this depth is complete.
     duint startDepth = depth();
@@ -143,10 +143,10 @@ void Process::execute(const Time::Delta& timeBox)
         startedAt_ = Time();
     }
 
-    try
+    // Execute the next command(s).
+    while(state_ == RUNNING && depth() >= startDepth)
     {
-        // Execute the next command(s).
-        while(state_ == RUNNING && depth() >= startDepth)
+        try
         {
             if(!context().execute())
             {
@@ -159,26 +159,94 @@ void Process::execute(const Time::Delta& timeBox)
                     "Script execution takes too long, or is stuck in an infinite loop");
             }
         }
+        catch(const Error& err)
+        {
+            //std::cerr << "Caught " << err.asText() << " at depth " << depth() << "\n";
+            
+            // Fast-forward to find a suitable catch statement.
+            if(jumpIntoCatch(err))
+            {
+                // Suitable catch statement was found. The current statement is now
+                // pointing at the catch compound's first statement.
+                continue;
+            }
+        
+            if(startDepth > 1)
+            {
+                // Pop this context off, it has not caught the exception.
+                delete popContext();
+                err.raise();
+            }
+            else
+            {
+                // Exception uncaught by all contexts, script execution stops.
+                std::cout << "Process::execute: " << err.asText() << "\n";
+                std::cout << "Stopping process.\n";
+                stop();
+            }
+        }
     }
-    catch(const Error& err)
+}
+
+bool Process::jumpIntoCatch(const Error& err)
+{
+    // The catch statement must be at the relative zero catch level.
+    dint level = 0;
+
+    // Proceed along default flow.
+    for(context().proceed(); context().current() && level >= 0; context().proceed())
     {
-        if(startDepth == 1)
+        const Statement* statement = context().current();
+        const TryStatement* tryStatement = dynamic_cast<const TryStatement*>(statement);
+        if(tryStatement)
         {
-            std::cout << "Process::execute:" << err.what() << "\n";
-            std::cout << "Stopping process.\n";
-            stop();
+            // Encountered a nested try statement.
+            ++level;
+            continue;
         }
-        else
+        const CatchStatement* catchStatement = dynamic_cast<const CatchStatement*>(statement);
+        if(catchStatement)
         {
-            err.raise();
+            if(!level)
+            {
+                // This might be the catch for us.
+                if(catchStatement->matches(err))
+                {
+                    catchStatement->executeCatch(context(), err);
+                    return true;
+                }
+            }
+            if(catchStatement->isFinal())
+            {
+                // A sequence of catch statements has ended.
+                --level;
+            }
         }
     }
+    
+    // Failed to find a catch statement that matches the given error.
+    return false;
 }
 
 Context& Process::context(duint downDepth)
 {
     assert(downDepth < depth());
     return **(stack_.rbegin() + downDepth);
+}
+
+Context* Process::popContext()
+{
+    Context* topmost = stack_.back();
+    stack_.pop_back();
+
+    // Pop a global namespace as well, if present.
+    if(context().type() == Context::GLOBAL_NAMESPACE)
+    {
+        delete stack_.back();
+        stack_.pop_back();
+    }    
+    
+    return topmost;
 }
 
 void Process::finish(Value* returnValue)
@@ -189,22 +257,13 @@ void Process::finish(Value* returnValue)
     if(depth() > 1)
     {
         // Finish the topmost context.
-        Context* topmost = stack_.back();
-        stack_.pop_back();
-
-        // Pop the global namespace as well, if present.
-        if(context().type() == Context::GLOBAL_NAMESPACE)
-        {
-            delete stack_.back();
-            stack_.pop_back();
-        }
-
+        std::auto_ptr<Context> topmost(popContext());
         if(topmost->type() == Context::FUNCTION_CALL)
         {
             // Return value to the new topmost level.
             context().evaluator().pushResult(returnValue? returnValue : new NoneValue());
         }
-        delete topmost;
+        delete topmost.release();
     }
     else
     {

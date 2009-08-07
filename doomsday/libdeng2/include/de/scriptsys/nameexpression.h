@@ -80,6 +80,9 @@ namespace de
         NameExpression(const String& identifier, const Flags& flags = BY_VALUE);
         ~NameExpression();
 
+        /// Returns the identifier in the name expression.
+        const String& identifier() const { return identifier_; }
+
         Value* evaluate(Evaluator& evaluator) const;
 
         // Implements ISerializable.

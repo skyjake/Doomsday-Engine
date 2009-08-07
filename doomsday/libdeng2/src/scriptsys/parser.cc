@@ -27,9 +27,11 @@
 #include "de/IfStatement"
 #include "de/WhileStatement"
 #include "de/ForStatement"
-#include "de/JumpStatement"
+#include "de/FlowStatement"
 #include "de/AssignStatement"
 #include "de/FunctionStatement"
+#include "de/TryStatement"
+#include "de/CatchStatement"
 #include "de/ArrayExpression"
 #include "de/DictionaryExpression"
 #include "de/ConstantExpression"
@@ -74,7 +76,7 @@ duint Parser::nextStatement()
     // Begin with the whole thing.
     statementRange_ = TokenRange(tokens_);
 
-    std::cout << "Next statement: '" << statementRange_.asText() << "'\n";
+    //std::cout << "Next statement: '" << statementRange_.asText() << "'\n";
     
     return result;
 }
@@ -85,6 +87,7 @@ void Parser::parseCompound(Compound& compound)
     {
         if(statementRange_.firstToken().equals("elsif") ||
            statementRange_.firstToken().equals("else") ||
+           statementRange_.firstToken().equals("catch") ||
            (statementRange_.size() == 1 && statementRange_.firstToken().equals("end")))
         {
             // End of compound.
@@ -123,6 +126,11 @@ void Parser::parseStatement(Compound& compound)
         compound.add(parseFunctionStatement());
         return;
     }
+    else if(firstToken.equals("try"))
+    {
+        parseTryCatchSequence(compound);
+        return;
+    }
     
     // Statements without a compound (must advance to next statement manually).
     if(firstToken.equals("import"))
@@ -137,9 +145,13 @@ void Parser::parseStatement(Compound& compound)
     {
         compound.add(parseDeleteStatement());
     }
+    else if(firstToken.equals("pass"))
+    {
+        compound.add(new FlowStatement(FlowStatement::PASS));
+    }
     else if(firstToken.equals("continue"))
     {
-        compound.add(new JumpStatement(JumpStatement::CONTINUE));
+        compound.add(new FlowStatement(FlowStatement::CONTINUE));
     }
     else if(firstToken.equals("break"))
     {
@@ -150,16 +162,18 @@ void Parser::parseStatement(Compound& compound)
         {
             breakCount = parseExpression(statementRange_.startingFrom(1));
         }
-        compound.add(new JumpStatement(JumpStatement::BREAK, breakCount));
+        compound.add(new FlowStatement(FlowStatement::BREAK, breakCount));
     }
-    else if(firstToken.equals("return"))
+    else if(firstToken.equals("return") || firstToken.equals("throw"))
     {
-        Expression* returnValue = 0;
+        Expression* argValue = 0;
         if(statementRange_.size() > 1)
         {
-            returnValue = parseExpression(statementRange_.startingFrom(1));
+            argValue = parseExpression(statementRange_.startingFrom(1));
         }
-        compound.add(new JumpStatement(JumpStatement::RETURN, returnValue));
+        compound.add(new FlowStatement(
+            firstToken.equals("return")? FlowStatement::RETURN : FlowStatement::THROW, 
+            argValue));
     }
     else if(firstToken.equals("print"))
     {
@@ -174,6 +188,7 @@ void Parser::parseStatement(Compound& compound)
     {
         compound.add(parseExpressionStatement());
     }
+    
     // We've fully parsed the current set of tokens, get the next statement.
     nextStatement();
 }
@@ -299,21 +314,6 @@ ExpressionStatement* Parser::parseDeleteStatement()
         DELETE_IDENTIFIER | LOCAL_NAMESPACE_ONLY));
 }
 
-PrintStatement* Parser::parsePrintStatement()
-{    
-    ArrayExpression* args = 0;
-    if(statementRange_.size() == 1) // Just the keyword.
-    {
-        args = new ArrayExpression();
-    }
-    else
-    {
-        // Parse the arguments of the print statement.
-        args = parseList(statementRange_.startingFrom(1));
-    }
-    return new PrintStatement(args);    
-}
-
 FunctionStatement* Parser::parseFunctionStatement()
 {
     dint pos = statementRange_.find("(");
@@ -362,6 +362,82 @@ FunctionStatement* Parser::parseFunctionStatement()
     parseConditionalCompound(statement->compound(), IGNORE_EXTRA_BEFORE_COLON);
     
     return statement.release();
+}
+
+void Parser::parseTryCatchSequence(Compound& compound)
+{
+    // "try" cond-compound catch-compound [catch-compound]*
+    // catch-compound: "catch" name-expr ["," ref-name-expr] cond-compound
+    
+    auto_ptr<TryStatement> tryStat(new TryStatement);
+    parseConditionalCompound(tryStat->compound(), STAY_AT_CLOSING_STATEMENT);
+    compound.add(tryStat.release());
+
+    // One catch is required.
+    if(!statementRange_.firstToken().equals("catch"))
+    {
+        throw UnexpectedTokenError("Parser::parseTryCatchSequence",
+            "Expected 'catch', but got " + statementRange_.firstToken().asText());
+    }
+    CatchStatement* finalCatch = 0;
+    bool expectEnd;
+    while(statementRange_.firstToken().equals("catch"))
+    {
+        dint colon = statementRange_.find(":");
+        expectEnd = (colon < 0);
+
+        // Parse the arguments.
+        auto_ptr<ArrayExpression> args;
+        if(statementRange_.size() > 1)
+        {
+            TokenRange argRange;
+            if(colon < 0)
+            {
+                argRange = statementRange_.startingFrom(1);
+            }
+            else
+            {
+                argRange = statementRange_.between(1, colon);
+            }
+            args.reset(parseList(argRange, ",", 
+                BY_REFERENCE | LOCAL_NAMESPACE_ONLY | ALLOW_NEW_VARIABLES));
+        }
+
+        auto_ptr<CatchStatement> catchStat(new CatchStatement(args.release()));
+        parseConditionalCompound(catchStat->compound(),
+            STAY_AT_CLOSING_STATEMENT | IGNORE_EXTRA_BEFORE_COLON);
+
+        // The final catch will be flagged.
+        finalCatch = catchStat.get();
+
+        // Add it to the compound.
+        compound.add(catchStat.release());
+    }    
+    finalCatch->flags.set(CatchStatement::FINAL_BIT);
+    if(expectEnd)
+    {
+        if(!statementRange_.firstToken().equals("end"))
+        {
+            throw UnexpectedTokenError("Parser::parseTryCatchSequence",
+            "Expected 'end', but got " + statementRange_.firstToken().asText());
+        }
+        nextStatement();
+    }
+}
+
+PrintStatement* Parser::parsePrintStatement()
+{    
+    ArrayExpression* args = 0;
+    if(statementRange_.size() == 1) // Just the keyword.
+    {
+        args = new ArrayExpression();
+    }
+    else
+    {
+        // Parse the arguments of the print statement.
+        args = parseList(statementRange_.startingFrom(1));
+    }
+    return new PrintStatement(args);    
 }
 
 AssignStatement* Parser::parseAssignStatement()
@@ -531,7 +607,7 @@ Expression* Parser::parseExpression(const TokenRange& fullRange, const Expressio
     }
     else
     {
-        std::cout << "parsing operator expression: " << operatorToText(op) << "\n";
+        //std::cout << "parsing operator expression: " << operatorToText(op) << "\n";
         
         // Left side is empty with unary operators.
         // The right side inherits the flags of the expression (e.g., name-by-reference).
@@ -587,8 +663,8 @@ DictionaryExpression* Parser::parseDictionaryExpression(const TokenRange& range)
 
 Expression* Parser::parseCallExpression(const TokenRange& nameRange, const TokenRange& argumentRange)
 {
-    std::cerr << "call name: " << nameRange.asText() << "\n";
-    std::cerr << "call args: " << argumentRange.asText() << "\n";
+    //std::cerr << "call name: " << nameRange.asText() << "\n";
+    //std::cerr << "call args: " << argumentRange.asText() << "\n";
     
     if(!argumentRange.firstToken().equals("(") || 
          argumentRange.closingBracket(0) < argumentRange.size() - 1)
@@ -650,7 +726,7 @@ Expression* Parser::parseCallExpression(const TokenRange& nameRange, const Token
 OperatorExpression* Parser::parseOperatorExpression(Operator op, const TokenRange& leftSide, 
     const TokenRange& rightSide, const ExpressionFlags& rightFlags)
 {
-    std::cerr << "left: " << leftSide.asText() << ", right: " << rightSide.asText() << "\n";
+    //std::cerr << "left: " << leftSide.asText() << ", right: " << rightSide.asText() << "\n";
     
     if(leftSide.empty())
     {

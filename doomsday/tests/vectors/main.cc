@@ -76,7 +76,7 @@ int deng_Main(int argc, char** argv)
     }
     catch(const Error& err)
     {
-        std::cout << err.what() << "\n";
+        std::cout << err.asText() << "\n";
     }
 
     std::cout << "Exiting deng_Main()...\n";

@@ -59,6 +59,11 @@ void ArrayExpression::push(Evaluator& evaluator, Record* names) const
     }
 }
 
+const Expression& ArrayExpression::at(dint pos) const
+{
+    return *arguments_.at(pos);
+}
+
 Value* ArrayExpression::evaluate(Evaluator& evaluator) const
 {
     // Collect the right number of results into the array.

@@ -39,8 +39,23 @@ namespace de
     {
     public:
         Error(const std::string& where, const std::string& message)
-            : std::runtime_error(std::string("(") + where + ") " + message) {}
+            : std::runtime_error(std::string("(") + where + ") " + message), name_("") {}
+        ~Error() throw() {}
         virtual void raise() const { throw *this; }
+        const std::string name() const { 
+            if(name_.empty()) return "Error";
+            return name_; 
+        }
+        virtual std::string asText() const {
+            return "[" + name() + "] " + std::runtime_error::what();
+        }
+    protected:
+        void setName(const std::string& name) {
+            if(!name_.empty()) name_ += "_";
+            name_ += name;
+        }
+    private:
+        std::string name_;
     };
 }
     
@@ -54,9 +69,9 @@ namespace de
     class Name : public Parent { \
     public: \
         Name(const std::string& message) \
-            : Parent("-", message) {} \
+            : Parent("-", message) { Parent::setName(#Name); } \
         Name(const std::string& where, const std::string& message) \
-            : Parent(where, message) {}                            \
+            : Parent(where, message) { Parent::setName(#Name); } \
         virtual void raise() const { throw *this; } \
     };    
 

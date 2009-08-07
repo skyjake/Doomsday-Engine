@@ -137,6 +137,9 @@ if not 'jet' in transports: print "No jet."
 # ---------------------------------------------------------------------------
 sections.begin('STATEMENTS & COMPOUNDS')
 
+sections.subsection('Separating statements with semicolon.')
+print 'Statement 1.'; print 'Statement 2.'
+
 sections.subsection('if/elsif/else statements.')
 if True
     print 'Regular compound.'
@@ -155,6 +158,7 @@ if False: print "Lots of useless stuff here"
 elsif True
     print "From the elsif"
 end
+if True: print 'Everything on one line.'; else: print 'Goes unseen.'
 
 sections.subsection('Assign statement.')
 print 'Assigning 10 to i...'
@@ -246,6 +250,98 @@ for i in ['planes', 'trains', 'automobiles']
     print i, 'are cool!'
 end
 
+sections.subsection('pass statement: no operation.')
+if True: print "'Tis true."; else: pass
+
+# ---------------------------------------------------------------------------
+sections.begin('EXCEPTIONS')
+
+sections.subsection('Simple try/catch.')
+try: print 'Nothing thrown yet.'
+catch: print 'Skipped.'
+
+try: throw "OMG!"
+catch: print 'Whoa there.'
+
+try
+    throw "OMG!"
+catch
+    print 'Not so fast!'
+end
+
+try: throw "OMG!"
+catch Error
+    print 'Hold your horses.'
+end
+
+try
+    throw "OMG!"
+catch Error: print "Whatcha tryin' to pull?"
+
+sections.subsection('Minimal catch.')
+try: throw 'OMG!'
+catch: pass
+
+sections.subsection('Assigning exception message to local variable.')
+try: throw "OMG!"
+catch Error, er
+    print 'Caught:', er
+end
+try: throw "OMG!"
+catch Error, er: print 'caught:', er
+
+sections.subsection('Throwing exception in a function.')
+def erroneous()
+    throw "I can't handle the truth!"
+end
+try
+    print "Calling erroneous()"
+    erroneous()
+    try
+        print 'This will be skipped!'
+    catch
+        print 'I am on the wrong catch level.'
+    end
+catch
+    print 'Fumbled it...'
+end
+
+sections.subsection('Catching a specific type of exception.')
+try
+    record temp
+    reference = temp
+    del temp
+    print reference
+catch NullError, er
+    print 'Oh noes:', er
+end
+
+sections.subsection('Multiple catch statements.')
+try
+    throw 'For the 2nd catch.'
+catch NullError: print 'Got NullError'
+catch Error, er: print er
+catch: print 'Never here.'
+
+sections.subsection('Exception thrown in another module.')
+try
+    sections.throwError()
+catch Error, er
+    print 'Got error from another module:', er
+end
+
+sections.subsection('Exception thrown in recursive call.')
+def recursive(i)
+    print i
+    if i == 10: throw 'Reached 10!'
+    recursive(i + 1)
+end
+try
+    recursive(1)
+catch Error, er
+    print er
+end
+
 # ---------------------------------------------------------------------------
 sections.begin('RECORDS')
 
@@ -300,8 +396,8 @@ sections.subsection('Deleting a record pointed to by two variables.')
 record soonDeleted
 reference = soonDeleted
 del soonDeleted
-# This would cause an exception.
-#print reference
+try: print reference
+catch Error, er: print "Can't print reference:", er
 del reference
 
 sections.subsection('Serializing records.')
@@ -454,6 +550,8 @@ dsns = deserialize(sns)
 print dsns
 print 'Calling deserialized function...'
 print dsns.func3(1, 2, 3)
+print 'Calling deserialized function that throws an exception...'
+try: dsns.erroneous(); catch: print 'Caught.'
 del dsns
 
 sections.subsection('Importing modules: import record.')

@@ -76,8 +76,7 @@ namespace de
         Type& evaluateTo(const Expression* expr) {
             Type* r = dynamic_cast<Type*>(&evaluate(expr));
             if(!r) {
-                throw ResultTypeError("Evaluator::result<Type>", 
-                    "Result type is not compatible with Type");
+                throw ResultTypeError("Evaluator::result<Type>", "Unexpected result type");
             }
             return *r;
         }

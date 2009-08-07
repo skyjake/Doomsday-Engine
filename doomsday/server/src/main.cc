@@ -30,7 +30,7 @@ int deng_Main(int argc, char** argv)
     }
     catch(const Error& error)
     {
-        std::cout << error.what() << std::endl;
+        std::cout << error.asText() << std::endl;
     }    
     return 0;
 }

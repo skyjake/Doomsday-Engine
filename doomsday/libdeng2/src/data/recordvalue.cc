@@ -73,6 +73,7 @@ const Record& RecordValue::dereference() const
 
 Value* RecordValue::duplicate() const
 {
+    verify();
     return new RecordValue(record_);
 }
 

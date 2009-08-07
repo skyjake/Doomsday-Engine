@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,48 +16,32 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
- 
-#ifndef LIBDENG2_JUMPSTATEMENT_H
-#define LIBDENG2_JUMPSTATEMENT_H
+
+#ifndef LIBDENG2_TRYSTATEMENT_H
+#define LIBDENG2_TRYSTATEMENT_H
 
 #include "../Statement"
+#include "../Compound"
 
 namespace de
 {
-    class Expression;
-    
     /**
-     * Jumps within the current context, i.e., local jumps.
-     *
-     * @ingroup script
+     * Begins a try/catch compound. Always followed by one or more catch statements.
      */
-    class JumpStatement : public Statement
+    class TryStatement : public Statement
     {
     public:
-        /// Type of jump.
-        enum Type {
-            CONTINUE,
-            BREAK,
-            RETURN
-        };
-        
-    public:
-        JumpStatement();
-        
-        JumpStatement(Type type, Expression* countArgument = 0);
-        
-        ~JumpStatement();
-        
         void execute(Context& context) const;
+        
+        Compound& compound() { return compound_; }
         
         // Implements ISerializable.
         void operator >> (Writer& to) const;
         void operator << (Reader& from);         
         
-    private:        
-        Type type_;
-        Expression* arg_;
+    private:
+        Compound compound_;
     };
 }
 
-#endif /* LIBDENG2_JUMPSTATEMENT_H */
+#endif /* LIBDENG2_TRYSTATEMENT_H */

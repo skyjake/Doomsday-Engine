@@ -91,6 +91,10 @@ namespace de
          */
         void reset();
 
+        /// Returns the currently executed statement.
+        /// @return Statement, or @c NULL if no control flow information exists.
+        const Statement* current();
+
         /**
          * Execute the current statement.  
          *
@@ -185,12 +189,8 @@ namespace de
         /// iteration value is deleted, if it has been defined.
         void popFlow();
 
-        /// Determines the currently executed statement.
-        /// @return Statement, or @c NULL if no control flow information exists.
-        const Statement* current();
-        
         /// Sets the currently executed statement.
-        void setCurrent(const Statement* statement);    
+        void setCurrent(const Statement* statement);
         
     private:        
         /// Type of the execution context.

@@ -78,7 +78,7 @@ File* FS::interpret(File* sourceData)
     }
     catch(const Error& err)
     {
-        std::cout << "FS::interpret: " << err.what() << "\n";
+        std::cout << "FS::interpret: " << err.asText() << "\n";
         // We were given responsibility of the source file.
         delete sourceData;
         err.raise();

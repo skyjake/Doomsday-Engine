@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,34 +17,32 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "de/ReceiverThread"
-#include "de/Socket"
+#include "de/TryStatement"
+#include "de/Context"
+#include "de/Writer"
+#include "de/Reader"
 
 using namespace de;
 
-ReceiverThread::ReceiverThread(Socket& socket, IncomingBuffer& buffer) 
-    : Thread(), socket_(socket), buffer_(buffer)
-{}
-
-ReceiverThread::~ReceiverThread()
-{}
-
-void ReceiverThread::run()
+void TryStatement::execute(Context& context) const
 {
-    try
+    context.start(compound_.firstStatement(), next());
+}
+
+void TryStatement::operator >> (Writer& to) const
+{
+    to << SerialId(TRY) << compound_;
+}
+
+void TryStatement::operator << (Reader& from)
+{
+    SerialId id;
+    from >> id;
+    if(id != TRY)
     {
-        while(!shouldStopNow())
-        {
-            buffer_.put(socket_.receive());
-        }
+        /// @throw DeserializationError The identifier that species the type of the 
+        /// serialized statement was invalid.
+        throw DeserializationError("TryStatement::operator <<", "Invalid ID");
     }
-    catch(const Socket::DisconnectedError&)
-    {
-        // No need to react. When the socket is closed, this is the exception
-        // that is thrown.
-    }
-    catch(const Error& err)
-    {
-        std::cerr << "Fatal exception in ReceiverThread::run(): " << err.asText() << "\n";
-    }
+    from >> compound_;
 }

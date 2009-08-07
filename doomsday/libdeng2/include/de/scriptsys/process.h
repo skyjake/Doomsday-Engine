@@ -181,6 +181,14 @@ namespace de
         /// Pops contexts off the stack until depth @a downToLevel is reached.
         void clearStack(duint downToLevel = 0);
         
+        /// Pops the topmost context off the stack and returns it. Ownership given
+        /// to caller.
+        Context* popContext();
+        
+        /// Fast forward to a suitable catch statement for @a err.
+        /// @return  @c true, if suitable catch statement found.
+        bool jumpIntoCatch(const Error& err);
+                
     private:
         State state_;
         
