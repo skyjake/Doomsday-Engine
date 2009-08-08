@@ -27,7 +27,7 @@ namespace de
     class Script;
     
     /**
-     * A Parser is responsible for reading in a script in text form and
+     * Interface for objects responsible for reading a script in text form and
      * producing an executable Script object, with Statements and related
      * atoms.
      *

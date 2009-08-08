@@ -141,7 +141,7 @@ void Parser::parseStatement(Compound& compound)
     }
     else if(firstToken.equals("record"))
     {
-        compound.add(parseRecordStatement());
+        compound.add(parseDeclarationStatement());
     }
     else if(firstToken.equals("del"))
     {
@@ -291,17 +291,17 @@ ExpressionStatement* Parser::parseImportStatement()
     return new ExpressionStatement(parseList(statementRange_.startingFrom(startAt), ",", flags));
 }
 
-ExpressionStatement* Parser::parseRecordStatement()
+ExpressionStatement* Parser::parseDeclarationStatement()
 {
     // "record" name-expr ["," name-expr]*
 
     if(statementRange_.size() < 2)
     {
-        throw MissingTokenError("Parser::parseRecordStatement",
+        throw MissingTokenError("Parser::parseDeclarationStatement",
             "Expected identifier to follow " + statementRange_.firstToken().asText());
     }    
-    return new ExpressionStatement(parseList(statementRange_.startingFrom(1), ",",
-        ALLOW_NEW_RECORDS | LOCAL_NAMESPACE_ONLY));
+    ExpressionFlags flags = LOCAL_NAMESPACE_ONLY | ALLOW_NEW_RECORDS;
+    return new ExpressionStatement(parseList(statementRange_.startingFrom(1), ",", flags));
 }
 
 ExpressionStatement* Parser::parseDeleteStatement()
@@ -446,6 +446,14 @@ PrintStatement* Parser::parsePrintStatement()
 AssignStatement* Parser::parseAssignStatement()
 {
     ExpressionFlags flags = ALLOW_NEW_VARIABLES | BY_REFERENCE | LOCAL_NAMESPACE_ONLY;
+    
+    /// "const" makes read-only variables.
+    if(statementRange_.firstToken().equals("const"))
+    {
+        flags |= SET_READ_ONLY;
+        statementRange_ = statementRange_.startingFrom(1);
+    }
+    
     dint pos = statementRange_.find("=");
     if(pos < 0)
     {
@@ -805,6 +813,7 @@ Expression* Parser::parseTokenExpression(const TokenRange& range, const Expressi
             if(flags[IMPORT_NAMESPACE_BIT]) nameFlags |= NameExpression::IMPORT;
             if(flags[THROWAWAY_IF_IN_SCOPE_BIT]) nameFlags |= NameExpression::THROWAWAY_IF_IN_SCOPE;
             if(flags[DELETE_IDENTIFIER_BIT]) nameFlags |= NameExpression::DELETE;
+            if(flags[SET_READ_ONLY_BIT]) nameFlags |= NameExpression::READ_ONLY;
             
             return new NameExpression(range.token(0).str(), nameFlags);
         }

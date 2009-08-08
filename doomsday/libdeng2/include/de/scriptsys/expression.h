@@ -50,7 +50,7 @@ namespace de
         /**
          * Constructs an expression by deserializing one from a reader.
          *
-         * @param from  Reader.
+         * @param reader  Reader.
          *
          * @return  The deserialized expression. Caller gets ownership.
          */

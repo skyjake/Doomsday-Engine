@@ -207,6 +207,16 @@ print 'Trying weak assignment: z ?= 10'
 z ?= 10
 print 'z =', z
 
+sections.subsection('Assign statement: const assignment to make read-only variables.')
+z = 1
+print 'z =', z
+const z = 10
+print 'z has been consted to', z
+print 'Have to delete z before it\'s value can change.'
+del z
+z = 2
+print 'Now z =', 2
+
 sections.subsection('Delete statement: deleting identifiers.')
 def funky()
     i = 1
@@ -376,6 +386,20 @@ try
     recursive(1)
 catch Error, er
     print er
+end
+
+sections.subsection('Exception from trying to change a read-only variable.')
+const SOME_CONSTANT = 3.1415
+print 'SOME_CONSTANT =', SOME_CONSTANT
+try
+    SOME_CONSTANT = 3
+catch ReadOnlyError, er
+    print 'Cannot do it.', er
+end
+try
+    const SOME_CONSTANT = 3
+catch ReadOnlyError, er
+    print 'Will not work either:', er
 end
 
 # ---------------------------------------------------------------------------

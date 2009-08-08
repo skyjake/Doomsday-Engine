@@ -106,6 +106,10 @@ namespace de
          */
         const Value& at(dint index) const;
         
+        const Value& front() const { return at(0); }
+        
+        const Value& back() const { return at(size() - 1); }
+        
         /**
          * Empties the array of all values.
          */

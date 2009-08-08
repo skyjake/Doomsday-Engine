@@ -39,7 +39,7 @@ namespace de
     /**
      * Provides read and write access to data inside a compressed ZIP archive.
      * 
-     * @see ZipFeed
+     * @see ArchiveFeed, ArchiveFile
      *
      * @ingroup data
      */

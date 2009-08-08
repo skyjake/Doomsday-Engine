@@ -27,9 +27,8 @@
 namespace de
 {
     /**
-     * Lex is the base class for lexical analyzers. It provides the basic
-     * service of reading characters one by one from an input text. It also
-     * classifies characters.
+     * Base class for lexical analyzers. It provides the basic service of reading 
+     * characters one by one from an input text. It also classifies characters.
      *
      * @ingroup script
      */

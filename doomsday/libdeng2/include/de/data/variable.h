@@ -183,6 +183,11 @@ namespace de
         void verifyValid(const Value& v) const;
         
         /**
+         * Verifies that the variable can be assigned a new value.
+         */
+        void verifyWritable();
+        
+        /**
          * Verifies that a string is a valid name for the variable. If not,
          * an exception is thrown.
          *

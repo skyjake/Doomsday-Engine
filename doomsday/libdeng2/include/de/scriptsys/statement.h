@@ -27,7 +27,7 @@ namespace de
     class Context;
     
     /**
-     * The Statement class is the abstract base class for all statements.
+     * The abstract base class for all statements.
      *
      * @ingroup script
      */

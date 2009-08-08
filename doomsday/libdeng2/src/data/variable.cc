@@ -62,6 +62,7 @@ Variable& Variable::operator = (Value* v)
 void Variable::set(Value* v)
 {
     std::auto_ptr<Value> val(v);
+    verifyWritable();
     verifyValid(*v);
     delete value_;
     value_ = val.release();
@@ -71,6 +72,7 @@ void Variable::set(Value* v)
 
 void Variable::set(const Value& v)
 {
+    verifyWritable();
     verifyValid(v);
     delete value_;
     value_ = v.duplicate();
@@ -110,8 +112,19 @@ void Variable::verifyValid(const Value& v) const
 {
     if(!isValid(v))
     {
+        /// @throw InvalidError  Value @a v is not allowed by the variable.
         throw InvalidError("Variable::verifyValid", 
             "Value type is not allowed by the variable '" + name_ + "'");
+    }
+}
+
+void Variable::verifyWritable()
+{
+    if(mode[READ_ONLY_BIT])
+    {
+        /// @throw ReadOnlyError  The variable is in read-only mode.
+        throw ReadOnlyError("Variable::verifyWritable", 
+            "Variable '" + name_ + "' is in read-only mode");
     }
 }
 
