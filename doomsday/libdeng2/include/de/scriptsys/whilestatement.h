@@ -28,7 +28,7 @@ namespace de
     class Expression;
     
     /**
-     * A while statement keeps looping as long as the loop condition evaluates to True.
+     * Keeps looping as long as the loop condition evaluates to True.
      *
      * @ingroup script
      */

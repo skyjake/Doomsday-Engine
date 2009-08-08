@@ -66,19 +66,22 @@ namespace de
         /// A colon is expected but not found. @ingroup errors
         DEFINE_SUB_ERROR(SyntaxError, MissingColonError);
         
+        // Flags for parsing conditional compounds.
         DEFINE_FLAG(HAS_CONDITION, 0);
         DEFINE_FLAG(STAY_AT_CLOSING_STATEMENT, 1);
         DEFINE_FINAL_FLAG(IGNORE_EXTRA_BEFORE_COLON, 2, CompoundFlags);
 
+        // Flags for name expressions.
         DEFINE_FLAG(BY_VALUE, 0);
         DEFINE_FLAG(BY_REFERENCE, 1);
         DEFINE_FLAG(LOCAL_NAMESPACE_ONLY, 2);
         DEFINE_FLAG(REQUIRE_NEW_IDENTIFIER, 3);
         DEFINE_FLAG(ALLOW_NEW_RECORDS, 4);
-        DEFINE_FLAG(DELETE_IDENTIFIER, 5);
-        DEFINE_FLAG(IMPORT_NAMESPACE, 6);
-        DEFINE_FLAG(THROWAWAY_IF_IN_SCOPE, 7);
-        DEFINE_FINAL_FLAG(ALLOW_NEW_VARIABLES, 8, ExpressionFlags);
+        DEFINE_FLAG(ALLOW_NEW_VARIABLES, 5);
+        DEFINE_FLAG(DELETE_IDENTIFIER, 6);
+        DEFINE_FLAG(IMPORT_NAMESPACE, 7);
+        DEFINE_FLAG(THROWAWAY_IF_IN_SCOPE, 8);
+        DEFINE_FINAL_FLAG(SET_READ_ONLY, 9, ExpressionFlags);
         
     public:
         Parser();
@@ -101,7 +104,7 @@ namespace de
                 
         ExpressionStatement* parseImportStatement();
                 
-        ExpressionStatement* parseRecordStatement();
+        ExpressionStatement* parseDeclarationStatement();
                 
         ExpressionStatement* parseDeleteStatement();
 

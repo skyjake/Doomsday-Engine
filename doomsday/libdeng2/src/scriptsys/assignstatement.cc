@@ -91,6 +91,14 @@ void AssignStatement::execute(Context& context) const
         // Extract the value from the results array (no copies).
         ref->assign(value.release());
     }
+    
+    // Should be set the variable to read-only mode?
+    const NameExpression* name = static_cast<const NameExpression*>(&args_.back());
+    if(name->flags()[NameExpression::READ_ONLY_BIT])
+    {
+        assert(ref->variable() != NULL);
+        ref->variable()->mode.set(Variable::READ_ONLY_BIT);
+    }
 
     context.proceed();
 }

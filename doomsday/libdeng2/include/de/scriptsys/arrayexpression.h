@@ -63,6 +63,10 @@ namespace de
          */
         const Expression& at(dint pos) const;
 
+        const Expression& front() const { return at(0); }
+        
+        const Expression& back() const { return at(size() - 1); }
+
         /**
          * Collects the result values of the arguments and puts them 
          * into an array.

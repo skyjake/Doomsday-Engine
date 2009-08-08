@@ -38,7 +38,7 @@ namespace de
     class ArrayValue;
 
     /**
-     * Set of statements ready for execution. The argument list defines what kind of
+     * Callable set of statements ready for execution. The argument list defines what kind of
      * arguments can be passed to the function and what are the default values for
      * the arguments. Functions are reference-counted so that they exist as long as
      * other objects need them (FunctionStatement, FunctionValue).

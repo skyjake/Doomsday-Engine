@@ -27,9 +27,8 @@ namespace de
     class Expression;
     
     /**
-     * ExpressionStatement is a Statement that evaluates an expression but
-     * does not store the result anywhere. An example of this would be a 
-     * statement that just does a single method call.
+     * Evaluates an expression but does not store the result anywhere. An example of 
+     * this would be a statement that just does a single method call.
      *
      * @ingroup script
      */

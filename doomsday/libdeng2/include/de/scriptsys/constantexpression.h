@@ -26,8 +26,8 @@
 namespace de
 {
     /**
-     * ConstantExpression is an expression that always evaluates to a constant
-     * value. It is used for storing the constant values in scripts. 
+     * An expression that always evaluates to a constant value. It is used for
+     * storing constants in scripts. 
      *
      * @ingroup script
      */

@@ -33,7 +33,7 @@ namespace de
     class Expression;
     
     /**
-     * FunctionStatement creates a new function when it is executed.
+     * Creates a new function.
      *
      * @ingroup script
      */

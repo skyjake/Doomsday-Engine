@@ -37,9 +37,10 @@ namespace de
     
     /**
      * Contains statements and expressions which are ready to be executed.
-     * A Script instance is built from a the source code text, which is parsed and
-     * converted to statements and expressions. Process objects are used to 
-     * execute scripts.
+     * A Script instance is built from source code text, which is parsed and
+     * converted to statements and expressions. 
+     *
+     * @see Process (used to execute scripts)
      *
      * @ingroup script
      */

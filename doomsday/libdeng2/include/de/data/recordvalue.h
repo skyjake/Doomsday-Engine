@@ -50,7 +50,8 @@ namespace de
         /**
          * Constructs a new reference to a record.
          *
-         * @param record  Record.
+         * @param record     Record.
+         * @param ownership  OWNS_RECORD, if the value is given ownership of @a record.
          */
         RecordValue(Record* record, const Ownership& ownership = 0);
         

@@ -73,7 +73,10 @@ namespace de
         DEFINE_FLAG(THROWAWAY_IF_IN_SCOPE, 7);
 
         /// Identifier must not already exist in scope.
-        DEFINE_FINAL_FLAG(NOT_IN_SCOPE, 8, Flags);
+        DEFINE_FLAG(NOT_IN_SCOPE, 8);
+
+        /// Variable will be set to read-only mode.
+        DEFINE_FINAL_FLAG(READ_ONLY, 9, Flags);
 
     public:
         NameExpression();
@@ -82,6 +85,8 @@ namespace de
 
         /// Returns the identifier in the name expression.
         const String& identifier() const { return identifier_; }
+
+        const Flags& flags() const { return flags_; }
 
         Value* evaluate(Evaluator& evaluator) const;
 

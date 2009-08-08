@@ -329,6 +329,7 @@ bool ScriptLex::isKeyword(const TokenBuffer::Token& token)
         "and",
         "break",
         "catch",
+        "const",
         "continue",
         "def",
         "del",

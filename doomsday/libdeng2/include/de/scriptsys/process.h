@@ -34,7 +34,7 @@ namespace de
     class ArrayValue;
     
     /**
-     * Runs a script. The process maintains the execution environment, including things
+     * Executes a script. The process maintains the execution environment, including things
      * like local variables and keeping track of which statement is being executed.
      * 
      * @ingroup script

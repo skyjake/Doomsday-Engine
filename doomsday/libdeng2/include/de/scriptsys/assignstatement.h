@@ -54,7 +54,7 @@ namespace de
          *                the assignment. 
          * @param value   Expression that determines the value of the variable.
          */
-        AssignStatement(Expression* target, const Indices& index, Expression* value);
+        AssignStatement(Expression* target, const Indices& indices, Expression* value);
         
         ~AssignStatement();
         
