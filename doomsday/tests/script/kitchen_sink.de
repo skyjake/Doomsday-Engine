@@ -497,7 +497,7 @@ end
 print myrec.func5("The record is\n", Text(myrec))
 
 sections.subsection('Defining a function within a function.')
-def func6():
+def func6()
     print 'Inside func6.'
     print 'func2() =', func2()
     def func2(): return 'Shadows the global level.'
@@ -507,7 +507,7 @@ func6()
 print 'func2() =', func2()
 
 sections.subsection("Accessing function's locals within a subfunction.")
-def func7():
+def func7()
     a = 100
     print 'Inside func7: a =', a
     def func()
