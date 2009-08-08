@@ -51,7 +51,8 @@ void Config::read()
         File& file = App::fileRoot().locate<File>(writtenConfigPath_);
         Reader(file) >> names();
         
-        // Check the version.
+        // If the saved config is from a different version, rerun the script.
+        // Otherwise, we're done.
         if(!names()["__version__"].value().compare(*version))
         {
             // Versions match.
@@ -61,10 +62,7 @@ void Config::read()
     }
     catch(const Folder::NotFoundError&)
     {}
-    
-    // If the saved config is from a different version, rerun the script.
-    // Otherwise, we're done.
-        
+            
     // The version of libdeng2 is automatically included.
     config_.globals().add(new Variable("__version__", version.release(), 
         Variable::ARRAY | Variable::READ_ONLY));

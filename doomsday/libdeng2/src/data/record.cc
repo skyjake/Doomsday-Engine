@@ -99,7 +99,7 @@ Variable& Record::add(Variable* variable)
         /// @throw UnnamedError All variables in a record must have a name.
         throw UnnamedError("Record::add", "All variables in a record must have a name");
     }
-    if(has(variable->name()))
+    if(hasMember(variable->name()))
     {
         // Delete the previous variable with this name.
         delete members_[variable->name()];
