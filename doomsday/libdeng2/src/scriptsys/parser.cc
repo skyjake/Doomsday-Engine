@@ -103,6 +103,8 @@ void Parser::parseCompound(Compound& compound)
 
 void Parser::parseStatement(Compound& compound)
 {
+    assert(!statementRange_.empty());
+    
     const TokenBuffer::Token& firstToken = statementRange_.firstToken();
 
     // Statements with a compound: if, for, while, def.
@@ -228,6 +230,7 @@ IfStatement* Parser::parseIfStatement()
         }
         nextStatement();
     }
+
     return statement.release(); 
 }
 

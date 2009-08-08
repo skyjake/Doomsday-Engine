@@ -190,11 +190,10 @@ void Process::execute(const Time::Delta& timeBox)
 
 bool Process::jumpIntoCatch(const Error& err)
 {
-    // The catch statement must be at the relative zero catch level.
     dint level = 0;
 
     // Proceed along default flow.
-    for(context().proceed(); context().current() && level >= 0; context().proceed())
+    for(context().proceed(); context().current(); context().proceed())
     {
         const Statement* statement = context().current();
         const TryStatement* tryStatement = dynamic_cast<const TryStatement*>(statement);
@@ -216,7 +215,7 @@ bool Process::jumpIntoCatch(const Error& err)
                     return true;
                 }
             }
-            if(catchStatement->isFinal())
+            if(catchStatement->isFinal() && level > 0)
             {
                 // A sequence of catch statements has ended.
                 --level;

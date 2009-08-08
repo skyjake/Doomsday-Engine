@@ -142,6 +142,16 @@ print 'Statement 1.'; print 'Statement 2.'
 
 sections.subsection('if/elsif/else statements.')
 if True
+end
+if True
+    if True
+        if True
+            if True
+            end
+        end
+    end
+end
+if True
     print 'Regular compound.'
 else
     print "You won't see this."
@@ -290,6 +300,31 @@ catch Error, er
 end
 try: throw "OMG!"
 catch Error, er: print 'caught:', er
+
+sections.subsection('Nesting try/catch statements.')
+try
+    try
+        try
+            throw 'Deep.'
+        catch BogusError
+        end
+    catch BogusError
+    end
+catch Error, er: print 'Got it:', er
+try
+    try
+        try
+            throw 'Deep 2.'
+        catch BogusError
+        end
+    catch BogusError: pass
+    try
+    catch Error, er
+        print 'Should *not* be caught here.'
+    end
+catch Error, er
+    print 'Should be caught here:', er
+end
 
 sections.subsection('Throwing exception in a function.')
 def erroneous()

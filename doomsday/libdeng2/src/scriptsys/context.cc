@@ -61,6 +61,13 @@ void Context::start(const Statement* statement, const Statement* fallback,
     const Statement* jumpContinue, const Statement* jumpBreak)
 {
     controlFlow_.push_back(ControlFlow(statement, fallback, jumpContinue, jumpBreak));
+
+    // When the current statement is NULL it means that the sequence of statements
+    // has ended, so we shouldn't do that until there really is no more statements.
+    if(!current())
+    {
+        proceed();
+    }
 }
 
 void Context::reset()
@@ -84,18 +91,18 @@ bool Context::execute()
 
 void Context::proceed()
 {
+    const Statement* st = NULL;
     if(current())
     {
-        const Statement* st = current()->next();
-        
-        // Should we fall back to a point that was specified earlier?
-        while(!st && controlFlow_.size())
-        {
-            st = controlFlow_.back().flow;
-            popFlow();
-        }
-        setCurrent(st);
+        st = current()->next();
     }
+    // Should we fall back to a point that was specified earlier?
+    while(!st && controlFlow_.size())
+    {
+        st = controlFlow_.back().flow;
+        popFlow();
+    }
+    setCurrent(st);
 }
 
 void Context::jumpContinue()
