@@ -99,11 +99,11 @@ static mobj_t* getTeleportDestination(short tag)
         params.foundMobj = NULL;
 
         P_IterListResetIterator(list, true);
-        while((sec = P_IterListIterator(list)) != NULL)
+        while((sec = (sector_t*) P_IterListIterator(list)) != NULL)
         {
             params.sec = sec;
 
-            if(!DD_IterateThinkers(P_MobjThinker, findMobj, &params))
+            if(!DD_IterateThinkers((void (*)()) P_MobjThinker, findMobj, &params))
             {   // Found one.
                 return params.foundMobj;
             }

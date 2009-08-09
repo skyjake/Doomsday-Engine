@@ -2,6 +2,7 @@
 #define DD_OBJECT_H
 
 #include "dd_share.h"
+#include <cstring>
 
 #ifndef __cplusplus
 #   error "C++ compilation required!"
@@ -78,11 +79,11 @@ public:
         tmap(0),
         tclass(0)
     {
-        memset(&thinker, 0, sizeof(thinker));
+        std::memset(&thinker, 0, sizeof(thinker));
         pos[0] = pos[1] = pos[2] = 0;
         mom[0] = mom[1] = mom[2] = 0;
         srvo[0] = srvo[1] = srvo[2] = 0;
-        memset(haloFactors, 0, sizeof(haloFactors));
+        std::memset(haloFactors, 0, sizeof(haloFactors));
     }
 };
 

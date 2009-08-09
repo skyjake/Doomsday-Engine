@@ -28,6 +28,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <de/deng.h>
+
 #include "de_base.h"
 #include "de_defs.h"
 #include "de_console.h"
@@ -420,5 +422,11 @@ boolean DD_IterateThinkers(think_t func,
                            boolean (*callback) (thinker_t*, void*),
                            void* context)
 {
+    /// @todo  mobjs are no longer in the thinkers list (they're in Map).
+    if(func == gx.MobjThinker)
+    {
+        throw de::Error("DD_IterateThinkers", "Implement iteration of map's objects");
+    }
+    
     return P_IterateThinkers(func, 0x1, callback, context);
 }

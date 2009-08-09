@@ -28,6 +28,8 @@
 #ifndef __COMMON_TERRAINTYPE_H__
 #define __COMMON_TERRAINTYPE_H__
 
+#include "doomsday.h"
+
 #define TTF_NONSOLID        0x1 /* Various implications:
                                    1) Bouncing mobjs destroyed on contact.
                                    2) Able mobjs can dive/surface. */

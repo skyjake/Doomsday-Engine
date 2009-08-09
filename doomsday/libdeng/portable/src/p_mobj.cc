@@ -31,6 +31,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <de/deng.h>
 #include <math.h>
 
 #include "de_base.h"
@@ -126,9 +127,12 @@ mobj_t* P_MobjCreate(think_t function, float x, float y, float z,
     mo->height = height;
     mo->ddFlags = ddflags;
     mo->thinker.function = function;
+    
+    throw de::Error("P_MobjCreate", "Object must be added to the map");
+    /*
     if(mo->thinker.function)
         P_ThinkerAdd(&mo->thinker, true); // Make it public.
-
+    */
     return mo;
 }
 

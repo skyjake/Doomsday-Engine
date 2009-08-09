@@ -104,6 +104,7 @@ static int SV_ReadLong(void)
 
 static void SV_ReadPlayer(player_t* pl)
 {
+#if 0
     int             i;
 
     SV_ReadLong();
@@ -198,10 +199,12 @@ static void SV_ReadPlayer(player_t* pl)
         psp->tics = SV_ReadLong();
     }
     pl->didSecret = SV_ReadLong();
+#endif
 }
 
 static void SV_ReadMobj(void)
 {
+#if 0
     float               pos[3], mom[3], radius, height, floorz, ceilingz;
     angle_t             angle;
     spritenum_t         sprite;
@@ -346,6 +349,7 @@ static void SV_ReadMobj(void)
         P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT);
     mo->ceilingZ =
         P_GetFloatp(mo->subsector, DMU_CEILING_HEIGHT);
+#endif
 }
 
 void P_v19_UnArchivePlayers(void)
@@ -378,6 +382,7 @@ void P_v19_UnArchivePlayers(void)
 
 void P_v19_UnArchiveWorld(void)
 {
+#if 0
     uint                i, j;
     float               matOffset[2];
     short              *get;
@@ -441,8 +446,10 @@ void P_v19_UnArchiveWorld(void)
     }
 
     savePtr = (byte *) get;
+#endif
 }
 
+#if 0
 static boolean removeThinker(thinker_t* th, void* context)
 {
     if(th->function == P_MobjThinker)
@@ -452,9 +459,11 @@ static boolean removeThinker(thinker_t* th, void* context)
 
     return true; // Continue iteration.
 }
+#endif
 
 void P_v19_UnArchiveThinkers(void)
 {
+#if 0
 enum thinkerclass_e {
     TC_END,
     TC_MOBJ
@@ -484,10 +493,12 @@ enum thinkerclass_e {
             Con_Error("Unknown tclass %i in savegame", tClass);
         }
     }
+#endif
 }
 
 static int SV_ReadCeiling(ceiling_t *ceiling)
 {
+#if 0
 /* Original DOOM format:
 typedef struct {
     thinker_t thinker; // was 12 bytes
@@ -528,11 +539,13 @@ typedef struct {
         DD_ThinkerSetStasis(&ceiling->thinker, true);
 
     P_ToXSector(ceiling->sector)->specialData = ceiling;
+#endif
     return true; // Add this thinker.
 }
 
 static int SV_ReadDoor(door_t *door)
 {
+#if 0
 /* Original DOOM format:
 typedef struct {
     thinker_t thinker; // was 12 bytes
@@ -565,11 +578,13 @@ typedef struct {
     door->thinker.function = T_Door;
 
     P_ToXSector(door->sector)->specialData = door;
+#endif
     return true; // Add this thinker.
 }
 
 static int SV_ReadFloor(floor_t *floor)
 {
+#if 0
 /* Original DOOM format:
 typedef struct {
     thinker_t thinker; // was 12 bytes
@@ -605,11 +620,13 @@ typedef struct {
     floor->thinker.function = T_MoveFloor;
 
     P_ToXSector(floor->sector)->specialData = floor;
+#endif
     return true; // Add this thinker.
 }
 
 static int SV_ReadPlat(plat_t *plat)
 {
+#if 0
 /* Original DOOM format:
 typedef struct {
     thinker_t thinker; // was 12 bytes
@@ -653,11 +670,13 @@ typedef struct {
         DD_ThinkerSetStasis(&plat->thinker, true);
 
     P_ToXSector(plat->sector)->specialData = plat;
+#endif
     return true; // Add this thinker.
 }
 
 static int SV_ReadFlash(lightflash_t *flash)
 {
+#if 0
 /* Original DOOM format:
 typedef struct {
     thinker_t thinker; // was 12 bytes
@@ -685,11 +704,13 @@ typedef struct {
     flash->minTime = SV_ReadLong();
 
     flash->thinker.function = T_LightFlash;
+#endif
     return true; // Add this thinker.
 }
 
 static int SV_ReadStrobe(strobe_t *strobe)
 {
+#if 0
 /* Original DOOM format:
 typedef struct {
     thinker_t thinker; // was 12 bytes
@@ -717,11 +738,13 @@ typedef struct {
     strobe->brightTime = SV_ReadLong();
 
     strobe->thinker.function = T_StrobeFlash;
+#endif
     return true; // Add this thinker.
 }
 
 static int SV_ReadGlow(glow_t *glow)
 {
+#if 0
 /* Original DOOM format:
 typedef struct {
     thinker_t thinker; // was 12 bytes
@@ -745,6 +768,7 @@ typedef struct {
     glow->direction = SV_ReadLong();
 
     glow->thinker.function = T_Glow;
+#endif
     return true; // Add this thinker.
 }
 
@@ -761,6 +785,7 @@ typedef struct {
  */
 void P_v19_UnArchiveSpecials(void)
 {
+#if 0
     enum {
         tc_ceiling,
         tc_door,
@@ -858,10 +883,12 @@ void P_v19_UnArchiveSpecials(void)
                       tClass);
         }
     }
+#endif
 }
 
 void SV_v19_LoadGame(const char* savename)
 {
+#if 0
     int                 i, a, b, c;
     size_t              length;
     char                vcheck[VERSIONSIZE];
@@ -921,4 +948,5 @@ void SV_v19_LoadGame(const char* savename)
 
     // Spawn particle generators.
     R_SetupMap(DDSMM_AFTER_LOADING, 0);
+#endif
 }

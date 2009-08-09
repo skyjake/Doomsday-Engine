@@ -366,17 +366,17 @@ boolean P_PolyobjMove(struct polyobj_s* po, float x, float y)
 static void rotatePoint(int an, float* x, float* y, float startSpotX,
                         float startSpotY)
 {
-    float               trx, _try, gxt, gyt;
+    float               trx, try_, gxt, gyt;
 
     trx = *x;
-    _try = *y;
+    try_ = *y;
 
     gxt = trx * FIX2FLT(fineCosine[an]);
-    gyt = _try * FIX2FLT(finesine[an]);
+    gyt = try_ * FIX2FLT(finesine[an]);
     *x = gxt - gyt + startSpotX;
 
     gxt = trx * FIX2FLT(finesine[an]);
-    gyt = _try * FIX2FLT(fineCosine[an]);
+    gyt = try_ * FIX2FLT(fineCosine[an]);
     *y = gyt + gxt + startSpotY;
 }
 

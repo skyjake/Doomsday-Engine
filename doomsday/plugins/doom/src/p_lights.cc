@@ -84,8 +84,8 @@ void P_SpawnFireFlicker(sector_t *sector)
     // Nothing special about it during gameplay.
     P_ToXSector(sector)->special = 0;
 
-    flick = Z_Calloc(sizeof(*flick), PU_MAP, 0);
-    flick->thinker.function = T_FireFlicker;
+    flick = (fireflicker_t*) Z_Calloc(sizeof(*flick), PU_MAP, 0);
+    flick->thinker.function = (void (*)()) T_FireFlicker;
     DD_ThinkerAdd(&flick->thinker);
 
     flick->sector = sector;
@@ -137,8 +137,8 @@ void P_SpawnLightFlash(sector_t *sector)
     // Nothing special about it during gameplay.
     P_ToXSector(sector)->special = 0;
 
-    flash = Z_Calloc(sizeof(*flash), PU_MAP, 0);
-    flash->thinker.function = T_LightFlash;
+    flash = (lightflash_t*) Z_Calloc(sizeof(*flash), PU_MAP, 0);
+    flash->thinker.function = (void (*)()) T_LightFlash;
     DD_ThinkerAdd(&flash->thinker);
 
     flash->sector = sector;
@@ -187,8 +187,8 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
     float               lightLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
     float               otherLevel = DDMAXFLOAT;
 
-    flash = Z_Calloc(sizeof(*flash), PU_MAP, 0);
-    flash->thinker.function = T_StrobeFlash;
+    flash = (strobe_t*) Z_Calloc(sizeof(*flash), PU_MAP, 0);
+    flash->thinker.function = (void (*)()) T_StrobeFlash;
     DD_ThinkerAdd(&flash->thinker);
 
     flash->sector = sector;
@@ -227,7 +227,7 @@ void EV_StartLightStrobing(linedef_t *line)
         return;
 
     P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    while((sec = (sector_t*) P_IterListIterator(list)) != NULL)
     {
         if(P_ToXSector(sec)->specialData)
             continue;
@@ -248,7 +248,7 @@ void EV_TurnTagLightsOff(linedef_t *line)
         return;
 
     P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    while((sec = (sector_t*) P_IterListIterator(list)) != NULL)
     {
         lightLevel = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
         otherLevel = DDMAXFLOAT;
@@ -274,7 +274,7 @@ void EV_LightTurnOn(linedef_t *line, float max)
         lightLevel = max;
 
     P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    while((sec = (sector_t*) P_IterListIterator(list)) != NULL)
     {
         // If Max = 0 means to search for the highest light level in the
         // surrounding sector.
@@ -330,8 +330,8 @@ void P_SpawnGlowingLight(sector_t *sector)
     float               otherLevel = DDMAXFLOAT;
     glow_t             *g;
 
-    g = Z_Calloc(sizeof(*g), PU_MAP, 0);
-    g->thinker.function = T_Glow;
+    g = (glow_t*) Z_Calloc(sizeof(*g), PU_MAP, 0);
+    g->thinker.function = (void (*)()) T_Glow;
     DD_ThinkerAdd(&g->thinker);
 
     g->sector = sector;

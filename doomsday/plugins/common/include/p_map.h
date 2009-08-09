@@ -50,41 +50,41 @@ extern mobj_t* blockingMobj;
 extern float tmBBox[];
 extern boolean fellDown;
 
-boolean         P_CheckSight(const mobj_t* from, const mobj_t* to);
+boolean         P_CheckSight(const mobj_s* from, const mobj_s* to);
 
-boolean         P_CheckPosition2f(mobj_t* thing, float x, float y);
-boolean         P_CheckPosition3f(mobj_t* thing, float x, float y, float z);
-boolean         P_CheckPosition3fv(mobj_t* thing, const float pos[3]);
+boolean         P_CheckPosition2f(mobj_s* thing, float x, float y);
+boolean         P_CheckPosition3f(mobj_s* thing, float x, float y, float z);
+boolean         P_CheckPosition3fv(mobj_s* thing, const float pos[3]);
 
 #if __JHEXEN__
-void P_RadiusAttack(mobj_t* spot, mobj_t* source, int damage, int distance,
+void P_RadiusAttack(mobj_s* spot, mobj_s* source, int damage, int distance,
                     boolean canDamageSource);
 #else
-void P_RadiusAttack(mobj_t* spot, mobj_t* source, int damage, int distance);
+void P_RadiusAttack(mobj_s* spot, mobj_s* source, int damage, int distance);
 #endif
 
 #if !__JHEXEN__
-boolean         P_TryMove(mobj_t* thing, float x, float y,
+boolean         P_TryMove(mobj_s* thing, float x, float y,
                           boolean dropoff, boolean slide);
 #else
-boolean         P_TryMove(mobj_t* thing, float x, float y);
+boolean         P_TryMove(mobj_s* thing, float x, float y);
 #endif
 
-boolean         P_TeleportMove(mobj_t* thing, float x, float y,
+boolean         P_TeleportMove(mobj_s* thing, float x, float y,
                                boolean alwaysStomp);
-void            P_SlideMove(mobj_t* mo);
+void            P_SlideMove(mobj_s* mo);
 
 void            P_UseLines(player_t* player);
 
 boolean         P_ChangeSector(sector_t* sector, boolean crunch);
 
-float           P_AimLineAttack(mobj_t* t1, angle_t angle, float distance);
-void            P_LineAttack(mobj_t* t1, angle_t angle, float distance,
+float           P_AimLineAttack(mobj_s* t1, angle_t angle, float distance);
+void            P_LineAttack(mobj_s* t1, angle_t angle, float distance,
                              float slope, int damage);
 
 float           P_GetGravity(void);
 
-boolean         P_CheckSides(mobj_t* actor, float x, float y);
+boolean         P_CheckSides(mobj_s* actor, float x, float y);
 
 #if __JHEXEN__
 boolean         P_TestMobjLocation(mobj_t* mobj);

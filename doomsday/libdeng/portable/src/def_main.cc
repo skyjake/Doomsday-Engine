@@ -368,7 +368,7 @@ acfnptr_t Def_GetActionPtr(const char* name)
     }
     for(; link->name; link++)
         if(!strcmp(name, link->name))
-            return link->func;
+            return (acfnptr_t) link->func;
 
     // The engine provides a couple of simple action functions.
     /*if(!strcmp(name, "A_ExecuteCommand"))

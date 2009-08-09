@@ -859,7 +859,7 @@ void C_DECL A_Raise(player_t *player, pspdef_t *psp)
  * Sets a slope so a near miss is at aproximately the height of the
  * intended target.
  */
-void P_BulletSlope(mobj_t *mo)
+void P_BulletSlope(mobj_s *mo)
 {
     angle_t             an = mo->angle;
 

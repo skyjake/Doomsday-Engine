@@ -18,7 +18,7 @@ ADD_DEFINITIONS ( -D__JDOOM__ )
 
 INCLUDE_DIRECTORIES ( include ${CMAKE_SOURCE_DIR}/libcommon/include )
 
-FILE ( GLOB SOURCES src/*.c include/*.h )
+FILE ( GLOB SOURCES src/*.cc include/*.h )
 
 ADD_LIBRARY ( dengplugin_doom SHARED ${SOURCES} ${COMMON_GAME_SOURCES} )
 

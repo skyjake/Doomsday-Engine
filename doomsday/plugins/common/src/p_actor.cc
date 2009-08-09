@@ -214,7 +214,7 @@ void P_MobjClearSRVO(mobj_t* mo)
     memset(mo->srvo, 0, sizeof(mo->srvo));
 }
 
-boolean P_MobjIsCamera(const mobj_t* mo)
+boolean P_MobjIsCamera(const mobj_s* mo)
 {
     // Client mobjs do not have thinkers and thus cannot be cameras.
     return (mo && mo->thinker.function && mo->player &&
@@ -249,7 +249,7 @@ void P_UpdateHealthBits(mobj_t* mobj)
  *
  * @return              Statenum of the associated state ELSE @c, S_NULL.
  */
-statenum_t P_GetState(mobjtype_t type, statename_t name)
+statenum_t P_GetState(int type, statename_t name)
 {
     if(type < 0 || type >= Get(DD_NUMMOBJTYPES))
         return S_NULL;

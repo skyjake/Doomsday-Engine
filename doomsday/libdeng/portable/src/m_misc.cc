@@ -718,13 +718,13 @@ void M_ProjectViewRelativeLine2D(const float center[2],
     }
     else
     {
-        float       trx, _try, thangle;
+        float       trx, try_, thangle;
 
         // Transform the origin point.
         trx = center[VX] - viewX;
-        _try = center[VY] - viewY;
+        try_ = center[VY] - viewY;
 
-        thangle = BANG2RAD(bamsAtan2(_try * 10, trx * 10)) - PI / 2;
+        thangle = BANG2RAD(bamsAtan2(try_ * 10, trx * 10)) - PI / 2;
         sinrv = sin(thangle);
         cosrv = cos(thangle);
     }

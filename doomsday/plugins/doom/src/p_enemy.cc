@@ -104,7 +104,7 @@ static const float dirSpeed[8][2] =
 void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
 {
     VALIDCOUNT++;
-    P_RecursiveSound(target, P_GetPtrp(emitter->subsector, DMU_SECTOR), 0);
+    P_RecursiveSound(target, (sector_t*) P_GetPtrp(emitter->subsector, DMU_SECTOR), 0);
 }
 
 static boolean checkMeleeRange(mobj_t *actor)
@@ -115,7 +115,7 @@ static boolean checkMeleeRange(mobj_t *actor)
     if(!actor->target)
         return false;
 
-    pl = actor->target;
+    pl = (mobj_t*) actor->target;
     dist = P_ApproxDistance(pl->pos[VX] - actor->pos[VX],
                             pl->pos[VY] - actor->pos[VY]);
     if(!cfg.netNoMaxZMonsterMeleeAttack)
@@ -156,7 +156,7 @@ static boolean checkMissileRange(mobj_t *actor)
         P_ApproxDistance(actor->pos[VX] - actor->target->pos[VX],
                          actor->pos[VY] - actor->target->pos[VY]) - 64;
 
-    if(P_GetState(actor->type, SN_MELEE) == S_NULL)
+    if(P_GetState(mobjtype_t(actor->type), SN_MELEE) == S_NULL)
         dist -= 128; // No melee attack, so fire more.
 
     if(actor->type == MT_VILE)
@@ -233,7 +233,7 @@ static boolean moveMobj(mobj_t *actor, boolean dropoff)
 
         actor->moveDir = DI_NODIR;
         good = false;
-        while((ld = P_PopIterList(spechit)) != NULL)
+        while((ld = (linedef_t*) P_PopIterList(spechit)) != NULL)
         {
             /**
              * If the special is not a door that can be opened, return false.
@@ -301,9 +301,9 @@ static boolean tryMoveMobj(mobj_t *actor)
 
 static void doNewChaseDir(mobj_t *actor, float deltaX, float deltaY)
 {
-    dirtype_t           xdir, ydir, tdir;
-    dirtype_t           olddir = actor->moveDir;
-    dirtype_t           turnaround = olddir;
+    int           xdir, ydir, tdir;
+    int           olddir = actor->moveDir;
+    int           turnaround = olddir;
 
     if(turnaround != DI_NODIR) // Find reverse direction.
         turnaround ^= 4;
@@ -322,7 +322,7 @@ static void doNewChaseDir(mobj_t *actor, float deltaX, float deltaY)
     // Try other directions.
     if(P_Random() > 200 || fabs(deltaY) > fabs(deltaX))
     {
-        dirtype_t temp = xdir;
+        int temp = xdir;
 
         xdir = ydir;
         ydir = temp;
@@ -370,8 +370,8 @@ static void doNewChaseDir(mobj_t *actor, float deltaX, float deltaY)
  */
 static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
 {
-    sector_t*           backsector = P_GetPtrp(line, DMU_BACK_SECTOR);
-    float*              bbox = P_GetPtrp(line, DMU_BOUNDING_BOX);
+    sector_t*           backsector = (sector_t*) P_GetPtrp(line, DMU_BACK_SECTOR);
+    float*              bbox = (float*) P_GetPtrp(line, DMU_BOUNDING_BOX);
 
     if(backsector &&
        tmBBox[BOXRIGHT]  > bbox[BOXLEFT] &&
@@ -380,7 +380,7 @@ static boolean PIT_AvoidDropoff(linedef_t* line, void* data)
        tmBBox[BOXBOTTOM] < bbox[BOXTOP]    &&
        P_BoxOnLineSide(tmBBox, line) == -1)
     {
-        sector_t*           frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+        sector_t*           frontsector = (sector_t*) P_GetPtrp(line, DMU_FRONT_SECTOR);
         float               front = P_GetFloatp(frontsector, DMU_FLOOR_HEIGHT);
         float               back = P_GetFloatp(backsector, DMU_FLOOR_HEIGHT);
         float               d1[2];
@@ -431,7 +431,7 @@ static boolean avoidDropoff(mobj_t *actor)
 
 static void newChaseDir(mobj_t *actor)
 {
-    mobj_t             *target = actor->target;
+    mobj_t             *target = (mobj_t*) actor->target;
     float               deltaX = target->pos[VX] - actor->pos[VX];
     float               deltaY = target->pos[VY] - actor->pos[VY];
 
@@ -549,7 +549,7 @@ int P_Massacre(void)
     // Only massacre when actually in a map.
     if(G_GetGameState() == GS_MAP)
     {
-        DD_IterateThinkers(P_MobjThinker, massacreMobj, &count);
+        DD_IterateThinkers((void (*)()) P_MobjThinker, massacreMobj, &count);
     }
 
     return count;
@@ -567,7 +567,7 @@ static boolean findBrainTarget(thinker_t* th, void* context)
             if(numBrainTargets == numBrainTargetsAlloc)
             {
                 numBrainTargetsAlloc *= 2;
-                brainTargets =
+                brainTargets = (mobj_t**)
                     Z_Realloc(brainTargets,
                               numBrainTargetsAlloc * sizeof(*brainTargets),
                               PU_MAP);
@@ -575,7 +575,7 @@ static boolean findBrainTarget(thinker_t* th, void* context)
             else
             {
                 numBrainTargetsAlloc = 32;
-                brainTargets =
+                brainTargets = (mobj_t**)
                     Z_Malloc(numBrainTargetsAlloc * sizeof(*brainTargets),
                              PU_MAP, NULL);
             }
@@ -596,7 +596,7 @@ static boolean findBrainTarget(thinker_t* th, void* context)
 void P_SpawnBrainTargets(void)
 {
     // Find all the target spots.
-    DD_IterateThinkers(P_MobjThinker, findBrainTarget, NULL);
+    DD_IterateThinkers((void (*)()) P_MobjThinker, findBrainTarget, NULL);
 }
 
 typedef struct {
@@ -625,9 +625,9 @@ void C_DECL A_KeenDie(mobj_t* mo)
     A_Fall(mo);
 
     // Check if there are no more Keens left in the map.
-    params.type = mo->type;
+    params.type = mobjtype_t(mo->type);
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers((void (*)()) P_MobjThinker, countMobjOfType, &params);
 
     if(!params.count)
     {   // No Keens left alive.
@@ -647,13 +647,13 @@ void C_DECL A_Look(mobj_t* actor)
     sector_t*           sec = NULL;
     mobj_t*             targ;
 
-    sec = P_GetPtrp(actor->subsector, DMU_SECTOR);
+    sec = (sector_t*) P_GetPtrp(actor->subsector, DMU_SECTOR);
 
     if(!sec)
         return;
 
     actor->threshold = 0; // Any shot will wake us up.
-    targ = P_ToXSector(sec)->soundTarget;
+    targ = (mobj_t*) P_ToXSector(sec)->soundTarget;
 
     if(targ && (targ->flags & MF_SHOOTABLE))
     {
@@ -705,7 +705,7 @@ void C_DECL A_Look(mobj_t* actor)
         }
     }
 
-    P_MobjChangeState(actor, P_GetState(actor->type, SN_SEE));
+    P_MobjChangeState(actor, P_GetState(mobjtype_t(actor->type), SN_SEE));
 }
 
 /**
@@ -722,7 +722,7 @@ void C_DECL A_Chase(mobj_t* actor)
     // Modify target threshold.
     if(actor->threshold)
     {
-        if(!actor->target || actor->target->health <= 0)
+        if(!actor->target || ((mobj_t*)actor->target)->health <= 0)
         {
             actor->threshold = 0;
         }
@@ -742,7 +742,7 @@ void C_DECL A_Chase(mobj_t* actor)
             actor->angle += ANG90 / 2;
     }
 
-    if(!actor->target || !(actor->target->flags & MF_SHOOTABLE) ||
+    if(!actor->target || !(((mobj_t*)actor->target)->flags & MF_SHOOTABLE) ||
        P_MobjIsCamera(actor->target))
     {
         // Look for a new target.
@@ -751,7 +751,7 @@ void C_DECL A_Chase(mobj_t* actor)
         }
         else
         {
-            P_MobjChangeState(actor, P_GetState(actor->type, SN_SPAWN));
+            P_MobjChangeState(actor, P_GetState(mobjtype_t(actor->type), SN_SPAWN));
         }
 
         return;
@@ -768,7 +768,7 @@ void C_DECL A_Chase(mobj_t* actor)
     }
 
     // Check for melee attack.
-    if((state = P_GetState(actor->type, SN_MELEE)) != S_NULL &&
+    if((state = P_GetState(mobjtype_t(actor->type), SN_MELEE)) != S_NULL &&
        checkMeleeRange(actor))
     {
         if(actor->info->attackSound)
@@ -779,7 +779,7 @@ void C_DECL A_Chase(mobj_t* actor)
     }
 
     // Check for missile attack.
-    if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
+    if((state = P_GetState(mobjtype_t(actor->type), SN_MISSILE)) != S_NULL)
     {
         if(!(gameSkill < SM_NIGHTMARE && !fastParm && actor->moveCount))
         {
@@ -824,7 +824,7 @@ void C_DECL A_FaceTarget(mobj_t *actor)
         R_PointToAngle2(actor->pos[VX], actor->pos[VY],
                         actor->target->pos[VX], actor->target->pos[VY]);
 
-    if(actor->target->flags & MF_SHADOW)
+    if(((mobj_t*)actor->target)->flags & MF_SHADOW)
         actor->angle += (P_Random() - P_Random()) << 21;
 }
 
@@ -896,10 +896,10 @@ void C_DECL A_CPosRefire(mobj_t* actor)
     if(P_Random() < 40)
         return;
 
-    if(!actor->target || actor->target->health <= 0 ||
+    if(!actor->target || ((mobj_t*)actor->target)->health <= 0 ||
        !P_CheckSight(actor, actor->target))
     {
-        P_MobjChangeState(actor, P_GetState(actor->type, SN_SEE));
+        P_MobjChangeState(actor, P_GetState(mobjtype_t(actor->type), SN_SEE));
     }
 }
 
@@ -911,10 +911,10 @@ void C_DECL A_SpidRefire(mobj_t* actor)
     if(P_Random() < 10)
         return;
 
-    if(!actor->target || actor->target->health <= 0 ||
+    if(!actor->target || ((mobj_t*)actor->target)->health <= 0 ||
        !P_CheckSight(actor, actor->target))
     {
-        P_MobjChangeState(actor, P_GetState(actor->type, SN_SEE));
+        P_MobjChangeState(actor, P_GetState(mobjtype_t(actor->type), SN_SEE));
     }
 }
 
@@ -1037,8 +1037,8 @@ void C_DECL A_Tracer(mobj_t *actor)
     angle_t             angle;
     float               dist;
     float               slope;
-    mobj_t             *dest;
-    mobj_t             *th;
+    mobj_s             *dest;
+    mobj_s             *th;
 
     if((int) GAMETIC & 3)
         return;
@@ -1061,7 +1061,7 @@ void C_DECL A_Tracer(mobj_t *actor)
     // Adjust direction.
     dest = actor->tracer;
 
-    if(!dest || dest->health <= 0)
+    if(!dest || ((mobj_t*)dest)->health <= 0)
         return;
 
     // Change angle.
@@ -1131,27 +1131,27 @@ void C_DECL A_SkelFist(mobj_t *actor)
 /**
  * Detect a corpse that could be raised.
  */
-boolean PIT_VileCheck(mobj_t *thing, void *data)
+boolean PIT_VileCheck(mobj_s *thing, void *data)
 {
     float               maxdist;
     boolean             check;
 
-    if(!(thing->flags & MF_CORPSE))
+    if(!(((mobj_t*)thing)->flags & MF_CORPSE))
         return true; // Not a monster.
 
     if(thing->tics != -1)
         return true; // Not lying still yet.
 
-    if(P_GetState(thing->type, SN_RAISE) == S_NULL)
+    if(P_GetState(mobjtype_t(thing->type), SN_RAISE) == S_NULL)
         return true; // Monster doesn't have a raise state.
 
-    maxdist = thing->info->radius + MOBJINFO[MT_VILE].radius;
+    maxdist = ((mobj_t*)thing)->info->radius + MOBJINFO[MT_VILE].radius;
 
     if(fabs(thing->pos[VX] - vileTry[VX]) > maxdist ||
        fabs(thing->pos[VY] - vileTry[VY]) > maxdist)
         return true; // Not actually touching.
 
-    corpseHit = thing;
+    corpseHit = (mobj_t*) thing;
     corpseHit->mom[MX] = corpseHit->mom[MY] = 0;
 
     // DJS - Used the PRBoom method to fix archvile raising ghosts
@@ -1216,7 +1216,7 @@ void C_DECL A_VileChase(mobj_t *actor)
         if(!P_MobjsBoxIterator(box, PIT_VileCheck, 0))
         {
             // Got one!
-            temp = actor->target;
+            temp = (mobj_t*) actor->target;
             actor->target = corpseHit;
             A_FaceTarget(actor);
             actor->target = temp;
@@ -1225,7 +1225,7 @@ void C_DECL A_VileChase(mobj_t *actor)
             S_StartSound(SFX_SLOP, corpseHit);
             info = corpseHit->info;
 
-            P_MobjChangeState(corpseHit, P_GetState(corpseHit->type, SN_RAISE));
+            P_MobjChangeState(corpseHit, P_GetState(mobjtype_t(corpseHit->type), SN_RAISE));
 
             if(cfg.raiseGhosts)
             {
@@ -1271,7 +1271,7 @@ void C_DECL A_FireCrackle(mobj_t *actor)
  */
 void C_DECL A_Fire(mobj_t *actor)
 {
-    mobj_t             *dest;
+    mobj_s             *dest;
     uint                an;
 
     dest = actor->tracer;
@@ -1314,7 +1314,7 @@ void C_DECL A_VileTarget(mobj_t *actor)
 
 void C_DECL A_VileAttack(mobj_t* actor)
 {
-    mobj_t*             fire;
+    mobj_s*             fire;
     uint                an;
 
     if(!actor->target)
@@ -1328,7 +1328,7 @@ void C_DECL A_VileAttack(mobj_t* actor)
     S_StartSound(SFX_BAREXP, actor);
     P_DamageMobj(actor->target, actor, actor, 20, false);
     actor->target->mom[MZ] =
-        FIX2FLT(1000 * FRACUNIT / actor->target->info->mass);
+        FIX2FLT(1000 * FRACUNIT / ((mobj_t*)actor->target)->info->mass);
 
     an = actor->angle >> ANGLETOFINESHIFT;
     fire = actor->tracer;
@@ -1422,7 +1422,7 @@ void C_DECL A_FatAttack3(mobj_t *actor)
  */
 void C_DECL A_SkullAttack(mobj_t *actor)
 {
-    mobj_t             *dest;
+    mobj_s             *dest;
     uint                an;
     float               dist;
 
@@ -1467,7 +1467,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
         // Count total number currently on the map.
         params.type = MT_SKULL;
         params.count = 0;
-        DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+        DD_IterateThinkers((void (*)()) P_MobjThinker, countMobjOfType, &params);
 
         if(params.count > 20)
             return; // Too many, don't spit another.
@@ -1496,7 +1496,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
             return;
 
         newmobj = P_SpawnMobj3fv(MT_SKULL, pos, angle, 0);
-        sec = P_GetPtrp(newmobj->subsector, DMU_SECTOR);
+        sec = (sector_t*) P_GetPtrp(newmobj->subsector, DMU_SECTOR);
 
         // Check to see if the new Lost Soul's z value is above the
         // ceiling of its new sector, or below the floor. If so, kill it.
@@ -1702,9 +1702,9 @@ void C_DECL A_BossDeath(mobj_t* mo)
         return; // No one left alive, so do not end game.
 
     // Scan the remaining thinkers to see if all bosses are dead.
-    params.type = mo->type;
+    params.type = mobjtype_t(mo->type);
     params.count = 0;
-    DD_IterateThinkers(P_MobjThinker, countMobjOfType, &params);
+    DD_IterateThinkers((void (*)()) P_MobjThinker, countMobjOfType, &params);
 
     if(params.count)
     {   // Other boss not dead.
@@ -1907,9 +1907,9 @@ void C_DECL A_SpawnSound(mobj_t *mo)
 void C_DECL A_SpawnFly(mobj_t *mo)
 {
     int                 r;
-    mobj_t             *newmobj;
-    mobj_t             *fog;
-    mobj_t             *targ;
+    mobj_s             *newmobj;
+    mobj_s             *fog;
+    mobj_s             *targ;
     mobjtype_t          type;
 
     if(--mo->reactionTime)
@@ -1950,8 +1950,8 @@ void C_DECL A_SpawnFly(mobj_t *mo)
 
     newmobj = P_SpawnMobj3fv(type, targ->pos, P_Random() << 24, 0);
 
-    if(lookForPlayers(newmobj, true))
-        P_MobjChangeState(newmobj, P_GetState(newmobj->type, SN_SEE));
+    if(lookForPlayers((mobj_t*)newmobj, true))
+        P_MobjChangeState((mobj_t*)newmobj, P_GetState(mobjtype_t(newmobj->type), SN_SEE));
 
     // Telefrag anything in this spot.
     P_TeleportMove(newmobj, newmobj->pos[VX], newmobj->pos[VY], false);

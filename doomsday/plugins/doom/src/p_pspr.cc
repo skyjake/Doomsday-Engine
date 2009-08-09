@@ -39,6 +39,7 @@
 #include <math.h>
 
 #include "jdoom.h"
+#include "acfnlink.h"
 
 #include "d_net.h"
 #include "p_player.h"
@@ -86,7 +87,7 @@ void R_GetWeaponBob(int player, float* x, float* y)
     }
 }
 
-void P_SetPsprite(player_t* player, int position, statenum_t stnum)
+void P_SetPsprite(player_t* player, int position, int stnum)
 {
     pspdef_t           *psp;
     state_t            *state;
@@ -114,12 +115,12 @@ void P_SetPsprite(player_t* player, int position, statenum_t stnum)
         // Call the state action routine (modified handling).
         if(state->action)
         {
-            state->action(player, psp);
+            ((void (*)(player_t*, pspdef_t*)) state->action)(player, psp);
             if(!psp->state)
                 break;
         }
 
-        stnum = psp->state->nextState;
+        stnum = statenum_t(psp->state->nextState);
 
     } while(!psp->tics);
     // An initial state of 0 could cycle through.
@@ -167,7 +168,7 @@ void P_BringUpWeapon(player_t *player)
     Con_Message("P_BringUpWeapon: player %i, weapon pspr to %i\n",
                 player - players, wminfo->states[WSN_UP]);
 #endif
-    P_SetPsprite(player, ps_weapon, wminfo->states[WSN_UP]);
+    P_SetPsprite(player, ps_weapon, statenum_t(wminfo->states[WSN_UP]));
 }
 
 void P_FireWeapon(player_t *player)
@@ -183,7 +184,7 @@ void P_FireWeapon(player_t *player)
     player->plr->pSprites[0].state = DDPSP_FIRE;
 
     P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->attackState);
-    newstate = weaponInfo[player->readyWeapon][player->class_].mode[0].states[WSN_ATTACK];
+    newstate = (statenum_t) weaponInfo[player->readyWeapon][player->class_].mode[0].states[WSN_ATTACK];
     P_SetPsprite(player, ps_weapon, newstate);
     NetSv_PSpriteChange(player - players, newstate);
     P_NoiseAlert(player->plr->mo, player->plr->mo);
@@ -201,7 +202,7 @@ void P_DropWeapon(player_t *player)
  * The player can fire the weapon or change to another weapon at this time.
  * Follows after getting weapon up, or after previous attack/fire sequence.
  */
-void C_DECL A_WeaponReady(player_t *player, pspdef_t *psp)
+void C_DECL A_WeaponReady(player_t *player, pspdef_t* psp)
 {
     weaponmodeinfo_t *wminfo;
 
@@ -335,7 +336,7 @@ void C_DECL A_Lower(player_t *player, pspdef_t *psp)
 
 void C_DECL A_Raise(player_t *player, pspdef_t *psp)
 {
-    statenum_t          newstate;
+    int          newstate;
 
     // Psprite state.
     player->plr->pSprites[0].state = DDPSP_UP;
@@ -449,7 +450,7 @@ void C_DECL A_Saw(player_t *player, pspdef_t *psp)
         else
             player->plr->mo->angle += ANG90 / 20;
     }
-    player->plr->mo->flags |= MF_JUSTATTACKED;
+    ((mobj_t*)player->plr->mo)->flags |= MF_JUSTATTACKED;
 }
 
 void C_DECL A_FireMissile(player_t *player, pspdef_t *psp)
@@ -491,7 +492,7 @@ void C_DECL A_FirePlasma(player_t *player, pspdef_t *psp)
  * Sets a slope so a near miss is at aproximately the height of the
  * intended target.
  */
-void P_BulletSlope(mobj_t *mo)
+void P_BulletSlope(mobj_s *mo)
 {
     angle_t             angle;
 
@@ -521,7 +522,7 @@ void P_BulletSlope(mobj_t *mo)
     }
 }
 
-void P_GunShot(mobj_t *mo, boolean accurate)
+void P_GunShot(mobj_s *mo, boolean accurate)
 {
     angle_t             angle;
     int                 damage;

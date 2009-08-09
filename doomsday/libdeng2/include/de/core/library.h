@@ -35,6 +35,7 @@ namespace de
 {
     class Audio;
     class Map;
+    class Object;
     class User;
     class Video;
     class World;
@@ -111,6 +112,11 @@ namespace de
          * @param name  Name of the map.
          */
         typedef Map* (*deng_NewMap)(const char* name);
+        
+        /**
+         * Constructs a new object.
+         */
+        typedef Object* (*deng_NewObject)(void);
         
         /**
          * Constructs a new user.

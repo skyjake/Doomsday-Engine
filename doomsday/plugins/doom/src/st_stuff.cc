@@ -748,7 +748,7 @@ void ST_updateWidgets(int player)
     static int          largeAmmo = 1994; // Means "n/a".
 
     int                 i;
-    ammotype_t          ammoType;
+    int                 ammoType;
     boolean             found;
     hudstate_t*         hud = &hudStates[player];
     player_t*           plr = &players[player];
@@ -1080,7 +1080,7 @@ void ST_doFullscreenStuff(int player)
 
     if(cfg.hudShown[HUD_AMMO])
     {
-        ammotype_t          ammoType;
+        int                 ammoType;
         float               scale;
 
         //// \todo Only supports one type of ammo per weapon.
@@ -1407,7 +1407,7 @@ void ST_createWidgets(int player)
         {ST_MAXAMMOX, ST_MAXAMMOY + (ST_AMMOHEIGHT * 2)}
     };
 
-    ammotype_t          ammoType;
+    int                 ammoType;
     int*                ptr = &largeAmmo;
     int                 i;
     boolean             found;

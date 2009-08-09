@@ -112,7 +112,7 @@ boolean P_GiveAmmo(player_t *player, ammotype_t ammo, int num)
 boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
 {
     int                 numClips;
-    ammotype_t          i;
+    int                 i;
     boolean             gaveAmmo = false, gaveWeapon = false;
 
     if(IS_NETGAME && (deathmatch != 2) && !dropped)
@@ -136,7 +136,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
             else
                 numClips = 2;
 
-            if(P_GiveAmmo(player, i, numClips))
+            if(P_GiveAmmo(player, ammotype_t(i), numClips))
                 gaveAmmo = true; // At least ONE type of ammo was given.
         }
 
@@ -163,7 +163,7 @@ boolean P_GiveWeapon(player_t *player, weapontype_t weapon, boolean dropped)
             else
                 numClips = 2;
 
-            if(P_GiveAmmo(player, i, numClips))
+            if(P_GiveAmmo(player, ammotype_t(i), numClips))
                 gaveAmmo = true; // At least ONE type of ammo was given.
         }
 
@@ -201,7 +201,7 @@ boolean P_GiveBody(player_t *player, int num)
     if(player->health > maxHealth)
         player->health = maxHealth;
 
-    player->plr->mo->health = player->health;
+    ((mobj_t*)player->plr->mo)->health = player->health;
     player->update |= PSF_HEALTH;
 
     // Maybe unhide the HUD?
@@ -257,7 +257,7 @@ void P_GiveBackpack(player_t* plr)
 
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
-        P_GiveAmmo(plr, i, 1);
+        P_GiveAmmo(plr, ammotype_t(i), 1);
     }
 
     P_SetMessage(plr, GOTBACKPACK, false);
@@ -275,17 +275,17 @@ boolean P_GivePower(player_t* player, int power)
 
     case PT_INVISIBILITY:
         player->powers[power] = INVISTICS;
-        player->plr->mo->flags |= MF_SHADOW;;
+        ((mobj_t*)player->plr->mo)->flags |= MF_SHADOW;;
         break;
 
     case PT_FLIGHT:
         player->powers[power] = 1;
-        player->plr->mo->flags2 |= MF2_FLY;
-        player->plr->mo->flags |= MF_NOGRAVITY;
-        if(player->plr->mo->pos[VZ] <= player->plr->mo->floorZ)
+        ((mobj_t*)player->plr->mo)->flags2 |= MF2_FLY;
+        ((mobj_t*)player->plr->mo)->flags |= MF_NOGRAVITY;
+        if(((mobj_t*)player->plr->mo)->pos[VZ] <= ((mobj_t*)player->plr->mo)->floorZ)
         {
             player->flyHeight = 10; // Thrust the player in the air a bit.
-            player->plr->mo->flags |= DDPF_FIXMOM;
+            ((mobj_t*)player->plr->mo)->flags |= DDPF_FIXMOM;
         }
         break;
 
@@ -321,7 +321,7 @@ boolean P_GivePower(player_t* player, int power)
 
 boolean P_TakePower(player_t* player, int power)
 {
-    mobj_t*             plrmo = player->plr->mo;
+    mobj_t*             plrmo = (mobj_t*) player->plr->mo;
 
     player->update |= PSF_POWERS;
     if(player->powers[PT_FLIGHT])
@@ -429,7 +429,7 @@ static itemtype_t getItemTypeBySprite(spritetype_e sprite)
         { IT_VISOR, SPR_PVIS },
         { IT_BACKPACK, SPR_BPAK },
         { IT_MEGASPHERE, SPR_MEGA },
-        { IT_NONE, 0 }
+        { IT_NONE, spritetype_e(0) }
     };
     uint                i;
 
@@ -512,7 +512,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         plr->health++; // Can go over 100%.
         if(plr->health > healthLimit)
             plr->health = healthLimit;
-        plr->plr->mo->health = plr->health;
+        ((mobj_t*)plr->plr->mo)->health = plr->health;
         plr->update |= PSF_HEALTH;
         P_SetMessage(plr, GOTHTHBONUS, false);
         S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
@@ -525,7 +525,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         plr->health += soulSphereHealth;
         if(plr->health > soulSphereLimit)
             plr->health = soulSphereLimit;
-        plr->plr->mo->health = plr->health;
+        ((mobj_t*)plr->plr->mo)->health = plr->health;
         plr->update |= PSF_HEALTH;
         P_SetMessage(plr, GOTSUPER, false);
         S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
@@ -592,7 +592,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         if(gameMode != commercial)
             return false;
         plr->health = megaSphereHealth;
-        plr->plr->mo->health = plr->health;
+        ((mobj_t*)plr->plr->mo)->health = plr->health;
         plr->update |= PSF_HEALTH;
         P_GiveArmor(plr, armorClass[1],
                     armorPoints[MINMAX_OF(0, armorClass[1] - 1, 1)]);
@@ -807,7 +807,7 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
     player = toucher->player;
 
     // Identify by sprite.
-    if((item = getItemTypeBySprite(special->sprite)) != IT_NONE)
+    if((item = getItemTypeBySprite(spritetype_e(special->sprite))) != IT_NONE)
     {
         if(!giveItem(player, item, (special->flags & MF_DROPPED)? true : false))
             return; // Don't destroy the item.
@@ -888,13 +888,13 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     }
 
     if(target->health < -target->info->spawnHealth &&
-       P_GetState(target->type, SN_XDEATH))
+       P_GetState(mobjtype_t(target->type), SN_XDEATH))
     {   // Extreme death.
-        P_MobjChangeState(target, P_GetState(target->type, SN_XDEATH));
+        P_MobjChangeState(target, P_GetState(mobjtype_t(target->type), SN_XDEATH));
     }
     else
     {   // Normal death.
-        P_MobjChangeState(target, P_GetState(target->type, SN_DEATH));
+        P_MobjChangeState(target, P_GetState(mobjtype_t(target->type), SN_DEATH));
     }
 
     target->tics -= P_Random() & 3;
@@ -945,9 +945,12 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
  *                      Source and inflictor are the same for melee attacks.
  * @return              Actual amount of damage done.
  */
-int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
+int P_DamageMobj(mobj_s* target_, mobj_s* inflictor_, mobj_s* source_,
                  int damageP, boolean stomping)
 {
+    mobj_t             *target = (mobj_t*) target_;
+    mobj_t             *source = (mobj_t*) source_;
+    mobj_t             *inflictor = (mobj_t*) inflictor_;
     angle_t             angle;
     int                 saved, originalHealth;
     player_t*           player;
@@ -1120,7 +1123,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
 
             target->flags |= MF_JUSTHIT; // Fight back!
 
-            if((state = P_GetState(target->type, SN_PAIN)) != S_NULL)
+            if((state = P_GetState(mobjtype_t(target->type), SN_PAIN)) != S_NULL)
                 P_MobjChangeState(target, state);
         }
 
@@ -1137,8 +1140,8 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
             target->target = source;
             target->threshold = BASETHRESHOLD;
 
-            if((state = P_GetState(target->type, SN_SEE)) != S_NULL &&
-               target->state == &STATES[P_GetState(target->type, SN_SPAWN)])
+            if((state = P_GetState(mobjtype_t(target->type), SN_SEE)) != S_NULL &&
+               target->state == &STATES[P_GetState(mobjtype_t(target->type), SN_SPAWN)])
             {
                 P_MobjChangeState(target, state);
             }

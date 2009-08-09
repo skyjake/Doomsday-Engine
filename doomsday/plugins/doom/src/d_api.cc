@@ -167,7 +167,7 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.PrivilegedResponder = (boolean (*)(event_t *)) G_PrivilegedResponder;
     gx.FallbackResponder = NULL; //Hu_MenuResponder;
     gx.G_Responder = G_Responder;
-    gx.MobjThinker = P_MobjThinker;
+    gx.MobjThinker = (void (*)()) P_MobjThinker;
     gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
     gx.EndFrame = G_EndFrame;
     gx.ConsoleBackground = D_ConsoleBg;

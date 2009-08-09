@@ -30,6 +30,8 @@ l * but WITHOUT ANY WARRANTY; without even the implied warranty of
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <de/Object>
+
 #include "jdoom.h"
 
 #include "m_argv.h"
@@ -355,6 +357,12 @@ DENG_EXPORT const char* deng_LibraryType(void)
     return "deng-plugin/game";
 }
 
+DENG_EXPORT de::Object* deng_NewObject()
+{
+    //return new doom_mobj_s;
+    return 0;
+}
+
 /**
  * Pre Engine Initialization routine.
  * All game-specific actions that should take place at this time go here.
@@ -585,7 +593,7 @@ void G_PostInit(void)
     p = ArgCheck("-skill");
     if(p && p < myargc - 1)
     {
-        startSkill = Argv(p + 1)[0] - '1';
+        startSkill = skillmode_t(Argv(p + 1)[0] - '1');
         autoStart = true;
     }
 

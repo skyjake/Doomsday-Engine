@@ -325,7 +325,7 @@ void Cht_GodFunc(player_t *plyr)
     if(P_GetPlayerCheats(plyr) & CF_GODMODE)
     {
         if(plyr->plr->mo)
-            plyr->plr->mo->health = maxHealth;
+            ((mobj_t*)plyr->plr->mo)->health = maxHealth;
         plyr->health = godModeHealth;
         plyr->update |= PSF_HEALTH;
     }
@@ -336,7 +336,7 @@ void Cht_GodFunc(player_t *plyr)
 
 void Cht_SuicideFunc(player_t *plyr)
 {
-    P_DamageMobj(plyr->plr->mo, NULL, NULL, 10000, false);
+    P_DamageMobj((mobj_t*)plyr->plr->mo, NULL, NULL, 10000, false);
 }
 
 int Cht_SuicideResponse(msgresponse_t response, void* context)
@@ -510,9 +510,9 @@ static void CheatDebugFunc(player_t *player, cheat_t *cheat)
     sub = player->plr->mo->subsector;
     Con_Message("\nSubsector %i:\n", P_ToIndex(sub));
     Con_Message("  FloorZ:%g Material:%s\n", P_GetFloatp(sub, DMU_FLOOR_HEIGHT),
-                P_GetMaterialName(P_GetPtrp(sub, DMU_FLOOR_MATERIAL)));
+                P_GetMaterialName((material_t*)P_GetPtrp(sub, DMU_FLOOR_MATERIAL)));
     Con_Message("  CeilingZ:%g Material:%s\n", P_GetFloatp(sub, DMU_CEILING_HEIGHT),
-                P_GetMaterialName(P_GetPtrp(sub, DMU_CEILING_MATERIAL)));
+                P_GetMaterialName((material_t*)P_GetPtrp(sub, DMU_CEILING_MATERIAL)));
     Con_Message("Player height:%g   Player radius:%g\n",
                 player->plr->mo->height, player->plr->mo->radius);
 }
@@ -829,7 +829,7 @@ DEFCC(CCmdCheatGive)
                 idx = ((int) buf[i+1]) - 48;
                 if(idx >= 0 && idx < NUM_WEAPON_TYPES)
                 {   // Give one specific weapon.
-                    P_GiveWeapon(plyr, idx, false);
+                    P_GiveWeapon(plyr, weapontype_t(idx), false);
                     giveAll = false;
                     i++;
                 }

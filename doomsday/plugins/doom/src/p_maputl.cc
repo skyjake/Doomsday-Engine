@@ -78,8 +78,8 @@ static boolean PIT_ApplyTorque(linedef_t* ld, void* data)
     if(tmThing->player)
         return true; // Skip players!
 
-    if(!(frontsec = P_GetPtrp(ld, DMU_FRONT_SECTOR)) ||
-       !(backsec = P_GetPtrp(ld, DMU_BACK_SECTOR)))
+    if(!(frontsec = (sector_t*) P_GetPtrp(ld, DMU_FRONT_SECTOR)) ||
+       !(backsec = (sector_t*) P_GetPtrp(ld, DMU_BACK_SECTOR)))
         return true; // Shouldn't ever happen.
 
     ffloor = P_GetFloatp(frontsec, DMU_FLOOR_HEIGHT);

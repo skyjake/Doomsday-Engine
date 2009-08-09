@@ -39,7 +39,7 @@ typedef struct {
     char            name[5];
 } sprname_t;
 
-typedef void    (C_DECL * acfnptr_t) ();
+typedef void    (C_DECL * acfnptr_t) (void*);
 
 typedef struct state_s {
     int             sprite;

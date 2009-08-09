@@ -34,6 +34,7 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
+#include "dd_object.h"
 #include "d_think.h"
 #include "p_terraintype.h"
 #include "doomdata.h"
@@ -188,10 +189,8 @@ typedef enum dirtype_s {
 } dirtype_t;
 
 // Map Object definition.
-typedef struct mobj_s {
-    // Defined in dd_share.h; required mobj elements.
-    DD_BASE_MOBJ_ELEMENTS()
-
+class doom_mobj_s : public mobj_s {
+public:
     // Doom-specific data:
     mobjinfo_t     *info;           // &mobjinfo[mobj->type]
     int             damage;         // For missiles
@@ -206,7 +205,7 @@ typedef struct mobj_s {
 
     // Thing being chased/attacked (or NULL),
     // also the originator for missiles.
-    struct mobj_s  *target;
+    mobj_s         *target;
 
     // If >0, the target will be chased
     // no matter what (even if shot)
@@ -228,11 +227,40 @@ typedef struct mobj_s {
     spawnspot_t     spawnSpot;
 
     // Thing being chased/attacked for tracers.
-    struct mobj_s  *tracer;
+    mobj_s         *tracer;
 
     int             turnTime;       // $visangle-facetarget
     int             corpseTics;     // $vanish: how long has this been dead?
-} mobj_t;
+    
+    doom_mobj_s() :
+        info(0),
+        damage(0),
+        flags(0),
+        flags2(0),
+        flags3(0),
+        health(0),
+        moveDir(0),
+        moveCount(0),
+        target(0),
+        threshold(0),
+        intFlags(0),
+        dropOffZ(0),
+        gear(0),
+        wallRun(0),
+        player(0),
+        lastLook(0),
+        tracer(0),
+        turnTime(0),
+        corpseTics(0)
+    {
+        spawnSpot.pos[0] = spawnSpot.pos[1] = spawnSpot.pos[2] = 0;
+        spawnSpot.angle = 0;
+        spawnSpot.type = 0;
+        spawnSpot.flags = 0;
+    }
+};
+
+typedef doom_mobj_s mobj_t;
 
 typedef struct polyobj_s {
     // Defined in dd_share.h; required polyobj elements.
@@ -247,20 +275,20 @@ void        P_RespawnEnqueue(spawnspot_t *spot);
 void        P_CheckRespawnQueue(void);
 void        P_EmptyRespawnQueue(void);
 
-mobj_t*     P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
+mobj_t*     P_SpawnMobj3f(int /*mobjtype_t*/ type, float x, float y, float z,
                           angle_t angle, int spawnFlags);
-mobj_t*     P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle,
+mobj_t*     P_SpawnMobj3fv(int /*mobjtype_t*/ type, float pos[3], angle_t angle,
                            int spawnFlags);
 
 mobj_t*     P_SpawnCustomPuff(mobjtype_t type, float x, float y, float z,
                               angle_t angle);
-mobj_t*     P_SpawnMissile(mobjtype_t type, mobj_t *source, mobj_t *dest);
+mobj_t*     P_SpawnMissile(mobjtype_t type, mobj_s *source, mobj_s *dest);
 void        P_SpawnPuff(float x, float y, float z, angle_t angle);
 void        P_SpawnBlood(float x, float y, float z, int damage,
                          angle_t angle);
 mobj_t*     P_SpawnTeleFog(float x, float y, angle_t angle);
 
-const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo);
-float       P_MobjGetFriction(mobj_t *mo);
+const terraintype_t* P_MobjGetFloorTerrainType(mobj_s* mo);
+float       P_MobjGetFriction(mobj_s *mo);
 
 #endif

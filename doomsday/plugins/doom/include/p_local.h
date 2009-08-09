@@ -71,7 +71,7 @@
 
 #define BASETHRESHOLD       (100)
 
-#define sentient(mobj)      ((mobj)->health > 0 && P_GetState((mobj)->type, SN_SEE))
+#define sentient(mobj)      ((mobj)->health > 0 && P_GetState(mobjtype_t((mobj)->type), SN_SEE))
 
 #define FRICTION_NORMAL     (0.90625f)
 #define FRICTION_FLY        (0.91796875f)
@@ -89,10 +89,10 @@ extern int clipAmmo[NUM_AMMO_TYPES];
 void        P_SetupPsprites(player_t *plr);
 void        P_MovePsprites(player_t *plr);
 void        P_DropWeapon(player_t *plr);
-void        P_SetPsprite(player_t *plr, int position, statenum_t stnum);
+void        P_SetPsprite(player_t *plr, int position, int /*statenum_t*/ stnum);
 
 void        P_MobjRemove(mobj_t* mo, boolean noRespawn);
-boolean     P_MobjChangeState(mobj_t* mo, statenum_t state);
+boolean     P_MobjChangeState(mobj_s* mo, int /*statenum_t*/ state);
 void        P_MobjThinker(mobj_t* mo);
 void        P_RipperBlood(mobj_t* mo);
 
@@ -104,8 +104,8 @@ void        P_SpawnPlayer(spawnspot_t* mthing, int pnum);
 
 void        P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher);
 
-int         P_DamageMobj(mobj_t* target, mobj_t* inflictor,
-                         mobj_t* source, int damage, boolean stomping);
+int         P_DamageMobj(mobj_s* target, mobj_s* inflictor,
+                         mobj_s* source, int damage, boolean stomping);
 
 void        P_ExplodeMissile(mobj_t* mo);
 

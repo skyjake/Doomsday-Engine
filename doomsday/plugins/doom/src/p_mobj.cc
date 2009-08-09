@@ -81,7 +81,7 @@ static int itemRespawnQueueHead, itemRespawnQueueTail;
 
 const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo)
 {
-    sector_t*           sec = P_GetPtrp(mo->subsector, DMU_SECTOR);
+    sector_t*           sec = (sector_t*) P_GetPtrp(mo->subsector, DMU_SECTOR);
 
     return P_GetPlaneMaterialType(sec, PLN_FLOOR);
 }
@@ -112,7 +112,7 @@ boolean P_MobjChangeState(mobj_t* mobj, statenum_t state)
         if(st->action)
             st->action(mobj);
 
-        state = st->nextState;
+        state = statenum_t(st->nextState);
     } while(!mobj->tics);
 
     return true;
@@ -129,7 +129,7 @@ void P_ExplodeMissile(mobj_t *mo)
 
     mo->mom[MX] = mo->mom[MY] = mo->mom[MZ] = 0;
 
-    P_MobjChangeState(mo, P_GetState(mo->type, SN_DEATH));
+    P_MobjChangeState(mo, P_GetState(mobjtype_t(mo->type), SN_DEATH));
 
     mo->tics -= P_Random() & 3;
 
@@ -154,7 +154,7 @@ void P_ExplodeMissile(mobj_t *mo)
 void P_FloorBounceMissile(mobj_t *mo)
 {
     mo->mom[MZ] = -mo->mom[MZ];
-    P_MobjChangeState(mo, P_GetState(mo->type, SN_DEATH));
+    P_MobjChangeState(mo, P_GetState(mobjtype_t(mo->type), SN_DEATH));
 }
 
 /**
@@ -167,7 +167,7 @@ float P_MobjGetFriction(mobj_t *mo)
         return FRICTION_FLY;
     }
 
-    return XS_Friction(P_GetPtrp(mo->subsector, DMU_SECTOR));
+    return XS_Friction((sector_t*) P_GetPtrp(mo->subsector, DMU_SECTOR));
 }
 
 static boolean isInWalkState(player_t* pl)
@@ -273,9 +273,9 @@ void P_MobjMoveXY(mobj_t *mo)
 
                 //// kludge: Prevent missiles exploding against the sky.
                 if(ceilingLine &&
-                   (backSec = P_GetPtrp(ceilingLine, DMU_BACK_SECTOR)))
+                   (backSec = (sector_t*) P_GetPtrp(ceilingLine, DMU_BACK_SECTOR)))
                 {
-                    material_t*         mat =
+                    material_t*         mat = (material_t*)
                         P_GetPtrp(backSec, DMU_CEILING_MATERIAL);
 
                     if((P_GetIntp(mat, DMU_FLAGS) & MATF_SKYMASK) &&
@@ -287,9 +287,9 @@ void P_MobjMoveXY(mobj_t *mo)
                 }
 
                 if(floorLine &&
-                   (backSec = P_GetPtrp(floorLine, DMU_BACK_SECTOR)))
+                   (backSec = (sector_t*) P_GetPtrp(floorLine, DMU_BACK_SECTOR)))
                 {
-                    material_t*         mat =
+                    material_t*         mat = (material_t*)
                         P_GetPtrp(backSec, DMU_FLOOR_MATERIAL);
 
                     if((P_GetIntp(mat, DMU_FLAGS) & MATF_SKYMASK) &&
@@ -351,7 +351,7 @@ void P_MobjMoveXY(mobj_t *mo)
     {
         // If in a walking frame, stop moving.
         if(player && isInWalkState(player) && player->plr->mo == mo)
-            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class_)->normalState);
+            P_MobjChangeState((mobj_t*)player->plr->mo, statenum_t(PCLASS_INFO(player->class_)->normalState));
 
         mo->mom[MX] = mo->mom[MY] = 0;
 
@@ -422,7 +422,7 @@ void P_MobjMoveZ(mobj_t* mo)
     targetZ = mo->pos[VZ] + mo->mom[MZ];
     floorZ = (mo->onMobj? mo->onMobj->pos[VZ] + mo->onMobj->height : mo->floorZ);
     ceilingZ = mo->ceilingZ;
-    gravity = XS_Gravity(P_GetPtrp(mo->subsector, DMU_SECTOR));
+    gravity = XS_Gravity((sector_t*) P_GetPtrp(mo->subsector, DMU_SECTOR));
 
     if((mo->flags2 & MF2_FLY) && mo->player &&
        mo->onMobj && mo->pos[VZ] > mo->onMobj->pos[VZ] + mo->onMobj->height)
@@ -571,7 +571,7 @@ void P_MobjMoveZ(mobj_t* mo)
 
         if(!((mo->flags ^ MF_MISSILE) & (MF_MISSILE | MF_NOCLIP)))
         {
-            material_t*         mat =
+            material_t*         mat = (material_t*)
                 P_GetPtrp(mo->subsector, DMU_FLOOR_MATERIAL);
 
             // Don't explode against sky.
@@ -601,7 +601,7 @@ void P_MobjMoveZ(mobj_t* mo)
 
             if(!((mo->flags ^ MF_MISSILE) & (MF_MISSILE | MF_NOCLIP)))
             {
-                material_t*         mat =
+                material_t*         mat = (material_t*)
                     P_GetPtrp(mo->subsector, DMU_CEILING_MATERIAL);
 
                 // Don't explode against sky.
@@ -813,7 +813,7 @@ void P_MobjThinker(mobj_t* mo)
         if(!mo->tics)
         {
             P_MobjClearSRVO(mo);
-            P_MobjChangeState(mo, mo->state->nextState);
+            P_MobjChangeState(mo, statenum_t(mo->state->nextState));
         }
     }
     else if(!IS_CLIENT)
@@ -853,7 +853,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     if(info->flags2 & MF2_DONTDRAW)
         ddflags |= DDMF_DONTDRAW;
 
-    mo = P_MobjCreate(P_MobjThinker, x, y, z, angle, info->radius,
+    mo = (mobj_t*) P_MobjCreate((void (*)()) P_MobjThinker, x, y, z, angle, info->radius,
                       info->height, ddflags);
     mo->type = type;
     mo->info = info;

@@ -205,7 +205,7 @@ void P_InitWeaponInfo(void)
 
             if(stricmp(data, "noammo"))
             {
-                ammotype_t          k;
+                int k;
 
                 for(k = 0; k < NUM_AMMO_TYPES; ++k)
                 {
