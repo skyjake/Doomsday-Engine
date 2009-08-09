@@ -34,7 +34,14 @@ Config::Config(const String& path) : configPath_(path)
 
 Config::~Config()
 {
-    write();
+    try
+    {
+        write();
+    }
+    catch(const Error& err)
+    {
+        std::cerr << "Config::~Config: " << err.asText() << "\n";
+    }
 }
 
 void Config::read()

@@ -239,7 +239,10 @@ void DirectoryFeed::removeFile(const String& name)
 #endif
 
 #ifdef WIN32
-    some code that fails to build
+    if(_unlink(path.c_str()))
+    {
+        throw RemoveError("DirectoryFeed::removeFile", name + ": " + strerror(errno));
+    }
 #endif
 }
 

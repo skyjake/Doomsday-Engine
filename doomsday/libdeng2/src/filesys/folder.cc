@@ -184,13 +184,17 @@ void Folder::removeFile(const String& removePath)
     
     // It should now be in this folder.
     File& file = locate<File>(removePath);
-    
-    // The origin feed will do the real removing.
-    if(file.originFeed())
-    {
-        file.originFeed()->removeFile(removePath);
-    }
+    Feed* originFeed = file.originFeed();
+
+    // This'll close it and remove it from the index.
     delete &file;
+    
+    // The origin feed will remove the original data of the file (e.g., the native file).
+    if(originFeed)
+    {
+        originFeed->removeFile(removePath);
+    }
+    
 }
 
 bool Folder::has(const String& name) const
