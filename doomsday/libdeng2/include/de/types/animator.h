@@ -42,7 +42,8 @@ namespace de
         typedef ddouble ValueType;
 
         enum Motion {
-            EASE_OUT    ///< Motion eases out, ends abruptly.
+            LINEAR = 0,
+            EASE_OUT = 1    ///< Motion eases out, ends abruptly.
         };
 
         /**
@@ -114,6 +115,13 @@ namespace de
          */
         ValueType target() const;
 
+        /**
+         * Gives the animator a new value immediately, without animation.
+         *
+         * @param immediatelyAssignedValue  New value.
+         */
+        Animator& operator = (const ValueType& immediatelyAssignedValue);
+
         /// Inverses the animator.
         Animator operator - () const;
 
@@ -153,9 +161,9 @@ namespace de
 
         IObserver* observer() const { return observer_; }
         
-        // Doesn't actually implement ISerializable.
-        void operator >> (Writer& /*to*/) const { assert(false); }
-        void operator << (Reader& /*from*/) { assert(false); }
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);
 
     private:
         const IClock* clock_;

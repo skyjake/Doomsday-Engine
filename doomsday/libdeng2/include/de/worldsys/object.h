@@ -31,7 +31,9 @@ namespace de
     class Record;
     
     /**
-     * Movable entity within in a map, represented by a sprite, 3D model, or wall segments.
+     * Movable entity within in a map, represented by a Thing (sprite, 3D model, 
+     * or wall segments). Objects by themselves cannot be collided with, as 
+     * collision detection is the Thing's responsibility.
      *
      * @ingroup world
      */
@@ -55,9 +57,6 @@ namespace de
         /// Position of the object's origin.
         AnimatorVector3 pos_;
 
-        /// Location of the origin within the object's local space.
-        AnimatorVector3 origin_;
-
         /// Current speed.
         Vector3f momentum_;
         
@@ -77,8 +76,7 @@ namespace de
         /// This is set only if this object is the representation of a user.
         User* user_;
 
-        /// Optional extra information specific to this object (assigned 
-        /// in a script, for example).
+        /// Optional object-specific namespace.
         Record* info_;
     };
 }

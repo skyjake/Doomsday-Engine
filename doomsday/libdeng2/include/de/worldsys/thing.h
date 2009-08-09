@@ -42,15 +42,18 @@ namespace de
 
         /// @todo  Appearance: sprite frame, 3D model, etc.
         ///        Behavior: states, scripts, counters, etc.
+
+        /// Location of the thing's origin within the object's local space.
+        AnimatorVector3 origin_;
         
         /// Overall opacity of the thing (1.0 = fully opaque, 0.0 = invisible).
         Animator opacity_;
-
+        
         /// Radius of the thing.
-        dfloat radius_;
+        Animator radius_;
         
         /// Height of the thing.
-        dfloat height_;
+        Animator height_;
     };
 }
 

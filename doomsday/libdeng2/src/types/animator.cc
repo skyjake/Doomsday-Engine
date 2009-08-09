@@ -20,6 +20,8 @@
 #include "de/Animator"
 #include "de/App"
 #include "de/math.h"
+#include "de/Writer"
+#include "de/Reader"
 
 #include <cmath>
 
@@ -87,6 +89,11 @@ void Animator::set(ValueType targetValue, const Time::Delta& transition)
     }
 }
 
+Animator& Animator::operator = (const ValueType& immediatelyAssignedValue)
+{
+    set(immediatelyAssignedValue);
+}
+
 Animator::ValueType Animator::now() const
 {
     if(!status_.test(ANIMATING))
@@ -112,6 +119,9 @@ Animator::ValueType Animator::now() const
     
     switch(motion_)
     {
+    case LINEAR:
+        return start_ + transition_ * t;
+        
     case EASE_OUT:
         return start_ + transition_ * std::sin(PI * t / 2.0);
         
@@ -183,6 +193,20 @@ bool Animator::operator < (const ValueType& offset) const
 bool Animator::operator > (const ValueType& offset) const
 {
     return now() > offset;
+}
+
+void Animator::operator >> (Writer& to) const
+{
+    to << duint8(motion_) << dfloat(target()) << transitionTime_;
+}
+
+void Animator::operator << (Reader& from)
+{
+    duint8 motionType;
+    dfloat targetValue;
+    from >> motionType >> targetValue >> transitionTime_;
+    motion_ = motionType;
+    set(targetValue, transitionTime_);
 }
 
 AnimatorVector2 AnimatorVector2::operator + (const Vector2<Animator::ValueType>& offset) const
