@@ -54,7 +54,7 @@ ClientApp::ClientApp(const de::CommandLine& arguments)
     args.append("../../data/doom.pk3");
 #endif
 
-    const duint16 SERVER_PORT = config().getui("net.localServerPort");
+    const duint16 SERVER_PORT = duint16(config().getui("net.localServer.listenPort"));
 
     std::auto_ptr<LocalServer> svPtr(new LocalServer(SERVER_PORT));
     localServer_ = svPtr.get();

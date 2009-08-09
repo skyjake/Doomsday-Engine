@@ -43,7 +43,7 @@ ServerApp::ServerApp(const de::CommandLine& arguments)
     CommandLine& args = commandLine();
 
     // Start listening.
-    duint16 port = config().getui("net.listenPort");
+    duint16 port = duint16(config().getui("net.listenPort"));
     String param;
     if(args.getParameter("--port", param))
     {

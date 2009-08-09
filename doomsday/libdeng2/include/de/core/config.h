@@ -32,7 +32,7 @@ namespace de
      * storage, and is restored from the serialized version directly before the
      * config scripts are run.
      */
-    class Config
+    class LIBDENG2_API Config
     {
     public:
         /**
