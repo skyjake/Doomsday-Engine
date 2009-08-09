@@ -69,7 +69,7 @@ int deng_Main(int argc, char** argv)
 
         // This won't appear in the file system unless FS::refresh() is called.
         // newFile() doesn't interpret anything, just makes a plain file.
-        File& zip2 = app.homeFolder().newFile("test2.zip");
+        File& zip2 = app.homeFolder().replaceFile("test2.zip");
         zip2.setMode(File::WRITE | File::TRUNCATE);
         Archive arch;
         arch.add("world.txt", content);
