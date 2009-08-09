@@ -58,7 +58,7 @@ IF ( UNIX )
 
     FILE ( GLOB UNIX_SOURCES 
         unix/src/*.c unix/src/*.cc unix/include/*.h
-        ../external/lzss/unix/src/*.c )
+        ../external/lzss/unix/src/*.cc )
     SET ( SOURCES ${SOURCES} ${UNIX_SOURCES} )
 ENDIF ( UNIX )
 

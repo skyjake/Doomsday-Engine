@@ -36,17 +36,6 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <assert.h>
-
-#include <de/App>
-#include <de/Zone>
-
-using namespace de;
-
-extern "C" {
 #include "de_base.h"
 #include "de_console.h"
 #include "de_network.h"
@@ -58,10 +47,19 @@ extern "C" {
 #include "def_main.h"
 #include "m_stack.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <assert.h>
+
+#include <de/App>
+#include <de/Zone>
+
+using namespace de;
+
 void getLightingParams(float x, float y, float z, subsector_t* ssec,
                        float distance, boolean fullBright,
                        float ambientColor[3], uint* vLightListIdx);
-}
 
 // MACROS ------------------------------------------------------------------
 
@@ -1026,7 +1024,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->vLightListIdx = vLightListIdx;
 }
 
-extern "C" void setupModelParamsForVisSprite(rendmodelparams_t *params,
+void setupModelParamsForVisSprite(rendmodelparams_t *params,
                                   float x, float y, float z, float distance,
                                   float visOffX, float visOffY, float visOffZ, float gzt, float yaw, 
                                   float yawAngleOffset, float pitch, float pitchAngleOffset,

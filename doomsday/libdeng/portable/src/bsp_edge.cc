@@ -40,13 +40,9 @@
 using namespace de;
 
 #include "dd_export.h"
-BEGIN_EXTERN_C
-
 #include "de_base.h"
 #include "de_bsp.h"
 #include "de_misc.h"
-
-END_EXTERN_C
 
 #include <stdlib.h>
 #include <ctype.h>

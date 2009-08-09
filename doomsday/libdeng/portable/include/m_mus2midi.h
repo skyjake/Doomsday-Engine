@@ -29,6 +29,14 @@
 #ifndef __DOOMSDAY_MUS2MIDI_H__
 #define __DOOMSDAY_MUS2MIDI_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 boolean             M_Mus2Midi(void* data, size_t length, const char* outFile);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

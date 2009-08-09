@@ -28,10 +28,6 @@
 #ifndef __LINKEDLIST_H__
 #define __LINKEDLIST_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // The C_DECL macro, used with compare functions.
 #ifndef C_DECL
 #  if defined(WIN32)
@@ -119,10 +115,6 @@ int             List_Iterate(const linklist_t *list, int iterateFlags,
 // Debugging:
 #ifndef NDEBUG
 void            List_Test(void);
-#endif
-
-#ifdef __cplusplus
-}
 #endif
 
 #endif

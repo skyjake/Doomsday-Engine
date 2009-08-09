@@ -42,8 +42,6 @@ using namespace de;
 #include <limits.h>
 #include <SDL.h>
 
-extern "C" 
-{
 #include "de_base.h"
 #include "de_graphics.h"
 #include "de_console.h"
@@ -254,5 +252,3 @@ void DD_Shutdown(void)
     // Shutdown all subsystems.
     DD_ShutdownAll();
 }
-
-} /* extern "C" */

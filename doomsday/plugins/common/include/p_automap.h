@@ -117,10 +117,6 @@ typedef struct automap_s {
     unsigned int    markpointnum; // next point to be assigned.
 } automap_t;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void            Automap_Open(automap_t* map, int yes, int fast);
 void            Automap_RunTic(automap_t* map);
 void            Automap_UpdateWindow(automap_t* map, float newX, float newY,
@@ -170,7 +166,4 @@ void            Automap_GetInViewAABB(const automap_t* map, float* lowX,
                                    float* hiX, float* lowY, float* hiY);
 void            Automap_GetViewParallaxPosition(const automap_t* map, float* x, float* y);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

@@ -66,7 +66,6 @@ enum { VX, VY, VZ };
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-extern "C" {
 int             DS_Init(void);
 void            DS_Shutdown(void);
 void            DS_Event(int type);
@@ -83,7 +82,6 @@ void            DS_SFX_Set(sfxbuffer_t* buf, int prop, float value);
 void            DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values);
 void            DS_SFX_Listener(int prop, float value);
 void            DS_SFX_Listenerv(int prop, float* values);
-}
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 

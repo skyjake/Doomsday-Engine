@@ -29,7 +29,7 @@
 #ifndef __DOOMSDAY_RENDER_SHADOW_BIAS_H__
 #define __DOOMSDAY_RENDER_SHADOW_BIAS_H__
 
-#include "m_vector.h"
+//#include "m_vector.h"
 
 #define MAX_BIAS_LIGHTS   (8 * 32) // Hard limit due to change tracking.
 #define MAX_BIAS_AFFECTED 6
@@ -94,7 +94,7 @@ void            SB_BeginFrame(void);
 void            SB_RendPoly(struct rcolor_s* rcolors,
                             struct biassurface_s* bsuf,
                             const struct rvertex_s* rvertices,
-                            size_t numVertices, const vectorcomp_t* normal,
+                            size_t numVertices, const float* normal,
                             float sectorLightLevel,
                             void* mapObject, uint elmIdx, boolean isSeg);
 void            SB_EndFrame(void);

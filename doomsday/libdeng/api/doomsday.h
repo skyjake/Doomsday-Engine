@@ -35,10 +35,6 @@
 
 #include "dd_export.h"
 
-#ifdef __cplusplus
-extern          "C" {
-#endif
-
 /**
  * Public definitions of the internal map data pointers.  These can be
  * accessed externally, but only as identifiers to data instances.
@@ -68,6 +64,10 @@ extern          "C" {
 
 #ifdef __INTERNAL_MAP_DATA_ACCESS__
 #   include "../portable/include/p_maptypes.h"
+#endif
+
+#ifdef __cplusplus
+extern          "C" {
 #endif
 
     DENG_API int             DD_Entry(int argc, char *argv[]);

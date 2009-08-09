@@ -34,11 +34,9 @@
 using namespace de;
 
 #include "dd_export.h"
-BEGIN_EXTERN_C
 #include "de_base.h"
 #include "de_console.h"
 #include "de_misc.h"
-END_EXTERN_C
 #include "doomsday.h"
 
 #include <stdio.h>

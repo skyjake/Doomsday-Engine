@@ -31,12 +31,12 @@
 #ifndef __DOOMSDAY_DED_FILES_H__
 #define __DOOMSDAY_DED_FILES_H__
 
+#include "def_share.h"
+#include "p_mapdata.h"
+
 #ifdef __cplusplus
 extern          "C" {
 #endif
-
-#include "def_share.h"
-#include "p_mapdata.h"
 
     // Version 6 does not require semicolons.
 #define DED_VERSION         6

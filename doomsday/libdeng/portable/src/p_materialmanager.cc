@@ -35,7 +35,6 @@ using namespace de;
 
 #include <ctype.h> // For tolower()
 
-extern "C" {
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -44,7 +43,6 @@ extern "C" {
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_audio.h" // For texture, environmental audio properties.
-}
 
 // MACROS ------------------------------------------------------------------
 

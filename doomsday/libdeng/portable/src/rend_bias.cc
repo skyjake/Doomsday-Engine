@@ -30,12 +30,6 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <de/App>
-#include <de/Zone>
-
-using namespace de;
-
-extern "C" {
 #include "de_base.h"
 #include "de_edit.h"
 #include "de_system.h"
@@ -45,7 +39,11 @@ extern "C" {
 #include "de_defs.h"
 #include "de_misc.h"
 #include "p_sight.h"
-}
+
+#include <de/App>
+#include <de/Zone>
+
+using namespace de;
 
 #include <math.h>
 

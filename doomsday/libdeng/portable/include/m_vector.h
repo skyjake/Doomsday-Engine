@@ -76,7 +76,7 @@ float           V3_Length(const pvec3_t vec);
 float           V3_Distance(const pvec3_t a, const pvec3_t b);
 float           V3_Normalize(pvec3_t vec);
 void            V3_Copy(pvec3_t dest, const_pvec3_t src);
-void            V3_Scale(pvec3_t vec, float scalar);
+void            V3_Scale(float* vec, float scalar);
 void            V3_Sum(pvec3_t dest, const_pvec3_t src1, const_pvec3_t src2);
 void            V3_Subtract(pvec3_t dest, const_pvec3_t src1,
                             const_pvec3_t src2);

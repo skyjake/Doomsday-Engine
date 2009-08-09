@@ -34,10 +34,7 @@
 
 using namespace de;
 
-extern "C" {
 #include "de_base.h"
-}
-
 #include "doomsday.h"
 
 void* _DECALL Z_Malloc(size_t size, int tag, void* user)

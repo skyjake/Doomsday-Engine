@@ -92,6 +92,7 @@ void Animator::set(ValueType targetValue, const Time::Delta& transition)
 Animator& Animator::operator = (const ValueType& immediatelyAssignedValue)
 {
     set(immediatelyAssignedValue);
+    return *this;
 }
 
 Animator::ValueType Animator::now() const
@@ -197,16 +198,17 @@ bool Animator::operator > (const ValueType& offset) const
 
 void Animator::operator >> (Writer& to) const
 {
-    to << duint8(motion_) << dfloat(target()) << transitionTime_;
+    to << duint8(motion_) << dfloat(target()) << dfloat(transitionTime_);
 }
 
 void Animator::operator << (Reader& from)
 {
     duint8 motionType;
     dfloat targetValue;
-    from >> motionType >> targetValue >> transitionTime_;
-    motion_ = motionType;
-    set(targetValue, transitionTime_);
+    float transTime;
+    from >> motionType >> targetValue >> transTime;
+    motion_ = Motion(motionType);
+    set(targetValue, transTime);
 }
 
 AnimatorVector2 AnimatorVector2::operator + (const Vector2<Animator::ValueType>& offset) const

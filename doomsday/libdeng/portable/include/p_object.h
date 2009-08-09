@@ -33,17 +33,14 @@
 #include "p_mapdata.h"
 
 #if defined(__JDOOM__) || defined(__JHERETIC__) || defined(__JHEXEN__)
-#  error "Attempted to include internal Doomsday p_object.h from a game"
+#   error "Attempted to include internal Doomsday p_object.h from a game"
 #endif
 
 // This macro can be used to calculate a mobj-specific 'random' number.
 #define MOBJ_TO_ID(mo) ( (long)(mo)->thinker.id * 48 + ((unsigned long)(mo)/1000) )
 
-// We'll use the base mobj template directly as our mobj.
-typedef struct mobj_s {
-DD_BASE_MOBJ_ELEMENTS()} mobj_t;
-
-#define MOBJ_SIZE           gx.mobjSize
+#include "dd_object.h"
+typedef mobj_s mobj_t;
 
 #define DEFAULT_FRICTION    FIX2FLT(0xe800)
 #define NOMOMENTUM_THRESHOLD    (0.000001f)
@@ -53,8 +50,6 @@ extern mobj_t  *blockingMobj;
 extern boolean  dontHitMobjs;
 
 #include "cl_def.h"                // for clplayerstate_s
-
-void            P_InitUnusedMobjList(void);
 
 mobj_t         *P_MobjCreate(think_t function, float x, float y, float z,
                              angle_t angle, float radius, float height,

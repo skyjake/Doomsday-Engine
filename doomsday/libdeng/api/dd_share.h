@@ -31,9 +31,17 @@
 #ifndef __DOOMSDAY_SHARED_H__
 #define __DOOMSDAY_SHARED_H__
 
+#include <stdlib.h>
+#include "../portable/include/dd_version.h"
+#include "dd_types.h"
+#include "dd_maptypes.h"
+#include "../portable/include/def_share.h" // \todo Not officially a public header file!
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "dd_gl.h"
 
 // The C_DECL macro, used with compare functions.
 #ifndef C_DECL
@@ -45,13 +53,6 @@ extern "C" {
 #    define C_DECL
 #  endif
 #endif
-
-#include <stdlib.h>
-#include "../portable/include/dd_version.h"
-#include "dd_types.h"
-#include "dd_maptypes.h"
-#include "dd_gl.h"
-#include "../portable/include/def_share.h" // \todo Not officially a public header file!
 
 //------------------------------------------------------------------------
 //
@@ -800,6 +801,7 @@ typedef struct linknode_s {
 
 enum { MX, MY, MZ }; // Momentum axis indices.
 
+#if 0
     // Base mobj_t elements. Games MUST use this as the basis for mobj_t.
 #define DD_BASE_MOBJ_ELEMENTS() \
     DD_BASE_DDMOBJ_ELEMENTS() \
@@ -837,6 +839,7 @@ enum { MX, MY, MZ }; // Momentum axis indices.
                                /* 0 = no change, 2= mobj is becoming more visible */ \
     int             reactionTime; /* if not zero, freeze controls */ \
     int             tmap, tclass;
+#endif
 
     // Base polyobj_t elements. Games MUST use this as the basis for polyobj_t.
 #define DD_BASE_POLYOBJ_ELEMENTS() \

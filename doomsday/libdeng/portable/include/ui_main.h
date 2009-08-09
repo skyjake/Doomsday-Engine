@@ -155,7 +155,7 @@ typedef struct {
 typedef struct {
     char           *ptr;           // Text to modify.
     int             maxlen;        // Maximum allowed length.
-    void           *data;
+    const void     *data;
     uint            cp;            // Cursor position.
 } uidata_edit_t;
 
@@ -168,7 +168,7 @@ typedef struct {
 typedef struct {
     void           *items;
     int             count;         // Number of items.
-    void           *data;
+    const void     *data;
     int             selection;     // Selected item (-1 if none).
     int             first;         // First visible item.
     int             itemhgt;       // Height of each item (0 = fonthgt).
@@ -182,7 +182,7 @@ typedef struct {
     float           value;
     float           step;          // Button step.
     boolean         floatmode;     // Otherwise only integers are allowed.
-    void           *data;
+    const void     *data;
     char           *zerotext;
     byte            button[3];     // Button states (0=normal, 1=down).
 } uidata_slider_t;
