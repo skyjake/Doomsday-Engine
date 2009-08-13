@@ -38,6 +38,8 @@
 extern game_import_t gi;
 extern game_export_t gx;
 
+BEGIN_EXTERN_C
 DENG_EXPORT game_export_t  *GetGameAPI(game_import_t *imports);
+END_EXTERN_C
 
 #endif

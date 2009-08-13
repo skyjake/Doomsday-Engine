@@ -69,11 +69,9 @@ ServerApp::~ServerApp()
     // Close all links.
     for(Clients::iterator i = clients_.begin(); i != clients_.end(); ++i)
     {
-        std::cout << "Deleting clients\n";
         delete *i;
     }
     clients_.clear();
-    std::cout << "Clients cleared\n";
     
     // Shutdown the engine.
     DD_Shutdown();

@@ -57,7 +57,7 @@ void Session::processCommand(Client& sender, const de::CommandPacket& packet)
 {
     try
     {
-        std::cout << "Processing '" << packet.command() << "' with args:\n" << packet.arguments();
+        std::cout << "Processing '" << packet.command() << "' with args:\n" << packet.arguments() << "\n";
         
         if(packet.command() == "session.new")
         {

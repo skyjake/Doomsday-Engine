@@ -63,6 +63,8 @@ game_export_t gx;
 
 // CODE --------------------------------------------------------------------
 
+BEGIN_EXTERN_C
+
 /**
  * Get a 32-bit integer value.
  */
@@ -200,3 +202,5 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.HandleMapObjectStatusReport = P_HandleMapObjectStatusReport;
     return &gx;
 }
+
+END_EXTERN_C

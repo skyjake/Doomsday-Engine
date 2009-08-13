@@ -45,10 +45,12 @@
 #endif
 
 // Common public functions.
+BEGIN_EXTERN_C
 DENG_EXPORT int          deng_GetInteger(int id);
 DENG_EXPORT const char*  deng_GetString(int id);
 DENG_EXPORT void*        deng_GetAddress(int id);
 DENG_EXPORT void         G_CommonPreInit(void);
+END_EXTERN_C
 
 #define OBSOLETE        CVF_HIDE|CVF_NO_ARCHIVE
 

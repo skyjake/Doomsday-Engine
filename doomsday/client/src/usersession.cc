@@ -72,7 +72,7 @@ void UserSession::processPacket(const de::Packet& packet)
     if(record)
     {
         const Record& rec = record->record();
-        std::cout << record->label() << "\n" << rec;
+        std::cout << record->label() << "\n" << rec << "\n";
 
         if(record->label() == "user.welcome")
         {

@@ -274,7 +274,7 @@ void DD_SetConfigFile(const char* file)
     bindingsConfigFileName[FILENAME_T_MAXLEN] = '\0';
 
     strncpy(bindingsConfigFileName + strlen(bindingsConfigFileName) - 4,
-            "-bindings.cfg", FILENAME_T_MAXLEN - strlen(bindingsConfigFileName - 4));
+            "-bindings.cfg", FILENAME_T_MAXLEN - strlen(bindingsConfigFileName) - 4);
     bindingsConfigFileName[FILENAME_T_MAXLEN] = '\0';
 }
 

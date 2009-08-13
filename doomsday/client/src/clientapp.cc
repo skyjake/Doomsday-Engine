@@ -81,7 +81,7 @@ ClientApp::ClientApp(const de::CommandLine& arguments)
     
     link->base() << CommandPacket("status");
     std::auto_ptr<RecordPacket> status(link->base().receivePacket<RecordPacket>());
-    std::cout << "Here's what the server said:\n" << status->label() << "\n" << status->record();
+    std::cout << "Here's what the server said:\n" << status->label() << "\n" << status->record() << "\n";
 
     Id sessionToJoin(status->record().subrecord("sessions").subrecords().begin()->first);
     std::cout << "Going to join session " << sessionToJoin << "\n";

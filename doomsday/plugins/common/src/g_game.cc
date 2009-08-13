@@ -1047,7 +1047,7 @@ void G_UpdateGSVarsForPlayer(player_t* pl)
  *
  * @param ticLength     How long this tick is, in seconds.
  */
-DENG_EXPORT void deng_Ticker(timespan_t ticLength)
+extern "C" DENG_EXPORT void deng_Ticker(timespan_t ticLength)
 {
     static int          oldGameState = -1;
     static trigger_t    fixed = {1.0 / TICSPERSEC};

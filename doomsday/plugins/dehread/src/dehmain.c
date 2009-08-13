@@ -52,6 +52,7 @@
 
 #define __INTERNAL_MAP_DATA_ACCESS__
 #include <doomsday.h>
+#include <dd_plugin.h>
 
 // This plugin accesses the internal definition arrays. This dependency should
 // be removed entirely, either by making the plugin modify the definitions

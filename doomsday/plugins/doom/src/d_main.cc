@@ -352,6 +352,8 @@ void G_IdentifyVersion(void)
            "-");
 }
 
+BEGIN_EXTERN_C
+
 DENG_EXPORT const char* deng_LibraryType(void)
 {
     return "deng-plugin/game";
@@ -524,6 +526,22 @@ DENG_EXPORT void deng_InitializePlugin(void)
 
     cfg.berserkAutoSwitch = true;
 }
+
+DENG_EXPORT void deng_ShutdownPlugin(void)
+{
+    Hu_MsgShutdown();
+    Hu_UnloadData();
+    Hu_LogShutdown();
+
+    P_DestroyIterList(spechit);
+    P_DestroyIterList(linespecials);
+    P_DestroyLineTagLists();
+    P_DestroySectorTagLists();
+    AM_Shutdown();
+    P_FreeWeaponSlots();
+}
+
+END_EXTERN_C
 
 /**
  * Post Engine Initialization routine.
@@ -707,20 +725,6 @@ void G_PostInit(void)
             G_StartTitle(); // Start up intro loop.
         }
     }
-}
-
-DENG_EXPORT void deng_ShutdownPlugin(void)
-{
-    Hu_MsgShutdown();
-    Hu_UnloadData();
-    Hu_LogShutdown();
-
-    P_DestroyIterList(spechit);
-    P_DestroyIterList(linespecials);
-    P_DestroyLineTagLists();
-    P_DestroySectorTagLists();
-    AM_Shutdown();
-    P_FreeWeaponSlots();
 }
 
 void G_EndFrame(void)
