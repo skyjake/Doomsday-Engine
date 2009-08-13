@@ -75,8 +75,10 @@
  *                          the current gamemode).
  *                          Generally this should be @c false.
  */
-void P_MobjRemove(mobj_t* mo, boolean noRespawn)
+void P_MobjRemove(mobj_s* mo_, boolean noRespawn)
 {
+    mobj_t* mo = (mobj_t*) mo_;
+    
     if(!noRespawn)
     {
 #if __JDOOM__ || __JDOOM64__
@@ -217,8 +219,8 @@ void P_MobjClearSRVO(mobj_t* mo)
 boolean P_MobjIsCamera(const mobj_s* mo)
 {
     // Client mobjs do not have thinkers and thus cannot be cameras.
-    return (mo && mo->thinker.function && mo->player &&
-            (mo->player->plr->flags & DDPF_CAMERA));
+    return (mo && mo->thinker.function && ((mobj_t*)mo)->player &&
+            (((mobj_t*)mo)->player->plr->flags & DDPF_CAMERA));
 }
 
 /**
@@ -256,5 +258,5 @@ statenum_t P_GetState(int type, statename_t name)
     if(name < 0 || name >= NUM_STATE_NAMES)
         return S_NULL;
 
-    return MOBJINFO[type].states[name];
+    return (statenum_t) MOBJINFO[type].states[name];
 }

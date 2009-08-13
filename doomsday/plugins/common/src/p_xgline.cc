@@ -141,22 +141,24 @@ void            XL_ChangeMaterial(linedef_t* line, int sidenum, int section,
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-int C_DECL      XL_DoChainSequence();
-int C_DECL      XL_DoDamage();
-int C_DECL      XL_DoPower();
-int C_DECL      XL_DoKey();
-int C_DECL      XL_DoExplode();
-int C_DECL      XL_DoCommand();
+#define DECLARE_XLTRAV_FUNC(Name) int C_DECL Name(linedef_t* line, boolean dummy, void* context, void* context2, mobj_t* activator);
 
-int C_DECL      XLTrav_ChangeLineType();
-int C_DECL      XLTrav_Activate();
-int C_DECL      XLTrav_Music();
-int C_DECL      XLTrav_LineCount();
-int C_DECL      XLTrav_LeaveMap();
-int C_DECL      XLTrav_DisableLine();
-int C_DECL      XLTrav_EnableLine();
-int C_DECL      XLTrav_ChangeWallMaterial();
-int C_DECL      XLTrav_LineTeleport();
+DECLARE_XLTRAV_FUNC(XL_DoChainSequence);
+DECLARE_XLTRAV_FUNC(XL_DoDamage);
+DECLARE_XLTRAV_FUNC(XL_DoPower);
+DECLARE_XLTRAV_FUNC(XL_DoKey);
+DECLARE_XLTRAV_FUNC(XL_DoExplode);
+DECLARE_XLTRAV_FUNC(XL_DoCommand);
+
+DECLARE_XLTRAV_FUNC(XLTrav_ChangeLineType);
+DECLARE_XLTRAV_FUNC(XLTrav_Activate);
+DECLARE_XLTRAV_FUNC(XLTrav_Music);
+DECLARE_XLTRAV_FUNC(XLTrav_LineCount);
+DECLARE_XLTRAV_FUNC(XLTrav_LeaveMap);
+DECLARE_XLTRAV_FUNC(XLTrav_DisableLine);
+DECLARE_XLTRAV_FUNC(XLTrav_EnableLine);
+DECLARE_XLTRAV_FUNC(XLTrav_ChangeWallMaterial);
+DECLARE_XLTRAV_FUNC(XLTrav_LineTeleport);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -176,7 +178,7 @@ xgclass_t xgClasses[NUMXGCLASSES] =
     { NULL, NULL, TRAV_NONE, 0, 1, 0, "None" },
       // Dummy class (has no functions but enables use of secondary actions) (no params)
 
-    { XL_DoChainSequence, NULL, TRAV_NONE, 0, 1, 0, "Chain Sequence",
+    { (int (*)()) XL_DoChainSequence, NULL, TRAV_NONE, 0, 1, 0, "Chain Sequence",
       // Excute a chain of other XG line types (a zero ends the list)
        {{XGPF_INT, "Chain Flags", "chsf_", 0},              // ip0: (chsf_) chain sequence flags
         {XGPF_INT, "Line Type 0", "", -1},                  // ip1: Type to execute
@@ -199,7 +201,7 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "Line Type 17", "", -1},                 // ip18: ""  ""  ""
         {XGPF_INT, "Line Type 18", "", -1} }},              // ip19: ""  ""  ""
 
-    { XSTrav_MovePlane, XS_InitMovePlane, TRAV_PLANES, 0, 1, 0, "Move Plane",
+    { (int (*)()) XSTrav_MovePlane, XS_InitMovePlane, TRAV_PLANES, 0, 1, 0, "Move Plane",
       // Move one or more planes. Optionaly change textures/types on start/end
        {{XGPF_INT, "Target Ref", "lpref_", 0},              // ip0: (plane ref) plane(s) to move.
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
@@ -217,7 +219,7 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "End Type Ref", "lpref_", 13},           // ip13: (plane ref) end sector type (spec: use i14 as type ID)
         {XGPF_INT, "End Type Num", "", -1} }},              // ip14: data component or type ID
 
-    { XSTrav_BuildStairs, XS_InitStairBuilder, TRAV_PLANES, 0, 1, 0, "Build Stairs",
+    { (int (*)()) XSTrav_BuildStairs, XS_InitStairBuilder, TRAV_PLANES, 0, 1, 0, "Build Stairs",
       // Moves one or more planes, incrementing their height with each move
        {{XGPF_INT, "Target Ref", "lpref_", 0},              // ip0: (plane ref) plane to start from
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
@@ -228,33 +230,33 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "Step End Sound", "", 6 | MAP_SND},      // ip6: step end sound
         {XGPF_INT, "Step Move Sound", "", 7 | MAP_SND} }},  // ip7: step move sound
 
-    { XL_DoDamage, NULL, TRAV_NONE, 0, 1, 0, "Damage",
+    { (int (*)()) XL_DoDamage, NULL, TRAV_NONE, 0, 1, 0, "Damage",
       // Deals health damage to the activator
        {{XGPF_INT, "Min Delta", "", -1},                    // ip0: min damage delta
         {XGPF_INT, "Max Delta", "", -1},                    // ip1: max damage delta
         {XGPF_INT, "Min Limit", "", -1},                    // ip2: min limit (wont damage if health bellow)
         {XGPF_INT, "Max Limit", "", -1} }},                 // ip3: max limit (wont damage if health above)
 
-    { XL_DoPower, NULL, TRAV_NONE, 0, 1, 0, "Power",
+    { (int (*)()) XL_DoPower, NULL, TRAV_NONE, 0, 1, 0, "Power",
       // Deals armor damage to the activator (must be a player)
        {{XGPF_INT, "Min Delta", "", -1},                    // ip0: min power delta
         {XGPF_INT, "Max Delta", "", -1},                    // ip1: max power delta
         {XGPF_INT, "Min Limit", "", -1},                    // ip2: min limit
         {XGPF_INT, "Max Limit", "", -1} }},                 // ip3: max limit
 
-    { XLTrav_ChangeLineType, NULL, TRAV_LINES, 0, 1, 0, "Line Type",
+    { (int (*)()) XLTrav_ChangeLineType, NULL, TRAV_LINES, 0, 1, 0, "Line Type",
       // Changes a line's type (must be an XG type)
        {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to change
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
         {XGPF_INT, "Line Type", "", -1} }},                 // ip2: new type (must be an XG line type)
 
-    { XSTrav_SectorType, NULL, TRAV_SECTORS, 0, 1, 0, "Sector Type",
+    { (int (*)()) XSTrav_SectorType, NULL, TRAV_SECTORS, 0, 1, 0, "Sector Type",
       // Changes a sector's type (must be an XG type)
        {{XGPF_INT, "Target Ref", "lsref_", 0},              // ip0: (sector ref) sector(s) to change
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
         {XGPF_INT, "Sector Type", "", -1} }},               // ip2: new type (zero or an XG sector type)
 
-    { XSTrav_SectorLight, NULL, TRAV_SECTORS, 0, 1, 0, "Sector Light",
+    { (int (*)()) XSTrav_SectorLight, NULL, TRAV_SECTORS, 0, 1, 0, "Sector Light",
       // Change the light level and/or color  of the target sector(s).
        {{XGPF_INT, "Target Ref", "lsref_", 0},              // ip0: (sector ref) sector(s) to change
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
@@ -269,52 +271,52 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "Green Delta", "", -1},                  // ip8: offset to green delta
         {XGPF_INT, "Blue Delta", "", -1} }},                // ip9: offset to blue delta
 
-    { XLTrav_Activate, NULL, TRAV_LINES, 0, 1, 0, "Activate",
+    { (int (*)()) XLTrav_Activate, NULL, TRAV_LINES, 0, 1, 0, "Activate",
       // Sends a chain event to all the referenced lines
        {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to activate
         {XGPF_INT, "Target Num", "", -1} }},                // ip1:
 
-    { XL_DoKey, NULL, TRAV_NONE, 0, 1, 0, "Key",
+    { (int (*)()) XL_DoKey, NULL, TRAV_NONE, 0, 1, 0, "Key",
       // Gives/takes keys to/from the activator (must be a player)
       // Params are bitfields! Bit 1 (0x1) corresponds key 1, bit 2 (0x2) key 2, etc.
        {{XGPF_INT, "Give Keys", "", -1},                    // ip0: keys to give
         {XGPF_INT, "Take Keys", "", -1} }},                 // ip1: keys to take away.
 
-    { XLTrav_Music, NULL, TRAV_LINES, 2, 3, 0, "Music",
+    { (int (*)()) XLTrav_Music, NULL, TRAV_LINES, 2, 3, 0, "Music",
       // Changes the music track being played
        {{XGPF_INT, "Song ID", "ldref_", 0 | MAP_MUS},       // ip0: song id/name or (line data ref from ip2)
         {XGPF_INT, "Play Looped", "", -1},                  // ip1: non-zero means play looped
         {XGPF_INT, "Data Ref", "lref_", 2},                 // ip2: (line ref) used with line data ref eg set music track to line-tag
         {XGPF_INT, "Data Num", "", -1} }},                  // ip3:
 
-    { XLTrav_LineCount, NULL, TRAV_LINES, 0, 1, 0, "Line Count",
+    { (int (*)()) XLTrav_LineCount, NULL, TRAV_LINES, 0, 1, 0, "Line Count",
       // Changes the XG line(s)' internal activation counter
        {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to change
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
         {XGPF_INT, "Set Absolute", "", -1},                 // ip2: non-zero makes ip3 absolute
         {XGPF_INT, "Count Delta", "", -1} }},               // ip3: count delta or absolute
 
-    { XLTrav_LeaveMap, NULL, TRAV_LINES, 1, 2, 0, "Leave Map",
+    { (int (*)()) XLTrav_LeaveMap, NULL, TRAV_LINES, 1, 2, 0, "Leave Map",
       // Exits the current map
        {{XGPF_INT, "Secret Exit", "", -1},                  // ip0: non-zero goto secret map
         {XGPF_INT, "Data Ref", "lref_", 1},                 // ip1: (line ref) line to acquire (line data ref) from
         {XGPF_INT, "Data Num", "", -1},                     // ip2:
         {XGPF_INT, "Goto Map", "ldref_", 3} }},             // ip3: map ID or (line data ref from ip1)
 
-    { XLTrav_DisableLine, NULL, TRAV_LINES, 0, 1, 0, "Disable Line",
+    { (int (*)()) XLTrav_DisableLine, NULL, TRAV_LINES, 0, 1, 0, "Disable Line",
       // Disables the referenced line(s) if active
        {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to disable
         {XGPF_INT, "Target Num", "", -1} }},                // ip1:
 
-    { XLTrav_EnableLine, NULL, TRAV_LINES, 0, 1, 0, "Enable Line",
+    { (int (*)()) XLTrav_EnableLine, NULL, TRAV_LINES, 0, 1, 0, "Enable Line",
       // Enables the referenced line(s) if active.
        {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to enable
         {XGPF_INT, "Target Num", "", -1} }},                // ip1:
 
-    { XL_DoExplode, NULL, TRAV_NONE, 0, 1, 0, "Explode" },
+    { (int (*)()) XL_DoExplode, NULL, TRAV_NONE, 0, 1, 0, "Explode" },
       // Explodes the activator (no params).
 
-    { XSTrav_PlaneMaterial, NULL, TRAV_PLANES, 0, 1, 0, "Plane Material",
+    { (int (*)()) XSTrav_PlaneMaterial, NULL, TRAV_PLANES, 0, 1, 0, "Plane Material",
       // Change the material and/or surface color of a plane.
        {{XGPF_INT, "Target Ref", "lpref_", 0},              // ip0 : (plane ref) plane(s) to change
         {XGPF_INT, "Target Num", "", -1},                   // ip1 : ref data
@@ -324,7 +326,7 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "Green Delta", "", -1},                  // ip5 : "" (green)
         {XGPF_INT, "Blue Delta", "", -1} }},                // ip6 : "" (blue)
 
-    { XLTrav_ChangeWallMaterial, NULL, TRAV_LINES, 0, 1, 0, "Wall Material",
+    { (int (*)()) XLTrav_ChangeWallMaterial, NULL, TRAV_LINES, 0, 1, 0, "Wall Material",
       // Changes material(s) on the referenced line(s).
       // Changes surface colour(s), alpha, mid textue blendmode and sidedef flags
        {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) line(s) to change
@@ -347,24 +349,24 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "Bottom Green Delta", "", -1},           // ip17:
         {XGPF_INT, "Bottom Blue Delta", "", -1} }},         // ip18:
 
-    { XL_DoCommand, NULL, TRAV_NONE, 0, 1, 0, "Command" },
+    { (int (*)()) XL_DoCommand, NULL, TRAV_NONE, 0, 1, 0, "Command" },
       // Executes a console command (CCmd)
 
-    { XSTrav_SectorSound, NULL, TRAV_SECTORS, 0, 1, 0, "Sector Sound",
+    { (int (*)()) XSTrav_SectorSound, NULL, TRAV_SECTORS, 0, 1, 0, "Sector Sound",
       // Plays a sound in sector(s)
        {{XGPF_INT, "Target Ref", "lsref_", 0},              // ip0: (sector ref) sector(s) to play the sound in
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
         {XGPF_INT, "Sound ID", "", 2 | MAP_SND},            // ip2: sound name/id to play
         {XGPF_INT, "Origin", "", -1} }},                    // ip3: non-zero = play from a specific origin (1=floor, 2=ceiling) else 0=center
 
-    { XSTrav_MimicSector, NULL, TRAV_SECTORS, 0, 1, 0, "Mimic Sector",
+    { (int (*)()) XSTrav_MimicSector, NULL, TRAV_SECTORS, 0, 1, 0, "Mimic Sector",
       // Copies all properties from target sector to destination sector(s)
        {{XGPF_INT, "Target Ref", "lsref_", 0},              // ip0: (sector ref) sector(s) to change
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
         {XGPF_INT, "Mimic Ref", "spref_", 2},               // ip2: (spref) sector to mimic
         {XGPF_INT, "Mimic Num", "", -1} }},                 // ip3:
 
-    { XSTrav_Teleport, NULL, TRAV_SECTORS, 0, 1, 0, "Teleport",
+    { (int (*)()) XSTrav_Teleport, NULL, TRAV_SECTORS, 0, 1, 0, "Teleport",
       // Teleports the activator to the first teleport exit in the target sector
        {{XGPF_INT, "Target Ref", "lsref_", 0},              // ip0: (sector ref) sector(s) to teleport to (first acceptable target is used)
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
@@ -372,7 +374,7 @@ xgclass_t xgClasses[NUMXGCLASSES] =
         {XGPF_INT, "No Sound", "", -1},                     // ip3: non-zero = no sound
         {XGPF_INT, "Always Stomp", "", -1} }},              // ip4: non-zero = Always telefrag
 
-    { XLTrav_LineTeleport, NULL, TRAV_LINES, 0, 1, 1 | XLE_CROSS, "Line Teleport",
+    { (int (*)()) XLTrav_LineTeleport, NULL, TRAV_LINES, 0, 1, 1 | XLE_CROSS, "Line Teleport",
       // Teleports the activator to the referenced line
        {{XGPF_INT, "Target Ref", "lref_", 0},               // ip0: (line ref) teleport destination
         {XGPF_INT, "Target Num", "", -1},                   // ip1:
@@ -613,7 +615,7 @@ void XL_SetLineType(linedef_t* line, int id)
 
         // Allocate memory for the line type data.
         if(!xline->xg)
-            xline->xg = Z_Malloc(sizeof(xgline_t), PU_MAP, 0);
+            xline->xg = (xgline_t*) Z_Malloc(sizeof(xgline_t), PU_MAP, 0);
 
         // Init the extended line state.
         xline->xg->disabled = false;
@@ -629,11 +631,11 @@ void XL_SetLineType(linedef_t* line, int id)
                xgClasses[xline->xg->info.lineClass].className, id);
 
         // If there is not already an xlthinker for this line, create one.
-        if(DD_IterateThinkers(XL_Thinker, findXLThinker, line))
+        if(DD_IterateThinkers((void (*)()) XL_Thinker, findXLThinker, line))
         {   // Not created one yet.
-            xlthinker_t*    xl = Z_Calloc(sizeof(*xl), PU_MAP, 0);
+            xlthinker_t*    xl = (xlthinker_t*) Z_Calloc(sizeof(*xl), PU_MAP, 0);
 
-            xl->thinker.function = XL_Thinker;
+            xl->thinker.function = (void (*)()) XL_Thinker;
             DD_ThinkerAdd(&xl->thinker);
 
             xl->line = line;
@@ -662,7 +664,7 @@ void XL_Init(void)
 
     for(i = 0; i < numlines; ++i)
     {
-        line = P_ToPtr(DMU_LINEDEF, i);
+        line = (linedef_t*) P_ToPtr(DMU_LINEDEF, i);
         P_ToXLine(line)->xg = 0;
 
         XL_SetLineType(line, P_ToXLine(line)->special);
@@ -676,8 +678,8 @@ void XL_Init(void)
  * @return              @c true, iff all callbacks return @c true.
  */
 int XL_TraversePlanes(linedef_t* line, int refType, int ref, void* data,
-                      void* context, boolean travsectors, mobj_t* activator,
-                      int (C_DECL *func)())
+                      void* context, boolean travsectors, mobj_s* activator,
+                      xstravfunc_t func)
 {
     int                 tag;
     mobj_t*             mo;
@@ -701,8 +703,8 @@ int XL_TraversePlanes(linedef_t* line, int refType, int ref, void* data,
     if(refType == LPREF_NONE)
         return false; // This is not a reference!
 
-    frontSec = P_GetPtrp(line, DMU_FRONT_SECTOR);
-    backSec = P_GetPtrp(line, DMU_BACK_SECTOR);
+    frontSec = (sector_t*) P_GetPtrp(line, DMU_FRONT_SECTOR);
+    backSec = (sector_t*) P_GetPtrp(line, DMU_BACK_SECTOR);
 
     // References to a single plane
     if(refType == LPREF_MY_FLOOR || refType == LPREF_MY_CEILING)
@@ -728,11 +730,11 @@ int XL_TraversePlanes(linedef_t* line, int refType, int ref, void* data,
     }
 
     if(refType == LPREF_INDEX_FLOOR)
-        return func(P_ToPtr(DMU_SECTOR, ref), false, data, context,
+        return func((sector_t*) P_ToPtr(DMU_SECTOR, ref), false, data, context,
                     activator);
 
     if(refType == LPREF_INDEX_CEILING)
-        return func(P_ToPtr(DMU_SECTOR, ref), true, data, context,
+        return func((sector_t*) P_ToPtr(DMU_SECTOR, ref), true, data, context,
                     activator);
 
     // Can we use the tagged sector lists?
@@ -758,7 +760,7 @@ int XL_TraversePlanes(linedef_t* line, int refType, int ref, void* data,
         if(list)
         {   // Find the first sector with the tag.
             P_IterListResetIterator(list, true);
-            while((sec = P_IterListIterator(list)) != NULL)
+            while((sec = (sector_t*) P_IterListIterator(list)) != NULL)
             {
                 xsec = P_ToXSector(sec);
 
@@ -785,7 +787,7 @@ int XL_TraversePlanes(linedef_t* line, int refType, int ref, void* data,
 
         for(i = 0; i < numsectors; ++i)
         {
-            sec = P_ToPtr(DMU_SECTOR, i);
+            sec = (sector_t*) P_ToPtr(DMU_SECTOR, i);
             xsec = P_ToXSector(sec);
 
             if(refType == LPREF_ALL_FLOORS || refType == LPREF_ALL_CEILINGS)
@@ -811,7 +813,7 @@ int XL_TraversePlanes(linedef_t* line, int refType, int ref, void* data,
             {
                 ok = true;
 
-                for(mo = P_GetPtrp(sec, DMT_MOBJS); ok && mo; mo = mo->sNext)
+                for(mo = (mobj_t*) P_GetPtrp(sec, DMT_MOBJS); ok && mo; mo = (mobj_t*) mo->sNext)
                 {
                     if(mo->type == P_ToXLine(line)->xg->info.aparm[9])
                     {
@@ -834,7 +836,7 @@ int XL_TraversePlanes(linedef_t* line, int refType, int ref, void* data,
             {
                 ok = true;
 
-                for(mo = P_GetPtrp(sec, DMT_MOBJS); ok && mo; mo = mo->sNext)
+                for(mo = (mobj_t*) P_GetPtrp(sec, DMT_MOBJS); ok && mo; mo = (mobj_t*) mo->sNext)
                 {
                     if(mo->type != P_ToXLine(line)->xg->info.aparm[9])
                         continue;
@@ -866,8 +868,9 @@ int XL_TraversePlanes(linedef_t* line, int refType, int ref, void* data,
  *                      @c true. Stops checking when false is returned.
  */
 int XL_TraverseLines(linedef_t* line, int rtype, int ref, void* data,
-                     void* context, mobj_t* activator, int (C_DECL *func)())
+                     void* context, mobj_s* activator_, xltravfunc_t func)
 {
+    mobj_t*             activator = (mobj_t*) activator_;
     uint                i;
     int                 tag;
     int                 reftype = rtype;
@@ -894,7 +897,7 @@ int XL_TraverseLines(linedef_t* line, int rtype, int ref, void* data,
         return func(line, true, data, context, activator);
 
     if(reftype == LREF_INDEX)
-        return func(P_ToPtr(DMU_LINEDEF, ref), true, data, context, activator);
+        return func((linedef_t*) P_ToPtr(DMU_LINEDEF, ref), true, data, context, activator);
 
     // Can we use the tagged line lists?
     findLineTagged = false;
@@ -917,7 +920,7 @@ int XL_TraverseLines(linedef_t* line, int rtype, int ref, void* data,
         if(list)
         {
             P_IterListResetIterator(list, true);
-            while((iter = P_IterListIterator(list)) != NULL)
+            while((iter = (linedef_t*) P_IterListIterator(list)) != NULL)
             {
                 if(reftype == LREF_TAGGED)
                 {
@@ -938,7 +941,7 @@ int XL_TraverseLines(linedef_t* line, int rtype, int ref, void* data,
     {
         for(i = 0; i < numlines; ++i)
         {
-            iter = P_ToPtr(DMU_LINEDEF, i);
+            iter = (linedef_t*) P_ToPtr(DMU_LINEDEF, i);
             if(reftype == LREF_ALL)
             {
                 if(!func(iter, true, data, context, activator))
@@ -1032,7 +1035,7 @@ int XL_ValidateLineRef(linedef_t* line, int reftype, void* context,
 
     case LDREF_TOP_OFFSETX:
         // Can this ever fail?
-        side = P_GetPtrp(line, DMU_SIDEDEF0);
+        side = (sidedef_t*) P_GetPtrp(line, DMU_SIDEDEF0);
         if(!side)
         {
             XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
@@ -1046,7 +1049,7 @@ int XL_ValidateLineRef(linedef_t* line, int reftype, void* context,
 
     case LDREF_TOP_OFFSETY:
         // Can this ever fail?
-        side = P_GetPtrp(line, DMU_SIDEDEF0);
+        side = (sidedef_t*) P_GetPtrp(line, DMU_SIDEDEF0);
         if(!side)
         {
             XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
@@ -1060,7 +1063,7 @@ int XL_ValidateLineRef(linedef_t* line, int reftype, void* context,
 
     case LDREF_MIDDLE_OFFSETX:
         // Can this ever fail?
-        side = P_GetPtrp(line, DMU_SIDEDEF0);
+        side = (sidedef_t*) P_GetPtrp(line, DMU_SIDEDEF0);
         if(!side)
         {
             XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
@@ -1074,7 +1077,7 @@ int XL_ValidateLineRef(linedef_t* line, int reftype, void* context,
 
     case LDREF_MIDDLE_OFFSETY:
         // Can this ever fail?
-        side = P_GetPtrp(line, DMU_SIDEDEF0);
+        side = (sidedef_t*) P_GetPtrp(line, DMU_SIDEDEF0);
         if(!side)
         {
             XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
@@ -1088,7 +1091,7 @@ int XL_ValidateLineRef(linedef_t* line, int reftype, void* context,
 
     case LDREF_BOTTOM_OFFSETX:
         // Can this ever fail?
-        side = P_GetPtrp(line, DMU_SIDEDEF0);
+        side = (sidedef_t*) P_GetPtrp(line, DMU_SIDEDEF0);
         if(!side)
         {
             XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
@@ -1102,7 +1105,7 @@ int XL_ValidateLineRef(linedef_t* line, int reftype, void* context,
 
     case LDREF_BOTTOM_OFFSETY:
         // Can this ever fail?
-        side = P_GetPtrp(line, DMU_SIDEDEF0);
+        side = (sidedef_t*) P_GetPtrp(line, DMU_SIDEDEF0);
         if(!side)
         {
             XG_Dev("XL_ValidateLineRef: REFERENCE MISSING FRONT SIDEDEF!");
@@ -1156,19 +1159,19 @@ void XL_DoFunction(linetype_t* info, linedef_t* line, int sideNum,
         switch(xgClass->traverse)
         {
             case TRAV_NONE: // No need for traversal, call the doFunc
-                xgClass->doFunc(line, true, line, info, actThing);
+                ((xltravfunc_t)xgClass->doFunc)(line, true, line, info, actThing);
                 break;
             case TRAV_LINES: // Traverse lines, executing doFunc for each
                 XL_TraverseLines(line, info->iparm[xgClass->travRef],
                                  info->iparm[xgClass->travData], line,
-                                 info, actThing, xgClass->doFunc);
+                                 info, actThing, (xltravfunc_t) xgClass->doFunc);
                 break;
             case TRAV_PLANES: // Traverse planes, executing doFunc for each
             case TRAV_SECTORS:
                 XL_TraversePlanes(line, info->iparm[xgClass->travRef],
                                   info->iparm[xgClass->travData], line,
                                   info, xgClass->traverse == TRAV_SECTORS? true : false,
-                                  actThing, xgClass->doFunc);
+                                  actThing, (xstravfunc_t) xgClass->doFunc);
                 break;
         }
     }
@@ -1246,7 +1249,7 @@ int C_DECL XL_DoChainSequence(linedef_t* line, boolean dummy, void* context,
 
         if(xline->xg)
         {
-            linetype_t*         info = context2;
+            linetype_t*         info = (linetype_t*) context2;
 
             xline->xg->chIdx = 1; // This is the first.
             // Start counting the first interval.
@@ -1262,7 +1265,7 @@ int C_DECL XL_DoDamage(linedef_t* line, boolean dummy, void* context,
                        void* context2, mobj_t* activator)
 {
     int                 i;
-    linetype_t*         info = context2;
+    linetype_t*         info = (linetype_t*) context2;
 
     if(!activator)
     {
@@ -1303,7 +1306,7 @@ int C_DECL XL_DoPower(linedef_t* line, boolean dummy, void* context,
                       void* context2, mobj_t* activator)
 {
     player_t*           player = 0;
-    linetype_t*         info = context2;
+    linetype_t*         info = (linetype_t*) context2;
     int                 delta;
 
     if(activator)
@@ -1346,7 +1349,7 @@ int C_DECL XL_DoKey(linedef_t* line, boolean dummy, void* context,
 {
     int                 i;
     player_t*           player = 0;
-    linetype_t*         info = context2;
+    linetype_t*         info = (linetype_t*) context2;
 
     if(activator)
         player = activator->player;
@@ -1364,7 +1367,7 @@ int C_DECL XL_DoKey(linedef_t* line, boolean dummy, void* context,
     for(i = 0; i < NUM_KEY_TYPES; ++i)
     {
         if(info->iparm[0] & (1 << i))
-            P_GiveKey(player, i);
+            P_GiveKey(player, keytype_t(i));
         if(info->iparm[1] & (1 << i))
             player->keys[i] = false;
     }
@@ -1391,7 +1394,7 @@ int C_DECL XL_DoExplode(linedef_t* line, boolean dummy, void* context,
 int C_DECL XL_DoCommand(linedef_t* line, boolean dummy, void* context,
                         void* context2, mobj_t* activator)
 {
-    linetype_t*         info = context2;
+    linetype_t*         info = (linetype_t*) context2;
 
     DD_Execute(true, info->sparm[0]);
     return true;
@@ -1407,7 +1410,7 @@ int C_DECL XLTrav_ChangeLineType(linedef_t* line, boolean dummy,
 {
     if(line)
     {
-        linetype_t*         info = context2;
+        linetype_t*         info = (linetype_t*) context2;
 
         XL_SetLineType(line, info->iparm[2]);
     }
@@ -1419,7 +1422,7 @@ int C_DECL XLTrav_ChangeWallMaterial(linedef_t* line, boolean dummy,
                                      void* context, void *context2,
                                      mobj_t* activator)
 {
-    linetype_t*     info = context2;
+    linetype_t*     info = (linetype_t*) context2;
     sidedef_t*      side;
     blendmode_t     blend = BM_NORMAL;
     byte            rgba[4];
@@ -1452,14 +1455,14 @@ int C_DECL XLTrav_ChangeWallMaterial(linedef_t* line, boolean dummy,
         if(!P_GetPtrp(line, DMU_BACK_SECTOR))
             return true;
 
-        side = P_GetPtrp(line, DMU_SIDEDEF1);
+        side = (sidedef_t*) P_GetPtrp(line, DMU_SIDEDEF1);
     }
     else
     {
         if(!P_GetPtrp(line, DMU_FRONT_SECTOR))
             return true;
 
-        side = P_GetPtrp(line, DMU_SIDEDEF0);
+        side = (sidedef_t*) P_GetPtrp(line, DMU_SIDEDEF0);
     }
 
     XG_Dev("XLTrav_ChangeWallTexture: Line %i", P_ToIndex(line));
@@ -1468,7 +1471,7 @@ int C_DECL XLTrav_ChangeWallMaterial(linedef_t* line, boolean dummy,
     rgba[1] = info->iparm[10];
     rgba[2] = info->iparm[11];
     XL_ChangeMaterial(line, info->iparm[2], LWS_UPPER,
-                      P_ToPtr(DMU_MATERIAL, info->iparm[3]), blend, rgba,
+                      (material_t*) P_ToPtr(DMU_MATERIAL, info->iparm[3]), blend, rgba,
                       info->iparm[7]);
 
     rgba[0] = info->iparm[12];
@@ -1482,17 +1485,17 @@ int C_DECL XLTrav_ChangeWallMaterial(linedef_t* line, boolean dummy,
         if(!P_GetPtrp(line, DMU_BACK_SECTOR) && info->iparm[4] == -1)
             mat = NULL;
         else
-            mat = P_ToPtr(DMU_MATERIAL, info->iparm[4]);
+            mat = (material_t*) P_ToPtr(DMU_MATERIAL, info->iparm[4]);
     }
 
     XL_ChangeMaterial(line, info->iparm[2], LWS_MID, mat,
-                      info->iparm[8], rgba, info->iparm[7]);
+                      (blendmode_t) info->iparm[8], rgba, info->iparm[7]);
 
     rgba[0] = info->iparm[16];
     rgba[1] = info->iparm[17];
     rgba[2] = info->iparm[18];
     XL_ChangeMaterial(line, info->iparm[2], LWS_LOWER,
-                      P_ToPtr(DMU_MATERIAL, info->iparm[5]), blend, rgba,
+                      (material_t*) P_ToPtr(DMU_MATERIAL, info->iparm[5]), blend, rgba,
                       info->iparm[7]);
 
     return true;
@@ -1513,7 +1516,7 @@ int C_DECL XLTrav_LineCount(linedef_t* line, boolean dummy, void* context,
     if(line)
     {
         xline_t*            xline = P_ToXLine(line);
-        linetype_t*         info = context2;
+        linetype_t*         info = (linetype_t*) context2;
 
         if(xline->xg)
         {
@@ -1532,7 +1535,7 @@ int C_DECL XLTrav_Music(linedef_t* line, boolean dummy, void* context,
 {
     int                 song = 0;
     int                 temp = 0;
-    linetype_t*         info = context2;
+    linetype_t*         info = (linetype_t*) context2;
 
     if(info->iparm[2] == LREF_NONE)
     {    // The old format, use ip0 explicitly.
@@ -1601,15 +1604,15 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
     }
 
     // Retrieve a few properties to make this look neater.
-    oldV1 = P_GetPtrp(line, DMU_VERTEX0);
-    oldV2 = P_GetPtrp(line, DMU_VERTEX1);
+    oldV1 = (vertex_t*) P_GetPtrp(line, DMU_VERTEX0);
+    oldV2 = (vertex_t*) P_GetPtrp(line, DMU_VERTEX1);
     P_GetFloatpv(line, DMU_DXY, oldLineDelta);
 
-    newV1 = P_GetPtrp(newLine, DMU_VERTEX0);
-    newV2 = P_GetPtrp(newLine, DMU_VERTEX1);
+    newV1 = (vertex_t*) P_GetPtrp(newLine, DMU_VERTEX0);
+    newV2 = (vertex_t*) P_GetPtrp(newLine, DMU_VERTEX1);
     P_GetFloatpv(newLine, DMU_DXY, newLineDelta);
-    newFrontSec = P_GetPtrp(newLine, DMU_FRONT_SECTOR);
-    newBackSec  = P_GetPtrp(newLine, DMU_BACK_SECTOR);
+    newFrontSec = (sector_t*) P_GetPtrp(newLine, DMU_FRONT_SECTOR);
+    newBackSec  = (sector_t*) P_GetPtrp(newLine, DMU_BACK_SECTOR);
 
     // i2: 1 = Spawn Fog
     // i3: Sound = Sound to play
@@ -1791,7 +1794,7 @@ int C_DECL XLTrav_LeaveMap(linedef_t* line, boolean dummy, void* context,
 {
     int                 map = 0;
     int                 temp = 0;
-    linetype_t*         info = context2;
+    linetype_t*         info = (linetype_t*) context2;
 
     // Is this a secret exit?
     if(info->iparm[0] > 0)
@@ -1898,7 +1901,7 @@ void XL_SwapSwitchTextures(linedef_t* line, int snum)
 {
     if(line)
     {
-        sidedef_t*          side = P_GetPtrp(line,
+        sidedef_t*          side = (sidedef_t*) P_GetPtrp(line,
             snum? DMU_SIDEDEF1 : DMU_SIDEDEF0);
 
         if(side && P_ToggleSwitch(side, SFX_NONE, true, 0))
@@ -1916,7 +1919,7 @@ void XL_ChangeMaterial(linedef_t* line, int sidenum, int section,
 {
     int                 i;
     int                 currentFlags;
-    sidedef_t*          side =
+    sidedef_t*          side = (sidedef_t*)
         P_GetPtrp(line, sidenum? DMU_SIDEDEF1:DMU_SIDEDEF0);
 
     if(!side)
@@ -1995,10 +1998,10 @@ void XL_Message(mobj_t* act, char* msg, boolean global)
     {
         pl = act->player;
     }
-    else if((act->flags & MF_MISSILE) && act->target && act->target->player)
+    else if((act->flags & MF_MISSILE) && act->target && ((mobj_t*)act->target)->player)
     {
         // Originator of the missile.
-        pl = act->target->player;
+        pl = ((mobj_t*)act->target)->player;
     }
     else
     {
@@ -2013,14 +2016,14 @@ void XL_Message(mobj_t* act, char* msg, boolean global)
 /**
  * XL_ActivateLine
  */
-void XL_ActivateLine(boolean activating, linetype_t* info, linedef_t* line,
-                     int sidenum, mobj_t* data, int evtype)
+void XL_ActivateLine(boolean activating, linetype_t* info, struct linedef_s* line, int sidenum,
+                     mobj_s* data, int evtype)
 {
     byte                rgba[4] = { 0, 0, 0, 0 };
     xgline_t*           xg;
     sector_t*           frontsector;
     mobj_t*             activator_thing = (mobj_t *) data;
-    ddmobj_base_t*      soundOrg = 0;
+    mobj_s*             soundOrg = 0;
 
     xg = P_ToXLine(line)->xg;
 
@@ -2042,9 +2045,9 @@ void XL_ActivateLine(boolean activating, linetype_t* info, linedef_t* line,
     }
 
     // Activation should happen on the front side.
-    frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+    frontsector = (sector_t*) P_GetPtrp(line, DMU_FRONT_SECTOR);
     if(frontsector)
-        soundOrg = P_GetPtrp(frontsector, DMU_SOUND_ORIGIN);
+        soundOrg = (mobj_t*) P_GetPtrp(frontsector, DMU_SOUND_ORIGIN);
 
     // Let the line know who's activating it.
     xg->activator = data;
@@ -2119,7 +2122,7 @@ void XL_ActivateLine(boolean activating, linetype_t* info, linedef_t* line,
         // Change the texture of the line if asked to.
         if(info->wallSection && info->actMaterial)
             XL_ChangeMaterial(line, sidenum, info->wallSection,
-                              P_ToPtr(DMU_MATERIAL, info->actMaterial),
+                              (material_t*) P_ToPtr(DMU_MATERIAL, info->actMaterial),
                               BM_NORMAL, rgba, 0);
 
         // Change the class of the line if asked to
@@ -2137,7 +2140,7 @@ void XL_ActivateLine(boolean activating, linetype_t* info, linedef_t* line,
         // Change the texture of the line if asked to.
         if(info->wallSection && info->deactMaterial)
             XL_ChangeMaterial(line, sidenum, info->wallSection,
-                              P_ToPtr(DMU_MATERIAL, info->deactMaterial),
+                              (material_t*) P_ToPtr(DMU_MATERIAL, info->deactMaterial),
                               BM_NORMAL, rgba, 0);
 
         // Change the class of the line if asked to.
@@ -2335,7 +2338,7 @@ int XL_LineEvent(int evtype, int linetype, linedef_t* line, int sidenum,
 
     if(info->flags & LTF_MOBJ_GONE)
     {
-        if(!DD_IterateThinkers(P_MobjThinker, XL_CheckMobjGone, &info->aparm[9]))
+        if(!DD_IterateThinkers((void (*)()) P_MobjThinker, XL_CheckMobjGone, &info->aparm[9]))
             return false;
     }
 
@@ -2479,7 +2482,7 @@ int XL_LineEvent(int evtype, int linetype, linedef_t* line, int sidenum,
 /**
  * @return              @c true, if the event was processed.
  */
-int XL_CrossLine(linedef_t* line, int sidenum, mobj_t* thing)
+int XL_CrossLine(linedef_t* line, int sidenum, mobj_s* thing)
 {
     if(!line || !P_ToXLine(line)->xg)
         return false;
@@ -2490,7 +2493,7 @@ int XL_CrossLine(linedef_t* line, int sidenum, mobj_t* thing)
 /**
  * @return              @c true, if the event was processed.
  */
-int XL_UseLine(linedef_t* line, int sidenum, mobj_t* thing)
+int XL_UseLine(linedef_t* line, int sidenum, mobj_s* thing)
 {
     if(!line || !P_ToXLine(line)->xg)
         return false;
@@ -2501,7 +2504,7 @@ int XL_UseLine(linedef_t* line, int sidenum, mobj_t* thing)
 /**
  * @return              @c true, if the event was processed.
  */
-int XL_ShootLine(linedef_t* line, int sidenum, mobj_t* thing)
+int XL_ShootLine(linedef_t* line, int sidenum, mobj_s* thing)
 {
     if(!line || !P_ToXLine(line)->xg)
         return false;
@@ -2509,7 +2512,7 @@ int XL_ShootLine(linedef_t* line, int sidenum, mobj_t* thing)
     return XL_LineEvent(XLE_SHOOT, 0, line, sidenum, thing);
 }
 
-int XL_HitLine(linedef_t *line, int sidenum, mobj_t *thing)
+int XL_HitLine(linedef_t *line, int sidenum, mobj_s* thing)
 {
     if(!line || !P_ToXLine(line)->xg)
         return false;
@@ -2517,8 +2520,7 @@ int XL_HitLine(linedef_t *line, int sidenum, mobj_t *thing)
     return XL_LineEvent(XLE_HIT, 0, line, sidenum, thing);
 }
 
-void XL_DoChain(linedef_t* line, int chain, boolean activating,
-                mobj_t* actThing)
+void XL_DoChain(linedef_t* line, int chain, boolean activating, mobj_t* actThing)
 {
     linedef_t*          dummyLine;
     xline_t*            xdummyLine;
@@ -2526,7 +2528,7 @@ void XL_DoChain(linedef_t* line, int chain, boolean activating,
     // We'll use a dummy line for the chain.
     dummyLine = P_AllocDummyLine();
     xdummyLine = P_ToXLine(dummyLine);
-    xdummyLine->xg = Z_Malloc(sizeof(xgline_t), PU_MAP, 0);
+    xdummyLine->xg = (xgline_t*) Z_Malloc(sizeof(xgline_t), PU_MAP, 0);
 
     XG_Dev("XL_DoChain: Line %i, chained type %i", P_ToIndex(line), chain);
     XG_Dev("  (dummy line will show up as %i)", P_ToIndex(dummyLine));
@@ -2602,7 +2604,7 @@ void XL_Thinker(xlthinker_t* xl)
             ((info->flags2 & LTF2_WHEN_INACTIVE) && !xg->active)) &&
             (!(info->flags2 & LTF2_WHEN_LAST) || info->actCount == 1))
         {
-            XL_DoFunction(info, line, 0, xg->activator, XLE_FORCED);
+            XL_DoFunction(info, line, 0, (mobj_t*) xg->activator, XLE_FORCED);
         }
     }
 
@@ -2628,7 +2630,7 @@ void XL_Thinker(xlthinker_t* xl)
             if(xg->chIdx < DDLT_MAX_PARAMS && info->iparm[xg->chIdx])
             {
                 // Only send activation events.
-                XL_DoChain(line, info->iparm[xg->chIdx], true, xg->activator);
+                XL_DoChain(line, info->iparm[xg->chIdx], true, (mobj_t*) xg->activator);
 
                 // Advance to the next one.
                 xg->chIdx++;
@@ -2653,7 +2655,7 @@ void XL_Thinker(xlthinker_t* xl)
             else if(info->iparm[0] & CHSF_DEACTIVATE_WHEN_DONE)
             {
                 // The sequence has been completed.
-                XL_ActivateLine(false, info, line, 0, xg->activator, XLE_CHAIN);
+                XL_ActivateLine(false, info, line, 0, (mobj_t*) xg->activator, XLE_CHAIN);
             }
         }
     }
@@ -2698,7 +2700,7 @@ void XL_Thinker(xlthinker_t* xl)
          */
 
         // Front side.
-        side = P_GetPtrp(line, DMU_SIDEDEF0);
+        side = (sidedef_t*) P_GetPtrp(line, DMU_SIDEDEF0);
         if(side)
         {
             P_GetFloatpv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);
@@ -2718,7 +2720,7 @@ void XL_Thinker(xlthinker_t* xl)
         }
 
         // Back side.
-        side = P_GetPtrp(line, DMU_SIDEDEF1);
+        side = (sidedef_t*) P_GetPtrp(line, DMU_SIDEDEF1);
         if(side)
         {
             P_GetFloatpv(side, DMU_TOP_MATERIAL_OFFSET_XY, current);

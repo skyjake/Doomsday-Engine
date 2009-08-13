@@ -119,7 +119,7 @@ iterlist_t *P_GetLineIterListForTag(int tag, boolean createNewList)
 
     // Nope, we need to allocate another.
     numLineTagLists++;
-    lineTagLists = realloc(lineTagLists, sizeof(taglist_t) * numLineTagLists);
+    lineTagLists = (taglist_t*) realloc(lineTagLists, sizeof(taglist_t) * numLineTagLists);
     tagList = &lineTagLists[numLineTagLists - 1];
     tagList->tag = tag;
 
@@ -165,7 +165,7 @@ iterlist_t *P_GetSectorIterListForTag(int tag, boolean createNewList)
 
     // Nope, we need to allocate another.
     numSectorTagLists++;
-    sectorTagLists = realloc(sectorTagLists, sizeof(taglist_t) * numSectorTagLists);
+    sectorTagLists = (taglist_t*) realloc(sectorTagLists, sizeof(taglist_t) * numSectorTagLists);
     tagList = &sectorTagLists[numSectorTagLists - 1];
     tagList->tag = tag;
 
@@ -188,13 +188,13 @@ sector_t *P_GetNextSector(linedef_t *line, sector_t *sec)
     if(!sec || !line)
         return NULL;
 
-    frontSec = P_GetPtrp(line, DMU_FRONT_SECTOR);
+    frontSec = (sector_t*) P_GetPtrp(line, DMU_FRONT_SECTOR);
 
     if(!frontSec)
         return NULL;
 
     if(frontSec == sec)
-        return P_GetPtrp(line, DMU_BACK_SECTOR);
+        return (sector_t*) P_GetPtrp(line, DMU_BACK_SECTOR);
 
     return frontSec;
 }
@@ -638,8 +638,8 @@ int spreadSoundToNeighbors(void *ptr, void *context)
         (spreadsoundtoneighborsparams_t*) context;
     sector_t           *frontSec, *backSec;
 
-    frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
-    backSec  = P_GetPtrp(li, DMU_BACK_SECTOR);
+    frontSec = (sector_t*) P_GetPtrp(li, DMU_FRONT_SECTOR);
+    backSec  = (sector_t*) P_GetPtrp(li, DMU_BACK_SECTOR);
 
     if(frontSec && backSec)
     {
@@ -693,7 +693,7 @@ void P_RecursiveSound(struct mobj_s *soundTarget, sector_t *sec,
 
     params.baseSec = sec;
     params.soundBlocks = soundBlocks;
-    params.soundTarget = soundTarget;
+    params.soundTarget = (mobj_t*) soundTarget;
     P_Iteratep(sec, DMU_LINEDEF, &params, spreadSoundToNeighbors);
 }
 
@@ -705,6 +705,6 @@ void P_RecursiveSound(struct mobj_s *soundTarget, sector_t *sec,
  */
 const terraintype_t* P_GetPlaneMaterialType(sector_t* sec, int plane)
 {
-    return P_TerrainTypeForMaterial(
+    return P_TerrainTypeForMaterial((material_t*)
         P_GetPtrp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL)));
 }

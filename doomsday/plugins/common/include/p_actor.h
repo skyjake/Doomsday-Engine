@@ -29,7 +29,7 @@
 #ifndef __DD_COMMON_ACTOR_H__
 #define __DD_COMMON_ACTOR_H__
 
-void            P_MobjRemove(mobj_t* mo, boolean noRespawn);
+void            P_MobjRemove(mobj_s* mo, boolean noRespawn);
 
 void            P_MobjUnsetPosition(mobj_t* mo);
 void            P_MobjSetPosition(mobj_t* mo);

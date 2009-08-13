@@ -31,7 +31,6 @@
 #ifndef __JDOOM_CONVENIENCE_H__
 #define __JDOOM_CONVENIENCE_H__
 
-#include "../../doom/include/acfnlink.h"
 #include "../../doom/include/d_api.h"
 #include "../../doom/include/d_config.h"
 #include "../../doom/include/d_console.h"
@@ -63,5 +62,6 @@
 #include "../../doom/include/st_stuff.h"
 #include "../../doom/include/tables.h"
 #include "../../doom/include/wi_stuff.h"
+#include "../../doom/include/acfnlink.h"
 
 #endif // __JDOOM_CONVENIENCE_H__

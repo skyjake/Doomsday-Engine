@@ -91,7 +91,6 @@ void        P_MovePsprites(player_t *plr);
 void        P_DropWeapon(player_t *plr);
 void        P_SetPsprite(player_t *plr, int position, int /*statenum_t*/ stnum);
 
-void        P_MobjRemove(mobj_t* mo, boolean noRespawn);
 boolean     P_MobjChangeState(mobj_s* mo, int /*statenum_t*/ state);
 void        P_MobjThinker(mobj_t* mo);
 void        P_RipperBlood(mobj_t* mo);

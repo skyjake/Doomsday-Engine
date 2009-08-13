@@ -178,7 +178,7 @@ static void ReadString(char** str)
         Con_Error("ReadString: Bogus len!\n");
 
     // Allocate memory for the string.
-    *str = Z_Malloc(len + 1, PU_STATIC, 0);
+    *str = (char*) Z_Malloc(len + 1, PU_STATIC, 0);
     memcpy(*str, readptr, len);
     readptr += len;
     (*str)[len] = 0;
@@ -340,14 +340,14 @@ void XG_ReadXGLump(char* name)
     buf = malloc(W_LumpLength(lump));
     W_ReadLump(lump, buf);
 
-    readptr = buf;
+    readptr = (const byte*) buf;
 
     num_linetypes = ReadShort();
     num_sectypes = ReadShort();
 
     // Allocate the arrays.
-    linetypes = Z_Calloc(sizeof(*linetypes) * num_linetypes, PU_STATIC, 0);
-    sectypes = Z_Calloc(sizeof(*sectypes) * num_sectypes, PU_STATIC, 0);
+    linetypes = (linetype_t*) Z_Calloc(sizeof(*linetypes) * num_linetypes, PU_STATIC, 0);
+    sectypes = (sectortype_t*) Z_Calloc(sizeof(*sectypes) * num_sectypes, PU_STATIC, 0);
 
     while(!done)
     {

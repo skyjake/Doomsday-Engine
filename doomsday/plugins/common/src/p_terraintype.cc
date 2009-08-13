@@ -109,7 +109,7 @@ static void createMaterialTerrainType(material_t* mat, uint idx)
         }
 
     // Its a new material.
-    materialTTypes =
+    materialTTypes = (materialterraintype_t*)
         Z_Realloc(materialTTypes, sizeof(*materialTTypes) * ++numMaterialTTypes,
                   PU_STATIC);
 
@@ -189,7 +189,7 @@ void P_InitTerrainTypes(void)
         {"X_009",    MN_FLATS, "Sludge"},
         {"F_033",    MN_FLATS, "Ice"},
 #endif
-        {NULL, 0, NULL}
+        {NULL, material_namespace_t(0), NULL}
     };
     uint                i;
 
@@ -205,7 +205,7 @@ void P_InitTerrainTypes(void)
 
         if(idx)
         {
-            material_t*         mat =
+            material_t*         mat = (material_t*)
                 P_ToPtr(DMU_MATERIAL,
                         P_MaterialCheckNumForName(matTTypeDefs[i].matName,
                                                   matTTypeDefs[i].matGroup));

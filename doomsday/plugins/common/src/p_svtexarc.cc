@@ -97,6 +97,7 @@ static void initMaterialNameLUT(void)
  */
 void SV_PrepareMaterial(material_t* mat, materialarchive_t* arc)
 {
+#if 0
     int                 c;
     char                name[9];
     const char*         matName;
@@ -105,7 +106,7 @@ void SV_PrepareMaterial(material_t* mat, materialarchive_t* arc)
     if(!mat)
         return;
     matName = P_GetMaterialName(mat);
-    mnamespace = P_GetIntp(mat, DMU_NAMESPACE);
+    mnamespace = (material_namespace_t) P_GetIntp(mat, DMU_NAMESPACE);
 
     // Get the name of the material.
     if(matName)
@@ -130,6 +131,8 @@ void SV_PrepareMaterial(material_t* mat, materialarchive_t* arc)
         strcpy(arc->table[arc->count++].name, name);
         arc->table[arc->count - 1].mnamespace = mnamespace;
     }
+    
+#endif
 }
 
 /**
@@ -143,6 +146,7 @@ void SV_PrepareMaterial(material_t* mat, materialarchive_t* arc)
  */
 void SV_InitMaterialArchives(void)
 {
+#if 0
     uint                i;
 
     matArchive.version = MATERIAL_ARCHIVE_VERSION;
@@ -161,6 +165,7 @@ void SV_InitMaterialArchives(void)
         SV_PrepareMaterial(P_GetPtr(DMU_SIDEDEF, i, DMU_TOP_MATERIAL), &matArchive);
         SV_PrepareMaterial(P_GetPtr(DMU_SIDEDEF, i, DMU_BOTTOM_MATERIAL), &matArchive);
     }
+#endif
 }
 
 unsigned short SV_SearchArchive(materialarchive_t* arc, const char* name)
@@ -198,6 +203,7 @@ unsigned short SV_MaterialArchiveNum(material_t* mat)
 
 material_t* SV_GetArchiveMaterial(int archivenum, int group)
 {
+#if 0
     if(archivenum == 0)
         return NULL;
     archivenum--;
@@ -221,10 +227,13 @@ material_t* SV_GetArchiveMaterial(int archivenum, int group)
         return P_ToPtr(DMU_MATERIAL,
             P_MaterialNumForName(matArchive.table[archivenum].name,
                                  matArchive.table[archivenum].mnamespace));
+#endif
+    return NULL;
 }
 
 void SV_WriteMaterialArchive(void)
 {
+#if 0
     int                 i;
 
     SV_WriteByte(matArchive.version);
@@ -235,11 +244,13 @@ void SV_WriteMaterialArchive(void)
         SV_Write(matArchive.table[i].name, 8);
         SV_WriteByte(matArchive.table[i].mnamespace);
     }
+#endif
 }
 
 static void readMatArchive(materialarchive_t* arc,
                            material_namespace_t defaultGroup)
 {
+#if 0
     int                 i, num;
 
     num = SV_ReadShort();
@@ -254,6 +265,7 @@ static void readMatArchive(materialarchive_t* arc,
     }
 
     arc->count += num;
+#endif
 }
 
 /**
@@ -261,6 +273,7 @@ static void readMatArchive(materialarchive_t* arc,
  */
 void SV_ReadMaterialArchive(int version)
 {
+#if 0
     if(version >= 0)
     {
         matArchive.version = version;
@@ -282,4 +295,5 @@ void SV_ReadMaterialArchive(int version)
 
         readMatArchive(&matArchive, MN_FLATS);
     }
+#endif
 }

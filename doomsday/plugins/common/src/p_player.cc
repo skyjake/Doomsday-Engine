@@ -128,14 +128,14 @@ static void unlinkWeaponInSlot(byte slotidx, weapontype_t type)
 
     memmove(&slot->types[i], &slot->types[i+1], sizeof(weapontype_t) *
             (slot->num - 1 - i));
-    slot->types = realloc(slot->types, sizeof(weapontype_t) * --slot->num);
+    slot->types = (weapontype_t*) realloc(slot->types, sizeof(weapontype_t) * --slot->num);
 }
 
 static void linkWeaponInSlot(byte slotidx, weapontype_t type)
 {
     weaponslotinfo_t*   slot = &weaponSlots[slotidx-1];
 
-    slot->types = realloc(slot->types, sizeof(weapontype_t) * ++slot->num);
+    slot->types = (weapontype_t*) realloc(slot->types, sizeof(weapontype_t) * ++slot->num);
     if(slot->num > 1)
         memmove(&slot->types[1], &slot->types[0],
                 sizeof(weapontype_t) * (slot->num - 1));
@@ -291,7 +291,7 @@ int P_GetPlayerCheats(player_t *player)
  */
 void P_ShotAmmo(player_t *player)
 {
-    ammotype_t          i;
+    int                 i;
     int                 fireMode;
     weaponinfo_t*       wInfo =
         &weaponInfo[player->readyWeapon][player->class_];
@@ -343,7 +343,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                                  ammotype_t ammo, boolean force)
 {
     int                 i, lvl, pclass;
-    ammotype_t          ammotype;
+    int                 ammotype;
     weapontype_t        candidate;
     weapontype_t        returnval = WT_NOCHANGE;
     weaponinfo_t       *winf;
@@ -368,7 +368,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
         found = false;
         for(i = 0; i < NUM_WEAPON_TYPES && !found; ++i)
         {
-            candidate = cfg.weaponOrder[i];
+            candidate = (weapontype_t) cfg.weaponOrder[i];
             winf = &weaponInfo[candidate][pclass];
 
             // Is candidate available in this game mode?
@@ -431,7 +431,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
                 // should be made. Preferences are user selectable.
                 for(i = 0; i < NUM_WEAPON_TYPES; ++i)
                 {
-                    candidate = cfg.weaponOrder[i];
+                    candidate = (weapontype_t) cfg.weaponOrder[i];
                     winf = &weaponInfo[candidate][pclass];
 
                     // Is candidate available in this game mode?
@@ -461,7 +461,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon,
             // Preferences are user selectable.
             for(i = 0; i < NUM_WEAPON_TYPES; ++i)
             {
-                candidate = cfg.weaponOrder[i];
+                candidate = (weapontype_t) cfg.weaponOrder[i];
                 winf = &weaponInfo[candidate][pclass];
 
                 // Is candidate available in this game mode?
@@ -524,7 +524,7 @@ boolean P_CheckAmmo(player_t* plr)
 {
     int                 fireMode;
     boolean             good;
-    ammotype_t          i;
+    int                 i;
     weaponinfo_t*       wInfo;
 
     wInfo = &weaponInfo[plr->readyWeapon][plr->class_];
@@ -584,7 +584,7 @@ boolean P_CheckAmmo(player_t* plr)
  */
 weapontype_t P_PlayerFindWeapon(player_t* player, boolean prev)
 {
-    weapontype_t*       list, w = 0;
+    weapontype_t*       list, w = weapontype_t(0);
     int                 lvl, i;
 #if __JDOOM__
     static weapontype_t wp_list[] = {
@@ -752,7 +752,7 @@ void P_Thrust3D(player_t *player, angle_t angle, float lookdir,
 {
     angle_t             pitch = LOOKDIR2DEG(lookdir) / 360 * ANGLE_MAX;
     angle_t             sideangle = angle - ANG90;
-    mobj_t             *mo = player->plr->mo;
+    mobj_t             *mo = (mobj_t*) player->plr->mo;
     float               zmul;
     float               mom[3];
     float               forwardmove = FIX2FLT(forwardmovex);
@@ -850,11 +850,11 @@ void P_PlayerThinkCamera(player_t *player)
     if(!(player->plr->flags & DDPF_CAMERA))
     {
         if(player->playerState == PST_LIVE)
-            player->plr->mo->flags |= (MF_SOLID | MF_SHOOTABLE | MF_PICKUP);
+            ((mobj_t*)player->plr->mo)->flags |= (MF_SOLID | MF_SHOOTABLE | MF_PICKUP);
         return;
     }
 
-    mo = player->plr->mo;
+    mo = (mobj_t*) player->plr->mo;
 
     mo->flags &= ~(MF_SOLID | MF_SHOOTABLE | MF_PICKUP);
 
@@ -1039,7 +1039,7 @@ DEFCC(CCmdSetViewLock)
     {
         if(players[lock].plr->inGame && players[lock].plr->mo)
         {
-            players[pl].viewLock = players[lock].plr->mo;
+            players[pl].viewLock = (mobj_t*) players[lock].plr->mo;
             return true;
         }
     }
@@ -1087,7 +1087,7 @@ DEFCC(CCmdMakeLocal)
  */
 DEFCC(CCmdPrintPlayerCoords)
 {
-    mobj_t             *mo = players[CONSOLEPLAYER].plr->mo;
+    mobj_t             *mo = (mobj_t*) players[CONSOLEPLAYER].plr->mo;
 
     if(!mo || G_GetGameState() != GS_MAP)
         return false;
@@ -1143,10 +1143,10 @@ DEFCC(CCmdSpawnMobj)
     }
 
     // First try to find the thing by ID.
-    if((type = Def_Get(DD_DEF_MOBJ, argv[1], 0)) < 0)
+    if((type = (mobjtype_t) Def_Get(DD_DEF_MOBJ, argv[1], 0)) < 0)
     {
         // Try to find it by name instead.
-        if((type = Def_Get(DD_DEF_MOBJ_BY_NAME, argv[1], 0)) < 0)
+        if((type = (mobjtype_t) Def_Get(DD_DEF_MOBJ_BY_NAME, argv[1], 0)) < 0)
         {
             Con_Printf("Undefined thing type %s.\n", argv[1]);
             return false;

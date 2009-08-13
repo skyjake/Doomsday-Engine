@@ -177,7 +177,7 @@ int P_RegisterPlayerStart(spawnspot_t *mthing)
         if(numPlayerStartsMax < numPlayerStarts)
             numPlayerStartsMax = numPlayerStarts;
 
-        playerStarts =
+        playerStarts = (spawnspot_t*)
             Z_Realloc(playerStarts, sizeof(spawnspot_t) * numPlayerStartsMax, PU_MAP);
     }
 
@@ -281,11 +281,11 @@ boolean P_CheckSpot(int playernum, spawnspot_t *mthing, boolean doTeleSpark)
         using_dummy = true;
     }
 
-    ddplyr->mo->flags2 &= ~MF2_PASSMOBJ;
+    ((mobj_t*)ddplyr->mo)->flags2 &= ~MF2_PASSMOBJ;
 
     if(!P_CheckPosition2f(ddplyr->mo, pos[VX], pos[VY]))
     {
-        ddplyr->mo->flags2 |= MF2_PASSMOBJ;
+        ((mobj_t*)ddplyr->mo)->flags2 |= MF2_PASSMOBJ;
 
         if(using_dummy)
         {
@@ -294,7 +294,7 @@ boolean P_CheckSpot(int playernum, spawnspot_t *mthing, boolean doTeleSpark)
         }
         return false;
     }
-    ddplyr->mo->flags2 |= MF2_PASSMOBJ;
+    ((mobj_t*)ddplyr->mo)->flags2 |= MF2_PASSMOBJ;
 
     if(using_dummy)
     {
@@ -303,7 +303,7 @@ boolean P_CheckSpot(int playernum, spawnspot_t *mthing, boolean doTeleSpark)
     }
 
 #if __JDOOM__ || __JDOOM64__
-    G_QueueBody(ddplyr->mo);
+    G_QueueBody((mobj_t*) ddplyr->mo);
 #endif
 
     if(doTeleSpark) // Spawn a teleport fog
@@ -762,7 +762,7 @@ void P_MoveThingsOutOfWalls(void)
     {
         mobjtype_t          type = types[i];
 
-        DD_IterateThinkers(P_MobjThinker, iterateLinedefsNearMobj, &type);
+        DD_IterateThinkers((void (*)()) P_MobjThinker, iterateLinedefsNearMobj, &type);
     }
 }
 

@@ -70,6 +70,7 @@ typedef struct {
     //int           (*GetInteger) (int id);
     //void         *(*GetVariable) (int id);
 
+    /*
     // Networking.
     int           (*NetServerStart) (int before);
     int           (*NetServerStop) (int before);
@@ -81,6 +82,7 @@ typedef struct {
                                    size_t length);
     void         *(*NetWriteCommands) (int numCommands, void* data);
     void         *(*NetReadCommands) (size_t pktLength, void* data);
+    */
 
     // Tickers.
     //void          (*Ticker) (timespan_t ticLength);

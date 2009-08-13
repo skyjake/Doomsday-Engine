@@ -160,22 +160,22 @@ float           XS_ThrustMul(struct sector_s *sector);
 
 void            XS_InitMovePlane(struct linedef_s *line);
 int C_DECL      XSTrav_MovePlane(struct sector_s *sector, boolean ceiling,
-                                 void *context, void *context2, struct mobj_s *activator);
+                                 void *context, void *context2, mobj_s *activator);
 int C_DECL      XSTrav_SectorType(struct sector_s *sec, boolean ceiling,
-                                  void *context, void *context2, struct mobj_s *activator);
+                                  void *context, void *context2, mobj_s *activator);
 int C_DECL      XSTrav_SectorLight(struct sector_s *sector, boolean ceiling,
-                                   void *context, void *context2, struct mobj_s *activator);
+                                   void *context, void *context2, mobj_s *activator);
 int C_DECL      XSTrav_PlaneMaterial(struct sector_s *sec, boolean ceiling,
-                                     void *context, void *context2, struct mobj_s *activator);
+                                     void *context, void *context2, mobj_s *activator);
 void            XS_InitStairBuilder(struct linedef_s *line);
 int C_DECL      XSTrav_BuildStairs(struct sector_s *sector, boolean ceiling,
-                                   void *context, void *context2, struct mobj_s *activator);
+                                   void *context, void *context2, mobj_s *activator);
 int C_DECL      XSTrav_SectorSound(struct sector_s *sec, boolean ceiling,
-                                   void *context, void *context2, struct mobj_s *activator);
+                                   void *context, void *context2, mobj_s *activator);
 int C_DECL      XSTrav_MimicSector(struct sector_s *sector, boolean ceiling,
-                                   void *context, void *context2, struct mobj_s *activator);
+                                   void *context, void *context2, mobj_s *activator);
 int C_DECL      XSTrav_Teleport(struct sector_s *sector, boolean ceiling,
-                                   void *context, void *context2, struct mobj_s *activator);
+                                   void *context, void *context2, mobj_s *activator);
 void            XS_SetSectorType(struct sector_s *sec, int special);
 void            XS_ChangePlaneMaterial(struct sector_s *sector, boolean ceiling,
                                        material_t* mat, float *rgb);

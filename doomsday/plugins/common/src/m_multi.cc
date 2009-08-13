@@ -650,7 +650,7 @@ void SCEnterGameSetup(int option, void* data)
 
 void SCGameSetupFunc(int option, void* data)
 {
-    byte*               ptr = data;
+    byte*               ptr = (byte*) data;
 
     *ptr ^= 1;
 }
@@ -958,7 +958,7 @@ void DrawEditField(menu_t* menu, int index, editfield_t* ef)
 
 void SCEditField(int efptr, void* data)
 {
-    editfield_t*        ef = data;
+    editfield_t*        ef = (editfield_t*) data;
 
     // Activate this edit field.
     ActiveEdit = ef;

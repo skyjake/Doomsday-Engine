@@ -49,7 +49,7 @@ typedef struct {
     void          (*func) (int option, void *data);
     int             option;
     dpatch_t*       patch;
-    void*           data;
+    const void*     data;
 } menuitem_t;
 
 // Menu flags

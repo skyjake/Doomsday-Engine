@@ -468,7 +468,7 @@ void FI_NewState(const char *script)
 
     // Take a copy of the script.
     size = strlen(script);
-    fi->script = Z_Malloc(size + 1, PU_STATIC, 0);
+    fi->script = (char*) Z_Malloc(size + 1, PU_STATIC, 0);
     memcpy(fi->script, script, size);
     fi->script[size] = '\0';
 
@@ -1201,7 +1201,7 @@ void FI_SetText(fitext_t* tex, char* str)
 
     if(tex->text)
         Z_Free(tex->text); // Free any previous text.
-    tex->text = Z_Malloc(len, PU_STATIC, 0);
+    tex->text = (char*) Z_Malloc(len, PU_STATIC, 0);
     memcpy(tex->text, str, len);
 }
 
@@ -1863,13 +1863,13 @@ void FIC_End(void)
 
 void FIC_BGFlat(void)
 {
-    fi->bgMaterial = P_ToPtr(DMU_MATERIAL,
+    fi->bgMaterial = (material_t*) P_ToPtr(DMU_MATERIAL,
         P_MaterialCheckNumForName(FI_GetToken(), MN_FLATS));
 }
 
 void FIC_BGTexture(void)
 {
-    fi->bgMaterial = P_ToPtr(DMU_MATERIAL,
+    fi->bgMaterial = (material_t*) P_ToPtr(DMU_MATERIAL,
         P_MaterialCheckNumForName(FI_GetToken(), MN_TEXTURES));
 }
 
@@ -2611,9 +2611,9 @@ void FIC_TextFromLump(void)
         char*               str, *out;
 
         // Load the lump.
-        data = W_CacheLumpNum(lnum, PU_STATIC);
+        data = (const char*) W_CacheLumpNum(lnum, PU_STATIC);
         incount = W_LumpLength(lnum);
-        str = Z_Malloc(buflen = 2 * incount + 1, PU_STATIC, 0);
+        str = (char*) Z_Malloc(buflen = 2 * incount + 1, PU_STATIC, 0);
         memset(str, 0, buflen);
         for(i = 0, out = str; i < incount; ++i)
         {

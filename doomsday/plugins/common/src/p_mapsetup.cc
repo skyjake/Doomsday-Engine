@@ -107,7 +107,7 @@ xline_t* P_ToXLine(linedef_t* line)
     // Is it a dummy?
     if(P_IsDummy(line))
     {
-        return P_DummyExtraData(line);
+        return (xline_t*) P_DummyExtraData(line);
     }
     else
     {
@@ -126,7 +126,7 @@ xsector_t* P_ToXSector(sector_t* sector)
     // Is it a dummy?
     if(P_IsDummy(sector))
     {
-        return P_DummyExtraData(sector);
+        return (xsector_t*) P_DummyExtraData(sector);
     }
     else
     {
@@ -144,12 +144,12 @@ xsector_t* P_ToXSectorOfSubsector(subsector_t* sub)
     if(!sub)
         return NULL;
 
-    sec = P_GetPtrp(sub, DMU_SECTOR);
+    sec = (sector_t*) P_GetPtrp(sub, DMU_SECTOR);
 
     // Is it a dummy?
     if(P_IsDummy(sec))
     {
-        return P_DummyExtraData(sec);
+        return (xsector_t*) P_DummyExtraData(sec);
     }
     else
     {
@@ -206,14 +206,14 @@ void P_SetupForMapData(int type, uint num)
     {
     case DMU_SECTOR:
         if(num > 0)
-            xsectors = Z_Calloc(num * sizeof(xsector_t), PU_MAP, 0);
+            xsectors = (xsector_t*) Z_Calloc(num * sizeof(xsector_t), PU_MAP, 0);
         else
             xsectors = NULL;
         break;
 
     case DMU_LINEDEF:
         if(num > 0)
-            xlines = Z_Calloc(num * sizeof(xline_t), PU_MAP, 0);
+            xlines = (xline_t*) Z_Calloc(num * sizeof(xline_t), PU_MAP, 0);
         else
             xlines = NULL;
         break;
@@ -328,7 +328,7 @@ static void P_LoadMapObjs(void)
     numthings = P_CountGameMapObjs(MO_THING);
 
     if(numthings > 0)
-        things = Z_Calloc(numthings * sizeof(spawnspot_t), PU_MAP, 0);
+        things = (spawnspot_t*) Z_Calloc(numthings * sizeof(spawnspot_t), PU_MAP, 0);
     else
         things = NULL;
 
@@ -389,7 +389,7 @@ static void P_LoadMapObjs(void)
 
     for(i = 0; i < numsectors; ++i)
     {
-        sector_t*           sec = P_ToPtr(DMU_SECTOR, i);
+        sector_t*           sec = (sector_t*) P_ToPtr(DMU_SECTOR, i);
         xsector_t*          xsec = &xsectors[i];
 
         xsec->special = P_GetGMOShort(MO_XSECTOR, i, MO_TYPE);
@@ -527,7 +527,7 @@ typedef struct setupmapparams_s {
 
 int P_SetupMapWorker(void* ptr)
 {
-    setupmapparams_t*   param = ptr;
+    setupmapparams_t*   param = (setupmapparams_t*) ptr;
     char                mapID[9];
 
     // It begins...
@@ -606,7 +606,7 @@ int P_SetupMapWorker(void* ptr)
             { GM_ANY,   MT_TFOG }, // Teleport FX.
             { GM_ANY,   MT_EXTRABFG },
             { GM_ANY,   MT_ROCKETPUFF },
-            { 0,        0}
+            { 0,        mobjtype_t(0) }
         };
         uint                i;
 #endif
@@ -760,7 +760,7 @@ static void P_FinalizeMap(void)
     // visible due to texture repeating and interpolation.
     {
     uint                i, k;
-    material_t*         mat = P_ToPtr(DMU_MATERIAL, P_MaterialNumForName("NUKE24", MN_TEXTURES));
+    material_t*         mat = (material_t*) P_ToPtr(DMU_MATERIAL, P_MaterialNumForName("NUKE24", MN_TEXTURES));
     material_t*         bottomMat, *midMat;
     float               yoff;
     sidedef_t*          sidedef;
@@ -768,16 +768,16 @@ static void P_FinalizeMap(void)
 
     for(i = 0; i < numlines; ++i)
     {
-        line = P_ToPtr(DMU_LINEDEF, i);
+        line = (linedef_t*) P_ToPtr(DMU_LINEDEF, i);
 
         for(k = 0; k < 2; ++k)
         {
-            sidedef = P_GetPtrp(line, k == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1);
+            sidedef = (sidedef_t*) P_GetPtrp(line, k == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1);
 
             if(sidedef)
             {
-                bottomMat = P_GetPtrp(sidedef, DMU_BOTTOM_MATERIAL);
-                midMat = P_GetPtrp(sidedef, DMU_MIDDLE_MATERIAL);
+                bottomMat = (material_t*) P_GetPtrp(sidedef, DMU_BOTTOM_MATERIAL);
+                midMat = (material_t*) P_GetPtrp(sidedef, DMU_MIDDLE_MATERIAL);
 
                 if(bottomMat == mat && midMat == NULL)
                 {

@@ -311,7 +311,7 @@ vectorgrap_t* AM_GetVectorGraph(vectorgrapname_t id)
     {
     uint                i, linecount;
 
-    vg = vectorGraphs[id] = malloc(sizeof(*vg));
+    vg = vectorGraphs[id] = (vectorgrap_t*) malloc(sizeof(*vg));
 
     switch(id)
     {
@@ -342,7 +342,7 @@ vectorgrap_t* AM_GetVectorGraph(vectorgrapname_t id)
         break;
     }
 
-    vg->lines = malloc(linecount * sizeof(vgline_t));
+    vg->lines = (vgline_t*) malloc(linecount * sizeof(vgline_t));
     vg->count = linecount;
     vg->dlist = 0;
     for(i = 0; i < linecount; ++i)
@@ -717,7 +717,7 @@ void AM_InitForMap(void)
         // Reset position onto the follow player.
         if(players[mcfg->followPlayer].plr->mo)
         {
-            mobj_t*             mo = players[mcfg->followPlayer].plr->mo;
+            mobj_s*             mo = players[mcfg->followPlayer].plr->mo;
 
             Automap_SetLocationTarget(map, mo->pos[VX], mo->pos[VY]);
         }
@@ -777,7 +777,7 @@ void AM_Open(automapid_t id, boolean yes, boolean fast)
         }
         else
         {   // The map's target player is available.
-            mobj_t*             mo = players[mcfg->followPlayer].plr->mo;
+            mobj_s*             mo = players[mcfg->followPlayer].plr->mo;
 
             if(!(map->panMode && !mcfg->panResetOnOpen))
                 Automap_SetLocationTarget(map, mo->pos[0], mo->pos[1]);
@@ -1541,11 +1541,11 @@ void AM_SetVectorGraphic(automapcfg_t* cfg, int objectname, int vgname)
     switch(objectname)
     {
     case AMO_THING:
-        cfg->vectorGraphicForThing = vgname;
+        cfg->vectorGraphicForThing = (vectorgrapname_t) vgname;
         break;
 
     case AMO_THINGPLAYER:
-        cfg->vectorGraphicForPlayer = vgname;
+        cfg->vectorGraphicForPlayer = (vectorgrapname_t) vgname;
         break;
 
     default:
@@ -1758,7 +1758,7 @@ static void mapTicker(automap_t* map)
     float               diff = 0, panX[2], panY[2],
                         zoomVel, zoomSpeed;
     player_t*           mapPlayer;
-    mobj_t*             mo;
+    mobj_s*             mo;
     automapcfg_t*       mcfg;
     float               scrwidth = DD_GetInteger(DD_WINDOW_WIDTH);
     float               scrheight = DD_GetInteger(DD_WINDOW_HEIGHT);

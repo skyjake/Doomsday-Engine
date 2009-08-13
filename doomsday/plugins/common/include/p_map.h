@@ -70,8 +70,7 @@ boolean         P_TryMove(mobj_s* thing, float x, float y,
 boolean         P_TryMove(mobj_s* thing, float x, float y);
 #endif
 
-boolean         P_TeleportMove(mobj_s* thing, float x, float y,
-                               boolean alwaysStomp);
+boolean         P_TeleportMove(mobj_s* thing, float x, float y, boolean alwaysStomp);
 void            P_SlideMove(mobj_s* mo);
 
 void            P_UseLines(player_t* player);

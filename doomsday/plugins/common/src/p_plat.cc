@@ -250,7 +250,7 @@ static int doPlat(linedef_t *line, int tag, plattype_e type, int amount)
     plat_t             *plat;
     sector_t           *sec = NULL;
 #if !__JHEXEN__
-    sector_t           *frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+    sector_t           *frontSector = (sector_t*) P_GetPtrp(line, DMU_FRONT_SECTOR);
 #endif
     xsector_t          *xsec;
     iterlist_t         *list;
@@ -260,7 +260,7 @@ static int doPlat(linedef_t *line, int tag, plattype_e type, int amount)
         return rtn;
 
     P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    while((sec = (sector_t*) P_IterListIterator(list)) != NULL)
     {
         xsec = P_ToXSector(sec);
 
@@ -270,8 +270,8 @@ static int doPlat(linedef_t *line, int tag, plattype_e type, int amount)
         // Find lowest & highest floors around sector
         rtn = 1;
 
-        plat = Z_Calloc(sizeof(*plat), PU_MAP, 0);
-        plat->thinker.function = T_PlatRaise;
+        plat = (plat_t*) Z_Calloc(sizeof(*plat), PU_MAP, 0);
+        plat->thinker.function = (void (*)()) T_PlatRaise;
         DD_ThinkerAdd(&plat->thinker);
 
         plat->type = type;
@@ -426,7 +426,7 @@ static int doPlat(linedef_t *line, int tag, plattype_e type, int amount)
             if(plat->high < floorHeight)
                 plat->high = floorHeight;
 
-            plat->state = P_Random() & 1;
+            plat->state = platstate_e(P_Random() & 1);
 #if __JHEXEN__
             plat->wait = (int) args[2];
 #else
@@ -514,7 +514,7 @@ int P_PlatActivate(short tag)
 
     params.tag = tag;
     params.count = 0;
-    DD_IterateThinkers(T_PlatRaise, activatePlat, &params);
+    DD_IterateThinkers((void (*)()) T_PlatRaise, activatePlat, &params);
 
     return params.count;
 }
@@ -566,7 +566,7 @@ int P_PlatDeactivate(short tag)
 
     params.tag = tag;
     params.count = 0;
-    DD_IterateThinkers(T_PlatRaise, deactivatePlat, &params);
+    DD_IterateThinkers((void (*)()) T_PlatRaise, deactivatePlat, &params);
 
     return params.count;
 }

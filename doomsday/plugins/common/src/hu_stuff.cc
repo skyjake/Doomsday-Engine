@@ -274,7 +274,7 @@ void R_SetFont(gamefontid_t fontid)
 gamefontid_t R_GetCurrentFont(void)
 {
     if(currentGFontIndex == -1)
-        return 0;
+        return (gamefontid_t) 0;
 
     return currentGFontIndex;
 }
@@ -702,7 +702,7 @@ void Hu_LoadData(void)
     {
         fogEffectData.texture =
             GL_NewTextureWithParams3(DGL_LUMINANCE, 64, 64,
-                                     W_CacheLumpName("menufog", PU_CACHE),
+                                     (void*) W_CacheLumpName("menufog", PU_CACHE),
                                      0, DGL_NEAREST, DGL_LINEAR,
                                      -1 /*best anisotropy*/,
                                      DGL_REPEAT, DGL_REPEAT);
@@ -744,7 +744,7 @@ void Hu_LoadData(void)
     if(gameMode == commercial)
     {
         int NUMCMAPS = 32;
-        mapNamePatches = Z_Malloc(sizeof(dpatch_t) * NUMCMAPS, PU_STATIC, 0);
+        mapNamePatches = (dpatch_t*) Z_Malloc(sizeof(dpatch_t) * NUMCMAPS, PU_STATIC, 0);
         for(i = 0; i < NUMCMAPS; ++i)
         {
             sprintf(name, "CWILV%2.2d", i);
@@ -757,7 +757,7 @@ void Hu_LoadData(void)
 
         // Don't waste space - patches are loaded back to back
         // ie no space in the array is left for E1M10
-        mapNamePatches = Z_Malloc(sizeof(dpatch_t) * (9*4), PU_STATIC, 0);
+        mapNamePatches = (dpatch_t*) Z_Malloc(sizeof(dpatch_t) * (9*4), PU_STATIC, 0);
         for(i = 0; i < 4; ++i) // Number of episodes.
         {
             for(j = 0; j < 9; ++j) // Number of maps per episode.
@@ -767,7 +767,7 @@ void Hu_LoadData(void)
             }
         }
 
-        episodeNamePatches = Z_Malloc(sizeof(dpatch_t) * 4, PU_STATIC, 0);
+        episodeNamePatches = (dpatch_t*) Z_Malloc(sizeof(dpatch_t) * 4, PU_STATIC, 0);
         for(i = 0; i < 4; ++i)
             R_CachePatch(&episodeNamePatches[i], episodePatchNames[i]);
     }
@@ -1108,8 +1108,8 @@ static void drawTable(float x, float ly, float width, float height,
     if(!numCols)
         return;
 
-    colX = calloc(1, sizeof(*colX) * numCols);
-    colW = calloc(1, sizeof(*colW) * numCols);
+    colX = (float*) calloc(1, sizeof(*colX) * numCols);
+    colW = (float*) calloc(1, sizeof(*colW) * numCols);
 
     lineHeight = height / (MAXPLAYERS + 1);
     fontHeight = M_StringHeight("AgIq^_", GF_FONTA);
@@ -1712,7 +1712,7 @@ void WI_DrawParamText(int x, int y, const char* inString, gamefontid_t defFont,
     }
     else
     {
-        bigBuff = malloc(len+1);
+        bigBuff = (char*) malloc(len+1);
         memcpy(bigBuff, inString, len);
         bigBuff[len+1] = '\0';
 
@@ -2636,7 +2636,7 @@ void M_DrawBackgroundBox(float x, float y, float w, float h, float red,
 
     if(background)
     {
-        DGL_SetMaterial(P_ToPtr(DMU_MATERIAL,
+        DGL_SetMaterial((material_s*) P_ToPtr(DMU_MATERIAL,
             P_MaterialNumForName(borderLumps[0], MN_FLATS)));
         DGL_DrawRectTiled(x, y, w, h, 64, 64);
     }

@@ -42,7 +42,7 @@ extern int      netSvAllowCheats;
 extern char    *mapCycle;
 extern char     gameConfigString[];
 
-void            P_Telefrag(mobj_t *thing);
+void            P_Telefrag(mobj_s *thing);
 
 void            NetSv_NewPlayerEnters(int plrnumber);
 void           *NetSv_ReadCommands(byte *msg, uint size);

@@ -101,7 +101,7 @@ static const float dirSpeed[8][2] =
  * If a monster yells at a player, it will alert other monsters to the
  * player's whereabouts.
  */
-void P_NoiseAlert(mobj_t *target, mobj_t *emitter)
+void P_NoiseAlert(mobj_s *target, mobj_s *emitter)
 {
     VALIDCOUNT++;
     P_RecursiveSound(target, (sector_t*) P_GetPtrp(emitter->subsector, DMU_SECTOR), 0);

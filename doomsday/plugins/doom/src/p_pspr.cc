@@ -115,7 +115,7 @@ void P_SetPsprite(player_t* player, int position, int stnum)
         // Call the state action routine (modified handling).
         if(state->action)
         {
-            ((void (*)(player_t*, pspdef_t*)) state->action)(player, psp);
+            ((void C_DECL (*)(player_t*, pspdef_t*)) state->action)(player, psp);
             if(!psp->state)
                 break;
         }

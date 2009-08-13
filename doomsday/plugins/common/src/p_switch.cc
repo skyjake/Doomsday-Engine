@@ -242,7 +242,7 @@ void P_InitSwitchList(void)
     {
         if(index+1 >= max_numswitches)
         {
-            switchlist = realloc(switchlist, sizeof(*switchlist) *
+            switchlist = (material_t**) realloc(switchlist, sizeof(*switchlist) *
                 (max_numswitches = max_numswitches ? max_numswitches*2 : 8));
         }
 
@@ -251,9 +251,9 @@ void P_InitSwitchList(void)
             if(!SHORT(sList[i].episode))
                 break;
 
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL,
+            switchlist[index++] = (material_t*) P_ToPtr(DMU_MATERIAL,
                 P_MaterialNumForName(sList[i].name1, MN_TEXTURES));
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL,
+            switchlist[index++] = (material_t*) P_ToPtr(DMU_MATERIAL,
                 P_MaterialNumForName(sList[i].name2, MN_TEXTURES));
             VERBOSE(Con_Message("P_InitSwitchList: ADD (\"%s\" | \"%s\" #%d)\n",
                                 sList[i].name1, sList[i].name2,
@@ -296,7 +296,7 @@ void T_MaterialChanger(materialchanger_t* mchanger)
                   mchanger->ssurfaceID == SID_TOP? DMU_TOP_MATERIAL :
                   DMU_BOTTOM_MATERIAL, mchanger->material);
 #if __JDOOM__ || __JDOOM64__
-        S_StartSound(SFX_SWTCHN, P_GetPtrp(
+        S_StartSound(SFX_SWTCHN, (mobj_t*) P_GetPtrp(
             P_GetPtrp(mchanger->side, DMU_SECTOR), DMU_SOUND_ORIGIN));
 #elif __JHERETIC__
         S_StartSound(SFX_SWITCH, P_GetPtrp(
@@ -312,8 +312,8 @@ void P_SpawnMaterialChanger(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
 {
     materialchanger_t*  mchanger;
 
-    mchanger = Z_Calloc(sizeof(*mchanger), PU_MAP, 0);
-    mchanger->thinker.function = T_MaterialChanger;
+    mchanger = (materialchanger_t*) Z_Calloc(sizeof(*mchanger), PU_MAP, 0);
+    mchanger->thinker.function = (void (*)()) T_MaterialChanger;
     DD_ThinkerAdd(&mchanger->thinker);
 
     mchanger->side = side;
@@ -349,7 +349,7 @@ void P_StartButton(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
     params.ssurfaceID = ssurfaceID;
 
     // See if a material change has already been queued.
-    if(!DD_IterateThinkers(T_MaterialChanger, findMaterialChanger, &params))
+    if(!DD_IterateThinkers((void (*)()) T_MaterialChanger, findMaterialChanger, &params))
         return;
 
     P_SpawnMaterialChanger(side, ssurfaceID, mat, tics);
@@ -372,7 +372,7 @@ boolean P_ToggleSwitch2(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
     material_t*         mat, *current;
     const switchlist_t* info;
 
-    current = P_GetPtrp(side,
+    current = (material_t*) P_GetPtrp(side,
                         ssurfaceID == SID_MIDDLE? DMU_MIDDLE_MATERIAL :
                         ssurfaceID == SID_TOP? DMU_TOP_MATERIAL :
                         DMU_BOTTOM_MATERIAL);
@@ -393,7 +393,7 @@ boolean P_ToggleSwitch2(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
 #endif
             }
 
-            S_StartSound(sound, P_GetPtrp(P_GetPtrp(side, DMU_SECTOR),
+            S_StartSound(sound, (mobj_t*) P_GetPtrp(P_GetPtrp(side, DMU_SECTOR),
                                           DMU_SOUND_ORIGIN));
         }
 

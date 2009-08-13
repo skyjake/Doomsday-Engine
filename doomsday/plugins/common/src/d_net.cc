@@ -128,6 +128,7 @@ void D_NetConsoleRegistration(void)
  */
 int D_NetServerStarted(int before)
 {
+#if 0
     int             netMap, netEpisode;
 
     if(before)
@@ -175,6 +176,7 @@ int D_NetServerStarted(int before)
 
     // Close the menu, the game begins!!
     Hu_MenuCommand(MCMD_CLOSE);
+#endif
     return true;
 }
 
@@ -186,6 +188,7 @@ int D_NetServerStarted(int before)
  */
 int D_NetServerClose(int before)
 {
+#if 0
     if(!before)
     {
         // Restore normal game state.
@@ -196,11 +199,13 @@ int D_NetServerClose(int before)
 #endif
         D_NetMessage(CONSOLEPLAYER, "NETGAME ENDS");
     }
+#endif
     return true;
 }
 
 int D_NetConnect(int before)
 {
+#if 0
     // We do nothing before the actual connection is made.
     if(before)
         return true;
@@ -211,11 +216,13 @@ int D_NetConnect(int before)
     // Close the menu, the game begins!!
     //  advancedemo = false;
     Hu_MenuCommand(MCMD_CLOSE);
+#endif
     return true;
 }
 
 int D_NetDisconnect(int before)
 {
+#if 0
     if(before)
         return true;
 
@@ -229,8 +236,10 @@ int D_NetDisconnect(int before)
     // Start demo.
     G_StartTitle();
     return true;
+#endif
 }
 
+#if 0
 void* D_NetWriteCommands(int numCommands, void* data)
 {
     // It's time to send ticcmds to the server.
@@ -243,9 +252,11 @@ void* D_NetReadCommands(size_t pktLength, void* data)
     // 'plrNumber' is the length of the packet.
     return NetSv_ReadCommands(data, pktLength);
 }
+#endif
 
 long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
 {
+#if 0
     // If this isn't a netgame, we won't react.
     if(!IS_NETGAME)
         return true;
@@ -312,12 +323,13 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
         D_NetMessageEx(CONSOLEPLAYER, msgBuff, (cfg.chatBeep? true : false));
         cfg.echoMsg = oldecho;
     }
-
+#endif
     return true;
 }
 
 int D_NetWorldEvent(int type, int parm, void *data)
 {
+#if 0
     int         i;
 
     switch (type)
@@ -423,11 +435,13 @@ int D_NetWorldEvent(int type, int parm, void *data)
     default:
         return false;
     }
+#endif
     return true;
 }
 
 void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
 {
+#if 0
     byte           *bData = data;
 
     //
@@ -537,6 +551,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         Con_Message("H_HandlePacket: Received unknown packet, " "type=%i.\n",
                     type);
     }
+#endif
 }
 
 /**
@@ -568,6 +583,7 @@ void D_ChatSound(void)
  */
 static void D_NetMessageEx(int player, const char* msg, boolean playSound)
 {
+#if 0
     player_t*           plr;
 
     if(player < 0 || player > MAXPLAYERS)
@@ -588,6 +604,7 @@ static void D_NetMessageEx(int player, const char* msg, boolean playSound)
         D_ChatSound();
 
     netSvAllowSendMsg = true;
+#endif
 }
 
 /**
@@ -656,6 +673,8 @@ Con_Message("P_DamageMobj2: Allowing normal damage in netgame.\n");
  */
 DEFCC(CCmdSetColor)
 {
+#if 0
+
 #if __JHEXEN__
     int     numColors = 8;
 #elif __JSTRIFE__
@@ -703,7 +722,7 @@ DEFCC(CCmdSetColor)
         // Tell the server about the change.
         NetCl_SendPlayerInfo();
     }
-
+#endif
     return true;
 }
 
@@ -731,7 +750,6 @@ DEFCC(CCmdSetClass)
     {
         P_PlayerChangeClass(&players[CONSOLEPLAYER], cfg.netClass);
     }
-
     return true;
 }
 #endif
@@ -784,6 +802,6 @@ DEFCC(CCmdSetMap)
 #endif
 
     // Use the configured network skill level for the new map.
-    G_DeferedInitNew(cfg.netSkill, ep, map);
+    G_DeferedInitNew(skillmode_t(cfg.netSkill), ep, map);
     return true;
 }

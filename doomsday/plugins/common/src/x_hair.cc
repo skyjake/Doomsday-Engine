@@ -164,7 +164,7 @@ void X_Drawer(int player)
 
         R_HSVToRGB(vitalColor, HUE_DEAD +
             (HUE_LIVE - HUE_DEAD) * MINMAX_OF(0,
-                (float) plr->mo->health / maxHealth, 1), 1, 1);
+                (float) ((mobj_t*)plr->mo)->health / maxHealth, 1), 1, 1);
         vitalColor[3] = alpha;
         DGL_Color4fv(vitalColor);
 

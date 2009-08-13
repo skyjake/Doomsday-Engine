@@ -161,6 +161,7 @@ void NetSv_UpdateGameConfig(void)
         strcat(gameConfigString, " jump");
 }
 
+#if 0
 /**
  * \kludge Unravel a DDPT_COMMANDS (32) packet. Returns a pointer to a static
  * buffer that contains the ticcmds (kludge to work around the parameter
@@ -253,6 +254,7 @@ void *NetSv_ReadCommands(byte *msg, uint size)
 
     return data;
 }
+#endif
 
 void NetSv_Ticker(void)
 {
@@ -729,6 +731,7 @@ void NetSv_CheckCycling(void)
  */
 void NetSv_NewPlayerEnters(int plrnumber)
 {
+#if 0
     player_t           *plr = &players[plrnumber];
 
     Con_Message("NetSv_NewPlayerEnters: spawning player %i.\n", plrnumber);
@@ -751,10 +754,12 @@ void NetSv_NewPlayerEnters(int plrnumber)
 
     // Get rid of anybody at the starting spot.
     P_Telefrag(plr->plr->mo);
+#endif
 }
 
 void NetSv_Intermission(int flags, int state, int time)
 {
+#if 0
     byte                buffer[32], *ptr = buffer;
 
     if(IS_CLIENT)
@@ -789,6 +794,7 @@ void NetSv_Intermission(int flags, int state, int time)
         WRITE_SHORT(ptr, time);
     Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, GPT_INTERMISSION, buffer,
                    ptr - buffer);
+#endif
 }
 
 /**
@@ -796,6 +802,7 @@ void NetSv_Intermission(int flags, int state, int time)
  */
 void NetSv_Finale(int flags, const char* script, const boolean* conds, byte numConds)
 {
+#if 0
     size_t              len, scriptLen = 0;
     byte*               buffer, *ptr;
 
@@ -840,10 +847,12 @@ void NetSv_Finale(int flags, const char* script, const boolean* conds, byte numC
     Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, GPT_FINALE2, buffer, len);
 
     Z_Free(buffer);
+#endif
 }
 
 void NetSv_SendGameState(int flags, int to)
 {
+#if 0
     byte        buffer[256], *ptr;
     int         i;
     fixed_t     gravity;
@@ -926,6 +935,7 @@ void NetSv_SendGameState(int flags, int to)
         // Send the packet.
         Net_SendPacket(i | DDSP_ORDERED, GPT_GAME_STATE, buffer, ptr - buffer);
     }
+#endif
 }
 
 /**
@@ -1209,6 +1219,7 @@ void NetSv_SendPlayerInfo(int whose, int to_whom)
 
 void NetSv_ChangePlayerInfo(int from, byte* data)
 {
+#if 0
     int                 col;
     player_t*           pl = &players[from];
 
@@ -1247,6 +1258,7 @@ void NetSv_ChangePlayerInfo(int from, byte* data)
 
     // Tell the other clients about the change.
     NetSv_SendPlayerInfo(from, DDSP_ALL_PLAYERS);
+#endif
 }
 
 /**
@@ -1501,7 +1513,7 @@ void NetSv_SendYellowMessage(int plrNum, char *msg)
     NetSv_SendMessageEx(plrNum, msg, true);
 }
 
-void P_Telefrag(mobj_t *thing)
+void P_Telefrag(mobj_s *thing)
 {
     P_TeleportMove(thing, thing->pos[VX], thing->pos[VY], false);
 }

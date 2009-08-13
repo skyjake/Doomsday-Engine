@@ -69,6 +69,7 @@
 
 void SV_WriteXGLine(linedef_t *li)
 {
+#if 0
     xgline_t *xg;
     linetype_t *info;
 
@@ -97,10 +98,12 @@ void SV_WriteXGLine(linedef_t *li)
     SV_WriteFloat(xg->fdata);
     SV_WriteLong(xg->chIdx);
     SV_WriteFloat(xg->chTimer);
+#endif
 }
 
 void SV_ReadXGLine(linedef_t *li)
 {
+#if 0
     xgline_t *xg;
     xline_t *xline = P_ToXLine(li);
 
@@ -128,6 +131,7 @@ void SV_ReadXGLine(linedef_t *li)
     xg->fdata = SV_ReadFloat();
     xg->chIdx = SV_ReadLong();
     xg->chTimer = SV_ReadFloat();
+#endif
 }
 
 /**
@@ -135,6 +139,7 @@ void SV_ReadXGLine(linedef_t *li)
  */
 void SV_WriteXGFunction(xgsector_t *xg, function_t *fn)
 {
+#if 0
     // Version byte.
     SV_WriteByte(1);
 
@@ -145,10 +150,12 @@ void SV_WriteXGFunction(xgsector_t *xg, function_t *fn)
     SV_WriteShort(fn->maxTimer);
     SV_WriteFloat(fn->value);
     SV_WriteFloat(fn->oldValue);
+#endif
 }
 
 void SV_ReadXGFunction(xgsector_t *xg, function_t *fn)
 {
+#if 0
     // Version byte.
     SV_ReadByte();
 
@@ -159,10 +166,12 @@ void SV_ReadXGFunction(xgsector_t *xg, function_t *fn)
     fn->maxTimer = SV_ReadShort();
     fn->value = SV_ReadFloat();
     fn->oldValue = SV_ReadFloat();
+#endif
 }
 
 void SV_WriteXGSector(struct sector_s *sec)
 {
+#if 0
     int         i;
     xgsector_t *xg;
     sectortype_t *info;
@@ -184,10 +193,12 @@ void SV_WriteXGSector(struct sector_s *sec)
     for(i = 0; i < 2; ++i)
         SV_WriteXGFunction(xg, &xg->plane[i]);
     SV_WriteXGFunction(xg, &xg->light);
+#endif
 }
 
 void SV_ReadXGSector(struct sector_s *sec)
 {
+#if 0
     int         i;
     xgsector_t *xg;
     xsector_t  *xsec = P_ToXSector(sec);
@@ -207,10 +218,12 @@ void SV_ReadXGSector(struct sector_s *sec)
     for(i = 0; i < 2; ++i)
         SV_ReadXGFunction(xg, &xg->plane[i]);
     SV_ReadXGFunction(xg, &xg->light);
+#endif
 }
 
 void SV_WriteXGPlaneMover(thinker_t *th)
 {
+#if 0
     uint        i;
     xgplanemover_t *mov = (xgplanemover_t *) th;
 
@@ -239,6 +252,7 @@ void SV_WriteXGPlaneMover(thinker_t *th)
     SV_WriteLong(mov->minInterval);
     SV_WriteLong(mov->maxInterval);
     SV_WriteLong(mov->timer);
+#endif
 }
 
 /**
@@ -246,19 +260,20 @@ void SV_WriteXGPlaneMover(thinker_t *th)
  */
 int SV_ReadXGPlaneMover(xgplanemover_t* mov)
 {
+#if 0
     int                 i, num;
     byte                ver;
 
     ver = SV_ReadByte(); // Version.
 
-    mov->sector = P_ToPtr(DMU_SECTOR, SV_ReadLong());
+    mov->sector = (sector_t*) P_ToPtr(DMU_SECTOR, SV_ReadLong());
 
     mov->ceiling = SV_ReadByte();
     mov->flags = SV_ReadLong();
 
     i = SV_ReadLong();
     if(i)
-        mov->origin = P_ToPtr(DMU_LINEDEF, i - 1);
+        mov->origin = (linedef_t*) P_ToPtr(DMU_LINEDEF, i - 1);
 
     mov->destination = FIX2FLT(SV_ReadLong());
     mov->speed = FIX2FLT(SV_ReadLong());
@@ -267,7 +282,7 @@ int SV_ReadXGPlaneMover(xgplanemover_t* mov)
     if(ver >= 3)
         mov->setMaterial = SV_GetArchiveMaterial(num, 0);
     else
-        mov->setMaterial = P_ToPtr(DMU_MATERIAL,
+        mov->setMaterial = (material_t*) P_ToPtr(DMU_MATERIAL,
             P_MaterialNumForName(W_LumpName(num), MN_FLATS));
     mov->setSectorType = SV_ReadLong();
     mov->startSound = SV_ReadLong();
@@ -277,7 +292,8 @@ int SV_ReadXGPlaneMover(xgplanemover_t* mov)
     mov->maxInterval = SV_ReadLong();
     mov->timer = SV_ReadLong();
 
-    mov->thinker.function = XS_PlaneMover;
+    mov->thinker.function = (void (*)()) XS_PlaneMover;
+#endif    
     return true; // Add this thinker.
 }
 

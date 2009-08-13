@@ -65,8 +65,8 @@
 
 linedef_t* P_AllocDummyLine(void)
 {
-    xline_t* extra = Z_Calloc(sizeof(xline_t), PU_STATIC, 0);
-    return P_AllocDummy(DMU_LINEDEF, extra);
+    xline_t* extra = (xline_t*) Z_Calloc(sizeof(xline_t), PU_STATIC, 0);
+    return (linedef_t*) P_AllocDummy(DMU_LINEDEF, extra);
 }
 
 void P_FreeDummyLine(linedef_t* line)
@@ -94,8 +94,8 @@ void P_CopyLine(linedef_t* dest, linedef_t* src)
     {
         sidx = (i==0? DMU_SIDEDEF0 : DMU_SIDEDEF1);
 
-        sidefrom = P_GetPtrp(src, sidx);
-        sideto = P_GetPtrp(dest, sidx);
+        sidefrom = (sidedef_t*) P_GetPtrp(src, sidx);
+        sideto = (sidedef_t*) P_GetPtrp(dest, sidx);
 
         if(!sidefrom || !sideto)
             continue;

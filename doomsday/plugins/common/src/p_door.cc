@@ -317,7 +317,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
         return rtn;
 
     P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    while((sec = (sector_t*) P_IterListIterator(list)) != NULL)
     {
         xsec = P_ToXSector(sec);
 
@@ -326,8 +326,8 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
 
         // new door thinker
         rtn = 1;
-        door = Z_Calloc(sizeof(*door), PU_MAP, 0);
-        door->thinker.function = T_Door;
+        door = (door_t*) Z_Calloc(sizeof(*door), PU_MAP, 0);
+        door->thinker.function = (void (*)()) T_Door;
         DD_ThinkerAdd(&door->thinker);
         xsec->specialData = door;
 
@@ -556,8 +556,8 @@ static boolean tryLockedManualDoor(linedef_t* line, mobj_t* mo)
     xline_t*            xline = P_ToXLine(line);
     player_t*           p;
     int                 keyNum = -1;
-    textenum_t          msgTxt = 0;
-    sfxenum_t           sfxNum = 0;
+    textenum_t          msgTxt = textenum_t(0);
+    sfxenum_t           sfxNum = sfxenum_t(0);
 
     if(!mo || !xline)
         return false;
@@ -684,7 +684,7 @@ boolean EV_VerticalDoor(linedef_t* line, mobj_t* mo)
     sector_t*           sec;
     door_t*             door;
 
-    sec = P_GetPtrp(line, DMU_BACK_SECTOR);
+    sec = (sector_t*) P_GetPtrp(line, DMU_BACK_SECTOR);
     if(!sec)
         return false;
 
@@ -700,7 +700,7 @@ boolean EV_VerticalDoor(linedef_t* line, mobj_t* mo)
 #if __JHEXEN__
         return false;
 #else
-        door = xsec->specialData;
+        door = (door_t*) xsec->specialData;
         switch(xline->special)
         {
         case 1:
@@ -734,8 +734,8 @@ boolean EV_VerticalDoor(linedef_t* line, mobj_t* mo)
     }
 
     // New door thinker.
-    door = Z_Calloc(sizeof(*door), PU_MAP, 0);
-    door->thinker.function = T_Door;
+    door = (door_t*) Z_Calloc(sizeof(*door), PU_MAP, 0);
+    door->thinker.function = (void (*)()) T_Door;
     DD_ThinkerAdd(&door->thinker);
     xsec->specialData = door;
     door->sector = sec;
@@ -856,8 +856,8 @@ void P_SpawnDoorCloseIn30(sector_t *sec)
 {
     door_t *door;
 
-    door = Z_Calloc(sizeof(*door), PU_MAP, 0);
-    door->thinker.function = T_Door;
+    door = (door_t*) Z_Calloc(sizeof(*door), PU_MAP, 0);
+    door->thinker.function = (void (*)()) T_Door;
     DD_ThinkerAdd(&door->thinker);
 
     P_ToXSector(sec)->specialData = door;
@@ -874,8 +874,8 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec)
 {
     door_t           *door;
 
-    door = Z_Calloc(sizeof(*door), PU_MAP, 0);
-    door->thinker.function = T_Door;
+    door = (door_t*) Z_Calloc(sizeof(*door), PU_MAP, 0);
+    door->thinker.function = (void (*)()) T_Door;
     DD_ThinkerAdd(&door->thinker);
 
     P_ToXSector(sec)->specialData = door;

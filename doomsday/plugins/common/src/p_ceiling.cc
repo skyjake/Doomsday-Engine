@@ -282,7 +282,7 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
         return rtn;
 
     P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    while((sec = (sector_t*) P_IterListIterator(list)) != NULL)
     {
         xsec = P_ToXSector(sec);
 
@@ -291,9 +291,9 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 
         // new door thinker
         rtn = 1;
-        ceiling = Z_Calloc(sizeof(*ceiling), PU_MAP, 0);
+        ceiling = (ceiling_t*) Z_Calloc(sizeof(*ceiling), PU_MAP, 0);
 
-        ceiling->thinker.function = T_MoveCeiling;
+        ceiling->thinker.function = (void (*)()) T_MoveCeiling;
         DD_ThinkerAdd(&ceiling->thinker);
 
         xsec->specialData = ceiling;
@@ -507,7 +507,7 @@ int P_CeilingActivate(short tag)
 
     params.tag = tag;
     params.count = 0;
-    DD_IterateThinkers(T_MoveCeiling, activateCeiling, &params);
+    DD_IterateThinkers((void (*)()) T_MoveCeiling, activateCeiling, &params);
 
     return params.count;
 }
@@ -556,7 +556,7 @@ int P_CeilingDeactivate(short tag)
 
     params.tag = tag;
     params.count = 0;
-    DD_IterateThinkers(T_MoveCeiling, deactivateCeiling, &params);
+    DD_IterateThinkers((void (*)()) T_MoveCeiling, deactivateCeiling, &params);
 
     return params.count;
 }

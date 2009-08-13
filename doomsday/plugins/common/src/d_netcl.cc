@@ -123,6 +123,7 @@ int NetCl_IsCompatible(int other, int us)
 
 void NetCl_UpdateGameState(byte *data)
 {
+#if 0
     byte                gsGameMode = 0;
     byte                gsFlags = 0;
     byte                gsEpisode = 0;
@@ -205,11 +206,11 @@ void NetCl_UpdateGameState(byte *data)
     // Do we need to change the map?
     if(gsFlags & GSF_CHANGE_MAP)
     {
-        G_InitNew(gsSkill, gsEpisode, gsMap);
+        G_InitNew(skillMode_t(gsSkill), gsEpisode, gsMap);
     }
     else
     {
-        gameSkill = gsSkill;
+        gameSkill = skillMode_t(gsSkill);
         gameEpisode = gsEpisode;
         gameMap = gsMap;
     }
@@ -253,10 +254,12 @@ void NetCl_UpdateGameState(byte *data)
 
     // Tell the server we're ready to begin receiving frames.
     Net_SendPacket(DDSP_CONFIRM, DDPT_OK, NULL, 0);
+#endif
 }
 
 void NetCl_UpdatePlayerState2(byte *data, int plrNum)
 {
+#if 0
     player_t *pl = &players[plrNum];
     unsigned int flags;
     //int     oldstate = pl->playerState;
@@ -323,10 +326,12 @@ void NetCl_UpdatePlayerState2(byte *data, int plrNum)
         else
             pl->plr->flags &= ~DDPF_NOCLIP;
     }
+#endif
 }
 
 void NetCl_UpdatePlayerState(byte *data, int plrNum)
 {
+#if 0
     int         i;
     player_t   *pl = &players[plrNum];
     byte        b;
@@ -584,6 +589,8 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
         localQuakeHappening[plrNum] = NetCl_ReadByte();
     }
 #endif
+
+#endif
 }
 
 void NetCl_UpdatePSpriteState(byte *data)
@@ -600,6 +607,7 @@ void NetCl_UpdatePSpriteState(byte *data)
 
 void NetCl_Intermission(byte *data)
 {
+#if 0
     uint                i;
     int                 flags;
 
@@ -671,6 +679,8 @@ void NetCl_Intermission(byte *data)
     if(flags & IMF_STATE)
         interState = (int) NetCl_ReadByte();
 #endif
+
+#endif
 }
 
 /**
@@ -678,6 +688,7 @@ void NetCl_Intermission(byte *data)
  */
 void NetCl_Finale(int packetType, byte *data)
 {
+#if 0
     int         flags, len, numConds, i;
     byte       *script = NULL;
 
@@ -719,6 +730,7 @@ void NetCl_Finale(int packetType, byte *data)
     {
         FI_SkipRequest();
     }
+#endif
 }
 
 /**
@@ -727,6 +739,7 @@ void NetCl_Finale(int packetType, byte *data)
  */
 void NetCl_UpdatePlayerInfo(byte *data)
 {
+#if 0
     int                 num;
 
     NetCl_SetReadBuffer(data);
@@ -743,6 +756,8 @@ void NetCl_UpdatePlayerInfo(byte *data)
 #else
     Con_Printf("NetCl_UpdatePlayerInfo: pl=%i color=%i class=%i\n", num,
                cfg.playerColor[num], cfg.playerClass[num]);
+#endif
+
 #endif
 }
 

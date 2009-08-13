@@ -244,7 +244,7 @@ static int newTorchDelta[MAXPLAYERS];
  */
 void P_Thrust(player_t *player, angle_t angle, float move)
 {
-    mobj_t*             mo = player->plr->mo;
+    mobj_t*             mo = (mobj_t*) player->plr->mo;
     uint                an = angle >> ANGLETOFINESHIFT;
 
     if(player->powers[PT_FLIGHT] && !(mo->pos[VZ] <= mo->floorZ))
@@ -265,7 +265,7 @@ void P_Thrust(player_t *player, angle_t angle, float move)
     else
     {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-        sector_t*           sec = P_GetPtrp(mo->subsector, DMU_SECTOR);
+        sector_t*           sec = (sector_t*) P_GetPtrp(mo->subsector, DMU_SECTOR);
         float               mul;
 #endif
 #if __JHEXEN__
@@ -317,9 +317,9 @@ boolean P_IsPlayerOnGround(player_t *player)
         onground = true; //(player->plr->mo->pos[VZ] <= on->pos[VZ] + on->height);
     }
 #else
-    if(player->plr->mo->onMobj && !onground && !(player->plr->mo->flags2 & MF2_FLY))
+    if(player->plr->mo->onMobj && !onground && !(((mobj_t*)player->plr->mo)->flags2 & MF2_FLY))
     {
-        mobj_t *on = player->plr->mo->onMobj;
+        mobj_s *on = player->plr->mo->onMobj;
 
         onground = (player->plr->mo->pos[VZ] <= on->pos[VZ] + on->height);
     }
@@ -361,7 +361,7 @@ void P_CheckPlayerJump(player_t *player)
 void P_MovePlayer(player_t *player)
 {
     ddplayer_t *dp = player->plr;
-    mobj_t     *plrmo = player->plr->mo;
+    mobj_t     *plrmo = (mobj_t*) player->plr->mo;
     //ticcmd_t   *cmd = &player->plr->cmd;
     playerbrain_t *brain = &player->brain;
     classinfo_t *pClassInfo = PCLASS_INFO(player->class_);
@@ -843,7 +843,7 @@ void P_ClientSideThink(void)
 
     pl = &players[CONSOLEPLAYER];
     dpl = pl->plr;
-    mo = dpl->mo;
+    mo = (mobj_t*) dpl->mo;
 
     // Applicable parts of the regular P_PlayerThink routine will be used.
     P_PlayerThink(pl, 1.0/TICSPERSEC);
@@ -972,7 +972,7 @@ void P_ClientSideThink(void)
     // "predictor"; almost all clientside movement is handled by that
     // routine, in fact.)
     {
-    float       mul = XS_ThrustMul(P_GetPtrp(mo->subsector, DMU_SECTOR));
+    float       mul = XS_ThrustMul((sector_t*) P_GetPtrp(mo->subsector, DMU_SECTOR));
     DD_SetVariable(DD_CPLAYER_THRUST_MUL, &mul);
     }
 #endif
@@ -990,7 +990,7 @@ void P_PlayerThinkState(player_t *player)
 
     if(player->plr->mo)
     {
-        mobj_t             *plrmo = player->plr->mo;
+        mobj_t             *plrmo = (mobj_t*) player->plr->mo;
 
         // jDoom
         // Selector 0 = Generic (used by default)
@@ -1033,7 +1033,7 @@ void P_PlayerThinkCheat(player_t *player)
 {
     if(player->plr->mo)
     {
-        mobj_t             *plrmo = player->plr->mo;
+        mobj_t             *plrmo = (mobj_t*) player->plr->mo;
 
         // fixme: do this in the cheat code
         if(P_GetPlayerCheats(player) & CF_NOCLIP)
@@ -1045,7 +1045,7 @@ void P_PlayerThinkCheat(player_t *player)
 
 void P_PlayerThinkAttackLunge(player_t *player)
 {
-    mobj_t     *plrmo = player->plr->mo;
+    mobj_t     *plrmo = (mobj_t*) player->plr->mo;
 
     if(plrmo && (plrmo->flags & MF_JUSTATTACKED))
     {
@@ -1093,7 +1093,7 @@ void P_PlayerThinkMorph(player_t *player)
  */
 void P_PlayerThinkMove(player_t *player)
 {
-    mobj_t             *plrmo = player->plr->mo;
+    mobj_t             *plrmo = (mobj_t*) player->plr->mo;
 
     // Move around.
     // Reactiontime is used to prevent movement for a bit after a teleport.
@@ -1154,7 +1154,7 @@ void P_PlayerThinkMove(player_t *player)
 
 void P_PlayerThinkFly(player_t *player)
 {
-    mobj_t             *plrmo = player->plr->mo;
+    mobj_t             *plrmo = (mobj_t*) player->plr->mo;
 
     // Reactiontime is used to prevent movement for a bit after a teleport.
     if(plrmo->reactionTime)
@@ -1215,7 +1215,7 @@ void P_PlayerThinkView(player_t* player)
 
 void P_PlayerThinkSpecial(player_t* player)
 {
-    if(P_ToXSector(P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR))->special)
+    if(P_ToXSector((sector_t*) P_GetPtrp(player->plr->mo->subsector, DMU_SECTOR))->special)
         P_PlayerInSpecialSector(player);
 
 #if __JHEXEN__
@@ -1344,14 +1344,14 @@ void P_PlayerThinkWeapons(player_t* player)
         weapontype_t        cand, first;
 
         // Is this a same-slot weapon cycle?
-        if(P_GetWeaponSlot(brain->changeWeapon) ==
-           P_GetWeaponSlot(player->readyWeapon))
+        if(P_GetWeaponSlot((weapontype_t) brain->changeWeapon) ==
+           P_GetWeaponSlot((weapontype_t) player->readyWeapon))
         {   // Yes.
             cand = player->readyWeapon;
         }
         else
         {   // No.
-            cand = brain->changeWeapon;
+            cand = (weapontype_t) brain->changeWeapon;
         }
 
         first = cand = P_WeaponSlotCycle(cand, brain->cycleWeapon < 0);
@@ -1451,7 +1451,7 @@ void P_PlayerThinkMap(player_t* player)
 
     if(brain->mapMarkAdd)
     {
-        mobj_t*         pmo = player->plr->mo;
+        mobj_t*         pmo = (mobj_t*) player->plr->mo;
         AM_AddMark(map, pmo->pos[VX], pmo->pos[VY], pmo->pos[VZ]);
     }
 
@@ -1479,7 +1479,7 @@ void P_PlayerThinkPowers(player_t* player)
     if(player->powers[PT_INVISIBILITY])
     {
         if(!--player->powers[PT_INVISIBILITY])
-            player->plr->mo->flags &= ~MF_SHADOW;
+            ((mobj_t*)player->plr->mo)->flags &= ~MF_SHADOW;
     }
 #endif
 
@@ -1913,7 +1913,7 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     // Adjust turn angles and look direction. This is done in fractional time.
     P_PlayerThinkLookAround(player, ticLength);
 
-    if(!M_CheckTrigger(DD_GetVariable(DD_SHARED_FIXED_TRIGGER), ticLength))
+    if(!M_CheckTrigger((const trigger_t*) DD_GetVariable(DD_SHARED_FIXED_TRIGGER), ticLength))
         return; // It's too soon.
 
     P_PlayerThinkUpdateControls(player);

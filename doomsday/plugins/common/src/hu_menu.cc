@@ -1348,7 +1348,7 @@ void M_InitEpisodeMenu(void)
 #endif
 
     // Allocate the menu items array.
-    EpisodeItems = Z_Calloc(sizeof(menuitem_t) * numEpisodes, PU_STATIC, 0);
+    EpisodeItems = (menuitem_t*) Z_Calloc(sizeof(menuitem_t) * numEpisodes, PU_STATIC, 0);
 
     for(i = 0, maxw = 0; i < numEpisodes; ++i)
     {
@@ -2059,7 +2059,7 @@ void Hu_MenuCommand(menucommand_e cmd)
         case MCMD_NAV_LEFT:
             if(item->type == ITT_LRFUNC && item->func != NULL)
             {
-                item->func(LEFT_DIR | item->option, item->data);
+                item->func(LEFT_DIR | item->option, (void*) item->data);
                 S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
             }
             break;
@@ -2067,7 +2067,7 @@ void Hu_MenuCommand(menucommand_e cmd)
         case MCMD_NAV_RIGHT:
             if(item->type == ITT_LRFUNC && item->func != NULL)
             {
-                item->func(RIGHT_DIR | item->option, item->data);
+                item->func(RIGHT_DIR | item->option, (void*) item->data);
                 S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
             }
             break;
@@ -2130,7 +2130,7 @@ void Hu_MenuCommand(menucommand_e cmd)
             {
                 if(item->func)
                 {
-                    item->func(-1, item->data);
+                    item->func(-1, (void*) item->data);
                     S_LocalSound(SFX_MENU_CANCEL, NULL);
                 }
             }
@@ -2147,12 +2147,12 @@ void Hu_MenuCommand(menucommand_e cmd)
                 menu->lastOn = hasFocus;
                 if(item->type == ITT_LRFUNC)
                 {
-                    item->func(RIGHT_DIR | item->option, item->data);
+                    item->func(RIGHT_DIR | item->option, (void*) item->data);
                     S_LocalSound(SFX_MENU_CYCLE, NULL);
                 }
                 else if(item->type == ITT_EFUNC)
                 {
-                    item->func(item->option, item->data);
+                    item->func(item->option, (void*) item->data);
                     S_LocalSound(SFX_MENU_CYCLE, NULL);
                 }
             }
@@ -3519,7 +3519,7 @@ void M_StatusBarOpacity(int option, void* context)
 
 void M_WGCurrentColor(int option, void* context)
 {
-    M_FloatMod10(context, option);
+    M_FloatMod10((float*) context, option);
 }
 
 void M_NewGame(int option, void* context)
@@ -3893,7 +3893,7 @@ void M_ChooseSkill(int option, void* context)
 # if __JDOOM64__
     G_DeferedInitNew(option, 1, 1);
 # else
-    G_DeferedInitNew(option, epi + 1, 1);
+    G_DeferedInitNew(skillmode_t(option), epi + 1, 1);
 # endif
 #endif
 }

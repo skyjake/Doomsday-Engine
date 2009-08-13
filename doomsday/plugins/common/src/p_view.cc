@@ -77,7 +77,7 @@ void P_CalcHeight(player_t* plr)
     boolean         airborne;
     boolean         morphed = false;
     ddplayer_t*     ddplr = plr->plr;
-    mobj_t*         pmo = ddplr->mo;
+    mobj_t*         pmo = (mobj_t*) ddplr->mo;
     float           target, step;
 
     // Regular movement bobbing (needs to be calculated for gun swing even

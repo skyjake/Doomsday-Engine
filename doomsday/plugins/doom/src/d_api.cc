@@ -176,6 +176,7 @@ game_export_t *GetGameAPI(game_import_t *imports)
     //gx.GetInteger = G_GetInteger;
     //gx.GetVariable = G_GetVariable;
 
+    /*
     gx.NetServerStart = D_NetServerStarted;
     gx.NetServerStop = D_NetServerClose;
     gx.NetConnect = D_NetConnect;
@@ -185,6 +186,7 @@ game_export_t *GetGameAPI(game_import_t *imports)
     gx.HandlePacket = D_HandlePacket;
     gx.NetWriteCommands = D_NetWriteCommands;
     gx.NetReadCommands = D_NetReadCommands;
+    */
 
     // Data structure sizes.
     gx.ticcmdSize = sizeof(ticcmd_t);

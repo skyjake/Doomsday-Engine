@@ -68,7 +68,7 @@
  */
 iterlist_t *P_CreateIterList(void)
 {
-    iterlist_t *list = malloc(sizeof(iterlist_t));
+    iterlist_t *list = (iterlist_t*) malloc(sizeof(iterlist_t));
 
     list->list = NULL;
     list->count = list->max = list->rover = 0;
@@ -113,7 +113,7 @@ int P_AddObjectToIterList(iterlist_t *list, void *obj)
     if(++list->count > list->max)
     {
          list->max = (list->max? list->max * 2 : 8);
-         list->list = realloc(list->list, sizeof(void*) * list->max);
+         list->list = (void**) realloc(list->list, sizeof(void*) * list->max);
     }
 
     list->list[list->count - 1] = obj;

@@ -1618,7 +1618,7 @@ boolean P_CheckMissileSpawn(mobj_t *missile)
  *
  * @return              Pointer to the newly spawned missile.
  */
-mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest,
+mobj_t* P_SpawnMissile(mobjtype_t type, mobj_s* source, mobj_s* dest,
                        boolean checkSpawn)
 {
     float               pos[3];

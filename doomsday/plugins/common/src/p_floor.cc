@@ -443,16 +443,16 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
         (findlineinsectorsmallestbottommaterialparams_t*) context;
     sector_t          *frontSec, *backSec;
 
-    frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
-    backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
+    frontSec = (sector_t*) P_GetPtrp(li, DMU_FRONT_SECTOR);
+    backSec = (sector_t*) P_GetPtrp(li, DMU_BACK_SECTOR);
 
     if(frontSec && backSec)
     {
         sidedef_t*          side;
         material_t*         mat;
 
-        side = P_GetPtrp(li, DMU_SIDEDEF0);
-        mat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
+        side = (sidedef_t*) P_GetPtrp(li, DMU_SIDEDEF0);
+        mat = (material_t*) P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
         if(mat)
         {
             int                 height = P_GetIntp(mat, DMU_HEIGHT);
@@ -464,8 +464,8 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
             }
         }
 
-        side = P_GetPtrp(li, DMU_SIDEDEF1);
-        mat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
+        side = (sidedef_t*) P_GetPtrp(li, DMU_SIDEDEF1);
+        mat = (material_t*) P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
         if(mat)
         {
             int                 height = P_GetIntp(mat, DMU_HEIGHT);
@@ -537,7 +537,7 @@ int EV_DoFloor(linedef_t *line, floortype_e floortype)
         return rtn;
 
     P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    while((sec = (sector_t*) P_IterListIterator(list)) != NULL)
     {
         xsec = P_ToXSector(sec);
         // If already moving, keep going...
@@ -546,8 +546,8 @@ int EV_DoFloor(linedef_t *line, floortype_e floortype)
         rtn = 1;
 
         // New floor thinker.
-        floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
-        floor->thinker.function = T_MoveFloor;
+        floor = (floor_t*) Z_Calloc(sizeof(*floor), PU_MAP, 0);
+        floor->thinker.function = (void (*)()) T_MoveFloor;
         DD_ThinkerAdd(&floor->thinker);
         xsec->specialData = floor;
 
@@ -800,7 +800,7 @@ int EV_DoFloor(linedef_t *line, floortype_e floortype)
             floor->floorDestHeight =
                 P_GetFloatp(floor->sector, DMU_FLOOR_HEIGHT) + 24;
 
-            frontsector = P_GetPtrp(line, DMU_FRONT_SECTOR);
+            frontsector = (sector_t*) P_GetPtrp(line, DMU_FRONT_SECTOR);
 
             P_SetPtrp(sec, DMU_FLOOR_MATERIAL,
                       P_GetPtrp(frontsector, DMU_FLOOR_MATERIAL));
@@ -849,7 +849,7 @@ int EV_DoFloor(linedef_t *line, floortype_e floortype)
             sector_t               *otherSec =
                 P_FindSectorSurroundingLowestFloor(sec, &floor->floorDestHeight);
 
-            floor->material = P_GetPtrp(otherSec, DMU_FLOOR_MATERIAL);
+            floor->material = (material_t*) P_GetPtrp(otherSec, DMU_FLOOR_MATERIAL);
             floor->newSpecial = P_ToXSector(otherSec)->special;
             }
             break;
@@ -930,14 +930,14 @@ int findAdjacentSectorForSpread(void* ptr, void* context)
     sector_t*           frontSec, *backSec;
     xsector_t*          xsec;
 
-    frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
+    frontSec = (sector_t*) P_GetPtrp(li, DMU_FRONT_SECTOR);
     if(!frontSec)
         return 1; // Continue iteration.
 
     if(params->baseSec != frontSec)
         return 1; // Continue iteration.
 
-    backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
+    backSec = (sector_t*) P_GetPtrp(li, DMU_BACK_SECTOR);
     if(!backSec)
         return 1; // Continue iteration.
 
@@ -971,7 +971,7 @@ int EV_BuildStairs(linedef_t* line, stair_e type)
         return rtn;
 
     P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    while((sec = (sector_t*) P_IterListIterator(list)) != NULL)
     {
         xsec = P_ToXSector(sec);
 
@@ -981,8 +981,8 @@ int EV_BuildStairs(linedef_t* line, stair_e type)
 
         // New floor thinker.
         rtn = 1;
-        floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
-        floor->thinker.function = T_MoveFloor;
+        floor = (floor_t*) Z_Calloc(sizeof(*floor), PU_MAP, 0);
+        floor->thinker.function = (void (*)()) T_MoveFloor;
         DD_ThinkerAdd(&floor->thinker);
 
         xsec->specialData = floor;
@@ -1023,7 +1023,7 @@ int EV_BuildStairs(linedef_t* line, stair_e type)
         // 1. Find 2-sided line with a front side in the same sector.
         // 2. Other side is the next sector to raise.
         params.baseSec = sec;
-        params.material = P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
+        params.material = (material_t*) P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
         params.foundSec = NULL;
 
         while(!P_Iteratep(params.baseSec, DMU_LINEDEF, &params,
@@ -1031,8 +1031,8 @@ int EV_BuildStairs(linedef_t* line, stair_e type)
         {   // We found another sector to spread to.
             height += stairsize;
 
-            floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
-            floor->thinker.function = T_MoveFloor;
+            floor = (floor_t*) Z_Calloc(sizeof(*floor), PU_MAP, 0);
+            floor->thinker.function = (void (*)()) T_MoveFloor;
             DD_ThinkerAdd(&floor->thinker);
 
             P_ToXSector(params.foundSec)->specialData = floor;
@@ -1216,8 +1216,8 @@ int findSectorFirstNeighbor(void *ptr, void *context)
         (findsectorfirstneighborparams_t*) context;
     sector_t           *frontSec, *backSec;
 
-    frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
-    backSec= P_GetPtrp(li, DMU_BACK_SECTOR);
+    frontSec = (sector_t*) P_GetPtrp(li, DMU_FRONT_SECTOR);
+    backSec= (sector_t*) P_GetPtrp(li, DMU_BACK_SECTOR);
 
     if(frontSec && backSec)
     {
@@ -1250,7 +1250,7 @@ int EV_DoDonut(linedef_t *line)
         return rtn;
 
     P_IterListResetIterator(list, true);
-    while((sec = P_IterListIterator(list)) != NULL)
+    while((sec = (sector_t*) P_IterListIterator(list)) != NULL)
     {
         // Already moving? If so, keep going...
         if(P_ToXSector(sec)->specialData)
@@ -1278,8 +1278,8 @@ int EV_DoDonut(linedef_t *line)
                 P_GetFloatp(inner, DMU_FLOOR_HEIGHT);
 
             // Spawn rising slime.
-            floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
-            floor->thinker.function = T_MoveFloor;
+            floor = (floor_t*) Z_Calloc(sizeof(*floor), PU_MAP, 0);
+            floor->thinker.function = (void (*)()) T_MoveFloor;
             DD_ThinkerAdd(&floor->thinker);
 
             P_ToXSector(outer)->specialData = floor;
@@ -1289,13 +1289,13 @@ int EV_DoDonut(linedef_t *line)
             floor->state = FS_UP;
             floor->sector = outer;
             floor->speed = FLOORSPEED * .5;
-            floor->material = P_GetPtrp(inner, DMU_FLOOR_MATERIAL);
+            floor->material = (material_t*) P_GetPtrp(inner, DMU_FLOOR_MATERIAL);
             floor->newSpecial = 0;
             floor->floorDestHeight = destHeight;
 
             // Spawn lowering donut-hole.
-            floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
-            floor->thinker.function = T_MoveFloor;
+            floor = (floor_t*) Z_Calloc(sizeof(*floor), PU_MAP, 0);
+            floor->thinker.function = (void (*)()) T_MoveFloor;
             DD_ThinkerAdd(&floor->thinker);
 
             P_ToXSector(sec)->specialData = floor;

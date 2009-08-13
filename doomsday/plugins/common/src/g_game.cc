@@ -118,7 +118,7 @@ MonsterMissileInfo[] =
     {MT_SRCRFX1, {20, 28}},
     {MT_SOR2FX1, {20, 28}},
 #endif
-    {-1, {-1, -1}}                  // Terminator
+    {mobjtype_t(-1), {-1, -1}}                  // Terminator
 };
 #endif
 
@@ -721,7 +721,7 @@ static const char* getGameStateStr(gamestate_t state)
         {GS_DEMOSCREEN, "GS_DEMOSCREEN"},
         {GS_WAITING, "GS_WAITING"},
         {GS_INFINE, "GS_INFINE"},
-        {-1, NULL}
+        {gamestate_t(-1), NULL}
     };
     uint                i;
 
@@ -827,7 +827,7 @@ void G_StartTitle(void)
         Con_Error("G_StartTitle: Script \"%s\" not defined.\n", name);
     }
 
-    FI_Start(script, FIMODE_LOCAL);
+    FI_Start((char*) script, FIMODE_LOCAL);
 }
 
 void G_DoLoadMap(void)
@@ -1049,7 +1049,7 @@ void G_UpdateGSVarsForPlayer(player_t* pl)
  */
 DENG_EXPORT void deng_Ticker(timespan_t ticLength)
 {
-    static gamestate_t  oldGameState = -1;
+    static int          oldGameState = -1;
     static trigger_t    fixed = {1.0 / TICSPERSEC};
 
     int                 i;
@@ -1334,7 +1334,7 @@ void G_PlayerLeaveMap(int player)
 #endif
 
     p->plr->lookDir = 0;
-    p->plr->mo->flags &= ~MF_SHADOW; // Cancel invisibility.
+    ((mobj_t*)p->plr->mo)->flags &= ~MF_SHADOW; // Cancel invisibility.
     p->plr->extraLight = 0; // Cancel gun flashes.
     p->plr->fixedColorMap = 0; // Cancel IR goggles.
 
@@ -1565,7 +1565,7 @@ void G_DoReborn(int playernum)
         if(p->plr->mo)
         {
             // First dissasociate the corpse.
-            p->plr->mo->player = NULL;
+            ((mobj_t*)p->plr->mo)->player = NULL;
             p->plr->mo->dPlayer = NULL;
         }
 
@@ -2204,7 +2204,7 @@ void G_InitNew(skillmode_t skill, int episode, int map)
     if(skill < SM_BABY)
         skill = SM_BABY;
     if(skill > NUM_SKILL_MODES - 1)
-        skill = NUM_SKILL_MODES - 1;
+        skill = skillmode_t(NUM_SKILL_MODES - 1);
 
     // Make sure that the episode and map numbers are good.
     G_ValidateMap(&episode, &map);

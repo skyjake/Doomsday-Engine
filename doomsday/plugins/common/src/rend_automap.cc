@@ -195,7 +195,7 @@ void Rend_AutomapLoadData(void)
         {
             amMaskTexture =
                 GL_NewTextureWithParams3(DGL_LUMINANCE, 256, 256,
-                                         W_CacheLumpName("mapmask", PU_CACHE),
+                                         (void*) W_CacheLumpName("mapmask", PU_CACHE),
                                          0x8, DGL_NEAREST, DGL_LINEAR,
                                          0 /*no anisotropy*/,
                                          DGL_REPEAT, DGL_REPEAT);
@@ -225,7 +225,7 @@ void Rend_AutomapUnloadData(void)
 
     for(i = 0; i < NUM_VECTOR_GRAPHS; ++i)
     {
-        vectorgrap_t*       vgraph = AM_GetVectorGraph(i);
+        vectorgrap_t*       vgraph = (vectorgrap_t*) AM_GetVectorGraph(vectorgrapname_t(i));
 
         if(vgraph->dlist)
             DGL_DeleteLists(vgraph->dlist, 1);
@@ -620,7 +620,7 @@ int Rend_AutomapSeg(void* obj, void* data)
     player_t*           plr = p->plr;
     automapid_t         id;
 
-    line = P_GetPtrp(seg, DMU_LINEDEF);
+    line = (linedef_t*) P_GetPtrp(seg, DMU_LINEDEF);
     if(!line)
         return 1;
 
@@ -632,8 +632,8 @@ int Rend_AutomapSeg(void* obj, void* data)
        !(p->map->flags & AMF_REND_ALLLINES))
         return 1;
 
-    frontSector = P_GetPtrp(line, DMU_FRONT_SECTOR);
-    if(frontSector != P_GetPtrp(line, DMU_SIDEDEF0_OF_LINE | DMU_SECTOR))
+    frontSector = (sector_t*) P_GetPtrp(line, DMU_FRONT_SECTOR);
+    if(frontSector != (sector_t*) P_GetPtrp(line, DMU_SIDEDEF0_OF_LINE | DMU_SECTOR))
         return 1; // We only want to draw twosided lines once.
 
     id = AM_MapForPlayer(plr - players);
@@ -641,7 +641,7 @@ int Rend_AutomapSeg(void* obj, void* data)
     if((p->map->flags & AMF_REND_ALLLINES) ||
        xLine->mapped[plr - players])
     {
-        backSector = P_GetPtrp(line, DMU_BACK_SECTOR);
+        backSector = (sector_t*) P_GetPtrp(line, DMU_BACK_SECTOR);
 
         // Perhaps this is a specially colored line?
         info = AM_GetInfoForSpecialLine(id, xLine->special, frontSector,
@@ -691,12 +691,12 @@ int Rend_AutomapSeg(void* obj, void* data)
 
         rendLine2(p->map, p->cfg, v1[VX], v1[VY], v2[VX], v2[VY],
                   info->rgba,
-                  (xLine->special && !p->cfg->glowingLineSpecials ?
+                  (glowtype_t) (xLine->special && !p->cfg->glowingLineSpecials ?
                         NO_GLOW : info->glow),
                   info->glowAlpha,
                   info->glowWidth, !p->addToLists, info->scaleWithView,
                   (info->glow && !(xLine->special && !p->cfg->glowingLineSpecials)),
-                  (xLine->special && !p->cfg->glowingLineSpecials ?
+                  (blendmode_t) (xLine->special && !p->cfg->glowingLineSpecials ?
                         BM_NORMAL : info->blendMode),
                   (p->map->flags & AMF_REND_LINE_NORMALS),
                   p->addToLists);
@@ -826,7 +826,7 @@ int renderPolyObjSeg(void* obj, void* context)
     const mapobjectinfo_t* info;
     automapobjectname_t amo;
 
-    if(!(line = P_GetPtrp(seg, DMU_LINEDEF)) || !(xLine = P_ToXLine(line)))
+    if(!(line = (linedef_t*) P_GetPtrp(seg, DMU_LINEDEF)) || !(xLine = P_ToXLine(line)))
         return 1;
 
     if(xLine->validCount == VALIDCOUNT)
@@ -850,7 +850,7 @@ int renderPolyObjSeg(void* obj, void* context)
     {
         renderLinedef(line, info->rgba[0], info->rgba[1], info->rgba[2],
                       info->rgba[3] * cfg.automapLineAlpha * Automap_GetOpacity(p->map),
-                      info->blendMode,
+                      (blendmode_t) info->blendMode,
                       (p->map->flags & AMF_REND_LINE_NORMALS)? true : false);
     }
 
@@ -1034,7 +1034,7 @@ static void renderPlayers(const automap_t* map, const automapcfg_t* mcfg,
 #endif
         alpha = MINMAX_OF(0.f, alpha * Automap_GetOpacity(map), 1.f);
 
-        mo = p->plr->mo;
+        mo = (mobj_t*) p->plr->mo;
 
         /* $unifiedangles */
         renderLineCharacter(vg, mo->pos[VX], mo->pos[VY],
@@ -1567,7 +1567,7 @@ void Rend_Automap(int player, const automap_t* map)
             // Setup the global list state.
             DGL_Color4f(info->rgba[0], info->rgba[1], info->rgba[2],
                         info->rgba[3] * cfg.automapLineAlpha * Automap_GetOpacity(map));
-            DGL_BlendMode(info->blendMode);
+            DGL_BlendMode((blendmode_t) info->blendMode);
 
             // Draw.
             DGL_CallList(rmap->lists[i]);
@@ -1602,7 +1602,7 @@ void Rend_Automap(int player, const automap_t* map)
         Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
                               &aabb[BOXBOTTOM], &aabb[BOXTOP]);
         VALIDCOUNT++;
-        P_MobjsBoxIterator(aabb, renderThing, &params);
+        P_MobjsBoxIterator(aabb, (int (*)(mobj_s*, void*)) renderThing, &params);
     }
 
     DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);

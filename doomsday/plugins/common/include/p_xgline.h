@@ -347,24 +347,19 @@ int             XL_LineEvent(int evType, int lineType, struct linedef_s* line,
                              int sideNum, void* data);
 void            XL_ActivateLine(boolean activating, linetype_t* info,
                                 struct linedef_s* line, int sideNum,
-                                struct mobj_s* data, int evType);
+                                mobj_s* data, int evType);
 int             XL_TraverseLines(struct linedef_s* line, int reftype, int ref,
-                                 void* context, void* context2, struct mobj_s* activator,
-                                 int (C_DECL *func)());
+                                 void* context, void* context2, mobj_s* activator,
+                                 xltravfunc_t func);
 int             XL_TraversePlanes(struct linedef_s* line, int reftype, int ref,
                                   void* context, void* context2, boolean travSectors,
-                                  struct mobj_s* activator,
-                                  int (C_DECL *func)());
+                                  mobj_s* activator, xstravfunc_t func);
 
 // Return false if the event was processed.
-int             XL_CrossLine(struct linedef_s* line, int sideNum,
-                             struct mobj_s* thing);
-int             XL_UseLine(struct linedef_s* line, int sideNum,
-                           struct mobj_s* thing);
-int             XL_ShootLine(struct linedef_s* line, int sideNum,
-                             struct mobj_s* thing);
-int             XL_HitLine(struct linedef_s* line, int sideNum,
-                           struct mobj_s* thing);
+int             XL_CrossLine(struct linedef_s* line, int sideNum, mobj_s* thing);
+int             XL_UseLine(struct linedef_s* line, int sideNum, mobj_s* thing);
+int             XL_ShootLine(struct linedef_s* line, int sideNum, mobj_s* thing);
+int             XL_HitLine(struct linedef_s* line, int sideNum, mobj_s* thing);
 
 int             XG_RandomInt(int min, int max);
 

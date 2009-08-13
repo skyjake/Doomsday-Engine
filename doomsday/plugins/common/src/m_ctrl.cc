@@ -359,7 +359,7 @@ static void M_DeleteBinding(bindingitertype_t type, int bid, const char* name, b
 
 static void M_EFuncControlConfig(int option, void* data)
 {
-    controlconfig_t*    cc = data;
+    controlconfig_t*    cc = (controlconfig_t*) data;
     char                buf[1024];
 
     if(option == -1)
@@ -392,7 +392,7 @@ void M_InitControlsMenu(void)
     VERBOSE( Con_Message("M_InitControlsMenu: Creating controls items.\n") );
 
     // Allocate the menu items array.
-    ControlsItems = Z_Calloc(sizeof(menuitem_t) * count, PU_STATIC, 0);
+    ControlsItems = (menuitem_t*) Z_Calloc(sizeof(menuitem_t) * count, PU_STATIC, 0);
 
     for(i = 0; i < count; ++i)
     {
@@ -455,7 +455,7 @@ static void M_DrawBinding(bindingitertype_t type, int bid, const char* name, boo
     static const float  bgRGB[] = { 0, 0, 0 };
 #endif
 
-    bindingdrawerdata_t* d = data;
+    bindingdrawerdata_t* d = (bindingdrawerdata_t*) data;
     int                 width, height;
 
     if(type == MIBT_KEY)
@@ -641,7 +641,7 @@ void M_DrawControlsMenu(void)
     for(i = 0; i < menu->numVisItems && menu->firstItem + i < menu->itemCount;
         i++, item++)
     {
-        controlconfig_t* cc = item->data;
+        controlconfig_t* cc = (controlconfig_t*) item->data;
         bindingdrawerdata_t draw;
 
         if(item->type != ITT_EFUNC)

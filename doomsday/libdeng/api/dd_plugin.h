@@ -43,11 +43,20 @@ enum                               // Hook types.
     NUM_HOOK_TYPES
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 DENG_API int             Plug_AddHook(int hook_type, hookfunc_t hook);
 DENG_API int             Plug_RemoveHook(int hook_type, hookfunc_t hook);
+
+#ifdef __cplusplus
+}
+#endif
 
 // Plug_DoHook is used by the engine to call all functions
 // registered to a hook.
 int             Plug_DoHook(int hook_type, int parm, void *data);
 int             Plug_CheckForHook(int hookType);
+
 #endif

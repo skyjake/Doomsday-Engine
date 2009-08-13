@@ -150,7 +150,7 @@ static void logPush(msglog_t* log, const char* txt, int tics)
 
     if(len > msg->maxLen)
     {
-        msg->text = realloc(msg->text, len + 1);
+        msg->text = (char*) realloc(msg->text, len + 1);
         msg->maxLen = len;
     }
     else
@@ -462,12 +462,12 @@ void Hu_LogPost(int player, byte flags, const char* msg, int tics)
 
         if(flags & LMF_YELLOW)
         {
-            buf = malloc((strlen(msg)+strlen(YELLOW_FORMAT)+1) * sizeof(char));
+            buf = (char*) malloc((strlen(msg)+strlen(YELLOW_FORMAT)+1) * sizeof(char));
             sprintf(buf, YELLOW_FORMAT "%s", msg);
         }
         else
         {
-            buf = malloc((strlen(msg)+1) * sizeof(char));
+            buf = (char*) malloc((strlen(msg)+1) * sizeof(char));
             sprintf(buf, "%s", msg);
         }
 
@@ -627,8 +627,6 @@ DEFCC(CCmdMsgAction);
 DEFCC(CCmdLocalMessage);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void     closeChat(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 

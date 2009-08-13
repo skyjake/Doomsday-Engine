@@ -25,6 +25,9 @@
 #ifndef __EXTENDED_GENERAL_H__
 #define __EXTENDED_GENERAL_H__
 
+typedef int C_DECL (*xltravfunc_t)(linedef_t*, boolean, void*, void*, mobj_t*);
+typedef int C_DECL (*xstravfunc_t)(struct sector_s*, boolean, void*, void*, struct mobj_s*);
+
 #include "p_xgline.h"
 #include "p_xgsec.h"
 

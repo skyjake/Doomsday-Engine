@@ -311,7 +311,7 @@ void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback,
     assert(msg);
 
     awaitingResponse = true;
-    messageResponse = 0;
+    messageResponse = msgresponse_t(0);
     messageToPrint = 1;
 
     msgType = type;
@@ -319,7 +319,7 @@ void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback,
     msgContext = context;
 
     // Take a copy of the message string.
-    msgText = calloc(1, strlen(msg)+1);
+    msgText = (char*) calloc(1, strlen(msg)+1);
     strncpy(msgText, msg, strlen(msg));
 
     if(msgType == MSG_YESNO)

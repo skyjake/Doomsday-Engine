@@ -79,7 +79,7 @@ static int itemRespawnQueueHead, itemRespawnQueueTail;
 
 // CODE --------------------------------------------------------------------
 
-const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo)
+const terraintype_t* P_MobjGetFloorTerrainType(mobj_s* mo)
 {
     sector_t*           sec = (sector_t*) P_GetPtrp(mo->subsector, DMU_SECTOR);
 
@@ -89,7 +89,7 @@ const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo)
 /**
  * @return              @c true, if the mobj is still present.
  */
-boolean P_MobjChangeState(mobj_t* mobj, statenum_t state)
+boolean P_MobjChangeState(mobj_s* mobj, int /*statenum_t*/ state)
 {
     state_t*            st;
 
@@ -105,7 +105,7 @@ boolean P_MobjChangeState(mobj_t* mobj, statenum_t state)
         P_MobjSetState(mobj, state);
         st = &STATES[state];
 
-        mobj->turnTime = false; // $visangle-facetarget
+        ((mobj_t*)mobj)->turnTime = false; // $visangle-facetarget
 
         // Modified handling.
         // Call action functions when the state is set.
@@ -160,9 +160,9 @@ void P_FloorBounceMissile(mobj_t *mo)
 /**
  * @return              The ground friction factor for the mobj.
  */
-float P_MobjGetFriction(mobj_t *mo)
+float P_MobjGetFriction(mobj_s *mo)
 {
-    if((mo->flags2 & MF2_FLY) && !(mo->pos[VZ] <= mo->floorZ) && !mo->onMobj)
+    if((((mobj_t*)mo)->flags2 & MF2_FLY) && !(mo->pos[VZ] <= mo->floorZ) && !mo->onMobj)
     {
         return FRICTION_FLY;
     }
@@ -838,7 +838,7 @@ void P_MobjThinker(mobj_t* mo)
 /**
  * Spawns a mobj of "type" at the specified position.
  */
-mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
+mobj_t* P_SpawnMobj3f(int /*mobjtype_t*/ type, float x, float y, float z,
                       angle_t angle, int spawnFlags)
 {
     mobj_t*             mo;
@@ -921,7 +921,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     return mo;
 }
 
-mobj_t* P_SpawnMobj3fv(mobjtype_t type, float pos[3], angle_t angle,
+mobj_t* P_SpawnMobj3fv(int /*mobjtype_t*/ type, float pos[3], angle_t angle,
                        int spawnFlags)
 {
     return P_SpawnMobj3f(type, pos[VX], pos[VY], pos[VZ], angle, spawnFlags);
@@ -1306,8 +1306,10 @@ boolean P_CheckMissileSpawn(mobj_t *th)
  *
  * @return              Pointer to the newly spawned missile.
  */
-mobj_t* P_SpawnMissile(mobjtype_t type, mobj_t* source, mobj_t* dest)
+mobj_t* P_SpawnMissile(mobjtype_t type, mobj_s* source_, mobj_s* dest_)
 {
+    mobj_t             *source = (mobj_t*) source_;
+    mobj_t             *dest = (mobj_t*) dest_;
     float               pos[3];
     mobj_t*             th = 0;
     unsigned int        an;
