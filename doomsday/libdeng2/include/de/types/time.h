@@ -21,6 +21,7 @@
 #define LIBDENG2_TIME_H
 
 #include "../deng.h"
+#include "../ISerializable"
 #include "../String"
 
 #include <ctime>
@@ -36,7 +37,7 @@ namespace de
      *
      * @ingroup types
      */
-    class LIBDENG2_API Time
+    class LIBDENG2_API Time : public ISerializable
     {   
     public: 
         /**
@@ -183,12 +184,16 @@ namespace de
          */
         Date asDate() const;
 
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);
+
     public:
         static void sleep(const Time::Delta& delta) { delta.sleep(); }
 
     private:
         time_t time_;
-        dint micro_;
+        dint32 micro_;
 
         friend class Date;
     };

@@ -70,7 +70,7 @@ String Function::asText() const
     return os.str();
 }
 
-void Function::mapArgumentValues(const ArrayValue& args, ArgumentValues& values)
+void Function::mapArgumentValues(const ArrayValue& args, ArgumentValues& values) const
 {
     const DictionaryValue* labeledArgs = dynamic_cast<const DictionaryValue*>(
         args.elements().front());
@@ -150,12 +150,12 @@ void Function::setGlobals(Record* globals)
     }
 }
 
-Record* Function::globals()
+Record* Function::globals() const
 {
     return globals_;
 }
 
-bool Function::callNative(Context& context, const ArgumentValues& args)
+bool Function::callNative(Context& context, const ArgumentValues& args) const
 {
     assert(args.size() == arguments_.size());    
     

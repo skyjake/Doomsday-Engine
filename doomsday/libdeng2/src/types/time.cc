@@ -19,6 +19,8 @@
 
 #include "de/Time"
 #include "de/Date"
+#include "de/Writer"
+#include "de/Reader"
 #include "../sdl.h"
 
 #include <cmath>
@@ -139,6 +141,19 @@ String Time::asText() const
 Date Time::asDate() const
 {
     return Date(*this);
+}
+
+void Time::operator >> (Writer& to) const
+{
+    to << duint64(time_) << micro_;
+}
+
+void Time::operator << (Reader& from)
+{
+    duint64 t;
+    from >> t;
+    time_ = (time_t) t;
+    from >> micro_;
 }
 
 std::ostream& de::operator << (std::ostream& os, const Time& t)

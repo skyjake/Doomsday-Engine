@@ -83,7 +83,19 @@ namespace de
         
         const Defaults& defaults() const { return defaults_; }
       
-        void mapArgumentValues(const ArrayValue& args, ArgumentValues& values);
+        /**
+         * Maps a set of named and unnamed argument values to the list of values that
+         * will be passed to the function. Default values will be used for any arguments
+         * that have been given no value. No copies of any values are made.
+         *
+         * @param args    The array's first element must be a DictionaryValue containing 
+         *                values for the named arguments of the call. The rest of the array
+         *                are the unnamed arguments.
+         * @param values  The resulting list of values to the passed to the function.
+         *                The values are in the order the arguments have been declared in
+         *                the function statement.
+         */
+        void mapArgumentValues(const ArrayValue& args, ArgumentValues& values) const;
 
         /**
          * Sets the global namespace of the function. This is the namespace 
@@ -95,7 +107,7 @@ namespace de
          * Returns the global namespace of the function.
          * Return @c NULL when the originating namespace has been deleted.
          */
-        Record* globals();
+        Record* globals() const;
         
         /**
          * Perform a native call of the function. 
@@ -111,7 +123,7 @@ namespace de
          *         native call handles everything, including placing the 
          *         return value into the evaluator.
          */
-        virtual bool callNative(Context& context, const ArgumentValues& args);
+        virtual bool callNative(Context& context, const ArgumentValues& args) const;
         
         // Implements ISerializable.
         void operator >> (Writer& to) const;

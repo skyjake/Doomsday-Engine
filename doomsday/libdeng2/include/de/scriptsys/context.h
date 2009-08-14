@@ -205,6 +205,9 @@ namespace de
 
         /// Expression evaluator.
         Evaluator evaluator_;
+
+        /// Determines whether the namespace is owned by the context.
+        bool ownsNamespace_;
         
         /// The local namespace of this context.
         Record* names_;

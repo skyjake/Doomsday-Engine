@@ -68,8 +68,14 @@ namespace de
     public:
         /**
          * Constructs a new process. The process is initialized to STOPPED state.
+         *
+         * @param externalGlobalNamespace  Namespace to use as the global namespace
+         *                                 of the process. If not specified, a private
+         *                                 global namespace is created for the process.
+         *                                 The process does not get ownership of the
+         *                                 external global namespace.
          */
-        Process();
+        Process(Record* externalGlobalNamespace = 0);
         
         /**
          * Constructs a new process. The process is initialized to RUNNING state.
@@ -158,9 +164,12 @@ namespace de
          * calling context's evaluator.
          *
          * @param function   Function to call.
-         * @param arguments  Arguments for the function.
+         * @param arguments  Arguments for the function. The array's first element
+         *                   must be a DictionaryValue containing values for the 
+         *                   named arguments of the call. The rest of the array
+         *                   are the unnamed arguments.
          */
-        void call(Function& function, const ArrayValue& arguments);
+        void call(const Function& function, const ArrayValue& arguments);
         
         /**
          * Collects the namespaces currently visible. This includes the process's

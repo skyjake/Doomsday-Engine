@@ -20,8 +20,7 @@
 #ifndef LIBDENG2_OBJECT_H
 #define LIBDENG2_OBJECT_H
 
-#include "../ISerializable"
-#include "../Enumerator"
+#include "../Thinker"
 #include "../Animator"
 
 namespace de
@@ -37,11 +36,8 @@ namespace de
      *
      * @ingroup world
      */
-    class LIBDENG2_API Object : public ISerializable
+    class LIBDENG2_API Object : public Thinker
     {
-    public:
-        typedef Enumerator::Type Id;
-        
     public:
         Object();
         
@@ -52,8 +48,6 @@ namespace de
         void operator << (Reader& from);
         
     private:
-        Id id_;
-        
         /// Position of the object's origin.
         AnimatorVector3 pos_;
 
@@ -67,17 +61,11 @@ namespace de
         /// E.g., a user that is only a spectator doesn't have a Thing.
         Thing* thing_;
 
-        /// Time when the object was created.
-        Time bornAt_;
-
         /// Another object this one is resting on.
         Object* onObject_;
 
         /// This is set only if this object is the representation of a user.
         User* user_;
-
-        /// Optional object-specific namespace.
-        Record* info_;
     };
 }
 

@@ -24,23 +24,20 @@
 using namespace de;
 
 Context::Context(Type type, Process* owner, Record* globals)
-    : type_(type), owner_(owner), evaluator_(*this), names_(globals)
+    : type_(type), owner_(owner), evaluator_(*this), ownsNamespace_(false), names_(globals)
 {
-    if(globals)
-    {
-        assert(type_ == GLOBAL_NAMESPACE);
-    }
     if(!names_)
     {
-        assert(type_ != GLOBAL_NAMESPACE);
         // Create a private empty namespace.
+        assert(type_ != GLOBAL_NAMESPACE);
         names_ = new Record();
+        ownsNamespace_ = true;
     }
 }
 
 Context::~Context()
 {
-    if(type_ != GLOBAL_NAMESPACE)
+    if(ownsNamespace_)
     {
         delete names_;
     }        

@@ -23,7 +23,7 @@
 
 using namespace de;
 
-Object::Object() : id_(0)
+Object::Object()
 {}
 
 Object::~Object()
@@ -31,10 +31,12 @@ Object::~Object()
 
 void Object::operator >> (Writer& to) const
 {
-    to << id_ << pos_;
+    Thinker::operator >> (to);
+    to << pos_;
 }
 
 void Object::operator << (Reader& from)
 {
-    from >> id_ >> pos_;
+    Thinker::operator << (from);
+    from >> pos_;
 }

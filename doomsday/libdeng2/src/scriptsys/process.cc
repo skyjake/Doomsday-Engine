@@ -33,12 +33,12 @@ using std::auto_ptr;
 /// If execution continues for longer than this, a HangError is thrown.
 static const Time::Delta MAX_EXECUTION_TIME = 10;
 
-Process::Process() : state_(STOPPED), workingPath_("/")
+Process::Process(Record* externalGlobalNamespace) : state_(STOPPED), workingPath_("/")
 {
     // Push the first context on the stack. This bottommost context
     // is never popped from the stack. Its namespace is the global namespace
     // of the process.
-    stack_.push_back(new Context(Context::PROCESS, this));
+    stack_.push_back(new Context(Context::PROCESS, this, externalGlobalNamespace));
 }
 
 Process::Process(const Script& script) : state_(STOPPED), workingPath_("/")
@@ -283,7 +283,7 @@ void Process::setWorkingPath(const String& newWorkingPath)
     workingPath_ = newWorkingPath;
 }
 
-void Process::call(Function& function, const ArrayValue& arguments)
+void Process::call(const Function& function, const ArrayValue& arguments)
 {
     // First map the argument values.
     Function::ArgumentValues argValues;
