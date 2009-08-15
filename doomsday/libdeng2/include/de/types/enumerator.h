@@ -49,6 +49,17 @@ namespace de
          */
         Type get();
         
+        /**
+         * Resets the enumerator so that it starts generating values starting from 1.
+         */
+        void reset();
+        
+        /**
+         * Increments the enumerator so that the next generated value is greater than 
+         * the claimed value @a value.
+         */
+        void claim(Type value);
+        
     private:
         Type current_;
     };

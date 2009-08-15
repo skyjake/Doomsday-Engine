@@ -18,6 +18,7 @@
  */
  
 #include "de/Enumerator"
+#include "de/math.h"
 
 using namespace de;
 
@@ -28,4 +29,14 @@ Enumerator::Type Enumerator::get()
 {
     while(!++current_);
     return current_;
+}
+
+void Enumerator::reset()
+{
+    current_ = NONE;
+}
+
+void Enumerator::claim(Type value)
+{
+    current_ = max(value, current_);
 }

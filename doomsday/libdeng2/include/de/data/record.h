@@ -32,6 +32,8 @@
 
 namespace de
 {
+    class Function;
+    
     /**
      * A set of variables. A record may have any number of subrecords.
      * Note that the members of a record do not have an order.
@@ -197,7 +199,7 @@ namespace de
         
         /**
          * Looks up a variable in the record. Variables in subrecords can be accessed
-         * using the path notation: subrecord-name/variable-name.
+         * using the member notation: <code>subrecord-name.variable-name</code>
          *
          * @param name  Variable name.
          *
@@ -207,7 +209,7 @@ namespace de
         
         /**
          * Looks up a variable in the record. Variables in subrecords can be accessed
-         * using the path notation: subrecord-name/variable-name.
+         * using the member notation: <code>subrecord-name.variable-name</code>
          *
          * @param name  Variable name.
          *
@@ -266,6 +268,16 @@ namespace de
         const ValueType& value(const String& name) const {
             return (*this)[name].value<ValueType>();
         }
+        
+        /**
+         * Convenience method for finding the Function referenced by a member.
+         *
+         * @param name  Name of member.
+         *
+         * @return  The function, or @c NULL if the member does not exist or
+         *          has some other value than FunctionValue.
+         */
+        const Function* function(const String& name) const;
         
         // Implements ISerializable.
         void operator >> (Writer& to) const;

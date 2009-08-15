@@ -23,9 +23,13 @@
 #include "../ISerializable"
 #include "../Time"
 #include "../Enumerator"
+#include "../Id"
+
+#include <set>
 
 namespace de
 {
+    class Reader;
     class Record;
     
     /**
@@ -38,8 +42,25 @@ namespace de
     class Thinker : public ISerializable
     {
     public:
-        typedef Enumerator::Type Id;
+        /// Unrecognized type encountered when deserializing a thinker. @ingroup errors
+        DEFINE_ERROR(UnrecognizedError);
 
+        /// Identifier used when serializing thinkers (0-255).
+        typedef duint8 SerialId;
+
+        enum {
+            THINKER = 0,
+            OBJECT = 1,
+            FIRST_CUSTOM_THINKER = 10
+        };
+        
+        /**
+         * Thinker constructor function. Attempts constructing a thinker based on 
+         * the data available in @a reader. If the data is not recognized, returns
+         * @c NULL.
+         */
+        typedef Thinker* (*Constructor)(Reader& reader);
+        
     public:
         /**
          * Constructs a new thinker. Note that the ID is not initialized here
@@ -48,6 +69,15 @@ namespace de
         Thinker();
         
         virtual ~Thinker();
+        
+        const Id& id() const { return id_; }
+        
+        /**
+         * Sets the id of the thinker.
+         *
+         * @param id  Id.
+         */
+        void setId(const Id& id);
         
         /**
          * Perform thinking. If there is a function called "thinker" present
@@ -61,6 +91,39 @@ namespace de
         void operator >> (Writer& to) const;
         void operator << (Reader& from);
 
+    public:
+        /**
+         * Defines a new thinker type that can be (de)serialized.
+         *
+         * @param constructor  Function that constructs thinkers.
+         */
+        static void define(Constructor constructor);
+        
+        /**
+         * Undefines a thinker type.
+         *
+         * @param constructor  Function that constructs thinkers.
+         */
+        static void undefine(Constructor constructor);
+
+        /**
+         * Constructs a new thinker by reading one from a Reader.
+         *
+         * @param reader  Reader.
+         *
+         * @return  Thinker. Caller gets ownership.
+         */
+        static Thinker* constructFrom(Reader& reader);
+
+        /**
+         * Deserializes a thinker from a reader.
+         *
+         * @param reader  Reader.
+         *
+         * @return  Deserialized thinker, or @c NULL if the type id doesn't match.
+         */
+        static Thinker* fromReader(Reader& reader);
+
     private:
         /// Unique identifier for the thinker.
         Id id_;
@@ -70,6 +133,9 @@ namespace de
 
         /// Optional thinker-specific namespace.
         Record* info_;
+        
+        typedef std::set<Constructor> Constructors;
+        static Constructors constructors_;
     };
 }
 

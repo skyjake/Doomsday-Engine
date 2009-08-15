@@ -23,13 +23,16 @@
 #include "../ISerializable"
 #include "../Enumerator"
 #include "../Record"
-#include "../Object"
 #include "../String"
+#include "../Id"
 
 #include <map>
 
 namespace de
 {
+    class Thinker;
+    class Object;
+    
     /**
      * Contains everything that makes a map work: sectors, lines, scripts, 
      * objects, etc. The game plugin is responsible for creating concrete
@@ -40,6 +43,16 @@ namespace de
      */
     class LIBDENG2_API Map : public ISerializable
     {
+    public:
+        /// Requested type casting was impossible. @ingroup errors
+        DEFINE_ERROR(TypeError);
+        
+        /// The thinker or object that was looked for could not be found. @ingroup errors
+        DEFINE_ERROR(NotFoundError);
+        
+        typedef std::map<Id, Thinker*> Thinkers;
+        typedef std::map<Id, Object*> Objects;
+                
     public:
         /**
          * Constructs a map.
@@ -53,6 +66,8 @@ namespace de
         
         virtual ~Map();
 
+        void clear();
+
         const Record& info() const { return info_; }
 
         Record& info() { return info_; }
@@ -63,9 +78,76 @@ namespace de
          */
         bool isVoid() const;
 
+        /**
+         * Adds a thinker to the map. The thinker will be assigned a new unique
+         * id from the map's Enumerator.
+         *
+         * @param thinker  Thinker to add. Map takes ownership.
+         */
+        Thinker& add(Thinker* thinker);
+
+        template <typename Type>
+        Type& addAs(Thinker* thinker) {
+            return *static_cast<Type*>(&add(thinker));
+        }
+        
+        /**
+         * Removes a thinker from the map. 
+         *
+         * @return  Thinker. Ownership given to caller.
+         */
+        Thinker* remove(Thinker& thinker);
+
+        /**
+         * Returns a map of thinkers, excluding objects.
+         */
+        const Thinkers& thinkers() const { return thinkers_; }
+        
+        /**
+         * Returns a map of objects.
+         */
+        const Objects& objects() const { return objects_; }
+
+        /**
+         * Returns a thinker with the specified id, or @c NULL if it doesn't exist.
+         * Does not return objects.
+         */
+        Thinker* thinker(const Id& id) const;
+        
+        /**
+         * Returns an object with the specified id, or @c NULL if it doesn't exist.
+         */
+        Object* object(const Id& id) const;
+
+        /**
+         * Finds any thinker (regular or object) with the specified id.
+         *
+         * @param id  Thinker/object id.
+         *
+         * @return  Thinker casted to @a Type.
+         */
+        template <typename Type>
+        Type& anyThinker(const Id& id) const {
+            Type* o = dynamic_cast<Type*>(object(id));
+            if(o)
+            {
+                return *o;
+            }
+            Type* t = dynamic_cast<Type*>(thinker(id));
+            if(t)
+            {
+                return *t;
+            }
+            /// @throw TypeError  Thinker's type was different than expected.
+            throw TypeError("Map::anyThinker", "Thinker not found, or has unexpected type");
+        }
+
         // Implements ISerializable.
         void operator >> (Writer& to) const;
         void operator << (Reader& from);
+        
+    protected:
+        void addThinkerOrObject(Thinker* thinker);
         
     private:
         /// Name of the map.
@@ -74,10 +156,13 @@ namespace de
         /// Map-specific information. Lost when the map changes.
         Record info_;
         
-        /// Generates ids for objects.
-        Enumerator objectEnum_;
+        /// Generates ids for thinkers (objects, too).
+        Enumerator thinkerEnum_;
         
-        typedef std::map<Object::Id, Object*> Objects;
+        /// All thinkers of the map (except objects).
+        Thinkers thinkers_;
+
+        /// All objects of the map.
         Objects objects_;
     };
 }

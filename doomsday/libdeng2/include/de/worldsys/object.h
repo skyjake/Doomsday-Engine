@@ -47,6 +47,16 @@ namespace de
         void operator >> (Writer& to) const;
         void operator << (Reader& from);
         
+    public:
+        /**
+         * Deserializes an object from a reader.
+         *
+         * @param reader  Reader.
+         *
+         * @return  Deserialized object, or @c NULL if the type id doesn't match.
+         */
+        static Thinker* fromReader(Reader& reader);
+        
     private:
         /// Position of the object's origin.
         AnimatorVector3 pos_;

@@ -28,6 +28,8 @@
 #include "de/Audio"
 #include "de/Video"
 #include "de/Zone"
+#include "de/Thinker"
+#include "de/Object"
 #include "../sdl.h"
 
 using namespace de;
@@ -68,6 +70,10 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
 
     try
     {
+        // Define built-in constructors.
+        Thinker::define(Thinker::fromReader);
+        Thinker::define(Object::fromReader);
+        
         // The memory zone.
         std::auto_ptr<Zone> memoryPtr(new Zone());
         memory_ = memoryPtr.get();

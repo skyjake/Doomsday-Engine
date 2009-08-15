@@ -31,12 +31,19 @@ using namespace de;
 
 #define HAS_INFO 0x01
 
+Thinker::Constructors Thinker::constructors_;
+
 Thinker::Thinker() : id_(0), info_(0)
 {}
 
 Thinker::~Thinker()
 {
     delete info_;
+}
+
+void Thinker::setId(const Id& id)
+{
+    id_ = id;
 }
 
 void Thinker::think(const Time::Delta& elapsed)
@@ -46,25 +53,60 @@ void Thinker::think(const Time::Delta& elapsed)
         // Must rely on built-in behavior of subclass.
         return;
     }
-    
-    Record::Members::const_iterator found = info_->members().find("thinker");
-    if(found != info_->members().end())
+
+    const Function* func = info_->function("thinker");
+    if(func)
     {
-        // Does it have a function as value?
-        const FunctionValue* func = dynamic_cast<const FunctionValue*>(&found->second->value());
-        if(func)
-        {
-            // Prepare the arguments for the thinker function.
-            ArrayValue args;
-            args.add(new DictionaryValue); // No named arguments.
-            args.add(new NumberValue(id_));
-            args.add(new NumberValue(elapsed));
+        // Prepare the arguments for the thinker function.
+        ArrayValue args;
+        args.add(new DictionaryValue); // No named arguments.
+        args.add(new NumberValue(id_));
+        args.add(new NumberValue(elapsed));
             
-            // We'll use a temporary process to execute the function in the 
-            // private namespace.
-            Process(info_).call(func->function(), args);
-        }
+        // We'll use a temporary process to execute the function in the 
+        // private namespace.
+        Process(info_).call(*func, args);
     }
+}
+
+void Thinker::define(Constructor constructor)
+{
+    constructors_.insert(constructor);
+}
+
+void Thinker::undefine(Constructor constructor)
+{
+    constructors_.erase(constructor);
+}
+
+Thinker* Thinker::constructFrom(Reader& reader)
+{
+    for(Constructors::iterator i = constructors_.begin(); i != constructors_.end(); ++i)
+    {
+        Reader attempt(reader);
+        Thinker* thinker = (*i)(attempt);
+        if(thinker)
+        {
+            // Advance the main reader.
+            reader.setOffset(attempt.offset());
+            return thinker;
+        }
+    }    
+    /// @throw UnrecognizedError  Could not construct thinker because the type id was unknown.
+    throw UnrecognizedError("Thinker::constructFrom", "Unknown thinker type");
+}
+
+Thinker* Thinker::fromReader(Reader& reader)
+{
+    SerialId sid;
+    reader >> sid;
+    if(sid != THINKER)
+    {
+        return 0;
+    }
+    std::auto_ptr<Thinker> th(new Thinker);
+    reader >> *th.get();
+    return th.release();
 }
 
 void Thinker::operator >> (Writer& to) const

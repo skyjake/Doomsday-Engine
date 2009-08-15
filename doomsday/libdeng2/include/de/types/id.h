@@ -21,6 +21,8 @@
 #define LIBDENG2_ID_H
 
 #include "../deng.h"
+#include "../ISerializable"
+#include "../Value"
 
 namespace de
 {
@@ -30,7 +32,7 @@ namespace de
      * Unique identifier number. Zero is not a valid identifier, as it reserved
      * for the "no identifier" special case.
      */
-    class LIBDENG2_API Id
+    class LIBDENG2_API Id : public ISerializable
     {
     public:
         typedef duint Type;
@@ -69,8 +71,14 @@ namespace de
         /// Converts the Id to a text string.
         operator String () const;
         
+        operator Value::Number () const;
+        
         /// Converts the Id to a text string.
         String asText() const;
+        
+        // Implements ISerializable.
+        void operator >> (Writer& to) const;
+        void operator << (Reader& from);
         
     private:
         Type id_;

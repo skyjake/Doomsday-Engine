@@ -29,6 +29,19 @@ Object::Object()
 Object::~Object()
 {}
 
+Thinker* Object::fromReader(Reader& reader)
+{
+    SerialId sid;
+    reader >> sid;
+    if(sid != OBJECT)
+    {
+        return 0;
+    }
+    std::auto_ptr<Object> ob(new Object);
+    reader >> *ob.get();
+    return ob.release();
+}
+
 void Object::operator >> (Writer& to) const
 {
     Thinker::operator >> (to);

@@ -19,6 +19,8 @@
 
 #include "de/Id"
 #include "de/String"
+#include "de/Writer"
+#include "de/Reader"
 
 #include <sstream>
 
@@ -52,6 +54,11 @@ Id::operator String () const
     return asText();
 }
     
+Id::operator Value::Number () const
+{
+    return static_cast<Value::Number>(id_);
+}
+    
 String Id::asText() const
 {
     std::ostringstream os;
@@ -63,4 +70,14 @@ std::ostream& de::operator << (std::ostream& os, const Id& id)
 {
     os << "{" << duint(id) << "}";
     return os;
+}
+
+void Id::operator >> (Writer& to) const
+{
+    to << id_;
+}
+
+void Id::operator << (Reader& from)
+{
+    from >> id_;
 }

@@ -18,6 +18,7 @@
  */
 
 #include "de/Map"
+#include "de/Object"
 #include "de/Writer"
 #include "de/Reader"
 
@@ -27,19 +28,124 @@ Map::Map(const String& name) : name_(name)
 {}
 
 Map::~Map()
-{}
+{
+    clear();
+}
 
 bool Map::isVoid() const
 {
     return name_.empty();
 }
 
+void Map::clear()
+{
+    name_.clear();
+    info_.clear();
+    thinkerEnum_.reset();
+
+    // Clear thinkers.
+    for(Thinkers::iterator i = thinkers_.begin(); i != thinkers_.end(); ++i)
+    {
+        delete i->second;
+    }
+    thinkers_.clear();
+    
+    // Clear objects.
+    for(Objects::iterator i = objects_.begin(); i != objects_.end(); ++i)
+    {
+        delete i->second;
+    }
+    objects_.clear();
+}
+    
+Thinker* Map::thinker(const Id& id) const
+{
+    Thinkers::const_iterator thFound = thinkers_.find(id);
+    if(thFound != thinkers_.end())
+    {
+        return thFound->second;
+    }
+    return NULL;
+}
+
+Object* Map::object(const Id& id) const
+{
+    Objects::const_iterator obFound = objects_.find(id);
+    if(obFound != objects_.end())
+    {
+        return obFound->second;
+    }
+    return NULL;
+}
+
+Thinker& Map::add(Thinker* thinker)
+{
+    // Give the thinker a new id.
+    thinker->setId(thinkerEnum_.get());
+    addThinkerOrObject(thinker);
+    return *thinker;
+}
+
+void Map::addThinkerOrObject(Thinker* thinker)
+{
+    Object* object = dynamic_cast<Object*>(thinker);
+    if(object)
+    {
+        // Put it in the separate objects map.
+        objects_[thinker->id()] = object;
+    }
+    else
+    {
+        thinkers_[thinker->id()] = thinker;
+    }
+}
+
+Thinker* Map::remove(Thinker& th)
+{
+    if(thinker(th.id()))
+    {
+        thinkers_.erase(th.id());
+        return &th;
+    }
+    else if(object(th.id()))
+    {
+        objects_.erase(th.id());
+        return &th;
+    }
+    /// @throw NotFoundError  Thinker @a thinker was not found in the map.
+    throw NotFoundError("Map::remove", "Thinker " + th.id().asText() + " not found");
+}
+
 void Map::operator >> (Writer& to) const
 {
     to << name_ << info_;
+    
+    // Thinkers.
+    to << duint32(objects_.size() + thinkers_.size());
+    
+    for(Objects::const_iterator i = objects_.begin(); i != objects_.end(); ++i)
+    {
+        to << *i->second;
+    }
+    for(Thinkers::const_iterator i = thinkers_.begin(); i != thinkers_.end(); ++i)
+    {
+        to << *i->second;
+    }
 }
 
 void Map::operator << (Reader& from)
 {
+    clear();
+    
     from >> name_ >> info_;
+    
+    // Thinkers.
+    duint32 count;
+    from >> count;
+    while(count--)
+    {
+        Thinker* thinker = Thinker::constructFrom(from);
+        addThinkerOrObject(thinker);
+        thinkerEnum_.claim(thinker->id());
+    }
 }

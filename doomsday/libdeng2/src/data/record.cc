@@ -27,6 +27,7 @@
 #include "de/DictionaryValue"
 #include "de/BlockValue"
 #include "de/RecordValue"
+#include "de/FunctionValue"
 #include "de/Vector"
 
 #include <iomanip>
@@ -286,6 +287,21 @@ String Record::asText(const String& prefix, List* lines) const
     }
 
     return os.str();    
+}
+
+const Function* Record::function(const String& name) const
+{
+    try
+    {
+        const FunctionValue* func = dynamic_cast<const FunctionValue*>(&(*this)[name].value());
+        if(func)
+        {
+            return &func->function();
+        }
+    }
+    catch(NotFoundError&)
+    {}
+    return 0;
 }
     
 void Record::operator >> (Writer& to) const
