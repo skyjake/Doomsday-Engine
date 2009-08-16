@@ -107,20 +107,25 @@ namespace de
         static void undefine(Constructor constructor);
 
         /**
-         * Constructs a new thinker by reading one from a Reader.
+         * Constructs a new thinker by reading one from a Reader. Calls all the defined
+         * thinker constructors until an instance is successfully constructed.
          *
          * @param reader  Reader.
          *
          * @return  Thinker. Caller gets ownership.
+         *
+         * @see define(), undefine()
          */
         static Thinker* constructFrom(Reader& reader);
 
         /**
-         * Deserializes a thinker from a reader.
+         * Deserializes an instance of Thinker from a reader.
          *
          * @param reader  Reader.
          *
          * @return  Deserialized thinker, or @c NULL if the type id doesn't match.
+         *
+         * @see Constructor
          */
         static Thinker* fromReader(Reader& reader);
 

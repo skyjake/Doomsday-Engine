@@ -3,5 +3,6 @@
 PROJECT_NAME           = libdeng2
 PROJECT_NUMBER         = 2.0.0
 OUTPUT_DIRECTORY       = ../doxygen/libdeng2
-INPUT                  = portable include/de
+INPUT                  = src include/de
 INCLUDE_PATH           = include
+EXAMPLE_PATH           = .

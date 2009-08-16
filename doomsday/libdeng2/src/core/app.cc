@@ -114,7 +114,7 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
 #endif
 
         /// @todo  /home should really be under the native user home dir (~/.deng2, 
-        /// C:\Documents and Settings\..., ~/Library/Application Support/Doomsday2/)
+        /// C:\\Documents and Settings\\..., ~/Library/Application Support/Doomsday2/)
         fs_->getFolder("/home").attach(new DirectoryFeed(
             String("home").concatenateNativePath(homeSubFolder), 
             DirectoryFeed::ALLOW_WRITE | DirectoryFeed::CREATE_IF_MISSING));

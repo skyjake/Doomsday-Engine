@@ -299,8 +299,7 @@ const Function* Record::function(const String& name) const
             return &func->function();
         }
     }
-    catch(NotFoundError&)
-    {}
+    catch(NotFoundError&) {}    
     return 0;
 }
     

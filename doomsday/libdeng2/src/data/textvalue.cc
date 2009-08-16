@@ -34,7 +34,7 @@ using namespace de;
 using std::list;
 using std::ostringstream;
 
-TextValue::TextValue(const Text& initialValue)
+TextValue::TextValue(const String& initialValue)
     : value_(initialValue)
 {}
 
@@ -203,7 +203,7 @@ void TextValue::operator << (Reader& from)
     from >> value_;
 }
 
-void TextValue::setValue(const Text& text)
+void TextValue::setValue(const String& text)
 {
     value_ = text;
 }

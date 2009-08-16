@@ -39,7 +39,7 @@ namespace de
         DEFINE_ERROR(IllegalPatternError);
         
     public:
-        TextValue(const Text& initialValue = "");
+        TextValue(const String& initialValue = "");
 
         /// Converts the TextValue to plain text.
         operator const String& () const;
@@ -64,7 +64,7 @@ namespace de
         
     protected:
         /// Changes the text of the value.
-        void setValue(const Text& text);
+        void setValue(const String& text);
         
     private:
         Text value_;
