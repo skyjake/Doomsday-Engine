@@ -21,10 +21,12 @@
 #include "de/Object"
 #include "de/Writer"
 #include "de/Reader"
+#include "de/App"
+#include "de/Library"
 
 using namespace de;
 
-Map::Map(const String& name) : name_(name)
+Map::Map()
 {}
 
 Map::~Map()
@@ -32,9 +34,19 @@ Map::~Map()
     clear();
 }
 
+void Map::load(const String& name)
+{
+    name_ = name;
+}
+
 bool Map::isVoid() const
 {
     return name_.empty();
+}
+
+Object& Map::newObject()
+{
+    return addAs<Object>(App::game().SYMBOL(deng_NewObject)());
 }
 
 void Map::clear()
@@ -78,16 +90,28 @@ Object* Map::object(const Id& id) const
     return NULL;
 }
 
+Id Map::findUniqueThinkerId()
+{
+    Id id = thinkerEnum_.get();
+    while(thinkerEnum_.overflown() && (thinker(id) || object(id)))
+    {
+        // This is in use, get the next one.
+        id = thinkerEnum_.get();
+    }
+    return id;
+}
+
 Thinker& Map::add(Thinker* thinker)
 {
     // Give the thinker a new id.
-    thinker->setId(thinkerEnum_.get());
+    thinker->setId(findUniqueThinkerId());
     addThinkerOrObject(thinker);
     return *thinker;
 }
 
 void Map::addThinkerOrObject(Thinker* thinker)
 {
+    thinker->setMap(this);
     Object* object = dynamic_cast<Object*>(thinker);
     if(object)
     {
@@ -105,11 +129,13 @@ Thinker* Map::remove(Thinker& th)
     if(thinker(th.id()))
     {
         thinkers_.erase(th.id());
+        th.setMap(0);
         return &th;
     }
     else if(object(th.id()))
     {
         objects_.erase(th.id());
+        th.setMap(0);
         return &th;
     }
     /// @throw NotFoundError  Thinker @a thinker was not found in the map.

@@ -29,6 +29,7 @@
 
 namespace de
 {
+    class Map;
     class Reader;
     class Record;
     
@@ -78,6 +79,18 @@ namespace de
          * @param id  Id.
          */
         void setId(const Id& id);
+        
+        /**
+         * Sets the map of the thinker. Every thinker is in at most one map.
+         *
+         * @param map  Map.
+         */
+        void setMap(Map* map);
+
+        /**
+         * Returns the map of the thinker.
+         */
+        Map* map() const { return map_; }
         
         /**
          * Perform thinking. If there is a function called "thinker" present
@@ -138,6 +151,9 @@ namespace de
 
         /// Optional thinker-specific namespace.
         Record* info_;
+        
+        /// The map where the thinker is in.
+        Map* map_;
         
         typedef std::set<Constructor> Constructors;
         static Constructors constructors_;

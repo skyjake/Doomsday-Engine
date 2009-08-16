@@ -108,10 +108,8 @@ namespace de
         
         /**
          * Constructs a new game map.
-         *
-         * @param name  Name of the map.
          */
-        typedef Map* (*deng_NewMap)(const char* name);
+        typedef Map* (*deng_NewMap)();
         
         /**
          * Constructs a new object.

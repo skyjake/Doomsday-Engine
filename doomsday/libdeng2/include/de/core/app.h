@@ -41,6 +41,7 @@ namespace de
     class ISubsystem;
     class Library;
     class LibraryFile;
+    class Map;
     class Module;
     class Video;
     class Zone;
@@ -77,6 +78,9 @@ namespace de
         
         /// The object or resource that was being looked for was not found. @ingroup errors
         DEFINE_ERROR(NotFoundError);
+        
+        /// No map has been set as the currently active map. @ingroup errors
+        DEFINE_ERROR(NoCurrentMapError);
         
     public:
         /**
@@ -187,6 +191,16 @@ namespace de
          */
         static CommandLine& commandLine();
 
+        /**
+         * Returns the memory zone.
+         */
+        static Zone& memory();
+
+        /**
+         * Returns the video subsystem.
+         */
+        static Video& video();
+
         /** 
          * Returns the file system.
          */
@@ -218,16 +232,6 @@ namespace de
         static Library& game();
         
         /**
-         * Returns the memory zone.
-         */
-        static Zone& memory();
-        
-        /**
-         * Returns the video subsystem.
-         */
-        static Video& video();
-        
-        /**
          * Determines whether a game library is currently available.
          */
         static bool hasGame();
@@ -252,6 +256,16 @@ namespace de
          */
         static Record& importModule(const String& name, const String& fromPath = "");
 
+        /**
+         * Returns the currently active map.
+         */
+        static Map& currentMap();
+
+        /**
+         * Sets the currently active map.
+         */
+        static void setCurrentMap(Map* map);
+
     private:
         CommandLine commandLine_;
         
@@ -272,6 +286,9 @@ namespace de
 
         /// The game library.
         LibraryFile* gameLib_;
+        
+        /// The currently active map.
+        Map* currentMap_;
         
         /// Subsystems.
         typedef std::list<ISubsystem*> Subsystems;

@@ -291,7 +291,7 @@ static dpatch_t kills; // "Kills"
 static dpatch_t secret; // "Scrt"
 static dpatch_t items; // "Items"
 static dpatch_t frags; // "Frags"
-static dpatch_t time; // "time"
+static dpatch_t time_; // "time"
 static dpatch_t par; // "par"
 static dpatch_t sucks; // "sucks!"
 static dpatch_t killers; // "killers"
@@ -1293,7 +1293,7 @@ void WI_drawStats(void)
                  NULL, false, ALIGN_LEFT);
     WI_drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY + 2 * lh, cntSecret[0]);
 
-    WI_DrawPatch(SP_TIMEX, SP_TIMEY, 1, 1, 1, 1, &time, NULL, false,
+    WI_DrawPatch(SP_TIMEX, SP_TIMEY, 1, 1, 1, 1, &time_, NULL, false,
                  ALIGN_LEFT);
     WI_drawTime(SCREENWIDTH / 2 - SP_TIMEX, SP_TIMEY, cntTime);
 
@@ -1476,7 +1476,7 @@ void WI_loadData(void)
     R_CachePatch(&colon, "WICOLON");
 
     // "time"
-    R_CachePatch(&time, "WITIME");
+    R_CachePatch(&time_, "WITIME");
 
     // "sucks"
     R_CachePatch(&sucks, "WISUCKS");

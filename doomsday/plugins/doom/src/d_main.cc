@@ -46,6 +46,8 @@ l * but WITHOUT ANY WARRANTY; without even the implied warranty of
 #include "g_defs.h"
 #include "p_player.h"
 
+#include "doommap.h"
+
 // MACROS ------------------------------------------------------------------
 
 #define BGCOLOR                 (7)
@@ -359,10 +361,14 @@ DENG_EXPORT const char* deng_LibraryType(void)
     return "deng-plugin/game";
 }
 
+DENG_EXPORT de::Map* deng_NewMap()
+{
+    return new DoomMap;
+}
+
 DENG_EXPORT de::Object* deng_NewObject()
 {
-    //return new doom_mobj_s;
-    return 0;
+    return new doom_mobj_s;
 }
 
 /**

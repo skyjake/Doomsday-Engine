@@ -47,12 +47,4 @@ DENG_EXPORT User* deng_NewUser()
     return new GameUser();
 }
 
-/**
- * Constructs a new (empty) map.
- */
-DENG_EXPORT Map* deng_NewMap(const char* name)
-{
-    return new GameMap(name);
-}
-
 END_EXTERN_C

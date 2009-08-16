@@ -30,8 +30,10 @@
 class LIBCOMMON_API GameMap : public de::Map
 {
 public:
-    GameMap(const de::String& name);
+    GameMap();
     ~GameMap();
+    
+    void load(const de::String& name);
     
     void operator << (de::Reader& from);    
 };

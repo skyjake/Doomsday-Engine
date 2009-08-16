@@ -3,12 +3,14 @@
 
 #include "dd_share.h"
 #include <cstring>
+#include <de/Object>
 
 #ifndef __cplusplus
 #   error "C++ compilation required!"
 #endif
 
-class mobj_s 
+// Some of this will be moved to de::Object, some to GameObject.
+class mobj_s : public de::Object
 {
 public:
     thinker_t       thinker;            /* thinker node */ 

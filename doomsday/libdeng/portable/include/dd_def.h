@@ -32,6 +32,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <de/math.h>
+
+using de::PI;
 
 #include "dd_types.h"
 #include "dd_api.h"
@@ -71,8 +74,6 @@
 
 #define MAXEVENTS       256
 #define SBARHEIGHT      39         // status bar height at bottom of screen
-#define PI              3.14159265359
-#define PI_D            3.14159265358979323846
 
 #define SECONDS_TO_TICKS(sec) ((int)(sec*35))
 

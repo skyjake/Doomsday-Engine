@@ -32,6 +32,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <de/deng.h>
+#include <de/App>
+#include <de/Map>
 #include <math.h>
 
 #include "de_base.h"
@@ -44,6 +46,8 @@
 #include "de_audio.h"
 
 #include "def_main.h"
+
+using namespace de;
 
 // MACROS ------------------------------------------------------------------
 
@@ -115,8 +119,7 @@ mobj_t* P_MobjCreate(think_t function, float x, float y, float z,
     if(!function)
         Con_Error("P_MobjCreate: Think function invalid, cannot create mobj.");
 
-    /// @todo  Map creates and owns objects: mo = App::map().newObject();
-    mo = new mobj_s;
+    mo = (mobj_t*) &App::currentMap().newObject();
 
     mo->pos[VX] = x;
     mo->pos[VY] = y;
@@ -128,7 +131,6 @@ mobj_t* P_MobjCreate(think_t function, float x, float y, float z,
     mo->ddFlags = ddflags;
     mo->thinker.function = function;
     
-    throw de::Error("P_MobjCreate", "Object must be added to the map");
     /*
     if(mo->thinker.function)
         P_ThinkerAdd(&mo->thinker, true); // Make it public.

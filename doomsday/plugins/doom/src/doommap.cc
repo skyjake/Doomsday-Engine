@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- libdeng2
+ * The Doomsday Engine Project
  *
  * Copyright (c) 2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,32 +16,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
- 
-#include "de/Enumerator"
-#include "de/math.h"
 
-using namespace de;
+#include "doommap.h"
+#include "g_common.h"
 
-Enumerator::Enumerator() : current_(NONE), overflown_(false)
+DoomMap::DoomMap()
 {}
 
-Enumerator::Type Enumerator::get()
+DoomMap::~DoomMap()
+{}
+
+void DoomMap::load(const de::String& name)
 {
-    Type previous = current_;
-    while(!++current_);
-    if(current_ < previous)
+    GameMap::load(name);
+    
+    /// @todo  Parse name for episode/mission.
+    G_InitNew(SM_MEDIUM, 1, 1);
+}
+
+void DoomMap::operator << (de::Reader& from)
+{
+    bool wasVoid = isVoid();
+    
+    GameMap::operator << (from);
+    
+    if(wasVoid)
     {
-        overflown_ = true;
+        /// @todo  Ultimately the deserialization produces a complete map
+        /// and this is unnecessary.
+        load(name());
     }
-    return current_;
-}
-
-void Enumerator::reset()
-{
-    current_ = NONE;
-}
-
-void Enumerator::claim(Type value)
-{
-    current_ = max(value, current_);
 }

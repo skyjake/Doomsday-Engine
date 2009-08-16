@@ -29,21 +29,26 @@ using namespace de;
 World::World() : map_(0)
 {
     // Create a blank map.
-    map_ = App::game().SYMBOL(deng_NewMap)("");
+    map_ = App::game().SYMBOL(deng_NewMap)();
 }
 
 World::~World()
 {
+    App::setCurrentMap(0);
     delete map_;
 }
 
 void World::loadMap(const String& name)
 {
     assert(map_ != NULL);
+    App::setCurrentMap(0);
     delete map_;
 
     // The map will do its own loading.
-    map_ = App::game().SYMBOL(deng_NewMap)(name.c_str());
+    map_ = App::game().SYMBOL(deng_NewMap)();
+    App::setCurrentMap(map_);
+    
+    map_->load(name);
 }
 
 void World::operator >> (Writer& to) const

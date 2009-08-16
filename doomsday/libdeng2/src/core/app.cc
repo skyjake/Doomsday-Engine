@@ -42,7 +42,8 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
       memory_(0), 
       fs_(0), 
       config_(0),
-      gameLib_(0), 
+      gameLib_(0),
+      currentMap_(0), 
       video_(0), 
       audio_(0),
       runMainLoop_(true), 
@@ -407,6 +408,23 @@ Library& App::game()
         throw NoGameError("App::game", "No game library located");
     }
     return self.gameLib_->library();
+}
+
+Map& App::currentMap()
+{
+    App& self = app();
+    if(!self.currentMap_)
+    {
+        /// @throw NoCurrentMapError  No map is currently active.
+        throw NoCurrentMapError("App::currentMap", "No map is currently active");
+    }
+    return *self.currentMap_;
+}
+
+void App::setCurrentMap(Map* map)
+{
+    App& self = app();
+    self.currentMap_ = map;
 }
 
 Video& App::video()

@@ -28,7 +28,7 @@
 using namespace de;
 
 Animator::Animator(ValueType initialValue)
-    : clock_(&App::app()), motion_(EASE_OUT), start_(initialValue), startTime_(0), 
+    : clock_(0), motion_(EASE_OUT), start_(initialValue), startTime_(0), 
       transition_(0), transitionTime_(0), observer_(0)
 {}
 

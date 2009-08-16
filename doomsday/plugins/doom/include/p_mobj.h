@@ -40,6 +40,7 @@
 #include "doomdata.h"
 #include "info.h"
 #include "tables.h"
+#include <common/GameObject>
 
 /**
  * (Re)Spawn flags:
@@ -189,7 +190,7 @@ typedef enum dirtype_s {
 } dirtype_t;
 
 // Map Object definition.
-class doom_mobj_s : public mobj_s {
+class doom_mobj_s : public GameObject {
 public:
     // Doom-specific data:
     mobjinfo_t     *info;           // &mobjinfo[mobj->type]

@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- libdeng2
+ * The Doomsday Engine Project
  *
  * Copyright (c) 2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,32 +16,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
- 
-#include "de/Enumerator"
-#include "de/math.h"
 
-using namespace de;
+#ifndef DOOMMAP_H
+#define DOOMMAP_H
 
-Enumerator::Enumerator() : current_(NONE), overflown_(false)
-{}
+#include <common/GameMap>
 
-Enumerator::Type Enumerator::get()
+class DoomMap : public GameMap
 {
-    Type previous = current_;
-    while(!++current_);
-    if(current_ < previous)
-    {
-        overflown_ = true;
-    }
-    return current_;
-}
+public:
+    DoomMap();
+    ~DoomMap();
+    
+    void load(const de::String& name);
+    
+    void operator << (de::Reader& from);    
+};
 
-void Enumerator::reset()
-{
-    current_ = NONE;
-}
-
-void Enumerator::claim(Type value)
-{
-    current_ = max(value, current_);
-}
+#endif /* DOOMMAP_H */

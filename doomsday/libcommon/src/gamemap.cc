@@ -17,7 +17,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#define __ACTION_LINK_H__
+//#define __ACTION_LINK_H__
 
 #include "common/GameMap"
 
@@ -29,15 +29,16 @@ extern "C" {
 
 using namespace de;
 
-GameMap::GameMap(const de::String& name) : Map(name)
-{
-/*#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    G_InitNew(SM_MEDIUM, 1, 1);
-#endif*/
-}
+GameMap::GameMap()
+{}
 
 GameMap::~GameMap()
 {}
+
+void GameMap::load(const de::String& name)
+{
+    Map::load(name);
+}
 
 void GameMap::operator << (Reader& from)
 {

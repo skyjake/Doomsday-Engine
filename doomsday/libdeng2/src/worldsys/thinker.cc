@@ -26,6 +26,7 @@
 #include "de/ArrayValue"
 #include "de/DictionaryValue"
 #include "de/NumberValue"
+#include "de/Map"
 
 using namespace de;
 
@@ -33,17 +34,26 @@ using namespace de;
 
 Thinker::Constructors Thinker::constructors_;
 
-Thinker::Thinker() : id_(0), info_(0)
+Thinker::Thinker() : id_(0), info_(0), map_(0)
 {}
 
 Thinker::~Thinker()
 {
+    if(map_)
+    {
+        map_->remove(*this);
+    }
     delete info_;
 }
 
 void Thinker::setId(const Id& id)
 {
     id_ = id;
+}
+
+void Thinker::setMap(Map* map)
+{
+    map_ = map;
 }
 
 void Thinker::think(const Time::Delta& elapsed)

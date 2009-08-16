@@ -55,18 +55,23 @@ namespace de
                 
     public:
         /**
-         * Constructs a map.
-         *
-         * @param name  Identifier of the map. The resources of the map are
-         *      located based on this identifier. If not specified, the instance
-         *      becomes a blank map that is expected to be deserialized from
-         *      somewhere.
+         * Constructs an empty map.
          */
-        Map(const String& name = "");
+        Map();
         
         virtual ~Map();
 
         void clear();
+        
+        /**
+         * Loads a map.
+         *
+         * @param name  Identifier of the map. The resources of the map are
+         *              located based on this identifier.
+         */
+        virtual void load(const String& name);
+
+        const String& name() const { return name_; }
 
         const Record& info() const { return info_; }
 
@@ -77,6 +82,18 @@ namespace de
          * has been loaded.
          */
         bool isVoid() const;
+
+        /**
+         * Returns a new unique thinker id.
+         */
+        Id findUniqueThinkerId();
+
+        /**
+         * Creates a new object in the map.
+         *
+         * @return  The new object. Map keeps ownership.
+         */
+        Object& newObject();
 
         /**
          * Adds a thinker to the map. The thinker will be assigned a new unique
