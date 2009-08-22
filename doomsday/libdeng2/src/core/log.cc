@@ -344,14 +344,6 @@ void LogBuffer::add(LogEntry* entry)
 
     entries_.push_back(entry);
     toBeFlushed_.push_back(entry);
-    
-    // Too many entries?
-    while(entries_.size() > maxEntryCount_)
-    {
-        LogEntry* old = entries_.front();
-        entries_.pop_front();
-        delete old;
-    }
 }
 
 void LogBuffer::enable(Level overLevel)
@@ -386,4 +378,12 @@ void LogBuffer::flush()
     }
     toBeFlushed_.clear();
     lastFlushedAt_ = Time();
+    
+    // Too many entries? Now they can be destroyed since we have flushed everything.
+    while(entries_.size() > maxEntryCount_)
+    {
+        LogEntry* old = entries_.front();
+        entries_.pop_front();
+        delete old;
+    }
 }
