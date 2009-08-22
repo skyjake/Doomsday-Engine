@@ -68,11 +68,13 @@ UserSession::~UserSession()
 
 void UserSession::processPacket(const de::Packet& packet)
 {
+    LOG_AS("UserSession::processPacket");
+    
     const RecordPacket* record = dynamic_cast<const RecordPacket*>(&packet);
     if(record)
     {
         const Record& rec = record->record();
-        std::cout << record->label() << "\n" << rec << "\n";
+        LOG_DEBUG("%s\n") << record->label() << rec;
 
         if(record->label() == "user.welcome")
         {
@@ -109,7 +111,7 @@ void UserSession::processPacket(const de::Packet& packet)
         }
         else if(record->label() == "session.ended")
         {
-            std::cout << "The session ended!\n";
+            LOG_INFO("The session ended!");
             sessionId_ = Id::NONE;
             /// @throw SessionEndedError The user session is no longer valid due to
             /// the serverside session having ended.
@@ -148,7 +150,7 @@ void UserSession::listen()
     catch(const ISerializable::DeserializationError&)
     {
         // Malformed packet!
-        std::cout << "Server sent nonsense.\n";
+        LOG_WARNING("Server sent nonsense.");
     }
 }
 

@@ -34,7 +34,7 @@ ENDMACRO ( DENG2_TEST_EXECUTABLE )
 IF ( ENABLE_TESTS )
     SUBDIRS ( 
         archive
-        basiclink 
+        basiclink
         record
         script
         sdlwindow

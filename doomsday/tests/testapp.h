@@ -25,12 +25,14 @@
 class TestApp : public de::App
 {
 public:
-    TestApp(const de::CommandLine& args) : de::App(args, "/config/testapp.de", "testapp") {
-        std::cout << "TestApp constructed.\n";
+    TestApp(const de::CommandLine& args) : de::App(args, "/config/testapp.de", "testapp", 
+        de::LogBuffer::DEBUG) {
+        logBuffer().enableStandardOutput();
+        LOG_MESSAGE("TestApp constructed.");
     }
     
     ~TestApp() {
-        std::cout << "TestApp destructed.\n";
+        LOG_MESSAGE("TestApp destroyed.");
     }
 
     void iterate() {}

@@ -41,6 +41,7 @@ namespace de
     class ISubsystem;
     class Library;
     class LibraryFile;
+    class LogBuffer;
     class Map;
     class Module;
     class Video;
@@ -86,15 +87,17 @@ namespace de
         /**
          * Constructs the application.
          * 
-         * @param commandLine    Command line arguments.
-         * @param configPath     Path of the configuration file. The application's 
-         *                       configuration must <tt>import deng</tt>.
-         * @param homeSubFolder  Folder under the native home directory where the app
-         *                       will store the data it writes. (Note that 
-         *                       <tt>/data</tt> is read-only.)
+         * @param commandLine      Command line arguments.
+         * @param configPath       Path of the configuration file. The application's 
+         *                         configuration must <tt>import deng</tt>.
+         * @param homeSubFolder    Folder under the native home directory where the app
+         *                         will store the data it writes. (Note that 
+         *                         <tt>/data</tt> is read-only.)
+         * @param defaultLogLevel  Default level for log buffering.
          */
         App(const CommandLine& commandLine, const String& configPath, 
-            const String& homeSubFolder = "");
+            const String& homeSubFolder = "", 
+            LogBuffer::Level defaultLogLevel = LogBuffer::MESSAGE);
             
         virtual ~App();
 
@@ -192,6 +195,11 @@ namespace de
         static CommandLine& commandLine();
 
         /**
+         * Returns the log buffer.
+         */
+        static LogBuffer& logBuffer();
+
+        /**
          * Returns the memory zone.
          */
         static Zone& memory();
@@ -271,6 +279,9 @@ namespace de
         
         /// Time when the App was initialized.
         Time initializedAt_;
+        
+        /// Buffer for recent log entries.
+        LogBuffer* logBuffer_;
         
         /// The memory zone.
         Zone* memory_;

@@ -28,7 +28,6 @@
 #define LIBDENG2_H
 
 #include <cassert>
-#include <iostream>
 #include <typeinfo>
 #include <memory>
 

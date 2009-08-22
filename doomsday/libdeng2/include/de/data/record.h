@@ -25,8 +25,8 @@
 #include "../Variable"
 #include "../Value"
 #include "../Observers"
+#include "../Log"
 
-#include <iostream>
 #include <map>
 #include <list>
 
@@ -42,7 +42,7 @@ namespace de
      *
      * @ingroup data
      */
-    class LIBDENG2_API Record : public ISerializable
+    class LIBDENG2_API Record : public ISerializable, public LogEntry::Arg::Base
     {
     public:
         /// Unknown variable name was given. @ingroup errors
@@ -254,7 +254,7 @@ namespace de
          *
          * @return  Text representation.
          */
-        String asText(const String& prefix = "", List* lines = 0) const;
+        String asText(const String& prefix, List* lines) const;
 
         /**
          * Convenience template for getting the value of a variable in a 
@@ -282,6 +282,10 @@ namespace de
         // Implements ISerializable.
         void operator >> (Writer& to) const;
         void operator << (Reader& from);
+        
+        // Implements LogEntry::Arg::Base.
+        LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
+        String asText() const { return asText("", 0); }
         
     private:  
         Members members_;

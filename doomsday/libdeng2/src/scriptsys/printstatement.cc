@@ -23,6 +23,7 @@
 #include "de/ArrayExpression"
 #include "de/Writer"
 #include "de/Reader"
+#include "de/Log"
 
 #include <sstream>
 
@@ -62,8 +63,7 @@ void PrintStatement::execute(Context& context) const
        os << (*i)->asText();
     }
     
-    /// @todo  Use the standard Doomsday output stream.
-    std::cout << os.str() << "\n";
+    LOG_MESSAGE("") << os.str();
     
     context.proceed();
 }

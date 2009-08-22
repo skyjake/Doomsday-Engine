@@ -24,13 +24,12 @@
 #include <de/script.h>
 #include "../testapp.h"
 
+#include <iostream>
+
 using namespace de;
 
 int deng_Main(int argc, char** argv)
 {
-    using std::cout;
-    using std::endl;
-    
     try
     {
         CommandLine args(argc, argv);
@@ -38,16 +37,17 @@ int deng_Main(int argc, char** argv)
 
         Script testScript(app.fileSystem().findSingle("kitchen_sink.de"));
         Process proc(testScript);
-        std::cout << "Script parsing is complete! Executing...\n"
-            << "------------------------------------------------------------------------------\n";
+        LOG_MESSAGE("Script parsing is complete! Executing...");
+        LOG_MESSAGE("------------------------------------------------------------------------------");
+
         proc.execute();
         
-        std::cout << "------------------------------------------------------------------------------\n"
-            << "Final result value is: " << proc.context().evaluator().result().asText() << "\n";
+        LOG_MESSAGE("------------------------------------------------------------------------------");
+        LOG_MESSAGE("Final result value is: ") << proc.context().evaluator().result().asText();
     }
     catch(const Error& err)
     {
-        std::cout << err.asText() << "\n";
+        std::cerr << err.asText() << "\n";
     }
 
     std::cout << "Exiting deng_Main()...\n";

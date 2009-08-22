@@ -18,6 +18,7 @@
  */
 
 #include "de/Library"
+#include "de/Log"
 
 #ifdef UNIX
 #   include <dlfcn.h>
@@ -35,7 +36,9 @@ const char* Library::DEFAULT_TYPE = "library/generic";
 Library::Library(const String& nativePath)
     : handle_(0), type_(DEFAULT_TYPE)
 {
-    std::cout << "Loading library: " << nativePath << "\n";
+    LOG_AS("Library::Library");
+    LOG_VERBOSE("Loading library: ") << nativePath;
+    
 #ifdef UNIX
     if((handle_ = dlopen(nativePath.c_str(), RTLD_LAZY)) == 0)
     {

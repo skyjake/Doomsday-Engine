@@ -23,6 +23,7 @@
 #include "../deng.h"
 #include "../ISerializable"
 #include "../Value"
+#include "../Log"
 
 namespace de
 {
@@ -32,7 +33,7 @@ namespace de
      * Unique identifier number. Zero is not a valid identifier, as it reserved
      * for the "no identifier" special case.
      */
-    class LIBDENG2_API Id : public ISerializable
+    class LIBDENG2_API Id : public ISerializable, public LogEntry::Arg::Base
     {
     public:
         typedef duint Type;
@@ -79,6 +80,9 @@ namespace de
         // Implements ISerializable.
         void operator >> (Writer& to) const;
         void operator << (Reader& from);
+        
+        // Implements LogEntry::Arg::Base.
+        LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
         
     private:
         Type id_;

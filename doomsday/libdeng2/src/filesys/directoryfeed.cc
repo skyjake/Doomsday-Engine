@@ -23,6 +23,7 @@
 #include "de/String"
 #include "de/FS"
 #include "de/Date"
+#include "de/Log"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -108,6 +109,8 @@ void DirectoryFeed::populate(Folder& folder)
 
 void DirectoryFeed::populateSubFolder(Folder& folder, const String& entryName)
 {
+    LOG_AS("DirectoryFeed::populateSubFolder");
+
     if(entryName != "." && entryName != "..")
     {
         String subFeedPath = nativePath_.concatenateNativePath(entryName);
@@ -126,7 +129,7 @@ void DirectoryFeed::populateSubFolder(Folder& folder, const String& entryName)
             if(dirFeed && dirFeed->nativePath_ == subFeedPath)
             {
                 // Already got this fed. Nothing else needs done.
-                std::cout << "Feed for " << subFeedPath << " already there.\n";
+                LOG_DEBUG("Feed for ") << subFeedPath << " already there.";
                 return;
             }
         }
@@ -166,6 +169,8 @@ void DirectoryFeed::populateFile(Folder& folder, const String& entryName)
 
 bool DirectoryFeed::prune(File& file) const
 {
+    LOG_AS("DirectoryFeed::prune");
+    
     /// Rules for pruning:
     /// - A file sourced by NativeFile will be pruned if it's out of sync with the hard 
     ///   drive version (size, time of last modification).
@@ -177,7 +182,7 @@ bool DirectoryFeed::prune(File& file) const
             if(fileStatus(nativeFile->nativePath()) != nativeFile->status())
             {
                 // It's not up to date.
-                std::cout << nativeFile->nativePath() << ": status has changed, pruning!\n";
+                LOG_VERBOSE("%s: status has changed, pruning!") << nativeFile->nativePath();
                 return true;
             }
         }
@@ -198,7 +203,7 @@ bool DirectoryFeed::prune(File& file) const
             DirectoryFeed* dirFeed = dynamic_cast<DirectoryFeed*>(subFolder->feeds().front());
             if(dirFeed && !exists(dirFeed->nativePath_))
             {
-                std::cout << nativePath_ << " no longer there, pruning!\n";
+                LOG_VERBOSE("%s: no longer exists, pruning!") << nativePath_;
                 return true;
             }
         }

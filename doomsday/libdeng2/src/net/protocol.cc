@@ -23,6 +23,7 @@
 #include "de/TextValue"
 #include "de/Record"
 #include "de/Transceiver"
+#include "de/Log"
 
 using namespace de;
 
@@ -55,6 +56,8 @@ Packet* Protocol::interpret(const Block& block) const
 
 void Protocol::decree(Transceiver& to, const CommandPacket& command, RecordPacket** response)
 {
+    LOG_AS("Protocol::decree");
+    
     to << command;
     std::auto_ptr<RecordPacket> rep(to.receivePacket<RecordPacket>());
 
@@ -71,8 +74,10 @@ void Protocol::decree(Transceiver& to, const CommandPacket& command, RecordPacke
         throw DenyError("Protocol::decree", "Command '" + command.command() +
             "' was denied: " + rep->valueAsText("message"));
     }
-    std::cout << "Reply to the decree '" << command.command() << "' was:\n" <<
-        rep->label() << ":\n" << rep->record();
+
+    LOG_DEBUG("Reply to the decree '%s' was '%s':") << command.command() << rep->label();
+    LOG_DEBUG("") << rep->record();
+
     if(response)
     {
         *response = rep.release();

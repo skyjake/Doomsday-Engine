@@ -21,6 +21,7 @@
 #define LIBDENG2_ADDRESS_H
 
 #include "../deng.h"
+#include "../Log"
 
 namespace de
 {
@@ -31,7 +32,7 @@ namespace de
      *
      * @ingroup net 
      */
-    class LIBDENG2_API Address
+    class LIBDENG2_API Address : public LogEntry::Arg::Base
     {
     public:
         /// The address cannot be resolved successfully. @ingroup errors
@@ -89,6 +90,9 @@ namespace de
          * Converts the address to text.
          */
         String asText() const;
+        
+        // Implements LogEntry::Arg::Base.
+        LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
 
     private:
         duint32 ip_;

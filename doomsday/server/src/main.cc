@@ -20,6 +20,8 @@
 #include <dengmain.h>
 #include "serverapp.h"
 
+#include <iostream>
+
 using namespace de;
 
 int deng_Main(int argc, char** argv)
@@ -30,7 +32,7 @@ int deng_Main(int argc, char** argv)
     }
     catch(const Error& error)
     {
-        std::cout << error.asText() << std::endl;
+        std::cerr << error.asText() << std::endl;
     }    
     return 0;
 }

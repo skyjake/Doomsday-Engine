@@ -23,3 +23,7 @@ importPath = ['', '/modules']
 # The default audio and video subsystems.
 video = 'sdlopengl'
 audio = 'fmod'
+
+# Log parameters.
+record log
+log.bufferSize = 1000

@@ -21,13 +21,15 @@
 #include "glwindow.h"
 
 #include <de/App>
+#include <de/Log>
 #include <SDL.h>
 
 using namespace de;
 
 SDLOpenGLVideo::SDLOpenGLVideo() : config_("/config/sdlopengl.de")
 {
-    std::cout << "SDLOpenGLVideo\n";
+    LOG_AS("SDLOpenGLVideo::SDLOpenGLVideo");
+    
     config_.read();
     
     if(SDL_InitSubSystem(SDL_INIT_VIDEO))
@@ -53,7 +55,7 @@ SDLOpenGLVideo::SDLOpenGLVideo() : config_("/config/sdlopengl.de")
 
 SDLOpenGLVideo::~SDLOpenGLVideo()
 {
-    std::cout << "~SDLOpenGLVideo\n";
+    LOG_AS("SDLOpenGLVideo::~SDLOpenGLVideo");
 
     SDL_QuitSubSystem(SDL_INIT_VIDEO);
 }

@@ -22,6 +22,7 @@
 #include "de/DirectoryFeed"
 #include "de/ArchiveFeed"
 #include "de/Archive"
+#include "de/Log"
 
 using namespace de;
 
@@ -54,20 +55,22 @@ Folder& FS::getFolder(const String& path)
 
 File* FS::interpret(File* sourceData)
 {
+    LOG_AS("FS::interpret");
+    
     /// @todo  One should be able to define new interpreters dynamically.
     
     try
     {
         if(LibraryFile::recognize(*sourceData))
         {
-            std::cout << "Interpreted " << sourceData->name() << " as a shared library\n";
+            LOG_VERBOSE("Interpreted ") << sourceData->name() << " as a shared library";
         
             // It is a shared library intended for Doomsday.
             return new LibraryFile(sourceData);
         }
         if(Archive::recognize(*sourceData))
         {
-            std::cout << "Interpreted " << sourceData->name() << " as a ZIP archive\n";
+            LOG_VERBOSE("Interpreted ") << sourceData->name() << " as a ZIP archive";
         
             // It is a ZIP archive. The folder will own the source file.
             std::auto_ptr<Folder> zip(new Folder(sourceData->name()));
@@ -78,7 +81,8 @@ File* FS::interpret(File* sourceData)
     }
     catch(const Error& err)
     {
-        std::cout << "FS::interpret: " << err.asText() << "\n";
+        LOG_ERROR("") << err.asText();
+
         // We were given responsibility of the source file.
         delete sourceData;
         err.raise();
@@ -165,15 +169,15 @@ void FS::printIndex()
 {
     for(Index::iterator i = index_.begin(); i != index_.end(); ++i)
     {
-        std::cout << "[" << i->first << "]: " << i->second->path() << "\n";
+        LOG_DEBUG("\"%s\": ") << i->first << i->second->path();
     }
     
     for(TypeIndex::iterator k = typeIndex_.begin(); k != typeIndex_.end(); ++k)
     {
-        std::cout << "\nIndex for type '" << k->first << "':\n";
+        LOG_DEBUG("Index for type '%s':") << k->first;
         for(Index::iterator i = k->second.begin(); i != k->second.end(); ++i)
         {
-            std::cout << "[" << i->first << "]: " << i->second->path() << "\n";
+            LOG_DEBUG("\"%s\": ") << i->first << i->second->path();
         }
     }
 }

@@ -21,6 +21,7 @@
 #define LIBDENG2_DATE_H
 
 #include "../Time"
+#include "../Log"
 
 namespace de
 {
@@ -29,7 +30,7 @@ namespace de
      *
      * @ingroup types
      */
-    class LIBDENG2_API Date
+    class LIBDENG2_API Date : public LogEntry::Arg::Base
     {
     public:
         /**
@@ -51,6 +52,10 @@ namespace de
          */
         Time asTime() const;
         
+        // Implements LogEntry::Arg::Base.
+        LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
+        
+    public:
         dint microSeconds;
         dint seconds;
         dint minutes;

@@ -81,10 +81,10 @@ ClientApp::ClientApp(const de::CommandLine& arguments)
     
     link->base() << CommandPacket("status");
     std::auto_ptr<RecordPacket> status(link->base().receivePacket<RecordPacket>());
-    std::cout << "Here's what the server said:\n" << status->label() << "\n" << status->record() << "\n";
+    LOG_MESSAGE("The server said '%s':\n%s") << status->label() << status->record();
 
     Id sessionToJoin(status->record().subrecord("sessions").subrecords().begin()->first);
-    std::cout << "Going to join session " << sessionToJoin << "\n";
+    LOG_MESSAGE("Going to join session ") << sessionToJoin;
 
     // Join the session.
     session_ = new UserSession(link, sessionToJoin);
@@ -115,13 +115,13 @@ void ClientApp::iterate()
     }
     catch(const UserSession::SessionEndedError& err)
     {
-        std::cout << "Session ended: " << err.asText() << "\n";
+        LOG_INFO("Session ended: ") << err.asText();
         delete session_;
         session_ = 0;
     }
     catch(const Link::DisconnectedError& err)
     {
-        std::cout << "Disconnected from server: " << err.asText() << "\n";
+        LOG_INFO("Disconnected from server: ") << err.asText();
         delete session_;
         session_ = 0;
     }

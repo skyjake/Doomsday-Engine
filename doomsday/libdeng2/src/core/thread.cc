@@ -19,6 +19,7 @@
 
 #include "de/Thread"
 #include "de/Time"
+#include "de/Log"
 #include "../sdl.h"
 
 #include <SDL_thread.h>
@@ -36,6 +37,8 @@ int Thread::runner(void* owner)
     self->run();
     self->thread_ = NULL;
     self->endOfThread_.post();
+
+    Log::disposeThreadLog();
 
     // The return value is not used at the moment.
     return 0;

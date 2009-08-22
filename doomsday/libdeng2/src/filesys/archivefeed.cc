@@ -23,6 +23,7 @@
 #include "de/Writer"
 #include "de/Folder"
 #include "de/FS"
+#include "de/Log"
 
 using namespace de;
 
@@ -38,12 +39,14 @@ ArchiveFeed::ArchiveFeed(ArchiveFeed& parentFeed, const String& basePath)
 
 ArchiveFeed::~ArchiveFeed()
 {
+    LOG_AS("ArchiveFeed::~ArchiveFeed");
+    
     if(archive_)
     {
         // If modified, the archive is written.
         if(archive_->modified())
         {
-            std::cout << "Updating archive in " << file_.name() << "\n";
+            LOG_MESSAGE("Updating archive in ") << file_.name();
 
             // Make sure we have either a compressed or uncompressed version of
             // each entry in memory before destroying the source file.
@@ -54,7 +57,7 @@ ArchiveFeed::~ArchiveFeed()
         }        
         else
         {
-            std::cout << "Not updating archive in " << file_.name() << " (not changed)\n";
+            LOG_VERBOSE("Not updating archive in %s (not changed)") << file_.name();
         }
         delete archive_;
     }
@@ -62,6 +65,8 @@ ArchiveFeed::~ArchiveFeed()
 
 void ArchiveFeed::populate(Folder& folder)
 {
+    LOG_AS("ArchiveFeed::populate");
+
     Archive::Names names;
     
     // Get a list of the files in this directory.
@@ -108,7 +113,7 @@ void ArchiveFeed::populate(Folder& folder)
             if(archFeed && &archFeed->archive() == &archive() && archFeed->basePath() == subBasePath)
             {
                 // It's got it.
-                std::cout << "Feed for " << archFeed->basePath() << " already there.\n";
+                LOG_DEBUG("Feed for ") << archFeed->basePath() << " already there.";
                 return;
             }
         }

@@ -23,6 +23,7 @@
 #include "de/DirectoryFeed"
 #include "de/Library"
 #include "de/LibraryFile"
+#include "de/LogBuffer"
 #include "de/Module"
 #include "de/ISubsystem"
 #include "de/Audio"
@@ -34,11 +35,15 @@
 
 using namespace de;
 
+const duint DEFAULT_LOG_BUFFER_MAX_ENTRY_COUNT = 1000;
+
 // This will be set when the app is constructed.
 App* App::singleton_ = 0;
 
-App::App(const CommandLine& commandLine, const String& configPath, const String& homeSubFolder)
+App::App(const CommandLine& commandLine, const String& configPath, const String& homeSubFolder,
+    LogBuffer::Level defaultLogLevel)
     : commandLine_(commandLine), 
+      logBuffer_(0),
       memory_(0), 
       fs_(0), 
       config_(0),
@@ -57,6 +62,10 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
         throw TooManyInstancesError("App::App", "Only one instance allowed");
     }
     singleton_ = this;
+
+    // Create a buffer for log entries.
+    logBuffer_ = new LogBuffer(DEFAULT_LOG_BUFFER_MAX_ENTRY_COUNT);
+    logBuffer_->enable(defaultLogLevel);
 
     // Start by initializing SDL.
     if(SDL_Init(SDL_INIT_TIMER) == -1)
@@ -127,6 +136,9 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
         config_ = configPtr.get();
         config_->read();
         
+        // Update the log buffer max entry count.
+        logBuffer_->setMaxEntryCount(config_->getui("deng.log.bufferSize"));
+        
         // Load the basic plugins.
         loadPlugins();
 
@@ -135,7 +147,7 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
         fsPtr.release();
         configPtr.release();
         
-        std::cout << "libdeng2::App " << LIBDENG2_VERSION << " initialized.\n";
+        LOG_VERBOSE("libdeng2::App ") << LIBDENG2_VERSION << " initialized.";
     }
     catch(const Error& err)
     {
@@ -166,11 +178,16 @@ App::~App()
     SDLNet_Quit();
     SDL_Quit();
 
+    delete logBuffer_;
+    logBuffer_ = 0;
+
     singleton_ = 0;
 }
 
 void App::loadPlugins()
 {
+    LOG_AS("App::loadPlugins");
+    
     // Names of preferred plugins.
     String gameName = "doom"; /// @todo There is no default game, really...
     commandLine_.getParameter("--game", gameName);
@@ -200,7 +217,7 @@ void App::loadPlugins()
                 {
                     // This is the right game.
                     gameLib_ = &libFile;
-                    std::cout << "App::loadPlugins() located the game " << libFile.path() << "\n";
+                    LOG_VERBOSE("Located the game ") << libFile.path();
                 }
                 else
                 {
@@ -215,7 +232,7 @@ void App::loadPlugins()
                 {
                     video_ = libFile.library().SYMBOL(deng_NewVideo)();
                     subsystems_.push_back(video_);
-                    std::cout << "App::loadPlugins() constructed video subsystem " << libFile.path() << "\n";                
+                    LOG_MESSAGE("Video subsystem ") << libFile.path();
                 }
                 else
                 {
@@ -230,7 +247,7 @@ void App::loadPlugins()
                 {
                     audio_ = libFile.library().SYMBOL(deng_NewAudio)();
                     subsystems_.push_back(audio_);
-                    std::cout << "App::loadPlugins() constructed audio subsystem " << libFile.path() << "\n";                
+                    LOG_MESSAGE("Audio subsystem ") << libFile.path();
                 }
                 else
                 {
@@ -240,8 +257,7 @@ void App::loadPlugins()
                 }
             }      
             
-            std::cout << "App::loadPlugins() loaded " << libFile.path() << " [" << 
-                libFile.library().type() << "]\n";
+            LOG_VERBOSE("Loaded ") << libFile.path() << " [" << libFile.library().type() << "]";
         }
     }
 }
@@ -276,6 +292,8 @@ void App::unloadGame()
 
 void App::unloadPlugins()
 {
+    LOG_AS("App::unloadPlugins");
+    
     clearSubsystems();
     unloadGame();
     
@@ -288,7 +306,7 @@ void App::unloadPlugins()
         if(libFile.name().contains("dengplugin_"))
         {
             libFile.clear();
-            std::cout << "App::unloadPlugins() unloaded " << libFile.path() << "\n";
+            LOG_VERBOSE("Unloaded ") << libFile.path();
         }
     }
 }
@@ -357,6 +375,13 @@ Version App::version()
 CommandLine& App::commandLine() 
 { 
     return app().commandLine_; 
+}
+
+LogBuffer& App::logBuffer()
+{
+    App& self = app();
+    assert(self.logBuffer_ != 0);
+    return *self.logBuffer_;
 }
 
 Zone& App::memory()
@@ -460,6 +485,8 @@ static int sortFilesByModifiedAt(const File* a, const File* b)
 
 Record& App::importModule(const String& name, const String& fromPath)
 {
+    LOG_AS("App::importModule");
+    
     App& self = app();
     
     // There are some special modules.
@@ -518,7 +545,7 @@ Record& App::importModule(const String& name, const String& fromPath)
             }
             matching.sort(sortFilesByModifiedAt);
             found = matching.back();
-            std::cout << "Chose " << found->path() << " out of " << matching.size() << " candidates.\n";
+            LOG_VERBOSE("Chose ") << found->path() << " out of " << matching.size() << " candidates.";
         }
         else
         {

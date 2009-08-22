@@ -21,6 +21,8 @@
 #include <de/types.h>
 #include "../testapp.h"
 
+#include <iostream>
+
 using namespace de;
 
 int deng_Main(int argc, char** argv)

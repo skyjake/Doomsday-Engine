@@ -17,36 +17,29 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "de/ReceiverThread"
-#include "de/Socket"
-#include "de/Log"
+#ifndef LIBDENG2_TEXTSTYLE_H
+#define LIBDENG2_TEXTSTYLE_H
 
-using namespace de;
-
-ReceiverThread::ReceiverThread(Socket& socket, IncomingBuffer& buffer) 
-    : Thread(), socket_(socket), buffer_(buffer)
-{}
-
-ReceiverThread::~ReceiverThread()
-{}
-
-void ReceiverThread::run()
+namespace de
 {
-    LOG_AS("ReceiverThread::run");
-    try
+    enum TextStyle
     {
-        while(!shouldStopNow())
-        {
-            buffer_.put(socket_.receive());
-        }
-    }
-    catch(const Socket::DisconnectedError&)
-    {
-        // No need to react. When the socket is closed, this is the exception
-        // that is thrown.
-    }
-    catch(const Error& err)
-    {
-        LOG_ERROR("Thread stopped: ") << err.asText();
-    }
+        NORMAL,
+        STRONG,
+        LOG_TIME,
+        LOG_LEVEL,
+        LOG_BAD_LEVEL,
+        LOG_SECTION,
+        LOG_MESSAGE
+    };
+    
+    const char* TEXT_STYLE_NORMAL = "$0";
+    const char* TEXT_STYLE_STRONG = "$1";
+    const char* TEXT_STYLE_LOG_TIME = "$2";
+    const char* TEXT_STYLE_LOG_LEVEL = "$3";
+    const char* TEXT_STYLE_LOG_BAD_LEVEL = "$4";
+    const char* TEXT_STYLE_SECTION = "$5";
+    const char* TEXT_STYLE_MESSAGE = "$6";
 }
+
+#endif /* LIBDENG2_TEXTSTYLE_H */

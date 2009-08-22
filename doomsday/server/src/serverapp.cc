@@ -50,7 +50,7 @@ ServerApp::ServerApp(const de::CommandLine& arguments)
         std::istringstream(param) >> port;
     }
     
-    std::cout << "Server uses port " << port << "\n";
+    LOG_INFO("Server uses port ") << port;
     listenSocket_ = new ListenSocket(port);
     
     args.append("-dedicated");
@@ -85,7 +85,7 @@ void ServerApp::iterate()
     Socket* incoming = listenSocket_->accept();
     if(incoming)
     {
-        std::cout << "New client connected from " << incoming->peerAddress() << "!\n";
+        LOG_INFO("New client connected from %s!") << incoming->peerAddress();
         clients_.push_back(new Client(incoming));
     }
 
@@ -111,6 +111,8 @@ Client& ServerApp::clientByAddress(const de::Address& address) const
 
 void ServerApp::tendClients()
 {
+    LOG_AS("ServerApp::tendClients");
+    
     for(Clients::iterator i = clients_.begin(); i != clients_.end(); )
     {
         bool deleteClient = false;
@@ -137,13 +139,12 @@ void ServerApp::tendClients()
         catch(const ISerializable::DeserializationError&)
         {
             // Malformed packet!
-            std::cout << "Client from " << (*i)->peerAddress() << " sent nonsense.\n";
+            LOG_WARNING("Client from ") << (*i)->peerAddress() << " sent nonsense.";
             deleteClient = true;
         }
         catch(const NoSessionError&)
         {
-            std::cout << "Client from " << (*i)->peerAddress() << 
-                " tried to access nonexistent session.\n";
+            LOG_WARNING("Client from ") << (*i)->peerAddress() << " tried to access nonexistent session.";
             deleteClient = true;
         }
         catch(const UnknownAddressError&)
@@ -151,7 +152,7 @@ void ServerApp::tendClients()
         catch(const Link::DisconnectedError&)
         {
             // The client was disconnected.
-            std::cout << "Client from " << (*i)->peerAddress() << " disconnected.\n";
+            LOG_INFO("Client from ") << (*i)->peerAddress() << " disconnected.";
             deleteClient = true;
         }
 
@@ -170,11 +171,12 @@ void ServerApp::tendClients()
 
 void ServerApp::processPacket(const de::Packet& packet)
 {
+    LOG_AS("ServerApp::processPacket");
+    
     const CommandPacket* cmd = dynamic_cast<const CommandPacket*>(&packet);
     if(cmd)
     {
-        std::cout << "Server received command (from " << packet.from() << 
-            "): " << cmd->command() << "\n";
+        LOG_DEBUG("Server received command (from %s): %s") << packet.from() << cmd->command();
           
         /// @todo  Session new/delete commands require admin access rights.
         // Session commands are handled by the session.

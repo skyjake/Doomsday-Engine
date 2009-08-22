@@ -19,6 +19,7 @@
  
 #include "de/Config"
 #include "de/App"
+#include "de/Log"
 #include "de/Folder"
 #include "de/ArrayValue"
 #include "de/NumberValue"
@@ -34,18 +35,21 @@ Config::Config(const String& path) : configPath_(path)
 
 Config::~Config()
 {
+    LOG_AS("Config::~Config");
     try
     {
         write();
     }
     catch(const Error& err)
     {
-        std::cerr << "Config::~Config: " << err.asText() << "\n";
+        LOG_ERROR("") << err.asText();
     }
 }
 
 void Config::read()
 {
+    LOG_AS("Config::read");
+    
     // Current version.
     std::auto_ptr<ArrayValue> version(new ArrayValue());
     version->add(new NumberValue(LIBDENG2_MAJOR_VERSION));
@@ -63,7 +67,7 @@ void Config::read()
         if(!names()["__version__"].value().compare(*version))
         {
             // Versions match.
-            std::cout << writtenConfigPath_ << " matches version " << version->asText() << "\n";
+            LOG_MESSAGE("") << writtenConfigPath_ << " matches version " << version->asText();
             return;
         }
     }

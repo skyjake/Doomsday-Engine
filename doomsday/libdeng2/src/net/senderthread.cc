@@ -21,6 +21,7 @@
 #include "de/Socket"
 #include "de/Time"
 #include "de/Message"
+#include "de/Log"
 
 using namespace de;
 
@@ -33,6 +34,8 @@ SenderThread::~SenderThread()
 
 void SenderThread::run()
 {
+    LOG_AS("SenderThread::run");
+    
     while(!shouldStopNow())
     {
         try
@@ -60,7 +63,7 @@ void SenderThread::run()
         }
         catch(const Waitable::WaitError&)
         {
-            std::cerr << "SenderThread: Socket closed.\n";
+            LOG_ERROR("Socket closed.");
             stop();
         }
     }           

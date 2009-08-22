@@ -21,6 +21,7 @@
 #include "de/Feed"
 #include "de/FS"
 #include "de/NumberValue"
+#include "de/Log"
 
 #include <sstream>
 
@@ -64,6 +65,8 @@ void Folder::clear()
 
 void Folder::populate()
 {
+    LOG_AS("Folder::populate");
+    
     // Prune the existing files first.
     for(Contents::iterator i = contents_.begin(); i != contents_.end(); )
     {
@@ -77,7 +80,7 @@ void Folder::populate()
         // If the file has a designated feed, ask it about pruning.
         if(file->originFeed() && file->originFeed()->prune(*file))
         {
-            std::cout << "Pruning " << file->path() << "\n";
+            LOG_DEBUG("Pruning ") << file->path();
             mustPrune = true;
         }
         else if(!file->originFeed())
@@ -89,7 +92,7 @@ void Folder::populate()
             {
                 if((*f)->prune(*file))
                 {
-                    std::cout << "Pruning " << file->path() << "\n";
+                    LOG_DEBUG("Pruning ") << file->path();
                     mustPrune = true;
                     break;
                 }

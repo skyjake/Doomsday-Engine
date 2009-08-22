@@ -23,6 +23,8 @@
 #include <de/net.h>
 #include "../testapp.h"
 
+#include <iostream>
+
 using namespace de;
 
 int deng_Main(int argc, char** argv)
@@ -39,11 +41,11 @@ int deng_Main(int argc, char** argv)
             
             while((client = entry.accept()) == NULL)
             {
-                std::cout << "Still waiting for incoming...\n";
+                LOG_MESSAGE("Still waiting for incoming...");
                 Time::sleep(.5);
             }
 
-            std::cout << "Sending...\n";
+            LOG_MESSAGE("Sending...");
             
             Link link(client);
             Block packet;
@@ -55,7 +57,7 @@ int deng_Main(int argc, char** argv)
             Link link(Address("localhost", 8080));
             while(!link.hasIncoming())
             {
-                std::cout << "Waiting for data\n";
+                LOG_MESSAGE("Waiting for data");
                 Time::sleep(.1);
             }
             
@@ -63,12 +65,12 @@ int deng_Main(int argc, char** argv)
             String str;
             Reader(*data) >> str;        
             
-            std::cout << "Received '" << str << "'\n";
+            LOG_MESSAGE("Received '%s'") << str;
         }
     }
     catch(const Error& err)
     {
-        std::cout << err.asText() << "\n";
+        std::cerr << err.asText() << "\n";
     }
 
     std::cout << "Exiting deng_Main()...\n";

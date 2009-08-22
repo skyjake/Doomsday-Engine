@@ -21,43 +21,45 @@
 #include <de/data.h>
 #include "../testapp.h"
 
+#include <iostream>
+#include <sstream>
+
 using namespace de;
 
 int deng_Main(int argc, char** argv)
 {
-    using std::cout;
-    using std::endl;
-    
     try
     {
+        TestApp app(CommandLine(argc, argv));
+        
         Record rec;
         
-        std::cout << "Empty record:\n";
-        cout << rec;
+        LOG_MESSAGE("Empty record:\n") << rec;
         
         rec.add(new Variable("hello", new TextValue("World!")));
-        std::cout << "\nWith one variable:\n" << rec;
+        LOG_MESSAGE("With one variable:\n") << rec;
         
         rec.add(new Variable("size", new NumberValue(1024)));
-        std::cout << "\nWith two variables:\n" << rec;
+        LOG_MESSAGE("With two variables:\n") << rec;
         
         Record rec2;
         Block b;
         Writer(b) << rec;
-        std::cout << "Serialized record to " << b.size() << " bytes.\n";
+        LOG_MESSAGE("Serialized record to ") << b.size() << " bytes.";
         
+        std::ostringstream str;
         for(duint i = 0; i < b.size(); ++i)
         {
-            std::cout << dint(b.data()[i]) << " ";
+            str << dint(b.data()[i]) << " ";
         }
-        std::cout << "\n";
+        LOG_MESSAGE("") << str.str();
         
         Reader(b) >> rec2;        
-        std::cout << "\nAfter being (de)serialized:\n" << rec2;
+        LOG_MESSAGE("After being (de)serialized:\n") << rec2;
     }
     catch(const Error& err)
     {
-        std::cout << err.asText() << "\n";
+        std::cerr << err.asText() << "\n";
     }
 
     std::cout << "Exiting deng_Main()...\n";

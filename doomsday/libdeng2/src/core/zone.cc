@@ -21,6 +21,7 @@
  */
 
 #include "de/Zone"
+#include "de/Log"
 #include "de/math.h"
 
 #include <cstdlib>
@@ -42,24 +43,24 @@ using namespace de;
 
 struct Zone::MemBlock 
 {
-    dsize           size; // Including header and possibly tiny fragments.
-    void**          user; // 0 if a free block.
-    Zone::PurgeTag  tag; // Purge level.
-    int             id; // Should be ZONEID.
-    Zone::MemVolume*      volume; // Volume this block belongs to.
-    Zone::MemBlock*       next;
-    Zone::MemBlock*       prev;
-    Zone::MemBlock*       seqLast;
-    Zone::MemBlock*       seqFirst;
+    dsize               size; // Including header and possibly tiny fragments.
+    void**              user; // 0 if a free block.
+    Zone::PurgeTag      tag; // Purge level.
+    int                 id; // Should be ZONEID.
+    Zone::MemVolume*    volume; // Volume this block belongs to.
+    Zone::MemBlock*     next;
+    Zone::MemBlock*     prev;
+    Zone::MemBlock*     seqLast;
+    Zone::MemBlock*     seqFirst;
 #ifdef LIBDENG2_FAKE_MEMORY_ZONE
-    void*           area; // The real memory area.
+    void*               area; // The real memory area.
 #endif
 };
 
 struct Zone::MemZone {
-    dsize           size; // Total bytes malloced, including header.
-    Zone::MemBlock        blockList; // Start / end cap for linked list.
-    Zone::MemBlock*       rover;
+    dsize               size; // Total bytes malloced, including header.
+    Zone::MemBlock      blockList; // Start / end cap for linked list.
+    Zone::MemBlock*     rover;
 };
 
 /**
@@ -67,9 +68,9 @@ struct Zone::MemZone {
  * allocated when necessary.
  */
 struct Zone::MemVolume {
-    Zone::MemZone*        zone;
-    dsize           size;
-    Zone::MemVolume*      next;
+    Zone::MemZone*      zone;
+    dsize               size;
+    Zone::MemVolume*    next;
 };
 
 static void* M_Malloc(dsize amount)
@@ -112,6 +113,8 @@ Zone::Zone() : volumeRoot_(0), fastMalloc_(false)
 
 Zone::~Zone()
 {        
+    LOG_AS("Zone::~Zone");
+    
     // Delete the batches.
     while(!batches_.empty())
     {
@@ -139,7 +142,7 @@ Zone::~Zone()
         M_Free(vol);
     }
 
-    std::cout << "Zone: Used " << numVolumes << " volumes, total " << totalMemory << " bytes.\n";
+    LOG_VERBOSE("Used %i volume(s), total %i bytes.") << numVolumes << totalMemory;
 }
 
 void Zone::enableFastMalloc(bool enabled)
@@ -662,6 +665,8 @@ Zone::MemBlock *Zone::getBlock(void *ptr) const
 
 Zone::MemVolume* Zone::newVolume(dsize volumeSize)
 {
+    LOG_AS("Zone::newVolume");
+    
     MemBlock     *block;
     MemVolume    *vol = static_cast<MemVolume*>(M_Calloc(sizeof(MemVolume)));
 
@@ -692,7 +697,7 @@ Zone::MemVolume* Zone::newVolume(dsize volumeSize)
     block->seqFirst = block->seqLast = 0;
     block->size = vol->zone->size - sizeof(MemZone);
 
-    std::cout << "Zone::newVolume: New " << vol->size / 1024.0 / 1024.0 << " MB memory volume.\n";
+    LOG_DEBUG("New ") << vol->size / 1024.0 / 1024.0 << " MB memory volume.";
 
     return vol;
 }

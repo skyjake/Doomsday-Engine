@@ -23,13 +23,12 @@
 #include <de/fs.h>
 #include "../testapp.h"
 
+#include <iostream>
+
 using namespace de;
 
 int deng_Main(int argc, char** argv)
 {
-    using std::cout;
-    using std::endl;
-    
     try
     {
         CommandLine args(argc, argv);
@@ -39,22 +38,19 @@ int deng_Main(int argc, char** argv)
         Writer(b, littleEndianByteOrder) << duint32(0x11223344);
         duint32 v;
         Reader(b, littleEndianByteOrder) >> v;
-        cout << std::hex << v << std::dec << "\n";
+        LOG_MESSAGE("%x") << v;
 
         Folder& zip = app.fileSystem().find<Folder>("test.zip");
         
-        cout << "Here's test.zip's info:\n";
-        cout << zip.info() << "\n";
-        
-        cout << "Root's info:\n";
-        cout << app.fileRoot().info() << "\n";
+        LOG_MESSAGE("Here's test.zip's info:\n") << zip.info();
+        LOG_MESSAGE("Root's info:\n") << app.fileRoot().info();
         
         const File& hello = zip.locate<File>("hello.txt");
         File::Status stats = hello.status();
-        cout << "hello.txt size: " << stats.size << " bytes, modified at " << Date(stats.modifiedAt) << endl;
+        LOG_MESSAGE("hello.txt size: %i bytes, modified at %s") << stats.size << Date(stats.modifiedAt);
         
         String content(hello);
-        cout << "The contents: \"" << content << "\"" << endl;
+        LOG_MESSAGE("The contents: \"%s\"") << content;
 
         try
         {
@@ -64,7 +60,7 @@ int deng_Main(int argc, char** argv)
         }
         catch(const File::IOError&)
         {
-            cout << "Cannot change files in read-only mode.\n";
+            LOG_WARNING("Cannot change files in read-only mode.");
         }
 
         // This won't appear in the file system unless FS::refresh() is called.
@@ -74,12 +70,12 @@ int deng_Main(int argc, char** argv)
         Archive arch;
         arch.add("world.txt", content);
         Writer(zip2) << arch;
-        cout << "Wrote " << zip2.path() << endl;
-        cout << zip2.info() << "\n";
+        LOG_MESSAGE("Wrote ") << zip2.path();
+        LOG_MESSAGE("") << zip2.info();
     }
     catch(const Error& err)
     {
-        std::cout << err.asText() << "\n";
+        std::cerr << err.asText() << "\n";
     }
 
     std::cout << "Exiting deng_Main()...\n";

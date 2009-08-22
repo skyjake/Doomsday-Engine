@@ -23,16 +23,18 @@
 #include <de/net.h>
 #include "../testapp.h"
 
+#include <iostream>
+
 using namespace de;
 
 int deng_Main(int argc, char** argv)
 {
-    std::cout << "Server runs until client tells it to stop.\n";
-
     try
     {
         CommandLine args(argc, argv);
         TestApp app(args);
+
+        LOG_MESSAGE("Server runs until client tells it to stop.");
         
         if(args.has("--server"))
         {
@@ -52,7 +54,7 @@ int deng_Main(int argc, char** argv)
             }
             String str;
             Reader(*message) >> str;
-            std::cout << "Received '" << str << "'\n";
+            LOG_MESSAGE("Received '%s'") << str;
             delete message;
         }
         else
@@ -65,7 +67,7 @@ int deng_Main(int argc, char** argv)
     }
     catch(const Error& err)
     {
-        std::cout << err.asText() << "\n";
+        std::cerr << err.asText() << "\n";
     }
 
     std::cout << "Exiting deng_Main()...\n";

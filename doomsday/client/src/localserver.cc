@@ -47,14 +47,16 @@ LocalServer::LocalServer(de::duint16 listenOnPort) : listenOnPort_(listenOnPort)
 
 LocalServer::~LocalServer()
 {
+    LOG_AS("LocalServer::~LocalServer");
+    
     try
     {
-        std::cout << "Stopping local server...\n";
+        LOG_MESSAGE("Stopping...");
 
         Link(Address("localhost", listenOnPort_)) << CommandPacket("quit");
     }
     catch(const Socket::ConnectionError&)
     {
-        std::cout << "Couldn't connect to local server!\n";
+        LOG_ERROR("Failed to connect!");
     }
 }

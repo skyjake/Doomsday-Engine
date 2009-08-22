@@ -34,6 +34,8 @@ Session::Session() : world_(0)
 
 Session::~Session()
 {
+    LOG_AS("Session::~Session");
+    
     if(!users_.empty())
     {
         RecordPacket sessionEnded("session.ended");
@@ -49,15 +51,17 @@ Session::~Session()
         }
         users_.clear();
     }
-    std::cout << "Deleting world\n";
+    LOG_DEBUG("Deleting the world");
     delete world_;
 }
 
 void Session::processCommand(Client& sender, const de::CommandPacket& packet)
 {
+    LOG_AS("Session::processCommand");
+    
     try
     {
-        std::cout << "Processing '" << packet.command() << "' with args:\n" << packet.arguments() << "\n";
+        LOG_DEBUG("Processing '%s' with args: %s") << packet.command() << packet.arguments();
         
         if(packet.command() == "session.new")
         {
@@ -109,6 +113,8 @@ void Session::processCommand(Client& sender, const de::CommandPacket& packet)
 
 RemoteUser& Session::promote(Client& client)
 {
+    LOG_AS("Session::promote");
+    
     try
     {
         userByAddress(client.peerAddress());
@@ -130,8 +136,9 @@ RemoteUser& Session::promote(Client& client)
         client.updates() << welcome;
 
         RemoteUser* remote = new RemoteUser(client, this);
-        std::cout << "Id of new remote user: " << remote->id() << "\n";
         users_[remote->id()] = remote;
+
+        LOG_VERBOSE("Id of new remote user: ") << remote->id();
 
         // Start observing when this link closes.
         client.link().observers.add(this);
@@ -169,6 +176,8 @@ RemoteUser& Session::userByAddress(const de::Address& address) const
 
 void Session::linkBeingDeleted(de::Link& link)
 {
+    LOG_AS("Session::linkBeingDeleted");
+    
     for(Users::iterator i = users_.begin(); i != users_.end(); ++i)
     {
         if(&i->second->client().link() == &link)
@@ -179,7 +188,7 @@ void Session::linkBeingDeleted(de::Link& link)
             return;
         }
     }
-    std::cout << "Session::linkBeingDeleted: " << link.peerAddress() << " not used by any user\n";
+    LOG_DEBUG("%s not used by any user") << link.peerAddress();
 }
 
 void Session::describe(de::Record& record) const

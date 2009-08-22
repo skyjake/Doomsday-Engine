@@ -23,6 +23,7 @@
 #include "de/DictionaryValue"
 #include "de/Writer"
 #include "de/Reader"
+#include "de/Log"
 
 #include <sstream>
 
@@ -139,6 +140,8 @@ void Function::mapArgumentValues(const ArrayValue& args, ArgumentValues& values)
 
 void Function::setGlobals(Record* globals)
 {
+    LOG_AS("Function::setGlobals");
+    
     if(!globals_)
     {
         globals_ = globals;
@@ -146,7 +149,7 @@ void Function::setGlobals(Record* globals)
     }
     else if(globals_ != globals)
     {
-        std::cerr << "Function::setGlobals: WARNING! Function was offered a different namespace.\n";
+        LOG_WARNING("Function was offered a different namespace.");
     }
 }
 

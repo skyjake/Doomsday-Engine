@@ -3,5 +3,7 @@
 #include "Config"
 #include "ISubsystem"
 #include "Library"
+#include "Log"
+#include "LogBuffer"
 #include "Thread"
 #include "Zone"

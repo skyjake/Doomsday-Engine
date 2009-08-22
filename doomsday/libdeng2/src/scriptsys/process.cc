@@ -180,8 +180,7 @@ void Process::execute(const Time::Delta& timeBox)
             else
             {
                 // Exception uncaught by all contexts, script execution stops.
-                std::cout << "Process::execute: " << err.asText() << "\n";
-                std::cout << "Stopping process.\n";
+                LOG_INFO("Stopping process: ") << err.asText();
                 stop();
             }
         }
