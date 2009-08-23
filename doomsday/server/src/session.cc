@@ -68,6 +68,8 @@ void Session::processCommand(Client& sender, const de::CommandPacket& packet)
             // Initialize the session with the provided settings.
             world_->loadMap(packet.arguments().value<TextValue>("map"));
 
+            LOG_DEBUG("Replying with session id.");
+
             // Respond.
             Record* reply = new Record();
             reply->addText("id", id_);

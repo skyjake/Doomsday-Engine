@@ -27,7 +27,6 @@ RefValue::RefValue(Variable* variable) : variable_(variable)
 {
     if(variable_)
     {
-        variable_->audienceForChange.add(this);
         variable_->audienceForDeletion.add(this);
     }
 }
@@ -36,7 +35,6 @@ RefValue::~RefValue()
 {
     if(variable_)
     {
-        variable_->audienceForChange.remove(this);
         variable_->audienceForDeletion.remove(this);
     }
 }
@@ -178,9 +176,6 @@ void RefValue::operator << (Reader& from)
     // Should never happen.
     assert(false);
 }
-
-void RefValue::variableValueChanged(Variable&, const Value&)
-{}
 
 void RefValue::variableBeingDeleted(Variable& variable)
 {

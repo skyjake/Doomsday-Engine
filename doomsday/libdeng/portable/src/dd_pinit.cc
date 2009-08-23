@@ -190,6 +190,7 @@ void DD_Verbosity(void)
  */
 boolean DD_EarlyInit(void)
 {
+    /*
     const char*         outFileName = "doomsday.out";
 
     // We'll redirect stdout to a log file.
@@ -200,32 +201,33 @@ boolean DD_EarlyInit(void)
         DD_ErrorBox(false, "Couldn't open message output file.");
     }
     else
+    
     {
         setbuf(outFile, NULL); // Don't buffer much.
+*/
+    // Determine the requested degree of verbosity.
+    DD_Verbosity();
 
-        // Determine the requested degree of verbosity.
-        DD_Verbosity();
+    // Get the console online ASAP.
+    if(!Con_Init())
+    {
+        DD_ErrorBox(true, "Error initializing console.");
+    }
+    else
+    {
+        Con_Message("Executable: " DOOMSDAY_VERSIONTEXT ".\n");
 
-        // Get the console online ASAP.
-        if(!Con_Init())
+        // Print the used command line.
+        if(verbose)
         {
-            DD_ErrorBox(true, "Error initializing console.");
-        }
-        else
-        {
-            Con_Message("Executable: " DOOMSDAY_VERSIONTEXT ".\n");
+            int         p;
 
-            // Print the used command line.
-            if(verbose)
-            {
-                int         p;
-
-                Con_Message("Command line (%i strings):\n", Argc());
-                for(p = 0; p < Argc(); ++p)
-                    Con_Message("  %i: %s\n", p, Argv(p));
-            }
+            Con_Message("Command line (%i strings):\n", Argc());
+            for(p = 0; p < Argc(); ++p)
+                Con_Message("  %i: %s\n", p, Argv(p));
         }
     }
+
 
     // Bring the window manager online.
     //Sys_InitWindowManager();
@@ -258,12 +260,4 @@ void DD_ShutdownAll(void)
     R_Shutdown();
     Def_Destroy();
     F_ShutdownDirec();
-    //Sys_ShutdownWindowManager();
-
-    // Close the message output file.
-    if(outFile)
-    {
-        fclose(outFile);
-        outFile = NULL;
-    }
 }

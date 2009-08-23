@@ -470,6 +470,7 @@ static void Net_DoUpdate(void)
  */
 void Net_Update(void)
 {
+#if 0
     Net_DoUpdate();
 
     // Listen for packets. Call the correct packet handler.
@@ -478,6 +479,7 @@ void Net_Update(void)
         Cl_GetPackets();
     else // Single-player or server.
         Sv_GetPackets();
+#endif
 }
 
 /**

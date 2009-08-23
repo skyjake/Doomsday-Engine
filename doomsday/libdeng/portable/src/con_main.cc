@@ -56,6 +56,10 @@
 #include "de_misc.h"
 #include "de_bsp.h"
 
+#include <de/core.h>
+
+using namespace de;
+
 #ifdef TextOut
 // Windows has its own TextOut.
 #  undef TextOut
@@ -143,7 +147,6 @@ byte    ConsoleSilent = false;
 
 int     conCompMode = 0;        // Completion mode.
 byte    conSilentCVars = 1;
-byte    consoleDump = true;
 int     consoleActiveKey = '`'; // Tilde.
 byte    consoleSnapBackOnPrint = false;
 
@@ -152,8 +155,7 @@ char   *prbuff = NULL;          // Print buffer, used by conPrintf.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static cbuffer_t *histBuf = NULL; // The console history buffer (log).
-uint bLineOff; // How many lines from the last in the histBuf?
+uint bLineOff; // How many lines from the last in the log history?
 
 static cbuffer_t *oldCmds = NULL; // The old commands buffer.
 uint ocPos;    // How many cmds from the last in the oldCmds buffer.
@@ -210,7 +212,6 @@ static void Con_Register(void)
 
     // Console
     C_VAR_INT("con-completion", &conCompMode, 0, 0, 1);
-    C_VAR_BYTE("con-dump", &consoleDump, 0, 0, 1);
     C_VAR_INT("con-key-activate", &consoleActiveKey, 0, 0, 255);
     C_VAR_BYTE("con-var-silent", &conSilentCVars, 0, 0, 1);
     C_VAR_BYTE("con-snapback", &consoleSnapBackOnPrint, 0, 0, 1);
@@ -239,11 +240,6 @@ boolean Con_InputMode(void)
 char *Con_GetCommandLine(void)
 {
     return cmdLine;
-}
-
-cbuffer_t *Con_GetConsoleBuffer(void)
-{
-    return histBuf;
 }
 
 uint Con_CursorPosition(void)
@@ -364,7 +360,6 @@ void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
 
 boolean Con_Init(void)
 {
-    histBuf = Con_NewBuffer(512, 70, 0);
     bLineOff = 0;
 
     oldCmds = Con_NewBuffer(0, CMDLINE_SIZE, CBF_ALWAYSFLUSH);
@@ -416,8 +411,6 @@ void Con_Shutdown(void)
     // Announce
     VERBOSE(Con_Printf("Con_Shutdown: Shuting down the console...\n"));
 
-    Con_DestroyBuffer(histBuf); // The console history buffer.
-    histBuf = 0; 
     Con_DestroyBuffer(oldCmds); // The old commands buffer.
     oldCmds = 0; 
 
@@ -451,9 +444,9 @@ void Con_SetFont(ddfont_t* cfont)
  */
 static void Con_Send(const char *command, byte src, int silent)
 {
+#if 0
     ushort          len = (ushort) (strlen(command) + 1);
 
-#if 0
     Msg_Begin(PKT_COMMAND2);
     // Mark high bit for silent commands.
     Msg_WriteShort(len | (silent ? 0x8000 : 0));
@@ -578,6 +571,7 @@ void Con_Ticker(timespan_t time)
 
 void Con_SetMaxLineLength(void)
 {
+    /*
     int         cw = FR_TextWidth("A");
     int         length;
     float       winWidth = DD_WindowWidth();
@@ -592,8 +586,7 @@ void Con_SetMaxLineLength(void)
         if(length > 250)
             length = 250;
     }
-
-    Con_BufferSetMaxLineLength(histBuf, length);
+    */
 }
 
 /**
@@ -1393,7 +1386,7 @@ boolean Con_Responder(ddevent_t* ev)
         if(conInputLock)
             break;
 
-        num = Con_BufferNumLines(histBuf);
+        num = App::logBuffer().size();
         if(num > 0)
         {
             bLineOff = MIN_OF(bLineOff + 3, num - 1);
@@ -1417,7 +1410,7 @@ boolean Con_Responder(ddevent_t* ev)
     case DDKEY_HOME:
         if(conInputLock)
             break;
-        bLineOff = Con_BufferNumLines(histBuf);
+        bLineOff = App::logBuffer().size();
         if(bLineOff != 0)
             bLineOff--;
         return true;
@@ -1624,24 +1617,7 @@ boolean Con_Responder(ddevent_t* ev)
  */
 void Con_AddRuler(void)
 {
-    int         i;
-
-    Con_BufferWrite(histBuf, CBLF_RULER, NULL);
-
-    if(consoleDump)
-    {
-        // A 70 characters long line.
-        for(i = 0; i < 7; ++i)
-        {
-            fprintf(outFile, "----------");
-            /*
-            if(isDedicated)
-                Sys_ConPrint(windowIDX, "----------", 0);*/
-        }
-        fprintf(outFile, "\n");
-/*        if(isDedicated)
-            Sys_ConPrint(windowIDX, "\n", 0);*/
-    }
+    LOG_MESSAGE("$R");
 }
 
 void conPrintf(int flags, const char *format, va_list args)
@@ -1660,9 +1636,6 @@ void conPrintf(int flags, const char *format, va_list args)
     // Format the message to prbuff.
     vsnprintf(prbuff, PRBUFF_SIZE, format, args);
 
-    if(consoleDump && outFile)
-        fprintf(outFile, "%s", prbuff);
-
     // Servers might have to send the text to a number of clients.
     if(isServer)
     {
@@ -1672,19 +1645,18 @@ void conPrintf(int flags, const char *format, va_list args)
             Sv_SendText(netRemoteUser, flags | SV_CONSOLE_FLAGS, prbuff);
     }
 
-    if(isDedicated)
+    // Remove unnecessary newline.
+    if(strlen(prbuff) > 0 && prbuff[strlen(prbuff) - 1] == '\n')
     {
-        //Sys_ConPrint(windowIDX, prbuff, flags);
+        prbuff[strlen(prbuff) - 1] = 0;
     }
-    else
-    {
-        Con_BufferWrite(histBuf, flags, prbuff);
 
-        if(consoleSnapBackOnPrint)
-        {
-            // Now that something new has been printed, it will be shown.
-            bLineOff = 0;
-        }
+    LOG_MESSAGE("%s") << prbuff;
+
+    if(consoleSnapBackOnPrint)
+    {
+        // Now that something new has been printed, it will be shown.
+        bLineOff = 0;
     }
 }
 
@@ -1743,19 +1715,6 @@ void Con_Message(const char *message, ...)
         vsnprintf(buffer, PRBUFF_SIZE, message, argptr);
         va_end(argptr);
 
-#ifdef UNIX
-        if(!isDedicated)
-        {
-            // These messages are supposed to be visible in the real console.
-            fprintf(stderr, "%s", buffer);
-        }
-#endif
-
-        // These messages are always dumped. If consoleDump is set,
-        // Con_Printf() will dump the message for us.
-        if(!consoleDump)
-            printf("%s", buffer);
-
         // Also print in the console.
         Con_Printf("%s", buffer);
 
@@ -1769,14 +1728,13 @@ void Con_Message(const char *message, ...)
 void Con_Error(const char *error, ...)
 {
     static boolean errorInProgress = false;
-    int         i, numBufLines;
     char        buff[2048], err[256];
     va_list     argptr;
 
     // Already in an error?
     if(!ConsoleInited || errorInProgress)
     {
-        if(outFile) fprintf(outFile, "Con_Error: Stack overflow imminent, aborting...\n");
+        LOG_WARNING("Con_Error: Stack overflow imminent, exiting now!");
 
         va_start(argptr, error);
         vsnprintf(buff, sizeof(buff), error, argptr);
@@ -1796,25 +1754,18 @@ void Con_Error(const char *error, ...)
     va_start(argptr, error);
     vsnprintf(err, sizeof(err), error, argptr);
     va_end(argptr);
-    if(outFile) fprintf(outFile, "%s\n", err);
+    LOG_ERROR("%s") << err;
 
     strcpy(buff, "");
-    if(histBuf != NULL)
-    {
-        // Flush anything still in the write buffer.
-        Con_BufferFlush(histBuf);
-        numBufLines = Con_BufferNumLines(histBuf);
-        for(i = 5; i > 1; i--)
-        {
-            const cbline_t *cbl =
-                Con_BufferGetLine(histBuf, numBufLines - i);
 
-            if(!cbl || !cbl->text)
-                continue;
-            strcat(buff, cbl->text);
-            strcat(buff, "\n");
-        }
+    LogBuffer::Entries entries;
+    App::logBuffer().latestEntries(entries, 5);
+    String msg;
+    for(LogBuffer::Entries::reverse_iterator i = entries.rbegin(); i != entries.rend(); ++i)
+    {
+        msg += (*i)->asText(LogEntry::SIMPLE) + "\n";
     }
+    strcat(buff, msg.c_str());
     strcat(buff, "\n");
     strcat(buff, err);
 
@@ -1855,8 +1806,7 @@ void Con_AbnormalShutdown(const char* message)
     DD_Shutdown();
 
     // Open Doomsday.out in a text editor.
-    if(outFile) fflush(outFile); // Make sure all the buffered stuff goes into the file.
-    Sys_OpenTextEditor("doomsday.out");
+    //Sys_OpenTextEditor("doomsday.out");
 
     // Get outta here.
     exit(1);
@@ -1942,7 +1892,7 @@ D_CMD(Help)
 
 D_CMD(Clear)
 {
-    Con_BufferClear(histBuf);
+    App::logBuffer().clear();
     bLineOff = 0;
     return true;
 }

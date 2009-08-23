@@ -79,13 +79,11 @@ DENG_EXPORT const char* deng_LibraryType(void)
  */
 DENG_EXPORT void deng_InitializePlugin(void)
 {
-    printf("deng_InitializePlugin: WAD Map Converter\n");
     Plug_AddHook(HOOK_MAP_CONVERT, ConvertMapHook);
 }
 
 DENG_EXPORT void deng_ShutdownPlugin(void)
 {
-    printf("deng_ShutdownPlugin: WAD Map Converter\n");
     Plug_RemoveHook(HOOK_MAP_CONVERT, ConvertMapHook);
 }
 

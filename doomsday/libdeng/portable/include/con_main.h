@@ -84,7 +84,6 @@ typedef struct calias_s {
 // e.g. for the game dll.
 extern int      CmdReturnValue;
 extern ddfont_t Cfont;
-extern byte     consoleDump;
 
 void            Con_DataRegister(void);
 void            Con_DestroyDatabases(void);
@@ -109,7 +108,6 @@ boolean         Con_IsLocked(void);
 boolean         Con_InputMode(void);
 uint            Con_CursorPosition(void);
 char           *Con_GetCommandLine(void);
-cbuffer_t      *Con_GetConsoleBuffer(void);
 
 boolean         Con_IsSpecialChar(int ch);
 void            Con_UpdateKnownWords(void);

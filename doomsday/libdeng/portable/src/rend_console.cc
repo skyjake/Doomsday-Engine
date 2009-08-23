@@ -36,6 +36,10 @@
 
 #include "math.h"
 
+#include <de/core.h>
+
+using namespace de;
+
 #ifdef TextOut
 // Windows has its own TextOut.
 #  undef TextOut
@@ -489,15 +493,12 @@ static void drawConsole(void)
     float       fontScaledY;
     int         textOffsetY = 0;
     uint        cmdCursor;
-    cbuffer_t  *buffer;
-    static const cbline_t **lines = NULL;
     static int bufferSize = 0;
 
     gtosMulY = DD_WindowHeight() / 200.0f;
 
     cmdLine = Con_GetCommandLine();
     cmdCursor = Con_CursorPosition();
-    buffer = Con_GetConsoleBuffer();
 
     // Do we have a font?
     if(Cfont.drawText == NULL)
@@ -558,14 +559,16 @@ static void drawConsole(void)
 
     glColor4f(1, 1, 1, closeFade);
 
-    // The console history log is drawn from top to bottom.
+    // The console history log is drawn from bottom to top.
     y = ConsoleY * gtosMulY - fontScaledY * 2 - textOffsetY;
 
     if(ceil(y / fontScaledY) > 0)
     {
-        int                 firstIdx = 0;
-        uint                i, count, reqLines = ceil(y / fontScaledY);
+        int firstIdx = bLineOff;
+        uint i, count;
+        uint reqLines = ceil(y / fontScaledY);
 
+        /*
         y -= (reqLines - 1) * fontScaledY;
 
         // Need to enlarge the buffer?
@@ -583,14 +586,17 @@ static void drawConsole(void)
             firstIdx -= bLineOff;
 
         count = Con_BufferGetLines(buffer, reqLines, firstIdx, lines);
-        for(i = 0; i < count; ++i)
+        */
+        
+        LogBuffer::Entries latest;
+        App::logBuffer().latestEntries(latest);
+        
+        for(i = firstIdx; i < latest.size() && i < firstIdx + reqLines; ++i)
         {
-            const cbline_t*         line = lines[i];
-
-            if(!line)
+            String lineText = latest[i]->asText(LogEntry::SIMPLE);
+            if(lineText.empty())
                 continue;
-
-            if(line->flags & CBLF_RULER)
+            if(lineText == "$R")
             {
                 // Draw a ruler here, and nothing else.
                 drawRuler2(y / Cfont.sizeY, Cfont.height, closeFade,
@@ -598,35 +604,30 @@ static void drawConsole(void)
             }
             else
             {
-                if(!line->text)
-                    continue;
-
                 memset(buff, 0, sizeof(buff));
-                strncpy(buff, line->text, 255);
+                strncpy(buff, lineText.c_str(), sizeof(buff) - 1);
 
+                /*
                 if(line->flags & CBLF_CENTER)
                     x = (DD_WindowWidth() /
                         Cfont.sizeX - Cfont.getWidth(buff)) / 2;
-                else
-                    x = 2;
+                else*/
+                    
+                x = 2;
 
-                if(Cfont.filterText)
-                    Cfont.filterText(buff);
-                /*else if(consoleShadowText)
-                {
-                    // Draw a shadow.
-                    glColor3f(0, 0, 0);
-                    Cfont.drawText(buff, x + 2, y / Cfont.sizeY + 2);
-                }*/
+                if(Cfont.filterText) Cfont.filterText(buff);
 
                 // Set the color.
+                /*
                 if(Cfont.flags & DDFONT_WHITE)  // Can it be colored?
                     consoleSetColor(line->flags, closeFade);
+                */
+
                 Cfont.drawText(buff, x, y / Cfont.sizeY);
             }
 
-            // Move down.
-            y += fontScaledY;
+            // Move up.
+            y -= fontScaledY;
         }
     }
 

@@ -31,6 +31,7 @@
 #include "de/Zone"
 #include "de/Thinker"
 #include "de/Object"
+#include "de/Map"
 #include "../sdl.h"
 
 using namespace de;
@@ -62,6 +63,11 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
         throw TooManyInstancesError("App::App", "Only one instance allowed");
     }
     singleton_ = this;
+
+#ifdef _DEBUG
+    // Enable all log entries by default in debug builds.
+    defaultLogLevel = DEBUG;
+#endif
 
     // Create a buffer for log entries.
     logBuffer_ = new LogBuffer(DEFAULT_LOG_BUFFER_MAX_ENTRY_COUNT);
@@ -141,6 +147,9 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
         
         // Set the log output file.
         logBuffer_->setOutputFile(config_->gets("deng.log.file"));
+        
+        // The level of enabled messages.
+        logBuffer_->enable(LogLevel(config_->getui("deng.log.level")));
         
         // Load the basic plugins.
         loadPlugins();
@@ -316,36 +325,42 @@ void App::unloadPlugins()
 
 dint App::mainLoop()
 {
-    // Now running the main loop.
-    runMainLoop_ = true;
-    firstIteration_ = true;
-    
-    while(runMainLoop_)
+    try
     {
-        // Determine elapsed time.
-        Time::Delta elapsed = 0;
-        currentTime_ = Time();
-        if(firstIteration_)
+        // Now running the main loop.
+        runMainLoop_ = true;
+        firstIteration_ = true;
+    
+        while(runMainLoop_)
         {
-            firstIteration_ = false;
-            elapsed = 0;
-        }
-        else
-        {
-            elapsed = currentTime_ - lastTime_;
-        }
-        lastTime_ = currentTime_;
+            // Determine elapsed time.
+            Time::Delta elapsed = 0;
+            currentTime_ = Time();
+            if(firstIteration_)
+            {
+                firstIteration_ = false;
+                elapsed = 0;
+            }
+            else
+            {
+                elapsed = currentTime_ - lastTime_;
+            }
+            lastTime_ = currentTime_;
 
-        // Do the loop iteration.
-        iterate();
+            // Do the loop iteration.
+            iterate();
         
-        // Update subsystems (draw graphics, update sounds, etc.).
-        for(Subsystems::iterator i = subsystems_.begin(); i != subsystems_.end(); ++i)
-        {
-            (*i)->update(elapsed);
+            // Update subsystems (draw graphics, update sounds, etc.).
+            for(Subsystems::iterator i = subsystems_.begin(); i != subsystems_.end(); ++i)
+            {
+                (*i)->update(elapsed);
+            }
         }
     }
-    
+    catch(const Error& err)
+    {
+        LOG_ERROR("Main loop stopped: ") << err.what();        
+    }
     return exitCode_;
 }
 
@@ -453,6 +468,8 @@ void App::setCurrentMap(Map* map)
 {
     App& self = app();
     self.currentMap_ = map;
+    
+    LOG_VERBOSE("Current map set: ") << map->name();
 }
 
 Video& App::video()

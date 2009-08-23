@@ -37,6 +37,7 @@ NativeFile::~NativeFile()
 
 void NativeFile::close()
 {
+    flush();
     if(in_)
     {
         delete in_;
@@ -46,6 +47,14 @@ void NativeFile::close()
     {
         delete out_;
         out_ = 0;
+    }
+}
+
+void NativeFile::flush()
+{
+    if(out_)
+    {
+        out_->flush();
     }
 }
 

@@ -32,7 +32,6 @@ namespace de
      * @ingroup data
      */
     class LIBDENG2_API RefValue : public Value, 
-                                  OBSERVES(Variable, Change), 
                                   OBSERVES(Variable, Deletion)
     {
     public:
@@ -85,9 +84,6 @@ namespace de
         // Implements ISerializable.
         void operator >> (Writer& to) const;
         void operator << (Reader& from);
-        
-        // Observes Variable change.
-        void variableValueChanged(Variable& variable, const Value& newValue);
 
         // Observes Variable deletion.
         void variableBeingDeleted(Variable& variable);

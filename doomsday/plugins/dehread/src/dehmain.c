@@ -2013,13 +2013,11 @@ DENG_EXPORT const char* deng_LibraryType(void)
  */
 DENG_EXPORT void deng_InitializePlugin(void)
 {
-    printf("deng_InitializePlugin: DEH Reader\n");
     Plug_AddHook(HOOK_DEFS, DefsHook);
 }
 
 DENG_EXPORT void deng_ShutdownPlugin(void)
 {
-    printf("deng_ShutdownPlugin: DEH Reader\n");
     Plug_RemoveHook(HOOK_DEFS, DefsHook);
 }
 

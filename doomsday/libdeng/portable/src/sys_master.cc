@@ -48,6 +48,10 @@
 
 #include "r_world.h"
 
+#include <de/core.h>
+
+using namespace de;
+
 // MACROS ------------------------------------------------------------------
 
 // Maximum time allowed time for a master server operation to take (seconds).
@@ -250,6 +254,8 @@ static int N_MasterParseResponse(ddstring_t *msg)
  */
 static int C_DECL N_MasterSendRequest(void *parm)
 {
+    LOG_AS("N_MasterSendRequest");
+    
     ddstring_t  response;
 	char		masterUrl[200];
     char        errorBuf[CURL_ERROR_SIZE];
@@ -286,7 +292,7 @@ static int C_DECL N_MasterSendRequest(void *parm)
 	else
 	{
 		success = false;
-		fprintf(outFile, "N_MasterSendRequest: %s\n", errorBuf);
+		LOG_ERROR("%s") << errorBuf;
 	}
 
 	// Cleanup the curl session.
@@ -312,6 +318,8 @@ static int C_DECL N_MasterSendRequest(void *parm)
  */
 static int C_DECL N_MasterSendAnnouncement(void *parm)
 {
+    LOG_AS("N_MasterSendAnnouncement");
+    
     serverinfo_t *info = (serverinfo_t*) parm;
     ddstring_t  msg;
 	char		masterUrl[200];
@@ -350,7 +358,7 @@ static int C_DECL N_MasterSendAnnouncement(void *parm)
     {
         // Failure.
 		success = false;
-		fprintf(outFile, "N_MasterSendAnnouncement: %s\n", errorBuf);
+		LOG_ERROR("%s") << errorBuf;
     }
 
     // Write an HTTP POST request with our info.

@@ -30,6 +30,7 @@ using namespace de;
 
 const Time::Delta FLUSH_INTERVAL = .1;
 const duint SIMPLE_INDENT = 29;
+const duint RULER_LENGTH = 98 - SIMPLE_INDENT;
 
 LogBuffer::LogBuffer(duint maxEntryCount) 
     : enabledOverLevel_(MESSAGE), 
@@ -47,11 +48,29 @@ LogBuffer::~LogBuffer()
 void LogBuffer::clear()
 {
     flush();
-    for(Entries::iterator i = entries_.begin(); i != entries_.end(); ++i)
+    for(EntryList::iterator i = entries_.begin(); i != entries_.end(); ++i)
     {
         delete *i;
     }
     entries_.clear();
+}
+
+dsize LogBuffer::size() const
+{
+    return entries_.size();
+}
+
+void LogBuffer::latestEntries(Entries& entries, dsize count) const
+{
+    entries.clear();
+    for(EntryList::const_reverse_iterator i = entries_.rbegin(); i != entries_.rend(); ++i)
+    {
+        entries.push_back(*i);
+        if(count && entries.size() >= count)
+        {
+            return;
+        }
+    }
 }
 
 void LogBuffer::setMaxEntryCount(duint maxEntryCount)
@@ -102,7 +121,7 @@ void LogBuffer::flush()
         writer = new Writer(*outputFile_, outputFile_->size());
     }
     
-    for(Entries::iterator i = toBeFlushed_.begin(); i != toBeFlushed_.end(); ++i)
+    for(EntryList::iterator i = toBeFlushed_.begin(); i != toBeFlushed_.end(); ++i)
     {
         // Error messages will go to stderr instead of stdout.
         std::ostream* os = (standardOutput_? ((*i)->level() >= ERROR? &std::cerr : &std::cout) : 0);
@@ -126,6 +145,13 @@ void LogBuffer::flush()
                 }
             }
             String lineText = message.substr(pos, next != String::npos? next - pos + 1 : next);
+
+            // Check for formatting symbols.
+            if(lineText == "$R")
+            {
+                lineText = String(RULER_LENGTH, '-');
+            }
+
             if(os)
             {
                 *os << lineText;
@@ -151,6 +177,12 @@ void LogBuffer::flush()
     lastFlushedAt_ = Time();
 
     delete writer;
+    
+    if(outputFile_)
+    {
+        // Make sure they get written now.
+        outputFile_->flush();
+    }
     
     // Too many entries? Now they can be destroyed since we have flushed everything.
     while(entries_.size() > maxEntryCount_)

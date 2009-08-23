@@ -85,16 +85,20 @@ void ServerApp::iterate()
     Socket* incoming = listenSocket_->accept();
     if(incoming)
     {
-        LOG_INFO("New client connected from %s!") << incoming->peerAddress();
+        LOG_INFO("New client connected from %s.") << incoming->peerAddress();
         clients_.push_back(new Client(incoming));
     }
 
     SDL_PumpEvents();
 
     tendClients();
+
+    LOG_TRACE("Entering libdeng gameloop...");
     
     // libdeng main loop tasks.
     DD_GameLoop();
+
+    LOG_TRACE("Finished iteration.");
 }
 
 Client& ServerApp::clientByAddress(const de::Address& address) const
@@ -111,8 +115,6 @@ Client& ServerApp::clientByAddress(const de::Address& address) const
 
 void ServerApp::tendClients()
 {
-    LOG_AS("ServerApp::tendClients");
-    
     for(Clients::iterator i = clients_.begin(); i != clients_.end(); )
     {
         bool deleteClient = false;
@@ -171,8 +173,6 @@ void ServerApp::tendClients()
 
 void ServerApp::processPacket(const de::Packet& packet)
 {
-    LOG_AS("ServerApp::processPacket");
-    
     const CommandPacket* cmd = dynamic_cast<const CommandPacket*>(&packet);
     if(cmd)
     {
@@ -227,6 +227,8 @@ void ServerApp::processPacket(const de::Packet& packet)
 
 void ServerApp::replyStatus(const de::Address& to)
 {
+    LOG_AS("replyStatus");
+    
     RecordPacket status("server.status");
     Record& rec = status.record();
     
@@ -246,6 +248,8 @@ void ServerApp::replyStatus(const de::Address& to)
     }
     
     clientByAddress(to).base() << status;
+    
+    LOG_TRACE("Finished.");
 }
 
 void ServerApp::verifyAdmin(const de::Address& clientAddress) const

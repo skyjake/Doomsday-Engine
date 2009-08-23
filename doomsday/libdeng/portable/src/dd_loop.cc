@@ -41,6 +41,8 @@
 #include "de_ui.h"
 #include "de_misc.h"
 
+#include <de/core.h>
+
 // MACROS ------------------------------------------------------------------
 
 /**
@@ -155,7 +157,6 @@ int DD_GameLoop(void)
             continue;*/
 #endif
 #endif
-
         // Frame syncronous I/O operations.
         DD_StartFrame();
 

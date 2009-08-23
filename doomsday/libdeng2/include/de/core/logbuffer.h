@@ -23,6 +23,9 @@
 #include "../Log"
 #include "../File"
 
+#include <vector>
+#include <list>
+
 namespace de
 {
     class LogEntry; 
@@ -34,6 +37,9 @@ namespace de
      */
     class LogBuffer : OBSERVES(File, Deletion)
     {
+    public:
+        typedef std::vector<const LogEntry*> Entries;
+        
     public:
         LogBuffer(duint maxEntryCount);
         virtual ~LogBuffer();
@@ -48,6 +54,24 @@ namespace de
         void add(LogEntry* entry);
 
         void clear();
+
+        /**
+         * Returns the number of entries stored in the buffer.
+         */
+        dsize size() const;
+
+        /**
+         * Returns the latest entries from the buffer. Note that when new entries
+         * are added the older entries may be deleted. The entries returned in @a
+         * entries should either be used immediately, or copies should be made in 
+         * the case they're needed later on.
+         *
+         * @param entries  The entries are placed here. The first entry of the
+         *                 array is the latest entry in the buffer.
+         * @param count    Number of entries to get. If zero, all entries are 
+         *                 returned.
+         */
+        void latestEntries(Entries& entries, dsize count = 0) const;
 
         /**
          * Enables log entries at or over a level. When a level is disabled, the 
@@ -91,15 +115,14 @@ namespace de
         void fileBeingDeleted(const File& file);
         
     private:
+        typedef std::list<LogEntry*> EntryList;
+
         dint enabledOverLevel_;
         duint maxEntryCount_;
         bool standardOutput_;
         File* outputFile_;
-
-        typedef std::list<LogEntry*> Entries;
-        Entries entries_;
-
-        Entries toBeFlushed_;
+        EntryList entries_;
+        EntryList toBeFlushed_;
         Time lastFlushedAt_;
     };    
 }

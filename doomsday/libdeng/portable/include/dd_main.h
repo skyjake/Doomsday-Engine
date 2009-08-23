@@ -37,7 +37,6 @@
 
 extern int verbose;
 extern int maxZone;
-extern FILE* outFile; // Output file for console messages.
 extern int isDedicated;
 extern char ddBasePath[];
 extern char* defaultWads; // A list of wad names, whitespace in between (in .cfg).

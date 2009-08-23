@@ -23,6 +23,7 @@
 #include "de/Map"
 #include "de/App"
 #include "de/Library"
+#include "de/Log"
 
 using namespace de;
 
@@ -40,15 +41,22 @@ World::~World()
 
 void World::loadMap(const String& name)
 {
+    LOG_AS("World::loadMap");
+    LOG_VERBOSE("%s") << name;
+    
     assert(map_ != NULL);
     App::setCurrentMap(0);
     delete map_;
+
+    LOG_TRACE("Creating an empty map.");
 
     // The map will do its own loading.
     map_ = App::game().SYMBOL(deng_NewMap)();
     App::setCurrentMap(map_);
     
     map_->load(name);
+
+    LOG_TRACE("Finished.");
 }
 
 void World::operator >> (Writer& to) const

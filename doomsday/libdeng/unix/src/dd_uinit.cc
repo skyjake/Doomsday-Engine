@@ -53,6 +53,10 @@ using namespace de;
 
 #include "dd_uinit.h"
 
+#include <de/core.h>
+
+using namespace de;
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -79,6 +83,8 @@ static void determineGlobalPaths(application_t *app)
     if(!app)
         return;
 
+    LOG_AS("determineGlobalPaths");
+
     /**
      * The base path is always the same and depends on the build
      * configuration.  Usually this is something like
@@ -95,7 +101,7 @@ static void determineGlobalPaths(application_t *app)
     Dir_MakeAbsolute(ddBasePath, FILENAME_T_MAXLEN);
     Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
 
-    printf("determineGlobalPaths: Base path = %s\n", ddBasePath);
+    LOG_VERBOSE("Base path: %s") << ddBasePath;
 
     // The -userdir option sets the working directory.
     if(ArgCheckWith("-userdir", 1))
@@ -120,7 +126,7 @@ static void determineGlobalPaths(application_t *app)
     // The current working directory is the runtime dir.
     Dir_GetDir(&ddRuntimeDir);
 
-    printf("Runtime directory: %s\n", ddRuntimeDir.path);
+    LOG_VERBOSE("Runtime directory: %s") << ddRuntimeDir.path;
 }
 
 static boolean loadGamePlugin(application_t *app)

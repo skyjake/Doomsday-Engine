@@ -120,18 +120,18 @@ String LogEntry::asText(const Flags& _flags) const
                 << (level_ >= WARNING? TEXT_STYLE_LOG_BAD_LEVEL : TEXT_STYLE_LOG_LEVEL)
                 << levelNames[level_] << "\t\r";
         }
-    
-        // Section name.
-        if(!section_.empty())
+    }
+
+    // Section name.
+    if(!section_.empty())
+    {
+        if(!flags[STYLED_BIT])
         {
-            if(!flags[STYLED_BIT])
-            {
-                output << "[" << section_ << "]: ";
-            }
-            else
-            {
-                output << TEXT_STYLE_SECTION << section_ << ": ";
-            }
+            output << section_ << ": ";
+        }
+        else
+        {
+            output << TEXT_STYLE_SECTION << section_ << ": ";
         }
     }
 

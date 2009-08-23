@@ -96,7 +96,7 @@ namespace de
          * @param defaultLogLevel  Default level for log buffering.
          */
         App(const CommandLine& commandLine, const String& configPath, 
-            const String& homeSubFolder = "", 
+            const String& homeSubFolder = "",
             LogLevel defaultLogLevel = MESSAGE);
             
         virtual ~App();

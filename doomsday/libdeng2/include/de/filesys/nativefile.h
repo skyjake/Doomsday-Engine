@@ -57,6 +57,7 @@ namespace de
         virtual ~NativeFile();
 
         void clear();
+        void flush();
 
         /**
          * Returns the native path of the file.

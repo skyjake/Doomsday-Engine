@@ -118,7 +118,6 @@ boolean cmdfrag; // true if a CMD_FRAG packet should be sent out
 int isDedicated = false;
 int maxZone = 0x2000000; // Default zone heap. (32meg)
 boolean autoStart;
-FILE* outFile; // Output file for console messages.
 
 char* iwadList[64];
 char* defaultWads = ""; // List of wad names, whitespace seperating(in .cfg).
