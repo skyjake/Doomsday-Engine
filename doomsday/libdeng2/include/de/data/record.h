@@ -24,7 +24,7 @@
 #include "../String"
 #include "../Variable"
 #include "../Value"
-#include "../Observers"
+#include "../Audience"
 #include "../Log"
 
 #include <map>
@@ -56,14 +56,7 @@ namespace de
         typedef std::pair<String, String> KeyValue;
         typedef std::list<KeyValue> List;
         
-        /// Observer interface.
-        class IObserver {
-        public:
-            virtual ~IObserver() {}
-            virtual void recordBeingDeleted(Record& record) = 0;
-        };
-        typedef Observers<IObserver> Audience;
-        Audience observers;
+        DEFINE_AUDIENCE(Deletion, void recordBeingDeleted(Record& record));
         
     public:
         Record();

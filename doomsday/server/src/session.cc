@@ -41,7 +41,7 @@ Session::~Session()
         RecordPacket sessionEnded("session.ended");
         for(Users::iterator i = users_.begin(); i != users_.end(); ++i)
         {
-            i->second->client().link().observers.remove(this);
+            i->second->client().link().audienceForDeletion.remove(this);
             i->second->setSession(0);
             
             // Inform that the session has ended.
@@ -141,7 +141,7 @@ RemoteUser& Session::promote(Client& client)
         LOG_VERBOSE("Id of new remote user: ") << remote->id();
 
         // Start observing when this link closes.
-        client.link().observers.add(this);
+        client.link().audienceForDeletion.add(this);
 
         return *remote;
     }
@@ -153,7 +153,7 @@ void Session::demote(RemoteUser& remoteUser)
     remoteUser.setSession(0);
     
     // Stop observing.
-    remoteUser.client().link().observers.remove(this);
+    remoteUser.client().link().audienceForDeletion.remove(this);
 
     // Update the others.
     RecordPacket userLeft("user.left");

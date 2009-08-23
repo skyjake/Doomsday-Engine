@@ -27,7 +27,8 @@ RefValue::RefValue(Variable* variable) : variable_(variable)
 {
     if(variable_)
     {
-        variable_->observers.add(this);
+        variable_->audienceForChange.add(this);
+        variable_->audienceForDeletion.add(this);
     }
 }
 
@@ -35,7 +36,8 @@ RefValue::~RefValue()
 {
     if(variable_)
     {
-        variable_->observers.remove(this);
+        variable_->audienceForChange.remove(this);
+        variable_->audienceForDeletion.remove(this);
     }
 }
 

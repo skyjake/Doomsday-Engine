@@ -22,7 +22,7 @@
 
 #include "../ISerializable"
 #include "../String"
-#include "../Observers"
+#include "../Audience"
 #include "../Flag"
 
 namespace de
@@ -200,29 +200,20 @@ namespace de
         void operator << (Reader& from);
         
     public:
-        /// Observer interface.
-        class IObserver {
-        public:
-            virtual ~IObserver() {}
+        /**
+         * The variable is about to be deleted.
+         *
+         * @param variable  Variable.
+         */
+        DEFINE_AUDIENCE(Deletion, void variableBeingDeleted(Variable& variable));
 
-            /**
-             * The value of the variable has changed.
-             *
-             * @param variable  Variable.
-             * @param newValue  New value of the variable.
-             */
-            virtual void variableValueChanged(Variable& variable, const Value& newValue) = 0;
-            
-            /**
-             * The variable is about to be deleted.
-             *
-             * @param variable  Variable.
-             */
-            virtual void variableBeingDeleted(Variable& variable) = 0;
-        };
-        
-        typedef Observers<IObserver> Audience;
-        Audience observers;
+        /**
+         * The value of the variable has changed.
+         *
+         * @param variable  Variable.
+         * @param newValue  New value of the variable.
+         */
+        DEFINE_AUDIENCE(Change, void variableValueChanged(Variable& variable, const Value& newValue));
 
         /// Mode flags.        
         Mode mode;

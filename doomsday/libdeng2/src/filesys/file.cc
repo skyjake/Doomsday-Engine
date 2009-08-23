@@ -44,7 +44,10 @@ File::File(const String& fileName)
 
 File::~File()
 {
-    flush();   
+    flush();
+    
+    FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
+    
     if(source_ != this) 
     {
         // If we own a source, get rid of it.

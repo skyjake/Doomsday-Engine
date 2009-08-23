@@ -25,13 +25,39 @@
 #include <set>
 
 /**
+ * Macro for defining an observer interface with a single method.
+ *
+ * @param Name    Name of the audience. E.g., "Deletion" produces @c DeletionAudience 
+ *                and @c audienceForDeletion.
+ * @param Method  The pure virtual method that the observer has to implement. 
+ *                The @c virtual keyword and <code>=0</code> are automatically included.
+ */
+#define DEFINE_AUDIENCE(Name, Method) \
+class I##Name##Observer { \
+public: \
+    virtual ~I##Name##Observer() {} \
+    virtual Method = 0; \
+}; \
+typedef de::Observers<I##Name##Observer> Name##Audience; \
+Name##Audience audienceFor##Name;   
+
+/**
+ * Macro for looping through the audience members.
+ *
+ * @param Name  Name of the audience.
+ * @param Var   Variable used in the loop.
+ */
+#define FOR_AUDIENCE(Name, Var) for(Name##Audience::Loop Var(audienceFor##Name); !Var.done(); ++Var)
+
+/**
  * Macro for looping through all observers. @note The @a Audience type needs to be defined
  * in the scope.
  *
- * @param Var  Variable used in the loop
- * @param Name  Name of the observer set.
+ * @param SetName  Name of the observer set class.
+ * @param Var      Variable used in the loop.
+ * @param Name     Name of the observer set.
  */
-#define FOR_EACH_OBSERVER(Var, Name) for(Audience::Loop Var(Name); !Var.done(); ++Var)
+#define FOR_EACH_OBSERVER(SetName, Var, Name) for(SetName::Loop Var(Name); !Var.done(); ++Var)
 
 namespace de
 {

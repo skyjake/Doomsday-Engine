@@ -51,7 +51,7 @@ Record::Record(const Record& other)
 
 Record::~Record()
 {
-    FOR_EACH_OBSERVER(o, observers) o->recordBeingDeleted(*this);
+    FOR_AUDIENCE(Deletion, i) i->recordBeingDeleted(*this);
     clear();
 }
 

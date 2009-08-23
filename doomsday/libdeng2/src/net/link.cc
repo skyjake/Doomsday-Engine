@@ -57,7 +57,7 @@ Link::~Link()
 {
     flush();
     
-    FOR_EACH_OBSERVER(o, observers) o->linkBeingDeleted(*this);
+    FOR_AUDIENCE(Deletion, i) i->linkBeingDeleted(*this);
     
     // Inform the threads that they can stop as soon as possible.
     receiver_->stop();

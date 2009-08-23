@@ -33,7 +33,7 @@ RecordValue::RecordValue(Record* record, const Ownership& o) : record_(record), 
     if(!ownership_[OWNS_RECORD_BIT])
     {
         // If we don't own it, someone may delete the record.
-        record_->observers.add(this);
+        record_->audienceForDeletion.add(this);
     }
 }
 
@@ -45,7 +45,7 @@ RecordValue::~RecordValue()
     }
     else if(record_)
     {
-        record_->observers.remove(this);
+        record_->audienceForDeletion.remove(this);
     }
     
 }

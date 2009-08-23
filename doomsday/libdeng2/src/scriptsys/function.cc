@@ -46,7 +46,7 @@ Function::~Function()
     if(globals_)
     {
         // Stop observing the namespace.
-        globals_->observers.remove(this);
+        globals_->audienceForDeletion.remove(this);
     }
 }
 
@@ -145,7 +145,7 @@ void Function::setGlobals(Record* globals)
     if(!globals_)
     {
         globals_ = globals;
-        globals_->observers.add(this);
+        globals_->audienceForDeletion.add(this);
     }
     else if(globals_ != globals)
     {

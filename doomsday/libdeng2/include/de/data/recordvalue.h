@@ -31,7 +31,7 @@ namespace de
      *
      * @ingroup data
      */
-    class LIBDENG2_API RecordValue : public Value, public Record::IObserver
+    class LIBDENG2_API RecordValue : public Value, public Record::IDeletionObserver
     {
     public:
         /// Attempt to access the record after it has been deleted. @ingroup errors

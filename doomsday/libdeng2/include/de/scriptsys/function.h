@@ -45,7 +45,7 @@ namespace de
      *
      * @ingroup script
      */
-    class Function : public Counted, public ISerializable, public Record::IObserver
+    class Function : public Counted, public ISerializable, public Record::IDeletionObserver
     {
     public:
         /// An incorrect number of arguments is given in a function call. @ingroup errors
@@ -129,7 +129,7 @@ namespace de
         void operator >> (Writer& to) const;
         void operator << (Reader& from);         
         
-        // Implements Record::IObserver.
+        // Implements Record::IDeletionObserver.
         void recordBeingDeleted(Record& record);
         
     private:

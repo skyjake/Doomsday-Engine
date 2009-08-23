@@ -120,6 +120,9 @@ namespace de
             standardOutput_ = yes;
         }
         
+        
+        void setOutputFile(const String& path);
+        
         /**
          * Flushes all unflushed entries to the defined outputs.
          */
@@ -196,6 +199,7 @@ namespace de
          * Creates a new log entry with the specified level.
          * Append the parameters of the entry using the << operator.
          *
+         * @param level   Level of the entry.
          * @param format  Format template of the entry.
          */
         LogEntry& enter(LogBuffer::Level level, const String& format);

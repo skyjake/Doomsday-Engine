@@ -96,21 +96,7 @@ namespace de
         void initialize();
 
     public:
-        /// Link observer interface.
-        class IObserver {
-        public:
-            virtual ~IObserver() {}
-            
-            /**
-             * Called when the observed Link is about to be deleted.
-             *
-             * @param link  Link begin deleted.
-             */
-            virtual void linkBeingDeleted(Link& link) = 0;
-        };
-        
-        typedef Observers<IObserver> Audience;
-        Audience observers;
+        DEFINE_AUDIENCE(Deletion, void linkBeingDeleted(Link& link));
 
         /// Mode flags.
         Mode mode;

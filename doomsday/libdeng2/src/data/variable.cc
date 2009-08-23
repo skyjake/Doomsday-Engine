@@ -49,7 +49,7 @@ Variable::Variable(const Variable& other)
 
 Variable::~Variable()
 {
-    FOR_EACH_OBSERVER(o, observers) o->variableBeingDeleted(*this);
+    FOR_AUDIENCE(Deletion, i) i->variableBeingDeleted(*this);
     delete value_;
 }
 
@@ -67,7 +67,7 @@ void Variable::set(Value* v)
     delete value_;
     value_ = val.release();
     
-    FOR_EACH_OBSERVER(o, observers) o->variableValueChanged(*this, *value_);
+    FOR_AUDIENCE(Change, i) i->variableValueChanged(*this, *value_);
 }
 
 void Variable::set(const Value& v)
@@ -77,7 +77,7 @@ void Variable::set(const Value& v)
     delete value_;
     value_ = v.duplicate();
 
-    FOR_EACH_OBSERVER(o, observers) o->variableValueChanged(*this, *value_);
+    FOR_AUDIENCE(Change, i) i->variableValueChanged(*this, *value_);
 }
 
 const Value& Variable::value() const

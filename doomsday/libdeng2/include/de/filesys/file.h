@@ -25,6 +25,7 @@
 #include "../Time"
 #include "../Record"
 #include "../AccessorValue"
+#include "../Audience"
 
 namespace de
 {
@@ -54,6 +55,14 @@ namespace de
         // Mode flags.
         DEFINE_FLAG(WRITE, 0);
         DEFINE_FINAL_FLAG(TRUNCATE, 1, Mode);
+
+        /**
+         * The file object is about to be deleted. This may be, e.g., due to pruning or
+         * because the parent is being deleted.
+         *
+         * @param file  The file object being deleted.
+         */
+        DEFINE_AUDIENCE(Deletion, void fileBeingDeleted(const File& file));
 
         /**
          * Stores the status of a file (size, time of last modification).
@@ -121,7 +130,7 @@ namespace de
             File& owner_;
             Property prop_;
         };
-        
+
     public:
         /**
          * When destroyed, a file is automatically removed from its parent folder 
