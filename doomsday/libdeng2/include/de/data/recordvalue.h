@@ -31,7 +31,7 @@ namespace de
      *
      * @ingroup data
      */
-    class LIBDENG2_API RecordValue : public Value, public Record::IDeletionObserver
+    class LIBDENG2_API RecordValue : public Value, OBSERVES(Record, Deletion)
     {
     public:
         /// Attempt to access the record after it has been deleted. @ingroup errors
@@ -78,7 +78,7 @@ namespace de
         void operator >> (Writer& to) const;
         void operator << (Reader& from);
         
-        // Implements Record::IObserver.
+        // Observes Record deletion.
         void recordBeingDeleted(Record& record);
         
     public:

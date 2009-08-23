@@ -32,7 +32,7 @@ namespace de
      *
      * @ingroup core
      */
-    class LogBuffer : public File::IDeletionObserver
+    class LogBuffer : OBSERVES(File, Deletion)
     {
     public:
         LogBuffer(duint maxEntryCount);
@@ -87,7 +87,7 @@ namespace de
          */
         void flush();
 
-        // Implements File::IDeletionObserver.
+        // Observes File deletion.
         void fileBeingDeleted(const File& file);
         
     private:

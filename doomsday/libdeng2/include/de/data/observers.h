@@ -42,6 +42,15 @@ typedef de::Observers<I##Name##Observer> Name##Audience; \
 Name##Audience audienceFor##Name;   
 
 /**
+ * Macro that can be used in class declarations to specify which audiences the class
+ * can belong to.
+ *
+ * @param Type      Name of the type where the audience is defined.
+ * @param Audience  Audience name.
+ */
+#define OBSERVES(Type, Audience) public Type::I##Audience##Observer
+
+/**
  * Macro for looping through the audience members.
  *
  * @param Name  Name of the audience.

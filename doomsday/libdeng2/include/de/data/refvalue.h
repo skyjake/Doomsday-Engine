@@ -32,8 +32,8 @@ namespace de
      * @ingroup data
      */
     class LIBDENG2_API RefValue : public Value, 
-                                  public Variable::IChangeObserver,
-                                  public Variable::IDeletionObserver
+                                  OBSERVES(Variable, Change), 
+                                  OBSERVES(Variable, Deletion)
     {
     public:
         /// Attempt to dereference a NULL variable. @ingroup errors
@@ -86,10 +86,10 @@ namespace de
         void operator >> (Writer& to) const;
         void operator << (Reader& from);
         
-        // Implements Variable::IChangeObserver.
+        // Observes Variable change.
         void variableValueChanged(Variable& variable, const Value& newValue);
 
-        // Implements Variable::IDeletionObserver.
+        // Observes Variable deletion.
         void variableBeingDeleted(Variable& variable);
         
     public:

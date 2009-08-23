@@ -37,7 +37,7 @@ class RemoteUser;
  *
  * @ingroup server
  */
-class Session : public de::Link::IDeletionObserver
+class Session : OBSERVES(de::Link, Deletion)
 {
 public:
     /// Given address is not in use by anyone. @ingroup errors
@@ -117,7 +117,7 @@ public:
      */
     void describe(de::Record& record) const;
 
-    // Implements de::Link::IDeletionObserver.
+    // Observes Link deletion.
     void linkBeingDeleted(de::Link& link);
 
 private:
