@@ -37,7 +37,7 @@ Library::Library(const String& nativePath)
     : handle_(0), type_(DEFAULT_TYPE)
 {
     LOG_AS("Library::Library");
-    LOG_VERBOSE("Loading library: ") << nativePath;
+    LOG_VERBOSE("%s") << nativePath;
     
 #ifdef UNIX
     if((handle_ = dlopen(nativePath.c_str(), RTLD_LAZY)) == 0)

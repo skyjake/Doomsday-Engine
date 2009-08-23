@@ -22,21 +22,19 @@
 #include "de/Date"
 #include "de/TextStyle"
 #include "de/App"
+#include "de/LogBuffer"
 #include "de/math.h"
 #include "../sdl.h"
 
 #include <cstdlib>
 #include <cstring>
-#include <map>
-#include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <map>
 
 using namespace de;
 
-const Time::Delta FLUSH_INTERVAL = .1;
 const char* MAIN_SECTION = "";
-const duint SIMPLE_INDENT = 29;
 
 /**
  * The logs table is lockable so that multiple threads can access their
@@ -57,9 +55,14 @@ public:
 /// The logs table contains the log of each thread that uses logging.
 static Logs logs;
 
-LogEntry::LogEntry(LogBuffer::Level level, const String& section, const String& format)
-    : logBuffer_(App::logBuffer()), level_(level), section_(section), format_(format)
-{}
+LogEntry::LogEntry(LogLevel level, const String& section, const String& format)
+    : level_(level), section_(section), format_(format), disabled_(false)
+{
+    if(!App::logBuffer().enabled(level))
+    {
+        disabled_ = true;
+    }
+}
 
 LogEntry::~LogEntry()
 {
@@ -89,7 +92,7 @@ String LogEntry::asText(const Flags& _flags) const
 
         if(!flags[STYLED_BIT])
         {
-            const char* levelNames[LogBuffer::MAX_LEVELS] = {
+            const char* levelNames[MAX_LOG_LEVELS] = {
                 "(...)",
                 "(bug)",
                 "(vbs)",
@@ -103,7 +106,7 @@ String LogEntry::asText(const Flags& _flags) const
         }
         else
         {
-            const char* levelNames[LogBuffer::MAX_LEVELS] = {
+            const char* levelNames[MAX_LOG_LEVELS] = {
                 "Trace",
                 "Debug",
                 "Verbose",
@@ -114,7 +117,7 @@ String LogEntry::asText(const Flags& _flags) const
                 "FATAL!"        
             };
             output << "\t" 
-                << (level_ >= LogBuffer::WARNING? TEXT_STYLE_LOG_BAD_LEVEL : TEXT_STYLE_LOG_LEVEL)
+                << (level_ >= WARNING? TEXT_STYLE_LOG_BAD_LEVEL : TEXT_STYLE_LOG_LEVEL)
                 << levelNames[level_] << "\t\r";
         }
     
@@ -216,7 +219,7 @@ Log::Section::~Section()
 
 Log::Log() : throwawayEntry_(0)
 {
-    throwawayEntry_ = new LogEntry(LogBuffer::MESSAGE, "", "");
+    throwawayEntry_ = new LogEntry(MESSAGE, "", "");
     sectionStack_.push_back(MAIN_SECTION);
 }
 
@@ -238,10 +241,10 @@ void Log::endSection(const char* name)
 
 LogEntry& Log::enter(const String& format)
 {
-    return enter(LogBuffer::MESSAGE, format);
+    return enter(MESSAGE, format);
 }
 
-LogEntry& Log::enter(LogBuffer::Level level, const String& format)
+LogEntry& Log::enter(LogLevel level, const String& format)
 {
     if(!App::logBuffer().enabled(level))
     {
@@ -308,82 +311,4 @@ void Log::disposeThreadLog()
         logs.erase(found);
     }
     logs.unlock();
-}
-
-LogBuffer::LogBuffer(duint maxEntryCount) : enabledOverLevel_(MESSAGE), maxEntryCount_(maxEntryCount)
-{}
-
-LogBuffer::~LogBuffer()
-{
-    clear();
-}
-
-void LogBuffer::clear()
-{
-    flush();
-    for(Entries::iterator i = entries_.begin(); i != entries_.end(); ++i)
-    {
-        delete *i;
-    }
-    entries_.clear();
-}
-
-void LogBuffer::setMaxEntryCount(duint maxEntryCount)
-{
-    maxEntryCount_ = maxEntryCount;
-}
-
-void LogBuffer::add(LogEntry* entry)
-{
-    // We will not flush the new entry as it likely has not yet been given
-    // all its arguments.
-    if(lastFlushedAt_.since() > FLUSH_INTERVAL)
-    {
-        flush();
-    }
-
-    entries_.push_back(entry);
-    toBeFlushed_.push_back(entry);
-}
-
-void LogBuffer::enable(Level overLevel)
-{
-    enabledOverLevel_ = overLevel;
-}
-
-void LogBuffer::flush()
-{
-    for(Entries::iterator i = toBeFlushed_.begin(); i != toBeFlushed_.end(); ++i)
-    {
-        if(standardOutput_)
-        {
-            std::ostream* os = ((*i)->level() >= ERROR? &std::cerr : &std::cout);
-            String message = (*i)->asText();
-            
-            // Print line by line.
-            String::size_type pos = 0;
-            while(pos != String::npos)
-            {
-                String::size_type next = message.find('\n', pos);
-                if(pos > 0)
-                {
-                    *os << std::setw(SIMPLE_INDENT) << "";
-                }
-                *os << message.substr(pos, next != String::npos? next - pos + 1 : next);
-                pos = next;
-                if(pos != String::npos) pos++;
-            }
-            *os << "\n";
-        }
-    }
-    toBeFlushed_.clear();
-    lastFlushedAt_ = Time();
-    
-    // Too many entries? Now they can be destroyed since we have flushed everything.
-    while(entries_.size() > maxEntryCount_)
-    {
-        LogEntry* old = entries_.front();
-        entries_.pop_front();
-        delete old;
-    }
 }

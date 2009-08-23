@@ -45,101 +45,33 @@
     de::String _logSectionName = str; \
     LOG_AS(_logSectionName.c_str());
     
-#define LOG_TRACE(str)      de::Log::threadLog().enter(de::LogBuffer::TRACE, str)
-#define LOG_DEBUG(str)      de::Log::threadLog().enter(de::LogBuffer::DEBUG, str)
-#define LOG_VERBOSE(str)    de::Log::threadLog().enter(de::LogBuffer::VERBOSE, str)
+#define LOG_TRACE(str)      de::Log::threadLog().enter(de::TRACE, str)
+#define LOG_DEBUG(str)      de::Log::threadLog().enter(de::DEBUG, str)
+#define LOG_VERBOSE(str)    de::Log::threadLog().enter(de::VERBOSE, str)
 #define LOG_MESSAGE(str)    de::Log::threadLog().enter(str)
-#define LOG_INFO(str)       de::Log::threadLog().enter(de::LogBuffer::INFO, str)
-#define LOG_WARNING(str)    de::Log::threadLog().enter(de::LogBuffer::WARNING, str)
-#define LOG_ERROR(str)      de::Log::threadLog().enter(de::LogBuffer::ERROR, str)
-#define LOG_CRITICAL(str)   de::Log::threadLog().enter(de::LogBuffer::CRITICAL, str)
+#define LOG_INFO(str)       de::Log::threadLog().enter(de::INFO, str)
+#define LOG_WARNING(str)    de::Log::threadLog().enter(de::WARNING, str)
+#define LOG_ERROR(str)      de::Log::threadLog().enter(de::ERROR, str)
+#define LOG_CRITICAL(str)   de::Log::threadLog().enter(de::CRITICAL, str)
 
 namespace de
 {   
-    class LogEntry; 
-
-    /**
-     * Buffer for log entries. The application owns one of these.
-     *
-     * @ingroup core
-     */
-    class LogBuffer
-    {
-    public:
-        /// Level of the log entry.
-        enum Level {
-            TRACE,      ///< Trace messages.
-            DEBUG,      ///< Debug messages.
-            VERBOSE,    ///< Verbose log messages.
-            MESSAGE,    ///< Normal log messages.
-            INFO,       ///< Important messages.
-            WARNING,    ///< A recoverable error.
-            ERROR,      ///< A nonrecoverable (but not fatal) error.
-            CRITICAL,   ///< Critical error (application will quit).
-            MAX_LEVELS
-        };
-        
-    public:
-        LogBuffer(duint maxEntryCount);
-        virtual ~LogBuffer();
-
-        void setMaxEntryCount(duint maxEntryCount);
-        
-        /**
-         * Adds an entry to the buffer. The buffer gets ownership.
-         *
-         * @param entry  Entry to add.
-         */
-        void add(LogEntry* entry);
-
-        void clear();
-
-        /**
-         * Enables log entries at or over a level. When a level is disabled, the 
-         * entries will not be added to the log entry buffer.
-         */
-        void enable(Level overLevel = MESSAGE);
-        
-        /**
-         * Disables the log. @see enable()
-         */
-        void disable() { enable(MAX_LEVELS); }
-        
-        bool enabled(Level overLevel = MESSAGE) const { 
-            return enabledOverLevel_ <= overLevel; 
-        }
-
-        /**
-         * Enables or disables standard output of log messages. When enabled,
-         * log entries are written with simple formatting to the standard
-         * output and error streams when the buffer is flushed.
-         *
-         * @param yes  @c true or @c false.
-         */
-        void enableStandardOutput(bool yes = true) {
-            standardOutput_ = yes;
-        }
-        
-        
-        void setOutputFile(const String& path);
-        
-        /**
-         * Flushes all unflushed entries to the defined outputs.
-         */
-        void flush();
-        
-    private:
-        dint enabledOverLevel_;
-        duint maxEntryCount_;
-        bool standardOutput_;
-
-        typedef std::list<LogEntry*> Entries;
-        Entries entries_;
-
-        Entries toBeFlushed_;
-        Time lastFlushedAt_;
-    };    
+    class LogBuffer;
+    class LogEntry;
     
+    /// Level of the log entry.
+    enum LogLevel {
+        TRACE,      ///< Trace messages.
+        DEBUG,      ///< Debug messages.
+        VERBOSE,    ///< Verbose log messages.
+        MESSAGE,    ///< Normal log messages.
+        INFO,       ///< Important messages.
+        WARNING,    ///< A recoverable error.
+        ERROR,      ///< A nonrecoverable (but not fatal) error.
+        CRITICAL,   ///< Critical error (application will quit).
+        MAX_LOG_LEVELS
+    };
+
     /**
      * Logs provide means for adding log entries into the log entry buffer.
      * Each thread uses its own logs.
@@ -202,7 +134,7 @@ namespace de
          * @param level   Level of the entry.
          * @param format  Format template of the entry.
          */
-        LogEntry& enter(LogBuffer::Level level, const String& format);
+        LogEntry& enter(LogLevel level, const String& format);
 
     public:
         /** 
@@ -382,13 +314,13 @@ namespace de
         DEFINE_ERROR(IllegalFormatError);
         
     public:
-        LogEntry(LogBuffer::Level level, const String& section, const String& format); 
+        LogEntry(LogLevel level, const String& section, const String& format); 
         ~LogEntry();
         
         /// Appends a new argument to the entry.
         template <typename ValueType>
         LogEntry& operator << (const ValueType& v) {
-            if(logBuffer_.enabled(level_)) {
+            if(!disabled_) {
                 args_.push_back(new Arg(v));
             }
             return *this;
@@ -397,7 +329,7 @@ namespace de
         /// Returns the timestamp of the entry.
         Time when() const { return when_; }
 
-        LogBuffer::Level level() const { return level_; }
+        LogLevel level() const { return level_; }
 
         /// Converts the log entry to a string.
         String asText(const Flags& flags = 0) const;
@@ -412,12 +344,12 @@ namespace de
         void advanceFormat(String::const_iterator& i) const;
 
     private:
-        LogBuffer& logBuffer_;
         Time when_;
-        LogBuffer::Level level_;
+        LogLevel level_;
         String section_;
         String format_;
         Flags defaultFlags_;
+        bool disabled_;
 
         typedef std::vector<Arg*> Args;        
         Args args_;

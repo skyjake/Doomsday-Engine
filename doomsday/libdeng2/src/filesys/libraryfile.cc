@@ -32,6 +32,9 @@ LibraryFile::LibraryFile(File* source)
 
 LibraryFile::~LibraryFile()
 {
+    FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
+    audienceForDeletion.clear();
+    
     deindex();    
     delete library_;
 }

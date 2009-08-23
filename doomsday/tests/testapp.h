@@ -21,12 +21,12 @@
 #define TESTAPP_H
 
 #include <de/App>
+#include <de/LogBuffer>
 
 class TestApp : public de::App
 {
 public:
-    TestApp(const de::CommandLine& args) : de::App(args, "/config/testapp.de", "testapp", 
-        de::LogBuffer::DEBUG) {
+    TestApp(const de::CommandLine& args) : de::App(args, "/config/testapp.de", "testapp", de::DEBUG) {
         logBuffer().enableStandardOutput();
         LOG_MESSAGE("TestApp constructed.");
     }

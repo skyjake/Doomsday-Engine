@@ -41,7 +41,7 @@ const duint DEFAULT_LOG_BUFFER_MAX_ENTRY_COUNT = 1000;
 App* App::singleton_ = 0;
 
 App::App(const CommandLine& commandLine, const String& configPath, const String& homeSubFolder,
-    LogBuffer::Level defaultLogLevel)
+    LogLevel defaultLogLevel)
     : commandLine_(commandLine), 
       logBuffer_(0),
       memory_(0), 
@@ -138,6 +138,9 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
         
         // Update the log buffer max entry count.
         logBuffer_->setMaxEntryCount(config_->getui("deng.log.bufferSize"));
+        
+        // Set the log output file.
+        logBuffer_->setOutputFile(config_->gets("deng.log.file"));
         
         // Load the basic plugins.
         loadPlugins();

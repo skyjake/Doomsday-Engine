@@ -97,7 +97,7 @@ namespace de
          */
         App(const CommandLine& commandLine, const String& configPath, 
             const String& homeSubFolder = "", 
-            LogBuffer::Level defaultLogLevel = LogBuffer::MESSAGE);
+            LogLevel defaultLogLevel = MESSAGE);
             
         virtual ~App();
 

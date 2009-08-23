@@ -38,6 +38,9 @@ Folder::Folder(const String& name) : File(name)
 
 Folder::~Folder()
 {
+    FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
+    audienceForDeletion.clear();
+    
     deindex();
     
     // Empty the contents.

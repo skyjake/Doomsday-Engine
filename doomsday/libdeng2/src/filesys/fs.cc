@@ -174,7 +174,7 @@ void FS::printIndex()
     
     for(TypeIndex::iterator k = typeIndex_.begin(); k != typeIndex_.end(); ++k)
     {
-        LOG_DEBUG("Index for type '%s':") << k->first;
+        LOG_DEBUG("\nIndex for type '%s':") << k->first;
         for(Index::iterator i = k->second.begin(); i != k->second.end(); ++i)
         {
             LOG_DEBUG("\"%s\": ") << i->first << i->second->path();

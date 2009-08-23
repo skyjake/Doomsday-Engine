@@ -28,6 +28,9 @@ NativeFile::NativeFile(const String& name, const String& nativePath)
 
 NativeFile::~NativeFile()
 {
+    FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
+    audienceForDeletion.clear();
+    
     close();
     deindex();
 }

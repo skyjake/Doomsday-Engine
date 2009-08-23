@@ -30,6 +30,10 @@ Writer::Writer(IByteArray& destination, const ByteOrder& byteOrder, IByteArray::
     : destination_(destination), offset_(offset), fixedOffset_(0), convert_(byteOrder)
 {}
 
+Writer::Writer(IByteArray& destination, IByteArray::Offset offset)
+    : destination_(destination), offset_(offset), fixedOffset_(0), convert_(bigEndianByteOrder)
+{}
+
 Writer::Writer(const Writer& other, const ByteOrder& byteOrder)
     : destination_(other.destination_), offset_(0), 
       fixedOffset_(other.fixedOffset_ + other.offset_), convert_(byteOrder)

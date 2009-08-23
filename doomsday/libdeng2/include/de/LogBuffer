@@ -1,1 +1,1 @@
-#include "core/log.h"
+#include "core/logbuffer.h"

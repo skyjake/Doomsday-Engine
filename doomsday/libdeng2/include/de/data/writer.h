@@ -50,6 +50,14 @@ namespace de
          */
         Writer(IByteArray& destination, const ByteOrder& byteOrder = bigEndianByteOrder, 
             IByteArray::Offset offset = 0);
+
+        /**
+         * Constructs a new writer (with big-endian byte order).
+         *
+         * @param destination  Byte array to write to.
+         * @param offset       Offset in @a destination where to start writing.
+         */
+        Writer(IByteArray& destination, IByteArray::Offset offset);
             
         /**
          * Constructs a new writer that uses the current offset of @a other as its 

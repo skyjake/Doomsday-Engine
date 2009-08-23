@@ -117,9 +117,14 @@ namespace de
         Observers() : members_(0) {}
 
         virtual ~Observers() {
-            delete members_;
+            clear();
         }
         
+        void clear() {
+            delete members_;
+            members_ = 0;
+        }
+
         /// Add an observer into the set. The set does not receive
         /// ownership of the observer instance.
         void add(Type* observer) {

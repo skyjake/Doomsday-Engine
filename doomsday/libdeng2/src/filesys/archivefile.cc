@@ -29,6 +29,9 @@ ArchiveFile::ArchiveFile(const String& name, Archive& archive, const String& ent
 
 ArchiveFile::~ArchiveFile()
 {
+    FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
+    audienceForDeletion.clear();
+    
     deindex();
 }
 
