@@ -57,6 +57,7 @@ Packet* Protocol::interpret(const Block& block) const
 void Protocol::decree(Transceiver& to, const CommandPacket& command, RecordPacket** response)
 {
     LOG_AS("Protocol::decree");
+    LOG_DEBUG("Sending command: '%s' with args:\n%s") << command.command() << command.arguments();
     
     to << command;
     std::auto_ptr<RecordPacket> rep(to.receivePacket<RecordPacket>());

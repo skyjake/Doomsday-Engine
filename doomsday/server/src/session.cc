@@ -61,7 +61,7 @@ void Session::processCommand(Client& sender, const de::CommandPacket& packet)
     
     try
     {
-        LOG_DEBUG("Processing '%s' with args: %s") << packet.command() << packet.arguments();
+        LOG_DEBUG("Processing '%s' with args:\n%s") << packet.command() << packet.arguments();
         
         if(packet.command() == "session.new")
         {

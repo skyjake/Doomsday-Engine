@@ -71,9 +71,13 @@ ClientApp::ClientApp(const de::CommandLine& arguments)
     DD_SetInteger(DD_DENG2_CLIENT, true);
     DD_Entry(0, NULL);
     
+    LOG_MESSAGE("Opening link to server.");
+    
     // DEVEL: Join the game session.
     // Query the on-going sessions.
     MuxLink* link = new MuxLink(Address("localhost", SERVER_PORT));
+
+    LOG_MESSAGE("Creating new session.");
 
     CommandPacket createSession("session.new");
     createSession.arguments().addText("map", "E1M1");

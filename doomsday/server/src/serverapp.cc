@@ -42,6 +42,8 @@ ServerApp::ServerApp(const de::CommandLine& arguments)
 {
     CommandLine& args = commandLine();
 
+    logBuffer().enableStandardOutput();
+
     // Start listening.
     duint16 port = duint16(config().getui("net.listenPort"));
     String param;
@@ -54,6 +56,7 @@ ServerApp::ServerApp(const de::CommandLine& arguments)
     listenSocket_ = new ListenSocket(port);
     
     args.append("-dedicated");
+    args.append("-nosound");
     
     args.append("-userdir");
     args.append("serverdir");

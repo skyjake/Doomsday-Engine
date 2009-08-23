@@ -26,6 +26,6 @@ audio = 'fmod'
 
 # Log parameters.
 record log
-log.file = "/home/deng.log"
-log.level = 0 #3
-log.bufferSize = 1000
+log.file ?= "/home/deng.log"
+log.level ?= 1 #3
+log.bufferSize ?= 1000

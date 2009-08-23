@@ -151,7 +151,7 @@ void P_MobjDestroy(mobj_t* mo)
 
     S_StopSound(0, mo);
 
-    P_ThinkerRemove((thinker_t *) mo);
+    //P_ThinkerRemove((thinker_t *) mo);
 }
 
 /**

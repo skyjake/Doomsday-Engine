@@ -73,6 +73,11 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
     logBuffer_ = new LogBuffer(DEFAULT_LOG_BUFFER_MAX_ENTRY_COUNT);
     logBuffer_->enable(defaultLogLevel);
 
+    if(commandLine.has("--stdout"))
+    {
+        logBuffer_->enableStandardOutput();
+    }
+
     // Start by initializing SDL.
     if(SDL_Init(SDL_INIT_TIMER) == -1)
     {
@@ -469,7 +474,14 @@ void App::setCurrentMap(Map* map)
     App& self = app();
     self.currentMap_ = map;
     
-    LOG_VERBOSE("Current map set: ") << map->name();
+    if(map)
+    {
+        LOG_VERBOSE("Current map set: ") << map->name();
+    }
+    else
+    {
+        LOG_VERBOSE("No more current map.");
+    }
 }
 
 Video& App::video()
