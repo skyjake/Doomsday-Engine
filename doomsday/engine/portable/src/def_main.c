@@ -162,13 +162,15 @@ void Def_Init(void)
     {
         const char*         arg = Argv(p);
 
-        if(ArgRecognize("-def", arg) && ArgRecognize("-defs", arg))
+        if(!ArgRecognize("-def", arg) && !ArgRecognize("-defs", arg))
             continue;
 
         while(c < MAX_READ && ++p != Argc() && !ArgIsOption(p))
         {
             // Add it to the list.
             dedFiles[c++] = Argv(p);
+            
+            Con_Message("Def_Init: Added '%s' to dedFiles.\n", Argv(p));
         }
 
         p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */

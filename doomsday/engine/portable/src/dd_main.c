@@ -742,8 +742,8 @@ static void HandleArgs(int state)
         {
             for(p = 0; p < Argc(); p++)
             {
-                if((order == 1 && ArgRecognize("-file", Argv(p))) ||
-                   (order == 0 && ArgRecognize("-iwad", Argv(p))))
+                if((order == 1 && !ArgRecognize("-file", Argv(p))) ||
+                   (order == 0 && !ArgRecognize("-iwad", Argv(p))))
                     continue;
 
                 while(++p != Argc() && !ArgIsOption(p))
