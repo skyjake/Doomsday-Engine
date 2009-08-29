@@ -62,6 +62,7 @@ Copy Map Info {
   ID = "E1M8";
   Name = "HUSTR_E1M8";
   Music = "e1m8";
+  Flags = nointermission;
 }
 
 Copy Map Info {
@@ -120,6 +121,7 @@ Copy Map Info {
   ID = "E2M8";
   Name = "HUSTR_E2M8";
   Music = "e2m8";
+  Flags = nointermission;
 }
 
 Copy Map Info {
@@ -175,6 +177,7 @@ Copy Map Info {
   ID = "E3M8";
   Name = "HUSTR_E3M8";
   Music = "e1m9";
+  Flags = nointermission;
 }
 
 Copy Map Info {
@@ -233,6 +236,7 @@ Copy Map Info {
   ID = "E4M8";
   Name = "HUSTR_E4M8";
   Music = "e1m8";
+  Flags = nointermission;
 }
 
 Copy Map Info {
@@ -288,6 +292,7 @@ Copy Map Info {
   ID = "E5M8";
   Name = "HUSTR_E5M8";
   Music = "e2m8";
+  Flags = nointermission;
 }
 
 Copy Map Info {

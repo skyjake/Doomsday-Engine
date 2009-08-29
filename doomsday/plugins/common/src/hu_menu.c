@@ -1063,7 +1063,7 @@ static menuitem_t GameplayItems[] = {
     {ITT_EFUNC, 0, "AV RESURRECTS GHOSTS :", M_ToggleVar, 0, NULL,
         "game-raiseghosts"},
 #  endif
-    {ITT_EFUNC, 0, "PE LIMITED TO 20 LOST SOULS :", M_ToggleVar, 0, NULL,
+    {ITT_EFUNC, 0, "PE LIMITED TO 21 LOST SOULS :", M_ToggleVar, 0, NULL,
         "game-maxskulls"},
     {ITT_EFUNC, 0, "LS CAN GET STUCK INSIDE WALLS :", M_ToggleVar, 0, NULL,
         "game-skullsinwalls"},

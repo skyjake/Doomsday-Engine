@@ -1106,12 +1106,17 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
         case GA_SINGLEREBORN:
             G_DoSingleReborn();
             break;
+#endif
 
         case GA_LEAVEMAP:
+#if __JHEXEN__ || __JSTRIFE__
             //Draw_TeleportIcon();
             G_DoTeleportNewMap();
-            break;
+#else
+            G_DoWorldDone();
 #endif
+            break;
+
         case GA_LOADMAP:
             G_DoLoadMap();
             break;
@@ -1134,10 +1139,6 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
 
         case GA_VICTORY:
             G_SetGameAction(GA_NONE);
-            break;
-
-        case GA_WORLDDONE:
-            G_DoWorldDone();
             break;
 
         case GA_SCREENSHOT:
@@ -1574,17 +1575,6 @@ void G_StartNewGame(skillmode_t skill)
     G_InitNew(dSkill, 1, realMap);
 }
 
-/**
- * Only called by the warp cheat code.  Works just like normal map to map
- * teleporting, but doesn't do any interlude stuff.
- */
-void G_TeleportNewMap(int map, int position)
-{
-    G_SetGameAction(GA_LEAVEMAP);
-    leaveMap = map;
-    leavePosition = position;
-}
-
 void G_DoTeleportNewMap(void)
 {
     // Clients trust the server in these things.
@@ -1681,21 +1671,11 @@ boolean G_IfVictory(void)
 
 void G_DoCompleted(void)
 {
-    int         i;
+    int                 i;
 
 #if __JHERETIC__
     static int  afterSecret[5] = { 7, 5, 5, 5, 4 };
 #endif
-
-    // Clear the currently playing script, if any.
-    FI_Reset();
-
-    // Is there a debriefing for this map?
-    if(FI_Debriefing(gameEpisode, gameMap))
-        return;
-
-    // We have either just returned from a debriefing or there wasn't one.
-    briefDisabled = false;
 
     G_SetGameAction(GA_NONE);
 
@@ -1712,6 +1692,23 @@ void G_DoCompleted(void)
                                   PSF_FRAGS | PSF_COUNTERS, true);
         }
     }
+
+    // Go to an intermission?
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    {
+    ddmapinfo_t         minfo;
+    char                levid[8];
+
+    P_GetMapLumpName(gameEpisode, gameMap, levid);
+
+    // See if there is a par time definition.
+    if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && (minfo.flags & MIF_NO_INTERMISSION))
+    {
+        G_WorldDone();
+        return;
+    }
+    }
+#endif
 
     // Has the player completed the game?
     if(G_IfVictory())
@@ -1903,12 +1900,25 @@ void G_PrepareWIData(void)
 
 void G_WorldDone(void)
 {
-    G_SetGameAction(GA_WORLDDONE);
-
-#if __JDOOM__ || __JDOOM64__
+#if !__JHEXEN__
+#else
+# if __JDOOM__ || __JDOOM64__
     if(secretExit)
         players[CONSOLEPLAYER].didSecret = true;
+# endif
 #endif
+
+    // Clear the currently playing script, if any.
+    FI_Reset();
+
+    // Is there a debriefing for this map?
+    if(FI_Debriefing(gameEpisode, gameMap))
+        return;
+
+    // We have either just returned from a debriefing or there wasn't one.
+    briefDisabled = false;
+
+    G_SetGameAction(GA_LEAVEMAP);
 }
 
 void G_DoWorldDone(void)

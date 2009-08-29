@@ -97,11 +97,16 @@ typedef struct {
     char*           text; // Pointer to the text (don't modify).
 } ddtext_t;
 
+// Map Info flags.
+#define MIF_FOG             0x1 // Fog is used in the map.
+#define MIF_DRAW_SPHERE     0x2 // Always draw the sky sphere.
+#define MIF_NO_INTERMISSION 0x4 // Skip any intermission between maps.
+
 typedef struct {
     char*           name;
     char*           author;
     int             music;
-    int             flags;
+    int             flags; // MIF_* flags.
     float           ambient;
     float           gravity;
     float           parTime;

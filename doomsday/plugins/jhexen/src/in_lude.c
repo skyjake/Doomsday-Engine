@@ -125,7 +125,7 @@ void IN_Start(void)
     // InFine handles the text.
     if(!deathmatch)
     {
-        G_SetGameAction(GA_LEAVEMAP);
+        G_WorldDone();
         return;
     }
 
@@ -143,7 +143,7 @@ void WaitStop(void)
     if(!--cnt)
     {
         IN_Stop();
-        G_SetGameAction(GA_LEAVEMAP);
+        G_WorldDone();
     }
 }
 
