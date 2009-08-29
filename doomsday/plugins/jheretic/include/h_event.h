@@ -43,7 +43,7 @@ typedef enum {
     GA_SAVEGAME,
     GA_COMPLETED,
     GA_VICTORY,
-    GA_WORLDDONE,
+    GA_LEAVEMAP,
     GA_SCREENSHOT
 } gameaction_t;
 

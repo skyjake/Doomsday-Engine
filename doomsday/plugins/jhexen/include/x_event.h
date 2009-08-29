@@ -45,7 +45,6 @@ typedef enum {
     GA_LEAVEMAP,
     GA_SINGLEREBORN,
     GA_VICTORY,
-    GA_WORLDDONE,
     GA_SCREENSHOT
 } gameaction_t;
 

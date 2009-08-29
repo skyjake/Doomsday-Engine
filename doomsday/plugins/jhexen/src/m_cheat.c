@@ -777,7 +777,10 @@ static void CheatWarpFunc(player_t* player, cheat_t* cheat)
     P_SetMessage(player, TXT_CHEATWARP, false);
 
     Hu_MenuCommand(MCMD_CLOSE);
-    G_TeleportNewMap(map, 0);
+
+    leaveMap = map;
+    leavePosition = 0;
+    G_WorldDone();
 }
 
 static void CheatPigFunc(player_t* player, cheat_t* cheat)
