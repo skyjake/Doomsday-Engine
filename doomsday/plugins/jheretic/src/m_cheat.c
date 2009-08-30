@@ -863,29 +863,55 @@ DEFCC(CCmdCheatGive)
             break;
             }
 
-        case 'i':
+        case 'i': // Inventory items
             {
             int                 plrnum = plyr - players;
-            inventoryitemtype_t type;
+            boolean             giveAll = true;
 
-            // All inventory items
-            for(type = IIT_FIRST; type < NUM_INVENTORYITEM_TYPES; ++type)
+            if(i < stuffLen)
             {
-                int                 i;
+                inventoryitemtype_t type = (inventoryitemtype_t) (((int) buf[i+1]) - 48);
 
-                if(gameMode == shareware &&
-                   (type == IIT_SUPERHEALTH || type == IIT_TELEPORT))
-                {
-                    continue;
-                }
+                if(type >= IIT_FIRST && type < NUM_INVENTORYITEM_TYPES)
+                {   // Give one specific item.
+                    if(!(gameMode = shareware &&
+                         (type == IIT_SUPERHEALTH || type == IIT_TELEPORT)))
+                    {
+                        int                 j;
 
-                for(i = 0; i < MAXINVITEMCOUNT; ++i)
-                {
-                    P_InventoryGive(plrnum, type, false);
+                        for(j = 0; j < MAXINVITEMCOUNT; ++j)
+                        {
+                            P_InventoryGive(plrnum, type, false);
+                        }
+                    }
+
+                    giveAll = false;
+                    i++;
                 }
             }
 
-            Con_Printf("Items given.\n");
+            if(giveAll)
+            {
+                inventoryitemtype_t type;
+
+                for(type = IIT_FIRST; type < NUM_INVENTORYITEM_TYPES; ++type)
+                {
+                    int                 i;
+
+                    if(gameMode == shareware &&
+                       (type == IIT_SUPERHEALTH || type == IIT_TELEPORT))
+                    {
+                        continue;
+                    }
+
+                    for(i = 0; i < MAXINVITEMCOUNT; ++i)
+                    {
+                        P_InventoryGive(plrnum, type, false);
+                    }
+                }
+
+                Con_Printf("All items given.\n");
+            }
             break;
             }
 
