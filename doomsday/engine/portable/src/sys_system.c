@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
@@ -100,7 +100,6 @@ void Sys_Init(void)
     // Virtual devices need to be created even in dedicated mode.
     I_InitVirtualInputDevices();
     Sys_InitTimer();
-    Sys_InitMixer();
     S_Init();
     Huff_Init();
     N_Init();
@@ -137,7 +136,6 @@ void Sys_Shutdown(void)
     // Let's shut down sound first, so Windows' HD-hogging doesn't jam
     // the MUS player (would produce horrible bursts of notes).
     S_Shutdown();
-    Sys_ShutdownMixer();
     GL_Shutdown();
     DD_ClearEvents();
     I_ShutdownInputDevices();

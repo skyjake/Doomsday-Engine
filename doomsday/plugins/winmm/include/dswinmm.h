@@ -4,7 +4,7 @@
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
  *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2008 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +36,31 @@
 
 #include "doomsday.h"
 #include "sys_audiod_mus.h"
+
+// Mixer return values.
+enum {
+    MIX_ERROR = -1,
+    MIX_OK
+};
+
+// Mixer devices.
+enum {
+    MIX_CDAUDIO,
+    MIX_MIDI
+};
+
+// Mixer actions.
+enum {
+    MIX_GET,
+    MIX_SET
+};
+
+// Mixer controls.
+enum {
+    MIX_VOLUME // 0-255
+};
+
+int             mixer4i(int device, int action, int control, int parm);
 
 // Public music interface.
 int             DM_Music_Init(void);

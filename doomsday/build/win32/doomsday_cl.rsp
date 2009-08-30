@@ -127,7 +127,6 @@
  .\..\..\engine\portable\src\sys_system.c
  .\..\..\engine\portable\src\sys_sock.c
  .\..\..\engine\portable\src\sys_network.c
- .\..\..\engine\win32\src\sys_mixer.c
  .\..\..\engine\portable\src\sys_master.c
  .\..\..\engine\win32\src\sys_input.c
  .\..\..\engine\win32\src\sys_findfile.c

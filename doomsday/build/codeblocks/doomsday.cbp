@@ -341,7 +341,6 @@
 		<Unit filename="..\..\engine\portable\include\sys_findfile.h" />
 		<Unit filename="..\..\engine\portable\include\sys_input.h" />
 		<Unit filename="..\..\engine\portable\include\sys_master.h" />
-		<Unit filename="..\..\engine\portable\include\sys_mixer.h" />
 		<Unit filename="..\..\engine\portable\include\sys_network.h" />
 		<Unit filename="..\..\engine\portable\include\sys_opengl.h" />
 		<Unit filename="..\..\engine\portable\include\sys_sock.h" />
@@ -853,10 +852,6 @@
 			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="..\..\engine\unix\src\sys_mixer.c">
-			<Option compilerVar="CC" />
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="..\..\engine\unix\src\sys_path.c">
 			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />
@@ -885,9 +880,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\win32\src\sys_input.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\engine\win32\src\sys_mixer.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\win32\src\sys_audiod_loader.c">
