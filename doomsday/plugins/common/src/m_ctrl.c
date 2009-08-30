@@ -219,8 +219,8 @@ static controlconfig_t controlConfig[] =
     { NULL },
 
     { "inventory" },
-    { "move left", 0, 0, "impulse previtem" },
-    { "move right", 0, 0, "impulse nextitem" },
+    { "move left", 0, 0, "impulse previtem", CCF_REPEAT },
+    { "move right", 0, 0, "impulse nextitem", CCF_REPEAT },
     { "use item", 0, 0, "impulse useitem" },
     { "panic!", 0, 0, "impulse panic" },
 #endif
@@ -307,8 +307,8 @@ static controlconfig_t controlConfig[] =
     { "hud" },
     { "show hud", 0, 0, "impulse showhud" },
     { "show score", 0, 0, "impulse showscore", CCF_REPEAT },
-    { "smaller view", 0, 0, "viewsize -" },
-    { "larger view", 0, 0, "viewsize +" },
+    { "smaller view", 0, 0, "viewsize -", CCF_REPEAT },
+    { "larger view", 0, 0, "viewsize +", CCF_REPEAT },
 
     { "message refresh", 0, 0, "impulse msgrefresh" },
 
