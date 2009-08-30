@@ -220,22 +220,6 @@ void Mus_StartFrame(void)
  */
 void Mus_SetVolume(float vol)
 {
-#if WIN32
-    int                 val;
-
-    if(!musAvail)
-        return;
-
-    // Under Win32 we need to do this via the mixer.
-    val = MINMAX_OF(0, (byte) (vol * 255 + .5f), 255);
-
-    // Straighten the volume curve.
-    val <<= 8; // Make it a word.
-    val = (int) (255.9980469 * sqrt(vol));
-
-    Sys_Mixer4i(MIX_MIDI, MIX_SET, MIX_VOLUME, val);
-    Sys_Mixer4i(MIX_CDAUDIO, MIX_SET, MIX_VOLUME, val);
-#else
     unsigned int        i;
 
     if(!musAvail)
@@ -247,7 +231,6 @@ void Mus_SetVolume(float vol)
         if(*interfaces[i].ip)
             (*interfaces[i].ip)->Set(MUSIP_VOLUME, vol);
     }
-#endif
 }
 
 /**
