@@ -45,8 +45,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define BUFFERED_MUSIC_FILE      "dd-buffered-song"
-#define BUFFERED_MIDI_MUSIC_FILE "dd-buffered-song.mid"
 #define NUM_INTERFACES (sizeof(interfaces)/sizeof(interfaces[0]))
 
 // TYPES -------------------------------------------------------------------
@@ -364,6 +362,21 @@ int Mus_GetCD(ded_music_t* def)
     return 0;
 }
 
+static void composeBufferedMusicFilename(char* path, size_t len, int id, const char* ext)
+{
+#define BUFFERED_MUSIC_FILE      "dd-buffered-song"
+
+    if(ext && ext[0])
+    {
+        dd_snprintf(path, len, "%s%i%s", BUFFERED_MUSIC_FILE, id, ext);
+        return;
+    }
+
+    dd_snprintf(path, len, "%s%i", BUFFERED_MUSIC_FILE, id);
+
+#undef BUFFERED_MUSIC_FILE
+}
+
 /**
  * Start playing a song. The chosen interface depends on what's available
  * and what kind of resources have been associated with the song.
@@ -373,6 +386,8 @@ int Mus_GetCD(ded_music_t* def)
  */
 int Mus_Start(ded_music_t* def, boolean looped)
 {
+    static int          currentBufFile = 0;
+
     filename_t          path;
     int                 i, order[3], songID;
 
@@ -439,11 +454,15 @@ int Mus_Start(ded_music_t* def, boolean looped)
                     // Write to disk and play from there.
                     FILE*               outFile;
                     void*               buf = malloc(len);
+                    filename_t          fname;
 
-                    if((outFile = fopen(BUFFERED_MUSIC_FILE, "wb")) == NULL)
+                    composeBufferedMusicFilename(fname, FILENAME_T_MAXLEN,
+                                                 currentBufFile ^= 1, NULL);
+
+                    if((outFile = fopen(fname, "wb")) == NULL)
                     {
                         Con_Message("Mus_Start: Couldn't open %s for writing. %s\n",
-                                    BUFFERED_MUSIC_FILE, strerror(errno));
+                                    fname, strerror(errno));
                         F_Close(file);
                         return false;
                     }
@@ -455,7 +474,7 @@ int Mus_Start(ded_music_t* def, boolean looped)
 
                     F_Close(file);
 
-                    return iMusic->PlayFile(BUFFERED_MUSIC_FILE, looped);
+                    return iMusic->PlayFile(fname, looped);
                 }
                 else
                 {   // Music interface offers buffered playback. Use it.
@@ -485,15 +504,20 @@ int Mus_Start(ded_music_t* def, boolean looped)
 
                 if((lump = W_CheckNumForName(def->lumpName)) != -1)
                 {
-                    size_t              len;
-                    void*               ptr;
+                    filename_t          fname;
+                    const char*         srcFile = NULL;
 
                     if(Mus_IsMUSLump(lump))
                     {   // Lump is in DOOM's MUS format.
                         void*               buf;
+                        size_t              len;
 
                         if(!canPlayMUS)
                             break;
+
+                        composeBufferedMusicFilename(fname, FILENAME_T_MAXLEN,
+                                                     currentBufFile ^= 1, ".mid");
+                        srcFile = fname;
 
                         // Read the lump, convert to MIDI and output to a
                         // temp file in the working directory. Use a
@@ -504,28 +528,24 @@ int Mus_Start(ded_music_t* def, boolean looped)
                         buf = M_Malloc(len);
                         W_ReadLump(lump, buf);
 
-                        M_Mus2Midi(buf, len, BUFFERED_MIDI_MUSIC_FILE);
-
+                        M_Mus2Midi(buf, len, srcFile);
                         M_Free(buf);
-
-                        // Play the newly converted MIDI file.
-                        return iMusic->PlayFile(BUFFERED_MIDI_MUSIC_FILE,
-                                                looped);
                     }
-
-                    if(!iMusic->Play)
+                    else if(!iMusic->Play)
                     {   // Music interface does not offer buffer playback.
                         // Write this lump to disk and play from there.
-                        if(!W_DumpLump(lump, BUFFERED_MUSIC_FILE))
-                            return false;
+                        composeBufferedMusicFilename(fname, FILENAME_T_MAXLEN,
+                                                     currentBufFile ^= 1, NULL);
+                        srcFile = fname;
 
-                        // Play the cached music file.
-                        return iMusic->PlayFile(BUFFERED_MUSIC_FILE,
-                                                looped);
+                        if(!W_DumpLump(lump, srcFile))
+                            return false;
                     }
 
-                    ptr = iMusic->SongBuffer(len = W_LumpLength(lump));
-                    W_ReadLump(lump, ptr);
+                    if(srcFile)
+                        return iMusic->PlayFile(srcFile, looped);
+
+                    W_ReadLump(lump, iMusic->SongBuffer(W_LumpLength(lump)));
                     return iMusic->Play(looped);
                 }
             }
