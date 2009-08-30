@@ -679,8 +679,7 @@ boolean Hu_InventorySelect(int player, inventoryitemtype_t type)
     return false;
 }
 
-boolean Hu_InventoryMove(int player, int dir, boolean canWrap,
-                         boolean silent)
+boolean Hu_InventoryMove(int player, int dir, boolean canWrap, boolean silent)
 {
     player_t*           plr;
     hud_inventory_t*    inv;
@@ -693,13 +692,19 @@ boolean Hu_InventoryMove(int player, int dir, boolean canWrap,
         return false;
     inv = &hudInventories[player];
 
-    if(inv->flags & HIF_IS_DIRTY)
-        rebuildInventory(inv);
-
+    // Do the move first, before updating a possibly out of date inventory.
     if(inv->numOwnedItemTypes > 1)
     {
         inventoryMove(inv, dir, canWrap);
+    }
 
+    if(inv->flags & HIF_IS_DIRTY)
+    {
+        rebuildInventory(inv);
+    }
+
+    if(inv->numOwnedItemTypes > 1)
+    {
         P_InventorySetReadyItem(player,
             P_GetInvItem(inv->selected)->type);
     }

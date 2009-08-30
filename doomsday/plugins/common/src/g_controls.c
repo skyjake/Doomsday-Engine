@@ -405,8 +405,11 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent key-p pause",
 
         "bindevent key-h {impulse showhud}",
+        "bindevent key-backslash-down {impulse showscore}",
         "bindevent key-backslash-repeat {impulse showscore}",
+        "bindevent key-minus-down {viewsize -}",
         "bindevent key-minus-repeat {viewsize -}",
+        "bindevent key-equals-down {viewsize +}",
         "bindevent key-equals-repeat {viewsize +}",
 
         // Player message log:
