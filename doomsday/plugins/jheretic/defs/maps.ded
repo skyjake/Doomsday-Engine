@@ -2,7 +2,7 @@
 # jHeretic: Maps
 #
 
-Header { Version = 5; }
+Header { Version = 6; }
 
 # The default definition, used for any maps without a map info definition.
 Map Info {
