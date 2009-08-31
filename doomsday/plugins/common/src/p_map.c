@@ -1550,19 +1550,25 @@ boolean PTR_ShootTraverse(intercept_t* in)
     {
         li = in->d.lineDef;
         xline = P_ToXLine(li);
-        if(xline->special)
-            P_ActivateLine(li, shootThing, 0, SPAC_IMPACT);
 
         frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
         backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
+
+        if(!frontSec || !backSec)
+        {
+            if(P_PointOnLinedefSide(tracePos[VX], tracePos[VY], li))
+                return true; // Continue traversal.
+
+            goto hitline;
+        }
+
+        if(xline->special)
+            P_ActivateLine(li, shootThing, 0, SPAC_IMPACT);
 
 #if __JDOOM64__
         if(xline->flags & ML_BLOCKALL) // jd64
             goto hitline;
 #endif
-
-        if(!frontSec || !backSec)
-            goto hitline;
 
         // Crosses a two sided line.
         P_LineOpening(li);
@@ -1836,7 +1842,20 @@ boolean PTR_AimTraverse(intercept_t* in)
 
         if(!(frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR)) ||
            !(backSec  = P_GetPtrp(li, DMU_BACK_SECTOR)))
+        {
+            float               tracePos[3];
+            divline_t*          trace =
+                (divline_t *) DD_GetVariable(DD_TRACE_ADDRESS);
+
+            tracePos[VX] = FIX2FLT(trace->pos[VX]);
+            tracePos[VY] = FIX2FLT(trace->pos[VY]);
+            tracePos[VZ] = shootZ;
+
+            if(P_PointOnLinedefSide(tracePos[VX], tracePos[VY], li))
+                return true; // Continue traversal.
+
             return false; // Stop.
+        }
 
         // Crosses a two sided line.
         // A two sided line will restrict the possible target ranges.
