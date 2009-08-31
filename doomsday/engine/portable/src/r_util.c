@@ -341,36 +341,26 @@ boolean R_IsPointInSector(const float x, const float y,
 }
 
 /**
- * Is the point inside the sector, according to the edge lines of the
+ * Is the point inside the subsector, according to the edge lines of the
  * subsector. Uses the well-known algorithm described here:
  * http://www.alienryderflex.com/polygon/
  *
- * More accurate than R_IsPointInSector.
+ * @param x             X coordinate to test.
+ * @param y             Y coordinate to test.
+ * @param ssec          Subsector to test.
  *
- * @param               X coordinate to test.
- * @param               Y coordinate to test.
- * @param               Sector to test.
- *
- * @return              @c true, if the point is inside the sector.
+ * @return              @c true, if the point is inside the subsector.
  */
-boolean R_IsPointInSector2(const float x, const float y,
-                           const sector_t *sector)
+boolean R_IsPointInSubsector(const float x, const float y,
+                             const subsector_t* ssec)
 {
     uint                i;
-    subsector_t        *subsector;
-    fvertex_t          *vi, *vj;
+    fvertex_t*          vi, *vj;
 
-    subsector = R_PointInSubsector(x, y);
-    if(subsector->sector != sector)
+    for(i = 0; i < ssec->segCount; ++i)
     {
-        // Wrong sector.
-        return false;
-    }
-
-    for(i = 0; i < subsector->segCount; ++i)
-    {
-        vi = &subsector->segs[i]->SG_v1->v;
-        vj = &subsector->segs[(i + 1) % subsector->segCount]->SG_v1->v;
+        vi = &ssec->segs[i]->SG_v1->v;
+        vj = &ssec->segs[(i + 1) % ssec->segCount]->SG_v1->v;
 
         if(((vi->pos[VY] - y) * (vj->pos[VX] - vi->pos[VX]) -
             (vi->pos[VX] - x) * (vj->pos[VY] - vi->pos[VY])) < 0)
@@ -392,8 +382,32 @@ boolean R_IsPointInSector2(const float x, const float y,
 */
     }
 
-    // All tests passed.
     return true;
+}
+
+/**
+ * Is the point inside the sector, according to the edge lines of the
+ * subsector.
+ *
+ * More accurate than R_IsPointInSector.
+ *
+ * @param               X coordinate to test.
+ * @param               Y coordinate to test.
+ * @param               Sector to test.
+ *
+ * @return              @c true, if the point is inside the sector.
+ */
+boolean R_IsPointInSector2(const float x, const float y,
+                           const sector_t* sector)
+{
+    subsector_t*        ssec = R_PointInSubsector(x, y);
+
+    if(ssec->sector != sector)
+    {   // Wrong sector.
+        return false;
+    }
+
+    return R_IsPointInSubsector(x, y, ssec);
 }
 
 void R_ScaleAmbientRGB(float *out, const float *in, float mul)
