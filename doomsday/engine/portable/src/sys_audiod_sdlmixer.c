@@ -172,10 +172,10 @@ static unsigned int getBufLength(sfxbuffer_t* buf)
 
 int DS_SDLMixerInit(void)
 {
-	int                 freq, channels;
-	uint16_t            format;
+    int                 freq, channels;
+    uint16_t            format;
     SDL_version         compVer;
-    const SDL_version*  linkVer; 
+    const SDL_version*  linkVer;
 
     if(sdlInitOk)
         return true;
@@ -187,10 +187,10 @@ int DS_SDLMixerInit(void)
     }
 
     SDL_MIXER_VERSION(&compVer);
-    linkVer = Mix_Linked_Version(); 
+    linkVer = Mix_Linked_Version();
 
     if(SDL_VERSIONNUM(linkVer->major, linkVer->minor, linkVer->patch) >
-       SDL_VERSIONNUM(compVer.major, compVer.minor, compVer.patch)) 
+       SDL_VERSIONNUM(compVer.major, compVer.minor, compVer.patch))
     {
         Con_Message("DS_SDLMixerInit: Warning, linked version of SDLMixer (%u.%u.%u) is "
                     "newer than expected (%u.%u.%u)\n", linkVer->major, linkVer->minor,
