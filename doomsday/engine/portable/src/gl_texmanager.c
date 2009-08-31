@@ -1765,26 +1765,28 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
     {
         // Must load the old-fashioned data lump.
         const byte*         lumpdata;
-        size_t              lumpLength = W_LumpLength(r->lump);
+        size_t              bufSize, lumpLength = W_LumpLength(r->lump);
 
         // Load the raw image data.
         lumpdata = W_CacheLumpNum(r->lump, PU_STATIC);
 
         image->width = 320;
+        image->height = 200;
 
         // Try to load it as a PCX image first.
-        image->pixels = M_Malloc(3 * 320 * 200);
+        bufSize = 3 * image->width * image->height;
+        image->pixels = M_Malloc(bufSize);
 
-        if(PCX_MemoryLoad(lumpdata, lumpLength, 320, 200, image->pixels))
+        if(PCX_MemoryLoad(lumpdata, lumpLength, image->width, image->height, image->pixels))
         {
-            image->height = 200;
             image->pixelSize = 3;
         }
         else
         {
             // PCX load failed. It must be an old-fashioned raw image.
-            memcpy(image->pixels, lumpdata, 3 * 320 * 200);
-            image->height = (int) (lumpLength / 320);
+            memcpy(image->pixels, lumpdata, MIN_OF(bufSize, lumpLength));
+
+            image->height = (int) (lumpLength / image->width);
             image->pixelSize = 1;
         }
 

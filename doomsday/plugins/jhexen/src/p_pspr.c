@@ -2166,15 +2166,18 @@ void C_DECL A_SummonTarget(mobj_t* mo)
 
 void C_DECL A_BoostArmor(mobj_t* mo)
 {
-    int             i, count;
+    int                 count;
+    armortype_t         type;
+    player_t*           plr;
 
     if(!mo->player)
         return;
+    plr = mo->player;
 
     count = 0;
-    for(i = 0; i < NUMARMOR; ++i)
+    for(type = 0; type < NUMARMOR; ++type)
     {
-        count += P_GiveArmor(mo->player, i, 1); // 1 point per armor type.
+        count += P_PlayerGiveArmorBonus(plr, type, 1 * FRACUNIT); // 1 point per armor type.
     }
 
     if(!count)

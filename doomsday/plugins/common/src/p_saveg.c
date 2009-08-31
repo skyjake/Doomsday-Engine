@@ -2436,8 +2436,10 @@ static void SV_WriteLine(linedef_t* li)
     // 2: Surface colors.
     // 3: "Mapped by player" values.
     // 3: Surface flags.
-    SV_WriteByte(3); // Write a version byte
+    // 4: Engine-side linedef flags.
+    SV_WriteByte(4); // Write a version byte
 
+    SV_WriteShort(P_GetIntp(li, DMU_FLAGS));
     SV_WriteShort(xli->flags);
 
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -2535,17 +2537,55 @@ static void SV_ReadLine(linedef_t *li)
     else
         ver = (int) SV_ReadByte();
 
-    flags = SV_ReadShort();
-    if(ver < 3 && (flags & 0x0100)) // the old ML_MAPPED flag
-    {
-        uint                lineIDX = P_ToIndex(li);
+    if(ver >= 4)
+        P_SetIntp(li, DMU_FLAGS, SV_ReadShort());
 
-        // Set line as having been seen by all players..
-        memset(xli->mapped, 0, sizeof(xli->mapped));
-        for(i = 0; i < MAXPLAYERS; ++i)
-            AM_UpdateLinedef(AM_MapForPlayer(i), lineIDX, true);
-        flags &= ~0x0100; // remove the old flag.
+    flags = SV_ReadShort();
+
+    if(ver < 4)
+    {   // Translate old linedef flags.
+        int             ddLineFlags = 0;
+
+        if(flags & 0x0001) // old ML_BLOCKING flag
+        {
+            ddLineFlags |= DDLF_BLOCKING;
+            flags &= ~0x0001;
+        }
+
+        if(flags & 0x0004) // old ML_TWOSIDED flag
+        {
+            flags &= ~0x0004;
+        }
+
+        if(flags & 0x0008) // old ML_DONTPEGTOP flag
+        {
+            ddLineFlags |= DDLF_DONTPEGTOP;
+            flags &= ~0x0008;
+        }
+
+        if(flags & 0x0010) // old ML_DONTPEGBOTTOM flag
+        {
+            ddLineFlags |= DDLF_DONTPEGBOTTOM;
+            flags &= ~0x0010;
+        }
+
+        P_SetIntp(li, DMU_FLAGS, ddLineFlags);
     }
+
+    if(ver < 3)
+    {
+        if(flags & 0x0100) // old ML_MAPPED flag
+        {
+            uint                lineIDX = P_ToIndex(li);
+
+            // Set line as having been seen by all players..
+            memset(xli->mapped, 0, sizeof(xli->mapped));
+            for(i = 0; i < MAXPLAYERS; ++i)
+                AM_UpdateLinedef(AM_MapForPlayer(i), lineIDX, true);
+            flags &= ~0x0100; // remove the old flag.
+        }
+    }
+
     xli->flags = flags;
 
     if(ver >= 3)
