@@ -749,7 +749,9 @@ void P_MobjLink(mobj_t* mo, byte flags)
         player->inVoid = true;
         if(R_IsPointInSector2(player->mo->pos[VX],
                               player->mo->pos[VY],
-                              player->mo->subsector->sector))
+                              player->mo->subsector->sector) &&
+           (player->mo->pos[VZ] < player->mo->subsector->sector->SP_ceilvisheight + 4 &&
+            player->mo->pos[VZ] > player->mo->subsector->sector->SP_floorvisheight + 4))
             player->inVoid = false;
     }
 }
