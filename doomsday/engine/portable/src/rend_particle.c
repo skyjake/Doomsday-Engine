@@ -406,7 +406,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
     params->center[VY] = center[VZ];
     params->center[VZ] = params->gzt = center[VY];
     params->distance = dist;
-    ssec = R_PointInSubsector(center[VX], center[VY]);
+    ssec = R_PointInSubsector(center[VX], center[VZ]);
 
     params->extraScale = size; // Extra scaling factor.
     params->mf = &modefs[dst->model];
@@ -671,6 +671,8 @@ static void renderParticles(int rtype, boolean withBlend)
         if(rtype == PTC_MODEL && dst->model >= 0)
         {
             rendmodelparams_t       params;
+
+            memset(&params, 0, sizeof(rendmodelparams_t));
 
             setupModelParamsForParticle(&params, pt, st, dst, center, dist,
                                         size, mark, color[CA]);

@@ -259,6 +259,9 @@ void R_Init(void)
     R_InitViewBorder();
     P_PtcInit();
 
+    // Defs have been read; we can now init models.
+    R_InitModels();
+
     Def_PostInit();
 }
 
@@ -281,13 +284,14 @@ void R_Update(void)
     R_InitSprites(); // Fully reinitialize sprites.
     R_UpdateTranslationTables();
 
+    R_InitModels(); // Defs might've changed.
+
     // Now that we've read the defs, we can load system textures.
     GL_LoadSystemTextures();
 
     Def_PostInit();
-
-    R_InitModels(); // Defs might've changed.
     P_UpdateParticleGens(); // Defs might've changed.
+
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         player_t*           plr = &ddPlayers[i];
