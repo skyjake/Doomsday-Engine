@@ -46,7 +46,6 @@ Flag { ID = "mf2_noteleport"; Value = 0x80; }
 Flag { ID = "mf2_rip"; Value = 0x100; }
 Flag { ID = "mf2_pushable"; Value = 0x200; }
 Flag { ID = "mf2_slide"; Value = 0x400; }
-Flag { ID = "mf2_onmobj"; Value = 0x800; }
 Flag { ID = "mf2_passmobj"; Value = 0x1000; }
 Flag { ID = "mf2_cannotpush"; Value = 0x2000; }
 Flag { ID = "mf2_dropped"; Value = 0x4000; }
@@ -70,3 +69,8 @@ Flag { ID = "mf2_reflective"; Value = 0x80000000; }
 
 # Mobj flags3:
 Flag { ID = "mf3_noinfight"; Value = 0x1; }
+
+#
+# Obsolete (unused) flags:
+#
+Flag { ID = "mf2_onmobj"; Value = 0; }
