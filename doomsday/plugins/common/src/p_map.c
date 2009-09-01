@@ -463,6 +463,12 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
     if(thing == tmThing)
         return true;
 
+#if __JHEXEN__
+    // Don't clip on something we are stood on.
+    if(thing == tmThing->onMobj)
+        return true;
+#endif
+
     if(!(thing->flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE)) ||
        P_MobjIsCamera(thing) || P_MobjIsCamera(tmThing))
         return true;

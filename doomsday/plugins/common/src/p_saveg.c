@@ -1403,7 +1403,7 @@ static void SV_ReadPlayer(player_t* p)
 }
 
 #if __JHEXEN__
-# define MOBJ_SAVEVERSION 7
+# define MOBJ_SAVEVERSION 8
 #elif __JHERETIC__
 # define MOBJ_SAVEVERSION 10
 #else
@@ -1450,6 +1450,7 @@ static void SV_WriteMobj(const mobj_t* original)
     //
     // JHEXEN
     // 7: Removed superfluous info ptr
+    // 8: Added 'onMobj'
     SV_WriteByte(MOBJ_SAVEVERSION);
 
 #if !__JHEXEN__
@@ -1461,9 +1462,9 @@ static void SV_WriteMobj(const mobj_t* original)
     // Ver 5 features: Save tracer (fixes Archvile, Revenant bug)
     SV_WriteShort(SV_ThingArchiveNum(mo->tracer));
 # endif
+#endif
 
     SV_WriteShort(SV_ThingArchiveNum(mo->onMobj));
-#endif
 
     // Info for drawing: position.
     SV_WriteLong(FLT2FIX(mo->pos[VX]));
@@ -1761,34 +1762,37 @@ static int SV_ReadMobj(thinker_t *th)
     ver = SV_ReadByte();
 
 #if !__JHEXEN__
+    if(ver >= 2) // Version 2 has mobj archive numbers.
+        SV_SetArchiveThing(mo, SV_ReadShort());
+#endif
+
+#if !__JHEXEN__
+    mo->target = NULL;
     if(ver >= 2)
     {
-        // Version 2 has mobj archive numbers.
-        SV_SetArchiveThing(mo, SV_ReadShort());
-        // The reference will be updated after all mobjs are loaded.
-        mo->target = (mobj_t *) (int) SV_ReadShort();
-    }
-    else
-        mo->target = NULL;
-
-    // Ver 5 features:
-    if(ver >= 5)
-    {
-# if __JDOOM__ || __JDOOM64__
-        // Tracer for enemy attacks (updated after all mobjs are loaded).
-        mo->tracer = (mobj_t *) (int) SV_ReadShort();
-# endif
-        // mobj this one is on top of (updated after all mobjs are loaded).
-        mo->onMobj = (mobj_t *) (int) SV_ReadShort();
-    }
-    else
-    {
-# if __JDOOM__ || __JDOOM64__
-        mo->tracer = NULL;
-# endif
-        mo->onMobj = NULL;
+        mo->target = (mobj_t*) (int) SV_ReadShort();
     }
 #endif
+
+#if __JDOOM__ || __JDOOM64__
+    // Tracer for enemy attacks (updated after all mobjs are loaded).
+    mo->tracer = NULL;
+    if(ver >= 5)
+    {
+        mo->tracer = (mobj_t*) (int) SV_ReadShort();
+    }
+#endif
+
+    // mobj this one is on top of (updated after all mobjs are loaded).
+    mo->onMobj = NULL;
+#if __JHEXEN__
+    if(ver >= 8)
+#else
+    if(ver >= 5)
+#endif
+    {
+        mo->onMobj = (mobj_t*) (int) SV_ReadShort();
+    }
 
     // Info for drawing: position.
     mo->pos[VX] = FIX2FLT(SV_ReadLong());
@@ -4093,6 +4097,7 @@ static boolean restoreMobjLinks(thinker_t* th, void* context)
     mobj_t*             mo = (mobj_t *) th;
 
     mo->target = SV_GetArchiveThing((int) mo->target, &mo->target);
+    mo->onMobj = SV_GetArchiveThing((int) mo->onMobj, &mo->onMobj);
 
 #if __JHEXEN__
     switch(mo->type)
@@ -4141,7 +4146,6 @@ static boolean restoreMobjLinks(thinker_t* th, void* context)
         break;
     }
 #else
-    mo->onMobj = SV_GetArchiveThing((int) mo->onMobj, &mo->onMobj);
 # if __JDOOM__ || __JDOOM64__
     mo->tracer = SV_GetArchiveThing((int) mo->tracer, &mo->tracer);
 # endif

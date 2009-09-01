@@ -115,8 +115,7 @@
 #define MF2_PUSHABLE        0x00000200  // can be pushed by other moving
                                         // mobjs
 #define MF2_SLIDE           0x00000400  // slides against walls
-#define MF2_ONMOBJ          0x00000800  // mobj is resting on top of another
-                                        // mobj
+//#define MF2_UNUSED1         0x00000800  // Formerly 'MF2_ONMOBJ'
 #define MF2_PASSMOBJ        0x00001000  // Enable z block checking.  If on,
                                         // this flag will allow the mobj to
                                         // pass over/under other mobjs.

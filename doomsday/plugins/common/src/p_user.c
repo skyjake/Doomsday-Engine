@@ -313,10 +313,8 @@ boolean P_IsPlayerOnGround(player_t *player)
         (player->plr->mo->pos[VZ] <= player->plr->mo->floorZ);
 
 #if __JHEXEN__
-    if((player->plr->mo->flags2 & MF2_ONMOBJ) && !onground)
+    if((player->plr->mo->onMobj) && !onground)
     {
-        //mobj_t *on = onmobj;
-
         onground = true; //(player->plr->mo->pos[VZ] <= on->pos[VZ] + on->height);
     }
 #else
@@ -327,6 +325,7 @@ boolean P_IsPlayerOnGround(player_t *player)
         onground = (player->plr->mo->pos[VZ] <= on->pos[VZ] + on->height);
     }
 #endif
+
     return onground;
 }
 
@@ -356,7 +355,7 @@ void P_CheckPlayerJump(player_t *player)
         player->jumpTics = PCLASS_INFO(player->class)->jumpTics;
 
 #if __JHEXEN__
-        player->plr->mo->flags2 &= ~MF2_ONMOBJ;
+        player->plr->mo->onMobj = NULL;
 #endif
     }
 }
