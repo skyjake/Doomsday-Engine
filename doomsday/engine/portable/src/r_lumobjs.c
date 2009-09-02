@@ -319,7 +319,7 @@ uint LO_ToIndex(const lumobj_t* lum)
 }
 
 /**
- * Is the specified lumobj clipped for a given viewer?
+ * Is the specified lumobj clipped for the current display player?
  */
 boolean LO_IsClipped(uint idx, int i)
 {
@@ -330,7 +330,7 @@ boolean LO_IsClipped(uint idx, int i)
 }
 
 /**
- * Is the specified lumobj hidden for the given viewer?
+ * Is the specified lumobj hidden for the current display player?
  */
 boolean LO_IsHidden(uint idx, int i)
 {
@@ -784,6 +784,7 @@ boolean LOIT_ClipLumObj(void* data, void* context)
 {
     lumobj_t*           lum = (lumobj_t*) data;
     uint                lumIdx = lumToIndex(lum);
+    vec3_t              pos;
 
     if(lum->type != LT_OMNI)
         return true; // Only interested in omnilights.
@@ -795,9 +796,32 @@ boolean LOIT_ClipLumObj(void* data, void* context)
 
     // \fixme Determine the exact centerpoint of the light in
     // LO_AddLuminous!
-    if(!C_IsPointVisible(lum->pos[VX], lum->pos[VY],
-                         lum->pos[VZ] + LUM_OMNI(lum)->zOff))
-        luminousClipped[lumIdx] = 1; // Won't have a halo.
+    V3_Set(pos, lum->pos[VX], lum->pos[VY], lum->pos[VZ] + LUM_OMNI(lum)->zOff);
+
+    /**
+     * Select clipping strategy:
+     *
+     * If culling world surfaces with the angle clipper and the viewer is
+     * not in the void; use the angle clipper here too. Otherwise, use the
+     * BSP-based LOS algorithm.
+     */
+    if(!(devNoCulling || P_IsInVoid(&ddPlayers[displayPlayer])))
+    {
+        if(!C_IsPointVisible(pos[VX], pos[VY], pos[VZ]))
+            luminousClipped[lumIdx] = 1; // Won't have a halo.
+    }
+    else
+    {
+        vec3_t              vpos;
+
+        V3_Set(vpos, vx, vz, vy);
+
+        luminousClipped[lumIdx] = 1;
+        if(P_CheckLineSight(vpos, pos, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER))
+        {
+            luminousClipped[lumIdx] = 0; // Will have a halo.
+        }
+    }
 
     return true; // Continue iteration.
 }
