@@ -236,7 +236,7 @@ boolean P_CheckSight(const mobj_t* from, const mobj_t* to)
     if(!P_MobjIsCamera(from))
         fPos[VZ] += from->height + -(from->height / 4);
 
-    return P_CheckLineSight(fPos, to->pos, 0, to->height);
+    return P_CheckLineSight(fPos, to->pos, 0, to->height, 0);
 }
 
 boolean PIT_StompThing(mobj_t* mo, void* data)

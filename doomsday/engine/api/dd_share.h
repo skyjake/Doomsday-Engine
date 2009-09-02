@@ -695,9 +695,9 @@ typedef struct {
 } fdivline_t;
 
 // For PathTraverse.
-#define PT_ADDLINES     1
-#define PT_ADDMOBJS     2
-#define PT_EARLYOUT     4
+#define PT_ADDLINES             1
+#define PT_ADDMOBJS             2
+#define PT_EARLYOUT             4
 
 typedef enum {
     ST_HORIZONTAL,
@@ -706,10 +706,20 @@ typedef enum {
     ST_NEGATIVE
 } slopetype_t;
 
+/**
+ * @defgroup lineSightFlags Line Sight Flags
+ * Flags used to dictate logic within P_CheckLineSight.
+ */
+/*@{*/
+#define LS_PASSLEFT            0x1 // Ray may cross one-sided linedefs from left to right.
+#define LS_PASSOVER            0x2 // Ray may cross over sector ceiling height on ray-entry side.
+#define LS_PASSUNDER           0x4 // Ray may cross under sector floor height on ray-entry side.
+/*@}*/
+
 // For (un)linking.
-#define DDLINK_SECTOR       0x1
-#define DDLINK_BLOCKMAP     0x2
-#define DDLINK_NOLINE       0x4
+#define DDLINK_SECTOR           0x1
+#define DDLINK_BLOCKMAP         0x2
+#define DDLINK_NOLINE           0x4
 
 typedef enum intercepttype_e {
     ICPT_MOBJ,

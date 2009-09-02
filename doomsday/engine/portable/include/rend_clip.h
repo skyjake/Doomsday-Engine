@@ -31,6 +31,8 @@
 
 #include "m_bams.h"
 
+extern int devNoCulling;
+
 void            C_Init(void);
 boolean         C_IsFull(void);
 void            C_ClearRanges(void);

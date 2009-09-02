@@ -70,7 +70,6 @@ static DGLuint constructBBox(DGLuint name, float br);
 extern int useDynLights, translucentIceCorpse;
 extern int skyhemispheres;
 extern int loMaxRadius;
-extern int devNoCulling;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 

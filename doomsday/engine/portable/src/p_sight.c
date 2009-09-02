@@ -55,18 +55,19 @@
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 typedef struct losdata_s {
+    int             flags; // LS_* flags @see lineSightFlags
     divline_t       trace;
     float           startZ; // Eye z of looker.
     float           topSlope; // Slope to top of target.
     float           bottomSlope; // Slope to bottom of target.
     float           bBox[4];
-    float           to[2];
+    float           to[3];
 } losdata_t;
 
 // CODE --------------------------------------------------------------------
 
-static boolean crossLineDef(const linedef_t* li, losdata_t* los,
-                            divline_t* dl)
+static boolean interceptLineDef(const linedef_t* li, losdata_t* los,
+                                divline_t* dl)
 {
     divline_t           localDL, *dlPtr;
 
@@ -98,6 +99,97 @@ static boolean crossLineDef(const linedef_t* li, losdata_t* los,
     return true; // Crossed.
 }
 
+static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
+{
+#define RTOP            0x1
+#define RBOTTOM         0x2
+
+    float               frac;
+    byte                ranges = 0;
+    divline_t           dl;
+    const sector_t*     fsec, *bsec;
+    boolean             noBack;
+
+    if(!interceptLineDef(li, los, &dl))
+        return true; // Ray does not intercept seg on the X/Y plane.
+
+    fsec = li->L_sector(side);
+    bsec  = (li->L_backside? li->L_sector(side^1) : NULL);
+    noBack = (!li->L_backside || !(bsec->SP_floorheight < bsec->SP_ceilheight));
+
+    if(noBack)
+    {
+        if((los->flags & LS_PASSLEFT) &&
+           P_PointOnLinedefSide(FIX2FLT(los->trace.pos[VX]),
+                                FIX2FLT(los->trace.pos[VY]), li))
+            return true; // Ray does not intercept seg from left to right.
+
+        if(!(los->flags & (LS_PASSOVER | LS_PASSUNDER)))
+            return false; // Stop iteration.
+    }
+
+    // Handle the case of a zero height backside in the top range.
+    if(noBack)
+    {
+        ranges |= RTOP;
+    }
+    else
+    {
+        if(bsec->SP_floorheight > fsec->SP_floorheight)
+            ranges |= RBOTTOM;
+        if(bsec->SP_ceilheight < fsec->SP_ceilheight)
+            ranges |= RTOP;
+    }
+
+    if(!ranges)
+        return true;
+
+    frac = P_InterceptVector(&los->trace, &dl);
+
+    if((los->flags & LS_PASSOVER) &&
+       los->bottomSlope > (fsec->SP_ceilheight - los->startZ) / frac)
+        return true;
+
+    if((los->flags & LS_PASSUNDER) &&
+       los->topSlope < (fsec->SP_floorheight - los->startZ) / frac)
+        return true;
+
+    if(ranges & RTOP)
+    {
+        float               slope, top;
+
+        top = (noBack? fsec->SP_ceilheight : bsec->SP_ceilheight);
+        slope = (top - los->startZ) / frac;
+
+        if((los->topSlope > slope) ^ (noBack && !(los->flags & LS_PASSOVER)) ||
+           (noBack && los->topSlope > (fsec->SP_floorheight - los->startZ) / frac))
+            los->topSlope = slope;
+        if((los->bottomSlope > slope) ^ (noBack && !(los->flags & LS_PASSUNDER)) ||
+           (noBack && los->bottomSlope > (fsec->SP_floorheight - los->startZ) / frac))
+            los->bottomSlope = slope;
+    }
+
+    if(ranges & RBOTTOM)
+    {
+        float               bottom =
+            (noBack? fsec->SP_floorheight : bsec->SP_floorheight);
+        float               slope = (bottom - los->startZ) / frac;
+
+        if(los->bottomSlope < slope)
+            los->bottomSlope = slope;
+        if(los->topSlope < slope)
+            los->topSlope = slope;
+    }
+
+    if(los->topSlope <= los->bottomSlope)
+        return false; // Stop iteration.
+
+    return true;
+
+#undef RTOP
+#undef RBOTTOM
+}
+
 /**
  * @return              @c true iff trace crosses the given subsector.
  */
@@ -120,7 +212,7 @@ static boolean crossSSec(uint ssecIdx, losdata_t* los)
 
                 li->validCount = validCount;
 
-                if(crossLineDef(li, los, NULL))
+                if(!crossLineDef(li, seg->side, los))
                     return false; // Stop iteration.
             }
 
@@ -130,73 +222,20 @@ static boolean crossSSec(uint ssecIdx, losdata_t* los)
 
     {
     // Check lines.
-    seg_t**             segPtr = ssec->segs;
+    const seg_t**       segPtr = ssec->segs;
+
     while(*segPtr)
     {
-        seg_t*              seg = *segPtr;
+        const seg_t*        seg = *segPtr;
 
         if(seg->lineDef && seg->lineDef->validCount != validCount)
         {
-            const linedef_t*    li = seg->lineDef;
-            divline_t           dl;
+            linedef_t*          li = seg->lineDef;
 
-            seg->lineDef->validCount = validCount;
+            li->validCount = validCount;
 
-            if(crossLineDef(li, los, &dl))
-            {
-                const sector_t*     front, *back;
-
-                // Must be twosided.
-                if(!li->L_frontside || !li->L_backside)
-                    return false; // Stop iteration.
-
-                front = seg->SG_frontsector;
-                back  = seg->SG_backsector;
-
-                // Do we need to check for occluding upper lower sections?
-                if(front->SP_floorheight != back->SP_floorheight ||
-                   front->SP_ceilheight  != back->SP_ceilheight)
-                {   // A possible occluder.
-                    float               openTop, openBottom, frac;
-
-                    if(front->SP_ceilheight < back->SP_ceilheight)
-                        openTop = front->SP_ceilheight;
-                    else
-                        openTop = back->SP_ceilheight;
-
-                    if(front->SP_floorheight > back->SP_floorheight)
-                        openBottom = front->SP_floorheight;
-                    else
-                        openBottom = back->SP_floorheight;
-
-                    // Completely closed?
-                    if(openBottom >= openTop)
-                        return false; // Stop iteration.
-
-                    frac = P_InterceptVector(&los->trace, &dl);
-
-                    if(front->SP_floorheight != back->SP_floorheight)
-                    {
-                        float               slope =
-                            (openBottom - los->startZ) / frac;
-
-                        if(slope > los->bottomSlope)
-                            los->bottomSlope = slope;
-                    }
-
-                    if(front->SP_ceilheight != back->SP_ceilheight)
-                    {
-                        float               slope =
-                            (openTop - los->startZ) / frac;
-
-                        if(slope < los->topSlope)
-                            los->topSlope = slope;
-                    }
-
-                    if(los->topSlope <= los->bottomSlope)
-                        return false; // Stop iteration.
-                }
-            }
+            if(!crossLineDef(li, seg->side, los))
+                return false;
         }
 
         *segPtr++;
@@ -241,15 +280,17 @@ static boolean crossBSPNode(unsigned int bspNum, losdata_t* los)
  *
  * @param from          World position, trace origin coordinates.
  * @param to            World position, trace target coordinates.
+ * @param flags         Line Sight Flags (LS_*) @see lineSightFlags
  *
  * @return              @c true if the traverser function returns @c true
  *                      for all visited lines.
  */
 boolean P_CheckLineSight(const float from[3], const float to[3],
-                         float bottomSlope, float topSlope)
+                         float bottomSlope, float topSlope, int flags)
 {
     losdata_t               los;
 
+    los.flags = flags;
     los.startZ = from[VZ];
     los.topSlope = to[VZ] + topSlope - los.startZ;
     los.bottomSlope = to[VZ] + bottomSlope - los.startZ;
@@ -259,6 +300,7 @@ boolean P_CheckLineSight(const float from[3], const float to[3],
     los.trace.dY = FLT2FIX(to[VY] - from[VY]);
     los.to[VX] = to[VX];
     los.to[VY] = to[VY];
+    los.to[VZ] = to[VZ];
 
     if(from[VX] > to[VX])
     {
