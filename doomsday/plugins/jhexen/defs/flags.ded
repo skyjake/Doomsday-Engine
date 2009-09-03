@@ -5,7 +5,6 @@ Flag { ID = "mf_special"; Value = 0x1; }
 Flag { ID = "mf_solid"; Value = 0x2; }
 Flag { ID = "mf_shootable"; Value = 0x4; }
 Flag { ID = "mf_nosector"; Value = 0x8; }
-Flag { ID = "mf_noblockmap"; Value = 0x10; }
 Flag { ID = "mf_ambush"; Value = 0x20; }
 Flag { ID = "mf_justhit"; Value = 0x40; }
 Flag { ID = "mf_justattacked"; Value = 0x80; }
@@ -73,4 +72,5 @@ Flag { ID = "mf3_noinfight"; Value = 0x1; }
 #
 # Obsolete (unused) flags:
 #
+Flag { ID = "mf_noblockmap"; Value = 0; }
 Flag { ID = "mf2_onmobj"; Value = 0; }

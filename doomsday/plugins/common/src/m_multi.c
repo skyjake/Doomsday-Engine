@@ -352,11 +352,7 @@ void DrawMultiplayerMenu(void)
 void DrawGameSetupMenu(void)
 {
     char*               boolText[] = {"NO", "YES"};
-#if __JDOOM__
     char*               skillText[] = {"BABY", "EASY", "MEDIUM", "HARD", "NIGHTMARE"};
-#else
-    char*               skillText[] = {"BABY", "EASY", "MEDIUM", "HARD"};
-#endif
 #if __JDOOM__ || __JDOOM64__
     //char*             freeLookText[3] = {"NO", "NOT BFG", "ALL"};
     char*               dmText[] = {"COOPERATIVE", "DEATHMATCH 1", "DEATHMATCH 2"};

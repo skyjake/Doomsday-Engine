@@ -1560,16 +1560,14 @@ boolean PTR_ShootTraverse(intercept_t* in)
         frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
         backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
 
-        if(!frontSec || !backSec)
-        {
-            if(P_PointOnLinedefSide(tracePos[VX], tracePos[VY], li))
-                return true; // Continue traversal.
-
-            goto hitline;
-        }
+        if(!backSec && P_PointOnLinedefSide(tracePos[VX], tracePos[VY], li))
+            return true; // Continue traversal.
 
         if(xline->special)
             P_ActivateLine(li, shootThing, 0, SPAC_IMPACT);
+
+        if(!backSec)
+            goto hitline;
 
 #if __JDOOM64__
         if(xline->flags & ML_BLOCKALL) // jd64
@@ -2605,10 +2603,6 @@ void P_SlideMove(mobj_t* mo)
 boolean PIT_ChangeSector(mobj_t* thing, void* data)
 {
     mobj_t*             mo;
-
-    // Don't check things that aren't blocklinked (supposedly immaterial).
-    if(thing->ddFlags & DDMF_NOBLOCKMAP)
-        return true;
 
     if(P_ThingHeightClip(thing))
         return true; // Keep checking...

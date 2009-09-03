@@ -773,7 +773,7 @@ typedef struct linknode_s {
 #define DDMF_VIEWALIGN      0x00000010
 #define DDMF_FITTOP         0x00000020 // Don't let the sprite go into the ceiling.
 #define DDMF_NOFITBOTTOM    0x00000040
-#define DDMF_NOBLOCKMAP     0x00000080
+//#define DDMF_UNUSED1        0x00000080 // Formerly DDMF_NOBLOCKMAP
 #define DDMF_LIGHTSCALE     0x00000180 // Light scale (0: full, 3: 1/4).
 #define DDMF_LIGHTOFFSET    0x0000f000 // How to offset light (along Z axis).
 //#define DDMF_RESERVED       0x00030000 // Don't touch these!! (translation class).
