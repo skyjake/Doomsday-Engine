@@ -159,13 +159,10 @@ void P_MobjRemove(mobj_t* mo, boolean noRespawn)
  */
 void P_MobjSetPosition(mobj_t* mo)
 {
-    int                 flags = 0;
+    int                 flags = DDLINK_BLOCKMAP;
 
     if(!(mo->flags & MF_NOSECTOR))
         flags |= DDLINK_SECTOR;
-
-    if(!(mo->flags & MF_NOBLOCKMAP))
-        flags |= DDLINK_BLOCKMAP;
 
     P_MobjLink(mo, flags);
 }

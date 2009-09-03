@@ -135,7 +135,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = noblockmap | nogravity | brightshadow;
+  Flags = nogravity | brightshadow;
   Flags2 = cannotpush | noteleport;
 }
 
@@ -190,7 +190,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 10;
-  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags = missile | dropoff | nogravity;
   Flags2 = noteleport;
 }
 
@@ -215,7 +215,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = noblockmap | nogravity;
+  Flags = nogravity;
   Flags2 = cannotpush | noteleport;
 }
 
@@ -270,7 +270,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 8;
-  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags = missile | dropoff | nogravity;
   Flags2 = noteleport;
 }
 
@@ -465,7 +465,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 8;
-  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags = missile | dropoff | nogravity;
   Flags2 = noteleport;
 }
 
@@ -738,7 +738,7 @@ Thing {
   Radius = 20;
   Height = 32;
   Mass = 100;
-  Flags = noblockmap | nosector;
+  Flags = nosector;
 }
 
 Thing {
@@ -762,7 +762,7 @@ Thing {
   Radius = 20;
   Height = 32;
   Mass = 100;
-  Flags = noblockmap | nosector;
+  Flags = nosector;
 }
 
 Thing {
@@ -788,7 +788,7 @@ Thing {
   Height = 32;
   Mass = 100;
   Damage = 3;
-  Flags = noblockmap | missile | dropoff | nogravity | noclip;
+  Flags = missile | dropoff | nogravity | noclip;
   Flags2 = cannotpush | noteleport;
 }
 
@@ -813,7 +813,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = noblockmap | nogravity;
+  Flags = nogravity;
   Flags2 = cannotpush | noteleport;
 }
 
@@ -865,7 +865,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 3;
-  Flags = brightexplode | dropoff | missile | noblockmap | nogravity | brightshadow;
+  Flags = brightexplode | dropoff | missile | nogravity | brightshadow;
   Flags2 = noteleport;
 }
 
@@ -892,7 +892,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 5;
-  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags = missile | dropoff | nogravity;
   Flags2 = noteleport;
 }
 
@@ -919,7 +919,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 20;
-  Flags = noblockmap | missile | dropoff | nogravity | brightexplode;
+  Flags = missile | dropoff | nogravity | brightexplode;
   Flags2 = noteleport;
 }
 
@@ -946,7 +946,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 5;
-  Flags = noblockmap | missile | dropoff | nogravity | brightshadow;
+  Flags = missile | dropoff | nogravity | brightshadow;
   Flags2 = noteleport;
 }
 
@@ -973,7 +973,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 100;
-  Flags = noblockmap | missile | dropoff | nogravity | brightexplode | brightshadow;
+  Flags = missile | dropoff | nogravity | brightexplode | brightshadow;
   Flags2 = noteleport;
 }
 
@@ -1000,7 +1000,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 5;
-  Flags = noblockmap | missile | dropoff | nogravity;
+  Flags = missile | dropoff | nogravity;
   Flags2 = noteleport;
 }
 
@@ -1025,7 +1025,7 @@ Thing {
   Radius = 8;
   Height = 8;
   Mass = 100;
-  Flags = noblockmap | nogravity | viewalign;
+  Flags = nogravity | viewalign;
   Flags2 = cannotpush | noteleport;
 }
 
@@ -1050,7 +1050,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = noblockmap | viewalign;
+  Flags = viewalign;
   Flags2 = cannotpush | noteleport;
 }
 
@@ -1075,7 +1075,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = noblockmap | nogravity;
+  Flags = nogravity;
   Flags2 = cannotpush | noteleport;
 }
 
@@ -1100,7 +1100,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = noblockmap | nogravity;
+  Flags = nogravity;
   Flags2 = cannotpush | noteleport;
 }
 
@@ -1125,7 +1125,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = noblockmap | nosector | local;
+  Flags = nosector | local;
   Flags2 = cannotpush;
 }
 
@@ -1150,7 +1150,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = noblockmap | nogravity | brightshadow;
+  Flags = nogravity | brightshadow;
   Flags2 = cannotpush | noteleport;
 }
 
@@ -3457,7 +3457,7 @@ Thing {
   Radius = 16;
   Height = 16;
   Mass = 100;
-  Flags = local | noblockmap | nogravity;
+  Flags = local | nogravity;
 }
 
 State {
@@ -11961,7 +11961,7 @@ Thing {
   Radius = 1;
   Height = 1;
   Mass = 100;
-  Flags = local | nosector | noblockmap | nogravity;
+  Flags = local | nosector | nogravity;
 }
 
 State {
@@ -12003,7 +12003,7 @@ Thing {
   Radius = 8;
   Height = 8;
   Mass = 100;
-  Flags = noblockmap | nogravity | viewalign;
+  Flags = nogravity | viewalign;
 }
 
 State {

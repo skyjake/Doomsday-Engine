@@ -255,8 +255,6 @@ static void SV_ReadMobj(void)
 
     if(info->flags & MF_SOLID)
         ddflags |= DDMF_SOLID;
-    if(info->flags & MF_NOBLOCKMAP)
-        ddflags |= DDMF_NOBLOCKMAP;
     if(info->flags2 & MF2_DONTDRAW)
         ddflags |= DDMF_DONTDRAW;
 

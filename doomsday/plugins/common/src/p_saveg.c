@@ -1835,8 +1835,6 @@ static int SV_ReadMobj(thinker_t *th)
 
     if(mo->info->flags & MF_SOLID)
         mo->ddFlags |= DDMF_SOLID;
-    if(mo->info->flags & MF_NOBLOCKMAP)
-        mo->ddFlags |= DDMF_NOBLOCKMAP;
     if(mo->info->flags2 & MF2_DONTDRAW)
         mo->ddFlags |= DDMF_DONTDRAW;
 

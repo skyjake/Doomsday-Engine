@@ -2604,10 +2604,6 @@ boolean PIT_ChangeSector(mobj_t* thing, void* data)
 {
     mobj_t*             mo;
 
-    // Don't check things that aren't blocklinked (supposedly immaterial).
-    if(thing->ddFlags & DDMF_NOBLOCKMAP)
-        return true;
-
     if(P_ThingHeightClip(thing))
         return true; // Keep checking...
 
