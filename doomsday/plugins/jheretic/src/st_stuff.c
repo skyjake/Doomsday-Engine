@@ -650,19 +650,24 @@ static void drawWidgets(hudstate_t* hud)
         // Current inventory item.
         if((readyItem = P_InventoryReadyItem(player)) != IIT_NONE)
         {
+            int                 x, y;
             lumpnum_t           patch;
 
             if(hud->currentInvItemFlash > 0)
             {
                 patch = dpInvItemFlash[hud->currentInvItemFlash % 5].lump;
+                x = ST_INVITEMX + 2;
+                y = ST_INVITEMY + 1;
             }
             else
             {
                 patch = P_GetInvItem(readyItem-1)->patchLump;
+                x = ST_INVITEMX;
+                y = ST_INVITEMY;
             }
 
             DGL_Color4f(1, 1, 1, alpha);
-            GL_DrawPatch_CS(ST_INVITEMX, ST_INVITEMY, patch);
+            GL_DrawPatch_CS(x, y, patch);
 
             if(!(hud->currentInvItemFlash > 0))
             {
@@ -1020,9 +1025,9 @@ Draw_EndZoom();
             if(hud->currentInvItemFlash > 0)
             {
 Draw_BeginZoom(cfg.hudScale, 318, 198);
-                GL_DrawPatchLitAlpha(286, 166, 1, iconAlpha / 2,
+                GL_DrawPatchLitAlpha(289, 169, 1, iconAlpha / 2,
                                      dpInvItemBox.lump);
-                GL_DrawPatchLitAlpha(286, 166, 1, iconAlpha,
+                GL_DrawPatchLitAlpha(292, 170, 1, iconAlpha,
                                      dpInvItemFlash[hud->currentInvItemFlash % 5].lump);
 Draw_EndZoom();
             }
@@ -1038,11 +1043,11 @@ Draw_EndZoom();
 
 Draw_BeginZoom(cfg.hudScale, 318, 198);
 
-                    GL_DrawPatchLitAlpha(286, 166, 1, iconAlpha / 2,
+                    GL_DrawPatchLitAlpha(289, 169, 1, iconAlpha / 2,
                                          dpInvItemBox.lump);
-                    GL_DrawPatchLitAlpha(286, 166, 1, iconAlpha, patch);
+                    GL_DrawPatchLitAlpha(289, 169, 1, iconAlpha, patch);
                     if((count = P_InventoryCount(player, readyItem)) > 1)
-                        Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, 313, 188,
+                        Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, 317, 191,
                                         textAlpha);
 Draw_EndZoom();
                 }
