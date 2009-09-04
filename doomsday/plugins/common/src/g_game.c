@@ -1701,7 +1701,6 @@ void G_DoCompleted(void)
 
     P_GetMapLumpName(gameEpisode, gameMap, levid);
 
-    // See if there is a par time definition.
     if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && (minfo.flags & MIF_NO_INTERMISSION))
     {
         G_WorldDone();
