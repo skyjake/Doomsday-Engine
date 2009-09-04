@@ -64,6 +64,13 @@ Copy Map Info {
 }
 
 Copy Map Info {
+  ID = "E1M9";
+  Name = "HUSTR_E1M9";
+  Music = "e1m9";
+  Par time = 165;
+}
+
+Copy Map Info {
   ID = "E1M8";
   Name = "HUSTR_E1M8";
   Music = "e1m8";
@@ -71,15 +78,18 @@ Copy Map Info {
   Par time = 30;
 }
 
-Copy Map Info {
-  ID = "E1M9";
-  Name = "HUSTR_E1M9";
-  Music = "e1m9";
-  Par time = 165;
-}
-
 # The rest of this file is skipped if DOOM1 Shareware
 SkipIf doom1-share
+
+Map Info {
+  ID = "E2M1";
+  Name = "HUSTR_E2M1";
+  Author = "id Software";
+  Music = "e2m1";
+  Par time = 90;
+  Gravity = 1;
+  Sky = "sky2";
+}
 
 Copy Map Info {
   ID = "E2M1";
@@ -132,14 +142,6 @@ Copy Map Info {
 }
 
 Copy Map Info {
-  ID = "E2M8";
-  Name = "HUSTR_E2M8";
-  Music = "e2m8";
-  Flags = nointermission;
-  Par time = 30;
-}
-
-Copy Map Info {
   ID = "E2M9";
   Name = "HUSTR_E2M9";
   Music = "e2m9";
@@ -147,10 +149,20 @@ Copy Map Info {
 }
 
 Copy Map Info {
+  ID = "E2M8";
+  Name = "HUSTR_E2M8";
+  Music = "e2m8";
+  Flags = nointermission;
+  Par time = 30;
+}
+
+Map Info {
   ID = "E3M1";
   Name = "HUSTR_E3M1";
+  Author = "id Software";
   Music = "e3m1";
   Par time = 90;
+  Gravity = 1;
   Sky = "sky3";
 }
 
@@ -197,6 +209,13 @@ Copy Map Info {
 }
 
 Copy Map Info {
+  ID = "E3M9";
+  Name = "HUSTR_E3M9";
+  Music = "e3m9";
+  Par time = 135;
+}
+
+Copy Map Info {
   ID = "E3M8";
   Name = "HUSTR_E3M8";
   Music = "e3m8";
@@ -204,21 +223,16 @@ Copy Map Info {
   Par time = 30;
 }
 
-Copy Map Info {
-  ID = "E3M9";
-  Name = "HUSTR_E3M9";
-  Music = "e3m9";
-  Par time = 135;
-}
-
 # The rest of this file is skipped if not DOOM1 Ultimate.
 SkipIf Not doom1-ultimate
 
-Copy Map Info {
+Map Info {
   ID = "E4M1";
   Name = "HUSTR_E4M1";
+  Author = "id Software";
   Music = "e3m4";
   Par time = 90;
+  Gravity = 1;
   Sky = "sky4";
 }
 
@@ -265,16 +279,16 @@ Copy Map Info {
 }
 
 Copy Map Info {
+  ID = "E4M9";
+  Name = "HUSTR_E4M9";
+  Music = "e1m9";
+  Par time = 90;
+}
+
+Copy Map Info {
   ID = "E4M8";
   Name = "HUSTR_E4M8";
   Music = "e2m5";
   Flags = nointermission;
   # Doesn't have a par time
-}
-
-Copy Map Info {
-  ID = "E4M9";
-  Name = "HUSTR_E4M9";
-  Music = "e1m9";
-  Par time = 90;
 }

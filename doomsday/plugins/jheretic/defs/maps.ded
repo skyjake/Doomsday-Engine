@@ -59,25 +59,27 @@ Copy Map Info {
 }
 
 Copy Map Info {
+  ID = "E1M9";
+  Name = "HUSTR_E1M9";
+  Music = "e1m9";
+}
+
+Copy Map Info {
   ID = "E1M8";
   Name = "HUSTR_E1M8";
   Music = "e1m8";
   Flags = nointermission;
 }
 
-Copy Map Info {
-  ID = "E1M9";
-  Name = "HUSTR_E1M9";
-  Music = "e1m9";
-}
-
 # The rest of the file is skipped if Heretic Shareware.
 SkipIf heretic-share;
 
-Copy Map Info {
+Map Info {
   ID = "E2M1";
   Name = "HUSTR_E2M1";
+  Author = "Raven Software";
   Music = "e2m1";
+  Gravity = 1;
   Sky = "sky2";
 }
 
@@ -118,22 +120,24 @@ Copy Map Info {
 }
 
 Copy Map Info {
-  ID = "E2M8";
-  Name = "HUSTR_E2M8";
-  Music = "e2m8";
-  Flags = nointermission;
-}
-
-Copy Map Info {
   ID = "E2M9";
   Name = "HUSTR_E2M9";
   Music = "e2m9";
 }
 
 Copy Map Info {
+  ID = "E2M8";
+  Name = "HUSTR_E2M8";
+  Music = "e2m8";
+  Flags = nointermission;
+}
+
+Map Info {
   ID = "E3M1";
   Name = "HUSTR_E3M1";
+  Author = "Raven Software";
   Music = "e1m1";
+  Gravity = 1;
   Sky = "sky3";
 }
 
@@ -174,25 +178,27 @@ Copy Map Info {
 }
 
 Copy Map Info {
+  ID = "E3M9";
+  Name = "HUSTR_E3M9";
+  Music = "e2m6";
+}
+
+Copy Map Info {
   ID = "E3M8";
   Name = "HUSTR_E3M8";
   Music = "e1m9";
   Flags = nointermission;
 }
 
-Copy Map Info {
-  ID = "E3M9";
-  Name = "HUSTR_E3M9";
-  Music = "e2m6";
-}
-
 # The rest of the file is skipped if not Heretic Extended.
 SkipIf Not heretic-ext;
 
-Copy Map Info {
+Map Info {
   ID = "E4M1";
   Name = "HUSTR_E4M1";
+  Author = "Raven Software";
   Music = "e1m6";
+  Gravity = 1;
   Sky = "sky1";
 }
 
@@ -233,22 +239,24 @@ Copy Map Info {
 }
 
 Copy Map Info {
-  ID = "E4M8";
-  Name = "HUSTR_E4M8";
-  Music = "e1m8";
-  Flags = nointermission;
-}
-
-Copy Map Info {
   ID = "E4M9";
   Name = "HUSTR_E4M9";
   Music = "e1m9";
 }
 
 Copy Map Info {
+  ID = "E4M8";
+  Name = "HUSTR_E4M8";
+  Music = "e1m8";
+  Flags = nointermission;
+}
+
+Map Info {
   ID = "E5M1";
   Name = "HUSTR_E5M1";
+  Author = "Raven Software";
   Music = "e2m1";
+  Gravity = 1;
   Sky = "sky3";
 }
 
@@ -289,22 +297,24 @@ Copy Map Info {
 }
 
 Copy Map Info {
-  ID = "E5M8";
-  Name = "HUSTR_E5M8";
-  Music = "e2m8";
-  Flags = nointermission;
-}
-
-Copy Map Info {
   ID = "E5M9";
   Name = "HUSTR_E5M9";
   Music = "e2m9";
 }
 
 Copy Map Info {
+  ID = "E5M8";
+  Name = "HUSTR_E5M8";
+  Music = "e2m8";
+  Flags = nointermission;
+}
+
+Map Info {
   ID = "E6M1";
   Name = "HUSTR_E6M1";
+  Author = "Raven Software";
   Music = "e3m2";
+  Gravity = 1;
   Sky = "sky1";
 }
 
