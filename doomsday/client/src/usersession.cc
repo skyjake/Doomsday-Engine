@@ -35,6 +35,9 @@ UserSession::UserSession(de::MuxLink* link, const de::Id& id)
     _user = App::game().SYMBOL(deng_NewUser)();
     _world = App::game().SYMBOL(deng_NewWorld)();
     
+    // The user name is in the configuration.
+    _user->info()["name"].set(TextValue(App::config().gets("user.name")));
+    
     // The server will tell our id.
     _user->setId(Id::NONE);
     

@@ -27,8 +27,7 @@ using namespace de;
 
 User::User()
 {
-    /// @todo  The name is read from the configuration.
-    _info.addText("name", "read-from-config");
+    _info.addText("name", "");
 }
 
 User::~User()

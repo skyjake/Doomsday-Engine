@@ -15,6 +15,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
-# Configuration for the client app.
+# Configuration for the user.
 
-import deng, net, user
+name ?= 'Anonymous'
