@@ -66,5 +66,6 @@ void World::operator >> (Writer& to) const
 
 void World::operator << (Reader& from)
 {
+    App::setCurrentMap(_map);
     from >> _info >> *_map;
 }

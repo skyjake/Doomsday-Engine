@@ -68,13 +68,14 @@ UserSession::~UserSession()
 
 void UserSession::processPacket(const de::Packet& packet)
 {
-    LOG_AS("UserSession::processPacket");
+    LOG_AS("processPacket");
     
     const RecordPacket* record = dynamic_cast<const RecordPacket*>(&packet);
     if(record)
     {
         const Record& rec = record->record();
         LOG_DEBUG("%s\n") << record->label() << rec;
+        LOG_AS_STRING(record->label());
 
         if(record->label() == "user.welcome")
         {
