@@ -91,7 +91,7 @@ void Thinker::undefine(Constructor constructor)
 
 Thinker* Thinker::constructFrom(Reader& reader)
 {
-    for(Constructors::iterator i = _constructors.begin(); i != _constructors.end(); ++i)
+    FOR_EACH(i, _constructors, Constructors::iterator)
     {
         Reader attempt(reader);
         Thinker* thinker = (*i)(attempt);

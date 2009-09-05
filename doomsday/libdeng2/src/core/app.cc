@@ -219,7 +219,7 @@ void App::loadPlugins()
     const FS::Index& index = _fs->indexFor(TYPE_NAME(LibraryFile));
 
     // Check all libraries we have access to and see what can be done with them.
-    for(FS::Index::const_iterator i = index.begin(); i != index.end(); ++i)
+    FOR_EACH(i, index, FS::Index::const_iterator)
     {
         LibraryFile& libFile = *static_cast<LibraryFile*>(i->second);
         if(libFile.name().contains("dengplugin_"))
@@ -281,7 +281,7 @@ void App::loadPlugins()
 
 void App::clearModules()
 {
-    for(Modules::iterator i = _modules.begin(); i != _modules.end(); ++i)
+    FOR_EACH(i, _modules, Modules::iterator)
     {
         delete i->second;
     }
@@ -290,7 +290,7 @@ void App::clearModules()
 
 void App::clearSubsystems()
 {
-    for(Subsystems::iterator i = _subsystems.begin(); i != _subsystems.end(); ++i)
+    FOR_EACH(i, _subsystems, Subsystems::iterator)
     {
         delete *i;
     }
@@ -317,7 +317,7 @@ void App::unloadPlugins()
     // Get the index of libraries.
     const FS::Index& index = _fs->indexFor(TYPE_NAME(LibraryFile));
     
-    for(FS::Index::const_iterator i = index.begin(); i != index.end(); ++i)
+    FOR_EACH(i, index, FS::Index::const_iterator)
     {
         LibraryFile& libFile = *static_cast<LibraryFile*>(i->second);
         if(libFile.name().contains("dengplugin_"))
@@ -356,7 +356,7 @@ dint App::mainLoop()
             iterate();
         
             // Update subsystems (draw graphics, update sounds, etc.).
-            for(Subsystems::iterator i = _subsystems.begin(); i != _subsystems.end(); ++i)
+            FOR_EACH(i, _subsystems, Subsystems::iterator)
             {
                 (*i)->update(elapsed);
             }
@@ -549,8 +549,7 @@ Record& App::importModule(const String& name, const String& fromPath)
     {}
     
     // Search the import path (array of paths).
-    for(ArrayValue::Elements::const_iterator i = importPath->elements().begin();
-        i != importPath->elements().end(); ++i)
+    FOR_EACH(i, importPath->elements(), ArrayValue::Elements::const_iterator)
     {
         String dir = (*i)->asText();
         String p;

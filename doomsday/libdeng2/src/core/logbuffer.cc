@@ -48,7 +48,7 @@ LogBuffer::~LogBuffer()
 void LogBuffer::clear()
 {
     flush();
-    for(EntryList::iterator i = _entries.begin(); i != _entries.end(); ++i)
+    FOR_EACH(i, _entries, EntryList::iterator)
     {
         delete *i;
     }
@@ -63,7 +63,7 @@ dsize LogBuffer::size() const
 void LogBuffer::latestEntries(Entries& entries, dsize count) const
 {
     entries.clear();
-    for(EntryList::const_reverse_iterator i = _entries.rbegin(); i != _entries.rend(); ++i)
+    FOR_EACH_REVERSE(i, _entries, EntryList::const_reverse_iterator)
     {
         entries.push_back(*i);
         if(count && entries.size() >= count)
@@ -121,7 +121,7 @@ void LogBuffer::flush()
         writer = new Writer(*_outputFile, _outputFile->size());
     }
     
-    for(EntryList::iterator i = _toBeFlushed.begin(); i != _toBeFlushed.end(); ++i)
+    FOR_EACH(i, _toBeFlushed, EntryList::iterator)
     {
         // Error messages will go to stderr instead of stdout.
         std::ostream* os = (_standardOutput? ((*i)->level() >= ERROR? &std::cerr : &std::cout) : 0);

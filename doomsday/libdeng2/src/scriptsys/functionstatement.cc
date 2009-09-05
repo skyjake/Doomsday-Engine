@@ -72,8 +72,7 @@ void FunctionStatement::execute(Context& context) const
 
     // Evaluate the argument default values.
     DictionaryValue& dict = eval.evaluateTo<DictionaryValue>(&_defaults);
-    for(DictionaryValue::Elements::const_iterator i = dict.elements().begin(); 
-        i != dict.elements().end(); ++i)
+    FOR_EACH(i, dict.elements(), DictionaryValue::Elements::const_iterator)
     {
         _function->defaults()[i->first.value->asText()] = i->second->duplicate();
     }

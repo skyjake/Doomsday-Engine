@@ -39,7 +39,7 @@ Function::Function(const Arguments& args, const Defaults& defaults)
 Function::~Function()
 {
     // Delete the default argument values.
-    for(Defaults::iterator i = _defaults.begin(); i != _defaults.end(); ++i)
+    FOR_EACH(i, _defaults, Defaults::iterator)
     {
         delete i->second;
     }
@@ -54,7 +54,7 @@ String Function::asText() const
 {
     std::ostringstream os;
     os << "[Function " << this << " (";
-    for(Arguments::const_iterator i = _arguments.begin(); i != _arguments.end(); ++i)
+    FOR_EACH(i, _arguments, Arguments::const_iterator)
     {
         if(i != _arguments.begin())
         {
@@ -172,7 +172,7 @@ void Function::operator >> (Writer& to) const
     to << duint16(_arguments.size());
 
     // Argument names.
-    for(Arguments::const_iterator i = _arguments.begin(); i != _arguments.end(); ++i)
+    FOR_EACH(i, _arguments, Arguments::const_iterator)
     {
         to << *i;
     }
@@ -181,7 +181,7 @@ void Function::operator >> (Writer& to) const
     to << duint16(_defaults.size());
     
     // Default values.
-    for(Defaults::const_iterator i = _defaults.begin(); i != _defaults.end(); ++i)
+    FOR_EACH(i, _defaults, Defaults::const_iterator)
     {
         to << i->first << *i->second;        
     }

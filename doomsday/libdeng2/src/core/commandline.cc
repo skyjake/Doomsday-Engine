@@ -59,7 +59,7 @@ CommandLine::CommandLine(const CommandLine& other)
     : _arguments(other._arguments)
 {
     // Use pointers to the already copied strings.
-    for(Arguments::iterator i = _arguments.begin(); i != _arguments.end(); ++i)
+    FOR_EACH(i, _arguments, Arguments::iterator)
     {
         _pointers.push_back(i->c_str());
     }
@@ -142,7 +142,7 @@ dint CommandLine::has(const String& arg) const
 {
     dint howMany = 0;
     
-    for(Arguments::const_iterator i = _arguments.begin(); i != _arguments.end(); ++i)
+    FOR_EACH(i, _arguments, Arguments::const_iterator)
     {
         if(matches(arg, *i))
         {
@@ -273,7 +273,7 @@ bool CommandLine::matches(const String& full, const String& fullOrAlias) const
     Aliases::const_iterator found = _aliases.find(full);
     if(found != _aliases.end())
     {
-        for(Arguments::const_iterator i = found->second.begin(); i != found->second.end(); ++i)
+        FOR_EACH(i, found->second, Arguments::const_iterator)
         {
             if(i->compareWithoutCase(fullOrAlias))
             {
@@ -308,7 +308,7 @@ void CommandLine::execute(char** envs) const
 
 #ifdef WIN32
     String quotedCmdLine;
-    for(Arguments::const_iterator i = _arguments.begin() + 1; i != _arguments.end(); ++i)
+    FOR_EACH(i, _arguments, Arguments::const_iterator)
     {
         quotedCmdLine += "\"" + *i + "\" ";
     }

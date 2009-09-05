@@ -150,7 +150,7 @@ String LogEntry::asText(const Flags& formattingFlags) const
     {
         Args::const_iterator arg = _args.begin();
         
-        for(String::const_iterator i = _format.begin(); i != _format.end(); ++i)
+        FOR_EACH(i, _format, String::const_iterator)
         {
             if(*i == '%')
             {
@@ -255,7 +255,7 @@ LogEntry& Log::enter(LogLevel level, const String& format)
     // Collect the sections.
     String context;
     String latest;
-    for(SectionStack::iterator i = _sectionStack.begin(); i != _sectionStack.end(); ++i)
+    FOR_EACH(i, _sectionStack, SectionStack::const_iterator)
     {
         if(*i == latest)
         {

@@ -43,7 +43,7 @@ void Protocol::define(Constructor constructor)
 
 Packet* Protocol::interpret(const Block& block) const
 {
-    for(Constructors::const_iterator i = _constructors.begin(); i != _constructors.end(); ++i)
+    FOR_EACH(i, _constructors, Constructors::const_iterator)
     {
         Packet* p = (*i)(block);
         if(p)

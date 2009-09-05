@@ -56,14 +56,14 @@ void Map::clear()
     _thinkerEnum.reset();
 
     // Clear thinkers.
-    for(Thinkers::iterator i = _thinkers.begin(); i != _thinkers.end(); ++i)
+    FOR_EACH(i, _thinkers, Thinkers::iterator)
     {
         delete i->second;
     }
     _thinkers.clear();
     
     // Clear objects.
-    for(Objects::iterator i = _objects.begin(); i != _objects.end(); ++i)
+    FOR_EACH(i, _objects, Objects::iterator)
     {
         delete i->second;
     }
@@ -149,11 +149,11 @@ void Map::operator >> (Writer& to) const
     // Thinkers.
     to << duint32(_objects.size() + _thinkers.size());
     
-    for(Objects::const_iterator i = _objects.begin(); i != _objects.end(); ++i)
+    FOR_EACH(i, _objects, Objects::const_iterator)
     {
         to << *i->second;
     }
-    for(Thinkers::const_iterator i = _thinkers.begin(); i != _thinkers.end(); ++i)
+    FOR_EACH(i, _thinkers, Thinkers::const_iterator)
     {
         to << *i->second;
     }

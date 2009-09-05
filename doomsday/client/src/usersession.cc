@@ -85,8 +85,7 @@ void UserSession::processPacket(const de::Packet& packet)
             // State of existing users.
             clearOthers();
             const Record& existingUsers = rec.subrecord("users");
-            for(Record::Members::const_iterator i = existingUsers.members().begin();
-                i != existingUsers.members().end(); ++i)
+            FOR_EACH(i, existingUsers.members(), Record::Members::const_iterator)
             {
                 User* remoteUser = App::game().SYMBOL(deng_NewUser)();
                 _others[Id(i->first)] = remoteUser;                
@@ -124,7 +123,7 @@ void UserSession::processPacket(const de::Packet& packet)
 
 void UserSession::listenForUpdates()
 {
-    for(;;)
+    FOREVER
     {
         std::auto_ptr<Message> message(_link->updates().receive());
         if(!message.get())
@@ -157,7 +156,7 @@ void UserSession::listen()
 
 void UserSession::clearOthers()
 {
-    for(Others::iterator i = _others.begin(); i != _others.end(); ++i)
+    FOR_EACH(i, _others, Others::iterator)
     {
         delete i->second;
     }

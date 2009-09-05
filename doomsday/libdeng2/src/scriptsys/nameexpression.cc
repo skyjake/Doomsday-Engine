@@ -53,7 +53,7 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
     Variable* variable = 0;
     Record* record = 0;
     
-    for(Evaluator::Namespaces::iterator i = spaces.begin(); i != spaces.end(); ++i)
+    FOR_EACH(i, spaces, Evaluator::Namespaces::iterator)
     {
         Record& ns = **i;
         if(ns.hasMember(_identifier))

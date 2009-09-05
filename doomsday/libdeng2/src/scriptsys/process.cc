@@ -111,7 +111,7 @@ void Process::stop()
     
     // Clear the context stack, apart from the bottommost context, which 
     // represents the process itself.
-    for(ContextStack::reverse_iterator i = _stack.rbegin(); i != _stack.rend(); ++i)
+    FOR_EACH_REVERSE(i, _stack, ContextStack::reverse_iterator)
     {
         if(*i != _stack[0])
         {
@@ -319,7 +319,7 @@ void Process::namespaces(Namespaces& spaces)
 {
     spaces.clear();
     
-    for(ContextStack::reverse_iterator i = _stack.rbegin(); i != _stack.rend(); ++i)
+    FOR_EACH_REVERSE(i, _stack, ContextStack::reverse_iterator)
     {
         Context& context = **i;
         spaces.push_back(&context.names());

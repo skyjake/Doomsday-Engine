@@ -49,8 +49,7 @@ void PrintStatement::execute(Context& context) const
     std::ostringstream os;
     bool isFirst = true;
             
-    for(ArrayValue::Elements::const_iterator i = value.elements().begin();
-        i != value.elements().end(); ++i)
+    FOR_EACH(i, value.elements(), ArrayValue::Elements::const_iterator)
     {
        if(!isFirst)
        {

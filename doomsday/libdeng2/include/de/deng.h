@@ -54,6 +54,28 @@
 #define TYPE_NAME(x) (typeid(x).name())
 
 /**
+ * Macro for iterating through a container.
+ *
+ * @param Var           Name of the iterator variable.
+ * @param ContainerRef  Container.
+ * @param IterClass     Class of the iterator.
+ */
+#define FOR_EACH(Var, ContainerRef, IterClass) \
+    for(IterClass Var = ContainerRef.begin(); Var != ContainerRef.end(); ++Var)
+
+/**
+ * Macro for iterating through a container in reverse.
+ *
+ * @param Var           Name of the iterator variable.
+ * @param ContainerRef  Container.
+ * @param IterClass     Class of the iterator.
+ */
+#define FOR_EACH_REVERSE(Var, ContainerRef, IterClass) \
+    for(IterClass Var = ContainerRef.rbegin(); Var != ContainerRef.rend(); ++Var)
+
+#define FOREVER for(;;)
+
+/**
  * @namespace de
  *
  * The @c de namespace contains all the classes, functions and other
