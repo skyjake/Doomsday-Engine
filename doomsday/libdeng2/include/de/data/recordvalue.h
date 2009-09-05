@@ -60,7 +60,7 @@ namespace de
         /**
          * Returns the record this reference points to.
          */
-        Record* record() const { return record_; }
+        Record* record() const { return _record; }
 
         void verify() const;
         Record& dereference();
@@ -82,8 +82,8 @@ namespace de
         void recordBeingDeleted(Record& record);
         
     public:
-        Record* record_;
-        Ownership ownership_;
+        Record* _record;
+        Ownership _ownership;
     };
 }
 

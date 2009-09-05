@@ -80,12 +80,12 @@ namespace de
             
         public:
             Status(dsize s = 0, const Time& modTime = Time()) 
-                : size(s), modifiedAt(modTime), type_(FILE) {}
+                : size(s), modifiedAt(modTime), _type(FILE) {}
                 
             Status(Type t, dsize s = 0, const Time& modTime = Time())
-                : size(s), modifiedAt(modTime), type_(t) {}
+                : size(s), modifiedAt(modTime), _type(t) {}
 
-            Type type() const { return type_; }
+            Type type() const { return _type; }
             
             bool operator == (const Status& s) const {
                 return size == s.size && modifiedAt == s.modifiedAt;
@@ -98,7 +98,7 @@ namespace de
             Time modifiedAt;
             
         private:
-            Type type_;
+            Type _type;
         };
         
         /**
@@ -129,8 +129,8 @@ namespace de
             Value* duplicateContent() const;
             
         private:
-            File& owner_;
-            Property prop_;
+            File& _owner;
+            Property _prop;
         };
 
     public:
@@ -167,17 +167,17 @@ namespace de
         static FS& fileSystem();
         
         /// Returns the name of the file.
-        const String& name() const { return name_; }
+        const String& name() const { return _name; }
 
         /**
          * Sets the parent folder of this file.
          */
-        void setParent(Folder* parent) { parent_ = parent; }
+        void setParent(Folder* parent) { _parent = parent; }
 
         /**
          * Returns the parent folder. May be NULL.
          */
-        Folder* parent() const { return parent_; }
+        Folder* parent() const { return _parent; }
         
         /**
          * Sets the origin Feed of the File. The origin feed is the feed that is able
@@ -194,7 +194,7 @@ namespace de
         /**
          * Returns the origin Feed of the File. @see setOriginFeed()
          */
-        Feed* originFeed() const { return originFeed_; }
+        Feed* originFeed() const { return _originFeed; }
         
         /**
          * Sets the source file of this file. The source is where this file is getting
@@ -255,10 +255,10 @@ namespace de
         virtual void setMode(const Mode& newMode);
 
         /// Returns the file information (const).
-        const Record& info() const { return info_; }
+        const Record& info() const { return _info; }
 
         /// Returns the file information.
-        Record& info() { return info_; }
+        Record& info() { return _info; }
         
         /**
          * Makes sure that the file has write access.
@@ -280,26 +280,26 @@ namespace de
     
     private:
         /// The parent folder.
-        Folder* parent_;
+        Folder* _parent;
         
         /// The source file (NULL for non-interpreted files).
-        File* source_;
+        File* _source;
                 
         /// Feed that generated the file. This feed is called upon when the file needs 
         /// to be pruned. May also be NULL.
-        Feed* originFeed_;
+        Feed* _originFeed;
         
         /// Name of the file.
-        String name_;
+        String _name;
         
         /// Status of the file.
-        Status status_;
+        Status _status;
         
         /// Mode flags.
-        Mode mode_;    
+        Mode _mode;    
         
         /// File information.
-        Record info_;
+        Record _info;
     }; 
 }
 

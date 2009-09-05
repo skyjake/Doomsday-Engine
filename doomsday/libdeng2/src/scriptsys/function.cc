@@ -29,24 +29,24 @@
 
 using namespace de;
 
-Function::Function() : globals_(0)
+Function::Function() : _globals(0)
 {}
 
 Function::Function(const Arguments& args, const Defaults& defaults) 
-    : arguments_(args), defaults_(defaults), globals_(0)
+    : _arguments(args), _defaults(defaults), _globals(0)
 {}
 
 Function::~Function()
 {
     // Delete the default argument values.
-    for(Defaults::iterator i = defaults_.begin(); i != defaults_.end(); ++i)
+    for(Defaults::iterator i = _defaults.begin(); i != _defaults.end(); ++i)
     {
         delete i->second;
     }
-    if(globals_)
+    if(_globals)
     {
         // Stop observing the namespace.
-        globals_->audienceForDeletion.remove(this);
+        _globals->audienceForDeletion.remove(this);
     }
 }
 
@@ -54,15 +54,15 @@ String Function::asText() const
 {
     std::ostringstream os;
     os << "[Function " << this << " (";
-    for(Arguments::const_iterator i = arguments_.begin(); i != arguments_.end(); ++i)
+    for(Arguments::const_iterator i = _arguments.begin(); i != _arguments.end(); ++i)
     {
-        if(i != arguments_.begin())
+        if(i != _arguments.begin())
         {
             os << ", ";
         }
         os << *i;
-        Defaults::const_iterator def = defaults_.find(*i);
-        if(def != defaults_.end())
+        Defaults::const_iterator def = _defaults.find(*i);
+        if(def != _defaults.end())
         {
             os << "=" << def->second->asText();
         }
@@ -78,13 +78,13 @@ void Function::mapArgumentValues(const ArrayValue& args, ArgumentValues& values)
     assert(labeledArgs != NULL);
 
     // First use all the unlabeled arguments.
-    Arguments::const_iterator k = arguments_.begin();
+    Arguments::const_iterator k = _arguments.begin();
     for(ArrayValue::Elements::const_iterator i = args.elements().begin() + 1;
         i != args.elements().end(); ++i)
     {
         values.push_back(*i);
         
-        if(k != arguments_.end())
+        if(k != _arguments.end())
         {
             if(labeledArgs->contains(TextValue(*k)))
             {
@@ -97,13 +97,13 @@ void Function::mapArgumentValues(const ArrayValue& args, ArgumentValues& values)
         }
     }
     
-    if(values.size() < arguments_.size())
+    if(values.size() < _arguments.size())
     {
         // Then apply the labeled arguments, falling back to default values.
-        Arguments::const_iterator i = arguments_.begin();
+        Arguments::const_iterator i = _arguments.begin();
         // Skip past arguments we already have a value for.
         for(duint count = values.size(); count > 0; --count, ++i);
-        for(; i != arguments_.end(); ++i)
+        for(; i != _arguments.end(); ++i)
         {
             try 
             {
@@ -112,8 +112,8 @@ void Function::mapArgumentValues(const ArrayValue& args, ArgumentValues& values)
             catch(const DictionaryValue::KeyError&)
             {
                 // Check the defaults.
-                Defaults::const_iterator k = defaults_.find(*i);
-                if(k != defaults_.end())
+                Defaults::const_iterator k = _defaults.find(*i);
+                if(k != _defaults.end())
                 {
                     values.push_back(k->second);
                 }
@@ -128,10 +128,10 @@ void Function::mapArgumentValues(const ArrayValue& args, ArgumentValues& values)
     }
     
     // Check that the number of arguments matches what we expect.
-    if(values.size() != arguments_.size())
+    if(values.size() != _arguments.size())
     {
         std::ostringstream os;
-        os << "Expected " << arguments_.size() << " arguments, but got " <<
+        os << "Expected " << _arguments.size() << " arguments, but got " <<
             values.size() << " arguments in function call";
         /// @throw WrongArgumentsError  Wrong number of argument specified.
         throw WrongArgumentsError("Function::mapArgumentValues", os.str());
@@ -142,12 +142,12 @@ void Function::setGlobals(Record* globals)
 {
     LOG_AS("Function::setGlobals");
     
-    if(!globals_)
+    if(!_globals)
     {
-        globals_ = globals;
-        globals_->audienceForDeletion.add(this);
+        _globals = globals;
+        _globals->audienceForDeletion.add(this);
     }
-    else if(globals_ != globals)
+    else if(_globals != globals)
     {
         LOG_WARNING("Function was offered a different namespace.");
     }
@@ -155,12 +155,12 @@ void Function::setGlobals(Record* globals)
 
 Record* Function::globals() const
 {
-    return globals_;
+    return _globals;
 }
 
 bool Function::callNative(Context& context, const ArgumentValues& args) const
 {
-    assert(args.size() == arguments_.size());    
+    assert(args.size() == _arguments.size());    
     
     // Do non-native function call.
     return false;
@@ -169,25 +169,25 @@ bool Function::callNative(Context& context, const ArgumentValues& args) const
 void Function::operator >> (Writer& to) const
 {
     // Number of arguments.
-    to << duint16(arguments_.size());
+    to << duint16(_arguments.size());
 
     // Argument names.
-    for(Arguments::const_iterator i = arguments_.begin(); i != arguments_.end(); ++i)
+    for(Arguments::const_iterator i = _arguments.begin(); i != _arguments.end(); ++i)
     {
         to << *i;
     }
     
     // Number of default values.
-    to << duint16(defaults_.size());
+    to << duint16(_defaults.size());
     
     // Default values.
-    for(Defaults::const_iterator i = defaults_.begin(); i != defaults_.end(); ++i)
+    for(Defaults::const_iterator i = _defaults.begin(); i != _defaults.end(); ++i)
     {
         to << i->first << *i->second;        
     }
     
     // The statements of the function.
-    to << compound_;        
+    to << _compound;        
 }
 
 void Function::operator << (Reader& from)
@@ -196,31 +196,31 @@ void Function::operator << (Reader& from)
     
     // Argument names.
     from >> count;
-    arguments_.clear();
+    _arguments.clear();
     while(count--)
     {
         String argName;
         from >> argName;
-        arguments_.push_back(argName);
+        _arguments.push_back(argName);
     }
     
     // Default values.
     from >> count;
-    defaults_.clear();
+    _defaults.clear();
     while(count--)
     {
         String name;
         from >> name;
-        defaults_[name] = Value::constructFrom(from);
+        _defaults[name] = Value::constructFrom(from);
     }
     
     // The statements.
-    from >> compound_;
+    from >> _compound;
 }
 
 void Function::recordBeingDeleted(Record& record)
 {
     // The namespace of the record is being deleted.
-    assert(globals_ == &record);
-    globals_ = 0;
+    assert(_globals == &record);
+    _globals = 0;
 }

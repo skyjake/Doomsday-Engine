@@ -23,49 +23,49 @@
 
 using namespace de;
 
-Lockable::Lockable() : isLocked_(false)
+Lockable::Lockable() : _isLocked(false)
 {
-    mutex_ = SDL_CreateMutex();
+    _mutex = SDL_CreateMutex();
 }
         
 Lockable::~Lockable()
 {
-    if(isLocked_)
+    if(_isLocked)
     {
         unlock();
     }
-    SDL_DestroyMutex(static_cast<SDL_mutex*>(mutex_));
+    SDL_DestroyMutex(static_cast<SDL_mutex*>(_mutex));
 }
 
 void Lockable::lock() const
 {
     // Acquire the lock.  Blocks until the operation succeeds.
-    if(SDL_LockMutex(static_cast<SDL_mutex*>(mutex_)) < 0)
+    if(SDL_LockMutex(static_cast<SDL_mutex*>(_mutex)) < 0)
     {
         /// @throw Error Acquiring the mutex failed due to an error.
         throw Error("Lockable::lock", "SDL_LockMutex failed");
     }
 
-    isLocked_ = true;
+    _isLocked = true;
 }
 
 void Lockable::unlock() const
 {
-    if(isLocked_)
+    if(_isLocked)
     {
-        isLocked_ = false;
+        _isLocked = false;
 
         // Release the lock.
-        SDL_UnlockMutex(static_cast<SDL_mutex*>(mutex_));
+        SDL_UnlockMutex(static_cast<SDL_mutex*>(_mutex));
     }
 }
 
 bool Lockable::isLocked() const
 {
-    return isLocked_;
+    return _isLocked;
 }
 
 void Lockable::assertLocked() const
 {
-    assert(isLocked_);
+    assert(_isLocked);
 }

@@ -85,7 +85,7 @@ namespace de
         void disable() { enable(MAX_LOG_LEVELS); }
         
         bool enabled(LogLevel overLevel = MESSAGE) const { 
-            return enabledOverLevel_ <= overLevel; 
+            return _enabledOverLevel <= overLevel; 
         }
 
         /**
@@ -96,7 +96,7 @@ namespace de
          * @param yes  @c true or @c false.
          */
         void enableStandardOutput(bool yes = true) {
-            standardOutput_ = yes;
+            _standardOutput = yes;
         }
         
         /**
@@ -117,13 +117,13 @@ namespace de
     private:
         typedef std::list<LogEntry*> EntryList;
 
-        dint enabledOverLevel_;
-        duint maxEntryCount_;
-        bool standardOutput_;
-        File* outputFile_;
-        EntryList entries_;
-        EntryList toBeFlushed_;
-        Time lastFlushedAt_;
+        dint _enabledOverLevel;
+        duint _maxEntryCount;
+        bool _standardOutput;
+        File* _outputFile;
+        EntryList _entries;
+        EntryList _toBeFlushed;
+        Time _lastFlushedAt;
     };    
 }
 

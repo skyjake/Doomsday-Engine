@@ -38,7 +38,7 @@
 using namespace de;
 
 ServerApp::ServerApp(const de::CommandLine& arguments)
-    : App(arguments, "/config/server/server.de", "server"), listenSocket_(0), session_(0)
+    : App(arguments, "/config/server/server.de", "server"), _listenSocket(0), _session(0)
 {
     CommandLine& args = commandLine();
 
@@ -53,7 +53,7 @@ ServerApp::ServerApp(const de::CommandLine& arguments)
     }
     
     LOG_INFO("Server uses port ") << port;
-    listenSocket_ = new ListenSocket(port);
+    _listenSocket = new ListenSocket(port);
     
     args.append("-dedicated");
     args.append("-nosound");
@@ -67,29 +67,29 @@ ServerApp::ServerApp(const de::CommandLine& arguments)
 
 ServerApp::~ServerApp()
 {
-    delete session_;
+    delete _session;
 
     // Close all links.
-    for(Clients::iterator i = clients_.begin(); i != clients_.end(); ++i)
+    for(Clients::iterator i = _clients.begin(); i != _clients.end(); ++i)
     {
         delete *i;
     }
-    clients_.clear();
+    _clients.clear();
     
     // Shutdown the engine.
     DD_Shutdown();
 
-    delete listenSocket_;
+    delete _listenSocket;
 }
 
 void ServerApp::iterate()
 {
     // Check for incoming connections.
-    Socket* incoming = listenSocket_->accept();
+    Socket* incoming = _listenSocket->accept();
     if(incoming)
     {
         LOG_INFO("New client connected from %s.") << incoming->peerAddress();
-        clients_.push_back(new Client(incoming));
+        _clients.push_back(new Client(incoming));
     }
 
     SDL_PumpEvents();
@@ -106,7 +106,7 @@ void ServerApp::iterate()
 
 Client& ServerApp::clientByAddress(const de::Address& address) const
 {
-    for(Clients::const_iterator i = clients_.begin(); i != clients_.end(); ++i)
+    for(Clients::const_iterator i = _clients.begin(); i != _clients.end(); ++i)
     {
         if((*i)->peerAddress() == address)
         {
@@ -118,7 +118,7 @@ Client& ServerApp::clientByAddress(const de::Address& address) const
 
 void ServerApp::tendClients()
 {
-    for(Clients::iterator i = clients_.begin(); i != clients_.end(); )
+    for(Clients::iterator i = _clients.begin(); i != _clients.end(); )
     {
         bool deleteClient = false;
         
@@ -165,7 +165,7 @@ void ServerApp::tendClients()
         if(deleteClient)
         {
             delete *i;
-            clients_.erase(i++);
+            _clients.erase(i++);
         }
         else
         {
@@ -188,30 +188,30 @@ void ServerApp::processPacket(const de::Packet& packet)
             if(cmd->command() == "session.new")
             {
                 verifyAdmin(packet.from());
-                if(session_)
+                if(_session)
                 {
                     // Could allow several...
-                    delete session_;
+                    delete _session;
                 }
                 // Start a new session.
-                session_ = new Session();
+                _session = new Session();
             }
             else if(cmd->command() == "session.delete")
             {
                 verifyAdmin(packet.from());
-                if(session_)
+                if(_session)
                 {
-                    delete session_;
-                    session_ = 0;
+                    delete _session;
+                    _session = 0;
                     return;
                 }
             }
-            if(!session_)
+            if(!_session)
             {
                 throw NoSessionError("ServerApp::processPacket", "No session available");
             }
             // Execute the command.
-            session_->processCommand(clientByAddress(packet.from()), *cmd);
+            _session->processCommand(clientByAddress(packet.from()), *cmd);
         }
         else if(cmd->command() == "status")
         {
@@ -244,10 +244,10 @@ void ServerApp::replyStatus(const de::Address& to)
     
     // The sessions.
     Record& sub = rec.addRecord("sessions");
-    if(session_)
+    if(_session)
     {
         // Information about the session.
-        session_->describe(sub.addRecord(session_->id()));
+        _session->describe(sub.addRecord(_session->id()));
     }
     
     clientByAddress(to).base() << status;

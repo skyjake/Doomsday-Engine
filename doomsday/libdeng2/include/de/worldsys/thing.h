@@ -38,22 +38,22 @@ namespace de
         
     private:
         /// Type identifier.
-        String id_;
+        String _id;
 
         /// @todo  Appearance: sprite frame, 3D model, etc.
         ///        Behavior: states, scripts, counters, etc.
 
         /// Location of the thing's origin within the object's local space.
-        AnimatorVector3 origin_;
+        AnimatorVector3 _origin;
         
         /// Overall opacity of the thing (1.0 = fully opaque, 0.0 = invisible).
-        Animator opacity_;
+        Animator _opacity;
         
         /// Radius of the thing.
-        Animator radius_;
+        Animator _radius;
         
         /// Height of the thing.
-        Animator height_;
+        Animator _height;
     };
 }
 

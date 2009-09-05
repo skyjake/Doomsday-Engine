@@ -42,7 +42,7 @@ namespace de
 
         void clear();
 
-        dsize size() const { return arguments_.size(); }
+        dsize size() const { return _arguments.size(); }
 
         /**
          * Adds an argument expression to the array expression.
@@ -81,7 +81,7 @@ namespace de
         
     private:
         typedef std::vector<Expression*> Arguments;
-        Arguments arguments_;
+        Arguments _arguments;
     };
 }
 

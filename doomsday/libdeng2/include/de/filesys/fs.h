@@ -87,7 +87,7 @@ namespace de
 
         void printIndex();
         
-        Folder& root() { return root_; }
+        Folder& root() { return _root; }
         
         /**
          * Refresh the file system. Populates all folders with files from the feeds.
@@ -160,7 +160,7 @@ namespace de
          * efficiently looking up files based on name. @note The file names are
          * indexed in lower case.
          */
-        const Index& nameIndex() const { return index_; }
+        const Index& nameIndex() const { return _index; }
         
         /**
          * Retrieves the index of files of a particular type.
@@ -192,15 +192,15 @@ namespace de
 
     private:  
         /// The main index to all files in the file system.
-        Index index_;
+        Index _index;
         
         /// Index of file types. Each entry in the index is another index of names 
         /// to file instances.
         typedef std::map<String, Index> TypeIndex;
-        TypeIndex typeIndex_;
+        TypeIndex _typeIndex;
 
         /// The root folder of the entire file system.
-        Folder root_;
+        Folder _root;
     };
 }
 

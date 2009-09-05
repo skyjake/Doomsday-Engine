@@ -47,7 +47,7 @@ namespace de
         /**
          * Returns the video subsystem that governs the window.
          */
-        Video& video() const { return video_; }
+        Video& video() const { return _video; }
 
         /**
          * Returns the drawing surface of the window.
@@ -57,28 +57,28 @@ namespace de
         /**
          * Returns the root visual of the window.
          */
-        const Visual& root() const { return root_; }
+        const Visual& root() const { return _root; }
 
         /**
          * Returns the root visual of the window.
          */
-        Visual& root() { return root_; }
+        Visual& root() { return _root; }
 
         virtual void setPlace(const Placement& p);
 
         /**
          * Returns the placement of the window.
          */
-        const Placement& place() const { return place_; }
+        const Placement& place() const { return _place; }
         
-        duint width() const { return place_.width(); }
+        duint width() const { return _place.width(); }
 
-        duint height() const { return place_.height(); }
+        duint height() const { return _place.height(); }
         
         /**
          * Returns the mode of the window.
          */
-        const Mode& mode() const { return mode_; }
+        const Mode& mode() const { return _mode; }
 
         /**
          * Changes the value of the mode flags. Subclass should override to
@@ -123,19 +123,19 @@ namespace de
         
     private:
         /// Video subsystem that governs the window.
-        Video& video_;
+        Video& _video;
         
         /// Window rectangle.
-        Placement place_;
+        Placement _place;
         
         /// Window mode.
-        Mode mode_;
+        Mode _mode;
         
         /// Drawing surface of the window.
-        Surface* surface_;
+        Surface* _surface;
         
         /// Root visual of the window.
-        Visual root_;
+        Visual _root;
     };
 };
 

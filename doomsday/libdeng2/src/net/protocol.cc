@@ -38,12 +38,12 @@ Protocol::~Protocol()
 
 void Protocol::define(Constructor constructor)
 {
-    constructors_.push_back(constructor);
+    _constructors.push_back(constructor);
 }
 
 Packet* Protocol::interpret(const Block& block) const
 {
-    for(Constructors::const_iterator i = constructors_.begin(); i != constructors_.end(); ++i)
+    for(Constructors::const_iterator i = _constructors.begin(); i != _constructors.end(); ++i)
     {
         Packet* p = (*i)(block);
         if(p)

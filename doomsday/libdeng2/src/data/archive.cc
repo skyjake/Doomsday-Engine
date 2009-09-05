@@ -250,10 +250,10 @@ struct CentralEnd : public ISerializable {
     }
 };
 
-Archive::Archive() : source_(0), modified_(false)
+Archive::Archive() : _source(0), _modified(false)
 {}
 
-Archive::Archive(const IByteArray& archive) : source_(&archive), modified_(false)
+Archive::Archive(const IByteArray& archive) : _source(&archive), _modified(false)
 {
     Reader reader(archive, littleEndianByteOrder);
     
@@ -366,7 +366,7 @@ Archive::Archive(const IByteArray& archive) : source_(&archive), modified_(false
         entry.offset = reader.offset() + header.fileNameSize + localHeader.extraFieldSize;
             
         // Add it to our index.
-        index_[fileName] = entry;
+        _index[fileName] = entry;
 
         // Back to the central directory.
         reader.setOffset(posInCentral);
@@ -380,28 +380,28 @@ Archive::~Archive()
 
 void Archive::cache(bool detachFromSource)
 {
-    if(!source_)
+    if(!_source)
     {
         // Nothing to read from.
         return;
     }    
-    for(Index::iterator i = index_.begin(); i != index_.end(); ++i)
+    for(Index::iterator i = _index.begin(); i != _index.end(); ++i)
     {
         Entry& entry = i->second;
         if(!entry.data && !entry.compressedData)
         {
-            entry.compressedData = new Block(*source_, entry.offset, entry.sizeInArchive);
+            entry.compressedData = new Block(*_source, entry.offset, entry.sizeInArchive);
         }
     }
     if(detachFromSource)
     {
-        source_ = 0;
+        _source = 0;
     }
 }
 
 bool Archive::has(const String& path) const
 {
-    return index_.find(path) != index_.end();
+    return _index.find(path) != _index.end();
 }
 
 void Archive::listFiles(Names& names, const String& folder) const
@@ -409,7 +409,7 @@ void Archive::listFiles(Names& names, const String& folder) const
     names.clear();
     
     String prefix = folder.empty()? "" : folder / "";
-    for(Index::const_iterator i = index_.begin(); i != index_.end(); ++i)
+    for(Index::const_iterator i = _index.begin(); i != _index.end(); ++i)
     {
         if(i->first.beginsWith(prefix))
         {
@@ -428,7 +428,7 @@ void Archive::listFolders(Names& names, const String& folder) const
     names.clear();
     
     String prefix = folder.empty()? "" : folder / "";
-    for(Index::const_iterator i = index_.begin(); i != index_.end(); ++i)
+    for(Index::const_iterator i = _index.begin(); i != _index.end(); ++i)
     {
         if(i->first.beginsWith(prefix))
         {
@@ -444,8 +444,8 @@ void Archive::listFolders(Names& names, const String& folder) const
 
 File::Status Archive::status(const String& path) const
 {
-    Index::const_iterator found = index_.find(path);
-    if(found == index_.end())
+    Index::const_iterator found = _index.find(path);
+    if(found == _index.end())
     {
         /// @throw NotFoundError  @a path was not found in the archive.
         throw NotFoundError("Archive::fileStatus",
@@ -462,8 +462,8 @@ File::Status Archive::status(const String& path) const
 
 const Block& Archive::entryBlock(const String& path) const
 {
-    Index::const_iterator found = index_.find(path);
-    if(found == index_.end())
+    Index::const_iterator found = _index.find(path);
+    if(found == _index.end())
     {
         /// @throw NotFoundError  @a path was not found in the archive.
         throw NotFoundError("Archive::block",
@@ -488,16 +488,16 @@ Block& Archive::entryBlock(const String& path)
     const Block& block = const_cast<const Archive*>(this)->entryBlock(path);
     
     // Mark for recompression.
-    index_.find(path)->second.mustCompress = true;
-    modified_ = true;
+    _index.find(path)->second.mustCompress = true;
+    _modified = true;
     
     return const_cast<Block&>(block);
 }
 
 void Archive::read(const String& path, IBlock& uncompressedData) const
 {
-    Index::const_iterator found = index_.find(path);
-    if(found == index_.end())
+    Index::const_iterator found = _index.find(path);
+    if(found == _index.end())
     {
         /// @throw NotFoundError @a path was not found in the archive.
         throw NotFoundError("Archive::readEntry",
@@ -528,8 +528,8 @@ void Archive::read(const String& path, IBlock& uncompressedData) const
         }
         else
         {
-            assert(source_ != NULL);
-            uncompressedData.copyFrom(*source_, entry.offset, entry.size);
+            assert(_source != NULL);
+            uncompressedData.copyFrom(*_source, entry.offset, entry.size);
         }
     }
     else
@@ -540,8 +540,8 @@ void Archive::read(const String& path, IBlock& uncompressedData) const
         // Take a copy of the compressed data for zlib.
         if(!entry.compressedData)
         {
-            assert(source_ != NULL);
-            entry.compressedData = new Block(*source_, entry.offset, entry.sizeInArchive);
+            assert(_source != NULL);
+            entry.compressedData = new Block(*_source, entry.offset, entry.sizeInArchive);
         }
 
         z_stream stream;
@@ -591,19 +591,19 @@ void Archive::add(const String& path, const IByteArray& data)
     entry.mustCompress = true;
     entry.compression = NO_COMPRESSION; // Will be updated.
     // The rest of the data gets updated when the archive is written.
-    index_[path] = entry;
-    modified_ = true;
+    _index[path] = entry;
+    _modified = true;
 }
 
 void Archive::remove(const String& path)
 {
-    Index::iterator found = index_.find(path);
-    if(found != index_.end())
+    Index::iterator found = _index.find(path);
+    if(found != _index.end())
     {
         delete found->second.data;
         delete found->second.compressedData;
-        index_.erase(found);
-        modified_ = true;
+        _index.erase(found);
+        _modified = true;
         return;
     }
     /// @throw NotFoundError  The path does not exist in the archive.
@@ -613,13 +613,13 @@ void Archive::remove(const String& path)
 void Archive::clear()
 {
     // Free uncompressed data.
-    for(Index::iterator i = index_.begin(); i != index_.end(); ++i)
+    for(Index::iterator i = _index.begin(); i != _index.end(); ++i)
     {
         delete i->second.data;
         delete i->second.compressedData;
     }
-    index_.clear();
-    modified_ = true;
+    _index.clear();
+    _modified = true;
 }
 
 void Archive::operator >> (Writer& to) const
@@ -629,7 +629,7 @@ void Archive::operator >> (Writer& to) const
     Writer writer(to, littleEndianByteOrder);
     
     // First write the local headers.
-    for(Index::const_iterator i = index_.begin(); i != index_.end(); ++i)
+    for(Index::const_iterator i = _index.begin(); i != _index.end(); ++i)
     {
         Entry& entry = const_cast<Entry&>(i->second);
         updateEntry(entry);
@@ -650,7 +650,7 @@ void Archive::operator >> (Writer& to) const
         header.fileNameSize = i->first.size();
 
         // Can we use the data already in the source archive?
-        if((entry.compressedData || source_) && !entry.mustCompress)
+        if((entry.compressedData || _source) && !entry.mustCompress)
         {
             // Yes, we can.
             writer << header << FixedByteArray(i->first);
@@ -661,7 +661,7 @@ void Archive::operator >> (Writer& to) const
             }
             else
             {
-                writer << FixedByteArray(*source_, entry.offset, entry.sizeInArchive);
+                writer << FixedByteArray(*_source, entry.offset, entry.sizeInArchive);
             }            
             // Written to new location.
             entry.offset = newOffset;
@@ -713,14 +713,14 @@ void Archive::operator >> (Writer& to) const
     }
     
     CentralEnd summary;
-    summary.diskEntryCount = index_.size();
-    summary.totalEntryCount = index_.size();
+    summary.diskEntryCount = _index.size();
+    summary.totalEntryCount = _index.size();
 
     // This is where the central directory begins.
     summary.offset = writer.offset();
     
     // Write the central directory.
-    for(Index::const_iterator i = index_.begin(); i != index_.end(); ++i)
+    for(Index::const_iterator i = _index.begin(); i != _index.end(); ++i)
     {
         const Entry& entry = i->second;
         

@@ -21,13 +21,13 @@
 
 using namespace de;
 
-Video::Video() : mainWindow_(0), target_(0)
+Video::Video() : _mainWindow(0), _target(0)
 {}
 
 Video::~Video()
 {
     // Delete all windows.
-    for(Windows::iterator i = windows_.begin(); i != windows_.end(); ++i)
+    for(Windows::iterator i = _windows.begin(); i != _windows.end(); ++i)
     {
         delete *i;
     }
@@ -35,28 +35,28 @@ Video::~Video()
 
 Window& Video::mainWindow() const
 {
-    assert(mainWindow_ != 0);
-    return *mainWindow_;
+    assert(_mainWindow != 0);
+    return *_mainWindow;
 }
     
 void Video::setMainWindow(Window* window)
 {
     assert(window != 0);
-    assert(windows_.find(window) != windows_.end());
-    mainWindow_ = window;
+    assert(_windows.find(window) != _windows.end());
+    _mainWindow = window;
 }
 
 Surface* Video::target() const
 {
-    return target_;
+    return _target;
 }
 
 void Video::setTarget(Surface& surface)
 {
-    target_ = &surface;
+    _target = &surface;
 }
 
 void Video::releaseTarget()
 {
-    target_ = 0;
+    _target = 0;
 }

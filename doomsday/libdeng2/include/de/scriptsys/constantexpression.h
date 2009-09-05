@@ -59,7 +59,7 @@ namespace de
         static ConstantExpression* Pi();
 
     private:
-        Value* value_;
+        Value* _value;
     };
 }
 

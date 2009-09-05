@@ -39,23 +39,23 @@ namespace de
     {
     public:
         Error(const std::string& where, const std::string& message)
-            : std::runtime_error(std::string("(") + where + ") " + message), name_("") {}
+            : std::runtime_error(std::string("(") + where + ") " + message), _name("") {}
         ~Error() throw() {}
         virtual void raise() const { throw *this; }
         const std::string name() const { 
-            if(name_.empty()) return "Error";
-            return name_; 
+            if(_name.empty()) return "Error";
+            return _name; 
         }
         virtual std::string asText() const {
             return "[" + name() + "] " + std::runtime_error::what();
         }
     protected:
         void setName(const std::string& name) {
-            if(!name_.empty()) name_ += "_";
-            name_ += name;
+            if(!_name.empty()) _name += "_";
+            _name += name;
         }
     private:
-        std::string name_;
+        std::string _name;
     };
 }
     

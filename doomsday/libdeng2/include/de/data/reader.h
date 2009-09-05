@@ -91,14 +91,14 @@ namespace de
          * Returns the source byte array of the reader.
          */
         const IByteArray& source() const { 
-            return source_; 
+            return _source; 
         }
 
         /**
          * Returns the offset used by the reader.
          */
         IByteArray::Offset offset() const {
-            return offset_;
+            return _offset;
         }
 
         /**
@@ -107,7 +107,7 @@ namespace de
          * @param offset  Offset to move to.
          */
         void setOffset(IByteArray::Offset offset) {
-            offset_ = offset;
+            _offset = offset;
         }
 
         /**
@@ -128,13 +128,13 @@ namespace de
          * Returns the byte order of the writer.
          */
         const ByteOrder& byteOrder() const {
-            return convert_;
+            return _convert;
         }
         
     private:
-        const IByteArray& source_;
-        IByteArray::Offset offset_;
-        const ByteOrder& convert_;
+        const IByteArray& _source;
+        IByteArray::Offset _offset;
+        const ByteOrder& _convert;
     };
 }
 

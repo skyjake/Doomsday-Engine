@@ -71,7 +71,7 @@ namespace de
         
         virtual ~Thinker();
         
-        const Id& id() const { return id_; }
+        const Id& id() const { return _id; }
         
         /**
          * Sets the id of the thinker.
@@ -90,7 +90,7 @@ namespace de
         /**
          * Returns the map of the thinker.
          */
-        Map* map() const { return map_; }
+        Map* map() const { return _map; }
         
         /**
          * Perform thinking. If there is a function called "thinker" present
@@ -144,19 +144,19 @@ namespace de
 
     private:
         /// Unique identifier for the thinker.
-        Id id_;
+        Id _id;
         
         /// Time when the thinker was initially created.
-        Time bornAt_;
+        Time _bornAt;
 
         /// Optional thinker-specific namespace.
-        Record* info_;
+        Record* _info;
         
         /// The map where the thinker is in.
-        Map* map_;
+        Map* _map;
         
         typedef std::set<Constructor> Constructors;
-        static Constructors constructors_;
+        static Constructors _constructors;
     };
 }
 

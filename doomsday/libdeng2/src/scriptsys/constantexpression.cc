@@ -26,21 +26,21 @@
 
 using namespace de;
 
-ConstantExpression::ConstantExpression() : value_(0)
+ConstantExpression::ConstantExpression() : _value(0)
 {}
 
-ConstantExpression::ConstantExpression(Value* value) : value_(value) 
+ConstantExpression::ConstantExpression(Value* value) : _value(value) 
 {}
 
 ConstantExpression::~ConstantExpression()
 {
-    delete value_;
+    delete _value;
 }
 
 Value* ConstantExpression::evaluate(Evaluator&) const
 {
-    assert(value_ != 0);
-    return value_->duplicate();
+    assert(_value != 0);
+    return _value->duplicate();
 }
 
 ConstantExpression* ConstantExpression::None()
@@ -65,7 +65,7 @@ ConstantExpression* ConstantExpression::Pi()
 
 void ConstantExpression::operator >> (Writer& to) const
 {
-    to << SerialId(CONSTANT) << *value_;
+    to << SerialId(CONSTANT) << *_value;
 }
 
 void ConstantExpression::operator << (Reader& from)
@@ -78,7 +78,7 @@ void ConstantExpression::operator << (Reader& from)
         /// serialized expression was invalid.
         throw DeserializationError("ConstantExpression::operator <<", "Invalid ID");
     }
-    delete value_;
-    value_ = 0;
-    value_ = Value::constructFrom(from);
+    delete _value;
+    _value = 0;
+    _value = Value::constructFrom(from);
 }

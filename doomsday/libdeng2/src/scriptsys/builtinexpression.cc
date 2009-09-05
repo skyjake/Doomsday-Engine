@@ -31,22 +31,22 @@
 
 using namespace de;
 
-BuiltInExpression::BuiltInExpression() : type_(NONE), arg_(0)
+BuiltInExpression::BuiltInExpression() : _type(NONE), _arg(0)
 {}
 
 BuiltInExpression::BuiltInExpression(Type type, Expression* argument)
-    : type_(type), arg_(argument)
+    : _type(type), _arg(argument)
 {}
 
 BuiltInExpression::~BuiltInExpression()
 {
-    delete arg_;
+    delete _arg;
 }
 
 void BuiltInExpression::push(Evaluator& evaluator, Record*) const
 {
     Expression::push(evaluator);    
-    arg_->push(evaluator);
+    _arg->push(evaluator);
 }
 
 Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
@@ -55,7 +55,7 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
     ArrayValue* args = dynamic_cast<ArrayValue*>(value.get());
     assert(args != NULL); // must be an array
     
-    switch(type_)
+    switch(_type)
     {
     case LENGTH:
         if(args->size() != 2)
@@ -72,7 +72,7 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for " +
-                std::string(type_ == DICTIONARY_KEYS? 
+                std::string(_type == DICTIONARY_KEYS? 
                     "DICTIONARY_KEYS" : "DICTIONARY_VALUES"));
         }
         
@@ -86,7 +86,7 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
         for(DictionaryValue::Elements::const_iterator i = dict->elements().begin();
             i != dict->elements().end(); ++i)
         {
-            if(type_ == DICTIONARY_KEYS)
+            if(_type == DICTIONARY_KEYS)
             {
                 array->add(i->first.value->duplicate());
             }
@@ -105,7 +105,7 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for " +
-                std::string(type_ == RECORD_MEMBERS? 
+                std::string(_type == RECORD_MEMBERS? 
                     "RECORD_MEMBERS" : "RECORD_SUBRECORDS"));
         }
         
@@ -116,7 +116,7 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
                 "Argument must be a record");
         }
         DictionaryValue* dict = new DictionaryValue();
-        if(type_ == RECORD_MEMBERS)
+        if(_type == RECORD_MEMBERS)
         {
             for(Record::Members::const_iterator i = rec->dereference().members().begin();
                 i != rec->dereference().members().end(); ++i)
@@ -208,7 +208,7 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
 
 void BuiltInExpression::operator >> (Writer& to) const
 {
-    to << SerialId(BUILT_IN) << duint8(type_) << *arg_;
+    to << SerialId(BUILT_IN) << duint8(_type) << *_arg;
 }
 
 void BuiltInExpression::operator << (Reader& from)
@@ -223,10 +223,10 @@ void BuiltInExpression::operator << (Reader& from)
     }
     duint8 t;
     from >> t;
-    type_ = Type(t);
-    delete arg_;
-    arg_ = 0;
-    arg_ = Expression::constructFrom(from);
+    _type = Type(t);
+    delete _arg;
+    _arg = 0;
+    _arg = Expression::constructFrom(from);
 }
 
 BuiltInExpression::Type BuiltInExpression::findType(const String& identifier)

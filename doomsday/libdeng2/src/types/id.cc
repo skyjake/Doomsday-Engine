@@ -27,22 +27,22 @@
 using namespace de;
 
 // The Id generator starts from one.
-Id::Type Id::generator_ = 1;
+Id::Type Id::_generator = 1;
 
-Id::Id() : id_(generator_++)
+Id::Id() : _id(_generator++)
 {
-    if(id_ == NONE) 
+    if(_id == NONE) 
     {
-        ++id_;   
+        ++_id;   
     }
 }
 
-Id::Id(const String& text) : id_(NONE)
+Id::Id(const String& text) : _id(NONE)
 {
     if(text.beginsWith("{") && text.endsWith("}"))
     {
         std::istringstream is(text.substr(1, text.size() - 2));
-        is >> id_;
+        is >> _id;
     }
 }
 
@@ -56,7 +56,7 @@ Id::operator String () const
     
 Id::operator Value::Number () const
 {
-    return static_cast<Value::Number>(id_);
+    return static_cast<Value::Number>(_id);
 }
     
 String Id::asText() const
@@ -74,10 +74,10 @@ std::ostream& de::operator << (std::ostream& os, const Id& id)
 
 void Id::operator >> (Writer& to) const
 {
-    to << id_;
+    to << _id;
 }
 
 void Id::operator << (Reader& from)
 {
-    from >> id_;
+    from >> _id;
 }

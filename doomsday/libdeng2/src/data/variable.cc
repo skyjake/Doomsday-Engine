@@ -31,26 +31,26 @@
 using namespace de;
 
 Variable::Variable(const String& name, Value* initial, const Mode& m)
-    : mode(m), name_(name), value_(0)
+    : mode(m), _name(name), _value(0)
 {
-    verifyName(name_);
+    verifyName(_name);
     if(!initial)
     {
         initial = new NoneValue();
     }
     std::auto_ptr<Value> v(initial);
     verifyValid(*initial);
-    value_ = v.release();
+    _value = v.release();
 }
 
 Variable::Variable(const Variable& other) 
-    : mode(other.mode), name_(other.name_), value_(other.value_->duplicate())
+    : mode(other.mode), _name(other._name), _value(other._value->duplicate())
 {}
 
 Variable::~Variable()
 {
     FOR_AUDIENCE(Deletion, i) i->variableBeingDeleted(*this);
-    delete value_;
+    delete _value;
 }
 
 Variable& Variable::operator = (Value* v)
@@ -64,32 +64,32 @@ void Variable::set(Value* v)
     std::auto_ptr<Value> val(v);
     verifyWritable();
     verifyValid(*v);
-    delete value_;
-    value_ = val.release();
+    delete _value;
+    _value = val.release();
     
-    FOR_AUDIENCE(Change, i) i->variableValueChanged(*this, *value_);
+    FOR_AUDIENCE(Change, i) i->variableValueChanged(*this, *_value);
 }
 
 void Variable::set(const Value& v)
 {
     verifyWritable();
     verifyValid(v);
-    delete value_;
-    value_ = v.duplicate();
+    delete _value;
+    _value = v.duplicate();
 
-    FOR_AUDIENCE(Change, i) i->variableValueChanged(*this, *value_);
+    FOR_AUDIENCE(Change, i) i->variableValueChanged(*this, *_value);
 }
 
 const Value& Variable::value() const
 {
-    assert(value_ != 0);
-    return *value_;
+    assert(_value != 0);
+    return *_value;
 }
 
 Value& Variable::value()
 {
-    assert(value_ != 0);
-    return *value_;
+    assert(_value != 0);
+    return *_value;
 }
 
 bool Variable::isValid(const Value& v) const
@@ -114,7 +114,7 @@ void Variable::verifyValid(const Value& v) const
     {
         /// @throw InvalidError  Value @a v is not allowed by the variable.
         throw InvalidError("Variable::verifyValid", 
-            "Value type is not allowed by the variable '" + name_ + "'");
+            "Value type is not allowed by the variable '" + _name + "'");
     }
 }
 
@@ -124,7 +124,7 @@ void Variable::verifyWritable()
     {
         /// @throw ReadOnlyError  The variable is in read-only mode.
         throw ReadOnlyError("Variable::verifyWritable", 
-            "Variable '" + name_ + "' is in read-only mode");
+            "Variable '" + _name + "' is in read-only mode");
     }
 }
 
@@ -141,24 +141,24 @@ void Variable::operator >> (Writer& to) const
 {
     if(!mode[NO_SERIALIZE_BIT])
     {
-        to << name_ << duint32(mode.to_ulong()) << *value_;
+        to << _name << duint32(mode.to_ulong()) << *_value;
     }
 }
 
 void Variable::operator << (Reader& from)
 {
     duint32 modeFlags = 0;
-    from >> name_ >> modeFlags;
+    from >> _name >> modeFlags;
     mode = modeFlags;
-    delete value_;
+    delete _value;
     try
     {
-        value_ = Value::constructFrom(from);
+        _value = Value::constructFrom(from);
     }
     catch(const Error& err)
     {
         // Always need to have a value.
-        value_ = new NoneValue();
+        _value = new NoneValue();
         err.raise();
     }    
 }

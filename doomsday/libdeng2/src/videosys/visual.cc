@@ -21,39 +21,39 @@
 
 using namespace de;
 
-Visual::Visual() : parent_(0)
+Visual::Visual() : _parent(0)
 {}
 
 Visual::~Visual()
 {
-    if(parent_)
+    if(_parent)
     {
-        parent_->remove(this);
+        _parent->remove(this);
     }
     clear();
 }
 
 void Visual::clear()
 {
-    for(Children::iterator i = children_.begin(); i != children_.end(); ++i)
+    for(Children::iterator i = _children.begin(); i != _children.end(); ++i)
     {
-        (*i)->parent_ = 0;
+        (*i)->_parent = 0;
         delete *i;
     }
-    children_.clear();
+    _children.clear();
 }
 
 Visual* Visual::add(Visual* visual)
 {
-    children_.push_back(visual);
-    visual->parent_ = this;
+    _children.push_back(visual);
+    visual->_parent = this;
     return visual;
 }
 
 Visual* Visual::remove(Visual* visual)
 {
-    visual->parent_ = 0;
-    children_.remove(visual);
+    visual->_parent = 0;
+    _children.remove(visual);
     return visual;
 }
 
@@ -63,7 +63,7 @@ void Visual::update()
 void Visual::draw() const
 {
     drawSelf(BEFORE_CHILDREN);
-    for(Children::const_iterator i = children_.begin(); i != children_.end(); ++i)
+    for(Children::const_iterator i = _children.begin(); i != _children.end(); ++i)
     {
         (*i)->draw();
     }

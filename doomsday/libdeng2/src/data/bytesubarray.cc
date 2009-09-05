@@ -23,30 +23,30 @@
 using namespace de;
 
 ByteSubArray::ByteSubArray(IByteArray& mainArray, Offset at, Size size)
-    : mainArray_(&mainArray), constMainArray_(&mainArray), at_(at), size_(size)
+    : _mainArray(&mainArray), _constMainArray(&mainArray), _at(at), _size(size)
 {}
 
 ByteSubArray::ByteSubArray(const IByteArray& mainArray, Offset at, Size size)
-    : mainArray_(0), constMainArray_(&mainArray), at_(at), size_(size)
+    : _mainArray(0), _constMainArray(&mainArray), _at(at), _size(size)
 {}
 
 ByteSubArray::Size ByteSubArray::size() const
 {
-    return size_;
+    return _size;
 }
 
 void ByteSubArray::get(Offset at, Byte* values, Size count) const
 {
-    constMainArray_->get(at_ + at, values, count);
+    _constMainArray->get(_at + at, values, count);
 }
 
 void ByteSubArray::set(Offset at, const Byte* values, Size count)
 {
-    if(!mainArray_)
+    if(!_mainArray)
     {
         /// @throw NonModifiableError @a mainArray is non-modifiable.
         throw NonModifiableError("ByteSubArray::set", "Array is non-modifiable.");
     }    
-    mainArray_->set(at_ + at, values, count);
-    size_ = max(size_, at + count);
+    _mainArray->set(_at + at, values, count);
+    _size = max(_size, at + count);
 }

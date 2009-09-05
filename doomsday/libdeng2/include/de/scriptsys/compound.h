@@ -47,7 +47,7 @@ namespace de
         /// Determines the size of the compound.
         /// @return Number of statements in the compound.
         duint size() const {
-            return statements_.size();
+            return _statements.size();
         }
         
         /**
@@ -71,7 +71,7 @@ namespace de
                 
     private:
         typedef std::list<Statement*> Statements;
-        Statements statements_;
+        Statements _statements;
     };
 }
 

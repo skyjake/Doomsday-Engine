@@ -25,7 +25,7 @@
 
 using namespace de;
 
-LocalServer::LocalServer(de::duint16 listenOnPort) : listenOnPort_(listenOnPort)
+LocalServer::LocalServer(de::duint16 listenOnPort) : _listenOnPort(listenOnPort)
 {
     CommandLine svArgs = App::app().commandLine();
     
@@ -38,7 +38,7 @@ LocalServer::LocalServer(de::duint16 listenOnPort) : listenOnPort_(listenOnPort)
 #endif
 
     svArgs.append("--port");
-    svArgs.append(NumberValue(listenOnPort_).asText());
+    svArgs.append(NumberValue(_listenOnPort).asText());
 
     svArgs.remove(1);
     extern char** environ;
@@ -53,7 +53,7 @@ LocalServer::~LocalServer()
     {
         LOG_MESSAGE("Stopping...");
 
-        Link(Address("localhost", listenOnPort_)) << CommandPacket("quit");
+        Link(Address("localhost", _listenOnPort)) << CommandPacket("quit");
     }
     catch(const Socket::ConnectionError&)
     {

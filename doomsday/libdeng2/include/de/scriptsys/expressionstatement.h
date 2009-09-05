@@ -40,7 +40,7 @@ namespace de
          *
          * @param expression  Statement gets ownership.
          */ 
-        ExpressionStatement(Expression* expression = 0) : expression_(expression) {}
+        ExpressionStatement(Expression* expression = 0) : _expression(expression) {}
         
         ~ExpressionStatement();
         
@@ -51,7 +51,7 @@ namespace de
         void operator << (Reader& from);         
         
     private:
-        Expression* expression_;
+        Expression* _expression;
     };
 }
 

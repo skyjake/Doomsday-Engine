@@ -29,17 +29,17 @@ using namespace de;
 
 WhileStatement::~WhileStatement()
 {
-    delete loopCondition_;
+    delete _loopCondition;
 }
 
 void WhileStatement::execute(Context& context) const
 {
     Evaluator& eval = context.evaluator();
 
-    if(eval.evaluate(loopCondition_).isTrue())
+    if(eval.evaluate(_loopCondition).isTrue())
     {
         // Continue and break jump points are defined within a while compound.
-        context.start(compound_.firstStatement(), this, this, this);
+        context.start(_compound.firstStatement(), this, this, this);
     }
     else
     {
@@ -49,7 +49,7 @@ void WhileStatement::execute(Context& context) const
 
 void WhileStatement::operator >> (Writer& to) const
 {
-    to << SerialId(WHILE) << *loopCondition_ << compound_;
+    to << SerialId(WHILE) << *_loopCondition << _compound;
 }
 
 void WhileStatement::operator << (Reader& from)
@@ -62,9 +62,9 @@ void WhileStatement::operator << (Reader& from)
         /// serialized statement was invalid.
         throw DeserializationError("WhileStatement::operator <<", "Invalid ID");
     }
-    delete loopCondition_;
-    loopCondition_ = 0;
-    loopCondition_ = Expression::constructFrom(from);
+    delete _loopCondition;
+    _loopCondition = 0;
+    _loopCondition = Expression::constructFrom(from);
     
-    from >> compound_;
+    from >> _compound;
 }

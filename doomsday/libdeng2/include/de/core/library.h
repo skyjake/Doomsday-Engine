@@ -143,7 +143,7 @@ namespace de
          * Returns the type identifier of the library. This affects how libdeng2
          * will treat the library.
          */
-        const String& type() const { return type_; }
+        const String& type() const { return _type; }
 
         /**
          * Gets the address of an exported symbol. This will always return a valid
@@ -162,14 +162,14 @@ namespace de
                 
     private:  
         /// Handle to the shared library.
-        void* handle_;
+        void* _handle;
         
         typedef std::map<String, void*> Symbols;
-        Symbols symbols_;
+        Symbols _symbols;
         
         /// Type identifier for the library (e.g., "deng-plugin/generic").
         /// Queried by calling deng_Identifier(), if one is exported in the library.
-        String type_;
+        String _type;
     };
 }
 

@@ -27,29 +27,29 @@
 using namespace de;
 
 NumberValue::NumberValue(Number initialValue)
-    : value_(initialValue) 
+    : _value(initialValue) 
 {}
 
 Value* NumberValue::duplicate() const
 {
-    return new NumberValue(value_);
+    return new NumberValue(_value);
 }
 
 Value::Number NumberValue::asNumber() const
 {
-    return value_;
+    return _value;
 }
 
 Value::Text NumberValue::asText() const
 {
     std::ostringstream str;
-    str << value_;
+    str << _value;
     return str.str();
 }
 
 bool NumberValue::isTrue() const
 {
-    return (value_ != 0);
+    return (_value != 0);
 }
 
 dint NumberValue::compare(const Value& value) const
@@ -57,18 +57,18 @@ dint NumberValue::compare(const Value& value) const
     const NumberValue* other = dynamic_cast<const NumberValue*>(&value);
     if(other)
     {
-        if(fequal(value_, other->value_))
+        if(fequal(_value, other->_value))
         {
             return 0;
         }
-        return cmp(value_, other->value_);
+        return cmp(_value, other->_value);
     }    
     return Value::compare(value);
 }
 
 void NumberValue::negate()
 {
-    value_ = -value_;
+    _value = -_value;
 }
 
 void NumberValue::sum(const Value& value)
@@ -79,7 +79,7 @@ void NumberValue::sum(const Value& value)
         throw ArithmeticError("NumberValue::sum", "Values cannot be summed");
     }
     
-    value_ += other->value_;
+    _value += other->_value;
 }
 
 void NumberValue::subtract(const Value& value)
@@ -90,7 +90,7 @@ void NumberValue::subtract(const Value& value)
         throw ArithmeticError("Value::subtract", "Value cannot be subtracted from");    
     }
     
-    value_ -= other->value_;
+    _value -= other->_value;
 }
 
 void NumberValue::divide(const Value& divisor)
@@ -101,7 +101,7 @@ void NumberValue::divide(const Value& divisor)
         throw ArithmeticError("NumberValue::divide", "Value cannot be divided");
     }
     
-    value_ /= other->value_;
+    _value /= other->_value;
 }
  
 void NumberValue::multiply(const Value& value)
@@ -112,7 +112,7 @@ void NumberValue::multiply(const Value& value)
         throw ArithmeticError("NumberValue::multiply", "Value cannot be multiplied");
     }
     
-    value_ *= other->value_;
+    _value *= other->_value;
 }
 
 void NumberValue::modulo(const Value& divisor)
@@ -124,12 +124,12 @@ void NumberValue::modulo(const Value& divisor)
     }
 
     // Modulo is done with integers.
-    value_ = int(value_) % int(other->value_);
+    _value = int(_value) % int(other->_value);
 }
 
 void NumberValue::operator >> (Writer& to) const
 {
-    to << SerialId(NUMBER) << value_;
+    to << SerialId(NUMBER) << _value;
 }
 
 void NumberValue::operator << (Reader& from)
@@ -142,5 +142,5 @@ void NumberValue::operator << (Reader& from)
         /// serialized value was invalid.
         throw DeserializationError("NumberValue::operator <<", "Invalid ID");
     }
-    from >> value_;
+    from >> _value;
 }

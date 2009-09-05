@@ -34,16 +34,16 @@ ArrayExpression::~ArrayExpression()
 
 void ArrayExpression::clear()
 {
-    for(Arguments::iterator i = arguments_.begin(); i != arguments_.end(); ++i)
+    for(Arguments::iterator i = _arguments.begin(); i != _arguments.end(); ++i)
     {
         delete *i;
     }
-    arguments_.clear();
+    _arguments.clear();
 }
 
 void ArrayExpression::add(Expression* arg)
 {
-    arguments_.push_back(arg);
+    _arguments.push_back(arg);
 }
 
 void ArrayExpression::push(Evaluator& evaluator, Record* names) const
@@ -52,8 +52,8 @@ void ArrayExpression::push(Evaluator& evaluator, Record* names) const
     
     // The arguments in reverse order (so they are evaluated in
     // natural order, i.e., the same order they are in the source).
-    for(Arguments::const_reverse_iterator i = arguments_.rbegin();
-        i != arguments_.rend(); ++i)
+    for(Arguments::const_reverse_iterator i = _arguments.rbegin();
+        i != _arguments.rend(); ++i)
     {
         (*i)->push(evaluator);
     }
@@ -61,14 +61,14 @@ void ArrayExpression::push(Evaluator& evaluator, Record* names) const
 
 const Expression& ArrayExpression::at(dint pos) const
 {
-    return *arguments_.at(pos);
+    return *_arguments.at(pos);
 }
 
 Value* ArrayExpression::evaluate(Evaluator& evaluator) const
 {
     // Collect the right number of results into the array.
     ArrayValue* value = new ArrayValue;
-    for(dint count = arguments_.size(); count > 0; --count)
+    for(dint count = _arguments.size(); count > 0; --count)
     {
         value->add(evaluator.popResult());
     }
@@ -78,8 +78,8 @@ Value* ArrayExpression::evaluate(Evaluator& evaluator) const
 
 void ArrayExpression::operator >> (Writer& to) const
 {
-    to << SerialId(ARRAY) << duint16(arguments_.size());
-    for(Arguments::const_iterator i = arguments_.begin(); i != arguments_.end(); ++i)
+    to << SerialId(ARRAY) << duint16(_arguments.size());
+    for(Arguments::const_iterator i = _arguments.begin(); i != _arguments.end(); ++i)
     {
         to << **i;
     }
@@ -100,6 +100,6 @@ void ArrayExpression::operator << (Reader& from)
     clear();
     while(count--)
     {
-        arguments_.push_back(Expression::constructFrom(from));
+        _arguments.push_back(Expression::constructFrom(from));
     }
 }

@@ -33,7 +33,7 @@
 using namespace de;
 
 ClientApp::ClientApp(const de::CommandLine& arguments)
-    : App(arguments, "/config/client/client.de", "client"), localServer_(0), session_(0)
+    : App(arguments, "/config/client/client.de", "client"), _localServer(0), _session(0)
 {        
     CommandLine& args = commandLine();
     
@@ -57,7 +57,7 @@ ClientApp::ClientApp(const de::CommandLine& arguments)
     const duint16 SERVER_PORT = duint16(config().getui("net.localServer.listenPort"));
 
     std::auto_ptr<LocalServer> svPtr(new LocalServer(SERVER_PORT));
-    localServer_ = svPtr.get();
+    _localServer = svPtr.get();
 
     /*
     args.append("-cmd");
@@ -91,7 +91,7 @@ ClientApp::ClientApp(const de::CommandLine& arguments)
     LOG_MESSAGE("Going to join session ") << sessionToJoin;
 
     // Join the session.
-    session_ = new UserSession(link, sessionToJoin);
+    _session = new UserSession(link, sessionToJoin);
 
     //Link(Address("localhost", SERVER_PORT)) << CommandPacket("quit");
     
@@ -101,8 +101,8 @@ ClientApp::ClientApp(const de::CommandLine& arguments)
 
 ClientApp::~ClientApp()
 {
-    delete session_;
-    delete localServer_;
+    delete _session;
+    delete _localServer;
     
     // Shutdown the engine.
     DD_Shutdown();
@@ -112,22 +112,22 @@ void ClientApp::iterate()
 {
     try
     {
-        if(session_)
+        if(_session)
         {
-            session_->listen();
+            _session->listen();
         }
     }
     catch(const UserSession::SessionEndedError& err)
     {
         LOG_INFO("Session ended: ") << err.asText();
-        delete session_;
-        session_ = 0;
+        delete _session;
+        _session = 0;
     }
     catch(const Link::DisconnectedError& err)
     {
         LOG_INFO("Disconnected from server: ") << err.asText();
-        delete session_;
-        session_ = 0;
+        delete _session;
+        _session = 0;
     }
     
     // libdeng main loop tasks.

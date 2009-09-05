@@ -34,11 +34,11 @@ using namespace de;
 #define HAS_LEFT_OPERAND    0x80
 #define OPERATOR_MASK       0x7f
 
-OperatorExpression::OperatorExpression() : op_(NONE), leftOperand_(0), rightOperand_(0)
+OperatorExpression::OperatorExpression() : _op(NONE), _leftOperand(0), _rightOperand(0)
 {}
 
 OperatorExpression::OperatorExpression(Operator op, Expression* operand)
-    : op_(op), leftOperand_(0), rightOperand_(operand)
+    : _op(op), _leftOperand(0), _rightOperand(operand)
 {
     if(op != PLUS && op != MINUS && op != NOT)
     {
@@ -48,7 +48,7 @@ OperatorExpression::OperatorExpression(Operator op, Expression* operand)
 }
 
 OperatorExpression::OperatorExpression(Operator op, Expression* leftOperand, Expression* rightOperand)
-    : op_(op), leftOperand_(leftOperand), rightOperand_(rightOperand)
+    : _op(op), _leftOperand(leftOperand), _rightOperand(rightOperand)
 {
     if(op == NOT)
     {
@@ -59,27 +59,27 @@ OperatorExpression::OperatorExpression(Operator op, Expression* leftOperand, Exp
 
 OperatorExpression::~OperatorExpression()
 {
-    delete leftOperand_;
-    delete rightOperand_;
+    delete _leftOperand;
+    delete _rightOperand;
 }
 
 void OperatorExpression::push(Evaluator& evaluator, Record* names) const
 {
     Expression::push(evaluator);
     
-    if(op_ == MEMBER)
+    if(_op == MEMBER)
     {
         // The MEMBER operator works a bit differently. Just push the left side
         // now. We'll push the other side when we've found out what is the 
         // scope defined by the result of the left side (which must be a RecordValue).
-        leftOperand_->push(evaluator, names);
+        _leftOperand->push(evaluator, names);
     }
     else
     {
-        rightOperand_->push(evaluator);
-        if(leftOperand_)
+        _rightOperand->push(evaluator);
+        if(_leftOperand)
         {
-            leftOperand_->push(evaluator, names);
+            _leftOperand->push(evaluator, names);
         }
     }
 }
@@ -101,13 +101,13 @@ void OperatorExpression::verifyAssignable(Value* value)
 Value* OperatorExpression::evaluate(Evaluator& evaluator) const
 {
     // Get the operands.
-    Value* rightValue = (op_ == MEMBER? 0 : evaluator.popResult());
-    Value* leftValue = (leftOperand_? evaluator.popResult() : 0);
+    Value* rightValue = (_op == MEMBER? 0 : evaluator.popResult());
+    Value* leftValue = (_leftOperand? evaluator.popResult() : 0);
     Value* result = (leftValue? leftValue : rightValue);
 
     try
     {
-        switch(op_)
+        switch(_op)
         {
         case PLUS:
             if(leftValue)
@@ -221,12 +221,12 @@ Value* OperatorExpression::evaluate(Evaluator& evaluator) const
             if(!recValue)
             {
                 throw ScopeError("OperatorExpression::evaluate",
-                    "Left side of " + operatorToText(op_) + " must evaluate to a record");
+                    "Left side of " + operatorToText(_op) + " must evaluate to a record");
             }
             
             // Now that we know what the scope is, push the rest of the expression
             // for evaluation (in this specific scope).
-            rightOperand_->push(evaluator, recValue->record());
+            _rightOperand->push(evaluator, recValue->record());
             
             // Cleanup.
             delete leftValue;
@@ -239,7 +239,7 @@ Value* OperatorExpression::evaluate(Evaluator& evaluator) const
 
         default:
             throw Error("OperatorExpression::evaluate", 
-                "Operator " + operatorToText(op_) + " not implemented");
+                "Operator " + operatorToText(_op) + " not implemented");
         }
     }
     catch(const Error& err)
@@ -259,15 +259,15 @@ Value* OperatorExpression::evaluate(Evaluator& evaluator) const
 void OperatorExpression::operator >> (Writer& to) const
 {
     to << SerialId(OPERATOR);
-    duint8 header = op_;
-    if(leftOperand_)
+    duint8 header = _op;
+    if(_leftOperand)
     {
         header |= HAS_LEFT_OPERAND;
     }
-    to << header << *rightOperand_;
-    if(leftOperand_)
+    to << header << *_rightOperand;
+    if(_leftOperand)
     {
-        to << *leftOperand_;
+        to << *_leftOperand;
     }
 }
 
@@ -283,17 +283,17 @@ void OperatorExpression::operator << (Reader& from)
     }
     duint8 header;
     from >> header;
-    op_ = Operator(header & OPERATOR_MASK);
+    _op = Operator(header & OPERATOR_MASK);
 
-    delete leftOperand_;
-    delete rightOperand_;
-    leftOperand_ = 0;
-    rightOperand_ = 0;
+    delete _leftOperand;
+    delete _rightOperand;
+    _leftOperand = 0;
+    _rightOperand = 0;
     
-    rightOperand_ = Expression::constructFrom(from);
+    _rightOperand = Expression::constructFrom(from);
     if(header & HAS_LEFT_OPERAND)
     {
-        leftOperand_ = Expression::constructFrom(from);
+        _leftOperand = Expression::constructFrom(from);
     }
 }
 
@@ -315,7 +315,7 @@ Value* OperatorExpression::performSlice(Value* leftValue, Value* rightValue) con
         if(!step)
         {
             throw SliceError("OperatorExpression::evaluate",
-                operatorToText(op_) + " cannot use zero as step");
+                operatorToText(_op) + " cannot use zero as step");
         }
     }
 

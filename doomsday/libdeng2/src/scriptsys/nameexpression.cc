@@ -34,7 +34,7 @@ NameExpression::NameExpression()
 {}
 
 NameExpression::NameExpression(const String& identifier, const Flags& flags) 
-    : identifier_(identifier), flags_(flags)
+    : _identifier(identifier), _flags(flags)
 {}
 
 NameExpression::~NameExpression()
@@ -42,8 +42,8 @@ NameExpression::~NameExpression()
 
 Value* NameExpression::evaluate(Evaluator& evaluator) const
 {
-    //std::cout << "NameExpression::evaluator: " << flags_.to_string() << "\n";
-    //LOG_DEBUG("path = %s, scope = %x") << path_ << evaluator.names();
+    //std::cout << "NameExpression::evaluator: " << _flags.to_string() << "\n";
+    //LOG_DEBUG("path = %s, scope = %x") << _path << evaluator.names();
     
     // Collect the namespaces to search.
     Evaluator::Namespaces spaces;
@@ -56,58 +56,58 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
     for(Evaluator::Namespaces::iterator i = spaces.begin(); i != spaces.end(); ++i)
     {
         Record& ns = **i;
-        if(ns.hasMember(identifier_))
+        if(ns.hasMember(_identifier))
         {
             // The name exists in this namespace (as a variable).
-            variable = &ns[identifier_];
+            variable = &ns[_identifier];
             foundInNamespace = &ns;
             break;
         }
-        if(ns.hasSubrecord(identifier_))
+        if(ns.hasSubrecord(_identifier))
         {
             // The name exists in this namespace (as a record).
-            record = &ns.subrecord(identifier_);
+            record = &ns.subrecord(_identifier);
             foundInNamespace = &ns;
         }
-        if(flags_[LOCAL_ONLY_BIT])
+        if(_flags[LOCAL_ONLY_BIT])
         {
             break;
         }
     }
 
-    if(variable && flags_[THROWAWAY_IF_IN_SCOPE_BIT])
+    if(variable && _flags[THROWAWAY_IF_IN_SCOPE_BIT])
     {
         foundInNamespace = 0;
         variable = &evaluator.context().throwaway();
     }
 
     // If a new variable/record is required and one is in scope, we cannot continue.
-    if((variable || record) && flags_[NOT_IN_SCOPE_BIT])
+    if((variable || record) && _flags[NOT_IN_SCOPE_BIT])
     {
         throw AlreadyExistsError("NameExpression::evaluate", 
-            "Identifier '" + identifier_ + "' already exists");
+            "Identifier '" + _identifier + "' already exists");
     }
     
     // Should we import a namespace?
-    if(flags_[IMPORT_BIT])
+    if(_flags[IMPORT_BIT])
     {
-        record = &App::importModule(identifier_,
+        record = &App::importModule(_identifier,
             evaluator.process().globals()["__file__"].value().asText());
             
         // Take a copy if requested.
-        if(flags_[BY_VALUE_BIT])
+        if(_flags[BY_VALUE_BIT])
         {
-            record = &spaces.front()->add(identifier_, new Record(*record));
+            record = &spaces.front()->add(_identifier, new Record(*record));
         }
     }
     
     // Should we delete the identifier?
-    if(flags_[DELETE_BIT])
+    if(_flags[DELETE_BIT])
     {
         if(!variable && !record)
         {
             throw NotFoundError("NameExpression::evaluate", 
-                "Cannot delete nonexistent identifier '" + identifier_ + "'");
+                "Cannot delete nonexistent identifier '" + _identifier + "'");
         }
         assert(foundInNamespace != 0);
         if(variable)
@@ -116,16 +116,16 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
         }
         else if(record)
         {
-            delete foundInNamespace->remove(identifier_);
+            delete foundInNamespace->remove(_identifier);
         }
         return new NoneValue();
     }
 
     // If nothing is found and we are permitted to create new variables, do so.
     // Occurs when assigning into new variables.
-    if(!variable && !record && flags_[NEW_VARIABLE_BIT])
+    if(!variable && !record && _flags[NEW_VARIABLE_BIT])
     {
-        variable = new Variable(identifier_);
+        variable = new Variable(_identifier);
         
         // Add it to the local namespace.
         spaces.front()->add(variable);
@@ -133,7 +133,7 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
     if(variable)
     {
         // Variables can be referred to by reference or value.
-        if(flags_[BY_REFERENCE_BIT])
+        if(_flags[BY_REFERENCE_BIT])
         {
             // Reference to the variable.
             return new RefValue(variable);
@@ -146,17 +146,17 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
     }
 
     // We may be permitted to create a new record.
-    if(flags_[NEW_RECORD_BIT])
+    if(_flags[NEW_RECORD_BIT])
     {
         if(!record)
         {
             // Add it to the local namespace.
-            record = &spaces.front()->addRecord(identifier_);
+            record = &spaces.front()->addRecord(_identifier);
         }
         else
         {
             // Create a variable referencing the record.
-            spaces.front()->add(new Variable(identifier_, new RecordValue(record)));
+            spaces.front()->add(new Variable(_identifier, new RecordValue(record)));
         }
     }
     if(record)
@@ -165,13 +165,13 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
         return new RecordValue(record);
     }
     
-    throw NotFoundError("NameExpression::evaluate", "Identifier '" + identifier_ + 
+    throw NotFoundError("NameExpression::evaluate", "Identifier '" + _identifier + 
         "' does not exist");
 }
 
 void NameExpression::operator >> (Writer& to) const
 {
-    to << SerialId(NAME) << identifier_ << duint16(flags_.to_ulong());
+    to << SerialId(NAME) << _identifier << duint16(_flags.to_ulong());
 }
 
 void NameExpression::operator << (Reader& from)
@@ -184,8 +184,8 @@ void NameExpression::operator << (Reader& from)
         /// serialized expression was invalid.
         throw DeserializationError("NameExpression::operator <<", "Invalid ID");
     }
-    from >> identifier_;
+    from >> _identifier;
     duint16 f;
     from >> f;
-    flags_ = f;
+    _flags = f;
 }

@@ -82,8 +82,8 @@ namespace de
         void luminocityToAlpha();
     
     private:
-        Format format_;
-        Dimensions dims_;
+        Format _format;
+        Dimensions _dims;
     };
 }
 

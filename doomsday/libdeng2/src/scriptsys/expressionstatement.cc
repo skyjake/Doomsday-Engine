@@ -28,18 +28,18 @@ using namespace de;
 
 ExpressionStatement::~ExpressionStatement()
 {
-    delete expression_;
+    delete _expression;
 }
 
 void ExpressionStatement::execute(Context& context) const
 {
-    context.evaluator().evaluate(expression_);
+    context.evaluator().evaluate(_expression);
     context.proceed();
 }
 
 void ExpressionStatement::operator >> (Writer& to) const
 {
-    to << SerialId(EXPRESSION) << *expression_;
+    to << SerialId(EXPRESSION) << *_expression;
 }
 
 void ExpressionStatement::operator << (Reader& from)
@@ -52,7 +52,7 @@ void ExpressionStatement::operator << (Reader& from)
         /// serialized statement was invalid.
         throw DeserializationError("ExpressionStatement::operator <<", "Invalid ID");
     }
-    delete expression_;
-    expression_ = 0;
-    expression_ = Expression::constructFrom(from);
+    delete _expression;
+    _expression = 0;
+    _expression = Expression::constructFrom(from);
 }

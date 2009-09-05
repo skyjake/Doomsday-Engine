@@ -39,13 +39,13 @@ Record::Record()
 
 Record::Record(const Record& other)
 {
-    for(Members::const_iterator i = other.members_.begin(); i != other.members_.end(); ++i)
+    for(Members::const_iterator i = other._members.begin(); i != other._members.end(); ++i)
     {
-        members_[i->first] = new Variable(*i->second);
+        _members[i->first] = new Variable(*i->second);
     }
-    for(Subrecords::const_iterator i = other.subrecords_.begin(); i != other.subrecords_.end(); ++i)
+    for(Subrecords::const_iterator i = other._subrecords.begin(); i != other._subrecords.end(); ++i)
     {
-        subrecords_[i->first] = new Record(*i->second);
+        _subrecords[i->first] = new Record(*i->second);
     }    
 }
 
@@ -57,21 +57,21 @@ Record::~Record()
 
 void Record::clear()
 {
-    if(!members_.empty())
+    if(!_members.empty())
     {
-        for(Members::iterator i = members_.begin(); i != members_.end(); ++i)
+        for(Members::iterator i = _members.begin(); i != _members.end(); ++i)
         {
             delete i->second;
         }
-        members_.clear();
+        _members.clear();
     }
-    if(!subrecords_.empty())
+    if(!_subrecords.empty())
     {
-        for(Subrecords::iterator i = subrecords_.begin(); i != subrecords_.end(); ++i)
+        for(Subrecords::iterator i = _subrecords.begin(); i != _subrecords.end(); ++i)
         {
             delete i->second;
         }
-        subrecords_.clear();
+        _subrecords.clear();
     }
 }
 
@@ -82,14 +82,14 @@ bool Record::has(const String& name) const
 
 bool Record::hasMember(const String& variableName) const
 {
-    Members::const_iterator found = members_.find(variableName);
-    return found != members_.end();
+    Members::const_iterator found = _members.find(variableName);
+    return found != _members.end();
 }
 
 bool Record::hasSubrecord(const String& subrecordName) const
 {
-    Subrecords::const_iterator found = subrecords_.find(subrecordName);
-    return found != subrecords_.end();
+    Subrecords::const_iterator found = _subrecords.find(subrecordName);
+    return found != _subrecords.end();
 }
 
 Variable& Record::add(Variable* variable)
@@ -103,15 +103,15 @@ Variable& Record::add(Variable* variable)
     if(hasMember(variable->name()))
     {
         // Delete the previous variable with this name.
-        delete members_[variable->name()];
+        delete _members[variable->name()];
     }
-    members_[variable->name()] = var.release();
+    _members[variable->name()] = var.release();
     return *variable;
 }
 
 Variable* Record::remove(Variable& variable)
 {
-    members_.erase(variable.name());
+    _members.erase(variable.name());
     return &variable;
 }
 
@@ -160,7 +160,7 @@ Record& Record::add(const String& name, Record* subrecord)
         /// @throw UnnamedError All subrecords in a record must have a name.
         throw UnnamedError("Record::add", "All subrecords in a record must have a name");
     }
-    subrecords_[name] = sub.release();
+    _subrecords[name] = sub.release();
     return *subrecord;
 }
 
@@ -171,11 +171,11 @@ Record& Record::addRecord(const String& name)
 
 Record* Record::remove(const String& name)
 {
-    Subrecords::iterator found = subrecords_.find(name);
-    if(found != subrecords_.end())
+    Subrecords::iterator found = _subrecords.find(name);
+    if(found != _subrecords.end())
     {
         Record* rec = found->second;
-        subrecords_.erase(found);
+        _subrecords.erase(found);
         return rec;
     }
     throw NotFoundError("Record::remove", "Subrecord '" + name + "' not found");
@@ -202,8 +202,8 @@ const Variable& Record::operator [] (const String& name) const
         return subrecord(subName)[remaining];
     }
     
-    Members::const_iterator found = members_.find(name);
-    if(found != members_.end())
+    Members::const_iterator found = _members.find(name);
+    if(found != _members.end())
     {
         return *found->second;
     }
@@ -224,8 +224,8 @@ const Record& Record::subrecord(const String& name) const
         return subrecord(name.substr(0, pos)).subrecord(name.substr(pos + 1));
     }
 
-    Subrecords::const_iterator found = subrecords_.find(name);
-    if(found != subrecords_.end())
+    Subrecords::const_iterator found = _subrecords.find(name);
+    if(found != _subrecords.end())
     {
         return *found->second;
     }
@@ -238,13 +238,13 @@ String Record::asText(const String& prefix, List* lines) const
     if(lines)
     {
         // Collect lines from this record.
-        for(Members::const_iterator i = members_.begin(); i != members_.end(); ++i)
+        for(Members::const_iterator i = _members.begin(); i != _members.end(); ++i)
         {
             KeyValue kv(prefix + i->first, i->second->value().asText());
             lines->push_back(kv);
         }
         // Collect lines from subrecords.
-        for(Subrecords::const_iterator i = subrecords_.begin(); i != subrecords_.end(); ++i)
+        for(Subrecords::const_iterator i = _subrecords.begin(); i != _subrecords.end(); ++i)
         {
             i->second->asText(i->first.concatenateMember(""), lines);
         }
@@ -305,16 +305,16 @@ const Function* Record::function(const String& name) const
     
 void Record::operator >> (Writer& to) const
 {
-    to << duint32(members_.size());
-    for(Members::const_iterator i = members_.begin(); i != members_.end(); ++i)
+    to << duint32(_members.size());
+    for(Members::const_iterator i = _members.begin(); i != _members.end(); ++i)
     {
         to << *i->second;
     }
     // Any subrecords?
-    to << duint32(subrecords_.size());
-    if(!subrecords_.empty())
+    to << duint32(_subrecords.size());
+    if(!_subrecords.empty())
     {
-        for(Subrecords::const_iterator i = subrecords_.begin(); i != subrecords_.end(); ++i)
+        for(Subrecords::const_iterator i = _subrecords.begin(); i != _subrecords.end(); ++i)
         {
             to << i->first << *i->second;
         }

@@ -33,34 +33,34 @@ IfStatement::~IfStatement()
 
 void IfStatement::clear()
 {
-    for(Branches::iterator i = branches_.begin(); i != branches_.end(); ++i)
+    for(Branches::iterator i = _branches.begin(); i != _branches.end(); ++i)
     {
         delete i->condition;
         delete i->compound;
     }
-    branches_.clear();
+    _branches.clear();
 }
 
 void IfStatement::newBranch()
 {
-    branches_.push_back(Branch(new Compound()));
+    _branches.push_back(Branch(new Compound()));
 }
 
 void IfStatement::setBranchCondition(Expression* condition)
 {
-    branches_.back().condition = condition;
+    _branches.back().condition = condition;
 }
 
 Compound& IfStatement::branchCompound()
 {
-    return *branches_.back().compound;
+    return *_branches.back().compound;
 }
 
 void IfStatement::execute(Context& context) const
 {
     Evaluator& eval = context.evaluator();
 
-    for(Branches::const_iterator i = branches_.begin(); i != branches_.end(); ++i)
+    for(Branches::const_iterator i = _branches.begin(); i != _branches.end(); ++i)
     {
         if(eval.evaluate(i->condition).isTrue())
         {
@@ -68,9 +68,9 @@ void IfStatement::execute(Context& context) const
             return;
         }
     }
-    if(elseCompound_.size())
+    if(_elseCompound.size())
     {
-        context.start(elseCompound_.firstStatement(), next());
+        context.start(_elseCompound.firstStatement(), next());
     }
     else
     {
@@ -83,14 +83,14 @@ void IfStatement::operator >> (Writer& to) const
     to << SerialId(IF);
     
     // Branches.
-    to << duint16(branches_.size());
-    for(Branches::const_iterator i = branches_.begin(); i != branches_.end(); ++i)
+    to << duint16(_branches.size());
+    for(Branches::const_iterator i = _branches.begin(); i != _branches.end(); ++i)
     {
         assert(i->condition != NULL);
         to << *i->condition << *i->compound;
     }
 
-    to << elseCompound_;
+    to << _elseCompound;
 }
 
 void IfStatement::operator << (Reader& from)
@@ -115,5 +115,5 @@ void IfStatement::operator << (Reader& from)
         from >> branchCompound();
     }
     
-    from >> elseCompound_;
+    from >> _elseCompound;
 }

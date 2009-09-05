@@ -57,9 +57,9 @@ namespace de
          */
         virtual void loadMap(const String& name);
         
-        const Record& info() const { return info_; }
+        const Record& info() const { return _info; }
 
-        Record& info() { return info_; }
+        Record& info() { return _info; }
 
         // Implements ISerializable.
         void operator >> (Writer& to) const;
@@ -67,10 +67,10 @@ namespace de
         
     private:
         /// Worldwide parameters. These will live on even when the map changes.
-        Record info_;
+        Record _info;
         
         /// The current map.
-        Map* map_;
+        Map* _map;
     };
 }
 

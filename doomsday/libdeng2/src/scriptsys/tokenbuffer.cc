@@ -37,7 +37,7 @@ bool TokenBuffer::Token::equals(const char* str) const
         // No possibility of a match.
         return false;
     }
-    return !String::compareWithCase(str, reinterpret_cast<const char*>(begin_), size());
+    return !String::compareWithCase(str, reinterpret_cast<const char*>(_begin), size());
 }
 
 bool TokenBuffer::Token::beginsWith(const char* str) const
@@ -48,28 +48,28 @@ bool TokenBuffer::Token::beginsWith(const char* str) const
         // No way.
         return false;
     }
-    return !String::compareWithCase(str, reinterpret_cast<const char*>(begin_), length);
+    return !String::compareWithCase(str, reinterpret_cast<const char*>(_begin), length);
 }
 
 String TokenBuffer::Token::asText() const
 {
     std::ostringstream os;
-    os << "'" << String(reinterpret_cast<const char*>(begin_), end_ - begin_) << 
-        "' (on line " << line_ << ")"; 
+    os << "'" << String(reinterpret_cast<const char*>(_begin), _end - _begin) << 
+        "' (on line " << _line << ")"; 
     return os.str();
 }
 
 String TokenBuffer::Token::str() const
 {
-    return String(reinterpret_cast<const char*>(begin_), end_ - begin_);
+    return String(reinterpret_cast<const char*>(_begin), _end - _begin);
 }
 
-TokenBuffer::TokenBuffer() : forming_(0), formPool_(0)
+TokenBuffer::TokenBuffer() : _forming(0), _formPool(0)
 {}
  
 TokenBuffer::~TokenBuffer()
 {
-    for(Pools::iterator i = pools_.begin(); i != pools_.end(); ++i)
+    for(Pools::iterator i = _pools.begin(); i != _pools.end(); ++i)
     {
         std::free(i->chars);
     }
@@ -77,33 +77,33 @@ TokenBuffer::~TokenBuffer()
 
 void TokenBuffer::clear()
 {
-    tokens_.clear();
+    _tokens.clear();
 
     // Empty the allocated pools.
-    for(Pools::iterator i = pools_.begin(); i != pools_.end(); ++i)
+    for(Pools::iterator i = _pools.begin(); i != _pools.end(); ++i)
     {
         i->rover = 0;
     }
 
     // Reuse allocated pools.
-    formPool_ = 0;
+    _formPool = 0;
 }
 
 duchar* TokenBuffer::advanceToPoolWithSpace(duint minimum)
 {
-    for(;; ++formPool_)
+    for(;; ++_formPool)
     {
-        if(pools_.size() == formPool_)
+        if(_pools.size() == _formPool)
         {
             // Need a new pool.
-            pools_.push_back(Pool());
-            Pool& newFp = pools_[formPool_];
+            _pools.push_back(Pool());
+            Pool& newFp = _pools[_formPool];
             newFp.size = POOL_SIZE + minimum;
             newFp.chars = reinterpret_cast<duchar*>(std::malloc(newFp.size));
             return newFp.chars;
         }
 
-        Pool& fp = pools_[formPool_];
+        Pool& fp = _pools[_formPool];
         if(fp.rover + minimum < fp.size)
         {
             return &fp.chars[fp.rover];
@@ -121,74 +121,74 @@ duchar* TokenBuffer::advanceToPoolWithSpace(duint minimum)
 
 void TokenBuffer::newToken(duint line)
 {
-    if(forming_)
+    if(_forming)
     {
         // Discard the currently formed token. Use the old start address.
-        *forming_ = Token(forming_->begin(), forming_->begin(), line);
+        *_forming = Token(_forming->begin(), _forming->begin(), line);
         return;
     }
 
     // Determine which pool to use and the starting address.
     duchar* begin = advanceToPoolWithSpace(0);
     
-    tokens_.push_back(Token(begin, begin, line));
-    forming_ = &tokens_.back();
+    _tokens.push_back(Token(begin, begin, line));
+    _forming = &_tokens.back();
 }
 
 void TokenBuffer::appendChar(duchar c)
 {
-    assert(forming_ != 0);
+    assert(_forming != 0);
         
     // There is at least one character available in the pool.
-    forming_->appendChar(c);
+    _forming->appendChar(c);
 
     // If we run out of space in the pool, we'll need to relocate the
     // token to a new pool. If the pool is new, or there are no tokens
     // in it yet, we can resize the pool in place.
-    Pool& fp = pools_[formPool_];
-    if(forming_->end() - fp.chars >= dint(fp.size))
+    Pool& fp = _pools[_formPool];
+    if(_forming->end() - fp.chars >= dint(fp.size))
     {
         // The pool is full. Find a new pool and move the token.
-        std::string tok = forming_->str();
+        std::string tok = _forming->str();
         duchar* newBegin = advanceToPoolWithSpace(tok.size());
         memmove(newBegin, tok.c_str(), tok.size());
-        *forming_ = Token(newBegin, newBegin + tok.size(), forming_->line());
+        *_forming = Token(newBegin, newBegin + tok.size(), _forming->line());
     }
 }
 
 void TokenBuffer::setType(Token::Type type)
 {
-    assert(forming_ != 0);
-    forming_->setType(type);
+    assert(_forming != 0);
+    _forming->setType(type);
 }
 
 void TokenBuffer::endToken()
 {
-    if(forming_)
+    if(_forming)
     {
         // Update the pool.
-        pools_[formPool_].rover += forming_->size();
+        _pools[_formPool].rover += _forming->size();
         
-        forming_ = 0;
+        _forming = 0;
     }
 }
 
 duint TokenBuffer::size() const
 {
-    return tokens_.size();
+    return _tokens.size();
 }
 
 const TokenBuffer::Token& TokenBuffer::at(duint i) const
 {
-    if(i >= tokens_.size())
+    if(i >= _tokens.size())
     {
         /// @throw OutOfRangeError  Index @a i is out of range.
         throw OutOfRangeError("TokenBuffer::at", "Index out of range");
     }
-    return tokens_[i];
+    return _tokens[i];
 }
 
 const TokenBuffer::Token& TokenBuffer::latest() const
 {
-    return tokens_.back();
+    return _tokens.back();
 }

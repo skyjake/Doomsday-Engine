@@ -43,28 +43,28 @@
 using namespace de;
 
 DirectoryFeed::DirectoryFeed(const String& nativePath, const Mode& mode) 
-    : nativePath_(nativePath), mode_(mode) {}
+    : _nativePath(nativePath), _mode(mode) {}
 
 DirectoryFeed::~DirectoryFeed()
 {}
 
 void DirectoryFeed::populate(Folder& folder)
 {
-    if(mode_[ALLOW_WRITE_BIT])
+    if(_mode[ALLOW_WRITE_BIT])
     {
         folder.setMode(File::WRITE);
     }
-    if(mode_[CREATE_IF_MISSING_BIT] && !exists(nativePath_))
+    if(_mode[CREATE_IF_MISSING_BIT] && !exists(_nativePath))
     {
-        createDir(nativePath_);
+        createDir(_nativePath);
     }
     
 #ifdef UNIX
-    DIR* dir = opendir(nativePath_.empty()? "." : nativePath_.c_str());
+    DIR* dir = opendir(_nativePath.empty()? "." : _nativePath.c_str());
     if(!dir)
     {
         /// @throw NotFoundError The native directory was not accessible.
-        throw NotFoundError("DirectoryFeed::populate", "Path '" + nativePath_ + "' not found");
+        throw NotFoundError("DirectoryFeed::populate", "Path '" + _nativePath + "' not found");
     }
     struct dirent* entry;
     while((entry = readdir(dir)) != 0)   
@@ -87,7 +87,7 @@ void DirectoryFeed::populate(Folder& folder)
 #ifdef WIN32
     _finddata_t fd;
     intptr_t handle;
-    if((handle = _findfirst(nativePath_.concatenateNativePath("*").c_str(), &fd)) != -1L)
+    if((handle = _findfirst(_nativePath.concatenateNativePath("*").c_str(), &fd)) != -1L)
     {
         do
         {
@@ -113,10 +113,10 @@ void DirectoryFeed::populateSubFolder(Folder& folder, const String& entryName)
 
     if(entryName != "." && entryName != "..")
     {
-        String subFeedPath = nativePath_.concatenateNativePath(entryName);
+        String subFeedPath = _nativePath.concatenateNativePath(entryName);
         Folder& subFolder = folder.fileSystem().getFolder(folder.path() / entryName);
 
-        if(mode_[ALLOW_WRITE_BIT])
+        if(_mode[ALLOW_WRITE_BIT])
         {
             subFolder.setMode(File::WRITE);
         }
@@ -126,7 +126,7 @@ void DirectoryFeed::populateSubFolder(Folder& folder, const String& entryName)
             i != subFolder.feeds().end(); ++i)
         {
             const DirectoryFeed* dirFeed = dynamic_cast<const DirectoryFeed*>(*i);
-            if(dirFeed && dirFeed->nativePath_ == subFeedPath)
+            if(dirFeed && dirFeed->_nativePath == subFeedPath)
             {
                 // Already got this fed. Nothing else needs done.
                 LOG_DEBUG("Feed for ") << subFeedPath << " already there.";
@@ -135,7 +135,7 @@ void DirectoryFeed::populateSubFolder(Folder& folder, const String& entryName)
         }
 
         // Add a new feed. Mode inherited.
-        subFolder.attach(new DirectoryFeed(subFeedPath, mode_));
+        subFolder.attach(new DirectoryFeed(subFeedPath, _mode));
     }
 }
 
@@ -147,12 +147,12 @@ void DirectoryFeed::populateFile(Folder& folder, const String& entryName)
         return;
     }
     
-    String entryPath = nativePath_.concatenateNativePath(entryName);
+    String entryPath = _nativePath.concatenateNativePath(entryName);
 
     // Open the native file.
     std::auto_ptr<NativeFile> nativeFile(new NativeFile(entryName, entryPath));
     nativeFile->setStatus(fileStatus(entryPath));
-    if(mode_[ALLOW_WRITE_BIT])
+    if(_mode[ALLOW_WRITE_BIT])
     {
         nativeFile->setMode(File::WRITE);
     }
@@ -201,9 +201,9 @@ bool DirectoryFeed::prune(File& file) const
         if(subFolder->feeds().size() == 1)
         {
             DirectoryFeed* dirFeed = dynamic_cast<DirectoryFeed*>(subFolder->feeds().front());
-            if(dirFeed && !exists(dirFeed->nativePath_))
+            if(dirFeed && !exists(dirFeed->_nativePath))
             {
-                LOG_VERBOSE("%s: no longer exists, pruning!") << nativePath_;
+                LOG_VERBOSE("%s: no longer exists, pruning!") << _nativePath;
                 return true;
             }
         }
@@ -215,7 +215,7 @@ bool DirectoryFeed::prune(File& file) const
 
 File* DirectoryFeed::newFile(const String& name)
 {
-    String newPath = nativePath_.concatenateNativePath(name);
+    String newPath = _nativePath.concatenateNativePath(name);
     if(exists(newPath))
     {
         /// @throw AlreadyExistsError  The file @a name already exists in the native directory.
@@ -228,7 +228,7 @@ File* DirectoryFeed::newFile(const String& name)
 
 void DirectoryFeed::removeFile(const String& name)
 {
-    String path = nativePath_.concatenateNativePath(name);
+    String path = _nativePath.concatenateNativePath(name);
     if(!exists(path))
     {
         /// @throw NotFoundError  The file @a name does not exist in the native directory.

@@ -24,7 +24,7 @@
 using namespace de;
 
 ArchiveFile::ArchiveFile(const String& name, Archive& archive, const String& entryPath)
-    : File(name), archive_(archive), entryPath_(entryPath)
+    : File(name), _archive(archive), _entryPath(entryPath)
 {}
 
 ArchiveFile::~ArchiveFile()
@@ -39,7 +39,7 @@ void ArchiveFile::clear()
 {
     File::clear();
     
-    archive().entryBlock(entryPath_).clear();
+    archive().entryBlock(_entryPath).clear();
     
     // Update status.
     Status st = status();
@@ -50,7 +50,7 @@ void ArchiveFile::clear()
 
 void ArchiveFile::get(Offset at, Byte* values, Size count) const
 {
-    archive().entryBlock(entryPath_).get(at, values, count);
+    archive().entryBlock(_entryPath).get(at, values, count);
 }
 
 void ArchiveFile::set(Offset at, const Byte* values, Size count)
@@ -58,7 +58,7 @@ void ArchiveFile::set(Offset at, const Byte* values, Size count)
     verifyWriteAccess();
     
     // The entry will be marked for recompression (due to non-const access).
-    Block& entryBlock = archive().entryBlock(entryPath_);
+    Block& entryBlock = archive().entryBlock(_entryPath);
     entryBlock.set(at, values, count);
     
     // Update status.

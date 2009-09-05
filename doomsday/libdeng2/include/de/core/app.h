@@ -135,7 +135,7 @@ namespace de
          *
          * @return @c true if main loop running.
          */
-        bool runningMainLoop() const { return runMainLoop_; }
+        bool runningMainLoop() const { return _runMainLoop; }
         
         /**
          * Sets the code to be returned from the deng_Main() function to the
@@ -143,7 +143,7 @@ namespace de
          *
          * @param exitCode  Exit code.
          */
-        virtual void setExitCode(dint exitCode) { exitCode_ = exitCode; }
+        virtual void setExitCode(dint exitCode) { _exitCode = exitCode; }
 
         /**
          * Returns the current exit code.
@@ -152,7 +152,7 @@ namespace de
          *
          * @see setExitCode()
          */
-        dint exitCode() const { return exitCode_; }
+        dint exitCode() const { return _exitCode; }
         
         /**
          * Stops the main loop.
@@ -169,7 +169,7 @@ namespace de
         void clearModules();
         
         // Implements IClock.
-        const Time& now() const { return currentTime_; }
+        const Time& now() const { return _currentTime; }
         
     protected:
         /**
@@ -275,60 +275,60 @@ namespace de
         static void setCurrentMap(Map* map);
 
     private:
-        CommandLine commandLine_;
+        CommandLine _commandLine;
         
         /// Time when the App was initialized.
-        Time initializedAt_;
+        Time _initializedAt;
         
         /// Buffer for recent log entries.
-        LogBuffer* logBuffer_;
+        LogBuffer* _logBuffer;
         
         /// The memory zone.
-        Zone* memory_;
+        Zone* _memory;
         
         /// The file system.
-        FS* fs_;
+        FS* _fs;
 
         /// The configuration.
-        Config* config_;
+        Config* _config;
         
         /// Protocol for incoming packets.
-        Protocol protocol_;
+        Protocol _protocol;
 
         /// The game library.
-        LibraryFile* gameLib_;
+        LibraryFile* _gameLib;
         
         /// The currently active map.
-        Map* currentMap_;
+        Map* _currentMap;
         
         /// Subsystems.
         typedef std::list<ISubsystem*> Subsystems;
-        Subsystems subsystems_;
+        Subsystems _subsystems;
         
         /// The video subsystem. Can be NULL.
-        Video* video_;
+        Video* _video;
         
         /// The audio subsystem. Can be NULL.
-        Audio* audio_;
+        Audio* _audio;
 
         /// Modules.
         typedef std::map<String, Module*> Modules;
-        Modules modules_;
+        Modules _modules;
         
         /// @c true while the main loop is running.
-        bool runMainLoop_;
+        bool _runMainLoop;
 
         /// Time in effect for the current main loop iteration.
-        Time currentTime_;
+        Time _currentTime;
         
-        bool firstIteration_;
-        Time lastTime_;
+        bool _firstIteration;
+        Time _lastTime;
         
         /// Exit code passed to the operating system when quitting.
-        dint exitCode_;
+        dint _exitCode;
         
         /// The singleton instance of the App.
-        static App* singleton_;
+        static App* _singleton;
     };
 };
 

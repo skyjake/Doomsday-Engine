@@ -21,18 +21,18 @@
 
 using namespace de;
 
-Counted::Counted() : refCount_(1)
+Counted::Counted() : _refCount(1)
 {}
 
 Counted::~Counted()
 {
-    assert(refCount_ == 0);
+    assert(_refCount == 0);
 }
 
 void Counted::release()
 {
-    assert(refCount_ > 0);
-    if(!--refCount_)
+    assert(_refCount > 0);
+    if(!--_refCount)
     {
         delete this;
     }

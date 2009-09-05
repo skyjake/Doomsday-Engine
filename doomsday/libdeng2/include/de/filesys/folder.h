@@ -69,8 +69,8 @@ namespace de
             Value* duplicateContent() const;
             
         private:
-            Folder& owner_;
-            Property prop_;
+            Folder& _owner;
+            Property _prop;
         };
         
         typedef std::list<Feed*> Feeds;
@@ -242,14 +242,14 @@ namespace de
          * Provides access to the list of Feeds for this folder. The feeds are responsible
          * for creating File and Folder instances in the folder.
          */
-        const Feeds& feeds() const { return feeds_; }
+        const Feeds& feeds() const { return _feeds; }
         
     private:
         /// A map of file names to file instances.
-        Contents contents_;
+        Contents _contents;
         
         /// Feeds provide content for the folder.
-        Feeds feeds_;
+        Feeds _feeds;
     };
 }
 

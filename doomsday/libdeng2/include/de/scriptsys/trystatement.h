@@ -33,14 +33,14 @@ namespace de
     public:
         void execute(Context& context) const;
         
-        Compound& compound() { return compound_; }
+        Compound& compound() { return _compound; }
         
         // Implements ISerializable.
         void operator >> (Writer& to) const;
         void operator << (Reader& from);         
         
     private:
-        Compound compound_;
+        Compound _compound;
     };
 }
 

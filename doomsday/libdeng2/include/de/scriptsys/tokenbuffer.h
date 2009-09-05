@@ -59,36 +59,36 @@ namespace de
             
         public:
             Token(duchar* begin = 0, duchar* end = 0, duint line = 0) 
-                : type_(UNKNOWN), begin_(begin), end_(end), line_(line) {}
+                : _type(UNKNOWN), _begin(begin), _end(end), _line(line) {}
 
-            void setType(Type type) { type_ = type; }
+            void setType(Type type) { _type = type; }
             
-            Type type() const { return type_; }
+            Type type() const { return _type; }
 
             /// Returns the address of the beginning of the token.
             /// @return Pointer to the first character of the token.
-            const duchar* begin() const { return begin_; }
+            const duchar* begin() const { return _begin; }
 
             /// Returns the address of the end of the token.
             /// @return Pointer to the character just after the last
             /// character of the token.
-            const duchar* end() const { return end_; }
+            const duchar* end() const { return _end; }
 
             /// Returns the address of the beginning of the token.
             /// @return Pointer to the first character of the token.
-            duchar* begin() { return begin_; }
+            duchar* begin() { return _begin; }
             
             /// Returns the address of the end of the token.
             /// @return Pointer to the character just after the last
             /// character of the token. This is where a new character is
             /// appended when the token is being compiled.
-            duchar* end() { return end_; }
+            duchar* end() { return _end; }
 
             /// Determines the length of the token.
             /// @return Length of the token as number of characters.
             duint size() const { 
-                if(!begin_ || !end_) return 0; 
-                return end_ - begin_; 
+                if(!_begin || !_end) return 0; 
+                return _end - _begin; 
             }
             
             bool isEmpty() const {
@@ -96,7 +96,7 @@ namespace de
             }
             
             void appendChar(duchar c) {
-                *end_++ = c;
+                *_end++ = c;
             }
             
             /// Determines whether the token equals @c str. Case sensitive.
@@ -108,7 +108,7 @@ namespace de
             bool beginsWith(const char* str) const;
             
             /// Determines the line on which the token begins in the source.
-            duint line() const { return line_; }
+            duint line() const { return _line; }
             
             /// Converts the token into a String. This is human-readably output, 
             /// with the line number included.
@@ -142,10 +142,10 @@ namespace de
             }
             
         private:
-            Type type_;     ///< Type of the token.
-            duchar* begin_; ///< Points to the first character.
-            duchar* end_;   ///< Points to the last character + 1.
-            duint line_;    ///< On which line the token begins.
+            Type _type;     ///< Type of the token.
+            duchar* _begin; ///< Points to the first character.
+            duchar* _end;   ///< Points to the last character + 1.
+            duint _line;    ///< On which line the token begins.
         };
         
     public:
@@ -204,16 +204,16 @@ namespace de
         duchar* advanceToPoolWithSpace(duint minimum);
                 
         typedef std::vector<Pool> Pools;
-        Pools pools_;
+        Pools _pools;
         
         typedef std::vector<Token> Tokens;
-        Tokens tokens_;
+        Tokens _tokens;
         
         /// Token being currently formed.
-        Token* forming_;
+        Token* _forming;
         
         /// Index of pool used for token forming.
-        duint formPool_;
+        duint _formPool;
     };
 }
 

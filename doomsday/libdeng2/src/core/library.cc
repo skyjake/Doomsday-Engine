@@ -34,13 +34,13 @@ using namespace de;
 const char* Library::DEFAULT_TYPE = "library/generic";
 
 Library::Library(const String& nativePath)
-    : handle_(0), type_(DEFAULT_TYPE)
+    : _handle(0), _type(DEFAULT_TYPE)
 {
     LOG_AS("Library::Library");
     LOG_VERBOSE("%s") << nativePath;
     
 #ifdef UNIX
-    if((handle_ = dlopen(nativePath.c_str(), RTLD_LAZY)) == 0)
+    if((_handle = dlopen(nativePath.c_str(), RTLD_LAZY)) == 0)
     {
         /// @throw LoadError Opening of the dynamic library failed.
         throw LoadError("Library::Library", dlerror());
@@ -48,7 +48,7 @@ Library::Library(const String& nativePath)
 #endif 
 
 #ifdef WIN32
-    if(!(handle_ = reinterpret_cast<void*>(LoadLibrary(nativePath.c_str()))))
+    if(!(_handle = reinterpret_cast<void*>(LoadLibrary(nativePath.c_str()))))
     {
         throw LoadError("Library::Library", "LoadLibrary failed: '" + nativePath + "'");
     }
@@ -57,10 +57,10 @@ Library::Library(const String& nativePath)
     if(address("deng_LibraryType")) 
     {
         // Query the type identifier.
-        type_ = SYMBOL(deng_LibraryType)();
+        _type = SYMBOL(deng_LibraryType)();
     }
     
-    if(type_.beginsWith("deng-plugin/") && address("deng_InitializePlugin"))
+    if(_type.beginsWith("deng-plugin/") && address("deng_InitializePlugin"))
     {
         // Automatically call the initialization function, if one exists.
         SYMBOL(deng_InitializePlugin)();
@@ -69,9 +69,9 @@ Library::Library(const String& nativePath)
 
 Library::~Library()
 {
-    if(handle_)
+    if(_handle)
     {
-        if(type_.beginsWith("deng-plugin/") && address("deng_ShutdownPlugin")) 
+        if(_type.beginsWith("deng-plugin/") && address("deng_ShutdownPlugin")) 
         {
             // Automatically call the shutdown function, if one exists.
             SYMBOL(deng_ShutdownPlugin)();
@@ -79,25 +79,25 @@ Library::~Library()
 
 #ifdef UNIX
         // Close the library.
-        dlclose(handle_);
+        dlclose(_handle);
 #endif
 
 #ifdef WIN32
-        FreeLibrary(reinterpret_cast<HMODULE>(handle_));
+        FreeLibrary(reinterpret_cast<HMODULE>(_handle));
 #endif
     }
 }
 
 void* Library::address(const String& name)
 {
-    if(!handle_)
+    if(!_handle)
     {
         return 0;
     }
     
     // Already looked up?
-    Symbols::iterator found = symbols_.find(name);
-    if(found != symbols_.end())
+    Symbols::iterator found = _symbols.find(name);
+    if(found != _symbols.end())
     {
         return found->second;
     }
@@ -105,12 +105,12 @@ void* Library::address(const String& name)
     void* ptr = 0;
 
 #ifdef UNIX
-    ptr = dlsym(handle_, name.c_str());
+    ptr = dlsym(_handle, name.c_str());
 #endif
 
 #ifdef WIN32
     ptr = reinterpret_cast<void*>(
-        GetProcAddress(reinterpret_cast<HMODULE>(handle_), name.c_str()));
+        GetProcAddress(reinterpret_cast<HMODULE>(_handle), name.c_str()));
 #endif 
 
     if(!ptr)
@@ -119,6 +119,6 @@ void* Library::address(const String& name)
         throw SymbolMissingError("Library::symbol", "Symbol '" + name + "' was not found");
     }
 
-    symbols_[name] = ptr;
+    _symbols[name] = ptr;
     return ptr;
 }

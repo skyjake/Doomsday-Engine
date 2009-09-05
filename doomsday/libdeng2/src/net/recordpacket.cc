@@ -27,49 +27,49 @@ using namespace de;
 
 static const char* RECORD_PACKET_TYPE = "RECO";
 
-RecordPacket::RecordPacket(const String& label) : Packet(RECORD_PACKET_TYPE), label_(label), record_(0)
+RecordPacket::RecordPacket(const String& label) : Packet(RECORD_PACKET_TYPE), _label(label), _record(0)
 {
-    record_ = new Record();
+    _record = new Record();
 }
 
 RecordPacket::~RecordPacket()
 {
-    delete record_;
+    delete _record;
 }
 
 void RecordPacket::take(Record* newRecord)
 {
-    delete record_;
-    record_ = newRecord;
+    delete _record;
+    _record = newRecord;
 }
 
 Record* RecordPacket::give()
 {
-    Record* detached = record_;
-    record_ = new Record();
+    Record* detached = _record;
+    _record = new Record();
     return detached;
 }
 
 const Variable& RecordPacket::operator [] (const String& variableName) const
 {
-    return (*record_)[variableName];
+    return (*_record)[variableName];
 }
 
 String RecordPacket::valueAsText(const String& variableName) const
 {
-    return (*record_)[variableName].value().asText();
+    return (*_record)[variableName].value().asText();
 }
 
 void RecordPacket::operator >> (Writer& to) const
 {
     Packet::operator >> (to);
-    to << label_ << *record_;
+    to << _label << *_record;
 }
 
 void RecordPacket::operator << (Reader& from)
 {
     Packet::operator << (from);
-    from >> label_ >> *record_;
+    from >> _label >> *_record;
 }
 
 Packet* RecordPacket::fromBlock(const Block& block)

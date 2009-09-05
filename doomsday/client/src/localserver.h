@@ -43,7 +43,7 @@ public:
     ~LocalServer();
     
 private:
-    de::duint16 listenOnPort_;
+    de::duint16 _listenOnPort;
 };
 
 #endif /* LOCALSERVER_H */

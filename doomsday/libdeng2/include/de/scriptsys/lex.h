@@ -49,17 +49,17 @@ namespace de
         class ModeSpan
         {
         public:
-            ModeSpan(Lex& lex, const Mode& m) : lex_(lex), originalMode_(lex.mode_) {
-                lex.mode_ = m;
+            ModeSpan(Lex& lex, const Mode& m) : _lex(lex), _originalMode(lex._mode) {
+                lex._mode = m;
             }
             
             ~ModeSpan() {
-                lex_.mode_ = originalMode_;
+                _lex._mode = _originalMode;
             }
             
         private:
-            Lex& lex_;
-            Mode originalMode_;
+            Lex& _lex;
+            Mode _originalMode;
         };
         
     public:
@@ -92,7 +92,7 @@ namespace de
         /// Returns the current line of the reading position. The character
         /// returned from get() will be on this line.
         duint lineNumber() const { 
-            return state_.lineNumber; 
+            return _state.lineNumber; 
         }
 
         /// Determines whether there is only whitespace (or nothing) 
@@ -126,9 +126,9 @@ namespace de
             
     private:
         /// Input text being analyzed.
-        const String* input_;
+        const String* _input;
 
-        mutable duint nextPos_;
+        mutable duint _nextPos;
 
         struct State {
             duint pos;          ///< Current reading position.
@@ -138,12 +138,12 @@ namespace de
             State() : pos(0), lineNumber(1), lineStartPos(0) {}
         };
         
-        State state_;
+        State _state;
         
         /// Character that begins a line comment.
-        duchar lineCommentChar_;
+        duchar _lineCommentChar;
         
-        Mode mode_;
+        Mode _mode;
     };
 }
 

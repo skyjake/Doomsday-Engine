@@ -37,13 +37,13 @@
 /// Macro for accessing the local log of the current thread and entering
 /// a new log section.
 #define LOG_AS(sectionName) \
-    de::Log::Section _logSection = de::Log::Section(sectionName);
+    de::Log::Section __logSection = de::Log::Section(sectionName);
     
 /// Macro for accessing the local log of the current thread and entering
 /// a new log section with a std::string variable based name.
 #define LOG_AS_STRING(str) \
-    de::String _logSectionName = str; \
-    LOG_AS(_logSectionName.c_str());
+    de::String __logSectionName = str; \
+    LOG_AS(__logSectionName.c_str());
     
 #define LOG_TRACE(str)      de::Log::threadLog().enter(de::TRACE, str)
 #define LOG_DEBUG(str)      de::Log::threadLog().enter(de::DEBUG, str)
@@ -93,11 +93,11 @@ namespace de
             Section(const char* name);
             ~Section();
 
-            Log& log() const { return log_; }
+            Log& log() const { return _log; }
 
         private:
-            Log& log_;
-            const char* name_;
+            Log& _log;
+            const char* _name;
         };
         
     public:
@@ -150,9 +150,9 @@ namespace de
 
     private:
         typedef std::vector<const char*> SectionStack;
-        SectionStack sectionStack_;
+        SectionStack _sectionStack;
         
-        LogEntry* throwawayEntry_;
+        LogEntry* _throwawayEntry;
     };
     
     /**
@@ -209,96 +209,96 @@ namespace de
             };
 
         public:
-            Arg(dint i) : type_(INTEGER) { data_.intValue = i; }
-            Arg(duint i) : type_(INTEGER) { data_.intValue = i; }
-            Arg(dint64 i) : type_(INTEGER) { data_.intValue = i; }
-            Arg(ddouble d) : type_(FLOATING_POINT) { data_.floatValue = d; }
-            Arg(const void* p) : type_(INTEGER) { data_.intValue = dint64(p); }
-            Arg(const char* s) : type_(STRING) {
-                data_.stringValue = new String(s);
+            Arg(dint i) : _type(INTEGER) { _data.intValue = i; }
+            Arg(duint i) : _type(INTEGER) { _data.intValue = i; }
+            Arg(dint64 i) : _type(INTEGER) { _data.intValue = i; }
+            Arg(ddouble d) : _type(FLOATING_POINT) { _data.floatValue = d; }
+            Arg(const void* p) : _type(INTEGER) { _data.intValue = dint64(p); }
+            Arg(const char* s) : _type(STRING) {
+                _data.stringValue = new String(s);
             }
-            Arg(const wchar_t* ws) : type_(WIDE_STRING) {
-                data_.wideStringValue = new std::wstring(ws);
+            Arg(const wchar_t* ws) : _type(WIDE_STRING) {
+                _data.wideStringValue = new std::wstring(ws);
             }
-            Arg(const String& s) : type_(STRING) {
-                data_.stringValue = new String(s); 
+            Arg(const String& s) : _type(STRING) {
+                _data.stringValue = new String(s); 
             }
-            Arg(const std::wstring& ws) : type_(WIDE_STRING) {
-                data_.wideStringValue = new std::wstring(ws);
+            Arg(const std::wstring& ws) : _type(WIDE_STRING) {
+                _data.wideStringValue = new std::wstring(ws);
             }
-            Arg(const Base& arg) : type_(arg.logEntryArgType()) {
-                switch(type_) {
+            Arg(const Base& arg) : _type(arg.logEntryArgType()) {
+                switch(_type) {
                 case INTEGER:
-                    data_.intValue = arg.asInt64();
+                    _data.intValue = arg.asInt64();
                     break;
                 case FLOATING_POINT:
-                    data_.floatValue = arg.asDouble();
+                    _data.floatValue = arg.asDouble();
                     break;
                 case STRING:
-                    data_.stringValue = new String(arg.asText());
+                    _data.stringValue = new String(arg.asText());
                     break;
                 case WIDE_STRING:
-                    data_.wideStringValue = new std::wstring(arg.asWideString());
+                    _data.wideStringValue = new std::wstring(arg.asWideString());
                     break;
                 }
             }
             ~Arg() {
-                if(type_ == STRING) {
-                    delete data_.stringValue;
+                if(_type == STRING) {
+                    delete _data.stringValue;
                 }
-                else if(type_ == WIDE_STRING) {
-                    delete data_.wideStringValue;
+                else if(_type == WIDE_STRING) {
+                    delete _data.wideStringValue;
                 }
             }
             
-            Type type() const { return type_; }
+            Type type() const { return _type; }
             dint64 intValue() const {
-                assert(type_ == INTEGER);
-                return data_.intValue;
+                assert(_type == INTEGER);
+                return _data.intValue;
             }
             ddouble floatValue() const {
-                assert(type_ == FLOATING_POINT);
-                return data_.floatValue;
+                assert(_type == FLOATING_POINT);
+                return _data.floatValue;
             }
             const std::string& stringValue() const {
-                assert(type_ == STRING);
-                return *data_.stringValue;
+                assert(_type == STRING);
+                return *_data.stringValue;
             }
             const std::wstring& wideStringValue() const {
-                assert(type_ == WIDE_STRING);
-                return *data_.wideStringValue;
+                assert(_type == WIDE_STRING);
+                return *_data.wideStringValue;
             }
 
             // Implements String::IPatternArg.
             ddouble asNumber() const {
-                if(type_ == INTEGER) {
-                    return data_.intValue;
+                if(_type == INTEGER) {
+                    return _data.intValue;
                 } 
-                else if(type_ == FLOATING_POINT) {
-                    return data_.floatValue;
+                else if(_type == FLOATING_POINT) {
+                    return _data.floatValue;
                 }
                 throw TypeError("Log::Arg::asNumber", 
                     "String argument cannot be used as a number");
             }
             String asText() const {
-                if(type_ == STRING) {
-                    return *data_.stringValue;
+                if(_type == STRING) {
+                    return *_data.stringValue;
                 }
-                else if(type_ == WIDE_STRING) {
-                    return String::wideToString(*data_.wideStringValue);
+                else if(_type == WIDE_STRING) {
+                    return String::wideToString(*_data.wideStringValue);
                 }
                 throw TypeError("Log::Arg::asText",
                     "Number argument cannot be used a string");
             }
 
         private:
-            Type type_;
+            Type _type;
             union Data {
                 dint64 intValue;
                 ddouble floatValue;
                 String* stringValue;
                 std::wstring* wideStringValue;
-            } data_;
+            } _data;
         };
         
     public:
@@ -320,23 +320,23 @@ namespace de
         /// Appends a new argument to the entry.
         template <typename ValueType>
         LogEntry& operator << (const ValueType& v) {
-            if(!disabled_) {
-                args_.push_back(new Arg(v));
+            if(!_disabled) {
+                _args.push_back(new Arg(v));
             }
             return *this;
         }
 
         /// Returns the timestamp of the entry.
-        Time when() const { return when_; }
+        Time when() const { return _when; }
 
-        LogLevel level() const { return level_; }
+        LogLevel level() const { return _level; }
 
         /// Converts the log entry to a string.
         String asText(const Flags& flags = 0) const;
 
         /// Make this entry print without metadata.
         LogEntry& simple() {
-            defaultFlags_ |= SIMPLE;
+            _defaultFlags |= SIMPLE;
             return *this;
         }
 
@@ -344,15 +344,15 @@ namespace de
         void advanceFormat(String::const_iterator& i) const;
 
     private:
-        Time when_;
-        LogLevel level_;
-        String section_;
-        String format_;
-        Flags defaultFlags_;
-        bool disabled_;
+        Time _when;
+        LogLevel _level;
+        String _section;
+        String _format;
+        Flags _defaultFlags;
+        bool _disabled;
 
         typedef std::vector<Arg*> Args;        
-        Args args_;
+        Args _args;
     };
     
     std::ostream& operator << (std::ostream& stream, const LogEntry::Arg& arg);

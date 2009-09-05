@@ -27,29 +27,29 @@
 using namespace de;
 
 Writer::Writer(IByteArray& destination, const ByteOrder& byteOrder, IByteArray::Offset offset)
-    : destination_(destination), offset_(offset), fixedOffset_(0), convert_(byteOrder)
+    : _destination(destination), _offset(offset), _fixedOffset(0), _convert(byteOrder)
 {}
 
 Writer::Writer(IByteArray& destination, IByteArray::Offset offset)
-    : destination_(destination), offset_(offset), fixedOffset_(0), convert_(bigEndianByteOrder)
+    : _destination(destination), _offset(offset), _fixedOffset(0), _convert(bigEndianByteOrder)
 {}
 
 Writer::Writer(const Writer& other, const ByteOrder& byteOrder)
-    : destination_(other.destination_), offset_(0), 
-      fixedOffset_(other.fixedOffset_ + other.offset_), convert_(byteOrder)
+    : _destination(other._destination), _offset(0), 
+      _fixedOffset(other._fixedOffset + other._offset), _convert(byteOrder)
 {}
 
 Writer& Writer::operator << (const dchar& byte)
 {
-    destination_.set(fixedOffset_ + offset_, reinterpret_cast<const IByteArray::Byte*>(&byte), 1);
-    ++offset_;
+    _destination.set(_fixedOffset + _offset, reinterpret_cast<const IByteArray::Byte*>(&byte), 1);
+    ++_offset;
     return *this;
 }
 
 Writer& Writer::operator << (const duchar& byte)
 {
-    destination_.set(fixedOffset_ + offset_, &byte, 1);
-    ++offset_;
+    _destination.set(_fixedOffset + _offset, &byte, 1);
+    ++_offset;
     return *this;
 }
 
@@ -61,9 +61,9 @@ Writer& Writer::operator << (const dint16& word)
 Writer& Writer::operator << (const duint16& word)
 {
     duint16 netWord;
-    convert_.nativeToForeign(word, netWord);
-    destination_.set(fixedOffset_ + offset_, reinterpret_cast<IByteArray::Byte*>(&netWord), 2);
-    offset_ += 2;
+    _convert.nativeToForeign(word, netWord);
+    _destination.set(_fixedOffset + _offset, reinterpret_cast<IByteArray::Byte*>(&netWord), 2);
+    _offset += 2;
     return *this;
 }
 
@@ -75,9 +75,9 @@ Writer& Writer::operator << (const dint32& dword)
 Writer& Writer::operator << (const duint32& dword)
 {
     duint32 netDword;
-    convert_.nativeToForeign(dword, netDword);
-    destination_.set(fixedOffset_ + offset_, reinterpret_cast<IByteArray::Byte*>(&netDword), 4);
-    offset_ += 4;
+    _convert.nativeToForeign(dword, netDword);
+    _destination.set(_fixedOffset + _offset, reinterpret_cast<IByteArray::Byte*>(&netDword), 4);
+    _offset += 4;
     return *this;
 }
 
@@ -89,9 +89,9 @@ Writer& Writer::operator << (const dint64& qword)
 Writer& Writer::operator << (const duint64& qword)
 {
     duint64 netQword;
-    convert_.nativeToForeign(qword, netQword);
-    destination_.set(fixedOffset_ + offset_, reinterpret_cast<IByteArray::Byte*>(&netQword), 8);
-    offset_ += 8;
+    _convert.nativeToForeign(qword, netQword);
+    _destination.set(_fixedOffset + _offset, reinterpret_cast<IByteArray::Byte*>(&netQword), 8);
+    _offset += 8;
     return *this;
 }
 
@@ -111,10 +111,10 @@ Writer& Writer::operator << (const String& text)
     duint size = text.length();
     *this << size;
 
-    destination_.set(fixedOffset_ + offset_,
+    _destination.set(_fixedOffset + _offset,
                      reinterpret_cast<const IByteArray::Byte*>(text.c_str()),
                      size);
-    offset_ += size;
+    _offset += size;
     return *this;
 }
 
@@ -136,8 +136,8 @@ Writer& Writer::operator << (const FixedByteArray& fixedByteArray)
     const dsize size = fixedByteArray.size();
     std::auto_ptr<IByteArray::Byte> data(new IByteArray::Byte[size]);
     fixedByteArray.get(0, data.get(), size);
-    destination_.set(fixedOffset_ + offset_, data.get(), size);
-    offset_ += size;
+    _destination.set(_fixedOffset + _offset, data.get(), size);
+    _offset += size;
     return *this;
 }
 
@@ -147,8 +147,8 @@ Writer& Writer::operator << (const Block& block)
     duint size = block.size();
     *this << size;
 
-    destination_.set(fixedOffset_ + offset_, block.data(), size);
-    offset_ += size;
+    _destination.set(_fixedOffset + _offset, block.data(), size);
+    _offset += size;
     return *this;
 }
 
@@ -160,9 +160,9 @@ Writer& Writer::operator << (const IWritable& writable)
 
 void Writer::seek(dint count)
 {
-    if(dint(fixedOffset_ + offset_) + count < 0)
+    if(dint(_fixedOffset + _offset) + count < 0)
     {
         throw IByteArray::OffsetError("Writer::seek", "Seek past beginning of destination");
     }
-    offset_ += count;
+    _offset += count;
 }

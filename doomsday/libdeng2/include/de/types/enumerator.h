@@ -60,14 +60,14 @@ namespace de
          */
         void claim(Type value);
         
-        bool overflown() const { return overflown_; }
+        bool overflown() const { return _overflown; }
         
     private:
-        Type current_;
+        Type _current;
         
         /// @c true after the 32-bit range of integers has been exhausted. The 
         /// enumerator wraps back to 1.
-        bool overflown_;
+        bool _overflown;
     };
 }
 

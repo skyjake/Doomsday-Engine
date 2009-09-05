@@ -43,7 +43,7 @@ namespace de
         CatchStatement(ArrayExpression* args = 0);
         ~CatchStatement();
         
-        Compound& compound() { return compound_; }
+        Compound& compound() { return _compound; }
         
         /// Skips the catch compound (called only during normal execution).
         void execute(Context& context) const;
@@ -72,8 +72,8 @@ namespace de
         void operator << (Reader& from);         
         
     private:
-        ArrayExpression* args_;
-        Compound compound_;
+        ArrayExpression* _args;
+        Compound _compound;
     };
 }
 

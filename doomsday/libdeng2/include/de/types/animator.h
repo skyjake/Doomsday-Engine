@@ -157,25 +157,25 @@ namespace de
             return !(*this < offset);
         }
 
-        void setObserver(IObserver* observer) { observer_ = observer; }
+        void setObserver(IObserver* observer) { _observer = observer; }
 
-        IObserver* observer() const { return observer_; }
+        IObserver* observer() const { return _observer; }
         
         // Implements ISerializable.
         void operator >> (Writer& to) const;
         void operator << (Reader& from);
 
     private:
-        const IClock* clock_;
-        Motion motion_;
-        mutable ValueType start_;
-        Time startTime_;
-        ValueType transition_;
-        Time::Delta transitionTime_;
-        IObserver* observer_;
+        const IClock* _clock;
+        Motion _motion;
+        mutable ValueType _start;
+        Time _startTime;
+        ValueType _transition;
+        Time::Delta _transitionTime;
+        IObserver* _observer;
 
         DEFINE_FINAL_FLAG(ANIMATING, 0, Status);
-        mutable Status status_;
+        mutable Status _status;
     };
 
     LIBDENG2_API std::ostream& operator << (std::ostream& os, const Animator& anim);

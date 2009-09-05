@@ -28,19 +28,19 @@
 
 using namespace de;
 
-AssignStatement::AssignStatement() : indexCount_(0)
+AssignStatement::AssignStatement() : _indexCount(0)
 {}
 
 AssignStatement::AssignStatement(Expression* target, const Indices& indices, Expression* value) 
-    : indexCount_(0)
+    : _indexCount(0)
 {
-    args_.add(value);
-    indexCount_ = indices.size();
+    _args.add(value);
+    _indexCount = indices.size();
     for(Indices::const_reverse_iterator i = indices.rbegin(); i != indices.rend(); ++i)
     {
-        args_.add(*i);
+        _args.add(*i);
     }
-    args_.add(target);
+    _args.add(target);
 }
 
 AssignStatement::~AssignStatement()
@@ -49,7 +49,7 @@ AssignStatement::~AssignStatement()
 void AssignStatement::execute(Context& context) const
 {
     Evaluator& eval = context.evaluator();
-    ArrayValue& results = eval.evaluateTo<ArrayValue>(&args_);
+    ArrayValue& results = eval.evaluateTo<ArrayValue>(&_args);
 
     // We want to pop the value to assign as the first element.
     results.reverse();
@@ -65,16 +65,16 @@ void AssignStatement::execute(Context& context) const
     // Ownership of this instance will be given to the variable.
     std::auto_ptr<Value> value(results.pop()); 
 
-    if(indexCount_ > 0)
+    if(_indexCount > 0)
     {
         // The value we will be modifying.
         Value* target = &ref->dereference();
 
-        for(dint i = 0; i < indexCount_; ++i)
+        for(dint i = 0; i < _indexCount; ++i)
         {   
             // Get the evaluated index.
             std::auto_ptr<Value> index(results.pop()); // Not released -- will be destroyed.
-            if(i < indexCount_ - 1)
+            if(i < _indexCount - 1)
             {
                 // Switch targets to a subelement.
                 target = &target->element(*index.get());
@@ -93,7 +93,7 @@ void AssignStatement::execute(Context& context) const
     }
     
     // Should be set the variable to read-only mode?
-    const NameExpression* name = static_cast<const NameExpression*>(&args_.back());
+    const NameExpression* name = static_cast<const NameExpression*>(&_args.back());
     if(name->flags()[NameExpression::READ_ONLY_BIT])
     {
         assert(ref->variable() != NULL);
@@ -105,7 +105,7 @@ void AssignStatement::execute(Context& context) const
 
 void AssignStatement::operator >> (Writer& to) const
 {
-    to << SerialId(ASSIGN) << duint8(indexCount_) << args_;    
+    to << SerialId(ASSIGN) << duint8(_indexCount) << _args;    
 }
 
 void AssignStatement::operator << (Reader& from)
@@ -121,7 +121,7 @@ void AssignStatement::operator << (Reader& from)
     // Number of indices in assignment.
     duint8 count;
     from >> count;
-    indexCount_ = count;
+    _indexCount = count;
     
-    from >> args_;
+    from >> _args;
 }

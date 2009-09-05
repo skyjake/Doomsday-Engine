@@ -58,10 +58,10 @@ namespace de
         virtual ~Context();
 
         /// Determines the type of the execution context.
-        Type type() { return type_; }
+        Type type() { return _type; }
 
         /// Returns the process that owns this context.
-        Process& process() { return *owner_; }
+        Process& process() { return *_owner; }
 
         /// Returns the namespace of the context.
         Record& names();
@@ -139,7 +139,7 @@ namespace de
          * values that are not needed. For instance, the weak assignment operator
          * will use this when the identifier already exists.
          */
-        Variable& throwaway() { return throwaway_; }
+        Variable& throwaway() { return _throwaway; }
         
     private:
         /**
@@ -162,14 +162,14 @@ namespace de
                         const Statement* f = 0, 
                         const Statement* c = 0, 
                         const Statement* b = 0)
-                : flow(f), jumpContinue(c), jumpBreak(b), iteration(0), current_(current) {}
+                : flow(f), jumpContinue(c), jumpBreak(b), iteration(0), _current(current) {}
                 
             /// Returns the currently executed statement.
-            const Statement* current() const { return current_; }
+            const Statement* current() const { return _current; }
                 
             /// Sets the currently executed statement. When the statement
             /// changes, the phase is reset back to zero.
-            void setCurrent(const Statement* s) { current_ = s; }
+            void setCurrent(const Statement* s) { _current = s; }
 
         public:
             const Statement* flow;
@@ -178,12 +178,12 @@ namespace de
             Value* iteration;
 
         private:
-            const Statement* current_;
+            const Statement* _current;
         };
         
     private:
         /// Returns the topmost control flow information.
-        ControlFlow& flow() { return controlFlow_.back(); }
+        ControlFlow& flow() { return _controlFlow.back(); }
 
         /// Pops the topmost control flow instance off of the stack. The 
         /// iteration value is deleted, if it has been defined.
@@ -194,25 +194,25 @@ namespace de
         
     private:        
         /// Type of the execution context.
-        Type type_;
+        Type _type;
         
         /// The process that owns this context.
-        Process* owner_;
+        Process* _owner;
 
         /// Control flow stack.
         typedef std::vector<ControlFlow> FlowStack;
-        FlowStack controlFlow_;
+        FlowStack _controlFlow;
 
         /// Expression evaluator.
-        Evaluator evaluator_;
+        Evaluator _evaluator;
 
         /// Determines whether the namespace is owned by the context.
-        bool ownsNamespace_;
+        bool _ownsNamespace;
         
         /// The local namespace of this context.
-        Record* names_;
+        Record* _names;
         
-        Variable throwaway_;
+        Variable _throwaway;
     };
 }
 

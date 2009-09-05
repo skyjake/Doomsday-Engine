@@ -92,22 +92,22 @@ namespace de
          */
         class Loop {
         public:
-            Loop(Observers& observers) : observers_(observers) {
-                next_ = observers.begin();
+            Loop(Observers& observers) : _observers(observers) {
+                _next = observers.begin();
                 next();
             }
             bool done() {
-                return current_ == observers_.end();
+                return _current == _observers.end();
             }
             void next() {
-                current_ = next_;
-                if(next_ != observers_.end())
+                _current = _next;
+                if(_next != _observers.end())
                 {
-                    ++next_;
+                    ++_next;
                 }
             }
             iterator& get() {
-                return current_;
+                return _current;
             }
             Type* operator -> () {
                 return *get();
@@ -117,80 +117,80 @@ namespace de
                 return *this;
             }
         private:
-            Observers& observers_;
-            iterator current_;
-            iterator next_;
+            Observers& _observers;
+            iterator _current;
+            iterator _next;
         };
         
     public:
-        Observers() : members_(0) {}
+        Observers() : _members(0) {}
 
         virtual ~Observers() {
             clear();
         }
         
         void clear() {
-            delete members_;
-            members_ = 0;
+            delete _members;
+            _members = 0;
         }
 
         /// Add an observer into the set. The set does not receive
         /// ownership of the observer instance.
         void add(Type* observer) {
             checkExists();
-            members_->insert(observer);
+            _members->insert(observer);
         }            
         
         void remove(Type* observer) {
-            if(members_) {
-                members_->erase(observer);
+            if(_members) {
+                _members->erase(observer);
             }
-            if(!members_->size()) {
-                delete members_;
-                members_ = 0;
+            if(!_members->size()) {
+                delete _members;
+                _members = 0;
             }
         }
         
         size_type size() const {
-            if(members_) {
-                return members_->size();
+            if(_members) {
+                return _members->size();
             }
             return 0;
         }
         
         iterator begin() {
             checkExists();
-            return members_->begin();
+            return _members->begin();
         }
 
         iterator end() {
             checkExists();
-            return members_->end();
+            return _members->end();
         }
         
         const_iterator begin() const {
-            if(!members_) {
+            if(!_members) {
                 return 0;
             }
-            return members_->begin();
+            return _members->begin();
         }
 
         const_iterator end() const {
-            if(!members_) {
+            if(!_members) {
                 return 0;
             }
-            return members_->end();
+            return _members->end();
         }
 
     protected:
         void checkExists() {
-            if(!members_) {
-                members_ = new Members;
+            if(!_members) {
+                _members = new Members;
             }            
         }
         
     private:
-        Members* members_;
+        Members* _members;
     };
 };
 

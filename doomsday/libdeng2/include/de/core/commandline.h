@@ -62,7 +62,7 @@ namespace de
          * Returns the number of arguments. This includes the program name, which
          * is the first argument in the list.
          */
-        dint count() const { return arguments_.size(); }
+        dint count() const { return _arguments.size(); }
 
         void clear();
 
@@ -130,7 +130,7 @@ namespace de
          */
         static bool isOption(const String& arg);
 
-        const String& at(duint pos) const { return arguments_.at(pos); }
+        const String& at(duint pos) const { return _arguments.at(pos); }
 
         /**
          * Returns a list of pointers to the arguments. The list contains
@@ -172,13 +172,13 @@ namespace de
         
     private:
         typedef std::vector<String> Arguments;
-        Arguments arguments_;
+        Arguments _arguments;
     
         typedef std::vector<const char*> ArgumentPointers;
-        ArgumentPointers pointers_;
+        ArgumentPointers _pointers;
         
         typedef std::map<String, Arguments> Aliases;
-        Aliases aliases_;
+        Aliases _aliases;
     };
 }
 

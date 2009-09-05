@@ -23,25 +23,25 @@
 
 using namespace de;
 
-RefValue::RefValue(Variable* variable) : variable_(variable)
+RefValue::RefValue(Variable* variable) : _variable(variable)
 {
-    if(variable_)
+    if(_variable)
     {
-        variable_->audienceForDeletion.add(this);
+        _variable->audienceForDeletion.add(this);
     }
 }
 
 RefValue::~RefValue()
 {
-    if(variable_)
+    if(_variable)
     {
-        variable_->audienceForDeletion.remove(this);
+        _variable->audienceForDeletion.remove(this);
     }
 }
 
 void RefValue::verify() const
 {
-    if(!variable_)
+    if(!_variable)
     {
         /// @throw NullError The value no longer points to a variable.
         throw NullError("RefValue::verify", "Value no longer references a variable");
@@ -51,18 +51,18 @@ void RefValue::verify() const
 Value& RefValue::dereference()
 {
     verify();
-    return variable_->value();
+    return _variable->value();
 }
 
 const Value& RefValue::dereference() const
 {
     verify();
-    return variable_->value();
+    return _variable->value();
 }
 
 Value* RefValue::duplicate() const
 {
-    return new RefValue(variable_);
+    return new RefValue(_variable);
 }
 
 Value::Number RefValue::asNumber() const
@@ -158,7 +158,7 @@ void RefValue::modulo(const Value& divisor)
 void RefValue::assign(Value* value)
 {
     verify();
-    variable_->set(value);
+    _variable->set(value);
 }
 
 void RefValue::call(Process& process, const Value& arguments) const
@@ -179,6 +179,6 @@ void RefValue::operator << (Reader& from)
 
 void RefValue::variableBeingDeleted(Variable& variable)
 {
-    assert(variable_ == &variable);
-    variable_ = 0;
+    assert(_variable == &variable);
+    _variable = 0;
 }

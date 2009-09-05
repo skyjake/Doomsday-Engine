@@ -27,16 +27,16 @@ using namespace de;
 /// This position is used for marking an undefined position in the range.
 const duint UNDEFINED_POS = 0xffffffff;
 
-TokenRange::TokenRange() : tokens_(0), start_(0), end_(0)
+TokenRange::TokenRange() : _tokens(0), _start(0), _end(0)
 {}
 
-TokenRange::TokenRange(const TokenBuffer& tokens) : tokens_(&tokens), start_(0)
+TokenRange::TokenRange(const TokenBuffer& tokens) : _tokens(&tokens), _start(0)
 {
-    end_ = tokens_->size();
+    _end = _tokens->size();
 }
 
 TokenRange::TokenRange(const TokenBuffer& tokens, duint start, duint end)
-    : tokens_(&tokens), start_(start), end_(end)
+    : _tokens(&tokens), _start(start), _end(end)
 {    
 }
 
@@ -46,24 +46,24 @@ duint TokenRange::tokenIndex(duint pos) const
     {
         std::ostringstream message;
         message << "Position " << pos << " is out of the range ("
-            << start_ << ", " << end_ << "), length " << size();
+            << _start << ", " << _end << "), length " << size();
         /// @throw OutOfBoundsError  @a pos is out of range.
         throw OutOfBoundsError("TokenRange::tokenIndex", message.str());
     }
-    return start_ + pos;
+    return _start + pos;
 }
 
 duint TokenRange::tokenPos(duint index) const
 {
-    if(index < start_)
+    if(index < _start)
     {
         std::ostringstream message;
         message << "Index " << index << " is out of the range ("
-            << start_ << ", " << end_ << ")";
+            << _start << ", " << _end << ")";
         /// @throw OutOfBoundsError  @a index is out of range.
         throw OutOfBoundsError("TokenRange::tokenPos", message.str());
     }
-    return index - start_;
+    return index - _start;
 }
 
 const TokenBuffer::Token& TokenRange::token(duint pos) const
@@ -72,11 +72,11 @@ const TokenBuffer::Token& TokenRange::token(duint pos) const
     {
         std::ostringstream message;
         message << "Position " << pos << " is out of the range ("
-            << start_ << ", " << end_ << ")";
+            << _start << ", " << _end << ")";
         /// @throw OutOfBoundsError  @a pos is out of range.
         throw OutOfBoundsError("TokenRange::token", message.str());
     }
-    return tokens_->at(tokenIndex(pos));
+    return _tokens->at(tokenIndex(pos));
 }
 
 const TokenBuffer::Token& TokenRange::firstToken() const 
@@ -110,7 +110,7 @@ bool TokenRange::beginsWith(const char* str) const
 
 TokenRange TokenRange::startingFrom(duint pos) const
 {
-    return TokenRange(*tokens_, tokenIndex(pos), end_);
+    return TokenRange(*_tokens, tokenIndex(pos), _end);
 }
 
 TokenRange TokenRange::endingTo(duint pos) const
@@ -119,11 +119,11 @@ TokenRange TokenRange::endingTo(duint pos) const
     {
         std::ostringstream message;
         message << "Position " << pos << " is not within the range ("
-            << start_ << ", " << end_ << ")";
+            << _start << ", " << _end << ")";
         /// @throw OutOfBoundsError  @a pos is out of range.
         throw OutOfBoundsError("TokenRange::endingTo", message.str());
     }
-    return TokenRange(*tokens_, start_, tokenIndex(pos));
+    return TokenRange(*_tokens, _start, tokenIndex(pos));
 }
 
 TokenRange TokenRange::between(duint startPos, duint endPos) const
@@ -132,7 +132,7 @@ TokenRange TokenRange::between(duint startPos, duint endPos) const
     {
         return startingFrom(startPos);
     }
-    return TokenRange(*tokens_, tokenIndex(startPos), tokenIndex(endPos));
+    return TokenRange(*_tokens, tokenIndex(startPos), tokenIndex(endPos));
 }
 
 dint TokenRange::find(const char* token, dint startPos) const
@@ -142,7 +142,7 @@ dint TokenRange::find(const char* token, dint startPos) const
 
     for(dint i = startPos; i < dint(len); ++i)
     {
-        if(tokens_->at(start_ + i).equals(token))
+        if(_tokens->at(_start + i).equals(token))
             return i;
     }
     return -1;
@@ -160,11 +160,11 @@ dint TokenRange::findBracketless(const char* token, dint startPos) const
 
 dint TokenRange::findIndexSkippingBrackets(const char* token, dint startIndex) const
 {
-    assert(startIndex >= dint(start_) && startIndex <= dint(end_));
+    assert(startIndex >= dint(_start) && startIndex <= dint(_end));
     
-    for(duint i = startIndex; i < end_; ++i)
+    for(duint i = startIndex; i < _end; ++i)
     {
-        const TokenBuffer::Token& t = tokens_->at(i);
+        const TokenBuffer::Token& t = _tokens->at(i);
         if(t.equals("(") || t.equals("[") || t.equals("{"))
         {
             i = tokenIndex(closingBracket(tokenPos(i)));
@@ -181,30 +181,30 @@ bool TokenRange::getNextDelimited(const char* delimiter, TokenRange& subrange) c
     if(subrange.undefined())
     {
         // This is the first range.
-        subrange.start_ = subrange.end_ = start_;
+        subrange._start = subrange._end = _start;
     }
     else
     {
         // Start past the previous delimiter.
-        subrange.start_ = subrange.end_ + 1;
+        subrange._start = subrange._end + 1;
     }
     
-    if(subrange.start_ > end_)
+    if(subrange._start > _end)
     {
         // No more tokens available.
         return false;
     }
     
-    dint index = findIndexSkippingBrackets(delimiter, subrange.start_);
+    dint index = findIndexSkippingBrackets(delimiter, subrange._start);
     if(index < 0)
     {
         // Not found. Use the entire range.
-        subrange.end_ = end_;
+        subrange._end = _end;
     }
     else
     {
         // Everything up to the delimiting token (not included).
-        subrange.end_ = index;
+        subrange._end = index;
     }
     return true;
 }
@@ -240,9 +240,9 @@ duint TokenRange::closingBracket(duint openBracketPos) const
     bracketTokens(token(openBracketPos), openingToken, closingToken);
     
     int level = 1;
-    for(dint i = tokenIndex(openBracketPos + 1); i < dint(end_); ++i)
+    for(dint i = tokenIndex(openBracketPos + 1); i < dint(_end); ++i)
     {
-        const TokenBuffer::Token& token = tokens_->at(i);
+        const TokenBuffer::Token& token = _tokens->at(i);
         if(token.equals(closingToken))
         {
             --level;
@@ -269,7 +269,7 @@ duint TokenRange::openingBracket(duint closeBracketPos) const
     
     for(dint start = tokenIndex(closeBracketPos - 1); start >= 0; --start)
     {
-        bracketTokens(tokens_->at(start), openingToken, closingToken);
+        bracketTokens(_tokens->at(start), openingToken, closingToken);
         if(!closingToken || !token(closeBracketPos).equals(closingToken))
         {
             // Not suitable.
@@ -290,23 +290,23 @@ duint TokenRange::openingBracket(duint closeBracketPos) const
 String TokenRange::asText() const
 {
     std::ostringstream os;
-    for(duint i = start_; i < end_; ++i)
+    for(duint i = _start; i < _end; ++i)
     {
-        if(i > start_) 
+        if(i > _start) 
         {
             os << " ";
         }
-        os << tokens_->at(i).str();
+        os << _tokens->at(i).str();
     }    
     return os.str();
 }
 
 TokenRange TokenRange::undefinedRange() const
 {
-    return TokenRange(*tokens_, UNDEFINED_POS, UNDEFINED_POS);
+    return TokenRange(*_tokens, UNDEFINED_POS, UNDEFINED_POS);
 }
 
 bool TokenRange::undefined() const
 {
-    return (start_ == UNDEFINED_POS && end_ == UNDEFINED_POS);    
+    return (_start == UNDEFINED_POS && _end == UNDEFINED_POS);    
 }

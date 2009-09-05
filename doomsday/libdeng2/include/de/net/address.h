@@ -69,13 +69,13 @@ namespace de
          */
         void set(const String& address, duint16 port);
 
-        duint32 ip() const { return ip_; }
+        duint32 ip() const { return _ip; }
         
-        void setIp(duint32 ip) { ip_ = ip; }
+        void setIp(duint32 ip) { _ip = ip; }
         
-        duint16 port() const { return port_; }
+        duint16 port() const { return _port; }
         
-        void setPort(duint16 p) { port_ = p; }
+        void setPort(duint16 p) { _port = p; }
 
         /**
          * Checks if two IP address match. Port numbers are ignored.
@@ -95,8 +95,8 @@ namespace de
         LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
 
     private:
-        duint32 ip_;
-        duint16 port_;
+        duint32 _ip;
+        duint16 _port;
     };
     
     LIBDENG2_API std::ostream& operator << (std::ostream& os, const Address& address);

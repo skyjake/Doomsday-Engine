@@ -51,7 +51,7 @@ public:
     /**
      * Returns the user's id.
      */
-    const de::Id& id() const { return user_->id(); }
+    const de::Id& id() const { return _user->id(); }
 
     /**
      * Returns the address of the remote user.
@@ -86,13 +86,13 @@ public:
     const de::User& user() const;
     
 private:
-    Client* client_;
+    Client* _client;
     
     /// Session to which this remote user belongs.
-    Session* session_;
+    Session* _session;
     
     /// The game user.
-    de::User* user_;
+    de::User* _user;
 };
 
 #endif /* REMOTEUSER_H */

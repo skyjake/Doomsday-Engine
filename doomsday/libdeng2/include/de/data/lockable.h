@@ -52,9 +52,9 @@ namespace de
         
     private:
         /// Pointer to the internal mutex data.
-        void* mutex_;
+        void* _mutex;
         
-        mutable bool isLocked_;
+        mutable bool _isLocked;
     };
 }
 

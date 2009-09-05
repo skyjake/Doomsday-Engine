@@ -84,17 +84,17 @@ namespace de
         
     private:
         /// Parent visual (NULL for the root visual).
-        Visual* parent_;
+        Visual* _parent;
         
         /// Child visuals. Owned by the visual.
         typedef std::list<Visual*> Children;
-        Children children_;
+        Children _children;
         
         /// Position of the visual (within its parent).
-        AnimatorVector2 pos_;
+        AnimatorVector2 _pos;
 
         /// Size of the visual.
-        AnimatorVector2 size_;
+        AnimatorVector2 _size;
     };
 }
 

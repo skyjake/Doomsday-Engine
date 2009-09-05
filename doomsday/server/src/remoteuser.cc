@@ -23,45 +23,45 @@
 using namespace de;
 
 RemoteUser::RemoteUser(Client& client, Session* session) 
-    : client_(&client), session_(session), user_(0)
+    : _client(&client), _session(session), _user(0)
 {
-    user_ = App::game().SYMBOL(deng_NewUser)();
+    _user = App::game().SYMBOL(deng_NewUser)();
 }
 
 RemoteUser::~RemoteUser()
 {
-    if(session_)
+    if(_session)
     {
         // Remove this user from the session.
-        session_->demote(*this);
+        _session->demote(*this);
     }
-    delete user_;
+    delete _user;
 }
 
 Client& RemoteUser::client() const
 {
-    assert(client_ != NULL);
-    return *client_;
+    assert(_client != NULL);
+    return *_client;
 }
 
 Session& RemoteUser::session() const
 {
-    if(!session_)
+    if(!_session)
     {
         /// @throw NotInSessionError The remote user is not associated with any session.
         throw NotInSessionError("RemoteUser::session", "Remote user not in session");
     }
-    return *session_;
+    return *_session;
 }
 
 void RemoteUser::setSession(Session* session)
 {
-    session_ = session;
+    _session = session;
 }
 
 de::User& RemoteUser::user()
 {
-    return *user_;
+    return *_user;
 }
 
 de::Address RemoteUser::address() const

@@ -31,16 +31,16 @@ Date::Date()
     *this = Date(Time());
 }
 
-Date::Date(const Time& at) : microSeconds(at.micro_)
+Date::Date(const Time& at) : microSeconds(at._micro)
 {
     struct tm t;
 
 #ifdef UNIX
-    localtime_r(&at.time_, &t);
+    localtime_r(&at._time, &t);
 #endif
 
 #ifdef WIN32
-    memcpy(&t, _localtime64(&at.time_), sizeof(t));
+    memcpy(&t, _localtime64(&at._time), sizeof(t));
 #endif
 
     seconds = t.tm_sec;

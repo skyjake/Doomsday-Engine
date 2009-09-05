@@ -24,7 +24,7 @@
 using namespace de;
 
 LibraryFile::LibraryFile(File* source)
-    : File(source->name()), library_(0)
+    : File(source->name()), _library(0)
 {
     assert(source != 0);
     setSource(source); // takes ownership
@@ -36,14 +36,14 @@ LibraryFile::~LibraryFile()
     audienceForDeletion.clear();
     
     deindex();    
-    delete library_;
+    delete _library;
 }
 
 Library& LibraryFile::library()
 {
-    if(library_)
+    if(_library)
     {
-        return *library_;
+        return *_library;
     }
     
     /// @todo A method for File for making a NativeFile out of any File.
@@ -56,16 +56,16 @@ Library& LibraryFile::library()
             ": can only load from NativeFile");
     }
     
-    library_ = new Library(native->nativePath());
-    return *library_;
+    _library = new Library(native->nativePath());
+    return *_library;
 }
 
 void LibraryFile::clear()
 {
-    if(library_)
+    if(_library)
     {
-        delete library_;
-        library_ = 0;
+        delete _library;
+        _library = 0;
     }
 }
 

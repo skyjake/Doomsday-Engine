@@ -21,7 +21,7 @@
 
 using namespace de;
 
-Surface::Surface(const Size& s) : size_(s) 
+Surface::Surface(const Size& s) : _size(s) 
 {}
 
 Surface::~Surface()
@@ -29,7 +29,7 @@ Surface::~Surface()
 
 void Surface::setSize(const Size& s)
 {
-    size_ = s;
+    _size = s;
 }
 
 Image* Surface::toImage() const

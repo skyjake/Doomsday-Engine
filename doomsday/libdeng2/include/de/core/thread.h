@@ -70,14 +70,14 @@ namespace de
         static int runner(void* owner);
  
         /// This is set to true when the thread should stop.
-        volatile bool stopNow_;
+        volatile bool _stopNow;
         
         /// Pointer to the internal thread data.
         typedef void* Handle;
-        volatile Handle thread_;
+        volatile Handle _thread;
         
         /// Signals the end of the thread.
-        Waitable endOfThread_;
+        Waitable _endOfThread;
     };
 }
 

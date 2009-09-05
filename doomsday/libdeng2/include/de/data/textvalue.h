@@ -67,7 +67,7 @@ namespace de
         void setValue(const String& text);
         
     private:
-        Text value_;
+        Text _value;
     };
 }
 

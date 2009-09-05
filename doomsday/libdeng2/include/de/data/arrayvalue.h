@@ -50,7 +50,7 @@ namespace de
         ~ArrayValue();
 
         /// Const accessor to the array elements.
-        const Elements& elements() const { return elements_; }
+        const Elements& elements() const { return _elements; }
         
         /**
          * Adds a new Value to the elements of the array. The value is
@@ -141,10 +141,10 @@ namespace de
         Elements::const_iterator indexToIterator(dint index) const;
     
     private:
-        Elements elements_;
+        Elements _elements;
         
         /// Current position of the iterator.
-        dint iteration_;
+        dint _iteration;
     };
 }
 

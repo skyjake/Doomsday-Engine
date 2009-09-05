@@ -56,7 +56,7 @@ namespace de
         
     private:
         /// Pointer to the internal semaphore data.
-        void* semaphore_;
+        void* _semaphore;
     };
 }
 

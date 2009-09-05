@@ -26,7 +26,7 @@
 
 using namespace de;
 
-Address::Address(duint32 ip, duint16 port) : ip_(ip), port_(port)
+Address::Address(duint32 ip, duint16 port) : _ip(ip), _port(port)
 {}
 
 Address::Address(const String& address, duint16 port)
@@ -36,7 +36,7 @@ Address::Address(const String& address, duint16 port)
 
 bool Address::operator == (const Address& other) const
 {
-    return ip_ == other.ip_ && port_ == other.port_;
+    return _ip == other._ip && _port == other._port;
 }
 
 void Address::set(const String& address, duint16 port)
@@ -68,13 +68,13 @@ void Address::set(const String& address, duint16 port)
         throw ResolveError("Address::set", SDLNet_GetError());
     }
 
-    ip_   = SDLNet_Read32(&resolved.host);
-    port_ = SDLNet_Read16(&resolved.port);
+    _ip   = SDLNet_Read32(&resolved.host);
+    _port = SDLNet_Read16(&resolved.port);
 }
 
 bool Address::matches(const Address& other, duint32 mask)
 {
-    return (ip_ & mask) == (other.ip_ & mask);
+    return (_ip & mask) == (other._ip & mask);
 }
 
 String Address::asText() const

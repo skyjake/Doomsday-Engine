@@ -71,11 +71,11 @@ namespace de
          */
         virtual void load(const String& name);
 
-        const String& name() const { return name_; }
+        const String& name() const { return _name; }
 
-        const Record& info() const { return info_; }
+        const Record& info() const { return _info; }
 
-        Record& info() { return info_; }
+        Record& info() { return _info; }
 
         /**
          * Determines whether the map is void. A map is void when no map data 
@@ -118,12 +118,12 @@ namespace de
         /**
          * Returns a map of thinkers, excluding objects.
          */
-        const Thinkers& thinkers() const { return thinkers_; }
+        const Thinkers& thinkers() const { return _thinkers; }
         
         /**
          * Returns a map of objects.
          */
-        const Objects& objects() const { return objects_; }
+        const Objects& objects() const { return _objects; }
 
         /**
          * Returns a thinker with the specified id, or @c NULL if it doesn't exist.
@@ -168,19 +168,19 @@ namespace de
         
     private:
         /// Name of the map.
-        String name_;
+        String _name;
         
         /// Map-specific information. Lost when the map changes.
-        Record info_;
+        Record _info;
         
         /// Generates ids for thinkers (objects, too).
-        Enumerator thinkerEnum_;
+        Enumerator _thinkerEnum;
         
         /// All thinkers of the map (except objects).
-        Thinkers thinkers_;
+        Thinkers _thinkers;
 
         /// All objects of the map.
-        Objects objects_;
+        Objects _objects;
     };
 }
 

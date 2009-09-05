@@ -24,54 +24,54 @@
 
 using namespace de;
 
-MuxLink::MuxLink(const Address& address) : link_(0), defaultChannel_(*this, 0)
+MuxLink::MuxLink(const Address& address) : _link(0), _defaultChannel(*this, 0)
 {
-    link_ = new Link(address);
+    _link = new Link(address);
 }
 
-MuxLink::MuxLink(Socket* socket) : link_(0), defaultChannel_(*this, 0)
+MuxLink::MuxLink(Socket* socket) : _link(0), _defaultChannel(*this, 0)
 {
-    link_ = new Link(socket);
+    _link = new Link(socket);
 }
 
 MuxLink::~MuxLink()
 {
-    delete link_;
+    delete _link;
 }
 
 Address MuxLink::peerAddress() const
 {
-    return link_->peerAddress();
+    return _link->peerAddress();
 }
 
 void MuxLink::demux()
 {
-    while(link_->hasIncoming())
+    while(_link->hasIncoming())
     {
-        std::auto_ptr<Message> message(link_->receive());
+        std::auto_ptr<Message> message(_link->receive());
         // We will quietly ignore channels we can't receive.
         duint chan = message->channel();
         if(chan < NUM_CHANNELS)
         {
-            buffers_[chan].put(message.release());
+            _buffers[chan].put(message.release());
         }
     }
 }
 
 void MuxLink::Channel::send(const IByteArray& data)
 {
-    mux_.link_->mode.set(Link::CHANNEL_1_BIT, channel_ == 1);
-    *mux_.link_ << data;
+    _mux._link->mode.set(Link::CHANNEL_1_BIT, _channel == 1);
+    *_mux._link << data;
 }
 
 Message* MuxLink::Channel::receive()
 {
-    mux_.demux();
-    return mux_.buffers_[channel_].get();
+    _mux.demux();
+    return _mux._buffers[_channel].get();
 }
 
 bool MuxLink::Channel::hasIncoming()
 {
-    mux_.demux();
-    return !mux_.buffers_[channel_].empty();
+    _mux.demux();
+    return !_mux._buffers[_channel].empty();
 }

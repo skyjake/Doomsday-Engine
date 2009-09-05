@@ -33,17 +33,17 @@ using std::auto_ptr;
 /// If execution continues for longer than this, a HangError is thrown.
 static const Time::Delta MAX_EXECUTION_TIME = 10;
 
-Process::Process(Record* externalGlobalNamespace) : state_(STOPPED), workingPath_("/")
+Process::Process(Record* externalGlobalNamespace) : _state(STOPPED), _workingPath("/")
 {
     // Push the first context on the stack. This bottommost context
     // is never popped from the stack. Its namespace is the global namespace
     // of the process.
-    stack_.push_back(new Context(Context::PROCESS, this, externalGlobalNamespace));
+    _stack.push_back(new Context(Context::PROCESS, this, externalGlobalNamespace));
 }
 
-Process::Process(const Script& script) : state_(STOPPED), workingPath_("/")
+Process::Process(const Script& script) : _state(STOPPED), _workingPath("/")
 {
-    stack_.push_back(new Context(Context::PROCESS, this));
+    _stack.push_back(new Context(Context::PROCESS, this));
 
     // If a script is provided, start running it automatically.
     run(script);
@@ -58,24 +58,24 @@ void Process::clearStack(duint downToLevel)
 {
     while(depth() > downToLevel)
     {
-        delete stack_.back();
-        stack_.pop_back();
+        delete _stack.back();
+        _stack.pop_back();
     }
 }
 
 duint Process::depth() const
 {
-    return stack_.size();
+    return _stack.size();
 }
 
 void Process::run(const Script& script)
 {
-    if(state_ != STOPPED)
+    if(_state != STOPPED)
     {
         throw NotStoppedError("Process::run", 
             "When a new script is started the process must be stopped first");
     }
-    state_ = RUNNING;
+    _state = RUNNING;
     
     // Make sure the stack is clear except for the process context.
     clearStack(1);
@@ -96,32 +96,32 @@ void Process::run(const Script& script)
 
 void Process::suspend(bool suspended)
 {
-    if(state_ == STOPPED)
+    if(_state == STOPPED)
     {
         throw SuspendError("Process:suspend", 
             "Stopped processes cannot be suspended or resumed");
     }    
     
-    state_ = (suspended? SUSPENDED : RUNNING);
+    _state = (suspended? SUSPENDED : RUNNING);
 }
 
 void Process::stop()
 {
-    state_ = STOPPED;
+    _state = STOPPED;
     
     // Clear the context stack, apart from the bottommost context, which 
     // represents the process itself.
-    for(ContextStack::reverse_iterator i = stack_.rbegin(); i != stack_.rend(); ++i)
+    for(ContextStack::reverse_iterator i = _stack.rbegin(); i != _stack.rend(); ++i)
     {
-        if(*i != stack_[0])
+        if(*i != _stack[0])
         {
             delete *i;
         }
     }
-    assert(!stack_.empty());
+    assert(!_stack.empty());
 
     // Erase all but the first context.
-    stack_.erase(stack_.begin() + 1, stack_.end());
+    _stack.erase(_stack.begin() + 1, _stack.end());
     
     // This will reset any half-done evaluations, but it won't clear the namespace.
     context().reset();
@@ -129,7 +129,7 @@ void Process::stop()
 
 void Process::execute(const Time::Delta& timeBox)
 {
-    if(state_ == SUSPENDED || state_ == STOPPED)
+    if(_state == SUSPENDED || _state == STOPPED)
     {
         // The process is not active.
         return;
@@ -140,11 +140,11 @@ void Process::execute(const Time::Delta& timeBox)
     if(startDepth == 1)
     {
         // Mark the start time.
-        startedAt_ = Time();
+        _startedAt = Time();
     }
 
     // Execute the next command(s).
-    while(state_ == RUNNING && depth() >= startDepth)
+    while(_state == RUNNING && depth() >= startDepth)
     {
         try
         {
@@ -152,7 +152,7 @@ void Process::execute(const Time::Delta& timeBox)
             {
                 finish();
             }
-            if(startedAt_.since() > MAX_EXECUTION_TIME)
+            if(_startedAt.since() > MAX_EXECUTION_TIME)
             {
                 /// @throw HangError  Execution takes too long.
                 throw HangError("Process::execute", 
@@ -229,19 +229,19 @@ bool Process::jumpIntoCatch(const Error& err)
 Context& Process::context(duint downDepth)
 {
     assert(downDepth < depth());
-    return **(stack_.rbegin() + downDepth);
+    return **(_stack.rbegin() + downDepth);
 }
 
 Context* Process::popContext()
 {
-    Context* topmost = stack_.back();
-    stack_.pop_back();
+    Context* topmost = _stack.back();
+    _stack.pop_back();
 
     // Pop a global namespace as well, if present.
     if(context().type() == Context::GLOBAL_NAMESPACE)
     {
-        delete stack_.back();
-        stack_.pop_back();
+        delete _stack.back();
+        _stack.pop_back();
     }    
     
     return topmost;
@@ -265,21 +265,21 @@ void Process::finish(Value* returnValue)
     }
     else
     {
-        assert(stack_.back()->type() == Context::PROCESS);
+        assert(_stack.back()->type() == Context::PROCESS);
         
         // This was the last level.
-        state_ = STOPPED;
+        _state = STOPPED;
     }   
 }
 
 const String& Process::workingPath() const
 {
-    return workingPath_;
+    return _workingPath;
 }
 
 void Process::setWorkingPath(const String& newWorkingPath)
 {
-    workingPath_ = newWorkingPath;
+    _workingPath = newWorkingPath;
 }
 
 void Process::call(const Function& function, const ArrayValue& arguments)
@@ -294,12 +294,12 @@ void Process::call(const Function& function, const ArrayValue& arguments)
         // that namespace on the stack first.
         if(function.globals() && function.globals() != &globals())
         {
-            stack_.push_back(new Context(Context::GLOBAL_NAMESPACE, this, 
+            _stack.push_back(new Context(Context::GLOBAL_NAMESPACE, this, 
                 function.globals()));
         }
         
         // Create a new context.
-        stack_.push_back(new Context(Context::FUNCTION_CALL, this));
+        _stack.push_back(new Context(Context::FUNCTION_CALL, this));
         
         // Create local variables for the arguments in the new context.
         Function::ArgumentValues::const_iterator b = argValues.begin();
@@ -319,7 +319,7 @@ void Process::namespaces(Namespaces& spaces)
 {
     spaces.clear();
     
-    for(ContextStack::reverse_iterator i = stack_.rbegin(); i != stack_.rend(); ++i)
+    for(ContextStack::reverse_iterator i = _stack.rbegin(); i != _stack.rend(); ++i)
     {
         Context& context = **i;
         spaces.push_back(&context.names());
@@ -333,5 +333,5 @@ void Process::namespaces(Namespaces& spaces)
 
 Record& Process::globals()
 {
-    return stack_[0]->names();
+    return _stack[0]->names();
 }

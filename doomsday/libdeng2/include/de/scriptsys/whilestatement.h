@@ -35,15 +35,15 @@ namespace de
     class WhileStatement : public Statement
     {
     public:
-        WhileStatement() : loopCondition_(0) {}
+        WhileStatement() : _loopCondition(0) {}
         ~WhileStatement();
         
         void setCondition(Expression* condition) {
-            loopCondition_ = condition;
+            _loopCondition = condition;
         }
         
         Compound& compound() {
-            return compound_;
+            return _compound;
         }
         
         void execute(Context& context) const;
@@ -53,8 +53,8 @@ namespace de
         void operator << (Reader& from);         
 
     private:
-        Expression* loopCondition_;
-        Compound compound_;
+        Expression* _loopCondition;
+        Compound _compound;
     };
 }
 

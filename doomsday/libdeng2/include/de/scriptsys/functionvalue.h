@@ -38,7 +38,7 @@ namespace de
         ~FunctionValue();
         
         /// Returns the function.
-        const Function& function() const { return *func_; }
+        const Function& function() const { return *_func; }
        
         Value* duplicate() const;
         Text asText() const;
@@ -52,7 +52,7 @@ namespace de
         void operator << (Reader& from);         
         
     private:
-        Function* func_;
+        Function* _func;
     };
 }
 

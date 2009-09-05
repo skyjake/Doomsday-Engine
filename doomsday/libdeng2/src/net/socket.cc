@@ -30,13 +30,13 @@ static const duint PROTOCOL_VERSION = 0;
 
 Socket::Header::Header() : version(PROTOCOL_VERSION), huffman(false), channel(0), size(0) {}
 
-Socket::Socket(const Address& address) : socket_(0), socketSet_(0)
+Socket::Socket(const Address& address) : _socket(0), _socketSet(0)
 {
     IPaddress ip;
 
     internal::convertAddress(address, &ip);
-    socket_ = SDLNet_TCP_Open(&ip);
-    if(socket_ == 0)
+    _socket = SDLNet_TCP_Open(&ip);
+    if(_socket == 0)
     {
         /// @throw ConnectionError Opening the socket to @a address failed.
         throw ConnectionError("Socket::Socket", "Failed to connect: " +
@@ -46,7 +46,7 @@ Socket::Socket(const Address& address) : socket_(0), socketSet_(0)
     initialize();
 }
 
-Socket::Socket(void* existingSocket) : socket_(existingSocket), socketSet_(0)
+Socket::Socket(void* existingSocket) : _socket(existingSocket), _socketSet(0)
 {
     initialize();
 }
@@ -55,33 +55,33 @@ Socket::~Socket()
 {
     close();
 
-    if(socketSet_)
+    if(_socketSet)
     {
-        SDLNet_FreeSocketSet(static_cast<SDLNet_SocketSet>(socketSet_));
-        socketSet_ = 0;
+        SDLNet_FreeSocketSet(static_cast<SDLNet_SocketSet>(_socketSet));
+        _socketSet = 0;
     }
 }
 
 void Socket::initialize()
 {
     // Allocate a socket set for waiting on.
-    socketSet_ = SDLNet_AllocSocketSet(1);
+    _socketSet = SDLNet_AllocSocketSet(1);
 
-    SDLNet_AddSocket(static_cast<SDLNet_SocketSet>(socketSet_),
-        static_cast<SDLNet_GenericSocket>(socket_));
+    SDLNet_AddSocket(static_cast<SDLNet_SocketSet>(_socketSet),
+        static_cast<SDLNet_GenericSocket>(_socket));
 
     // Incoming packets will be marked with this address.
-    peerAddress_ = peerAddress();
+    _peerAddress = peerAddress();
 }
 
 void Socket::close()
 {
     // Close the socket.
-    if(socket_)
+    if(_socket)
     {
         lock();
-        TCPsocket s = static_cast<TCPsocket>(socket_);
-        socket_ = 0;
+        TCPsocket s = static_cast<TCPsocket>(_socket);
+        _socket = 0;
         SDLNet_TCP_Close(s);
         unlock();
     }
@@ -126,7 +126,7 @@ void Socket::readHeader(duint headerBytes, Header& header)
 
 void Socket::send(const IByteArray& packet, duint channel)
 {
-    if(!socket_) 
+    if(!_socket) 
     {
         /// @throw DisconnectedError Sending is not possible because the socket has been closed.
         throw DisconnectedError("Socket::operator << ", "Socket closed");
@@ -143,7 +143,7 @@ void Socket::send(const IByteArray& packet, duint channel)
     
     packet.get(0, buffer + 4, packet.size());
     unsigned int sentBytes = SDLNet_TCP_Send(
-        static_cast<TCPsocket>(socket_), buffer, packetSize);
+        static_cast<TCPsocket>(_socket), buffer, packetSize);
     delete [] buffer;
 
     // Did the transmission fail?
@@ -156,7 +156,7 @@ void Socket::send(const IByteArray& packet, duint channel)
 
 void Socket::checkValid()
 {
-    if(!socket_ || !socketSet_)
+    if(!_socket || !_socketSet)
     {
         /// @throw DisconnectedError The socket has been closed.
         throw DisconnectedError("Socket::receive", "Socket was closed");
@@ -179,7 +179,7 @@ void Socket::receiveBytes(duint count, dbyte* buffer)
             unlock();
 
             int result = SDLNet_CheckSockets(
-                static_cast<SDLNet_SocketSet>(socketSet_), LIBDENG2_SOCKET_RECV_TIMEOUT);
+                static_cast<SDLNet_SocketSet>(_socketSet), LIBDENG2_SOCKET_RECV_TIMEOUT);
 
             lock();
             checkValid();
@@ -197,7 +197,7 @@ void Socket::receiveBytes(duint count, dbyte* buffer)
             }
 
             // There is something to receive.
-            int recvResult = SDLNet_TCP_Recv(static_cast<TCPsocket>(socket_), 
+            int recvResult = SDLNet_TCP_Recv(static_cast<TCPsocket>(_socket), 
                 buffer + received, count - received);
 
             if(recvResult <= 0)
@@ -228,7 +228,7 @@ void Socket::receiveBytes(duint count, dbyte* buffer)
 
 Message* Socket::receive()
 {
-    if(!socket_) 
+    if(!_socket) 
     {
         /// @throw DisconnectedError Receiving data is not possible because the socket is closed.
         throw DisconnectedError("Socket::receive", "Socket is closed");
@@ -250,16 +250,16 @@ Message* Socket::receive()
         throw UnknownProtocolError("Socket::receive", "Incoming packet has unknown protocol");
     }
     
-    std::auto_ptr<Message> data(new Message(peerAddress_, incoming.channel, incoming.size)); 
+    std::auto_ptr<Message> data(new Message(_peerAddress, incoming.channel, incoming.size)); 
     receiveBytes(incoming.size, const_cast<dbyte*>(data.get()->data()));
     return data.release();
 }
 
 Address Socket::peerAddress() const
 {
-    if(socket_)
+    if(_socket)
     {
-        IPaddress* ip = SDLNet_TCP_GetPeerAddress(static_cast<TCPsocket>(socket_));
+        IPaddress* ip = SDLNet_TCP_GetPeerAddress(static_cast<TCPsocket>(_socket));
         if(ip)
         {
             return internal::convertAddress(ip);

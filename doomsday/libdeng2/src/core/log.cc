@@ -56,28 +56,28 @@ public:
 static Logs logs;
 
 LogEntry::LogEntry(LogLevel level, const String& section, const String& format)
-    : level_(level), section_(section), format_(format), disabled_(false)
+    : _level(level), _section(section), _format(format), _disabled(false)
 {
     if(!App::logBuffer().enabled(level))
     {
-        disabled_ = true;
+        _disabled = true;
     }
 }
 
 LogEntry::~LogEntry()
 {
-    for(Args::iterator i = args_.begin(); i != args_.end(); ++i) 
+    for(Args::iterator i = _args.begin(); i != _args.end(); ++i) 
     {
         delete *i;
     }    
 }
 
-String LogEntry::asText(const Flags& _flags) const
+String LogEntry::asText(const Flags& formattingFlags) const
 {
-    Flags flags = _flags;
+    Flags flags = formattingFlags;
     std::ostringstream output;
     
-    if(defaultFlags_[SIMPLE_BIT])
+    if(_defaultFlags[SIMPLE_BIT])
     {
         flags |= SIMPLE;
     }
@@ -88,7 +88,7 @@ String LogEntry::asText(const Flags& _flags) const
         // Begin with the timestamp.
         if(flags[STYLED_BIT]) output << TEXT_STYLE_LOG_TIME;
     
-        output << Date(when_) << " ";
+        output << Date(_when) << " ";
 
         if(!flags[STYLED_BIT])
         {
@@ -102,7 +102,7 @@ String LogEntry::asText(const Flags& _flags) const
                 "(ERR)",
                 "(!!!)"        
             };
-            output << std::setfill(' ') << std::setw(5) << levelNames[level_] << " ";
+            output << std::setfill(' ') << std::setw(5) << levelNames[_level] << " ";
         }
         else
         {
@@ -117,21 +117,21 @@ String LogEntry::asText(const Flags& _flags) const
                 "FATAL!"        
             };
             output << "\t" 
-                << (level_ >= WARNING? TEXT_STYLE_LOG_BAD_LEVEL : TEXT_STYLE_LOG_LEVEL)
-                << levelNames[level_] << "\t\r";
+                << (_level >= WARNING? TEXT_STYLE_LOG_BAD_LEVEL : TEXT_STYLE_LOG_LEVEL)
+                << levelNames[_level] << "\t\r";
         }
     }
 
     // Section name.
-    if(!section_.empty())
+    if(!_section.empty())
     {
         if(!flags[STYLED_BIT])
         {
-            output << section_ << ": ";
+            output << _section << ": ";
         }
         else
         {
-            output << TEXT_STYLE_SECTION << section_ << ": ";
+            output << TEXT_STYLE_SECTION << _section << ": ";
         }
     }
 
@@ -141,26 +141,26 @@ String LogEntry::asText(const Flags& _flags) const
     }
     
     // Message text with the arguments formatted.
-    if(args_.empty())
+    if(_args.empty())
     {
         // Just verbatim.
-        output << format_;
+        output << _format;
     }
     else
     {
-        Args::const_iterator arg = args_.begin();
+        Args::const_iterator arg = _args.begin();
         
-        for(String::const_iterator i = format_.begin(); i != format_.end(); ++i)
+        for(String::const_iterator i = _format.begin(); i != _format.end(); ++i)
         {
             if(*i == '%')
             {
-                if(arg == args_.end())
+                if(arg == _args.end())
                 {
                     // Out of args.
                     throw IllegalFormatError("LogEntry::asText", "Ran out of arguments");
                 }
                                 
-                output << String::patternFormat(i, format_.end(), **arg);
+                output << String::patternFormat(i, _format.end(), **arg);
                 ++arg;
             }
             else
@@ -170,7 +170,7 @@ String LogEntry::asText(const Flags& _flags) const
         }
         
         // Just append the rest of the arguments without special instructions.
-        for(; arg != args_.end(); ++arg)
+        for(; arg != _args.end(); ++arg)
         {
             output << **arg;
         }        
@@ -207,36 +207,36 @@ std::ostream& de::operator << (std::ostream& stream, const LogEntry::Arg& arg)
     return stream;
 }
 
-Log::Section::Section(const char* name) : log_(threadLog()), name_(name)
+Log::Section::Section(const char* name) : _log(threadLog()), _name(name)
 {
-    log_.beginSection(name_);
+    _log.beginSection(_name);
 }
 
 Log::Section::~Section()
 {
-    log_.endSection(name_);
+    _log.endSection(_name);
 }
 
-Log::Log() : throwawayEntry_(0)
+Log::Log() : _throwawayEntry(0)
 {
-    throwawayEntry_ = new LogEntry(MESSAGE, "", "");
-    sectionStack_.push_back(MAIN_SECTION);
+    _throwawayEntry = new LogEntry(MESSAGE, "", "");
+    _sectionStack.push_back(MAIN_SECTION);
 }
 
 Log::~Log()
 {
-    delete throwawayEntry_;
+    delete _throwawayEntry;
 }
 
 void Log::beginSection(const char* name)
 {
-    sectionStack_.push_back(name);
+    _sectionStack.push_back(name);
 }
 
 void Log::endSection(const char* name)
 {
-    assert(sectionStack_.back() == name);
-    sectionStack_.pop_back();
+    assert(_sectionStack.back() == name);
+    _sectionStack.pop_back();
 }
 
 LogEntry& Log::enter(const String& format)
@@ -249,13 +249,13 @@ LogEntry& Log::enter(LogLevel level, const String& format)
     if(!App::logBuffer().enabled(level))
     {
         // If the level is disabled, no messages are entered into it.
-        return *throwawayEntry_;
+        return *_throwawayEntry;
     }
     
     // Collect the sections.
     String context;
     String latest;
-    for(SectionStack::iterator i = sectionStack_.begin(); i != sectionStack_.end(); ++i)
+    for(SectionStack::iterator i = _sectionStack.begin(); i != _sectionStack.end(); ++i)
     {
         if(*i == latest)
         {

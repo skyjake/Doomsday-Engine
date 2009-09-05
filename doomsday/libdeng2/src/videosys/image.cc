@@ -26,13 +26,13 @@ Image::Image() : Block()
 
 void Image::set(Format format, const Dimensions& dims, const Byte* data, Size dataSize, duint linePitchBytes)
 {
-    format_ = format;
-    dims_ = dims;
+    _format = format;
+    _dims = dims;
 
     duint expectedSize = dims.x * dims.y * bytesPerPixel();
     if(expectedSize > dataSize)
     {
-        dims_ = Dimensions();
+        _dims = Dimensions();
         throw DataError("Image::set", "Not enough data provided");
     }
 
@@ -55,32 +55,32 @@ void Image::set(Format format, const Dimensions& dims, const Byte* data, Size da
 
 Image::Format Image::format() const
 {
-    return format_;
+    return _format;
 }
 
 duint Image::width() const
 {
-    return dims_.x;
+    return _dims.x;
 }
 
 duint Image::height() const
 {
-    return dims_.y;
+    return _dims.y;
 }
 
 Image::Dimensions Image::dimensions() const
 {
-    return dims_;
+    return _dims;
 }
 
 duint Image::bytesPerPixel() const
 {
-    return (format_ == RGB? 3 : format_ == RGBA? 4 : 0);
+    return (_format == RGB? 3 : _format == RGBA? 4 : 0);
 }
 
 void Image::luminocityToAlpha()
 {
-    if(format_ != RGB)
+    if(_format != RGB)
     {
         throw FilterError("Image::luminocityToAlpha", "Image must be in RGB format");
     }
@@ -102,6 +102,6 @@ void Image::luminocityToAlpha()
         source += 3;
     }
 
-    set(Image::RGBA, dims_, filtered, count);
+    set(Image::RGBA, _dims, filtered, count);
     delete filtered;
 }

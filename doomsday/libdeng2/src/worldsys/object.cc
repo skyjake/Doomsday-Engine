@@ -45,11 +45,11 @@ Thinker* Object::fromReader(Reader& reader)
 void Object::operator >> (Writer& to) const
 {
     Thinker::operator >> (to);
-    to << pos_;
+    to << _pos;
 }
 
 void Object::operator << (Reader& from)
 {
     Thinker::operator << (from);
-    from >> pos_;
+    from >> _pos;
 }

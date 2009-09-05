@@ -62,7 +62,7 @@ namespace de
         /**
          * Returns the native path of the file.
          */
-        const String& nativePath() const { return nativePath_; }
+        const String& nativePath() const { return _nativePath; }
 
         void setMode(const Mode& newMode);
 
@@ -83,13 +83,13 @@ namespace de
         
     private:
         /// Path of the native file in the OS file system.
-        String nativePath_;
+        String _nativePath;
         
         /// Input stream.
-        mutable std::ifstream* in_;
+        mutable std::ifstream* _in;
         
         /// Output stream.
-        std::ofstream* out_;
+        std::ofstream* _out;
     };
 }
 

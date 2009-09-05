@@ -75,8 +75,8 @@ namespace de
         static Type findType(const String& identifier);
         
     private:  
-        Type type_;
-        Expression* arg_;
+        Type _type;
+        Expression* _arg;
     };
 }
 

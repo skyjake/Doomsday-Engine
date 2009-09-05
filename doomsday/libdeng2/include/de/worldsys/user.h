@@ -44,18 +44,18 @@ namespace de
         
         virtual ~User();
 
-        const Id& id() const { return id_; }
+        const Id& id() const { return _id; }
 
         /**
          * Sets the id of the user.
          *
          * @param id  New identifier.
          */ 
-        void setId(const Id& id) { id_ = id; }
+        void setId(const Id& id) { _id = id; }
 
-        const Record& info() const { return info_; }
+        const Record& info() const { return _info; }
 
-        Record& info() { return info_; }
+        Record& info() { return _info; }
 
         /**
          * Returns the name of the player.
@@ -75,10 +75,10 @@ namespace de
                 
     private:
         /// User's id in the session. Assigned by the server's Session.
-        Id id_;
+        Id _id;
         
         /// Description of the user.
-        Record info_;
+        Record _info;
     };
 };
 

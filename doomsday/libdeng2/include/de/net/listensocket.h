@@ -55,9 +55,9 @@ namespace de
     
     private:
         /// Pointer to the internal socket data.
-        void* socket_;
+        void* _socket;
         
-        duint16 port_;
+        duint16 _port;
     };
 }
 

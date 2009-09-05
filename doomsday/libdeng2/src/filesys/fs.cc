@@ -34,14 +34,14 @@ FS::~FS()
 
 void FS::refresh()
 {
-    root_.populate();
+    _root.populate();
     
     printIndex();
 }
 
 Folder& FS::getFolder(const String& path)
 {
-    Folder* subFolder = root_.tryLocate<Folder>(path);
+    Folder* subFolder = _root.tryLocate<Folder>(path);
     if(!subFolder)
     {
         // This folder does not exist yet. Let's create it.
@@ -100,7 +100,7 @@ void FS::find(const String& path, FoundFiles& found) const
         // Always begin with a slash. We don't want to match partial folder names.
         dir = "/" + dir;
     }
-    ConstIndexRange range = index_.equal_range(baseName);
+    ConstIndexRange range = _index.equal_range(baseName);
     for(Index::const_iterator i = range.first; i != range.second; ++i)    
     {
         File* file = i->second;
@@ -120,10 +120,10 @@ void FS::index(File& file)
 {
     const String lowercaseName = file.name().lower();
     
-    index_.insert(IndexEntry(lowercaseName, &file));
+    _index.insert(IndexEntry(lowercaseName, &file));
     
     // Also make an entry in the type index.
-    Index& indexOfType = typeIndex_[TYPE_NAME(file)];
+    Index& indexOfType = _typeIndex[TYPE_NAME(file)];
     indexOfType.insert(IndexEntry(lowercaseName, &file));
 }
 
@@ -150,14 +150,14 @@ static void removeFromIndex(FS::Index& idx, File& file)
 
 void FS::deindex(File& file)
 {
-    removeFromIndex(index_, file);
-    removeFromIndex(typeIndex_[TYPE_NAME(file)], file);
+    removeFromIndex(_index, file);
+    removeFromIndex(_typeIndex[TYPE_NAME(file)], file);
 }
 
 const FS::Index& FS::indexFor(const String& typeName) const
 {
-    TypeIndex::const_iterator found = typeIndex_.find(typeName);
-    if(found != typeIndex_.end())
+    TypeIndex::const_iterator found = _typeIndex.find(typeName);
+    if(found != _typeIndex.end())
     {
         return found->second;
     }
@@ -167,12 +167,12 @@ const FS::Index& FS::indexFor(const String& typeName) const
 
 void FS::printIndex()
 {
-    for(Index::iterator i = index_.begin(); i != index_.end(); ++i)
+    for(Index::iterator i = _index.begin(); i != _index.end(); ++i)
     {
         LOG_DEBUG("\"%s\": ") << i->first << i->second->path();
     }
     
-    for(TypeIndex::iterator k = typeIndex_.begin(); k != typeIndex_.end(); ++k)
+    for(TypeIndex::iterator k = _typeIndex.begin(); k != _typeIndex.end(); ++k)
     {
         LOG_DEBUG("\nIndex for type '%s':") << k->first;
         for(Index::iterator i = k->second.begin(); i != k->second.end(); ++i)

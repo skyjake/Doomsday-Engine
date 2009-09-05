@@ -109,32 +109,32 @@ namespace de
          * Returns the destination byte array used by the writer.
          */
         const IByteArray& destination() const {
-            return destination_;
+            return _destination;
         }
 
         /**
          * Returns the destination byte array used by the writer.
          */
         IByteArray& destination() {
-            return destination_;
+            return _destination;
         }
 
         /**
          * Returns the offset used by the writer.
          */
         IByteArray::Offset offset() const {
-            return offset_;
+            return _offset;
         }
         
         void setOffset(IByteArray::Offset offset) {
-            offset_ = offset;
+            _offset = offset;
         }
 
         /**
          * Returns the byte order of the writer.
          */
         const ByteOrder& byteOrder() const {
-            return convert_;
+            return _convert;
         }
 
         /**
@@ -145,10 +145,10 @@ namespace de
         void seek(dint count);
         
     private:
-        IByteArray& destination_;
-        IByteArray::Offset offset_;
-        const IByteArray::Offset fixedOffset_;
-        const ByteOrder& convert_;
+        IByteArray& _destination;
+        IByteArray::Offset _offset;
+        const IByteArray::Offset _fixedOffset;
+        const ByteOrder& _convert;
     };
 }
 

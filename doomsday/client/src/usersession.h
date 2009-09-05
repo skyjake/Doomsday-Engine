@@ -69,20 +69,20 @@ protected:
     
 private:
     /// Link to the server.
-    de::MuxLink* link_;
+    de::MuxLink* _link;
     
     /// Id of the session on the server.
-    de::Id sessionId_;
+    de::Id _sessionId;
 
     /// The game world. Mirrors the game world in the server's Session.
-    de::World* world_;
+    de::World* _world;
 
     /// The user that owns the UserSession.
-    de::User* user_;
+    de::User* _user;
 
     /// The others.
     typedef std::map<de::Id, de::User*> Others;
-    Others others_;
+    Others _others;
 };
 
 #endif /* USERSESSION_H */

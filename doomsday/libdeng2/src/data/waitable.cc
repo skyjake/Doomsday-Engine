@@ -25,17 +25,17 @@
 
 using namespace de;
 
-Waitable::Waitable(duint initialValue) : semaphore_(0)
+Waitable::Waitable(duint initialValue) : _semaphore(0)
 {
-    semaphore_ = SDL_CreateSemaphore(initialValue);
+    _semaphore = SDL_CreateSemaphore(initialValue);
 }
     
 Waitable::~Waitable()
 {
-    SDL_sem* sem = static_cast<SDL_sem*>(semaphore_);
+    SDL_sem* sem = static_cast<SDL_sem*>(_semaphore);
 
     // The semaphore will be destroyed.  This'll make sure no new waits can begin.
-    semaphore_ = 0;
+    _semaphore = 0;
     
     if(sem)
     {
@@ -55,7 +55,7 @@ Waitable::~Waitable()
 void Waitable::wait()
 {
     // Wait until the resource becomes available.
-    if(SDL_SemWait(static_cast<SDL_sem*>(semaphore_)) < 0)
+    if(SDL_SemWait(static_cast<SDL_sem*>(_semaphore)) < 0)
     {
         /// @throw WaitError Failed to secure the resource due to an error.
         throw WaitError("Waitable::wait", SDL_GetError());
@@ -64,7 +64,7 @@ void Waitable::wait()
 
 void Waitable::wait(const Time::Delta& timeOut)
 {
-    int result = SDL_SemWaitTimeout(static_cast<SDL_sem*>(semaphore_),
+    int result = SDL_SemWaitTimeout(static_cast<SDL_sem*>(_semaphore),
                                     duint32(timeOut.asMilliSeconds()));
 
     if(result == SDL_MUTEX_TIMEDOUT)
@@ -81,5 +81,5 @@ void Waitable::wait(const Time::Delta& timeOut)
 
 void Waitable::post()
 {
-    SDL_SemPost(static_cast<SDL_sem*>(semaphore_));
+    SDL_SemPost(static_cast<SDL_sem*>(_semaphore));
 }

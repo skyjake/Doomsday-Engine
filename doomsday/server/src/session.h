@@ -52,9 +52,9 @@ public:
      */
     class Broadcast : public de::Transceiver {
     public:
-        Broadcast(Session& session) : session_(session), exclude_(0) {}
+        Broadcast(Session& session) : _session(session), _exclude(0) {}
         Broadcast& exclude(RemoteUser* user) { 
-            exclude_ = user; 
+            _exclude = user; 
             return *this;
         }
         /// Sends @a data to all users in the session.
@@ -64,8 +64,8 @@ public:
             return 0;
         }
     private:
-        Session& session_;
-        RemoteUser* exclude_;
+        Session& _session;
+        RemoteUser* _exclude;
     };
     
 public:
@@ -73,7 +73,7 @@ public:
 
     virtual ~Session();
 
-    const de::Id& id() const { return id_; }
+    const de::Id& id() const { return _id; }
 
     /**
      * Process a command related to the session. Any access rights must be
@@ -121,14 +121,14 @@ public:
     void linkBeingDeleted(de::Link& link);
 
 private:
-    de::Id id_;
+    de::Id _id;
 
     /// The game world.
-    de::World* world_;
+    de::World* _world;
     
     // The remote users.
     typedef std::map<de::Id, RemoteUser*> Users;
-    Users users_;
+    Users _users;
 };
 
 #endif /* SESSION_H */

@@ -47,7 +47,7 @@ namespace de
          */ 
         class LIBDENG2_API Channel : public Transceiver {
         public:
-            Channel(MuxLink& mux, duint channel) : mux_(mux), channel_(channel) {}
+            Channel(MuxLink& mux, duint channel) : _mux(mux), _channel(channel) {}
 
             // Implements Transceiver.
             void send(const IByteArray& data);
@@ -57,8 +57,8 @@ namespace de
             bool hasIncoming();
 
         private:
-            MuxLink& mux_;
-            duint channel_;
+            MuxLink& _mux;
+            duint _channel;
         };
         
     public:
@@ -82,7 +82,7 @@ namespace de
         /**
          * Returns the link over which multiplexing is done.
          */
-        Link& link() { return *link_; }
+        Link& link() { return *_link; }
 
         /**
          * Returns the address of the remote end of the link.
@@ -115,7 +115,7 @@ namespace de
          * When MuxLink is used as a Transceiver, it defaults to the base channel.
          */
         operator Transceiver& () {
-            return defaultChannel_;
+            return _defaultChannel;
         }
 
     protected:
@@ -126,12 +126,12 @@ namespace de
         
     private:
         /// The link over which multiplexing is done.
-        Link* link_;
+        Link* _link;
         
         /// Each channel has its own incoming buffer.
-        Link::IncomingBuffer buffers_[NUM_CHANNELS];
+        Link::IncomingBuffer _buffers[NUM_CHANNELS];
         
-        Channel defaultChannel_;
+        Channel _defaultChannel;
     };
 };
 

@@ -51,7 +51,7 @@ namespace de
         void operator << (Reader& from);         
         
     private:
-        ArrayExpression* arg_;
+        ArrayExpression* _arg;
     };
 }
 

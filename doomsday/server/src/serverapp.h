@@ -96,13 +96,13 @@ public:
     
 private:
     /// The server listens on this socket.
-    de::ListenSocket* listenSocket_;
+    de::ListenSocket* _listenSocket;
     
     /// The active game session.
-    Session* session_;
+    Session* _session;
     
     typedef std::list<Client*> Clients;
-    Clients clients_;
+    Clients _clients;
 };
 
 #endif /* SERVERAPP_H */

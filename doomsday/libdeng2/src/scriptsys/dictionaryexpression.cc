@@ -37,19 +37,19 @@ DictionaryExpression::~DictionaryExpression()
 
 void DictionaryExpression::clear()
 {
-    for(Arguments::iterator i = arguments_.begin(); i != arguments_.end(); ++i)
+    for(Arguments::iterator i = _arguments.begin(); i != _arguments.end(); ++i)
     {
         delete i->first;
         delete i->second;
     }
-    arguments_.clear();
+    _arguments.clear();
 }
 
 void DictionaryExpression::add(Expression* key, Expression* value)
 {
     assert(key != NULL);
     assert(value != NULL);
-    arguments_.push_back(ExpressionPair(key, value));
+    _arguments.push_back(ExpressionPair(key, value));
 }
 
 void DictionaryExpression::push(Evaluator& evaluator, Record* names) const
@@ -58,8 +58,8 @@ void DictionaryExpression::push(Evaluator& evaluator, Record* names) const
     
     // The arguments in reverse order (so they are evaluated in
     // natural order, i.e., the same order they are in the source).
-    for(Arguments::const_reverse_iterator i = arguments_.rbegin();
-        i != arguments_.rend(); ++i)
+    for(Arguments::const_reverse_iterator i = _arguments.rbegin();
+        i != _arguments.rend(); ++i)
     {
         i->second->push(evaluator);
         i->first->push(evaluator);
@@ -73,8 +73,8 @@ Value* DictionaryExpression::evaluate(Evaluator& evaluator) const
     std::list<Value*> keys, values;
     
     // Collect the right number of results into the array.
-    for(Arguments::const_reverse_iterator i = arguments_.rbegin();
-        i != arguments_.rend(); ++i)
+    for(Arguments::const_reverse_iterator i = _arguments.rbegin();
+        i != _arguments.rend(); ++i)
     {
         values.push_back(evaluator.popResult());
         keys.push_back(evaluator.popResult());
@@ -94,8 +94,8 @@ Value* DictionaryExpression::evaluate(Evaluator& evaluator) const
 
 void DictionaryExpression::operator >> (Writer& to) const
 {
-    to << SerialId(DICTIONARY) << duint16(arguments_.size());
-    for(Arguments::const_iterator i = arguments_.begin(); i != arguments_.end(); ++i)
+    to << SerialId(DICTIONARY) << duint16(_arguments.size());
+    for(Arguments::const_iterator i = _arguments.begin(); i != _arguments.end(); ++i)
     {
         to << *i->first << *i->second;
     }
@@ -118,6 +118,6 @@ void DictionaryExpression::operator << (Reader& from)
     {
         std::auto_ptr<Expression> key(Expression::constructFrom(from));
         std::auto_ptr<Expression> value(Expression::constructFrom(from));
-        arguments_.push_back(ExpressionPair(key.release(), value.release()));
+        _arguments.push_back(ExpressionPair(key.release(), value.release()));
     }
 }

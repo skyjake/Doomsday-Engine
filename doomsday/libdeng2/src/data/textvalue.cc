@@ -35,22 +35,22 @@ using std::list;
 using std::ostringstream;
 
 TextValue::TextValue(const String& initialValue)
-    : value_(initialValue)
+    : _value(initialValue)
 {}
 
 TextValue::operator const String& () const
 {
-    return value_;
+    return _value;
 }
 
 Value* TextValue::duplicate() const
 {
-    return new TextValue(value_);
+    return new TextValue(_value);
 }
 
 Value::Number TextValue::asNumber() const
 {
-    std::istringstream str(value_);
+    std::istringstream str(_value);
     Number number = 0;
     str >> number;
     return number;
@@ -58,18 +58,18 @@ Value::Number TextValue::asNumber() const
 
 Value::Text TextValue::asText() const
 {
-    return value_;
+    return _value;
 }
 
 dsize TextValue::size() const
 {
-    return value_.size();
+    return _value.size();
 }
 
 bool TextValue::isTrue() const
 {
     // If there is at least one nonwhite character, this is considered a truth.
-    for(Text::const_iterator i = value_.begin(); i != value_.end(); ++i)
+    for(Text::const_iterator i = _value.begin(); i != _value.end(); ++i)
     {
         if(!std::isspace(*i))
             return true;
@@ -82,7 +82,7 @@ dint TextValue::compare(const Value& value) const
     const TextValue* other = dynamic_cast<const TextValue*>(&value);
     if(other)
     {
-        return value_.compare(other->value_);
+        return _value.compare(other->_value);
     }
     return Value::compare(value);
 }
@@ -95,7 +95,7 @@ void TextValue::sum(const Value& value)
         throw ArithmeticError("TextValue::sum", "Value cannot be summed");
     }
     
-    value_ += other->value_;
+    _value += other->_value;
 }
 
 void TextValue::multiply(const Value& value)
@@ -110,19 +110,19 @@ void TextValue::multiply(const Value& value)
     
     if(factor <= 0)
     {
-        value_.clear();
+        _value.clear();
     }
     else
     {
         ostringstream os;
         while(factor-- > 1)
         {
-            os << value_;
+            os << _value;
         }
         // The remainder.
-        dint remain = dint(std::floor((factor + 1) * value_.size() + .5));
-        os << value_.substr(0, remain);
-        value_ = os.str();
+        dint remain = dint(std::floor((factor + 1) * _value.size() + .5));
+        os << _value.substr(0, remain);
+        _value = os.str();
     }
 }
 
@@ -133,7 +133,7 @@ void TextValue::divide(const Value& value)
     {
         throw ArithmeticError("TextValue::divide", "Text cannot be divided");
     }
-    value_ = value_ / other->value_;
+    _value = _value / other->_value;
 }
 
 void TextValue::modulo(const Value& value)
@@ -155,7 +155,7 @@ void TextValue::modulo(const Value& value)
         args.push_back(&value);
     }
     
-    value_ = substitutePlaceholders(value_, args);
+    _value = substitutePlaceholders(_value, args);
 }
 
 String TextValue::substitutePlaceholders(const String& pattern, const std::list<const Value*>& args)
@@ -189,7 +189,7 @@ String TextValue::substitutePlaceholders(const String& pattern, const std::list<
 
 void TextValue::operator >> (Writer& to) const
 {
-    to << SerialId(TEXT) << value_;
+    to << SerialId(TEXT) << _value;
 }
 
 void TextValue::operator << (Reader& from)
@@ -200,10 +200,10 @@ void TextValue::operator << (Reader& from)
     {
         throw DeserializationError("TextValue::operator <<", "Invalid ID");
     }
-    from >> value_;
+    from >> _value;
 }
 
 void TextValue::setValue(const String& text)
 {
-    value_ = text;
+    _value = text;
 }

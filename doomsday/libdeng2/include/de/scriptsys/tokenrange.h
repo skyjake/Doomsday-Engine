@@ -57,13 +57,13 @@ namespace de
         TokenRange(const TokenBuffer& tokens, duint startIndex, duint endIndex);
 
         const TokenBuffer& buffer() const {
-            return *tokens_;
+            return *_tokens;
         }
 
         /// Determines the length of the range.
         /// @return Number of tokens in the range.
         duint size() const {
-            return end_ - start_;
+            return _end - _start;
         }
         
         bool empty() const { return !size(); }
@@ -134,7 +134,7 @@ namespace de
          * @return @c true, if token was found, otherwise @c false.
          */
         bool hasBracketless(const char* token) const {
-            return findIndexSkippingBrackets(token, start_) >= 0;
+            return findIndexSkippingBrackets(token, _start) >= 0;
         }
 
         /**
@@ -207,15 +207,15 @@ namespace de
             const char*& opening, const char*& closing);
         
     private:
-        const TokenBuffer* tokens_;
+        const TokenBuffer* _tokens;
         
         /// Index of the start of the range. This is the first token in 
         /// the range.
-        duint start_;
+        duint _start;
         
         /// Index of the end of the range, plus one. This is the token
         /// just after the last token of the range.
-        duint end_;
+        duint _end;
     };
 }
 

@@ -39,17 +39,17 @@ using namespace de;
 
 duint64 Time::Delta::asMilliSeconds() const
 {
-    return duint64(seconds_ * 1000);
+    return duint64(_seconds * 1000);
 }
 
 Time::Delta Time::Delta::operator + (const ddouble& d) const
 {
-    return seconds_ + d;
+    return _seconds + d;
 }
 
 Time::Delta Time::Delta::operator - (const ddouble& d) const
 {
-    return seconds_ - d;
+    return _seconds - d;
 }
 
 void Time::Delta::sleep() const
@@ -62,30 +62,30 @@ Time::Time()
 #ifdef UNIX
     struct timeval tv;
     gettimeofday(&tv, 0);
-    time_ = tv.tv_sec;
-    micro_ = tv.tv_usec;
+    _time = tv.tv_sec;
+    _micro = tv.tv_usec;
 #endif
 
 #ifdef WIN32
     struct __timeb64 tb;
     _ftime64(&tb);
-    time_ = tb.time;
-    micro_ = tb.millitm * 1000;
+    _time = tb.time;
+    _micro = tb.millitm * 1000;
 #endif
 }
 
 bool Time::operator < (const Time& t) const
 {
-    if(time_ > t.time_)
+    if(_time > t._time)
     {
         return false;
     }
-    return time_ < t.time_ || micro_ < t.micro_;
+    return _time < t._time || _micro < t._micro;
 }
 
 bool Time::operator == (const Time& t) const
 {
-    return time_ == t.time_ && micro_ == t.micro_;
+    return _time == t._time && _micro == t._micro;
 }
 
 Time Time::operator + (const Delta& delta) const
@@ -102,22 +102,22 @@ Time& Time::operator += (const Delta& delta)
     ddouble fraction = amount - fullSeconds;
     if(delta > 0.0)
     {
-        time_ += time_t(fullSeconds);
-        micro_ += dint(fraction * 1.0e6);
-        if(micro_ > 1000000)
+        _time += time_t(fullSeconds);
+        _micro += dint(fraction * 1.0e6);
+        if(_micro > 1000000)
         {
-            micro_ -= 1000000;
-            time_ += 1;
+            _micro -= 1000000;
+            _time += 1;
         }
     }
     else
     {
-        time_ -= time_t(fullSeconds);
-        micro_ -= dint(fraction * 1.0e6);
-        if(micro_ < 0)
+        _time -= time_t(fullSeconds);
+        _micro -= dint(fraction * 1.0e6);
+        if(_micro < 0)
         {
-            micro_ += 1000000;
-            time_ -= 1;
+            _micro += 1000000;
+            _time -= 1;
         }
     }
     return *this;
@@ -125,16 +125,16 @@ Time& Time::operator += (const Delta& delta)
 
 Time::Delta Time::operator - (const Time& earlierTime) const
 {
-    ddouble seconds = std::difftime(time_, earlierTime.time_);
+    ddouble seconds = std::difftime(_time, earlierTime._time);
     // The fraction.
-    seconds += (micro_ - earlierTime.micro_) / 1.0e6;
+    seconds += (_micro - earlierTime._micro) / 1.0e6;
     return seconds;
 }
 
 String Time::asText() const
 {
     std::ostringstream os;
-    os << time_ << "." << std::setw(6) << std::setfill('0') << micro_;
+    os << _time << "." << std::setw(6) << std::setfill('0') << _micro;
     return os.str();
 }
 
@@ -145,15 +145,15 @@ Date Time::asDate() const
 
 void Time::operator >> (Writer& to) const
 {
-    to << duint64(time_) << micro_;
+    to << duint64(_time) << _micro;
 }
 
 void Time::operator << (Reader& from)
 {
     duint64 t;
     from >> t;
-    time_ = (time_t) t;
-    from >> micro_;
+    _time = (time_t) t;
+    from >> _micro;
 }
 
 std::ostream& de::operator << (std::ostream& os, const Time& t)

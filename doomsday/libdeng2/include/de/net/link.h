@@ -81,7 +81,7 @@ namespace de
          *
          * @return  Socket.
          */ 
-        Socket& socket() { return *socket_; }
+        Socket& socket() { return *_socket; }
         
         /**
          * Returns the address of the remote end of the link.
@@ -103,19 +103,19 @@ namespace de
     
     private:
         /// Socket over which the link communicates.
-        Socket* socket_; 
+        Socket* _socket; 
 
         /// Address of the remote end.
-        Address peerAddress_;
+        Address _peerAddress;
         
         /// Thread that writes outgoing data to the socket.
-        SenderThread* sender_;
+        SenderThread* _sender;
         
         /// Thread that reads incoming data from the socket.
-        ReceiverThread* receiver_;
+        ReceiverThread* _receiver;
         
-        OutgoingBuffer outgoing_;
-        IncomingBuffer incoming_;
+        OutgoingBuffer _outgoing;
+        IncomingBuffer _incoming;
     };
 }
 

@@ -53,10 +53,10 @@ namespace de
         void set(Offset at, const Byte* values, Size count);
         
     private:
-        IByteArray* mainArray_;
-        const IByteArray* constMainArray_;
-        Offset at_;
-        Size size_;
+        IByteArray* _mainArray;
+        const IByteArray* _constMainArray;
+        Offset _at;
+        Size _size;
     };
 }
 

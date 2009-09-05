@@ -45,7 +45,7 @@ namespace de
          */
         template <typename Type>
         Type* ref() {
-            ++refCount_;
+            ++_refCount;
             return static_cast<Type*>(this);
         }
         
@@ -59,7 +59,7 @@ namespace de
     private:
         /// Number of other things that refer to this object, i.e. have
         /// a pointer to it.
-        duint refCount_;
+        duint _refCount;
     };
 }
 

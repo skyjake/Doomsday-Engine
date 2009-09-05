@@ -24,31 +24,31 @@
 using namespace de;
 
 Window::Window(Video& v, const Placement& p, const Mode& m, Surface* surf) 
-    : video_(v), place_(p), mode_(m), surface_(surf)
+    : _video(v), _place(p), _mode(m), _surface(surf)
 {}
 
 Window::~Window()
 {
-    delete surface_;
+    delete _surface;
 }
 
 void Window::setPlace(const Placement& p)
 {
-    place_ = p;
+    _place = p;
     
     // Update surface size.
-    surface_->setSize(p.size());
+    _surface->setSize(p.size());
 }
 
 Surface& Window::surface() const
 {
-    assert(surface_ != 0);
-    return *surface_;
+    assert(_surface != 0);
+    return *_surface;
 }
 
 void Window::setSurface(Surface* surf)
 {
-    surface_ = surf;
+    _surface = surf;
 }
 
 void Window::setMode(Flag modeFlags, bool set)
@@ -56,21 +56,21 @@ void Window::setMode(Flag modeFlags, bool set)
     Mode flags(modeFlags);
     if(set)
     {
-        mode_ = mode_ | flags;
+        _mode = _mode | flags;
     }
     else
     {
-        mode_ = mode_ & ~flags;
+        _mode = _mode & ~flags;
     }
 }
 
 void Window::draw()
 {
     // Use this window as the rendering target.
-    video_.setTarget(surface());
+    _video.setTarget(surface());
 
     // Draw all the visuals.
-    root_.draw();
+    _root.draw();
     
-    video_.releaseTarget();
+    _video.releaseTarget();
 }

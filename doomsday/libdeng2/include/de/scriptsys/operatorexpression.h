@@ -100,9 +100,9 @@ namespace de
         static Value* newBooleanValue(bool isTrue);
                 
     private:
-        Operator op_;
-        Expression* leftOperand_;
-        Expression* rightOperand_;
+        Operator _op;
+        Expression* _leftOperand;
+        Expression* _rightOperand;
     };
 }
 

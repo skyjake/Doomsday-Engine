@@ -51,7 +51,7 @@ namespace de
          * Conversion template that forces a cast to another type.
          */
         template <typename Type>
-        Type as() const { return Type(value_); }
+        Type as() const { return Type(_value); }
 
         Value* duplicate() const;
         Number asNumber() const;
@@ -70,7 +70,7 @@ namespace de
         void operator << (Reader& from);
         
     private:
-        Number value_;
+        Number _value;
     };
 }
 

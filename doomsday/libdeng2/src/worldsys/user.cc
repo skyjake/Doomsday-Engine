@@ -28,7 +28,7 @@ using namespace de;
 User::User()
 {
     /// @todo  The name is read from the configuration.
-    info_.addText("name", "read-from-config");
+    _info.addText("name", "read-from-config");
 }
 
 User::~User()
@@ -36,17 +36,17 @@ User::~User()
 
 const String User::name() const
 {
-    return info_["name"].value().asText();
+    return _info["name"].value().asText();
 }
 
 void User::setName(const String& name)
 {
-    info_["name"] = new TextValue(name);
+    _info["name"] = new TextValue(name);
 }
 
 void User::operator >> (Writer& to) const
 {
-    to << duint32(id_) << info_;
+    to << duint32(_id) << _info;
 }
 
 void User::operator << (Reader& from)
@@ -56,7 +56,7 @@ void User::operator << (Reader& from)
     if(newId != 0)
     {
         // Once assigned, the id can't be cleared.
-        id_ = newId;
+        _id = newId;
     }
-    from >> info_;
+    from >> _info;
 }

@@ -30,7 +30,7 @@
 using namespace de;
 
 Reader::Reader(const IByteArray& source, const ByteOrder& byteOrder, IByteArray::Offset offset)
-    : source_(source), offset_(offset), convert_(byteOrder)
+    : _source(source), _offset(offset), _convert(byteOrder)
 {}
 
 Reader& Reader::operator >> (dchar& byte)
@@ -40,8 +40,8 @@ Reader& Reader::operator >> (dchar& byte)
 
 Reader& Reader::operator >> (duchar& byte)
 {
-    source_.get(offset_, &byte, 1);
-    ++offset_;
+    _source.get(_offset, &byte, 1);
+    ++_offset;
     return *this;
 }
 
@@ -52,9 +52,9 @@ Reader& Reader::operator >> (dint16& word)
 
 Reader& Reader::operator >> (duint16& word)
 {
-    source_.get(offset_, reinterpret_cast<IByteArray::Byte*>(&word), 2);
-    offset_ += 2;
-    convert_.foreignToNative(word, word);
+    _source.get(_offset, reinterpret_cast<IByteArray::Byte*>(&word), 2);
+    _offset += 2;
+    _convert.foreignToNative(word, word);
     return *this;
 }
 
@@ -65,9 +65,9 @@ Reader& Reader::operator >> (dint32& dword)
 
 Reader& Reader::operator >> (duint32& dword)
 {
-    source_.get(offset_, reinterpret_cast<IByteArray::Byte*>(&dword), 4);
-    offset_ += 4;
-    convert_.foreignToNative(dword, dword);
+    _source.get(_offset, reinterpret_cast<IByteArray::Byte*>(&dword), 4);
+    _offset += 4;
+    _convert.foreignToNative(dword, dword);
     return *this;
 }
 
@@ -78,9 +78,9 @@ Reader& Reader::operator >> (dint64& qword)
 
 Reader& Reader::operator >> (duint64& qword)
 {
-    source_.get(offset_, reinterpret_cast<IByteArray::Byte*>(&qword), 8);
-    offset_ += 8;
-    convert_.foreignToNative(qword, qword);
+    _source.get(_offset, reinterpret_cast<IByteArray::Byte*>(&qword), 8);
+    _offset += 8;
+    _convert.foreignToNative(qword, qword);
     return *this;
 }
 
@@ -122,8 +122,8 @@ Reader& Reader::operator >> (IByteArray& byteArray)
      * a memory buffer where you can copy the contents directly.
      */
     std::auto_ptr<IByteArray::Byte> data(new IByteArray::Byte[size]);
-    source_.get(offset_, data.get(), size);
-    offset_ += size;
+    _source.get(_offset, data.get(), size);
+    _offset += size;
     byteArray.set(0, data.get(), size);
     return *this;
 }
@@ -137,8 +137,8 @@ Reader& Reader::operator >> (FixedByteArray& fixedByteArray)
      */
     const dsize size = fixedByteArray.size();
     std::auto_ptr<IByteArray::Byte> data(new IByteArray::Byte[size]);
-    source_.get(offset_, data.get(), size);
-    offset_ += size;
+    _source.get(_offset, data.get(), size);
+    _offset += size;
     fixedByteArray.set(0, data.get(), size);
     return *this;
 }
@@ -148,8 +148,8 @@ Reader& Reader::operator >> (Block& block)
     duint size = 0;
     *this >> size;
 
-    block.copyFrom(source_, offset_, size);
-    offset_ += size;
+    block.copyFrom(_source, _offset, size);
+    _offset += size;
     return *this;
 }
 
@@ -161,20 +161,20 @@ Reader& Reader::operator >> (IReadable& readable)
 
 void Reader::seek(dint count)
 {
-    if(IByteArray::Offset(offset_ + count) >= source_.size())
+    if(IByteArray::Offset(_offset + count) >= _source.size())
     {
         throw IByteArray::OffsetError("Reader::seek", "Seek past bounds of source data");
     }
-    offset_ += count;
+    _offset += count;
 }
 
 void Reader::rewind(dint count)
 {
-    if(IByteArray::Offset(offset_ - count) >= source_.size())
+    if(IByteArray::Offset(_offset - count) >= _source.size())
     {
         std::ostringstream os;
-        os << "(count: " << count << ", offset: " << offset_ << ", size: " << source_.size() << ")";
+        os << "(count: " << count << ", offset: " << _offset << ", size: " << _source.size() << ")";
         throw IByteArray::OffsetError("Reader::rewind", "Rewound past bounds of source data " + os.str());
     }
-    offset_ -= count;
+    _offset -= count;
 }

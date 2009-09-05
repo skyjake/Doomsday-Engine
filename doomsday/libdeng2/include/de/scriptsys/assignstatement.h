@@ -65,8 +65,8 @@ namespace de
         void operator << (Reader& from);         
         
     private:
-        ArrayExpression args_;
-        dint indexCount_;
+        ArrayExpression _args;
+        dint _indexCount;
     };
 }
 

@@ -27,15 +27,15 @@
 
 using namespace de;
 
-DictionaryValue::DictionaryValue() : iteration_(0), validIteration_(false)
+DictionaryValue::DictionaryValue() : _iteration(0), _validIteration(false)
 {}
 
-DictionaryValue::DictionaryValue(const DictionaryValue& other) : iteration_(0), validIteration_(false)
+DictionaryValue::DictionaryValue(const DictionaryValue& other) : _iteration(0), _validIteration(false)
 {
-    for(Elements::const_iterator i = other.elements_.begin(); i != other.elements_.end(); ++i)
+    for(Elements::const_iterator i = other._elements.begin(); i != other._elements.end(); ++i)
     {
         Value* value = i->second->duplicate();
-        elements_[ValueRef(i->first.value->duplicate())] = value;
+        _elements[ValueRef(i->first.value->duplicate())] = value;
     }
 }
 
@@ -46,19 +46,19 @@ DictionaryValue::~DictionaryValue()
 
 void DictionaryValue::clear()
 {
-    for(Elements::iterator i = elements_.begin(); i != elements_.end(); ++i)
+    for(Elements::iterator i = _elements.begin(); i != _elements.end(); ++i)
     {
         delete i->first.value;
         delete i->second;
     }
-    elements_.clear();
+    _elements.clear();
 }
 
 void DictionaryValue::add(Value* key, Value* value)
 {
-    Elements::iterator existing = elements_.find(ValueRef(key));
+    Elements::iterator existing = _elements.find(ValueRef(key));
     
-    if(existing != elements_.end())
+    if(existing != _elements.end())
     {
         // Found it. Replace old value.
         delete existing->second;
@@ -70,7 +70,7 @@ void DictionaryValue::add(Value* key, Value* value)
     else
     {
         // Set new value.
-        elements_[ValueRef(key)] = value;
+        _elements[ValueRef(key)] = value;
     }
 }
 
@@ -87,7 +87,7 @@ Value::Text DictionaryValue::asText() const
     bool isFirst = true;
 
     // Compose a textual representation of the array elements.
-    for(Elements::const_iterator i = elements_.begin(); i != elements_.end(); ++i)
+    for(Elements::const_iterator i = _elements.begin(); i != _elements.end(); ++i)
     {
         if(!isFirst)
         {
@@ -103,13 +103,13 @@ Value::Text DictionaryValue::asText() const
 
 dsize DictionaryValue::size() const
 {
-    return elements_.size();
+    return _elements.size();
 }
 
 const Value& DictionaryValue::element(const Value& index) const
 {
-    Elements::const_iterator i = elements_.find(ValueRef(&index));
-    if(i == elements_.end())
+    Elements::const_iterator i = _elements.find(ValueRef(&index));
+    if(i == _elements.end())
     {
         throw KeyError("DictionaryValue::element",
             "Key '" + index.asText() + "' does not exist in the dictionary");
@@ -124,11 +124,11 @@ Value& DictionaryValue::element(const Value& index)
 
 void DictionaryValue::setElement(const Value& index, Value* value)
 {
-    Elements::iterator i = elements_.find(ValueRef(&index));
-    if(i == elements_.end())
+    Elements::iterator i = _elements.find(ValueRef(&index));
+    if(i == _elements.end())
     {
         // Add it to the dictionary.
-        elements_[ValueRef(index.duplicate())] = value;
+        _elements[ValueRef(index.duplicate())] = value;
     }
     else
     {
@@ -139,30 +139,30 @@ void DictionaryValue::setElement(const Value& index, Value* value)
 
 bool DictionaryValue::contains(const Value& value) const
 {
-    return elements_.find(ValueRef(&value)) != elements_.end();
+    return _elements.find(ValueRef(&value)) != _elements.end();
 }
 
 Value* DictionaryValue::begin()
 {
-    validIteration_ = false;
+    _validIteration = false;
     return next();
 }
 
 Value* DictionaryValue::next()
 {
-    if(!validIteration_)
+    if(!_validIteration)
     {
-        iteration_ = elements_.begin();
-        validIteration_ = true;
+        _iteration = _elements.begin();
+        _validIteration = true;
     }
-    else if(iteration_ == elements_.end())
+    else if(_iteration == _elements.end())
     {
         return 0;
     }
     ArrayValue* pair = new ArrayValue;
-    pair->add(iteration_->first.value->duplicate());
-    pair->add(iteration_->second->duplicate());
-    ++iteration_;
+    pair->add(_iteration->first.value->duplicate());
+    pair->add(_iteration->second->duplicate());
+    ++_iteration;
     return pair;
 }
 
@@ -185,9 +185,9 @@ dint DictionaryValue::compare(const Value& value) const
             return 1;
         }
         // If all the keys and values compare equal, these are equal.
-        Elements::const_iterator mine = elements_.begin();
-        Elements::const_iterator theirs = other->elements_.begin();
-        for(; mine != elements_.end() && theirs != other->elements_.end(); ++mine, ++theirs)
+        Elements::const_iterator mine = _elements.begin();
+        Elements::const_iterator theirs = other->_elements.begin();
+        for(; mine != _elements.end() && theirs != other->_elements.end(); ++mine, ++theirs)
         {
             dint result = mine->first.value->compare(*theirs->first.value);
             if(result) return result;
@@ -209,8 +209,8 @@ void DictionaryValue::sum(const Value& value)
         throw ArithmeticError("DictionaryValue::sum", "Values cannot be summed");
     }
     
-    for(Elements::const_iterator i = other->elements_.begin();
-        i != other->elements_.end(); ++i)
+    for(Elements::const_iterator i = other->_elements.begin();
+        i != other->_elements.end(); ++i)
     {
         add(i->first.value->duplicate(), i->second->duplicate());
     }
@@ -218,23 +218,23 @@ void DictionaryValue::sum(const Value& value)
 
 void DictionaryValue::subtract(const Value& subtrahend)
 {
-    Elements::iterator i = elements_.find(ValueRef(&subtrahend));
-    if(i == elements_.end())
+    Elements::iterator i = _elements.find(ValueRef(&subtrahend));
+    if(i == _elements.end())
     {
         throw KeyError("DictionaryValue::subtract",
             "Key '" + subtrahend.asText() + "' does not exist in the dictionary");
     }
     delete i->second;
-    elements_.erase(i);
+    _elements.erase(i);
 }
 
 void DictionaryValue::operator >> (Writer& to) const
 {
-    to << SerialId(DICTIONARY) << duint(elements_.size());
+    to << SerialId(DICTIONARY) << duint(_elements.size());
 
-    if(!elements_.empty())
+    if(!_elements.empty())
     {
-        for(Elements::const_iterator i = elements_.begin(); i != elements_.end(); ++i)
+        for(Elements::const_iterator i = _elements.begin(); i != _elements.end(); ++i)
         {
             to << *i->first.value << *i->second;
         }

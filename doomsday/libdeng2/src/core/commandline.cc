@@ -38,7 +38,7 @@ using namespace de;
 CommandLine::CommandLine(int argc, char** v)
 {
     // The pointers list is kept null terminated.
-    pointers_.push_back(0);
+    _pointers.push_back(0);
 
     for(int i = 0; i < argc; ++i)
     {
@@ -49,65 +49,65 @@ CommandLine::CommandLine(int argc, char** v)
         }
         else
         {
-            arguments_.push_back(v[i]);
-            pointers_.insert(pointers_.end() - 1, arguments_[i].c_str());
+            _arguments.push_back(v[i]);
+            _pointers.insert(_pointers.end() - 1, _arguments[i].c_str());
         }
     }
 }
 
 CommandLine::CommandLine(const CommandLine& other)
-    : arguments_(other.arguments_)
+    : _arguments(other._arguments)
 {
     // Use pointers to the already copied strings.
-    for(Arguments::iterator i = arguments_.begin(); i != arguments_.end(); ++i)
+    for(Arguments::iterator i = _arguments.begin(); i != _arguments.end(); ++i)
     {
-        pointers_.push_back(i->c_str());
+        _pointers.push_back(i->c_str());
     }
-    pointers_.push_back(0);
+    _pointers.push_back(0);
 }
 
 void CommandLine::clear()
 {
-    arguments_.clear();
-    pointers_.clear();
-    pointers_.push_back(0);
+    _arguments.clear();
+    _pointers.clear();
+    _pointers.push_back(0);
 }
 
 void CommandLine::append(const String& arg)
 {
-    arguments_.push_back(arg);
-    pointers_.insert(pointers_.end() - 1, arguments_.rbegin()->c_str());
+    _arguments.push_back(arg);
+    _pointers.insert(_pointers.end() - 1, _arguments.rbegin()->c_str());
 }
 
 void CommandLine::insert(duint pos, const String& arg)
 {
-    if(pos > arguments_.size())
+    if(pos > _arguments.size())
     {
         /// @throw OutOfRangeError @a pos is out of range.
         throw OutOfRangeError("CommandLine::insert", "Index out of range");
     }
-    arguments_.insert(arguments_.begin() + pos, arg);
-    pointers_.insert(pointers_.begin() + pos, arguments_[pos].c_str());
+    _arguments.insert(_arguments.begin() + pos, arg);
+    _pointers.insert(_pointers.begin() + pos, _arguments[pos].c_str());
 }
 
 void CommandLine::remove(duint pos)
 {
-    if(pos >= arguments_.size())
+    if(pos >= _arguments.size())
     {
         /// @throw OutOfRangeError @a pos is out of range.
         throw OutOfRangeError("CommandLine::remove", "Index out of range");
     }
-    arguments_.erase(arguments_.begin() + pos);
-    pointers_.erase(pointers_.begin() + pos);
+    _arguments.erase(_arguments.begin() + pos);
+    _pointers.erase(_pointers.begin() + pos);
 }
 
 dint CommandLine::check(const String& arg, dint numParams) const
 {
     // Do a search for arg.
-    Arguments::const_iterator i = arguments_.begin();
-    for(; i != arguments_.end() && !matches(arg, *i); ++i);
+    Arguments::const_iterator i = _arguments.begin();
+    for(; i != _arguments.end() && !matches(arg, *i); ++i);
     
-    if(i == arguments_.end())
+    if(i == _arguments.end())
     {
         // Not found.
         return 0;
@@ -117,14 +117,14 @@ dint CommandLine::check(const String& arg, dint numParams) const
     Arguments::const_iterator k = i;
     while(numParams-- > 0)
     {
-        if(++k == arguments_.end() || isOption(*k))
+        if(++k == _arguments.end() || isOption(*k))
         {
             // Ran out of arguments, or encountered an option.
             return 0;
         }
     }
     
-    return i - arguments_.begin();
+    return i - _arguments.begin();
 }
 
 bool CommandLine::getParameter(const String& arg, String& param) const
@@ -142,7 +142,7 @@ dint CommandLine::has(const String& arg) const
 {
     dint howMany = 0;
     
-    for(Arguments::const_iterator i = arguments_.begin(); i != arguments_.end(); ++i)
+    for(Arguments::const_iterator i = _arguments.begin(); i != _arguments.end(); ++i)
     {
         if(matches(arg, *i))
         {
@@ -154,13 +154,13 @@ dint CommandLine::has(const String& arg) const
 
 bool CommandLine::isOption(duint pos) const
 {
-    if(pos >= arguments_.size())
+    if(pos >= _arguments.size())
     {
         /// @throw OutOfRangeError @a pos is out of range.
         throw OutOfRangeError("CommandLine::isOption", "Index out of range");
     }
-    assert(!arguments_[pos].empty());
-    return isOption(arguments_[pos]);
+    assert(!_arguments[pos].empty());
+    return isOption(_arguments[pos]);
 }
 
 bool CommandLine::isOption(const String& arg)
@@ -170,8 +170,8 @@ bool CommandLine::isOption(const String& arg)
 
 const char* const* CommandLine::argv() const
 {
-    assert(*pointers_.rbegin() == 0);
-    return &pointers_[0];
+    assert(*_pointers.rbegin() == 0);
+    return &_pointers[0];
 }
 
 void CommandLine::parse(const String& cmdLine)
@@ -251,15 +251,15 @@ void CommandLine::parse(const String& cmdLine)
         }
         else if(!word.empty()) // Make sure there *is* a word.
         {
-            arguments_.push_back(word);
-            pointers_.insert(pointers_.end() - 1, arguments_.rbegin()->c_str());
+            _arguments.push_back(word);
+            _pointers.insert(_pointers.end() - 1, _arguments.rbegin()->c_str());
         }
     }
 }
 
 void CommandLine::alias(const String& full, const String& alias)
 {
-    aliases_[full].push_back(alias);
+    _aliases[full].push_back(alias);
 }
 
 bool CommandLine::matches(const String& full, const String& fullOrAlias) const
@@ -270,8 +270,8 @@ bool CommandLine::matches(const String& full, const String& fullOrAlias) const
         return true;
     }
     
-    Aliases::const_iterator found = aliases_.find(full);
-    if(found != aliases_.end())
+    Aliases::const_iterator found = _aliases.find(full);
+    if(found != _aliases.end())
     {
         for(Arguments::const_iterator i = found->second.begin(); i != found->second.end(); ++i)
         {
@@ -294,8 +294,8 @@ void CommandLine::execute(char** envs) const
     if(!result)
     {
         // Here we go in the child process.
-        printf("Child loads %s...\n", pointers_[0]);
-        execve(pointers_[0], const_cast<char* const*>(argv()), const_cast<char* const*>(envs));
+        printf("Child loads %s...\n", _pointers[0]);
+        execve(_pointers[0], const_cast<char* const*>(argv()), const_cast<char* const*>(envs));
     }
     else
     {
@@ -308,7 +308,7 @@ void CommandLine::execute(char** envs) const
 
 #ifdef WIN32
     String quotedCmdLine;
-    for(Arguments::const_iterator i = arguments_.begin() + 1; i != arguments_.end(); ++i)
+    for(Arguments::const_iterator i = _arguments.begin() + 1; i != _arguments.end(); ++i)
     {
         quotedCmdLine += "\"" + *i + "\" ";
     }
@@ -319,7 +319,7 @@ void CommandLine::execute(char** envs) const
     startupInfo.cb = sizeof(startupInfo);
     ZeroMemory(&processInfo, sizeof(processInfo));
 
-    if(!CreateProcess(pointers_[0], const_cast<char*>(quotedCmdLine.c_str()), 
+    if(!CreateProcess(_pointers[0], const_cast<char*>(quotedCmdLine.c_str()), 
         NULL, NULL, FALSE, 0, NULL, NULL, &startupInfo, &processInfo))
     {
         /// @throw ExecuteError The system call to start a new process failed.

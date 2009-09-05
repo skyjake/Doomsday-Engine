@@ -29,22 +29,22 @@
 
 using namespace de;
 
-PrintStatement::PrintStatement(ArrayExpression* arguments) : arg_(arguments)
+PrintStatement::PrintStatement(ArrayExpression* arguments) : _arg(arguments)
 {
-    if(!arg_)
+    if(!_arg)
     {
-        arg_ = new ArrayExpression();
+        _arg = new ArrayExpression();
     }
 }
 
 PrintStatement::~PrintStatement()
 {
-    delete arg_;
+    delete _arg;
 }
 
 void PrintStatement::execute(Context& context) const
 {
-    ArrayValue& value = context.evaluator().evaluateTo<ArrayValue>(arg_);
+    ArrayValue& value = context.evaluator().evaluateTo<ArrayValue>(_arg);
 
     std::ostringstream os;
     bool isFirst = true;
@@ -70,7 +70,7 @@ void PrintStatement::execute(Context& context) const
 
 void PrintStatement::operator >> (Writer& to) const
 {
-    to << SerialId(PRINT) << *arg_;
+    to << SerialId(PRINT) << *_arg;
 }
 
 void PrintStatement::operator << (Reader& from)
@@ -83,5 +83,5 @@ void PrintStatement::operator << (Reader& from)
         /// serialized statement was invalid.
         throw DeserializationError("PrintStatement::operator <<", "Invalid ID");
     }
-    from >> *arg_;
+    from >> *_arg;
 }

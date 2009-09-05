@@ -29,16 +29,16 @@
 using namespace de;
 
 File::File(const String& fileName)
-    : parent_(0), originFeed_(0), name_(fileName)
+    : _parent(0), _originFeed(0), _name(fileName)
 {
-    source_ = this;
+    _source = this;
     
     // Create the default set of info variables common to all files.
-    info_.add(new Variable("name", new Accessor(*this, Accessor::NAME), Accessor::VARIABLE_MODE));
-    info_.add(new Variable("path", new Accessor(*this, Accessor::PATH), Accessor::VARIABLE_MODE));
-    info_.add(new Variable("type", new Accessor(*this, Accessor::TYPE), Accessor::VARIABLE_MODE));
-    info_.add(new Variable("size", new Accessor(*this, Accessor::SIZE), Accessor::VARIABLE_MODE));
-    info_.add(new Variable("modifiedAt", new Accessor(*this, Accessor::MODIFIED_AT),
+    _info.add(new Variable("name", new Accessor(*this, Accessor::NAME), Accessor::VARIABLE_MODE));
+    _info.add(new Variable("path", new Accessor(*this, Accessor::PATH), Accessor::VARIABLE_MODE));
+    _info.add(new Variable("type", new Accessor(*this, Accessor::TYPE), Accessor::VARIABLE_MODE));
+    _info.add(new Variable("size", new Accessor(*this, Accessor::SIZE), Accessor::VARIABLE_MODE));
+    _info.add(new Variable("modifiedAt", new Accessor(*this, Accessor::MODIFIED_AT),
         Accessor::VARIABLE_MODE));
 }
 
@@ -47,16 +47,16 @@ File::~File()
     FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
 
     flush();
-    if(source_ != this) 
+    if(_source != this) 
     {
         // If we own a source, get rid of it.
-        delete source_;
-        source_ = 0;
+        delete _source;
+        _source = 0;
     }
-    if(parent_)
+    if(_parent)
     {
         // Remove from parent folder.
-        parent_->remove(this);
+        _parent->remove(this);
     }
     deindex();
 }
@@ -81,13 +81,13 @@ FS& File::fileSystem()
 
 void File::setOriginFeed(Feed* feed)
 {
-    originFeed_ = feed;
+    _originFeed = feed;
 }
 
 const String File::path() const
 {
     String thePath = name();
-    for(Folder* i = parent_; i; i = i->parent_)
+    for(Folder* i = _parent; i; i = i->_parent)
     {
         thePath = i->name() / thePath;
     }
@@ -96,73 +96,73 @@ const String File::path() const
         
 void File::setSource(File* source)
 {
-    if(source_ != this)
+    if(_source != this)
     {
         // Delete the old source.
-        delete source_;
+        delete _source;
     }
-    source_ = source;
+    _source = source;
 }        
         
 const File* File::source() const
 {
-    if(source_ != this)
+    if(_source != this)
     {
-        return source_->source();
+        return _source->source();
     }
-    return source_;
+    return _source;
 }
 
 File* File::source()
 {
-    if(source_ != this)
+    if(_source != this)
     {
-        return source_->source();
+        return _source->source();
     }
-    return source_;
+    return _source;
 }
 
 void File::setStatus(const Status& status)
 {
     // The source file status is the official one.
-    if(this != source_)
+    if(this != _source)
     {
-        source_->setStatus(status);
+        _source->setStatus(status);
     }
     else
     {
-        status_ = status;
+        _status = status;
     }
 }
 
 const File::Status& File::status() const 
 {
-    if(this != source_)
+    if(this != _source)
     {
-        return source_->status();
+        return _source->status();
     }
-    return status_;
+    return _status;
 }
 
 void File::setMode(const Mode& newMode)
 {
-    if(this != source_)
+    if(this != _source)
     {
-        source_->setMode(newMode);
+        _source->setMode(newMode);
     }
     else
     {
-        mode_ = newMode;
+        _mode = newMode;
     }
 }
 
 const File::Mode& File::mode() const 
 {
-    if(this != source_)
+    if(this != _source)
     {
-        return source_->mode();
+        return _source->mode();
     }
-    return mode_;
+    return _mode;
 }
 
 void File::verifyWriteAccess()
@@ -192,7 +192,7 @@ void File::set(Offset at, const Byte* values, Size count)
     verifyWriteAccess();
 }
 
-File::Accessor::Accessor(File& owner, Property prop) : owner_(owner), prop_(prop)
+File::Accessor::Accessor(File& owner, Property prop) : _owner(owner), _prop(prop)
 {
     update();
 }
@@ -203,27 +203,27 @@ void File::Accessor::update() const
     Accessor* nonConst = const_cast<Accessor*>(this);
     
     std::ostringstream os;    
-    switch(prop_)
+    switch(_prop)
     {
     case NAME:
-        nonConst->setValue(owner_.name());
+        nonConst->setValue(_owner.name());
         break;
         
     case PATH:
-        nonConst->setValue(owner_.path());
+        nonConst->setValue(_owner.path());
         break;
 
     case TYPE:
-        nonConst->setValue(owner_.status().type() == File::Status::FILE? "file" : "folder");
+        nonConst->setValue(_owner.status().type() == File::Status::FILE? "file" : "folder");
         break;
 
     case SIZE:
-        os << owner_.status().size;
+        os << _owner.status().size;
         nonConst->setValue(os.str());
         break;
 
     case MODIFIED_AT:
-        os << owner_.status().modifiedAt.asDate();
+        os << _owner.status().modifiedAt.asDate();
         nonConst->setValue(os.str());
         break;
     }
@@ -231,7 +231,7 @@ void File::Accessor::update() const
 
 Value* File::Accessor::duplicateContent() const
 {
-    if(prop_ == SIZE)
+    if(_prop == SIZE)
     {
         return new NumberValue(asNumber());
     }

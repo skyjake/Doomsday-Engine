@@ -25,7 +25,7 @@
 
 using namespace de;
 
-ListenSocket::ListenSocket(duint16 port) : socket_(0), port_(port)
+ListenSocket::ListenSocket(duint16 port) : _socket(0), _port(port)
 {
     // Listening address.
     Address address(0, port);
@@ -33,7 +33,7 @@ ListenSocket::ListenSocket(duint16 port) : socket_(0), port_(port)
 
     internal::convertAddress(address, &ip);
 
-    if((socket_ = SDLNet_TCP_Open(&ip)) == 0)
+    if((_socket = SDLNet_TCP_Open(&ip)) == 0)
     {
         /// @throw OpenError Opening the socket failed.
         throw OpenError("ListenSocket::ListenSocket", SDLNet_GetError());
@@ -42,15 +42,15 @@ ListenSocket::ListenSocket(duint16 port) : socket_(0), port_(port)
 
 ListenSocket::~ListenSocket()
 {
-    if(socket_)
+    if(_socket)
     {
-        SDLNet_TCP_Close( static_cast<TCPsocket>(socket_) );
+        SDLNet_TCP_Close( static_cast<TCPsocket>(_socket) );
     }
 }
 
 Socket* ListenSocket::accept()
 {
-    TCPsocket clientSocket = SDLNet_TCP_Accept(static_cast<TCPsocket>(socket_));
+    TCPsocket clientSocket = SDLNet_TCP_Accept(static_cast<TCPsocket>(_socket));
     if(!clientSocket)
     {
         return 0;
@@ -61,5 +61,5 @@ Socket* ListenSocket::accept()
 
 duint16 ListenSocket::port() const
 {
-    return port_;
+    return _port;
 }

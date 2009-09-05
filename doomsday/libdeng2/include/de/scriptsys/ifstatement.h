@@ -60,7 +60,7 @@ namespace de
          * Returns the else-compound of the statement.
          */
         Compound& elseCompound() {
-            return elseCompound_;
+            return _elseCompound;
         }
 
         void execute(Context& context) const;
@@ -77,8 +77,8 @@ namespace de
         };
         typedef std::list<Branch> Branches;
 
-        Branches branches_;
-        Compound elseCompound_;
+        Branches _branches;
+        Compound _elseCompound;
     };
 }
 

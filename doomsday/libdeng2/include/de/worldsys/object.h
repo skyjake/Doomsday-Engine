@@ -59,23 +59,23 @@ namespace de
         
     private:
         /// Position of the object's origin.
-        AnimatorVector3 pos_;
+        AnimatorVector3 _pos;
 
         /// Current speed.
-        Vector3f momentum_;
+        Vector3f _momentum;
         
         /// Rotation angles for the object (yaw, pitch, roll).
-        AnimatorVector3 angles_;
+        AnimatorVector3 _angles;
 
         /// Optional physical representation of the object (modified state).
         /// E.g., a user that is only a spectator doesn't have a Thing.
-        Thing* thing_;
+        Thing* _thing;
 
         /// Another object this one is resting on.
-        Object* onObject_;
+        Object* _onObject;
 
         /// This is set only if this object is the representation of a user.
-        User* user_;
+        User* _user;
     };
 }
 

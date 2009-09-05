@@ -26,7 +26,7 @@
 using namespace de;
 
 SenderThread::SenderThread(Socket& socket, OutgoingBuffer& buffer) 
-    : Thread(), socket_(socket), buffer_(buffer)
+    : Thread(), _socket(socket), _buffer(buffer)
 {}
 
 SenderThread::~SenderThread()
@@ -41,19 +41,19 @@ void SenderThread::run()
         try
         {
             // Wait for new outgoing messages.
-            buffer_.wait(10);
+            _buffer.wait(10);
 
             // There is a new outgoing message. We'll keep it in the FIFO
             // until it has been sent.
-            const PacketType* data = buffer_.peek();
+            const PacketType* data = _buffer.peek();
             if(data)
             {
                 // Write this to the socket.
-                socket_.mode.set(Socket::CHANNEL_1_BIT, data->channel() == 1);
-                socket_ << *data;
+                _socket.mode.set(Socket::CHANNEL_1_BIT, data->channel() == 1);
+                _socket << *data;
 
                 // The packet can be discarded.
-                delete buffer_.get();
+                delete _buffer.get();
             }
         }
         catch(const Waitable::TimeOutError&)

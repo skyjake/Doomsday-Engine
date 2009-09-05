@@ -23,14 +23,14 @@ using namespace de;
 
 Block::Block(Size initialSize)
 {
-    data_.resize(initialSize);
+    _data.resize(initialSize);
 }
 
 Block::Block(const IByteArray& other)
 {
     // Read the other's data directly into our data buffer.
-    data_.resize(other.size());
-    other.get(0, &data_[0], other.size());
+    _data.resize(other.size());
+    other.get(0, &_data[0], other.size());
 }
 
 Block::Block(const IByteArray& other, Offset at, Size count) : IByteArray()
@@ -40,7 +40,7 @@ Block::Block(const IByteArray& other, Offset at, Size count) : IByteArray()
 
 Block::Size Block::size() const
 {
-    return data_.size();
+    return _data.size();
 }
 
 void Block::get(Offset at, Byte* values, Size count) const
@@ -51,7 +51,7 @@ void Block::get(Offset at, Byte* values, Size count) const
         throw OffsetError("Block::get", "Out of range");
     }
 
-    for(Data::const_iterator i = data_.begin() + at; count > 0; ++i, --count)
+    for(Data::const_iterator i = _data.begin() + at; count > 0; ++i, --count)
     {
         *values++ = *i;
     }
@@ -65,34 +65,34 @@ void Block::set(Offset at, const Byte* values, Size count)
         throw OffsetError("Block::set", "Out of range");
     }
 
-    data_.insert(data_.begin() + at, values, values + count);
+    _data.insert(_data.begin() + at, values, values + count);
 }
 
 void Block::copyFrom(const IByteArray& array, Offset at, Size count)
 {
     // Read the other's data directly into our data buffer.
-    data_.resize(count);
-    array.get(at, &data_[0], count);
+    _data.resize(count);
+    array.get(at, &_data[0], count);
 }
 
 void Block::resize(Size size)
 {
-    data_.resize(size);
+    _data.resize(size);
 }
 
 const Block::Byte* Block::data() const
 {
-    return &data_[0];
+    return &_data[0];
 }
 
 Block& Block::operator += (const Block& other)
 {
-    data_.reserve(size() + other.size());
-    data_.insert(data_.end(), other.data_.begin(), other.data_.end());
+    _data.reserve(size() + other.size());
+    _data.insert(_data.end(), other._data.begin(), other._data.end());
     return *this;
 }
 
 void Block::clear()
 {
-    data_.clear();
+    _data.clear();
 }

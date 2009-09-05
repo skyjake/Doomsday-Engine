@@ -41,13 +41,13 @@ namespace de
         ForStatement();
         
         ForStatement(Expression* iter, Expression* iteration) 
-            : iterator_(iter), iteration_(iteration) {}
+            : _iterator(iter), _iteration(iteration) {}
         
         ~ForStatement();
         
         /// Returns the compound of the statement.
         Compound& compound() {
-            return compound_;
+            return _compound;
         }
         
         void execute(Context& context) const;
@@ -57,9 +57,9 @@ namespace de
         void operator << (Reader& from);         
 
     private:
-        Expression* iterator_;
-        Expression* iteration_;
-        Compound compound_;
+        Expression* _iterator;
+        Expression* _iteration;
+        Compound _compound;
     };
 }
 

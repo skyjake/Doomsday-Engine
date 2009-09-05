@@ -28,17 +28,17 @@
 
 using namespace de;
 
-ArrayValue::ArrayValue() : Value(), iteration_(0)
+ArrayValue::ArrayValue() : Value(), _iteration(0)
 {}
 
 ArrayValue::ArrayValue(const ArrayValue& other)
 {
-    for(Elements::const_iterator i = other.elements_.begin();
-        i != other.elements_.end(); ++i)
+    for(Elements::const_iterator i = other._elements.begin();
+        i != other._elements.end(); ++i)
     {
-        elements_.push_back((*i)->duplicate());
+        _elements.push_back((*i)->duplicate());
     }
-    iteration_ = 0;
+    _iteration = 0;
 }
 
 ArrayValue::~ArrayValue()
@@ -59,8 +59,8 @@ Value::Text ArrayValue::asText() const
     bool isFirst = true;
 
     // Compose a textual representation of the array elements.
-    for(Elements::const_iterator i = elements_.begin();
-        i != elements_.end(); ++i)
+    for(Elements::const_iterator i = _elements.begin();
+        i != _elements.end(); ++i)
     {
         if(!isFirst)
         {
@@ -76,7 +76,7 @@ Value::Text ArrayValue::asText() const
 
 dsize ArrayValue::size() const
 {
-    return elements_.size();
+    return _elements.size();
 }
 
 const Value& ArrayValue::element(const Value& indexValue) const
@@ -110,7 +110,7 @@ void ArrayValue::setElement(const Value& indexValue, Value* value)
 
 bool ArrayValue::contains(const Value& value) const
 {
-    for(Elements::const_iterator i = elements_.begin(); i != elements_.end(); ++i)
+    for(Elements::const_iterator i = _elements.begin(); i != _elements.end(); ++i)
     {
         if(!(*i)->compare(value))
         {
@@ -122,22 +122,22 @@ bool ArrayValue::contains(const Value& value) const
 
 Value* ArrayValue::begin()
 {
-    iteration_ = 0;
+    _iteration = 0;
     return next();
 }
 
 Value* ArrayValue::next()
 {
-    if(iteration_ < dint(elements_.size()))
+    if(_iteration < dint(_elements.size()))
     {
-        return elements_[iteration_++]->duplicate();
+        return _elements[_iteration++]->duplicate();
     }
     return 0;
 }
 
 bool ArrayValue::isTrue() const
 {
-    return elements_.size() > 0;
+    return _elements.size() > 0;
 }
 
 dint ArrayValue::compare(const Value& value) const
@@ -154,9 +154,9 @@ dint ArrayValue::compare(const Value& value) const
             return 1;
         }
         // If all the keys and values compare equal, these are equal.
-        Elements::const_iterator mine = elements_.begin();
-        Elements::const_iterator theirs = other->elements_.begin();
-        for(; mine != elements_.end() && theirs != other->elements_.end(); ++mine, ++theirs)
+        Elements::const_iterator mine = _elements.begin();
+        Elements::const_iterator theirs = other->_elements.begin();
+        for(; mine != _elements.end() && theirs != other->_elements.end(); ++mine, ++theirs)
         {
             dint result = (*mine)->compare(**theirs);
             if(result) return result;
@@ -177,15 +177,15 @@ void ArrayValue::sum(const Value& value)
         throw ArithmeticError("ArrayValue::sum", "Array cannot be summed with value");
     }
     
-    for(Elements::const_iterator i = array->elements_.begin(); i != array->elements_.end(); ++i)
+    for(Elements::const_iterator i = array->_elements.begin(); i != array->_elements.end(); ++i)
     {
-        elements_.push_back((*i)->duplicate());
+        _elements.push_back((*i)->duplicate());
     }
 }
 
 void ArrayValue::add(Value* value)
 {
-    elements_.push_back(value);
+    _elements.push_back(value);
 }
 
 void ArrayValue::add(const String& text)
@@ -202,11 +202,11 @@ ArrayValue::Elements::iterator ArrayValue::indexToIterator(dint index)
 {
     if(index >= 0 && index < dint(size()))
     {
-        return elements_.begin() + index;
+        return _elements.begin() + index;
     }
     else if(index < 0 && index > -dint(size()))
     {
-        return elements_.begin() + size() + index;
+        return _elements.begin() + size() + index;
     }
     else
     {
@@ -219,11 +219,11 @@ ArrayValue::Elements::const_iterator ArrayValue::indexToIterator(dint index) con
 {
     if(index >= 0 && index < dint(size()))
     {
-        return elements_.begin() + index;
+        return _elements.begin() + index;
     }
     else if(index < 0 && index >= -dint(size()))
     {
-        return elements_.begin() + size() + index;
+        return _elements.begin() + size() + index;
     }
     else
     {
@@ -240,7 +240,7 @@ void ArrayValue::insert(dint index, Value* value)
     }
     else 
     {
-        elements_.insert(indexToIterator(index), value);
+        _elements.insert(indexToIterator(index), value);
     }
 }
 
@@ -255,36 +255,36 @@ void ArrayValue::remove(dint index)
 {
     Elements::iterator elem = indexToIterator(index);
     delete *elem;
-    elements_.erase(elem);
+    _elements.erase(elem);
 }
     
 Value* ArrayValue::pop()
 {
     assert(size() > 0);
-    Value* popped = elements_.back();
-    elements_.pop_back();
+    Value* popped = _elements.back();
+    _elements.pop_back();
     return popped;
 }
 
 void ArrayValue::reverse()
 {
-    std::reverse(elements_.begin(), elements_.end());
+    std::reverse(_elements.begin(), _elements.end());
 }
 
 void ArrayValue::clear()
 {
     // Delete the values.
-    for(Elements::iterator i = elements_.begin(); i != elements_.end(); ++i)
+    for(Elements::iterator i = _elements.begin(); i != _elements.end(); ++i)
     {
         delete *i;
     }
-    elements_.clear();
+    _elements.clear();
 }
 
 void ArrayValue::operator >> (Writer& to) const
 {
-    to << SerialId(ARRAY) << duint(elements_.size());
-    for(Elements::const_iterator i = elements_.begin(); i != elements_.end(); ++i)
+    to << SerialId(ARRAY) << duint(_elements.size());
+    for(Elements::const_iterator i = _elements.begin(); i != _elements.end(); ++i)
     {
         to << **i;
     }

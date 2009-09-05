@@ -33,10 +33,10 @@ const duint SIMPLE_INDENT = 29;
 const duint RULER_LENGTH = 98 - SIMPLE_INDENT;
 
 LogBuffer::LogBuffer(duint maxEntryCount) 
-    : enabledOverLevel_(MESSAGE), 
-      maxEntryCount_(maxEntryCount),
-      standardOutput_(false),
-      outputFile_(0)
+    : _enabledOverLevel(MESSAGE), 
+      _maxEntryCount(maxEntryCount),
+      _standardOutput(false),
+      _outputFile(0)
 {}
 
 LogBuffer::~LogBuffer()
@@ -48,22 +48,22 @@ LogBuffer::~LogBuffer()
 void LogBuffer::clear()
 {
     flush();
-    for(EntryList::iterator i = entries_.begin(); i != entries_.end(); ++i)
+    for(EntryList::iterator i = _entries.begin(); i != _entries.end(); ++i)
     {
         delete *i;
     }
-    entries_.clear();
+    _entries.clear();
 }
 
 dsize LogBuffer::size() const
 {
-    return entries_.size();
+    return _entries.size();
 }
 
 void LogBuffer::latestEntries(Entries& entries, dsize count) const
 {
     entries.clear();
-    for(EntryList::const_reverse_iterator i = entries_.rbegin(); i != entries_.rend(); ++i)
+    for(EntryList::const_reverse_iterator i = _entries.rbegin(); i != _entries.rend(); ++i)
     {
         entries.push_back(*i);
         if(count && entries.size() >= count)
@@ -75,56 +75,56 @@ void LogBuffer::latestEntries(Entries& entries, dsize count) const
 
 void LogBuffer::setMaxEntryCount(duint maxEntryCount)
 {
-    maxEntryCount_ = maxEntryCount;
+    _maxEntryCount = maxEntryCount;
 }
 
 void LogBuffer::add(LogEntry* entry)
 {
     // We will not flush the new entry as it likely has not yet been given
     // all its arguments.
-    if(lastFlushedAt_.since() > FLUSH_INTERVAL)
+    if(_lastFlushedAt.since() > FLUSH_INTERVAL)
     {
         flush();
     }
 
-    entries_.push_back(entry);
-    toBeFlushed_.push_back(entry);
+    _entries.push_back(entry);
+    _toBeFlushed.push_back(entry);
 }
 
 void LogBuffer::enable(LogLevel overLevel)
 {
-    enabledOverLevel_ = overLevel;
+    _enabledOverLevel = overLevel;
 }
 
 void LogBuffer::setOutputFile(const String& path)
 {
-    if(outputFile_)
+    if(_outputFile)
     {
         flush();
-        outputFile_->audienceForDeletion.remove(this);
-        outputFile_ = 0;
+        _outputFile->audienceForDeletion.remove(this);
+        _outputFile = 0;
     }
     if(!path.empty())
     {
-        outputFile_ = &App::fileRoot().replaceFile(path);
-        outputFile_->setMode(File::WRITE);
-        outputFile_->audienceForDeletion.add(this);
+        _outputFile = &App::fileRoot().replaceFile(path);
+        _outputFile->setMode(File::WRITE);
+        _outputFile->audienceForDeletion.add(this);
     }
 }
 
 void LogBuffer::flush()
 {
     Writer* writer = 0;
-    if(outputFile_)
+    if(_outputFile)
     {
         // We will add to the end.
-        writer = new Writer(*outputFile_, outputFile_->size());
+        writer = new Writer(*_outputFile, _outputFile->size());
     }
     
-    for(EntryList::iterator i = toBeFlushed_.begin(); i != toBeFlushed_.end(); ++i)
+    for(EntryList::iterator i = _toBeFlushed.begin(); i != _toBeFlushed.end(); ++i)
     {
         // Error messages will go to stderr instead of stdout.
-        std::ostream* os = (standardOutput_? ((*i)->level() >= ERROR? &std::cerr : &std::cout) : 0);
+        std::ostream* os = (_standardOutput? ((*i)->level() >= ERROR? &std::cerr : &std::cout) : 0);
         
         String message = (*i)->asText();
             
@@ -173,29 +173,29 @@ void LogBuffer::flush()
             *writer << FixedByteArray(String("\n"));
         }
     }
-    toBeFlushed_.clear();
-    lastFlushedAt_ = Time();
+    _toBeFlushed.clear();
+    _lastFlushedAt = Time();
 
     delete writer;
     
-    if(outputFile_)
+    if(_outputFile)
     {
         // Make sure they get written now.
-        outputFile_->flush();
+        _outputFile->flush();
     }
     
     // Too many entries? Now they can be destroyed since we have flushed everything.
-    while(entries_.size() > maxEntryCount_)
+    while(_entries.size() > _maxEntryCount)
     {
-        LogEntry* old = entries_.front();
-        entries_.pop_front();
+        LogEntry* old = _entries.front();
+        _entries.pop_front();
         delete old;
     }
 }
 
 void LogBuffer::fileBeingDeleted(const File& file)
 {
-    assert(outputFile_ == &file);
+    assert(_outputFile == &file);
     flush();
-    outputFile_ = 0;
+    _outputFile = 0;
 }

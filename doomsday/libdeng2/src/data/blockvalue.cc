@@ -28,44 +28,44 @@ using namespace de;
 BlockValue::BlockValue()
 {}
 
-BlockValue::BlockValue(const Block& block) : value_(block) 
+BlockValue::BlockValue(const Block& block) : _value(block) 
 {}
 
 BlockValue::operator const IByteArray& () const
 {
-    return value_;
+    return _value;
 }
 
 BlockValue::operator IByteArray& ()
 {
-    return value_;
+    return _value;
 }
 
 void BlockValue::clear()
 {
-    value_.clear();
+    _value.clear();
 }
 
 Value* BlockValue::duplicate() const
 {
-    return new BlockValue(value_);
+    return new BlockValue(_value);
 }
 
 Value::Text BlockValue::asText() const
 {
     std::ostringstream os;
-    os << "[Block of " << value_.size() << " bytes]";
+    os << "[Block of " << _value.size() << " bytes]";
     return os.str();
 }
 
 dsize BlockValue::size() const
 {
-    return value_.size();
+    return _value.size();
 }
 
 bool BlockValue::isTrue() const
 {
-    return value_.size() > 0;
+    return _value.size() > 0;
 }
 
 void BlockValue::sum(const Value& value)
@@ -77,12 +77,12 @@ void BlockValue::sum(const Value& value)
         /// summed with another BlockValue.
         throw ArithmeticError("BlockValue::sum", "Value cannot be summed");
     }    
-    value_ += other->value_;
+    _value += other->_value;
 }
 
 void BlockValue::operator >> (Writer& to) const
 {
-    to << SerialId(BLOCK) << value_;
+    to << SerialId(BLOCK) << _value;
 }
 
 void BlockValue::operator << (Reader& from)
@@ -95,6 +95,6 @@ void BlockValue::operator << (Reader& from)
         /// serialized value was invalid.
         throw DeserializationError("BlockValue::operator <<", "Invalid ID");
     }
-    value_.clear();
-    from >> value_;
+    _value.clear();
+    from >> _value;
 }

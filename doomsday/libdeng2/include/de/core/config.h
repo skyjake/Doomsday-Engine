@@ -75,13 +75,13 @@ namespace de
         
     private:
         /// Configuration file name.
-        String configPath_;
+        String _configPath;
         
         /// Path where the configuration is written.
-        String writtenConfigPath_;
+        String _writtenConfigPath;
         
         /// The configuration namespace.
-        Process config_;
+        Process _config;
     };
 }
 

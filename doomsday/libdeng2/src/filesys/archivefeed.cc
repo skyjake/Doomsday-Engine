@@ -27,39 +27,39 @@
 
 using namespace de;
 
-ArchiveFeed::ArchiveFeed(File& archiveFile) : file_(archiveFile), archive_(0), parentFeed_(0)
+ArchiveFeed::ArchiveFeed(File& archiveFile) : _file(archiveFile), _archive(0), _parentFeed(0)
 {
     // Open the archive.
-    archive_ = new Archive(archiveFile);
+    _archive = new Archive(archiveFile);
 }
 
 ArchiveFeed::ArchiveFeed(ArchiveFeed& parentFeed, const String& basePath)
-    : file_(parentFeed.file_), archive_(0), basePath_(basePath), parentFeed_(&parentFeed)
+    : _file(parentFeed._file), _archive(0), _basePath(basePath), _parentFeed(&parentFeed)
 {}
 
 ArchiveFeed::~ArchiveFeed()
 {
     LOG_AS("ArchiveFeed::~ArchiveFeed");
     
-    if(archive_)
+    if(_archive)
     {
         // If modified, the archive is written.
-        if(archive_->modified())
+        if(_archive->modified())
         {
-            LOG_MESSAGE("Updating archive in ") << file_.name();
+            LOG_MESSAGE("Updating archive in ") << _file.name();
 
             // Make sure we have either a compressed or uncompressed version of
             // each entry in memory before destroying the source file.
-            archive_->cache();
+            _archive->cache();
 
-            file_.clear();
-            Writer(file_) << *archive_;
+            _file.clear();
+            Writer(_file) << *_archive;
         }        
         else
         {
-            LOG_VERBOSE("Not updating archive in %s (not changed)") << file_.name();
+            LOG_VERBOSE("Not updating archive in %s (not changed)") << _file.name();
         }
-        delete archive_;
+        delete _archive;
     }
 }
 
@@ -70,7 +70,7 @@ void ArchiveFeed::populate(Folder& folder)
     Archive::Names names;
     
     // Get a list of the files in this directory.
-    archive().listFiles(names, basePath_);
+    archive().listFiles(names, _basePath);
     
     for(Archive::Names::iterator i = names.begin(); i != names.end(); ++i)
     {
@@ -80,7 +80,7 @@ void ArchiveFeed::populate(Folder& folder)
             return;
         }
         
-        String entry = basePath_ / *i;
+        String entry = _basePath / *i;
         
         std::auto_ptr<ArchiveFile> archFile(new ArchiveFile(*i, archive(), entry));
         // Use the status of the entry within the archive.
@@ -98,11 +98,11 @@ void ArchiveFeed::populate(Folder& folder)
     }
     
     // Also populate subfolders.
-    archive().listFolders(names, basePath_);
+    archive().listFolders(names, _basePath);
     
     for(Archive::Names::iterator i = names.begin(); i != names.end(); ++i)
     {
-        String subBasePath = basePath_ / *i;
+        String subBasePath = _basePath / *i;
         Folder& subFolder = folder.fileSystem().getFolder(folder.path() / *i);
         
         // Does it already have the appropriate feed?
@@ -131,7 +131,7 @@ bool ArchiveFeed::prune(File& file) const
 
 File* ArchiveFeed::newFile(const String& name)
 {
-    String newEntry = basePath_ / name;
+    String newEntry = _basePath / name;
     if(archive().has(newEntry))
     {
         /// @throw AlreadyExistsError  The entry @a name already exists in the archive.
@@ -146,15 +146,15 @@ File* ArchiveFeed::newFile(const String& name)
 
 void ArchiveFeed::removeFile(const String& name)
 {
-    String entryPath = basePath_ / name;
+    String entryPath = _basePath / name;
     archive().remove(entryPath);
 }
 
 Archive& ArchiveFeed::archive()
 {
-    if(parentFeed_)
+    if(_parentFeed)
     {
-        return parentFeed_->archive();
+        return _parentFeed->archive();
     }
-    return *archive_;
+    return *_archive;
 }

@@ -58,7 +58,7 @@ namespace de
         void operator << (Reader& from);
         
     private:
-        Block value_;
+        Block _value;
     };
 }
 

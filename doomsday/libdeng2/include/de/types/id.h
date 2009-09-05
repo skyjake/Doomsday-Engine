@@ -48,7 +48,7 @@ namespace de
          */
         Id();
         
-        Id(const Type& idValue) : id_(idValue) {}
+        Id(const Type& idValue) : _id(idValue) {}
         
         /**
          * Constructs an identifier from the text representation.
@@ -59,15 +59,15 @@ namespace de
 
         ~Id();
 
-        bool operator < (const Id& other) const { return id_ < other.id_; }
+        bool operator < (const Id& other) const { return _id < other._id; }
 
-        bool operator == (const Id& other) const { return id_ == other.id_; }
+        bool operator == (const Id& other) const { return _id == other._id; }
 
-        bool operator != (const Id& other) const { return id_ != other.id_; }
+        bool operator != (const Id& other) const { return _id != other._id; }
         
-        operator bool () const { return id_ != NONE; }
+        operator bool () const { return _id != NONE; }
 
-        operator Type () const { return id_; }
+        operator Type () const { return _id; }
 
         /// Converts the Id to a text string.
         operator String () const;
@@ -85,8 +85,8 @@ namespace de
         LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
         
     private:
-        Type id_;
-        static Type generator_;
+        Type _id;
+        static Type _generator;
     };
     
     LIBDENG2_API std::ostream& operator << (std::ostream& os, const Id& id);

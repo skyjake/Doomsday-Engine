@@ -71,17 +71,17 @@ namespace de
         /// Returns a human-readable representation of the function.
         String asText() const;
         
-        Compound& compound() { return compound_; }
+        Compound& compound() { return _compound; }
 
-        const Compound& compound() const { return compound_; }
+        const Compound& compound() const { return _compound; }
 
-        Arguments& arguments() { return arguments_; }
+        Arguments& arguments() { return _arguments; }
         
-        const Arguments& arguments() const { return arguments_; }
+        const Arguments& arguments() const { return _arguments; }
 
-        Defaults& defaults() { return defaults_; }
+        Defaults& defaults() { return _defaults; }
         
-        const Defaults& defaults() const { return defaults_; }
+        const Defaults& defaults() const { return _defaults; }
       
         /**
          * Maps a set of named and unnamed argument values to the list of values that
@@ -134,18 +134,18 @@ namespace de
         
     private:
         /// Argument names.
-        Arguments arguments_;
+        Arguments _arguments;
 
         /// The function owns the default values stored in the arguments list.
-        Defaults defaults_;
+        Defaults _defaults;
         
         /// The statements of this function.
-        Compound compound_;
+        Compound _compound;
         
         /// Namespace where the function was created. This global namespace is
         /// used always when executing the function, regardless of where the
         /// function is called.
-        Record* globals_;
+        Record* _globals;
     };
 }
 

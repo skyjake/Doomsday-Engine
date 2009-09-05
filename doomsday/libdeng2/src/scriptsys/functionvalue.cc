@@ -25,27 +25,27 @@
 
 using namespace de;
 
-FunctionValue::FunctionValue() : func_(new Function())
+FunctionValue::FunctionValue() : _func(new Function())
 {
     // We now hold the only reference to the function.
 }
 
-FunctionValue::FunctionValue(Function* func) : func_(func->ref<Function>())
+FunctionValue::FunctionValue(Function* func) : _func(func->ref<Function>())
 {}
 
 FunctionValue::~FunctionValue()
 {
-    func_->release();
+    _func->release();
 }
 
 Value* FunctionValue::duplicate() const
 {
-    return new FunctionValue(func_);
+    return new FunctionValue(_func);
 }
 
 Value::Text FunctionValue::asText() const
 {
-    return func_->asText();
+    return _func->asText();
 }
 
 bool FunctionValue::isTrue() const
@@ -66,11 +66,11 @@ dint FunctionValue::compare(const Value& value) const
         return -1;
     }
     // Address comparison.
-    if(func_ == other->func_)
+    if(_func == other->_func)
     {
         return 0;
     }
-    if(func_ > other->func_)
+    if(_func > other->_func)
     {
         return 1;
     }
@@ -85,12 +85,12 @@ void FunctionValue::call(Process& process, const Value& arguments) const
         /// @throw IllegalError  The call arguments must be an array value.
         throw IllegalError("FunctionValue::call", "Arguments is not an array");
     }
-    process.call(*func_, *array);
+    process.call(*_func, *array);
 }
 
 void FunctionValue::operator >> (Writer& to) const
 {
-    to << SerialId(FUNCTION) << *func_;
+    to << SerialId(FUNCTION) << *_func;
 }
 
 void FunctionValue::operator << (Reader& from)
@@ -103,5 +103,5 @@ void FunctionValue::operator << (Reader& from)
         /// serialized value was invalid.
         throw DeserializationError("FunctionValue::operator <<", "Invalid ID");
     }
-    from >> *func_;
+    from >> *_func;
 }

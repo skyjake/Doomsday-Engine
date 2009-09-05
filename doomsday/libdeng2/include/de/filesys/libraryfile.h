@@ -60,7 +60,7 @@ namespace de
          *
          * @return  @c true, if the library has been loaded.
          */
-        bool loaded() const { return library_ != 0; }
+        bool loaded() const { return _library != 0; }
         
         /**
          * Provides access to the loaded library. Automatically attempts to load 
@@ -91,7 +91,7 @@ namespace de
         static bool recognize(const File& file);
         
     private:
-        Library* library_;
+        Library* _library;
     };
 }
 

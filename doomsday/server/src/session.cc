@@ -26,20 +26,20 @@
 
 using namespace de;
 
-Session::Session() : world_(0)
+Session::Session() : _world(0)
 {
     // Create a blank world.
-    world_ = App::game().SYMBOL(deng_NewWorld)();
+    _world = App::game().SYMBOL(deng_NewWorld)();
 }
 
 Session::~Session()
 {
     LOG_AS("Session::~Session");
     
-    if(!users_.empty())
+    if(!_users.empty())
     {
         RecordPacket sessionEnded("session.ended");
-        for(Users::iterator i = users_.begin(); i != users_.end(); ++i)
+        for(Users::iterator i = _users.begin(); i != _users.end(); ++i)
         {
             i->second->client().link().audienceForDeletion.remove(this);
             i->second->setSession(0);
@@ -49,10 +49,10 @@ Session::~Session()
             
             delete i->second;
         }
-        users_.clear();
+        _users.clear();
     }
     LOG_DEBUG("Deleting the world");
-    delete world_;
+    delete _world;
 }
 
 void Session::processCommand(Client& sender, const de::CommandPacket& packet)
@@ -66,19 +66,19 @@ void Session::processCommand(Client& sender, const de::CommandPacket& packet)
         if(packet.command() == "session.new")
         {
             // Initialize the session with the provided settings.
-            world_->loadMap(packet.arguments().value<TextValue>("map"));
+            _world->loadMap(packet.arguments().value<TextValue>("map"));
 
             LOG_DEBUG("Replying with session id.");
 
             // Respond.
             Record* reply = new Record();
-            reply->addText("id", id_);
+            reply->addText("id", _id);
             App::protocol().reply(sender, Protocol::OK, reply);
         }
         else if(packet.command() == "session.join")
         {
             // Request to join this session?
-            if(Id(packet.arguments().value<TextValue>("id")) != id_)
+            if(Id(packet.arguments().value<TextValue>("id")) != _id)
             {
                 // Not intended for this session.
                 return;
@@ -128,9 +128,9 @@ RemoteUser& Session::promote(Client& client)
     {
         // Compose a welcome packet for the new user.
         RecordPacket welcome("user.welcome");
-        Writer(welcome.record().addBlock("worldState").value<BlockValue>()) << *world_;
+        Writer(welcome.record().addBlock("worldState").value<BlockValue>()) << *_world;
         Record& userStateRec = welcome.record().addRecord("users");
-        for(Users::iterator i = users_.begin(); i != users_.end(); ++i)
+        for(Users::iterator i = _users.begin(); i != _users.end(); ++i)
         {
             Writer(userStateRec.addBlock(i->second->user().id()).value<BlockValue>())
                 << i->second->user();
@@ -138,7 +138,7 @@ RemoteUser& Session::promote(Client& client)
         client.updates() << welcome;
 
         RemoteUser* remote = new RemoteUser(client, this);
-        users_[remote->id()] = remote;
+        _users[remote->id()] = remote;
 
         LOG_VERBOSE("Id of new remote user: ") << remote->id();
 
@@ -151,7 +151,7 @@ RemoteUser& Session::promote(Client& client)
 
 void Session::demote(RemoteUser& remoteUser)
 {
-    users_.erase(remoteUser.id());
+    _users.erase(remoteUser.id());
     remoteUser.setSession(0);
     
     // Stop observing.
@@ -165,7 +165,7 @@ void Session::demote(RemoteUser& remoteUser)
 
 RemoteUser& Session::userByAddress(const de::Address& address) const
 {
-    for(Users::const_iterator i = users_.begin(); i != users_.end(); ++i)
+    for(Users::const_iterator i = _users.begin(); i != _users.end(); ++i)
     {
         if(i->second->address() == address)
         {
@@ -180,13 +180,13 @@ void Session::linkBeingDeleted(de::Link& link)
 {
     LOG_AS("Session::linkBeingDeleted");
     
-    for(Users::iterator i = users_.begin(); i != users_.end(); ++i)
+    for(Users::iterator i = _users.begin(); i != _users.end(); ++i)
     {
         if(&i->second->client().link() == &link)
         {
             // This user's link has been closed. The remote user will disappear.
             delete i->second;
-            users_.erase(i);
+            _users.erase(i);
             return;
         }
     }
@@ -197,7 +197,7 @@ void Session::describe(de::Record& record) const
 {
     // User names and identifiers in a dictionary.
     DictionaryValue& dict = record.addDictionary("users").value<DictionaryValue>();
-    for(Users::const_iterator i = users_.begin(); i != users_.end(); ++i)
+    for(Users::const_iterator i = _users.begin(); i != _users.end(); ++i)
     {
         dict.add(new TextValue(i->first), new TextValue(i->second->user().name()));
     }
@@ -205,9 +205,9 @@ void Session::describe(de::Record& record) const
 
 void Session::Broadcast::send(const de::IByteArray& data)
 {
-    for(Users::iterator i = session_.users_.begin(); i != session_.users_.end(); ++i)
+    for(Users::iterator i = _session._users.begin(); i != _session._users.end(); ++i)
     {
-        if(i->second != exclude_)
+        if(i->second != _exclude)
         {
             i->second->client().updates() << data;
         }

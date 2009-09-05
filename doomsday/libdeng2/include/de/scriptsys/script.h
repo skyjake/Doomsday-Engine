@@ -67,7 +67,7 @@ namespace de
         
         virtual ~Script();
 
-        const String& path() const { return path_; }
+        const String& path() const { return _path; }
 
         /// Returns the statement that begins the script. This is where
         /// a process begins the execution of a script.
@@ -76,15 +76,15 @@ namespace de
         /// Returns a modifiable reference to the main statement compound
         /// of the script.
         Compound& compound() {
-            return compound_;
+            return _compound;
         }
         
     private:
-        Compound compound_;
+        Compound _compound;
         
         /// File path where the script was loaded. Will be visible in the namespace
         /// of the process executing the script.
-        String path_;
+        String _path;
     };
 }
 

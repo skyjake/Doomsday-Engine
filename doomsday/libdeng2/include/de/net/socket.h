@@ -140,12 +140,12 @@ namespace de
     
     private:
         /// Pointer to the internal socket data.
-        void* socket_;
+        void* _socket;
 
         /// Used for waiting on activity.
-        void* socketSet_;
+        void* _socketSet;
         
-        Address peerAddress_;
+        Address _peerAddress;
         
         /** 
          * ListenSocket creates instances of Socket so it needs to use

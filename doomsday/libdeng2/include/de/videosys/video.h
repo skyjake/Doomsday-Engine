@@ -94,7 +94,7 @@ namespace de
         Surface* target() const;
 
         /// Returns the window list (read access only).
-        const Windows& windows() const { return windows_; }
+        const Windows& windows() const { return _windows; }
         
         /**
          * Constructs a new Window.
@@ -109,16 +109,16 @@ namespace de
 
     protected:        
         /// Returns the window list.
-        Windows& windows() { return windows_; }
+        Windows& windows() { return _windows; }
                 
     private:
-        Window* mainWindow_;
+        Window* _mainWindow;
 
         /// List of all windows owned by the video subsystem. The main window is one of these.
-        Windows windows_;
+        Windows _windows;
 
         /// Current target drawing surface.
-        Surface* target_;
+        Surface* _target;
     };      
 };
 

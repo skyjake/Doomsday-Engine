@@ -34,28 +34,28 @@
 using namespace de;
 
 FunctionStatement::FunctionStatement(Expression* identifier)
-    : identifier_(identifier)
+    : _identifier(identifier)
 {
-    function_ = new Function();
+    _function = new Function();
 }
 
 FunctionStatement::~FunctionStatement()
 {
-    delete identifier_;
-    function_->release();
+    delete _identifier;
+    _function->release();
 }
 
 Compound& FunctionStatement::compound()
 {
-    return function_->compound();
+    return _function->compound();
 }
 
 void FunctionStatement::addArgument(const String& argName, Expression* defaultValue)
 {
-    function_->arguments().push_back(argName);
+    _function->arguments().push_back(argName);
     if(defaultValue)
     {
-        defaults_.add(new ConstantExpression(new TextValue(argName)), defaultValue);
+        _defaults.add(new ConstantExpression(new TextValue(argName)), defaultValue);
     }
 }
 
@@ -64,29 +64,29 @@ void FunctionStatement::execute(Context& context) const
     Evaluator& eval = context.evaluator();
 
     // Set the function's namespace.
-    function_->setGlobals(&context.process().globals());
+    _function->setGlobals(&context.process().globals());
 
     // Variable that will store the function.
-    eval.evaluateTo<RefValue>(identifier_);
+    eval.evaluateTo<RefValue>(_identifier);
     std::auto_ptr<RefValue> ref(eval.popResultAs<RefValue>());
 
     // Evaluate the argument default values.
-    DictionaryValue& dict = eval.evaluateTo<DictionaryValue>(&defaults_);
+    DictionaryValue& dict = eval.evaluateTo<DictionaryValue>(&_defaults);
     for(DictionaryValue::Elements::const_iterator i = dict.elements().begin(); 
         i != dict.elements().end(); ++i)
     {
-        function_->defaults()[i->first.value->asText()] = i->second->duplicate();
+        _function->defaults()[i->first.value->asText()] = i->second->duplicate();
     }
         
     // The value takes a reference to the function.
-    ref->assign(new FunctionValue(function_));
+    ref->assign(new FunctionValue(_function));
     
     context.proceed();
 }
 
 void FunctionStatement::operator >> (Writer& to) const
 {
-    to << SerialId(FUNCTION) << *identifier_ << *function_ << defaults_;
+    to << SerialId(FUNCTION) << *_identifier << *_function << _defaults;
 }
 
 void FunctionStatement::operator << (Reader& from)
@@ -99,9 +99,9 @@ void FunctionStatement::operator << (Reader& from)
         /// serialized statement was invalid.
         throw DeserializationError("FunctionStatement::operator <<", "Invalid ID");
     }
-    delete identifier_;
-    identifier_ = 0;
-    identifier_ = Expression::constructFrom(from);
+    delete _identifier;
+    _identifier = 0;
+    _identifier = Expression::constructFrom(from);
 
-    from >> *function_ >> defaults_;
+    from >> *_function >> _defaults;
 }

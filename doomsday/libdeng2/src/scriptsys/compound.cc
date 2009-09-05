@@ -34,35 +34,35 @@ Compound::~Compound()
 
 void Compound::clear()
 {
-    for(Statements::iterator i = statements_.begin(); i != statements_.end(); ++i)
+    for(Statements::iterator i = _statements.begin(); i != _statements.end(); ++i)
     {
         delete *i;
     }
-    statements_.clear();
+    _statements.clear();
 }
 
 const Statement* Compound::firstStatement() const
 {
-    if(statements_.empty())
+    if(_statements.empty())
     {
         return NULL;
     }
-    return *statements_.begin();
+    return *_statements.begin();
 }
 
 void Compound::add(Statement* statement)
 {
-    if(statements_.size() > 0)
+    if(_statements.size() > 0)
     {
-        statements_.back()->setNext(statement);
+        _statements.back()->setNext(statement);
     }
-    statements_.push_back(statement);
+    _statements.push_back(statement);
 }
 
 void Compound::operator >> (Writer& to) const
 {
-    to << duint32(statements_.size());
-    for(Statements::const_iterator i = statements_.begin(); i != statements_.end(); ++i)
+    to << duint32(_statements.size());
+    for(Statements::const_iterator i = _statements.begin(); i != _statements.end(); ++i)
     {
         to << **i;
     }

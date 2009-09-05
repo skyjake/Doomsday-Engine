@@ -89,7 +89,7 @@ namespace de
         
         virtual ~Process();
 
-        State state() const { return state_; }
+        State state() const { return _state; }
 
         /// Determines the current depth of the call stack.
         duint depth() const;
@@ -199,19 +199,19 @@ namespace de
         bool jumpIntoCatch(const Error& err);
                 
     private:
-        State state_;
+        State _state;
         
         // The execution environment.
         typedef std::vector<Context*> ContextStack;
-        ContextStack stack_;
+        ContextStack _stack;
         
         /// This is the current working folder of the process. Relative paths
         /// given to workingFile() are located in relation to this
         /// folder. Initial value is the root folder.
-        String workingPath_;
+        String _workingPath;
         
         /// Time when execution was started at depth 1.
-        Time startedAt_;
+        Time _startedAt;
     };
 }
 

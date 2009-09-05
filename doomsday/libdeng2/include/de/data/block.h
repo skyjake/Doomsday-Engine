@@ -64,7 +64,7 @@ namespace de
         
     private:
         typedef std::vector<Byte> Data;
-        Data data_;
+        Data _data;
     };
 }
     

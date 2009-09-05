@@ -28,9 +28,9 @@
 
 using namespace de;
 
-Config::Config(const String& path) : configPath_(path)
+Config::Config(const String& path) : _configPath(path)
 {
-    writtenConfigPath_ = String("/home") / configPath_.fileNameWithoutExtension() + ".config";
+    _writtenConfigPath = String("/home") / _configPath.fileNameWithoutExtension() + ".config";
 }
 
 Config::~Config()
@@ -59,7 +59,7 @@ void Config::read()
     try
     {
         // If we already have a saved copy of the config, read it.
-        File& file = App::fileRoot().locate<File>(writtenConfigPath_);
+        File& file = App::fileRoot().locate<File>(_writtenConfigPath);
         Reader(file) >> names();
         
         // If the saved config is from a different version, rerun the script.
@@ -67,7 +67,7 @@ void Config::read()
         if(!names()["__version__"].value().compare(*version))
         {
             // Versions match.
-            LOG_MESSAGE("") << writtenConfigPath_ << " matches version " << version->asText();
+            LOG_MESSAGE("") << _writtenConfigPath << " matches version " << version->asText();
             return;
         }
     }
@@ -75,29 +75,29 @@ void Config::read()
     {}
             
     // The version of libdeng2 is automatically included.
-    config_.globals().add(new Variable("__version__", version.release(), 
+    _config.globals().add(new Variable("__version__", version.release(), 
         Variable::ARRAY | Variable::READ_ONLY));
 
     // Read the main configuration. 
-    Script script(App::fileRoot().locate<File>(configPath_));
-    config_.run(script);
-    config_.execute();
+    Script script(App::fileRoot().locate<File>(_configPath));
+    _config.run(script);
+    _config.execute();
 }
 
 void Config::write()
 {
-    File& file = App::fileRoot().replaceFile(writtenConfigPath_);
+    File& file = App::fileRoot().replaceFile(_writtenConfigPath);
     Writer(file) << names();    
 }
 
 Record& Config::names()
 {
-    return config_.globals();
+    return _config.globals();
 }
 
 Value& Config::get(const String& name)
 {
-    return config_.globals()[name].value();
+    return _config.globals()[name].value();
 }
 
 dint Config::geti(const String& name)

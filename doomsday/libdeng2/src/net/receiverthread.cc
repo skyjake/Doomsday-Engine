@@ -24,7 +24,7 @@
 using namespace de;
 
 ReceiverThread::ReceiverThread(Socket& socket, IncomingBuffer& buffer) 
-    : Thread(), socket_(socket), buffer_(buffer)
+    : Thread(), _socket(socket), _buffer(buffer)
 {}
 
 ReceiverThread::~ReceiverThread()
@@ -37,7 +37,7 @@ void ReceiverThread::run()
     {
         while(!shouldStopNow())
         {
-            buffer_.put(socket_.receive());
+            _buffer.put(_socket.receive());
         }
     }
     catch(const Socket::DisconnectedError&)

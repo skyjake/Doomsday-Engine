@@ -66,19 +66,19 @@ namespace de
         /**
          * Returns the base path within the archive.
          */
-        const String& basePath() const { return basePath_; }
+        const String& basePath() const { return _basePath; }
                     
     private:
         /// File where the archive is stored.
-        File& file_;
+        File& _file;
         
-        Archive* archive_;
+        Archive* _archive;
         
         /// Mount point within the archive for this feed.
-        String basePath_;
+        String _basePath;
         
         /// The feed whose archive this feed is using.
-        ArchiveFeed* parentFeed_;
+        ArchiveFeed* _parentFeed;
     };
 }
 

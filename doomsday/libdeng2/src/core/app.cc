@@ -39,30 +39,30 @@ using namespace de;
 const duint DEFAULT_LOG_BUFFER_MAX_ENTRY_COUNT = 1000;
 
 // This will be set when the app is constructed.
-App* App::singleton_ = 0;
+App* App::_singleton = 0;
 
 App::App(const CommandLine& commandLine, const String& configPath, const String& homeSubFolder,
     LogLevel defaultLogLevel)
-    : commandLine_(commandLine), 
-      logBuffer_(0),
-      memory_(0), 
-      fs_(0), 
-      config_(0),
-      gameLib_(0),
-      currentMap_(0), 
-      video_(0), 
-      audio_(0),
-      runMainLoop_(true), 
-      firstIteration_(true), 
-      exitCode_(0)
+    : _commandLine(commandLine), 
+      _logBuffer(0),
+      _memory(0), 
+      _fs(0), 
+      _config(0),
+      _gameLib(0),
+      _currentMap(0), 
+      _video(0), 
+      _audio(0),
+      _runMainLoop(true), 
+      _firstIteration(true), 
+      _exitCode(0)
 {
-    if(singleton_)
+    if(_singleton)
     {
         /// @throw TooManyInstancesError Attempted to construct a new instance of App while
         /// one already exists. There can only be one instance of App per process.
         throw TooManyInstancesError("App::App", "Only one instance allowed");
     }
-    singleton_ = this;
+    _singleton = this;
 
 #ifdef _DEBUG
     // Enable all log entries by default in debug builds.
@@ -70,12 +70,12 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
 #endif
 
     // Create a buffer for log entries.
-    logBuffer_ = new LogBuffer(DEFAULT_LOG_BUFFER_MAX_ENTRY_COUNT);
-    logBuffer_->enable(defaultLogLevel);
+    _logBuffer = new LogBuffer(DEFAULT_LOG_BUFFER_MAX_ENTRY_COUNT);
+    _logBuffer->enable(defaultLogLevel);
 
     if(commandLine.has("--stdout"))
     {
-        logBuffer_->enableStandardOutput();
+        _logBuffer->enableStandardOutput();
     }
 
     // Start by initializing SDL.
@@ -97,64 +97,64 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
         
         // The memory zone.
         std::auto_ptr<Zone> memoryPtr(new Zone());
-        memory_ = memoryPtr.get();
+        _memory = memoryPtr.get();
 
 #if defined(MACOSX)
         // When the application is started through Finder, we get a special command
         // line argument. The working directory needs to be changed.
-        if(commandLine_.count() >= 2 && String(commandLine_.at(1)).beginsWith("-psn"))
+        if(_commandLine.count() >= 2 && String(_commandLine.at(1)).beginsWith("-psn"))
         {
-            DirectoryFeed::changeWorkingDir(commandLine_.at(0).fileNamePath() + "/..");
+            DirectoryFeed::changeWorkingDir(_commandLine.at(0).fileNamePath() + "/..");
         }
 #endif
     
         // Now we can proceed with the members.
         std::auto_ptr<FS> fsPtr(new FS());
-        fs_ = fsPtr.get();
+        _fs = fsPtr.get();
 
         // Initialize the built-in folders.
 #if defined(MACOSX)
-        fs_->getFolder("/bin").attach(new DirectoryFeed("MacOS"));
-        fs_->getFolder("/data").attach(new DirectoryFeed("Resources"));
-        fs_->getFolder("/config").attach(new DirectoryFeed("Resources/config"));
+        _fs->getFolder("/bin").attach(new DirectoryFeed("MacOS"));
+        _fs->getFolder("/data").attach(new DirectoryFeed("Resources"));
+        _fs->getFolder("/config").attach(new DirectoryFeed("Resources/config"));
         //fs_->getFolder("/modules").attach(new DirectoryFeed("Resources/modules"));
 #endif
 
 #if defined(UNIX) && !defined(MACOSX)
-        fs_->getFolder("/bin").attach(new DirectoryFeed("bin"));
-        fs_->getFolder("/data").attach(new DirectoryFeed("data"));
-        fs_->getFolder("/config").attach(new DirectoryFeed("data/config"));
+        _fs->getFolder("/bin").attach(new DirectoryFeed("bin"));
+        _fs->getFolder("/data").attach(new DirectoryFeed("data"));
+        _fs->getFolder("/config").attach(new DirectoryFeed("data/config"));
         //fs_->getFolder("/modules").attach(new DirectoryFeed("data/modules"));
 #endif
 
 #ifdef WIN32
-        fs_->getFolder("/bin").attach(new DirectoryFeed("bin"));
-        fs_->getFolder("/data").attach(new DirectoryFeed("data"));
-        fs_->getFolder("/config").attach(new DirectoryFeed("data\\config"));
+        _fs->getFolder("/bin").attach(new DirectoryFeed("bin"));
+        _fs->getFolder("/data").attach(new DirectoryFeed("data"));
+        _fs->getFolder("/config").attach(new DirectoryFeed("data\\config"));
         //fs_->getFolder("/modules").attach(new DirectoryFeed("data\\modules"));
 #endif
 
         /// @todo  /home should really be under the native user home dir (~/.deng2, 
         /// C:\\Documents and Settings\\..., ~/Library/Application Support/Doomsday2/)
-        fs_->getFolder("/home").attach(new DirectoryFeed(
+        _fs->getFolder("/home").attach(new DirectoryFeed(
             String("home").concatenateNativePath(homeSubFolder), 
             DirectoryFeed::ALLOW_WRITE | DirectoryFeed::CREATE_IF_MISSING));
 
-        fs_->refresh();
+        _fs->refresh();
         
         // The configuration.
         std::auto_ptr<Config> configPtr(new Config(configPath));
-        config_ = configPtr.get();
-        config_->read();
+        _config = configPtr.get();
+        _config->read();
         
         // Update the log buffer max entry count.
-        logBuffer_->setMaxEntryCount(config_->getui("deng.log.bufferSize"));
+        _logBuffer->setMaxEntryCount(_config->getui("deng.log.bufferSize"));
         
         // Set the log output file.
-        logBuffer_->setOutputFile(config_->gets("deng.log.file"));
+        _logBuffer->setOutputFile(_config->gets("deng.log.file"));
         
         // The level of enabled messages.
-        logBuffer_->enable(LogLevel(config_->getui("deng.log.level")));
+        _logBuffer->enable(LogLevel(_config->getui("deng.log.level")));
         
         // Load the basic plugins.
         loadPlugins();
@@ -178,27 +178,27 @@ App::~App()
 {
     clearSubsystems();
 
-    delete config_;
-    config_ = 0;
+    delete _config;
+    _config = 0;
 
     clearModules();
 
     // Deleting the file system will unload everything owned by the files, including 
     // all remaining plugin libraries.
-    delete fs_;
-    fs_ = 0;
+    delete _fs;
+    _fs = 0;
     
-    delete memory_;
-    memory_ = 0;
+    delete _memory;
+    _memory = 0;
  
     // Shut down SDL.
     SDLNet_Quit();
     SDL_Quit();
 
-    delete logBuffer_;
-    logBuffer_ = 0;
+    delete _logBuffer;
+    _logBuffer = 0;
 
-    singleton_ = 0;
+    _singleton = 0;
 }
 
 void App::loadPlugins()
@@ -207,16 +207,16 @@ void App::loadPlugins()
     
     // Names of preferred plugins.
     String gameName = "doom"; /// @todo There is no default game, really...
-    commandLine_.getParameter("--game", gameName);
+    _commandLine.getParameter("--game", gameName);
     
     String videoName = config().gets("deng.video");
-    commandLine_.getParameter("--video", videoName);
+    _commandLine.getParameter("--video", videoName);
     
     String audioName = config().gets("deng.audio");
-    commandLine_.getParameter("--audio", audioName);
+    _commandLine.getParameter("--audio", audioName);
 
     // Get the index of libraries.
-    const FS::Index& index = fs_->indexFor(TYPE_NAME(LibraryFile));
+    const FS::Index& index = _fs->indexFor(TYPE_NAME(LibraryFile));
 
     // Check all libraries we have access to and see what can be done with them.
     for(FS::Index::const_iterator i = index.begin(); i != index.end(); ++i)
@@ -230,10 +230,10 @@ void App::loadPlugins()
             // What kind of a library do we have?
             if(type == "deng-plugin/game")
             {
-                if(libFile.hasUnderscoreName(gameName) && !gameLib_)
+                if(libFile.hasUnderscoreName(gameName) && !_gameLib)
                 {
                     // This is the right game.
-                    gameLib_ = &libFile;
+                    _gameLib = &libFile;
                     LOG_VERBOSE("Located the game ") << libFile.path();
                 }
                 else
@@ -245,10 +245,10 @@ void App::loadPlugins()
             }
             else if(type == "deng-plugin/video")
             {
-                if(videoName != "none" && libFile.hasUnderscoreName(videoName) && !video_)
+                if(videoName != "none" && libFile.hasUnderscoreName(videoName) && !_video)
                 {
-                    video_ = libFile.library().SYMBOL(deng_NewVideo)();
-                    subsystems_.push_back(video_);
+                    _video = libFile.library().SYMBOL(deng_NewVideo)();
+                    _subsystems.push_back(_video);
                     LOG_MESSAGE("Video subsystem ") << libFile.path();
                 }
                 else
@@ -260,10 +260,10 @@ void App::loadPlugins()
             }
             else if(type == "deng-plugin/audio")
             {
-                if(audioName != "none" && libFile.hasUnderscoreName(audioName) && !audio_)
+                if(audioName != "none" && libFile.hasUnderscoreName(audioName) && !_audio)
                 {
-                    audio_ = libFile.library().SYMBOL(deng_NewAudio)();
-                    subsystems_.push_back(audio_);
+                    _audio = libFile.library().SYMBOL(deng_NewAudio)();
+                    _subsystems.push_back(_audio);
                     LOG_MESSAGE("Audio subsystem ") << libFile.path();
                 }
                 else
@@ -281,29 +281,29 @@ void App::loadPlugins()
 
 void App::clearModules()
 {
-    for(Modules::iterator i = modules_.begin(); i != modules_.end(); ++i)
+    for(Modules::iterator i = _modules.begin(); i != _modules.end(); ++i)
     {
         delete i->second;
     }
-    modules_.clear();
+    _modules.clear();
 }
 
 void App::clearSubsystems()
 {
-    for(Subsystems::iterator i = subsystems_.begin(); i != subsystems_.end(); ++i)
+    for(Subsystems::iterator i = _subsystems.begin(); i != _subsystems.end(); ++i)
     {
         delete *i;
     }
-    subsystems_.clear();
+    _subsystems.clear();
 }
 
 void App::unloadGame()
 {
     // Unload the game first.
-    if(gameLib_)
+    if(_gameLib)
     {
-        gameLib_->clear();
-        gameLib_ = 0;
+        _gameLib->clear();
+        _gameLib = 0;
     }
 }
 
@@ -315,7 +315,7 @@ void App::unloadPlugins()
     unloadGame();
     
     // Get the index of libraries.
-    const FS::Index& index = fs_->indexFor(TYPE_NAME(LibraryFile));
+    const FS::Index& index = _fs->indexFor(TYPE_NAME(LibraryFile));
     
     for(FS::Index::const_iterator i = index.begin(); i != index.end(); ++i)
     {
@@ -333,30 +333,30 @@ dint App::mainLoop()
     try
     {
         // Now running the main loop.
-        runMainLoop_ = true;
-        firstIteration_ = true;
+        _runMainLoop = true;
+        _firstIteration = true;
     
-        while(runMainLoop_)
+        while(_runMainLoop)
         {
             // Determine elapsed time.
             Time::Delta elapsed = 0;
-            currentTime_ = Time();
-            if(firstIteration_)
+            _currentTime = Time();
+            if(_firstIteration)
             {
-                firstIteration_ = false;
+                _firstIteration = false;
                 elapsed = 0;
             }
             else
             {
-                elapsed = currentTime_ - lastTime_;
+                elapsed = _currentTime - _lastTime;
             }
-            lastTime_ = currentTime_;
+            _lastTime = _currentTime;
 
             // Do the loop iteration.
             iterate();
         
             // Update subsystems (draw graphics, update sounds, etc.).
-            for(Subsystems::iterator i = subsystems_.begin(); i != subsystems_.end(); ++i)
+            for(Subsystems::iterator i = _subsystems.begin(); i != _subsystems.end(); ++i)
             {
                 (*i)->update(elapsed);
             }
@@ -366,23 +366,23 @@ dint App::mainLoop()
     {
         LOG_ERROR("Main loop stopped: ") << err.what();        
     }
-    return exitCode_;
+    return _exitCode;
 }
 
 void App::stop(dint code)
 {
-    runMainLoop_ = false;
+    _runMainLoop = false;
     setExitCode(code);
 }
 
 App& App::app()
 {
-    if(!singleton_)
+    if(!_singleton)
     {
         /// @throw NoInstanceError No App instance is currently available.
         throw NoInstanceError("App::app", "App has not been constructed yet");
     }
-    return *singleton_;
+    return *_singleton;
 }
 
 Version App::version()
@@ -397,82 +397,82 @@ Version App::version()
 
 CommandLine& App::commandLine() 
 { 
-    return app().commandLine_; 
+    return app()._commandLine; 
 }
 
 LogBuffer& App::logBuffer()
 {
     App& self = app();
-    assert(self.logBuffer_ != 0);
-    return *self.logBuffer_;
+    assert(self._logBuffer != 0);
+    return *self._logBuffer;
 }
 
 Zone& App::memory()
 {
     App& self = app();
-    assert(self.memory_ != 0);
-    return *self.memory_;
+    assert(self._memory != 0);
+    return *self._memory;
 }
 
 FS& App::fileSystem() 
 { 
     App& self = app();
-    assert(self.fs_ != 0);
-    return *self.fs_; 
+    assert(self._fs != 0);
+    return *self._fs; 
 }
 
 Folder& App::fileRoot()
 {
     App& self = app();
-    assert(self.fs_ != 0);
-    return self.fs_->root();
+    assert(self._fs != 0);
+    return self._fs->root();
 }
 
 Folder& App::homeFolder()
 {
     App& self = app();
-    assert(self.fs_ != 0);
-    return self.fs_->root().locate<Folder>("/home");
+    assert(self._fs != 0);
+    return self._fs->root().locate<Folder>("/home");
 }
 
 Config& App::config()
 {
     App& self = app();
-    assert(self.config_ != 0);
-    return *self.config_; 
+    assert(self._config != 0);
+    return *self._config; 
 }
 
 Protocol& App::protocol()
 {
-    return app().protocol_;
+    return app()._protocol;
 }
 
 Library& App::game()
 {
     App& self = app();
-    if(!self.gameLib_)
+    if(!self._gameLib)
     {
         /// @throw NoGameError No game library is currently available.
         throw NoGameError("App::game", "No game library located");
     }
-    return self.gameLib_->library();
+    return self._gameLib->library();
 }
 
 Map& App::currentMap()
 {
     App& self = app();
-    if(!self.currentMap_)
+    if(!self._currentMap)
     {
         /// @throw NoCurrentMapError  No map is currently active.
         throw NoCurrentMapError("App::currentMap", "No map is currently active");
     }
-    return *self.currentMap_;
+    return *self._currentMap;
 }
 
 void App::setCurrentMap(Map* map)
 {
     App& self = app();
-    self.currentMap_ = map;
+    self._currentMap = map;
     
     if(map)
     {
@@ -487,27 +487,27 @@ void App::setCurrentMap(Map* map)
 Video& App::video()
 {
     App& self = app();
-    if(!self.video_)
+    if(!self._video)
     {
         /// @throw NoVideoError The video subsystem is not available. 
         throw NoVideoError("App::video", "No video subsystem available");
     }
-    return *self.video_;
+    return *self._video;
 }
 
 bool App::hasGame() 
 { 
-    return app().gameLib_ != 0;
+    return app()._gameLib != 0;
 }
 
 bool App::hasVideo() 
 { 
-    return app().video_ != 0; 
+    return app()._video != 0; 
 }
 
 Time::Delta App::uptime()
 {
-    return app().initializedAt_.since();
+    return app()._initializedAt.since();
 }
 
 static int sortFilesByModifiedAt(const File* a, const File* b)
@@ -528,8 +528,8 @@ Record& App::importModule(const String& name, const String& fromPath)
     }
     
     // Maybe we already have this module?
-    Modules::iterator found = self.modules_.find(name);
-    if(found != self.modules_.end())
+    Modules::iterator found = self._modules.find(name);
+    if(found != self._modules.end())
     {
         return found->second->names();
     }
@@ -590,7 +590,7 @@ Record& App::importModule(const String& name, const String& fromPath)
         if(found)
         {
             Module* module = new Module(*found);
-            self.modules_[name] = module;
+            self._modules[name] = module;
             return module->names();
         }
     }

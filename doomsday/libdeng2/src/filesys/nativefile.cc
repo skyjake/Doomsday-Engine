@@ -23,7 +23,7 @@
 using namespace de;
 
 NativeFile::NativeFile(const String& name, const String& nativePath)
-    : File(name), nativePath_(nativePath), in_(0), out_(0)
+    : File(name), _nativePath(nativePath), _in(0), _out(0)
 {}
 
 NativeFile::~NativeFile()
@@ -38,23 +38,23 @@ NativeFile::~NativeFile()
 void NativeFile::close()
 {
     flush();
-    if(in_)
+    if(_in)
     {
-        delete in_;
-        in_ = 0;
+        delete _in;
+        _in = 0;
     }
-    if(out_)
+    if(_out)
     {
-        delete out_;
-        out_ = 0;
+        delete _out;
+        _out = 0;
     }
 }
 
 void NativeFile::flush()
 {
-    if(out_)
+    if(_out)
     {
-        out_->flush();
+        _out->flush();
     }
 }
 
@@ -116,24 +116,24 @@ void NativeFile::setMode(const Mode& newMode)
 
 std::ifstream& NativeFile::input() const
 {
-    if(!in_)
+    if(!_in)
     {
         // Reading is allowed always.
-        in_ = new std::ifstream(nativePath_.c_str(), std::ifstream::binary | std::ifstream::in);
-        if(!in_->good())
+        _in = new std::ifstream(_nativePath.c_str(), std::ifstream::binary | std::ifstream::in);
+        if(!_in->good())
         {
-            delete in_;
-            in_ = 0;
+            delete _in;
+            _in = 0;
             /// @throw InputError  Opening the input stream failed.
-            throw InputError("NativeFile::input", "Failed to read " + nativePath_);
+            throw InputError("NativeFile::input", "Failed to read " + _nativePath);
         }
     }
-    return *in_;
+    return *_in;
 }
 
 std::ofstream& NativeFile::output()
 {
-    if(!out_)
+    if(!_out)
     {
         // Are we allowed to output?
         verifyWriteAccess();
@@ -143,13 +143,13 @@ std::ofstream& NativeFile::output()
         {
             bits |= std::ios::trunc;
         }
-        out_ = new std::ofstream(nativePath_.c_str(), bits);
-        if(!out_->good())
+        _out = new std::ofstream(_nativePath.c_str(), bits);
+        if(!_out->good())
         {
-            delete out_;
-            out_ = 0;
+            delete _out;
+            _out = 0;
             /// @throw OutputError  Opening the output stream failed.
-            throw OutputError("NativeFile::output", "Failed to write " + nativePath_);
+            throw OutputError("NativeFile::output", "Failed to write " + _nativePath);
         }
         if(mode()[TRUNCATE_BIT])
         {
@@ -159,5 +159,5 @@ std::ofstream& NativeFile::output()
             setStatus(st);
         }
     }
-    return *out_;
+    return *_out;
 }

@@ -24,40 +24,40 @@
 using namespace de;
 
 Context::Context(Type type, Process* owner, Record* globals)
-    : type_(type), owner_(owner), evaluator_(*this), ownsNamespace_(false), names_(globals)
+    : _type(type), _owner(owner), _evaluator(*this), _ownsNamespace(false), _names(globals)
 {
-    if(!names_)
+    if(!_names)
     {
         // Create a private empty namespace.
-        assert(type_ != GLOBAL_NAMESPACE);
-        names_ = new Record();
-        ownsNamespace_ = true;
+        assert(_type != GLOBAL_NAMESPACE);
+        _names = new Record();
+        _ownsNamespace = true;
     }
 }
 
 Context::~Context()
 {
-    if(ownsNamespace_)
+    if(_ownsNamespace)
     {
-        delete names_;
+        delete _names;
     }        
     reset();
 }
 
 Evaluator& Context::evaluator()
 {
-    return evaluator_;
+    return _evaluator;
 }
 
 Record& Context::names() 
 {
-    return *names_;
+    return *_names;
 }
 
 void Context::start(const Statement* statement, const Statement* fallback, 
     const Statement* jumpContinue, const Statement* jumpBreak)
 {
-    controlFlow_.push_back(ControlFlow(statement, fallback, jumpContinue, jumpBreak));
+    _controlFlow.push_back(ControlFlow(statement, fallback, jumpContinue, jumpBreak));
 
     // When the current statement is NULL it means that the sequence of statements
     // has ended, so we shouldn't do that until there really is no more statements.
@@ -69,11 +69,11 @@ void Context::start(const Statement* statement, const Statement* fallback,
 
 void Context::reset()
 {
-    while(!controlFlow_.empty())
+    while(!_controlFlow.empty())
     {
         popFlow();
     }    
-    evaluator_.reset();
+    _evaluator.reset();
 }
 
 bool Context::execute()
@@ -94,9 +94,9 @@ void Context::proceed()
         st = current()->next();
     }
     // Should we fall back to a point that was specified earlier?
-    while(!st && controlFlow_.size())
+    while(!st && _controlFlow.size())
     {
-        st = controlFlow_.back().flow;
+        st = _controlFlow.back().flow;
         popFlow();
     }
     setCurrent(st);
@@ -105,9 +105,9 @@ void Context::proceed()
 void Context::jumpContinue()
 {
     const Statement* st = NULL;
-    while(!st && controlFlow_.size())
+    while(!st && _controlFlow.size())
     {
-        st = controlFlow_.back().jumpContinue;
+        st = _controlFlow.back().jumpContinue;
         popFlow();
     }
     if(!st)
@@ -125,9 +125,9 @@ void Context::jumpBreak(duint count)
     }
     
     const Statement* st = NULL;
-    while((!st || count > 0) && controlFlow_.size())
+    while((!st || count > 0) && _controlFlow.size())
     {
-        st = controlFlow_.back().jumpBreak;
+        st = _controlFlow.back().jumpBreak;
         if(st)
         {
             --count;
@@ -148,7 +148,7 @@ void Context::jumpBreak(duint count)
 
 const Statement* Context::current()
 {
-    if(controlFlow_.size())
+    if(_controlFlow.size())
     {
         return flow().current();
     }
@@ -157,9 +157,9 @@ const Statement* Context::current()
 
 void Context::setCurrent(const Statement* statement)
 {
-    if(controlFlow_.size())
+    if(_controlFlow.size())
     {
-        evaluator_.reset();
+        _evaluator.reset();
         flow().setCurrent(statement);
     }
     else
@@ -170,13 +170,13 @@ void Context::setCurrent(const Statement* statement)
 
 Value* Context::iterationValue()
 {
-    assert(controlFlow_.size());
-    return controlFlow_.back().iteration;
+    assert(_controlFlow.size());
+    return _controlFlow.back().iteration;
 }
 
 void Context::setIterationValue(Value* value)
 {
-    assert(controlFlow_.size());
+    assert(_controlFlow.size());
     
     ControlFlow& fl = flow();
     if(fl.iteration)
@@ -188,7 +188,7 @@ void Context::setIterationValue(Value* value)
 
 void Context::popFlow()
 {
-    assert(!controlFlow_.empty());
+    assert(!_controlFlow.empty());
     delete flow().iteration;
-    controlFlow_.pop_back();
+    _controlFlow.pop_back();
 }

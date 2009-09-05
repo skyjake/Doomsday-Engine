@@ -31,23 +31,23 @@ using namespace de;
 #define HAS_ARG     0x80
 #define TYPE_MASK   0x7f
  
-FlowStatement::FlowStatement() : type_(PASS), arg_(0)
+FlowStatement::FlowStatement() : _type(PASS), _arg(0)
 {}
  
 FlowStatement::FlowStatement(Type type, Expression* countArgument) 
-    : type_(type), arg_(countArgument) 
+    : _type(type), _arg(countArgument) 
 {}
  
 FlowStatement::~FlowStatement()
 {
-    delete arg_;
+    delete _arg;
 }
          
 void FlowStatement::execute(Context& context) const
 {
     Evaluator& eval = context.evaluator();
     
-    switch(type_)
+    switch(_type)
     {
     case PASS:
         context.proceed();
@@ -58,9 +58,9 @@ void FlowStatement::execute(Context& context) const
         break;
         
     case BREAK:
-        if(arg_)
+        if(_arg)
         {
-            context.jumpBreak(dint(eval.evaluate(arg_).asNumber()));
+            context.jumpBreak(dint(eval.evaluate(_arg).asNumber()));
         }
         else
         {
@@ -69,9 +69,9 @@ void FlowStatement::execute(Context& context) const
         break;
         
     case RETURN:
-        if(arg_)
+        if(_arg)
         {
-            eval.evaluate(arg_);
+            eval.evaluate(_arg);
             context.process().finish(eval.popResult());
         }
         else
@@ -81,9 +81,9 @@ void FlowStatement::execute(Context& context) const
         break;
         
     case THROW:
-        if(arg_)
+        if(_arg)
         {
-            throw Error("thrown in script", eval.evaluate(arg_).asText());
+            throw Error("thrown in script", eval.evaluate(_arg).asText());
         }   
         else
         {
@@ -96,15 +96,15 @@ void FlowStatement::execute(Context& context) const
 void FlowStatement::operator >> (Writer& to) const
 {
     to << SerialId(FLOW);
-    duint8 header = duint8(type_);
-    if(arg_)
+    duint8 header = duint8(_type);
+    if(_arg)
     {
         header |= HAS_ARG;
     }
     to << header;
-    if(arg_)
+    if(_arg)
     {
-        to << *arg_;
+        to << *_arg;
     }
 }
 
@@ -120,11 +120,11 @@ void FlowStatement::operator << (Reader& from)
     }
     duint8 header;
     from >> header;
-    type_ = Type(header & TYPE_MASK);
+    _type = Type(header & TYPE_MASK);
     if(header & HAS_ARG)
     {
-        delete arg_;
-        arg_ = 0;
-        arg_ = Expression::constructFrom(from);
+        delete _arg;
+        _arg = 0;
+        _arg = Expression::constructFrom(from);
     }
 }

@@ -47,7 +47,7 @@ Folder::~Folder()
     clear();
     
     // Destroy all feeds that remain.
-    for(Feeds::reverse_iterator i = feeds_.rbegin(); i != feeds_.rend(); ++i)
+    for(Feeds::reverse_iterator i = _feeds.rbegin(); i != _feeds.rend(); ++i)
     {
         delete *i;
     }
@@ -55,15 +55,15 @@ Folder::~Folder()
 
 void Folder::clear()
 {
-    if(contents_.empty()) return;
+    if(_contents.empty()) return;
     
     // Destroy all the file objects.
-    for(Contents::iterator i = contents_.begin(); i != contents_.end(); ++i)
+    for(Contents::iterator i = _contents.begin(); i != _contents.end(); ++i)
     {
         i->second->setParent(0);
         delete i->second;
     }
-    contents_.clear();
+    _contents.clear();
 }
 
 void Folder::populate()
@@ -71,7 +71,7 @@ void Folder::populate()
     LOG_AS("Folder::populate");
     
     // Prune the existing files first.
-    for(Contents::iterator i = contents_.begin(); i != contents_.end(); )
+    for(Contents::iterator i = _contents.begin(); i != _contents.end(); )
     {
         // By default we will NOT prune if there are no feeds attached to the folder.
         // In this case the files were probably created manually, so we shouldn't
@@ -91,7 +91,7 @@ void Folder::populate()
             // There is no designated feed, ask all feeds of this folder.
             // If even one of the feeds thinks that the file is out of date,
             // it will be pruned.
-            for(Feeds::iterator f = feeds_.begin(); f != feeds_.end(); ++f)
+            for(Feeds::iterator f = _feeds.begin(); f != _feeds.end(); ++f)
             {
                 if((*f)->prune(*file))
                 {
@@ -105,7 +105,7 @@ void Folder::populate()
         if(mustPrune)
         {
             // It needs to go.
-            contents_.erase(i++);
+            _contents.erase(i++);
             delete file;
         }
         else
@@ -115,13 +115,13 @@ void Folder::populate()
     }
     
     // Populate with new/updated ones.
-    for(Feeds::reverse_iterator i = feeds_.rbegin(); i != feeds_.rend(); ++i)
+    for(Feeds::reverse_iterator i = _feeds.rbegin(); i != _feeds.rend(); ++i)
     {
         (*i)->populate(*this);
     }
     
     // Call populate on subfolders.
-    for(Contents::iterator i = contents_.begin(); i != contents_.end(); ++i)
+    for(Contents::iterator i = _contents.begin(); i != _contents.end(); ++i)
     {
         Folder* folder = dynamic_cast<Folder*>(i->second);
         if(folder)
@@ -133,7 +133,7 @@ void Folder::populate()
 
 const Folder::Contents& Folder::contents() const
 {
-    return contents_;
+    return _contents;
 }
 
 File& Folder::newFile(const String& newPath, bool replaceExisting)
@@ -153,7 +153,7 @@ File& Folder::newFile(const String& newPath, bool replaceExisting)
     }
     
     // The first feed able to create a file will get the honors.
-    for(Feeds::iterator i = feeds_.begin(); i != feeds_.end(); ++i)
+    for(Feeds::iterator i = _feeds.begin(); i != _feeds.end(); ++i)
     {
         File* file = (*i)->newFile(newPath);
         if(file)
@@ -205,7 +205,7 @@ void Folder::removeFile(const String& removePath)
 
 bool Folder::has(const String& name) const
 {
-    return (contents_.find(name.lower()) != contents_.end());
+    return (_contents.find(name.lower()) != _contents.end());
 }
 
 File& Folder::add(File* file)
@@ -217,18 +217,18 @@ File& Folder::add(File* file)
         throw DuplicateNameError("Folder::add", "Folder cannot contain two files with the same name: '" +
             file->name() + "'");
     }
-    contents_[file->name().lower()] = file;
+    _contents[file->name().lower()] = file;
     file->setParent(this);
     return *file;
 }
 
 File* Folder::remove(File& file)
 {
-    for(Contents::iterator i = contents_.begin(); i != contents_.end(); ++i)
+    for(Contents::iterator i = _contents.begin(); i != _contents.end(); ++i)
     {
         if(i->second == &file)
         {
-            contents_.erase(i);
+            _contents.erase(i);
             break;
         }
     }    
@@ -254,8 +254,8 @@ File* Folder::tryLocateFile(const String& path) const
     if(end == String::npos)
     {
         // No more slashes. What remains is the final component.
-        Contents::const_iterator found = contents_.find(path.lower());
-        if(found != contents_.end())
+        Contents::const_iterator found = _contents.find(path.lower());
+        if(found != _contents.end())
         {
             return found->second;
         }
@@ -281,8 +281,8 @@ File* Folder::tryLocateFile(const String& path) const
     }
     
     // Do we have a folder for this?
-    Contents::const_iterator found = contents_.find(component.lower());
-    if(found != contents_.end())
+    Contents::const_iterator found = _contents.find(component.lower());
+    if(found != _contents.end())
     {
         Folder* subFolder = dynamic_cast<Folder*>(found->second);
         if(subFolder)
@@ -298,16 +298,16 @@ File* Folder::tryLocateFile(const String& path) const
 
 void Folder::attach(Feed* feed)
 {
-    feeds_.push_back(feed);
+    _feeds.push_back(feed);
 }
 
 Feed* Folder::detach(Feed& feed)
 {
-    feeds_.remove(&feed);
+    _feeds.remove(&feed);
     return &feed;
 }
 
-Folder::Accessor::Accessor(Folder& owner, Property prop) : owner_(owner), prop_(prop)
+Folder::Accessor::Accessor(Folder& owner, Property prop) : _owner(owner), _prop(prop)
 {}
 
 void Folder::Accessor::update() const
@@ -316,10 +316,10 @@ void Folder::Accessor::update() const
     Accessor* nonConst = const_cast<Accessor*>(this);
     
     std::ostringstream os;
-    switch(prop_)
+    switch(_prop)
     {
     case CONTENT_SIZE:
-        os << owner_.contents_.size();
+        os << _owner._contents.size();
         nonConst->setValue(os.str());
         break;
     }    

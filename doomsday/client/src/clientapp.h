@@ -44,10 +44,10 @@ public:
     void iterate();
     
 private:
-    LocalServer* localServer_;
+    LocalServer* _localServer;
     
     /// The game session.
-    UserSession* session_;
+    UserSession* _session;
 };
 
 #endif /* CLIENTAPP_H */

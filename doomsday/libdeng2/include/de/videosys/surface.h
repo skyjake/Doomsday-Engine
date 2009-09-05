@@ -48,7 +48,7 @@ namespace de
         /**
          * Returns the size of the drawing surface.
          */
-        const Size& size() const { return size_; }
+        const Size& size() const { return _size; }
         
         /**
          * Sets the size of the drawing surface.
@@ -70,7 +70,7 @@ namespace de
         Image* toImage() const;
         
     private:
-        Size size_;
+        Size _size;
     };
 }
 

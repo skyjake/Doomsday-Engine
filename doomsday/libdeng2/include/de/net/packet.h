@@ -58,19 +58,19 @@ namespace de
         /**
          * Returns the type identifier of the packet.
          */
-        const Type& type() const { return type_; }
+        const Type& type() const { return _type; }
 
         /** 
          * Determines where the packet was received from.
          */
-        const Address& from() const { return from_; }
+        const Address& from() const { return _from; }
 
         /**
          * Sets the address where the packet was received from.
          *
          * @param from  Address of the sender.
          */ 
-        void setFrom(const Address& from) { from_ = from; }
+        void setFrom(const Address& from) { _from = from; }
 
         /**
          * Execute whatever action the packet defines. This is called for all packets
@@ -103,10 +103,10 @@ namespace de
         
     private:  
         /// The type is identified with a four-character string.
-        Type type_;
+        Type _type;
         
         /// Address where the packet was received from.
-        Address from_;
+        Address _from;
     };
 };
 

@@ -32,66 +32,66 @@ using namespace de;
 
 #define HAS_INFO 0x01
 
-Thinker::Constructors Thinker::constructors_;
+Thinker::Constructors Thinker::_constructors;
 
-Thinker::Thinker() : id_(0), info_(0), map_(0)
+Thinker::Thinker() : _id(0), _info(0), _map(0)
 {}
 
 Thinker::~Thinker()
 {
-    if(map_)
+    if(_map)
     {
-        map_->remove(*this);
+        _map->remove(*this);
     }
-    delete info_;
+    delete _info;
 }
 
 void Thinker::setId(const Id& id)
 {
-    id_ = id;
+    _id = id;
 }
 
 void Thinker::setMap(Map* map)
 {
-    map_ = map;
+    _map = map;
 }
 
 void Thinker::think(const Time::Delta& elapsed)
 {
-    if(!info_)
+    if(!_info)
     {
         // Must rely on built-in behavior of subclass.
         return;
     }
 
-    const Function* func = info_->function("thinker");
+    const Function* func = _info->function("thinker");
     if(func)
     {
         // Prepare the arguments for the thinker function.
         ArrayValue args;
         args.add(new DictionaryValue); // No named arguments.
-        args.add(new NumberValue(id_));
+        args.add(new NumberValue(_id));
         args.add(new NumberValue(elapsed));
             
         // We'll use a temporary process to execute the function in the 
         // private namespace.
-        Process(info_).call(*func, args);
+        Process(_info).call(*func, args);
     }
 }
 
 void Thinker::define(Constructor constructor)
 {
-    constructors_.insert(constructor);
+    _constructors.insert(constructor);
 }
 
 void Thinker::undefine(Constructor constructor)
 {
-    constructors_.erase(constructor);
+    _constructors.erase(constructor);
 }
 
 Thinker* Thinker::constructFrom(Reader& reader)
 {
-    for(Constructors::iterator i = constructors_.begin(); i != constructors_.end(); ++i)
+    for(Constructors::iterator i = _constructors.begin(); i != _constructors.end(); ++i)
     {
         Reader attempt(reader);
         Thinker* thinker = (*i)(attempt);
@@ -121,10 +121,10 @@ Thinker* Thinker::fromReader(Reader& reader)
 
 void Thinker::operator >> (Writer& to) const
 {
-    to << id_ << bornAt_;
-    if(info_)
+    to << _id << _bornAt;
+    if(_info)
     {
-        to << duint8(HAS_INFO) << *info_;
+        to << duint8(HAS_INFO) << *_info;
     }
     else
     {
@@ -134,15 +134,15 @@ void Thinker::operator >> (Writer& to) const
 
 void Thinker::operator << (Reader& from)
 {
-    from >> id_ >> bornAt_;
+    from >> _id >> _bornAt;
     duint8 flags;
     from >> flags;
     if(flags & HAS_INFO)
     {
-        if(!info_)
+        if(!_info)
         {
-            info_ = new Record;
+            _info = new Record;
         }
-        from >> *info_;
+        from >> *_info;
     }
 }

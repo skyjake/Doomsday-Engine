@@ -35,8 +35,8 @@ int Thread::runner(void* owner)
     Thread* self = static_cast<Thread*>(owner);
     
     self->run();
-    self->thread_ = NULL;
-    self->endOfThread_.post();
+    self->_thread = NULL;
+    self->_endOfThread.post();
 
     Log::disposeThreadLog();
 
@@ -44,7 +44,7 @@ int Thread::runner(void* owner)
     return 0;
 }
 
-Thread::Thread() : stopNow_(false), thread_(0)
+Thread::Thread() : _stopNow(false), _thread(0)
 {}
 
 Thread::~Thread()
@@ -54,34 +54,34 @@ Thread::~Thread()
 
 void Thread::start()
 {
-    assert(thread_ == NULL);
+    assert(_thread == NULL);
 
-    stopNow_ = false;
-    thread_ = SDL_CreateThread(runner, this);
+    _stopNow = false;
+    _thread = SDL_CreateThread(runner, this);
 }
 
 void Thread::stop()
 {
     // We'll rely on run() to notice this and exit as soon as possible.
-    stopNow_ = true;
+    _stopNow = true;
 }
 
 void Thread::join(const Time::Delta& timeOut)
 {
     stop();
-    if(thread_)
+    if(_thread)
     {
-        endOfThread_.wait(timeOut);
-        //assert(thread_ == NULL);
+        _endOfThread.wait(timeOut);
+        //assert(_thread == NULL);
     }
 }
 
 bool Thread::shouldStopNow() const
 {
-    return stopNow_;
+    return _stopNow;
 }
 
 bool Thread::isRunning() const
 {
-    return thread_ != 0;
+    return _thread != 0;
 }

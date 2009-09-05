@@ -30,13 +30,13 @@
 
 using namespace de;
 
-ForStatement::ForStatement() : iterator_(0), iteration_(0)
+ForStatement::ForStatement() : _iterator(0), _iteration(0)
 {}
 
 ForStatement::~ForStatement()
 {
-    delete iterator_;
-    delete iteration_;
+    delete _iterator;
+    delete _iteration;
 }
 
 void ForStatement::execute(Context& context) const
@@ -44,7 +44,7 @@ void ForStatement::execute(Context& context) const
     Evaluator& eval = context.evaluator();
     if(!context.iterationValue())
     {
-        eval.evaluate(iteration_);
+        eval.evaluate(_iteration);
         // We now have the iterated value.
         context.setIterationValue(eval.popResult());
     }
@@ -54,11 +54,11 @@ void ForStatement::execute(Context& context) const
     if(nextValue)
     {
         // Assign the variable specified.
-        RefValue& ref = eval.evaluateTo<RefValue>(iterator_);
+        RefValue& ref = eval.evaluateTo<RefValue>(_iterator);
         ref.assign(nextValue);
         
         // Let's begin the compound.
-        context.start(compound_.firstStatement(), this, this, this);
+        context.start(_compound.firstStatement(), this, this, this);
     }
     else
     {
@@ -69,7 +69,7 @@ void ForStatement::execute(Context& context) const
 
 void ForStatement::operator >> (Writer& to) const
 {
-    to << SerialId(FOR) << *iterator_ << *iteration_ << compound_;
+    to << SerialId(FOR) << *_iterator << *_iteration << _compound;
 }
 
 void ForStatement::operator << (Reader& from)
@@ -82,13 +82,13 @@ void ForStatement::operator << (Reader& from)
         /// serialized statement was invalid.
         throw DeserializationError("ForStatement::operator <<", "Invalid ID");
     }
-    delete iterator_; 
-    delete iteration_;
-    iterator_ = 0;
-    iteration_ = 0;
+    delete _iterator; 
+    delete _iteration;
+    _iterator = 0;
+    _iteration = 0;
     
-    iterator_ = Expression::constructFrom(from);
-    iteration_ = Expression::constructFrom(from);
+    _iterator = Expression::constructFrom(from);
+    _iteration = Expression::constructFrom(from);
     
-    from >> compound_;
+    from >> _compound;
 }

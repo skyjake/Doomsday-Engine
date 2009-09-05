@@ -32,12 +32,12 @@ Packet::Packet(const Type& t)
 void Packet::setType(const Type& t)
 {
     assert(t.size() == TYPE_SIZE);
-    type_ = t;
+    _type = t;
 }
 
 void Packet::operator >> (Writer& to) const
 {
-    to << type_[0] << type_[1] << type_[2] << type_[3];
+    to << _type[0] << _type[1] << _type[2] << _type[3];
 }
 
 void Packet::operator << (Reader& from)
@@ -48,7 +48,7 @@ void Packet::operator << (Reader& from)
     
     // Having been constructed as a specific type, the identifier is already
     // set and cannot change. Let's check if it's the correct one.
-    if(type_.compareWithCase(ident))
+    if(_type.compareWithCase(ident))
     {
         throw InvalidTypeError("Packet::operator <<", "Invalid ID");
     }

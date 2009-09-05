@@ -26,13 +26,13 @@
 
 using namespace de;
 
-Module::Module(const String& sourcePath) : sourcePath_(sourcePath), process_(0)
+Module::Module(const String& sourcePath) : _sourcePath(sourcePath), _process(0)
 {
     // Load the script.
     initialize(Script(App::fileRoot().locate<File>(sourcePath)));
 }
 
-Module::Module(const File& sourceFile) : sourcePath_(sourceFile.path()), process_(0)
+Module::Module(const File& sourceFile) : _sourcePath(sourceFile.path()), _process(0)
 {
     initialize(Script(sourceFile));
 }
@@ -42,15 +42,15 @@ void Module::initialize(const Script& script)
     // Execute the script.
     std::auto_ptr<Process> proc(new Process(script));
     proc->execute();
-    process_ = proc.release();
+    _process = proc.release();
 }
 
 Module::~Module()
 {
-    delete process_;
+    delete _process;
 }
 
 Record& Module::names()
 {
-    return process_->context().names();
+    return _process->context().names();
 }

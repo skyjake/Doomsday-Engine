@@ -22,26 +22,26 @@
 
 using namespace de;
 
-Enumerator::Enumerator() : current_(NONE), overflown_(false)
+Enumerator::Enumerator() : _current(NONE), _overflown(false)
 {}
 
 Enumerator::Type Enumerator::get()
 {
-    Type previous = current_;
-    while(!++current_);
-    if(current_ < previous)
+    Type previous = _current;
+    while(!++_current);
+    if(_current < previous)
     {
-        overflown_ = true;
+        _overflown = true;
     }
-    return current_;
+    return _current;
 }
 
 void Enumerator::reset()
 {
-    current_ = NONE;
+    _current = NONE;
 }
 
 void Enumerator::claim(Type value)
 {
-    current_ = max(value, current_);
+    _current = max(value, _current);
 }

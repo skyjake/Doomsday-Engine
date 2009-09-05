@@ -57,8 +57,8 @@ namespace de
         void operator << (Reader& from);         
         
     private:        
-        Type type_;
-        Expression* arg_;
+        Type _type;
+        Expression* _arg;
     };
 }
 

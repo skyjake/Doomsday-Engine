@@ -56,7 +56,7 @@ Parser::~Parser()
 void Parser::parse(const String& input, Script& output)
 {
     // Lexical analyzer for Haw scripts.
-    analyzer_ = ScriptLex(input);
+    _analyzer = ScriptLex(input);
     
     // Get the tokens of the first statement.
     if(nextStatement() > 0)
@@ -66,29 +66,29 @@ void Parser::parse(const String& input, Script& output)
     }
 
     // We're done, free the remaining tokens.
-    tokens_.clear();
+    _tokens.clear();
 }
 
 duint Parser::nextStatement()
 {
-    duint result = analyzer_.getStatement(tokens_);
+    duint result = _analyzer.getStatement(_tokens);
     
     // Begin with the whole thing.
-    statementRange_ = TokenRange(tokens_);
+    _statementRange = TokenRange(_tokens);
 
-    //std::cout << "Next statement: '" << statementRange_.asText() << "'\n";
+    //std::cout << "Next statement: '" << _statementRange.asText() << "'\n";
     
     return result;
 }
 
 void Parser::parseCompound(Compound& compound)
 {
-    while(statementRange_.size() > 0) 
+    while(_statementRange.size() > 0) 
     {
-        if(statementRange_.firstToken().equals("elsif") ||
-           statementRange_.firstToken().equals("else") ||
-           statementRange_.firstToken().equals("catch") ||
-           (statementRange_.size() == 1 && statementRange_.firstToken().equals("end")))
+        if(_statementRange.firstToken().equals("elsif") ||
+           _statementRange.firstToken().equals("else") ||
+           _statementRange.firstToken().equals("catch") ||
+           (_statementRange.size() == 1 && _statementRange.firstToken().equals("end")))
         {
             // End of compound.
             break;
@@ -103,9 +103,9 @@ void Parser::parseCompound(Compound& compound)
 
 void Parser::parseStatement(Compound& compound)
 {
-    assert(!statementRange_.empty());
+    assert(!_statementRange.empty());
     
-    const TokenBuffer::Token& firstToken = statementRange_.firstToken();
+    const TokenBuffer::Token& firstToken = _statementRange.firstToken();
 
     // Statements with a compound: if, for, while, def.
     if(firstToken.equals("if"))
@@ -160,18 +160,18 @@ void Parser::parseStatement(Compound& compound)
         // Break may have an expression argument that tells us how many
         // nested compounds to break out of.
         Expression* breakCount = 0;
-        if(statementRange_.size() > 1)
+        if(_statementRange.size() > 1)
         {
-            breakCount = parseExpression(statementRange_.startingFrom(1));
+            breakCount = parseExpression(_statementRange.startingFrom(1));
         }
         compound.add(new FlowStatement(FlowStatement::BREAK, breakCount));
     }
     else if(firstToken.equals("return") || firstToken.equals("throw"))
     {
         Expression* argValue = 0;
-        if(statementRange_.size() > 1)
+        if(_statementRange.size() > 1)
         {
-            argValue = parseExpression(statementRange_.startingFrom(1));
+            argValue = parseExpression(_statementRange.startingFrom(1));
         }
         compound.add(new FlowStatement(
             firstToken.equals("return")? FlowStatement::RETURN : FlowStatement::THROW, 
@@ -181,8 +181,8 @@ void Parser::parseStatement(Compound& compound)
     {
         compound.add(parsePrintStatement());
     }
-    else if(statementRange_.hasBracketless("=") || statementRange_.hasBracketless(":=") ||
-        statementRange_.hasBracketless("?="))
+    else if(_statementRange.hasBracketless("=") || _statementRange.hasBracketless(":=") ||
+        _statementRange.hasBracketless("?="))
     {
         compound.add(parseAssignStatement());
     }
@@ -198,7 +198,7 @@ void Parser::parseStatement(Compound& compound)
 IfStatement* Parser::parseIfStatement()
 {
     // The "end" keyword is necessary in the full form.
-    bool expectEnd = !statementRange_.has(":");
+    bool expectEnd = !_statementRange.has(":");
     
     auto_ptr<IfStatement> statement(new IfStatement());
     statement->newBranch();
@@ -206,27 +206,27 @@ IfStatement* Parser::parseIfStatement()
         parseConditionalCompound(statement->branchCompound(), 
             HAS_CONDITION | STAY_AT_CLOSING_STATEMENT));
     
-    while(statementRange_.beginsWith("elsif"))
+    while(_statementRange.beginsWith("elsif"))
     {
-        expectEnd = !statementRange_.has(":");
+        expectEnd = !_statementRange.has(":");
         statement->newBranch();
         statement->setBranchCondition(
             parseConditionalCompound(statement->branchCompound(), 
                 HAS_CONDITION | STAY_AT_CLOSING_STATEMENT));
     }
     
-    if(statementRange_.beginsWith("else"))
+    if(_statementRange.beginsWith("else"))
     {
-        expectEnd = !statementRange_.has(":");
+        expectEnd = !_statementRange.has(":");
         parseConditionalCompound(statement->elseCompound(), STAY_AT_CLOSING_STATEMENT);
     }
     
     if(expectEnd) 
     {
-        if(statementRange_.size() != 1 || !statementRange_.firstToken().equals("end"))
+        if(_statementRange.size() != 1 || !_statementRange.firstToken().equals("end"))
         {
             throw UnexpectedTokenError("Parser::parseIfStatement", "Expected 'end', but got " + 
-                statementRange_.firstToken().asText());
+                _statementRange.firstToken().asText());
         }
         nextStatement();
     }
@@ -249,17 +249,17 @@ ForStatement* Parser::parseForStatement()
     // "for" by-ref-expr "in" expr ":" statement
     // "for" by-ref-expr "in" expr "\n" compound
     
-    dint colonPos = statementRange_.find(":");
-    dint inPos = statementRange_.find("in");
+    dint colonPos = _statementRange.find(":");
+    dint inPos = _statementRange.find("in");
     if(inPos < 0 || (colonPos > 0 && inPos > colonPos))
     {
         throw MissingTokenError("Parser::parseForStatement",
-            "Expected 'in' to follow " + statementRange_.firstToken().asText());
+            "Expected 'in' to follow " + _statementRange.firstToken().asText());
     }
     
-    auto_ptr<Expression> iter(parseExpression(statementRange_.between(1, inPos),
+    auto_ptr<Expression> iter(parseExpression(_statementRange.between(1, inPos),
         BY_REFERENCE | ALLOW_NEW_VARIABLES | LOCAL_NAMESPACE_ONLY));
-    Expression* iterable = parseExpression(statementRange_.between(inPos + 1, colonPos));
+    Expression* iterable = parseExpression(_statementRange.between(inPos + 1, colonPos));
     
     auto_ptr<ForStatement> statement(new ForStatement(iter.release(), iterable));
 
@@ -273,66 +273,66 @@ ExpressionStatement* Parser::parseImportStatement()
 {
     // "import" ["record"] name-expr ["," name-expr]*
  
-    if(statementRange_.size() < 2)
+    if(_statementRange.size() < 2)
     {
         throw MissingTokenError("Parser::parseImportStatement",
-            "Expected identifier to follow " + statementRange_.firstToken().asText());
+            "Expected identifier to follow " + _statementRange.firstToken().asText());
     }
     dint startAt = 1;
     ExpressionFlags flags = IMPORT_NAMESPACE | ALLOW_NEW_RECORDS | 
         REQUIRE_NEW_IDENTIFIER | LOCAL_NAMESPACE_ONLY;
-    if(statementRange_.size() >= 3 && statementRange_.token(1).equals("record"))
+    if(_statementRange.size() >= 3 && _statementRange.token(1).equals("record"))
     {
         // Take a copy of the imported record instead of referencing it.
         flags |= BY_VALUE;
         flags &= ~ALLOW_NEW_RECORDS; // don't create a variable referencing it
         startAt = 2;
     }
-    return new ExpressionStatement(parseList(statementRange_.startingFrom(startAt), ",", flags));
+    return new ExpressionStatement(parseList(_statementRange.startingFrom(startAt), ",", flags));
 }
 
 ExpressionStatement* Parser::parseDeclarationStatement()
 {
     // "record" name-expr ["," name-expr]*
 
-    if(statementRange_.size() < 2)
+    if(_statementRange.size() < 2)
     {
         throw MissingTokenError("Parser::parseDeclarationStatement",
-            "Expected identifier to follow " + statementRange_.firstToken().asText());
+            "Expected identifier to follow " + _statementRange.firstToken().asText());
     }    
     ExpressionFlags flags = LOCAL_NAMESPACE_ONLY | ALLOW_NEW_RECORDS;
-    return new ExpressionStatement(parseList(statementRange_.startingFrom(1), ",", flags));
+    return new ExpressionStatement(parseList(_statementRange.startingFrom(1), ",", flags));
 }
 
 ExpressionStatement* Parser::parseDeleteStatement()
 {
     // "del" name-expr ["," name-expr]*
     
-    if(statementRange_.size() < 2)
+    if(_statementRange.size() < 2)
     {
         throw MissingTokenError("Parser::parseDeleteStatement",
-            "Expected identifier to follow " + statementRange_.firstToken().asText());
+            "Expected identifier to follow " + _statementRange.firstToken().asText());
     }    
-    return new ExpressionStatement(parseList(statementRange_.startingFrom(1), ",",
+    return new ExpressionStatement(parseList(_statementRange.startingFrom(1), ",",
         DELETE_IDENTIFIER | LOCAL_NAMESPACE_ONLY));
 }
 
 FunctionStatement* Parser::parseFunctionStatement()
 {
-    dint pos = statementRange_.find("(");
+    dint pos = _statementRange.find("(");
     if(pos < 0)
     {
         throw MissingTokenError("Parser::parseMethodStatement",
-            "Expected arguments for " + statementRange_.firstToken().asText());
+            "Expected arguments for " + _statementRange.firstToken().asText());
     }
 
     // The function must have a name that is not already in use in the scope.
     auto_ptr<FunctionStatement> statement(new FunctionStatement(
-        parseExpression(statementRange_.between(1, pos), 
+        parseExpression(_statementRange.between(1, pos), 
             LOCAL_NAMESPACE_ONLY | BY_REFERENCE | ALLOW_NEW_VARIABLES | REQUIRE_NEW_IDENTIFIER)));
 
     // Collect the argument names.
-    TokenRange argRange = statementRange_.between(pos + 1, statementRange_.closingBracket(pos));
+    TokenRange argRange = _statementRange.between(pos + 1, _statementRange.closingBracket(pos));
     if(!argRange.empty())
     {
         // The arguments are comma-separated.
@@ -377,30 +377,30 @@ void Parser::parseTryCatchSequence(Compound& compound)
     compound.add(tryStat.release());
 
     // One catch is required.
-    if(!statementRange_.firstToken().equals("catch"))
+    if(!_statementRange.firstToken().equals("catch"))
     {
         throw UnexpectedTokenError("Parser::parseTryCatchSequence",
-            "Expected 'catch', but got " + statementRange_.firstToken().asText());
+            "Expected 'catch', but got " + _statementRange.firstToken().asText());
     }
     CatchStatement* finalCatch = 0;
     bool expectEnd;
-    while(statementRange_.firstToken().equals("catch"))
+    while(_statementRange.firstToken().equals("catch"))
     {
-        dint colon = statementRange_.find(":");
+        dint colon = _statementRange.find(":");
         expectEnd = (colon < 0);
 
         // Parse the arguments.
         auto_ptr<ArrayExpression> args;
-        if(statementRange_.size() > 1)
+        if(_statementRange.size() > 1)
         {
             TokenRange argRange;
             if(colon < 0)
             {
-                argRange = statementRange_.startingFrom(1);
+                argRange = _statementRange.startingFrom(1);
             }
             else
             {
-                argRange = statementRange_.between(1, colon);
+                argRange = _statementRange.between(1, colon);
             }
             args.reset(parseList(argRange, ",", 
                 BY_REFERENCE | LOCAL_NAMESPACE_ONLY | ALLOW_NEW_VARIABLES));
@@ -419,10 +419,10 @@ void Parser::parseTryCatchSequence(Compound& compound)
     finalCatch->flags.set(CatchStatement::FINAL_BIT);
     if(expectEnd)
     {
-        if(!statementRange_.firstToken().equals("end"))
+        if(!_statementRange.firstToken().equals("end"))
         {
             throw UnexpectedTokenError("Parser::parseTryCatchSequence",
-            "Expected 'end', but got " + statementRange_.firstToken().asText());
+            "Expected 'end', but got " + _statementRange.firstToken().asText());
         }
         nextStatement();
     }
@@ -431,14 +431,14 @@ void Parser::parseTryCatchSequence(Compound& compound)
 PrintStatement* Parser::parsePrintStatement()
 {    
     ArrayExpression* args = 0;
-    if(statementRange_.size() == 1) // Just the keyword.
+    if(_statementRange.size() == 1) // Just the keyword.
     {
         args = new ArrayExpression();
     }
     else
     {
         // Parse the arguments of the print statement.
-        args = parseList(statementRange_.startingFrom(1));
+        args = parseList(_statementRange.startingFrom(1));
     }
     return new PrintStatement(args);    
 }
@@ -448,20 +448,20 @@ AssignStatement* Parser::parseAssignStatement()
     ExpressionFlags flags = ALLOW_NEW_VARIABLES | BY_REFERENCE | LOCAL_NAMESPACE_ONLY;
     
     /// "const" makes read-only variables.
-    if(statementRange_.firstToken().equals("const"))
+    if(_statementRange.firstToken().equals("const"))
     {
         flags |= SET_READ_ONLY;
-        statementRange_ = statementRange_.startingFrom(1);
+        _statementRange = _statementRange.startingFrom(1);
     }
     
-    dint pos = statementRange_.find("=");
+    dint pos = _statementRange.find("=");
     if(pos < 0)
     {
         flags &= ~LOCAL_NAMESPACE_ONLY;
-        pos = statementRange_.find(":=");
+        pos = _statementRange.find(":=");
         if(pos < 0)
         {
-            pos = statementRange_.find("?=");
+            pos = _statementRange.find("?=");
             flags |= THROWAWAY_IF_IN_SCOPE;
         }
     }
@@ -472,12 +472,12 @@ AssignStatement* Parser::parseAssignStatement()
     dint bracketPos = pos - 1;
     try
     {
-        while(statementRange_.token(bracketPos).equals("]"))
+        while(_statementRange.token(bracketPos).equals("]"))
         {
-            dint startPos = statementRange_.openingBracket(bracketPos);
+            dint startPos = _statementRange.openingBracket(bracketPos);
             nameEndPos = startPos;
             Expression* indexExpr = parseExpression(
-                statementRange_.between(startPos + 1, bracketPos));
+                _statementRange.between(startPos + 1, bracketPos));
             indices.push_back(indexExpr);
             bracketPos = nameEndPos - 1;
         }
@@ -488,8 +488,8 @@ AssignStatement* Parser::parseAssignStatement()
                 "Weak assignment cannot be used with indices");
         }
 
-        auto_ptr<Expression> lValue(parseExpression(statementRange_.endingTo(nameEndPos), flags));
-        auto_ptr<Expression> rValue(parseExpression(statementRange_.startingFrom(pos + 1)));
+        auto_ptr<Expression> lValue(parseExpression(_statementRange.endingTo(nameEndPos), flags));
+        auto_ptr<Expression> rValue(parseExpression(_statementRange.startingFrom(pos + 1)));
 
         AssignStatement* st = new AssignStatement(lValue.get(), indices, rValue.get());
 
@@ -512,7 +512,7 @@ AssignStatement* Parser::parseAssignStatement()
 
 ExpressionStatement* Parser::parseExpressionStatement()
 {
-    return new ExpressionStatement(parseExpression(statementRange_));
+    return new ExpressionStatement(parseExpression(_statementRange));
 }
 
 Expression* Parser::parseConditionalCompound(Compound& compound, const CompoundFlags& flags)
@@ -520,7 +520,7 @@ Expression* Parser::parseConditionalCompound(Compound& compound, const CompoundF
     // keyword [expr] ":" statement
     // keyword [expr] "\n" compound
     
-    TokenRange range = statementRange_;
+    TokenRange range = _statementRange;
     
     // See if there is a colon on this line.
     dint colon = range.find(":");
@@ -546,7 +546,7 @@ Expression* Parser::parseConditionalCompound(Compound& compound, const CompoundF
     {
         // The colon is not the last token. There must be a statement 
         // continuing on the same line.
-        statementRange_ = statementRange_.startingFrom(colon + 1);
+        _statementRange = _statementRange.startingFrom(colon + 1);
         parseStatement(compound);
     }
     else

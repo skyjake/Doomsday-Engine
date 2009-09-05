@@ -31,7 +31,7 @@ Script::Script(const String& source)
     Parser().parse(source, *this);
 }
 
-Script::Script(const File& file) : path_(file.path())
+Script::Script(const File& file) : _path(file.path())
 {
     Parser().parse(file, *this);
 }
@@ -41,5 +41,5 @@ Script::~Script()
 
 const Statement* Script::firstStatement() const
 {
-    return compound_.firstStatement();
+    return _compound.firstStatement();
 }

@@ -45,7 +45,7 @@ namespace de
          * Returns the address associated with the block.
          */
         const Address& address() const {
-            return address_;
+            return _address;
         }
 
         /**
@@ -53,16 +53,16 @@ namespace de
          *
          * @param channel  Multiplex channel.
          */
-        void setChannel(Channel channel) { channel_ = channel; }
+        void setChannel(Channel channel) { _channel = channel; }
         
         /**
          * Returns the channel over which the block was received.
          */
-        Channel channel() const { return channel_; }
+        Channel channel() const { return _channel; }
         
     private:
-        Address address_;
-        Channel channel_;
+        Address _address;
+        Channel _channel;
     };    
 }
 

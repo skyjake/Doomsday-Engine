@@ -53,19 +53,19 @@ namespace de
              *
              * @param seconds  Length of the delta.
              */
-            Delta(ddouble seconds = 0) : seconds_(seconds) {}
+            Delta(ddouble seconds = 0) : _seconds(seconds) {}
             
             /**
              * Conversion to the numeric type (floating-point seconds).
              */
-            operator const ddouble() const { return seconds_; }
+            operator const ddouble() const { return _seconds; }
             
             bool operator < (const ddouble& d) const {
-                return seconds_ < d;
+                return _seconds < d;
             }
             
             bool operator > (const ddouble& d) const {
-                return seconds_ > d;
+                return _seconds > d;
             }
 
             Delta operator + (const ddouble& d) const;
@@ -85,7 +85,7 @@ namespace de
             void sleep() const;
             
         private:
-            ddouble seconds_;
+            ddouble _seconds;
         };
         
     public:
@@ -94,7 +94,7 @@ namespace de
          */
         Time();
         
-        Time(const time_t& t, dint m = 0) : time_(t), micro_(m) {}
+        Time(const time_t& t, dint m = 0) : _time(t), _micro(m) {}
 
         bool operator < (const Time& t) const;
 
@@ -192,8 +192,8 @@ namespace de
         static void sleep(const Time::Delta& delta) { delta.sleep(); }
 
     private:
-        time_t time_;
-        dint32 micro_;
+        time_t _time;
+        dint32 _micro;
 
         friend class Date;
     };

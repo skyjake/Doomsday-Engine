@@ -191,7 +191,7 @@ namespace de
         /**
          * Determines if the archive has been modified.
          */
-        bool modified() const { return modified_; }
+        bool modified() const { return _modified; }
 
         /**
          * Writes the archive to a Writer. Uncompressed entries are compressed 
@@ -235,13 +235,13 @@ namespace de
         
     private:
         /// Source data provided at construction.
-        const IByteArray* source_;
+        const IByteArray* _source;
         
         /// Index maps entry paths to their metadata.
-        Index index_;
+        Index _index;
         
         /// Contents of the archive has been modified.
-        bool modified_;
+        bool _modified;
     };
 }
 

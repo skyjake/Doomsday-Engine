@@ -57,7 +57,7 @@ namespace de
         ~DictionaryValue();
 
         /// Returns a direct reference to the elements map.
-        const Elements& elements() const { return elements_; }
+        const Elements& elements() const { return _elements; }
 
         /**
          * Clears the dictionary of all values.
@@ -93,9 +93,9 @@ namespace de
         void operator << (Reader& from);
         
     private:
-        Elements elements_;
-        Elements::iterator iteration_;
-        bool validIteration_;
+        Elements _elements;
+        Elements::iterator _iteration;
+        bool _validIteration;
     };
 }
 

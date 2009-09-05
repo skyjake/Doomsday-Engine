@@ -49,20 +49,20 @@ namespace de
         void clear();
 
         /// Returns the archive of the file.
-        Archive& archive() { return archive_; }
+        Archive& archive() { return _archive; }
 
         /// Returns the archive of the file (non-modifiable).
-        const Archive& archive() const { return archive_; }
+        const Archive& archive() const { return _archive; }
 
         // Implements IByteArray.
         void get(Offset at, Byte* values, Size count) const;
         void set(Offset at, const Byte* values, Size count);
         
     private:
-        Archive& archive_;
+        Archive& _archive;
         
         /// Path of the entry within the archive.
-        String entryPath_;
+        String _entryPath;
     };
 }
 

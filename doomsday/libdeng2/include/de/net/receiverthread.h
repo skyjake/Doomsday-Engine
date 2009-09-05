@@ -50,8 +50,8 @@ namespace de
         void run();
         
     private:
-        Socket& socket_;
-        IncomingBuffer& buffer_;
+        Socket& _socket;
+        IncomingBuffer& _buffer;
     };
 }
 

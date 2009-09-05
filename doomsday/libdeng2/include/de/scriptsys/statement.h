@@ -38,15 +38,15 @@ namespace de
         DEFINE_ERROR(DeserializationError);
         
     public:
-        Statement() : next_(0) {}
+        Statement() : _next(0) {}
         
         virtual ~Statement() {}
 
         virtual void execute(Context& context) const = 0;
 
-        Statement* next() const { return next_; }
+        Statement* next() const { return _next; }
         
-        void setNext(Statement* statement) { next_ = statement; }
+        void setNext(Statement* statement) { _next = statement; }
 
     public:
         /**
@@ -77,7 +77,7 @@ namespace de
     private:
         /// Pointer to the statement that follows this one, or NULL if
         /// this is the final statement.
-        Statement* next_;
+        Statement* _next;
     };
 }
 

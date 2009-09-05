@@ -27,43 +27,43 @@
 using namespace de;
 
 UserSession::UserSession(de::MuxLink* link, const de::Id& id)
-    : link_(link), sessionId_(id), world_(0), user_(0)
+    : _link(link), _sessionId(id), _world(0), _user(0)
 {
     // Create a blank user and world. The user is configured jointly
     // from configuration and by the game. The world is mirrored from
     // the server's session when we join.
-    user_ = App::game().SYMBOL(deng_NewUser)();
-    world_ = App::game().SYMBOL(deng_NewWorld)();
+    _user = App::game().SYMBOL(deng_NewUser)();
+    _world = App::game().SYMBOL(deng_NewWorld)();
     
     // The server will tell our id.
-    user_->setId(Id::NONE);
+    _user->setId(Id::NONE);
     
     // Ask to join the session.
     CommandPacket join("session.join");
     join.arguments().addText("id", id);
 
     // Include our initial user state in the arguments.
-    Writer(join.arguments().addBlock("userState").value<BlockValue>()) << *user_;
+    Writer(join.arguments().addBlock("userState").value<BlockValue>()) << *_user;
 
     RecordPacket* response;
-    App::app().protocol().decree(*link_, join, &response);
+    App::app().protocol().decree(*_link, join, &response);
 
     // Get the user id.
-    user_->setId(response->valueAsText("userId"));
+    _user->setId(response->valueAsText("userId"));
 }   
 
 UserSession::~UserSession()
 {
-    if(sessionId_)
+    if(_sessionId)
     {
         // Inform that we are leaving.
-        link_->base() << CommandPacket("session.leave");
+        _link->base() << CommandPacket("session.leave");
     }
     clearOthers();
 
-    delete user_;
-    delete world_;    
-    delete link_;
+    delete _user;
+    delete _world;    
+    delete _link;
 }
 
 void UserSession::processPacket(const de::Packet& packet)
@@ -79,7 +79,7 @@ void UserSession::processPacket(const de::Packet& packet)
         if(record->label() == "user.welcome")
         {
             // State of the world.
-            Reader(rec.value<BlockValue>("worldState")) >> *world_;
+            Reader(rec.value<BlockValue>("worldState")) >> *_world;
             
             // State of existing users.
             clearOthers();
@@ -88,31 +88,31 @@ void UserSession::processPacket(const de::Packet& packet)
                 i != existingUsers.members().end(); ++i)
             {
                 User* remoteUser = App::game().SYMBOL(deng_NewUser)();
-                others_[Id(i->first)] = remoteUser;                
+                _others[Id(i->first)] = remoteUser;                
                 Reader(i->second->value<BlockValue>()) >> *remoteUser;
             }
         }
         else if(record->label() == "user.joined")
         {
             User* remoteUser = App::game().SYMBOL(deng_NewUser)();
-            others_[Id(record->valueAsText("id"))] = remoteUser;
+            _others[Id(record->valueAsText("id"))] = remoteUser;
             
             // State of the new user.
             Reader(rec.value<BlockValue>("userState")) >> *remoteUser;
         }
         else if(record->label() == "user.left")
         {
-            Others::iterator found = others_.find(Id(rec.value<TextValue>("id")));
-            if(found != others_.end())
+            Others::iterator found = _others.find(Id(rec.value<TextValue>("id")));
+            if(found != _others.end())
             {
                 delete found->second;
-                others_.erase(found);
+                _others.erase(found);
             }
         }
         else if(record->label() == "session.ended")
         {
             LOG_INFO("The session ended!");
-            sessionId_ = Id::NONE;
+            _sessionId = Id::NONE;
             /// @throw SessionEndedError The user session is no longer valid due to
             /// the serverside session having ended.
             throw SessionEndedError("UserSession::processPacket", 
@@ -125,7 +125,7 @@ void UserSession::listenForUpdates()
 {
     for(;;)
     {
-        std::auto_ptr<Message> message(link_->updates().receive());
+        std::auto_ptr<Message> message(_link->updates().receive());
         if(!message.get())
         {
             // That was all.
@@ -156,9 +156,9 @@ void UserSession::listen()
 
 void UserSession::clearOthers()
 {
-    for(Others::iterator i = others_.begin(); i != others_.end(); ++i)
+    for(Others::iterator i = _others.begin(); i != _others.end(); ++i)
     {
         delete i->second;
     }
-    others_.clear();
+    _others.clear();
 }

@@ -105,7 +105,7 @@ namespace de
         /**
          * Returns the name of the variable.
          */
-        const String& name() const { return name_; }
+        const String& name() const { return _name; }
         
         /**
          * Sets the value of the variable.
@@ -143,7 +143,7 @@ namespace de
          */
         template <typename Type>
         Type& value() {
-            Type* v = dynamic_cast<Type*>(value_);
+            Type* v = dynamic_cast<Type*>(_value);
             if(!v) {
                 /// @throw TypeError Casting to Type failed.
                 throw TypeError("Variable::value<Type>", "Illegal type conversion");
@@ -156,7 +156,7 @@ namespace de
          */
         template <typename Type>
         const Type& value() const {
-            const Type* v = dynamic_cast<const Type*>(value_);
+            const Type* v = dynamic_cast<const Type*>(_value);
             if(!v) {
                 /// @throw TypeError Casting to Type failed.
                 throw TypeError("Variable::value<Type>", "Illegal type conversion");
@@ -219,10 +219,10 @@ namespace de
         Mode mode;
         
     private:        
-        String name_;
+        String _name;
 
         /// Value of the variable.
-        Value* value_;
+        Value* _value;
     };
 }
 

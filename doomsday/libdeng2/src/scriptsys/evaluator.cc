@@ -25,7 +25,7 @@
 
 using namespace de;
 
-Evaluator::Evaluator(Context& owner) : context_(owner), current_(0), names_(0)
+Evaluator::Evaluator(Context& owner) : _context(owner), _current(0), _names(0)
 {}
 
 Evaluator::~Evaluator()
@@ -36,12 +36,12 @@ Evaluator::~Evaluator()
 
 Process& Evaluator::process()
 { 
-    return context_.process(); 
+    return _context.process(); 
 }
 
 void Evaluator::reset()
 {
-    current_ = NULL;
+    _current = NULL;
     
     clearStack();
     clearNames();
@@ -49,46 +49,46 @@ void Evaluator::reset()
 
 Value& Evaluator::evaluate(const Expression* expression)
 {
-    assert(names_ == NULL);
-    assert(stack_.empty());
+    assert(_names == NULL);
+    assert(_stack.empty());
         
     // Begin a new evaluation operation.
-    current_ = expression;
+    _current = expression;
     expression->push(*this);
 
     // Clear the result stack.
     clearResults();
 
-    while(!stack_.empty())
+    while(!_stack.empty())
     {
         // Continue by processing the next step in the evaluation.
-        ScopedExpression top = stack_.back();
-        stack_.pop_back();
+        ScopedExpression top = _stack.back();
+        _stack.pop_back();
         clearNames();
-        names_ = top.names;
+        _names = top.names;
         pushResult(top.expression->evaluate(*this));
     }
 
     // During function call evaluation the process's context changes. We should
     // now be back at the level we started from.
-    assert(&process().context() == &context_);
+    assert(&process().context() == &_context);
 
     // Exactly one value should remain in the result stack: the result of the
     // evaluated expression.
     assert(hasResult());
 
     clearNames();
-    current_ = NULL;
+    _current = NULL;
     return result();
 }
 
 void Evaluator::namespaces(Namespaces& spaces)
 {
-    if(names_)
+    if(_names)
     {
         // A specific namespace has been defined.
         spaces.clear();
-        spaces.push_back(names_);
+        spaces.push_back(_names);
     }
     else
     {
@@ -99,21 +99,21 @@ void Evaluator::namespaces(Namespaces& spaces)
 
 bool Evaluator::hasResult() const
 {
-    return results_.size() == 1;
+    return _results.size() == 1;
 }
 
 Value& Evaluator::result()
 {
-    if(results_.empty())
+    if(_results.empty())
     {
-        return noResult_;
+        return _noResult;
     }
-    return *results_.front();
+    return *_results.front();
 }
 
 void Evaluator::push(const Expression* expression, Record* names)
 {
-    stack_.push_back(ScopedExpression(expression, names));
+    _stack.push_back(ScopedExpression(expression, names));
 }
 
 void Evaluator::pushResult(Value* value)
@@ -122,24 +122,24 @@ void Evaluator::pushResult(Value* value)
     // no result was given.
     if(value)
     {
-        results_.push_back(value);
+        _results.push_back(value);
     }
 }
 
 Value* Evaluator::popResult()
 {
-    assert(results_.size() > 0);
+    assert(_results.size() > 0);
 
-    Value* result = results_.back();
-    results_.pop_back();
+    Value* result = _results.back();
+    _results.pop_back();
     return result;
 }
 
 void Evaluator::clearNames()
 {
-    if(names_)
+    if(_names)
     {
-        names_ = 0;
+        _names = 0;
     }
 }
 
@@ -147,20 +147,20 @@ void Evaluator::clearResults()
 {
     //LOG_TRACE("Evaluator::clearResults");
     
-    for(Results::iterator i = results_.begin(); i != results_.end(); ++i)
+    for(Results::iterator i = _results.begin(); i != _results.end(); ++i)
     {
         delete *i;
     }
-    results_.clear();
+    _results.clear();
 }
 
 void Evaluator::clearStack()
 {
-    while(!stack_.empty())
+    while(!_stack.empty())
     {
-        ScopedExpression top = stack_.back();
-        stack_.pop_back();
+        ScopedExpression top = _stack.back();
+        _stack.pop_back();
         clearNames();
-        names_ = top.names;
+        _names = top.names;
     }
 }

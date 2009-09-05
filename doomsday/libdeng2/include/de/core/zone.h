@@ -265,8 +265,8 @@ namespace de
          *      batch if its tag gets purged or when the zone is deleted.
          */
         Batch* newBatch(duint elementSize, duint batchSize, PurgeTag tag = STATIC) {
-            batches_.push_back(new Batch(*this, elementSize, batchSize, tag));
-            return batches_.back();
+            _batches.push_back(new Batch(*this, elementSize, batchSize, tag));
+            return _batches.back();
         }
         
         /**
@@ -282,8 +282,8 @@ namespace de
          */
         template <typename Type>
         Allocator<Type>* newAllocator(duint batchSize, PurgeTag tag = STATIC) {
-            batches_.push_back(new Allocator<Type>(*this, batchSize, tag));
-            return static_cast<Allocator<Type>*>(batches_.back());
+            _batches.push_back(new Allocator<Type>(*this, batchSize, tag));
+            return static_cast<Allocator<Type>*>(_batches.back());
         }
         
         /**
@@ -320,8 +320,8 @@ namespace de
              * @return  Pointer to the newly created batch.
              */
             Batch(Zone& zone, dsize elementSize, dsize batchSize, PurgeTag tag = STATIC) 
-                : zone_(zone), elementSize_(elementSize), elementsPerBlock_(batchSize), 
-                  tag_(tag), max_(0), count_(0), blocks_(0) {
+                : _zone(zone), _elementSize(elementSize), _elementsPerBlock(batchSize), 
+                  _tag(tag), _max(0), _count(0), _blocks(0) {
                 // The first block.
                 expand();
             }
@@ -331,12 +331,12 @@ namespace de
              * All memory allocated is released for all elements in all blocks.
              */
             virtual ~Batch() {
-                if(blocks_) {
+                if(_blocks) {
                     // Free the elements from each block.
-                    for(dsize i = 0; i < count_; ++i) {
-                        zone_.free(blocks_[i].elements);
+                    for(dsize i = 0; i < _count; ++i) {
+                        _zone.free(_blocks[i].elements);
                     }
-                    zone_.free(blocks_);
+                    _zone.free(_blocks);
                 }
             }
 
@@ -349,7 +349,7 @@ namespace de
                 // When this is called, there is always an available element in the topmost
                 // block. We will return it.
                 ZBlock* block = lastBlock();
-                void* element = block->elements + elementSize_ * block->count;
+                void* element = block->elements + _elementSize * block->count;
 
                 // Reserve the element.
                 block->count++;
@@ -364,7 +364,7 @@ namespace de
             /**
              * Returns the purge tag used by the allocator.
              */
-            PurgeTag tag() const { return tag_; }
+            PurgeTag tag() const { return _tag; }
             
         protected:
             struct ZBlock {
@@ -377,8 +377,8 @@ namespace de
              * Returns the last block.
              */ 
             ZBlock* lastBlock() {
-                assert(count_ > 0);
-                return &blocks_[count_ - 1];
+                assert(_count > 0);
+                return &_blocks[_count - 1];
             }
 
             /**
@@ -387,34 +387,34 @@ namespace de
             void expand() {
                 // Get a new block by resizing the blocks array. This is done relatively
                 // seldom, since there is a large number of elements per each block.
-                count_++;
-                if(count_ > max_ || !max_) {
-                    max_ *= 2;
-                    if(!max_) max_ = count_;
-                    blocks_ = zone_.resizeClear<ZBlock>(blocks_, max_, tag_);
+                _count++;
+                if(_count > _max || !_max) {
+                    _max *= 2;
+                    if(!_max) _max = _count;
+                    _blocks = _zone.resizeClear<ZBlock>(_blocks, _max, _tag);
                 }
 
                 // Initialize the block's data.
                 ZBlock* block = lastBlock();
-                block->max = elementsPerBlock_;
-                block->elements = zone_.allocate<dbyte>(elementSize_ * block->max, tag_);
+                block->max = _elementsPerBlock;
+                block->elements = _zone.allocate<dbyte>(_elementSize * block->max, _tag);
                 block->count = 0;
             }
 
         private:
-            Zone& zone_;
+            Zone& _zone;
 
-            const dsize elementSize_;
+            const dsize _elementSize;
 
-            dsize elementsPerBlock_;
+            dsize _elementsPerBlock;
 
             /// All blocks in a blockset have the same tag.
-            PurgeTag tag_; 
+            PurgeTag _tag; 
 
-            dsize max_;
-            dsize count_;
+            dsize _max;
+            dsize _count;
             
-            ZBlock* blocks_;
+            ZBlock* _blocks;
         };
         
         /**
@@ -458,7 +458,7 @@ namespace de
         MemVolume* newVolume(dsize volumeSize);
 
     private:
-        MemVolume* volumeRoot_;
+        MemVolume* _volumeRoot;
 
         /**
          * If false, alloc() will free purgable blocks and aggressively look for
@@ -468,10 +468,10 @@ namespace de
          * enabled during map setup because a large number of mallocs will occur
          * during setup.
          */
-        bool fastMalloc_;
+        bool _fastMalloc;
         
         typedef std::list<Batch*> Batches;
-        Batches batches_;
+        Batches _batches;
     };
     
 }

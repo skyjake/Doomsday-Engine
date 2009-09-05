@@ -61,7 +61,7 @@ namespace de
         virtual ~Module();
         
         /// Returns the module's source script's absolute path.
-        const String& sourcePath() const { return sourcePath_; }
+        const String& sourcePath() const { return _sourcePath; }
         
         /// Returns the namespace of the module. The import statement gives access
         /// to this.
@@ -73,11 +73,11 @@ namespace de
     private:
         /// Path of the script source file. Used to identify whether a script has
         /// already been loaded or not. Imported scripts are run only once.
-        String sourcePath_;
+        String _sourcePath;
         
         /// Process where the source script of the module was executed. Owns
         /// the namespace of the module.
-        Process* process_;
+        Process* _process;
     };
 };
 

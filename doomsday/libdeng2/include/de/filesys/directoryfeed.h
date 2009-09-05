@@ -111,8 +111,8 @@ namespace de
         void populateFile(Folder& folder, const String& entryName);
 
     private:
-        const String nativePath_;
-        Mode mode_;
+        const String _nativePath;
+        Mode _mode;
     };
 }
 

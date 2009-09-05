@@ -51,7 +51,7 @@ namespace de
         /**
          * Returns the variable this reference points to.
          */
-        Variable* variable() const { return variable_; }
+        Variable* variable() const { return _variable; }
 
         void verify() const;
         
@@ -89,7 +89,7 @@ namespace de
         void variableBeingDeleted(Variable& variable);
         
     public:
-        Variable* variable_;
+        Variable* _variable;
     };
 }
 

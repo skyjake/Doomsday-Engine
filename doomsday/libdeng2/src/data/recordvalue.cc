@@ -27,32 +27,32 @@
 
 using namespace de;
 
-RecordValue::RecordValue(Record* record, const Ownership& o) : record_(record), ownership_(o)
+RecordValue::RecordValue(Record* record, const Ownership& o) : _record(record), _ownership(o)
 {
-    assert(record_ != NULL);
-    if(!ownership_[OWNS_RECORD_BIT])
+    assert(_record != NULL);
+    if(!_ownership[OWNS_RECORD_BIT])
     {
         // If we don't own it, someone may delete the record.
-        record_->audienceForDeletion.add(this);
+        _record->audienceForDeletion.add(this);
     }
 }
 
 RecordValue::~RecordValue()
 {
-    if(ownership_[OWNS_RECORD_BIT])
+    if(_ownership[OWNS_RECORD_BIT])
     {
-        delete record_;
+        delete _record;
     }
-    else if(record_)
+    else if(_record)
     {
-        record_->audienceForDeletion.remove(this);
+        _record->audienceForDeletion.remove(this);
     }
     
 }
 
 void RecordValue::verify() const
 {
-    if(!record_)
+    if(!_record)
     {
         /// @throw NullError The value no longer points to a record.
         throw NullError("RecordValue::verify", "Value no longer references a record");
@@ -62,19 +62,19 @@ void RecordValue::verify() const
 Record& RecordValue::dereference()
 {
     verify();
-    return *record_;
+    return *_record;
 }
 
 const Record& RecordValue::dereference() const
 {
     verify();
-    return *record_;
+    return *_record;
 }
 
 Value* RecordValue::duplicate() const
 {
     verify();
-    return new RecordValue(record_);
+    return new RecordValue(_record);
 }
 
 Value::Text RecordValue::asText() const
@@ -134,7 +134,7 @@ dint RecordValue::compare(const Value& value) const
         return cmp(reinterpret_cast<const void*>(this), 
                    reinterpret_cast<const void*>(&value));
     }
-    return cmp(recValue->record_, record_);
+    return cmp(recValue->_record, _record);
 }
 
 void RecordValue::operator >> (Writer& to) const
@@ -157,7 +157,7 @@ void RecordValue::operator << (Reader& from)
 
 void RecordValue::recordBeingDeleted(Record& record)
 {
-    assert(record_ == &record);
-    assert(!ownership_[OWNS_RECORD_BIT]);
-    record_ = 0;
+    assert(_record == &record);
+    assert(!_ownership[OWNS_RECORD_BIT]);
+    _record = 0;
 }

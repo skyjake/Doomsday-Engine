@@ -26,12 +26,12 @@ using namespace de;
 
 void TryStatement::execute(Context& context) const
 {
-    context.start(compound_.firstStatement(), next());
+    context.start(_compound.firstStatement(), next());
 }
 
 void TryStatement::operator >> (Writer& to) const
 {
-    to << SerialId(TRY) << compound_;
+    to << SerialId(TRY) << _compound;
 }
 
 void TryStatement::operator << (Reader& from)
@@ -44,5 +44,5 @@ void TryStatement::operator << (Reader& from)
         /// serialized statement was invalid.
         throw DeserializationError("TryStatement::operator <<", "Invalid ID");
     }
-    from >> compound_;
+    from >> _compound;
 }

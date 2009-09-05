@@ -51,7 +51,7 @@ namespace de
         Evaluator(Context& owner);
         ~Evaluator();
 
-        Context& context() { return context_; }
+        Context& context() { return _context; }
 
         /**
          * Returns the process that owns this evaluator.
@@ -158,7 +158,7 @@ namespace de
         void clearStack();
         
         /// The context that owns this evaluator.
-        Context& context_;
+        Context& _context;
         
         struct ScopedExpression {
             const Expression* expression;
@@ -169,16 +169,16 @@ namespace de
         typedef std::vector<Value*> Results;
 
         /// The expression that is currently being evaluated.
-        const Expression* current_;
+        const Expression* _current;
         
         /// Namespace for the current expression.
-        Record* names_;
+        Record* _names;
         
-        Expressions stack_;
-        Results results_;
+        Expressions _stack;
+        Results _results;
         
         /// Returned when there is no result to give.
-        NoneValue noResult_;
+        NoneValue _noResult;
     };
 }
 

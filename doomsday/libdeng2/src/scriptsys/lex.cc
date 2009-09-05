@@ -23,44 +23,44 @@
 
 using namespace de;
 
-Lex::Lex(const String& input) : input_(&input), lineCommentChar_('#')
+Lex::Lex(const String& input) : _input(&input), _lineCommentChar('#')
 {}
 
 const String& Lex::input() const
 {
-    return *input_;
+    return *_input;
 }
     
 duint Lex::pos() const
 {
-    return state_.pos;
+    return _state.pos;
 }
 
 duchar Lex::peek() const
 {
-    if(state_.pos >= input_->size())
+    if(_state.pos >= _input->size())
     {
         // There is no more; trying to get() will throw an exception.
         return 0;
     }
     
-    duchar c = input_->at(state_.pos);
+    duchar c = _input->at(_state.pos);
 
-    if(!mode_[SKIP_COMMENTS_BIT] && (c == lineCommentChar_))
+    if(!_mode[SKIP_COMMENTS_BIT] && (c == _lineCommentChar))
     {
         // This isn't considered part of the input stream. Skip it.
-        duint p = state_.pos;
-        while(p < input_->size() && input_->at(++p) != '\n');
-        nextPos_ = p + 1;
-        if(p == input_->size())
+        duint p = _state.pos;
+        while(p < _input->size() && _input->at(++p) != '\n');
+        _nextPos = p + 1;
+        if(p == _input->size())
         {
             return 0;
         }
         return '\n';
     }
     
-    nextPos_ = state_.pos + 1;
-    return input_->at(state_.pos);
+    _nextPos = _state.pos + 1;
+    return _input->at(_state.pos);
 }
     
 duchar Lex::get()
@@ -73,13 +73,13 @@ duchar Lex::get()
     }
     
     // The next position is determined by peek().
-    state_.pos = nextPos_;
+    _state.pos = _nextPos;
     
     // Did we move to a new line?
     if(c == '\n')
     {
-        state_.lineNumber++;
-        state_.lineStartPos = state_.pos;
+        _state.lineNumber++;
+        _state.lineStartPos = _state.pos;
     }
     return c;
 }
@@ -108,7 +108,7 @@ void Lex::skipToNextLine()
 
 bool Lex::onlyWhiteOnLine()
 {
-    State saved = state_;    
+    State saved = _state;    
     try
     {
         for(;;)
@@ -116,29 +116,29 @@ bool Lex::onlyWhiteOnLine()
             duchar c = get();
             if(c == '\n')
             {
-                state_ = saved;
+                _state = saved;
                 return true;
             }
             if(!isWhite(c))
             {
-                state_ = saved;
+                _state = saved;
                 return false;
             }
         }
     }
     catch(const OutOfInputError&)
     {
-        state_ = saved;
+        _state = saved;
         return true;
     }
 }
 
 duint Lex::countLineStartSpace() const
 {
-    duint pos = state_.lineStartPos;
+    duint pos = _state.lineStartPos;
     duint count = 0;
     
-    while(pos < input_->size() && isWhite(input_->at(pos++))) count++;
+    while(pos < _input->size() && isWhite(_input->at(pos++))) count++;
     return count;
 }
 

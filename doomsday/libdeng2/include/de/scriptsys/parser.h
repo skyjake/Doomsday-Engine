@@ -149,15 +149,15 @@ namespace de
         duint nextStatement();
 
     private:
-        ScriptLex analyzer_;
+        ScriptLex _analyzer;
         
-        TokenBuffer tokens_;    
+        TokenBuffer _tokens;    
         
         // Range of the current statement. Can be a subrange of the full 
         // set of tokens.
-        TokenRange statementRange_;
+        TokenRange _statementRange;
         
-        duint currentIndent_;
+        duint _currentIndent;
     };    
 }
 

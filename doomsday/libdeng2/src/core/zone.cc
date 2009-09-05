@@ -105,7 +105,7 @@ static void M_Free(void* ptr)
     return val;
 }*/
 
-Zone::Zone() : volumeRoot_(0), fastMalloc_(false)
+Zone::Zone() : _volumeRoot(0), _fastMalloc(false)
 {
     // Create the first volume.
     newVolume(MEMORY_VOLUME_SIZE);
@@ -116,19 +116,19 @@ Zone::~Zone()
     LOG_AS("Zone::~Zone");
     
     // Delete the batches.
-    while(!batches_.empty())
+    while(!_batches.empty())
     {
-        deleteBatch(batches_.front());
+        deleteBatch(_batches.front());
     }
     
     int numVolumes = 0;
     dsize totalMemory = 0;
 
     // Destroy all the memory volumes.
-    while(volumeRoot_)
+    while(_volumeRoot)
     {
-        MemVolume *vol = volumeRoot_;
-        volumeRoot_ = vol->next;
+        MemVolume *vol = _volumeRoot;
+        _volumeRoot = vol->next;
 
         // Calculate stats.
         numVolumes++;
@@ -147,7 +147,7 @@ Zone::~Zone()
 
 void Zone::enableFastMalloc(bool enabled)
 {
-    fastMalloc_ = enabled;
+    _fastMalloc = enabled;
 }
 
 void* Zone::alloc(dsize size, PurgeTag tag, void* user)
@@ -175,7 +175,7 @@ void* Zone::alloc(dsize size, PurgeTag tag, void* user)
     // Iterate through memory volumes until we can find one with
     // enough free memory.  (Note: we *will* find one that's large
     // enough.)
-    for(volume = volumeRoot_; ; volume = volume->next)
+    for(volume = _volumeRoot; ; volume = volume->next)
     {
         if(volume == 0)
         {
@@ -202,7 +202,7 @@ void* Zone::alloc(dsize size, PurgeTag tag, void* user)
             base = base->prev;
 
         gotoNextVolume = false;
-        if(fastMalloc_)
+        if(_fastMalloc)
         {
             // In fast malloc mode, if the rover block isn't large enough,
             // just give up and move to the next volume right away.
@@ -492,12 +492,12 @@ void Zone::free(void *ptr)
 void Zone::purgeRange(PurgeTag lowTag, PurgeTag highTag)
 {
     // Check batch allocator tags and free as called for.
-    for(Batches::iterator i = batches_.begin(); i != batches_.end(); )
+    for(Batches::iterator i = _batches.begin(); i != _batches.end(); )
     {
         if((*i)->tag() >= lowTag && (*i)->tag() <= highTag)
         {
             delete *i;
-            batches_.erase(i++);
+            _batches.erase(i++);
         }
         else
         {
@@ -508,7 +508,7 @@ void Zone::purgeRange(PurgeTag lowTag, PurgeTag highTag)
     // Check the volumes.
     MemVolume *volume;
     MemBlock *block, *next;
-    for(volume = volumeRoot_; volume; volume = volume->next)
+    for(volume = _volumeRoot; volume; volume = volume->next)
     {
         for(block = volume->zone->blockList.next;
             block != &volume->zone->blockList;
@@ -562,7 +562,7 @@ dsize Zone::availableMemory() const
 
     verify();
 
-    for(volume = volumeRoot_; volume; volume = volume->next)
+    for(volume = _volumeRoot; volume; volume = volume->next)
     {
         for(block = volume->zone->blockList.next;
             block != &volume->zone->blockList;
@@ -584,7 +584,7 @@ void Zone::verify() const
     MemBlock *block;
     bool isDone;
 
-    for(volume = volumeRoot_; volume; volume = volume->next)
+    for(volume = _volumeRoot; volume; volume = volume->next)
     {
         block = volume->zone->blockList.next;
         isDone = false;
@@ -635,7 +635,7 @@ Zone::MemBlock *Zone::getBlock(void *ptr) const
 #ifdef LIBDENG2_FAKE_MEMORY_ZONE
     MemVolume    *volume;
 
-    for(volume = volumeRoot_; volume; volume = volume->next)
+    for(volume = _volumeRoot; volume; volume = volume->next)
     {
         for(block = volume->zone->blockList.next;
             block != &volume->zone->blockList;
@@ -670,8 +670,8 @@ Zone::MemVolume* Zone::newVolume(dsize volumeSize)
     MemBlock     *block;
     MemVolume    *vol = static_cast<MemVolume*>(M_Calloc(sizeof(MemVolume)));
 
-    vol->next = volumeRoot_;
-    volumeRoot_ = vol;
+    vol->next = _volumeRoot;
+    _volumeRoot = vol;
     vol->size = volumeSize;
 
     // Allocate memory for the zone volume.
@@ -704,11 +704,11 @@ Zone::MemVolume* Zone::newVolume(dsize volumeSize)
 
 void Zone::deleteBatch(Batch* batch)
 {
-    for(Batches::iterator i = batches_.begin(); i != batches_.end(); ++i)
+    for(Batches::iterator i = _batches.begin(); i != _batches.end(); ++i)
     {
         if(*i == batch)
         {
-            batches_.erase(i);
+            _batches.erase(i);
             delete batch;
             return;
         }

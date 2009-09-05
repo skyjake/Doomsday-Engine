@@ -38,7 +38,7 @@ namespace de
     public:
         FIFO() : Lockable() {}
         virtual ~FIFO() {
-            for(typename Objects::iterator i = objects_.begin(); i != objects_.end(); ++i) {
+            for(typename Objects::iterator i = _objects.begin(); i != _objects.end(); ++i) {
                 delete *i;
             }
         }
@@ -53,7 +53,7 @@ namespace de
         void put(Type* object) {
             // The FIFO must be locked before it can be modified.
             lock();
-            objects_.push_front(object);
+            _objects.push_front(object);
             unlock();
         }        
         
@@ -66,12 +66,12 @@ namespace de
         Type* get() {
             // The FIFO must be locked before it can be modified.
             lock();
-            if(objects_.empty()) {
+            if(_objects.empty()) {
                 unlock();
                 return NULL;
             }
-            Type* last = objects_.back();
-            objects_.pop_back();
+            Type* last = _objects.back();
+            _objects.pop_back();
             unlock();
             return last;
         }        
@@ -85,11 +85,11 @@ namespace de
         Type* peek() {
             // The FIFO must be locked before it can be modified.
             lock();
-            if(objects_.empty()) {
+            if(_objects.empty()) {
                 unlock();
                 return NULL;
             }
-            Type* last = objects_.back();
+            Type* last = _objects.back();
             unlock();
             return last;
         }
@@ -99,14 +99,14 @@ namespace de
          */
         bool empty() const {
             lock();
-            bool empty = objects_.empty();
+            bool empty = _objects.empty();
             unlock();
             return empty;
         }
 
     private:
         typedef std::list<Type*> Objects;
-        Objects objects_;
+        Objects _objects;
     };
 }
 

@@ -231,12 +231,12 @@ namespace de
         /**
          * Returns a non-modifiable map of the members.
          */
-        const Members& members() const { return members_; }
+        const Members& members() const { return _members; }
         
         /**
          * Returns a non-modifiable map of the subrecords.
          */
-        const Subrecords& subrecords() const { return subrecords_; }
+        const Subrecords& subrecords() const { return _subrecords; }
 
         /**
          * Creates a text representation of the record. Each variable name is 
@@ -281,8 +281,8 @@ namespace de
         String asText() const { return asText("", 0); }
         
     private:  
-        Members members_;
-        Subrecords subrecords_;
+        Members _members;
+        Subrecords _subrecords;
     };
     
     /// Converts the record into a human-readable text representation.

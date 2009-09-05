@@ -56,13 +56,13 @@ namespace de
         void operator << (Reader& from);         
 
     private:
-        Expression* identifier_;
+        Expression* _identifier;
         
         // The statement holds one reference to the function.
-        Function* function_;
+        Function* _function;
     
         /// Expression that evaluates into the default values of the method.
-        DictionaryExpression defaults_;
+        DictionaryExpression _defaults;
     };
 }
 

@@ -84,9 +84,9 @@ namespace de
         ~NameExpression();
 
         /// Returns the identifier in the name expression.
-        const String& identifier() const { return identifier_; }
+        const String& identifier() const { return _identifier; }
 
-        const Flags& flags() const { return flags_; }
+        const Flags& flags() const { return _flags; }
 
         Value* evaluate(Evaluator& evaluator) const;
 
@@ -95,8 +95,8 @@ namespace de
         void operator << (Reader& from);                 
         
     private:
-        String identifier_;
-        Flags flags_;
+        String _identifier;
+        Flags _flags;
     };
 }
 

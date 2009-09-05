@@ -41,16 +41,16 @@ namespace de
         virtual ~RecordPacket();
 
         /// Returns the caption of the packet.
-        const String& label() const { return label_; }
+        const String& label() const { return _label; }
         
         /// Sets the command of the packet.
-        void setLabel(const String& s) { label_ = s; }
+        void setLabel(const String& s) { _label = s; }
 
         /// Returns the arguments of the packet (non-modifiable).
-        const Record& record() const { return *record_; }
+        const Record& record() const { return *_record; }
         
         /// Returns the arguments of the packet.
-        Record& record() { return *record_; }
+        Record& record() { return *_record; }
 
         /**
          * Takes ownership of a previously created record.
@@ -95,10 +95,10 @@ namespace de
         static Packet* fromBlock(const Block& block);
 
     private:
-        String label_;
+        String _label;
 
         /// The record.
-        Record* record_;
+        Record* _record;
     };
 }
 

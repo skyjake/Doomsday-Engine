@@ -27,17 +27,17 @@
 
 using namespace de;
 
-CatchStatement::CatchStatement(ArrayExpression* args) : args_(args)
+CatchStatement::CatchStatement(ArrayExpression* args) : _args(args)
 {
-    if(!args_)
+    if(!_args)
     {
-        args_ = new ArrayExpression;
+        _args = new ArrayExpression;
     }
 }
 
 CatchStatement::~CatchStatement()
 {
-    delete args_;
+    delete _args;
 }
 
 void CatchStatement::execute(Context& context) const
@@ -52,13 +52,13 @@ bool CatchStatement::isFinal() const
 
 bool CatchStatement::matches(const Error& err) const
 {
-    if(!args_->size())
+    if(!_args->size())
     {
         // Not specified, so catches all.
         return true;
     }
     
-    const NameExpression* name = dynamic_cast<const NameExpression*>(&args_->at(0));
+    const NameExpression* name = dynamic_cast<const NameExpression*>(&_args->at(0));
     assert(name != NULL);
     
     return (name->identifier() == err.name() ||
@@ -67,20 +67,20 @@ bool CatchStatement::matches(const Error& err) const
 
 void CatchStatement::executeCatch(Context& context, const Error& err) const
 {
-    if(args_->size() > 1)
+    if(_args->size() > 1)
     {
         // Place the error message into the specified variable.
-        RefValue& ref = context.evaluator().evaluateTo<RefValue>(&args_->at(1));
+        RefValue& ref = context.evaluator().evaluateTo<RefValue>(&_args->at(1));
         ref.assign(new TextValue(err.asText()));
     }
     
     // Begin the catch compound.
-    context.start(compound_.firstStatement(), next());
+    context.start(_compound.firstStatement(), next());
 }
 
 void CatchStatement::operator >> (Writer& to) const
 {
-    to << SerialId(CATCH) << duint8(flags.to_ulong()) << *args_ << compound_;
+    to << SerialId(CATCH) << duint8(flags.to_ulong()) << *_args << _compound;
 }
 
 void CatchStatement::operator << (Reader& from)
@@ -96,5 +96,5 @@ void CatchStatement::operator << (Reader& from)
     duint8 f;
     from >> f;
     flags = f;
-    from >> *args_ >> compound_;
+    from >> *_args >> _compound;
 }

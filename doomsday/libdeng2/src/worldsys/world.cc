@@ -27,16 +27,16 @@
 
 using namespace de;
 
-World::World() : map_(0)
+World::World() : _map(0)
 {
     // Create a blank map.
-    map_ = App::game().SYMBOL(deng_NewMap)();
+    _map = App::game().SYMBOL(deng_NewMap)();
 }
 
 World::~World()
 {
     App::setCurrentMap(0);
-    delete map_;
+    delete _map;
 }
 
 void World::loadMap(const String& name)
@@ -44,27 +44,27 @@ void World::loadMap(const String& name)
     LOG_AS("World::loadMap");
     LOG_VERBOSE("%s") << name;
     
-    assert(map_ != NULL);
+    assert(_map != NULL);
     App::setCurrentMap(0);
-    delete map_;
+    delete _map;
 
     LOG_TRACE("Creating an empty map.");
 
     // The map will do its own loading.
-    map_ = App::game().SYMBOL(deng_NewMap)();
-    App::setCurrentMap(map_);
+    _map = App::game().SYMBOL(deng_NewMap)();
+    App::setCurrentMap(_map);
     
-    map_->load(name);
+    _map->load(name);
 
     LOG_TRACE("Finished.");
 }
 
 void World::operator >> (Writer& to) const
 {
-    to << info_ << *map_;
+    to << _info << *_map;
 }
 
 void World::operator << (Reader& from)
 {
-    from >> info_ >> *map_;
+    from >> _info >> *_map;
 }

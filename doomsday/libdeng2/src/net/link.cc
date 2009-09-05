@@ -29,28 +29,28 @@
 
 using namespace de;
 
-Link::Link(const Address& address) : socket_(0), sender_(0), receiver_(0)
+Link::Link(const Address& address) : _socket(0), _sender(0), _receiver(0)
 {
-    socket_ = new Socket(address);
+    _socket = new Socket(address);
     initialize();
 }
 
-Link::Link(Socket* socket) : socket_(socket), sender_(0), receiver_(0)
+Link::Link(Socket* socket) : _socket(socket), _sender(0), _receiver(0)
 {
     initialize();
 }
 
 void Link::initialize()
 {
-    assert(socket_ != 0);
+    assert(_socket != 0);
     
-    sender_ = new SenderThread(*socket_, outgoing_);
-    receiver_ = new ReceiverThread(*socket_, incoming_);
+    _sender = new SenderThread(*_socket, _outgoing);
+    _receiver = new ReceiverThread(*_socket, _incoming);
     
-    sender_->start();
-    receiver_->start();
+    _sender->start();
+    _receiver->start();
     
-    peerAddress_ = socket_->peerAddress();
+    _peerAddress = _socket->peerAddress();
 }
 
 Link::~Link()
@@ -60,28 +60,28 @@ Link::~Link()
     FOR_AUDIENCE(Deletion, i) i->linkBeingDeleted(*this);
     
     // Inform the threads that they can stop as soon as possible.
-    receiver_->stop();
-    sender_->stop();
+    _receiver->stop();
+    _sender->stop();
 
     // Close the socket.
-    socket_->close();
+    _socket->close();
     
     // Wake up the sender thread (it's waiting for outgoing packets).
-    outgoing_.post();
+    _outgoing.post();
         
-    delete sender_;
-    delete receiver_;
-    delete socket_;
+    delete _sender;
+    delete _receiver;
+    delete _socket;
 }
 
 bool Link::hasIncoming() const
 {
-    return !incoming_.empty();
+    return !_incoming.empty();
 }
 
 void Link::flush()
 {
-    while(sender_->isRunning() && !outgoing_.empty())
+    while(_sender->isRunning() && !_outgoing.empty())
     {
         Time::sleep(.01);
     }
@@ -89,26 +89,26 @@ void Link::flush()
 
 Address Link::peerAddress() const
 {
-    return peerAddress_;
+    return _peerAddress;
 }
 
 void Link::send(const IByteArray& data)
 {
     Message* message = new Message(data);
     message->setChannel(mode[CHANNEL_1_BIT]? 1 : 0);
-    outgoing_.put(message);
-    outgoing_.post();
+    _outgoing.put(message);
+    _outgoing.post();
 }
 
 Message* Link::receive()
 {
-    Message* b = incoming_.get();
+    Message* b = _incoming.get();
     if(b)
     {
         // A message was waiting.
         return b;
     }    
-    if(!receiver_->isRunning())
+    if(!_receiver->isRunning())
     {
         /// @throw DisconnectedError The receiver is no longer running, which indicates
         /// that the remote end has closed the connection.

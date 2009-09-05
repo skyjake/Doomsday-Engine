@@ -28,23 +28,23 @@
 using namespace de;
 
 Animator::Animator(ValueType initialValue)
-    : clock_(0), motion_(EASE_OUT), start_(initialValue), startTime_(0), 
-      transition_(0), transitionTime_(0), observer_(0)
+    : _clock(0), _motion(EASE_OUT), _start(initialValue), _startTime(0), 
+      _transition(0), _transitionTime(0), _observer(0)
 {}
 
 Animator::Animator(const IClock& clock, ValueType initialValue)
-    : clock_(&clock), motion_(EASE_OUT), start_(initialValue), startTime_(0), 
-      transition_(0), transitionTime_(0), observer_(0)
+    : _clock(&clock), _motion(EASE_OUT), _start(initialValue), _startTime(0), 
+      _transition(0), _transitionTime(0), _observer(0)
 {}
 
 Animator::Animator(const Animator& other)
-    : clock_(other.clock_), motion_(other.motion_), 
-      start_(other.start_), 
-      startTime_(other.startTime_), 
-      transition_(other.transition_), 
-      transitionTime_(other.transitionTime_),
-      observer_(0),
-      status_(other.status_)
+    : _clock(other._clock), _motion(other._motion), 
+      _start(other._start), 
+      _startTime(other._startTime), 
+      _transition(other._transition), 
+      _transitionTime(other._transitionTime),
+      _observer(0),
+      _status(other._status)
 {}
 
 Animator::~Animator()
@@ -52,40 +52,40 @@ Animator::~Animator()
 
 void Animator::setClock(const IClock& clock)
 {
-    clock_ = &clock;
+    _clock = &clock;
 }
 
 void Animator::set(ValueType targetValue, const Time::Delta& transition)
 {
     ValueType oldTarget = target();
     
-    if(!clock_)
+    if(!_clock)
     {
         // Default to the application.        
-        clock_ = &App::app();
+        _clock = &App::app();
     }
     
     if(transition > 0.0)
     {
-        start_ = now();
-        startTime_ = clock_->now();
-        transition_ = targetValue - start_;
-        transitionTime_ = transition;
-        status_.set(ANIMATING);
+        _start = now();
+        _startTime = _clock->now();
+        _transition = targetValue - _start;
+        _transitionTime = transition;
+        _status.set(ANIMATING);
     }
     else
     {
-        start_ = targetValue;
-        startTime_ = clock_->now();
-        transition_ = 0;
-        transitionTime_ = 0;
-        status_.set(ANIMATING, false);
+        _start = targetValue;
+        _startTime = _clock->now();
+        _transition = 0;
+        _transitionTime = 0;
+        _status.set(ANIMATING, false);
     }
 
     // Let the observer know.
-    if(observer_)
+    if(_observer)
     {
-        observer_->animatorValueSet(*this, oldTarget);
+        _observer->animatorValueSet(*this, oldTarget);
     }
 }
 
@@ -97,66 +97,66 @@ Animator& Animator::operator = (const ValueType& immediatelyAssignedValue)
 
 Animator::ValueType Animator::now() const
 {
-    if(!status_.test(ANIMATING))
+    if(!_status.test(ANIMATING))
     {
-        return start_;
+        return _start;
     }
 
-    if(!clock_)
+    if(!_clock)
     {
         throw ClockMissingError("Animator::set", "Animator has no clock");
     }
     
-    const Time& nowTime = clock_->now();
-    ddouble t = (nowTime - startTime_) / transitionTime_;
+    const Time& nowTime = _clock->now();
+    ddouble t = (nowTime - _startTime) / _transitionTime;
     
     if(t >= 1.0)
     {
         // The animation is complete.
-        status_.set(ANIMATING, false);
-        start_ += transition_;
-        return start_;
+        _status.set(ANIMATING, false);
+        _start += _transition;
+        return _start;
     }
     
-    switch(motion_)
+    switch(_motion)
     {
     case LINEAR:
-        return start_ + transition_ * t;
+        return _start + _transition * t;
         
     case EASE_OUT:
-        return start_ + transition_ * std::sin(PI * t / 2.0);
+        return _start + _transition * std::sin(PI * t / 2.0);
         
     default:
-        return start_;
+        return _start;
     }
 }
 
 Animator::ValueType Animator::target() const
 {
-    return start_ + transition_;
+    return _start + _transition;
 }
 
 Animator Animator::operator - () const
 {
     Animator inversed = Animator(*this);
-    inversed.start_ = -inversed.start_;
-    inversed.transition_ = -inversed.transition_;
+    inversed._start = -inversed._start;
+    inversed._transition = -inversed._transition;
     return inversed;
 }
 
 Animator Animator::operator * (ddouble scalar) const
 {
     Animator scaled = Animator(*this);
-    scaled.start_ = scalar * scaled.start_;
-    scaled.transition_ = scalar * scaled.transition_;
+    scaled._start = scalar * scaled._start;
+    scaled._transition = scalar * scaled._transition;
     return scaled;
 }
 
 Animator Animator::operator / (ddouble scalar) const
 {
     Animator scaled = Animator(*this);
-    scaled.start_ = scaled.start_ / scalar;
-    scaled.transition_ = scaled.transition_ / scalar;
+    scaled._start = scaled._start / scalar;
+    scaled._transition = scaled._transition / scalar;
     return scaled;
 }
 
@@ -176,13 +176,13 @@ Animator Animator::operator - (const ValueType& offset) const
 
 Animator& Animator::operator += (const ValueType& offset)
 {
-    start_ += offset;
+    _start += offset;
     return *this;
 }
 
 Animator& Animator::operator -= (const ValueType& offset)
 {
-    start_ -= offset;
+    _start -= offset;
     return *this;
 }
 
@@ -198,7 +198,7 @@ bool Animator::operator > (const ValueType& offset) const
 
 void Animator::operator >> (Writer& to) const
 {
-    to << duint8(motion_) << dfloat(target()) << dfloat(transitionTime_);
+    to << duint8(_motion) << dfloat(target()) << dfloat(_transitionTime);
 }
 
 void Animator::operator << (Reader& from)
@@ -207,7 +207,7 @@ void Animator::operator << (Reader& from)
     dfloat targetValue;
     float transTime;
     from >> motionType >> targetValue >> transTime;
-    motion_ = Motion(motionType);
+    _motion = Motion(motionType);
     set(targetValue, transTime);
 }
 
