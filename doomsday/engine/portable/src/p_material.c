@@ -392,7 +392,8 @@ material_env_class_t Material_GetEnvClass(material_t* mat)
     {
         if(mat->envClass == MEC_UNKNOWN)
         {
-            S_MaterialClassForName(P_GetMaterialName(mat), mat->mnamespace);
+            mat->envClass =
+                S_MaterialClassForName(P_GetMaterialName(mat), mat->mnamespace);
         }
 
         if(!(mat->flags & MATF_NO_DRAW))
