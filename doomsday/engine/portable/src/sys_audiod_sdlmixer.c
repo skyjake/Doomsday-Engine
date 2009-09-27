@@ -130,21 +130,20 @@ audiointerface_music_t audiod_sdlmixer_music = {
 static int numChannels;
 static boolean* usedChannels;
 
-static Mix_Music* currentMusic;
+static Mix_Music* lastMusic;
+static boolean playingMusic = false;
 
 // CODE --------------------------------------------------------------------
 
 /**
  * This is the hook we ask SDL_mixer to call when music playback finishes.
  */
+#if _DEBUG
 static void musicPlaybackFinished(void)
 {
-    if(currentMusic)
-    {
-        Mix_FreeMusic(currentMusic);
-        currentMusic = NULL;
-    }
+    Con_Printf("DS_SDLMixer: Music playback finished.\n");
 }
+#endif
 
 static int getFreeChannel(void)
 {
@@ -229,9 +228,12 @@ void DS_SDLMixerShutdown(void)
     if(usedChannels)
         free(usedChannels);
 
-    if(currentMusic)
-        Mix_FreeMusic(currentMusic);
-    currentMusic = NULL;
+    if(lastMusic)
+    {
+        Mix_HaltMusic();
+        Mix_FreeMusic(lastMusic);
+    }
+    lastMusic = NULL;
 
     Mix_CloseAudio();
     SDL_QuitSubSystem(SDL_INIT_AUDIO);
@@ -476,7 +478,10 @@ void DS_SDLMixer_SFX_Listenerv(int prop, float* values)
 
 int DS_SDLMixer_Music_Init(void)
 {
+#if _DEBUG
     Mix_HookMusicFinished(musicPlaybackFinished);
+#endif
+
     return sdlInitOk;
 }
 
@@ -513,7 +518,7 @@ int DS_SDLMixer_Music_Get(int prop, void* value)
         break;
 
     case MUSIP_PLAYING:
-        return (currentMusic? true : false);
+        return Mix_PlayingMusic();
 
     default:
         return false;
@@ -545,17 +550,18 @@ int DS_SDLMixer_Music_PlayFile(const char* filename, int looped)
     if(!sdlInitOk)
         return false;
 
-    Mix_SetMusicCMD(NULL);
-
     // Free any previously loaded music.
-    if(currentMusic)
-        Mix_FreeMusic(currentMusic);
+    if(lastMusic)
+    {
+        Mix_HaltMusic();
+        Mix_FreeMusic(lastMusic);
+    }
 
-    if(!(currentMusic = Mix_LoadMUS(filename)))
+    if(!(lastMusic = Mix_LoadMUS(filename)))
     {
         Con_Message("DS_SDLMixer_Music_PlayFile: Error %s.\n", Mix_GetError());
         return false;
     }
 
-    return !Mix_PlayMusic(currentMusic, looped ? -1 : 1);
+    return !Mix_PlayMusic(lastMusic, looped ? -1 : 1);
 }
