@@ -82,7 +82,7 @@ ServerApp::~ServerApp()
     delete _listenSocket;
 }
 
-void ServerApp::iterate()
+void ServerApp::iterate(const Time::Delta& elapsed)
 {
     // Check for incoming connections.
     Socket* incoming = _listenSocket->accept();
@@ -97,6 +97,12 @@ void ServerApp::iterate()
     tendClients();
 
     LOG_TRACE("Entering libdeng gameloop...");
+
+    // Perform thinking for the current map.
+    if(hasCurrentMap())
+    {
+        currentMap().think(elapsed);
+    }
     
     // libdeng main loop tasks.
     DD_GameLoop();

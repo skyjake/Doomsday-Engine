@@ -22,6 +22,7 @@
 
 #include "../deng.h"
 #include "../IClock"
+#include "../Time"
 #include "../CommandLine"
 #include "../FS"
 #include "../Protocol"
@@ -127,8 +128,10 @@ namespace de
         
         /**
          * Called on every iteration of the main loop.
+         *
+         * @param elapsed  Amount of time elapsed since last iteration.
          */
-        virtual void iterate() = 0;
+        virtual void iterate(const Time::Delta& elapsed) = 0;
         
         /** 
          * Determines whether the main loop should be running.
@@ -248,6 +251,11 @@ namespace de
          * Determines whether a video subsystem is currently available.
          */
         static bool hasVideo();
+        
+        /**
+         * Determines whether a map has currently been set.
+         */
+        static bool hasCurrentMap();
         
         /**
          * Returns the amount of time since the creation of the App.

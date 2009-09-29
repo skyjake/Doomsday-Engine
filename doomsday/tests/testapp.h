@@ -35,7 +35,7 @@ public:
         LOG_MESSAGE("TestApp destroyed.");
     }
 
-    void iterate() {}
+    void iterate(const de::Time::Delta& elapsed) {}
 };
 
 #endif /* TESTAPP_H */

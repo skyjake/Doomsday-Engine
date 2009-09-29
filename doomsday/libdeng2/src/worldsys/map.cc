@@ -142,6 +142,24 @@ Thinker* Map::remove(Thinker& th)
     throw NotFoundError("Map::remove", "Thinker " + th.id().asText() + " not found");
 }
 
+void Map::think(const Time::Delta& elapsed)
+{
+    FOR_EACH(i, _thinkers, Thinkers::iterator)
+    {
+        if(i->second->isAlive())
+        {
+            i->second->think(elapsed);
+        }
+    }    
+    FOR_EACH(i, _objects, Objects::iterator)
+    {
+        if(i->second->isAlive())
+        {
+            i->second->think(elapsed);
+        }
+    }
+}
+
 void Map::operator >> (Writer& to) const
 {
     to << _name << _info;

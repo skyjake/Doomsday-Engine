@@ -353,7 +353,7 @@ dint App::mainLoop()
             _lastTime = _currentTime;
 
             // Do the loop iteration.
-            iterate();
+            iterate(elapsed);
         
             // Update subsystems (draw graphics, update sounds, etc.).
             FOR_EACH(i, _subsystems, Subsystems::iterator)
@@ -503,6 +503,11 @@ bool App::hasGame()
 bool App::hasVideo() 
 { 
     return app()._video != 0; 
+}
+
+bool App::hasCurrentMap()
+{
+    return app()._currentMap != 0;
 }
 
 Time::Delta App::uptime()

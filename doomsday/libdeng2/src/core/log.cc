@@ -94,8 +94,8 @@ String LogEntry::asText(const Flags& formattingFlags) const
         {
             const char* levelNames[MAX_LOG_LEVELS] = {
                 "(...)",
-                "(bug)",
-                "(vbs)",
+                "(deb)",
+                "(vrb)",
                 "",
                 "(inf)",
                 "(WRN)",

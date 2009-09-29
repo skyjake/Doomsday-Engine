@@ -159,6 +159,13 @@ namespace de
             throw TypeError("Map::anyThinker", "Thinker not found, or has unexpected type");
         }
 
+        /**
+         * Performs thinking for all thinkers, including objects.
+         *
+         * @param elapsed  Amount of time elapsed since previous thinking.
+         */
+        void think(const Time::Delta& elapsed);
+
         // Implements ISerializable.
         void operator >> (Writer& to) const;
         void operator << (Reader& from);

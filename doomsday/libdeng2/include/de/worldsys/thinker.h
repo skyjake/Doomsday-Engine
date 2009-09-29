@@ -24,6 +24,7 @@
 #include "../Time"
 #include "../Enumerator"
 #include "../Id"
+#include "../Flag"
 
 #include <set>
 
@@ -45,6 +46,9 @@ namespace de
     public:
         /// Unrecognized type encountered when deserializing a thinker. @ingroup errors
         DEFINE_ERROR(UnrecognizedError);
+
+        /// The thinker is in statis and will not think.
+        DEFINE_FINAL_FLAG(IN_STASIS, 0, Mode);
 
         /// Identifier used when serializing thinkers (0-255).
         typedef duint8 SerialId;
@@ -70,6 +74,11 @@ namespace de
         Thinker();
         
         virtual ~Thinker();
+        
+        /**
+         * Thinkers that are "alive" will think on every iteration of the main loop.
+         */
+        bool isAlive() const { return !mode[IN_STASIS_BIT]; }
         
         const Id& id() const { return _id; }
         
@@ -141,6 +150,10 @@ namespace de
          * @see Constructor
          */
         static Thinker* fromReader(Reader& reader);
+
+    public:
+        /// Mode flags.
+        Mode mode;
 
     private:
         /// Unique identifier for the thinker.

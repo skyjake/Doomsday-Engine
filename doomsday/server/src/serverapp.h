@@ -52,7 +52,7 @@ public:
     ServerApp(const de::CommandLine& commandLine);
     ~ServerApp();
     
-    void iterate();
+    void iterate(const de::Time::Delta& elapsed);
 
     /**
      * Returns the client with the given address. 

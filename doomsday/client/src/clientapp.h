@@ -41,7 +41,7 @@ public:
     ClientApp(const de::CommandLine& arguments);
     ~ClientApp();
     
-    void iterate();
+    void iterate(const de::Time::Delta& elapsed);
     
 private:
     LocalServer* _localServer;

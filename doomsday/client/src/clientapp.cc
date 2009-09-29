@@ -108,13 +108,19 @@ ClientApp::~ClientApp()
     DD_Shutdown();
 }
 
-void ClientApp::iterate()
+void ClientApp::iterate(const Time::Delta& elapsed)
 {
     try
     {
         if(_session)
         {
             _session->listen();
+        }
+        
+        // Perform thinking for the current map.
+        if(hasCurrentMap())
+        {
+            currentMap().think(elapsed);
         }
     }
     catch(const UserSession::SessionEndedError& err)
