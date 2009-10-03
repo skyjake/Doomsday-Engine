@@ -49,6 +49,13 @@ namespace de
     class Zone;
     
     /**
+     * Convenience macro for accessing symbols exported from the game plugin.
+     *
+     * @param Name  Name of an exported symbol.
+     */
+#define GAME_SYMBOL(Name)   App::game().SYMBOL(Name)
+    
+    /**
      * The application. Subclasses need to define the iterate() method that performs
      * tasks while the main loop is running.
      *

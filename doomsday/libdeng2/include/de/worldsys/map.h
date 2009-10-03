@@ -47,11 +47,10 @@ namespace de
         /// Requested type casting was impossible. @ingroup errors
         DEFINE_ERROR(TypeError);
         
-        /// The thinker or object that was looked for could not be found. @ingroup errors
+        /// The thinker that was searched for could not be found. @ingroup errors
         DEFINE_ERROR(NotFoundError);
         
         typedef std::map<Id, Thinker*> Thinkers;
-        typedef std::map<Id, Object*> Objects;
                 
     public:
         /**
@@ -104,8 +103,9 @@ namespace de
         Thinker& add(Thinker* thinker);
 
         template <typename Type>
-        Type& addAs(Thinker* thinker) {
-            return *static_cast<Type*>(&add(thinker));
+        Type& addAs(Type* thinker) {
+            add(thinker);
+            return *thinker;
         }
         
         /**
@@ -116,14 +116,9 @@ namespace de
         Thinker* remove(Thinker& thinker);
 
         /**
-         * Returns a map of thinkers, excluding objects.
+         * Returns all thinkers of the map.
          */
         const Thinkers& thinkers() const { return _thinkers; }
-        
-        /**
-         * Returns a map of objects.
-         */
-        const Objects& objects() const { return _objects; }
 
         /**
          * Returns a thinker with the specified id, or @c NULL if it doesn't exist.
@@ -145,11 +140,6 @@ namespace de
          */
         template <typename Type>
         Type& anyThinker(const Id& id) const {
-            Type* o = dynamic_cast<Type*>(object(id));
-            if(o)
-            {
-                return *o;
-            }
             Type* t = dynamic_cast<Type*>(thinker(id));
             if(t)
             {
@@ -160,7 +150,7 @@ namespace de
         }
 
         /**
-         * Performs thinking for all thinkers, including objects.
+         * Performs thinking for all thinkers.
          *
          * @param elapsed  Amount of time elapsed since previous thinking.
          */
@@ -171,7 +161,7 @@ namespace de
         void operator << (Reader& from);
         
     protected:
-        void addThinkerOrObject(Thinker* thinker);
+        void addThinker(Thinker* thinker);
         
     private:
         /// Name of the map.
@@ -183,11 +173,8 @@ namespace de
         /// Generates ids for thinkers (objects, too).
         Enumerator _thinkerEnum;
         
-        /// All thinkers of the map (except objects).
+        /// All thinkers of the map.
         Thinkers _thinkers;
-
-        /// All objects of the map.
-        Objects _objects;
     };
 }
 

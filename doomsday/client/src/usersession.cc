@@ -32,8 +32,8 @@ UserSession::UserSession(de::MuxLink* link, const de::Id& id)
     // Create a blank user and world. The user is configured jointly
     // from configuration and by the game. The world is mirrored from
     // the server's session when we join.
-    _user = App::game().SYMBOL(deng_NewUser)();
-    _world = App::game().SYMBOL(deng_NewWorld)();
+    _user = GAME_SYMBOL(deng_NewUser)();
+    _world = GAME_SYMBOL(deng_NewWorld)();
     
     // The user name is in the configuration.
     _user->info()["name"].set(TextValue(App::config().gets("user.name")));
@@ -90,14 +90,14 @@ void UserSession::processPacket(const de::Packet& packet)
             const Record& existingUsers = rec.subrecord("users");
             FOR_EACH(i, existingUsers.members(), Record::Members::const_iterator)
             {
-                User* remoteUser = App::game().SYMBOL(deng_NewUser)();
+                User* remoteUser = GAME_SYMBOL(deng_NewUser)();
                 _others[Id(i->first)] = remoteUser;                
                 Reader(i->second->value<BlockValue>()) >> *remoteUser;
             }
         }
         else if(record->label() == "user.joined")
         {
-            User* remoteUser = App::game().SYMBOL(deng_NewUser)();
+            User* remoteUser = GAME_SYMBOL(deng_NewUser)();
             _others[Id(record->valueAsText("id"))] = remoteUser;
             
             // State of the new user.

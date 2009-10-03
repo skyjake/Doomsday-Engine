@@ -25,7 +25,7 @@ using namespace de;
 RemoteUser::RemoteUser(Client& client, Session* session) 
     : _client(&client), _session(session), _user(0)
 {
-    _user = App::game().SYMBOL(deng_NewUser)();
+    _user = GAME_SYMBOL(deng_NewUser)();
 }
 
 RemoteUser::~RemoteUser()

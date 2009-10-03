@@ -46,7 +46,7 @@ bool Map::isVoid() const
 
 Object& Map::newObject()
 {
-    return addAs<Object>(App::game().SYMBOL(deng_NewObject)());
+    return addAs<Object>(GAME_SYMBOL(deng_NewObject)());
 }
 
 void Map::clear()
@@ -61,31 +61,24 @@ void Map::clear()
         delete i->second;
     }
     _thinkers.clear();
-    
-    // Clear objects.
-    FOR_EACH(i, _objects, Objects::iterator)
-    {
-        delete i->second;
-    }
-    _objects.clear();
 }
     
 Thinker* Map::thinker(const Id& id) const
 {
-    Thinkers::const_iterator thFound = _thinkers.find(id);
-    if(thFound != _thinkers.end())
+    Thinkers::const_iterator found = _thinkers.find(id);
+    if(found != _thinkers.end())
     {
-        return thFound->second;
+        return found->second;
     }
     return NULL;
 }
 
 Object* Map::object(const Id& id) const
 {
-    Objects::const_iterator obFound = _objects.find(id);
-    if(obFound != _objects.end())
+    Thinkers::const_iterator found = _thinkers.find(id);
+    if(found != _thinkers.end())
     {
-        return obFound->second;
+        return dynamic_cast<Object*>(found->second);
     }
     return NULL;
 }
@@ -93,7 +86,7 @@ Object* Map::object(const Id& id) const
 Id Map::findUniqueThinkerId()
 {
     Id id = _thinkerEnum.get();
-    while(_thinkerEnum.overflown() && (thinker(id) || object(id)))
+    while(_thinkerEnum.overflown() && thinker(id))
     {
         // This is in use, get the next one.
         id = _thinkerEnum.get();
@@ -105,23 +98,14 @@ Thinker& Map::add(Thinker* thinker)
 {
     // Give the thinker a new id.
     thinker->setId(findUniqueThinkerId());
-    addThinkerOrObject(thinker);
+    addThinker(thinker);
     return *thinker;
 }
 
-void Map::addThinkerOrObject(Thinker* thinker)
+void Map::addThinker(Thinker* thinker)
 {
     thinker->setMap(this);
-    Object* object = dynamic_cast<Object*>(thinker);
-    if(object)
-    {
-        // Put it in the separate objects map.
-        _objects[thinker->id()] = object;
-    }
-    else
-    {
-        _thinkers[thinker->id()] = thinker;
-    }
+    _thinkers[thinker->id()] = thinker;
 }
 
 Thinker* Map::remove(Thinker& th)
@@ -129,12 +113,6 @@ Thinker* Map::remove(Thinker& th)
     if(thinker(th.id()))
     {
         _thinkers.erase(th.id());
-        th.setMap(0);
-        return &th;
-    }
-    else if(object(th.id()))
-    {
-        _objects.erase(th.id());
         th.setMap(0);
         return &th;
     }
@@ -151,13 +129,6 @@ void Map::think(const Time::Delta& elapsed)
             i->second->think(elapsed);
         }
     }    
-    FOR_EACH(i, _objects, Objects::iterator)
-    {
-        if(i->second->isAlive())
-        {
-            i->second->think(elapsed);
-        }
-    }
 }
 
 void Map::operator >> (Writer& to) const
@@ -165,12 +136,7 @@ void Map::operator >> (Writer& to) const
     to << _name << _info;
     
     // Thinkers.
-    to << duint32(_objects.size() + _thinkers.size());
-    
-    FOR_EACH(i, _objects, Objects::const_iterator)
-    {
-        to << *i->second;
-    }
+    to << duint32(_thinkers.size());
     FOR_EACH(i, _thinkers, Thinkers::const_iterator)
     {
         to << *i->second;
@@ -189,7 +155,7 @@ void Map::operator << (Reader& from)
     while(count--)
     {
         Thinker* thinker = Thinker::constructFrom(from);
-        addThinkerOrObject(thinker);
+        addThinker(thinker);
         _thinkerEnum.claim(thinker->id());
     }
 }

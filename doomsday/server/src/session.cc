@@ -29,7 +29,7 @@ using namespace de;
 Session::Session() : _world(0)
 {
     // Create a blank world.
-    _world = App::game().SYMBOL(deng_NewWorld)();
+    _world = GAME_SYMBOL(deng_NewWorld)();
 }
 
 Session::~Session()

@@ -30,7 +30,7 @@ using namespace de;
 World::World() : _map(0)
 {
     // Create a blank map.
-    _map = App::game().SYMBOL(deng_NewMap)();
+    _map = GAME_SYMBOL(deng_NewMap)();
 }
 
 World::~World()
@@ -51,7 +51,7 @@ void World::loadMap(const String& name)
     LOG_TRACE("Creating an empty map.");
 
     // The map will do its own loading.
-    _map = App::game().SYMBOL(deng_NewMap)();
+    _map = GAME_SYMBOL(deng_NewMap)();
     App::setCurrentMap(_map);
     
     _map->load(name);

@@ -59,22 +59,22 @@ using namespace de;
 
 int game_GetInteger(int id)
 {
-    return App::game().SYMBOL(deng_GetInteger)(id);
+    return GAME_SYMBOL(deng_GetInteger)(id);
 }
 
 const char* game_GetString(int id)
 {
-    return App::game().SYMBOL(deng_GetString)(id);
+    return GAME_SYMBOL(deng_GetString)(id);
 }
 
 void* game_GetAddress(int id)
 {
-    return App::game().SYMBOL(deng_GetAddress)(id);
+    return GAME_SYMBOL(deng_GetAddress)(id);
 }
 
 void game_Ticker(double tickLength)
 {
-    App::game().SYMBOL(deng_Ticker)(tickLength);
+    GAME_SYMBOL(deng_Ticker)(tickLength);
 }
 
 void game_Call(const char* funcName)
