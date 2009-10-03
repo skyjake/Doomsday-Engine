@@ -36,6 +36,7 @@
 #include "dd_types.h"
 #include "dd_maptypes.h"
 #include "../portable/include/def_share.h" // \todo Not officially a public header file!
+#include <de/Thinker>
 
 #ifdef __cplusplus
 extern "C" {
@@ -641,6 +642,7 @@ enum /* Do NOT change the numerical values of the constants. */
     DMUSC_LINE_FIRSTRENDERED
 };
 
+#if 0
 typedef struct thinker_s {
     struct thinker_s *prev, *next;
     think_t         function;
@@ -651,11 +653,23 @@ typedef struct thinker_s {
 // All map think-able objects must use this as a base. Also used for sound
 // origin purposes for all of: mobj_t, polyobj_t, sector_t/plane_t
 #define DD_BASE_DDMOBJ_ELEMENTS() \
-    thinker_t       thinker;            /* thinker node */ \
+    thinker_t       thinker;            /* thinker node */
     float           pos[3];             /* position [x,y,z] */
 
 typedef struct ddmobj_base_s {
     DD_BASE_DDMOBJ_ELEMENTS()
+} ddmobj_base_t;
+#endif
+
+struct thinker_s : public de::Thinker 
+{
+    think_t         function;
+};
+
+typedef thinker_s thinker_t;
+
+typedef struct ddmobj_base_s {
+    float           pos[3];             /* position [x,y,z] */
 } ddmobj_base_t;
 
 // Fixed-point vertex position. Utility struct for the game, not used by
@@ -841,6 +855,7 @@ enum { MX, MY, MZ }; // Momentum axis indices.
     int             tmap, tclass;
 #endif
 
+#if 0
     // Base polyobj_t elements. Games MUST use this as the basis for polyobj_t.
 #define DD_BASE_POLYOBJ_ELEMENTS() \
     DD_BASE_DDMOBJ_ELEMENTS() \
@@ -866,6 +881,7 @@ enum { MX, MY, MZ }; // Momentum axis indices.
         unsigned int lineCount; \
         struct linedef_s** lineDefs; \
     } buildData;
+#endif
 
 //------------------------------------------------------------------------
 //

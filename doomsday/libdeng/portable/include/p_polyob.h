@@ -30,10 +30,33 @@
 #define __DOOMSDAY_POLYOB_H__
 
 #include "dd_share.h"
+#include <de/Object>
 
 // We'll use the base polyobj template directly as our mobj.
-typedef struct polyobj_s {
-DD_BASE_POLYOBJ_ELEMENTS()} polyobj_t;
+typedef struct polyobj_s : public de::Object {
+    float           pos[3];
+    struct subsector_s* subsector; /* subsector in which this resides */ \
+    unsigned int    idx; /* Idx of polyobject. */ \
+    int             tag; /* Reference tag. */ \
+    int             validCount; \
+    float           box[2][2]; \
+    float           dest[2]; /* Destination XY. */ \
+    angle_t         angle; \
+    angle_t         destAngle; /* Destination angle. */ \
+    angle_t         angleSpeed; /* Rotation speed. */ \
+    unsigned int    numSegs; \
+    struct seg_s**  segs; \
+    struct fvertex_s* originalPts; /* Used as the base for the rotations. */ \
+    struct fvertex_s* prevPts; /* Use to restore the old point values. */ \
+    float           speed; /* Movement speed. */ \
+    boolean         crush; /* Should the polyobj attempt to crush mobjs? */ \
+    int             seqType; \
+    struct { \
+        int         index; \
+        unsigned int lineCount; \
+        struct linedef_s** lineDefs; \
+    } buildData;
+} polyobj_t;
 
 #define POLYOBJ_SIZE        gx.polyobjSize
 

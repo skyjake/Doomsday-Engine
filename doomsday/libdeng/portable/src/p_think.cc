@@ -35,15 +35,19 @@
 #include "de_console.h"
 #include "de_network.h"
 
+using namespace de;
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
 
+#if 0
 typedef struct {
     boolean         isPublic; /* @c true = all thinkers in this list are
                                  visible publically */
     thinker_t       thinkerCap;
 } thinkerlist_t;
+#endif
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -55,17 +59,20 @@ typedef struct {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int idtable[2048]; // 65536 bits telling which IDs are in use.
-unsigned short iddealer = 0;
+//int idtable[2048]; // 65536 bits telling which IDs are in use.
+//unsigned short iddealer = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+/*
 static size_t numThinkerLists;
 static thinkerlist_t** thinkerLists;
 static boolean inited = false;
+*/
 
 // CODE --------------------------------------------------------------------
 
+#if 0
 static thid_t newMobjID(void)
 {
     // Increment the ID dealer until a free ID is found.
@@ -316,6 +323,7 @@ boolean P_ThinkerListInited(void)
 {
     return inited;
 }
+#endif
 
 /**
  * Iterate the list of thinkers making a callback for each.
@@ -331,6 +339,9 @@ boolean P_IterateThinkers(think_t func, byte flags,
                           boolean (*callback) (thinker_t*, void*),
                           void* context)
 {
+    throw Error("P_IterateThinkers", "not implemented");
+    return true;
+/*
     if(!inited)
         return true;
 
@@ -364,9 +375,10 @@ boolean P_IterateThinkers(think_t func, byte flags,
             break;
     }
     return result;
-    }
+    }*/
 }
 
+#if 0
 /**
  * Part of the Doomsday public API.
  */
@@ -414,6 +426,7 @@ void DD_ThinkerSetStasis(thinker_t* th, boolean on)
         th->inStasis = on;
     }
 }
+#endif
 
 /**
  * Part of the Doomsday public API.

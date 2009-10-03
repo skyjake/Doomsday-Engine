@@ -1514,7 +1514,7 @@ void R_ProjectSprite(mobj_t* mo)
                                      visOff[VX], visOff[VY], visOff[VZ] - floorClip, gzt, yaw, 0, pitch, 0,
                                      mf, nextmf, interp,
                                      ambientColor[CR], ambientColor[CG], ambientColor[CB], alpha,
-                                     vLightListIdx, mo->thinker.id, mo->selector,
+                                     vLightListIdx, mo->id(), mo->selector,
                                      mo->subsector, mo->ddFlags,
                                      mo->tmap,
                                      viewAlign,

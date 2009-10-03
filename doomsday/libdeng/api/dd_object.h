@@ -13,7 +13,7 @@
 class mobj_s : public de::Object
 {
 public:
-    thinker_t       thinker;            /* thinker node */ 
+//    thinker_t       thinker;            /* thinker node */ 
     float           pos[3];
     nodeindex_t     lineRoot; /* lines to which this is linked */ 
     struct mobj_s*  sNext, **sPrev; /* links in sector (if needed) */ 
@@ -81,7 +81,6 @@ public:
         tmap(0),
         tclass(0)
     {
-        std::memset(&thinker, 0, sizeof(thinker));
         pos[0] = pos[1] = pos[2] = 0;
         mom[0] = mom[1] = mom[2] = 0;
         srvo[0] = srvo[1] = srvo[2] = 0;

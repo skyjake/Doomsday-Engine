@@ -396,7 +396,7 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
         ch->pos[VZ] = ch->emitter->pos[VZ];
 
         // If this is a mobj, center the Z pos.
-        if(P_IsMobjThinker(ch->emitter->thinker.function))
+        if(dynamic_cast<mobj_s*>(ch->emitter)) // P_IsMobjThinker(ch->emitter->thinker.function))
         {
             // Sounds originate from the center.
             ch->pos[VZ] += ch->emitter->height / 2;
@@ -427,7 +427,7 @@ void Sfx_ChannelUpdate(sfxchannel_t* ch)
 
         // If the sound is emitted by the listener, speed is zero.
         if(ch->emitter && ch->emitter != listener &&
-           P_IsMobjThinker(ch->emitter->thinker.function))
+           dynamic_cast<mobj_s*>(ch->emitter))
         {
             vec[VX] = ch->emitter->mom[MX] * TICSPERSEC;
             vec[VY] = ch->emitter->mom[MY] * TICSPERSEC;

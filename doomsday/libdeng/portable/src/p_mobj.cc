@@ -129,7 +129,11 @@ mobj_t* P_MobjCreate(think_t function, float x, float y, float z,
     mo->radius = radius;
     mo->height = height;
     mo->ddFlags = ddflags;
-    mo->thinker.function = function;
+    if(function != gx.MobjThinker)
+    {
+        throw Error("P_MobjCreate", "function is not MobjThinker");
+    }
+    //mo->thinker.function = function;
     
     /*
     if(mo->thinker.function)

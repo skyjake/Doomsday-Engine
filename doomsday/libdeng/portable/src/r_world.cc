@@ -557,7 +557,7 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
     plane->soundOrg.pos[VX] = sec->soundOrg.pos[VX];
     plane->soundOrg.pos[VY] = sec->soundOrg.pos[VY];
     plane->soundOrg.pos[VZ] = sec->soundOrg.pos[VZ];
-    memset(&plane->soundOrg.thinker, 0, sizeof(plane->soundOrg.thinker));
+    //memset(&plane->soundOrg.thinker, 0, sizeof(plane->soundOrg.thinker));
     plane->speed = 0;
     plane->target = 0;
     plane->type = PLN_MID;

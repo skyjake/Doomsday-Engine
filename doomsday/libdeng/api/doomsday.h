@@ -405,12 +405,6 @@ extern          "C" {
     DENG_API void            P_MaterialPrecache(material_t* mat);
     
      // Play: Thinkers.
-    DENG_API void            DD_InitThinkers(void);
-    DENG_API void            DD_RunThinkers(void);
-    DENG_API void            DD_ThinkerAdd(thinker_t* th);
-    DENG_API void            DD_ThinkerRemove(thinker_t* th);
-    DENG_API void            DD_ThinkerSetStasis(thinker_t* th, boolean on);
-     
     DENG_API boolean         DD_IterateThinkers(think_t type, boolean (*func) (thinker_t *th, void*), void* data);
      
     // Refresh.

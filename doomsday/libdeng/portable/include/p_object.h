@@ -37,7 +37,7 @@
 #endif
 
 // This macro can be used to calculate a mobj-specific 'random' number.
-#define MOBJ_TO_ID(mo) ( (long)(mo)->thinker.id * 48 + ((unsigned long)(mo)/1000) )
+#define MOBJ_TO_ID(mo) ( de::duint((mo)->id()) * 48 + ((unsigned long)(mo)/1000) )
 
 #include "dd_object.h"
 typedef mobj_s mobj_t;

@@ -452,7 +452,7 @@ Con_Message("SpawnPtcGen: %s/%i (src:%s typ:%s mo:%p)\n",
 
     P_InitParticleGen(gen, def);
     gen->source = source;
-    gen->srcid = source->thinker.id;
+    gen->srcid = source->id();
 
     // Is there a need to pre-simulate?
     P_PresimParticleGen(gen, def->preSim);
