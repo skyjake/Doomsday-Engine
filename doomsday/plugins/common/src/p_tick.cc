@@ -163,7 +163,7 @@ void P_DoTick(void)
        !Get(DD_PLAYBACK) && players[CONSOLEPLAYER].plr->viewZ != 1)
         return;
 
-    DD_RunThinkers();
+    //DD_RunThinkers();
     P_UpdateSpecials();
 
 #if __JDOOM64__

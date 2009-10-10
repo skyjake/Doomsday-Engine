@@ -29,6 +29,8 @@
 #ifndef __DOOMSDAY_POLYOB_H__
 #define __DOOMSDAY_POLYOB_H__
 
+#ifdef __cplusplus
+
 #include "dd_share.h"
 #include <de/Object>
 
@@ -77,5 +79,7 @@ boolean         P_PolyobjLinesIterator(polyobj_t* po, boolean (*func) (struct li
                                        void* data);
 
 #include "doomsday.h"
+
+#endif
 
 #endif

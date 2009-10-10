@@ -309,7 +309,7 @@ boolean P_LoadMap(const char *mapID)
         gamemap_t*          map = P_GetCurrentMap();
 
         // Init the thinker lists (public and private).
-        P_InitThinkerLists(0x1 | 0x2);
+        //P_GetCurrentMaperLists(0x1 | 0x2);
 
         // Tell shadow bias to initialize the bias light sources.
         SB_InitForMap(P_GetUniqueMapID(map));

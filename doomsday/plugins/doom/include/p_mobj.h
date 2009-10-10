@@ -263,12 +263,19 @@ public:
 
 typedef doom_mobj_s mobj_t;
 
+/*
 typedef struct polyobj_s {
     // Defined in dd_share.h; required polyobj elements.
     DD_BASE_POLYOBJ_ELEMENTS()
 
     // Doom-specific data:
 } polyobj_t;
+*/
+
+struct polyobj_s : public mobj_s 
+{};
+
+typedef polyobj_s polyobj_t;
 
 extern spawnspot_t* things;
 

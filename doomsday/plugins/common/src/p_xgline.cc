@@ -636,7 +636,8 @@ void XL_SetLineType(linedef_t* line, int id)
             xlthinker_t*    xl = (xlthinker_t*) Z_Calloc(sizeof(*xl), PU_MAP, 0);
 
             xl->thinker.function = (void (*)()) XL_Thinker;
-            DD_ThinkerAdd(&xl->thinker);
+            //DD_ThinkerAdd(&xl->thinker);
+            #warning XL_SetLineType: Need to add thinker
 
             xl->line = line;
         }
@@ -1134,7 +1135,7 @@ void XL_DoFunction(linetype_t* info, linedef_t* line, int sideNum,
     xgclass_t*          xgClass = &xgClasses[info->lineClass];
 
     XG_Dev("XL_DoFunction: Line %i, side %i, activator id %i, event %s",
-            P_ToIndex(line), sideNum, actThing ? actThing->thinker.id : 0,
+            P_ToIndex(line), sideNum, actThing ? de::duint(actThing->id()) : 0,
             EVTYPESTR(evType));
     XG_Dev("  Executing class: %s (0x%X)...", xgClass->className, info->lineClass);
 
@@ -1889,7 +1890,7 @@ boolean XL_CheckMobjGone(thinker_t* th, void* context)
     if(mo->type == thingtype && mo->health > 0)
     {   // Not dead.
         XG_Dev("XL_CheckMobjGone: Thing type %i: Found mo id=%i, "
-               "health=%i, pos=(%g,%g)", thingtype, mo->thinker.id,
+               "health=%i, pos=(%g,%g)", thingtype, de::duint(mo->id()),
                mo->health, mo->pos[VX], mo->pos[VY]);
         return false; // Stop iteration.
     }

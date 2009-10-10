@@ -211,6 +211,7 @@ namespace de
         public:
             Arg(dint i) : _type(INTEGER) { _data.intValue = i; }
             Arg(duint i) : _type(INTEGER) { _data.intValue = i; }
+            Arg(size_t i) : _type(INTEGER) { _data.intValue = i; }
             Arg(dint64 i) : _type(INTEGER) { _data.intValue = i; }
             Arg(ddouble d) : _type(FLOATING_POINT) { _data.floatValue = d; }
             Arg(const void* p) : _type(INTEGER) { _data.intValue = dint64(p); }

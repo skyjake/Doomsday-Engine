@@ -36,7 +36,6 @@
 #include "dd_types.h"
 #include "dd_maptypes.h"
 #include "../portable/include/def_share.h" // \todo Not officially a public header file!
-#include <de/Thinker>
 
 #ifdef __cplusplus
 extern "C" {
@@ -661,12 +660,20 @@ typedef struct ddmobj_base_s {
 } ddmobj_base_t;
 #endif
 
+#ifdef __cplusplus
+}
+
+#include <de/Thinker>
+
 struct thinker_s : public de::Thinker 
 {
     think_t         function;
 };
 
 typedef thinker_s thinker_t;
+
+extern "C" {
+#endif
 
 typedef struct ddmobj_base_s {
     float           pos[3];             /* position [x,y,z] */

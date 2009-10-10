@@ -29,6 +29,8 @@
 #ifndef __DOOMSDAY_AUDIO_DRIVER_MUSIC_H__
 #define __DOOMSDAY_AUDIO_DRIVER_MUSIC_H__
 
+#include <stdlib.h>
+
 // Music interface properties.
 enum {
     MUSIP_ID, // Only for Get()ing.

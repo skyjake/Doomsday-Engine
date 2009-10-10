@@ -16,7 +16,7 @@
 
 INCLUDE_DIRECTORIES ( include )
 
-FILE ( GLOB SOURCES src/*.c include/*.h )
+FILE ( GLOB SOURCES src/*.cc include/*.h )
 
 ADD_LIBRARY ( dengplugin_wadmapconverter SHARED ${SOURCES} )
 

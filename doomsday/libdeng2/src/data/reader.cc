@@ -33,6 +33,11 @@ Reader::Reader(const IByteArray& source, const ByteOrder& byteOrder, IByteArray:
     : _source(source), _offset(offset), _convert(byteOrder)
 {}
 
+Reader& Reader::operator >> (char& byte)
+{
+    return *this >> reinterpret_cast<duchar&>(byte);
+}
+
 Reader& Reader::operator >> (dchar& byte)
 {
     return *this >> reinterpret_cast<duchar&>(byte);

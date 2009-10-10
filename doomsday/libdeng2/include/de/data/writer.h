@@ -69,6 +69,7 @@ namespace de
         Writer(const Writer& other, const ByteOrder& byteOrder = bigEndianByteOrder);
 
         //@{ Write a number to the destination buffer, in the chosen byte order.
+        Writer& operator << (const char& byte);
         Writer& operator << (const dchar& byte);
         Writer& operator << (const duchar& byte);
         Writer& operator << (const dint16& word);

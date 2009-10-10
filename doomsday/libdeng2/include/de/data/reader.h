@@ -52,6 +52,7 @@ namespace de
             IByteArray::Offset offset = 0);
 
         //@{ Read a number from the source buffer, in network byte order.
+        Reader& operator >> (char& byte);
         Reader& operator >> (dchar& byte);
         Reader& operator >> (duchar& byte);
         Reader& operator >> (dint16& word);

@@ -170,16 +170,16 @@ static ptcgen_t* P_PtcGenCreate(void)
 {
     ptcgen_t*           gen = (ptcgen_t*) Z_Calloc(sizeof(ptcgen_t), PU_MAP, 0);
 
-    // Link the thinker to the list of (private) thinkers.
+/*    // Link the thinker to the list of (private) thinkers.
     gen->thinker.function = (void (*)()) P_PtcGenThinker;
     P_ThinkerAdd(&gen->thinker, false);
-
+*/
     return gen;
 }
 
 static void P_PtcGenDestroy(ptcgen_t* gen)
 {
-    P_ThinkerRemove(&gen->thinker);
+    //P_ThinkerRemove(&gen->thinker);
 
     unlinkPtcGen(gen);
     freePtcGen(gen);
@@ -1277,7 +1277,7 @@ void P_PtcGenThinker(ptcgen_t* gen)
     const ded_ptcgen_t* def = gen->def;
 
     // Source has been destroyed?
-    if(!(gen->flags & PGF_UNTRIGGERED) && !P_IsUsedMobjID(gen->srcid))
+    if(!(gen->flags & PGF_UNTRIGGERED)) // && !P_IsUsedMobjID(gen->srcid))
     {
         // Blasted... Spawning new particles becomes impossible.
         gen->source = NULL;

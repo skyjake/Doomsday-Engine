@@ -303,7 +303,8 @@ void T_MaterialChanger(materialchanger_t* mchanger)
             P_GetPtrp(mchanger->side, DMU_SECTOR), DMU_SOUND_ORIGIN));
 #endif
 
-        DD_ThinkerRemove(&mchanger->thinker);
+        //DD_ThinkerRemove(&mchanger->thinker);
+        #warning T_MaterialChanger: Need to remove thinker
     }
 }
 
@@ -314,7 +315,8 @@ void P_SpawnMaterialChanger(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
 
     mchanger = (materialchanger_t*) Z_Calloc(sizeof(*mchanger), PU_MAP, 0);
     mchanger->thinker.function = (void (*)()) T_MaterialChanger;
-    DD_ThinkerAdd(&mchanger->thinker);
+    //DD_ThinkerAdd(&mchanger->thinker);
+    #warning P_SpawnMaterialChanger: Need to add thinker
 
     mchanger->side = side;
     mchanger->ssurfaceID = ssurfaceID;

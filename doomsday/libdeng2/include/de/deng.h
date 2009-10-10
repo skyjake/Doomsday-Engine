@@ -30,6 +30,7 @@
 #include <cassert>
 #include <typeinfo>
 #include <memory>
+#include <stdint.h>
 
 #ifdef WIN32
 #   ifdef LIBDENG2_EXPORTS
@@ -87,27 +88,25 @@ namespace de
      * @defgroup types Basic Types
      * 
      * Basic data types.
-     * 
-     * @todo Use native types that are guaranteed to have the right size.
      */
     
     //@{
     /// @ingroup types
-    typedef char                    dchar;      ///< 8-bit signed integer.
-    typedef unsigned char           dbyte;      ///< 8-bit unsigned integer.
-    typedef unsigned char           duchar;     ///< 8-bit unsigned integer.
+    typedef int8_t                  dchar;      ///< 8-bit signed integer.
+    typedef uint8_t                 dbyte;      ///< 8-bit unsigned integer.
+    typedef uint8_t                 duchar;     ///< 8-bit unsigned integer.
     typedef dchar                   dint8;      ///< 8-bit signed integer.
     typedef dbyte                   duint8;     ///< 8-bit unsigned integer.
-    typedef signed short int        dint16;     ///< 16-bit signed integer.
-    typedef unsigned short int      duint16;    ///< 16-bit unsigned integer.
+    typedef int16_t                 dint16;     ///< 16-bit signed integer.
+    typedef uint16_t                duint16;    ///< 16-bit unsigned integer.
     typedef dint16                  dshort;     ///< 16-bit signed integer.
     typedef duint16                 dushort;    ///< 16-bit unsigned integer.
-    typedef signed int              dint32;     ///< 32-bit signed integer.
-    typedef unsigned long int       duint32;    ///< 32-bit unsigned integer.
+    typedef int32_t                 dint32;     ///< 32-bit signed integer.
+    typedef uint32_t                duint32;    ///< 32-bit unsigned integer.
     typedef dint32                  dint;       ///< 32-bit signed integer.
     typedef duint32                 duint;      ///< 32-bit unsigned integer.
-    typedef signed long long int    dint64;     ///< 64-bit signed integer.
-    typedef unsigned long long int  duint64;    ///< 64-bit unsigned integer.
+    typedef int64_t                 dint64;     ///< 64-bit signed integer.
+    typedef uint64_t                duint64;    ///< 64-bit unsigned integer.
     typedef float                   dfloat;     ///< 32-bit floating point number.
     typedef double                  ddouble;    ///< 64-bit floating point number.
     typedef size_t                  dsize;

@@ -219,7 +219,7 @@ void P_MobjClearSRVO(mobj_t* mo)
 boolean P_MobjIsCamera(const mobj_s* mo)
 {
     // Client mobjs do not have thinkers and thus cannot be cameras.
-    return (mo && mo->thinker.function && ((mobj_t*)mo)->player &&
+    return (mo /*&& mo->thinker.function*/ && ((mobj_t*)mo)->player &&
             (((mobj_t*)mo)->player->plr->flags & DDPF_CAMERA));
 }
 

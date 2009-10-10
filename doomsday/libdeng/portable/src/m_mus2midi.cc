@@ -253,7 +253,7 @@ static boolean getNextEvent(midi_event_t* ev)
  * @param outFile       Name of the file the resulting MIDI data will be
  *                      written to.
  */
-boolean M_Mus2Midi(void* data, size_t length, const char* outFile)
+int M_Mus2Midi(void* data, unsigned int length, const char* outFile)
 {
     FILE*               file;
     unsigned char       buffer[80];

@@ -289,7 +289,8 @@ boolean destroyXSThinker(thinker_t* th, void* context)
 
     if(xs->sector == (sector_t*) context)
     {
-        DD_ThinkerRemove(&xs->thinker);
+        //DD_ThinkerRemove(&xs->thinker);
+        #warning destroyXSThinker: Need to remove thinker
         return false; // Stop iteration, we're done.
     }
 
@@ -377,7 +378,8 @@ void XS_SetSectorType(struct sector_s* sec, int special)
             xsthinker_t*    xs = (xsthinker_t*) Z_Calloc(sizeof(*xs), PU_MAP, 0);
 
             xs->thinker.function = (void (*)()) XS_Thinker;
-            DD_ThinkerAdd(&xs->thinker);
+            //DD_ThinkerAdd(&xs->thinker);
+            #warning XS_SetSectorType: Need to add thinker
 
             xs->sector = sec;
         }
@@ -463,7 +465,8 @@ void XS_MoverStopped(xgplanemover_t *mover, boolean done)
         }
 
         // Remove this thinker.
-        DD_ThinkerRemove((thinker_t *) mover);
+       // DD_ThinkerRemove((thinker_t *) mover);
+       #warning XS_MoverStopped: Need to remove thinker
     }
     else
     {
@@ -483,7 +486,8 @@ void XS_MoverStopped(xgplanemover_t *mover, boolean done)
         if(mover->flags & (PMF_ACTIVATE_ON_ABORT | PMF_DEACTIVATE_ON_ABORT))
         {
             // Destroy this mover.
-            DD_ThinkerRemove((thinker_t *) mover);
+            //DD_ThinkerRemove((thinker_t *) mover);
+#warning XS_MoverStopped: Need to remove thinker
         }
     }
 }
@@ -624,7 +628,8 @@ static boolean stopPlaneMover(thinker_t* th, void* context)
        mover->ceiling == params->ceiling)
     {
         XS_MoverStopped(mover, false);
-        DD_ThinkerRemove(th); // Remove it.
+        //DD_ThinkerRemove(th); // Remove it.
+        #warning stopPlaneMover: Need to remove thinker
     }
 
     return true; // Continue iteration.
@@ -646,7 +651,8 @@ xgplanemover_t *XS_GetPlaneMover(sector_t *sec, boolean ceiling)
     // Allocate a new thinker.
     mover = (xgplanemover_t*) Z_Calloc(sizeof(*mover), PU_MAP, 0);
     mover->thinker.function = (void (*)()) XS_PlaneMover;
-    DD_ThinkerAdd(&mover->thinker);
+    //DD_ThinkerAdd(&mover->thinker);
+    #warning XS_GetPlaneMover: Need to add thinker
 
     mover->sector = sec;
     mover->ceiling = ceiling;

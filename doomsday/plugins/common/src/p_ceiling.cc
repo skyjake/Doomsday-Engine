@@ -94,7 +94,8 @@ static void stopCeiling(ceiling_t* ceiling)
 #if __JHEXEN__
     P_TagFinished(P_ToXSector(ceiling->sector)->tag);
 #endif
-    DD_ThinkerRemove(&ceiling->thinker);
+//    DD_ThinkerRemove(&ceiling->thinker);
+#warning stopCeiling: Need to remove thinker
 }
 
 void T_MoveCeiling(ceiling_t* ceiling)
@@ -294,7 +295,8 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
         ceiling = (ceiling_t*) Z_Calloc(sizeof(*ceiling), PU_MAP, 0);
 
         ceiling->thinker.function = (void (*)()) T_MoveCeiling;
-        DD_ThinkerAdd(&ceiling->thinker);
+        //DD_ThinkerAdd(&ceiling->thinker);
+#warning EV_DoCeiling2: Need to add thinker
 
         xsec->specialData = ceiling;
         ceiling->sector = sec;
@@ -484,10 +486,11 @@ static boolean activateCeiling(thinker_t* th, void* context)
     ceiling_t*          ceiling = (ceiling_t*) th;
     activateceilingparams_t* params = (activateceilingparams_t*) context;
 
-    if(ceiling->tag == (int) params->tag && ceiling->thinker.inStasis)
+#warning activateCeiling: Check if ceiling thinker is in stasis
+    if(ceiling->tag == (int) params->tag) // && ceiling->thinker.inStasis)
     {
         ceiling->state = ceiling->oldState;
-        DD_ThinkerSetStasis(&ceiling->thinker, false);
+        //DD_ThinkerSetStasis(&ceiling->thinker, false);
         params->count++;
     }
 
@@ -533,10 +536,11 @@ static boolean deactivateCeiling(thinker_t* th, void* context)
         return false; // Stop iteration.
     }
 #else
-    if(!ceiling->thinker.inStasis && ceiling->tag == (int) params->tag)
+#warning deactivateCeiling: Check if ceiling in stasis
+    if(/*!ceiling->thinker.inStasis && */ceiling->tag == (int) params->tag)
     {   // Put it into stasis.
         ceiling->oldState = ceiling->state;
-        DD_ThinkerSetStasis(&ceiling->thinker, true);
+        //DD_ThinkerSetStasis(&ceiling->thinker, true);
         params->count++;
     }
 #endif

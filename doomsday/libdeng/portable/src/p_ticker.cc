@@ -131,8 +131,10 @@ void P_Ticker(timespan_t time)
     P_ControlTicker(time);
     P_MaterialManagerTicker(time);
 
+/*
     if(!P_ThinkerListInited())
         return; // Not initialized yet.
+*/
 
     if(!M_RunTrigger(&fixed, time))
         return;

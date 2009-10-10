@@ -137,6 +137,7 @@ void Cl_InitMovers(void)
 
 void Cl_RemoveActiveMover(mover_t *mover)
 {
+    /*
     int                 i;
 
     for(i = 0; i < MAX_MOVERS; ++i)
@@ -146,6 +147,7 @@ void Cl_RemoveActiveMover(mover_t *mover)
             activemovers[i] = NULL;
             break;
         }
+        */
 }
 
 /**
@@ -153,6 +155,7 @@ void Cl_RemoveActiveMover(mover_t *mover)
  */
 void Cl_RemoveActivePoly(polymover_t *mover)
 {
+    /*
     int                 i;
 
     for(i = 0; i < MAX_MOVERS; ++i)
@@ -162,6 +165,7 @@ void Cl_RemoveActivePoly(polymover_t *mover)
             activepolys[i] = NULL;
             break;
         }
+        */
 }
 
 /**
@@ -382,7 +386,7 @@ void Cl_SetPolyMover(uint number, int move, int rotate)
  */
 void Cl_RemoveMovers(void)
 {
-    int                 i;
+/*    int                 i;
 
     for(i = 0; i < MAX_MOVERS; ++i)
     {
@@ -396,7 +400,7 @@ void Cl_RemoveMovers(void)
             P_ThinkerRemove(&activepolys[i]->thinker);
             activepolys[i] = NULL;
         }
-    }
+    }*/
 }
 
 mover_t *Cl_GetActiveMover(uint sectornum, clmovertype_t type)

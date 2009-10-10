@@ -180,7 +180,7 @@ static void addMaterialToList(materialref_t* m, materialref_t*** list,
     size_t              i, n;
 
     // Enlarge the list.
-    (*list) = realloc((*list), sizeof(m) * ++(*size));
+    (*list) = (materialref_t**) realloc((*list), sizeof(m) * ++(*size));
 
     // Find insertion point.
     n = 0;
@@ -214,7 +214,7 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
         /**
          * A new material.
          */
-        m = malloc(sizeof(*m));
+        m = (materialref_t*) malloc(sizeof(*m));
         if(map->format == MF_DOOM64)
         {
             int                 idx = *((int*) name);
@@ -566,7 +566,7 @@ int DataTypeForLumpName(const char* name)
         {ML_GLPVS,      "GL_PVS"},
         {ML_INVALID,    NULL},
     };
-    lumptype_t          i;
+    int i;
 
     if(name && name[0])
     {
@@ -620,12 +620,12 @@ static boolean createPolyobj(mline_t **lineList, uint num, uint *poIdx,
     }
 
     // Allocate the new polyobj.
-    po = calloc(1, sizeof(*po));
+    po = (mpolyobj_t*) calloc(1, sizeof(*po));
 
     /**
      * Link the new polyobj into the global list.
      */
-    newList = malloc(((++map->numPolyobjs) + 1) * sizeof(mpolyobj_t*));
+    newList = (mpolyobj_t**) malloc(((++map->numPolyobjs) + 1) * sizeof(mpolyobj_t*));
     // Copy the existing list.
     for(i = 0; i < map->numPolyobjs - 1; ++i)
     {
@@ -644,7 +644,7 @@ static boolean createPolyobj(mline_t **lineList, uint num, uint *poIdx,
     po->anchor[VX] = anchorX;
     po->anchor[VY] = anchorY;
     po->lineCount = num;
-    po->lineIndices = malloc(sizeof(uint) * num);
+    po->lineIndices = (uint*) malloc(sizeof(uint) * num);
     for(i = 0; i < num; ++i)
     {
         // This line is part of a polyobj.
@@ -738,7 +738,7 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
                 Con_Error("WadMapConverter::findAndCreatePolyobj: Found unclosed polyobj.\n");
             }
 
-            lineList = malloc((PolyLineCount+1) * sizeof(mline_t*));
+            lineList = (mline_t**) malloc((PolyLineCount+1) * sizeof(mline_t*));
 
             lineList[0] = line; // Insert the first line.
             iterFindPolyLines(v2[VX], v2[VY], lineList + 1);
@@ -1550,7 +1550,7 @@ static void bufferLump(int lumpNum, byte** buf, size_t* len, size_t* oldLen)
     // Need to enlarge our buffer?
     if(*len > *oldLen)
     {
-        *buf = realloc(*buf, *len);
+        *buf = (byte*) realloc(*buf, *len);
         *oldLen = *len;
     }
 
@@ -1565,18 +1565,20 @@ boolean LoadMap(const int* lumpList, int numLumps)
     size_t              oldLen = 0;
 
     // Allocate the data structure arrays.
-    map->vertexes = malloc(map->numVertexes * 2 * sizeof(float));
-    map->lines = malloc(map->numLines * sizeof(mline_t));
-    map->sides = malloc(map->numSides * sizeof(mside_t));
-    map->sectors = malloc(map->numSectors * sizeof(msector_t));
-    map->things = malloc(map->numThings * sizeof(mthing_t));
+    map->vertexes = (float*) malloc(map->numVertexes * 2 * sizeof(float));
+    map->lines = (mline_t*) malloc(map->numLines * sizeof(mline_t));
+    map->sides = (mside_t*) malloc(map->numSides * sizeof(mside_t));
+    map->sectors = (msector_t*) malloc(map->numSectors * sizeof(msector_t));
+    map->things = (mthing_t*) malloc(map->numThings * sizeof(mthing_t));
     if(map->numLights)
-        map->lights = malloc(map->numLights * sizeof(surfacetint_t));
+    {
+        map->lights = (surfacetint_t*) malloc(map->numLights * sizeof(surfacetint_t));
+    }
 
     for(i = 0; i < numLumps; ++i)
     {
         size_t              len;
-        lumptype_t          lumpType;
+        int                 lumpType;
 
         lumpType = DataTypeForLumpName(W_LumpName(lumpList[i]));
 
@@ -1764,7 +1766,7 @@ boolean TransferMap(void)
         mpolyobj_t*         po = map->polyobjs[i];
         uint                j, *lineList;
 
-        lineList = malloc(sizeof(uint) * po->lineCount);
+        lineList = (uint*) malloc(sizeof(uint) * po->lineCount);
         for(j = 0; j < po->lineCount; ++j)
             lineList[j] = po->lineIndices[j] + 1;
         MPE_PolyobjCreate(lineList, po->lineCount, po->tag,

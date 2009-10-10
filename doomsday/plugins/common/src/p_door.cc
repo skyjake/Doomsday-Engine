@@ -192,7 +192,8 @@ void T_Door(door_t* door)
             case DT_BLAZERAISE:
             case DT_BLAZECLOSE:
                 xsec->specialData = NULL;
-                DD_ThinkerRemove(&door->thinker); // Unlink and free.
+                //DD_ThinkerRemove(&door->thinker); // Unlink and free.
+                #warning T_Door: Need to remove thinker
 
                 // DOOMII BUG:
                 // This is what causes blazing doors to produce two closing
@@ -207,7 +208,8 @@ void T_Door(door_t* door)
 #if __JHEXEN__
                 P_TagFinished(P_ToXSector(door->sector)->tag);
 #endif
-                DD_ThinkerRemove(&door->thinker); // Unlink and free.
+                //DD_ThinkerRemove(&door->thinker); // Unlink and free.
+                #warning T_Door: Need to remove thinker
 #if __JHERETIC__
                 S_SectorSound(door->sector, SORG_CEILING, SFX_DOORCLOSE);
 #endif
@@ -286,7 +288,8 @@ void T_Door(door_t* door)
 #if __JHEXEN__
                 P_TagFinished(P_ToXSector(door->sector)->tag);
 #endif
-                DD_ThinkerRemove(&door->thinker); // Unlink and free.
+//                DD_ThinkerRemove(&door->thinker); // Unlink and free.
+#warning T_Door: Need to remove thinker
 #if __JHERETIC__
                 S_StopSound(0, (mobj_t *) P_GetPtrp(door->sector,
                                                     DMU_CEILING_SOUND_ORIGIN));
@@ -324,13 +327,15 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
         if(xsec->specialData)
             continue;
 
-        // new door thinker
+#warning EV_DoDoor2: Need to create thinker
+        return rtn;
+/*        // new door thinker
         rtn = 1;
         door = (door_t*) Z_Calloc(sizeof(*door), PU_MAP, 0);
         door->thinker.function = (void (*)()) T_Door;
         DD_ThinkerAdd(&door->thinker);
         xsec->specialData = door;
-
+*/
         door->sector = sec;
         door->type = type;
         door->topWait = topwait;
@@ -733,6 +738,9 @@ boolean EV_VerticalDoor(linedef_t* line, mobj_t* mo)
 #endif
     }
 
+#warning EV_VerticalDoor: Need to create thinker
+    return false;
+    /*
     // New door thinker.
     door = (door_t*) Z_Calloc(sizeof(*door), PU_MAP, 0);
     door->thinker.function = (void (*)()) T_Door;
@@ -740,6 +748,7 @@ boolean EV_VerticalDoor(linedef_t* line, mobj_t* mo)
     xsec->specialData = door;
     door->sector = sec;
     door->state = DS_UP;
+    */
 
     // Play a sound?
 #if __JHEXEN__
@@ -856,10 +865,12 @@ void P_SpawnDoorCloseIn30(sector_t *sec)
 {
     door_t *door;
 
+#warning P_SpawnDoorCloseIn30: Need to create thinker
+/*
     door = (door_t*) Z_Calloc(sizeof(*door), PU_MAP, 0);
     door->thinker.function = (void (*)()) T_Door;
     DD_ThinkerAdd(&door->thinker);
-
+*/
     P_ToXSector(sec)->specialData = door;
     P_ToXSector(sec)->special = 0;
 
@@ -874,10 +885,13 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec)
 {
     door_t           *door;
 
+#warning P_SpawnDoorRaiseIn5Mins: Need to create thinker
+    return;
+/*
     door = (door_t*) Z_Calloc(sizeof(*door), PU_MAP, 0);
     door->thinker.function = (void (*)()) T_Door;
     DD_ThinkerAdd(&door->thinker);
-
+*/
     P_ToXSector(sec)->specialData = door;
     P_ToXSector(sec)->special = 0;
 

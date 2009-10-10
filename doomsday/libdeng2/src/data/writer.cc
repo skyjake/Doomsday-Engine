@@ -39,6 +39,13 @@ Writer::Writer(const Writer& other, const ByteOrder& byteOrder)
       _fixedOffset(other._fixedOffset + other._offset), _convert(byteOrder)
 {}
 
+Writer& Writer::operator << (const char& byte)
+{
+    _destination.set(_fixedOffset + _offset, reinterpret_cast<const IByteArray::Byte*>(&byte), 1);
+    ++_offset;
+    return *this;
+}
+
 Writer& Writer::operator << (const dchar& byte)
 {
     _destination.set(_fixedOffset + _offset, reinterpret_cast<const IByteArray::Byte*>(&byte), 1);

@@ -1128,9 +1128,8 @@ void SetValueStr(const char *path, const char *id, char *str)
     // Not found, create a new Value.
     i = DED_AddValue(ded, realid);
     // Must allocate memory using DD_Realloc.
-    ded->values[i].text = 0;
-    strcpy(ded->values[i].text =
-           DD_Realloc(ded->values[i].text, strlen(str) + 1), str);
+    ded->values[i].text = (char*) DD_Realloc(0, strlen(str) + 1);
+    strcpy(ded->values[i].text, str);
 }
 
 void SetValueInt(const char *path, const char *id, int val)
@@ -1552,7 +1551,7 @@ int PatchCodePtrs(int dummy)
 
 void ReplaceInString(char *str, char *occurance, char *replacewith)
 {
-    char   *buf = calloc(strlen(str) * 2, 1);
+    char   *buf = (char*) calloc(strlen(str) * 2, 1);
     char   *out = buf, *in = str;
     int     oclen = strlen(occurance), replen = strlen(replacewith);
 
@@ -1591,8 +1590,8 @@ int PatchText(int oldSize)
     }
     newSize = atoi(com_token);
 
-    oldStr = malloc(oldSize + 1);
-    newStr = malloc(newSize + 1);
+    oldStr = (char*) malloc(oldSize + 1);
+    newStr = (char*) malloc(newSize + 1);
 
     if(!oldStr || !newStr)
     {
@@ -1829,7 +1828,7 @@ int DoInclude(int dummy)
     }
     fseek(file, 0, SEEK_END);
     len = ftell(file);
-    patch = calloc(len + 1, 1);
+    patch = (char*) calloc(len + 1, 1);
     rewind(file);
     fread(patch, len, 1, file);
     patch[len] = 0;
@@ -1929,7 +1928,7 @@ void ReadDehackedLump(int lumpnum)
 
     Con_Message("Applying Dehacked: lump %i...\n", lumpnum);
     len = W_LumpLength(lumpnum);
-    lump = calloc(len + 1, 1);
+    lump = (byte*) calloc(len + 1, 1);
     memcpy(lump, W_CacheLumpNum(lumpnum, PU_CACHE), len);
     ApplyDEH((char*)lump, len);
     free(lump);
@@ -1953,7 +1952,7 @@ void ReadDehacked(char *filename)
     fseek(file, 0, SEEK_END);
     len = ftell(file) + 1;
     // Allocate enough memory and read it.
-    deh = calloc(len + 1, 1);
+    deh = (char*) calloc(len + 1, 1);
     rewind(file);
     fread(deh, len, 1, file);
     fclose(file);
