@@ -143,6 +143,7 @@ boolean netServerMode = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+/*
 static TCPsocket serverSock;
 static volatile UDPsocket inSock;
 static Uint16 recvUDPPort;
@@ -156,15 +157,18 @@ static foundhost_t located;
 static volatile boolean stopReceiver;
 static byte* transmissionBuffer;
 static size_t transmissionBufferSize;
+*/
 
 // CODE --------------------------------------------------------------------
 
 void N_Register(void)
 {
+    /*
     C_VAR_CHARPTR("net-ip-address", &nptIPAddress, 0, 0, 0);
     C_VAR_INT("net-ip-port", &nptIPPort, CVF_NO_MAX, 0, 0);
     C_VAR_INT("net-port-control", &nptIPPort, CVF_NO_MAX, 0, 0);
     C_VAR_INT("net-port-data", &nptUDPPort, CVF_NO_MAX, 0, 0);
+    */
 }
 
 /**

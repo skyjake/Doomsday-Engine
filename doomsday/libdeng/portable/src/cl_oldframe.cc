@@ -61,8 +61,10 @@ extern boolean  gotFirstFrame;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+/*
 static int num_acks;
 static byte acks[MAX_ACKS];
+*/
 
 // CODE --------------------------------------------------------------------
 

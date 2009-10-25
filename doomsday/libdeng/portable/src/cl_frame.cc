@@ -60,6 +60,7 @@ int     predicted_tics;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+/*
 // Ordinal of the latest set received by the client. Used for detecting deltas
 // that arrive out of order. The ordinal is the logical equivalent of the set
 // identifier (which is 0...255).
@@ -80,6 +81,7 @@ static int      historyIdx;
 // to detect duplicate resends.
 static byte     resendHistory[RESEND_HISTORY_SIZE];
 static int      resendHistoryIdx;
+*/
 
 // CODE --------------------------------------------------------------------
 

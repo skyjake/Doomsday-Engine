@@ -180,6 +180,7 @@ int DD_GameLoop(void)
     }
 
     //return exitCode;
+    return 0;
 }
 
 /**

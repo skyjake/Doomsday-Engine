@@ -68,20 +68,20 @@ netbuffer_t netBuffer;
 //static store_t stores[DDMAXPLAYERS];
 
 // The message queue: list of incoming messages waiting for processing.
-static netmessage_t *msgHead, *msgTail;
-static int msgCount;
+//static netmessage_t *msgHead, *msgTail;
+//static int msgCount;
 
 // A mutex is used to protect the addition and removal of messages from
 // the message queue.
-static mutex_t msgMutex;
+//static mutex_t msgMutex;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Number of bytes of outgoing data transmitted.
-static size_t numOutBytes;
+//static size_t numOutBytes;
 
 // Number of bytes sent over the network (compressed).
-static size_t numSentBytes;
+//static size_t numSentBytes;
 
 // CODE --------------------------------------------------------------------
 

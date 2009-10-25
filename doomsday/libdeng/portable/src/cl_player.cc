@@ -59,7 +59,7 @@ clplayerstate_t clPlayerStates[DDMAXPLAYERS];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int fixSpeed = 15;
+//static int fixSpeed = 15;
 static float fixPos[3];
 static int fixTics;
 static float pspY;

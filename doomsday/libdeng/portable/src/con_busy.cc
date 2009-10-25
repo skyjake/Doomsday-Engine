@@ -66,6 +66,7 @@ static void Con_BusyDeleteTextures(void);
 
 static boolean busyInited;
 static int busyMode;
+/*
 static char* busyTaskName;
 static thread_t busyThread;
 static timespan_t busyTime;
@@ -78,6 +79,7 @@ static mutex_t busy_Mutex; // To prevent Data races in the busy thread.
 
 static DGLuint texLoading[2];
 static DGLuint texScreenshot; // Captured screenshot of the latest frame.
+*/
 
 // CODE --------------------------------------------------------------------
 
