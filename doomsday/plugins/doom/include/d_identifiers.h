@@ -39,7 +39,10 @@
 enum {
     SID_UNUSED = de::Thinker::FIRST_CUSTOM_THINKER, // don't use for anything
 
-    SID_LIGHT_FLASH_THINKER
+    SID_LIGHT_FLASH_THINKER,
+    SID_FIRE_FLICKER_THINKER,
+    SID_STROBE_THINKER,
+    SID_GLOW_THINKER
 };
 
 #endif

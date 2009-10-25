@@ -442,40 +442,6 @@ static thinkerinfo_t thinkerInfo[] = {
      sizeof(polydoor_t)
     },
 #else
-    {
-      TC_FLASH,
-      (voidfunc_t) 0, //T_LightFlash,
-      0,
-      (voidfunc_t) SV_WriteFlash,
-      (intfunc_t) SV_ReadFlash,
-      sizeof(lightflash_t)
-    },
-    {
-      TC_STROBE,
-      (voidfunc_t) T_StrobeFlash,
-      0,
-      (voidfunc_t) SV_WriteStrobe,
-      (intfunc_t) SV_ReadStrobe,
-      sizeof(strobe_t)
-    },
-    {
-      TC_GLOW,
-      (voidfunc_t) T_Glow,
-      0,
-      (voidfunc_t) SV_WriteGlow,
-      (intfunc_t) SV_ReadGlow,
-      sizeof(glow_t)
-    },
-# if __JDOOM__ || __JDOOM64__
-    {
-      TC_FLICKER,
-      (voidfunc_t) T_FireFlicker,
-      0,
-      (voidfunc_t) SV_WriteFlicker,
-      (intfunc_t) SV_ReadFlicker,
-      sizeof(fireflicker_t)
-    },
-# endif
 # if __JDOOM64__
     {
       TC_BLINK,

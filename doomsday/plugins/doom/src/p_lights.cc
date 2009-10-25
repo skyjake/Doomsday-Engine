@@ -61,9 +61,30 @@ using namespace de;
 
 // CODE --------------------------------------------------------------------
 
-void T_FireFlicker(fireflicker_t *flick)
+void LightThinker::operator >> (Writer& to) const
 {
-    float               amount, lightLevel;
+    Thinker::operator >> (to);
+
+    to << duint(P_ToIndex(sector))
+       << maxLight
+       << minLight;
+}
+
+void LightThinker::operator << (Reader& from)
+{
+    Thinker::operator << (from);
+
+    duint sectorIndex;
+    from >> sectorIndex;
+    sector = (sector_t*) P_ToPtr(DMU_SECTOR, sectorIndex);
+    from >> maxLight
+         >> minLight;
+}
+
+void FireFlickerThinker::think(const Time::Delta& /*elapsed*/)
+{
+    fireflicker_t *flick = this;
+    float amount, lightLevel;
 
     if(--flick->count)
         return;
@@ -80,6 +101,18 @@ void T_FireFlicker(fireflicker_t *flick)
     flick->count = 4;
 }
 
+void FireFlickerThinker::operator >> (Writer& to) const
+{
+    LightThinker::operator >> (to);
+    to << count;
+}
+
+void FireFlickerThinker::operator << (Reader& from)
+{
+    LightThinker::operator << (from);
+    from >> count;
+}
+
 void P_SpawnFireFlicker(sector_t *sector)
 {
     float               lightLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
@@ -90,13 +123,8 @@ void P_SpawnFireFlicker(sector_t *sector)
     // Nothing special about it during gameplay.
     P_ToXSector(sector)->special = 0;
 
-/*
-    flick = (fireflicker_t*) Z_Calloc(sizeof(*flick), PU_MAP, 0);
-    flick->thinker.function = (void (*)()) T_FireFlicker;
-    DD_ThinkerAdd(&flick->thinker);
-    */
-#warning P_SpawnFireFlicker: Thinker add needed
-    return;
+    flick = new FireFlickerThinker;
+    App::currentMap().add(flick);
 
     flick->sector = sector;
     flick->count = 4;
@@ -136,28 +164,14 @@ void LightFlashThinker::think(const Time::Delta& /*elapsed*/)
 
 void LightFlashThinker::operator >> (Writer& to) const
 {
-    Thinker::operator >> (to);
-
-    to << duint(P_ToIndex(sector))
-       << count 
-       << maxLight
-       << minLight
-       << maxTime
-       << minTime;
+    LightThinker::operator >> (to);
+    to << count << maxTime << minTime;
 }
 
 void LightFlashThinker::operator << (Reader& from)
 {
-    Thinker::operator << (from);
-
-    duint sectorIndex;
-    from >> sectorIndex;
-    sector = (sector_t*) P_ToPtr(DMU_SECTOR, sectorIndex);
-    from >> count 
-         >> maxLight
-         >> minLight
-         >> maxTime
-         >> minTime;
+    LightThinker::operator << (from);
+    from >> count >> maxTime >> minTime;
 }
 
 /**
@@ -193,9 +207,10 @@ void P_SpawnLightFlash(sector_t *sector)
 /**
  * Strobe light flashing.
  */
-void T_StrobeFlash(strobe_t *flash)
+void StrobeThinker::think(const Time::Delta& /*elapsed*/)
 {
-    float               lightLevel;
+    strobe_t* flash = this;
+    float lightLevel;
 
     if(--flash->count)
         return;
@@ -213,6 +228,18 @@ void T_StrobeFlash(strobe_t *flash)
     }
 }
 
+void StrobeThinker::operator >> (Writer& to) const
+{
+    LightThinker::operator >> (to);
+    to << count << darkTime << brightTime;
+}
+
+void StrobeThinker::operator << (Reader& from)
+{
+    LightThinker::operator << (from);
+    from >> count >> darkTime >> brightTime;
+}
+
 /**
  * After the map has been loaded, scan each sector for specials that spawn
  * thinkers.
@@ -223,13 +250,8 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
     float               lightLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
     float               otherLevel = DDMAXFLOAT;
 
-/*
-    flash = (strobe_t*) Z_Calloc(sizeof(*flash), PU_MAP, 0);
-    flash->thinker.function = (void (*)()) T_StrobeFlash;
-    DD_ThinkerAdd(&flash->thinker);
-*/
-#warning P_SpawnStrobeFlash: Thinker add needed
-    return;
+    flash = new StrobeThinker;
+    App::currentMap().add(flash);
 
     flash->sector = sector;
     flash->darkTime = fastOrSlow;
@@ -253,6 +275,76 @@ void P_SpawnStrobeFlash(sector_t *sector, int fastOrSlow, int inSync)
     else
         flash->count = 1;
 }
+
+void GlowThinker::think(const Time::Delta& /*elapsed*/)
+{
+    glow_t *g = this;
+    float lightLevel = P_GetFloatp(g->sector, DMU_LIGHT_LEVEL);
+    float glowDelta = (1.0f / 255.0f) * (float) GLOWSPEED;
+
+    switch(g->direction)
+    {
+    case -1: // Down.
+        lightLevel -= glowDelta;
+        if(lightLevel <= g->minLight)
+        {
+            lightLevel += glowDelta;
+            g->direction = 1;
+        }
+        break;
+
+    case 1: // Up.
+        lightLevel += glowDelta;
+        if(lightLevel >= g->maxLight)
+        {
+            lightLevel -= glowDelta;
+            g->direction = -1;
+        }
+        break;
+
+    default:
+        Con_Error("T_Glow: Invalid direction %i.", g->direction);
+        break;
+    }
+
+    P_SetFloatp(g->sector, DMU_LIGHT_LEVEL, lightLevel);
+}
+
+void GlowThinker::operator >> (Writer& to) const
+{
+    LightThinker::operator >> (to);
+    to << direction;
+}
+
+void GlowThinker::operator << (Reader& from)
+{
+    LightThinker::operator << (from);
+    from >> direction;
+}
+
+void P_SpawnGlowingLight(sector_t *sector)
+{
+    float               lightLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
+    float               otherLevel = DDMAXFLOAT;
+    glow_t             *g;
+
+    g = new GlowThinker;
+    App::currentMap().add(g);
+
+    g->sector = sector;
+    P_FindSectorSurroundingLowestLight(sector, &otherLevel);
+    if(otherLevel < lightLevel)
+        g->minLight = otherLevel;
+    else
+        g->minLight = lightLevel;
+    g->maxLight = lightLevel;
+    g->direction = -1;
+
+    // Note that we are resetting sector attributes.
+    // Nothing special about it during gameplay.
+    P_ToXSector(sector)->special = 0;
+}
+
 
 /**
  * Start strobing lights (usually from a trigger)
@@ -329,65 +421,4 @@ void EV_LightTurnOn(linedef_t *line, float max)
 
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, lightLevel);
     }
-}
-
-void T_Glow(glow_t *g)
-{
-    float               lightLevel = P_GetFloatp(g->sector, DMU_LIGHT_LEVEL);
-    float               glowDelta = (1.0f / 255.0f) * (float) GLOWSPEED;
-
-    switch(g->direction)
-    {
-    case -1: // Down.
-        lightLevel -= glowDelta;
-        if(lightLevel <= g->minLight)
-        {
-            lightLevel += glowDelta;
-            g->direction = 1;
-        }
-        break;
-
-    case 1: // Up.
-        lightLevel += glowDelta;
-        if(lightLevel >= g->maxLight)
-        {
-            lightLevel -= glowDelta;
-            g->direction = -1;
-        }
-        break;
-
-    default:
-        Con_Error("T_Glow: Invalid direction %i.", g->direction);
-        break;
-    }
-
-    P_SetFloatp(g->sector, DMU_LIGHT_LEVEL, lightLevel);
-}
-
-void P_SpawnGlowingLight(sector_t *sector)
-{
-    float               lightLevel = P_GetFloatp(sector, DMU_LIGHT_LEVEL);
-    float               otherLevel = DDMAXFLOAT;
-    glow_t             *g;
-
-#warning P_SpawnGlowingLight: Thinker add needed
-    return;
-/*
-    g = (glow_t*) Z_Calloc(sizeof(*g), PU_MAP, 0);
-    g->thinker.function = (void (*)()) T_Glow;
-    DD_ThinkerAdd(&g->thinker);
-    */
-
-    g->sector = sector;
-    P_FindSectorSurroundingLowestLight(sector, &otherLevel);
-    if(otherLevel < lightLevel)
-        g->minLight = otherLevel;
-    else
-        g->minLight = lightLevel;
-    g->maxLight = lightLevel;
-    g->direction = -1;
-
-    // Note that we are resetting sector attributes.
-    // Nothing special about it during gameplay.
-    P_ToXSector(sector)->special = 0;
 }
