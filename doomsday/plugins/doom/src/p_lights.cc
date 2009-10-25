@@ -107,9 +107,10 @@ void P_SpawnFireFlicker(sector_t *sector)
 /**
  * Broken light flashing.
  */
-void T_LightFlash(lightflash_t *flash)
+void LightFlashThinker::think(const Time::Delta& /*elapsed*/)
 {
-    float               lightLevel;
+    lightflast_t* flash = this;
+    float lightLevel;
 
     if(--flash->count)
         return;
@@ -141,13 +142,8 @@ void P_SpawnLightFlash(sector_t *sector)
     // Nothing special about it during gameplay.
     P_ToXSector(sector)->special = 0;
 
-/*
-    flash = (lightflash_t*) Z_Calloc(sizeof(*flash), PU_MAP, 0);
-    flash->thinker.function = (void (*)()) T_LightFlash;
-    DD_ThinkerAdd(&flash->thinker);
-    */
-#warning P_SpawnLightFlash: Thinker add needed
-    return;
+    flash = new LightFlashThinker;
+    App::currentMap().add(flash);
     
     flash->sector = sector;
     flash->maxLight = lightLevel;

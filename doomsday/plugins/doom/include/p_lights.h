@@ -28,6 +28,8 @@
 #ifndef __P_LIGHTS_H__
 #define __P_LIGHTS_H__
 
+#include <de/Thinker>
+
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
 #endif
@@ -45,15 +47,29 @@ typedef struct {
     float           minLight;
 } fireflicker_t;
 
-typedef struct {
-    thinker_t       thinker;
+class LightFlashThinker : public de::Thinker 
+{
+public:
     sector_t*       sector;
     int             count;
     float           maxLight;
     float           minLight;
     int             maxTime;
     int             minTime;
-} lightflash_t;
+    
+public:
+    LightFlashThinker() 
+        : sector(0), 
+          count(0),
+          maxLight(0),
+          minLight(0),
+          maxTime(0),
+          minTime(0) {}
+          
+    void think(const de::Time::Delta& elapsed);
+};
+
+typedef LightFlashThinker lightflast_t;
 
 typedef struct {
     thinker_t       thinker;
@@ -76,7 +92,7 @@ typedef struct {
 void            T_FireFlicker(fireflicker_t* flick);
 void            P_SpawnFireFlicker(sector_t* sector);
 
-void            T_LightFlash(lightflash_t* flash);
+//void            T_LightFlash(lightflash_t* flash);
 void            P_SpawnLightFlash(sector_t* sector);
 
 void            T_StrobeFlash(strobe_t* flash);
