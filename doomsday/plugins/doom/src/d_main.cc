@@ -45,8 +45,11 @@ l * but WITHOUT ANY WARRANTY; without even the implied warranty of
 #include "am_map.h"
 #include "g_defs.h"
 #include "p_player.h"
+#include "p_lights.h"
 
 #include "doommap.h"
+
+using namespace de;
 
 // MACROS ------------------------------------------------------------------
 
@@ -380,7 +383,10 @@ DENG_EXPORT void deng_InitializePlugin(void)
     int                 i;
 
     G_SetGameMode(indetermined);
-
+    
+    // Thinker types.
+    Thinker::define(SID_LIGHT_FLASH_THINKER, LightFlashThinker::construct);
+    
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
     memset(&cfg, 0, sizeof(cfg));

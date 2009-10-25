@@ -28,13 +28,15 @@
 #include "de/NumberValue"
 #include "de/Map"
 
+#include <sstream>
+
 using namespace de;
 
 #define HAS_INFO 0x01
 
 Thinker::Constructors Thinker::_constructors;
 
-Thinker::Thinker() : _id(0), _info(0), _map(0)
+Thinker::Thinker(SerialId sid) : _serialId(sid), _id(0), _info(0), _map(0)
 {}
 
 Thinker::~Thinker()
@@ -79,49 +81,37 @@ void Thinker::think(const Time::Delta& elapsed)
     }
 }
 
-void Thinker::define(Constructor constructor)
+void Thinker::define(SerialId serializedId, Constructor constructor)
 {
-    _constructors.insert(constructor);
+    _constructors[serializedId] = constructor;
 }
 
-void Thinker::undefine(Constructor constructor)
+void Thinker::undefine(SerialId serializedId)
 {
-    _constructors.erase(constructor);
+    _constructors.erase(serializedId);
 }
 
 Thinker* Thinker::constructFrom(Reader& reader)
 {
-    FOR_EACH(i, _constructors, Constructors::iterator)
+    SerialId serialId;
+    reader >> serialId;
+    reader.rewind(sizeof(SerialId));
+
+    Constructors::iterator found = _constructors.find(serialId);
+    if(found != _constructors.end())
     {
-        Reader attempt(reader);
-        Thinker* thinker = (*i)(attempt);
-        if(thinker)
-        {
-            // Advance the main reader.
-            reader.setOffset(attempt.offset());
-            return thinker;
-        }
-    }    
+        std::auto_ptr<Thinker> th(found->second());
+        reader >> *th.get();
+        return th.release();
+    }
+    
     /// @throw UnrecognizedError  Could not construct thinker because the type id was unknown.
     throw UnrecognizedError("Thinker::constructFrom", "Unknown thinker type");
 }
 
-Thinker* Thinker::fromReader(Reader& reader)
-{
-    SerialId sid;
-    reader >> sid;
-    if(sid != THINKER)
-    {
-        return 0;
-    }
-    std::auto_ptr<Thinker> th(new Thinker);
-    reader >> *th.get();
-    return th.release();
-}
-
 void Thinker::operator >> (Writer& to) const
 {
-    to << _id << _bornAt;
+    to << _serialId << _id << _bornAt;
     if(_info)
     {
         to << duint8(HAS_INFO) << *_info;
@@ -134,6 +124,19 @@ void Thinker::operator >> (Writer& to) const
 
 void Thinker::operator << (Reader& from)
 {
+    SerialId readSerialId;
+    from >> readSerialId; 
+
+    // Sanity check.
+    if(readSerialId != _serialId)
+    {
+        std::ostringstream os;
+        os << "Invalid serial ID (got " << duint(readSerialId) << " while " << 
+            duint(_serialId) << " was expected)";
+        /// @throw InvalidTypeError  The read serial ID was unexpected.
+        throw InvalidTypeError("Thinker::operator <<", os.str());
+    }
+    
     from >> _id >> _bornAt;
     duint8 flags;
     from >> flags;

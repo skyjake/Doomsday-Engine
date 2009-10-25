@@ -444,7 +444,7 @@ static thinkerinfo_t thinkerInfo[] = {
 #else
     {
       TC_FLASH,
-      (voidfunc_t) T_LightFlash,
+      (voidfunc_t) 0, //T_LightFlash,
       0,
       (voidfunc_t) SV_WriteFlash,
       (intfunc_t) SV_ReadFlash,

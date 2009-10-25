@@ -23,23 +23,15 @@
 
 using namespace de;
 
-Object::Object()
+Object::Object() : Thinker(OBJECT)
 {}
 
 Object::~Object()
 {}
 
-Thinker* Object::fromReader(Reader& reader)
+Thinker* Object::construct()
 {
-    SerialId sid;
-    reader >> sid;
-    if(sid != OBJECT)
-    {
-        return 0;
-    }
-    std::auto_ptr<Object> ob(new Object);
-    reader >> *ob.get();
-    return ob.release();
+    return new Object;
 }
 
 void Object::operator >> (Writer& to) const

@@ -63,5 +63,6 @@
 #include "../../doom/include/tables.h"
 #include "../../doom/include/wi_stuff.h"
 #include "../../doom/include/acfnlink.h"
+#include "../../doom/include/d_identifiers.h"
 
 #endif // __JDOOM_CONVENIENCE_H__

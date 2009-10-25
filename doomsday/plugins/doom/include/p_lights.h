@@ -28,6 +28,7 @@
 #ifndef __P_LIGHTS_H__
 #define __P_LIGHTS_H__
 
+#include "d_identifiers.h"
 #include <de/Thinker>
 
 #ifndef __JDOOM__
@@ -38,14 +39,6 @@
 #define STROBEBRIGHT            (5)
 #define FASTDARK                (15)
 #define SLOWDARK                (35)
-
-typedef struct {
-    thinker_t       thinker;
-    sector_t*       sector;
-    int             count;
-    float           maxLight;
-    float           minLight;
-} fireflicker_t;
 
 class LightFlashThinker : public de::Thinker 
 {
@@ -59,7 +52,8 @@ public:
     
 public:
     LightFlashThinker() 
-        : sector(0), 
+        : de::Thinker(SID_LIGHT_FLASH_THINKER),
+          sector(0), 
           count(0),
           maxLight(0),
           minLight(0),
@@ -67,9 +61,25 @@ public:
           minTime(0) {}
           
     void think(const de::Time::Delta& elapsed);
+
+    // Implements ISerializable.
+    void operator >> (de::Writer& to) const;
+    void operator << (de::Reader& from);
+    
+    static Thinker* construct() {
+        return new LightFlashThinker;
+    }
 };
 
-typedef LightFlashThinker lightflast_t;
+typedef LightFlashThinker lightflash_t;
+
+typedef struct {
+    thinker_t       thinker;
+    sector_t*       sector;
+    int             count;
+    float           maxLight;
+    float           minLight;
+} fireflicker_t;
 
 typedef struct {
     thinker_t       thinker;

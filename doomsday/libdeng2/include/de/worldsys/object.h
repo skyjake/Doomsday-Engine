@@ -46,16 +46,9 @@ namespace de
         // Implements ISerializable.
         void operator >> (Writer& to) const;
         void operator << (Reader& from);
-        
+
     public:
-        /**
-         * Deserializes an object from a reader.
-         *
-         * @param reader  Reader.
-         *
-         * @return  Deserialized object, or @c NULL if the type id doesn't match.
-         */
-        static Thinker* fromReader(Reader& reader);
+        static Thinker* construct();
         
     private:
         /// Position of the object's origin.

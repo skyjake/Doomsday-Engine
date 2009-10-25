@@ -92,11 +92,11 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
     try
     {
         // Define built-in constructors.
-        Thinker::define(Thinker::fromReader);
-        Thinker::define(Object::fromReader);
+        Thinker::define(Thinker::THINKER, Thinker::construct);
+        Thinker::define(Thinker::OBJECT, Object::construct);
         
         // The memory zone.
-        std::auto_ptr<Zone> memoryPtr(new Zone());
+        std::auto_ptr<Zone> memoryPtr(new Zone);
         _memory = memoryPtr.get();
 
 #if defined(MACOSX)
@@ -109,7 +109,7 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
 #endif
     
         // Now we can proceed with the members.
-        std::auto_ptr<FS> fsPtr(new FS());
+        std::auto_ptr<FS> fsPtr(new FS);
         _fs = fsPtr.get();
 
         // Initialize the built-in folders.

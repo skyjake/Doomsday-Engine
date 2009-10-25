@@ -37,6 +37,12 @@
 #include "p_mapsetup.h"
 #include "p_mapspec.h"
 
+#include <de/core.h>
+#include <de/world.h>
+#include <de/data.h>
+
+using namespace de;
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -109,7 +115,7 @@ void P_SpawnFireFlicker(sector_t *sector)
  */
 void LightFlashThinker::think(const Time::Delta& /*elapsed*/)
 {
-    lightflast_t* flash = this;
+    lightflash_t* flash = this;
     float lightLevel;
 
     if(--flash->count)
@@ -126,6 +132,32 @@ void LightFlashThinker::think(const Time::Delta& /*elapsed*/)
         P_SetFloatp(flash->sector, DMU_LIGHT_LEVEL, flash->maxLight);
         flash->count = (P_Random() & flash->maxTime) + 1;
     }
+}
+
+void LightFlashThinker::operator >> (Writer& to) const
+{
+    Thinker::operator >> (to);
+
+    to << duint(P_ToIndex(sector))
+       << count 
+       << maxLight
+       << minLight
+       << maxTime
+       << minTime;
+}
+
+void LightFlashThinker::operator << (Reader& from)
+{
+    Thinker::operator << (from);
+
+    duint sectorIndex;
+    from >> sectorIndex;
+    sector = (sector_t*) P_ToPtr(DMU_SECTOR, sectorIndex);
+    from >> count 
+         >> maxLight
+         >> minLight
+         >> maxTime
+         >> minTime;
 }
 
 /**

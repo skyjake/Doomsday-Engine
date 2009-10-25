@@ -25,8 +25,9 @@
 #include "../Enumerator"
 #include "../Id"
 #include "../Flag"
+#include "../Reader"
 
-#include <set>
+#include <map>
 
 namespace de
 {
@@ -46,6 +47,9 @@ namespace de
     public:
         /// Unrecognized type encountered when deserializing a thinker. @ingroup errors
         DEFINE_ERROR(UnrecognizedError);
+        
+        /// Invalid type when deserializing a thinker. @ingroup errors
+        DEFINE_ERROR(InvalidTypeError);
 
         /// The thinker is in statis and will not think.
         DEFINE_FINAL_FLAG(IN_STASIS, 0, Mode);
@@ -60,18 +64,18 @@ namespace de
         };
         
         /**
-         * Thinker constructor function. Attempts constructing a thinker based on 
-         * the data available in @a reader. If the data is not recognized, returns
-         * @c NULL.
+         * Thinker constructor function. Constructs a new instance of the thinker.
          */
-        typedef Thinker* (*Constructor)(Reader& reader);
+        typedef Thinker* (*Constructor)();
         
     public:
         /**
          * Constructs a new thinker. Note that the ID is not initialized here
          * (an enumerator will generate it, or it will be deserialized).
+         *
+         * @param serialId  Serialization identifier of the thinker class.
          */
-        Thinker();
+        Thinker(SerialId serialId = THINKER);
         
         virtual ~Thinker();
         
@@ -115,18 +119,27 @@ namespace de
 
     public:
         /**
+         * Constructs a new instance of the thinker. Derived classes are required
+         * to override this with their own constructors.
+         */
+        static Thinker* construct() {
+            return new Thinker;
+        }
+        
+        /**
          * Defines a new thinker type that can be (de)serialized.
          *
-         * @param constructor  Function that constructs thinkers.
+         * @param serializedId  Identifier of the thinker type when serialized.
+         * @param constructor   Function that constructs thinkers.
          */
-        static void define(Constructor constructor);
+        static void define(SerialId serializedId, Constructor constructor);
         
         /**
          * Undefines a thinker type.
          *
-         * @param constructor  Function that constructs thinkers.
+         * @param serializedId  Identifier of the thinker type when serialized.
          */
-        static void undefine(Constructor constructor);
+        static void undefine(SerialId serializedId);
 
         /**
          * Constructs a new thinker by reading one from a Reader. Calls all the defined
@@ -140,22 +153,14 @@ namespace de
          */
         static Thinker* constructFrom(Reader& reader);
 
-        /**
-         * Deserializes an instance of Thinker from a reader.
-         *
-         * @param reader  Reader.
-         *
-         * @return  Deserialized thinker, or @c NULL if the type id doesn't match.
-         *
-         * @see Constructor
-         */
-        static Thinker* fromReader(Reader& reader);
-
     public:
         /// Mode flags.
         Mode mode;
 
     private:
+        /// Identifier of the thinker class for serialization.
+        SerialId _serialId;
+        
         /// Unique identifier for the thinker.
         Id _id;
         
@@ -168,7 +173,7 @@ namespace de
         /// The map where the thinker is in.
         Map* _map;
         
-        typedef std::set<Constructor> Constructors;
+        typedef std::map<SerialId, Constructor> Constructors;
         static Constructors _constructors;
     };
 }
