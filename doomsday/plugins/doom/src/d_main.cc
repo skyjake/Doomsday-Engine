@@ -386,6 +386,9 @@ DENG_EXPORT void deng_InitializePlugin(void)
     
     // Thinker types.
     Thinker::define(SID_LIGHT_FLASH_THINKER, LightFlashThinker::construct);
+    Thinker::define(SID_FIRE_FLICKER_THINKER, FireFlickerThinker::construct);
+    Thinker::define(SID_STROBE_THINKER, StrobeThinker::construct);
+    Thinker::define(SID_GLOW_THINKER, GlowThinker::construct);
     
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
