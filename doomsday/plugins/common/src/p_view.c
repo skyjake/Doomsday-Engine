@@ -82,9 +82,8 @@ void P_CalcHeight(player_t* plr)
 
     // Regular movement bobbing (needs to be calculated for gun swing even
     // if not on ground).
-    plr->bob =
-        (pmo->mom[MX] * pmo->mom[MX]) + (pmo->mom[MY] * pmo->mom[MY]);
-    plr->bob /= 2;
+    plr->bob = (pmo->mom[MX] * pmo->mom[MX]) + (pmo->mom[MY] * pmo->mom[MY]);
+    plr->bob /= 4;
     if(plr->bob > MAXBOB)
         plr->bob = MAXBOB;
 
@@ -177,8 +176,7 @@ void P_CalcHeight(player_t* plr)
     }
 
     // Set the plr's eye-level Z coordinate.
-    ddplr->viewZ = pmo->pos[VZ] +
-                     (P_MobjIsCamera(pmo)? 0 : ddplr->viewHeight);
+    ddplr->viewZ = pmo->pos[VZ] + (P_MobjIsCamera(pmo)? 0 : ddplr->viewHeight);
 
     // During demo playback (or camera mode) the viewz will not be modified
     // any further.
