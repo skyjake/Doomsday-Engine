@@ -1044,7 +1044,10 @@ desc = 1=Disable non-visible subsector culling.
 desc = 1=Render mobj bounding boxes (as used for collision detection).
 
 [rend-dev-sky]
-desc = 1=Render the sky as a solid surface.
+desc = 1=Render the sky as a solid surface. 2= Draw sky surface planes.
+
+[rend-dev-sky-always]
+desc = 1=Always render the sky, even if there are no sky surfaces visible.
 
 [rend-dev-tex-showfix]
 desc = 1=Render the missing texture instead of fixing with a suitable game texture.
