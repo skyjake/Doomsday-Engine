@@ -2050,13 +2050,14 @@ void C_DECL A_RemovePod(mobj_t* actor)
 
 void C_DECL A_MakePod(mobj_t* actor)
 {
-    mobj_t*             mo;
+    mobj_t* mo;
 
     // Too many generated pods?
     if(actor->special1 == MAX_GEN_PODS)
         return;
 
-    if(!(mo = P_SpawnMobj3fv(MT_POD, actor->pos, actor->angle, MSF_Z_FLOOR)))
+    if(!(mo = P_SpawnMobj3f(MT_POD, actor->pos[VX], actor->pos[VY], 0,
+                            actor->angle, MSF_Z_FLOOR)))
         return;
 
     if(P_CheckPosition2f(mo, mo->pos[VX], mo->pos[VY]) == false)
