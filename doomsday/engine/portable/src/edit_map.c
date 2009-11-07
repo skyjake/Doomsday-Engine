@@ -725,8 +725,8 @@ static void buildSectorLineLists(gamemap_t* map)
 
             /**
              * The behaviour of some algorithms used in original DOOM are
-             * dependant upon the order of these lists (e.g., EV_DoFloor).
-             * Lets be helpful and use the same order.
+             * dependant upon the order of these lists (e.g., EV_DoFloor
+             * and EV_BuildStairs). Lets be helpful and use the same order.
              *
              * Sort: LineDef index ascending (zero based).
              */
