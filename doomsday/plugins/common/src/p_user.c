@@ -1679,7 +1679,7 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
     int                 playerNum = player - players;
     ddplayer_t         *plr = player->plr;
     int                 turn = 0;
-    boolean             strafe = false;
+    //boolean             strafe = false;
     float               vel, off, turnSpeed;
     float               offsetSensitivity = 100; // \fixme Should be done engine-side, mouse sensitivity!
     classinfo_t        *pClassInfo = PCLASS_INFO(player->class);
@@ -1698,10 +1698,10 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
     }
 
     // Check for strafe.
-    P_GetControlState(playerNum, CTL_STRAFE, &vel, 0);
-    strafe = (vel != 0);
+    //P_GetControlState(playerNum, CTL_STRAFE, &vel, 0);
+    //strafe = (vel != 0);
 
-    if(!strafe)
+    //if(!strafe)
     {
         // Yaw.
         P_GetControlState(playerNum, CTL_TURN, &vel, &off);
@@ -1760,18 +1760,15 @@ void P_PlayerThinkUpdateControls(player_t* player)
     brain->speed = (vel != 0);
 
     // Check for strafe.
-    P_GetControlState(playerNum, CTL_STRAFE, &vel, 0);
+    P_GetControlState(playerNum, CTL_MODIFIER_1, &vel, 0);
     strafe = (vel != 0);
 
     // Move status.
     P_GetControlState(playerNum, CTL_WALK, &vel, &off);
     brain->forwardMove = off * offsetSensitivity + vel;
-    P_GetControlState(playerNum, strafe? CTL_TURN : CTL_SIDESTEP, &vel, &off);
-    if(strafe)
-    {
-        // Saturate.
-        vel = (vel > 0? 1 : vel < 0? -1 : 0);
-    }
+    P_GetControlState(playerNum, CTL_SIDESTEP, &vel, &off);
+    // Saturate sidestep.
+    vel = (vel > 0? 1 : vel < 0? -1 : 0);
     brain->sideMove = off * offsetSensitivity + vel;
 
     // Flight.

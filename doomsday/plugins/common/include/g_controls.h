@@ -44,7 +44,7 @@ enum {
 // Control identifiers.
 enum {
     CTL_SPEED = CTL_FIRST_GAME_CONTROL,
-    CTL_STRAFE,
+    //CTL_STRAFE,
     CTL_LOOK_CENTER,
     CTL_FALL_DOWN,
     CTL_USE,

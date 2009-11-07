@@ -276,7 +276,7 @@ void B_DestroyDeviceBinding(dbinding_t* cb)
     }
 }
 
-void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relativeOffset, bcontext_t* controlClass)
+void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos, float* relativeOffset, bcontext_t* controlClass)
 {
     dbinding_t* cb;
     int         i;
@@ -300,7 +300,7 @@ void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relati
         skip = false;
         for(i = 0; i < cb->numConds; ++i)
         {
-            if(!B_CheckCondition(&cb->conds[i]))
+            if(!B_CheckCondition(&cb->conds[i], localNum, controlClass))
             {
                 skip = true;
                 break;
@@ -365,8 +365,7 @@ void B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relati
             break;
 
         default:
-            Con_Error("B_EvaluateDeviceBindingList: Invalid value, "
-                      "cb->type = %i.", cb->type);
+            Con_Error("B_EvaluateDeviceBindingList: Invalid value, cb->type = %i.", cb->type);
             break;
         }
 

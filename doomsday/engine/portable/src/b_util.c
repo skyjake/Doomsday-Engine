@@ -28,11 +28,14 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <math.h>
+
 #include "de_base.h"
 #include "de_misc.h"
 
 #include "b_main.h"
 #include "b_util.h"
+#include "b_context.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -109,6 +112,17 @@ boolean B_ParseAxisPosition(const char* desc, ebstate_t* state, float* pos)
     else
     {
         Con_Message("B_ParseAxisPosition: Axis position \"%s\" is invalid.\n", desc);
+        return false;
+    }
+    return true;
+}
+
+boolean B_ParseModifierId(const char* desc, int* id)
+{
+    *id = strtoul(desc, NULL, 10) - 1 + CTL_MODIFIER_1;
+    if(*id < CTL_MODIFIER_1 || *id > CTL_MODIFIER_4)
+    {
+        // Out of range.
         return false;
     }
     return true;
@@ -254,7 +268,26 @@ boolean B_ParseStateCondition(statecondition_t* cond, const char* desc)
     // First, we expect to encounter a device name.
     desc = Str_CopyDelim(str, desc, '-');
 
-    if(!Str_CompareIgnoreCase(str, "key"))
+    if(!Str_CompareIgnoreCase(str, "modifier"))
+    {
+        cond->device = 0; // not used
+        cond->type = SCT_MODIFIER_STATE;
+        
+        // Parse the modifier number.
+        desc = Str_CopyDelim(str, desc, '-');
+        if(!B_ParseModifierId(Str_Text(str), &cond->id))
+        {
+            goto parseEnded;
+        }
+
+        // The final part of a modifier is the state.
+        desc = Str_CopyDelim(str, desc, '-');
+        if(!B_ParseToggleState(Str_Text(str), &cond->state))
+        {
+            goto parseEnded;
+        }
+    }
+    else if(!Str_CompareIgnoreCase(str, "key"))
     {
         cond->device = IDEV_KEYBOARD;
         cond->type = SCT_TOGGLE_STATE;
@@ -406,27 +439,44 @@ boolean B_CheckAxisPos(ebstate_t test, float testPos, float pos)
     return true;
 }
 
-boolean B_CheckCondition(statecondition_t* cond)
+boolean B_CheckCondition(statecondition_t* cond, int localNum, bcontext_t* context)
 {
     boolean fulfilled = !cond->negate;
     inputdev_t* dev = I_GetDevice(cond->device, false);
 
-    if(cond->type == SCT_TOGGLE_STATE)
+    switch(cond->type)
+    {
+    case SCT_MODIFIER_STATE:
+        if(context)
+        {
+            // Evaluate the current state of the modifier (in this context).
+            float pos = 0, relative = 0;
+            dbinding_t* binds = &B_GetControlBinding(context, cond->id)->deviceBinds[localNum];
+            B_EvaluateDeviceBindingList(localNum, binds, &pos, &relative, context);
+            if((cond->state == EBTOG_DOWN && fabs(pos) > .5) ||
+               (cond->state == EBTOG_UP && fabs(pos) < .5))
+                return fulfilled;
+        }
+        break;
+        
+    case SCT_TOGGLE_STATE:
     {
         int isDown = (dev->keys[cond->id].isDown != 0);
         if((isDown && cond->state == EBTOG_DOWN) ||
            (!isDown && cond->state == EBTOG_UP))
             return fulfilled;
+        break;
     }
-    if(cond->type == SCT_AXIS_BEYOND)
-    {
+    
+    case SCT_AXIS_BEYOND:
         if(B_CheckAxisPos(cond->state, cond->pos, dev->axes[cond->id].position))
             return fulfilled;
-    }
-    if(cond->type == SCT_ANGLE_AT)
-    {
+        break;
+
+    case SCT_ANGLE_AT:
         if(dev->hats[cond->id].pos == cond->pos)
             return fulfilled;
+        break;
     }
     return !fulfilled;
 }
@@ -520,12 +570,19 @@ void B_AppendAnglePositionToString(float pos, ddstring_t* str)
  */
 void B_AppendConditionToString(const statecondition_t* cond, ddstring_t* str)
 {
-    B_AppendDeviceDescToString(cond->device,
-                               cond->type == SCT_TOGGLE_STATE? E_TOGGLE :
-                               cond->type == SCT_AXIS_BEYOND? E_AXIS : E_ANGLE,
-                               cond->id, str);
+    if(cond->type == SCT_MODIFIER_STATE)
+    {
+        Str_Appendf(str, "modifier-%i", cond->id - CTL_MODIFIER_1 + 1);
+    }
+    else
+    {
+        B_AppendDeviceDescToString(cond->device,
+                                   cond->type == SCT_TOGGLE_STATE? E_TOGGLE :
+                                   cond->type == SCT_AXIS_BEYOND? E_AXIS : E_ANGLE,
+                                   cond->id, str);
+    }
 
-    if(cond->type == SCT_TOGGLE_STATE)
+    if(cond->type == SCT_TOGGLE_STATE || cond->type == SCT_MODIFIER_STATE)
     {
         B_AppendToggleStateToString(cond->state, str);
     }

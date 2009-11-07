@@ -400,7 +400,7 @@ void B_SubstituteInCommand(const char* command, ddevent_t* event, evbinding_t* e
  * @return  @c true, if the bound command was executed. @c false otherwise, as the
  *          event didn't match all the conditions.
  */
-boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bclass_s* eventClass)
+boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bcontext_s* eventClass)
 {
     int         i;
     inputdev_t* dev;
@@ -494,7 +494,7 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bclass_s* 
     // Any conditions on the current state of the input devices?
     for(i = 0; i < eb->numConds; ++i)
     {
-        if(!B_CheckCondition(&eb->conds[i]))
+        if(!B_CheckCondition(&eb->conds[i], 0, NULL))
             return false;
     }
 

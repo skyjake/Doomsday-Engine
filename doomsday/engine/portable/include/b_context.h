@@ -48,7 +48,7 @@ typedef struct controlbinding_s {
                                      // higher-priority contexts override it.
 #define BCF_ACQUIRE_ALL         0x08 // Context will acquire all unacquired states.
 
-typedef struct bclass_s {
+typedef struct bcontext_s {
     char*           name; // Name of the binding context.
     byte            flags;
     evbinding_t     commandBinds; // List of command bindings.
