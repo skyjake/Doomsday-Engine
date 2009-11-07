@@ -1848,8 +1848,10 @@ void G_DoCompleted(void)
 
 #if __JDOOM__ || __JDOOM64__
     WI_Start(&wmInfo);
-#else
+#elif __JHERETIC__
     IN_Start(&wmInfo);
+#else /* __JHEXEN__ */
+    IN_Start();
 #endif
 }
 
