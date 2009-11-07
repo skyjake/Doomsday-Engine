@@ -748,7 +748,7 @@ static void buildSectorLineLists(gamemap_t* map)
 
             sec->lineDefs[numLineDefs] = NULL; // terminate.
             sec->lineDefCount = numLineDefs;
-            linebptr += numLineDefs;
+            linebptr += numLineDefs + 1;
         }
         else
         {
