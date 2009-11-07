@@ -1240,9 +1240,9 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
  */
 void G_PlayerLeaveMap(int player)
 {
-    int flightPower;
 #if __JHERETIC__ || __JHEXEN__
     uint i;
+    int flightPower;
 #endif
     player_t* p = &players[player];
     boolean newCluster;
