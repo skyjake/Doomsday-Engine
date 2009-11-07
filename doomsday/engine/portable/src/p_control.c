@@ -282,7 +282,7 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
     nowTime = Sys_GetRealTime();
 
     if(newState == db->previousClickState &&
-       nowTime - db->previousClickTime < doubleClickThresholdMilliseconds)
+       nowTime - db->previousClickTime < (uint) MAX_OF(0, doubleClickThresholdMilliseconds))
     {
         ddevent_t event;
         ddstring_t* symbolicName = Str_New();
