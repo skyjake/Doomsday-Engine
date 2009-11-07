@@ -166,7 +166,6 @@ skillmode_t gameSkill;
 int gameEpisode;
 int gameMap;
 int nextMap; // If non zero this will be the next map.
-int prevMap;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __JSTRIFE__
 boolean respawnMonsters;
@@ -185,7 +184,7 @@ boolean singledemo; // Quit after playing a demo from cmdline.
 
 boolean precache = true; // If @c true, load all graphics at start.
 
-#if __JDOOM__ || __JDOOM64__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 wbstartstruct_t wmInfo; // Params for world map / intermission.
 #endif
 
@@ -1673,10 +1672,6 @@ void G_DoCompleted(void)
 {
     int                 i;
 
-#if __JHERETIC__
-    static int  afterSecret[5] = { 7, 5, 5, 5, 4 };
-#endif
-
     G_SetGameAction(GA_NONE);
 
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -1713,28 +1708,8 @@ void G_DoCompleted(void)
     if(G_IfVictory())
         return; // Victorious!
 
-#if __JHERETIC__
-    prevMap = gameMap;
-    if(secretExit == true)
-    {
-        gameMap = 9;
-    }
-    else if(gameMap == 9)
-    {   // Finished secret map.
-        gameMap = afterSecret[gameEpisode - 1];
-    }
-    else
-    {
-        // Is there an overide for nextmap? (eg from an XG line)
-        if(nextMap > 0)
-            gameMap = nextMap;
-
-        gameMap++;
-    }
-#endif
-
-#if __JDOOM__ || __JDOOM64__
-# if !__JDOOM64__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+# if __JDOOM__
     if(gameMode != commercial && gameMap == 9)
     {
         for(i = 0; i < MAXPLAYERS; ++i)
@@ -1772,7 +1747,7 @@ void G_DoCompleted(void)
         default: wmInfo.next = gameMap;
         }
     }
-# else
+# elif __JDOOM__
     // wmInfo.next is 0 biased, unlike gameMap
     if(gameMode == commercial)
     {
@@ -1827,36 +1802,54 @@ void G_DoCompleted(void)
         else
             wmInfo.next = gameMap; // Go to next map.
     }
+# else /* __JHERETIC__ */
+    if(secretExit == true)
+    {
+        wmInfo.next = 9;
+    }
+    else if(gameMap == 9)
+    {   // Finished secret map.
+        static int afterSecret[5] = { 7, 5, 5, 5, 4 };
+
+        wmInfo.next = afterSecret[gameEpisode - 1];
+    }
+    else
+        wmInfo.next = gameMap; // Go to next map.
 # endif
 
     // Is there an overide for wmInfo.next? (eg from an XG line)
     if(nextMap > 0)
     {
-        wmInfo.next = nextMap -1;   // wmInfo is zero based
+        wmInfo.next = nextMap - 1;   // wmInfo is zero based
         nextMap = 0;
     }
 
+# if __JDOOM__ || __JDOOM64__
     wmInfo.maxKills = totalKills;
     wmInfo.maxItems = totalItems;
     wmInfo.maxSecret = totalSecret;
 
     G_PrepareWIData();
+# endif
+#endif
 
-    // Tell the clients what's going on.
-    NetSv_Intermission(IMF_BEGIN, 0, 0);
-
-#elif __JHERETIC__
-    // Let the clients know the next map.
+#if __JHERETIC__
+    // @fixme is this necessary at this time?
     NetSv_SendGameState(0, DDSP_ALL_PLAYERS);
-#elif __JHEXEN__ || __JSTRIFE__
+#endif
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    NetSv_Intermission(IMF_BEGIN, 0, 0);
+#else /* __JHEXEN__ */
     NetSv_Intermission(IMF_BEGIN, leaveMap, leavePosition);
 #endif
+
     G_ChangeGameState(GS_INTERMISSION);
 
 #if __JDOOM__ || __JDOOM64__
     WI_Start(&wmInfo);
 #else
-    IN_Start();
+    IN_Start(&wmInfo);
 #endif
 }
 
@@ -1922,14 +1915,15 @@ void G_WorldDone(void)
 
 void G_DoWorldDone(void)
 {
-#if __JDOOM__ || __JDOOM64__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     gameMap = wmInfo.next + 1;
 #endif
+
     G_DoLoadMap();
     G_SetGameAction(GA_NONE);
 }
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
 /**
  * Called by G_Ticker based on gameaction.  Loads a game from the reborn
  * save slot.

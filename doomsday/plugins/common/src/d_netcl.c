@@ -191,10 +191,6 @@ void NetCl_UpdateGameState(byte *data)
                 gsJumping ? "yes" : "no", gsGravity);
 #endif
 
-#ifdef __JHERETIC__
-    prevMap = gameMap;
-#endif
-
     // Start reading after the GS packet.
 #if __JHEXEN__ || __JSTRIFE__
     NetCl_SetReadBuffer(data + 16);
@@ -648,7 +644,9 @@ void NetCl_Intermission(byte *data)
     if(flags & IMF_BEGIN)
     {
         G_ChangeGameState(GS_INTERMISSION);
-        IN_Start();
+
+        // @fixme jHeretic does not transmit the intermission info!
+        IN_Start(&wmInfo);
     }
     if(flags & IMF_END)
     {
