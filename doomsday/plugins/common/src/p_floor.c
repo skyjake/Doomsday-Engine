@@ -438,24 +438,32 @@ typedef struct findlineinsectorsmallestbottommaterialparams_s {
 
 int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
 {
-    linedef_t          *li = (linedef_t*) ptr;
-    findlineinsectorsmallestbottommaterialparams_t *params =
+    linedef_t* li = (linedef_t*) ptr;
+    findlineinsectorsmallestbottommaterialparams_t* params =
         (findlineinsectorsmallestbottommaterialparams_t*) context;
-    sector_t          *frontSec, *backSec;
+    sector_t* frontSec, *backSec;
 
     frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
     backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
 
     if(frontSec && backSec)
     {
-        sidedef_t*          side;
-        material_t*         mat;
+        sidedef_t* side;
+        material_t* mat;
 
         side = P_GetPtrp(li, DMU_SIDEDEF0);
         mat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
+
+        /**
+         * Emulate DOOM.exe behaviour. In the instance where no material is
+         * present, the height is taken from the very first texture.
+         */
+        if(!mat)
+            mat = P_ToPtr(DMU_MATERIAL, P_MaterialCheckNumForIndex(0, MN_TEXTURES));
+
         if(mat)
         {
-            int                 height = P_GetIntp(mat, DMU_HEIGHT);
+            int height = P_GetIntp(mat, DMU_HEIGHT);
 
             if(height < params->minSize)
             {
@@ -466,9 +474,12 @@ int findLineInSectorSmallestBottomMaterial(void *ptr, void *context)
 
         side = P_GetPtrp(li, DMU_SIDEDEF1);
         mat = P_GetPtrp(side, DMU_BOTTOM_MATERIAL);
+        if(!mat)
+            mat = P_ToPtr(DMU_MATERIAL, P_MaterialCheckNumForIndex(0, MN_TEXTURES));
+
         if(mat)
         {
-            int                 height = P_GetIntp(mat, DMU_HEIGHT);
+            int height = P_GetIntp(mat, DMU_HEIGHT);
 
             if(height < params->minSize)
             {
