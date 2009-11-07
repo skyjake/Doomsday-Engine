@@ -102,7 +102,7 @@ void C_DECL A_PotteryExplode(mobj_t* actor)
         {
             P_MobjChangeState(mo, P_GetState(mo->type, SN_SPAWN) + (P_Random() % 5));
 
-            mo->mom[MZ] = FIX2FLT((P_Random() & 7) + 5) * .75f;
+            mo->mom[MZ] = FIX2FLT(((P_Random() & 7) + 5) * (3 * FRACUNIT / 4));
             mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 10);
             mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 10);
         }
