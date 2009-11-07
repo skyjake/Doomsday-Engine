@@ -1240,14 +1240,12 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
  */
 void G_PlayerLeaveMap(int player)
 {
-#if __JHERETIC__
-    uint                i;
+#if __JHERETIC__ || __JHEXEN__
+    uint i;
+    int flightPower;
 #endif
-#if __JHEXEN__
-    int                 flightPower;
-#endif
-    player_t*           p = &players[player];
-    boolean             newCluster;
+    player_t* p = &players[player];
+    boolean newCluster;
 
 #if __JHEXEN__ || __JSTRIFE__
     newCluster = (P_GetMapCluster(gameMap) != P_GetMapCluster(leaveMap));
@@ -1255,20 +1253,21 @@ void G_PlayerLeaveMap(int player)
     newCluster = true;
 #endif
 
+    // Remember if flying
+    flightPower = p->powers[PT_FLIGHT];
+
 #if __JHERETIC__
     // Empty the inventory of excess items
     for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
     {
         inventoryitemtype_t type = IIT_FIRST + i;
-        uint            count = P_InventoryCount(player, type);
+        uint count = P_InventoryCount(player, type);
 
         if(count)
         {
-            uint            j;
+            uint j;
 
-            // When entering a new cluster. strip ALL flight items,
-            // otherwise leave the player one of each type.
-            if(!(type == IIT_FLY && !deathmatch && newCluster))
+            if(type != IIT_FLY)
                 count--;
 
             for(j = 0; j < count; ++j)
@@ -1277,9 +1276,14 @@ void G_PlayerLeaveMap(int player)
     }
 #endif
 
-    // Remember if flying
 #if __JHEXEN__
-    flightPower = p->powers[PT_FLIGHT];
+    if(newCluster)
+    {
+        uint count = P_InventoryCount(player, IIT_FLY);
+
+        for(i = 0; i < count; ++i)
+            P_InventoryTake(player, IIT_FLY, true);
+    }
 #endif
 
     // Remove their powers.
