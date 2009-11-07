@@ -1253,8 +1253,10 @@ void G_PlayerLeaveMap(int player)
     newCluster = true;
 #endif
 
-    // Remember if flying
+#if __JHERETIC__ || __JHEXEN__
+    // Remember if flying.
     flightPower = p->powers[PT_FLIGHT];
+#endif
 
 #if __JHERETIC__
     // Empty the inventory of excess items
