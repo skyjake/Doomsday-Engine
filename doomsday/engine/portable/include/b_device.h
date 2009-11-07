@@ -62,8 +62,9 @@ void        B_DestroyDeviceBindingList(dbinding_t* listRoot);
 dbinding_t* B_NewDeviceBinding(dbinding_t* listRoot, const char* deviceDesc);
 void        B_DestroyDeviceBinding(dbinding_t* cb);
 void        B_DeviceBindingToString(const dbinding_t* b, ddstring_t* str);
-void        B_EvaluateDeviceBindingList(dbinding_t* listRoot, float* pos, float* relativeOffset,
-                                        struct bclass_s* controlClass);
+void        B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, 
+                                        float* pos, float* relativeOffset,
+                                        struct bcontext_s* controlClass);
 
 #endif // __DOOMSDAY_BIND_DEVICE_H__
 

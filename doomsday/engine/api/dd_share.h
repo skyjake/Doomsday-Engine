@@ -1255,6 +1255,10 @@ typedef struct ticcmd_s {
         CTL_ZFLY = 3,           ///< Up/down movement.
         CTL_TURN = 4,           ///< Turning horizontally.
         CTL_LOOK = 5,           ///< Turning up and down.
+        CTL_MODIFIER_1 = 6,
+        CTL_MODIFIER_2 = 7,
+        CTL_MODIFIER_3 = 8,
+        CTL_MODIFIER_4 = 9,
         CTL_FIRST_GAME_CONTROL = 1000
     };
 

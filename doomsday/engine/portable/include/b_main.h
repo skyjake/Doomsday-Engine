@@ -43,7 +43,7 @@ void            B_WriteToFile(FILE* file);
 struct evbinding_s* B_BindCommand(const char* eventDesc, const char* command);
 struct dbinding_s* B_BindControl(const char* controlDesc, const char* device);
 struct dbinding_s* B_GetControlDeviceBindings(int localNum, int control,
-                                              struct bclass_s** bContext);
+                                              struct bcontext_s** bContext);
 // Utils
 //// \todo: move to b_util.h
 int         B_NewIdentifier(void);
