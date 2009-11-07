@@ -240,11 +240,7 @@ boolean EV_ThingSpawn(byte *args, boolean fog)
     {
         z = mobj->pos[VZ];
 
-        if(MOBJINFO[moType].flags2 & MF2_FLOATBOB)
-            z -= mobj->floorZ;
-
-        if((newMobj = P_SpawnMobj3f(moType, mobj->pos[VX], mobj->pos[VY], z,
-                                    angle, 0)))
+        if((newMobj = P_SpawnMobj3fv(moType, mobj->pos, angle, 0)))
         {
             if(P_TestMobjLocation(newMobj) == false)
             {   // Didn't fit

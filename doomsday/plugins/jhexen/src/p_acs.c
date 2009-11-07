@@ -350,6 +350,7 @@ boolean P_StartACS(int number, int map, byte* args, mobj_t* activator,
         //Con_Error("P_StartACS: Unknown script number %d", number);
         sprintf(ErrorMsg, "P_STARTACS ERROR: UNKNOWN SCRIPT %d", number);
         P_SetMessage(&players[CONSOLEPLAYER], ErrorMsg, false);
+        return false;
     }
 
     statePtr = &ACSInfo[infoIndex].state;
