@@ -508,6 +508,59 @@ linedef_t* P_FindLineInSectorSmallestBottomMaterial(sector_t *sec, int *val)
     return params.foundLine;
 }
 
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+/**
+ * Find the first sector which shares a border to the specified sector
+ * and whose floor height matches that specified.
+ *
+ * @note Behaviour here is dependant upon the order of the sector-linked
+ * LineDefs list. This is necessary to emulate the flawed algorithm used in
+ * DOOM.exe In addition, this algorithm was further broken in Heretic as the
+ * test which compares floor heights was removed.
+ *
+ * @important DO NOT USE THIS ANYWHERE ELSE!
+ */
+
+typedef struct findfirstneighbouratfloorheightparams_s {
+    sector_t*           baseSec;
+    float               height;
+    sector_t*           foundSec;
+} findfirstneighbouratfloorheightparams_t;
+
+static int findFirstNeighbourAtFloorHeight(void* ptr, void* context)
+{
+    linedef_t* ln = (linedef_t*) ptr;
+    findfirstneighbouratfloorheightparams_t* params =
+        (findfirstneighbouratfloorheightparams_t*) context;
+    sector_t* other;
+
+    other = P_GetNextSector(ln, params->baseSec);
+# if __JDOOM__ || __JDOOM64__
+    if(other && P_GetFloatp(other, DMU_FLOOR_HEIGHT) == params->height)
+# elif __JHERETIC__
+    if(other)
+# endif
+    {
+        params->foundSec = other;
+        return 0; // Stop iteration.
+    }
+
+    return 1; // Continue iteration.
+}
+
+static sector_t* findSectorSurroundingAtFloorHeight(sector_t* sec,
+                                                    float height)
+{
+    findfirstneighbouratfloorheightparams_t params;
+
+    params.baseSec = sec;
+    params.foundSec = NULL;
+    params.height = height;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findFirstNeighbourAtFloorHeight);
+    return params.foundSec;
+}
+#endif
+
 /**
  * Handle moving floors.
  */
@@ -856,12 +909,18 @@ int EV_DoFloor(linedef_t *line, floortype_e floortype)
             floor->state = FS_DOWN;
             floor->sector = sec;
             floor->speed = FLOORSPEED;
-            {
-            sector_t               *otherSec =
-                P_FindSectorSurroundingLowestFloor(sec, &floor->floorDestHeight);
+            P_FindSectorSurroundingLowestFloor(sec, &floor->floorDestHeight);
+            floor->material = P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
 
-            floor->material = P_GetPtrp(otherSec, DMU_FLOOR_MATERIAL);
-            floor->newSpecial = P_ToXSector(otherSec)->special;
+            {
+            sector_t* otherSec = findSectorSurroundingAtFloorHeight(sec,
+                floor->floorDestHeight);
+
+            if(otherSec)
+            {
+                floor->material = P_GetPtrp(otherSec, DMU_FLOOR_MATERIAL);
+                floor->newSpecial = P_ToXSector(otherSec)->special;
+            }
             }
             break;
 #endif
