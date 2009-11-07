@@ -1686,8 +1686,8 @@ void P_BlastMobj(mobj_t *source, mobj_t *victim, float strength)
                 victim->target = source;
             }
         }
-        victim->mom[MX] = FIX2FLT(BLAST_SPEED) * FIX2FLT(finecosine[an]);
-        victim->mom[MY] = FIX2FLT(BLAST_SPEED) * FIX2FLT(finesine[an]);
+        victim->mom[MX] = BLAST_SPEED * FIX2FLT(finecosine[an]);
+        victim->mom[MY] = BLAST_SPEED * FIX2FLT(finesine[an]);
 
         // Spawn blast puff.
         angle = R_PointToAngle2(victim->pos[VX], victim->pos[VY],
@@ -1696,11 +1696,10 @@ void P_BlastMobj(mobj_t *source, mobj_t *victim, float strength)
 
         pos[VX] = victim->pos[VX];
         pos[VY] = victim->pos[VY];
-        pos[VZ] = victim->pos[VZ];
+        pos[VZ] = victim->pos[VZ] - victim->floorClip + victim->height / 2;
 
-        pos[VX] += victim->radius + 1 * FIX2FLT(finecosine[an]);
-        pos[VY] += victim->radius + 1 * FIX2FLT(finesine[an]);
-        pos[VZ] -= victim->floorClip + victim->height / 2;
+        pos[VX] += (victim->radius + FIX2FLT(FRACUNIT)) * FIX2FLT(finecosine[an]);
+        pos[VY] += (victim->radius + FIX2FLT(FRACUNIT)) * FIX2FLT(finesine[an]);
 
         if((mo = P_SpawnMobj3fv(MT_BLASTEFFECT, pos, angle, 0)))
         {
