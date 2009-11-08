@@ -3505,6 +3505,8 @@ void C_DECL A_SorcBallOrbit(mobj_t* actor)
     }
     actor->special1 = angle; // Set previous angle.
 
+    P_MobjUnsetPosition(actor);
+
     actor->pos[VX] = parent->pos[VX];
     actor->pos[VY] = parent->pos[VY];
     actor->pos[VZ] = parent->pos[VZ];
@@ -3514,6 +3516,8 @@ void C_DECL A_SorcBallOrbit(mobj_t* actor)
 
     actor->pos[VZ] += parent->info->height;
     actor->pos[VZ] -= parent->floorClip;
+
+    P_MobjSetPosition(actor);
 }
 
 /**
