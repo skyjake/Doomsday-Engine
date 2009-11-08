@@ -169,7 +169,7 @@ void Def_Init(void)
         {
             // Add it to the list.
             dedFiles[c++] = Argv(p);
-            
+
             Con_Message("Def_Init: Added '%s' to dedFiles.\n", Argv(p));
         }
 
@@ -245,13 +245,13 @@ int Def_GetSpriteNum(const char* name)
 
 int Def_GetMobjNum(const char* id)
 {
-    int                 i;
+    int i;
 
     if(!id || !id[0])
         return -1;
 
     for(i = 0; i < defs.count.mobjs.num; ++i)
-        if(!strcmp(defs.mobjs[i].id, id))
+        if(!stricmp(defs.mobjs[i].id, id))
             return i;
 
     return -1;
