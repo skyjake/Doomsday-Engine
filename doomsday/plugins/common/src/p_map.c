@@ -604,7 +604,11 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
         tmThing->flags &= ~MF_SKULLFLY;
         tmThing->mom[MX] = tmThing->mom[MY] = tmThing->mom[MZ] = 0;
 
+#if __JHERETIC__ || __JHEXEN__
+        P_MobjChangeState(tmThing, P_GetState(tmThing->type, SN_SEE));
+#else
         P_MobjChangeState(tmThing, P_GetState(tmThing->type, SN_SPAWN));
+#endif
 
         return false; // Stop moving.
     }
