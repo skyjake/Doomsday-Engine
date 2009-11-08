@@ -310,11 +310,15 @@ void C_DECL A_BridgeOrbit(mobj_t* actor)
     }
     actor->args[0] += 3;
 
+    P_MobjUnsetPosition(actor);
+
     actor->pos[VX] = actor->target->pos[VX];
     actor->pos[VY] = actor->target->pos[VY];
 
     actor->pos[VX] += orbitTableX[actor->args[0]];
     actor->pos[VY] += orbitTableY[actor->args[0]];
+
+    P_MobjSetPosition(actor);
 }
 
 void C_DECL A_BridgeInit(mobj_t* actor)

@@ -2884,17 +2884,23 @@ void C_DECL A_WraithFX2(mobj_t* mo)
  */
 void C_DECL A_WraithFX3(mobj_t* mo)
 {
-    int                 i, numdropped = P_Random() % 15;
+    int i, numdropped = P_Random() % 15;
 
     for(i = 0; i < numdropped; ++i)
     {
-        mobj_t*         pmo;
+        mobj_t* pmo;
+        float pos[3];
 
-        if((pmo = P_SpawnMobj3fv(MT_WRAITHFX3, mo->pos, P_Random() << 24, 0)))
+        pos[VX] = mo->pos[VX];
+        pos[VY] = mo->pos[VY];
+        pos[VZ] = mo->pos[VZ];
+
+        pos[VX] += FIX2FLT((P_Random() - 128) << 11);
+        pos[VY] += FIX2FLT((P_Random() - 128) << 11);
+        pos[VZ] += FIX2FLT(P_Random() << 10);
+
+        if((pmo = P_SpawnMobj3fv(MT_WRAITHFX3, pos, P_Random() << 24, 0)))
         {
-            pmo->pos[VX] += FIX2FLT((P_Random() - 128) << 11);
-            pmo->pos[VY] += FIX2FLT((P_Random() - 128) << 11);
-            pmo->pos[VZ] += FIX2FLT(P_Random() << 10);
             pmo->target = mo;
         }
     }
@@ -2931,22 +2937,36 @@ void C_DECL A_WraithFX4(mobj_t* mo)
 
     if(spawn4)
     {
-        if((pmo = P_SpawnMobj3fv(MT_WRAITHFX4, mo->pos, P_Random() << 24, 0)))
+        float pos[3];
+
+        pos[VX] = mo->pos[VX];
+        pos[VY] = mo->pos[VY];
+        pos[VZ] = mo->pos[VZ];
+
+        pos[VX] += FIX2FLT((P_Random() - 128) << 12);
+        pos[VY] += FIX2FLT((P_Random() - 128) << 12);
+        pos[VZ] += FIX2FLT(P_Random() << 10);
+
+        if((pmo = P_SpawnMobj3fv(MT_WRAITHFX4, pos, P_Random() << 24, 0)))
         {
-            pmo->pos[VX] += FIX2FLT((P_Random() - 128) << 12);
-            pmo->pos[VY] += FIX2FLT((P_Random() - 128) << 12);
-            pmo->pos[VZ] += FIX2FLT(P_Random() << 10);
             pmo->target = mo;
         }
     }
 
     if(spawn5)
     {
-        if((pmo = P_SpawnMobj3fv(MT_WRAITHFX5, mo->pos, P_Random() << 24, 0)))
+        float pos[3];
+
+        pos[VX] = mo->pos[VX];
+        pos[VY] = mo->pos[VY];
+        pos[VZ] = mo->pos[VZ];
+
+        pos[VX] += FIX2FLT((P_Random() - 128) << 11);
+        pos[VY] += FIX2FLT((P_Random() - 128) << 11);
+        pos[VZ] += FIX2FLT(P_Random() << 10);
+
+        if((pmo = P_SpawnMobj3fv(MT_WRAITHFX5, pos, P_Random() << 24, 0)))
         {
-            pmo->pos[VX] += FIX2FLT((P_Random() - 128) << 11);
-            pmo->pos[VY] += FIX2FLT((P_Random() - 128) << 11);
-            pmo->pos[VZ] += FIX2FLT(P_Random() << 10);
             pmo->target = mo;
         }
     }
@@ -3868,9 +3888,13 @@ void C_DECL A_SorcFX2Orbit(mobj_t* mo)
     // Spawn trailer.
     P_SpawnMobj3fv(MT_SORCFX2_T1, pos, angle, 0);
 
+    P_MobjUnsetPosition(mo);
+
     mo->pos[VX] = pos[VX];
     mo->pos[VY] = pos[VY];
     mo->pos[VZ] = pos[VZ];
+
+    P_MobjSetPosition(mo);
 }
 
 /**
