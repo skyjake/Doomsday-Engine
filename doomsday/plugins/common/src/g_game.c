@@ -2070,10 +2070,15 @@ void G_DoNewGame(void)
  */
 void G_InitNew(skillmode_t skill, int episode, int map)
 {
-    int                 i;
+    int i;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    int                 speed;
+    int speed;
 #endif
+
+    // Close any open automaps.
+    for(i = 0; i < MAXPLAYERS; ++i)
+        if(players[i].plr->inGame)
+            AM_Open(AM_MapForPlayer(i), false, true);
 
     // If there are any InFine scripts running, they must be stopped.
     FI_Reset();
