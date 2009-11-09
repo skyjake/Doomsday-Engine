@@ -44,7 +44,7 @@
 
 DEFCC(CCmdCheat);
 DEFCC(CCmdCheatGod);
-DEFCC(CCmdCheatClip);
+DEFCC(CCmdCheatNoClip);
 DEFCC(CCmdCheatWarp);
 DEFCC(CCmdCheatReveal);
 DEFCC(CCmdCheatGive);
@@ -194,7 +194,7 @@ ccmd_t gameCCmds[] = {
     // $cheats
     {"cheat",       "s",    CCmdCheat},
     {"god",         "",     CCmdCheatGod},
-    {"noclip",      "",     CCmdCheatClip},
+    {"noclip",      "",     CCmdCheatNoClip},
     {"warp",        NULL,   CCmdCheatWarp},
     {"reveal",      "i",    CCmdCheatReveal},
     {"give",        NULL,   CCmdCheatGive},

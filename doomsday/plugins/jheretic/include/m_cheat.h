@@ -22,12 +22,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * m_cheat.h: Cheat code checking - jHeretic specific.
- */
-
-#ifndef __M_CHEAT_H__
-#define __M_CHEAT_H__
+#ifndef M_CHEAT_H
+#define M_CHEAT_H
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -36,10 +32,9 @@
 #include "h_stat.h"
 
 void        Cht_Init(void);
+boolean     Cht_Responder(event_t* ev);
 
 void        Cht_GodFunc(player_t* player);
 void        Cht_NoClipFunc(player_t* player);
 void        Cht_SuicideFunc(player_t* player);
-boolean     Cht_Responder(event_t* ev);
-
-#endif
+#endif /* M_CHEAT_H */

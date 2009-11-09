@@ -21,12 +21,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * m_cheat.h: Cheat code checking.
- */
-
-#ifndef __M_CHEAT__
-#define __M_CHEAT__
+#ifndef M_CHEAT
+#define M_CHEAT
 
 #ifndef __JHEXEN__
 #  error "Using jHexen headers without __JHEXEN__"
@@ -35,10 +31,9 @@
 #include "x_player.h"
 
 void            Cht_Init(void);
-boolean         Cht_Responder(event_t *ev);
+boolean         Cht_Responder(event_t* ev);
 
-void            Cht_GodFunc(player_t *plr);
-void            Cht_SuicideFunc(player_t *plr);
-void            Cht_NoClipFunc(player_t *plr);
-
-#endif
+void            Cht_GodFunc(player_t* player);
+void            Cht_SuicideFunc(player_t* player);
+void            Cht_NoClipFunc(player_t* player);
+#endif /* M_CHEAT */
