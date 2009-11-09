@@ -786,7 +786,7 @@ void AM_Open(automapid_t id, boolean yes, boolean fast)
 
                 /* $unifiedangles */
                 if(map->rotate)
-                    angle = mo->angle / (float) ANGLE_MAX * -360 - 90;
+                    angle = (mo->angle - ANGLE_90) / (float) ANGLE_MAX * 360;
                 else
                     angle = 0;
                 Automap_SetViewAngleTarget(map, angle);
@@ -1837,7 +1837,7 @@ static void mapTicker(automap_t* map)
 
         /* $unifiedangles */
         if(map->rotate)
-            angle = mo->angle / (float) ANGLE_MAX * 360 - 90;
+            angle = (mo->angle - ANGLE_90) / (float) ANGLE_MAX * 360;
         else
             angle = 0;
         Automap_SetViewAngleTarget(map, angle);

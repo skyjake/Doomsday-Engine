@@ -230,9 +230,7 @@ void Automap_RunTic(automap_t* map)
     }
     else
     {
-        float               diff;
-        float               startAngle = map->oldAngle;
-        float               endAngle = map->targetAngle;
+        float diff, startAngle = map->oldAngle, endAngle = map->targetAngle;
 
         if(endAngle > startAngle)
         {
@@ -248,6 +246,10 @@ void Automap_RunTic(automap_t* map)
         }
 
         map->angle = LERP(startAngle, endAngle, map->angleTimer);
+        if(map->angle < 0)
+            map->angle += 360;
+        else if(map->angle > 360)
+            map->angle -= 360;
     }
 
     //
@@ -482,7 +484,7 @@ void Automap_SetViewAngleTarget(automap_t* map, float angle)
         return;
 
     map->oldAngle = map->angle;
-    map->targetAngle = angle;
+    map->targetAngle = MINMAX_OF(0, angle, 359.9999f);
 
     // Restart the timer.
     map->angleTimer = 0;
