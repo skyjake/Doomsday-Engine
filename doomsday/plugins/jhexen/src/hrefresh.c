@@ -118,7 +118,7 @@ void R_DrawMapTitle(void)
 
     Draw_BeginZoom((1 + cfg.hudScale)/2, 160, y);
 
-    if(lname)
+    if(lname && lname[0])
     {
         M_WriteText3(160 - M_StringWidth(lname, GF_FONTB) / 2, y, lname,
                     GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2],
@@ -126,7 +126,7 @@ void R_DrawMapTitle(void)
         y += 20;
     }
 
-    if(lauthor)
+    if(lauthor && lauthor[0])
     {
         M_WriteText3(160 - M_StringWidth(lauthor, GF_FONTA) / 2, y, lauthor,
                     GF_FONTA, .5f, .5f, .5f, alpha, false, true, 0);

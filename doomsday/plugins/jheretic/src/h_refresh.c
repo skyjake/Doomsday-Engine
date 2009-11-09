@@ -134,11 +134,11 @@ boolean R_GetFilterColor(float rgba[4], int filter)
 void R_DrawMapTitle(int x, int y, float alpha, gamefontid_t font,
                     boolean center)
 {
-    int                 strX;
-    char*               lname, *lauthor;
+    int strX;
+    char* lname, *lauthor;
 
     lname = P_GetMapNiceName();
-    if(lname)
+    if(lname && lname[0])
     {
         strX = x;
         if(center)
