@@ -1525,7 +1525,8 @@ void Rend_Automap(int player, const automap_t* map)
 
     // Freeze the lists if the map is fading out from being open or if set
     // to frozen for debug.
-    if((++updateWait % 10) && rmap->constructMap && !freezeMapRLs)
+    if((++updateWait % 10) && rmap->constructMap && !freezeMapRLs &&
+       Automap_IsActive(map))
     {   // Its time to rebuild the automap object display lists.
         compileObjectLists(rmap, map, mcfg, player);
     }
