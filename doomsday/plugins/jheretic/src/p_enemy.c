@@ -1917,7 +1917,8 @@ mobj_t* P_DropItem(mobjtype_t type, mobj_t* source, int special, int chance)
     {
         mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 8);
         mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 8);
-        mo->mom[MZ] = 5 + FIX2FLT(P_Random() << 10);
+        if(!(mo->info->flags2 & MF2_FLOATBOB))
+            mo->mom[MZ] = 5 + FIX2FLT(P_Random() << 10);
 
         mo->flags |= MF_DROPPED;
         mo->health = special;

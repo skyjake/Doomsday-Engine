@@ -1833,6 +1833,9 @@ static int SV_ReadMobj(thinker_t *th)
 #endif
     mo->info = &MOBJINFO[mo->type];
 
+    if(mo->info->flags2 & MF2_FLOATBOB)
+        mo->mom[MZ] = 0;
+
     if(mo->info->flags & MF_SOLID)
         mo->ddFlags |= DDMF_SOLID;
     if(mo->info->flags2 & MF2_DONTDRAW)
