@@ -42,7 +42,6 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-DEFCC(CCmdCheat);
 DEFCC(CCmdCheatGod);
 DEFCC(CCmdCheatNoClip);
 DEFCC(CCmdCheatWarp);
@@ -206,15 +205,14 @@ ccmd_t  gameCCmds[] = {
     {"viewsize",    "s",    CCmdViewSize},
 
     // $cheats
-    {"cheat",       "s",    CCmdCheat},
-    {"god",         "",     CCmdCheatGod},
-    {"noclip",      "",     CCmdCheatNoClip},
+    {"god",         NULL,   CCmdCheatGod},
+    {"noclip",      NULL,   CCmdCheatNoClip},
     {"warp",        "i",    CCmdCheatWarp},
     {"reveal",      "i",    CCmdCheatReveal},
     {"give",        NULL,   CCmdCheatGive},
     {"kill",        "",     CCmdCheatMassacre},
     {"leavemap",    "",     CCmdCheatLeaveMap},
-    {"suicide",     "",     CCmdCheatSuicide},
+    {"suicide",     NULL,     CCmdCheatSuicide},
     {"where",       "",     CCmdCheatWhere},
 
     {"doom64font",  "",     CCmdDoom64Font},

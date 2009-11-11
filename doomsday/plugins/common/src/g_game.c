@@ -677,7 +677,9 @@ void G_CommonPostInit(void)
     Con_Message("ST_Init: Init status bar.\n");
     ST_Init();
 
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
     Cht_Init();
+#endif
 
     Con_Message("Hu_MenuInit: Init miscellaneous info.\n");
     Hu_MenuInit();
@@ -953,9 +955,11 @@ boolean G_Responder(event_t *ev)
         if(Chat_Responder(ev))
             return true;
 
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
         // Check for cheats.
         if(Cht_Responder(ev))
             return true;
+#endif
     }
 
     // Try the edit responder.

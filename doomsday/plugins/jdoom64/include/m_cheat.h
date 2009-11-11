@@ -3,10 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
- *\author Copyright © 1993-1996 by id Software, Inc.
+ *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,19 +28,4 @@
 #  error "Using jDoom64 headers without __JDOOM64__"
 #endif
 
-void        Cht_Init(void);
-boolean     Cht_Responder(event_t* ev);
-
-void        Cht_GodFunc(player_t* plyr);
-void        Cht_SuicideFunc(player_t* plyr);
-void        Cht_GiveWeaponsFunc(player_t* plyr);
-void        Cht_GiveAmmoFunc(player_t* plyr);
-void        Cht_GiveKeysFunc(player_t* plyr);
-int         Cht_MusicFunc(player_t* plyr, char* buf);
-void        Cht_NoClipFunc(player_t* plyr);
-boolean     Cht_WarpFunc(player_t* plyr, char* buf);
-boolean     Cht_PowerUpFunc(player_t* plyr, int i);
-void        Cht_ChoppersFunc(player_t* plyr);
-void        Cht_MyPosFunc(player_t* plyr);
-void        Cht_LaserFunc(player_t* plyr);
 #endif /* M_CHEAT_H */
