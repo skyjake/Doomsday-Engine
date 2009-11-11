@@ -470,13 +470,14 @@ static int checkCheat(cheatseq_t* cht, char key, boolean* eat)
 
     if(*cht->pos == 0)
     {
-        *eat = true;
         cht->args[cht->currentArg++] = key;
         cht->pos++;
+        *eat = true;
     }
     else if(cheatLookup[key] == *cht->pos)
     {
         cht->pos++;
+        *eat = true;
     }
     else
     {
@@ -505,44 +506,44 @@ void Cht_Init(void)
 }
 
 /**
- * Responds to user input to see if a cheat sequence has been entered.
+ * Responds to an input event if determined to be part of a cheat entry
+ * sequence.
  *
  * @param ev            Ptr to the event to be checked.
- * @return              @c true, if the caller should eat the key.
+ *
+ * @return              @c true, if the event was 'eaten'.
  */
 boolean Cht_Responder(event_t* ev)
 {
-    byte key = ev->data1;
-    boolean eat = false;
     player_t* plr = &players[CONSOLEPLAYER];
+    boolean eat = false;
 
     if(ev->type != EV_KEY || ev->state != EVS_DOWN)
+        return false;
+
+    if(IS_NETGAME)
         return false;
 
     if(G_GetGameState() != GS_MAP)
         return false;
 
-    if(IS_NETGAME || gameSkill == SM_NIGHTMARE)
-    {   // Can't cheat in a net-game, or in nightmare mode.
-        return false;
-    }
-
     if(plr->health <= 0)
-    {   // Dead players can't cheat.
-        return false;
-    }
+        return false; // Dead players can't cheat.
 
-    if(checkCheat(&cheatGod, key, &eat))
+    if(gameSkill == SM_NIGHTMARE)
+        return false;
+
+    if(checkCheat(&cheatGod, ev->data1, &eat))
     {
         Cht_GodFunc(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatNoClip, key, &eat))
+    else if(checkCheat(&cheatNoClip, ev->data1, &eat))
     {
         Cht_NoClipFunc(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatWeapons, key, &eat))
+    else if(checkCheat(&cheatWeapons, ev->data1, &eat))
     {
         Cht_GiveWeaponsFunc(plr);
         Cht_GiveAmmoFunc(plr);
@@ -551,107 +552,107 @@ boolean Cht_Responder(event_t* ev)
         P_SetMessage(plr, TXT_CHEATWEAPONS, false);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatHealth, key, &eat))
+    else if(checkCheat(&cheatHealth, ev->data1, &eat))
     {
         Cht_HealthFunc(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatKeys, key, &eat))
+    else if(checkCheat(&cheatKeys, ev->data1, &eat))
     {
         Cht_GiveKeysFunc(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatSound, key, &eat))
+    else if(checkCheat(&cheatSound, ev->data1, &eat))
     {
         Cht_SoundFunc(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatInventory, key, &eat))
+    else if(checkCheat(&cheatInventory, ev->data1, &eat))
     {
         Cht_InventoryFunc(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatPuzzle, key, &eat))
+    else if(checkCheat(&cheatPuzzle, ev->data1, &eat))
     {
         Cht_PuzzleFunc(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatWarp, key, &eat))
+    else if(checkCheat(&cheatWarp, ev->data1, &eat))
     {
         Cht_WarpFunc(plr, &cheatWarp);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatPig, key, &eat))
+    else if(checkCheat(&cheatPig, ev->data1, &eat))
     {
         Cht_PigFunc(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatMassacre, key, &eat))
+    else if(checkCheat(&cheatMassacre, ev->data1, &eat))
     {
         Cht_MassacreFunc(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatIDKFA, key, &eat))
+    else if(checkCheat(&cheatIDKFA, ev->data1, &eat))
     {
         Cht_IDKFAFunc(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatQuicken1, key, &eat))
+    else if(checkCheat(&cheatQuicken1, ev->data1, &eat))
     {
         Cht_QuickenFunc1(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatQuicken2, key, &eat))
+    else if(checkCheat(&cheatQuicken2, ev->data1, &eat))
     {
         Cht_QuickenFunc2(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatQuicken3, key, &eat))
+    else if(checkCheat(&cheatQuicken3, ev->data1, &eat))
     {
         Cht_QuickenFunc3(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatClass1, key, &eat))
+    else if(checkCheat(&cheatClass1, ev->data1, &eat))
     {
         Cht_ClassFunc1(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatClass2, key, &eat))
+    else if(checkCheat(&cheatClass2, ev->data1, &eat))
     {
         Cht_ClassFunc2(plr, &cheatClass2);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatInit, key, &eat))
+    else if(checkCheat(&cheatInit, ev->data1, &eat))
     {
         Cht_InitFunc(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatVersion, key, &eat))
+    else if(checkCheat(&cheatVersion, ev->data1, &eat))
     {
         Cht_VersionFunc(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatDebug, key, &eat))
+    else if(checkCheat(&cheatDebug, ev->data1, &eat))
     {
         Cht_DebugFunc(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatScript1, key, &eat))
+    else if(checkCheat(&cheatScript1, ev->data1, &eat))
     {
         Cht_ScriptFunc1(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatScript2, key, &eat))
+    else if(checkCheat(&cheatScript2, ev->data1, &eat))
     {
         Cht_ScriptFunc2(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatScript3, key, &eat))
+    else if(checkCheat(&cheatScript3, ev->data1, &eat))
     {
         Cht_ScriptFunc3(plr, &cheatScript3);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);
     }
-    else if(checkCheat(&cheatReveal, key, &eat))
+    else if(checkCheat(&cheatReveal, ev->data1, &eat))
     {
         Cht_RevealFunc(plr);
         S_LocalSound(SFX_PLATFORM_STOP, NULL);

@@ -331,13 +331,14 @@ static int checkCheat(cheatseq_t* cht, char key, boolean* eat)
 
     if(*cht->pos == 0)
     {
-        *eat = true;
         cht->args[cht->currentArg++] = key;
         cht->pos++;
+        *eat = true;
     }
     else if(cheatLookup[key] == *cht->pos)
     {
         cht->pos++;
+        *eat = true;
     }
     else
     {
@@ -366,17 +367,17 @@ void Cht_Init(void)
 }
 
 /**
- * Responds to user input to see if a cheat sequence has been entered.
+ * Responds to an input event if determined to be part of a cheat entry
+ * sequence.
  *
- * @param               Ptr to the event to be checked.
+ * @param ev            Ptr to the event to be checked.
  *
- * @return              @c true, if the caller should eat the key.
+ * @return              @c true, if the event was 'eaten'.
  */
 boolean Cht_Responder(event_t* ev)
 {
-    byte key = ev->data1;
-    boolean eat = false;
     player_t* plr = &players[CONSOLEPLAYER];
+    boolean eat = false;
 
     if(ev->type != EV_KEY || ev->state != EVS_DOWN)
         return false;
@@ -384,27 +385,37 @@ boolean Cht_Responder(event_t* ev)
     if(G_GetGameState() != GS_MAP)
         return false;
 
-    if(IS_NETGAME || gameSkill == SM_NIGHTMARE)
-    {   // Can't cheat in a net-game, or in nightmare mode.
-        return false;
-    }
-
     if(plr->health <= 0)
-    {   // Dead players can't cheat.
-        return false;
+        return false; // Dead players can't cheat.
+
+    if(!(IS_NETGAME && deathmatch))
+    {
+    automapid_t map = AM_MapForPlayer(CONSOLEPLAYER);
+
+    if(AM_IsActive(map) && checkCheat(&cheatAutomap, ev->data1, &eat))
+    {
+        AM_IncMapCheatLevel(map);
+        return true;
+    }
     }
 
-    if(checkCheat(&cheatGod, key, &eat))
+    if(IS_NETGAME)
+        return false;
+
+    if(gameSkill == SM_NIGHTMARE)
+        return false;
+
+    if(checkCheat(&cheatGod, ev->data1, &eat))
     {
         Cht_GodFunc(plr);
         S_LocalSound(SFX_DORCLS, NULL);
     }
-    else if(checkCheat(&cheatNoClip, key, &eat))
+    else if(checkCheat(&cheatNoClip, ev->data1, &eat))
     {
         Cht_NoClipFunc(plr);
         S_LocalSound(SFX_DORCLS, NULL);
     }
-    else if(checkCheat(&cheatWeapons, key, &eat))
+    else if(checkCheat(&cheatWeapons, ev->data1, &eat))
     {
         Cht_GiveWeaponsFunc(plr);
         Cht_GiveAmmoFunc(plr);
@@ -413,81 +424,70 @@ boolean Cht_Responder(event_t* ev)
         P_SetMessage(plr, TXT_CHEATWEAPONS, false);
         S_LocalSound(SFX_DORCLS, NULL);
     }
-    else if(checkCheat(&cheatPower, key, &eat))
+    else if(checkCheat(&cheatPower, ev->data1, &eat))
     {
         Cht_PowerupFunc(plr);
         S_LocalSound(SFX_DORCLS, NULL);
     }
-    else if(checkCheat(&cheatHealth, key, &eat))
+    else if(checkCheat(&cheatHealth, ev->data1, &eat))
     {
         Cht_HealthFunc(plr);
         S_LocalSound(SFX_DORCLS, NULL);
     }
-    else if(checkCheat(&cheatKeys, key, &eat))
+    else if(checkCheat(&cheatKeys, ev->data1, &eat))
     {
         Cht_GiveKeysFunc(plr);
         S_LocalSound(SFX_DORCLS, NULL);
     }
-    else if(checkCheat(&cheatSound, key, &eat))
+    else if(checkCheat(&cheatSound, ev->data1, &eat))
     {
         // Otherwise ignored.
         S_LocalSound(SFX_DORCLS, NULL);
     }
-    else if(checkCheat(&cheatTicker, key, &eat))
+    else if(checkCheat(&cheatTicker, ev->data1, &eat))
     {
         // Otherwise ignored.
         S_LocalSound(SFX_DORCLS, NULL);
     }
-    else if(checkCheat(&cheatInvItem1, key, &eat))
+    else if(checkCheat(&cheatInvItem1, ev->data1, &eat))
     {
         Cht_InvItem1Func(plr);
         S_LocalSound(SFX_DORCLS, NULL);
     }
-    else if(checkCheat(&cheatInvItem2, key, &eat))
+    else if(checkCheat(&cheatInvItem2, ev->data1, &eat))
     {
         Cht_InvItem2Func(plr);
         S_LocalSound(SFX_DORCLS, NULL);
     }
-    else if(checkCheat(&cheatInvItem3, key, &eat))
+    else if(checkCheat(&cheatInvItem3, ev->data1, &eat))
     {
         Cht_InvItem3Func(plr, &cheatInvItem3);
         S_LocalSound(SFX_DORCLS, NULL);
     }
-    else if(checkCheat(&cheatWarp, key, &eat))
+    else if(checkCheat(&cheatWarp, ev->data1, &eat))
     {
         Cht_WarpFunc(plr, &cheatWarp);
         S_LocalSound(SFX_DORCLS, NULL);
     }
-    else if(checkCheat(&cheatChicken, key, &eat))
+    else if(checkCheat(&cheatChicken, ev->data1, &eat))
     {
         Cht_ChickenFunc(plr);
         S_LocalSound(SFX_DORCLS, NULL);
     }
-    else if(checkCheat(&cheatMassacre, key, &eat))
+    else if(checkCheat(&cheatMassacre, ev->data1, &eat))
     {
         Cht_MassacreFunc(plr);
         S_LocalSound(SFX_DORCLS, NULL);
     }
-    else if(checkCheat(&cheatIDKFA, key, &eat))
+    else if(checkCheat(&cheatIDKFA, ev->data1, &eat))
     {
         Cht_IDKFAFunc(plr);
         S_LocalSound(SFX_DORCLS, NULL);
     }
-    else if(checkCheat(&cheatIDDQD, key, &eat))
+    else if(checkCheat(&cheatIDDQD, ev->data1, &eat))
     {
         Cht_IDDQDFunc(plr);
         S_LocalSound(SFX_DORCLS, NULL);
-    }
-
-    if(!deathmatch && ev->type == EV_KEY && ev->state == EVS_DOWN)
-    {
-        automapid_t map = AM_MapForPlayer(CONSOLEPLAYER);
-
-        if(AM_IsActive(map) && checkCheat(&cheatAutomap, (char) ev->data1, &eat))
-        {
-            AM_IncMapCheatLevel(map);
-            return true;
-        }
     }
 
     return eat;
