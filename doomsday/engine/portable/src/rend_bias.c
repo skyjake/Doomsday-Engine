@@ -697,9 +697,9 @@ int SB_TrackerCheck(biastracker_t* tracker, int index)
  */
 void SB_TrackerApply(biastracker_t* dest, const biastracker_t* src)
 {
-    unsigned int        i;
+    int i;
 
-    for(i = 0; i < sizeof(dest->changes)/sizeof(dest->changes[0]); ++i)
+    for(i = 0; i < MAX_BIAS_TRACKED; ++i)
     {
         dest->changes[i] |= src->changes[i];
     }
@@ -710,9 +710,9 @@ void SB_TrackerApply(biastracker_t* dest, const biastracker_t* src)
  */
 void SB_TrackerClear(biastracker_t* dest, const biastracker_t* src)
 {
-    unsigned int        i;
+    int i;
 
-    for(i = 0; i < sizeof(dest->changes)/sizeof(dest->changes[0]); ++i)
+    for(i = 0; i < MAX_BIAS_TRACKED; ++i)
     {
         dest->changes[i] &= ~src->changes[i];
     }

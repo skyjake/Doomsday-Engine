@@ -31,8 +31,9 @@
 
 #include "m_vector.h"
 
-#define MAX_BIAS_LIGHTS   (8 * 32) // Hard limit due to change tracking.
-#define MAX_BIAS_AFFECTED 6
+#define MAX_BIAS_LIGHTS     (8 * 32) // Hard limit due to change tracking.
+#define MAX_BIAS_TRACKED    (MAX_BIAS_LIGHTS / 8)
+#define MAX_BIAS_AFFECTED   (6)
 
 typedef struct vilight_s {
     short           source;
@@ -71,7 +72,7 @@ typedef struct source_s {
 } source_t;
 
 typedef struct biastracker_s {
-    unsigned int changes[MAX_BIAS_LIGHTS / 32];
+    unsigned int changes[MAX_BIAS_TRACKED];
 } biastracker_t;
 
 struct rendpoly_s;
