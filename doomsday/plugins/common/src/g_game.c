@@ -53,6 +53,7 @@
 
 #include "p_saveg.h"
 #include "g_controls.h"
+#include "g_eventsequence.h"
 #include "p_mapsetup.h"
 #include "p_user.h"
 #include "p_actor.h"
