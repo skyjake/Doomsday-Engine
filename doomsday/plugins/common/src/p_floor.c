@@ -1274,33 +1274,21 @@ int EV_BuildStairs(linedef_t* line, byte* args, int direction,
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-typedef struct findsectorfirstneighborparams_s {
-    sector_t           *baseSec;
-    sector_t           *foundSec;
-} findsectorfirstneighborparams_t;
+typedef struct {
+    sector_t*       sector;
+    linedef_t*      foundLineDef;
+} findfirsttwosidedparams_t;
 
-int findSectorFirstNeighbor(void *ptr, void *context)
+int findFirstTwosided(void *ptr, void *context)
 {
-    linedef_t          *li = (linedef_t*) ptr;
-    findsectorfirstneighborparams_t *params =
-        (findsectorfirstneighborparams_t*) context;
-    sector_t           *frontSec, *backSec;
+    linedef_t* li = (linedef_t*) ptr;
+    findfirsttwosidedparams_t* params = (findfirsttwosidedparams_t*) context;
+    sector_t* backSec = P_GetPtrp(li, DMU_BACK_SECTOR);
 
-    frontSec = P_GetPtrp(li, DMU_FRONT_SECTOR);
-    backSec= P_GetPtrp(li, DMU_BACK_SECTOR);
-
-    if(frontSec && backSec)
+    if(backSec && !(params->sector && backSec == params->sector))
     {
-        if(frontSec == params->baseSec && backSec != params->baseSec)
-        {
-            params->foundSec = backSec;
-            return 0; // Stop iteration, this will do.
-        }
-        else if(backSec == params->baseSec && frontSec != params->baseSec)
-        {
-            params->foundSec = frontSec;
-            return 0; // Stop iteration, this will do.
-        }
+        params->foundLineDef = li;
+        return 0; // Stop iteration, this will do.
     }
 
     return 1; // Continue iteration.
@@ -1308,12 +1296,11 @@ int findSectorFirstNeighbor(void *ptr, void *context)
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-int EV_DoDonut(linedef_t *line)
+int EV_DoDonut(linedef_t* line)
 {
-    int                 rtn = 0;
-    sector_t           *sec, *inner, *outer;
-    iterlist_t         *list;
-    findsectorfirstneighborparams_t params;
+    int rtn = 0;
+    sector_t* sec, *outer, *ring;
+    iterlist_t* list;
 
     list = P_GetSectorIterListForTag(P_ToXLine(line)->tag, false);
     if(!list)
@@ -1322,44 +1309,48 @@ int EV_DoDonut(linedef_t *line)
     P_IterListResetIterator(list, true);
     while((sec = P_IterListIterator(list)) != NULL)
     {
+        findfirsttwosidedparams_t params;
+
         // Already moving? If so, keep going...
         if(P_ToXSector(sec)->specialData)
             continue;
 
         rtn = 1;
-        inner = outer = NULL;
+        outer = ring = NULL;
 
-        params.baseSec = sec;
-        params.foundSec = NULL;
-        if(!P_Iteratep(sec, DMU_LINEDEF, &params, findSectorFirstNeighbor))
+        params.sector = NULL;
+        params.foundLineDef = NULL;
+        if(!P_Iteratep(sec, DMU_LINEDEF, &params, findFirstTwosided))
         {
-            outer = params.foundSec;
+            ring = P_GetPtrp(params.foundLineDef, DMU_BACK_SECTOR);
+            if(ring == sec)
+                ring = P_GetPtrp(params.foundLineDef, DMU_FRONT_SECTOR);
 
-            params.baseSec = outer;
-            params.foundSec = NULL;
-            if(!P_Iteratep(outer, DMU_LINEDEF, &params, findSectorFirstNeighbor))
-                inner = params.foundSec;
+            params.sector = sec;
+            params.foundLineDef = NULL;
+            if(!P_Iteratep(ring, DMU_LINEDEF, &params, findFirstTwosided))
+                outer = P_GetPtrp(params.foundLineDef, DMU_BACK_SECTOR);
         }
 
-        if(inner && outer)
+        if(outer && ring)
         {   // Found both parts of the donut.
-            floor_t        *floor;
-            float               destHeight =
-                P_GetFloatp(inner, DMU_FLOOR_HEIGHT);
+            floor_t* floor;
+            float destHeight =
+                P_GetFloatp(outer, DMU_FLOOR_HEIGHT);
 
             // Spawn rising slime.
             floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
             floor->thinker.function = T_MoveFloor;
             DD_ThinkerAdd(&floor->thinker);
 
-            P_ToXSector(outer)->specialData = floor;
+            P_ToXSector(ring)->specialData = floor;
 
             floor->type = FT_RAISEDONUT;
             floor->crush = false;
             floor->state = FS_UP;
-            floor->sector = outer;
+            floor->sector = ring;
             floor->speed = FLOORSPEED * .5;
-            floor->material = P_GetPtrp(inner, DMU_FLOOR_MATERIAL);
+            floor->material = P_GetPtrp(outer, DMU_FLOOR_MATERIAL);
             floor->newSpecial = 0;
             floor->floorDestHeight = destHeight;
 
