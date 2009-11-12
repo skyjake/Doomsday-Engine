@@ -47,7 +47,7 @@ typedef struct vilight_s {
 typedef struct vertexillum_s {
     float           color[3];     // Current color of the vertex.
     float           dest[3];      // Destination color of the vertex.
-    unsigned int    updatetime;   // When the value was calculated.
+    uint            updatetime;   // When the value was calculated.
     short           flags;
     vilight_t       casted[MAX_BIAS_AFFECTED];
 } vertexillum_t;
@@ -68,11 +68,11 @@ typedef struct source_s {
     float           intensity;
     float           primaryIntensity;
     float           sectorLevel[2];
-    unsigned int    lastUpdateTime;
+    uint            lastUpdateTime;
 } source_t;
 
 typedef struct biastracker_s {
-    unsigned int changes[MAX_BIAS_TRACKED];
+    uint            changes[MAX_BIAS_TRACKED];
 } biastracker_t;
 
 struct rendpoly_s;
@@ -80,7 +80,7 @@ struct rvertex_s;
 struct rcolor_s;
 
 extern int      useBias; // Bias lighting enabled.
-extern unsigned int currentTimeSB;
+extern uint     currentTimeSB;
 
 void            SB_Register(void);
 void            SB_InitForMap(const char* uniqueId);
