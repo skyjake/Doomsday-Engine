@@ -320,9 +320,6 @@ int Cht_WarpFunc(const int* args, int player)
     if(IS_NETGAME)
         return false;
 
-    if(plr->health <= 0)
-        return false; // Dead players can't cheat.
-
     if(gameMode == commercial)
     {
         epsd = 1;

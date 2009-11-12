@@ -324,10 +324,6 @@ int Cht_WarpFunc(const int* args, int player)
 
     if(IS_NETGAME)
         return false;
-    if(gameSkill == SM_NIGHTMARE)
-        return false;
-    if(plr->health <= 0)
-        return false; // Dead players can't cheat.
 
     epsd = args[0] - '0';
     map = args[1] - '0';
