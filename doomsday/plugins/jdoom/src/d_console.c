@@ -206,14 +206,14 @@ ccmd_t gameCCmds[] = {
 
     // $cheats
     {"cheat",       "s",    CCmdCheat},
-    {"god",         "",     CCmdCheatGod},
-    {"noclip",      "",     CCmdCheatNoClip},
+    {"god",         NULL,   CCmdCheatGod},
+    {"noclip",      NULL,   CCmdCheatNoClip},
     {"warp",        NULL,   CCmdCheatWarp},
     {"reveal",      "i",    CCmdCheatReveal},
     {"give",        NULL,   CCmdCheatGive},
     {"kill",        "",     CCmdCheatMassacre},
     {"leavemap",    "",     CCmdCheatLeaveMap},
-    {"suicide",     "",     CCmdCheatSuicide},
+    {"suicide",     NULL,   CCmdCheatSuicide},
     {"where",       "",     CCmdCheatWhere},
 
     {"doomfont",    "",     CCmdDoomFont},

@@ -31,17 +31,4 @@
 #endif
 
 void        Cht_Init(void);
-boolean     Cht_Responder(event_t* ev);
-
-void        Cht_GodFunc(player_t* plyr);
-void        Cht_SuicideFunc(player_t* plyr);
-void        Cht_GiveWeaponsFunc(player_t* plyr);
-void        Cht_GiveAmmoFunc(player_t* plyr);
-void        Cht_GiveKeysFunc(player_t* plyr);
-int         Cht_MusicFunc(player_t* plyr, char* buf);
-void        Cht_NoClipFunc(player_t* plyr);
-boolean     Cht_WarpFunc(player_t* plyr, char* buf);
-boolean     Cht_PowerUpFunc(player_t* plyr, int i);
-void        Cht_ChoppersFunc(player_t* plyr);
-void        Cht_MyPosFunc(player_t* plyr);
 #endif /* M_CHEAT */

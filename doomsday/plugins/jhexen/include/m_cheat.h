@@ -28,12 +28,5 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
-#include "x_player.h"
-
 void            Cht_Init(void);
-boolean         Cht_Responder(event_t* ev);
-
-void            Cht_GodFunc(player_t* player);
-void            Cht_SuicideFunc(player_t* player);
-void            Cht_NoClipFunc(player_t* player);
 #endif /* M_CHEAT */

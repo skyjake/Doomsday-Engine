@@ -29,12 +29,5 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include "h_stat.h"
-
 void        Cht_Init(void);
-boolean     Cht_Responder(event_t* ev);
-
-void        Cht_GodFunc(player_t* player);
-void        Cht_NoClipFunc(player_t* player);
-void        Cht_SuicideFunc(player_t* player);
 #endif /* M_CHEAT_H */

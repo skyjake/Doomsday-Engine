@@ -44,52 +44,34 @@
 #include "dmu_lib.h"
 #include "p_user.h"
 #include "p_start.h"
-
 #include "p_inventory.h"
+#include "g_eventsequence.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define CHEAT_ENCRYPT(a) \
-    ((((a)&1)<<5)+ \
-    (((a)&2)<<1)+ \
-    (((a)&4)<<4)+ \
-    (((a)&8)>>3)+ \
-    (((a)&16)>>3)+ \
-    (((a)&32)<<2)+ \
-    (((a)&64)>>2)+ \
-    (((a)&128)>>4))
-
 // TYPES -------------------------------------------------------------------
-
-typedef struct cheatseq_s {
-    byte*           sequence;
-    byte*           pos;
-    int             args[2];
-    int             currentArg;
-} cheatseq_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void Cht_GodFunc(player_t* plr);
-void Cht_NoClipFunc(player_t* plr);
-void Cht_SuicideFunc(player_t* plr);
-void Cht_GiveWeaponsFunc(player_t* plr);
-void Cht_GiveAmmoFunc(player_t* plr);
-void Cht_GiveArmorFunc(player_t* plr);
-void Cht_PowerupFunc(player_t* plr);
-void Cht_HealthFunc(player_t* plr);
-void Cht_GiveKeysFunc(player_t* plr);
-void Cht_InvItem1Func(player_t* plr);
-void Cht_InvItem2Func(player_t* plr);
-void Cht_InvItem3Func(player_t* plr, cheatseq_t* cheat);
-boolean Cht_WarpFunc(player_t* plr, cheatseq_t* cheat);
-void Cht_ChickenFunc(player_t* plr);
-void Cht_MassacreFunc(player_t* plr);
-void Cht_IDKFAFunc(player_t* plr);
-void Cht_IDDQDFunc(player_t* plr);
-void Cht_DebugFunc(player_t* plr);
+int Cht_GodFunc(const int* args, int player);
+int Cht_NoClipFunc(const int* args, int player);
+int Cht_WeaponsFunc(const int* args, int player);
+int Cht_PowerupFunc(const int* args, int player);
+int Cht_HealthFunc(const int* args, int player);
+int Cht_GiveKeysFunc(const int* args, int player);
+int Cht_InvItem1Func(const int* args, int player);
+int Cht_InvItem2Func(const int* args, int player);
+int Cht_InvItem3Func(const int* args, int player);
+int Cht_WarpFunc(const int* args, int player);
+int Cht_ChickenFunc(const int* args, int player);
+int Cht_MassacreFunc(const int* args, int player);
+int Cht_IDKFAFunc(const int* args, int player);
+int Cht_IDDQDFunc(const int* args, int player);
+int Cht_SoundFunc(const int* args, int player);
+int Cht_TickerFunc(const int* args, int player);
+int Cht_RevealFunc(const int* args, int player);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -99,209 +81,87 @@ void Cht_DebugFunc(player_t* plr);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static byte cheatLookup[256];
-
 // Toggle god mode.
-static byte cheatGodSeq[] = {
-    CHEAT_ENCRYPT('q'),
-    CHEAT_ENCRYPT('u'),
-    CHEAT_ENCRYPT('i'),
-    CHEAT_ENCRYPT('c'),
-    CHEAT_ENCRYPT('k'),
-    CHEAT_ENCRYPT('e'),
-    CHEAT_ENCRYPT('n'),
-    0xff
+static unsigned char cheatGodSeq[] = {
+    'q', 'u', 'i', 'c', 'k', 'e', 'n'
 };
 
 // Toggle no clipping mode.
-static byte cheatNoClipSeq[] = {
-    CHEAT_ENCRYPT('k'),
-    CHEAT_ENCRYPT('i'),
-    CHEAT_ENCRYPT('t'),
-    CHEAT_ENCRYPT('t'),
-    CHEAT_ENCRYPT('y'),
-    0xff
+static unsigned char cheatNoClipSeq[] = {
+    'k', 'i', 't', 't', 'y'
 };
 
 // Get all weapons and ammo.
-static byte cheatWeaponsSeq[] = {
-    CHEAT_ENCRYPT('r'),
-    CHEAT_ENCRYPT('a'),
-    CHEAT_ENCRYPT('m'),
-    CHEAT_ENCRYPT('b'),
-    CHEAT_ENCRYPT('o'),
-    0xff
+static unsigned char cheatWeaponsSeq[] = {
+    'r', 'a', 'm', 'b', 'o'
 };
 
 // Toggle tome of power.
-static byte cheatPowerSeq[] = {
-    CHEAT_ENCRYPT('s'),
-    CHEAT_ENCRYPT('h'),
-    CHEAT_ENCRYPT('a'),
-    CHEAT_ENCRYPT('z'),
-    CHEAT_ENCRYPT('a'),
-    CHEAT_ENCRYPT('m'),
-    0xff, 0
+static unsigned char cheatPowerSeq[] = {
+    's', 'h', 'a', 'z', 'a', 'm'
 };
 
 // Get full health.
-static byte cheatHealthSeq[] = {
-    CHEAT_ENCRYPT('p'),
-    CHEAT_ENCRYPT('o'),
-    CHEAT_ENCRYPT('n'),
-    CHEAT_ENCRYPT('c'),
-    CHEAT_ENCRYPT('e'),
-    0xff
+static unsigned char cheatHealthSeq[] = {
+    'p', 'o', 'n', 'c', 'e'
 };
 
 // Get all keys.
-static byte cheatKeysSeq[] = {
-    CHEAT_ENCRYPT('s'),
-    CHEAT_ENCRYPT('k'),
-    CHEAT_ENCRYPT('e'),
-    CHEAT_ENCRYPT('l'),
-    0xff, 0
+static unsigned char cheatKeysSeq[] = {
+    's', 'k', 'e', 'l'
 };
 
 // Toggle sound debug info.
-static byte cheatSoundSeq[] = {
-    CHEAT_ENCRYPT('n'),
-    CHEAT_ENCRYPT('o'),
-    CHEAT_ENCRYPT('i'),
-    CHEAT_ENCRYPT('s'),
-    CHEAT_ENCRYPT('e'),
-    0xff
+static unsigned char cheatSoundSeq[] = {
+    'n', 'o', 'i', 's', 'e'
 };
 
 // Toggle ticker.
-static byte cheatTickerSeq[] = {
-    CHEAT_ENCRYPT('t'),
-    CHEAT_ENCRYPT('i'),
-    CHEAT_ENCRYPT('c'),
-    CHEAT_ENCRYPT('k'),
-    CHEAT_ENCRYPT('e'),
-    CHEAT_ENCRYPT('r'),
-    0xff, 0
+static unsigned char cheatTickerSeq[] = {
+    't', 'i', 'c', 'k', 'e', 'r'
 };
 
 // Get an inventory item 1st stage (ask for type).
-static byte cheatInvItem1Seq[] = {
-    CHEAT_ENCRYPT('g'),
-    CHEAT_ENCRYPT('i'),
-    CHEAT_ENCRYPT('m'),
-    CHEAT_ENCRYPT('m'),
-    CHEAT_ENCRYPT('e'),
-    0xff
+static unsigned char cheatInvItem1Seq[] = {
+    'g', 'i', 'm', 'm', 'e'
 };
 
 // Get an inventory item 2nd stage (ask for count).
-static byte cheatInvItem2Seq[] = {
-    CHEAT_ENCRYPT('g'),
-    CHEAT_ENCRYPT('i'),
-    CHEAT_ENCRYPT('m'),
-    CHEAT_ENCRYPT('m'),
-    CHEAT_ENCRYPT('e'),
-    0, 0xff, 0
+static unsigned char cheatInvItem2Seq[] = {
+    'g', 'i', 'm', 'm', 'e', 1, 0
 };
 
 // Get an inventory item final stage.
-static byte cheatInvItem3Seq[] = {
-    CHEAT_ENCRYPT('g'),
-    CHEAT_ENCRYPT('i'),
-    CHEAT_ENCRYPT('m'),
-    CHEAT_ENCRYPT('m'),
-    CHEAT_ENCRYPT('e'),
-    0, 0, 0xff
+static unsigned char cheatInvItem3Seq[] = {
+    'g', 'i', 'm', 'm', 'e', 1, 0, 0
 };
 
 // Warp to new level.
-static byte cheatWarpSeq[] = {
-    CHEAT_ENCRYPT('e'),
-    CHEAT_ENCRYPT('n'),
-    CHEAT_ENCRYPT('g'),
-    CHEAT_ENCRYPT('a'),
-    CHEAT_ENCRYPT('g'),
-    CHEAT_ENCRYPT('e'),
-    0, 0, 0xff, 0
+static unsigned char cheatWarpSeq[] = {
+    'e', 'n', 'g', 'a', 'g', 'e', 1, 0, 0
 };
 
 // Save a screenshot.
-static byte cheatChickenSeq[] = {
-    CHEAT_ENCRYPT('c'),
-    CHEAT_ENCRYPT('o'),
-    CHEAT_ENCRYPT('c'),
-    CHEAT_ENCRYPT('k'),
-    CHEAT_ENCRYPT('a'),
-    CHEAT_ENCRYPT('d'),
-    CHEAT_ENCRYPT('o'),
-    CHEAT_ENCRYPT('o'),
-    CHEAT_ENCRYPT('d'),
-    CHEAT_ENCRYPT('l'),
-    CHEAT_ENCRYPT('e'),
-    CHEAT_ENCRYPT('d'),
-    CHEAT_ENCRYPT('o'),
-    CHEAT_ENCRYPT('o'),
-    0xff, 0
+static unsigned char cheatChickenSeq[] = {
+    'c', 'o', 'c', 'k', 'a', 'd', 'o', 'o', 'd', 'l', 'e', 'd', 'o', 'o'
 };
 
 // Kill all monsters.
-static byte cheatMassacreSeq[] = {
-    CHEAT_ENCRYPT('m'),
-    CHEAT_ENCRYPT('a'),
-    CHEAT_ENCRYPT('s'),
-    CHEAT_ENCRYPT('s'),
-    CHEAT_ENCRYPT('a'),
-    CHEAT_ENCRYPT('c'),
-    CHEAT_ENCRYPT('r'),
-    CHEAT_ENCRYPT('e'),
-    0xff, 0
+static unsigned char cheatMassacreSeq[] = {
+    'm', 'a', 's', 's', 'a', 'c', 'r', 'e'
 };
 
-static byte cheatIDKFASeq[] = {
-    CHEAT_ENCRYPT('i'),
-    CHEAT_ENCRYPT('d'),
-    CHEAT_ENCRYPT('k'),
-    CHEAT_ENCRYPT('f'),
-    CHEAT_ENCRYPT('a'),
-    0xff, 0
+static unsigned char cheatIDKFASeq[] = {
+    'i', 'd', 'k', 'f', 'a'
 };
 
-static byte cheatIDDQDSeq[] = {
-    CHEAT_ENCRYPT('i'),
-    CHEAT_ENCRYPT('d'),
-    CHEAT_ENCRYPT('d'),
-    CHEAT_ENCRYPT('q'),
-    CHEAT_ENCRYPT('d'),
-    0xff, 0
+static unsigned char cheatIDDQDSeq[] = {
+    'i', 'd', 'd', 'q', 'd'
 };
 
-static byte cheatAutomapSeq[] = {
-    CHEAT_ENCRYPT('r'),
-    CHEAT_ENCRYPT('a'),
-    CHEAT_ENCRYPT('v'),
-    CHEAT_ENCRYPT('m'),
-    CHEAT_ENCRYPT('a'),
-    CHEAT_ENCRYPT('p'),
-    0xff, 0
+static unsigned char cheatAutomapSeq[] = {
+    'r', 'a', 'v', 'm', 'a', 'p'
 };
-
-static cheatseq_t cheatGod = {cheatGodSeq, NULL, {0, 0}, 0};
-static cheatseq_t cheatNoClip = {cheatNoClipSeq, NULL, {0, 0}, 0};
-static cheatseq_t cheatWeapons = {cheatWeaponsSeq, NULL, {0, 0}, 0};
-static cheatseq_t cheatPower = {cheatPowerSeq, NULL, {0, 0}, 0};
-static cheatseq_t cheatHealth = {cheatHealthSeq, NULL, {0, 0}, 0};
-static cheatseq_t cheatKeys = {cheatKeysSeq, NULL, {0, 0}, 0};
-static cheatseq_t cheatSound = {cheatSoundSeq, NULL, {0, 0}, 0};
-static cheatseq_t cheatTicker = {cheatTickerSeq, NULL, {0, 0}, 0};
-static cheatseq_t cheatInvItem1 = {cheatInvItem1Seq, NULL, {0, 0}, 0};
-static cheatseq_t cheatInvItem2 = {cheatInvItem2Seq, NULL, {0, 0}, 0};
-static cheatseq_t cheatInvItem3 = {cheatInvItem3Seq, NULL, {0, 0}, 0};
-static cheatseq_t cheatWarp = {cheatWarpSeq, NULL, {0, 0}, 0};
-static cheatseq_t cheatChicken = {cheatChickenSeq, NULL, {0, 0}, 0};
-static cheatseq_t cheatMassacre = {cheatMassacreSeq, NULL, {0, 0}, 0};
-static cheatseq_t cheatIDKFA = {cheatIDKFASeq, NULL, {0, 0}, 0};
-static cheatseq_t cheatIDDQD = {cheatIDDQDSeq, NULL, {0, 0}, 0};
-static cheatseq_t cheatAutomap = {cheatAutomapSeq, NULL, {0, 0}, 0};
 
 // CODE --------------------------------------------------------------------
 
@@ -318,203 +178,55 @@ static boolean cheatsEnabled(void)
 #endif
 }
 
-/**
- * @return              Non-zero iff the cheat was successful.
- */
-static int checkCheat(cheatseq_t* cht, char key, boolean* eat)
-{
-    if(!cht->pos)
-    {
-        cht->pos = cht->sequence;
-        cht->currentArg = 0;
-    }
-
-    if(*cht->pos == 0)
-    {
-        cht->args[cht->currentArg++] = key;
-        cht->pos++;
-        *eat = true;
-    }
-    else if(cheatLookup[key] == *cht->pos)
-    {
-        cht->pos++;
-        *eat = true;
-    }
-    else
-    {
-        cht->pos = cht->sequence;
-        cht->currentArg = 0;
-    }
-
-    if(*cht->pos == 0xff)
-    {
-        cht->pos = cht->sequence;
-        cht->currentArg = 0;
-        return true;
-    }
-
-    return false;
-}
-
 void Cht_Init(void)
 {
-    int i;
-
-    for(i = 0; i < 256; ++i)
-    {
-        cheatLookup[i] = CHEAT_ENCRYPT(i);
-    }
+    G_AddEventSequence(cheatAutomapSeq, sizeof(cheatAutomapSeq), Cht_RevealFunc);
+    G_AddEventSequence(cheatGodSeq, sizeof(cheatGodSeq), Cht_GodFunc);
+    G_AddEventSequence(cheatNoClipSeq, sizeof(cheatNoClipSeq), Cht_NoClipFunc);
+    G_AddEventSequence(cheatWeaponsSeq, sizeof(cheatWeaponsSeq), Cht_WeaponsFunc);
+    G_AddEventSequence(cheatPowerSeq, sizeof(cheatPowerSeq), Cht_PowerupFunc);
+    G_AddEventSequence(cheatHealthSeq, sizeof(cheatHealthSeq), Cht_HealthFunc);
+    G_AddEventSequence(cheatKeysSeq, sizeof(cheatKeysSeq), Cht_GiveKeysFunc);
+    G_AddEventSequence(cheatSoundSeq, sizeof(cheatSoundSeq), Cht_SoundFunc);
+    G_AddEventSequence(cheatTickerSeq, sizeof(cheatTickerSeq), Cht_TickerFunc);
+    G_AddEventSequence(cheatInvItem3Seq, sizeof(cheatInvItem3Seq), Cht_InvItem3Func);
+    G_AddEventSequence(cheatInvItem2Seq, sizeof(cheatInvItem2Seq), Cht_InvItem2Func);
+    G_AddEventSequence(cheatInvItem1Seq, sizeof(cheatInvItem1Seq), Cht_InvItem1Func);
+    G_AddEventSequence(cheatWarpSeq, sizeof(cheatWarpSeq), Cht_WarpFunc);
+    G_AddEventSequence(cheatChickenSeq, sizeof(cheatChickenSeq), Cht_ChickenFunc);
+    G_AddEventSequence(cheatMassacreSeq, sizeof(cheatMassacreSeq), Cht_MassacreFunc);
+    G_AddEventSequence(cheatIDKFASeq, sizeof(cheatIDKFASeq), Cht_IDKFAFunc);
+    G_AddEventSequence(cheatIDDQDSeq, sizeof(cheatIDDQDSeq), Cht_IDDQDFunc);
 }
 
-/**
- * Responds to an input event if determined to be part of a cheat entry
- * sequence.
- *
- * @param ev            Ptr to the event to be checked.
- *
- * @return              @c true, if the event was 'eaten'.
- */
-boolean Cht_Responder(event_t* ev)
+int Cht_GodFunc(const int* args, int player)
 {
-    player_t* plr = &players[CONSOLEPLAYER];
-    boolean eat = false;
-
-    if(ev->type != EV_KEY || ev->state != EVS_DOWN)
-        return false;
-
-    if(G_GetGameState() != GS_MAP)
-        return false;
-
-    if(plr->health <= 0)
-        return false; // Dead players can't cheat.
-
-    if(!(IS_NETGAME && deathmatch))
-    {
-    automapid_t map = AM_MapForPlayer(CONSOLEPLAYER);
-
-    if(AM_IsActive(map) && checkCheat(&cheatAutomap, ev->data1, &eat))
-    {
-        AM_IncMapCheatLevel(map);
-        return true;
-    }
-    }
+    player_t* plr = &players[player];
 
     if(IS_NETGAME)
         return false;
-
     if(gameSkill == SM_NIGHTMARE)
         return false;
+    if(plr->health <= 0)
+        return false; // Dead players can't cheat.
 
-    if(checkCheat(&cheatGod, ev->data1, &eat))
-    {
-        Cht_GodFunc(plr);
-        S_LocalSound(SFX_DORCLS, NULL);
-    }
-    else if(checkCheat(&cheatNoClip, ev->data1, &eat))
-    {
-        Cht_NoClipFunc(plr);
-        S_LocalSound(SFX_DORCLS, NULL);
-    }
-    else if(checkCheat(&cheatWeapons, ev->data1, &eat))
-    {
-        Cht_GiveWeaponsFunc(plr);
-        Cht_GiveAmmoFunc(plr);
-        Cht_GiveArmorFunc(plr);
-
-        P_SetMessage(plr, TXT_CHEATWEAPONS, false);
-        S_LocalSound(SFX_DORCLS, NULL);
-    }
-    else if(checkCheat(&cheatPower, ev->data1, &eat))
-    {
-        Cht_PowerupFunc(plr);
-        S_LocalSound(SFX_DORCLS, NULL);
-    }
-    else if(checkCheat(&cheatHealth, ev->data1, &eat))
-    {
-        Cht_HealthFunc(plr);
-        S_LocalSound(SFX_DORCLS, NULL);
-    }
-    else if(checkCheat(&cheatKeys, ev->data1, &eat))
-    {
-        Cht_GiveKeysFunc(plr);
-        S_LocalSound(SFX_DORCLS, NULL);
-    }
-    else if(checkCheat(&cheatSound, ev->data1, &eat))
-    {
-        // Otherwise ignored.
-        S_LocalSound(SFX_DORCLS, NULL);
-    }
-    else if(checkCheat(&cheatTicker, ev->data1, &eat))
-    {
-        // Otherwise ignored.
-        S_LocalSound(SFX_DORCLS, NULL);
-    }
-    else if(checkCheat(&cheatInvItem1, ev->data1, &eat))
-    {
-        Cht_InvItem1Func(plr);
-        S_LocalSound(SFX_DORCLS, NULL);
-    }
-    else if(checkCheat(&cheatInvItem2, ev->data1, &eat))
-    {
-        Cht_InvItem2Func(plr);
-        S_LocalSound(SFX_DORCLS, NULL);
-    }
-    else if(checkCheat(&cheatInvItem3, ev->data1, &eat))
-    {
-        Cht_InvItem3Func(plr, &cheatInvItem3);
-        S_LocalSound(SFX_DORCLS, NULL);
-    }
-    else if(checkCheat(&cheatWarp, ev->data1, &eat))
-    {
-        Cht_WarpFunc(plr, &cheatWarp);
-        S_LocalSound(SFX_DORCLS, NULL);
-    }
-    else if(checkCheat(&cheatChicken, ev->data1, &eat))
-    {
-        Cht_ChickenFunc(plr);
-        S_LocalSound(SFX_DORCLS, NULL);
-    }
-    else if(checkCheat(&cheatMassacre, ev->data1, &eat))
-    {
-        Cht_MassacreFunc(plr);
-        S_LocalSound(SFX_DORCLS, NULL);
-    }
-    else if(checkCheat(&cheatIDKFA, ev->data1, &eat))
-    {
-        Cht_IDKFAFunc(plr);
-        S_LocalSound(SFX_DORCLS, NULL);
-    }
-    else if(checkCheat(&cheatIDDQD, ev->data1, &eat))
-    {
-        Cht_IDDQDFunc(plr);
-        S_LocalSound(SFX_DORCLS, NULL);
-    }
-
-    return eat;
-}
-
-void Cht_GodFunc(player_t* plr)
-{
     plr->cheats ^= CF_GODMODE;
     plr->update |= PSF_STATE;
 
     P_SetMessage(plr,
                  ((P_GetPlayerCheats(plr) & CF_GODMODE) ? TXT_CHEATGODON : TXT_CHEATGODOFF), false);
+    S_LocalSound(SFX_DORCLS, NULL);
+    return true;
 }
 
-void Cht_SuicideFunc(player_t* plr)
-{
-    P_DamageMobj(plr->plr->mo, NULL, NULL, 10000, false);
-}
-
-void Cht_GiveArmorFunc(player_t* plr)
+static void giveArmor(player_t* plr)
 {
     plr->update |= PSF_ARMOR_POINTS | PSF_STATE;
     plr->armorPoints = 200;
     plr->armorType = 2;
 }
 
-void Cht_GiveWeaponsFunc(player_t* plr)
+static void giveWeapons(player_t* plr)
 {
     int i;
 
@@ -526,7 +238,7 @@ void Cht_GiveWeaponsFunc(player_t* plr)
     }
 }
 
-void Cht_GiveAmmoFunc(player_t* plr)
+static void giveAmmo(player_t* plr)
 {
     int i;
 
@@ -546,29 +258,79 @@ void Cht_GiveAmmoFunc(player_t* plr)
     }
 }
 
-void Cht_GiveKeysFunc(player_t* plr)
+int Cht_WeaponsFunc(const int* args, int player)
 {
+    player_t* plr = &players[player];
+
+    if(IS_NETGAME)
+        return false;
+    if(gameSkill == SM_NIGHTMARE)
+        return false;
+    if(plr->health <= 0)
+        return false; // Dead players can't cheat.
+
+    giveWeapons(plr);
+    giveAmmo(plr);
+    giveArmor(plr);
+
+    P_SetMessage(plr, TXT_CHEATWEAPONS, false);
+    S_LocalSound(SFX_DORCLS, NULL);
+    return true;
+}
+
+int Cht_GiveKeysFunc(const int* args, int player)
+{
+    player_t* plr = &players[player];
+
+    if(IS_NETGAME)
+        return false;
+    if(gameSkill == SM_NIGHTMARE)
+        return false;
+    if(plr->health <= 0)
+        return false; // Dead players can't cheat.
+
     plr->update |= PSF_KEYS;
     plr->keys[KT_YELLOW] = true;
     plr->keys[KT_GREEN] = true;
     plr->keys[KT_BLUE] = true;
     P_SetMessage(plr, TXT_CHEATKEYS, false);
+    S_LocalSound(SFX_DORCLS, NULL);
+    return true;
 }
 
-void Cht_NoClipFunc(player_t* plr)
+int Cht_NoClipFunc(const int* args, int player)
 {
+    player_t* plr = &players[player];
+
+    if(IS_NETGAME)
+        return false;
+    if(gameSkill == SM_NIGHTMARE)
+        return false;
+    if(plr->health <= 0)
+        return false; // Dead players can't cheat.
+
     plr->cheats ^= CF_NOCLIP;
     plr->update |= PSF_STATE;
     P_SetMessage(plr,
                  ((P_GetPlayerCheats(plr) & CF_NOCLIP) ? TXT_CHEATNOCLIPON : TXT_CHEATNOCLIPOFF), false);
+    S_LocalSound(SFX_DORCLS, NULL);
+    return true;
 }
 
-boolean Cht_WarpFunc(player_t* plr, cheatseq_t* cheat)
+int Cht_WarpFunc(const int* args, int player)
 {
+    player_t* plr = &players[player];
     int epsd, map;
 
-    epsd = cheat->args[0] - '0';
-    map = cheat->args[1] - '0';
+    if(IS_NETGAME)
+        return false;
+    if(gameSkill == SM_NIGHTMARE)
+        return false;
+    if(plr->health <= 0)
+        return false; // Dead players can't cheat.
+
+    epsd = args[0] - '0';
+    map = args[1] - '0';
 
     // Catch invalid maps.
     if(!G_ValidateMap(&epsd, &map))
@@ -576,6 +338,8 @@ boolean Cht_WarpFunc(player_t* plr, cheatseq_t* cheat)
 
     // So be it.
     P_SetMessage(plr, TXT_CHEATWARP, false);
+    S_LocalSound(SFX_DORCLS, NULL);
+
     G_DeferedInitNew(gameSkill, epsd, map);
 
     // Clear the menu if open.
@@ -584,8 +348,17 @@ boolean Cht_WarpFunc(player_t* plr, cheatseq_t* cheat)
     return true;
 }
 
-void Cht_PowerupFunc(player_t* plr)
+int Cht_PowerupFunc(const int* args, int player)
 {
+    player_t* plr = &players[player];
+
+    if(IS_NETGAME)
+        return false;
+    if(gameSkill == SM_NIGHTMARE)
+        return false;
+    if(plr->health <= 0)
+        return false; // Dead players can't cheat.
+
     plr->update |= PSF_POWERS;
     if(plr->powers[PT_WEAPONLEVEL2])
     {
@@ -600,10 +373,13 @@ void Cht_PowerupFunc(player_t* plr)
         P_InventoryUse(plrnum, IIT_TOMBOFPOWER, true);
         P_SetMessage(plr, TXT_CHEATPOWERON, false);
     }
+    S_LocalSound(SFX_DORCLS, NULL);
+    return true;
 }
 
-void Cht_DebugFunc(player_t* plr)
+static void printDebugInfo(int player)
 {
+    player_t* plr = &players[player];
     char lumpName[9], textBuffer[256];
     subsector_t* sub;
 
@@ -630,8 +406,17 @@ void Cht_DebugFunc(player_t* plr)
                 plr->plr->mo->height, plr->plr->mo->radius);
 }
 
-void Cht_HealthFunc(player_t* plr)
+int Cht_HealthFunc(const int* args, int player)
 {
+    player_t* plr = &players[player];
+
+    if(IS_NETGAME)
+        return false;
+    if(gameSkill == SM_NIGHTMARE)
+        return false;
+    if(plr->health <= 0)
+        return false; // Dead players can't cheat.
+
     plr->update |= PSF_HEALTH;
     if(plr->morphTics)
     {
@@ -642,36 +427,68 @@ void Cht_HealthFunc(player_t* plr)
         plr->health = plr->plr->mo->health = maxHealth;
     }
     P_SetMessage(plr, TXT_CHEATHEALTH, false);
+    S_LocalSound(SFX_DORCLS, NULL);
+    return true;
 }
 
-void Cht_InvItem1Func(player_t* plr)
+int Cht_InvItem1Func(const int* args, int player)
 {
+    player_t* plr = &players[player];
+
+    if(IS_NETGAME)
+        return false;
+    if(gameSkill == SM_NIGHTMARE)
+        return false;
+    if(plr->health <= 0)
+        return false; // Dead players can't cheat.
+
     P_SetMessage(plr, TXT_CHEATINVITEMS1, false);
+    S_LocalSound(SFX_DORCLS, NULL);
+    return true;
 }
 
-void Cht_InvItem2Func(player_t* plr)
+int Cht_InvItem2Func(const int* args, int player)
 {
+    player_t* plr = &players[player];
+
+    if(IS_NETGAME)
+        return false;
+    if(gameSkill == SM_NIGHTMARE)
+        return false;
+    if(plr->health <= 0)
+        return false; // Dead players can't cheat.
+
     P_SetMessage(plr, TXT_CHEATINVITEMS2, false);
+    S_LocalSound(SFX_DORCLS, NULL);
+    return true;
 }
 
-void Cht_InvItem3Func(player_t* plr, cheatseq_t* cheat)
+int Cht_InvItem3Func(const int* args, int player)
 {
-    int i, count, plrnum = plr - players;
+    player_t* plr = &players[player];
+    int i, count;
     inventoryitemtype_t type;
 
-    type = cheat->args[0] - 'a' + 1;
-    count = cheat->args[1] - '0';
+    if(IS_NETGAME)
+        return false;
+    if(gameSkill == SM_NIGHTMARE)
+        return false;
+    if(plr->health <= 0)
+        return false; // Dead players can't cheat.
+
+    type = args[0] - 'a' + 1;
+    count = args[1] - '0';
     if(type > IIT_NONE && type < NUM_INVENTORYITEM_TYPES && count > 0 && count < 10)
     {
         if(gameMode == shareware && (type == IIT_SUPERHEALTH || type == IIT_TELEPORT))
         {
             P_SetMessage(plr, TXT_CHEATITEMSFAIL, false);
-            return;
+            return false;
         }
 
         for(i = 0; i < count; ++i)
         {
-            P_InventoryGive(plrnum, type, false);
+            P_InventoryGive(player, type, false);
         }
         P_SetMessage(plr, TXT_CHEATINVITEMS3, false);
     }
@@ -679,10 +496,22 @@ void Cht_InvItem3Func(player_t* plr, cheatseq_t* cheat)
     {   // Bad input
         P_SetMessage(plr, TXT_CHEATITEMSFAIL, false);
     }
+
+    S_LocalSound(SFX_DORCLS, NULL);
+    return true;
 }
 
-void Cht_ChickenFunc(player_t* plr)
+int Cht_ChickenFunc(const int* args, int player)
 {
+    player_t* plr = &players[player];
+
+    if(IS_NETGAME)
+        return false;
+    if(gameSkill == SM_NIGHTMARE)
+        return false;
+    if(plr->health <= 0)
+        return false; // Dead players can't cheat.
+
     if(plr->morphTics)
     {
         if(P_UndoPlayerMorph(plr))
@@ -694,21 +523,43 @@ void Cht_ChickenFunc(player_t* plr)
     {
         P_SetMessage(plr, TXT_CHEATCHICKENON, false);
     }
+
+    S_LocalSound(SFX_DORCLS, NULL);
+    return true;
 }
 
-void Cht_MassacreFunc(player_t* plr)
+int Cht_MassacreFunc(const int* args, int player)
 {
+    player_t* plr = &players[player];
+
+    if(IS_NETGAME)
+        return false;
+    if(gameSkill == SM_NIGHTMARE)
+        return false;
+    if(plr->health <= 0)
+        return false; // Dead players can't cheat.
+
     P_Massacre();
     P_SetMessage(plr, TXT_CHEATMASSACRE, false);
+    S_LocalSound(SFX_DORCLS, NULL);
+    return true;
 }
 
-void Cht_IDKFAFunc(player_t* plr)
+int Cht_IDKFAFunc(const int* args, int player)
 {
+    player_t* plr = &players[player];
     int i;
+
+    if(IS_NETGAME)
+        return false;
+    if(gameSkill == SM_NIGHTMARE)
+        return false;
+    if(plr->health <= 0)
+        return false; // Dead players can't cheat.
 
     if(plr->morphTics)
     {
-        return;
+        return false;
     }
 
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
@@ -718,12 +569,75 @@ void Cht_IDKFAFunc(player_t* plr)
 
     plr->pendingWeapon = WT_FIRST;
     P_SetMessage(plr, TXT_CHEATIDKFA, false);
+    S_LocalSound(SFX_DORCLS, NULL);
+    return true;
 }
 
-void Cht_IDDQDFunc(player_t* plr)
+int Cht_IDDQDFunc(const int* args, int player)
 {
+    player_t* plr = &players[player];
+
+    if(IS_NETGAME)
+        return false;
+    if(gameSkill == SM_NIGHTMARE)
+        return false;
+    if(plr->health <= 0)
+        return false; // Dead players can't cheat.
+
     P_DamageMobj(plr->plr->mo, NULL, plr->plr->mo, 10000, false);
     P_SetMessage(plr, TXT_CHEATIDDQD, false);
+    S_LocalSound(SFX_DORCLS, NULL);
+    return true;
+}
+
+int Cht_SoundFunc(const int* args, int player)
+{
+    player_t* plr = &players[player];
+
+    if(IS_NETGAME)
+        return false;
+    if(gameSkill == SM_NIGHTMARE)
+        return false;
+    if(plr->health <= 0)
+        return false; // Dead players can't cheat.
+
+    // Otherwise ignored.
+    S_LocalSound(SFX_DORCLS, NULL);
+    return true;
+}
+
+int Cht_TickerFunc(const int* args, int player)
+{
+    player_t* plr = &players[player];
+
+    if(IS_NETGAME)
+        return false;
+    if(gameSkill == SM_NIGHTMARE)
+        return false;
+    if(plr->health <= 0)
+        return false; // Dead players can't cheat.
+
+    // Otherwise ignored.
+    S_LocalSound(SFX_DORCLS, NULL);
+    return true;
+}
+
+int Cht_RevealFunc(const int* args, int player)
+{
+    player_t* plr = &players[player];
+    automapid_t map;
+
+    if(IS_NETGAME && deathmatch)
+        return false;
+    if(plr->health <= 0)
+        return false; // Dead players can't cheat.
+
+    map = AM_MapForPlayer(player);
+    if(!AM_IsActive(map))
+        return false;
+
+    AM_IncMapCheatLevel(map);
+    return true;
 }
 
 // This is the multipurpose cheat ccmd.
@@ -740,33 +654,87 @@ DEFCC(CCmdCheat)
         ev.state = EVS_DOWN;
         ev.data1 = argv[1][i];
         ev.data2 = ev.data3 = 0;
-        Cht_Responder(&ev);
+        G_EventSequenceResponder(&ev);
     }
     return true;
 }
 
 DEFCC(CCmdCheatGod)
 {
-    if(IS_NETGAME)
-        NetCl_CheatRequest("god");
-    else
-        Cht_GodFunc(&players[CONSOLEPLAYER]);
+    if(G_GetGameState() == GS_MAP)
+    {
+        if(IS_CLIENT)
+        {
+            NetCl_CheatRequest("god");
+        }
+        else
+        {
+            int player = CONSOLEPLAYER;
+
+            if(IS_NETGAME && !netSvAllowCheats)
+                return false;
+
+            if(argc == 2)
+            {
+                player = atoi(argv[1]);
+                if(player < 0 || player >= MAXPLAYERS)
+                    return false;
+            }
+
+            if(!players[player].plr->inGame)
+                return false;
+
+            Cht_GodFunc(NULL, player);
+        }
+    }
     return true;
 }
 
 DEFCC(CCmdCheatNoClip)
 {
-    if(IS_NETGAME)
-        NetCl_CheatRequest("noclip");
-    else
-        Cht_NoClipFunc(&players[CONSOLEPLAYER]);
+    if(G_GetGameState() == GS_MAP)
+    {
+        if(IS_CLIENT)
+        {
+            NetCl_CheatRequest("noclip");
+        }
+        else
+        {
+            int player = CONSOLEPLAYER;
+
+            if(IS_NETGAME && !netSvAllowCheats)
+                return false;
+
+            if(argc == 2)
+            {
+                player = atoi(argv[1]);
+                if(player < 0 || player >= MAXPLAYERS)
+                    return false;
+            }
+
+            if(!players[player].plr->inGame)
+                return false;
+
+            Cht_NoClipFunc(NULL, player);
+        }
+    }
     return true;
 }
 
 static int suicideResponse(msgresponse_t response, void* context)
 {
     if(response == MSG_YES)
-        Cht_SuicideFunc(&players[CONSOLEPLAYER]);
+    {
+        if(IS_NETGAME && IS_CLIENT)
+        {
+            NetCl_CheatRequest("suicide");
+        }
+        else
+        {
+            player_t* plr = &players[CONSOLEPLAYER];
+            P_DamageMobj(plr->plr->mo, NULL, NULL, 10000, false);
+        }
+    }
     return true;
 }
 
@@ -774,19 +742,35 @@ DEFCC(CCmdCheatSuicide)
 {
     if(G_GetGameState() == GS_MAP)
     {
-        if(IS_NETGAME)
+        player_t* plr;
+
+        if(IS_NETGAME && !netSvAllowCheats)
+            return false;
+
+        if(argc == 2)
         {
-            NetCl_CheatRequest("suicide");
+            int i = atoi(argv[1]);
+            if(i < 0 || i >= MAXPLAYERS)
+                return false;
+            plr = &players[i];
         }
         else
-        {   // When not in a netgame we'll ask the plr to confirm.
-            player_t* plr = &players[CONSOLEPLAYER];
+            plr = &players[CONSOLEPLAYER];
 
-            if(plr->playerState == PST_DEAD)
-                return false; // Already dead!
+        if(!plr->plr->inGame)
+            return false;
 
+        if(plr->playerState == PST_DEAD)
+            return false;
+
+        if(!IS_NETGAME || IS_CLIENT)
+        {
             Hu_MsgStart(MSG_YESNO, SUICIDEASK, suicideResponse, NULL);
+            return true;
         }
+
+        P_DamageMobj(plr->plr->mo, NULL, NULL, 10000, false);
+        return true;
     }
     else
     {
@@ -798,8 +782,7 @@ DEFCC(CCmdCheatSuicide)
 
 DEFCC(CCmdCheatWarp)
 {
-    cheatseq_t cheat;
-    int num;
+    int num, args[2];
 
     if(!cheatsEnabled())
         return false;
@@ -807,13 +790,13 @@ DEFCC(CCmdCheatWarp)
     if(argc == 2)
     {
         num = atoi(argv[1]);
-        cheat.args[0] = num / 10 + '0';
-        cheat.args[1] = num % 10 + '0';
+        args[0] = num / 10 + '0';
+        args[1] = num % 10 + '0';
     }
     else if(argc == 3)
     {
-        cheat.args[0] = atoi(argv[1]) % 10 + '0';
-        cheat.args[1] = atoi(argv[2]) % 10 + '0';
+        args[0] = atoi(argv[1]) % 10 + '0';
+        args[1] = atoi(argv[2]) % 10 + '0';
     }
     else
     {
@@ -823,7 +806,7 @@ DEFCC(CCmdCheatWarp)
 
     // We don't want that keys are repeated while we wait.
     DD_ClearKeyRepeaters();
-    Cht_WarpFunc(&players[CONSOLEPLAYER], &cheat);
+    Cht_WarpFunc(args, CONSOLEPLAYER);
     return true;
 }
 
@@ -854,7 +837,7 @@ DEFCC(CCmdCheatReveal)
 DEFCC(CCmdCheatGive)
 {
     char buf[100];
-    player_t* plr = &players[CONSOLEPLAYER];
+    int player = CONSOLEPLAYER;
     size_t i, stuffLen;
 
     if(IS_CLIENT)
@@ -891,11 +874,9 @@ DEFCC(CCmdCheatGive)
 
     if(argc == 3)
     {
-        i = atoi(argv[2]);
-        if(i < 0 || i >= MAXPLAYERS)
+        player = atoi(argv[2]);
+        if(player < 0 || player >= MAXPLAYERS)
             return false;
-
-        plr = &players[i];
     }
 
     if(G_GetGameState() != GS_MAP)
@@ -904,7 +885,7 @@ DEFCC(CCmdCheatGive)
         return true;
     }
 
-    if(!plr->plr->inGame)
+    if(!players[player].plr->inGame)
         return true; // Can't give to a plr who's not playing.
 
     strcpy(buf, argv[1]); // Stuff is the 2nd arg.
@@ -916,6 +897,7 @@ DEFCC(CCmdCheatGive)
         {
         case 'a':
             {
+            player_t* plr = &players[player];
             boolean giveAll = true;
 
             if(i < stuffLen)
@@ -936,8 +918,6 @@ DEFCC(CCmdCheatGive)
             {
                 int j;
 
-                Con_Printf("All ammo given.\n");
-
                 plr->update |= PSF_AMMO;
                 for(j = 0; j < NUM_AMMO_TYPES; ++j)
                     plr->ammo[j].owned = plr->ammo[j].max;
@@ -947,7 +927,6 @@ DEFCC(CCmdCheatGive)
 
         case 'i': // Inventory items
             {
-            int plrnum = plr - players;
             boolean giveAll = true;
 
             if(i < stuffLen)
@@ -963,7 +942,7 @@ DEFCC(CCmdCheatGive)
 
                         for(j = 0; j < MAXINVITEMCOUNT; ++j)
                         {
-                            P_InventoryGive(plrnum, type, false);
+                            P_InventoryGive(player, type, false);
                         }
                     }
 
@@ -988,22 +967,20 @@ DEFCC(CCmdCheatGive)
 
                     for(i = 0; i < MAXINVITEMCOUNT; ++i)
                     {
-                        P_InventoryGive(plrnum, type, false);
+                        P_InventoryGive(player, type, false);
                     }
                 }
-
-                Con_Printf("All items given.\n");
             }
             break;
             }
 
         case 'h':
-            Con_Printf("Health given.\n");
-            Cht_HealthFunc(plr);
+            Cht_HealthFunc(NULL, player);
             break;
 
         case 'k':
             {
+            player_t* plr = &players[player];
             boolean giveAll = true;
 
             if(i < stuffLen)
@@ -1022,17 +999,15 @@ DEFCC(CCmdCheatGive)
 
             if(giveAll)
             {
-                Con_Printf("All Keys given.\n");
-                Cht_GiveKeysFunc(plr);
+                Cht_GiveKeysFunc(NULL, player);
             }
             break;
             }
 
         case 'p':
             {
+            player_t* plr = &players[player];
             int j;
-
-            Con_Printf("Ammo backpack given.\n");
 
             if(!plr->backpack)
             {
@@ -1052,18 +1027,20 @@ DEFCC(CCmdCheatGive)
             }
 
         case 'r':
-            Con_Printf("Full armor given.\n");
+            {
+            player_t* plr = &players[player];
             plr->update |= PSF_ARMOR_POINTS;
             plr->armorPoints = 200;
             plr->armorType = 2;
             break;
-
+            }
         case 't':
-            Cht_PowerupFunc(plr);
+            Cht_PowerupFunc(NULL, player);
             break;
 
         case 'w':
             {
+            player_t* plr = &players[player];
             boolean giveAll = true;
 
             if(i < stuffLen)
@@ -1085,8 +1062,7 @@ DEFCC(CCmdCheatGive)
 
             if(giveAll)
             {
-                Con_Printf("All weapons given.\n");
-                Cht_GiveWeaponsFunc(plr);
+                giveWeapons(plr);
             }
             break;
             }
@@ -1102,13 +1078,13 @@ DEFCC(CCmdCheatGive)
 
 DEFCC(CCmdCheatMassacre)
 {
-    Cht_MassacreFunc(&players[CONSOLEPLAYER]);
+    Cht_MassacreFunc(NULL, CONSOLEPLAYER);
     return true;
 }
 
 DEFCC(CCmdCheatWhere)
 {
-    Cht_DebugFunc(&players[CONSOLEPLAYER]);
+    printDebugInfo(CONSOLEPLAYER);
     return true;
 }
 
@@ -1136,6 +1112,6 @@ DEFCC(CCmdCheatPig)
     if(!cheatsEnabled())
         return false;
 
-    Cht_ChickenFunc(&players[CONSOLEPLAYER]);
+    Cht_ChickenFunc(NULL, CONSOLEPLAYER);
     return true;
 }

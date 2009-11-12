@@ -257,6 +257,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\g_eventsequence.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\g_update.h"
 				>
 			</File>
@@ -442,6 +446,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\src\g_defs.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\src\g_eventsequence.c"
 				>
 			</File>
 			<File

@@ -929,21 +929,6 @@ void G_DoLoadMap(void)
  */
 boolean G_Responder(event_t *ev)
 {
-#if 0 // FIXME! __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    //// \fixme DJS - Why is this here??
-    player_t *plr = &players[CONSOLEPLAYER];
-
-    if(!actions[A_USEARTIFACT].on)
-    {   // Flag to denote that it's okay to use an inventory item.
-        if(!Hu_InventoryIsOpen())
-        {
-            plr->readyItem = plr->inventory[plr->invPtr].type;
-        }
-        usearti = true;
-    }
-
-#endif
-
     // With the menu active, none of these should respond to input events.
     if(!Hu_MenuIsActive() && !Hu_IsMessageActive())
     {
@@ -956,9 +941,12 @@ boolean G_Responder(event_t *ev)
             return true;
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-        // Check for cheats.
-        if(Cht_Responder(ev))
-            return true;
+        // Check for cheats?
+        if(G_GetGameState() == GS_MAP)
+        {
+            if(G_EventSequenceResponder(ev))
+                return true;
+        }
 #endif
     }
 

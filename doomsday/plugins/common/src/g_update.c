@@ -162,9 +162,6 @@ void G_UpdateState(int step)
         ST_Init();
 #endif
 
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-        Cht_Init();
-#endif
         Hu_MenuInit();
 
 #if __JHEXEN__
