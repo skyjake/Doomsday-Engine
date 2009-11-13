@@ -401,16 +401,18 @@ int Cht_WarpFunc(const int* args, int player)
         return false;
     }
 
-    // So be it.
-    P_SetMessage(plr, TXT_CHEATWARP, false);
     S_LocalSound(SFX_PLATFORM_STOP, NULL);
-    leaveMap = map;
-    leavePosition = 0;
-    G_WorldDone();
+    P_SetMessage(plr, TXT_CHEATWARP, false);
 
     // Clear the menu if open.
     Hu_MenuCommand(MCMD_CLOSE);
+
+    // So be it.
+    leaveMap = map;
+    leavePosition = 0;
     briefDisabled = true;
+    G_WorldDone();
+
     return true;
 }
 

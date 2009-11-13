@@ -1903,6 +1903,22 @@ void G_PrepareWIData(void)
 }
 #endif
 
+boolean G_DebriefingEnabled(void)
+{
+    // If we're already in the INFINE state, don't start a finale.
+    if(briefDisabled)
+        return false;
+#if __JHEXEN__
+    if(cfg.overrideHubMsg && G_GetGameState() == GS_MAP &&
+       P_GetMapCluster(gameMap) != P_GetMapCluster(leaveMap))
+        return false;
+#endif
+    if(G_GetGameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
+        return false;
+
+    return true;
+}
+
 void G_WorldDone(void)
 {
 #if __JDOOM__ || __JDOOM64__
@@ -1911,14 +1927,19 @@ void G_WorldDone(void)
 #endif
 
     // Clear the currently playing script, if any.
+    // @note FI_Reset() changes the game state so we must determine
+    // whether the debrief is enabled first.
+    {
+    boolean doDebrief = G_DebriefingEnabled();
+
     FI_Reset();
 
-    // Is there a debriefing for this map?
-    if(FI_Debriefing(gameEpisode, gameMap))
+    if(doDebrief && FI_Debriefing(gameEpisode, gameMap))
         return;
 
     // We have either just returned from a debriefing or there wasn't one.
     briefDisabled = false;
+    }
 
     G_SetGameAction(GA_LEAVEMAP);
 }

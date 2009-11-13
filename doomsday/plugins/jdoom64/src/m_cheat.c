@@ -163,13 +163,15 @@ boolean Cht_WarpFunc(player_t* plr, cheatseq_t* cheat)
     if(!G_ValidateMap(&epsd, &map))
         return false;
 
-    // So be it.
     P_SetMessage(plr, STSTR_CLEV, false);
-    G_DeferedInitNew(gameSkill, epsd, map);
 
     // Clear the menu if open.
     Hu_MenuCommand(MCMD_CLOSE);
+
+    // So be it.
     briefDisabled = true;
+    G_DeferedInitNew(gameSkill, epsd, map);
+
     return true;
 }
 
