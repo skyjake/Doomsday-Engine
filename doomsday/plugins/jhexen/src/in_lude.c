@@ -30,6 +30,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <ctype.h>
+#include <assert.h>
 
 #include "jhexen.h"
 
@@ -73,7 +74,7 @@ typedef enum gametype_e {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void WaitStop(void);
+static void IN_WaitStop(void);
 static void loadPics(void);
 static void unloadPics(void);
 static void CheckForSkip(void);
@@ -91,6 +92,9 @@ int interState = 0;
 int overrideHubMsg = 0; // Override the hub transition message when 1.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+// Used for timing of background animation.
+static int bcnt;
 
 static boolean skipIntermission;
 static int interTime = -1;
@@ -113,32 +117,62 @@ static int fontBLumpBase;
 
 // CODE --------------------------------------------------------------------
 
-void IN_Start(void)
+void WI_initVariables(void /* wbstartstruct_t* wbstartstruct */)
 {
-    int                 i;
+/*    wbs = wbstartstruct;
 
-    for(i = 0; i < MAXPLAYERS; ++i)
-        AM_Open(AM_MapForPlayer(i), false, true);
-
-    SN_StopAllSequences();
-
-    // InFine handles the text.
-    if(!deathmatch)
+#ifdef RANGECHECK
+    if(gameMode != commercial)
     {
-        G_WorldDone();
-        return;
+        if(gameMode == retail)
+            RNGCHECK(wbs->epsd, 0, 3);
+        else
+            RNGCHECK(wbs->epsd, 0, 2);
     }
+    else
+    {
+        RNGCHECK(wbs->last, 0, 8);
+        RNGCHECK(wbs->next, 0, 8);
+    }
+    RNGCHECK(wbs->pnum, 0, MAXPLAYERS);
+    RNGCHECK(wbs->pnum, 0, MAXPLAYERS);
+#endif
 
-    GL_SetFilter(false);
-    initStats();
-    loadPics();
+    accelerateStage = 0;
+    cnt =*/ bcnt = 0; /*
+    firstRefresh = 1;
+    me = wbs->pNum;
+    myTeam = cfg.playerColor[wbs->pNum];
+    plrs = wbs->plyr;
+
+    if(!wbs->maxKills)
+        wbs->maxKills = 1;
+    if(!wbs->maxItems)
+        wbs->maxItems = 1;
+    if(!wbs->maxSecret)
+        wbs->maxSecret = 1;
+
+    if(gameMode != retail)
+        if(wbs->epsd > 2)
+            wbs->epsd -= 3;*/
+
     intermission = true;
     interState = 0;
     skipIntermission = false;
     interTime = 0;
 }
 
-void WaitStop(void)
+void IN_Start(void)
+{
+    assert(deathmatch);
+
+    WI_initVariables();
+    loadPics();
+
+    initStats();
+}
+
+void IN_WaitStop(void)
 {
     if(!--cnt)
     {
@@ -159,101 +193,46 @@ void IN_Stop(void)
  */
 static void initStats(void)
 {
-    int                 i, j;
-    int                 slaughterFrags;
-    int                 posNum;
-    int                 slaughterCount;
-    int                 playerCount;
+    int i, j, slaughterFrags, posNum, slaughterCount, playerCount;
 
-    if(!deathmatch)
+    gameType = DEATHMATCH;
+    slaughterBoy = 0;
+    slaughterFrags = -9999;
+    posNum = 0;
+    playerCount = 0;
+    slaughterCount = 0;
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
-#if 0
-        int                 oldCluster;
-        char               *msgLumpName;
-        size_t              msgSize;
-        int                 msgLump;
-
-        gameType = SINGLE;
-        hubCount = 0;
-        oldCluster = P_GetMapCluster(gamemap);
-        if(oldCluster != P_GetMapCluster(LeaveMap))
+        totalFrags[i] = 0;
+        if(players[i].plr->inGame)
         {
-            if(oldCluster >= 1 && oldCluster <= 5)
+            playerCount++;
+            for(j = 0; j < MAXPLAYERS; ++j)
             {
-                if(!overrideHubMsg)
+                if(players[i].plr->inGame)
                 {
-                    msgLumpName = ClusMsgLumpNames[oldCluster - 1];
-                    msgLump = W_CheckNumForName(msgLumpName);
-                    if(msgLump < 0)
-                    {
-                        HubText = "correct hub message not found";
-                    }
-                    else
-                    {
-                        msgSize = W_LumpLength(msgLump);
-                        if(msgSize >= MAX_INTRMSN_MESSAGE_SIZE)
-                        {
-                            Con_Error("Cluster message too long (%s)",
-                                      msgLumpName);
-                        }
-                        gi.W_ReadLump(msgLump, ClusterMessage);
-                        ClusterMessage[msgSize] = 0;    // Append terminator
-                        HubText = ClusterMessage;
-                    }
+                    totalFrags[i] += players[i].frags[j];
                 }
-                else
-                {
-                    HubText = "null hub message";
-                }
-                hubCount = strlen(HubText) * TEXTSPEED + TEXTWAIT;
-                S_StartSongName("hub", true);
             }
+            posNum++;
         }
-#endif
+
+        if(totalFrags[i] > slaughterFrags)
+        {
+            slaughterBoy = 1 << i;
+            slaughterFrags = totalFrags[i];
+            slaughterCount = 1;
+        }
+        else if(totalFrags[i] == slaughterFrags)
+        {
+            slaughterBoy |= 1 << i;
+            slaughterCount++;
+        }
     }
-    else
-    {
-        gameType = DEATHMATCH;
+
+    if(playerCount == slaughterCount)
+    {   // don't do the slaughter stuff if everyone is equal
         slaughterBoy = 0;
-        slaughterFrags = -9999;
-        posNum = 0;
-        playerCount = 0;
-        slaughterCount = 0;
-        for(i = 0; i < MAXPLAYERS; ++i)
-        {
-            totalFrags[i] = 0;
-            if(players[i].plr->inGame)
-            {
-                playerCount++;
-                for(j = 0; j < MAXPLAYERS; ++j)
-                {
-                    if(players[i].plr->inGame)
-                    {
-                        totalFrags[i] += players[i].frags[j];
-                    }
-                }
-                posNum++;
-            }
-
-            if(totalFrags[i] > slaughterFrags)
-            {
-                slaughterBoy = 1 << i;
-                slaughterFrags = totalFrags[i];
-                slaughterCount = 1;
-            }
-            else if(totalFrags[i] == slaughterFrags)
-            {
-                slaughterBoy |= 1 << i;
-                slaughterCount++;
-            }
-        }
-
-        if(playerCount == slaughterCount)
-        {   // don't do the slaughter stuff if everyone is equal
-            slaughterBoy = 0;
-        }
-
-        S_StartMusic("hub", true);
     }
 }
 
@@ -293,14 +272,22 @@ void IN_Ticker(void)
 
     if(interState)
     {
-        WaitStop();
+        IN_WaitStop();
         return;
     }
-
     skipIntermission = false;
     CheckForSkip();
-    interTime++;
 
+    // Counter for general background animation.
+    bcnt++;
+
+    if(bcnt == 1)
+    {
+        // Intermission music.
+        S_StartMusic("hub", true);
+    }
+
+    interTime++;
     if(skipIntermission || (gameType == SINGLE && !hubCount))
     {
         interState = 1;

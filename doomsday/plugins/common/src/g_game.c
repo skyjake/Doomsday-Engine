@@ -1540,7 +1540,7 @@ void G_DoReborn(int plrNum)
     }
 }
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
 void G_StartNewInit(void)
 {
     SV_HxInitBaseSlot();
@@ -1556,7 +1556,7 @@ void G_StartNewInit(void)
 
 void G_StartNewGame(skillmode_t skill)
 {
-    int         realMap = 1;
+    int realMap = 1;
 
     G_StartNewInit();
 #   if __JHEXEN__
@@ -1615,7 +1615,7 @@ void G_LeaveMap(int map, int position, boolean secret)
     }
 #endif
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     leaveMap = map;
     leavePosition = position;
 #else
@@ -1669,7 +1669,7 @@ boolean G_IfVictory(void)
 
 void G_DoCompleted(void)
 {
-    int                 i;
+    int i;
 
     G_SetGameAction(GA_NONE);
 
@@ -1687,11 +1687,17 @@ void G_DoCompleted(void)
         }
     }
 
+    GL_SetFilter(false);
+
+#if __JHEXEN__
+    SN_StopAllSequences();
+#endif
+
     // Go to an intermission?
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     {
-    ddmapinfo_t         minfo;
-    char                levid[8];
+    ddmapinfo_t minfo;
+    char levid[8];
 
     P_GetMapLumpName(gameEpisode, gameMap, levid);
 
@@ -1700,6 +1706,12 @@ void G_DoCompleted(void)
         G_WorldDone();
         return;
     }
+    }
+#elif __JHEXEN__
+    if(!deathmatch)
+    {
+        G_WorldDone();
+        return;
     }
 #endif
 
@@ -1893,12 +1905,9 @@ void G_PrepareWIData(void)
 
 void G_WorldDone(void)
 {
-#if !__JHEXEN__
-#else
-# if __JDOOM__ || __JDOOM64__
+#if __JDOOM__ || __JDOOM64__
     if(secretExit)
         players[CONSOLEPLAYER].didSecret = true;
-# endif
 #endif
 
     // Clear the currently playing script, if any.
