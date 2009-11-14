@@ -45,7 +45,6 @@ extern skillmode_t gameSkill;
 extern int gameEpisode;
 extern int gameMap;
 extern int nextMap; // If non zero this will be the next map.
-extern int prevMap;
 extern int totalKills, totalItems, totalSecret;
 extern boolean respawnMonsters;
 extern wbstartstruct_t wmInfo;

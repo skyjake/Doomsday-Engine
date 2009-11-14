@@ -184,16 +184,14 @@ void R_DrawMapTitle(void)
     // Compose the mapnumber used to check the map name patches array.
     mapnum = gameMap - 1;
 
-    if(lname)
-    {
-        WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, alpha, &mapNamePatches[mapnum],
-                     lname, false, ALIGN_CENTER);
-        y += 14;                //9;
-    }
+    WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, alpha, &mapNamePatches[mapnum],
+                 lname, false, ALIGN_CENTER);
+    y += 14;                //9;
 
     DGL_Color4f(.5f, .5f, .5f, alpha);
-    if(lauthor && W_IsFromIWAD(mapNamePatches[mapnum].lump) &&
-       (!cfg.hideAuthorMidway || stricmp(lauthor, "Midway")))
+    if(lauthor && lauthor[0] &&
+       (!W_IsFromIWAD(mapNamePatches[mapnum].lump) ||
+        (!stricmp(lauthor, "Midway") && cfg.hideAuthorMidway)))
     {
         M_WriteText2(160 - M_StringWidth(lauthor, GF_FONTA) / 2, y, lauthor,
                      GF_FONTA, -1, -1, -1, -1);

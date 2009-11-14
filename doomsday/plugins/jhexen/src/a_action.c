@@ -102,7 +102,7 @@ void C_DECL A_PotteryExplode(mobj_t* actor)
         {
             P_MobjChangeState(mo, P_GetState(mo->type, SN_SPAWN) + (P_Random() % 5));
 
-            mo->mom[MZ] = FIX2FLT((P_Random() & 7) + 5) * .75f;
+            mo->mom[MZ] = FIX2FLT(((P_Random() & 7) + 5) * (3 * FRACUNIT / 4));
             mo->mom[MX] = FIX2FLT((P_Random() - P_Random()) << 10);
             mo->mom[MY] = FIX2FLT((P_Random() - P_Random()) << 10);
         }
@@ -310,11 +310,15 @@ void C_DECL A_BridgeOrbit(mobj_t* actor)
     }
     actor->args[0] += 3;
 
+    P_MobjUnsetPosition(actor);
+
     actor->pos[VX] = actor->target->pos[VX];
     actor->pos[VY] = actor->target->pos[VY];
 
     actor->pos[VX] += orbitTableX[actor->args[0]];
     actor->pos[VY] += orbitTableY[actor->args[0]];
+
+    P_MobjSetPosition(actor);
 }
 
 void C_DECL A_BridgeInit(mobj_t* actor)

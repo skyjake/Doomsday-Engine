@@ -36,6 +36,7 @@
  .\..\..\plugins\common\src\hu_pspr.c
  .\..\..\plugins\common\src\hu_inventory.c
  .\..\..\plugins\common\src\g_defs.c
+ .\..\..\plugins\common\src\g_eventsequence.c
  .\..\..\plugins\common\src\g_controls.c
  .\..\..\plugins\common\src\g_game.c
  .\..\..\plugins\common\src\g_update.c

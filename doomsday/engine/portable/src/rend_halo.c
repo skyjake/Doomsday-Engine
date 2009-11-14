@@ -61,8 +61,6 @@ D_CMD(FlareConfig);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int devNoCulling;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int     haloMode = 5, haloBright = 35, haloSize = 50;
@@ -157,21 +155,9 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
     float           colorAverage, f, distanceDim;
     flare_t*        fl;
 
+    // In realistic mode we don't render secondary halos.
     if(!primary && haloRealistic)
-    {
-        // In the realistic mode we don't render secondary halos.
         return false;
-    }
-
-    if(devNoCulling || P_IsInVoid(viewPlayer))
-    {
-        // Normal visible surface culling has been disabled meaning that this
-        // halo should, more than likely, be occluded (at least partially) by
-        // something else in the scene.
-        // \fixme Therefore we need to check using a line-of-sight method
-        // that only checks front facing geometry...?
-        return false;
-    }
 
     if(distanceToViewer <= 0 || occlusionFactor == 0 ||
        (haloFadeMax && distanceToViewer > haloFadeMax))

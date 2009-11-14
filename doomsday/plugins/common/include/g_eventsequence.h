@@ -3,7 +3,10 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999 Activision
+ *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,20 +24,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_inter.h:
- */
+#ifndef COMMON_EVENTSEQUENCE_H
+#define COMMON_EVENTSEQUENCE_H
 
-#ifndef __P_INTER_H__
-#define __P_INTER_H__
+boolean         G_EventSequenceResponder(event_t* ev);
 
-#ifndef __JHEXEN__
-#  error "Using jHexen headers without __JHEXEN__"
-#endif
+void            G_AddEventSequence(const unsigned char* sequence, size_t sequenceLength,
+                                   int (*callback) (const int*, int));
 
-#include "x_player.h"
-
-boolean         P_GiveArmor(player_t* plr, armortype_t type, int points);
-boolean         P_GiveArmor2(player_t* plr, armortype_t type, int amount);
-
-#endif
+#endif /* COMMON_EVENTSEQUENCE_H */

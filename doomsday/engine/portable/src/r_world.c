@@ -1539,8 +1539,8 @@ void R_SetupMap(int mode, int flags)
 
                 //// \fixme $nplanes
                 if(ssec &&
-                   ddpl->mo->pos[VZ] > ssec->sector->SP_floorheight + 4 &&
-                   ddpl->mo->pos[VZ] < ssec->sector->SP_ceilheight - 4)
+                   ddpl->mo->pos[VZ] > ssec->sector->SP_floorvisheight + 4 &&
+                   ddpl->mo->pos[VZ] < ssec->sector->SP_ceilvisheight - 4)
                    ddpl->inVoid = false;
             }
         }

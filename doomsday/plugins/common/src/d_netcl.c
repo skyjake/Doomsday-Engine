@@ -191,10 +191,6 @@ void NetCl_UpdateGameState(byte *data)
                 gsJumping ? "yes" : "no", gsGravity);
 #endif
 
-#ifdef __JHERETIC__
-    prevMap = gameMap;
-#endif
-
     // Start reading after the GS packet.
 #if __JHEXEN__ || __JSTRIFE__
     NetCl_SetReadBuffer(data + 16);
@@ -598,23 +594,31 @@ void NetCl_UpdatePSpriteState(byte *data)
      */
 }
 
-void NetCl_Intermission(byte *data)
+void NetCl_Intermission(byte* data)
 {
-    uint                i;
-    int                 flags;
+    int flags;
 
     NetCl_SetReadBuffer(data);
     flags = NetCl_ReadByte();
 
     //Con_Printf( "NetCl_Intermission: flags=%x\n", flags);
 
-    // Close any automaps left open at the end of the previous map.
-    for(i = 0; i < MAXPLAYERS; ++i)
-        AM_Open(AM_MapForPlayer(i), false, true);
-
-#if __JDOOM__ || __JDOOM64__
     if(flags & IMF_BEGIN)
     {
+        uint i;
+
+        // Close any automaps left open at the end of the previous map.
+        for(i = 0; i < MAXPLAYERS; ++i)
+            AM_Open(AM_MapForPlayer(i), false, true);
+
+        GL_SetFilter(false);
+
+#if __JHEXEN__
+        SN_StopAllSequences();
+#endif
+
+        // @fixme jHeretic does not transmit the intermission info!
+#if __JDOOM__ || __JDOOM64__
         wmInfo.maxKills = NetCl_ReadShort();
         wmInfo.maxItems = NetCl_ReadShort();
         wmInfo.maxSecret = NetCl_ReadShort();
@@ -623,53 +627,43 @@ void NetCl_Intermission(byte *data)
         wmInfo.didSecret = NetCl_ReadByte();
 
         G_PrepareWIData();
-
-        G_ChangeGameState(GS_INTERMISSION);
-
-        WI_Start(&wmInfo);
-    }
-
-    if(flags & IMF_END)
-    {
-        WI_End();
-    }
-
-    if(flags & IMF_STATE)
-    {
-        WI_SetState(NetCl_ReadByte());
-    }
-#endif
-
-#if __JHERETIC__
-    if(flags & IMF_STATE)
-        interState = (int) NetCl_ReadByte();
-    if(flags & IMF_TIME)
-        interTime = NetCl_ReadShort();
-    if(flags & IMF_BEGIN)
-    {
-        G_ChangeGameState(GS_INTERMISSION);
-        IN_Start();
-    }
-    if(flags & IMF_END)
-    {
-        IN_Stop();
-    }
-#endif
-
-#if __JHEXEN__ || __JSTRIFE__
-    if(flags & IMF_BEGIN)
-    {
+#elif __JHEXEN__
         leaveMap = NetCl_ReadByte();
         leavePosition = NetCl_ReadByte();
+#endif
+
         G_ChangeGameState(GS_INTERMISSION);
+
+#if __JDOOM__ || __JDOOM64__
+        WI_Start(&wmInfo);
+#elif __JHERETIC__
+        IN_Start(&wmInfo);
+#elif __JHEXEN__
         IN_Start();
+#endif
     }
+
     if(flags & IMF_END)
     {
+#if __JDOOM__ || __JDOOM64__
+        WI_End();
+#elif __JHERETIC__ || __JHEXEN__
         IN_Stop();
+#endif
     }
+
     if(flags & IMF_STATE)
+    {
+#if __JDOOM__ || __JDOOM64__
+        WI_SetState(NetCl_ReadByte());
+#elif __JHERETIC__ || __JHEXEN__
         interState = (int) NetCl_ReadByte();
+#endif
+    }
+
+#if __JHERETIC__
+    if(flags & IMF_TIME)
+        interTime = NetCl_ReadShort();
 #endif
 }
 

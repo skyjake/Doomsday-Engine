@@ -73,7 +73,7 @@ void         SB_EvalPoint(float light[4],
 
 int useBias = false;
 int numSources = 0;
-unsigned int currentTimeSB;
+uint currentTimeSB;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -86,7 +86,7 @@ static float biasMax = 1.f;
 static int doUpdateAffected = true;
 static float biasIgnoreLimit = .005f;
 static int lightSpeed = 130;
-static unsigned int lastChangeOnFrame;
+static uint lastChangeOnFrame;
 
 /**
  * BS_EvalPoint uses these, so they must be set before it is called.
@@ -672,8 +672,9 @@ static void updateAffected2(biassurface_t* bsuf, const struct rvertex_s* rvertic
 /**
  * Sets/clears a bit in the tracker for the given index.
  */
-void SB_TrackerMark(biastracker_t* tracker, int index)
+void SB_TrackerMark(biastracker_t* tracker, uint index)
 {
+    // Assume 32-bit uint.
     if(index >= 0)
     {
         tracker->changes[index >> 5] |= (1 << (index & 0x1f));
@@ -687,8 +688,9 @@ void SB_TrackerMark(biastracker_t* tracker, int index)
 /**
  * Checks if the given index bit is set in the tracker.
  */
-int SB_TrackerCheck(biastracker_t* tracker, int index)
+int SB_TrackerCheck(biastracker_t* tracker, uint index)
 {
+    // Assume 32-bit uint.
     return (tracker->changes[index >> 5] & (1 << (index & 0x1f))) != 0;
 }
 
@@ -697,9 +699,9 @@ int SB_TrackerCheck(biastracker_t* tracker, int index)
  */
 void SB_TrackerApply(biastracker_t* dest, const biastracker_t* src)
 {
-    unsigned int        i;
+    uint i;
 
-    for(i = 0; i < sizeof(dest->changes)/sizeof(dest->changes[0]); ++i)
+    for(i = 0; i < MAX_BIAS_TRACKED; ++i)
     {
         dest->changes[i] |= src->changes[i];
     }
@@ -710,9 +712,9 @@ void SB_TrackerApply(biastracker_t* dest, const biastracker_t* src)
  */
 void SB_TrackerClear(biastracker_t* dest, const biastracker_t* src)
 {
-    unsigned int        i;
+    uint i;
 
-    for(i = 0; i < sizeof(dest->changes)/sizeof(dest->changes[0]); ++i)
+    for(i = 0; i < MAX_BIAS_TRACKED; ++i)
     {
         dest->changes[i] &= ~src->changes[i];
     }
@@ -724,7 +726,7 @@ void SB_TrackerClear(biastracker_t* dest, const biastracker_t* src)
 static boolean SB_ChangeInAffected(biasaffection_t* affected,
                                    biastracker_t* changed)
 {
-    uint                i;
+    uint i;
 
     for(i = 0; i < MAX_BIAS_AFFECTED; ++i)
     {
@@ -1205,7 +1207,7 @@ void SB_EvalPoint(float light[4], vertexillum_t* illum,
         V3_Scale(surfacePoint, 1.f / 100);
         V3_Sum(surfacePoint, surfacePoint, point);
 
-        if(useSightCheck && !P_CheckLineSight(s->pos, surfacePoint, -1, 1))
+        if(useSightCheck && !P_CheckLineSight(s->pos, surfacePoint, -1, 1, 0))
         {
             // LOS fail.
             if(casted)

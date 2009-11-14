@@ -46,9 +46,10 @@ extern boolean secretExit;
 extern skillmode_t gameSkill;
 extern int gameEpisode;
 extern int gameMap;
-extern int nextMap, prevMap;
+extern int nextMap;
 extern int mapStartTic;
 extern int totalKills, totalItems, totalSecret;
+extern wbstartstruct_t wmInfo;
 
 extern int gsvMapMusic;
 

@@ -1403,7 +1403,7 @@ static void SV_ReadPlayer(player_t* p)
 }
 
 #if __JHEXEN__
-# define MOBJ_SAVEVERSION 7
+# define MOBJ_SAVEVERSION 8
 #elif __JHERETIC__
 # define MOBJ_SAVEVERSION 10
 #else
@@ -1450,6 +1450,7 @@ static void SV_WriteMobj(const mobj_t* original)
     //
     // JHEXEN
     // 7: Removed superfluous info ptr
+    // 8: Added 'onMobj'
     SV_WriteByte(MOBJ_SAVEVERSION);
 
 #if !__JHEXEN__
@@ -1461,9 +1462,9 @@ static void SV_WriteMobj(const mobj_t* original)
     // Ver 5 features: Save tracer (fixes Archvile, Revenant bug)
     SV_WriteShort(SV_ThingArchiveNum(mo->tracer));
 # endif
+#endif
 
     SV_WriteShort(SV_ThingArchiveNum(mo->onMobj));
-#endif
 
     // Info for drawing: position.
     SV_WriteLong(FLT2FIX(mo->pos[VX]));
@@ -1696,6 +1697,10 @@ static void RestoreMobj(mobj_t *mo, int ver)
     mo->info = &MOBJINFO[mo->type];
 
     P_MobjSetState(mo, (int) mo->state);
+#if __JHEXEN__
+    if(mo->flags2 & MF2_DORMANT)
+        mo->tics = -1;
+#endif
 
     if(mo->player)
     {
@@ -1761,34 +1766,37 @@ static int SV_ReadMobj(thinker_t *th)
     ver = SV_ReadByte();
 
 #if !__JHEXEN__
+    if(ver >= 2) // Version 2 has mobj archive numbers.
+        SV_SetArchiveThing(mo, SV_ReadShort());
+#endif
+
+#if !__JHEXEN__
+    mo->target = NULL;
     if(ver >= 2)
     {
-        // Version 2 has mobj archive numbers.
-        SV_SetArchiveThing(mo, SV_ReadShort());
-        // The reference will be updated after all mobjs are loaded.
-        mo->target = (mobj_t *) (int) SV_ReadShort();
-    }
-    else
-        mo->target = NULL;
-
-    // Ver 5 features:
-    if(ver >= 5)
-    {
-# if __JDOOM__ || __JDOOM64__
-        // Tracer for enemy attacks (updated after all mobjs are loaded).
-        mo->tracer = (mobj_t *) (int) SV_ReadShort();
-# endif
-        // mobj this one is on top of (updated after all mobjs are loaded).
-        mo->onMobj = (mobj_t *) (int) SV_ReadShort();
-    }
-    else
-    {
-# if __JDOOM__ || __JDOOM64__
-        mo->tracer = NULL;
-# endif
-        mo->onMobj = NULL;
+        mo->target = (mobj_t*) (int) SV_ReadShort();
     }
 #endif
+
+#if __JDOOM__ || __JDOOM64__
+    // Tracer for enemy attacks (updated after all mobjs are loaded).
+    mo->tracer = NULL;
+    if(ver >= 5)
+    {
+        mo->tracer = (mobj_t*) (int) SV_ReadShort();
+    }
+#endif
+
+    // mobj this one is on top of (updated after all mobjs are loaded).
+    mo->onMobj = NULL;
+#if __JHEXEN__
+    if(ver >= 8)
+#else
+    if(ver >= 5)
+#endif
+    {
+        mo->onMobj = (mobj_t*) (int) SV_ReadShort();
+    }
 
     // Info for drawing: position.
     mo->pos[VX] = FIX2FLT(SV_ReadLong());
@@ -1829,10 +1837,11 @@ static int SV_ReadMobj(thinker_t *th)
 #endif
     mo->info = &MOBJINFO[mo->type];
 
+    if(mo->info->flags2 & MF2_FLOATBOB)
+        mo->mom[MZ] = 0;
+
     if(mo->info->flags & MF_SOLID)
         mo->ddFlags |= DDMF_SOLID;
-    if(mo->info->flags & MF_NOBLOCKMAP)
-        mo->ddFlags |= DDMF_NOBLOCKMAP;
     if(mo->info->flags2 & MF2_DONTDRAW)
         mo->ddFlags |= DDMF_DONTDRAW;
 
@@ -2436,8 +2445,10 @@ static void SV_WriteLine(linedef_t* li)
     // 2: Surface colors.
     // 3: "Mapped by player" values.
     // 3: Surface flags.
-    SV_WriteByte(3); // Write a version byte
+    // 4: Engine-side linedef flags.
+    SV_WriteByte(4); // Write a version byte
 
+    SV_WriteShort(P_GetIntp(li, DMU_FLAGS));
     SV_WriteShort(xli->flags);
 
     for(i = 0; i < MAXPLAYERS; ++i)
@@ -2535,17 +2546,55 @@ static void SV_ReadLine(linedef_t *li)
     else
         ver = (int) SV_ReadByte();
 
-    flags = SV_ReadShort();
-    if(ver < 3 && (flags & 0x0100)) // the old ML_MAPPED flag
-    {
-        uint                lineIDX = P_ToIndex(li);
+    if(ver >= 4)
+        P_SetIntp(li, DMU_FLAGS, SV_ReadShort());
 
-        // Set line as having been seen by all players..
-        memset(xli->mapped, 0, sizeof(xli->mapped));
-        for(i = 0; i < MAXPLAYERS; ++i)
-            AM_UpdateLinedef(AM_MapForPlayer(i), lineIDX, true);
-        flags &= ~0x0100; // remove the old flag.
+    flags = SV_ReadShort();
+
+    if(ver < 4)
+    {   // Translate old linedef flags.
+        int             ddLineFlags = 0;
+
+        if(flags & 0x0001) // old ML_BLOCKING flag
+        {
+            ddLineFlags |= DDLF_BLOCKING;
+            flags &= ~0x0001;
+        }
+
+        if(flags & 0x0004) // old ML_TWOSIDED flag
+        {
+            flags &= ~0x0004;
+        }
+
+        if(flags & 0x0008) // old ML_DONTPEGTOP flag
+        {
+            ddLineFlags |= DDLF_DONTPEGTOP;
+            flags &= ~0x0008;
+        }
+
+        if(flags & 0x0010) // old ML_DONTPEGBOTTOM flag
+        {
+            ddLineFlags |= DDLF_DONTPEGBOTTOM;
+            flags &= ~0x0010;
+        }
+
+        P_SetIntp(li, DMU_FLAGS, ddLineFlags);
     }
+
+    if(ver < 3)
+    {
+        if(flags & 0x0100) // old ML_MAPPED flag
+        {
+            uint                lineIDX = P_ToIndex(li);
+
+            // Set line as having been seen by all players..
+            memset(xli->mapped, 0, sizeof(xli->mapped));
+            for(i = 0; i < MAXPLAYERS; ++i)
+                AM_UpdateLinedef(AM_MapForPlayer(i), lineIDX, true);
+            flags &= ~0x0100; // remove the old flag.
+        }
+    }
+
     xli->flags = flags;
 
     if(ver >= 3)
@@ -4053,6 +4102,7 @@ static boolean restoreMobjLinks(thinker_t* th, void* context)
     mobj_t*             mo = (mobj_t *) th;
 
     mo->target = SV_GetArchiveThing((int) mo->target, &mo->target);
+    mo->onMobj = SV_GetArchiveThing((int) mo->onMobj, &mo->onMobj);
 
 #if __JHEXEN__
     switch(mo->type)
@@ -4101,7 +4151,6 @@ static boolean restoreMobjLinks(thinker_t* th, void* context)
         break;
     }
 #else
-    mo->onMobj = SV_GetArchiveThing((int) mo->onMobj, &mo->onMobj);
 # if __JDOOM__ || __JDOOM64__
     mo->tracer = SV_GetArchiveThing((int) mo->tracer, &mo->tracer);
 # endif

@@ -365,7 +365,6 @@ void            G_RecordDemo(skillmode_t skill, int numplayers, int episode,
                              int map, char* name);
 void            G_PlayDemo(char* name);
 void            G_TimeDemo(char* name);
-void            G_TeleportNewMap(int map, int position);
 void            G_LeaveMap(int map, int position, boolean secret);
 void            G_StartNewGame(skillmode_t skill);
 void            G_StartNewInit(void);

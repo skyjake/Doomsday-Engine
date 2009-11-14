@@ -70,7 +70,6 @@ static DGLuint constructBBox(DGLuint name, float br);
 extern int useDynLights, translucentIceCorpse;
 extern int skyhemispheres;
 extern int loMaxRadius;
-extern int devNoCulling;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -84,7 +83,8 @@ float vx, vy, vz, vang, vpitch;
 float viewsidex, viewsidey;
 
 byte freezeRLs = false;
-int devSkyMode = false;
+int devRendSkyMode = false;
+byte devRendSkyAlways = false;
 
 int missileBlend = 1;
 // Ambient lighting, rAmbient is used within the renderer, ambientLight is
@@ -125,23 +125,20 @@ static boolean firstsubsector; // No range checking for the first one.
 
 void Rend_Register(void)
 {
-    C_VAR_INT("rend-dev-sky", &devSkyMode, CVF_NO_ARCHIVE, 0, 2);
-    C_VAR_BYTE("rend-dev-freeze", &freezeRLs, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_INT("rend-dev-cull-subsectors", &devNoCulling,CVF_NO_ARCHIVE,0,1);
-    C_VAR_INT("rend-dev-mobj-bbox", &devMobjBBox, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_FLOAT("rend-camera-fov", &fieldOfView, 0, 1, 179);
     C_VAR_BYTE("rend-tex-anim-smooth", &smoothTexAnim, 0, 0, 1);
     C_VAR_INT("rend-tex-shiny", &useShinySurfaces, 0, 0, 1);
-    C_VAR_FLOAT2("rend-light-compression", &lightRangeCompression, 0, -1, 1,
-                 Rend_CalcLightModRange);
-    C_VAR_INT2("rend-light-ambient", &ambientLight, 0, 0, 255,
-               Rend_CalcLightModRange);
-    C_VAR_INT2("rend-light-sky", &rendSkyLight, 0, 0, 1,
-               LG_MarkAllForUpdate);
-    C_VAR_FLOAT("rend-light-wall-angle", &rendLightWallAngle, CVF_NO_MAX,
-                0, 0);
-    C_VAR_FLOAT("rend-light-attenuation", &rendLightDistanceAttentuation,
-                CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT2("rend-light-compression", &lightRangeCompression, 0, -1, 1, Rend_CalcLightModRange);
+    C_VAR_INT2("rend-light-ambient", &ambientLight, 0, 0, 255, Rend_CalcLightModRange);
+    C_VAR_INT2("rend-light-sky", &rendSkyLight, 0, 0, 1, LG_MarkAllForUpdate);
+    C_VAR_FLOAT("rend-light-wall-angle", &rendLightWallAngle, CVF_NO_MAX, 0, 0);
+    C_VAR_FLOAT("rend-light-attenuation", &rendLightDistanceAttentuation, CVF_NO_MAX, 0, 0);
+
+    C_VAR_INT("rend-dev-sky", &devRendSkyMode, CVF_NO_ARCHIVE, 0, 2);
+    C_VAR_BYTE("rend-dev-sky-always", &devRendSkyAlways, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-freeze", &freezeRLs, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_INT("rend-dev-cull-subsectors", &devNoCulling,CVF_NO_ARCHIVE,0,1);
+    C_VAR_INT("rend-dev-mobj-bbox", &devMobjBBox, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-light-mod", &devLightModRange, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-tex-showfix", &devNoTexFix, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-blockmap-debug", &bmapShowDebug, CVF_NO_ARCHIVE, 0, 3);
@@ -1991,9 +1988,9 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
         skyhemispheres |=
             (type == PLN_FLOOR? SKYHEMI_LOWER : SKYHEMI_UPPER);
 
-        // In devSkyMode mode we render all polys destined for the
+        // In devRendSkyMode mode we render all polys destined for the
         // skymask as regular world polys (with a few obvious properties).
-        if(devSkyMode)
+        if(devRendSkyMode)
         {
             params.type = RPT_NORMAL;
             params.blendMode = BM_NORMAL;
@@ -2226,9 +2223,9 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
         // Fill in the remaining params data.
         if(skyMask || R_IsSkySurface(surface))
         {
-            // In devSkyMode mode we render all polys destined for the skymask
+            // In devRendSkyMode mode we render all polys destined for the skymask
             // as regular world polys (with a few obvious properties).
-            if(devSkyMode)
+            if(devRendSkyMode)
             {
                 mat = surface->material;
                 forceOpaque = true;
@@ -2769,7 +2766,7 @@ static void prepareSkyMaskPoly(rvertex_t verts[4], rtexcoord_t coords[4],
     material_snapshot_t ms;
     vec3_t              texOrigin[2];
 
-    // In devSkyMode mode we render all polys destined for the skymask as
+    // In devRendSkyMode mode we render all polys destined for the skymask as
     // regular world polys (with a few obvious properties).
 
     Material_Prepare(&ms, mat, true, NULL);
@@ -2808,7 +2805,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
     // Init the poly.
     memset(rTU, 0, sizeof(rTU));
 
-    if(devSkyMode)
+    if(devRendSkyMode)
     {
         uint                i;
 
@@ -2886,12 +2883,12 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                 vTL[VZ] = vTR[VZ] = ffloor;
                 vBL[VZ] = vBR[VZ] = skyFix[PLN_FLOOR].height;
 
-                if(devSkyMode)
+                if(devRendSkyMode)
                     prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length,
                                        frontsec->SP_floormaterial);
 
                 RL_AddPoly(PT_TRIANGLE_STRIP,
-                           (devSkyMode? RPT_NORMAL : RPT_SKY_MASK),
+                           (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK),
                            rvertices, rtexcoords, NULL, NULL,
                            rcolors, 4, 0, 0, NULL, rTU);
             }
@@ -2904,12 +2901,12 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                 vTL[VZ] = vTR[VZ] = skyFix[PLN_CEILING].height;
                 vBL[VZ] = vBR[VZ] = fceil;
 
-                if(devSkyMode)
+                if(devRendSkyMode)
                      prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length,
                                         frontsec->SP_ceilmaterial);
 
                 RL_AddPoly(PT_TRIANGLE_STRIP,
-                           (devSkyMode? RPT_NORMAL : RPT_SKY_MASK),
+                           (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK),
                            rvertices, rtexcoords, NULL, NULL,
                            rcolors, 4, 0, 0, NULL, rTU);
             }
@@ -2927,12 +2924,12 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                     vTL[VZ] = vTR[VZ] = bfloor;
                     vBL[VZ] = vBR[VZ] = skyFix[PLN_FLOOR].height;
 
-                    if(devSkyMode)
+                    if(devRendSkyMode)
                         prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length,
                                            frontsec->SP_floormaterial);
 
                     RL_AddPoly(PT_TRIANGLE_STRIP,
-                               (devSkyMode? RPT_NORMAL : RPT_SKY_MASK),
+                               (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK),
                                rvertices, rtexcoords, NULL, NULL,
                                rcolors, 4, 0, 0, NULL, rTU);
                 }
@@ -2950,13 +2947,13 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                     vTL[VZ] = vTR[VZ] = skyFix[PLN_CEILING].height;
                     vBL[VZ] = vBR[VZ] = bceil;
 
-                    if(devSkyMode)
+                    if(devRendSkyMode)
                         prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length,
                                            frontsec->SP_ceilmaterial);
 
 
                     RL_AddPoly(PT_TRIANGLE_STRIP,
-                               (devSkyMode? RPT_NORMAL : RPT_SKY_MASK),
+                               (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK),
                                rvertices, rtexcoords, NULL, NULL,
                                rcolors, 4, 0, 0, NULL, rTU);
                 }
@@ -3249,7 +3246,7 @@ static void Rend_RenderSubsector(uint ssecidx)
                          texMode);
     }
 
-    if(devSkyMode == 2)
+    if(devRendSkyMode == 2)
     {
         /**
          * In devSky mode 2, we draw additional geometry, showing the

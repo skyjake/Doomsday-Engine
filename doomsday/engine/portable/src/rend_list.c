@@ -206,7 +206,8 @@ typedef struct listhash_s {
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern int skyhemispheres;
-extern int devSkyMode;
+extern int devRendSkyMode;
+extern byte devRendSkyAlways;
 extern int useDynLights, dlBlend, simpleSky;
 extern boolean usingFog;
 
@@ -1778,19 +1779,27 @@ Con_Error("collectLists: Ran out of MAX_RLISTS.\n");
  */
 void RL_RenderAllLists(void)
 {
-    uint                count;
+    uint count;
     // Pointers to all the rendering lists.
-    rendlist_t*         lists[MAX_RLISTS];
+    rendlist_t* lists[MAX_RLISTS];
 
 BEGIN_PROF( PROF_RL_RENDER_ALL );
 
-    if(!freezeRLs) // only update when lists arn't frozen
-        rendSky = !P_IsInVoid(viewPlayer);
+    if(!freezeRLs) // Only update when lists are not frozen.
+    {
+        if(devRendSkyAlways)
+        {
+            rendSky = true;
+            skyhemispheres |= SKYHEMI_UPPER | SKYHEMI_LOWER;
+        }
+        else
+            rendSky = !P_IsInVoid(viewPlayer);
+    }
 
     // When in the void we don't render a sky.
     // \fixme We could use a stencil when rendering the sky, using the
     // already collected skymask polys as a mask.
-    if(rendSky && !devSkyMode)
+    if(rendSky && !devRendSkyMode)
         // The sky might be visible. Render the needed hemispheres.
         Rend_RenderSky(skyhemispheres);
 

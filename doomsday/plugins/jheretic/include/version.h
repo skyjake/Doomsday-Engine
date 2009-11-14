@@ -49,8 +49,8 @@
 #define GAME_NICENAME       "jHeretic"
 #define GAME_DETAILS        "jHeretic is based on Heretic v1.3 by Raven Software."
 
-#define GAME_VERSION_TEXT   "1.4.4"
+#define GAME_VERSION_TEXT   "1.4.6"
 #define GAME_VERSION_TEXTLONG "Version" GAME_VERSION_TEXT " " __DATE__ " (" JHERETIC_VER_ID ")"
-#define GAME_VERSION_NUMBER 1,4,4,0 // For WIN32 version info.
+#define GAME_VERSION_NUMBER 1,4,6,0 // For WIN32 version info.
 
 #endif

@@ -901,10 +901,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\..\engine\win32\src\sys_mixer.c"
-					>
-				</File>
-				<File
 					RelativePath="..\..\..\engine\win32\src\sys_window.c"
 					>
 				</File>
@@ -1110,30 +1106,6 @@
 				</File>
 				<File
 					RelativePath="..\..\..\engine\unix\src\sys_input.c"
-					>
-					<FileConfiguration
-						Name="Release|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug|Win32"
-						ExcludedFromBuild="true"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							ObjectFile="$(IntDir)\$(InputName)1.obj"
-							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\..\engine\unix\src\sys_mixer.c"
 					>
 					<FileConfiguration
 						Name="Release|Win32"
@@ -1900,10 +1872,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\sys_master.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\sys_mixer.h"
 				>
 			</File>
 			<File

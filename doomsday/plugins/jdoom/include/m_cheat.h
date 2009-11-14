@@ -23,48 +23,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * m_cheat.h: Cheat code checking.
- */
-
-#ifndef __M_CHEAT__
-#define __M_CHEAT__
+#ifndef M_CHEAT
+#define M_CHEAT
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-//
-// CHEAT SEQUENCE PACKAGE
-//
-
-#define SCRAMBLE(a) \
-((((a)&1)<<7) + (((a)&2)<<5) + ((a)&4) + (((a)&8)<<1) \
- + (((a)&16)>>1) + ((a)&32) + (((a)&64)>>5) + (((a)&128)>>7))
-
-typedef struct {
-    unsigned char  *sequence;
-    unsigned char  *p;
-
-} cheatseq_t;
-
 void        Cht_Init(void);
-
-int         Cht_CheckCheat(cheatseq_t *cht, char key);
-
-void        Cht_GetParam(cheatseq_t *cht, char *buffer);
-
-void        Cht_GodFunc(player_t *plyr);
-void        Cht_SuicideFunc(player_t *plyr);
-void        Cht_GiveFunc(player_t *plyr, boolean weapons, boolean ammo,
-                         boolean armor, boolean cards, cheatseq_t *cht);
-void        Cht_MusicFunc(player_t *plyr, char *buf);
-void        Cht_NoClipFunc(player_t *plyr);
-boolean     Cht_WarpFunc(player_t *plyr, char *buf);
-boolean     Cht_PowerUpFunc(player_t *plyr, int i);
-void        Cht_ChoppersFunc(player_t *plyr);
-void        Cht_MyPosFunc(player_t *plyr);
-
-boolean     Cht_Responder(event_t *ev);
-
-#endif
+#endif /* M_CHEAT */

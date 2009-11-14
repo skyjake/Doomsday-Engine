@@ -123,20 +123,20 @@ typedef struct inputdevaxis_s {
     int     filter;         // Filter grade.
     float   accumulation;   // Position accumulator for the filter.
     uint    time;           // Timestamp for the latest update that changed the position.
-    struct bclass_s* bContext;
+    struct bcontext_s* bContext;
 } inputdevaxis_t;
 
 typedef struct inputdevkey_s {
     char    isDown;         // True/False for each key.
     uint    time;
-    struct bclass_s* bContext;
+    struct bcontext_s* bContext;
     const char* name;       // Symbolic name.
 } inputdevkey_t;
 
 typedef struct inputdevhat_s {
     int     pos;            // Position of each hat, -1 if centered.
     uint    time;           // Timestamp for each hat for the latest change.
-    struct bclass_s* bContext;
+    struct bcontext_s* bContext;
 } inputdevhat_t;
 
 // Input device flags.

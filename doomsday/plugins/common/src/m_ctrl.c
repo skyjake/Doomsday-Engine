@@ -46,19 +46,20 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define NUM_CONTROLS_ITEMS  (0)
+#define NUM_CONTROLS_ITEMS      0
 
 // Control config flags.
-#define CCF_NON_INVERSE     (0x1)
-#define CCF_INVERSE         (0x2)
-#define CCF_STAGED          (0x4)
-#define CCF_REPEAT          (0x8)
+#define CCF_NON_INVERSE         0x1
+#define CCF_INVERSE             0x2
+#define CCF_STAGED              0x4
+#define CCF_REPEAT              0x8
+#define CCF_SIDESTEP_MODIFIER   0x10
 
-#define BIND_GAP            (2)
-#define SMALL_SCALE         (.75f)
+#define BIND_GAP                2
+#define SMALL_SCALE             .75f
 
 // Binding iteration flags for M_IterateBindings().
-#define MIBF_IGNORE_REPEATS (0x1)
+#define MIBF_IGNORE_REPEATS     0x1
 
 // TYPES -------------------------------------------------------------------
 
@@ -159,8 +160,8 @@ static controlconfig_t controlConfig[] =
     { "backward", 0, "walk", 0, CCF_INVERSE },
     { "strafe left", 0, "sidestep", 0, CCF_INVERSE },
     { "strafe right", 0, "sidestep", 0, CCF_NON_INVERSE },
-    { "turn left", 0, "turn", 0, CCF_STAGED | CCF_INVERSE },
-    { "turn right", 0, "turn", 0, CCF_STAGED | CCF_NON_INVERSE },
+    { "turn left", 0, "turn", 0, CCF_STAGED | CCF_INVERSE | CCF_SIDESTEP_MODIFIER },
+    { "turn right", 0, "turn", 0, CCF_STAGED | CCF_NON_INVERSE | CCF_SIDESTEP_MODIFIER },
     { "jump", 0, 0, "impulse jump" },
     { "use", 0, 0, "impulse use" },
     { "fly up", 0, "zfly", 0, CCF_STAGED | CCF_NON_INVERSE },
@@ -219,8 +220,8 @@ static controlconfig_t controlConfig[] =
     { NULL },
 
     { "inventory" },
-    { "move left", 0, 0, "impulse previtem" },
-    { "move right", 0, 0, "impulse nextitem" },
+    { "move left", 0, 0, "impulse previtem", CCF_REPEAT },
+    { "move right", 0, 0, "impulse nextitem", CCF_REPEAT },
     { "use item", 0, 0, "impulse useitem" },
     { "panic!", 0, 0, "impulse panic" },
 #endif
@@ -307,8 +308,8 @@ static controlconfig_t controlConfig[] =
     { "hud" },
     { "show hud", 0, 0, "impulse showhud" },
     { "show score", 0, 0, "impulse showscore", CCF_REPEAT },
-    { "smaller view", 0, 0, "viewsize -" },
-    { "larger view", 0, 0, "viewsize +" },
+    { "smaller view", 0, 0, "viewsize -", CCF_REPEAT },
+    { "larger view", 0, 0, "viewsize +", CCF_REPEAT },
 
     { "message refresh", 0, 0, "impulse msgrefresh" },
 
@@ -512,7 +513,7 @@ void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, voi
                                         boolean isInverse, void *data))
 {
     const char*         ptr = strchr(bindings, ':');
-    const char*         begin, *end, *end2, *k;
+    const char*         begin, *end, *end2, *k, *bindingStart, *bindingEnd;
     int                 bid;
     char                buf[80], *b;
     boolean             isInverse;
@@ -535,6 +536,15 @@ void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, voi
             bid = 0;
         }
 
+        // Find the end of the entire binding.
+        bindingStart = k + 1;
+        bindingEnd = strchr(bindingStart, '@');
+        if(!bindingEnd)
+        {
+            // Then point to the end of the string.
+            bindingEnd = strchr(k + 1, 0);
+        }
+
         ptr++;
         end = strchr(ptr, '-');
         if(!end)
@@ -554,7 +564,8 @@ void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, voi
         else
             end = end2;
 
-        if(!(flags & MIBF_IGNORE_REPEATS) || !findInString(ptr, "-repeat", end - ptr))
+        if(!findInString(bindingStart, "modifier-1-down", bindingEnd - bindingStart) &&
+           (!(flags & MIBF_IGNORE_REPEATS) || !findInString(ptr, "-repeat", end - ptr)))
         {
             isInverse = (findInString(ptr, "-inverse", end - ptr) != NULL);
 
@@ -719,8 +730,6 @@ int M_ControlsPrivilegedResponder(event_t* ev)
            return false;
         }
 
-        //Con_Message("got %s\n", symbol);
-
         if(grabbing->bindContext)
         {
             bindContext = grabbing->bindContext;
@@ -754,6 +763,7 @@ int M_ControlsPrivilegedResponder(event_t* ev)
             boolean             inv = (grabbing->flags & CCF_INVERSE) != 0;
             boolean             isStaged = (grabbing->flags & CCF_STAGED) != 0;
             char                temp3[256];
+            char                extra[256];
             const char*         end = strchr(symbol + 5, '-');
 
             end = strchr(end + 1, '-');
@@ -783,7 +793,16 @@ int M_ControlsPrivilegedResponder(event_t* ev)
                 strcat(temp3, "-inverse");
             }
 
-            sprintf(cmd, "bindcontrol {%s} {%s}", grabbing->controlName, temp3);
+            strcpy(extra, "");
+            if(grabbing->flags & CCF_SIDESTEP_MODIFIER)
+            {
+                sprintf(cmd, "bindcontrol sidestep {%s + modifier-1-down}", temp3);
+                DD_Execute(true, cmd);
+                
+                strcpy(extra, " + modifier-1-up");
+            }
+
+            sprintf(cmd, "bindcontrol {%s} {%s%s}", grabbing->controlName, temp3, extra);
         }
 
         VERBOSE( Con_Message("M_ControlsPrivilegedResponder: %s\n", cmd) );

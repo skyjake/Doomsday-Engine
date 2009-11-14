@@ -26,7 +26,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_nogravity";
+  Flags = "mf_nosector mf_nogravity";
   Flags2 = "mf2_dontdraw";
 }
 
@@ -77,7 +77,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 4;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport mf2_firedamage";
 }
 
@@ -104,7 +104,7 @@ Thing {
   Height = 4;
   Mass = 100;
   Damage = 4;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport";
 }
 
@@ -131,7 +131,7 @@ Thing {
   Height = 4;
   Mass = 100;
   Damage = 2;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport";
 }
 
@@ -158,7 +158,7 @@ Thing {
   Height = 4;
   Mass = 100;
   Damage = 2;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport";
 }
 
@@ -185,7 +185,7 @@ Thing {
   Height = 16;
   Mass = 100;
   Damage = 2;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport mf2_rip";
 }
 
@@ -212,7 +212,7 @@ Thing {
   Height = 6;
   Mass = 100;
   Damage = 3;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport";
 }
 
@@ -239,7 +239,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 1;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport mf2_icedamage";
 }
 
@@ -486,7 +486,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_missile mf_dropoff mf_noblockmap";
+  Flags = "mf_missile mf_dropoff";
   Flags2 = "mf2_noteleport";
 }
 
@@ -587,7 +587,7 @@ Thing {
   Height = 16;
   Mass = 100;
   Damage = 10001;
-  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity mf_noblockmap";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport";
 }
 
@@ -614,7 +614,7 @@ Thing {
   Height = 16;
   Mass = 100;
   Damage = 10001;
-  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity mf_noblockmap";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport";
 }
 
@@ -641,7 +641,7 @@ Thing {
   Height = 16;
   Mass = 100;
   Damage = 10001;
-  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity mf_noblockmap";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport";
 }
 
@@ -668,7 +668,7 @@ Thing {
   Height = 16;
   Mass = 100;
   Damage = 10001;
-  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity mf_noblockmap";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport";
 }
 
@@ -695,7 +695,7 @@ Thing {
   Height = 16;
   Mass = 100;
   Damage = 10001;
-  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity mf_noblockmap";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport";
 }
 
@@ -720,7 +720,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_missile";
+  Flags = "mf_dropoff mf_missile";
   Flags2 = "mf2_noteleport";
 }
 
@@ -745,7 +745,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_missile";
+  Flags = "mf_dropoff mf_missile";
   Flags2 = "mf2_noteleport";
 }
 
@@ -770,7 +770,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_missile";
+  Flags = "mf_dropoff mf_missile";
   Flags2 = "mf2_noteleport";
 }
 
@@ -795,7 +795,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_missile";
+  Flags = "mf_dropoff mf_missile";
   Flags2 = "mf2_noteleport mf2_lograv";
 }
 
@@ -820,7 +820,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_missile";
+  Flags = "mf_dropoff mf_missile";
   Flags2 = "mf2_noteleport mf2_lograv";
 }
 
@@ -845,7 +845,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_missile";
+  Flags = "mf_dropoff mf_missile";
   Flags2 = "mf2_noteleport mf2_lograv";
 }
 
@@ -870,7 +870,6 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
   Flags2 = "mf2_noteleport";
 }
 
@@ -895,7 +894,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_missile";
+  Flags = "mf_dropoff mf_missile";
   Flags2 = "mf2_noteleport";
 }
 
@@ -920,7 +919,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_missile";
+  Flags = "mf_dropoff mf_missile";
   Flags2 = "mf2_noteleport";
 }
 
@@ -945,7 +944,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_missile";
+  Flags = "mf_dropoff mf_missile";
   Flags2 = "mf2_noteleport";
 }
 
@@ -970,7 +969,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector";
+  Flags = "mf_nosector";
   Flags2 = "mf2_dontdraw mf2_floatbob";
 }
 
@@ -996,7 +995,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_float mf_nogravity mf_shadow mf_noclip";
+  Flags = "mf_float mf_nogravity mf_shadow mf_noclip";
   Flags2 = "mf2_noteleport";
 }
 
@@ -1022,7 +1021,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_float mf_nogravity mf_shadow mf_noclip";
+  Flags = "mf_float mf_nogravity mf_shadow mf_noclip";
   Flags2 = "mf2_noteleport";
 }
 
@@ -1048,7 +1047,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_float mf_nogravity mf_shadow mf_noclip";
+  Flags = "mf_float mf_nogravity mf_shadow mf_noclip";
   Flags2 = "mf2_noteleport";
 }
 
@@ -1073,7 +1072,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector";
+  Flags = "mf_nosector";
   Flags2 = "mf2_dontdraw";
 }
 
@@ -1098,7 +1097,7 @@ Thing {
   Radius = 5;
   Height = 16;
   Mass = 5;
-  Flags = "mf_noblockmap mf_dropoff mf_missile mf_nogravity";
+  Flags = "mf_dropoff mf_missile mf_nogravity";
   Flags2 = "mf2_noteleport mf2_floorbounce";
 }
 
@@ -1123,7 +1122,7 @@ Thing {
   Radius = 5;
   Height = 16;
   Mass = 5;
-  Flags = "mf_noblockmap mf_dropoff mf_missile mf_nogravity";
+  Flags = "mf_dropoff mf_missile mf_nogravity";
   Flags2 = "mf2_noteleport mf2_floorbounce";
 }
 
@@ -1148,7 +1147,7 @@ Thing {
   Radius = 5;
   Height = 16;
   Mass = 5;
-  Flags = "mf_noblockmap mf_dropoff mf_missile mf_nogravity";
+  Flags = "mf_dropoff mf_missile mf_nogravity";
   Flags2 = "mf2_noteleport mf2_floorbounce";
 }
 
@@ -1173,7 +1172,7 @@ Thing {
   Radius = 5;
   Height = 16;
   Mass = 5;
-  Flags = "mf_noblockmap mf_dropoff mf_missile mf_nogravity";
+  Flags = "mf_dropoff mf_missile mf_nogravity";
   Flags2 = "mf2_noteleport mf2_floorbounce";
 }
 
@@ -1198,7 +1197,7 @@ Thing {
   Radius = 5;
   Height = 16;
   Mass = 5;
-  Flags = "mf_noblockmap mf_dropoff mf_missile mf_nogravity";
+  Flags = "mf_dropoff mf_missile mf_nogravity";
   Flags2 = "mf2_noteleport mf2_floorbounce";
 }
 
@@ -1223,7 +1222,7 @@ Thing {
   Radius = 5;
   Height = 16;
   Mass = 5;
-  Flags = "mf_noblockmap mf_dropoff mf_missile mf_nogravity";
+  Flags = "mf_dropoff mf_missile mf_nogravity";
   Flags2 = "mf2_noteleport mf2_floorbounce";
 }
 
@@ -1248,7 +1247,7 @@ Thing {
   Radius = 5;
   Height = 16;
   Mass = 5;
-  Flags = "mf_noblockmap mf_dropoff mf_missile mf_nogravity";
+  Flags = "mf_dropoff mf_missile mf_nogravity";
   Flags2 = "mf2_noteleport mf2_floorbounce";
 }
 
@@ -1273,7 +1272,7 @@ Thing {
   Radius = 5;
   Height = 16;
   Mass = 5;
-  Flags = "mf_noblockmap mf_dropoff mf_missile mf_nogravity";
+  Flags = "mf_dropoff mf_missile mf_nogravity";
   Flags2 = "mf2_noteleport mf2_floorbounce";
 }
 
@@ -1298,7 +1297,7 @@ Thing {
   Radius = 5;
   Height = 16;
   Mass = 5;
-  Flags = "mf_noblockmap mf_dropoff mf_missile mf_nogravity";
+  Flags = "mf_dropoff mf_missile mf_nogravity";
   Flags2 = "mf2_noteleport mf2_floorbounce";
 }
 
@@ -1323,7 +1322,7 @@ Thing {
   Radius = 5;
   Height = 16;
   Mass = 5;
-  Flags = "mf_noblockmap mf_dropoff mf_missile mf_nogravity";
+  Flags = "mf_dropoff mf_missile mf_nogravity";
   Flags2 = "mf2_noteleport mf2_floorbounce";
 }
 
@@ -1375,7 +1374,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 1;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport";
 }
 
@@ -1981,7 +1980,7 @@ Thing {
   Radius = 5;
   Height = 5;
   Mass = 100;
-  Flags = "mf_nogravity mf_noblockmap";
+  Flags = "mf_nogravity";
 }
 
 Thing {
@@ -2005,7 +2004,7 @@ Thing {
   Radius = 1;
   Height = 1;
   Mass = 2147483647;
-  Flags = "mf_nogravity mf_noblockmap mf_shadow mf_noclip mf_dropoff mf_viewalign";
+  Flags = "mf_nogravity mf_shadow mf_noclip mf_dropoff mf_viewalign";
   Flags2 = "mf2_nodmgthrust";
 }
 
@@ -2031,7 +2030,7 @@ Thing {
   Radius = 8;
   Height = 10;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_missile mf_brightexplode";
+  Flags = "mf_dropoff mf_missile mf_brightexplode";
   Flags2 = "mf2_floorbounce mf2_firedamage";
 }
 
@@ -2181,7 +2180,7 @@ Thing {
   Radius = 2;
   Height = 4;
   Mass = 100;
-  Flags = "mf_noblockmap mf_missile mf_dropoff";
+  Flags = "mf_missile mf_dropoff";
   Flags2 = "mf2_noteleport mf2_lograv mf2_cannotpush";
 }
 
@@ -2206,7 +2205,6 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
 }
 
 Thing {
@@ -2230,7 +2228,6 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
 }
 
 Thing {
@@ -2254,7 +2251,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_shadow";
+  Flags = "mf_nogravity mf_shadow";
 }
 
 Thing {
@@ -2278,7 +2275,7 @@ Thing {
   Radius = 2;
   Height = 4;
   Mass = 100;
-  Flags = "mf_noblockmap mf_missile mf_dropoff";
+  Flags = "mf_missile mf_dropoff";
   Flags2 = "mf2_noteleport mf2_lograv mf2_cannotpush";
 }
 
@@ -2303,7 +2300,6 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
 }
 
 Thing {
@@ -4354,7 +4350,6 @@ Thing {
   Radius = 5;
   Height = 5;
   Mass = 100;
-  Flags = "mf_noblockmap";
   Flags2 = "mf2_telestomp";
 }
 
@@ -4404,7 +4399,6 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
 }
 
 Thing {
@@ -4428,7 +4422,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity";
+  Flags = "mf_nogravity";
 }
 
 Thing {
@@ -4452,7 +4446,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_local";
+  Flags = "mf_nosector mf_local";
   Flags2 = "mf2_dontdraw";
 }
 
@@ -4477,7 +4471,7 @@ Thing {
   Radius = 2;
   Height = 4;
   Mass = 100;
-  Flags = "mf_noblockmap mf_missile mf_local";
+  Flags = "mf_missile mf_local";
   Flags2 = "mf2_noteleport mf2_lograv";
 }
 
@@ -4502,7 +4496,7 @@ Thing {
   Radius = 2;
   Height = 4;
   Mass = 100;
-  Flags = "mf_noblockmap mf_missile mf_local";
+  Flags = "mf_missile mf_local";
   Flags2 = "mf2_noteleport mf2_lograv";
 }
 
@@ -4600,7 +4594,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_viewalign";
+  Flags = "mf_nogravity mf_viewalign";
   Flags2 = "mf2_noteleport";
 }
 
@@ -4625,7 +4619,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity";
+  Flags = "mf_nogravity";
 }
 
 Thing {
@@ -4649,7 +4643,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity";
+  Flags = "mf_nogravity";
 }
 
 Thing {
@@ -4961,7 +4955,6 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
 }
 
 Thing {
@@ -5081,7 +5074,7 @@ Thing {
   Radius = 4;
   Height = 32;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_spawnceiling";
+  Flags = "mf_nogravity mf_spawnceiling";
 }
 
 Thing {
@@ -5105,7 +5098,7 @@ Thing {
   Radius = 4;
   Height = 64;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_spawnceiling";
+  Flags = "mf_nogravity mf_spawnceiling";
 }
 
 Thing {
@@ -5129,7 +5122,7 @@ Thing {
   Radius = 4;
   Height = 32;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_spawnceiling";
+  Flags = "mf_nogravity mf_spawnceiling";
 }
 
 Thing {
@@ -5153,7 +5146,7 @@ Thing {
   Radius = 4;
   Height = 32;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_spawnceiling";
+  Flags = "mf_nogravity mf_spawnceiling";
 }
 
 Thing {
@@ -5177,7 +5170,7 @@ Thing {
   Radius = 4;
   Height = 32;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_spawnceiling";
+  Flags = "mf_nogravity mf_spawnceiling";
 }
 
 Thing {
@@ -5201,7 +5194,7 @@ Thing {
   Radius = 4;
   Height = 32;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_spawnceiling";
+  Flags = "mf_nogravity mf_spawnceiling";
 }
 
 Thing {
@@ -5225,7 +5218,7 @@ Thing {
   Radius = 4;
   Height = 32;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_spawnceiling";
+  Flags = "mf_nogravity mf_spawnceiling";
 }
 
 Thing {
@@ -5249,7 +5242,6 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
 }
 
 Thing {
@@ -5273,7 +5265,6 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
 }
 
 Thing {
@@ -5297,7 +5288,6 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
 }
 
 Thing {
@@ -5321,7 +5311,6 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
 }
 
 Thing {
@@ -5345,7 +5334,6 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
 }
 
 Thing {
@@ -5369,7 +5357,6 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
 }
 
 Thing {
@@ -5393,7 +5380,6 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
 }
 
 Thing {
@@ -5417,7 +5403,6 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
 }
 
 Thing {
@@ -5441,7 +5426,6 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
 }
 
 Thing {
@@ -5465,7 +5449,6 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap";
 }
 
 Thing {
@@ -5489,7 +5472,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity";
+  Flags = "mf_nogravity";
 }
 
 Thing {
@@ -5513,7 +5496,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity";
+  Flags = "mf_nogravity";
 }
 
 Thing {
@@ -5537,7 +5520,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector";
+  Flags = "mf_nosector";
   Flags2 = "mf2_dontdraw";
 }
 
@@ -5562,7 +5545,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_viewalign mf_nogravity mf_shadow";
+  Flags = "mf_viewalign mf_nogravity mf_shadow";
 }
 
 Thing {
@@ -5610,7 +5593,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_shadow";
+  Flags = "mf_nogravity mf_shadow";
 }
 
 Thing {
@@ -5634,7 +5617,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity";
+  Flags = "mf_nogravity";
 }
 
 Thing {
@@ -5658,7 +5641,7 @@ Thing {
   Radius = 2;
   Height = 4;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_dropoff";
+  Flags = "mf_nogravity mf_dropoff";
   Flags2 = "mf2_noteleport mf2_cannotpush";
 }
 
@@ -5709,7 +5692,7 @@ Thing {
   Height = 20;
   Mass = 100;
   Damage = 10;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport mf2_impact mf2_pcross mf2_firedamage";
 }
 
@@ -5734,7 +5717,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_shadow";
+  Flags = "mf_nogravity mf_shadow";
 }
 
 Thing {
@@ -5760,7 +5743,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 8;
-  Flags = "mf_missile mf_brightexplode mf_noblockmap mf_nogravity mf_dropoff";
+  Flags = "mf_missile mf_brightexplode mf_nogravity mf_dropoff";
   Flags2 = "mf2_noteleport mf2_impact mf2_pcross";
 }
 
@@ -5785,7 +5768,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_viewalign mf_shadow";
+  Flags = "mf_nogravity mf_viewalign mf_shadow";
 }
 
 Thing {
@@ -5835,7 +5818,7 @@ Thing {
   Height = 10;
   Mass = 100;
   Damage = 5;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport mf2_impact mf2_pcross";
 }
 
@@ -5860,7 +5843,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_shadow";
+  Flags = "mf_nogravity mf_shadow";
 }
 
 Thing {
@@ -5908,7 +5891,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_viewalign mf_nogravity";
+  Flags = "mf_viewalign mf_nogravity";
 }
 
 Thing {
@@ -5932,7 +5915,7 @@ Thing {
   Radius = 1;
   Height = 1;
   Mass = 100;
-  Flags = "mf_noblockmap mf_viewalign mf_nogravity mf_brightshadow";
+  Flags = "mf_viewalign mf_nogravity mf_brightshadow";
 }
 
 Thing {
@@ -5956,7 +5939,7 @@ Thing {
   Radius = 1;
   Height = 1;
   Mass = 100;
-  Flags = "mf_noblockmap mf_viewalign mf_nogravity mf_brightshadow";
+  Flags = "mf_viewalign mf_nogravity mf_brightshadow";
 }
 
 Thing {
@@ -5981,7 +5964,7 @@ Thing {
   Height = 16;
   Mass = 100;
   Damage = 2;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity mf_brightshadow";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity mf_brightshadow";
   Flags2 = "mf2_noteleport mf2_firedamage";
 }
 
@@ -6008,7 +5991,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 8;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity mf_brightshadow";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity mf_brightshadow";
   Flags2 = "mf2_noteleport mf2_impact mf2_pcross mf2_dontdraw mf2_firedamage";
 }
 
@@ -6035,7 +6018,7 @@ Thing {
   Height = 6;
   Mass = 100;
   Damage = 3;
-  Flags = "mf_noblockmap mf_dropoff mf_nogravity mf_brightshadow mf_missile mf_brightexplode";
+  Flags = "mf_dropoff mf_nogravity mf_brightshadow mf_missile mf_brightexplode";
   Flags2 = "mf2_noteleport mf2_seekermissile mf2_rip mf2_impact mf2_pcross";
 }
 
@@ -6060,7 +6043,7 @@ Thing {
   Radius = 1;
   Height = 1;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_nogravity mf_viewalign mf_noclip mf_altshadow";
+  Flags = "mf_dropoff mf_nogravity mf_viewalign mf_noclip mf_altshadow";
   Flags2 = "mf2_noteleport";
 }
 
@@ -6085,7 +6068,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_shadow";
+  Flags = "mf_nogravity mf_shadow";
 }
 
 Thing {
@@ -6111,7 +6094,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 4;
-  Flags = "mf_noblockmap mf_dropoff mf_nogravity mf_missile mf_brightexplode";
+  Flags = "mf_dropoff mf_nogravity mf_missile mf_brightexplode";
   Flags2 = "mf2_noteleport";
 }
 
@@ -6136,7 +6119,7 @@ Thing {
   Radius = 4;
   Height = 8;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_nogravity mf_viewalign mf_altshadow";
+  Flags = "mf_dropoff mf_nogravity mf_viewalign mf_altshadow";
   Flags2 = "mf2_noteleport";
 }
 
@@ -6161,7 +6144,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_viewalign mf_nogravity";
+  Flags = "mf_viewalign mf_nogravity";
   Flags2 = "mf2_noteleport mf2_cannotpush mf2_nodmgthrust";
 }
 
@@ -6186,7 +6169,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_viewalign mf_shadow";
+  Flags = "mf_nogravity mf_viewalign mf_shadow";
   Flags2 = "mf2_noteleport mf2_cannotpush mf2_nodmgthrust";
 }
 
@@ -6213,7 +6196,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 2;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport mf2_rip mf2_impact mf2_pcross mf2_nodmgthrust mf2_cannotpush";
 }
 
@@ -6264,7 +6247,7 @@ Thing {
   Height = 40;
   Mass = 100;
   Damage = 8;
-  Flags = "mf_noblockmap mf_nogravity mf_missile mf_brightexplode mf_dropoff";
+  Flags = "mf_nogravity mf_missile mf_brightexplode mf_dropoff";
   Flags2 = "mf2_noteleport mf2_impact mf2_pcross";
 }
 
@@ -6291,7 +6274,7 @@ Thing {
   Height = 40;
   Mass = 100;
   Damage = 8;
-  Flags = "mf_noblockmap mf_nogravity mf_missile mf_brightexplode mf_dropoff";
+  Flags = "mf_nogravity mf_missile mf_brightexplode mf_dropoff";
   Flags2 = "mf2_noteleport mf2_impact mf2_pcross";
 }
 
@@ -6317,7 +6300,7 @@ Thing {
   Height = 35;
   Mass = 100;
   Damage = 2;
-  Flags = "mf_noblockmap mf_nogravity mf_missile mf_brightexplode mf_viewalign mf_dropoff";
+  Flags = "mf_nogravity mf_missile mf_brightexplode mf_viewalign mf_dropoff";
 }
 
 Thing {
@@ -6343,7 +6326,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 6;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport mf2_firedamage mf2_rip mf2_impact mf2_pcross";
 }
 
@@ -6370,7 +6353,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 4;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport mf2_firedamage mf2_impact mf2_pcross mf2_seekermissile";
 }
 
@@ -6620,7 +6603,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_shadow";
+  Flags = "mf_nogravity mf_shadow";
 }
 
 Thing {
@@ -6670,7 +6653,7 @@ Thing {
   Height = 8;
   Mass = 100;
   Damage = 1;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport mf2_impact mf2_pcross mf2_icedamage";
 }
 
@@ -6695,7 +6678,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 5;
-  Flags = "mf_noblockmap mf_viewalign";
+  Flags = "mf_viewalign";
 }
 
 Thing {
@@ -6719,7 +6702,7 @@ Thing {
   Radius = 2;
   Height = 4;
   Mass = 5;
-  Flags = "mf_noblockmap mf_missile mf_dropoff";
+  Flags = "mf_missile mf_dropoff";
   Flags2 = "mf2_noteleport mf2_cannotpush";
 }
 
@@ -6744,7 +6727,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_corpse";
+  Flags = "mf_dropoff mf_corpse";
   Flags2 = "mf2_noteleport";
 }
 
@@ -6794,7 +6777,7 @@ Thing {
   Radius = 4;
   Height = 4;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff";
+  Flags = "mf_dropoff";
   Flags2 = "mf2_lograv mf2_cannotpush";
 }
 
@@ -6819,7 +6802,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_altshadow";
+  Flags = "mf_nogravity mf_altshadow";
 }
 
 Thing {
@@ -6843,7 +6826,7 @@ Thing {
   Radius = 3;
   Height = 4;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_altshadow";
+  Flags = "mf_dropoff mf_altshadow";
   Flags2 = "mf2_lograv mf2_cannotpush mf2_floorclip";
 }
 
@@ -7026,7 +7009,7 @@ Thing {
   Height = 16;
   Mass = 100;
   Damage = 4;
-  Flags = "mf_missile mf_brightexplode mf_noblockmap mf_nogravity mf_dropoff";
+  Flags = "mf_missile mf_brightexplode mf_nogravity mf_dropoff";
   Flags2 = "mf2_noteleport mf2_impact mf2_pcross";
 }
 
@@ -7128,7 +7111,7 @@ Thing {
   Radius = 5;
   Height = 5;
   Mass = 100;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_corpse";
+  Flags = "mf_missile mf_dropoff mf_corpse";
   Flags2 = "mf2_noteleport mf2_floorclip";
 }
 
@@ -7153,7 +7136,7 @@ Thing {
   Radius = 5;
   Height = 5;
   Mass = 100;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_corpse";
+  Flags = "mf_missile mf_dropoff mf_corpse";
   Flags2 = "mf2_noteleport mf2_floorclip";
 }
 
@@ -7178,7 +7161,7 @@ Thing {
   Radius = 5;
   Height = 5;
   Mass = 100;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_corpse";
+  Flags = "mf_missile mf_dropoff mf_corpse";
   Flags2 = "mf2_noteleport mf2_floorclip";
 }
 
@@ -7203,7 +7186,7 @@ Thing {
   Radius = 5;
   Height = 5;
   Mass = 100;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_corpse";
+  Flags = "mf_missile mf_dropoff mf_corpse";
   Flags2 = "mf2_noteleport mf2_floorclip";
 }
 
@@ -7228,7 +7211,7 @@ Thing {
   Radius = 5;
   Height = 5;
   Mass = 100;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_corpse";
+  Flags = "mf_missile mf_dropoff mf_corpse";
   Flags2 = "mf2_noteleport mf2_floorclip";
 }
 
@@ -7255,7 +7238,7 @@ Thing {
   Height = 6;
   Mass = 100;
   Damage = 5;
-  Flags = "mf_missile mf_brightexplode mf_noblockmap mf_nogravity mf_dropoff";
+  Flags = "mf_missile mf_brightexplode mf_nogravity mf_dropoff";
   Flags2 = "mf2_noteleport mf2_impact mf2_pcross mf2_firedamage";
 }
 
@@ -7307,7 +7290,7 @@ Thing {
   Radius = 5;
   Height = 5;
   Mass = 100;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_corpse";
+  Flags = "mf_missile mf_dropoff mf_corpse";
   Flags2 = "mf2_noteleport mf2_floorclip";
 }
 
@@ -7332,7 +7315,7 @@ Thing {
   Radius = 5;
   Height = 5;
   Mass = 100;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_corpse";
+  Flags = "mf_missile mf_dropoff mf_corpse";
   Flags2 = "mf2_noteleport mf2_floorclip";
 }
 
@@ -7357,7 +7340,7 @@ Thing {
   Radius = 5;
   Height = 5;
   Mass = 100;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_corpse";
+  Flags = "mf_missile mf_dropoff mf_corpse";
   Flags2 = "mf2_noteleport mf2_floorclip";
 }
 
@@ -7382,7 +7365,7 @@ Thing {
   Radius = 5;
   Height = 5;
   Mass = 100;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_corpse";
+  Flags = "mf_missile mf_dropoff mf_corpse";
   Flags2 = "mf2_noteleport mf2_floorclip";
 }
 
@@ -7407,7 +7390,7 @@ Thing {
   Radius = 5;
   Height = 5;
   Mass = 100;
-  Flags = "mf_noblockmap mf_missile mf_dropoff mf_corpse";
+  Flags = "mf_missile mf_dropoff mf_corpse";
   Flags2 = "mf2_noteleport mf2_floorclip";
 }
 
@@ -7434,7 +7417,7 @@ Thing {
   Height = 6;
   Mass = 100;
   Damage = 5;
-  Flags = "mf_missile mf_brightexplode mf_noblockmap mf_nogravity mf_dropoff";
+  Flags = "mf_missile mf_brightexplode mf_nogravity mf_dropoff";
   Flags2 = "mf2_noteleport mf2_impact mf2_pcross mf2_firedamage";
 }
 
@@ -7517,7 +7500,7 @@ Thing {
   Height = 6;
   Mass = 5;
   Damage = 5;
-  Flags = "mf_noblockmap mf_nogravity mf_dropoff mf_missile mf_brightexplode";
+  Flags = "mf_nogravity mf_dropoff mf_missile mf_brightexplode";
   Flags2 = "mf2_noteleport mf2_impact mf2_pcross mf2_floorclip mf2_firedamage";
 }
 
@@ -7542,7 +7525,7 @@ Thing {
   Radius = 2;
   Height = 5;
   Mass = 5;
-  Flags = "mf_noblockmap mf_dropoff";
+  Flags = "mf_dropoff";
   Flags2 = "mf2_noteleport mf2_floorclip";
 }
 
@@ -7567,7 +7550,7 @@ Thing {
   Radius = 2;
   Height = 5;
   Mass = 5;
-  Flags = "mf_noblockmap mf_dropoff mf_missile mf_brightexplode";
+  Flags = "mf_dropoff mf_missile mf_brightexplode";
   Flags2 = "mf2_noteleport mf2_floorclip";
 }
 
@@ -7592,7 +7575,7 @@ Thing {
   Radius = 2;
   Height = 5;
   Mass = 5;
-  Flags = "mf_noblockmap mf_dropoff mf_missile";
+  Flags = "mf_dropoff mf_missile";
   Flags2 = "mf2_noteleport";
 }
 
@@ -7617,7 +7600,7 @@ Thing {
   Radius = 2;
   Height = 5;
   Mass = 5;
-  Flags = "mf_noblockmap mf_dropoff mf_missile";
+  Flags = "mf_dropoff mf_missile";
   Flags2 = "mf2_noteleport";
 }
 
@@ -7672,7 +7655,7 @@ Thing {
   Height = 6;
   Mass = 100;
   Damage = 3;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport mf2_firedamage";
 }
 
@@ -7699,7 +7682,7 @@ Thing {
   Height = 12;
   Mass = 100;
   Damage = 4;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport mf2_firedamage";
 }
 
@@ -7725,7 +7708,7 @@ Thing {
   Height = 16;
   Mass = 100;
   Damage = 4;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport mf2_firedamage";
 }
 
@@ -7750,7 +7733,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_shadow";
+  Flags = "mf_nogravity mf_shadow";
   Flags2 = "mf2_noteleport";
 }
 
@@ -7775,7 +7758,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_shadow";
+  Flags = "mf_nogravity mf_shadow";
   Flags2 = "mf2_noteleport";
 }
 
@@ -7856,7 +7839,7 @@ Thing {
   Height = 10;
   Mass = 100;
   Damage = 4;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport";
 }
 
@@ -7881,7 +7864,6 @@ Thing {
   Radius = 5;
   Height = 10;
   Mass = 100;
-  Flags = "mf_noblockmap";
   Flags2 = "mf2_lograv";
 }
 
@@ -7906,7 +7888,7 @@ Thing {
   Radius = 3;
   Height = 3;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity";
+  Flags = "mf_nogravity";
 }
 
 Thing {
@@ -7930,7 +7912,7 @@ Thing {
   Radius = 3;
   Height = 3;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity";
+  Flags = "mf_nogravity";
 }
 
 Thing {
@@ -7954,7 +7936,7 @@ Thing {
   Radius = 3;
   Height = 3;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity";
+  Flags = "mf_nogravity";
 }
 
 Thing {
@@ -8005,7 +7987,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_shadow mf_noblockmap mf_nogravity";
+  Flags = "mf_shadow mf_nogravity";
 }
 
 Thing {
@@ -8029,7 +8011,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_shadow";
+  Flags = "mf_nogravity mf_shadow";
 }
 
 Thing {
@@ -8053,7 +8035,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_shadow";
+  Flags = "mf_nogravity mf_shadow";
 }
 
 Thing {
@@ -8079,7 +8061,7 @@ Thing {
   Height = 6;
   Mass = 100;
   Damage = 1;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport mf2_seekermissile";
 }
 
@@ -8134,7 +8116,7 @@ Thing {
   Height = 10;
   Mass = 100;
   Damage = 6;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport mf2_firedamage";
 }
 
@@ -8159,7 +8141,6 @@ Thing {
   Radius = 8;
   Height = 8;
   Mass = 100;
-  Flags = "mf_noblockmap";
   Flags2 = "mf2_noteleport mf2_firedamage mf2_dontdraw";
 }
 
@@ -8626,7 +8607,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector";
+  Flags = "mf_nosector";
   Flags2 = "mf2_dontdraw";
 }
 
@@ -8651,7 +8632,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector";
+  Flags = "mf_nosector";
   Flags2 = "mf2_dontdraw";
 }
 
@@ -8807,7 +8788,7 @@ Thing {
   Radius = 3;
   Height = 5;
   Mass = 16;
-  Flags = "mf_noblockmap mf_dropoff mf_missile";
+  Flags = "mf_dropoff mf_missile";
   Flags2 = "mf2_noteleport";
 }
 
@@ -8832,7 +8813,7 @@ Thing {
   Radius = 3;
   Height = 5;
   Mass = 16;
-  Flags = "mf_noblockmap mf_dropoff mf_missile";
+  Flags = "mf_dropoff mf_missile";
   Flags2 = "mf2_noteleport";
 }
 
@@ -8857,7 +8838,7 @@ Thing {
   Radius = 3;
   Height = 5;
   Mass = 16;
-  Flags = "mf_noblockmap mf_dropoff mf_missile";
+  Flags = "mf_dropoff mf_missile";
   Flags2 = "mf2_noteleport";
 }
 
@@ -8882,7 +8863,7 @@ Thing {
   Radius = 3;
   Height = 5;
   Mass = 16;
-  Flags = "mf_noblockmap mf_dropoff mf_missile";
+  Flags = "mf_dropoff mf_missile";
   Flags2 = "mf2_noteleport";
 }
 
@@ -8907,7 +8888,7 @@ Thing {
   Radius = 3;
   Height = 5;
   Mass = 16;
-  Flags = "mf_noblockmap mf_dropoff mf_missile";
+  Flags = "mf_dropoff mf_missile";
   Flags2 = "mf2_noteleport";
 }
 
@@ -8934,7 +8915,7 @@ Thing {
   Height = 6;
   Mass = 15;
   Damage = 1;
-  Flags = "mf_noblockmap mf_nogravity mf_dropoff mf_missile mf_brightexplode";
+  Flags = "mf_nogravity mf_dropoff mf_missile mf_brightexplode";
   Flags2 = "mf2_noteleport mf2_impact mf2_pcross mf2_floorclip mf2_firedamage";
 }
 
@@ -8988,7 +8969,7 @@ Thing {
   Height = 10;
   Mass = 100;
   Damage = 1;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_dropoff mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_dropoff mf_nogravity";
   Flags2 = "mf2_noteleport mf2_icedamage";
 }
 
@@ -9013,7 +8994,7 @@ Thing {
   Radius = 1;
   Height = 1;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_shadow mf_dropoff";
+  Flags = "mf_nogravity mf_shadow mf_dropoff";
   Flags2 = "mf2_noteleport";
 }
 
@@ -9040,7 +9021,7 @@ Thing {
   Height = 4;
   Mass = 100;
   Damage = 1;
-  Flags = "mf_noblockmap mf_dropoff mf_missile mf_brightexplode";
+  Flags = "mf_dropoff mf_missile mf_brightexplode";
   Flags2 = "mf2_noteleport mf2_lograv mf2_icedamage";
 }
 
@@ -9065,7 +9046,7 @@ Thing {
   Radius = 1;
   Height = 1;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff";
+  Flags = "mf_dropoff";
   Flags2 = "mf2_noteleport mf2_lograv";
 }
 
@@ -9090,7 +9071,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_nogravity mf_altshadow mf_missile mf_brightexplode";
+  Flags = "mf_dropoff mf_nogravity mf_altshadow mf_missile mf_brightexplode";
   Flags2 = "mf2_noteleport";
 }
 
@@ -9115,7 +9096,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_nogravity mf_altshadow mf_missile mf_brightexplode";
+  Flags = "mf_dropoff mf_nogravity mf_altshadow mf_missile mf_brightexplode";
   Flags2 = "mf2_noteleport";
 }
 
@@ -9251,7 +9232,7 @@ Thing {
   Radius = 5;
   Height = 5;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_missile mf_brightexplode";
+  Flags = "mf_nogravity mf_missile mf_brightexplode";
   Flags2 = "mf2_noteleport mf2_floorbounce";
 }
 
@@ -9277,7 +9258,7 @@ Thing {
   Radius = 5;
   Height = 5;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_missile mf_brightexplode";
+  Flags = "mf_nogravity mf_missile mf_brightexplode";
   Flags2 = "mf2_noteleport mf2_floorbounce";
 }
 
@@ -9303,7 +9284,7 @@ Thing {
   Radius = 5;
   Height = 5;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_missile mf_brightexplode";
+  Flags = "mf_nogravity mf_missile mf_brightexplode";
   Flags2 = "mf2_noteleport mf2_floorbounce";
 }
 
@@ -9329,7 +9310,7 @@ Thing {
   Radius = 5;
   Height = 5;
   Mass = 100;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode";
+  Flags = "mf_missile mf_brightexplode";
   Flags2 = "mf2_noteleport mf2_floorbounce";
 }
 
@@ -9355,7 +9336,7 @@ Thing {
   Radius = 5;
   Height = 5;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity";
+  Flags = "mf_nogravity";
   Flags2 = "mf2_noteleport";
 }
 
@@ -9380,7 +9361,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_altshadow";
+  Flags = "mf_nogravity mf_altshadow";
   Flags2 = "mf2_noteleport";
 }
 
@@ -9406,7 +9387,7 @@ Thing {
   Radius = 22;
   Height = 65;
   Mass = 100;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode";
+  Flags = "mf_missile mf_brightexplode";
   Flags2 = "mf2_noteleport";
 }
 
@@ -9431,7 +9412,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_altshadow";
+  Flags = "mf_nogravity mf_altshadow";
   Flags2 = "mf2_noteleport";
 }
 
@@ -9457,7 +9438,7 @@ Thing {
   Radius = 10;
   Height = 10;
   Mass = 100;
-  Flags = "mf_noblockmap mf_missile mf_brightexplode mf_nogravity";
+  Flags = "mf_missile mf_brightexplode mf_nogravity";
   Flags2 = "mf2_noteleport";
 }
 
@@ -9482,7 +9463,7 @@ Thing {
   Radius = 5;
   Height = 5;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff";
+  Flags = "mf_dropoff";
   Flags2 = "mf2_noteleport mf2_lograv";
 }
 
@@ -9507,7 +9488,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_noclip mf_altshadow";
+  Flags = "mf_nogravity mf_noclip mf_altshadow";
   Flags2 = "mf2_noteleport";
 }
 
@@ -9587,7 +9568,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_nogravity mf_altshadow mf_missile mf_noclip";
+  Flags = "mf_dropoff mf_nogravity mf_altshadow mf_missile mf_noclip";
   Flags2 = "mf2_noteleport";
 }
 
@@ -9613,7 +9594,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_nogravity mf_altshadow mf_missile mf_noclip";
+  Flags = "mf_dropoff mf_nogravity mf_altshadow mf_missile mf_noclip";
   Flags2 = "mf2_noteleport";
 }
 
@@ -9639,7 +9620,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_nogravity mf_altshadow mf_missile mf_noclip";
+  Flags = "mf_dropoff mf_nogravity mf_altshadow mf_missile mf_noclip";
   Flags2 = "mf2_noteleport";
 }
 
@@ -9665,7 +9646,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_nogravity mf_altshadow mf_missile mf_noclip";
+  Flags = "mf_dropoff mf_nogravity mf_altshadow mf_missile mf_noclip";
   Flags2 = "mf2_noteleport";
 }
 
@@ -9691,7 +9672,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_nogravity mf_altshadow mf_missile mf_noclip";
+  Flags = "mf_dropoff mf_nogravity mf_altshadow mf_missile mf_noclip";
   Flags2 = "mf2_noteleport";
 }
 
@@ -9717,7 +9698,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_dropoff mf_nogravity mf_altshadow mf_missile mf_noclip";
+  Flags = "mf_dropoff mf_nogravity mf_altshadow mf_missile mf_noclip";
   Flags2 = "mf2_noteleport";
 }
 
@@ -9851,7 +9832,7 @@ Thing {
   Radius = 15;
   Height = 35;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_missile mf_brightexplode mf_dropoff";
+  Flags = "mf_nogravity mf_missile mf_brightexplode mf_dropoff";
   Flags2 = "mf2_noteleport";
 }
 
@@ -9876,7 +9857,7 @@ Thing {
   Radius = 20;
   Height = 16;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nosector mf_nogravity";
+  Flags = "mf_nosector mf_nogravity";
   Flags2 = "mf2_dontdraw";
 }
 
@@ -9902,7 +9883,7 @@ Thing {
   Radius = 3;
   Height = 3;
   Mass = 100;
-  Flags = "mf_noblockmap mf_nogravity mf_missile";
+  Flags = "mf_nogravity mf_missile";
   Flags2 = "mf2_passmobj mf2_noteleport";
 }
 
@@ -9928,7 +9909,7 @@ Thing {
   Radius = 10;
   Height = 10;
   Mass = 100;
-  Flags = "mf_nogravity mf_nosector mf_noblockmap mf_teleport mf_dropoff";
+  Flags = "mf_nogravity mf_nosector mf_teleport mf_dropoff";
   Flags2 = "mf2_passmobj mf2_slide mf2_cannotpush mf2_dontdraw";
 }
 
@@ -33925,7 +33906,7 @@ Thing {
   Radius = 1;
   Height = 1;
   Mass = 100;
-  Flags = "mf_local mf_nosector mf_noblockmap mf_nogravity";
+  Flags = "mf_local mf_nosector mf_nogravity";
   Flags2 = "mf2_dontdraw";
 }
 

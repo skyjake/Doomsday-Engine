@@ -162,13 +162,15 @@ void Def_Init(void)
     {
         const char*         arg = Argv(p);
 
-        if(ArgRecognize("-def", arg) && ArgRecognize("-defs", arg))
+        if(!ArgRecognize("-def", arg) && !ArgRecognize("-defs", arg))
             continue;
 
         while(c < MAX_READ && ++p != Argc() && !ArgIsOption(p))
         {
             // Add it to the list.
             dedFiles[c++] = Argv(p);
+
+            Con_Message("Def_Init: Added '%s' to dedFiles.\n", Argv(p));
         }
 
         p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
@@ -243,13 +245,13 @@ int Def_GetSpriteNum(const char* name)
 
 int Def_GetMobjNum(const char* id)
 {
-    int                 i;
+    int i;
 
     if(!id || !id[0])
         return -1;
 
     for(i = 0; i < defs.count.mobjs.num; ++i)
-        if(!strcmp(defs.mobjs[i].id, id))
+        if(!stricmp(defs.mobjs[i].id, id))
             return i;
 
     return -1;

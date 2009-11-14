@@ -1086,31 +1086,35 @@ static boolean renderThing(mobj_t* mo, void* context)
 {
     renderthing_params_t* p = (renderthing_params_t*) context;
 
-    if(p->flags & AMF_REND_KEYS)
+    // Only sector linked mobjs should be visible in the automap.
+    if(!(mo->flags & MF_NOSECTOR))
     {
-        int                 keyColor;
+        if(p->flags & AMF_REND_KEYS)
+        {
+            int                 keyColor;
 
-        // Is this a key?
-        if((keyColor = getKeyColorForMobjType(mo->type)) != -1)
-        {   // This mobj is indeed a key.
-            float               rgb[4];
+            // Is this a key?
+            if((keyColor = getKeyColorForMobjType(mo->type)) != -1)
+            {   // This mobj is indeed a key.
+                float               rgb[4];
 
-            R_GetColorPaletteRGBf(0, rgb, keyColor, false);
+                R_GetColorPaletteRGBf(0, rgb, keyColor, false);
 
-            /* $unifiedangles */
-            renderLineCharacter(AM_GetVectorGraph(VG_KEYSQUARE),
-                                mo->pos[VX], mo->pos[VY], 0,
-                                PLAYERRADIUS, rgb, p->alpha, BM_NORMAL);
-            return true; // Continue iteration.
+                /* $unifiedangles */
+                renderLineCharacter(AM_GetVectorGraph(VG_KEYSQUARE),
+                                    mo->pos[VX], mo->pos[VY], 0,
+                                    PLAYERRADIUS, rgb, p->alpha, BM_NORMAL);
+                return true; // Continue iteration.
+            }
         }
-    }
 
-    if(p->flags & AMF_REND_THINGS)
-    {   // Something else.
-        /* $unifiedangles */
-        renderLineCharacter(p->vgraph, mo->pos[VX], mo->pos[VY],
-                            mo->angle / (float) ANGLE_MAX * 360,
-                            PLAYERRADIUS, p->rgb, p->alpha, BM_NORMAL);
+        if(p->flags & AMF_REND_THINGS)
+        {   // Something else.
+            /* $unifiedangles */
+            renderLineCharacter(p->vgraph, mo->pos[VX], mo->pos[VY],
+                                mo->angle / (float) ANGLE_MAX * 360,
+                                PLAYERRADIUS, p->rgb, p->alpha, BM_NORMAL);
+        }
     }
 
     return true; // Continue iteration.
@@ -1521,7 +1525,8 @@ void Rend_Automap(int player, const automap_t* map)
 
     // Freeze the lists if the map is fading out from being open or if set
     // to frozen for debug.
-    if((++updateWait % 10) && rmap->constructMap && !freezeMapRLs)
+    if((++updateWait % 10) && rmap->constructMap && !freezeMapRLs &&
+       Automap_IsActive(map))
     {   // Its time to rebuild the automap object display lists.
         compileObjectLists(rmap, map, mcfg, player);
     }

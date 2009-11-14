@@ -1094,12 +1094,77 @@ void P_PlayerInSpecialSector(player_t *player)
  */
 void P_UpdateSpecials(void)
 {
+#define PLANE_MATERIAL_SCROLLUNIT (8.f/35*2)
+
+    uint                i;
     float               x;
     linedef_t*          line;
     sidedef_t*          side;
 
     // Extended lines and sectors.
     XG_Ticker();
+
+    // Update scrolling plane materials.
+    for(i = 0; i < numsectors; ++i)
+    {
+        xsector_t*          sect = P_ToXSector(P_ToPtr(DMU_SECTOR, i));
+        float               texOff[2];
+
+        switch(sect->special)
+        {
+        case 25: // Scroll north.
+        case 26:
+        case 27:
+        case 28:
+        case 29:
+            texOff[VY] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y);
+            texOff[VY] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 25);
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y, texOff[VY]);
+            break;
+
+        case 20: // Scroll east.
+        case 21:
+        case 22:
+        case 23:
+        case 24:
+            texOff[VX] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X);
+            texOff[VX] -= PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 20);
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, texOff[VX]);
+            break;
+
+        case 4: // Scroll east (lava damage).
+            texOff[VX] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X);
+            texOff[VX] -= PLANE_MATERIAL_SCROLLUNIT * 8 * (1 + sect->special - 4);
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, texOff[VX]);
+            break;
+
+        case 30: // Scroll south.
+        case 31:
+        case 32:
+        case 33:
+        case 34:
+            texOff[VY] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y);
+            texOff[VY] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 30);
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y, texOff[VY]);
+            break;
+
+        case 35: // Scroll west.
+        case 36:
+        case 37:
+        case 38:
+        case 39:
+            texOff[VX] = P_GetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X);
+            texOff[VX] += PLANE_MATERIAL_SCROLLUNIT * (1 + sect->special - 35);
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, texOff[VX]);
+            break;
+
+        default:
+            // DJS - Is this really necessary every tic?
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_X, 0);
+            P_SetFloat(DMU_SECTOR, i, DMU_FLOOR_MATERIAL_OFFSET_Y, 0);
+            break;
+        }
+    }
 
     // ANIMATE LINE SPECIALS
     if(P_IterListSize(linespecials))
@@ -1139,6 +1204,8 @@ void P_UpdateSpecials(void)
             }
         }
     }
+
+#undef PLANE_MATERIAL_SCROLLUNIT
 }
 
 /**
@@ -1162,8 +1229,8 @@ void P_SpawnSpecials(void)
 
         if(xsec->tag)
         {
-           list = P_GetSectorIterListForTag(xsec->tag, true);
-           P_AddObjectToIterList(list, sec);
+            list = P_GetSectorIterListForTag(xsec->tag, true);
+            P_AddObjectToIterList(list, sec);
         }
 
         if(!xsec->special)

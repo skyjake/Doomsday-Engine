@@ -152,10 +152,9 @@ boolean R_GetFilterColor(float rgba[4], int filter)
  */
 void R_DrawMapTitle(void)
 {
-    float               alpha = 1;
-    int                 y = 12;
-    int                 mapnum;
-    char               *lname, *lauthor;
+    float alpha = 1;
+    int y = 12, mapnum;
+    char* lname, *lauthor;
 
     if(!cfg.mapTitle || actualMapTime > 6 * TICSPERSEC)
         return;
@@ -182,16 +181,14 @@ void R_DrawMapTitle(void)
     else
         mapnum = ((gameEpisode -1) * 9) + gameMap -1;
 
-    if(lname)
-    {
-        WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, alpha,
-                     &mapNamePatches[mapnum], lname, false,
-                     ALIGN_CENTER);
-        y += 14;
-    }
+    WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, alpha,
+                 &mapNamePatches[mapnum], lname, false,
+                 ALIGN_CENTER);
+    y += 14;
 
-    if(lauthor && W_IsFromIWAD(mapNamePatches[mapnum].lump) &&
-       (!cfg.hideAuthorIdSoft || stricmp(lauthor, "id software")))
+    if(lauthor && lauthor[0] &&
+       (!W_IsFromIWAD(mapNamePatches[mapnum].lump) ||
+        (!stricmp(lauthor, "id software") && cfg.hideAuthorIdSoft)))
     {
         M_WriteText3(160 - M_StringWidth(lauthor, GF_FONTA) / 2, y, lauthor,
                      GF_FONTA, .5f, .5f, .5f, alpha, false, true, 0);

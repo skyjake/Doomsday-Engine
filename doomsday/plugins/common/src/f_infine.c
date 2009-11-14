@@ -763,13 +763,8 @@ int FI_Briefing(int episode, int map)
  */
 int FI_Debriefing(int episode, int map)
 {
-    char                mid[20];
-    ddfinale_t          fin;
-
-    // If we're already in the INFINE state, don't start a finale.
-    if(briefDisabled || G_GetGameState() == GS_INFINE || IS_CLIENT ||
-       Get(DD_PLAYBACK))
-        return false;
+    char mid[20];
+    ddfinale_t fin;
 
     // Is there such a finale definition?
     P_GetMapLumpName(episode, map, mid);

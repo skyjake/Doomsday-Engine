@@ -351,10 +351,9 @@ boolean P_SeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
     return true;
 }
 
-float P_MobjGetFriction(mobj_t *mo)
+float P_MobjGetFriction(mobj_t* mo)
 {
-    if((mo->flags2 & MF2_FLY) && !(mo->pos[VZ] <= mo->floorZ) &&
-       !(mo->flags2 & MF2_ONMOBJ))
+    if((mo->flags2 & MF2_FLY) && !(mo->pos[VZ] <= mo->floorZ) && !mo->onMobj)
     {
         return FRICTION_FLY;
     }
@@ -660,8 +659,7 @@ explode:
     if(mo->flags & (MF_MISSILE | MF_SKULLFLY))
         return; // No friction for missiles
 
-    if(mo->pos[VZ] > mo->floorZ && !(mo->flags2 & MF2_FLY) &&
-       !(mo->flags2 & MF2_ONMOBJ))
+    if(mo->pos[VZ] > mo->floorZ && !(mo->flags2 & MF2_FLY) && !mo->onMobj)
     {    // No friction when falling
         if(mo->type != MT_BLASTEFFECT)
             return;
@@ -974,8 +972,11 @@ void P_MobjMoveZ(mobj_t *mo)
     }
 }
 
-static void PlayerLandedOnThing(mobj_t *mo, mobj_t *onmobj)
+static void landedOnThing(mobj_t* mo)
 {
+    if(mo->player)
+        return; // We are only interested in players.
+
     mo->player->plr->viewHeightDelta = mo->mom[MZ] / 8;
     if(mo->mom[MZ] < -23)
     {
@@ -1015,8 +1016,6 @@ static void PlayerLandedOnThing(mobj_t *mo, mobj_t *onmobj)
 
 void P_MobjThinker(mobj_t* mobj)
 {
-    mobj_t*             onmo = NULL;
-
     if(mobj->ddFlags & DDMF_REMOTE) // Remote mobjs are handled separately.
         return;
 
@@ -1142,58 +1141,35 @@ void P_MobjThinker(mobj_t* mobj)
     {   // Handle Z momentum and gravity
         if(mobj->flags2 & MF2_PASSMOBJ)
         {
-            onmo = P_CheckOnMobj(mobj);
-            if(!onmo)
+            mobj->onMobj = P_CheckOnMobj(mobj);
+            if(!mobj->onMobj)
             {
                 P_MobjMoveZ(mobj);
-                if(mobj->player && mobj->flags & MF2_ONMOBJ)
-                {
-                    mobj->flags2 &= ~MF2_ONMOBJ;
-                }
             }
             else
             {
-                if(mobj->player)
+                if(mobj->mom[MZ] < -P_GetGravity() * 8 && !(mobj->flags2 & MF2_FLY))
                 {
-                    if(mobj->mom[MZ] < -P_GetGravity() * 8 && !(mobj->flags2 & MF2_FLY))
-                    {
-                        PlayerLandedOnThing(mobj, onmo);
-                    }
+                    landedOnThing(mobj);
+                }
 
-                    if(onmo->pos[VZ] + onmo->height - mobj->pos[VZ] <= 24)
+                if(mobj->onMobj->pos[VZ] + mobj->onMobj->height - mobj->pos[VZ] <= 24)
+                {
+                    if(mobj->player)
                     {
                         mobj->player->plr->viewHeight -=
-                            onmo->pos[VZ] + onmo->height - mobj->pos[VZ];
+                            mobj->onMobj->pos[VZ] + mobj->onMobj->height - mobj->pos[VZ];
                         mobj->player->plr->viewHeightDelta =
                             (cfg.plrViewHeight - mobj->player->plr->viewHeight) / 8;
-                        mobj->pos[VZ] = onmo->pos[VZ] + onmo->height;
-                        mobj->flags2 |= MF2_ONMOBJ;
-                        mobj->mom[MZ] = 0;
                     }
-                    else
-                    {   // hit the bottom of the blocking mobj
-                        mobj->mom[MZ] = 0;
-                    }
-                }
 
-                /* Landing on another player, and mimicking his movements
-                if(mobj->player && onmo->player)
-                {
-                    mobj->mom[MX] = onmo->mom[MX];
-                    mobj->mom[MY] = onmo->mom[MY];
-                    if(onmo->z < onmo->floorZ)
-                    {
-                        mobj->z += onmo->floorZ-onmo->z;
-                        if(onmo->player)
-                        {
-                            onmo->player->plr->viewHeight -= onmo->floorZ-onmo->z;
-                            onmo->player->plr->viewHeightDelta =
-                                 (VIEWHEIGHT- onmo->player->plr->viewHeight) / 8;
-                        }
-                        onmo->z = onmo->floorZ;
-                    }
+                    mobj->pos[VZ] = mobj->onMobj->pos[VZ] + mobj->onMobj->height;
+                    mobj->mom[MZ] = 0;
                 }
-                */
+                else
+                {   // hit the bottom of the blocking mobj
+                    mobj->mom[MZ] = 0;
+                }
             }
         }
         else
@@ -1267,8 +1243,6 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
 
     if(info->flags & MF_SOLID)
         ddflags |= DDMF_SOLID;
-    if(info->flags & MF_NOBLOCKMAP)
-        ddflags |= DDMF_NOBLOCKMAP;
     if(info->flags2 & MF2_DONTDRAW)
         ddflags |= DDMF_DONTDRAW;
 
@@ -1712,8 +1686,8 @@ void P_BlastMobj(mobj_t *source, mobj_t *victim, float strength)
                 victim->target = source;
             }
         }
-        victim->mom[MX] = FIX2FLT(BLAST_SPEED) * FIX2FLT(finecosine[an]);
-        victim->mom[MY] = FIX2FLT(BLAST_SPEED) * FIX2FLT(finesine[an]);
+        victim->mom[MX] = BLAST_SPEED * FIX2FLT(finecosine[an]);
+        victim->mom[MY] = BLAST_SPEED * FIX2FLT(finesine[an]);
 
         // Spawn blast puff.
         angle = R_PointToAngle2(victim->pos[VX], victim->pos[VY],
@@ -1722,11 +1696,10 @@ void P_BlastMobj(mobj_t *source, mobj_t *victim, float strength)
 
         pos[VX] = victim->pos[VX];
         pos[VY] = victim->pos[VY];
-        pos[VZ] = victim->pos[VZ];
+        pos[VZ] = victim->pos[VZ] - victim->floorClip + victim->height / 2;
 
-        pos[VX] += victim->radius + 1 * FIX2FLT(finecosine[an]);
-        pos[VY] += victim->radius + 1 * FIX2FLT(finesine[an]);
-        pos[VZ] -= victim->floorClip + victim->height / 2;
+        pos[VX] += (victim->radius + FIX2FLT(FRACUNIT)) * FIX2FLT(finecosine[an]);
+        pos[VY] += (victim->radius + FIX2FLT(FRACUNIT)) * FIX2FLT(finesine[an]);
 
         if((mo = P_SpawnMobj3fv(MT_BLASTEFFECT, pos, angle, 0)))
         {

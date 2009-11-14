@@ -1142,11 +1142,11 @@ DEFCC(CCmdCycleSpy)
 
 DEFCC(CCmdSpawnMobj)
 {
-    mobjtype_t          type;
-    float               pos[3];
-    mobj_t*             mo;
-    angle_t             angle;
-    int                 spawnFlags;
+    mobjtype_t type;
+    float pos[3];
+    mobj_t* mo;
+    angle_t angle;
+    int spawnFlags = 0;
 
     if(argc != 5 && argc != 6)
     {

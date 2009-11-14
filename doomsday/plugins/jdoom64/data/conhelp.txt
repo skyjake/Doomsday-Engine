@@ -98,10 +98,6 @@ inf = Params: viewsize (size)\nFor example, 'viewsize 10'.\nSize can be: +, -, (
 
 [pause]
 desc = Pause the game.
-    
-[cheat]
-desc = Issue a cheat code using the original DOOM64 cheats.
-inf = Params: cheat (cheat)\nFor example, 'cheat ddslia'.
 
 [god]
 desc = God mode.

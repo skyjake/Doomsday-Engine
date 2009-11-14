@@ -165,4 +165,32 @@ typedef struct player_s {
     mobj_t*         rain2; // Active rain maker 2.
 } player_t;
 
+//
+// INTERMISSION
+// Structure passed e.g. to IN_Start(wb)
+//
+/*typedef struct {
+    boolean         inGame; // Whether the player is in game.
+
+    // Player stats, kills, collected items etc.
+    int             kills;
+    int             items;
+    int             secret;
+    int             time;
+    int             frags[MAXPLAYERS];
+    int             score; // Current score on entry, modified on return.
+} wbplayerstruct_t;*/
+
+typedef struct {
+/*    int             epsd; // Episode # (0-2)*/
+    boolean         didSecret; // If true, splash the secret level.
+    int             last, next; // Previous and next levels, origin 0.
+/*    int             maxKills;
+    int             maxItems;
+    int             maxSecret;
+    int             maxFrags;
+    int             parTime;
+    int             pNum; // Index of this player in game.
+    wbplayerstruct_t plyr[MAXPLAYERS];*/
+} wbstartstruct_t;
 #endif

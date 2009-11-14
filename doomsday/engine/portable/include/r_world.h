@@ -50,10 +50,6 @@ extern int rendSkyLight; // cvar
 extern boolean ddMapSetup;
 extern skyfix_t skyFix[2]; // [floor, ceiling]
 
-// Map Info flags.
-#define MIF_FOG             0x1 // Fog is used in the map.
-#define MIF_DRAW_SPHERE     0x2 // Always draw the sky sphere.
-
 // Sky flags.
 #define SIF_DRAW_SPHERE     0x1 // Always draw the sky sphere.
 

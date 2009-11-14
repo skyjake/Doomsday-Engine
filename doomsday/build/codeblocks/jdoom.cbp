@@ -99,6 +99,7 @@
 		<Unit filename="..\..\plugins\common\include\dmu_lib.h" />
 		<Unit filename="..\..\plugins\common\include\f_infine.h" />
 		<Unit filename="..\..\plugins\common\include\g_defs.h" />
+		<Unit filename="..\..\plugins\common\include\g_eventsequence.h" />
 		<Unit filename="..\..\plugins\common\include\g_common.h" />
 		<Unit filename="..\..\plugins\common\include\g_controls.h" />
 		<Unit filename="..\..\plugins\common\include\g_update.h" />
@@ -156,9 +157,8 @@
 		<Unit filename="..\..\plugins\common\src\f_infine.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\plugins\common\src\g_defs.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="..\..\plugins\common\src\g_defs.c" />
+		<Unit filename="..\..\plugins\common\src\g_eventsequence.c" />
 		<Unit filename="..\..\plugins\common\src\g_controls.c">
 			<Option compilerVar="CC" />
 		</Unit>

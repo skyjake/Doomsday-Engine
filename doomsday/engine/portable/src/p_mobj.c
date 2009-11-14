@@ -257,9 +257,9 @@ boolean PIT_LineCollide(linedef_t* ld, void* parm)
     return true;
 }
 
-boolean PIT_MobjCollide(mobj_t *mo, void *parm)
+boolean PIT_MobjCollide(mobj_t* mo, void* parm)
 {
-    checkpos_data_t    *tm = parm;
+    checkpos_data_t*    tm = parm;
     float               blockdist;
     boolean             overlap = false;
 

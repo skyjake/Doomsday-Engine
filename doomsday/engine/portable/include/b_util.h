@@ -47,6 +47,7 @@ typedef enum ebstate_e {
 
 typedef enum stateconditiontype_e {
     SCT_TOGGLE_STATE,               ///< Toggle is in a specific state.
+    SCT_MODIFIER_STATE,             ///< Modifier is in a specific state.
     SCT_AXIS_BEYOND,                ///< Axis is past a specific position.
     SCT_ANGLE_AT                    ///< Angle is pointing to a specific direction.
 } stateconditiontype_t;
@@ -69,7 +70,7 @@ boolean     B_ParseJoystickTypeAndId(uint device, const char* desc, ddeventtype_
 boolean     B_ParseAnglePosition(const char* desc, float* pos);
 boolean     B_ParseStateCondition(statecondition_t* cond, const char* desc);
 boolean     B_CheckAxisPos(ebstate_t test, float testPos, float pos);
-boolean     B_CheckCondition(statecondition_t* cond);
+boolean     B_CheckCondition(statecondition_t* cond, int localNum, struct bcontext_s* context);
 void        B_AppendDeviceDescToString(uint device, ddeventtype_t type, int id, ddstring_t* str);
 void        B_AppendToggleStateToString(ebstate_t state, ddstring_t* str);
 void        B_AppendAxisPositionToString(ebstate_t state, float pos, ddstring_t* str);

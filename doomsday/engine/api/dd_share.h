@@ -695,9 +695,9 @@ typedef struct {
 } fdivline_t;
 
 // For PathTraverse.
-#define PT_ADDLINES     1
-#define PT_ADDMOBJS     2
-#define PT_EARLYOUT     4
+#define PT_ADDLINES             1
+#define PT_ADDMOBJS             2
+#define PT_EARLYOUT             4
 
 typedef enum {
     ST_HORIZONTAL,
@@ -706,10 +706,20 @@ typedef enum {
     ST_NEGATIVE
 } slopetype_t;
 
+/**
+ * @defgroup lineSightFlags Line Sight Flags
+ * Flags used to dictate logic within P_CheckLineSight.
+ */
+/*@{*/
+#define LS_PASSLEFT            0x1 // Ray may cross one-sided linedefs from left to right.
+#define LS_PASSOVER            0x2 // Ray may cross over sector ceiling height on ray-entry side.
+#define LS_PASSUNDER           0x4 // Ray may cross under sector floor height on ray-entry side.
+/*@}*/
+
 // For (un)linking.
-#define DDLINK_SECTOR       0x1
-#define DDLINK_BLOCKMAP     0x2
-#define DDLINK_NOLINE       0x4
+#define DDLINK_SECTOR           0x1
+#define DDLINK_BLOCKMAP         0x2
+#define DDLINK_NOLINE           0x4
 
 typedef enum intercepttype_e {
     ICPT_MOBJ,
@@ -763,7 +773,7 @@ typedef struct linknode_s {
 #define DDMF_VIEWALIGN      0x00000010
 #define DDMF_FITTOP         0x00000020 // Don't let the sprite go into the ceiling.
 #define DDMF_NOFITBOTTOM    0x00000040
-#define DDMF_NOBLOCKMAP     0x00000080
+//#define DDMF_UNUSED1        0x00000080 // Formerly DDMF_NOBLOCKMAP
 #define DDMF_LIGHTSCALE     0x00000180 // Light scale (0: full, 3: 1/4).
 #define DDMF_LIGHTOFFSET    0x0000f000 // How to offset light (along Z axis).
 //#define DDMF_RESERVED       0x00030000 // Don't touch these!! (translation class).
@@ -1245,6 +1255,10 @@ typedef struct ticcmd_s {
         CTL_ZFLY = 3,           ///< Up/down movement.
         CTL_TURN = 4,           ///< Turning horizontally.
         CTL_LOOK = 5,           ///< Turning up and down.
+        CTL_MODIFIER_1 = 6,
+        CTL_MODIFIER_2 = 7,
+        CTL_MODIFIER_3 = 8,
+        CTL_MODIFIER_4 = 9,
         CTL_FIRST_GAME_CONTROL = 1000
     };
 

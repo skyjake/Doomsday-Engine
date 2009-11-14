@@ -365,14 +365,13 @@ int B_ContextCount(void)
 
 int B_GetContextPos(bcontext_t* bc)
 {
-    int                 i;
+    int i;
 
     for(i = 0; i < bindContextCount; ++i)
     {
         if(bindContexts[i] == bc)
             return i;
     }
-
     return -1;
 }
 
@@ -484,7 +483,7 @@ boolean B_DeleteBinding(bcontext_t* bc, int bid)
         }
     }
 
-    // How about one fo the control bindings?
+    // How about one of the control bindings?
     for(conBin = bc->controlBinds.next; conBin != &bc->controlBinds; conBin = conBin->next)
     {
         if(conBin->bid == bid)

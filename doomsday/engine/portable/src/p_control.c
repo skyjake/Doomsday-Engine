@@ -282,7 +282,7 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
     nowTime = Sys_GetRealTime();
 
     if(newState == db->previousClickState &&
-       nowTime - db->previousClickTime < doubleClickThresholdMilliseconds)
+       nowTime - db->previousClickTime < (uint) MAX_OF(0, doubleClickThresholdMilliseconds))
     {
         ddevent_t event;
         ddstring_t* symbolicName = Str_New();
@@ -326,8 +326,9 @@ void P_MaintainControlDoubleClicks(int playerNum, int control, float pos)
 void P_GetControlState(int playerNum, int control, float* pos, float* relativeOffset)
 {
     float tmp;
-    struct bclass_s* bc = 0;
+    struct bcontext_s* bc = 0;
     struct dbinding_s* binds = 0;
+    int localNum;
 
 #if _DEBUG
     // Check that this is really a numeric control.
@@ -345,8 +346,9 @@ void P_GetControlState(int playerNum, int control, float* pos, float* relativeOf
     // Bindings are associated with the ordinal of the local player, not
     // the actual console number (playerNum) being used. That is why
     // P_ConsoleToLocal() is called here.
-    binds = B_GetControlDeviceBindings(P_ConsoleToLocal(playerNum), control, &bc);
-    B_EvaluateDeviceBindingList(binds, pos, relativeOffset, bc);
+    localNum = P_ConsoleToLocal(playerNum);
+    binds = B_GetControlDeviceBindings(localNum, control, &bc);
+    B_EvaluateDeviceBindingList(localNum, binds, pos, relativeOffset, bc);
 
     // Mark for double-clicks.
     P_MaintainControlDoubleClicks(playerNum, P_PlayerControlIndexForId(control), *pos);

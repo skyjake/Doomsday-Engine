@@ -38,7 +38,6 @@
 #include "sys_sock.h"
 #include "sys_master.h"
 #include "sys_timer.h"
-#include "sys_mixer.h"
 #include "sys_opengl.h"
 
 // Use SDL for window management under *nix

@@ -388,6 +388,9 @@ void R_PreInitSprites(void)
         if(name[7] && (name[7] < '0' || name[7] > '8'))
             continue;
 
+        if(W_LumpLength(i) < 8)
+            continue;
+
         numSpritePatches++;
 
         // Its a valid, name. Have we already come accross it?

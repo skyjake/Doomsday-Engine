@@ -53,6 +53,7 @@
 
 #include "p_saveg.h"
 #include "g_controls.h"
+#include "g_eventsequence.h"
 #include "p_mapsetup.h"
 #include "p_user.h"
 #include "p_actor.h"
@@ -166,7 +167,6 @@ skillmode_t gameSkill;
 int gameEpisode;
 int gameMap;
 int nextMap; // If non zero this will be the next map.
-int prevMap;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __JSTRIFE__
 boolean respawnMonsters;
@@ -185,7 +185,7 @@ boolean singledemo; // Quit after playing a demo from cmdline.
 
 boolean precache = true; // If @c true, load all graphics at start.
 
-#if __JDOOM__ || __JDOOM64__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 wbstartstruct_t wmInfo; // Params for world map / intermission.
 #endif
 
@@ -678,7 +678,9 @@ void G_CommonPostInit(void)
     Con_Message("ST_Init: Init status bar.\n");
     ST_Init();
 
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
     Cht_Init();
+#endif
 
     Con_Message("Hu_MenuInit: Init miscellaneous info.\n");
     Hu_MenuInit();
@@ -928,21 +930,6 @@ void G_DoLoadMap(void)
  */
 boolean G_Responder(event_t *ev)
 {
-#if 0 // FIXME! __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    //// \fixme DJS - Why is this here??
-    player_t *plr = &players[CONSOLEPLAYER];
-
-    if(!actions[A_USEARTIFACT].on)
-    {   // Flag to denote that it's okay to use an inventory item.
-        if(!Hu_InventoryIsOpen())
-        {
-            plr->readyItem = plr->inventory[plr->invPtr].type;
-        }
-        usearti = true;
-    }
-
-#endif
-
     // With the menu active, none of these should respond to input events.
     if(!Hu_MenuIsActive() && !Hu_IsMessageActive())
     {
@@ -954,9 +941,14 @@ boolean G_Responder(event_t *ev)
         if(Chat_Responder(ev))
             return true;
 
-        // Check for cheats.
-        if(Cht_Responder(ev))
-            return true;
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+        // Check for cheats?
+        if(G_GetGameState() == GS_MAP)
+        {
+            if(G_EventSequenceResponder(ev))
+                return true;
+        }
+#endif
     }
 
     // Try the edit responder.
@@ -1106,12 +1098,17 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
         case GA_SINGLEREBORN:
             G_DoSingleReborn();
             break;
+#endif
 
         case GA_LEAVEMAP:
+#if __JHEXEN__ || __JSTRIFE__
             //Draw_TeleportIcon();
             G_DoTeleportNewMap();
-            break;
+#else
+            G_DoWorldDone();
 #endif
+            break;
+
         case GA_LOADMAP:
             G_DoLoadMap();
             break;
@@ -1134,10 +1131,6 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
 
         case GA_VICTORY:
             G_SetGameAction(GA_NONE);
-            break;
-
-        case GA_WORLDDONE:
-            G_DoWorldDone();
             break;
 
         case GA_SCREENSHOT:
@@ -1240,14 +1233,12 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
  */
 void G_PlayerLeaveMap(int player)
 {
-#if __JHERETIC__
-    uint                i;
+#if __JHERETIC__ || __JHEXEN__
+    uint i;
+    int flightPower;
 #endif
-#if __JHEXEN__
-    int                 flightPower;
-#endif
-    player_t*           p = &players[player];
-    boolean             newCluster;
+    player_t* p = &players[player];
+    boolean newCluster;
 
 #if __JHEXEN__ || __JSTRIFE__
     newCluster = (P_GetMapCluster(gameMap) != P_GetMapCluster(leaveMap));
@@ -1255,20 +1246,23 @@ void G_PlayerLeaveMap(int player)
     newCluster = true;
 #endif
 
+#if __JHERETIC__ || __JHEXEN__
+    // Remember if flying.
+    flightPower = p->powers[PT_FLIGHT];
+#endif
+
 #if __JHERETIC__
     // Empty the inventory of excess items
     for(i = 0; i < NUM_INVENTORYITEM_TYPES; ++i)
     {
         inventoryitemtype_t type = IIT_FIRST + i;
-        uint            count = P_InventoryCount(player, type);
+        uint count = P_InventoryCount(player, type);
 
         if(count)
         {
-            uint            j;
+            uint j;
 
-            // When entering a new cluster. strip ALL flight items,
-            // otherwise leave the player one of each type.
-            if(!(type == IIT_FLY && !deathmatch && newCluster))
+            if(type != IIT_FLY)
                 count--;
 
             for(j = 0; j < count; ++j)
@@ -1277,9 +1271,14 @@ void G_PlayerLeaveMap(int player)
     }
 #endif
 
-    // Remember if flying
 #if __JHEXEN__
-    flightPower = p->powers[PT_FLIGHT];
+    if(newCluster)
+    {
+        uint count = P_InventoryCount(player, IIT_FLY);
+
+        for(i = 0; i < count; ++i)
+            P_InventoryTake(player, IIT_FLY, true);
+    }
 #endif
 
     // Remove their powers.
@@ -1541,7 +1540,7 @@ void G_DoReborn(int plrNum)
     }
 }
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
 void G_StartNewInit(void)
 {
     SV_HxInitBaseSlot();
@@ -1557,7 +1556,7 @@ void G_StartNewInit(void)
 
 void G_StartNewGame(skillmode_t skill)
 {
-    int         realMap = 1;
+    int realMap = 1;
 
     G_StartNewInit();
 #   if __JHEXEN__
@@ -1572,17 +1571,6 @@ void G_StartNewGame(skillmode_t skill)
     }
 
     G_InitNew(dSkill, 1, realMap);
-}
-
-/**
- * Only called by the warp cheat code.  Works just like normal map to map
- * teleporting, but doesn't do any interlude stuff.
- */
-void G_TeleportNewMap(int map, int position)
-{
-    G_SetGameAction(GA_LEAVEMAP);
-    leaveMap = map;
-    leavePosition = position;
 }
 
 void G_DoTeleportNewMap(void)
@@ -1627,7 +1615,7 @@ void G_LeaveMap(int map, int position, boolean secret)
     }
 #endif
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     leaveMap = map;
     leavePosition = position;
 #else
@@ -1681,21 +1669,7 @@ boolean G_IfVictory(void)
 
 void G_DoCompleted(void)
 {
-    int         i;
-
-#if __JHERETIC__
-    static int  afterSecret[5] = { 7, 5, 5, 5, 4 };
-#endif
-
-    // Clear the currently playing script, if any.
-    FI_Reset();
-
-    // Is there a debriefing for this map?
-    if(FI_Debriefing(gameEpisode, gameMap))
-        return;
-
-    // We have either just returned from a debriefing or there wasn't one.
-    briefDisabled = false;
+    int i;
 
     G_SetGameAction(GA_NONE);
 
@@ -1713,32 +1687,40 @@ void G_DoCompleted(void)
         }
     }
 
+    GL_SetFilter(false);
+
+#if __JHEXEN__
+    SN_StopAllSequences();
+#endif
+
+    // Go to an intermission?
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    {
+    ddmapinfo_t minfo;
+    char levid[8];
+
+    P_GetMapLumpName(gameEpisode, gameMap, levid);
+
+    if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && (minfo.flags & MIF_NO_INTERMISSION))
+    {
+        G_WorldDone();
+        return;
+    }
+    }
+#elif __JHEXEN__
+    if(!deathmatch)
+    {
+        G_WorldDone();
+        return;
+    }
+#endif
+
     // Has the player completed the game?
     if(G_IfVictory())
         return; // Victorious!
 
-#if __JHERETIC__
-    prevMap = gameMap;
-    if(secretExit == true)
-    {
-        gameMap = 9;
-    }
-    else if(gameMap == 9)
-    {   // Finished secret map.
-        gameMap = afterSecret[gameEpisode - 1];
-    }
-    else
-    {
-        // Is there an overide for nextmap? (eg from an XG line)
-        if(nextMap > 0)
-            gameMap = nextMap;
-
-        gameMap++;
-    }
-#endif
-
-#if __JDOOM__ || __JDOOM64__
-# if !__JDOOM64__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+# if __JDOOM__
     if(gameMode != commercial && gameMap == 9)
     {
         for(i = 0; i < MAXPLAYERS; ++i)
@@ -1776,7 +1758,7 @@ void G_DoCompleted(void)
         default: wmInfo.next = gameMap;
         }
     }
-# else
+# elif __JDOOM__
     // wmInfo.next is 0 biased, unlike gameMap
     if(gameMode == commercial)
     {
@@ -1831,35 +1813,55 @@ void G_DoCompleted(void)
         else
             wmInfo.next = gameMap; // Go to next map.
     }
+# else /* __JHERETIC__ */
+    if(secretExit == true)
+    {
+        wmInfo.next = 9;
+    }
+    else if(gameMap == 9)
+    {   // Finished secret map.
+        static int afterSecret[5] = { 7, 5, 5, 5, 4 };
+
+        wmInfo.next = afterSecret[gameEpisode - 1];
+    }
+    else
+        wmInfo.next = gameMap; // Go to next map.
 # endif
 
     // Is there an overide for wmInfo.next? (eg from an XG line)
     if(nextMap > 0)
     {
-        wmInfo.next = nextMap -1;   // wmInfo is zero based
+        wmInfo.next = nextMap - 1;   // wmInfo is zero based
         nextMap = 0;
     }
 
+# if __JDOOM__ || __JDOOM64__
     wmInfo.maxKills = totalKills;
     wmInfo.maxItems = totalItems;
     wmInfo.maxSecret = totalSecret;
 
     G_PrepareWIData();
+# endif
+#endif
 
-    // Tell the clients what's going on.
-    NetSv_Intermission(IMF_BEGIN, 0, 0);
-
-#elif __JHERETIC__
-    // Let the clients know the next map.
+#if __JHERETIC__
+    // @fixme is this necessary at this time?
     NetSv_SendGameState(0, DDSP_ALL_PLAYERS);
-#elif __JHEXEN__ || __JSTRIFE__
+#endif
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    NetSv_Intermission(IMF_BEGIN, 0, 0);
+#else /* __JHEXEN__ */
     NetSv_Intermission(IMF_BEGIN, leaveMap, leavePosition);
 #endif
+
     G_ChangeGameState(GS_INTERMISSION);
 
 #if __JDOOM__ || __JDOOM64__
     WI_Start(&wmInfo);
-#else
+#elif __JHERETIC__
+    IN_Start(&wmInfo);
+#else /* __JHEXEN__ */
     IN_Start();
 #endif
 }
@@ -1901,26 +1903,59 @@ void G_PrepareWIData(void)
 }
 #endif
 
+boolean G_DebriefingEnabled(void)
+{
+    // If we're already in the INFINE state, don't start a finale.
+    if(briefDisabled)
+        return false;
+#if __JHEXEN__
+    if(cfg.overrideHubMsg && G_GetGameState() == GS_MAP &&
+       !(leaveMap == -1 && leavePosition == -1) &&
+       P_GetMapCluster(gameMap) != P_GetMapCluster(leaveMap))
+        return false;
+#endif
+    if(G_GetGameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
+        return false;
+
+    return true;
+}
+
 void G_WorldDone(void)
 {
-    G_SetGameAction(GA_WORLDDONE);
-
 #if __JDOOM__ || __JDOOM64__
     if(secretExit)
         players[CONSOLEPLAYER].didSecret = true;
 #endif
+
+    // Clear the currently playing script, if any.
+    // @note FI_Reset() changes the game state so we must determine
+    // whether the debrief is enabled first.
+    {
+    boolean doDebrief = G_DebriefingEnabled();
+
+    FI_Reset();
+
+    if(doDebrief && FI_Debriefing(gameEpisode, gameMap))
+        return;
+
+    // We have either just returned from a debriefing or there wasn't one.
+    briefDisabled = false;
+    }
+
+    G_SetGameAction(GA_LEAVEMAP);
 }
 
 void G_DoWorldDone(void)
 {
-#if __JDOOM__ || __JDOOM64__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     gameMap = wmInfo.next + 1;
 #endif
+
     G_DoLoadMap();
     G_SetGameAction(GA_NONE);
 }
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
 /**
  * Called by G_Ticker based on gameaction.  Loads a game from the reborn
  * save slot.
@@ -2059,10 +2094,15 @@ void G_DoNewGame(void)
  */
 void G_InitNew(skillmode_t skill, int episode, int map)
 {
-    int                 i;
+    int i;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    int                 speed;
+    int speed;
 #endif
+
+    // Close any open automaps.
+    for(i = 0; i < MAXPLAYERS; ++i)
+        if(players[i].plr->inGame)
+            AM_Open(AM_MapForPlayer(i), false, true);
 
     // If there are any InFine scripts running, they must be stopped.
     FI_Reset();

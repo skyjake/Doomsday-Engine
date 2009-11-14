@@ -648,8 +648,7 @@ static int DD_StartupWorker(void *parm)
 
     Con_SetProgress(175);
 
-    // Defs have been read; we can now init models and the map format info.
-    R_InitModels();
+    // Defs have been read; we can now init the map format info.
     P_InitData();
 
     Con_SetProgress(190);
@@ -742,8 +741,8 @@ static void HandleArgs(int state)
         {
             for(p = 0; p < Argc(); p++)
             {
-                if((order == 1 && ArgRecognize("-file", Argv(p))) ||
-                   (order == 0 && ArgRecognize("-iwad", Argv(p))))
+                if((order == 1 && !ArgRecognize("-file", Argv(p))) ||
+                   (order == 0 && !ArgRecognize("-iwad", Argv(p))))
                     continue;
 
                 while(++p != Argc() && !ArgIsOption(p))

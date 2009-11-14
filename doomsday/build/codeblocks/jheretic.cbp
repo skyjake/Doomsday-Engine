@@ -94,6 +94,7 @@
 		<Unit filename="..\..\plugins\common\include\dmu_lib.h" />
 		<Unit filename="..\..\plugins\common\include\f_infine.h" />
 		<Unit filename="..\..\plugins\common\include\g_defs.h" />
+		<Unit filename="..\..\plugins\common\include\g_eventsequence.h" />
 		<Unit filename="..\..\plugins\common\include\g_common.h" />
 		<Unit filename="..\..\plugins\common\include\g_controls.h" />
 		<Unit filename="..\..\plugins\common\include\g_update.h" />
@@ -141,6 +142,7 @@
 		<Unit filename="..\..\plugins\common\src\dmu_lib.c" />
 		<Unit filename="..\..\plugins\common\src\f_infine.c" />
 		<Unit filename="..\..\plugins\common\src\g_defs.c" />
+		<Unit filename="..\..\plugins\common\src\g_eventsequence.c" />
 		<Unit filename="..\..\plugins\common\src\g_controls.c" />
 		<Unit filename="..\..\plugins\common\src\g_game.c" />
 		<Unit filename="..\..\plugins\common\src\g_update.c" />

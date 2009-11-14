@@ -32,12 +32,15 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
+#include "h_player.h"
+
 extern boolean intermission;
 extern int interState;
 extern int interTime;
 
-void            IN_Start(void);
+void            IN_Start(wbstartstruct_t* wbstartstruct);
 void            IN_Stop(void);
+
 void            IN_Ticker(void);
 void            IN_Drawer(void);
 

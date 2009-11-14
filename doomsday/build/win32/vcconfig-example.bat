@@ -17,8 +17,8 @@ REM ---- Python Interpreter
 SET PYTHON_DIR=C:\Python25
 
 REM ---- DirectX:
-SET DX_INC=C:\Program Files\Microsoft DirectX SDK (March 2008)\Include
-SET DX_LIB=C:\Program Files\Microsoft DirectX SDK (March 2008)\Lib
+SET DX_INC=C:\Program Files\Microsoft DirectX SDK (March 2009)\Include
+SET DX_LIB=C:\Program Files\Microsoft DirectX SDK (March 2009)\Lib
 
 REM ---- Creative Labs EAX:
 SET EAX_INC=D:\sdk\Creative Labs\EAX 2.0 Extensions SDK\Include
@@ -30,12 +30,12 @@ SET SDL_INC=D:\sdk\SDL-1.2.13\include
 SET SDL_LIB=D:\sdk\SDL-1.2.13\lib
 
 REM ---- SDL_net:
-SET SDLNET_INC=D:\sdk\SDL_net-1.2.6\include
-SET SDLNET_LIB=D:\sdk\SDL_net-1.2.6\lib
+SET SDLNET_INC=D:\sdk\SDL_net-1.2.7\include
+SET SDLNET_LIB=D:\sdk\SDL_net-1.2.7\lib
 
 REM ---- SDL_mixer:
-SET SDLMIXER_INC=D:\sdk\SDL_mixer-1.2.7\include
-SET SDLMIXER_LIB=D:\sdk\SDL_mixer-1.2.7\lib
+SET SDLMIXER_INC=D:\sdk\SDL_mixer-1.2.8\include
+SET SDLMIXER_LIB=D:\sdk\SDL_mixer-1.2.8\lib
 
 REM -=- Requirements for drOpenGL.dll -=-
 REM
