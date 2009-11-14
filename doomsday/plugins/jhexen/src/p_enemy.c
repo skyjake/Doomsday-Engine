@@ -4336,12 +4336,12 @@ void C_DECL A_FreezeDeathChunks(mobj_t* mo)
 
 void C_DECL A_KoraxChase(mobj_t* actor)
 {
-    mobj_t*             spot;
-    byte                args[3] = { 0, 0, 0 };
+    mobj_t* spot;
+    byte args[3] = { 0, 0, 0 };
 
-    if((!actor->special2) &&
-       (actor->health <= (actor->info->spawnHealth / 2)))
+    if(!actor->special2 && actor->health <= actor->info->spawnHealth / 2)
     {
+        actor->special1 = 0;
         spot = P_FindMobjFromTID(KORAX_FIRST_TELEPORT_TID, &actor->special1);
         if(spot)
         {
@@ -4367,7 +4367,7 @@ void C_DECL A_KoraxChase(mobj_t* actor)
     }
 
     // Teleport away.
-    if(actor->health < (actor->info->spawnHealth >> 1))
+    if(actor->health < actor->info->spawnHealth >> 1)
     {
         if(P_Random() < 10)
         {
