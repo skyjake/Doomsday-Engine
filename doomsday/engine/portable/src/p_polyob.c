@@ -253,11 +253,11 @@ void P_MapInitPolyobjs(void)
 
 boolean P_PolyobjMove(struct polyobj_s* po, float x, float y)
 {
-    uint                count;
-    fvertex_t*          prevPts;
-    seg_t**             segList;
-    seg_t**             veryTempSeg;
-    boolean             blocked;
+    uint count;
+    fvertex_t* prevPts;
+    seg_t** segList;
+    seg_t** veryTempSeg;
+    boolean blocked;
 
     if(!po)
         return false;
@@ -266,21 +266,14 @@ boolean P_PolyobjMove(struct polyobj_s* po, float x, float y)
 
     segList = po->segs;
     prevPts = po->prevPts;
-    blocked = false;
-
-    validCount++;
     for(count = 0; count < po->numSegs; ++count, segList++, prevPts++)
     {
-        seg_t*              seg = *segList;
+        seg_t* seg = *segList;
 
-        if(seg->lineDef->validCount != validCount)
-        {
-            seg->lineDef->bBox[BOXTOP]    += y;
-            seg->lineDef->bBox[BOXBOTTOM] += y;
-            seg->lineDef->bBox[BOXLEFT]   += x;
-            seg->lineDef->bBox[BOXRIGHT]  += x;
-            seg->lineDef->validCount = validCount;
-        }
+        seg->lineDef->bBox[BOXTOP]    += y;
+        seg->lineDef->bBox[BOXBOTTOM] += y;
+        seg->lineDef->bBox[BOXLEFT]   += x;
+        seg->lineDef->bBox[BOXRIGHT]  += x;
 
         for(veryTempSeg = po->segs; veryTempSeg != segList; veryTempSeg++)
         {
@@ -301,6 +294,7 @@ boolean P_PolyobjMove(struct polyobj_s* po, float x, float y)
     }
 
     segList = po->segs;
+    blocked = false;
     for(count = 0; count < po->numSegs; ++count, segList++)
     {
         if(CheckMobjBlocking(*segList, po))
@@ -314,19 +308,14 @@ boolean P_PolyobjMove(struct polyobj_s* po, float x, float y)
         count = 0;
         segList = po->segs;
         prevPts = po->prevPts;
-        validCount++;
-        while(count++ < po->numSegs)
+        for(count = 0; count < po->numSegs; ++count, segList++, prevPts++)
         {
-            seg_t*              seg = *segList;
+            seg_t* seg = *segList;
 
-            if(seg->lineDef->validCount != validCount)
-            {
-                seg->lineDef->bBox[BOXTOP]    -= y;
-                seg->lineDef->bBox[BOXBOTTOM] -= y;
-                seg->lineDef->bBox[BOXLEFT]   -= x;
-                seg->lineDef->bBox[BOXRIGHT]  -= x;
-                seg->lineDef->validCount = validCount;
-            }
+            seg->lineDef->bBox[BOXTOP]    -= y;
+            seg->lineDef->bBox[BOXBOTTOM] -= y;
+            seg->lineDef->bBox[BOXLEFT]   -= x;
+            seg->lineDef->bBox[BOXRIGHT]  -= x;
 
             for(veryTempSeg = po->segs; veryTempSeg != segList; veryTempSeg++)
             {
@@ -344,9 +333,6 @@ boolean P_PolyobjMove(struct polyobj_s* po, float x, float y)
 
             (*prevPts).pos[VX] -= x;
             (*prevPts).pos[VY] -= y;
-
-            segList++;
-            prevPts++;
         }
 
         P_PolyobjLink(po);
@@ -382,13 +368,13 @@ static void rotatePoint(int an, float* x, float* y, float startSpotX,
 
 boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle)
 {
-    int                 an;
-    uint                count;
-    fvertex_t*          originalPts;
-    fvertex_t*          prevPts;
-    vertex_t*           vtx;
-    seg_t**             segList;
-    boolean             blocked;
+    int an;
+    uint count;
+    fvertex_t* originalPts;
+    fvertex_t* prevPts;
+    vertex_t* vtx;
+    seg_t** segList;
+    boolean blocked;
 
     if(!po)
         return false;
@@ -418,6 +404,9 @@ boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle)
         rotatePoint(an, &vtx->V_pos[VX], &vtx->V_pos[VY],
                     po->pos[VX], po->pos[VY]);
 
+        updateSegBBox(seg);
+        seg->angle += angle;
+
         // Now update the surface normal.
         surface->normal[VY] = (seg->SG_v1pos[VX] - seg->SG_v2pos[VX]) / seg->length;
         surface->normal[VX] = (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / seg->length;
@@ -430,23 +419,14 @@ boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle)
 
     segList = po->segs;
     blocked = false;
-    validCount++;
     for(count = 0; count < po->numSegs; ++count, segList++)
     {
-        seg_t*              seg = *segList;
+        seg_t* seg = *segList;
 
         if(CheckMobjBlocking(seg, po))
         {
             blocked = true;
         }
-
-        if(seg->lineDef->validCount != validCount)
-        {
-            updateSegBBox(seg);
-            seg->lineDef->validCount = validCount;
-        }
-
-        seg->angle += angle;
     }
 
     if(blocked)
@@ -455,7 +435,7 @@ boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle)
         prevPts = po->prevPts;
         for(count = 0; count < po->numSegs; ++count, segList++, prevPts++)
         {
-            seg_t*              seg = *segList;
+            seg_t* seg = *segList;
 
             vtx = seg->SG_v1;
             vtx->V_pos[VX] = prevPts->pos[VX];
@@ -463,16 +443,11 @@ boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle)
         }
 
         segList = po->segs;
-        validCount++;
         for(count = 0; count < po->numSegs; ++count, segList++, prevPts++)
         {
-            seg_t*              seg = *segList;
+            seg_t* seg = *segList;
 
-            if(seg->lineDef->validCount != validCount)
-            {
-                updateSegBBox(seg);
-                seg->lineDef->validCount = validCount;
-            }
+            updateSegBBox(seg);
             seg->angle -= angle;
         }
 
@@ -602,6 +577,7 @@ static boolean CheckMobjBlocking(seg_t* seg, polyobj_t* po)
     bbox[1][VX] = ld->bBox[BOXRIGHT]  + DDMOBJ_RADIUS_MAX;
     bbox[1][VY] = ld->bBox[BOXTOP]    + DDMOBJ_RADIUS_MAX;
 
+    validCount++;
     P_BoxToBlockmapBlocks(BlockMap, blockBox, bbox);
     P_BlockBoxMobjsIterator(BlockMap, blockBox,
                             PTR_CheckMobjBlocking, &params);
