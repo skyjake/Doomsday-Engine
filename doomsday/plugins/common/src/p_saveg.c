@@ -1697,6 +1697,10 @@ static void RestoreMobj(mobj_t *mo, int ver)
     mo->info = &MOBJINFO[mo->type];
 
     P_MobjSetState(mo, (int) mo->state);
+#if __JHEXEN__
+    if(mo->flags2 & MF2_DORMANT)
+        mo->tics = -1;
+#endif
 
     if(mo->player)
     {
