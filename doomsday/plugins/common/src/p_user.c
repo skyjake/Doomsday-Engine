@@ -993,10 +993,6 @@ void P_ClientSideThink(void)
 
 void P_PlayerThinkState(player_t *player)
 {
-#if __JHEXEN__
-    player->worldTimer++;
-#endif
-
     if(player->plr->mo)
     {
         mobj_t             *plrmo = player->plr->mo;
@@ -1920,6 +1916,10 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
 
     if(!M_CheckTrigger(DD_GetVariable(DD_SHARED_FIXED_TRIGGER), ticLength))
         return; // It's too soon.
+
+#if __JHEXEN__
+    player->worldTimer++;
+#endif
 
     P_PlayerThinkUpdateControls(player);
 
