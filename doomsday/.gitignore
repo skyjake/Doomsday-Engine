@@ -2,3 +2,7 @@ Makefile
 Doomsday.tmproj
 mybuild
 myrelease
+.kdev4
+doomsday.kdev4
+libdeng2
+
