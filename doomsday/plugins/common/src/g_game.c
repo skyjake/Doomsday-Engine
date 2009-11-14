@@ -1910,6 +1910,7 @@ boolean G_DebriefingEnabled(void)
         return false;
 #if __JHEXEN__
     if(cfg.overrideHubMsg && G_GetGameState() == GS_MAP &&
+       !(leaveMap == -1 && leavePosition == -1) &&
        P_GetMapCluster(gameMap) != P_GetMapCluster(leaveMap))
         return false;
 #endif
