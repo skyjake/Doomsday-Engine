@@ -571,10 +571,10 @@ void G_PostInit(void)
     }
 
     // Command line options.
-    noMonstersParm = ArgCheck("-nomonsters");
-    respawnParm = ArgCheck("-respawn");
-    fastParm = ArgCheck("-fast");
-    devParm = ArgCheck("-devparm");
+    noMonstersParm = ArgCheck("-nomonsters")? true : false;
+    respawnParm = ArgCheck("-respawn")? true : false;
+    fastParm = ArgCheck("-fast")? true : false;
+    devParm = ArgCheck("-devparm")? true : false;
 
     if(ArgCheck("-altdeath"))
         cfg.netDeathmatch = 2;
