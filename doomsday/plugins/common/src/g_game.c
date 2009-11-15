@@ -2080,7 +2080,7 @@ void G_DoNewGame(void)
     {
         deathmatch = false;
         respawnMonsters = false;
-        noMonstersParm = ArgExists("-noMonstersParm");  //false;
+        noMonstersParm = ArgExists("-nomonsters")? true : false;
     }
     G_InitNew(dSkill, dEpisode, dMap);
 #else
