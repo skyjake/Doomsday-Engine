@@ -276,8 +276,8 @@ static boolean countParticles(ptcgen_t* gen, void* context)
 {
     if(isPtcGenVisible(gen))
     {
-        int                 p;
-        size_t*             numParts = (uint*) context;
+        int p;
+        size_t* numParts = (size_t*) context;
 
         for(p = 0; p < gen->count; ++p)
             if(gen->ptcs[p].stage >= 0)
@@ -289,10 +289,10 @@ static boolean countParticles(ptcgen_t* gen, void* context)
 
 static boolean populateSortBuffer(ptcgen_t* gen, void* context)
 {
-    int                 p;
+    int p;
     const ded_ptcgen_t* def;
-    particle_t*         pt;
-    size_t*             m = (size_t*) context;
+    particle_t* pt;
+    size_t* m = (size_t*) context;
 
     if(!isPtcGenVisible(gen))
         return true; // Continue iteration.
