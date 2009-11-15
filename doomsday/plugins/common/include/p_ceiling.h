@@ -30,6 +30,11 @@
 #ifndef __COMMON_THINKER_CEILING_H__
 #define __COMMON_THINKER_CEILING_H__
 
+#if __JDOOM__
+#   include "d_identifiers.h"
+#endif
+#include <de/Thinker>
+
 typedef enum {
     CS_DOWN,
     CS_UP
@@ -58,8 +63,9 @@ typedef enum {
     NUMCEILINGTYPES
 } ceilingtype_e;
 
-typedef struct {
-    thinker_t       thinker;
+class CeilingThinker : public de::Thinker 
+{
+public:
     ceilingtype_e   type;
     sector_t*       sector;
     float           bottomHeight;
@@ -69,12 +75,38 @@ typedef struct {
     ceilingstate_e  state;
     ceilingstate_e  oldState;
     int             tag; // id.
-} ceiling_t;
+    
+public:
+    CeilingThinker() 
+        : de::Thinker(SID_CEILING),
+          type(CT_LOWERTOFLOOR),
+          sector(0),
+          bottomHeight(0),
+          topHeight(0),
+          speed(0),
+          crush(0),
+          state(CS_DOWN),
+          oldState(CS_DOWN),
+          tag(0) {}
+          
+    void think(const de::Time::Delta& elapsed);
+
+    // Implements ISerializable.
+    void operator >> (de::Writer& to) const;
+    void operator << (de::Reader& from);
+    
+    static Thinker* construct() {
+        return new CeilingThinker;
+    }
+};
+
+typedef CeilingThinker ceiling_t;
 
 #define CEILSPEED           (1)
 #define CEILWAIT            (150)
 
-void        T_MoveCeiling(ceiling_t* c);
+//void        T_MoveCeiling(ceiling_t* c);
+
 #if __JHEXEN__
 int         EV_DoCeiling(linedef_t* line, byte* args, ceilingtype_e type);
 #else

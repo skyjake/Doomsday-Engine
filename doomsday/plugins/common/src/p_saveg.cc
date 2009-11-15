@@ -344,6 +344,7 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(xgplanemover_t)
     },
 #endif
+/*
     {
       TC_CEILING,
       (voidfunc_t) T_MoveCeiling,
@@ -351,7 +352,7 @@ static thinkerinfo_t thinkerInfo[] = {
       (voidfunc_t) SV_WriteCeiling,
       (intfunc_t) SV_ReadCeiling,
       sizeof(ceiling_t)
-    },
+    },*/
     {
       TC_DOOR,
       (voidfunc_t) T_Door,

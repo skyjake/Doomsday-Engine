@@ -49,6 +49,13 @@
 #include "p_tick.h"
 #include "p_ceiling.h"
 
+#include <de/App>
+#include <de/Map>
+#include <de/Reader>
+#include <de/Writer>
+
+using namespace de;
+
 // MACROS ------------------------------------------------------------------
 
 // Sounds played by the ceilings when changing state or moving.
@@ -91,16 +98,55 @@
 static void stopCeiling(ceiling_t* ceiling)
 {
     P_ToXSector(ceiling->sector)->specialData = NULL;
+
 #if __JHEXEN__
     P_TagFinished(P_ToXSector(ceiling->sector)->tag);
 #endif
-//    DD_ThinkerRemove(&ceiling->thinker);
-#warning stopCeiling: Need to remove thinker
+
+    App::currentMap().destroy(ceiling);
 }
 
-void T_MoveCeiling(ceiling_t* ceiling)
+void CeilingThinker::operator >> (de::Writer& to) const
 {
-    result_e            res;
+    Thinker::operator >> (to);
+    
+    to << duint8(type)
+       << duint(P_ToIndex(sector))
+       << bottomHeight
+       << topHeight
+       << speed
+       << duint8(crush)
+       << duint8(state)
+       << duint8(oldState)
+       << tag;
+}
+
+void CeilingThinker::operator << (de::Reader& from)
+{
+    Thinker::operator << (from);
+    
+    duint8 i;
+    from >> i;
+    type = ceilingtype_e(i);
+
+    duint sectorIndex;
+    from >> sectorIndex;
+    sector = (sector_t*) P_ToPtr(DMU_SECTOR, sectorIndex);
+
+    from >> bottomHeight
+         >> topHeight
+         >> speed;
+         
+     from >> i; crush = i;
+     from >> i; state = ceilingstate_e(i);
+     from >> i; oldState = ceilingstate_e(i);
+     from >> tag;     
+}
+
+void CeilingThinker::think(const de::Time::Delta& /*elapsed*/)
+{
+    ceiling_t* ceiling = this;
+    result_e res;
 
     switch(ceiling->state)
     {
@@ -292,11 +338,9 @@ static int EV_DoCeiling2(int tag, float basespeed, ceilingtype_e type)
 
         // new door thinker
         rtn = 1;
-        ceiling = (ceiling_t*) Z_Calloc(sizeof(*ceiling), PU_MAP, 0);
 
-        ceiling->thinker.function = (void (*)()) T_MoveCeiling;
-        //DD_ThinkerAdd(&ceiling->thinker);
-#warning EV_DoCeiling2: Need to add thinker
+        ceiling = new CeilingThinker; 
+        App::currentMap().add(ceiling);
 
         xsec->specialData = ceiling;
         ceiling->sector = sec;
@@ -481,16 +525,15 @@ typedef struct {
     int                 count;
 } activateceilingparams_t;
 
-static boolean activateCeiling(thinker_t* th, void* context)
+static bool activateCeiling(de::Thinker* th, void* context)
 {
     ceiling_t*          ceiling = (ceiling_t*) th;
     activateceilingparams_t* params = (activateceilingparams_t*) context;
 
-#warning activateCeiling: Check if ceiling thinker is in stasis
-    if(ceiling->tag == (int) params->tag) // && ceiling->thinker.inStasis)
+    if(ceiling->tag == (int) params->tag && ceiling->mode[CeilingThinker::IN_STASIS_BIT])
     {
         ceiling->state = ceiling->oldState;
-        //DD_ThinkerSetStasis(&ceiling->thinker, false);
+        ceiling->mode[CeilingThinker::IN_STASIS_BIT] = false;
         params->count++;
     }
 
@@ -510,7 +553,8 @@ int P_CeilingActivate(short tag)
 
     params.tag = tag;
     params.count = 0;
-    DD_IterateThinkers((void (*)()) T_MoveCeiling, activateCeiling, &params);
+    
+    App::currentMap().iterate(SID_CEILING, activateCeiling, &params);
 
     return params.count;
 }
@@ -521,7 +565,7 @@ typedef struct {
     int                 count;
 } deactivateceilingparams_t;
 
-static boolean deactivateCeiling(thinker_t* th, void* context)
+static bool deactivateCeiling(de::Thinker* th, void* context)
 {
     ceiling_t*          ceiling = (ceiling_t*) th;
     deactivateceilingparams_t* params =
@@ -536,11 +580,10 @@ static boolean deactivateCeiling(thinker_t* th, void* context)
         return false; // Stop iteration.
     }
 #else
-#warning deactivateCeiling: Check if ceiling in stasis
-    if(/*!ceiling->thinker.inStasis && */ceiling->tag == (int) params->tag)
+    if(!ceiling->mode[CeilingThinker::IN_STASIS_BIT] && ceiling->tag == (int) params->tag)
     {   // Put it into stasis.
         ceiling->oldState = ceiling->state;
-        //DD_ThinkerSetStasis(&ceiling->thinker, true);
+        ceiling->mode[CeilingThinker::IN_STASIS_BIT] = true;
         params->count++;
     }
 #endif
@@ -560,7 +603,7 @@ int P_CeilingDeactivate(short tag)
 
     params.tag = tag;
     params.count = 0;
-    DD_IterateThinkers((void (*)()) T_MoveCeiling, deactivateCeiling, &params);
+    App::currentMap().iterate(SID_CEILING, deactivateCeiling, &params);
 
     return params.count;
 }
