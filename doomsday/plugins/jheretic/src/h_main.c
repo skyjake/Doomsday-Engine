@@ -313,7 +313,7 @@ void G_PreInit(void)
     cfg.netGravity = -1;        // use map default
     cfg.plrViewHeight = 41;
     cfg.mapTitle = true;
-  //cfg.hideAuthorIdSoft = true;
+    cfg.hideAuthorRavenSoft = true;
     cfg.menuColor[0] = defFontRGB[0]; // use the default colour by default.
     cfg.menuColor[1] = defFontRGB[1];
     cfg.menuColor[2] = defFontRGB[2];

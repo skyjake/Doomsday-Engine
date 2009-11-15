@@ -157,10 +157,9 @@ boolean R_GetFilterColor(float rgba[4], int filter)
  */
 void R_DrawMapTitle(void)
 {
-    float               alpha = 1;
-    int                 y = 12;
-    int                 mapnum;
-    char               *lname, *lauthor;
+    float alpha;
+    int y = 12, mapnum;
+    char* lname, *lauthor;
 
     if(!cfg.mapTitle || actualMapTime > 6 * 35)
         return;
@@ -172,6 +171,7 @@ void R_DrawMapTitle(void)
     DGL_Scalef(.7f, .7f, 1);
     DGL_Translatef(-160, -y, 0);
 
+    alpha = 1;
     if(actualMapTime < 35)
         alpha = actualMapTime / 35.0f;
     if(actualMapTime > 5 * 35)
@@ -179,22 +179,28 @@ void R_DrawMapTitle(void)
 
     // Get the strings from Doomsday.
     lname = P_GetMapNiceName();
-    lauthor = (char *) DD_GetVariable(DD_MAP_AUTHOR);
+    lauthor = (char*) DD_GetVariable(DD_MAP_AUTHOR);
 
     // Compose the mapnumber used to check the map name patches array.
     mapnum = gameMap - 1;
 
-    WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, alpha, &mapNamePatches[mapnum],
-                 lname, false, ALIGN_CENTER);
-    y += 14;                //9;
+    WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, alpha,
+                 &mapNamePatches[mapnum], lname, false, ALIGN_CENTER);
+    y += 14;
 
-    DGL_Color4f(.5f, .5f, .5f, alpha);
-    if(lauthor && lauthor[0] &&
-       (!W_IsFromIWAD(mapNamePatches[mapnum].lump) ||
-        (!stricmp(lauthor, "Midway") && cfg.hideAuthorMidway)))
+    if(lauthor && lauthor[0])
     {
-        M_WriteText2(160 - M_StringWidth(lauthor, GF_FONTA) / 2, y, lauthor,
-                     GF_FONTA, -1, -1, -1, -1);
+        char lumpName[9];
+
+        P_GetMapLumpName(gameEpisode, gameMap, lumpName);
+
+        if(!(cfg.hideAuthorMidway && !stricmp(lauthor, "Midway") &&
+             !W_IsFromIWAD(W_GetNumForName(lumpName))))
+        {
+            M_WriteText3(160 - M_StringWidth(lauthor, GF_FONTA) / 2, y,
+                         lauthor, GF_FONTA, .5f, .5f, .5f, alpha, false,
+                         true, 0);
+        }
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);

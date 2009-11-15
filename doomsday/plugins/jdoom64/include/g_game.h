@@ -106,4 +106,5 @@ void            G_PrepareWIData(void);
 
 void            G_QueueBody(mobj_t* body);
 
+void            P_GetMapLumpName(int episode, int map, char* lumpName);
 #endif

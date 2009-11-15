@@ -95,4 +95,6 @@ void            G_Ticker(timespan_t ticLength);
 boolean         G_Responder(event_t* ev);
 
 void            G_ScreenShot(void);
+
+void            P_GetMapLumpName(int episode, int map, char* lumpName);
 #endif
