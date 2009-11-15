@@ -318,8 +318,8 @@ static void sanityCheckClosed(const bspleafdata_t *leaf)
 
     if(gaps > 0)
     {
-        Con_Message("HEdge list for leaf #%p is not closed "
-                    "(%d gaps, %d half-edges)\n", leaf, gaps, total);
+        VERBOSE( Con_Message("HEdge list for leaf #%p is not closed (%d gaps, %d half-edges)\n", 
+                             leaf, gaps, total) );
 
 /*#if _DEBUG
 for(cur = leaf->hEdges; cur; cur = cur->next)
