@@ -90,9 +90,9 @@ void R_SetViewSize(int blocks)
 
 void R_DrawMapTitle(void)
 {
-    float               alpha = 1;
-    int                 y = 12;
-    char*               lname, *lauthor;
+    float alpha;
+    int y = 12;
+    char* lname, *lauthor;
 
     if(!cfg.mapTitle || actualMapTime > 6 * 35)
         return;
@@ -104,6 +104,7 @@ void R_DrawMapTitle(void)
     DGL_Scalef(.75f, .75f, 1);   // Scale to 3/4
     DGL_Translatef(-160, -y, 0);
 
+    alpha = 1;
     if(actualMapTime < 35)
         alpha = actualMapTime / 35.0f;
     if(actualMapTime > 5 * 35)
@@ -128,8 +129,17 @@ void R_DrawMapTitle(void)
 
     if(lauthor && lauthor[0])
     {
-        M_WriteText3(160 - M_StringWidth(lauthor, GF_FONTA) / 2, y, lauthor,
-                    GF_FONTA, .5f, .5f, .5f, alpha, false, true, 0);
+        char lumpName[9];
+
+        P_GetMapLumpName(gameEpisode, gameMap, lumpName);
+
+        if(!(cfg.hideAuthorRavenSoft && !stricmp(lauthor, "raven software") &&
+             !W_IsFromIWAD(W_GetNumForName(lumpName))))
+        {
+            M_WriteText3(160 - M_StringWidth(lauthor, GF_FONTA) / 2, y,
+                         lauthor, GF_FONTA, .5f, .5f, .5f, alpha, false,
+                         true, 0);
+        }
     }
 
     Draw_EndZoom();

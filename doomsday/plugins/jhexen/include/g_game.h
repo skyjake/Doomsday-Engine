@@ -58,4 +58,5 @@ void            G_PrintMapList(void);
 void            G_PlayerReborn(int player);
 void            G_SaveGame(int slot, const char* description);
 
+void            P_GetMapLumpName(int episode, int map, char* lumpName);
 #endif

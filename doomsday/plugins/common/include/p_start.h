@@ -139,7 +139,6 @@ extern int bossSpotCount;
 
 void            P_Init(void);
 mobjtype_t      P_DoomEdNumToMobjType(int doomEdNum);
-void            P_GetMapLumpName(int episode, int map, char* lumpName);
 void            P_SpawnPlayers(void);
 void            P_MoveThingsOutOfWalls();
 #if __JHERETIC__
