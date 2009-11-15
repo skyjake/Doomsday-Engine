@@ -2594,7 +2594,7 @@ void M_DrawClassMenu(void)
 #define BG_Y            (8)
 
     menu_t*             menu = &ClassDef;
-    playerclass_t       pClass;
+    int                 pClass;
     spriteinfo_t        sprInfo;
     int                 tmap = 1, hasFocus = MAX_OF(0, itemOn);
     static char* boxLumpName[3] = {
@@ -2606,13 +2606,13 @@ void M_DrawClassMenu(void)
     M_WriteText3(34, 24, "CHOOSE CLASS:", GF_FONTB, menu->color[0],
                  menu->color[1], menu->color[2], menuAlpha, true, true, 0);
 
-    pClass = (playerclass_t) menu->items[hasFocus].option;
+    pClass = menu->items[hasFocus].option;
     if(pClass < 0)
     {   // Random class.
         // Number of user-selectable classes.
         pClass = (menuTime / 5) % (menu->itemCount - 1);
     }
-
+    
     R_GetSpriteInfo(STATES[PCLASS_INFO(pClass)->normalState].sprite,
                     ((menuTime >> 3) & 3), &sprInfo);
 
