@@ -117,7 +117,7 @@ public:
 
 public:
     FloorThinker() 
-        : de::Thinker(SID_FLOOR),
+        : de::Thinker(SID_FLOOR_THINKER),
 #if __JHEXEN__
           delayCount(0),
           delayTotal(0),

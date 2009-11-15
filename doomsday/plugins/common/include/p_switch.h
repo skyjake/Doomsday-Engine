@@ -30,6 +30,12 @@
 #ifndef __COMMON_SWITCH_H__
 #define __COMMON_SWITCH_H__
 
+#if __JDOOM__
+#   include "d_identifiers.h"
+#endif
+
+#include <de/Thinker>
+
 typedef enum {
     SID_MIDDLE,
     SID_BOTTOM,
@@ -38,13 +44,34 @@ typedef enum {
 
 #define BUTTONTIME              (TICSPERSEC) // 1 second, in ticks.
 
-typedef struct {
-    thinker_t       thinker;
+class MaterialChangerThinker : public de::Thinker
+{
+public:
     int             timer;
     sidedef_t*      side;
     sidedefsurfaceid_t ssurfaceID;
     material_t*     material;
-} materialchanger_t;
+    
+public:
+    MaterialChangerThinker() 
+        : de::Thinker(SID_MATERIAL_CHANGER_THINKER),
+          timer(0),
+          side(0),
+          ssurfaceID(SID_MIDDLE),
+          material(0) {}
+    
+    void think(const de::Time::Delta& elapsed);
+
+    // Implements ISerializable.
+    void operator >> (de::Writer& to) const;
+    void operator << (de::Reader& from);
+
+    static Thinker* construct() {
+        return new MaterialChangerThinker;
+    }    
+};
+    
+typedef MaterialChangerThinker materialchanger_t;
 
 /**
  * This struct is used to provide byte offsets when reading a custom
@@ -70,7 +97,6 @@ boolean         P_ToggleSwitch(sidedef_t* side, int sound, boolean silent,
                                int tics);
 boolean         P_UseSpecialLine(mobj_t* mo, linedef_t* line, int side);
 
-void            T_MaterialChanger(materialchanger_t* mchanger);
 void            P_SpawnMaterialChanger(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
                                        material_t* mat, int tics);
 

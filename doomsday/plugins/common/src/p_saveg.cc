@@ -335,14 +335,14 @@ static thinkerinfo_t thinkerInfo[] = {
       sizeof(mobj_t)
     },
 #if !__JHEXEN__
-    {
+/*    {
       TC_XGMOVER,
       (voidfunc_t) XS_PlaneMover,
       0,
       (voidfunc_t) SV_WriteXGPlaneMover,
       (intfunc_t) SV_ReadXGPlaneMover,
       sizeof(xgplanemover_t)
-    },
+    },*/
 #endif
 /*
     {
@@ -369,14 +369,14 @@ static thinkerinfo_t thinkerInfo[] = {
       (intfunc_t) SV_ReadFloor,
       sizeof(floor_t)
     },*/
-    {
+/*    {
       TC_PLAT,
       (voidfunc_t) T_PlatRaise,
       0,
       (voidfunc_t) SV_WritePlat,
       (intfunc_t) SV_ReadPlat,
       sizeof(plat_t)
-    },
+    },*/
 #if __JHEXEN__
     {
      TC_INTERPRET_ACS,
@@ -454,14 +454,14 @@ static thinkerinfo_t thinkerInfo[] = {
     },
 # endif
 #endif
-    {
+/*    {
       TC_MATERIALCHANGER,
       (voidfunc_t) T_MaterialChanger,
       0,
       (voidfunc_t) SV_WriteMaterialChanger,
       (intfunc_t) SV_ReadMaterialChanger,
       sizeof(materialchanger_t)
-    },
+    },*/
     // Terminator
     { TC_NULL, NULL, 0, NULL, NULL, 0 }
 };

@@ -49,6 +49,7 @@ l * but WITHOUT ANY WARRANTY; without even the implied warranty of
 #include "p_ceiling.h"
 #include "p_door.h"
 #include "p_floor.h"
+#include "p_plat.h"
 
 #include "doommap.h"
 
@@ -392,9 +393,13 @@ DENG_EXPORT void deng_InitializePlugin(void)
     Thinker::define(SID_FIRE_FLICKER_THINKER, FireFlickerThinker::construct);
     Thinker::define(SID_STROBE_THINKER, StrobeThinker::construct);
     Thinker::define(SID_GLOW_THINKER, GlowThinker::construct);
-    Thinker::define(SID_CEILING, CeilingThinker::construct);
-    Thinker::define(SID_DOOR, DoorThinker::construct);
-    Thinker::define(SID_FLOOR, FloorThinker::construct);
+    Thinker::define(SID_CEILING_THINKER, CeilingThinker::construct);
+    Thinker::define(SID_DOOR_THINKER, DoorThinker::construct);
+    Thinker::define(SID_FLOOR_THINKER, FloorThinker::construct);
+    Thinker::define(SID_PLAT_THINKER, PlatThinker::construct);
+    Thinker::define(SID_MATERIAL_CHANGER_THINKER, MaterialChangerThinker::construct);
+    Thinker::define(SID_XS_THINKER, XSThinker::construct);
+    Thinker::define(SID_XG_PLANE_MOVER_THINKER, XGPlaneMoverThinker::construct);
     
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.

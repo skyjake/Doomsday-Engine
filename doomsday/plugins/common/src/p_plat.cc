@@ -48,6 +48,13 @@
 #include "p_tick.h"
 #include "p_plat.h"
 
+#include <de/App>
+#include <de/Map>
+#include <de/Writer>
+#include <de/Reader>
+
+using namespace de;
+
 // MACROS ------------------------------------------------------------------
 
 // Sounds played by the platforms when changing state or moving.
@@ -97,8 +104,46 @@ static void stopPlat(plat_t* plat)
 #if __JHEXEN__
     P_TagFinished(P_ToXSector(plat->sector)->tag);
 #endif
-    //DD_ThinkerRemove(&plat->thinker);
-    #warning stopPlat: Need to remove thinker
+    App::currentMap().destroy(plat);
+}
+
+void PlatThinker::operator >> (de::Writer& to) const
+{
+    Thinker::operator >> (to);
+    
+    to << duint(P_ToIndex(sector))
+       << speed
+       << low
+       << high
+       << wait
+       << count
+       << dint8(state)
+       << dint8(oldState)
+       << dint8(crush)
+       << tag
+       << dint8(type);
+}
+
+void PlatThinker::operator << (de::Reader& from)
+{
+    Thinker::operator << (from);
+    
+    duint sectorIndex;
+    from >> sectorIndex;
+    sector = (sector_t*) P_ToPtr(DMU_SECTOR, sectorIndex);
+    
+    from >> speed 
+         >> low 
+         >> high 
+         >> wait 
+         >> count;
+    
+    dint8 i;
+    from >> i; state = platstate_e(i);
+    from >> i; oldState = platstate_e(i);
+    from >> i; crush = i;
+    from >> tag;
+    from >> i; type = plattype_e(i);
 }
 
 /**
@@ -106,8 +151,9 @@ static void stopPlat(plat_t* plat)
  *
  * @param plat          Ptr to the plat to be moved.
  */
-void T_PlatRaise(plat_t* plat)
+void PlatThinker::think(const Time::Delta& /*elapsed*/)
 {
+    plat_t*             plat = this;
     result_e            res;
 
     switch(plat->state)
@@ -271,10 +317,8 @@ static int doPlat(linedef_t *line, int tag, plattype_e type, int amount)
         // Find lowest & highest floors around sector
         rtn = 1;
 
-        plat = (plat_t*) Z_Calloc(sizeof(*plat), PU_MAP, 0);
-        plat->thinker.function = (void (*)()) T_PlatRaise;
-        //DD_ThinkerAdd(&plat->thinker);
-        #warning doPlat: Need to add thinker
+        plat = new PlatThinker;
+        App::currentMap().add(plat);
 
         plat->type = type;
         plat->sector = sec;
@@ -489,20 +533,17 @@ typedef struct {
     int                 count;
 } activateplatparams_t;
 
-static boolean activatePlat(thinker_t* th, void* context)
+static bool activatePlat(Thinker* th, void* context)
 {
     plat_t*             plat = (plat_t*) th;
     activateplatparams_t* params = (activateplatparams_t*) context;
 
-#warning activatePlat: Check for stasis
-/*
-    if(plat->tag == (int) params->tag && plat->thinker.inStasis)
+    if(plat->tag == (int) params->tag && plat->mode[Thinker::IN_STASIS_BIT])
     {
         plat->state = plat->oldState;
-        DD_ThinkerSetStasis(&plat->thinker, false);
+        plat->mode[Thinker::IN_STASIS_BIT] = false;
         params->count++;
     }
-*/
     return true; // Contiue iteration.
 }
 
@@ -518,7 +559,7 @@ int P_PlatActivate(short tag)
 
     params.tag = tag;
     params.count = 0;
-    DD_IterateThinkers((void (*)()) T_PlatRaise, activatePlat, &params);
+    App::currentMap().iterate(SID_PLAT_THINKER, activatePlat, &params);
 
     return params.count;
 }
@@ -529,7 +570,7 @@ typedef struct {
     int                 count;
 } deactivateplatparams_t;
 
-static boolean deactivatePlat(thinker_t* th, void* context)
+static bool deactivatePlat(Thinker* th, void* context)
 {
     plat_t*             plat = (plat_t*) th;
     deactivateplatparams_t* params = (deactivateplatparams_t*) context;
@@ -544,15 +585,14 @@ static boolean deactivatePlat(thinker_t* th, void* context)
         return false; // Stop iteration.
     }
 #else
-#warning deactivatePlat: Check for stasis
     // For one with the tag and not in stasis.
-/*    if(plat->tag == (int) params->tag && !plat->thinker.inStasis)
+    if(plat->tag == (int) params->tag && !plat->mode[Thinker::IN_STASIS_BIT])
     {
         // Put it in stasis.
         plat->oldState = plat->state;
-        DD_ThinkerSetStasis(&plat->thinker, true);
+        plat->mode[Thinker::IN_STASIS_BIT] = true;
         params->count++;
-    }*/
+    }
 #endif
 
     return true; // Continue iteration.
@@ -571,7 +611,7 @@ int P_PlatDeactivate(short tag)
 
     params.tag = tag;
     params.count = 0;
-    DD_IterateThinkers((void (*)()) T_PlatRaise, deactivatePlat, &params);
+    App::currentMap().iterate(SID_PLAT_THINKER, deactivatePlat, &params);
 
     return params.count;
 }

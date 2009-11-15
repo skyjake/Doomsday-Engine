@@ -46,6 +46,13 @@
 #include "p_plat.h"
 #include "p_switch.h"
 
+#include <de/App>
+#include <de/Map>
+#include <de/Reader>
+#include <de/Writer>
+
+using namespace de;
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -287,8 +294,38 @@ material_t* P_GetSwitch(material_t* mat, const switchlist_t** info)
     return NULL;
 }
 
-void T_MaterialChanger(materialchanger_t* mchanger)
+void MaterialChangerThinker::operator >> (de::Writer& to) const
 {
+    Thinker::operator >> (to);
+    
+    to << timer
+       << duint(P_ToIndex(side))
+       << dint8(ssurfaceID)
+       << duint(0); /// @todo  Need material identifier.
+}
+
+void MaterialChangerThinker::operator << (de::Reader& from)
+{
+    Thinker::operator << (from);
+    
+    from >> timer;
+    
+    duint sideIndex;
+    from >> sideIndex;
+    side = (sidedef_t*) P_ToPtr(DMU_SIDEDEF, sideIndex);
+    
+    dint8 i;
+    from >> i; ssurfaceID = sidedefsurfaceid_t(i);
+    
+    duint materialId;
+    from >> materialId;
+    /// @todo  Get the material that matches this identifier.
+}
+
+void MaterialChangerThinker::think(const Time::Delta& /*elapsed*/)
+{
+    materialchanger_t* mchanger = this;
+    
     if(!(--mchanger->timer))
     {
         P_SetPtrp(mchanger->side,
@@ -302,21 +339,16 @@ void T_MaterialChanger(materialchanger_t* mchanger)
         S_StartSound(SFX_SWITCH, P_GetPtrp(
             P_GetPtrp(mchanger->side, DMU_SECTOR), DMU_SOUND_ORIGIN));
 #endif
-
-        //DD_ThinkerRemove(&mchanger->thinker);
-        #warning T_MaterialChanger: Need to remove thinker
+        
+        App::currentMap().destroy(mchanger);
     }
 }
 
 void P_SpawnMaterialChanger(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
                             material_t* mat, int tics)
 {
-    materialchanger_t*  mchanger;
-
-    mchanger = (materialchanger_t*) Z_Calloc(sizeof(*mchanger), PU_MAP, 0);
-    mchanger->thinker.function = (void (*)()) T_MaterialChanger;
-    //DD_ThinkerAdd(&mchanger->thinker);
-    #warning P_SpawnMaterialChanger: Need to add thinker
+    materialchanger_t* mchanger = new MaterialChangerThinker;
+    App::currentMap().add(mchanger);
 
     mchanger->side = side;
     mchanger->ssurfaceID = ssurfaceID;
@@ -329,7 +361,7 @@ typedef struct {
     sidedefsurfaceid_t  ssurfaceID;
 } findmaterialchangerparams_t;
 
-boolean findMaterialChanger(thinker_t* th, void* data)
+static bool findMaterialChanger(Thinker* th, void* data)
 {
     materialchanger_t*  mchanger = (materialchanger_t*) th;
     findmaterialchangerparams_t* params =
@@ -351,7 +383,7 @@ void P_StartButton(sidedef_t* side, sidedefsurfaceid_t ssurfaceID,
     params.ssurfaceID = ssurfaceID;
 
     // See if a material change has already been queued.
-    if(!DD_IterateThinkers((void (*)()) T_MaterialChanger, findMaterialChanger, &params))
+    if(!App::currentMap().iterate(SID_MATERIAL_CHANGER_THINKER, findMaterialChanger, &params))
         return;
 
     P_SpawnMaterialChanger(side, ssurfaceID, mat, tics);

@@ -711,13 +711,6 @@ void P_MobjThinker(mobj_t* mo)
        (mo->flags & MF_SKULLFLY))
     {
         P_MobjMoveXY(mo);
-
-#warning P_MobjThinker: Need to check for removed objects?
-/*
-        //// \fixme decent NOP/NULL/Nil function pointer please.
-        if(mo->thinker.function == NOPFUNC)
-            return; // Mobj was removed.
-            */
     }
 
     floorZ = (mo->onMobj? mo->onMobj->pos[VZ] + mo->onMobj->height : mo->floorZ);
@@ -742,13 +735,6 @@ void P_MobjThinker(mobj_t* mo)
             !INRANGE_OF(mo->mom[MZ], 0, NOMOMENTUM_THRESHOLD))
     {
         P_MobjMoveZ(mo);
-
-#warning P_MobjThinker: Need to check for removed objects?
-/*
-        //// \fixme decent NOP/NULL/Nil function pointer please.
-        if(mo->thinker.function == NOPFUNC)
-            return; // Mobj was removed.
-            */
     }
     // Non-sentient objects at rest.
     else if(!sentient(mo) && !mo->player &&

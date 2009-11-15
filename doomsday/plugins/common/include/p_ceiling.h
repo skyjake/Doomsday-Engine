@@ -78,7 +78,7 @@ public:
     
 public:
     CeilingThinker() 
-        : de::Thinker(SID_CEILING),
+        : de::Thinker(SID_CEILING_THINKER),
           type(CT_LOWERTOFLOOR),
           sector(0),
           bottomHeight(0),

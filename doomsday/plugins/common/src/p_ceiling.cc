@@ -554,7 +554,7 @@ int P_CeilingActivate(short tag)
     params.tag = tag;
     params.count = 0;
     
-    App::currentMap().iterate(SID_CEILING, activateCeiling, &params);
+    App::currentMap().iterate(SID_CEILING_THINKER, activateCeiling, &params);
 
     return params.count;
 }
@@ -603,7 +603,7 @@ int P_CeilingDeactivate(short tag)
 
     params.tag = tag;
     params.count = 0;
-    App::currentMap().iterate(SID_CEILING, deactivateCeiling, &params);
+    App::currentMap().iterate(SID_CEILING_THINKER, deactivateCeiling, &params);
 
     return params.count;
 }

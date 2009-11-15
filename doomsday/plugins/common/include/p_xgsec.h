@@ -29,6 +29,12 @@
 #ifndef __XG_SECTORTYPE_H__
 #define __XG_SECTORTYPE_H__
 
+#include <de/Thinker>
+
+#if __JDOOM__
+#   include "d_identifiers.h"
+#endif
+
 #include "g_common.h"
 
 // Sector chain event types.
@@ -111,10 +117,26 @@ enum {
     XGSP_BLUE
 };
 
-typedef struct {
-    thinker_t       thinker;
+class XSThinker : public de::Thinker
+{
+public:
     sector_t*       sector;
-} xsthinker_t;
+    
+public:
+    XSThinker() : de::Thinker(SID_XS_THINKER), sector(0) {}
+    
+    void think(const de::Time::Delta& elapsed);
+
+    // Implements ISerializable.
+    void operator >> (de::Writer& to) const;
+    void operator << (de::Reader& from);
+
+    static Thinker* construct() {
+        return new XSThinker;
+    }
+};
+
+typedef XSThinker xsthinker_t;
 
 typedef struct {
     boolean         disabled;
@@ -126,9 +148,9 @@ typedef struct {
     int             chainTimer[DDLT_MAX_CHAINS];
 } xgsector_t;
 
-typedef struct {
-    thinker_t       thinker;
-
+class XGPlaneMoverThinker : public de::Thinker
+{
+public:    
     struct sector_s* sector;
     boolean         ceiling; // True if operates on the ceiling.
 
@@ -147,12 +169,43 @@ typedef struct {
     int             moveSound; // Sound to play while moving.
     int             minInterval, maxInterval; // Sound playing intervals.
     int             timer; // Counts down to zero.
-} xgplanemover_t;
+
+public:
+    XGPlaneMoverThinker()
+        : de::Thinker(SID_XG_PLANE_MOVER_THINKER),
+          sector(0),
+          ceiling(false),
+          flags(0),
+          origin(0),
+          destination(0),
+          speed(0),
+          crushSpeed(0),
+          setMaterial(0),
+          setSectorType(0),
+          startSound(0),
+          endSound(0),
+          moveSound(0),
+          minInterval(0),
+          maxInterval(0),
+          timer(0) {}
+
+    void think(const de::Time::Delta& elapsed);
+
+    // Implements ISerializable.
+    void operator >> (de::Writer& to) const;
+    void operator << (de::Reader& from);
+
+    static Thinker* construct() {
+        return new XGPlaneMoverThinker;
+    }
+};
+    
+typedef XGPlaneMoverThinker xgplanemover_t;
 
 void            XS_Init(void);
 void            XS_Update(void);
 
-void            XS_Thinker(xsthinker_t* xs);
+//void            XS_Thinker(xsthinker_t* xs);
 
 float           XS_Gravity(struct sector_s *sector);
 float           XS_Friction(struct sector_s *sector);
@@ -180,12 +233,12 @@ void            XS_SetSectorType(struct sector_s *sec, int special);
 void            XS_ChangePlaneMaterial(struct sector_s *sector, boolean ceiling,
                                        material_t* mat, float *rgb);
 xgplanemover_t *XS_GetPlaneMover(struct sector_s *sector, boolean ceiling);
-void            XS_PlaneMover(xgplanemover_t *mover);  // A thinker for plane movers.
+//void            XS_PlaneMover(xgplanemover_t *mover);  // A thinker for plane movers.
 
 void            SV_WriteXGSector(struct sector_s *sec);
 void            SV_ReadXGSector(struct sector_s *sec);
-void            SV_WriteXGPlaneMover(thinker_t *th);
-int             SV_ReadXGPlaneMover(xgplanemover_t* mov);
+//void            SV_WriteXGPlaneMover(thinker_t *th);
+//int             SV_ReadXGPlaneMover(xgplanemover_t* mov);
 
 DEFCC(CCmdMovePlane);
 

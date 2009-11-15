@@ -54,6 +54,13 @@
 #include "p_terraintype.h"
 #include "p_tick.h"
 
+#include <de/App>
+#include <de/Map>
+#include <de/Reader>
+#include <de/Writer>
+
+using namespace de;
+
 // MACROS ------------------------------------------------------------------
 
 #define PI              3.141592657
@@ -273,7 +280,7 @@ int C_DECL XLTrav_LineAngle(linedef_t* line, boolean dummy, void* context,
     return false; // Stop looking after first hit.
 }
 
-boolean findXSThinker(thinker_t* th, void* context)
+bool findXSThinker(Thinker* th, void* context)
 {
     xsthinker_t*        xs = (xsthinker_t*) th;
 
@@ -283,14 +290,13 @@ boolean findXSThinker(thinker_t* th, void* context)
     return true; // Continue iteration.
 }
 
-boolean destroyXSThinker(thinker_t* th, void* context)
+bool destroyXSThinker(Thinker* th, void* context)
 {
     xsthinker_t*        xs = (xsthinker_t*) th;
 
     if(xs->sector == (sector_t*) context)
     {
-        //DD_ThinkerRemove(&xs->thinker);
-        #warning destroyXSThinker: Need to remove thinker
+        App::currentMap().destroy(xs);
         return false; // Stop iteration, we're done.
     }
 
@@ -373,13 +379,11 @@ void XS_SetSectorType(struct sector_s* sec, int special)
         }
 
         // If there is not already an xsthinker for this sector, create one.
-        if(DD_IterateThinkers((void (*)()) XS_Thinker, findXSThinker, sec))
-        {   // Not created one yet.
-            xsthinker_t*    xs = (xsthinker_t*) Z_Calloc(sizeof(*xs), PU_MAP, 0);
-
-            xs->thinker.function = (void (*)()) XS_Thinker;
-            //DD_ThinkerAdd(&xs->thinker);
-            #warning XS_SetSectorType: Need to add thinker
+        if(App::currentMap().iterate(SID_XS_THINKER, findXSThinker, sec))
+        {   
+            // Not created one yet.
+            xsthinker_t* xs = new XSThinker;
+            App::currentMap().add(xs);
 
             xs->sector = sec;
         }
@@ -390,11 +394,10 @@ void XS_SetSectorType(struct sector_s* sec, int special)
                special);
 
         // If there is an xsthinker for this, destroy it.
-        DD_IterateThinkers((void (*)()) XS_Thinker, destroyXSThinker, sec);
+        App::currentMap().iterate(SID_XS_THINKER, destroyXSThinker, sec);
 
         // Free previously allocated XG data.
-        if(xsec->xg)
-            Z_Free(xsec->xg);
+        if(xsec->xg) Z_Free(xsec->xg);
         xsec->xg = NULL;
 
         // Just set it, then. Must be a standard sector type...
@@ -465,8 +468,7 @@ void XS_MoverStopped(xgplanemover_t *mover, boolean done)
         }
 
         // Remove this thinker.
-       // DD_ThinkerRemove((thinker_t *) mover);
-       #warning XS_MoverStopped: Need to remove thinker
+        App::currentMap().destroy(mover);
     }
     else
     {
@@ -486,17 +488,50 @@ void XS_MoverStopped(xgplanemover_t *mover, boolean done)
         if(mover->flags & (PMF_ACTIVATE_ON_ABORT | PMF_DEACTIVATE_ON_ABORT))
         {
             // Destroy this mover.
-            //DD_ThinkerRemove((thinker_t *) mover);
-#warning XS_MoverStopped: Need to remove thinker
+            App::currentMap().destroy(mover);
         }
     }
+}
+
+void XGPlaneMoverThinker::operator >> (de::Writer& to) const
+{
+    Thinker::operator >> (to);
+    
+/*
+struct sector_s* sector;
+boolean         ceiling; // True if operates on the ceiling.
+
+int             flags;
+struct linedef_s* origin;
+
+float           destination;
+float           speed; // Signed.
+float           crushSpeed; // Signed (speed to use when crushing).
+
+material_t*     setMaterial; // Set material when move done.
+int             setSectorType; // Sector type to set when move done
+// (-1 if no change).
+int             startSound; // Played after waiting.
+int             endSound; // Play when move done.
+int             moveSound; // Sound to play while moving.
+int             minInterval, maxInterval; // Sound playing intervals.
+int             timer; // Counts down to zero.
+*/    
+}
+
+void XGPlaneMoverThinker::operator << (de::Reader& from)
+{
+    Thinker::operator << (from);
+    
+    
 }
 
 /**
  * A thinker function for plane movers.
  */
-void XS_PlaneMover(xgplanemover_t *mover)
+void XGPlaneMoverThinker::think(const Time::Delta& /*elapsed*/)
 {
+    xgplanemover_t *mover = this;
     int         res, res2;
     int         dir;
     float       ceil = P_GetFloatp(mover->sector, DMU_CEILING_HEIGHT);
@@ -619,17 +654,15 @@ typedef struct {
     boolean             ceiling;
 } stopplanemoverparams_t;
 
-static boolean stopPlaneMover(thinker_t* th, void* context)
+static bool stopPlaneMover(Thinker* th, void* context)
 {
     stopplanemoverparams_t* params = (stopplanemoverparams_t*) context;
     xgplanemover_t*     mover = (xgplanemover_t *) th;
 
-    if(mover->sector == params->sec &&
-       mover->ceiling == params->ceiling)
+    if(mover->sector == params->sec && mover->ceiling == params->ceiling)
     {
         XS_MoverStopped(mover, false);
-        //DD_ThinkerRemove(th); // Remove it.
-        #warning stopPlaneMover: Need to remove thinker
+        App::currentMap().destroy(th);
     }
 
     return true; // Continue iteration.
@@ -646,13 +679,11 @@ xgplanemover_t *XS_GetPlaneMover(sector_t *sec, boolean ceiling)
 
     params.sec = sec;
     params.ceiling = ceiling;
-    DD_IterateThinkers((void (*)()) XS_PlaneMover, stopPlaneMover, &params);
+    App::currentMap().iterate(SID_XG_PLANE_MOVER_THINKER, stopPlaneMover, &params);
 
     // Allocate a new thinker.
-    mover = (xgplanemover_t*) Z_Calloc(sizeof(*mover), PU_MAP, 0);
-    mover->thinker.function = (void (*)()) XS_PlaneMover;
-    //DD_ThinkerAdd(&mover->thinker);
-    #warning XS_GetPlaneMover: Need to add thinker
+    mover = new XGPlaneMoverThinker;
+    App::currentMap().add(mover);
 
     mover->sector = sec;
     mover->ceiling = ceiling;
@@ -2754,11 +2785,10 @@ typedef struct {
     int                 data;
 } xstrav_sectorchainparams_t;
 
-boolean XSTrav_SectorChain(thinker_t* th, void* context)
+bool XSTrav_SectorChain(Object* obj, void* context)
 {
-    xstrav_sectorchainparams_t* params =
-        (xstrav_sectorchainparams_t*) context;
-    mobj_t*             mo = (mobj_t *) th;
+    xstrav_sectorchainparams_t* params = (xstrav_sectorchainparams_t*) context;
+    mobj_t*             mo = (mobj_t *) obj;
 
     if(params->sec == P_GetPtrp(mo->subsector, DMU_SECTOR))
     {
@@ -2819,10 +2849,10 @@ typedef struct {
     sector_t*           sec;
 } xstrav_windparams_t;
 
-boolean XSTrav_Wind(thinker_t* th, void* context)
+bool XSTrav_Wind(Object* obj, void* context)
 {
     xstrav_windparams_t* params = (xstrav_windparams_t*) context;
-    mobj_t*             mo = (mobj_t *) th;
+    mobj_t*             mo = (mobj_t *) obj;
 
     if(params->sec == P_GetPtrp(mo->subsector, DMU_SECTOR))
     {
@@ -2843,11 +2873,28 @@ void XS_ConstrainPlaneOffset(float *offset)
         *offset += 64;
 }
 
+void XSThinker::operator >> (de::Writer& to) const
+{
+    Thinker::operator >> (to);
+    
+    to << duint(P_ToIndex(sector));
+}
+
+void XSThinker::operator << (de::Reader& from)
+{
+    Thinker::operator << (from);
+    
+    duint sectorIndex;
+    from >> sectorIndex;
+    sector = (sector_t*) P_ToPtr(DMU_SECTOR, sectorIndex);
+}
+
 /**
  * XG sectors get to think.
  */
-void XS_Thinker(xsthinker_t* xs)
+void XSThinker::think(const Time::Delta& /*elapsed*/)
 {
+    xsthinker_t*        xs = this;
     int                 i;
     float               ang;
     float               floorOffset[2], ceilOffset[2];
@@ -2908,7 +2955,7 @@ void XS_Thinker(xsthinker_t* xs)
 
             params.sec = sector;
             params.data = XSCE_FLOOR;
-            DD_IterateThinkers((void (*)()) P_MobjThinker, XSTrav_SectorChain, &params);
+            App::currentMap().iterateObjects(XSTrav_SectorChain, &params);
         }
 
         // Ceiling chain. Check any mobjs that are touching the ceiling.
@@ -2918,7 +2965,7 @@ void XS_Thinker(xsthinker_t* xs)
 
             params.sec = sector;
             params.data = XSCE_CEILING;
-            DD_IterateThinkers((void (*)()) P_MobjThinker, XSTrav_SectorChain, &params);
+            App::currentMap().iterateObjects(XSTrav_SectorChain, &params);
         }
 
         // Inside chain. Check any sectorlinked mobjs.
@@ -2928,7 +2975,7 @@ void XS_Thinker(xsthinker_t* xs)
 
             params.sec = sector;
             params.data = XSCE_INSIDE;
-            DD_IterateThinkers((void (*)()) P_MobjThinker, XSTrav_SectorChain, &params);
+            App::currentMap().iterateObjects(XSTrav_SectorChain, &params);
         }
 
         // Ticker chain. Send an activate event if TICKER_D flag is not set.
@@ -2984,7 +3031,7 @@ void XS_Thinker(xsthinker_t* xs)
         xstrav_windparams_t params;
 
         params.sec = sector;
-        DD_IterateThinkers((void (*)()) P_MobjThinker, XSTrav_Wind, &params);
+        App::currentMap().iterateObjects(XSTrav_Wind, &params);
     }
 }
 

@@ -30,6 +30,12 @@
 #ifndef __COMMON_THINKER_PLAT_H__
 #define __COMMON_THINKER_PLAT_H__
 
+#if __JDOOM__
+#   include "d_identifiers.h"
+#endif
+
+#include <de/Thinker>
+
 typedef enum {
     PS_UP, // Moving up.
     PS_DOWN, // Moving down.
@@ -60,8 +66,9 @@ typedef enum {
     NUMPLATTYPES
 } plattype_e;
 
-typedef struct plat_s {
-    thinker_t       thinker;
+class PlatThinker : public de::Thinker
+{
+public:
     sector_t*       sector;
     float           speed;
     float           low;
@@ -73,12 +80,39 @@ typedef struct plat_s {
     boolean         crush;
     int             tag;
     plattype_e      type;
-} plat_t;
+    
+public:
+    PlatThinker()
+        : de::Thinker(SID_PLAT_THINKER),
+          sector(0),
+          speed(0),
+          low(0),
+          high(0),
+          wait(0),
+          count(0),
+          state(PS_UP),
+          oldState(PS_UP),
+          crush(false),
+          tag(0),
+          type(PT_PERPETUALRAISE) {}
+          
+    void think(const de::Time::Delta& elapsed);
+
+    // Implements ISerializable.
+    void operator >> (de::Writer& to) const;
+    void operator << (de::Reader& from);
+
+    static Thinker* construct() {
+        return new PlatThinker;
+    }
+};
+
+typedef PlatThinker plat_t;
 
 #define PLATWAIT        (3)
 #define PLATSPEED       (1)
 
-void        T_PlatRaise(plat_t* pl);
+//void        T_PlatRaise(plat_t* pl);
 
 #if __JHEXEN__
 int         EV_DoPlat(linedef_t* li, byte* args, plattype_e type,

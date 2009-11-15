@@ -82,7 +82,7 @@ public:
 
 public:
     DoorThinker() 
-        : de::Thinker(SID_DOOR),
+        : de::Thinker(SID_DOOR_THINKER),
           type(DT_NORMAL),
           sector(0),
           topHeight(0),
