@@ -1570,9 +1570,9 @@ Con_Message("front line: %d  front dist: %1.1f  front_open: %s\n",
 
     if(backOpen && frontOpen && l->sideDefs[FRONT]->sector == backOpen)
     {
-        Con_Message("Linedef #%d seems to be a One-Sided Window "
-                    "(back faces sector #%d).\n", l->buildData.index - 1,
-                    backOpen->buildData.index - 1);
+        VERBOSE( Con_Message("Linedef #%d seems to be a One-Sided Window "
+                             "(back faces sector #%d).\n", l->buildData.index - 1,
+                             backOpen->buildData.index - 1) );
 
         l->buildData.windowEffect = frontOpen;
     }
