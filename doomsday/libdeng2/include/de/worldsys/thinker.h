@@ -84,7 +84,15 @@ namespace de
          */
         bool isAlive() const { return !mode[IN_STASIS_BIT]; }
         
+        /**
+         * Returns the ID of the thinker.
+         */
         const Id& id() const { return _id; }
+        
+        /**
+         * Returns the serialization ID of the thinker class.
+         */
+        const SerialId& serialId() const { return _serialId; }
         
         /**
          * Sets the id of the thinker.

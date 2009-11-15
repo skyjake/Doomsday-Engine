@@ -41,10 +41,7 @@ Thinker::Thinker(SerialId sid) : _serialId(sid), _id(0), _info(0), _map(0)
 
 Thinker::~Thinker()
 {
-    if(_map)
-    {
-        _map->remove(*this);
-    }
+    assert(_map == NULL); // By this time, it must be removed from the map.
     delete _info;
 }
 

@@ -26,7 +26,7 @@
 
 using namespace de;
 
-Map::Map()
+Map::Map() : _thinkersFrozen(0)
 {}
 
 Map::~Map()
@@ -61,6 +61,13 @@ void Map::clear()
         delete i->second;
     }
     _thinkers.clear();
+    
+    // Ownership of the thinkers to add was given to us.
+    FOR_EACH(i, _thinkersToAdd, PendingThinkers::iterator)
+    {
+        delete *i;
+    }
+    _thinkersToDestroy.clear();
 }
     
 Thinker* Map::thinker(const Id& id) const
@@ -68,6 +75,11 @@ Thinker* Map::thinker(const Id& id) const
     Thinkers::const_iterator found = _thinkers.find(id);
     if(found != _thinkers.end())
     {
+        if(markedForDestruction(found->second))
+        {
+            // No longer exists officially.
+            return NULL;
+        }
         return found->second;
     }
     return NULL;
@@ -78,6 +90,11 @@ Object* Map::object(const Id& id) const
     Thinkers::const_iterator found = _thinkers.find(id);
     if(found != _thinkers.end())
     {
+        if(markedForDestruction(found->second))
+        {
+            // No longer exists officially.
+            return NULL;
+        }
         return dynamic_cast<Object*>(found->second);
     }
     return NULL;
@@ -102,26 +119,103 @@ Thinker& Map::add(Thinker* thinker)
     return *thinker;
 }
 
-void Map::addThinker(Thinker* thinker)
+void Map::addThinker(Thinker* t)
 {
-    thinker->setMap(this);
-    _thinkers[thinker->id()] = thinker;
+    t->setMap(this);
+    
+    if(_thinkersFrozen)
+    {
+        // Add it to the list of pending tasks.
+        _thinkersToAdd.push_back(t);
+        return;
+    }
+    
+    _thinkers[t->id()] = t;
 }
 
-Thinker* Map::remove(Thinker& th)
+void Map::destroy(Thinker* t)
 {
-    if(thinker(th.id()))
+    if(thinker(t->id()))
     {
-        _thinkers.erase(th.id());
-        th.setMap(0);
-        return &th;
+        if(_thinkersFrozen)
+        {
+            // Add it to the list of pending tasks.
+            _thinkersToDestroy.push_back(t);
+            return;
+        }
+        
+        _thinkers.erase(t->id());
+        t->setMap(0);
+        delete t;
     }
     /// @throw NotFoundError  Thinker @a thinker was not found in the map.
-    throw NotFoundError("Map::remove", "Thinker " + th.id().asText() + " not found");
+    throw NotFoundError("Map::destroy", "Thinker " + t->id().asText() + " not found");
+}
+
+void Map::freezeThinkerList(bool freeze)
+{
+    if(freeze)
+    {
+        _thinkersFrozen++;
+    }
+    else
+    {
+        _thinkersFrozen--;
+        assert(_thinkersFrozen >= 0);
+        
+        if(!_thinkersFrozen)
+        {
+            // Perform the pending tasks.
+            FOR_EACH(i, _thinkersToAdd, PendingThinkers::iterator)
+            {
+                add(const_cast<Thinker*>(*i));
+            }
+            FOR_EACH(i, _thinkersToDestroy, PendingThinkers::iterator)
+            {
+                destroy(const_cast<Thinker*>(*i));
+            }
+            _thinkersToAdd.clear();
+            _thinkersToDestroy.clear();
+        }
+    }
+}
+
+bool Map::markedForDestruction(const Thinker* thinker) const
+{
+    FOR_EACH(i, _thinkersToDestroy, PendingThinkers::const_iterator)
+    {
+        if(*i == thinker)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Map::iterate(Thinker::SerialId serialId, bool (*callback)(Thinker*, void*), void* parameters)
+{
+    freezeThinkerList(true);
+
+    FOR_EACH(i, _thinkers, Thinkers::iterator)
+    {
+        if(i->second->serialId() == serialId)
+        {
+            if(!callback(i->second, parameters))
+            {
+                freezeThinkerList(false);
+                return false;
+            }
+        }
+    }
+
+    freezeThinkerList(false);
+    return true;
 }
 
 void Map::think(const Time::Delta& elapsed)
 {
+    freezeThinkerList(true);
+
     FOR_EACH(i, _thinkers, Thinkers::iterator)
     {
         if(i->second->isAlive())
@@ -129,6 +223,8 @@ void Map::think(const Time::Delta& elapsed)
             i->second->think(elapsed);
         }
     }    
+
+    freezeThinkerList(false);
 }
 
 void Map::operator >> (Writer& to) const

@@ -25,12 +25,12 @@
 #include "../Record"
 #include "../String"
 #include "../Id"
+#include "../Thinker"
 
 #include <map>
 
 namespace de
 {
-    class Thinker;
     class Object;
     
     /**
@@ -109,11 +109,11 @@ namespace de
         }
         
         /**
-         * Removes a thinker from the map. 
+         * Removes and deletes a thinker in the map.
          *
-         * @return  Thinker. Ownership given to caller.
+         * @param thinker  Thinker to remove and delete.
          */
-        Thinker* remove(Thinker& thinker);
+        void destroy(Thinker* thinker);
 
         /**
          * Returns all thinkers of the map.
@@ -150,6 +150,20 @@ namespace de
         }
 
         /**
+         * Iterates through thinkers of a specific type.
+         *
+         * @param serialId    Type of thinker to iterate.
+         * @param callback    Callback function that gets called on each thinker. Iteration
+         *                    continues if the callback function returns @c true. Iteration
+         *                    is aborted if @c false is returned.
+         * @param parameters  Extra parameter passed to the callback function.
+         *
+         * @return  @c true, if all calls to the callback function returned @c true. Otherwise,
+         *          @c false.
+         */
+        bool iterate(Thinker::SerialId serialId, bool (*callback)(Thinker*, void*), void* parameters = 0);
+
+        /**
          * Performs thinking for all thinkers.
          *
          * @param elapsed  Amount of time elapsed since previous thinking.
@@ -162,6 +176,8 @@ namespace de
         
     protected:
         void addThinker(Thinker* thinker);
+        void freezeThinkerList(bool freeze);
+        bool markedForDestruction(const Thinker* thinker) const;
         
     private:
         /// Name of the map.
@@ -175,6 +191,14 @@ namespace de
         
         /// All thinkers of the map.
         Thinkers _thinkers;
+        
+        /// Is the addition and removal of thinkers currently allowed?
+        int _thinkersFrozen;
+
+        /// While frozen, thinkers to add and remove will be stored here.
+        typedef std::list<const Thinker*> PendingThinkers;
+        PendingThinkers _thinkersToAdd;
+        PendingThinkers _thinkersToDestroy;
     };
 }
 
