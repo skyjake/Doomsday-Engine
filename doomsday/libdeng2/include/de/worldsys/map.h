@@ -158,10 +158,23 @@ namespace de
          *                    is aborted if @c false is returned.
          * @param parameters  Extra parameter passed to the callback function.
          *
-         * @return  @c true, if all calls to the callback function returned @c true. Otherwise,
-         *          @c false.
+         * @return  @c true, if all calls to the callback function returned @c true. 
+         *          Otherwise, @c false.
          */
         bool iterate(Thinker::SerialId serialId, bool (*callback)(Thinker*, void*), void* parameters = 0);
+
+        /**
+         * Iterates through objects.
+         *
+         * @param callback    Callback function that gets called on each object. Iteration
+         *                    continues if the callback function returns @c true. Iteration
+         *                    is aborted if @c false is returned.
+         * @param parameters  Extra parameter passed to the callback function.
+         *
+         * @return  @c true, if all calls to the callback function returned @c true. 
+         *          Otherwise, @c false.
+         */
+        bool iterateObjects(bool (*callback)(Object*, void*), void* parameters = 0);
 
         /**
          * Performs thinking for all thinkers.

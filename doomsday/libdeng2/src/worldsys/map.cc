@@ -212,13 +212,34 @@ bool Map::iterate(Thinker::SerialId serialId, bool (*callback)(Thinker*, void*),
     return true;
 }
 
+bool Map::iterateObjects(bool (*callback)(Object*, void*), void* parameters)
+{
+    freezeThinkerList(true);
+
+    FOR_EACH(i, _thinkers, Thinkers::iterator)
+    {
+        Object* object = dynamic_cast<Object*>(i->second);
+        if(object)
+        {
+            if(!callback(object, parameters))
+            {
+                freezeThinkerList(false);
+                return false;
+            }
+        }
+    }
+
+    freezeThinkerList(false);
+    return true;    
+}
+
 void Map::think(const Time::Delta& elapsed)
 {
     freezeThinkerList(true);
 
     FOR_EACH(i, _thinkers, Thinkers::iterator)
     {
-        if(i->second->isAlive())
+        if(i->second->isAlive() && !markedForDestruction(i->second))
         {
             i->second->think(elapsed);
         }
