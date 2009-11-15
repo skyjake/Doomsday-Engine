@@ -55,6 +55,13 @@
 #  include "p_inventory.h"
 #endif
 
+#include <de/App>
+#include <de/Map>
+#include <de/Reader>
+#include <de/Writer>
+
+using namespace de;
+
 // MACROS ------------------------------------------------------------------
 
 // Sounds played by the doors when changing state.
@@ -101,8 +108,38 @@
 
 // CODE --------------------------------------------------------------------
 
-void T_Door(door_t* door)
+void DoorThinker::operator >> (de::Writer& to) const
 {
+    Thinker::operator >> (to);
+    
+    to << dint8(type)
+       << duint(P_ToIndex(sector))
+       << topHeight
+       << speed
+       << dint8(state)
+       << topWait
+       << topCountDown;
+}
+
+void DoorThinker::operator << (de::Reader& from)
+{
+    Thinker::operator << (from);
+    
+    dint8 i;
+    from >> i; type = doortype_e(i);
+
+    duint sectorIndex;
+    from >> sectorIndex;
+    sector = (sector_t*) P_ToPtr(DMU_SECTOR, sectorIndex);
+    
+    from >> topHeight >> speed;    
+    from >> i; state = doorstate_e(i);
+    from >> topWait >> topCountDown;
+}
+
+void DoorThinker::think(const Time::Delta& /*elapsed*/)
+{
+    door_t*             door = this;
     xsector_t*          xsec;
     result_e            res;
 
@@ -192,8 +229,7 @@ void T_Door(door_t* door)
             case DT_BLAZERAISE:
             case DT_BLAZECLOSE:
                 xsec->specialData = NULL;
-                //DD_ThinkerRemove(&door->thinker); // Unlink and free.
-                #warning T_Door: Need to remove thinker
+                App::currentMap().destroy(door);
 
                 // DOOMII BUG:
                 // This is what causes blazing doors to produce two closing
@@ -208,8 +244,7 @@ void T_Door(door_t* door)
 #if __JHEXEN__
                 P_TagFinished(P_ToXSector(door->sector)->tag);
 #endif
-                //DD_ThinkerRemove(&door->thinker); // Unlink and free.
-                #warning T_Door: Need to remove thinker
+                App::currentMap().destroy(door);
 #if __JHERETIC__
                 S_SectorSound(door->sector, SORG_CEILING, SFX_DOORCLOSE);
 #endif
@@ -248,9 +283,7 @@ void T_Door(door_t* door)
         break;
 
     case DS_UP:
-        res =
-            T_MovePlane(door->sector, door->speed, door->topHeight, false, 1,
-                        1);
+        res = T_MovePlane(door->sector, door->speed, door->topHeight, false, 1, 1);
 
         if(res == pastdest)
         {
@@ -288,8 +321,7 @@ void T_Door(door_t* door)
 #if __JHEXEN__
                 P_TagFinished(P_ToXSector(door->sector)->tag);
 #endif
-//                DD_ThinkerRemove(&door->thinker); // Unlink and free.
-#warning T_Door: Need to remove thinker
+                App::currentMap().destroy(door);
 #if __JHERETIC__
                 S_StopSound(0, (mobj_t *) P_GetPtrp(door->sector,
                                                     DMU_CEILING_SOUND_ORIGIN));
@@ -327,15 +359,12 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
         if(xsec->specialData)
             continue;
 
-#warning EV_DoDoor2: Need to create thinker
-        return rtn;
-/*        // new door thinker
+        // new door thinker
         rtn = 1;
-        door = (door_t*) Z_Calloc(sizeof(*door), PU_MAP, 0);
-        door->thinker.function = (void (*)()) T_Door;
-        DD_ThinkerAdd(&door->thinker);
+        door = new DoorThinker;
+        App::currentMap().add(door);
         xsec->specialData = door;
-*/
+
         door->sector = sec;
         door->type = type;
         door->topWait = topwait;
@@ -722,7 +751,9 @@ boolean EV_VerticalDoor(linedef_t* line, mobj_t* mo)
 # endif
             // Only for "raise" doors, not "open"s.
             if(door->state == DS_DOWN)
+            {
                 door->state = DS_UP; // Go back up.
+            }
             else
             {
                 if(!mo->player)
@@ -738,17 +769,12 @@ boolean EV_VerticalDoor(linedef_t* line, mobj_t* mo)
 #endif
     }
 
-#warning EV_VerticalDoor: Need to create thinker
-    return false;
-    /*
     // New door thinker.
-    door = (door_t*) Z_Calloc(sizeof(*door), PU_MAP, 0);
-    door->thinker.function = (void (*)()) T_Door;
-    DD_ThinkerAdd(&door->thinker);
+    door = new DoorThinker;
+    App::currentMap().add(door);
     xsec->specialData = door;
     door->sector = sec;
     door->state = DS_UP;
-    */
 
     // Play a sound?
 #if __JHEXEN__
@@ -865,12 +891,9 @@ void P_SpawnDoorCloseIn30(sector_t *sec)
 {
     door_t *door;
 
-#warning P_SpawnDoorCloseIn30: Need to create thinker
-/*
-    door = (door_t*) Z_Calloc(sizeof(*door), PU_MAP, 0);
-    door->thinker.function = (void (*)()) T_Door;
-    DD_ThinkerAdd(&door->thinker);
-*/
+    door = new DoorThinker;
+    App::currentMap().add(door);
+
     P_ToXSector(sec)->specialData = door;
     P_ToXSector(sec)->special = 0;
 
@@ -885,13 +908,9 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec)
 {
     door_t           *door;
 
-#warning P_SpawnDoorRaiseIn5Mins: Need to create thinker
-    return;
-/*
-    door = (door_t*) Z_Calloc(sizeof(*door), PU_MAP, 0);
-    door->thinker.function = (void (*)()) T_Door;
-    DD_ThinkerAdd(&door->thinker);
-*/
+    door = new DoorThinker;
+    App::currentMap().add(door);
+
     P_ToXSector(sec)->specialData = door;
     P_ToXSector(sec)->special = 0;
 

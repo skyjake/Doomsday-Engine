@@ -353,22 +353,22 @@ static thinkerinfo_t thinkerInfo[] = {
       (intfunc_t) SV_ReadCeiling,
       sizeof(ceiling_t)
     },*/
-    {
+/*    {
       TC_DOOR,
       (voidfunc_t) T_Door,
       0,
       (voidfunc_t) SV_WriteDoor,
       (intfunc_t) SV_ReadDoor,
       sizeof(door_t)
-    },
-    {
+    },*/
+/*    {
       TC_FLOOR,
       (voidfunc_t) T_MoveFloor,
       0,
       (voidfunc_t) SV_WriteFloor,
       (intfunc_t) SV_ReadFloor,
       sizeof(floor_t)
-    },
+    },*/
     {
       TC_PLAT,
       (voidfunc_t) T_PlatRaise,

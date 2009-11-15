@@ -47,6 +47,8 @@ l * but WITHOUT ANY WARRANTY; without even the implied warranty of
 #include "p_player.h"
 #include "p_lights.h"
 #include "p_ceiling.h"
+#include "p_door.h"
+#include "p_floor.h"
 
 #include "doommap.h"
 
@@ -391,6 +393,8 @@ DENG_EXPORT void deng_InitializePlugin(void)
     Thinker::define(SID_STROBE_THINKER, StrobeThinker::construct);
     Thinker::define(SID_GLOW_THINKER, GlowThinker::construct);
     Thinker::define(SID_CEILING, CeilingThinker::construct);
+    Thinker::define(SID_DOOR, DoorThinker::construct);
+    Thinker::define(SID_FLOOR, FloorThinker::construct);
     
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.

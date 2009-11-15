@@ -52,6 +52,13 @@
 #include "p_ceiling.h"
 #endif
 
+#include <de/App>
+#include <de/Map>
+#include <de/Reader>
+#include <de/Writer>
+
+using namespace de;
+
 // MACROS ------------------------------------------------------------------
 
 #if __JHERETIC__
@@ -308,11 +315,43 @@ result_e T_MovePlane(sector_t* sector, float speed, float dest,
     return ok;
 }
 
+void FloorThinker::operator >> (de::Writer& to) const
+{
+    Thinker::operator >> (to);
+    
+    to << dint8(type)
+       << dint8(crush)
+       << duint(P_ToIndex(sector))
+       << dint8(state)
+       << newSpecial
+       << duint(0) /// @todo  SV_MaterialArchiveNum(floor->material) 
+       << floorDestHeight
+       << speed
+#if __JHEXEN__
+       << delayCount
+       << delayTotal
+       << stairsDelayHeight
+       << stairsDelayHeightDelta
+       << resetHeight
+       << resetDelay
+       << resetDelayCount
+#endif
+       ;
+}
+
+void FloorThinker::operator << (de::Reader& from)
+{
+    Thinker::operator << (from);
+ 
+    /// @todo  Implement.
+}
+
 /**
  * Move a floor to it's destination (up or down).
  */
-void T_MoveFloor(floor_t* floor)
+void FloorThinker::think(const Time::Delta& /*elapsed*/)
 {
+    floor_t*            floor = this;
     result_e            res;
 
 #if __JHEXEN__
@@ -339,9 +378,8 @@ void T_MoveFloor(floor_t* floor)
     }
 #endif
 
-    res =
-        T_MovePlane(floor->sector, floor->speed, floor->floorDestHeight,
-                    floor->crush, 0, floor->state);
+    res = T_MovePlane(floor->sector, floor->speed, floor->floorDestHeight,
+                      floor->crush, 0, floor->state);
 
 #if __JHEXEN__
     if(floor->type == FT_RAISEBUILDSTEP)
@@ -426,8 +464,7 @@ void T_MoveFloor(floor_t* floor)
 #if __JHEXEN__
         P_TagFinished(P_ToXSector(floor->sector)->tag);
 #endif
-        //DD_ThinkerRemove(&floor->thinker);
-#warning T_MoveFloor: Need to remove thinker        
+        App::currentMap().destroy(floor);
     }
 }
 
@@ -546,12 +583,10 @@ int EV_DoFloor(linedef_t *line, floortype_e floortype)
             continue;
         rtn = 1;
 
-#warning EV_DoFloor: Need to create thinker
-        return rtn;
         // New floor thinker.
-        floor = (floor_t*) Z_Calloc(sizeof(*floor), PU_MAP, 0);
-        floor->thinker.function = (void (*)()) T_MoveFloor;
-        //DD_ThinkerAdd(&floor->thinker);
+        floor = new FloorThinker;
+        App::currentMap().add(floor);
+
         xsec->specialData = floor;
 
         floor->type = floortype;
@@ -983,12 +1018,8 @@ int EV_BuildStairs(linedef_t* line, stair_e type)
             continue;
 
         // New floor thinker.
-        rtn = 1;
-#warning EV_BuildStairs: Need to create thinker
-        return rtn;
-        floor = (floor_t*) Z_Calloc(sizeof(*floor), PU_MAP, 0);
-        floor->thinker.function = (void (*)()) T_MoveFloor;
-        //DD_ThinkerAdd(&floor->thinker);
+        floor = new FloorThinker;
+        App::currentMap().add(floor);
 
         xsec->specialData = floor;
         floor->state = FS_UP;
@@ -1036,11 +1067,8 @@ int EV_BuildStairs(linedef_t* line, stair_e type)
         {   // We found another sector to spread to.
             height += stairsize;
 
-#warning EV_BuildStairs: Need to create thinker
-            return rtn;
-            floor = (floor_t*) Z_Calloc(sizeof(*floor), PU_MAP, 0);
-            floor->thinker.function = (void (*)()) T_MoveFloor;
-            //DD_ThinkerAdd(&floor->thinker);
+            floor = new FloorThinker;
+            App::currentMap().add(floor);
 
             P_ToXSector(params.foundSec)->specialData = floor;
 #if __JHERETIC__
@@ -1281,19 +1309,12 @@ int EV_DoDonut(linedef_t *line)
         if(inner && outer)
         {   // Found both parts of the donut.
             floor_t        *floor;
-            float               destHeight =
-                P_GetFloatp(inner, DMU_FLOOR_HEIGHT);
+            float           destHeight = P_GetFloatp(inner, DMU_FLOOR_HEIGHT);
 
-#warning EV_DoDonut: Need to create thinker
-            floor = (floor_t*) Z_Calloc(sizeof(*floor), PU_MAP, 0);
-/*
             // Spawn rising slime.
-            floor->thinker.function = (void (*)()) T_MoveFloor;
-            DD_ThinkerAdd(&floor->thinker);
-            */
-
+            floor = new FloorThinker;
+            App::currentMap().add(floor);
             P_ToXSector(outer)->specialData = floor;
-
             floor->type = FT_RAISEDONUT;
             floor->crush = false;
             floor->state = FS_UP;
@@ -1303,14 +1324,9 @@ int EV_DoDonut(linedef_t *line)
             floor->newSpecial = 0;
             floor->floorDestHeight = destHeight;
 
-/*
             // Spawn lowering donut-hole.
-            floor = (floor_t*) Z_Calloc(sizeof(*floor), PU_MAP, 0);
-            floor->thinker.function = (void (*)()) T_MoveFloor;
-            DD_ThinkerAdd(&floor->thinker);
-            */
-#warning EV_DoDonut: Need to create thinker
-
+            floor = new FloorThinker;
+            App::currentMap().add(floor);
             P_ToXSector(sec)->specialData = floor;
             floor->type = FT_LOWER;
             floor->crush = false;

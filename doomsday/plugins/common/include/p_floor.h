@@ -30,6 +30,12 @@
 #ifndef __COMMON_THINKER_FLOOR_H__
 #define __COMMON_THINKER_FLOOR_H__
 
+#if __JDOOM__
+#   include "d_identifiers.h"
+#endif
+
+#include <de/Thinker>
+
 typedef enum {
     FS_DOWN = -1, // Moving down.
     FS_WAIT, // Currently unused.
@@ -87,16 +93,9 @@ typedef enum {
     NUMFLOORTYPES
 } floortype_e;
 
-typedef struct {
-    thinker_t       thinker;
-    floortype_e     type;
-    boolean         crush;
-    sector_t*       sector;
-    floorstate_e    state;
-    int             newSpecial;
-    material_t*     material;
-    float           floorDestHeight;
-    float           speed;
+class FloorThinker : public de::Thinker
+{
+public:
 #if __JHEXEN__
     int             delayCount;
     int             delayTotal;
@@ -107,11 +106,52 @@ typedef struct {
     short           resetDelayCount;
 //    byte            textureChange;
 #endif
-} floor_t;
+    floortype_e     type;
+    boolean         crush;
+    sector_t*       sector;
+    floorstate_e    state;
+    int             newSpecial;
+    material_t*     material;
+    float           floorDestHeight;
+    float           speed;
+
+public:
+    FloorThinker() 
+        : de::Thinker(SID_FLOOR),
+#if __JHEXEN__
+          delayCount(0),
+          delayTotal(0),
+          stairsDelayHeight(0),
+          stairsDelayHeightDelta(0),
+          resetHeight(0),
+          resetDelay(0),
+          resetDelayCount(0),
+#endif
+          type(FT_LOWER),
+          crush(false),
+          sector(0),
+          state(FS_WAIT),
+          newSpecial(0),
+          material(0),
+          floorDestHeight(0),
+          speed(0) {}
+          
+    void think(const de::Time::Delta& elapsed);
+    
+    // Implements ISerializable.
+    void operator >> (de::Writer& to) const;
+    void operator << (de::Reader& from);
+
+    static Thinker* construct() {
+        return new FloorThinker;
+    }
+};
+    
+typedef FloorThinker floor_t;
 
 #define FLOORSPEED          (1)
 
-void        T_MoveFloor(floor_t* floor);
+//void        T_MoveFloor(floor_t* floor);
 #if __JHEXEN__
 int         EV_DoFloor(linedef_t* li, byte* args, floortype_e type);
 #else

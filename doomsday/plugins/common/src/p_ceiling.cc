@@ -110,14 +110,14 @@ void CeilingThinker::operator >> (de::Writer& to) const
 {
     Thinker::operator >> (to);
     
-    to << duint8(type)
+    to << dint8(type)
        << duint(P_ToIndex(sector))
        << bottomHeight
        << topHeight
        << speed
-       << duint8(crush)
-       << duint8(state)
-       << duint8(oldState)
+       << dint8(crush)
+       << dint8(state)
+       << dint8(oldState)
        << tag;
 }
 
@@ -125,7 +125,7 @@ void CeilingThinker::operator << (de::Reader& from)
 {
     Thinker::operator << (from);
     
-    duint8 i;
+    dint8 i;
     from >> i;
     type = ceilingtype_e(i);
 

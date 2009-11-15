@@ -30,6 +30,12 @@
 #ifndef __COMMON_THINKER_DOOR_H__
 #define __COMMON_THINKER_DOOR_H__
 
+#if __JDOOM__
+#   include "d_identifiers.h"
+#endif
+
+#include <de/Thinker>
+
 typedef enum {
     DS_DOWN = -1,
     DS_WAIT,
@@ -60,8 +66,12 @@ typedef enum {
     NUMDOORTYPES
 } doortype_e;
 
-typedef struct {
-    thinker_t       thinker;
+#define DOORSPEED          2
+#define DOORWAIT           150
+
+class DoorThinker : public de::Thinker
+{
+public:
     doortype_e      type;
     sector_t*       sector;
     float           topHeight;
@@ -69,12 +79,32 @@ typedef struct {
     doorstate_e     state;
     int             topWait; // Tics to wait at the top.
     int             topCountDown;
-} door_t;
 
-#define DOORSPEED          (2)
-#define DOORWAIT           (150)
+public:
+    DoorThinker() 
+        : de::Thinker(SID_DOOR),
+          type(DT_NORMAL),
+          sector(0),
+          topHeight(0),
+          speed(0),
+          state(DS_WAIT),
+          topWait(0),
+          topCountDown(0) {}
 
-void        T_Door(door_t* door);
+    void think(const de::Time::Delta& elapsed);
+
+    // Implements ISerializable.
+    void operator >> (de::Writer& to) const;
+    void operator << (de::Reader& from);
+
+    static Thinker* construct() {
+        return new DoorThinker;
+    }
+};
+
+typedef DoorThinker door_t;
+
+//void        T_Door(door_t* door);
 
 boolean     EV_VerticalDoor(linedef_t* li, mobj_t* mo);
 #if __JHEXEN__
