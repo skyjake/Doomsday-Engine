@@ -198,7 +198,7 @@ bool Map::iterate(Thinker::SerialId serialId, bool (*callback)(Thinker*, void*),
 
     FOR_EACH(i, _thinkers, Thinkers::iterator)
     {
-        if(i->second->serialId() == serialId)
+        if(i->second->serialId() == serialId && !markedForDestruction(i->second))
         {
             if(!callback(i->second, parameters))
             {
@@ -221,7 +221,7 @@ bool Map::iterateObjects(bool (*callback)(Object*, void*), void* parameters)
         Object* object = dynamic_cast<Object*>(i->second);
         if(object)
         {
-            if(!callback(object, parameters))
+            if(!callback(object, parameters) && !markedForDestruction(i->second))
             {
                 freezeThinkerList(false);
                 return false;
