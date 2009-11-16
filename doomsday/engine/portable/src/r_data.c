@@ -311,7 +311,7 @@ colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
 
         Con_Error("R_CreateColorPalette: Failed creating \"%s\", "
                   "invalid character '%c' in format string at "
-                  "position %i.\n", name, *c, c - fmt);
+                  "position %u.\n", name, *c, (unsigned int) (c - fmt));
     } while(++c <= end);
 
     if(pos != 3)

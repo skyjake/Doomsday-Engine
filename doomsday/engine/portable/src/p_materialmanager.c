@@ -793,10 +793,10 @@ void P_MaterialManagerTicker(timespan_t time)
 static void printMaterialInfo(materialnum_t num, boolean printNamespace)
 {
     const materialbind_t* mb = &materialBinds[num];
-    uint                i;
-    int                 numDigits = M_NumDigits(numMaterialBinds);
+    int numDigits = M_NumDigits(numMaterialBinds);
+    uint i;
 
-    Con_Printf(" %*lu - \"%s\"", numDigits, num, mb->name);
+    Con_Printf(" %*u - \"%s\"", numDigits, (unsigned int) num, mb->name);
     if(printNamespace)
         Con_Printf(" (%i)", mb->mat->mnamespace);
     Con_Printf(" [%i, %i]", mb->mat->width, mb->mat->height);

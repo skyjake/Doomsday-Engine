@@ -464,9 +464,9 @@ int Mus_Start(ded_music_t* def, boolean looped)
                     void*               ptr;
 
                     VERBOSE(Con_Message("Mus_GetExt: Opened Song %s "
-                                        "(File \"%s\" %ul bytes)\n",
+                                        "(File \"%s\" %u bytes)\n",
                                         def->id, M_PrettyPath(path),
-                                        len));
+                                        (unsigned int) len));
 
                     ptr = iMusic->SongBuffer(len);
                     F_Read(ptr, len, file);
