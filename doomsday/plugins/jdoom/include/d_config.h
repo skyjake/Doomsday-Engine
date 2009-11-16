@@ -113,7 +113,7 @@ typedef struct jdoom_config_s {
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
     byte            secretMsg;
     int             plrViewHeight;
-    byte            mapTitle, hideAuthorIdSoft;
+    byte            mapTitle, hideIWADAuthor;
     float           menuColor[3];
     float           menuColor2[3];
     byte            noCoopDamage;

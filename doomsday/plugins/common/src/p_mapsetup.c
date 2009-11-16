@@ -1038,30 +1038,70 @@ static void P_FinalizeMap(void)
 #endif
 }
 
-char* P_GetMapNiceName(void)
+const char* P_GetMapNiceName(void)
 {
-    char*               lname, *ptr;
+    const char* lname, *ptr;
 
-    lname = (char *) DD_GetVariable(DD_MAP_NAME);
-
-    if(lname)
-    {
-        // Skip the ExMx part.
-        ptr = strchr(lname, ':');
-        if(ptr)
-        {
-            lname = ptr + 1;
-            while(*lname && isspace(*lname))
-                lname++;
-        }
-    }
+    lname = (char*) DD_GetVariable(DD_MAP_NAME);
 #if __JHEXEN__
     // In jHexen we can look in the MAPINFO for the map name.
     if(!lname)
         lname = P_GetMapName(gameMap);
 #endif
 
+    if(!lname || !lname[0])
+        return NULL;
+
+    // Skip the ExMx part.
+    ptr = strchr(lname, ':');
+    if(ptr)
+    {
+        lname = ptr + 1;
+        while(*lname && isspace(*lname))
+            lname++;
+    }
+
     return lname;
+}
+
+const char* P_GetMapAuthor(boolean surpressIWADAuthors)
+{
+    const char* author = (const char*) DD_GetVariable(DD_MAP_AUTHOR);
+
+    if(!author || !author[0])
+        return NULL;
+
+    if(surpressIWADAuthors)
+    {
+        char lumpName[9];
+
+        P_GetMapLumpName(gameEpisode, gameMap, lumpName);
+        if(W_IsFromIWAD(W_GetNumForName(lumpName)))
+            return NULL;
+
+        // @kludge We need DED Reader 2.0 to handle this the Right Way...
+        {
+# if __JDOOM__
+        static const char* iwadAuthors[] = {
+            "id Software",
+            "id Software",
+            "Team TNT",
+            "Dario Casali and Milo Casali"
+        };
+
+        if(!stricmp(author, iwadAuthors[gameMission]))
+            return NULL;
+# elif __JDOOM64__
+        if(!stricmp(author, "Midway"))
+            return NULL;
+# else /* __JHERETIC__ || __JHEXEN__ */
+        if(!stricmp(author, "raven software"))
+            return NULL;
+# endif
+        }
+    }
+
+    return author;
 }
 
 /**
@@ -1070,27 +1110,36 @@ char* P_GetMapNiceName(void)
  */
 static void P_PrintMapBanner(int episode, int map)
 {
-#if !__JHEXEN__
-    char               *lname, *lauthor;
-
-    // Retrieve the name and author strings from the engine.
-    lname = (char *) DD_GetVariable(DD_MAP_NAME);
-    lauthor = (char *) DD_GetVariable(DD_MAP_AUTHOR);
-#else
-    char                lname[64];
-    boolean             lauthor = false;
-
-    sprintf(lname, "Map %d (%d): %s", P_GetMapWarpTrans(map), map,
-            P_GetMapName(map));
-#endif
+    const char* lname;
 
     Con_Printf("\n");
+    lname = P_GetMapNiceName();
     if(lname)
-        Con_FPrintf(CBLF_LIGHT | CBLF_BLUE, "%s\n", lname);
+    {
+        char name[64];
+
+#if __JHEXEN__
+        dd_snprintf(name, 64, "Map %d (%d): %s", P_GetMapWarpTrans(map),
+                    map, lname);
+#else
+        dd_snprintf(name, 64, "Map %d: %s", map, lname);
+#endif
+
+        Con_FPrintf(CBLF_LIGHT | CBLF_BLUE, "%s\n", name);
+    }
 
 #if !__JHEXEN__
-    if(lauthor)
-        Con_FPrintf(CBLF_LIGHT | CBLF_BLUE, "Author: %s\n", lauthor);
+    {
+    static const char* unknownAuthorStr = "Unknown";
+    const char* lauthor;
+
+    lauthor = P_GetMapAuthor(cfg.hideIWADAuthor);
+    if(!lauthor)
+        lauthor = unknownAuthorStr;
+
+    Con_FPrintf(CBLF_LIGHT | CBLF_BLUE, "Author: %s\n", lauthor);
+    }
 #endif
+
     Con_Printf("\n");
 }

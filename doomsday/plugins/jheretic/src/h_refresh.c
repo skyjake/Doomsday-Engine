@@ -134,10 +134,10 @@ boolean R_GetFilterColor(float rgba[4], int filter)
 void R_DrawMapTitle(int x, int y, float alpha, gamefontid_t font,
                     boolean center)
 {
-    char* lname, *lauthor;
+    const char* lname, *lauthor;
 
     lname = P_GetMapNiceName();
-    if(lname && lname[0])
+    if(lname)
     {
         M_WriteText3(x - M_StringWidth(lname, font) / 2, y, lname, font,
                      defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha,
@@ -145,20 +145,12 @@ void R_DrawMapTitle(int x, int y, float alpha, gamefontid_t font,
         y += 20;
     }
 
-    lauthor = (char*) DD_GetVariable(DD_MAP_AUTHOR);
-    if(lauthor && lauthor[0])
+    lauthor = P_GetMapAuthor(cfg.hideIWADAuthor);
+    if(lauthor)
     {
-        char lumpName[9];
-
-        P_GetMapLumpName(gameEpisode, gameMap, lumpName);
-
-        if(!(cfg.hideAuthorRavenSoft && !stricmp(lauthor, "raven software") &&
-             !W_IsFromIWAD(W_GetNumForName(lumpName))))
-        {
-            M_WriteText3(x - M_StringWidth(lauthor, GF_FONTA) / 2, y,
-                         lauthor, GF_FONTA, .5f, .5f, .5f, alpha,
-                         false, true, 0);
-        }
+        M_WriteText3(x - M_StringWidth(lauthor, GF_FONTA) / 2, y,
+                     lauthor, GF_FONTA, .5f, .5f, .5f, alpha,
+                     false, true, 0);
     }
 }
 

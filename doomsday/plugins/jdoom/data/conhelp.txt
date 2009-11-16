@@ -714,8 +714,8 @@ desc = View window size (3-13).
 [hud-title]
 desc = 1=Show map title and author in the beginning.
 
-[hud-title-noidsoft]
-desc = 1=Do not show map author if it is \"id Software\".
+[hud-title-author-noiwad]
+desc = 1=Do not show map author if it is a map from an IWAD.
 
 [view-bob-height]
 desc = Scale for viewheight bobbing.

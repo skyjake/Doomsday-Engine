@@ -148,7 +148,7 @@ typedef struct {
 
     int             dclickUse;
     int             plrViewHeight;
-    byte            mapTitle, hideAuthorRavenSoft;
+    byte            mapTitle, hideIWADAuthor;
     float           menuScale;
     int             menuEffects;
     int             hudFog;

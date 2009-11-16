@@ -307,7 +307,7 @@ void G_PreInit(void)
     cfg.netGravity = -1; // Use map default.
     cfg.plrViewHeight = 54;
     cfg.mapTitle = true;
-    cfg.hideAuthorMidway = true;
+    cfg.hideIWADAuthor = true;
     cfg.menuColor[0] = 1;
     cfg.menuColor2[0] = 1;
     cfg.menuSlam = false;

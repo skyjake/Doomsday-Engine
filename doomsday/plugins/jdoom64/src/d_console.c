@@ -93,7 +93,7 @@ cvar_t gameCVars[] = {
 // View/Refresh
     {"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenBlocks, 3, 11},
     {"hud-title", 0, CVT_BYTE, &cfg.mapTitle, 0, 1},
-    {"hud-title-nomidway", 0, CVT_BYTE, &cfg.hideAuthorMidway, 0, 1},
+    {"hud-title-author-noiwad", 0, CVT_BYTE, &cfg.hideIWADAuthor, 0, 1},
 
     {"view-bob-height", 0, CVT_FLOAT, &cfg.bobView, 0, 1},
     {"view-bob-weapon", 0, CVT_FLOAT, &cfg.bobWeapon, 0, 1},

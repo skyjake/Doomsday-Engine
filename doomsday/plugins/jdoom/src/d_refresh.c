@@ -154,7 +154,7 @@ void R_DrawMapTitle(void)
 {
     float alpha;
     int y = 12, mapnum;
-    char* lname, *lauthor;
+    const char* lname, *lauthor;
 
     if(!cfg.mapTitle || actualMapTime > 6 * TICSPERSEC)
         return;
@@ -172,9 +172,8 @@ void R_DrawMapTitle(void)
     if(actualMapTime > 5 * 35)
         alpha = 1 - (actualMapTime - 5 * 35) / 35.0f;
 
-    // Get the strings from Doomsday
     lname = P_GetMapNiceName();
-    lauthor = (char*) DD_GetVariable(DD_MAP_AUTHOR);
+    lauthor = P_GetMapAuthor(cfg.hideIWADAuthor);
 
     // Compose the mapnumber used to check the map name patches array.
     if(gameMode == commercial)
@@ -186,19 +185,11 @@ void R_DrawMapTitle(void)
                  &mapNamePatches[mapnum], lname, false, ALIGN_CENTER);
     y += 14;
 
-    if(lauthor && lauthor[0])
+    if(lauthor)
     {
-        char lumpName[9];
-
-        P_GetMapLumpName(gameEpisode, gameMap, lumpName);
-
-        if(!(cfg.hideAuthorIdSoft && !stricmp(lauthor, "id software") &&
-             !W_IsFromIWAD(W_GetNumForName(lumpName))))
-        {
-            M_WriteText3(160 - M_StringWidth(lauthor, GF_FONTA) / 2, y,
-                         lauthor, GF_FONTA, .5f, .5f, .5f, alpha, false,
-                         true, 0);
-        }
+        M_WriteText3(160 - M_StringWidth(lauthor, GF_FONTA) / 2, y,
+                     lauthor, GF_FONTA, .5f, .5f, .5f, alpha, false,
+                     true, 0);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);

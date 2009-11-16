@@ -1376,20 +1376,20 @@ static void drawMapName(float x, float y, float alpha, dpatch_t* patch,
  */
 static void renderMapName(const automap_t* map)
 {
-    float               x, y, otherY;
-    char*               lname;
-    dpatch_t*           patch = NULL;
+    float x, y, otherY;
+    const char* lname;
+    dpatch_t* patch = NULL;
 #if __JDOOM__ || __JDOOM64__
-    int                 mapNum;
+    int mapNum;
 #endif
 
     lname = P_GetMapNiceName();
 
     if(lname)
     {
-        float               wx, wy, ww, wh;
-        float               scrwidth = Get(DD_WINDOW_WIDTH);
-        float               scrheight = Get(DD_WINDOW_HEIGHT);
+        float wx, wy, ww, wh;
+        float scrwidth = Get(DD_WINDOW_WIDTH);
+        float scrheight = Get(DD_WINDOW_HEIGHT);
 
         // Compose the mapnumber used to check the map name patches array.
 #if __JDOOM64__

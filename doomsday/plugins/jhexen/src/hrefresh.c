@@ -92,7 +92,7 @@ void R_DrawMapTitle(void)
 {
     float alpha;
     int y = 12;
-    char* lname, *lauthor;
+    const char* lname, *lauthor;
 
     if(!cfg.mapTitle || actualMapTime > 6 * 35)
         return;
@@ -111,7 +111,7 @@ void R_DrawMapTitle(void)
         alpha = 1 - (actualMapTime - 5 * 35) / 35.0f;
 
     lname = P_GetMapNiceName();
-    lauthor = (char *) DD_GetVariable(DD_MAP_AUTHOR);
+    lauthor = P_GetMapAuthor(cfg.hideIWADAuthor);
 
     // Use stardard map name if DED didn't define it.
     if(!lname)
@@ -119,7 +119,7 @@ void R_DrawMapTitle(void)
 
     Draw_BeginZoom((1 + cfg.hudScale)/2, 160, y);
 
-    if(lname && lname[0])
+    if(lname)
     {
         M_WriteText3(160 - M_StringWidth(lname, GF_FONTB) / 2, y, lname,
                     GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2],
@@ -127,19 +127,11 @@ void R_DrawMapTitle(void)
         y += 20;
     }
 
-    if(lauthor && lauthor[0])
+    if(lauthor)
     {
-        char lumpName[9];
-
-        P_GetMapLumpName(gameEpisode, gameMap, lumpName);
-
-        if(!(cfg.hideAuthorRavenSoft && !stricmp(lauthor, "raven software") &&
-             !W_IsFromIWAD(W_GetNumForName(lumpName))))
-        {
-            M_WriteText3(160 - M_StringWidth(lauthor, GF_FONTA) / 2, y,
-                         lauthor, GF_FONTA, .5f, .5f, .5f, alpha, false,
-                         true, 0);
-        }
+        M_WriteText3(160 - M_StringWidth(lauthor, GF_FONTA) / 2, y,
+                     lauthor, GF_FONTA, .5f, .5f, .5f, alpha, false,
+                     true, 0);
     }
 
     Draw_EndZoom();
