@@ -20,14 +20,14 @@
 	<Configurations>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="./Bin/Release"
-			IntermediateDirectory="./Obj/Release/dpExample"
+			OutputDirectory="bin\"
+			IntermediateDirectory="build\$(ConfigurationName)\$(TargetName)\"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
-			BuildLogFile="$(OutDir)/$(ProjectName)_buildlog.htm"
+			BuildLogFile="$(OutDir)\$(TargetFileName).buildlog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -59,9 +59,9 @@
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\./Obj/Release/dpExample/dpExample.pch"
-				AssemblerListingLocation=".\./Obj/Release/dpExample/"
-				ObjectFile=".\./Obj/Release/dpExample/"
-				ProgramDataBaseFileName=".\./Obj/Release/dpExample/"
+				AssemblerListingLocation="$(IntDir)\"
+				ObjectFile="$(IntDir)\obj\"
+				ProgramDataBaseFileName="$(IntDir)\$(TargetFileName).pdb"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				CallingConvention="0"
@@ -80,11 +80,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="./bin/release/Doomsday.lib"
-				OutputFile=".\./Bin/Release/dpExample.dll"
+				AdditionalDependencies="Doomsday.lib"
+				OutputFile="$(OutDir)$(ProjectName).dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\./Bin/Release/dpExample.pdb"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;"
+				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
+				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Release/dpExample.lib"
@@ -95,6 +97,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				DependencyInformationFile="$(IntDir)\$(TargetFileName).dep"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -208,14 +211,14 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="./Bin/Debug"
-			IntermediateDirectory="./Obj/Debug/dpExample"
+			OutputDirectory="bin\"
+			IntermediateDirectory="build\$(ConfigurationName)\$(TargetName)\"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
-			BuildLogFile="$(OutDir)/$(ProjectName)_buildlog.htm"
+			BuildLogFile="$(OutDir)\$(TargetFileName).buildlog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -246,9 +249,9 @@
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile="./Obj/Debug/dpExample/dpExample.pch"
-				AssemblerListingLocation="./Obj/Debug/dpExample/"
-				ObjectFile="./Obj/Debug/dpExample/"
-				ProgramDataBaseFileName="./Obj/Debug/dpExample/"
+				AssemblerListingLocation="$(IntDir)\"
+				ObjectFile="$(IntDir)\obj\"
+				ProgramDataBaseFileName="$(IntDir)\$(TargetFileName).pdb"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
@@ -268,12 +271,14 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="./bin/debug/doomsday.lib"
-				OutputFile="./Bin/Debug/dpExample.dll"
+				AdditionalDependencies="Doomsday.lib"
+				OutputFile="$(OutDir)$(ProjectName).dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;"
+				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="./Bin/Debug/dpExample.pdb"
+				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				ImportLibrary="./Bin/Debug/dpExample.lib"
@@ -284,6 +289,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				DependencyInformationFile="$(IntDir)\$(TargetFileName).dep"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -398,7 +404,10 @@
 		</Configuration>
 		<Configuration
 			Name="Debug x64|Win32"
+			OutputDirectory="bin\"
+			IntermediateDirectory="build\$(ConfigurationName)\$(TargetName)\"
 			ConfigurationType="1"
+			BuildLogFile="$(OutDir)\$(TargetFileName).buildlog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -417,6 +426,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AssemblerListingLocation="$(IntDir)\"
+				ObjectFile="$(IntDir)\obj\"
+				ProgramDataBaseFileName="$(IntDir)\$(TargetFileName).pdb"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -429,12 +441,18 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="Doomsday.lib"
+				OutputFile="$(OutDir)$(ProjectName).dll"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;"
+				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
+				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
 			/>
 			<Tool
 				Name="VCALinkTool"
 			/>
 			<Tool
 				Name="VCManifestTool"
+				DependencyInformationFile="$(IntDir)\$(TargetFileName).dep"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -549,14 +567,14 @@
 		</Configuration>
 		<Configuration
 			Name="Release x64|Win32"
-			OutputDirectory="$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="bin\"
+			IntermediateDirectory="build\$(ConfigurationName)\$(TargetName)\"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
-			BuildLogFile="$(OutDir)/$(ProjectName)_buildlog.htm"
+			BuildLogFile="$(OutDir)\$(TargetFileName).buildlog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -588,9 +606,9 @@
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\./Obj/Release/dpExample/dpExample.pch"
-				AssemblerListingLocation=".\./Obj/Release/dpExample/"
-				ObjectFile=".\./Obj/Release/dpExample/"
-				ProgramDataBaseFileName=".\./Obj/Release/dpExample/"
+				AssemblerListingLocation="$(IntDir)\"
+				ObjectFile="$(IntDir)\obj\"
+				ProgramDataBaseFileName="$(IntDir)\$(TargetFileName).pdb"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				CallingConvention="0"
@@ -609,11 +627,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="./bin/release/Doomsday.lib"
-				OutputFile=".\./Bin/Release/dpExample.dll"
+				AdditionalDependencies="Doomsday.lib"
+				OutputFile="$(OutDir)$(ProjectName).dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				ProgramDatabaseFile=".\./Bin/Release/dpExample.pdb"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;"
+				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
+				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				ImportLibrary=".\./Bin/Release/dpExample.lib"
@@ -624,6 +644,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				DependencyInformationFile="$(IntDir)\$(TargetFileName).dep"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"

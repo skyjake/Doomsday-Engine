@@ -20,14 +20,14 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory=".\./Bin/Debug"
-			IntermediateDirectory=".\./Obj/Debug/jHexen"
+			OutputDirectory="bin\"
+			IntermediateDirectory="build\$(ConfigurationName)\$(TargetName)\"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
-			BuildLogFile="$(OutDir)/$(ProjectName)_buildlog.htm"
+			BuildLogFile="$(OutDir)\$(TargetFileName).buildlog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -58,10 +58,11 @@
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\./Obj/Debug/jHexen/jHexen.pch"
-				AssemblerListingLocation=".\./Obj/Debug/jHexen/"
-				ObjectFile=".\./Obj/Debug/jHexen/"
-				ProgramDataBaseFileName=".\./Obj/Debug/jHexen/"
-				BrowseInformation="1"
+				AssemblerListingLocation="$(IntDir)\"
+				ObjectFile="$(IntDir)\obj\"
+				ProgramDataBaseFileName="$(IntDir)\$(TargetFileName).pdb"
+				BrowseInformation="0"
+				BrowseInformationFile=""
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				DebugInformationFormat="4"
@@ -76,24 +77,26 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
 				Culture="1033"
+				ResourceOutputFileName="$(IntDir)\$(TargetFileName).res"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="./bin/debug/doomsday.lib lzss.lib"
-				OutputFile=".\./Bin/Debug/jHexen.dll"
+				AdditionalDependencies="Doomsday.lib lzss.lib"
+				OutputFile="$(OutDir)$(ProjectName).dll"
 				LinkIncremental="2"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;..\..\..\external\lzss\win32"
 				GenerateManifest="false"
+				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
 				ModuleDefinitionFile="..\..\..\plugins\jhexen\api\jhexen.def"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile=".\./Bin/Debug/jHexen.pdb"
+				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary=".\./Bin/Debug/jHexen.lib"
+				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -101,6 +104,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				DependencyInformationFile="$(IntDir)\$(TargetFileName).dep"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -220,14 +224,14 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\./Bin/Release"
-			IntermediateDirectory=".\./Obj/Release/jHexen"
+			OutputDirectory="bin\"
+			IntermediateDirectory="build\$(ConfigurationName)\$(TargetName)\"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
-			BuildLogFile="$(OutDir)/$(ProjectName)_buildlog.htm"
+			BuildLogFile="$(OutDir)\$(TargetFileName).buildlog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -259,9 +263,11 @@
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\./Obj/Release/jHexen/jHexen.pch"
-				AssemblerListingLocation=".\./Obj/Release/jHexen/"
-				ObjectFile=".\./Obj/Release/jHexen/"
-				ProgramDataBaseFileName=".\./Obj/Release/jHexen/"
+				AssemblerListingLocation="$(IntDir)\"
+				ObjectFile="$(IntDir)\obj\"
+				ProgramDataBaseFileName="$(IntDir)\$(TargetFileName).pdb"
+				BrowseInformation="0"
+				BrowseInformationFile=""
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				CallingConvention="0"
@@ -274,6 +280,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
 				Culture="1033"
+				ResourceOutputFileName="$(IntDir)\$(TargetFileName).res"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -281,17 +288,18 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="./bin/release/doomsday.lib lzss.lib"
-				OutputFile=".\./Bin/Release/jHexen.dll"
+				AdditionalDependencies="Doomsday.lib lzss.lib"
+				OutputFile="$(OutDir)$(ProjectName).dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;..\..\..\external\lzss\win32"
 				GenerateManifest="false"
+				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
 				ModuleDefinitionFile="..\..\..\plugins\jhexen\api\jhexen.def"
-				ProgramDatabaseFile=".\./Bin/Release/jHexen.pdb"
+				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary=".\./Bin/Release/jHexen.lib"
+				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -299,6 +307,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				DependencyInformationFile="$(IntDir)\$(TargetFileName).dep"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -416,7 +425,10 @@
 		</Configuration>
 		<Configuration
 			Name="Debug x64|Win32"
+			OutputDirectory="bin\"
+			IntermediateDirectory="build\$(ConfigurationName)\$(TargetName)\"
 			ConfigurationType="1"
+			BuildLogFile="$(OutDir)\$(TargetFileName).buildlog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -435,24 +447,38 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AssemblerListingLocation="$(IntDir)\"
+				ObjectFile="$(IntDir)\obj\"
+				ProgramDataBaseFileName="$(IntDir)\$(TargetFileName).pdb"
+				BrowseInformation="0"
+				BrowseInformationFile=""
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
+				Culture="1033"
+				ResourceOutputFileName="$(IntDir)\$(TargetFileName).res"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="Doomsday.lib lzss.lib"
+				OutputFile="$(OutDir)$(ProjectName).dll"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;..\..\..\external\lzss\win32"
+				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
+				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
+				ImportLibrary=""
 			/>
 			<Tool
 				Name="VCALinkTool"
 			/>
 			<Tool
 				Name="VCManifestTool"
+				DependencyInformationFile="$(IntDir)\$(TargetFileName).dep"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -572,14 +598,14 @@
 		</Configuration>
 		<Configuration
 			Name="Release x64|Win32"
-			OutputDirectory="$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="bin\"
+			IntermediateDirectory="build\$(ConfigurationName)\$(TargetName)\"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC70.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="2"
-			BuildLogFile="$(OutDir)/$(ProjectName)_buildlog.htm"
+			BuildLogFile="$(OutDir)\$(TargetFileName).buildlog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -611,9 +637,11 @@
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				PrecompiledHeaderFile=".\./Obj/Release/jHexen/jHexen.pch"
-				AssemblerListingLocation=".\./Obj/Release/jHexen/"
-				ObjectFile=".\./Obj/Release/jHexen/"
-				ProgramDataBaseFileName=".\./Obj/Release/jHexen/"
+				AssemblerListingLocation="$(IntDir)\"
+				ObjectFile="$(IntDir)\obj\"
+				ProgramDataBaseFileName="$(IntDir)\$(TargetFileName).pdb"
+				BrowseInformation="0"
+				BrowseInformationFile=""
 				WarningLevel="3"
 				SuppressStartupBanner="true"
 				CallingConvention="0"
@@ -626,6 +654,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
 				Culture="1033"
+				ResourceOutputFileName="$(IntDir)\$(TargetFileName).res"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -633,17 +662,18 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalOptions="/MACHINE:I386"
-				AdditionalDependencies="./bin/release/doomsday.lib lzss.lib"
-				OutputFile=".\./Bin/Release/jHexen.dll"
+				AdditionalDependencies="Doomsday.lib lzss.lib"
+				OutputFile="$(OutDir)$(ProjectName).dll"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
-				AdditionalLibraryDirectories="..\..\..\external\lzss\win32"
+				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;..\..\..\external\lzss\win32"
 				GenerateManifest="false"
+				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
 				ModuleDefinitionFile="..\..\..\plugins\jhexen\api\jhexen.def"
-				ProgramDatabaseFile=".\./Bin/Release/jHexen.pdb"
+				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary=".\./Bin/Release/jHexen.lib"
+				ImportLibrary=""
 				TargetMachine="1"
 			/>
 			<Tool
@@ -651,6 +681,7 @@
 			/>
 			<Tool
 				Name="VCManifestTool"
+				DependencyInformationFile="$(IntDir)\$(TargetFileName).dep"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
