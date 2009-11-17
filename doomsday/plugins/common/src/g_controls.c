@@ -101,8 +101,6 @@ DEFCC( CCmdPause );
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void G_UpdateCmdControls(ticcmd_t *cmd, int pnum, float elapsedTime);
-
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern boolean sendpause;
@@ -125,7 +123,6 @@ bindcontext_t BindClasses[] = {
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Input devices; state controls.
-static int     joymove[NUM_JOYSTICK_AXES]; // joy axis state
 static int     povangle = -1;          // -1 means centered (really 0 - 7).
 static float   mousex;
 static float   mousey;
@@ -543,7 +540,6 @@ char G_MakeLookDelta(float offset)
         offset = -128;
     return (signed char) offset;
 }
-#endif
 
 /**
  * Turn client angle.
@@ -594,6 +590,7 @@ static void G_AdjustLookDir(player_t *player, int look, float elapsed)
         }
     }
 }
+#endif
 
 /**
  * Updates the viewers' look angle.

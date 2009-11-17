@@ -573,8 +573,8 @@ void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, voi
                !strncmp(ptr, "mouse-left", 10) || !strncmp(ptr, "mouse-middle", 12) ||
                !strncmp(ptr, "mouse-right", 11))
             {
-                if((cc->flags & CCF_INVERSE) && isInverse ||
-                   (cc->flags & CCF_NON_INVERSE) && !isInverse ||
+                if(((cc->flags & CCF_INVERSE) && isInverse) ||
+                   ((cc->flags & CCF_NON_INVERSE) && !isInverse) ||
                    !(cc->flags & (CCF_INVERSE | CCF_NON_INVERSE)))
                 {
                     callback(!strncmp(ptr, "key", 3)? MIBT_KEY :
@@ -798,7 +798,7 @@ int M_ControlsPrivilegedResponder(event_t* ev)
             {
                 sprintf(cmd, "bindcontrol sidestep {%s + modifier-1-down}", temp3);
                 DD_Execute(true, cmd);
-                
+
                 strcpy(extra, " + modifier-1-up");
             }
 

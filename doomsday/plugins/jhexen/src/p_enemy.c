@@ -4508,7 +4508,7 @@ static void spawnKoraxMissile(mobjtype_t type, angle_t angle, float distance,
 void C_DECL A_KoraxMissile(mobj_t* mo)
 {
     int                 type = P_Random() % 6;
-    int                 sound;
+    int                 sound = 0;
 
     S_StartSound(SFX_KORAX_ATTACK, mo);
 

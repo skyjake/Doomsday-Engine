@@ -104,7 +104,6 @@ static int slaughterBoy; // In DM, the player with the most kills.
 static signed int totalFrags[MAXPLAYERS];
 
 static int hubCount;
-static char clusterMessage[MAX_INTRMSN_MESSAGE_SIZE];
 
 static int patchInterpicLumpRS; // A raw screen.
 static int fontBNumbersLump[10];

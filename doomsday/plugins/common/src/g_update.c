@@ -190,18 +190,3 @@ void G_UpdateState(int step)
         break;
     }
 }
-
-static char* ScanWord(char* ptr, char* buf)
-{
-    if(ptr)
-    {
-        // Skip whitespace at beginning.
-        while(*ptr && isspace(*ptr))
-            ptr++;
-        while(*ptr && !isspace(*ptr))
-            *buf++ = *ptr++;
-    }
-
-    *buf = 0;
-    return ptr;
-}

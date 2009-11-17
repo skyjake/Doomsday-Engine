@@ -248,7 +248,6 @@ static int editcolorindex = 0; // The index of the widgetcolors array of the ite
 
 static float currentcolor[4] = {0, 0, 0, 0}; // Used by the widget as temporay values.
 
-static int menuDarkTicks = 15;
 #if !defined( __JHEXEN__ ) && !defined( __JHERETIC__ )
 static int quitYet = 0; // Prevents multiple quit responses.
 #endif
@@ -2056,6 +2055,11 @@ void Hu_MenuCommand(menucommand_e cmd)
 
         switch(cmd)
         {
+        default:
+            Con_Error("Internal Error: Menu cmd %i not handled in "
+                      "Hu_MenuCommand.", (int) cmd);
+            break; // Unreachable.
+
         case MCMD_NAV_LEFT:
             if(item->type == ITT_LRFUNC && item->func != NULL)
             {
@@ -2558,6 +2562,7 @@ void M_DrawReadThis(void)
 #endif
 }
 
+#if __JHERETIC__
 static void composeNotDesignedForMessage(const char* str)
 {
     char*               buf = notDesignedForMessage, *in, tmp[2];
@@ -2586,6 +2591,7 @@ static void composeNotDesignedForMessage(const char* str)
         strcat(buf, tmp);
     }
 }
+#endif
 
 #if __JHEXEN__
 void M_DrawClassMenu(void)

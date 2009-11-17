@@ -1151,6 +1151,11 @@ static boolean giveItem(player_t* plr, itemtype_t item)
 
             switch(item)
             {
+            default:
+                Con_Error("Internal Error: Item type %i not handled in "
+                          "giveItem.", (int) item);
+                break; // Unreachable.
+
             case IT_WEAPON_QUIETUS1:
             case IT_WEAPON_QUIETUS2:
             case IT_WEAPON_QUIETUS3:

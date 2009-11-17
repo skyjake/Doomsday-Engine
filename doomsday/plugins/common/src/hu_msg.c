@@ -205,9 +205,9 @@ static void drawMessage(void)
         M_WriteText3(x, y, string, GF_FONTA, cfg.menuColor2[0],
                      cfg.menuColor2[1], cfg.menuColor2[2], 1,
                      true, true, 0);
-		y += M_StringHeight(string, GF_FONTA);
+        y += M_StringHeight(string, GF_FONTA);
 
-        if((*p) = c)
+        if(((*p) = c))
             p++;
     }
 

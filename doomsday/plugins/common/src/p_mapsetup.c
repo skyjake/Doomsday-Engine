@@ -424,8 +424,7 @@ static void P_LoadMapObjs(void)
 
     for(i = 0; i < numsectors; ++i)
     {
-        sector_t*           sec = P_ToPtr(DMU_SECTOR, i);
-        xsector_t*          xsec = &xsectors[i];
+        xsector_t* xsec = &xsectors[i];
 
         xsec->special = P_GetGMOShort(MO_XSECTOR, i, MO_TYPE);
         xsec->tag = P_GetGMOShort(MO_XSECTOR, i, MO_TAG);
@@ -433,7 +432,8 @@ static void P_LoadMapObjs(void)
 #if __JDOOM64__
         {
         applysurfacecolorparams_t params;
-        float               rgba[4];
+        float rgba[4];
+        sector_t* sec = P_ToPtr(DMU_SECTOR, i);
 
         getSurfaceColor(TOLIGHTIDX(
             P_GetGMOShort(MO_XSECTOR, i, MO_FLOORCOLOR)), rgba);

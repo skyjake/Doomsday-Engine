@@ -1674,7 +1674,6 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
 {
     int                 playerNum = player - players;
     ddplayer_t         *plr = player->plr;
-    int                 turn = 0;
     //boolean             strafe = false;
     float               vel, off, turnSpeed;
     float               offsetSensitivity = 100; // \fixme Should be done engine-side, mouse sensitivity!
@@ -1744,7 +1743,6 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
 void P_PlayerThinkUpdateControls(player_t* player)
 {
     int                 playerNum = player - players;
-    classinfo_t        *pClassInfo = PCLASS_INFO(player->class);
     float               vel, off, offsetSensitivity = 100;
     int                 i;
     boolean             strafe = false;

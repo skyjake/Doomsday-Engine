@@ -446,11 +446,10 @@ static void drawChain(hudstate_t* hud)
     };
 
     int                 x, y, w, h, cw;
-    int                 gemoffset = 36, pClass, pColor;
+    int                 pClass, pColor;
     float               healthPos, gemXOffset;
     float               gemglow, rgb[3];
     int                 player = hud - hudStates;
-    player_t*           plr = &players[player];
 
     hud->oldHealth = hud->healthMarker;
 
@@ -554,7 +553,6 @@ static void drawStatusBarBackground(int player)
     int                 pClass;
     float               cw, cw2, ch;
     hudstate_t*         hud = &hudStates[player];
-    player_t*           plr = &players[player];
     float               alpha;
 
     // Original class (i.e. not pig).
@@ -888,7 +886,6 @@ void ST_loadData(void)
 static void initData(hudstate_t* hud)
 {
     int                 player = hud - hudStates;
-    player_t*           plr = &players[player];
 
     hud->alpha = 0.0f;
     hud->stopped = true;

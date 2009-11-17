@@ -471,6 +471,7 @@ static void sendNeedKeyMessage(player_t* p, textenum_t msgTxt, int keyNum)
 }
 #endif
 
+#if __JDOOM__ || __JDOOM64__
 /**
  * Checks whether the given linedef is a locked door.
  * If locked and the player IS ABLE to open it, return @c true.
@@ -485,7 +486,6 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
     if(!p || !xline)
         return false;
 
-#if __JDOOM__ || __JDOOM64__
     switch(xline->special)
     {
     case 99:                    // Blue Lock
@@ -549,10 +549,10 @@ static boolean tryLockedDoor(linedef_t *line, player_t *p)
     default:
         break;
     }
-#endif
 
     return true;
 }
+#endif
 
 /**
  * Checks whether the given linedef is a locked manual door.
@@ -565,9 +565,11 @@ static boolean tryLockedManualDoor(linedef_t* line, mobj_t* mo)
 {
     xline_t*            xline = P_ToXLine(line);
     player_t*           p;
+#if !__JHEXEN__
     int                 keyNum = -1;
     textenum_t          msgTxt = 0;
     sfxenum_t           sfxNum = 0;
+#endif
 
     if(!mo || !xline)
         return false;

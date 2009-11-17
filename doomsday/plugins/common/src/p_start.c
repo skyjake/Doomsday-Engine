@@ -572,7 +572,7 @@ static void spawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 void P_RebornPlayer(int plrNum)
 {
 #if __JHEXEN__
-    int                 oldKeys, oldPieces, bestWeapon;
+    int                 oldKeys = 0, oldPieces = 0, bestWeapon;
     boolean             oldWeaponOwned[NUM_WEAPON_TYPES];
 #endif
     player_t*           p;
@@ -872,7 +872,6 @@ void P_SpawnPlayers(void)
             if(players[i].plr->inGame)
             {
                 const playerstart_t* start = NULL;
-                ddplayer_t*         ddpl = players[i].plr;
                 float               pos[3];
                 angle_t             angle;
                 int                 spawnFlags;

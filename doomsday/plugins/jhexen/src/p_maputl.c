@@ -48,8 +48,6 @@ typedef struct mobjtargetableparams_s {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static boolean isTargetable(mobj_t *mo, mobj_t *target);
-
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------

@@ -909,7 +909,7 @@ boolean IsSupportedFormat(const int *lumpList, int numLumps)
     for(i = 0; i < numLumps; ++i)
     {
         uint*               ptr;
-        size_t              elmSize; // Num of bytes.
+        size_t              elmSize = 0; // Num of bytes.
         const char*         lumpName = W_LumpName(lumpList[i]);
 
         // Determine the number of map data objects of each data type.

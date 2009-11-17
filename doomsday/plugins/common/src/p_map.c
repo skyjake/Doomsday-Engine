@@ -117,8 +117,10 @@ mobj_t* blockingMobj;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static float tm[3];
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 static float tmHeight;
 static linedef_t* tmHitLine;
+#endif
 static float tmDropoffZ;
 static float bestSlideFrac, secondSlideFrac;
 static linedef_t* bestSlideLine, *secondSlideLine;
@@ -424,6 +426,7 @@ boolean P_CheckSides(mobj_t* actor, float x, float y)
     return !P_AllLinesBoxIterator(tmBBox, PIT_CrossLine, 0);
 }
 
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 /**
  * $unstuck: used to test intersection between thing and line assuming NO
  * movement occurs -- used to avoid sticky situations.
@@ -449,6 +452,7 @@ static int untouched(linedef_t* ld)
 
     return false;
 }
+#endif
 
 boolean PIT_CheckThing(mobj_t* thing, void* data)
 {
@@ -1779,9 +1783,11 @@ if(lineWasHit)
     if(lineAttackDamage)
     {
         int                 damageDone;
+#if __JDOOM__ || __JDOOM64__
         angle_t             attackAngle =
             R_PointToAngle2(shootThing->pos[VX], shootThing->pos[VY],
                             pos[VX], pos[VY]);
+#endif
 
 #if __JHEXEN__
         if(PuffType == MT_FLAMEPUFF2)
@@ -2377,7 +2383,6 @@ static void P_HitSlideLine(linedef_t* ld)
         deltaAngle += ANG180;
 
     moveLen = P_ApproxDistance(tmMove[MX], tmMove[MY]);
-
     an = deltaAngle >> ANGLETOFINESHIFT;
     newLen = moveLen * FIX2FLT(finecosine[an]);
 
@@ -2445,13 +2450,13 @@ boolean PTR_SlideTraverse(intercept_t* in)
  */
 void P_SlideMove(mobj_t* mo)
 {
-    int                 hitcount = 3;
+    int hitcount = 3;
 
     slideMo = mo;
 
     do
     {
-        float               leadpos[3], trailpos[3], newPos[3];
+        float leadpos[3], trailpos[3], newPos[3];
 
         if(!--hitcount == 3)
             goto stairstep; // Don't loop forever.

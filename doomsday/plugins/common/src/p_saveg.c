@@ -789,13 +789,9 @@ void SV_WriteLong(long val)
 
 void SV_WriteFloat(float val)
 {
-#if __JHEXEN__
-    lzPutL(*(int *) &val, savefile);
-#else
     long temp = 0;
     memcpy(&temp, &val, 4);
     lzPutL(temp, savefile);
-#endif
 }
 
 void SV_Read(void *data, int len)
@@ -5013,13 +5009,13 @@ static boolean readSaveHeader(saveheader_t *hdr, LZFILE *savefile)
     // Set the save pointer and skip the description field
     saveptr.b = saveBuffer + SAVESTRINGSIZE;
 
-    if(strncmp(saveptr.b, HXS_VERSION_TEXT, 8))
+    if(strncmp((const char*) saveptr.b, HXS_VERSION_TEXT, 8))
     {
         Con_Message("SV_LoadGame: Bad magic.\n");
         return false;
     }
 
-    saveVersion = atoi(saveptr.b + 8);
+    saveVersion = atoi((const char*) (saveptr.b + 8));
 
     // Check for unsupported versions.
     if(saveVersion > MY_SAVE_VERSION)

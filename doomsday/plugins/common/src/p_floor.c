@@ -576,7 +576,7 @@ int EV_DoFloor(linedef_t *line, floortype_e floortype)
     int         rtn = 0;
     xsector_t  *xsec;
     sector_t   *sec = NULL;
-    floor_t *floor;
+    floor_t *floor = NULL;
     iterlist_t *list;
 #if __JHEXEN__
     int         tag = (int) args[0];
@@ -935,7 +935,7 @@ int EV_DoFloor(linedef_t *line, floortype_e floortype)
     }
 
 #if __JHEXEN__
-    if(rtn)
+    if(rtn && floor)
     {
         SN_StartSequence(P_GetPtrp(floor->sector, DMU_SOUND_ORIGIN),
                          SEQ_PLATFORM + P_ToXSector(floor->sector)->seqType);

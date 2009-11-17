@@ -121,7 +121,6 @@ float HU_PSpriteYOffset(player_t *pl)
  */
 void HU_UpdatePlayerSprite(int pnum)
 {
-    extern float lookOffset;
     int         i;
     pspdef_t   *psp;
     ddpsprite_t *ddpsp;

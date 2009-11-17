@@ -2077,7 +2077,7 @@ mobj_t* P_SpawnMissileAngle(mobjtype_t type, mobj_t* source, angle_t angle,
                             float momz)
 {
     unsigned int        an;
-    float               pos[3], spawnZOff;
+    float               pos[3], spawnZOff = 0;
     mobj_t*             mo;
 
     memcpy(pos, source->pos, sizeof(pos));

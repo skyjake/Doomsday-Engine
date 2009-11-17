@@ -108,7 +108,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 int ConvertMapHook(int hookType, int param, void *data)
 {
     int                *lumpList = (int*) data;
-    boolean             result = false;
 
     verbose = ArgExists("-verbose");
 

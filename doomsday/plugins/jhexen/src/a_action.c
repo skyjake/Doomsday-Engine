@@ -480,7 +480,7 @@ void C_DECL A_Summon(mobj_t* actor)
 void C_DECL A_FogSpawn(mobj_t* actor)
 {
     mobj_t*             mo = NULL;
-    mobjtype_t          type;
+    mobjtype_t          type = 0;
     angle_t             delta, angle;
 
     if(actor->special1-- > 0)

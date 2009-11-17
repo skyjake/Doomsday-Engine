@@ -656,11 +656,7 @@ Con_Message("P_DamageMobj2: Allowing normal damage in netgame.\n");
  */
 DEFCC(CCmdSetColor)
 {
-#if __JHEXEN__
-    int     numColors = 8;
-#elif __JSTRIFE__
-    int     numColors = 8;
-#else
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     int     numColors = 4;
 #endif
 

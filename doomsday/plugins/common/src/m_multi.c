@@ -430,18 +430,6 @@ void DrawGameSetupMenu(void)
     M_WriteMenuText(menu, idx++, buf);
 }
 
-/**
- * Finds the power of 2 that is equal to or greater than the specified number.
- */
-static int CeilPow2(int num)
-{
-    int                 cumul;
-
-    for(cumul = 1; num > cumul; cumul <<= 1);
-
-    return cumul;
-}
-
 void DrawPlayerSetupMenu(void)
 {
 #define AVAILABLE_WIDTH     38

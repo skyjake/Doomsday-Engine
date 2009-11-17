@@ -91,7 +91,7 @@ static void parseAnimGroup(material_namespace_t mnamespace)
         {
             if(SC_Compare("pic"))
             {
-                int                 picNum, min, max = 0;
+                int                 picNum, min = 0, max = 0;
 
                 SC_MustGetNumber();
                 picNum = sc_Number;
