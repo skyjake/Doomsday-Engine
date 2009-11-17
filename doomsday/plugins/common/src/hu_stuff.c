@@ -893,9 +893,9 @@ void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
             if(!c)
                 break;
 
-            if(!gFonts[font].chars[c].patch.lump)
+            if(!gFonts[font].chars[(byte) c].patch.lump)
                 continue;
-            p = &gFonts[font].chars[c].patch;
+            p = &gFonts[font].chars[(byte) c].patch;
 
             x -= p->width * scale;
         }
@@ -918,9 +918,9 @@ void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
         if(!c)
             break;
 
-        if(!gFonts[font].chars[c].patch.lump)
+        if(!gFonts[font].chars[(byte) c].patch.lump)
             continue;
-        p = &gFonts[font].chars[c].patch;
+        p = &gFonts[font].chars[(byte) c].patch;
 
         w = p->width;
         h = p->height;

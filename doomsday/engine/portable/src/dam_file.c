@@ -387,7 +387,7 @@ static void writeLine(const gamemap_t *map, uint idx)
     writeFloat(l->length);
     writeLong((long) l->angle);
     for(i = 0; i < DDMAXPLAYERS; ++i)
-        writeByte(l->mapped[DDMAXPLAYERS]? 1 : 0);
+        writeByte(l->mapped[i]? 1 : 0);
 }
 
 static void readLine(const gamemap_t *map, uint idx)

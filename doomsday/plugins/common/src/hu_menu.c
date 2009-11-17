@@ -2612,7 +2612,7 @@ void M_DrawClassMenu(void)
         // Number of user-selectable classes.
         pClass = (menuTime / 5) % (menu->itemCount - 1);
     }
-    
+
     R_GetSpriteInfo(STATES[PCLASS_INFO(pClass)->normalState].sprite,
                     ((menuTime >> 3) & 3), &sprInfo);
 
@@ -2653,7 +2653,7 @@ void M_DrawEpisode(void)
 
         M_WriteText3(160 - M_StringWidth(str, GF_FONTA) / 2,
                      200 - M_StringHeight(str, GF_FONTA) - 2, str, GF_FONTA,
-                     cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[3],
+                     cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2],
                      menuAlpha, true, true, 0);
     }
 #else // __JDOOM__
@@ -3090,7 +3090,7 @@ void M_DrawWeaponMenu(void)
 
         M_WriteText3(160 - M_StringWidth(str, GF_FONTA) / 2,
                      200 - M_StringHeight(str, GF_FONTA) - 2, str, GF_FONTA,
-                     cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[3],
+                     cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2],
                      menuAlpha, true, true, 0);
     }
 
