@@ -44,10 +44,10 @@ iterlist_t     *P_GetSectorIterListForTag(int tag, boolean createNewList);
 
 sector_t*       P_GetNextSector(linedef_t *line, sector_t *sec);
 
-sector_t*       P_FindSectorSurroundingLowestFloor(sector_t *sec, float *val);
-sector_t*       P_FindSectorSurroundingHighestFloor(sector_t *sec, float *val);
-sector_t*       P_FindSectorSurroundingLowestCeiling(sector_t *sec, float *val);
-sector_t*       P_FindSectorSurroundingHighestCeiling(sector_t *sec, float *val);
+sector_t*       P_FindSectorSurroundingLowestFloor(sector_t *sec, float max, float *val);
+sector_t*       P_FindSectorSurroundingHighestFloor(sector_t *sec, float min, float *val);
+sector_t*       P_FindSectorSurroundingLowestCeiling(sector_t *sec, float max, float *val);
+sector_t*       P_FindSectorSurroundingHighestCeiling(sector_t *sec, float min, float *val);
 sector_t*       P_FindSectorSurroundingLowestLight(sector_t *sector, float *val);
 sector_t*       P_FindSectorSurroundingHighestLight(sector_t *sector, float *val);
 

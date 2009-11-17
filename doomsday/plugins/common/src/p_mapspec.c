@@ -423,13 +423,13 @@ int findExtremalPlaneHeight(void *ptr, void *context)
 /**
  * Find the sector with the lowest floor height in surrounding sectors.
  */
-sector_t* P_FindSectorSurroundingLowestFloor(sector_t* sec, float* val)
+sector_t* P_FindSectorSurroundingLowestFloor(sector_t* sec, float max, float* val)
 {
     findextremalplaneheightparams_t params;
 
     params.baseSec = sec;
     params.flags = FEPHF_MIN | FEPHF_FLOOR;
-    params.val = DDMAXFLOAT;
+    params.val = max;
     params.foundSec = NULL;
     P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalPlaneHeight);
 
@@ -441,13 +441,13 @@ sector_t* P_FindSectorSurroundingLowestFloor(sector_t* sec, float* val)
 /**
  * Find the sector with the highest floor height in surrounding sectors.
  */
-sector_t* P_FindSectorSurroundingHighestFloor(sector_t* sec, float* val)
+sector_t* P_FindSectorSurroundingHighestFloor(sector_t* sec, float min, float* val)
 {
     findextremalplaneheightparams_t params;
 
     params.baseSec = sec;
     params.flags = FEPHF_FLOOR;
-    params.val = DDMINFLOAT;
+    params.val = min;
     params.foundSec = NULL;
     P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalPlaneHeight);
 
@@ -459,13 +459,13 @@ sector_t* P_FindSectorSurroundingHighestFloor(sector_t* sec, float* val)
 /**
  * Find lowest ceiling in the surrounding sector.
  */
-sector_t* P_FindSectorSurroundingLowestCeiling(sector_t *sec, float *val)
+sector_t* P_FindSectorSurroundingLowestCeiling(sector_t *sec, float max, float *val)
 {
     findextremalplaneheightparams_t params;
 
     params.baseSec = sec;
     params.flags = FEPHF_MIN;
-    params.val = DDMAXFLOAT;
+    params.val = max;
     params.foundSec = NULL;
     P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalPlaneHeight);
 
@@ -477,13 +477,13 @@ sector_t* P_FindSectorSurroundingLowestCeiling(sector_t *sec, float *val)
 /**
  * Find highest ceiling in the surrounding sectors.
  */
-sector_t* P_FindSectorSurroundingHighestCeiling(sector_t *sec, float *val)
+sector_t* P_FindSectorSurroundingHighestCeiling(sector_t *sec, float min, float *val)
 {
     findextremalplaneheightparams_t params;
 
     params.baseSec = sec;
     params.flags = 0;
-    params.val = DDMINFLOAT;
+    params.val = min;
     params.foundSec = NULL;
     P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalPlaneHeight);
 

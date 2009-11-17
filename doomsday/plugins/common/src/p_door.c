@@ -356,7 +356,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
         {
 #if __JDOOM__ || __JDOOM64__
         case DT_BLAZECLOSE:
-            P_FindSectorSurroundingLowestCeiling(sec, &door->topHeight);
+            P_FindSectorSurroundingLowestCeiling(sec, (float) MAXINT, &door->topHeight);
             door->topHeight -= 4;
             door->state = DS_DOWN;
             door->speed *= 4;
@@ -364,7 +364,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
             break;
 #endif
         case DT_CLOSE:
-            P_FindSectorSurroundingLowestCeiling(sec, &door->topHeight);
+            P_FindSectorSurroundingLowestCeiling(sec, (float) MAXINT, &door->topHeight);
             door->topHeight -= 4;
             door->state = DS_DOWN;
 #if !__JHEXEN__
@@ -386,7 +386,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
 #if !__JHEXEN__
         case DT_BLAZEOPEN:
             door->state = DS_UP;
-            P_FindSectorSurroundingLowestCeiling(sec, &door->topHeight);
+            P_FindSectorSurroundingLowestCeiling(sec, (float) MAXINT, &door->topHeight);
             door->topHeight -= 4;
 # if __JHERETIC__
             door->speed *= 3;
@@ -401,7 +401,7 @@ static int EV_DoDoor2(int tag, float speed, int topwait, doortype_e type)
         case DT_NORMAL:
         case DT_OPEN:
             door->state = DS_UP;
-            P_FindSectorSurroundingLowestCeiling(sec, &door->topHeight);
+            P_FindSectorSurroundingLowestCeiling(sec, (float) MAXINT, &door->topHeight);
             door->topHeight -= 4;
 
 #if !__JHEXEN__
@@ -856,7 +856,7 @@ boolean EV_VerticalDoor(linedef_t* line, mobj_t* mo)
     }
 
     // find the top and bottom of the movement range
-    P_FindSectorSurroundingLowestCeiling(sec, &door->topHeight);
+    P_FindSectorSurroundingLowestCeiling(sec, (float) MAXINT, &door->topHeight);
     door->topHeight -= 4;
     return true;
 }
@@ -895,7 +895,7 @@ void P_SpawnDoorRaiseIn5Mins(sector_t *sec)
     door->state = DS_INITIALWAIT;
     door->type = DT_RAISEIN5MINS;
     door->speed = DOORSPEED;
-    P_FindSectorSurroundingLowestCeiling(sec, &door->topHeight);
+    P_FindSectorSurroundingLowestCeiling(sec, (float) MAXINT, &door->topHeight);
     door->topHeight -= 4;
     door->topWait = DOORWAIT;
     door->topCountDown = 5 * 60 * TICSPERSEC;

@@ -1279,28 +1279,28 @@ boolean XS_GetPlane(linedef_t* actline, sector_t* sector, int ref,
     if(ref == SPREF_HIGHEST_CEILING)
     {
         otherSec =
-            P_FindSectorSurroundingHighestCeiling(sector, &otherHeight);
+            P_FindSectorSurroundingHighestCeiling(sector, DDMINFLOAT, &otherHeight);
         if(otherSec)
             otherMat = P_GetPtrp(otherSec, DMU_CEILING_MATERIAL);
     }
     else if(ref == SPREF_HIGHEST_FLOOR)
     {
         otherSec =
-            P_FindSectorSurroundingHighestFloor(sector, &otherHeight);
+            P_FindSectorSurroundingHighestFloor(sector, DDMINFLOAT, &otherHeight);
         if(otherSec)
             otherMat = P_GetPtrp(otherSec, DMU_CEILING_MATERIAL);
     }
     else if(ref == SPREF_LOWEST_CEILING)
     {
         otherSec =
-            P_FindSectorSurroundingLowestCeiling(sector, &otherHeight);
+            P_FindSectorSurroundingLowestCeiling(sector, DDMAXFLOAT, &otherHeight);
         if(otherSec)
             otherMat = P_GetPtrp(otherSec, DMU_CEILING_MATERIAL);
     }
     else if(ref == SPREF_LOWEST_FLOOR)
     {
         otherSec =
-            P_FindSectorSurroundingLowestFloor(sector, &otherHeight);
+            P_FindSectorSurroundingLowestFloor(sector, DDMAXFLOAT, &otherHeight);
         if(otherSec)
             otherMat = P_GetPtrp(otherSec, DMU_FLOOR_MATERIAL);
     }

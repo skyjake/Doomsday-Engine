@@ -179,7 +179,8 @@ int EV_OpenPillar(linedef_t *line, byte *args)
         pillar->sector = sec;
         if(!args[2])
         {
-            P_FindSectorSurroundingLowestFloor(sec, &pillar->floorDest);
+            P_FindSectorSurroundingLowestFloor(sec,
+                P_GetFloatp(sec, DMU_FLOOR_HEIGHT), &pillar->floorDest);
         }
         else
         {
@@ -189,7 +190,7 @@ int EV_OpenPillar(linedef_t *line, byte *args)
 
         if(!args[3])
         {
-            P_FindSectorSurroundingHighestCeiling(sec, &pillar->ceilingDest);
+            P_FindSectorSurroundingHighestCeiling(sec, 0, &pillar->ceilingDest);
         }
         else
         {
