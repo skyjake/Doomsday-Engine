@@ -1765,6 +1765,8 @@ int PatchWeapon(int weapNum)
             SetValueStr(buf, "Atk", ded->states[val].id);
         else if(!stricmp(Line1, "Firing frame"))
             SetValueStr(buf, "Flash", ded->states[val].id);
+        else if(!stricmp(Line1, "Ammo per shot"))
+            SetValueInt(buf, "Per shot", val);
         else
             LPrintf(unknown_str, Line1, "Weapon", weapNum);
     }
