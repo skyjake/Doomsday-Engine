@@ -1104,6 +1104,16 @@ const char* P_GetMapAuthor(boolean surpressIWADAuthors)
     return author;
 }
 
+#if !__JHEXEN__
+static boolean isIWADMap(int episode, int map)
+{
+    char lumpName[9];
+
+    P_GetMapLumpName(episode, map, lumpName);
+    return W_IsFromIWAD(W_GetNumForName(lumpName));
+}
+#endif
+
 /**
  * Prints a banner to the console containing information pertinent to the
  * current map (e.g. map name, author...).
@@ -1133,7 +1143,7 @@ static void P_PrintMapBanner(int episode, int map)
     static const char* unknownAuthorStr = "Unknown";
     const char* lauthor;
 
-    lauthor = P_GetMapAuthor(cfg.hideIWADAuthor);
+    lauthor = P_GetMapAuthor(!isIWADMap(episode, map));
     if(!lauthor)
         lauthor = unknownAuthorStr;
 
