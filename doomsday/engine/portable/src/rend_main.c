@@ -938,6 +938,7 @@ static void quadLightCoords(rtexcoord_t* tc, const float s[2],
     tc[2].st[1] = tc[0].st[1] = t[1];
 }
 
+#if 0
 static void quadShinyMaskTexCoords(rtexcoord_t* tc, const rvertex_t* rverts,
                                    float wallLength, float texWidth,
                                    float texHeight, const pvec2_t texOrigin[2],
@@ -951,6 +952,7 @@ static void quadShinyMaskTexCoords(rtexcoord_t* tc, const rvertex_t* rverts,
     tc[2].st[1] = tc[3].st[1] + (rverts[1].pos[VZ] - rverts[0].pos[VZ]) / texHeight;
     tc[0].st[1] = tc[3].st[1] + (rverts[3].pos[VZ] - rverts[2].pos[VZ]) / texHeight;
 }
+#endif
 
 static float shinyVertical(float dy, float dx)
 {
@@ -1395,7 +1397,6 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     rtexcoord_t*        shinyTexCoords = NULL;
     boolean             useLights = false;
     uint                numLights = 0;
-    float               interPos = 0;
     DGLuint             modTex = 0;
     float               modTexTC[2][2];
     float               modColor[3];
@@ -2079,8 +2080,7 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
                              biassurface_t* bsuf, uint elmIdx /*tmp*/,
                              int texMode /*tmp*/)
 {
-    sector_t*           sec = ssec->sector;
-    vec3_t              vec;
+    vec3_t vec;
 
     // Must have a visible surface.
     if(!inMat || (inMat->flags & MATF_NO_DRAW))
@@ -2092,7 +2092,7 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
     // Don't bother with planes facing away from the camera.
     if(!(V3_DotProduct(vec, normal) < 0))
     {
-        float               texTL[3], texBR[3];
+        float texTL[3], texBR[3];
 
         // Set the texture origin, Y is flipped for the ceiling.
         V3_Set(texTL, ssec->bBox[0].pos[VX],
@@ -2195,7 +2195,6 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
     if(alpha > 0)
     {
         int                 texMode = 0;
-        short               tempflags = 0;
         uint                lightListIdx = 0;
         float               texTL[3], texBR[3], texScale[2],
                             inter = 0;
@@ -2208,7 +2207,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
         blendmode_t         blendMode = BM_NORMAL;
         boolean             addFakeRadio = false, addReflection = false,
                             isGlowing = false, blended = false;
-        const float*        color, *color2;
+        const float*        color = NULL, *color2 = NULL;
         material_snapshot_t msA, msB;
 
         memset(&msA, 0, sizeof(msA));
@@ -3539,7 +3538,7 @@ static void drawVertexIndex(const vertex_t* vtx, float z, float scale,
     glRotatef(vpitch, 1, 0, 0);
     glScalef(-scale, -scale, 1);
 
-    sprintf(buf, "%i", vtx - vertexes);
+    sprintf(buf, "%lu", (unsigned long) (vtx - vertexes));
     UI_TextOutEx(buf, 2, 2, false, false, UI_Color(UIC_TITLE), alpha);
 
     glMatrixMode(GL_MODELVIEW);

@@ -1024,7 +1024,7 @@ boolean R_IsPrecacheGroup(int groupNum)
 {
     animgroup_t*        group;
 
-    if(group = getAnimGroup(groupNum))
+    if((group = getAnimGroup(groupNum)))
     {
         return (group->flags & AGF_PRECACHE)? true : false;
     }

@@ -2422,8 +2422,7 @@ int DED_Read(ded_t* ded, const char* sPathName)
  */
 int DED_ReadLump(ded_t* ded, lumpnum_t lump)
 {
-    int                 result;
-    size_t              lumpLength;
+    size_t lumpLength;
 
     if(lump < 0 || lump >= numLumps)
     {
@@ -2433,12 +2432,12 @@ int DED_ReadLump(ded_t* ded, lumpnum_t lump)
 
     if((lumpLength = W_LumpLength(lump)) > 0)
     {
-        void*               buf = M_Calloc(lumpLength + 1);
-
-        result = DED_ReadData(ded, buf, W_LumpSourceFile(lump));
+        void* buf = M_Calloc(lumpLength + 1);
+        int result = DED_ReadData(ded, buf, W_LumpSourceFile(lump));
 
         M_Free(buf);
+        return result;
     }
 
-    return result;
+    return false;
 }

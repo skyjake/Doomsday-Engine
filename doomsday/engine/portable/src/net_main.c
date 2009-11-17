@@ -1028,12 +1028,12 @@ void Net_Ticker(void /*timespan_t time*/)
                 if(Sv_IsFrameTarget(i))
                 {
                     Con_Message("%i(rdy%i): avg=%05ims thres=%05ims "
-                                "bwr=%05i (adj:%i) maxfs=%05ulb unakd=%05i\n", i,
+                                "bwr=%05i (adj:%i) maxfs=%05lub unakd=%05i\n", i,
                                 clients[i].ready, Net_GetAckTime(i),
                                 Net_GetAckThreshold(i),
                                 clients[i].bandwidthRating,
                                 clients[i].bwrAdjustTime,
-                                Sv_GetMaxFrameSize(i),
+                                (unsigned long) Sv_GetMaxFrameSize(i),
                                 Sv_CountUnackedDeltas(i));
                 }
                 /*if(ddPlayers[i].inGame)

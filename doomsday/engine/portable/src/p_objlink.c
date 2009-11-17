@@ -432,6 +432,10 @@ static void findContacts(objlink_t* oLink)
         ssec = &mo->subsector;
         break;
         }
+    default:
+        Con_Error("Internal Error: Invalid value (%i) for objlink_t->type "
+                  "in findContacts.", (int) oLink->type);
+        return; // Unreachable.
     }
 
     // Do the subsector spread. Begin from the obj's own ssec.
@@ -584,6 +588,10 @@ BEGIN_PROF( PROF_OBJLINK_LINK );
         case OT_MOBJ:
             pos = ((mobj_t*) oLink->obj)->pos;
             break;
+        default:
+            Con_Error("Internal Error: Invalid value (%i) for objlink_t->type "
+                      "in R_LinkObjs.", (int) oLink->type);
+            return; // Unreachable.
         }
 
         R_ObjBlockmapLinkObjLink(objBlockmap, oLink, pos[VX], pos[VY]);

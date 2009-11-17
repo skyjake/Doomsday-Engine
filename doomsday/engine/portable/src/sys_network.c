@@ -493,7 +493,7 @@ void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
     if(size > DDMAXSHORT)
     {
         Con_Error("N_SendDataBufferReliably: Trying to send a too large data "
-                  "buffer.\n  Attempted size is %ul bytes.\n", size);
+                  "buffer.\n  Attempted size is %lu bytes.\n", (unsigned long) size);
     }
 
     // Compose the entire message in the transmission buffer.
@@ -504,8 +504,8 @@ void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
     }
 
     if(size > sizeof(short))
-        Con_Error("N_SendDataBufferReliably: Tried to send %ul bytes "
-                  "(max pkt size %ul).\n", (unsigned long) size,
+        Con_Error("N_SendDataBufferReliably: Tried to send %lu bytes "
+                  "(max pkt size %lu).\n", (unsigned long) size,
                   (unsigned long) sizeof(short));
     {
     short           packetSize = SHORT(size);
@@ -547,15 +547,17 @@ void N_SendDataBuffer(void *data, size_t size, nodeid_t destination)
     if(RNG_RandFloat() < RANDOMIZER_DROP_PERCENT / 100.0)
     {
         VERBOSE( Con_Message("N_SendDataBuffer: Randomizer dropped packet to %i "
-                             "(%i bytes).\n", destination, size) );
+                             "(%lu bytes).\n", destination,
+                             (unsigned long) size) );
         return;
     }
 #endif
 
     if(size > maxDatagramSize)
     {
-        Con_Error("N_SendDataBuffer: Too large packet (%ul), risk of "
-                  "fragmentation (MTU=%ul).\n", size, maxDatagramSize);
+        Con_Error("N_SendDataBuffer: Too large packet (%lu), risk of "
+                  "fragmentation (MTU=%lu).\n", (unsigned long) size,
+                  (unsigned long) maxDatagramSize);
     }
 
     // This memory is freed after the packet is sent.
@@ -783,8 +785,8 @@ void N_SystemInit(void)
     if(ArgCheckWith("-mtu", 1))
     {
         maxDatagramSize = (size_t) strtol(ArgNext(), NULL, 0);
-        Con_Message("N_SystemInit: Custom MTU: %ul bytes.\n",
-                    maxDatagramSize);
+        Con_Message("N_SystemInit: Custom MTU: %lu bytes.\n",
+                    (unsigned long) maxDatagramSize);
     }
 
     // Allocate the transmission buffer.
