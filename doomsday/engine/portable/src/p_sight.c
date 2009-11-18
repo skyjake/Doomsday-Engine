@@ -118,9 +118,12 @@ static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
 
     fsec = li->L_sector(side);
     bsec  = (li->L_backside? li->L_sector(side^1) : NULL);
-    noBack = (!li->L_backside ||
-              !(bsec->SP_floorheight < fsec->SP_ceilheight) ||
-              !(fsec->SP_floorheight < bsec->SP_ceilheight));
+    noBack = li->L_backside? false : true;
+
+    if(!noBack && !(los->flags & LS_PASSLEFT) &&
+       (!(bsec->SP_floorheight < fsec->SP_ceilheight) ||
+        !(fsec->SP_floorheight < bsec->SP_ceilheight)))
+        noBack = true;
 
     if(noBack)
     {
