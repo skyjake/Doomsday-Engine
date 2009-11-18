@@ -104,11 +104,11 @@ static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
 #define RTOP            0x1
 #define RBOTTOM         0x2
 
-    float               frac;
-    byte                ranges = 0;
-    divline_t           dl;
-    const sector_t*     fsec, *bsec;
-    boolean             noBack;
+    float frac;
+    byte ranges = 0;
+    divline_t dl;
+    const sector_t* fsec, *bsec;
+    boolean noBack;
 
     if(!interceptLineDef(li, los, &dl))
         return true; // Ray does not intercept seg on the X/Y plane.
@@ -118,7 +118,9 @@ static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
 
     fsec = li->L_sector(side);
     bsec  = (li->L_backside? li->L_sector(side^1) : NULL);
-    noBack = (!li->L_backside || !(bsec->SP_floorheight < bsec->SP_ceilheight));
+    noBack = (!li->L_backside ||
+              !(bsec->SP_floorheight < fsec->SP_ceilheight) ||
+              !(fsec->SP_floorheight < bsec->SP_ceilheight));
 
     if(noBack)
     {
@@ -159,7 +161,7 @@ static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
 
     if(ranges & RTOP)
     {
-        float               slope, top;
+        float slope, top;
 
         top = (noBack? fsec->SP_ceilheight : bsec->SP_ceilheight);
         slope = (top - los->startZ) / frac;
@@ -174,9 +176,8 @@ static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
 
     if(ranges & RBOTTOM)
     {
-        float               bottom =
-            (noBack? fsec->SP_floorheight : bsec->SP_floorheight);
-        float               slope = (bottom - los->startZ) / frac;
+        float bottom = (noBack? fsec->SP_floorheight : bsec->SP_floorheight);
+        float slope = (bottom - los->startZ) / frac;
 
         if(los->bottomSlope < slope)
             los->bottomSlope = slope;
