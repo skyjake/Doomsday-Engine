@@ -406,7 +406,7 @@ void Sv_WritePlayerDelta(const void* deltaPtr)
                 else
                     Msg_WritePackedShort(0);
             }
-            if(psdf & PSDF_LIGHT)
+            /*if(psdf & PSDF_LIGHT)
             {
                 k = psp->light * 255;
                 if(k < 0)
@@ -414,7 +414,7 @@ void Sv_WritePlayerDelta(const void* deltaPtr)
                 if(k > 255)
                     k = 255;
                 Msg_WriteByte(k);
-            }
+            }*/
             if(psdf & PSDF_ALPHA)
             {
                 k = psp->alpha * 255;

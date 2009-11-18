@@ -69,7 +69,6 @@ static float PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
 #endif
 
 #if __JHEXEN__
-// Y-adjustment values for full screen (4 weapons)
 static float PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
 // Fighter
     {0, -12, -10, 10},
@@ -82,34 +81,26 @@ static float PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
 };
 #endif
 
-#if __JSTRIFE__
-// Y-adjustment values for full screen (10 weapons)
-static float PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-};
-#endif
-
 // CODE --------------------------------------------------------------------
 
 /**
  * Calculates the Y offset for the player's psprite. The offset depends
  * on the size of the game window.
  */
-float HU_PSpriteYOffset(player_t *pl)
+float HU_PSpriteYOffset(player_t* pl)
 {
-    int         viewWindowHeight = Get(DD_VIEWWINDOW_HEIGHT);
-#if __JDOOM__ || __JDOOM64__
-    float       offy = (cfg.plrViewHeight - 41) * 2;
-#else
-    float       offy = PSpriteSY[pl->class][pl->readyWeapon];
+    int viewWindowHeight = Get(DD_VIEWWINDOW_HEIGHT);
+    float offy = (cfg.plrViewHeight - DEFAULT_PLAYER_VIEWHEIGHT) * 2;
+
+#if __JHERETIC__ || __JHEXEN__
+    if(viewWindowHeight == SCREENHEIGHT)
+        offy += PSpriteSY[pl->class][pl->readyWeapon];
 #endif
 
-#if !__JDOOM64__
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
     // If the status bar is visible, the sprite is moved up a bit.
     if(viewWindowHeight < SCREENHEIGHT)
-    {
-        offy -= (((float) ST_HEIGHT * cfg.statusbarScale) / (2 * 20) - 1);
-    }
+        offy -= (float) (ST_HEIGHT - 2) * (cfg.statusbarScale / 20.f) - 20;
 #endif
 
     return offy;
@@ -140,19 +131,27 @@ void HU_UpdatePlayerSprite(int pnum)
 
         ddpsp->statePtr = psp->state;
         ddpsp->tics = psp->tics;
+        ddpsp->flags = 0;
 
-        // Choose color and alpha.
-        ddpsp->light = 1;
+        // Fullbright?
+        if((psp->state->flags & STF_FULLBRIGHT) ||
+            (pl->powers[PT_INFRARED] > 4 * 32) || (pl->powers[PT_INFRARED] & 8)
+# if __JDOOM__ || __JDOOM64__
+            || (pl->powers[PT_INVULNERABILITY] > 30)
+# endif
+            )
+        {
+            ddpsp->flags |= DDPSPF_FULLBRIGHT;
+        }
+
+        // Translucent?
         ddpsp->alpha = 1;
-
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
         if((pl->powers[PT_INVISIBILITY] > 4 * 32) ||
            (pl->powers[PT_INVISIBILITY] & 8))
-        {
-            // shadow draw
+        {   // shadow draw
             ddpsp->alpha = .25f;
         }
-        else
 #elif __JHEXEN__
         if(pl->powers[PT_INVULNERABILITY] && pl->class == PCLASS_CLERIC)
         {
@@ -172,31 +171,7 @@ void HU_UpdatePlayerSprite(int pnum)
                 ddpsp->alpha = .333f;
             }
         }
-        else
 #endif
-        if(psp->state->flags & STF_FULLBRIGHT)
-        {   // Fullbright.
-            ddpsp->light = 1;
-        }
-        else
-        {   // Local light.
-            ddpsp->light =
-                P_GetFloatp(pl->plr->mo->subsector, DMU_LIGHT_LEVEL);
-        }
-#if !__JSTRIFE__
-        // Needs fullbright?
-        if((pl->powers[PT_INFRARED] > 4 * 32) || (pl->powers[PT_INFRARED] & 8)
-# if __JDOOM__ || __JDOOM64__
-           || (pl->powers[PT_INVULNERABILITY] > 30)
-# endif
-           )
-        {
-            // Torch lights up the psprite.
-            ddpsp->light = 1;
-        }
-#endif
-        // Add some extra light.
-        ddpsp->light += .1f;
 
         // Offset from center.
         ddpsp->pos[VX] = psp->pos[VX] - G_GetLookOffset(pnum) * 1300;

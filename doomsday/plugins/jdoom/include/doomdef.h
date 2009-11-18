@@ -259,4 +259,6 @@ enum { CR, CG, CB, CA }; // Color indices.
 #define DISPLAYPLAYER       (Get(DD_DISPLAYPLAYER))
 
 #define GAMETIC             (*((timespan_t*) DD_GetVariable(DD_GAMETIC)))
+
+#define DEFAULT_PLAYER_VIEWHEIGHT (41)
 #endif

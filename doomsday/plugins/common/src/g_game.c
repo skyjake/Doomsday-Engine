@@ -642,6 +642,11 @@ void R_InitRefresh(void)
     VERBOSE(Con_Message("R_InitRefresh: Loading data for referesh.\n"))
 
     R_LoadColorPalettes();
+
+    {
+    float mul = 1.4f;
+    DD_SetVariable(DD_PSPRITE_LIGHTLEVEL_MULTIPLIER, &mul);
+    }
 }
 
 /**

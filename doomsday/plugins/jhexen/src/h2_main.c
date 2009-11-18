@@ -270,7 +270,7 @@ void G_PreInit(void)
     cfg.netMobDamageModifier = 1;
     cfg.netMobHealthModifier = 1;
     cfg.netGravity = -1;        // use map default
-    cfg.plrViewHeight = 48;
+    cfg.plrViewHeight = DEFAULT_PLAYER_VIEWHEIGHT;
     cfg.mapTitle = true;
     cfg.hideIWADAuthor = true;
     cfg.menuScale = .75f;

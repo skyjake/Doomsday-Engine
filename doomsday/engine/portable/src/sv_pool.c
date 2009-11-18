@@ -1344,8 +1344,8 @@ void Sv_ApplyDeltaData(void* destDelta, const void* srcDelta)
                     d->psp[i].tics =
                         (s->psp[i].statePtr ? s->psp[i].statePtr->tics : 0);
                 }
-                if(sf & (PSDF_LIGHT << off))
-                    d->psp[i].light = s->psp[i].light;
+                /*if(sf & (PSDF_LIGHT << off))
+                    d->psp[i].light = s->psp[i].light;*/
                 if(sf & (PSDF_ALPHA << off))
                     d->psp[i].alpha = s->psp[i].alpha;
                 if(sf & (PSDF_STATE << off))

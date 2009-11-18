@@ -114,7 +114,7 @@ void Cl_LocalCommand(void)
     }
 
     //s->forwardMove = cl->lastCmd->forwardMove * 2048;
-    
+
     P_GetControlState(consolePlayer, CTL_WALK, &vel, &off);
     s->forwardMove = (off + vel) * 2048;
 
@@ -270,7 +270,7 @@ Con_Message("Cl_RPlD: pl=%i => moid=%i\n", num, s->mobjId);
             //if(psdf & PSDF_NEXT/*TIME*/) psp->nexttime = (char) Msg_ReadByte();
             //if(psdf & PSDF_TICS) psp->tics = (char) Msg_ReadByte();
             if(psdf & PSDF_LIGHT)
-                psp->light = Msg_ReadByte() / 255.0f;
+                /* psp->light = */ Msg_ReadByte() /* / 255.0f */;
             if(psdf & PSDF_ALPHA)
                 psp->alpha = Msg_ReadByte() / 255.0f;
             if(psdf & PSDF_STATE)
@@ -332,7 +332,7 @@ void Cl_MovePlayer(int plrNum)
     // Move.
     P_MobjMovement2(mo, st);
     P_MobjZMovement(mo);
-    
+
 #ifdef _DEBUG
     VERBOSE2(Con_Message("Cl_MovePlayer: Pl%i: mo x=%g y=%g\n", plrNum, mo->pos[VX], mo->pos[VY]));
 #endif
@@ -827,8 +827,8 @@ Con_Message("Cl_RdPlrD2: pl=%i => moid=%i\n",
                 }
             }
 
-            if(psdf & PSDF_LIGHT)
-                psp->light = Msg_ReadByte() / 255.0f;
+            /*if(psdf & PSDF_LIGHT)
+                psp->light = Msg_ReadByte() / 255.0f;*/
             if(psdf & PSDF_ALPHA)
                 psp->alpha = Msg_ReadByte() / 255.0f;
             if(psdf & PSDF_STATE)

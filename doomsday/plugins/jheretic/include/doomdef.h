@@ -296,6 +296,8 @@ void       *G_GetVariable(int id);
 
 #define MAXEVENTS           (64)
 
+#define DEFAULT_PLAYER_VIEWHEIGHT (41)
+
 extern fixed_t finesine[5 * FINEANGLES / 4];
 extern fixed_t *finecosine;
 

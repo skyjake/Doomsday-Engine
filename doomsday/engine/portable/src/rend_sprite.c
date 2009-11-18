@@ -278,22 +278,15 @@ static void setupPSpriteParams(rendpspriteparams_t* params,
     Material_Prepare(&ms, sprFrame->mats[0], true, &mparams);
 
     sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
-
     params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX];
-    params->pos[VY] = offScaleY * psp->pos[VY] +
-        (1 - offScaleY) * 32 - sprTex->offY + pspOffset[VY];
+    params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX];
+    params->pos[VY] = offScaleY * (psp->pos[VY] - sprTex->offY) + pspOffset[VY];
     params->width = ms.width;
     params->height = ms.height;
 
-    // Let's calculate texture coordinates.
-    // To remove a possible edge artifact, move the corner a bit up/left.
-    params->texOffset[0] =
-        ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[VX] -
-            0.4f / M_CeilPow2(ms.width);
-    params->texOffset[1] =
-        ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[VY] -
-            0.4f / M_CeilPow2(ms.height);
-
+    // Calculate texture coordinates.
+    params->texOffset[0] = ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[VX];
+    params->texOffset[1] = ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[VY];
     params->texFlip[0] = flip;
     params->texFlip[1] = false;
 
@@ -321,15 +314,12 @@ static void setupPSpriteParams(rendpspriteparams_t* params,
             const float*        secColor =
                 R_GetSectorLightColor(spr->data.sprite.subsector->sector);
 
-            if(spr->psp->light < 1)
-                lightLevel = (spr->psp->light - .1f);
-            else
-                lightLevel = 1;
-
             // No need for distance attentuation.
+            lightLevel = spr->data.sprite.subsector->sector->lightLevel;
 
-            // Add extra light.
+            // Add extra light plus bonus.
             lightLevel += R_ExtraLightDelta();
+            lightLevel *= pspLightLevelMultiplier;
 
             Rend_ApplyLightAdaptation(&lightLevel);
 
@@ -597,7 +587,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
                          params->vertices[3].pos[VY]);
 
             glColor4fv(params->vertices[2].color);
-			glMultiTexCoord2fARB(normalTarget, params->texCoord[1][0], params->texCoord[1][1]);
+            glMultiTexCoord2fARB(normalTarget, params->texCoord[1][0], params->texCoord[1][1]);
 
             glMultiTexCoord2fARB(dynTarget, params->modTexCoord[0][1], params->modTexCoord[1][1]);
 

@@ -292,6 +292,7 @@ enum {
     DD_GRAVITY,
     DD_PSPRITE_OFFSET_X, // 10x
     DD_PSPRITE_OFFSET_Y, // 10x
+    DD_PSPRITE_LIGHTLEVEL_MULTIPLIER,
     DD_TORCH_RED,
     DD_TORCH_GREEN,
     DD_TORCH_BLUE,
@@ -1294,13 +1295,20 @@ typedef struct ticcmd_s {
         DDPSP_UP
     };
 
+/**
+ * @defGroup pspriteFlags PSprite Flags
+ */
+/*{*/
+#define DDPSPF_FULLBRIGHT 0x1
+/*}*/
+
     // Player sprites.
     typedef struct {
         state_t*        statePtr;
         int             tics;
-        float           light, alpha;
+        float           alpha;
         float           pos[2];
-        int             flags;
+        byte            flags; // @see pspriteFlags
         int             state;
         float           offset[2];
     } ddpsprite_t;

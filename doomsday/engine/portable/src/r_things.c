@@ -110,6 +110,7 @@ float modelSpinSpeed = 1;
 int alwaysAlign = 0;
 int noSpriteZWrite = false;
 float pspOffset[2] = {0, 0};
+float pspLightLevelMultiplier = 1;
 // useSRVO: 1 = models only, 2 = sprites + models
 int useSRVO = 2, useSRVOAngle = true;
 int psp3d;
@@ -897,7 +898,7 @@ void R_ProjectPlayerSprites(void)
             memset(spr->data.model.visOff, 0, sizeof(spr->data.model.visOff));
 
             spr->data.model.alpha = psp->alpha;
-            spr->data.model.stateFullBright = false;
+            spr->data.model.stateFullBright = (psp->flags & DDPSPF_FULLBRIGHT)!=0;
         }
         else
         {   // No, draw a 2D sprite (in Rend_DrawPlayerSprites).
@@ -910,7 +911,7 @@ void R_ProjectPlayerSprites(void)
 
             spr->data.sprite.subsector = ddpl->mo->subsector;
             spr->data.sprite.alpha = psp->alpha;
-            spr->data.sprite.isFullBright = isFullBright;
+            spr->data.sprite.isFullBright = (psp->flags & DDPSPF_FULLBRIGHT)!=0;
         }
     }
 }

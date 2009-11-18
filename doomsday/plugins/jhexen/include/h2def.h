@@ -366,6 +366,8 @@ extern int maulatorSeconds;
 
 #define TELEFOGHEIGHT       (32)
 
+#define DEFAULT_PLAYER_VIEWHEIGHT (48)
+
 extern fixed_t finesine[5 * FINEANGLES / 4];
 extern fixed_t *finecosine;
 

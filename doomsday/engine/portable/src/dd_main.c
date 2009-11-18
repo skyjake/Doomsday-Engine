@@ -1082,6 +1082,9 @@ void* DD_GetVariable(int ddvalue)
         case DD_PSPRITE_OFFSET_Y:
             return &pspOffset[VY];
 
+        case DD_PSPRITE_LIGHTLEVEL_MULTIPLIER:
+            return &pspLightLevelMultiplier;
+
         case DD_SHARED_FIXED_TRIGGER:
             return &sharedFixedTrigger;
 
@@ -1192,6 +1195,10 @@ void DD_SetVariable(int ddvalue, void *parm)
 
         case DD_PSPRITE_OFFSET_Y:
             pspOffset[VY] = *(float*) parm;
+            return;
+
+        case DD_PSPRITE_LIGHTLEVEL_MULTIPLIER:
+            pspLightLevelMultiplier = *(float*) parm;
             return;
 
         case DD_TORCH_RED:

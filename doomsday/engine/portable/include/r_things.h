@@ -178,7 +178,7 @@ typedef struct collectaffectinglights_params_s {
 
 extern spritedef_t* sprites;
 extern int      numSprites;
-extern float    pspOffset[2];
+extern float    pspOffset[2], pspLightLevelMultiplier;
 extern int      alwaysAlign;
 extern float    weaponOffsetScale, weaponFOVShift;
 extern int      weaponOffsetScaleY;
