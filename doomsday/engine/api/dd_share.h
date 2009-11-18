@@ -240,6 +240,8 @@ enum {
     DD_ID,
     DD_LUMP,
     DD_CD_TRACK,
+    DD_SPRITE,
+    DD_FRAME,
     DD_GAME_MODE, // 16 chars max (swdoom, doom1, udoom, tnt, heretic...)
     DD_GAME_CONFIG, // String: dm/co-op, jumping, etc.
     DD_DEF_FINALE,

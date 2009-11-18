@@ -61,10 +61,9 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define OFF_STATE   0x01000000
-#define OFF_SOUND   0x02000000
-#define OFF_FLOAT   0x04000000
-#define OFF_SPRITE  0x08000000
+#define OFF_STATE   0x02000000
+#define OFF_SOUND   0x04000000
+#define OFF_FLOAT   0x08000000
 #define OFF_FIXED   0x10000000
 #define OFF_MASK    0x00ffffff
 
@@ -95,7 +94,7 @@ void    InitPlugin(void) __attribute__ ((constructor));
 
 int     PatchThing(int);
 int     PatchSound(int);
-int     PatchFrame(int);
+int     PatchState(int);
 int     PatchSprite(int);
 int     PatchAmmo(int);
 int     PatchWeapon(int);
@@ -815,7 +814,7 @@ static const struct {
     // These appear in .deh and .bex files
     { "Thing",      PatchThing },
     { "Sound",      PatchSound },
-    { "Frame",      PatchFrame },
+    { "Frame",      PatchState },
     { "Sprite",     PatchSprite },
     { "Ammo",       PatchAmmo },
     { "Weapon",     PatchWeapon },
@@ -953,8 +952,6 @@ static boolean HandleKey(const struct Key *keys, void *structure,
         // Apply value.
         if(keys->offset & OFF_STATE)
             strcpy((char *) ptr, ded->states[value].id);
-        else if(keys->offset & OFF_SPRITE)
-            strcpy((char *) ptr, ded->sprites[value].id);
         else if(keys->offset & OFF_SOUND)
             strcpy((char *) ptr, ded->sounds[value].id);
         else if(keys->offset & OFF_FLOAT)
@@ -1511,11 +1508,9 @@ int PatchSound(int soundNum)
     return result;
 }
 
-int PatchFrame(int frameNum)
+int PatchState(int stateNum)
 {
     static struct Key keys[] = {
-        {"Sprite number", myoffsetof(ded_state_t, sprite, OFF_SPRITE)},
-        {"Sprite subnumber", myoffsetof(ded_state_t, frame, 0)},
         {"Duration", myoffsetof(ded_state_t, tics, 0)},
         {"Next frame", myoffsetof(ded_state_t, nextState, OFF_STATE)},
         {"Unknown 1", 0 /*myoffsetof(ded_state_t,misc[0],0) */ },
@@ -1529,21 +1524,32 @@ int PatchFrame(int frameNum)
     keys[4].offset = myoffsetof(ded_state_t, misc[0], 0);
     keys[5].offset = myoffsetof(ded_state_t, misc[1], 0);
 
-    if(frameNum >= 0 && frameNum < ded->count.states.num)
+    if(stateNum >= 0 && stateNum < ded->count.states.num)
     {
-        info = ded->states + frameNum;
+        info = ded->states + stateNum;
         if(verbose)
-            LPrintf("Frame %d\n", frameNum);
+            LPrintf("State %d\n", stateNum);
     }
     else
     {
         info = &dummy;
-        LPrintf("Frame %d out of range (Create more State defs!)\n", frameNum);
+        LPrintf("State %d out of range (Create more State defs!)\n", stateNum);
     }
 
     while((result = GetLine()) == 1)
-        if(HandleKey(keys, info, Line1, atoi(Line2)))
-            LPrintf(unknown_str, Line1, "Frame", frameNum);
+    {
+        int value = atoi(Line2);
+
+        if(HandleKey(keys, info, Line1, value))
+        {
+            if(!stricmp(Line1, "Sprite number"))
+                Def_Set(DD_DEF_STATE, stateNum, DD_SPRITE, &value);
+            else if(!stricmp(Line1, "Sprite subnumber"))
+                Def_Set(DD_DEF_STATE, stateNum, DD_FRAME, &value);
+            else
+                LPrintf(unknown_str, Line1, "State", stateNum);
+        }
+    }
 
     return result;
 }

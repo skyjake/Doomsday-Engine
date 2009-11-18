@@ -1669,6 +1669,46 @@ int Def_Set(int type, int index, int value, const void* ptr)
         strcpy(defs.text[index].text, ptr);
         break;
 
+    case DD_DEF_STATE:
+        {
+        ded_state_t* stateDef;
+
+        if(index < 0 || index >= defs.count.states.num)
+            Con_Error("Def_Set: State index %i is invalid.\n", index);
+
+        stateDef = &defs.states[index];
+        switch(value)
+        {
+        case DD_SPRITE:
+            {
+            int sprite = *(int*) ptr;
+
+            if(sprite < 0 || sprite >= defs.count.sprites.num)
+            {
+                Con_Message("Def_Set: Warning, invalid sprite index %i.\n",
+                            sprite);
+                break;
+            }
+
+            strcpy((char*) stateDef->sprite.id, defs.sprites[value].id);
+            break;
+            }
+        case DD_FRAME:
+            {
+            int frame = *(int*) ptr;
+
+            if(frame & FF_FULLBRIGHT)
+                stateDef->flags |= STF_FULLBRIGHT;
+            else
+                stateDef->flags &= ~STF_FULLBRIGHT;
+            stateDef->frame = frame & ~FF_FULLBRIGHT;
+            break;
+            }
+        default:
+            break;
+        }
+        break;
+        }
     case DD_DEF_SOUND:
         if(index < 0 || index >= countSounds.num)
             Con_Error("Def_Set: Sound index %i is invalid.\n", index);
