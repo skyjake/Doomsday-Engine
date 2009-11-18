@@ -26,16 +26,16 @@ SET EAX_LIB=D:\sdk\Creative Labs\EAX 2.0 Extensions SDK\Libs
 SET EAX_DLL=D:\sdk\Creative Labs\EAX 2.0 Extensions SDK\dll
 
 REM ---- SDL:
-SET SDL_INC=D:\sdk\SDL-1.2.13\include
-SET SDL_LIB=D:\sdk\SDL-1.2.13\lib
+SET SDL_INC=D:\sdk\SDL-1.2.14\include
+SET SDL_LIB=D:\sdk\SDL-1.2.14\lib
 
 REM ---- SDL_net:
 SET SDLNET_INC=D:\sdk\SDL_net-1.2.7\include
 SET SDLNET_LIB=D:\sdk\SDL_net-1.2.7\lib
 
 REM ---- SDL_mixer:
-SET SDLMIXER_INC=D:\sdk\SDL_mixer-1.2.8\include
-SET SDLMIXER_LIB=D:\sdk\SDL_mixer-1.2.8\lib
+SET SDLMIXER_INC=D:\sdk\SDL_mixer-1.2.11\include
+SET SDLMIXER_LIB=D:\sdk\SDL_mixer-1.2.11\lib
 
 REM -=- Requirements for drOpenGL.dll -=-
 REM
