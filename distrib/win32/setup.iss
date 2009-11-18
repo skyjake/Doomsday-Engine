@@ -56,12 +56,13 @@ Source: "Bin\Release\jHexen.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Co
 ; Libraries
 Source: "SDL.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "SDL_net.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "SDL_mixer.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "eax.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
-Source: "smpeg.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "libogg-0.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "libvorbis-0.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "libvorbisfile-3.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "mikmod.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "SDL_mixer.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
+Source: "smpeg.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "..\..\external\lzss\win32\lzss.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "..\..\external\zlib\win32\zlib1.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
 Source: "..\..\external\libpng\win32\libpng13.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: Engine
