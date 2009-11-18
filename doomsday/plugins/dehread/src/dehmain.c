@@ -61,9 +61,8 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define OFF_STATE   0x02000000
-#define OFF_SOUND   0x04000000
-#define OFF_FLOAT   0x08000000
+#define OFF_STATE   0x04000000
+#define OFF_SOUND   0x08000000
 #define OFF_FIXED   0x10000000
 #define OFF_MASK    0x00ffffff
 
@@ -954,13 +953,6 @@ static boolean HandleKey(const struct Key *keys, void *structure,
             strcpy((char *) ptr, ded->states[value].id);
         else if(keys->offset & OFF_SOUND)
             strcpy((char *) ptr, ded->sounds[value].id);
-        else if(keys->offset & OFF_FLOAT)
-        {
-            if(value < 0x2000)
-                *(float *) ptr = (float) value; // / (float) 0x10000;
-            else
-                *(float *) ptr = value / (float) 0x10000;
-        }
         else if(keys->offset & OFF_FIXED)
             *(float *) ptr = value / (float) 0x10000;
         else
@@ -1198,14 +1190,11 @@ int HandleMode(const char *mode, int num)
 
 int PatchThing(int thingy)
 {
-    size_t          thingNum = (size_t) thingy;
-
     static const struct Key keys[] = {
         {"ID #", myoffsetof(ded_mobj_t, doomEdNum, 0)},
         {"Hit points", myoffsetof(ded_mobj_t, spawnHealth, 0)},
         {"Reaction time", myoffsetof(ded_mobj_t, reactionTime, 0)},
         {"Pain chance", myoffsetof(ded_mobj_t, painChance, 0)},
-        {"Speed", myoffsetof(ded_mobj_t, speed, OFF_FLOAT)},
         {"Width", myoffsetof(ded_mobj_t, radius, OFF_FIXED)},
         {"Height", myoffsetof(ded_mobj_t, height, OFF_FIXED)},
         {"Mass", myoffsetof(ded_mobj_t, mass, 0)},
@@ -1312,10 +1301,11 @@ int PatchThing(int thingy)
         {30, 1, "SEEKERMISSILE"},
         {31, 1, "REFLECTIVE"}
     };
-    int             result;
-    ded_mobj_t*     info, dummy;
-    boolean         hadHeight = false;
-    boolean         checkHeight = false;
+    int result;
+    ded_mobj_t* info, dummy;
+    boolean hadHeight = false;
+    boolean checkHeight = false;
+    size_t thingNum = (size_t) thingy;
 
     thingNum--;
     if(thingNum < (unsigned) ded->count.mobjs.num)
@@ -1333,9 +1323,9 @@ int PatchThing(int thingy)
 
     while((result = GetLine()) == 1)
     {
-        int             value = atoi(Line2);
-        size_t          len = strlen(Line1);
-        size_t          sndmap;
+        int value = atoi(Line2);
+        size_t len = strlen(Line1);
+        size_t sndmap;
 
         sndmap = value;
         if(sndmap >= sizeof(SoundMap)-1)
@@ -1345,7 +1335,7 @@ int PatchThing(int thingy)
         {
             if(!stricmp(Line1 + len - 6, " frame"))
             {
-                uint                i;
+                uint i;
 
                 for(i = 0; stateNames[i].label; ++i)
                 {
@@ -1358,11 +1348,18 @@ int PatchThing(int thingy)
                     }
                 }
             }
+            else if(!stricmp(Line1, "Speed"))
+            {
+                if(abs(value) < 256)
+                    info->speed = (float) value;
+                else
+                    info->speed = FIX2FLT(value);
+            }
             else if(!stricmp(Line1, "Bits"))
             {
-                int             value = 0, value2 = 0;
-                boolean         vchanged = false, v2changed = false;
-                char           *strval;
+                int value = 0, value2 = 0;
+                boolean vchanged = false, v2changed = false;
+                char* strval;
 
                 for(strval = Line2; (strval = strtok(strval, ",+| \t\f\r"));
                     strval = NULL)
