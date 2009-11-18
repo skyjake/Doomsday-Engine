@@ -2060,6 +2060,9 @@ void Hu_MenuCommand(menucommand_e cmd)
                       "Hu_MenuCommand.", (int) cmd);
             break; // Unreachable.
 
+        case MCMD_OPEN: // Ignore.
+            break;
+
         case MCMD_NAV_LEFT:
             if(item->type == ITT_LRFUNC && item->func != NULL)
             {
