@@ -1882,22 +1882,22 @@ int PatchMisc(int dummy)
         val = atoi(Line2);
 
         if(!stricmp(Line1, "Initial Health"))
-            SetValueInt("Player|Health", "Type", val);
+            SetValueInt("Player", "Health", val);
 
         else if(!stricmp(Line1, "Initial Bullets"))
             SetValueInt("Player|Init ammo", "Clip", val);
 
         else if(!stricmp(Line1, "Max Health"))
-            SetValueInt("Player|Health Limit", "Type", val);
+            SetValueInt("Player", "Health Limit", val);
 
         else if(!stricmp(Line1, "Max Armor"))
-            SetValueInt("Player|Blue Armor", "Type", val);
+            SetValueInt("Player", "Blue Armor", val);
 
         else if(!stricmp(Line1, "Green Armor Class"))
-            SetValueInt("Player|Green Armor Class", "Type", val);
+            SetValueInt("Player", "Green Armor Class", val);
 
         else if(!stricmp(Line1, "Blue Armor Class"))
-            SetValueInt("Player|Blue Armor Class", "Type", val);
+            SetValueInt("Player", "Blue Armor Class", val);
 
         else if(!stricmp(Line1, "Max Soulsphere"))
             SetValueInt("SoulSphere|Give", "Health Limit", val);
@@ -1909,19 +1909,19 @@ int PatchMisc(int dummy)
             SetValueInt("MegaSphere|Give", "Health", val);
 
         else if(!stricmp(Line1, "God Mode Health"))
-            SetValueInt("Player|God Health", "Type", val);
+            SetValueInt("Player", "God Health", val);
 
         else if(!stricmp(Line1, "IDFA Armor"))
-            SetValueInt("Player|IDFA Armor", "Type", val);
+            SetValueInt("Player", "IDFA Armor", val);
 
         else if(!stricmp(Line1, "IDFA Armor Class"))
-            SetValueInt("Player|IDFA Armor Class", "Type", val);
+            SetValueInt("Player", "IDFA Armor Class", val);
 
         else if(!stricmp(Line1, "IDKFA Armor"))
-            SetValueInt("Player|IDKFA Armor", "Type", val);
+            SetValueInt("Player", "IDKFA Armor", val);
 
         else if(!stricmp(Line1, "IDKFA Armor Class"))
-            SetValueInt("Player|IDKFA Armor Class", "Type", val);
+            SetValueInt("Player", "IDKFA Armor Class", val);
 
         else if(!stricmp(Line1, "BFG Cells/Shot"))
             SetValueInt("Weapon Info|6", "Per shot", val);
