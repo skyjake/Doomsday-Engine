@@ -811,7 +811,7 @@ DEFCC(CCmdCheatGive)
         case 'h':
             {
             player_t* plr = &players[player];
-            P_GiveBody(plr, maxHealth);
+            P_GiveBody(plr, healthLimit);
             break;
             }
         case 'i':

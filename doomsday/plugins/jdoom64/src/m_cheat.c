@@ -538,7 +538,7 @@ DEFCC(CCmdCheatGive)
             break;
             }
         case 'h':
-            P_GiveBody(plr, maxHealth);
+            P_GiveBody(plr, healthLimit);
             break;
 
         case 'i':
