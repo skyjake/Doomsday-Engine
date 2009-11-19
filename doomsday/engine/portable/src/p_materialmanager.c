@@ -491,14 +491,15 @@ Con_Message("P_MaterialCreate: Warning, attempted to create material in "
 
     if(oldMat)
     {   // We are updating an existing material.
-        materialbind_t*     mb = &materialBinds[oldMat - 1];
+        materialbind_t* mb = &materialBinds[oldMat - 1];
+        uint i;
 
         mat = mb->mat;
 
         // Update the (possibly new) meta data.
+        mat->flags = flags;
         if(tex)
             mat->layers[0].tex = tex;
-        mat->flags = flags;
         if(width > 0)
             mat->width = width;
         if(height > 0)
@@ -513,6 +514,16 @@ Con_Message("P_MaterialCreate: Warning, attempted to create material in "
         mat->envClass = MEC_UNKNOWN;
         mat->mnamespace = mnamespace;
 
+        // Is this a custom material?
+        mat->flags &= ~MATF_CUSTOM;
+        for(i = 0; i < mat->numLayers; ++i)
+        {
+            if(!GLTexture_IsFromIWAD(GL_GetGLTexture(mat->layers[i].tex)))
+            {
+                mat->flags |= MATF_CUSTOM;
+                break;
+            }
+        }
         return mat; // Yep, return it.
     }
 

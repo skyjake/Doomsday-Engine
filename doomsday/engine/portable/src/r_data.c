@@ -1665,10 +1665,8 @@ doomtexturedef_t* R_GetDoomTextureDef(int num)
  */
 static int R_NewFlat(lumpnum_t lump)
 {
-    int                 i;
-    flat_t**            newlist, *ptr;
-    material_t*         mat;
-    const gltexture_t*  tex;
+    int i;
+    flat_t** newlist, *ptr;
 
     for(i = 0; i < numFlats; ++i)
     {
@@ -1700,26 +1698,20 @@ static int R_NewFlat(lumpnum_t lump)
     ptr->width = 64; /// \fixme not all flats are 64 texels in width!
     ptr->height = 64; /// \fixme not all flats are 64 texels in height!
 
-    tex = GL_CreateGLTexture(W_LumpName(lump), numFlats - 1, GLT_FLAT);
-
-    // Create a material for this flat.
-    // \note that width = 64, height = 64 regardless of the flat dimensions.
-    mat = P_MaterialCreate(W_LumpName(lump), 64, 64, 0, tex->id, MN_FLATS, NULL);
-
     return numFlats - 1;
 }
 
 void R_InitFlats(void)
 {
-    int                 i;
-    float               starttime = Sys_GetSeconds();
-    ddstack_t*          stack = Stack_New();
+    int i;
+    float starttime = Sys_GetSeconds();
+    ddstack_t* stack = Stack_New();
 
     numFlats = 0;
 
     for(i = 0; i < numLumps; ++i)
     {
-        const char*         name = W_LumpName(i);
+        const char* name = W_LumpName(i);
 
         if(name[0] == 'F')
         {
@@ -1748,6 +1740,18 @@ void R_InitFlats(void)
     while(Stack_Height(stack))
         Stack_Pop(stack);
     Stack_Delete(stack);
+
+    for(i = 0; i < numFlats; ++i)
+    {
+        const flat_t* flat = flats[i];
+        const gltexture_t* tex;
+
+        tex = GL_CreateGLTexture(W_LumpName(flat->lump), i, GLT_FLAT);
+
+        // Create a material for this flat.
+        // \note that width = 64, height = 64 regardless of the flat dimensions.
+        P_MaterialCreate(W_LumpName(flat->lump), 64, 64, 0, tex->id, MN_FLATS, NULL);
+    }
 
     VERBOSE(Con_Message("R_InitFlats: Done in %.2f seconds.\n",
                         Sys_GetSeconds() - starttime));
