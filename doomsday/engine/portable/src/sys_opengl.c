@@ -493,11 +493,15 @@ void Sys_InitGLState(void)
     glFogi(GL_FOG_END, 2100);   // This should be tweaked a bit.
     glFogfv(GL_FOG_COLOR, fogcol);
 
-    // Default state for vsync is off
-    GL_state.useVSync = 0;
 #ifdef WIN32
+    // Default state for vsync is on.
+    GL_state.useVSync = true;
     if(wglSwapIntervalEXT != NULL)
-        wglSwapIntervalEXT(0);
+    {
+        wglSwapIntervalEXT(1);
+    }
+#else
+    GL_state.useVSync = false;
 #endif
 
 #if DRMESA
