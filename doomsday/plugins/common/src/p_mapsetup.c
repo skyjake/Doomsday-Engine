@@ -506,6 +506,9 @@ static void P_LoadMapObjs(void)
             xsector->seqType = spot->doomEdNum - 1400;
             continue;
         }
+        // Polyobject origin?
+        if(spot->doomEdNum >= 3000 && spot->doomEdNum < 3003)
+            continue; // Not spawned.
 #endif
 
         switch(spot->doomEdNum)
