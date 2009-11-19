@@ -546,6 +546,13 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
                             GL_CLAMP_TO_EDGE);
         }
+
+        // Clamp on the vertical axis?
+        // @todo When drawing a stretched, masked middle texture we should
+        // not be clamping here. Currently this info is unknown at this point
+        // but because no maps yet make use of this feature (other than the
+        // unreleased jDoom64) we opt to clamp.
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
     GL_BlendMode(params->blendMode);
 
