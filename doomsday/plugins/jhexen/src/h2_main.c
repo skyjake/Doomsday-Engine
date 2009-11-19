@@ -257,6 +257,7 @@ void G_PreInit(void)
     cfg.xhairColor[1] = 1;
     cfg.xhairColor[2] = 1;
     cfg.xhairColor[3] = 1;
+    cfg.filterStrength = .8f;
     cfg.jumpEnabled = cfg.netJumping = true; // true by default in Hexen
     cfg.jumpPower = 9;
     cfg.airborneMovement = 1;

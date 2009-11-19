@@ -292,6 +292,7 @@ void G_PreInit(void)
     cfg.xhairColor[1] = 1;
     cfg.xhairColor[2] = 1;
     cfg.xhairColor[3] = 1;
+    cfg.filterStrength = .8f;
   //cfg.snd_3D = false;
   //cfg.snd_ReverbFactor = 100;
     cfg.moveCheckZ = true;

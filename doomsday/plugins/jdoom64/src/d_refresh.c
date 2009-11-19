@@ -124,7 +124,7 @@ boolean R_GetFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = 0;
         rgba[CB] = 0;
-        rgba[CA] = filter / 9.f;
+        rgba[CA] = (deathmatch? 1.0f : cfg.filterStrength) * filter / 9.f;
         return true;
     }
 
@@ -133,7 +133,7 @@ boolean R_GetFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = .8f;
         rgba[CB] = .5f;
-        rgba[CA] = (filter - STARTBONUSPALS + 1) / 16.f;
+        rgba[CA] = cfg.filterStrength * (filter - STARTBONUSPALS + 1) / 16.f;
         return true;
     }
 
@@ -142,7 +142,7 @@ boolean R_GetFilterColor(float rgba[4], int filter)
         rgba[CR] = 0;
         rgba[CG] = .7f;
         rgba[CB] = 0;
-        rgba[CA] = .15f;
+        rgba[CA] = cfg.filterStrength * .25f;
         return true;
     }
 

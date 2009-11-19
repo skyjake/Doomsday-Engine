@@ -98,7 +98,7 @@ cvar_t gameCVars[] = {
     {"view-bob-height", 0, CVT_FLOAT, &cfg.bobView, 0, 1},
     {"view-bob-weapon", 0, CVT_FLOAT, &cfg.bobWeapon, 0, 1},
     {"view-bob-weapon-switch-lower", 0, CVT_BYTE, &cfg.bobWeaponLower, 0, 1},
-
+    {"view-filter-strength", 0, CVT_FLOAT, &cfg.filterStrength, 0, 1},
     {"view-ringfilter", 0, CVT_INT, &cfg.ringFilter, 1, 2},
 
 // Server-side options

@@ -294,6 +294,9 @@ desc = Crosshair color blue component.
 [view-cross-a]
 desc = Crosshair color alpha component.
 
+[view-filter-strength]
+desc = Strength of view filter.
+
 [msg-show]
 desc = 1=Show messages.
 

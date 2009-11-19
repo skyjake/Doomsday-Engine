@@ -89,12 +89,12 @@ void R_DrawSpecialFilter(int pnum)
     if(cfg.ringFilter == 1)
     {
         DGL_BlendFunc(DGL_SRC_COLOR, DGL_SRC_COLOR);
-        DGL_DrawRect(x, y, w, h, .5f, .35f, .1f, 1);
+        DGL_DrawRect(x, y, w, h, .5f, .35f, .1f, cfg.filterStrength);
     }
     else
     {
         DGL_BlendFunc(DGL_DST_COLOR, DGL_SRC_COLOR);
-        DGL_DrawRect(x, y, w, h, 0, 0, .6f, 1);
+        DGL_DrawRect(x, y, w, h, 0, 0, .6f, cfg.filterStrength);
     }
 
     // Restore the normal rendering state.
@@ -113,7 +113,7 @@ boolean R_GetFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = 0;
         rgba[CB] = 0;
-        rgba[CA] = filter / 8.f; // Full red with filter 8.
+        rgba[CA] = (deathmatch? 1.0f : cfg.filterStrength) * filter / 8.f; // Full red with filter 8.
         return true;
     }
     else if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
@@ -121,7 +121,7 @@ boolean R_GetFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = 1;
         rgba[CB] = .5f;
-        rgba[CA] = (filter - STARTBONUSPALS + 1) / 16.f;
+        rgba[CA] = cfg.filterStrength * (filter - STARTBONUSPALS + 1) / 16.f;
         return true;
     }
 

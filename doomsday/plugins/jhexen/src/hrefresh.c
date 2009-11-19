@@ -387,7 +387,7 @@ boolean R_GetFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = 0;
         rgba[CB] = 0;
-        rgba[CA] = filter / 8.f; // Full red with filter 8.
+        rgba[CA] = (deathmatch? 1.0f : cfg.filterStrength) * filter / 8.f; // Full red with filter 8.
         return true;
     }
     else if(filter >= STARTBONUSPALS && filter < STARTBONUSPALS + NUMBONUSPALS)
@@ -395,7 +395,7 @@ boolean R_GetFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = 1;
         rgba[CB] = .5f;
-        rgba[CA] = (filter - STARTBONUSPALS + 1) / 16.f;
+        rgba[CA] = cfg.filterStrength * (filter - STARTBONUSPALS + 1) / 16.f;
         return true;
     }
     else if(filter >= STARTPOISONPALS && filter < STARTPOISONPALS + NUMPOISONPALS)
@@ -403,7 +403,7 @@ boolean R_GetFilterColor(float rgba[4], int filter)
         rgba[CR] = 0;
         rgba[CG] = 1;
         rgba[CB] = 0;
-        rgba[CA] = (filter - STARTPOISONPALS + 1) / 16.f;
+        rgba[CA] = cfg.filterStrength * (filter - STARTPOISONPALS + 1) / 16.f;
         return true;
     }
     else if(filter >= STARTSCOURGEPAL)
@@ -411,7 +411,7 @@ boolean R_GetFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = .5f;
         rgba[CB] = 0;
-        rgba[CA] = (STARTSCOURGEPAL + 3 - filter) / 6.f;
+        rgba[CA] = cfg.filterStrength * (STARTSCOURGEPAL + 3 - filter) / 6.f;
         return true;
     }
     else if(filter >= STARTHOLYPAL)
@@ -419,7 +419,7 @@ boolean R_GetFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = 1;
         rgba[CB] = 1;
-        rgba[CA] = (STARTHOLYPAL + 3 - filter) / 6.f;
+        rgba[CA] = cfg.filterStrength * (STARTHOLYPAL + 3 - filter) / 6.f;
         return true;
     }
     else if(filter == STARTICEPAL)
@@ -427,7 +427,7 @@ boolean R_GetFilterColor(float rgba[4], int filter)
         rgba[CR] = .5f;
         rgba[CG] = .5f;
         rgba[CB] = 1;
-        rgba[CA] = .4f;
+        rgba[CA] = cfg.filterStrength * .4f;
         return true;
     }
 

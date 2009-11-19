@@ -109,6 +109,7 @@ typedef struct jheretic_config_s {
     int             weaponOrder[NUM_WEAPON_TYPES];
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
     byte            secretMsg;
+    float           filterStrength;
     int             plrViewHeight;
     byte            mapTitle, hideIWADAuthor;
     float           menuColor[3];

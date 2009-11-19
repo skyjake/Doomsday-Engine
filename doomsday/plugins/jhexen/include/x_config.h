@@ -112,7 +112,7 @@ typedef struct {
     byte            ammoAutoSwitch;
     int             weaponOrder[NUM_WEAPON_TYPES];
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
-
+    float           filterStrength;
     byte            counterCheat;
     float           counterCheatScale;
 
