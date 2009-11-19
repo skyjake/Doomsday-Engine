@@ -49,7 +49,7 @@ void            Hu_LogRegister(void);
 void            Hu_LogStart(int player);
 void            Hu_LogShutdown(void);
 
-void            Hu_LogPost(int player, byte flags, const char* msg, int tics);
+void            Hu_LogPost(int player, byte flags, const char* msg);
 void            Hu_LogRefresh(int player);
 void            Hu_LogEmpty(int player);
 

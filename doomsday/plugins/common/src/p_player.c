@@ -736,7 +736,7 @@ void P_SetMessage(player_t* pl, char *msg, boolean noHide)
 {
     byte                flags = (noHide? LMF_NOHIDE : 0);
 
-    Hu_LogPost(pl - players, flags, msg, MESSAGETICS);
+    Hu_LogPost(pl - players, flags, msg);
 
     if(pl == &players[CONSOLEPLAYER] && cfg.echoMsg)
         Con_FPrintf(CBLF_CYAN, "%s\n", msg);
@@ -758,7 +758,7 @@ void P_SetYellowMessage(player_t* pl, char *msg, boolean noHide)
 {
     byte                flags = LMF_YELLOW | (noHide? LMF_NOHIDE : 0);
 
-    Hu_LogPost(pl - players, flags, msg, 5 * MESSAGETICS);
+    Hu_LogPost(pl - players, flags, msg);
 
     if(pl == &players[CONSOLEPLAYER] && cfg.echoMsg)
         Con_FPrintf(CBLF_CYAN, "%s\n", msg);

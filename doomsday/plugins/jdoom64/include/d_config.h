@@ -168,7 +168,7 @@ typedef struct jdoom64_config_s {
 
     int             msgCount;
     float           msgScale;
-    int             msgUptime;
+    float           msgUptime;
     int             msgBlink;
     int             msgAlign;
     byte            msgShow;

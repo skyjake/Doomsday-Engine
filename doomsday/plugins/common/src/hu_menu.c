@@ -101,6 +101,7 @@ void M_QuitDOOM(int option, void* context);
 void M_OpenDCP(int option, void* context);
 void M_ChangeMessages(int option, void* context);
 void M_HUDHideTime(int option, void* context);
+void M_MessageUptime(int option, void* context);
 #if __JHERETIC__ || __JHEXEN__
 void M_InventoryHideTime(int option, void* context);
 void M_InventorySlotMaxVis(int option, void* context);
@@ -828,6 +829,7 @@ static menuitem_t HUDItems[] = {
     {ITT_EFUNC, 0, "Single key display :", M_ToggleVar, 0, NULL, "hud-keys-combine"},
 #endif
     {ITT_EFUNC, 0, "Show messages :", M_ChangeMessages, 0},
+    {ITT_LRFUNC, 0, "Message uptime :", M_MessageUptime, 0},
     {ITT_LRFUNC, 0, "Auto-hide :", M_HUDHideTime, 0},
     {ITT_EMPTY, 0, "Un-hide events", NULL, 0},
     {ITT_EFUNC, 0, "Receive damage :", M_ToggleVar, 0, NULL, "hud-unhide-damage"},
@@ -927,13 +929,13 @@ static menu_t HUDDef = {
 #endif
     M_DrawHUDMenu,
 #if __JHEXEN__
-    38, HUDItems,
+    39, HUDItems,
 #elif __JHERETIC__
-    45, HUDItems,
+    46, HUDItems,
 #elif __JDOOM64__
-    32, HUDItems,
+    33, HUDItems,
 #elif __JDOOM__
-    36, HUDItems,
+    37, HUDItems,
 #endif
     0, MENU_OPTIONS,
     GF_FONTA,
@@ -3298,6 +3300,17 @@ void M_DrawHUDMenu(void)
     M_WriteMenuText(menu, idx++, yesno[cfg.hudKeysCombine]);
 #endif
     M_WriteMenuText(menu, idx++, yesno[cfg.msgShow != 0]);
+    {
+    char secString[11];
+    const char* str;
+    uint seconds = MINMAX_OF(1, cfg.msgUptime, 30);
+
+    memset(secString, 0, sizeof(secString));
+    dd_snprintf(secString, 11, "%2u %s", seconds, seconds > 1? "seconds" : "second");
+    str = secString;
+
+    M_WriteMenuText(menu, idx++, str);
+    }
 
     // Auto-hide HUD options:
     {
@@ -3307,7 +3320,7 @@ void M_DrawHUDMenu(void)
     if(seconds > 0)
     {
         memset(secString, 0, sizeof(secString));
-        dd_snprintf(secString, 11, "%2u seconds", seconds);
+        dd_snprintf(secString, 11, "%2u %s", seconds, seconds > 1? "seconds" : "second");
         str = secString;
     }
     else
@@ -3676,6 +3689,21 @@ void M_HUDHideTime(int option, void* context)
         val--;
 
     cfg.hudTimer = val;
+}
+
+void M_MessageUptime(int option, void* context)
+{
+    int                 val = cfg.msgUptime;
+
+    if(option == RIGHT_DIR)
+    {
+        if(val < 30)
+            val++;
+    }
+    else if(val > 1)
+        val--;
+
+    cfg.msgUptime = val;
 }
 
 #if __JHERETIC__ || __JHEXEN__

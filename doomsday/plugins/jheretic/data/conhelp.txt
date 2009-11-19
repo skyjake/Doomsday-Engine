@@ -313,7 +313,7 @@ desc = 1=Echo all messages to the console.
 desc = Number of HUD messages displayed at the same time.
 
 [msg-uptime]
-desc = Number of tics to keep HUD messages on screen.
+desc = Number of seconds to keep HUD messages on screen.
 
 [msg-scale]
 desc = Scaling factor for HUD messages.

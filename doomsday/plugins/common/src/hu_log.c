@@ -101,7 +101,7 @@ static msglog_t msgLogs[MAXPLAYERS];
 cvar_t msgLogCVars[] = {
     // Behaviour
     {"msg-count", 0, CVT_INT, &cfg.msgCount, 0, 8},
-    {"msg-uptime", CVF_NO_MAX, CVT_INT, &cfg.msgUptime, 35, 0},
+    {"msg-uptime", 0, CVT_FLOAT, &cfg.msgUptime, 1, 60},
 
     // Display
     {"msg-align", 0, CVT_INT, &cfg.msgAlign, 0, 2},
@@ -306,7 +306,7 @@ static void logDrawer(msglog_t* log)
             uint                msgTics, td, blinkSpeed = cfg.msgBlink;
 
             msgTics = msg->tics - msg->ticsRemain;
-            td = cfg.msgUptime - msg->ticsRemain;
+            td = (cfg.msgUptime * TICSPERSEC) - msg->ticsRemain;
 
             if((td & 2) && blinkSpeed != 0 && msgTics < blinkSpeed)
             {
@@ -430,19 +430,17 @@ void Hu_LogDrawer(int player)
  *                      LMF_YELLOW:
  *                      Prepend the YELLOW param string to msg.
  * @param msg           Message text to be posted.
- * @param tics          Minimum number of tics (from *now*) the message
- *                      should be visible for.
  */
-void Hu_LogPost(int player, byte flags, const char* msg, int tics)
+void Hu_LogPost(int player, byte flags, const char* msg)
 {
 #define YELLOW_FMT      "{r=1; g=0.7; b=0.3;}"
 #define YELLOW_FMT_LEN  19
 #define SMALLBUF_MAXLEN 128
 
-    player_t*           plr;
-    msglog_t*           log;
+    player_t* plr;
+    msglog_t* log;
 
-    if(!msg || !msg[0] || !(tics > 0))
+    if(!msg || !msg[0])
         return;
 
     if(player < 0 || player >= MAXPLAYERS)
@@ -456,9 +454,9 @@ void Hu_LogPost(int player, byte flags, const char* msg, int tics)
 
     if(!log->notToBeFuckedWith || log->dontFuckWithMe)
     {
-        char                smallBuf[SMALLBUF_MAXLEN+1];
-        char*               bigBuf = NULL, *p;
-        size_t              requiredLen = strlen(msg) +
+        char smallBuf[SMALLBUF_MAXLEN+1];
+        char* bigBuf = NULL, *p;
+        size_t requiredLen = strlen(msg) +
             ((flags & LMF_YELLOW)? YELLOW_FMT_LEN : 0);
 
         if(requiredLen <= SMALLBUF_MAXLEN)
@@ -477,7 +475,7 @@ void Hu_LogPost(int player, byte flags, const char* msg, int tics)
         else
             sprintf(p, "%s", msg);
 
-        logPush(log, p, cfg.msgUptime + tics);
+        logPush(log, p, cfg.msgUptime * TICSPERSEC);
 
         if(bigBuf)
             free(bigBuf);
@@ -873,15 +871,12 @@ static void sendMessage(const char* msg)
 /**
  * Sets the chat buffer to a chat macro string.
  */
-static boolean sendMacro(int num)
+static boolean sendMacro(int player, int num)
 {
-    if(!chatOn)
-        return false;
-
     if(num >= 0 && num < 9)
     {   // Leave chat mode and notify that it was sent.
         if(chatOn)
-            Chat_Open(CONSOLEPLAYER, false);
+            Chat_Open(player, false);
 
         sendMessage(cfg.chatMacros[num]);
         return true;
@@ -900,12 +895,11 @@ DEFCC(CCmdLocalMessage)
 }
 
 /**
- * Handles controls (console commands) for the msglog and chat
- * widget
+ * Handles controls (console commands) for the chat widget.
  */
 DEFCC(CCmdMsgAction)
 {
-    int                 plynum;
+    int toPlayer;
 
     if(chatOn)
     {
@@ -929,37 +923,34 @@ DEFCC(CCmdMsgAction)
 
     if(!stricmp(argv[0], "chatsendmacro"))  // send a chat macro
     {
-        int                 macroNum;
+        int macroNum;
 
         if(argc < 2 || argc > 3)
         {
             Con_Message("Usage: %s (player) (macro number)\n", argv[0]);
-            Con_Message("Send a chat macro to other player(s) in multiplayer.\n"
+            Con_Message("Send a chat macro to other player(s).\n"
                         "If (player) is omitted, the message will be sent to all players.\n");
             return true;
         }
 
         if(argc == 3)
         {
-            plynum = atoi(argv[1]);
-            if(plynum < 0 || plynum > 3)
+            toPlayer = atoi(argv[1]);
+            if(toPlayer < 0 || toPlayer > 3)
             {
                 // Bad destination.
                 Con_Message("Invalid player number \"%i\". Should be 0-3\n",
-                            plynum);
+                            toPlayer);
                 return false;
             }
 
-            plynum += 1;
+            toPlayer = toPlayer + 1;
         }
         else
-            plynum = 0;
-
-        if(!chatOn) // we need to enable chat mode first...
-            Chat_Open(plynum, true);
+            toPlayer = 0;
 
         macroNum = atoi(((argc == 3)? argv[2] : argv[1]));
-        if(!sendMacro(macroNum))
+        if(!sendMacro(CONSOLEPLAYER, macroNum))
         {
             Con_Message("Invalid macro number\n");
             return false;
@@ -972,21 +963,21 @@ DEFCC(CCmdMsgAction)
 
         if(argc == 2)
         {
-            plynum = atoi(argv[1]);
-            if(plynum < 0 || plynum > 3)
+            toPlayer = atoi(argv[1]);
+            if(toPlayer < 0 || toPlayer > 3)
             {
                 // Bad destination.
                 Con_Message("Invalid player number \"%i\". Should be 0-3\n",
-                            plynum);
+                            toPlayer);
                 return false;
             }
 
-            plynum += 1;
+            toPlayer = toPlayer + 1;
         }
         else
-            plynum = 0;
+            toPlayer = 0;
 
-        Chat_Open(plynum, true);
+        Chat_Open(toPlayer, true);
     }
 
     return true;

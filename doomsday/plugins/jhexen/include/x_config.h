@@ -102,7 +102,7 @@ typedef struct {
 
     int             msgCount;
     float           msgScale;
-    int             msgUptime;
+    float           msgUptime;
     int             msgBlink;
     int             msgAlign;
     byte            msgShow;

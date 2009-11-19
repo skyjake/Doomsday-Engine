@@ -485,7 +485,7 @@ void G_PreInit(void)
     cfg.msgShow = true;
     cfg.msgCount = 4;
     cfg.msgScale = .8f;
-    cfg.msgUptime = 5 * TICSPERSEC;
+    cfg.msgUptime = 5;
     cfg.msgAlign = ALIGN_LEFT;
     cfg.msgBlink = 5;
 
