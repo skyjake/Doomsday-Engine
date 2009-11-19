@@ -600,6 +600,18 @@ boolean GL_EarlyInit(void)
     // Allow font rendering.
     FR_Init();
 
+    // Render a few black frames before we continue. This will help to
+    // stableize things before we begin drawing for real and to avoid any
+    // unwanted video artefacts.
+    {
+    int i = 0;
+    while(i++ < 3)
+    {
+        glClear(GL_COLOR_BUFFER_BIT);
+        GL_DoUpdate();
+    }
+    }
+
     initGLOk = true;
     return true;
 }
