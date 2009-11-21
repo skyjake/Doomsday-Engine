@@ -157,30 +157,6 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
         mat->detail = Def_GetDetailTex(mat, tmpResult == 2);
     }
 
-    // Do we need to prepare any lightmaps?
-    if(mat->decoration)
-    {
-        /**
-         * \todo No need to look up the lightmap texture records every time!
-         */
-
-        for(i = 0; i < DED_DECOR_NUM_LIGHTS; ++i)
-        {
-            const ded_decorlight_t* light = &mat->decoration->lights[i];
-            lightmap_t*         lmap;
-
-            if(!R_IsValidLightDecoration(light))
-                break;
-
-            if((lmap = R_GetLightMap(light->up.id)))
-                GL_PrepareGLTexture(lmap->id, NULL, NULL);
-            if((lmap = R_GetLightMap(light->down.id)))
-                GL_PrepareGLTexture(lmap->id, NULL, NULL);
-            if((lmap = R_GetLightMap(light->sides.id)))
-                GL_PrepareGLTexture(lmap->id, NULL, NULL);
-        }
-    }
-
     // Do we need to prepare a detail texture?
     if(mat->detail)
     {
