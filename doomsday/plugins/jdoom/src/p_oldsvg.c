@@ -109,9 +109,9 @@ static void SV_ReadPlayer(player_t* pl)
     SV_ReadLong();
     pl->playerState = SV_ReadLong();
     SV_Read(NULL, 8);
-    pl->plr->viewZ = FIX2FLT(SV_ReadLong());
-    pl->plr->viewHeight = FIX2FLT(SV_ReadLong());
-    pl->plr->viewHeightDelta = FIX2FLT(SV_ReadLong());
+    pl->viewZ = FIX2FLT(SV_ReadLong());
+    pl->viewHeight = FIX2FLT(SV_ReadLong());
+    pl->viewHeightDelta = FIX2FLT(SV_ReadLong());
     pl->bob = FLT2FIX(SV_ReadLong());
     pl->flyHeight = 0;
     pl->health = SV_ReadLong();

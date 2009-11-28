@@ -972,7 +972,7 @@ static void P_ResetWorldState(void)
 
         plr->killCount = plr->secretCount = plr->itemCount = 0;
         // Initial height of PointOfView; will be set by player think.
-        plr->plr->viewZ = 1;
+        plr->viewZ = 1;
 
         AM_SetCheatLevel(map, 0);
         AM_RevealMap(map, false);

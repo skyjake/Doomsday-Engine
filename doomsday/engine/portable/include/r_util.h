@@ -32,8 +32,8 @@
 int             R_PointOnSide(const float x, const float y,
                               const partition_t* par);
 angle_t         R_PointToAngle(float x, float y);
-angle_t         R_PointToAngle2(const float x1, const float y1,
-                                const float x2, const float y2);
+angle_t         R_PointToAngle2(float x1, float y1,
+                                float x2, float y2);
 float           R_PointToDist(const float x, const float y);
 linedef_t*      R_GetLineForSide(const uint sideIDX);
 subsector_t*    R_PointInSubsector(const float x, const float y);

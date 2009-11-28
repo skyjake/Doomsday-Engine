@@ -71,9 +71,6 @@ typedef struct player_s {
     playerclass_t   class; // player class type
     playerbrain_t   brain;
 
-    float           viewOffset[3];
-    float           bob; // Bounded/scaled total momentum.
-
     // This is only used between maps, mo->health is used during maps.
     int             health;
     int             armorPoints;
@@ -130,14 +127,17 @@ typedef struct player_s {
     // True if secret map has been done.
     boolean         didSecret;
 
-    // The player's view pitch is centering back to zero.
-    boolean         centering;
-
-    // The player can jump if this counter is zero.
-    int             jumpTics;
+    int             jumpTics; // The player can jump if this counter is zero.
     int             airCounter;
     int             rebornWait; // The player can be reborn if this counter is zero.
+    boolean         centering; // The player's view pitch is centering back to zero.
     int             update, startSpot;
+
+    float           viewOffset[3]; // Relative to position of the player mobj.
+    float           viewZ; // Focal origin above r.z.
+    float           viewHeight; // Base height above floor for viewZ.
+    float           viewHeightDelta;
+    float           bob; // Bounded/scaled total momentum.
 
     // Target view to a mobj (NULL=disabled).
     mobj_t*         viewLock; // $democam

@@ -807,13 +807,14 @@ vissprite_t* R_NewVisSprite(void)
  */
 void R_ProjectPlayerSprites(void)
 {
-    int                 i;
-    float               inter;
-    modeldef_t*         mf, *nextmf;
-    ddpsprite_t*        psp;
-    boolean             isFullBright = (levelFullBright != 0);
-    boolean             isModel;
-    ddplayer_t*         ddpl = &viewPlayer->shared;
+    int i;
+    float inter;
+    modeldef_t* mf, *nextmf;
+    ddpsprite_t* psp;
+    boolean isFullBright = (levelFullBright != 0);
+    boolean isModel;
+    ddplayer_t* ddpl = &viewPlayer->shared;
+    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
 
     psp3d = false;
 
@@ -837,7 +838,7 @@ void R_ProjectPlayerSprites(void)
 
     for(i = 0, psp = ddpl->pSprites; i < DDMAXPSPRITES; ++i, psp++)
     {
-        vispsprite_t*       spr = &visPSprites[i];
+        vispsprite_t* spr = &visPSprites[i];
 
         spr->type = VPSPR_SPRITE;
         spr->psp = psp;
@@ -849,7 +850,7 @@ void R_ProjectPlayerSprites(void)
         isModel = false;
         if(useModels)
         {   // Is there a model for this frame?
-            mobj_t              dummy;
+            mobj_t dummy;
 
             // Setup a dummy for the call to R_CheckModelFor.
             dummy.state = psp->statePtr;
@@ -870,7 +871,7 @@ void R_ProjectPlayerSprites(void)
             spr->data.model.subsector = ddpl->mo->subsector;
             spr->data.model.flags = 0;
             // 32 is the raised weapon height.
-            spr->data.model.gzt = viewZ;
+            spr->data.model.gzt = viewData->current.pos[VZ];
             spr->data.model.secFloor = ddpl->mo->subsector->sector->SP_floorvisheight;
             spr->data.model.secCeil = ddpl->mo->subsector->sector->SP_ceilvisheight;
             spr->data.model.pClass = 0;
@@ -880,9 +881,9 @@ void R_ProjectPlayerSprites(void)
             spr->data.model.nextMF = nextmf;
             spr->data.model.inter = inter;
             spr->data.model.viewAligned = true;
-            spr->center[VX] = viewX;
-            spr->center[VY] = viewY;
-            spr->center[VZ] = viewZ;
+            spr->center[VX] = viewData->current.pos[VX];
+            spr->center[VY] = viewData->current.pos[VY];
+            spr->center[VZ] = viewData->current.pos[VZ];
 
             // Offsets to rotation angles.
             spr->data.model.yawAngleOffset = psp->pos[VX] * weaponOffsetScale - 90;
@@ -893,8 +894,8 @@ void R_ProjectPlayerSprites(void)
                 spr->data.model.pitchAngleOffset -= weaponFOVShift * (fieldOfView - 90) / 90;
             // Real rotation angles.
             spr->data.model.yaw =
-                viewAngle / (float) ANGLE_MAX *-360 + spr->data.model.yawAngleOffset + 90;
-            spr->data.model.pitch = viewPitch * 85 / 110 + spr->data.model.yawAngleOffset;
+                viewData->current.angle / (float) ANGLE_MAX *-360 + spr->data.model.yawAngleOffset + 90;
+            spr->data.model.pitch = viewData->current.pitch * 85 / 110 + spr->data.model.yawAngleOffset;
             memset(spr->data.model.visOff, 0, sizeof(spr->data.model.visOff));
 
             spr->data.model.alpha = psp->alpha;
@@ -905,9 +906,9 @@ void R_ProjectPlayerSprites(void)
             spr->type = VPSPR_SPRITE;
 
             // Adjust the center slightly so an angle can be calculated.
-            spr->center[VX] = viewX;
-            spr->center[VY] = viewY;
-            spr->center[VZ] = viewZ;
+            spr->center[VX] = viewData->current.pos[VX];
+            spr->center[VY] = viewData->current.pos[VY];
+            spr->center[VZ] = viewData->current.pos[VZ];
 
             spr->data.sprite.subsector = ddpl->mo->subsector;
             spr->data.sprite.alpha = psp->alpha;
@@ -1137,28 +1138,29 @@ void getLightingParams(float x, float y, float z, subsector_t* ssec,
  */
 void R_ProjectSprite(mobj_t* mo)
 {
-    sector_t*           sect = mo->subsector->sector;
-    float               thangle = 0, alpha, floorClip, secFloor, secCeil;
-    float               pos[2], yaw, pitch;
-    vec3_t              visOff;
-    spritedef_t*        sprDef;
-    spriteframe_t*      sprFrame = NULL;
-    int                 i, tmap = 0, tclass = 0;
-    unsigned            rot;
-    boolean             matFlipS, matFlipT;
-    vissprite_t*        vis;
-    angle_t             ang;
-    boolean             align, fullBright, viewAlign, floorAdjust;
-    modeldef_t*         mf = NULL, *nextmf = NULL;
-    float               interp = 0, distance, gzt;
-    spritetex_t*        sprTex;
-    vismobjzparams_t    params;
-    visspritetype_t     visType = VSPR_SPRITE;
-    float               ambientColor[3];
-    uint                vLightListIdx = 0;
-    material_t*         mat;
+    sector_t* sect = mo->subsector->sector;
+    float thangle = 0, alpha, floorClip, secFloor, secCeil;
+    float pos[2], yaw, pitch;
+    vec3_t visOff;
+    spritedef_t* sprDef;
+    spriteframe_t* sprFrame = NULL;
+    int i, tmap = 0, tclass = 0;
+    unsigned rot;
+    boolean matFlipS, matFlipT;
+    vissprite_t* vis;
+    angle_t ang;
+    boolean align, fullBright, viewAlign, floorAdjust;
+    modeldef_t* mf = NULL, *nextmf = NULL;
+    float interp = 0, distance, gzt;
+    spritetex_t* sprTex;
+    vismobjzparams_t params;
+    visspritetype_t visType = VSPR_SPRITE;
+    float ambientColor[3];
+    uint vLightListIdx = 0;
+    material_t* mat;
     material_snapshot_t ms;
     material_load_params_t mparams;
+    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
 
     if(mo->ddFlags & DDMF_DONTDRAW || mo->translucency == 0xff ||
        mo->state == NULL || mo->state == states)
@@ -1170,8 +1172,8 @@ void R_ProjectSprite(mobj_t* mo)
     }
 
     // Transform the origin point.
-    pos[VX] = mo->pos[VX] - viewX;
-    pos[VY] = mo->pos[VY] - viewY;
+    pos[VX] = mo->pos[VX] - viewData->current.pos[VX];
+    pos[VY] = mo->pos[VY] - viewData->current.pos[VY];
 
     // Decide which patch to use for sprite relative to player.
 
@@ -1264,7 +1266,7 @@ void R_ProjectSprite(mobj_t* mo)
             // draw it. Otherwise large models are likely to disappear
             // too early.
             if(P_ApproxDistance
-               (distance, mo->pos[VZ] + (mo->height / 2) - viewZ) >
+                (distance, mo->pos[VZ] + (mo->height / 2) - viewData->current.pos[VZ]) >
                MAX_OBJECT_RADIUS)
             {
                 return; // Can't be visible.
@@ -1363,7 +1365,7 @@ void R_ProjectSprite(mobj_t* mo)
         if(mf->sub[0].flags & MFF_ALIGN_PITCH)
         {
             pitch = -BANG2DEG(bamsAtan2
-                              (((vis->center[VZ] + gzt) / 2 - viewZ) * 10,
+                (((vis->center[VZ] + gzt) / 2 - viewData->current.pos[VZ]) * 10,
                               distance * 10));
         }
         else if(mf->sub[0].flags & MFF_MOVEMENT_PITCH)

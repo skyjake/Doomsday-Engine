@@ -1406,7 +1406,7 @@ static void initData(hudstate_t* hud)
     hud->lastAttackDown = -1;
     hud->blended = false;
     hud->showBar = 0.f;
-    hud->statusbarCounterAlpha = 0.f;
+    hud->statusbarCounterAlpha = 1.f;
 
     for(i = 0; i < 3; ++i)
     {

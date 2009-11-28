@@ -32,6 +32,7 @@
 
 #include "de_base.h"
 #include "de_refresh.h"
+#include "de_play.h"
 
 #include "p_dmu.h"
 
@@ -156,6 +157,52 @@ int R_SlopeDiv(unsigned num, unsigned den)
     return ans <= SLOPERANGE ? ans : SLOPERANGE;
 }
 
+static angle_t pointToAngle(float x, float y)
+{
+    fixed_t pos[2];
+
+    if(x == 0 && y == 0)
+        return 0;
+
+    pos[VX] = FLT2FIX(x);
+    pos[VY] = FLT2FIX(y);
+
+    if(pos[VX] >= 0)
+    {   // x >=0
+        if(pos[VY] >= 0)
+        {   // y>= 0
+            if(pos[VX] > pos[VY])
+                return tantoangle[R_SlopeDiv(pos[VY], pos[VX])]; // octant 0
+
+            return ANG90 - 1 - tantoangle[R_SlopeDiv(pos[VX], pos[VY])]; // octant 1
+        }
+
+        // y<0
+        pos[VY] = -pos[VY];
+        if(pos[VX] > pos[VY])
+            return -tantoangle[R_SlopeDiv(pos[VY], pos[VX])]; // octant 8
+
+        return ANG270 + tantoangle[R_SlopeDiv(pos[VX], pos[VY])]; // octant 7
+    }
+
+    // x<0
+    pos[VX] = -pos[VX];
+    if(pos[VY] >= 0)
+    {   // y>= 0
+        if(pos[VX] > pos[VY])
+            return ANG180 - 1 - tantoangle[R_SlopeDiv(pos[VY], pos[VX])]; // octant 3
+
+        return ANG90 + tantoangle[R_SlopeDiv(pos[VX], pos[VY])]; // octant 2
+    }
+
+    // y<0
+    pos[VY] = -pos[VY];
+    if(pos[VX] > pos[VY])
+        return ANG180 + tantoangle[R_SlopeDiv(pos[VY], pos[VX])]; // octant 4
+
+    return ANG270 - 1 - tantoangle[R_SlopeDiv(pos[VX], pos[VY])]; // octant 5
+}
+
 /**
  * To get a global angle from cartesian coordinates, the coordinates are
  * flipped until they are in the first octant of the coordinate system, then
@@ -170,72 +217,30 @@ int R_SlopeDiv(unsigned num, unsigned den)
  */
 angle_t R_PointToAngle(float x, float y)
 {
-    fixed_t             pos[2];
+    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
 
-    x -= viewX;
-    y -= viewY;
+    x -= viewData->current.pos[VX];
+    y -= viewData->current.pos[VY];
 
-    if(x == 0 && y == 0)
-        return 0;
-
-    pos[VX] = FLT2FIX(x);
-    pos[VY] = FLT2FIX(y);
-
-    if(pos[VX] >= 0)
-    {   // x >=0
-        if(pos[VY] >= 0)
-        {   // y>= 0
-            if(pos[VX] > pos[VY])
-                return tantoangle[R_SlopeDiv(pos[VY], pos[VX])];                // octant 0
-            else
-                return ANG90 - 1 - tantoangle[R_SlopeDiv(pos[VX], pos[VY])];    // octant 1
-        }
-        else
-        {   // y<0
-            pos[VY] = -pos[VY];
-            if(pos[VX] > pos[VY])
-                return -tantoangle[R_SlopeDiv(pos[VY], pos[VX])];               // octant 8
-            else
-                return ANG270 + tantoangle[R_SlopeDiv(pos[VX], pos[VY])];       // octant 7
-        }
-    }
-    else
-    {   // x<0
-        pos[VX] = -pos[VX];
-        if(pos[VY] >= 0)
-        {   // y>= 0
-            if(pos[VX] > pos[VY])
-                return ANG180 - 1 - tantoangle[R_SlopeDiv(pos[VY], pos[VX])];   // octant 3
-            else
-                return ANG90 + tantoangle[R_SlopeDiv(pos[VX], pos[VY])];        // octant 2
-        }
-        else
-        {   // y<0
-            pos[VY] = -pos[VY];
-            if(pos[VX] > pos[VY])
-                return ANG180 + tantoangle[R_SlopeDiv(pos[VY], pos[VX])];       // octant 4
-            else
-                return ANG270 - 1 - tantoangle[R_SlopeDiv(pos[VX], pos[VY])];   // octant 5
-        }
-    }
+    return pointToAngle(x, y);
 }
 
-angle_t R_PointToAngle2(const float x1, const float y1,
-                        const float x2, const float y2)
+angle_t R_PointToAngle2(float x1, float y1, float x2, float y2)
 {
-    viewX = x1;
-    viewY = y1;
-    return R_PointToAngle(x2, y2);
+    x2 -= x1;
+    y2 -= y1;
+
+    return pointToAngle(x2, y2);
 }
 
 float R_PointToDist(const float x, const float y)
 {
-    uint                angle;
-    float               dx, dy, temp;
-    float               dist;
+    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+    float dx, dy, temp, dist;
+    uint angle;
 
-    dx = fabs(x - viewX);
-    dy = fabs(y - viewY);
+    dx = fabs(x - viewData->current.pos[VX]);
+    dy = fabs(y - viewData->current.pos[VY]);
 
     if(dy > dx)
     {

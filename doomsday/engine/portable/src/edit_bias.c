@@ -145,9 +145,10 @@ void SBE_Register(void)
 
 static void SBE_GetHand(float pos[3])
 {
-    pos[0] = vx + viewFrontVec[VX] * editDistance;
-    pos[1] = vz + viewFrontVec[VZ] * editDistance;
-    pos[2] = vy + viewFrontVec[VY] * editDistance;
+    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+    pos[0] = vx + viewData->frontVec[VX] * editDistance;
+    pos[1] = vz + viewData->frontVec[VZ] * editDistance;
+    pos[2] = vy + viewData->frontVec[VY] * editDistance;
 }
 
 static source_t *SBE_GrabSource(int index)
@@ -200,13 +201,14 @@ static source_t *SBE_GetNearest(void)
 
 static void SBE_GetHueColor(float *color, float *angle, float *sat)
 {
-    int                 i;
-    float               dot;
-    float               saturation, hue, scale;
-    float               minAngle = 0.1f, range = 0.19f;
-    vec3_t              h, proj;
+    int i;
+    float dot;
+    float saturation, hue, scale;
+    float minAngle = 0.1f, range = 0.19f;
+    vec3_t h, proj;
+    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
 
-    dot = M_DotProduct(viewFrontVec, hueOrigin);
+    dot = M_DotProduct(viewData->frontVec, hueOrigin);
     saturation = (acos(dot) - minAngle) / range;
 
     if(saturation < 0)
@@ -229,12 +231,12 @@ static void SBE_GetHueColor(float *color, float *angle, float *sat)
 
     // Calculate hue angle by projecting the current viewfront to the
     // hue circle plane.  Project onto the normal and subtract.
-    scale = M_DotProduct(viewFrontVec, hueOrigin) /
+    scale = M_DotProduct(viewData->frontVec, hueOrigin) /
         M_DotProduct(hueOrigin, hueOrigin);
     M_Scale(h, hueOrigin, scale);
 
     for(i = 0; i < 3; ++i)
-        proj[i] = viewFrontVec[i] - h[i];
+        proj[i] = viewData->frontVec[i] - h[i];
 
     // Now we have the projected view vector on the circle's plane.
     // Normalize the projected vector.
@@ -439,7 +441,7 @@ void SBE_MenuSave(ui_object_t *ob)
 
 void SBE_SetHueCircle(boolean activate)
 {
-    int                 i;
+    int i;
 
     if((signed) activate == editHueCircle)
         return; // No change in state.
@@ -451,12 +453,14 @@ void SBE_SetHueCircle(boolean activate)
 
     if(activate)
     {
+        const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+
         // Determine the orientation of the hue circle.
         for(i = 0; i < 3; ++i)
         {
-            hueOrigin[i] = viewFrontVec[i];
-            hueSide[i] = viewSideVec[i];
-            hueUp[i] = viewUpVec[i];
+            hueOrigin[i] = viewData->frontVec[i];
+            hueSide[i] = viewData->sideVec[i];
+            hueUp[i] = viewData->upVec[i];
         }
     }
 }

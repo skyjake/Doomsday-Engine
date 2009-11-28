@@ -445,12 +445,13 @@ Con_Printf("RDP: pt=%i ang=%i ld=%i len=%i type=%i\n", ptime,
  */
 void Demo_WriteLocalCamera(int plrNum)
 {
-    player_t           *plr = &ddPlayers[plrNum];
-    ddplayer_t         *ddpl = &plr->shared;
-    mobj_t             *mo = ddpl->mo;
-    fixed_t             x, y, z;
-    byte                flags;
-    boolean             incfov = (writeInfo[plrNum].fov != fieldOfView);
+    player_t* plr = &ddPlayers[plrNum];
+    ddplayer_t* ddpl = &plr->shared;
+    mobj_t* mo = ddpl->mo;
+    fixed_t x, y, z;
+    byte flags;
+    boolean incfov = (writeInfo[plrNum].fov != fieldOfView);
+    const viewdata_t* viewData = R_ViewData(plrNum);
 
     if(!mo)
         return;
@@ -474,8 +475,7 @@ void Demo_WriteLocalCamera(int plrNum)
     Msg_WriteShort(y >> 16);
     Msg_WriteByte(y >> 8);
 
-    //z = mo->pos[VZ] + ddpl->viewheight;
-    z = FLT2FIX(ddpl->viewZ);
+    z = FLT2FIX(mo->pos[VZ] + viewData->current.pos[VZ]);
     Msg_WriteShort(z >> 16);
     Msg_WriteByte(z >> 8);
 
@@ -577,7 +577,6 @@ void Demo_ReadLocalCamera(void)
         R_ResetViewer();
         demoFrameZ = z;
         Cl_MoveLocalPlayer(posDelta[VX], posDelta[VY], z, demoOnGround);
-        pl->viewZ = z; // Might get an unsynced frame is not set right now.
         posDelta[VX] = posDelta[VY] = posDelta[VZ] = 0;
     }
 }

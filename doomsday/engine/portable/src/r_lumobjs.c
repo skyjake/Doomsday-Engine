@@ -575,7 +575,8 @@ static int C_DECL lumobjSorter(const void* e1, const void* e2)
  */
 void LO_BeginFrame(void)
 {
-    uint                i;
+    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+    uint i;
 
     if(!(numLuminous > 0))
         return;
@@ -585,18 +586,19 @@ BEGIN_PROF( PROF_LUMOBJ_FRAME_SORT );
     // Update lumobj distances ready for linking and sorting.
     for(i = 0; i < numLuminous; ++i)
     {
-        lumobj_t*           lum = luminousList[i];
+        lumobj_t* lum = luminousList[i];
+        float pos[3];
+
+        V3_Subtract(pos, lum->pos, viewData->current.pos);
 
         // Approximate the distance in 3D.
-        luminousDist[i] = P_ApproxDistance3(lum->pos[VX] - viewX,
-                                            lum->pos[VY] - viewY,
-                                            lum->pos[VZ] - viewZ);
+        luminousDist[i] = P_ApproxDistance3(pos[VX], pos[VY], pos[VZ]);
     }
 
     if(loMaxLumobjs > 0 && numLuminous > loMaxLumobjs)
     {   // Sort lumobjs by distance from the viewer. Then clip all lumobjs
         // so that only the closest are visible (max loMaxLumobjs).
-        uint                n;
+        uint n;
 
         // Init the lumobj indices, sort array.
         for(i = 0; i < numLuminous; ++i)

@@ -131,12 +131,12 @@ boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle,
             {
                 mo->pos[VZ] = mo->ceilingZ - mo->height;
             }
-            player->plr->viewZ = mo->pos[VZ] + player->plr->viewHeight;
+            player->viewZ = mo->pos[VZ] + player->viewHeight;
         }
         else
         {
             mo->pos[VZ] = mo->floorZ;
-            player->plr->viewZ = mo->pos[VZ] + player->plr->viewHeight;
+            player->viewZ = mo->pos[VZ] + player->viewHeight;
             if(useFog)
             {
                 player->plr->lookDir = 0;

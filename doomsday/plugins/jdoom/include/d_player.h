@@ -62,8 +62,6 @@ typedef struct player_s {
     playerclass_t   class; // Player class type.
     playerbrain_t   brain;
 
-    float           viewOffset[3];
-    float           bob; // Bounded/scaled total momentum.
     int             health; // This is only used between levels, mo->health is used during levels.
     int             armorPoints;
     int             armorType; // Armor type is 0-2.
@@ -100,14 +98,19 @@ typedef struct player_s {
     int             colorMap; // Player skin colorshift, 0-3 for which color to draw player.
     pspdef_t        pSprites[NUMPSPRITES]; // Overlay view sprites (gun, etc).
     boolean         didSecret; // True if secret level has been done.
-    boolean         centering; // The player's view pitch is centering back to zero.
 
-    // The player can jump if this counter is zero.
-    int             jumpTics;
+    int             jumpTics; // The player can jump if this counter is zero.
     int             airCounter;
     int             flyHeight;
     int             rebornWait; // The player can be reborn if this counter is zero.
+    boolean         centering; // The player's view pitch is centering back to zero.
     int             update, startSpot;
+
+    float           viewOffset[3]; // Relative to position of the player mobj.
+    float           viewZ; // Focal origin above r.z.
+    float           viewHeight; // Base height above floor for viewZ.
+    float           viewHeightDelta;
+    float           bob; // Bounded/scaled total momentum.
 
     // Target view to a mobj (NULL=disabled):
     mobj_t*         viewLock; // $democam

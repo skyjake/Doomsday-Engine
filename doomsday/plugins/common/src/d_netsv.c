@@ -1174,7 +1174,8 @@ void NetSv_SendPlayerState(int srcPlrNum, int destPlrNum, int flags,
 
     if(flags & PSF_VIEW_HEIGHT)
     {
-        *ptr++ = (byte) pl->plr->viewHeight;
+        // @todo Do clients really need to know this?
+        *ptr++ = (byte) pl->viewHeight;
     }
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__

@@ -203,11 +203,13 @@ void Rend_Reset(void)
 
 void Rend_ModelViewMatrix(boolean useAngles)
 {
-    vx = viewX;
-    vy = viewZ;
-    vz = viewY;
-    vang = viewAngle / (float) ANGLE_MAX *360 - 90;
-    vpitch = viewPitch * 85.0 / 110.0;
+    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+
+    vx = viewData->current.pos[VX];
+    vy = viewData->current.pos[VZ];
+    vz = viewData->current.pos[VY];
+    vang = viewData->current.angle / (float) ANGLE_MAX *360 - 90;
+    vpitch = viewData->current.pitch * 85.0 / 110.0;
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -2149,7 +2151,8 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
 
     if(section == SEG_MIDDLE && softSurface)
     {
-        mobj_t*             mo = viewPlayer->shared.mo;
+        mobj_t* mo = viewPlayer->shared.mo;
+        const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
 
         /**
          * Can the player walk through this surface?
@@ -2159,10 +2162,11 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
          * opaque waterfall).
          */
 
-        if(viewZ > bottom && viewZ < top)
+        if(viewData->current.pos[VZ] > bottom &&
+           viewData->current.pos[VZ] < top)
         {
-            float               delta[2], pos, result[2];
-            linedef_t*          lineDef = seg->lineDef;
+            float delta[2], pos, result[2];
+            linedef_t* lineDef = seg->lineDef;
 
             delta[0] = lineDef->dX;
             delta[1] = lineDef->dY;
@@ -3314,17 +3318,19 @@ static void Rend_RenderNode(uint bspnum)
     }
     else
     {
-        node_t             *bsp;
-        byte                side;
+        const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+        node_t* bsp;
+        byte side;
 
         // Descend deeper into the nodes.
         bsp = NODE_PTR(bspnum);
 
         // Decide which side the view point is on.
-        side = R_PointOnSide(viewX, viewY, &bsp->partition);
+        side = R_PointOnSide(viewData->current.pos[VX], viewData->current.pos[VY],
+                             &bsp->partition);
 
-        Rend_RenderNode(bsp->children[side]);   // Recursively divide front space.
-        Rend_RenderNode(bsp->children[side ^ 1]);   // ...and back space.
+        Rend_RenderNode(bsp->children[side]); // Recursively divide front space.
+        Rend_RenderNode(bsp->children[side ^ 1]); // ...and back space.
     }
 }
 
@@ -3740,9 +3746,8 @@ void Rend_Vertexes(void)
 
 void Rend_RenderMap(void)
 {
-    binangle_t          viewside;
-    boolean             doLums =
-        (useDynLights || haloMode || spriteLight || useDecorations);
+    binangle_t viewside;
+    boolean doLums = (useDynLights || haloMode || spriteLight || useDecorations);
 
     // Set to true if dynlights are inited for this frame.
     loInited = false;
@@ -3754,6 +3759,8 @@ void Rend_RenderMap(void)
 
     if(!freezeRLs)
     {
+        const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+
         // Prepare for rendering.
         RL_ClearLists(); // Clear the lists for new quads.
         C_ClearRanges(); // Clear the clipper.
@@ -3782,19 +3789,20 @@ void Rend_RenderMap(void)
         // Add the backside clipping range (if vpitch allows).
         if(vpitch <= 90 - yfov / 2 && vpitch >= -90 + yfov / 2)
         {
-            float   a = fabs(vpitch) / (90 - yfov / 2);
+
+            float a = fabs(vpitch) / (90 - yfov / 2);
             binangle_t startAngle =
                 (binangle_t) (BANG_45 * fieldOfView / 90) * (1 + a);
             binangle_t angLen = BANG_180 - startAngle;
 
-            viewside = (viewAngle >> (32 - BAMS_BITS)) + startAngle;
+            viewside = (viewData->current.angle >> (32 - BAMS_BITS)) + startAngle;
             C_SafeAddRange(viewside, viewside + angLen);
             C_SafeAddRange(viewside + angLen, viewside + 2 * angLen);
         }
 
         // The viewside line for the depth cue.
-        viewsidex = -viewSin;
-        viewsidey = viewCos;
+        viewsidex = -viewData->viewSin;
+        viewsidey = viewData->viewCos;
 
         // We don't want subsector clipchecking for the first subsector.
         firstsubsector = true;

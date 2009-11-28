@@ -278,10 +278,10 @@ void D_ConsoleBg(int *width, int *height)
  */
 void G_UpdateEyeHeight(cvar_t* unused)
 {
-    player_t*           plr = &players[CONSOLEPLAYER];
+    player_t* plr = &players[CONSOLEPLAYER];
 
     if(!(plr->plr->flags & DDPF_CAMERA))
-        plr->plr->viewHeight = (float) cfg.plrViewHeight;
+        plr->viewHeight = (float) cfg.plrViewHeight;
 }
 
 /**

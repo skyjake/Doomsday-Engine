@@ -582,12 +582,10 @@ void Cl_MoveLocalPlayer(float dx, float dy, float z, boolean onground)
     if(onground)
     {
         mo->pos[VZ] = z - 1;
-        ddpl->viewHeight = 1;
     }
     else
     {
         mo->pos[VZ] = z;
-        ddpl->viewHeight = 0;
     }
 
     Cl_UpdatePlayerPos(consolePlayer);

@@ -1316,7 +1316,7 @@ void C_DECL A_MinotaurAtk3(mobj_t *actor)
         P_DamageMobj(actor->target, actor, actor, HITDICE(3), false);
         if((player = actor->target->player) != NULL)
         {   // Squish the player.
-            player->plr->viewHeightDelta = -16;
+            player->viewHeightDelta = -16;
         }
     }
     else

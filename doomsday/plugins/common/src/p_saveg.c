@@ -1021,9 +1021,9 @@ static void SV_WritePlayer(int playernum)
 #if __JHEXEN__
     SV_WriteLong(p->class);    // 2nd class...?
 #endif
-    SV_WriteLong(FLT2FIX(dp->viewZ));
-    SV_WriteLong(FLT2FIX(dp->viewHeight));
-    SV_WriteLong(FLT2FIX(dp->viewHeightDelta));
+    SV_WriteLong(FLT2FIX(p->viewZ));
+    SV_WriteLong(FLT2FIX(p->viewHeight));
+    SV_WriteLong(FLT2FIX(p->viewHeightDelta));
 #if !__JHEXEN__
     SV_WriteFloat(dp->lookDir);
 #endif
@@ -1187,9 +1187,10 @@ static void SV_ReadPlayer(player_t* p)
 #if __JHEXEN__
     p->class = SV_ReadLong();        // 2nd class...?
 #endif
-    dp->viewZ = FIX2FLT(SV_ReadLong());
-    dp->viewHeight = FIX2FLT(SV_ReadLong());
-    dp->viewHeightDelta = FIX2FLT(SV_ReadLong());
+
+    p->viewZ = FIX2FLT(SV_ReadLong());
+    p->viewHeight = FIX2FLT(SV_ReadLong());
+    p->viewHeightDelta = FIX2FLT(SV_ReadLong());
 #if !__JHEXEN__
     dp->lookDir = SV_ReadFloat();
 #endif

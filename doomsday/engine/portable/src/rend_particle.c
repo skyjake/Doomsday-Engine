@@ -109,8 +109,9 @@ static boolean isPtcGenVisible(const ptcgen_t* gen)
 
 static float pointDist(fixed_t c[3])
 {
-    float               dist = ((viewY - FIX2FLT(c[VY])) * -viewSin) -
-        ((viewX - FIX2FLT(c[VX])) * viewCos);
+    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+    float dist = ((viewData->current.pos[VY] - FIX2FLT(c[VY])) * -viewData->viewSin) -
+        ((viewData->current.pos[VX] - FIX2FLT(c[VX])) * viewData->viewCos);
 
     if(dist < 0)
         return -dist; // Always return positive.
@@ -496,18 +497,21 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
 
 static void renderParticles(int rtype, boolean withBlend)
 {
-    size_t              i;
-    int                 c;
-    DGLuint             tex = 0;
-    float               leftoff[3], rightoff[3];
-    ushort              primType = GL_QUADS;
-    blendmode_t         mode = BM_NORMAL, newMode;
+    size_t i;
+    int c;
+    DGLuint tex = 0;
+    float leftoff[3], rightoff[3];
+    ushort primType = GL_QUADS;
+    blendmode_t mode = BM_NORMAL, newMode;
 
+    {
+    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
     // viewSideVec points to the left.
     for(c = 0; c < 3; ++c)
     {
-        leftoff[c]  = viewUpVec[c] + viewSideVec[c];
-        rightoff[c] = viewUpVec[c] - viewSideVec[c];
+        leftoff[c]  = viewData->upVec[c] + viewData->sideVec[c];
+        rightoff[c] = viewData->upVec[c] - viewData->sideVec[c];
+    }
     }
 
     // Should we use a texture?

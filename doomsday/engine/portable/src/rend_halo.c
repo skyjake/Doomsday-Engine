@@ -145,15 +145,16 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
                      float viewXOffset, boolean primary,
                      boolean viewRelativeRotate)
 {
-    int             i, k;
-    float           viewPos[3];
-    float           viewToCenter[3], mirror[3], normalViewToCenter[3];
-    float           leftOff[3], rightOff[3], center[3], radius;
-    float           haloPos[3];
-    float           rgba[4], radX, radY, scale, turnAngle = 0;
-    float           fadeFactor = 1, secBold, secDimFactor;
-    float           colorAverage, f, distanceDim;
-    flare_t*        fl;
+    int i, k;
+    float viewPos[3];
+    float viewToCenter[3], mirror[3], normalViewToCenter[3];
+    float leftOff[3], rightOff[3], center[3], radius;
+    float haloPos[3];
+    float rgba[4], radX, radY, scale, turnAngle = 0;
+    float fadeFactor = 1, secBold, secDimFactor;
+    float colorAverage, f, distanceDim;
+    flare_t* fl;
+    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
 
     // In realistic mode we don't render secondary halos.
     if(!primary && haloRealistic)
@@ -175,8 +176,8 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
     // viewSideVec is to the left.
     for(i = 0; i < 3; ++i)
     {
-        leftOff[i] = viewUpVec[i] + viewSideVec[i];
-        rightOff[i] = viewUpVec[i] - viewSideVec[i];
+        leftOff[i] = viewData->upVec[i] + viewData->sideVec[i];
+        rightOff[i] = viewData->upVec[i] - viewData->sideVec[i];
     }
 
     rgba[CR] = color[CR];
@@ -194,7 +195,7 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
 
     // Apply the flare's X offset. (Positive is to the right.)
     for(i = 0; i < 3; i++)
-        center[i] -= viewXOffset * viewSideVec[i];
+        center[i] -= viewXOffset * viewData->sideVec[i];
 
     // Calculate the mirrored position.
     // Project viewtocenter vector onto viewSideVec.
@@ -206,14 +207,14 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
 
     // Calculate the dimming factor for secondary flares.
     M_Normalize(normalViewToCenter);
-    secDimFactor = M_DotProduct(normalViewToCenter, viewFrontVec);
+    secDimFactor = M_DotProduct(normalViewToCenter, viewData->frontVec);
 
-    scale = M_DotProduct(viewToCenter, viewFrontVec) /
-                M_DotProduct(viewFrontVec, viewFrontVec);
+    scale = M_DotProduct(viewToCenter, viewData->frontVec) /
+                M_DotProduct(viewData->frontVec, viewData->frontVec);
 
     for(i = 0; i < 3; i++)
         haloPos[i] = mirror[i] =
-            (viewFrontVec[i] * scale - viewToCenter[i]) * 2;
+            (viewData->frontVec[i] * scale - viewToCenter[i]) * 2;
     // Now adding 'mirror' to a position will mirror it.
 
     // Calculate texture turn angle.
@@ -223,7 +224,7 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
         // Both vectors are on the view plane.
         if(viewRelativeRotate)
         {
-            turnAngle = M_DotProduct(haloPos, viewUpVec);
+            turnAngle = M_DotProduct(haloPos, viewData->upVec);
             if(turnAngle > 1)
                 turnAngle = 1;
             else if(turnAngle < -1)
@@ -237,7 +238,7 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
                 turnAngle = acos(turnAngle);
 
             // On which side of the up vector (left or right)?
-            if(M_DotProduct(haloPos, viewSideVec) < 0)
+            if(M_DotProduct(haloPos, viewData->sideVec) < 0)
                 turnAngle = -turnAngle;
         }
         else

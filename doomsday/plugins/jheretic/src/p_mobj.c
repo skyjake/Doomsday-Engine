@@ -567,10 +567,9 @@ void P_MobjMoveZ(mobj_t *mo)
     // Check for smooth step up.
     if(mo->player && mo->pos[VZ] < mo->floorZ)
     {
-        mo->dPlayer->viewHeight -= mo->floorZ - mo->pos[VZ];
-
-        mo->dPlayer->viewHeightDelta =
-            (cfg.plrViewHeight - mo->dPlayer->viewHeight) / 8;
+        mo->player->viewHeight -= mo->floorZ - mo->pos[VZ];
+        mo->player->viewHeightDelta =
+            (cfg.plrViewHeight - mo->player->viewHeight) / 8;
     }
 
     // Adjust height.
@@ -625,7 +624,7 @@ void P_MobjMoveZ(mobj_t *mo)
             {
                 // Squat down. Decrease viewheight for a moment after
                 // hitting the ground (hard), and utter appropriate sound.
-                mo->dPlayer->viewHeightDelta = mo->mom[MZ] / 8;
+                mo->player->viewHeightDelta = mo->mom[MZ] / 8;
 
                 if(mo->player->health > 0)
                     S_StartSound(SFX_PLROOF, mo);
@@ -684,7 +683,7 @@ void P_MobjMoveZ(mobj_t *mo)
             {
                 // Squat down. Decrease viewheight for a moment after
                 // hitting the ground hard and utter appropriate sound.
-                mo->player->plr->viewHeightDelta = mo->mom[MZ] / 8;
+                mo->player->viewHeightDelta = mo->mom[MZ] / 8;
 #if __JHERETIC__
                 mo->player->jumpTics = 12; // Can't jump in a while.
 #endif

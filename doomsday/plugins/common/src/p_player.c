@@ -947,12 +947,12 @@ DEFCC(CCmdSetCamera)
         if(player->plr->flags & DDPF_CAMERA)
         {   // Is now a camera.
             if(player->plr->mo)
-                player->plr->mo->pos[VZ] += player->plr->viewHeight;
+                player->plr->mo->pos[VZ] += player->viewHeight;
         }
         else
         {   // Is now a "real" player.
             if(player->plr->mo)
-                player->plr->mo->pos[VZ] -= player->plr->viewHeight;
+                player->plr->mo->pos[VZ] -= player->viewHeight;
         }
     }
     return true;

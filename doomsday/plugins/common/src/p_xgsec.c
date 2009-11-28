@@ -2203,14 +2203,14 @@ int C_DECL XSTrav_Teleport(sector_t* sector, boolean ceiling, void* context,
                 {
                     thing->pos[VZ] = thceilz - thing->height;
                 }
-                thing->dPlayer->viewZ =
-                    thing->pos[VZ] + thing->dPlayer->viewHeight;
+                thing->player->viewZ =
+                    thing->pos[VZ] + thing->player->viewHeight;
             }
             else
             {
                 thing->pos[VZ] = thfloorz;
-                thing->dPlayer->viewZ =
-                    thing->pos[VZ] + thing->dPlayer->viewHeight;
+                thing->player->viewZ =
+                    thing->pos[VZ] + thing->player->viewHeight;
                 thing->dPlayer->lookDir = 0; /* $unifiedangles */
             }
 #if __JHERETIC__

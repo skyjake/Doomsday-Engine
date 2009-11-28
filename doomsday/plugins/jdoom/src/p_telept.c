@@ -196,8 +196,7 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
                 //mo->dPlayer->clLookDir = 0; /* $unifiedangles */
                 mo->dPlayer->lookDir = 0;
             }
-            mo->dPlayer->viewZ =
-                mo->pos[VZ] + mo->dPlayer->viewHeight;
+            mo->player->viewZ = mo->pos[VZ] + mo->player->viewHeight;
 
             //mo->dPlayer->clAngle = mo->angle; /* $unifiedangles */
             mo->dPlayer->flags |=

@@ -34,26 +34,36 @@ typedef struct viewport_s {
     int             x, y, width, height;
 } viewport_t;
 
-extern float    viewX, viewY, viewZ;
-extern float    viewFrontVec[3], viewUpVec[3], viewSideVec[3];
-extern float    viewXOffset, viewYOffset, viewZOffset;
-extern angle_t  viewAngle;
-extern float    viewPitch;
-extern angle_t  clipAngle;
-extern fixed_t  fineTangent[FINEANGLES / 2];
+typedef struct viewer_s {
+    float       pos[3];
+    angle_t     angle;
+    float       pitch;
+} viewer_t;
+
+typedef struct viewdata_s {
+    viewer_t        current; // Current view paramaters.
+    viewer_t        lastSharp[2]; // For smoothing.
+    float           frontVec[3], upVec[3], sideVec[3];
+    float           viewCos, viewSin;
+
+    // These are used when camera smoothing is disabled.
+    angle_t         frozenAngle;
+    float           frozenPitch;
+} viewdata_t;
+
+extern float    viewX, viewY, viewZ, viewPitch;
+extern int      viewAngle;
 
 extern float    frameTimePos;      // 0...1: fractional part for sharp game tics
-extern boolean  resyncFrameTimePos;
 extern int      loadInStartupMode;
 extern int      validCount;
 extern int      viewwidth, viewheight, viewwindowx, viewwindowy;
-extern boolean  setSizeNeeded;
 extern int      frameCount;
-extern int      viewAngleOffset;
 extern int      extraLight;
 extern float    extraLightDelta;
-extern float    viewCos, viewSin;
 extern int      rendInfoTris;
+
+extern fixed_t  fineTangent[FINEANGLES / 2];
 
 void            R_Register(void);
 void            R_Init(void);
@@ -64,7 +74,10 @@ void            R_EndWorldFrame(void);
 void            R_RenderPlayerView(int num);
 void            R_RenderPlayerViewBorder(void);
 void            R_RenderViewPorts(void);
+
+const viewdata_t* R_ViewData(int localPlayerNum);
 void            R_ResetViewer(void);
+
 void            R_SetViewWindow(int x, int y, int w, int h);
 void            R_NewSharpWorld(void);
 

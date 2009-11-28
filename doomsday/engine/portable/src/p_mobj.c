@@ -924,14 +924,6 @@ void P_MobjZMovement(mobj_t *mo)
 {
     float               gravity = FIX2FLT(mapGravity);
 
-    // check for smooth step up
-    if(mo->dPlayer && mo->pos[VZ] < mo->floorZ)
-    {
-        mo->dPlayer->viewHeight -= mo->floorZ - mo->pos[VZ];
-        mo->dPlayer->viewHeightDelta =
-            (41 - mo->dPlayer->viewHeight) / 8;
-    }
-
     // Adjust height.
     mo->pos[VZ] += mo->mom[MZ];
 
@@ -940,15 +932,6 @@ void P_MobjZMovement(mobj_t *mo)
     {
         if(mo->mom[MZ] < 0)
         {
-            if(mo->dPlayer && mo->mom[MZ] < -gravity * 8)
-            {
-                /**
-                 * Decrease viewheight for a moment after hitting the ground
-                 * (hard), and utter appropriate sound.
-                 */
-                mo->dPlayer->viewHeightDelta = mo->mom[MZ] / 8;
-            }
-
             mo->mom[MZ] = 0;
         }
 
@@ -962,15 +945,6 @@ void P_MobjZMovement(mobj_t *mo)
         // Hit the floor.
         if(mo->mom[MZ] < 0)
         {
-            if(mo->dPlayer && mo->mom[MZ] < -gravity * 8)
-            {
-                /**
-                 * Decrease viewheight for a moment after hitting the ground
-                 * (hard), and utter appropriate sound.
-                 */
-                mo->dPlayer->viewHeightDelta = mo->mom[MZ] / 8;
-            }
-
             mo->mom[MZ] = 0;
         }
 

@@ -282,14 +282,11 @@ enum {
     DD_OPENTOP,
     DD_OPENBOTTOM,
     DD_LOWFLOOR,
-    DD_VIEWX,
-    DD_VIEWY,
-    DD_VIEWZ,
-    DD_VIEWX_OFFSET,
-    DD_VIEWY_OFFSET,
-    DD_VIEWZ_OFFSET,
-    DD_VIEWANGLE,
-    DD_VIEWANGLE_OFFSET,
+    DD_VIEW_X,
+    DD_VIEW_Y,
+    DD_VIEW_Z,
+    DD_VIEW_ANGLE,
+    DD_VIEW_PITCH,
     DD_CPLAYER_THRUST_MUL,
     DD_GRAVITY,
     DD_PSPRITE_OFFSET_X, // 10x
@@ -1331,9 +1328,6 @@ typedef struct ticcmd_s {
     typedef struct ddplayer_s {
         ticcmd_t        cmd;
         struct mobj_s*  mo; // Pointer to a (game specific) mobj.
-        float           viewZ; // Focal origin above r.z.
-        float           viewHeight; // Base height above floor for viewZ.
-        float           viewHeightDelta;
         float           lookDir; // For mouse look.
         int             fixedColorMap; // Can be set to REDCOLORMAP, etc.
         int             extraLight; // So gun flashes light up areas.

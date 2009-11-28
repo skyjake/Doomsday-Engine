@@ -1758,7 +1758,7 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
     // Adjust the player's view, incase there has been a height change
     if(mobj->player)
     {
-        mobj->dPlayer->viewZ = mobj->pos[VZ] + mobj->dPlayer->viewHeight;
+        mobj->player->viewZ = mobj->pos[VZ] + mobj->player->viewHeight;
         mobj->dPlayer->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
     }
 

@@ -228,7 +228,6 @@ void NetCl_UpdateGameState(byte *data)
             mo->pos[VZ] = (float) NetCl_ReadShort();
             P_MobjSetPosition(mo);
             mo->angle = NetCl_ReadShort() << 16; /* $unifiedangles */
-            pl->plr->viewZ = mo->pos[VZ];
             // Update floorz and ceilingz.
 #if __JDOOM__ || __JDOOM64__
             P_CheckPosition3fv(mo, mo->pos);
@@ -564,7 +563,7 @@ void NetCl_UpdatePlayerState(byte *data, int plrNum)
 
     if(flags & PSF_VIEW_HEIGHT)
     {
-        pl->plr->viewHeight = (float) NetCl_ReadByte();
+        pl->viewHeight = (float) NetCl_ReadByte();
     }
 
 #if __JHERETIC || __JHEXEN__ || __JSTRIFE__

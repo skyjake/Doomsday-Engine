@@ -1411,7 +1411,7 @@ void C_DECL A_MinotaurAtk1(mobj_t* actor)
         if((player = actor->target->player) != NULL)
         {
             // Squish the player.
-            player->plr->viewHeightDelta = -16;
+            player->viewHeightDelta = -16;
         }
     }
 }
@@ -1536,7 +1536,7 @@ void C_DECL A_MinotaurAtk3(mobj_t* actor)
         if((player = actor->target->player) != NULL)
         {
             // Squish the player.
-            player->plr->viewHeightDelta = -16;
+            player->viewHeightDelta = -16;
         }
     }
     else

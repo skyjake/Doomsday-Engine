@@ -142,10 +142,10 @@ void R_DrawMapTitle(void)
 
 static void rendPlayerView(int player)
 {
-    player_t*           plr = &players[player];
-    boolean             special200 = false;
-    int                 viewAngleOffset =
-        ANGLE_MAX * -G_GetLookOffset(player);
+    player_t* plr = &players[player];
+    boolean special200 = false;
+    float viewPos[3], viewPitch;
+    angle_t viewAngle;
 
     if(IS_CLIENT)
     {
@@ -165,8 +165,7 @@ static void rendPlayerView(int player)
     // How about a bit of quake?
     if(localQuakeHappening[player] && !P_IsPaused())
     {
-        int                 intensity =
-            localQuakeHappening[player];
+        int intensity = localQuakeHappening[player];
 
         plr->viewOffset[VX] =
             (float) ((M_Random() % (intensity << 2)) - (intensity << 1));
@@ -178,17 +177,23 @@ static void rendPlayerView(int player)
         plr->viewOffset[VX] = plr->viewOffset[VY] = 0;
     }
 
-    DD_SetVariable(DD_VIEWX_OFFSET, &plr->viewOffset[VX]);
-    DD_SetVariable(DD_VIEWY_OFFSET, &plr->viewOffset[VY]);
-    DD_SetVariable(DD_VIEWZ_OFFSET, &plr->viewOffset[VZ]);
-    // The view angle offset.
-    DD_SetVariable(DD_VIEWANGLE_OFFSET, &viewAngleOffset);
+    viewPos[VX] = plr->plr->mo->pos[VX] + plr->viewOffset[VX];
+    viewPos[VY] = plr->plr->mo->pos[VY] + plr->viewOffset[VY];
+    viewPos[VZ] = plr->viewZ + plr->viewOffset[VZ];
+    viewAngle = plr->plr->mo->angle + (int) (ANGLE_MAX * -G_GetLookOffset(player));
+    viewPitch = plr->plr->lookDir;
+
+    DD_SetVariable(DD_VIEW_X, &viewPos[VX]);
+    DD_SetVariable(DD_VIEW_Y, &viewPos[VY]);
+    DD_SetVariable(DD_VIEW_Z, &viewPos[VZ]);
+    DD_SetVariable(DD_VIEW_ANGLE, &viewAngle);
+    DD_SetVariable(DD_VIEW_PITCH, &viewPitch);
 
     // $democam
     GL_SetFilter((plr->plr->flags & DDPF_VIEW_FILTER)? true : false);
     if(plr->plr->flags & DDPF_VIEW_FILTER)
     {
-        const float*        color = plr->plr->filterColor;
+        const float* color = plr->plr->filterColor;
         GL_SetFilterColor(color[CR], color[CG], color[CB], color[CA]);
     }
 
@@ -298,14 +303,6 @@ void G_Display(int layer)
 
             if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
                 return;
-
-            if(!IS_CLIENT && mapTime < 2)
-            {
-                // Don't render too early; the first couple of frames
-                // might be a bit unstable -- this should be considered
-                // a bug, but since there's an easy fix...
-                return;
-            }
 
             rendPlayerView(player);
 

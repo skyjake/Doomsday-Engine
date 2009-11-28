@@ -54,6 +54,8 @@
 #include "de_graphics.h"
 #include "de_refresh.h"
 #include "de_misc.h"
+#include "de_play.h"
+
 #include "lzss.h"
 
 // MACROS ------------------------------------------------------------------
@@ -709,20 +711,21 @@ void M_ProjectViewRelativeLine2D(const float center[2],
                                  float width, float offset,
                                  float start[2], float end[2])
 {
-    float       sinrv, cosrv;
+    const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
+    float sinrv, cosrv;
 
     if(alignToViewPlane)
     {   // Should be fully aligned to view plane.
-        sinrv = -viewCos;
-        cosrv = viewSin;
+        sinrv = -viewData->viewCos;
+        cosrv = viewData->viewSin;
     }
     else
     {
-        float       trx, try, thangle;
+        float trx, try, thangle;
 
         // Transform the origin point.
-        trx = center[VX] - viewX;
-        try = center[VY] - viewY;
+        trx = center[VX] - viewData->current.pos[VX];
+        try = center[VY] - viewData->current.pos[VY];
 
         thangle = BANG2RAD(bamsAtan2(try * 10, trx * 10)) - PI / 2;
         sinrv = sin(thangle);

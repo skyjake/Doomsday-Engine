@@ -110,9 +110,9 @@ static void SV_v13_ReadPlayer(player_t* pl)
     SV_v13_ReadLong(); // mo
     pl->playerState = SV_v13_ReadLong();
     SV_v13_Read(temp, 10); // ticcmd_t
-    ddpl->viewZ = FIX2FLT(SV_v13_ReadLong());
-    ddpl->viewHeight = FIX2FLT(SV_v13_ReadLong());
-    ddpl->viewHeightDelta = FIX2FLT(SV_v13_ReadLong());
+    pl->viewZ = FIX2FLT(SV_v13_ReadLong());
+    pl->viewHeight = FIX2FLT(SV_v13_ReadLong());
+    pl->viewHeightDelta = FIX2FLT(SV_v13_ReadLong());
     pl->bob = FIX2FLT(SV_v13_ReadLong());
     pl->flyHeight = SV_v13_ReadLong();
     ddpl->lookDir = SV_v13_ReadLong();

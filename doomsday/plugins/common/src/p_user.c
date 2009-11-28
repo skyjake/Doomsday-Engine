@@ -501,8 +501,8 @@ void P_DeathThink(player_t* player)
        player->plr->mo->type == MT_ICECHUNK)
 #endif
     {   // Flying bloody skull
-        player->plr->viewHeight = 6;
-        player->plr->viewHeightDelta = 0;
+        player->viewHeight = 6;
+        player->viewHeightDelta = 0;
 
         if(onground)
         {
@@ -528,13 +528,13 @@ void P_DeathThink(player_t* player)
     else // fall to the ground
 #endif
     {
-        if(player->plr->viewHeight > 6)
-            player->plr->viewHeight -= 1;
+        if(player->viewHeight > 6)
+            player->viewHeight -= 1;
 
-        if(player->plr->viewHeight < 6)
-            player->plr->viewHeight = 6;
+        if(player->viewHeight < 6)
+            player->viewHeight = 6;
 
-        player->plr->viewHeightDelta = 0;
+        player->viewHeightDelta = 0;
 
 #if __JHERETIC__ || __JHEXEN__
         if(player->plr->lookDir > 0)

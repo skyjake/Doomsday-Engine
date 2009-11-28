@@ -101,7 +101,7 @@ void P_CalcHeight(player_t* plr)
     // During demo playback the view is thought to be airborne if viewheight
     // is zero (Cl_MoveLocalPlayer).
     if(Get(DD_PLAYBACK))
-        airborne = !ddplr->viewHeight;
+        airborne = !plr->viewHeight;
     else
         airborne = pmo->pos[VZ] > pmo->floorZ; // Truly in the air?
 
@@ -152,31 +152,31 @@ void P_CalcHeight(player_t* plr)
         // Move viewheight.
         if(plr->playerState == PST_LIVE)
         {
-            ddplr->viewHeight += ddplr->viewHeightDelta;
+            plr->viewHeight += plr->viewHeightDelta;
 
-            if(ddplr->viewHeight > VIEW_HEIGHT)
+            if(plr->viewHeight > VIEW_HEIGHT)
             {
-                ddplr->viewHeight = VIEW_HEIGHT;
-                ddplr->viewHeightDelta = 0;
+                plr->viewHeight = VIEW_HEIGHT;
+                plr->viewHeightDelta = 0;
             }
-            else if(ddplr->viewHeight < VIEW_HEIGHT / 2.0f)
+            else if(plr->viewHeight < VIEW_HEIGHT / 2.0f)
             {
-                ddplr->viewHeight = VIEW_HEIGHT / 2.0f;
-                if(ddplr->viewHeightDelta <= 0)
-                    ddplr->viewHeightDelta = 1;
+                plr->viewHeight = VIEW_HEIGHT / 2.0f;
+                if(plr->viewHeightDelta <= 0)
+                    plr->viewHeightDelta = 1;
             }
 
-            if(ddplr->viewHeightDelta)
+            if(plr->viewHeightDelta)
             {
-                ddplr->viewHeightDelta += 0.25f;
-                if(!ddplr->viewHeightDelta)
-                    ddplr->viewHeightDelta = 1;
+                plr->viewHeightDelta += 0.25f;
+                if(!plr->viewHeightDelta)
+                    plr->viewHeightDelta = 1;
             }
         }
     }
 
     // Set the plr's eye-level Z coordinate.
-    ddplr->viewZ = pmo->pos[VZ] + (P_MobjIsCamera(pmo)? 0 : ddplr->viewHeight);
+    plr->viewZ = pmo->pos[VZ] + (P_MobjIsCamera(pmo)? 0 : plr->viewHeight);
 
     // During demo playback (or camera mode) the viewz will not be modified
     // any further.
@@ -185,7 +185,7 @@ void P_CalcHeight(player_t* plr)
     {
         if(morphed)
         {   // Chicken or pig.
-            ddplr->viewZ -= 20;
+            plr->viewZ -= 20;
         }
 
         // Foot clipping is done for living players.
@@ -193,7 +193,7 @@ void P_CalcHeight(player_t* plr)
         {
             if(pmo->floorClip && pmo->pos[VZ] <= pmo->floorZ)
             {
-                ddplr->viewZ -= pmo->floorClip;
+                plr->viewZ -= pmo->floorClip;
             }
         }
     }

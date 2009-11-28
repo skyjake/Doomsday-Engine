@@ -476,10 +476,10 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     if(p->plr->flags & DDPF_CAMERA)
     {
         p->plr->mo->pos[VZ] += (float) cfg.plrViewHeight;
-        p->plr->viewHeight = 0;
+        p->viewHeight = p->viewZ = 0;
     }
     else
-        p->plr->viewHeight = (float) cfg.plrViewHeight;
+        p->viewHeight = p->viewZ = (float) cfg.plrViewHeight;
 
     // Give all cards in death match mode.
     if(deathmatch)

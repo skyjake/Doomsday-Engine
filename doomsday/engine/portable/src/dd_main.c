@@ -960,29 +960,20 @@ void* DD_GetVariable(int ddvalue)
         case DD_GAME_EXPORTS:
             return &gx;
 
-        case DD_VIEWX:
+        case DD_VIEW_X:
             return &viewX;
 
-        case DD_VIEWY:
+        case DD_VIEW_Y:
             return &viewY;
 
-        case DD_VIEWZ:
+        case DD_VIEW_Z:
             return &viewZ;
 
-        case DD_VIEWX_OFFSET:
-            return &viewXOffset;
-
-        case DD_VIEWY_OFFSET:
-            return &viewYOffset;
-
-        case DD_VIEWZ_OFFSET:
-            return &viewZOffset;
-
-        case DD_VIEWANGLE:
+        case DD_VIEW_ANGLE:
             return &viewAngle;
 
-        case DD_VIEWANGLE_OFFSET:
-            return &viewAngleOffset;
+        case DD_VIEW_PITCH:
+            return &viewPitch;
 
         case DD_SECTOR_COUNT:
             return &numSectors;
@@ -1149,36 +1140,24 @@ void DD_SetVariable(int ddvalue, void *parm)
     {
         switch(ddvalue)
         {
-        case DD_VIEWX:
+        case DD_VIEW_X:
             viewX = *(float*) parm;
             return;
 
-        case DD_VIEWY:
+        case DD_VIEW_Y:
             viewY = *(float*) parm;
             return;
 
-        case DD_VIEWZ:
+        case DD_VIEW_Z:
             viewZ = *(float*) parm;
             return;
 
-        case DD_VIEWX_OFFSET:
-            viewXOffset = *(float*) parm;
-            return;
-
-        case DD_VIEWY_OFFSET:
-            viewYOffset = *(float*) parm;
-            return;
-
-        case DD_VIEWZ_OFFSET:
-            viewZOffset = *(float*) parm;
-            return;
-
-        case DD_VIEWANGLE:
+        case DD_VIEW_ANGLE:
             viewAngle = *(angle_t*) parm;
             return;
 
-        case DD_VIEWANGLE_OFFSET:
-            viewAngleOffset = *(int*) parm;
+        case DD_VIEW_PITCH:
+            viewPitch = *(float*) parm;
             return;
 
         case DD_CPLAYER_THRUST_MUL:

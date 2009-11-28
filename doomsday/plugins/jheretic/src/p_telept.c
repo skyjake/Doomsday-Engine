@@ -89,12 +89,12 @@ boolean P_Teleport(mobj_t* thing, float x, float y, angle_t angle,
             {
                 thing->pos[VZ] = thing->ceilingZ - thing->height;
             }
-            player->plr->viewZ = thing->pos[VZ] + player->plr->viewHeight;
+            player->viewZ = thing->pos[VZ] + player->viewHeight;
         }
         else
         {
             thing->pos[VZ] = thing->floorZ;
-            player->plr->viewZ = thing->pos[VZ] + player->plr->viewHeight;
+            player->viewZ = thing->pos[VZ] + player->viewHeight;
             //player->plr->clLookDir = 0; /* $unifiedangles */
             player->plr->lookDir = 0;
         }
