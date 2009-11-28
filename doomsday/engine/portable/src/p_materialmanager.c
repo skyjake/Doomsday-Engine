@@ -633,7 +633,7 @@ materialnum_t P_MaterialNumForIndex(uint idx, material_namespace_t mnamespace)
     materialnum_t       result = P_MaterialCheckNumForIndex(idx, mnamespace);
 
     // Not found? Don't announce during map setup or if not yet inited.
-    if(result == 0 && (!ddMapSetup || !initedOk))
+    if(verbose && result == 0 && (!ddMapSetup || !initedOk))
         Con_Message("P_MaterialNumForIndex: %u in namespace %i not found!\n",
                     idx, mnamespace);
     return result;
@@ -733,7 +733,7 @@ materialnum_t P_MaterialNumForName(const char* name,
     result = P_MaterialCheckNumForName(name, mnamespace);
 
     // Not found?
-    if(result == 0 && !ddMapSetup) // Don't announce during map setup.
+    if(verbose && result == 0 && !ddMapSetup) // Don't announce during map setup.
         Con_Message("P_MaterialNumForName: \"%.8s\" in namespace %i not found!\n",
                     name, mnamespace);
     return result;
