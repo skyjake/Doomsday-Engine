@@ -76,6 +76,8 @@ ENDIF ( WIN32 )
 
 # Apple configuration.
 IF ( APPLE )
+    SET ( CMAKE_OSX_DEPLOYMENT_TARGET 10.4 )
+
     # Install into a bundle directory.
     SET ( DENG_BUNDLE_DIR Doomsday.app/Contents )
     SET ( DENG_BINARY_DIR ${DENG_BUNDLE_DIR}/MacOS )
