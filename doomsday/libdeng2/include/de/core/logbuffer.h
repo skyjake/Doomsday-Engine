@@ -77,14 +77,14 @@ namespace de
          * Enables log entries at or over a level. When a level is disabled, the 
          * entries will not be added to the log entry buffer.
          */
-        void enable(LogLevel overLevel = MESSAGE);
+        void enable(Log::LogLevel overLevel = Log::MESSAGE);
         
         /**
          * Disables the log. @see enable()
          */
-        void disable() { enable(MAX_LOG_LEVELS); }
+        void disable() { enable(Log::MAX_LOG_LEVELS); }
         
-        bool enabled(LogLevel overLevel = MESSAGE) const { 
+        bool enabled(Log::LogLevel overLevel = Log::MESSAGE) const { 
             return _enabledOverLevel <= overLevel; 
         }
 

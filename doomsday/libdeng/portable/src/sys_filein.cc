@@ -33,12 +33,13 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include "de_platform.h"
+
 #include <ctype.h>
 #include <time.h>
 #include <sys/stat.h>
 
 #include "doomsday.h"
-#include "de_platform.h"
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"

@@ -46,12 +46,12 @@
 
 #include <stdlib.h>
 
-#include "doomsday.h"
 #include "de_platform.h"
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_misc.h"
+#include "doomsday.h"
 
 #include "r_extres.h"
 #include "gl_draw.h" // for GL_SetFilter()
@@ -620,7 +620,7 @@ boolean W_AddFile(const char* fileName, boolean allowDuplicate)
         singleInfo.size = LONG(F_Length(handle));
 
         // Is there a prefix to be omitted in the name?
-        slash = strrchr(fileName, DIR_SEP_CHAR);
+        slash = (char*)strrchr(fileName, DIR_SEP_CHAR);
         // The slash mustn't be too early in the string.
         if(slash && slash >= fileName + 2)
         {

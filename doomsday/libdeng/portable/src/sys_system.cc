@@ -29,6 +29,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include "de_platform.h"
+
 #ifdef WIN32
 #  include <windows.h>
 #  include <process.h>

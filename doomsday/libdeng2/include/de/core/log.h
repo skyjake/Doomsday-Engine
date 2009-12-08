@@ -45,43 +45,47 @@
     de::String __logSectionName = str; \
     LOG_AS(__logSectionName.c_str());
     
-#define LOG_TRACE(str)      de::Log::threadLog().enter(de::TRACE, str)
-#define LOG_DEBUG(str)      de::Log::threadLog().enter(de::DEBUG, str)
-#define LOG_VERBOSE(str)    de::Log::threadLog().enter(de::VERBOSE, str)
+#define LOG_TRACE(str)      de::Log::threadLog().enter(de::Log::TRACE, str)
+#define LOG_DEBUG(str)      de::Log::threadLog().enter(de::Log::DEBUG, str)
+#define LOG_VERBOSE(str)    de::Log::threadLog().enter(de::Log::VERBOSE, str)
 #define LOG_MESSAGE(str)    de::Log::threadLog().enter(str)
-#define LOG_INFO(str)       de::Log::threadLog().enter(de::INFO, str)
-#define LOG_WARNING(str)    de::Log::threadLog().enter(de::WARNING, str)
-#define LOG_ERROR(str)      de::Log::threadLog().enter(de::ERROR, str)
-#define LOG_CRITICAL(str)   de::Log::threadLog().enter(de::CRITICAL, str)
+#define LOG_INFO(str)       de::Log::threadLog().enter(de::Log::INFO, str)
+#define LOG_WARNING(str)    de::Log::threadLog().enter(de::Log::WARNING, str)
+#define LOG_ERROR(str)      de::Log::threadLog().enter(de::Log::ERROR, str)
+#define LOG_CRITICAL(str)   de::Log::threadLog().enter(de::Log::CRITICAL, str)
+
+#ifdef WIN32
+#   undef ERROR
+#endif
 
 namespace de
 {   
     class LogBuffer;
     class LogEntry;
     
-    /// Level of the log entry.
-    enum LogLevel {
-        TRACE,      ///< Trace messages.
-        DEBUG,      ///< Debug messages.
-        VERBOSE,    ///< Verbose log messages.
-        MESSAGE,    ///< Normal log messages.
-        INFO,       ///< Important messages.
-        WARNING,    ///< A recoverable error.
-        ERROR,      ///< A nonrecoverable (but not fatal) error.
-        CRITICAL,   ///< Critical error (application will quit).
-        MAX_LOG_LEVELS
-    };
-
     /**
      * Logs provide means for adding log entries into the log entry buffer.
      * Each thread uses its own logs.
      *
      * @ingroup core
      */
-    class Log
+    class LIBDENG2_API Log
     {
     public:
-        class Section
+        /// Level of the log entry.
+        enum LogLevel {
+            TRACE,      ///< Trace messages.
+            DEBUG,      ///< Debug messages.
+            VERBOSE,    ///< Verbose log messages.
+            MESSAGE,    ///< Normal log messages.
+            INFO,       ///< Important messages.
+            WARNING,    ///< A recoverable error.
+            ERROR,      ///< A nonrecoverable (but not fatal) error.
+            CRITICAL,   ///< Critical error (application will quit).
+            MAX_LOG_LEVELS
+        };
+
+        class LIBDENG2_API Section
         {
         public:
             /**
@@ -161,7 +165,7 @@ namespace de
      *
      * @ingroup core
      */
-    class LogEntry 
+    class LIBDENG2_API LogEntry 
     {
     public:
         /**
@@ -169,7 +173,7 @@ namespace de
          *
          * @ingroup core
          */
-        class Arg : public String::IPatternArg
+        class LIBDENG2_API Arg : public String::IPatternArg
         {
         public:
             /// The wrong type is used in accessing the value. @ingroup errors
@@ -211,7 +215,9 @@ namespace de
         public:
             Arg(dint i) : _type(INTEGER) { _data.intValue = i; }
             Arg(duint i) : _type(INTEGER) { _data.intValue = i; }
+#ifndef WIN32
             Arg(dsize i) : _type(INTEGER) { _data.intValue = i; }
+#endif
             Arg(dint64 i) : _type(INTEGER) { _data.intValue = i; }
             Arg(ddouble d) : _type(FLOATING_POINT) { _data.floatValue = d; }
             Arg(const void* p) : _type(INTEGER) { _data.intValue = dint64(p); }
@@ -273,7 +279,7 @@ namespace de
             // Implements String::IPatternArg.
             ddouble asNumber() const {
                 if(_type == INTEGER) {
-                    return _data.intValue;
+                    return ddouble(_data.intValue);
                 } 
                 else if(_type == FLOATING_POINT) {
                     return _data.floatValue;
@@ -315,7 +321,7 @@ namespace de
         DEFINE_ERROR(IllegalFormatError);
         
     public:
-        LogEntry(LogLevel level, const String& section, const String& format); 
+        LogEntry(Log::LogLevel level, const String& section, const String& format); 
         ~LogEntry();
         
         /// Appends a new argument to the entry.
@@ -330,7 +336,7 @@ namespace de
         /// Returns the timestamp of the entry.
         Time when() const { return _when; }
 
-        LogLevel level() const { return _level; }
+        Log::LogLevel level() const { return _level; }
 
         /// Converts the log entry to a string.
         String asText(const Flags& flags = 0) const;
@@ -346,7 +352,7 @@ namespace de
 
     private:
         Time _when;
-        LogLevel _level;
+        Log::LogLevel _level;
         String _section;
         String _format;
         Flags _defaultFlags;

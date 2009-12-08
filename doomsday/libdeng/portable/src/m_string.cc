@@ -35,9 +35,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "doomsday.h"
 #include "de_base.h"
 #include "de_misc.h"
+#include "doomsday.h"
 
 // MACROS ------------------------------------------------------------------
 

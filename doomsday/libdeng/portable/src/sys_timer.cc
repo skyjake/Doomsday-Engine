@@ -31,7 +31,6 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomsday.h"
 #include "de_platform.h"
 
 #ifdef WIN32
@@ -44,6 +43,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "doomsday.h"
 
 // MACROS ------------------------------------------------------------------
 

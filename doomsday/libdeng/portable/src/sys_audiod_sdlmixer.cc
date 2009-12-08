@@ -28,6 +28,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include "de_platform.h"
 #include <stdlib.h>
 #include <string.h>
 

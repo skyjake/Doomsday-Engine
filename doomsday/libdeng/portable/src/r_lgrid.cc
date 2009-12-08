@@ -234,11 +234,11 @@ void LG_Init(void)
     size = center = 0;
     if(numSamples > 1)
     {
-        float       f = sqrt(numSamples);
+        float       f = sqrt(float(numSamples));
 
         if(ceil(f) != floor(f))
         {
-            size = sqrt(numSamples -1);
+            size = sqrt(float(numSamples - 1));
             center = 0;
         }
         else

@@ -365,6 +365,7 @@ uint N_IdentifyPlayer(nodeid_t id)
     // Clients receive messages only from the server.
     return 0;
 #endif
+    return 0;
 }
 
 /**

@@ -28,6 +28,8 @@
  * \fixme Needs to be redesigned.
  */
 
+#include "de_base.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

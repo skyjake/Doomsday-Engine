@@ -30,7 +30,6 @@
 #include <cassert>
 #include <typeinfo>
 #include <memory>
-#include <stdint.h>
 
 #ifdef WIN32
 #   ifdef LIBDENG2_EXPORTS
@@ -39,14 +38,30 @@
 #       define LIBDENG2_API __declspec(dllimport)
 #   endif
 #   define LIBDENG2_EXPORT __declspec(dllexport)
+
     // Disable warnings about non-exported (C++ standard library) base classes.
 #   pragma warning(disable: 4275)
 #   pragma warning(disable: 4251)
     // Disable warning about using this pointer in initializer list.
 #   pragma warning(disable: 4355)
+
+#   if defined(_MSC_VER)
+        // Microsoft Visual C++ lacks stdint.h, so define the integer types manually.
+        typedef signed __int8       int8_t;
+        typedef unsigned __int8     uint8_t;
+        typedef signed __int16      int16_t;
+        typedef unsigned __int16    uint16_t;
+        typedef signed __int32      int32_t;
+        typedef unsigned __int32    uint32_t;
+        typedef signed __int64      int64_t;
+        typedef unsigned __int64    uint64_t;
+#   endif
 #else
 #   define LIBDENG2_API
 #   define LIBDENG2_EXPORT
+
+    // Standard integer types.
+#   include <stdint.h>
 #endif
 
 /**
@@ -115,5 +130,6 @@ namespace de
 
 #include "Error"
 #include "version.h"
+#include "math.h"
 
 #endif /* LIBDENG2_H */

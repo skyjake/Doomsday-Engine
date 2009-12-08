@@ -37,6 +37,10 @@
 #include "dd_maptypes.h"
 #include "../portable/include/def_share.h" // \todo Not officially a public header file!
 
+#if defined(_MSC_VER)
+#   pragma warning (disable:4099)
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -745,7 +749,7 @@ typedef struct intercept_s {
     float           frac; // Along trace line.
     intercepttype_t type;
     union {
-        struct mobj_s* mo;
+        class mobj_s* mo;
         struct linedef_s* lineDef;
     } d;
 } intercept_t;

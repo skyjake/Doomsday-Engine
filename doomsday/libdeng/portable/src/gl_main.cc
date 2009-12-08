@@ -365,9 +365,9 @@ void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast,
     {
         if(gamma <= 0.1f)
             gamma = 0.1f;
-        norm = pow(255, 1 / gamma - 1); // Normalizing factor.
+        norm = pow(255.0, 1.0 / gamma - 1); // Normalizing factor.
         for(i = 0; i < 256; ++i)
-            ideal[i] = pow(ideal[i], 1 / gamma) / norm;
+            ideal[i] = pow(ideal[i], 1.0 / gamma) / norm;
     }
 
     // The last step is to add the brightness offset.

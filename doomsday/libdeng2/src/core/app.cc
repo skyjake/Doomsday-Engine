@@ -42,7 +42,7 @@ const duint DEFAULT_LOG_BUFFER_MAX_ENTRY_COUNT = 1000;
 App* App::_singleton = 0;
 
 App::App(const CommandLine& commandLine, const String& configPath, const String& homeSubFolder,
-    LogLevel defaultLogLevel)
+         Log::LogLevel defaultLogLevel)
     : _commandLine(commandLine), 
       _logBuffer(0),
       _memory(0), 
@@ -66,7 +66,7 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
 
 #ifdef _DEBUG
     // Enable all log entries by default in debug builds.
-    defaultLogLevel = DEBUG;
+    defaultLogLevel = Log::DEBUG;
 #endif
 
     // Create a buffer for log entries.
@@ -154,7 +154,7 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
         _logBuffer->setOutputFile(_config->gets("deng.log.file"));
         
         // The level of enabled messages.
-        _logBuffer->enable(LogLevel(_config->getui("deng.log.level")));
+        _logBuffer->enable(Log::LogLevel(_config->getui("deng.log.level")));
         
         // Load the basic plugins.
         loadPlugins();

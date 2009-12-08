@@ -30,7 +30,6 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomsday.h"
 #include "de_platform.h"
 
 #if defined(WIN32)
@@ -39,8 +38,6 @@
 #if defined(UNIX)
 #   include <unistd.h>
 #endif
-
-#include "de_platform.h"
 
 #if defined(WIN32)
 #  include <direct.h>
@@ -56,6 +53,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "doomsday.h"
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"

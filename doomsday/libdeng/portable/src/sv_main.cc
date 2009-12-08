@@ -1133,6 +1133,7 @@ int Sv_GetNumPlayers(void)
 
     return count;
 #endif
+    return 0;
 }
 
 /**
@@ -1153,6 +1154,7 @@ int Sv_GetNumConnected(void)
 
     return count;
 #endif
+    return 0;
 }
 
 /**
@@ -1197,6 +1199,7 @@ boolean Sv_CheckBandwidth(int playerNumber)
     // New messages will not be sent if there's too much already.
     return qSize <= 10 * limit;
 #endif
+    return false;
 }
 
 void Sv_PlaceMobj(mobj_t* mo, float x, float y, float z, boolean onFloor)
@@ -1288,6 +1291,6 @@ D_CMD(Logout)
     Msg_WriteByte(false);       // You're outta here.
     Net_SendBuffer(netRemoteUser, SPF_ORDERED);
     netRemoteUser = 0;
-    return true;
 #endif
+    return true;
 }

@@ -22,6 +22,14 @@
 
 #include <de/deng.h>
 
+#ifdef min
+#   undef min
+#endif
+
+#ifdef max
+#   undef max
+#endif
+
 namespace de
 {
     const ddouble PI = 3.14159265358979323846;

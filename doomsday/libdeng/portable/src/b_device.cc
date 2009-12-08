@@ -28,9 +28,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomsday.h"
 #include "de_base.h"
 #include "de_misc.h"
+#include "doomsday.h"
 
 #include "b_main.h"
 #include "b_device.h"
