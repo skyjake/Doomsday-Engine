@@ -31,6 +31,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include "de_base.h"
+
 #ifdef WIN32
 #   define WIN32_LEAN_AND_MEAN
 #   include <windows.h>
@@ -39,7 +41,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_graphics.h"
@@ -624,7 +625,7 @@ int FR_PrepareGDIFont(HFONT hfont)
     rect.top = 0;
     rect.right = bmpWidth;
     rect.bottom = bmpHeight;
-    FillRect(hdc, &rect, GetStockObject(BLACK_BRUSH));
+    FillRect(hdc, &rect, (HBRUSH)GetStockObject(BLACK_BRUSH));
 
     // Print all the characters.
     for(i = 0, x = 0, y = 0, maxh = 0; i < 256; ++i)
@@ -659,7 +660,7 @@ int FR_PrepareGDIFont(HFONT hfont)
 Con_Printf( "font: %d x %d\n", imgWidth, imgHeight);
 #endif
 */
-    image = M_Malloc(4 * imgWidth * imgHeight);
+    image = (uint32_t*) M_Malloc(4 * imgWidth * imgHeight);
     memset(image, 0, 4 * imgWidth * imgHeight);
     for(y = 0; y < bmpHeight; ++y)
         for(x = 0; x < bmpWidth; ++x)

@@ -26,7 +26,7 @@
 class TestApp : public de::App
 {
 public:
-    TestApp(const de::CommandLine& args) : de::App(args, "/config/testapp.de", "testapp", de::DEBUG) {
+    TestApp(const de::CommandLine& args) : de::App(args, "/config/testapp.de", "testapp", de::Log::DEBUG) {
         logBuffer().enableStandardOutput();
         LOG_MESSAGE("TestApp constructed.");
     }

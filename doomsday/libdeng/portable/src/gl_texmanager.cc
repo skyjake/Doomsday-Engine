@@ -307,7 +307,7 @@ static void calcGammaTable(void)
     // Clamp to a sane range.
     invGamma = 1.0f - MINMAX_OF(0, texGamma, 1);
     for(i = 0; i < 256; ++i)
-        gammaTable[i] = (byte)(255.0f * pow(i / 255.0f, invGamma));
+        gammaTable[i] = (byte)(255.0f * pow(i / 255.0, invGamma));
 }
 
 /**

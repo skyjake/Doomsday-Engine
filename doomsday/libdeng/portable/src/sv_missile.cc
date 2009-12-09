@@ -60,6 +60,7 @@ mislink_t *Sv_MRHash(pool_t *pool, thid_t id)
 #if 0
     return &pool->misHash[(unsigned) id % POOL_MISSILE_HASH_SIZE];
 #endif
+    return 0;
 }
 
 /**
@@ -80,8 +81,8 @@ misrecord_t *Sv_MRFind(pool_t *pool, thid_t id)
             return mis;
         }
     }
-    return NULL;
 #endif
+    return NULL;
 }
 
 /**

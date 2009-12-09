@@ -55,7 +55,7 @@ public:
 /// The logs table contains the log of each thread that uses logging.
 static Logs logs;
 
-LogEntry::LogEntry(LogLevel level, const String& section, const String& format)
+LogEntry::LogEntry(Log::LogLevel level, const String& section, const String& format)
     : _level(level), _section(section), _format(format), _disabled(false)
 {
     if(!App::logBuffer().enabled(level))
@@ -92,7 +92,7 @@ String LogEntry::asText(const Flags& formattingFlags) const
 
         if(!flags[STYLED_BIT])
         {
-            const char* levelNames[MAX_LOG_LEVELS] = {
+            const char* levelNames[Log::MAX_LOG_LEVELS] = {
                 "(...)",
                 "(deb)",
                 "(vrb)",
@@ -106,7 +106,7 @@ String LogEntry::asText(const Flags& formattingFlags) const
         }
         else
         {
-            const char* levelNames[MAX_LOG_LEVELS] = {
+            const char* levelNames[Log::MAX_LOG_LEVELS] = {
                 "Trace",
                 "Debug",
                 "Verbose",
@@ -117,7 +117,7 @@ String LogEntry::asText(const Flags& formattingFlags) const
                 "FATAL!"        
             };
             output << "\t" 
-                << (_level >= WARNING? TEXT_STYLE_LOG_BAD_LEVEL : TEXT_STYLE_LOG_LEVEL)
+                << (_level >= Log::WARNING? TEXT_STYLE_LOG_BAD_LEVEL : TEXT_STYLE_LOG_LEVEL)
                 << levelNames[_level] << "\t\r";
         }
     }
@@ -244,7 +244,7 @@ LogEntry& Log::enter(const String& format)
     return enter(MESSAGE, format);
 }
 
-LogEntry& Log::enter(LogLevel level, const String& format)
+LogEntry& Log::enter(Log::LogLevel level, const String& format)
 {
     if(!App::logBuffer().enabled(level))
     {

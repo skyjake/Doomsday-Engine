@@ -494,6 +494,7 @@ boolean N_ReceiveReliably(nodeid_t from)
     }
     return true;
 #endif
+    return false;
 }
 
 /**
@@ -972,6 +973,7 @@ boolean N_InitService(boolean inServerMode)
 
     return true;
 #endif
+    return false;
 }
 
 /**
@@ -1379,6 +1381,7 @@ boolean N_LookForHosts(const char *address, int port)
         return false;
     }
 #endif
+    return false;
 }
 
 /**
@@ -1464,6 +1467,7 @@ boolean N_Connect(int index)
     Cl_SendHello();
     return true;
 #endif
+    return false;
 }
 
 /**

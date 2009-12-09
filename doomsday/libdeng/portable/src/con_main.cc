@@ -40,6 +40,7 @@
 
 #ifdef WIN32
 #   include <process.h>
+#   undef ERROR
 #endif
 
 #include "de_base.h"

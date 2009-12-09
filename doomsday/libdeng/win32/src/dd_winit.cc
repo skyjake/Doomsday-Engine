@@ -32,6 +32,9 @@
 
 #include <de/App>
 #include <de/Library>
+#include <de/Vector>
+#include <de/Rectangle>
+#include <de/Log>
 
 using namespace de;
 
@@ -45,8 +48,6 @@ using namespace de;
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-extern "C" {
 
 #include "resource.h"
 
@@ -443,5 +444,3 @@ void DD_Shutdown(void)
 
     // Bye!
 }
-
-} // extern "C"

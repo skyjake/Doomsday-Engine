@@ -33,12 +33,18 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <de/core.h>
+
 #include "de_platform.h"
 
 #ifdef WIN32
 # define CURL_STATICLIB
 #endif
 #include <curl/curl.h>
+
+#ifdef WIN32
+#   undef ERROR
+#endif
 
 #include "de_base.h"
 #include "de_network.h"
@@ -47,8 +53,6 @@
 #include "de_misc.h"
 
 #include "r_world.h"
-
-#include <de/core.h>
 
 using namespace de;
 

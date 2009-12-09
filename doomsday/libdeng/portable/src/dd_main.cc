@@ -29,6 +29,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <de/Log>
+#include <de/Vector>
+#include <de/Rectangle>
+
 #ifdef WIN32
 #  define _WIN32_DCOM
 #  include <objbase.h>
@@ -51,7 +55,6 @@
 #include <time.h>
 #include <string.h>
 
-#include "de_base.h"
 #include "de_system.h"
 #include "de_console.h"
 #include "de_network.h"

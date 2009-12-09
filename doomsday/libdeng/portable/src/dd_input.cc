@@ -33,12 +33,12 @@
 
 #include <SDL.h>
 
-#include "doomsday.h"
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_misc.h"
 #include "de_ui.h"
+#include "doomsday.h"
 
 #include "gl_main.h"
 
@@ -444,7 +444,7 @@ boolean I_ParseDeviceAxis(const char* str, uint* deviceID, uint* axis)
     char                name[30], *ptr;
     inputdev_t*         device;
 
-    ptr = strchr(str, '-');
+    ptr = (char*)strchr(str, '-');
     if(!ptr)
         return false;
 

@@ -41,6 +41,13 @@
  */
 #if defined(WIN32)
 
+// Some libdeng2 classes are incompatible with Windows headers, so include them first.
+#include <de/Vector>
+#include <de/Rectangle>
+#include <de/Log>
+
+#pragma warning (disable:4099)
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <io.h>

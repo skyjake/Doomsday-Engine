@@ -237,6 +237,7 @@ int D_NetDisconnect(int before)
     G_StartTitle();
     return true;
 #endif
+    return false;
 }
 
 #if 0

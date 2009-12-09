@@ -839,6 +839,7 @@ uint Net_GetAckTime(int clientNumber)
         return client->ackTimes[0];
     }
 #endif
+    return 0;
 }
 
 /**
@@ -1298,6 +1299,7 @@ D_CMD(Connect)
     return Con_Busy(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
                     NULL, Net_ConnectWorker, &param);
 #endif
+    return 0;
 }
 
 /**

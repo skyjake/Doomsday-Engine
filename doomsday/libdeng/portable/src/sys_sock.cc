@@ -28,6 +28,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include "de_platform.h"
+
 #ifdef WIN32
 #   include <winsock.h>
 #endif

@@ -508,7 +508,7 @@ double M_Length(double x, double y)
 
 int M_NumDigits(int value)
 {
-    return floor(log10(abs(value))) + 1;
+    return floor(log10(float(abs(value)))) + 1;
 }
 
 /**
@@ -1156,7 +1156,7 @@ boolean M_CheckPath(const char* path)
  */
 void M_GetFileExt(char* ext, const char* path, size_t len)
 {
-    char*               ptr = strrchr(path, '.');
+    const char* ptr = strrchr(path, '.');
 
     *ext = 0;
     if(!ptr)

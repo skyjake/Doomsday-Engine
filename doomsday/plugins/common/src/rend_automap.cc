@@ -862,7 +862,7 @@ int renderPolyObjSeg(void* obj, void* context)
 boolean drawSegsOfPolyobject(polyobj_t* po, void* context)
 {
     int                 result = 1;
-    #warning drawSegsOfPolyobject: Disabled
+    //#warning drawSegsOfPolyobject: Disabled
     /*
     seg_t**             segPtr;
 

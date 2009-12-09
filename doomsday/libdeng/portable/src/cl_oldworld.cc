@@ -312,6 +312,7 @@ Con_Printf("lineflag %i: %02x\n", GET_LINE_IDX(line),
     // Continue reading.
     return true;
 #endif
+    return false;
 }
 
 /**

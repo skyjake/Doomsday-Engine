@@ -33,7 +33,7 @@ const duint SIMPLE_INDENT = 29;
 const duint RULER_LENGTH = 98 - SIMPLE_INDENT;
 
 LogBuffer::LogBuffer(duint maxEntryCount) 
-    : _enabledOverLevel(MESSAGE), 
+    : _enabledOverLevel(Log::MESSAGE), 
       _maxEntryCount(maxEntryCount),
       _standardOutput(false),
       _outputFile(0)
@@ -91,7 +91,7 @@ void LogBuffer::add(LogEntry* entry)
     _toBeFlushed.push_back(entry);
 }
 
-void LogBuffer::enable(LogLevel overLevel)
+void LogBuffer::enable(Log::LogLevel overLevel)
 {
     _enabledOverLevel = overLevel;
 }
@@ -124,7 +124,7 @@ void LogBuffer::flush()
     FOR_EACH(i, _toBeFlushed, EntryList::iterator)
     {
         // Error messages will go to stderr instead of stdout.
-        std::ostream* os = (_standardOutput? ((*i)->level() >= ERROR? &std::cerr : &std::cout) : 0);
+        std::ostream* os = (_standardOutput? ((*i)->level() >= Log::ERROR? &std::cerr : &std::cout) : 0);
         
         String message = (*i)->asText();
             

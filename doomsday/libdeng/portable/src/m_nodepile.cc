@@ -30,10 +30,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomsday.h"
 #include "de_base.h"
 #include "de_console.h"
 #include "de_misc.h"
+#include "doomsday.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -36,11 +36,11 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include "doomsday.h"
+#include "de_base.h"
+#include "de_console.h"
 #include "dd_types.h"
 #include "dd_share.h"
-
-#include "de_console.h"
+#include "doomsday.h"
 
 #include <stdlib.h>
 
