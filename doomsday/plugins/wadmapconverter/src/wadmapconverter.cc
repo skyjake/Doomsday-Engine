@@ -68,6 +68,8 @@ boolean verbose;
 
 // CODE --------------------------------------------------------------------
 
+BEGIN_EXTERN_C
+
 DENG_EXPORT const char* deng_LibraryType(void)
 {
     return "deng-plugin/generic";
@@ -86,6 +88,8 @@ DENG_EXPORT void deng_ShutdownPlugin(void)
 {
     Plug_RemoveHook(HOOK_MAP_CONVERT, ConvertMapHook);
 }
+
+END_EXTERN_C
 
 #ifdef WIN32
 /**

@@ -2001,6 +2001,8 @@ int DefsHook(int hook_type, int parm, void *data)
     return true;
 }
 
+BEGIN_EXTERN_C
+
 DENG_EXPORT const char* deng_LibraryType(void)
 {
     return "deng-plugin/generic";
@@ -2019,6 +2021,8 @@ DENG_EXPORT void deng_ShutdownPlugin(void)
 {
     Plug_RemoveHook(HOOK_DEFS, DefsHook);
 }
+
+END_EXTERN_C
 
 #ifdef WIN32
 /**
