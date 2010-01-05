@@ -769,7 +769,7 @@ byte GL_LoadDDTexture(image_t* image, const gltexture_inst_t* inst,
 byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst,
                           void* context)
 {
-    detailtex_t*        dTex;
+    detailtex_t* dTex;
 
     if(!image)
         return 0; // Wha?
@@ -778,7 +778,7 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst,
 
     if(dTex->external != NULL)
     {
-        filename_t          fileName;
+        filename_t fileName;
 
         if(!(R_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, fileName,
                              dTex->external, NULL, FILENAME_T_MAXLEN) &&
@@ -793,7 +793,7 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst,
     }
     else
     {
-        const byte*         data = W_CacheLumpNum(dTex->lump, PU_STATIC);
+        const byte* data = W_CacheLumpNum(dTex->lump, PU_STATIC);
 
         // First try loading it as a PCX image.
         if(PCX_MemoryGetSize(data, &image->width, &image->height))
@@ -804,10 +804,10 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst,
         }
         else // It must be a raw image.
         {
-            size_t              lumpLength = W_LumpLength(dTex->lump);
+            size_t lumpLength = W_LumpLength(dTex->lump);
 
             /**
-             * \ fixme we should not error out here if the lump is not
+             * @fixme we should not error out here if the lump is not
              * of the required format! Perform this check much earlier,
              * when the definitions are read and mark which are valid.
              */
@@ -833,6 +833,8 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst,
                     image->width = image->height = 128;
                 }
             }
+            else
+                image->width = image->height = 256;
 
             image->pixels = M_Malloc(image->width * image->height);
             memcpy(image->pixels, W_CacheLumpNum(dTex->lump, PU_CACHE),
