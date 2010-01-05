@@ -63,17 +63,16 @@
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // View window current position.
-static float windowX = 0;
-static float windowY = 0;
-static float windowWidth = 320;
-static float windowHeight = 200;
-static int targetX = 0, targetY = 0, targetWidth = 320, targetHeight = 200;
-static int oldWindowX = 0, oldWindowY = 0, oldWindowWidth = 320, oldWindowHeight = 200;
+static float windowX = 0, oldWindowX = 0;
+static float windowY = 0, oldWindowY = 0;
+static float windowWidth = SCREENWIDTH, oldWindowWidth = SCREENWIDTH;
+static float windowHeight = SCREENHEIGHT, oldWindowHeight = SCREENHEIGHT;
+static int targetX = -1, targetY = -1, targetWidth = -1, targetHeight = -1;
 static float windowPos = 0;
 
 static int gammaLevel;
 #ifndef __JHEXEN__
-char    gammamsg[5][81];
+char gammamsg[5][81];
 #endif
 
 // CODE --------------------------------------------------------------------
@@ -103,6 +102,15 @@ void R_PrecachePSprites(void)
 
 void R_SetViewWindowTarget(int x, int y, int w, int h)
 {
+    if(targetX == -1)
+    {   // First call.
+        windowX = oldWindowX = targetX = x;
+        windowY = oldWindowY = targetY = y;
+        windowWidth = oldWindowWidth = targetWidth = w;
+        windowHeight = oldWindowHeight = targetHeight = h;
+        return;
+    }
+
     if(x == targetX && y == targetY && w == targetWidth && h == targetHeight)
     {
         return;
@@ -127,6 +135,9 @@ void R_SetViewWindowTarget(int x, int y, int w, int h)
  */
 void R_ViewWindowTicker(void)
 {
+    if(targetX == -1)
+        return; // Nothing to do.
+
     windowPos += .4f;
     if(windowPos >= 1)
     {
