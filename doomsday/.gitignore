@@ -5,3 +5,4 @@ Makefile
 Doomsday.tmproj
 mybuild
 myrelease
+*.user
