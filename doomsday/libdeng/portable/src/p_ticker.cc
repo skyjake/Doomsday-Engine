@@ -37,6 +37,11 @@
 
 #include "r_sky.h"
 
+#include <de/App>
+#include <de/Map>
+
+using namespace de;
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -55,7 +60,7 @@
 
 // CODE --------------------------------------------------------------------
 
-boolean P_MobjTicker(thinker_t* th, void* context)
+bool P_MobjTicker(Object* th, void* context)
 {
     uint                i;
     mobj_t*             mo = (mobj_t*) th;
@@ -113,14 +118,6 @@ boolean P_MobjTicker(thinker_t* th, void* context)
     return true; // Continue iteration.
 }
 
-boolean PIT_ClientMobjTicker(clmobj_t *cmo, void *parm)
-{
-    P_MobjTicker((thinker_t*) &cmo->mo, NULL);
-
-    // Continue iteration.
-    return true;
-}
-
 /**
  * Doomsday's own play-ticker.
  */
@@ -131,11 +128,6 @@ void P_Ticker(timespan_t time)
     P_ControlTicker(time);
     P_MaterialManagerTicker(time);
 
-/*
-    if(!P_ThinkerListInited())
-        return; // Not initialized yet.
-*/
-
     if(!M_RunTrigger(&fixed, time))
         return;
 
@@ -145,8 +137,5 @@ void P_Ticker(timespan_t time)
     R_SkyTicker();
 
     // Check all mobjs (always public).
-    P_IterateThinkers(gx.MobjThinker, 0x1, P_MobjTicker, NULL);
-
-    // Check all client mobjs.
-    Cl_MobjIterator(PIT_ClientMobjTicker, NULL);
+    App::currentMap().iterateObjects(P_MobjTicker);
 }

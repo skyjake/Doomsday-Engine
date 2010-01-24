@@ -403,10 +403,7 @@ extern          "C" {
     DENG_API const char*     P_GetMaterialName(material_t* mat);
      
     DENG_API void            P_MaterialPrecache(material_t* mat);
-    
-     // Play: Thinkers.
-    DENG_API boolean         DD_IterateThinkers(think_t type, boolean (*func) (thinker_t *th, void*), void* data);
-     
+        
     // Refresh.
     DENG_API float           DD_GetFrameRate(void);
     DENG_API void            R_SetDataPath(const char* path);

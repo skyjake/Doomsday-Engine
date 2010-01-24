@@ -61,6 +61,11 @@
 #include "p_tick.h"
 #include "p_switch.h"
 
+#include <de/App>
+#include <de/Map>
+
+using namespace de;
+
 // MACROS ------------------------------------------------------------------
 
 #define XLTIMER_STOPPED 1    // Timer stopped.
@@ -630,8 +635,9 @@ void XL_SetLineType(linedef_t* line, int id)
         XG_Dev("XL_SetLineType: Line %i (%s), ID %i.", P_ToIndex(line),
                xgClasses[xline->xg->info.lineClass].className, id);
 
+#warning Need to iterate XGLineThinkers
         // If there is not already an xlthinker for this line, create one.
-        if(DD_IterateThinkers((void (*)()) XL_Thinker, findXLThinker, line))
+        /*if(App::currentMap().iterate(SID_XL_THINKER, findXLThinker, line))
         {   // Not created one yet.
             xlthinker_t*    xl = (xlthinker_t*) Z_Calloc(sizeof(*xl), PU_MAP, 0);
 
@@ -640,7 +646,7 @@ void XL_SetLineType(linedef_t* line, int id)
             #warning XL_SetLineType: Need to add thinker
 
             xl->line = line;
-        }
+        }*/
     }
     else if(id)
     {
@@ -1882,7 +1888,7 @@ boolean XL_CheckLineStatus(linedef_t* line, int reftype, int ref, int active,
                             XLTrav_CheckLine);
 }
 
-boolean XL_CheckMobjGone(thinker_t* th, void* context)
+bool XL_CheckMobjGone(Object* th, void* context)
 {
     int                 thingtype = *(int*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -2339,7 +2345,7 @@ int XL_LineEvent(int evtype, int linetype, linedef_t* line, int sidenum,
 
     if(info->flags & LTF_MOBJ_GONE)
     {
-        if(!DD_IterateThinkers((void (*)()) P_MobjThinker, XL_CheckMobjGone, &info->aparm[9]))
+        if(!App::currentMap().iterateObjects(XL_CheckMobjGone, &info->aparm[9]))
             return false;
     }
 

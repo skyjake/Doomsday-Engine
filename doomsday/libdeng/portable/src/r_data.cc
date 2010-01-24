@@ -40,6 +40,11 @@
 
 #include "m_stack.h"
 
+#include <de/App>
+#include <de/Map>
+
+using namespace de;
+
 // MACROS ------------------------------------------------------------------
 
 #define PATCHTEX_HASH_SIZE  128
@@ -2024,7 +2029,7 @@ static boolean isInList(void** list, size_t len, void* elm)
     return false;
 }
 
-boolean findSpriteOwner(thinker_t* th, void* context)
+bool findSpriteOwner(Object* th, void* context)
 {
     int                 i;
     mobj_t*             mo = (mobj_t*) th;
@@ -2158,8 +2163,7 @@ void R_PrecacheMap(void)
         {
             spritedef_t*        sprDef = &sprites[i];
 
-            if(!P_IterateThinkers(gx.MobjThinker, 0x1, // All mobjs are public
-                                  findSpriteOwner, sprDef))
+            if(!App::currentMap().iterateObjects(findSpriteOwner, sprDef))
             {   // This sprite is used by some state of at least one mobj.
                 int                 j;
 
@@ -2195,7 +2199,7 @@ void R_PrecacheMap(void)
     if(useModels && precacheSkins)
     {
         // All mobjs are public.
-        P_IterateThinkers(gx.MobjThinker, 0x1, R_PrecacheSkinsForMobj, NULL);
+        App::currentMap().iterateObjects(R_PrecacheSkinsForMobj);
     }
 
     // Sky models usually have big skins.

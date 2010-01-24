@@ -39,6 +39,7 @@
 #include <math.h>
 
 #include <de/App>
+#include <de/Map>
 #include <de/Zone>
 
 using namespace de;
@@ -897,7 +898,7 @@ void LO_UnlinkMobjLumobj(mobj_t* mo)
     mo->lumIdx = 0;
 }
 
-boolean LOIT_UnlinkMobjLumobj(thinker_t* th, void* context)
+bool LOIT_UnlinkMobjLumobj(Object* th, void* context)
 {
     LO_UnlinkMobjLumobj((mobj_t*) th);
 
@@ -909,7 +910,7 @@ void LO_UnlinkMobjLumobjs(cvar_t* var)
     if(!useDynLights)
     {
         // Mobjs are always public.
-        P_IterateThinkers(gx.MobjThinker, 0x1, LOIT_UnlinkMobjLumobj, NULL);
+        App::currentMap().iterateObjects(LOIT_UnlinkMobjLumobj);
     }
 }
 

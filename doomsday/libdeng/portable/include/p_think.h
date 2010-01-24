@@ -29,6 +29,7 @@
 #ifndef __DOOMSDAY_THINKER_H__
 #define __DOOMSDAY_THINKER_H__
 
+/*
 boolean         P_ThinkerListInited(void);
 
 void            P_InitThinkerLists(byte flags);
@@ -42,5 +43,6 @@ void            P_ThinkerRemove(thinker_t* th);
 void            P_SetMobjID(thid_t id, boolean state);
 boolean         P_IsUsedMobjID(thid_t id);
 boolean         P_IsMobjThinker(think_t thinker);
+*/
 
 #endif

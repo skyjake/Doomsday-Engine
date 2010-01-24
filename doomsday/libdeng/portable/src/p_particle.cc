@@ -39,6 +39,11 @@
 
 #include <math.h>
 
+#include <de/App>
+#include <de/Map>
+
+using namespace de;
+
 // MACROS ------------------------------------------------------------------
 
 #define ORDER(x,y,a,b)      ( (x)<(y)? ((a)=(x),(b)=(y)) : ((b)=(x),(a)=(y)) )
@@ -814,7 +819,7 @@ boolean PIT_ClientMobjParticles(clmobj_t* cmo, void* context)
 /**
  * Spawn multiple new particles using all applicable sources.
  */
-static boolean manyNewParticles(thinker_t* th, void* context)
+static bool manyNewParticles(Object* th, void* context)
 {
     ptcgen_t*           gen = (ptcgen_t*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -1312,8 +1317,7 @@ void P_PtcGenThinker(ptcgen_t* gen)
                     Cl_MobjIterator(PIT_ClientMobjParticles, gen);
                 }
 
-                P_IterateThinkers(gx.MobjThinker, 0x1, // All mobjs are public
-                                  manyNewParticles, gen);
+                App::currentMap().iterateObjects(manyNewParticles, gen);
 
                 // The generator has no real source.
                 gen->source = NULL;

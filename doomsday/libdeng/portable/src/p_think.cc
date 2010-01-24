@@ -323,7 +323,6 @@ boolean P_ThinkerListInited(void)
 {
     return inited;
 }
-#endif
 
 /**
  * Iterate the list of thinkers making a callback for each.
@@ -378,7 +377,6 @@ boolean P_IterateThinkers(think_t func, byte flags,
     }*/
 }
 
-#if 0
 /**
  * Part of the Doomsday public API.
  */
@@ -426,7 +424,6 @@ void DD_ThinkerSetStasis(thinker_t* th, boolean on)
         th->inStasis = on;
     }
 }
-#endif
 
 /**
  * Part of the Doomsday public API.
@@ -443,3 +440,4 @@ boolean DD_IterateThinkers(think_t func,
     
     return P_IterateThinkers(func, 0x1, callback, context);
 }
+#endif

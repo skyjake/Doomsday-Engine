@@ -37,6 +37,11 @@
 #include "p_mapspec.h"
 #include "p_terraintype.h"
 
+#include <de/App>
+#include <de/Map>
+
+using namespace de;
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -66,7 +71,7 @@ typedef struct {
     mobj_t*             foundMobj;
 } findmobjparams_t;
 
-static boolean findMobj(thinker_t* th, void* context)
+static bool findMobj(Object* th, void* context)
 {
     findmobjparams_t*   params = (findmobjparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -103,7 +108,7 @@ static mobj_t* getTeleportDestination(short tag)
         {
             params.sec = sec;
 
-            if(!DD_IterateThinkers((void (*)()) P_MobjThinker, findMobj, &params))
+            if(!App::currentMap().iterateObjects(findMobj, &params))
             {   // Found one.
                 return params.foundMobj;
             }

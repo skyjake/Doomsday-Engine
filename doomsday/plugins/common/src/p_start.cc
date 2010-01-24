@@ -64,6 +64,11 @@
 #include "g_defs.h"
 #include "p_inventory.h"
 
+#include <de/App>
+#include <de/Map>
+
+using namespace de;
+
 // MACROS ------------------------------------------------------------------
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -702,7 +707,7 @@ boolean unstuckMobjInLinedef(linedef_t* li, void* context)
     return true; // Continue iteration.
 }
 
-boolean iterateLinedefsNearMobj(thinker_t* th, void* context)
+bool iterateLinedefsNearMobj(Object* th, void* context)
 {
     mobj_t*             mo = (mobj_t*) th;
     mobjtype_t          type = *((mobjtype_t*) context);
@@ -762,7 +767,7 @@ void P_MoveThingsOutOfWalls(void)
     {
         mobjtype_t          type = types[i];
 
-        DD_IterateThinkers((void (*)()) P_MobjThinker, iterateLinedefsNearMobj, &type);
+        App::currentMap().iterateObjects(iterateLinedefsNearMobj, &type);
     }
 }
 

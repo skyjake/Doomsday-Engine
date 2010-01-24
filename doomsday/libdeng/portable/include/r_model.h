@@ -29,6 +29,8 @@
 #ifndef __DOOMSDAY_REFRESH_MODEL_H__
 #define __DOOMSDAY_REFRESH_MODEL_H__
 
+#include <de/Object>
+
 #include "gl_model.h"
 
 #define MAX_FRAME_MODELS        DED_MAX_SUB_MODELS
@@ -119,7 +121,7 @@ int             R_ModelFrameNumForName(int modelnum, char* fname);
 void            R_SetModelFrame(modeldef_t* modef, int frame);
 void            R_SetSpriteReplacement(int sprite, char* modelname);
 void            R_PrecacheSkinsForState(int stateIndex);
-boolean         R_PrecacheSkinsForMobj(thinker_t* th, void* context);
+bool            R_PrecacheSkinsForMobj(de::Object* th, void* context);
 void            R_PrecacheModelSkins(modeldef_t* modef);
 
 #endif

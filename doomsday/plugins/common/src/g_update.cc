@@ -48,6 +48,11 @@
 #include "rend_automap.h"
 #include "p_inventory.h"
 
+#include <de/App>
+#include <de/Map>
+
+using namespace de;
+
 // MACROS ------------------------------------------------------------------
 
 #define MANGLE_STATE(x)     ((state_t*) ((x)? (x)-STATES : -1))
@@ -69,7 +74,7 @@
 
 // CODE --------------------------------------------------------------------
 
-static boolean mangleMobj(thinker_t* th, void* context)
+static bool mangleMobj(Object* th, void* context)
 {
     mobj_t*             mo = (mobj_t *) th;
 
@@ -79,7 +84,7 @@ static boolean mangleMobj(thinker_t* th, void* context)
     return true; // Continue iteration.
 }
 
-static boolean restoreMobj(thinker_t* th, void* context)
+static bool restoreMobj(Object* th, void* context)
 {
     mobj_t*             mo = (mobj_t *) th;
 
@@ -97,7 +102,7 @@ void G_MangleState(void)
 {
     int                 i;
 
-    DD_IterateThinkers((void (*)()) P_MobjThinker, mangleMobj, NULL);
+    App::currentMap().iterateObjects(mangleMobj);
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -114,7 +119,7 @@ void G_RestoreState(void)
 {
     int                 i;
 
-    DD_IterateThinkers((void (*)()) P_MobjThinker, restoreMobj, NULL);
+    App::currentMap().iterateObjects(restoreMobj);
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {

@@ -47,6 +47,11 @@
 #include "p_door.h"
 #include "p_floor.h"
 
+#include <de/App>
+#include <de/Map>
+
+using namespace de;
+
 // MACROS ------------------------------------------------------------------
 
 #define FATSPREAD               (ANG90/8)
@@ -525,7 +530,7 @@ static boolean lookForPlayers(mobj_t *actor, boolean allAround)
     }
 }
 
-static boolean massacreMobj(thinker_t* th, void* context)
+static bool massacreMobj(Object* th, void* context)
 {
     int*                count = (int*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -549,13 +554,13 @@ int P_Massacre(void)
     // Only massacre when actually in a map.
     if(G_GetGameState() == GS_MAP)
     {
-        DD_IterateThinkers((void (*)()) P_MobjThinker, massacreMobj, &count);
+        App::currentMap().iterateObjects(massacreMobj, &count);
     }
 
     return count;
 }
 
-static boolean findBrainTarget(thinker_t* th, void* context)
+static bool findBrainTarget(Object* th, void* context)
 {
     mobj_t*             mo = (mobj_t *) th;
 
@@ -596,7 +601,7 @@ static boolean findBrainTarget(thinker_t* th, void* context)
 void P_SpawnBrainTargets(void)
 {
     // Find all the target spots.
-    DD_IterateThinkers((void (*)()) P_MobjThinker, findBrainTarget, NULL);
+    App::currentMap().iterateObjects(findBrainTarget);
 }
 
 typedef struct {
@@ -604,7 +609,7 @@ typedef struct {
     size_t              count;
 } countmobjoftypeparams_t;
 
-static boolean countMobjOfType(thinker_t* th, void* context)
+static bool countMobjOfType(Object* th, void* context)
 {
     countmobjoftypeparams_t *params = (countmobjoftypeparams_t*) context;
     mobj_t*             mo = (mobj_t *) th;
@@ -627,7 +632,7 @@ void C_DECL A_KeenDie(mobj_t* mo)
     // Check if there are no more Keens left in the map.
     params.type = mobjtype_t(mo->type);
     params.count = 0;
-    DD_IterateThinkers((void (*)()) P_MobjThinker, countMobjOfType, &params);
+    App::currentMap().iterateObjects(countMobjOfType, &params);
 
     if(!params.count)
     {   // No Keens left alive.
@@ -1467,7 +1472,7 @@ void C_DECL A_PainShootSkull(mobj_t* actor, angle_t angle)
         // Count total number currently on the map.
         params.type = MT_SKULL;
         params.count = 0;
-        DD_IterateThinkers((void (*)()) P_MobjThinker, countMobjOfType, &params);
+        App::currentMap().iterateObjects(countMobjOfType, &params);
 
         if(params.count > 20)
             return; // Too many, don't spit another.
@@ -1704,7 +1709,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
     // Scan the remaining thinkers to see if all bosses are dead.
     params.type = mobjtype_t(mo->type);
     params.count = 0;
-    DD_IterateThinkers((void (*)()) P_MobjThinker, countMobjOfType, &params);
+    App::currentMap().iterateObjects(countMobjOfType, &params);
 
     if(params.count)
     {   // Other boss not dead.
