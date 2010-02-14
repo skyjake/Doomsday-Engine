@@ -126,16 +126,20 @@ void P_Ticker(timespan_t time)
     static trigger_t    fixed = { 1.0 / 35, 0 };
 
     P_ControlTicker(time);
+
     P_MaterialManagerTicker(time);
 
     if(!M_RunTrigger(&fixed, time))
         return;
 
-    // New ptcgens for planes?
-    P_CheckPtcPlanes();
+    if(App::hasCurrentMap())
+    {
+        // New ptcgens for planes?
+        P_CheckPtcPlanes();
 
-    R_SkyTicker();
+        R_SkyTicker();
 
-    // Check all mobjs (always public).
-    App::currentMap().iterateObjects(P_MobjTicker);
+        // Check all mobjs (always public).
+        App::currentMap().iterateObjects(P_MobjTicker);
+    }
 }

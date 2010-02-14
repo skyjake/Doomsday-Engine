@@ -72,7 +72,7 @@ ClientApp::ClientApp(const de::CommandLine& arguments)
     DD_Entry(0, NULL);
     
     LOG_MESSAGE("Opening link to server.");
-    
+
     // DEVEL: Join the game session.
     // Query the on-going sessions.
     MuxLink* link = new MuxLink(Address("localhost", SERVER_PORT));
