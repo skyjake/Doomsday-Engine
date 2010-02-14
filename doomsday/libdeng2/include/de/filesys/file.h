@@ -296,7 +296,7 @@ namespace de
         Status _status;
         
         /// Mode flags.
-        Mode _mode;    
+        Mode _mode;
         
         /// File information.
         Record _info;
