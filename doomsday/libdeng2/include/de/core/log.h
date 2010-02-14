@@ -73,15 +73,66 @@ namespace de
     {
     public:
         /// Level of the log entry.
-        enum LogLevel {
-            TRACE,      ///< Trace messages.
-            DEBUG,      ///< Debug messages.
-            VERBOSE,    ///< Verbose log messages.
-            MESSAGE,    ///< Normal log messages.
-            INFO,       ///< Important messages.
-            WARNING,    ///< A recoverable error.
-            ERROR,      ///< A nonrecoverable (but not fatal) error.
-            CRITICAL,   ///< Critical error (application will quit).
+        enum LogLevel
+        {
+            /**
+             * Trace messages are intended for low-level debugging. They should be used
+             * to log which methods are entered and exited, and mark certain points within
+             * methods. Intended only for developers and debug builds.
+             */
+            TRACE,
+
+            /**
+             * Debug messages are intended for normal debugging. They should be enabled
+             * only in debug builds. An example of a debug message might be a printout of
+             * a ZIP archive's file count and size once an archive has been successfully
+             * opened. Intended only for developers and debug builds.
+             */
+            DEBUG,
+
+            /**
+             * Verbose messages should be used to log technical information that is only
+             * of interest to advanced users. An example of a verbose message could be
+             * the summary of all the defined object types during the launch of a game.
+             * Verbose messages should not be used for anything that produces a large
+             * number of log entries, such as an entry about reading the contents of a
+             * file within a ZIP archive (which would be suitable for the DEBUG level).
+             */
+            VERBOSE,
+
+            /**
+             * Normal log entries are intended for regular users. An example: message about
+             * which map is being loaded.
+             */
+            MESSAGE,
+
+            /**
+             * Info messages are intended for situations that are particularly noteworthy.
+             * An info message should be used for instance when a script has been stopped
+             * because of an uncaught exception occurred during its execution.
+             */
+            INFO,
+
+            /**
+             * Warning messages are reserved for recoverable error situations. A warning
+             * might be logged for example when the expected resource could not be found,
+             * and a fallback resource was used instead.
+             */
+            WARNING,
+
+            /**
+             * Error messages are intended for nonrecoverable errors. The error is grave
+             * enough to cause the shutting down of the current game, but the engine can
+             * still remain running.
+             */
+            ERROR,
+
+            /**
+             * Critical messages are intended for fatal errors that cause the engine to be
+             * shut down.
+             */
+            CRITICAL,
+
             MAX_LOG_LEVELS
         };
 
