@@ -1821,11 +1821,11 @@ void G_DoCompleted(void)
 # else /* __JHERETIC__ */
     if(secretExit == true)
     {
-        wmInfo.next = 9;
+        wmInfo.next = 8;
     }
     else if(gameMap == 9)
     {   // Finished secret map.
-        static int afterSecret[5] = { 7, 5, 5, 5, 4 };
+        static int afterSecret[5] = { 6, 4, 4, 4, 3 };
 
         wmInfo.next = afterSecret[gameEpisode - 1];
     }
