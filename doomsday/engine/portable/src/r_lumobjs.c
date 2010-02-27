@@ -47,13 +47,6 @@ END_PROF_TIMERS()
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct {
-    float           color[3];
-    float           size;
-    float           flareSize;
-    float           xOffset, yOffset;
-} lightconfig_t;
-
 typedef struct lumlistnode_s {
     struct lumlistnode_s* next;
     struct lumlistnode_s* nextUsed;
@@ -340,7 +333,6 @@ boolean LO_IsHidden(uint idx, int i)
     return false;
 }
 
-
 /**
  * @return              Approximated distance between the lumobj and the
  *                      viewer.
@@ -368,13 +360,11 @@ void LO_AddLuminous(mobj_t* mo)
        (mo->ddFlags & DDMF_ALWAYSLIT))
     {
         uint                i;
-        float               mul, xOff, center;
-        int                 flags = 0;
-        int                 radius, flareSize;
-        float               rgb[3];
+        float               mul, center;
+        int                 radius;
+        float               rgb[3], yOffset, size;
         lumobj_t*           l;
-        lightconfig_t       cf;
-        ded_light_t*        def = 0;
+        ded_light_t*        def = (mo->state? def = stateLights[mo->state - states] : 0);
         spritedef_t*        sprDef;
         spriteframe_t*      sprFrame;
         material_t*         mat;
@@ -392,17 +382,8 @@ void LO_AddLuminous(mobj_t* mo)
         // Determine the sprite frame lump of the source.
         sprDef = &sprites[mo->sprite];
         sprFrame = &sprDef->spriteFrames[mo->frame];
-        if(sprFrame->rotate)
-        {
-            mat =
-                sprFrame->
-                mats[(R_PointToAngle(mo->pos[VX], mo->pos[VY]) - mo->angle +
-                      (unsigned) (ANG45 / 2) * 9) >> 29];
-        }
-        else
-        {
-            mat = sprFrame->mats[0];
-        }
+        // Always use rotation zero.
+        mat = sprFrame->mats[0];
 
 #if _DEBUG
 if(!mat)
@@ -418,45 +399,23 @@ if(!mat)
 
         texInst = ms.units[MTU_PRIMARY].texInst;
 
-        cf.size = cf.flareSize = texInst->data.sprite.lumSize;
-        cf.xOffset = texInst->data.sprite.flareX;
-        cf.yOffset = texInst->data.sprite.flareY;
+        size = texInst->data.sprite.lumSize;
+        yOffset = texInst->data.sprite.flareY;
+        // Does the mobj have an active light definition?
+        if(def)
+        {
+            if(def->size)
+                size = def->size;
+            if(def->offset[VY])
+                yOffset = def->offset[VY];
+        }
+
         autoLightColor[CR] = texInst->data.sprite.autoLightColor[CR];
         autoLightColor[CG] = texInst->data.sprite.autoLightColor[CG];
         autoLightColor[CB] = texInst->data.sprite.autoLightColor[CB];
 
-        // X offset to the flare position.
-        xOff = (cf.xOffset - (float) ms.width / 2) -
-            (spriteTextures[texInst->tex->ofTypeID]->offX -
-                (float) ms.width / 2);
-
-        // Does the mobj have an active light definition?
-        if(mo->state)
-        {
-            def = stateLights[mo->state - states];
-
-            if(def)
-            {
-                if(def->size)
-                    cf.size = def->size;
-
-                if(def->offset[VX])
-                {
-                    // Set the x offset here.
-                    xOff = cf.xOffset = def->offset[VX];
-                }
-
-                if(def->offset[VY])
-                    cf.yOffset = def->offset[VY];
-                if(def->haloRadius)
-                    cf.flareSize = def->haloRadius;
-
-                flags |= def->flags;
-            }
-        }
-
         center = spriteTextures[texInst->tex->ofTypeID]->offY -
-            mo->floorClip - R_GetBobOffset(mo) - cf.yOffset;
+            mo->floorClip - R_GetBobOffset(mo) - yOffset;
 
         // Will the sprite be allowed to go inside the floor?
         mul = mo->pos[VZ] + spriteTextures[texInst->tex->ofTypeID]->offY -
@@ -467,16 +426,11 @@ if(!mat)
             center -= mul;
         }
 
-        radius = cf.size * 40 * loRadiusFactor;
+        radius = size * 40 * loRadiusFactor;
 
         // Don't make a too small light.
         if(radius < 32)
             radius = 32;
-
-        flareSize = cf.flareSize * 60 * (50 + haloSize) / 100.0f;
-
-        if(flareSize < 8)
-            flareSize = 8;
 
         // Does the mobj use a light scale?
         if(mo->ddFlags & DDMF_LIGHTSCALE)
@@ -513,37 +467,20 @@ if(!mat)
         l->maxDistance = 0;
         l->decorSource = NULL;
 
-        LUM_OMNI(l)->flags = flags;
-        LUM_OMNI(l)->haloFactors = &mo->haloFactors[0];
-        LUM_OMNI(l)->zOff = center;
-        LUM_OMNI(l)->xOff = xOff;
-
         // Don't make too large a light.
         if(radius > loMaxRadius)
             radius = loMaxRadius;
 
         LUM_OMNI(l)->radius = radius;
-        LUM_OMNI(l)->flareMul = 1;
-        LUM_OMNI(l)->flareSize = flareSize;
         for(i = 0; i < 3; ++i)
             LUM_OMNI(l)->color[i] = rgb[i];
+        LUM_OMNI(l)->zOff = center;
 
         if(def)
         {
             LUM_OMNI(l)->tex = GL_GetLightMapTexture(def->sides.id);
             LUM_OMNI(l)->ceilTex = GL_GetLightMapTexture(def->up.id);
             LUM_OMNI(l)->floorTex = GL_GetLightMapTexture(def->down.id);
-
-            if(!(def->flare.id && def->flare.id[0] == '-'))
-            {
-                LUM_OMNI(l)->flareTex =
-                    GL_GetFlareTexture(def->flare.id, -1);
-            }
-            else
-            {
-                LUM_OMNI(l)->flags |= LUMOF_NOHALO;
-                LUM_OMNI(l)->flareTex = 0;
-            }
         }
         else
         {

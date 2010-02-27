@@ -162,17 +162,22 @@ static void projectDecoration(decorsource_t* src)
     v1[VX] = src->pos[VX];
     v1[VY] = src->pos[VY];
 
+    /**
+     * Model decorations become model-type vissprites.
+     * Light decorations become flare-type vissprites.
+     */
     vis = R_NewVisSprite();
-    vis->type = ((src->type == DT_MODEL)? VSPR_MODEL : VSPR_HIDDEN);
+    vis->type = ((src->type == DT_MODEL)? VSPR_MODEL : VSPR_FLARE);
 
     vis->center[VX] = src->pos[VX];
     vis->center[VY] = src->pos[VY];
     vis->center[VZ] = src->pos[VZ];
     vis->distance = distance;
-    vis->isDecoration = true;
 
-    if(src->type == DT_MODEL)
+    switch(src->type)
     {
+    case DT_MODEL:
+        {
         float           ambientColor[3];
         vlight_t*       lightList = NULL;
         uint            numLights = 0;
@@ -189,9 +194,61 @@ static void projectDecoration(decorsource_t* src)
                                      ambientColor[CR], ambientColor[CG], ambientColor[CB],
                                      src->fadeMul, lightList, numLights, 0, 0, src->subsector,
                                      0, 0, false, levelFullBright, true);
-    }
+        break;
+        }
+    case DT_LIGHT:
+        {
+        const ded_decorlight_t* def = src->data.light.def;
+        const lumobj_t* lum = LO_GetLuminous(src->lumIdx);
 
-    vis->lumIdx = src->lumIdx;
+        vis->data.flare.isDecoration = true;
+        vis->data.flare.lumIdx = src->lumIdx;
+
+        // Color is taken from the associated lumobj.
+        V3_Copy(vis->data.flare.color, LUM_OMNI(lum)->color);
+
+        if(def->haloRadius > 0)
+        {
+            vis->data.flare.size = MAX_OF(1,
+                def->haloRadius * 60 * (50 + haloSize) / 100.0f);
+        }
+        else
+        {
+            vis->data.flare.size = 0;
+        }
+
+        if(!(def->flare.id && def->flare.id[0] == '-'))
+        {
+            vis->data.flare.tex = GL_GetFlareTexture(def->flare.id, def->flareTexture);
+        }
+        else
+        {   // Primary halo disabled.
+            vis->data.flare.flags |= RFF_NO_PRIMARY;
+            vis->data.flare.tex = 0;
+        }
+
+        // Halo brightness drops as the angle gets too big.
+        vis->data.flare.mul = 1;
+        if(src->data.light.def->elevation < 2 && decorFadeAngle > 0) // Close the surface?
+        {
+            float vector[3], dot;
+
+            vector[VX] = src->pos[VX] - vx;
+            vector[VY] = src->pos[VY] - vz;
+            vector[VZ] = src->pos[VZ] - vy;
+            M_Normalize(vector);
+            dot = -(src->surface->normal[VX] * vector[VX] +
+                    src->surface->normal[VY] * vector[VY] +
+                    src->surface->normal[VZ] * vector[VZ]);
+
+            if(dot < decorFadeAngle / 2)
+                vis->data.flare.mul = 0;
+            else if(dot < 3 * decorFadeAngle)
+                vis->data.flare.mul = (dot - decorFadeAngle / 2) / (2.5f * decorFadeAngle);
+        }
+        break;
+        }
+    }
 }
 
 /**
@@ -264,31 +321,6 @@ static void addLuminousDecoration(decorsource_t* src)
     // Don't make a too small or too large light.
     if(LUM_OMNI(l)->radius > loMaxRadius)
         LUM_OMNI(l)->radius = loMaxRadius;
-
-    if(def->haloRadius > 0)
-    {
-        LUM_OMNI(l)->flareSize = def->haloRadius * 60 *
-            (50 + haloSize) / 100.0f;
-        if(LUM_OMNI(l)->flareSize < 1)
-            LUM_OMNI(l)->flareSize = 1;
-    }
-    else
-    {
-        LUM_OMNI(l)->flareSize = 0;
-    }
-
-    if(!(def->flare.id && def->flare.id[0] == '-'))
-    {
-        LUM_OMNI(l)->flareTex =
-            GL_GetFlareTexture(def->flare.id, def->flareTexture);
-    }
-    else
-    {   // Primary halo disabled.
-        LUM_OMNI(l)->flags |= LUMOF_NOHALO;
-        LUM_OMNI(l)->flareTex = 0;
-    }
-
-    LUM_OMNI(l)->flareMul = 1;
 
     for(i = 0; i < 3; ++i)
         LUM_OMNI(l)->color[i] = def->color[i] * src->fadeMul;
@@ -431,39 +463,6 @@ boolean R_ProjectSurfaceDecorations(surface_t* suf, void* context)
     }
 
     return true;
-}
-
-/**
- * @retunr              Surface decoration to viewer, angle factor.
- */
-float Rend_DecorSurfaceAngleHaloMul(void* p)
-{
-    decorsource_t*      src = (decorsource_t*) p;
-
-    if(!src)
-        return 1;
-
-    // Halo brightness drops as the angle gets too big.
-    if(src->data.light.def->elevation < 2 && decorFadeAngle > 0) // Close the surface?
-    {
-        float               vector[3], dot;
-
-        vector[VX] = src->pos[VX] - vx;
-        vector[VY] = src->pos[VY] - vz;
-        vector[VZ] = src->pos[VZ] - vy;
-        M_Normalize(vector);
-        dot = -(src->surface->normal[VX] * vector[VX] +
-                src->surface->normal[VY] * vector[VY] +
-                src->surface->normal[VZ] * vector[VZ]);
-
-        if(dot < decorFadeAngle / 2)
-            return 0;
-
-        if(dot < 3 * decorFadeAngle)
-            return (dot - decorFadeAngle / 2) / (2.5f * decorFadeAngle);
-    }
-
-    return 1;
 }
 
 /**

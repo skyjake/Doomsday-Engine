@@ -732,59 +732,33 @@ static void setupModelParamsForVisPSprite(rendmodelparams_t* params,
     }
 }
 
-static boolean generateHaloForVisSprite(vissprite_t* spr, boolean primary)
+static boolean generateHaloForVisSprite(const vissprite_t* spr, boolean primary)
 {
-    lumobj_t*           lum = LO_GetLuminous(spr->lumIdx);
-    vec3_t              center;
-    float               occlusionFactor, flareMul;
+    float occlussionFactor;
 
-    if(LUM_OMNI(lum)->flags & LUMOF_NOHALO)
+    if(primary && (spr->data.flare.flags & RFF_NO_PRIMARY))
         return false;
 
-    V3_Copy(center, spr->center);
-    center[VZ] += LUM_OMNI(lum)->zOff;
-
-    if(spr->type == VSPR_SPRITE)
+    if(spr->data.flare.isDecoration)
     {
-        V3_Sum(center, center, spr->data.sprite.srvo);
-    }
-    else if(spr->type == VSPR_MODEL)
-    {
-        V3_Sum(center, center, spr->data.model.srvo);
-    }
-
-    flareMul = LUM_OMNI(lum)->flareMul;
-
-    /**
-     * \kludge surface decorations do not yet persist over frames,
-     * thus we do not smoothly occlude their halos. Instead, we will
-     * have to put up with them instantly appearing/disappearing.
-     */
-    if(spr->isDecoration)
-    {
-        if(LO_IsClipped(spr->lumIdx, viewPlayer - ddPlayers))
-            occlusionFactor = 0;
-        else
-            occlusionFactor = 1;
-
-        flareMul *= Rend_DecorSurfaceAngleHaloMul(lum->decorSource);
+        /**
+         * \kludge surface decorations do not yet persist over frames,
+         * thus we do not smoothly occlude their flares. Instead, we will
+         * have to put up with them instantly appearing/disappearing.
+         */
+        occlussionFactor = (LO_IsClipped(spr->data.flare.lumIdx, viewPlayer - ddPlayers)? 0 : 1);
     }
     else
-    {
-        byte                haloFactor = (LUM_OMNI(lum)->haloFactors?
-            LUM_OMNI(lum)->haloFactors[viewPlayer - ddPlayers] : 0xff);
+        occlussionFactor = (spr->data.flare.factor & 0x7f) / 127.0f;
 
-        occlusionFactor = (haloFactor & 0x7f) / 127.0f;
-    }
-
-    return H_RenderHalo(center[VX], center[VY], center[VZ],
-                        LUM_OMNI(lum)->flareSize,
-                        LUM_OMNI(lum)->flareTex,
-                        LUM_OMNI(lum)->color,
-                        LO_DistanceToViewer(spr->lumIdx, viewPlayer - ddPlayers),
-                        occlusionFactor, flareMul,
-                        LUM_OMNI(lum)->xOff, primary,
-                        (LUM_OMNI(lum)->flags & LUMOF_DONTTURNHALO));
+    return H_RenderHalo(spr->center[VX], spr->center[VY], spr->center[VZ],
+                        spr->data.flare.size,
+                        spr->data.flare.tex,
+                        spr->data.flare.color,
+                        spr->distance,
+                        occlussionFactor, spr->data.flare.mul,
+                        spr->data.flare.xOff, primary,
+                        (spr->data.flare.flags & RFF_NO_TURN));
 }
 
 /**
@@ -799,8 +773,8 @@ static boolean generateHaloForVisSprite(vissprite_t* spr, boolean primary)
  */
 void Rend_DrawMasked(void)
 {
-    boolean             haloDrawn = false;
-    vissprite_t*        spr;
+    boolean flareDrawn = false;
+    vissprite_t* spr;
 
     if(devNoSprites)
         return;
@@ -831,18 +805,16 @@ void Rend_DrawMasked(void)
             case VSPR_MODEL:
                 Rend_RenderModel(&spr->data.model);
                 break;
-            }
 
-            // How about a halo?
-            if(spr->lumIdx)
-            {
-                if(generateHaloForVisSprite(spr, true) && !haloDrawn)
-                    haloDrawn = true;
+            case VSPR_FLARE:
+                if(generateHaloForVisSprite(spr, true) && !flareDrawn)
+                    flareDrawn = true;
+                break;
             }
         }
 
         // Draw secondary halos.
-        if(haloDrawn && haloMode > 1)
+        if(flareDrawn && haloMode > 1)
         {
             // Now we can setup the state only once.
             H_SetupState(true);
@@ -850,7 +822,7 @@ void Rend_DrawMasked(void)
             for(spr = visSprSortedHead.next; spr != &visSprSortedHead;
                 spr = spr->next)
             {
-                if(spr->lumIdx)
+                if(spr->type == VSPR_FLARE)
                 {
                     generateHaloForVisSprite(spr, false);
                 }

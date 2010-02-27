@@ -29,10 +29,6 @@
 #ifndef __DOOMSDAY_REFRESH_LUMINOUS_H__
 #define __DOOMSDAY_REFRESH_LUMINOUS_H__
 
-// lumobj, omni flags
-#define LUMOF_NOHALO        0x1
-#define LUMOF_DONTTURNHALO  0x2
-
 // Lumobject types.
 typedef enum {
     LT_OMNI, // Omni (spherical) light.
@@ -52,20 +48,11 @@ typedef struct lumobj_s {
 
     union lumobj_data_u {
         struct lumobj_omni_s {
-            int             flags; // LUMOF_* flags.
             float           color[3];
             float           radius; // Radius for this omnilight source.
             float           zOff; // Offset to center from pos[VZ].
             DGLuint         tex; // Lightmap texture.
             DGLuint         floorTex, ceilTex; // Lightmaps for floor/ceil.
-
-        // For flares (halos).
-            int             flareSize;
-            const byte*     haloFactors; // Ptr to array of bytes, DDMAXPLAYERS size.
-            float           xOff;
-            DGLuint         flareTex; // Flaremap if flareCustom ELSE (flaretexName id.
-                                      // Zero = automatical)
-            float           flareMul; // Flare brightness factor.
         } omni;
         struct lumobj_plane_s {
             float           color[3];

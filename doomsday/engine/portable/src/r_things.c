@@ -1300,8 +1300,6 @@ void R_ProjectSprite(mobj_t* mo)
     vis->center[VY] = mo->pos[VY];
     vis->center[VZ] = mo->pos[VZ];
     vis->distance = distance;
-    vis->lumIdx = mo->lumIdx;
-    vis->isDecoration = false;
 
     floorAdjust = (fabs(sect->SP_floorvisheight - sect->SP_floorheight) < 8);
 
@@ -1518,6 +1516,100 @@ void R_ProjectSprite(mobj_t* mo)
                                      viewAlign,
                                      fullBright && !(mf && (mf->sub[0].flags & MFF_DIM)),
                                      false);
+    }
+
+    // Do we need to project a flare source too?
+    if(mo->lumIdx)
+    {
+        const lumobj_t* lum;
+        const ded_light_t* def;
+        float flareSize, xOffset;
+        spritedef_t* sprDef;
+        spriteframe_t* sprFrame;
+        material_t* mat;
+        material_snapshot_t ms;
+        const gltexture_inst_t* texInst;
+
+        // Determine the sprite frame lump of the source.
+        sprDef = &sprites[mo->sprite];
+        sprFrame = &sprDef->spriteFrames[mo->frame];
+        if(sprFrame->rotate)
+        {
+            mat =
+                sprFrame->
+                mats[(R_PointToAngle(mo->pos[VX], mo->pos[VY]) - mo->angle +
+                      (unsigned) (ANG45 / 2) * 9) >> 29];
+        }
+        else
+        {
+            mat = sprFrame->mats[0];
+        }
+
+#if _DEBUG
+if(!mat)
+    Con_Error("R_ProjectSprite: Sprite '%i' frame '%i' missing material.",
+              (int) mo->sprite, mo->frame);
+#endif
+
+        // Ensure we have up-to-date information about the material.
+        Material_Prepare(&ms, mat, true, NULL);
+        if(ms.units[MTU_PRIMARY].texInst->tex->type != GLT_SPRITE)
+            return; // *Very* strange...
+        texInst = ms.units[MTU_PRIMARY].texInst;
+
+        lum = LO_GetLuminous(mo->lumIdx);
+        def = (mo->state? stateLights[mo->state - states] : 0);
+
+        vis = R_NewVisSprite();
+        vis->type = VSPR_FLARE;
+        vis->distance = distance;
+
+        // Determine the exact center of the flare.
+        V3_Sum(vis->center, mo->pos, visOff);
+        vis->center[VZ] += LUM_OMNI(lum)->zOff;
+
+        flareSize = texInst->data.sprite.lumSize;
+        // X offset to the flare position.
+        xOffset = (texInst->data.sprite.flareX - (float) ms.width / 2) -
+            (spriteTextures[texInst->tex->ofTypeID]->offX -
+                (float) ms.width / 2);
+
+        // Does the mobj have an active light definition?
+        if(def)
+        {
+            if(def->size)
+                flareSize = def->size;
+            if(def->haloRadius)
+                flareSize = def->haloRadius;
+            if(def->offset[VX])
+                xOffset = def->offset[VX];
+
+            vis->data.flare.flags = def->flags;
+        }
+
+        vis->data.flare.size = flareSize * 60 * (50 + haloSize) / 100.0f;
+        if(vis->data.flare.size < 8) vis->data.flare.size = 8;
+
+        // Color is taken from the associated lumobj.
+        V3_Copy(vis->data.flare.color, LUM_OMNI(lum)->color);
+
+        vis->data.flare.factor = mo->haloFactors[viewPlayer - ddPlayers];
+        vis->data.flare.xOff = xOffset;
+        vis->data.flare.mul = 1;
+
+        if(def)
+        {
+            if(!(def->flare.id && def->flare.id[0] == '-'))
+            {
+                vis->data.flare.tex =
+                    GL_GetFlareTexture(def->flare.id, -1);
+            }
+            else
+            {
+                vis->data.flare.flags |= RFF_NO_PRIMARY;
+                vis->data.flare.tex = 0;
+            }
+        }
     }
 }
 

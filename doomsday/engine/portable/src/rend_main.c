@@ -862,11 +862,9 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices,
     midpoint[VZ] = (rvertices[0].pos[VZ] + rvertices[3].pos[VZ]) / 2;
 
     vis->type = VSPR_MASKED_WALL;
-    vis->lumIdx = 0;
     vis->center[VX] = midpoint[VX];
     vis->center[VY] = midpoint[VY];
     vis->center[VZ] = midpoint[VZ];
-    vis->isDecoration = false;
     vis->distance = Rend_PointDist2D(midpoint);
     vis->data.wall.tex = rTU[TU_PRIMARY].tex;
     vis->data.wall.magMode = rTU[TU_PRIMARY].magMode;
@@ -3104,9 +3102,15 @@ static void Rend_RenderSubsector(uint ssecidx)
     // Mark the particle generators in the sector visible.
     Rend_ParticleMarkInSectorVisible(sect);
 
-    // Sprites for this subsector have to be drawn. This must be done before
-    // the segments of this subsector are added to the clipper. Otherwise
-    // the sprites would get clipped by them, and that wouldn't be right.
+    /**
+     * Sprites for this subsector have to be drawn.
+     * @note
+     * Must be done BEFORE the segments of this subsector are added to the
+     * clipper. Otherwise the sprites would get clipped by them, and that
+     * wouldn't be right.
+     * Must be done AFTER the lumobjs have been clipped as this affects the
+     * projection of flares.
+     */
     R_AddSprites(ssec);
 
     // Draw the various skyfixes for all front facing segs in this ssec
@@ -3764,13 +3768,14 @@ void Rend_RenderMap(void)
         // Prepare for rendering.
         RL_ClearLists(); // Clear the lists for new quads.
         C_ClearRanges(); // Clear the clipper.
+
+        // Make vissprites of all the visible decorations.
+        Rend_ProjectDecorations();
+
         LO_BeginFrame();
 
         // Clear particle generator visibilty info.
         Rend_ParticleInitForNewFrame();
-
-        // Make vissprites of all the visible decorations.
-        Rend_ProjectDecorations();
 
         // Recycle the vlight lists. Currently done here as the lists are
         // not shared by all viewports.

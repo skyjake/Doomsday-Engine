@@ -140,7 +140,7 @@ void H_SetupState(boolean dosetup)
  * @return          @c true, if a halo was rendered.
  */
 boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
-                     float color[3], float distanceToViewer,
+                     const float color[3], float distanceToViewer,
                      float occlusionFactor, float brightnessFactor,
                      float viewXOffset, boolean primary,
                      boolean viewRelativeRotate)

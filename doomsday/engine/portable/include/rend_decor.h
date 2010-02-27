@@ -36,8 +36,6 @@ extern float    decorFadeAngle;
 
 void            Rend_DecorRegister(void);
 
-float           Rend_DecorSurfaceAngleHaloMul(void* p);
-
 void            Rend_InitDecorationsForFrame(void);
 void            Rend_AddLuminousDecorations(void);
 void            Rend_ProjectDecorations(void);
