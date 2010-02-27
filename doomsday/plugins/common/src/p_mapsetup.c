@@ -766,6 +766,10 @@ int P_SetupMapWorker(void* ptr)
     }
 
     DD_InitThinkers();
+#if __JHERETIC__
+    P_InitAmbientSound();
+#endif
+
     P_LoadMapObjs();
 
 #if __JDOOM__
@@ -795,10 +799,6 @@ int P_SetupMapWorker(void* ptr)
 #endif
 
     interpretLinedefFlags();
-
-#if __JHERETIC__
-    P_InitAmbientSound();
-#endif
 
 #if __JHEXEN__
     Con_Message("Load ACS scripts\n");
