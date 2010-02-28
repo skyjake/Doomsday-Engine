@@ -240,7 +240,7 @@ int gsvInvItems[NUM_INVENTORYITEM_TYPES];
 int gsvWPieces[4];
 #endif
 
-static gamestate_t gameState = GS_DEMOSCREEN;
+static gamestate_t gameState = GS_STARTUP;
 
 cvar_t gamestatusCVars[] = {
    {"game-state", READONLYCVAR, CVT_INT, &gameState, 0, 0},
@@ -723,7 +723,7 @@ static const char* getGameStateStr(gamestate_t state)
         {GS_MAP, "GS_MAP"},
         {GS_INTERMISSION, "GS_INTERMISSION"},
         {GS_FINALE, "GS_FINALE"},
-        {GS_DEMOSCREEN, "GS_DEMOSCREEN"},
+        {GS_STARTUP, "GS_STARTUP"},
         {GS_WAITING, "GS_WAITING"},
         {GS_INFINE, "GS_INFINE"},
         {-1, NULL}
@@ -793,17 +793,16 @@ VERBOSE(Con_Message("G_ChangeGameState: New state %s.\n",
     // Update the state of the gameui binding context.
     switch(gameState)
     {
-        case GS_FINALE:
-        case GS_DEMOSCREEN:
-        case GS_WAITING:
-        case GS_INFINE:
-            gameActive = false;
-        case GS_INTERMISSION:
-            gameUIActive = true;
-            break;
-
-        default:
-            break;
+    case GS_FINALE:
+    case GS_STARTUP:
+    case GS_WAITING:
+    case GS_INFINE:
+        gameActive = false;
+    case GS_INTERMISSION:
+        gameUIActive = true;
+        break;
+    default:
+        break;
     }
 
     if(gameUIActive)

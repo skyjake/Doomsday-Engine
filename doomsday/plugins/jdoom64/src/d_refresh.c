@@ -312,45 +312,49 @@ static void rendHUD(int player)
  */
 void D_Display(int layer)
 {
-    int                 player = DISPLAYPLAYER;
-    player_t*           plr = &players[player];
-    float               x, y, w, h;
+    int player = DISPLAYPLAYER;
+    player_t* plr = &players[player];
+    float x, y, w, h;
 
-    if(layer == 0)
+    if(layer != 0)
     {
-        if(G_GetGameState() == GS_MAP)
-        {
-            // $democam: can be set on every frame.
-            if(cfg.setBlocks > 10 || (P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
-            {
-                // Full screen.
-                R_SetViewWindowTarget(0, 0, 320, 200);
-            }
-            else
-            {
-                int                 w = cfg.setBlocks * 32;
-                int                 h = cfg.setBlocks * 20;
-                R_SetViewWindowTarget(160 - (w >> 1), (100 - (h >> 1)), w, h);
-            }
+        rendHUD(player);
+        return;
+    }
 
-            R_GetViewWindow(&x, &y, &w, &h);
+    if(G_GetGameState() == GS_MAP)
+    {
+        // $democam: can be set on every frame.
+        if(cfg.setBlocks > 10 || (P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
+        {
+            // Full screen.
+            R_SetViewWindowTarget(0, 0, SCREENWIDTH, SCREENHEIGHT);
         }
         else
         {
-            x = 0;
-            y = 0;
-            w = SCREENWIDTH;
-            h = SCREENHEIGHT;
+            int w = cfg.setBlocks * 32;
+            int h = cfg.setBlocks * 20;
+            R_SetViewWindowTarget(SCREENWIDTH/2 - w/2, SCREENHEIGHT/2 - h/2, w, h);
         }
 
-        R_SetViewWindow((int) x, (int) y, (int) w, (int) h);
+        R_GetViewWindow(&x, &y, &w, &h);
+    }
+    else
+    {
+        x = 0;
+        y = 0;
+        w = SCREENWIDTH;
+        h = SCREENHEIGHT;
+    }
 
+    R_SetViewWindow((int) x, (int) y, (int) w, (int) h);
+
+    switch(G_GetGameState())
+    {
+    case GS_MAP:
         if(!(MN_CurrentMenuHasBackground() && Hu_MenuAlpha() >= 1) &&
            !R_MapObscures(player, (int) x, (int) y, (int) w, (int) h))
         {
-            if(G_GetGameState() != GS_MAP)
-                return;
-
             if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
                 return;
 
@@ -365,10 +369,12 @@ void D_Display(int layer)
 
         // Draw the automap?
         AM_Drawer(player);
-    }
-    else if(layer == 1)
-    {
-        rendHUD(player);
+        break;
+    case GS_STARTUP:
+        DGL_DrawRect(x, y, w, h, 0, 0, 0, 1);
+        break;
+    default:
+        break;
     }
 }
 

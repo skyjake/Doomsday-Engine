@@ -124,7 +124,7 @@ typedef enum gamestate_e {
     GS_MAP,
     GS_INTERMISSION,
     GS_FINALE,
-    GS_DEMOSCREEN,
+    GS_STARTUP,
     GS_WAITING,
     GS_INFINE,
     NUM_GAME_STATES
