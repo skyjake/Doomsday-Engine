@@ -95,10 +95,10 @@ int P_ConsoleToLocal(int playerNum)
     {
         return 0;
     }
-    
+
     if(!(plr->shared.flags & DDPF_LOCAL))
         return -1; // Not local at all.
-    
+
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         int console = (i + consolePlayer) % DDMAXPLAYERS;
@@ -108,7 +108,7 @@ int P_ConsoleToLocal(int playerNum)
         {
             return count;
         }
-        
+
         if(plr->shared.flags & DDPF_LOCAL)
             count++;
     }
@@ -159,7 +159,7 @@ boolean P_IsInVoid(player_t* player)
         if(ddpl->inVoid)
             return true;
 
-        if(ddpl->mo->subsector)
+        if(ddpl->mo && ddpl->mo->subsector)
         {
             sector_t*           sec = ddpl->mo->subsector->sector;
 
