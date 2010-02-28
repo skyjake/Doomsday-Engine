@@ -989,10 +989,19 @@ static int findSectorNeighborsForStairBuild(void* ptr, void* context)
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+/**
+ * @note Behaviour here is dependant upon the order of the sector-linked
+ * LineDefs list. This is necessary to emulate the flawed algorithm used in
+ * DOOM.exe In addition, this algorithm was further broken in Heretic as the
+ * test which compares floor heights was removed.
+ *
+ * @important DO NOT USE THIS ANYWHERE ELSE!
+ */
 typedef struct spreadsectorparams_s {
     sector_t*           baseSec;
     material_t*         material;
     sector_t*           foundSec;
+    float               height, stairSize;
 } spreadsectorparams_t;
 
 int findAdjacentSectorForSpread(void* ptr, void* context)
@@ -1015,6 +1024,13 @@ int findAdjacentSectorForSpread(void* ptr, void* context)
 
     if(P_GetPtrp(backSec, DMU_FLOOR_MATERIAL) != params->material)
         return 1; // Continue iteration.
+
+    /**
+     * @note The placement of this step height addition is vital to ensure
+     * the exact behaviour of the original DOOM algorithm. Logically this
+     * should occur after the test below...
+     */
+    params->height += params->stairSize;
 
     xsec = P_ToXSector(backSec);
     if(xsec->specialData)
@@ -1084,7 +1100,8 @@ int EV_BuildStairs(linedef_t* line, stair_e type)
         }
 #if __JHERETIC__
         floor->type = FT_RAISEBUILDSTEP;
-        floor->speed = FLOORSPEED;
+        speed = FLOORSPEED;
+        floor->speed = speed;
 #else
         floor->speed = speed;
 #endif
@@ -1097,12 +1114,12 @@ int EV_BuildStairs(linedef_t* line, stair_e type)
         params.baseSec = sec;
         params.material = P_GetPtrp(sec, DMU_FLOOR_MATERIAL);
         params.foundSec = NULL;
+        params.height = height;
+        params.stairSize = stairsize;
 
         while(!P_Iteratep(params.baseSec, DMU_LINEDEF, &params,
                           findAdjacentSectorForSpread))
         {   // We found another sector to spread to.
-            height += stairsize;
-
             floor = Z_Calloc(sizeof(*floor), PU_MAP, 0);
             floor->thinker.function = T_MoveFloor;
             DD_ThinkerAdd(&floor->thinker);
@@ -1112,13 +1129,9 @@ int EV_BuildStairs(linedef_t* line, stair_e type)
             floor->type = FT_RAISEBUILDSTEP;
 #endif
             floor->state = FS_UP;
-            floor->sector = params.foundSec;
-#if __JHERETIC__
-            floor->speed = FLOORSPEED;
-#else
             floor->speed = speed;
-#endif
-            floor->floorDestHeight = height;
+            floor->sector = params.foundSec;
+            floor->floorDestHeight = params.height;
 
             // Prepare for the next pass.
             params.baseSec = params.foundSec;
