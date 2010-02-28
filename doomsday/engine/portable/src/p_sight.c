@@ -143,9 +143,9 @@ static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
     }
     else
     {
-        if(bsec->SP_floorheight > fsec->SP_floorheight)
+        if(bsec->SP_floorheight != fsec->SP_floorheight)
             ranges |= RBOTTOM;
-        if(bsec->SP_ceilheight < fsec->SP_ceilheight)
+        if(bsec->SP_ceilheight != fsec->SP_ceilheight)
             ranges |= RTOP;
     }
 
@@ -164,27 +164,25 @@ static boolean crossLineDef(const linedef_t* li, byte side, losdata_t* los)
 
     if(ranges & RTOP)
     {
-        float slope, top;
+        float top = (noBack? fsec->SP_ceilheight : fsec->SP_ceilheight < bsec->SP_ceilheight? fsec->SP_ceilheight : bsec->SP_ceilheight);
+        float slope = (top - los->startZ) / frac;
 
-        top = (noBack? fsec->SP_ceilheight : bsec->SP_ceilheight);
-        slope = (top - los->startZ) / frac;
-
-        if((los->topSlope > slope) ^ (noBack && !(los->flags & LS_PASSOVER)) ||
+        if((slope < los->topSlope) ^ (noBack && !(los->flags & LS_PASSOVER)) ||
            (noBack && los->topSlope > (fsec->SP_floorheight - los->startZ) / frac))
             los->topSlope = slope;
-        if((los->bottomSlope > slope) ^ (noBack && !(los->flags & LS_PASSUNDER)) ||
+        if((slope < los->bottomSlope) ^ (noBack && !(los->flags & LS_PASSUNDER)) ||
            (noBack && los->bottomSlope > (fsec->SP_floorheight - los->startZ) / frac))
             los->bottomSlope = slope;
     }
 
     if(ranges & RBOTTOM)
     {
-        float bottom = (noBack? fsec->SP_floorheight : bsec->SP_floorheight);
+        float bottom = (noBack? fsec->SP_floorheight : fsec->SP_floorheight > bsec->SP_floorheight? fsec->SP_floorheight : bsec->SP_floorheight);
         float slope = (bottom - los->startZ) / frac;
 
-        if(los->bottomSlope < slope)
+        if(slope > los->bottomSlope)
             los->bottomSlope = slope;
-        if(los->topSlope < slope)
+        if(slope > los->topSlope)
             los->topSlope = slope;
     }
 
