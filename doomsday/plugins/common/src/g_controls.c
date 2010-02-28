@@ -50,6 +50,7 @@
 #include "d_netsv.h"
 #include "hu_menu.h"
 #include "hu_msg.h"
+#include "g_common.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -481,6 +482,9 @@ void G_RegisterBindClasses(void)
 
 DEFCC( CCmdPause )
 {
+    if(G_GetGameAction() == GA_QUIT)
+        return false;
+
     // Toggle pause.
     G_SetPause(!(paused & 1));
     return true;

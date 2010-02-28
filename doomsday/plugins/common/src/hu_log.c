@@ -901,6 +901,9 @@ DEFCC(CCmdMsgAction)
 {
     int toPlayer;
 
+    if(G_GetGameAction() == GA_QUIT)
+        return false;
+
     if(chatOn)
     {
         if(!stricmp(argv[0], "chatcomplete"))  // send the message

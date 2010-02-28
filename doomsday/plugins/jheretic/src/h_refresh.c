@@ -68,6 +68,8 @@ extern const float defFontRGB2[];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+float quitDarkenOpacity = 0;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
@@ -324,7 +326,9 @@ void H_Display(int layer)
         AM_Drawer(player);
         break;
     case GS_STARTUP:
+        DGL_Disable(DGL_TEXTURING);
         DGL_DrawRect(x, y, w, h, 0, 0, 0, 1);
+        DGL_Enable(DGL_TEXTURING);
         break;
     default:
         break;
@@ -396,6 +400,13 @@ void H_Display2(void)
 
     // Draw HUD displays; menu, messages.
     Hu_Drawer();
+
+    if(G_GetGameAction() == GA_QUIT)
+    {
+        DGL_Disable(DGL_TEXTURING);
+        DGL_DrawRect(0, 0, 320, 200, 0, 0, 0, quitDarkenOpacity);
+        DGL_Enable(DGL_TEXTURING);
+    }
 }
 
 /**

@@ -249,10 +249,6 @@ static int editcolorindex = 0; // The index of the widgetcolors array of the ite
 
 static float currentcolor[4] = {0, 0, 0, 0}; // Used by the widget as temporay values.
 
-#if !defined( __JHEXEN__ ) && !defined( __JHERETIC__ )
-static int quitYet = 0; // Prevents multiple quit responses.
-#endif
-
 // Used to fade out the background a little when a widget is active.
 static float menu_calpha = 0;
 
@@ -3569,60 +3565,9 @@ void M_NewGame(int option, void* context)
 
 int M_QuitResponse(msgresponse_t response, void* context)
 {
-#if __JDOOM__ || __JDOOM64__
-    static int quitsounds[8] = {
-        SFX_PLDETH,
-        SFX_DMPAIN,
-        SFX_POPAIN,
-        SFX_SLOP,
-        SFX_TELEPT,
-        SFX_POSIT1,
-        SFX_POSIT3,
-        SFX_SGTATK
-    };
-    static int quitsounds2[8] = {
-        SFX_VILACT,
-        SFX_GETPOW,
-# if __JDOOM64__
-        SFX_PEPAIN,
-# else
-        SFX_BOSCUB,
-# endif
-        SFX_SLOP,
-        SFX_SKESWG,
-        SFX_KNTDTH,
-        SFX_BSPACT,
-        SFX_SGTATK
-    };
-#endif
-
     if(response == MSG_YES)
     {
-        Hu_MenuCommand(MCMD_CLOSEFAST);
-
-#if __JDOOM__ || __JDOOM64__
-        // Play an exit sound if it is enabled.
-        if(cfg.menuQuitSound && !IS_NETGAME)
-        {
-            if(!quitYet)
-            {
-                if(gameMode == commercial)
-                    S_LocalSound(quitsounds2[((int)GAMETIC >> 2) & 7], NULL);
-                else
-                    S_LocalSound(quitsounds[((int)GAMETIC >> 2) & 7], NULL);
-
-                // Wait for 1.5 seconds.
-                DD_Executef(true, "activatebcontext deui; after 53 quit!");
-                quitYet = true;
-            }
-        }
-        else
-        {
-            Sys_Quit();
-        }
-#else
-        Sys_Quit();
-#endif
+        G_SetGameAction(GA_QUIT);
     }
 
     return true;
@@ -4077,7 +4022,10 @@ void MN_DrawSlider(const menu_t* menu, int item, int width, int slot)
  */
 DEFCC(CCmdMenuAction)
 {
-    int                 mode = 0;
+    int mode = 0;
+
+    if(G_GetGameAction() == GA_QUIT)
+        return false;
 
     if(!menuActive)
     {

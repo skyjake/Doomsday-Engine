@@ -98,10 +98,10 @@ typedef enum {
  * gazing at the intermission screen, the game final animation, or a demo.
  */
 typedef enum gamestate_e {
+    GS_STARTUP,
     GS_MAP,
     GS_INTERMISSION,
     GS_FINALE,
-    GS_STARTUP,
     GS_WAITING,
     GS_INFINE,
     NUM_GAME_STATES
@@ -117,7 +117,8 @@ typedef enum {
     GA_COMPLETED,
     GA_VICTORY,
     GA_LEAVEMAP,
-    GA_SCREENSHOT
+    GA_SCREENSHOT,
+    GA_QUIT
 } gameaction_t;
 
 //

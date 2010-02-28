@@ -36,6 +36,8 @@
 
 #include "p_mobj.h"
 
+extern float quitDarkenOpacity;
+
 void            H_Display(int layer);
 void            H_Display2(void);
 

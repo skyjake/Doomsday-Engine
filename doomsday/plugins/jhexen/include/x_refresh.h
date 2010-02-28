@@ -32,6 +32,8 @@
 #  error "Using jHexen headers without __JHEXEN__"
 #endif
 
+extern float quitDarkenOpacity;
+
 void            G_Display(int layer);
 void            G_Display2(void);
 

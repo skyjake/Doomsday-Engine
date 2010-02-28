@@ -419,6 +419,9 @@ void G_Register(void)
 
 void G_SetGameAction(gameaction_t action)
 {
+    if(gameAction == GA_QUIT)
+        return;
+
     if(gameAction != action)
         gameAction = action;
 }
@@ -776,6 +779,9 @@ void G_ChangeGameState(gamestate_t state)
     boolean gameUIActive = false;
     boolean gameActive = true;
 
+    if(G_GetGameAction() == GA_QUIT)
+        return;
+
     if(state < 0 || state >= NUM_GAME_STATES)
         Con_Error("G_ChangeGameState: Invalid state %i.\n", (int) state);
 
@@ -934,6 +940,9 @@ void G_DoLoadMap(void)
  */
 boolean G_Responder(event_t *ev)
 {
+    if(G_GetGameAction() == GA_QUIT)
+        return false; // Eat all events once shutdown has begun.
+
     // With the menu active, none of these should respond to input events.
     if(!Hu_MenuIsActive() && !Hu_IsMessageActive())
     {
@@ -1036,60 +1045,79 @@ void G_UpdateGSVarsForPlayer(player_t* pl)
 #endif
 }
 
-/**
- * The core of the timing loop. Game state, game actions etc occur here.
- *
- * @param ticLength     How long this tick is, in seconds.
- */
-void G_Ticker(timespan_t ticLength)
+static void runGameAction(void)
 {
-    static gamestate_t  oldGameState = -1;
-    static trigger_t    fixed = {1.0 / TICSPERSEC};
-
-    int                 i;
-    gameaction_t        currentAction;
-
-    // Always tic:
-    Hu_FogEffectTicker(ticLength);
-    Hu_MenuTicker(ticLength);
-    Hu_MsgTicker(ticLength);
-
-    if(IS_CLIENT && !Get(DD_GAME_READY))
-        return;
-
-    // Do player reborns if needed.
-    for(i = 0; i < MAXPLAYERS; ++i)
+    if(G_GetGameAction() == GA_QUIT)
     {
-        player_t       *plr = &players[i];
+#define QUITWAIT_MILLISECONDS 1500
 
-        if(plr->plr->inGame && plr->playerState == PST_REBORN &&
-           !P_MobjIsCamera(plr->plr->mo))
-            G_DoReborn(i);
+        static uint quitTime = 0;
 
-        // Player has left?
-        if(plr->playerState == PST_GONE)
+        if(quitTime == 0)
         {
-            plr->playerState = PST_REBORN;
-            if(plr->plr->mo)
-            {
-                if(!IS_CLIENT)
-                {
-                    P_SpawnTeleFog(plr->plr->mo->pos[VX],
-                                   plr->plr->mo->pos[VY],
-                                   plr->plr->mo->angle + ANG180);
-                }
+            quitTime = Sys_GetRealTime();
 
-                // Let's get rid of the mobj.
-#ifdef _DEBUG
-Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
+            Hu_MenuCommand(MCMD_CLOSEFAST);
+
+            if(!IS_NETGAME)
+            {
+#if __JDOOM__ || __JDOOM64__
+                // Play an exit sound if it is enabled.
+                if(cfg.menuQuitSound)
+                {
+                    static int quitsounds[8] = {
+                        SFX_PLDETH,
+                        SFX_DMPAIN,
+                        SFX_POPAIN,
+                        SFX_SLOP,
+                        SFX_TELEPT,
+                        SFX_POSIT1,
+                        SFX_POSIT3,
+                        SFX_SGTATK
+                    };
+                    static int quitsounds2[8] = {
+                        SFX_VILACT,
+                        SFX_GETPOW,
+# if __JDOOM64__
+                        SFX_PEPAIN,
+# else
+                        SFX_BOSCUB,
+# endif
+                        SFX_SLOP,
+                        SFX_SKESWG,
+                        SFX_KNTDTH,
+                        SFX_BSPACT,
+                        SFX_SGTATK
+                    };
+
+                    if(gameMode == commercial)
+                        S_LocalSound(quitsounds2[P_Random() & 7], NULL);
+                    else
+                        S_LocalSound(quitsounds[P_Random() & 7], NULL);
+                }
 #endif
-                P_MobjRemove(plr->plr->mo, true);
-                plr->plr->mo = NULL;
+                DD_Executef(true, "activatebcontext deui");
             }
         }
+
+        if(Sys_GetRealTime() > quitTime + QUITWAIT_MILLISECONDS)
+        {
+            Sys_Quit();
+        }
+        else
+        {
+            float t = (Sys_GetRealTime() - quitTime) / (float) QUITWAIT_MILLISECONDS;
+            quitDarkenOpacity = t*t*t;
+        }
+
+        // No game state changes occur once we have begun to quit.
+        return;
+
+#undef QUITWAIT_MILLISECONDS
     }
 
     // Do things to change the game state.
+    {gameaction_t currentAction;
     while((currentAction = G_GetGameAction()) != GA_NONE)
     {
         switch(currentAction)
@@ -1146,23 +1174,89 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
         default:
             break;
         }
-    }
+    }}
+}
 
-    // Update the viewer's look angle
-    //G_LookAround(CONSOLEPLAYER);
+/**
+ * The core of the timing loop. Game state, game actions etc occur here.
+ *
+ * @param ticLength     How long this tick is, in seconds.
+ */
+void G_Ticker(timespan_t ticLength)
+{
+    static gamestate_t  oldGameState = -1;
+    static trigger_t    fixed = {1.0 / TICSPERSEC};
 
-    if(!IS_CLIENT)
+    int                 i;
+
+    // Always tic:
+    Hu_FogEffectTicker(ticLength);
+    Hu_MenuTicker(ticLength);
+    Hu_MsgTicker(ticLength);
+
+    if(IS_CLIENT && !Get(DD_GAME_READY))
+        return;
+
+    // Do player reborns if needed.
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
-        // Enable/disable sending of frames (delta sets) to clients.
-        Set(DD_ALLOW_FRAMES, G_GetGameState() == GS_MAP);
+        player_t       *plr = &players[i];
 
-        // Tell Doomsday when the game is paused (clients can't pause
-        // the game.)
-        Set(DD_CLIENT_PAUSED, P_IsPaused());
+        if(plr->plr->inGame && plr->playerState == PST_REBORN &&
+           !P_MobjIsCamera(plr->plr->mo))
+            G_DoReborn(i);
+
+        // Player has left?
+        if(plr->playerState == PST_GONE)
+        {
+            plr->playerState = PST_REBORN;
+            if(plr->plr->mo)
+            {
+                if(!IS_CLIENT)
+                {
+                    P_SpawnTeleFog(plr->plr->mo->pos[VX],
+                                   plr->plr->mo->pos[VY],
+                                   plr->plr->mo->angle + ANG180);
+                }
+
+                // Let's get rid of the mobj.
+#ifdef _DEBUG
+Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
+#endif
+                P_MobjRemove(plr->plr->mo, true);
+                plr->plr->mo = NULL;
+            }
+        }
     }
 
-    // Must be called on every tick.
-    P_RunPlayers(ticLength);
+    runGameAction();
+
+    if(G_GetGameAction() != GA_QUIT)
+    {
+        // Update the viewer's look angle
+        //G_LookAround(CONSOLEPLAYER);
+
+        if(!IS_CLIENT)
+        {
+            // Enable/disable sending of frames (delta sets) to clients.
+            Set(DD_ALLOW_FRAMES, G_GetGameState() == GS_MAP);
+
+            // Tell Doomsday when the game is paused (clients can't pause
+            // the game.)
+            Set(DD_CLIENT_PAUSED, P_IsPaused());
+        }
+
+        // Must be called on every tick.
+        P_RunPlayers(ticLength);
+    }
+    else
+    {
+        if(!IS_CLIENT)
+        {
+            // Disable sending of frames (delta sets) to clients.
+            Set(DD_ALLOW_FRAMES, false);
+        }
+    }
 
     // The following is restricted to fixed 35 Hz ticks.
     if(M_RunTrigger(&fixed, ticLength))
@@ -2562,7 +2656,10 @@ void G_DemoEnds(void)
     G_ChangeGameState(GS_WAITING);
 
     if(singledemo)
-        Sys_Quit();
+    {
+        G_SetGameAction(GA_QUIT);
+        return;
+    }
 
     FI_DemoEnds();
 }

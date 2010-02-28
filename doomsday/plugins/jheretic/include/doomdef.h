@@ -141,10 +141,10 @@ extern classinfo_t classInfo[NUM_PLAYER_CLASSES];
  * intermission screen, the game final animation, or a demo.
  */
 typedef enum {
+    GS_STARTUP,
     GS_MAP,
     GS_INTERMISSION,
     GS_FINALE,
-    GS_STARTUP,
     GS_WAITING,
     GS_INFINE,
     NUM_GAME_STATES
