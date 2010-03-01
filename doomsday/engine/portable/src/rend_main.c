@@ -132,6 +132,7 @@ void Rend_Register(void)
     C_VAR_INT2("rend-light-ambient", &ambientLight, 0, 0, 255, Rend_CalcLightModRange);
     C_VAR_INT2("rend-light-sky", &rendSkyLight, 0, 0, 1, LG_MarkAllForUpdate);
     C_VAR_FLOAT("rend-light-wall-angle", &rendLightWallAngle, CVF_NO_MAX, 0, 0);
+    C_VAR_BYTE("rend-light-wall-angle-smooth", &rendLightWallAngleSmooth, 0, 0, 1);
     C_VAR_FLOAT("rend-light-attenuation", &rendLightDistanceAttentuation, CVF_NO_MAX, 0, 0);
 
     C_VAR_INT("rend-dev-sky", &devRendSkyMode, CVF_NO_ARCHIVE, 0, 2);
@@ -1363,7 +1364,8 @@ typedef struct {
     const float*    normal; // Surface normal.
     float           alpha;
     const float*    sectorLightLevel;
-    float           surfaceLightLevelDelta;
+    float           surfaceLightLevelDL;
+    float           surfaceLightLevelDR;
     const float*    sectorLightColor;
     const float*    surfaceColor;
 
@@ -1562,15 +1564,14 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             }
             else
             {
-                uint                i;
-                float               ll = *p->sectorLightLevel +
-                    p->surfaceLightLevelDelta;
+                uint i;
+                
 
                 // Calculate the color for each vertex, blended with plane color?
                 if(p->surfaceColor[0] < 1 || p->surfaceColor[1] < 1 ||
                    p->surfaceColor[2] < 1)
                 {
-                    float               vColor[4];
+                    float vColor[4];
 
                     // Blend sector light+color+surfacecolor
                     vColor[CR] = p->surfaceColor[CR] * p->sectorLightColor[CR];
@@ -1578,21 +1579,48 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                     vColor[CB] = p->surfaceColor[CB] * p->sectorLightColor[CB];
                     vColor[CA] = 1;
 
-                    for(i = 0; i < numVertices; ++i)
-                        lightVertex(&rcolors[i], &rvertices[i], ll, vColor);
+                    if(p->isWall)
+                    {
+                        float llL = *p->sectorLightLevel + p->surfaceLightLevelDL;
+                        float llR = *p->sectorLightLevel + p->surfaceLightLevelDR;
+
+                        lightVertex(&rcolors[0], &rvertices[0], llL, vColor);
+                        lightVertex(&rcolors[1], &rvertices[1], llL, vColor);
+                        lightVertex(&rcolors[2], &rvertices[2], llR, vColor);
+                        lightVertex(&rcolors[3], &rvertices[3], llR, vColor);
+                    }
+                    else
+                    {
+                        float ll = *p->sectorLightLevel + p->surfaceLightLevelDL;
+                        for(i = 0; i < numVertices; ++i)
+                            lightVertex(&rcolors[i], &rvertices[i], ll, vColor);
+                    }
                 }
                 else
-                {
-                    // Use sector light+color only
-                    for(i = 0; i < numVertices; ++i)
-                        lightVertex(&rcolors[i], &rvertices[i], ll,
-                                    p->sectorLightColor);
+                {   // Use sector light+color only.
+                    if(p->isWall)
+                    {
+                        float llL = *p->sectorLightLevel + p->surfaceLightLevelDL;
+                        float llR = *p->sectorLightLevel + p->surfaceLightLevelDR;
+
+                        lightVertex(&rcolors[0], &rvertices[0], llL, p->sectorLightColor);
+                        lightVertex(&rcolors[1], &rvertices[1], llL, p->sectorLightColor);
+                        lightVertex(&rcolors[2], &rvertices[2], llR, p->sectorLightColor);
+                        lightVertex(&rcolors[3], &rvertices[3], llR, p->sectorLightColor);
+                    }
+                    else
+                    {
+                        float ll = *p->sectorLightLevel + p->surfaceLightLevelDL;
+                        for(i = 0; i < numVertices; ++i)
+                            lightVertex(&rcolors[i], &rvertices[i], ll,
+                                        p->sectorLightColor);
+                    }
                 }
 
                 // Bottom color (if different from top)?
                 if(p->isWall && p->surfaceColor2)
                 {
-                    float               vColor[4];
+                    float vColor[4];
 
                     // Blend sector light+color+surfacecolor
                     vColor[CR] = p->surfaceColor2[CR] * p->sectorLightColor[CR];
@@ -1600,8 +1628,8 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                     vColor[CB] = p->surfaceColor2[CB] * p->sectorLightColor[CB];
                     vColor[CA] = 1;
 
-                    lightVertex(&rcolors[0], &rvertices[0], ll, vColor);
-                    lightVertex(&rcolors[2], &rvertices[2], ll, vColor);
+                    lightVertex(&rcolors[0], &rvertices[0], *p->sectorLightLevel + p->surfaceLightLevelDL, vColor);
+                    lightVertex(&rcolors[2], &rvertices[2], *p->sectorLightLevel + p->surfaceLightLevelDR, vColor);
                 }
             }
 
@@ -1820,7 +1848,8 @@ static boolean doRenderSeg(seg_t* seg,
                            const fvertex_t* from, const fvertex_t* to,
                            float bottom, float top, const pvec3_t normal,
                            float alpha,
-                           const float* lightLevel, float lightLevelDelta,
+                           const float* lightLevel, float lightLevelDL,
+                           float lightLevelDR,
                            const float* lightColor,
                            uint lightListIdx,
                            const walldiv_t* divs,
@@ -1855,7 +1884,8 @@ static boolean doRenderSeg(seg_t* seg,
     params.texTL = texTL;
     params.texBR = texBR;
     params.sectorLightLevel = lightLevel;
-    params.surfaceLightLevelDelta = lightLevelDelta;
+    params.surfaceLightLevelDL = lightLevelDL;
+    params.surfaceLightLevelDR = lightLevelDR;
     params.sectorLightColor = lightColor;
     params.surfaceColor = color;
     params.surfaceColor2 = color2;
@@ -1979,7 +2009,7 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
     params.texBR = texBR;
     params.sectorLightLevel = &sec->lightLevel;
     params.sectorLightColor = R_GetSectorLightColor(sec);
-    params.surfaceLightLevelDelta = 0;
+    params.surfaceLightLevelDL = params.surfaceLightLevelDR = 0;
     params.surfaceColor = sufColor;
     params.texOffset = texOffset;
     params.texScale = texScale;
@@ -2326,11 +2356,21 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             applyWallHeightDivision(divs, seg, frontsec, bottom, top);
         }
 
+        {
+        float deltaL, deltaR, diff;
+
+        Linedef_LightLevelDelta(seg->lineDef, seg->side, &deltaL, &deltaR);
+
+        // Linear interpolation of the linedef light deltas to the edges of the seg.
+        diff = deltaR - deltaL;
+        deltaR = deltaL + ((seg->offset + seg->length) / seg->lineDef->length) * diff;
+        deltaL += (seg->offset / seg->lineDef->length) * diff;
+
         solidSeg = doRenderSeg(seg,
                                from, to, bottom, top,
                                surface->normal, (forceOpaque? -1 : alpha),
                                &frontsec->lightLevel,
-                               R_WallAngleLightLevelDelta(seg->lineDef, seg->side),
+                               deltaL, deltaR,
                                R_GetSectorLightColor(frontsec),
                                lightListIdx,
                                (divs[0].num > 0 || divs[1].num > 0)? divs : NULL,
@@ -2342,6 +2382,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
                                color, color2,
                                seg->bsuf[section], (uint) section,
                                &msA, inter, blended? &msB : NULL);
+        }
     }
 
     return solidSeg;

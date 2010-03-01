@@ -47,6 +47,8 @@ typedef struct skyfix_s {
 } skyfix_t;
 
 extern int rendSkyLight; // cvar
+extern float rendLightWallAngle;
+extern byte rendLightWallAngleSmooth;
 extern boolean ddMapSetup;
 extern skyfix_t skyFix[2]; // [floor, ceiling]
 
@@ -63,7 +65,6 @@ void            R_SetupSky(ded_sky_t* sky);
 
 const float*    R_GetSectorLightColor(const sector_t* sector);
 float           R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
-float           R_WallAngleLightLevelDelta(const linedef_t* l, byte side);
 float           R_ExtraLightDelta(void);
 float           R_CheckSectorLight(float lightlevel, float min, float max);
 boolean         R_IsSkySurface(const surface_t* suf);

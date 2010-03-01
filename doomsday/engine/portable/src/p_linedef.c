@@ -32,6 +32,8 @@
 #include "de_refresh.h"
 #include "de_play.h"
 
+#include "m_bams.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -50,10 +52,105 @@
 
 // CODE --------------------------------------------------------------------
 
-float Linedef_GetLightLevelDelta(const linedef_t* l)
+static void calcNormal(const linedef_t* l, byte side, pvec2_t normal)
 {
-    return (1.0f / 255) *
-        ((l->L_vpos(1)[VY] - l->L_vpos(0)[VY]) / l->length * 18);
+    V2_Set(normal, (l->L_vpos(side^1)[VY] - l->L_vpos(side)[VY])   / l->length,
+                   (l->L_vpos(side)[VX]   - l->L_vpos(side^1)[VX]) / l->length);
+}
+
+static float lightLevelDelta(const pvec2_t normal)
+{
+    return (1.0f / 255) * (normal[VX] * 18) * rendLightWallAngle;
+}
+
+static linedef_t* findBlendNeighbor(const linedef_t* l, byte side, byte right,
+    binangle_t* diff)
+{
+    if(!l->L_backside ||
+       l->L_backsector->SP_ceilvisheight <= l->L_frontsector->SP_floorvisheight ||
+       l->L_backsector->SP_floorvisheight >= l->L_frontsector->SP_ceilvisheight)
+    {
+        return R_FindSolidLineNeighbor(l->L_sector(side), l, l->L_vo(right^side), right, diff);
+    }
+
+    return R_FindLineNeighbor(l->L_sector(side), l, l->L_vo(right^side), right, diff);
+}
+
+/**
+ * The DOOM lighting model applies a sector light level delta when drawing
+ * segs based on their 2D world angle.
+ *
+ * @param l             Linedef to calculate the delta for.
+ * @param side          Side of the linedef we are interested in.
+ * @param deltaL        Light delta for the left edge is written back here.
+ * @param deltaR        Light delta for the right edge is written back here.
+ */
+void Linedef_LightLevelDelta(const linedef_t* l, byte side, float* deltaL, float* deltaR)
+{
+    vec2_t normal;
+    float delta;
+
+    // Disabled?
+    if(!(rendLightWallAngle > 0))
+    {
+        *deltaL = *deltaR = 0;
+        return;
+    }
+
+    calcNormal(l, side, normal);
+    delta = lightLevelDelta(normal);
+
+    // If smoothing is disabled use this delta for left and right edges.
+    // Must forcibly disable smoothing for polyobj linedefs as they have
+    // no owner rings.
+    if(!rendLightWallAngleSmooth || (l->inFlags & LF_POLYOBJ))
+    {
+        *deltaL = *deltaR = delta;
+        return;
+    }
+
+    // Find the left neighbour linedef for which we will calculate the
+    // lightlevel delta and then blend with this to produce the value for
+    // the left edge. Blend iff the angle between the two linedefs is less
+    // than 45 degrees.
+    {
+    binangle_t diff = 0;
+    linedef_t* other = findBlendNeighbor(l, side, 0, &diff);
+    if(other && INRANGE_OF(diff, BANG_180, BANG_45))
+    {
+        vec2_t otherNormal;
+
+        calcNormal(other, other->L_v2 != l->L_v(side), otherNormal);
+
+        // Average normals.
+        V2_Sum(otherNormal, otherNormal, normal);
+        otherNormal[VX] /= 2; otherNormal[VY] /= 2;
+
+        *deltaL = lightLevelDelta(otherNormal);
+    }
+    else
+        *deltaL = delta;
+    }
+
+    // Do the same for the right edge but with the right neighbour linedef.
+    {
+    binangle_t diff = 0;
+    linedef_t* other = findBlendNeighbor(l, side, 1, &diff);
+    if(other && INRANGE_OF(diff, BANG_180, BANG_45))
+    {
+        vec2_t otherNormal;
+
+        calcNormal(other, other->L_v1 != l->L_v(side^1), otherNormal);
+
+        // Average normals.
+        V2_Sum(otherNormal, otherNormal, normal);
+        otherNormal[VX] /= 2; otherNormal[VY] /= 2;
+
+        *deltaR = lightLevelDelta(otherNormal);
+    }
+    else
+        *deltaR = delta;
+    }
 }
 
 /**

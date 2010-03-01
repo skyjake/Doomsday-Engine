@@ -63,7 +63,6 @@ extern int renderTextures;
 extern int renderWireframe;
 extern int useMultiTexLights;
 extern int useMultiTexDetails;
-extern float rendLightWallAngle;
 extern float detailFactor, detailScale;
 extern int torchAdditive;
 extern float torchColor[];

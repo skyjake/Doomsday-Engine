@@ -656,7 +656,10 @@ desc = Maximum radius of dynamic lights (default: 128).
 desc = Minimum dynamic light radius to convert to BIAS light source.
 
 [rend-light-wall-angle]
-desc = Intensity of angle-based wall light.
+desc = Intensity of angle-based wall lighting delta.
+
+[rend-light-wall-angle-smooth]
+desc = 1=Enable smoothing of angle-based wall lighting.
 
 [rend-light-multitex]
 desc = 1=Use multitexturing when rendering dynamic lights.
