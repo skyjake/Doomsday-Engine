@@ -807,9 +807,9 @@ void C_DECL A_BFGsound(player_t *player, pspdef_t *psp)
 /**
  * Called at start of level for each player.
  */
-void P_SetupPsprites(player_t *player)
+void P_SetupPsprites(player_t* player)
 {
-    int                 i;
+    int i;
 
     // Remove all psprites.
     for(i = 0; i < NUMPSPRITES; ++i)
@@ -819,6 +819,15 @@ void P_SetupPsprites(player_t *player)
     if(player->pendingWeapon == WT_NOCHANGE)
         player->pendingWeapon = player->readyWeapon;
     P_BringUpWeapon(player);
+
+    /// Ensure the engine-side state matches.
+    /// \fixme Is this duplication still necessary?
+    for(i = 0; i < NUMPSPRITES; ++i)
+    {
+        player->plr->pSprites[i].pos[0] = player->pSprites[i].pos[0];
+        player->plr->pSprites[i].pos[1] = player->pSprites[i].pos[1];
+        player->plr->pSprites[i].tics = player->pSprites[i].tics;
+    }
 }
 
 /**

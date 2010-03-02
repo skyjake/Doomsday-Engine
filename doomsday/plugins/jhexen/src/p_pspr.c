@@ -2025,24 +2025,29 @@ void C_DECL A_Light0(player_t *plr, pspdef_t *psp)
 /**
  * Called at start of the map for each player.
  */
-void P_SetupPsprites(player_t *plr)
+void P_SetupPsprites(player_t* player)
 {
-    int                 i;
-
-#if _DEBUG
-    Con_Message("P_SetupPsprites: Player %i.\n", plr - players);
-#endif
+    int i;
 
     // Remove all psprites.
     for(i = 0; i < NUMPSPRITES; ++i)
     {
-        plr->pSprites[i].state = NULL;
+        player->pSprites[i].state = NULL;
     }
 
     // Spawn the ready weapon
-    if(plr->pendingWeapon == WT_NOCHANGE)
-        plr->pendingWeapon = plr->readyWeapon;
-    P_BringUpWeapon(plr);
+    if(player->pendingWeapon == WT_NOCHANGE)
+        player->pendingWeapon = player->readyWeapon;
+    P_BringUpWeapon(player);
+
+    /// Ensure the engine-side state matches.
+    /// \fixme Is this duplication still necessary?
+    for(i = 0; i < NUMPSPRITES; ++i)
+    {
+        player->plr->pSprites[i].pos[0] = player->pSprites[i].pos[0];
+        player->plr->pSprites[i].pos[1] = player->pSprites[i].pos[1];
+        player->plr->pSprites[i].tics = player->pSprites[i].tics;
+    }
 }
 
 /**
