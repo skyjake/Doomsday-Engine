@@ -2096,7 +2096,7 @@ void P_LineAttack(mobj_t* t1, angle_t angle, float distance, float slope,
  */
 boolean PIT_RadiusAttack(mobj_t* thing, void* data)
 {
-    float               dx, dy, dz, dist;
+    float dx, dy, dz, dist;
 
     if(!(thing->flags & MF_SHOOTABLE))
         return true;
@@ -2122,7 +2122,7 @@ boolean PIT_RadiusAttack(mobj_t* thing, void* data)
 
     dx = fabs(thing->pos[VX] - bombSpot->pos[VX]);
     dy = fabs(thing->pos[VY] - bombSpot->pos[VY]);
-    dz = fabs(thing->pos[VZ] - bombSpot->pos[VZ]);
+    dz = fabs((thing->pos[VZ] + thing->height / 2) - bombSpot->pos[VZ]);
 
     dist = (dx > dy? dx : dy);
 
@@ -2145,7 +2145,7 @@ boolean PIT_RadiusAttack(mobj_t* thing, void* data)
     // Must be in direct path.
     if(P_CheckSight(thing, bombSpot))
     {
-        int                 damage;
+        int damage;
 
         damage = (bombDamage * (bombDistance - dist) / bombDistance) + 1;
 #if __JHEXEN__
