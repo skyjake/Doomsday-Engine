@@ -30,5 +30,6 @@
 #define __COMMON_PSPRITE_H__
 
 void            HU_UpdatePsprites(void);
+float           HU_PSpriteYOffset(player_t* pl);
 
 #endif

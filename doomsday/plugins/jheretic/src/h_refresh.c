@@ -179,7 +179,7 @@ void R_SetViewSize(int blocks)
 static void rendPlayerView(int player)
 {
     player_t* plr = &players[player];
-    float viewPos[3], viewPitch;
+    float viewPos[3], viewPitch, pspriteOffsetY;
     angle_t viewAngle;
     boolean isFullBright = (plr->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD) ||
                             (plr->powers[PT_INVULNERABILITY] & 8);
@@ -201,6 +201,9 @@ static void rendPlayerView(int player)
     DD_SetVariable(DD_VIEW_Z, &viewPos[VZ]);
     DD_SetVariable(DD_VIEW_ANGLE, &viewAngle);
     DD_SetVariable(DD_VIEW_PITCH, &viewPitch);
+
+    pspriteOffsetY = HU_PSpriteYOffset(plr);
+    DD_SetVariable(DD_PSPRITE_OFFSET_Y, &pspriteOffsetY);
 
     // $democam
     GL_SetFilter((plr->plr->flags & DDPF_VIEW_FILTER)? true : false);

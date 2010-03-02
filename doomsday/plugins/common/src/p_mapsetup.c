@@ -53,6 +53,7 @@
 #include "am_map.h"
 #include "p_tick.h"
 #include "p_start.h"
+#include "hu_pspr.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -808,6 +809,7 @@ int P_SetupMapWorker(void* ptr)
 
     P_DealPlayerStarts(0);
     P_SpawnPlayers();
+    HU_UpdatePsprites();
 
     // Set up world state.
     P_SpawnSpecials();

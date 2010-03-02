@@ -189,11 +189,7 @@ void HU_UpdatePlayerSprite(int pnum)
  */
 void HU_UpdatePsprites(void)
 {
-    int         i;
-    float       offsetY = HU_PSpriteYOffset(&players[CONSOLEPLAYER]);
-
-    DD_SetVariable(DD_PSPRITE_OFFSET_Y, &offsetY);
-
+    int i;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         if(players[i].plr->inGame)
