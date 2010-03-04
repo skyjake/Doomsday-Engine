@@ -407,7 +407,7 @@ void GL_GetColorPaletteRGB(DGLuint id, DGLubyte rgb[3], ushort idx)
             Con_Message("GL_GetColorPaletteRGB: Warning, color idx %u "
                         "out of range in palette %u.\n", idx, id))
 
-        idx = MINMAX_OF(0, idx, pal->num) * 3;
+        idx = MINMAX_OF(0, idx, pal->num-1) * 3;
         rgb[CR] = pal->data[idx];
         rgb[CG] = pal->data[idx + 1];
         rgb[CB] = pal->data[idx + 2];
