@@ -40,6 +40,7 @@
 #include "g_common.h"
 #include "hu_menu.h"
 #include "hu_msg.h"
+#include "hu_pspr.h"
 #include "am_map.h"
 #include "x_hair.h"
 #include "p_tick.h"
