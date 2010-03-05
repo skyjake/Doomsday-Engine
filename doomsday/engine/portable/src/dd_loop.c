@@ -230,7 +230,13 @@ void DD_DrawAndBlit(void)
         // Restore the projection mode that was previously in effect.
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
+    }
 
+    if(Con_TransitionInProgress())
+        Con_DrawTransition();
+
+    if(drawGame)
+    {
         // Debug information.
         Net_Drawer();
         S_Drawer();

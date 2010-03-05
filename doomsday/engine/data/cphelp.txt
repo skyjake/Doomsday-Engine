@@ -565,11 +565,17 @@ desc = 1=Don't show the value of a cvar when setting it.
 [con-fps]
 desc = 1=Show FPS counter on screen.
 
+[con-move-speed]
+desc = Speed of console opening/closing.
+
 [con-text-shadow]
 desc = 1=Text in the console has a shadow (might be slow).
 
-[con-move-speed]
-desc = Speed of console opening/closing.
+[con-transition]
+desc = Transition effect used when leaving busy mode: 0=Crossfade, 1=DOOM (smooth), 2=DOOM
+
+[con-transition-tics]
+desc = Duration of transition effect in tics. 0= Disabled.
 
 [ui-panel-help]
 desc = 1=Enable help window in Control Panel.

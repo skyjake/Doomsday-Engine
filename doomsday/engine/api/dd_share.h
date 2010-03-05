@@ -1016,6 +1016,7 @@ typedef unsigned int colorpaletteid_t;
 #define BUSYF_ACTIVITY      0x8  // Indicate activity.
 #define BUSYF_NO_UPLOADS    0x10 // Deferred uploads not completed.
 #define BUSYF_STARTUP       0x20 // Startup mode: normal fonts, texman not available.
+#define BUSYF_TRANSITION    0x40 // Do a transition effect when busy mode ends.
 
 // These correspond the good old text mode VGA colors.
 #define CBLF_BLACK          0x00000001

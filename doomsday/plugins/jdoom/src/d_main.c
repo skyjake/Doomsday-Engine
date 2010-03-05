@@ -513,6 +513,9 @@ void G_PreInit(void)
 
     cfg.berserkAutoSwitch = true;
 
+    // Use the DOOM transition by default.
+    Con_SetInteger("con-transition", 1, 0);
+
     // Do the common pre init routine;
     G_CommonPreInit();
 }

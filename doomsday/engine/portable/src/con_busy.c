@@ -45,6 +45,10 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define SCREENSHOT_TEXTURE_SIZE 512
+
+#define DOOMWIPESINE_NUMSAMPLES 320
+
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -58,9 +62,14 @@ static void Con_BusyDrawer(void);
 static void Con_BusyLoadTextures(void);
 static void Con_BusyDeleteTextures(void);
 
+static void seedDoomWipeSine(void);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+int rTransition = (int) TS_CROSSFADE;
+int rTransitionTics = 28;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -78,6 +87,12 @@ static mutex_t busy_Mutex; // To prevent Data races in the busy thread.
 
 static DGLuint texLoading[2];
 static DGLuint texScreenshot; // Captured screenshot of the latest frame.
+
+static boolean transitionInProgress = false;
+static uint transitionStartTime = 0;
+static float transitionPosition;
+
+static float doomWipeSine[DOOMWIPESINE_NUMSAMPLES];
 
 // CODE --------------------------------------------------------------------
 
@@ -251,8 +266,9 @@ static void Con_BusyDeleteTextures(void)
 
     busyFont = 0;
 
-    // Don't release this yet if doing a wipe.
-    Con_ReleaseScreenshotTexture();
+    // Don't release this yet if doing a transition.
+    if(!(rTransitionTics > 0))
+        Con_ReleaseScreenshotTexture();
 }
 
 /**
@@ -277,7 +293,7 @@ void Con_AcquireScreenshotTexture(void)
 
     frame = M_Malloc(theWindow->width * theWindow->height * 3);
     GL_Grab(0, 0, theWindow->width, theWindow->height, DGL_RGB, frame);
-    GL_state.maxTexSize = 512; // A bit of a hack, but don't use too large a texture.
+    GL_state.maxTexSize = SCREENSHOT_TEXTURE_SIZE; // A bit of a hack, but don't use too large a texture.
     texScreenshot = GL_UploadTexture(frame, theWindow->width, theWindow->height,
                                      false, false, true, false, true,
                                      GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
@@ -341,15 +357,25 @@ static void Con_BusyLoop(void)
             Con_BusyDrawer();
     }
 
+    if(verbose)
+    {
+        Con_Message("Con_Busy: Was busy for %.2lf seconds.\n", busyTime);
+    }
+
     if(canDraw)
     {
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
-    }
 
-    if(verbose)
-    {
-        Con_Message("Con_Busy: Was busy for %.2lf seconds.\n", busyTime);
+        // Do a transition effect?
+        if(rTransitionTics > 0 && !(busyMode & BUSYF_STARTUP) && (busyMode & BUSYF_TRANSITION))
+        {
+            if(rTransition == TS_DOOM || rTransition == TS_DOOMSMOOTH)
+                seedDoomWipeSine();
+            transitionStartTime = Sys_GetTime();
+            transitionPosition = 0;
+            transitionInProgress = true;
+        }
     }
 }
 
@@ -622,6 +648,125 @@ static void Con_BusyDrawer(void)
     }
 
     Sys_UpdateWindow(windowIDX);
+}
+
+boolean Con_TransitionInProgress(void)
+{
+    return transitionInProgress;
+}
+
+void Con_TransitionTicker(timespan_t ticLength)
+{
+    if(isDedicated)
+        return;
+    if(!Con_TransitionInProgress())
+        return;
+
+    transitionPosition = (float)(Sys_GetTime() - transitionStartTime) / rTransitionTics;
+    if(transitionPosition >= 1)
+    {
+        Con_ReleaseScreenshotTexture();
+        transitionInProgress = false;
+    }
+}
+
+static void seedDoomWipeSine(void)
+{
+    int i;
+
+    doomWipeSine[0] = (128 - RNG_RandByte()) / 128.f;
+    for(i = 1; i < DOOMWIPESINE_NUMSAMPLES; ++i)
+    {
+        float r = (128 - RNG_RandByte()) / 512.f;
+        doomWipeSine[i] = MINMAX_OF(-1, doomWipeSine[i-1] + r, 1);
+    }
+}
+
+static float sampleDoomWipeSine(float point)
+{
+    float sample = doomWipeSine[(uint)ROUND((DOOMWIPESINE_NUMSAMPLES-1) * MINMAX_OF(0, point, 1))];
+    float offset = SCREENHEIGHT * transitionPosition * transitionPosition;
+    return offset + (SCREENHEIGHT/2) * (transitionPosition + sample) * transitionPosition * transitionPosition;
+}
+
+void Con_DrawTransition(void)
+{
+    if(isDedicated)
+        return;
+    if(!Con_TransitionInProgress())
+        return;
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
+
+    glBindTexture(GL_TEXTURE_2D, texScreenshot);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+    switch(rTransition)
+    {
+    case TS_DOOMSMOOTH:
+        {
+        float colWidth = .5f / SCREENSHOT_TEXTURE_SIZE;
+        int i;
+
+        glColor3f(1, 1, 1);
+
+        glBegin(GL_QUAD_STRIP);
+            glTexCoord2f(0, 1); glVertex2f(0, MAX_OF(0, sampleDoomWipeSine(0)));
+            glTexCoord2f(0, 0); glVertex2f(0, MAX_OF(0, sampleDoomWipeSine(0))+SCREENHEIGHT);
+        for(i = 1; i <= SCREENWIDTH; ++i)
+        {
+            float s = (float) i / SCREENWIDTH - colWidth;
+            float x = i - .5f;
+            float y = MAX_OF(0, sampleDoomWipeSine((float) i / SCREENWIDTH));
+
+            glTexCoord2f(s, 1); glVertex2f(x, y);
+            glTexCoord2f(s, 0); glVertex2f(x, y+SCREENHEIGHT);
+        }
+            glTexCoord2f(1, 1); glVertex2f(SCREENWIDTH, MAX_OF(0, sampleDoomWipeSine(1)));
+            glTexCoord2f(1, 0); glVertex2f(SCREENWIDTH, MAX_OF(0, sampleDoomWipeSine(1))+SCREENHEIGHT);
+        glEnd();
+        break;
+        }
+    case TS_DOOM:
+        { // As above but drawn with whole pixel columns.
+        float colWidth = 1.0f / SCREENSHOT_TEXTURE_SIZE;
+        int i;
+
+        glColor3f(1, 1, 1);
+
+        glBegin(GL_QUADS);
+        for(i = 0; i <= SCREENWIDTH; ++i)
+        {
+            float s = (float) i / SCREENWIDTH;
+            float x = i;
+            float y = MAX_OF(0, sampleDoomWipeSine((float) i / SCREENWIDTH));
+
+            glTexCoord2f(s, 1); glVertex2f(x, y);
+            glTexCoord2f(s+colWidth, 1); glVertex2f(x+1, y);
+            glTexCoord2f(s+colWidth, 0); glVertex2f(x+1, y+SCREENHEIGHT);
+            glTexCoord2f(s, 0); glVertex2f(x, y+SCREENHEIGHT);
+        }
+        glEnd();
+        break;
+        }
+    case TS_CROSSFADE:
+        glColor4f(1, 1, 1, 1 - transitionPosition);
+
+        glBegin(GL_QUADS);
+            glTexCoord2f(0, 1); glVertex2f(0, 0);
+            glTexCoord2f(0, 0); glVertex2f(0, SCREENHEIGHT);
+            glTexCoord2f(1, 0); glVertex2f(SCREENWIDTH, SCREENHEIGHT);
+            glTexCoord2f(1, 1); glVertex2f(SCREENWIDTH, 0);
+        glEnd();
+        break;
+    }
+
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
 }
 
 #if 0

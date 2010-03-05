@@ -891,7 +891,7 @@ void P_SetupMap(int episode, int map, int playerMask, skillmode_t skill)
     DD_Executef(true, "texreset raw"); // Delete raw images to save memory.
 
     // \todo Use progress bar mode and update progress during the setup.
-    Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+    Con_Busy(BUSYF_ACTIVITY | /*BUSYF_PROGRESS_BAR |*/ BUSYF_TRANSITION | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
              "Loading map...", P_SetupMapWorker, &param);
 
     AM_InitForMap();

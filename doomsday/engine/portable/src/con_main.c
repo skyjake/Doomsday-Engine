@@ -220,6 +220,9 @@ static void Con_Register(void)
     // File
     C_VAR_CHARPTR("file-startup", &defaultWads, 0, 0, 0);
 
+    C_VAR_INT("con-transition", &rTransition, 0, FIRST_TRANSITIONSTYLE, LAST_TRANSITIONSTYLE);
+    C_VAR_INT("con-transition-tics", &rTransitionTics, 0, 0, 60);
+
     Con_DataRegister();
 }
 
@@ -563,6 +566,7 @@ void Con_Ticker(timespan_t time)
     }
 
     Con_CheckExecBuffer();
+    Con_TransitionTicker(time);
     Rend_ConsoleTicker(time);
 
     if(!ConsoleActive)
