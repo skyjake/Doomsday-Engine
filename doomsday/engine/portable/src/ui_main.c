@@ -82,7 +82,6 @@ extern int glMaxTexSize;
 extern int gameDrawHUD;
 extern boolean stopTime;
 extern boolean tickUI;
-extern boolean tickFrame;
 extern boolean drawGame;
 // extern boolean dialogActive;
 // extern boolean dialogInput;

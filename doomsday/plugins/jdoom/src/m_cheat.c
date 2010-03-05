@@ -669,8 +669,6 @@ DEFCC(CCmdCheatWarp)
         args[1] = (int) argv[2][0];
     }
 
-    // We don't want that keys are repeated while we wait.
-    DD_ClearKeyRepeaters();
     Cht_WarpFunc(args, CONSOLEPLAYER);
     return true;
 }

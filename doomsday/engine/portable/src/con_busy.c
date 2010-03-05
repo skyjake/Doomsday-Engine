@@ -42,6 +42,7 @@
 #include "de_refresh.h"
 #include "de_ui.h"
 #include "de_misc.h"
+#include "de_network.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -136,6 +137,11 @@ int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
     // Load any textures needed in this mode.
     Con_BusyLoadTextures();
 
+    // Activate the UI binding context so that any and all accumulated input
+    // events are discarded when done.
+    DD_ClearKeyRepeaters();
+    B_ActivateContext(B_ContextByName(UI_BINDING_CONTEXT_NAME), true);
+
     busyInited = true;
 
     // Start the busy worker thread, which will proces things in the
@@ -144,6 +150,23 @@ int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
 
     // Wait for the busy thread to stop.
     Con_BusyLoop();
+
+    // Are we doing a transition effect?
+    if(!isDedicated && !netGame && !(busyMode & BUSYF_STARTUP) &&
+       rTransitionTics > 0 && (busyMode & BUSYF_TRANSITION))
+    {
+        if(rTransition == TS_DOOM || rTransition == TS_DOOMSMOOTH)
+            seedDoomWipeSine();
+        transitionStartTime = Sys_GetTime();
+        transitionPosition = 0;
+        transitionInProgress = true;
+    }
+    else
+    {
+        // Clear any input events that might have accumulated whilst busy.
+        DD_ClearEvents();
+        B_ActivateContext(B_ContextByName(UI_BINDING_CONTEXT_NAME), false);
+    }
 
     // Free resources.
     Con_BusyDeleteTextures();
@@ -267,7 +290,7 @@ static void Con_BusyDeleteTextures(void)
     busyFont = 0;
 
     // Don't release this yet if doing a transition.
-    if(!(rTransitionTics > 0))
+    if(!transitionInProgress)
         Con_ReleaseScreenshotTexture();
 }
 
@@ -366,16 +389,6 @@ static void Con_BusyLoop(void)
     {
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
-
-        // Do a transition effect?
-        if(rTransitionTics > 0 && !(busyMode & BUSYF_STARTUP) && (busyMode & BUSYF_TRANSITION))
-        {
-            if(rTransition == TS_DOOM || rTransition == TS_DOOMSMOOTH)
-                seedDoomWipeSine();
-            transitionStartTime = Sys_GetTime();
-            transitionPosition = 0;
-            transitionInProgress = true;
-        }
     }
 }
 
@@ -665,6 +678,10 @@ void Con_TransitionTicker(timespan_t ticLength)
     transitionPosition = (float)(Sys_GetTime() - transitionStartTime) / rTransitionTics;
     if(transitionPosition >= 1)
     {
+        // Clear any input events that might have accumulated during the transition.
+        DD_ClearEvents();
+        B_ActivateContext(B_ContextByName(UI_BINDING_CONTEXT_NAME), false);
+
         Con_ReleaseScreenshotTexture();
         transitionInProgress = false;
     }

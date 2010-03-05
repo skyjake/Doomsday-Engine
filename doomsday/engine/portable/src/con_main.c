@@ -566,7 +566,8 @@ void Con_Ticker(timespan_t time)
     }
 
     Con_CheckExecBuffer();
-    Con_TransitionTicker(time);
+    if(tickFrame)
+        Con_TransitionTicker(time);
     Rend_ConsoleTicker(time);
 
     if(!ConsoleActive)

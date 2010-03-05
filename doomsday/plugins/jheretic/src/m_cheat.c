@@ -801,8 +801,6 @@ DEFCC(CCmdCheatWarp)
         return true;
     }
 
-    // We don't want that keys are repeated while we wait.
-    DD_ClearKeyRepeaters();
     Cht_WarpFunc(args, CONSOLEPLAYER);
     return true;
 }

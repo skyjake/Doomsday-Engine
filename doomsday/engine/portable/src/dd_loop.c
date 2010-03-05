@@ -313,69 +313,71 @@ void DD_Ticker(timespan_t time)
 {
     static float        realFrameTimePos = 0;
 
-    // Demo ticker. Does stuff like smoothing of view angles.
-    Net_BuildLocalCommands(time);
-    Demo_Ticker(time);
-    P_Ticker(time);
+    if(!Con_TransitionInProgress())
+    {
+        // Demo ticker. Does stuff like smoothing of view angles.
+        Net_BuildLocalCommands(time);
+        Demo_Ticker(time);
+        P_Ticker(time);
 
-    if(tickFrame || netGame)
-    {   // Advance frametime
-        /**
-         * It will be reduced when new sharp world positions are calculated,
-         * so that frametime always stays within the range 0..1.
-         */
-        realFrameTimePos += time * TICSPERSEC;
-
-        // Game logic.
-        gx.Ticker(time);
-
-        if(M_RunTrigger(&sharedFixedTrigger, time))
-        {   // A new 35 Hz tick begins.
-            // Clear the player fixangles flags which have been in effect
-            // for any fractional ticks since they were set.
-            //Sv_FixLocalAngles(true /* just clear flags; don't apply */);
-
+        if(tickFrame || netGame)
+        {   // Advance frametime
             /**
-             * Server ticks.
-             *
-             * These are placed here because they still rely on fixed ticks
-             * and thus it's best to keep them in sync with the fixed game
-             * ticks.
+             * It will be reduced when new sharp world positions are calculated,
+             * so that frametime always stays within the range 0..1.
              */
-            if(isClient)
-                Cl_Ticker( /* time */ );
-            else
-                Sv_Ticker( /* time */ );
+            realFrameTimePos += time * TICSPERSEC;
 
-            // This is needed by camera smoothing.  It needs to know
-            // when the world tic has occured so the next sharp
-            // position can be processed.
+            // Game logic.
+            gx.Ticker(time);
 
-            // Frametime will be set back by one tick.
-            realFrameTimePos -= 1;
+            if(M_RunTrigger(&sharedFixedTrigger, time))
+            {   // A new 35 Hz tick begins.
+                // Clear the player fixangles flags which have been in effect
+                // for any fractional ticks since they were set.
+                //Sv_FixLocalAngles(true /* just clear flags; don't apply */);
+
+                /**
+                 * Server ticks.
+                 *
+                 * These are placed here because they still rely on fixed ticks
+                 * and thus it's best to keep them in sync with the fixed game
+                 * ticks.
+                 */
+                if(isClient)
+                    Cl_Ticker( /* time */ );
+                else
+                    Sv_Ticker( /* time */ );
+
+                // This is needed by camera smoothing.  It needs to know
+                // when the world tic has occured so the next sharp
+                // position can be processed.
+
+                // Frametime will be set back by one tick.
+                realFrameTimePos -= 1;
+
+                // We can't sent FixAngles messages to ourselves, so it's
+                // done here.
+                //Sv_FixLocalAngles(false /* apply only; don't clear flag */);
+
+                R_NewSharpWorld();
+            }
+
+            // While paused, don't modify frametime so things keep still.
+            if(!clientPaused)
+                frameTimePos = realFrameTimePos;
 
             // We can't sent FixAngles messages to ourselves, so it's
             // done here.
             //Sv_FixLocalAngles(false /* apply only; don't clear flag */);
-
-            R_NewSharpWorld();
         }
-
-        // While paused, don't modify frametime so things keep still.
-        if(!clientPaused)
-            frameTimePos = realFrameTimePos;
-
-        // We can't sent FixAngles messages to ourselves, so it's
-        // done here.
-        //Sv_FixLocalAngles(false /* apply only; don't clear flag */);
     }
 
     // Console is always ticking.
     Con_Ticker(time);
 
     if(tickUI)
-    {
-        // User interface ticks.
+    {   // User interface ticks.
         UI_Ticker(time);
     }
 }

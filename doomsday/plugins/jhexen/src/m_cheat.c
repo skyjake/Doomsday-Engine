@@ -986,8 +986,6 @@ DEFCC(CCmdCheatWarp)
     args[0] = num / 10 + '0';
     args[1] = num % 10 + '0';
 
-    // We don't want that keys are repeated while we wait.
-    DD_ClearKeyRepeaters();
     Cht_WarpFunc(args, CONSOLEPLAYER);
     return true;
 }

@@ -394,8 +394,6 @@ DEFCC(CCmdCheatWarp)
     cheat.args[0] = num / 10 + '0';
     cheat.args[1] = num % 10 + '0';
 
-    // We don't want that keys are repeated while we wait.
-    DD_ClearKeyRepeaters();
     Cht_WarpFunc(&players[CONSOLEPLAYER], &cheat);
     return true;
 }
