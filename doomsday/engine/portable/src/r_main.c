@@ -894,7 +894,7 @@ void R_RenderViewPorts(void)
     int                 x, y, p;
     GLbitfield          bits = GL_DEPTH_BUFFER_BIT;
 
-    if(firstFrameAfterLoad || freezeRLs)
+    if(/*firstFrameAfterLoad ||*/ freezeRLs)
     {
         bits |= GL_COLOR_BUFFER_BIT;
     }

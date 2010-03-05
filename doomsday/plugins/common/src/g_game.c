@@ -1765,62 +1765,13 @@ boolean G_IfVictory(void)
     return false;
 }
 
-void G_DoCompleted(void)
+static int prepareIntermission(void* paramaters)
 {
-    int i;
-
-    G_SetGameAction(GA_NONE);
-
-    for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        if(players[i].plr->inGame)
-        {
-            AM_Open(AM_MapForPlayer(i), false, true);
-
-            G_PlayerLeaveMap(i); // take away cards and stuff
-
-            // Update this client's stats.
-            NetSv_SendPlayerState(i, DDSP_ALL_PLAYERS,
-                                  PSF_FRAGS | PSF_COUNTERS, true);
-        }
-    }
-
-    GL_SetFilter(false);
-
-#if __JHEXEN__
-    SN_StopAllSequences();
-#endif
-
-    // Go to an intermission?
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    {
-    ddmapinfo_t minfo;
-    char levid[8];
-
-    P_GetMapLumpName(gameEpisode, gameMap, levid);
-
-    if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && (minfo.flags & MIF_NO_INTERMISSION))
-    {
-        G_WorldDone();
-        return;
-    }
-    }
-#elif __JHEXEN__
-    if(!deathmatch)
-    {
-        G_WorldDone();
-        return;
-    }
-#endif
-
-    // Has the player completed the game?
-    if(G_IfVictory())
-        return; // Victorious!
-
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 # if __JDOOM__
     if(gameMode != commercial && gameMap == 9)
     {
+        int i;
         for(i = 0; i < MAXPLAYERS; ++i)
             players[i].didSecret = true;
     }
@@ -1942,6 +1893,73 @@ void G_DoCompleted(void)
 # endif
 #endif
 
+#if __JDOOM__ || __JDOOM64__
+    WI_Start(&wmInfo);
+#elif __JHERETIC__
+    IN_Start(&wmInfo);
+#else /* __JHEXEN__ */
+    IN_Start();
+#endif
+
+    Con_BusyWorkerEnd();
+    return 0;
+}
+
+void G_DoCompleted(void)
+{
+    int i;
+
+    G_SetGameAction(GA_NONE);
+
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        if(players[i].plr->inGame)
+        {
+            AM_Open(AM_MapForPlayer(i), false, true);
+
+            G_PlayerLeaveMap(i); // take away cards and stuff
+
+            // Update this client's stats.
+            NetSv_SendPlayerState(i, DDSP_ALL_PLAYERS,
+                                  PSF_FRAGS | PSF_COUNTERS, true);
+        }
+    }
+
+    GL_SetFilter(false);
+
+#if __JHEXEN__
+    SN_StopAllSequences();
+#endif
+
+    // Go to an intermission?
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+    {
+    ddmapinfo_t minfo;
+    char levid[8];
+
+    P_GetMapLumpName(gameEpisode, gameMap, levid);
+
+    if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && (minfo.flags & MIF_NO_INTERMISSION))
+    {
+        G_WorldDone();
+        return;
+    }
+    }
+#elif __JHEXEN__
+    if(!deathmatch)
+    {
+        G_WorldDone();
+        return;
+    }
+#endif
+
+    // Has the player completed the game?
+    if(G_IfVictory())
+        return; // Victorious!
+
+    // Time for an intermission.
+    Con_Busy(BUSYF_TRANSITION, NULL, prepareIntermission, NULL);
+
 #if __JHERETIC__
     // @fixme is this necessary at this time?
     NetSv_SendGameState(0, DDSP_ALL_PLAYERS);
@@ -1954,14 +1972,6 @@ void G_DoCompleted(void)
 #endif
 
     G_ChangeGameState(GS_INTERMISSION);
-
-#if __JDOOM__ || __JDOOM64__
-    WI_Start(&wmInfo);
-#elif __JHERETIC__
-    IN_Start(&wmInfo);
-#else /* __JHEXEN__ */
-    IN_Start();
-#endif
 }
 
 #if __JDOOM__ || __JDOOM64__
@@ -1981,7 +1991,7 @@ void G_PrepareWIData(void)
 
     // See if there is a par time definition.
     if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && minfo.parTime > 0)
-        info->parTime = 35 * (int) minfo.parTime;
+        info->parTime = TICRATE * (int) minfo.parTime;
     else
         info->parTime = -1; // Unknown.
 

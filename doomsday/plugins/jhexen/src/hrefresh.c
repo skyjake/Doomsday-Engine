@@ -356,16 +356,6 @@ void G_Display2(void)
         //MN_DrCenterTextA_CS("WAITING... PRESS ESC FOR MENU", 160, 188);
         break;
 
-    case GS_INFINE:
-        if(!fiCmdExecuted)
-        {   // A (de)briefing is in process but the script hasn't started yet.
-            // Just clear the screen, then.
-            DGL_Disable(DGL_TEXTURING);
-            DGL_DrawRect(0, 0, 320, 200, 0, 0, 0, 1);
-            DGL_Enable(DGL_TEXTURING);
-        }
-        break;
-
     default:
         break;
     }

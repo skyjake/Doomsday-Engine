@@ -643,16 +643,15 @@ static void Con_BusyDrawer(void)
     Con_DrawScreenshotBackground(0, 0, theWindow->width, theWindow->height);
 
     // Indefinite activity?
-    if(busyMode & BUSYF_ACTIVITY)
+    if((busyMode & BUSYF_ACTIVITY) || (busyMode & BUSYF_PROGRESS_BAR))
     {
-        pos = 1;
+        if(busyMode & BUSYF_ACTIVITY)
+            pos = 1;
+        else // The progress is animated elsewhere.
+            pos = Con_GetProgress();
+
+        Con_BusyDrawIndicator(theWindow->width/2, theWindow->height/2, theWindow->height/12, pos);
     }
-    else if(busyMode & BUSYF_PROGRESS_BAR)
-    {
-        // The progress is animated elsewhere.
-        pos = Con_GetProgress();
-    }
-    Con_BusyDrawIndicator(theWindow->width/2, theWindow->height/2, theWindow->height/12, pos);
 
     // Output from the console?
     if(busyMode & BUSYF_CONSOLE_OUTPUT)

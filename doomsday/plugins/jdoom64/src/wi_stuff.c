@@ -828,9 +828,9 @@ void WI_updateStats(void)
         cntKills[0] = (plrs[me].kills * 100) / wbs->maxKills;
         cntItems[0] = (plrs[me].items * 100) / wbs->maxItems;
         cntSecret[0] = (plrs[me].secret * 100) / wbs->maxSecret;
-        cntTime = plrs[me].time / TICRATE;
+        cntTime = plrs[me].time;
         if(wbs->parTime != -1)
-            cntPar = wbs->parTime / TICRATE;
+            cntPar = wbs->parTime;
         S_LocalSound(SFX_BAREXP, 0);
         spState = 10;
     }
@@ -882,28 +882,28 @@ void WI_updateStats(void)
         if(!(bcnt & 3))
             S_LocalSound(SFX_PISTOL, 0);
 
-        cntTime += 3;
+        if(cntTime == -1)
+            cntTime = 0;
+        cntTime += TICRATE * 3;
 
-        if(cntTime >= plrs[me].time / TICRATE)
-            cntTime = plrs[me].time / TICRATE;
-
-        if(cntPar != -1)
+        // Par time might not be defined so count up and stop on play time instead.
+        if(cntTime >= plrs[me].time)
         {
-            cntPar += 3;
-
-            if(cntPar >= wbs->parTime / TICRATE)
-            {
-                cntPar = wbs->parTime / TICRATE;
-
-                if(cntTime >= plrs[me].time / TICRATE)
-                {
-                    S_LocalSound(SFX_BAREXP, 0);
-                    spState++;
-                }
-            }
-        }
-        else
+            cntTime = plrs[me].time;
+            cntPar = wbs->parTime;
+            S_LocalSound(SFX_BAREXP, 0);
             spState++;
+        }
+
+        if(wbs->parTime != -1)
+        {
+            if(cntPar == -1)
+                cntPar = 0;
+            cntPar += TICRATE * 3;
+
+            if(cntPar >= wbs->parTime)
+                cntPar = wbs->parTime;
+        }
     }
     else if(spState == 10)
     {
@@ -950,13 +950,15 @@ void WI_drawStats(void)
 
     WI_DrawPatch(SP_TIMEX, SP_TIMEY, 1, 1, 1, 1, &time, NULL, false,
                  ALIGN_LEFT);
-    WI_drawTime(SCREENWIDTH / 2 - SP_TIMEX, SP_TIMEY, cntTime);
+    if(cntTime >= 0)
+        WI_drawTime(SCREENWIDTH / 2 - SP_TIMEX, SP_TIMEY, cntTime / TICRATE);
 
     if(wbs->parTime != -1)
     {
         WI_DrawPatch(SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY, 1, 1, 1, 1, &par,
                      NULL, false, ALIGN_LEFT);
-        WI_drawTime(SCREENWIDTH - SP_TIMEX, SP_TIMEY, cntPar);
+        if(cntPar >= 0)
+            WI_drawTime(SCREENWIDTH - SP_TIMEX, SP_TIMEY, cntPar / TICRATE);
     }
 }
 
@@ -999,12 +1001,6 @@ void WI_Ticker(void)
     // Counter for general background animation.
     bcnt++;
 
-    if(bcnt == 1)
-    {
-        // Intermission music.
-        S_StartMusic("dm2int", true);
-    }
-
     WI_checkForAccelerate();
 
     switch(state)
@@ -1032,12 +1028,8 @@ void WI_loadData(void)
 
     strcpy(name, "INTERPIC");
 
-    if(!Get(DD_NOVIDEO))
-    {
-        // Background.
-        R_CachePatch(&bg, name);
-        GL_DrawPatch(0, 0, bg.lump);
-    }
+    // Background.
+    R_CachePatch(&bg, name);
 
     // More hacks on minus sign.
     R_CachePatch(&minus, "WIMINUS");
@@ -1220,6 +1212,9 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
         WI_initNetgameStats();
     else
         WI_initStats();
+
+    // Intermission music.
+    S_StartMusic("dm2int", true);
 }
 
 void WI_SetState(interludestate_t st)

@@ -378,16 +378,6 @@ void H_Display2(void)
         //gl.Clear(DGL_COLOR_BUFFER_BIT);
         break;
 
-    case GS_INFINE:
-        if(!fiCmdExecuted)
-        {   // A (de)briefing is in process but the script hasn't started yet.
-            // Just clear the screen, then.
-            DGL_Disable(DGL_TEXTURING);
-            DGL_DrawRect(0, 0, 320, 200, 0, 0, 0, 1);
-            DGL_Enable(DGL_TEXTURING);
-        }
-        break;
-
     default:
         break;
     }

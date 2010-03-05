@@ -211,6 +211,9 @@ void IN_Start(wbstartstruct_t * wbstartstruct)
     IN_LoadPics();
 
     IN_InitStats();
+
+    // Intermission music.
+    S_StartMusic("intr", true);
 }
 
 void IN_WaitStop(void)
@@ -410,12 +413,6 @@ void IN_Ticker(void)
 
     // Counter for general background animation.
     bcnt++;
-
-    if(bcnt == 1)
-    {
-        // Intermission music.
-        S_StartMusic("intr", true);
-    }
 
     interTime++;
     if(oldInterTime < interTime)
