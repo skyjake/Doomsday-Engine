@@ -1476,7 +1476,6 @@ void NetSv_Paused(boolean isPaused)
     if(!IS_SERVER || !IS_NETGAME)
         return;
 
-    // This will make the clients save their games.
     Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_CONFIRM, GPT_PAUSE, &setPause, 1);
 }
 
