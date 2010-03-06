@@ -1244,24 +1244,22 @@ static void initData(hudstate_t* hud)
     player_t*           plr = &players[player];
 
     hud->firstTime = true;
-    hud->stopped = true;
-    hud->showBar = 0.0f;
-    hud->alpha = 0.0f;
-
-    hud->tomePlay = 0;
-    hud->statusbarCounterAlpha = 0.0f;
-    hud->blended = false;
-    hud->oldAmmoIconIdx = -1;
-    hud->oldReadyWeapon = -1;
-    hud->oldHealth = -1;
-    hud->currentAmmoIconIdx = 0;
-
     hud->statusbarActive = true;
+    hud->stopped = true;
+    hud->oldHealth = -1;
+    hud->blended = false;
+    hud->showBar = 0.0f;
+    hud->statusbarCounterAlpha = 1.f;
 
     for(i = 0; i < 3; ++i)
     {
         hud->keyBoxes[i] = false;
     }
+
+    hud->tomePlay = 0;
+    hud->oldAmmoIconIdx = -1;
+    hud->oldReadyWeapon = -1;
+    hud->currentAmmoIconIdx = 0;
 
     ST_HUDUnHide(player, HUE_FORCE);
 }
