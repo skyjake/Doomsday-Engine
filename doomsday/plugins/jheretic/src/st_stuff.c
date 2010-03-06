@@ -1247,6 +1247,8 @@ static void initData(hudstate_t* hud)
     hud->statusbarActive = true;
     hud->stopped = true;
     hud->oldHealth = -1;
+    // Health marker chain animates up to the actual health value.
+    hud->healthMarker = 0;
     hud->blended = false;
     hud->showBar = 0.0f;
     hud->statusbarCounterAlpha = 1.f;
