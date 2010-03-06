@@ -1160,12 +1160,11 @@ void WI_initVariables(wbstartstruct_t *wbstartstruct)
         wbs->maxSecret = 1;
 }
 
-void WI_Start(wbstartstruct_t *wbstartstruct)
+void WI_Init(wbstartstruct_t* wbstartstruct)
 {
-    int                 i, j, k;
-    teaminfo_t         *tin;
+    int i, j, k;
+    teaminfo_t* tin;
 
-    GL_SetFilter(false);
     WI_initVariables(wbstartstruct);
     WI_loadData();
 
@@ -1212,8 +1211,10 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
         WI_initNetgameStats();
     else
         WI_initStats();
+}
 
-    // Intermission music.
+void WI_Start(void)
+{
     S_StartMusic("dm2int", true);
 }
 

@@ -161,7 +161,7 @@ void WI_initVariables(void /* wbstartstruct_t* wbstartstruct */)
     interTime = 0;
 }
 
-void IN_Start(void)
+void IN_Init(void)
 {
     assert(deathmatch);
 
@@ -169,7 +169,10 @@ void IN_Start(void)
     loadPics();
 
     initStats();
+}
 
+void IN_Start(void)
+{
     S_StartMusic("hub", true);
 }
 

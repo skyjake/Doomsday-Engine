@@ -167,7 +167,7 @@ typedef struct player_s {
 
 //
 // INTERMISSION
-// Structure passed e.g. to IN_Start(wb)
+// Structure passed e.g. to IN_Init(wb)
 //
 /*typedef struct {
     boolean         inGame; // Whether the player is in game.

@@ -205,14 +205,16 @@ void WI_initVariables(wbstartstruct_t * wbstartstruct)
     oldInterTime = 0;
 }
 
-void IN_Start(wbstartstruct_t * wbstartstruct)
+void IN_Init(wbstartstruct_t * wbstartstruct)
 {
     WI_initVariables(wbstartstruct);
     IN_LoadPics();
 
     IN_InitStats();
+}
 
-    // Intermission music.
+void IN_Start(void)
+{
     S_StartMusic("intr", true);
 }
 
@@ -526,7 +528,7 @@ void IN_Drawer(void)
 {
     static int          oldInterState;
 
-    if(!intermission || interState < 0 || interState > 3)
+    if(!intermission || interState > 3)
     {
         return;
     }
@@ -540,12 +542,15 @@ void IN_Drawer(void)
         S_LocalSound(SFX_PSTOP, NULL);
     }
 
-    oldInterState = interState;
+    if(interState != -1)
+        oldInterState = interState;
+
     switch(interState)
     {
+    case -1:
     case 0: // Draw stats.
         IN_DrawStatBack();
-        switch (gameType)
+        switch(gameType)
         {
         case SINGLE:
             IN_DrawSingleStats();

@@ -1894,12 +1894,13 @@ static int prepareIntermission(void* paramaters)
 #endif
 
 #if __JDOOM__ || __JDOOM64__
-    WI_Start(&wmInfo);
+    WI_Init(&wmInfo);
 #elif __JHERETIC__
-    IN_Start(&wmInfo);
+    IN_Init(&wmInfo);
 #else /* __JHEXEN__ */
-    IN_Start();
+    IN_Init();
 #endif
+    G_ChangeGameState(GS_INTERMISSION);
 
     Con_BusyWorkerEnd();
     return 0;
@@ -1971,7 +1972,11 @@ void G_DoCompleted(void)
     NetSv_Intermission(IMF_BEGIN, leaveMap, leavePosition);
 #endif
 
-    G_ChangeGameState(GS_INTERMISSION);
+#if __JDOOM__ || __JDOOM64__
+    WI_Start();
+#else
+    IN_Start();
+#endif
 }
 
 #if __JDOOM__ || __JDOOM64__

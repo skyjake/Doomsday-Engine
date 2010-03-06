@@ -631,15 +631,17 @@ void NetCl_Intermission(byte* data)
         leavePosition = NetCl_ReadByte();
 #endif
 
-        G_ChangeGameState(GS_INTERMISSION);
-
 #if __JDOOM__ || __JDOOM64__
-        WI_Start(&wmInfo);
+        WI_Init(&wmInfo);
+        WI_Start();
 #elif __JHERETIC__
-        IN_Start(&wmInfo);
+        IN_Init(&wmInfo);
+        IN_Start();
 #elif __JHEXEN__
+        IN_Init();
         IN_Start();
 #endif
+        G_ChangeGameState(GS_INTERMISSION);
     }
 
     if(flags & IMF_END)

@@ -1567,10 +1567,10 @@ void WI_initVariables(wbstartstruct_t * wbstartstruct)
             wbs->epsd -= 3;
 }
 
-void WI_Start(wbstartstruct_t *wbstartstruct)
+void WI_Init(wbstartstruct_t* wbstartstruct)
 {
-    int                 i, j, k;
-    teaminfo_t         *tin;
+    int i, j, k;
+    teaminfo_t* tin;
 
     WI_initVariables(wbstartstruct);
     WI_loadData();
@@ -1616,12 +1616,11 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
         WI_initNetgameStats();
     else
         WI_initStats();
+}
 
-    // Intermission music.
-    if(gameMode == commercial)
-        S_StartMusic("dm2int", true);
-    else
-        S_StartMusic("inter", true);
+void WI_Start(void)
+{
+    S_StartMusic(gameMode == commercial? "dm2int" : "inter", true);
 }
 
 void WI_SetState(interludestate_t st)
