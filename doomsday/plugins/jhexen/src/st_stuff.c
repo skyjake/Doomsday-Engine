@@ -885,25 +885,31 @@ void ST_loadData(void)
 
 static void initData(hudstate_t* hud)
 {
-    int                 player = hud - hudStates;
+    int player = hud - hudStates;
+    player_t* plr = &players[player];
 
-    hud->alpha = 0.0f;
+    hud->firstTime = true;
+    hud->statusbarActive = true;
     hud->stopped = true;
-    hud->showBar = 0.0f;
-    hud->statusbarCounterAlpha = 0.0f;
-    hud->blended = false;
     hud->oldHealth = -1;
+    // Health marker chain animates up to the actual health value.
+    hud->healthMarker = 0;
+    hud->blended = false;
+    hud->showBar = 0.0f;
+    hud->statusbarCounterAlpha = 1.0f;
 
-    hud->armorLevel = 0;
+    hud->armorLevel = FixedDiv(
+        PCLASS_INFO(plr->class)->autoArmorSave + plr->armorPoints[ARMOR_ARMOR] +
+        plr->armorPoints[ARMOR_SHIELD] +
+        plr->armorPoints[ARMOR_HELMET] +
+        plr->armorPoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
+
     hud->manaAIcon = 0;
     hud->manaBIcon = 0;
     hud->manaAVial = 0;
     hud->manaBVial = 0;
     hud->manaACount = 0;
     hud->manaBCount = 0;
-    hud->firstTime = true;
-    hud->statusbarActive = true;
-
 
     ST_HUDUnHide(player, HUE_FORCE);
 }
