@@ -861,6 +861,9 @@ int P_SetupMapWorker(void* ptr)
 #endif
     }
 
+    if(IS_SERVER)
+        R_SetAllDoomsdayFlags();
+
     P_FinalizeMap();
 
     // Someone may want to do something special now that the map has been
