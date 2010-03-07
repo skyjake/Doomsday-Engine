@@ -124,7 +124,7 @@ boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle,
     {
         player = mo->player;
         player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
-        if(player->powers[PT_FLIGHT] && aboveFloor)
+        if(player->powers[PT_FLIGHT] && aboveFloor > 0)
         {
             mo->pos[VZ] = mo->floorZ + aboveFloor;
             if(mo->pos[VZ] + mo->height > mo->ceilingZ)
@@ -136,6 +136,8 @@ boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle,
         else
         {
             mo->pos[VZ] = mo->floorZ;
+            player->viewHeight = (float) cfg.plrViewHeight;
+            player->viewHeightDelta = 0;
             player->viewZ = mo->pos[VZ] + player->viewHeight;
             if(useFog)
             {

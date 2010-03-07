@@ -185,7 +185,7 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
         if(mo->player)
         {
             mo->reactionTime = 18;
-            if(mo->player->powers[PT_FLIGHT] && aboveFloor)
+            if(mo->player->powers[PT_FLIGHT] && aboveFloor > 0)
             {
                 mo->pos[VZ] = mo->floorZ + aboveFloor;
                 if(mo->pos[VZ] + mo->height > mo->ceilingZ)
@@ -198,6 +198,8 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
                 //mo->dPlayer->clLookDir = 0; /* $unifiedangles */
                 mo->dPlayer->lookDir = 0;
             }
+            mo->player->viewHeight = (float) cfg.plrViewHeight;
+            mo->player->viewHeightDelta = 0;
             mo->player->viewZ = mo->pos[VZ] + mo->player->viewHeight;
 
             //mo->dPlayer->clAngle = mo->angle; /* $unifiedangles */

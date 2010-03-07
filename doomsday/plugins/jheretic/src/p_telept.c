@@ -82,7 +82,7 @@ boolean P_Teleport(mobj_t* thing, float x, float y, angle_t angle,
     if(thing->player)
     {
         player = thing->player;
-        if(player->powers[PT_FLIGHT] && aboveFloor)
+        if(player->powers[PT_FLIGHT] && aboveFloor > 0)
         {
             thing->pos[VZ] = thing->floorZ + aboveFloor;
             if(thing->pos[VZ] + thing->height > thing->ceilingZ)
@@ -94,6 +94,8 @@ boolean P_Teleport(mobj_t* thing, float x, float y, angle_t angle,
         else
         {
             thing->pos[VZ] = thing->floorZ;
+            player->viewHeight = (float) cfg.plrViewHeight;
+            player->viewHeightDelta = 0;
             player->viewZ = thing->pos[VZ] + player->viewHeight;
             //player->plr->clLookDir = 0; /* $unifiedangles */
             player->plr->lookDir = 0;
