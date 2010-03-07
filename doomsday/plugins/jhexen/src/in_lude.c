@@ -171,11 +171,6 @@ void IN_Init(void)
     initStats();
 }
 
-void IN_Start(void)
-{
-    S_StartMusic("hub", true);
-}
-
 void IN_WaitStop(void)
 {
     if(!--cnt)

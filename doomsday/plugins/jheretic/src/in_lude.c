@@ -213,11 +213,6 @@ void IN_Init(wbstartstruct_t * wbstartstruct)
     IN_InitStats();
 }
 
-void IN_Start(void)
-{
-    S_StartMusic("intr", true);
-}
-
 void IN_WaitStop(void)
 {
     if(!--cnt)

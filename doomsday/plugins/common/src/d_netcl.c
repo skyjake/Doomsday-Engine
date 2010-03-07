@@ -633,13 +633,19 @@ void NetCl_Intermission(byte* data)
 
 #if __JDOOM__ || __JDOOM64__
         WI_Init(&wmInfo);
-        WI_Start();
 #elif __JHERETIC__
         IN_Init(&wmInfo);
-        IN_Start();
 #elif __JHEXEN__
         IN_Init();
-        IN_Start();
+#endif
+#if __JDOOM64__
+        S_StartMusic("dm2int", true);
+#elif __JDOOM__
+        S_StartMusic(gameMode == commercial? "dm2int" : "inter", true);
+#elif __JHERETIC__
+        S_StartMusic("intr", true);
+#elif __JHEXEN__
+        S_StartMusic("hub", true);
 #endif
         G_ChangeGameState(GS_INTERMISSION);
     }

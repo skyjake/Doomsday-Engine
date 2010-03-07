@@ -1213,11 +1213,6 @@ void WI_Init(wbstartstruct_t* wbstartstruct)
         WI_initStats();
 }
 
-void WI_Start(void)
-{
-    S_StartMusic("dm2int", true);
-}
-
 void WI_SetState(interludestate_t st)
 {
     if(st == ILS_SHOW_STATS)

@@ -77,7 +77,6 @@ void            WI_Drawer(void);
 // Setup for an intermission screen.
 void            WI_Init(wbstartstruct_t *wbstartstruct);
 
-void            WI_Start(void);
 void            WI_SetState(interludestate_t st);
 void            WI_End(void);
 

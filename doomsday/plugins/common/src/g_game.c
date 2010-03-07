@@ -1978,6 +1978,17 @@ void G_DoCompleted(void)
         return; // Victorious!
 
     // Time for an intermission.
+#if __JDOOM64__
+    S_StartMusic("dm2int", true);
+#elif __JDOOM__
+    S_StartMusic(gameMode == commercial? "dm2int" : "inter", true);
+#elif __JHERETIC__
+    S_StartMusic("intr", true);
+#elif __JHEXEN__
+    S_StartMusic("hub", true);
+#endif
+    S_PauseMusic(true);
+
     Con_Busy(BUSYF_TRANSITION, NULL, prepareIntermission, NULL);
 
 #if __JHERETIC__
@@ -1991,11 +2002,7 @@ void G_DoCompleted(void)
     NetSv_Intermission(IMF_BEGIN, leaveMap, leavePosition);
 #endif
 
-#if __JDOOM__ || __JDOOM64__
-    WI_Start();
-#else
-    IN_Start();
-#endif
+    S_PauseMusic(false);
 }
 
 #if __JDOOM__ || __JDOOM64__

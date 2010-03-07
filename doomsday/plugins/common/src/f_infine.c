@@ -766,7 +766,7 @@ int FI_Debriefing(int episode, int map, ddfinale_t* fin)
 #if __JHEXEN__
     if(cfg.overrideHubMsg && G_GetGameState() == GS_MAP &&
        !(leaveMap == -1 && leavePosition == -1) &&
-       P_GetMapCluster(gameMap) != P_GetMapCluster(leaveMap))
+       P_GetMapCluster(map) != P_GetMapCluster(leaveMap))
         return false;
 #endif
     if(G_GetGameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
