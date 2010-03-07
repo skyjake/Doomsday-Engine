@@ -749,7 +749,7 @@ int FI_Briefing(int episode, int map, ddfinale_t* fin)
     // Is there such a finale definition?
     P_GetMapLumpName(episode, map, mid);
 
-    return Def_Get(DD_DEF_FINALE_BEFORE, mid, &fin);
+    return Def_Get(DD_DEF_FINALE_BEFORE, mid, fin);
 }
 
 /**
