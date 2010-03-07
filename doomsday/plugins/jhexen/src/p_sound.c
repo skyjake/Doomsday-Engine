@@ -63,16 +63,17 @@ int S_GetSoundID(const char* name)
 }
 
 /**
- * Starts the song of the current map..
+ * Starts the song of the specified map, updating the currentmap definition
+ * in the process.
  */
-void S_MapMusic(void)
+void S_MapMusic(int episode, int map)
 {
-    int                 idx = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
-    int                 cdTrack;
+    int idx = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
+    int cdTrack;
 
     // Update the 'currentmap' music definition.
-    Def_Set(DD_DEF_MUSIC, idx, DD_LUMP, P_GetMapSongLump(gameMap));
-    cdTrack = P_GetMapCDTrack(gameMap);
+    Def_Set(DD_DEF_MUSIC, idx, DD_LUMP, P_GetMapSongLump(map));
+    cdTrack = P_GetMapCDTrack(map);
     Def_Set(DD_DEF_MUSIC, idx, DD_CD_TRACK, &cdTrack);
     if(S_StartMusic("currentmap", true))
     {

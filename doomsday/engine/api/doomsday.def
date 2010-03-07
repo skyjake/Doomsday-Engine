@@ -37,7 +37,6 @@ NAME            "DOOMSDAY"
 ; 204 formerly TGA_Save16_rgb888
 ; 205 formerly TGA_GetSize
 ; 206 formerly GL_Update
-; 232 formerly R_SetAnimGroup
 ; 238 formerly DGL_Color2
 ; 255 formerly P_PointToBlock
 ; 326 formerly PO_Alloc
@@ -445,6 +444,7 @@ EXPORTS
     S_StartMusic                @219 NONAME
     S_StartMusicNum             @222 NONAME
     S_StopMusic                 @220 NONAME
+    S_PauseMusic                @232 NONAME
 
 ; Miscellaneous.
     M_ReadFile                  @133 NONAME

@@ -40,7 +40,7 @@ enum {
     SORG_CEILING
 };
 
-void            S_MapMusic(void);
+void            S_MapMusic(int episode, int map);
 void            S_SectorSound(sector_t* sec, int origin, int id);
 
 #endif

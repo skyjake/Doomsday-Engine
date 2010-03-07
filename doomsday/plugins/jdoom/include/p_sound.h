@@ -40,7 +40,7 @@ typedef enum {
     SORG_CEILING
 } sectorsoundorigin_t;
 
-void            S_MapMusic(void);
+void            S_MapMusic(int episode, int map);
 void            S_SectorSound(sector_t* sec, sectorsoundorigin_t origin,
                               int id);
 

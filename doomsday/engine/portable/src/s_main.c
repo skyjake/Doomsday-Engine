@@ -608,6 +608,14 @@ void S_StopMusic(void)
 }
 
 /**
+ * Change paused state of the current music.
+ */
+void S_PauseMusic(boolean paused)
+{
+    Mus_Pause(paused);
+}
+
+/**
  * Draws debug information on-screen.
  */
 void S_Drawer(void)

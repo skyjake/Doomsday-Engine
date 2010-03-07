@@ -679,7 +679,7 @@ void FI_End(void)
         {
             // Enter the map, this was a briefing.
             G_ChangeGameState(GS_MAP);
-            S_MapMusic();
+            S_MapMusic(gameEpisode, gameMap);
             mapStartTic = (int) GAMETIC;
             mapTime = actualMapTime = 0;
         }
@@ -734,13 +734,12 @@ DEFCC(CCmdStopInFine)
 }
 
 /**
- * Check if there is a finale before the map and play it.
- * Returns true if a finale was begun.
+ * Check if there is a finale before the map.
+ * Returns true if a finale was found.
  */
-int FI_Briefing(int episode, int map)
+int FI_Briefing(int episode, int map, ddfinale_t* fin)
 {
-    char                mid[20];
-    ddfinale_t          fin;
+    char mid[20];
 
     // If we're already in the INFINE state, don't start a finale.
     if(briefDisabled || G_GetGameState() == GS_INFINE || IS_CLIENT ||
@@ -750,29 +749,32 @@ int FI_Briefing(int episode, int map)
     // Is there such a finale definition?
     P_GetMapLumpName(episode, map, mid);
 
-    if(!Def_Get(DD_DEF_FINALE_BEFORE, mid, &fin))
-        return false;
-
-    FI_Start(fin.script, FIMODE_BEFORE);
-    return true;
+    return Def_Get(DD_DEF_FINALE_BEFORE, mid, &fin);
 }
 
 /**
- * Check if there is a finale after the map and play it.
- * Returns true if a finale was begun.
+ * Check if there is a finale after the map.
+ * Returns true if a finale was found.
  */
-int FI_Debriefing(int episode, int map)
+int FI_Debriefing(int episode, int map, ddfinale_t* fin)
 {
     char mid[20];
-    ddfinale_t fin;
+
+    // If we're already in the INFINE state, don't start a finale.
+    if(briefDisabled)
+        return false;
+#if __JHEXEN__
+    if(cfg.overrideHubMsg && G_GetGameState() == GS_MAP &&
+       !(leaveMap == -1 && leavePosition == -1) &&
+       P_GetMapCluster(gameMap) != P_GetMapCluster(leaveMap))
+        return false;
+#endif
+    if(G_GetGameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
+        return false;
 
     // Is there such a finale definition?
     P_GetMapLumpName(episode, map, mid);
-    if(!Def_Get(DD_DEF_FINALE_AFTER, mid, &fin))
-        return false;
-
-    FI_Start(fin.script, FIMODE_AFTER);
-    return true;
+    return Def_Get(DD_DEF_FINALE_AFTER, mid, fin);
 }
 
 void FI_DemoEnds(void)

@@ -52,20 +52,22 @@
 // CODE --------------------------------------------------------------------
 
 /**
- * Starts playing the music for the current map.
+ * Start the song for the specified map.
  */
-void S_MapMusic(void)
+void S_MapMusic(int episode, int map)
 {
-    int                 songid;
+    ddmapinfo_t mapInfo;
+    char mapId[8];
 
-    if(G_GetGameState() != GS_MAP)
-        return;
+    P_GetMapLumpName(episode, map, mapId);
 
-    songid = Get(DD_MAP_MUSIC);
-    if(S_StartMusicNum(songid, true))
+    if(Def_Get(DD_DEF_MAP_INFO, mapId, &mapInfo))
     {
-        // Set the game status cvar for the map music.
-        gsvMapMusic = songid;
+        if(S_StartMusicNum(mapInfo.music, true))
+        {
+            // Set the game status cvar for the map music.
+            gsvMapMusic = mapInfo.music;
+        }
     }
 }
 

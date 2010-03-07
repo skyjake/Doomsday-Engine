@@ -842,8 +842,10 @@ void G_StartTitle(void)
 
 void G_DoLoadMap(void)
 {
-    int                 i;
-    char               *lname, *ptr;
+    int i;
+    char* lname, *ptr;
+    ddfinale_t fin;
+    boolean hasBrief;
 
 #if __JHEXEN__ || __JSTRIFE__
     static int firstFragReset = 1;
@@ -884,6 +886,15 @@ void G_DoLoadMap(void)
         G_ResetLookOffset(i);
     }
 
+    // Determine whether there is a briefing to run before the map starts
+    // (played after the map has been loaded).
+    hasBrief = FI_Briefing(gameEpisode, gameMap, &fin);
+    if(!hasBrief)
+    {
+        S_MapMusic(gameEpisode, gameMap);
+        S_PauseMusic(true);
+    }
+
     P_SetupMap(gameEpisode, gameMap, 0, gameSkill);
     Set(DD_DISPLAYPLAYER, CONSOLEPLAYER); // View the guy you are playing.
     G_SetGameAction(GA_NONE);
@@ -892,6 +903,7 @@ void G_DoLoadMap(void)
 
     // Clear cmd building stuff.
     G_ResetMousePos();
+
     sendPause = paused = false;
 
     G_ControlReset(-1); // Clear all controls for all local players.
@@ -927,10 +939,14 @@ void G_DoLoadMap(void)
     }
 
     // Start a briefing, if there is one.
-    if(!FI_Briefing(gameEpisode, gameMap))
-    {   // No briefing, start the map.
+    if(hasBrief)
+    {
+        FI_Start(fin.script, FIMODE_BEFORE);
+    }
+    else // No briefing, start the map.
+    {
         G_ChangeGameState(GS_MAP);
-        S_MapMusic();
+        S_PauseMusic(false);
     }
 }
 
@@ -1673,6 +1689,8 @@ void G_StartNewGame(skillmode_t skill)
 
 void G_DoTeleportNewMap(void)
 {
+    ddfinale_t fin;
+
     // Clients trust the server in these things.
     if(IS_CLIENT)
     {
@@ -1686,7 +1704,8 @@ void G_DoTeleportNewMap(void)
     rebornPosition = leavePosition;
 
     // Is there a briefing before this map?
-    FI_Briefing(gameEpisode, gameMap);
+    if(FI_Briefing(gameEpisode, gameMap, &fin))
+        FI_Start(fin.script, FIMODE_BEFORE);
 }
 #endif
 
@@ -2016,23 +2035,6 @@ void G_PrepareWIData(void)
 }
 #endif
 
-boolean G_DebriefingEnabled(void)
-{
-    // If we're already in the INFINE state, don't start a finale.
-    if(briefDisabled)
-        return false;
-#if __JHEXEN__
-    if(cfg.overrideHubMsg && G_GetGameState() == GS_MAP &&
-       !(leaveMap == -1 && leavePosition == -1) &&
-       P_GetMapCluster(gameMap) != P_GetMapCluster(leaveMap))
-        return false;
-#endif
-    if(G_GetGameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
-        return false;
-
-    return true;
-}
-
 void G_WorldDone(void)
 {
 #if __JDOOM__ || __JDOOM64__
@@ -2044,12 +2046,16 @@ void G_WorldDone(void)
     // @note FI_Reset() changes the game state so we must determine
     // whether the debrief is enabled first.
     {
-    boolean doDebrief = G_DebriefingEnabled();
+    ddfinale_t fin;
+    boolean doDebrief = FI_Debriefing(gameEpisode, gameMap, &fin);
 
     FI_Reset();
 
-    if(doDebrief && FI_Debriefing(gameEpisode, gameMap))
+    if(doDebrief)
+    {
+        FI_Start(fin.script, FIMODE_AFTER);
         return;
+    }
 
     // We have either just returned from a debriefing or there wasn't one.
     briefDisabled = false;

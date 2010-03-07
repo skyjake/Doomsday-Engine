@@ -169,7 +169,7 @@ void G_UpdateState(int step)
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        S_MapMusic();
+        S_MapMusic(gameEpisode, gameMap);
 #endif
         break;
 
