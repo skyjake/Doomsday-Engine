@@ -1187,6 +1187,11 @@ boolean P_CheckPosition3f(mobj_t* thing, float x, float y, float z)
     blockingMobj = NULL;
 #endif
 
+    box[BOXLEFT]   = tmBBox[BOXLEFT];
+    box[BOXRIGHT]  = tmBBox[BOXRIGHT];
+    box[BOXBOTTOM] = tmBBox[BOXBOTTOM];
+    box[BOXTOP]    = tmBBox[BOXTOP];
+
     return P_AllLinesBoxIterator(box, PIT_CheckLine, 0);
 }
 
