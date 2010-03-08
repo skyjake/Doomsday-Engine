@@ -1719,10 +1719,6 @@ void G_DoTeleportNewMap(void)
     G_ChangeGameState(GS_MAP);
     G_SetGameAction(GA_NONE);
     rebornPosition = leavePosition;
-
-    // Is there a briefing before this map?
-    if(FI_Briefing(gameEpisode, gameMap, &fin))
-        FI_Start(fin.script, FIMODE_BEFORE);
 }
 #endif
 
