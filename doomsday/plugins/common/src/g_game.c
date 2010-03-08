@@ -891,6 +891,23 @@ void G_DoLoadMap(void)
     hasBrief = FI_Briefing(gameEpisode, gameMap, &fin);
     if(!hasBrief)
     {
+#if __JHEXEN__
+        /**
+         * \kludge Due to the way music is managed with Hexen, unless we
+         * explicitly stop the current playing track the engine will not
+         * change tracks. This is due to the use of the runtime-updated
+         * "currentmap" definition (the engine thinks music has not changed
+         * because the current Music definition is the same).
+         *
+         * The only reason it worked previously was because the
+         * waiting-for-map-load song was started prior to load.
+         *
+         * \todo Rethink the Music definition stuff with regard to Hexen.
+         * Why not create definitions during startup by parsing MAPINFO?
+         */
+        S_StopMusic();
+        //S_StartMusic("chess", true); // Waiting-for-map-load song
+#endif
         S_MapMusic(gameEpisode, gameMap);
         S_PauseMusic(true);
     }
@@ -2044,10 +2061,17 @@ void G_PrepareWIData(void)
 
 void G_WorldDone(void)
 {
+    int i;
+
 #if __JDOOM__ || __JDOOM64__
     if(secretExit)
         players[CONSOLEPLAYER].didSecret = true;
 #endif
+
+    // Close any open automaps.
+    for(i = 0; i < MAXPLAYERS; ++i)
+        if(players[i].plr->inGame)
+            AM_Open(AM_MapForPlayer(i), false, true);
 
     // Clear the currently playing script, if any.
     // @note FI_Reset() changes the game state so we must determine
