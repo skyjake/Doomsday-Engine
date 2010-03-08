@@ -754,10 +754,6 @@ int P_SetupMapWorker(void* ptr)
     // Initialize The Logical Sound Manager.
     S_MapChange();
 
-#if __JHEXEN__
-    S_StartMusic("chess", true); // Waiting-for-map-load song
-#endif
-
     Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
     P_GetMapLumpName(param->episode, param->map, mapID);
