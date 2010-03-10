@@ -53,7 +53,7 @@
 /**
  * Start the song for the specified map.
  */
-void S_MapMusic(int episode, int map)
+void S_MapMusic(uint episode, uint map)
 {
     ddmapinfo_t mapInfo;
     char mapId[8];

@@ -42,11 +42,11 @@ extern boolean deathmatch;
 extern boolean respawnMonsters;
 extern boolean userGame;
 extern player_t players[MAXPLAYERS];
-extern boolean secretExit;
 extern skillmode_t gameSkill;
-extern int gameEpisode;
-extern int gameMap;
-extern int nextMap;
+extern uint gameEpisode;
+extern uint gameMap;
+extern uint nextMap;
+extern boolean secretExit;
 extern int mapStartTic;
 extern int totalKills, totalItems, totalSecret;
 extern wbstartstruct_t wmInfo;
@@ -61,14 +61,14 @@ void            R_InitRefresh(void);
 void            G_DeathMatchSpawnPlayer(int playernum);
 
 void            G_PrintMapList(void);
-boolean         G_ValidateMap(int* episode, int* map);
-int             G_GetMapNumber(int episode, int map);
+boolean         G_ValidateMap(uint* episode, uint* map);
+uint            G_GetMapNumber(uint episode, uint map);
 
-void            G_InitNew(skillmode_t skill, int episode, int map);
+void            G_InitNew(skillmode_t skill, uint episode, uint map);
 
 // Can be called by the startup code or Hu_MenuResponder.
 // A normal game starts at map 1, but a warp test can start elsewhere.
-void            G_DeferedInitNew(skillmode_t skill, int episode, int map);
+void            G_DeferedInitNew(skillmode_t skill, uint episode, uint map);
 
 void            G_DeferedPlayDemo(char* demo);
 
@@ -87,7 +87,11 @@ void            G_DemoAborted(void);
 
 void            G_DoReborn(int playernum);
 void            G_PlayerReborn(int player);
-void            G_LeaveMap(int map, int position, boolean secret);
+void            G_LeaveMap(uint newMap, uint entryPoint, boolean secretExit);
+
+uint            G_GetNextMap(uint episode, uint map, boolean secretExit);
+
+boolean         P_MapExists(uint episode, uint map);
 
 void            G_WorldDone(void);
 
@@ -96,5 +100,5 @@ boolean         G_Responder(event_t* ev);
 
 void            G_ScreenShot(void);
 
-void            P_GetMapLumpName(int episode, int map, char* lumpName);
+void            P_GetMapLumpName(uint episode, uint map, char* lumpName);
 #endif

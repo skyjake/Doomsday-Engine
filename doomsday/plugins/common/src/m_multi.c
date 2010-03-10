@@ -379,11 +379,11 @@ void DrawGameSetupMenu(void)
     if(gameMode != commercial)
 #  endif
     {
-        sprintf(buf, "%i", cfg.netEpisode);
+        sprintf(buf, "%u", cfg.netEpisode+1);
         M_WriteMenuText(menu, idx++, buf);
     }
 # endif
-    sprintf(buf, "%i", cfg.netMap);
+    sprintf(buf, "%u", cfg.netMap+1);
     M_WriteMenuText(menu, idx++, buf);
     M_WriteMenuText(menu, idx++, skillText[cfg.netSkill]);
     M_WriteMenuText(menu, idx++, dmText[cfg.netDeathmatch]);
@@ -404,7 +404,7 @@ void DrawGameSetupMenu(void)
     M_WriteMenuText(menu, idx++, boolText[cfg.noTeamDamage]);
 #elif __JHEXEN__ || __JSTRIFE__
 
-    sprintf(buf, "%i", cfg.netMap);
+    sprintf(buf, "%u", cfg.netMap+1);
     M_WriteMenuText(menu, idx++, buf);
     M_WriteText2(160 - M_StringWidth(mapName, GF_FONTA) / 2,
                  menu->y + menu->itemHeight, mapName,
@@ -587,47 +587,43 @@ void SCEnterGameSetup(int option, void* data)
 {
     // See to it that the episode and map numbers are correct.
 #if __JDOOM64__
-    if(cfg.netMap < 1)
-        cfg.netMap = 1;
-    if(cfg.netMap > 32)
-        cfg.netMap = 32;
+    if(cfg.netMap > 31)
+        cfg.netMap = 31;
 #elif __JDOOM__
     if(gameMode == commercial)
     {
-        cfg.netEpisode = 1;
+        cfg.netEpisode = 0;
     }
     else if(gameMode == retail)
     {
-        if(cfg.netEpisode > 4)
-            cfg.netEpisode = 4;
-        if(cfg.netMap > 9)
-            cfg.netMap = 9;
+        if(cfg.netEpisode > 3)
+            cfg.netEpisode = 3;
+        if(cfg.netMap > 8)
+            cfg.netMap = 8;
     }
     else if(gameMode == registered)
     {
-        if(cfg.netEpisode > 3)
-            cfg.netEpisode = 3;
-        if(cfg.netMap > 9)
-            cfg.netMap = 9;
+        if(cfg.netEpisode > 2)
+            cfg.netEpisode = 2;
+        if(cfg.netMap > 8)
+            cfg.netMap = 8;
     }
     else if(gameMode == shareware)
     {
-        cfg.netEpisode = 1;
-        if(cfg.netMap > 9)
-            cfg.netMap = 9;
+        cfg.netEpisode = 0;
+        if(cfg.netMap > 8)
+            cfg.netMap = 8;
     }
 #elif __JHERETIC__
-    if(cfg.netMap > 9)
-        cfg.netMap = 9;
-    if(cfg.netEpisode > 6)
-        cfg.netEpisode = 6;
-    if(cfg.netEpisode == 6 && cfg.netMap > 3)
-        cfg.netMap = 3;
+    if(cfg.netMap > 8)
+        cfg.netMap = 8;
+    if(cfg.netEpisode > 5)
+        cfg.netEpisode = 5;
+    if(cfg.netEpisode == 5 && cfg.netMap > 2)
+        cfg.netMap = 2;
 #elif __JHEXEN__ || __JSTRIFE__
-    if(cfg.netMap < 1)
-        cfg.netMap = 1;
-    if(cfg.netMap > 31)
-        cfg.netMap = 31;
+    if(cfg.netMap > 30)
+        cfg.netMap = 30;
 #endif
     M_SetupNextMenu(&GameSetupMenu);
 }
@@ -662,35 +658,37 @@ void SCGameSetupEpisode(int option, void* data)
 # if __JDOOM__
     if(gameMode == shareware)
     {
-        cfg.netEpisode = 1;
+        cfg.netEpisode = 0;
         return;
     }
 
     if(option == RIGHT_DIR)
     {
-        if(cfg.netEpisode < (gameMode == retail ? 4 : 3))
+        if(cfg.netEpisode < (gameMode == retail ? 3 : 2))
             cfg.netEpisode++;
     }
-    else if(cfg.netEpisode > 1)
+    else if(cfg.netEpisode != 0)
     {
         cfg.netEpisode--;
     }
 # elif __JHERETIC__
     if(shareware)
     {
-        cfg.netEpisode = 1;
+        cfg.netEpisode = 0;
         return;
     }
 
     if(option == RIGHT_DIR)
     {
-        if(cfg.netEpisode < (gameMode == extended? 6 : 3))
+        if(cfg.netEpisode < (gameMode == extended? 5 : 2))
             cfg.netEpisode++;
     }
-    else if(cfg.netEpisode > 1)
+    else if(cfg.netEpisode != 0)
     {
         cfg.netEpisode--;
     }
+    if(cfg.netMap > (cfg.netEpisode == 5? 2 : 8))
+        cfg.netMap = (cfg.netEpisode == 5? 2 : 8);
 # endif
 }
 #endif
@@ -700,20 +698,20 @@ void SCGameSetupMap(int option, void* data)
     if(option == RIGHT_DIR)
     {
 #if __JDOOM64__
-        if(cfg.netMap < 32)
+        if(cfg.netMap < 31)
             cfg.netMap++;
 #elif __JDOOM__
-        if(cfg.netMap < (gameMode == commercial ? 32 : 9))
+        if(cfg.netMap < (gameMode == commercial ? 31 : 8))
             cfg.netMap++;
 #elif __JHERETIC__
-        if(cfg.netMap < (cfg.netEpisode == 6? 3 : 9))
+        if(cfg.netMap < (cfg.netEpisode == 5? 2 : 8))
             cfg.netMap++;
 #elif __JHEXEN__ || __JSTRIFE__
-        if(cfg.netMap < 31)
+        if(cfg.netMap < 30)
             cfg.netMap++;
 #endif
     }
-    else if(cfg.netMap > 1)
+    else if(cfg.netMap != 0)
     {
         cfg.netMap--;
     }
@@ -738,11 +736,11 @@ void SCOpenServer(int option, void* data)
     {
         // Game already running, just change map.
 #if __JHEXEN__ || __JSTRIFE__
-        Executef(false, "setmap %i", cfg.netMap);
+        Executef(false, "setmap %u", cfg.netMap+1);
 #elif __JDOOM64__
-        Executef(false, "setmap 1 %i", cfg.netMap);
+        Executef(false, "setmap 1 %u", cfg.netMap+1);
 #else
-        Executef(false, "setmap %i %i", cfg.netEpisode, cfg.netMap);
+        Executef(false, "setmap %u %u", cfg.netEpisode+1, cfg.netMap+1);
 #endif
 
         Hu_MenuCommand(MCMD_CLOSE);

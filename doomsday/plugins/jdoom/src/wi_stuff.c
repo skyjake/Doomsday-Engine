@@ -327,9 +327,9 @@ void WI_drawLF(void)
     char               *mapName;
 
     if(gameMode == commercial)
-        mapNum = wbs->last;
+        mapNum = wbs->currentMap;
     else
-        mapNum = ((gameEpisode -1) * 9) + wbs->last;
+        mapNum = (wbs->episode * 8) + wbs->currentMap;
 
     mapName = (char *) DD_GetVariable(DD_MAP_NAME);
     // Skip the E#M# or Map #.
@@ -362,15 +362,12 @@ void WI_drawLF(void)
 void WI_drawEL(void)
 {
     int                 y = WI_TITLEY;
-    int                 mapNum;
     char               *mapName = NULL;
     ddmapinfo_t         minfo;
     char                lumpName[10];
 
-    mapNum = G_GetMapNumber(gameEpisode, wbs->next);
-
     // See if there is a map name.
-    P_GetMapLumpName(gameEpisode, wbs->next+1, lumpName);
+    P_GetMapLumpName(wbs->episode, wbs->nextMap, lumpName);
     if(Def_Get(DD_DEF_MAP_INFO, lumpName, &minfo) && minfo.name)
     {
         if(Def_Get(DD_DEF_TEXT, minfo.name, &mapName) == -1)
@@ -395,10 +392,10 @@ void WI_drawEL(void)
                  NULL, false, ALIGN_CENTER);
 
     // Draw map.
-    y += (5 * mapNamePatches[wbs->next].height) / 4;
+    y += (5 * mapNamePatches[wbs->nextMap].height) / 4;
 
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
-                 &mapNamePatches[((gameEpisode -1) * 9) + wbs->next],
+                 &mapNamePatches[(wbs->episode * 8) + wbs->nextMap],
                  mapName, false, ALIGN_CENTER);
 }
 
@@ -411,8 +408,8 @@ void WI_DrawOnMapNode(int n, dpatch_t * c)
     i = 0;
     do
     {
-        left = mapPoints[wbs->epsd][n].x - c[i].leftOffset;
-        top = mapPoints[wbs->epsd][n].y - c[i].topOffset;
+        left = mapPoints[wbs->episode][n].x - c[i].leftOffset;
+        top = mapPoints[wbs->episode][n].y - c[i].topOffset;
         right = left + c[i].width;
         bottom = top + c[i].height;
         if(left >= 0 && right < SCREENWIDTH && top >= 0 &&
@@ -424,7 +421,7 @@ void WI_DrawOnMapNode(int n, dpatch_t * c)
 
     if(fits && i < 2)
     {
-        WI_DrawPatch(mapPoints[wbs->epsd][n].x, mapPoints[wbs->epsd][n].y,
+        WI_DrawPatch(mapPoints[wbs->episode][n].x, mapPoints[wbs->episode][n].y,
                      1, 1, 1, 1,
                      &c[i], NULL, false, ALIGN_LEFT);
     }
@@ -441,12 +438,12 @@ void WI_initAnimatedBack(void)
 
     if(gameMode == commercial)
         return;
-    if(wbs->epsd > 2)
+    if(wbs->episode > 2)
         return;
 
-    for(i = 0; i < NUMANIMS[wbs->epsd]; ++i)
+    for(i = 0; i < NUMANIMS[wbs->episode]; ++i)
     {
-        a = &anims[wbs->epsd][i];
+        a = &anims[wbs->episode][i];
 
         a->ctr = -1;
 
@@ -467,12 +464,12 @@ void WI_updateAnimatedBack(void)
 
     if(gameMode == commercial)
         return;
-    if(wbs->epsd > 2)
+    if(wbs->episode > 2)
         return;
 
-    for(i = 0; i < NUMANIMS[wbs->epsd]; ++i)
+    for(i = 0; i < NUMANIMS[wbs->episode]; ++i)
     {
-        a = &anims[wbs->epsd][i];
+        a = &anims[wbs->episode][i];
 
         if(bcnt == a->nextTic)
         {
@@ -497,7 +494,7 @@ void WI_updateAnimatedBack(void)
 
             case ANIM_MAP:
                 // Gawd-awful hack for map anims.
-                if(!(state == ILS_SHOW_STATS && i == 7) && wbs->next == a->data1)
+                if(!(state == ILS_SHOW_STATS && i == 7) && wbs->nextMap == a->data1)
                 {
                     a->ctr++;
                     if(a->ctr == a->numAnimFrames)
@@ -517,12 +514,12 @@ void WI_drawAnimatedBack(void)
 
     if(gameMode == commercial)
         return;
-    if(wbs->epsd > 2)
+    if(wbs->episode > 2)
         return;
 
-    for(i = 0; i < NUMANIMS[wbs->epsd]; ++i)
+    for(i = 0; i < NUMANIMS[wbs->episode]; ++i)
     {
-        a = &anims[wbs->epsd][i];
+        a = &anims[wbs->episode][i];
         if(a->ctr >= 0)
             WI_DrawPatch(a->loc.x, a->loc.y, 1, 1, 1, 1, &a->p[a->ctr],
                          NULL, false, ALIGN_LEFT);
@@ -685,13 +682,13 @@ void WI_drawShowNextLoc(void)
 
     if(gameMode != commercial)
     {
-        if(wbs->epsd > 2)
+        if(wbs->episode > 2)
         {
             WI_drawEL();
             return;
         }
 
-        last = (wbs->last == 8) ? wbs->next - 1 : wbs->last;
+        last = (wbs->currentMap == 8) ? wbs->nextMap-1 : wbs->currentMap;
 
         // Draw a splat on taken cities.
         for(i = 0; i <= last; ++i)
@@ -703,11 +700,11 @@ void WI_drawShowNextLoc(void)
 
         // Draw flashing ptr.
         if(snlPointerOn)
-            WI_DrawOnMapNode(wbs->next, yah);
+            WI_DrawOnMapNode(wbs->nextMap, yah);
     }
 
     // Draws which map you are entering..
-    if((gameMode != commercial) || wbs->next != 30)
+    if((gameMode != commercial) || wbs->nextMap != 30)
         WI_drawEL();
 }
 
@@ -1386,11 +1383,11 @@ void WI_loadData(void)
     if(gameMode == commercial)
         strcpy(name, "INTERPIC");
     else
-        sprintf(name, "WIMAP%d", wbs->epsd);
+        sprintf(name, "WIMAP%u", wbs->episode);
 
     if(gameMode == retail)
     {
-        if(wbs->epsd == 3)
+        if(wbs->episode > 2)
             strcpy(name, "INTERPIC");
     }
 
@@ -1407,18 +1404,18 @@ void WI_loadData(void)
         // Splat.
         R_CachePatch(&splat, "WISPLAT");
 
-        if(wbs->epsd < 3)
+        if(wbs->episode < 3)
         {
-            for(j = 0; j < NUMANIMS[wbs->epsd]; ++j)
+            for(j = 0; j < NUMANIMS[wbs->episode]; ++j)
             {
-                a = &anims[wbs->epsd][j];
+                a = &anims[wbs->episode][j];
                 for(i = 0; i < a->numAnimFrames; ++i)
                 {
                     //// \kludge >
-                    if(wbs->epsd != 1 || j != 8)
+                    if(wbs->episode != 1 || j != 8)
                     {
                         // Animations
-                        sprintf(name, "WIA%d%.2d%.2d", wbs->epsd, j, i);
+                        sprintf(name, "WIA%u%.2d%.2d", wbs->episode, j, i);
                         R_CachePatch(&a->p[i], name);
                     }
                     else
@@ -1561,10 +1558,6 @@ void WI_initVariables(wbstartstruct_t * wbstartstruct)
         wbs->maxItems = 1;
     if(!wbs->maxSecret)
         wbs->maxSecret = 1;
-
-    if(gameMode != retail)
-        if(wbs->epsd > 2)
-            wbs->epsd -= 3;
 }
 
 void WI_Init(wbstartstruct_t* wbstartstruct)

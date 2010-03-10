@@ -136,8 +136,8 @@ void        P_ExplodeMissile(mobj_t* mo);
 #define OPENBOTTOM          (*(float*) DD_GetVariable(DD_OPENBOTTOM))
 #define LOWFLOOR            (*(float*) DD_GetVariable(DD_LOWFLOOR))
 
-char*           P_GetMapName(int episode, int map);
-char*           P_GetShortMapName(int episode, int map);
+const char*     P_GetMapName(uint episode, uint map);
+const char*     P_GetShortMapName(uint episode, uint map);
 
 extern float turboMul;
 extern int maxAmmo[NUM_AMMO_TYPES];

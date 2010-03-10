@@ -154,10 +154,11 @@ void Cht_NoClipFunc(player_t* plr)
 
 boolean Cht_WarpFunc(player_t* plr, cheatseq_t* cheat)
 {
-    int epsd, map;
+    uint epsd, map;
 
-    epsd = 1;
+    epsd = 0;
     map = (cheat->args[0] - '0') * 10 + cheat->args[1] - '0';
+    if(map != 0) map -= 1;
 
     // Catch invalid maps.
     if(!G_ValidateMap(&epsd, &map))
@@ -659,7 +660,6 @@ DEFCC(CCmdCheatLeaveMap)
         return true;
     }
 
-    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
-
+    G_LeaveMap(G_GetNextMap(gameEpisode, gameMap, false), 0, false);
     return true;
 }

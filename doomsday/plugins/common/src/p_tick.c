@@ -47,6 +47,7 @@
 #include "p_user.h"
 #include "hu_menu.h"
 #include "hu_msg.h"
+#include "d_netsv.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -140,6 +141,16 @@ void P_RunPlayers(timespan_t ticLength)
  */
 void P_DoTick(void)
 {
+    if(IS_SERVER)
+    {
+        // Game is paused after a map load until the first tic begins server-side.
+        if(mapTime == 0)
+        {
+            paused = false;
+            NetSv_Paused(paused);
+        }
+    }
+
     // If the game is paused, nothing will happen.
     if(paused)
         return;
@@ -150,12 +161,7 @@ void P_DoTick(void)
     {
         if(!--timerGame)
         {
-#if __JHEXEN__ || __JSTRIFE__
-            G_LeaveMap(G_GetMapNumber(gameEpisode, P_GetMapNextMap(gameMap)),
-                         0, false);
-#else
-            G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
-#endif
+            G_LeaveMap(G_GetNextMap(gameEpisode, gameMap, false), 0, false);
         }
     }
 

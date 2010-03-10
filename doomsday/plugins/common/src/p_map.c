@@ -272,7 +272,7 @@ boolean PIT_StompThing(mobj_t* mo, void* data)
         return false;
 #elif __JDOOM__
     // Monsters don't stomp things except on a boss map.
-    if(!tmThing->player && gameMap != 30)
+    if(!tmThing->player && gameMap != 29)
         return false;
 #endif
 

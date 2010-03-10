@@ -130,22 +130,21 @@ MonsterMissileInfo[] =
 DEFCC(CCmdListMaps);
 
 void    G_PlayerReborn(int player);
-void    G_InitNew(skillmode_t skill, int episode, int map);
+void    G_InitNew(skillmode_t skill, uint episode, uint map);
 void    G_DoInitNew(void);
 void    G_DoReborn(int playernum);
 void    G_DoLoadMap(void);
 void    G_DoNewGame(void);
 void    G_DoLoadGame(void);
 void    G_DoPlayDemo(void);
-void    G_DoCompleted(void);
+void    G_DoMapCompleted(void);
 void    G_DoVictory(void);
 void    G_DoWorldDone(void);
 void    G_DoSaveGame(void);
 void    G_DoScreenShot(void);
-boolean G_ValidateMap(int *episode, int *map);
+boolean G_ValidateMap(uint *episode, uint *map);
 
 #if __JHEXEN__ || __JSTRIFE__
-void    G_DoTeleportNewMap(void);
 void    G_DoSingleReborn(void);
 void    H2_PageTicker(void);
 void    H2_AdvanceDemo(void);
@@ -164,9 +163,25 @@ game_config_t cfg; // The global cfg.
 int debugSound; // Debug flag for displaying sound info.
 
 skillmode_t gameSkill;
-int gameEpisode;
-int gameMap;
-int nextMap; // If non zero this will be the next map.
+uint gameEpisode;
+uint gameMap;
+
+uint nextMap;
+#if __JHEXEN__ || __JSTRIFE__
+uint nextMapEntryPoint;
+#endif
+
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+boolean secretExit;
+#endif
+
+#if __JHEXEN__ || __JSTRIFE__
+// Position indicator for cooperative net-play reborn
+uint rebornPosition;
+#endif
+#if __JHEXEN__ || __JSTRIFE__
+uint mapHub = 0;
+#endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __JSTRIFE__
 boolean respawnMonsters;
@@ -197,19 +212,7 @@ mobj_t *bodyQueue[BODYQUEUESIZE];
 int bodyQueueSlot;
 #endif
 
-#if __JHEXEN__ || __JSTRIFE__
-// Position indicator for cooperative net-play reborn
-int rebornPosition;
-int leaveMap;
-int leavePosition;
-#endif
-
-boolean secretExit;
 filename_t saveName;
-
-#if __JHEXEN__ || __JSTRIFE__
-int mapHub = 0;
-#endif
 
 // vars used with game status cvars
 int gsvInMap = 0;
@@ -387,7 +390,7 @@ cvar_t gamestatusCVars[] = {
    {NULL}
 };
 
-ccmd_t  gameCmds[] = {
+ccmd_t gameCmds[] = {
     { "listmaps",    "",     CCmdListMaps },
     { NULL }
 };
@@ -395,8 +398,8 @@ ccmd_t  gameCmds[] = {
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static skillmode_t dSkill;
-static int dEpisode;
-static int dMap;
+static uint dEpisode;
+static uint dMap;
 
 #if __JHEXEN__ || __JSTRIFE__
 static int gameLoadSlot;
@@ -915,6 +918,7 @@ void G_DoLoadMap(void)
     P_SetupMap(gameEpisode, gameMap, 0, gameSkill);
     Set(DD_DISPLAYPLAYER, CONSOLEPLAYER); // View the guy you are playing.
     G_SetGameAction(GA_NONE);
+    nextMap = 0;
 
     Z_CheckHeap();
 
@@ -1166,12 +1170,7 @@ static void runGameAction(void)
 #endif
 
         case GA_LEAVEMAP:
-#if __JHEXEN__ || __JSTRIFE__
-            //Draw_TeleportIcon();
-            G_DoTeleportNewMap();
-#else
             G_DoWorldDone();
-#endif
             break;
 
         case GA_LOADMAP:
@@ -1190,8 +1189,8 @@ static void runGameAction(void)
             G_DoSaveGame();
             break;
 
-        case GA_COMPLETED:
-            G_DoCompleted();
+        case GA_MAPCOMPLETED:
+            G_DoMapCompleted();
             break;
 
         case GA_VICTORY:
@@ -1372,7 +1371,7 @@ void G_PlayerLeaveMap(int player)
     boolean newCluster;
 
 #if __JHEXEN__ || __JSTRIFE__
-    newCluster = (P_GetMapCluster(gameMap) != P_GetMapCluster(leaveMap));
+    newCluster = (P_GetMapCluster(gameMap) != P_GetMapCluster(nextMap));
 #else
     newCluster = true;
 #endif
@@ -1593,7 +1592,7 @@ void G_PlayerReborn(int player)
     p->weapons[WT_SECOND].owned = true;
     p->ammo[AT_CRYSTAL].owned = 50;
 
-    if(gameMap == 9 || secret)
+    if(gameMap == 8 || secret)
     {
         p->didSecret = true;
     }
@@ -1677,9 +1676,7 @@ void G_StartNewInit(void)
     SV_HxInitBaseSlot();
     SV_HxClearRebornSlot();
 
-# if __JHEXEN__
     P_ACSInitNewGame();
-# endif
 
     // Default the player start spot group to 0
     rebornPosition = 0;
@@ -1687,38 +1684,8 @@ void G_StartNewInit(void)
 
 void G_StartNewGame(skillmode_t skill)
 {
-    int realMap = 1;
-
     G_StartNewInit();
-#   if __JHEXEN__
-    realMap = P_TranslateMap(1);
-#   elif __JSTRIFE__
-    realMap = 1;
-#   endif
-
-    if(realMap == -1)
-    {
-        realMap = 1;
-    }
-
-    G_InitNew(dSkill, 1, realMap);
-}
-
-void G_DoTeleportNewMap(void)
-{
-    ddfinale_t fin;
-
-    // Clients trust the server in these things.
-    if(IS_CLIENT)
-    {
-        G_SetGameAction(GA_NONE);
-        return;
-    }
-
-    SV_MapTeleport(leaveMap, leavePosition);
-    G_ChangeGameState(GS_MAP);
-    G_SetGameAction(GA_NONE);
-    rebornPosition = leavePosition;
+    G_InitNew(dSkill, 0, P_TranslateMap(0));
 }
 #endif
 
@@ -1727,38 +1694,37 @@ void G_DoTeleportNewMap(void)
  * (if __JHEXEN__ the intermission will only be displayed when exiting a
  * hub and in DeathMatch games)
  *
- * @param map           ID of the map we are leaving.
- * @param position      Position id (maps with multiple entry/exit points).
- * @param secret        @c true = if this is a secret exit point.
+ * @param newMap        ID of the map we are entering.
+ * @param _entryPoint   Entry point on the new map.
+ * @param secretExit
  */
-void G_LeaveMap(int map, int position, boolean secret)
+void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
 {
     if(cyclingMaps && mapCycleNoExit)
         return;
 
 #if __JHEXEN__
-    if(shareware && map > 4)
-    {
-        // Not possible in the 4-map demo.
+    if(shareware && newMap != DDMAXINT && newMap > 3)
+    {   // Not possible in the 4-map demo.
         P_SetMessage(&players[CONSOLEPLAYER], "PORTAL INACTIVE -- DEMO", false);
         return;
     }
 #endif
 
 #if __JHEXEN__
-    leaveMap = map;
-    leavePosition = position;
+    nextMap = newMap;
+    nextMapEntryPoint = _entryPoint;
 #else
-    secretExit = secret;
+    secretExit = _secretExit;
   #if __JDOOM__
       // If no Wolf3D maps, no secret exit!
-      if(secret && (gameMode == commercial) &&
+      if(secretExit && (gameMode == commercial) &&
          W_CheckNumForName("map31") < 0)
           secretExit = false;
   #endif
 #endif
 
-    G_SetGameAction(GA_COMPLETED);
+    G_SetGameAction(GA_MAPCOMPLETED);
 }
 
 /**
@@ -1767,29 +1733,25 @@ void G_LeaveMap(int map, int position, boolean secret)
 boolean G_IfVictory(void)
 {
 #if __JDOOM64__
-    if(gameMap == 28)
+    if(gameMap == 27)
     {
-        G_SetGameAction(GA_VICTORY);
         return true;
     }
 #elif __JDOOM__
-    if((gameMap == 8) && (gameMode != commercial))
+    if((gameMap == 7) && (gameMode != commercial))
     {
-        G_SetGameAction(GA_VICTORY);
         return true;
     }
 
 #elif __JHERETIC__
-    if(gameMap == 8)
+    if(gameMap == 7)
     {
-        G_SetGameAction(GA_VICTORY);
         return true;
     }
 
 #elif __JHEXEN__ || __JSTRIFE__
-    if(leaveMap == -1 && leavePosition == -1)
+    if(nextMap == DDMAXINT && nextMapEntryPoint == DDMAXINT)
     {
-        G_SetGameAction(GA_VICTORY);
         return true;
     }
 #endif
@@ -1800,121 +1762,10 @@ boolean G_IfVictory(void)
 static int prepareIntermission(void* paramaters)
 {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-# if __JDOOM__
-    if(gameMode != commercial && gameMap == 9)
-    {
-        int i;
-        for(i = 0; i < MAXPLAYERS; ++i)
-            players[i].didSecret = true;
-    }
-# endif
-
+    wmInfo.episode = gameEpisode;
+    wmInfo.currentMap = gameMap;
+    wmInfo.nextMap = nextMap;
     wmInfo.didSecret = players[CONSOLEPLAYER].didSecret;
-    wmInfo.last = gameMap - 1;
-
-# if __JDOOM64__
-    if(secretExit)
-    {
-        switch(gameMap)
-        {
-        case 1: wmInfo.next = 31; break;
-        case 4: wmInfo.next = 28; break;
-        case 12: wmInfo.next = 29; break;
-        case 18: wmInfo.next = 30; break;
-        case 32: wmInfo.next = 0; break;
-        }
-    }
-    else
-    {
-        switch(gameMap)
-        {
-        case 24: wmInfo.next = 27; break;
-        case 32: wmInfo.next = 0; break;
-        case 29: wmInfo.next = 4; break;
-        case 30: wmInfo.next = 12; break;
-        case 31: wmInfo.next = 18; break;
-        case 25: wmInfo.next = 0; break;
-        case 26: wmInfo.next = 0; break;
-        case 27: wmInfo.next = 0; break;
-        default: wmInfo.next = gameMap;
-        }
-    }
-# elif __JDOOM__
-    // wmInfo.next is 0 biased, unlike gameMap
-    if(gameMode == commercial)
-    {
-        if(secretExit)
-        {
-            switch(gameMap)
-            {
-            case 15:
-                wmInfo.next = 30;
-                break;
-            case 31:
-                wmInfo.next = 31;
-                break;
-            }
-        }
-        else
-        {
-            switch(gameMap)
-            {
-            case 31:
-            case 32:
-                wmInfo.next = 15;
-                break;
-            default:
-                wmInfo.next = gameMap;
-            }
-        }
-    }
-    else
-    {
-        if(secretExit)
-            wmInfo.next = 8; // Go to secret map.
-        else if(gameMap == 9)
-        {
-            // Returning from secret map.
-            switch(gameEpisode)
-            {
-            case 1:
-                wmInfo.next = 3;
-                break;
-            case 2:
-                wmInfo.next = 5;
-                break;
-            case 3:
-                wmInfo.next = 6;
-                break;
-            case 4:
-                wmInfo.next = 2;
-                break;
-            }
-        }
-        else
-            wmInfo.next = gameMap; // Go to next map.
-    }
-# else /* __JHERETIC__ */
-    if(secretExit == true)
-    {
-        wmInfo.next = 8;
-    }
-    else if(gameMap == 9)
-    {   // Finished secret map.
-        static int afterSecret[5] = { 6, 4, 4, 4, 3 };
-
-        wmInfo.next = afterSecret[gameEpisode - 1];
-    }
-    else
-        wmInfo.next = gameMap; // Go to next map.
-# endif
-
-    // Is there an overide for wmInfo.next? (eg from an XG line)
-    if(nextMap > 0)
-    {
-        wmInfo.next = nextMap - 1;   // wmInfo is zero based
-        nextMap = 0;
-    }
 
 # if __JDOOM__ || __JDOOM64__
     wmInfo.maxKills = totalKills;
@@ -1938,7 +1789,7 @@ static int prepareIntermission(void* paramaters)
     return 0;
 }
 
-void G_DoCompleted(void)
+void G_DoMapCompleted(void)
 {
     int i;
 
@@ -1988,7 +1839,24 @@ void G_DoCompleted(void)
 
     // Has the player completed the game?
     if(G_IfVictory())
-        return; // Victorious!
+    {   // Victorious!
+        G_SetGameAction(GA_VICTORY);
+        return;
+    }
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+# if __JDOOM__
+    if(gameMode != commercial && gameMap == 8)
+    {
+        int i;
+        for(i = 0; i < MAXPLAYERS; ++i)
+            players[i].didSecret = true;
+    }
+# endif
+
+    // Determine the next map.
+    nextMap = G_GetNextMap(gameEpisode, gameMap, secretExit);
+#endif
 
     // Time for an intermission.
 #if __JDOOM64__
@@ -2012,7 +1880,7 @@ void G_DoCompleted(void)
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     NetSv_Intermission(IMF_BEGIN, 0, 0);
 #else /* __JHEXEN__ */
-    NetSv_Intermission(IMF_BEGIN, leaveMap, leavePosition);
+    NetSv_Intermission(IMF_BEGIN, (int) nextMap, (int) nextMapEntryPoint);
 #endif
 
     S_PauseMusic(false);
@@ -2026,9 +1894,6 @@ void G_PrepareWIData(void)
     char            levid[8];
     wbstartstruct_t *info = &wmInfo;
 
-#if !__JDOOM64__
-    info->epsd = gameEpisode - 1;
-#endif
     info->maxFrags = 0;
 
     P_GetMapLumpName(gameEpisode, gameMap, levid);
@@ -2057,17 +1922,10 @@ void G_PrepareWIData(void)
 
 void G_WorldDone(void)
 {
-    int i;
-
 #if __JDOOM__ || __JDOOM64__
     if(secretExit)
         players[CONSOLEPLAYER].didSecret = true;
 #endif
-
-    // Close any open automaps.
-    for(i = 0; i < MAXPLAYERS; ++i)
-        if(players[i].plr->inGame)
-            AM_Open(AM_MapForPlayer(i), false, true);
 
     // Clear the currently playing script, if any.
     // @note FI_Reset() changes the game state so we must determine
@@ -2093,11 +1951,17 @@ void G_WorldDone(void)
 
 void G_DoWorldDone(void)
 {
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    gameMap = wmInfo.next + 1;
-#endif
+#if __JHEXEN__
+    SV_MapTeleport(nextMap, nextMapEntryPoint);
+    rebornPosition = nextMapEntryPoint;
+#else
+# if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    gameMap = nextMap;
+# endif
 
     G_DoLoadMap();
+#endif
+
     G_SetGameAction(GA_NONE);
 }
 
@@ -2205,7 +2069,7 @@ void G_DoInitNew(void)
  * Can be called by the startup code or the menu task, CONSOLEPLAYER,
  * DISPLAYPLAYER, playeringame[] should be set.
  */
-void G_DeferedInitNew(skillmode_t skill, int episode, int map)
+void G_DeferedInitNew(skillmode_t skill, uint episode, uint map)
 {
     dSkill = skill;
     dEpisode = episode;
@@ -2238,7 +2102,7 @@ void G_DoNewGame(void)
 /**
  * Start a new game.
  */
-void G_InitNew(skillmode_t skill, int episode, int map)
+void G_InitNew(skillmode_t skill, uint episode, uint map)
 {
     int i;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -2358,7 +2222,7 @@ void G_InitNew(skillmode_t skill, int episode, int map)
 /**
  * Return the index of this map.
  */
-int G_GetMapNumber(int episode, int map)
+uint G_GetMapNumber(uint episode, uint map)
 {
 #if __JHEXEN__ || __JSTRIFE__
     return P_TranslateMap(map);
@@ -2379,26 +2243,26 @@ int G_GetMapNumber(int episode, int map)
 /**
  * Compose the name of the map lump identifier.
  */
-void P_GetMapLumpName(int episode, int map, char *lumpName)
+void P_GetMapLumpName(uint episode, uint map, char* lumpName)
 {
 #if __JDOOM64__
-    sprintf(lumpName, "MAP%02i", map);
+    sprintf(lumpName, "MAP%02u", map+1);
 #elif __JDOOM__
     if(gameMode == commercial)
-        sprintf(lumpName, "MAP%02i", map);
+        sprintf(lumpName, "MAP%02u", map+1);
     else
-        sprintf(lumpName, "E%iM%i", episode, map);
+        sprintf(lumpName, "E%uM%u", episode+1, map+1);
 #elif  __JHERETIC__
-    sprintf(lumpName, "E%iM%i", episode, map);
+    sprintf(lumpName, "E%uM%u", episode+1, map+1);
 #else
-    sprintf(lumpName, "MAP%02i", map);
+    sprintf(lumpName, "MAP%02u", map+1);
 #endif
 }
 
 /**
  * Returns true if the specified ep/map exists in a WAD.
  */
-boolean P_MapExists(int episode, int map)
+boolean P_MapExists(uint episode, uint map)
 {
     char                buf[20];
 
@@ -2410,123 +2274,111 @@ boolean P_MapExists(int episode, int map)
  * Returns true if the specified (episode, map) pair can be used.
  * Otherwise the values are adjusted so they are valid.
  */
-boolean G_ValidateMap(int *episode, int *map)
+boolean G_ValidateMap(uint* episode, uint* map)
 {
     boolean             ok = true;
 
-    if(*episode < 1)
-    {
-        *episode = 1;
-        ok = false;
-    }
-
-    if(*map < 1)
-    {
-        *map = 1;
-        ok = false;
-    }
-
 #if __JDOOM64__
-    if(*map > 99)
+    if(*map > 98)
     {
-        *map = 99;
+        *map = 98;
         ok = false;
     }
 #elif __JDOOM__
     if(gameMode == shareware)
     {
-        // only start episode 1 on shareware
-        if(*episode > 1)
+        // only start episode 0 on shareware
+        if(*episode != 0)
         {
-            *episode = 1;
+            *episode = 0;
             ok = false;
         }
     }
     else
     {
-        // Allow episodes 1-9.
-        if(*episode > 9)
+        // Allow episodes 0-8.
+        if(*episode > 8)
         {
-            *episode = 9;
+            *episode = 8;
             ok = false;
         }
     }
 
     if(gameMode == commercial)
     {
-        if(*map > 99)
+        if(*map > 98)
         {
-            *map = 99;
+            *map = 98;
             ok = false;
         }
     }
     else
     {
-        if(*map > 9)
+        if(*map > 8)
         {
-            *map = 9;
+            *map = 8;
             ok = false;
         }
     }
 
 #elif __JHERETIC__
-    //  Allow episodes 1-9.
-    if(*episode > 9)
+    //  Allow episodes 0-8.
+    if(*episode > 8)
     {
-        *episode = 9;
+        *episode = 8;
         ok = false;
     }
 
-    if(*map > 9)
+    if(*map > 8)
     {
-        *map = 9;
+        *map = 8;
         ok = false;
     }
 
     if(gameMode == shareware) // Shareware version checks
     {
-        if(*episode > 1)
+        if(*episode != 0)
         {
-            *episode = 1;
+            *episode = 0;
             ok = false;
         }
     }
     else if(gameMode == extended) // Extended version checks
     {
-        if(*episode == 6)
+        if(*episode == 5)
         {
-            if(*map > 3)
+            if(*map > 2)
             {
-                *map = 3;
+                *map = 2;
                 ok = false;
             }
         }
-        else if(*episode > 5)
+        else if(*episode > 4)
         {
-            *episode = 5;
+            *episode = 4;
             ok = false;
         }
     }
     else // Registered version checks
     {
-        if(*episode == 4)
+        if(*episode == 3)
         {
-            if(*map != 1)
+            if(*map != 0)
             {
-                *map = 1;
+                *map = 0;
                 ok = false;
             }
         }
-        else if(*episode > 3)
+        else if(*episode > 2)
         {
-            *episode = 3;
+            *episode = 2;
             ok = false;
         }
     }
 #elif __JHEXEN__ || __JSTRIFE__
-    if(*map > 99)
+    if(*map > 98)
     {
-        *map = 99;
+        *map = 98;
         ok = false;
     }
 #endif
@@ -2534,22 +2386,132 @@ boolean G_ValidateMap(int *episode, int *map)
     // Check that the map truly exists.
     if(!P_MapExists(*episode, *map))
     {
-        // (1,1) should exist always?
-        *episode = 1;
-        *map = 1;
+        // (0,0) should exist always?
+        *episode = 0;
+        *map = 0;
         ok = false;
     }
 
     return ok;
 }
 
-#if __JHERETIC__
-char* P_GetShortMapName(int episode, int map)
+/**
+ * Return the next map according to the default map progression.
+ *
+ * @param episode       Current episode.
+ * @param map           Current map.
+ * @param secretExit
+ * @return              The next map.
+ */
+uint G_GetNextMap(uint episode, uint map, boolean secretExit)
 {
-    char*               name = P_GetMapName(episode, map);
-    char*               ptr;
+#if __JHEXEN__
+    return G_GetMapNumber(episode, P_GetMapNextMap(map));
+#elif __JDOOM64__
+    if(secretExit)
+    {
+        switch(map)
+        {
+        case 0: return 31;
+        case 3: return 28;
+        case 11: return 29;
+        case 17: return 30;
+        case 31: return 0;
+        default:
+            Con_Message("G_NextMap: Warning - No secret exit on map %u!", map+1);
+            break;
+        }
+    }
 
-    // Remove the "ExMx:" from the beginning.
+    switch(map)
+    {
+    case 23: return 27;
+    case 31: return 0;
+    case 28: return 4;
+    case 29: return 12;
+    case 30: return 18;
+    case 24: return 0;
+    case 25: return 0;
+    case 26: return 0;
+    default:
+        return map + 1;
+    }
+#elif __JDOOM__
+    if(gameMode == commercial)
+    {
+        if(secretExit)
+        {
+            switch(map)
+            {
+            case 14: return 30;
+            case 30: return 31;
+            default:
+               Con_Message("G_NextMap: Warning - No secret exit on map %u!", map+1);
+               break;
+            }
+        }
+
+        switch(map)
+        {
+        case 30:
+        case 31: return 15;
+        default:
+            return map + 1;
+        }
+    }
+    else
+    {
+        if(secretExit && map != 8)
+            return 8; // Go to secret map.
+
+        switch(map)
+        {
+        case 8: // Returning from secret map.
+            switch(episode)
+            {
+            case 0: return 3;
+            case 1: return 5;
+            case 2: return 6;
+            case 3: return 2;
+            default:
+                Con_Error("G_NextMap: Invalid episode num #%u!", episode);
+            }
+            return 0; // Unreachable
+        default:
+            return map + 1; // Go to next map.
+        }
+    }
+#elif __JHERETIC__
+    if(secretExit && map != 8)
+        return 8; // Go to secret map.
+
+    switch(map)
+    {
+    case 8: // Returning from secret map.
+        switch(episode)
+        {
+        case 0: return 6;
+        case 1: return 4;
+        case 2: return 4;
+        case 3: return 4;
+        case 4: return 3;
+        default:
+            Con_Error("G_NextMap: Invalid episode num #%u!", episode);
+        }
+        return 0; // Unreachable
+    default:
+        return map + 1; // Go to next map.
+    }
+#endif
+}
+
+#if __JHERETIC__
+const char* P_GetShortMapName(uint episode, uint map)
+{
+    const char* name = P_GetMapName(episode, map);
+    const char* ptr;
+
+    // Skip over the "ExMx:" from the beginning.
     ptr = strchr(name, ':');
     if(!ptr)
         return name;
@@ -2561,7 +2523,7 @@ char* P_GetShortMapName(int episode, int map)
     return name;
 }
 
-char* P_GetMapName(int episode, int map)
+const char* P_GetMapName(uint episode, uint map)
 {
     char                id[10], *ptr;
     ddmapinfo_t         info;
@@ -2586,12 +2548,12 @@ char* P_GetMapName(int episode, int map)
 /**
  * Print a list of maps and the WAD files where they are from.
  */
-void G_PrintFormattedMapList(int episode, const char** files, int count)
+void G_PrintFormattedMapList(uint episode, const char** files, uint count)
 {
     const char*         current = NULL;
     char                lump[20];
-    int                 i, k;
-    int                 rangeStart = 0, len;
+    uint                i, k;
+    uint                rangeStart = 0, len;
 
     for(i = 0; i < count; ++i)
     {
@@ -2607,7 +2569,7 @@ void G_PrintFormattedMapList(int episode, const char** files, int count)
             Con_Printf("  "); // Indentation.
             if(len <= 2)
             {
-                for(k = rangeStart + 1; k <= i; ++k)
+                for(k = rangeStart; k < i; ++k)
                 {
                     P_GetMapLumpName(episode, k, lump);
                     Con_Printf("%s%s", lump, k != i ? "," : "");
@@ -2615,7 +2577,7 @@ void G_PrintFormattedMapList(int episode, const char** files, int count)
             }
             else
             {
-                P_GetMapLumpName(episode, rangeStart + 1, lump);
+                P_GetMapLumpName(episode, rangeStart, lump);
                 Con_Printf("%s-", lump);
                 P_GetMapLumpName(episode, i, lump);
                 Con_Printf("%s", lump);
@@ -2637,7 +2599,7 @@ void G_PrintMapList(void)
 {
     const char*         sourceList[100];
     lumpnum_t           lump;
-    int                 episode, map, numEpisodes, maxMapsPerEpisode;
+    uint                episode, map, numEpisodes, maxMapsPerEpisode;
     char                mapLump[20];
 
 #if __JDOOM__
@@ -2669,12 +2631,12 @@ void G_PrintMapList(void)
     maxMapsPerEpisode = 99;
 #endif
 
-    for(episode = 1; episode <= numEpisodes; ++episode)
+    for(episode = 0; episode < numEpisodes; ++episode)
     {
         memset((void *) sourceList, 0, sizeof(sourceList));
 
         // Find the name of each map (not all may exist).
-        for(map = 1; map <= maxMapsPerEpisode; ++map)
+        for(map = 0; map < maxMapsPerEpisode-1; ++map)
         {
             P_GetMapLumpName(episode, map, mapLump);
 
@@ -2682,7 +2644,7 @@ void G_PrintMapList(void)
             if((lump = W_CheckNumForName(mapLump)) >= 0)
             {
                 // Get the name of the WAD.
-                sourceList[map - 1] = W_LumpSourceFile(lump);
+                sourceList[map] = W_LumpSourceFile(lump);
             }
         }
 

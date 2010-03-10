@@ -386,19 +386,17 @@ int             G_GetInteger(int id);
 void*           G_GetVariable(int id);
 
 void            G_DeathMatchSpawnPlayer(int playernum);
-int             G_GetMapNumber(int episode, int map);
-void            G_InitNew(skillmode_t skill, int episode, int map);
-void            G_DeferedInitNew(skillmode_t skill, int episode, int map);
+uint            G_GetMapNumber(uint episode, uint map);
+void            G_InitNew(skillmode_t skill, uint episode, uint map);
+void            G_DeferedInitNew(skillmode_t skill, uint episode, uint map);
 void            G_DeferredNewGame(skillmode_t skill);
 void            G_DeferedPlayDemo(char* demo);
 void            G_DoPlayDemo(void);
 void            G_LoadGame(int slot);
 void            G_DoLoadGame(void);
-void            G_RecordDemo(skillmode_t skill, int numplayers, int episode,
-                             int map, char* name);
 void            G_PlayDemo(char* name);
 void            G_TimeDemo(char* name);
-void            G_LeaveMap(int map, int position, boolean secret);
+void            G_LeaveMap(uint newMap, uint entryPoint, boolean secretExit);
 void            G_StartNewGame(skillmode_t skill);
 void            G_StartNewInit(void);
 void            G_WorldDone(void);
@@ -413,8 +411,7 @@ boolean         G_Responder(event_t* ev);
 
 void            P_Init(void);
 
-void            P_SetupMap(int episode, int map, int playermask,
-                           skillmode_t skill);
+void            P_SetupMap(uint episode, uint map, int playermask, skillmode_t skill);
 
 extern boolean setsizeneeded;
 

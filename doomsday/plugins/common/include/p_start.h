@@ -121,7 +121,7 @@ typedef struct {
 
 typedef struct {
     int             plrNum;
-    byte            entryPoint;
+    uint            entryPoint;
     float           pos[3];
     angle_t         angle;
     int             spawnFlags; // MSF_* flags.
@@ -150,15 +150,15 @@ void            P_AddMaceSpot(float x, float y, angle_t angle);
 void            P_AddBossSpot(float x, float y, angle_t angle);
 #endif
 
-void            P_CreatePlayerStart(int defaultPlrNum, byte entryPoint,
+void            P_CreatePlayerStart(int defaultPlrNum, uint entryPoint,
                                     boolean deathmatch, float x, float y,
                                     float z, angle_t angle, int spawnFlags);
 void            P_DestroyPlayerStarts(void);
 uint            P_GetNumPlayerStarts(boolean deathmatch);
 
-const playerstart_t* P_GetPlayerStart(byte entryPoint, int pnum,
+const playerstart_t* P_GetPlayerStart(uint entryPoint, int pnum,
                                       boolean deathmatch);
-void            P_DealPlayerStarts(byte entryPoint);
+void            P_DealPlayerStarts(uint entryPoint);
 
 void            P_SpawnPlayer(int plrNum, playerclass_t pClass, float x,
                               float y, float z, angle_t angle,

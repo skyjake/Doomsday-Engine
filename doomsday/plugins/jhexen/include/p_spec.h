@@ -89,6 +89,6 @@ boolean     EV_ThingDeactivate(int tid);
 boolean     EV_ThingRemove(int tid);
 boolean     EV_ThingDestroy(int tid);
 
-void        P_InitSky(int map);
+void        P_InitSky(uint map);
 
 #endif

@@ -305,7 +305,7 @@ void G_PreInit(void)
     cfg.fastMonsters = false;
     cfg.secretMsg = true;
     cfg.netJumping = true;
-    cfg.netEpisode = 1;
+    cfg.netEpisode = 0;
     cfg.netMap = 1;
     cfg.netSkill = SM_MEDIUM;
     cfg.netColor = 4;           // Use the default color by default.

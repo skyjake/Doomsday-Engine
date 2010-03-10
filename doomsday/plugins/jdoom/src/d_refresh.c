@@ -179,9 +179,9 @@ void R_DrawMapTitle(void)
 
     // Compose the mapnumber used to check the map name patches array.
     if(gameMode == commercial)
-        mapnum = gameMap -1;
+        mapnum = gameMap;
     else
-        mapnum = ((gameEpisode -1) * 9) + gameMap -1;
+        mapnum = (gameEpisode * 9) + gameMap;
 
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, alpha,
                  &mapNamePatches[mapnum], lname, false, ALIGN_CENTER);

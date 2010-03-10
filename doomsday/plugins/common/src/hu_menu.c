@@ -3823,7 +3823,7 @@ void M_ChooseClass(int option, void* context)
 void M_Episode(int option, void* context)
 {
 #if __JHERETIC__
-    if(shareware && option > 1)
+    if(shareware && option)
     {
         Hu_MsgStart(MSG_ANYKEY, SWSTRING, NULL, NULL);
         M_SetupNextMenu(&ReadDef1);
@@ -3849,7 +3849,7 @@ int M_VerifyNightmare(msgresponse_t response, void* context)
     if(response == MSG_YES)
     {
         Hu_MenuCommand(MCMD_CLOSEFAST);
-        G_DeferedInitNew(SM_NIGHTMARE, epi + 1, 1);
+        G_DeferedInitNew(SM_NIGHTMARE, epi, 0);
     }
 
     return true;
@@ -3874,9 +3874,9 @@ void M_ChooseSkill(int option, void* context)
     Hu_MenuCommand(MCMD_CLOSEFAST);
 
 # if __JDOOM64__
-    G_DeferedInitNew(option, 1, 1);
+    G_DeferedInitNew(option, 0, 0);
 # else
-    G_DeferedInitNew(option, epi + 1, 1);
+    G_DeferedInitNew(option, epi, 0);
 # endif
 #endif
 }

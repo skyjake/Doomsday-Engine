@@ -265,7 +265,7 @@ void G_PreInit(void)
     cfg.noWeaponAutoSwitchIfFiring = false;
     cfg.ammoAutoSwitch = 0; // never
     cfg.fastMonsters = false;
-    cfg.netMap = 1;
+    cfg.netMap = 0;
     cfg.netSkill = SM_MEDIUM;
     cfg.netColor = 8;           // Use the default color by default.
     cfg.netMobDamageModifier = 1;
@@ -452,7 +452,7 @@ void G_PostInit(void)
     {
         int                     map;
 
-        warpMap = atoi(Argv(p + 1));
+        warpMap = atoi(Argv(p + 1)) - 1;
         map = P_TranslateMap(warpMap);
         if(map == -1)
         {   // Couldn't find real map number.
@@ -467,19 +467,15 @@ void G_PostInit(void)
     }
     else
     {
-        warpMap = 1;
-        startMap = P_TranslateMap(1);
-        if(startMap == -1)
-        {
-            startMap = 1;
-        }
+        warpMap = 0;
+        startMap = P_TranslateMap(0);
     }
 
     // Are we autostarting?
     if(autoStart)
     {
-        Con_Message("Warp to Map %d (\"%s\":%d), Skill %d\n", warpMap,
-                    P_GetMapName(startMap), startMap, startSkill + 1);
+        Con_Message("Warp to Map %d (\"%s\":%d), Skill %d\n", warpMap+1,
+                    P_GetMapName(startMap), startMap+1, startSkill + 1);
     }
 
     // Load a saved game?

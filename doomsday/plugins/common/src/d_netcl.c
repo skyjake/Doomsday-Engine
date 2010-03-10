@@ -136,8 +136,8 @@ void NetCl_UpdateGameState(byte *data)
 
     gsGameMode = data[0];
     gsFlags = data[1];
-    gsEpisode = data[2];
-    gsMap = data[3];
+    gsEpisode = data[2]-1;
+    gsMap = data[3]-1;
     gsDeathmatch = data[4] & 0x3;
     gsMonsters = (data[4] & 0x4? true : false);
     gsRespawn = (data[4] & 0x8? true : false);
@@ -172,12 +172,12 @@ void NetCl_UpdateGameState(byte *data)
 
     // Some statistics.
 #if __JHEXEN__ || __JSTRIFE__
-    Con_Message("Game state: Map=%i Skill=%i %s\n", gsMap, gsSkill,
+    Con_Message("Game state: Map=%u Skill=%i %s\n", gsMap+1, gsSkill,
                 deathmatch == 1 ? "Deathmatch" : deathmatch ==
                 2 ? "Deathmatch2" : "Co-op");
 #else
-    Con_Message("Game state: Map=%i Episode=%i Skill=%i %s\n", gsMap,
-                gsEpisode, gsSkill,
+    Con_Message("Game state: Map=%u Episode=%u Skill=%i %s\n", gsMap+1,
+                gsEpisode+1, gsSkill,
                 deathmatch == 1 ? "Deathmatch" : deathmatch ==
                 2 ? "Deathmatch2" : "Co-op");
 #endif
@@ -621,14 +621,17 @@ void NetCl_Intermission(byte* data)
         wmInfo.maxKills = NetCl_ReadShort();
         wmInfo.maxItems = NetCl_ReadShort();
         wmInfo.maxSecret = NetCl_ReadShort();
-        wmInfo.next = NetCl_ReadByte();
-        wmInfo.last = NetCl_ReadByte();
+        wmInfo.nextMap = NetCl_ReadByte();
+        wmInfo.currentMap = NetCl_ReadByte();
         wmInfo.didSecret = NetCl_ReadByte();
+        wmInfo.episode = gameEpisode;
 
         G_PrepareWIData();
+#elif __JHERETIC__
+        wmInfo.episode = gameEpisode;
 #elif __JHEXEN__
-        leaveMap = NetCl_ReadByte();
-        leavePosition = NetCl_ReadByte();
+        nextMap = NetCl_ReadByte();
+        nextMapEntryPoint = NetCl_ReadByte();
 #endif
 
 #if __JDOOM__ || __JDOOM64__

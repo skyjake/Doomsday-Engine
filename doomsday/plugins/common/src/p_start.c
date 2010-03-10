@@ -225,7 +225,7 @@ void P_Init(void)
 #endif
 }
 
-void P_CreatePlayerStart(int defaultPlrNum, byte entryPoint,
+void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint,
                          boolean deathmatch, float x, float y, float z,
                          angle_t angle, int spawnFlags)
 {
@@ -270,7 +270,7 @@ void P_DestroyPlayerStarts(void)
  * @return              The correct start for the player. The start is in
  *                      the given group for specified entry point.
  */
-const playerstart_t* P_GetPlayerStart(byte entryPoint, int pnum,
+const playerstart_t* P_GetPlayerStart(uint entryPoint, int pnum,
                                       boolean deathmatch)
 {
 #if __JHEXEN__
@@ -296,7 +296,7 @@ const playerstart_t* P_GetPlayerStart(byte entryPoint, int pnum,
     {
         const playerstart_t* start = &playerStarts[i];
 
-        if(start->entryPoint == entryPoint && start->plrNum - 1 == pnum)
+        if(start->entryPoint == nextMapEntryPoint && start->plrNum - 1 == pnum)
             return start;
         if(!start->entryPoint && start->plrNum - 1 == pnum)
             def = start;
@@ -321,7 +321,7 @@ uint P_GetNumPlayerStarts(boolean deathmatch)
  * Gives all the players in the game a playerstart.
  * Only needed in co-op games (start spots are random in deathmatch).
  */
-void P_DealPlayerStarts(byte entryPoint)
+void P_DealPlayerStarts(uint entryPoint)
 {
     int                 i;
 
@@ -638,9 +638,9 @@ void P_RebornPlayer(int plrNum)
     else
     {
 #if __JHEXEN__
-        byte                entryPoint = rebornPosition;
+        uint entryPoint = rebornPosition;
 #else
-        byte                entryPoint = 0;
+        uint entryPoint = 0;
 #endif
         boolean             foundSpot = false;
         const playerstart_t* assigned =

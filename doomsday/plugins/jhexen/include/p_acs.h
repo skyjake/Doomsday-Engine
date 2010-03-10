@@ -38,7 +38,6 @@
 #define MAX_ACS_MAP_VARS        32
 #define MAX_ACS_WORLD_VARS      64
 #define ACS_STACK_DEPTH         32
-#define MAX_ACS_STORE           20
 
 typedef enum aste_e {
     ASTE_INACTIVE,
@@ -73,7 +72,7 @@ typedef struct acs_s {
 } acs_t;
 
 typedef struct acsstore_s {
-    int             map; // Target map.
+    uint            map; // Target map.
     int             script; // Script number on target map.
     byte            args[4]; // Padded to 4 for alignment.
 } acsstore_t;
@@ -83,19 +82,20 @@ extern const byte* ActionCodeBase;
 extern acsinfo_t* ACSInfo;
 extern int MapVars[MAX_ACS_MAP_VARS];
 extern int WorldVars[MAX_ACS_WORLD_VARS];
-extern acsstore_t ACSStore[MAX_ACS_STORE + 1]; // +1 for termination marker.
+extern int ACSStoreSize;
+extern acsstore_t* ACSStore;
 
 void            P_LoadACScripts(int lump);
-boolean         P_StartACS(int number, int map, byte* args,
+boolean         P_StartACS(int number, uint map, byte* args,
                            mobj_t* activator, linedef_t* line, int side);
 boolean         P_StartLockedACS(linedef_t* line, byte* args, mobj_t* mo,
                                  int side);
-boolean         P_TerminateACS(int number, int map);
-boolean         P_SuspendACS(int number, int map);
+boolean         P_TerminateACS(int number, uint map);
+boolean         P_SuspendACS(int number, uint map);
 void            T_InterpretACS(acs_t* script);
 void            P_TagFinished(int tag);
 void            P_PolyobjFinished(int po);
 void            P_ACSInitNewGame(void);
-void            P_CheckACSStore(void);
+void            P_CheckACSStore(uint map);
 
 #endif

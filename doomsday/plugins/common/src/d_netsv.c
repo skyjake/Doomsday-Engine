@@ -403,22 +403,22 @@ void NetSv_Ticker(void)
     }
 }
 
-void NetSv_CycleToMapNum(int map)
+void NetSv_CycleToMapNum(uint map)
 {
     char        tmp[3], cmd[80];
 
-    sprintf(tmp, "%02i", map);
+    sprintf(tmp, "%02u", map);
 #if __JDOOM64__
-    sprintf(cmd, "setmap 1 %i", map);
+    sprintf(cmd, "setmap 1 %u", map);
 #elif __JDOOM__
     if(gameMode == commercial)
-        sprintf(cmd, "setmap 1 %i", map);
+        sprintf(cmd, "setmap 1 %u", map);
     else
         sprintf(cmd, "setmap %c %c", tmp[0], tmp[1]);
 #elif __JHERETIC__
     sprintf(cmd, "setmap %c %c", tmp[0], tmp[1]);
 #elif __JHEXEN__ || __JSTRIFE__
-    sprintf(cmd, "setmap %i", map);
+    sprintf(cmd, "setmap %u", map);
 #endif
 
     DD_Execute(false, cmd);
@@ -432,10 +432,11 @@ void NetSv_CycleToMapNum(int map)
  * Reads through the MapCycle cvar and finds the map with the given index.
  * Rules that apply to the map are returned in 'rules'.
  */
-int NetSv_ScanCycle(int index, maprule_t * rules)
+int NetSv_ScanCycle(int index, maprule_t* rules)
 {
     char       *ptr = mapCycle, *end;
-    int         i, pos = -1, episode, mission;
+    int         i, pos = -1;
+    uint        episode, map;
 
 #if __JHEXEN__ || __JSTRIFE__
     int         m;
@@ -525,54 +526,54 @@ int NetSv_ScanCycle(int index, maprule_t * rules)
                     // The differences in map numbering make this harder
                     // than it should be.
 #if __JDOOM64__
-                    sprintf(lump, "MAP%i%i", episode =
+                    sprintf(lump, "MAP%u%u", episode =
                             tmp[0] == '*' ? M_Random() % 4 : tmp[0] - '0',
-                            mission =
+                            map =
                             tmp[1] ==
                             '*' ? M_Random() % 10 : tmp[1] - '0');
 #elif __JDOOM__
                     if(gameMode == commercial)
                     {
-                        sprintf(lump, "MAP%i%i", episode =
+                        sprintf(lump, "MAP%u%u", episode =
                                 tmp[0] == '*' ? M_Random() % 4 : tmp[0] - '0',
-                                mission =
+                                map =
                                 tmp[1] ==
                                 '*' ? M_Random() % 10 : tmp[1] - '0');
                     }
                     else
                     {
-                        sprintf(lump, "E%iM%i", episode =
+                        sprintf(lump, "E%uM%u", episode =
                                 tmp[0] ==
                                 '*' ? 1 + M_Random() % 4 : tmp[0] - '0',
-                                mission =
+                                map =
                                 tmp[1] ==
                                 '*' ? 1 + M_Random() % 9 : tmp[1] - '0');
                     }
 #elif __JSTRIFE__
-                    sprintf(lump, "MAP%i%i", episode =
+                    sprintf(lump, "MAP%u%u", episode =
                             tmp[0] == '*' ? M_Random() % 4 : tmp[0] - '0',
-                            mission =
+                            map =
                             tmp[1] ==
                             '*' ? M_Random() % 10 : tmp[1] - '0');
 #elif __JHERETIC__
-                    sprintf(lump, "E%iM%i", episode =
+                    sprintf(lump, "E%uM%u", episode =
                             tmp[0] == '*' ? 1 + M_Random() % 6 : tmp[0] - '0',
-                            mission =
+                            map =
                             tmp[1] == '*' ? 1 + M_Random() % 9 : tmp[1] - '0');
 #elif __JHEXEN__
-                    sprintf(lump, "%i%i", episode =
+                    sprintf(lump, "%u%u", episode =
                             tmp[0] == '*' ? M_Random() % 4 : tmp[0] - '0',
-                            mission =
+                            map =
                             tmp[1] == '*' ? M_Random() % 10 : tmp[1] - '0');
                     m = P_TranslateMap(atoi(lump));
                     if(m < 0)
                         continue;
-                    sprintf(lump, "MAP%02i", m);
+                    sprintf(lump, "MAP%02u", m);
 #endif
                     if(W_CheckNumForName(lump) >= 0)
                     {
                         tmp[0] = episode + '0';
-                        tmp[1] = mission + '0';
+                        tmp[1] = map + '0';
                         break;
                     }
                     else if(!has_random)
@@ -744,15 +745,15 @@ void NetSv_NewPlayerEnters(int plrNum)
     else
     {
 #if __JHEXEN__
-        byte                entryPoint = rebornPosition;
+        uint                nextMapEntryPoint = rebornPosition;
         playerclass_t       pClass = cfg.playerClass[plrNum];
 #else
-        byte                entryPoint = 0;
+        uint                nextMapEntryPoint = 0;
         playerclass_t       pClass = PCLASS_PLAYER;
 #endif
         const playerstart_t* start;
 
-        if((start = P_GetPlayerStart(entryPoint, plrNum, false)))
+        if((start = P_GetPlayerStart(nextMapEntryPoint, plrNum, false)))
         {
             P_SpawnPlayer(plrNum, pClass, start->pos[VX], start->pos[VY],
                           start->pos[VZ], start->angle, start->spawnFlags,
@@ -786,8 +787,8 @@ void NetSv_Intermission(int flags, int state, int time)
         WRITE_SHORT(ptr, wmInfo.maxKills);
         WRITE_SHORT(ptr, wmInfo.maxItems);
         WRITE_SHORT(ptr, wmInfo.maxSecret);
-        *ptr++ = wmInfo.next;
-        *ptr++ = wmInfo.last;
+        *ptr++ = wmInfo.nextMap;
+        *ptr++ = wmInfo.currentMap;
         *ptr++ = wmInfo.didSecret;
     }
 #endif
@@ -795,8 +796,8 @@ void NetSv_Intermission(int flags, int state, int time)
 #if __JHEXEN__ || __JSTRIFE__
     if(flags & IMF_BEGIN)
     {
-        *ptr++ = state;         // LeaveMap
-        *ptr++ = time;          // LeavePosition
+        *ptr++ = state; // LeaveMap
+        *ptr++ = time; // LeavePosition
     }
 #endif
 
@@ -875,7 +876,7 @@ void NetSv_SendGameState(int flags, int to)
     // Print a short message that describes the game state.
     if(verbose || IS_DEDICATED)
     {
-        Con_Printf("Game setup: ep%i map%i %s\n", gameEpisode, gameMap,
+        Con_Printf("Game setup: ep%u map%u %s\n", gameEpisode+1, gameMap+1,
                    gameConfigString);
     }
 
@@ -903,8 +904,8 @@ void NetSv_SendGameState(int flags, int to)
         ptr[0] = 0;
 #endif
         ptr[1] = flags;
-        ptr[2] = gameEpisode;
-        ptr[3] = gameMap;
+        ptr[2] = gameEpisode+1;
+        ptr[3] = gameMap+1;
         ptr[4] = (deathmatch & 0x3)
             | (!noMonstersParm? 0x4 : 0)
 #if !__JHEXEN__

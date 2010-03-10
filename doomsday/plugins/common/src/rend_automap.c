@@ -1393,13 +1393,13 @@ static void renderMapName(const automap_t* map)
 
         // Compose the mapnumber used to check the map name patches array.
 #if __JDOOM64__
-        mapNum = gameMap -1;
+        mapNum = gameMap;
         patch = &mapNamePatches[mapNum];
 #elif __JDOOM__
         if(gameMode == commercial)
-            mapNum = gameMap -1;
+            mapNum = gameMap;
         else
-            mapNum = ((gameEpisode -1) * 9) + gameMap -1;
+            mapNum = (gameEpisode * 9) + gameMap;
 
         patch = &mapNamePatches[mapNum];
 #endif

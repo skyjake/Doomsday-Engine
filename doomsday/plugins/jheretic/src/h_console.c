@@ -104,8 +104,8 @@ cvar_t gameCVars[] = {
 // Server-side options
     // Game state
     {"server-game-skill", 0, CVT_BYTE, &cfg.netSkill, 0, 4},
-    {"server-game-map", 0, CVT_BYTE, &cfg.netMap, 1, 31},
-    {"server-game-episode", 0, CVT_BYTE, &cfg.netEpisode, 1, 6},
+    {"server-game-map", CVF_NO_MAX, CVT_BYTE, &cfg.netMap, 0, 0},
+    {"server-game-episode", CVF_NO_MAX, CVT_BYTE, &cfg.netEpisode, 0, 0},
     {"server-game-deathmatch", 0, CVT_BYTE,
         &cfg.netDeathmatch, 0, 1}, /* jHeretic only has one deathmatch mode */
 

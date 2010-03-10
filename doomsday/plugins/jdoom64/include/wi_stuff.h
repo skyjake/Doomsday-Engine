@@ -48,8 +48,9 @@ typedef struct {
 } wbplayerstruct_t;
 
 typedef struct {
+    uint            episode;
     boolean         didSecret; // If true, splash the secret level.
-    int             last, next; // Previous and next levels, origin 0.
+    uint            currentMap, nextMap; // This and next maps.
     int             maxKills;
     int             maxItems;
     int             maxSecret;

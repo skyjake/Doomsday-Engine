@@ -131,7 +131,6 @@
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-boolean         G_ValidateMap(int* episode, int* map);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -1767,9 +1766,10 @@ int C_DECL XLTrav_LineTeleport(linedef_t* newLine, boolean dummy,
 #undef FUDGEFACTOR
 }
 
-int XL_ValidateMap(int val, int type)
+boolean XL_ValidateMap(uint* map, int type)
 {
-    int                 episode, map = val;
+    boolean result;
+    uint bMap = *map, episode;
 
 #if __JDOOM__
     if(gameMode == commercial || gameMode == shareware)
@@ -1782,31 +1782,35 @@ int XL_ValidateMap(int val, int type)
     episode = gameEpisode;
 #endif
 
-    if(!G_ValidateMap(&episode, &map))
-        XG_Dev("XLTrav_LeaveMap: NOT A VALID MAP NUMBER %i, "
-               "next map will be %i.", val, map);
+    if(!(result = G_ValidateMap(&episode, map)))
+        XG_Dev("XLTrav_LeaveMap: NOT A VALID MAP NUMBER %u, "
+               "next map will be %u.", bMap, *map+1);
 
-    return map;
+    return result;
 }
 
 int C_DECL XLTrav_LeaveMap(linedef_t* line, boolean dummy, void* context,
                           void* context2, mobj_t* activator)
 {
-    int                 map = 0;
-    int                 temp = 0;
-    linetype_t*         info = context2;
+    uint map = 0;
+    int temp = 0;
+    linetype_t* info = context2;
+    boolean mapSpecified = false;
 
     // Is this a secret exit?
     if(info->iparm[0] > 0)
     {
-        G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, true);
+        G_LeaveMap(G_GetNextMap(gameEpisode, gameMap, true), 0, true);
         return false;
     }
 
     if(info->iparm[1] == LREF_NONE)
     {   // (ip3) will be used to determine next map.
         if(info->iparm[3])
-            map = XL_ValidateMap(info->iparm[3], 0);
+        {
+            map = info->iparm[3]-1;
+            mapSpecified = XL_ValidateMap(&map, 0);
+        }
     }
     else
     {    // We might possibly have a data reference to evaluate.
@@ -1815,21 +1819,28 @@ int C_DECL XLTrav_LeaveMap(linedef_t* line, boolean dummy, void* context,
             temp = XL_ValidateLineRef(line,info->iparm[3], context2,
                                       "Map Number");
             if(temp > 0)
-                map = XL_ValidateMap(temp, info->iparm[3]);
+            {
+                map = temp-1;
+                mapSpecified = XL_ValidateMap(&map, info->iparm[3]);
+            }
         }
 
-        if(map != 0)
+        if(!mapSpecified)
             XG_Dev("XLTrav_LeaveMap: Reference data not valid. "
                    "Next map as normal");
     }
 
-    if(map)
+    if(mapSpecified)
     {
-        XG_Dev("XLTrav_LeaveMap: Next map set to %i", map);
-        nextMap = map;
+        XG_Dev("XLTrav_LeaveMap: Next map set to %u", map+1);
+        map = G_GetMapNumber(gameEpisode, map);
+    }
+    else
+    {
+        map = G_GetNextMap(gameEpisode, gameMap, false);
     }
 
-    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+    G_LeaveMap(map, 0, false);
     return false; // Only do this once!
 }
 

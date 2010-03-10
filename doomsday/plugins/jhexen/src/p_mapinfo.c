@@ -46,8 +46,8 @@
 
 typedef struct mapinfo_s {
     short           cluster;
-    short           warpTrans;
-    short           nextMap;
+    uint            warpTrans;
+    uint            nextMap;
     short           cdTrack;
     char            name[32];
     materialnum_t   sky1Material;
@@ -87,7 +87,7 @@ enum {
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void setSongCDTrack(int index, int track);
-static int qualifyMap(int map);
+static uint qualifyMap(uint map);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -96,7 +96,7 @@ static int qualifyMap(int map);
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static mapinfo_t MapInfo[99];
-static int mapCount;
+static uint mapCount;
 
 static char *mapCmdNames[] = {
     "SKY1",
@@ -149,32 +149,33 @@ static char* cdSongDefIDs[] =  // Music defs that correspond the above.
 // CODE --------------------------------------------------------------------
 
 /**
- * Initializes the MapInfo database. Default settings are stored in map 0.
+ * Initializes the MapInfo database.
  * All MAPINFO lumps are then parsed and stored into the database.
  *
  * Called by P_Init()
  */
 void P_InitMapInfo(void)
 {
-    int         map, mapMax = 1, mcmdValue;
-    char        songMulch[10];
-    mapinfo_t  *info;
+    uint map, mapMax = 0;
+    int mcmdValue;
+    char songMulch[10];
+    mapinfo_t defMapInfo;
+    mapinfo_t* info;
 
-    // Put defaults into MapInfo[0]
-    info = MapInfo;
-    info->cluster = 0;
-    info->warpTrans = 0;
-    info->nextMap = 1;          // Always go to map 1 if not specified
-    info->cdTrack = 1;
-    info->sky1Material =
+    // Configure the defaults
+    defMapInfo.cluster = 0;
+    defMapInfo.warpTrans = 0;
+    defMapInfo.nextMap = 0; // Always go to map 0 if not specified.
+    defMapInfo.cdTrack = 1;
+    defMapInfo.sky1Material =
         P_MaterialNumForName(shareware ? "SKY2" : DEFAULT_SKY_NAME, MN_TEXTURES);
-    info->sky2Material = info->sky1Material;
-    info->sky1ScrollDelta = 0;
-    info->sky2ScrollDelta = 0;
-    info->doubleSky = false;
-    info->lightning = false;
-    info->fadetable = W_GetNumForName(DEFAULT_FADE_TABLE);
-    strcpy(info->name, UNKNOWN_MAP_NAME);
+    defMapInfo.sky2Material = defMapInfo.sky1Material;
+    defMapInfo.sky1ScrollDelta = 0;
+    defMapInfo.sky2ScrollDelta = 0;
+    defMapInfo.doubleSky = false;
+    defMapInfo.lightning = false;
+    defMapInfo.fadetable = W_GetNumForName(DEFAULT_FADE_TABLE);
+    strcpy(defMapInfo.name, UNKNOWN_MAP_NAME);
 
     for(map = 0; map < 99; ++map)
         MapInfo[map].warpTrans = 0;
@@ -188,18 +189,16 @@ void P_InitMapInfo(void)
         }
         SC_MustGetNumber();
         if(sc_Number < 1 || sc_Number > 99)
-        {
             SC_ScriptError(NULL);
-        }
 
-        map = sc_Number;
+        map = (unsigned) sc_Number - 1;
         info = &MapInfo[map];
 
         // Save song lump name
         strcpy(songMulch, info->songLump);
 
         // Copy defaults to current map definition
-        memcpy(info, &MapInfo[0], sizeof(*info));
+        memcpy(info, &defMapInfo, sizeof(*info));
 
         // Restore song lump name
         strcpy(info->songLump, songMulch);
@@ -215,7 +214,7 @@ void P_InitMapInfo(void)
         while(SC_GetString())
         {
             if(SC_Compare("MAP"))
-            {                   // Start next map definition
+            {   // Start next map definition.
                 SC_UnGet();
                 break;
             }
@@ -230,12 +229,16 @@ void P_InitMapInfo(void)
 
             case MCMD_WARPTRANS:
                 SC_MustGetNumber();
-                info->warpTrans = sc_Number;
+                if(sc_Number < 1 || sc_Number > 99)
+                    SC_ScriptError(NULL);
+                info->warpTrans = (unsigned) sc_Number - 1;
                 break;
 
             case MCMD_NEXT:
                 SC_MustGetNumber();
-                info->nextMap = sc_Number;
+                if(sc_Number < 1 || sc_Number > 99)
+                    SC_ScriptError(NULL);
+                info->nextMap = (unsigned) sc_Number - 1;
                 break;
 
             case MCMD_CDTRACK:
@@ -290,7 +293,7 @@ void P_InitMapInfo(void)
     }
 
     SC_Close();
-    mapCount = mapMax;
+    mapCount = mapMax+1;
 }
 
 /**
@@ -298,7 +301,7 @@ void P_InitMapInfo(void)
  */
 void P_InitMapMusicInfo(void)
 {
-    int         i;
+    uint i;
 
     for(i = 0; i < 99; ++i)
     {
@@ -320,9 +323,9 @@ static void setSongCDTrack(int index, int track)
             DD_CD_TRACK, &cdTrack);
 }
 
-static __inline int qualifyMap(int map)
+static __inline uint qualifyMap(uint map)
 {
-    return (map < 1 || map > mapCount) ? 0 : map;
+    return (map >= mapCount) ? 0 : map;
 }
 
 /**
@@ -332,17 +335,15 @@ static __inline int qualifyMap(int map)
  *
  * @return              The logical map number given a warp map number.
  */
-int P_TranslateMap(int map)
+uint P_TranslateMap(uint map)
 {
-    int         i;
-
-    for(i = 1; i < 99; ++i)
+    uint i;
+    for(i = 0; i < 99; ++i)
     {
-        if((int) MapInfo[i].warpTrans == map)
+        if(MapInfo[i].warpTrans == map)
             return i;
     }
-
-    return -1; // Not found
+    return 0; // Not found, default to map zero.
 }
 
 /**
@@ -353,9 +354,9 @@ int P_TranslateMap(int map)
  * @param map           The map (logical number) to be changed.
  * @param lumpName      The lumpName to be set.
  */
-void P_PutMapSongLump(int map, char *lumpName)
+void P_PutMapSongLump(uint map, char *lumpName)
 {
-    if(map < 1 || map > mapCount)
+    if(map >= mapCount)
         return;
 
     strncpy(MapInfo[map].songLump, lumpName, sizeof(MapInfo[map].songLump));
@@ -368,7 +369,7 @@ void P_PutMapSongLump(int map, char *lumpName)
  *
  * @return              Ptr to string containing the name of the map.
  */
-char *P_GetMapName(int map)
+char *P_GetMapName(uint map)
 {
     return MapInfo[qualifyMap(map)].name;
 }
@@ -380,7 +381,7 @@ char *P_GetMapName(int map)
  *
  * @return              The cluster number of the map.
  */
-int P_GetMapCluster(int map)
+int P_GetMapCluster(uint map)
 {
     return (int) MapInfo[qualifyMap(map)].cluster;
 }
@@ -392,7 +393,7 @@ int P_GetMapCluster(int map)
  *
  * @return              The CD track number for the map.
  */
-int P_GetMapCDTrack(int map)
+int P_GetMapCDTrack(uint map)
 {
     return (int) MapInfo[qualifyMap(map)].cdTrack;
 }
@@ -404,9 +405,9 @@ int P_GetMapCDTrack(int map)
  *
  * @return              The warp number of the map.
  */
-int P_GetMapWarpTrans(int map)
+uint P_GetMapWarpTrans(uint map)
 {
-    return (int) MapInfo[qualifyMap(map)].warpTrans;
+    return MapInfo[qualifyMap(map)].warpTrans;
 }
 
 /**
@@ -416,9 +417,9 @@ int P_GetMapWarpTrans(int map)
  *
  * @return              The next map number of the map.
  */
-int P_GetMapNextMap(int map)
+uint P_GetMapNextMap(uint map)
 {
-    return (int) MapInfo[qualifyMap(map)].nextMap;
+    return MapInfo[qualifyMap(map)].nextMap;
 }
 
 /**
@@ -428,7 +429,7 @@ int P_GetMapNextMap(int map)
  *
  * @return              The sky1 material num of the map.
  */
-materialnum_t P_GetMapSky1Material(int map)
+materialnum_t P_GetMapSky1Material(uint map)
 {
     return MapInfo[qualifyMap(map)].sky1Material;
 }
@@ -440,7 +441,7 @@ materialnum_t P_GetMapSky1Material(int map)
  *
  * @return              The sky2 material num of the map.
  */
-materialnum_t P_GetMapSky2Material(int map)
+materialnum_t P_GetMapSky2Material(uint map)
 {
     return MapInfo[qualifyMap(map)].sky2Material;
 }
@@ -452,7 +453,7 @@ materialnum_t P_GetMapSky2Material(int map)
  *
  * @return              The sky1 scroll delta of the map.
  */
-float P_GetMapSky1ScrollDelta(int map)
+float P_GetMapSky1ScrollDelta(uint map)
 {
     return MapInfo[qualifyMap(map)].sky1ScrollDelta;
 }
@@ -464,7 +465,7 @@ float P_GetMapSky1ScrollDelta(int map)
  *
  * @return              The sky2 scroll delta of the map.
  */
-float P_GetMapSky2ScrollDelta(int map)
+float P_GetMapSky2ScrollDelta(uint map)
 {
     return MapInfo[qualifyMap(map)].sky2ScrollDelta;
 }
@@ -476,7 +477,7 @@ float P_GetMapSky2ScrollDelta(int map)
  *
  * @return              @c true, if the map is set to doublesky.
  */
-boolean P_GetMapDoubleSky(int map)
+boolean P_GetMapDoubleSky(uint map)
 {
     return MapInfo[qualifyMap(map)].doubleSky;
 }
@@ -488,7 +489,7 @@ boolean P_GetMapDoubleSky(int map)
  *
  * @return              @c true, if the map is set to lightning.
  */
-boolean P_GetMapLightning(int map)
+boolean P_GetMapLightning(uint map)
 {
     return MapInfo[qualifyMap(map)].lightning;
 }
@@ -500,7 +501,7 @@ boolean P_GetMapLightning(int map)
  *
  * @return              The lump id used for the fadetable for the map.
  */
-int P_GetMapFadeTable(int map)
+int P_GetMapFadeTable(uint map)
 {
     return MapInfo[qualifyMap(map)].fadetable;
 }
@@ -514,7 +515,7 @@ int P_GetMapFadeTable(int map)
  *                      default song lump, else a ptr to a string
  *                      containing the name of the song lump.
  */
-char *P_GetMapSongLump(int map)
+char *P_GetMapSongLump(uint map)
 {
     if(!strcasecmp(MapInfo[qualifyMap(map)].songLump, DEFAULT_SONG_LUMP))
     {

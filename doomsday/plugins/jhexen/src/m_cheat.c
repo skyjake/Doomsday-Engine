@@ -365,7 +365,8 @@ int Cht_NoClipFunc(const int* args, int player)
 int Cht_WarpFunc(const int* args, int player)
 {
     player_t* plr = &players[player];
-    int tens, ones, map;
+    int i, tens, ones;
+    uint map;
     char mapName[9];
 
     if(IS_NETGAME)
@@ -373,28 +374,21 @@ int Cht_WarpFunc(const int* args, int player)
 
     tens = args[0] - '0';
     ones = args[1] - '0';
-    if(tens < 0 || tens > 9 || ones < 0 || ones > 9)
+    if(tens < 0 || tens > 9 || ones < 1 || ones > 9)
     {   // Bad map
         P_SetMessage(plr, TXT_CHEATBADINPUT, false);
         return false;
     }
 
-    //map = P_TranslateMap((cheat->args[0]-'0')*10+cheat->args[1]-'0');
-    map = P_TranslateMap(tens * 10 + ones);
-    if(map == -1)
-    {   // Not found
-        P_SetMessage(plr, TXT_CHEATNOMAP, false);
-        return false;
-    }
-
+    map = P_TranslateMap((tens * 10 + ones) - 1);
     if(map == gameMap)
-    {   // Don't try to teleport to current map.
+    {   // Don't try to teleport to the current map.
         P_SetMessage(plr, TXT_CHEATBADINPUT, false);
         return false;
     }
 
     // Search primary lumps.
-    sprintf(mapName, "MAP%02d", map);
+    sprintf(mapName, "MAP%02u", map+1);
     if(W_CheckNumForName(mapName) == -1)
     {   // Can't find.
         P_SetMessage(plr, TXT_CHEATNOMAP, false);
@@ -407,11 +401,16 @@ int Cht_WarpFunc(const int* args, int player)
     // Clear the menu if open.
     Hu_MenuCommand(MCMD_CLOSE);
 
+    // Close any open automaps.
+    for(i = 0; i < MAXPLAYERS; ++i)
+        if(players[i].plr->inGame)
+            AM_Open(AM_MapForPlayer(i), false, true);
+
     // So be it.
-    leaveMap = map;
-    leavePosition = 0;
+    nextMap = map;
+    nextMapEntryPoint = 0;
     briefDisabled = true;
-    G_WorldDone();
+    G_SetGameAction(GA_LEAVEMAP);
 
     return true;
 }

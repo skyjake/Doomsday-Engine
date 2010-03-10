@@ -73,7 +73,7 @@ typedef struct acsheader_s {
 static void StartOpenACS(int number, int infoIndex, const int* address);
 static void ScriptFinished(int number);
 static boolean TagBusy(int tag);
-static boolean AddToACSStore(int map, int number, byte *args);
+static boolean AddToACSStore(uint map, int number, const byte* args);
 static int GetACSIndex(int number);
 static void Push(int value);
 static int Pop(void);
@@ -194,7 +194,8 @@ const byte* ActionCodeBase;
 acsinfo_t* ACSInfo;
 int MapVars[MAX_ACS_MAP_VARS];
 int WorldVars[MAX_ACS_WORLD_VARS];
-acsstore_t ACSStore[MAX_ACS_STORE + 1]; // +1 for termination marker
+int ACSStoreSize;
+acsstore_t* ACSStore;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -301,7 +302,7 @@ static void StartOpenACS(int number, int infoIndex, const int* address)
     script->number = number;
 
     // World objects are allotted 1 second for initialization
-    script->delayCount = 35;
+    script->delayCount = TICRATE;
 
     script->infoIndex = infoIndex;
     script->ip = address;
@@ -310,28 +311,48 @@ static void StartOpenACS(int number, int infoIndex, const int* address)
 }
 
 /**
- * Scans the ACS store and executes all scripts belonging to the current
- * map.
+ * Scans the ACS store and executes all scripts belonging to the current map.
  */
-void P_CheckACSStore(void)
+void P_CheckACSStore(uint map)
 {
-    acsstore_t*         store;
-
-    for(store = ACSStore; store->map != 0; store++)
+    int i = 0, origSize = ACSStoreSize;
+    while(i < ACSStoreSize)
     {
-        if(store->map == gameMap)
+        acsstore_t* store = &ACSStore[i];
+
+        if(store->map != map)
         {
-            P_StartACS(store->script, 0, store->args, NULL, NULL, 0);
-            if(NewScript)
-            {
-                NewScript->delayCount = 35;
-            }
-            store->map = -1;
+            i++;
+            continue;
         }
+
+        P_StartACS(store->script, 0, store->args, NULL, NULL, 0);
+        if(NewScript)
+        {
+            NewScript->delayCount = TICRATE;
+        }
+
+        ACSStoreSize -= 1;
+        if(i == ACSStoreSize)
+            break;
+        memmove(&ACSStore[i], &ACSStore[i+1], sizeof(acsstore_t) * (ACSStoreSize-i));
+    }
+
+    if(ACSStoreSize != origSize)
+    {
+        if(ACSStoreSize)
+            ACSStore = Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_STATIC);
+        else
+            Z_Free(ACSStore); ACSStore = NULL;
     }
 }
 
-boolean P_StartACS(int number, int map, byte* args, mobj_t* activator,
+/**
+ * @param map           Map number on which the script is being started on.
+ *                      @c 0 = Current map. Otherwise 1-based index of the
+ *                      map to start on (will be deferred).
+ */
+boolean P_StartACS(int number, uint map, byte* args, mobj_t* activator,
                    linedef_t* line, int side)
 {
     int                 i, infoIndex;
@@ -339,15 +360,15 @@ boolean P_StartACS(int number, int map, byte* args, mobj_t* activator,
     aste_t*             statePtr;
 
     NewScript = NULL;
-    if(map && map != gameMap)
-    {   // Add to the script store.
-        return AddToACSStore(map, number, args);
+    if(map && map-1 != gameMap)
+    {   // Script is not for the current map.
+        // Add it to the store to be started when that map is next entered.
+        return AddToACSStore(map-1, number, args);
     }
 
     infoIndex = GetACSIndex(number);
     if(infoIndex == -1)
     {   // Script not found.
-        //Con_Error("P_StartACS: Unknown script number %d", number);
         sprintf(ErrorMsg, "P_STARTACS ERROR: UNKNOWN SCRIPT %d", number);
         P_SetMessage(&players[CONSOLEPLAYER], ErrorMsg, false);
         return false;
@@ -385,37 +406,38 @@ boolean P_StartACS(int number, int map, byte* args, mobj_t* activator,
     return true;
 }
 
-static boolean AddToACSStore(int map, int number, byte *args)
+static boolean AddToACSStore(uint map, int number, const byte* args)
 {
-    int         i;
-    int         index;
+    acsstore_t* store;
 
-    index = -1;
-    for(i = 0; ACSStore[i].map != 0; ++i)
+    if(ACSStoreSize)
     {
-        if(ACSStore[i].script == number && ACSStore[i].map == map)
-        {   // Don't allow duplicates
-            return false;
+        int i;
+        // Don't allow duplicates.
+        for(i = 0; i < ACSStoreSize; ++i)
+        {
+            store = &ACSStore[i];
+            if(store->script == number && store->map == map)
+                return false;
         }
-        if(index == -1 && ACSStore[i].map == -1)
-        {   // Remember first empty slot
-            index = i;
-        }
+
+        ACSStore = Z_Realloc(ACSStore, ++ACSStoreSize * sizeof(acsstore_t), PU_STATIC);
+    }
+    else
+    {
+        ACSStore = Z_Malloc(sizeof(acsstore_t), PU_STATIC, 0);
+        ACSStoreSize = 1;
     }
 
-    if(index == -1)
-    {   // Append required
-        if(i == MAX_ACS_STORE)
-        {
-            Con_Error("AddToACSStore: MAX_ACS_STORE (%d) exceeded.",
-                      MAX_ACS_STORE);
-        }
-        index = i;
-        ACSStore[index + 1].map = 0;
-    }
-    ACSStore[index].map = map;
-    ACSStore[index].script = number;
-    *((int *) ACSStore[index].args) = *((int *) args);
+    store = &ACSStore[ACSStoreSize-1];
+
+    store->map = map;
+    store->script = number;
+    store->args[0] = args[0];
+    store->args[1] = args[1];
+    store->args[2] = args[2];
+    store->args[3] = args[3];
+
     return true;
 }
 
@@ -454,7 +476,7 @@ boolean P_StartLockedACS(linedef_t *line, byte *args, mobj_t *mo, int side)
     return P_StartACS(newArgs[0], newArgs[1], &newArgs[2], mo, line, side);
 }
 
-boolean P_TerminateACS(int number, int map)
+boolean P_TerminateACS(int number, uint map)
 {
     int         infoIndex;
 
@@ -474,7 +496,7 @@ boolean P_TerminateACS(int number, int map)
     return true;
 }
 
-boolean P_SuspendACS(int number, int map)
+boolean P_SuspendACS(int number, uint map)
 {
     int         infoIndex;
 
@@ -498,7 +520,10 @@ boolean P_SuspendACS(int number, int map)
 void P_ACSInitNewGame(void)
 {
     memset(WorldVars, 0, sizeof(WorldVars));
-    memset(ACSStore, 0, sizeof(ACSStore));
+    if(ACSStore)
+        Z_Free(ACSStore);
+    ACSStore = NULL;
+    ACSStoreSize = 0;
 }
 
 void T_InterpretACS(acs_t* script)

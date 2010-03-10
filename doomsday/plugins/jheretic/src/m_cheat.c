@@ -320,13 +320,13 @@ int Cht_NoClipFunc(const int* args, int player)
 int Cht_WarpFunc(const int* args, int player)
 {
     player_t* plr = &players[player];
-    int epsd, map;
+    uint epsd, map;
 
     if(IS_NETGAME)
         return false;
 
-    epsd = args[0] - '0';
-    map = args[1] - '0';
+    epsd = (args[0] > '0')? args[0] - '1' : 0;
+    map = (args[1] > '0')? args[1] - '1' : 0;
 
     // Catch invalid maps.
     if(!G_ValidateMap(&epsd, &map))
@@ -1098,7 +1098,7 @@ DEFCC(CCmdCheatLeaveMap)
         return true;
     }
 
-    G_LeaveMap(G_GetMapNumber(gameEpisode, gameMap), 0, false);
+    G_LeaveMap(G_GetNextMap(gameEpisode, gameMap, false), 0, false);
     return true;
 }
 

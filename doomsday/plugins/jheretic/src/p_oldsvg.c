@@ -881,8 +881,8 @@ boolean SV_v13_LoadGame(const char* savename)
     }
     save_p += VERSIONSIZE;
     gameSkill = *save_p++;
-    gameEpisode = *save_p++;
-    gameMap = *save_p++;
+    gameEpisode = (*save_p++) - 1;
+    gameMap = (*save_p++) - 1;
 
     for(i = 0; i < 4; ++i)
     {

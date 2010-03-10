@@ -4538,18 +4538,19 @@ static void P_UnArchiveScripts(void)
 
 static void P_ArchiveGlobalScriptData(void)
 {
-    int                 i;
+    int i;
 
     SV_BeginSegment(ASEG_GLOBALSCRIPTDATA);
-    SV_WriteByte(2); // version byte
+    SV_WriteByte(3); // version byte
 
     for(i = 0; i < MAX_ACS_WORLD_VARS; ++i)
         SV_WriteLong(WorldVars[i]);
 
-    for(i = 0; i < MAX_ACS_STORE; ++i)
+    SV_WriteLong(ACSStoreSize);
+    for(i = 0; i < ACSStoreSize; ++i)
     {
-        int                 j;
-        const acsstore_t*   store = &ACSStore[i];
+        const acsstore_t* store = &ACSStore[i];
+        int j;
 
         SV_WriteLong(store->map);
         SV_WriteLong(store->script);
@@ -4571,19 +4572,62 @@ static void P_UnArchiveGlobalScriptData(void)
     for(i = 0; i < MAX_ACS_WORLD_VARS; ++i)
         WorldVars[i] = SV_ReadLong();
 
-    for(i = 0; i < MAX_ACS_STORE; ++i)
+    if(ver >= 3)
     {
-        int                 j;
-        acsstore_t*         store = &ACSStore[i];
+        ACSStoreSize = SV_ReadLong();
+        if(ACSStoreSize)
+        {
+            if(ACSStore)
+                ACSStore = Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_STATIC);
+            else
+                ACSStore = Z_Malloc(sizeof(acsstore_t) * ACSStoreSize, PU_STATIC, 0);
 
-        store->map = SV_ReadLong();
-        store->script = SV_ReadLong();
-        for(j = 0; j < 4; ++j)
-            store->args[j] = SV_ReadByte();
+            for(i = 0; i < ACSStoreSize; ++i)
+            {
+                acsstore_t* store = &ACSStore[i];
+                int j;
+
+                store->map = SV_ReadLong();
+                store->script = SV_ReadLong();
+                for(j = 0; j < 4; ++j)
+                    store->args[j] = SV_ReadByte();
+            }
+        }
+    }
+    else
+    {   // Old format.
+        acsstore_t tempStore[20];
+        
+        ACSStoreSize = 0;
+        for(i = 0; i < 20; ++i)
+        {
+            int map = SV_ReadLong();
+            acsstore_t* store = &tempStore[map < 0? 19 : ACSStoreSize++];
+            int j;
+
+            store->map = map < 0? 0 : map-1;
+            store->script = SV_ReadLong();
+            for(j = 0; j < 4; ++j)
+                store->args[j] = SV_ReadByte();
+        }
+
+        if(saveVersion < 7)
+            SV_Read(junkbuffer, 12); // Junk.
+
+        if(ACSStoreSize)
+        {
+            if(ACSStore)
+                ACSStore = Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_STATIC);
+            else
+                ACSStore = Z_Malloc(sizeof(acsstore_t) * ACSStoreSize, PU_STATIC, 0);
+            memcpy(ACSStore, tempStore, sizeof(acsstore_t) * ACSStoreSize);
+        }
     }
 
-    if(saveVersion < 7)
-        SV_Read(junkbuffer, 12); // Junk.
+    if(!ACSStoreSize && ACSStore)
+    {
+        Z_Free(ACSStore); ACSStore = NULL;
+    }
 }
 
 static void P_ArchiveMisc(void)
@@ -4869,7 +4913,7 @@ int SV_SaveGameWorker(void* ptr)
     SV_BeginSegment(ASEG_GAME_HEADER);
 
     // Write current map and difficulty
-    SV_WriteByte(gameMap);
+    SV_WriteByte(gameMap+1);
     SV_WriteByte(gameSkill);
     SV_WriteByte(deathmatch);
     SV_WriteByte(noMonstersParm);
@@ -4892,8 +4936,8 @@ int SV_SaveGameWorker(void* ptr)
     hdr.skill = gameSkill;
     if(fastParm)
         hdr.skill |= 0x80;      // Set high byte.
-    hdr.episode = gameEpisode;
-    hdr.map = gameMap;
+    hdr.episode = gameEpisode+1;
+    hdr.map = gameMap+1;
     hdr.deathmatch = deathmatch;
     hdr.noMonsters = noMonstersParm;
     hdr.respawnMonsters = respawnMonsters;
@@ -4930,8 +4974,8 @@ int SV_SaveGameWorker(void* ptr)
         filename_t          fileName;
 
         // Open the output file
-        dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02d.hxs", savePath,
-                 gameMap);
+        dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02u.hxs", savePath,
+                 gameMap+1);
         M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
         OpenStreamOut(fileName);
 
@@ -5033,8 +5077,8 @@ static boolean readSaveHeader(saveheader_t *hdr, LZFILE *savefile)
 
     AssertSegment(ASEG_GAME_HEADER);
 
-    gameEpisode = 1;
-    gameMap = SV_ReadByte();
+    gameEpisode = 0;
+    gameMap = SV_ReadByte() - 1;
     gameSkill = SV_ReadByte();
     deathmatch = SV_ReadByte();
     noMonstersParm = SV_ReadByte();
@@ -5066,8 +5110,8 @@ static boolean readSaveHeader(saveheader_t *hdr, LZFILE *savefile)
 
     gameSkill = hdr->skill & 0x7f;
     fastParm = (hdr->skill & 0x80) != 0;
-    gameEpisode = hdr->episode;
-    gameMap = hdr->map;
+    gameEpisode = hdr->episode - 1;
+    gameMap = hdr->map - 1;
     deathmatch = hdr->deathmatch;
     noMonstersParm = hdr->noMonsters;
     respawnMonsters = hdr->respawnMonsters;
@@ -5295,8 +5339,8 @@ void SV_SaveClient(unsigned int gameID)
     hdr.magic = MY_CLIENT_SAVE_MAGIC;
     hdr.version = MY_SAVE_VERSION;
     hdr.skill = gameSkill;
-    hdr.episode = gameEpisode;
-    hdr.map = gameMap;
+    hdr.episode = gameEpisode+1;
+    hdr.map = gameMap+1;
     hdr.deathmatch = deathmatch;
     hdr.noMonsters = noMonstersParm;
     hdr.respawnMonsters = respawnMonsters;
@@ -5358,10 +5402,10 @@ void SV_LoadClient(unsigned int gameid)
     noMonstersParm = hdr.noMonsters;
     respawnMonsters = hdr.respawnMonsters;
     // Do we need to change the map?
-    if(gameMap != hdr.map || gameEpisode != hdr.episode)
+    if(gameMap != hdr.map - 1 || gameEpisode != hdr.episode - 1)
     {
-        gameMap = hdr.map;
-        gameEpisode = hdr.episode;
+        gameMap = hdr.map - 1;
+        gameEpisode = hdr.episode - 1;
         G_InitNew(gameSkill, gameEpisode, gameMap);
     }
     mapTime = hdr.mapTime;
@@ -5391,8 +5435,8 @@ static void unarchiveMap(void)
     filename_t          fileName;
 
     // Create the name
-    dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02d.hxs", savePath,
-             gameMap);
+    dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02u.hxs", savePath,
+             gameMap+1);
     M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
 
 #ifdef _DEBUG
@@ -5417,7 +5461,7 @@ static void unarchiveMap(void)
 }
 
 #if __JHEXEN__
-void SV_MapTeleport(int map, int position)
+void SV_MapTeleport(uint map, uint position)
 {
     int                 i, oldKeys = 0, oldPieces = 0, bestWeapon;
     filename_t          fileName;
@@ -5434,7 +5478,7 @@ void SV_MapTeleport(int map, int position)
      * First, determine whether we've been to this map previously and if so,
      * whether we need to load the archived map state.
      */
-    dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02d.hxs", savePath, map);
+    dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02u.hxs", savePath, map+1);
     M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
 
     if(!deathmatch && ExistingFile(fileName))
@@ -5445,15 +5489,15 @@ void SV_MapTeleport(int map, int position)
     if(!deathmatch)
     {
         if(P_GetMapCluster(gameMap) == P_GetMapCluster(map))
-        {   // Same cluster - save map without saving player mobjs
+        {   // Same cluster - save current map without saving player mobjs.
             filename_t          fileName;
 
             // Set the mobj archive numbers
             SV_InitThingArchive(false, false);
 
             // Open the output file
-            dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02d.hxs",
-                     savePath, gameMap);
+            dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02u.hxs",
+                     savePath, gameMap+1);
             M_TranslatePath(fileName, fileName, FILENAME_T_MAXLEN);
             OpenStreamOut(fileName);
 
@@ -5638,7 +5682,7 @@ void SV_MapTeleport(int map, int position)
     // Launch waiting scripts
     if(!deathmatch)
     {
-        P_CheckACSStore();
+        P_CheckACSStore(gameMap);
     }
 
     // For single play, save immediately into the reborn slot

@@ -66,7 +66,7 @@ int S_GetSoundID(const char* name)
  * Starts the song of the specified map, updating the currentmap definition
  * in the process.
  */
-void S_MapMusic(int episode, int map)
+void S_MapMusic(uint episode, uint map)
 {
     int idx = Def_Get(DD_DEF_MUSIC, "currentmap", 0);
     int cdTrack;

@@ -594,13 +594,14 @@ void FI_Start(char *finalescript, infinemode_t mode)
     {
         // We are able to figure out the truth values of all the
         // conditions.
-        fi->conditions[FICOND_SECRET] = (secretExit != 0);
-
 #if __JHEXEN__
+        fi->conditions[FICOND_SECRET] = false;
+
         // Current hub has been completed?
         fi->conditions[FICOND_LEAVEHUB] =
-            (P_GetMapCluster(gameMap) != P_GetMapCluster(leaveMap));
+            (P_GetMapCluster(gameMap) != P_GetMapCluster(nextMap));
 #else
+        fi->conditions[FICOND_SECRET] = secretExit;
         // Only Hexen has hubs.
         fi->conditions[FICOND_LEAVEHUB] = false;
 #endif
@@ -670,7 +671,7 @@ void FI_End(void)
 #endif
                 return;
             }
-            G_SetGameAction(GA_COMPLETED);
+            G_SetGameAction(GA_MAPCOMPLETED);
 
             // Don't play the debriefing again.
             briefDisabled = true;
@@ -737,7 +738,7 @@ DEFCC(CCmdStopInFine)
  * Check if there is a finale before the map.
  * Returns true if a finale was found.
  */
-int FI_Briefing(int episode, int map, ddfinale_t* fin)
+int FI_Briefing(uint episode, uint map, ddfinale_t* fin)
 {
     char mid[20];
 
@@ -756,7 +757,7 @@ int FI_Briefing(int episode, int map, ddfinale_t* fin)
  * Check if there is a finale after the map.
  * Returns true if a finale was found.
  */
-int FI_Debriefing(int episode, int map, ddfinale_t* fin)
+int FI_Debriefing(uint episode, uint map, ddfinale_t* fin)
 {
     char mid[20];
 
@@ -765,8 +766,8 @@ int FI_Debriefing(int episode, int map, ddfinale_t* fin)
         return false;
 #if __JHEXEN__
     if(cfg.overrideHubMsg && G_GetGameState() == GS_MAP &&
-       !(leaveMap == -1 && leavePosition == -1) &&
-       P_GetMapCluster(map) != P_GetMapCluster(leaveMap))
+       !(nextMap == DDMAXINT && nextMapEntryPoint == DDMAXINT) &&
+       P_GetMapCluster(map) != P_GetMapCluster(nextMap))
         return false;
 #endif
     if(G_GetGameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))

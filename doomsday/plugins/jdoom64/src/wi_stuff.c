@@ -171,9 +171,9 @@ void WI_drawLF(void)
     lname = (char *) DD_GetVariable(DD_MAP_NAME);
 
     if(gameMode == commercial)
-        mapnum = wbs->last;
+        mapnum = wbs->currentMap;
     else
-        mapnum = ((gameEpisode -1) * 9) + wbs->last;
+        mapnum = (wbs->episode * 8) + wbs->currentMap;
 
     ptr = strchr(lname, ':'); // Skip the E#M# or Level #.
     if(ptr)
@@ -200,13 +200,11 @@ void WI_drawLF(void)
 void WI_drawEL(void)
 {
     int                 y = WI_TITLEY;
-    int                 mapnum;
     char               *lname = "", *ptr;
     ddmapinfo_t         minfo;
     char                levid[10];
 
-    P_GetMapLumpName(gameEpisode, wbs->next+1, levid);
-    mapnum = G_GetMapNumber(gameEpisode, wbs->next);
+    P_GetMapLumpName(wbs->episode, wbs->nextMap, levid);
 
     // See if there is a level name.
     if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && minfo.name)
@@ -228,10 +226,10 @@ void WI_drawEL(void)
                  NULL, false, ALIGN_CENTER);
 
     // Draw level.
-    y += (5 * mapNamePatches[wbs->next].height) / 4;
+    y += (5 * mapNamePatches[wbs->nextMap].height) / 4;
 
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, 1,
-                 &mapNamePatches[((gameEpisode -1) * 9) + wbs->next],
+                 &mapNamePatches[(wbs->episode * 8) + wbs->nextMap],
                  lname, false, ALIGN_CENTER);
 }
 
@@ -1133,14 +1131,14 @@ void WI_initVariables(wbstartstruct_t *wbstartstruct)
     if(gameMode != commercial)
     {
         if(gameMode == retail)
-            RNGCHECK(wbs->epsd, 0, 3);
+            RNGCHECK(wbs->episode, 0, 3);
         else
-            RNGCHECK(wbs->epsd, 0, 2);
+            RNGCHECK(wbs->episode, 0, 2);
     }
     else
     {
-        RNGCHECK(wbs->last, 0, 8);
-        RNGCHECK(wbs->next, 0, 8);
+        RNGCHECK(wbs->currentMap, 0, 8);
+        RNGCHECK(wbs->nextMap, 0, 8);
     }
     RNGCHECK(wbs->pnum, 0, MAXPLAYERS);
     RNGCHECK(wbs->pnum, 0, MAXPLAYERS);

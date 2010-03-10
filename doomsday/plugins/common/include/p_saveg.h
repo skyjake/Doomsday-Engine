@@ -75,7 +75,7 @@ int             SV_GetSaveDescription(char* str, const char* filename,
 #if __JHEXEN__
 boolean         SV_SaveGame(int slot, const char* description);
 boolean         SV_LoadGame(int slot);
-void            SV_MapTeleport(int map, int position);
+void            SV_MapTeleport(uint map, uint position);
 
 void            SV_HxInitBaseSlot(void);
 void            SV_HxUpdateRebornSlot(void);

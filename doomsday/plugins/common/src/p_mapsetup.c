@@ -76,7 +76,7 @@ typedef struct {
 
 static void     P_ResetWorldState(void);
 static void     P_FinalizeMap(void);
-static void     P_PrintMapBanner(int episode, int map);
+static void     P_PrintMapBanner(uint episode, uint map);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -579,9 +579,9 @@ Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
         case 4:
             {
 #if __JHEXEN__
-            byte                entryPoint = spot->arg1;
+            uint entryPoint = spot->arg1;
 #else
-            byte                entryPoint = 0;
+            uint entryPoint = 0;
 #endif
 
             P_CreatePlayerStart(spot->doomEdNum, entryPoint, false,
@@ -730,8 +730,8 @@ static void interpretLinedefFlags(void)
 }
 
 typedef struct setupmapparams_s {
-    int             episode;
-    int             map;
+    uint            episode;
+    uint            map;
     int             playerMask; // Unused?
     skillmode_t     skill;
 } setupmapparams_t;
@@ -878,7 +878,7 @@ int P_SetupMapWorker(void* ptr)
 /**
  * Loads map and glnode data for the requested episode and map.
  */
-void P_SetupMap(int episode, int map, int playerMask, skillmode_t skill)
+void P_SetupMap(uint episode, uint map, int playerMask, skillmode_t skill)
 {
     setupmapparams_t  param;
 
@@ -901,7 +901,7 @@ void P_SetupMap(int episode, int map, int playerMask, skillmode_t skill)
     {
     int i;
     // Load colormap and set the fullbright flag
-    i = P_GetMapFadeTable(gameMap);
+    i = P_GetMapFadeTable(map);
     if(i == W_GetNumForName("COLORMAP"))
     {
         // We don't want fog in this case.
@@ -1109,7 +1109,7 @@ const char* P_GetMapAuthor(boolean surpressIWADAuthors)
 }
 
 #if !__JHEXEN__
-static boolean isIWADMap(int episode, int map)
+static boolean isIWADMap(uint episode, uint map)
 {
     char lumpName[9];
 
@@ -1122,7 +1122,7 @@ static boolean isIWADMap(int episode, int map)
  * Prints a banner to the console containing information pertinent to the
  * current map (e.g. map name, author...).
  */
-static void P_PrintMapBanner(int episode, int map)
+static void P_PrintMapBanner(uint episode, uint map)
 {
     const char* lname;
 
@@ -1133,10 +1133,10 @@ static void P_PrintMapBanner(int episode, int map)
         char name[64];
 
 #if __JHEXEN__
-        dd_snprintf(name, 64, "Map %d (%d): %s", P_GetMapWarpTrans(map),
-                    map, lname);
+        dd_snprintf(name, 64, "Map %u (%u): %s", P_GetMapWarpTrans(map)+1,
+                    map+1, lname);
 #else
-        dd_snprintf(name, 64, "Map %d: %s", map, lname);
+        dd_snprintf(name, 64, "Map %u: %s", map+1, lname);
 #endif
 
         Con_FPrintf(CBLF_LIGHT | CBLF_BLUE, "%s\n", name);

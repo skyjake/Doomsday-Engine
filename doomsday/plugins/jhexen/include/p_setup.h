@@ -63,7 +63,4 @@ int             P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
                                              valuetype_t type, void *data);
 int             P_HandleMapObjectStatusReport(int code, uint id, int dtype,
                                               void *data);
-
-boolean         P_MapExists(int episode, int map);
-
 #endif

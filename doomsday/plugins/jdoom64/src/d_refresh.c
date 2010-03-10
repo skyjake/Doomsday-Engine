@@ -184,7 +184,7 @@ void R_DrawMapTitle(void)
     lauthor = P_GetMapAuthor(cfg.hideIWADAuthor);
 
     // Compose the mapnumber used to check the map name patches array.
-    mapnum = gameMap - 1;
+    mapnum = gameMap;
 
     WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, alpha,
                  &mapNamePatches[mapnum], lname, false, ALIGN_CENTER);

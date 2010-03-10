@@ -326,7 +326,7 @@ void            D_QuitNetGame(void);
 // can call G_PlayerExited
 // carries out all thinking of monsters and players
 
-void            P_SetupMap(int episode, int map, int playermask,
+void            P_SetupMap(uint episode, uint map, int playermask,
                              skillmode_t skill);
 // called by W_Ticker
 void            P_Init(void);
@@ -338,8 +338,6 @@ void            R_InitTranslationTables(void);
 //MISC
 //----
 void            strcatQuoted(char *dest, char *src);
-
-boolean         M_ValidEpisodeMap(int episode, int map);
 
 // returns true if the episode/map combo is valid for the current
 // game configuration

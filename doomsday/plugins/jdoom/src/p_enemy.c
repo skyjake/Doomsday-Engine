@@ -1622,7 +1622,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
 
     if(gameMode == commercial)
     {
-        if(gameMap != 7)
+        if(gameMap != 6)
             return;
         if((mo->type != MT_FATSO) && (mo->type != MT_BABY))
             return;
@@ -1631,8 +1631,8 @@ void C_DECL A_BossDeath(mobj_t* mo)
     {
         switch(gameEpisode)
         {
-        case 1:
-            if(gameMap != 8)
+        case 0:
+            if(gameMap != 7)
                 return;
 
             /**
@@ -1650,16 +1650,16 @@ void C_DECL A_BossDeath(mobj_t* mo)
                     return;
             break;
 
-        case 2:
-            if(gameMap != 8)
+        case 1:
+            if(gameMap != 7)
                 return;
 
             if(mo->type != MT_CYBORG)
                 return;
             break;
 
-        case 3:
-            if(gameMap != 8)
+        case 2:
+            if(gameMap != 7)
                 return;
 
             if(mo->type != MT_SPIDER)
@@ -1667,15 +1667,15 @@ void C_DECL A_BossDeath(mobj_t* mo)
 
             break;
 
-        case 4:
+        case 3:
             switch(gameMap)
             {
-            case 6:
+            case 5:
                 if(mo->type != MT_CYBORG)
                     return;
                 break;
 
-            case 8:
+            case 7:
                 if(mo->type != MT_SPIDER)
                     return;
                 break;
@@ -1687,7 +1687,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
             break;
 
         default:
-            if(gameMap != 8)
+            if(gameMap != 7)
                 return;
             break;
         }
@@ -1717,7 +1717,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
     // Victory!
     if(gameMode == commercial)
     {
-        if(gameMap == 7)
+        if(gameMap == 6)
         {
             if(mo->type == MT_FATSO)
             {
@@ -1745,36 +1745,40 @@ void C_DECL A_BossDeath(mobj_t* mo)
     {
         switch(gameEpisode)
         {
-        case 1:
+        case 0:
             dummyLine = P_AllocDummyLine();
             P_ToXLine(dummyLine)->tag = 666;
             EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
             P_FreeDummyLine(dummyLine);
             bossKilled = true;
             return;
-            break;
 
-        case 4:
+        case 3:
             switch(gameMap)
             {
-            case 6:
+            case 5:
                 dummyLine = P_AllocDummyLine();
                 P_ToXLine(dummyLine)->tag = 666;
                 EV_DoDoor(dummyLine, DT_BLAZEOPEN);
                 P_FreeDummyLine(dummyLine);
                 bossKilled = true;
                 return;
-                break;
 
-            case 8:
+            case 7:
                 dummyLine = P_AllocDummyLine();
                 P_ToXLine(dummyLine)->tag = 666;
                 EV_DoFloor(dummyLine, FT_LOWERTOLOWEST);
                 P_FreeDummyLine(dummyLine);
                 bossKilled = true;
                 return;
+
+            default:
                 break;
             }
+            break;
+
+        default:
+            break;
         }
     }
 
@@ -1789,7 +1793,7 @@ void C_DECL A_Hoof(mobj_t *mo)
      */
     S_StartSound(SFX_HOOF |
                  (gameMode != commercial &&
-                  gameMap == 8 ? DDSF_NO_ATTENUATION : 0), mo);
+                  gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 
@@ -1801,7 +1805,7 @@ void C_DECL A_Metal(mobj_t *mo)
      */
     S_StartSound(SFX_METAL |
                  (gameMode != commercial &&
-                  gameMap == 8 ? DDSF_NO_ATTENUATION : 0), mo);
+                  gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
 

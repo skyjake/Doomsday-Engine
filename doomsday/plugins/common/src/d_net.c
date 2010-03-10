@@ -128,7 +128,7 @@ void D_NetConsoleRegistration(void)
  */
 int D_NetServerStarted(int before)
 {
-    int             netMap, netEpisode;
+    uint netMap, netEpisode;
 
     if(before)
         return true;
@@ -166,7 +166,7 @@ int D_NetServerStarted(int before)
 #endif
 
 #if __JDOOM64__
-    netEpisode = 1;
+    netEpisode = 0;
 #else
     netEpisode = cfg.netEpisode;
 #endif
@@ -737,7 +737,7 @@ DEFCC(CCmdSetClass)
  */
 DEFCC(CCmdSetMap)
 {
-    int                 ep, map;
+    uint ep, map;
 
     // Only the server can change the map.
     if(!IS_SERVER)
@@ -759,24 +759,28 @@ DEFCC(CCmdSetMap)
     // Update game mode.
     deathmatch = cfg.netDeathmatch;
     noMonstersParm = cfg.netNoMonsters;
-
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    respawnMonsters = cfg.netRespawn;
+#endif
+#if __JHEXEN__
+    randomClassParm = cfg.netRandomClass;
+#endif
     cfg.jumpEnabled = cfg.netJumping;
 
 #if __JDOOM__ || __JHERETIC__
-    respawnMonsters = cfg.netRespawn;
     ep = atoi(argv[1]);
-    map = atoi(argv[2]);
-#elif __JDOOM64__
-    respawnMonsters = cfg.netRespawn;
-    ep = 1;
-    map = atoi(argv[1]);
-#elif __JSTRIFE__
-    ep = 1;
-    map = atoi(argv[1]);
-#elif __JHEXEN__
-    randomClassParm = cfg.netRandomClass;
-    ep = 1;
-    map = P_TranslateMap(atoi(argv[1]));
+    if(ep != 0) ep -= 1;
+#else
+    ep = 0;
+#endif
+
+#if __JDOOM__ || __JHERETIC__
+    map = atoi(argv[2]); if(map != 0) map -= 1;
+#else
+    map = atoi(argv[1]); if(map != 0) map -= 1;
+#endif
+#if __JHEXEN__
+    map = P_TranslateMap(map);
 #endif
 
     // Use the configured network skill level for the new map.

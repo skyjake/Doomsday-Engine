@@ -2145,11 +2145,11 @@ void C_DECL A_BossDeath(mobj_t* actor)
     countmobjoftypeparams_t params;
 
     // Not a boss level?
-    if(gameMap != 8)
+    if(gameMap != 7)
         return;
 
     // Not considered a boss in this episode?
-    if(actor->type != bossType[gameEpisode - 1])
+    if(actor->type != bossType[gameEpisode])
         return;
 
     // Scan the remaining thinkers to see if all bosses are dead.
@@ -2163,7 +2163,7 @@ void C_DECL A_BossDeath(mobj_t* actor)
     }
 
     // Kill any remaining monsters.
-    if(gameEpisode > 1)
+    if(gameEpisode != 0)
         P_Massacre();
 
     dummyLine = P_AllocDummyLine();
