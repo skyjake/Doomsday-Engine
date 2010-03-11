@@ -141,16 +141,6 @@ void P_RunPlayers(timespan_t ticLength)
  */
 void P_DoTick(void)
 {
-    if(IS_SERVER)
-    {
-        // Game is paused after a map load until the first tic begins server-side.
-        if(mapTime == 0)
-        {
-            paused = false;
-            NetSv_Paused(paused);
-        }
-    }
-
     // If the game is paused, nothing will happen.
     if(paused)
         return;
