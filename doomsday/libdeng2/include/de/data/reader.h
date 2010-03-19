@@ -88,6 +88,16 @@ namespace de
         /// Reads a serializable object from the source buffer.
         Reader& operator >> (IReadable& readable);
     
+        /**
+         * Reads bytes from the source buffer until a specified delimiter
+         * value is encountered. The delimiter is included as part of
+         * the read data.
+         *
+         * @param byteArray  Destination buffer.
+         * @param delimiter  Delimiter value.
+         */
+        Reader& readUntil(IByteArray& byteArray, IByteArray::Byte delimiter = 0);
+
         /** 
          * Returns the source byte array of the reader.
          */

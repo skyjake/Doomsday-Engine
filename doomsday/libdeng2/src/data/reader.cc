@@ -164,6 +164,17 @@ Reader& Reader::operator >> (IReadable& readable)
     return *this;
 }
 
+Reader& Reader::readUntil(IByteArray& byteArray, IByteArray::Byte delimiter)
+{
+    int pos = 0;
+    IByteArray::Byte b = 0;
+    do {
+        *this >> b;
+        byteArray.set(pos++, &b, 1);
+    } while(b != delimiter);
+    return *this;
+}
+
 void Reader::seek(dint count)
 {
     if(IByteArray::Offset(_offset + count) >= _source.size())
