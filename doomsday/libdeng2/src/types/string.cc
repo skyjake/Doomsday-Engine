@@ -410,7 +410,7 @@ String String::fileNameNativePath() const
 
 dint String::compareWithCase(const String& str) const
 {
-    return compare(str);
+    return strncmp(c_str(), str.c_str(), max(str.size(), size()));
 }
 
 dint String::compareWithoutCase(const String& str) const
