@@ -1052,6 +1052,9 @@ desc = 1=Disable non-visible subsector culling.
 [rend-dev-mobj-bbox]
 desc = 1=Render mobj bounding boxes (as used for collision detection).
 
+[rend-dev-polyobj-bbox]
+desc = 1=Render polyobj bounding boxes.
+
 [rend-dev-sky]
 desc = 1=Render the sky as a solid surface. 2= Draw sky surface planes.
 

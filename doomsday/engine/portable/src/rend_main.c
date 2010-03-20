@@ -54,10 +54,10 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void Rend_DrawBBox(const float pos3f[3], float w, float l, float h,
+void Rend_DrawBBox(const float pos3f[3], float w, float l, float h, float a,
                    const float color3f[3], float alpha, float br,
                    boolean alignToBase);
-void Rend_DrawArrow(const float pos3f[3], angle_t a, float s,
+void Rend_DrawArrow(const float pos3f[3], float a, float s,
                     const float color3f[3], float alpha);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -107,6 +107,7 @@ byte devLightModRange = 0;
 float rendLightDistanceAttentuation = 1024;
 
 int devMobjBBox = 0; // 1 = Draw mobj bounding boxes (for debug)
+int devPolyobjBBox = 0; // 1 = Draw polyobj bounding boxes (for debug)
 DGLuint dlBBox = 0; // Display list: active-textured bbox model.
 
 byte devVertexIndices = 0; // @c 1= Draw world vertex indices (for debug).
@@ -140,6 +141,7 @@ void Rend_Register(void)
     C_VAR_BYTE("rend-dev-freeze", &freezeRLs, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_INT("rend-dev-cull-subsectors", &devNoCulling,CVF_NO_ARCHIVE,0,1);
     C_VAR_INT("rend-dev-mobj-bbox", &devMobjBBox, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_INT("rend-dev-polyobj-bbox", &devPolyobjBBox, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-light-mod", &devLightModRange, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-tex-showfix", &devNoTexFix, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-blockmap-debug", &bmapShowDebug, CVF_NO_ARCHIVE, 0, 3);
@@ -4096,7 +4098,7 @@ static DGLuint constructBBox(DGLuint name, float br)
  * @param alignToBase   If @c true, align the base of the box
  *                      to the Z coordinate.
  */
-void Rend_DrawBBox(const float pos3f[3], float w, float l, float h,
+void Rend_DrawBBox(const float pos3f[3], float w, float l, float h, float a,
                    const float color3f[3], float alpha, float br,
                    boolean alignToBase)
 {
@@ -4108,6 +4110,10 @@ void Rend_DrawBBox(const float pos3f[3], float w, float l, float h,
         glTranslatef(pos3f[VX], pos3f[VZ] + h, pos3f[VY]);
     else
         glTranslatef(pos3f[VX], pos3f[VZ], pos3f[VY]);
+
+    glRotatef(0, 0, 0, 1);
+    glRotatef(0, 1, 0, 0);
+    glRotatef(a, 0, 1, 0);
 
     glScalef(w - br - br, h - br - br, l - br - br);
     glColor4f(color3f[0], color3f[1], color3f[2], alpha);
@@ -4129,7 +4135,7 @@ void Rend_DrawBBox(const float pos3f[3], float w, float l, float h,
  * @param color3f       Color to make the box (uniform vertex color).
  * @param alpha         Alpha to make the box (uniform vertex color).
  */
-void Rend_DrawArrow(const float pos3f[3], angle_t a, float s,
+void Rend_DrawArrow(const float pos3f[3], float a, float s,
                     const float color3f[3], float alpha)
 {
     glMatrixMode(GL_MODELVIEW);
@@ -4139,7 +4145,7 @@ void Rend_DrawArrow(const float pos3f[3], angle_t a, float s,
 
     glRotatef(0, 0, 0, 1);
     glRotatef(0, 1, 0, 0);
-    glRotatef((a / (float) ANGLE_MAX *-360), 0, 1, 0);
+    glRotatef(a, 0, 1, 0);
 
     glScalef(s, 0, s);
 
@@ -4183,7 +4189,7 @@ static void Rend_RenderBoundingBoxes(void)
     material_t*         mat;
     material_snapshot_t ms;
 
-    if(!devMobjBBox || netGame)
+    if((!devMobjBBox && !devPolyobjBBox) || netGame)
         return;
 
     if(!dlBBox)
@@ -4207,7 +4213,7 @@ static void Rend_RenderBoundingBoxes(void)
                    ms.units[MTU_PRIMARY].magMode);
     GL_BlendMode(BM_ADD);
 
-    // For every sector
+    if(devMobjBBox)
     for(i = 0; i < numSectors; ++i)
     {
         sec = SECTOR_PTR(i);
@@ -4229,15 +4235,60 @@ static void Rend_RenderBoundingBoxes(void)
 
             // Draw a bounding box in an appropriate color.
             size = mo->radius;
-            Rend_DrawBBox(mo->pos, size, size, mo->height/2,
+            Rend_DrawBBox(mo->pos, size, size, mo->height/2, 0,
                           (mo->ddFlags & DDMF_MISSILE)? yellow :
                           (mo->ddFlags & DDMF_SOLID)? green : red,
                           alpha, .08f, true);
 
-            Rend_DrawArrow(mo->pos, mo->angle + ANG45 + ANG90 , size*1.25,
+            Rend_DrawArrow(mo->pos, ((mo->angle + ANG45 + ANG90) / (float) ANGLE_MAX *-360), size*1.25,
                            (mo->ddFlags & DDMF_MISSILE)? yellow :
                            (mo->ddFlags & DDMF_SOLID)? green : red, alpha);
         }
+    }
+
+    if(devPolyobjBBox)
+    for(i = 0; i < numPolyObjs; ++i)
+    {
+        const polyobj_t* po = polyObjs[i];
+        const sector_t* sec = po->subsector->sector;
+        float width  = (po->box[1][0] - po->box[0][0])/2;
+        float length = (po->box[1][1] - po->box[0][1])/2;
+        float height = (sec->SP_ceilheight - sec->SP_floorheight)/2;
+        float pos[3], alpha;
+        
+        pos[VX] = po->box[0][0]+width;
+        pos[VY] = po->box[0][1]+length;
+        pos[VZ] = sec->SP_floorheight;
+
+        alpha = 1 - ((M_Distance(pos, eye)/(theWindow->width/2))/4);
+        if(alpha < .25f)
+            alpha = .25f; // Don't make them totally invisible.
+
+        Rend_DrawBBox(pos, width, length, height, 0, yellow, alpha, .08f, true);
+
+        {uint j;
+        for(j = 0; j < po->numSegs; ++j)
+        {
+            seg_t* seg = po->segs[j];
+            linedef_t* lineDef = seg->lineDef;
+            float width  = (lineDef->bBox[BOXRIGHT] - lineDef->bBox[BOXLEFT])/2;
+            float length = (lineDef->bBox[BOXTOP] - lineDef->bBox[BOXBOTTOM])/2;
+            float pos[3];
+
+            pos[VX] = lineDef->bBox[BOXLEFT]+width;
+            pos[VY] = lineDef->bBox[BOXBOTTOM]+length;
+            pos[VZ] = sec->SP_floorheight;
+
+            Rend_DrawBBox(pos, width, length, height, 0, red, alpha, .08f, true);
+
+            pos[VX] = (lineDef->L_v2pos[VX]+lineDef->L_v1pos[VX])/2;
+            pos[VY] = (lineDef->L_v2pos[VY]+lineDef->L_v1pos[VY])/2;
+            pos[VZ] = sec->SP_floorheight;
+            width = 0;
+            length = lineDef->length/2;
+
+            Rend_DrawBBox(pos, width, length, height, BANG2DEG(BANG_90-lineDef->angle), green, alpha, 0, true);
+        }}
     }
 
     GL_BlendMode(BM_NORMAL);
