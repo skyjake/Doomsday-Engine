@@ -381,7 +381,7 @@ int Cht_WarpFunc(const int* args, int player)
     }
 
     map = P_TranslateMap((tens * 10 + ones) - 1);
-    if(map == gameMap)
+    if(userGame && map == gameMap)
     {   // Don't try to teleport to the current map.
         P_SetMessage(plr, TXT_CHEATBADINPUT, false);
         return false;
@@ -407,10 +407,19 @@ int Cht_WarpFunc(const int* args, int player)
             AM_Open(AM_MapForPlayer(i), false, true);
 
     // So be it.
-    nextMap = map;
-    nextMapEntryPoint = 0;
-    briefDisabled = true;
-    G_SetGameAction(GA_LEAVEMAP);
+    if(userGame)
+    {
+        nextMap = map;
+        nextMapEntryPoint = 0;
+        briefDisabled = true;
+        G_SetGameAction(GA_LEAVEMAP);
+    }
+    else
+    {
+        briefDisabled = true;
+        G_StartNewInit();
+        G_InitNew(dSkill, 0, map);
+    }
 
     return true;
 }

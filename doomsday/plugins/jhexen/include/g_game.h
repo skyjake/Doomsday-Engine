@@ -42,6 +42,8 @@ extern skillmode_t gameSkill;
 extern boolean deathmatch;
 extern boolean userGame;
 
+extern skillmode_t dSkill;
+
 extern uint rebornPosition;
 extern uint nextMap;
 extern uint nextMapEntryPoint;
