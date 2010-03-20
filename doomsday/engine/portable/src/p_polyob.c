@@ -129,16 +129,13 @@ boolean P_IsPolyobjOrigin(void* ddMobjBase)
 
 static void updateSegBBox(seg_t* seg)
 {
-    linedef_t*          line = seg->lineDef;
-    byte                edge;
+    linedef_t* line = seg->lineDef;
 
-    edge = (seg->SG_v1pos[VX] < seg->SG_v2pos[VX]);
-    line->bBox[BOXLEFT]  = seg->SG_vpos(edge^1)[VX];
-    line->bBox[BOXRIGHT] = seg->SG_vpos(edge)[VX];
+    line->bBox[BOXLEFT]  = MIN_OF(seg->SG_v2pos[VX], seg->SG_v1pos[VX]);
+    line->bBox[BOXRIGHT] = MAX_OF(seg->SG_v2pos[VX], seg->SG_v1pos[VX]);
 
-    edge = (seg->SG_v1pos[VY] < seg->SG_v2pos[VY]);
-    line->bBox[BOXBOTTOM] = seg->SG_vpos(edge^1)[VY];
-    line->bBox[BOXTOP]    = seg->SG_vpos(edge)[VY];
+    line->bBox[BOXBOTTOM] = MIN_OF(seg->SG_v2pos[VY], seg->SG_v1pos[VY]);
+    line->bBox[BOXTOP]    = MAX_OF(seg->SG_v2pos[VY], seg->SG_v1pos[VY]);
 
     // Update the line's slopetype.
     line->dX = line->L_v2pos[VX] - line->L_v1pos[VX];
@@ -390,9 +387,7 @@ boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle)
     for(count = 0; count < po->numSegs;
         ++count, segList++, originalPts++, prevPts++)
     {
-        seg_t*              seg = *segList;
-        sidedef_t*          side = SEG_SIDEDEF(seg);
-        surface_t*          surface = &side->SW_topsurface;
+        seg_t* seg = *segList;
 
         vtx = seg->SG_v1;
 
@@ -403,9 +398,18 @@ boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle)
 
         rotatePoint(an, &vtx->V_pos[VX], &vtx->V_pos[VY],
                     po->pos[VX], po->pos[VY]);
+    }
+
+    segList = po->segs;
+    for(count = 0; count < po->numSegs; ++count, segList++)
+    {
+        seg_t* seg = *segList;
+        sidedef_t* side = SEG_SIDEDEF(seg);
+        surface_t* surface = &side->SW_topsurface;
 
         updateSegBBox(seg);
         seg->angle += angle;
+        seg->lineDef->angle += angle >> FRACBITS;
 
         // Now update the surface normal.
         surface->normal[VY] = (seg->SG_v1pos[VX] - seg->SG_v2pos[VX]) / seg->length;
@@ -443,12 +447,24 @@ boolean P_PolyobjRotate(struct polyobj_s* po, angle_t angle)
         }
 
         segList = po->segs;
-        for(count = 0; count < po->numSegs; ++count, segList++, prevPts++)
+        for(count = 0; count < po->numSegs; ++count, segList++)
         {
             seg_t* seg = *segList;
+            sidedef_t* side = SEG_SIDEDEF(seg);
+            surface_t* surface = &side->SW_topsurface;
 
             updateSegBBox(seg);
             seg->angle -= angle;
+            seg->lineDef->angle -= angle >> FRACBITS;
+
+            // Now update the surface normal.
+            surface->normal[VY] = (seg->SG_v1pos[VX] - seg->SG_v2pos[VX]) / seg->length;
+            surface->normal[VX] = (seg->SG_v2pos[VY] - seg->SG_v1pos[VY]) / seg->length;
+            surface->normal[VZ] = 0;
+
+            // All surfaces of a sidedef have the same normal.
+            memcpy(side->SW_middlenormal, surface->normal, sizeof(surface->normal));
+            memcpy(side->SW_bottomnormal, surface->normal, sizeof(surface->normal));
         }
 
         P_PolyobjLink(po);

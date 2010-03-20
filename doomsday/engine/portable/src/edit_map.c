@@ -888,7 +888,7 @@ static void finishLineDefs(gamemap_t* map)
         // Calculate the accurate length of each line.
         ld->length = P_AccurateDistance(ld->dX, ld->dY);
         ld->angle = bamsAtan2((int) (ld->v[1]->V_pos[VY] - ld->v[0]->V_pos[VY]),
-                      (int) (ld->v[1]->V_pos[VX] - ld->v[0]->V_pos[VX])) << FRACBITS;
+                      (int) (ld->v[1]->V_pos[VX] - ld->v[0]->V_pos[VX]));
 
         if(!ld->dX)
             ld->slopeType = ST_VERTICAL;
@@ -2095,7 +2095,7 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
 
     l->angle =
         bamsAtan2((int) (l->L_v2pos[VY] - l->L_v1pos[VY]),
-                  (int) (l->L_v2pos[VX] - l->L_v1pos[VX])) << FRACBITS;
+                  (int) (l->L_v2pos[VX] - l->L_v1pos[VX]));
 
     if(l->dX == 0)
         l->slopeType = ST_VERTICAL;
