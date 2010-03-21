@@ -294,7 +294,7 @@ colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
                 {
                     char                buf[3];
 
-                    memset(buf, 0, numDigits);
+                    memset(buf, 0, sizeof(buf));
                     memcpy(buf, start, numDigits);
 
                     compSize[comp] = atoi(buf);

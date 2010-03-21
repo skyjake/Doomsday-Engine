@@ -89,6 +89,7 @@ END_PROF_TIMERS()
 #define DCF_SET_MATRIX_TEXTURE0     0x00000200
 #define DCF_SET_MATRIX_TEXTURE1     0x00000400
 #define DCF_SET_MATRIX_TEXTURE      (DCF_SET_MATRIX_TEXTURE0 | DCF_SET_MATRIX_TEXTURE1)
+#define DCF_NO_COLOR                0x00000800
 #define DCF_SKIP                    0x80000000
 
 // TYPES -------------------------------------------------------------------
@@ -166,7 +167,7 @@ typedef struct primhdr_s {
     // using multitexturing (if available), depending on the list state.
     // Example: first light affecting the primitive.
     DGLuint         modTex;
-    float           modColor[3];
+    float           modColor[4];
 } primhdr_t;
 
 // Helper macro for accessing rendlist texmap units.
@@ -705,11 +706,8 @@ static void* allocateData(rendlist_t* list, int bytes)
         // Restore in-list pointers.
         if(oldData)
         {
-            boolean isDone;
-
             hdr = (primhdr_t *) list->data;
-            isDone = false;
-            while(!isDone)
+            while(hdr <= list->last)
             {
                 if(hdr->indices != NULL)
                 {
@@ -720,10 +718,9 @@ static void* allocateData(rendlist_t* list, int bytes)
 
                 // Check here in the end; primitive composition may be
                 // in progress.
-                if(hdr->size != 0)
-                    hdr = (primhdr_t *) ((byte *) hdr + hdr->size);
-                else
-                    isDone = true;
+                if(hdr->size == 0)
+                    break;
+                hdr = (primhdr_t*) ((byte*) hdr + hdr->size);
             }
         }
     }
@@ -874,6 +871,7 @@ END_PROF( PROF_RL_GET_LIST );
     hdr->modColor[CR] = modColor? modColor[CR] : 0;
     hdr->modColor[CG] = modColor? modColor[CG] : 0;
     hdr->modColor[CB] = modColor? modColor[CB] : 0;
+    hdr->modColor[CA] = 0;
 
     if(polyType == RPT_SHINY && rTU[TU_INTER].tex)
     {
@@ -1071,7 +1069,8 @@ static void drawPrimitives(int conditions, uint coords[MAX_TEX_UNITS],
                     }
                 }
 
-                glColor4ubv(colors[index].rgba);
+                if(!(conditions & DCF_NO_COLOR))
+                    glColor4ubv(colors[index].rgba);
                 glVertex3fv(vertices[index].xyz);
             }
             glEnd();
@@ -1128,7 +1127,7 @@ static int setupListState(listmode_t mode, rendlist_t* list)
     {
     case LM_SKYMASK:
         // Render all primitives on the list without discrimination.
-        return 0;
+        return DCF_NO_COLOR;
 
     case LM_ALL: // All surfaces.
         // Should we do blending?

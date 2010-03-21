@@ -480,8 +480,11 @@ void R_NewSharpWorld(void)
         viewdata_t* vd = &viewData[i];
         player_t* plr = &ddPlayers[i];
 
-        if(!(/*(plr->shared.flags & DDPF_LOCAL) &&*/ plr->shared.inGame))
+        if(/*(plr->shared.flags & DDPF_LOCAL) &&*/
+           (!plr->shared.inGame || !plr->shared.mo))
+        {
             continue;
+        }
 
         R_GetSharpView(&sharpView, plr);
 

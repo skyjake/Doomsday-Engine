@@ -207,7 +207,7 @@ void Dir_FixSlashes(char* path, size_t len)
 {
     size_t              i;
 
-    for(i = 0; i < len; ++i)
+    for(i = 0; i < len && path[i]; ++i)
     {
         if(path[i] == DIR_WRONG_SEP_CHAR)
             path[i] = DIR_SEP_CHAR;
