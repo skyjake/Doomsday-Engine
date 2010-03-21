@@ -38,6 +38,7 @@
 #include "p_inventory.h"
 #include "p_tick.h"
 #include "p_user.h"
+#include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -483,7 +484,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_ITEMHEALTH, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_SHIELD1:
@@ -491,7 +493,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_ITEMSHIELD1, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_SHIELD2:
@@ -499,7 +502,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_ITEMSHIELD2, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_BAGOFHOLDING:
@@ -520,7 +524,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
         P_GiveAmmo(plr, AT_RUNE, AMMO_SKRD_WIMPY);
         P_GiveAmmo(plr, AT_FIREORB, AMMO_PHRD_WIMPY);
         P_SetMessage(plr, TXT_ITEMBAGOFHOLDING, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_ALLMAP:
@@ -531,7 +536,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
         ST_HUDUnHide(plr - players, HUE_ON_PICKUP_POWER);
 
         P_SetMessage(plr, TXT_ITEMSUPERMAP, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_KEY_BLUE:
@@ -541,7 +547,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
         }
 
         P_GiveKey(plr, KT_BLUE);
-        S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
         if(IS_NETGAME)
             return false;
         break;
@@ -553,7 +560,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
         }
 
         P_GiveKey(plr, KT_YELLOW);
-        S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
         if(IS_NETGAME)
             return false;
         break;
@@ -565,7 +573,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
         }
 
         P_GiveKey(plr, KT_GREEN);
-        S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_KEYUP, NULL, plr - players);
         if(IS_NETGAME)
             return false;
         break;
@@ -575,7 +584,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_INV_HEALTH, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_ITEM_WINGS:
@@ -583,7 +593,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_INV_FLY, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_ITEM_INVUL:
@@ -591,7 +602,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_INV_INVULNERABILITY, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_ITEM_TOMB:
@@ -599,7 +611,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_INV_TOMEOFPOWER, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_ITEM_INVIS:
@@ -607,7 +620,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_INV_INVISIBILITY, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_ITEM_EGG:
@@ -615,7 +629,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_INV_EGG, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_ITEM_HEALTHSUPER:
@@ -623,7 +638,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_INV_SUPERHEALTH, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_ITEM_TORCH:
@@ -631,7 +647,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_INV_TORCH, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_ITEM_FIREBOMB:
@@ -639,7 +656,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_INV_FIREBOMB, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_ITEM_TELEPORT:
@@ -647,7 +665,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_INV_TELEPORT, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_WAND:
@@ -655,7 +674,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_AMMOGOLDWAND1, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_WAND_LARGE:
@@ -663,7 +683,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_AMMOGOLDWAND2, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_MACE:
@@ -671,7 +692,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_AMMOMACE1, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_MACE_LARGE:
@@ -679,7 +701,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_AMMOMACE2, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_CROSSBOW:
@@ -687,7 +710,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_AMMOCROSSBOW1, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_CROSSBOW_LARGE:
@@ -695,7 +719,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_AMMOCROSSBOW2, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_BLASTER:
@@ -703,7 +728,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_AMMOBLASTER1, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_BLASTER_LARGE:
@@ -711,7 +737,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_AMMOBLASTER2, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_SKULL:
@@ -719,7 +746,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_AMMOSKULLROD1, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_SKULL_LARGE:
@@ -727,7 +755,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_AMMOSKULLROD2, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_PHOENIX:
@@ -735,7 +764,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_AMMOPHOENIXROD1, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_AMMO_PHOENIX_LARGE:
@@ -743,7 +773,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_AMMOPHOENIXROD2, false);
-        S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_ITEMUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_MACE:
@@ -751,7 +782,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_WPNMACE, false);
-        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_CROSSBOW:
@@ -759,7 +791,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_WPNCROSSBOW, false);
-        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_BLASTER:
@@ -767,7 +800,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_WPNBLASTER, false);
-        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_SKULLROD:
@@ -775,7 +809,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_WPNSKULLROD, false);
-        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_PHOENIXROD:
@@ -783,7 +818,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_WPNPHOENIXROD, false);
-        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     case IT_WEAPON_GAUNTLETS:
@@ -791,7 +827,8 @@ static boolean giveItem(player_t* plr, itemtype_t item, int quantity)
             return false;
 
         P_SetMessage(plr, TXT_WPNGAUNTLETS, false);
-        S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+        if(!mapSetup)
+            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
         break;
 
     default:
@@ -855,7 +892,8 @@ void P_TouchSpecialMobj(mobj_t* special, mobj_t* toucher)
         else
             P_MobjRemove(special, false);
 
-        player->bonusCount += BONUSADD;
+        if(!mapSetup)
+            player->bonusCount += BONUSADD;
         break;
     }
 }
