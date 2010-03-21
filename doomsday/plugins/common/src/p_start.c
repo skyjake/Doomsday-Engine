@@ -850,7 +850,7 @@ void P_SpawnPlayers(void)
     }
     else
     {
-#if __JDOOM__ || __JDOOM64__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
         if(!IS_NETGAME)
         {
             /* $voodoodolls */

@@ -338,8 +338,8 @@ void P_MobjMoveXY(mobj_t *mo)
     }
 
     // Stop player walking animation.
-    if((!player || !(player->plr->cmd.forwardMove | player->plr->cmd.sideMove) ||
-         player->plr->mo != mo /* $voodoodolls: Stop also. */) &&
+    if(!player || (!(player->plr->cmd.forwardMove | player->plr->cmd.sideMove) &&
+         player->plr->mo != mo /* $voodoodolls: Stop animating. */) &&
        INRANGE_OF(mo->mom[MX], 0, STOPSPEED) &&
        INRANGE_OF(mo->mom[MY], 0, STOPSPEED))
     {
@@ -347,7 +347,9 @@ void P_MobjMoveXY(mobj_t *mo)
         if(player && isInWalkState(player) && player->plr->mo == mo)
             P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
 
-        mo->mom[MX] = mo->mom[MY] = 0;
+        // $voodoodolls: Do not zero mom!
+        if(!(player && player->plr->mo != mo))
+            mo->mom[MX] = mo->mom[MY] = 0;
 
         // $voodoodolls: Stop view bobbing if this isn't a voodoo doll.
         if(player && player->plr->mo == mo)
@@ -355,7 +357,7 @@ void P_MobjMoveXY(mobj_t *mo)
     }
     else
     {
-        float       friction = getFriction(mo);
+        float friction = getFriction(mo);
 
         mo->mom[MX] *= friction;
         mo->mom[MY] *= friction;
