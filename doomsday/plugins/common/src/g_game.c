@@ -191,7 +191,7 @@ boolean respawnMonsters;
 
 boolean paused;
 boolean sendPause; // Send a pause event next tic.
-boolean userGame; // Ok to save / end game.
+boolean userGame = false; // Ok to save / end game.
 boolean deathmatch; // Only if started as net death.
 player_t players[MAXPLAYERS];
 

@@ -167,15 +167,7 @@ static unsigned char cheatAutomapSeq[] = {
 
 static boolean cheatsEnabled(void)
 {
-    if(IS_NETGAME && !IS_CLIENT && netSvAllowCheats)
-        return true;
-
-#ifdef _DEBUG
-    return true;
-#else
-    return !(gameSkill == SM_NIGHTMARE || (IS_NETGAME /*&& !netcheat */ )
-             || players[CONSOLEPLAYER].health <= 0);
-#endif
+    return !IS_NETGAME;
 }
 
 void Cht_Init(void)
@@ -845,7 +837,7 @@ DEFCC(CCmdCheatGive)
         return true;
     }
 
-    if(!cheatsEnabled())
+    if(IS_NETGAME && !netSvAllowCheats)
         return false;
 
     if(argc != 2 && argc != 3)
@@ -1104,7 +1096,10 @@ DEFCC(CCmdCheatLeaveMap)
 
 DEFCC(CCmdCheatPig)
 {
-    if(!cheatsEnabled())
+    if(IS_NETGAME)
+        return false;
+
+    if(!userGame || gameSkill == SM_NIGHTMARE || players[CONSOLEPLAYER].health <= 0)
         return false;
 
     Cht_ChickenFunc(NULL, CONSOLEPLAYER);
