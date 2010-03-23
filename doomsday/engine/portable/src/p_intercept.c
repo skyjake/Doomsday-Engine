@@ -100,7 +100,8 @@ intercept_t* P_AddIntercept(float frac, intercepttype_t type, void* ptr)
     if(count == maxIntercepts)
     {
         // Allocate more memory.
-        intercepts = Z_Realloc(intercepts, maxIntercepts *= 2, PU_STATIC);
+        maxIntercepts *= 2;
+        intercepts = Z_Realloc(intercepts, sizeof(*intercepts) * maxIntercepts, PU_STATIC);
         intercept_p = intercepts + count;
     }
 
