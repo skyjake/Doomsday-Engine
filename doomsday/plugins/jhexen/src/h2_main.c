@@ -404,9 +404,9 @@ void G_PostInit(void)
     /* None */
 
     // Get skill / episode / map from parms.
-    startEpisode = 1;
+    startEpisode = 0;
     startSkill = SM_MEDIUM;
-    startMap = 1;
+    startMap = 0;
 
     // Game mode specific settings.
     /* None */
@@ -450,20 +450,9 @@ void G_PostInit(void)
     p = ArgCheck("-warp");
     if(p && p < Argc() - 1)
     {
-        int                     map;
-
         warpMap = atoi(Argv(p + 1)) - 1;
-        map = P_TranslateMap(warpMap);
-        if(map == -1)
-        {   // Couldn't find real map number.
-            startMap = 1;
-            Con_Message("-WARP: Invalid map number.\n");
-        }
-        else
-        {   // Found a valid startmap.
-            startMap = map;
-            autoStart = true;
-        }
+        startMap = P_TranslateMap(warpMap);
+        autoStart = true;
     }
     else
     {
@@ -487,12 +476,11 @@ void G_PostInit(void)
     // Check valid episode and map.
     if(autoStart || IS_NETGAME)
     {
-        sprintf(mapStr,"MAP%2.2d", startMap);
+        sprintf(mapStr,"MAP%2.2d", startMap+1);
 
         if(!W_CheckNumForName(mapStr))
         {
-            startEpisode = 1;
-            startMap = 1;
+            startMap = 0;
         }
     }
 

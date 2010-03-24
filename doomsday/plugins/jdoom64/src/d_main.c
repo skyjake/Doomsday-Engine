@@ -424,8 +424,8 @@ void G_PostInit(void)
 
     // Get skill / episode / map from parms.
     gameSkill = startSkill = SM_NOITEMS;
-    startEpisode = 1;
-    startMap = 1;
+    startEpisode = 0;
+    startMap = 0;
     autoStart = false;
 
     // Game mode specific settings
@@ -464,7 +464,7 @@ void G_PostInit(void)
     p = ArgCheck("-warp");
     if(p && p < myargc - 1)
     {
-        startMap = atoi(Argv(p + 1));
+        startMap = atoi(Argv(p + 1)) - '1';
         autoStart = true;
     }
 
@@ -490,8 +490,8 @@ void G_PostInit(void)
     // Are we autostarting?
     if(autoStart)
     {
-        Con_Message("Warp to Episode %d, Map %d, Skill %d\n", startEpisode,
-                    startMap, startSkill + 1);
+        Con_Message("Warp to Episode %d, Map %d, Skill %d\n", startEpisode+1,
+                    startMap+1, startSkill + 1);
     }
 
     // Load a saved game?
@@ -506,12 +506,12 @@ void G_PostInit(void)
     // Check valid episode and map.
     if((autoStart || IS_NETGAME))
     {
-        sprintf(mapStr, "MAP%2.2d", startMap);
+        sprintf(mapStr, "MAP%2.2d", startMap+1);
 
         if(!W_CheckNumForName(mapStr))
         {
-            startEpisode = 1;
-            startMap = 1;
+            startEpisode = 0;
+            startMap = 0;
         }
     }
 
