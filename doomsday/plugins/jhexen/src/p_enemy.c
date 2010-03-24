@@ -2134,8 +2134,8 @@ static void spawnSerpentGib(mobjtype_t type, mobj_t* mo)
 
     if((pmo = P_SpawnMobj3fv((type), pos, P_Random() << 24, MSF_Z_FLOOR)))
     {
-        pmo->mom[MX] = (P_Random() - 128) << 6;
-        pmo->mom[MY] = (P_Random() - 128) << 6;
+        pmo->mom[MX] = FIX2FLT((P_Random() - 128) << 6);
+        pmo->mom[MY] = FIX2FLT((P_Random() - 128) << 6);
         pmo->floorClip = 6;
     }
 }
