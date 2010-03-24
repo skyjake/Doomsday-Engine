@@ -139,6 +139,7 @@ typedef struct jheretic_config_s {
 
     byte            fallOff; // Objects fall under their own weight.
     byte            fixFloorFire; // Fix Heretic bug; explode Maulotaur floor fire when feetclipped.
+    byte            fixPlaneScrollMaterialsEastOnly; // Fix Heretic bug; plane materials would only scroll east.
 
     byte            counterCheat;
     float           counterCheatScale;

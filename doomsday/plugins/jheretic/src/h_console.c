@@ -174,6 +174,7 @@ cvar_t gameCVars[] = {
     {"game-zclip", 0, CVT_BYTE, &cfg.moveCheckZ, 0, 1},
     {"game-corpse-sliding", 0, CVT_BYTE, &cfg.slidingCorpses, 0, 1},
     {"server-game-maulotaur-fixfloorfire", 0, CVT_BYTE, &cfg.fixFloorFire, 0, 1},
+    {"server-game-plane-fixmaterialscroll", 0, CVT_BYTE, &cfg.fixPlaneScrollMaterialsEastOnly, 0, 1},
 
 // Game state
     {"game-fastmonsters", 0, CVT_BYTE, &cfg.fastMonsters, 0, 1},
