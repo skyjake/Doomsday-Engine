@@ -77,6 +77,13 @@ void            R_InitSkyFix(void);
 void            R_UpdateSkyFixForSec(const sector_t* sec);
 void            R_OrderVertices(const linedef_t* line, const sector_t* sector,
                                 vertex_t* verts[2]);
+boolean         R_FindBottomTop(segsection_t section, float segOffset,
+                                const surface_t* suf,
+                                const plane_t* ffloor, const plane_t* fceil,
+                                const plane_t* bfloor, const plane_t* bceil,
+                                boolean unpegBottom, boolean unpegTop,
+                                boolean stretchMiddle, boolean isSelfRef,
+                                float* bottom, float* top, float texOffset[2]);
 plane_t*        R_NewPlaneForSector(sector_t* sec);
 void            R_DestroyPlaneOfSector(uint id, sector_t* sec);
 

@@ -445,7 +445,7 @@ static void findContacts(objlink_t* oLink)
     params.objType = oLink->type;
     V3_Copy(params.objPos, pos);
     // Use a slightly smaller radius than what the obj really is.
-    params.objRadius = radius * .9f;
+    params.objRadius = radius * .98f;
 
     params.box[BOXLEFT]   = params.objPos[VX] - radius;
     params.box[BOXRIGHT]  = params.objPos[VX] + radius;

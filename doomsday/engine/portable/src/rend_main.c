@@ -2458,7 +2458,7 @@ static boolean Rend_RenderSSWallSeg(subsector_t* ssec, seg_t* seg)
     return solidSeg;
 }
 
-static boolean findBottomTop(segsection_t section, float segOffset,
+boolean R_FindBottomTop(segsection_t section, float segOffset,
                              const surface_t* suf,
                              const plane_t* ffloor, const plane_t* fceil,
                              const plane_t* bfloor, const plane_t* bceil,
@@ -2534,8 +2534,8 @@ static boolean findBottomTop(segsection_t section, float segOffset,
             ftop    = MIN_OF(bceil->visHeight, fceil->visHeight);
         }
 
-        fbottom += suf->visOffset[2];
-        ftop    += suf->visOffset[2];
+        //fbottom += suf->visOffset[VY];
+        //ftop    += suf->visOffset[VY];
 
         *bottom = vR_ZBottom = fbottom;
         *top    = vR_ZTop    = ftop;
@@ -2633,7 +2633,7 @@ static boolean Rend_RenderWallSeg(subsector_t* ssec, seg_t* seg)
     {
         surface_t*          suf = &frontSide->SW_middlesurface;
 
-        if(findBottomTop(SEG_MIDDLE, seg->offset, suf,
+        if(R_FindBottomTop(SEG_MIDDLE, seg->offset, suf,
                          ffloor, fceil, bfloor, bceil,
                          (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
                          (line->flags & DDLF_DONTPEGTOP)? true : false,
@@ -2663,8 +2663,8 @@ static boolean Rend_RenderWallSeg(subsector_t* ssec, seg_t* seg)
                     xtop    = MIN_OF(bceil->visHeight, fceil->visHeight);
                 }
 
-                xbottom += suf->visOffset[2];
-                xtop    += suf->visOffset[2];
+                xbottom += suf->visOffset[VY];
+                xtop    += suf->visOffset[VY];
 
                 // Can we make this a solid segment?
                 if(!(top >= xtop && bottom <= xbottom))
@@ -2678,7 +2678,7 @@ static boolean Rend_RenderWallSeg(subsector_t* ssec, seg_t* seg)
     {
         surface_t*      suf = &frontSide->SW_topsurface;
 
-        if(findBottomTop(SEG_TOP, seg->offset, suf,
+        if(R_FindBottomTop(SEG_TOP, seg->offset, suf,
                          ffloor, fceil, bfloor, bceil,
                          (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
                          (line->flags & DDLF_DONTPEGTOP)? true : false,
@@ -2697,7 +2697,7 @@ static boolean Rend_RenderWallSeg(subsector_t* ssec, seg_t* seg)
     {
         surface_t*          suf = &frontSide->SW_bottomsurface;
 
-        if(findBottomTop(SEG_BOTTOM, seg->offset, suf,
+        if(R_FindBottomTop(SEG_BOTTOM, seg->offset, suf,
                          ffloor, fceil, bfloor, bceil,
                          (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
                          (line->flags & DDLF_DONTPEGTOP)? true : false,
