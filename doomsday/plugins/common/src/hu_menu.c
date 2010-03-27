@@ -328,7 +328,7 @@ menu_t MainDef = {
     0, 5
 #elif __JHERETIC__
     0,
-    110, 64,
+    110, 56,
     M_DrawMainMenu,
     5, MainItems,
     0, MENU_NONE,
