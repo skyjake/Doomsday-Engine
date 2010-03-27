@@ -1141,7 +1141,7 @@ int UIEdit_Responder(ui_object_t *ob, ddevent_t *ev)
 
         case DDKEY_RETURN:
             // Store changes.
-            memset(dat->ptr, 0, dat->maxlen + 1);
+            memset(dat->ptr, 0, dat->maxlen);
             strncpy(dat->ptr, ob->text, dat->maxlen);
             if(ob->action)
                 ob->action(ob);
