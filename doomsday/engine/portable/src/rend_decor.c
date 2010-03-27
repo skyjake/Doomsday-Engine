@@ -808,7 +808,7 @@ static void updateSideSectionDecorations(sidedef_t* side, segsection_t section)
                 top = backFloor->visHeight;
                 bottom  = frontFloor->visHeight;
                 if(line->flags & DDLF_DONTPEGBOTTOM)
-                    offsetT += frontCeil->visHeight - backFloor->visHeight;
+                    offsetT -= frontCeil->visHeight - backFloor->visHeight;
                 visible = true;
             }
         break;
