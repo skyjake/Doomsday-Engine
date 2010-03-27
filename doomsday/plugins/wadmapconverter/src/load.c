@@ -104,6 +104,8 @@ typedef enum lumptype_e {
 static uint PolyLineCount;
 static int16_t PolyStart[2];
 
+static uint validCount = 0; // Used for Polyobj LineDef collection.
+
 // CODE --------------------------------------------------------------------
 
 static int C_DECL compareMaterialNames(const void* a, const void* b)
@@ -583,26 +585,6 @@ int DataTypeForLumpName(const char* name)
 }
 
 /**
- * @return              @c  0 = Unclosed polygon.
- */
-static int isClosedPolygon(mline_t **lineList, size_t num)
-{
-    uint            i;
-
-    for(i = 0; i < num; ++i)
-    {
-        mline_t         *line = lineList[i];
-        mline_t         *next = (i == num-1? lineList[0] : lineList[i+1]);
-
-        if(!(line->v[1] == next->v[0]))
-             return false;
-    }
-
-    // The polygon is closed.
-    return true;
-}
-
-/**
  * Create a temporary polyobj (read from the original map data).
  */
 static boolean createPolyobj(mline_t **lineList, uint num, uint *poIdx,
@@ -614,12 +596,6 @@ static boolean createPolyobj(mline_t **lineList, uint num, uint *poIdx,
 
     if(!lineList || num == 0)
         return false;
-
-    // Ensure that lineList is a closed polygon.
-    if(isClosedPolygon(lineList, num) == 0)
-    {   // Nope, perhaps it needs sorting?
-        Con_Error("WadMapConverter::createPolyobj: Linelist does not form a closed polygon.");
-    }
 
     // Allocate the new polyobj.
     po = calloc(1, sizeof(*po));
@@ -649,10 +625,9 @@ static boolean createPolyobj(mline_t **lineList, uint num, uint *poIdx,
     po->lineIndices = malloc(sizeof(uint) * num);
     for(i = 0; i < num; ++i)
     {
-        // This line is part of a polyobj.
-        lineList[i]->aFlags |= LAF_POLYOBJ;
-
-        po->lineIndices[i] = lineList[i] - map->lines;
+        mline_t* line = lineList[i];
+        line->aFlags |= LAF_POLYOBJ;
+        po->lineIndices[i] = line - map->lines;
     }
 
     if(poIdx)
@@ -665,19 +640,19 @@ static boolean createPolyobj(mline_t **lineList, uint num, uint *poIdx,
  * @param lineList      @c NULL, will cause IterFindPolyLines to count
  *                      the number of lines in the polyobj.
  */
-static boolean iterFindPolyLines(int16_t x, int16_t y, mline_t **lineList)
+static void iterFindPolyLines(int16_t x, int16_t y, mline_t** lineList)
 {
-    uint                i;
-
-    if(x == PolyStart[VX] && y == PolyStart[VY])
-    {
-        return true;
-    }
+    uint i;
 
     for(i = 0; i < map->numLines; ++i)
     {
-        mline_t        *line = &map->lines[i];
-        int16_t        v1[2], v2[2];
+        mline_t* line = &map->lines[i];
+        int16_t v1[2], v2[2];
+
+        if(line->aFlags & LAF_POLYOBJ)
+            continue;
+        if(line->validCount == validCount)
+            continue;
 
         v1[VX] = (int16_t) map->vertexes[(line->v[0] - 1) * 2];
         v1[VY] = (int16_t) map->vertexes[(line->v[0] - 1) * 2 + 1];
@@ -686,17 +661,52 @@ static boolean iterFindPolyLines(int16_t x, int16_t y, mline_t **lineList)
 
         if(v1[VX] == x && v1[VY] == y)
         {
+            line->validCount = validCount;
+
             if(!lineList)
                 PolyLineCount++;
             else
                 *lineList++ = line;
 
             iterFindPolyLines(v2[VX], v2[VY], lineList);
-            return true;
         }
     }
+}
 
-    return false;
+/**
+ * @todo This terribly inefficent (naive) algorithm may need replacing
+ * (it is far outside an exceptable polynominal range!).
+ */
+static mline_t** collectPolyobjLineDefs(mline_t* lineDef, uint* num)
+{
+    mline_t** lineList;
+    int16_t v1[2], v2[2];
+
+    lineDef->xType = 0;
+    lineDef->xArgs[0] = 0;
+
+    v1[VX] = (int16_t) map->vertexes[(lineDef->v[0]-1) * 2];
+    v1[VY] = (int16_t) map->vertexes[(lineDef->v[0]-1) * 2 + 1];
+    v2[VX] = (int16_t) map->vertexes[(lineDef->v[1]-1) * 2];
+    v2[VY] = (int16_t) map->vertexes[(lineDef->v[1]-1) * 2 + 1];
+
+    PolyStart[VX] = v1[VX];
+    PolyStart[VY] = v1[VY];
+    PolyLineCount = 1;
+    validCount++;
+    lineDef->validCount = validCount;
+    iterFindPolyLines(v2[VX], v2[VY], NULL);
+
+    lineList = malloc((PolyLineCount+1) * sizeof(mline_t*));
+
+    lineList[0] = lineDef; // Insert the first line.
+    validCount++;
+    lineDef->validCount = validCount;
+    iterFindPolyLines(v2[VX], v2[VY], lineList + 1);
+    lineList[PolyLineCount] = 0; // Terminate.
+
+    *num = PolyLineCount;
+    return lineList;
 }
 
 /**
@@ -712,53 +722,35 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
 {
 #define MAXPOLYLINES         32
 
-    uint                i;
+    uint i;
 
     for(i = 0; i < map->numLines; ++i)
     {
-        mline_t            *line = &map->lines[i];
+        mline_t* line = &map->lines[i];
 
-        if(line->xType == PO_LINE_START && line->xArgs[0] == tag)
+        if(line->aFlags & LAF_POLYOBJ)
+            continue;
+        if(!(line->xType == PO_LINE_START && line->xArgs[0] == tag))
+            continue;
+
+        {mline_t** lineList;
+        uint num;
+        if((lineList = collectPolyobjLineDefs(line, &num)))
         {
-            byte                seqType;
-            mline_t           **lineList;
-            int16_t             v1[2], v2[2];
-            uint                poIdx;
-
-            line->xType = 0;
-            line->xArgs[0] = 0;
-            PolyLineCount = 1;
-
-            v1[VX] = (int16_t) map->vertexes[(line->v[0]-1) * 2];
-            v1[VY] = (int16_t) map->vertexes[(line->v[0]-1) * 2 + 1];
-            v2[VX] = (int16_t) map->vertexes[(line->v[1]-1) * 2];
-            v2[VY] = (int16_t) map->vertexes[(line->v[1]-1) * 2 + 1];
-            PolyStart[VX] = v1[VX];
-            PolyStart[VY] = v1[VY];
-            if(!iterFindPolyLines(v2[VX], v2[VY], NULL))
-            {
-                Con_Error("WadMapConverter::findAndCreatePolyobj: Found unclosed polyobj.\n");
-            }
-
-            lineList = malloc((PolyLineCount+1) * sizeof(mline_t*));
-
-            lineList[0] = line; // Insert the first line.
-            iterFindPolyLines(v2[VX], v2[VY], lineList + 1);
-            lineList[PolyLineCount] = 0; // Terminate.
+            uint poIdx;
+            byte seqType;
+            boolean result;
 
             seqType = line->xArgs[2];
             if(seqType >= SEQTYPE_NUMSEQ)
                 seqType = 0;
 
-            if(createPolyobj(lineList, PolyLineCount, &poIdx, tag,
-                             seqType, anchorX, anchorY))
-            {
-                free(lineList);
-                return true;
-            }
-
+            result = createPolyobj(lineList, num, &poIdx, tag, seqType, anchorX, anchorY);
             free(lineList);
-        }
+
+            if(result)
+                return true;
+        }}
     }
 
     /**
@@ -777,6 +769,9 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
         for(i = 0; i < map->numLines; ++i)
         {
             mline_t         *line = &map->lines[i];
+
+            if(line->aFlags & LAF_POLYOBJ)
+                continue;
 
             if(line->xType == PO_LINE_EXPLICIT &&
                line->xArgs[0] == tag)
@@ -804,6 +799,7 @@ static boolean findAndCreatePolyobj(int16_t tag, int16_t anchorX,
                     // Clear out any special.
                     line->xType = 0;
                     line->xArgs[0] = 0;
+                    line->aFlags |= LAF_POLYOBJ;
                 }
             }
         }
@@ -1120,7 +1116,8 @@ static boolean loadLinedefs(const byte* buf, size_t len)
                 l->sides[LEFT] = 0;
             else
                 l->sides[LEFT] = idx + 1;
-            l = l;
+            l->aFlags = 0;
+            l->validCount = 0;
         }
         break;
 
@@ -1156,7 +1153,8 @@ static boolean loadLinedefs(const byte* buf, size_t len)
                 l->sides[LEFT] = 0;
             else
                 l->sides[LEFT] = idx + 1;
-            l = l;
+            l->aFlags = 0;
+            l->validCount = 0;
         }
         break;
 
@@ -1193,6 +1191,8 @@ static boolean loadLinedefs(const byte* buf, size_t len)
                 l->sides[LEFT] = 0;
             else
                 l->sides[LEFT] = idx + 1;
+            l->aFlags = 0;
+            l->validCount = 0;
         }
         break;
     }

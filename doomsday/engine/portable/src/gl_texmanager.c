@@ -3003,7 +3003,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context,
 
         if(tex->type == GLT_SPRITE || tex->type == GLT_DOOMTEXTURE)
         {
-            if(image.pixelSize == 1 && fillOutlines)
+            if(image.pixelSize == 1 && fillOutlines && image.isMasked)
                 ColorOutlines(image.pixels, image.width, image.height);
         }
 

@@ -135,12 +135,14 @@ static superblock_t* createInitialHEdges(gamemap_t* map)
     {
         linedef_t*          line = &map->lineDefs[i];
 
+        if(line->buildData.mlFlags & MLF_POLYOBJ)
+            continue;
+
         front = back = NULL;
 
         // Ignore zero-length and polyobj lines.
-        if(!(line->buildData.mlFlags & MLF_ZEROLENGTH) &&
-           /*!line->buildData.overlap &&*/
-           !(line->buildData.mlFlags & MLF_POLYOBJ))
+        if(!(line->buildData.mlFlags & MLF_ZEROLENGTH)
+           /*&& !line->buildData.overlap*/)
         {
             // Check for Humungously long lines.
             if(ABS(line->v[0]->buildData.pos[VX] - line->v[1]->buildData.pos[VX]) >= 10000 ||

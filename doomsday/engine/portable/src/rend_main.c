@@ -2409,7 +2409,6 @@ static boolean Rend_RenderSSWallSeg(subsector_t* ssec, seg_t* seg)
         return false;
     }
 
-    solidSeg = true;
     frontsec = ssec->sector;
     backSide = seg->side;
     ldef = seg->lineDef;
@@ -2445,7 +2444,7 @@ static boolean Rend_RenderSSWallSeg(subsector_t* ssec, seg_t* seg)
 
         Rend_RadioUpdateLinedef(seg->lineDef, seg->side);
 
-        rendSegSection(ssec, seg, SEG_MIDDLE, &side->SW_middlesurface,
+        solidSeg = rendSegSection(ssec, seg, SEG_MIDDLE, &side->SW_middlesurface,
                            &seg->SG_v1->v, &seg->SG_v2->v, ffloor, fceil,
                            texOffset,
                            /*temp >*/ frontsec, /*< temp*/
@@ -4275,11 +4274,12 @@ static void Rend_RenderBoundingBoxes(void)
             float length = (lineDef->bBox[BOXTOP] - lineDef->bBox[BOXBOTTOM])/2;
             float pos[3];
 
+            /** Draw a bounding box for the lineDef.
             pos[VX] = lineDef->bBox[BOXLEFT]+width;
             pos[VY] = lineDef->bBox[BOXBOTTOM]+length;
             pos[VZ] = sec->SP_floorheight;
-
             Rend_DrawBBox(pos, width, length, height, 0, red, alpha, .08f, true);
+            */
 
             pos[VX] = (lineDef->L_v2pos[VX]+lineDef->L_v1pos[VX])/2;
             pos[VY] = (lineDef->L_v2pos[VY]+lineDef->L_v1pos[VY])/2;
