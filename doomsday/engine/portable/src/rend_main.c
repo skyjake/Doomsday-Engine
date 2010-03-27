@@ -913,6 +913,7 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices,
         vis->data.wall.modTexCoord[1][1] = dyn->t[1];
         for(c = 0; c < 3; ++c)
             vis->data.wall.modColor[c] = dyn->color[c];
+        vis->data.wall.modColor[3] = 1;
     }
     else
     {

@@ -79,7 +79,7 @@ typedef struct rendmaskedwallparams_s {
 
     DGLuint         modTex; // Texture to modulate with.
     float           modTexCoord[2][2]; // u and v coordinates.
-    float           modColor[3];
+    float           modColor[4];
 } rendmaskedwallparams_t;
 
 typedef struct rendspriteparams_s {
