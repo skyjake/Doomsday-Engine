@@ -2459,7 +2459,7 @@ void M_WriteText3(int x, int y, const char* string, gamefontid_t font,
                 // Do something flashy!
                 if(flash > 0)
                 {
-                    M_LetterFlash(cx, cy + yoff, w, h, true,
+                    M_LetterFlash(cx, cy + yoff + h/2, w, h, true,
                                   flashColor[CR], flashColor[CG],
                                   flashColor[CB], flashColor[CA] * flash);
                 }
@@ -2467,7 +2467,7 @@ void M_WriteText3(int x, int y, const char* string, gamefontid_t font,
             else if(flagShadow && cfg.menuShadow > 0)
             {
                 // Shadow.
-                M_LetterFlash(cx, cy + yoff, w, h, false, 1, 1, 1,
+                M_LetterFlash(cx, cy + yoff + h/2, w, h, false, 1, 1, 1,
                               (red <
                                0 ? DGL_GetInteger(DGL_CURRENT_COLOR_A) /
                                255.0f : alpha) * cfg.menuShadow);
