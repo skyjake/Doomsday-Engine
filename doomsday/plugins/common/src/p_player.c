@@ -718,7 +718,7 @@ void P_PlayerChangeClass(player_t* player, playerclass_t newClass)
 
         P_SpawnPlayer(player - players, newClass, oldMo->pos[VX],
                       oldMo->pos[VY], oldMo->pos[VZ], oldMo->angle, 0,
-                      P_MobjIsCamera(oldMo));
+                      P_MobjIsCamera(oldMo), true);
         P_MobjRemove(oldMo, true);
     }
 }

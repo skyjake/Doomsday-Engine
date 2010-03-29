@@ -5612,12 +5612,12 @@ void SV_MapTeleport(uint map, uint position)
             {
                 P_SpawnPlayer(i, cfg.playerClass[i], start->pos[VX],
                               start->pos[VY], start->pos[VZ], start->angle,
-                              start->spawnFlags, false);
+                              start->spawnFlags, false, true);
             }
             else
             {
                 P_SpawnPlayer(i, cfg.playerClass[i], 0, 0, 0, 0,
-                              MSF_Z_FLOOR, true);
+                              MSF_Z_FLOOR, true, true);
             }
         }
 

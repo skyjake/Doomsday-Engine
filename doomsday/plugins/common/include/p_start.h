@@ -162,7 +162,7 @@ void            P_DealPlayerStarts(uint entryPoint);
 
 void            P_SpawnPlayer(int plrNum, playerclass_t pClass, float x,
                               float y, float z, angle_t angle,
-                              int spawnFlags, boolean makeCamera);
+                              int spawnFlags, boolean makeCamera, boolean pickupItems);
 void            G_DeathMatchSpawnPlayer(int playernum);
 void            P_RebornPlayer(int plrNum);
 

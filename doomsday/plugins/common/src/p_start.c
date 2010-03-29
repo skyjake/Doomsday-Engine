@@ -386,7 +386,7 @@ void P_DealPlayerStarts(uint entryPoint)
  */
 void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
                    float z, angle_t angle, int spawnFlags,
-                   boolean makeCamera)
+                   boolean makeCamera, boolean pickupItems)
 {
     player_t*           p;
     mobj_t*             mo;
@@ -498,10 +498,13 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 
     p->pendingWeapon = WT_NOCHANGE;
 
-    // Finally, check the current position so that any interactions
-    // which would occur as a result of collision happen immediately
-    // (e.g., weapon pickups at the current position will be collected).
-    P_CheckPosition3fv(mo, mo->pos);
+    if(pickupItems)
+    {
+        // Check the current position so that any interactions which would
+        // occur as a result of collision happen immediately
+        // (e.g., weapon pickups at the current position will be collected).
+        P_CheckPosition3fv(mo, mo->pos);
+    }
 
     if(p->pendingWeapon != WT_NOCHANGE)
         p->readyWeapon = p->pendingWeapon;
@@ -531,10 +534,14 @@ static void spawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 #if __JDOOM__ || __JDOOM64__
     boolean             queueBody = (plrNum >= 0? true : false);
 #endif
+    boolean pickupItems = true;
 
     /* $voodoodolls */
     if(plrNum < 0)
+    {
         plrNum = -plrNum - 1;
+        pickupItems = false;
+    }
     plrNum = MINMAX_OF(0, plrNum, MAXPLAYERS-1);
 
     plr = &players[plrNum];
@@ -544,7 +551,7 @@ static void spawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
         G_QueueBody(plr->plr->mo);
 #endif
 
-    P_SpawnPlayer(plrNum, pClass, x, y, z, angle, spawnFlags, makeCamera);
+    P_SpawnPlayer(plrNum, pClass, x, y, z, angle, spawnFlags, makeCamera, pickupItems);
 
     // Spawn a teleport fog?
     if(doTeleSpark && !makeCamera)
