@@ -2091,7 +2091,7 @@ D_CMD(AddSub)
     boolean             force = false;
     float               delta = 0;
 
-    if(argc == 2)
+    if(argc <= 2)
     {
         Con_Printf("Usage: %s (cvar) (val) (force)\n", argv[0]);
         Con_Printf("Use force to make cvars go off limits.\n");
