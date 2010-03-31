@@ -683,10 +683,10 @@ void P_MorphThink(player_t *player)
     if(player->health > 0)
         P_UpdateBeak(player, &player->pSprites[ps_weapon]); // Handle beak movement
 
-	if(player->chickenPeck)
-	{   // Chicken attack counter.
-		player->chickenPeck -= 3;
-	}
+    if(player->chickenPeck)
+    {   // Chicken attack counter.
+        player->chickenPeck -= 3;
+    }
 
     if(IS_CLIENT || player->morphTics & 15)
         return;
