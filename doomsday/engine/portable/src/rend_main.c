@@ -2803,6 +2803,39 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
     }
 }
 
+static void occludeFrontFacingSegsInSubsector(const subsector_t* ssec)
+{
+    seg_t** ptr;
+
+    ptr = ssec->segs;
+    while(*ptr)
+    {
+        seg_t* seg = *ptr;
+
+        if((seg->frameFlags & SEGINF_FACINGFRONT) && seg->lineDef &&
+           !(seg->flags & SEGF_POLYOBJ))
+        {
+            if(!C_CheckViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY], seg->SG_v2pos[VX], seg->SG_v2pos[VY]))
+                seg->frameFlags &= ~SEGINF_FACINGFRONT;
+        }
+        *ptr++;
+    }
+
+    if(ssec->polyObj)
+    {
+        uint i;
+        for(i = 0; i < ssec->polyObj->numSegs; ++i)
+        {
+            seg_t* seg = ssec->polyObj->segs[i];
+            if(seg->frameFlags & SEGINF_FACINGFRONT)
+            {
+                if(!C_CheckViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY], seg->SG_v2pos[VX], seg->SG_v2pos[VY]))
+                    seg->frameFlags &= ~SEGINF_FACINGFRONT;
+            }
+        }
+    }
+}
+
 static void prepareSkyMaskPoly(rvertex_t verts[4], rtexcoord_t coords[4],
                                rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
                                float wallLength, material_t* mat)
@@ -3136,6 +3169,8 @@ static void Rend_RenderSubsector(uint ssecidx)
     LO_ClipInSubsector(ssecidx);
     occludeSubsector(ssec, true);
 
+    occludeFrontFacingSegsInSubsector(ssec);
+
     if(ssec->polyObj)
     {
         // Polyobjs don't obstruct, do clip lights with another algorithm.
@@ -3195,6 +3230,10 @@ static void Rend_RenderSubsector(uint ssecidx)
 
             if(solid)
             {
+                if(seg->lineDef->buildData.index -1 == 291)
+                    solid = false;
+                if(seg->lineDef->buildData.index -1 == 302)
+                    solid = false;
                 C_AddViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY],
                                 seg->SG_v2pos[VX], seg->SG_v2pos[VY]);
             }
