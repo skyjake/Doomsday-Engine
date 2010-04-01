@@ -385,6 +385,21 @@ int Cht_PowerupMessage(const int* args, int player)
     return true;
 }
 
+static void givePower(player_t* plr, powertype_t type)
+{
+    if(type < 0 && type >= NUM_POWER_TYPES)
+        return;
+
+    if(!plr->powers[type])
+    {
+        P_GivePower(plr, type);
+    }
+    else if(type == PT_STRENGTH || type == PT_FLIGHT || type == PT_ALLMAP)
+    {
+        P_TakePower(plr, type);
+    }
+}
+
 /**
  * 'idbehold?' power-up cheats.
  */
@@ -405,24 +420,10 @@ int Cht_PowerupFunc(const int* args, int player)
 
     for(i = 0; i < numValues; ++i)
     {
-        powertype_t type;
-
         if(args[0] != values[i])
             continue;
-        type = (powertype_t) i;
-
-        if(!plr->powers[type])
-        {
-            P_GivePower(plr, type);
-            P_SetMessage(plr, STSTR_BEHOLDX, false);
-        }
-        else if(type == PT_STRENGTH || type == PT_FLIGHT ||
-                type == PT_ALLMAP)
-        {
-            P_TakePower(plr, type);
-            P_SetMessage(plr, STSTR_BEHOLDX, false);
-        }
-
+        givePower(plr, (powertype_t) i);
+        P_SetMessage(plr, STSTR_BEHOLDX, false);
         return true;
     }
 
@@ -702,6 +703,7 @@ DEFCC(CCmdCheatGive)
 {
     char buf[100];
     int player = CONSOLEPLAYER;
+    player_t* plr;
     size_t i, stuffLen;
 
     if(IS_CLIENT)
@@ -756,6 +758,7 @@ DEFCC(CCmdCheatGive)
 
     if(!players[player].plr->inGame)
         return true; // Can't give to a plr who's not playing
+    plr = &players[player];
 
     strcpy(buf, argv[1]); // Stuff is the 2nd arg.
     strlwr(buf);
@@ -766,7 +769,6 @@ DEFCC(CCmdCheatGive)
         {
         case 'a':
             {
-            player_t* plr = &players[player];
             boolean giveAll = true;
 
             if(i < stuffLen)
@@ -790,38 +792,27 @@ DEFCC(CCmdCheatGive)
             break;
             }
         case 'b':
-            {
-            int args[2] = {PT_STRENGTH, 0};
-            Cht_PowerupFunc(args, player);
+            givePower(plr, PT_STRENGTH);
             break;
-            }
+
         case 'f':
-            {
-            int args[2] = {PT_FLIGHT, 0};
-            Cht_PowerupFunc(args, player);
+            givePower(plr, PT_FLIGHT);
             break;
-            }
+
         case 'g':
-            {
-            int args[2] = {PT_INFRARED, 0};
-            Cht_PowerupFunc(args, player);
+            givePower(plr, PT_INFRARED);
             break;
-            }
+
         case 'h':
-            {
-            player_t* plr = &players[player];
             P_GiveBody(plr, healthLimit);
             break;
-            }
+
         case 'i':
-            {
-            int args[2] = {PT_INVULNERABILITY, 0};
-            Cht_PowerupFunc(args, player);
+            givePower(plr, PT_INVULNERABILITY);
             break;
-            }
+
         case 'k':
             {
-            player_t* plr = &players[player];
             boolean giveAll = true;
 
             if(i < stuffLen)
@@ -845,36 +836,27 @@ DEFCC(CCmdCheatGive)
             break;
             }
         case 'm':
-            {
-            int args[2] = {PT_ALLMAP, 0};
-            Cht_PowerupFunc(args, player);
+            givePower(plr, PT_ALLMAP);
             break;
-            }
+
         case 'p':
-            {
-            player_t* plr = &players[player];
             P_GiveBackpack(plr);
             break;
-            }
+
         case 'r':
             giveArmor(player, 1);
             break;
 
         case 's':
-            {
-            int args[2] = {PT_IRONFEET, 0};
-            Cht_PowerupFunc(args, player);
+            givePower(plr, PT_IRONFEET);
             break;
-            }
+
         case 'v':
-            {
-            int args[2] = {PT_INVISIBILITY, 0};
-            Cht_PowerupFunc(args, player);
+            givePower(plr, PT_INVISIBILITY);
             break;
-            }
+
         case 'w':
             {
-            player_t* plr = &players[player];
             boolean giveAll = true;
 
             if(i < stuffLen)
