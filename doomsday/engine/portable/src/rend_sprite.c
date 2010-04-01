@@ -108,10 +108,6 @@ static __inline void renderQuad(dgl_vertex_t *v, dgl_color_t *c,
     glEnd();
 }
 
-/**
- * Fog is turned off while rendering. It's not feasible to think that the
- * fog would obstruct the player's view of his own weapon.
- */
 void Rend_Draw3DPlayerSprites(void)
 {
     int                 i;
@@ -119,13 +115,12 @@ void Rend_Draw3DPlayerSprites(void)
     // Setup the modelview matrix.
     Rend_ModelViewMatrix(false);
 
+    if(usingFog)
+        glEnable(GL_FOG);
+
     // Clear Z buffer. This will prevent the psprites from being clipped
     // by nearby polygons.
     glClear(GL_DEPTH_BUFFER_BIT);
-
-    // Turn off fog.
-    if(usingFog)
-        glDisable(GL_FOG);
 
     for(i = 0; i < DDMAXPSPRITES; ++i)
     {
@@ -141,9 +136,8 @@ void Rend_Draw3DPlayerSprites(void)
         }
     }
 
-    // Should we turn the fog back on?
     if(usingFog)
-        glEnable(GL_FOG);
+        glDisable(GL_FOG);
 }
 
 /**
@@ -453,6 +447,9 @@ void Rend_Draw2DPlayerSprites(void)
     if((ddpl->flags & DDPF_CAMERA) || (ddpl->flags & DDPF_CHASECAM))
         return;
 
+    if(usingFog)
+        glEnable(GL_FOG);
+
     // Check for fullbright.
     for(i = 0, psp = ddpl->pSprites; i < DDMAXPSPRITES; ++i, psp++)
     {
@@ -471,6 +468,9 @@ void Rend_Draw2DPlayerSprites(void)
             Rend_DrawPSprite(&params);
         }
     }
+
+    if(usingFog)
+        glDisable(GL_FOG);
 }
 
 /**

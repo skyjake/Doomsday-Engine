@@ -889,6 +889,23 @@ void R_RenderPlayerView(int num)
 }
 
 /**
+ * Should be called when returning from a game-side drawing method to ensure
+ * that our assumptions of the GL state are valid. This is necessary because
+ * DGL affords the user the posibility of modifiying the GL state.
+ *
+ * Todo: A cleaner approach would be a DGL state stack which could simply pop.
+ */
+static void restoreDefaultGLState(void)
+{
+    // Here we use the DGL methods as this ensures it's state is kept in sync.
+    DGL_Disable(DGL_FOG);
+    DGL_Disable(DGL_SCISSOR_TEST);
+    DGL_Enable(DGL_TEXTURING);
+    DGL_Enable(DGL_LINE_SMOOTH);
+    DGL_Enable(DGL_POINT_SMOOTH);
+}
+
+/**
  * Render all view ports in the viewport grid.
  */
 void R_RenderViewPorts(void)
@@ -938,12 +955,14 @@ void R_RenderViewPorts(void)
 
             // Draw in-window game graphics (layer 0).
             gx.G_Drawer(0);
+            restoreDefaultGLState();
 
             // Draw the view border.
             R_RenderPlayerViewBorder();
 
             // Draw in-window game graphics (layer 1).
             gx.G_Drawer(1);
+            restoreDefaultGLState();
 
             // Increment the internal frame count. This does not
             // affect the FPS counter.

@@ -715,8 +715,12 @@ void GL_Init2DState(void)
     glFogi(GL_FOG_MODE, (fogModeDefault == 0 ? GL_LINEAR :
                           fogModeDefault == 1 ? GL_EXP :
                           GL_EXP2));
-    glFogf(GL_FOG_END, 2100); // This should be tweaked a bit.
-    fogColor[0] = fogColor[1] = fogColor[2] = 138.0f/255;
+    glFogf(GL_FOG_START, DEFAULT_FOG_START);
+    glFogf(GL_FOG_END, DEFAULT_FOG_END);
+    glFogf(GL_FOG_DENSITY, DEFAULT_FOG_DENSITY);
+    fogColor[0] = DEFAULT_FOG_COLOR_RED;
+    fogColor[1] = DEFAULT_FOG_COLOR_GREEN;
+    fogColor[2] = DEFAULT_FOG_COLOR_BLUE;
     fogColor[3] = 1;
     glFogfv(GL_FOG_COLOR, fogColor);
 }
@@ -816,25 +820,7 @@ void GL_ProjectionMatrix(void)
 
 void GL_UseFog(int yes)
 {
-    if(isDedicated)
-    {
-        // The dedicated server does not care about fog.
-        return;
-    }
-
-    if(!usingFog && yes)
-    {
-        // Fog is turned on.
-        usingFog = true;
-        glEnable(GL_FOG);
-    }
-    else if(usingFog && !yes)
-    {
-        // Fog must be turned off.
-        usingFog = false;
-        glDisable(GL_FOG);
-    }
-    // Otherwise we won't do a thing.
+    usingFog = yes;
 }
 
 /**

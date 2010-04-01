@@ -109,16 +109,12 @@ void H_SetupState(boolean dosetup)
 {
     if(dosetup)
     {
-        if(usingFog)
-            glDisable(GL_FOG);
         glDepthMask(GL_FALSE);
         glDisable(GL_DEPTH_TEST);
         GL_BlendMode(BM_ADD);
     }
     else
     {
-        if(usingFog)
-            glEnable(GL_FOG);
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
         GL_BlendMode(BM_NORMAL);

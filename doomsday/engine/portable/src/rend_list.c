@@ -1399,6 +1399,31 @@ static void finishListState(listmode_t mode, rendlist_t* list)
     }
 }
 
+static void finishPassState(listmode_t mode)
+{
+    switch(mode)
+    {
+    default:
+        break;
+
+    case LM_ALL:
+    case LM_SHADOW:
+    case LM_BLENDED:
+    case LM_LIGHT_MOD_TEXTURE:
+    case LM_TEXTURE_PLUS_LIGHT:
+    case LM_LIGHTS:
+    case LM_UNBLENDED_TEXTURE_AND_DETAIL:
+    case LM_ALL_DETAILS:
+    case LM_BLENDED_DETAILS:
+    case LM_SHINY:
+    case LM_MASKED_SHINY:
+    case LM_ALL_SHINY:
+        if(usingFog)
+            glDisable(GL_FOG);
+        break;
+    }
+}
+
 /**
  * Setup GL state for an entire rendering pass (compassing multiple lists).
  */
@@ -1418,9 +1443,6 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         // We don't want to write to the color buffer.
         glEnable(GL_BLEND);
         glBlendFunc(GL_ZERO, GL_ONE);
-        // No need for fog.
-        if(usingFog)
-            glDisable(GL_FOG);
         break;
 
     case LM_BLENDED:
@@ -1478,10 +1500,6 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
-
-        // Fog is allowed during this pass.
-        if(usingFog)
-            glDisable(GL_FOG);
         // All of the surfaces are opaque.
         glDisable(GL_BLEND);
         break;
@@ -1496,9 +1514,6 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         glDepthMask(GL_FALSE);
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
-        // Fog is allowed during this pass.
-        if(usingFog)
-            glDisable(GL_FOG);
         // All of the surfaces are opaque.
         glEnable(GL_BLEND);
         glBlendFunc(GL_ONE, GL_ONE);
@@ -1511,9 +1526,6 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
-
-        // Fog must be disabled during this pass.
-        glDisable(GL_FOG);
         // All of the surfaces are opaque.
         glDisable(GL_BLEND);
         break;
@@ -1533,8 +1545,6 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
             glEnable(GL_FOG);
             glFogfv(GL_FOG_COLOR, blackColor);
         }
-        else
-            glDisable(GL_FOG);
 
         glEnable(GL_BLEND);
         GL_BlendMode(BM_ADD);
@@ -1554,8 +1564,6 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         // All of the surfaces are opaque.
         glEnable(GL_BLEND);
         glBlendFunc(GL_DST_COLOR, GL_ZERO);
-        // Fog would mess with the color (this is a multiplicative pass).
-        glDisable(GL_FOG);
         break;
 
     case LM_UNBLENDED_TEXTURE_AND_DETAIL:
@@ -1584,8 +1592,6 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         // All of the surfaces are opaque.
         glEnable(GL_BLEND);
         glBlendFunc(GL_DST_COLOR, GL_ZERO);
-        // This is a multiplicative pass.
-        glDisable(GL_FOG);
         break;
 
     case LM_ALL_DETAILS:
@@ -1667,14 +1673,9 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         glDepthFunc(GL_LEQUAL);
 
         if(usingFog)
-        {
-            // Fog makes the shininess diminish in the distance.
+        {   // Fog makes the shininess diminish in the distance.
             glEnable(GL_FOG);
             glFogfv(GL_FOG_COLOR, blackColor);
-        }
-        else
-        {
-            glDisable(GL_FOG);
         }
         glEnable(GL_BLEND);
         GL_BlendMode(BM_ADD); // Purely additive.
@@ -1695,10 +1696,6 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
             // Fog makes the shininess diminish in the distance.
             glEnable(GL_FOG);
             glFogfv(GL_FOG_COLOR, blackColor);
-        }
-        else
-        {
-            glDisable(GL_FOG);
         }
         glEnable(GL_BLEND);
         GL_BlendMode(BM_ADD); // Purely additive.
@@ -1738,6 +1735,8 @@ static void renderLists(listmode_t mode, rendlist_t** lists, uint num)
         // Some modes require cleanup.
         finishListState(mode, list);
     }
+
+    finishPassState(mode);
 }
 
 /**
@@ -2019,10 +2018,6 @@ END_PROF( PROF_RL_RENDER_SHADOW );
         glEnable(GL_FOG);
         glFogfv(GL_FOG_COLOR, fogColor);
     }
-    else
-    {
-        glDisable(GL_FOG);
-    }
 
     // Draw masked walls, sprites and models.
 BEGIN_PROF( PROF_RL_RENDER_MASKED );
@@ -2031,6 +2026,9 @@ BEGIN_PROF( PROF_RL_RENDER_MASKED );
 
     // Draw particles.
     Rend_RenderParticles();
+
+    if(usingFog)
+        glDisable(GL_FOG);
 
 END_PROF( PROF_RL_RENDER_MASKED );
 END_PROF( PROF_RL_RENDER_ALL );

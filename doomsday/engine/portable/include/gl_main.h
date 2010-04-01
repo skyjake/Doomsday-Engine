@@ -32,6 +32,14 @@
 #include "con_decl.h"
 #include "r_main.h"
 
+// This should be tweaked a bit.
+#define DEFAULT_FOG_START       0
+#define DEFAULT_FOG_END         2100
+#define DEFAULT_FOG_DENSITY     0.0001f
+#define DEFAULT_FOG_COLOR_RED   138.0f/255
+#define DEFAULT_FOG_COLOR_GREEN 138.0f/255
+#define DEFAULT_FOG_COLOR_BLUE  138.0f/255
+
 typedef enum glfontstyle_e {
     GLFS_NORMAL,
     GLFS_BOLD,

@@ -430,6 +430,13 @@ int DED_AddMapInfo(ded_t *ded, char *str)
     inf->gravity = 1;
     inf->parTime = -1; // unknown
 
+    inf->fogColor[0] = DEFAULT_FOG_COLOR_RED;
+    inf->fogColor[1] = DEFAULT_FOG_COLOR_GREEN;
+    inf->fogColor[2] = DEFAULT_FOG_COLOR_BLUE;
+    inf->fogDensity = DEFAULT_FOG_DENSITY;
+    inf->fogStart = DEFAULT_FOG_START;
+    inf->fogEnd = DEFAULT_FOG_END;
+
     inf->sky.height = .666667f;
     for(i = 0; i < NUM_SKY_MODELS; ++i)
     {

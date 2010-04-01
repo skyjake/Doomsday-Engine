@@ -4238,9 +4238,6 @@ static void Rend_RenderBoundingBoxes(void)
     eye[VY] = vz;
     eye[VZ] = vy;
 
-    if(usingFog)
-        glDisable(GL_FOG);
-
     glDisable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
@@ -4335,7 +4332,4 @@ static void Rend_RenderBoundingBoxes(void)
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
-
-    if(usingFog)
-        glEnable(GL_FOG);
 }
