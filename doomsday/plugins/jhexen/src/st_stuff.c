@@ -445,9 +445,10 @@ static void drawChain(hudstate_t* hud)
         234  // Purple
     };
 
-    int                 x, y, w, h, cw;
+    int                 x, y, w, h;
     int                 pClass, pColor;
-    float               healthPos, gemXOffset;
+    float               healthPos;
+    int                 gemXOffset;
     float               gemglow, rgb[3];
     int                 player = hud - hudStates;
 
@@ -478,24 +479,23 @@ static void drawChain(hudstate_t* hud)
     gemglow = healthPos;
 
     // Draw the chain.
-    x = 44;
+    x = 43;
     y = 193;
-    w = ST_WIDTH - 44 - 44;
+    w = ST_WIDTH - 43 - 43;
     h = 7;
-    cw = (float) w / dpChain[pClass].width;
 
-    DGL_SetPatch(dpChain[pClass].lump, DGL_REPEAT, DGL_CLAMP);
+    DGL_SetPatch(dpChain[pClass].lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
     DGL_Color4f(1, 1, 1, hud->statusbarCounterAlpha);
 
-    gemXOffset = (w - dpLifeGem[pClass][pColor].width) * healthPos;
+    gemXOffset = 7 + ROUND((w - 14) * healthPos) - dpLifeGem[pClass][pColor].width/2;
 
     if(gemXOffset > 0)
     {   // Left chain section.
-        float               cw = gemXOffset / dpChain[pClass].width;
+        float cw = (float)(dpChain[pClass].width - gemXOffset) / dpChain[pClass].width;
 
         DGL_Begin(DGL_QUADS);
-            DGL_TexCoord2f(0, 1 - cw, 0);
+            DGL_TexCoord2f(0, cw, 0);
             DGL_Vertex2f(x, y);
 
             DGL_TexCoord2f(0, 1, 0);
@@ -504,7 +504,7 @@ static void drawChain(hudstate_t* hud)
             DGL_TexCoord2f(0, 1, 1);
             DGL_Vertex2f(x + gemXOffset, y + h);
 
-            DGL_TexCoord2f(0, 1 - cw, 1);
+            DGL_TexCoord2f(0, cw, 1);
             DGL_Vertex2f(x, y + h);
         DGL_End();
     }
@@ -512,7 +512,7 @@ static void drawChain(hudstate_t* hud)
     if(gemXOffset + dpLifeGem[pClass][pColor].width < w)
     {   // Right chain section.
         float               cw =
-            (w - gemXOffset - dpLifeGem[pClass][pColor].width) /
+            (w - (float)gemXOffset - dpLifeGem[pClass][pColor].width) /
                 dpChain[pClass].width;
 
         DGL_Begin(DGL_QUADS);
@@ -531,16 +531,45 @@ static void drawChain(hudstate_t* hud)
     }
 
     // Draw the life gem.
-    GL_DrawPatchLitAlpha(x + gemXOffset, 193,
-                         1, hud->statusbarCounterAlpha,
-                         dpLifeGem[pClass][pColor].lump);
+    {
+    int vX = x + MAX_OF(0, gemXOffset);
+    int vWidth;
+    float s1 = 0, s2 = 1;
+
+    vWidth = dpLifeGem[pClass][pColor].width;
+    if(gemXOffset + dpLifeGem[pClass][pColor].width > w)
+    {
+        vWidth -= gemXOffset + dpLifeGem[pClass][pColor].width - w;
+        s2 = (float)vWidth / dpLifeGem[pClass][pColor].width;
+    }
+    if(gemXOffset < 0)
+    {
+        vWidth -= -gemXOffset;
+        s1 = (float)(-gemXOffset) / dpLifeGem[pClass][pColor].width;
+    }
+
+    DGL_SetPatch(dpLifeGem[pClass][pColor].lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_Begin(DGL_QUADS);
+        DGL_TexCoord2f(0, s1, 0);
+        DGL_Vertex2f(vX, y);
+
+        DGL_TexCoord2f(0, s2, 0);
+        DGL_Vertex2f(vX + vWidth, y);
+
+        DGL_TexCoord2f(0, s2, 1);
+        DGL_Vertex2f(vX + vWidth, y + h);
+
+        DGL_TexCoord2f(0, s1, 1);
+        DGL_Vertex2f(vX, y + h);
+    DGL_End();
+    }
 
     // How about a glowing gem?
     DGL_BlendMode(BM_ADD);
     DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
 
     R_GetColorPaletteRGBf(0, rgb, theirColors[pColor], false);
-    DGL_DrawRect(x + gemXOffset + 23, 193 - 6, 41, 24, rgb[0], rgb[1],
+    DGL_DrawRect(x + gemXOffset + 23, y - 6, 41, 24, rgb[0], rgb[1],
                  rgb[2], gemglow - (1 - hud->statusbarCounterAlpha));
 
     DGL_BlendMode(BM_NORMAL);
