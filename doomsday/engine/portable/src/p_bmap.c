@@ -381,14 +381,18 @@ void P_BlockmapLinkPolyobj(blockmap_t* blockmap, polyobj_t* po)
 {
     if(blockmap)
     {
-        bmap_t*             bmap = (bmap_t*) blockmap;
-        uint                blockBox[4];
+        bmap_t* bmap = (bmap_t*) blockmap;
+        uint blockBox[4], x, y;
 
         P_PolyobjUpdateBBox(po);
         P_BoxToBlockmapBlocks(blockmap, blockBox, po->box);
 
-        M_GridmapBoxIteratorv(bmap->gridmap, blockBox,
-                              linkPolyobjInBlock, (void*) po);
+        for(y = blockBox[BOXBOTTOM]; y <= blockBox[BOXTOP]; ++y)
+            for(x = blockBox[BOXLEFT]; x <= blockBox[BOXRIGHT]; ++x)
+            {
+                bmapblock_t* block = (bmapblock_t*) M_GridmapGetBlock(bmap->gridmap, x, y, true);
+                linkPolyobjInBlock((void*)block, po);
+            }
     }
 }
 

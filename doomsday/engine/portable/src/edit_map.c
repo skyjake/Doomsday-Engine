@@ -2131,8 +2131,8 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
     }
     else
     {
-        l->bBox[BOXBOTTOM] = l->L_v1pos[VY];
-        l->bBox[BOXTOP]    = l->L_v2pos[VY];
+        l->bBox[BOXBOTTOM] = l->L_v2pos[VY];
+        l->bBox[BOXTOP]    = l->L_v1pos[VY];
     }
 
     l->L_frontside = front;
