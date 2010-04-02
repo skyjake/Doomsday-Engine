@@ -2463,7 +2463,7 @@ void P_SlideMove(mobj_t* mo)
     {
         float leadpos[3], trailpos[3], newPos[3];
 
-        if(!--hitcount == 3)
+        if(--hitcount == 0)
             goto stairstep; // Don't loop forever.
 
         // Trace along the three leading corners.
