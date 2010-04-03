@@ -2330,6 +2330,10 @@ static boolean P_ThingHeightClip(mobj_t* thing)
             thing->pos[VZ] = thing->floorZ;
         }
 #else
+        // Update view offset of real players $voodoodolls.
+        if(thing->player && thing->player->plr->mo == thing)
+            thing->player->viewZ += thing->floorZ - thing->pos[VZ];
+
         // Walking monsters rise and fall with the floor.
         thing->pos[VZ] = thing->floorZ;
 
