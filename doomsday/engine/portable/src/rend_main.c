@@ -1866,7 +1866,8 @@ static boolean doRenderSeg(seg_t* seg,
                            const float* color, const float* color2,
                            biassurface_t* bsuf, uint elmIdx /*tmp*/,
                            const material_snapshot_t* msA, float inter,
-                           const material_snapshot_t* msB)
+                           const material_snapshot_t* msB,
+                           boolean isTwosidedMiddle)
 {
     rendworldpoly_params_t params;
     sidedef_t*          side = (seg->lineDef? SEG_SIDEDEF(seg) : NULL);
@@ -1947,7 +1948,7 @@ static boolean doRenderSeg(seg_t* seg,
             radioParams.segOffset = &seg->offset;
             radioParams.segLength = &seg->length;
             radioParams.frontSec = seg->SG_frontsector;
-            radioParams.backSec = seg->SG_backsector;
+            radioParams.backSec = (!isTwosidedMiddle? seg->SG_backsector : NULL);
 
             /**
              * \kludge Revert the vertex coords as they may have been changed
@@ -2384,7 +2385,8 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
                                texTL, texBR, texOffset, texScale, blendMode,
                                color, color2,
                                seg->bsuf[section], (uint) section,
-                               &msA, inter, blended? &msB : NULL);
+                               &msA, inter, blended? &msB : NULL,
+                               (section == SEG_MIDDLE && isTwoSided));
         }
     }
 
