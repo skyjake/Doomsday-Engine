@@ -4208,6 +4208,43 @@ void Rend_DrawArrow(const float pos3f[3], float a, float s,
     glPopMatrix();
 }
 
+static boolean drawMobjBBox(thinker_t* th, void* context)
+{
+    static const float  red[3] = { 1, 0.2f, 0.2f}; // non-solid objects
+    static const float  green[3] = { 0.2f, 1, 0.2f}; // solid objects
+    static const float  yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
+
+    mobj_t* mo = (mobj_t*) th;
+    float size, alpha, eye[3];
+
+    // We don't want the console player.
+    if(mo == ddPlayers[consolePlayer].shared.mo)
+        return true; // Continue iteration.
+    // Is it vissible?
+    if(!(mo->subsector && mo->subsector->sector->frameFlags & SIF_VISIBLE))
+        return true; // Continue iteration.
+
+    eye[VX] = vx;
+    eye[VY] = vz;
+    eye[VZ] = vy;
+
+    alpha = 1 - ((M_Distance(mo->pos, eye)/(theWindow->width/2))/4);
+    if(alpha < .25f)
+        alpha = .25f; // Don't make them totally invisible.
+
+    // Draw a bounding box in an appropriate color.
+    size = mo->radius;
+    Rend_DrawBBox(mo->pos, size, size, mo->height/2, 0,
+                  (mo->ddFlags & DDMF_MISSILE)? yellow :
+                  (mo->ddFlags & DDMF_SOLID)? green : red,
+                  alpha, .08f, true);
+
+    Rend_DrawArrow(mo->pos, ((mo->angle + ANG45 + ANG90) / (float) ANGLE_MAX *-360), size*1.25,
+                   (mo->ddFlags & DDMF_MISSILE)? yellow :
+                   (mo->ddFlags & DDMF_SOLID)? green : red, alpha);
+    return true; // Continue iteration.
+}
+
 /**
  * Renders bounding boxes for all mobj's (linked in sec->mobjList, except
  * the console player) in all sectors that are currently marked as vissible.
@@ -4222,9 +4259,7 @@ static void Rend_RenderBoundingBoxes(void)
     static const float  yellow[3] = {0.7f, 0.7f, 0.2f}; // missiles
 
     uint                i;
-    float               size, alpha, eye[3];
-    mobj_t*             mo;
-    sector_t*           sec;
+    float               eye[3];
     material_t*         mat;
     material_snapshot_t ms;
 
@@ -4250,37 +4285,7 @@ static void Rend_RenderBoundingBoxes(void)
     GL_BlendMode(BM_ADD);
 
     if(devMobjBBox)
-    for(i = 0; i < numSectors; ++i)
-    {
-        sec = SECTOR_PTR(i);
-
-        // Is it vissible?
-        if(!(sec->frameFlags & SIF_VISIBLE))
-            continue;
-
-        // For every mobj in the sector's mobjList
-        for(mo = sec->mobjList; mo; mo = mo->sNext)
-        {
-            if(mo == ddPlayers[consolePlayer].shared.mo)
-                continue; // We don't want the console player.
-
-            alpha = 1 - ((M_Distance(mo->pos, eye)/(theWindow->width/2))/4);
-
-            if(alpha < .25f)
-                alpha = .25f; // Don't make them totally invisible.
-
-            // Draw a bounding box in an appropriate color.
-            size = mo->radius;
-            Rend_DrawBBox(mo->pos, size, size, mo->height/2, 0,
-                          (mo->ddFlags & DDMF_MISSILE)? yellow :
-                          (mo->ddFlags & DDMF_SOLID)? green : red,
-                          alpha, .08f, true);
-
-            Rend_DrawArrow(mo->pos, ((mo->angle + ANG45 + ANG90) / (float) ANGLE_MAX *-360), size*1.25,
-                           (mo->ddFlags & DDMF_MISSILE)? yellow :
-                           (mo->ddFlags & DDMF_SOLID)? green : red, alpha);
-        }
-    }
+        P_IterateThinkers(gx.MobjThinker, 0x1, drawMobjBBox, NULL);
 
     if(devPolyobjBBox)
     for(i = 0; i < numPolyObjs; ++i)
