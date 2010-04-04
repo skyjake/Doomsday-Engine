@@ -482,11 +482,11 @@ void R_SetAllDoomsdayFlags(void)
                 mo->ddFlags |= DDMF_DONTDRAW;
 
             // Choose which ddflags to set.
-            if(mo->flags2 & MF2_DONTDRAW)
+            /*if(mo->flags2 & MF2_DONTDRAW)
             {
                 mo->ddFlags |= DDMF_DONTDRAW;
                 continue; // No point in checking the other flags.
-            }
+            }*/
 
             if((mo->flags & MF_BRIGHTSHADOW) == MF_BRIGHTSHADOW)
                 mo->ddFlags |= DDMF_BRIGHTSHADOW;

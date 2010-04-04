@@ -1406,12 +1406,6 @@ int PatchThing(int thingy)
 
                 if(vchanged)
                 {
-                    if(value & 0x10) // Old MF_NOBLOCKMAP
-                    {
-                        // Ensure vanilla compatibility; clear incompatible flags.
-                        value &= ~(0x2 /*=MF_SOLID*/| 0x4 /*=MF_SHOOTABLE*/);
-                    }
-
                     info->flags[0] = value;
 
                     if(value & 0x100) // Spawnceiling?

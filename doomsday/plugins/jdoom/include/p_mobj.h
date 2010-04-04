@@ -62,7 +62,7 @@
 #define MF_SOLID            0x00000002  // Blocks.
 #define MF_SHOOTABLE        0x00000004  // Can be hit.
 #define MF_NOSECTOR         0x00000008  // (p) Don't use the sector links (invisible but touchable).
-//#define MF_UNUSED1        0x00000010  // Formerly MF_NOBLOCKMAP
+#define MF_NOBLOCKMAP       0x00000010  // (p) Don't use the blocklinks (inert but displayable)
 #define MF_AMBUSH           0x00000020  // Not to be activated by sound, deaf monster.
 #define MF_JUSTHIT          0x00000040  // Will try to attack right back.
 #define MF_JUSTATTACKED     0x00000080  // Will take at least one step before attacking.

@@ -58,7 +58,8 @@
 #define MF_SHOOTABLE    4
 #define MF_NOSECTOR     8          // don't use the sector links
                                    // (invisible but touchable)
-//#define MF_UNUSED1    16         // Formerly MF_NOBLOCKMAP
+#define MF_NOBLOCKMAP   16         // don't use the blocklinks
+                                   // (inert but displayable)
 #define MF_AMBUSH       32
 #define MF_JUSTHIT      64         // try to attack right back
 #define MF_JUSTATTACKED 128        // take at least one step before attacking
