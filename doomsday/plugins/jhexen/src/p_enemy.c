@@ -2411,7 +2411,7 @@ void C_DECL A_BishopPainBlur(mobj_t *actor)
     P_SpawnMobj3fv(MT_BISHOPPAINBLUR, pos, actor->angle, 0);
 }
 
-static void DragonSeek(mobj_t *actor, angle_t thresh, angle_t turnMax)
+static void dragonSeek(mobj_t *actor, angle_t thresh, angle_t turnMax)
 {
     int             i, search, dir, bestArg;
     float           dist;
@@ -2452,9 +2452,8 @@ static void DragonSeek(mobj_t *actor, angle_t thresh, angle_t turnMax)
         dist = P_ApproxDistance(target->pos[VX] - actor->pos[VX],
                                 target->pos[VY] - actor->pos[VY]);
         dist /= actor->info->speed;
-        if(dist < 1)
-            dist = 1;
-
+        if(dist < FIX2FLT(1))
+            dist = FIX2FLT(1);
         actor->mom[MZ] = (target->pos[VZ] - actor->pos[VZ]) / dist;
     }
     else
@@ -2491,7 +2490,7 @@ static void DragonSeek(mobj_t *actor, angle_t thresh, angle_t turnMax)
         }
     }
 
-    if(dist < 4)
+    if(dist < FIX2FLT(4))
     {   // Hit the target thing.
         if(actor->target && P_Random() < 200)
         {
@@ -2561,7 +2560,7 @@ void C_DECL A_DragonFlight(mobj_t* actor)
 {
     angle_t         angle;
 
-    DragonSeek(actor, 4 * ANGLE_1, 8 * ANGLE_1);
+    dragonSeek(actor, 4 * ANGLE_1, 8 * ANGLE_1);
     if(actor->target)
     {
         if(!(actor->target->flags & MF_SHOOTABLE))
