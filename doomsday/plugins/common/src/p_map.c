@@ -2685,7 +2685,12 @@ boolean PIT_ChangeSector(mobj_t* thing, void* data)
     noFit = true;
     if(crushChange > 0 && !(mapTime & 3))
     {
+#if __JHEXEN__
+        P_DamageMobj(thing, NULL, NULL, crushChange, false);
+#else
         P_DamageMobj(thing, NULL, NULL, 10, false);
+#endif
+
 #if __JDOOM__ || __JDOOM64__
         if(!(thing->flags & MF_NOBLOOD))
 #elif __JHEXEN__

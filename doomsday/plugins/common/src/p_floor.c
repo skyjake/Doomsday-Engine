@@ -204,7 +204,7 @@ result_e T_MovePlane(sector_t* sector, float speed, float dest,
                 if(flag == true)
                 {
 #if !__JHEXEN__
-                    if(crush == true)
+                    if(crush)
                         return crushed;
 #endif
                     P_SetFloatp(sector, DMU_FLOOR_HEIGHT, lastpos);
@@ -255,7 +255,7 @@ result_e T_MovePlane(sector_t* sector, float speed, float dest,
                 if(flag == true)
                 {
 #if !__JHEXEN__
-                    if(crush == true)
+                    if(crush)
                         return crushed;
 #endif
                     P_SetFloatp(sector, DMU_CEILING_HEIGHT, lastpos);
