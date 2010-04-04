@@ -148,6 +148,7 @@ DEFCC(CCmdStatusBarSize);
 
 static void DrINumber(signed int val, int x, int y, float r, float g,
                       float b, float a);
+void ST_updateWidgets(int player);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -925,20 +926,8 @@ static void initData(hudstate_t* hud)
     hud->healthMarker = 0;
     hud->blended = false;
     hud->showBar = 0.0f;
-    hud->statusbarCounterAlpha = 1.0f;
 
-    hud->armorLevel = FixedDiv(
-        PCLASS_INFO(plr->class)->autoArmorSave + plr->armorPoints[ARMOR_ARMOR] +
-        plr->armorPoints[ARMOR_SHIELD] +
-        plr->armorPoints[ARMOR_HELMET] +
-        plr->armorPoints[ARMOR_AMULET], 5 * FRACUNIT) >> FRACBITS;
-
-    hud->manaAIcon = 0;
-    hud->manaBIcon = 0;
-    hud->manaAVial = 0;
-    hud->manaBVial = 0;
-    hud->manaACount = 0;
-    hud->manaBCount = 0;
+    ST_updateWidgets(player);
 
     ST_HUDUnHide(player, HUE_FORCE);
 }
