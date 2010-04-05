@@ -790,53 +790,6 @@ boolean B_Responder(ddevent_t* ev)
     }
 
     return B_TryEvent(ev);
-
-    /*
-    bindcontrol_t *ctrl;
-
-    if((ctrl = B_GetBindControlForEvent(ev)) == NULL)
-        return false; // Nope, nothing.
-
-    // Found one!
-    if(ctrl->type == BND_COMMAND)
-    {
-        bindcommand_t *bnd = &ctrl->data.command;
-
-        Con_Execute(CMDS_BIND, bnd->command[ev->data1], true, false);
-    }
-    else // An axis control.
-    {
-        float       pos;
-        inputdev_t *device = I_GetDevice(ev->device, true);
-        inputdevaxis_t *axis = &device->axes[ev->obsolete.controlID];
-        bindaxis_t *bnd = &ctrl->data.axiscontrol;
-
-        // Invert the axis position, if requested.
-        if(bnd->invert)
-            pos = -axis->position;
-        else
-            pos = axis->position;
-
-        // Update the control state.
-        switch(device->axes[ev->obsolete.controlID].type)
-        {
-        case IDAT_STICK: // joysticks, gamepads
-            P_ControlSetAxis(P_LocalToConsole(bnd->localPlayer),
-                             bnd->playercontrol, pos);
-            break;
-
-        case IDAT_POINTER: // mouse
-            P_ControlAxisDelta(P_LocalToConsole(bnd->localPlayer),
-                               bnd->playercontrol, pos);
-            break;
-
-        default:
-            break;
-        }
-    }
-
-    return true;
-     */
 }
 
 #if 0

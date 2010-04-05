@@ -81,7 +81,8 @@ static int checkSequence(eventsequence_t* es, char key, boolean* eat)
     else if(key == es->sequence[es->pos])
     {
         es->pos++;
-        *eat = true;
+        // Not eating partial matches.
+        *eat = false;
     }
     else
     {
