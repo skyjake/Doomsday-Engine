@@ -101,6 +101,18 @@ typedef struct ddevent_s {
 #define IS_MOUSE_UP(evp)               (evp->device == IDEV_MOUSE && IS_TOGGLE_UP(evp))
 #define IS_MOUSE_MOTION(evp)           (evp->device == IDEV_MOUSE && evp->type == E_AXIS)
 
+// Binding association. How the device axis/key/etc. relates to binding contexts.
+typedef struct inputdevassoc_s {
+    struct bcontext_s* bContext;
+    struct bcontext_s* prevBContext;
+    int     flags;
+} inputdevassoc_t;
+
+// Association flags.
+#define IDAF_EXPIRED    0x1 // The state has expired. The device is considered to remain
+                            // in default state until the flag gets cleared (which happens when
+                            // the real device state returns to its default).
+
 // Input device axis types.
 enum
 {
@@ -123,20 +135,20 @@ typedef struct inputdevaxis_s {
     int     filter;         // Filter grade.
     float   accumulation;   // Position accumulator for the filter.
     uint    time;           // Timestamp for the latest update that changed the position.
-    struct bcontext_s* bContext;
+    inputdevassoc_t assoc;  // Binding association.
 } inputdevaxis_t;
 
 typedef struct inputdevkey_s {
     char    isDown;         // True/False for each key.
     uint    time;
-    struct bcontext_s* bContext;
+    inputdevassoc_t assoc;  // Binding association.
     const char* name;       // Symbolic name.
 } inputdevkey_t;
 
 typedef struct inputdevhat_s {
     int     pos;            // Position of each hat, -1 if centered.
     uint    time;           // Timestamp for each hat for the latest change.
-    struct bcontext_s* bContext;
+    inputdevassoc_t assoc;  // Binding association.
 } inputdevhat_t;
 
 // Input device flags.

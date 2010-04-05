@@ -536,6 +536,12 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
     else // Cumulative.
         a->position += pos; //a->realPosition;
 
+    // We can clear the expiration when it returns to default state.
+    if(!a->position)
+    {
+        a->assoc.flags &= ~IDAF_EXPIRED;
+    }
+
 /*    if(verbose > 3)
     {
         Con_Message("I_UpdateAxis: device=%s axis=%i pos=%f\n",
@@ -579,19 +585,36 @@ void I_TrackInput(ddevent_t *ev, timespan_t ticLength)
     }
     else if(ev->type == E_TOGGLE)
     {
-        dev->keys[ev->toggle.id].isDown =
-            (ev->toggle.state == ETOG_DOWN || ev->toggle.state == ETOG_REPEAT);
+        inputdevkey_t* key = &dev->keys[ev->toggle.id];
+
+        key->isDown = (ev->toggle.state == ETOG_DOWN || ev->toggle.state == ETOG_REPEAT);
 
         // Mark down the time when the change occurs.
         if(ev->toggle.state == ETOG_DOWN || ev->toggle.state == ETOG_UP)
-            dev->keys[ev->toggle.id].time = Sys_GetRealTime();
+        {
+            key->time = Sys_GetRealTime();
+        }
+
+        // We can clear the expiration when the key is released.
+        if(!key->isDown)
+        {
+            key->assoc.flags &= ~IDAF_EXPIRED;
+        }
     }
     else if(ev->type == E_ANGLE)
     {
-        dev->hats[ev->angle.id].pos = ev->angle.pos;
+        inputdevhat_t* hat = &dev->hats[ev->angle.id];
+
+        hat->pos = ev->angle.pos;
 
         // Mark down the time when the change occurs.
-        dev->hats[ev->angle.id].time = Sys_GetRealTime();
+        hat->time = Sys_GetRealTime();
+
+        // We can clear the expiration when the hat is centered.
+        if(hat->pos < 0)
+        {
+            hat->assoc.flags &= ~IDAF_EXPIRED;
+        }
     }
 }
 
@@ -606,13 +629,22 @@ void I_ClearDeviceContextAssociations(void)
 
         // Keys.
         for(j = 0; j < dev->numKeys; ++j)
-            dev->keys[j].bContext = NULL;
+        {
+            dev->keys[j].assoc.prevBContext = dev->keys[j].assoc.bContext;
+            dev->keys[j].assoc.bContext = NULL;
+        }
         // Axes.
         for(j = 0; j < dev->numAxes; ++j)
-            dev->axes[j].bContext = NULL;
+        {
+            dev->axes[j].assoc.prevBContext = dev->axes[j].assoc.bContext;
+            dev->axes[j].assoc.bContext = NULL;
+        }
         // Hats.
         for(j = 0; j < dev->numHats; ++j)
-            dev->hats[j].bContext = NULL;
+        {
+            dev->hats[j].assoc.prevBContext = dev->hats[j].assoc.bContext;
+            dev->hats[j].assoc.bContext = NULL;
+        }
     }
 }
 

@@ -94,7 +94,7 @@ void B_DestroyAllContexts(void)
  */
 void B_UpdateDeviceStateAssociations(void)
 {
-    int                 i;
+    int                 i, j;
     uint                k;
     bcontext_t*         bc;
     evbinding_t*        eb;
@@ -119,18 +119,18 @@ void B_UpdateDeviceStateAssociations(void)
             switch(eb->type)
             {
             case E_TOGGLE:
-                if(!dev->keys[eb->id].bContext)
-                    dev->keys[eb->id].bContext = bc;
+                if(!dev->keys[eb->id].assoc.bContext)
+                    dev->keys[eb->id].assoc.bContext = bc;
                 break;
 
             case E_AXIS:
-                if(!dev->axes[eb->id].bContext)
-                    dev->axes[eb->id].bContext = bc;
+                if(!dev->axes[eb->id].assoc.bContext)
+                    dev->axes[eb->id].assoc.bContext = bc;
                 break;
 
             case E_ANGLE:
-                if(!dev->hats[eb->id].bContext)
-                    dev->hats[eb->id].bContext = bc;
+                if(!dev->hats[eb->id].assoc.bContext)
+                    dev->hats[eb->id].assoc.bContext = bc;
                 break;
 
             case E_SYMBOLIC:
@@ -153,23 +153,23 @@ void B_UpdateDeviceStateAssociations(void)
                 for(db = conBin->deviceBinds[k].next; db != &conBin->deviceBinds[k];
                     db = db->next)
                 {
-                    inputdev_t*         dev = I_GetDevice(db->device, false);
+                    inputdev_t* dev = I_GetDevice(db->device, false);
 
                     switch(db->type)
                     {
                     case CBD_TOGGLE:
-                        if(!dev->keys[db->id].bContext)
-                            dev->keys[db->id].bContext = bc;
+                        if(!dev->keys[db->id].assoc.bContext)
+                            dev->keys[db->id].assoc.bContext = bc;
                         break;
 
                     case CBD_AXIS:
-                        if(!dev->axes[db->id].bContext)
-                            dev->axes[db->id].bContext = bc;
+                        if(!dev->axes[db->id].assoc.bContext)
+                            dev->axes[db->id].assoc.bContext = bc;
                         break;
 
                     case CBD_ANGLE:
-                        if(!dev->hats[db->id].bContext)
-                            dev->hats[db->id].bContext = bc;
+                        if(!dev->hats[db->id].assoc.bContext)
+                            dev->hats[db->id].assoc.bContext = bc;
                         break;
 
                     default:
@@ -189,8 +189,8 @@ void B_UpdateDeviceStateAssociations(void)
 
             for(k = 0; k < dev->numKeys; ++k)
             {
-                if(!dev->keys[k].bContext)
-                    dev->keys[k].bContext = bc;
+                if(!dev->keys[k].assoc.bContext)
+                    dev->keys[k].assoc.bContext = bc;
             }
         }
 
@@ -199,26 +199,66 @@ void B_UpdateDeviceStateAssociations(void)
             int                 j;
             for(j = 0; j < NUM_INPUT_DEVICES; ++j)
             {
-                inputdev_t*         dev = I_GetDevice(j, true);
+                inputdev_t* dev = I_GetDevice(j, true);
 
                 if(!dev)
                     continue;
 
                 for(k = 0; k < dev->numKeys; ++k)
                 {
-                    if(!dev->keys[k].bContext)
-                        dev->keys[k].bContext = bc;
+                    if(!dev->keys[k].assoc.bContext)
+                        dev->keys[k].assoc.bContext = bc;
                 }
                 for(k = 0; k < dev->numAxes; ++k)
                 {
-                    if(!dev->axes[k].bContext)
-                        dev->axes[k].bContext = bc;
+                    if(!dev->axes[k].assoc.bContext)
+                        dev->axes[k].assoc.bContext = bc;
                 }
                 for(k = 0; k < dev->numHats; ++k)
                 {
-                    if(!dev->hats[k].bContext)
-                        dev->hats[k].bContext = bc;
+                    if(!dev->hats[k].assoc.bContext)
+                        dev->hats[k].assoc.bContext = bc;
                 }
+            }
+        }
+    }
+
+    // Now that we know what are the updated context associations, let's check
+    // the devices and see if any of the states need to be expired.
+    for(i = 0; i < NUM_INPUT_DEVICES; ++i)
+    {
+        inputdev_t* dev = I_GetDevice(i, false);
+
+        // Keys.
+        for(j = 0; j < dev->numKeys; ++j)
+        {
+            if(dev->keys[j].assoc.bContext != dev->keys[j].assoc.prevBContext &&
+               dev->keys[j].isDown)
+            {
+                // No longer valid.
+                dev->keys[j].assoc.flags |= IDAF_EXPIRED;
+            }
+        }
+
+        // Axes.
+        for(j = 0; j < dev->numAxes; ++j)
+        {
+            if(dev->axes[j].assoc.bContext != dev->axes[j].assoc.prevBContext &&
+               dev->axes[j].position != 0)
+            {
+                // No longer valid.
+                dev->axes[j].assoc.flags |= IDAF_EXPIRED;
+            }
+        }
+
+        // Hats.
+        for(j = 0; j < dev->numHats; ++j)
+        {
+            if(dev->hats[j].assoc.bContext != dev->hats[j].assoc.prevBContext &&
+               dev->hats[j].pos >= 0)
+            {
+                // No longer valid.
+                dev->hats[j].assoc.flags |= IDAF_EXPIRED;
             }
         }
     }

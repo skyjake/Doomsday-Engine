@@ -424,7 +424,7 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bcontext_s
     case E_TOGGLE:
         if(eb->id != event->toggle.id)
             return false;
-        if(eventClass && dev->keys[eb->id].bContext != eventClass)
+        if(eventClass && dev->keys[eb->id].assoc.bContext != eventClass)
             return false; // Shadowed by a more important active class.
 
         // Is the state as required?
@@ -462,7 +462,7 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bcontext_s
     case E_AXIS:
         if(eb->id != event->axis.id)
             return false;
-        if(eventClass && dev->axes[eb->id].bContext != eventClass)
+        if(eventClass && dev->axes[eb->id].assoc.bContext != eventClass)
             return false; // Shadowed by a more important active class.
 
         // Is the position as required?
@@ -475,7 +475,7 @@ boolean B_TryCommandBinding(evbinding_t* eb, ddevent_t* event, struct bcontext_s
     case E_ANGLE:
         if(eb->id != event->angle.id)
             return false;
-        if(eventClass && dev->hats[eb->id].bContext != eventClass)
+        if(eventClass && dev->hats[eb->id].assoc.bContext != eventClass)
             return false; // Shadowed by a more important active class.
         // Is the position as required?
         if(event->angle.pos != eb->pos)
