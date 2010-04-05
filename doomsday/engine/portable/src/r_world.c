@@ -1634,36 +1634,43 @@ boolean R_SectorContainsSkySurfaces(const sector_t* sec)
  * Given a sidedef section, look at the neighbouring surfaces and pick the
  * best choice of material used on those surfaces to be applied to "this"
  * surface.
+ *
+ * Material on back neighbour plane has priority.
+ * Non-animated materials are preferred.
+ * Sky materials are ignored.
  */
 static material_t* chooseFixMaterial(sidedef_t* s, segsection_t section)
 {
-    material_t*         choice = NULL;
+    material_t* choice1 = NULL, *choice2 = NULL;
 
-    // Try the materials used on the front and back sector planes,
-    // favouring non-animated materials.
     if(section == SEG_BOTTOM || section == SEG_TOP)
     {
-        byte                sid = (s->line->L_frontside == s? 0 : 1);
-        sector_t*           backSec = s->line->L_sector(sid^1);
+        byte sid = (s->line->L_frontside == s? 0 : 1);
+        sector_t* frontSec = s->line->L_sector(sid);
+        sector_t* backSec = s->line->L_sector(sid^1);
+        surface_t* suf;
 
         if(backSec)
         {
-            surface_t*          backSuf = &backSec->
-                SP_plane(section == SEG_BOTTOM? PLN_FLOOR : PLN_CEILING)->
-                    surface;
-
-            if(!(backSuf->material && backSuf->material->inAnimGroup) &&
-               !R_IsSkySurface(backSuf))
-                choice = backSuf->material;
+            suf = &backSec->SP_plane(section == SEG_BOTTOM? PLN_FLOOR : PLN_CEILING)->surface;
+            if(suf->material && !R_IsSkySurface(suf))
+                choice1 = suf->material;
         }
 
-        if(!choice)
-            choice = s->sector->
-                SP_plane(section == SEG_BOTTOM? PLN_FLOOR : PLN_CEILING)->
-                    surface.material;
+        suf = &frontSec->SP_plane(section == SEG_BOTTOM? PLN_FLOOR : PLN_CEILING)->surface;
+        if(suf->material && !R_IsSkySurface(suf))
+            choice2 = suf->material;
     }
 
-    return choice;
+    if(choice1 && !choice1->inAnimGroup)
+        return choice1;
+    if(choice2 && !choice2->inAnimGroup)
+        return choice2;
+    if(choice1)
+        return choice1;
+    if(choice2)
+        return choice2;
+    return NULL;
 }
 
 static void updateSidedefSection(sidedef_t* s, segsection_t section)
@@ -1674,10 +1681,10 @@ static void updateSidedefSection(sidedef_t* s, segsection_t section)
         return; // Not applicable.
 
     suf = &s->sections[section];
-    if(!suf->material &&
+    if(!suf->material /*&&
        !R_IsSkySurface(&s->sector->
             SP_plane(section == SEG_BOTTOM? PLN_FLOOR : PLN_CEILING)->
-                surface))
+                surface)*/)
     {
         Surface_SetMaterial(suf, chooseFixMaterial(s, section));
         suf->inFlags |= SUIF_MATERIAL_FIX;
