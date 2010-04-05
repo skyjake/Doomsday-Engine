@@ -427,6 +427,7 @@ void P_MovePlayer(player_t *player)
         }
 #endif
 
+        // Make sure it's within valid bounds.
         forwardMove = MINMAX_OF(-maxMove, forwardMove, maxMove);
         sideMove    = MINMAX_OF(-maxMove, sideMove, maxMove);
 
@@ -438,6 +439,9 @@ void P_MovePlayer(player_t *player)
             forwardMove *= m;
             sideMove    *= m;
         }
+
+        // Add the lunge.
+        forwardMove += brain->lunge;
 
         if(forwardMove != 0 && movemul)
         {
@@ -1055,18 +1059,27 @@ void P_PlayerThinkCheat(player_t *player)
 
 void P_PlayerThinkAttackLunge(player_t *player)
 {
-    mobj_t     *plrmo = player->plr->mo;
+    mobj_t* plrmo = player->plr->mo;
+
+    // Normally we don't lunge.
+    player->brain.lunge = 0;
 
     if(plrmo && (plrmo->flags & MF_JUSTATTACKED))
     {
+        /*
         ticcmd_t   *cmd = &player->plr->cmd;
-
         cmd->angle = plrmo->angle >> 16;    // Don't turn.
                                             // The client must know of this.
-        player->plr->flags |= DDPF_FIXANGLES;
         cmd->forwardMove = 0xc800 / 512;
         cmd->sideMove = 0;
+        */
+
+        player->brain.lunge = FIX2FLT(0xc800) / 256;
+        player->brain.forwardMove = 0;
+        player->brain.sideMove = 0;
+
         plrmo->flags &= ~MF_JUSTATTACKED;
+        player->plr->flags |= DDPF_FIXANGLES;
     }
 }
 
@@ -1930,7 +1943,6 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     {
         P_PlayerThinkCamera(player); // $democam
         P_PlayerThinkCheat(player);
-        P_PlayerThinkAttackLunge(player);
     }
 
     P_PlayerThinkHUD(player);
@@ -1941,6 +1953,7 @@ void P_PlayerThink(player_t *player, timespan_t ticLength)
     if(!IS_CLIENT) // Locally only.
     {
         P_PlayerThinkMorph(player);
+        P_PlayerThinkAttackLunge(player);
         P_PlayerThinkMove(player);
     }
 

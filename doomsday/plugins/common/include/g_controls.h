@@ -119,6 +119,7 @@ typedef struct playerbrain_s {
     float       forwardMove;        // 1.0 for maximum movement
     float       sideMove;           // 1.0 for maximum movement
     float       upMove;             // 1.0 for maximum movement
+    float       lunge;              // extra forwards movement (due to external forces)
     int         changeWeapon;       // WT_NOCHANGE, or the weapon to change to
     int         cycleWeapon;        // +1 or -1
 #if __JHERETIC__ || __JHEXEN__
