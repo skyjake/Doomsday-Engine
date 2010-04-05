@@ -537,7 +537,7 @@ static void I_UpdateAxis(inputdev_t *dev, uint axis, float pos, timespan_t ticLe
         a->position += pos; //a->realPosition;
 
     // We can clear the expiration when it returns to default state.
-    if(!a->position)
+    if(!a->position || a->type == IDAT_POINTER)
     {
         a->assoc.flags &= ~IDAF_EXPIRED;
     }
