@@ -1794,9 +1794,7 @@ typedef enum {
     SFX_SKESIT,
     SFX_SKEATK,
     SFX_RADIO,
-    SFX_WSPLASH,
-    SFX_NSPLASH,
-    SFX_BLURB,
+    SFX_SECRET,
     NUMSFX
 } sfxenum_t;
 

@@ -1905,6 +1905,7 @@ typedef enum {
     SFX_AMB9,
     SFX_AMB10,
     SFX_AMB11,
+    SFX_SECRET,
     NUMSFX
 } sfxenum_t;
 

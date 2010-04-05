@@ -1704,9 +1704,6 @@ typedef enum {
     SFX_SKESIT,
     SFX_SKEATK,
     SFX_RADIO,
-    //SFX_WSPLASH, // jd64
-    //SFX_NSPLASH, // jd64
-    //SFX_BLURB, // jd64
     // jd64 >
     SFX_PSIDL,
     SFX_LASER,
@@ -1717,6 +1714,7 @@ typedef enum {
     SFX_MTHDTH,
     SFX_HTIME,
     // < D64TC
+    SFX_SECRET,
     NUMSFX
 } sfxenum_t;
 

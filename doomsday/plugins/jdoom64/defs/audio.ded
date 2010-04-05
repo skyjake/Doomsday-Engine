@@ -1121,6 +1121,16 @@ Sound {
   Max channels = -1;
 }
 
+Sound {
+  ID = "secret";
+  Flags = "sf_shift2";
+  Lump = "DSGETPOW";
+  Link pitch = -1;
+  Link volume = -1;
+  Priority = 60;
+  Max channels = -1;
+}
+
 Texture Environment {
   ID = "Metal";
   Texture { ID = "BIGDOOR1"; };
