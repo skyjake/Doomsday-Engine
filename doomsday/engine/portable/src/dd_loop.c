@@ -380,6 +380,9 @@ void DD_Ticker(timespan_t time)
     {   // User interface ticks.
         UI_Ticker(time);
     }
+
+    // Plugins tick always.
+    Plug_DoHook(HOOK_TICKER, 0, &time);
 }
 
 /**

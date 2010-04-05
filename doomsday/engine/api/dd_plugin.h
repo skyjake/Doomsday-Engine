@@ -40,6 +40,7 @@ enum                               // Hook types.
     HOOK_INIT = 1,                 // Called after engine has been initialized.
     HOOK_DEFS = 2,                 // Called after DEDs have been loaded.
     HOOK_MAP_CONVERT = 3,          // Called when a map needs converting.
+    HOOK_TICKER = 4,               // Called as part of the run loop.
     NUM_HOOK_TYPES
 };
 
@@ -50,4 +51,5 @@ int             Plug_RemoveHook(int hook_type, hookfunc_t hook);
 // registered to a hook.
 int             Plug_DoHook(int hook_type, int parm, void *data);
 int             Plug_CheckForHook(int hookType);
+
 #endif
