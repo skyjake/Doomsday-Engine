@@ -1028,6 +1028,13 @@ Sound {
   Priority = 1;
 }
 
+Sound {
+  ID = "secret";
+  Lump = "WPNUP";
+  Priority = 32;
+  Max channels = 2;
+}
+
 Texture Environment {
   ID = "Metal";
   Texture { ID = "BADPATCH"; };

@@ -1714,6 +1714,7 @@ typedef enum {
     SFX_MTHDTH,
     SFX_HTIME,
     // < D64TC
+    SFX_SECRET,
     NUMSFX
 } sfxenum_t;
 
