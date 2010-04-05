@@ -27,8 +27,8 @@
  * dd_version.h: Version Information
  */
 
-#ifndef __DOOMSDAY_VERSION_INFO_H__
-#define __DOOMSDAY_VERSION_INFO_H__
+#ifndef __DOOMSDAY_VERSION_H__
+#define __DOOMSDAY_VERSION_H__
 
 /**
  * Version number rules: (major).(minor).(revision)-(release)
@@ -43,7 +43,7 @@
  * Revision number increases with each small (maintenance) release.
  */
 
-#define DOOMSDAY_RELEASE_NAME   "beta6.8"
+#define DOOMSDAY_RELEASE_NAME   "beta6.9"
 
 /**
  * Version constants.  The Game module can use DOOMSDAY_VERSION to

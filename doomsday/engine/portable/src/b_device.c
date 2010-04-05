@@ -321,8 +321,12 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
         switch(cb->type)
         {
         case CBD_TOGGLE:
-            if(controlClass && dev->keys[cb->id].bContext != controlClass)
+            if(controlClass && dev->keys[cb->id].assoc.bContext != controlClass)
                 continue; // Shadowed by a more important active class.
+
+            // Expired?
+            if(dev->keys[cb->id].assoc.flags & IDAF_EXPIRED)
+                break;
 
             devicePos = (dev->keys[cb->id].isDown? 1.0f : 0.0f);
             deviceTime = dev->keys[cb->id].time;
@@ -330,9 +334,9 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
 
         case CBD_AXIS:
             axis = &dev->axes[cb->id];
-            if(controlClass && axis->bContext != controlClass)
+            if(controlClass && axis->assoc.bContext != controlClass)
             {
-                if(!B_FindDeviceBinding(axis->bContext, cb->device, CBD_AXIS, cb->id))
+                if(!B_FindDeviceBinding(axis->assoc.bContext, cb->device, CBD_AXIS, cb->id))
                 {
                     // The overriding context doesn't bind to the axis, though.
                     if(axis->type == IDAT_POINTER)
@@ -343,6 +347,10 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
                 }
                 continue; // Shadowed by a more important active class.
             }
+
+            // Expired?
+            if(axis->assoc.flags & IDAF_EXPIRED)
+                break;
 
             if(axis->type == IDAT_POINTER)
             {
@@ -357,8 +365,11 @@ void B_EvaluateDeviceBindingList(int localNum, dbinding_t* listRoot, float* pos,
             break;
 
         case CBD_ANGLE:
-            if(controlClass && dev->hats[cb->id].bContext != controlClass)
+            if(controlClass && dev->hats[cb->id].assoc.bContext != controlClass)
                 continue; // Shadowed by a more important active class.
+
+            if(dev->hats[cb->id].assoc.flags & IDAF_EXPIRED)
+                break;
 
             devicePos = (dev->hats[cb->id].pos == cb->angle? 1.0f : 0.0f);
             deviceTime = dev->hats[cb->id].time;
