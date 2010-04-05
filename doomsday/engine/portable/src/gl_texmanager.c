@@ -110,7 +110,7 @@ boolean load8bit = false; // Load textures as 8 bit? (w/paltex)
 int monochrome = 0; // desaturate a patch (average colours)
 int upscaleAndSharpenPatches = 0;
 int useSmartFilter = 0; // Smart filter mode (cvar: 1=hq2x)
-int mipmapping = 3, linearRaw = 1, texQuality = TEXQ_BEST;
+int mipmapping = 5, linearRaw = 1, texQuality = TEXQ_BEST;
 int filterSprites = true;
 int texMagMode = 1; // Linear.
 int texAniso = -1; // Use best.
