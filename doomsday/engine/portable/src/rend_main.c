@@ -2509,12 +2509,9 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
             texOffset[VX] = suf->visOffset[VX] + segOffset;
             texOffset[VY] = suf->visOffset[VY];
 
-            if(bfloor->visHeight > fceil->visHeight)
-                texOffset[VY] += bfloor->visHeight - bceil->visHeight;
-
             // Align with normal middle texture?
-            if(unpegBottom)
-                texOffset[VY] += (fceil->visHeight - bfloor->visHeight);
+            if(!unpegBottom && bfloor->visHeight > fceil->visHeight)
+                texOffset[VY] += -(fceil->visHeight - bfloor->visHeight);
 
             return true;
         }
