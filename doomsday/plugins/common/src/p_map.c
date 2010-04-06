@@ -2383,7 +2383,7 @@ static void P_HitSlideLine(linedef_t* ld)
     side = P_PointOnLinedefSide(slideMo->pos[VX], slideMo->pos[VY], ld);
     P_GetFloatpv(ld, DMU_DXY, d1);
     lineAngle = R_PointToAngle2(0, 0, d1[0], d1[1]);
-    moveAngle = R_PointToAngle2(0, 0, tmMove[MX], tmMove[MY]) + 10;
+    moveAngle = R_PointToAngle2(0, 0, tmMove[MX], tmMove[MY]);
 
     if(side == 1)
         lineAngle += ANG180;
@@ -2511,50 +2511,23 @@ void P_SlideMove(mobj_t* mo)
 
         // Move up to the wall.
         if(bestSlideFrac == 1)
-        {
-            // The move must have hit the middle, so stairstep.
+        {   // The move must have hit the middle, so stairstep. $dropoff_fix
           stairstep:
-            // $dropoff_fix
+            /**
+             * Ideally we would set the directional momentum of the mobj to zero
+             * here should a move fail (to prevent noticeable stuttering against
+             * the blocking surface/thing). However due to the mechanics of the
+             * wall side algorithm this is not possible as it results in highly
+             * unpredictable behaviour and resulting in the player sling-shoting
+             * away from the wall.
+             */
 #if __JHEXEN__
             if(!P_TryMove(mo, mo->pos[VX], mo->pos[VY] + mo->mom[MY]))
-            {
-                if(P_TryMove(mo, mo->pos[VX] + mo->mom[MX], mo->pos[VY]))
-                {
-                    // If not set to zero, the mobj will appear stuttering against
-                    // the blocking surface/thing.
-                    mo->mom[MY] = 0;
-                }
-                else
-                {
-                    // If not set to zero, the mobj will appear stuttering against
-                    // the blocking surface/thing.
-                    mo->mom[MX] = mo->mom[MY] = 0;
-                }
-            }
+                P_TryMove(mo, mo->pos[VX] + mo->mom[MX], mo->pos[VY]);
 #else
             if(!P_TryMove(mo, mo->pos[VX], mo->pos[VY] + mo->mom[MY], true, true))
-            {
-                if(P_TryMove(mo, mo->pos[VX] + mo->mom[MX], mo->pos[VY], true, true))
-                {
-                    // If not set to zero, the mobj will appear stuttering against
-                    // the blocking surface/thing.
-                    mo->mom[MY] = 0;
-                }
-                else
-                {
-                    // If not set to zero, the mobj will appear stuttering against
-                    // the blocking surface/thing.
-                    mo->mom[MX] = mo->mom[MY] = 0;
-                }
-            }
+                P_TryMove(mo, mo->pos[VX] + mo->mom[MX], mo->pos[VY], true, true);
 #endif
-            else
-            {
-                // If not set to zero, the mobj will appear stuttering against
-                // the blocking surface/thing.
-                mo->mom[MX] = 0;
-            }
-
             break;
         }
 

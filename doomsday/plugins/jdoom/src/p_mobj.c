@@ -240,8 +240,8 @@ void P_MobjMoveXY(mobj_t *mo)
         {
             pos[VX] = mo->pos[VX] + mom[MX] / 2;
             pos[VY] = mo->pos[VY] + mom[MY] / 2;
-            mom[VX] /= 2;
-            mom[VY] /= 2;
+            mom[MX] /= 2;
+            mom[MY] /= 2;
         }
         else
         {
