@@ -247,60 +247,48 @@ static int newTorchDelta[MAXPLAYERS];
  */
 void P_Thrust(player_t *player, angle_t angle, float move)
 {
-    mobj_t*             mo = player->plr->mo;
-    uint                an = angle >> ANGLETOFINESHIFT;
+    mobj_t* mo = player->plr->mo;
+    uint an = angle >> ANGLETOFINESHIFT;
 
-    if(player->powers[PT_FLIGHT] && !(mo->pos[VZ] <= mo->floorZ))
+    /*float xmul=1, ymul=1;
+    // How about Quake-flying? -- jk
+    if(quakeFly)
     {
-        /*float xmul=1, ymul=1;
+        float ang = LOOKDIR2RAD(player->plr->lookDir);
+        xmul = ymul = cos(ang);
+        mo->mom[MZ] += sin(ang) * move;
+    }*/
 
-           // How about Quake-flying? -- jk
-           if(quakeFly)
-           {
-           float ang = LOOKDIR2RAD(player->plr->lookDir);
-           xmul = ymul = cos(ang);
-           mo->mom[MZ] += sin(ang) * move;
-           } */
-
-        mo->mom[MX] += move * FIX2FLT(finecosine[an]);
-        mo->mom[MY] += move * FIX2FLT(finesine[an]);
-    }
-    else
+    if(!(player->powers[PT_FLIGHT] && !(mo->pos[VZ] <= mo->floorZ)))
     {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-        sector_t*           sec = P_GetPtrp(mo->subsector, DMU_SECTOR);
-        float               mul;
+        sector_t* sec = P_GetPtrp(mo->subsector, DMU_SECTOR);
 #endif
 #if __JHEXEN__
         const terraintype_t* tt = P_MobjGetFloorTerrainType(mo);
 #endif
 
-#if __JHERETIC__
-        if(P_ToXSector(sec)->special == 15) // Friction_Low
-        {
-            mo->mom[MX] += (move / 4) * FIX2FLT(finecosine[an]);
-            mo->mom[MY] += (move / 4) * FIX2FLT(finesine[an]);
-            return;
-        }
-
-#elif __JHEXEN__
+#if __JHEXEN__
         if(tt->flags & TTF_FRICTION_LOW)
         {
-            mo->mom[MX] += (move / 2) * FIX2FLT(finecosine[an]);
-            mo->mom[MY] += (move / 2) * FIX2FLT(finesine[an]);
-            return;
+            move /= 2;
+        }
+#elif __JHERETIC__
+        if(P_ToXSector(sec)->special == 15) // Friction_Low
+        {
+            move /= 4;
+        }
+        else
+#endif
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+        {
+            move *= XS_ThrustMul(sec);
         }
 #endif
-
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-        mul = XS_ThrustMul(sec);
-        if(mul != 1)
-            move *= mul;
-#endif
-
-        mo->mom[MX] += move * FIX2FLT(finecosine[an]);
-        mo->mom[MY] += move * FIX2FLT(finesine[an]);
     }
+
+    mo->mom[MX] += move * FIX2FLT(finecosine[an]);
+    mo->mom[MY] += move * FIX2FLT(finesine[an]);
 }
 
 /**
@@ -406,17 +394,12 @@ void P_MovePlayer(player_t *player)
     {
         // 'Move while in air' hack (server doesn't know about this!!).
         // Movement while in air traditionally disabled.
-        float           maxMove = FIX2FLT(pClassInfo->maxMove);
-        int             movemul =
-            (onground || plrmo->flags2 & MF2_FLY) ? pClassInfo->moveMul :
-                (cfg.airborneMovement) ? cfg.airborneMovement * 64 : 0;
+        float maxMove = FIX2FLT(pClassInfo->maxMove);
+        int movemul = (onground || (plrmo->flags2 & MF2_FLY))? pClassInfo->moveMul :
+                (cfg.airborneMovement? cfg.airborneMovement * 64 : 0);
 
-        forwardMove =
-            FIX2FLT(pClassInfo->forwardMove[speed]) * brain->forwardMove;
-        sideMove = FIX2FLT(pClassInfo->sideMove[speed]) * brain->sideMove;
-
-        forwardMove *= turboMul;
-        sideMove    *= turboMul;
+        forwardMove = FIX2FLT(pClassInfo->forwardMove[speed]) * turboMul * MIN_OF(brain->forwardMove, 1);
+        sideMove    = FIX2FLT(pClassInfo->sideMove[speed])    * turboMul * MIN_OF(brain->sideMove, 1);
 
 #if __JHEXEN__
         if(player->powers[PT_SPEED] && !player->morphTics)
@@ -427,18 +410,17 @@ void P_MovePlayer(player_t *player)
         }
 #endif
 
-        // Make sure it's within valid bounds.
-        forwardMove = MINMAX_OF(-maxMove, forwardMove, maxMove);
-        sideMove    = MINMAX_OF(-maxMove, sideMove, maxMove);
-
         // Players can opt to reduce their maximum possible movement speed.
         if((int) cfg.playerMoveSpeed != 1)
         {   // A divsor has been specified, apply it.
-            float           m = MINMAX_OF(0.f, cfg.playerMoveSpeed, 1.f);
-
+            float m = MINMAX_OF(0.f, cfg.playerMoveSpeed, 1.f);
             forwardMove *= m;
             sideMove    *= m;
         }
+
+        // Make sure it's within valid bounds.
+        forwardMove = MINMAX_OF(-maxMove, forwardMove, maxMove);
+        sideMove    = MINMAX_OF(-maxMove, sideMove,    maxMove);
 
         // Add the lunge.
         forwardMove += brain->lunge;
@@ -1111,9 +1093,6 @@ void P_PlayerThinkMorph(player_t *player)
 #endif
 }
 
-/**
- * \todo Need to replace this as it comes straight from Hexen.
- */
 void P_PlayerThinkMove(player_t *player)
 {
     mobj_t             *plrmo = player->plr->mo;
@@ -1704,7 +1683,7 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
 
     // Check for extra speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, NULL);
-    if(vel != 0)
+    if((vel != 0) ^ (cfg.alwaysRun != 0))
     {
         // Hurry, good man!
         turnSpeed = pClassInfo->turnSpeed[1] * TICRATE;
