@@ -1260,8 +1260,7 @@ int C_DECL XL_DoChainSequence(linedef_t* line, boolean dummy, void* context,
 int C_DECL XL_DoDamage(linedef_t* line, boolean dummy, void* context,
                        void* context2, mobj_t* activator)
 {
-    int                 i;
-    linetype_t*         info = context2;
+    linetype_t* info = context2;
 
     if(!activator)
     {
@@ -1277,18 +1276,19 @@ int C_DECL XL_DoDamage(linedef_t* line, boolean dummy, void* context,
     {
         // Iparms define the min and max damage to inflict.
         // The real amount is random.
-        i = XG_RandomInt(info->iparm[0], info->iparm[1]);
+        int i = XG_RandomInt(info->iparm[0], info->iparm[1]);
         if(i > 0)
-            P_DamageMobj(activator, 0, 0, i, false);
-        else if(i < 0)
         {
-            activator->health -= i;
+            P_DamageMobj(activator, 0, 0, i, false);
+        }
+        else if(i < 0 && activator->health < info->iparm[3])
+        {
+            int origHealth = activator->health;
             // Don't go above a given level.
-            if(activator->health > info->iparm[3])
-                activator->health = info->iparm[3];
-            if(activator->player)
+            activator->health = MIN_OF(activator->health-i, info->iparm[3]);
+            // Need to signal an update?
+            if(activator->player && activator->health != origHealth)
             {
-                // This is player.
                 activator->player->health = activator->health;
                 activator->player->update |= PSF_HEALTH;
             }
