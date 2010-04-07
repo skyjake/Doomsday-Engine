@@ -48,7 +48,7 @@
 #define MAX_BOB_OFFSET          (8)
 
 #define NOMOMENTUM_THRESHOLD    (0.000001f)
-#define STOPSPEED               (1.0f/1.6/10)
+#define WALKSTOP_THRESHOLD      (0.062484741f) // FIX2FLT(0x1000-1)
 #define STANDSPEED              (1.0f/2)
 
 // TYPES -------------------------------------------------------------------
@@ -531,10 +531,10 @@ void P_MobjMoveXY(mobj_t* mo)
     }
 
     // Stop player walking animation.
-    if(!player || (!(player->plr->cmd.forwardMove | player->plr->cmd.sideMove) &&
-         player->plr->mo != mo /* $voodoodolls: Stop animating. */) &&
-       INRANGE_OF(mo->mom[MX], 0, STOPSPEED) &&
-       INRANGE_OF(mo->mom[MY], 0, STOPSPEED))
+    if((!player || (!(player->plr->cmd.forwardMove | player->plr->cmd.sideMove) &&
+        player->plr->mo != mo /* $voodoodolls: Stop animating. */)) &&
+       INRANGE_OF(mo->mom[MX], 0, WALKSTOP_THRESHOLD) &&
+       INRANGE_OF(mo->mom[MY], 0, WALKSTOP_THRESHOLD))
     {
         // If in a walking frame, stop moving.
         if(player && isInWalkState(player) && player->plr->mo == mo)

@@ -54,7 +54,7 @@
 #define HEAL_RADIUS_DIST        255
 
 #define NOMOMENTUM_THRESHOLD    (0.000001f)
-#define STOPSPEED               (0.1f/1.6)
+#define WALKSTOP_THRESHOLD      (0.062484741f) // FIX2FLT(0x1000-1)
 
 #define SMALLSPLASHCLIP         (12);
 
@@ -677,10 +677,10 @@ explode:
         }
     }
 
-    if(mo->mom[MX] > -STOPSPEED && mo->mom[MX] < STOPSPEED &&
-       mo->mom[MY] > -STOPSPEED && mo->mom[MY] < STOPSPEED &&
-       (!player || (player->plr->cmd.forwardMove == 0 &&
-                    player->plr->cmd.sideMove == 0)))
+    // Stop player walking animation.
+    if((!player || (!(player->plr->cmd.forwardMove | player->plr->cmd.sideMove))) &&
+       INRANGE_OF(mo->mom[MX], 0, WALKSTOP_THRESHOLD) &&
+       INRANGE_OF(mo->mom[MY], 0, WALKSTOP_THRESHOLD))
     {   // If in a walking frame, stop moving
         if(player)
         {
