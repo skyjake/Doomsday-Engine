@@ -1688,9 +1688,12 @@ void P_PlayerThinkLookAround(player_t* player, timespan_t ticLength)
     }
 
     // Yaw.
-    P_GetControlState(playerNum, CTL_TURN, &vel, &off);
-    plr->mo->angle -= FLT2FIX(turnSpeed * vel * ticLength) +
-        (fixed_t)(offsetSensitivity * off / 180 * ANGLE_180);
+    if(!((plr->mo->flags & MF_JUSTATTACKED) || player->brain.lunge))
+    {
+        P_GetControlState(playerNum, CTL_TURN, &vel, &off);
+        plr->mo->angle -= FLT2FIX(turnSpeed * vel * ticLength) +
+            (fixed_t)(offsetSensitivity * off / 180 * ANGLE_180);
+    }
 
     // Look center requested?
     if(P_GetImpulseControlState(playerNum, CTL_LOOK_CENTER))
