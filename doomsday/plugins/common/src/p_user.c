@@ -1056,7 +1056,7 @@ void P_PlayerThinkAttackLunge(player_t *player)
         cmd->sideMove = 0;
         */
 
-        player->brain.lunge = FIX2FLT(0xc800) / 256;
+        player->brain.lunge = FIX2FLT(0xc800 / 512);
         player->brain.forwardMove = 0;
         player->brain.sideMove = 0;
 
