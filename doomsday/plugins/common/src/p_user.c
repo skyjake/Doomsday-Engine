@@ -1667,14 +1667,13 @@ void P_PlayerThinkPowers(player_t* player)
  *                      Note that original game logic was always using a
  *                      tick duration of 1/35 seconds.
  */
-void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
+void P_PlayerThinkLookAround(player_t* player, timespan_t ticLength)
 {
-    int                 playerNum = player - players;
-    ddplayer_t         *plr = player->plr;
-    //boolean             strafe = false;
-    float               vel, off, turnSpeed;
-    float               offsetSensitivity = 100; // \fixme Should be done engine-side, mouse sensitivity!
-    classinfo_t        *pClassInfo = PCLASS_INFO(player->class);
+    int playerNum = player - players;
+    ddplayer_t* plr = player->plr;
+    float vel, off, turnSpeed;
+    float offsetSensitivity = 100; /// \fixme Should be done engine-side, mouse sensitivity!
+    classinfo_t* pClassInfo = PCLASS_INFO(player->class);
 
     if(!plr->mo || player->playerState == PST_DEAD || player->viewLock)
         return; // Nothing to control.
@@ -1684,22 +1683,14 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
     // Check for extra speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, NULL);
     if((vel != 0) ^ (cfg.alwaysRun != 0))
-    {
-        // Hurry, good man!
+    {   // Hurry, good man!
         turnSpeed = pClassInfo->turnSpeed[1] * TICRATE;
     }
 
-    // Check for strafe.
-    //P_GetControlState(playerNum, CTL_STRAFE, &vel, 0);
-    //strafe = (vel != 0);
-
-    //if(!strafe)
-    {
-        // Yaw.
-        P_GetControlState(playerNum, CTL_TURN, &vel, &off);
-        plr->mo->angle -= FLT2FIX(turnSpeed * vel * ticLength) +
-            (fixed_t)(offsetSensitivity * off / 180 * ANGLE_180);
-    }
+    // Yaw.
+    P_GetControlState(playerNum, CTL_TURN, &vel, &off);
+    plr->mo->angle -= FLT2FIX(turnSpeed * vel * ticLength) +
+        (fixed_t)(offsetSensitivity * off / 180 * ANGLE_180);
 
     // Look center requested?
     if(P_GetImpulseControlState(playerNum, CTL_LOOK_CENTER))
@@ -1728,7 +1719,7 @@ void P_PlayerThinkLookAround(player_t *player, timespan_t ticLength)
     else
     {
         // Pitch as controlled by CTL_LOOK.
-        plr->lookDir += 110.f/85.f * (turnSpeed/65535.f*360 * vel * ticLength +
+        plr->lookDir += 110.f/85.f * ((640 * TICRATE)/65535.f*360 * vel * ticLength +
                                       offsetSensitivity * off);
         if(plr->lookDir < -110)
             plr->lookDir = -110;
