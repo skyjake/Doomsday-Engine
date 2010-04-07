@@ -913,8 +913,8 @@ boolean PIT_CheckThing(mobj_t* thing, void* data)
 #if !__JHEXEN__
     else if(overlap && solid)
     {
-        // How are we positioned?
-        if(tm[VZ] > thing->pos[VZ] + thing->height - 24)
+        // How are we positioned, allow step up?
+        if(!(thing->flags & MF_CORPSE) && tm[VZ] > thing->pos[VZ] + thing->height - 24)
         {
             tmThing->onMobj = thing;
             if(thing->pos[VZ] + thing->height > tmFloorZ)
