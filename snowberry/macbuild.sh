@@ -1,5 +1,7 @@
 #!/bin/sh
 
+export VERSIONER_PYTHON_VERSION=2.5 
+
 VERSION=$1
 if test ! $VERSION; then
     echo "Must define version as argument."
@@ -9,7 +11,7 @@ echo "Building version "$VERSION
 echo $VERSION > VERSION
 
 # Locations.
-DENG_DIR=../doomsday/myrelease/
+DENG_DIR=../doomsday/BUILD.beta6/
 TARGET_IMAGE=images/deng-$VERSION.dmg
 
 # Clean.

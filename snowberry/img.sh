@@ -15,7 +15,7 @@ rm -rf "$WC_DIR/Read Me.rtf"
 ditto "dist/Doomsday Engine.app" "$WC_DIR/Doomsday Engine.app"
 ditto "../doomsday/build/mac/Read Me.rtf" "$WC_DIR/Read Me.rtf"
 
-diskutil rename "$WC_DIR" "$VOLUME_NAME"
+diskutil rename `pwd`/"$WC_DIR" "$VOLUME_NAME"
 
 hdiutil detach -quiet "$WC_DIR"
 rm -f "$MASTER_DMG"
