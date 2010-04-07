@@ -398,32 +398,41 @@ void P_MovePlayer(player_t *player)
         int movemul = (onground || (plrmo->flags2 & MF2_FLY))? pClassInfo->moveMul :
                 (cfg.airborneMovement? cfg.airborneMovement * 64 : 0);
 
-        forwardMove = FIX2FLT(pClassInfo->forwardMove[speed]) * turboMul * MIN_OF(brain->forwardMove, 1);
-        sideMove    = FIX2FLT(pClassInfo->sideMove[speed])    * turboMul * MIN_OF(brain->sideMove, 1);
+        if(!brain->lunge)
+        {
+            forwardMove = FIX2FLT(pClassInfo->forwardMove[speed]) * turboMul * MIN_OF(brain->forwardMove, 1);
+            sideMove    = FIX2FLT(pClassInfo->sideMove[speed])    * turboMul * MIN_OF(brain->sideMove, 1);
 
 #if __JHEXEN__
-        if(player->powers[PT_SPEED] && !player->morphTics)
-        {
-            // Adjust for a player with the speed power.
-            forwardMove = (3 * forwardMove) / 2;
-            sideMove = (3 * sideMove) / 2;
-        }
+            if(player->powers[PT_SPEED] && !player->morphTics)
+            {
+                // Adjust for a player with the speed power.
+                forwardMove = (3 * forwardMove) / 2;
+                sideMove = (3 * sideMove) / 2;
+            }
 #endif
+            // Players can opt to reduce their maximum possible movement speed.
+            if((int) cfg.playerMoveSpeed != 1)
+            {   // A divsor has been specified, apply it.
+                float m = MINMAX_OF(0.f, cfg.playerMoveSpeed, 1.f);
+                forwardMove *= m;
+                sideMove    *= m;
+            }
 
-        // Players can opt to reduce their maximum possible movement speed.
-        if((int) cfg.playerMoveSpeed != 1)
-        {   // A divsor has been specified, apply it.
-            float m = MINMAX_OF(0.f, cfg.playerMoveSpeed, 1.f);
-            forwardMove *= m;
-            sideMove    *= m;
+            // Make sure it's within valid bounds.
+            forwardMove = MINMAX_OF(-maxMove, forwardMove, maxMove);
+            sideMove    = MINMAX_OF(-maxMove, sideMove,    maxMove);
         }
-
-        // Make sure it's within valid bounds.
-        forwardMove = MINMAX_OF(-maxMove, forwardMove, maxMove);
-        sideMove    = MINMAX_OF(-maxMove, sideMove,    maxMove);
-
-        // Add the lunge.
-        forwardMove += brain->lunge;
+        else
+        {   // Do the lunge.
+            /**
+             * \note Normal valid range clamp not used with lunge as with
+             * it; the amount of forward velocity is not sufficent to
+             * prevent the player from easily backing out while lunging.
+             */
+            forwardMove = FIX2FLT(0xc800 / 512);
+            sideMove = 0;
+        }
 
         if(forwardMove != 0 && movemul)
         {
@@ -1044,22 +1053,11 @@ void P_PlayerThinkAttackLunge(player_t *player)
     mobj_t* plrmo = player->plr->mo;
 
     // Normally we don't lunge.
-    player->brain.lunge = 0;
+    player->brain.lunge = false;
 
     if(plrmo && (plrmo->flags & MF_JUSTATTACKED))
     {
-        /*
-        ticcmd_t   *cmd = &player->plr->cmd;
-        cmd->angle = plrmo->angle >> 16;    // Don't turn.
-                                            // The client must know of this.
-        cmd->forwardMove = 0xc800 / 512;
-        cmd->sideMove = 0;
-        */
-
-        player->brain.lunge = FIX2FLT(0xc800 / 512);
-        player->brain.forwardMove = 0;
-        player->brain.sideMove = 0;
-
+        player->brain.lunge = true;
         plrmo->flags &= ~MF_JUSTATTACKED;
         player->plr->flags |= DDPF_FIXANGLES;
     }
