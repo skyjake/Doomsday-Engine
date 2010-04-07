@@ -36,8 +36,7 @@ opts = dict(py2app = dict(
     iconfile = iconfile,
     plist = plist,
     includes = includes,
-    optimize = 2,
-    strip = 0
+    optimize = 2
     ))
     
 setup( app = ['snowberry.py'], data_files = resources, options = opts )

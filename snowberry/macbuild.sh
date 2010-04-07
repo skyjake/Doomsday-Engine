@@ -11,7 +11,7 @@ echo "Building version "$VERSION
 echo $VERSION > VERSION
 
 # Locations.
-DENG_DIR=../doomsday/BUILD.beta6/
+DENG_DIR=../doomsday/myrelease/
 TARGET_IMAGE=images/deng-$VERSION.dmg
 
 # Clean.
