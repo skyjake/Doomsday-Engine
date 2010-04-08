@@ -103,7 +103,13 @@ float HU_PSpriteYOffset(player_t* pl)
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
     // If the status bar is visible, the sprite is moved up a bit.
     if(viewWindowHeight < SCREENHEIGHT)
-        offy -= (float) (ST_HEIGHT - 2) * (cfg.statusbarScale / 20.f) - 20;
+    {
+# if __JDOOM__
+        offy -= (float) (ST_HEIGHT) * (cfg.statusbarScale / 20.f) - 16;
+# else
+        offy -= (float) (ST_HEIGHT-1) * (cfg.statusbarScale / 20.f) - 20;
+# endif
+    }
 #endif
 
     return offy;
