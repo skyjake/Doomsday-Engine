@@ -35,6 +35,9 @@
 
 #include "p_terraintype.h"
 
+#define NOMOMENTUM_THRESHOLD    (0.023764f)
+#define WALKSTOP_THRESHOLD      (0.062485f)
+
 /**
  * Mobj flags
  *

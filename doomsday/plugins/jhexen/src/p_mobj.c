@@ -53,9 +53,6 @@
 #define BLAST_FULLSTRENGTH      255
 #define HEAL_RADIUS_DIST        255
 
-#define NOMOMENTUM_THRESHOLD    (0.000001f)
-#define WALKSTOP_THRESHOLD      (0.062484741f) // FIX2FLT(0x1000-1)
-
 #define SMALLSPLASHCLIP         (12);
 
 // TYPES -------------------------------------------------------------------
@@ -696,10 +693,15 @@ explode:
     }
     else
     {
-        float       friction = P_MobjGetFriction(mo);
+        float friction = P_MobjGetFriction(mo);
 
         mo->mom[MX] *= friction;
+        if(INRANGE_OF(mo->mom[MX], 0, NOMOMENTUM_THRESHOLD))
+            mo->mom[MX] = 0;
+
         mo->mom[MY] *= friction;
+        if(INRANGE_OF(mo->mom[MY], 0, NOMOMENTUM_THRESHOLD))
+            mo->mom[MY] = 0;
     }
 }
 

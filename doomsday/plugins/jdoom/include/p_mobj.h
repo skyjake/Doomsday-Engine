@@ -40,6 +40,10 @@
 #include "info.h"
 #include "tables.h"
 
+#define NOMOMENTUM_THRESHOLD    (0.023764f)
+#define WALKSTOP_THRESHOLD      (0.062485f)
+#define DROPOFFMOMENTUM_THRESHOLD (1.0f / 4)
+
 /**
  * Mobj flags
  *

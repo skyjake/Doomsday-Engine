@@ -53,10 +53,6 @@
 
 #define MAX_BOB_OFFSET          (8)
 
-#define NOMOMENTUM_THRESHOLD    (0.000001f)
-#define WALKSTOP_THRESHOLD      (0.062484741f) // FIX2FLT(0x1000-1)
-#define DROPOFFMOMENTUM_THRESHOLD (1.0f / 4)
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -198,8 +194,7 @@ void P_MobjMoveXY(mobj_t *mo)
     if(P_CameraXYMovement(mo))
         return;
 
-    if(INRANGE_OF(mo->mom[MX], 0, NOMOMENTUM_THRESHOLD) &&
-       INRANGE_OF(mo->mom[MY], 0, NOMOMENTUM_THRESHOLD))
+    if(mo->mom[MX] == 0 && mo->mom[MY] == 0)
     {
         if(mo->flags & MF_SKULLFLY)
         {   // The skull slammed into something.
@@ -360,7 +355,12 @@ void P_MobjMoveXY(mobj_t *mo)
         float friction = getFriction(mo);
 
         mo->mom[MX] *= friction;
+        if(INRANGE_OF(mo->mom[MX], 0, NOMOMENTUM_THRESHOLD))
+            mo->mom[MX] = 0;
+
         mo->mom[MY] *= friction;
+        if(INRANGE_OF(mo->mom[MY], 0, NOMOMENTUM_THRESHOLD))
+            mo->mom[MY] = 0;
     }
 }
 

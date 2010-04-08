@@ -42,6 +42,10 @@
 #include "d_think.h"
 #include "info.h"
 
+#define NOMOMENTUM_THRESHOLD    (0.023764f)
+#define WALKSTOP_THRESHOLD      (0.062485f)
+#define STANDSPEED              (1.0f/2)
+
 #define FRICTION_NORMAL     (0.90625f)
 #define FRICTION_FLY        (0.91796875f)
 #define FRICTION_HIGH       (0.5f)

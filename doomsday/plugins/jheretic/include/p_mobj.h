@@ -38,6 +38,10 @@
 #include "h_think.h"
 #include "info.h"
 
+#define NOMOMENTUM_THRESHOLD    (0.023764f)
+#define WALKSTOP_THRESHOLD      (0.062485f)
+#define STANDSPEED              (1.0f/2)
+
 /**
  * Mobj flags
  *
