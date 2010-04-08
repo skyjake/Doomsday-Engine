@@ -1,5 +1,7 @@
 #!/bin/sh
 
+export VERSIONER_PYTHON_VERSION=2.5 
+
 VERSION=$1
 if test ! $VERSION; then
     echo "Must define version as argument."
