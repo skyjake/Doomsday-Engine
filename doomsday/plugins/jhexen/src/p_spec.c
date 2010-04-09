@@ -111,7 +111,7 @@ void P_InitSky(uint map)
     fval = 0;
     Rend_SkyParams(0, DD_OFFSET, &fval);
     Rend_SkyParams(1, DD_OFFSET, &fval);
-    if(doubleSky)
+    if(doubleSky && sky2Material)
     {
         Rend_SkyParams(0, DD_ENABLE, NULL);
         ival = DD_NO;
