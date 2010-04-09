@@ -224,6 +224,12 @@ void P_InitMapInfo(void)
             {
             case MCMD_CLUSTER:
                 SC_MustGetNumber();
+                if(sc_Number < 1)
+                {
+                    char buf[40];
+                    dd_snprintf(buf, 40, "Invalid cluster %i", sc_Number);
+                    SC_ScriptError(buf);
+                }
                 info->cluster = sc_Number;
                 break;
 
@@ -340,7 +346,8 @@ uint P_TranslateMap(uint map)
     uint i;
     for(i = 0; i < 99; ++i)
     {
-        if(MapInfo[i].warpTrans == map)
+        const mapinfo_t* info = &MapInfo[i];
+        if(info->cluster && info->warpTrans == map)
             return i;
     }
     return 0; // Not found, default to map zero.
