@@ -3232,10 +3232,6 @@ static void Rend_RenderSubsector(uint ssecidx)
 
             if(solid)
             {
-                if(seg->lineDef->buildData.index -1 == 291)
-                    solid = false;
-                if(seg->lineDef->buildData.index -1 == 302)
-                    solid = false;
                 C_AddViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY],
                                 seg->SG_v2pos[VX], seg->SG_v2pos[VY]);
             }
