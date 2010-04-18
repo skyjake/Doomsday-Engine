@@ -88,19 +88,11 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef enum animenum_e {
-    ANIM_ALWAYS,
-    ANIM_RANDOM,
-    ANIM_MAP
-} animenum_t;
-
 typedef struct point_s {
     int             x, y;
 } point_t;
 
 typedef struct wianim_s {
-    animenum_t      type;
-
     // Period in tics between animations.
     int             period;
 
@@ -191,37 +183,37 @@ static point_t mapPoints[NUMEPISODES][NUMMAPS] = {
 
 // Animation locations.
 static wianim_t epsd0animinfo[] = {
-    {ANIM_ALWAYS, TICRATE / 3, 3, {224, 104}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {184, 160}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {112, 136}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {72, 112}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {88, 96}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {64, 48}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {192, 40}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {136, 16}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {80, 16}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {64, 24}}
+    {TICRATE / 3, 3, {224, 104}},
+    {TICRATE / 3, 3, {184, 160}},
+    {TICRATE / 3, 3, {112, 136}},
+    {TICRATE / 3, 3, {72, 112}},
+    {TICRATE / 3, 3, {88, 96}},
+    {TICRATE / 3, 3, {64, 48}},
+    {TICRATE / 3, 3, {192, 40}},
+    {TICRATE / 3, 3, {136, 16}},
+    {TICRATE / 3, 3, {80, 16}},
+    {TICRATE / 3, 3, {64, 24}}
 };
 
 static wianim_t epsd1animinfo[] = {
-    {ANIM_MAP, TICRATE / 3, 1, {128, 136}, 1},
-    {ANIM_MAP, TICRATE / 3, 1, {128, 136}, 2},
-    {ANIM_MAP, TICRATE / 3, 1, {128, 136}, 3},
-    {ANIM_MAP, TICRATE / 3, 1, {128, 136}, 4},
-    {ANIM_MAP, TICRATE / 3, 1, {128, 136}, 5},
-    {ANIM_MAP, TICRATE / 3, 1, {128, 136}, 6},
-    {ANIM_MAP, TICRATE / 3, 1, {128, 136}, 7},
-    {ANIM_MAP, TICRATE / 3, 3, {192, 144}, 8},
-    {ANIM_MAP, TICRATE / 3, 1, {128, 136}, 8}
+    {0, 1, {128, 136}, 1},
+    {0, 1, {128, 136}, 2},
+    {0, 1, {128, 136}, 3},
+    {0, 1, {128, 136}, 4},
+    {0, 1, {128, 136}, 5},
+    {0, 1, {128, 136}, 6},
+    {0, 1, {128, 136}, 7},
+    {0, 3, {192, 144}, 8},
+    {0, 1, {128, 136}, 8}
 };
 
 static wianim_t epsd2animinfo[] = {
-    {ANIM_ALWAYS, TICRATE / 3, 3, {104, 168}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {40, 136}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {160, 96}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {104, 80}},
-    {ANIM_ALWAYS, TICRATE / 3, 3, {120, 32}},
-    {ANIM_ALWAYS, TICRATE / 4, 3, {40, 0}}
+    {TICRATE / 3, 3, {104, 168}},
+    {TICRATE / 3, 3, {40, 136}},
+    {TICRATE / 3, 3, {160, 96}},
+    {TICRATE / 3, 3, {104, 80}},
+    {TICRATE / 3, 3, {120, 32}},
+    {TICRATE / 4, 3, {40, 0}}
 };
 
 static int NUMANIMS[NUMEPISODES] = {
@@ -445,15 +437,17 @@ void WI_initAnimatedBack(void)
     {
         a = &anims[wbs->episode][i];
 
-        a->ctr = -1;
-
         // Specify the next time to draw it.
-        if(a->type == ANIM_ALWAYS)
-            a->nextTic = bcnt + 1 + (M_Random() % a->period);
-        else if(a->type == ANIM_RANDOM)
-            a->nextTic = bcnt + 1 + a->data2 + (M_Random() % a->data1);
-        else if(a->type == ANIM_MAP)
+        if(a->data1) // MAP animated.
+        {
             a->nextTic = bcnt + 1;
+            a->ctr = (a->data1 == wbs->nextMap? 0 : -1); // Init to zero so we draw on the first frame.
+        }
+        else
+        {
+            a->nextTic = bcnt + 1 + (M_Random() % a->period);
+            a->ctr = -1; // Do not draw on the first frame.
+        }
     }
 }
 
@@ -471,39 +465,21 @@ void WI_updateAnimatedBack(void)
     {
         a = &anims[wbs->episode][i];
 
-        if(bcnt == a->nextTic)
+        if(a->data1) // MAP animated.
         {
-            switch (a->type)
-            {
-            case ANIM_ALWAYS:
-                if(++a->ctr >= a->numAnimFrames)
-                    a->ctr = 0;
-                a->nextTic = bcnt + a->period;
-                break;
-
-            case ANIM_RANDOM:
-                a->ctr++;
-                if(a->ctr == a->numAnimFrames)
-                {
-                    a->ctr = -1;
-                    a->nextTic = bcnt + a->data2 + (M_Random() % a->data1);
-                }
-                else
-                    a->nextTic = bcnt + a->period;
-                break;
-
-            case ANIM_MAP:
-                // Gawd-awful hack for map anims.
-                if(!(state == ILS_SHOW_STATS && i == 7) && wbs->nextMap == a->data1)
-                {
-                    a->ctr++;
-                    if(a->ctr == a->numAnimFrames)
-                        a->ctr--;
-                    a->nextTic = bcnt + a->period;
-                }
-                break;
-            }
+            if(wbs->nextMap != a->data1)
+                continue;
+            // Gawd-awful hack for map anims.
+            if(state == ILS_SHOW_STATS && i == 7)
+                continue;
         }
+
+        if(bcnt != a->nextTic)
+            continue;
+
+        if(++a->ctr >= a->numAnimFrames)
+            a->ctr = 0;
+        a->nextTic = bcnt + (a->period > 0? a->period : 1);
     }
 }
 
@@ -655,7 +631,7 @@ void WI_initShowNextLoc(void)
     accelerateStage = 0;
     cnt = SHOWNEXTLOCDELAY * TICRATE;
 
-    WI_initAnimatedBack();
+    //WI_initAnimatedBack();
 
     NetSv_Intermission(IMF_STATE, state, 0);
 }
