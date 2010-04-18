@@ -137,8 +137,10 @@ void Cht_Init(void)
     G_AddEventSequence(cheatAmmoNoKeySeq, sizeof(cheatAmmoNoKeySeq), Cht_GiveWeaponsAmmoArmor);
     G_AddEventSequence(cheatAmmoSeq, sizeof(cheatAmmoSeq), Cht_GiveWeaponsAmmoArmorKeys);
     G_AddEventSequence(cheatMusSeq, sizeof(cheatMusSeq), Cht_MusicFunc);
-    G_AddEventSequence(cheatNoClipSeq, sizeof(cheatNoClipSeq), Cht_NoClipFunc);
-    G_AddEventSequence(cheatCommercialNoClipSeq, sizeof(cheatCommercialNoClipSeq), Cht_NoClipFunc);
+    if(gameMode == commercial)
+        G_AddEventSequence(cheatCommercialNoClipSeq, sizeof(cheatCommercialNoClipSeq), Cht_NoClipFunc);
+    else
+        G_AddEventSequence(cheatNoClipSeq, sizeof(cheatNoClipSeq), Cht_NoClipFunc);
     G_AddEventSequence(cheatPowerupSeq1, sizeof(cheatPowerupSeq1), Cht_PowerupFunc);
     G_AddEventSequence(cheatPowerupSeq, sizeof(cheatPowerupSeq), Cht_PowerupMessage);
     G_AddEventSequence(cheatChoppersSeq, sizeof(cheatChoppersSeq), Cht_ChoppersFunc);
