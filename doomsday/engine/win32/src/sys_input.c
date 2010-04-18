@@ -36,7 +36,6 @@
 #include <windows.h>
 #include <dinput.h>
 #include <assert.h>
-#include <strsafe.h>
 
 #include "de_base.h"
 #include "de_console.h"
