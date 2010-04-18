@@ -417,30 +417,24 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
     if(inv->numUsedSlots > maxVisSlots)
     {
 #define ARROW_RELXOFF          2
-#define ARROW_YOFFSET          9
+#if __JHEXEN__
+# define ARROW_YOFFSET         -1
+#else
+# define ARROW_YOFFSET         9
+#endif
 
         if(cfg.inventoryWrap || first != 0)
         {
-            GL_DrawPatchLitAlpha(
-#if __JHEXEN__
-                                 40, 167,
-#else
-                                 x - dpInvPageLeft[0].width - ARROW_RELXOFF,
+            GL_DrawPatchLitAlpha(x - dpInvPageLeft[0].width - ARROW_RELXOFF,
                                  y + ARROW_YOFFSET,
-#endif
                                  1, iconAlpha,
                                  dpInvPageLeft[!(mapTime & 4)? 1 : 0].lump);
         }
 
         if(cfg.inventoryWrap || inv->numUsedSlots - first > numVisSlots)
         {
-            GL_DrawPatchLitAlpha(
-#if __JHEXEN__
-                                 270, 167,
-#else
-                                 x + numVisSlots * ST_INVSLOTWIDTH + ARROW_RELXOFF,
+            GL_DrawPatchLitAlpha(x + numVisSlots * ST_INVSLOTWIDTH + ARROW_RELXOFF + 1,
                                  y + ARROW_YOFFSET,
-#endif
                                  1, iconAlpha,
                                  dpInvPageRight[!(mapTime & 4)? 1 : 0].lump);
         }
