@@ -556,7 +556,7 @@ static void drawConsole(void)
 
     // Subtle shadow.
     glBegin(GL_QUADS);
-        glColor4f(.1f, .1f, .1f, consoleAlpha * consoleBackgroundAlpha * .5f);
+        glColor4f(.1f, .1f, .1f, consoleAlpha * consoleBackgroundAlpha * .75f);
         glVertex2f(0, (int) (ConsoleY * gtosMulY + 5));
         glVertex2f(theWindow->width, (int) (ConsoleY * gtosMulY + 5));
         glColor4f(0, 0, 0, 0);
