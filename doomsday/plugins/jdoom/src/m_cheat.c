@@ -276,7 +276,10 @@ int Cht_MusicFunc(const int* args, int player)
     if(plr->health <= 0)
         return false; // Dead players can't cheat.
 
-    musnum = (args[0] - '0') * 10 + (args[1] - '0');
+    if(gameMode == commercial)
+        musnum = (args[0] - '0') * 10 + (args[1] - '0');
+    else
+        musnum = (args[0] - '1') * 9 + (args[1] - '0');
 
     if(S_StartMusicNum(musnum, true))
     {
