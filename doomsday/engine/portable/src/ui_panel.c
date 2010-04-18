@@ -259,8 +259,8 @@ uidata_list_t lst_resolution = {
     lstit_resolution, NUMITEMS(lstit_resolution)
 };
 
-uidata_slider_t sld_con_alpha = { 0, 100, 0, 1, false, "con-alpha" };
-uidata_slider_t sld_con_light = { 0, 100, 0, 1, false, "con-light" };
+uidata_slider_t sld_con_alpha = { 0, 1, 0, .01f, true, "con-alpha" };
+uidata_slider_t sld_con_light = { 0, 1, 0, .01f, true, "con-light" };
 uidata_slider_t sld_keywait1 = { 50, 1000, 0, 1, false, "input-key-delay1" };
 uidata_slider_t sld_keywait2 = { 20, 1000, 0, 1, false, "input-key-delay2" };
 uidata_slider_t sld_mouse_x_scale = { 0, .01f, 0, .00005f, true, "input-mouse-x-scale" };

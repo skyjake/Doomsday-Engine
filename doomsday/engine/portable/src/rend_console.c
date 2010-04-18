@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,7 +61,8 @@ float   CcolYellow[3] = { 1, .85f, .3f };
 
 float   ConsoleOpenY;           // Where the console bottom is when open.
 int     consoleTurn;            // The rotation variable.
-int     consoleLight = 14, consoleAlpha = 75;
+float   consoleLight = .14f;
+float   consoleBackgroundAlpha = .75f;
 byte    consoleShowFPS = false;
 byte    consoleShadowText = true;
 float   consoleMoveSpeed = .2f; // Speed of console opening/closing
@@ -71,7 +72,8 @@ float   consoleMoveSpeed = .2f; // Speed of console opening/closing
 static float ConsoleY;          // Where the console bottom is currently?
 static float ConsoleDestY;      // Where the console bottom should be?
 static float ConsoleBlink;      // Cursor blink timer (35 Hz tics).
-static boolean openingOrClosing = true;
+static boolean openingOrClosing;
+static float consoleAlpha, consoleAlphaTarget;
 static float fontFx, fontSy;    // Font x factor and y size.
 
 static float funnyAng;
@@ -86,8 +88,8 @@ void Rend_ConsoleRegister(void)
 {
     C_CMD_FLAGS("bgturn", "i", BackgroundTurn, CMDF_NO_DEDICATED);
 
-    C_VAR_INT("con-alpha", &consoleAlpha, 0, 0, 100);
-    C_VAR_INT("con-light", &consoleLight, 0, 0, 100);
+    C_VAR_FLOAT("con-alpha", &consoleBackgroundAlpha, 0, 0, 1);
+    C_VAR_FLOAT("con-light", &consoleLight, 0, 0, 1);
     C_VAR_BYTE("con-fps", &consoleShowFPS, 0, 0, 1);
     C_VAR_BYTE("con-text-shadow", &consoleShadowText, 0, 0, 1);
     C_VAR_FLOAT("con-move-speed", &consoleMoveSpeed, 0, 0, 1);
@@ -98,6 +100,9 @@ void Rend_ConsoleInit(void)
     ConsoleY = 0;
     ConsoleOpenY = 90;
     ConsoleDestY = 0;
+    openingOrClosing = true;
+    consoleAlpha = 0;
+    consoleAlphaTarget = 0;
 
     // Font size in VGA coordinates. (Everything is in VGA coords.)
     fontFx = 1;
@@ -269,7 +274,7 @@ static void drawSideText(const char *text, int line, float alpha)
 
 static __inline int consoleMinHeight(void)
 {
-    return 1.25f * fontSy + GetConsoleTitleBarHeight() /
+    return fontSy + ((Cfont.height * Cfont.sizeY)/8) + GetConsoleTitleBarHeight() /
         theWindow->height * 200;
 }
 
@@ -300,11 +305,13 @@ void Rend_ConsoleOpen(int yes)
     openingOrClosing = true;
     if(yes)
     {
+        consoleAlphaTarget = 1;
         ConsoleDestY = ConsoleOpenY;
         Rend_ConsoleCursorResetBlink();
     }
     else
     {
+        consoleAlphaTarget = 0;
         ConsoleDestY = 0;
     }
 }
@@ -367,6 +374,22 @@ void Rend_ConsoleTicker(timespan_t time)
         ConsoleY -= diff * step;
         if(ConsoleY < ConsoleDestY)
             ConsoleY = ConsoleDestY;
+    }
+
+    // Move the console alpha to the target.
+    if(consoleAlphaTarget > consoleAlpha)
+    {
+        float diff = (consoleAlphaTarget - consoleAlpha) * consoleMoveSpeed;
+        consoleAlpha += diff * step;
+        if(consoleAlpha > consoleAlphaTarget)
+            consoleAlpha = consoleAlphaTarget;
+    }
+    else if(consoleAlphaTarget < consoleAlpha)
+    {
+        float diff = (consoleAlpha - consoleAlphaTarget) * consoleMoveSpeed;
+        consoleAlpha -= diff * step;
+        if(consoleAlpha < consoleAlphaTarget)
+            consoleAlpha = consoleAlphaTarget;
     }
 
     if(ConsoleY == ConsoleOpenY)
@@ -446,15 +469,15 @@ static void DrawConsoleTitleBar(float closeFade)
     FR_SetFont(oldFont);
 }
 
-static void drawConsoleBackground(int x, int y, int w, int h,
-                                  float gtosMulY, float closeFade)
+static void drawConsoleBackground(int x, int y, int w, int h, float gtosMulY,
+    float closeFade)
 {
-    int                 bgX = 64, bgY = 64;
+    int bgX = 64, bgY = 64;
 
     // The console is composed of two parts: the main area background
     // and the border.
-    glColor4f(consoleLight / 100.0f, consoleLight / 100.0f,
-              consoleLight / 100.0f, closeFade * consoleAlpha / 100);
+    glColor4f(consoleLight, consoleLight, consoleLight,
+              closeFade * consoleBackgroundAlpha);
 
     // The background.
     if(gx.ConsoleBackground)
@@ -483,7 +506,6 @@ static void drawConsole(void)
 
     int         k;               // Line and buffer cursor.
     float       x, y;
-    float       closeFade = 1;
     float       gtosMulY;
     char        buff[CMDLINE_SIZE + 1], temp[CMDLINE_SIZE + 1], *cmdLine;
     float       fontScaledY;
@@ -523,23 +545,18 @@ static void drawConsole(void)
     glLoadIdentity();
     glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
 
-    if(openingOrClosing)
-    {
-        closeFade = ConsoleY / (float) ConsoleOpenY;
-    }
-
     drawConsoleBackground(0, (int) (ConsoleY * gtosMulY + 4),
                           theWindow->width, -theWindow->height - 4,
-                          gtosMulY, closeFade);
+                          gtosMulY, consoleAlpha);
 
     glDisable(GL_TEXTURE_2D);
     // The border.
     GL_DrawRect(0, (int) (ConsoleY * gtosMulY + 4), theWindow->width,
-                2, 0, 0, 0, closeFade);
+                2, 0, 0, 0, consoleAlpha);
 
     // Subtle shadow.
     glBegin(GL_QUADS);
-        glColor4f(.1f, .1f, .1f, closeFade * consoleAlpha / 150);
+        glColor4f(.1f, .1f, .1f, consoleAlpha * consoleBackgroundAlpha * .5f);
         glVertex2f(0, (int) (ConsoleY * gtosMulY + 5));
         glVertex2f(theWindow->width, (int) (ConsoleY * gtosMulY + 5));
         glColor4f(0, 0, 0, 0);
@@ -553,10 +570,10 @@ static void drawConsole(void)
     glScalef(Cfont.sizeX, Cfont.sizeY, 1);
 
     // The game & version number.
-    //drawSideText(gx.Get(DD_GAME_ID), 2, closeFade);
-    //drawSideText(gx.Get(DD_GAME_MODE), 1, closeFade);
+    //drawSideText(gx.Get(DD_GAME_ID), 2, consoleAlpha);
+    //drawSideText(gx.Get(DD_GAME_MODE), 1, consoleAlpha);
 
-    glColor4f(1, 1, 1, closeFade);
+    glColor4f(1, 1, 1, consoleAlpha);
 
     // The console history log is drawn from top to bottom.
     y = ConsoleY * gtosMulY - fontScaledY * 2 - textOffsetY;
@@ -593,7 +610,7 @@ static void drawConsole(void)
             if(line->flags & CBLF_RULER)
             {
                 // Draw a ruler here, and nothing else.
-                drawRuler2(y / Cfont.sizeY, Cfont.height, closeFade,
+                drawRuler2(y / Cfont.sizeY, Cfont.height, consoleAlpha,
                            theWindow->width / Cfont.sizeX);
             }
             else
@@ -621,7 +638,7 @@ static void drawConsole(void)
 
                 // Set the color.
                 if(Cfont.flags & DDFONT_WHITE)  // Can it be colored?
-                    consoleSetColor(line->flags, closeFade);
+                    consoleSetColor(line->flags, consoleAlpha);
                 Cfont.drawText(buff, x, y / Cfont.sizeY);
             }
 
@@ -644,9 +661,9 @@ static void drawConsole(void)
                       2 + (ConsoleY * gtosMulY - fontScaledY) / Cfont.sizeY);
     }*/
     if(Cfont.flags & DDFONT_WHITE)
-        glColor4f(CcolYellow[0], CcolYellow[1], CcolYellow[2], closeFade);
+        glColor4f(CcolYellow[0], CcolYellow[1], CcolYellow[2], consoleAlpha);
     else
-        glColor4f(1, 1, 1, closeFade);
+        glColor4f(1, 1, 1, consoleAlpha);
     Cfont.drawText(buff, 2, (ConsoleY * gtosMulY - fontScaledY - textOffsetY) /
                    Cfont.sizeY);
 
@@ -672,7 +689,7 @@ static void drawConsole(void)
         GL_DrawRect(2 + i, (ConsoleY * gtosMulY - textOffsetY + curHeight) / Cfont.sizeY,
                     k, -(Con_InputMode()? fontScaledY + curHeight: curHeight) / Cfont.sizeY,
                     CcolYellow[0], CcolYellow[1], CcolYellow[2],
-                    closeFade * (((int) ConsoleBlink) & 0x10 ? .2f : .5f));
+                    consoleAlpha * (((int) ConsoleBlink) & 0x10 ? .2f : .5f));
         glEnable(GL_TEXTURE_2D);
     }
 
@@ -681,7 +698,7 @@ static void drawConsole(void)
     glPopMatrix();
 
     // Draw the console title bar.
-    DrawConsoleTitleBar(closeFade);
+    DrawConsoleTitleBar(consoleAlpha);
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();

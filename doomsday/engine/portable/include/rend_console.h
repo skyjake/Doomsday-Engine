@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,8 +29,7 @@
 #ifndef __DOOMSDAY_CONSOLE_RENDER_H__
 #define __DOOMSDAY_CONSOLE_RENDER_H__
 
-extern int      consoleAlpha, consoleLight;
-extern byte     consoleShowFPS, consoleShadowText;
+extern byte consoleShowFPS, consoleShadowText;
 
 void    Rend_ConsoleRegister(void);
 
