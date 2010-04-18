@@ -2445,32 +2445,30 @@ void M_WriteText3(int x, int y, const char* string, gamefontid_t font,
             w = gFonts[font].chars[c].patch.width;
             h = gFonts[font].chars[c].patch.height;
 
-            if(!gFonts[font].chars[c].patch.lump)
+            if(gFonts[font].chars[c].patch.lump && c != ' ')
             {
-                // A character we don't have a patch for...?!
-                continue;
-            }
-
-            if(pass)
-            {
-                // The character itself.
-                GL_DrawPatch_CS(cx, cy + yoff, gFonts[font].chars[c].patch.lump);
-
-                // Do something flashy!
-                if(flash > 0)
+                // A character we have a patch for that is not white space.
+                if(pass)
                 {
-                    M_LetterFlash(cx, cy + yoff + h/2, w, h, true,
-                                  flashColor[CR], flashColor[CG],
-                                  flashColor[CB], flashColor[CA] * flash);
+                    // The character itself.
+                    GL_DrawPatch_CS(cx, cy + yoff, gFonts[font].chars[c].patch.lump);
+
+                    // Do something flashy!
+                    if(flash > 0)
+                    {
+                        M_LetterFlash(cx, cy + yoff, w, h, true,
+                                      flashColor[CR], flashColor[CG],
+                                      flashColor[CB], flashColor[CA] * flash);
+                    }
                 }
-            }
-            else if(flagShadow && cfg.menuShadow > 0)
-            {
-                // Shadow.
-                M_LetterFlash(cx, cy + yoff + h/2, w, h, false, 1, 1, 1,
-                              (red <
-                               0 ? DGL_GetInteger(DGL_CURRENT_COLOR_A) /
-                               255.0f : alpha) * cfg.menuShadow);
+                else if(flagShadow && cfg.menuShadow > 0)
+                {
+                    // Shadow.
+                    M_LetterFlash(cx, cy + yoff, w, h, false, 1, 1, 1,
+                                  (red <
+                                   0 ? DGL_GetInteger(DGL_CURRENT_COLOR_A) /
+                                   255.0f : alpha) * cfg.menuShadow);
+                }
             }
 
             cx += w;
