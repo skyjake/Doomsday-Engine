@@ -755,8 +755,9 @@ void NetSv_NewPlayerEnters(int plrNum)
 
         if((start = P_GetPlayerStart(nextMapEntryPoint, plrNum, false)))
         {
-            P_SpawnPlayer(plrNum, pClass, start->pos[VX], start->pos[VY],
-                          start->pos[VZ], start->angle, start->spawnFlags,
+            const mapspot_t* spot = &mapSpots[start->spot];
+            P_SpawnPlayer(plrNum, pClass, spot->pos[VX], spot->pos[VY],
+                          spot->pos[VZ], spot->angle, spot->flags,
                           false, true);
         }
         else

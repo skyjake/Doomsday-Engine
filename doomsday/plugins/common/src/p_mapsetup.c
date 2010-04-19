@@ -569,8 +569,7 @@ Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
             break;
             }
         case 11: // Player start (deathmatch).
-            P_CreatePlayerStart(0, 0, true, spot->pos[VX], spot->pos[VY],
-                                spot->pos[VZ], spot->angle, spot->flags);
+            P_CreatePlayerStart(0, 0, true, i);
             break;
 
         case 1: // Player starts 1 through 4.
@@ -584,9 +583,7 @@ Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
             uint entryPoint = 0;
 #endif
 
-            P_CreatePlayerStart(spot->doomEdNum, entryPoint, false,
-                                spot->pos[VX], spot->pos[VY], spot->pos[VZ],
-                                spot->angle, spot->flags);
+            P_CreatePlayerStart(spot->doomEdNum, entryPoint, false, i);
             break;
             }
 
@@ -606,9 +603,7 @@ Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
         case 9101:
         case 9102:
         case 9103:
-            P_CreatePlayerStart(5 + spot->doomEdNum - 9100, spot->arg1,
-                                false, spot->pos[VX], spot->pos[VY],
-                                spot->pos[VZ], spot->angle, spot->flags);
+            P_CreatePlayerStart(5 + spot->doomEdNum - 9100, spot->arg1, false, i);
             break;
 #endif
         }

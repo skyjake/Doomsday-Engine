@@ -226,11 +226,10 @@ void P_Init(void)
 #endif
 }
 
-void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint,
-                         boolean deathmatch, float x, float y, float z,
-                         angle_t angle, int spawnFlags)
+void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, boolean deathmatch,
+    mapspotid_t spot)
 {
-    playerstart_t*      start;
+    playerstart_t* start;
 
     if(deathmatch)
     {
@@ -247,11 +246,7 @@ void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint,
 
     start->plrNum = defaultPlrNum;
     start->entryPoint = entryPoint;
-    start->pos[VX] = x;
-    start->pos[VY] = y;
-    start->pos[VZ] = z;
-    start->angle = angle;
-    start->spawnFlags = spawnFlags;
+    start->spot = spot;
 }
 
 void P_DestroyPlayerStarts(void)
@@ -670,34 +665,41 @@ void P_RebornPlayer(int plrNum)
 #else
         uint entryPoint = 0;
 #endif
-        boolean             foundSpot = false;
-        const playerstart_t* assigned =
-            P_GetPlayerStart(entryPoint, plrNum, false);
+        boolean foundSpot = false;
+        const playerstart_t* assigned = P_GetPlayerStart(entryPoint, plrNum, false);
 
-        if(assigned && P_CheckSpot(assigned->pos[VX], assigned->pos[VY]))
-        {   // Appropriate player start spot is open.
-            Con_Printf("- spawning at assigned spot\n");
+        if(assigned)
+        {
+            const mapspot_t* spot = &mapSpots[assigned->spot];
 
-            pos[VX] = assigned->pos[VX];
-            pos[VY] = assigned->pos[VY];
-            pos[VZ] = assigned->pos[VZ];
-            angle = assigned->angle;
-            spawnFlags = assigned->spawnFlags;
+            if(P_CheckSpot(spot->pos[VX], spot->pos[VY]))
+            {   // Appropriate player start spot is open.
+                Con_Printf("- spawning at assigned spot\n");
 
-            foundSpot = true;
+                pos[VX] = spot->pos[VX];
+                pos[VY] = spot->pos[VY];
+                pos[VZ] = spot->pos[VZ];
+                angle = spot->angle;
+                spawnFlags = spot->flags;
+
+                foundSpot = true;
+            }
         }
+
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        else
+        if(!foundSpot)
         {
             Con_Printf("- force spawning at %i.\n", p->startSpot);
 
             if(assigned)
             {
-                pos[VX] = assigned->pos[VX];
-                pos[VY] = assigned->pos[VY];
-                pos[VZ] = assigned->pos[VZ];
-                angle = assigned->angle;
-                spawnFlags = assigned->spawnFlags;
+                const mapspot_t* spot = &mapSpots[assigned->spot];
+
+                pos[VX] = spot->pos[VX];
+                pos[VY] = spot->pos[VY];
+                pos[VZ] = spot->pos[VZ];
+                angle = spot->angle;
+                spawnFlags = spot->flags;
 
                 // "Fuzz" the spawn position looking for room nearby.
                 makeCamera = !fuzzySpawnPosition(&pos[VX], &pos[VY],
@@ -713,7 +715,7 @@ void P_RebornPlayer(int plrNum)
             }
         }
 #else
-        else
+        if(!foundSpot)
         {
             int                 i;
 
@@ -724,14 +726,16 @@ void P_RebornPlayer(int plrNum)
 
                 if((start = P_GetPlayerStart(rebornPosition, i, false)))
                 {
-                    if(P_CheckSpot(start->pos[VX], start->pos[VY]))
+                    const mapspot_t* spot = &mapSpots[start->spot];
+
+                    if(P_CheckSpot(spot->pos[VX], spot->pos[VY]))
                     {
                         // Found an open start spot.
-                        pos[VX] = start->pos[VX];
-                        pos[VY] = start->pos[VY];
-                        pos[VZ] = start->pos[VZ];
-                        angle = start->angle;
-                        spawnFlags = start->spawnFlags;
+                        pos[VX] = spot->pos[VX];
+                        pos[VY] = spot->pos[VY];
+                        pos[VZ] = spot->pos[VZ];
+                        angle = spot->angle;
+                        spawnFlags = spot->flags;
 
                         foundSpot = true;
                         break;
@@ -746,11 +750,13 @@ void P_RebornPlayer(int plrNum)
 
             if((start = P_GetPlayerStart(rebornPosition, plrNum, false)))
             {
-                pos[VX] = start->pos[VX];
-                pos[VY] = start->pos[VY];
-                pos[VZ] = start->pos[VZ];
-                angle = start->angle;
-                spawnFlags = start->spawnFlags;
+                const mapspot_t* spot = &mapSpots[start->spot];
+
+                pos[VX] = spot->pos[VX];
+                pos[VY] = spot->pos[VY];
+                pos[VZ] = spot->pos[VZ];
+                angle = spot->angle;
+                spawnFlags = spot->flags;
             }
             else
             {
@@ -872,11 +878,11 @@ void P_SpawnPlayers(void)
             {
                 if(players[0].startSpot != i && playerStarts[i].plrNum == 1)
                 {
-                    const playerstart_t* start = &playerStarts[i];
+                    const mapspot_t* spot = &mapSpots[playerStarts[i].spot];
 
-                    spawnPlayer(-1, PCLASS_PLAYER, start->pos[VX],
-                                start->pos[VY], start->pos[VZ],
-                                start->angle, start->spawnFlags, false,
+                    spawnPlayer(-1, PCLASS_PLAYER, spot->pos[VX],
+                                spot->pos[VY], spot->pos[VZ],
+                                spot->angle, spot->flags, false,
                                 false, false);
                 }
             }
@@ -903,11 +909,13 @@ void P_SpawnPlayers(void)
 
                 if(start)
                 {
-                    pos[VX] = start->pos[VX];
-                    pos[VY] = start->pos[VY];
-                    pos[VZ] = start->pos[VZ];
-                    angle = start->angle;
-                    spawnFlags = start->spawnFlags;
+                    const mapspot_t* spot = &mapSpots[start->spot];
+
+                    pos[VX] = spot->pos[VX];
+                    pos[VY] = spot->pos[VY];
+                    pos[VZ] = spot->pos[VZ];
+                    angle = spot->angle;
+                    spawnFlags = spot->flags;
 
                     // "Fuzz" the spawn position looking for room nearby.
                     makeCamera = !fuzzySpawnPosition(&pos[VX], &pos[VY],
@@ -971,13 +979,12 @@ void G_DeathMatchSpawnPlayer(int playerNum)
 
     for(i = 0; i < 20; ++i)
     {
-        const playerstart_t* start =
-            &deathmatchStarts[P_Random() % numPlayerDMStarts];
+        const mapspot_t* spot = &mapSpots[deathmatchStarts[P_Random() % numPlayerDMStarts].spot];
 
-        if(P_CheckSpot(start->pos[VX], start->pos[VY]))
+        if(P_CheckSpot(spot->pos[VX], spot->pos[VY]))
         {
-            spawnPlayer(playerNum, pClass, start->pos[VX], start->pos[VY],
-                        start->pos[VZ], start->angle, start->spawnFlags, false,
+            spawnPlayer(playerNum, pClass, spot->pos[VX], spot->pos[VY],
+                        spot->pos[VZ], spot->angle, spot->flags, false,
                         true, true);
             return;
         }

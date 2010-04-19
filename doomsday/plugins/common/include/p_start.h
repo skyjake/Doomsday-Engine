@@ -124,9 +124,7 @@ typedef uint mapspotid_t;
 typedef struct {
     int             plrNum;
     uint            entryPoint;
-    float           pos[3];
-    angle_t         angle;
-    int             spawnFlags; // MSF_* flags.
+    mapspotid_t     spot;
 } playerstart_t;
 
 extern uint numMapSpots;
@@ -153,8 +151,7 @@ void            P_AddBossSpot(mapspotid_t id);
 #endif
 
 void            P_CreatePlayerStart(int defaultPlrNum, uint entryPoint,
-                                    boolean deathmatch, float x, float y,
-                                    float z, angle_t angle, int spawnFlags);
+                                    boolean deathmatch, mapspotid_t spot);
 void            P_DestroyPlayerStarts(void);
 uint            P_GetNumPlayerStarts(boolean deathmatch);
 

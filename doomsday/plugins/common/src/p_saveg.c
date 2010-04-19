@@ -5609,9 +5609,10 @@ void SV_MapTeleport(uint map, uint position)
 
             if((start = P_GetPlayerStart(position, i, false)))
             {
-                P_SpawnPlayer(i, cfg.playerClass[i], start->pos[VX],
-                              start->pos[VY], start->pos[VZ], start->angle,
-                              start->spawnFlags, false, true);
+                const mapspot_t* spot = &mapSpots[start->spot];
+                P_SpawnPlayer(i, cfg.playerClass[i], spot->pos[VX],
+                              spot->pos[VY], spot->pos[VZ], spot->angle,
+                              spot->flags, false, true);
             }
             else
             {

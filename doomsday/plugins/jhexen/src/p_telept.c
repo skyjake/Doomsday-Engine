@@ -75,8 +75,8 @@ void P_TeleportToPlayerStarts(mobj_t* mo)
     // Get a random player start.
     if((start = P_GetPlayerStart(0, -1, false)))
     {
-        P_Teleport(mo, start->pos[VX], start->pos[VY],
-                   start->angle, true);
+        const mapspot_t* spot = &mapSpots[start->spot];
+        P_Teleport(mo, spot->pos[VX], spot->pos[VY], spot->angle, true);
     }
 }
 
@@ -90,8 +90,8 @@ void P_TeleportToDeathmatchStarts(mobj_t* mo)
     // First, try a random deathmatch start.
     if((start = P_GetPlayerStart(0, -1, true)))
     {
-        P_Teleport(mo, start->pos[VX], start->pos[VY],
-                   start->angle, true);
+        const mapspot_t* spot = &mapSpots[start->spot];
+        P_Teleport(mo, spot->pos[VX], spot->pos[VY], spot->angle, true);
     }
     else
     {
@@ -250,8 +250,8 @@ void P_ArtiTele(player_t* player)
 
     if((start = P_GetPlayerStart(0, deathmatch? -1 : 0, deathmatch)))
     {
-        P_Teleport(player->plr->mo, start->pos[VX], start->pos[VY],
-                   start->angle, true);
+        const mapspot_t* spot = &mapSpots[start->spot];
+        P_Teleport(player->plr->mo, spot->pos[VX], spot->pos[VY], spot->angle, true);
 
 #if __JHEXEN__
         if(player->morphTics)
