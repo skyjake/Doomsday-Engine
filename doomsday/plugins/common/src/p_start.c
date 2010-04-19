@@ -56,6 +56,7 @@
 #include "p_user.h"
 #include "d_net.h"
 #include "p_map.h"
+#include "am_map.h"
 #include "p_terraintype.h"
 #include "g_common.h"
 #include "p_start.h"
@@ -510,6 +511,26 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
         p->readyWeapon = p->pendingWeapon;
     else
         p->pendingWeapon = p->readyWeapon;
+
+    // Initialize the automap.
+    {
+    uint i;
+    automapid_t automap = AM_MapForPlayer(plrNum);
+
+    if(IS_NETGAME)
+    {
+        AM_SetCheatLevel(automap, 0);
+        AM_RevealMap(automap, false);
+    }
+
+    // Add all immediately visible lines.
+    for(i = 0; i < numlines; ++i)
+    {
+        xline_t* xline = &xlines[i];
+        if(xline->flags & ML_MAPPED)
+            AM_UpdateLinedef(automap, i, true);
+    }
+    }
 
     // Setup gun psprite.
     P_SetupPsprites(p);

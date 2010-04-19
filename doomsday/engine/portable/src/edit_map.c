@@ -2039,7 +2039,7 @@ uint MPE_SidedefCreate(uint sector, short flags,
  * @param v2            Idx of the end vertex.
  * @param frontSide     Idx of the front sidedef.
  * @param backSide      Idx of the back sidedef.
- * @param flags         Currently unused.
+ * @param flags         DDLF_* flags.
  *
  * @return              Idx of the newly created linedef else @c 0 if there
  *                      was an error.
@@ -2154,7 +2154,7 @@ uint MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide,
     l->inFlags = 0;
 
     // Determine the default linedef flags.
-    l->flags = 0;
+    l->flags = flags;
     if(!front || !back)
         l->flags |= DDLF_BLOCKING;
 

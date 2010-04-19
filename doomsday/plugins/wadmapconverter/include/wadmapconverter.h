@@ -81,6 +81,7 @@ typedef struct mline_s {
     byte            d64useType;
     int16_t         d64tag;
 
+    int             ddFlags;
     uint            validCount; // Used for Polyobj LineDef collection.
 } mline_t;
 

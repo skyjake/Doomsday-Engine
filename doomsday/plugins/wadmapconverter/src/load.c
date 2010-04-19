@@ -1072,6 +1072,69 @@ static boolean loadVertexes(const byte* buf, size_t len)
     return true;
 }
 
+/**
+ * Interpret linedef flags.
+ */
+static void interpretLineDefFlags(mline_t* l)
+{
+#define ML_BLOCKING             1 // Solid, is an obstacle.
+#define ML_TWOSIDED             4 // Backside will not be present at all if not two sided.
+#define ML_DONTPEGTOP           8 // Upper texture unpegged.
+#define ML_DONTPEGBOTTOM        16 // Lower texture unpegged.
+// If set ALL flags NOT in DOOM v1.9 will be zeroed upon map load.
+#define ML_INVALID              2048
+#define DOOM_VALIDMASK          0x000001ff
+
+    /**
+     * Zero unused flags if ML_INVALID is set.
+     *
+     * \attention "This has been found to be necessary because of errors
+     *  in Ultimate DOOM's E2M7, where around 1000 linedefs have
+     *  the value 0xFE00 masked into the flags value.
+     *  There could potentially be many more maps with this problem,
+     *  as it is well-known that Hellmaker wads set all bits in
+     *  mapthings that it does not understand."
+     *  Thanks to Quasar for the heads up.
+     *
+     * Only valid for DOOM format maps.
+     */
+    if(map->format == MF_DOOM)
+    {
+        if(l->flags & ML_INVALID)
+            l->flags &= DOOM_VALIDMASK;
+    }
+
+    if(l->flags & ML_BLOCKING)
+    {
+        l->ddFlags |= DDLF_BLOCKING;
+        l->flags &= ~ML_BLOCKING;
+    }
+
+    if(l->flags & ML_TWOSIDED)
+    {
+        l->flags &= ~ML_TWOSIDED;
+    }
+
+    if(l->flags & ML_DONTPEGTOP)
+    {
+        l->ddFlags |= DDLF_DONTPEGTOP;
+        l->flags &= ~ML_DONTPEGTOP;
+    }
+
+    if(l->flags & ML_DONTPEGBOTTOM)
+    {
+        l->ddFlags |= DDLF_DONTPEGBOTTOM;
+        l->flags &= ~ML_DONTPEGBOTTOM;
+    }
+
+#undef ML_BLOCKING
+#undef ML_TWOSIDED
+#undef ML_DONTPEGTOP
+#undef ML_DONTPEGBOTTOM
+#undef ML_INVALID
+#undef DOOM_VALIDMASK
+}
+
 static boolean loadLinedefs(const byte* buf, size_t len)
 {
     uint                num, n;
@@ -1118,6 +1181,8 @@ static boolean loadLinedefs(const byte* buf, size_t len)
                 l->sides[LEFT] = idx + 1;
             l->aFlags = 0;
             l->validCount = 0;
+            l->ddFlags = 0;
+            interpretLineDefFlags(l);
         }
         break;
 
@@ -1155,6 +1220,8 @@ static boolean loadLinedefs(const byte* buf, size_t len)
                 l->sides[LEFT] = idx + 1;
             l->aFlags = 0;
             l->validCount = 0;
+            l->ddFlags = 0;
+            interpretLineDefFlags(l);
         }
         break;
 
@@ -1193,6 +1260,8 @@ static boolean loadLinedefs(const byte* buf, size_t len)
                 l->sides[LEFT] = idx + 1;
             l->aFlags = 0;
             l->validCount = 0;
+            l->ddFlags = 0;
+            interpretLineDefFlags(l);
         }
         break;
     }
@@ -1732,7 +1801,7 @@ boolean TransferMap(void)
                                   back->offset[VX], back->offset[VY], 1, 1, 1);
         }
 
-        MPE_LinedefCreate(l->v[0], l->v[1], frontIdx, backIdx, 0);
+        MPE_LinedefCreate(l->v[0], l->v[1], frontIdx, backIdx, l->ddFlags);
 
         MPE_GameObjProperty("XLinedef", i, "Flags", DDVT_SHORT, &l->flags);
 

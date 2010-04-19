@@ -75,11 +75,11 @@ typedef struct xsector_s {
  * xline_t flags:
  */
 
-#define ML_BLOCKMONSTERS        2 // Blocks monsters only.
-#define ML_SECRET               32 // In AutoMap: don't map as two sided: IT'S A SECRET!
-#define ML_SOUNDBLOCK           64 // Sound rendering: don't let sound cross two of these.
-#define ML_DONTDRAW             128 // Don't draw on the automap at all.
-#define ML_MAPPED               256 // Set if already seen, thus drawn in automap.
+#define ML_BLOCKMONSTERS        0x0002 // Blocks monsters only.
+#define ML_SECRET               0x0020 // In AutoMap: don't map as two sided: IT'S A SECRET!
+#define ML_SOUNDBLOCK           0x0040 // Sound rendering: don't let sound cross two of these.
+#define ML_DONTDRAW             0x0080 // Don't draw on the automap at all.
+#define ML_MAPPED               0x0100 // Set if already seen, thus drawn in automap.
 
 // FIXME! DJS - This is important!
 // Doom64tc unfortunetly used non standard values for the linedef flags
@@ -88,14 +88,14 @@ typedef struct xsector_s {
 // once jDoom64 is released with 1.9.0 I imagine we'll see a bunch
 // PWADs start cropping up.
 
-//#define ML_PASSUSE            512 // Allows a USE action to pass through a linedef with a special
-//#define ML_ALLTRIGGER         1024 // If set allows any mobj to trigger the linedef's special
-//#define ML_INVALID            2048 // If set ALL flags NOT in DOOM v1.9 will be zeroed upon map load. ML_BLOCKING -> ML_MAPPED inc will persist.
-//#define VALIDMASK             0x000001ff
+//#define ML_PASSUSE            0x0200 // Allows a USE action to pass through a linedef with a special
+//#define ML_ALLTRIGGER         0x0400 // If set allows any mobj to trigger the linedef's special
 
-#define ML_ALLTRIGGER           512 // Anything can use linedef if this is set - kaiser
-#define ML_PASSUSE              1024
-#define ML_BLOCKALL             2048
+#define ML_ALLTRIGGER           0x0200 // Anything can use linedef if this is set - kaiser
+#define ML_PASSUSE              0x0400
+#define ML_BLOCKALL             0x0800
+
+#define ML_VALID_MASK           (ML_BLOCKMONSTERS|ML_SECRET|ML_SOUNDBLOCK|ML_DONTDRAW|ML_MAPPED|ML_ALLTRIGGER|ML_PASSUSE|ML_BLOCKALL)
 
 typedef struct xline_s {
     short           special;

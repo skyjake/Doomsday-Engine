@@ -634,99 +634,15 @@ Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
     }
 }
 
-/**
- * \todo This should be done in the map converter plugin, not here.
- */
 static void interpretLinedefFlags(void)
 {
-#define ML_BLOCKING             1 // Solid, is an obstacle.
-#define ML_TWOSIDED             4 // Backside will not be present at all if not two sided.
-#define ML_DONTPEGTOP           8 // Upper texture unpegged.
-#define ML_DONTPEGBOTTOM        16 // Lower texture unpegged.
-#if __JDOOM64__
-# define MLT_MIRRORH             64 // Mirror textures horizontally.
-# define MLT_MIRRORV             128 // Mirror textures vertically.
-#endif
-    uint                i;
-
-    // Interpret the archived map linedef flags and update accordingly.
+    uint i;
+    // Clear out any invalid flags.
     for(i = 0; i < numlines; ++i)
     {
-        int                 flags = 0;
-        xline_t*            xline = &xlines[i];
-
-        /**
-         * Zero unused flags if ML_INVALID is set.
-         *
-         * \attention "This has been found to be necessary because of errors
-         *  in Ultimate DOOM's E2M7, where around 1000 linedefs have
-         *  the value 0xFE00 masked into the flags value.
-         *  There could potentially be many more maps with this problem,
-         *  as it is well-known that Hellmaker wads set all bits in
-         *  mapthings that it does not understand."
-         *  Thanks to Quasar for the heads up.
-         */
-#if !__JHEXEN__
-        /**
-         * \fixme This applies only to DOOM format maps but the game doesn't
-         * know what format the map is in (and shouldn't really) but the
-         * engine doesn't know if the game wants to do this...
-         */
-# if !__JDOOM64__
-        /**
-         * \attention DJS - Can't do this with Doom64TC as it has used the
-         * ML_INVALID bit for another purpose... doh!
-         */
-
-        if(xline->flags & ML_INVALID)
-            xline->flags &= VALIDMASK;
-# endif
-#endif
-
-        if(xline->flags & ML_BLOCKING)
-        {
-            flags |= DDLF_BLOCKING;
-            xline->flags &= ~ML_BLOCKING;
-        }
-
-        if(xline->flags & ML_TWOSIDED)
-        {
-            xline->flags &= ~ML_TWOSIDED;
-        }
-
-        if(xline->flags & ML_DONTPEGTOP)
-        {
-            flags |= DDLF_DONTPEGTOP;
-            xline->flags &= ~ML_DONTPEGTOP;
-        }
-
-        if(xline->flags & ML_DONTPEGBOTTOM)
-        {
-            flags |= DDLF_DONTPEGBOTTOM;
-            xline->flags &= ~ML_DONTPEGBOTTOM;
-        }
-
-        if(xline->flags & ML_MAPPED)
-        {
-            int                 p;
-
-            // Update the automap(s) with all immediately visible lines.
-            for(p = 0; p < MAXPLAYERS; ++p)
-                AM_UpdateLinedef(AM_MapForPlayer(p), i, true);
-            xline->flags &= ~ML_MAPPED;
-        }
-
-        P_SetInt(DMU_LINEDEF, i, DMU_FLAGS, flags);
+        xline_t* xline = &xlines[i];
+        xline->flags &= ML_VALID_MASK;
     }
-
-#undef ML_BLOCKING
-#undef ML_TWOSIDED
-#undef ML_DONTPEGTOP
-#undef ML_DONTPEGBOTTOM
-#if __JDOOM64__
-# undef MLT_MIRRORH
-# undef MLT_MIRRORV
-#endif
 }
 
 typedef struct setupmapparams_s {
@@ -968,15 +884,8 @@ static void P_ResetWorldState(void)
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t*           plr = &players[i];
-        automapid_t         map = AM_MapForPlayer(i);
-
+        player_t* plr = &players[i];
         plr->killCount = plr->secretCount = plr->itemCount = 0;
-        // Initial height of PointOfView; will be set by player think.
-        plr->viewZ = 1;
-
-        AM_SetCheatLevel(map, 0);
-        AM_RevealMap(map, false);
     }
 
 #if __JDOOM__ || __JDOOM64__

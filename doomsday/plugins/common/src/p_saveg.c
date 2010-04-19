@@ -2580,15 +2580,14 @@ static void SV_ReadLine(linedef_t *li)
 
     if(ver < 3)
     {
-        if(flags & 0x0100) // old ML_MAPPED flag
+        if(flags & ML_MAPPED)
         {
-            uint                lineIDX = P_ToIndex(li);
+            uint lineIDX = P_ToIndex(li);
 
             // Set line as having been seen by all players..
             memset(xli->mapped, 0, sizeof(xli->mapped));
             for(i = 0; i < MAXPLAYERS; ++i)
                 AM_UpdateLinedef(AM_MapForPlayer(i), lineIDX, true);
-            flags &= ~0x0100; // remove the old flag.
         }
     }
 
