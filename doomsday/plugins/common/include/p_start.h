@@ -119,6 +119,8 @@ typedef struct {
 #endif
 } mapspot_t;
 
+typedef uint mapspotid_t;
+
 typedef struct {
     int             plrNum;
     uint            entryPoint;
@@ -131,10 +133,10 @@ extern uint numMapSpots;
 extern mapspot_t* mapSpots;
 
 #if __JHERETIC__
-extern mapspot_t* maceSpots;
-extern int maceSpotCount;
-extern mapspot_t* bossSpots;
-extern int bossSpotCount;
+extern mapspotid_t* maceSpots;
+extern uint maceSpotCount;
+extern mapspotid_t* bossSpots;
+extern uint bossSpotCount;
 #endif
 
 void            P_Init(void);
@@ -146,8 +148,8 @@ void            P_TurnGizmosAwayFromDoors();
 #endif
 
 #if __JHERETIC__
-void            P_AddMaceSpot(float x, float y, angle_t angle);
-void            P_AddBossSpot(float x, float y, angle_t angle);
+void            P_AddMaceSpot(mapspotid_t id);
+void            P_AddBossSpot(mapspotid_t id);
 #endif
 
 void            P_CreatePlayerStart(int defaultPlrNum, uint entryPoint,

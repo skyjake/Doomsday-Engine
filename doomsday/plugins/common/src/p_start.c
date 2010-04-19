@@ -94,10 +94,10 @@ uint numMapSpots;
 mapspot_t* mapSpots;
 
 #if __JHERETIC__
-int maceSpotCount;
-mapspot_t* maceSpots;
-int bossSpotCount;
-mapspot_t* bossSpots;
+uint maceSpotCount;
+mapspotid_t* maceSpots;
+uint bossSpotCount;
+mapspotid_t* bossSpots;
 #endif
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -831,30 +831,16 @@ boolean P_CheckSpot(float x, float y)
 }
 
 #if __JHERETIC__
-void P_AddMaceSpot(float x, float y, angle_t angle)
+void P_AddMaceSpot(mapspotid_t id)
 {
-    mapspot_t*          spot;
-
-    maceSpots = Z_Realloc(maceSpots, sizeof(mapspot_t) * ++maceSpotCount,
-                          PU_MAP);
-    spot = &maceSpots[maceSpotCount-1];
-
-    spot->pos[VX] = x;
-    spot->pos[VY] = y;
-    spot->angle = angle;
+    maceSpots = Z_Realloc(maceSpots, sizeof(mapspotid_t) * ++maceSpotCount, PU_MAP);
+    maceSpots[maceSpotCount-1] = id;
 }
 
-void P_AddBossSpot(float x, float y, angle_t angle)
+void P_AddBossSpot(mapspotid_t id)
 {
-    mapspot_t*          spot;
-
-    bossSpots = Z_Realloc(bossSpots, sizeof(mapspot_t) * ++bossSpotCount,
-                          PU_MAP);
-    spot = &bossSpots[bossSpotCount-1];
-
-    spot->pos[VX] = x;
-    spot->pos[VY] = y;
-    spot->angle = angle;
+    bossSpots = Z_Realloc(bossSpots, sizeof(mapspotid_t) * ++bossSpotCount, PU_MAP);
+    bossSpots[bossSpotCount-1] = id;
 }
 #endif
 

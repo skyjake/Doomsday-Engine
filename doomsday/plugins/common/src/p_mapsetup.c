@@ -592,12 +592,12 @@ Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
 
 #if __JHERETIC__
         case 56: // Boss spot.
-            P_AddBossSpot(spot->pos[VX], spot->pos[VY], spot->angle);
+            P_AddBossSpot(i);
             break;
 
         case 2002:
             if(gameMode != shareware)
-                P_AddMaceSpot(spot->pos[VX], spot->pos[VY], spot->angle);
+                P_AddMaceSpot(i);
             break;
 #endif
 
@@ -696,8 +696,7 @@ int P_SetupMapWorker(void* ptr)
         // Sometimes doesn't show up if not in deathmatch.
         if(!(!deathmatch && P_Random() < 64))
         {
-            const mapspot_t*    spot =
-                &maceSpots[P_Random() % maceSpotCount];
+            const mapspot_t* spot = &mapSpots[maceSpots[P_Random() % maceSpotCount]];
 
             P_SpawnMobj3f(MT_WMACE, spot->pos[VX], spot->pos[VY], 0,
                           spot->angle, MSF_Z_FLOOR);

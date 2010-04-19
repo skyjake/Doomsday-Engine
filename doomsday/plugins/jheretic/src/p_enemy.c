@@ -1224,7 +1224,7 @@ void P_DSparilTeleport(mobj_t* actor)
 
         do
         {
-            dest = &bossSpots[++i % bossSpotCount];
+            dest = &mapSpots[bossSpots[++i % bossSpotCount]];
             if(P_ApproxDistance(actor->pos[VX] - dest->pos[VX],
                                 actor->pos[VY] - dest->pos[VY]) >= 128)
             {   // A suitable teleport destination is available.

@@ -1203,13 +1203,13 @@ mobj_t* P_SpawnMobj3fv(mobjtype_t type, const float pos[3], angle_t angle,
  */
 void P_RepositionMace(mobj_t* mo)
 {
-    int                 spot;
-    subsector_t*        ss;
+    mapspotid_t spot;
+    subsector_t* ss;
 
     P_MobjUnsetPosition(mo);
-    spot = P_Random() % maceSpotCount;
-    mo->pos[VX] = maceSpots[spot].pos[VX];
-    mo->pos[VY] = maceSpots[spot].pos[VY];
+    spot = maceSpots[P_Random() % maceSpotCount];
+    mo->pos[VX] = mapSpots[spot].pos[VX];
+    mo->pos[VY] = mapSpots[spot].pos[VY];
     ss = R_PointInSubsector(mo->pos[VX], mo->pos[VY]);
 
     mo->floorZ = P_GetFloatp(ss, DMU_CEILING_HEIGHT);
