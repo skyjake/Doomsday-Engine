@@ -1768,7 +1768,7 @@ void P_PlayerThinkUpdateControls(player_t* player)
 
     // Check for look centering based on lookSpring.
     if(cfg.lookSpring &&
-       (fabs(brain->forwardMove) > .333f || fabs(brain->sideMove > .333f)))
+       (fabs(brain->forwardMove) > .333f || fabs(brain->sideMove) > .333f))
     {
         // Center view when mlook released w/lookspring, or when moving.
         player->centering = true;
