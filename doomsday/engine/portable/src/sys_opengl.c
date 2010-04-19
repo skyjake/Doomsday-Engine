@@ -622,7 +622,7 @@ void Sys_InitGLExtensions(void)
 
     query("GL_EXT_paletted_texture", &GL_state.palExtAvailable);
     query("GL_EXT_texture_filter_anisotropic", &GL_state_ext.aniso);
-    if(ArgExists("-texnonpow2"))
+    if(!ArgExists("-notexnonpow2"))
        query("GL_ARB_texture_non_power_of_two", &GL_state.textureNonPow2);
 
     // EXT_blend_subtract

@@ -447,9 +447,9 @@ boolean GL_PalettizeImage(byte* out, int outformat, DGLuint palid,
             if(outformat == 4)
             {
                 if(informat == 2)
-                    out[3] = in[numPixels * inSize];
+                    out[CA] = in[numPixels * inSize];
                 else
-                    out[3] = 0;
+                    out[CA] = 0;
             }
         }
 
@@ -807,15 +807,15 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid,
     }
     else
     {   // Use true color textures.
-        int         alphachannel = ((format == DGL_RGBA) ||
-                        (format == DGL_COLOR_INDEX_8_PLUS_A8) ||
-                        (format == DGL_LUMINANCE_PLUS_A8));
-        int         i, colorComps = alphachannel ? 4 : 3;
-        int         numPixels = width * height;
-        byte       *buffer;
-        byte       *pixel, *in;
-        boolean     needFree = false;
-        int         loadFormat = GL_RGBA;
+        int alphachannel = ((format == DGL_RGBA) ||
+                            (format == DGL_COLOR_INDEX_8_PLUS_A8) ||
+                            (format == DGL_LUMINANCE_PLUS_A8));
+        int loadFormat = GL_RGBA;
+        int glFormat = ChooseFormat(alphachannel ? 4 : 3);
+        int numPixels = width * height;
+        byte* buffer;
+        byte* pixel, *in;
+        boolean needFree = false;
 
         // Convert to either RGB or RGBA, if necessary.
         if(format == DGL_RGBA)
@@ -832,6 +832,8 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid,
         else
         {   // Needs converting.
             // \fixme This adds some overhead.
+            int i;
+
             needFree = true;
             buffer = M_Malloc(numPixels * 4);
             if(!buffer)
@@ -906,15 +908,13 @@ boolean GL_TexImage(dgltexformat_t format, DGLuint palid,
 
         if(genMips && !GL_state_ext.genMip)
         {   // Build all mipmap levels.
-            gluBuild2DMipmaps(GL_TEXTURE_2D, ChooseFormat(colorComps),
-                              width, height, loadFormat, GL_UNSIGNED_BYTE,
-                              buffer);
+            gluBuild2DMipmaps(GL_TEXTURE_2D, glFormat, width, height,
+                              loadFormat, GL_UNSIGNED_BYTE, buffer);
         }
         else
         {   // The texture has no mipmapping, just one level.
-            glTexImage2D(GL_TEXTURE_2D, mipLevel, ChooseFormat(colorComps),
-                         width, height, 0, loadFormat, GL_UNSIGNED_BYTE,
-                         buffer);
+            glTexImage2D(GL_TEXTURE_2D, mipLevel, glFormat, width, height, 0,
+                         loadFormat, GL_UNSIGNED_BYTE, buffer);
         }
 
         if(needFree)

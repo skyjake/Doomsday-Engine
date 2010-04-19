@@ -555,10 +555,20 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
     else
     {
         // Convert a paletted source image to truecolor so it can be scaled.
+        // If there isn't an alpha channel yet, add one.
         freeOriginal = true;
+        comps = 4;
         rgbaOriginal = M_Malloc(width * height * comps);
         GL_ConvertBuffer(width, height, alphaChannel ? 2 : 1, comps, data,
                          rgbaOriginal, 0, !load8bit);
+
+        if(!alphaChannel)
+        {
+            int n;
+            for(n = 0; n < width * height; ++n)
+                rgbaOriginal[n * 4 + 3] = 255;
+            alphaChannel = true;
+        }
     }
 
     if(applyTexGamma)
@@ -644,8 +654,10 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
 
     // The RGB(A) copy of the source image is no longer needed.
     if(freeOriginal)
+    {
         M_Free(rgbaOriginal);
-    rgbaOriginal = NULL;
+        rgbaOriginal = NULL;
+    }
 
     // Bind the texture so we can upload content.
     glBindTexture(GL_TEXTURE_2D, content->name);
@@ -1853,10 +1865,10 @@ DGLuint GL_PrepareRawTex2(rawtex_t* raw)
 
             // It's most efficient to create two textures (256+64 = 320).
 
-            if(!(image.height < 200))
+            if(!GL_state.textureNonPow2 && !(image.height < 200))
             {
-                int                 k, comps = image.pixelSize;
-                byte*               dat1, *dat2;
+                int k, comps = image.pixelSize;
+                byte* dat1, *dat2;
 
                 // Two pieces:
                 dat1 = M_Calloc(comps * 256 * 256);
@@ -1865,11 +1877,11 @@ DGLuint GL_PrepareRawTex2(rawtex_t* raw)
                 // Image data loaded, divide it into two parts.
                 for(k = 0; k < image.height; ++k)
                 {
-                    int                 i;
+                    int i;
 
                     for(i = 0; i < 256; ++i)
                     {
-                        int                 c, idx = k * assumedWidth + i;
+                        int c, idx = k * assumedWidth + i;
 
                         // Part one.
                         for(c = 0; c < comps; ++c)
@@ -1907,16 +1919,16 @@ DGLuint GL_PrepareRawTex2(rawtex_t* raw)
             }
             else // We can use the normal one-part method.
             {
-                assumedWidth = 256;
+                assumedWidth = GL_state.textureNonPow2? image.width : 256;
 
                 // Generate a texture.
-                raw->tex = GL_UploadTexture(image.pixels, 256, image.height,
+                raw->tex = GL_UploadTexture(image.pixels, GL_state.textureNonPow2? image.width : 256, image.height,
                     false, false, rgbdata, false, false, GL_NEAREST,
                     (linearRaw? GL_LINEAR:GL_NEAREST), 0 /*no anisotropy*/,
                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                     (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
 
-                raw->width = 256;
+                raw->width = GL_state.textureNonPow2? image.width : 256;
                 raw->height = image.height;
 
                 raw->tex2 = 0;
@@ -2364,7 +2376,7 @@ DGLuint GL_PreparePatch2(patchtex_t* p)
                 // Generate a texture.
                 p->tex = GL_UploadTexture(image.pixels, image.width,
                     image.height, image.isMasked, false, false, false,
-                    false, GL_NEAREST, glmode[texMagMode], texAniso,
+                    false, GL_NEAREST, glmode[texMagMode], 0 /* no aniso */,
                     GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
 
                 p->width += addBorder*2;
