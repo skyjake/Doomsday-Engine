@@ -783,7 +783,7 @@ boolean Chat_Responder(event_t* ev)
     boolean             eatkey = false;
     unsigned char       c;
 
-    if(!chatOn || G_GetGameState() != GS_MAP)
+    if(!chatOn)
         return false;
 
     if(ev->type != EV_KEY)

@@ -988,18 +988,18 @@ boolean G_Responder(event_t *ev)
         if(FI_Responder(ev))
             return true;
 
-        // Try the chatmode responder.
-        if(Chat_Responder(ev))
-            return true;
-
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-        // Check for cheats?
         if(G_GetGameState() == GS_MAP)
         {
+            // Try the chatmode responder.
+            if(Chat_Responder(ev))
+                return true;
+
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+            // Check for cheats.
             if(G_EventSequenceResponder(ev))
                 return true;
-        }
 #endif
+        }
     }
 
     // Try the edit responder.

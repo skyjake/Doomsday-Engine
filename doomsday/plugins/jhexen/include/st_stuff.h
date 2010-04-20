@@ -57,7 +57,7 @@ void        ST_updateGraphics(void);
 void        ST_HUDUnHide(int player, hueevent_t ev);
 
 // Called in P_inter & P_enemy
-void        ST_doPaletteStuff(int player, boolean forceChange);
+void        ST_doPaletteStuff(int player);
 
 void        ST_Init(void);
 boolean     ST_Responder(event_t* ev);

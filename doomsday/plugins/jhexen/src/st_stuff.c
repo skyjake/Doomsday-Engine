@@ -1185,7 +1185,7 @@ void ST_Ticker(void)
  * Sets the new palette based upon the current values of
  * player_t->damageCount and player_t->bonusCount.
  */
-void ST_doPaletteStuff(int player, boolean forceChange)
+void ST_doPaletteStuff(int player)
 {
     int                 palette = 0;
     player_t*           plr;
@@ -1668,7 +1668,7 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
          (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     // Do palette shifts
-    ST_doPaletteStuff(player, false);
+    ST_doPaletteStuff(player);
 
     // Either slide the status bar in or fade out the fullscreen hud
     if(hud->statusbarActive)

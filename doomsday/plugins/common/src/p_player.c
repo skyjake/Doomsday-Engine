@@ -1108,9 +1108,12 @@ DEFCC(CCmdMakeLocal)
  */
 DEFCC(CCmdPrintPlayerCoords)
 {
-    mobj_t             *mo = players[CONSOLEPLAYER].plr->mo;
+    mobj_t* mo;
 
-    if(!mo || G_GetGameState() != GS_MAP)
+    if(G_GetGameState() != GS_MAP)
+        return false;
+
+    if(!(mo = players[CONSOLEPLAYER].plr->mo))
         return false;
 
     Con_Printf("Console %i: X=%g Y=%g Z=%g\n", CONSOLEPLAYER,

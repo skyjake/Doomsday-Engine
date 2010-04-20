@@ -4183,7 +4183,7 @@ void C_DECL A_FreezeDeath(mobj_t* mo)
         plr->poisonCount = 0;
         plr->bonusCount = 0;
 
-        ST_doPaletteStuff(plr - players, false);
+        ST_doPaletteStuff(plr - players);
     }
     else if(mo->flags & MF_COUNTKILL && mo->special)
     {   // Initiate monster death actions.

@@ -3739,17 +3739,20 @@ void M_LoadGame(int option, void* context)
  */
 void M_SaveGame(int option, void* context)
 {
-    player_t*           player = &players[CONSOLEPLAYER];
+    player_t* player = &players[CONSOLEPLAYER];
 
-    if(player->playerState == PST_DEAD || Get(DD_PLAYBACK))
-    {
-        Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, NULL);
+    if(Get(DD_PLAYBACK))
         return;
-    }
 
     if(G_GetGameState() != GS_MAP)
     {
         Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, NULL, NULL);
+        return;
+    }
+
+    if(player->playerState == PST_DEAD)
+    {
+        Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, NULL, NULL);
         return;
     }
 

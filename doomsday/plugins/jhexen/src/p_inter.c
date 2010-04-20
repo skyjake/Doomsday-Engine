@@ -2192,7 +2192,7 @@ int P_DamageMobj(mobj_t* target, mobj_t* inflictor, mobj_t* source,
         // Maybe unhide the HUD?
         ST_HUDUnHide(player - players, HUE_ON_DAMAGE);
 
-        ST_doPaletteStuff(player - players, false);
+        ST_doPaletteStuff(player - players);
     }
 
     // How about some particles, yes?
