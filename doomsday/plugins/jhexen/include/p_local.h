@@ -144,7 +144,8 @@ boolean     P_HitFloor(mobj_t* mo);
 void        P_NoiseAlert(mobj_t* target, mobj_t* emmiter);
 int         P_Massacre(void);
 boolean     P_LookForMonsters(mobj_t* mo);
-void        P_InitCreatureCorpseQueue(boolean corpseScan);
+void        P_InitCorpseQueue(void);
+void        P_AddCorpsesToQueue(void);
 
 #define MAXINTERCEPTS       128
 extern intercept_t intercepts[MAXINTERCEPTS], *intercept_p;

@@ -1749,16 +1749,20 @@ static boolean addMobjToCorpseQueue(thinker_t* th, void* context)
     return true; // Continue iteration.
 }
 
-void P_InitCreatureCorpseQueue(boolean corpseScan)
+/**
+ * Initialize queue.
+ */
+void P_InitCorpseQueue(void)
 {
-    // Initialize queue
     corpseQueueSlot = 0;
     memset(corpseQueue, 0, sizeof(mobj_t *) * CORPSEQUEUESIZE);
+}
 
-    if(!corpseScan)
-        return;
-
-    // Search the thinker list for corpses and place them in this queue.
+/**
+ * Search the thinker list for corpses and place them in this queue.
+ */
+void P_AddCorpsesToQueue(void)
+{
     DD_IterateThinkers(P_MobjThinker, addMobjToCorpseQueue, NULL);
 }
 

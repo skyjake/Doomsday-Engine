@@ -4326,7 +4326,8 @@ static void P_UnArchiveThinkers(void)
 
 #if __JHEXEN__
     P_CreateTIDList();
-    P_InitCreatureCorpseQueue(true);    // true = scan for corpses
+    P_InitCorpseQueue();
+    P_AddCorpsesToQueue();
 #endif
 }
 

@@ -328,7 +328,7 @@ static boolean checkMapSpotSpawnFlags(const mapspot_t* spot)
     };
 #endif
 
-    int                 spawnMask;
+    int spawnMask;
 
     // Don't spawn things flagged for Multiplayer if we're not in a netgame.
     if(!IS_NETGAME && (spot->flags & MSF_NOTSINGLE))
@@ -368,7 +368,7 @@ static boolean checkMapSpotSpawnFlags(const mapspot_t* spot)
     }
     else if(deathmatch == false)
     {   // Cooperative.
-        int                 i;
+        int i;
 
         spawnMask = 0;
         for(i = 0; i < MAXPLAYERS; ++i)
@@ -397,15 +397,61 @@ static boolean checkMapSpotSpawnFlags(const mapspot_t* spot)
     return true;
 }
 
-static void P_LoadMapObjs(void)
+/**
+ * Should we auto-spawn one or more mobjs from the specified map spot?
+ */
+static boolean checkMapSpotAutoSpawn(const mapspot_t* spot)
 {
-    uint                i;
+#if __JHERETIC__
+    // Ambient sound sequence activator?
+    if(spot->doomEdNum >= 1200 && spot->doomEdNum < 1300)
+        return false;
+#elif __JHEXEN__
+    // Sound sequence origin?
+    if(spot->doomEdNum >= 1400 && spot->doomEdNum < 1410)
+        return false;
+#endif
+
+    // The following are currently handled by special-case spawn logic elsewhere.
+    switch(spot->doomEdNum)
+    {
+    case 1: // Player starts 1 through 4.
+    case 2:
+    case 3:
+    case 4:
+    case 11: // Player start (deathmatch).
+#if __JHERETIC__
+    case 56: // Boss spot.
+    case 2002: // Mace spot.
+#endif
+#if __JHEXEN__
+    case 3000: // Polyobj origins.
+    case 3001:
+    case 3002:
+    case 9100: // Player starts 5 through 8.
+    case 9101:
+    case 9102:
+    case 9103:
+#endif
+        return false;
+    default:
+        break;
+    }
+
+    // So far so good. Now check the flags to make the final decision.
+    return checkMapSpotSpawnFlags(spot);
+}
+
+static void initXLineDefs(void)
+{
+    uint i;
 
     for(i = 0; i < numlines; ++i)
     {
-        xline_t*            xl = &xlines[i];
+        xline_t* xl = &xlines[i];
+        xline_t* xline = &xlines[i];
 
-        xl->flags = P_GetGMOShort(MO_XLINEDEF, i, MO_FLAGS);
+        xl->flags = P_GetGMOShort(MO_XLINEDEF, i, MO_FLAGS) & ML_VALID_MASK;
 #if __JHEXEN__
         xl->special = P_GetGMOByte(MO_XLINEDEF, i, MO_TYPE);
         xl->arg1 = P_GetGMOByte(MO_XLINEDEF, i, MO_ARG0);
@@ -422,6 +468,11 @@ static void P_LoadMapObjs(void)
         xl->tag = P_GetGMOShort(MO_XLINEDEF, i, MO_TAG);
 #endif
     }
+}
+
+static void initXSectors(void)
+{
+    uint i;
 
     for(i = 0; i < numsectors; ++i)
     {
@@ -457,18 +508,21 @@ static void P_LoadMapObjs(void)
         }
 #endif
     }
+}
+
+static void loadMapSpots(void)
+{
+    uint i;
 
     numMapSpots = P_CountGameMapObjs(MO_THING);
-
     if(numMapSpots > 0)
-        mapSpots =
-            Z_Malloc(numMapSpots * sizeof(mapspot_t), PU_MAP, 0);
+        mapSpots = Z_Malloc(numMapSpots * sizeof(mapspot_t), PU_MAP, 0);
     else
         mapSpots = NULL;
 
     for(i = 0; i < numMapSpots; ++i)
     {
-        mapspot_t*        spot = &mapSpots[i];
+        mapspot_t* spot = &mapSpots[i];
 
         spot->pos[VX] = P_GetGMOFloat(MO_THING, i, MO_X);
         spot->pos[VY] = P_GetGMOFloat(MO_THING, i, MO_Y);
@@ -489,7 +543,7 @@ static void P_LoadMapObjs(void)
 #endif
 
 #if __JHERETIC__
-        // Ambient sound origin?
+        // Ambient sound sequence activator?
         if(spot->doomEdNum >= 1200 && spot->doomEdNum < 1300)
         {
             P_AddAmbientSfx(spot->doomEdNum - 1200);
@@ -499,75 +553,16 @@ static void P_LoadMapObjs(void)
         // Sound sequence origin?
         if(spot->doomEdNum >= 1400 && spot->doomEdNum < 1410)
         {
-            subsector_t*        ssec =
-                R_PointInSubsector(spot->pos[VX], spot->pos[VY]);
-            xsector_t*          xsector =
-                P_ToXSector(P_GetPtrp(ssec, DMU_SECTOR));
+            subsector_t* ssec = R_PointInSubsector(spot->pos[VX], spot->pos[VY]);
+            xsector_t* xsector = P_ToXSector(P_GetPtrp(ssec, DMU_SECTOR));
 
             xsector->seqType = spot->doomEdNum - 1400;
             continue;
         }
-        // Polyobject origin?
-        if(spot->doomEdNum >= 3000 && spot->doomEdNum < 3003)
-            continue; // Not spawned.
 #endif
 
         switch(spot->doomEdNum)
         {
-        default: // A spot that should auto-spawn one (or more) mobjs.
-            {
-            mobjtype_t          type;
-
-            if(!checkMapSpotSpawnFlags(spot))
-                continue;
-
-            // Find which type to spawn.
-            if((type = P_DoomEdNumToMobjType(spot->doomEdNum)) != MT_NONE)
-            {   // A known type; spawn it!
-                mobj_t*             mo;
-/*#if _DEBUG
-Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
-            spot->pos[VX], spot->pos[VY], spot->pos[VZ], spot->angle,
-            spot->doomedNum, spot->flags);
-#endif*/
-
-                if((mo = P_SpawnMobj3fv(type, spot->pos, spot->angle,
-                                        spot->flags)))
-                {
-                    if(mo->tics > 0)
-                        mo->tics = 1 + (P_Random() % mo->tics);
-
-#if __JHEXEN__
-                    mo->tid = spot->tid;
-                    mo->special = spot->special;
-                    mo->args[0] = spot->arg1;
-                    mo->args[1] = spot->arg2;
-                    mo->args[2] = spot->arg3;
-                    mo->args[3] = spot->arg4;
-                    mo->args[4] = spot->arg5;
-#endif
-
-#if __JHEXEN__
-                    if(mo->flags2 & MF2_FLOATBOB)
-                        mo->special1 = FLT2FIX(spot->pos[VZ]);
-#endif
-
-#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-                    if(mo->flags & MF_COUNTKILL)
-                        totalKills++;
-                    if(mo->flags & MF_COUNTITEM)
-                        totalItems++;
-#endif
-                }
-            }
-            else
-            {
-                Con_Message("spawnMapThing: Warning, unknown thing num %i "
-                            "at [%g, %g, %g].\n", spot->doomEdNum,
-                            spot->pos[VX], spot->pos[VY], spot->pos[VZ]);
-            }
-            break;
-            }
         case 11: // Player start (deathmatch).
             P_CreatePlayerStart(0, 0, true, i);
             break;
@@ -599,6 +594,11 @@ Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
 #endif
 
 #if __JHEXEN__
+        case 3000: // Polyobj origins.
+        case 3001:
+        case 3002:
+            break;
+
         case 9100: // Player starts 5 through 8.
         case 9101:
         case 9102:
@@ -606,19 +606,95 @@ Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
             P_CreatePlayerStart(5 + spot->doomEdNum - 9100, spot->arg1, false, i);
             break;
 #endif
+        default: // No special handling.
+            break;
         }
     }
+
+    P_DealPlayerStarts(0);
 }
 
-static void interpretLinedefFlags(void)
+static void spawnMapObjects(void)
 {
     uint i;
-    // Clear out any invalid flags.
-    for(i = 0; i < numlines; ++i)
+
+    for(i = 0; i < numMapSpots; ++i)
     {
-        xline_t* xline = &xlines[i];
-        xline->flags &= ML_VALID_MASK;
+        const mapspot_t* spot = &mapSpots[i];
+        mobjtype_t type;
+
+        // Not all map spots spawn mobjs on map load.
+        if(!checkMapSpotAutoSpawn(spot))
+            continue;
+
+        // A spot that should auto-spawn one (or more) mobjs.
+
+        // Find which type to spawn.
+        if((type = P_DoomEdNumToMobjType(spot->doomEdNum)) != MT_NONE)
+        {   // A known type; spawn it!
+            mobj_t* mo;
+/*#if _DEBUG
+Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
+        spot->pos[VX], spot->pos[VY], spot->pos[VZ], spot->angle,
+        spot->doomedNum, spot->flags);
+#endif*/
+
+            if((mo = P_SpawnMobj3fv(type, spot->pos, spot->angle,
+                                    spot->flags)))
+            {
+                if(mo->tics > 0)
+                    mo->tics = 1 + (P_Random() % mo->tics);
+
+#if __JHEXEN__
+                mo->tid = spot->tid;
+                mo->special = spot->special;
+                mo->args[0] = spot->arg1;
+                mo->args[1] = spot->arg2;
+                mo->args[2] = spot->arg3;
+                mo->args[3] = spot->arg4;
+                mo->args[4] = spot->arg5;
+#endif
+
+#if __JHEXEN__
+                if(mo->flags2 & MF2_FLOATBOB)
+                    mo->special1 = FLT2FIX(spot->pos[VZ]);
+#endif
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+                if(mo->flags & MF_COUNTKILL)
+                    totalKills++;
+                if(mo->flags & MF_COUNTITEM)
+                    totalItems++;
+#endif
+            }
+        }
+        else
+        {
+            Con_Message("spawnMapThing: Warning, unknown thing num %i "
+                        "at [%g, %g, %g].\n", spot->doomEdNum,
+                        spot->pos[VX], spot->pos[VY], spot->pos[VZ]);
+        }
     }
+
+#if __JHERETIC__
+    if(maceSpotCount)
+    {
+        // Sometimes doesn't show up if not in deathmatch.
+        if(!(!deathmatch && P_Random() < 64))
+        {
+            const mapspot_t* spot = &mapSpots[maceSpots[P_Random() % maceSpotCount]];
+
+            P_SpawnMobj3f(MT_WMACE, spot->pos[VX], spot->pos[VY], 0,
+                          spot->angle, MSF_Z_FLOOR);
+        }
+    }
+#endif
+
+#if __JHEXEN__
+    P_CreateTIDList();
+#endif
+
+    P_SpawnPlayers();
 }
 
 typedef struct setupmapparams_s {
@@ -658,39 +734,24 @@ int P_SetupMapWorker(void* ptr)
 #if __JHERETIC__
     P_InitAmbientSound();
 #endif
-
-    P_LoadMapObjs();
-
-#if __JHERETIC__
-    if(maceSpotCount)
-    {
-        // Sometimes doesn't show up if not in deathmatch.
-        if(!(!deathmatch && P_Random() < 64))
-        {
-            const mapspot_t* spot = &mapSpots[maceSpots[P_Random() % maceSpotCount]];
-
-            P_SpawnMobj3f(MT_WMACE, spot->pos[VX], spot->pos[VY], 0,
-                          spot->angle, MSF_Z_FLOOR);
-        }
-    }
+#if __JHEXEN__
+    P_InitCorpseQueue();
 #endif
 
+    initXLineDefs();
+    initXSectors();
+    loadMapSpots();
+
+    spawnMapObjects();
+
 #if __JHEXEN__
-    P_CreateTIDList();
-    P_InitCreatureCorpseQueue(false); // false = do NOT scan for corpses
     PO_InitForMap();
-#endif
 
-    interpretLinedefFlags();
-
-#if __JHEXEN__
     Con_Message("Load ACS scripts\n");
-    // \fixme Custom map data format support
+    // \fixme Should be interpreted by the map converter.
     P_LoadACScripts(W_GetNumForName(mapID) + 11 /*ML_BEHAVIOR*/); // ACS object code
 #endif
 
-    P_DealPlayerStarts(0);
-    P_SpawnPlayers();
     HU_UpdatePsprites();
 
     // Set up world state.
