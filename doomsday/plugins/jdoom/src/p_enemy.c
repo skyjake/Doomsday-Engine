@@ -67,9 +67,6 @@
 
 boolean bossKilled;
 
-mobj_t **brainTargets;
-int numBrainTargets;
-int numBrainTargetsAlloc;
 braindata_t brain; // Global state of boss brain.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -1840,7 +1837,7 @@ void C_DECL A_BrainSpit(mobj_t *mo)
     mobj_t             *targ;
     mobj_t             *newmobj;
 
-    if(!numBrainTargets)
+    if(!brain.numTargets)
         return; // Ignore if no targets.
 
     brain.easy ^= 1;
@@ -1848,8 +1845,8 @@ void C_DECL A_BrainSpit(mobj_t *mo)
         return;
 
     // Shoot a cube at current target.
-    targ = brainTargets[brain.targetOn++];
-    brain.targetOn %= numBrainTargets;
+    targ = brain.targets[brain.targetOn++];
+    brain.targetOn %= brain.numTargets;
 
     // Spawn brain missile.
     newmobj = P_SpawnMissile(MT_SPAWNSHOT, mo, targ);

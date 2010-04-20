@@ -36,14 +36,14 @@
  * Global state of boss brain.
  */
 typedef struct braindata_s {
-    int             easy;
-    int             targetOn;
+    int easy;
+    int targetOn;
+    int numTargets;
+    int maxTargets;
+    mobj_t** targets;
 } braindata_t;
 
 extern braindata_t brain;
-extern mobj_t **brainTargets;
-extern int numBrainTargets;
-extern int numBrainTargetsAlloc;
 
 extern boolean bossKilled;
 

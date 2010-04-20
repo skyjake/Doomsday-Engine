@@ -842,8 +842,8 @@ static void P_ResetWorldState(void)
 
 #if __JDOOM__
     // Brain info
-    numBrainTargets = 0;
-    numBrainTargetsAlloc = -1;
+    brain.numTargets = 0;
+    brain.maxTargets = -1;
     brain.targetOn = 0;
     brain.easy = 0; // Always init easy to 0.
 #endif

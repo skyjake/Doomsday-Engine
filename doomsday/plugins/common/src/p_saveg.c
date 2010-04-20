@@ -4337,13 +4337,13 @@ static void P_ArchiveBrain(void)
 
     SV_WriteByte(1); // Write a version byte.
 
-    SV_WriteShort(numBrainTargets);
+    SV_WriteShort(brain.numTargets);
     SV_WriteShort(brain.targetOn);
     SV_WriteByte(brain.easy!=0? 1:0);
 
     // Write the mobj references using the mobj archive.
-    for(i = 0; i < numBrainTargets; ++i)
-        SV_WriteShort(SV_ThingArchiveNum(brainTargets[i]));
+    for(i = 0; i < brain.numTargets; ++i)
+        SV_WriteShort(SV_ThingArchiveNum(brain.targets[i]));
 }
 
 static void P_UnArchiveBrain(void)
@@ -4358,21 +4358,21 @@ static void P_UnArchiveBrain(void)
 
     if(ver >= 1)
     {
-        numBrainTargets = SV_ReadShort();
+        brain.numTargets = SV_ReadShort();
         brain.targetOn = SV_ReadShort();
         brain.easy = SV_ReadByte()!=0? true : false;
     }
     else
     {
-        numBrainTargets = SV_ReadByte();
+        brain.numTargets = SV_ReadByte();
         brain.targetOn = SV_ReadByte();
         brain.easy = false;
     }
 
-    for(i = 0; i < numBrainTargets; ++i)
+    for(i = 0; i < brain.numTargets; ++i)
     {
-        brainTargets[i] = (mobj_t*) (int) SV_ReadShort();
-        brainTargets[i] = SV_GetArchiveThing((int) brainTargets[i], NULL);
+        brain.targets[i] = (mobj_t*) (int) SV_ReadShort();
+        brain.targets[i] = SV_GetArchiveThing((int) brain.targets[i], NULL);
     }
 }
 #endif
