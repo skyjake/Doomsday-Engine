@@ -78,7 +78,7 @@
 #if __JDOOM__
 # define MY_SAVE_MAGIC         0x1DEAD666
 # define MY_CLIENT_SAVE_MAGIC  0x2DEAD666
-# define MY_SAVE_VERSION       7
+# define MY_SAVE_VERSION       8
 # define SAVESTRINGSIZE        24
 # define CONSISTENCY           0x2c
 # define SAVEGAMENAME          "DoomSav"
@@ -4333,10 +4333,14 @@ static void P_UnArchiveThinkers(void)
 #if __JDOOM__
 static void P_ArchiveBrain(void)
 {
-    int                 i;
+    int i;
 
-    SV_WriteByte(numBrainTargets);
-    SV_WriteByte(brain.targetOn);
+    SV_WriteByte(1); // Write a version byte.
+
+    SV_WriteShort(numBrainTargets);
+    SV_WriteShort(brain.targetOn);
+    SV_WriteByte(brain.easy!=0? 1:0);
+
     // Write the mobj references using the mobj archive.
     for(i = 0; i < numBrainTargets; ++i)
         SV_WriteShort(SV_ThingArchiveNum(brainTargets[i]));
@@ -4344,13 +4348,27 @@ static void P_ArchiveBrain(void)
 
 static void P_UnArchiveBrain(void)
 {
-    int i;
+    int i, ver = 0;
 
     if(hdr.version < 3)
         return; // No brain data before version 3.
 
-    numBrainTargets = SV_ReadByte();
-    brain.targetOn = SV_ReadByte();
+    if(hdr.version >= 8)
+        ver = SV_ReadByte();
+
+    if(ver >= 1)
+    {
+        numBrainTargets = SV_ReadShort();
+        brain.targetOn = SV_ReadShort();
+        brain.easy = SV_ReadByte()!=0? true : false;
+    }
+    else
+    {
+        numBrainTargets = SV_ReadByte();
+        brain.targetOn = SV_ReadByte();
+        brain.easy = false;
+    }
+
     for(i = 0; i < numBrainTargets; ++i)
     {
         brainTargets[i] = (mobj_t*) (int) SV_ReadShort();
