@@ -176,12 +176,11 @@ static void draw(const vectorgraphic_t* vg)
     DGL_Begin(DGL_LINES);
     for(i = 0; i < vg->count; ++i)
     {
-        vgline_t* vgl = &vg->lines[i];
-
-        DGL_TexCoord2f(0, vgl->a.pos[VX], vgl->a.pos[VY]);
-        DGL_Vertex2f(vgl->a.pos[VX], vgl->a.pos[VY]);
-        DGL_TexCoord2f(0, vgl->b.pos[VX], vgl->b.pos[VY]);
-        DGL_Vertex2f(vgl->b.pos[VX], vgl->b.pos[VY]);
+        vgline_t* l = &vg->lines[i];
+        DGL_TexCoord2f(0, l->a.pos[VX], l->a.pos[VY]);
+        DGL_Vertex2f(l->a.pos[VX], l->a.pos[VY]);
+        DGL_TexCoord2f(0, l->b.pos[VX], l->b.pos[VY]);
+        DGL_Vertex2f(l->b.pos[VX], l->b.pos[VY]);
     }
     DGL_End();
 }
@@ -209,13 +208,11 @@ void R_ShutdownVectorGraphics(void)
         vectorgraphic_t* vg = vectorGraphics[i];
         if(!vg)
             continue;
-
         if(!(Get(DD_NOVIDEO) || IS_DEDICATED))
         {
             if(vg->dlist)
                 DGL_DeleteLists(vg->dlist, 1);
         }
-
         free(vg->lines);
         free(vg);
     }
@@ -236,7 +233,6 @@ void R_UnloadVectorGraphics(void)
         vectorgraphic_t* vg = R_PrepareVectorGraphic(i);
         if(!vg)
             continue;
-
         if(vg->dlist)
             DGL_DeleteLists(vg->dlist, 1);
         vg->dlist = 0;
