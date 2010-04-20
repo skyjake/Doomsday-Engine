@@ -715,6 +715,7 @@ void G_Shutdown(void)
     P_DestroyLineTagLists();
     P_DestroySectorTagLists();
     AM_Shutdown();
+    R_ShutdownVectorGraphics();
     P_FreeWeaponSlots();
 }
 

@@ -47,6 +47,7 @@
 #include "hu_menu.h"
 #include "rend_automap.h"
 #include "p_inventory.h"
+#include "r_vectorgraphic.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -174,19 +175,15 @@ void G_UpdateState(int step)
         break;
 
     case DD_RENDER_RESTART_PRE:
-        // Free the background fog effect texture.
         Hu_UnloadData();
-
-        // Free the automap mask texture.
         Rend_AutomapUnloadData();
+        R_UnloadVectorGraphics();
         break;
 
     case DD_RENDER_RESTART_POST:
-        // Reload the background fog effect texture.
         Hu_LoadData();
-
-        // Reload the automap mask texture.
         Rend_AutomapLoadData();
+        R_UnloadVectorGraphics();
         break;
     }
 }

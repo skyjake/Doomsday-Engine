@@ -67,8 +67,8 @@ typedef struct taglist_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-iterlist_t  *spechit; // for crossed line specials.
-iterlist_t  *linespecials; // for surfaces that tick eg wall scrollers.
+iterlist_t  *spechit = NULL; // for crossed line specials.
+iterlist_t  *linespecials = NULL; // for surfaces that tick eg wall scrollers.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 

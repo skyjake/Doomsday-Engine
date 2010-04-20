@@ -60,105 +60,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define R (1.0f)
-
-vgline_t keysquare[] = {
-    {{0, 0}, {R / 4, -R / 2}},
-    {{R / 4, -R / 2}, {R / 2, -R / 2}},
-    {{R / 2, -R / 2}, {R / 2, R / 2}},
-    {{R / 2, R / 2}, {R / 4, R / 2}},
-    {{R / 4, R / 2}, {0, 0}}, // Handle part type thing.
-    {{0, 0}, {-R, 0}}, // Stem.
-    {{-R, 0}, {-R, -R / 2}}, // End lockpick part.
-    {{-3 * R / 4, 0}, {-3 * R / 4, -R / 4}}
-};
-
-vgline_t thintriangle_guy[] = {
-    {{-R / 2, R - R / 2}, {R, 0}}, // >
-    {{R, 0}, {-R / 2, -R + R / 2}},
-    {{-R / 2, -R + R / 2}, {-R / 2, R - R / 2}} // |>
-};
-
-#if __JDOOM__ || __JDOOM64__
-vgline_t player_arrow[] = {
-    {{-R + R / 8, 0}, {R, 0}}, // -----
-    {{R, 0}, {R - R / 2, R / 4}}, // ----->
-    {{R, 0}, {R - R / 2, -R / 4}},
-    {{-R + R / 8, 0}, {-R - R / 8, R / 4}}, // >---->
-    {{-R + R / 8, 0}, {-R - R / 8, -R / 4}},
-    {{-R + 3 * R / 8, 0}, {-R + R / 8, R / 4}}, // >>--->
-    {{-R + 3 * R / 8, 0}, {-R + R / 8, -R / 4}}
-};
-
-vgline_t cheat_player_arrow[] = {
-    {{-R + R / 8, 0}, {R, 0}},    // -----
-    {{R, 0}, {R - R / 2, R / 6}},    // ----->
-    {{R, 0}, {R - R / 2, -R / 6}},
-    {{-R + R / 8, 0}, {-R - R / 8, R / 6}},    // >----->
-    {{-R + R / 8, 0}, {-R - R / 8, -R / 6}},
-    {{-R + 3 * R / 8, 0}, {-R + R / 8, R / 6}},    // >>----->
-    {{-R + 3 * R / 8, 0}, {-R + R / 8, -R / 6}},
-    {{-R / 2, 0}, {-R / 2, -R / 6}},    // >>-d--->
-    {{-R / 2, -R / 6}, {-R / 2 + R / 6, -R / 6}},
-    {{-R / 2 + R / 6, -R / 6}, {-R / 2 + R / 6, R / 4}},
-    {{-R / 6, 0}, {-R / 6, -R / 6}},    // >>-dd-->
-    {{-R / 6, -R / 6}, {0, -R / 6}},
-    {{0, -R / 6}, {0, R / 4}},
-    {{R / 6, R / 4}, {R / 6, -R / 7}},    // >>-ddt->
-    {{R / 6, -R / 7}, {R / 6 + R / 32, -R / 7 - R / 32}},
-    {{R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7}}
-};
-
-#elif __JHERETIC__
-vgline_t player_arrow[] = {
-    {{-R + R / 4, 0}, {0, 0}},       // center line.
-    {{-R + R / 4, R / 8}, {R, 0}}, // blade
-    {{-R + R / 4, -R / 8}, {R, 0}},
-    {{-R + R / 4, -R / 4}, {-R + R / 4, R / 4}},    // crosspiece
-    {{-R + R / 8, -R / 4}, {-R + R / 8, R / 4}},
-    {{-R + R / 8, -R / 4}, {-R + R / 4, -R / 4}},    //crosspiece connectors
-    {{-R + R / 8, R / 4}, {-R + R / 4, R / 4}},
-    {{-R - R / 4, R / 8}, {-R - R / 4, -R / 8}},    //pommel
-    {{-R - R / 4, R / 8}, {-R + R / 8, R / 8}},
-    {{-R - R / 4, -R / 8}, {-R + R / 8, -R / 8}}
-};
-
-vgline_t cheat_player_arrow[] = {
-    {{-R + R / 8, 0}, {R, 0}},       // -----
-    {{R, 0}, {R - R / 2, R / 6}},  // ----->
-    {{R, 0}, {R - R / 2, -R / 6}},
-    {{-R + R / 8, 0}, {-R - R / 8, R / 6}},    // >----->
-    {{-R + R / 8, 0}, {-R - R / 8, -R / 6}},
-    {{-R + 3 * R / 8, 0}, {-R + R / 8, R / 6}},    // >>----->
-    {{-R + 3 * R / 8, 0}, {-R + R / 8, -R / 6}},
-    {{-R / 2, 0}, {-R / 2, -R / 6}},    // >>-d--->
-    {{-R / 2, -R / 6}, {-R / 2 + R / 6, -R / 6}},
-    {{-R / 2 + R / 6, -R / 6}, {-R / 2 + R / 6, R / 4}},
-    {{-R / 6, 0}, {-R / 6, -R / 6}},    // >>-dd-->
-    {{-R / 6, -R / 6}, {0, -R / 6}},
-    {{0, -R / 6}, {0, R / 4}},
-    {{R / 6, R / 4}, {R / 6, -R / 7}},    // >>-ddt->
-    {{R / 6, -R / 7}, {R / 6 + R / 32, -R / 7 - R / 32}},
-    {{R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7}}
-};
-
-#elif __JHEXEN__
-vgline_t player_arrow[] = {
-    {{-R + R / 4, 0}, {0, 0}},       // center line.
-    {{-R + R / 4, R / 8}, {R, 0}}, // blade
-    {{-R + R / 4, -R / 8}, {R, 0}},
-    {{-R + R / 4, -R / 4}, {-R + R / 4, R / 4}},    // crosspiece
-    {{-R + R / 8, -R / 4}, {-R + R / 8, R / 4}},
-    {{-R + R / 8, -R / 4}, {-R + R / 4, -R / 4}},    //crosspiece connectors
-    {{-R + R / 8, R / 4}, {-R + R / 4, R / 4}},
-    {{-R - R / 4, R / 8}, {-R - R / 4, -R / 8}},    //pommel
-    {{-R - R / 4, R / 8}, {-R + R / 8, R / 8}},
-    {{-R - R / 4, -R / 8}, {-R + R / 8, -R / 8}}
-};
-#endif
-
-#undef R
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -236,8 +137,6 @@ cvar_t mapCVars[] = {
 static automap_t automaps[MAXPLAYERS];
 static automapcfg_t automapCFGs[MAXPLAYERS];
 
-static vectorgrap_t* vectorGraphs[NUM_VECTOR_GRAPHS];
-
 // CODE --------------------------------------------------------------------
 
 static __inline automap_t* getAutomap(automapid_t id)
@@ -292,62 +191,6 @@ void AM_GetMapColor(float* rgb, const float* uColor, int palidx,
     rgb[0] = uColor[0];
     rgb[1] = uColor[1];
     rgb[2] = uColor[2];
-}
-
-vectorgrap_t* AM_GetVectorGraph(vectorgrapname_t id)
-{
-    vectorgrap_t*       vg;
-    vgline_t*           lines;
-
-    if(id > NUM_VECTOR_GRAPHS - 1)
-        return NULL;
-
-    if(vectorGraphs[id])
-        return vectorGraphs[id];
-
-    // Not loaded yet.
-    {
-    uint                i, linecount;
-
-    vg = vectorGraphs[id] = malloc(sizeof(*vg));
-
-    switch(id)
-    {
-    case VG_KEYSQUARE:
-        lines = keysquare;
-        linecount = sizeof(keysquare) / sizeof(vgline_t);
-        break;
-
-    case VG_TRIANGLE:
-        lines = thintriangle_guy;
-        linecount = sizeof(thintriangle_guy) / sizeof(vgline_t);
-        break;
-
-    case VG_ARROW:
-        lines = player_arrow;
-        linecount = sizeof(player_arrow) / sizeof(vgline_t);
-        break;
-
-#if !__JHEXEN__
-    case VG_CHEATARROW:
-        lines = cheat_player_arrow;
-        linecount = sizeof(cheat_player_arrow) / sizeof(vgline_t);
-        break;
-#endif
-
-    default:
-        Con_Error("AM_GetVectorGraph: Unknown id %i.", id);
-        break;
-    }
-
-    vg->lines = malloc(linecount * sizeof(vgline_t));
-    vg->count = linecount;
-    vg->dlist = 0;
-    for(i = 0; i < linecount; ++i)
-        memcpy(&vg->lines[i], &lines[i], sizeof(vgline_t));
-    }
-
-    return vg;
 }
 
 const automapcfg_t* AM_GetMapConfig(automapid_t id)
@@ -616,8 +459,6 @@ void AM_Init(void)
     uint                i;
     float               scrwidth, scrheight;
 
-    memset(vectorGraphs, 0, sizeof(vectorGraphs));
-
     scrwidth = Get(DD_WINDOW_WIDTH);
     scrheight = Get(DD_WINDOW_HEIGHT);
 
@@ -653,26 +494,10 @@ void AM_Init(void)
  */
 void AM_Shutdown(void)
 {
-    uint                i;
-
     if(IS_DEDICATED)
         return; // nothing to do.
 
     Rend_AutomapUnloadData();
-
-    // Vector graphics.
-    for(i = 0; i < NUM_VECTOR_GRAPHS; ++i)
-    {
-        vectorgrap_t *vg = vectorGraphs[i];
-
-        if(vg)
-        {
-            if(vg->dlist)
-                DGL_DeleteLists(vg->dlist, 1);
-            free(vg->lines);
-            free(vg);
-        }
-    }
 }
 
 /**
@@ -1553,7 +1378,7 @@ void AM_SetVectorGraphic(automapcfg_t* cfg, int objectname, int vgname)
     }
 }
 
-vectorgrapname_t AM_GetVectorGraphic(const automapcfg_t* cfg, int objectname)
+vectorgraphicname_t AM_GetVectorGraphic(const automapcfg_t* cfg, int objectname)
 {
     if(!cfg)
         return VG_NONE;

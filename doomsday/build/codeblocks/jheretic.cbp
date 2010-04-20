@@ -131,6 +131,7 @@
 		<Unit filename="..\..\plugins\common\include\p_xgline.h" />
 		<Unit filename="..\..\plugins\common\include\p_xgsec.h" />
 		<Unit filename="..\..\plugins\common\include\r_common.h" />
+		<Unit filename="..\..\plugins\common\include\r_vectorgraphic.h" />
 		<Unit filename="..\..\plugins\common\include\rend_automap.h" />
 		<Unit filename="..\..\plugins\common\include\st_lib.h" />
 		<Unit filename="..\..\plugins\common\include\x_hair.h" />
@@ -180,6 +181,7 @@
 		<Unit filename="..\..\plugins\common\src\p_xgsave.c" />
 		<Unit filename="..\..\plugins\common\src\p_xgsec.c" />
 		<Unit filename="..\..\plugins\common\src\r_common.c" />
+		<Unit filename="..\..\plugins\common\src\r_vectorgraphic.c" />
 		<Unit filename="..\..\plugins\common\src\rend_automap.h" />
 		<Unit filename="..\..\plugins\common\src\st_lib.c" />
 		<Unit filename="..\..\plugins\common\src\x_hair.c" />

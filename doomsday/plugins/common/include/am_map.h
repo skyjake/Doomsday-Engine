@@ -29,6 +29,8 @@
 #ifndef __COMMON_AUTOMAP_MANAGER__
 #define __COMMON_AUTOMAP_MANAGER__
 
+#include "r_vectorgraphic.h"
+
 #define AUTOMAP_OPEN_SECONDS    (.3f) // Num of seconds to open/close the map.
 
 #if __JDOOM__ || __JDOOM64__
@@ -304,33 +306,6 @@ enum {
     NUM_MAP_OBJECTLISTS
 };
 
-typedef enum vectorgraphname_e {
-    VG_NONE = -1,
-    VG_KEYSQUARE,
-    VG_TRIANGLE,
-    VG_ARROW,
-#if !__JHEXEN__
-    VG_CHEATARROW,
-#endif
-    NUM_VECTOR_GRAPHS
-} vectorgrapname_t;
-
-typedef struct mpoint_s {
-    float               pos[3];
-} mpoint_t;
-
-typedef struct mline_s {
-    mpoint_t            a, b;
-} vgline_t;
-
-typedef struct vectorgrap_s {
-    DGLuint         dlist;
-    uint            count;
-    vgline_t*       lines;
-} vectorgrap_t;
-
-vectorgrap_t* AM_GetVectorGraph(vectorgrapname_t id);
-
 #define AM_MAXSPECIALLINES      32
 
 typedef struct automapspecialline_s {
@@ -350,8 +325,8 @@ typedef struct automapcfg_s {
     float           openSeconds; // Num seconds it takes for the map to open/close.
     automapspecialline_t specialLines[AM_MAXSPECIALLINES];
     uint            numSpecialLines;
-    vectorgrapname_t vectorGraphicForPlayer;
-    vectorgrapname_t vectorGraphicForThing;
+    vectorgraphicname_t vectorGraphicForPlayer;
+    vectorgraphicname_t vectorGraphicForThing;
     int             cheating;
     boolean         revealed;
     uint            followPlayer; // Player id of that to follow.
@@ -412,6 +387,6 @@ void AM_SetColorAndAlpha(automapid_t id, int objectname, float r, float g,
 
 void AM_GetMapColor(float* rgb, const float* uColor, int palidx,
                     boolean customPal);
-vectorgrapname_t AM_GetVectorGraphic(const automapcfg_t* cfg, int objectname);
+vectorgraphicname_t AM_GetVectorGraphic(const automapcfg_t* cfg, int objectname);
 void AM_SetVectorGraphic(automapcfg_t* cfg, int objectname, int vgname);
 #endif

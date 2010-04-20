@@ -701,6 +701,8 @@ void G_CommonPostInit(void)
     // From this point on, the shortcuts are always active.
     DD_Execute(true, "activatebcontext shortcut");
 
+    R_InitVectorGraphics();
+
     Con_Message("AM_Init: Init automap.\n");
     AM_Init();
 
