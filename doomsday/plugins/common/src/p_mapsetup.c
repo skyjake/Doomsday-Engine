@@ -608,25 +608,6 @@ Con_Message("spawning x:[%g, %g, %g] angle:%i ednum:%i flags:%i\n",
 #endif
         }
     }
-
-    if(deathmatch)
-    {
-        int                 i;
-        uint                numDMStarts = P_GetNumPlayerStarts(true),
-                            playerCount = 0;
-
-        for(i = 0; i < MAXPLAYERS; ++i)
-        {
-            if(players[i].plr->inGame)
-                playerCount++;
-        }
-
-        if(numDMStarts < playerCount)
-        {
-            Con_Error("P_SetupMap: Player count (%d) exceeds deathmatch "
-                      "spots (%d).", playerCount, numDMStarts);
-        }
-    }
 }
 
 static void interpretLinedefFlags(void)
