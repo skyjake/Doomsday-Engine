@@ -233,20 +233,26 @@ static void rendHUD(int player)
     if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
         return;
 
+    if(MN_CurrentMenuHasBackground() && Hu_MenuAlpha() >= 1)
+        return;
+
     plr = &players[player];
+
+    // Draw the automap?
+    AM_Drawer(player);
 
     // These various HUD's will be drawn unless Doomsday advises not to
     if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
     {
-        automapid_t         map = AM_MapForPlayer(player);
-        boolean             redrawsbar = false;
-
-        if((WINDOWHEIGHT != 200))
-            redrawsbar = true;
+        automapid_t map = AM_MapForPlayer(player);
+        boolean redrawsbar = false;
 
         // Draw HUD displays only visible when the automap is open.
         if(AM_IsActive(map))
             HU_DrawMapCounters();
+
+        if((WINDOWHEIGHT != 200))
+            redrawsbar = true;
 
         // Do we need to render a full status bar at this point?
         if(!(AM_IsActive(map) && cfg.automapHudDisplay == 0) &&
@@ -259,6 +265,24 @@ static void rendHUD(int player)
         }
 
         HU_Drawer(player);
+
+        // Level information is shown for a few seconds in the beginning of a level.
+        if(cfg.mapTitle || actualMapTime <= 6 * TICSPERSEC)
+        {
+            int x, y;
+            float alpha = 1;
+
+            if(actualMapTime < 35)
+                alpha = actualMapTime / 35.0f;
+            if(actualMapTime > 5 * 35)
+                alpha = 1 - (actualMapTime - 5 * 35) / 35.0f;
+
+            x = SCREENWIDTH / 2;
+            y = 13;
+            Draw_BeginZoom((1 + cfg.hudScale)/2, x, y);
+            R_DrawMapTitle(x, y, alpha, GF_FONTB, true);
+            Draw_EndZoom();
+        }
     }
 }
 
@@ -324,9 +348,6 @@ void H_Display(int layer)
             if(!(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam
                 X_Drawer(player);
         }
-
-        // Draw the automap?
-        AM_Drawer(player);
         break;
     case GS_STARTUP:
         DGL_Disable(DGL_TEXTURING);
@@ -342,33 +363,6 @@ void H_Display2(void)
 {
     switch(G_GetGameState())
     {
-    case GS_MAP:
-        if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
-            break;
-
-        if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
-        {
-            // Level information is shown for a few seconds in the
-            // beginning of a level.
-            if(cfg.mapTitle || actualMapTime <= 6 * TICSPERSEC)
-            {
-                int         x, y;
-                float       alpha = 1;
-
-                if(actualMapTime < 35)
-                    alpha = actualMapTime / 35.0f;
-                if(actualMapTime > 5 * 35)
-                    alpha = 1 - (actualMapTime - 5 * 35) / 35.0f;
-
-                x = SCREENWIDTH / 2;
-                y = 13;
-                Draw_BeginZoom((1 + cfg.hudScale)/2, x, y);
-                R_DrawMapTitle(x, y, alpha, GF_FONTB, true);
-                Draw_EndZoom();
-            }
-        }
-        break;
-
     case GS_INTERMISSION:
         IN_Drawer();
         break;
