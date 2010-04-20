@@ -225,6 +225,9 @@ static void rendHUD(int player)
     if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
         return;
 
+    if(MN_CurrentMenuHasBackground() && Hu_MenuAlpha() >= 1)
+        return;
+
     plr = &players[player];
 
     // These various HUD's will be drawn unless Doomsday advises not to
@@ -252,6 +255,9 @@ static void rendHUD(int player)
         }
 
         HU_Drawer(player);
+
+        // Map information is shown for a few seconds in the beginning of a map.
+        R_DrawMapTitle();
     }
 }
 
@@ -334,18 +340,6 @@ void G_Display2(void)
 {
     switch(G_GetGameState())
     {
-    case GS_MAP:
-        if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
-            break;
-
-        if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
-        {
-            // Map information is shown for a few seconds in the
-            // beginning of a map.
-            R_DrawMapTitle();
-        }
-        break;
-
     case GS_INTERMISSION:
         IN_Drawer();
         break;
