@@ -555,50 +555,6 @@ int P_Massacre(void)
     return count;
 }
 
-static boolean findBrainTarget(thinker_t* th, void* context)
-{
-    mobj_t*             mo = (mobj_t *) th;
-
-    if(mo->type == MT_BOSSTARGET)
-    {
-        if(numBrainTargets >= numBrainTargetsAlloc)
-        {
-            // Do we need to alloc more targets?
-            if(numBrainTargets == numBrainTargetsAlloc)
-            {
-                numBrainTargetsAlloc *= 2;
-                brainTargets =
-                    Z_Realloc(brainTargets,
-                              numBrainTargetsAlloc * sizeof(*brainTargets),
-                              PU_MAP);
-            }
-            else
-            {
-                numBrainTargetsAlloc = 32;
-                brainTargets =
-                    Z_Malloc(numBrainTargetsAlloc * sizeof(*brainTargets),
-                             PU_MAP, NULL);
-            }
-        }
-
-        brainTargets[numBrainTargets++] = mo;
-    }
-
-    return true; // Continue iteration.
-}
-
-/**
- * Initialize boss brain targets at map startup, rather than at boss
- * wakeup, to prevent savegame-related crashes.
- *
- * \todo Does not belong in this file, find it a better home.
- */
-void P_SpawnBrainTargets(void)
-{
-    // Find all the target spots.
-    DD_IterateThinkers(P_MobjThinker, findBrainTarget, NULL);
-}
-
 typedef struct {
     mobjtype_t          type;
     size_t              count;

@@ -34,8 +34,6 @@
 
 extern boolean bossKilled;
 
-void        P_SpawnBrainTargets(void);
-
 void        P_NoiseAlert(mobj_t *target, mobj_t *emmiter);
 int         P_Massacre(void);
 

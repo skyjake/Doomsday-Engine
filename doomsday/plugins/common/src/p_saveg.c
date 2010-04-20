@@ -4344,7 +4344,7 @@ static void P_ArchiveBrain(void)
 
 static void P_UnArchiveBrain(void)
 {
-    int                 i;
+    int i;
 
     if(hdr.version < 3)
         return; // No brain data before version 3.
@@ -4356,9 +4356,6 @@ static void P_UnArchiveBrain(void)
         brainTargets[i] = (mobj_t*) (int) SV_ReadShort();
         brainTargets[i] = SV_GetArchiveThing((int) brainTargets[i], NULL);
     }
-
-    if(gameMode == commercial)
-        P_SpawnBrainTargets();
 }
 #endif
 

@@ -680,11 +680,6 @@ int P_SetupMapWorker(void* ptr)
 
     P_LoadMapObjs();
 
-#if __JDOOM__
-    if(gameMode == commercial)
-        P_SpawnBrainTargets();
-#endif
-
 #if __JHERETIC__
     if(maceSpotCount)
     {
