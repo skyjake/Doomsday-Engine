@@ -6,6 +6,7 @@
  *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
+ *\author Copyright © 2003 Grégory Smialek <texel@fr.fm>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -109,7 +110,7 @@ int     r_detail = true;        // Render detail textures (if available).
 float   vid_gamma = 1.0f, vid_bright = 0, vid_contrast = 1.0f;
 int     glFontFixed, glFontVariable[NUM_GLFS];
 
-float   glNearClip, glFarClip;
+float   glNearClip;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -696,8 +697,7 @@ void GL_Shutdown(void)
 void GL_Init2DState(void)
 {
     // The variables.
-    glNearClip = 5;
-    glFarClip = 16500;
+    glNearClip = 0.05f;
 
     // Here we configure the OpenGL state and set the projection matrix.
     glDisable(GL_CULL_FACE);
@@ -805,15 +805,59 @@ void GL_Restore2DState(int step)
     }
 }
 
-void GL_ProjectionMatrix(void)
+/**
+ * Like gluPerspective but with a far clip plane at infinity.
+ * Borrowed from texel3d by Grégory Smialek.
+ */
+void GL_InfinitePerspective(GLdouble fovy, GLdouble aspect, GLdouble znear)
 {
-    // We're assuming pixels are squares.
-    float               aspect = viewpw / (float) viewph;
+#define OFFSET (1 - 1.0 / (1 << 23));
+
+    GLdouble tangent, left, right, bottom, top;
+    GLdouble m[16];
+
+    tangent = tan(DEG2RAD(fovy/2.0));
+    top = tangent * znear;
+    bottom = -top;
+    left = bottom * aspect;
+    right = top * aspect;
+
+    m[ 0] = (2 * znear) / (right - left);
+    m[ 4] = 0;
+    m[ 8] = (right + left) / (right - left);
+    m[12] = 0;
+
+    m[ 1] = 0;
+    m[ 5] = (2 * znear) / (top - bottom);
+    m[ 9] = (top + bottom) / (top - bottom);
+    m[13] = 0;
+
+    m[ 2] = 0;
+    m[ 6] = 0;
+    m[10] = -1 * OFFSET;
+    m[14] = -2 * znear * OFFSET;
+
+    m[ 3] = 0;
+    m[ 7] = 0;
+    m[11] = -1;
+    m[15] = 0;
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(yfov = fieldOfView / aspect, aspect, glNearClip, glFarClip);
 
+    glMultMatrixd(m);
+
+#undef OFFSET
+}
+
+void GL_ProjectionMatrix(void)
+{
+    // We're assuming pixels are squares.
+    float aspect = viewpw / (float) viewph;
+
+    yfov = 2 * RAD2DEG(atan(tan(DEG2RAD(fieldOfView) / 2) / aspect));
+    GL_InfinitePerspective(yfov, aspect, glNearClip);
+    
     // We'd like to have a left-handed coordinate system.
     glScalef(1, 1, -1);
 }
