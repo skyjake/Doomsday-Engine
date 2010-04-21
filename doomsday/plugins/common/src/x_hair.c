@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,8 +24,6 @@
 
 /**
  * x_hair.c: Crosshairs, drawing and config.
- *
- * \todo Use the vector graphic routines currently in the automap here.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -41,31 +39,15 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
 #include "x_hair.h"
 #include "p_user.h"
+#include "r_vectorgraphic.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_XLINES              16
-
 // TYPES -------------------------------------------------------------------
-
-typedef struct crosspoint_s {
-    float               x, y;
-} crosspoint_t;
-
-typedef struct crossline_s {
-    crosspoint_t        a, b;
-} crossline_t;
-
-typedef struct cross_s {
-    int                 numLines;
-    crossline_t         lines[MAX_XLINES];
-} cross_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -76,27 +58,6 @@ typedef struct cross_s {
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-#define XL(x1,y1,x2,y2) {{x1,y1},{x2,y2}}
-
-cross_t crosshairs[NUM_XHAIRS] = {
-    // + (open center)
-    {4, {XL(-1, 0, -.4f, 0), XL(0, -1, 0, -.4f), XL(1, 0, .4f, 0), XL(0, 1, 0, .4f)}},
-    // > <
-    {4,
-     {XL(-1, -.714f, -.286f, 0), XL(-1, .714f, -.286f, 0), XL(1, -.714f, .286f, 0), XL(1, .714f, .286f, 0)}},
-    // square
-    {4,
-     {XL(-1, -1, -1, 1), XL(-1, 1, 1, 1), XL(1, 1, 1, -1), XL(1, -1, -1, -1)}},
-    // square (open center)
-    {8,
-     {XL(-1, -1, -1, -.5f), XL(-1, .5f, -1, 1), XL(-1, 1, -.5f, 1), XL(.5f, 1, 1, 1),
-      XL(1, 1, 1, .5f), XL(1, -.5f, 1, -1), XL(1, -1, .5f, -1), XL(-.5f, -1, -1, -1)}},
-    // diamond
-    {4, {XL(0, -1, 1, 0), XL(1, 0, 0, 1), XL(0, 1, -1, 0), XL(-1, 0, 0, -1)}},
-    // ^
-    {2, {XL(-1, -1, 0, 0), XL(0, 0, 1, -1)}}
-};
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -119,7 +80,7 @@ cvar_t xhairCVars[] = {
  */
 void X_Register(void)
 {
-    int                 i;
+    int i;
 
     for(i = 0; xhairCVars[i].name; ++i)
         Con_AddVariable(xhairCVars + i);
@@ -129,11 +90,9 @@ void X_Drawer(int player)
 {
 #define XHAIR_LINE_WIDTH    1.f
 
-    int                 i, xhair = MINMAX_OF(0, cfg.xhair, NUM_XHAIRS),
-                        centerX, centerY;
-    float               alpha, scale, oldLineWidth;
-    ddplayer_t*         plr = players[player].plr;
-    cross_t*            cross;
+    int xhair = MINMAX_OF(0, cfg.xhair, NUM_XHAIRS), centerX, centerY;
+    float alpha, scale, oldLineWidth;
+    player_t* plr = &players[player];
 
     alpha = MINMAX_OF(0, cfg.xhairColor[3], 1);
 
@@ -153,18 +112,16 @@ void X_Drawer(int player)
     DGL_Translatef(centerX, centerY, 0);
     DGL_Scalef(scale, scale, 1);
 
-    cross = &crosshairs[xhair - 1];
-
     if(cfg.xhairVitality)
     {   // Color the crosshair according to how close the player is to death.
 #define HUE_DEAD            0.f
 #define HUE_LIVE            .3f
 
-        float               vitalColor[4];
+        float vitalColor[4];
 
         R_HSVToRGB(vitalColor, HUE_DEAD +
             (HUE_LIVE - HUE_DEAD) * MINMAX_OF(0,
-                (float) plr->mo->health / maxHealth, 1), 1, 1);
+                (float) plr->plr->mo->health / maxHealth, 1), 1, 1);
         vitalColor[3] = alpha;
         DGL_Color4fv(vitalColor);
 
@@ -173,7 +130,7 @@ void X_Drawer(int player)
     }
     else
     {
-        float               color[4];
+        float color[4];
 
         color[0] = MINMAX_OF(0, cfg.xhairColor[0], 1);
         color[1] = MINMAX_OF(0, cfg.xhairColor[1], 1);
@@ -187,15 +144,7 @@ void X_Drawer(int player)
     DGL_SetFloat(DGL_LINE_WIDTH, XHAIR_LINE_WIDTH);
     DGL_Disable(DGL_TEXTURING);
 
-    DGL_Begin(DGL_LINES);
-    for(i = 0; i < cross->numLines; ++i)
-    {
-        crossline_t*        xline = &cross->lines[i];
-
-        DGL_Vertex2f(xline->a.x, xline->a.y);
-        DGL_Vertex2f(xline->b.x, xline->b.y);
-    }
-    DGL_End();
+    R_DrawVectorGraphic(R_PrepareVectorGraphic(VG_XHAIR1 + (xhair-1)));
 
     // Restore the previous state.
     DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);

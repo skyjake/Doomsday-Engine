@@ -36,6 +36,12 @@ typedef enum {
 #if !__JHEXEN__
     VG_CHEATARROW,
 #endif
+    VG_XHAIR1,
+    VG_XHAIR2,
+    VG_XHAIR3,
+    VG_XHAIR4,
+    VG_XHAIR5,
+    VG_XHAIR6,
     NUM_VECTOR_GRAPHICS
 } vectorgraphicname_t;
 

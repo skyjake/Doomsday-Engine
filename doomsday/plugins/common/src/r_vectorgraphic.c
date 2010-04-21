@@ -162,6 +162,52 @@ vgline_t player_arrow[] = {
 };
 #endif
 
+#define XL(x1,y1,x2,y2) {{x1,y1},{x2,y2}}
+
+vgline_t crossHair1[] = { // + (open center)
+    {{-1, 0}, {-.4f, 0}},
+    {{0, -1}, {0, -.4f}},
+    {{1, 0}, {.4f, 0}},
+    {{0, 1}, {0, .4f}}
+};
+  
+vgline_t crossHair2[] = { // > <
+    {{-1, -.714f}, {-.286f, 0}},
+    {{-1, .714f}, {-.286f, 0}},
+    {{1, -.714f}, {.286f, 0}},
+    {{1, .714f}, {.286f, 0}}
+};
+
+vgline_t crossHair3[] = { // square
+    {{-1, -1}, {-1, 1}},
+    {{-1, 1}, {1, 1}},
+    {{1, 1}, {1, -1}},
+    {{1, -1}, {-1, -1}}
+};
+
+vgline_t crossHair4[] = { // square (open center)
+    {{-1, -1}, {-1, -.5f}},
+    {{-1, .5f}, {-1, 1}},
+    {{-1, 1}, {-.5f, 1}},
+    {{.5f, 1}, {1, 1}},
+    {{1, 1}, {1, .5f}},
+    {{1, -.5f}, {1, -1}},
+    {{1, -1}, {.5f, -1}},
+    {{-.5f, -1}, {-1, -1}}
+};
+
+vgline_t crossHair5[] = { // diamond
+    {{0, -1}, {1, 0}},
+    {{1, 0}, {0, 1}},
+    {{0, 1}, {-1, 0}},
+    {{-1, 0}, {0, -1}}
+};
+
+vgline_t crossHair6[] = { // ^
+    {{-1, -1}, {0, 0}},
+    {{0, 0}, {1, -1}}
+};
+
 #undef R
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -294,6 +340,36 @@ vectorgraphic_t* R_PrepareVectorGraphic(vectorgraphicname_t id)
         linecount = sizeof(cheat_player_arrow) / sizeof(vgline_t);
         break;
 #endif
+
+    case VG_XHAIR1:
+        lines = crossHair1;
+        linecount = sizeof(crossHair1) / sizeof(vgline_t);
+        break;
+
+    case VG_XHAIR2:
+        lines = crossHair2;
+        linecount = sizeof(crossHair2) / sizeof(vgline_t);
+        break;
+
+    case VG_XHAIR3:
+        lines = crossHair3;
+        linecount = sizeof(crossHair3) / sizeof(vgline_t);
+        break;
+
+    case VG_XHAIR4:
+        lines = crossHair4;
+        linecount = sizeof(crossHair4) / sizeof(vgline_t);
+        break;
+
+    case VG_XHAIR5:
+        lines = crossHair5;
+        linecount = sizeof(crossHair5) / sizeof(vgline_t);
+        break;
+
+    case VG_XHAIR6:
+        lines = crossHair6;
+        linecount = sizeof(crossHair6) / sizeof(vgline_t);
+        break;
 
     default:
         Con_Error("R_PrepareVectorGraphic: Unknown id %i.", id);
