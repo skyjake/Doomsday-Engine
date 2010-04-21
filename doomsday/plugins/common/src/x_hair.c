@@ -88,7 +88,7 @@ void X_Register(void)
 
 void X_Drawer(int player)
 {
-#define XHAIR_LINE_WIDTH    1.f
+#define XHAIR_LINE_WIDTH    1f
 
     int xhair = MINMAX_OF(0, cfg.xhair, NUM_XHAIRS), centerX, centerY;
     float alpha, scale, oldLineWidth;
