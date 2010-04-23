@@ -216,9 +216,6 @@ desc = 1=Disable exit buttons during map rotation.
 [server-game-cheat]
 desc = 1=Allow cheating in multiplayer games (god, noclip, give).
 
-[menu-scale]
-desc = Scaling for menus.
-
 [menu-flash-r]
 desc = Menu selection flash color, red component.
 
@@ -264,17 +261,23 @@ desc = Menu fog mode: 0=off, 1=shimmer, 2=black smoke, 3=blue vertical, 4=grey s
 [menu-hotkeys]
 desc = 1=Enable hotkey navigation in the menu.
 
-[menu-shadow]
-desc = Menu text shadow darkness.
+[menu-nostretch]
+desc = If the window dimension aspect ratio is not equal to but close to that of the original game, the menu will be stretched 1= disabled.
 
 [menu-patch-replacement]
 desc = Patch Replacement strings. 1=Enable external, 2=Enable built-in.
 
-[menu-slam]
-desc = 1=Slam the menu when opening.
-
 [menu-quick-ask]
 desc = 1=Ask me to confirm when quick saving/loading.
+
+[menu-scale]
+desc = Scaling for menus.
+
+[menu-shadow]
+desc = Menu text shadow darkness.
+
+[menu-slam]
+desc = 1=Slam the menu when opening.
 
 [xg-dev]
 desc = 1=Print XG debug messages.

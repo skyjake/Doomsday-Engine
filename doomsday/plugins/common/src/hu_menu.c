@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -1206,6 +1206,7 @@ static menu_t ColorWidgetMnu = {
 // Cvars for the menu:
 cvar_t menuCVars[] = {
     {"menu-scale", 0, CVT_FLOAT, &cfg.menuScale, .1f, 1},
+    {"menu-nostretch", 0, CVT_BYTE, &cfg.menuNoStretch, 0, 1},
     {"menu-flash-r", 0, CVT_FLOAT, &cfg.flashColor[0], 0, 1},
     {"menu-flash-g", 0, CVT_FLOAT, &cfg.flashColor[1], 0, 1},
     {"menu-flash-b", 0, CVT_FLOAT, &cfg.flashColor[2], 0, 1},
@@ -1730,21 +1731,77 @@ boolean MN_CurrentMenuHasBackground(void)
 }
 
 /**
+ * Decide our scaling strategy by comparing the aspect ratios of the
+ * window dimensions to the original fixed-size window.
+ *
+ * @return              @c true if decided to stretch, else scale to fit.
+ */
+static boolean __inline pickScalingStrategy(int winWidth, int winHeight)
+{
+    float a = (float)winWidth/winHeight;
+    float b = (float)SCREENWIDTH/SCREENHEIGHT;
+
+    if(INRANGE_OF(a, b, .001f))
+        return true; // The same, so stretch.
+    if(cfg.menuNoStretch || !INRANGE_OF(a, b, .18f))
+        return false; // No stretch; translate and scale to fit.
+    // Otherwise stretch.
+    return true;
+}
+
+/**
  * This is the main menu drawing routine (called every tic by the drawing
  * loop) Draws the current menu 'page' by calling the funcs attached to
  * each menu item.
  */
 void Hu_MenuDrawer(void)
 {
-    int             i;
-    int             pos[2], offset[2], width, height;
-    float           scale;
-    boolean         allowScaling =
-        (!(currentMenu->flags & MNF_NOSCALE)? true : false);
+    int i, pos[2], offset[2], winWidth, winHeight, width, height;
+    boolean allowScaling = (!(currentMenu->flags & MNF_NOSCALE)? true : false);
+    float scale;
+
+    winWidth = Get(DD_WINDOW_WIDTH);
+    winHeight = Get(DD_WINDOW_HEIGHT);
+
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+
+    if(pickScalingStrategy(winWidth, winHeight))
+    {
+        // Use an orthograohic projection in a fixed 320x200 space.
+        DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
+    }
+    else
+    {
+        /**
+         * Use an orthographic projection in native screenspace. Then
+         * translate and scale the projection to produce an aspect
+         * corrected coordinate space of 320x200 and centered on the
+         * larger of the horizontal and vertical axes.
+         */
+        DGL_Ortho(0, 0, winWidth, winHeight, -1, 1);
+
+        if(winWidth >= winHeight)
+        {
+            DGL_Translatef(winWidth/2, 0, 0);
+            DGL_Scalef(1/1.2f, 1, 1); // Aspect correction.
+            DGL_Scalef((float)winHeight/SCREENHEIGHT, (float)winHeight/SCREENHEIGHT, 1);
+            DGL_Translatef(-(SCREENWIDTH/2), 0, 0);
+        }
+        else
+        {
+            DGL_Translatef(0, winHeight/2, 0);
+            DGL_Scalef(1, 1.2f, 1); // Aspect correction.
+            DGL_Scalef((float)winWidth/SCREENWIDTH, (float)winWidth/SCREENWIDTH, 1);
+            DGL_Translatef(0, -(SCREENHEIGHT/2), 0);
+        }
+    }
 
     // Popped at the end of the function.
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
+    DGL_LoadIdentity();
 
     // Setup matrix.
     if(menuActive || menuAlpha > 0)
@@ -1753,8 +1810,7 @@ void Hu_MenuDrawer(void)
         // background effect.
         if(currentMenu->background)
         {
-            lumpnum_t           lump =
-                W_CheckNumForName(currentMenu->background);
+            lumpnum_t lump = W_CheckNumForName(currentMenu->background);
 
             if(lump != -1)
             {
@@ -1786,22 +1842,10 @@ void Hu_MenuDrawer(void)
     {
         currentMenu->numVisItems = currentMenu->unscaled.numVisItems / cfg.menuScale;
         currentMenu->y = 110 - (110 - currentMenu->unscaled.y) / cfg.menuScale;
-
-        /*
-        if(currentMenu->firstItem && currentMenu->firstItem < currentMenu->numVisItems)
-        {
-            // Make sure all pages are divided correctly.
-            currentMenu->firstItem = 0;
-        }
-        if(itemOn - currentMenu->firstItem >= currentMenu->numVisItems)
-        {
-            itemOn = currentMenu->firstItem + currentMenu->numVisItems - 1;
-        }
-        */
     }
 
     if(currentMenu->drawFunc)
-        currentMenu->drawFunc(); // Call Draw routine.
+        currentMenu->drawFunc();
 
     pos[VX] = currentMenu->x;
     pos[VY] = currentMenu->y;
@@ -1811,7 +1855,7 @@ void Hu_MenuDrawer(void)
         for(i = currentMenu->firstItem;
             i < currentMenu->itemCount && i < currentMenu->firstItem + currentMenu->numVisItems; ++i)
         {
-            float           t, r, g, b;
+            float t, r, g, b;
 
             // Which color?
 #if __JDOOM__ || __JDOOM64__
@@ -1886,9 +1930,8 @@ void Hu_MenuDrawer(void)
         // Draw the menu cursor.
         if(allowScaling)
         {
-            int                 hasFocus = MAX_OF(0, itemOn);
-            menu_t*             mn =
-                (widgetEdit? &ColorWidgetMnu : currentMenu);
+            int hasFocus = MAX_OF(0, itemOn);
+            menu_t* mn = (widgetEdit? &ColorWidgetMnu : currentMenu);
 
             scale = mn->itemHeight / (float) LINEHEIGHT;
             width = cursorst[whichSkull].width;
@@ -1898,11 +1941,9 @@ void Hu_MenuDrawer(void)
             offset[VX] -= width / 2 * scale;
 
             offset[VY] = mn->y + MENUCURSOR_OFFSET_Y * scale;
-            offset[VY] += (hasFocus - mn->firstItem) * mn->itemHeight +
-                mn->itemHeight / 2;
+            offset[VY] += (hasFocus - mn->firstItem) * mn->itemHeight + mn->itemHeight / 2;
 
-            DGL_SetPatch(cursorst[whichSkull].lump, DGL_CLAMP_TO_EDGE,
-                         DGL_CLAMP_TO_EDGE);
+            DGL_SetPatch(cursorst[whichSkull].lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
             DGL_MatrixMode(DGL_MODELVIEW);
             DGL_PushMatrix();
@@ -1928,6 +1969,9 @@ void Hu_MenuDrawer(void)
 
     // Restore original matrices.
     DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+
+    DGL_MatrixMode(DGL_PROJECTION);
     DGL_PopMatrix();
 
     M_ControlGrabDrawer();

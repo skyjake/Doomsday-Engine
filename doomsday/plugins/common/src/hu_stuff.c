@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -2878,12 +2878,6 @@ void Hu_Drawer(void)
 {
     if((Hu_MenuIsActive() || Hu_MenuAlpha() > 0) || Hu_IsMessageActive())
     {
-        // Use a plain 320x200 projection.
-        DGL_MatrixMode(DGL_PROJECTION);
-        DGL_LoadIdentity();
-        DGL_PushMatrix();
-        DGL_Ortho(0, 0, 320, 200, -1, 1);
-
         // Draw the fog effect?
         if(fogEffectData.alpha > 0 && cfg.hudFog &&
            !((Hu_MenuIsActive() || Hu_MenuAlpha() > 0) &&
@@ -2894,9 +2888,6 @@ void Hu_Drawer(void)
             Hu_MsgDrawer();
         else
             Hu_MenuDrawer();
-
-        DGL_MatrixMode(DGL_PROJECTION);
-        DGL_PopMatrix();
     }
 }
 

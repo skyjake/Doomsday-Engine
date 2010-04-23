@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 1999 Activision
  *
@@ -283,6 +283,7 @@ void G_PreInit(void)
     cfg.menuColor2[2] = defFontRGB2[2];
     cfg.menuEffects = 0;
     cfg.menuHotkeys = true;
+    cfg.menuNoStretch = false;
     cfg.askQuickSaveLoad = true;
     cfg.hudFog = 5;
     cfg.menuSlam = true;

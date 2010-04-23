@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -93,6 +93,7 @@ typedef struct jdoom64_config_s {
     int             menuQuitSound;
     byte            menuSlam;
     byte            menuHotkeys;
+    byte            menuNoStretch;
     byte            askQuickSaveLoad;
     float           flashColor[3];
     int             flashSpeed;

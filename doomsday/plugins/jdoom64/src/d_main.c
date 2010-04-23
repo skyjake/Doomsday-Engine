@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -263,6 +263,7 @@ void G_PreInit(void)
     cfg.menuShadow = 0.33f;
     cfg.menuQuitSound = true;
     cfg.menuEffects = 1; // Do type-in effect.
+    cfg.menuNoStretch = false;
     cfg.flashColor[0] = .7f;
     cfg.flashColor[1] = .9f;
     cfg.flashColor[2] = 1;
