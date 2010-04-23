@@ -408,13 +408,6 @@ void D_Display2(void)
         break;
     }
 
-    // Draw pause pic (but not if InFine active).
-    if(paused && !fiActive)
-    {
-        WI_DrawPatch(SCREENWIDTH /2, 4, 1, 1, 1, 1, &m_pause, NULL, false,
-                     ALIGN_CENTER);
-    }
-
     // InFine is drawn whenever active.
     FI_Drawer();
 

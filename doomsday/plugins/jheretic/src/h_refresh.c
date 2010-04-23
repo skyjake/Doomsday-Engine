@@ -376,12 +376,6 @@ void H_Display2(void)
         break;
     }
 
-    // Draw pause pic (but not if InFine active).
-    if(paused && !fiActive)
-    {
-        GL_DrawPatch(SCREENWIDTH/2, 4, W_GetNumForName("PAUSED"));
-    }
-
     // InFine is drawn whenever active.
     FI_Drawer();
 
