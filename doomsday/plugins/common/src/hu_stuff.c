@@ -2914,13 +2914,45 @@ void Hu_Drawer(void)
     winWidth = Get(DD_WINDOW_WIDTH);
     winHeight = Get(DD_WINDOW_HEIGHT);
 
+    if(pauseGraphicVisible)
+    {
+        /**
+         * Use an orthographic projection in native screenspace. Then
+         * translate and scale the projection to produce an aspect
+         * corrected coordinate space at 4:3, aligned vertically to
+         * the top and centered horizontally in the window.
+         */
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PushMatrix();
+        DGL_LoadIdentity();
+        DGL_Ortho(0, 0, winWidth, winHeight, -1, 1);
+
+        DGL_Translatef((float)winWidth/2, (float)winHeight/SCREENHEIGHT * 4, 0);
+        if(winWidth >= winHeight)
+            DGL_Scalef((float)winHeight/SCREENHEIGHT, (float)winHeight/SCREENHEIGHT, 1);
+        else
+            DGL_Scalef((float)winWidth/SCREENWIDTH, (float)winWidth/SCREENWIDTH, 1);
+
+#if __JDOOM__ || __JDOOM64__
+        WI_DrawPatch(0, 0, 1, 1, 1, 1, &m_pause, NULL, false, ALIGN_CENTER);
+#elif __JHERETIC__ || __JHEXEN__
+        GL_DrawPatch(0, 0, W_GetNumForName("PAUSED"));
+#endif
+
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PopMatrix();
+    }
+
+    if(!menuOrMessageVisible)
+        return;
+
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadIdentity();
 
     if(pickScalingStrategy(winWidth, winHeight))
     {
-        // Use an orthograohic projection in a fixed 320x200 space.
+        // Use an orthographic projection in a fixed 320x200 space.
         DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
     }
     else
@@ -2935,42 +2967,29 @@ void Hu_Drawer(void)
 
         if(winWidth >= winHeight)
         {
-            DGL_Translatef(winWidth/2, 0, 0);
+            DGL_Translatef((float)winWidth/2, 0, 0);
             DGL_Scalef(1/1.2f, 1, 1); // Aspect correction.
             DGL_Scalef((float)winHeight/SCREENHEIGHT, (float)winHeight/SCREENHEIGHT, 1);
             DGL_Translatef(-(SCREENWIDTH/2), 0, 0);
         }
         else
         {
-            DGL_Translatef(0, winHeight/2, 0);
+            DGL_Translatef(0, (float)winHeight/2, 0);
             DGL_Scalef(1, 1.2f, 1); // Aspect correction.
             DGL_Scalef((float)winWidth/SCREENWIDTH, (float)winWidth/SCREENWIDTH, 1);
             DGL_Translatef(0, -(SCREENHEIGHT/2), 0);
         }
     }
 
-    // Draw pause pic (but not if InFine active).
-    if(pauseGraphicVisible)
-    {
-#if __JDOOM__ || __JDOOM64__
-        WI_DrawPatch(SCREENWIDTH /2, 4, 1, 1, 1, 1, &m_pause, NULL, false, ALIGN_CENTER);
-#elif __JHERETIC__ || __JHEXEN__
-        GL_DrawPatch(SCREENWIDTH/2, 4, W_GetNumForName("PAUSED"));
-#endif
-    }
+    // Draw the fog effect?
+    if(fogEffectData.alpha > 0 && cfg.hudFog &&
+       !((Hu_MenuIsActive() || Hu_MenuAlpha() > 0) && MN_CurrentMenuHasBackground()))
+        drawFogEffect();
 
-    if(menuOrMessageVisible)
-    {
-        // Draw the fog effect?
-        if(fogEffectData.alpha > 0 && cfg.hudFog &&
-           !((Hu_MenuIsActive() || Hu_MenuAlpha() > 0) && MN_CurrentMenuHasBackground()))
-            drawFogEffect();
-
-        if(Hu_IsMessageActive())
-            Hu_MsgDrawer();
-        else
-            Hu_MenuDrawer();
-    }
+    if(Hu_IsMessageActive())
+        Hu_MsgDrawer();
+    else
+        Hu_MenuDrawer();
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PopMatrix();
