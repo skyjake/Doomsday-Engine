@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -190,19 +190,22 @@ void R_ViewPortPlacement(viewport_t* port, int x, int y)
 }
 
 /**
- * Set up a view grid and calculate the viewports.  Set 'numCols' and
+ * Attempt to set up a view grid and calculate the viewports. Set 'numCols' and
  * 'numRows' to zero to just update the viewport coordinates.
  */
-void R_SetViewGrid(int numCols, int numRows)
+boolean R_SetViewGrid(int numCols, int numRows)
 {
-    int                 x, y, p;
+    int x, y, p;
 
     if(numCols > 0 && numRows > 0)
     {
-        if(numCols > 16)
-            numCols = 16;
-        if(numRows > 16)
-            numRows = 16;
+        if(numCols * numRows > DDMAXPLAYERS)
+            return false;
+
+        if(numCols > DDMAXPLAYERS)
+            numCols = DDMAXPLAYERS;
+        if(numRows > DDMAXPLAYERS)
+            numRows = DDMAXPLAYERS;
 
         gridCols = numCols;
         gridRows = numRows;
@@ -222,6 +225,8 @@ void R_SetViewGrid(int numCols, int numRows)
             viewports[p].console = displayPlayer; //clients[P_LocalToConsole(p)].viewConsole;
         }
     }
+
+    return true;
 }
 
 /**
@@ -774,6 +779,7 @@ void R_UseViewPort(viewport_t* port)
 {
     if(!port)
     {
+        currentPort = NULL;
         glViewport(0, FLIP(0 + theWindow->height - 1), theWindow->width, theWindow->height);
     }
     else
@@ -944,8 +950,10 @@ void R_RenderViewPorts(void)
     for(p = 0, y = 0; y < gridRows; ++y)
         for(x = 0; x < gridCols; x++, ++p)
         {
-            displayPlayer = viewports[p].console;
-            R_UseViewPort(viewports + p);
+            viewport_t* vp = &viewports[p];
+
+            displayPlayer = vp->console;
+            R_UseViewPort(vp);
 
             if(displayPlayer < 0)
             {
@@ -983,6 +991,5 @@ D_CMD(ViewGrid)
     }
 
     // Recalculate viewports.
-    R_SetViewGrid(strtol(argv[1], NULL, 0), strtol(argv[2], NULL, 0));
-    return true;
+    return R_SetViewGrid(strtol(argv[1], NULL, 0), strtol(argv[2], NULL, 0));
 }

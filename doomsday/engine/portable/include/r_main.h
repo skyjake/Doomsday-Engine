@@ -81,6 +81,6 @@ void            R_ResetViewer(void);
 void            R_SetViewWindow(int x, int y, int w, int h);
 void            R_NewSharpWorld(void);
 
-void            R_SetViewGrid(int numCols, int numRows);
+boolean         R_SetViewGrid(int numCols, int numRows);
 void            R_SetViewWindow(int x, int y, int w, int h);
 #endif
