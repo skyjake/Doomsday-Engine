@@ -825,8 +825,6 @@ static menuitem_t HUDItems[] = {
 #if __JDOOM__
     {ITT_EFUNC, 0, "Single key display :", M_ToggleVar, 0, NULL, "hud-keys-combine"},
 #endif
-    {ITT_EFUNC, 0, "Show messages :", M_ChangeMessages, 0},
-    {ITT_LRFUNC, 0, "Message uptime :", M_MessageUptime, 0},
     {ITT_LRFUNC, 0, "Auto-hide :", M_HUDHideTime, 0},
     {ITT_EMPTY, 0, "Un-hide events", NULL, 0},
     {ITT_EFUNC, 0, "Receive damage :", M_ToggleVar, 0, NULL, "hud-unhide-damage"},
@@ -845,9 +843,18 @@ static menuitem_t HUDItems[] = {
 #endif
     {ITT_EMPTY, 0, NULL, NULL, 0},
 
+    {ITT_EMPTY, 0, "Messages", NULL, 0},
+    {ITT_EFUNC, 0, "Shown :", M_ChangeMessages, 0},
+    {ITT_LRFUNC, 0, "Uptime :", M_MessageUptime, 0},
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+
     {ITT_EMPTY, 0, "Crosshair", NULL, 0},
     {ITT_LRFUNC, 0, "Symbol :", M_Xhair, 0},
     {ITT_LRFUNC, 0, "Size :", M_XhairSize, 0},
+#if __JHERETIC__ || __JHEXEN__
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+#endif
     {ITT_LRFUNC, 0, "Opacity :", M_XhairOpacity, 0},
 #if __JHERETIC__ || __JHEXEN__
     {ITT_EMPTY, 0, NULL, NULL, 0},
@@ -880,12 +887,7 @@ static menuitem_t HUDItems[] = {
     {ITT_LRFUNC, 0, "Secrets :", M_SecretCounter, 0 },
 #endif
 
-#if __JDOOM__ || __JDOOM64__
-    // Push the fullscreen options onto the next page.
-    {ITT_EMPTY, 0, NULL, NULL, 0},
-#endif
-
-#if __JHERETIC__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
 
@@ -927,13 +929,13 @@ static menu_t HUDDef = {
 #endif
     M_DrawHUDMenu,
 #if __JHEXEN__
-    40, HUDItems,
+    44, HUDItems,
 #elif __JHERETIC__
-    47, HUDItems,
+    51, HUDItems,
 #elif __JDOOM64__
-    34, HUDItems,
+    36, HUDItems,
 #elif __JDOOM__
-    38, HUDItems,
+    40, HUDItems,
 #endif
     0, MENU_OPTIONS,
     GF_FONTA,
@@ -3281,18 +3283,6 @@ void M_DrawHUDMenu(void)
 #if __JDOOM__
     M_WriteMenuText(menu, idx++, yesno[cfg.hudKeysCombine]);
 #endif
-    M_WriteMenuText(menu, idx++, yesno[cfg.msgShow != 0]);
-    {
-    char secString[11];
-    const char* str;
-    uint seconds = MINMAX_OF(1, cfg.msgUptime, 30);
-
-    memset(secString, 0, sizeof(secString));
-    dd_snprintf(secString, 11, "%2u %s", seconds, seconds > 1? "seconds" : "second");
-    str = secString;
-
-    M_WriteMenuText(menu, idx++, str);
-    }
 
     // Auto-hide HUD options:
     {
@@ -3320,20 +3310,32 @@ void M_DrawHUDMenu(void)
 #if __JHERETIC__ || __JHEXEN__
     M_WriteMenuText(menu, idx++, yesno[cfg.hudUnHide[HUE_ON_PICKUP_INVITEM]? 1 : 0]);
 #endif
-#if __JDOOM__ || __JDOOM64__
-    idx++;
-#endif
+    idx += 2;
+
+    // Message log options:
+    M_WriteMenuText(menu, idx++, yesno[cfg.msgShow != 0]);
+    {
+    char secString[11];
+    const char* str;
+    uint seconds = MINMAX_OF(1, cfg.msgUptime, 30);
+
+    memset(secString, 0, sizeof(secString));
+    dd_snprintf(secString, 11, "%2u %s", seconds, seconds > 1? "seconds" : "second");
+    str = secString;
+
+    M_WriteMenuText(menu, idx++, str);
+    }
+    idx += 2;
 
     // Crosshair options:
-    idx++;
-#if __JHERETIC__ || __JHEXEN__
-    idx++;
-#endif
     M_WriteMenuText(menu, idx++, xhairnames[cfg.xhair]);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
     MN_DrawSlider(menu, idx++, 11, cfg.xhairSize * 10 + .25f);
+#if __JHERETIC__ || __JHEXEN__
+    idx += 2;
+#endif
     MN_DrawSlider(menu, idx++, 11, cfg.xhairColor[3] * 10 + .25f);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
