@@ -836,6 +836,9 @@ desc = Speed of model spinning, 1=normal.
 [rend-model-shiny-multitex]
 desc = 1=Enable multitexturing with shiny model skins.
 
+[rend-hud-nostretch]
+desc = If the window dimension aspect ratio is not equal to but close to that of the original game, the HUD will be stretched 1= disabled.
+
 [rend-hud-offset-scale]
 desc = Scaling of player weapon (x,y) offset.
 

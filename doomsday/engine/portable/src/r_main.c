@@ -845,7 +845,7 @@ void R_RenderPlayerView(int num)
     GL_SwitchTo3DState(true, currentPort);
     Rend_RenderMap();
     // Orthogonal projection to the view window.
-    GL_Restore2DState(1);
+    GL_Restore2DState(1, currentPort);
 
     // Don't render in wireframe mode with 2D psprites.
     if(renderWireframe)
@@ -855,16 +855,16 @@ void R_RenderPlayerView(int num)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // Fullscreen viewport.
-    GL_Restore2DState(2);
+    GL_Restore2DState(2, currentPort);
     // Do we need to render any 3D psprites?
     if(psp3d)
     {
         GL_SwitchTo3DState(false, currentPort);
         Rend_Draw3DPlayerSprites();
-        GL_Restore2DState(2);   // Restore viewport.
+        GL_Restore2DState(2, currentPort);   // Restore viewport.
     }
     // Original matrices and state: back to normal 2D.
-    GL_Restore2DState(3);
+    GL_Restore2DState(3, currentPort);
 
     // Back from wireframe mode?
     if(renderWireframe)

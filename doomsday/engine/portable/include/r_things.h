@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -202,6 +202,7 @@ extern float    pspOffset[2], pspLightLevelMultiplier;
 extern int      alwaysAlign;
 extern float    weaponOffsetScale, weaponFOVShift;
 extern int      weaponOffsetScaleY;
+extern byte     weaponNoStretch;
 extern float    modelSpinSpeed;
 extern int      maxModelDistance, noSpriteZWrite;
 extern int      useSRVO, useSRVOAngle;

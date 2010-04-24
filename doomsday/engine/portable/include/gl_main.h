@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@ void            GL_TotalRestore(void);
 
 void            GL_Init2DState(void);
 void            GL_SwitchTo3DState(boolean push_state, viewport_t* port);
-void            GL_Restore2DState(int step);
+void            GL_Restore2DState(int step, viewport_t* port);
 void            GL_ProjectionMatrix(void);
 void            GL_RuntimeMode(void);
 void            GL_DoUpdate(void);
