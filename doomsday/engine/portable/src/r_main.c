@@ -790,6 +790,14 @@ void R_UseViewPort(viewport_t* port)
 }
 
 /**
+ * @return                  The current viewport else @c NULL.
+ */
+const viewport_t* R_CurrentViewPort(void)
+{
+    return currentPort;
+}
+
+/**
  * Render a blank view for the specified player.
  */
 void R_RenderBlankView(void)

@@ -68,33 +68,59 @@ byte* translationTables;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static char borderGfx[9][9];
+static char borderPatchNames[9][9];
+static lumpnum_t borderPatchLumps[9];
 
 // CODE --------------------------------------------------------------------
 
-void R_SetBorderGfx(char *gfx[9])
+void R_SetBorderGfx(char* gfx[9])
 {
-    uint                    i;
-
+    uint i;
     for(i = 0; i < 9; ++i)
+    {
         if(gfx[i])
-            strcpy(borderGfx[i], gfx[i]);
+            strcpy(borderPatchNames[i], gfx[i]);
         else
-            strcpy(borderGfx[i], "-");
-
+            strcpy(borderPatchNames[i], "-");
+    }
     R_InitViewBorder();
 }
 
 void R_InitViewBorder(void)
 {
-    lumppatch_t*            patch = NULL;
+    lumppatch_t* patch = NULL;
+    uint i;
+
+    for(i = 0; i < 9; ++i)
+        borderPatchLumps[i] = W_CheckNumForName(borderPatchNames[i]);
 
     // Detemine the view border width.
-    if(W_CheckNumForName(borderGfx[BG_TOP]) == -1)
+    if(borderPatchLumps[BG_TOP] == -1)
+    {
+        bwidth = 0;
         return;
+    }
 
-    patch = (lumppatch_t*) W_CacheLumpName(borderGfx[BG_TOP], PU_CACHE);
+    patch = (lumppatch_t*) W_CacheLumpNum(borderPatchLumps[BG_TOP], PU_CACHE);
     bwidth = SHORT(patch->height);
+}
+
+static void drawPatch(lumpnum_t lump, int x, int y, int w, int h)
+{
+    patchtex_t* p = R_GetPatchTex(lump);
+    assert(p);
+    glBindTexture(GL_TEXTURE_2D, GL_PreparePatch(p));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glmode[texMagMode]);
+    GL_DrawRect(x, y, w, h, 1, 1, 1, 1);
+}
+
+static void drawPatchTiled(lumpnum_t lump, int x, int y, int w, int h)
+{
+    patchtex_t* p = R_GetPatchTex(lump);
+    assert(p);
+    glBindTexture(GL_TEXTURE_2D, GL_PreparePatch(p));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glmode[texMagMode]);
+    GL_DrawRectTiled(x, y, w, h, p->width, p->height);
 }
 
 /**
@@ -102,61 +128,90 @@ void R_InitViewBorder(void)
  */
 void R_DrawViewBorder(void)
 {
-    patchtex_t*         p;
-    material_t*         mat;
+    int viewX, viewY, viewW, viewH, border;
+    const viewport_t* port;
+    float xScale, yScale;
+    material_t* mat;
 
     if(viewwidth == 320 && viewheight == 200)
         return;
 
+    port = R_CurrentViewPort();
+    assert(port);
+
+    xScale = (float) port->width / SCREENWIDTH;
+    yScale = (float) port->height / SCREENHEIGHT;
+
+    viewX = viewwindowx * xScale;
+    viewY = viewwindowy * yScale;
+    viewW = viewwidth * xScale;
+    viewH = viewheight * yScale;
+
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
-    glOrtho(0, 320, 200, 0, -1, 1);
+
+    /**
+     * Use an orthographic projection in native screenspace. Then
+     * translate and scale the projection to produce an aspect
+     * corrected coordinate space at 4:3.
+     */
+    glOrtho(0, port->width, port->height, 0, -1, 1);
+
+    glMatrixMode(GL_TEXTURE);
+    glPushMatrix();
+
+    // Correct viewport aspect ratio?
+    if(port->width < SCREENWIDTH || port->height < SCREENHEIGHT)
+    {
+        if(port->width >= port->height)
+            glScalef((float)port->height/SCREENHEIGHT, (float)port->height/SCREENHEIGHT, 1);
+        else
+            glScalef((float)port->width/SCREENWIDTH, (float)port->width/SCREENWIDTH, 1);
+    }
+
+    // Scale from viewport space to fixed 320x200 space.
+    if(port->width >= port->height)
+    {
+        glScalef((float)SCREENHEIGHT/port->height, (float)SCREENHEIGHT/port->height, 1);
+        border = (float) bwidth / SCREENHEIGHT * port->height;
+    }
+    else
+    {
+        glScalef((float)SCREENWIDTH/port->width, (float)SCREENWIDTH/port->width, 1);
+        border = (float) bwidth / SCREENWIDTH * port->width;
+    }
+
+    glColor4f(1, 1, 1, 1);
 
     // View background.
-    glColor4f(1, 1, 1, 1);
-    mat = P_ToMaterial(P_MaterialNumForName(borderGfx[BG_BACKGROUND], MN_FLATS));
+    mat = P_ToMaterial(P_MaterialNumForName(borderPatchNames[BG_BACKGROUND], MN_FLATS));
     if(mat)
     {
         GL_SetMaterial(mat);
-        GL_DrawCutRectTiled(0, 0, 320, 200, mat->width, mat->height, 0, 0,
-                            viewwindowx - bwidth,
-                            viewwindowy - bwidth, viewwidth + 2 * bwidth,
-                            viewheight + 2 * bwidth);
+        GL_DrawCutRectTiled(0, 0, port->width, port->height, mat->width, mat->height, 0, 0,
+                            viewX - border, viewY - border,
+                            viewW + 2 * border, viewH + 2 * border);
     }
 
-    // The border top.
-    p = R_GetPatchTex(W_GetNumForName(borderGfx[BG_TOP]));
-    GL_BindTexture(GL_PreparePatch(R_GetPatchTex(p->lump)), glmode[texMagMode]);
-    GL_DrawRectTiled(viewwindowx, viewwindowy - bwidth, viewwidth,
-                     p->height, 16, p->height);
-    // Border bottom.
-    p = R_GetPatchTex(W_GetNumForName(borderGfx[BG_BOTTOM]));
-    GL_BindTexture(GL_PreparePatch(R_GetPatchTex(p->lump)), glmode[texMagMode]);
-    GL_DrawRectTiled(viewwindowx, viewwindowy + viewheight , viewwidth,
-                     p->height, 16, p->height);
+    if(border != 0)
+    {
+        drawPatchTiled(borderPatchLumps[BG_TOP], viewX, viewY - border, viewW, border);
+        drawPatchTiled(borderPatchLumps[BG_BOTTOM], viewX, viewY + viewH , viewW, border);
+        drawPatchTiled(borderPatchLumps[BG_LEFT], viewX - border, viewY, border, viewH);
+        drawPatchTiled(borderPatchLumps[BG_RIGHT], viewX + viewW, viewY, border, viewH);
+    }
 
-    // Left view border.
-    p = R_GetPatchTex(W_GetNumForName(borderGfx[BG_LEFT]));
-    GL_BindTexture(GL_PreparePatch(R_GetPatchTex(p->lump)), glmode[texMagMode]);
-    GL_DrawRectTiled(viewwindowx - bwidth, viewwindowy,
-                     p->width, viewheight, p->width, 16);
-    // Right view border.
-    p = R_GetPatchTex(W_GetNumForName(borderGfx[BG_RIGHT]));
-    GL_BindTexture(GL_PreparePatch(R_GetPatchTex(p->lump)), glmode[texMagMode]);
-    GL_DrawRectTiled(viewwindowx + viewwidth , viewwindowy,
-                     p->width, viewheight, p->width, 16);
+    glMatrixMode(GL_TEXTURE);
+    glPopMatrix();
 
-    GL_UsePatchOffset(false);
-    GL_DrawPatch(viewwindowx - bwidth, viewwindowy - bwidth,
-                 W_GetNumForName(borderGfx[BG_TOPLEFT]));
-    GL_DrawPatch(viewwindowx + viewwidth, viewwindowy - bwidth,
-                 W_GetNumForName(borderGfx[BG_TOPRIGHT]));
-    GL_DrawPatch(viewwindowx + viewwidth, viewwindowy + viewheight,
-                 W_GetNumForName(borderGfx[BG_BOTTOMRIGHT]));
-    GL_DrawPatch(viewwindowx - bwidth, viewwindowy + viewheight,
-                 W_GetNumForName(borderGfx[BG_BOTTOMLEFT]));
-    GL_UsePatchOffset(true);
+    if(border != 0)
+    {
+        drawPatch(borderPatchLumps[BG_TOPLEFT], viewX - border, viewY - border, border, border);
+        drawPatch(borderPatchLumps[BG_TOPRIGHT], viewX + viewW, viewY - border, border, border);
+        drawPatch(borderPatchLumps[BG_BOTTOMRIGHT], viewX + viewW, viewY + viewH, border, border);
+        drawPatch(borderPatchLumps[BG_BOTTOMLEFT], viewX - border, viewY + viewH, border, border);
+    }
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();

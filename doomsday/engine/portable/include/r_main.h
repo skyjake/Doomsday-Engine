@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -74,6 +74,8 @@ void            R_EndWorldFrame(void);
 void            R_RenderPlayerView(int num);
 void            R_RenderPlayerViewBorder(void);
 void            R_RenderViewPorts(void);
+
+const viewport_t* R_CurrentViewPort(void);
 
 const viewdata_t* R_ViewData(int localPlayerNum);
 void            R_ResetViewer(void);

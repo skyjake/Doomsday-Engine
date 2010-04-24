@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -212,13 +212,13 @@ void DD_DrawAndBlit(void)
         // Interpolate the world ready for drawing view(s) of it.
         R_BeginWorldFrame();
 
+        R_RenderViewPorts();
+
         // Set up the basic 320x200 legacy projection for the game.
         glMatrixMode(GL_PROJECTION);
         glPushMatrix();
         glLoadIdentity();
         glOrtho(0, 320, 200, 0, -1, 1);
-
-        R_RenderViewPorts();
 
         // Draw any over/outside view window game graphics (e.g. fullscreen
         // menus and other displays).
