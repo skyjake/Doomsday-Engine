@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2004-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -127,8 +127,6 @@ boolean     Cl_Responder(event_t *event); // Handles control in a menu widget
 
 // Edit field routines.
 boolean     Ed_Responder(event_t *event);
-
-boolean     MN_CurrentMenuHasBackground(void);
 
 void        MN_ActivateMenu(void);
 void        MN_DeactivateMenu(void);

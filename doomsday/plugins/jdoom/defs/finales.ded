@@ -73,6 +73,50 @@ InFine
 }
 
 InFine {
+  ID = "help";
+  Script {
+    NoTrigger; NoFlat;
+
+    IF shareware DO
+      Patch back 0 0 "HELP2"
+      Patch cursor 248 180 M_SKULL1
+    ;
+    ELSE DO
+      Patch back 0 0 "HELP1"
+      Patch cursor 298 160 M_SKULL1
+    ;
+
+    # Configure the animating skull
+    Clranim cursor
+    Anim cursor M_SKULL1 0.223857
+    Anim cursor M_SKULL2 0.223857
+    Repeat cursor
+
+    Pause
+
+    IF ultimate DO
+      Set back "CREDIT"
+    ;
+    ELSE DO
+      IF commercial DO
+        Set back "CREDIT"
+      ;
+      ELSE DO
+        IF shareware DO
+          Set back "HELP1"
+          X cursor 298
+          Y cursor 160
+        ;
+        ELSE DO
+          Set back "HELP2"
+        ;
+      ;
+    ;
+    Pause
+  };
+}
+
+InFine {
   ID = "imp";
   Script {
     NoSkip 

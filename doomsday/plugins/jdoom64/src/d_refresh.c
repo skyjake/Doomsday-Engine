@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -279,9 +279,6 @@ static void rendHUD(int player)
     if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
         return;
 
-    if(MN_CurrentMenuHasBackground() && Hu_MenuAlpha() >= 1)
-        return;
-
     plr = &players[player];
 
     // Draw the automap?
@@ -366,8 +363,7 @@ void D_Display(int layer)
     switch(G_GetGameState())
     {
     case GS_MAP:
-        if(!(MN_CurrentMenuHasBackground() && Hu_MenuAlpha() >= 1) &&
-           !R_MapObscures(player, (int) x, (int) y, (int) w, (int) h))
+        if(!R_MapObscures(player, (int) x, (int) y, (int) w, (int) h))
         {
             if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
                 return;

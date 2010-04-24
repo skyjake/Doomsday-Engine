@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -111,7 +111,6 @@ menu_t ControlsDef = {
     1, MENU_OPTIONS,
     GF_FONTA,                    //1, 0, 0,
     cfg.menuColor2,
-    NULL, false,
     LINEHEIGHT_A,
     0, 17, { 17, 40 }
 };
@@ -126,7 +125,6 @@ menu_t ControlsDef = {
     1, MENU_OPTIONS,
     GF_FONTA,                    //1, 0, 0,
     cfg.menuColor2,
-    NULL, false,
     LINEHEIGHT_A,
     0, 15, { 15, 26 }
 };
@@ -141,7 +139,6 @@ menu_t ControlsDef = {
     1, MENU_OPTIONS,
     GF_FONTA,                    //1, 0, 0,
     cfg.menuColor2,
-    NULL, false,
     LINEHEIGHT_A,
     0, 16, { 16, 21 }
 };

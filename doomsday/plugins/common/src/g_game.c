@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 1999-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -831,8 +831,8 @@ VERBOSE(Con_Message("G_ChangeGameState: New state %s.\n",
  */
 void G_StartTitle(void)
 {
-    char               *name = "title";
-    void               *script;
+    char* name = "title";
+    void* script;
 
     G_StopDemo();
     userGame = false;
@@ -845,6 +845,27 @@ void G_StartTitle(void)
 
     FI_Start(script, FIMODE_LOCAL);
 }
+
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+/**
+ * Begin the helpscreen animation sequence.
+ */
+void G_StartHelp(void)
+{
+    char* name = "help";
+    void* script;
+
+    Hu_MenuCommand(MCMD_CLOSEFAST);
+
+    // The help script must always be defined.
+    if(!Def_Get(DD_DEF_FINALE, name, &script))
+    {
+        Con_Error("G_StartHelp: Script \"%s\" not defined.\n", name);
+    }
+
+    FI_Start(script, FIMODE_LOCAL);
+}
+#endif
 
 void G_DoLoadMap(void)
 {

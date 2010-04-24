@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -128,7 +128,6 @@ menu_t MultiplayerMenu = {
     3, MultiplayerItems,
     0, MENU_NEWGAME,
     GF_FONTA,cfg.menuColor2,
-    NULL, false,
     LINEHEIGHT_A,
     0, 3
 };
@@ -268,7 +267,6 @@ menu_t GameSetupMenu = {
     0, MENU_MULTIPLAYER,
     GF_FONTA,                  //1, 0, 0,
     cfg.menuColor2,
-    NULL, false,
     LINEHEIGHT_A,
     0, NUM_GAMESETUP_ITEMS
 };
@@ -298,7 +296,7 @@ menu_t PlayerSetupMenu = {
     DrawPlayerSetupMenu,
     NUM_PLAYERSETUP_ITEMS, PlayerSetupItems,
     0, MENU_MULTIPLAYER,
-    GF_FONTB, cfg.menuColor, NULL, false, LINEHEIGHT_B,
+    GF_FONTB, cfg.menuColor, LINEHEIGHT_B,
     0, NUM_PLAYERSETUP_ITEMS
 };
 

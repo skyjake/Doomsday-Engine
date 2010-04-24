@@ -2982,8 +2982,7 @@ void Hu_Drawer(void)
     }
 
     // Draw the fog effect?
-    if(fogEffectData.alpha > 0 && cfg.hudFog &&
-       !((Hu_MenuIsActive() || Hu_MenuAlpha() > 0) && MN_CurrentMenuHasBackground()))
+    if(fogEffectData.alpha > 0 && cfg.hudFog)
         drawFogEffect();
 
     if(Hu_IsMessageActive())

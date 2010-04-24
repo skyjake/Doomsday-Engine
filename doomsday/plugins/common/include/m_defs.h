@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -54,8 +54,7 @@ typedef struct {
 
 // Menu flags
 #define MNF_NOHOTKEYS           0x00000001 // Hotkeys are disabled.
-#define MNF_NOSCALE             0x00000002 // Menu wont be scaled (e.g. readthis).
-#define MNF_DELETEFUNC          0x00000004 // MCMD_DELETE causes a call to item's func
+#define MNF_DELETEFUNC          0x00000002 // MCMD_DELETE causes a call to item's func
 
 typedef struct unscaledmenustate_s {
     int             numVisItems;
@@ -73,8 +72,6 @@ typedef struct {
     int             prevMenu; // menutype_t
     gamefontid_t    font; // Font for menu items.
     float*          color;
-    char*           background; // Background lump name for this menu (if any).
-    boolean         backgroundIsRaw;
     int             itemHeight;
     // For multipage menus.
     int             firstItem, numVisItems;

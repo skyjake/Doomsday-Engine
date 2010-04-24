@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -135,6 +135,7 @@ typedef struct fistate_s {
     char*           script; // A copy of the script.
     char*           cp; // The command cursor.
     infinemode_t    mode;
+    gamestate_t     lastGameState; // Game state before the script began.
     int             overlayGameState; // Overlay scripts run only in one gameMode.
     int             timer;
     boolean         conditions[NUM_FICONDS];
@@ -567,7 +568,7 @@ void FI_Reset(void)
  */
 void FI_Start(char *finalescript, infinemode_t mode)
 {
-    int                 i;
+    int i;
 
     if(mode == FIMODE_LOCAL && IS_DEDICATED)
     {
@@ -585,6 +586,7 @@ void FI_Start(char *finalescript, infinemode_t mode)
     // Init InFine state.
     FI_NewState(finalescript);
     fi->mode = mode;
+    fi->lastGameState = G_GetGameState();
     // Clear the message queue for all local players.
     for(i = 0; i < MAXPLAYERS; ++i)
         Hu_LogEmpty(i);
@@ -639,12 +641,14 @@ void FI_Start(char *finalescript, infinemode_t mode)
  */
 void FI_End(void)
 {
-    int                 oldMode;
+    int oldMode;
+    gamestate_t lastGameState;
 
     if(!fiActive || !fi->canSkip)
         return;
 
     oldMode = fi->mode;
+    lastGameState = fi->lastGameState;
 
     // This'll set fi to NULL.
     FI_PopState();
@@ -659,35 +663,42 @@ void FI_End(void)
         NetSv_Finale(FINF_END, 0, NULL, 0);
     }
 
-    // If no more scripts are left, go to the next game mode.
-    if(!fiActive)
-    {
-        if(oldMode == FIMODE_AFTER) // A map has been completed.
-        {
-            if(IS_CLIENT)
-            {
-#if __JHEXEN__ || __JSTRIFE__
-                Draw_TeleportIcon();
-#endif
-                return;
-            }
-            G_SetGameAction(GA_MAPCOMPLETED);
+    if(fiActive)
+        return;
 
-            // Don't play the debriefing again.
-            briefDisabled = true;
-        }
-        else if(oldMode == FIMODE_BEFORE)
+    /**
+     * No more scripts are left.
+     */
+
+    // Return to the last game state?
+    if(oldMode == FIMODE_LOCAL)
+    {
+        G_ChangeGameState(lastGameState);
+        return;
+    }
+
+    // Go to the next game mode?
+    if(oldMode == FIMODE_AFTER) // A map has been completed.
+    {
+        if(IS_CLIENT)
         {
-            // Enter the map, this was a briefing.
-            G_ChangeGameState(GS_MAP);
-            S_MapMusic(gameEpisode, gameMap);
-            mapStartTic = (int) GAMETIC;
-            mapTime = actualMapTime = 0;
+#if __JHEXEN__ || __JSTRIFE__
+            Draw_TeleportIcon();
+#endif
+            return;
         }
-        else if(oldMode == FIMODE_LOCAL)
-        {
-            G_ChangeGameState(GS_WAITING);
-        }
+        G_SetGameAction(GA_MAPCOMPLETED);
+
+        // Don't play the debriefing again.
+        briefDisabled = true;
+    }
+    else if(oldMode == FIMODE_BEFORE)
+    {
+        // Enter the map, this was a briefing.
+        G_ChangeGameState(GS_MAP);
+        S_MapMusic(gameEpisode, gameMap);
+        mapStartTic = (int) GAMETIC;
+        mapTime = actualMapTime = 0;
     }
 }
 

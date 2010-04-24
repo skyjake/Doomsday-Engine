@@ -51,6 +51,24 @@ InFine
   };
 }
 
+InFine {
+  ID = "help";
+  Script {
+    NoTrigger; NoFlat;
+
+    Image back "HELP1"
+    Pause
+
+    Del back
+    Image back "HELP2"
+    Pause
+
+    Del back
+    Image back "CREDIT"
+    Pause
+  };
+}
+
 # Episode I: City Of The Damned
 Finale
 {
