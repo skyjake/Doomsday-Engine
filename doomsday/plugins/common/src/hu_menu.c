@@ -126,6 +126,7 @@ void M_LoadSelect(int option, void* context);
 void M_SaveSelect(int option, void* context);
 void M_Xhair(int option, void* context);
 void M_XhairSize(int option, void* context);
+void M_XhairOpacity(int option, void* context);
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 void            M_KillCounter(int option, void* data);
@@ -239,7 +240,7 @@ static rgba_t widgetcolors[] = { // Ptrs to colors editable with the colour widg
     { &cfg.automapBack[0], &cfg.automapBack[1], &cfg.automapBack[2], NULL },
     { &cfg.hudColor[0], &cfg.hudColor[1], &cfg.hudColor[2], &cfg.hudColor[3] },
     { &cfg.automapMobj[0], &cfg.automapMobj[1], &cfg.automapMobj[2], NULL },
-    { &cfg.xhairColor[0], &cfg.xhairColor[1], &cfg.xhairColor[2], &cfg.xhairColor[3]}
+    { &cfg.xhairColor[0], &cfg.xhairColor[1], &cfg.xhairColor[2], NULL }
 };
 
 static boolean widgetEdit = false; // No active widget by default.
@@ -847,6 +848,7 @@ static menuitem_t HUDItems[] = {
     {ITT_EMPTY, 0, "Crosshair", NULL, 0},
     {ITT_LRFUNC, 0, "Symbol :", M_Xhair, 0},
     {ITT_LRFUNC, 0, "Size :", M_XhairSize, 0},
+    {ITT_LRFUNC, 0, "Opacity :", M_XhairOpacity, 0},
 #if __JHERETIC__ || __JHEXEN__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
@@ -925,13 +927,13 @@ static menu_t HUDDef = {
 #endif
     M_DrawHUDMenu,
 #if __JHEXEN__
-    39, HUDItems,
+    40, HUDItems,
 #elif __JHERETIC__
-    46, HUDItems,
+    47, HUDItems,
 #elif __JDOOM64__
-    33, HUDItems,
+    34, HUDItems,
 #elif __JDOOM__
-    37, HUDItems,
+    38, HUDItems,
 #endif
     0, MENU_OPTIONS,
     GF_FONTA,
@@ -3332,12 +3334,13 @@ void M_DrawHUDMenu(void)
     idx++;
 #endif
     MN_DrawSlider(menu, idx++, 11, cfg.xhairSize * 10 + .25f);
+    MN_DrawSlider(menu, idx++, 11, cfg.xhairColor[3] * 10 + .25f);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
     M_WriteMenuText(menu, idx++, yesno[cfg.xhairVitality != 0]);
     MN_DrawColorBox(menu, idx++, cfg.xhairColor[0], cfg.xhairColor[1],
-                    cfg.xhairColor[2], cfg.xhairColor[3]);
+                    cfg.xhairColor[2], 1);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
@@ -3487,6 +3490,11 @@ void M_Xhair(int option, void* context)
 void M_XhairSize(int option, void* context)
 {
     M_FloatMod10(&cfg.xhairSize, option);
+}
+
+void M_XhairOpacity(int option, void* context)
+{
+    M_FloatMod10(&cfg.xhairColor[3], option);
 }
 
 #if __JDOOM64__
