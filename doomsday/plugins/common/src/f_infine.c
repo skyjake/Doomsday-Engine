@@ -587,6 +587,7 @@ void FI_Start(char *finalescript, infinemode_t mode)
     FI_NewState(finalescript);
     fi->mode = mode;
     fi->lastGameState = G_GetGameState();
+    fi->showMenu = true; // Enabled by default.
     // Clear the message queue for all local players.
     for(i = 0; i < MAXPLAYERS; ++i)
         Hu_LogEmpty(i);
