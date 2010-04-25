@@ -1408,10 +1408,7 @@ int FI_SkipRequest(void)
  */
 boolean FI_IsMenuTrigger(event_t* ev)
 {
-    if(!fiActive)
-        return false;
-
-    return fi->showMenu;
+    return (fiActive && !fi->showMenu);
 }
 
 int FI_AteEvent(event_t *ev)
