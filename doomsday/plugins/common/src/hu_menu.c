@@ -1819,7 +1819,7 @@ void Hu_MenuCommand(menucommand_e cmd)
 
     if(!menuActive)
     {
-        if(cmd == MCMD_OPEN && FI_IsMenuTrigger(NULL))
+        if(cmd == MCMD_OPEN && !FI_IsMenuTrigger(NULL))
         {
             S_LocalSound(SFX_MENU_OPEN, NULL);
 
