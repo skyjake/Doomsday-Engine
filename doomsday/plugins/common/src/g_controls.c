@@ -409,10 +409,10 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent key-h {impulse showhud}",
         "bindevent key-backslash-down {impulse showscore}",
         "bindevent key-backslash-repeat {impulse showscore}",
-        "bindevent key-minus-down {viewsize -}",
-        "bindevent key-minus-repeat {viewsize -}",
-        "bindevent key-equals-down {viewsize +}",
-        "bindevent key-equals-repeat {viewsize +}",
+        "bindevent key-minus-down {sub view-size 1}",
+        "bindevent key-minus-repeat {sub view-size 1}",
+        "bindevent key-equals-down {add view-size 1}",
+        "bindevent key-equals-repeat {add view-size 1}",
 
         // Player message log:
 #if !defined(__JHEXEN__) && !defined(__JHERETIC__)

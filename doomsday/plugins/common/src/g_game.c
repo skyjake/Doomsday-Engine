@@ -675,7 +675,6 @@ void G_CommonPostInit(void)
     XG_Register(); // Register XG classnames.
 #endif
 
-    R_SetViewSize(cfg.screenBlocks);
     R_SetBorderGfx(borderLumps);
 
     Con_Message("P_Init: Init Playloop state.\n");

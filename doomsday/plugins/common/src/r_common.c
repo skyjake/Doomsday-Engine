@@ -135,6 +135,59 @@ void R_SetViewWindowTarget(int x, int y, int w, int h)
  */
 void R_ViewWindowTicker(void)
 {
+    int destBlocks = MINMAX_OF(3, cfg.setBlocks, 13);
+    boolean instantChange = false;
+
+    if(cfg.screenBlocks != destBlocks)
+    {
+        int x = 0, y = 0, w = SCREENWIDTH, h = SCREENHEIGHT;
+
+        if(cfg.screenBlocks == 10 && destBlocks > 10 && destBlocks < 13)
+        {   // When going fullscreen, force a hud show event (to reset the timer).
+            int i;
+            for(i = 0; i < MAXPLAYERS; ++i)
+                ST_HUDUnHide(i, HUE_FORCE);
+        }
+        else if(cfg.screenBlocks > 10 && destBlocks <= 10)
+        {   // When going to statusbar span, do an instant change.
+            instantChange = true;
+        }
+
+        if(destBlocks > cfg.screenBlocks)
+            cfg.screenBlocks++;
+        else
+            cfg.screenBlocks--;
+
+        if(cfg.screenBlocks <= 10)
+        {
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+            int statusBarHeight = ST_HEIGHT * cfg.statusbarScale/20.f;
+#endif
+            if(cfg.screenBlocks != 10)
+            {
+                w = cfg.screenBlocks * SCREENWIDTH/10;
+                x = SCREENWIDTH/2 - w/2;
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+                h = cfg.screenBlocks * (SCREENHEIGHT - statusBarHeight) / 10;
+                y = (SCREENHEIGHT - statusBarHeight - h) / 2;
+#else
+                h = cfg.screenBlocks * SCREENHEIGHT/10;
+                y = (SCREENHEIGHT - h) / 2;
+#endif
+            }
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+            else
+            {
+                h -= statusBarHeight;
+            }
+#endif
+        }
+
+        R_SetViewWindowTarget(x, y, w, h);
+        if(instantChange)
+            windowPos = 1;
+    }
+
     if(targetX == -1)
         return; // Nothing to do.
 

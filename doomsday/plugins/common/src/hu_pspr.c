@@ -89,8 +89,10 @@ static float PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {
  */
 float HU_PSpriteYOffset(player_t* pl)
 {
-    int viewWindowHeight = Get(DD_VIEWWINDOW_HEIGHT);
+    float viewWindowHeight;
     float offy = (cfg.plrViewHeight - DEFAULT_PLAYER_VIEWHEIGHT) * 2;
+
+    R_GetViewWindow(NULL, NULL, NULL, &viewWindowHeight);
 
 #if __JHERETIC__ 
     if(viewWindowHeight == SCREENHEIGHT)

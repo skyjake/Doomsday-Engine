@@ -128,47 +128,18 @@ static void drawPatchTiled(lumpnum_t lump, int x, int y, int w, int h)
  */
 void R_DrawViewBorder(void)
 {
-    int viewX, viewY, viewW, viewH, border;
+    int border;
     const viewport_t* port;
-    float xScale, yScale;
     material_t* mat;
-
-    if(viewwidth == 320 && viewheight == 200)
-        return;
 
     port = R_CurrentViewPort();
     assert(port);
 
-    xScale = (float) port->width / SCREENWIDTH;
-    yScale = (float) port->height / SCREENHEIGHT;
-
-    viewX = viewwindowx * xScale;
-    viewY = viewwindowy * yScale;
-    viewW = viewwidth * xScale;
-    viewH = viewheight * yScale;
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-
-    /**
-     * Use an orthographic projection in native screenspace. Then
-     * translate and scale the projection to produce an aspect
-     * corrected coordinate space at 4:3.
-     */
-    glOrtho(0, port->width, port->height, 0, -1, 1);
+    if(viewwidth == port->width && viewheight == port->height)
+        return;
 
     glMatrixMode(GL_TEXTURE);
     glPushMatrix();
-
-    // Correct viewport aspect ratio?
-    if(port->width < SCREENWIDTH || port->height < SCREENHEIGHT)
-    {
-        if(port->width >= port->height)
-            glScalef((float)port->height/SCREENHEIGHT, (float)port->height/SCREENHEIGHT, 1);
-        else
-            glScalef((float)port->width/SCREENWIDTH, (float)port->width/SCREENWIDTH, 1);
-    }
 
     // Scale from viewport space to fixed 320x200 space.
     if(port->width >= port->height)
@@ -190,16 +161,16 @@ void R_DrawViewBorder(void)
     {
         GL_SetMaterial(mat);
         GL_DrawCutRectTiled(0, 0, port->width, port->height, mat->width, mat->height, 0, 0,
-                            viewX - border, viewY - border,
-                            viewW + 2 * border, viewH + 2 * border);
+                            viewwindowx - border, viewwindowy - border,
+                            viewwidth + 2 * border, viewheight + 2 * border);
     }
 
     if(border != 0)
     {
-        drawPatchTiled(borderPatchLumps[BG_TOP], viewX, viewY - border, viewW, border);
-        drawPatchTiled(borderPatchLumps[BG_BOTTOM], viewX, viewY + viewH , viewW, border);
-        drawPatchTiled(borderPatchLumps[BG_LEFT], viewX - border, viewY, border, viewH);
-        drawPatchTiled(borderPatchLumps[BG_RIGHT], viewX + viewW, viewY, border, viewH);
+        drawPatchTiled(borderPatchLumps[BG_TOP], viewwindowx, viewwindowy - border, viewwidth, border);
+        drawPatchTiled(borderPatchLumps[BG_BOTTOM], viewwindowx, viewwindowy + viewheight , viewwidth, border);
+        drawPatchTiled(borderPatchLumps[BG_LEFT], viewwindowx - border, viewwindowy, border, viewheight);
+        drawPatchTiled(borderPatchLumps[BG_RIGHT], viewwindowx + viewwidth, viewwindowy, border, viewheight);
     }
 
     glMatrixMode(GL_TEXTURE);
@@ -207,12 +178,9 @@ void R_DrawViewBorder(void)
 
     if(border != 0)
     {
-        drawPatch(borderPatchLumps[BG_TOPLEFT], viewX - border, viewY - border, border, border);
-        drawPatch(borderPatchLumps[BG_TOPRIGHT], viewX + viewW, viewY - border, border, border);
-        drawPatch(borderPatchLumps[BG_BOTTOMRIGHT], viewX + viewW, viewY + viewH, border, border);
-        drawPatch(borderPatchLumps[BG_BOTTOMLEFT], viewX - border, viewY + viewH, border, border);
+        drawPatch(borderPatchLumps[BG_TOPLEFT], viewwindowx - border, viewwindowy - border, border, border);
+        drawPatch(borderPatchLumps[BG_TOPRIGHT], viewwindowx + viewwidth, viewwindowy - border, border, border);
+        drawPatch(borderPatchLumps[BG_BOTTOMRIGHT], viewwindowx + viewwidth, viewwindowy + viewheight, border, border);
+        drawPatch(borderPatchLumps[BG_BOTTOMLEFT], viewwindowx - border, viewwindowy + viewheight, border, border);
     }
-
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
 }

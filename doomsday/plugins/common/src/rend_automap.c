@@ -1365,10 +1365,10 @@ static void renderMapName(const automap_t* map)
 
         x = SCREENXTOFIXX(wx + (ww * .5f));
         y = SCREENYTOFIXY(wy + wh);
-        if(cfg.setBlocks < 13)
+        if(cfg.screenBlocks < 13)
         {
 #if !__JDOOM64__
-            if(cfg.setBlocks <= 11 || cfg.automapHudDisplay == 2)
+            if(cfg.screenBlocks <= 11 || cfg.automapHudDisplay == 2)
             {   // We may need to adjust for the height of the statusbar
                 otherY = ST_Y;
                 otherY += ST_HEIGHT * (1 - (cfg.statusbarScale / 20.0f));
@@ -1376,7 +1376,7 @@ static void renderMapName(const automap_t* map)
                 if(y > otherY)
                     y = otherY;
             }
-            else if(cfg.setBlocks == 12)
+            else if(cfg.screenBlocks == 12)
 #endif
             {   // We may need to adjust for the height of the HUD icons.
                 otherY = y;

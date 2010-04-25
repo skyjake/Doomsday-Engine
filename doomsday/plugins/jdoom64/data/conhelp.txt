@@ -91,10 +91,6 @@ desc = Spy mode: cycle player views in co-op.
     
 [screenshot]
 desc = Takes a screenshot. Saved to DOOM64nn.TGA.
-    
-[viewsize]
-desc = View size adjustment.
-inf = Params: viewsize (size)\nFor example, 'viewsize 10'.\nSize can be: +, -, (num).
 
 [pause]
 desc = Pause the game.

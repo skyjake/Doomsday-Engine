@@ -70,7 +70,6 @@ DEFCC(CCmdPrintPlayerCoords);
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 DEFCC(CCmdScreenShot);
-DEFCC(CCmdViewSize);
 DEFCC(CCmdDoom64Font);
 DEFCC(CCmdConBackground);
 
@@ -91,7 +90,7 @@ cvar_t gameCVars[] = {
     {"con-zoom", 0, CVT_FLOAT, &consoleZoom, 0.1f, 100.0f},
 
 // View/Refresh
-    {"view-size", CVF_PROTECTED, CVT_INT, &cfg.screenBlocks, 3, 11},
+    {"view-size", 0, CVT_INT, &cfg.setBlocks, 3, 11},
     {"hud-title", 0, CVT_BYTE, &cfg.mapTitle, 0, 1},
     {"hud-title-author-noiwad", 0, CVT_BYTE, &cfg.hideIWADAuthor, 0, 1},
 
@@ -203,7 +202,6 @@ cvar_t gameCVars[] = {
 ccmd_t  gameCCmds[] = {
     {"spy",         "",     CCmdCycleSpy},
     {"screenshot",  "",     CCmdScreenShot},
-    {"viewsize",    "s",    CCmdViewSize},
 
     // $cheats
     {"god",         NULL,   CCmdCheatGod},
@@ -307,39 +305,6 @@ int ConTextWidth(const char* text)
 DEFCC(CCmdScreenShot)
 {
     G_ScreenShot();
-    return true;
-}
-
-/**
- * Console command to change the size of the view window.
- */
-DEFCC(CCmdViewSize)
-{
-    int                 min = 3, max = 11, *val = &cfg.screenBlocks;
-
-    if(argc != 2)
-    {
-        Con_Printf("Usage: %s (size)\n", argv[0]);
-        Con_Printf("Size can be: +, -, (num).\n");
-        return true;
-    }
-
-    // Adjust/set the value
-    if(!stricmp(argv[1], "+"))
-        (*val)++;
-    else if(!stricmp(argv[1], "-"))
-        (*val)--;
-    else
-        *val = strtol(argv[1], NULL, 0);
-
-    // Clamp it
-    if(*val < min)
-        *val = min;
-    if(*val > max)
-        *val = max;
-
-    // Update the view size if necessary.
-    R_SetViewSize(cfg.screenBlocks);
     return true;
 }
 

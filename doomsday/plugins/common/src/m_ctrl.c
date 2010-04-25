@@ -305,8 +305,8 @@ static controlconfig_t controlConfig[] =
     { "hud" },
     { "show hud", 0, 0, "impulse showhud" },
     { "show score", 0, 0, "impulse showscore", CCF_REPEAT },
-    { "smaller view", 0, 0, "viewsize -", CCF_REPEAT },
-    { "larger view", 0, 0, "viewsize +", CCF_REPEAT },
+    { "smaller view", 0, 0, "sub view-size 1", CCF_REPEAT },
+    { "larger view", 0, 0, "add view-size 1", CCF_REPEAT },
 
     { "message refresh", 0, 0, "impulse msgrefresh" },
 

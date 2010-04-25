@@ -93,10 +93,6 @@ desc = Change the viewplayer when not in deathmatch.
 [screenshot]
 desc = Take a screenshot.
 
-[viewsize]
-desc = Set the view size.
-inf = Params: viewsize (size)\nFor example, 'viewsize 10'.\nSize can be: +, -, (num).
-
 [pause]
 desc = Pause the game (same as pressing the pause key).
 

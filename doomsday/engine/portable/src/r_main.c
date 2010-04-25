@@ -862,21 +862,22 @@ void R_RenderPlayerView(int num)
     if(renderWireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    // Fullscreen viewport.
-    GL_Restore2DState(2, currentPort);
     // Do we need to render any 3D psprites?
     if(psp3d)
     {
         GL_SwitchTo3DState(false, currentPort);
         Rend_Draw3DPlayerSprites();
-        GL_Restore2DState(2, currentPort);   // Restore viewport.
     }
-    // Original matrices and state: back to normal 2D.
-    GL_Restore2DState(3, currentPort);
+
+    // Restore fullscreen viewport, original matrices and state: back to normal 2D.
+    GL_Restore2DState(2, currentPort);
 
     // Back from wireframe mode?
     if(renderWireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    // The colored filter.
+    GL_DrawFilter();
 
     // Now we can show the viewPlayer's mobj again.
     if(!(player->shared.flags & DDPF_CHASECAM))
@@ -897,9 +898,6 @@ void R_RenderPlayerView(int num)
     }
 
     R_InfoRendVerticesPool();
-
-    // The colored filter.
-    GL_DrawFilter();
 }
 
 /**
@@ -969,6 +967,17 @@ void R_RenderViewPorts(void)
                 continue;
             }
 
+            glMatrixMode(GL_PROJECTION);
+            glPushMatrix();
+            glLoadIdentity();
+
+            /**
+             * Use an orthographic projection in native screenspace. Then
+             * translate and scale the projection to produce an aspect
+             * corrected coordinate space at 4:3.
+             */
+            glOrtho(0, vp->width, vp->height, 0, -1, 1);
+
             // Draw in-window game graphics (layer 0).
             gx.G_Drawer(0);
             restoreDefaultGLState();
@@ -979,6 +988,9 @@ void R_RenderViewPorts(void)
             // Draw in-window game graphics (layer 1).
             gx.G_Drawer(1);
             restoreDefaultGLState();
+
+            glMatrixMode(GL_PROJECTION);
+            glPopMatrix();
 
             // Increment the internal frame count. This does not
             // affect the FPS counter.

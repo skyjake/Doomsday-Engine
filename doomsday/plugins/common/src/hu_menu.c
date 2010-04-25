@@ -3079,7 +3079,7 @@ void M_DrawHUDMenu(void)
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
-    MN_DrawSlider(menu, idx++, 11, cfg.screenBlocks - 3);
+    MN_DrawSlider(menu, idx++, 11, cfg.setBlocks - 3);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
@@ -3321,8 +3321,6 @@ void M_SizeStatusBar(int option, void* context)
         cfg.statusbarScale--;
 
     ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE);
-
-    R_SetViewSize(cfg.screenBlocks);
 }
 
 void M_StatusBarOpacity(int option, void* context)
@@ -3722,20 +3720,18 @@ void M_SizeDisplay(int option, void* context)
     if(option == RIGHT_DIR)
     {
 #if __JDOOM64__
-        if(cfg.screenBlocks < 11)
+        if(cfg.setBlocks < 11)
 #else
-        if(cfg.screenBlocks < 13)
+        if(cfg.setBlocks < 13)
 #endif
         {
-            cfg.screenBlocks++;
+            cfg.setBlocks++;
         }
     }
-    else if(cfg.screenBlocks > 3)
+    else if(cfg.setBlocks > 3)
     {
-        cfg.screenBlocks--;
+        cfg.setBlocks--;
     }
-
-    R_SetViewSize(cfg.screenBlocks);
 }
 
 void M_OpenDCP(int option, void* context)

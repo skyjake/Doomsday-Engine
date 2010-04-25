@@ -38,7 +38,6 @@ extern float quitDarkenOpacity;
 
 void            D_Display(int layer);
 void            D_Display2(void);
-void            R_SetViewSize(int blocks);
 
 void            R_DrawSpecialFilter(int pnum);
 void            R_DrawMapTitle(void);

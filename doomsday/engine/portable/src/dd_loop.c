@@ -214,22 +214,12 @@ void DD_DrawAndBlit(void)
 
         R_RenderViewPorts();
 
-        // Set up the basic 320x200 legacy projection for the game.
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-        glLoadIdentity();
-        glOrtho(0, 320, 200, 0, -1, 1);
-
         // Draw any over/outside view window game graphics (e.g. fullscreen
         // menus and other displays).
         if(gx.G_Drawer2 && !(UI_IsActive() && UI_Alpha() >= 1.0))
         {
             gx.G_Drawer2();
         }
-
-        // Restore the projection mode that was previously in effect.
-        glMatrixMode(GL_PROJECTION);
-        glPopMatrix();
     }
 
     if(Con_TransitionInProgress())

@@ -1368,7 +1368,7 @@ void ST_Init(void)
  */
 DEFCC(CCmdStatusBarSize)
 {
-    int                 min = 1, max = 20, *val = &cfg.statusbarScale;
+    int min = 1, max = 20, *val = &cfg.statusbarScale;
 
     if(!stricmp(argv[1], "+"))
         (*val)++;
@@ -1379,8 +1379,6 @@ DEFCC(CCmdStatusBarSize)
 
     *val = MINMAX_OF(min, *val, max);
 
-    // Update the view size if necessary.
-    R_SetViewSize(cfg.screenBlocks);
     ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE); // so the user can see the change.
 
     return true;

@@ -187,10 +187,6 @@ desc = Cycle gamma correction levels.
 [togglemsgs]
 desc = Messages on/off.
 
-[viewsize]
-desc = View size adjustment.
-inf = Params: viewsize (size)\nFor example, 'viewsize 10'.\nSize can be: +, -, (num).
-
 [warp]
 desc = Warp to another map.
 

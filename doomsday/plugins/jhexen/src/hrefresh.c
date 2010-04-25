@@ -48,8 +48,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define WINDOWHEIGHT            (Get(DD_VIEWWINDOW_HEIGHT))
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -64,31 +62,11 @@ extern void MN_DrCenterTextA_CS(char *text, int center_x, int y);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean setsizeneeded;
 float quitDarkenOpacity = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
-
-/**
- * Don't really change anything here, because i might be in the middle of
- * a refresh.  The change will take effect next refresh.
- */
-void R_SetViewSize(int blocks)
-{
-    setsizeneeded = true;
-
-    if(cfg.setBlocks != blocks && blocks > 10 && blocks < 13)
-    {   // When going fullscreen, force a hud show event (to reset the timer).
-        int                 i;
-
-        for(i = 0; i < MAXPLAYERS; ++i)
-            ST_HUDUnHide(i, HUE_FORCE);
-    }
-
-    cfg.setBlocks = blocks;
-}
 
 void R_DrawMapTitle(void)
 {
@@ -235,6 +213,12 @@ static void rendHUD(int player)
     {
         automapid_t map = AM_MapForPlayer(player);
 
+        // Set up the fixed 320x200 projection.
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PushMatrix();
+        DGL_LoadIdentity();
+        DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
+
         // Draw HUD displays only visible when the automap is open.
         if(AM_IsActive(map))
             HU_DrawMapCounters();
@@ -243,21 +227,17 @@ static void rendHUD(int player)
         if(!(AM_IsActive(map) && cfg.automapHudDisplay == 0) &&
            !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
-            if(true == (WINDOWHEIGHT == 200))
-            {
-                // Fullscreen. Which mode?
-                ST_Drawer(player, cfg.setBlocks - 10, true);
-            }
-            else
-            {
-                ST_Drawer(player, 0, true);
-            }
+            int viewmode = (cfg.screenBlocks < 10? 0 : cfg.screenBlocks - 10);
+            ST_Drawer(player, viewmode, true);
         }
 
         HU_Drawer(player);
 
         // Map information is shown for a few seconds in the beginning of a map.
         R_DrawMapTitle();
+
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PopMatrix();
     }
 }
 
@@ -270,8 +250,9 @@ static void rendHUD(int player)
 void G_Display(int layer)
 {
     int player = DISPLAYPLAYER;
+    int vpWidth, vpHeight;
     player_t* plr = &players[player];
-    float x, y, w, h;
+    float x, y, w, h, xScale, yScale;
 
     if(layer != 0)
     {
@@ -279,33 +260,24 @@ void G_Display(int layer)
         return;
     }
 
-    if(G_GetGameState() == GS_MAP)
+    R_GetViewPort(player, NULL, NULL, &vpWidth, &vpHeight);
+    xScale = (float)vpWidth/SCREENWIDTH;
+    yScale = (float)vpHeight/SCREENHEIGHT;
+
+    if(G_GetGameState() == GS_MAP && cfg.screenBlocks <= 10 &&
+       !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam: can be set on every frame.
     {
-        // $democam: can be set on every frame.
-        if(cfg.setBlocks > 10 || (P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
-        {
-            // Full screen.
-            R_SetViewWindowTarget(0, 0, SCREENWIDTH, SCREENHEIGHT);
-        }
-        else
-        {
-            int w = cfg.setBlocks * 32;
-            int h = cfg.setBlocks * (SCREENHEIGHT - SBARHEIGHT * cfg.statusbarScale / 20) / 10;
-
-            R_SetViewWindowTarget(SCREENWIDTH/2 - w/2, (SCREENHEIGHT - SBARHEIGHT * cfg.statusbarScale / 20 - h) / 2, w, h);
-        }
-
         R_GetViewWindow(&x, &y, &w, &h);
     }
     else
-    {
+    {   // Full screen.
         x = 0;
         y = 0;
         w = SCREENWIDTH;
         h = SCREENHEIGHT;
     }
 
-    R_SetViewWindow((int) x, (int) y, (int) w, (int) h);
+    R_SetViewWindow((int) (x * xScale), (int) (y * yScale), (int) (w * xScale), (int) (h * yScale));
 
     switch(G_GetGameState())
     {

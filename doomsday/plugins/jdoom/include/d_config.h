@@ -77,7 +77,6 @@ typedef struct jdoom_config_s {
     int             jumpEnabled;
     float           jumpPower;
     int             airborneMovement;
-    byte            setSizeNeeded;
     int             setBlocks;
     int             screenBlocks;
     byte            deathLookUp; // look up when killed

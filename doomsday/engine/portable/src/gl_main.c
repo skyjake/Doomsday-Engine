@@ -741,29 +741,12 @@ void GL_SwitchTo3DState(boolean push_state, viewport_t* port)
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
-#if 0
-    viewpx = viewwindowx * theWindow->width / 320, viewpy =
-        viewwindowy * theWindow->height / 200;
-    // Set the viewport.
-    if(viewheight != SCREENHEIGHT)
-    {
-        viewpw = viewwidth * theWindow->width / 320;
-        viewph = viewheight * theWindow->height / 200 + 1;
-        glViewport(viewpx, FLIP(viewpy + viewph - 1), viewpw, viewph);
-    }
-    else
-    {
-        viewpw = theWindow->width;
-        viewph = theWindow->height;
-    }
-#endif
-
     memcpy(&currentView, port, sizeof(currentView));
 
-    viewpx = port->x + viewwindowx / 320.0f * port->width;
-    viewpy = port->y + viewwindowy / 200.0f * port->height;
-    viewpw = port->width * viewwidth / 320.0f;
-    viewph = port->height * viewheight / 200.0f;
+    viewpx = port->x + MIN_OF(viewwindowx, port->width);
+    viewpy = port->y + MIN_OF(viewwindowy, port->height);
+    viewpw = MIN_OF(port->width, viewwidth);
+    viewph = MIN_OF(port->height, viewheight);
     glViewport(viewpx, FLIP(viewpy + viewph - 1), viewpw, viewph);
 
     // The 3D projection matrix.
@@ -789,7 +772,7 @@ void GL_Restore2DState(int step, viewport_t* port)
     {
     case 1: // After Restore Step 1 normal player sprites are rendered.
         {
-        int height = (SCREENWIDTH * viewheight) / viewwidth;
+        int height = (float)(port->width * viewheight / viewwidth) / port->height * SCREENHEIGHT;
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
@@ -838,12 +821,9 @@ void GL_Restore2DState(int step, viewport_t* port)
         glDisable(GL_DEPTH_TEST);
         break;
         }
-    case 2: // After Restore Step 2 nothing special happens.
+    case 2: // After Restore Step 2 we're back in 2D rendering mode.
         glViewport(currentView.x, FLIP(currentView.y + currentView.height - 1),
                    currentView.width, currentView.height);
-        break;
-
-    case 3: // After Restore Step 3 we're back in 2D rendering mode.
         glMatrixMode(GL_PROJECTION);
         glPopMatrix();
         glMatrixMode(GL_MODELVIEW);

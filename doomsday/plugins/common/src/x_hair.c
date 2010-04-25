@@ -100,15 +100,17 @@ void X_Drawer(int player)
     if(xhair == 0 || !(alpha > 0))
         return;
 
-    scale = .125f + MINMAX_OF(0, cfg.xhairSize, 1) * .125f * 80;
     centerX = Get(DD_VIEWWINDOW_X) + (Get(DD_VIEWWINDOW_WIDTH) / 2);
     centerY = Get(DD_VIEWWINDOW_Y) + (Get(DD_VIEWWINDOW_HEIGHT) / 2);
+    scale = .125f + MINMAX_OF(0, cfg.xhairSize, 1) * .125f * Get(DD_VIEWWINDOW_HEIGHT) * ((float)80/SCREENHEIGHT);
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
-    DGL_LoadIdentity();
 
-    DGL_Ortho(0, 0, 320, 200, -1, 1);
+    oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
+    DGL_SetFloat(DGL_LINE_WIDTH, XHAIR_LINE_WIDTH);
+    DGL_Disable(DGL_TEXTURING);
+
     DGL_Translatef(centerX, centerY, 0);
     DGL_Scalef(scale, scale, 1);
 
@@ -140,15 +142,13 @@ void X_Drawer(int player)
         DGL_Color4fv(color);
     }
 
-    oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
-    DGL_SetFloat(DGL_LINE_WIDTH, XHAIR_LINE_WIDTH);
-    DGL_Disable(DGL_TEXTURING);
-
     R_DrawVectorGraphic(R_PrepareVectorGraphic(VG_XHAIR1 + (xhair-1)));
 
     // Restore the previous state.
     DGL_Enable(DGL_TEXTURING);
     DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
+
+    DGL_MatrixMode(DGL_PROJECTION);
     DGL_PopMatrix();
 
 #undef XHAIR_LINE_WIDTH
