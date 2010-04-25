@@ -756,19 +756,19 @@ int G_UIResponder(event_t* ev)
     if(Hu_MsgResponder(ev))
         return true;
 
+    if(ev->state != EVS_DOWN)
+        return false;
+    if(!(ev->type == EV_KEY || ev->type == EV_MOUSE_BUTTON || ev->type == EV_JOY_BUTTON))
+        return false;
+
     if(!Hu_MenuIsActive())
     {
         // Any key/button down pops up menu if in demos.
         if(G_GetGameAction() == GA_NONE && !singledemo &&
            (Get(DD_PLAYBACK) || FI_IsMenuTrigger(ev)))
         {
-            if(ev->state == EVS_DOWN &&
-               (ev->type == EV_KEY || ev->type == EV_MOUSE_BUTTON ||
-                ev->type == EV_JOY_BUTTON))
-            {
                 Hu_MenuCommand(MCMD_OPEN);
                 return true;
-            }
         }
     }
 
