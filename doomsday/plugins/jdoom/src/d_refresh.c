@@ -264,6 +264,14 @@ static void rendHUD(int player)
     {
         automapid_t map = AM_MapForPlayer(player);
 
+        // Do we need to render a full status bar at this point?
+        if(!(AM_IsActive(map) && cfg.automapHudDisplay == 0) &&
+           !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
+        {
+            int viewmode = (cfg.screenBlocks < 10? 0 : cfg.screenBlocks - 10);
+            ST_Drawer(player, viewmode, true);
+        }
+
         // Set up the fixed 320x200 projection.
         DGL_MatrixMode(DGL_PROJECTION);
         DGL_PushMatrix();
@@ -273,14 +281,6 @@ static void rendHUD(int player)
         // Draw HUD displays only visible when the automap is open.
         if(AM_IsActive(map))
             HU_DrawMapCounters();
-
-        // Do we need to render a full status bar at this point?
-        if(!(AM_IsActive(map) && cfg.automapHudDisplay == 0) &&
-           !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
-        {
-            int viewmode = (cfg.screenBlocks < 10? 0 : cfg.screenBlocks - 10);
-            ST_Drawer(player, viewmode, true);
-        }
 
         HU_Drawer(player);
 

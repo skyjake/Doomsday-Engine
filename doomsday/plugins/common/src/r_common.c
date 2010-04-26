@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -130,63 +130,90 @@ void R_SetViewWindowTarget(int x, int y, int w, int h)
     targetHeight = h;
 }
 
+void R_UpdateViewWindow(boolean force)
+{
+    int destBlocks = MINMAX_OF(3, cfg.setBlocks, 13);
+    boolean instantChange = force;
+    int x = 0, y = 0, w = SCREENWIDTH, h = SCREENHEIGHT;
+
+    if(!force && cfg.screenBlocks == cfg.setBlocks)
+        return;
+
+    if(cfg.screenBlocks == 10 && destBlocks > 10 && destBlocks < 13)
+    {   // When going fullscreen, force a hud show event (to reset the timer).
+        int i;
+        for(i = 0; i < MAXPLAYERS; ++i)
+            ST_HUDUnHide(i, HUE_FORCE);
+    }
+    else if(cfg.screenBlocks > 10 && destBlocks <= 10)
+    {   // When going to statusbar span, do an instant change.
+        instantChange = true;
+    }
+
+    if(destBlocks > cfg.screenBlocks)
+        cfg.screenBlocks++;
+    else if(destBlocks < cfg.screenBlocks)
+        cfg.screenBlocks--;
+
+    if(cfg.screenBlocks <= 10)
+    {
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+        float fscale = cfg.statusbarScale / 20.f;
+        int statusBarHeight, needWidth, viewW, viewH;
+
+        R_GetViewPort(0, NULL, NULL, &viewW, &viewH);
+
+        needWidth = (float)viewH/SCREENHEIGHT * ST_WIDTH;
+        if(needWidth > viewW)
+            fscale *= (float)viewW/needWidth;
+        statusBarHeight = floor(ST_HEIGHT * fscale);
+#endif
+
+        if(cfg.screenBlocks != 10)
+        {
+            w = cfg.screenBlocks * SCREENWIDTH/10;
+            x = SCREENWIDTH/2 - w/2;
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+            h = cfg.screenBlocks * (SCREENHEIGHT - statusBarHeight) / 10;
+            y = (SCREENHEIGHT - statusBarHeight - h) / 2;
+#else
+            h = cfg.screenBlocks * SCREENHEIGHT/10;
+            y = (SCREENHEIGHT - h) / 2;
+#endif
+        }
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
+        else
+        {
+            h -= statusBarHeight;
+        }
+#endif
+    }
+
+    R_SetViewWindowTarget(x, y, w, h);
+    if(instantChange)
+        windowPos = 1;
+}
+
 /**
  * Animates the game view window towards the target values.
  */
 void R_ViewWindowTicker(void)
 {
+    static int oldViewW = -1, oldViewH = -1;
+
     int destBlocks = MINMAX_OF(3, cfg.setBlocks, 13);
-    boolean instantChange = false;
+    int viewW, viewH;
 
-    if(cfg.screenBlocks != destBlocks)
-    {
-        int x = 0, y = 0, w = SCREENWIDTH, h = SCREENHEIGHT;
+    /**
+     * \kludge \fixme Doomsday does not notify us when viewport dimensions change
+     * so we must track them here.
+     */
+    R_GetViewPort(0, NULL, NULL, &viewW, &viewH);
 
-        if(cfg.screenBlocks == 10 && destBlocks > 10 && destBlocks < 13)
-        {   // When going fullscreen, force a hud show event (to reset the timer).
-            int i;
-            for(i = 0; i < MAXPLAYERS; ++i)
-                ST_HUDUnHide(i, HUE_FORCE);
-        }
-        else if(cfg.screenBlocks > 10 && destBlocks <= 10)
-        {   // When going to statusbar span, do an instant change.
-            instantChange = true;
-        }
+    R_UpdateViewWindow(viewW != oldViewW || viewH != oldViewH);
 
-        if(destBlocks > cfg.screenBlocks)
-            cfg.screenBlocks++;
-        else
-            cfg.screenBlocks--;
-
-        if(cfg.screenBlocks <= 10)
-        {
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-            int statusBarHeight = ST_HEIGHT * cfg.statusbarScale/20.f;
-#endif
-            if(cfg.screenBlocks != 10)
-            {
-                w = cfg.screenBlocks * SCREENWIDTH/10;
-                x = SCREENWIDTH/2 - w/2;
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-                h = cfg.screenBlocks * (SCREENHEIGHT - statusBarHeight) / 10;
-                y = (SCREENHEIGHT - statusBarHeight - h) / 2;
-#else
-                h = cfg.screenBlocks * SCREENHEIGHT/10;
-                y = (SCREENHEIGHT - h) / 2;
-#endif
-            }
-#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-            else
-            {
-                h -= statusBarHeight;
-            }
-#endif
-        }
-
-        R_SetViewWindowTarget(x, y, w, h);
-        if(instantChange)
-            windowPos = 1;
-    }
+    oldViewW = viewW;
+    oldViewH = viewH;
 
     if(targetX == -1)
         return; // Nothing to do.

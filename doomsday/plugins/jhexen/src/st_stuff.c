@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -141,14 +141,12 @@ typedef struct {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-// Console commands for the HUD/Statusbar
-DEFCC(CCmdStatusBarSize);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void DrINumber(signed int val, int x, int y, float r, float g,
                       float b, float a);
 void ST_updateWidgets(int player);
+static void updateViewWindow(cvar_t* cvar);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -191,7 +189,7 @@ cvar_t sthudCVars[] = {
     // HUD scale
     {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10},
 
-    {"hud-status-size", CVF_PROTECTED, CVT_INT, &cfg.statusbarScale, 1, 20},
+    {"hud-status-size", 0, CVT_INT, &cfg.statusbarScale, 1, 20, updateViewWindow},
 
     // HUD colour + alpha
     {"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1},
@@ -222,12 +220,6 @@ cvar_t sthudCVars[] = {
     {NULL}
 };
 
-// Console commands for the HUD/Status bar
-ccmd_t sthudCCmds[] = {
-    {"sbsize",      "s",    CCmdStatusBarSize},
-    {NULL}
-};
-
 // CODE --------------------------------------------------------------------
 
 /**
@@ -239,8 +231,6 @@ void ST_Register(void)
 
     for(i = 0; sthudCVars[i].name; ++i)
         Con_AddVariable(sthudCVars + i);
-    for(i = 0; sthudCCmds[i].name; ++i)
-        Con_AddCommand(sthudCCmds + i);
 
     Hu_InventoryRegister();
 }
@@ -405,7 +395,7 @@ static void drawWeaponPieces(hudstate_t* hud)
 
     if(plr->pieces == 7)
     {
-        GL_DrawPatchLitAlpha(190, 162, 1, hud->statusbarCounterAlpha,
+        GL_DrawPatchLitAlpha(190, 0, 1, hud->statusbarCounterAlpha,
                              dpWeaponFull[pClass].lump);
     }
     else
@@ -413,21 +403,21 @@ static void drawWeaponPieces(hudstate_t* hud)
         if(plr->pieces & WPIECE1)
         {
             GL_DrawPatchLitAlpha(PCLASS_INFO(pClass)->pieceX[0],
-                                 162, 1, hud->statusbarCounterAlpha,
+                                 0, 1, hud->statusbarCounterAlpha,
                                  dpWeaponPiece1[pClass].lump);
         }
 
         if(plr->pieces & WPIECE2)
         {
             GL_DrawPatchLitAlpha(PCLASS_INFO(pClass)->pieceX[1],
-                                 162, 1, hud->statusbarCounterAlpha,
+                                 0, 1, hud->statusbarCounterAlpha,
                                  dpWeaponPiece2[pClass].lump);
         }
 
         if(plr->pieces & WPIECE3)
         {
             GL_DrawPatchLitAlpha(PCLASS_INFO(pClass)->pieceX[2],
-                                 162, 1, hud->statusbarCounterAlpha,
+                                 0, 1, hud->statusbarCounterAlpha,
                                  dpWeaponPiece3[pClass].lump);
         }
     }
@@ -579,11 +569,11 @@ static void drawChain(hudstate_t* hud)
 
 static void drawStatusBarBackground(int player)
 {
-    int                 x, y, w, h;
-    int                 pClass;
-    float               cw, cw2, ch;
-    hudstate_t*         hud = &hudStates[player];
-    float               alpha;
+    int x, y, w, h;
+    int pClass;
+    float cw, cw2, ch;
+    hudstate_t* hud = &hudStates[player];
+    float alpha;
 
     // Original class (i.e. not pig).
     pClass = cfg.playerClass[player];
@@ -600,7 +590,7 @@ static void drawStatusBarBackground(int player)
 
     if(!(alpha < 1))
     {
-        GL_DrawPatch(0, 134, dpStatusBar.lump);
+        GL_DrawPatch(0, -28, dpStatusBar.lump);
         /**
          * \kludge The Hexen statusbar graphic has a chain already in the
          * image, which shows through the modified chain patches.
@@ -608,33 +598,33 @@ static void drawStatusBarBackground(int player)
          * rectangle over it.
          */
         DGL_SetNoMaterial();
-        DGL_DrawRect(44, 193, 232, 7, .1f, .1f, .1f, 1);
+        DGL_DrawRect(44, 31, 232, 7, .1f, .1f, .1f, 1);
         //// \kludge end
-        GL_DrawPatch(0, 134, dpStatusBarTop.lump);
+        GL_DrawPatch(0, -28, dpStatusBarTop.lump);
 
         if(!Hu_InventoryIsOpen(player))
         {
             // Main interface
             if(!AM_IsActive(AM_MapForPlayer(player)))
             {
-                GL_DrawPatch(38, 162, dpStatBar.lump);
+                GL_DrawPatch(38, 0, dpStatBar.lump);
 
                 if(deathmatch)
                 {
-                    GL_DrawPatch_CS(38, 162, dpKills.lump);
+                    GL_DrawPatch_CS(38, 0, dpKills.lump);
                 }
 
-                GL_DrawPatch(190, 162, dpWeaponSlot[pClass].lump);
+                GL_DrawPatch(190, 0, dpWeaponSlot[pClass].lump);
             }
             else
             {
-                GL_DrawPatch(38, 162, dpKeyBar.lump);
+                GL_DrawPatch(38, 0, dpKeyBar.lump);
                 drawKeyBar(hud);
             }
         }
         else
         {
-            GL_DrawPatch(38, 162, dpInventoryBar.lump);
+            GL_DrawPatch(38, 0, dpInventoryBar.lump);
         }
     }
     else
@@ -646,7 +636,7 @@ static void drawStatusBarBackground(int player)
 
         // top
         x = 0;
-        y = 135;
+        y = -27;
         w = ST_WIDTH;
         h = 27;
         ch = 0.41538461538461538461538461538462;
@@ -662,7 +652,7 @@ static void drawStatusBarBackground(int player)
 
         // left statue
         x = 0;
-        y = 162;
+        y = 0;
         w = 38;
         h = 38;
         cw = (float) 38 / ST_WIDTH;
@@ -679,7 +669,7 @@ static void drawStatusBarBackground(int player)
 
         // right statue
         x = 282;
-        y = 162;
+        y = 0;
         w = 38;
         h = 38;
         cw = (float) (ST_WIDTH - 38) / ST_WIDTH;
@@ -701,10 +691,10 @@ static void drawStatusBarBackground(int player)
          * Mask out the chain on the statusbar by cutting a window out and
          * drawing a solid near-black rectangle to fill the hole.
          */
-        DGL_DrawCutRectTiled(38, 192, 244, 8, 320, 65, 38, 192-135,
-                             44, 193, 232, 7);
+        DGL_DrawCutRectTiled(38, 30, 244, 8, 320, 65, 38, 192-135,
+                             44, 31, 232, 7);
         DGL_SetNoMaterial();
-        DGL_DrawRect(44, 193, 232, 7, .1f, .1f, .1f, alpha);
+        DGL_DrawRect(44, 31, 232, 7, .1f, .1f, .1f, alpha);
         DGL_Color4f(1, 1, 1, alpha);
         //// \kludge end
 
@@ -715,15 +705,15 @@ static void drawStatusBarBackground(int player)
             {
                 if(deathmatch)
                 {
-                    GL_DrawPatch_CS(38, 162, dpKills.lump);
+                    GL_DrawPatch_CS(38, 0, dpKills.lump);
                 }
 
                 // left of statbar (upto weapon puzzle display)
-                DGL_SetPatch(dpStatBar.lump, DGL_CLAMP, DGL_CLAMP);
+                DGL_SetPatch(dpStatBar.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
                 DGL_Begin(DGL_QUADS);
 
                 x = deathmatch ? 68 : 38;
-                y = 162;
+                y = 0;
                 w = deathmatch ? 122 : 152;
                 h = 30;
                 cw = deathmatch ? (float) 15 / 122 : 0;
@@ -741,7 +731,7 @@ static void drawStatusBarBackground(int player)
 
                 // right of statbar (after weapon puzzle display)
                 x = 247;
-                y = 162;
+                y = 0;
                 w = 35;
                 h = 30;
                 cw = 0.85655737704918032786885245901639;
@@ -758,21 +748,21 @@ static void drawStatusBarBackground(int player)
 
                 DGL_End();
 
-                GL_DrawPatch_CS(190, 162, dpWeaponSlot[pClass].lump);
+                GL_DrawPatch_CS(190, 0, dpWeaponSlot[pClass].lump);
             }
             else
             {
-                GL_DrawPatch_CS(38, 162, dpKeyBar.lump);
+                GL_DrawPatch_CS(38, 0, dpKeyBar.lump);
             }
         }
         else
         {
             // INVBAR
-            DGL_SetPatch(dpInventoryBar.lump, DGL_CLAMP, DGL_CLAMP);
+            DGL_SetPatch(dpInventoryBar.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
             DGL_Begin(DGL_QUADS);
 
             x = 38;
-            y = 162;
+            y = 0;
             w = 244;
             h = 30;
             ch = 0.96774193548387096774193548387097;
@@ -1461,47 +1451,79 @@ void ST_HUDUnHide(int player, hueevent_t ev)
     }
 }
 
+static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeight)
+{
+    float a = (float)viewportWidth/viewportHeight;
+    float b = (float)SCREENWIDTH/SCREENHEIGHT;
+
+    if(INRANGE_OF(a, b, .001f))
+        return true; // The same, so stretch.
+    if(Con_GetByte("rend-hud-nostretch") || !INRANGE_OF(a, b, .18f))
+        return false; // No stretch; translate and scale to fit.
+    // Otherwise stretch.
+    return true;
+}
+
 /**
  * All drawing for the status bar starts and ends here
  */
 void ST_doRefresh(int player)
 {
-    hudstate_t*         hud;
-    boolean             statusbarVisible;
+    hudstate_t* hud;
+    float fscale;
+    int viewW, viewH;
 
     if(player < 0 || player > MAXPLAYERS)
         return;
 
     hud = &hudStates[player];
-
-    statusbarVisible = (cfg.statusbarScale < 20 ||
-        (cfg.statusbarScale == 20 && hud->showBar < 1.0f));
+    R_GetViewPort(player, NULL, NULL, &viewW, &viewH);
 
     hud->firstTime = false;
 
-    if(statusbarVisible)
-    {
-        float               fscale = cfg.statusbarScale / 20.0f;
-        float               h = 200 * (1 - fscale);
+    fscale = cfg.statusbarScale / 20.0f;
 
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PushMatrix();
-        DGL_Translatef(160 - 320 * fscale / 2, h / hud->showBar, 0);
-        DGL_Scalef(fscale, fscale, 1);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+
+    DGL_Translatef(viewW/2, viewH, 0);
+    if(pickStatusbarScalingStrategy(viewW, viewH))
+    {
+        DGL_Scalef((float)viewW/SCREENWIDTH, (float)viewH/SCREENHEIGHT, 1);
     }
+    else
+    {
+        int needWidth;
+
+        if(viewW >= viewH)
+        {
+            needWidth = (float)viewH/SCREENHEIGHT * ST_WIDTH;
+            DGL_Scalef((float)viewH/SCREENHEIGHT, (float)viewH/SCREENHEIGHT, 1);
+        }
+        else
+        {
+            needWidth = (float)viewW/SCREENWIDTH * ST_WIDTH;
+            DGL_Scalef((float)viewW/SCREENWIDTH, (float)viewW/SCREENWIDTH, 1);
+        }
+
+        if(needWidth > viewW)
+            fscale *= (float)viewW/needWidth;
+    }
+    DGL_Scalef(fscale, fscale, 1);
+    DGL_Translatef(-ST_WIDTH/2, -ST_HEIGHT * hud->showBar, 0);
 
     drawStatusBarBackground(player);
+
     if(!Hu_InventoryIsOpen(player) && !AM_IsActive(AM_MapForPlayer(player)))
         drawWeaponPieces(hud);
+
+    DGL_Translatef(0, -(SCREENHEIGHT-ST_HEIGHT), 0);
+
     drawChain(hud);
     drawWidgets(hud);
 
-    if(statusbarVisible)
-    {
-        // Restore the normal modelview matrix.
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PopMatrix();
-    }
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 void ST_doFullscreenStuff(int player)
@@ -1735,22 +1757,10 @@ void Draw_TeleportIcon(void)
 }
 
 /**
- * Console command to change the size of the status bar.
+ * Called when the statusbar scale cvar changes.
  */
-DEFCC(CCmdStatusBarSize)
+static void updateViewWindow(cvar_t* cvar)
 {
-    int min = 1, max = 20, *val = &cfg.statusbarScale;
-
-    if(!stricmp(argv[1], "+"))
-        (*val)++;
-    else if(!stricmp(argv[1], "-"))
-        (*val)--;
-    else
-        *val = strtol(argv[1], NULL, 0);
-
-    *val = MINMAX_OF(min, *val, max);
-
+    R_UpdateViewWindow(true);
     ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE); // So the user can see the change.
-
-    return true;
 }

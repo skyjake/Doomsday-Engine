@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,9 +44,11 @@ typedef struct dpatch_s {
 
 #define LERP(start, end, pos) (end * pos + start * (1 - pos))
 
-void            R_SetViewWindowTarget(int x, int y, int w, int h);
 void            R_ViewWindowTicker(void);
+void            R_UpdateViewWindow(boolean force);
+void            R_SetViewWindowTarget(int x, int y, int w, int h);
 void            R_GetViewWindow(float* x, float* y, float* w, float* h);
+
 boolean         R_IsFullScreenViewWindow(void);
 boolean         R_MapObscures(int playerid, int x, int y, int w, int h);
 

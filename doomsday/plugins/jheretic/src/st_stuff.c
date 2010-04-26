@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -133,12 +133,10 @@ typedef struct {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-// Console commands for the HUD/Statusbar.
-DEFCC(CCmdStatusBarSize);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void drawINumber(signed int val, int x, int y, float r, float g, float b, float a);
+static void updateViewWindow(cvar_t* cvar);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -172,7 +170,7 @@ cvar_t sthudCVars[] = {
     // HUD scale
     {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10},
 
-    {"hud-status-size", CVF_PROTECTED, CVT_INT, &cfg.statusbarScale, 1, 20},
+    {"hud-status-size", 0, CVT_INT, &cfg.statusbarScale, 1, 20, updateViewWindow},
 
     // HUD colour + alpha
     {"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1},
@@ -208,12 +206,6 @@ cvar_t sthudCVars[] = {
     {NULL}
 };
 
-// Console commands for the HUD/Status bar
-ccmd_t  sthudCCmds[] = {
-    {"sbsize",      "s",    CCmdStatusBarSize},
-    {NULL}
-};
-
 // CODE --------------------------------------------------------------------
 
 /**
@@ -225,8 +217,6 @@ void ST_Register(void)
 
     for(i = 0; sthudCVars[i].name; ++i)
         Con_AddVariable(sthudCVars + i);
-    for(i = 0; sthudCCmds[i].name; ++i)
-        Con_AddCommand(sthudCCmds + i);
 
     Hu_InventoryRegister();
 }
@@ -362,9 +352,9 @@ static void drawChain(hudstate_t* hud)
  */
 static void drawStatusBarBackground(int player)
 {
-    hudstate_t*         hud = &hudStates[player];
-    player_t*           plr = &players[player];
-    float               alpha;
+    hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
+    float alpha;
 
     if(hud->blended)
     {
@@ -379,28 +369,28 @@ static void drawStatusBarBackground(int player)
     if(!(alpha < 1))
     {   // We can just render the full thing as normal.
         // Top bits.
-        GL_DrawPatch(0, 148, statusbarTopLeft.lump);
-        GL_DrawPatch(290, 148, statusbarTopRight.lump);
+        GL_DrawPatch(0, -10, statusbarTopLeft.lump);
+        GL_DrawPatch(290, -10, statusbarTopRight.lump);
 
         // Faces.
-        GL_DrawPatch(0, 158, statusbar.lump);
+        GL_DrawPatch(0, 0, statusbar.lump);
 
         if(P_GetPlayerCheats(plr) & CF_GODMODE)
         {
-            GL_DrawPatch(16, 167, godLeft.lump);
-            GL_DrawPatch(287, 167, godRight.lump);
+            GL_DrawPatch(16, 9, godLeft.lump);
+            GL_DrawPatch(287, 9, godRight.lump);
         }
 
         if(!Hu_InventoryIsOpen(player))
         {
             if(deathmatch)
-                GL_DrawPatch(34, 160, statBar.lump);
+                GL_DrawPatch(34, 2, statBar.lump);
             else
-                GL_DrawPatch(34, 160, lifeBar.lump);
+                GL_DrawPatch(34, 2, lifeBar.lump);
         }
         else
         {
-            GL_DrawPatch(34, 160, invBar.lump);
+            GL_DrawPatch(34, 2, invBar.lump);
         }
     }
     else
@@ -408,43 +398,43 @@ static void drawStatusBarBackground(int player)
         DGL_Color4f(1, 1, 1, alpha);
 
         // Top bits.
-        GL_DrawPatch_CS(0, 148, statusbarTopLeft.lump);
-        GL_DrawPatch_CS(290, 148, statusbarTopRight.lump);
+        GL_DrawPatch_CS(0, -10, statusbarTopLeft.lump);
+        GL_DrawPatch_CS(290, -10, statusbarTopRight.lump);
 
-        DGL_SetPatch(statusbar.lump, DGL_REPEAT, DGL_REPEAT);
+        DGL_SetPatch(statusbar.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
         // Top border.
-        DGL_DrawCutRectTiled(34, 158, 248, 2, 320, 42, 34, 0, 0, 158, 0, 0);
+        DGL_DrawCutRectTiled(34, 0, 248, 2, 320, 42, 34, 0, 0, 0, 0, 0);
 
         // Chain background.
-        DGL_DrawCutRectTiled(34, 191, 248, 9, 320, 42, 34, 33, 0, 191, 16, 8);
+        DGL_DrawCutRectTiled(34, 33, 248, 9, 320, 42, 34, 33, 0, 191, 16, 8);
 
         // Faces.
         if(P_GetPlayerCheats(plr) & CF_GODMODE)
         {
             // If GOD mode we need to cut windows
-            DGL_DrawCutRectTiled(0, 158, 34, 42, 320, 42, 0, 0, 16, 167, 16, 8);
-            DGL_DrawCutRectTiled(282, 158, 38, 42, 320, 42, 282, 0, 287, 167, 16, 8);
+            DGL_DrawCutRectTiled(0, 0, 34, 42, 320, 42, 0, 0, 16, 9, 16, 8);
+            DGL_DrawCutRectTiled(282, 0, 38, 42, 320, 42, 282, 0, 287, 9, 16, 8);
 
-            GL_DrawPatch_CS(16, 167, godLeft.lump);
-            GL_DrawPatch_CS(287, 167, godRight.lump);
+            GL_DrawPatch_CS(16, 9, godLeft.lump);
+            GL_DrawPatch_CS(287, 9, godRight.lump);
         }
         else
         {
-            DGL_DrawCutRectTiled(0, 158, 34, 42, 320, 42, 0, 0, 0, 158, 0, 0);
-            DGL_DrawCutRectTiled(282, 158, 38, 42, 320, 42, 282, 0, 0, 158, 0, 0);
+            DGL_DrawCutRectTiled(0, 0, 34, 42, 320, 42, 0, 0, 0, 0, 0, 0);
+            DGL_DrawCutRectTiled(282, 0, 38, 42, 320, 42, 282, 0, 0, 0, 0, 0);
         }
 
         if(!Hu_InventoryIsOpen(player))
         {
             if(deathmatch)
-                GL_DrawPatch_CS(34, 160, statBar.lump);
+                GL_DrawPatch_CS(34, 2, statBar.lump);
             else
-                GL_DrawPatch_CS(34, 160, lifeBar.lump);
+                GL_DrawPatch_CS(34, 2, lifeBar.lump);
         }
         else
         {
-            GL_DrawPatch_CS(34, 160, invBar.lump);
+            GL_DrawPatch_CS(34, 2, invBar.lump);
         }
     }
 }
@@ -867,45 +857,76 @@ static void drawIcons(int player)
     Draw_EndZoom();
 }
 
+static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeight)
+{
+    float a = (float)viewportWidth/viewportHeight;
+    float b = (float)SCREENWIDTH/SCREENHEIGHT;
+
+    if(INRANGE_OF(a, b, .001f))
+        return true; // The same, so stretch.
+    if(Con_GetByte("rend-hud-nostretch") || !INRANGE_OF(a, b, .18f))
+        return false; // No stretch; translate and scale to fit.
+    // Otherwise stretch.
+    return true;
+}
+
 /**
  * All drawing for the statusbar starts and ends here.
  */
 void ST_doRefresh(int player)
 {
-    hudstate_t*         hud;
-    boolean             statusbarVisible;
+    hudstate_t* hud;
+    float fscale;
+    int viewW, viewH;
 
     if(player < 0 || player > MAXPLAYERS)
         return;
 
     hud = &hudStates[player];
-
-    statusbarVisible = (cfg.statusbarScale < 20 ||
-        (cfg.statusbarScale == 20 && hud->showBar < 1.0f));
+    R_GetViewPort(player, NULL, NULL, &viewW, &viewH);
 
     hud->firstTime = false;
 
-    if(statusbarVisible)
-    {
-        float               fscale = cfg.statusbarScale / 20.0f;
-        float               h = 200 * (1 - fscale);
+    fscale = cfg.statusbarScale / 20.0f;
 
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PushMatrix();
-        DGL_Translatef(160 - 320 * fscale / 2, h / hud->showBar, 0);
-        DGL_Scalef(fscale, fscale, 1);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+
+    DGL_Translatef(viewW/2, viewH, 0);
+    if(pickStatusbarScalingStrategy(viewW, viewH))
+    {
+        DGL_Scalef((float)viewW/SCREENWIDTH, (float)viewH/SCREENHEIGHT, 1);
     }
+    else
+    {
+        int needWidth;
+
+        if(viewW >= viewH)
+        {
+            needWidth = (float)viewH/SCREENHEIGHT * ST_WIDTH;
+            DGL_Scalef((float)viewH/SCREENHEIGHT, (float)viewH/SCREENHEIGHT, 1);
+        }
+        else
+        {
+            needWidth = (float)viewW/SCREENWIDTH * ST_WIDTH;
+            DGL_Scalef((float)viewW/SCREENWIDTH, (float)viewW/SCREENWIDTH, 1);
+        }
+
+        if(needWidth > viewW)
+            fscale *= (float)viewW/needWidth;
+    }
+    DGL_Scalef(fscale, fscale, 1);
+    DGL_Translatef(-ST_WIDTH/2, -ST_HEIGHT * hud->showBar, 0);
 
     drawStatusBarBackground(player);
+
+    DGL_Translatef(0, -(SCREENHEIGHT-ST_HEIGHT), 0);
+
     drawChain(hud);
     drawWidgets(hud);
 
-    if(statusbarVisible)
-    {
-        // Restore the normal modelview matrix.
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PopMatrix();
-    }
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 void ST_doFullscreenStuff(int player)
@@ -1364,22 +1385,10 @@ void ST_Init(void)
 }
 
 /**
- * Console command to change the size of the status bar.
+ * Called when the statusbar scale cvar changes.
  */
-DEFCC(CCmdStatusBarSize)
+static void updateViewWindow(cvar_t* cvar)
 {
-    int min = 1, max = 20, *val = &cfg.statusbarScale;
-
-    if(!stricmp(argv[1], "+"))
-        (*val)++;
-    else if(!stricmp(argv[1], "-"))
-        (*val)--;
-    else
-        *val = strtol(argv[1], NULL, 0);
-
-    *val = MINMAX_OF(min, *val, max);
-
-    ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE); // so the user can see the change.
-
-    return true;
+    R_UpdateViewWindow(true);
+    ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE); // So the user can see the change.
 }

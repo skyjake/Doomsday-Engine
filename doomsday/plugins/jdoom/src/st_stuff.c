@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -230,9 +230,9 @@ typedef struct {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-DEFCC(CCmdStatusBarSize);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+static void updateViewWindow(cvar_t* cvar);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -275,7 +275,7 @@ cvar_t sthudCVars[] =
     // HUD scale
     {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10},
 
-    {"hud-status-size", CVF_PROTECTED, CVT_INT, &cfg.statusbarScale, 1, 20},
+    {"hud-status-size", 0, CVT_INT, &cfg.statusbarScale, 1, 20, updateViewWindow},
 
     // HUD colour + alpha
     {"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1},
@@ -313,12 +313,6 @@ cvar_t sthudCVars[] =
     {NULL}
 };
 
-// Console commands for the HUD/Status bar:
-ccmd_t  sthudCCmds[] = {
-    {"sbsize",      "s",    CCmdStatusBarSize},
-    {NULL}
-};
-
 // CODE --------------------------------------------------------------------
 
 /**
@@ -326,12 +320,10 @@ ccmd_t  sthudCCmds[] = {
  */
 void ST_Register(void)
 {
-    int                 i;
+    int i;
 
     for(i = 0; sthudCVars[i].name; ++i)
         Con_AddVariable(sthudCVars + i);
-    for(i = 0; sthudCCmds[i].name; ++i)
-        Con_AddCommand(sthudCCmds + i);
 }
 
 static void drawStatusBarBackground(int player, float width, float height)
@@ -955,31 +947,63 @@ static void drawWidgets(hudstate_t* hud)
     }
 }
 
+static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeight)
+{
+    float a = (float)viewportWidth/viewportHeight;
+    float b = (float)SCREENWIDTH/SCREENHEIGHT;
+
+    if(INRANGE_OF(a, b, .001f))
+        return true; // The same, so stretch.
+    if(Con_GetByte("rend-hud-nostretch") || !INRANGE_OF(a, b, .18f))
+        return false; // No stretch; translate and scale to fit.
+    // Otherwise stretch.
+    return true;
+}
+
 void ST_doRefresh(int player)
 {
-    hudstate_t*         hud;
-    boolean             statusbarVisible;
-    float               fscale, h;
+    hudstate_t* hud;
+    float fscale;
+    int viewW, viewH;
 
     if(player < 0 || player > MAXPLAYERS)
         return;
 
     hud = &hudStates[player];
-
-    statusbarVisible = (cfg.statusbarScale < 20 ||
-        (cfg.statusbarScale == 20 && hud->showBar < 1.0f));
+    R_GetViewPort(player, NULL, NULL, &viewW, &viewH);
 
     hud->firstTime = false;
 
     fscale = cfg.statusbarScale / 20.0f;
-    h = SCREENHEIGHT * (1 - fscale);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef((SCREENWIDTH/2) - SCREENWIDTH * fscale / 2,
-                   h / hud->showBar, 0);
+
+    DGL_Translatef(viewW/2, viewH, 0);
+    if(pickStatusbarScalingStrategy(viewW, viewH))
+    {
+        DGL_Scalef((float)viewW/SCREENWIDTH, (float)viewH/SCREENHEIGHT, 1);
+    }
+    else
+    {
+        int needWidth;
+
+        if(viewW >= viewH)
+        {
+            needWidth = (float)viewH/SCREENHEIGHT * ST_WIDTH;
+            DGL_Scalef((float)viewH/SCREENHEIGHT, (float)viewH/SCREENHEIGHT, 1);
+        }
+        else
+        {
+            needWidth = (float)viewW/SCREENWIDTH * ST_WIDTH;
+            DGL_Scalef((float)viewW/SCREENWIDTH, (float)viewW/SCREENWIDTH, 1);
+        }
+
+        if(needWidth > viewW)
+            fscale *= (float)viewW/needWidth;
+    }
     DGL_Scalef(fscale, fscale, 1);
-    DGL_Translatef(ST_X, ST_Y, 0);
+    DGL_Translatef(-ST_WIDTH/2, -ST_HEIGHT * hud->showBar, 0);
 
     // Draw background.
     drawStatusBarBackground(player, ST_WIDTH, ST_HEIGHT);
@@ -1544,24 +1568,10 @@ void ST_Init(void)
 }
 
 /**
- * Console command to change the size of the status bar.
+ * Called when the statusbar scale cvar changes.
  */
-DEFCC(CCmdStatusBarSize)
+static void updateViewWindow(cvar_t* cvar)
 {
-    int min = 1, max = 20, *val = &cfg.statusbarScale;
-
-    if(!stricmp(argv[1], "+"))
-        (*val)++;
-    else if(!stricmp(argv[1], "-"))
-        (*val)--;
-    else
-        *val = strtol(argv[1], NULL, 0);
-
-    if(*val < min)
-        *val = min;
-    if(*val > max)
-        *val = max;
-
+    R_UpdateViewWindow(true);
     ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE); // So the user can see the change.
-    return true;
 }

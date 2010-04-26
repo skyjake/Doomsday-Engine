@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@
 #include "x_config.h"
 
 // Size of statusbar.
-#define ST_HEIGHT           (42*SCREEN_MUL)
+#define ST_HEIGHT           (38*SCREEN_MUL)
 #define ST_WIDTH            (SCREENWIDTH)
 #define ST_Y                (SCREENHEIGHT - ST_HEIGHT)
 

@@ -138,10 +138,6 @@ inf = Params: reveal (0-4)\nModes:\n 0=nothing\n 1=show unseen\n 2=full map\n 3=
 [savegame]
 desc = Open the save game menu.
 
-[sbsize]
-desc = Status bar size adjustment.
-inf = Params: sbsize (size)\nFor example, 'sbsize +'.\nSize can be: +, -, (num).
-
 [screenshot]
 desc = Takes a screenshot. Saved to DOOMnn.TGA.
 

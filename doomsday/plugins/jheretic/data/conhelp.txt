@@ -167,10 +167,6 @@ desc = Turn yourself into a chicken. Go ahead.
 [where]
 desc = Prints your map number and exact location.
 
-[sbsize]
-desc = Status bar size adjustment.
-inf = Params: sbsize (size)\nFor example, 'sbsize +'.\nSize can be: +, -, (num).
-
 [movefloor]
 desc = Move a sector's floor plane.
 

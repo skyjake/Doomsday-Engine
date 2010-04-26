@@ -179,10 +179,6 @@ inf = Params: class (classnumber).
 [demomode]
 desc = Set demo external camera mode.
 
-[sbsize]
-desc = Status bar size adjustment.
-inf = Params: sbsize (size)\nFor example, 'sbsize +'.\nSize can be: +, -, (num).
-
 [movefloor]
 desc = Move a sector's floor plane.
 

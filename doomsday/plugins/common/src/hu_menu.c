@@ -3312,15 +3312,7 @@ void M_WeaponRecoil(int option, void* context)
 #if !__JDOOM64__
 void M_SizeStatusBar(int option, void* context)
 {
-    if(option == RIGHT_DIR)
-    {
-        if(cfg.statusbarScale < 20)
-            cfg.statusbarScale++;
-    }
-    else if(cfg.statusbarScale > 1)
-        cfg.statusbarScale--;
-
-    ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE);
+    DD_Execute(true, option == RIGHT_DIR? "add hud-status-size 1" : "sub hud-status-size 1");
 }
 
 void M_StatusBarOpacity(int option, void* context)
