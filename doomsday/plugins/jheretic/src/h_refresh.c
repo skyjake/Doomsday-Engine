@@ -131,29 +131,6 @@ boolean R_GetFilterColor(float rgba[4], int filter)
     return false;
 }
 
-void R_DrawMapTitle(int x, int y, float alpha, gamefontid_t font,
-                    boolean center)
-{
-    const char* lname, *lauthor;
-
-    lname = P_GetMapNiceName();
-    if(lname)
-    {
-        M_WriteText3(x - M_StringWidth(lname, font) / 2, y, lname, font,
-                     defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha,
-                     false, true, 0);
-        y += 20;
-    }
-
-    lauthor = P_GetMapAuthor(cfg.hideIWADAuthor);
-    if(lauthor)
-    {
-        M_WriteText3(x - M_StringWidth(lauthor, GF_FONTA) / 2, y,
-                     lauthor, GF_FONTA, .5f, .5f, .5f, alpha,
-                     false, true, 0);
-    }
-}
-
 static void rendPlayerView(int player)
 {
     player_t* plr = &players[player];
@@ -198,9 +175,9 @@ static void rendPlayerView(int player)
     R_RenderPlayerView(player);
 }
 
-static void rendHUD(int player)
+static void rendHUD(int player, int viewW, int viewH)
 {
-    player_t*           plr;
+    player_t* plr;
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -241,26 +218,34 @@ static void rendHUD(int player)
 
         HU_Drawer(player);
 
-        // Level information is shown for a few seconds in the beginning of a level.
-        if(cfg.mapTitle || actualMapTime <= 6 * TICSPERSEC)
-        {
-            int x, y;
-            float alpha = 1;
-
-            if(actualMapTime < 35)
-                alpha = actualMapTime / 35.0f;
-            if(actualMapTime > 5 * 35)
-                alpha = 1 - (actualMapTime - 5 * 35) / 35.0f;
-
-            x = SCREENWIDTH / 2;
-            y = 13;
-            Draw_BeginZoom((1 + cfg.hudScale)/2, x, y);
-            R_DrawMapTitle(x, y, alpha, GF_FONTB, true);
-            Draw_EndZoom();
-        }
-
         DGL_MatrixMode(DGL_PROJECTION);
         DGL_PopMatrix();
+
+        // Level information is shown for a few seconds in the beginning of a level.
+        if(cfg.mapTitle && !(actualMapTime > 6 * TICSPERSEC))
+        {
+            int needWidth;
+            float scale;
+
+            if(viewW >= viewH)
+            {
+                needWidth = (float)viewH/SCREENHEIGHT * SCREENWIDTH;
+                scale = (float)viewH/SCREENHEIGHT;
+            }
+            else
+            {
+                needWidth = (float)viewW/SCREENWIDTH * SCREENWIDTH;
+                scale = (float)viewW/SCREENWIDTH;
+            }
+            if(needWidth > viewW)
+                scale *= (float)viewW/needWidth;
+
+            scale *= (1+cfg.hudScale)/2;
+            // Make the title 3/4 smaller.
+            scale *= .75f;
+
+            Hu_DrawMapTitle(viewW/2, (float)viewH/SCREENHEIGHT * 6, scale);
+        }
     }
 }
 
@@ -277,13 +262,14 @@ void H_Display(int layer)
     player_t* plr = &players[player];
     float x, y, w, h, xScale, yScale;
 
+    R_GetViewPort(player, NULL, NULL, &vpWidth, &vpHeight);
+
     if(layer != 0)
     {
-        rendHUD(player);
+        rendHUD(player, vpWidth, vpHeight);
         return;
     }
 
-    R_GetViewPort(player, NULL, NULL, &vpWidth, &vpHeight);
     xScale = (float)vpWidth/SCREENWIDTH;
     yScale = (float)vpHeight/SCREENHEIGHT;
 

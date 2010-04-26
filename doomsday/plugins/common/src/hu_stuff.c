@@ -2998,3 +2998,70 @@ void Hu_FogEffectSetAlphaTarget(float alpha)
 {
     fogEffectData.targetAlpha = MINMAX_OF(0, alpha, 1);
 }
+
+static void drawMapTitle(void)
+{
+    const char* lname, *lauthor;
+    float y = 0, alpha = 1;
+#if __JDOOM__ || __JDOOM64__
+    int mapnum;
+#endif
+
+    if(actualMapTime < 35)
+        alpha = actualMapTime / 35.0f;
+    if(actualMapTime > 5 * 35)
+        alpha = 1 - (actualMapTime - 5 * 35) / 35.0f;
+
+    // Get the strings from Doomsday.
+    lname = P_GetMapNiceName();
+    lauthor = P_GetMapAuthor(cfg.hideIWADAuthor);
+#if __JHEXEN__
+    // Use stardard map name if DED didn't define it.
+    if(!lname)
+        lname = P_GetMapName(gameMap);
+#endif
+
+#if __JDOOM__ || __JDOOM64__
+    // Compose the mapnumber used to check the map name patches array.
+# if __JDOOM__
+    if(gameMode == commercial)
+        mapnum = gameMap;
+    else
+        mapnum = (gameEpisode * 9) + gameMap;
+# else // __JDOOM64__
+    mapnum = gameMap;
+# endif
+
+    WI_DrawPatch(0, 0, 1, 1, 1, alpha, &mapNamePatches[mapnum], lname, false, ALIGN_CENTER);
+    y += 14;
+
+#elif __JHERETIC__ || __JHEXEN__
+    if(lname)
+    {
+        M_WriteText3(-M_StringWidth(lname, GF_FONTB) / 2, 0, lname, GF_FONTB,
+                     defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha,
+                     false, true, 0);
+        y += 20;
+    }
+#endif
+
+    if(lauthor)
+    {
+        M_WriteText3(-M_StringWidth(lauthor, GF_FONTA) / 2, y,
+                     lauthor, GF_FONTA, .5f, .5f, .5f, alpha,
+                     false, true, 0);
+    }
+}
+
+void Hu_DrawMapTitle(int x, int y, float scale)
+{
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(scale, scale, 1);
+
+    drawMapTitle();
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+}

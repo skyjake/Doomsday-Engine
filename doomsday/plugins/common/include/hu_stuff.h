@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -47,17 +47,17 @@ enum {
 
 // The fonts.
 typedef enum {
-	GF_FIRST = 0,
-	GF_FONTA = GF_FIRST,
-	GF_FONTB,
-	NUM_GAME_FONTS
+    GF_FIRST = 0,
+    GF_FONTA = GF_FIRST,
+    GF_FONTB,
+    NUM_GAME_FONTS
 } gamefontid_t;
 
 typedef struct gamefont_s {
-	struct gamefont_char_s {
-		char			lumpname[9];
-		dpatch_t		patch;
-	} chars[256];
+    struct gamefont_char_s {
+        char            lumpname[9];
+        dpatch_t        patch;
+    } chars[256];
 } gamefont_t;
 
 extern dpatch_t huMinus;
@@ -98,6 +98,8 @@ void            Hu_Ticker(void);
 void            Hu_FogEffectTicker(timespan_t time);
 
 void            Hu_FogEffectSetAlphaTarget(float alpha);
+
+void            Hu_DrawMapTitle(int x, int y, float scale);
 
 // Implements patch replacement.
 void        WI_DrawPatch(int x, int y, float r, float g, float b, float a,

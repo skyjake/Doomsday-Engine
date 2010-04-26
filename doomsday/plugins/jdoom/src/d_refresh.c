@@ -147,55 +147,6 @@ boolean R_GetFilterColor(float rgba[4], int filter)
     return false;
 }
 
-/**
- * Show map name and author.
- */
-void R_DrawMapTitle(void)
-{
-    float alpha;
-    int y = 12, mapnum;
-    const char* lname, *lauthor;
-
-    if(!cfg.mapTitle || actualMapTime > 6 * TICSPERSEC)
-        return;
-
-    // Make the text a bit smaller.
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-    DGL_Translatef(160, y, 0);
-    DGL_Scalef(.7f, .7f, 1);
-    DGL_Translatef(-160, -y, 0);
-
-    alpha = 1;
-    if(actualMapTime < 35)
-        alpha = actualMapTime / 35.0f;
-    if(actualMapTime > 5 * 35)
-        alpha = 1 - (actualMapTime - 5 * 35) / 35.0f;
-
-    lname = P_GetMapNiceName();
-    lauthor = P_GetMapAuthor(cfg.hideIWADAuthor);
-
-    // Compose the mapnumber used to check the map name patches array.
-    if(gameMode == commercial)
-        mapnum = gameMap;
-    else
-        mapnum = (gameEpisode * 9) + gameMap;
-
-    WI_DrawPatch(SCREENWIDTH / 2, y, 1, 1, 1, alpha,
-                 &mapNamePatches[mapnum], lname, false, ALIGN_CENTER);
-    y += 14;
-
-    if(lauthor)
-    {
-        M_WriteText3(160 - M_StringWidth(lauthor, GF_FONTA) / 2, y,
-                     lauthor, GF_FONTA, .5f, .5f, .5f, alpha, false,
-                     true, 0);
-    }
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-}
-
 static void rendPlayerView(int player)
 {
     player_t* plr = &players[player];
@@ -241,9 +192,9 @@ static void rendPlayerView(int player)
     R_RenderPlayerView(player);
 }
 
-static void rendHUD(int player)
+static void rendHUD(int player, int viewW, int viewH)
 {
-    player_t*           plr;
+    player_t* plr;
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -284,11 +235,34 @@ static void rendHUD(int player)
 
         HU_Drawer(player);
 
-        // Map information is shown for a few seconds in the beginning of a map.
-        R_DrawMapTitle();
-
         DGL_MatrixMode(DGL_PROJECTION);
         DGL_PopMatrix();
+
+        // Level information is shown for a few seconds in the beginning of a level.
+        if(cfg.mapTitle && !(actualMapTime > 6 * TICSPERSEC))
+        {
+            int needWidth;
+            float scale;
+
+            if(viewW >= viewH)
+            {
+                needWidth = (float)viewH/SCREENHEIGHT * SCREENWIDTH;
+                scale = (float)viewH/SCREENHEIGHT;
+            }
+            else
+            {
+                needWidth = (float)viewW/SCREENWIDTH * SCREENWIDTH;
+                scale = (float)viewW/SCREENWIDTH;
+            }
+            if(needWidth > viewW)
+                scale *= (float)viewW/needWidth;
+
+            scale *= (1+cfg.hudScale)/2;
+            // Make the title 3/4 smaller.
+            scale *= .75f;
+
+            Hu_DrawMapTitle(viewW/2, (float)viewH/SCREENHEIGHT * 6, scale);
+        }
     }
 }
 
@@ -305,13 +279,14 @@ void D_Display(int layer)
     player_t* plr = &players[player];
     float x, y, w, h, xScale, yScale;
 
+    R_GetViewPort(player, NULL, NULL, &vpWidth, &vpHeight);
+
     if(layer != 0)
     {
-        rendHUD(player);
+        rendHUD(player, vpWidth, vpHeight);
         return;
     }
 
-    R_GetViewPort(player, NULL, NULL, &vpWidth, &vpHeight);
     xScale = (float)vpWidth/SCREENWIDTH;
     yScale = (float)vpHeight/SCREENHEIGHT;
    
