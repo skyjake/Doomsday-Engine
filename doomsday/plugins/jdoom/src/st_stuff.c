@@ -960,7 +960,7 @@ static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeigh
     return true;
 }
 
-void ST_doRefresh(int player)
+static void drawStatusbar(int player)
 {
     hudstate_t* hud;
     float fscale;
@@ -1087,187 +1087,198 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
     DGL_End();
 }
 
-void ST_doFullscreenStuff(int player)
+static void drawFragsWidget(int player, int x, int y, float textAlpha, float iconAlpha)
 {
-    static const int    ammoSprite[NUM_AMMO_TYPES] = {
+    hudstate_t* hud = &hudStates[player];
+    char buf[20];
+    sprintf(buf, "FRAGS:%i", hud->currentFragsCount);
+    M_WriteText2(x, y, buf, GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+}
+
+static int drawHealthWidget(int player, int x, int y, float textAlpha, float iconAlpha)
+{
+    hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
+    char buf[20];
+    int w, h;
+    ST_drawHUDSprite(SPR_STIM, x, y, HOT_BLEFT, 1, iconAlpha, false);
+    ST_HUDSpriteSize(SPR_STIM, &w, &h);
+    sprintf(buf, "%i%%", plr->health);
+    M_WriteText2(x + w + 2, y-12, buf, GF_FONTB, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    return w + 2 + M_StringWidth(buf, GF_FONTB) + 2;
+}
+
+static int drawAmmoWidget(int player, int x, int y, float textAlpha, float iconAlpha)
+{
+    static const int ammoSprite[NUM_AMMO_TYPES] = {
         SPR_AMMO,
         SPR_SBOX,
         SPR_CELL,
         SPR_ROCK
     };
+    player_t* plr = &players[player];
+    ammotype_t ammoType;
+    char buf[20];
+    float scale;
 
-    hudstate_t*         hud = &hudStates[player];
-    player_t*           plr = &players[player];
-    char                buf[20];
-    int                 w, h, pos = 0, spr, i;
-    int                 width = 320 / cfg.hudScale;
-    int                 height = 200 / cfg.hudScale;
-    float               textAlpha =
-        MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]), 1.f);
-    float               iconAlpha =
-        MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha), 1.f);
+    /// \todo Only supports one type of ammo per weapon.
+    /// for each type of ammo this weapon takes.
+    for(ammoType = 0; ammoType < NUM_AMMO_TYPES; ++ammoType)
+    {
+        int spr, w, h;
+
+        if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammoType])
+            continue;
+
+        spr = ammoSprite[ammoType];
+        scale = (spr == SPR_ROCK? .72f : 1);
+
+        ST_drawHUDSprite(spr, x, y, HOT_BLEFT, scale, iconAlpha, false);
+        ST_HUDSpriteSize(spr, &w, &h);
+        sprintf(buf, "%i", plr->ammo[ammoType].owned);
+        M_WriteText2(x+w+2, y-12, buf, GF_FONTB, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+        return w + 2;
+    }
+    return 0;
+}
+
+static void drawFaceWidget(int player, int x, int y, float textAlpha, float iconAlpha)
+{
+    hudstate_t* hud = &hudStates[player];
+    int plrColor = cfg.playerColor[player];
+
+    if(!(iconAlpha > 0))
+        return;
+
+    x -= (faceBackground[plrColor].width/2);
+
+    DGL_Color4f(1, 1, 1, iconAlpha);
+    if(IS_NETGAME)
+        GL_DrawPatch_CS(x, y - faceBackground[plrColor].height + 1, faceBackground[plrColor].lump);
+
+    GL_DrawPatch_CS(x, y - faceBackground[plrColor].height, faces[hud->faceIndex].lump);
+}
+
+static int drawArmorWidget(int player, int x, int y, float textAlpha, float iconAlpha)
+{
+    player_t* plr = &players[player];
+    int maxArmor, armorOffset, spr, w, h;
+    char buf[20];
+
+    maxArmor = MAX_OF(armorPoints[0], armorPoints[1]);
+    maxArmor = MAX_OF(maxArmor, armorPoints[2]);
+    maxArmor = MAX_OF(maxArmor, armorPoints[2]);
+    sprintf(buf, "%i%%", maxArmor);
+    armorOffset = M_StringWidth(buf, GF_FONTB);
+
+    sprintf(buf, "%i%%", plr->armorPoints);
+
+    M_WriteText2(x - M_StringWidth(buf, GF_FONTB), y-12, buf, GF_FONTB, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    x -= armorOffset;
+    spr = (plr->armorType == 2 ? SPR_ARM2 : SPR_ARM1);
+    ST_drawHUDSprite(spr, x-2, y, HOT_BRIGHT, 1, iconAlpha, false);
+    ST_HUDSpriteSize(spr, &w, &h);
+    return armorOffset + w + 4;
+}
+
+static void drawKeysWidget(int player, int x, int y, float textAlpha, float iconAlpha)
+{
+    static int keyPairs[3][2] = {
+        {KT_REDCARD, KT_REDSKULL},
+        {KT_YELLOWCARD, KT_YELLOWSKULL},
+        {KT_BLUECARD, KT_BLUESKULL}
+    };
+    static int keyIcons[NUM_KEY_TYPES] = {
+        SPR_BKEY,
+        SPR_YKEY,
+        SPR_RKEY,
+        SPR_BSKU,
+        SPR_YSKU,
+        SPR_RSKU
+    };
+    player_t* plr = &players[player];
+    int i;
+
+    for(i = 0; i < NUM_KEY_TYPES; ++i)
+    {
+        boolean shown = true;
+
+        if(!plr->keys[i])
+            continue;
+
+        if(cfg.hudKeysCombine)
+        {
+            int j;
+
+            for(j = 0; j < 3; ++j)
+                if(keyPairs[j][0] == i && plr->keys[keyPairs[j][0]] && plr->keys[keyPairs[j][1]])
+                {
+                    shown = false;
+                    break;
+                }
+        }
+
+        if(shown)
+        {
+            int w, h, spr = keyIcons[i];
+            ST_drawHUDSprite(spr, x, y, HOT_BRIGHT, 1, iconAlpha, false);
+            ST_HUDSpriteSize(spr, &w, &h);
+            x -= w + 2;
+        }
+    }
+}
+
+static void drawFullscreenHUD(int player, int width, int height, float textAlpha, float iconAlpha)
+{
+#define INSET_BORDER 2 // In fixed 320x200 pixels
+
+    int x, y, posX, posY;
+
+    x = y = INSET_BORDER;
+    height = height-INSET_BORDER*2;
+    width = width-INSET_BORDER*2;
+
+    posX = x;
+    posY = y + height;
 
     if(IS_NETGAME && deathmatch && cfg.hudShown[HUD_FRAGS])
-    {
-        // Display the frag counter.
-        i = 199 - 8;
-        if(cfg.hudShown[HUD_HEALTH] || cfg.hudShown[HUD_AMMO])
-        {
-            i -= 18 * cfg.hudScale;
-        }
-        sprintf(buf, "FRAGS:%i", hud->currentFragsCount);
-        M_WriteText2(2, i, buf, GF_FONTA, cfg.hudColor[0], cfg.hudColor[1],
-                     cfg.hudColor[2], textAlpha);
-    }
-
-    // Setup the scaling matrix.
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-    DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
+        drawFragsWidget(player, posX, posY - ((cfg.hudShown[HUD_HEALTH] || cfg.hudShown[HUD_AMMO])? 24 : 0), textAlpha, iconAlpha);
 
     // Draw the visible HUD data, first health.
     if(cfg.hudShown[HUD_HEALTH])
-    {
-        ST_drawHUDSprite(SPR_STIM, 2, height - 2, HOT_BLEFT, 1, iconAlpha,
-                         false);
-        ST_HUDSpriteSize(SPR_STIM, &w, &h);
-        pos = w + 2;
-        sprintf(buf, "%i%%", plr->health);
-        M_WriteText2(pos, height - 14, buf, GF_FONTB, cfg.hudColor[0],
-                     cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-        pos += M_StringWidth(buf, GF_FONTB) + 2;
-    }
+        posX += drawHealthWidget(player, posX, posY, textAlpha, iconAlpha);
 
     if(cfg.hudShown[HUD_AMMO])
-    {
-        ammotype_t          ammoType;
-        float               scale;
-
-        //// \todo Only supports one type of ammo per weapon.
-        //// for each type of ammo this weapon takes.
-        for(ammoType = 0; ammoType < NUM_AMMO_TYPES; ++ammoType)
-        {
-            if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammoType])
-                continue;
-
-            spr = ammoSprite[ammoType];
-            scale = (spr == SPR_ROCK? .72f : 1);
-
-            ST_drawHUDSprite(spr, pos, height - 2, HOT_BLEFT, scale,
-                             iconAlpha, false);
-            ST_HUDSpriteSize(spr, &w, &h);
-            pos += w + 2;
-            sprintf(buf, "%i", plr->ammo[ammoType].owned);
-            M_WriteText2(pos, height - 14, buf, GF_FONTB,
-                         cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2],
-                         textAlpha);
-            break;
-        }
-    }
+        posX += drawAmmoWidget(player, posX, posY, textAlpha, iconAlpha);
 
     // Doomguy's face | use a bit of extra scale.
+    posX = x + width/2;
     if(cfg.hudShown[HUD_FACE])
     {
-        int             plrColor = cfg.playerColor[player];
-
-        pos = (width/2) -(faceBackground[plrColor].width/2) + 6;
-
-        if(iconAlpha != 0.0f)
-        {
-Draw_BeginZoom(0.7f, pos , height - 1);
-            DGL_Color4f(1, 1, 1, iconAlpha);
-            if(IS_NETGAME)
-                GL_DrawPatch_CS(pos, height - faceBackground[plrColor].height + 1,
-                                faceBackground[plrColor].lump);
-
-            GL_DrawPatch_CS(pos, height - faceBackground[plrColor].height,
-                            faces[hud->faceIndex].lump);
+Draw_BeginZoom(0.7f, posX, posY - 1);
+        drawFaceWidget(player, posX, posY, textAlpha, iconAlpha);
 Draw_EndZoom();
-        }
     }
 
-    pos = width - 2;
+    posX = x + width;
     if(cfg.hudShown[HUD_ARMOR])
-    {
-        int                 maxArmor, armorOffset;
-
-        maxArmor = MAX_OF(armorPoints[0], armorPoints[1]);
-        maxArmor = MAX_OF(maxArmor, armorPoints[2]);
-        maxArmor = MAX_OF(maxArmor, armorPoints[2]);
-        sprintf(buf, "%i%%", maxArmor);
-        armorOffset = M_StringWidth(buf, GF_FONTB);
-
-        sprintf(buf, "%i%%", plr->armorPoints);
-        pos -= armorOffset;
-        M_WriteText2(pos + armorOffset - M_StringWidth(buf, GF_FONTB), height - 14, buf, GF_FONTB,
-                     cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-        pos -= 2;
-
-        spr = (plr->armorType == 2 ? SPR_ARM2 : SPR_ARM1);
-        ST_drawHUDSprite(spr, pos, height - 2, HOT_BRIGHT, 1, iconAlpha,
-                         false);
-        ST_HUDSpriteSize(spr, &w, &h);
-        pos -= w + 2;
-    }
+        posX -= drawArmorWidget(player, posX, posY, textAlpha, iconAlpha);
 
     // Keys | use a bit of extra scale.
     if(cfg.hudShown[HUD_KEYS])
     {
-        static int          keyPairs[3][2] = {
-            {KT_REDCARD, KT_REDSKULL},
-            {KT_YELLOWCARD, KT_YELLOWSKULL},
-            {KT_BLUECARD, KT_BLUESKULL}
-        };
-        static int          keyIcons[NUM_KEY_TYPES] = {
-            SPR_BKEY,
-            SPR_YKEY,
-            SPR_RKEY,
-            SPR_BSKU,
-            SPR_YSKU,
-            SPR_RSKU
-        };
-
-Draw_BeginZoom(0.75f, pos , height - 2);
-        for(i = 0; i < NUM_KEY_TYPES; ++i)
-        {
-            boolean             shown = true;
-
-            if(!plr->keys[i])
-                continue;
-
-            if(cfg.hudKeysCombine)
-            {
-                int                 j;
-
-                for(j = 0; j < 3; ++j)
-                    if(keyPairs[j][0] == i &&
-                       plr->keys[keyPairs[j][0]] && plr->keys[keyPairs[j][1]])
-                    {
-                        shown = false;
-                        break;
-                    }
-            }
-
-            if(shown)
-            {
-                spr = keyIcons[i];
-                ST_drawHUDSprite(spr, pos, height - 2, HOT_BRIGHT, 1,
-                                 iconAlpha, false);
-                ST_HUDSpriteSize(spr, &w, &h);
-                pos -= w + 2;
-            }
-        }
+Draw_BeginZoom(0.75f, posX, posY);
+        drawKeysWidget(player, posX, posY, textAlpha, iconAlpha);
 Draw_EndZoom();
     }
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
+#undef INSET_BORDER
 }
 
 void ST_Drawer(int player, int fullscreenMode, boolean refresh)
 {
-    hudstate_t*         hud;
-    player_t*           plr;
+    hudstate_t* hud;
+    player_t* plr;
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -1330,9 +1341,34 @@ void ST_Drawer(int player, int fullscreenMode, boolean refresh)
         hud->blended = 0;
 
     if(hud->statusbarActive)
-        ST_doRefresh(player);
-    else if(fullscreenMode != 3)
-        ST_doFullscreenStuff(player);
+    {
+        drawStatusbar(player);
+        return;
+    }
+
+    if(fullscreenMode != 3)
+    {
+        int viewW, viewH, width, height;
+        float scale;
+        float textAlpha = MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]), 1.f);
+        float iconAlpha = MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha), 1.f);
+
+        R_GetViewPort(player, NULL, NULL, &viewW, &viewH);
+        scale = (float)viewW/SCREENWIDTH;
+        scale *= cfg.hudScale;
+        width = 320 / cfg.hudScale;
+        height = 200 / cfg.hudScale;
+
+        // Setup the scaling matrix.
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
+        DGL_Scalef(scale, scale, 1);
+
+        drawFullscreenHUD(player, width, height, textAlpha, iconAlpha);
+
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
+    }
 }
 
 void ST_loadGraphics(void)
