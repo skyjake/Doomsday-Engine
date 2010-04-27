@@ -804,7 +804,6 @@ static int drawFlightWidget(int player, float textAlpha, float iconAlpha)
 {
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    int frame;
 
     if(!plr->powers[PT_FLIGHT])
         return 0;

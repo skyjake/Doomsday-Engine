@@ -378,7 +378,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
 
             if((count = P_InventoryCount(player, item->type)))
             {
-                GL_DrawPatchLitAlpha(x + slot * ST_INVSLOTWIDTH,
+                GL_DrawPatchLitAlpha(x + slot * ST_INVSLOTWIDTH - 1,
                                      y + ST_INVICONOFFY, 1,
                                      slot == selected? iconAlpha : iconAlpha / 3,
                                      item->patchLump);
@@ -404,11 +404,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
     if(inv->numUsedSlots > maxVisSlots)
     {
 #define ARROW_RELXOFF          2
-#if __JHEXEN__
-# define ARROW_YOFFSET         -1
-#else
-# define ARROW_YOFFSET         9
-#endif
+#define ARROW_YOFFSET          9
 
         if(cfg.inventoryWrap || first != 0)
         {
