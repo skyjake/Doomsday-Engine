@@ -71,6 +71,13 @@ typedef struct {
     st_number_t     wFrags; // In deathmatch only, summary of frags stats.
 } hudstate_t;
 
+typedef enum hotloc_e {
+    HOT_TLEFT,
+    HOT_TRIGHT,
+    HOT_BRIGHT,
+    HOT_BLEFT
+} hotloc_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------

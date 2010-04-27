@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -46,13 +46,6 @@
 #define HUDBORDERX          (14)
 #define HUDBORDERY          (18)
 
-typedef enum hotloc_e {
-    HOT_TLEFT,
-    HOT_TRIGHT,
-    HOT_BRIGHT,
-    HOT_BLEFT
-} hotloc_t;
-
 // Called by main loop.
 void    ST_Ticker(void);
 
@@ -70,7 +63,5 @@ void    ST_Init(void);
 void    ST_HUDUnHide(int player, hueevent_t event);
 
 void    ST_HUDSpriteSize(int sprite, int *w, int *h);
-void    ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
-                         float scale, float alpha, boolean flip);
 
 #endif
