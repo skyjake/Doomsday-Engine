@@ -759,102 +759,117 @@ void ST_HUDUnHide(int player, hueevent_t ev)
     }
 }
 
-static void drawIcons(int player)
+static void drawPatch(lumpnum_t lump, int x, int y, float alpha, boolean usePatchOffset)
 {
-    int                 frame;
-    float               iconAlpha = cfg.hudIconAlpha;
-    float               textAlpha = cfg.hudColor[3];
-    hudstate_t*         hud = &hudStates[player];
-    player_t*           plr = &players[player];
+    patchinfo_t info;
+    int w, h;
 
-    Draw_BeginZoom(cfg.hudScale, 2, 2);
+    if(!R_GetPatchInfo(lump, &info))
+        return;
 
-    // Flight icons
-    if(plr->powers[PT_FLIGHT])
+    w = (int) info.width;
+    h = (int) info.height;
+
+    if(usePatchOffset)
     {
-        int     offset = (cfg.hudShown[HUD_AMMO] && cfg.screenBlocks > 10 &&
-                          plr->readyWeapon > 0 &&
-                          plr->readyWeapon < 7) ? 43 : 0;
+        x += (int) info.offset;
+        y += (int) info.topOffset;
+    }
 
-        if(plr->powers[PT_FLIGHT] > BLINKTHRESHOLD ||
-           !(plr->powers[PT_FLIGHT] & 16))
+    DGL_SetPatch(lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_Color4f(1, 1, 1, alpha);
+    DGL_Begin(DGL_QUADS);
+        DGL_TexCoord2f(0, 0, 0);
+        DGL_Vertex2f(x, y);
+        DGL_TexCoord2f(0, 1, 0);
+        DGL_Vertex2f(x + w, y);
+        DGL_TexCoord2f(0, 1, 1);
+        DGL_Vertex2f(x + w, y + h);
+        DGL_TexCoord2f(0, 0, 1);
+        DGL_Vertex2f(x, y + h);
+    DGL_End();
+}
+
+static void drawFlightWidget(int player, int x, int y, float textAlpha, float iconAlpha)
+{
+    hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
+    int frame;
+
+    if(!(plr->powers[PT_FLIGHT] > BLINKTHRESHOLD || !(plr->powers[PT_FLIGHT] & 16)))
+        return;
+
+    frame = (mapTime / 3) & 15;
+    if(plr->plr->mo->flags2 & MF2_FLY)
+    {
+        if(hud->hitCenterFrame && (frame != 15 && frame != 0))
+            frame = 15;
+        else               
+            hud->hitCenterFrame = false;
+    }
+    else
+    {
+        if(!hud->hitCenterFrame && (frame != 15 && frame != 0))
         {
-            frame = (mapTime / 3) & 15;
-            if(plr->plr->mo->flags2 & MF2_FLY)
-            {
-                if(hud->hitCenterFrame && (frame != 15 && frame != 0))
-                {
-                    GL_DrawPatchLitAlpha(20 + offset, 17, 1, iconAlpha,
-                                         spinFly[15].lump);
-                }
-                else
-                {
-                    GL_DrawPatchLitAlpha(20 + offset, 17, 1, iconAlpha,
-                                         spinFly[frame].lump);
-                    hud->hitCenterFrame = false;
-                }
-            }
-            else
-            {
-                if(!hud->hitCenterFrame && (frame != 15 && frame != 0))
-                {
-                    GL_DrawPatchLitAlpha(20 + offset, 17, 1, iconAlpha,
-                                         spinFly[frame].lump);
-                    hud->hitCenterFrame = false;
-                }
-                else
-                {
-                    GL_DrawPatchLitAlpha(20 + offset, 17, 1, iconAlpha,
-                                         spinFly[15].lump);
-                    hud->hitCenterFrame = true;
-                }
-            }
+            hud->hitCenterFrame = false;
+        }
+        else
+        {
+            frame = 15;
+            hud->hitCenterFrame = true;
         }
     }
 
-    Draw_EndZoom();
+    drawPatch(spinFly[frame].lump, x+16, y+14, iconAlpha, true);
+}
 
-    Draw_BeginZoom(cfg.hudScale, 318, 2);
+static void drawTombOfPowerWidget(int player, int x, int y, float textAlpha, float iconAlpha)
+{
+    player_t* plr = &players[player];
 
-    if(plr->powers[PT_WEAPONLEVEL2] && !plr->morphTics)
+    if(cfg.tomeCounter || plr->powers[PT_WEAPONLEVEL2] > BLINKTHRESHOLD || !(plr->powers[PT_WEAPONLEVEL2] & 16))
     {
-        if(cfg.tomeCounter || plr->powers[PT_WEAPONLEVEL2] > BLINKTHRESHOLD
-           || !(plr->powers[PT_WEAPONLEVEL2] & 16))
-        {
-            frame = (mapTime / 3) & 15;
-            if(cfg.tomeCounter && plr->powers[PT_WEAPONLEVEL2] < 35)
-            {
-                DGL_Color4f(1, 1, 1, plr->powers[PT_WEAPONLEVEL2] / 35.0f);
-            }
+        int frame = (mapTime / 3) & 15;
+        float alpha = iconAlpha;
+        if(cfg.tomeCounter && plr->powers[PT_WEAPONLEVEL2] < 35)
+            alpha *= plr->powers[PT_WEAPONLEVEL2] / 35.0f;
+        drawPatch(spinBook[frame].lump, x-12, y+13, alpha, true);
+    }
 
-            GL_DrawPatchLitAlpha(300, 17, 1, iconAlpha,
-                                 spinBook[frame].lump);
-        }
-
-        if(plr->powers[PT_WEAPONLEVEL2] < cfg.tomeCounter * 35)
-        {
+    if(plr->powers[PT_WEAPONLEVEL2] < cfg.tomeCounter * 35)
+    {
 #define COUNT_X             (303)
 #define COUNT_Y             (30)
 
-            int                 val = 1 + plr->powers[PT_WEAPONLEVEL2] / 35;
-
-            DGL_Color4f(1, 1, 1, textAlpha);
-
-            if(val > 9)
-            {
-                GL_DrawPatch_CS(COUNT_X, COUNT_Y,
-                                dpSmallNumbers[(val / 10) % 10].lump);
-            }
-
-            val = val % 10;
-            GL_DrawPatch_CS(COUNT_X + 4, COUNT_Y, dpSmallNumbers[val].lump);
+        int val = 1 + plr->powers[PT_WEAPONLEVEL2] / 35;
+        if(val > 9)
+            drawPatch(dpSmallNumbers[(val / 10) % 10].lump, x-12+3, y+13+13, textAlpha, true);
+        val = val % 10;
+        drawPatch(dpSmallNumbers[val].lump, x-12+7, y+13+13, textAlpha, true);
 
 #undef COUNT_X
 #undef COUNT_Y
-        }
     }
+}
 
-    Draw_EndZoom();
+static void drawFlightIcon(int player, float textAlpha, float iconAlpha)
+{
+    player_t* plr = &players[player];
+    // Flight icons
+    if(plr->powers[PT_FLIGHT])
+    {
+        int offset = (cfg.hudShown[HUD_AMMO] && cfg.screenBlocks > 10 && plr->readyWeapon > 0 && plr->readyWeapon < 7) ? 43 : 0;
+        drawFlightWidget(player, 20 + offset, 2, textAlpha, iconAlpha);
+    }
+}
+
+static void drawTombOfPowerIcon(int player, float textAlpha, float iconAlpha)
+{
+    player_t* plr = &players[player];
+    if(plr->powers[PT_WEAPONLEVEL2] && !plr->morphTics)
+    {
+        drawTombOfPowerWidget(player, 300, 17, textAlpha, iconAlpha);
+    }
 }
 
 static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeight)
@@ -873,7 +888,7 @@ static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeigh
 /**
  * All drawing for the statusbar starts and ends here.
  */
-void ST_doRefresh(int player)
+static void drawStatusbar(int player)
 {
     hudstate_t* hud;
     float fscale;
@@ -929,178 +944,199 @@ void ST_doRefresh(int player)
     DGL_PopMatrix();
 }
 
-void ST_doFullscreenStuff(int player)
+static int drawAmmoWidget(int player, int x, int y, float textAlpha, float iconAlpha)
 {
-    int                 i, x, temp = 0;
-    hudstate_t*         hud = &hudStates[player];
-    player_t*           plr = &players[player];
-    float               textAlpha =
-        MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]), 1.f);
-    float               iconAlpha =
-        MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha), 1.f);
+    player_t* plr = &players[player];
+    int lvl = (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
+    ammotype_t ammoType;
+    int drawnWidth = 0;
+
+    if(!(plr->readyWeapon > 0 && plr->readyWeapon < 7))
+        return 0;
+
+    /// \todo Only supports one type of ammo per weapon.
+    /// For each type of ammo this weapon takes.
+    for(ammoType = 0; ammoType < NUM_AMMO_TYPES; ++ammoType)
+    {
+        const dpatch_t* dp;
+        if(!weaponInfo[plr->readyWeapon][plr->class].mode[lvl].ammoType[ammoType])
+            continue;
+        dp = &ammoIcons[plr->readyWeapon - 1];
+        drawPatch(dp->lump, x, y, iconAlpha, false);
+        drawINumber(plr->ammo[ammoType].owned, x+dp->width+2, y-2, 1, 1, 1, textAlpha);
+        /// \kludge calculate the visual width properly!
+        drawnWidth = dp->width + 2 + (iNumbers[0].width+1) * 3;
+        break;
+    }
+    return drawnWidth;
+}
+
+static int drawHealthWidget(int player, int x, int y, float textAlpha, float iconAlpha)
+{
+    player_t* plr = &players[player];
+    int health = MAX_OF(plr->plr->mo->health, 0);
+    HU_DrawBNumber(health, x-1, y-17, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    return 17;
+}
+
+static int drawArmorWidget(int player, int x, int y, float textAlpha, float iconAlpha)
+{
+    player_t* plr = &players[player];
+    drawINumber(plr->armorPoints, x, y-11, 1, 1, 1, textAlpha);
+    /// \kludge calculate the visual width properly!
+    return (iNumbers[0].width+1) * 3;
+}
+
+static int drawKeysWidget(int player, int x, int y, float textAlpha, float iconAlpha)
+{
+    player_t* plr = &players[player];
+    int drawnHeight = 0;
+
+    if(plr->keys[KT_YELLOW])
+    {
+        drawPatch(keys[0].lump, x, y-keys[0].height, iconAlpha, false);
+        x += keys[0].width + 2;
+        drawnHeight = keys[0].height;
+    }
+
+    if(plr->keys[KT_GREEN])
+    {
+        drawPatch(keys[1].lump, x, y-keys[1].height, iconAlpha, false);
+        x += keys[1].width + 2;
+        if(keys[1].height > drawnHeight)
+            drawnHeight = keys[1].height;
+    }
+
+    if(plr->keys[KT_BLUE])
+    {
+        drawPatch(keys[2].lump, x, y-keys[2].height, iconAlpha, false);
+        x += keys[2].width;
+        if(keys[2].height > drawnHeight)
+            drawnHeight = keys[2].height;
+    }
+    return drawnHeight;
+}
+
+static int drawFragsWidget(int player, int x, int y, float textAlpha, float iconAlpha)
+{
+    player_t* plr = &players[player];
+    int i, numFrags = 0;
+    for(i = 0; i < MAXPLAYERS; ++i)
+        if(players[i].plr->inGame)
+            numFrags += plr->frags[i];
+    drawINumber(numFrags, x, y, 1, 1, 1, textAlpha);
+    /// \kludge calculate the visual width properly!
+    return (iNumbers[0].width+1) * 3;
+}
+
+static int drawCurrentItemWidget(int player, int x, int y, float textAlpha, float iconAlpha)
+{
+    hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
+    inventoryitemtype_t readyItem;
+
+    if(hud->currentInvItemFlash > 0)
+    {
+        drawPatch(dpInvItemBox.lump, x-29, y-29, iconAlpha / 2, false);
+        drawPatch(dpInvItemFlash[hud->currentInvItemFlash % 5].lump, x-29, y-28, iconAlpha, true);
+        return dpInvItemBox.width;
+    }
+
+    readyItem = P_InventoryReadyItem(player);
+
+    if(readyItem != IIT_NONE)
+    {
+        lumpnum_t patch = P_GetInvItem(readyItem-1)->patchLump;
+        uint count;
+
+        drawPatch(dpInvItemBox.lump, x-29, y-29, iconAlpha / 2, false);
+        drawPatch(patch, x-29, y-29, iconAlpha, true);
+        if((count = P_InventoryCount(player, readyItem)) > 1)
+            Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, x-1, y-7, textAlpha);
+    }
+    return dpInvItemBox.width;
+}
+
+static int drawInventoryWidget(int player, int x, int y, float textAlpha, float iconAlpha)
+{
+#define INVENTORY_HEIGHT    29
+
+    hudstate_t* hud = &hudStates[player];
+    Hu_InventoryDraw(player, x, y-INVENTORY_HEIGHT, textAlpha, iconAlpha);
+    /// \kludge calculate the visual width properly!
+    return 31*7+16*2;
+
+#undef INVENTORY_HEIGHT
+}
+
+static void drawFullscreenHUD(int player, int x, int y, int width, int height, float textAlpha, float iconAlpha)
+{
+    hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
+    int posX, posY;
+
+    posX = x;
+    posY = y;
 
     if(cfg.hudShown[HUD_AMMO])
     {
-        if(plr->readyWeapon > 0 && plr->readyWeapon < 7)
-        {
-            ammotype_t          ammoType;
-            int                 lvl =
-                (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
-
-            //// \todo Only supports one type of ammo per weapon.
-            // For each type of ammo this weapon takes.
-            for(ammoType = 0; ammoType < NUM_AMMO_TYPES; ++ammoType)
-            {
-                if(!weaponInfo[plr->readyWeapon][plr->class].mode[lvl].ammoType[ammoType])
-                    continue;
-
-                Draw_BeginZoom(cfg.hudScale, 2, 2);
-                GL_DrawPatchLitAlpha(-1, 0, 1, iconAlpha,
-                                     ammoIcons[plr->readyWeapon - 1].lump);
-                drawINumber(plr->ammo[ammoType].owned, 18, 2,
-                            1, 1, 1, textAlpha);
-
-                Draw_EndZoom();
-                break;
-            }
-        }
+        int drawnWidth = drawAmmoWidget(player, posX, posY, textAlpha, iconAlpha);
+        if(drawnWidth > 0)
+            posX += drawnWidth + 2;
     }
 
-Draw_BeginZoom(cfg.hudScale, 2, 198);
+    if(plr->powers[PT_FLIGHT])
+        drawFlightWidget(player, posX, posY, cfg.hudColor[3], cfg.hudIconAlpha);
+
+    posX = x + width;
+    if(plr->powers[PT_WEAPONLEVEL2] && !plr->morphTics)
+        drawTombOfPowerWidget(player, posX, posY, cfg.hudColor[3], cfg.hudIconAlpha);
+
+    posX = x;
+    posY = y + height;
     if(cfg.hudShown[HUD_HEALTH])
     {
-        if(plr->plr->mo->health > 0)
-        {
-            HU_DrawBNumber(plr->plr->mo->health, 2, 180,
-                        cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2],
-                        textAlpha);
-        }
-        else
-        {
-            HU_DrawBNumber(0, 2, 180, cfg.hudColor[0], cfg.hudColor[1],
-                        cfg.hudColor[2], textAlpha);
-        }
-    }
-
-    if(cfg.hudShown[HUD_ARMOR])
-    {
-        if(cfg.hudShown[HUD_HEALTH] && cfg.hudShown[HUD_KEYS])
-            temp = 158;
-        else if(!cfg.hudShown[HUD_HEALTH] && cfg.hudShown[HUD_KEYS])
-            temp = 176;
-        else if(cfg.hudShown[HUD_HEALTH] && !cfg.hudShown[HUD_KEYS])
-            temp = 168;
-        else if(!cfg.hudShown[HUD_HEALTH] && !cfg.hudShown[HUD_KEYS])
-            temp = 186;
-
-        drawINumber(plr->armorPoints, 6, temp, 1, 1, 1, textAlpha);
+        int drawnHeight = drawHealthWidget(player, posX, posY, textAlpha, iconAlpha);
+        if(drawnHeight > 0)
+            posY -= drawnHeight + 2;
     }
 
     if(cfg.hudShown[HUD_KEYS])
     {
-        x = 6;
-
-        // Draw keys above health?
-        if(plr->keys[KT_YELLOW])
-        {
-            GL_DrawPatchLitAlpha(x, cfg.hudShown[HUD_HEALTH]? 172 : 190, 1,
-                                 iconAlpha, keys[0].lump);
-            x += 11;
-        }
-
-        if(plr->keys[KT_GREEN])
-        {
-            GL_DrawPatchLitAlpha(x, cfg.hudShown[HUD_HEALTH]? 172 : 190, 1,
-                                 iconAlpha, keys[1].lump);
-            x += 11;
-        }
-
-        if(plr->keys[KT_BLUE])
-        {
-            GL_DrawPatchLitAlpha(x, cfg.hudShown[HUD_HEALTH]? 172 : 190, 1,
-                                 iconAlpha, keys[2].lump);
-        }
+        int drawnHeight = drawKeysWidget(player, posX, posY, textAlpha, iconAlpha);
+        if(drawnHeight > 0)
+            posY -= drawnHeight + 2;
     }
-Draw_EndZoom();
+
+    if(cfg.hudShown[HUD_ARMOR])
+        drawArmorWidget(player, posX, posY, textAlpha, iconAlpha);
 
     if(deathmatch)
     {
-        temp = 0;
-        for(i = 0; i < MAXPLAYERS; ++i)
-        {
-            if(players[i].plr->inGame)
-            {
-                temp += plr->frags[i];
-            }
-        }
-
-Draw_BeginZoom(cfg.hudScale, 2, 198);
-        drawINumber(temp, 45, 185, 1, 1, 1, textAlpha);
-Draw_EndZoom();
+        drawFragsWidget(player, 45, 185, textAlpha, iconAlpha);
     }
 
     if(!Hu_InventoryIsOpen(player))
     {
+        posX = x + width;
+        posY = y + height;
         if(cfg.hudShown[HUD_CURRENTITEM])
         {
-            if(hud->currentInvItemFlash > 0)
-            {
-Draw_BeginZoom(cfg.hudScale, 318, 198);
-                GL_DrawPatchLitAlpha(289, 169, 1, iconAlpha / 2,
-                                     dpInvItemBox.lump);
-                GL_DrawPatchLitAlpha(292, 170, 1, iconAlpha,
-                                     dpInvItemFlash[hud->currentInvItemFlash % 5].lump);
-Draw_EndZoom();
-            }
-            else
-            {
-                inventoryitemtype_t readyItem = P_InventoryReadyItem(player);
-
-                if(readyItem != IIT_NONE)
-                {
-                    uint                count;
-                    lumpnum_t           patch =
-                        P_GetInvItem(readyItem-1)->patchLump;
-
-Draw_BeginZoom(cfg.hudScale, 318, 198);
-
-                    GL_DrawPatchLitAlpha(289, 169, 1, iconAlpha / 2,
-                                         dpInvItemBox.lump);
-                    GL_DrawPatchLitAlpha(289, 169, 1, iconAlpha, patch);
-                    if((count = P_InventoryCount(player, readyItem)) > 1)
-                        Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, 317, 191,
-                                        textAlpha);
-Draw_EndZoom();
-                }
-            }
+            drawCurrentItemWidget(player, posX, posY, textAlpha, iconAlpha);
         }
     }
     else
     {
-#define BORDER              2
-#define INVENTORY_HEIGHT    30
-#define INVENTORY_X         SCREENWIDTH / 2
-#define INVENTORY_Y         SCREENHEIGHT - INVENTORY_HEIGHT - BORDER
-
-        float               textAlpha =
-            MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]), 1.f);
-        float               iconAlpha =
-            MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha), 1.f);
-
-        Hu_InventoryDraw(player, INVENTORY_X, INVENTORY_Y, hud->alpha,
-                         textAlpha, iconAlpha);
-
-#undef BORDER
-#undef INVENTORY_HEIGHT
-#undef INVENTORY_X
-#undef INVENTORY_Y
+        posX = x + width/2;
+        posY = y + height;
+        drawInventoryWidget(player, posX, posY, textAlpha, iconAlpha);
     }
 }
 
 void ST_Drawer(int player, int fullscreenmode, boolean refresh)
 {
-    hudstate_t*         hud;
-    player_t*           plr;
+    hudstate_t* hud;
+    player_t* plr;
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -1164,15 +1200,46 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
 
     if(hud->statusbarActive)
     {
-        ST_doRefresh(player);
+        drawStatusbar(player);
+
+Draw_BeginZoom(cfg.hudScale, 2, 2);
+        drawFlightIcon(player, cfg.hudColor[3], cfg.hudIconAlpha);
+Draw_EndZoom();
+Draw_BeginZoom(cfg.hudScale, 318, 2);
+        drawTombOfPowerIcon(player, cfg.hudColor[3], cfg.hudIconAlpha);
+Draw_EndZoom();
     }
     else if(fullscreenmode != 3)
     {
-        ST_doFullscreenStuff(player);
-    }
+#define INSET_BORDER 2 // In fixed 320x200 pixels
 
-    DGL_Color4f(1, 1, 1, 1);
-    drawIcons(player);
+        int viewW, viewH, x, y, width, height;
+        float textAlpha = MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]), 1.f);
+        float iconAlpha = MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha), 1.f);
+        float scale;
+
+        R_GetViewPort(player, NULL, NULL, &viewW, &viewH);
+        scale = (float)viewW/SCREENWIDTH;
+        scale *= cfg.hudScale;
+        width = 320 / cfg.hudScale;
+        height = 200 / cfg.hudScale;
+
+        x = y = INSET_BORDER;
+        height -= INSET_BORDER*2;
+        width -= INSET_BORDER*2;
+
+        // Setup the scaling matrix.
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
+        DGL_Scalef(scale, scale, 1);
+
+        drawFullscreenHUD(player, x, y, width, height, textAlpha, iconAlpha);
+
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
+
+#undef INSET_BORDER
+    }
 }
 
 void ST_loadGraphics(void)

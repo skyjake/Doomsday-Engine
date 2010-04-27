@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -295,19 +295,14 @@ static void inventoryIndexes(const player_t* plr, const hud_inventory_t* inv,
         *toSlot = (unsigned) to;
 }
 
-void Hu_InventoryDraw(int player, int x, int y, float alpha,
-                      float textAlpha, float iconAlpha)
+void Hu_InventoryDraw(int player, int x, int y, float textAlpha, float iconAlpha)
 {
 #define BORDER              1
 
     const hud_inventory_t* inv;
-    player_t*           plr;
-    uint                i, from, to, idx, slot, first, selected,
-                        numVisSlots, maxVisSlots, startSlot, endSlot;
-    float               invScale, lightDelta;
-
-    if(alpha <= 0)
-        return;
+    uint i, from, to, idx, slot, first, selected, numVisSlots, maxVisSlots, startSlot, endSlot;
+    float invScale, lightDelta;
+    player_t* plr;
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -328,14 +323,13 @@ void Hu_InventoryDraw(int player, int x, int y, float alpha,
     {
 #define EXTRA_SCALE         .75f
 
-    float               availWidth = SCREENWIDTH - 50 * 2,
-                        width = (numVisSlots * ST_INVSLOTWIDTH) * EXTRA_SCALE;
+    float availWidth = SCREENWIDTH - 50 * 2, width = (numVisSlots * ST_INVSLOTWIDTH) * EXTRA_SCALE;
 
     if(width > availWidth)
         invScale = availWidth / width;
     else
         invScale = 1;
-    invScale *= cfg.hudScale * EXTRA_SCALE;
+    invScale *= EXTRA_SCALE;
 
 #undef EXTRA_SCALE
     }
@@ -370,7 +364,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
 
     for(i = from; i < to; ++i)
     {
-        float               light, a;
+        float light, a;
 
         if(i < maxVisSlots / 2)
             light = (i + 1) * lightDelta;
@@ -379,21 +373,19 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
         a = i == selected? .5f : light / 2;
 
         GL_DrawPatchLitAlpha(x + slot * ST_INVSLOTWIDTH + ST_INVSLOTOFFX,
-                             y,
-                             light, a * alpha,
+                             y, light, a * iconAlpha,
                              dpInvItemBox.lump);
 
         if(i >= startSlot && i < endSlot)
         {
-            uint                count;
-            const invitem_t*    item =
-                P_GetInvItem(inv->slots[idx]);
+            const invitem_t* item = P_GetInvItem(inv->slots[idx]);
+            uint count;
 
             if((count = P_InventoryCount(player, item->type)))
             {
                 GL_DrawPatchLitAlpha(x + slot * ST_INVSLOTWIDTH,
                                      y + ST_INVICONOFFY, 1,
-                                     slot == selected? alpha : iconAlpha / 3,
+                                     slot == selected? iconAlpha : iconAlpha / 3,
                                      item->patchLump);
 
                 if(count > 1)
@@ -401,7 +393,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
                                     ST_INVCOUNTDIGITS,
                                     x + slot * ST_INVSLOTWIDTH + ST_INVCOUNTOFFX,
                                     y + ST_INVCOUNTOFFY,
-                                    slot == selected? alpha : textAlpha / 2);
+                                    slot == selected? textAlpha : textAlpha / 2);
             }
 
             if(++idx > inv->numOwnedItemTypes - 1)
@@ -412,7 +404,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
 
     GL_DrawPatchLitAlpha(x + selected * ST_INVSLOTWIDTH,
                          y + ST_INVSELECTOFFY - BORDER,
-                         1, alpha, dpInvSelectBox.lump);
+                         1, iconAlpha, dpInvSelectBox.lump);
 
     if(inv->numUsedSlots > maxVisSlots)
     {

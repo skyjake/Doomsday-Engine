@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -511,6 +511,7 @@ extern          "C" {
     void            M_AddToBox(fixed_t* box, fixed_t x, fixed_t y);
     int             M_ScreenShot(const char* filename, int bits);
     int             M_CeilPow2(int num);
+    int             M_NumDigits(int value);
 
     // MiscellaneousL: Time utilities.
     boolean         M_RunTrigger(trigger_t* trigger, timespan_t advanceTime);

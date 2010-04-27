@@ -728,23 +728,24 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
 
 boolean R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info)
 {
-    if(info)
+    if(!info)
         return false;
 
     memset(info, 0, sizeof(*info));
 
     if(lump >= 0 && lump < numLumps)
     {
-        lumppatch_t*        patch =
-            (lumppatch_t*) W_CacheLumpNum(lump, PU_CACHE);
-
+        const lumppatch_t* patch = (const lumppatch_t*) W_CacheLumpNum(lump, PU_CACHE);
         info->lump = info->realLump = lump;
         info->width = SHORT(patch->width);
         info->height = SHORT(patch->height);
-        info->topOffset = SHORT(patch->topOffset);
-        info->offset = SHORT(patch->leftOffset);
+        info->topOffset = -SHORT(patch->topOffset);
+        info->offset = -SHORT(patch->leftOffset);
         return true;
     }
+
+    // Safety precaution.
+    info->lump = -1;
 
     VERBOSE(Con_Message("R_GetPatchInfo: Warning, invalid lumpnum %i.\n", lump));
     return false;
