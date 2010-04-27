@@ -817,7 +817,7 @@ static menuitem_t HUDItems[] = {
     {ITT_EFUNC, 0, "Show keys :", M_ToggleVar, 0, NULL, "hud-keys"},
 #endif
 #if __JHERETIC__ || __JHEXEN__
-    {ITT_EFUNC, 0, "Show item :", M_ToggleVar, 0, NULL, "hud-item" },
+    {ITT_EFUNC, 0, "Show item :", M_ToggleVar, 0, NULL, "hud-currentitem" },
 #endif
 };
 
