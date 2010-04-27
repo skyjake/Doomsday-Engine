@@ -806,31 +806,33 @@ static int drawFlightWidget(int player, float textAlpha, float iconAlpha)
     player_t* plr = &players[player];
     int frame;
 
-    if(!plr->powers[PT_FLIGHT] || !(plr->powers[PT_FLIGHT] > BLINKTHRESHOLD || !(plr->powers[PT_FLIGHT] & 16)))
+    if(!plr->powers[PT_FLIGHT])
         return 0;
 
-    frame = (mapTime / 3) & 15;
-    if(plr->plr->mo->flags2 & MF2_FLY)
+    if(plr->powers[PT_FLIGHT] > BLINKTHRESHOLD || !(plr->powers[PT_FLIGHT] & 16))
     {
-        if(hud->hitCenterFrame && (frame != 15 && frame != 0))
-            frame = 15;
-        else               
-            hud->hitCenterFrame = false;
-    }
-    else
-    {
-        if(!hud->hitCenterFrame && (frame != 15 && frame != 0))
+        int frame = (mapTime / 3) & 15;
+        if(plr->plr->mo->flags2 & MF2_FLY)
         {
-            hud->hitCenterFrame = false;
+            if(hud->hitCenterFrame && (frame != 15 && frame != 0))
+                frame = 15;
+            else               
+                hud->hitCenterFrame = false;
         }
         else
         {
-            frame = 15;
-            hud->hitCenterFrame = true;
+            if(!hud->hitCenterFrame && (frame != 15 && frame != 0))
+            {
+                hud->hitCenterFrame = false;
+            }
+            else
+            {
+                frame = 15;
+                hud->hitCenterFrame = true;
+            }
         }
+        drawPatch(spinFly[frame].lump, 16, 14, iconAlpha, true);
     }
-
-    drawPatch(spinFly[frame].lump, 16, 14, iconAlpha, true);
     return 32;
 }
 
@@ -1087,7 +1089,6 @@ static int drawInventoryWidget(int player, float textAlpha, float iconAlpha)
 {
 #define INVENTORY_HEIGHT    29
 
-    hudstate_t* hud = &hudStates[player];
     if(!Hu_InventoryIsOpen(player))
         return 0;
     Hu_InventoryDraw(player, 0, -INVENTORY_HEIGHT, textAlpha, iconAlpha);
