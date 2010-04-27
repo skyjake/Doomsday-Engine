@@ -42,7 +42,8 @@ enum {
     HUD_ARMOR,
     HUD_KEYS,
     HUD_HEALTH,
-    HUD_CURRENTITEM
+    HUD_CURRENTITEM,
+    NUMHUDDISPLAYS
 };
 
 // Hud Unhide Events (the hud will unhide on these events if enabled).

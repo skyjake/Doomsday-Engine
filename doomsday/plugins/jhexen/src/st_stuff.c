@@ -1655,13 +1655,10 @@ Draw_EndZoom();
 #define INVENTORY_X         SCREENWIDTH / 2 - 2
 #define INVENTORY_Y         SCREENHEIGHT - INVENTORY_HEIGHT - BORDER
 
-        float               textAlpha =
-            MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]), 1.f);
-        float               iconAlpha =
-            MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha), 1.f);
+        float textAlpha = MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]), 1.f);
+        float iconAlpha = MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha), 1.f);
 
-        Hu_InventoryDraw(player, INVENTORY_X, INVENTORY_Y, hud->alpha,
-                         textAlpha, iconAlpha);
+        Hu_InventoryDraw(player, INVENTORY_X, INVENTORY_Y, textAlpha, iconAlpha);
 
 #undef BORDER
 #undef INVENTORY_HEIGHT

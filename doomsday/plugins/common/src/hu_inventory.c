@@ -321,17 +321,12 @@ void Hu_InventoryDraw(int player, int x, int y, float textAlpha, float iconAlpha
     numVisSlots = maxVisSlots;
 
     {
-#define EXTRA_SCALE         .75f
-
-    float availWidth = SCREENWIDTH - 50 * 2, width = (numVisSlots * ST_INVSLOTWIDTH) * EXTRA_SCALE;
+    float availWidth = SCREENWIDTH - 50 * 2, width = (numVisSlots * ST_INVSLOTWIDTH);
 
     if(width > availWidth)
         invScale = availWidth / width;
     else
         invScale = 1;
-    invScale *= EXTRA_SCALE;
-
-#undef EXTRA_SCALE
     }
 
     if(maxVisSlots % 2)
