@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,10 +23,28 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef __HU_LIB_H__
-#define __HU_LIB_H__
+#ifndef LIBCOMMON_UI_LIBRARY_H
+#define LIBCOMMON_UI_LIBRARY_H
 
 #include "hu_stuff.h"
+
+typedef enum {
+    HOT_TLEFT,
+    HOT_TRIGHT,
+    HOT_BRIGHT,
+    HOT_BLEFT,
+    HOT_B,
+    HOT_LEFT
+} hotloc_t;
+
+typedef struct {
+    int id;
+    float scale;
+    int (*draw) (int player, float textAlpha, float iconAlpha);
+    float* textAlpha, *iconAlpha; /// \todo refactor away.
+} uiwidget_t;
+
+void            UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, int x, int y, int player, float textAlpha, float iconAlpha, hotloc_t hotspot);
 
 #define HU_MAXLINELENGTH    (160)
 
@@ -63,4 +81,4 @@ boolean         HUlib_keyInText(hu_text_t* it, unsigned char ch);
 void            HUlib_drawText(hu_text_t* it, gamefontid_t font);
 void            HUlib_eraseText(hu_text_t* it);
 
-#endif
+#endif /* LIBCOMMON_UI_LIBRARY_H */

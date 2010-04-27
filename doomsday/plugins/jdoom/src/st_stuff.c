@@ -42,6 +42,7 @@
 #include "d_net.h"
 #include "st_lib.h"
 #include "hu_stuff.h"
+#include "hu_lib.h"
 #include "p_tick.h" // for P_IsPaused
 #include "p_player.h"
 #include "am_map.h"
@@ -184,14 +185,6 @@
 #define ST_DETHY            (191)
 
 // TYPES -------------------------------------------------------------------
-
-typedef enum hotloc_e {
-    HOT_TLEFT,
-    HOT_TRIGHT,
-    HOT_BRIGHT,
-    HOT_BLEFT,
-    HOT_B
-} hotloc_t;
 
 typedef struct {
     boolean         stopped;
@@ -1230,93 +1223,19 @@ static int drawKeysWidget(int player, float textAlpha, float iconAlpha)
     return drawnWidth;
 }
 
-typedef struct {
-    int id;
-    float scale;
-    int (*draw) (int player, float textAlpha, float iconAlpha);
-} hudwidget_t;
-
-static const hudwidget_t widgetsBottomLeft[] = {
+static const uiwidget_t widgetsBottomLeft[] = {
     { HUD_HEALTH, 1, drawHealthWidget },
     { HUD_AMMO, 1, drawAmmoWidget }
 };
 
-static const hudwidget_t widgetsBottom[] = {
+static const uiwidget_t widgetsBottom[] = {
     { HUD_FACE, .7f, drawFaceWidget }
 };
 
-static const hudwidget_t widgetsBottomRight[] = {
+static const uiwidget_t widgetsBottomRight[] = {
     { HUD_ARMOR, 1, drawArmorWidget },
     { HUD_KEYS, .75f, drawKeysWidget }
 };
-
-static int drawFullscreenWidget(const hudwidget_t* w, int player, float textAlpha, float iconAlpha)
-{
-    int drawnWidth;
-
-    if(w->scale != 1)
-    {
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PushMatrix();
-        DGL_Scalef(w->scale, w->scale, 1);
-    }
-
-    drawnWidth = w->draw(player, textAlpha, iconAlpha);
-
-    if(w->scale != 1)
-    {
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PopMatrix();
-    }
-
-    return drawnWidth;
-}
-
-static void drawFullscreenWidgets(const hudwidget_t* widgets, size_t numWidgets, int x, int y,
-    int player, float textAlpha, float iconAlpha, hotloc_t hotspot)
-{
-    size_t i;
-
-    if(!numWidgets || !(iconAlpha > 0))
-        return;
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-
-    for(i = 0; i < numWidgets; ++i)
-    {
-        const hudwidget_t* w = &widgets[i];
-        int drawnWidth;
-
-        assert(w->id >= 0 && w->id < NUMHUDDISPLAYS);
-
-        if(!cfg.hudShown[w->id])
-            continue;
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(x, y, 0);
-
-        drawnWidth = drawFullscreenWidget(w, player, textAlpha, iconAlpha);
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(-x, -y, 0);
-
-        switch(hotspot)
-        {
-        case HOT_TLEFT:
-        case HOT_BLEFT:
-        case HOT_B: x += drawnWidth; break;
-
-        case HOT_TRIGHT:
-        case HOT_BRIGHT: x -= drawnWidth; break;
-
-        default: break;
-        }
-    }
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-}
 
 static void drawFullscreenHUD(int player, int x, int y, int width, int height,
     float textAlpha, float iconAlpha)
@@ -1329,15 +1248,15 @@ static void drawFullscreenHUD(int player, int x, int y, int width, int height,
     if(IS_NETGAME && deathmatch && cfg.hudShown[HUD_FRAGS])
         drawFragsWidget(player, posX, posY - ((cfg.hudShown[HUD_HEALTH] || cfg.hudShown[HUD_AMMO])? 24 : 0), textAlpha, iconAlpha);
 
-    drawFullscreenWidgets(widgetsBottomLeft, sizeof(widgetsBottomLeft)/sizeof(widgetsBottomLeft[0]),
+    UI_DrawWidgets(widgetsBottomLeft, sizeof(widgetsBottomLeft)/sizeof(widgetsBottomLeft[0]),
         posX, posY, player, textAlpha, iconAlpha, HOT_BLEFT);
 
     posX = x + width/2;
-    drawFullscreenWidgets(widgetsBottom, sizeof(widgetsBottom)/sizeof(widgetsBottom[0]),
+    UI_DrawWidgets(widgetsBottom, sizeof(widgetsBottom)/sizeof(widgetsBottom[0]),
         posX, posY, player, textAlpha, iconAlpha, HOT_B);
 
     posX = x + width;
-    drawFullscreenWidgets(widgetsBottomRight, sizeof(widgetsBottomRight)/sizeof(widgetsBottomRight[0]),
+    UI_DrawWidgets(widgetsBottomRight, sizeof(widgetsBottomRight)/sizeof(widgetsBottomRight[0]),
         posX, posY, player, textAlpha, iconAlpha, HOT_BRIGHT);
 }
 

@@ -39,6 +39,7 @@
 #include "am_map.h"
 #include "g_common.h"
 #include "p_inventory.h"
+#include "hu_lib.h"
 #include "hu_inventory.h"
 
 // MACROS ------------------------------------------------------------------
@@ -98,15 +99,6 @@
 #define ST_FRAGSY               176
 
 // TYPES -------------------------------------------------------------------
-
-typedef enum hotloc_e {
-    HOT_TLEFT,
-    HOT_TRIGHT,
-    HOT_BRIGHT,
-    HOT_BLEFT,
-    HOT_B,
-    HOT_LEFT
-} hotloc_t;
 
 typedef struct {
     boolean         stopped;
@@ -1638,111 +1630,30 @@ static int drawInventoryWidget(int player, float textAlpha, float iconAlpha)
 #undef INVENTORY_HEIGHT
 }
 
-typedef struct {
-    int id;
-    float scale;
-    int (*draw) (int player, float textAlpha, float iconAlpha);
-    float* textAlpha, *iconAlpha; /// \todo refactor away.
-} hudwidget_t;
-
-static int drawFullscreenWidget(const hudwidget_t* w, int player, float textAlpha, float iconAlpha)
-{
-    int drawnWidth;
-
-    if(w->scale != 1)
-    {
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PushMatrix();
-        DGL_Scalef(w->scale, w->scale, 1);
-    }
-
-    drawnWidth = w->draw(player, textAlpha, iconAlpha);
-
-    if(w->scale != 1)
-    {
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PopMatrix();
-    }
-
-    return drawnWidth;
-}
-
-static void drawFullscreenWidgets(const hudwidget_t* widgets, size_t numWidgets, int x, int y,
-    int player, float textAlpha, float iconAlpha, hotloc_t hotspot)
-{
-    size_t i;
-
-    if(!numWidgets || !(iconAlpha > 0))
-        return;
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-
-    for(i = 0; i < numWidgets; ++i)
-    {
-        const hudwidget_t* w = &widgets[i];
-        int drawnWidth;
-
-        if(w->id != -1)
-        {
-            assert(w->id >= 0 && w->id < NUMHUDDISPLAYS);
-
-             if(!cfg.hudShown[w->id])
-                continue;
-        }
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(x, y, 0);
-
-        drawnWidth = drawFullscreenWidget(w, player, w->textAlpha? *w->textAlpha : textAlpha, w->iconAlpha? *w->iconAlpha : iconAlpha);
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(-x, -y, 0);
-
-        if(drawnWidth > 0)
-            switch(hotspot)
-            {
-            case HOT_TLEFT: y += drawnWidth + 2; break;
-            case HOT_LEFT: x += drawnWidth + 2; break;
-
-            case HOT_BLEFT:
-            case HOT_B: y -= drawnWidth + 2; break;
-
-            case HOT_TRIGHT:
-            case HOT_BRIGHT: x -= drawnWidth + 2; break;
-
-            default: break;
-            }
-    }
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-}
-
-static const hudwidget_t widgetsTopLeft[] = {
+static const uiwidget_t widgetsTopLeft[] = {
     { HUD_MANA, 1, drawBlueManaWidget },
     { HUD_MANA, 1, drawGreenManaWidget }
 };
 
-static const hudwidget_t widgetsTopLeft2[] = {
+static const uiwidget_t widgetsTopLeft2[] = {
     { -1, 1, drawFlightWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
     { -1, 1, drawBootsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
 };
 
-static const hudwidget_t widgetsTopRight[] = {
+static const uiwidget_t widgetsTopRight[] = {
     { -1, 1, drawServantWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
     { -1, 1, drawDefenseWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
 };
 
-static const hudwidget_t widgetsBottomLeft[] = {
+static const uiwidget_t widgetsBottomLeft[] = {
     { HUD_HEALTH, 1, drawHealthWidget }
 };
 
-static const hudwidget_t widgetsBottomRight[] = {
+static const uiwidget_t widgetsBottomRight[] = {
     { HUD_CURRENTITEM, 1, drawCurrentItemWidget }
 };
 
-static const hudwidget_t widgetsBottom[] = {
+static const uiwidget_t widgetsBottom[] = {
     { -1, .75f, drawInventoryWidget }
 };
 
@@ -1762,29 +1673,29 @@ static void drawFullscreenHUD(int player, int x, int y, int width, int height, f
         DGL_Translatef(-45, -185, 0);
     }
 
-    drawFullscreenWidgets(widgetsTopLeft, sizeof(widgetsTopLeft)/sizeof(widgetsTopLeft[0]),
+    UI_DrawWidgets(widgetsTopLeft, sizeof(widgetsTopLeft)/sizeof(widgetsTopLeft[0]),
         posX, posY, player, textAlpha, iconAlpha, HOT_TLEFT);
 
     posX = x;
     posY = y;
-    drawFullscreenWidgets(widgetsTopLeft2, sizeof(widgetsTopLeft2)/sizeof(widgetsTopLeft2[0]),
+    UI_DrawWidgets(widgetsTopLeft2, sizeof(widgetsTopLeft2)/sizeof(widgetsTopLeft2[0]),
         posX, posY, player, textAlpha, iconAlpha, HOT_LEFT);
 
     posX = x + width;
-    drawFullscreenWidgets(widgetsTopRight, sizeof(widgetsTopRight)/sizeof(widgetsTopRight[0]),
+    UI_DrawWidgets(widgetsTopRight, sizeof(widgetsTopRight)/sizeof(widgetsTopRight[0]),
         posX, posY, player, textAlpha, iconAlpha, HOT_TRIGHT);
 
     posX = x;
     posY = y + height;
-    drawFullscreenWidgets(widgetsBottomLeft, sizeof(widgetsBottomLeft)/sizeof(widgetsBottomLeft[0]),
+    UI_DrawWidgets(widgetsBottomLeft, sizeof(widgetsBottomLeft)/sizeof(widgetsBottomLeft[0]),
         posX, posY, player, textAlpha, iconAlpha, HOT_BLEFT);
 
     posX = x + width;
-    drawFullscreenWidgets(widgetsBottomRight, sizeof(widgetsBottomRight)/sizeof(widgetsBottomRight[0]),
+    UI_DrawWidgets(widgetsBottomRight, sizeof(widgetsBottomRight)/sizeof(widgetsBottomRight[0]),
         posX, posY, player, textAlpha, iconAlpha, HOT_BRIGHT);
 
     posX = x + width/2;
-    drawFullscreenWidgets(widgetsBottom, sizeof(widgetsBottom)/sizeof(widgetsBottom[0]),
+    UI_DrawWidgets(widgetsBottom, sizeof(widgetsBottom)/sizeof(widgetsBottom[0]),
         posX, posY, player, textAlpha, iconAlpha, HOT_B);
 }
 
