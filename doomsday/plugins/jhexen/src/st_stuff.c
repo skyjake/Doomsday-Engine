@@ -238,13 +238,14 @@ void ST_Register(void)
     Hu_InventoryRegister();
 }
 
-int drawFlightWidget(int player, float textAlpha, float iconAlpha)
+void drawFlightWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
 
     if(!plr->powers[PT_FLIGHT])
-        return 0;
+        return;
 
     if(plr->powers[PT_FLIGHT] > BLINKTHRESHOLD || !(plr->powers[PT_FLIGHT] & 16))
     {
@@ -270,44 +271,51 @@ int drawFlightWidget(int player, float textAlpha, float iconAlpha)
         }
         GL_DrawPatchLitAlpha(16, 14, 1, iconAlpha, dpSpinFly[frame].lump);
     }
-    return 32;
+    *drawnWidth = 32;
+    *drawnHeight = 28;
 }
 
-int drawBootsWidget(int player, float textAlpha, float iconAlpha)
+void drawBootsWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
     player_t* plr = &players[player];
     if(!plr->powers[PT_SPEED])
-        return 0;
+        return;
     if(plr->powers[PT_SPEED] > BLINKTHRESHOLD || !(plr->powers[PT_SPEED] & 16))
         GL_DrawPatchLitAlpha(12, 14, 1, iconAlpha, dpSpinSpeed[(mapTime / 3) & 15].lump);
-    return 24;
+    *drawnWidth = 24;
+    *drawnHeight = 28;
 }
 
-int drawDefenseWidget(int player, float textAlpha, float iconAlpha)
+void drawDefenseWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
     player_t* plr = &players[player];
     if(!plr->powers[PT_INVULNERABILITY])
-        return 0;
+        return;
     if(plr->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD || !(plr->powers[PT_INVULNERABILITY] & 16))
         GL_DrawPatchLitAlpha(-13, 14, 1, iconAlpha, dpSpinDefense[(mapTime / 3) & 15].lump);
-    return 26;
+    *drawnWidth = 26;
+    *drawnHeight = 28;
 }
 
-int drawServantWidget(int player, float textAlpha, float iconAlpha)
+void drawServantWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
     player_t* plr = &players[player];
     if(!plr->powers[PT_MINOTAUR])
-        return 0;
+        return;
     if(plr->powers[PT_MINOTAUR] > BLINKTHRESHOLD || !(plr->powers[PT_MINOTAUR] & 16))
         GL_DrawPatchLitAlpha(-13, 17, 1, iconAlpha, dpSpinMinotaur[(mapTime / 3) & 15].lump);
-    return 26;
+    *drawnWidth = 26;
+    *drawnHeight = 34;
 }
 
 static void drawKeyBar(hudstate_t* hud)
 {
-    int                 i, xPosition, temp, pClass;
-    int                 player = hud - hudStates;
-    player_t*           plr = &players[player];
+    int i, xPosition, temp, pClass;
+    int player = hud - hudStates;
+    player_t* plr = &players[player];
 
     // Original player class (i.e. not pig).
     pClass = cfg.playerClass[player];
@@ -1435,18 +1443,25 @@ static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeigh
     return true;
 }
 
-int drawHealthWidget(int player, float textAlpha, float iconAlpha)
+void drawHealthWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    int health = MAX_OF(plr->plr->mo->health, 0);
+    int w, h, health = MAX_OF(plr->plr->mo->health, 0);
+    char buf[20];
     if(hud->statusbarActive)
-        return 0;
-    DrBNumber(health, 0, -18, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    return M_CharHeight('0', GF_FONTB);
+        return;
+    dd_snprintf(buf, 20, "%i", health);
+    w = M_StringWidth(buf, GF_FONTB);
+    h = M_StringHeight(buf, GF_FONTB);
+    M_WriteText2(0, -h, buf, GF_FONTB, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    *drawnWidth = w;
+    *drawnHeight = h;
 }
 
-int drawBlueManaWidget(int player, float textAlpha, float iconAlpha)
+void drawBlueManaWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
@@ -1455,7 +1470,7 @@ int drawBlueManaWidget(int player, float textAlpha, float iconAlpha)
     const dpatch_t* patch = NULL;
 
     if(hud->statusbarActive)
-        return 0;
+        return;
 
     if(!(plr->ammo[AT_BLUEMANA].owned > 0))
         patch = dim;
@@ -1481,11 +1496,13 @@ int drawBlueManaWidget(int player, float textAlpha, float iconAlpha)
     }
 
     GL_DrawPatchLitAlpha(0, 0, 1, iconAlpha, patch->lump);
-    DrINumber(plr->ammo[AT_BLUEMANA].owned, 16, 0, 1, 1, 1, textAlpha);
-    return patch->height;
+    DrINumber(plr->ammo[AT_BLUEMANA].owned, patch->width+2, 0, 1, 1, 1, textAlpha);
+    *drawnWidth = patch->width+2+dpINumbers[0].width*3;
+    *drawnHeight = MAX_OF(patch->height, dpINumbers[0].height);
 }
 
-int drawGreenManaWidget(int player, float textAlpha, float iconAlpha)
+void drawGreenManaWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
@@ -1494,7 +1511,7 @@ int drawGreenManaWidget(int player, float textAlpha, float iconAlpha)
     const dpatch_t* patch = NULL;
 
     if(hud->statusbarActive)
-        return 0;
+        return;
 
     if(!(plr->ammo[AT_GREENMANA].owned > 0))
         patch = dim;
@@ -1520,30 +1537,35 @@ int drawGreenManaWidget(int player, float textAlpha, float iconAlpha)
     }
 
     GL_DrawPatchLitAlpha(0, 0, 1, iconAlpha, patch->lump);
-    DrINumber(plr->ammo[AT_GREENMANA].owned, 16, 0, 1, 1, 1, textAlpha);
-    return patch->height;
+    DrINumber(plr->ammo[AT_GREENMANA].owned, patch->width+2, 0, 1, 1, 1, textAlpha);
+    *drawnWidth = patch->width+2+dpINumbers[0].width*3;
+    *drawnHeight = MAX_OF(patch->height, dpINumbers[0].height);
 }
 
-int drawFragsWidget(int player, float textAlpha, float iconAlpha)
+void drawFragsWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
     int i, numFrags = 0;
     if(hud->statusbarActive || !deathmatch)
-        return 0;
+        return;
     for(i = 0; i < MAXPLAYERS; ++i)
         if(plr->plr->inGame)
             numFrags += plr->frags[i];
     DrINumber(numFrags, 0, -13, 1, 1, 1, textAlpha);
-    return 3 * dpINumbers[0].width;
+    /// \kludge calculate the visual dimensions properly!
+    *drawnWidth = (dpINumbers[0].width+1) * 3;
+    *drawnHeight = dpINumbers[0].height;
 }
 
-int drawCurrentItemWidget(int player, float textAlpha, float iconAlpha)
+void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
 
     if(hud->statusbarActive || Hu_InventoryIsOpen(player))
-        return 0;
+        return;
 
     if(hud->currentInvItemFlash > 0)
     {
@@ -1567,18 +1589,21 @@ int drawCurrentItemWidget(int player, float textAlpha, float iconAlpha)
                 Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, -1, -6, textAlpha);
         }
     }
-    return dpInvItemBox.width;
+    *drawnWidth = dpInvItemBox.width;
+    *drawnHeight = dpInvItemBox.height;
 }
 
-int drawInventoryWidget(int player, float textAlpha, float iconAlpha)
+void drawInventoryWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
 #define INVENTORY_HEIGHT    29
 
     hudstate_t* hud = &hudStates[player];
     if(hud->statusbarActive || !Hu_InventoryIsOpen(player))
-        return 0;
+        return;
     Hu_InventoryDraw(player, 0, -INVENTORY_HEIGHT, textAlpha, iconAlpha);
-    return 31 * 7 + 16 * 2;
+    *drawnWidth = 31 * 7 + 16 * 2;
+    *drawnHeight = INVENTORY_HEIGHT;
 
 #undef INVENTORY_HEIGHT
 }
@@ -1764,32 +1789,32 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
         posX = x;
         posY = y;
         UI_DrawWidgets(widgetsTopLeft, sizeof(widgetsTopLeft)/sizeof(widgetsTopLeft[0]),
-            posX, posY, player, textAlpha, iconAlpha, HOT_TLEFT);
+            UWF_TOP2BOTTOM, posX, posY, player, textAlpha, iconAlpha);
 
         posX = x;
         posY = y;
         UI_DrawWidgets(widgetsTopLeft2, sizeof(widgetsTopLeft2)/sizeof(widgetsTopLeft2[0]),
-            posX, posY, player, textAlpha, iconAlpha, HOT_LEFT);
+            UWF_LEFT2RIGHT, posX, posY, player, textAlpha, iconAlpha);
 
         posX = x + width;
         posY = y;
         UI_DrawWidgets(widgetsTopRight, sizeof(widgetsTopRight)/sizeof(widgetsTopRight[0]),
-            posX, posY, player, textAlpha, iconAlpha, HOT_TRIGHT);
+            UWF_RIGHT2LEFT, posX, posY, player, textAlpha, iconAlpha);
 
         posX = x;
         posY = y + height;
         UI_DrawWidgets(widgetsBottomLeft, sizeof(widgetsBottomLeft)/sizeof(widgetsBottomLeft[0]),
-            posX, posY, player, textAlpha, iconAlpha, HOT_BLEFT);
+            UWF_BOTTOM2TOP, posX, posY, player, textAlpha, iconAlpha);
 
         posX = x + width;
         posY = y + height;
         UI_DrawWidgets(widgetsBottomRight, sizeof(widgetsBottomRight)/sizeof(widgetsBottomRight[0]),
-            posX, posY, player, textAlpha, iconAlpha, HOT_BRIGHT);
+            UWF_RIGHT2LEFT, posX, posY, player, textAlpha, iconAlpha);
 
         posX = x + width/2;
         posY = y + height;
         UI_DrawWidgets(widgetsBottom, sizeof(widgetsBottom)/sizeof(widgetsBottom[0]),
-            posX, posY, player, textAlpha, iconAlpha, HOT_B);
+            UWF_BOTTOM2TOP, posX, posY, player, textAlpha, iconAlpha);
         }
 
         DGL_MatrixMode(DGL_MODELVIEW);

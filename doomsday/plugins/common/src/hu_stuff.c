@@ -2036,20 +2036,34 @@ int M_CharHeight(unsigned char ch, gamefontid_t font)
     return gFonts[font].chars[ch].patch.height;
 }
 
-/**
- * Find string height from huFont chars
- */
-int M_StringHeight(const char* string, gamefontid_t font)
+int M_StringHeight(const char* string, gamefontid_t fontId)
 {
-    uint                i;
-    int                 h, height = gFonts[font].chars['A'].patch.height;
+    int h, currentLineHeight;
+    const gamefont_t* font;
+    uint i, len;
 
-    h = height;
-    for(i = 0; i < strlen(string); ++i)
+    if(!string || !string[0])
+        return 0;
+    if(fontId < 0 || fontId >= NUM_GAME_FONTS)
+        return 0;
+    font = &gFonts[fontId];
+    
+    len = strlen(string);
+    h = 0;
+    currentLineHeight = 0;
+    for(i = 0; i < len; ++i)
     {
         if(string[i] == '\n')
-            h += height;
+        {
+            h += currentLineHeight == 0? font->chars['A'].patch.height : currentLineHeight;
+            currentLineHeight = 0;
+            continue;
+        }
+
+        if(font->chars[string[i] % 256].patch.height > currentLineHeight)
+            currentLineHeight = font->chars[string[i] % 256].patch.height;
     }
+    h += currentLineHeight;
 
     return h;
 }
@@ -2057,8 +2071,8 @@ int M_StringHeight(const char* string, gamefontid_t font)
 void M_LetterFlash(int x, int y, int w, int h, int bright, float r, float g,
                    float b, float a)
 {
-    float               fsize = 4 + bright, red, green, blue, alpha;
-    float               fw = fsize * w / 2.0f, fh = fsize * h / 2.0f;
+    float fsize = 4 + bright, red, green, blue, alpha;
+    float fw = fsize * w / 2.0f, fh = fsize * h / 2.0f;
 
     // Don't draw anything for very small letters.
     if(h <= 4)

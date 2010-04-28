@@ -378,7 +378,12 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
 
             if((count = P_InventoryCount(player, item->type)))
             {
-                GL_DrawPatchLitAlpha(x + slot * ST_INVSLOTWIDTH - 1,
+#if __JHEXEN__
+                int posX = x + slot * ST_INVSLOTWIDTH - 1;
+#else
+                int posX = x + slot * ST_INVSLOTWIDTH;
+#endif
+                GL_DrawPatchLitAlpha(posX,
                                      y + ST_INVICONOFFY, 1,
                                      slot == selected? iconAlpha : iconAlpha / 3,
                                      item->patchLump);

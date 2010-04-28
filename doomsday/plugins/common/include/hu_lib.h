@@ -28,23 +28,24 @@
 
 #include "hu_stuff.h"
 
-typedef enum {
-    HOT_TLEFT,
-    HOT_TRIGHT,
-    HOT_BRIGHT,
-    HOT_BLEFT,
-    HOT_B,
-    HOT_LEFT
-} hotloc_t;
-
 typedef struct {
     int id;
     float scale;
-    int (*draw) (int player, float textAlpha, float iconAlpha);
+    void (*draw) (int player, float textAlpha, float iconAlpha, int* drawnWidth, int* drawnHeight);
     float* textAlpha, *iconAlpha; /// \todo refactor away.
 } uiwidget_t;
 
-void            UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, int x, int y, int player, float textAlpha, float iconAlpha, hotloc_t hotspot);
+/**
+ * @defgroup uiWidgetFlags UI Widget Flags
+ */
+/*@{*/
+#define UWF_LEFT2RIGHT      0x0001
+#define UWF_RIGHT2LEFT      0x0002
+#define UWF_TOP2BOTTOM      0x0004
+#define UWF_BOTTOM2TOP      0x0008
+/*@}*/
+
+void            UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, short flags, int x, int y, int player, float textAlpha, float iconAlpha);
 
 #define HU_MAXLINELENGTH    (160)
 

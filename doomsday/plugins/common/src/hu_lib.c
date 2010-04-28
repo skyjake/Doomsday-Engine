@@ -192,10 +192,9 @@ void HUlib_eraseText(hu_text_t* it)
     it->laston = *it->on;
 }
 
-static int drawWidget(const uiwidget_t* w, int player, float textAlpha, float iconAlpha)
+static void drawWidget(const uiwidget_t* w, int player, float textAlpha,
+    float iconAlpha, int* drawnWidth, int* drawnHeight)
 {
-    int drawnWidth;
-
     if(w->scale != 1)
     {
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -203,19 +202,17 @@ static int drawWidget(const uiwidget_t* w, int player, float textAlpha, float ic
         DGL_Scalef(w->scale, w->scale, 1);
     }
 
-    drawnWidth = w->draw(player, textAlpha, iconAlpha);
+    w->draw(player, textAlpha, iconAlpha, drawnWidth, drawnHeight);
 
     if(w->scale != 1)
     {
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PopMatrix();
     }
-
-    return drawnWidth;
 }
 
-void UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, int x, int y,
-    int player, float textAlpha, float iconAlpha, hotloc_t hotspot)
+void UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, short flags,
+    int x, int y, int player, float textAlpha, float iconAlpha)
 {
     size_t i;
 
@@ -228,7 +225,7 @@ void UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, int x, int y,
     for(i = 0; i < numWidgets; ++i)
     {
         const uiwidget_t* w = &widgets[i];
-        int drawnWidth;
+        int drawnWidth = 0, drawnHeight = 0;
 
         if(w->id != -1)
         {
@@ -241,53 +238,22 @@ void UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, int x, int y,
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_Translatef(x, y, 0);
 
-        drawnWidth = drawWidget(w, player, w->textAlpha? *w->textAlpha : textAlpha, w->iconAlpha? *w->iconAlpha : iconAlpha);
+        drawWidget(w, player, w->textAlpha? *w->textAlpha : textAlpha, w->iconAlpha? *w->iconAlpha : iconAlpha, &drawnWidth, &drawnHeight);
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_Translatef(-x, -y, 0);
 
-        if(drawnWidth > 0)
+        if(drawnWidth > 0 || drawnHeight > 0)
         {
-#if __JDOOM__ || __JDOOM64__
-            switch(hotspot)
-            {
-            case HOT_TLEFT:
-            case HOT_BLEFT:
-            case HOT_B: x += drawnWidth; break;
+            if(flags & UWF_RIGHT2LEFT)
+                x -= drawnWidth + 2;
+            else if(flags & UWF_LEFT2RIGHT)
+                x += drawnWidth + 2;
 
-            case HOT_TRIGHT:
-            case HOT_BRIGHT: x -= drawnWidth; break;
-
-            default: break;
-            }
-#elif __JHERETIC__
-            switch(hotspot)
-            {
-            case HOT_TLEFT: x += drawnWidth + 2; break;
-
-            case HOT_BLEFT:
-            case HOT_B: y -= drawnWidth + 2; break;
-
-            case HOT_TRIGHT:
-            case HOT_BRIGHT: x -= drawnWidth + 2; break;
-
-            default: break;
-            }
-#elif __JHEXEN__
-            switch(hotspot)
-            {
-            case HOT_TLEFT: y += drawnWidth + 2; break;
-            case HOT_LEFT: x += drawnWidth + 2; break;
-
-            case HOT_BLEFT:
-            case HOT_B: y -= drawnWidth + 2; break;
-
-            case HOT_TRIGHT:
-            case HOT_BRIGHT: x -= drawnWidth + 2; break;
-
-            default: break;
-            }
-#endif
+            if(flags & UWF_BOTTOM2TOP)
+                y -= drawnHeight + 2;
+            else if(flags & UWF_TOP2BOTTOM)
+                y += drawnHeight + 2;
         }
     }
 

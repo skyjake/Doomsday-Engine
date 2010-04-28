@@ -793,13 +793,14 @@ static void drawPatch(lumpnum_t lump, int x, int y, float alpha, boolean usePatc
     DGL_End();
 }
 
-int drawFlightWidget(int player, float textAlpha, float iconAlpha)
+void drawFlightWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
 
     if(!plr->powers[PT_FLIGHT])
-        return 0;
+        return;
 
     if(plr->powers[PT_FLIGHT] > BLINKTHRESHOLD || !(plr->powers[PT_FLIGHT] & 16))
     {
@@ -825,15 +826,21 @@ int drawFlightWidget(int player, float textAlpha, float iconAlpha)
         }
         drawPatch(spinFly[frame].lump, 16, 14, iconAlpha, true);
     }
-    return 32;
+    /// \kludge calculate dimensions properly!
+    *drawnWidth = 32;
+    *drawnHeight = 32;
 }
 
-int drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha)
+void drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
     player_t* plr = &players[player];
 
     if(!plr->powers[PT_WEAPONLEVEL2] || plr->morphTics)
-        return 0;
+        return;
+
+    *drawnWidth = 0;
+    *drawnHeight = 0;
 
     if(cfg.tomeCounter || plr->powers[PT_WEAPONLEVEL2] > BLINKTHRESHOLD || !(plr->powers[PT_WEAPONLEVEL2] & 16))
     {
@@ -842,6 +849,9 @@ int drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha)
         if(cfg.tomeCounter && plr->powers[PT_WEAPONLEVEL2] < 35)
             alpha *= plr->powers[PT_WEAPONLEVEL2] / 35.0f;
         drawPatch(spinBook[frame].lump, -12, 13, alpha, true);
+        /// \kludge calculate dimensions properly!
+        *drawnWidth += 24;
+        *drawnHeight += 26;
     }
 
     if(plr->powers[PT_WEAPONLEVEL2] < cfg.tomeCounter * 35)
@@ -849,17 +859,21 @@ int drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha)
 #define COUNT_X             (303)
 #define COUNT_Y             (30)
 
-        int val = 1 + plr->powers[PT_WEAPONLEVEL2] / 35;
+        int val = 1 + plr->powers[PT_WEAPONLEVEL2] / 35, w, h;
         if(val > 9)
             drawPatch(dpSmallNumbers[(val / 10) % 10].lump, -12+3, 13+13, textAlpha, true);
         val = val % 10;
         drawPatch(dpSmallNumbers[val].lump, -12+7, 13+13, textAlpha, true);
 
+        /// \kludge calculate dimensions properly!
+        w = M_NumDigits(val) * dpSmallNumbers[0].width;
+        h = dpSmallNumbers[0].height;
+        if(w > *drawnWidth)
+            *drawnWidth += w;
+        *drawnHeight += h;
 #undef COUNT_X
 #undef COUNT_Y
     }
-
-    return 24;
 }
 
 static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeight)
@@ -914,16 +928,19 @@ static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
     DGL_PopMatrix();
 }
 
-int drawAmmoWidget(int player, float textAlpha, float iconAlpha)
+void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
     int lvl = (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
     ammotype_t ammoType;
-    int drawnWidth = 0;
 
     if(hud->statusbarActive || (!(plr->readyWeapon > 0 && plr->readyWeapon < 7)))
-        return 0;
+        return;
+
+    *drawnWidth = 0;
+    *drawnHeight = 0;
 
     /// \todo Only supports one type of ammo per weapon.
     /// For each type of ammo this weapon takes.
@@ -935,125 +952,153 @@ int drawAmmoWidget(int player, float textAlpha, float iconAlpha)
         dp = &ammoIcons[plr->readyWeapon - 1];
         drawPatch(dp->lump, 0, 0, iconAlpha, false);
         drawINumber(plr->ammo[ammoType].owned, dp->width+2, -2, 1, 1, 1, textAlpha);
-        /// \kludge calculate the visual width properly!
-        drawnWidth = dp->width + 2 + (iNumbers[0].width+1) * 3;
+        /// \kludge calculate the visual dimensions properly!
+        *drawnWidth += dp->width + 2 + (iNumbers[0].width+1) * 3;
+        if(MAX_OF(dp->height, iNumbers[0].height) > *drawnHeight)
+            *drawnHeight = MAX_OF(dp->height, iNumbers[0].height);
         break;
     }
-    return drawnWidth;
 }
 
-int drawHealthWidget(int player, float textAlpha, float iconAlpha)
+void drawHealthWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
-    int health = MAX_OF(plr->plr->mo->health, 0);
+    int w, h, health = MAX_OF(plr->plr->mo->health, 0);
+    char buf[20];
     if(hud->statusbarActive)
-        return 0;
-    HU_DrawBNumber(health, -1, -17, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    return 17;
+        return;
+    dd_snprintf(buf, 5, "%i", health);
+    h = M_StringHeight(buf, GF_FONTB);
+    w = M_StringWidth(buf, GF_FONTB);
+    M_WriteText2(0, -h, buf, GF_FONTB, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    *drawnWidth = w;
+    *drawnHeight = h;
 }
 
-int drawArmorWidget(int player, float textAlpha, float iconAlpha)
+void drawArmorWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
     if(hud->statusbarActive)
-        return 0;
+        return;
     drawINumber(plr->armorPoints, 0, -11, 1, 1, 1, textAlpha);
-    /// \kludge calculate the visual width properly!
-    return (iNumbers[0].width+1) * 3;
+    /// \kludge calculate the visual dimensions properly!
+    *drawnWidth = (iNumbers[0].width+1) * 3 - 1;
+    *drawnHeight = iNumbers[0].height;
 }
 
-int drawKeysWidget(int player, float textAlpha, float iconAlpha)
+void drawKeysWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
-    int x = 0, drawnHeight = 0;
+    int x = 0, numDrawnKeys = 0; 
 
     if(hud->statusbarActive)
-        return 0;
+        return;
+
+    *drawnWidth = 0;
+    *drawnHeight = 0;
 
     if(plr->keys[KT_YELLOW])
     {
         drawPatch(keys[0].lump, x, -keys[0].height, iconAlpha, false);
-        x += keys[0].width + 2;
-        drawnHeight = keys[0].height;
+        x += keys[0].width + 1;
+        *drawnWidth += keys[0].width;
+        if(keys[0].height > *drawnHeight)
+            *drawnHeight = keys[0].height;
+        numDrawnKeys++;
     }
 
     if(plr->keys[KT_GREEN])
     {
         drawPatch(keys[1].lump, x, -keys[1].height, iconAlpha, false);
-        x += keys[1].width + 2;
-        if(keys[1].height > drawnHeight)
-            drawnHeight = keys[1].height;
+        x += keys[1].width + 1;
+        *drawnWidth += keys[1].width;
+        if(keys[1].height > *drawnHeight)
+            *drawnHeight = keys[1].height;
+        numDrawnKeys++;
     }
 
     if(plr->keys[KT_BLUE])
     {
         drawPatch(keys[2].lump, x, -keys[2].height, iconAlpha, false);
         x += keys[2].width;
-        if(keys[2].height > drawnHeight)
-            drawnHeight = keys[2].height;
+        *drawnWidth += keys[1].width;
+        if(keys[2].height > *drawnHeight)
+            *drawnHeight = keys[2].height;
+        numDrawnKeys++;
     }
-    return drawnHeight;
+
+    *drawnWidth += (numDrawnKeys-1) * 1;
 }
 
-int drawFragsWidget(int player, float textAlpha, float iconAlpha)
+void drawFragsWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
     int i, numFrags = 0;
     if(hud->statusbarActive || !deathmatch)
-        return 0;
+        return;
     for(i = 0; i < MAXPLAYERS; ++i)
         if(players[i].plr->inGame)
             numFrags += plr->frags[i];
     drawINumber(numFrags, 0, -13, 1, 1, 1, textAlpha);
-    /// \kludge calculate the visual width properly!
-    return (iNumbers[0].width+1) * 3;
+    /// \kludge calculate the visual dimensions properly!
+    *drawnWidth = (iNumbers[0].width+1) * 3;
+    *drawnHeight = iNumbers[0].height;
 }
 
-int drawCurrentItemWidget(int player, float textAlpha, float iconAlpha)
+void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     inventoryitemtype_t readyItem;
 
     if(hud->statusbarActive || Hu_InventoryIsOpen(player))
-        return 0;
+        return;
 
     if(hud->currentInvItemFlash > 0)
     {
         drawPatch(dpInvItemBox.lump, -29, -29, iconAlpha / 2, false);
         drawPatch(dpInvItemFlash[hud->currentInvItemFlash % 5].lump, -29, -28, iconAlpha, true);
-        return dpInvItemBox.width;
     }
-
-    readyItem = P_InventoryReadyItem(player);
-
-    if(readyItem != IIT_NONE)
+    else
     {
-        lumpnum_t patch = P_GetInvItem(readyItem-1)->patchLump;
-        uint count;
+        readyItem = P_InventoryReadyItem(player);
 
-        drawPatch(dpInvItemBox.lump, -29, -29, iconAlpha / 2, false);
-        drawPatch(patch, -29, -29, iconAlpha, true);
-        if((count = P_InventoryCount(player, readyItem)) > 1)
-            Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, -1, -7, textAlpha);
+        if(readyItem != IIT_NONE)
+        {
+            lumpnum_t patch = P_GetInvItem(readyItem-1)->patchLump;
+            uint count;
+
+            drawPatch(dpInvItemBox.lump, -29, -29, iconAlpha / 2, false);
+            drawPatch(patch, -29, -29, iconAlpha, true);
+            if((count = P_InventoryCount(player, readyItem)) > 1)
+                Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, -1, -7, textAlpha);
+        }
     }
-    return dpInvItemBox.width;
+    *drawnWidth = dpInvItemBox.width;
+    *drawnHeight = dpInvItemBox.height;
 }
 
-int drawInventoryWidget(int player, float textAlpha, float iconAlpha)
+void drawInventoryWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
 #define INVENTORY_HEIGHT    29
 
     hudstate_t* hud = &hudStates[player];
     if(hud->statusbarActive || !Hu_InventoryIsOpen(player))
-        return 0;
+        return;
     Hu_InventoryDraw(player, 0, -INVENTORY_HEIGHT, textAlpha, iconAlpha);
-    /// \kludge calculate the visual width properly!
-    return 31*7+16*2;
+    /// \kludge calculate the visual dimensions properly!
+    *drawnWidth = 31*7+16*2;
+    *drawnHeight = INVENTORY_HEIGHT;
 
 #undef INVENTORY_HEIGHT
 }
@@ -1206,37 +1251,37 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
         posX = x;
         posY = y;
         UI_DrawWidgets(widgetsTopLeft, sizeof(widgetsTopLeft)/sizeof(widgetsTopLeft[0]),
-            posX, posY, player, textAlpha, iconAlpha, HOT_TLEFT);
+            UWF_LEFT2RIGHT, posX, posY, player, textAlpha, iconAlpha);
 
         posX = x;
         posY = y;
         UI_DrawWidgets(widgetsTopLeft2, sizeof(widgetsTopLeft2)/sizeof(widgetsTopLeft2[0]),
-            posX, posY, player, textAlpha, iconAlpha, HOT_TLEFT);
+            UWF_LEFT2RIGHT, posX, posY, player, textAlpha, iconAlpha);
 
         posX = x + width;
         posY = y;
         UI_DrawWidgets(widgetsTopRight, sizeof(widgetsTopRight)/sizeof(widgetsTopRight[0]),
-            posX, posY, player, textAlpha, iconAlpha, HOT_TRIGHT);
+            UWF_RIGHT2LEFT, posX, posY, player, textAlpha, iconAlpha);
 
         posX = x;
         posY = y + height;
         UI_DrawWidgets(widgetsBottomLeft, sizeof(widgetsBottomLeft)/sizeof(widgetsBottomLeft[0]),
-            posX, posY, player, textAlpha, iconAlpha, HOT_BLEFT);
+            UWF_BOTTOM2TOP, posX, posY, player, textAlpha, iconAlpha);
 
         posX = x + 43;
         posY = y + height;
         UI_DrawWidgets(widgetsBottomLeft2, sizeof(widgetsBottomLeft2)/sizeof(widgetsBottomLeft2[0]),
-            posX, posY, player, textAlpha, iconAlpha, HOT_LEFT);
+            UWF_LEFT2RIGHT, posX, posY, player, textAlpha, iconAlpha);
 
         posX = x + width;
         posY = y + height;
         UI_DrawWidgets(widgetsBottomRight, sizeof(widgetsBottomRight)/sizeof(widgetsBottomRight[0]),
-            posX, posY, player, textAlpha, iconAlpha, HOT_BRIGHT);
+            UWF_RIGHT2LEFT, posX, posY, player, textAlpha, iconAlpha);
 
         posX = x + width/2;
         posY = y + height;
         UI_DrawWidgets(widgetsBottom, sizeof(widgetsBottom)/sizeof(widgetsBottom[0]),
-            posX, posY, player, textAlpha, iconAlpha, HOT_B);
+            UWF_BOTTOM2TOP, posX, posY, player, textAlpha, iconAlpha);
         }
 
         DGL_MatrixMode(DGL_MODELVIEW);
