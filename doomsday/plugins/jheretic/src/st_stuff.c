@@ -862,33 +862,6 @@ static int drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha)
     return 24;
 }
 
-static void drawFlightIcon(int player, float textAlpha, float iconAlpha)
-{
-    player_t* plr = &players[player];
-    int offset = (cfg.hudShown[HUD_AMMO] && cfg.screenBlocks > 10 && plr->readyWeapon > 0 && plr->readyWeapon < 7) ? 43 : 0;
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(20 + offset, 2, 0);
-
-    drawFlightWidget(player, textAlpha, iconAlpha);
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(-(20 + offset), -2, 0);
-}
-
-static void drawTombOfPowerIcon(int player, float textAlpha, float iconAlpha)
-{
-    player_t* plr = &players[player];
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(300, 17, 0);
-
-    drawTombOfPowerWidget(player, textAlpha, iconAlpha);
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(-300, -17, 0);
-}
-
 static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeight)
 {
     float a = (float)viewportWidth/viewportHeight;
@@ -905,49 +878,29 @@ static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeigh
 /**
  * All drawing for the statusbar starts and ends here.
  */
-static void drawStatusbar(int player)
+static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
 {
-    hudstate_t* hud;
-    float fscale;
-    int viewW, viewH;
+    hudstate_t* hud = &hudStates[player];
+    int needWidth = ((viewW >= viewH)? (float)viewH/SCREENHEIGHT : (float)viewW/SCREENWIDTH) * ST_WIDTH;
 
-    if(player < 0 || player > MAXPLAYERS)
+    if(!hud->statusbarActive)
         return;
-
-    hud = &hudStates[player];
-    R_GetViewPort(player, NULL, NULL, &viewW, &viewH);
-
-    hud->firstTime = false;
-
-    fscale = cfg.statusbarScale / 20.0f;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
 
-    DGL_Translatef(viewW/2, viewH, 0);
+    /// \fixme Should be done higher up rather than counteract (hence the fudge).
     if(pickStatusbarScalingStrategy(viewW, viewH))
     {
-        DGL_Scalef((float)viewW/SCREENWIDTH, (float)viewH/SCREENHEIGHT, 1);
+        DGL_Scalef((float)viewW/needWidth+0.01f/*fudge*/, 1, 1);
     }
     else
     {
-        int needWidth;
-
-        if(viewW >= viewH)
-        {
-            needWidth = (float)viewH/SCREENHEIGHT * ST_WIDTH;
-            DGL_Scalef((float)viewH/SCREENHEIGHT, (float)viewH/SCREENHEIGHT, 1);
-        }
-        else
-        {
-            needWidth = (float)viewW/SCREENWIDTH * ST_WIDTH;
-            DGL_Scalef((float)viewW/SCREENWIDTH, (float)viewW/SCREENWIDTH, 1);
-        }
-
         if(needWidth > viewW)
-            fscale *= (float)viewW/needWidth;
+            DGL_Scalef((float)viewW/needWidth, (float)viewW/needWidth, 1);
     }
-    DGL_Scalef(fscale, fscale, 1);
+
     DGL_Translatef(-ST_WIDTH/2, -ST_HEIGHT * hud->showBar, 0);
 
     drawStatusBarBackground(player);
@@ -964,11 +917,12 @@ static void drawStatusbar(int player)
 static int drawAmmoWidget(int player, float textAlpha, float iconAlpha)
 {
     player_t* plr = &players[player];
+    hudstate_t* hud = &hudStates[player];
     int lvl = (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
     ammotype_t ammoType;
     int drawnWidth = 0;
 
-    if(!(plr->readyWeapon > 0 && plr->readyWeapon < 7))
+    if(hud->statusbarActive || (!(plr->readyWeapon > 0 && plr->readyWeapon < 7)))
         return 0;
 
     /// \todo Only supports one type of ammo per weapon.
@@ -991,7 +945,10 @@ static int drawAmmoWidget(int player, float textAlpha, float iconAlpha)
 static int drawHealthWidget(int player, float textAlpha, float iconAlpha)
 {
     player_t* plr = &players[player];
+    hudstate_t* hud = &hudStates[player];
     int health = MAX_OF(plr->plr->mo->health, 0);
+    if(hud->statusbarActive)
+        return 0;
     HU_DrawBNumber(health, -1, -17, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     return 17;
 }
@@ -999,6 +956,9 @@ static int drawHealthWidget(int player, float textAlpha, float iconAlpha)
 static int drawArmorWidget(int player, float textAlpha, float iconAlpha)
 {
     player_t* plr = &players[player];
+    hudstate_t* hud = &hudStates[player];
+    if(hud->statusbarActive)
+        return 0;
     drawINumber(plr->armorPoints, 0, -11, 1, 1, 1, textAlpha);
     /// \kludge calculate the visual width properly!
     return (iNumbers[0].width+1) * 3;
@@ -1007,7 +967,11 @@ static int drawArmorWidget(int player, float textAlpha, float iconAlpha)
 static int drawKeysWidget(int player, float textAlpha, float iconAlpha)
 {
     player_t* plr = &players[player];
+    hudstate_t* hud = &hudStates[player];
     int x = 0, drawnHeight = 0;
+
+    if(hud->statusbarActive)
+        return 0;
 
     if(plr->keys[KT_YELLOW])
     {
@@ -1034,14 +998,17 @@ static int drawKeysWidget(int player, float textAlpha, float iconAlpha)
     return drawnHeight;
 }
 
-static int drawFragsWidget(int player, int x, int y, float textAlpha, float iconAlpha)
+static int drawFragsWidget(int player, float textAlpha, float iconAlpha)
 {
     player_t* plr = &players[player];
+    hudstate_t* hud = &hudStates[player];
     int i, numFrags = 0;
+    if(hud->statusbarActive || !deathmatch)
+        return 0;
     for(i = 0; i < MAXPLAYERS; ++i)
         if(players[i].plr->inGame)
             numFrags += plr->frags[i];
-    drawINumber(numFrags, x, y, 1, 1, 1, textAlpha);
+    drawINumber(numFrags, 0, 0, 1, 1, 1, textAlpha);
     /// \kludge calculate the visual width properly!
     return (iNumbers[0].width+1) * 3;
 }
@@ -1052,7 +1019,7 @@ static int drawCurrentItemWidget(int player, float textAlpha, float iconAlpha)
     player_t* plr = &players[player];
     inventoryitemtype_t readyItem;
 
-    if(Hu_InventoryIsOpen(player))
+    if(hud->statusbarActive || Hu_InventoryIsOpen(player))
         return 0;
 
     if(hud->currentInvItemFlash > 0)
@@ -1081,7 +1048,8 @@ static int drawInventoryWidget(int player, float textAlpha, float iconAlpha)
 {
 #define INVENTORY_HEIGHT    29
 
-    if(!Hu_InventoryIsOpen(player))
+    hudstate_t* hud = &hudStates[player];
+    if(hud->statusbarActive || !Hu_InventoryIsOpen(player))
         return 0;
     Hu_InventoryDraw(player, 0, -INVENTORY_HEIGHT, textAlpha, iconAlpha);
     /// \kludge calculate the visual width properly!
@@ -1091,7 +1059,10 @@ static int drawInventoryWidget(int player, float textAlpha, float iconAlpha)
 }
 
 static const uiwidget_t widgetsTopLeft[] = {
-    { HUD_AMMO, 1, drawAmmoWidget },
+    { HUD_AMMO, 1, drawAmmoWidget }
+};
+
+static const uiwidget_t widgetsTopLeft2[] = {
     { -1, 1, drawFlightWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
 };
 
@@ -1112,42 +1083,6 @@ static const uiwidget_t widgetsBottomRight[] = {
 static const uiwidget_t widgetsBottom[] = {
     { -1, .75f, drawInventoryWidget }
 };
-
-static void drawFullscreenHUD(int player, int x, int y, int width, int height, float textAlpha, float iconAlpha)
-{
-    player_t* plr = &players[player];
-    int posX, posY;
-
-    posX = x;
-    posY = y;
-
-    if(IS_NETGAME && deathmatch)
-    {
-        drawFragsWidget(player, 45, 185, textAlpha, iconAlpha);
-    }
-
-    UI_DrawWidgets(widgetsTopLeft, sizeof(widgetsTopLeft)/sizeof(widgetsTopLeft[0]),
-        posX, posY, player, textAlpha, iconAlpha, HOT_TLEFT);
-
-    posX = x + width;
-    UI_DrawWidgets(widgetsTopRight, sizeof(widgetsTopRight)/sizeof(widgetsTopRight[0]),
-        posX, posY, player, textAlpha, iconAlpha, HOT_TRIGHT);
-
-    posX = x;
-    posY = y + height;
-    UI_DrawWidgets(widgetsBottomLeft, sizeof(widgetsBottomLeft)/sizeof(widgetsBottomLeft[0]),
-        posX, posY, player, textAlpha, iconAlpha, HOT_BLEFT);
-
-    posX = x + width;
-    posY = y + height;
-    UI_DrawWidgets(widgetsBottomRight, sizeof(widgetsBottomRight)/sizeof(widgetsBottomRight[0]),
-        posX, posY, player, textAlpha, iconAlpha, HOT_BRIGHT);
-
-    posX = x + width/2;
-    posY = y + height;
-    UI_DrawWidgets(widgetsBottom, sizeof(widgetsBottom)/sizeof(widgetsBottom[0]),
-        posX, posY, player, textAlpha, iconAlpha, HOT_B);
-}
 
 void ST_Drawer(int player, int fullscreenmode, boolean refresh)
 {
@@ -1214,47 +1149,96 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
     else
         hud->blended = 0;
 
-    if(hud->statusbarActive)
+    if(hud->statusbarActive || fullscreenmode != 3)
     {
-        drawStatusbar(player);
-
-Draw_BeginZoom(cfg.hudScale, 2, 2);
-        drawFlightIcon(player, cfg.hudColor[3], cfg.hudIconAlpha);
-Draw_EndZoom();
-Draw_BeginZoom(cfg.hudScale, 318, 2);
-        drawTombOfPowerIcon(player, cfg.hudColor[3], cfg.hudIconAlpha);
-Draw_EndZoom();
-    }
-    else if(fullscreenmode != 3)
-    {
-#define INSET_BORDER 2 // In fixed 320x200 pixels
-
         int viewW, viewH, x, y, width, height;
-        float textAlpha = MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]), 1.f);
-        float iconAlpha = MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha), 1.f);
+        float textAlpha = MINMAX_OF(0.f, /*hud->alpha -*/ 1 - hud->hideAmount - ( 1 - cfg.hudColor[3]), 1.f);
+        float iconAlpha = MINMAX_OF(0.f, /*hud->alpha -*/ 1 - hud->hideAmount - ( 1 - cfg.hudIconAlpha), 1.f);
         float scale;
 
         R_GetViewPort(player, NULL, NULL, &viewW, &viewH);
-        scale = (float)viewW/SCREENWIDTH;
-        scale *= cfg.hudScale;
-        width = 320 / cfg.hudScale;
-        height = 200 / cfg.hudScale;
 
-        x = y = INSET_BORDER;
-        height -= INSET_BORDER*2;
-        width -= INSET_BORDER*2;
+        if(viewW >= viewH)
+            scale = (float)viewH/SCREENHEIGHT;
+        else
+            scale = (float)viewW/SCREENWIDTH;
 
-        // Setup the scaling matrix.
+        if(hud->statusbarActive)
+            scale *= cfg.statusbarScale / 20.0f;
+        else
+            scale *= cfg.hudScale;
+
+        x = y = 0;
+        width = viewW / scale;
+        height = viewH / scale;
+
+        if(!hud->statusbarActive)
+        {
+#define INSET_BORDER 2 // In fixed 320x200 pixels
+
+            x += INSET_BORDER;
+            y += INSET_BORDER;
+            height -= INSET_BORDER*2;
+            width -= INSET_BORDER*2;
+
+#undef INSET_BORDER
+        }
+
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
+
         DGL_Scalef(scale, scale, 1);
 
-        drawFullscreenHUD(player, x, y, width, height, textAlpha, iconAlpha);
+        /**
+         * Draw widgets.
+         */
+        {
+        int posX, posY;
+
+        posX = x + width/2;
+        posY = y + height;
+        drawStatusbar(player, posX, posY, viewW, viewH);
+
+        posX = x + 43;
+        posY = y + height - 13;
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(posX, posY, 0);
+        drawFragsWidget(player, textAlpha, iconAlpha);
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(-posX, -posY, 0);
+
+        posX = x;
+        posY = y;
+        UI_DrawWidgets(widgetsTopLeft, sizeof(widgetsTopLeft)/sizeof(widgetsTopLeft[0]),
+            posX, posY, player, textAlpha, iconAlpha, HOT_TLEFT);
+
+        posX = x;
+        posY = y;
+        UI_DrawWidgets(widgetsTopLeft2, sizeof(widgetsTopLeft2)/sizeof(widgetsTopLeft2[0]),
+            posX, posY, player, textAlpha, iconAlpha, HOT_TLEFT);
+
+        posX = x + width;
+        UI_DrawWidgets(widgetsTopRight, sizeof(widgetsTopRight)/sizeof(widgetsTopRight[0]),
+            posX, posY, player, textAlpha, iconAlpha, HOT_TRIGHT);
+
+        posX = x;
+        posY = y + height;
+        UI_DrawWidgets(widgetsBottomLeft, sizeof(widgetsBottomLeft)/sizeof(widgetsBottomLeft[0]),
+            posX, posY, player, textAlpha, iconAlpha, HOT_BLEFT);
+
+        posX = x + width;
+        posY = y + height;
+        UI_DrawWidgets(widgetsBottomRight, sizeof(widgetsBottomRight)/sizeof(widgetsBottomRight[0]),
+            posX, posY, player, textAlpha, iconAlpha, HOT_BRIGHT);
+
+        posX = x + width/2;
+        posY = y + height;
+        UI_DrawWidgets(widgetsBottom, sizeof(widgetsBottom)/sizeof(widgetsBottom[0]),
+            posX, posY, player, textAlpha, iconAlpha, HOT_B);
+        }
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PopMatrix();
-
-#undef INSET_BORDER
     }
 }
 

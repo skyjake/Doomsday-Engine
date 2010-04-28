@@ -355,9 +355,9 @@ static void drawKeyBar(hudstate_t* hud)
 
 static void drawWeaponPieces(hudstate_t* hud)
 {
-    int                 player = hud - hudStates, pClass;
-    player_t*           plr = &players[player];
-    float               alpha;
+    int player = hud - hudStates, pClass;
+    player_t* plr = &players[player];
+    float alpha;
 
     // Original player class (i.e. not pig).
     pClass = cfg.playerClass[player];
@@ -1435,72 +1435,13 @@ static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeigh
     return true;
 }
 
-/**
- * All drawing for the status bar starts and ends here
- */
-static void drawStatusbar(int player)
-{
-    hudstate_t* hud;
-    float fscale;
-    int viewW, viewH;
-
-    if(player < 0 || player > MAXPLAYERS)
-        return;
-
-    hud = &hudStates[player];
-    R_GetViewPort(player, NULL, NULL, &viewW, &viewH);
-
-    hud->firstTime = false;
-
-    fscale = cfg.statusbarScale / 20.0f;
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-
-    DGL_Translatef(viewW/2, viewH, 0);
-    if(pickStatusbarScalingStrategy(viewW, viewH))
-    {
-        DGL_Scalef((float)viewW/SCREENWIDTH, (float)viewH/SCREENHEIGHT, 1);
-    }
-    else
-    {
-        int needWidth;
-
-        if(viewW >= viewH)
-        {
-            needWidth = (float)viewH/SCREENHEIGHT * ST_WIDTH;
-            DGL_Scalef((float)viewH/SCREENHEIGHT, (float)viewH/SCREENHEIGHT, 1);
-        }
-        else
-        {
-            needWidth = (float)viewW/SCREENWIDTH * ST_WIDTH;
-            DGL_Scalef((float)viewW/SCREENWIDTH, (float)viewW/SCREENWIDTH, 1);
-        }
-
-        if(needWidth > viewW)
-            fscale *= (float)viewW/needWidth;
-    }
-    DGL_Scalef(fscale, fscale, 1);
-    DGL_Translatef(-ST_WIDTH/2, -ST_HEIGHT * hud->showBar, 0);
-
-    drawStatusBarBackground(player);
-
-    if(!Hu_InventoryIsOpen(player) && !AM_IsActive(AM_MapForPlayer(player)))
-        drawWeaponPieces(hud);
-
-    DGL_Translatef(0, -(SCREENHEIGHT-ST_HEIGHT), 0);
-
-    drawChain(hud);
-    drawWidgets(hud);
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-}
-
 static int drawHealthWidget(int player, float textAlpha, float iconAlpha)
 {
+    hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     int health = MAX_OF(plr->plr->mo->health, 0);
+    if(hud->statusbarActive)
+        return 0;
     DrBNumber(health, 0, -18, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     return M_StringWidth("000", GF_FONTB);
 }
@@ -1508,9 +1449,13 @@ static int drawHealthWidget(int player, float textAlpha, float iconAlpha)
 static int drawBlueManaWidget(int player, float textAlpha, float iconAlpha)
 {
     player_t* plr = &players[player];
+    hudstate_t* hud = &hudStates[player];
     const dpatch_t* dim =  &dpManaAIcons[0];
     const dpatch_t* bright = &dpManaAIcons[1];
     const dpatch_t* patch = NULL;
+
+    if(hud->statusbarActive)
+        return 0;
 
     if(!(plr->ammo[AT_BLUEMANA].owned > 0))
         patch = dim;
@@ -1543,9 +1488,13 @@ static int drawBlueManaWidget(int player, float textAlpha, float iconAlpha)
 static int drawGreenManaWidget(int player, float textAlpha, float iconAlpha)
 {
     player_t* plr = &players[player];
+    hudstate_t* hud = &hudStates[player];
     const dpatch_t* dim = &dpManaBIcons[0];
     const dpatch_t* bright = &dpManaBIcons[1];
     const dpatch_t* patch = NULL;
+
+    if(hud->statusbarActive)
+        return 0;
 
     if(!(plr->ammo[AT_GREENMANA].owned > 0))
         patch = dim;
@@ -1578,7 +1527,10 @@ static int drawGreenManaWidget(int player, float textAlpha, float iconAlpha)
 static int drawFragsWidget(int player, float textAlpha, float iconAlpha)
 {
     player_t* plr = &players[player];
+    hudstate_t* hud = &hudStates[player];
     int i, numFrags = 0;
+    if(hud->statusbarActive || !deathmatch)
+        return 0;
     for(i = 0; i < MAXPLAYERS; ++i)
         if(plr->plr->inGame)
             numFrags += plr->frags[i];
@@ -1590,7 +1542,7 @@ static int drawCurrentItemWidget(int player, float textAlpha, float iconAlpha)
 {
     hudstate_t* hud = &hudStates[player];
 
-    if(Hu_InventoryIsOpen(player))
+    if(hud->statusbarActive || Hu_InventoryIsOpen(player))
         return 0;
 
     if(hud->currentInvItemFlash > 0)
@@ -1622,7 +1574,8 @@ static int drawInventoryWidget(int player, float textAlpha, float iconAlpha)
 {
 #define INVENTORY_HEIGHT    29
 
-    if(!Hu_InventoryIsOpen(player))
+    hudstate_t* hud = &hudStates[player];
+    if(hud->statusbarActive || !Hu_InventoryIsOpen(player))
         return 0;
     Hu_InventoryDraw(player, 0, -INVENTORY_HEIGHT, textAlpha, iconAlpha);
     return 31 * 7 + 16 * 2;
@@ -1657,52 +1610,49 @@ static const uiwidget_t widgetsBottom[] = {
     { -1, .75f, drawInventoryWidget }
 };
 
-static void drawFullscreenHUD(int player, int x, int y, int width, int height, float textAlpha, float iconAlpha)
+static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
 {
-    int posX, posY;
+    hudstate_t* hud = &hudStates[player];
+    int needWidth = ((viewW >= viewH)? (float)viewH/SCREENHEIGHT : (float)viewW/SCREENWIDTH) * ST_WIDTH;
 
-    posX = x;
-    posY = y;
+    if(!hud->statusbarActive)
+        return;
 
-    if(IS_NETGAME && deathmatch)
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+
+    /// \fixme Should be done higher up rather than counteract (hence the fudge).
+    if(pickStatusbarScalingStrategy(viewW, viewH))
     {
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(45, 185, 0);
-        drawFragsWidget(player, textAlpha, iconAlpha);
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(-45, -185, 0);
+        DGL_Scalef((float)viewW/needWidth+0.01f/*fudge*/, 1, 1);
+    }
+    else
+    {
+        if(needWidth > viewW)
+            DGL_Scalef((float)viewW/needWidth, (float)viewW/needWidth, 1);
     }
 
-    UI_DrawWidgets(widgetsTopLeft, sizeof(widgetsTopLeft)/sizeof(widgetsTopLeft[0]),
-        posX, posY, player, textAlpha, iconAlpha, HOT_TLEFT);
+    DGL_Translatef(-ST_WIDTH/2, -ST_HEIGHT * hud->showBar, 0);
 
-    posX = x;
-    posY = y;
-    UI_DrawWidgets(widgetsTopLeft2, sizeof(widgetsTopLeft2)/sizeof(widgetsTopLeft2[0]),
-        posX, posY, player, textAlpha, iconAlpha, HOT_LEFT);
+    drawStatusBarBackground(player);
 
-    posX = x + width;
-    UI_DrawWidgets(widgetsTopRight, sizeof(widgetsTopRight)/sizeof(widgetsTopRight[0]),
-        posX, posY, player, textAlpha, iconAlpha, HOT_TRIGHT);
+    if(!Hu_InventoryIsOpen(player) && !AM_IsActive(AM_MapForPlayer(player)))
+        drawWeaponPieces(hud);
 
-    posX = x;
-    posY = y + height;
-    UI_DrawWidgets(widgetsBottomLeft, sizeof(widgetsBottomLeft)/sizeof(widgetsBottomLeft[0]),
-        posX, posY, player, textAlpha, iconAlpha, HOT_BLEFT);
+    DGL_Translatef(0, -(SCREENHEIGHT-ST_HEIGHT), 0);
 
-    posX = x + width;
-    UI_DrawWidgets(widgetsBottomRight, sizeof(widgetsBottomRight)/sizeof(widgetsBottomRight[0]),
-        posX, posY, player, textAlpha, iconAlpha, HOT_BRIGHT);
+    drawChain(hud);
+    drawWidgets(hud);
 
-    posX = x + width/2;
-    UI_DrawWidgets(widgetsBottom, sizeof(widgetsBottom)/sizeof(widgetsBottom[0]),
-        posX, posY, player, textAlpha, iconAlpha, HOT_B);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 void ST_Drawer(int player, int fullscreenmode, boolean refresh)
 {
-    hudstate_t*         hud;
-    player_t*           plr;
+    hudstate_t* hud;
+    player_t* plr;
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -1760,72 +1710,94 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
     else
         hud->blended = 0;
 
-    if(hud->statusbarActive)
+    if(hud->statusbarActive || fullscreenmode != 3)
     {
-        drawStatusbar(player);
-
-Draw_BeginZoom(cfg.hudScale, 2, 2);
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(20, 19, 0);
-        drawFlightWidget(player, cfg.hudColor[3], cfg.hudIconAlpha);
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(-20, -19, 0);
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(60, 19, 0);
-        drawBootsWidget(player, cfg.hudColor[3], cfg.hudIconAlpha);
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(-60, -19, 0);
-
-Draw_EndZoom();
-
-Draw_BeginZoom(cfg.hudScale, 318, 2);
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(260, 19, 0);
-        drawDefenseWidget(player, cfg.hudColor[3], cfg.hudIconAlpha);
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(-260, -19, 0);
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(300, 19, 0);
-        drawServantWidget(player, cfg.hudColor[3], cfg.hudIconAlpha);
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(-300, -19, 0);
-
-Draw_EndZoom();
-    }
-    else if(fullscreenmode != 3)
-    {
-#define INSET_BORDER 2 // In fixed 320x200 pixels
-
         int viewW, viewH, x, y, width, height;
-        float textAlpha = MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]), 1.f);
-        float iconAlpha = MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha), 1.f);
+        float textAlpha = MINMAX_OF(0.f, /*hud->alpha -*/ 1 - hud->hideAmount - ( 1 - cfg.hudColor[3]), 1.f);
+        float iconAlpha = MINMAX_OF(0.f, /*hud->alpha -*/ 1 - hud->hideAmount - ( 1 - cfg.hudIconAlpha), 1.f);
         float scale;
 
         R_GetViewPort(player, NULL, NULL, &viewW, &viewH);
-        scale = (float)viewW/SCREENWIDTH;
-        scale *= cfg.hudScale;
-        width = 320 / cfg.hudScale;
-        height = 200 / cfg.hudScale;
 
-        x = y = INSET_BORDER;
-        height -= INSET_BORDER*2;
-        width -= INSET_BORDER*2;
+        if(viewW >= viewH)
+            scale = (float)viewH/SCREENHEIGHT;
+        else
+            scale = (float)viewW/SCREENWIDTH;
 
-        // Setup the scaling matrix.
+        if(hud->statusbarActive)
+            scale *= cfg.statusbarScale / 20.0f;
+        else
+            scale *= cfg.hudScale;
+
+        x = y = 0;
+        width = viewW / scale;
+        height = viewH / scale;
+
+        if(!hud->statusbarActive)
+        {
+#define INSET_BORDER 2 // In fixed 320x200 pixels
+
+            x += INSET_BORDER;
+            y += INSET_BORDER;
+            height -= INSET_BORDER*2;
+            width -= INSET_BORDER*2;
+
+#undef INSET_BORDER
+        }
+
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
+
         DGL_Scalef(scale, scale, 1);
 
-        drawFullscreenHUD(player, x, y, width, height, textAlpha, iconAlpha);
+        /**
+         * Draw widgets.
+         */
+        {
+        int posX, posY;
+
+        posX = x + width/2;
+        posY = y + height;
+        drawStatusbar(player, posX, posY, viewW, viewH);
+
+        posX = x + 43;
+        posY = y + height - 13;
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(posX, posY, 0);
+        drawFragsWidget(player, textAlpha, iconAlpha);
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(-posX, -posY, 0);
+
+        posX = x;
+        posY = y;
+        UI_DrawWidgets(widgetsTopLeft, sizeof(widgetsTopLeft)/sizeof(widgetsTopLeft[0]),
+            posX, posY, player, textAlpha, iconAlpha, HOT_TLEFT);
+
+        posX = x;
+        posY = y;
+        UI_DrawWidgets(widgetsTopLeft2, sizeof(widgetsTopLeft2)/sizeof(widgetsTopLeft2[0]),
+            posX, posY, player, textAlpha, iconAlpha, HOT_LEFT);
+
+        posX = x + width;
+        UI_DrawWidgets(widgetsTopRight, sizeof(widgetsTopRight)/sizeof(widgetsTopRight[0]),
+            posX, posY, player, textAlpha, iconAlpha, HOT_TRIGHT);
+
+        posX = x;
+        posY = y + height;
+        UI_DrawWidgets(widgetsBottomLeft, sizeof(widgetsBottomLeft)/sizeof(widgetsBottomLeft[0]),
+            posX, posY, player, textAlpha, iconAlpha, HOT_BLEFT);
+
+        posX = x + width;
+        UI_DrawWidgets(widgetsBottomRight, sizeof(widgetsBottomRight)/sizeof(widgetsBottomRight[0]),
+            posX, posY, player, textAlpha, iconAlpha, HOT_BRIGHT);
+
+        posX = x + width/2;
+        UI_DrawWidgets(widgetsBottom, sizeof(widgetsBottom)/sizeof(widgetsBottom[0]),
+            posX, posY, player, textAlpha, iconAlpha, HOT_B);
+        }
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PopMatrix();
-
-#undef INSET_BORDER
     }
 }
 
