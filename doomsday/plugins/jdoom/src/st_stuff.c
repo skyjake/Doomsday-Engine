@@ -1064,17 +1064,18 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
     DGL_End();
 }
 
-static void drawFragsWidget(int player, float textAlpha, float iconAlpha)
+int drawFragsWidget(int player, float textAlpha, float iconAlpha)
 {
     hudstate_t* hud = &hudStates[player];
     char buf[20];
     if(hud->statusbarActive || !deathmatch)
-        return;
+        return 0;
     sprintf(buf, "FRAGS:%i", hud->currentFragsCount);
     M_WriteText2(0, 0, buf, GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    return M_StringWidth(buf, GF_FONTA);
 }
 
-static int drawHealthWidget(int player, float textAlpha, float iconAlpha)
+int drawHealthWidget(int player, float textAlpha, float iconAlpha)
 {
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
@@ -1089,7 +1090,7 @@ static int drawHealthWidget(int player, float textAlpha, float iconAlpha)
     return w + 2 + M_StringWidth(buf, GF_FONTB) + 2;
 }
 
-static int drawAmmoWidget(int player, float textAlpha, float iconAlpha)
+int drawAmmoWidget(int player, float textAlpha, float iconAlpha)
 {
     static const int ammoSprite[NUM_AMMO_TYPES] = {
         SPR_AMMO,
@@ -1127,7 +1128,7 @@ static int drawAmmoWidget(int player, float textAlpha, float iconAlpha)
     return 0;
 }
 
-static int drawFaceWidget(int player, float textAlpha, float iconAlpha)
+int drawFaceWidget(int player, float textAlpha, float iconAlpha)
 {
     hudstate_t* hud = &hudStates[player];
     const dpatch_t* facePatch = &faces[hud->faceIndex];
@@ -1142,7 +1143,7 @@ static int drawFaceWidget(int player, float textAlpha, float iconAlpha)
     return bgPatch->width;
 }
 
-static int drawArmorWidget(int player, float textAlpha, float iconAlpha)
+int drawArmorWidget(int player, float textAlpha, float iconAlpha)
 {
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
@@ -1167,7 +1168,7 @@ static int drawArmorWidget(int player, float textAlpha, float iconAlpha)
     return armorOffset + w + 4;
 }
 
-static int drawKeysWidget(int player, float textAlpha, float iconAlpha)
+int drawKeysWidget(int player, float textAlpha, float iconAlpha)
 {
     static int keyPairs[3][2] = {
         {KT_REDCARD, KT_REDSKULL},
@@ -1220,16 +1221,20 @@ static int drawKeysWidget(int player, float textAlpha, float iconAlpha)
     return drawnWidth;
 }
 
-static const uiwidget_t widgetsBottomLeft[] = {
+uiwidget_t widgetsBottomLeft[] = {
     { HUD_HEALTH, 1, drawHealthWidget },
     { HUD_AMMO, 1, drawAmmoWidget }
 };
 
-static const uiwidget_t widgetsBottom[] = {
+uiwidget_t widgetsBottomLeft2[] = {
+    { HUD_FRAGS, 1, drawFragsWidget }
+};
+
+uiwidget_t widgetsBottom[] = {
     { HUD_FACE, .7f, drawFaceWidget }
 };
 
-static const uiwidget_t widgetsBottomRight[] = {
+uiwidget_t widgetsBottomRight[] = {
     { HUD_ARMOR, 1, drawArmorWidget },
     { HUD_KEYS, .75f, drawKeysWidget }
 };
@@ -1349,27 +1354,23 @@ void ST_Drawer(int player, int fullscreenMode, boolean refresh)
         posY = y + height;
         drawStatusbar(player, posX, posY, viewW, viewH);
 
-        if(cfg.hudShown[HUD_FRAGS])
-        {
-            posX = x;
-            posY = y + height - ((cfg.hudShown[HUD_HEALTH] || cfg.hudShown[HUD_AMMO])? 24 : 0);
-            DGL_MatrixMode(DGL_MODELVIEW);
-            DGL_Translatef(posX, posY, 0);
-            drawFragsWidget(player, textAlpha, iconAlpha);
-            DGL_MatrixMode(DGL_MODELVIEW);
-            DGL_Translatef(-posX, -posY, 0);
-        }
-
         posX = x;
         posY = y + height;
         UI_DrawWidgets(widgetsBottomLeft, sizeof(widgetsBottomLeft)/sizeof(widgetsBottomLeft[0]),
             posX, posY, player, textAlpha, iconAlpha, HOT_BLEFT);
 
+        posX = x;
+        posY = y + height - ((cfg.hudShown[HUD_HEALTH] || cfg.hudShown[HUD_AMMO])? 24 : 0);
+        UI_DrawWidgets(widgetsBottomLeft2, sizeof(widgetsBottomLeft2)/sizeof(widgetsBottomLeft2[0]),
+            posX, posY, player, textAlpha, iconAlpha, HOT_BLEFT);
+
         posX = x + width/2;
+        posY = y + height;
         UI_DrawWidgets(widgetsBottom, sizeof(widgetsBottom)/sizeof(widgetsBottom[0]),
             posX, posY, player, textAlpha, iconAlpha, HOT_B);
 
         posX = x + width;
+        posY = y + height;
         UI_DrawWidgets(widgetsBottomRight, sizeof(widgetsBottomRight)/sizeof(widgetsBottomRight[0]),
             posX, posY, player, textAlpha, iconAlpha, HOT_BRIGHT);
         }

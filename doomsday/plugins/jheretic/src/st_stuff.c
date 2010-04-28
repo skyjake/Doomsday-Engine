@@ -793,7 +793,7 @@ static void drawPatch(lumpnum_t lump, int x, int y, float alpha, boolean usePatc
     DGL_End();
 }
 
-static int drawFlightWidget(int player, float textAlpha, float iconAlpha)
+int drawFlightWidget(int player, float textAlpha, float iconAlpha)
 {
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
@@ -828,7 +828,7 @@ static int drawFlightWidget(int player, float textAlpha, float iconAlpha)
     return 32;
 }
 
-static int drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha)
+int drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha)
 {
     player_t* plr = &players[player];
 
@@ -914,7 +914,7 @@ static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
     DGL_PopMatrix();
 }
 
-static int drawAmmoWidget(int player, float textAlpha, float iconAlpha)
+int drawAmmoWidget(int player, float textAlpha, float iconAlpha)
 {
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
@@ -942,7 +942,7 @@ static int drawAmmoWidget(int player, float textAlpha, float iconAlpha)
     return drawnWidth;
 }
 
-static int drawHealthWidget(int player, float textAlpha, float iconAlpha)
+int drawHealthWidget(int player, float textAlpha, float iconAlpha)
 {
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
@@ -953,7 +953,7 @@ static int drawHealthWidget(int player, float textAlpha, float iconAlpha)
     return 17;
 }
 
-static int drawArmorWidget(int player, float textAlpha, float iconAlpha)
+int drawArmorWidget(int player, float textAlpha, float iconAlpha)
 {
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
@@ -964,7 +964,7 @@ static int drawArmorWidget(int player, float textAlpha, float iconAlpha)
     return (iNumbers[0].width+1) * 3;
 }
 
-static int drawKeysWidget(int player, float textAlpha, float iconAlpha)
+int drawKeysWidget(int player, float textAlpha, float iconAlpha)
 {
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
@@ -998,7 +998,7 @@ static int drawKeysWidget(int player, float textAlpha, float iconAlpha)
     return drawnHeight;
 }
 
-static int drawFragsWidget(int player, float textAlpha, float iconAlpha)
+int drawFragsWidget(int player, float textAlpha, float iconAlpha)
 {
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
@@ -1008,12 +1008,12 @@ static int drawFragsWidget(int player, float textAlpha, float iconAlpha)
     for(i = 0; i < MAXPLAYERS; ++i)
         if(players[i].plr->inGame)
             numFrags += plr->frags[i];
-    drawINumber(numFrags, 0, 0, 1, 1, 1, textAlpha);
+    drawINumber(numFrags, 0, -13, 1, 1, 1, textAlpha);
     /// \kludge calculate the visual width properly!
     return (iNumbers[0].width+1) * 3;
 }
 
-static int drawCurrentItemWidget(int player, float textAlpha, float iconAlpha)
+int drawCurrentItemWidget(int player, float textAlpha, float iconAlpha)
 {
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
@@ -1044,7 +1044,7 @@ static int drawCurrentItemWidget(int player, float textAlpha, float iconAlpha)
     return dpInvItemBox.width;
 }
 
-static int drawInventoryWidget(int player, float textAlpha, float iconAlpha)
+int drawInventoryWidget(int player, float textAlpha, float iconAlpha)
 {
 #define INVENTORY_HEIGHT    29
 
@@ -1058,29 +1058,33 @@ static int drawInventoryWidget(int player, float textAlpha, float iconAlpha)
 #undef INVENTORY_HEIGHT
 }
 
-static const uiwidget_t widgetsTopLeft[] = {
+uiwidget_t widgetsTopLeft[] = {
     { HUD_AMMO, 1, drawAmmoWidget }
 };
 
-static const uiwidget_t widgetsTopLeft2[] = {
+uiwidget_t widgetsTopLeft2[] = {
     { -1, 1, drawFlightWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
 };
 
-static const uiwidget_t widgetsTopRight[] = {
+uiwidget_t widgetsTopRight[] = {
     { -1, 1, drawTombOfPowerWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
 };
 
-static const uiwidget_t widgetsBottomLeft[] = {
+uiwidget_t widgetsBottomLeft[] = {
     { HUD_HEALTH, 1, drawHealthWidget },
     { HUD_KEYS, 1, drawKeysWidget },
     { HUD_ARMOR, 1, drawArmorWidget }
 };
 
-static const uiwidget_t widgetsBottomRight[] = {
+uiwidget_t widgetsBottomLeft2[] = {
+    { -1, 1, drawFragsWidget }
+};
+
+uiwidget_t widgetsBottomRight[] = {
     { HUD_CURRENTITEM, 1, drawCurrentItemWidget }
 };
 
-static const uiwidget_t widgetsBottom[] = {
+uiwidget_t widgetsBottom[] = {
     { -1, .75f, drawInventoryWidget }
 };
 
@@ -1199,14 +1203,6 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
         posY = y + height;
         drawStatusbar(player, posX, posY, viewW, viewH);
 
-        posX = x + 43;
-        posY = y + height - 13;
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(posX, posY, 0);
-        drawFragsWidget(player, textAlpha, iconAlpha);
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_Translatef(-posX, -posY, 0);
-
         posX = x;
         posY = y;
         UI_DrawWidgets(widgetsTopLeft, sizeof(widgetsTopLeft)/sizeof(widgetsTopLeft[0]),
@@ -1218,6 +1214,7 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
             posX, posY, player, textAlpha, iconAlpha, HOT_TLEFT);
 
         posX = x + width;
+        posY = y;
         UI_DrawWidgets(widgetsTopRight, sizeof(widgetsTopRight)/sizeof(widgetsTopRight[0]),
             posX, posY, player, textAlpha, iconAlpha, HOT_TRIGHT);
 
@@ -1225,6 +1222,11 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
         posY = y + height;
         UI_DrawWidgets(widgetsBottomLeft, sizeof(widgetsBottomLeft)/sizeof(widgetsBottomLeft[0]),
             posX, posY, player, textAlpha, iconAlpha, HOT_BLEFT);
+
+        posX = x + 43;
+        posY = y + height;
+        UI_DrawWidgets(widgetsBottomLeft2, sizeof(widgetsBottomLeft2)/sizeof(widgetsBottomLeft2[0]),
+            posX, posY, player, textAlpha, iconAlpha, HOT_LEFT);
 
         posX = x + width;
         posY = y + height;
