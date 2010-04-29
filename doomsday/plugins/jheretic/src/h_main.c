@@ -282,6 +282,7 @@ void G_PreInit(void)
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
         cfg.hudUnHide[i] = 1;
     cfg.hudScale = .7f;
+    cfg.hudWideOffset = 1;
     cfg.hudColor[0] = .325f;
     cfg.hudColor[1] = .686f;
     cfg.hudColor[2] = .278f;

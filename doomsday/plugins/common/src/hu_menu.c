@@ -104,6 +104,7 @@ void M_WeaponAutoSwitch(int option, void* context);
 void M_AmmoAutoSwitch(int option, void* context);
 void M_HUDInfo(int option, void* context);
 void M_HUDScale(int option, void* context);
+void M_HUDInOffsetScale(int option, void* context);
 void M_SfxVol(int option, void* context);
 void M_WeaponOrder(int option, void* context);
 void M_MusicVol(int option, void* context);
@@ -798,7 +799,12 @@ static menuitem_t HUDItems[] = {
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
-    {ITT_EFUNC, 0, "   color", SCColorWidget, 5},
+    {ITT_LRFUNC, 0, "Wide Offset :", M_HUDInOffsetScale, 0},
+#if __JHERETIC__ || __JHEXEN__
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+#endif
+    {ITT_EFUNC, 0, "   text color", SCColorWidget, 5},
 #if __JHEXEN__
     {ITT_EFUNC, 0, "Show mana :", M_ToggleVar, 0, NULL, "hud-mana" },
 #endif
@@ -830,13 +836,13 @@ static menu_t HUDDef = {
 #endif
     M_DrawHUDMenu,
 #if __JHEXEN__
-    44, HUDItems,
+    47, HUDItems,
 #elif __JHERETIC__
-    51, HUDItems,
+    54, HUDItems,
 #elif __JDOOM64__
-    36, HUDItems,
+    37, HUDItems,
 #elif __JDOOM__
-    40, HUDItems,
+    41, HUDItems,
 #endif
     0, MENU_OPTIONS,
     GF_FONTA,
@@ -3181,7 +3187,11 @@ void M_DrawHUDMenu(void)
 #if __JHERETIC__
     idx++;
 #endif
-    MN_DrawSlider(menu, idx++, 8, cfg.hudScale * 10 - 3 + .5f);
+    MN_DrawSlider(menu, idx++, 11, cfg.hudScale * 12 - 2 + .25f);
+#if __JHERETIC__ || __JHEXEN__
+    idx++;
+#endif
+    MN_DrawSlider(menu, idx++, 11, cfg.hudWideOffset * 10 + .25f);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
@@ -3477,17 +3487,15 @@ void M_InventorySlotMaxVis(int option, void* context)
 
 void M_HUDScale(int option, void* context)
 {
-    int                 val = (cfg.hudScale + .05f) * 10;
+    DD_Execute(true, option == RIGHT_DIR? "add hud-scale 0.1" : "sub hud-scale 0.1");
+    /// \fixme Do this in a callback.
+    ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE);
+}
 
-    if(option == RIGHT_DIR)
-    {
-        if(val < 10)
-            val++;
-    }
-    else if(val > 3)
-        val--;
-
-    cfg.hudScale = val / 10.0f;
+void M_HUDInOffsetScale(int option, void* context)
+{
+    DD_Execute(true, option == RIGHT_DIR? "add hud-wideoffset 0.1" : "sub hud-wideoffset 0.1");
+    /// \fixme Do this in a callback.
     ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE);
 }
 

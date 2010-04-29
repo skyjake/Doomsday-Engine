@@ -631,6 +631,9 @@ desc = Status bar size.
 [hud-status-weaponslots-ownedfix]
 desc = 1= Fix original DOOM behavior when drawing the statusbar owned weapon display.
 
+[hud-wideoffset]
+desc = Size of hud offset for wide/tall screen dimensions.
+
 [hud-color-r]
 desc = HUD info color red component.
 

@@ -171,7 +171,8 @@ static dpatch_t lame;
 // CVARs for the HUD/Statusbar
 cvar_t sthudCVars[] = {
     // HUD scale
-    {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10},
+    {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 1},
+    {"hud-wideoffset", 0, CVT_FLOAT, &cfg.hudWideOffset, 0, 1},
 
     {"hud-status-size", 0, CVT_FLOAT, &cfg.statusbarScale, 0.1f, 1, updateViewWindow},
 
@@ -1230,6 +1231,31 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
         posX = x + width/2;
         posY = y + height;
         drawStatusbar(player, posX, posY, viewW, viewH);
+
+        /**
+         * Wide offset scaling.
+         * Used with ultra-wide/tall resolutions to move the uiwidgets into
+         * the viewer's primary field of vision (without this, uiwidgets
+         * would be positioned at the very edges of the view window and
+         * likely outside the viewer's peripheral vision.
+         *
+         * \note Statusbar is exempt because it is intended to extend over
+         * the entire width of the view window and as such, uses a another
+         * special-case scale-positioning calculation.
+         */
+        if(cfg.hudWideOffset != 1)
+        {
+            if(viewW > viewH)
+            {
+                x = (viewW/2/scale - SCREENWIDTH/2) * (1-cfg.hudWideOffset);
+                width -= x*2;
+            }
+            else
+            {
+                y = (viewH/2/scale - SCREENHEIGHT/2) * (1-cfg.hudWideOffset);
+                height -= y*2;
+            }
+        }
 
         posX = x + PADDING;
         posY = y + PADDING;

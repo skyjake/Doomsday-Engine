@@ -293,6 +293,7 @@ void G_PreInit(void)
     cfg.flashSpeed = 4;
     cfg.turningSkull = false;
     cfg.hudScale = .7f;
+    cfg.hudWideOffset = 1;
     cfg.hudColor[0] = defFontRGB[0];    // use the default colour by default.
     cfg.hudColor[1] = defFontRGB[1];
     cfg.hudColor[2] = defFontRGB[2];
