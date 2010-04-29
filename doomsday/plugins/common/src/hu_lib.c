@@ -212,9 +212,15 @@ static void drawWidget(const uiwidget_t* w, int player, float textAlpha,
 }
 
 void UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, short flags,
-    int x, int y, int player, float textAlpha, float iconAlpha)
+    int padding, int x, int y, int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
-    size_t i;
+    size_t i, numDrawnWidgets = 0;
+
+    if(drawnWidth)
+        *drawnWidth = 0;
+    if(drawnHeight)
+        *drawnHeight = 0;
 
     if(!numWidgets || !(iconAlpha > 0))
         return;
@@ -225,7 +231,7 @@ void UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, short flags,
     for(i = 0; i < numWidgets; ++i)
     {
         const uiwidget_t* w = &widgets[i];
-        int drawnWidth = 0, drawnHeight = 0;
+        int wDrawnWidth = 0, wDrawnHeight = 0;
 
         if(w->id != -1)
         {
@@ -238,25 +244,41 @@ void UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, short flags,
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_Translatef(x, y, 0);
 
-        drawWidget(w, player, w->textAlpha? *w->textAlpha : textAlpha, w->iconAlpha? *w->iconAlpha : iconAlpha, &drawnWidth, &drawnHeight);
-
+        drawWidget(w, player, w->textAlpha? *w->textAlpha : textAlpha, w->iconAlpha? *w->iconAlpha : iconAlpha, &wDrawnWidth, &wDrawnHeight);
+    
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_Translatef(-x, -y, 0);
 
-        if(drawnWidth > 0 || drawnHeight > 0)
+        if(wDrawnWidth > 0 || wDrawnHeight > 0)
         {
+            numDrawnWidgets++;
+
             if(flags & UWF_RIGHT2LEFT)
-                x -= drawnWidth + 2;
+                x -= wDrawnWidth + padding;
             else if(flags & UWF_LEFT2RIGHT)
-                x += drawnWidth + 2;
+                x += wDrawnWidth + padding;
 
             if(flags & UWF_BOTTOM2TOP)
-                y -= drawnHeight + 2;
+                y -= wDrawnHeight + padding;
             else if(flags & UWF_TOP2BOTTOM)
-                y += drawnHeight + 2;
+                y += wDrawnHeight + padding;
+
+            if(drawnWidth)
+                *drawnWidth += wDrawnWidth;
+            if(drawnHeight)
+                *drawnHeight += wDrawnHeight;
         }
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
+
+    if(numDrawnWidgets)
+    {
+        if(drawnWidth && (flags & (UWF_LEFT2RIGHT|UWF_RIGHT2LEFT)))
+            *drawnWidth += (numDrawnWidgets-1) * padding;
+
+        if(drawnHeight && (flags & (UWF_TOP2BOTTOM|UWF_BOTTOM2TOP)))
+            *drawnHeight += (numDrawnWidgets-1) * padding;
+    }
 }

@@ -848,9 +848,9 @@ void drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha,
         float alpha = iconAlpha;
         if(cfg.tomeCounter && plr->powers[PT_WEAPONLEVEL2] < 35)
             alpha *= plr->powers[PT_WEAPONLEVEL2] / 35.0f;
-        drawPatch(spinBook[frame].lump, -12, 13, alpha, true);
+        drawPatch(spinBook[frame].lump, -13, 13, alpha, true);
         /// \kludge calculate dimensions properly!
-        *drawnWidth += 24;
+        *drawnWidth += 26;
         *drawnHeight += 26;
     }
 
@@ -951,9 +951,9 @@ void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
             continue;
         dp = &ammoIcons[plr->readyWeapon - 1];
         drawPatch(dp->lump, 0, 0, iconAlpha, false);
-        drawINumber(plr->ammo[ammoType].owned, dp->width+2, -2, 1, 1, 1, textAlpha);
+        drawINumber(plr->ammo[ammoType].owned, dp->width+1, -2, 1, 1, 1, textAlpha);
         /// \kludge calculate the visual dimensions properly!
-        *drawnWidth += dp->width + 2 + (iNumbers[0].width+1) * 3;
+        *drawnWidth += dp->width + 2 + (iNumbers[0].width+1) * 3 - 1;
         if(MAX_OF(dp->height, iNumbers[0].height) > *drawnHeight)
             *drawnHeight = MAX_OF(dp->height, iNumbers[0].height);
         break;
@@ -972,7 +972,8 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
     dd_snprintf(buf, 5, "%i", health);
     h = M_StringHeight(buf, GF_FONTB);
     w = M_StringWidth(buf, GF_FONTB);
-    M_WriteText2(0, -h, buf, GF_FONTB, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_WriteText2(2, -h + 1, buf, GF_FONTB, 0, 0, 0, textAlpha * .4f);
+    M_WriteText2(0, -h - 1, buf, GF_FONTB, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     *drawnWidth = w;
     *drawnHeight = h;
 }
@@ -984,7 +985,7 @@ void drawArmorWidget(int player, float textAlpha, float iconAlpha,
     hudstate_t* hud = &hudStates[player];
     if(hud->statusbarActive)
         return;
-    drawINumber(plr->armorPoints, 0, -11, 1, 1, 1, textAlpha);
+    drawINumber(plr->armorPoints, -1, -11, 1, 1, 1, textAlpha);
     /// \kludge calculate the visual dimensions properly!
     *drawnWidth = (iNumbers[0].width+1) * 3 - 1;
     *drawnHeight = iNumbers[0].height;
@@ -1065,8 +1066,8 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
 
     if(hud->currentInvItemFlash > 0)
     {
-        drawPatch(dpInvItemBox.lump, -29, -29, iconAlpha / 2, false);
-        drawPatch(dpInvItemFlash[hud->currentInvItemFlash % 5].lump, -29, -28, iconAlpha, true);
+        drawPatch(dpInvItemBox.lump, -dpInvItemBox.width, -dpInvItemBox.height, iconAlpha / 2, false);
+        drawPatch(dpInvItemFlash[hud->currentInvItemFlash % 5].lump, -dpInvItemBox.width, -dpInvItemBox.height + 1, iconAlpha, true);
     }
     else
     {
@@ -1077,8 +1078,8 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
             lumpnum_t patch = P_GetInvItem(readyItem-1)->patchLump;
             uint count;
 
-            drawPatch(dpInvItemBox.lump, -29, -29, iconAlpha / 2, false);
-            drawPatch(patch, -29, -29, iconAlpha, true);
+            drawPatch(dpInvItemBox.lump, -dpInvItemBox.width, -dpInvItemBox.height, iconAlpha / 2, false);
+            drawPatch(patch, -dpInvItemBox.width, -dpInvItemBox.height, iconAlpha, true);
             if((count = P_InventoryCount(player, readyItem)) > 1)
                 Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, -1, -7, textAlpha);
         }
@@ -1242,7 +1243,9 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
          * Draw widgets.
          */
         {
-        int posX, posY;
+#define PADDING 2 // In fixed 320x200 units.
+
+        int posX, posY, drawnWidth, drawnHeight;
 
         posX = x + width/2;
         posY = y + height;
@@ -1251,37 +1254,39 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
         posX = x;
         posY = y;
         UI_DrawWidgets(widgetsTopLeft, sizeof(widgetsTopLeft)/sizeof(widgetsTopLeft[0]),
-            UWF_LEFT2RIGHT, posX, posY, player, textAlpha, iconAlpha);
+            UWF_LEFT2RIGHT, PADDING, posX, posY, player, textAlpha, iconAlpha, &drawnWidth, &drawnHeight);
 
-        posX = x;
+        posX = x + (drawnWidth > 0 ? drawnWidth + PADDING : 0);
         posY = y;
         UI_DrawWidgets(widgetsTopLeft2, sizeof(widgetsTopLeft2)/sizeof(widgetsTopLeft2[0]),
-            UWF_LEFT2RIGHT, posX, posY, player, textAlpha, iconAlpha);
+            UWF_LEFT2RIGHT, PADDING, posX, posY, player, textAlpha, iconAlpha, &drawnWidth, &drawnHeight);
 
         posX = x + width;
         posY = y;
         UI_DrawWidgets(widgetsTopRight, sizeof(widgetsTopRight)/sizeof(widgetsTopRight[0]),
-            UWF_RIGHT2LEFT, posX, posY, player, textAlpha, iconAlpha);
+            UWF_RIGHT2LEFT, PADDING, posX, posY, player, textAlpha, iconAlpha, &drawnWidth, &drawnHeight);
 
         posX = x;
         posY = y + height;
         UI_DrawWidgets(widgetsBottomLeft, sizeof(widgetsBottomLeft)/sizeof(widgetsBottomLeft[0]),
-            UWF_BOTTOM2TOP, posX, posY, player, textAlpha, iconAlpha);
+            UWF_BOTTOM2TOP, PADDING, posX, posY, player, textAlpha, iconAlpha, &drawnWidth, &drawnHeight);
 
-        posX = x + 43;
+        posX = x + (drawnWidth > 0 ? drawnWidth + PADDING : 0);
         posY = y + height;
         UI_DrawWidgets(widgetsBottomLeft2, sizeof(widgetsBottomLeft2)/sizeof(widgetsBottomLeft2[0]),
-            UWF_LEFT2RIGHT, posX, posY, player, textAlpha, iconAlpha);
+            UWF_LEFT2RIGHT, PADDING, posX, posY, player, textAlpha, iconAlpha, &drawnWidth, &drawnHeight);
 
         posX = x + width;
         posY = y + height;
         UI_DrawWidgets(widgetsBottomRight, sizeof(widgetsBottomRight)/sizeof(widgetsBottomRight[0]),
-            UWF_RIGHT2LEFT, posX, posY, player, textAlpha, iconAlpha);
+            UWF_RIGHT2LEFT, PADDING, posX, posY, player, textAlpha, iconAlpha, &drawnWidth, &drawnHeight);
 
         posX = x + width/2;
         posY = y + height;
         UI_DrawWidgets(widgetsBottom, sizeof(widgetsBottom)/sizeof(widgetsBottom[0]),
-            UWF_BOTTOM2TOP, posX, posY, player, textAlpha, iconAlpha);
+            UWF_BOTTOM2TOP, PADDING, posX, posY, player, textAlpha, iconAlpha, &drawnWidth, &drawnHeight);
+
+#undef PADDING
         }
 
         DGL_MatrixMode(DGL_MODELVIEW);

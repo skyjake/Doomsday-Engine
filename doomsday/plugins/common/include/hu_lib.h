@@ -45,7 +45,7 @@ typedef struct {
 #define UWF_BOTTOM2TOP      0x0008
 /*@}*/
 
-void            UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, short flags, int x, int y, int player, float textAlpha, float iconAlpha);
+void            UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, short flags, int padding, int x, int y, int player, float textAlpha, float iconAlpha, int* drawnWidth, int* drawnHeight);
 
 #define HU_MAXLINELENGTH    (160)
 
