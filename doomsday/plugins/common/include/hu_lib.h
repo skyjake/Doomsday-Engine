@@ -30,7 +30,8 @@
 
 typedef struct {
     int id;
-    float scale;
+    float* scale;
+    float extraScale;
     void (*draw) (int player, float textAlpha, float iconAlpha, int* drawnWidth, int* drawnHeight);
     float* textAlpha, *iconAlpha; /// \todo refactor away.
 } uiwidget_t;

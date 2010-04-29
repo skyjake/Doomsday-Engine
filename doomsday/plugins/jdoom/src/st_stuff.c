@@ -1217,21 +1217,21 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
 }
 
 uiwidget_t widgetsBottomLeft[] = {
-    { HUD_HEALTH, 1, drawHealthWidget },
-    { HUD_AMMO, 1, drawAmmoWidget }
+    { HUD_HEALTH, &cfg.hudScale, 1, drawHealthWidget },
+    { HUD_AMMO, &cfg.hudScale, 1, drawAmmoWidget }
 };
 
 uiwidget_t widgetsBottomLeft2[] = {
-    { HUD_FRAGS, 1, drawFragsWidget }
+    { HUD_FRAGS, &cfg.hudScale, 1, drawFragsWidget }
 };
 
 uiwidget_t widgetsBottom[] = {
-    { HUD_FACE, .7f, drawFaceWidget }
+    { HUD_FACE, &cfg.hudScale, .7f, drawFaceWidget }
 };
 
 uiwidget_t widgetsBottomRight[] = {
-    { HUD_ARMOR, 1, drawArmorWidget },
-    { HUD_KEYS, .75f, drawKeysWidget }
+    { HUD_ARMOR, &cfg.hudScale, 1, drawArmorWidget },
+    { HUD_KEYS, &cfg.hudScale, .75f, drawKeysWidget }
 };
 
 void ST_Drawer(int player, int fullscreenMode, boolean refresh)
@@ -1312,9 +1312,6 @@ void ST_Drawer(int player, int fullscreenMode, boolean refresh)
             scale = (float)viewH/SCREENHEIGHT;
         else
             scale = (float)viewW/SCREENWIDTH;
-
-        if(!hud->statusbarActive)
-            scale *= cfg.hudScale;
 
         x = y = 0;
         width = viewW / scale;

@@ -1102,33 +1102,33 @@ void drawInventoryWidget(int player, float textAlpha, float iconAlpha,
 }
 
 uiwidget_t widgetsTopLeft[] = {
-    { HUD_AMMO, 1, drawAmmoWidget }
+    { HUD_AMMO, &cfg.hudScale, 1, drawAmmoWidget }
 };
 
 uiwidget_t widgetsTopLeft2[] = {
-    { -1, 1, drawFlightWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
+    { -1, &cfg.hudScale, 1, drawFlightWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
 };
 
 uiwidget_t widgetsTopRight[] = {
-    { -1, 1, drawTombOfPowerWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
+    { -1, &cfg.hudScale, 1, drawTombOfPowerWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
 };
 
 uiwidget_t widgetsBottomLeft[] = {
-    { HUD_HEALTH, 1, drawHealthWidget },
-    { HUD_KEYS, 1, drawKeysWidget },
-    { HUD_ARMOR, 1, drawArmorWidget }
+    { HUD_HEALTH, &cfg.hudScale, 1, drawHealthWidget },
+    { HUD_KEYS, &cfg.hudScale, 1, drawKeysWidget },
+    { HUD_ARMOR, &cfg.hudScale, 1, drawArmorWidget }
 };
 
 uiwidget_t widgetsBottomLeft2[] = {
-    { -1, 1, drawFragsWidget }
+    { -1, &cfg.hudScale, 1, drawFragsWidget }
 };
 
 uiwidget_t widgetsBottomRight[] = {
-    { HUD_CURRENTITEM, 1, drawCurrentItemWidget }
+    { HUD_CURRENTITEM, &cfg.hudScale, 1, drawCurrentItemWidget }
 };
 
 uiwidget_t widgetsBottom[] = {
-    { -1, .75f, drawInventoryWidget }
+    { -1, &cfg.hudScale, .75f, drawInventoryWidget }
 };
 
 void ST_Drawer(int player, int fullscreenmode, boolean refresh)
@@ -1209,9 +1209,6 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
             scale = (float)viewH/SCREENHEIGHT;
         else
             scale = (float)viewW/SCREENWIDTH;
-
-        if(!hud->statusbarActive)
-            scale *= cfg.hudScale;
 
         x = y = 0;
         width = viewW / scale;

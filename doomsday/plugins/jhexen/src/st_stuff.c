@@ -1594,31 +1594,31 @@ void drawInventoryWidget(int player, float textAlpha, float iconAlpha,
 }
 
 uiwidget_t widgetsTopLeft[] = {
-    { HUD_MANA, 1, drawBlueManaWidget },
-    { HUD_MANA, 1, drawGreenManaWidget }
+    { HUD_MANA, &cfg.hudScale, 1, drawBlueManaWidget },
+    { HUD_MANA, &cfg.hudScale, 1, drawGreenManaWidget }
 };
 
 uiwidget_t widgetsTopLeft2[] = {
-    { -1, 1, drawFlightWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-    { -1, 1, drawBootsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
+    { -1, &cfg.hudScale, 1, drawFlightWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+    { -1, &cfg.hudScale, 1, drawBootsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
 };
 
 uiwidget_t widgetsTopRight[] = {
-    { -1, 1, drawServantWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-    { -1, 1, drawDefenseWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
+    { -1, &cfg.hudScale, 1, drawServantWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+    { -1, &cfg.hudScale, 1, drawDefenseWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
 };
 
 uiwidget_t widgetsBottomLeft[] = {
-    { HUD_HEALTH, 1, drawHealthWidget },
-    { -1, 1, drawFragsWidget }
+    { HUD_HEALTH, &cfg.hudScale, 1, drawHealthWidget },
+    { -1, &cfg.hudScale, 1, drawFragsWidget }
 };
 
 uiwidget_t widgetsBottomRight[] = {
-    { HUD_CURRENTITEM, 1, drawCurrentItemWidget }
+    { HUD_CURRENTITEM, &cfg.hudScale, 1, drawCurrentItemWidget }
 };
 
 uiwidget_t widgetsBottom[] = {
-    { -1, .75f, drawInventoryWidget }
+    { -1, &cfg.hudScale, .75f, drawInventoryWidget }
 };
 
 static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
@@ -1737,9 +1737,6 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
             scale = (float)viewH/SCREENHEIGHT;
         else
             scale = (float)viewW/SCREENWIDTH;
-
-        if(!hud->statusbarActive)
-            scale *= cfg.hudScale;
 
         x = y = 0;
         width = viewW / scale;

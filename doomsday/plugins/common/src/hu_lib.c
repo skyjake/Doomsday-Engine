@@ -195,17 +195,28 @@ void HUlib_eraseText(hu_text_t* it)
 static void drawWidget(const uiwidget_t* w, int player, float textAlpha,
     float iconAlpha, int* drawnWidth, int* drawnHeight)
 {
-    if(w->scale != 1)
+    boolean scaled = false;
+    float scale = 1;
+
+    if(w->scale || w->extraScale != 1)
     {
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PushMatrix();
-        DGL_Scalef(w->scale, w->scale, 1);
+        scale = (w->scale? *w->scale : 1) * w->extraScale;
+        if(scale != 1)
+        {
+            DGL_MatrixMode(DGL_MODELVIEW);
+            DGL_PushMatrix();
+            DGL_Scalef(scale, scale, 1);
+            scaled = true;
+        }
     }
 
     w->draw(player, textAlpha, iconAlpha, drawnWidth, drawnHeight);
 
-    if(w->scale != 1)
+    if(scaled)
     {
+        *drawnWidth *= scale;
+        *drawnHeight *= scale;
+
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PopMatrix();
     }
@@ -237,7 +248,7 @@ void UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, short flags,
         {
             assert(w->id >= 0 && w->id < NUMHUDDISPLAYS);
 
-             if(!cfg.hudShown[w->id])
+            if(!cfg.hudShown[w->id])
                 continue;
         }
 
@@ -264,9 +275,20 @@ void UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, short flags,
                 y += wDrawnHeight + padding;
 
             if(drawnWidth)
-                *drawnWidth += wDrawnWidth;
+            {
+                if(flags & (UWF_LEFT2RIGHT|UWF_RIGHT2LEFT))
+                    *drawnWidth += wDrawnWidth;
+                else if(wDrawnWidth > *drawnWidth)
+                    *drawnWidth = wDrawnWidth;
+            }
+
             if(drawnHeight)
-                *drawnHeight += wDrawnHeight;
+            {
+                if(flags & (UWF_TOP2BOTTOM|UWF_BOTTOM2TOP))
+                    *drawnHeight += wDrawnHeight;
+                else if(wDrawnHeight > *drawnHeight)
+                    *drawnHeight = wDrawnHeight;
+            }
         }
     }
 
