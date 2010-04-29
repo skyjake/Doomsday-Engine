@@ -1742,18 +1742,6 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
         width = viewW / scale;
         height = viewH / scale;
 
-        if(!hud->statusbarActive)
-        {
-#define INSET_BORDER 2 // In fixed 320x200 pixels
-
-            x += INSET_BORDER;
-            y += INSET_BORDER;
-            height -= INSET_BORDER*2;
-            width -= INSET_BORDER*2;
-
-#undef INSET_BORDER
-        }
-
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
 
@@ -1771,33 +1759,33 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
         posY = y + height;
         drawStatusbar(player, posX, posY, viewW, viewH);
 
-        posX = x;
-        posY = y;
+        posX = x + PADDING;
+        posY = y + PADDING;
         UI_DrawWidgets(widgetsTopLeft, sizeof(widgetsTopLeft)/sizeof(widgetsTopLeft[0]),
             UWF_TOP2BOTTOM, PADDING, posX, posY, player, textAlpha, iconAlpha, &drawnWidth, &drawnHeight);
 
-        posX = x + (drawnWidth > 0 ? drawnWidth + PADDING : 0);
-        posY = y;
+        posX = x + PADDING + (drawnWidth > 0 ? drawnWidth + PADDING : 0);
+        posY = y + PADDING;
         UI_DrawWidgets(widgetsTopLeft2, sizeof(widgetsTopLeft2)/sizeof(widgetsTopLeft2[0]),
             UWF_LEFT2RIGHT, PADDING, posX, posY, player, textAlpha, iconAlpha, &drawnWidth, &drawnHeight);
 
-        posX = x + width;
-        posY = y;
+        posX = x + width - PADDING;
+        posY = y + PADDING;
         UI_DrawWidgets(widgetsTopRight, sizeof(widgetsTopRight)/sizeof(widgetsTopRight[0]),
             UWF_RIGHT2LEFT, PADDING, posX, posY, player, textAlpha, iconAlpha, &drawnWidth, &drawnHeight);
 
-        posX = x;
-        posY = y + height;
+        posX = x + PADDING;
+        posY = y + height - PADDING;
         UI_DrawWidgets(widgetsBottomLeft, sizeof(widgetsBottomLeft)/sizeof(widgetsBottomLeft[0]),
             UWF_BOTTOM2TOP, PADDING, posX, posY, player, textAlpha, iconAlpha, &drawnWidth, &drawnHeight);
 
-        posX = x + width;
-        posY = y + height;
+        posX = x + width - PADDING;
+        posY = y + height - PADDING;
         UI_DrawWidgets(widgetsBottomRight, sizeof(widgetsBottomRight)/sizeof(widgetsBottomRight[0]),
             UWF_RIGHT2LEFT, PADDING, posX, posY, player, textAlpha, iconAlpha, &drawnWidth, &drawnHeight);
 
-        posX = x + width/2;
-        posY = y + height;
+        posX = x + PADDING + (width-PADDING*2)/2;
+        posY = y + height - PADDING;
         UI_DrawWidgets(widgetsBottom, sizeof(widgetsBottom)/sizeof(widgetsBottom[0]),
             UWF_BOTTOM2TOP, PADDING, posX, posY, player, textAlpha, iconAlpha, &drawnWidth, &drawnHeight);
 
