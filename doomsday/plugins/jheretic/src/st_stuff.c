@@ -47,51 +47,51 @@
 // Current ammo icon(sbbar).
 #define ST_AMMOIMGWIDTH     (24)
 #define ST_AMMOICONX        (111)
-#define ST_AMMOICONY        (172)
+#define ST_AMMOICONY        (14)
 
 // Inventory.
 #define ST_INVENTORYX       (50)
-#define ST_INVENTORYY       (160)
+#define ST_INVENTORYY       (2)
 
 // Current inventory item.
 #define ST_INVITEMX         (179)
-#define ST_INVITEMY         (160)
+#define ST_INVITEMY         (2)
 
 // Current inventory item count.
 #define ST_INVITEMCWIDTH    (2) // Num digits
 #define ST_INVITEMCX        (208)
-#define ST_INVITEMCY        (182)
+#define ST_INVITEMCY        (24)
 
 // AMMO number pos.
 #define ST_AMMOWIDTH        (3)
 #define ST_AMMOX            (135)
-#define ST_AMMOY            (162)
+#define ST_AMMOY            (4)
 
 // ARMOR number pos.
 #define ST_ARMORWIDTH       (3)
 #define ST_ARMORX           (254)
-#define ST_ARMORY           (170)
+#define ST_ARMORY           (12)
 
 // HEALTH number pos.
 #define ST_HEALTHWIDTH      (3)
 #define ST_HEALTHX          (85)
-#define ST_HEALTHY          (170)
+#define ST_HEALTHY          (12)
 
 // Key icon positions.
 #define ST_KEY0WIDTH        (10)
 #define ST_KEY0HEIGHT       (6)
 #define ST_KEY0X            (153)
-#define ST_KEY0Y            (164)
+#define ST_KEY0Y            (6)
 #define ST_KEY1WIDTH        (ST_KEY0WIDTH)
 #define ST_KEY1X            (153)
-#define ST_KEY1Y            (172)
+#define ST_KEY1Y            (14)
 #define ST_KEY2WIDTH        (ST_KEY0WIDTH)
 #define ST_KEY2X            (153)
-#define ST_KEY2Y            (180)
+#define ST_KEY2Y            (22)
 
 // Frags pos.
 #define ST_FRAGSX           (85)
-#define ST_FRAGSY           (171)
+#define ST_FRAGSY           (13)
 #define ST_FRAGSWIDTH       (2)
 
 // TYPES -------------------------------------------------------------------
@@ -231,18 +231,18 @@ static void shadeChain(float alpha)
     DGL_Begin(DGL_QUADS);
         // Left shadow.
         DGL_Color4f(0, 0, 0, alpha);
-        DGL_Vertex2f(20, 200);
-        DGL_Vertex2f(20, 190);
+        DGL_Vertex2f(20, ST_HEIGHT);
+        DGL_Vertex2f(20, ST_HEIGHT-10);
         DGL_Color4f(0, 0, 0, 0);
-        DGL_Vertex2f(35, 190);
-        DGL_Vertex2f(35, 200);
+        DGL_Vertex2f(35, ST_HEIGHT-10);
+        DGL_Vertex2f(35, ST_HEIGHT);
 
         // Right shadow.
-        DGL_Vertex2f(277, 200);
-        DGL_Vertex2f(277, 190);
+        DGL_Vertex2f(ST_WIDTH-43, ST_HEIGHT);
+        DGL_Vertex2f(ST_WIDTH-43, ST_HEIGHT-10);
         DGL_Color4f(0, 0, 0, alpha);
-        DGL_Vertex2f(293, 190);
-        DGL_Vertex2f(293, 200);
+        DGL_Vertex2f(ST_WIDTH-27, ST_HEIGHT-10);
+        DGL_Vertex2f(ST_WIDTH-27, ST_HEIGHT);
     DGL_End();
 
     DGL_Enable(DGL_TEXTURING);
@@ -256,16 +256,16 @@ static void drawChain(hudstate_t* hud)
         150, // Red.
         220  // Blue.
     };
-    int                 chainY;
-    float               healthPos, gemXOffset, gemglow;
-    int                 x, y, w, h, gemNum;
-    float               cw, rgb[3];
-    int                 player = hud - hudStates;
-    player_t*           plr = &players[player];
+    int chainY;
+    float healthPos, gemXOffset, gemglow;
+    int x, y, w, h, gemNum;
+    float cw, rgb[3];
+    int player = hud - hudStates;
+    player_t* plr = &players[player];
 
     hud->oldHealth = hud->healthMarker;
 
-    chainY = 191;
+    chainY = ST_HEIGHT-9;
     if(hud->healthMarker != plr->plr->mo->health)
         chainY += hud->chainWiggle;
 
@@ -292,7 +292,7 @@ static void drawChain(hudstate_t* hud)
 
     if(gemXOffset > 0)
     {   // Left chain section.
-        float               cw = gemXOffset / chain.width;
+        float cw = gemXOffset / chain.width;
 
         DGL_Begin(DGL_QUADS);
             DGL_TexCoord2f(0, 1 - cw, 0);
@@ -311,8 +311,7 @@ static void drawChain(hudstate_t* hud)
 
     if(gemXOffset + lifeGems[gemNum].width < w)
     {   // Right chain section.
-        float               cw =
-            (w - gemXOffset - lifeGems[gemNum].width) / chain.width;
+        float cw = (w - gemXOffset - lifeGems[gemNum].width) / chain.width;
 
         DGL_Begin(DGL_QUADS);
             DGL_TexCoord2f(0, 0, 0);
@@ -330,9 +329,7 @@ static void drawChain(hudstate_t* hud)
     }
 
     // Draw the life gem.
-    GL_DrawPatchLitAlpha(x + gemXOffset, chainY,
-                         1, hud->statusbarCounterAlpha,
-                         lifeGems[gemNum].lump);
+    GL_DrawPatchLitAlpha(x + gemXOffset, chainY, 1, hud->statusbarCounterAlpha, lifeGems[gemNum].lump);
 
     shadeChain((hud->statusbarCounterAlpha + cfg.statusbarOpacity) /3);
 
@@ -341,8 +338,7 @@ static void drawChain(hudstate_t* hud)
     DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
 
     R_GetColorPaletteRGBf(0, rgb, theirColors[gemNum], false);
-    DGL_DrawRect(x + gemXOffset - 11, chainY - 6, 41, 24, rgb[0], rgb[1],
-                 rgb[2], gemglow - (1 - hud->statusbarCounterAlpha));
+    DGL_DrawRect(x + gemXOffset - 11, chainY - 6, 41, 24, rgb[0], rgb[1], rgb[2], gemglow - (1 - hud->statusbarCounterAlpha));
 
     DGL_BlendMode(BM_NORMAL);
     DGL_Color4f(1, 1, 1, 1);
@@ -610,9 +606,9 @@ void ST_doPaletteStuff(int player)
 
 static void drawWidgets(hudstate_t* hud)
 {
-    int                 i, player = hud - hudStates;
-    player_t*           plr = &players[player];
-    float               alpha = hud->statusbarCounterAlpha;
+    int i, player = hud - hudStates;
+    player_t* plr = &players[player];
+    float alpha = hud->statusbarCounterAlpha;
 
     hud->oldHealth = -1;
     if(!Hu_InventoryIsOpen(player))
@@ -643,9 +639,9 @@ static void drawWidgets(hudstate_t* hud)
         // Current inventory item.
         if((readyItem = P_InventoryReadyItem(player)) != IIT_NONE)
         {
-            int                 x, y;
-            lumpnum_t           patch;
-
+            lumpnum_t patch;
+            int x, y;
+            
             if(hud->currentInvItemFlash > 0)
             {
                 patch = dpInvItemFlash[hud->currentInvItemFlash % 5].lump;
@@ -664,12 +660,10 @@ static void drawWidgets(hudstate_t* hud)
 
             if(!(hud->currentInvItemFlash > 0))
             {
-                uint                count =
-                    P_InventoryCount(player, readyItem);
+                uint count = P_InventoryCount(player, readyItem);
 
                 if(count > 1)
-                    Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, ST_INVITEMCX,
-                                    ST_INVITEMCY, alpha);
+                    Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, ST_INVITEMCX, ST_INVITEMCY, alpha);
             }
         }
     }
@@ -681,8 +675,8 @@ static void drawWidgets(hudstate_t* hud)
 
 void ST_FlashCurrentItem(int player)
 {
-    player_t*           plr;
-    hudstate_t*         hud;
+    player_t* plr;
+    hudstate_t* hud;
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -696,10 +690,9 @@ void ST_FlashCurrentItem(int player)
     hud->currentInvItemFlash = 4;
 }
 
-static void drawINumber(signed int val, int x, int y, float r, float g,
-                        float b, float a)
+static void drawINumber(signed int val, int x, int y, float r, float g, float b, float a)
 {
-    int                 oldval;
+    int oldval;
 
     DGL_Color4f(r, g, b, a);
 
@@ -746,7 +739,7 @@ static void drawINumber(signed int val, int x, int y, float r, float g,
  */
 void ST_HUDUnHide(int player, hueevent_t ev)
 {
-    player_t*           plr;
+    player_t* plr;
 
     if(ev < HUE_FORCE || ev > NUMHUDUNHIDEEVENTS)
         return;
@@ -895,32 +888,36 @@ static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeigh
 static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
 {
     hudstate_t* hud = &hudStates[player];
-    int needWidth = ((viewW >= viewH)? (float)viewH/SCREENHEIGHT : (float)viewW/SCREENWIDTH) * ST_WIDTH;
+    int needWidth;
+    float scaleX, scaleY;
 
     if(!hud->statusbarActive)
         return;
+
+    needWidth = ((viewW >= viewH)? (float)viewH/SCREENHEIGHT : (float)viewW/SCREENWIDTH) * ST_WIDTH;
+    scaleX = scaleY = cfg.statusbarScale / 20.0f;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
     DGL_Translatef(x, y, 0);
 
-    /// \fixme Should be done higher up rather than counteract (hence the fudge).
     if(pickStatusbarScalingStrategy(viewW, viewH))
     {
-        DGL_Scalef((float)viewW/needWidth+0.01f/*fudge*/, 1, 1);
+        scaleX *= (float)viewW/needWidth;
     }
     else
     {
         if(needWidth > viewW)
-            DGL_Scalef((float)viewW/needWidth, (float)viewW/needWidth, 1);
+        {
+            scaleX *= (float)viewW/needWidth;
+            scaleY *= (float)viewW/needWidth;
+        }
     }
 
+    DGL_Scalef(scaleX, scaleY, 1);
     DGL_Translatef(-ST_WIDTH/2, -ST_HEIGHT * hud->showBar, 0);
 
     drawStatusBarBackground(player);
-
-    DGL_Translatef(0, -(SCREENHEIGHT-ST_HEIGHT), 0);
-
     drawChain(hud);
     drawWidgets(hud);
 
@@ -1213,9 +1210,7 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
         else
             scale = (float)viewW/SCREENWIDTH;
 
-        if(hud->statusbarActive)
-            scale *= cfg.statusbarScale / 20.0f;
-        else
+        if(!hud->statusbarActive)
             scale *= cfg.hudScale;
 
         x = y = 0;

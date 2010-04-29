@@ -46,57 +46,57 @@
 
 // Inventory
 #define ST_INVENTORYX       (50)
-#define ST_INVENTORYY       (163)
+#define ST_INVENTORYY       (1)
 
 // Current inventory item.
 #define ST_INVITEMX         (143)
-#define ST_INVITEMY         (163)
+#define ST_INVITEMY         (1)
 
 // Current inventory item count.
 #define ST_INVITEMCWIDTH    (2) // Num digits
 #define ST_INVITEMCX        (174)
-#define ST_INVITEMCY        (184)
+#define ST_INVITEMCY        (22)
 
 // HEALTH number pos.
 #define ST_HEALTHWIDTH          3
 #define ST_HEALTHX              64
-#define ST_HEALTHY              176
+#define ST_HEALTHY              14
 
 // MANA A
 #define ST_MANAAWIDTH           3
 #define ST_MANAAX               91
-#define ST_MANAAY               181
+#define ST_MANAAY               19
 
 // MANA A ICON
 #define ST_MANAAICONX           77
-#define ST_MANAAICONY           164
+#define ST_MANAAICONY           2
 
 // MANA A VIAL
 #define ST_MANAAVIALX           94
-#define ST_MANAAVIALY           164
+#define ST_MANAAVIALY           2
 
 // MANA B
 #define ST_MANABWIDTH           3
 #define ST_MANABX               123
-#define ST_MANABY               181
+#define ST_MANABY               19
 
 // MANA B ICON
 #define ST_MANABICONX           110
-#define ST_MANABICONY           164
+#define ST_MANABICONY           2
 
 // MANA B VIAL
 #define ST_MANABVIALX           102
-#define ST_MANABVIALY           164
+#define ST_MANABVIALY           2
 
 // ARMOR number pos.
 #define ST_ARMORWIDTH           2
 #define ST_ARMORX               274
-#define ST_ARMORY               176
+#define ST_ARMORY               14
 
 // Frags pos.
 #define ST_FRAGSWIDTH           3
 #define ST_FRAGSX               64
-#define ST_FRAGSY               176
+#define ST_FRAGSY               14
 
 // TYPES -------------------------------------------------------------------
 
@@ -325,8 +325,7 @@ static void drawKeyBar(hudstate_t* hud)
     {
         if(plr->keys & (1 << i))
         {
-            GL_DrawPatchLitAlpha(xPosition, 163, 1, hud->statusbarCounterAlpha,
-                                 dpKeySlot[i].lump);
+            GL_DrawPatchLitAlpha(xPosition, 1, 1, hud->statusbarCounterAlpha, dpKeySlot[i].lump);
             xPosition += 20;
         }
     }
@@ -344,19 +343,15 @@ static void drawKeyBar(hudstate_t* hud)
 
         if(plr->armorPoints[i] <= (PCLASS_INFO(pClass)->armorIncrement[i] >> 2))
         {
-            GL_DrawPatchLitAlpha(150 + 31 * i, 164, 1, hud->statusbarCounterAlpha * 0.3,
-                                 dpArmorSlot[i].lump);
+            GL_DrawPatchLitAlpha(150 + 31 * i, 2, 1, hud->statusbarCounterAlpha * 0.3, dpArmorSlot[i].lump);
         }
-        else if(plr->armorPoints[i] <=
-                (PCLASS_INFO(pClass)->armorIncrement[i] >> 1))
+        else if(plr->armorPoints[i] <= (PCLASS_INFO(pClass)->armorIncrement[i] >> 1))
         {
-            GL_DrawPatchLitAlpha(150 + 31 * i, 164, 1, hud->statusbarCounterAlpha * 0.6,
-                                 dpArmorSlot[i].lump);
+            GL_DrawPatchLitAlpha(150 + 31 * i, 2, 1, hud->statusbarCounterAlpha * 0.6, dpArmorSlot[i].lump);
         }
         else
         {
-            GL_DrawPatchLitAlpha(150 + 31 * i, 164, 1, hud->statusbarCounterAlpha,
-                                 dpArmorSlot[i].lump);
+            GL_DrawPatchLitAlpha(150 + 31 * i, 2, 1, hud->statusbarCounterAlpha, dpArmorSlot[i].lump);
         }
     }
 }
@@ -415,12 +410,12 @@ static void drawChain(hudstate_t* hud)
         234  // Purple
     };
 
-    int                 x, y, w, h;
-    int                 pClass, pColor;
-    float               healthPos;
-    int                 gemXOffset;
-    float               gemglow, rgb[3];
-    int                 player = hud - hudStates;
+    int x, y, w, h;
+    int pClass, pColor;
+    float healthPos;
+    int gemXOffset;
+    float gemglow, rgb[3];
+    int player = hud - hudStates;
 
     hud->oldHealth = hud->healthMarker;
 
@@ -450,7 +445,7 @@ static void drawChain(hudstate_t* hud)
 
     // Draw the chain.
     x = 43;
-    y = 193;
+    y = ST_HEIGHT-7;
     w = ST_WIDTH - 43 - 43;
     h = 7;
 
@@ -481,9 +476,7 @@ static void drawChain(hudstate_t* hud)
 
     if(gemXOffset + dpLifeGem[pClass][pColor].width < w)
     {   // Right chain section.
-        float               cw =
-            (w - (float)gemXOffset - dpLifeGem[pClass][pColor].width) /
-                dpChain[pClass].width;
+        float cw = (w - (float)gemXOffset - dpLifeGem[pClass][pColor].width) / dpChain[pClass].width;
 
         DGL_Begin(DGL_QUADS);
             DGL_TexCoord2f(0, 0, 0);
@@ -539,8 +532,7 @@ static void drawChain(hudstate_t* hud)
     DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
 
     R_GetColorPaletteRGBf(0, rgb, theirColors[pColor], false);
-    DGL_DrawRect(x + gemXOffset + 23, y - 6, 41, 24, rgb[0], rgb[1],
-                 rgb[2], gemglow - (1 - hud->statusbarCounterAlpha));
+    DGL_DrawRect(x + gemXOffset + 23, y - 6, 41, 24, rgb[0], rgb[1], rgb[2], gemglow - (1 - hud->statusbarCounterAlpha));
 
     DGL_BlendMode(BM_NORMAL);
     DGL_Color4f(1, 1, 1, 1);
@@ -1213,9 +1205,9 @@ void ST_doPaletteStuff(int player)
 
 static void drawWidgets(hudstate_t* hud)
 {
-    int                 player = hud - hudStates;
-    player_t*           plr = &players[player];
-    float               alpha = hud->statusbarCounterAlpha;
+    int player = hud - hudStates;
+    player_t* plr = &players[player];
+    float alpha = hud->statusbarCounterAlpha;
 
     hud->oldHealth = -1;
     if(!Hu_InventoryIsOpen(player))
@@ -1245,18 +1237,14 @@ static void drawWidgets(hudstate_t* hud)
 
             // Draw the mana bars
             DGL_SetNoMaterial();
-            DGL_DrawRect(95, 165, 3,
-                         22 - (22 * plr->ammo[AT_BLUEMANA].owned) / MAX_MANA,
-                         0, 0, 0, alpha);
-            DGL_DrawRect(103, 165, 3,
-                         22 - (22 * plr->ammo[AT_GREENMANA].owned) / MAX_MANA,
-                         0, 0, 0, alpha);
+            DGL_DrawRect(95, 3, 3, 22 - (22 * plr->ammo[AT_BLUEMANA].owned) / MAX_MANA, 0, 0, 0, alpha);
+            DGL_DrawRect(103, 3, 3, 22 - (22 * plr->ammo[AT_GREENMANA].owned) / MAX_MANA, 0, 0, 0, alpha);
 
             // Current inventory item.
             if((readyItem = P_InventoryReadyItem(player)) != IIT_NONE)
             {
-                int                 x, y;
-                lumpnum_t           patch;
+                int x, y;
+                lumpnum_t patch;
 
                 if(hud->currentInvItemFlash > 0)
                 {
@@ -1276,12 +1264,9 @@ static void drawWidgets(hudstate_t* hud)
 
                 if(!(hud->currentInvItemFlash > 0))
                 {
-                    uint                count =
-                        P_InventoryCount(player, readyItem);
-
+                    uint count = P_InventoryCount(player, readyItem);
                     if(count > 1)
-                        Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, ST_INVITEMCX,
-                                        ST_INVITEMCY, alpha);
+                        Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, ST_INVITEMCX, ST_INVITEMCY, alpha);
                 }
             }
         }
@@ -1639,35 +1624,38 @@ uiwidget_t widgetsBottom[] = {
 static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
 {
     hudstate_t* hud = &hudStates[player];
-    int needWidth = ((viewW >= viewH)? (float)viewH/SCREENHEIGHT : (float)viewW/SCREENWIDTH) * ST_WIDTH;
+    int needWidth;
+    float scaleX, scaleY;
 
     if(!hud->statusbarActive)
         return;
+
+    needWidth = ((viewW >= viewH)? (float)viewH/SCREENHEIGHT : (float)viewW/SCREENWIDTH) * ST_WIDTH;
+    scaleX = scaleY = cfg.statusbarScale / 20.0f;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
     DGL_Translatef(x, y, 0);
 
-    /// \fixme Should be done higher up rather than counteract (hence the fudge).
     if(pickStatusbarScalingStrategy(viewW, viewH))
     {
-        DGL_Scalef((float)viewW/needWidth+0.01f/*fudge*/, 1, 1);
+        scaleX *= (float)viewW/needWidth;
     }
     else
     {
         if(needWidth > viewW)
-            DGL_Scalef((float)viewW/needWidth, (float)viewW/needWidth, 1);
+        {
+            scaleX *= (float)viewW/needWidth;
+            scaleY *= (float)viewW/needWidth;
+        }
     }
 
+    DGL_Scalef(scaleX, scaleY, 1);
     DGL_Translatef(-ST_WIDTH/2, -ST_HEIGHT * hud->showBar, 0);
 
     drawStatusBarBackground(player);
-
     if(!Hu_InventoryIsOpen(player) && !AM_IsActive(AM_MapForPlayer(player)))
         drawWeaponPieces(hud);
-
-    DGL_Translatef(0, -(SCREENHEIGHT-ST_HEIGHT), 0);
-
     drawChain(hud);
     drawWidgets(hud);
 
@@ -1750,9 +1738,7 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
         else
             scale = (float)viewW/SCREENWIDTH;
 
-        if(hud->statusbarActive)
-            scale *= cfg.statusbarScale / 20.0f;
-        else
+        if(!hud->statusbarActive)
             scale *= cfg.hudScale;
 
         x = y = 0;

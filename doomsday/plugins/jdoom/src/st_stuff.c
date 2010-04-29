@@ -59,10 +59,8 @@
 
 // Location of status bar
 #define ST_X                (0)
-#define ST_X2               (104)
 
 #define ST_FX               (144)
-#define ST_FY               (169)
 
 // Number of status faces.
 #define ST_NUMPAINFACES     (5)
@@ -86,7 +84,7 @@
 #define ST_DEADFACE         (ST_GODFACE+1)
 
 #define ST_FACESX           (143)
-#define ST_FACESY           (168)
+#define ST_FACESY           (0)
 
 #define ST_EVILGRINCOUNT    (2*TICRATE)
 #define ST_STRAIGHTFACECOUNT (TICRATE/2)
@@ -96,93 +94,56 @@
 
 #define ST_MUCHPAIN         (20)
 
-// AMMO number pos.
-#define ST_CURRENTAMMOWIDTH (3)
-#define ST_CURRENTAMMOX     (44)
-#define ST_CURRENTAMMOY     (171)
-
 // HEALTH number pos.
 #define ST_HEALTHWIDTH      (3)
 #define ST_HEALTHX          (90)
-#define ST_HEALTHY          (171)
+#define ST_HEALTHY          (3)
 
 // Weapon pos.
 #define ST_ARMSX            (111)
-#define ST_ARMSY            (172)
+#define ST_ARMSY            (4)
 #define ST_ARMSBGX          (104)
-#define ST_ARMSBGY          (168)
+#define ST_ARMSBGY          (1)
 #define ST_ARMSXSPACE       (12)
 #define ST_ARMSYSPACE       (10)
 
 // Frags pos.
 #define ST_FRAGSX           (138)
-#define ST_FRAGSY           (171)
+#define ST_FRAGSY           (3)
 #define ST_FRAGSWIDTH       (2)
 
 // ARMOR number pos.
 #define ST_ARMORWIDTH       (3)
 #define ST_ARMORX           (221)
-#define ST_ARMORY           (171)
+#define ST_ARMORY           (3)
 
 // Key icon positions.
 #define ST_KEY0WIDTH        (8)
 #define ST_KEY0HEIGHT       (5)
 #define ST_KEY0X            (239)
-#define ST_KEY0Y            (171)
+#define ST_KEY0Y            (3)
 #define ST_KEY1WIDTH        (ST_KEY0WIDTH)
 #define ST_KEY1X            (239)
-#define ST_KEY1Y            (181)
+#define ST_KEY1Y            (13)
 #define ST_KEY2WIDTH        (ST_KEY0WIDTH)
 #define ST_KEY2X            (239)
-#define ST_KEY2Y            (191)
+#define ST_KEY2Y            (23)
 
 // Ready Ammunition counter.
 #define ST_READYAMMOWIDTH   (3)
 #define ST_READYAMMOX       (44)
-#define ST_READYAMMOY       (171)
+#define ST_READYAMMOY       (3)
 
 // Ammo counters.
 #define ST_AMMOWIDTH        (3)
 #define ST_AMMOHEIGHT       (6)
 #define ST_AMMOX            (288)
-#define ST_AMMOY            (173)
+#define ST_AMMOY            (5)
 
 #define ST_MAXAMMOWIDTH     (3)
 #define ST_MAXAMMOHEIGHT    (6)
 #define ST_MAXAMMOX         (314)
-#define ST_MAXAMMOY         (173)
-
-// Pistol.
-#define ST_WEAPON0X         (110)
-#define ST_WEAPON0Y         (172)
-
-// Shotgun.
-#define ST_WEAPON1X         (122)
-#define ST_WEAPON1Y         (172)
-
-// Chain gun.
-#define ST_WEAPON2X         (134)
-#define ST_WEAPON2Y         (172)
-
-// Missile launcher.
-#define ST_WEAPON3X         (110)
-#define ST_WEAPON3Y         (181)
-
-// Plasma gun.
-#define ST_WEAPON4X         (122)
-#define ST_WEAPON4Y         (181)
-
- // BFG.
-#define ST_WEAPON5X         (134)
-#define ST_WEAPON5Y         (181)
-
-// WPNS title.
-#define ST_WPNSX            (109)
-#define ST_WPNSY            (191)
-
- // DETH title.
-#define ST_DETHX            (109)
-#define ST_DETHY            (191)
+#define ST_MAXAMMOY         (5)
 
 // TYPES -------------------------------------------------------------------
 
@@ -969,32 +930,36 @@ static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeigh
 static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
 {
     hudstate_t* hud = &hudStates[player];
-    int needWidth = ((viewW >= viewH)? (float)viewH/SCREENHEIGHT : (float)viewW/SCREENWIDTH) * ST_WIDTH;
+    int needWidth;
+    float scaleX, scaleY;
 
     if(!hud->statusbarActive)
         return;
+
+    needWidth = ((viewW >= viewH)? (float)viewH/SCREENHEIGHT : (float)viewW/SCREENWIDTH) * ST_WIDTH;
+    scaleX = scaleY = cfg.statusbarScale / 20.0f;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
     DGL_Translatef(x, y, 0);
 
-    /// \fixme Should be done higher up rather than counteract (hence the fudge).
     if(pickStatusbarScalingStrategy(viewW, viewH))
     {
-        DGL_Scalef((float)viewW/needWidth+0.01f/*fudge*/, 1, 1);
+        scaleX *= (float)viewW/needWidth;
     }
     else
     {
         if(needWidth > viewW)
-            DGL_Scalef((float)viewW/needWidth, (float)viewW/needWidth, 1);
+        {
+            scaleX *= (float)viewW/needWidth;
+            scaleY *= (float)viewW/needWidth;
+        }
     }
 
+    DGL_Scalef(scaleX, scaleY, 1);
     DGL_Translatef(-ST_WIDTH/2, -ST_HEIGHT * hud->showBar, 0);
 
     drawStatusBarBackground(player);
-
-    DGL_Translatef(0, -(SCREENHEIGHT-ST_HEIGHT), 0);
-
     drawWidgets(hud);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1348,9 +1313,7 @@ void ST_Drawer(int player, int fullscreenMode, boolean refresh)
         else
             scale = (float)viewW/SCREENWIDTH;
 
-        if(hud->statusbarActive)
-            scale *= cfg.statusbarScale / 20.0f;
-        else
+        if(!hud->statusbarActive)
             scale *= cfg.hudScale;
 
         x = y = 0;
