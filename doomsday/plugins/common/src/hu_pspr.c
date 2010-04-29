@@ -107,9 +107,9 @@ float HU_PSpriteYOffset(player_t* pl)
     if(viewWindowHeight < SCREENHEIGHT)
     {
 # if __JDOOM__
-        offy -= (float) (ST_HEIGHT) * (cfg.statusbarScale / 20.f) - 16;
+        offy -= (float) (ST_HEIGHT) * cfg.statusbarScale - 16;
 # else
-        offy -= (float) (ST_HEIGHT-1) * (cfg.statusbarScale / 20.f) - 20;
+        offy -= (float) (ST_HEIGHT-1) * cfg.statusbarScale - 20;
 # endif
     }
 #endif

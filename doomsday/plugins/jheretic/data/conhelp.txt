@@ -824,7 +824,7 @@ desc = Corpse vanish time in seconds, 0=disabled.
 desc = Scaling for HUD info.
 
 [hud-status-size]
-desc = Status bar size (1-20).
+desc = Status bar size.
 
 [hud-color-r]
 desc = HUD info color red component.

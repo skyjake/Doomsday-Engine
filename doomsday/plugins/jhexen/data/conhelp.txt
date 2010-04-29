@@ -851,7 +851,7 @@ desc = 1=Translucent frozen monsters.
 desc = Scaling for HUD info.
 
 [hud-status-size]
-desc = Status bar size (1-20).
+desc = Status bar size.
 
 [hud-color-r]
 desc = HUD info color red component.

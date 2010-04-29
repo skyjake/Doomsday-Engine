@@ -125,7 +125,7 @@ typedef struct jdoom_config_s {
     byte            coopRespawnItems;
     byte            respawnMonstersNightmare;
 
-    int             statusbarScale;
+    float           statusbarScale;
     float           statusbarOpacity;
     float           statusbarCounterAlpha;
 

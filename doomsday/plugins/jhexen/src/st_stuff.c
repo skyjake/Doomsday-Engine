@@ -192,7 +192,7 @@ cvar_t sthudCVars[] = {
     // HUD scale
     {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 10},
 
-    {"hud-status-size", 0, CVT_INT, &cfg.statusbarScale, 1, 20, updateViewWindow},
+    {"hud-status-size", 0, CVT_FLOAT, &cfg.statusbarScale, 0.1f, 1, updateViewWindow},
 
     // HUD colour + alpha
     {"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1},
@@ -1631,7 +1631,7 @@ static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
         return;
 
     needWidth = ((viewW >= viewH)? (float)viewH/SCREENHEIGHT : (float)viewW/SCREENWIDTH) * ST_WIDTH;
-    scaleX = scaleY = cfg.statusbarScale / 20.0f;
+    scaleX = scaleY = cfg.statusbarScale;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();

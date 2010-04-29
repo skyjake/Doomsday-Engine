@@ -441,7 +441,7 @@ void G_PreInit(void)
     cfg.fixOuchFace = true;
     cfg.fixStatusbarOwnedWeapons = true;
 
-    cfg.statusbarScale = 20; // Full size.
+    cfg.statusbarScale = 1;
     cfg.statusbarOpacity = 1;
     cfg.statusbarCounterAlpha = 1;
 

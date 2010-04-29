@@ -258,7 +258,7 @@ void G_PreInit(void)
     cfg.playerMoveSpeed = 1;
     cfg.dclickUse = false;
     cfg.povLookAround = true;
-    cfg.statusbarScale = 20;         // Full size.
+    cfg.statusbarScale = 1;
     cfg.screenBlocks = cfg.setBlocks = 10;
     cfg.echoMsg = true;
     cfg.lookSpeed = 3;

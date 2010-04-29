@@ -3153,7 +3153,7 @@ void M_DrawHUDMenu(void)
 #if !__JDOOM64__
     // Statusbar options:
     idx += 2;
-    MN_DrawSlider(menu, idx++, 20, cfg.statusbarScale - 1);
+    MN_DrawSlider(menu, idx++, 11, cfg.statusbarScale * 11 - 1 + .25f);
 #if __JHERETIC__ || __JHEXEN__
     idx += 2;
 #endif
@@ -3312,7 +3312,7 @@ void M_WeaponRecoil(int option, void* context)
 #if !__JDOOM64__
 void M_SizeStatusBar(int option, void* context)
 {
-    DD_Execute(true, option == RIGHT_DIR? "add hud-status-size 1" : "sub hud-status-size 1");
+    DD_Execute(true, option == RIGHT_DIR? "add hud-status-size 0.1" : "sub hud-status-size 0.1");
 }
 
 void M_StatusBarOpacity(int option, void* context)

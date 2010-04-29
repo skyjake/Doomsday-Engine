@@ -241,7 +241,7 @@ void G_PreInit(void)
     // but these will be used no such files are found.
     memset(&cfg, 0, sizeof(cfg));
     cfg.playerMoveSpeed = 1;
-    cfg.statusbarScale = 20;
+    cfg.statusbarScale = 1;
     cfg.dclickUse = false;
     cfg.screenBlocks = cfg.setBlocks = 10;
     cfg.hudShown[HUD_MANA] = true;

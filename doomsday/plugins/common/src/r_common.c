@@ -158,7 +158,7 @@ void R_UpdateViewWindow(boolean force)
     if(cfg.screenBlocks <= 10)
     {
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-        float fscale = cfg.statusbarScale / 20.f;
+        float fscale = cfg.statusbarScale;
         int statusBarHeight, needWidth, viewW, viewH;
 
         R_GetViewPort(0, NULL, NULL, &viewW, &viewH);

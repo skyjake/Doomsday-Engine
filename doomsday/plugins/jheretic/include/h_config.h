@@ -125,7 +125,7 @@ typedef struct jheretic_config_s {
 
 
 
-    int             statusbarScale;
+    float           statusbarScale;
     float           statusbarOpacity;
     float           statusbarCounterAlpha;
 

@@ -626,7 +626,7 @@ desc = 1=Joystick values => look angle delta.
 desc = Scaling for HUD info.
 
 [hud-status-size]
-desc = Status bar size (1-20).
+desc = Status bar size.
 
 [hud-status-weaponslots-ownedfix]
 desc = 1= Fix original DOOM behavior when drawing the statusbar owned weapon display.

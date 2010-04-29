@@ -1371,7 +1371,7 @@ static void renderMapName(const automap_t* map)
             if(cfg.screenBlocks <= 11 || cfg.automapHudDisplay == 2)
             {   // We may need to adjust for the height of the statusbar
                 otherY = ST_Y;
-                otherY += ST_HEIGHT * (1 - (cfg.statusbarScale / 20.0f));
+                otherY += ST_HEIGHT * (1 - cfg.statusbarScale);
 
                 if(y > otherY)
                     y = otherY;

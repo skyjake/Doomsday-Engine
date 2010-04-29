@@ -97,7 +97,7 @@ typedef struct {
     byte            xhairVitality;
     float           xhairColor[4];
 
-    int             statusbarScale;
+    float           statusbarScale;
     float           statusbarOpacity;
     float           statusbarCounterAlpha;
 
