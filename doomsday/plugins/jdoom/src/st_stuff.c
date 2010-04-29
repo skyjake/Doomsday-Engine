@@ -292,43 +292,37 @@ void ST_Register(void)
         Con_AddVariable(sthudCVars + i);
 }
 
-static void drawStatusBarBackground(int player)
+void drawStatusBarBackground(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
-    float width = ST_WIDTH;
-    float height = ST_HEIGHT;
-    float x, y, w, h;
-    float cw, cw2, ch;
-    float alpha;
+#define WIDTH (ST_WIDTH)
+#define HEIGHT (ST_HEIGHT)
+#define ORIGINX (-WIDTH/2)
+#define ORIGINY (-HEIGHT)
+
     hudstate_t* hud = &hudStates[player];
+    float x = ORIGINX, y = ORIGINY, w = WIDTH, h = HEIGHT;
     float armsBGX = ST_ARMSBGX - armsBackground.leftOffset;
+    float cw, cw2, ch;
+
+    if(!hud->statusbarActive)
+        return;
 
     DGL_SetPatch(statusbar.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_Color4f(1, 1, 1, iconAlpha);
 
-    if(hud->blended)
-    {
-        alpha = cfg.statusbarOpacity - hud->hideAmount;
-        if(!(alpha > 0))
-            return;
-
-        alpha = MINMAX_OF(0.f, alpha, 1.f);
-    }
-    else
-        alpha = 1.0f;
-
-    DGL_Color4f(1, 1, 1, alpha);
-
-    if(!(alpha < 1))
+    if(!(iconAlpha < 1))
     {
         // We can draw the full graphic in one go.
         DGL_Begin(DGL_QUADS);
             DGL_TexCoord2f(0, 0, 0);
-            DGL_Vertex2f(0, 0);
+            DGL_Vertex2f(x, y);
             DGL_TexCoord2f(0, 1, 0);
-            DGL_Vertex2f(width, 0);
+            DGL_Vertex2f(x + w, y);
             DGL_TexCoord2f(0, 1, 1);
-            DGL_Vertex2f(width, height);
+            DGL_Vertex2f(x + w, y + h);
             DGL_TexCoord2f(0, 0, 1);
-            DGL_Vertex2f(0, height);
+            DGL_Vertex2f(x, y + h);
         DGL_End();
     }
     else
@@ -337,11 +331,9 @@ static void drawStatusBarBackground(int player)
         DGL_Begin(DGL_QUADS);
 
         // Up to faceback if deathmatch, else ST_ARMS.
-        x = 0;
-        y = 0;
-        w = width * (float) ((hud->statusbarActive && !deathmatch) ? armsBGX : ST_FX) / ST_WIDTH;
-        h = height * (float) ST_HEIGHT / ST_HEIGHT;
-        cw = w / width;
+        w = !deathmatch ? armsBGX : ST_FX;
+        h = HEIGHT;
+        cw = w / WIDTH;
 
         DGL_TexCoord2f(0, 0, 0);
         DGL_Vertex2f(x, y);
@@ -357,32 +349,32 @@ static void drawStatusBarBackground(int player)
             // Fill in any gap left before the faceback due to small ARMS.
             if(armsBGX + armsBackground.width < ST_FX)
             {
-                x = width * (float) (armsBGX + armsBackground.width) / ST_WIDTH;
-                y = 0;
-                w = width * (float) (ST_FX - armsBGX - armsBackground.width) / ST_WIDTH;
-                h = height * (float) (ST_HEIGHT) / ST_HEIGHT;
-                cw = x / width;
-                cw2 = (x + w) / width;
-                ch = h / height;
+                int sectionWidth = armsBGX + armsBackground.width;
+                x = ORIGINX + sectionWidth;
+                y = ORIGINY;
+                w = ST_FX - armsBGX - armsBackground.width;
+                h = HEIGHT;
+                cw = (float)sectionWidth / WIDTH;
+                cw2 = (sectionWidth + w) / WIDTH;
 
                 DGL_TexCoord2f(0, cw, 0);
                 DGL_Vertex2f(x, y);
                 DGL_TexCoord2f(0, cw2, 0);
                 DGL_Vertex2f(x + w, y);
-                DGL_TexCoord2f(0, cw2, ch);
+                DGL_TexCoord2f(0, cw2, 1);
                 DGL_Vertex2f(x + w, y + h);
-                DGL_TexCoord2f(0, cw, ch);
+                DGL_TexCoord2f(0, cw, 1);
                 DGL_Vertex2f(x, y + h);
             }
 
             // Awkward, 2 pixel tall strip above faceback.
-            x = width * (float) (ST_FX) / ST_WIDTH;
-            y = 0;
-            w = width * (float) (ST_WIDTH - ST_FX - 141 - 2) / ST_WIDTH;
-            h = height * (float) (ST_HEIGHT - 30) / ST_HEIGHT;
-            cw = x / width;
-            cw2 = (x + w) / width;
-            ch = h / height;
+            x = ORIGINX + ST_FX;
+            y = ORIGINY;
+            w = WIDTH - ST_FX - 141 - 2;
+            h = HEIGHT - 30;
+            cw = (float)ST_FX / WIDTH;
+            cw2 = (float)(ST_FX + w) / WIDTH;
+            ch = h / HEIGHT;
 
             DGL_TexCoord2f(0, cw, 0);
             DGL_Vertex2f(x, y);
@@ -394,13 +386,13 @@ static void drawStatusBarBackground(int player)
             DGL_Vertex2f(x, y + h);
 
             // Awkward, 1 pixel tall strip bellow faceback.
-            x = width * (float) (ST_FX) / ST_WIDTH;
-            y = height * (float) (ST_HEIGHT - 1) / ST_HEIGHT;
-            w = width * (float) (ST_WIDTH - ST_FX - 141 - 2) / ST_WIDTH;
-            h = height * (float) (ST_HEIGHT - 31) / ST_HEIGHT;
-            cw = x / width;
-            cw2 = (x + w) / width;
-            ch = (ST_HEIGHT - 1) / height;
+            x = ORIGINX + ST_FX;
+            y = ORIGINY + (HEIGHT - 1);
+            w = WIDTH - ST_FX - 141 - 2;
+            h = HEIGHT - 31;
+            cw = (float)ST_FX / WIDTH;
+            cw2 = (float)(ST_FX + w) / WIDTH;
+            ch = (float)(HEIGHT - 1) / HEIGHT;
 
             DGL_TexCoord2f(0, cw, ch);
             DGL_Vertex2f(x, y);
@@ -412,20 +404,24 @@ static void drawStatusBarBackground(int player)
             DGL_Vertex2f(x, y + h);
 
             // After faceback.
-            x = width * (float) (ST_FX + (ST_WIDTH - ST_FX - 141 - 2)) / ST_WIDTH;
-            y = 0;
-            w = width * (float) (ST_WIDTH - (ST_FX + (ST_WIDTH - ST_FX - 141 - 2))) / ST_WIDTH;
-            h = height * (float) ST_HEIGHT / ST_HEIGHT;
-            cw = x / width;
+            {
+            int sectionWidth = ST_FX + (WIDTH - ST_FX - 141 - 2);
+            x = ORIGINX + sectionWidth;
+            y = ORIGINY;
+            w = WIDTH - sectionWidth;
+            h = HEIGHT;
+            cw = (float)sectionWidth / WIDTH;
+            }
         }
         else
         {
             // Including area behind the face status indicator.
-            x = width * (float) (armsBGX + armsBackground.width) / ST_WIDTH;
-            y = 0;
-            w = width * (float) (ST_WIDTH - armsBGX - armsBackground.width) / ST_WIDTH;
-            h = height * (float) ST_HEIGHT / ST_HEIGHT;
-            cw = x / width;
+            int sectionWidth = armsBGX + armsBackground.width;
+            x = ORIGINX + sectionWidth;
+            y = ORIGINY;
+            w = WIDTH - sectionWidth;
+            h = HEIGHT;
+            cw = (float)sectionWidth / WIDTH;
         }
 
         DGL_TexCoord2f(0, cw, 0);
@@ -444,10 +440,10 @@ static void drawStatusBarBackground(int player)
     {   // Draw the ARMS background.
         DGL_SetPatch(armsBackground.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
-        x = width * ((float) armsBGX - ST_X) / ST_WIDTH;
-        y = height * ((float) armsBackground.topOffset) / ST_HEIGHT;
-        w = width * ((float) armsBackground.width) / ST_WIDTH;
-        h = height * ((float) armsBackground.height) / ST_HEIGHT;
+        x = ORIGINX + armsBGX;
+        y = ORIGINY + armsBackground.topOffset;
+        w = armsBackground.width;
+        h = armsBackground.height;
 
         DGL_Begin(DGL_QUADS);
             DGL_TexCoord2f(0, 0, 0);
@@ -461,20 +457,20 @@ static void drawStatusBarBackground(int player)
         DGL_End();
     }
 
-    if(IS_NETGAME) // Faceback.
+    // Faceback?
+    if(IS_NETGAME)
     {
-        int             plrColor = cfg.playerColor[player];
-        dpatch_t*       patch = &faceBackground[plrColor];
+        const dpatch_t* patch = &faceBackground[cfg.playerColor[player%MAXPLAYERS]%4];
 
         DGL_SetPatch(patch->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
-        x = width * (float) (ST_FX - ST_X) / ST_WIDTH;
-        y = height * (float) (ST_HEIGHT - 30) / ST_HEIGHT;
-        w = width * (float) (ST_WIDTH - ST_FX - 141 - 2) / ST_WIDTH;
-        h = height * (float) (ST_HEIGHT - 3) / ST_HEIGHT;
-        cw = (float) (1) / patch->width;
-        cw2 = (float) (patch->width - 1) / patch->width;
-        ch = (float) (patch->height - 1) / patch->height;
+        x = ORIGINX + (ST_FX - ST_X);
+        y = ORIGINY + (HEIGHT - 30);
+        w = WIDTH - ST_FX - 141 - 2;
+        h = HEIGHT - 3;
+        cw = 1.f / patch->width;
+        cw2 = ((float)patch->width - 1) / patch->width;
+        ch = ((float)patch->height - 1) / patch->height;
 
         DGL_Begin(DGL_QUADS);
             DGL_TexCoord2f(0, cw, 0);
@@ -487,6 +483,14 @@ static void drawStatusBarBackground(int player)
             DGL_Vertex2f(x, y + h);
         DGL_End();
     }
+
+    *drawnWidth = WIDTH;
+    *drawnHeight = HEIGHT;
+
+#undef WIDTH
+#undef HEIGHT
+#undef ORIGINX
+#undef ORIGINY
 }
 
 /**
@@ -840,17 +844,127 @@ void ST_doPaletteStuff(int player)
         plr->plr->flags &= ~DDPF_VIEW_FILTER;
 }
 
+void drawReadyAmmoWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
+{
+    hudstate_t* hud = &hudStates[player];
+    if(!hud->statusbarActive)
+        return;
+    STlib_DrawNum(&hud->wReadyWeapon, textAlpha);
+    *drawnWidth = tallNum[0].width * 3;
+    *drawnHeight = tallNum[0].height;
+}
+
+void drawOwnedAmmoWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
+{
+    hudstate_t* hud = &hudStates[player];
+    int i;
+    if(!hud->statusbarActive)
+        return;
+    for(i = 0; i < 4; ++i)
+    {
+        STlib_DrawNum(&hud->wAmmo[i], textAlpha);
+    }
+    *drawnWidth = shortNum[0].width;
+    *drawnHeight = (shortNum[0].height + 10) * 4;
+}
+
+void drawMaxAmmoWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
+{
+    hudstate_t* hud = &hudStates[player];
+    int i;
+    if(!hud->statusbarActive)
+        return;
+    for(i = 0; i < 4; ++i)
+    {
+        STlib_DrawNum(&hud->wMaxAmmo[i], textAlpha);
+    }
+    *drawnWidth = shortNum[0].width;
+    *drawnHeight = (shortNum[0].height + 10) * 4;
+}
+
+void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
+{
+    hudstate_t* hud = &hudStates[player];
+    if(!hud->statusbarActive)
+        return;
+    STlib_DrawPercent(&hud->wHealth, textAlpha);
+    *drawnWidth = tallNum[0].width * 3;
+    *drawnHeight = tallNum[0].height;
+}
+
+void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
+{
+    hudstate_t* hud = &hudStates[player];
+    if(!hud->statusbarActive)
+        return;
+    STlib_DrawPercent(&hud->wArmor, textAlpha);
+    *drawnWidth = tallNum[0].width * 3;
+    *drawnHeight = tallNum[0].height;
+}
+
+void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
+{
+    hudstate_t* hud = &hudStates[player];
+    if(!hud->statusbarActive || !deathmatch)
+        return;
+    STlib_DrawPercent(&hud->wArmor, textAlpha);
+    *drawnWidth = tallNum[0].width * 3;
+    *drawnHeight = tallNum[0].height;
+}
+
+void drawSBarFaceWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
+{
+    hudstate_t* hud = &hudStates[player];
+    if(!hud->statusbarActive)
+        return;
+    STlib_DrawMultiIcon(&hud->wFaces, hud->faceIndex, iconAlpha);
+    {
+    const dpatch_t* facePatch = &faces[hud->faceIndex%ST_NUMFACES];
+    *drawnWidth = facePatch->width;
+    *drawnHeight = facePatch->height;
+    }
+}
+
+void drawSBarKeysWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
+{
+    hudstate_t* hud = &hudStates[player];
+    int i, numDrawnKeys = 0;
+    if(!hud->statusbarActive)
+        return;
+    *drawnWidth = 0;
+    *drawnHeight = 0;
+    for(i = 0; i < 3; ++i)
+    {
+        const dpatch_t* patch;
+        if(hud->keyBoxes[i] == -1)
+            continue;
+        patch = &keys[hud->keyBoxes[i]%3];
+        STlib_DrawMultiIcon(&hud->wKeyBoxes[i], hud->keyBoxes[i], iconAlpha);
+        if(patch->width > *drawnWidth)
+            *drawnWidth = patch->width;
+        *drawnHeight += patch->height;
+    }
+    *drawnHeight += (numDrawnKeys-1) * 10;
+}
+
 typedef struct {
     hudstate_t*     hud;
     int             slot;
     float           alpha;
 } drawownedweapondisply_params_t;
 
-int drawOwnedWeaponDisplay(weapontype_t type, void* context)
+int drawOwnedWeaponWidget2(weapontype_t type, void* context)
 {
-    drawownedweapondisply_params_t* params =
-        (drawownedweapondisply_params_t*) context;
-    const player_t*     plr = &players[params->hud - hudStates];
+    drawownedweapondisply_params_t* params = (drawownedweapondisply_params_t*) context;
+    const player_t* plr = &players[params->hud - hudStates];
 
     if(cfg.fixStatusbarOwnedWeapons)
     {
@@ -858,59 +972,31 @@ int drawOwnedWeaponDisplay(weapontype_t type, void* context)
             return 1; // Continue iteration.
     }
 
-    STlib_DrawMultiIcon(&params->hud->wArms[params->slot],
-                        plr->weapons[type].owned ? 1 : 0, params->alpha);
-
+    STlib_DrawMultiIcon(&params->hud->wArms[params->slot], plr->weapons[type].owned ? 1 : 0, params->alpha);
     return 0; // Stop iteration.
 }
 
-static void drawWidgets(hudstate_t* hud)
+void drawOwnedWeaponWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
-    int                 i;
-    float               alpha = hud->statusbarCounterAlpha;
-
-    STlib_DrawNum(&hud->wReadyWeapon, alpha);
-
-    for(i = 0; i < 4; ++i)
+    hudstate_t* hud = &hudStates[player];
+    int i;
+    if(!hud->statusbarActive || deathmatch)
+        return;
+    for(i = 0; i < 6; ++i)
     {
-        STlib_DrawNum(&hud->wAmmo[i], alpha);
-        STlib_DrawNum(&hud->wMaxAmmo[i], alpha);
-    }
+        drawownedweapondisply_params_t params;
+        int result;
 
-    STlib_DrawPercent(&hud->wHealth, alpha);
-    STlib_DrawPercent(&hud->wArmor, alpha);
+        params.hud = hud;
+        params.slot = i;
+        params.alpha = textAlpha;
 
-    if(!deathmatch)
-    {
-        for(i = 0; i < 6; ++i)
-        {
-            int                 result;
-            drawownedweapondisply_params_t params;
+        result = P_IterateWeaponsInSlot(i+1, true, drawOwnedWeaponWidget2, &params);
 
-            params.hud = hud;
-            params.slot = i;
-            params.alpha = alpha;
-
-            result =
-                P_IterateWeaponsInSlot(i+1, true, drawOwnedWeaponDisplay,
-                                       &params);
-
-            if(cfg.fixStatusbarOwnedWeapons && result)
-            {   // No weapon bound to slot is owned by player.
-                STlib_DrawMultiIcon(&hud->wArms[i], 0, alpha);
-            }
-        }
-    }
-    else
-        STlib_DrawNum(&hud->wFrags, alpha);
-
-    STlib_DrawMultiIcon(&hud->wFaces, hud->faceIndex, alpha);
-
-    for(i = 0; i < 3; ++i)
-    {
-        if(hud->keyBoxes[i] != -1)
-        {
-            STlib_DrawMultiIcon(&hud->wKeyBoxes[i], hud->keyBoxes[i], alpha);
+        if(cfg.fixStatusbarOwnedWeapons && result)
+        {   // No weapon bound to slot is owned by player.
+            STlib_DrawMultiIcon(&hud->wArms[i], 0, textAlpha);
         }
     }
 }
@@ -960,8 +1046,8 @@ static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
     DGL_Scalef(scaleX, scaleY, 1);
     DGL_Translatef(-ST_WIDTH/2, -ST_HEIGHT * hud->showBar, 0);
 
-    drawStatusBarBackground(player);
-    drawWidgets(hud);
+    //drawStatusBarBackground(player, 1, 1, NULL, NULL);
+    //drawWidgets(hud);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -1217,6 +1303,19 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
     *drawnWidth += (numDrawnKeys-1) * 2;
 }
 
+uiwidget_t widgetsStatusBar[] = {
+    { -1, NULL, 1, drawStatusBarBackground },
+    { -1, NULL, 1, drawReadyAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+    { -1, NULL, 1, drawSBarHealthWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+    { -1, NULL, 1, drawOwnedWeaponWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+    { -1, NULL, 1, drawSBarFragsWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+    { -1, NULL, 1, drawSBarFaceWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+    { -1, NULL, 1, drawSBarArmorWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+    { -1, NULL, 1, drawSBarKeysWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+    { -1, NULL, 1, drawOwnedAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+    { -1, NULL, 1, drawMaxAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha }
+};
+
 uiwidget_t widgetsBottomLeft[] = {
     { HUD_HEALTH, &cfg.hudScale, 1, drawHealthWidget },
     { HUD_AMMO, &cfg.hudScale, 1, drawAmmoWidget }
@@ -1333,17 +1432,21 @@ void ST_Drawer(int player, int fullscreenMode, boolean refresh)
 
         posX = x + width/2;
         posY = y + height;
-        drawStatusbar(player, posX, posY, viewW, viewH);
+        {
+        float alpha = hud->blended? MINMAX_OF(0.f, cfg.statusbarOpacity - hud->hideAmount, 1.f) : 1.0f;
+        UI_DrawWidgets(widgetsStatusBar, sizeof(widgetsStatusBar)/sizeof(widgetsStatusBar[0]),
+            0, 0, posX, posY, player, textAlpha, alpha, &drawnWidth, &drawnHeight);
+        }
 
         /**
          * Wide offset scaling.
          * Used with ultra-wide/tall resolutions to move the uiwidgets into
          * the viewer's primary field of vision (without this, uiwidgets
          * would be positioned at the very edges of the view window and
-         * likely outside the viewer's peripheral vision.
+         * likely into the viewer's peripheral vision range).
          *
          * \note Statusbar is exempt because it is intended to extend over
-         * the entire width of the view window and as such, uses a another
+         * the entire width of the view window and as such, uses another
          * special-case scale-positioning calculation.
          */
         if(cfg.hudWideOffset != 1)
@@ -1500,11 +1603,14 @@ static void initData(hudstate_t* hud)
 
 void ST_createWidgets(int player)
 {
+#define ORIGINX (-ST_WIDTH/2)
+#define ORIGINY (-ST_HEIGHT)
+
     typedef struct {
-        float               x, y;
+        float x, y;
     } hudelement_t;
 
-    static int          largeAmmo = 1994; // means "n/a"
+    static int largeAmmo = 1994; // means "n/a"
     static const hudelement_t ammoPos[NUM_AMMO_TYPES] =
     {
         {ST_AMMOX, ST_AMMOY},
@@ -1520,12 +1626,12 @@ void ST_createWidgets(int player)
         {ST_MAXAMMOX, ST_MAXAMMOY + (ST_AMMOHEIGHT * 2)}
     };
 
-    ammotype_t          ammoType;
-    int*                ptr = &largeAmmo;
-    int                 i;
-    boolean             found;
-    player_t*           plr = &players[player];
-    hudstate_t*         hud = &hudStates[player];
+    player_t* plr = &players[player];
+    hudstate_t* hud = &hudStates[player];
+    int* ptr = &largeAmmo;
+    ammotype_t ammoType;
+    boolean found;
+    int i;
 
     // Ready weapon ammo:
     //// \todo Only supports one type of ammo per weapon.
@@ -1534,52 +1640,42 @@ void ST_createWidgets(int player)
     {
         if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammoType])
             continue; // Weapon does not take this ammo.
-
         ptr = &plr->ammo[ammoType].owned;
         found = true;
     }
 
-    STlib_InitNum(&hud->wReadyWeapon, ST_READYAMMOX, ST_READYAMMOY, tallNum,
-                  ptr, ST_READYAMMOWIDTH, 1);
+    STlib_InitNum(&hud->wReadyWeapon, ORIGINX+ST_READYAMMOX, ORIGINY+ST_READYAMMOY, tallNum, ptr, ST_READYAMMOWIDTH, 1);
 
     // Health percentage.
-    STlib_InitPercent(&hud->wHealth, ST_HEALTHX, ST_HEALTHY, tallNum,
-                      &plr->health, &tallPercent, 1);
+    STlib_InitPercent(&hud->wHealth, ORIGINX+ST_HEALTHX, ORIGINY+ST_HEALTHY, tallNum, &plr->health, &tallPercent, 1);
 
     // Weapons owned.
     for(i = 0; i < 6; ++i)
     {
-        STlib_InitMultiIcon(&hud->wArms[i], ST_ARMSX + (i % 3) * ST_ARMSXSPACE,
-                            ST_ARMSY + (i / 3) * ST_ARMSYSPACE, arms[i], 1);
+        STlib_InitMultiIcon(&hud->wArms[i], ORIGINX+ST_ARMSX + (i % 3) * ST_ARMSXSPACE, ORIGINY+ST_ARMSY + (i / 3) * ST_ARMSYSPACE, arms[i], 1);
     }
 
     // Frags sum.
-    STlib_InitNum(&hud->wFrags, ST_FRAGSX, ST_FRAGSY, tallNum,
-                  &hud->currentFragsCount, ST_FRAGSWIDTH, 1);
+    STlib_InitNum(&hud->wFrags, ORIGINX+ST_FRAGSX, ORIGINY+ST_FRAGSY, tallNum, &hud->currentFragsCount, ST_FRAGSWIDTH, 1);
 
     // Faces.
-    STlib_InitMultiIcon(&hud->wFaces, ST_FACESX, ST_FACESY, faces, 1);
+    STlib_InitMultiIcon(&hud->wFaces, ORIGINX+ST_FACESX, ORIGINY+ST_FACESY, faces, 1);
 
     // Armor percentage - should be colored later.
-    STlib_InitPercent(&hud->wArmor, ST_ARMORX, ST_ARMORY, tallNum,
-                      &plr->armorPoints, &tallPercent, 1);
+    STlib_InitPercent(&hud->wArmor, ORIGINX+ST_ARMORX, ORIGINY+ST_ARMORY, tallNum, &plr->armorPoints, &tallPercent, 1);
 
     // Keyboxes 0-2.
-    STlib_InitMultiIcon(&hud->wKeyBoxes[0], ST_KEY0X, ST_KEY0Y, keys, 1);
+    STlib_InitMultiIcon(&hud->wKeyBoxes[0], ORIGINX+ST_KEY0X, ORIGINY+ST_KEY0Y, keys, 1);
 
-    STlib_InitMultiIcon(&hud->wKeyBoxes[1], ST_KEY1X, ST_KEY1Y, keys, 1);
+    STlib_InitMultiIcon(&hud->wKeyBoxes[1], ORIGINX+ST_KEY1X, ORIGINY+ST_KEY1Y, keys, 1);
 
-    STlib_InitMultiIcon(&hud->wKeyBoxes[2], ST_KEY2X, ST_KEY2Y, keys, 1);
+    STlib_InitMultiIcon(&hud->wKeyBoxes[2], ORIGINX+ST_KEY2X, ORIGINY+ST_KEY2Y, keys, 1);
 
     // Ammo count and max (all four kinds).
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
-        STlib_InitNum(&hud->wAmmo[i], ammoPos[i].x, ammoPos[i].y, shortNum,
-                      &plr->ammo[i].owned, ST_AMMOWIDTH, 1);
-
-        STlib_InitNum(&hud->wMaxAmmo[i], ammoMaxPos[i].x, ammoMaxPos[i].y,
-                      shortNum, &plr->ammo[i].max,
-                      ST_MAXAMMOWIDTH, 1);
+        STlib_InitNum(&hud->wAmmo[i], ORIGINX+ammoPos[i].x, ORIGINY+ammoPos[i].y, shortNum, &plr->ammo[i].owned, ST_AMMOWIDTH, 1);
+        STlib_InitNum(&hud->wMaxAmmo[i], ORIGINX+ammoMaxPos[i].x, ORIGINY+ammoMaxPos[i].y, shortNum, &plr->ammo[i].max, ST_MAXAMMOWIDTH, 1);
     }
 }
 

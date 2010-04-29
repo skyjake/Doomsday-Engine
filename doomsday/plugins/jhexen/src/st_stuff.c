@@ -1765,10 +1765,10 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
          * Used with ultra-wide/tall resolutions to move the uiwidgets into
          * the viewer's primary field of vision (without this, uiwidgets
          * would be positioned at the very edges of the view window and
-         * likely outside the viewer's peripheral vision.
+         * likely into the viewer's peripheral vision range).
          *
          * \note Statusbar is exempt because it is intended to extend over
-         * the entire width of the view window and as such, uses a another
+         * the entire width of the view window and as such, uses another
          * special-case scale-positioning calculation.
          */
         if(cfg.hudWideOffset != 1)
