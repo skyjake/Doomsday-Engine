@@ -298,7 +298,7 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha,
 #define WIDTH (ST_WIDTH)
 #define HEIGHT (ST_HEIGHT)
 #define ORIGINX (-WIDTH/2)
-#define ORIGINY (-HEIGHT)
+#define ORIGINY (-HEIGHT * hud->showBar)
 
     hudstate_t* hud = &hudStates[player];
     float x = ORIGINX, y = ORIGINY, w = WIDTH, h = HEIGHT;
@@ -848,9 +848,14 @@ void drawReadyAmmoWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    float yOffset = ST_HEIGHT*(1-hud->showBar);
     if(!hud->statusbarActive)
         return;
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(0, yOffset, 0);
     STlib_DrawNum(&hud->wReadyWeapon, textAlpha);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(0, -yOffset, 0);
     *drawnWidth = tallNum[0].width * 3;
     *drawnHeight = tallNum[0].height;
 }
@@ -859,13 +864,18 @@ void drawOwnedAmmoWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    float yOffset = ST_HEIGHT*(1-hud->showBar);
     int i;
     if(!hud->statusbarActive)
         return;
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(0, yOffset, 0);
     for(i = 0; i < 4; ++i)
     {
         STlib_DrawNum(&hud->wAmmo[i], textAlpha);
     }
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(0, -yOffset, 0);
     *drawnWidth = shortNum[0].width;
     *drawnHeight = (shortNum[0].height + 10) * 4;
 }
@@ -874,13 +884,18 @@ void drawMaxAmmoWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    float yOffset = ST_HEIGHT*(1-hud->showBar);
     int i;
     if(!hud->statusbarActive)
         return;
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(0, yOffset, 0);
     for(i = 0; i < 4; ++i)
     {
         STlib_DrawNum(&hud->wMaxAmmo[i], textAlpha);
     }
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(0, -yOffset, 0);
     *drawnWidth = shortNum[0].width;
     *drawnHeight = (shortNum[0].height + 10) * 4;
 }
@@ -889,9 +904,14 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    float yOffset = ST_HEIGHT*(1-hud->showBar);
     if(!hud->statusbarActive)
         return;
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(0, yOffset, 0);
     STlib_DrawPercent(&hud->wHealth, textAlpha);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(0, -yOffset, 0);
     *drawnWidth = tallNum[0].width * 3;
     *drawnHeight = tallNum[0].height;
 }
@@ -900,9 +920,14 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    float yOffset = ST_HEIGHT*(1-hud->showBar);
     if(!hud->statusbarActive)
         return;
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(0, yOffset, 0);
     STlib_DrawPercent(&hud->wArmor, textAlpha);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(0, -yOffset, 0);
     *drawnWidth = tallNum[0].width * 3;
     *drawnHeight = tallNum[0].height;
 }
@@ -911,9 +936,14 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    float yOffset = ST_HEIGHT*(1-hud->showBar);
     if(!hud->statusbarActive || !deathmatch)
         return;
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(0, yOffset, 0);
     STlib_DrawPercent(&hud->wArmor, textAlpha);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(0, -yOffset, 0);
     *drawnWidth = tallNum[0].width * 3;
     *drawnHeight = tallNum[0].height;
 }
@@ -922,9 +952,14 @@ void drawSBarFaceWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    float yOffset = ST_HEIGHT*(1-hud->showBar);
     if(!hud->statusbarActive)
         return;
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(0, yOffset, 0);
     STlib_DrawMultiIcon(&hud->wFaces, hud->faceIndex, iconAlpha);
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(0, -yOffset, 0);
     {
     const dpatch_t* facePatch = &faces[hud->faceIndex%ST_NUMFACES];
     *drawnWidth = facePatch->width;
@@ -937,10 +972,13 @@ void drawSBarKeysWidget(int player, float textAlpha, float iconAlpha,
 {
     hudstate_t* hud = &hudStates[player];
     int i, numDrawnKeys = 0;
+    float yOffset = ST_HEIGHT*(1-hud->showBar);
     if(!hud->statusbarActive)
         return;
     *drawnWidth = 0;
     *drawnHeight = 0;
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(0, yOffset, 0);
     for(i = 0; i < 3; ++i)
     {
         const dpatch_t* patch;
@@ -952,6 +990,8 @@ void drawSBarKeysWidget(int player, float textAlpha, float iconAlpha,
             *drawnWidth = patch->width;
         *drawnHeight += patch->height;
     }
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(0, -yOffset, 0);
     *drawnHeight += (numDrawnKeys-1) * 10;
 }
 
@@ -980,9 +1020,12 @@ void drawOwnedWeaponWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    float yOffset = ST_HEIGHT*(1-hud->showBar);
     int i;
     if(!hud->statusbarActive || deathmatch)
         return;
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(0, yOffset, 0);
     for(i = 0; i < 6; ++i)
     {
         drawownedweapondisply_params_t params;
@@ -999,6 +1042,8 @@ void drawOwnedWeaponWidget(int player, float textAlpha, float iconAlpha,
             STlib_DrawMultiIcon(&hud->wArms[i], 0, textAlpha);
         }
     }
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(0, -yOffset, 0);
 }
 
 static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeight)
@@ -1044,10 +1089,6 @@ static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
     }
 
     DGL_Scalef(scaleX, scaleY, 1);
-    DGL_Translatef(-ST_WIDTH/2, -ST_HEIGHT * hud->showBar, 0);
-
-    //drawStatusBarBackground(player, 1, 1, NULL, NULL);
-    //drawWidgets(hud);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -1304,34 +1345,34 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
 }
 
 uiwidget_t widgetsStatusBar[] = {
-    { -1, NULL, 1, drawStatusBarBackground },
-    { -1, NULL, 1, drawReadyAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, NULL, 1, drawSBarHealthWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, NULL, 1, drawOwnedWeaponWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, NULL, 1, drawSBarFragsWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, NULL, 1, drawSBarFaceWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, NULL, 1, drawSBarArmorWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, NULL, 1, drawSBarKeysWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, NULL, 1, drawOwnedAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, NULL, 1, drawMaxAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha }
+    { -1, &cfg.statusbarScale, 1, drawStatusBarBackground, &cfg.statusbarOpacity, &cfg.statusbarOpacity },
+    { -1, &cfg.statusbarScale, 1, drawReadyAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+    { -1, &cfg.statusbarScale, 1, drawSBarHealthWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+    { -1, &cfg.statusbarScale, 1, drawOwnedWeaponWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+    { -1, &cfg.statusbarScale, 1, drawSBarFragsWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+    { -1, &cfg.statusbarScale, 1, drawSBarFaceWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+    { -1, &cfg.statusbarScale, 1, drawSBarArmorWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+    { -1, &cfg.statusbarScale, 1, drawSBarKeysWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+    { -1, &cfg.statusbarScale, 1, drawOwnedAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+    { -1, &cfg.statusbarScale, 1, drawMaxAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha }
 };
 
 uiwidget_t widgetsBottomLeft[] = {
-    { HUD_HEALTH, &cfg.hudScale, 1, drawHealthWidget },
-    { HUD_AMMO, &cfg.hudScale, 1, drawAmmoWidget }
+    { HUD_HEALTH, &cfg.hudScale, 1, drawHealthWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+    { HUD_AMMO, &cfg.hudScale, 1, drawAmmoWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
 };
 
 uiwidget_t widgetsBottomLeft2[] = {
-    { HUD_FRAGS, &cfg.hudScale, 1, drawFragsWidget }
+    { HUD_FRAGS, &cfg.hudScale, 1, drawFragsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
 };
 
 uiwidget_t widgetsBottom[] = {
-    { HUD_FACE, &cfg.hudScale, .7f, drawFaceWidget }
+    { HUD_FACE, &cfg.hudScale, .7f, drawFaceWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
 };
 
 uiwidget_t widgetsBottomRight[] = {
-    { HUD_ARMOR, &cfg.hudScale, 1, drawArmorWidget },
-    { HUD_KEYS, &cfg.hudScale, .75f, drawKeysWidget }
+    { HUD_ARMOR, &cfg.hudScale, 1, drawArmorWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+    { HUD_KEYS, &cfg.hudScale, .75f, drawKeysWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
 };
 
 void ST_Drawer(int player, int fullscreenMode, boolean refresh)
@@ -1402,8 +1443,7 @@ void ST_Drawer(int player, int fullscreenMode, boolean refresh)
     if(hud->statusbarActive || fullscreenMode != 3)
     {
         int viewW, viewH, x, y, width, height;
-        float textAlpha = MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudColor[3]), 1.f);
-        float iconAlpha = MINMAX_OF(0.f, hud->alpha - hud->hideAmount - ( 1 - cfg.hudIconAlpha), 1.f);
+        float alpha = (hud->statusbarActive? (hud->blended? (1-hud->hideAmount) : 1.0f) : hud->alpha * (1-hud->hideAmount));
         float scale;
 
         R_GetViewPort(player, NULL, NULL, &viewW, &viewH);
@@ -1432,11 +1472,8 @@ void ST_Drawer(int player, int fullscreenMode, boolean refresh)
 
         posX = x + width/2;
         posY = y + height;
-        {
-        float alpha = hud->blended? MINMAX_OF(0.f, cfg.statusbarOpacity - hud->hideAmount, 1.f) : 1.0f;
         UI_DrawWidgets(widgetsStatusBar, sizeof(widgetsStatusBar)/sizeof(widgetsStatusBar[0]),
-            0, 0, posX, posY, player, textAlpha, alpha, &drawnWidth, &drawnHeight);
-        }
+            0, 0, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
 
         /**
          * Wide offset scaling.
@@ -1466,22 +1503,22 @@ void ST_Drawer(int player, int fullscreenMode, boolean refresh)
         posX = x + PADDING;
         posY = y + height - PADDING;
         UI_DrawWidgets(widgetsBottomLeft, sizeof(widgetsBottomLeft)/sizeof(widgetsBottomLeft[0]),
-            UWF_LEFT2RIGHT, PADDING, posX, posY, player, textAlpha, iconAlpha, &drawnWidth, &drawnHeight);
+            UWF_LEFT2RIGHT, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
 
         posX = x + PADDING;
         posY = y + height - PADDING - (drawnHeight > 0 ? drawnHeight + PADDING : 0);
         UI_DrawWidgets(widgetsBottomLeft2, sizeof(widgetsBottomLeft2)/sizeof(widgetsBottomLeft2[0]),
-            UWF_LEFT2RIGHT, PADDING, posX, posY, player, textAlpha, iconAlpha, &drawnWidth, &drawnHeight);
+            UWF_LEFT2RIGHT, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
 
         posX = x + PADDING + (width-PADDING*2)/2;
         posY = y + height - PADDING;
         UI_DrawWidgets(widgetsBottom, sizeof(widgetsBottom)/sizeof(widgetsBottom[0]),
-            UWF_BOTTOM2TOP, PADDING, posX, posY, player, textAlpha, iconAlpha, &drawnWidth, &drawnHeight);
+            UWF_BOTTOM2TOP, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
 
         posX = x + width - PADDING;
         posY = y + height - PADDING;
         UI_DrawWidgets(widgetsBottomRight, sizeof(widgetsBottomRight)/sizeof(widgetsBottomRight[0]),
-            UWF_RIGHT2LEFT, PADDING, posX, posY, player, textAlpha, iconAlpha, &drawnWidth, &drawnHeight);
+            UWF_RIGHT2LEFT, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
 
 #undef PADDING
         }

@@ -192,8 +192,8 @@ void HUlib_eraseText(hu_text_t* it)
     it->laston = *it->on;
 }
 
-static void drawWidget(const uiwidget_t* w, int player, float textAlpha,
-    float iconAlpha, int* drawnWidth, int* drawnHeight)
+static void drawWidget(const uiwidget_t* w, int player, float alpha,
+    int* drawnWidth, int* drawnHeight)
 {
     boolean scaled = false;
     float scale = 1;
@@ -210,7 +210,7 @@ static void drawWidget(const uiwidget_t* w, int player, float textAlpha,
         }
     }
 
-    w->draw(player, textAlpha, iconAlpha, drawnWidth, drawnHeight);
+    w->draw(player, alpha * (w->textAlpha? *w->textAlpha : 1), alpha * (w->iconAlpha? *w->iconAlpha : 1), drawnWidth, drawnHeight);
 
     if(scaled)
     {
@@ -223,7 +223,7 @@ static void drawWidget(const uiwidget_t* w, int player, float textAlpha,
 }
 
 void UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, short flags,
-    int padding, int x, int y, int player, float textAlpha, float iconAlpha,
+    int padding, int x, int y, int player, float alpha,
     int* drawnWidth, int* drawnHeight)
 {
     size_t i, numDrawnWidgets = 0;
@@ -233,7 +233,7 @@ void UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, short flags,
     if(drawnHeight)
         *drawnHeight = 0;
 
-    if(!numWidgets || !(iconAlpha > 0))
+    if(!numWidgets || !(alpha > 0))
         return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -255,7 +255,7 @@ void UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, short flags,
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_Translatef(x, y, 0);
 
-        drawWidget(w, player, w->textAlpha? *w->textAlpha : textAlpha, w->iconAlpha? *w->iconAlpha : iconAlpha, &wDrawnWidth, &wDrawnHeight);
+        drawWidget(w, player, alpha, &wDrawnWidth, &wDrawnHeight);
     
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_Translatef(-x, -y, 0);
