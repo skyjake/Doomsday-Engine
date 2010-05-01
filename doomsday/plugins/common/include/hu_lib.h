@@ -44,6 +44,7 @@ typedef struct {
 #define UWF_RIGHT2LEFT      0x0002
 #define UWF_TOP2BOTTOM      0x0004
 #define UWF_BOTTOM2TOP      0x0008
+#define UWF_OVERRIDE_ALPHA  0x0010
 /*@}*/
 
 void            UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, short flags, int padding, int x, int y, int player, float alpha, int* drawnWidth, int* drawnHeight);

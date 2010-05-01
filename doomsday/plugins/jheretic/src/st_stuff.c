@@ -1386,7 +1386,7 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
         posX = x + width/2;
         posY = y + height;
         UI_DrawWidgets(widgetsStatusBar, sizeof(widgetsStatusBar)/sizeof(widgetsStatusBar[0]),
-            0, 0, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+            (!hud->blended? UWF_OVERRIDE_ALPHA : 0), 0, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
 
         /**
          * Wide offset scaling.
@@ -1458,8 +1458,8 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
 
 void ST_loadGraphics(void)
 {
-    int                 i;
-    char                nameBuf[9];
+    char nameBuf[9];
+    int i;
 
     R_CachePatch(&statusbar, "BARBACK");
     R_CachePatch(&invBar, "INVBAR");
@@ -1497,7 +1497,7 @@ void ST_loadGraphics(void)
 
     // Inventory item flash anim.
     {
-    const char          invItemFlashAnim[5][9] = {
+    const char invItemFlashAnim[5][9] = {
         {"USEARTIA"},
         {"USEARTIB"},
         {"USEARTIC"},
@@ -1513,7 +1513,7 @@ void ST_loadGraphics(void)
 
     // Ammo icons.
     {
-    const char          ammoPic[NUM_AMMO_TYPES][9] = {
+    const char ammoPic[NUM_AMMO_TYPES][9] = {
         {"INAMGLD"},
         {"INAMBOW"},
         {"INAMBST"},

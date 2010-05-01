@@ -2001,7 +2001,7 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
         posX = x + width/2;
         posY = y + height;
         UI_DrawWidgets(widgetsStatusBar, sizeof(widgetsStatusBar)/sizeof(widgetsStatusBar[0]),
-            0, 0, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+            (!hud->blended? UWF_OVERRIDE_ALPHA : 0), 0, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
 
         /**
          * Wide offset scaling.

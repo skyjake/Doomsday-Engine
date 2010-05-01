@@ -192,9 +192,11 @@ void HUlib_eraseText(hu_text_t* it)
     it->laston = *it->on;
 }
 
-static void drawWidget(const uiwidget_t* w, int player, float alpha,
+static void drawWidget(const uiwidget_t* w, short flags, int player, float alpha,
     int* drawnWidth, int* drawnHeight)
 {
+    float textAlpha = (flags & UWF_OVERRIDE_ALPHA)? alpha : w->textAlpha? alpha * *w->textAlpha : alpha;
+    float iconAlpha = (flags & UWF_OVERRIDE_ALPHA)? alpha : w->iconAlpha? alpha * *w->iconAlpha : alpha;
     boolean scaled = false;
     float scale = 1;
 
@@ -210,7 +212,7 @@ static void drawWidget(const uiwidget_t* w, int player, float alpha,
         }
     }
 
-    w->draw(player, alpha * (w->textAlpha? *w->textAlpha : 1), alpha * (w->iconAlpha? *w->iconAlpha : 1), drawnWidth, drawnHeight);
+    w->draw(player, textAlpha, iconAlpha, drawnWidth, drawnHeight);
 
     if(scaled)
     {
@@ -255,7 +257,7 @@ void UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, short flags,
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_Translatef(x, y, 0);
 
-        drawWidget(w, player, alpha, &wDrawnWidth, &wDrawnHeight);
+        drawWidget(w, flags, player, alpha, &wDrawnWidth, &wDrawnHeight);
     
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_Translatef(-x, -y, 0);
