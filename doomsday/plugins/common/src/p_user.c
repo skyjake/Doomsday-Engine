@@ -1858,6 +1858,11 @@ void P_PlayerThinkUpdateControls(player_t* player)
 
     // HUD.
     brain->hudShow = (P_GetImpulseControlState(playerNum, CTL_HUD_SHOW) != 0);
+#if __JHERETIC__ || __JHEXEN__
+    // Also unhide the HUD when cycling inventory items.
+    if(brain->cycleInvItem != 0)
+        brain->hudShow = true;
+#endif
     brain->scoreShow = (P_GetImpulseControlState(playerNum, CTL_SCORE_SHOW) != 0);
     brain->logRefresh = (P_GetImpulseControlState(playerNum, CTL_LOG_REFRESH) != 0);
 

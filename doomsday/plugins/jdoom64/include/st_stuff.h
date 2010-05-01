@@ -46,18 +46,15 @@
 #define HUDBORDERX          (14)
 #define HUDBORDERY          (18)
 
-// Called by main loop.
-void    ST_Ticker(void);
-
-// Called by main loop.
-void    ST_Drawer(int player, int fullscreenmode);
-
-void    ST_Start(int player);
-void    ST_Stop(int player);
-
 // Called by startup code.
 void    ST_Register(void);
 void    ST_Init(void);
+
+void    ST_Ticker(timespan_t ticLength);
+void    ST_Drawer(int player);
+
+void    ST_Start(int player);
+void    ST_Stop(int player);
 
 // Called when it might be neccessary for the hud to unhide.
 void    ST_HUDUnHide(int player, hueevent_t event);

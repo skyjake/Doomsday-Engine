@@ -45,18 +45,12 @@
 void        ST_Register(void);
 void        ST_Init(void);
 
-// Called by main loop.
-void        ST_Ticker(void);
-
-// Called by main loop.
-void        ST_Drawer(int player, int mode, boolean refresh);
+void        ST_Ticker(timespan_t ticLength);
+void        ST_Drawer(int player);
 
 // Called when the console player is spawned on each map.
 void        ST_Start(int player);
 void        ST_Stop(int player);
-
 // Called when it might be neccessary for the hud to unhide.
 void        ST_HUDUnHide(int player, hueevent_t event);
-
-boolean     ST_PickStatusbarScalingStrategy(int viewportWidth, int viewportHeight);
 #endif

@@ -104,16 +104,13 @@ typedef struct {
     float           showBar; // Slide statusbar amount 1.0 is fully open.
     float           alpha; // Fullscreen hud alpha value.
 
-    float           statusbarCounterAlpha;
-    boolean         firstTime; // ST_Start() has just been called.
-    boolean         statusbarActive; // Whether left-side main status bar is active.
+    boolean         statusbarActive; // Whether main statusbar is active.
 
     boolean         hitCenterFrame;
     int             currentInvItemFlash;
     int             currentAmmoIconIdx; // Current ammo icon index.
     boolean         keyBoxes[3]; // Holds key-type for each key box on bar.
     int             fragsCount; // Number of frags so far in deathmatch.
-    boolean         blended; // Whether to use alpha blending.
 
     int             tomePlay;
     int             healthMarker;
@@ -121,7 +118,6 @@ typedef struct {
 
     int             oldAmmoIconIdx;
     int             oldReadyWeapon;
-    int             oldHealth;
 
     // Widgets:
     st_multiicon_t  wCurrentAmmoIcon; // Current ammo icon.
@@ -271,8 +267,6 @@ void drawChainWidget(int player, float textAlpha, float iconAlpha,
 
     if(!hud->statusbarActive)
         return;
-
-    hud->oldHealth = hud->healthMarker;
 
     chainY = -9;
     if(hud->healthMarker != plr->plr->mo->health)
@@ -468,20 +462,12 @@ void ST_updateWidgets(int player)
 {
     static int          largeammo = 1994; // Means "n/a".
 
-    int                 i;
-    ammotype_t          ammoType;
-    boolean             found;
-    hudstate_t*         hud = &hudStates[player];
-    player_t*           plr = &players[player];
-    int                 lvl = (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
-
-    if(hud->blended)
-    {
-        hud->statusbarCounterAlpha =
-            MINMAX_OF(0.f, cfg.statusbarCounterAlpha - hud->hideAmount, 1.f);
-    }
-    else
-        hud->statusbarCounterAlpha = 1.0f;
+    hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
+    int lvl = (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
+    ammotype_t ammoType;
+    boolean found;
+    int i;
 
     // Must redirect the pointer if the ready weapon has changed.
     found = false;
@@ -523,69 +509,112 @@ void ST_updateWidgets(int player)
     }
 }
 
-void ST_Ticker(void)
+void ST_Ticker(timespan_t ticLength)
 {
-    int                 i;
+    static trigger_t fixed = {1.0 / TICSPERSEC};
 
-    Hu_InventoryTicker();
+    boolean runFixedTic = M_RunTrigger(&fixed, ticLength);
+    int i;
+
+    if(runFixedTic)
+        Hu_InventoryTicker();
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t*           plr = &players[i];
-        hudstate_t*         hud = &hudStates[i];
+        player_t* plr = &players[i];
+        hudstate_t* hud = &hudStates[i];
 
         if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
             continue;
 
-        ST_updateWidgets(i);
-
-        if(!P_IsPaused())
+        // Either slide the status bar in or fade out the fullscreen HUD.
+        if(hud->statusbarActive)
         {
-            int                 delta, curHealth;
-
-            if(cfg.hudTimer == 0)
+            if(hud->alpha > 0.0f)
             {
-                hud->hideTics = hud->hideAmount = 0;
+                hud->statusbarActive = 0;
+                hud->alpha -= 0.1f;
+            }
+            else if(hud->showBar < 1.0f)
+            {
+                hud->showBar += 0.1f;
+            }
+        }
+        else
+        {
+            if(cfg.screenBlocks == 13)
+            {
+                if(hud->alpha > 0.0f)
+                {
+                    hud->alpha -= 0.1f;
+                }
             }
             else
             {
-                if(hud->hideTics > 0)
-                    hud->hideTics--;
-                if(hud->hideTics == 0 && cfg.hudTimer > 0 && hud->hideAmount < 1)
-                    hud->hideAmount += 0.1f;
-            }
-
-            if(hud->currentInvItemFlash > 0)
-                hud->currentInvItemFlash--;
-
-            if(mapTime & 1)
-            {
-                hud->chainWiggle = P_Random() & 1;
-            }
-
-            curHealth = MAX_OF(plr->plr->mo->health, 0);
-            if(curHealth < hud->healthMarker)
-            {
-                delta = MINMAX_OF(1, (hud->healthMarker - curHealth) >> 2, 4);
-                hud->healthMarker -= delta;
-            }
-            else if(curHealth > hud->healthMarker)
-            {
-                delta = MINMAX_OF(1, (curHealth - hud->healthMarker) >> 2, 4);
-                hud->healthMarker += delta;
-            }
-
-            // Tome of Power countdown sound.
-            if(plr->powers[PT_WEAPONLEVEL2] &&
-               plr->powers[PT_WEAPONLEVEL2] < cfg.tomeSound * 35)
-            {
-                int                 timeleft =
-                    plr->powers[PT_WEAPONLEVEL2] / 35;
-
-                if(hud->tomePlay != timeleft)
+                if(hud->showBar > 0.0f)
                 {
-                    hud->tomePlay = timeleft;
-                    S_LocalSound(SFX_KEYUP, NULL);
+                    hud->showBar -= 0.1f;
+                    hud->statusbarActive = 1;
+                }
+                else if(hud->alpha < 1.0f)
+                {
+                    hud->alpha += 0.1f;
+                }
+            }
+        }
+
+        // The following is restricted to fixed 35 Hz ticks.
+        if(runFixedTic)
+        {
+            ST_updateWidgets(i);
+
+            if(!P_IsPaused())
+            {
+                int delta, curHealth;
+
+                if(cfg.hudTimer == 0)
+                {
+                    hud->hideTics = hud->hideAmount = 0;
+                }
+                else
+                {
+                    if(hud->hideTics > 0)
+                        hud->hideTics--;
+                    if(hud->hideTics == 0 && cfg.hudTimer > 0 && hud->hideAmount < 1)
+                        hud->hideAmount += 0.1f;
+                }
+
+                if(hud->currentInvItemFlash > 0)
+                    hud->currentInvItemFlash--;
+
+                if(mapTime & 1)
+                {
+                    hud->chainWiggle = P_Random() & 1;
+                }
+
+                curHealth = MAX_OF(plr->plr->mo->health, 0);
+                if(curHealth < hud->healthMarker)
+                {
+                    delta = MINMAX_OF(1, (hud->healthMarker - curHealth) >> 2, 4);
+                    hud->healthMarker -= delta;
+                }
+                else if(curHealth > hud->healthMarker)
+                {
+                    delta = MINMAX_OF(1, (curHealth - hud->healthMarker) >> 2, 4);
+                    hud->healthMarker += delta;
+                }
+
+                // Tome of Power countdown sound.
+                if(plr->powers[PT_WEAPONLEVEL2] &&
+                   plr->powers[PT_WEAPONLEVEL2] < cfg.tomeSound * 35)
+                {
+                    int timeleft = plr->powers[PT_WEAPONLEVEL2] / 35;
+
+                    if(hud->tomePlay != timeleft)
+                    {
+                        hud->tomePlay = timeleft;
+                        S_LocalSound(SFX_KEYUP, NULL);
+                    }
                 }
             }
         }
@@ -598,8 +627,8 @@ void ST_Ticker(void)
  */
 void ST_doPaletteStuff(int player)
 {
-    int                 palette = 0;
-    player_t*           plr = &players[player];
+    int palette = 0;
+    player_t* plr = &players[player];
 
     if(plr->damageCount)
     {
@@ -1287,10 +1316,12 @@ uiwidget_t widgetsBottom[] = {
     { -1, &cfg.hudScale, .75f, drawInventoryWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
 };
 
-void ST_Drawer(int player, int fullscreenmode, boolean refresh)
+void ST_Drawer(int player)
 {
     hudstate_t* hud;
     player_t* plr;
+    int fullscreenMode = (cfg.screenBlocks < 10? 0 : cfg.screenBlocks - 10);
+    boolean blended = (fullscreenMode!=0);
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -1300,63 +1331,15 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
         return;
 
     hud = &hudStates[player];
-
-    hud->firstTime = hud->firstTime || refresh;
-    hud->statusbarActive = (fullscreenmode < 2) ||
-        (AM_IsActive(AM_MapForPlayer(player)) &&
-         (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2) );
-    hud->oldHealth = -1;
+    hud->statusbarActive = (fullscreenMode < 2) || (AM_IsActive(AM_MapForPlayer(player)) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2) );
 
     // Do palette shifts
     ST_doPaletteStuff(player);
 
-    // Either slide the status bar in or fade out the fullscreen hud
-    if(hud->statusbarActive)
-    {
-        if(hud->alpha > 0.0f)
-        {
-            hud->statusbarActive = 0;
-            hud->alpha -= 0.1f;
-        }
-        else if(hud->showBar < 1.0f)
-        {
-            hud->showBar += 0.1f;
-        }
-    }
-    else
-    {
-        if(fullscreenmode == 3)
-        {
-            if(hud->alpha > 0.0f)
-            {
-                hud->alpha -= 0.1f;
-                fullscreenmode = 2;
-            }
-        }
-        else
-        {
-            if(hud->showBar > 0.0f)
-            {
-                hud->showBar -= 0.1f;
-                hud->statusbarActive = 1;
-            }
-            else if(hud->alpha < 1.0f)
-            {
-                hud->alpha += 0.1f;
-            }
-        }
-    }
-
-    // Always try to render statusbar with alpha in fullscreen modes
-    if(fullscreenmode)
-        hud->blended = 1;
-    else
-        hud->blended = 0;
-
-    if(hud->statusbarActive || fullscreenmode != 3)
+    if(hud->statusbarActive || (fullscreenMode < 3 || hud->alpha > 0))
     {
         int viewW, viewH, x, y, width, height;
-        float alpha = (hud->statusbarActive? (hud->blended? (1-hud->hideAmount) : 1.0f) : hud->alpha * (1-hud->hideAmount));
+        float alpha = (hud->statusbarActive? (blended? (1-hud->hideAmount) : 1.0f) : hud->alpha * (1-hud->hideAmount));
         float scale;
 
         R_GetViewPort(player, NULL, NULL, &viewW, &viewH);
@@ -1386,7 +1369,7 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
         posX = x + width/2;
         posY = y + height;
         UI_DrawWidgets(widgetsStatusBar, sizeof(widgetsStatusBar)/sizeof(widgetsStatusBar[0]),
-            (!hud->blended? UWF_OVERRIDE_ALPHA : 0), 0, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+            (!blended? UWF_OVERRIDE_ALPHA : 0), 0, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
 
         /**
          * Wide offset scaling.
@@ -1541,19 +1524,14 @@ void ST_loadData(void)
 
 static void initData(hudstate_t* hud)
 {
-    int                 i;
-    int                 player = hud - hudStates;
-    player_t*           plr = &players[player];
+    int i, player = hud - hudStates;
+    player_t* plr = &players[player];
 
-    hud->firstTime = true;
     hud->statusbarActive = true;
     hud->stopped = true;
-    hud->oldHealth = -1;
     // Health marker chain animates up to the actual health value.
     hud->healthMarker = 0;
-    hud->blended = false;
     hud->showBar = 0.0f;
-    hud->statusbarCounterAlpha = 1.f;
 
     for(i = 0; i < 3; ++i)
     {
@@ -1601,7 +1579,7 @@ void ST_createWidgets(int player)
 
         //STlib_InitNum(&wReadyWeapon, ORIGINX+ST_AMMOX, ST_AMMOY, iNumbers,
         //              &plr->ammo[weaponinfo[plr->readyWeapon].ammo],
-        //              &statusbarActive, ST_AMMOWIDTH, &statusbarCounterAlpha);
+        //              &statusbarActive, ST_AMMOWIDTH);
 
         // Ready weapon ammo.
         STlib_InitNum(&hud->wReadyWeapon, ORIGINX+ST_AMMOX, ORIGINY+ST_AMMOY, iNumbers, &largeammo, ST_AMMOWIDTH, 1);
@@ -1630,7 +1608,7 @@ void ST_createWidgets(int player)
 
 void ST_Start(int player)
 {
-    hudstate_t*         hud;
+    hudstate_t* hud;
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -1648,7 +1626,7 @@ void ST_Start(int player)
 
 void ST_Stop(int player)
 {
-    hudstate_t*         hud;
+    hudstate_t* hud;
 
     if(player < 0 || player >= MAXPLAYERS)
         return;

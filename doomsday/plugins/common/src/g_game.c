@@ -1239,10 +1239,10 @@ static void runGameAction(void)
  */
 void G_Ticker(timespan_t ticLength)
 {
-    static gamestate_t  oldGameState = -1;
-    static trigger_t    fixed = {1.0 / TICSPERSEC};
+    static gamestate_t oldGameState = -1;
+    static trigger_t fixed = {1.0 / TICSPERSEC};
 
-    int                 i;
+    int i;
 
     // Always tic:
     Hu_FogEffectTicker(ticLength);
@@ -1313,6 +1313,11 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
         }
     }
 
+    if(G_GetGameState() == GS_MAP && !IS_DEDICATED)
+    {
+        ST_Ticker(ticLength);
+    }
+
     // The following is restricted to fixed 35 Hz ticks.
     if(M_RunTrigger(&fixed, ticLength))
     {
@@ -1334,7 +1339,6 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
             if(IS_DEDICATED)
                 break;
 
-            ST_Ticker();
             AM_Ticker();
             Hu_Ticker();
             break;

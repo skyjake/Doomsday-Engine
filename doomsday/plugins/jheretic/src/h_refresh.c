@@ -198,12 +198,10 @@ static void rendHUD(int player, int viewW, int viewH)
     {
         automapid_t map = AM_MapForPlayer(player);
 
-        // Do we need to render a full status bar at this point?
         if(!(AM_IsActive(map) && cfg.automapHudDisplay == 0) &&
            !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
-            int viewmode = (cfg.screenBlocks < 10? 0 : cfg.screenBlocks - 10);
-            ST_Drawer(player, viewmode, true);
+            ST_Drawer(player);
         }
 
         // Set up the fixed 320x200 projection.

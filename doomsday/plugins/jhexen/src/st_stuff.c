@@ -108,9 +108,7 @@ typedef struct {
     float           showBar; // Slide statusbar amount 1.0 is fully open.
     float           alpha; // Fullscreen hud alpha value.
 
-    float           statusbarCounterAlpha;
-    boolean         firstTime; // ST_Start() has just been called.
-    boolean         statusbarActive; // Whether left-side main status bar is active.
+    boolean         statusbarActive; // Whether the statusbar is active.
 
     boolean         hitCenterFrame;
     int             currentInvItemFlash;
@@ -122,11 +120,8 @@ typedef struct {
     int             manaACount;
     int             manaBCount;
     int             fragsCount; // Number of frags so far in deathmatch.
-    boolean         blended; // Whether to use alpha blending.
 
     int             healthMarker;
-
-    int             oldHealth;
 
     // Widgets:
     st_multiicon_t  wManaA; // Current mana A icon.
@@ -327,23 +322,23 @@ void drawWeaponPiecesWidget(int player, float textAlpha, float iconAlpha,
 
     if(plr->pieces == 7)
     {
-        GL_DrawPatchLitAlpha(ORIGINX+190, ORIGINY, 1, hud->statusbarCounterAlpha, dpWeaponFull[pClass].lump);
+        GL_DrawPatchLitAlpha(ORIGINX+190, ORIGINY, 1, iconAlpha, dpWeaponFull[pClass].lump);
     }
     else
     {
         if(plr->pieces & WPIECE1)
         {
-            GL_DrawPatchLitAlpha(ORIGINX+PCLASS_INFO(pClass)->pieceX[0], ORIGINY, 1, hud->statusbarCounterAlpha, dpWeaponPiece1[pClass].lump);
+            GL_DrawPatchLitAlpha(ORIGINX+PCLASS_INFO(pClass)->pieceX[0], ORIGINY, 1, iconAlpha, dpWeaponPiece1[pClass].lump);
         }
 
         if(plr->pieces & WPIECE2)
         {
-            GL_DrawPatchLitAlpha(ORIGINX+PCLASS_INFO(pClass)->pieceX[1], ORIGINY, 1, hud->statusbarCounterAlpha, dpWeaponPiece2[pClass].lump);
+            GL_DrawPatchLitAlpha(ORIGINX+PCLASS_INFO(pClass)->pieceX[1], ORIGINY, 1, iconAlpha, dpWeaponPiece2[pClass].lump);
         }
 
         if(plr->pieces & WPIECE3)
         {
-            GL_DrawPatchLitAlpha(ORIGINX+PCLASS_INFO(pClass)->pieceX[2], ORIGINY, 1, hud->statusbarCounterAlpha, dpWeaponPiece3[pClass].lump);
+            GL_DrawPatchLitAlpha(ORIGINX+PCLASS_INFO(pClass)->pieceX[2], ORIGINY, 1, iconAlpha, dpWeaponPiece3[pClass].lump);
         }
     }
 
@@ -381,8 +376,6 @@ void drawHealthChainWidget(int player, float textAlpha, float iconAlpha,
 
     if(!hud->statusbarActive)
         return;
-
-    hud->oldHealth = hud->healthMarker;
 
     // Original player class (i.e. not pig).
     pClass = cfg.playerClass[player];
@@ -824,13 +817,10 @@ static void initData(hudstate_t* hud)
     int player = hud - hudStates;
     player_t* plr = &players[player];
 
-    hud->firstTime = true;
     hud->statusbarActive = true;
     hud->stopped = true;
-    hud->oldHealth = -1;
     // Health marker chain animates up to the actual health value.
     hud->healthMarker = 0;
-    hud->blended = false;
     hud->showBar = 0.0f;
 
     ST_updateWidgets(player);
@@ -940,14 +930,6 @@ void ST_updateWidgets(int player)
     // Original player class (i.e. not pig).
     pClass = cfg.playerClass[player];
 
-    if(hud->blended)
-    {
-        hud->statusbarCounterAlpha =
-            MINMAX_OF(0.f, cfg.statusbarCounterAlpha - hud->hideAmount, 1.f);
-    }
-    else
-        hud->statusbarCounterAlpha = 1.0f;
-
     // Used by w_frags widget.
     hud->fragsCount = 0;
 
@@ -1033,52 +1015,95 @@ void ST_updateWidgets(int player)
     }
 }
 
-void ST_Ticker(void)
+void ST_Ticker(timespan_t ticLength)
 {
-    int                 i;
+    static trigger_t fixed = {1.0 / TICSPERSEC};
 
-    Hu_InventoryTicker();
+    boolean runFixedTic = M_RunTrigger(&fixed, ticLength);
+    int i;
+
+    if(runFixedTic)
+        Hu_InventoryTicker();
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t*           plr = &players[i];
-        hudstate_t*         hud = &hudStates[i];
+        player_t* plr = &players[i];
+        hudstate_t* hud = &hudStates[i];
 
         if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
             continue;
 
-        ST_updateWidgets(i);
-
-        if(!P_IsPaused())
+        // Either slide the statusbar in or fade out the fullscreen HUD.
+        if(hud->statusbarActive)
         {
-            int                 delta;
-            int                 curHealth;
-
-            if(cfg.hudTimer == 0)
+            if(hud->alpha > 0.0f)
             {
-                hud->hideTics = hud->hideAmount = 0;
+                hud->statusbarActive = 0;
+                hud->alpha -= 0.1f;
+            }
+            else if(hud->showBar < 1.0f)
+            {
+                hud->showBar += 0.1f;
+            }
+        }
+        else
+        {
+            if(cfg.screenBlocks == 13)
+            {
+                if(hud->alpha > 0.0f)
+                {
+                    hud->alpha -= 0.1f;
+                }
             }
             else
             {
-                if(hud->hideTics > 0)
-                    hud->hideTics--;
-                if(hud->hideTics == 0 && cfg.hudTimer > 0 && hud->hideAmount < 1)
-                    hud->hideAmount += 0.1f;
+                if(hud->showBar > 0.0f)
+                {
+                    hud->showBar -= 0.1f;
+                    hud->statusbarActive = 1;
+                }
+                else if(hud->alpha < 1.0f)
+                {
+                    hud->alpha += 0.1f;
+                }
             }
+        }
 
-            if(hud->currentInvItemFlash > 0)
-                hud->currentInvItemFlash--;
+        // The following is restricted to fixed 35 Hz ticks.
+        if(runFixedTic)
+        {
+            ST_updateWidgets(i);
 
-            curHealth = MAX_OF(plr->plr->mo->health, 0);
-            if(curHealth < hud->healthMarker)
+            if(!P_IsPaused())
             {
-                delta = MINMAX_OF(1, (hud->healthMarker - curHealth) >> 2, 6);
-                hud->healthMarker -= delta;
-            }
-            else if(curHealth > hud->healthMarker)
-            {
-                delta = MINMAX_OF(1, (curHealth - hud->healthMarker) >> 2, 6);
-                hud->healthMarker += delta;
+                int delta, curHealth;
+
+                if(cfg.hudTimer == 0)
+                {
+                    hud->hideTics = hud->hideAmount = 0;
+                }
+                else
+                {
+                    if(hud->hideTics > 0)
+                        hud->hideTics--;
+                    if(hud->hideTics == 0 && cfg.hudTimer > 0 && hud->hideAmount < 1)
+                        hud->hideAmount += 0.1f;
+                }
+
+                if(hud->currentInvItemFlash > 0)
+                    hud->currentInvItemFlash--;
+
+                curHealth = MAX_OF(plr->plr->mo->health, 0);
+                if(curHealth < hud->healthMarker)
+                {
+                    delta = MINMAX_OF(1, (hud->healthMarker - curHealth) >> 2, 6);
+                    hud->healthMarker -= delta;
+                }
+                else if(curHealth > hud->healthMarker)
+                {
+                    delta = MINMAX_OF(1, (curHealth - hud->healthMarker) >> 2, 6);
+                    hud->healthMarker += delta;
+                }
             }
         }
     }
@@ -1090,8 +1115,8 @@ void ST_Ticker(void)
  */
 void ST_doPaletteStuff(int player)
 {
-    int                 palette = 0;
-    player_t*           plr;
+    int palette = 0;
+    player_t* plr;
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -1906,10 +1931,12 @@ static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
     DGL_PopMatrix();
 }
 
-void ST_Drawer(int player, int fullscreenmode, boolean refresh)
+void ST_Drawer(int player)
 {
     hudstate_t* hud;
     player_t* plr;
+    int fullscreenMode = (cfg.screenBlocks < 10? 0 : cfg.screenBlocks - 10);
+    boolean blended = (fullscreenMode!=0);
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -1919,59 +1946,15 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
         return;
 
     hud = &hudStates[player];
-
-    hud->firstTime = hud->firstTime || refresh;
-    hud->statusbarActive = (fullscreenmode < 2) ||
-        (AM_IsActive(AM_MapForPlayer(player)) &&
-         (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
+    hud->statusbarActive = (fullscreenMode < 2) || (AM_IsActive(AM_MapForPlayer(player)) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     // Do palette shifts
     ST_doPaletteStuff(player);
 
-    // Either slide the status bar in or fade out the fullscreen hud
-    if(hud->statusbarActive)
-    {
-        if(hud->alpha > 0.0f)
-        {
-            hud->statusbarActive = 0;
-            hud->alpha-=0.1f;
-        }
-        else if(hud->showBar < 1.0f)
-            hud->showBar += 0.1f;
-    }
-    else
-    {
-        if(fullscreenmode == 3)
-        {
-            if(hud->alpha > 0.0f)
-            {
-                hud->alpha-=0.1f;
-                fullscreenmode = 2;
-            }
-        }
-        else
-        {
-            if(hud->showBar > 0.0f)
-            {
-                hud->showBar -= 0.1f;
-                hud->statusbarActive = 1;
-            }
-            else if(hud->alpha < 1.0f)
-                hud->alpha += 0.1f;
-        }
-    }
-    hud->oldHealth = -1;
-
-    // Always try to render statusbar with alpha in fullscreen modes
-    if(fullscreenmode)
-        hud->blended = 1;
-    else
-        hud->blended = 0;
-
-    if(hud->statusbarActive || fullscreenmode != 3)
+    if(hud->statusbarActive || (fullscreenMode < 3 || hud->alpha > 0))
     {
         int viewW, viewH, x, y, width, height;
-        float alpha = (hud->statusbarActive? (hud->blended? (1-hud->hideAmount) : 1.0f) : hud->alpha * (1-hud->hideAmount));
+        float alpha = (hud->statusbarActive? (blended? (1-hud->hideAmount) : 1.0f) : hud->alpha * (1-hud->hideAmount));
         float scale;
 
         R_GetViewPort(player, NULL, NULL, &viewW, &viewH);
@@ -2001,7 +1984,7 @@ void ST_Drawer(int player, int fullscreenmode, boolean refresh)
         posX = x + width/2;
         posY = y + height;
         UI_DrawWidgets(widgetsStatusBar, sizeof(widgetsStatusBar)/sizeof(widgetsStatusBar[0]),
-            (!hud->blended? UWF_OVERRIDE_ALPHA : 0), 0, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+            (!blended? UWF_OVERRIDE_ALPHA : 0), 0, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
 
         /**
          * Wide offset scaling.

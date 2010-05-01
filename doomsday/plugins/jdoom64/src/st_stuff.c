@@ -63,7 +63,6 @@ typedef struct {
     float           alpha; // Fullscreen hud alpha value.
 
     boolean         firstTime;  // ST_Start() has just been called.
-    boolean         blended; // Whether to use alpha blending.
     boolean         statusbarActive; // Whether the HUD is on.
     int             currentFragsCount; // Number of frags so far in deathmatch.
 
@@ -185,41 +184,73 @@ void ST_updateWidgets(int player)
     }
 }
 
-void ST_Ticker(void)
+void ST_Ticker(timespan_t ticLength)
 {
-    int                 i;
+    static trigger_t fixed = {1.0 / TICSPERSEC};
+
+    boolean runFixedTic = M_RunTrigger(&fixed, ticLength);
+    int i;
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t*           plr = &players[i];
-        hudstate_t*         hud = &hudStates[i];
+        player_t* plr = &players[i];
+        hudstate_t* hud = &hudStates[i];
 
         if(!(plr->plr->inGame && (plr->plr->flags & DDPF_LOCAL)))
             continue;
 
-        if(!P_IsPaused())
+        // Fade in/out the fullscreen HUD.
+        if(hud->statusbarActive)
         {
-            if(cfg.hudTimer == 0)
+            if(hud->alpha > 0.0f)
             {
-                hud->hideTics = hud->hideAmount = 0;
+                hud->statusbarActive = 0;
+                hud->alpha-=0.1f;
+            }
+        }
+        else
+        {
+            if(cfg.screenBlocks == 13)
+            {
+                if(hud->alpha > 0.0f)
+                {
+                    hud->alpha-=0.1f;
+                }
             }
             else
             {
-                if(hud->hideTics > 0)
-                    hud->hideTics--;
-                if(hud->hideTics == 0 && cfg.hudTimer > 0 && hud->hideAmount < 1)
-                    hud->hideAmount += 0.1f;
+                if(hud->alpha < 1.0f)
+                    hud->alpha += 0.1f;
             }
+        }
 
-            ST_updateWidgets(i);
+        // The following is restricted to fixed 35 Hz ticks.
+        if(runFixedTic)
+        {
+            if(!P_IsPaused())
+            {
+                if(cfg.hudTimer == 0)
+                {
+                    hud->hideTics = hud->hideAmount = 0;
+                }
+                else
+                {
+                    if(hud->hideTics > 0)
+                        hud->hideTics--;
+                    if(hud->hideTics == 0 && cfg.hudTimer > 0 && hud->hideAmount < 1)
+                        hud->hideAmount += 0.1f;
+                }
+
+                ST_updateWidgets(i);
+            }
         }
     }
 }
 
 void ST_doPaletteStuff(int player)
 {
-    int                 palette = 0, cnt, bzc;
-    player_t*           plr = &players[player];
+    int palette = 0, cnt, bzc;
+    player_t* plr = &players[player];
 
     cnt = plr->damageCount;
 
@@ -498,10 +529,11 @@ Draw_EndZoom();
     DGL_PopMatrix();
 }
 
-void ST_Drawer(int player, int fullscreenmode)
+void ST_Drawer(int player)
 {
-    hudstate_t*         hud;
-    player_t*           plr;
+    hudstate_t* hud;
+    player_t* plr;
+    int fullscreenMode = (cfg.screenBlocks < 10? 0 : cfg.screenBlocks - 10);
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -513,52 +545,18 @@ void ST_Drawer(int player, int fullscreenmode)
     hud = &hudStates[player];
 
     hud->firstTime = hud->firstTime;
-    hud->statusbarActive = (fullscreenmode < 2) ||
-        (AM_IsActive(AM_MapForPlayer(player)) &&
-         (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
+    hud->statusbarActive = (fullscreenMode < 2) || (AM_IsActive(AM_MapForPlayer(player)) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     // Do palette shifts.
     ST_doPaletteStuff(player);
-
-    // Fade in/out the fullscreen HUD.
-    if(hud->statusbarActive)
-    {
-        if(hud->alpha > 0.0f)
-        {
-            hud->statusbarActive = 0;
-            hud->alpha-=0.1f;
-        }
-    }
-    else
-    {
-        if(fullscreenmode == 3)
-        {
-            if(hud->alpha > 0.0f)
-            {
-                hud->alpha-=0.1f;
-                fullscreenmode = 2;
-            }
-        }
-        else
-        {
-            if(hud->alpha < 1.0f)
-                hud->alpha += 0.1f;
-        }
-    }
-
-    // Always try to render statusbar with alpha in fullscreen modes.
-    if(fullscreenmode)
-        hud->blended = 1;
-    else
-        hud->blended = 0;
 
     ST_doFullscreenStuff(player);
 }
 
 void ST_loadGraphics(void)
 {
-    int                 i;
-    char                namebuf[9];
+    int i;
+    char namebuf[9];
 
     // Load the numbers, tall and short.
     for(i = 0; i < 10; ++i)
@@ -575,11 +573,10 @@ void ST_loadData(void)
 
 static void initData(hudstate_t* hud)
 {
-    int                 player = hud - hudStates;
+    int player = hud - hudStates;
 
     hud->firstTime = true;
     hud->statusbarActive = true;
-    hud->blended = false;
     hud->stopped = true;
     hud->alpha = 0.f;
 
@@ -597,7 +594,7 @@ void ST_createWidgets(int player)
 
 void ST_Start(int player)
 {
-    hudstate_t*         hud;
+    hudstate_t* hud;
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -615,7 +612,7 @@ void ST_Start(int player)
 
 void ST_Stop(int player)
 {
-    hudstate_t*         hud;
+    hudstate_t* hud;
 
     if(player < 0 || player >= MAXPLAYERS)
         return;

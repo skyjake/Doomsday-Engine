@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,22 +41,17 @@
 #define ST_WIDTH            (SCREENWIDTH)
 #define ST_Y                (SCREENHEIGHT - ST_HEIGHT)
 
-// Called by main loop.
-void            ST_Ticker(void);
-
-// Called by main loop.
-void            ST_Drawer(int player, int fullscreenMode, boolean refresh);
-
-void            ST_Start(int player);
-
-void            ST_Stop(int player);
-
 // Called by startup code.
 void            ST_Register(void);
 void            ST_Init(void);
 
+void            ST_Ticker(timespan_t ticLength);
+void            ST_Drawer(int player);
+
+void            ST_Start(int player);
+void            ST_Stop(int player);
+
 void            ST_doPaletteStuff(int player);
-void            ST_updateGraphics(void);
 
 // Called when it might be neccessary for the hud to unhide.
 void            ST_HUDUnHide(int player, hueevent_t ev);
