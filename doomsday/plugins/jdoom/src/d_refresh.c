@@ -321,7 +321,7 @@ void D_Display(int layer)
         break;
     case GS_STARTUP:
         DGL_Disable(DGL_TEXTURING);
-        DGL_DrawRect(x, y, w, h, 0, 0, 0, 1);
+        DGL_DrawRect(0, 0, vpWidth, vpHeight, 0, 0, 0, 1);
         DGL_Enable(DGL_TEXTURING);
         break;
     default:
