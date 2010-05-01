@@ -1607,7 +1607,7 @@ static void initData(hudstate_t* hud)
     hud->oldHealth = -1;
     hud->priority = 0;
     hud->lastAttackDown = -1;
-    hud->showBar = 0.f;
+    hud->showBar = 1;
 
     for(i = 0; i < 3; ++i)
     {
