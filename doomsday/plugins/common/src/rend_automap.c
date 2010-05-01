@@ -1083,15 +1083,15 @@ static boolean renderThing(mobj_t* mo, void* context)
 static void drawMarks(const automap_t* map)
 {
 #if !__JDOOM64__
-    float               x, y, w, h;
-    dpatch_t*           patch;
-    float               scrwidth = Get(DD_WINDOW_WIDTH);
-    float               scrheight = Get(DD_WINDOW_HEIGHT);
-    float               aabb[4];
-    unsigned int        i, numMarks;
+    float x, y, w, h;
+    dpatch_t* patch;
+    int scrwidth, scrheight;
+    float aabb[4];
+    unsigned int i, numMarks;
 
-    Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
-                          &aabb[BOXBOTTOM], &aabb[BOXTOP]);
+    R_GetViewPort(DISPLAYPLAYER, NULL, NULL, &scrwidth, &scrheight);
+
+    Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT], &aabb[BOXBOTTOM], &aabb[BOXTOP]);
     numMarks = Automap_GetNumMarks(map);
     for(i = 0; i < numMarks; ++i)
     {
@@ -1101,8 +1101,16 @@ static void drawMarks(const automap_t* map)
         {
             patch = &markerPatches[i];
 
-            w = Automap_FrameToMap(map, FIXXTOSCREENX(patch->width));
-            h = Automap_FrameToMap(map, FIXYTOSCREENY(patch->height));
+            if(scrwidth >= scrheight)
+            {
+                w = Automap_FrameToMap(map, FIXYTOSCREENY(patch->width));
+                h = Automap_FrameToMap(map, FIXYTOSCREENY(patch->height));
+            }
+            else
+            {
+                w = Automap_FrameToMap(map, FIXXTOSCREENX(patch->width));
+                h = Automap_FrameToMap(map, FIXXTOSCREENX(patch->height));
+            }
 
             DGL_SetPatch(patch->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
             DGL_Color4f(1, 1, 1, Automap_GetOpacity(map));
@@ -1137,14 +1145,16 @@ static void drawMarks(const automap_t* map)
  * Sets up the state for automap drawing.
  */
 static void setupGLStateForMap(const automap_t* map,
-                               const automapcfg_t* mcfg, int player)
+    const automapcfg_t* mcfg, int player)
 {
-    float               wx, wy, ww, wh, angle, plx, ply;
-    float               scrwidth = Get(DD_WINDOW_WIDTH);
-    float               scrheight = Get(DD_WINDOW_HEIGHT);
-    rautomap_data_t*    rmap = &rautomaps[AM_MapForPlayer(player)-1];
+    float wx, wy, ww, wh, angle, plx, ply;
+    rautomap_data_t* rmap = &rautomaps[AM_MapForPlayer(player)-1];
 
-    Automap_GetWindow(map, &wx, &wy, &ww, &wh);
+    wx = Get(DD_VIEWWINDOW_X);
+    wy = Get(DD_VIEWWINDOW_Y);
+    ww = Get(DD_VIEWWINDOW_WIDTH);
+    wh = Get(DD_VIEWWINDOW_HEIGHT);
+    //Automap_GetWindow(map, &wx, &wy, &ww, &wh);
     Automap_GetViewParallaxPosition(map, &plx, &ply);
     angle = Automap_GetViewAngle(map);
 
@@ -1158,8 +1168,6 @@ static void setupGLStateForMap(const automap_t* map,
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
-    DGL_LoadIdentity();
-    DGL_Ortho(0, 0, scrwidth, scrheight, -1, 1);
 
     // Do we want a background texture?
     if(autopageLumpNum != -1)
@@ -1223,8 +1231,8 @@ static void setupGLStateForMap(const automap_t* map,
     // If drawn in HUD we don't need them visible in the map too.
     if(!cfg.hudShown[HUD_INVENTORY])
     {
-        int                 i, num = 0;
-        player_t*           plr = &players[player];
+        int i, num = 0;
+        player_t* plr = &players[player];
         inventoryitemtype_t items[3] = {
             IIT_DEMONKEY1,
             IIT_DEMONKEY2,
@@ -1236,9 +1244,9 @@ static void setupGLStateForMap(const automap_t* map,
 
         if(num > 0)
         {
-            float               x, y, w, h, spacing, scale, iconAlpha;
-            spriteinfo_t        sprInfo;
-            int                 invItemSprites[NUM_INVENTORYITEM_TYPES] = {
+            float x, y, w, h, spacing, scale, iconAlpha;
+            spriteinfo_t sprInfo;
+            int invItemSprites[NUM_INVENTORYITEM_TYPES] = {
                 SPR_ART1, SPR_ART2, SPR_ART3
             };
 
@@ -1260,7 +1268,7 @@ static void setupGLStateForMap(const automap_t* map,
                     h = sprInfo.height;
 
                     {
-                    float               s, t;
+                    float s, t;
 
                     // Let's calculate texture coordinates.
                     // To remove a possible edge artifact, move the corner a bit up/left.
@@ -1292,8 +1300,12 @@ static void setupGLStateForMap(const automap_t* map,
 #endif
 
     // Setup the scissor clipper.
-    DGL_Scissor(wx, wy, ww, wh);
+    {
+    int viewX, viewY;
+    R_GetViewPort(player, &viewX, &viewY, NULL, NULL);
+    DGL_Scissor(viewX+wx, viewY+wy, ww, wh);
     DGL_Enable(DGL_SCISSOR_TEST);
+    }
 }
 
 /**
@@ -1301,31 +1313,29 @@ static void setupGLStateForMap(const automap_t* map,
  */
 static void restoreGLStateFromMap(rautomap_data_t* rmap)
 {
-    // Return to the normal GL state.
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-
     if(!rmap->scissorState[0])
         DGL_Disable(DGL_SCISSOR_TEST);
     DGL_Scissor(rmap->scissorState[1], rmap->scissorState[2],
                 rmap->scissorState[3], rmap->scissorState[4]);
 }
 
-static void drawMapName(float x, float y, float alpha, dpatch_t* patch,
-                        const char* lname)
+static void drawMapName(float x, float y, float scale, float alpha,
+    dpatch_t* patch, const char* lname)
 {
     DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-    DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
+    DGL_Translatef(x, y, 0);
 
-    Draw_BeginZoom(.4f, x, y);
-    y -= 24; // border
-    WI_DrawPatch(x, y, 1, 1, 1, alpha, patch, lname, false, ALIGN_CENTER);
-    Draw_EndZoom();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Scalef(scale, scale, 1);
+
+    WI_DrawPatch(0, -16, 1, 1, 1, alpha, patch, lname, false, ALIGN_CENTER);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 
     DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PopMatrix();
+    DGL_Translatef(-x, -y, 0);
 }
 
 /**
@@ -1333,7 +1343,7 @@ static void drawMapName(float x, float y, float alpha, dpatch_t* patch,
  */
 static void renderMapName(const automap_t* map)
 {
-    float x, y, otherY;
+    float x, y;
     const char* lname;
     dpatch_t* patch = NULL;
 #if __JDOOM__ || __JDOOM64__
@@ -1344,9 +1354,13 @@ static void renderMapName(const automap_t* map)
 
     if(lname)
     {
-        float wx, wy, ww, wh;
-        float scrwidth = Get(DD_WINDOW_WIDTH);
-        float scrheight = Get(DD_WINDOW_HEIGHT);
+        float wx, wy, ww, wh, scale;
+        int viewW, viewH;
+
+        wx = Get(DD_VIEWWINDOW_X);
+        wy = Get(DD_VIEWWINDOW_Y);
+        ww = Get(DD_VIEWWINDOW_WIDTH);
+        wh = Get(DD_VIEWWINDOW_HEIGHT);
 
         // Compose the mapnumber used to check the map name patches array.
 #if __JDOOM64__
@@ -1361,40 +1375,29 @@ static void renderMapName(const automap_t* map)
         patch = &mapNamePatches[mapNum];
 #endif
 
-        Automap_GetWindow(map, &wx, &wy, &ww, &wh);
+        //Automap_GetWindow(map, &wx, &wy, &ww, &wh);
+        R_GetViewPort(DISPLAYPLAYER, NULL, NULL, &viewW, &viewH);
+        scale = (viewH >= viewW? (float)viewW/SCREENWIDTH : (float)viewH/SCREENHEIGHT);
 
-        x = SCREENXTOFIXX(wx + (ww * .5f));
-        y = SCREENYTOFIXY(wy + wh);
-        if(cfg.screenBlocks < 13)
-        {
+        x = wx + ww/2;
+        y = wy + wh;
 #if !__JDOOM64__
-            if(cfg.screenBlocks <= 11 || cfg.automapHudDisplay == 2)
-            {   // We may need to adjust for the height of the statusbar
-                otherY = ST_Y;
-                otherY += ST_HEIGHT * (1 - cfg.statusbarScale);
-
-                if(y > otherY)
-                    y = otherY;
-            }
-            else if(cfg.screenBlocks == 12)
-#endif
-            {   // We may need to adjust for the height of the HUD icons.
-                otherY = y;
-                otherY += -(y * (cfg.hudScale / 10.0f));
-
-                if(y > otherY)
-                    y = otherY;
-            }
+        if(cfg.screenBlocks <= 11 || cfg.automapHudDisplay == 2)
+        {   // We may need to adjust for the height of the statusbar
+            float otherY = viewH - (ST_HEIGHT * cfg.statusbarScale * scale);
+            if(y > otherY)
+                y = otherY;
         }
+#endif
 
-        drawMapName(x, y, Automap_GetOpacity(map), patch, lname);
+        drawMapName(x, y, scale/3, Automap_GetOpacity(map), patch, lname);
     }
 }
 
 static void renderVertexes(float alpha)
 {
-    uint                i;
-    float               v[2], oldPointSize;
+    float v[2], oldPointSize;
+    uint i;
 
     DGL_Color4f(.2f, .5f, 1, alpha);
 
@@ -1455,14 +1458,14 @@ void Rend_AutomapRebuild(int player)
  */
 void Rend_Automap(int player, const automap_t* map)
 {
-    static int          updateWait = 0;
+    static int updateWait = 0;
 
-    uint                i;
-    automapid_t         id = AM_MapForPlayer(player);
-    player_t*           plr;
-    float               wx, wy, ww, wh, vx, vy, angle, oldLineWidth, mtof;
+    uint i;
+    automapid_t id = AM_MapForPlayer(player);
+    player_t* plr;
+    float wx, wy, ww, wh, vx, vy, angle, oldLineWidth, mtof;
     const automapcfg_t* mcfg;
-    rautomap_data_t*    rmap;
+    rautomap_data_t* rmap;
 
     plr = &players[player];
 
@@ -1475,7 +1478,11 @@ void Rend_Automap(int player, const automap_t* map)
     mcfg = AM_GetMapConfig(id);
     rmap = &rautomaps[id-1];
 
-    Automap_GetWindow(map, &wx, &wy, &ww, &wh);
+    wx = Get(DD_VIEWWINDOW_X);
+    wy = Get(DD_VIEWWINDOW_Y);
+    ww = Get(DD_VIEWWINDOW_WIDTH);
+    wh = Get(DD_VIEWWINDOW_HEIGHT);
+    //Automap_GetWindow(map, &wx, &wy, &ww, &wh);
     Automap_GetLocation(map, &vx, &vy);
     mtof = Automap_MapToFrameMultiplier(map);
     angle = Automap_GetViewAngle(map);
@@ -1527,8 +1534,7 @@ void Rend_Automap(int player, const automap_t* map)
             const mapobjectinfo_t* info = &mcfg->mapObjectInfo[i];
 
             // Setup the global list state.
-            DGL_Color4f(info->rgba[0], info->rgba[1], info->rgba[2],
-                        info->rgba[3] * cfg.automapLineAlpha * Automap_GetOpacity(map));
+            DGL_Color4f(info->rgba[0], info->rgba[1], info->rgba[2], info->rgba[3] * cfg.automapLineAlpha * Automap_GetOpacity(map));
             DGL_BlendMode(info->blendMode);
 
             // Draw.
@@ -1551,18 +1557,15 @@ void Rend_Automap(int player, const automap_t* map)
     renderPlayers(map, mcfg, player);
     if(Automap_GetFlags(map) & (AMF_REND_THINGS|AMF_REND_KEYS))
     {
-        float               aabb[4];
         renderthing_params_t params;
+        float aabb[4];
 
         params.flags = Automap_GetFlags(map);
         params.vg = AM_GetVectorGraphic(mcfg, AMO_THING);
-        AM_GetMapColor(params.rgb, cfg.automapMobj, THINGCOLORS,
-                       !W_IsFromIWAD(W_GetNumForName("PLAYPAL")));
-        params.alpha = MINMAX_OF(0.f,
-            cfg.automapLineAlpha * Automap_GetOpacity(map), 1.f);
+        AM_GetMapColor(params.rgb, cfg.automapMobj, THINGCOLORS, !W_IsFromIWAD(W_GetNumForName("PLAYPAL")));
+        params.alpha = MINMAX_OF(0.f, cfg.automapLineAlpha * Automap_GetOpacity(map), 1.f);
 
-        Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
-                              &aabb[BOXBOTTOM], &aabb[BOXTOP]);
+        Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT], &aabb[BOXBOTTOM], &aabb[BOXTOP]);
         VALIDCOUNT++;
         P_MobjsBoxIterator(aabb, renderThing, &params);
     }
@@ -1583,6 +1586,10 @@ void Rend_Automap(int player, const automap_t* map)
     drawMarks(map);
 
     DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
+
+    // Return to the normal GL state.
+    DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 
     renderMapName(map);
