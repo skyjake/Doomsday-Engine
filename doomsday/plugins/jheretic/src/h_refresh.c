@@ -75,16 +75,14 @@ float quitDarkenOpacity = 0;
 /**
  * Draws a special filter over the screen.
  */
-void R_DrawSpecialFilter(int pnum)
+static void drawSpecialFilter(int pnum, int x, int y, int w, int h)
 {
-    float               x, y, w, h;
-    player_t*           player = &players[pnum];
+    player_t* player = &players[pnum];
 
     if(player->powers[PT_INVULNERABILITY] <= BLINKTHRESHOLD &&
        !(player->powers[PT_INVULNERABILITY] & 8))
         return;
 
-    R_GetViewWindow(&x, &y, &w, &h);
     DGL_Disable(DGL_TEXTURING);
     if(cfg.ringFilter == 1)
     {
@@ -296,7 +294,7 @@ void H_Display(int layer)
 
             rendPlayerView(player);
 
-            R_DrawSpecialFilter(player);
+            drawSpecialFilter(player, (int) (x * xScale), (int) (y * yScale), (int) (w * xScale), (int) (h * yScale));
 
             // Crosshair.
             if(!(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam

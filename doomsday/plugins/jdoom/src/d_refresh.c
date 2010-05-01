@@ -71,41 +71,40 @@ float quitDarkenOpacity = 0;
  * Draws a special filter over the screen (e.g. the inversing filter used
  * when in god mode).
  */
-void R_DrawSpecialFilter(int pnum)
+static void drawSpecialFilter(int pnum, int x, int y, int w, int h)
 {
-    player_t*           player = &players[pnum];
+#define T (player->powers[PT_INVULNERABILITY])
 
-    if(player->powers[PT_INVULNERABILITY])
-    {
-        float               x, y, w, h;
-        float               max = 30;
-        float               str, r, g, b;
-        int                 t = player->powers[PT_INVULNERABILITY];
+    player_t* player = &players[pnum];
+    float max = 30, str, r, g, b;
 
-        if(t < max)
-            str = t / max;
-        else if(t < 4 * 32 && !(t & 8))
-            str = .7f;
-        else if(t > INVULNTICS - max)
-            str = (INVULNTICS - t) / max;
-        else
-            str = 1; // Full inversion.
+    if(!T)
+        return;
 
-        // Draw an inversing filter.
-        DGL_Disable(DGL_TEXTURING);
-        DGL_BlendMode(BM_INVERSE);
+    if(T < max)
+        str = T / max;
+    else if(T < 4 * 32 && !(T & 8))
+        str = .7f;
+    else if(T > INVULNTICS - max)
+        str = (INVULNTICS - T) / max;
+    else
+        str = 1; // Full inversion.
 
-        r = MINMAX_OF(0.f, str * 2, 1.f);
-        g = MINMAX_OF(0.f, str * 2 - .4, 1.f);
-        b = MINMAX_OF(0.f, str * 2 - .8, 1.f);
+    // Draw an inversing filter.
+    DGL_Disable(DGL_TEXTURING);
+    DGL_BlendMode(BM_INVERSE);
 
-        R_GetViewWindow(&x, &y, &w, &h);
-        DGL_DrawRect(x, y, w, h, r, g, b, 1);
+    r = MINMAX_OF(0.f, str * 2, 1.f);
+    g = MINMAX_OF(0.f, str * 2 - .4, 1.f);
+    b = MINMAX_OF(0.f, str * 2 - .8, 1.f);
 
-        // Restore the normal rendering state.
-        DGL_BlendMode(BM_NORMAL);
-        DGL_Enable(DGL_TEXTURING);
-    }
+    DGL_DrawRect(x, y, w, h, r, g, b, 1);
+
+    // Restore the normal rendering state.
+    DGL_BlendMode(BM_NORMAL);
+    DGL_Enable(DGL_TEXTURING);
+
+#undef T
 }
 
 boolean R_GetFilterColor(float rgba[4], int filter)
@@ -313,7 +312,7 @@ void D_Display(int layer)
 
             rendPlayerView(player);
 
-            R_DrawSpecialFilter(player);
+            drawSpecialFilter(player, (int) (x * xScale), (int) (y * yScale), (int) (w * xScale), (int) (h * yScale));
 
             // Crosshair.
             if(!(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam

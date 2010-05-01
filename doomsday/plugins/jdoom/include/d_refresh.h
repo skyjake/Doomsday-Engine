@@ -39,8 +39,6 @@ extern float quitDarkenOpacity;
 void            D_Display(int layer);
 void            D_Display2(void);
 
-void            R_DrawSpecialFilter(int pnum);
-
 void            P_SetDoomsdayFlags(mobj_t* mo);
 void            R_SetAllDoomsdayFlags(void);
 boolean         R_GetFilterColor(float rgba[4], int filter);

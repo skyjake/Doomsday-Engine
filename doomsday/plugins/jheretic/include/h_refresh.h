@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,9 +41,7 @@ extern float quitDarkenOpacity;
 void            H_Display(int layer);
 void            H_Display2(void);
 
-void            R_DrawSpecialFilter(int pnum);
-void            R_DrawMapTitle(int x, int y, float alpha,
-                               gamefontid_t font, boolean center);
+void            R_DrawMapTitle(int x, int y, float alpha, gamefontid_t font, boolean center);
 
 void            P_SetDoomsdayFlags(mobj_t* mo);
 void            R_SetAllDoomsdayFlags(void);
