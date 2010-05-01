@@ -139,7 +139,7 @@ void R_UpdateViewWindow(boolean force)
     if(!force && cfg.screenBlocks == cfg.setBlocks)
         return;
 
-    if(cfg.screenBlocks == 10 && destBlocks > 10 && destBlocks < 13)
+    if(cfg.screenBlocks >= 10 && destBlocks != 13)
     {   // When going fullscreen, force a hud show event (to reset the timer).
         int i;
         for(i = 0; i < MAXPLAYERS; ++i)
