@@ -53,7 +53,7 @@ void            Hu_LogPost(int player, byte flags, const char* msg);
 void            Hu_LogRefresh(int player);
 void            Hu_LogEmpty(int player);
 
-void            Hu_LogDrawer(int player);
+void            Hu_LogDrawer(int player, float textAlpha);
 void            Hu_LogTicker(void);
 #endif
 

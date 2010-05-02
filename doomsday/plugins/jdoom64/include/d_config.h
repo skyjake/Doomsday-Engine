@@ -43,6 +43,7 @@ enum {
     HUD_AMMO,
     HUD_KEYS,
     HUD_FRAGS,
+    HUD_LOG,
     HUD_INVENTORY, // jd64
     NUMHUDDISPLAYS
 };
@@ -173,7 +174,6 @@ typedef struct jdoom64_config_s {
     float           msgUptime;
     int             msgBlink;
     int             msgAlign;
-    byte            msgShow;
     float           msgColor[3];
 
     char           *chatMacros[10];

@@ -275,6 +275,7 @@ void G_PreInit(void)
     cfg.hudShown[HUD_KEYS] = true;
     cfg.hudShown[HUD_FRAGS] = true;
     cfg.hudShown[HUD_INVENTORY] = false; // They will be visible when the automap is.
+    cfg.hudShown[HUD_LOG] = true;
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
         cfg.hudUnHide[i] = 1;
     cfg.hudScale = .6f;
@@ -362,7 +363,6 @@ void G_PreInit(void)
     cfg.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
     cfg.counterCheatScale = .7f; // From jHeretic.
 
-    cfg.msgShow = true;
     cfg.msgCount = 1;
     cfg.msgScale = .8f;
     cfg.msgUptime = 5;

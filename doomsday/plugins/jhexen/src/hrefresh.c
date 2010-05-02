@@ -159,13 +159,7 @@ static void rendHUD(int player, int viewW, int viewH)
     // These various HUD's will be drawn unless Doomsday advises not to
     if(DD_GetInteger(DD_GAME_DRAW_HUD_HINT))
     {
-        automapid_t map = AM_MapForPlayer(player);
-
-        if(!(AM_IsActive(map) && cfg.automapHudDisplay == 0) &&
-           !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
-        {
-            ST_Drawer(player);
-        }
+        ST_Drawer(player);
 
         // Set up the fixed 320x200 projection.
         DGL_MatrixMode(DGL_PROJECTION);
@@ -174,7 +168,7 @@ static void rendHUD(int player, int viewW, int viewH)
         DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
 
         // Draw HUD displays only visible when the automap is open.
-        if(AM_IsActive(map))
+        if(AM_IsActive(AM_MapForPlayer(player)))
             HU_DrawMapCounters();
 
         HU_Drawer(player);

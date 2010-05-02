@@ -34,6 +34,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #if __JDOOM__
 #  include "jdoom.h"
@@ -81,7 +82,6 @@ typedef struct msglog_s {
     uint            numVisibleMsgs; // Number of visible messages.
 
     int             timer; // Auto-hide timer.
-    float           yOffset; // Scroll-up offset.
 } msglog_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -100,14 +100,14 @@ static msglog_t msgLogs[MAXPLAYERS];
 
 cvar_t msgLogCVars[] = {
     // Behaviour
-    {"msg-count", 0, CVT_INT, &cfg.msgCount, 0, 8},
+    {"msg-count", 0, CVT_INT, &cfg.msgCount, 1, 8},
     {"msg-uptime", 0, CVT_FLOAT, &cfg.msgUptime, 1, 60},
 
     // Display
     {"msg-align", 0, CVT_INT, &cfg.msgAlign, 0, 2},
     {"msg-blink", CVF_NO_MAX, CVT_INT, &cfg.msgBlink, 0, 0},
-    {"msg-scale", CVF_NO_MAX, CVT_FLOAT, &cfg.msgScale, 0, 0},
-    {"msg-show", 0, CVT_BYTE, &cfg.msgShow, 0, 1},
+    {"msg-scale", 0, CVT_FLOAT, &cfg.msgScale, 0.1f, 1},
+    {"msg-show", 0, CVT_BYTE, &cfg.hudShown[HUD_LOG], 0, 1},
 
     // Colour defaults
     {"msg-color-r", 0, CVT_FLOAT, &cfg.msgColor[CR], 0, 1},
@@ -124,7 +124,7 @@ cvar_t msgLogCVars[] = {
  */
 void Hu_LogRegister(void)
 {
-    int                 i;
+    int i;
 
     for(i = 0; msgLogCVars[i].name; ++i)
         Con_AddVariable(msgLogCVars + i);
@@ -139,8 +139,8 @@ void Hu_LogRegister(void)
  */
 static void logPush(msglog_t* log, const char* txt, int tics)
 {
-    size_t              len;
-    logmsg_t*           msg;
+    size_t len;
+    logmsg_t* msg;
 
     if(!txt || !txt[0])
         return;
@@ -186,8 +186,8 @@ static void logPush(msglog_t* log, const char* txt, int tics)
  */
 static void logPop(msglog_t* log)
 {
-    int                 oldest;
-    logmsg_t*           msg;
+    int oldest;
+    logmsg_t* msg;
 
     if(log->numVisibleMsgs == 0)
         return;
@@ -211,7 +211,7 @@ static void logPop(msglog_t* log)
  */
 static void logTicker(msglog_t* log)
 {
-    int                 i;
+    int i;
 
     // Don't tick if the game is paused.
     if(P_IsPaused())
@@ -221,7 +221,7 @@ static void logTicker(msglog_t* log)
     // of the message log. When zero, the earliest is pop'd.
     for(i = 0; i < LOG_MAX_MESSAGES; ++i)
     {
-        logmsg_t*           msg = &log->msgs[i];
+        logmsg_t* msg = &log->msgs[i];
 
         if(msg->ticsRemain > 0)
             msg->ticsRemain--;
@@ -229,8 +229,8 @@ static void logTicker(msglog_t* log)
 
     if(log->numVisibleMsgs)
     {
-        int                 oldest;
-        logmsg_t*           msg;
+        int oldest;
+        logmsg_t* msg;
 
         oldest = (unsigned) log->nextMsg - log->numVisibleMsgs;
         if(oldest < 0)
@@ -238,15 +238,9 @@ static void logTicker(msglog_t* log)
 
         msg = &log->msgs[oldest];
 
-        log->yOffset = 0;
         if(msg->ticsRemain == 0)
         {
             logPop(log);
-        }
-        else
-        {
-            if(msg->ticsRemain <= LINEHEIGHT_A)
-                log->yOffset = LINEHEIGHT_A - msg->ticsRemain;
         }
     }
 
@@ -261,91 +255,6 @@ static void logTicker(msglog_t* log)
 }
 
 /**
- * Draws the contents of the given msglog to the screen.
- *
- * @param log           Ptr to the msglog to draw.
- */
-static void logDrawer(msglog_t* log)
-{
-    uint                i, numVisible;
-    int                 n, x, y;
-
-    // How many messages should we print?
-    switch(cfg.msgAlign)
-    {
-    default:
-    case ALIGN_LEFT:    x = 0;              break;
-    case ALIGN_CENTER:  x = SCREENWIDTH/2;  break;
-    case ALIGN_RIGHT:   x = SCREENWIDTH;    break;
-    }
-
-    // First 'num' messages starting from the first one.
-    numVisible = MIN_OF(log->numVisibleMsgs, (unsigned) cfg.msgCount);
-    n = log->nextMsg - numVisible;
-    if(n < 0)
-        n += LOG_MAX_MESSAGES;
-
-    y = 0;
-
-    Draw_BeginZoom(cfg.msgScale, x, 0);
-    DGL_Translatef(0, -log->yOffset, 0);
-
-    for(i = 0; i < numVisible; ++i, y += LINEHEIGHT_A)
-    {
-        logmsg_t*           msg = &log->msgs[n];
-        float               col[4];
-
-        // Default colour and alpha.
-        col[CR] = cfg.msgColor[CR];
-        col[CG] = cfg.msgColor[CG];
-        col[CB] = cfg.msgColor[CB];
-        col[CA] = 1;
-
-        if(msg->flags & MF_JUSTADDED)
-        {
-            uint                msgTics, td, blinkSpeed = cfg.msgBlink;
-
-            msgTics = msg->tics - msg->ticsRemain;
-            td = (cfg.msgUptime * TICSPERSEC) - msg->ticsRemain;
-
-            if((td & 2) && blinkSpeed != 0 && msgTics < blinkSpeed)
-            {
-                // Flash color.
-                col[CR] = col[CG] = col[CB] = 1;
-            }
-            else if(blinkSpeed != 0 &&
-                    msgTics < blinkSpeed + LOG_MSG_FLASHFADETICS &&
-                    msgTics >= blinkSpeed)
-            {
-                int                 c;
-
-                // Fade color to normal.
-                for(c = 0; c < 3; ++c)
-                    col[c] += ((1.0f - col[c]) / LOG_MSG_FLASHFADETICS) *
-                                (blinkSpeed + LOG_MSG_FLASHFADETICS - msgTics);
-            }
-        }
-        else
-        {
-            // Fade alpha out.
-            if(i == 0 && msg->ticsRemain <= LINEHEIGHT_A)
-                col[CA] = msg->ticsRemain / (float) LINEHEIGHT_A * .9f;
-        }
-
-        // Draw using param text.
-        // Messages may use the params to override the way the message is
-        // is displayed, e.g. colour (Hexen's important messages).
-        WI_DrawParamText(x, 1 + y, msg->text, GF_FONTA,
-                         col[CR], col[CG], col[CB], col[CA], false, false,
-                         cfg.msgAlign);
-
-        n = (n < LOG_MAX_MESSAGES - 1)? n + 1 : 0;
-    }
-
-    Draw_EndZoom();
-}
-
-/**
  * Initialize the message log of the specified player. Typically called after
  * map load or when said player enters the world.
  *
@@ -353,8 +262,8 @@ static void logDrawer(msglog_t* log)
  */
 void Hu_LogStart(int player)
 {
-    player_t*           plr;
-    msglog_t*           log;
+    player_t* plr;
+    msglog_t* log;
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -372,16 +281,16 @@ void Hu_LogStart(int player)
  */
 void Hu_LogShutdown(void)
 {
-    int                 i;
+    int i;
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        msglog_t*           log = &msgLogs[i];
-        int                 j;
+        msglog_t* log = &msgLogs[i];
+        int j;
 
         for(j = 0; j < LOG_MAX_MESSAGES; ++j)
         {
-            logmsg_t*           msg = &log->msgs[j];
+            logmsg_t* msg = &log->msgs[j];
 
             if(msg->text)
                 free(msg->text);
@@ -398,7 +307,7 @@ void Hu_LogShutdown(void)
  */
 void Hu_LogTicker(void)
 {
-    int                 i;
+    int i;
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
@@ -411,11 +320,103 @@ void Hu_LogTicker(void)
  *
  * @param player        Player (local) number whose message log to draw.
  */
-void Hu_LogDrawer(int player)
+void Hu_LogDrawer(int player, float textAlpha)
 {
-    if(cfg.msgShow)
+    assert(player >= 0 && player < MAXPLAYERS);
     {
-        logDrawer(&msgLogs[player]);
+    msglog_t* log = &msgLogs[player];
+    int n, y, viewW, viewH;
+    uint i, numVisible;
+    float scale, yOffset;
+
+    R_GetViewPort(player, NULL, NULL, &viewW, &viewH);
+    scale = viewW >= viewH? (float)viewH/SCREENHEIGHT : (float)viewW/SCREENWIDTH;
+
+    // How many messages should we print?
+    // First 'num' messages starting from the first one.
+    numVisible = MIN_OF(log->numVisibleMsgs, (unsigned) cfg.msgCount);
+    if(!numVisible)
+        return;
+
+    n = log->nextMsg - numVisible;
+    if(n < 0)
+        n += LOG_MAX_MESSAGES;
+
+    {
+    int oldest = (unsigned) log->nextMsg - log->numVisibleMsgs;
+    logmsg_t* msg;
+
+    if(oldest < 0)
+        oldest += LOG_MAX_MESSAGES;
+
+    msg = &log->msgs[oldest];
+
+    if(msg->ticsRemain > 0 && msg->ticsRemain <= LINEHEIGHT_A)
+        yOffset = -LINEHEIGHT_A * (1.f - ((float)msg->ticsRemain/LINEHEIGHT_A));
+    else
+        yOffset = 0;
+    }
+
+    yOffset *= scale;
+
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_Translatef(0, yOffset, 0);
+
+    y = 0;
+    for(i = 0; i < numVisible; ++i, y += LINEHEIGHT_A)
+    {
+        logmsg_t* msg = &log->msgs[n];
+        float col[4];
+
+        // Default colour and alpha.
+        col[CR] = cfg.msgColor[CR];
+        col[CG] = cfg.msgColor[CG];
+        col[CB] = cfg.msgColor[CB];
+        col[CA] = textAlpha;
+
+        if(msg->flags & MF_JUSTADDED)
+        {
+            uint msgTics, td, blinkSpeed = cfg.msgBlink;
+
+            msgTics = msg->tics - msg->ticsRemain;
+            td = (cfg.msgUptime * TICSPERSEC) - msg->ticsRemain;
+
+            if((td & 2) && blinkSpeed != 0 && msgTics < blinkSpeed)
+            {
+                // Flash color.
+                col[CR] = col[CG] = col[CB] = 1;
+            }
+            else if(blinkSpeed != 0 &&
+                    msgTics < blinkSpeed + LOG_MSG_FLASHFADETICS &&
+                    msgTics >= blinkSpeed)
+            {
+                int c;
+
+                // Fade color to normal.
+                for(c = 0; c < 3; ++c)
+                    col[c] += ((1.0f - col[c]) / LOG_MSG_FLASHFADETICS) *
+                                (blinkSpeed + LOG_MSG_FLASHFADETICS - msgTics);
+            }
+        }
+        else
+        {
+            // Fade alpha out.
+            if(i == 0 && msg->ticsRemain <= LINEHEIGHT_A)
+                col[CA] *= msg->ticsRemain / (float) LINEHEIGHT_A * .9f;
+        }
+
+        // Draw using param text.
+        // Messages may use the params to override the way the message is
+        // is displayed, e.g. colour (Hexen's important messages).
+        WI_DrawParamText(0, y, msg->text, GF_FONTA,
+                         col[CR], col[CG], col[CB], col[CA], false, false,
+                         cfg.msgAlign);
+
+        n = (n < LOG_MAX_MESSAGES - 1)? n + 1 : 0;
+    }
+
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_Translatef(0, -yOffset, 0);
     }
 }
 
@@ -494,10 +495,10 @@ void Hu_LogPost(int player, byte flags, const char* msg)
  */
 void Hu_LogRefresh(int player)
 {
-    uint                i;
-    int                 n;
-    player_t*           plr;
-    msglog_t*           log;
+    player_t* plr;
+    msglog_t* log;
+    uint i;
+    int n;
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -521,7 +522,7 @@ void Hu_LogRefresh(int player)
 
     for(i = 0; i < log->numVisibleMsgs; ++i)
     {
-        logmsg_t*           msg = &log->msgs[n];
+        logmsg_t* msg = &log->msgs[n];
 
         // Change the tics remaining to that at post time plus a small bonus
         // so that they don't all disappear at once.
@@ -539,8 +540,8 @@ void Hu_LogRefresh(int player)
  */
 void Hu_LogEmpty(int player)
 {
-    player_t*           plr;
-    msglog_t*           log;
+    player_t* plr;
+    msglog_t* log;
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -711,7 +712,7 @@ static boolean chatAlwaysOff = false;
  */
 void Chat_Register(void)
 {
-    int                 i;
+    int i;
 
     for(i = 0; chatCVars[i].name; ++i)
         Con_AddVariable(chatCVars + i);
@@ -725,7 +726,7 @@ void Chat_Register(void)
  */
 void Chat_Init(void)
 {
-    int                 i;
+    int i;
 
     // Setup strings.
     for(i = 0; i < 10; ++i)
@@ -740,7 +741,7 @@ void Chat_Init(void)
  */
 void Chat_Start(void)
 {
-    int                 i;
+    int i;
 
     // Create the chat widget
     HUlib_initText(&chat, 0, M_CharHeight('A', GF_FONTA) + 1, &chatOn);
@@ -780,8 +781,8 @@ void Chat_Open(int player, boolean open)
 
 boolean Chat_Responder(event_t* ev)
 {
-    boolean             eatkey = false;
-    unsigned char       c;
+    boolean eatkey = false;
+    unsigned char c;
 
     if(!chatOn)
         return false;
@@ -819,8 +820,8 @@ void Chat_Drawer(int player)
  */
 static void sendMessage(const char* msg)
 {
-    char                buff[256];
-    int                 i;
+    char buff[256];
+    int i;
 
     if(chatTo == 0)
     {   // Send the message to the other players explicitly,

@@ -388,6 +388,7 @@ void G_PreInit(void)
     cfg.hudShown[HUD_KEYS] = true;
     cfg.hudShown[HUD_FRAGS] = true;
     cfg.hudShown[HUD_FACE] = false;
+    cfg.hudShown[HUD_LOG] = true;
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
         cfg.hudUnHide[i] = 1;
     cfg.hudScale = .6f;
@@ -484,7 +485,6 @@ void G_PreInit(void)
 
     cfg.counterCheatScale = .7f;
 
-    cfg.msgShow = true;
     cfg.msgCount = 4;
     cfg.msgScale = .8f;
     cfg.msgUptime = 5;

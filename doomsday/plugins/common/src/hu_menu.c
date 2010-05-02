@@ -94,6 +94,7 @@ void M_QuitDOOM(int option, void* context);
 
 void M_OpenDCP(int option, void* context);
 void M_ChangeMessages(int option, void* context);
+void M_SizeMessages(int option, void* context);
 void M_HUDHideTime(int option, void* context);
 void M_MessageUptime(int option, void* context);
 #if __JHERETIC__ || __JHEXEN__
@@ -747,6 +748,11 @@ static menuitem_t HUDItems[] = {
 
     {ITT_EMPTY, 0, "Messages", NULL, 0},
     {ITT_EFUNC, 0, "Shown :", M_ChangeMessages, 0},
+    {ITT_LRFUNC, 0, "Size :", M_SizeMessages, 0},
+#if __JHERETIC__ || __JHEXEN__
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+#endif
     {ITT_LRFUNC, 0, "Uptime :", M_MessageUptime, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 
@@ -836,13 +842,13 @@ static menu_t HUDDef = {
 #endif
     M_DrawHUDMenu,
 #if __JHEXEN__
-    47, HUDItems,
+    50, HUDItems,
 #elif __JHERETIC__
-    54, HUDItems,
+    57, HUDItems,
 #elif __JDOOM64__
-    37, HUDItems,
+    38, HUDItems,
 #elif __JDOOM__
-    41, HUDItems,
+    42, HUDItems,
 #endif
     0, MENU_OPTIONS,
     GF_FONTA,
@@ -3122,7 +3128,11 @@ void M_DrawHUDMenu(void)
     idx += 2;
 
     // Message log options:
-    M_WriteMenuText(menu, idx++, yesno[cfg.msgShow != 0]);
+    M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_LOG]? 1 : 0]);
+    MN_DrawSlider(menu, idx++, 11, cfg.msgScale * 10 + .25f);
+#if __JHERETIC__ || __JHEXEN__
+    idx += 2;
+#endif
     {
     char secString[11];
     const char* str;
@@ -3414,8 +3424,13 @@ void M_EndGame(int option, void* context)
 
 void M_ChangeMessages(int option, void* context)
 {
-    cfg.msgShow = !cfg.msgShow;
-    P_SetMessage(players + CONSOLEPLAYER, !cfg.msgShow ? MSGOFF : MSGON, true);
+    cfg.hudShown[HUD_LOG] = !cfg.hudShown[HUD_LOG];
+    P_SetMessage(players + CONSOLEPLAYER, !cfg.hudShown[HUD_LOG] ? MSGOFF : MSGON, true);
+}
+
+void M_SizeMessages(int option, void* context)
+{
+    DD_Execute(true, option == RIGHT_DIR? "add msg-scale 0.1" : "sub msg-scale 0.1");
 }
 
 void M_HUDHideTime(int option, void* context)

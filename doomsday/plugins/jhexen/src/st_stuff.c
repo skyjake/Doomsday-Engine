@@ -41,6 +41,7 @@
 #include "p_inventory.h"
 #include "hu_lib.h"
 #include "hu_inventory.h"
+#include "hu_log.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1849,6 +1850,17 @@ void drawInventoryWidget(int player, float textAlpha, float iconAlpha,
 #undef INVENTORY_HEIGHT
 }
 
+void drawMessageLogWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
+{
+    // Don't draw the message log while the map title is up.
+    if(cfg.mapTitle && actualMapTime < 6 * 35)
+        return;
+    Hu_LogDrawer(player, textAlpha);
+    *drawnWidth = 320;
+    *drawnHeight = 10*4;
+}
+
 uiwidget_t widgetsStatusBar[] = {
     { -1, &cfg.statusbarScale, 1, drawStatusBarBackground, &cfg.statusbarOpacity, &cfg.statusbarOpacity },
     { -1, &cfg.statusbarScale, 1, drawWeaponPiecesWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
@@ -1894,6 +1906,10 @@ uiwidget_t widgetsBottomRight[] = {
 
 uiwidget_t widgetsBottom[] = {
     { -1, &cfg.hudScale, .75f, drawInventoryWidget }
+};
+
+uiwidget_t widgetsTop[] = {
+    { HUD_LOG, &cfg.msgScale, 1, drawMessageLogWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
 };
 
 static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
@@ -1981,10 +1997,14 @@ void ST_Drawer(int player)
 
         int posX, posY, drawnWidth, drawnHeight;
 
+        if(!(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0) &&
+           !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
+        {
         posX = x + width/2;
         posY = y + height;
         UI_DrawWidgets(widgetsStatusBar, sizeof(widgetsStatusBar)/sizeof(widgetsStatusBar[0]),
             (!blended? UWF_OVERRIDE_ALPHA : 0), 0, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+        }
 
         /**
          * Wide offset scaling.
@@ -2011,6 +2031,20 @@ void ST_Drawer(int player)
             }
         }
 
+        switch(cfg.msgAlign)
+        {
+        default:
+        case ALIGN_LEFT:    posX = x + PADDING;         break;
+        case ALIGN_CENTER:  posX = width/2;             break;
+        case ALIGN_RIGHT:   posX = x + width - PADDING; break;
+        }
+        posY = y + PADDING;
+        UI_DrawWidgets(widgetsTop, sizeof(widgetsTop)/sizeof(widgetsTop[0]),
+            0, 0, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+
+        if(!(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0) &&
+           !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
+        {
         posX = x + PADDING;
         posY = y + PADDING;
         UI_DrawWidgets(widgetsTopLeft, sizeof(widgetsTopLeft)/sizeof(widgetsTopLeft[0]),
@@ -2040,7 +2074,7 @@ void ST_Drawer(int player)
         posY = y + height - PADDING;
         UI_DrawWidgets(widgetsBottom, sizeof(widgetsBottom)/sizeof(widgetsBottom[0]),
             UWF_BOTTOM2TOP, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
-
+        }
 #undef PADDING
         }
 

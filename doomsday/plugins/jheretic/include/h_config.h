@@ -43,6 +43,7 @@ enum {
     HUD_KEYS,
     HUD_HEALTH,
     HUD_CURRENTITEM,
+    HUD_LOG,
     NUMHUDDISPLAYS
 };
 
@@ -175,7 +176,6 @@ typedef struct jheretic_config_s {
     float           msgUptime;
     int             msgBlink;
     int             msgAlign;
-    byte            msgShow;
     float           msgColor[3];
 
     char*           chatMacros[10];

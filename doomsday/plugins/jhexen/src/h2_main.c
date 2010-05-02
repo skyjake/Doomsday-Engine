@@ -247,6 +247,7 @@ void G_PreInit(void)
     cfg.hudShown[HUD_MANA] = true;
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_CURRENTITEM] = true;
+    cfg.hudShown[HUD_LOG] = true;
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
         cfg.hudUnHide[i] = 1;
     cfg.lookSpeed = 3;
@@ -344,7 +345,6 @@ void G_PreInit(void)
     cfg.automapOpenSeconds = AUTOMAP_OPEN_SECONDS;
     cfg.counterCheatScale = .7f; //From jHeretic
 
-    cfg.msgShow = true;
     cfg.msgCount = 4;
     cfg.msgScale = .8f;
     cfg.msgUptime = 5;

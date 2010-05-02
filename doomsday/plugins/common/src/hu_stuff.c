@@ -843,12 +843,6 @@ void HU_Start(int player)
 
 void HU_Drawer(int player)
 {
-    // Don't draw the message log while the map title is up.
-    if(!(cfg.mapTitle && actualMapTime < 6 * 35))
-    {
-        Hu_LogDrawer(player);
-    }
-
     Chat_Drawer(player);
     HU_DrawScoreBoard(player);
 }

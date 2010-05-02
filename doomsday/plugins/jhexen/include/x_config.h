@@ -37,6 +37,7 @@ enum {
     HUD_MANA,
     HUD_HEALTH,
     HUD_CURRENTITEM,
+    HUD_LOG,
     NUMHUDDISPLAYS
 };
 
@@ -107,7 +108,6 @@ typedef struct {
     float           msgUptime;
     int             msgBlink;
     int             msgAlign;
-    byte            msgShow;
     float           msgColor[3];
     byte            weaponAutoSwitch;
     byte            noWeaponAutoSwitchIfFiring;
