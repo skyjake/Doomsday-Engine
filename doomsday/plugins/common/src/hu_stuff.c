@@ -55,16 +55,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-// Counter Cheat flags.
-#define CCH_KILLS               0x1
-#define CCH_ITEMS               0x2
-#define CCH_SECRET              0x4
-#define CCH_KILLS_PRCNT         0x8
-#define CCH_ITEMS_PRCNT         0x10
-#define CCH_SECRET_PRCNT        0x20
-#endif
-
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
@@ -183,14 +173,6 @@ const char shiftXForm[] = {
     '{', '|', '}', '~', 127
 };
 
-cvar_t hudCVars[] = {
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    {"map-cheat-counter", 0, CVT_BYTE, &cfg.counterCheat, 0, 63},
-    {"map-cheat-counter-scale", 0, CVT_FLOAT, &cfg.counterCheatScale, .1f, 1},
-#endif
-    {NULL}
-};
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static hudstate_t hudStates[MAXPLAYERS];
@@ -200,17 +182,6 @@ static dpatch_t borderPatches[8];
 static fogeffectdata_t fogEffectData;
 
 // Code -------------------------------------------------------------------
-
-/**
- * Called during pre-init to register cvars and ccmds for the hud displays.
- */
-void HU_Register(void)
-{
-    uint                i;
-
-    for(i = 0; hudCVars[i].name; ++i)
-        Con_AddVariable(&hudCVars[i]);
-}
 
 void R_SetFontCharacter(gamefontid_t fontid, byte ch, const char* lumpname)
 {
@@ -1446,120 +1417,21 @@ static void drawWorldTimer(void)
 #endif
 }
 
-/**
- * Handles what counters to draw eg title, timer, dm stats etc
- */
 void HU_DrawMapCounters(void)
 {
-    player_t           *plr;
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    char                buf[40], tmp[20];
-    int                 x = 5, y = LINEHEIGHT_A * 3;
-#endif
-
-    plr = &players[DISPLAYPLAYER];
-
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    DGL_Color3f(1, 1, 1);
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-#endif
-
-    DGL_Enable(DGL_TEXTURING);
-
     drawWorldTimer();
-
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    Draw_BeginZoom(cfg.counterCheatScale, x, y);
-
-    if(cfg.counterCheat)
-    {
-        // Kills.
-        if(cfg.counterCheat & (CCH_KILLS | CCH_KILLS_PRCNT))
-        {
-            strcpy(buf, "Kills: ");
-            if(cfg.counterCheat & CCH_KILLS)
-            {
-                sprintf(tmp, "%i/%i ", plr->killCount, totalKills);
-                strcat(buf, tmp);
-            }
-            if(cfg.counterCheat & CCH_KILLS_PRCNT)
-            {
-                sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_KILLS ? "(" : ""),
-                        totalKills ? plr->killCount * 100 / totalKills : 100,
-                        (cfg.counterCheat & CCH_KILLS ? ")" : ""));
-                strcat(buf, tmp);
-            }
-
-            M_WriteText2(x, y, buf, GF_FONTA, 1, 1, 1, 1);
-
-            y += LINEHEIGHT_A;
-        }
-
-        // Items.
-        if(cfg.counterCheat & (CCH_ITEMS | CCH_ITEMS_PRCNT))
-        {
-            strcpy(buf, "Items: ");
-            if(cfg.counterCheat & CCH_ITEMS)
-            {
-                sprintf(tmp, "%i/%i ", plr->itemCount, totalItems);
-                strcat(buf, tmp);
-            }
-            if(cfg.counterCheat & CCH_ITEMS_PRCNT)
-            {
-                sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_ITEMS ? "(" : ""),
-                        totalItems ? plr->itemCount * 100 / totalItems : 100,
-                        (cfg.counterCheat & CCH_ITEMS ? ")" : ""));
-                strcat(buf, tmp);
-            }
-
-            M_WriteText2(x, y, buf, GF_FONTA, 1, 1, 1, 1);
-
-            y += LINEHEIGHT_A;
-        }
-
-        // Secrets.
-        if(cfg.counterCheat & (CCH_SECRET | CCH_SECRET_PRCNT))
-        {
-            strcpy(buf, "Secret: ");
-            if(cfg.counterCheat & CCH_SECRET)
-            {
-                sprintf(tmp, "%i/%i ", plr->secretCount, totalSecret);
-                strcat(buf, tmp);
-            }
-            if(cfg.counterCheat & CCH_SECRET_PRCNT)
-            {
-                sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_SECRET ? "(" : ""),
-                        totalSecret ? plr->secretCount * 100 / totalSecret : 100,
-                        (cfg.counterCheat & CCH_SECRET ? ")" : ""));
-                strcat(buf, tmp);
-            }
-
-            M_WriteText2(x, y, buf, GF_FONTA, 1, 1, 1, 1);
-
-            y += LINEHEIGHT_A;
-        }
-    }
-
-    Draw_EndZoom();
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-
-#endif
 }
 
 void Hu_Ticker(void)
 {
-    int                 i;
+    int i;
 
     Hu_LogTicker();
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        hudstate_t*         hud = &hudStates[i];
-        player_t*           plr = &players[i];
+        hudstate_t* hud = &hudStates[i];
+        player_t* plr = &players[i];
 
         if(!((plr->plr->flags & DDPF_LOCAL) && plr->plr->inGame))
             continue;
@@ -1584,9 +1456,9 @@ void Hu_FogEffectTicker(timespan_t time)
 #define fog                 (&fogEffectData)
 #define FOGALPHA_FADE_STEP (.07f)
 
-    int                 i;
     static const float MENUFOGSPEED[2] = {.05f, -.085f};
-    static trigger_t    fixed = { 1 / 35.0 };
+    static trigger_t fixed = { 1 / 35.0 };
+    int i;
 
     if(!M_RunTrigger(&fixed, time))
         return;
@@ -1597,7 +1469,7 @@ void Hu_FogEffectTicker(timespan_t time)
     // Move towards the target alpha
     if(fog->alpha != fog->targetAlpha)
     {
-        float               diff = fog->targetAlpha - fog->alpha;
+        float diff = fog->targetAlpha - fog->alpha;
 
         if(fabs(diff) > FOGALPHA_FADE_STEP)
         {

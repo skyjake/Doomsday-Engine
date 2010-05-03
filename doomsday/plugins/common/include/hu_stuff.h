@@ -160,8 +160,6 @@ void        M_DrawSlider(int x, int y, int width, int height, int slot,
 void        Draw_BeginZoom(float s, float originX, float originY);
 void        Draw_EndZoom(void);
 
-void        HU_Register(void);
-
 void        HU_Start(int player);
 void        Hu_UnloadData(void);
 void        HU_Drawer(int player);

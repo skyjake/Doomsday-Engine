@@ -106,6 +106,7 @@ void M_AmmoAutoSwitch(int option, void* context);
 void M_HUDInfo(int option, void* context);
 void M_HUDScale(int option, void* context);
 void M_HUDInOffsetScale(int option, void* context);
+void M_HUDCheatCounterScale(int option, void* context);
 void M_SfxVol(int option, void* context);
 void M_WeaponOrder(int option, void* context);
 void M_MusicVol(int option, void* context);
@@ -725,6 +726,11 @@ static menuitem_t HUDItems[] = {
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
+    {ITT_LRFUNC, 0, "Wide Offset :", M_HUDInOffsetScale, 0},
+#if __JHERETIC__ || __JHEXEN__
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+#endif
 #if __JDOOM__
     {ITT_EFUNC, 0, "Single key display :", M_ToggleVar, 0, NULL, "hud-keys-combine"},
 #endif
@@ -785,14 +791,17 @@ static menuitem_t HUDItems[] = {
     {ITT_EMPTY, 0, NULL, NULL, 0},
 # endif
 #endif
-#if __JDOOM__ || __JDOOM64__
     {ITT_EMPTY, 0, NULL, NULL, 0},
-#endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     {ITT_EMPTY, 0, "Counters", NULL, 0 },
     {ITT_LRFUNC, 0, "Kills :", M_KillCounter, 0 },
     {ITT_LRFUNC, 0, "Items :", M_ItemCounter, 0 },
     {ITT_LRFUNC, 0, "Secrets :", M_SecretCounter, 0 },
+    {ITT_LRFUNC, 0, "Size :", M_HUDCheatCounterScale, 0},
+#if __JHERETIC__
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+#endif
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -800,12 +809,7 @@ static menuitem_t HUDItems[] = {
 #endif
 
     {ITT_EMPTY, 0, "Fullscreen HUD",    NULL, 0},
-    {ITT_LRFUNC, 0, "Scale :", M_HUDScale, 0},
-#if __JHERETIC__ || __JHEXEN__
-    {ITT_EMPTY, 0, NULL, NULL, 0},
-    {ITT_EMPTY, 0, NULL, NULL, 0},
-#endif
-    {ITT_LRFUNC, 0, "Wide Offset :", M_HUDInOffsetScale, 0},
+    {ITT_LRFUNC, 0, "Size :", M_HUDScale, 0},
 #if __JHERETIC__ || __JHEXEN__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
@@ -842,13 +846,13 @@ static menu_t HUDDef = {
 #endif
     M_DrawHUDMenu,
 #if __JHEXEN__
-    50, HUDItems,
+    51, HUDItems,
 #elif __JHERETIC__
-    57, HUDItems,
+    61, HUDItems,
 #elif __JDOOM64__
-    38, HUDItems,
+    39, HUDItems,
 #elif __JDOOM__
-    42, HUDItems,
+    43, HUDItems,
 #endif
     0, MENU_OPTIONS,
     GF_FONTA,
@@ -1077,21 +1081,25 @@ menu_t* menulist[] = {
 
 static menuitem_t ColorWidgetItems[] = {
     {ITT_LRFUNC, 0, "red :    ", M_WGCurrentColor, 0, NULL, &currentcolor[0] },
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
     {ITT_LRFUNC, 0, "green :", M_WGCurrentColor, 0, NULL, &currentcolor[1] },
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
     {ITT_LRFUNC, 0, "blue :  ", M_WGCurrentColor, 0, NULL, &currentcolor[2] },
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
     {ITT_LRFUNC, 0, "alpha :", M_WGCurrentColor, 0, NULL, &currentcolor[3] },
+#if __JHERETIC__ || __JHEXEN__
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+    {ITT_EMPTY, 0, NULL, NULL, 0},
+#endif
 };
 
 static menu_t ColorWidgetMnu = {
@@ -1101,7 +1109,7 @@ static menu_t ColorWidgetMnu = {
 #if __JDOOM__ || __JDOOM64__
     4, ColorWidgetItems,
 #else
-    10, ColorWidgetItems,
+    12, ColorWidgetItems,
 #endif
     0, MENU_OPTIONS,
     GF_FONTA,
@@ -1110,7 +1118,7 @@ static menu_t ColorWidgetMnu = {
 #if __JDOOM__ || __JDOOM64__
     0, 4
 #else
-    0, 10
+    0, 12
 #endif
 };
 
@@ -3055,19 +3063,19 @@ void M_DrawInventoryMenu(void)
  */
 void M_DrawHUDMenu(void)
 {
-    int                 idx;//, page;
-    menu_t*             menu = &HUDDef;
+    int idx;
+    menu_t* menu = &HUDDef;
 #if __JDOOM__ || __JDOOM64__
-    char                buf[1024];
+    char buf[1024];
 #endif
 #if __JHERETIC__ || __JHEXEN__
-    char*               token;
+    char* token;
 #endif
-    char*               xhairnames[7] = {
+    static const char* xhairnames[7] = {
         "NONE", "CROSS", "ANGLES", "SQUARE", "OPEN SQUARE", "DIAMOND", "V"
     };
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    static char*        countnames[4] = { "HIDDEN", "COUNT", "PERCENT", "COUNT+PCNT" };
+    static const char* countnames[4] = { "HIDDEN", "COUNT", "PERCENT", "COUNT+PCNT" };
 #endif
 
     M_DrawTitle("HUD options", menu->y - 28);
@@ -3092,6 +3100,10 @@ void M_DrawHUDMenu(void)
     idx++;
 #endif
     MN_DrawSlider(menu, idx++, 11, cfg.setBlocks - 3);
+#if __JHERETIC__ || __JHEXEN__
+    idx += 2;
+#endif
+    MN_DrawSlider(menu, idx++, 11, cfg.hudWideOffset * 10 + .25f);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
@@ -3129,9 +3141,12 @@ void M_DrawHUDMenu(void)
 
     // Message log options:
     M_WriteMenuText(menu, idx++, yesno[cfg.hudShown[HUD_LOG]? 1 : 0]);
+#if __JHERETIC__ || __JHEXEN__
+    idx++;
+#endif
     MN_DrawSlider(menu, idx++, 11, cfg.msgScale * 10 + .25f);
 #if __JHERETIC__ || __JHEXEN__
-    idx += 2;
+    idx++;
 #endif
     {
     char secString[11];
@@ -3181,7 +3196,7 @@ void M_DrawHUDMenu(void)
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-    idx++;
+    idx += 2;
 #endif
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -3190,18 +3205,18 @@ void M_DrawHUDMenu(void)
     M_WriteMenuText(menu, idx++, countnames[(cfg.counterCheat & 0x1) | ((cfg.counterCheat & 0x8) >> 2)]);
     M_WriteMenuText(menu, idx++, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);
     M_WriteMenuText(menu, idx++, countnames[((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4)]);
+# if __JHERETIC__
+    idx++;
+# endif
+    MN_DrawSlider(menu, idx++, 11, cfg.counterCheatScale * 12 - 2 + .25f);
 #endif
 
     // Fullscreen HUD options:
     idx += 2;
 #if __JHERETIC__
-    idx++;
+    idx += 2;
 #endif
     MN_DrawSlider(menu, idx++, 11, cfg.hudScale * 12 - 2 + .25f);
-#if __JHERETIC__ || __JHEXEN__
-    idx+=2;
-#endif
-    MN_DrawSlider(menu, idx++, 11, cfg.hudWideOffset * 10 + .25f);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
@@ -3510,6 +3525,13 @@ void M_HUDScale(int option, void* context)
 void M_HUDInOffsetScale(int option, void* context)
 {
     DD_Execute(true, option == RIGHT_DIR? "add hud-wideoffset 0.1" : "sub hud-wideoffset 0.1");
+    /// \fixme Do this in a callback.
+    ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE);
+}
+
+void M_HUDCheatCounterScale(int option, void* context)
+{
+    DD_Execute(true, option == RIGHT_DIR? "add hud-cheat-counter-scale 0.1" : "sub hud-cheat-counter-scale 0.1");
     /// \fixme Do this in a callback.
     ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE);
 }

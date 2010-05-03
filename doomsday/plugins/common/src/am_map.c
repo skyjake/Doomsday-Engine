@@ -1713,7 +1713,7 @@ menuitem_t MAPItems[] = {
     {ITT_EMPTY, 0, NULL, NULL, 0 },
     {ITT_EMPTY, 0, NULL, NULL, 0 },
 #endif
-    {ITT_LRFUNC, 0, "line alpha :", M_MapLineAlpha, 0 },
+    {ITT_LRFUNC, 0, "line opacity :", M_MapLineAlpha, 0 },
 #if __JHERETIC__ || __JHEXEN__
     {ITT_EMPTY, 0, NULL, NULL, 0 },
     {ITT_EMPTY, 0, NULL, NULL, 0 },

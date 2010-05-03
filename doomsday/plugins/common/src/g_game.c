@@ -482,7 +482,6 @@ void G_CommonPreInit(void)
     G_ControlRegister();        // For controls/input.
     AM_Register();              // For the automap.
     Hu_MenuRegister();          // For the menu.
-    HU_Register();              // For the HUD displays.
     Hu_LogRegister();           // For the player message logs.
     Chat_Register();
     Hu_MsgRegister();           // For the game messages.

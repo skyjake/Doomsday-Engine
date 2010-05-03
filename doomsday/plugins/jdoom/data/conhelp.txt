@@ -475,11 +475,11 @@ desc = Automap background color, green component.
 [map-background-b]
 desc = Automap background color, blue component.
 
-[map-cheat-counter]
-desc = 6-bit bitfield. Show kills, items and secret counters in automap.
+[hud-cheat-counter]
+desc = 6-bit bitfield. Show kills, items and secret counters.
 
-[map-cheat-counter-scale]
-desc = Size factor for the counters in the automap.
+[hud-cheat-counter-scale]
+desc = Size factor for the counters.
 
 [map-customcolors]
 desc = Custom automap coloring 0=Never, 1=Auto (enabled if unchanged), 2=Always.

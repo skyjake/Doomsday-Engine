@@ -146,6 +146,14 @@
 #define ST_MAXAMMOX         (314)
 #define ST_MAXAMMOY         (5)
 
+// Counter Cheat flags.
+#define CCH_KILLS               0x1
+#define CCH_ITEMS               0x2
+#define CCH_SECRET              0x4
+#define CCH_KILLS_PRCNT         0x8
+#define CCH_ITEMS_PRCNT         0x10
+#define CCH_SECRET_PRCNT        0x20
+
 // TYPES -------------------------------------------------------------------
 
 typedef enum {
@@ -274,6 +282,9 @@ cvar_t sthudCVars[] =
     {"hud-unhide-pickup-weapon", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_WEAPON], 0, 1},
     {"hud-unhide-pickup-ammo", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_AMMO], 0, 1},
     {"hud-unhide-pickup-key", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_KEY], 0, 1},
+
+    {"hud-cheat-counter", 0, CVT_BYTE, &cfg.counterCheat, 0, 63},
+    {"hud-cheat-counter-scale", 0, CVT_FLOAT, &cfg.counterCheatScale, .1f, 1},
     {NULL}
 };
 
@@ -1388,6 +1399,90 @@ void drawMessageLogWidget(int player, float textAlpha, float iconAlpha,
     *drawnHeight = 10*4;
 }
 
+void drawKillsWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
+{
+    player_t* plr = &players[player];
+    char buf[40], tmp[20];
+
+    if(!(cfg.counterCheat & (CCH_KILLS | CCH_KILLS_PRCNT)))
+        return;
+
+    strcpy(buf, "Kills: ");
+    if(cfg.counterCheat & CCH_KILLS)
+    {
+        sprintf(tmp, "%i/%i ", plr->killCount, totalKills);
+        strcat(buf, tmp);
+    }
+    if(cfg.counterCheat & CCH_KILLS_PRCNT)
+    {
+        sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_KILLS ? "(" : ""),
+                totalKills ? plr->killCount * 100 / totalKills : 100,
+                (cfg.counterCheat & CCH_KILLS ? ")" : ""));
+        strcat(buf, tmp);
+    }
+
+    *drawnHeight = M_StringHeight(buf, GF_FONTA);
+    *drawnWidth = M_StringWidth(buf, GF_FONTA);
+    M_WriteText2(0, -(*drawnHeight), buf, GF_FONTA, 1, 1, 1, textAlpha);
+}
+
+void drawItemsWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
+{
+    player_t* plr = &players[player];
+    char buf[40], tmp[20];
+
+    if(!(cfg.counterCheat & (CCH_ITEMS | CCH_ITEMS_PRCNT)))
+        return;
+
+    strcpy(buf, "Items: ");
+    if(cfg.counterCheat & CCH_ITEMS)
+    {
+        sprintf(tmp, "%i/%i ", plr->itemCount, totalItems);
+        strcat(buf, tmp);
+    }
+    if(cfg.counterCheat & CCH_ITEMS_PRCNT)
+    {
+        sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_ITEMS ? "(" : ""),
+                totalItems ? plr->itemCount * 100 / totalItems : 100,
+                (cfg.counterCheat & CCH_ITEMS ? ")" : ""));
+        strcat(buf, tmp);
+    }
+
+    *drawnHeight = M_StringHeight(buf, GF_FONTA);
+    *drawnWidth = M_StringWidth(buf, GF_FONTA);
+    M_WriteText2(0, -(*drawnHeight), buf, GF_FONTA, 1, 1, 1, textAlpha);
+}
+
+void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
+{
+    player_t* plr = &players[player];
+    char buf[40], tmp[20];
+
+    if(!(cfg.counterCheat & (CCH_SECRET | CCH_SECRET_PRCNT)))
+        return;
+
+    strcpy(buf, "Secret: ");
+    if(cfg.counterCheat & CCH_SECRET)
+    {
+        sprintf(tmp, "%i/%i ", plr->secretCount, totalSecret);
+        strcat(buf, tmp);
+    }
+    if(cfg.counterCheat & CCH_SECRET_PRCNT)
+    {
+        sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_SECRET ? "(" : ""),
+                totalSecret ? plr->secretCount * 100 / totalSecret : 100,
+                (cfg.counterCheat & CCH_SECRET ? ")" : ""));
+        strcat(buf, tmp);
+    }
+
+    *drawnHeight = M_StringHeight(buf, GF_FONTA);
+    *drawnWidth = M_StringWidth(buf, GF_FONTA);
+    M_WriteText2(0, -(*drawnHeight), buf, GF_FONTA, 1, 1, 1, textAlpha);
+}
+
 uiwidget_t widgetsStatusBar[] = {
     { -1, &cfg.statusbarScale, 1, drawStatusBarBackground, &cfg.statusbarOpacity, &cfg.statusbarOpacity },
     { -1, &cfg.statusbarScale, 1, drawReadyAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
@@ -1421,6 +1516,12 @@ uiwidget_t widgetsBottomRight[] = {
 
 uiwidget_t widgetsTop[] = {
     { HUD_LOG, &cfg.msgScale, 1, drawMessageLogWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
+};
+
+uiwidget_t widgetsLeft[] = {
+    { -1, &cfg.counterCheatScale, 1, drawSecretsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+    { -1, &cfg.counterCheatScale, 1, drawItemsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+    { -1, &cfg.counterCheatScale, 1, drawKillsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
 };
 
 void ST_Drawer(int player)
@@ -1541,6 +1642,11 @@ void ST_Drawer(int player)
         posY = y + height - PADDING;
         UI_DrawWidgets(widgetsBottomRight, sizeof(widgetsBottomRight)/sizeof(widgetsBottomRight[0]),
             UWF_RIGHT2LEFT, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+
+        posX = x + PADDING;
+        posY = y + PADDING + (height-PADDING*2)/2;
+        UI_DrawWidgets(widgetsLeft, sizeof(widgetsLeft)/sizeof(widgetsLeft[0]),
+            UWF_BOTTOM2TOP, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
         }
 #undef PADDING
         }
