@@ -53,7 +53,7 @@ void            Hu_LogPost(int player, byte flags, const char* msg);
 void            Hu_LogRefresh(int player);
 void            Hu_LogEmpty(int player);
 
-void            Hu_LogDrawer(int player, float textAlpha);
+void            Hu_LogDrawer(int player, float textAlpha, float iconAlpha, int* drawnWidth, int* drawnHeight);
 void            Hu_LogTicker(void);
 #endif
 
@@ -99,13 +99,13 @@ void            Hu_LogTicker(void);
 #  include "jhexen.h"
 #endif
 
-extern boolean chatOn;
-
 void            Chat_Register(void);
 void            Chat_Init(void);
 
 void            Chat_Start(void);
 void            Chat_Open(int player, boolean open);
+boolean         Chat_IsActive(int player);
 boolean         Chat_Responder(event_t* ev);
-void            Chat_Drawer(int player);
+
+void            Chat_Drawer(int player, float textAlpha, float iconAlpha, int* drawnWidth, int* drawnHeight);
 #endif

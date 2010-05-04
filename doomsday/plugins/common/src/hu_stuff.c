@@ -135,6 +135,7 @@ dpatch_t dpInvPageLeft[2];
 dpatch_t dpInvPageRight[2];
 #endif
 
+boolean shiftdown = false;
 const char shiftXForm[] = {
     0,
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
@@ -808,12 +809,6 @@ void HU_Start(int player)
     }
 }
 
-void HU_Drawer(int player)
-{
-    Chat_Drawer(player);
-    HU_DrawScoreBoard(player);
-}
-
 static void drawQuad(float x, float y, float w, float h, float s, float t,
     float r, float g, float b, float a)
 {
@@ -1328,6 +1323,12 @@ void HU_DrawScoreBoard(int player)
     if(!(hud->scoreAlpha > 0))
         return;
 
+    // Set up the fixed 320x200 projection.
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
+
     // Determine the dimensions of the scoreboard:
     x = 0;
     y = 0;
@@ -1343,7 +1344,6 @@ void HU_DrawScoreBoard(int player)
 
     // Scale by HUD scale.
     DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
     DGL_Translatef(16, 16, 0);
 
     // Draw a background around the whole thing.

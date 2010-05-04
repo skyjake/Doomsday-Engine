@@ -214,16 +214,7 @@ static void rendHUD(int player, int viewW, int viewH)
     {
         ST_Drawer(player);
 
-        // Set up the fixed 320x200 projection.
-        DGL_MatrixMode(DGL_PROJECTION);
-        DGL_PushMatrix();
-        DGL_LoadIdentity();
-        DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
-
-        HU_Drawer(player);
-
-        DGL_MatrixMode(DGL_PROJECTION);
-        DGL_PopMatrix();
+        HU_DrawScoreBoard(player);
 
         // Level information is shown for a few seconds in the beginning of a level.
         if(cfg.mapTitle && !(actualMapTime > 6 * TICSPERSEC))

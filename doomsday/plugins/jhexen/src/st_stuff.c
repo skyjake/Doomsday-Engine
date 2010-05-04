@@ -1850,17 +1850,6 @@ void drawInventoryWidget(int player, float textAlpha, float iconAlpha,
 #undef INVENTORY_HEIGHT
 }
 
-void drawMessageLogWidget(int player, float textAlpha, float iconAlpha,
-    int* drawnWidth, int* drawnHeight)
-{
-    // Don't draw the message log while the map title is up.
-    if(cfg.mapTitle && actualMapTime < 6 * 35)
-        return;
-    Hu_LogDrawer(player, textAlpha);
-    *drawnWidth = 320;
-    *drawnHeight = 10*4;
-}
-
 void drawWorldTimerWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
@@ -1947,7 +1936,8 @@ uiwidget_t widgetsBottom[] = {
 };
 
 uiwidget_t widgetsTop[] = {
-    { HUD_LOG, &cfg.msgScale, 1, drawMessageLogWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
+    { HUD_LOG, &cfg.msgScale, 1, Hu_LogDrawer, &cfg.hudColor[3], &cfg.hudIconAlpha },
+    { -1, &cfg.msgScale, 1, Chat_Drawer, &cfg.hudColor[3], &cfg.hudIconAlpha }
 };
 
 static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
@@ -2078,7 +2068,7 @@ void ST_Drawer(int player)
         }
         posY = y + PADDING;
         UI_DrawWidgets(widgetsTop, sizeof(widgetsTop)/sizeof(widgetsTop[0]),
-            0, 0, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+            UWF_TOP2BOTTOM, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
 
         drawnHeight = 0;
 

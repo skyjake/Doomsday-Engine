@@ -320,7 +320,8 @@ void Hu_LogTicker(void)
  *
  * @param player        Player (local) number whose message log to draw.
  */
-void Hu_LogDrawer(int player, float textAlpha)
+void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
     assert(player >= 0 && player < MAXPLAYERS);
     {
@@ -328,6 +329,10 @@ void Hu_LogDrawer(int player, float textAlpha)
     int n, y, viewW, viewH;
     uint i, numVisible;
     float scale, yOffset;
+
+    // Don't draw the message log while the map title is up.
+    if(cfg.mapTitle && actualMapTime < 6 * 35)
+        return;
 
     R_GetViewPort(player, NULL, NULL, &viewW, &viewH);
     scale = viewW >= viewH? (float)viewH/SCREENHEIGHT : (float)viewW/SCREENWIDTH;
@@ -357,15 +362,19 @@ void Hu_LogDrawer(int player, float textAlpha)
         yOffset = 0;
     }
 
+    *drawnWidth = 0;
+    *drawnHeight = 0;
+
     yOffset *= scale;
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_Translatef(0, yOffset, 0);
 
     y = 0;
-    for(i = 0; i < numVisible; ++i, y += LINEHEIGHT_A)
+    for(i = 0; i < numVisible; ++i)
     {
         logmsg_t* msg = &log->msgs[n];
+        int width, height;
         float col[4];
 
         // Default colour and alpha.
@@ -386,16 +395,13 @@ void Hu_LogDrawer(int player, float textAlpha)
                 // Flash color.
                 col[CR] = col[CG] = col[CB] = 1;
             }
-            else if(blinkSpeed != 0 &&
-                    msgTics < blinkSpeed + LOG_MSG_FLASHFADETICS &&
-                    msgTics >= blinkSpeed)
+            else if(blinkSpeed != 0 && msgTics < blinkSpeed + LOG_MSG_FLASHFADETICS && msgTics >= blinkSpeed)
             {
                 int c;
 
                 // Fade color to normal.
                 for(c = 0; c < 3; ++c)
-                    col[c] += ((1.0f - col[c]) / LOG_MSG_FLASHFADETICS) *
-                                (blinkSpeed + LOG_MSG_FLASHFADETICS - msgTics);
+                    col[c] += ((1.0f - col[c]) / LOG_MSG_FLASHFADETICS) * (blinkSpeed + LOG_MSG_FLASHFADETICS - msgTics);
             }
         }
         else
@@ -408,15 +414,23 @@ void Hu_LogDrawer(int player, float textAlpha)
         // Draw using param text.
         // Messages may use the params to override the way the message is
         // is displayed, e.g. colour (Hexen's important messages).
-        WI_DrawParamText(0, y, msg->text, GF_FONTA,
-                         col[CR], col[CG], col[CB], col[CA], false, false,
-                         cfg.msgAlign);
+        WI_DrawParamText(0, y, msg->text, GF_FONTA, col[CR], col[CG], col[CB], col[CA], false, false, cfg.msgAlign);
 
+        width = M_StringWidth(msg->text, GF_FONTA);
+        height = M_StringHeight(msg->text, GF_FONTA);
+        if(width > *drawnWidth)
+            *drawnWidth = width;
+        *drawnHeight += height;
+
+        y += height + 1;
         n = (n < LOG_MAX_MESSAGES - 1)? n + 1 : 0;
     }
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_Translatef(0, -yOffset, 0);
+
+    *drawnHeight += (numVisible-1) * 1;
+    *drawnHeight -= -yOffset/scale;
     }
 }
 
@@ -627,6 +641,13 @@ enum {
 };
 #endif
 
+typedef struct {
+    boolean active;
+    boolean shiftDown;
+    int to; // 0=all, 1=player 0, etc.
+    hu_text_t buffer;
+} uiwidget_chat_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -641,9 +662,6 @@ static void     closeChat(void);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-boolean shiftdown = false;
-boolean chatOn;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 
@@ -699,10 +717,7 @@ ccmd_t chatCCmds[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static int chatTo = 0; // 0=all, 1=player 0, etc.
-static hu_text_t chat;
-static hu_text_t chatBuffer[MAXPLAYERS];
-static boolean chatAlwaysOff = false;
+uiwidget_chat_t chatWidgets[DDMAXPLAYERS];
 
 // CODE --------------------------------------------------------------------
 
@@ -743,48 +758,49 @@ void Chat_Start(void)
 {
     int i;
 
-    // Create the chat widget
-    HUlib_initText(&chat, 0, M_CharHeight('A', GF_FONTA) + 1, &chatOn);
-
+    // Create the chat widgets.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         Chat_Open(i, false);
 
         // Create the input buffers.
-        HUlib_initText(&chatBuffer[i], 0, 0, &chatAlwaysOff);
+        HUlib_initText(&chatWidgets[i].buffer, 0, 0, &chatWidgets[i].active);
     }
 }
 
 void Chat_Open(int player, boolean open)
 {
+    assert(player >= 0 && player < DDMAXPLAYERS);
+    {
+    uiwidget_chat_t* chat = &chatWidgets[player];
     if(open)
     {
-        chatOn = true;
-        chatTo = player;
+        chat->active = true;
+        chat->to = player;
 
-        HUlib_resetText(&chat);
-
+        HUlib_resetText(&chat->buffer);
         // Enable the chat binding class
         DD_Execute(true, "activatebcontext chat");
+        return;
     }
-    else
-    {
-        if(chatOn)
-        {
-            chatOn = false;
 
-            // Disable the chat binding class
-            DD_Execute(true, "deactivatebcontext chat");
-        }
+    if(chat->active)
+    {
+        chat->active = false;
+        // Disable the chat binding class
+        DD_Execute(true, "deactivatebcontext chat");
+    }
     }
 }
 
 boolean Chat_Responder(event_t* ev)
 {
+    int player = CONSOLEPLAYER;
+    uiwidget_chat_t* chat = &chatWidgets[player];
     boolean eatkey = false;
     unsigned char c;
 
-    if(!chatOn)
+    if(!chat->active)
         return false;
 
     if(ev->type != EV_KEY)
@@ -792,7 +808,7 @@ boolean Chat_Responder(event_t* ev)
 
     if(ev->data1 == DDKEY_RSHIFT)
     {
-        shiftdown = (ev->state == EVS_DOWN || ev->state == EVS_REPEAT);
+        chat->shiftDown = (ev->state == EVS_DOWN || ev->state == EVS_REPEAT);
         return false;
     }
 
@@ -801,29 +817,58 @@ boolean Chat_Responder(event_t* ev)
 
     c = (unsigned char) ev->data1;
 
-    if(shiftdown)
+    if(chat->shiftDown)
         c = shiftXForm[c];
 
-    eatkey = HUlib_keyInText(&chat, c);
+    eatkey = HUlib_keyInText(&chat->buffer, c);
 
     return eatkey;
 }
 
-void Chat_Drawer(int player)
+void Chat_Drawer(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
 {
-    if(player == CONSOLEPLAYER)
-        HUlib_drawText(&chat, GF_FONTA);
+    assert(player >= 0 && player < DDMAXPLAYERS);
+    {
+    uiwidget_chat_t* chat = &chatWidgets[player];
+    hu_textline_t* l = &chat->buffer.l;
+    char buf[HU_MAXLINELENGTH+1];
+    const char* str;
+    int xOffset = 0;
+
+    if(!*chat->buffer.on)
+        return;
+
+    if(actualMapTime & 12)
+    {
+        dd_snprintf(buf, HU_MAXLINELENGTH+1, "%s_", chat->buffer.l.l);
+        str = buf;
+        if(cfg.msgAlign == 1)
+            xOffset = M_CharWidth('_', GF_FONTA)/2;
+    }
+    else
+    {
+        str = chat->buffer.l.l;
+        if(cfg.msgAlign == 2)
+            xOffset = -M_CharWidth('_', GF_FONTA);
+    }
+
+    WI_DrawParamText(xOffset, 0, str, GF_FONTA, cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha, false, false, cfg.msgAlign);
+    *drawnWidth = M_StringWidth(chat->buffer.l.l, GF_FONTA) + M_CharWidth('_', GF_FONTA);
+    *drawnHeight = MAX_OF(M_StringHeight(chat->buffer.l.l, GF_FONTA), M_CharHeight('_', GF_FONTA));
+    }
 }
 
 /**
  * Sends a string to other player(s) as a chat message.
  */
-static void sendMessage(const char* msg)
+static void sendMessage(int player, const char* msg)
 {
+    uiwidget_chat_t* chat = &chatWidgets[player];
     char buff[256];
     int i;
 
-    if(chatTo == 0)
+    if(chat->to == 0)
     {   // Send the message to the other players explicitly,
         if(!IS_NETGAME)
         {   // Send it locally.
@@ -841,10 +886,10 @@ static void sendMessage(const char* msg)
     }
     else
     {   // Send to all of the destination color.
-        chatTo -= 1;
+        chat->to -= 1;
 
         for(i = 0; i < MAXPLAYERS; ++i)
-            if(players[i].plr->inGame && cfg.playerColor[i] == chatTo)
+            if(players[i].plr->inGame && cfg.playerColor[i] == chat->to)
             {
                 if(!IS_NETGAME)
                 {   // Send it locally.
@@ -869,6 +914,15 @@ static void sendMessage(const char* msg)
 #endif
 }
 
+boolean Chat_IsActive(int player)
+{
+    assert(player >= 0 && player < DDMAXPLAYERS);
+    {
+    uiwidget_chat_t* chat = &chatWidgets[player];
+    return chat->active;
+    }
+}
+
 /**
  * Sets the chat buffer to a chat macro string.
  */
@@ -876,10 +930,10 @@ static boolean sendMacro(int player, int num)
 {
     if(num >= 0 && num < 9)
     {   // Leave chat mode and notify that it was sent.
-        if(chatOn)
+        if(chatWidgets[player].active)
             Chat_Open(player, false);
 
-        sendMessage(cfg.chatMacros[num]);
+        sendMessage(player, cfg.chatMacros[num]);
         return true;
     }
 
@@ -900,28 +954,30 @@ DEFCC(CCmdLocalMessage)
  */
 DEFCC(CCmdMsgAction)
 {
+    int player = CONSOLEPLAYER;
+    uiwidget_chat_t* chat = &chatWidgets[player];
     int toPlayer;
 
     if(G_GetGameAction() == GA_QUIT)
         return false;
 
-    if(chatOn)
+    if(chat->active)
     {
         if(!stricmp(argv[0], "chatcomplete"))  // send the message
         {
-            Chat_Open(CONSOLEPLAYER, false);
-            if(chat.l.len)
+            Chat_Open(player, false);
+            if(chat->buffer.l.len)
             {
-                sendMessage(chat.l.l);
+                sendMessage(player, chat->buffer.l.l);
             }
         }
         else if(!stricmp(argv[0], "chatcancel"))  // close chat
         {
-            Chat_Open(CONSOLEPLAYER, false);
+            Chat_Open(player, false);
         }
         else if(!stricmp(argv[0], "chatdelete"))
         {
-            HUlib_delCharFromText(&chat);
+            HUlib_delCharFromText(&chat->buffer);
         }
     }
 
@@ -943,8 +999,7 @@ DEFCC(CCmdMsgAction)
             if(toPlayer < 0 || toPlayer > 3)
             {
                 // Bad destination.
-                Con_Message("Invalid player number \"%i\". Should be 0-3\n",
-                            toPlayer);
+                Con_Message("Invalid player number \"%i\". Should be 0-3\n", toPlayer);
                 return false;
             }
 
@@ -954,7 +1009,7 @@ DEFCC(CCmdMsgAction)
             toPlayer = 0;
 
         macroNum = atoi(((argc == 3)? argv[2] : argv[1]));
-        if(!sendMacro(CONSOLEPLAYER, macroNum))
+        if(!sendMacro(player, macroNum))
         {
             Con_Message("Invalid macro number\n");
             return false;
@@ -962,7 +1017,7 @@ DEFCC(CCmdMsgAction)
     }
     else if(!stricmp(argv[0], "beginchat")) // begin chat mode
     {
-        if(chatOn)
+        if(chat->active)
             return false;
 
         if(argc == 2)
@@ -971,8 +1026,7 @@ DEFCC(CCmdMsgAction)
             if(toPlayer < 0 || toPlayer > 3)
             {
                 // Bad destination.
-                Con_Message("Invalid player number \"%i\". Should be 0-3\n",
-                            toPlayer);
+                Con_Message("Invalid player number \"%i\". Should be 0-3\n", toPlayer);
                 return false;
             }
 

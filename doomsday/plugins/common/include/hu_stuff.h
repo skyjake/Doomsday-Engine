@@ -162,7 +162,6 @@ void        Draw_EndZoom(void);
 
 void        HU_Start(int player);
 void        Hu_UnloadData(void);
-void        HU_Drawer(int player);
 char        HU_dequeueChatChar(void);
 void        HU_Erase(void);
 

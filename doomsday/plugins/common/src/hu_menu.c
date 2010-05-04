@@ -3862,7 +3862,7 @@ DEFCC(CCmdMenuAction)
 
     if(!menuActive)
     {
-        if(!stricmp(argv[0], "menu") && !chatOn) // Open menu.
+        if(!stricmp(argv[0], "menu") && !Chat_IsActive(CONSOLEPLAYER)) // Open menu.
         {
             Hu_MenuCommand(MCMD_OPEN);
             return true;
