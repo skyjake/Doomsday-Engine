@@ -166,8 +166,6 @@ void        HU_Drawer(int player);
 char        HU_dequeueChatChar(void);
 void        HU_Erase(void);
 
-void        HU_DrawMapCounters(void);
-
 void        Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
                              float texAngle, float alpha, float arg1);
 

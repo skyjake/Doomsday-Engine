@@ -34,6 +34,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #if __JDOOM__
 #  include "jdoom.h"
@@ -52,6 +53,7 @@
 #include "p_mapsetup.h"
 #include "p_tick.h"
 #include "f_infine.h"
+#include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -185,7 +187,7 @@ static fogeffectdata_t fogEffectData;
 
 void R_SetFontCharacter(gamefontid_t fontid, byte ch, const char* lumpname)
 {
-    gamefont_t*         font;
+    gamefont_t* font;
 
     if(!(fontid >= GF_FIRST && fontid < NUM_GAME_FONTS))
     {
@@ -205,14 +207,14 @@ void R_SetFontCharacter(gamefontid_t fontid, byte ch, const char* lumpname)
 
     R_CachePatch(&font->chars[ch].patch, font->chars[ch].lumpname);
 
-    DD_SetInteger(DD_MONOCHROME_PATCHES, 0);
     DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, false);
+    DD_SetInteger(DD_MONOCHROME_PATCHES, 0);
 }
 
 void R_InitFont(gamefontid_t fontid, const fontpatch_t* patches, size_t num)
 {
-    size_t              i;
-    gamefont_t*         font;
+    gamefont_t* font;
+    size_t i;
 
     if(!(fontid >= GF_FIRST && fontid < NUM_GAME_FONTS))
     {
@@ -226,7 +228,7 @@ void R_InitFont(gamefontid_t fontid, const fontpatch_t* patches, size_t num)
 
     for(i = 0; i < num; ++i)
     {
-        const fontpatch_t*  p = &patches[i];
+        const fontpatch_t* p = &patches[i];
 
         R_SetFontCharacter(fontid, p->ch, p->lumpName);
     }
@@ -239,7 +241,6 @@ void R_SetFont(gamefontid_t fontid)
 {
     if(!(fontid >= GF_FIRST && fontid < NUM_GAME_FONTS))
         return; // No such font.
-
     currentGFontIndex = fontid;
 }
 
@@ -247,7 +248,6 @@ gamefontid_t R_GetCurrentFont(void)
 {
     if(currentGFontIndex == -1)
         return 0;
-
     return currentGFontIndex;
 }
 
@@ -257,8 +257,6 @@ gamefontid_t R_GetCurrentFont(void)
  */
 void Hu_LoadData(void)
 {
-    int                 i;
-    char                name[9];
 #if __JDOOM__ || __JDOOM64__
     static const char*  skillModePatchNames[] =
     {
@@ -271,7 +269,6 @@ void Hu_LoadData(void)
 # endif
     };
 #endif
-
 #if __JDOOM__
     static const char*  episodePatchNames[] =
     {
@@ -654,6 +651,8 @@ void Hu_LoadData(void)
         { 122, "FONTB58" } // z
     };
 #endif
+    char name[9];
+    int i;
 
     // Intialize the background fog effect.
     fogEffectData.texture = 0;
@@ -725,7 +724,7 @@ void Hu_LoadData(void)
     }
     else
     {
-        int                 j;
+        int j;
 
         // Don't waste space - patches are loaded back to back
         // ie no space in the array is left for E1M10
@@ -786,22 +785,18 @@ void Hu_UnloadData(void)
 
 void HU_Stop(int player)
 {
-    hudstate_t*         hud;
-
-    if(player < 0 || player >= MAXPLAYERS)
-        return;
-
-    hud = &hudStates[player];
+    assert(player >= 0 && player < MAXPLAYERS);
+    {
+    hudstate_t* hud = &hudStates[player];
     hud->active = false;
+    }
 }
 
 void HU_Start(int player)
 {
-    hudstate_t*         hud;
-
-    if(player < 0 || player >= MAXPLAYERS)
-        return;
-
+    assert(player >= 0 && player < MAXPLAYERS);
+    {
+    hudstate_t* hud = &hudStates[player];
     Chat_Start();
     Hu_LogStart(player);
 
@@ -810,6 +805,7 @@ void HU_Start(int player)
         HU_Stop(player);
 
     hud->active = true;
+    }
 }
 
 void HU_Drawer(int player)
@@ -819,7 +815,7 @@ void HU_Drawer(int player)
 }
 
 static void drawQuad(float x, float y, float w, float h, float s, float t,
-                     float r, float g, float b, float a)
+    float r, float g, float b, float a)
 {
     DGL_Color4f(r, g, b, a);
     DGL_Begin(DGL_QUADS);
@@ -838,13 +834,12 @@ static void drawQuad(float x, float y, float w, float h, float s, float t,
 }
 
 void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
-                 float scale, float r, float g, float b, float a,
-                 boolean alignRight)
+    float scale, float r, float g, float b, float a, boolean alignRight)
 {
-    const char*         ch;
-    char                c;
-    float               w, h;
-    dpatch_t*           p;
+    const char* ch;
+    dpatch_t* p;
+    float w, h;
+    char c;
 
     if(!str || !str[0])
         return;
@@ -901,15 +896,15 @@ void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
 }
 
 typedef struct {
-    int                 player, pClass, team;
-    int                 kills, suicides;
-    float               color[3];
+    int player, pClass, team;
+    int kills, suicides;
+    float color[3];
 } scoreinfo_t;
 
 int scoreInfoCompare(const void* a, const void* b)
 {
-    const scoreinfo_t*  infoA = (scoreinfo_t*) a;
-    const scoreinfo_t*  infoB = (scoreinfo_t*) b;
+    const scoreinfo_t* infoA = (scoreinfo_t*) a;
+    const scoreinfo_t* infoB = (scoreinfo_t*) b;
 
     if(infoA->kills > infoB->kills)
         return -1;
@@ -934,34 +929,33 @@ static void sortScoreInfo(scoreinfo_t* vec, size_t size)
     qsort(vec, size, sizeof(scoreinfo_t), scoreInfoCompare);
 }
 
-static int buildScoreBoard(scoreinfo_t* scoreBoard, int maxPlayers,
-                           int player)
+static int buildScoreBoard(scoreinfo_t* scoreBoard, int maxPlayers, int player)
 {
 #if __JHEXEN__
-static const int plrColors[] = {
-    AM_PLR1_COLOR,
-    AM_PLR2_COLOR,
-    AM_PLR3_COLOR,
-    AM_PLR4_COLOR,
-    AM_PLR5_COLOR,
-    AM_PLR6_COLOR,
-    AM_PLR7_COLOR,
-    AM_PLR8_COLOR
-};
+    static const int plrColors[] = {
+        AM_PLR1_COLOR,
+        AM_PLR2_COLOR,
+        AM_PLR3_COLOR,
+        AM_PLR4_COLOR,
+        AM_PLR5_COLOR,
+        AM_PLR6_COLOR,
+        AM_PLR7_COLOR,
+        AM_PLR8_COLOR
+    };
 #else
-    static const float  green[3] = { 0.f,    .8f,  0.f   };
-    static const float  gray[3]  = {  .45f,  .45f,  .45f };
-    static const float  brown[3] = {  .7f,   .5f,   .4f  };
-    static const float  red[3]   = { 1.f,   0.f,   0.f   };
+    static const float green[3] = { 0.f,    .8f,  0.f   };
+    static const float gray[3]  = {  .45f,  .45f,  .45f };
+    static const float brown[3] = {  .7f,   .5f,   .4f  };
+    static const float red[3]   = { 1.f,   0.f,   0.f   };
 #endif
-    int                 i, j, n, inCount;
+    int i, j, n, inCount;
 
     memset(scoreBoard, 0, sizeof(*scoreBoard) * maxPlayers);
     inCount = 0;
     for(i = 0, n = 0; i < maxPlayers; ++i)
     {
-        player_t*           plr = &players[i];
-        scoreinfo_t*        info;
+        player_t* plr = &players[i];
+        scoreinfo_t* info;
 
         if(!plr->plr->inGame)
             continue;
@@ -1026,8 +1020,8 @@ static const int plrColors[] = {
 
 void HU_ScoreBoardUnHide(int player)
 {
-    hudstate_t*         hud;
-    player_t*           plr;
+    hudstate_t* hud;
+    player_t* plr;
 
     if(player < 0 || player >= MAXPLAYERS)
         return;
@@ -1042,15 +1036,14 @@ void HU_ScoreBoardUnHide(int player)
 }
 
 static void drawTable(float x, float ly, float width, float height,
-                      column_t* columns, scoreinfo_t* scoreBoard,
-                      int inCount, float alpha, int player)
+    column_t* columns, scoreinfo_t* scoreBoard, int inCount, float alpha,
+    int player)
 {
 #define CELL_PADDING    (1)
 
-    int                 i, n, numCols, numStretchCols;
-    float               cX, cY, fixedWidth, lineHeight, fontScale, fontHeight,
-                        fontOffsetY;
-    float*              colX, *colW;
+    int i, n, numCols, numStretchCols;
+    float cX, cY, fixedWidth, lineHeight, fontScale, fontHeight, fontOffsetY;
+    float* colX, *colW;
 
     if(!columns)
         return;
@@ -1141,14 +1134,13 @@ static void drawTable(float x, float ly, float width, float height,
     // Draw the table from left to right, top to bottom:
     for(i = 0; i < inCount; ++i, ly += lineHeight)
     {
-        scoreinfo_t*        info = &scoreBoard[i];
-        const char*         name = Net_GetPlayerName(info->player);
-        char                buf[5];
+        scoreinfo_t* info = &scoreBoard[i];
+        const char* name = Net_GetPlayerName(info->player);
+        char buf[5];
 
         if(info->player == player)
         {   // Draw a background to make *me* stand out.
-            float               val =
-                (info->color[0] + info->color[1] + info->color[2]) / 3;
+            float val = (info->color[0] + info->color[1] + info->color[2]) / 3;
 
             if(val < .5f)
                 val = .2f;
@@ -1189,7 +1181,7 @@ DGL_Enable(DGL_TEXTURING);
             case 0: // Class icon.
                 {
 #if __JHERETIC__ || __JHEXEN__
-                int                 spr = 0;
+                int spr = 0;
 # if __JHERETIC__
                 if(info->pClass == PCLASS_CHICKEN)
                     spr = SPR_CHKN;
@@ -1204,9 +1196,9 @@ DGL_Enable(DGL_TEXTURING);
 # endif
                 if(spr)
                 {
-                    spriteinfo_t        sprInfo;
-                    int                 w, h, w2, h2;
-                    float               s, t, scale;
+                    spriteinfo_t sprInfo;
+                    int w, h, w2, h2;
+                    float s, t, scale;
 
                     R_GetSpriteInfo(spr, 0, &sprInfo);
                     w = sprInfo.width;
@@ -1287,7 +1279,7 @@ const char* P_GetGameModeName(void)
 static void drawMapMetaData(float x, float y, gamefontid_t font, float alpha)
 {
     static const char*  unnamed = "unnamed";
-    const char*         lname = P_GetMapNiceName();
+    const char* lname = P_GetMapNiceName();
 
     if(!lname)
         lname = unnamed;
@@ -1321,9 +1313,9 @@ void HU_DrawScoreBoard(int player)
         {NULL, 0, 0}
     };
 
-    int                 x, y, width, height, inCount;
-    hudstate_t*         hud;
-    scoreinfo_t         scoreBoard[MAXPLAYERS];
+    scoreinfo_t scoreBoard[MAXPLAYERS];
+    int x, y, width, height, inCount;
+    hudstate_t* hud;
 
     if(!IS_NETGAME)
         return;
@@ -1370,56 +1362,6 @@ void HU_DrawScoreBoard(int player)
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
-}
-
-/**
- * Draws the world time in the top right corner of the screen
- */
-static void drawWorldTimer(void)
-{
-#if __JHEXEN__
-    int     days, hours, minutes, seconds;
-    int     worldTimer;
-    char    timeBuffer[15];
-    char    dayBuffer[20];
-
-    worldTimer = players[DISPLAYPLAYER].worldTimer;
-
-    worldTimer /= 35;
-    days = worldTimer / 86400;
-    worldTimer -= days * 86400;
-    hours = worldTimer / 3600;
-    worldTimer -= hours * 3600;
-    minutes = worldTimer / 60;
-    worldTimer -= minutes * 60;
-    seconds = worldTimer;
-
-    sprintf(timeBuffer, "%.2d : %.2d : %.2d", hours, minutes, seconds);
-    M_WriteText2(240, 8, timeBuffer, GF_FONTA, 1, 1, 1, 1);
-
-    if(days)
-    {
-        if(days == 1)
-        {
-            sprintf(dayBuffer, "%.2d DAY", days);
-        }
-        else
-        {
-            sprintf(dayBuffer, "%.2d DAYS", days);
-        }
-
-        M_WriteText2(240, 20, dayBuffer, GF_FONTA, 1, 1, 1, 1);
-        if(days >= 5)
-        {
-            M_WriteText2(230, 35, "YOU FREAK!!!", GF_FONTA, 1, 1, 1, 1);
-        }
-    }
-#endif
-}
-
-void HU_DrawMapCounters(void)
-{
-    drawWorldTimer();
 }
 
 void Hu_Ticker(void)
@@ -1490,19 +1432,15 @@ void Hu_FogEffectTicker(timespan_t time)
         {
             fog->layers[i].texAngle += MENUFOGSPEED[i] / 4;
             fog->layers[i].posAngle -= MENUFOGSPEED[!i];
-            fog->layers[i].texOffset[VX] =
-                160 + 120 * cos(fog->layers[i].posAngle / 180 * PI);
-            fog->layers[i].texOffset[VY] =
-                100 + 100 * sin(fog->layers[i].posAngle / 180 * PI);
+            fog->layers[i].texOffset[VX] = 160 + 120 * cos(fog->layers[i].posAngle / 180 * PI);
+            fog->layers[i].texOffset[VY] = 100 + 100 * sin(fog->layers[i].posAngle / 180 * PI);
         }
         else
         {
             fog->layers[i].texAngle += MENUFOGSPEED[i] / 4;
             fog->layers[i].posAngle -= MENUFOGSPEED[!i] * 1.5f;
-            fog->layers[i].texOffset[VX] =
-                320 + 320 * cos(fog->layers[i].posAngle / 180 * PI);
-            fog->layers[i].texOffset[VY] =
-                240 + 240 * sin(fog->layers[i].posAngle / 180 * PI);
+            fog->layers[i].texOffset[VX] = 320 + 320 * cos(fog->layers[i].posAngle / 180 * PI);
+            fog->layers[i].texOffset[VY] = 240 + 240 * sin(fog->layers[i].posAngle / 180 * PI);
         }
     }
 
@@ -1526,8 +1464,8 @@ void Hu_FogEffectTicker(timespan_t time)
  */
 float WI_ParseFloat(char** str)
 {
-    float               value;
-    char*               end;
+    float value;
+    char* end;
 
     *str = M_SkipWhite(*str);
     if(**str != '=')
@@ -1543,28 +1481,27 @@ float WI_ParseFloat(char** str)
  * Draw a string of text controlled by parameter blocks.
  */
 void WI_DrawParamText(int x, int y, const char* inString, gamefontid_t defFont,
-                      float defRed, float defGreen, float defBlue,
-                      float defAlpha, boolean defCase, boolean defTypeIn,
-                      int halign)
+    float defRed, float defGreen, float defBlue, float defAlpha, boolean defCase,
+    boolean defTypeIn, int halign)
 {
 #define SMALLBUFF_SIZE  80
 
-    char                smallBuff[SMALLBUFF_SIZE+1], *bigBuff = NULL;
-    char                temp[256], *str, *string, *end;
-    gamefontid_t        font = defFont;
-    float               r = defRed, g = defGreen, b = defBlue, a = defAlpha;
-    float               offX = 0, offY = 0, width = 0;
-    float               scaleX = 1, scaleY = 1, angle = 0, extraScale;
-    float               cx = x, cy = y;
-    int                 charCount = 0;
-    boolean             typeIn = defTypeIn;
-    boolean             caseScale = defCase;
+    char smallBuff[SMALLBUFF_SIZE+1], *bigBuff = NULL;
+    char temp[256], *str, *string, *end;
+    gamefontid_t font = defFont;
+    float r = defRed, g = defGreen, b = defBlue, a = defAlpha;
+    float offX = 0, offY = 0, width = 0;
+    float scaleX = 1, scaleY = 1, angle = 0, extraScale;
+    float cx = x, cy = y;
+    int charCount = 0;
+    boolean typeIn = defTypeIn;
+    boolean caseScale = defCase;
     struct {
-        float               scale, offset;
+        float scale, offset;
     } caseMod[2]; // 1=upper, 0=lower
-    int                 curCase = -1;
-    int                 alignx = 0;
-    size_t              len;
+    int curCase = -1;
+    int alignx = 0;
+    size_t len;
 
     if(!inString || !inString[0])
         return;
@@ -2407,8 +2344,7 @@ void Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha)
  *                      (ie it does not originate from a DED definition).
  */
 void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
-                  const dpatch_t* patch, const char* altstring,
-                  boolean builtin, int halign)
+    const dpatch_t* patch, const char* altstring, boolean builtin, int halign)
 {
     char def[80], *string;
     int patchString = 0, posx = x;
@@ -2423,16 +2359,12 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
     {   // We have already determined a string to replace this with.
         if(W_IsFromIWAD(patch->lump))
         {
-            WI_DrawParamText(x, y, altstring, GF_FONTB, r, g, b, a, false,
-                             true, halign);
+            WI_DrawParamText(x, y, altstring, GF_FONTB, r, g, b, a, false, true, halign);
             return;
         }
     }
     else if(cfg.usePatchReplacement)
     {   // We might be able to replace the patch with a string
-        if(!patch)
-            return;
-
         strcpy(def, "Patch Replacement|");
         strcat(def, W_LumpName(patch->lump));
 
@@ -2443,23 +2375,18 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
             // A user replacement?
             if(patchString)
             {
-                WI_DrawParamText(x, y, string, GF_FONTB, r, g, b, a, false,
-                                 true, halign);
+                WI_DrawParamText(x, y, string, GF_FONTB, r, g, b, a, false, true, halign);
                 return;
             }
 
             // A built-in replacement?
             if(cfg.usePatchReplacement == 2 && altstring && altstring[0])
             {
-                WI_DrawParamText(x, y, altstring, GF_FONTB, r, g, b, a, false,
-                                 true, halign);
+                WI_DrawParamText(x, y, altstring, GF_FONTB, r, g, b, a, false, true, halign);
                 return;
             }
         }
     }
-
-    if(!patch)
-        return;
 
     // No replacement possible/wanted - use the original patch.
     if(halign == ALIGN_CENTER)

@@ -305,7 +305,7 @@ void drawServantWidget(int player, float textAlpha, float iconAlpha,
     if(plr->powers[PT_MINOTAUR] > BLINKTHRESHOLD || !(plr->powers[PT_MINOTAUR] & 16))
         GL_DrawPatchLitAlpha(-13, 17, 1, iconAlpha, dpSpinMinotaur[(mapTime / 3) & 15].lump);
     *drawnWidth = 26;
-    *drawnHeight = 34;
+    *drawnHeight = 29;
 }
 
 void drawWeaponPiecesWidget(int player, float textAlpha, float iconAlpha,
@@ -1861,6 +1861,40 @@ void drawMessageLogWidget(int player, float textAlpha, float iconAlpha,
     *drawnHeight = 10*4;
 }
 
+void drawWorldTimerWidget(int player, float textAlpha, float iconAlpha,
+    int* drawnWidth, int* drawnHeight)
+{
+    int days, hours, minutes, seconds;
+    int worldTimer;
+    char buf[60];
+
+    if(!AM_IsActive(AM_MapForPlayer(player)))
+        return;
+
+    worldTimer = players[player].worldTimer / TICRATE;
+    days = worldTimer / 86400;
+    worldTimer -= days * 86400;
+    hours = worldTimer / 3600;
+    worldTimer -= hours * 3600;
+    minutes = worldTimer / 60;
+    worldTimer -= minutes * 60;
+    seconds = worldTimer;
+
+    dd_snprintf(buf, 60, "%.2d : %.2d : %.2d", hours, minutes, seconds);
+
+    if(days)
+    {
+        char buf2[30];
+        dd_snprintf(buf2, 20, "\n%.2d %s", days, days == 1? "day" : "days");
+        if(days >= 5)
+            strncat(buf2, "\nYOU FREAK!!!", 20);
+        strncat(buf, buf2, 60);
+    }
+    *drawnWidth = M_StringWidth(buf, GF_FONTA);
+    *drawnHeight = M_StringHeight(buf, GF_FONTA);
+    WI_DrawParamText(0, 0, buf, GF_FONTA, 1, 1, 1, textAlpha, false, false, ALIGN_RIGHT);
+}
+
 uiwidget_t widgetsStatusBar[] = {
     { -1, &cfg.statusbarScale, 1, drawStatusBarBackground, &cfg.statusbarOpacity, &cfg.statusbarOpacity },
     { -1, &cfg.statusbarScale, 1, drawWeaponPiecesWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
@@ -1893,6 +1927,10 @@ uiwidget_t widgetsTopLeft2[] = {
 uiwidget_t widgetsTopRight[] = {
     { -1, &cfg.hudScale, 1, drawServantWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
     { -1, &cfg.hudScale, 1, drawDefenseWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
+};
+
+uiwidget_t widgetsTopRight2[] = {
+    { -1, &cfg.hudScale, 1, drawWorldTimerWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
 };
 
 uiwidget_t widgetsBottomLeft[] = {
@@ -2042,6 +2080,8 @@ void ST_Drawer(int player)
         UI_DrawWidgets(widgetsTop, sizeof(widgetsTop)/sizeof(widgetsTop[0]),
             0, 0, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
 
+        drawnHeight = 0;
+
         if(!(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0) &&
            !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
@@ -2059,7 +2099,16 @@ void ST_Drawer(int player)
         posY = y + PADDING;
         UI_DrawWidgets(widgetsTopRight, sizeof(widgetsTopRight)/sizeof(widgetsTopRight[0]),
             UWF_RIGHT2LEFT, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+        }
 
+        posX = x + width - PADDING;
+        posY = y + PADDING + (drawnHeight > 0 ? drawnHeight + PADDING : 0);
+        UI_DrawWidgets(widgetsTopRight2, sizeof(widgetsTopRight2)/sizeof(widgetsTopRight2[0]),
+            UWF_TOP2BOTTOM, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+
+        if(!(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0) &&
+           !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
+        {
         posX = x + PADDING;
         posY = y + height - PADDING;
         UI_DrawWidgets(widgetsBottomLeft, sizeof(widgetsBottomLeft)/sizeof(widgetsBottomLeft[0]),

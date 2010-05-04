@@ -225,10 +225,6 @@ static void rendHUD(int player, int viewW, int viewH)
         DGL_LoadIdentity();
         DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
 
-        // Draw HUD displays only visible when the automap is open.
-        if(AM_IsActive(AM_MapForPlayer(player)))
-            HU_DrawMapCounters();
-
         HU_Drawer(player);
 
         DGL_MatrixMode(DGL_PROJECTION);
