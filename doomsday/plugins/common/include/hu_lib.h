@@ -23,12 +23,14 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBCOMMON_UI_LIBRARY_H
-#define LIBCOMMON_UI_LIBRARY_H
+#ifndef LIBCOMMON_GUI_LIBRARY_H
+#define LIBCOMMON_GUI_LIBRARY_H
 
-#include "hu_stuff.h"
+void            GUI_Init(void);
+void            GUI_Shutdown(void);
 
 typedef struct {
+    int player;
     int id;
     float* scale;
     float extraScale;
@@ -36,18 +38,50 @@ typedef struct {
     float* textAlpha, *iconAlpha; /// \todo refactor away.
 } uiwidget_t;
 
+typedef unsigned int uiwidgetid_t;
+
+uiwidgetid_t    GUI_CreateWidget(int player, int id, float* scale, float extraScale, void (*draw) (int player, float textAlpha, float iconAlpha, int* drawnWidth, int* drawnHeight), float* textAlpha, float *iconAlpha);
+
+/**
+ * @defgroup uiWidgetGroupFlags UI Widget Group Flags
+ */
+/*@{*/
+#define UWGF_ALIGN_LEFT     0x0001
+#define UWGF_ALIGN_RIGHT    0x0002
+#define UWGF_ALIGN_TOP      0x0004
+#define UWGF_ALIGN_BOTTOM   0x0008
+#define UWGF_LEFT2RIGHT     0x0010
+#define UWGF_RIGHT2LEFT     0x0020
+#define UWGF_TOP2BOTTOM     0x0040
+#define UWGF_BOTTOM2TOP     0x0080
+/*@}*/
+
+typedef struct {
+    int name; // Name of the group.
+    short flags;
+    int padding;
+    uiwidgetid_t num;
+    uiwidgetid_t* widgetIds;
+} uiwidgetgroup_t;
+
+int             GUI_CreateWidgetGroup(int name, short flags, int padding);
+
+void            GUI_GroupAddWidget(int name, uiwidgetid_t id);
+short           GUI_GroupFlags(int name);
+void            GUI_GroupSetFlags(int name, short flags);
+
 /**
  * @defgroup uiWidgetFlags UI Widget Flags
  */
 /*@{*/
-#define UWF_LEFT2RIGHT      0x0001
-#define UWF_RIGHT2LEFT      0x0002
-#define UWF_TOP2BOTTOM      0x0004
-#define UWF_BOTTOM2TOP      0x0008
-#define UWF_OVERRIDE_ALPHA  0x0010
+#define UWF_OVERRIDE_ALPHA  0x01
 /*@}*/
 
-void            UI_DrawWidgets(const uiwidget_t* widgets, size_t numWidgets, short flags, int padding, int x, int y, int player, float alpha, int* drawnWidth, int* drawnHeight);
+void            GUI_DrawWidgets(int group, byte flags, int x, int y, int availWidth, int availHeight, float alpha, int* drawnWidth, int* drawnHeight);
+
+/**
+ * Here follows legacy UI stuff to be replaced.
+ */
 
 #define HU_MAXLINELENGTH    (160)
 
@@ -66,8 +100,6 @@ typedef struct {
     boolean*        on; // Whether to update window.
     boolean         laston; // Last value of *->on.
 } hu_text_t;
-
-void            HUlib_init(void);
 
 void            HUlib_clearTextLine(hu_textline_t* t);
 void            HUlib_initTextLine(hu_textline_t* t, int x, int y);

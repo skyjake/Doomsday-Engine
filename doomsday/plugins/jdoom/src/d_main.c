@@ -37,6 +37,7 @@
 #include "hu_log.h"
 #include "hu_menu.h"
 #include "hu_msg.h"
+#include "hu_lib.h"
 #include "p_saveg.h"
 #include "p_mapspec.h"
 #include "p_switch.h"
@@ -719,6 +720,7 @@ void G_Shutdown(void)
     AM_Shutdown();
     R_ShutdownVectorGraphics();
     P_FreeWeaponSlots();
+    GUI_Shutdown();
 }
 
 void G_EndFrame(void)

@@ -165,7 +165,19 @@ typedef enum {
     HOT_LEFT
 } hotloc_t;
 
+enum {
+    UWG_STATUSBAR = 0,
+    UWG_BOTTOMLEFT,
+    UWG_BOTTOMLEFT2,
+    UWG_BOTTOMRIGHT,
+    UWG_BOTTOM,
+    UWG_TOP,
+    UWG_COUNTERS,
+    NUM_UIWIDGET_GROUPS
+};
+
 typedef struct {
+    boolean         inited;
     boolean         stopped;
     int             hideTics;
     float           hideAmount;
@@ -184,6 +196,8 @@ typedef struct {
     int             faceIndex; // Current face index, used by wFaces.
     int             lastAttackDown;
     int             priority;
+
+    int             widgetGroupNames[NUM_UIWIDGET_GROUPS];
 
     // Widgets:
     st_number_t     wReadyWeapon; // Ready-weapon widget.
@@ -1472,47 +1486,26 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
     M_WriteText2(0, -(*drawnHeight), buf, GF_FONTA, 1, 1, 1, textAlpha);
 }
 
-uiwidget_t widgetsStatusBar[] = {
-    { -1, &cfg.statusbarScale, 1, drawStatusBarBackground, &cfg.statusbarOpacity, &cfg.statusbarOpacity },
-    { -1, &cfg.statusbarScale, 1, drawReadyAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawSBarHealthWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawOwnedWeaponWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawSBarFragsWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawSBarFaceWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawSBarArmorWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawSBarKeysWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawOwnedAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawMaxAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha }
-};
+typedef struct {
+    int group;
+    int id;
+    float* scale;
+    float extraScale;
+    void (*draw) (int player, float textAlpha, float iconAlpha, int* drawnWidth, int* drawnHeight);
+    float* textAlpha;
+    float *iconAlpha;
+} uiwidgetdef_t;
 
-uiwidget_t widgetsBottomLeft[] = {
-    { HUD_HEALTH, &cfg.hudScale, 1, drawHealthWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-    { HUD_AMMO, &cfg.hudScale, 1, drawAmmoWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
-};
+typedef struct {
+    int group;
+    short flags;
+    int padding; // In fixed 320x200 pixels.
+} uiwidgetgroupdef_t;
 
-uiwidget_t widgetsBottomLeft2[] = {
-    { HUD_FRAGS, &cfg.hudScale, 1, drawFragsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
-};
-
-uiwidget_t widgetsBottom[] = {
-    { HUD_FACE, &cfg.hudScale, .7f, drawFaceWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
-};
-
-uiwidget_t widgetsBottomRight[] = {
-    { HUD_ARMOR, &cfg.hudScale, 1, drawArmorWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-    { HUD_KEYS, &cfg.hudScale, .75f, drawKeysWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
-};
-
-uiwidget_t widgetsTop[] = {
-    { HUD_LOG, &cfg.msgScale, 1, Hu_LogDrawer, &cfg.hudColor[3], &cfg.hudIconAlpha },
-    { -1, &cfg.msgScale, 1, Chat_Drawer, &cfg.hudColor[3], &cfg.hudIconAlpha }
-};
-
-uiwidget_t widgetsLeft[] = {
-    { -1, &cfg.counterCheatScale, 1, drawSecretsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-    { -1, &cfg.counterCheatScale, 1, drawItemsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-    { -1, &cfg.counterCheatScale, 1, drawKillsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
-};
+static int __inline toGroupName(int player, int group)
+{
+    return player * NUM_UIWIDGET_GROUPS + group;
+}
 
 void ST_Drawer(int player)
 {
@@ -1529,6 +1522,72 @@ void ST_Drawer(int player)
         return;
 
     hud = &hudStates[player];
+    if(!hud->inited)
+    {
+#define PADDING 2 // In fixed 320x200 units.
+
+        const uiwidgetgroupdef_t widgetGroupDefs[] = {
+            { UWG_STATUSBAR, UWGF_ALIGN_BOTTOM, 0 },
+            { UWG_BOTTOMLEFT, UWGF_ALIGN_BOTTOM|UWGF_ALIGN_LEFT|UWGF_LEFT2RIGHT, PADDING },
+            { UWG_BOTTOMLEFT2, UWGF_ALIGN_BOTTOM|UWGF_ALIGN_LEFT|UWGF_LEFT2RIGHT, PADDING },
+            { UWG_BOTTOMRIGHT, UWGF_ALIGN_BOTTOM|UWGF_ALIGN_RIGHT|UWGF_RIGHT2LEFT, PADDING },
+            { UWG_BOTTOM, UWGF_ALIGN_BOTTOM|UWGF_BOTTOM2TOP, PADDING },
+            { UWG_TOP, UWGF_ALIGN_TOP|UWGF_ALIGN_LEFT|UWGF_TOP2BOTTOM, PADDING },
+            { UWG_COUNTERS, UWGF_ALIGN_LEFT|UWGF_BOTTOM2TOP, PADDING }
+        };
+        const uiwidgetdef_t widgetDefs[] = {
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawStatusBarBackground, &cfg.statusbarOpacity, &cfg.statusbarOpacity },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawReadyAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarHealthWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawOwnedWeaponWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarFragsWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarFaceWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarArmorWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarKeysWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawOwnedAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawMaxAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_BOTTOMLEFT, HUD_HEALTH, &cfg.hudScale, 1, drawHealthWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_BOTTOMLEFT, HUD_AMMO, &cfg.hudScale, 1, drawAmmoWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_BOTTOMLEFT2, HUD_FRAGS, &cfg.hudScale, 1, drawFragsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_BOTTOMRIGHT, HUD_ARMOR, &cfg.hudScale, 1, drawArmorWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_BOTTOMRIGHT, HUD_KEYS, &cfg.hudScale, .75f, drawKeysWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_BOTTOM, HUD_FACE, &cfg.hudScale, .7f, drawFaceWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_TOP, HUD_LOG, &cfg.msgScale, 1, Hu_LogDrawer, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_TOP, -1, &cfg.msgScale, 1, Chat_Drawer, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_COUNTERS, -1, &cfg.counterCheatScale, 1, drawSecretsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_COUNTERS, -1, &cfg.counterCheatScale, 1, drawItemsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_COUNTERS, -1, &cfg.counterCheatScale, 1, drawKillsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+        };
+        size_t i;
+
+        for(i = 0; i < sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]); ++i)
+        {
+            const uiwidgetgroupdef_t* def = &widgetGroupDefs[i];
+            hud->widgetGroupNames[i] = GUI_CreateWidgetGroup(toGroupName(player, def->group), def->flags, def->padding);
+        }
+
+        for(i = 0; i < sizeof(widgetDefs)/sizeof(widgetDefs[0]); ++i)
+        {
+            const uiwidgetdef_t* def = &widgetDefs[i];
+            uiwidgetid_t id = GUI_CreateWidget(player, def->id, def->scale, def->extraScale, def->draw, def->textAlpha, def->iconAlpha);
+            GUI_GroupAddWidget(toGroupName(player, def->group), id);
+        }
+
+        // Initialize widgets according to player preferences.
+        {
+        short flags = GUI_GroupFlags(hud->widgetGroupNames[UWG_COUNTERS]);
+        flags &= ~(UWGF_ALIGN_LEFT|UWGF_ALIGN_RIGHT);
+        if(cfg.msgAlign == 0)
+            flags |= UWGF_ALIGN_LEFT;
+        else if(cfg.msgAlign == 2)
+            flags |= UWGF_ALIGN_RIGHT;
+        GUI_GroupSetFlags(hud->widgetGroupNames[UWG_COUNTERS], flags);
+        }
+
+        hud->inited = true;
+
+#undef PADDING
+    }
 
     hud->statusbarActive = (fullscreenMode < 2) || (AM_IsActive(AM_MapForPlayer(player)) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
@@ -1563,15 +1622,12 @@ void ST_Drawer(int player)
         {
 #define PADDING 2 // In fixed 320x200 units.
 
-        int posX, posY, drawnWidth, drawnHeight;
+        int availHeight, drawnWidth, drawnHeight;
 
         if(!(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0) &&
            !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
-        posX = x + width/2;
-        posY = y + height;
-        UI_DrawWidgets(widgetsStatusBar, sizeof(widgetsStatusBar)/sizeof(widgetsStatusBar[0]),
-            (!blended? UWF_OVERRIDE_ALPHA : 0), 0, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+        GUI_DrawWidgets(hud->widgetGroupNames[UWG_STATUSBAR], (!blended? UWF_OVERRIDE_ALPHA : 0), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
         }
 
         /**
@@ -1599,44 +1655,24 @@ void ST_Drawer(int player)
             }
         }
 
-        switch(cfg.msgAlign)
-        {
-        default:
-        case ALIGN_LEFT:    posX = x + PADDING;         break;
-        case ALIGN_CENTER:  posX = width/2;             break;
-        case ALIGN_RIGHT:   posX = x + width - PADDING; break;
-        }
-        posY = y + PADDING;
-        UI_DrawWidgets(widgetsTop, sizeof(widgetsTop)/sizeof(widgetsTop[0]),
-            UWF_TOP2BOTTOM, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+        x += PADDING;
+        y += PADDING;
+        width -= PADDING*2;
+        height -= PADDING*2;
+
+        GUI_DrawWidgets(hud->widgetGroupNames[UWG_TOP], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
 
         if(!(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0) &&
            !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
-        posX = x + PADDING;
-        posY = y + height - PADDING;
-        UI_DrawWidgets(widgetsBottomLeft, sizeof(widgetsBottomLeft)/sizeof(widgetsBottomLeft[0]),
-            UWF_LEFT2RIGHT, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+        GUI_DrawWidgets(hud->widgetGroupNames[UWG_BOTTOMLEFT], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
 
-        posX = x + PADDING;
-        posY = y + height - PADDING - (drawnHeight > 0 ? drawnHeight + PADDING : 0);
-        UI_DrawWidgets(widgetsBottomLeft2, sizeof(widgetsBottomLeft2)/sizeof(widgetsBottomLeft2[0]),
-            UWF_LEFT2RIGHT, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+        availHeight = height - (drawnHeight > 0 ? drawnHeight + PADDING : 0);
+        GUI_DrawWidgets(hud->widgetGroupNames[UWG_BOTTOMLEFT2], 0, x, y, width, availHeight, alpha, &drawnWidth, &drawnHeight);
 
-        posX = x + PADDING + (width-PADDING*2)/2;
-        posY = y + height - PADDING;
-        UI_DrawWidgets(widgetsBottom, sizeof(widgetsBottom)/sizeof(widgetsBottom[0]),
-            UWF_BOTTOM2TOP, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
-
-        posX = x + width - PADDING;
-        posY = y + height - PADDING;
-        UI_DrawWidgets(widgetsBottomRight, sizeof(widgetsBottomRight)/sizeof(widgetsBottomRight[0]),
-            UWF_RIGHT2LEFT, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
-
-        posX = x + PADDING;
-        posY = y + PADDING + (height-PADDING*2)/2;
-        UI_DrawWidgets(widgetsLeft, sizeof(widgetsLeft)/sizeof(widgetsLeft[0]),
-            UWF_BOTTOM2TOP, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+        GUI_DrawWidgets(hud->widgetGroupNames[UWG_BOTTOM], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+        GUI_DrawWidgets(hud->widgetGroupNames[UWG_BOTTOMRIGHT], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+        GUI_DrawWidgets(hud->widgetGroupNames[UWG_COUNTERS], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
         }
 #undef PADDING
         }

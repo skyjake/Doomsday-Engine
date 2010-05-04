@@ -596,6 +596,7 @@ void G_Shutdown(void)
     AM_Shutdown();
     R_ShutdownVectorGraphics();
     P_FreeWeaponSlots();
+    GUI_Shutdown();
 }
 
 void G_EndFrame(void)

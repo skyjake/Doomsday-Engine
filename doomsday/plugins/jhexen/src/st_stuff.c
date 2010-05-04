@@ -2068,7 +2068,7 @@ void ST_Drawer(int player)
         }
         posY = y + PADDING;
         UI_DrawWidgets(widgetsTop, sizeof(widgetsTop)/sizeof(widgetsTop[0]),
-            UWF_TOP2BOTTOM, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+            UWGF_TOP2BOTTOM, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
 
         drawnHeight = 0;
 
@@ -2078,23 +2078,23 @@ void ST_Drawer(int player)
         posX = x + PADDING;
         posY = y + PADDING;
         UI_DrawWidgets(widgetsTopLeft, sizeof(widgetsTopLeft)/sizeof(widgetsTopLeft[0]),
-            UWF_TOP2BOTTOM, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+            UWGF_TOP2BOTTOM, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
 
         posX = x + PADDING + (drawnWidth > 0 ? drawnWidth + PADDING : 0);
         posY = y + PADDING;
         UI_DrawWidgets(widgetsTopLeft2, sizeof(widgetsTopLeft2)/sizeof(widgetsTopLeft2[0]),
-            UWF_LEFT2RIGHT, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+            UWGF_LEFT2RIGHT, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
 
         posX = x + width - PADDING;
         posY = y + PADDING;
         UI_DrawWidgets(widgetsTopRight, sizeof(widgetsTopRight)/sizeof(widgetsTopRight[0]),
-            UWF_RIGHT2LEFT, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+            UWGF_RIGHT2LEFT, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
         }
 
         posX = x + width - PADDING;
         posY = y + PADDING + (drawnHeight > 0 ? drawnHeight + PADDING : 0);
         UI_DrawWidgets(widgetsTopRight2, sizeof(widgetsTopRight2)/sizeof(widgetsTopRight2[0]),
-            UWF_TOP2BOTTOM, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+            UWGF_TOP2BOTTOM, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
 
         if(!(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0) &&
            !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
@@ -2102,17 +2102,17 @@ void ST_Drawer(int player)
         posX = x + PADDING;
         posY = y + height - PADDING;
         UI_DrawWidgets(widgetsBottomLeft, sizeof(widgetsBottomLeft)/sizeof(widgetsBottomLeft[0]),
-            UWF_BOTTOM2TOP, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+            UWGF_BOTTOM2TOP, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
 
         posX = x + width - PADDING;
         posY = y + height - PADDING;
         UI_DrawWidgets(widgetsBottomRight, sizeof(widgetsBottomRight)/sizeof(widgetsBottomRight[0]),
-            UWF_RIGHT2LEFT, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+            UWGF_RIGHT2LEFT, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
 
         posX = x + PADDING + (width-PADDING*2)/2;
         posY = y + height - PADDING;
         UI_DrawWidgets(widgetsBottom, sizeof(widgetsBottom)/sizeof(widgetsBottom[0]),
-            UWF_BOTTOM2TOP, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+            UWGF_BOTTOM2TOP, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
         }
 #undef PADDING
         }

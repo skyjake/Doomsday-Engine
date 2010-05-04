@@ -47,8 +47,6 @@
 #elif __JHEXEN__
 #  include "jhexen.h"
 #  include "p_inventory.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
 #include "p_saveg.h"
@@ -64,6 +62,7 @@
 #include "hu_log.h"
 #include "hu_msg.h"
 #include "hu_pspr.h"
+#include "hu_lib.h"
 #include "g_common.h"
 #include "g_update.h"
 #include "d_net.h"
@@ -144,7 +143,7 @@ void    G_DoSaveGame(void);
 void    G_DoScreenShot(void);
 boolean G_ValidateMap(uint *episode, uint *map);
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
 void    G_DoSingleReborn(void);
 void    H2_PageTicker(void);
 void    H2_AdvanceDemo(void);
@@ -169,7 +168,7 @@ uint gameEpisode;
 uint gameMap;
 
 uint nextMap;
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
 uint nextMapEntryPoint;
 #endif
 
@@ -177,15 +176,15 @@ uint nextMapEntryPoint;
 boolean secretExit;
 #endif
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
 // Position indicator for cooperative net-play reborn
 uint rebornPosition;
 #endif
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
 uint mapHub = 0;
 #endif
 
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __JSTRIFE__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 boolean respawnMonsters;
 #endif
 
@@ -259,7 +258,7 @@ cvar_t gamestatusCVars[] = {
 #if __JDOOM__
    {"map-mission", READONLYCVAR, CVT_INT, &gameMission, 0, 0},
 #endif
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
    {"map-hub", READONLYCVAR, CVT_INT, &mapHub, 0, 0},
 #endif
    {"game-music", READONLYCVAR, CVT_INT, &gsvCurrentMusic, 0, 0},
@@ -402,7 +401,7 @@ ccmd_t gameCmds[] = {
 static uint dEpisode;
 static uint dMap;
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
 static int gameLoadSlot;
 #endif
 
@@ -412,7 +411,7 @@ static gameaction_t gameAction;
 
 void G_Register(void)
 {
-    int                 i;
+    int i;
 
     for(i = 0; gamestatusCVars[i].name; ++i)
         Con_AddVariable(gamestatusCVars + i);
@@ -441,8 +440,8 @@ gameaction_t G_GetGameAction(void)
  */
 void G_CommonPreInit(void)
 {
-    int                 i;
-    filename_t          file;
+    filename_t file;
+    int i;
 
     // Make sure game.dll isn't newer than Doomsday...
     if(gi.version < DOOMSDAY_VERSION)
@@ -521,7 +520,7 @@ void R_SetTranslation(mobj_t* mo)
     }
     else
     {
-        int                 tclass, tmap;
+        int tclass, tmap;
 
         tmap = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
 
@@ -556,11 +555,10 @@ void R_LoadColorPalettes(void)
 #define PALENTRIES          (256)
 #define PALID               (0)
 
-    lumpnum_t           lump = W_GetNumForName(PALLUMPNAME);
-    byte                data[PALENTRIES*3];
+    lumpnum_t lump = W_GetNumForName(PALLUMPNAME);
+    byte data[PALENTRIES*3];
 
-    W_ReadLumpSection(lump, data, 0 + PALID * (PALENTRIES * 3),
-                      PALENTRIES * 3);
+    W_ReadLumpSection(lump, data, 0 + PALID * (PALENTRIES * 3), PALENTRIES * 3);
 
     R_CreateColorPalette("R8G8B8", PALLUMPNAME, data, PALENTRIES);
 
@@ -573,9 +571,8 @@ void R_LoadColorPalettes(void)
      */
 #if __JDOOM__ || __JDOOM64__
     {
-    byte               *translationtables = (byte *)
-                    DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
-    int                 i;
+    byte* translationtables = (byte*) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
+    int i;
 
     // Translate just the 16 green colors.
     for(i = 0; i < 256; ++i)
@@ -597,9 +594,8 @@ void R_LoadColorPalettes(void)
     }
 #elif __JHERETIC__
     {
-    int                 i;
-    byte*               translationtables =
-        (byte*) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
+    int i;
+    byte* translationtables = (byte*) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
 
     // Fill out the translation tables.
     for(i = 0; i < 256; ++i)
@@ -619,14 +615,13 @@ void R_LoadColorPalettes(void)
     }
 #else // __JHEXEN__
     {
-    int                 i;
-    byte*               translationtables =
-        (byte*) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
+    int i;
+    byte* translationtables = (byte*) DD_GetVariable(DD_TRANSLATIONTABLES_ADDRESS);
 
     for(i = 0; i < 3 * 7; ++i)
     {
-        char                name[9];
-        lumpnum_t           lump;
+        char name[9];
+        lumpnum_t lump;
 
         dd_snprintf(name, 9, "TRANTBL%X", i);
 
@@ -664,6 +659,7 @@ void G_CommonPostInit(void)
 {
     VERBOSE(G_PrintMapList());
 
+    GUI_Init();
     R_InitRefresh();
 
     // Init the save system and create the game save directory
