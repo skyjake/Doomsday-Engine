@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -217,8 +217,7 @@ static void logTicker(msglog_t* log)
     if(P_IsPaused())
         return;
 
-    // All messags tic away. When lower than lineheight, offset the y origin
-    // of the message log. When zero, the earliest is pop'd.
+    // All messags tic away. When zero, the earliest is pop'd.
     for(i = 0; i < LOG_MAX_MESSAGES; ++i)
     {
         logmsg_t* msg = &log->msgs[i];
@@ -326,7 +325,7 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
     assert(player >= 0 && player < MAXPLAYERS);
     {
     msglog_t* log = &msgLogs[player];
-    int n, y, viewW, viewH;
+    int n, y, viewW, viewH, lineHeight = MAX_OF(7, M_CharHeight('Q', GF_FONTA));
     uint i, numVisible;
     float scale, yOffset;
 
@@ -356,8 +355,8 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
 
     msg = &log->msgs[oldest];
 
-    if(msg->ticsRemain > 0 && msg->ticsRemain <= LINEHEIGHT_A)
-        yOffset = -LINEHEIGHT_A * (1.f - ((float)msg->ticsRemain/LINEHEIGHT_A));
+    if(msg->ticsRemain > 0 && msg->ticsRemain <= (unsigned) lineHeight)
+        yOffset = -lineHeight * (1.f - ((float)msg->ticsRemain/lineHeight));
     else
         yOffset = 0;
     }
@@ -407,8 +406,8 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
         else
         {
             // Fade alpha out.
-            if(i == 0 && msg->ticsRemain <= LINEHEIGHT_A)
-                col[CA] *= msg->ticsRemain / (float) LINEHEIGHT_A * .9f;
+            if(i == 0 && msg->ticsRemain <= (unsigned) lineHeight)
+                col[CA] *= msg->ticsRemain / (float) lineHeight * .9f;
         }
 
         // Draw using param text.
