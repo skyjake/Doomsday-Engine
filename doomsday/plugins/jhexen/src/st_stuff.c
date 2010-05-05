@@ -101,7 +101,21 @@
 
 // TYPES -------------------------------------------------------------------
 
+enum {
+    UWG_STATUSBAR = 0,
+    UWG_BOTTOMLEFT,
+    UWG_BOTTOMRIGHT,
+    UWG_BOTTOM,
+    UWG_TOP,
+    UWG_TOPLEFT,
+    UWG_TOPLEFT2,
+    UWG_TOPRIGHT,
+    UWG_TOPRIGHT2,
+    NUM_UIWIDGET_GROUPS
+};
+
 typedef struct {
+    boolean         inited;
     boolean         stopped;
     int             hideTics;
     float           hideAmount;
@@ -123,6 +137,8 @@ typedef struct {
     int             fragsCount; // Number of frags so far in deathmatch.
 
     int             healthMarker;
+
+    int             widgetGroupNames[NUM_UIWIDGET_GROUPS];
 
     // Widgets:
     st_multiicon_t  wManaA; // Current mana A icon.
@@ -1218,6 +1234,8 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
             *drawnHeight = patch->height;
 
         numDrawn++;
+        if(numDrawn == 5)
+            break;
     }
     if(numDrawn)
         *drawnWidth += (numDrawn-1)*20;
@@ -1884,61 +1902,26 @@ void drawWorldTimerWidget(int player, float textAlpha, float iconAlpha,
     WI_DrawParamText(0, 0, buf, GF_FONTA, 1, 1, 1, textAlpha, false, false, ALIGN_RIGHT);
 }
 
-uiwidget_t widgetsStatusBar[] = {
-    { -1, &cfg.statusbarScale, 1, drawStatusBarBackground, &cfg.statusbarOpacity, &cfg.statusbarOpacity },
-    { -1, &cfg.statusbarScale, 1, drawWeaponPiecesWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawHealthChainWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawSBarInventoryWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawKeysWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawSBarArmorIconsWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawSBarFragsWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawSBarHealthWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawSBarArmorWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawSBarCurrentItemWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawBlueManaIconWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawSBarBlueManaWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawBlueManaVialWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawGreenManaIconWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawSBarGreenManaWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
-    { -1, &cfg.statusbarScale, 1, drawGreenManaVialWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha }
-};
+typedef struct {
+    int group;
+    int id;
+    float* scale;
+    float extraScale;
+    void (*draw) (int player, float textAlpha, float iconAlpha, int* drawnWidth, int* drawnHeight);
+    float* textAlpha;
+    float *iconAlpha;
+} uiwidgetdef_t;
 
-uiwidget_t widgetsTopLeft[] = {
-    { HUD_MANA, &cfg.hudScale, 1, drawBlueManaWidget },
-    { HUD_MANA, &cfg.hudScale, 1, drawGreenManaWidget }
-};
+typedef struct {
+    int group;
+    short flags;
+    int padding; // In fixed 320x200 pixels.
+} uiwidgetgroupdef_t;
 
-uiwidget_t widgetsTopLeft2[] = {
-    { -1, &cfg.hudScale, 1, drawFlightWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-    { -1, &cfg.hudScale, 1, drawBootsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
-};
-
-uiwidget_t widgetsTopRight[] = {
-    { -1, &cfg.hudScale, 1, drawServantWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
-    { -1, &cfg.hudScale, 1, drawDefenseWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
-};
-
-uiwidget_t widgetsTopRight2[] = {
-    { -1, &cfg.hudScale, 1, drawWorldTimerWidget, &cfg.hudColor[3], &cfg.hudIconAlpha }
-};
-
-uiwidget_t widgetsBottomLeft[] = {
-    { HUD_HEALTH, &cfg.hudScale, 1, drawHealthWidget },
-    { -1, &cfg.hudScale, 1, drawFragsWidget }
-};
-
-uiwidget_t widgetsBottomRight[] = {
-    { HUD_CURRENTITEM, &cfg.hudScale, 1, drawCurrentItemWidget }
-};
-
-uiwidget_t widgetsBottom[] = {
-    { -1, &cfg.hudScale, .75f, drawInventoryWidget }
-};
-
-uiwidget_t widgetsTop[] = {
-    { HUD_LOG, &cfg.msgScale, 1, Hu_LogDrawer, &cfg.hudColor[3], &cfg.hudIconAlpha },
-    { -1, &cfg.msgScale, 1, Chat_Drawer, &cfg.hudColor[3], &cfg.hudIconAlpha }
-};
+static int __inline toGroupName(int player, int group)
+{
+    return player * NUM_UIWIDGET_GROUPS + group;
+}
 
 static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
 {
@@ -1990,6 +1973,83 @@ void ST_Drawer(int player)
         return;
 
     hud = &hudStates[player];
+    if(!hud->inited)
+    {
+#define PADDING 2 // In fixed 320x200 units.
+
+        const uiwidgetgroupdef_t widgetGroupDefs[] = {
+            { UWG_STATUSBAR, UWGF_ALIGN_BOTTOM, 0 },
+            { UWG_BOTTOMLEFT, UWGF_ALIGN_BOTTOM|UWGF_ALIGN_LEFT|UWGF_LEFT2RIGHT, PADDING },
+            { UWG_BOTTOMRIGHT, UWGF_ALIGN_BOTTOM|UWGF_ALIGN_RIGHT|UWGF_RIGHT2LEFT, PADDING },
+            { UWG_BOTTOM, UWGF_ALIGN_BOTTOM|UWGF_BOTTOM2TOP, PADDING },
+            { UWG_TOP, UWGF_ALIGN_TOP|UWGF_ALIGN_LEFT|UWGF_TOP2BOTTOM, PADDING },
+            { UWG_TOPLEFT, UWGF_ALIGN_TOP|UWGF_ALIGN_LEFT|UWGF_TOP2BOTTOM, PADDING },
+            { UWG_TOPLEFT2, UWGF_ALIGN_TOP|UWGF_ALIGN_LEFT|UWGF_LEFT2RIGHT, PADDING },
+            { UWG_TOPRIGHT, UWGF_ALIGN_TOP|UWGF_ALIGN_RIGHT|UWGF_RIGHT2LEFT, PADDING },
+            { UWG_TOPRIGHT2, UWGF_ALIGN_TOP|UWGF_ALIGN_RIGHT|UWGF_TOP2BOTTOM, PADDING }
+        };
+        const uiwidgetdef_t widgetDefs[] = {
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawStatusBarBackground, &cfg.statusbarOpacity, &cfg.statusbarOpacity },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawWeaponPiecesWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawHealthChainWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarInventoryWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawKeysWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarArmorIconsWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarFragsWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarHealthWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarArmorWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarCurrentItemWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawBlueManaIconWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarBlueManaWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawBlueManaVialWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawGreenManaIconWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarGreenManaWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawGreenManaVialWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_TOPLEFT, HUD_MANA, &cfg.hudScale, 1, drawBlueManaWidget },
+            { UWG_TOPLEFT, HUD_MANA, &cfg.hudScale, 1, drawGreenManaWidget },
+            { UWG_TOPLEFT2, -1, &cfg.hudScale, 1, drawFlightWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_TOPLEFT2, -1, &cfg.hudScale, 1, drawBootsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_TOPRIGHT, -1, &cfg.hudScale, 1, drawServantWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_TOPRIGHT, -1, &cfg.hudScale, 1, drawDefenseWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_TOPRIGHT2, -1, &cfg.hudScale, 1, drawWorldTimerWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_BOTTOMLEFT, HUD_HEALTH, &cfg.hudScale, 1, drawHealthWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_BOTTOMLEFT, -1, &cfg.hudScale, 1, drawFragsWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_BOTTOMRIGHT, HUD_CURRENTITEM, &cfg.hudScale, 1, drawCurrentItemWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_BOTTOM, -1, &cfg.hudScale, .75f, drawInventoryWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_TOP, HUD_LOG, &cfg.msgScale, 1, Hu_LogDrawer, &cfg.hudColor[3], &cfg.hudIconAlpha },
+            { UWG_TOP, -1, &cfg.msgScale, 1, Chat_Drawer, &cfg.hudColor[3], &cfg.hudIconAlpha }
+        };
+        size_t i;
+
+        for(i = 0; i < sizeof(widgetGroupDefs)/sizeof(widgetGroupDefs[0]); ++i)
+        {
+            const uiwidgetgroupdef_t* def = &widgetGroupDefs[i];
+            hud->widgetGroupNames[i] = GUI_CreateWidgetGroup(toGroupName(player, def->group), def->flags, def->padding);
+        }
+
+        for(i = 0; i < sizeof(widgetDefs)/sizeof(widgetDefs[0]); ++i)
+        {
+            const uiwidgetdef_t* def = &widgetDefs[i];
+            uiwidgetid_t id = GUI_CreateWidget(player, def->id, def->scale, def->extraScale, def->draw, def->textAlpha, def->iconAlpha);
+            GUI_GroupAddWidget(toGroupName(player, def->group), id);
+        }
+
+        // Initialize widgets according to player preferences.
+        {
+        short flags = GUI_GroupFlags(hud->widgetGroupNames[UWG_TOP]);
+        flags &= ~(UWGF_ALIGN_LEFT|UWGF_ALIGN_RIGHT);
+        if(cfg.msgAlign == 0)
+            flags |= UWGF_ALIGN_LEFT;
+        else if(cfg.msgAlign == 2)
+            flags |= UWGF_ALIGN_RIGHT;
+        GUI_GroupSetFlags(hud->widgetGroupNames[UWG_TOP], flags);
+        }
+
+        hud->inited = true;
+
+#undef PADDING
+    }
+
     hud->statusbarActive = (fullscreenMode < 2) || (AM_IsActive(AM_MapForPlayer(player)) && (cfg.automapHudDisplay == 0 || cfg.automapHudDisplay == 2));
 
     // Do palette shifts
@@ -2023,15 +2083,12 @@ void ST_Drawer(int player)
         {
 #define PADDING 2 // In fixed 320x200 units.
 
-        int posX, posY, drawnWidth, drawnHeight;
+        int posX, posY, availWidth, availHeight, drawnWidth, drawnHeight;
 
         if(!(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0) &&
            !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
-        posX = x + width/2;
-        posY = y + height;
-        UI_DrawWidgets(widgetsStatusBar, sizeof(widgetsStatusBar)/sizeof(widgetsStatusBar[0]),
-            (!blended? UWF_OVERRIDE_ALPHA : 0), 0, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+        GUI_DrawWidgets(hud->widgetGroupNames[UWG_STATUSBAR], (!blended? UWF_OVERRIDE_ALPHA : 0), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
         }
 
         /**
@@ -2059,60 +2116,37 @@ void ST_Drawer(int player)
             }
         }
 
-        switch(cfg.msgAlign)
-        {
-        default:
-        case ALIGN_LEFT:    posX = x + PADDING;         break;
-        case ALIGN_CENTER:  posX = width/2;             break;
-        case ALIGN_RIGHT:   posX = x + width - PADDING; break;
-        }
-        posY = y + PADDING;
-        UI_DrawWidgets(widgetsTop, sizeof(widgetsTop)/sizeof(widgetsTop[0]),
-            UWGF_TOP2BOTTOM, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+        x += PADDING;
+        y += PADDING;
+        width -= PADDING*2;
+        height -= PADDING*2;
+
+        GUI_DrawWidgets(hud->widgetGroupNames[UWG_TOP], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
 
         drawnHeight = 0;
 
         if(!(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0) &&
            !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
-        posX = x + PADDING;
-        posY = y + PADDING;
-        UI_DrawWidgets(widgetsTopLeft, sizeof(widgetsTopLeft)/sizeof(widgetsTopLeft[0]),
-            UWGF_TOP2BOTTOM, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+        GUI_DrawWidgets(hud->widgetGroupNames[UWG_TOPLEFT], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
 
-        posX = x + PADDING + (drawnWidth > 0 ? drawnWidth + PADDING : 0);
-        posY = y + PADDING;
-        UI_DrawWidgets(widgetsTopLeft2, sizeof(widgetsTopLeft2)/sizeof(widgetsTopLeft2[0]),
-            UWGF_LEFT2RIGHT, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+        posX = x + (drawnWidth > 0 ? drawnWidth + PADDING : 0);
+        availWidth = width - (drawnWidth > 0 ? drawnWidth + PADDING : 0);
+        GUI_DrawWidgets(hud->widgetGroupNames[UWG_TOPLEFT2],0, posX, y, availWidth, height, alpha, &drawnWidth, &drawnHeight);
 
-        posX = x + width - PADDING;
-        posY = y + PADDING;
-        UI_DrawWidgets(widgetsTopRight, sizeof(widgetsTopRight)/sizeof(widgetsTopRight[0]),
-            UWGF_RIGHT2LEFT, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+        GUI_DrawWidgets(hud->widgetGroupNames[UWG_TOPRIGHT], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
         }
 
-        posX = x + width - PADDING;
-        posY = y + PADDING + (drawnHeight > 0 ? drawnHeight + PADDING : 0);
-        UI_DrawWidgets(widgetsTopRight2, sizeof(widgetsTopRight2)/sizeof(widgetsTopRight2[0]),
-            UWGF_TOP2BOTTOM, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+        posY = y + (drawnHeight > 0 ? drawnHeight + PADDING : 0);
+        availHeight = height - (drawnHeight > 0 ? drawnHeight + PADDING : 0);
+        GUI_DrawWidgets(hud->widgetGroupNames[UWG_TOPRIGHT2], 0, x, posY, width, availHeight, alpha, &drawnWidth, &drawnHeight);
 
         if(!(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0) &&
            !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
         {
-        posX = x + PADDING;
-        posY = y + height - PADDING;
-        UI_DrawWidgets(widgetsBottomLeft, sizeof(widgetsBottomLeft)/sizeof(widgetsBottomLeft[0]),
-            UWGF_BOTTOM2TOP, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
-
-        posX = x + width - PADDING;
-        posY = y + height - PADDING;
-        UI_DrawWidgets(widgetsBottomRight, sizeof(widgetsBottomRight)/sizeof(widgetsBottomRight[0]),
-            UWGF_RIGHT2LEFT, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
-
-        posX = x + PADDING + (width-PADDING*2)/2;
-        posY = y + height - PADDING;
-        UI_DrawWidgets(widgetsBottom, sizeof(widgetsBottom)/sizeof(widgetsBottom[0]),
-            UWGF_BOTTOM2TOP, PADDING, posX, posY, player, alpha, &drawnWidth, &drawnHeight);
+        GUI_DrawWidgets(hud->widgetGroupNames[UWG_BOTTOMLEFT], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+        GUI_DrawWidgets(hud->widgetGroupNames[UWG_BOTTOMRIGHT], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
+        GUI_DrawWidgets(hud->widgetGroupNames[UWG_BOTTOM], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
         }
 #undef PADDING
         }
