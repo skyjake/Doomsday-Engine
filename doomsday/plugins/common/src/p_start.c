@@ -384,8 +384,8 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
                    float z, angle_t angle, int spawnFlags,
                    boolean makeCamera, boolean pickupItems)
 {
-    player_t*           p;
-    mobj_t*             mo;
+    player_t* p;
+    mobj_t* mo;
 
     plrNum = MINMAX_OF(0, plrNum, MAXPLAYERS - 1);
 
@@ -396,8 +396,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     pClass = MINMAX_OF(0, pClass, NUM_PLAYER_CLASSES - 1);
 
     /* $unifiedangles */
-    if(!(mo = P_SpawnMobj3f(PCLASS_INFO(pClass)->mobjType, x, y, z, angle,
-                            spawnFlags)))
+    if(!(mo = P_SpawnMobj3f(PCLASS_INFO(pClass)->mobjType, x, y, z, angle, spawnFlags)))
         Con_Error("P_SpawnPlayer: Failed spawning mobj for player %i "
                   "(class:%i) pos:[%g, %g, %g] angle:%i.", plrNum, pClass,
                   x, y, z, angle);
@@ -476,8 +475,10 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
     }
     else
         p->viewHeight = (float) cfg.plrViewHeight;
+    p->viewHeightDelta = 0;
 
     p->viewZ = p->plr->mo->pos[VZ] + p->viewHeight;
+    p->viewOffset[VX] = p->viewOffset[VY] = p->viewOffset[VZ] = 0;
 
     // Give all cards in death match mode.
     if(deathmatch)
@@ -485,8 +486,7 @@ void P_SpawnPlayer(int plrNum, playerclass_t pClass, float x, float y,
 #if __JHEXEN__
         p->keys = 2047;
 #else
-        int                 i;
-
+        int i;
         for(i = 0; i < NUM_KEY_TYPES; ++i)
             p->keys[i] = true;
 #endif
