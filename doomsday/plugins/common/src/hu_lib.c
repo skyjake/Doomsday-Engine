@@ -341,7 +341,13 @@ void GUI_GroupAddWidget(int name, uiwidgetid_t id)
     // Ensure this is a known widget id.
     assert(toWidget(id));
     // Ensure this is a known group name.
-    assert(group = groupForName(name, false));
+    group = groupForName(name, false);
+    if(!group)
+    {
+        Con_Message("GUI_GroupAddWidget: Failed adding widget %u, group %i unknown.\n", id, name);
+        return;
+    }
+
     // Ensure widget is not already in this group.
     for(i = 0; i < group->num; ++i)
         if(group->widgetIds[i] == id)
@@ -357,9 +363,9 @@ short GUI_GroupFlags(int name)
 {
     assert(inited);
     {
-    const uiwidgetgroup_t* group;
+    const uiwidgetgroup_t* group = groupForName(name, false);
     // Ensure this is a known group name.
-    assert(group = groupForName(name, false));
+    assert(group);
     return group->flags;
     }
 }
@@ -368,9 +374,9 @@ void GUI_GroupSetFlags(int name, short flags)
 {
     assert(inited);
     {
-    uiwidgetgroup_t* group;
+    uiwidgetgroup_t* group = groupForName(name, false);
     // Ensure this is a known group name.
-    assert(group = groupForName(name, false));
+    assert(group);
     group->flags = flags;
     }
 }
