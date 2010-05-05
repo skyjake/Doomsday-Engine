@@ -1077,66 +1077,145 @@ static boolean renderThing(mobj_t* mo, void* context)
     return true; // Continue iteration.
 }
 
+static boolean interceptEdge(float point[2], const float fromA[2], const float toA[2],
+    const float fromB[2], const float toB[2])
+{
+    float deltaA[2];
+    deltaA[0] = toA[0] - fromA[0];
+    deltaA[1] = toA[1] - fromA[1];
+    if(P_PointOnLineSide(point[0], point[1], fromA[0], fromA[1], deltaA[0], deltaA[1]))
+    {
+        float deltaB[2];
+        deltaB[0] = toB[0] - fromB[0];
+        deltaB[1] = toB[1] - fromB[1];
+        V2_Intersection(fromA, deltaA, fromB, deltaB, point);
+        return true;
+    }
+    return false;
+}
+
+static void positionPointInView(const automap_t* map, float point[2],
+    const float topLeft[2], const float topRight[2], const float bottomRight[2],
+    const float bottomLeft[2], const float viewPoint[2])
+{
+    // Trace a vector from the view location to the marked point and intercept
+    // vs the edges of the rotated view window.
+    if(!interceptEdge(point, topLeft, bottomLeft, viewPoint, point))
+        interceptEdge(point, bottomRight, topRight, viewPoint, point);
+    if(!interceptEdge(point, topRight, topLeft, viewPoint, point))
+        interceptEdge(point, bottomLeft, bottomRight, viewPoint, point);
+}
+
 /**
  * Draws all the points marked by the player.
  */
 static void drawMarks(const automap_t* map)
 {
 #if !__JDOOM64__
-    float x, y, w, h;
-    dpatch_t* patch;
-    int scrwidth, scrheight;
-    float aabb[4];
+    float bottomLeft[2], topLeft[2], bottomRight[2], topRight[2], border;
+    int scrwidth, scrheight, viewWidth, viewHeight;
     unsigned int i, numMarks;
+    float viewPoint[2], rads;
 
-    R_GetViewPort(DISPLAYPLAYER, NULL, NULL, &scrwidth, &scrheight);
-
-    Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT], &aabb[BOXBOTTOM], &aabb[BOXTOP]);
     numMarks = Automap_GetNumMarks(map);
+    if(!numMarks)
+        return;
+
+    /**
+     * Calculate the map coordinates of the rotated view window.
+     */
+
+    // Calculate border (viewport coordinate space).
+    R_GetViewPort(DISPLAYPLAYER, NULL, NULL, &scrwidth, &scrheight);
+    border = (scrwidth >= scrheight? FIXYTOSCREENY(4) : FIXXTOSCREENX(4));
+
+    // Determine the dimensions of the view window in map coordinates.
+    viewWidth  = Automap_FrameToMap(map, Get(DD_VIEWWINDOW_WIDTH) -border*2);
+    viewHeight = Automap_FrameToMap(map, Get(DD_VIEWWINDOW_HEIGHT)-border*2);
+    topLeft[0]     = bottomLeft[0] = -viewWidth/2;
+    topLeft[1]     = topRight[1]   =  viewHeight/2;
+    bottomRight[0] = topRight[0]   =  viewWidth/2;
+    bottomRight[1] = bottomLeft[1] = -viewHeight/2;
+
+    // Apply map rotation.
+    rads = map->angle / 360 * 2 * PI;
+    V2_Rotate(topLeft,     rads);
+    V2_Rotate(bottomRight, rads);
+    V2_Rotate(bottomLeft,  rads);
+    V2_Rotate(topRight,    rads);
+
+    // Translate to the viewpoint.
+    Automap_GetLocation(map, &viewPoint[0], &viewPoint[1]);
+    topLeft[0]     += viewPoint[0]; topLeft[1]     += viewPoint[1];
+    bottomRight[0] += viewPoint[0]; bottomRight[1] += viewPoint[1];
+    bottomLeft[0]  += viewPoint[0]; bottomLeft[1]  += viewPoint[1];
+    topRight[0]    += viewPoint[0]; topRight[1]    += viewPoint[1];
+
+/*#if _DEBUG
+{ // Draw the rectangle described by the viewwindow.
+float aabb[4];
+DGL_Disable(DGL_TEXTURING);
+DGL_Color4f(1, 1, 1, 1);
+DGL_Begin(DGL_LINES);
+    DGL_Vertex2f(topLeft[0], topLeft[1]);
+    DGL_Vertex2f(topRight[0], topRight[1]);
+    DGL_Vertex2f(topRight[0], topRight[1]);
+    DGL_Vertex2f(bottomRight[0], bottomRight[1]);
+    DGL_Vertex2f(bottomRight[0], bottomRight[1]);
+    DGL_Vertex2f(bottomLeft[0], bottomLeft[1]);
+    DGL_Vertex2f(bottomLeft[0], bottomLeft[1]);
+    DGL_Vertex2f(topLeft[0], topLeft[1]);
+DGL_End();
+DGL_Enable(DGL_TEXTURING);
+}
+#endif*/
+
     for(i = 0; i < numMarks; ++i)
     {
-        if(Automap_GetMark(map, i, &x, &y, NULL) &&
-           !(x < aabb[BOXLEFT]   || x > aabb[BOXRIGHT] ||
-             y < aabb[BOXBOTTOM] || y > aabb[BOXTOP]))
+        const dpatch_t* patch;
+        float point[2], w, h;
+
+        if(!Automap_GetMark(map, i, &point[0], &point[1], NULL))
+            continue;
+
+        patch = &markerPatches[i];
+        if(scrwidth >= scrheight)
         {
-            patch = &markerPatches[i];
-
-            if(scrwidth >= scrheight)
-            {
-                w = Automap_FrameToMap(map, FIXYTOSCREENY(patch->width));
-                h = Automap_FrameToMap(map, FIXYTOSCREENY(patch->height));
-            }
-            else
-            {
-                w = Automap_FrameToMap(map, FIXXTOSCREENX(patch->width));
-                h = Automap_FrameToMap(map, FIXXTOSCREENX(patch->height));
-            }
-
-            DGL_SetPatch(patch->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-            DGL_Color4f(1, 1, 1, Automap_GetOpacity(map));
-
-            DGL_MatrixMode(DGL_PROJECTION);
-            DGL_PushMatrix();
-            DGL_Translatef(x, y, 0);
-            DGL_Rotatef(Automap_GetViewAngle(map), 0, 0, 1);
-
-            DGL_Begin(DGL_QUADS);
-                DGL_TexCoord2f(0, 0, 0);
-                DGL_Vertex2f(-(w / 2), h / 2);
-
-                DGL_TexCoord2f(0, 1, 0);
-                DGL_Vertex2f(w / 2, h / 2);
-
-                DGL_TexCoord2f(0, 1, 1);
-                DGL_Vertex2f(w / 2, -(h / 2));
-
-                DGL_TexCoord2f(0, 0, 1);
-                DGL_Vertex2f(-(w / 2), -(h / 2));
-            DGL_End();
-
-            DGL_MatrixMode(DGL_PROJECTION);
-            DGL_PopMatrix();
+            w = Automap_FrameToMap(map, FIXYTOSCREENY(patch->width));
+            h = Automap_FrameToMap(map, FIXYTOSCREENY(patch->height));
         }
+        else
+        {
+            w = Automap_FrameToMap(map, FIXXTOSCREENX(patch->width));
+            h = Automap_FrameToMap(map, FIXXTOSCREENX(patch->height));
+        }
+
+        positionPointInView(map, point, topLeft, topRight, bottomRight, bottomLeft, viewPoint);
+
+        DGL_SetPatch(patch->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_Color4f(1, 1, 1, Automap_GetOpacity(map));
+
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PushMatrix();
+        DGL_Translatef(point[0], point[1], 0);
+        DGL_Rotatef(Automap_GetViewAngle(map), 0, 0, 1);
+
+        DGL_Begin(DGL_QUADS);
+            DGL_TexCoord2f(0, 0, 0);
+            DGL_Vertex2f(-(w / 2), h / 2);
+
+            DGL_TexCoord2f(0, 1, 0);
+            DGL_Vertex2f(w / 2, h / 2);
+
+            DGL_TexCoord2f(0, 1, 1);
+            DGL_Vertex2f(w / 2, -(h / 2));
+
+            DGL_TexCoord2f(0, 0, 1);
+            DGL_Vertex2f(-(w / 2), -(h / 2));
+        DGL_End();
+
+        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_PopMatrix();
     }
 #endif
 }

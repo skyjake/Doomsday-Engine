@@ -45,9 +45,7 @@ NAME            "DOOMSDAY"
 ; 319 formerly P_Swap
 ; 320 formerly P_Swapp
 ; 328 formerly P_RegisterCustomMapProperty
-; 349 formerly R_MaterialIsCustom
 ; 375 formerly DGL_MultiTexCoord2f
-; 376 formerly DGL_MultiTexCoord2fv
 
 EXPORTS
 ; Plugins.
@@ -472,10 +470,12 @@ EXPORTS
 
     ; Vectors.
     V2_Rotate                   @344 NONAME
+    V2_Intersection             @349 NONAME
 
     ; Utilities.
     M_PointLineDistance         @442 NONAME
     M_ProjectPointOnLine        @443 NONAME
+    P_PointOnLineSide           @376 NONAME
 
 ; Miscellaneous: Command line.
     ArgAbbreviate               @146 NONAME

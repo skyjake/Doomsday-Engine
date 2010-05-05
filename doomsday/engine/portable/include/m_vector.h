@@ -56,8 +56,8 @@ float           V2_ScalarProject(const pvec2_t a, const pvec2_t b);
 void            V2_Project(pvec2_t dest, const pvec2_t a, const pvec2_t b);
 boolean         V2_IsParallel(const pvec2_t a, const pvec2_t b);
 boolean         V2_IsZero(const pvec2_t vec);
-float           V2_Intersection(const pvec2_t p1, const pvec2_t delta1,
-                                const pvec2_t p2, const pvec2_t delta2,
+float           V2_Intersection(const_pvec2_t p1, const_pvec2_t delta1,
+                                const_pvec2_t p2, const_pvec2_t delta2,
                                 pvec2_t point);
 float           V2_Intercept(const pvec2_t a, const pvec2_t b, const pvec2_t c,
                              const pvec2_t d, pvec2_t point);
