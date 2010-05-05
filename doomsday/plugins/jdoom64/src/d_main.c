@@ -41,6 +41,7 @@
 #include "hu_menu.h"
 #include "hu_log.h"
 #include "hu_msg.h"
+#include "hu_lib.h"
 #include "p_saveg.h"
 #include "p_mapspec.h"
 #include "p_switch.h"

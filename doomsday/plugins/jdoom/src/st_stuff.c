@@ -324,11 +324,16 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha,
 #define ORIGINY (-HEIGHT * hud->showBar)
 
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     float x = ORIGINX, y = ORIGINY, w = WIDTH, h = HEIGHT;
     float armsBGX = ST_ARMSBGX - armsBackground.leftOffset;
     float cw, cw2, ch;
 
     if(!hud->statusbarActive)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
     DGL_SetPatch(statusbar.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
@@ -906,8 +911,13 @@ void drawReadyAmmoWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
     if(!hud->statusbarActive)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
@@ -922,9 +932,14 @@ void drawOwnedAmmoWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
     int i;
     if(!hud->statusbarActive)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
@@ -942,9 +957,14 @@ void drawMaxAmmoWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
     int i;
     if(!hud->statusbarActive)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
@@ -962,8 +982,13 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
     if(!hud->statusbarActive)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
@@ -978,8 +1003,13 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
     if(!hud->statusbarActive)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
@@ -994,8 +1024,13 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
     if(!hud->statusbarActive || !deathmatch)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
@@ -1010,8 +1045,13 @@ void drawSBarFaceWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
     if(!hud->statusbarActive)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
@@ -1029,9 +1069,14 @@ void drawSBarKeysWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     int i, numDrawnKeys = 0;
     float yOffset = ST_HEIGHT*(1-hud->showBar);
     if(!hud->statusbarActive)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
     *drawnWidth = 0;
     *drawnHeight = 0;
@@ -1078,9 +1123,14 @@ void drawOwnedWeaponWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
     int i;
     if(!hud->statusbarActive || deathmatch)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
@@ -1228,8 +1278,13 @@ void drawFragsWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     char buf[20];
     if(hud->statusbarActive || !deathmatch)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
     sprintf(buf, "FRAGS:%i", hud->currentFragsCount);
     M_WriteText2(0, 0, buf, GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
@@ -1245,6 +1300,10 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
     char buf[20];
     int w, h;
     if(hud->statusbarActive)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
     ST_drawHUDSprite(SPR_STIM, 0, 0, HOT_BLEFT, 1, iconAlpha, false);
     ST_HUDSpriteSize(SPR_STIM, &w, &h);
@@ -1271,7 +1330,10 @@ void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
 
     if(hud->statusbarActive)
         return;
-
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+        return;
     *drawnWidth = 0;
     *drawnHeight = 0;
 
@@ -1301,10 +1363,15 @@ void drawFaceWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     const dpatch_t* facePatch = &faces[hud->faceIndex];
     const dpatch_t* bgPatch = &faceBackground[cfg.playerColor[player]];
     int x = -(bgPatch->width/2);
     if(hud->statusbarActive)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
     DGL_Color4f(1, 1, 1, iconAlpha);
     if(IS_NETGAME)
@@ -1324,7 +1391,10 @@ void drawArmorWidget(int player, float textAlpha, float iconAlpha,
 
     if(hud->statusbarActive)
         return;
-
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+        return;
     maxArmor = MAX_OF(armorPoints[0], armorPoints[1]);
     maxArmor = MAX_OF(maxArmor, armorPoints[2]);
     maxArmor = MAX_OF(maxArmor, armorPoints[2]);
@@ -1362,6 +1432,10 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
     int i, numDrawnKeys = 0, x = 0;
 
     if(hud->statusbarActive)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
     *drawnWidth = 0;
@@ -1410,7 +1484,10 @@ void drawKillsWidget(int player, float textAlpha, float iconAlpha,
 
     if(!(cfg.counterCheat & (CCH_KILLS | CCH_KILLS_PRCNT)))
         return;
-
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+        return;
     strcpy(buf, "Kills: ");
     if(cfg.counterCheat & CCH_KILLS)
     {
@@ -1438,7 +1515,10 @@ void drawItemsWidget(int player, float textAlpha, float iconAlpha,
 
     if(!(cfg.counterCheat & (CCH_ITEMS | CCH_ITEMS_PRCNT)))
         return;
-
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+        return;
     strcpy(buf, "Items: ");
     if(cfg.counterCheat & CCH_ITEMS)
     {
@@ -1466,7 +1546,10 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
 
     if(!(cfg.counterCheat & (CCH_SECRET | CCH_SECRET_PRCNT)))
         return;
-
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+        return;
     strcpy(buf, "Secret: ");
     if(cfg.counterCheat & CCH_SECRET)
     {
@@ -1575,13 +1658,13 @@ void ST_Drawer(int player)
 
         // Initialize widgets according to player preferences.
         {
-        short flags = GUI_GroupFlags(hud->widgetGroupNames[UWG_COUNTERS]);
+        short flags = GUI_GroupFlags(hud->widgetGroupNames[UWG_TOP]);
         flags &= ~(UWGF_ALIGN_LEFT|UWGF_ALIGN_RIGHT);
         if(cfg.msgAlign == 0)
             flags |= UWGF_ALIGN_LEFT;
         else if(cfg.msgAlign == 2)
             flags |= UWGF_ALIGN_RIGHT;
-        GUI_GroupSetFlags(hud->widgetGroupNames[UWG_COUNTERS], flags);
+        GUI_GroupSetFlags(hud->widgetGroupNames[UWG_TOP], flags);
         }
 
         hud->inited = true;
@@ -1624,11 +1707,7 @@ void ST_Drawer(int player)
 
         int availHeight, drawnWidth, drawnHeight;
 
-        if(!(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0) &&
-           !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
-        {
         GUI_DrawWidgets(hud->widgetGroupNames[UWG_STATUSBAR], (!blended? UWF_OVERRIDE_ALPHA : 0), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
-        }
 
         /**
          * Wide offset scaling.
@@ -1661,10 +1740,6 @@ void ST_Drawer(int player)
         height -= PADDING*2;
 
         GUI_DrawWidgets(hud->widgetGroupNames[UWG_TOP], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
-
-        if(!(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0) &&
-           !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
-        {
         GUI_DrawWidgets(hud->widgetGroupNames[UWG_BOTTOMLEFT], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
 
         availHeight = height - (drawnHeight > 0 ? drawnHeight + PADDING : 0);
@@ -1673,7 +1748,7 @@ void ST_Drawer(int player)
         GUI_DrawWidgets(hud->widgetGroupNames[UWG_BOTTOM], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
         GUI_DrawWidgets(hud->widgetGroupNames[UWG_BOTTOMRIGHT], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
         GUI_DrawWidgets(hud->widgetGroupNames[UWG_COUNTERS], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
-        }
+
 #undef PADDING
         }
 

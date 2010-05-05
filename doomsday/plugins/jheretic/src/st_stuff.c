@@ -1481,13 +1481,13 @@ void ST_Drawer(int player)
 
         // Initialize widgets according to player preferences.
         {
-        short flags = GUI_GroupFlags(hud->widgetGroupNames[UWG_COUNTERS]);
+        short flags = GUI_GroupFlags(hud->widgetGroupNames[UWG_TOP]);
         flags &= ~(UWGF_ALIGN_LEFT|UWGF_ALIGN_RIGHT);
         if(cfg.msgAlign == 0)
             flags |= UWGF_ALIGN_LEFT;
         else if(cfg.msgAlign == 2)
             flags |= UWGF_ALIGN_RIGHT;
-        GUI_GroupSetFlags(hud->widgetGroupNames[UWG_COUNTERS], flags);
+        GUI_GroupSetFlags(hud->widgetGroupNames[UWG_TOP], flags);
         }
 
         hud->inited = true;

@@ -41,6 +41,7 @@
 #include "hu_log.h"
 #include "hu_menu.h"
 #include "hu_msg.h"
+#include "hu_lib.h"
 #include "d_net.h"
 #include "g_update.h"
 #include "g_common.h"
