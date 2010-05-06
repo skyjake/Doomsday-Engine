@@ -145,8 +145,9 @@ void R_UpdateViewWindow(boolean force)
         for(i = 0; i < MAXPLAYERS; ++i)
             ST_HUDUnHide(i, HUE_FORCE);
     }
-    else if(cfg.screenBlocks > 10 && destBlocks <= 10)
-    {   // When going to statusbar span, do an instant change.
+    if((cfg.screenBlocks == 11 && destBlocks == 10) ||
+       (cfg.screenBlocks == 10 && destBlocks == 11))
+    {   // When going to/from statusbar span, do an instant change.
         instantChange = true;
     }
 
@@ -197,7 +198,7 @@ void R_UpdateViewWindow(boolean force)
 /**
  * Animates the game view window towards the target values.
  */
-void R_ViewWindowTicker(void)
+void R_ViewWindowTicker(timespan_t ticLength)
 {
     static int oldViewW = -1, oldViewH = -1;
 
@@ -218,7 +219,7 @@ void R_ViewWindowTicker(void)
     if(targetX == -1)
         return; // Nothing to do.
 
-    windowPos += .4f;
+    windowPos += (float)(.4 * ticLength * TICRATE);
     if(windowPos >= 1)
     {
         windowX = targetX;

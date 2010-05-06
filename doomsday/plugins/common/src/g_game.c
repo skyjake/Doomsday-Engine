@@ -1314,6 +1314,9 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
         AM_Ticker(ticLength);
     }
 
+    // Update view window size.
+    R_ViewWindowTicker(ticLength);
+
     // The following is restricted to fixed 35 Hz ticks.
     if(M_RunTrigger(&fixed, ticLength))
     {
@@ -1359,9 +1362,6 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
 
         // Update the game status cvars for player data.
         G_UpdateGSVarsForPlayer(&players[CONSOLEPLAYER]);
-
-        // Update view window size.
-        R_ViewWindowTicker();
 
         // InFine ticks whenever it's active.
         FI_Ticker();

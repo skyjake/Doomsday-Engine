@@ -44,7 +44,7 @@ typedef struct dpatch_s {
 
 #define LERP(start, end, pos) (end * pos + start * (1 - pos))
 
-void            R_ViewWindowTicker(void);
+void            R_ViewWindowTicker(timespan_t ticLength);
 void            R_UpdateViewWindow(boolean force);
 void            R_SetViewWindowTarget(int x, int y, int w, int h);
 void            R_GetViewWindow(float* x, float* y, float* w, float* h);
