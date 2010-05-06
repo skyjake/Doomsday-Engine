@@ -346,7 +346,7 @@ void            AM_Init(void);
 void            AM_Shutdown(void);
 
 void            AM_InitForMap(void);
-void            AM_Ticker(void);
+void            AM_Ticker(timespan_t ticLength);
 void            AM_Drawer(int player);
 
 automapid_t     AM_MapForPlayer(int plrnum);

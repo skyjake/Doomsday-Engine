@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2008-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,8 +25,8 @@
  * p_automap.h : The automap.
  */
 
-#ifndef __AUTOMAP_H__
-#define __AUTOMAP_H__
+#ifndef LIBCOMMON_AUTOMAP_H
+#define LIBCOMMON_AUTOMAP_H
 
 #define MAX_MAP_POINTS       (10)
 
@@ -122,23 +122,20 @@ extern "C" {
 #endif
 
 void            Automap_Open(automap_t* map, int yes, int fast);
-void            Automap_RunTic(automap_t* map);
-void            Automap_UpdateWindow(automap_t* map, float newX, float newY,
-                             float newWidth, float newHeight);
+void            Automap_RunTic(automap_t* map, timespan_t ticLength);
+void            Automap_UpdateWindow(automap_t* map, float newX, float newY, float newWidth, float newHeight);
 
 int             Automap_IsActive(const automap_t* map);
 
 int             Automap_AddMark(automap_t* map, float x, float y, float z);
-int             Automap_GetMark(const automap_t* map, unsigned int mark,
-                                float* x, float* y, float* z);
+int             Automap_GetMark(const automap_t* map, unsigned int mark, float* x, float* y, float* z);
 void            Automap_ClearMarks(automap_t* map);
 unsigned int    Automap_GetNumMarks(const automap_t* map);
 
 void            Automap_SetFlags(automap_t* map, int flags);
 int             Automap_GetFlags(const automap_t* map);
 
-void            Automap_SetWorldBounds(automap_t* map, float lowX, float hiX,
-                                       float lowY, float hiY);
+void            Automap_SetWorldBounds(automap_t* map, float lowX, float hiX, float lowY, float hiY);
 void            Automap_SetMinScale(automap_t* map, const float scale);
 
 void            Automap_SetWindowTarget(automap_t* map, int x, int y, int w, int h);
@@ -166,8 +163,7 @@ int             Automap_IsMapWindowInFullScreenMode(const automap_t* map);
 void            Automap_SetViewRotate(automap_t* map, int offOnToggle);
 void            Automap_ToggleFollow(automap_t* map);
 void            Automap_ToggleZoomMax(automap_t* map);
-void            Automap_GetInViewAABB(const automap_t* map, float* lowX,
-                                   float* hiX, float* lowY, float* hiY);
+void            Automap_GetInViewAABB(const automap_t* map, float* lowX, float* hiX, float* lowY, float* hiY);
 void            Automap_GetViewParallaxPosition(const automap_t* map, float* x, float* y);
 
 #ifdef __cplusplus

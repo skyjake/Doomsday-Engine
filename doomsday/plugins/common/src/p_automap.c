@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2008-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2008-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <assert.h>
 
 #include "doomsday.h" // temporary, to be removed.
 
@@ -162,11 +163,13 @@ void Automap_Open(automap_t* map, int yes, int fast)
     map->active = (yes? true : false);
 }
 
-void Automap_RunTic(automap_t* map)
+void Automap_RunTic(automap_t* map, timespan_t ticLength)
 {
-    float               width, height, scale;
+    assert(map);
+    {
+    float width, height, scale;
 
-    if(!map)
+    if(!map->active)
         return;
 
     if(map->updateViewScale)
@@ -175,9 +178,9 @@ void Automap_RunTic(automap_t* map)
     // Window position and dimensions.
     if(!map->fullScreenMode)
     {
-        automapwindow_t*    win = &map->window;
+        automapwindow_t* win = &map->window;
 
-        win->posTimer += .4f;
+        win->posTimer += (float)(.4 * ticLength * TICRATE);
         if(win->posTimer >= 1)
         {
             win->x = win->targetX;
@@ -195,7 +198,7 @@ void Automap_RunTic(automap_t* map)
     }
 
     // Map viewer location.
-    map->viewTimer += .4f;
+    map->viewTimer += (float)(.4 * ticLength * TICRATE);
     if(map->viewTimer >= 1)
     {
         map->viewX = map->targetViewX;
@@ -211,19 +214,18 @@ void Automap_RunTic(automap_t* map)
     map->viewPLY = map->viewY / 4000;
 
     // Map view scale (zoom).
-    map->viewScaleTimer += .4f;
+    map->viewScaleTimer += (float)(.4 * ticLength * TICRATE);
     if(map->viewScaleTimer >= 1)
     {
         map->viewScale = map->targetViewScale;
     }
     else
     {
-        map->viewScale =
-            LERP(map->oldViewScale, map->targetViewScale, map->viewScaleTimer);
+        map->viewScale = LERP(map->oldViewScale, map->targetViewScale, map->viewScaleTimer);
     }
 
     // Map view rotation.
-    map->angleTimer += .4f;
+    map->angleTimer += (float)(.4 * ticLength * TICRATE);
     if(map->angleTimer >= 1)
     {
         map->angle = map->targetAngle;
@@ -275,8 +277,7 @@ void Automap_RunTic(automap_t* map)
     else if((y) > (b)[BOXTOP]) \
         (b)[BOXTOP] = (y);
 
-    float           angle;
-    float           v[2];
+    float angle, v[2];
 
     angle = map->angle;
 
@@ -311,6 +312,7 @@ void Automap_RunTic(automap_t* map)
     ADDTOBOX(map->viewAABB, v[0], v[1]);
 
 #undef ADDTOBOX
+    }
     }
 }
 

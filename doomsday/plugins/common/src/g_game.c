@@ -1250,7 +1250,7 @@ void G_Ticker(timespan_t ticLength)
     // Do player reborns if needed.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t       *plr = &players[i];
+        player_t* plr = &players[i];
 
         if(plr->plr->inGame && plr->playerState == PST_REBORN &&
            !P_MobjIsCamera(plr->plr->mo))
@@ -1311,6 +1311,7 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
     if(G_GetGameState() == GS_MAP && !IS_DEDICATED)
     {
         ST_Ticker(ticLength);
+        AM_Ticker(ticLength);
     }
 
     // The following is restricted to fixed 35 Hz ticks.
@@ -1334,7 +1335,6 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
             if(IS_DEDICATED)
                 break;
 
-            AM_Ticker();
             Hu_Ticker();
             break;
 

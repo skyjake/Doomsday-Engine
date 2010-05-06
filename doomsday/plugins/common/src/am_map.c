@@ -1572,28 +1572,14 @@ static void findMinMaxBoundaries(void)
     }
 }
 
-/**
- * Called each tic for each player's automap if they are in-game.
- */
-static void mapTicker(automap_t* map)
+static void mapTicker(automap_t* map, timespan_t ticLength)
 {
-    int                 playerNum;
-    float               panX[2], panY[2],
-                        zoomVel, zoomSpeed;
-    player_t*           mapPlayer;
-    mobj_t*             mo;
-    automapcfg_t*       mcfg;
-    float               scrwidth = DD_GetInteger(DD_WINDOW_WIDTH);
-    float               scrheight = DD_GetInteger(DD_WINDOW_HEIGHT);
-    float               newX, newY, newWidth, newHeight;
-
-    if(!map)
-        return;
-
-    playerNum = map - automaps;
-    mapPlayer = &players[playerNum];
-    mcfg = &automapCFGs[playerNum];
-    mo = players[mcfg->followPlayer].plr->mo;
+    int playerNum = map - automaps;
+    player_t* mapPlayer = &players[playerNum];
+    automapcfg_t* mcfg = &automapCFGs[playerNum];
+    mobj_t* mo = players[mcfg->followPlayer].plr->mo;
+    float panX[2], panY[2], zoomVel, zoomSpeed;
+    float newX, newY, newWidth, newHeight, scrwidth, scrheight;
 
     // Check the state of the controls. Done here so that offsets don't accumulate
     // unnecessarily, as they would, if left unread.
@@ -1604,26 +1590,26 @@ static void mapTicker(automap_t* map)
         return;
 
     // Move towards the target alpha level for the automap.
-    if(++map->alphaTimer < mcfg->openSeconds * TICSPERSEC)
-        map->alpha = LERP(map->oldAlpha, map->targetAlpha,
-                          map->alphaTimer / (mcfg->openSeconds * TICSPERSEC));
-    else
+    map->alphaTimer += (mcfg->openSeconds == 0? 1 : 1/mcfg->openSeconds * ticLength);
+    if(map->alphaTimer >= 1)
         map->alpha = map->targetAlpha;
+    else
+        map->alpha = LERP(map->oldAlpha, map->targetAlpha, map->alphaTimer);
 
     // If the automap is not active do nothing else.
     if(!map->active)
         return;
 
-    //
-    // Update per tic, driven controls.
-    //
+    scrwidth = Get(DD_VIEWWINDOW_WIDTH);
+    scrheight = Get(DD_VIEWWINDOW_HEIGHT);
 
     // Map view zoom contol.
-    zoomSpeed = (1 + mcfg->zoomSpeed);
+    zoomSpeed = 1 + (2 * mcfg->zoomSpeed) * ticLength * TICRATE;
     if(players[playerNum].brain.speed)
         zoomSpeed *= 1.5f;
+
     P_GetControlState(playerNum, CTL_MAP_ZOOM, &zoomVel, NULL); // ignores rel offset -jk
-    if(zoomVel > 0)  // zoom in
+    if(zoomVel > 0) // zoom in
     {
         Automap_SetViewScaleTarget(map, map->viewScale * zoomSpeed);
     }
@@ -1635,26 +1621,24 @@ static void mapTicker(automap_t* map)
     // Map viewer location paning control.
     if(map->panMode || !players[mcfg->followPlayer].plr->inGame)
     {
-        float               xy[2] = { 0, 0 }; // deltas
+        float xy[2] = { 0, 0 }; // deltas
         // DOOM.EXE pans the automap at 140 fixed pixels per second.
-        float       panUnitsPerTic = (Automap_FrameToMap(map, FIXXTOSCREENX(140)) / TICSPERSEC) *
-                        (2 * mcfg->panSpeed);
+        float panUnitsPerTic = (Automap_FrameToMap(map, FIXXTOSCREENX(140)) / TICSPERSEC) * (2 * mcfg->panSpeed) * TICRATE;
 
         if(panUnitsPerTic < 8)
             panUnitsPerTic = 8;
 
-        xy[VX] = panX[0] * panUnitsPerTic + panX[1];
-        xy[VY] = panY[0] * panUnitsPerTic + panY[1];
+        xy[VX] = panX[0] * panUnitsPerTic * ticLength + panX[1];
+        xy[VY] = panY[0] * panUnitsPerTic * ticLength + panY[1];
 
         V2_Rotate(xy, map->angle / 360 * 2 * PI);
 
         if(xy[VX] || xy[VY])
-            Automap_SetLocationTarget(map, map->viewX + xy[VX],
-                                  map->viewY + xy[VY]);
+            Automap_SetLocationTarget(map, map->viewX + xy[VX], map->viewY + xy[VY]);
     }
     else  // Camera follows the player
     {
-        float               angle;
+        float angle;
 
         Automap_SetLocationTarget(map, mo->pos[VX], mo->pos[VY]);
 
@@ -1672,23 +1656,18 @@ static void mapTicker(automap_t* map)
     Automap_UpdateWindow(map, FIXXTOSCREENX(newX), FIXYTOSCREENY(newY),
                          FIXXTOSCREENX(newWidth), FIXYTOSCREENY(newHeight));
 
-    Automap_RunTic(map);
+    Automap_RunTic(map, ticLength);
 }
 
-/**
- * Updates on Game Tick.
- */
-void AM_Ticker(void)
+void AM_Ticker(timespan_t ticLength)
 {
-    uint                i;
-
-    if(IS_DEDICATED)
-        return; // Nothing to do.
+    uint i;
 
     // All maps get to tick if their player is in-game.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        mapTicker(&automaps[i]);
+        automap_t* map = &automaps[i];
+        mapTicker(map, ticLength);
     }
 }
 

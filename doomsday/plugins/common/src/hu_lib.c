@@ -336,10 +336,11 @@ void GUI_GroupAddWidget(int name, uiwidgetid_t id)
     assert(inited);
     {
     uiwidgetgroup_t* group;
+    uiwidget_t* w = toWidget(id);
     uiwidgetid_t i;
 
     // Ensure this is a known widget id.
-    assert(toWidget(id));
+    assert(w);
     // Ensure this is a known group name.
     group = groupForName(name, false);
     if(!group)
