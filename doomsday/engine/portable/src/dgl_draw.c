@@ -549,6 +549,10 @@ void DGL_DrawRect(float x, float y, float w, float h, float r, float g,
 
 void DGL_DrawRectTiled(float x, float y, float w, float h, int tw, int th)
 {
+    // Make sure the current texture will be tiled.
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
     GL_DrawRectTiled(x, y, w, h, tw, th);
 }
 

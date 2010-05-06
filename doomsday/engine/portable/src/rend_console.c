@@ -491,6 +491,16 @@ static void drawConsoleBackground(int x, int y, int w, int h, float gtosMulY,
     glTranslatef(2 * sin(funnyAng / 4), 2 * cos(funnyAng / 4), 0);
     glRotatef(funnyAng * 3, 0, 0, 1);
 
+    /**
+     * Make sure the current texture will be tiled.
+     * Do NOT do this here. We have no idea what the current texture may be.
+     * Instead simply assume that it has been suitably configured for tiling.
+     * \fixme Refactor the way console background is drawn (do it entirely
+     * engine-side or game-side).
+     */
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
     GL_DrawRectTiled(x, y, w, h, bgX, bgY);
 
     glMatrixMode(GL_TEXTURE);

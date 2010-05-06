@@ -109,17 +109,25 @@ static void drawPatch(lumpnum_t lump, int x, int y, int w, int h)
 {
     patchtex_t* p = R_GetPatchTex(lump);
     assert(p);
+
     glBindTexture(GL_TEXTURE_2D, GL_PreparePatch(p));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glmode[texMagMode]);
+
     GL_DrawRect(x, y, w, h, 1, 1, 1, 1);
 }
 
-static void drawPatchTiled(lumpnum_t lump, int x, int y, int w, int h)
+static void drawPatchTiled(lumpnum_t lump, int x, int y, int w, int h, GLint wrapS, GLint wrapT)
 {
     patchtex_t* p = R_GetPatchTex(lump);
     assert(p);
+
     glBindTexture(GL_TEXTURE_2D, GL_PreparePatch(p));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glmode[texMagMode]);
+
     GL_DrawRectTiled(x, y, w, h, p->width, p->height);
 }
 
@@ -167,10 +175,10 @@ void R_DrawViewBorder(void)
 
     if(border != 0)
     {
-        drawPatchTiled(borderPatchLumps[BG_TOP], viewwindowx, viewwindowy - border, viewwidth, border);
-        drawPatchTiled(borderPatchLumps[BG_BOTTOM], viewwindowx, viewwindowy + viewheight , viewwidth, border);
-        drawPatchTiled(borderPatchLumps[BG_LEFT], viewwindowx - border, viewwindowy, border, viewheight);
-        drawPatchTiled(borderPatchLumps[BG_RIGHT], viewwindowx + viewwidth, viewwindowy, border, viewheight);
+        drawPatchTiled(borderPatchLumps[BG_TOP], viewwindowx, viewwindowy - border, viewwidth, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
+        drawPatchTiled(borderPatchLumps[BG_BOTTOM], viewwindowx, viewwindowy + viewheight , viewwidth, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
+        drawPatchTiled(borderPatchLumps[BG_LEFT], viewwindowx - border, viewwindowy, border, viewheight, GL_CLAMP_TO_EDGE, GL_REPEAT);
+        drawPatchTiled(borderPatchLumps[BG_RIGHT], viewwindowx + viewwidth, viewwindowy, border, viewheight, GL_CLAMP_TO_EDGE, GL_REPEAT);
     }
 
     glMatrixMode(GL_TEXTURE);
