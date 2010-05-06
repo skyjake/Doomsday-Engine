@@ -257,6 +257,10 @@ void drawFlightWidget(int player, float textAlpha, float iconAlpha,
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
 
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+        return;
     if(!plr->powers[PT_FLIGHT])
         return;
 
@@ -292,6 +296,10 @@ void drawBootsWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     player_t* plr = &players[player];
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+        return;
     if(!plr->powers[PT_SPEED])
         return;
     if(plr->powers[PT_SPEED] > BLINKTHRESHOLD || !(plr->powers[PT_SPEED] & 16))
@@ -304,6 +312,10 @@ void drawDefenseWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     player_t* plr = &players[player];
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+        return;
     if(!plr->powers[PT_INVULNERABILITY])
         return;
     if(plr->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD || !(plr->powers[PT_INVULNERABILITY] & 16))
@@ -316,6 +328,10 @@ void drawServantWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     player_t* plr = &players[player];
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+        return;
     if(!plr->powers[PT_MINOTAUR])
         return;
     if(plr->powers[PT_MINOTAUR] > BLINKTHRESHOLD || !(plr->powers[PT_MINOTAUR] & 16))
@@ -335,6 +351,10 @@ void drawWeaponPiecesWidget(int player, float textAlpha, float iconAlpha,
     int pClass = cfg.playerClass[player]; // Original player class (i.e. not pig).
 
     if(!hud->statusbarActive || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
     if(plr->pieces == 7)
@@ -384,6 +404,7 @@ void drawHealthChainWidget(int player, float textAlpha, float iconAlpha,
     };
 
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     int x, y, w, h;
     int pClass, pColor;
     float healthPos;
@@ -392,6 +413,10 @@ void drawHealthChainWidget(int player, float textAlpha, float iconAlpha,
     float yOffset = ST_HEIGHT*(1-hud->showBar);
 
     if(!hud->statusbarActive)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
     // Original player class (i.e. not pig).
@@ -538,10 +563,15 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
 #define ORIGINY (-HEIGHT * hud->showBar)
 
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     int x, y, w, h, pClass = cfg.playerClass[player]; // Original class (i.e. not pig).
     float cw, ch;
 
     if(!hud->statusbarActive)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
     if(!(iconAlpha < 1))
@@ -1191,10 +1221,14 @@ void drawSBarInventoryWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
     if(!hud->statusbarActive || !Hu_InventoryIsOpen(player))
         return;
-
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+        return;
     Hu_InventoryDraw2(player, -ST_WIDTH/2 + ST_INVENTORYX, -ST_HEIGHT + yOffset + ST_INVENTORYY, iconAlpha);
 
     // \fixme calculate dimensions properly!
@@ -1213,6 +1247,10 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
     int i, numDrawn, pClass = cfg.playerClass[player]; // Original player class (i.e. not pig).
 
     if(!hud->statusbarActive || Hu_InventoryIsOpen(player) || !AM_IsActive(AM_MapForPlayer(player)))
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
     *drawnWidth = 0;
@@ -1256,6 +1294,10 @@ void drawSBarArmorIconsWidget(int player, float textAlpha, float iconAlpha,
 
     if(!hud->statusbarActive || Hu_InventoryIsOpen(player) || !AM_IsActive(AM_MapForPlayer(player)))
         return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+        return;
 
     *drawnWidth = 0;
     *drawnHeight = 0;
@@ -1296,9 +1338,14 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
 
     if(!hud->statusbarActive || !deathmatch || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1318,9 +1365,14 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
 
     if(!hud->statusbarActive || deathmatch || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1340,9 +1392,14 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
 
     if(!hud->statusbarActive || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1362,9 +1419,14 @@ void drawSBarBlueManaWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
 
     if(!hud->statusbarActive || hud->manaACount <= 0 || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1384,9 +1446,14 @@ void drawSBarGreenManaWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
 
     if(!hud->statusbarActive || hud->manaBCount <= 0 || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1409,6 +1476,7 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
 #define ORIGINY (-ST_HEIGHT)
 
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
     inventoryitemtype_t readyItem;
     lumpnum_t patch;
@@ -1416,7 +1484,10 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
 
     if(!hud->statusbarActive || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
         return;
-
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+        return;
     if((readyItem = P_InventoryReadyItem(player)) == IIT_NONE)
         return;
 
@@ -1460,9 +1531,14 @@ void drawBlueManaIconWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
 
     if(!hud->statusbarActive || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1481,9 +1557,14 @@ void drawGreenManaIconWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
 
     if(!hud->statusbarActive || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1508,6 +1589,10 @@ void drawBlueManaVialWidget(int player, float textAlpha, float iconAlpha,
     player_t* plr = &players[player];
 
     if(!hud->statusbarActive || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1537,6 +1622,10 @@ void drawGreenManaVialWidget(int player, float textAlpha, float iconAlpha,
     player_t* plr = &players[player];
 
     if(!hud->statusbarActive || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1712,6 +1801,10 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
     char buf[20];
     if(hud->statusbarActive)
         return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+        return;
     dd_snprintf(buf, 20, "%i", health);
     w = M_StringWidth(buf, GF_FONTB);
     h = M_StringHeight(buf, GF_FONTB);
@@ -1730,6 +1823,10 @@ void drawBlueManaWidget(int player, float textAlpha, float iconAlpha,
     const dpatch_t* patch = NULL;
 
     if(hud->statusbarActive)
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
     if(!(plr->ammo[AT_BLUEMANA].owned > 0))
@@ -1772,6 +1869,10 @@ void drawGreenManaWidget(int player, float textAlpha, float iconAlpha,
 
     if(hud->statusbarActive)
         return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+        return;
 
     if(!(plr->ammo[AT_GREENMANA].owned > 0))
         patch = dim;
@@ -1810,6 +1911,10 @@ void drawFragsWidget(int player, float textAlpha, float iconAlpha,
     int i, numFrags = 0;
     if(hud->statusbarActive || !deathmatch)
         return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
+        return;
     for(i = 0; i < MAXPLAYERS; ++i)
         if(plr->plr->inGame)
             numFrags += plr->frags[i];
@@ -1823,8 +1928,13 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
 
     if(hud->statusbarActive || Hu_InventoryIsOpen(player))
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
     if(hud->currentInvItemFlash > 0)
@@ -1859,7 +1969,12 @@ void drawInventoryWidget(int player, float textAlpha, float iconAlpha,
 #define INVENTORY_HEIGHT    29
 
     hudstate_t* hud = &hudStates[player];
+    player_t* plr = &players[player];
     if(hud->statusbarActive || !Hu_InventoryIsOpen(player))
+        return;
+    if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
+        return;
+    if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
     Hu_InventoryDraw(player, 0, -INVENTORY_HEIGHT, textAlpha, iconAlpha);
     *drawnWidth = 31 * 7 + 16 * 2;
@@ -2085,11 +2200,7 @@ void ST_Drawer(int player)
 
         int posX, posY, availWidth, availHeight, drawnWidth, drawnHeight;
 
-        if(!(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0) &&
-           !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
-        {
         GUI_DrawWidgets(hud->widgetGroupNames[UWG_STATUSBAR], (!blended? UWF_OVERRIDE_ALPHA : 0), x, y, width, height, alpha, &drawnWidth, &drawnHeight);
-        }
 
         /**
          * Wide offset scaling.
@@ -2122,12 +2233,6 @@ void ST_Drawer(int player)
         height -= PADDING*2;
 
         GUI_DrawWidgets(hud->widgetGroupNames[UWG_TOP], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
-
-        drawnHeight = 0;
-
-        if(!(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0) &&
-           !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
-        {
         GUI_DrawWidgets(hud->widgetGroupNames[UWG_TOPLEFT], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
 
         posX = x + (drawnWidth > 0 ? drawnWidth + PADDING : 0);
@@ -2135,19 +2240,14 @@ void ST_Drawer(int player)
         GUI_DrawWidgets(hud->widgetGroupNames[UWG_TOPLEFT2],0, posX, y, availWidth, height, alpha, &drawnWidth, &drawnHeight);
 
         GUI_DrawWidgets(hud->widgetGroupNames[UWG_TOPRIGHT], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
-        }
 
         posY = y + (drawnHeight > 0 ? drawnHeight + PADDING : 0);
         availHeight = height - (drawnHeight > 0 ? drawnHeight + PADDING : 0);
         GUI_DrawWidgets(hud->widgetGroupNames[UWG_TOPRIGHT2], 0, x, posY, width, availHeight, alpha, &drawnWidth, &drawnHeight);
 
-        if(!(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0) &&
-           !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK)))
-        {
         GUI_DrawWidgets(hud->widgetGroupNames[UWG_BOTTOMLEFT], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
         GUI_DrawWidgets(hud->widgetGroupNames[UWG_BOTTOMRIGHT], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
         GUI_DrawWidgets(hud->widgetGroupNames[UWG_BOTTOM], 0, x, y, width, height, alpha, &drawnWidth, &drawnHeight);
-        }
 #undef PADDING
         }
 
