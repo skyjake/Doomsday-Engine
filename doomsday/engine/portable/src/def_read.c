@@ -125,8 +125,8 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct dedsource_s {
-    char*           buffer;
-    char*           pos;
+    const char*     buffer;
+    const char*     pos;
     boolean         atEnd;
     int             lineNumber;
     const char*     fileName;
@@ -613,7 +613,7 @@ static void DED_Include(const char* fileName, directory_t* dir)
     strncpy(token, "", MAX_TOKEN_LEN);
 }
 
-static void DED_InitReader(char* buffer, const char* fileName)
+static void DED_InitReader(const char* buffer, const char* fileName)
 {
     if(source && source - sourceStack >= MAX_RECUR_DEPTH)
     {
@@ -681,7 +681,7 @@ static boolean DED_CheckCondition(const char* cond, boolean expected)
  * @param buffer        The data to be read, must be null-terminated.
  * @param sourceFile    Just FYI.
  */
-static int DED_ReadData(ded_t* ded, char* buffer, const char* sourceFile)
+static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
 {
     char                dummy[128], label[128], tmp[256];
     int                 dummyInt, idx, retVal = true;
@@ -2432,10 +2432,9 @@ int DED_ReadLump(ded_t* ded, lumpnum_t lump)
 
     if((lumpLength = W_LumpLength(lump)) > 0)
     {
-        void* buf = M_Calloc(lumpLength + 1);
-        int result = DED_ReadData(ded, buf, W_LumpSourceFile(lump));
-
-        M_Free(buf);
+        const void* lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
+        int result = DED_ReadData(ded, lumpPtr, W_LumpSourceFile(lump));
+        W_ChangeCacheTag(lump, PU_CACHE);
         return result;
     }
 
