@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * rend_shadow.c: Map Object Shadows
+ * rend_shadow.c: Map Object Shadows.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -54,7 +54,7 @@
 static int useShadows = true;
 static int shadowMaxRad = 80;
 static int shadowMaxDist = 1000;
-static float shadowFactor = 0.5f;
+static float shadowFactor = 1.2f;
 
 // CODE --------------------------------------------------------------------
 
@@ -62,7 +62,7 @@ void Rend_ShadowRegister(void)
 {
     // Cvars
     C_VAR_INT("rend-shadow", &useShadows, 0, 0, 1);
-    C_VAR_FLOAT("rend-shadow-darkness", &shadowFactor, 0, 0, 1);
+    C_VAR_FLOAT("rend-shadow-darkness", &shadowFactor, 0, 0, 2);
     C_VAR_INT("rend-shadow-far", &shadowMaxDist, CVF_NO_MAX, 0, 0);
     C_VAR_INT("rend-shadow-radius-max", &shadowMaxRad, CVF_NO_MAX, 0, 0);
 }
@@ -134,8 +134,7 @@ static void processMobjShadow(mobj_t* mo)
 
     // Calculate the strength of the shadow.
     // Simplified version, no light diminishing or range compression.
-    alpha = shadowFactor * sec->lightLevel *
-        (1 - mo->translucency * reciprocal255);
+    alpha = (0.6f - sec->lightLevel * 0.4f) * shadowFactor * (1 - mo->translucency * reciprocal255);
 
     halfmoh = moh / 2;
     if(height > halfmoh)

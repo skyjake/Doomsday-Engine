@@ -314,7 +314,7 @@ uidata_slider_t sld_fov = { 1, 179, 0, .01f, true, "rend-camera-fov" };
 uidata_slider_t sld_sky_distance =
     { 1, 10000, 0, 10, true, "rend-sky-distance" };
 uidata_slider_t sld_shadow_dark =
-    { 0, 1, 0, .01f, true, "rend-shadow-darkness" };
+    { 0, 2, 0, .01f, true, "rend-shadow-darkness" };
 uidata_slider_t sld_shadow_far = { 0, 3000, 0, 1, false, "rend-shadow-far" };
 uidata_slider_t sld_shadow_radmax =
     { 0, 128, 0, 1, false, "rend-shadow-radius-max" };
