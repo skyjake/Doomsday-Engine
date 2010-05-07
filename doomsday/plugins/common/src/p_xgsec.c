@@ -3120,25 +3120,20 @@ DEFCC(CCmdMovePlane)
         p = 2;
         if(!players[CONSOLEPLAYER].plr->mo)
             return false;
-        sector =
-            P_GetPtrp(players[CONSOLEPLAYER].plr->mo->subsector, DMU_SECTOR);
+        sector = P_GetPtrp(players[CONSOLEPLAYER].plr->mo->subsector, DMU_SECTOR);
     }
     else if(!stricmp(argv[1], "at") && argc >= 4)
     {
         p = 4;
-        sector =
-            P_GetPtrp(R_PointInSubsector((float) strtol(argv[2], 0, 0),
-                                         (float) strtol(argv[3], 0, 0)),
-                      DMU_SECTOR);
+        sector = P_GetPtrp(R_PointInSubsector((float) strtol(argv[2], 0, 0), (float) strtol(argv[3], 0, 0)), DMU_SECTOR);
     }
     else if(!stricmp(argv[1], "tag") && argc >= 3)
     {
-        int         tag = (short) strtol(argv[2], 0, 0);
-        sector_t   *sec = NULL;
-        iterlist_t *list;
+        int tag = (short) strtol(argv[2], 0, 0);
+        sector_t* sec = NULL;
+        iterlist_t* list;
 
         p = 3;
-
         list = P_GetSectorIterListForTag(tag, false);
         if(list)
         {   // Find the first sector with the tag.
@@ -3162,8 +3157,7 @@ DEFCC(CCmdMovePlane)
     // No more arguments?
     if(argc == p)
     {
-        Con_Printf("Ceiling = %g\nFloor = %g\n", ceilingheight,
-                   floorheight);
+        Con_Printf("Ceiling = %g\nFloor = %g\n", ceilingheight, floorheight);
         return true;
     }
 
@@ -3208,20 +3202,7 @@ DEFCC(CCmdMovePlane)
     mover = XS_GetPlaneMover(sector, isCeiling);
 
     // Setup the thinker and add it to the list.
-    mover->destination =
-        units +
-        (isOffset ? (isCeiling ? ceilingheight : floorheight) : 0);
-
-    // Check that the destination is valid.
-    if(!isBoth)
-    {
-        if(isCeiling &&
-           mover->destination < floorheight + 4)
-            mover->destination = floorheight + 4;
-        if(!isCeiling &&
-           mover->destination > ceilingheight - 4)
-            mover->destination = ceilingheight - 4;
-    }
+    mover->destination = units + (isOffset ? (isCeiling ? ceilingheight : floorheight) : 0);
 
     mover->speed = speed;
     if(isCrusher)
