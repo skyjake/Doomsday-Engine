@@ -30,8 +30,17 @@
 #include <math.h>
 #include <assert.h>
 
-#include "doomsday.h" // temporary, to be removed.
+#if __JDOOM__
+#  include "jdoom.h"
+#elif __JDOOM64__
+#  include "jdoom64.h"
+#elif __JHERETIC__
+#  include "jheretic.h"
+#elif __JHEXEN__
+#  include "jhexen.h"
+#endif
 
+#include "r_common.h"
 #include "p_automap.h"
 
 // MACROS ------------------------------------------------------------------
@@ -39,8 +48,8 @@
 #define LERP(start, end, pos) (end * pos + start * (1 - pos))
 
 // Translate between frame and map distances:
-#define FTOM(map, x) ((x) * (map)->scaleFTOM)
-#define MTOF(map, x) ((x) * (map)->scaleMTOF)
+#define FTOM(map, x)        ((x) * (map)->scaleFTOM)
+#define MTOF(map, x)        ((x) * (map)->scaleMTOF)
 
 // Map boundry plane idents:
 #define BOXTOP              (0)
@@ -66,15 +75,11 @@
 
 static void rotate2D(float* x, float* y, float angle)
 {
-#define PI                  3.141592657
-
-    float               tmpx;
+    float tmpx;
 
     tmpx = (float) ((*x * cos(angle/180 * PI)) - (*y * sin(angle/180 * PI)));
     *y   = (float) ((*x * sin(angle/180 * PI)) + (*y * cos(angle/180 * PI)));
     *x = tmpx;
-
-#undef PI
 }
 
 /**
@@ -86,10 +91,7 @@ static void rotate2D(float* x, float* y, float angle)
  */
 static void calcViewScaleFactors(automap_t* map)
 {
-    float               dx, dy, dist, a, b;
-
-    if(!map)
-        return; // hmm...
+    float dx, dy, dist, a, b;
 
     dx = map->bounds[BOXRIGHT] - map->bounds[BOXLEFT];
     dy = map->bounds[BOXTOP]   - map->bounds[BOXBOTTOM];
@@ -107,24 +109,19 @@ static void calcViewScaleFactors(automap_t* map)
 }
 
 void Automap_SetWorldBounds(automap_t* map, float lowX, float hiX,
-                            float lowY, float hiY)
+    float lowY, float hiY)
 {
-    if(!map)
-        return;
-
+    assert(map);
     map->bounds[BOXLEFT]   = lowX;
     map->bounds[BOXTOP]    = hiY;
     map->bounds[BOXRIGHT]  = hiX;
     map->bounds[BOXBOTTOM] = lowY;
-
     map->updateViewScale = true;
 }
 
 void Automap_SetMinScale(automap_t* map, const float scale)
 {
-    if(!map)
-        return;
-
+    assert(map);
     map->minScale = MAX_OF(1, scale);
     map->updateViewScale = true;
 }
@@ -134,17 +131,13 @@ void Automap_SetMinScale(automap_t* map, const float scale)
  */
 void Automap_SetMaxLocationTargetDelta(automap_t* map, float max)
 {
-    if(!map)
-        return;
-
+    assert(map);
     map->maxViewPositionDelta = MINMAX_OF(0, max, 32768*2);
 }
 
 void Automap_Open(automap_t* map, int yes, int fast)
 {
-    if(!map)
-        return;
-
+    assert(map);
     if(yes == map->active)
         return; // No change.
 
@@ -263,6 +256,40 @@ void Automap_RunTic(automap_t* map, timespan_t ticLength)
     map->scaleMTOF = scale;
     map->scaleFTOM = 1.0f / map->scaleMTOF;
 
+    /**
+     * Calculate the map coordinates of the rotated view window.
+     */
+    {
+    float viewPoint[2], rads, viewWidth, viewHeight, border;
+    int scrwidth = Get(DD_WINDOW_WIDTH);
+    int scrheight = Get(DD_WINDOW_HEIGHT);
+
+    // Calculate border (viewport coordinate space).
+    border = 4 * (scrwidth >= scrheight? FIXYTOSCREENY(1) : FIXXTOSCREENX(1));
+
+    // Determine the dimensions of the view window in map coordinates.
+    viewWidth  = Automap_FrameToMap(map, map->window.width-(border*2));
+    viewHeight = Automap_FrameToMap(map, map->window.height-(border*2));
+    map->topLeft[0]     = map->bottomLeft[0] = -viewWidth/2;
+    map->topLeft[1]     = map->topRight[1]   =  viewHeight/2;
+    map->bottomRight[0] = map->topRight[0]   =  viewWidth/2;
+    map->bottomRight[1] = map->bottomLeft[1] = -viewHeight/2;
+
+    // Apply map rotation.
+    rads = (float)(map->angle / 360 * 2 * PI);
+    V2_Rotate(map->topLeft,     rads);
+    V2_Rotate(map->bottomRight, rads);
+    V2_Rotate(map->bottomLeft,  rads);
+    V2_Rotate(map->topRight,    rads);
+
+    // Translate to the viewpoint.
+    Automap_GetLocation(map, &viewPoint[0], &viewPoint[1]);
+    map->topLeft[0]     += viewPoint[0]; map->topLeft[1]     += viewPoint[1];
+    map->bottomRight[0] += viewPoint[0]; map->bottomRight[1] += viewPoint[1];
+    map->bottomLeft[0]  += viewPoint[0]; map->bottomLeft[1]  += viewPoint[1];
+    map->topRight[0]    += viewPoint[0]; map->topRight[1]    += viewPoint[1];
+    }
+
     width = Automap_FrameToMap(map, map->window.width);
     height = Automap_FrameToMap(map, map->window.height);
 
@@ -321,9 +348,7 @@ void Automap_RunTic(automap_t* map, timespan_t ticLength)
  */
 float Automap_MapToFrame(const automap_t* map, float val)
 {
-    if(!map)
-        return 1;
-
+    assert(map);
     return MTOF(map, val);
 }
 
@@ -332,18 +357,15 @@ float Automap_MapToFrame(const automap_t* map, float val)
  */
 float Automap_FrameToMap(const automap_t* map, float val)
 {
-    if(!map)
-        return 1;
-
+    assert(map);
     return FTOM(map, val);
 }
 
 void Automap_SetWindowTarget(automap_t* map, int x, int y, int w, int h)
 {
+    assert(map);
+    {
     automapwindow_t*    win;
-
-    if(!map)
-        return;
 
     // Are we in fullscreen mode?
     // If so, setting the window size is not allowed.
@@ -368,26 +390,26 @@ void Automap_SetWindowTarget(automap_t* map, int x, int y, int w, int h)
     win->targetY = (float) y;
     win->targetWidth = (float) w;
     win->targetHeight = (float) h;
+    }
 }
 
 void Automap_GetWindow(const automap_t* map, float* x, float* y, float* w,
-                       float* h)
+    float* h)
 {
-    if(!map)
-        return;
-
+    assert(map);
+    {
     if(x) *x = map->window.x;
     if(y) *y = map->window.y;
     if(w) *w = map->window.width;
     if(h) *h = map->window.height;
+    }
 }
 
 void Automap_SetLocationTarget(automap_t* map, float x, float y)
 {
-    boolean             instantChange = false;
-
-    if(!map)
-        return;
+    assert(map);
+    {
+    boolean instantChange = false;
 
     x = MINMAX_OF(-32768, x, 32768);
     y = MINMAX_OF(-32768, y, 32768);
@@ -398,7 +420,7 @@ void Automap_SetLocationTarget(automap_t* map, float x, float y)
 
     if(map->maxViewPositionDelta > 0)
     {
-        float               dx, dy, dist;
+        float dx, dy, dist;
 
         dx = map->viewX - x;
         dy = map->viewY - y;
@@ -424,22 +446,19 @@ void Automap_SetLocationTarget(automap_t* map, float x, float y)
         // Restart the timer.
         map->viewTimer = 0;
     }
+    }
 }
 
 void Automap_GetLocation(const automap_t* map, float* x, float* y)
 {
-    if(!map)
-        return;
-
+    assert(map);
     if(x) *x = map->viewX;
     if(y) *y = map->viewY;
 }
 
 void Automap_GetViewParallaxPosition(const automap_t* map, float* x, float* y)
 {
-    if(!map)
-        return;
-
+    assert(map);
     if(x) *x = map->viewPLX;
     if(y) *y = map->viewPLY;
 }
@@ -449,17 +468,13 @@ void Automap_GetViewParallaxPosition(const automap_t* map, float* x, float* y)
  */
 float Automap_GetViewAngle(const automap_t* map)
 {
-    if(!map)
-        return 0;
-
+    assert(map);
     return map->angle;
 }
 
 void Automap_SetViewScaleTarget(automap_t* map, float scale)
 {
-    if(!map)
-        return;
-
+    assert(map);
     if(map->updateViewScale)
         calcViewScaleFactors(map);
 
@@ -478,9 +493,7 @@ void Automap_SetViewScaleTarget(automap_t* map, float scale)
 
 void Automap_SetViewAngleTarget(automap_t* map, float angle)
 {
-    if(!map)
-        return;
-
+    assert(map);
     // Already at this target?
     if(angle == map->targetAngle)
         return;
@@ -494,9 +507,7 @@ void Automap_SetViewAngleTarget(automap_t* map, float angle)
 
 float Automap_MapToFrameMultiplier(const automap_t* map)
 {
-    if(!map)
-        return 1;
-
+    assert(map);
     return map->scaleMTOF;
 }
 
@@ -505,48 +516,67 @@ float Automap_MapToFrameMultiplier(const automap_t* map)
  */
 int Automap_IsActive(const automap_t* map)
 {
-    if(!map)
-        return false;
-
+    assert(map);
     return map->active;
 }
 
-void Automap_GetInViewAABB(const automap_t* map, float* lowX, float* hiX,
-                           float* lowY, float* hiY)
+void Automap_PVisibleAABounds(const automap_t* map, float* lowX, float* hiX,
+    float* lowY, float* hiY)
 {
-    if(!map)
-        return;
+    assert(map);
+    if(lowX) *lowX = map->viewAABB[BOXLEFT];
+    if(hiX)  *hiX  = map->viewAABB[BOXRIGHT];
+    if(lowY) *lowY = map->viewAABB[BOXBOTTOM];
+    if(hiY)  *hiY  = map->viewAABB[BOXTOP];
+}
 
-   if(lowX) *lowX = map->viewAABB[BOXLEFT];
-   if(hiX)  *hiX  = map->viewAABB[BOXRIGHT];
-   if(lowY) *lowY = map->viewAABB[BOXBOTTOM];
-   if(hiY)  *hiY  = map->viewAABB[BOXTOP];
+void Automap_VisibleBounds(const automap_t* map, float topLeft[2],
+    float bottomRight[2], float topRight[2], float bottomLeft[2])
+{
+    assert(map);
+    if(topLeft)
+    {
+        topLeft[0] = map->topLeft[0];
+        topLeft[1] = map->topLeft[1];
+    }
+    if(bottomRight)
+    {
+        bottomRight[0] = map->bottomRight[0];
+        bottomRight[1] = map->bottomRight[1];
+    }
+    if(topRight)
+    {
+        topRight[0] = map->topRight[0];
+        topRight[1] = map->topRight[1];
+    }
+    if(bottomLeft)
+    {
+        bottomLeft[0] = map->bottomLeft[0];
+        bottomLeft[1] = map->bottomLeft[1];
+    }
 }
 
 void Automap_ClearMarks(automap_t* map)
 {
-    uint                i;
-
-    if(!map)
-        return;
-
+    assert(map);
+    {
+    uint i;
     for(i = 0; i < MAX_MAP_POINTS; ++i)
         map->markpointsUsed[i] = false;
     map->markpointnum = 0;
+    }
 }
 
 unsigned int Automap_GetNumMarks(const automap_t* map)
 {
-    unsigned int        i, numUsed = 0;
-
-    if(!map)
-        return numUsed;
-
+    assert(map);
+    {
+    unsigned int i, numUsed = 0;
     for(i = 0; i < MAX_MAP_POINTS; ++i)
         if(map->markpointsUsed[i])
             numUsed++;
-
     return numUsed;
+    }
 }
 
 /**
@@ -554,11 +584,10 @@ unsigned int Automap_GetNumMarks(const automap_t* map)
  */
 int Automap_AddMark(automap_t* map, float x, float y, float z)
 {
-    unsigned int        num;
-    automappoint_t*     point;
-
-    if(!map)
-        return -1;
+    assert(map);
+    {
+    unsigned int num;
+    automappoint_t* point;
 
     num = map->markpointnum;
     point = &map->markpoints[num];
@@ -569,14 +598,13 @@ int Automap_AddMark(automap_t* map, float x, float y, float z)
     map->markpointnum = (map->markpointnum + 1) % MAX_MAP_POINTS;
 
     return num;
+    }
 }
 
 int Automap_GetMark(const automap_t* map, unsigned int mark, float* x,
-                    float* y, float* z)
+    float* y, float* z)
 {
-    if(!map)
-        return false;
-
+    assert(map);
     if(!x && !y && !z)
         return false;
 
@@ -599,9 +627,7 @@ int Automap_GetMark(const automap_t* map, unsigned int mark, float* x,
  */
 void Automap_ToggleZoomMax(automap_t* map)
 {
-    if(!map)
-        return;
-
+    assert(map);
     if(map->updateViewScale)
         calcViewScaleFactors(map);
 
@@ -618,25 +644,19 @@ void Automap_ToggleZoomMax(automap_t* map)
  */
 void Automap_ToggleFollow(automap_t* map)
 {
-    if(!map)
-        return;
-
+    assert(map);
     map->panMode = !map->panMode;
 }
 
 void Automap_SetViewRotate(automap_t* map, int on)
 {
-    if(!map)
-        return;
-
+    assert(map);
     map->rotate = on;
 }
 
 void Automap_SetWindowFullScreenMode(automap_t* map, int value)
 {
-    if(!map)
-        return;
-
+    assert(map);
     if(value < 0 || value > 2)
     {
 #if _DEBUG
@@ -653,9 +673,7 @@ Con_Error("Automap::SetWindowFullScreenMode: Unknown value %i.", value);
 
 int Automap_IsMapWindowInFullScreenMode(const automap_t* map)
 {
-    if(!map)
-        return false;
-
+    assert(map);
     return map->fullScreenMode;
 }
 
@@ -667,8 +685,7 @@ int Automap_IsMapWindowInFullScreenMode(const automap_t* map)
  */
 void Automap_SetOpacityTarget(automap_t* map, float alpha)
 {
-    if(!map)
-        return;
+    assert(map);
     alpha = MINMAX_OF(0, alpha, 1);
 
     // Already at this target?
@@ -687,17 +704,13 @@ void Automap_SetOpacityTarget(automap_t* map, float alpha)
  */
 float Automap_GetOpacity(const automap_t* map)
 {
-    if(!map)
-        return 0;
-
+    assert(map);
     return map->alpha;
 }
 
 int Automap_GetFlags(const automap_t* map)
 {
-    if(!map)
-        return 0;
-
+    assert(map);
     return map->flags;
 }
 
@@ -706,19 +719,16 @@ int Automap_GetFlags(const automap_t* map)
  */
 void Automap_SetFlags(automap_t* map, int flags)
 {
-    if(!map)
-        return;
-
+    assert(map);
     map->flags = flags;
 }
 
 void Automap_UpdateWindow(automap_t* map, float newX, float newY,
-                          float newWidth, float newHeight)
+    float newWidth, float newHeight)
 {
-    automapwindow_t*   win;
-
-    if(!map)
-        return;
+    assert(map);
+    {
+    automapwindow_t* win;
 
     win = &map->window;
 
@@ -750,5 +760,6 @@ void Automap_UpdateWindow(automap_t* map, float newX, float newY,
         // Now the screen dimensions have changed we have to update scaling
         // factors accordingly.
         map->updateViewScale = true;
+    }
     }
 }

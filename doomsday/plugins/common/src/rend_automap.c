@@ -60,7 +60,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define AM_LINE_WIDTH       (1.25f)
+#define AM_LINE_WIDTH       (1/1.6f)
 
 // TYPES -------------------------------------------------------------------
 
@@ -729,7 +729,7 @@ static void renderWalls(const automap_t* map, const automapcfg_t* cfg,
     {
         float               aabb[4];
 
-        Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
+        Automap_PVisibleAABounds(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
                               &aabb[BOXBOTTOM], &aabb[BOXTOP]);
         P_SubsectorsBoxIterator(aabb, NULL, drawSegsOfSubsector, &params);
     }
@@ -877,7 +877,7 @@ static void renderPolyObjs(const automap_t* map, const automapcfg_t* cfg,
     params.objType = MOL_LINEDEF;
 
     // Next, draw any polyobjects in view.
-    Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
+    Automap_PVisibleAABounds(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
                           &aabb[BOXBOTTOM], &aabb[BOXTOP]);
     P_PolyobjsBoxIterator(aabb, drawSegsOfPolyobject, &params);
 }
@@ -926,7 +926,7 @@ static void renderXGLinedefs(const automap_t* map, const automapcfg_t* cfg,
     params.addToLists = false;
     params.objType = -1;
 
-    Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
+    Automap_PVisibleAABounds(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
                           &aabb[BOXBOTTOM], &aabb[BOXTOP]);
     P_LinesBoxIterator(aabb, renderXGLinedef, &params);
 #endif
@@ -1109,66 +1109,25 @@ static void positionPointInView(const automap_t* map, float point[2],
 /**
  * Draws all the points marked by the player.
  */
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
 static void drawMarks(const automap_t* map)
 {
-#if !__JDOOM64__
-    float bottomLeft[2], topLeft[2], bottomRight[2], topRight[2], border;
-    int scrwidth, scrheight, viewWidth, viewHeight;
-    unsigned int i, numMarks;
-    float viewPoint[2], rads;
+    float bottomLeft[2], topLeft[2], bottomRight[2], topRight[2];
+    float viewPoint[2], angle, alpha, stom;
+    unsigned int i, numMarks = Automap_GetNumMarks(map);
+    int scrwidth, scrheight;
 
-    numMarks = Automap_GetNumMarks(map);
     if(!numMarks)
         return;
 
-    /**
-     * Calculate the map coordinates of the rotated view window.
-     */
-
-    // Calculate border (viewport coordinate space).
     R_GetViewPort(DISPLAYPLAYER, NULL, NULL, &scrwidth, &scrheight);
-    border = (scrwidth >= scrheight? FIXYTOSCREENY(4) : FIXXTOSCREENX(4));
+    stom = Automap_FrameToMap(map, (scrwidth >= scrheight? FIXYTOSCREENY(1) : FIXXTOSCREENX(1)));
 
-    // Determine the dimensions of the view window in map coordinates.
-    viewWidth  = Automap_FrameToMap(map, Get(DD_VIEWWINDOW_WIDTH) -border*2);
-    viewHeight = Automap_FrameToMap(map, Get(DD_VIEWWINDOW_HEIGHT)-border*2);
-    topLeft[0]     = bottomLeft[0] = -viewWidth/2;
-    topLeft[1]     = topRight[1]   =  viewHeight/2;
-    bottomRight[0] = topRight[0]   =  viewWidth/2;
-    bottomRight[1] = bottomLeft[1] = -viewHeight/2;
-
-    // Apply map rotation.
-    rads = map->angle / 360 * 2 * PI;
-    V2_Rotate(topLeft,     rads);
-    V2_Rotate(bottomRight, rads);
-    V2_Rotate(bottomLeft,  rads);
-    V2_Rotate(topRight,    rads);
-
-    // Translate to the viewpoint.
     Automap_GetLocation(map, &viewPoint[0], &viewPoint[1]);
-    topLeft[0]     += viewPoint[0]; topLeft[1]     += viewPoint[1];
-    bottomRight[0] += viewPoint[0]; bottomRight[1] += viewPoint[1];
-    bottomLeft[0]  += viewPoint[0]; bottomLeft[1]  += viewPoint[1];
-    topRight[0]    += viewPoint[0]; topRight[1]    += viewPoint[1];
+    Automap_VisibleBounds(map, topLeft, bottomRight, topRight, bottomLeft);
 
-/*#if _DEBUG
-{ // Draw the rectangle described by the viewwindow.
-float aabb[4];
-DGL_Disable(DGL_TEXTURING);
-DGL_Color4f(1, 1, 1, 1);
-DGL_Begin(DGL_LINES);
-    DGL_Vertex2f(topLeft[0], topLeft[1]);
-    DGL_Vertex2f(topRight[0], topRight[1]);
-    DGL_Vertex2f(topRight[0], topRight[1]);
-    DGL_Vertex2f(bottomRight[0], bottomRight[1]);
-    DGL_Vertex2f(bottomRight[0], bottomRight[1]);
-    DGL_Vertex2f(bottomLeft[0], bottomLeft[1]);
-    DGL_Vertex2f(bottomLeft[0], bottomLeft[1]);
-    DGL_Vertex2f(topLeft[0], topLeft[1]);
-DGL_End();
-DGL_Enable(DGL_TEXTURING);
-}
-#endif*/
+    angle = Automap_GetViewAngle(map);
+    alpha = Automap_GetOpacity(map);
 
     for(i = 0; i < numMarks; ++i)
     {
@@ -1179,27 +1138,19 @@ DGL_Enable(DGL_TEXTURING);
             continue;
 
         patch = &markerPatches[i];
-        if(scrwidth >= scrheight)
-        {
-            w = Automap_FrameToMap(map, FIXYTOSCREENY(patch->width));
-            h = Automap_FrameToMap(map, FIXYTOSCREENY(patch->height));
-        }
-        else
-        {
-            w = Automap_FrameToMap(map, FIXXTOSCREENX(patch->width));
-            h = Automap_FrameToMap(map, FIXXTOSCREENX(patch->height));
-        }
+        w = patch->width  * stom;
+        h = patch->height * stom;
 
         positionPointInView(map, point, topLeft, topRight, bottomRight, bottomLeft, viewPoint);
 
         DGL_SetPatch(patch->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_Color4f(1, 1, 1, Automap_GetOpacity(map));
 
-        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
         DGL_Translatef(point[0], point[1], 0);
-        DGL_Rotatef(Automap_GetViewAngle(map), 0, 0, 1);
+        DGL_Rotatef(angle, 0, 0, 1);
 
+        DGL_Color4f(1, 1, 1, alpha);
         DGL_Begin(DGL_QUADS);
             DGL_TexCoord2f(0, 0, 0);
             DGL_Vertex2f(-(w / 2), h / 2);
@@ -1214,11 +1165,11 @@ DGL_Enable(DGL_TEXTURING);
             DGL_Vertex2f(-(w / 2), -(h / 2));
         DGL_End();
 
-        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PopMatrix();
     }
-#endif
 }
+#endif
 
 /**
  * Sets up the state for automap drawing.
@@ -1229,11 +1180,7 @@ static void setupGLStateForMap(const automap_t* map,
     float wx, wy, ww, wh, angle, plx, ply;
     rautomap_data_t* rmap = &rautomaps[AM_MapForPlayer(player)-1];
 
-    wx = Get(DD_VIEWWINDOW_X);
-    wy = Get(DD_VIEWWINDOW_Y);
-    ww = Get(DD_VIEWWINDOW_WIDTH);
-    wh = Get(DD_VIEWWINDOW_HEIGHT);
-    //Automap_GetWindow(map, &wx, &wy, &ww, &wh);
+    Automap_GetWindow(map, &wx, &wy, &ww, &wh);
     Automap_GetViewParallaxPosition(map, &plx, &ply);
     angle = Automap_GetViewAngle(map);
 
@@ -1503,7 +1450,7 @@ static void renderVertexes(float alpha)
 static void compileObjectLists(rautomap_data_t* rmap, const automap_t* map,
                                const automapcfg_t* cfg, int player)
 {
-    uint                i;
+    uint i;
 
     deleteMapLists(rmap);
 
@@ -1522,7 +1469,7 @@ static void compileObjectLists(rautomap_data_t* rmap, const automap_t* map,
 
 void Rend_AutomapRebuild(int player)
 {
-    automapid_t         map;
+    automapid_t map;
 
     if((map = AM_MapForPlayer(player)))
     {
@@ -1557,11 +1504,7 @@ void Rend_Automap(int player, const automap_t* map)
     mcfg = AM_GetMapConfig(id);
     rmap = &rautomaps[id-1];
 
-    wx = Get(DD_VIEWWINDOW_X);
-    wy = Get(DD_VIEWWINDOW_Y);
-    ww = Get(DD_VIEWWINDOW_WIDTH);
-    wh = Get(DD_VIEWWINDOW_HEIGHT);
-    //Automap_GetWindow(map, &wx, &wy, &ww, &wh);
+    Automap_GetWindow(map, &wx, &wy, &ww, &wh);
     Automap_GetLocation(map, &vx, &vy);
     mtof = Automap_MapToFrameMultiplier(map);
     angle = Automap_GetViewAngle(map);
@@ -1585,7 +1528,31 @@ void Rend_Automap(int player, const automap_t* map)
     DGL_Translatef(-vx, -vy, 0);
 
     oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
-    DGL_SetFloat(DGL_LINE_WIDTH, AM_LINE_WIDTH);
+    {
+    int winWidth = Get(DD_WINDOW_WIDTH);
+    int winHeight = Get(DD_WINDOW_HEIGHT);
+    DGL_SetFloat(DGL_LINE_WIDTH, (winWidth>= winHeight? winHeight : winWidth) * (AM_LINE_WIDTH/SCREENWIDTH));
+    }
+
+/*#if _DEBUG
+{ // Draw the rectangle described by the visible bounds.
+float topLeft[2], bottomRight[2], topRight[2], bottomLeft[2];
+Automap_VisibleBounds(map, topLeft, bottomRight, topRight, bottomLeft);
+DGL_Disable(DGL_TEXTURING);
+DGL_Color4f(1, 1, 1, 1);
+DGL_Begin(DGL_LINES);
+    DGL_Vertex2f(topLeft[0], topLeft[1]);
+    DGL_Vertex2f(topRight[0], topRight[1]);
+    DGL_Vertex2f(topRight[0], topRight[1]);
+    DGL_Vertex2f(bottomRight[0], bottomRight[1]);
+    DGL_Vertex2f(bottomRight[0], bottomRight[1]);
+    DGL_Vertex2f(bottomLeft[0], bottomLeft[1]);
+    DGL_Vertex2f(bottomLeft[0], bottomLeft[1]);
+    DGL_Vertex2f(topLeft[0], topLeft[1]);
+DGL_End();
+DGL_Enable(DGL_TEXTURING);
+}
+#endif*/
 
     if(amMaskTexture)
     {
@@ -1644,7 +1611,7 @@ void Rend_Automap(int player, const automap_t* map)
         AM_GetMapColor(params.rgb, cfg.automapMobj, THINGCOLORS, !W_IsFromIWAD(W_GetNumForName("PLAYPAL")));
         params.alpha = MINMAX_OF(0.f, cfg.automapLineAlpha * Automap_GetOpacity(map), 1.f);
 
-        Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT], &aabb[BOXBOTTOM], &aabb[BOXTOP]);
+        Automap_PVisibleAABounds(map, &aabb[BOXLEFT], &aabb[BOXRIGHT], &aabb[BOXBOTTOM], &aabb[BOXTOP]);
         VALIDCOUNT++;
         P_MobjsBoxIterator(aabb, renderThing, &params);
     }
@@ -1661,8 +1628,10 @@ void Rend_Automap(int player, const automap_t* map)
     // Draw glows.
     renderWalls(map, mcfg, player, -1, false);
 
+#if __JDOOM__ || __JHERETIC__ || __JHEXEN__
     // Draw any marked points.
     drawMarks(map);
+#endif
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PopMatrix();

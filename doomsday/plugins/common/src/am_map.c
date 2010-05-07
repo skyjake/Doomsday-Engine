@@ -592,7 +592,7 @@ void AM_Open(automapid_t id, boolean yes, boolean fast)
         if(!players[mcfg->followPlayer].plr->inGame)
         {   // Set viewer target to the center of the map.
             float               aabb[4];
-            Automap_GetInViewAABB(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
+            Automap_PVisibleAABounds(map, &aabb[BOXLEFT], &aabb[BOXRIGHT],
                                   &aabb[BOXBOTTOM], &aabb[BOXTOP]);
             Automap_SetLocationTarget(map, (aabb[BOXRIGHT] - aabb[BOXLEFT]) / 2,
                                  (aabb[BOXTOP] - aabb[BOXBOTTOM]) / 2);
@@ -1579,7 +1579,6 @@ static void mapTicker(automap_t* map, timespan_t ticLength)
     automapcfg_t* mcfg = &automapCFGs[playerNum];
     mobj_t* mo = players[mcfg->followPlayer].plr->mo;
     float panX[2], panY[2], zoomVel, zoomSpeed;
-    float newX, newY, newWidth, newHeight, scrwidth, scrheight;
 
     // Check the state of the controls. Done here so that offsets don't accumulate
     // unnecessarily, as they would, if left unread.
@@ -1600,9 +1599,6 @@ static void mapTicker(automap_t* map, timespan_t ticLength)
     if(!map->active)
         return;
 
-    scrwidth = Get(DD_VIEWWINDOW_WIDTH);
-    scrheight = Get(DD_VIEWWINDOW_HEIGHT);
-
     // Map view zoom contol.
     zoomSpeed = 1 + (2 * mcfg->zoomSpeed) * ticLength * TICRATE;
     if(players[playerNum].brain.speed)
@@ -1621,9 +1617,12 @@ static void mapTicker(automap_t* map, timespan_t ticLength)
     // Map viewer location paning control.
     if(map->panMode || !players[mcfg->followPlayer].plr->inGame)
     {
-        float xy[2] = { 0, 0 }; // deltas
+        float panUnitsPerTic, xy[2] = { 0, 0 }; // deltas
+        int scrwidth, scrheight;
+
         // DOOM.EXE pans the automap at 140 fixed pixels per second.
-        float panUnitsPerTic = (Automap_FrameToMap(map, FIXXTOSCREENX(140)) / TICSPERSEC) * (2 * mcfg->panSpeed) * TICRATE;
+        R_GetViewPort(playerNum, NULL, NULL, &scrwidth, &scrheight); 
+        panUnitsPerTic = (Automap_FrameToMap(map, scrwidth >= scrheight? FIXYTOSCREENY(140):FIXXTOSCREENX(140)) / TICSPERSEC) * (2 * mcfg->panSpeed) * TICRATE;
 
         if(panUnitsPerTic < 8)
             panUnitsPerTic = 8;
@@ -1652,9 +1651,8 @@ static void mapTicker(automap_t* map, timespan_t ticLength)
 
     // Determine whether the available space has changed and thus whether
     // the position and/or size of the automap must therefore change too.
-    R_GetViewWindow(&newX, &newY, &newWidth, &newHeight);
-    Automap_UpdateWindow(map, FIXXTOSCREENX(newX), FIXYTOSCREENY(newY),
-                         FIXXTOSCREENX(newWidth), FIXYTOSCREENY(newHeight));
+    Automap_UpdateWindow(map, Get(DD_VIEWWINDOW_X), Get(DD_VIEWWINDOW_Y),
+                         Get(DD_VIEWWINDOW_WIDTH), Get(DD_VIEWWINDOW_HEIGHT));
 
     Automap_RunTic(map, ticLength);
 }

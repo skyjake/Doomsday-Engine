@@ -104,8 +104,11 @@ typedef struct automap_s {
     float           targetAngle; // Should be at.
     float           oldAngle; // Previous.
 
-// View frame coordinates on map.
-     float          viewAABB[4]; // Clip bbox coordinates on map.
+// Axis-aligned bounding box of the potentially visible area (extended to be rotation-aware) in map coordinates.
+    float           viewAABB[4];
+
+// Bounding box of the actual visible area in map coordinates.
+    float           topLeft[2], bottomRight[2], topRight[2], bottomLeft[2];
 
 // Misc
     float           maxViewPositionDelta;
@@ -129,33 +132,36 @@ int             Automap_IsActive(const automap_t* map);
 
 int             Automap_AddMark(automap_t* map, float x, float y, float z);
 int             Automap_GetMark(const automap_t* map, unsigned int mark, float* x, float* y, float* z);
-void            Automap_ClearMarks(automap_t* map);
 unsigned int    Automap_GetNumMarks(const automap_t* map);
+void            Automap_ClearMarks(automap_t* map);
 
-void            Automap_SetFlags(automap_t* map, int flags);
 int             Automap_GetFlags(const automap_t* map);
+void            Automap_SetFlags(automap_t* map, int flags);
 
 void            Automap_SetWorldBounds(automap_t* map, float lowX, float hiX, float lowY, float hiY);
 void            Automap_SetMinScale(automap_t* map, const float scale);
 
-void            Automap_SetWindowTarget(automap_t* map, int x, int y, int w, int h);
 void            Automap_GetWindow(const automap_t* map, float* x, float* y, float* w, float* h);
+void            Automap_SetWindowTarget(automap_t* map, int x, int y, int w, int h);
 
+void            Automap_GetLocation(const automap_t* map, float* x, float* y);
 void            Automap_SetMaxLocationTargetDelta(automap_t* map, float max);
 void            Automap_SetLocationTarget(automap_t* map, float x, float y);
-void            Automap_GetLocation(const automap_t* map, float* x, float* y);
 
+float           Automap_GetViewAngle(const automap_t* map);
 void            Automap_SetViewScaleTarget(automap_t* map, float scale);
 void            Automap_SetViewAngleTarget(automap_t* map, float angle);
-float           Automap_GetViewAngle(const automap_t* map);
 
-void            Automap_SetOpacityTarget(automap_t* map, float alpha);
 float           Automap_GetOpacity(const automap_t* map);
+void            Automap_SetOpacityTarget(automap_t* map, float alpha);
 
 // Conversion helpers:
 float           Automap_FrameToMap(const automap_t* map, float val);
 float           Automap_MapToFrame(const automap_t* map, float val);
 float           Automap_MapToFrameMultiplier(const automap_t* map);
+
+void            Automap_VisibleBounds(const automap_t* map, float topLeft[2], float bottomRight[2], float topRight[2], float bottomLeft[2]);
+void            Automap_PVisibleAABounds(const automap_t* map, float* lowX, float* hiX, float* lowY, float* hiY);
 
 /// \todo
 void            Automap_SetWindowFullScreenMode(automap_t* map, int value);
@@ -163,7 +169,6 @@ int             Automap_IsMapWindowInFullScreenMode(const automap_t* map);
 void            Automap_SetViewRotate(automap_t* map, int offOnToggle);
 void            Automap_ToggleFollow(automap_t* map);
 void            Automap_ToggleZoomMax(automap_t* map);
-void            Automap_GetInViewAABB(const automap_t* map, float* lowX, float* hiX, float* lowY, float* hiY);
 void            Automap_GetViewParallaxPosition(const automap_t* map, float* x, float* y);
 
 #ifdef __cplusplus
