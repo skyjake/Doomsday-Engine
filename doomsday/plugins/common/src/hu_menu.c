@@ -1458,50 +1458,88 @@ float Hu_MenuAlpha(void)
 /**
  * Updates on Game Tick.
  */
-void Hu_MenuTicker(timespan_t time)
+void Hu_MenuTicker(timespan_t ticLength)
 {
-#define MENUALPHA_FADE_STEP (.07f)
-
-    float               diff;
-    static trigger_t    fixed = { 1 / 35.0 };
-
-    if(!M_RunTrigger(&fixed, time))
-        return;
-
-    typeInTime++;
+    static trigger_t fixed = { 1 / 35.0 };
 
     // Move towards the target alpha level for the entire menu.
-    diff = menuTargetAlpha - menuAlpha;
-    if(fabs(diff) > MENUALPHA_FADE_STEP)
+    if(menuAlpha != menuTargetAlpha)
     {
-        menuAlpha += MENUALPHA_FADE_STEP * (diff > 0? 1 : -1);
-    }
-    else
-    {
-        menuAlpha = menuTargetAlpha;
+#define MENUALPHA_FADE_STEP (.07)
+
+        float diff = menuTargetAlpha - menuAlpha;
+        if(fabs(diff) > MENUALPHA_FADE_STEP)
+        {
+            menuAlpha += (float)(MENUALPHA_FADE_STEP * ticLength * TICRATE * (diff > 0? 1 : -1));
+        }
+        else
+        {
+            menuAlpha = menuTargetAlpha;
+        }
+
+#undef MENUALPHA_FADE_STEP
     }
 
     if(menuActive || menuAlpha > 0)
     {
-        float               rewind = 20;
-
         // Fade in/out the widget background filter
         if(widgetEdit)
         {
             if(menu_calpha < 0.5f)
-                menu_calpha += .1f;
+                menu_calpha += (float)(.1 * ticLength * TICRATE);
             if(menu_calpha > 0.5f)
                 menu_calpha = 0.5f;
         }
         else
         {
             if(menu_calpha > 0)
-                menu_calpha -= .1f;
+                menu_calpha -= (float)(.1 * ticLength * TICRATE);
             if(menu_calpha < 0)
                 menu_calpha = 0;
         }
 
-        // Animate the cursor patches
+        menu_color += (int)(cfg.flashSpeed * ticLength * TICRATE);
+        if(menu_color >= 100)
+            menu_color -= 100;
+
+        if(cfg.turningSkull)
+        {
+#define SKULL_REWIND_SPEED 20
+
+            if(itemOn >= 0 && itemOn < currentMenu->itemCount &&
+               currentMenu->items[itemOn].type == ITT_LRFUNC)
+            {
+                skull_angle += (float)(5 * ticLength * TICRATE);
+            }
+            else if(skull_angle != 0)
+            {
+                float rewind = (float)(SKULL_REWIND_SPEED * ticLength * TICRATE);
+                if(skull_angle <= rewind || skull_angle >= 360 - rewind)
+                    skull_angle = 0;
+                else if(skull_angle < 180)
+                    skull_angle -= rewind;
+                else
+                    skull_angle += rewind;
+            }
+
+            if(skull_angle >= 360)
+                skull_angle -= 360;
+
+#undef SKULL_REWIND_SPEED
+        }
+    }
+
+    // The following is restricted to fixed 35 Hz ticks.
+    if(!M_RunTrigger(&fixed, ticLength))
+        return; // It's too soon.
+
+    typeInTime++;
+
+    if(menuActive || menuAlpha > 0)
+    {
+        menuTime++;
+
+        // Animate the cursor patches.
         if(--skullAnimCounter <= 0)
         {
             whichSkull++;
@@ -1510,36 +1548,11 @@ void Hu_MenuTicker(timespan_t time)
                 whichSkull = 0;
         }
 
-        menuTime++;
-
-        menu_color += cfg.flashSpeed;
-        if(menu_color >= 100)
-            menu_color -= 100;
-
-        if(cfg.turningSkull &&
-           itemOn >= 0 && itemOn < currentMenu->itemCount &&
-           currentMenu->items[itemOn].type == ITT_LRFUNC)
-            skull_angle += 5;
-        else if(skull_angle != 0)
-        {
-            if(skull_angle <= rewind || skull_angle >= 360 - rewind)
-                skull_angle = 0;
-            else if(skull_angle < 180)
-                skull_angle -= rewind;
-            else
-                skull_angle += rewind;
-        }
-        if(skull_angle >= 360)
-            skull_angle -= 360;
-
-        // Used for jHeretic's rotating skulls
+        // Used for Heretic's rotating skulls.
         frame = (menuTime / 3) % 18;
-    }
 
-    if(menuActive)
         MN_TickerEx();
-
-#undef MENUALPHA_FADE_STEP
+    }
 }
 
 void Hu_MenuPageString(char* page, const menu_t* menu)

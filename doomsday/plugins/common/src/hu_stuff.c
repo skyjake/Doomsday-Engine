@@ -1393,17 +1393,13 @@ void Hu_Ticker(void)
 /**
  * Updates on Game Tick.
  */
-void Hu_FogEffectTicker(timespan_t time)
+void Hu_FogEffectTicker(timespan_t ticLength)
 {
 #define fog                 (&fogEffectData)
 #define FOGALPHA_FADE_STEP (.07f)
 
-    static const float MENUFOGSPEED[2] = {.05f, -.085f};
-    static trigger_t fixed = { 1 / 35.0 };
+    static const float MENUFOGSPEED[2] = {.03f, -.085f};
     int i;
-
-    if(!M_RunTrigger(&fixed, time))
-        return;
 
     if(cfg.hudFog == 0)
         return;
@@ -1415,7 +1411,7 @@ void Hu_FogEffectTicker(timespan_t time)
 
         if(fabs(diff) > FOGALPHA_FADE_STEP)
         {
-            fog->alpha += FOGALPHA_FADE_STEP * (diff > 0? 1 : -1);
+            fog->alpha += FOGALPHA_FADE_STEP * ticLength * TICRATE * (diff > 0? 1 : -1);
         }
         else
         {
@@ -1430,15 +1426,15 @@ void Hu_FogEffectTicker(timespan_t time)
     {
         if(cfg.hudFog == 2)
         {
-            fog->layers[i].texAngle += MENUFOGSPEED[i] / 4;
-            fog->layers[i].posAngle -= MENUFOGSPEED[!i];
+            fog->layers[i].texAngle += ((MENUFOGSPEED[i]/4) * ticLength * TICRATE);
+            fog->layers[i].posAngle -= (MENUFOGSPEED[!i]    * ticLength * TICRATE);
             fog->layers[i].texOffset[VX] = 160 + 120 * cos(fog->layers[i].posAngle / 180 * PI);
             fog->layers[i].texOffset[VY] = 100 + 100 * sin(fog->layers[i].posAngle / 180 * PI);
         }
         else
         {
-            fog->layers[i].texAngle += MENUFOGSPEED[i] / 4;
-            fog->layers[i].posAngle -= MENUFOGSPEED[!i] * 1.5f;
+            fog->layers[i].texAngle += ((MENUFOGSPEED[i]/4)     * ticLength * TICRATE);
+            fog->layers[i].posAngle -= ((MENUFOGSPEED[!i]*1.5f) * ticLength * TICRATE);
             fog->layers[i].texOffset[VX] = 320 + 320 * cos(fog->layers[i].posAngle / 180 * PI);
             fog->layers[i].texOffset[VY] = 240 + 240 * sin(fog->layers[i].posAngle / 180 * PI);
         }
