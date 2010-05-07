@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -993,6 +993,7 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
     boolean             noMove = (uFlags & DDSW_NOMOVE);
     boolean             noSize = (uFlags & DDSW_NOSIZE);
     boolean             inControlPanel = false;
+    boolean             noFrame;
 
     if(uFlags & DDSW_NOCHANGES)
         return true; // Nothing to do.
@@ -1005,6 +1006,7 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
     height = window->height;
     bpp = window->normal.bpp;
     flags = window->flags;
+    noFrame = ArgCheck("-noframe");
     // Force update on init?
     if(!window->inited && window->type == WT_NORMAL)
     {
@@ -1104,8 +1106,8 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
     {
         if(flags & DDWF_CENTER)
         {   // Auto centering mode.
-            x = (GetSystemMetrics(SM_CXSCREEN) - width) / 2;
-            y = (GetSystemMetrics(SM_CYSCREEN) - height) / 2;
+            x = (GetSystemMetrics(SM_CXVIRTUALSCREEN) - width) / 2;
+            y = (GetSystemMetrics(SM_CYVIRTUALSCREEN) - height) / 2;
         }
         else if(x != newX || y != newY)
         {
@@ -1114,11 +1116,11 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
         }
 
         // Are we in range here?
-        if(width > GetSystemMetrics(SM_CXSCREEN))
-            width = GetSystemMetrics(SM_CXSCREEN);
+        if(width > GetSystemMetrics(SM_CXVIRTUALSCREEN))
+            width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
 
-        if(height > GetSystemMetrics(SM_CYSCREEN))
-            height = GetSystemMetrics(SM_CYSCREEN);
+        if(height > GetSystemMetrics(SM_CYVIRTUALSCREEN))
+            height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
     }
 
     // Change visibility?
@@ -1149,7 +1151,7 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
     {   // We need to request changes to the window style.
         LONG    style;
 
-        if(flags & DDWF_FULLSCREEN)
+        if((flags & DDWF_FULLSCREEN) || noFrame)
             style = FULLSCREENSTYLE;
         else
             style = WINDOWEDSTYLE;
@@ -1157,7 +1159,7 @@ static boolean setDDWindow(ddwindow_t *window, int newX, int newY,
         SetWindowLong(hWnd, GWL_STYLE, style);
     }
 
-    if(!(flags & DDWF_FULLSCREEN))
+    if(!(flags & DDWF_FULLSCREEN) && !noFrame)
     {   // We need to have a large enough client area.
         RECT        rect;
 
