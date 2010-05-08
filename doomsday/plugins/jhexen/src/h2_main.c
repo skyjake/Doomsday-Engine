@@ -245,6 +245,7 @@ void G_PreInit(void)
     cfg.statusbarScale = 1;
     cfg.dclickUse = false;
     cfg.screenBlocks = cfg.setBlocks = 10;
+    cfg.fiNoStretch = false;
     cfg.hudShown[HUD_MANA] = true;
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_CURRENTITEM] = true;

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,6 +46,8 @@ typedef enum infinemode_e {
 extern boolean fiActive;
 extern boolean fiCmdExecuted; // Set to true after first command.
 extern boolean briefDisabled;
+
+void            FI_Register(void);
 
 void            FI_Reset(void);
 void            FI_Start(char* finalescript, infinemode_t mode);

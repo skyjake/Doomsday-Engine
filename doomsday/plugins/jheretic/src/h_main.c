@@ -261,6 +261,7 @@ void G_PreInit(void)
     cfg.povLookAround = true;
     cfg.statusbarScale = 1;
     cfg.screenBlocks = cfg.setBlocks = 10;
+    cfg.fiNoStretch = false;
     cfg.echoMsg = true;
     cfg.lookSpeed = 3;
     cfg.turnSpeed = 1;

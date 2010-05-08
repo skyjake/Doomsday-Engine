@@ -202,6 +202,9 @@ desc = 1=Disable exit buttons during map rotation.
 [server-game-cheat]
 desc = 1=Allow cheating in multiplayer games (god, noclip, give).
 
+[finale-nostretch]
+desc = If the window dimension aspect ratio is not equal to but close to that of the original game, fixed-aspect finale animations will be stretched 1= disabled.
+
 [menu-flash-r]
 desc = Menu selection flash color, red component.
 

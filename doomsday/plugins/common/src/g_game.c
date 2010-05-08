@@ -479,6 +479,7 @@ void G_CommonPreInit(void)
     D_NetConsoleRegistration(); // For network.
     G_Register();               // Read-only game status cvars (for playsim).
     G_ControlRegister();        // For controls/input.
+    FI_Register();
     AM_Register();              // For the automap.
     Hu_MenuRegister();          // For the menu.
     Hu_LogRegister();           // For the player message logs.

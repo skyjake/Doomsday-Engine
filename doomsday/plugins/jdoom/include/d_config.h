@@ -174,6 +174,8 @@ typedef struct jdoom_config_s {
     byte            automapPanResetOnOpen;
     float           automapOpenSeconds;
 
+    byte            fiNoStretch; // Do not stretch finales to fill the screen at near 4:3 aspect ratios.
+
     int             msgCount;
     float           msgScale;
     float           msgUptime;
