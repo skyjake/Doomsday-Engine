@@ -258,7 +258,7 @@ void G_Display(int layer)
 
 void G_Display2(void)
 {
-    if(fiActive && fiCmdExecuted || G_GetGameState() == GS_INTERMISSION)
+    if((fiActive && fiCmdExecuted) || G_GetGameState() == GS_INTERMISSION)
     {
         borderedprojectionstate_t borderedProjection;
         Hu_ConfigureBorderedProjection(&borderedProjection);
