@@ -1143,27 +1143,13 @@ static void drawMarks(const automap_t* map)
 
         positionPointInView(map, point, topLeft, topRight, bottomRight, bottomLeft, viewPoint);
 
-        DGL_SetPatch(patch->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
         DGL_Translatef(point[0], point[1], 0);
         DGL_Rotatef(angle, 0, 0, 1);
 
-        DGL_Color4f(1, 1, 1, alpha);
-        DGL_Begin(DGL_QUADS);
-            DGL_TexCoord2f(0, 0, 0);
-            DGL_Vertex2f(-(w / 2), h / 2);
-
-            DGL_TexCoord2f(0, 1, 0);
-            DGL_Vertex2f(w / 2, h / 2);
-
-            DGL_TexCoord2f(0, 1, 1);
-            DGL_Vertex2f(w / 2, -(h / 2));
-
-            DGL_TexCoord2f(0, 0, 1);
-            DGL_Vertex2f(-(w / 2), -(h / 2));
-        DGL_End();
+        DGL_SetPatch(patch->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_DrawRect(-w/2, h/2, w, -h, 1, 1, 1, alpha);
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PopMatrix();

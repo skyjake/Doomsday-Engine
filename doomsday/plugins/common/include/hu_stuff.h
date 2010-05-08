@@ -171,4 +171,16 @@ void        Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
 void        HU_ScoreBoardUnHide(int player);
 void        HU_DrawScoreBoard(int player);
 
+typedef struct {
+    int winWidth, winHeight;
+    float scale;
+    int displayMode;
+    int scissorState[5];
+} borderedprojectionstate_t;
+
+void            Hu_ConfigureBorderedProjection(borderedprojectionstate_t* s);
+
+void            Hu_BeginBorderedProjection(borderedprojectionstate_t* s);
+void            Hu_EndBorderedProjection(borderedprojectionstate_t* s);
+
 #endif

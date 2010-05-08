@@ -67,12 +67,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-enum {
-    STRETCH = 0,
-    PILLARBOX,
-    LETTERBOX,
-};
-
 typedef char handle_t[32];
 
 typedef struct ficmd_s {
@@ -1717,104 +1711,19 @@ void FI_GetTurnCenter(fipic_t *pic, float *center)
     center[VY] *= pic->object.scale[VY].value;
 }
 
-static int pickScalingStrategy(int winWidth, int winHeight, float* outScale)
-{
-    float scale = (winWidth >= winHeight? (float)winHeight/SCREENHEIGHT : (float)winWidth/SCREENWIDTH);
-    float a = (float)winWidth/winHeight;
-    float b = (float)SCREENWIDTH/SCREENHEIGHT;
-    int displayMode = STRETCH;
-
-    if(!INRANGE_OF(a, b, .001f) && (cfg.fiNoStretch || !INRANGE_OF(a, b, .38f)))
-    {
-        if(SCREENWIDTH * scale > winWidth || SCREENHEIGHT * scale < winHeight)
-        {
-            scale *= (float)winWidth/(SCREENWIDTH*scale);
-            displayMode = LETTERBOX;
-        }
-        else if(SCREENWIDTH * scale < winWidth)
-        {
-            displayMode = PILLARBOX;
-        }
-    }
-    if(outScale)
-        *outScale = scale;
-    return displayMode;
-}
-
 /**
  * Drawing is the most complex task here.
  */
 void FI_Drawer(void)
 {
-    int winWidth, winHeight, displayMode, scissorState[5], i, sq;
-    float scale, mid[2];
+    int i, sq;
+    float mid[2];
     fipic_t* pic;
     fitext_t* tex;
 
     // Don't draw anything until we are sure the script has started.
     if(!fiActive || !fiCmdExecuted)
         return;
-
-    winWidth = Get(DD_WINDOW_WIDTH);
-    winHeight = Get(DD_WINDOW_HEIGHT);
-    displayMode = pickScalingStrategy(winWidth, winHeight, &scale);
-
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-    switch(displayMode)
-    {
-    case PILLARBOX:
-        {
-        /**
-         * Use an orthographic projection in native screenspace. Then
-         * translate and scale the projection to produce an aspect
-         * corrected coordinate space at 4:3, centered horizontally
-         * in the window.
-         */
-        int w = (winWidth-SCREENWIDTH*scale)/2;
-        DGL_Ortho(0, 0, winWidth, winHeight, -1, 1);
-
-        DGL_GetIntegerv(DGL_SCISSOR_TEST, scissorState);
-        DGL_GetIntegerv(DGL_SCISSOR_BOX, scissorState + 1);
-        DGL_Scissor(w, 0, SCREENWIDTH*scale, winHeight);
-        DGL_Enable(DGL_SCISSOR_TEST);
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PushMatrix();
-        DGL_Translatef((float)winWidth/2, (float)winHeight/2, 0);
-        DGL_Scalef(scale, scale, 1);
-        DGL_Translatef(-SCREENWIDTH/2, -SCREENHEIGHT/2, 0);
-        break;
-        }
-    case LETTERBOX:
-        {
-        /**
-         * Use an orthographic projection in native screenspace. Then
-         * translate and scale the projection to produce an aspect
-         * corrected coordinate space at 4:3, centered vertically in
-         * the window.
-         */
-        int h = (winHeight-SCREENHEIGHT*scale)/2;
-        DGL_Ortho(0, 0, winWidth, winHeight, -1, 1);
-
-        DGL_GetIntegerv(DGL_SCISSOR_TEST, scissorState);
-        DGL_GetIntegerv(DGL_SCISSOR_BOX, scissorState + 1);
-        DGL_Scissor(0, h, winWidth, SCREENHEIGHT*scale);
-        DGL_Enable(DGL_SCISSOR_TEST);
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PushMatrix();
-        DGL_Translatef((float)winWidth/2, (float)winHeight/2, 0);
-        DGL_Scalef(scale, scale, 1);
-        DGL_Translatef(-SCREENWIDTH/2, -SCREENHEIGHT/2, 0);
-        }
-        break;
-
-    default: // STRETCH
-        DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
-        break;
-    }
 
     // Draw the background.
     if(fi->bgMaterial)
@@ -1947,44 +1856,6 @@ void FI_Drawer(void)
         DGL_End();
         DGL_Enable(DGL_TEXTURING);
     }
-
-    if(displayMode != STRETCH)
-    {
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PopMatrix();
-
-        if(!scissorState[0])
-            DGL_Disable(DGL_SCISSOR_TEST);
-        DGL_Scissor(scissorState[1], scissorState[2], scissorState[3], scissorState[4]);
-
-        switch(displayMode)
-        {
-        case PILLARBOX:
-            {
-            int w = (winWidth-SCREENWIDTH*scale)/2;
-
-            DGL_SetNoMaterial();
-            DGL_DrawRect(0, 0, w, winHeight, 0, 0, 0, 1);
-            DGL_DrawRect(winWidth - w, 0, w, winHeight, 0, 0, 0, 1);
-            break;
-            }
-        case LETTERBOX:
-            {
-            int h = (winHeight-SCREENHEIGHT*scale)/2;
-
-            DGL_SetNoMaterial();
-            DGL_DrawRect(0, 0, winWidth, h, 0, 0, 0, 1);
-            DGL_DrawRect(0, winHeight - h, winWidth, h, 0, 0, 0, 1);
-            }
-            break;
-
-        default: // STRETCH
-            break;
-        }
-    }
-    
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PopMatrix();
 }
 
 /**

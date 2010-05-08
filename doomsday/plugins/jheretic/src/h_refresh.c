@@ -295,23 +295,23 @@ void H_Display(int layer)
 
 void H_Display2(void)
 {
-    switch(G_GetGameState())
+    if(fiActive && fiCmdExecuted || G_GetGameState() == GS_INTERMISSION)
     {
-    case GS_INTERMISSION:
-        IN_Drawer();
-        break;
+        borderedprojectionstate_t borderedProjection;
+        Hu_ConfigureBorderedProjection(&borderedProjection);
 
-    case GS_WAITING:
-        // Clear the screen while waiting, doesn't mess up the menu.
-        //gl.Clear(DGL_COLOR_BUFFER_BIT);
-        break;
+        Hu_BeginBorderedProjection(&borderedProjection);
 
-    default:
-        break;
+        // InFine is drawn whenever active.
+        FI_Drawer();
+
+        if(G_GetGameState() == GS_INTERMISSION)
+        {
+            IN_Drawer();
+        }
+
+        Hu_EndBorderedProjection(&borderedProjection);
     }
-
-    // InFine is drawn whenever active.
-    FI_Drawer();
 
     // Draw HUD displays; menu, messages.
     Hu_Drawer();

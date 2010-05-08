@@ -258,24 +258,23 @@ void G_Display(int layer)
 
 void G_Display2(void)
 {
-    switch(G_GetGameState())
+    if(fiActive && fiCmdExecuted || G_GetGameState() == GS_INTERMISSION)
     {
-    case GS_INTERMISSION:
-        IN_Drawer();
-        break;
+        borderedprojectionstate_t borderedProjection;
+        Hu_ConfigureBorderedProjection(&borderedProjection);
 
-    case GS_WAITING:
-        //GL_DrawRawScreen(W_GetNumForName("TITLE"), 0, 0);
-        //DGL_Color3f(1, 1, 1);
-        //MN_DrCenterTextA_CS("WAITING... PRESS ESC FOR MENU", 160, 188);
-        break;
+        Hu_BeginBorderedProjection(&borderedProjection);
 
-    default:
-        break;
+        // InFine is drawn whenever active.
+        FI_Drawer();
+
+        if(G_GetGameState() == GS_INTERMISSION)
+        {
+            IN_Drawer();
+        }
+
+        Hu_EndBorderedProjection(&borderedProjection);
     }
-
-    // InFine is drawn whenever active.
-    FI_Drawer();
 
     // Draw HUD displays; menu, messages.
     Hu_Drawer();
