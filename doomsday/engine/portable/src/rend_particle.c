@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,9 +47,9 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    ptcgenid_t      ptcGenID; // Generator id.
-    int             ptID; // Particle id.
-    float           distance;
+    ptcgenid_t ptcGenID; // Generator id.
+    int ptID; // Particle id.
+    float distance;
 } porder_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -87,12 +87,9 @@ void Rend_ParticleRegister(void)
     C_VAR_BYTE("rend-particle", &useParticles, 0, 0, 1);
     C_VAR_INT("rend-particle-max", &maxParticles, CVF_NO_MAX, 0, 0);
     C_VAR_FLOAT("rend-particle-rate", &particleSpawnRate, 0, 0, 5);
-    C_VAR_FLOAT("rend-particle-diffuse", &particleDiffuse,
-                CVF_NO_MAX, 0, 0);
-    C_VAR_INT("rend-particle-visible-near", &particleNearLimit,
-              CVF_NO_MAX, 0, 0);
-    C_VAR_BYTE("rend-dev-generator-show-indices", &devDrawGenerators,
-               CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_FLOAT("rend-particle-diffuse", &particleDiffuse, CVF_NO_MAX, 0, 0);
+    C_VAR_INT("rend-particle-visible-near", &particleNearLimit, CVF_NO_MAX, 0, 0);
+    C_VAR_BYTE("rend-dev-generator-show-indices", &devDrawGenerators, CVF_NO_ARCHIVE, 0, 1);
 }
 
 static boolean markPtcGenVisible(ptcgen_t* gen, void* context)
@@ -121,7 +118,7 @@ static float pointDist(fixed_t c[3])
 
 byte GL_LoadParticleTexture(image_t* image, const char* name)
 {
-    filename_t          fileName;
+    filename_t fileName;
 
     if(R_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, fileName, name, "-ck",
                        FILENAME_T_MAXLEN) &&
@@ -138,8 +135,8 @@ byte GL_LoadParticleTexture(image_t* image, const char* name)
  */
 void Rend_ParticleInitTextures(void)
 {
-    int                 i;
-    boolean             reported;
+    boolean reported;
+    int i;
 
     if(pointTex)
         return; // Already been here.
@@ -163,8 +160,8 @@ void Rend_ParticleInitTextures(void)
     reported = false;
     for(i = 0; i < MAX_PTC_TEXTURES; ++i)
     {
-        image_t             image;
-        char                name[80];
+        image_t image;
+        char name[80];
 
         // Try to load the texture.
         sprintf(name, "Particle%02i", i);
@@ -197,8 +194,7 @@ void Rend_ParticleInitTextures(void)
             // Just show the first 'not found'.
             if(verbose && !reported)
             {
-                Con_Message("Rend_ParticleInitTextures: %s not found.\n",
-                            name);
+                Con_Message("Rend_ParticleInitTextures: %s not found.\n", name);
                 reported = true;
             }
         }
@@ -257,7 +253,7 @@ static int C_DECL comparePOrder(const void* pt1, const void* pt2)
  */
 static void checkOrderBuffer(size_t max)
 {
-    size_t              currentSize = orderSize;
+    size_t currentSize = orderSize;
 
     if(!orderSize)
     {
@@ -277,8 +273,8 @@ static boolean countParticles(ptcgen_t* gen, void* context)
 {
     if(isPtcGenVisible(gen))
     {
-        int p;
         size_t* numParts = (size_t*) context;
+        int p;
 
         for(p = 0; p < gen->count; ++p)
             if(gen->ptcs[p].stage >= 0)
@@ -290,10 +286,10 @@ static boolean countParticles(ptcgen_t* gen, void* context)
 
 static boolean populateSortBuffer(ptcgen_t* gen, void* context)
 {
-    int p;
+    size_t* m = (size_t*) context;
     const ded_ptcgen_t* def;
     particle_t* pt;
-    size_t* m = (size_t*) context;
+    int p;
 
     if(!isPtcGenVisible(gen))
         return true; // Continue iteration.
@@ -301,9 +297,9 @@ static boolean populateSortBuffer(ptcgen_t* gen, void* context)
     def = gen->def;
     for(p = 0, pt = gen->ptcs; p < gen->count; ++p, pt++)
     {
-        int                 stagetype;
-        float               dist;
-        porder_t*           slot;
+        int stagetype;
+        float dist;
+        porder_t* slot;
 
         if(pt->stage < 0)
             continue;
@@ -337,13 +333,11 @@ static boolean populateSortBuffer(ptcgen_t* gen, void* context)
         {
             hasLines = true;
         }
-        else if(stagetype >= PTC_TEXTURE &&
-                stagetype < PTC_TEXTURE + MAX_PTC_TEXTURES)
+        else if(stagetype >= PTC_TEXTURE && stagetype < PTC_TEXTURE + MAX_PTC_TEXTURES)
         {
             hasPointTexs[stagetype - PTC_TEXTURE] = true;
         }
-        else if(stagetype >= PTC_MODEL &&
-                stagetype < PTC_MODEL + MAX_PTC_MODELS)
+        else if(stagetype >= PTC_MODEL && stagetype < PTC_MODEL + MAX_PTC_MODELS)
         {
             hasModels = true;
         }
@@ -362,7 +356,7 @@ static boolean populateSortBuffer(ptcgen_t* gen, void* context)
  */
 static int listVisibleParticles(void)
 {
-    size_t              numVisibleParticles;
+    size_t numVisibleParticles;
 
     hasPoints = hasModels = hasLines = hasBlend = hasNoBlend = false;
     memset(hasPointTexs, 0, sizeof(hasPointTexs));
@@ -393,14 +387,11 @@ static int listVisibleParticles(void)
 }
 
 static void setupModelParamsForParticle(rendmodelparams_t* params,
-                                        const particle_t* pt,
-                                        const ptcstage_t* st,
-                                        const ded_ptcstage_t* dst,
-                                        float* center, float dist,
-                                        float size, float mark, float alpha)
+    const particle_t* pt, const ptcstage_t* st, const ded_ptcstage_t* dst,
+    float* center, float dist, float size, float mark, float alpha)
 {
-    int                 frame;
-    subsector_t*        ssec;
+    subsector_t* ssec;
+    int frame;
 
     // Render the particle as a model.
     params->center[VX] = center[VX];
@@ -421,16 +412,14 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
     else
     {
         frame = dst->frame + (dst->endFrame - dst->frame) * mark;
-        params->inter =
-            M_CycleIntoRange(mark * (dst->endFrame - dst->frame), 1);
+        params->inter = M_CycleIntoRange(mark * (dst->endFrame - dst->frame), 1);
     }
 
     R_SetModelFrame(params->mf, frame);
     // Set the correct orientation for the particle.
     if(params->mf->sub[0].flags & MFF_MOVEMENT_YAW)
     {
-        params->yaw =
-            R_MovementYaw(FIX2FLT(pt->mov[0]), FIX2FLT(pt->mov[1]));
+        params->yaw = R_MovementYaw(FIX2FLT(pt->mov[0]), FIX2FLT(pt->mov[1]));
     }
     else
     {
@@ -439,8 +428,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
 
     if(params->mf->sub[0].flags & MFF_MOVEMENT_PITCH)
     {
-        params->pitch =
-            R_MovementPitch(pt->mov[0], pt->mov[1], pt->mov[2]);
+        params->pitch = R_MovementPitch(pt->mov[0], pt->mov[1], pt->mov[2]);
     }
     else
     {
@@ -451,8 +439,7 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
 
     if((st->flags & PTCF_BRIGHT) || levelFullBright)
     {
-        params->ambientColor[CR] = params->ambientColor[CG] =
-            params->ambientColor[CB] = 1;
+        params->ambientColor[CR] = params->ambientColor[CG] = params->ambientColor[CB] = 1;
         params->vLightListIdx = 0;
     }
     else
@@ -465,8 +452,8 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
         }
         else
         {
-            float               lightLevel = pt->sector->lightLevel;
-            const float*        secColor = R_GetSectorLightColor(pt->sector);
+            float lightLevel = pt->sector->lightLevel;
+            const float* secColor = R_GetSectorLightColor(pt->sector);
 
             // Apply distance attenuation.
             lightLevel = R_DistAttenuateLightLevel(params->distance, lightLevel);
@@ -497,12 +484,12 @@ static void setupModelParamsForParticle(rendmodelparams_t* params,
 
 static void renderParticles(int rtype, boolean withBlend)
 {
-    size_t i;
-    int c;
-    DGLuint tex = 0;
     float leftoff[3], rightoff[3];
     ushort primType = GL_QUADS;
     blendmode_t mode = BM_NORMAL, newMode;
+    DGLuint tex = 0;
+    size_t i;
+    int c;
 
     {
     const viewdata_t* viewData = R_ViewData(viewPlayer - ddPlayers);
@@ -554,14 +541,14 @@ static void renderParticles(int rtype, boolean withBlend)
 
     for(; i < numParts; ++i)
     {
-        const porder_t*     slot = &order[i];
-        const ptcgen_t*     gen;
-        const particle_t*   pt;
-        const ptcstage_t*   st;
+        const porder_t* slot = &order[i];
+        const ptcgen_t* gen;
+        const particle_t* pt;
+        const ptcstage_t* st;
         const ded_ptcstage_t* dst, *nextDst;
-        float               size, color[4], center[3], mark, invMark;
-        float               dist, maxdist, projected[2];
-        boolean             flatOnPlane, flatOnWall, nearPlane, nearWall;
+        float size, color[4], center[3], mark, invMark;
+        float dist, maxdist, projected[2];
+        boolean flatOnPlane, flatOnWall, nearPlane, nearWall;
 
         gen = P_IndexToPtcGen(slot->ptcGenID);
         pt = &gen->ptcs[slot->ptID];
@@ -598,8 +585,7 @@ static void renderParticles(int rtype, boolean withBlend)
         // Is there a next stage for this particle?
         if(pt->stage >= gen->def->stageCount.num - 1 ||
            !gen->stages[pt->stage + 1].type)
-        {
-            // There is no "next stage". Use the current one.
+        {   // There is no "next stage". Use the current one.
             nextDst = gen->def->stages + pt->stage;
         }
         else
@@ -611,7 +597,7 @@ static void renderParticles(int rtype, boolean withBlend)
 
         // Calculate size and color.
         size = P_GetParticleRadius(dst, slot->ptID) * invMark +
-            P_GetParticleRadius(nextDst, slot->ptID) * mark;
+               P_GetParticleRadius(nextDst, slot->ptID) * mark;
         if(!size)
             continue; // Infinitely small.
 
@@ -652,7 +638,7 @@ static void renderParticles(int rtype, boolean withBlend)
 
         nearPlane = (pt->sector &&
                      (FLT2FIX(pt->sector->SP_floorheight) + 2 * FRACUNIT >= pt->pos[VZ] ||
-                      FLT2FIX(pt->sector->SP_ceilheight) - 2 * FRACUNIT <= pt->pos[VZ]));
+                      FLT2FIX(pt->sector->SP_ceilheight)  - 2 * FRACUNIT <= pt->pos[VZ]));
         flatOnPlane = (st->flags & PTCF_PLANE_FLAT && nearPlane);
 
         nearWall = (pt->contact && !pt->mov[VX] && !pt->mov[VY]);
@@ -674,12 +660,11 @@ static void renderParticles(int rtype, boolean withBlend)
         // routine.
         if(rtype == PTC_MODEL && dst->model >= 0)
         {
-            rendmodelparams_t       params;
+            rendmodelparams_t params;
 
             memset(&params, 0, sizeof(rendmodelparams_t));
 
-            setupModelParamsForParticle(&params, pt, st, dst, center, dist,
-                                        size, mark, color[CA]);
+            setupModelParamsForParticle(&params, pt, st, dst, center, dist, size, mark, color[CA]);
             Rend_RenderModel(&params);
             continue;
         }
@@ -705,8 +690,8 @@ static void renderParticles(int rtype, boolean withBlend)
             // Flat against a wall, then?
             else if(flatOnWall)
             {
-                float               line[2], pos[2];
-                vertex_t*           vtx;
+                float line[2], pos[2];
+                vertex_t* vtx;
 
                 line[0] = pt->contact->dX;
                 line[1] = pt->contact->dY;
@@ -721,8 +706,7 @@ static void renderParticles(int rtype, boolean withBlend)
                 // Z-fighting.
                 pos[VX] = FIX2FLT(pt->pos[VX]);
                 pos[VY] = FIX2FLT(pt->pos[VY]);
-                M_ProjectPointOnLine(pos, &vtx->V_pos[VX], line, 1,
-                                     projected);
+                M_ProjectPointOnLine(pos, &vtx->V_pos[VX], line, 1, projected);
 
                 P_LineUnitVector(pt->contact, line);
 
@@ -799,7 +783,7 @@ static void renderParticles(int rtype, boolean withBlend)
 
 static void renderPass(boolean useBlending)
 {
-    int                 i;
+    int i;
 
     // Set blending mode.
     if(useBlending)
@@ -858,19 +842,18 @@ static boolean drawGeneratorOrigin(ptcgen_t* gen, void* context)
 {
 #define MAX_GENERATOR_DIST  2048
 
-    float*              eye = (float*) context;
+    float* eye = (float*) context;
 
     // Determine approximate center.
     if((gen->source || (gen->flags & PGF_UNTRIGGERED)))
     {
-        float               pos[3], dist, alpha;
+        float pos[3], dist, alpha;
 
         if(gen->source)
         {
             pos[VX] = gen->source->pos[VX];
             pos[VY] = gen->source->pos[VY];
-            pos[VZ] = gen->source->pos[VZ] - gen->source->floorClip +
-                FIX2FLT(gen->center[VZ]);
+            pos[VZ] = gen->source->pos[VZ] - gen->source->floorClip + FIX2FLT(gen->center[VZ]);
         }
         else
         {
@@ -884,8 +867,8 @@ static boolean drawGeneratorOrigin(ptcgen_t* gen, void* context)
 
         if(alpha > 0)
         {
-            char                buf[80];
-            float               scale = dist / (theWindow->width / 2);
+            float scale = dist / (theWindow->width / 2);
+            char buf[80];
 
             glMatrixMode(GL_MODELVIEW);
             glPushMatrix();
@@ -913,7 +896,7 @@ static boolean drawGeneratorOrigin(ptcgen_t* gen, void* context)
  */
 void Rend_RenderGenerators(void)
 {
-    float               eye[3];
+    float eye[3];
 
     if(!devDrawGenerators)
         return;
