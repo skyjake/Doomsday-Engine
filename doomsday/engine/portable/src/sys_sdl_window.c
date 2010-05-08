@@ -730,7 +730,7 @@ extern boolean usingFog;
             hadFog = usingFog;
             GL_TotalReset();
             gx.UpdateState(DD_RENDER_RESTART_PRE);
-            UI_ClearTextures();
+            GL_ClearSystemTextures();
         }
 
         if(createContext(window->width, window->height, window->normal.bpp,
@@ -750,8 +750,8 @@ extern boolean usingFog;
             if(hadFog)
                 GL_UseFog(true);
             gx.UpdateState(DD_RENDER_RESTART_POST);
-            
-            UI_LoadTextures();
+
+            GL_LoadSystemTextures();
         }
     }
     /*else
