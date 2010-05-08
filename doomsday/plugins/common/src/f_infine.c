@@ -1775,16 +1775,13 @@ void FI_Drawer(void)
         int w = (winWidth-SCREENWIDTH*scale)/2;
         DGL_Ortho(0, 0, winWidth, winHeight, -1, 1);
 
-        DGL_SetNoMaterial();
-        DGL_DrawRect(0, 0, w, winHeight, 0, 0, 0, 1);
-        DGL_DrawRect(winWidth - w, 0, w, winHeight, 0, 0, 0, 1);
-
         DGL_GetIntegerv(DGL_SCISSOR_TEST, scissorState);
         DGL_GetIntegerv(DGL_SCISSOR_BOX, scissorState + 1);
         DGL_Scissor(w, 0, SCREENWIDTH*scale, winHeight);
         DGL_Enable(DGL_SCISSOR_TEST);
 
-        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
         DGL_Translatef((float)winWidth/2, (float)winHeight/2, 0);
         DGL_Scalef(scale, scale, 1);
         DGL_Translatef(-SCREENWIDTH/2, -SCREENHEIGHT/2, 0);
@@ -1801,16 +1798,13 @@ void FI_Drawer(void)
         int h = (winHeight-SCREENHEIGHT*scale)/2;
         DGL_Ortho(0, 0, winWidth, winHeight, -1, 1);
 
-        DGL_SetNoMaterial();
-        DGL_DrawRect(0, 0, winWidth, h, 0, 0, 0, 1);
-        DGL_DrawRect(0, winHeight - h, winWidth, h, 0, 0, 0, 1);
-
         DGL_GetIntegerv(DGL_SCISSOR_TEST, scissorState);
         DGL_GetIntegerv(DGL_SCISSOR_BOX, scissorState + 1);
         DGL_Scissor(0, h, winWidth, SCREENHEIGHT*scale);
         DGL_Enable(DGL_SCISSOR_TEST);
 
-        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PushMatrix();
         DGL_Translatef((float)winWidth/2, (float)winHeight/2, 0);
         DGL_Scalef(scale, scale, 1);
         DGL_Translatef(-SCREENWIDTH/2, -SCREENHEIGHT/2, 0);
@@ -1829,7 +1823,7 @@ void FI_Drawer(void)
         DGL_SetMaterial(fi->bgMaterial);
         DGL_DrawRectTiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
     }
-    else
+    else if(fi->bgColor[3].value > 0)
     {
         // Just clear the screen, then.
         DGL_Disable(DGL_TEXTURING);
@@ -1956,9 +1950,37 @@ void FI_Drawer(void)
 
     if(displayMode != STRETCH)
     {
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_PopMatrix();
+
         if(!scissorState[0])
             DGL_Disable(DGL_SCISSOR_TEST);
         DGL_Scissor(scissorState[1], scissorState[2], scissorState[3], scissorState[4]);
+
+        switch(displayMode)
+        {
+        case PILLARBOX:
+            {
+            int w = (winWidth-SCREENWIDTH*scale)/2;
+
+            DGL_SetNoMaterial();
+            DGL_DrawRect(0, 0, w, winHeight, 0, 0, 0, 1);
+            DGL_DrawRect(winWidth - w, 0, w, winHeight, 0, 0, 0, 1);
+            break;
+            }
+        case LETTERBOX:
+            {
+            int h = (winHeight-SCREENHEIGHT*scale)/2;
+
+            DGL_SetNoMaterial();
+            DGL_DrawRect(0, 0, winWidth, h, 0, 0, 0, 1);
+            DGL_DrawRect(0, winHeight - h, winWidth, h, 0, 0, 0, 1);
+            }
+            break;
+
+        default: // STRETCH
+            break;
+        }
     }
     
     DGL_MatrixMode(DGL_PROJECTION);
