@@ -2699,7 +2699,7 @@ static boolean __inline pickScalingStrategy(int winWidth, int winHeight)
 
     if(INRANGE_OF(a, b, .001f))
         return true; // The same, so stretch.
-    if(cfg.menuNoStretch || !INRANGE_OF(a, b, .18f))
+    if(cfg.menuNoStretch || !INRANGE_OF(a, b, .38f))
         return false; // No stretch; translate and scale to fit.
     // Otherwise stretch.
     return true;

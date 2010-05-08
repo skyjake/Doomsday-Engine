@@ -760,7 +760,7 @@ static boolean __inline pickScalingStrategy(int viewportWidth, int viewportHeigh
 
     if(INRANGE_OF(a, b, .001f))
         return true; // The same, so stretch.
-    if(weaponNoStretch || !INRANGE_OF(a, b, .18f))
+    if(weaponNoStretch || !INRANGE_OF(a, b, .38f))
         return false; // No stretch; translate and scale to fit.
     // Otherwise stretch.
     return true;

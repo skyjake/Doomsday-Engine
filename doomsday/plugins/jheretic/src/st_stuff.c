@@ -1140,7 +1140,7 @@ static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeigh
 
     if(INRANGE_OF(a, b, .001f))
         return true; // The same, so stretch.
-    if(Con_GetByte("rend-hud-nostretch") || !INRANGE_OF(a, b, .18f))
+    if(Con_GetByte("rend-hud-nostretch") || !INRANGE_OF(a, b, .38f))
         return false; // No stretch; translate and scale to fit.
     // Otherwise stretch.
     return true;
