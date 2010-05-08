@@ -1004,9 +1004,7 @@ static void setSideShadowParams(rendershadowseg_params_t* p,
         if(bottomGlow)
         {
             p->texHeight = -(*fCeil - *fFloor);
-            p->texOffset[VY] =
-                calcTexCoordY(top, *fFloor, *fCeil, p->texHeight);
-
+            p->texOffset[VY] = calcTexCoordY(top, *fFloor, *fCeil, p->texHeight);
             p->texture = LST_RADIO_CO;
         }
         else if(topGlow)
@@ -1023,12 +1021,10 @@ static void quadTexCoords(rtexcoord_t* tc, const rvertex_t* rverts,
 {
     if(horizontal)
     {   // Special horizontal coordinates for wall shadows.
-        tc[0].st[0] = tc[2].st[0] =
-            rverts[0].pos[VX] - texOrigin[0][VX] + texOffset[VY] / texHeight;
-        tc[0].st[1] = tc[1].st[1] =
-            rverts[0].pos[VY] - texOrigin[0][VY] + texOffset[VX] / texWidth;
-        tc[1].st[0] = tc[0].st[0] + (rverts[1].pos[VZ] - texOrigin[0][VZ]) / texHeight;
-        tc[3].st[0] = tc[0].st[0] + (rverts[3].pos[VZ] - texOrigin[0][VZ]) / texHeight;
+        tc[0].st[0] = tc[2].st[0] = rverts[0].pos[VX] - texOrigin[0][VX] + texOffset[VY] / texHeight;
+        tc[0].st[1] = tc[1].st[1] = rverts[0].pos[VY] - texOrigin[0][VY] + texOffset[VX] / texWidth;
+        tc[1].st[0] = tc[0].st[0] + (rverts[1].pos[VZ] - texOrigin[1][VZ]) / texHeight;
+        tc[3].st[0] = tc[0].st[0] + (rverts[3].pos[VZ] - texOrigin[1][VZ]) / texHeight;
         tc[3].st[1] = tc[0].st[1] + wallLength / texWidth;
         tc[2].st[1] = tc[0].st[1] + wallLength / texWidth;
         return;
