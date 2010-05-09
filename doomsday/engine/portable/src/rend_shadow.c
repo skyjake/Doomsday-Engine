@@ -89,7 +89,7 @@ static boolean Rend_ShadowIterator(sector_t *sector, void *data)
 
 static void processMobjShadow(mobj_t* mo)
 {
-#define SHADOWZOFFSET       (0.2f)
+#define SHADOWZOFFSET       (0.8f)
 
     float               moz;
     float               height, moh, halfmoh, alpha, pos[2];
