@@ -876,9 +876,9 @@ END_PROF( PROF_GRID_UPDATE );
  */
 void LG_Evaluate(const float *point, float *color)
 {
-    int                 x, y, i;
-    float               dz = 0, dimming;
-    gridblock_t        *block;
+    int x, y, i;
+    //float dz = 0, dimming;
+    gridblock_t* block;
 
     if(!lgInited)
     {
@@ -893,9 +893,19 @@ void LG_Evaluate(const float *point, float *color)
 
     block = &grid[y * lgBlockWidth + x];
 
+    /**
+     * danij: Biased light dimming disabled because this does not work
+     * well enough. The problem is that two points on a given surface
+     * may be determined to be in different blocks and as the height is
+     * taken from the block-linked sector this results in very uneven
+     * lighting.
+     *
+     * Biasing the dimming is a good idea but the heights must be taken
+     * from the subsector which contains the surface and not the block.
+     */
     if(block->sector)
     {
-        if(block->bias < 0)
+        /*if(block->bias < 0)
         {
             // Calculate Z difference to the ceiling.
             dz = block->sector->SP_ceilheight - point[VZ];
@@ -908,7 +918,7 @@ void LG_Evaluate(const float *point, float *color)
 
         dz -= 50;
         if(dz < 0)
-            dz = 0;
+            dz = 0;*/
 
         if(block->flags & GBF_CHANGED)
         {   // We are waiting for an updated value, for now use the old.
@@ -931,7 +941,7 @@ void LG_Evaluate(const float *point, float *color)
     }
 
     // Biased ambient light causes a dimming in the Z direction.
-    if(dz && block->bias)
+    /*if(dz && block->bias)
     {
         if(block->bias < 0)
             dimming = 1 - (dz * (float) -block->bias) / 35000.0f;
@@ -950,7 +960,7 @@ void LG_Evaluate(const float *point, float *color)
             color[i] += Rend_GetLightAdaptVal(color[i]);
         }
     }
-    else
+    else*/
     {
         // Just add the light range compression factor
         for(i = 0; i < 3; ++i)

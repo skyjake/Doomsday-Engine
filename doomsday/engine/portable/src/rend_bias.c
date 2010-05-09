@@ -979,9 +979,22 @@ void SB_RendPoly(struct rcolor_s* rcolors, biassurface_t* bsuf,
         }
     }
 
-    for(i = 0; i < numVertices; ++i)
-        SB_EvalPoint(rcolors[i].rgba, &bsuf->illum[i], bsuf->affected,
-                     rvertices[i].pos, normal);
+/*#if _DEBUG
+// Assign primary colors rather than the real values.
+    if(isSeg)
+    {
+        rcolors[0].rgba[CR] = 1; rcolors[0].rgba[CG] = 0; rcolors[0].rgba[CB] = 0; rcolors[0].rgba[CA] = 1;
+        rcolors[1].rgba[CR] = 0; rcolors[1].rgba[CG] = 1; rcolors[1].rgba[CB] = 0; rcolors[1].rgba[CA] = 1;
+        rcolors[2].rgba[CR] = 0; rcolors[2].rgba[CG] = 0; rcolors[2].rgba[CB] = 1; rcolors[2].rgba[CA] = 1;
+        rcolors[3].rgba[CR] = 1; rcolors[3].rgba[CG] = 1; rcolors[3].rgba[CB] = 0; rcolors[3].rgba[CA] = 1;
+    }
+    else
+#endif*/
+    {
+        for(i = 0; i < numVertices; ++i)
+            SB_EvalPoint(rcolors[i].rgba, &bsuf->illum[i], bsuf->affected,
+                         rvertices[i].pos, normal);
+    }
 
 //    colorOverride = SB_CheckColorOverride(affected);
 
