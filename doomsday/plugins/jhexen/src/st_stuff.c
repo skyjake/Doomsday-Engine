@@ -615,7 +615,7 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
     else
     {
         DGL_Color4f(1, 1, 1, iconAlpha);
-        DGL_SetPatch(dpStatusBar.lump, DGL_CLAMP, DGL_CLAMP);
+        DGL_SetPatch(dpStatusBar.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
         DGL_Begin(DGL_QUADS);
 
