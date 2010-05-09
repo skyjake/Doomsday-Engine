@@ -1611,8 +1611,11 @@ DGL_Enable(DGL_TEXTURING);
         DGL_Bind(0);
     }
 
-    // Draw glows.
-    renderWalls(map, mcfg, player, -1, false);
+    // Draw glows?
+    if(mcfg->glowingLineSpecials)
+    {   // \optimize Hugely inefficent. Need a new approach.
+        renderWalls(map, mcfg, player, -1, false);
+    }
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
     // Draw any marked points.
