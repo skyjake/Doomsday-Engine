@@ -836,7 +836,7 @@ void R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src,
     {
         float               inter = (divs[1].pos[i] - bR) / height;
 
-        dst[numL + 2 + i].st[0] = src[2].st[0];
+        dst[numL + 2 + i].st[0] = src[3].st[0];
         dst[numL + 2 + i].st[1] = src[2].st[1] +
             (src[3].st[1] - src[2].st[1]) * inter;
     }
@@ -886,7 +886,7 @@ void R_DivVertColors(rcolor_t* dst, const rcolor_t* src,
 
         for(c = 0; c < 4; ++c)
         {
-            dst[numL + 2 + i].rgba[c] = src[2].rgba[c] +
+            dst[numL + 2 + i].rgba[c] = src[3].rgba[c] +
                 (src[3].rgba[c] - src[2].rgba[c]) * inter;
         }
     }
