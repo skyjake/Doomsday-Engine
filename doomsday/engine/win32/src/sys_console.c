@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -79,7 +79,7 @@ static void initVKeyToDDKeyTlat(void)
     keymap[VK_CONTROL] = DDKEY_RCTRL;
     keymap[VK_MENU] = DDKEY_RALT;
     keymap[VK_PAUSE] = DDKEY_PAUSE;
-    //keymap[VK_CAPITAL] = ;
+    keymap[VK_CAPITAL] = DDKEY_CAPSLOCK;
     //keymap[VK_KANA] = ;
     //keymap[VK_HANGEUL] = ;
     //keymap[VK_HANGUL] = ;
@@ -152,6 +152,7 @@ static void initVKeyToDDKeyTlat(void)
     keymap[VK_F10] = DDKEY_F10;
     keymap[VK_F11] = DDKEY_F11;
     keymap[VK_F12] = DDKEY_F12;
+    keymap[VK_SNAPSHOT] = DDKEY_PRINT;
 
     keymap[0x30] = '0';
     keymap[0x31] = '1';

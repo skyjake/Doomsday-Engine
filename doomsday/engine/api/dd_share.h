@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -413,6 +413,7 @@ enum {
     DDKEY_F11,
     DDKEY_F12,
     DDKEY_NUMLOCK,
+    DDKEY_CAPSLOCK,
     DDKEY_SCROLL,
     DDKEY_NUMPAD7,
     DDKEY_NUMPAD8,
@@ -440,6 +441,7 @@ enum {
     DDKEY_END,
     DDKEY_SUBTRACT, // '-' on numeric keypad.
     DDKEY_ADD, // '+' on numeric keypad.
+    DDKEY_PRINT,
     DD_HIGHEST_KEYCODE
 };
 

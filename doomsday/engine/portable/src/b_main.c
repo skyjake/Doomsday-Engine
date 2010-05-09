@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -130,6 +130,7 @@ static const keyname_t keyNames[] = {
     {DDKEY_F9,          "f9"},
     {'`',               "tilde"},
     {DDKEY_NUMLOCK,     "numlock"},
+    {DDKEY_CAPSLOCK,    "capslock"},
     {DDKEY_SCROLL,      "scrlock"},
     {DDKEY_NUMPAD0,     "pad0"},
     {DDKEY_NUMPAD1,     "pad1"},
@@ -144,7 +145,8 @@ static const keyname_t keyNames[] = {
     {DDKEY_DECIMAL,     "padcomma"},
     {DDKEY_SUBTRACT,    "padminus"}, // not really used
     {DDKEY_ADD,         "padplus"}, // not really used
-
+    {DDKEY_PRINT,       "print"},
+    {DDKEY_PRINT,       "prtsc"},
     {0, NULL} // The terminator
 };
 
