@@ -640,10 +640,9 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
         glEnd();
     }
 
-    if(params->masked)
+    if(params->masked && renderTextures)
     {   // Restore the original texture state.
-        if(withDyn)
-            GL_ActiveTexture(IS_MUL ? GL_TEXTURE1 : GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, params->tex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
