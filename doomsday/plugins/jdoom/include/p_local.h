@@ -63,7 +63,6 @@
 // MAXRADIUS is for precalculated sector block boxes the spider demon is
 // larger, but we do not have any moving sectors nearby.
 #define MAXRADIUS           (32)
-#define MAXMOVE             (30)
 
 #define USERANGE            (64)
 #define MELEERANGE          (64)
@@ -72,10 +71,6 @@
 #define BASETHRESHOLD       (100)
 
 #define sentient(mobj)      ((mobj)->health > 0 && P_GetState((mobj)->type, SN_SEE))
-
-#define FRICTION_NORMAL     (0.90625f)
-#define FRICTION_FLY        (0.91796875f)
-#define FRICTION_HIGH       (0.5f)
 
 #define OPENRANGE           (*(float*) DD_GetVariable(DD_OPENRANGE))
 #define OPENTOP             (*(float*) DD_GetVariable(DD_OPENTOP))

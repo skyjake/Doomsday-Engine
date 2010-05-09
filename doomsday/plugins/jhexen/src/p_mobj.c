@@ -348,6 +348,11 @@ boolean P_SeekerMissile(mobj_t *actor, angle_t thresh, angle_t turnMax)
     return true;
 }
 
+static __inline boolean isInWalkState(player_t* pl)
+{
+    return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class)->runState < 4;
+}
+
 float P_MobjGetFriction(mobj_t* mo)
 {
     if((mo->flags2 & MF2_FLY) && !(mo->pos[VZ] <= mo->floorZ) && !mo->onMobj)
@@ -367,19 +372,20 @@ float P_MobjGetFriction(mobj_t* mo)
 
 void P_MobjMoveXY(mobj_t* mo)
 {
-    static const int    windTab[3] = { 2048 * 5, 2048 * 10, 2048 * 25 };
+    static const int windTab[3] = { 2048 * 5, 2048 * 10, 2048 * 25 };
 
-    float               posTry[2];
-    player_t*           player;
-    float               move[2];
-    int                 special;
-    angle_t             angle;
+    float posTry[2];
+    player_t* player;
+    float mom[2];
+    int special;
+    angle_t angle;
 
     // $democam: cameramen have their own movement code
     if(P_CameraXYMovement(mo))
         return;
 
-    if(mo->mom[MX] == 0 && mo->mom[MY] == 0)
+    if(INRANGE_OF(mo->mom[MX], 0, NOMOM_THRESHOLD) &&
+       INRANGE_OF(mo->mom[MY], 0, NOMOM_THRESHOLD))
     {
         if(mo->flags & MF_SKULLFLY)
         {   // A flying mobj slammed into something
@@ -420,38 +426,31 @@ void P_MobjMoveXY(mobj_t* mo)
             break;
         }
     }
+
+    mom[MX] = MINMAX_OF(-MAXMOM, mo->mom[MX], MAXMOM);
+    mom[MY] = MINMAX_OF(-MAXMOM, mo->mom[MY], MAXMOM);
+    mo->mom[MX] = mom[MX];
+    mo->mom[MY] = mom[MY];
+
     player = mo->player;
-
-    if(mo->mom[MX] > MAXMOVE)
-        mo->mom[MX] = MAXMOVE;
-    else if(mo->mom[MX] < -MAXMOVE)
-        mo->mom[MX] = -MAXMOVE;
-
-    if(mo->mom[MY] > MAXMOVE)
-        mo->mom[MY] = MAXMOVE;
-    else if(mo->mom[MY] < -MAXMOVE)
-        mo->mom[MY] = -MAXMOVE;
-
-    move[VX] = mo->mom[MX];
-    move[VY] = mo->mom[MY];
     do
     {
-        if(move[VX] > MAXMOVE / 2 || move[VY] > MAXMOVE / 2)
+        if(mom[VX] > MAXMOMSTEP || mom[VY] > MAXMOMSTEP)
         {
-            posTry[VX] = mo->pos[VX] + move[VX] / 2;
-            posTry[VY] = mo->pos[VY] + move[VY] / 2;
-            move[VX] /= 2;
-            move[VY] /= 2;
+            posTry[VX] = mo->pos[VX] + mom[VX] / 2;
+            posTry[VY] = mo->pos[VY] + mom[VY] / 2;
+            mom[VX] /= 2;
+            mom[VY] /= 2;
         }
         else
         {
-            posTry[VX] = mo->pos[VX] + move[VX];
-            posTry[VY] = mo->pos[VY] + move[VY];
-            move[VX] = move[VY] = 0;
+            posTry[VX] = mo->pos[VX] + mom[VX];
+            posTry[VY] = mo->pos[VY] + mom[VY];
+            mom[VX] = mom[VY] = 0;
         }
 
         if(!P_TryMove(mo, posTry[VX], posTry[VY]))
-        {   // Blocked move.
+        {   // Blocked mom.
             if(mo->flags2 & MF2_SLIDE)
             {   // Try to slide along it.
                 if(blockingMobj == NULL)
@@ -476,7 +475,7 @@ void P_MobjMoveXY(mobj_t* mo)
             }
             else if(mo->flags & MF_MISSILE)
             {
-                sector_t*           backSec;
+                sector_t* backSec;
 
                 if(mo->flags2 & MF2_FLOORBOUNCE)
                 {
@@ -486,7 +485,7 @@ void P_MobjMoveXY(mobj_t* mo)
                            ((!blockingMobj->player) &&
                             (!(blockingMobj->flags & MF_COUNTKILL))))
                         {
-                            float       speed;
+                            float speed;
 
                             angle =
                                 R_PointToAngle2(blockingMobj->pos[VX],
@@ -568,10 +567,8 @@ void P_MobjMoveXY(mobj_t* mo)
                     mo->angle = angle;
                     angle >>= ANGLETOFINESHIFT;
 
-                    mo->mom[MX] =
-                        (mo->info->speed / 2) * FIX2FLT(finecosine[angle]);
-                    mo->mom[MY] =
-                        (mo->info->speed / 2) * FIX2FLT(finesine[angle]);
+                    mo->mom[MX] = (mo->info->speed / 2) * FIX2FLT(finecosine[angle]);
+                    mo->mom[MY] = (mo->info->speed / 2) * FIX2FLT(finesine[angle]);
 
                     if(mo->flags2 & MF2_SEEKERMISSILE)
                     {
@@ -644,8 +641,8 @@ explode:
                 mo->mom[MX] = mo->mom[MY] = 0;
             }
         }
-    } while(!INRANGE_OF(move[MX], 0, NOMOMENTUM_THRESHOLD) ||
-            !INRANGE_OF(move[MY], 0, NOMOMENTUM_THRESHOLD));
+    } while(!INRANGE_OF(mom[MX], 0, NOMOM_THRESHOLD) ||
+            !INRANGE_OF(mom[MY], 0, NOMOM_THRESHOLD));
 
     // Friction
     if(player && (P_GetPlayerCheats(player) & CF_NOMOMENTUM))
@@ -663,45 +660,46 @@ explode:
     }
 
     if(mo->flags & MF_CORPSE)
-    {   // Don't stop sliding if halfway off a step with some momentum
-        if(mo->mom[MX] > 1.0f / 4 || mo->mom[MX] < -1.0f / 4 ||
-           mo->mom[MY] > 1.0f / 4 || mo->mom[MY] < -1.0f / 4)
+    {
+        // Do not stop sliding if halfway off a step with some momentum.
+        if(!INRANGE_OF(mo->mom[MX], 0, DROPOFFMOM_THRESHOLD) ||
+           !INRANGE_OF(mo->mom[MY], 0, DROPOFFMOM_THRESHOLD))
         {
             if(mo->floorZ != P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
-            {
                 return;
-            }
         }
     }
 
     // Stop player walking animation.
-    if((!player || (!(player->plr->cmd.forwardMove | player->plr->cmd.sideMove))) &&
+    if(player && (!(player->plr->cmd.forwardMove | player->plr->cmd.sideMove) ||
+                  player->plr->mo != mo /* $voodoodolls: Stop animating. */) &&
+       INRANGE_OF(mo->mom[MX], 0, STANDSPEED_THRESHOLD) &&
+       INRANGE_OF(mo->mom[MY], 0, STANDSPEED_THRESHOLD))
+    {
+        // If in a walking frame, stop moving.
+        if(player && isInWalkState(player) && player->plr->mo == mo)
+            P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
+
+        // $voodoodolls: Stop view bobbing if this isn't a voodoo doll.
+        if(player && player->plr->mo == mo)
+            player->bob = 0;
+    }
+
+    if((!player || !(player->plr->cmd.forwardMove | player->plr->cmd.sideMove)) &&
        INRANGE_OF(mo->mom[MX], 0, WALKSTOP_THRESHOLD) &&
        INRANGE_OF(mo->mom[MY], 0, WALKSTOP_THRESHOLD))
-    {   // If in a walking frame, stop moving
-        if(player)
-        {
-            if((unsigned)
-               ((player->plr->mo->state - STATES) - PCLASS_INFO(player->class)->runState) <
-               4)
-            {
-                P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
-            }
-        }
-        mo->mom[MX] = 0;
-        mo->mom[MY] = 0;
+    {
+        mo->mom[MX] = mo->mom[MY] = 0;
+
+        // $voodoodolls: Stop view bobbing if this isn't a voodoo doll.
+        if(player && player->plr->mo == mo)
+            player->bob = 0;
     }
     else
     {
         float friction = P_MobjGetFriction(mo);
-
         mo->mom[MX] *= friction;
-        if(INRANGE_OF(mo->mom[MX], 0, NOMOMENTUM_THRESHOLD))
-            mo->mom[MX] = 0;
-
         mo->mom[MY] *= friction;
-        if(INRANGE_OF(mo->mom[MY], 0, NOMOMENTUM_THRESHOLD))
-            mo->mom[MY] = 0;
     }
 }
 

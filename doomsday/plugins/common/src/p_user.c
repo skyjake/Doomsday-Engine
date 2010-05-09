@@ -659,8 +659,8 @@ void P_MorphThink(player_t *player)
         return;
 
     pmo = player->plr->mo;
-    if(INRANGE_OF(pmo->mom[MX], 0, NOMOMENTUM_THRESHOLD) &&
-       INRANGE_OF(pmo->mom[MY], 0, NOMOMENTUM_THRESHOLD) && P_Random() < 64)
+    if(INRANGE_OF(pmo->mom[MX], 0, NOMOM_THRESHOLD) &&
+       INRANGE_OF(pmo->mom[MY], 0, NOMOM_THRESHOLD) && P_Random() < 64)
     {   // Snout sniff
         P_SetPspriteNF(player, ps_weapon, S_SNOUTATK2);
         S_StartSound(SFX_PIG_ACTIVE1, pmo); // snort
@@ -687,8 +687,8 @@ void P_MorphThink(player_t *player)
         return;
 
     pmo = player->plr->mo;
-    if(INRANGE_OF(pmo->mom[MX], 0, NOMOMENTUM_THRESHOLD) &&
-       INRANGE_OF(pmo->mom[MY], 0, NOMOMENTUM_THRESHOLD) && P_Random() < 160)
+    if(INRANGE_OF(pmo->mom[MX], 0, NOMOM_THRESHOLD) &&
+       INRANGE_OF(pmo->mom[MY], 0, NOMOM_THRESHOLD) && P_Random() < 160)
     {   // Twitch view angle
         pmo->angle += (P_Random() - P_Random()) << 19;
     }

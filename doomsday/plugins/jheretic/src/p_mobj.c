@@ -334,10 +334,9 @@ float P_MobjGetFriction(mobj_t *mo)
     }
 }
 
-static boolean isInWalkState(player_t* pl)
+static __inline boolean isInWalkState(player_t* pl)
 {
-    return pl->plr->mo->state - STATES -
-                PCLASS_INFO(pl->class)->runState < 4;
+    return pl->plr->mo->state - STATES - PCLASS_INFO(pl->class)->runState < 4;
 }
 
 static float getFriction(mobj_t* mo)
@@ -360,20 +359,16 @@ static float getFriction(mobj_t* mo)
 
 void P_MobjMoveXY(mobj_t* mo)
 {
-    float               pos[2], mom[2];
-    player_t*           player;
-    boolean             largeNegative;
+    float pos[2], mom[2];
+    player_t* player;
+    boolean largeNegative;
 
     // $democam: cameramen have their own movement code
     if(P_CameraXYMovement(mo))
         return;
 
-    mom[MX] = MINMAX_OF(-MAXMOVE, mo->mom[MX], MAXMOVE);
-    mom[MY] = MINMAX_OF(-MAXMOVE, mo->mom[MY], MAXMOVE);
-    mo->mom[MX] = mom[MX];
-    mo->mom[MY] = mom[MY];
-
-    if(mo->mom[MX] == 0 && mo->mom[MY] == 0)
+    if(INRANGE_OF(mo->mom[MX], 0, NOMOM_THRESHOLD) &&
+       INRANGE_OF(mo->mom[MY], 0, NOMOM_THRESHOLD))
     {
         if(mo->flags & MF_SKULLFLY)
         {   // A flying mobj slammed into something.
@@ -384,6 +379,11 @@ void P_MobjMoveXY(mobj_t* mo)
 
         return;
     }
+
+    mom[MX] = MINMAX_OF(-MAXMOM, mo->mom[MX], MAXMOM);
+    mom[MY] = MINMAX_OF(-MAXMOM, mo->mom[MY], MAXMOM);
+    mo->mom[MX] = mom[MX];
+    mo->mom[MY] = mom[MY];
 
     if(mo->flags2 & MF2_WINDTHRUST)
         P_WindThrust(mo);
@@ -398,18 +398,19 @@ void P_MobjMoveXY(mobj_t* mo)
          */
 
         largeNegative = false;
-        if(!cfg.moveBlock &&
-           (mom[MX] < -MAXMOVE / 2 || mom[MY] < -MAXMOVE / 2))
+        if(!cfg.moveBlock && (mom[MX] < -MAXMOMSTEP || mom[MY] < -MAXMOMSTEP))
         {
             // Make an exception for "north-only wallrunning".
             if(!(cfg.wallRunNorthOnly && mo->wallRun))
                 largeNegative = true;
         }
 
-        if(largeNegative || mom[MX] > MAXMOVE / 2 || mom[MY] > MAXMOVE / 2)
+        if(largeNegative || mom[MX] > MAXMOMSTEP || mom[MY] > MAXMOMSTEP)
         {
-            pos[VX] = mo->pos[VX] + (mom[MX] /= 2);
-            pos[VY] = mo->pos[VY] + (mom[MY] /= 2);
+            pos[VX] = mo->pos[VX] + mom[MX] / 2;
+            pos[VY] = mo->pos[VY] + mom[MY] / 2;
+            mom[MX] /= 2;
+            mom[MY] /= 2;
         }
         else
         {
@@ -431,7 +432,7 @@ void P_MobjMoveXY(mobj_t* mo)
             }
             else if(mo->flags & MF_MISSILE)
             {   // Explode a missile
-                sector_t*           backSec;
+                sector_t* backSec;
 
                 //// kludge: Prevent missiles exploding against the sky.
                 if(ceilingLine &&
@@ -484,8 +485,8 @@ void P_MobjMoveXY(mobj_t* mo)
                 mo->mom[MX] = mo->mom[MY] = 0;
             }
         }
-    } while(!INRANGE_OF(mom[MX], 0, NOMOMENTUM_THRESHOLD) ||
-            !INRANGE_OF(mom[MY], 0, NOMOMENTUM_THRESHOLD));
+    } while(!INRANGE_OF(mom[MX], 0, NOMOM_THRESHOLD) ||
+            !INRANGE_OF(mom[MY], 0, NOMOM_THRESHOLD));
 
     // Slow down.
     if(player && (P_GetPlayerCheats(player) & CF_NOMOMENTUM))
@@ -507,38 +508,41 @@ void P_MobjMoveXY(mobj_t* mo)
 
     if(cfg.slidingCorpses)
     {
-        /**
-         * $dropoff_fix:
-         * Add objects falling off ledges. Does not apply to players!
-         */
-
+        // $dropoff_fix: Add objects falling off ledges, does not apply to
+        // players!
         if(((mo->flags & MF_CORPSE) || (mo->intFlags & MIF_FALLING)) &&
            !mo->player)
-        {   // Do not stop sliding.
-            // If halfway off a step with some momentum.
-            if(mo->mom[MX] > 1.0f / 4 || mo->mom[MX] < -1.0f / 4 ||
-               mo->mom[MY] > 1.0f / 4 || mo->mom[MY] < -1.0f / 4)
+        {
+            // Do not stop sliding if halfway off a step with some momentum.
+            if(!INRANGE_OF(mo->mom[MX], 0, DROPOFFMOM_THRESHOLD) ||
+               !INRANGE_OF(mo->mom[MY], 0, DROPOFFMOM_THRESHOLD))
             {
-                if(mo->floorZ !=
-                   P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
+                if(mo->floorZ != P_GetFloatp(mo->subsector, DMU_FLOOR_HEIGHT))
                     return;
             }
         }
     }
 
     // Stop player walking animation.
-    if((!player || (!(player->plr->cmd.forwardMove | player->plr->cmd.sideMove) &&
-        player->plr->mo != mo /* $voodoodolls: Stop animating. */)) &&
-       INRANGE_OF(mo->mom[MX], 0, WALKSTOP_THRESHOLD) &&
-       INRANGE_OF(mo->mom[MY], 0, WALKSTOP_THRESHOLD))
+    if(player && (!(player->plr->cmd.forwardMove | player->plr->cmd.sideMove) ||
+                  player->plr->mo != mo /* $voodoodolls: Stop animating. */) &&
+       INRANGE_OF(mo->mom[MX], 0, STANDSPEED_THRESHOLD) &&
+       INRANGE_OF(mo->mom[MY], 0, STANDSPEED_THRESHOLD))
     {
         // If in a walking frame, stop moving.
         if(player && isInWalkState(player) && player->plr->mo == mo)
             P_MobjChangeState(player->plr->mo, PCLASS_INFO(player->class)->normalState);
 
-        // $voodoodolls: Do not zero mom!
-        if(!(player && player->plr->mo != mo))
-            mo->mom[MX] = mo->mom[MY] = 0;
+        // $voodoodolls: Stop view bobbing if this isn't a voodoo doll.
+        if(player && player->plr->mo == mo)
+            player->bob = 0;
+    }
+
+    if((!player || !(player->plr->cmd.forwardMove | player->plr->cmd.sideMove)) &&
+       INRANGE_OF(mo->mom[MX], 0, WALKSTOP_THRESHOLD) &&
+       INRANGE_OF(mo->mom[MY], 0, WALKSTOP_THRESHOLD))
+    {
+        mo->mom[MX] = mo->mom[MY] = 0;
 
         // $voodoodolls: Stop view bobbing if this isn't a voodoo doll.
         if(player && player->plr->mo == mo)
@@ -547,14 +551,8 @@ void P_MobjMoveXY(mobj_t* mo)
     else
     {
         float friction = getFriction(mo);
-
         mo->mom[MX] *= friction;
-        if(INRANGE_OF(mo->mom[MX], 0, NOMOMENTUM_THRESHOLD))
-            mo->mom[MX] = 0;
-
         mo->mom[MY] *= friction;
-        if(INRANGE_OF(mo->mom[MY], 0, NOMOMENTUM_THRESHOLD))
-            mo->mom[MY] = 0;
     }
 }
 
