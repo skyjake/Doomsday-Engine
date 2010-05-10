@@ -212,7 +212,7 @@ void            DGL_SetNoMaterial(void);
 void            DGL_SetPatch(lumpnum_t lump, int wrapS, int wrapT);
 void            DGL_SetPSprite(struct material_s* mat);
 void            DGL_SetTranslatedSprite(struct material_s* mat, int tclass, int tmap);
-void            DGL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS, int wrapT);
+void            DGL_SetRawImage(lumpnum_t lump, int wrapS, int wrapT);
 
 void            DGL_BlendOp(int op);
 void            DGL_BlendFunc(int param1, int param2);

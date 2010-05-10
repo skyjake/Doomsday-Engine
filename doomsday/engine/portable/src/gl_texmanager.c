@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -428,18 +428,12 @@ void GL_ClearRuntimeTextures(void)
     patches = R_CollectPatchTexs(NULL);
     for(ptr = patches; *ptr; ptr++)
     {
-        patchtex_t*         p = (*ptr);
+        patchtex_t* p = (*ptr);
 
         if(p->tex)
         {
             glDeleteTextures(1, (const GLuint*) &p->tex);
             p->tex = 0;
-        }
-
-        if(p->tex2)
-        {
-            glDeleteTextures(1, (const GLuint*) &p->tex2);
-            p->tex2 = 0;
         }
     }
     Z_Free(patches);
@@ -1833,16 +1827,15 @@ DGLuint GL_PrepareRawTex2(rawtex_t* raw)
 
     if(!raw->tex)
     {
-        image_t             image;
-        byte                result;
+        image_t image;
+        byte result;
 
         // Clear any old values.
         memset(&image, 0, sizeof(image));
 
         if((result = GL_LoadRawTex(&image, raw)) == 2)
         {   // Loaded an external raw texture.
-            // We have the image in the buffer. We'll upload it as one
-            // big texture.
+            // We have the image in the buffer. We'll upload it as one big texture.
             raw->tex =
                 GL_UploadTexture(image.pixels, image.width, image.height,
                                  image.pixelSize == 4, false, true, false, false,
@@ -1852,88 +1845,24 @@ DGLuint GL_PrepareRawTex2(rawtex_t* raw)
                                  (image.pixelSize == 4? TXCF_APPLY_GAMMACORRECTION : 0));
 
             raw->width = 320;
-            raw->width2 = 0;
-            raw->tex2 = 0;
-            raw->height = raw->height2 = 200;
+            raw->height = 200;
 
             GL_DestroyImage(&image);
         }
         else
         {
-            int                 assumedWidth = 320;
-            boolean             rgbdata = (image.pixelSize > 1? true:false);
+            boolean rgbdata = (image.pixelSize > 1? true:false);
+            int assumedWidth = GL_state.textureNonPow2? image.width : 256;
 
-            // It's most efficient to create two textures (256+64 = 320).
+            // Generate a texture.
+            raw->tex = GL_UploadTexture(image.pixels, GL_state.textureNonPow2? image.width : 256, image.height,
+                false, false, rgbdata, false, false, GL_NEAREST,
+                (linearRaw? GL_LINEAR:GL_NEAREST), 0 /*no anisotropy*/,
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
+                (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
 
-            if(!GL_state.textureNonPow2 && !(image.height < 200))
-            {
-                int k, comps = image.pixelSize;
-                byte* dat1, *dat2;
-
-                // Two pieces:
-                dat1 = M_Calloc(comps * 256 * 256);
-                dat2 = M_Calloc(comps * 64 * 256);
-
-                // Image data loaded, divide it into two parts.
-                for(k = 0; k < image.height; ++k)
-                {
-                    int i;
-
-                    for(i = 0; i < 256; ++i)
-                    {
-                        int c, idx = k * assumedWidth + i;
-
-                        // Part one.
-                        for(c = 0; c < comps; ++c)
-                        {
-                            dat1[(k * 256 + i) * comps + c] =
-                                image.pixels[idx * comps + c];
-
-                            // We can setup part two at the same time.
-                            dat2[(k * 64 + i) * comps + c] =
-                                image.pixels[(idx + 256) * comps + c];
-                        }
-                    }
-                }
-
-                // Upload part one.
-                raw->tex = GL_UploadTexture(dat1, 256,
-                    assumedWidth < 320 ? image.height : 256, false, false,
-                    rgbdata, false, false, GL_NEAREST,
-                    (linearRaw? GL_LINEAR:GL_NEAREST), 0 /*no anisotropy*/,
-                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                    (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
-
-                // And the other part.
-                raw->tex2 = GL_UploadTexture(dat2, 64, 256, false, false,
-                    rgbdata, false, false, GL_NEAREST,
-                    (linearRaw? GL_LINEAR:GL_NEAREST), 0 /*no anisotropy*/,
-                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                    (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
-
-                raw->width = 256;
-                raw->width2 = 64;
-                raw->height = raw->height2 = image.height;
-                M_Free(dat1);
-                M_Free(dat2);
-            }
-            else // We can use the normal one-part method.
-            {
-                assumedWidth = GL_state.textureNonPow2? image.width : 256;
-
-                // Generate a texture.
-                raw->tex = GL_UploadTexture(image.pixels, GL_state.textureNonPow2? image.width : 256, image.height,
-                    false, false, rgbdata, false, false, GL_NEAREST,
-                    (linearRaw? GL_LINEAR:GL_NEAREST), 0 /*no anisotropy*/,
-                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                    (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
-
-                raw->width = GL_state.textureNonPow2? image.width : 256;
-                raw->height = image.height;
-
-                raw->tex2 = 0;
-                raw->width2 = raw->height2 = 0;
-            }
+            raw->width = GL_state.textureNonPow2? image.width : 256;
+            raw->height = image.height;
 
             GL_DestroyImage(&image);
         }
@@ -1960,39 +1889,15 @@ DGLuint GL_PrepareRawTex(rawtex_t* rawTex)
     return 0;
 }
 
-/**
- * Returns the OpenGL name of the texture.
- */
-DGLuint GL_PrepareRawTexOtherPart(rawtex_t* rawTex)
+void GL_SetRawImage(lumpnum_t lump, int wrapS, int wrapT)
 {
-    if(rawTex)
-    {
-        if(!rawTex->tex)
-        {   // The rawtex isn't yet bound with OpenGL.
-            rawTex->tex = GL_PrepareRawTex2(rawTex);
-        }
-
-        return rawTex->tex2;
-    }
-
-    return 0;
-}
-
-void GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS, int wrapT)
-{
-    rawtex_t*           rawTex;
+    rawtex_t* rawTex;
 
     if((rawTex = R_GetRawTex(lump)))
     {
-        DGLuint             tex;
+        DGLuint tex = GL_PrepareRawTex(rawTex);
 
-        if(!part2)
-            tex = GL_PrepareRawTex(rawTex);
-        else
-            tex = GL_PrepareRawTexOtherPart(rawTex);
-
-        GL_BindTexture(tex,
-                       (linearRaw ? GL_LINEAR : GL_NEAREST));
+        GL_BindTexture(tex, (linearRaw ? GL_LINEAR : GL_NEAREST));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
     }
@@ -2327,66 +2232,16 @@ DGLuint GL_PreparePatch2(patchtex_t* p)
                 p->flags |= PF_UPSCALE_AND_SHARPEN;
             }
 
-            /**
-             * See if we have to split the patch into two parts.
-             * This is done to conserve the quality of wide textures (like
-             * the DOOM status bar) on video cards that have a pitifully
-             * small maximum texture size.
-             */
-            if(p->width > GL_state.maxTexSize)
-            {
-                // The width of the first part is max texture size.
-                int                 part2Width;
-                byte*               tmpBuf;
+            // Generate a texture.
+            p->tex = GL_UploadTexture(image.pixels, image.width,
+                image.height, image.isMasked, false, false, false,
+                false, GL_NEAREST, glmode[texMagMode], 0 /* no aniso */,
+                GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
 
-                part2Width = image.width - GL_state.maxTexSize;
-                tmpBuf = M_Malloc(2 * image.height *
-                    MAX_OF(GL_state.maxTexSize, part2Width));
-
-                // Use a temporary buffer for doing the splitting.
-                // First, part one.
-                pixBlt(image.pixels, image.width, image.height, tmpBuf,
-                       GL_state.maxTexSize, image.height, image.isMasked,
-                       0, 0, 0, 0, GL_state.maxTexSize, image.height);
-
-                p->tex = GL_UploadTexture(tmpBuf, GL_state.maxTexSize,
-                    image.height, image.isMasked, false, false, false,
-                    false, GL_NEAREST, GL_LINEAR, texAniso,
-                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
-
-                // Then part two.
-                pixBlt(image.pixels, image.width, image.height, tmpBuf,
-                       part2Width, image.height, image.isMasked,
-                       GL_state.maxTexSize, 0, 0, 0, part2Width,
-                       image.height);
-
-                p->tex2 = GL_UploadTexture(tmpBuf, part2Width,
-                    image.height, image.isMasked, false, false, false,
-                    false, GL_NEAREST, glmode[texMagMode], texAniso,
-                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
-
-                p->width2 = p->width - GL_state.maxTexSize;
-                p->width = GL_state.maxTexSize;
-                p->height2 = p->height;
-
-                M_Free(tmpBuf);
-            }
-            else // We can use the normal one-part method.
-            {
-                // Generate a texture.
-                p->tex = GL_UploadTexture(image.pixels, image.width,
-                    image.height, image.isMasked, false, false, false,
-                    false, GL_NEAREST, glmode[texMagMode], 0 /* no aniso */,
-                    GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
-
-                p->width += addBorder*2;
-                p->height += addBorder*2;
-                p->extraOffset[VX] = -addBorder;
-                p->extraOffset[VY] = -addBorder;
-
-                p->tex2 = 0;
-                p->width2 = p->height2 = 0;
-            }
+            p->width += addBorder*2;
+            p->height += addBorder*2;
+            p->extraOffset[VX] = -addBorder;
+            p->extraOffset[VY] = -addBorder;
 
             // The original image is no longer needed.
             GL_DestroyImage(&image);
@@ -2407,25 +2262,8 @@ DGLuint GL_PreparePatch(patchtex_t* patchTex)
         {   // The patch isn't yet bound with OpenGL.
             patchTex->tex = GL_PreparePatch2(patchTex);
         }
-
         return patchTex->tex;
     }
-
-    return 0;
-}
-
-DGLuint GL_PreparePatchOtherPart(patchtex_t* patchTex)
-{
-    if(patchTex)
-    {
-        if(!patchTex->tex)
-        {   // The patch isn't yet bound with OpenGL.
-            patchTex->tex = GL_PreparePatch2(patchTex);
-        }
-
-        return patchTex->tex2;
-    }
-
     return 0;
 }
 
@@ -2453,18 +2291,14 @@ static void setTextureMinMode(DGLuint tex, int minMode)
 
 void GL_SetRawTextureParams(int minMode)
 {
-    rawtex_t**          rawTexs, **ptr;
+    rawtex_t** rawTexs, **ptr;
 
     rawTexs = R_CollectRawTexs(NULL);
     for(ptr = rawTexs; *ptr; ptr++)
     {
-        rawtex_t*       r = (*ptr);
-
+        rawtex_t* r = (*ptr);
         if(r->tex) // Is the texture loaded?
             setTextureMinMode(r->tex, minMode);
-
-        if(r->tex2) // Is the texture loaded?
-            setTextureMinMode(r->tex2, minMode);
     }
     Z_Free(rawTexs);
 }
@@ -2483,21 +2317,15 @@ void GL_SetTextureParams(int minMode, int gameTex, int uiTex)
     if(uiTex)
     {
         // Patch textures.
-        {
-        patchtex_t **patches, **ptr;
+        patchtex_t** patches, **ptr;
         patches = R_CollectPatchTexs(NULL);
         for(ptr = patches; *ptr; ptr++)
         {
-            patchtex_t*       p = (*ptr);
-
+            patchtex_t* p = (*ptr);
             if(p->tex) // Is the texture loaded?
                 setTextureMinMode(p->tex, minMode);
-
-            if(p->tex2) // Is the texture loaded?
-                setTextureMinMode(p->tex2, minMode);
         }
         Z_Free(patches);
-        }
 
         GL_SetRawTextureParams(minMode);
     }
@@ -2604,18 +2432,11 @@ void GL_DeleteRawImages(void)
     rawTexs = R_CollectRawTexs(NULL);
     for(ptr = rawTexs; *ptr; ptr++)
     {
-        rawtex_t*         r = (*ptr);
-
+        rawtex_t* r = (*ptr);
         if(r->tex)
         {
             glDeleteTextures(1, (const GLuint*) &r->tex);
             r->tex = 0;
-        }
-
-        if(r->tex2)
-        {
-            glDeleteTextures(1, (const GLuint*) &r->tex2);
-            r->tex2 = 0;
         }
     }
     Z_Free(rawTexs);

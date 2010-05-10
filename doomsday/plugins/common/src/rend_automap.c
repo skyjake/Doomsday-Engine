@@ -1193,7 +1193,7 @@ static void setupGLStateForMap(const automap_t* map,
         DGL_LoadIdentity();
 
          // We only want the left portion.
-        DGL_SetRawImage(autopageLumpNum, false, DGL_REPEAT, DGL_REPEAT);
+        DGL_SetRawImage(autopageLumpNum, DGL_REPEAT, DGL_REPEAT);
 
         DGL_Color4f(mcfg->backgroundRGBA[0],
                     mcfg->backgroundRGBA[1],

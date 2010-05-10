@@ -195,22 +195,18 @@ DGLuint         GL_PrepareLSTexture(lightingtexid_t which);
 DGLuint         GL_PrepareSysFlareTexture(flaretexid_t flare);
 
 DGLuint         GL_PreparePatch(patchtex_t* patch);
-DGLuint         GL_PreparePatchOtherPart(patchtex_t* patch);
 DGLuint         GL_PrepareRawTex(rawtex_t* rawTex);
-DGLuint         GL_PrepareRawTexOtherPart(rawtex_t* rawTex);
 
 DGLuint         GL_GetLightMapTexture(const char* name);
 DGLuint         GL_GetFlareTexture(const char* name, int oldIdx);
 
 void            GL_SetMaterial(material_t* mat);
 void            GL_SetPSprite(material_t* mat);
-void            GL_SetTranslatedSprite(material_t* mat, int tclass,
-                                       int tmap);
+void            GL_SetTranslatedSprite(material_t* mat, int tclass, int tmap);
 
 void            GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT); // No mipmaps are generated.
 
-void            GL_SetRawImage(lumpnum_t lump, boolean part2, int wrapS,
-                               int wrapT);
+void            GL_SetRawImage(lumpnum_t lump, int wrapS, int wrapT);
 
 
 // Management of and access to gltextures (via the texmanager):

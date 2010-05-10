@@ -165,13 +165,8 @@ typedef struct patchtex_s {
     short           extraOffset[2]; // Only used with upscaled and sharpened patches.
     int             flags; // Possible modifier filters to apply (monochrome, scale+sharp)
 
-    // Part 1
     DGLuint         tex; // Name of the associated DGL texture.
     short           width, height;
-
-    // Part 2 (only used with textures larger than the max texture size).
-    DGLuint         tex2;
-    short           width2, height2;
 
     struct patchtex_s* next;
 } patchtex_t;
@@ -187,16 +182,9 @@ typedef struct lumppatch_s {
 // A rawtex is a lump raw graphic that has been prepared for render.
 typedef struct rawtex_s {
     lumpnum_t       lump;
-
-    // Part 1
     DGLuint         tex; // Name of the associated DGL texture.
     short           width, height;
     byte            masked;
-
-    // Part 2 (only used with textures larger than the max texture size).
-    DGLuint         tex2;
-    short           width2, height2;
-    byte            masked2;
 
     struct rawtex_s* next;
 } rawtex_t;

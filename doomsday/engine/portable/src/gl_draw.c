@@ -63,13 +63,15 @@ void GL_UsePatchOffset(boolean enable)
     usePatchOffset = enable;
 }
 
+/**
+ * \todo No need for this special method now. Refactor callers to use the
+ * normal DGL drawing methods.
+ */
 void GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
                          float scalex, float scaley)
 {
-    boolean             isTwoPart;
-    float               pixelBorder = 0;
-    float               tcb = 0;
-    rawtex_t*           raw;
+    float pixelBorder = 0;
+    rawtex_t* raw;
 
     if(lump < 0 || lump >= numLumps)
         return;
@@ -89,19 +91,9 @@ void GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
     glLoadIdentity();
     glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
 
-    GL_SetRawImage(lump, false, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+    GL_SetRawImage(lump, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     raw = R_GetRawTex(lump);
-    isTwoPart = (raw->tex2 != 0);
-
-    if(isTwoPart)
-    {
-        tcb = raw->height / 256.0f;
-    }
-    else
-    {
-        // Bottom texture coordinate.
-        tcb = 1;
-    }
+    // Bottom texture coordinate.
     pixelBorder = raw->width * theWindow->width / 320;
 
     // The first part is rendered in any case.
@@ -110,27 +102,11 @@ void GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
         glVertex2f(0, 0);
         glTexCoord2f(1, 0);
         glVertex2f(pixelBorder, 0);
-        glTexCoord2f(1, tcb);
+        glTexCoord2f(1, 1);
         glVertex2f(pixelBorder, theWindow->height);
-        glTexCoord2f(0, tcb);
+        glTexCoord2f(0, 1);
         glVertex2f(0, theWindow->height);
     glEnd();
-
-    if(isTwoPart)
-    {
-        // And the other part.
-        GL_SetRawImage(lump, true, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-        glBegin(GL_QUADS);
-            glTexCoord2f(0, 0);
-            glVertex2f(pixelBorder, 0);
-            glTexCoord2f(1, 0);
-            glVertex2f(theWindow->width, 0);
-            glTexCoord2f(1, tcb);
-            glVertex2f(theWindow->width, theWindow->height);
-            glTexCoord2f(0, tcb);
-            glVertex2f(pixelBorder, theWindow->height);
-        glEnd();
-    }
 
     // Restore the old projection matrix.
     glMatrixMode(GL_PROJECTION);
@@ -154,10 +130,8 @@ void GL_DrawRawScreen(lumpnum_t lump, float offx, float offy)
  */
 void GL_DrawPatch_CS(int posX, int posY, lumpnum_t lump)
 {
-    float               x = posX;
-    float               y = posY;
-    float               w, h;
-    patchtex_t*         p = R_GetPatchTex(lump);
+    float x = posX, y = posY, w, h;
+    patchtex_t* p = R_GetPatchTex(lump);
 
     if(!p)
         return;
@@ -195,26 +169,6 @@ void GL_DrawPatch_CS(int posX, int posY, lumpnum_t lump)
         glTexCoord2f(0, 1);
         glVertex2f(x, y + h);
     glEnd();
-
-    // Is there a second part?
-    if(GL_PreparePatchOtherPart(p))
-    {
-        x += (float) p->width2;
-
-        GL_BindTexture(GL_PreparePatchOtherPart(p), glmode[texMagMode]);
-        w = (float) p->width2;
-
-        glBegin(GL_QUADS);
-            glTexCoord2f(0, 0);
-            glVertex2f(x, y);
-            glTexCoord2f(1, 0);
-            glVertex2f(x + w, y);
-            glTexCoord2f(1, 1);
-            glVertex2f(x + w, y + h);
-            glTexCoord2f(0, 1);
-            glVertex2f(x, y + h);
-        glEnd();
-    }
 }
 
 void GL_DrawPatchLitAlpha(int x, int y, float light, float alpha,
