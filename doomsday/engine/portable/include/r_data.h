@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -176,6 +176,14 @@ typedef struct patchtex_s {
     struct patchtex_s* next;
 } patchtex_t;
 
+typedef struct lumppatch_s {
+    short           width; // Bounding box size.
+    short           height;
+    short           leftOffset; // Pixels to the left of origin.
+    short           topOffset; // Pixels below the origin.
+    int             columnOfs[8]; // Only [width] used the [0] is &columnofs[width]
+} lumppatch_t;
+
 // A rawtex is a lump raw graphic that has been prepared for render.
 typedef struct rawtex_s {
     lumpnum_t       lump;
@@ -318,7 +326,7 @@ boolean         R_UpdateSurface(struct surface_s* suf, boolean forceUpdate);
 
 void            R_PrecacheMap(void);
 void            R_PrecacheMobjNum(int mobjtypeNum);
-void            R_PrecachePatch(lumpnum_t lump);
+void            R_PrecachePatch(const char* name, patchinfo_t* info);
 
 doomtexturedef_t* R_GetDoomTextureDef(int num);
 

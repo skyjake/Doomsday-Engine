@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -2006,12 +2006,22 @@ boolean R_IsAllowedDetailTex(ded_detailtexture_t* def, material_t* mat,
     return (def->flags & DTLF_PWAD) != 0;
 }
 
-/**
- * Prepares the specified patch.
- */
-void R_PrecachePatch(lumpnum_t num)
+void R_PrecachePatch(const char* name, patchinfo_t* info)
 {
-    GL_PreparePatch(R_GetPatchTex(num));
+    lumpnum_t lump;
+
+    if(isDedicated)
+        return;
+
+    if((lump = W_CheckNumForName(name)) != -1)
+    {
+        patchtex_t* patch = R_GetPatchTex(lump);
+        GL_PreparePatch(patch);
+        if(info)
+        {
+            R_GetPatchInfo(lump, info);
+        }
+    }
 }
 
 static boolean isInList(void** list, size_t len, void* elm)

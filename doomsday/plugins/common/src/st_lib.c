@@ -66,7 +66,7 @@
 
 // CODE --------------------------------------------------------------------
 
-void STlib_InitNum(st_number_t* n, int x, int y, dpatch_t* pl, int* num,
+void STlib_InitNum(st_number_t* n, int x, int y, patchinfo_t* pl, int* num,
                    int maxDigits, float alpha)
 {
     n->x = x;
@@ -124,8 +124,8 @@ void STlib_DrawNum(st_number_t* n, float alpha)
                      NULL, false, ALIGN_LEFT);
 }
 
-void STlib_InitPercent(st_percent_t* p, int x, int y, dpatch_t* pl,
-                       int* num, dpatch_t* percent, float alpha)
+void STlib_InitPercent(st_percent_t* p, int x, int y, patchinfo_t* pl,
+                       int* num, patchinfo_t* percent, float alpha)
 {
     STlib_InitNum(&p->n, x, y, pl, num, 3, alpha);
     p->p = percent;
@@ -139,7 +139,7 @@ void STlib_DrawPercent(st_percent_t* per, float alpha)
     STlib_DrawNum(&per->n, alpha);
 }
 
-void STlib_InitIcon(st_icon_t* b, int x, int y, dpatch_t* i, float alpha)
+void STlib_InitIcon(st_icon_t* b, int x, int y, patchinfo_t* i, float alpha)
 {
     b->x = x;
     b->y = y;
@@ -153,7 +153,7 @@ void STlib_DrawIcon(st_icon_t* bi, float alpha)
                  false, ALIGN_LEFT);
 }
 
-void STlib_InitMultiIcon(st_multiicon_t* i, int x, int y, dpatch_t* il,
+void STlib_InitMultiIcon(st_multiicon_t* i, int x, int y, patchinfo_t* il,
                          float alpha)
 {
     i->x = x;

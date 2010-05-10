@@ -410,7 +410,7 @@ extern          "C" {
     void            R_SetupMap(int mode, int flags);
     void            R_PrecacheMap(void);
     void            R_PrecacheMobjNum(int mobjtypeNum);
-    void            R_PrecachePatch(lumpnum_t lump);
+    void            R_PrecachePatch(const char* name, patchinfo_t* info);
     void            R_PrecacheSkinsForState(int stateIndex);
     void            R_RenderPlayerView(int num);
     void            R_SetViewWindow(int x, int y, int w, int h);

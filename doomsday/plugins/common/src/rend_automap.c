@@ -102,7 +102,7 @@ static int autopageLumpNum = 1;
 static int autopageLumpNum = 1;
 #endif
 
-dpatch_t markerPatches[10]; // Numbers used for marking by the automap (lump indices).
+patchinfo_t markerPatches[10]; // Numbers used for marking by the automap (lump indices).
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -181,7 +181,7 @@ void Rend_AutomapLoadData(void)
     for(i = 0; i < 10; ++i)
     {
         MARKERPATCHES; // Check the macros eg: "sprintf(namebuf, "AMMNUM%d", i)" for jDoom
-        R_CachePatch(&markerPatches[i], namebuf);
+        R_PrecachePatch(namebuf, &markerPatches[i]);
     }
 #endif
 
@@ -1131,7 +1131,7 @@ static void drawMarks(const automap_t* map)
 
     for(i = 0; i < numMarks; ++i)
     {
-        const dpatch_t* patch;
+        const patchinfo_t* patch;
         float point[2], w, h;
 
         if(!Automap_GetMark(map, i, &point[0], &point[1], NULL))
@@ -1332,7 +1332,7 @@ static void restoreGLStateFromMap(rautomap_data_t* rmap)
 }
 
 static void drawMapName(float x, float y, float scale, float alpha,
-    dpatch_t* patch, const char* lname)
+    patchinfo_t* patch, const char* lname)
 {
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_Translatef(x, y, 0);
@@ -1357,7 +1357,7 @@ static void renderMapName(const automap_t* map)
 {
     float x, y;
     const char* lname;
-    dpatch_t* patch = NULL;
+    patchinfo_t* patch = NULL;
 #if __JDOOM__ || __JDOOM64__
     int mapNum;
 #endif

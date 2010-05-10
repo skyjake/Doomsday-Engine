@@ -100,7 +100,7 @@ typedef enum hotloc_e {
 static hudstate_t hudStates[MAXPLAYERS];
 
 // 0-9, tall numbers.
-static dpatch_t tallnum[10];
+static patchinfo_t tallnum[10];
 
 // CVARs for the HUD/Statusbar.
 cvar_t sthudCVars[] =
@@ -566,14 +566,14 @@ void ST_Drawer(int player)
 
 void ST_loadGraphics(void)
 {
-    int i;
     char namebuf[9];
+    int i;
 
     // Load the numbers, tall and short.
     for(i = 0; i < 10; ++i)
     {
         sprintf(namebuf, "STTNUM%d", i);
-        R_CachePatch(&tallnum[i], namebuf);
+        R_PrecachePatch(namebuf, &tallnum[i]);
     }
 }
 

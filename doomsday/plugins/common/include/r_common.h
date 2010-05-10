@@ -29,13 +29,6 @@
 #ifndef __GAME_COMMON_REFRESH_H__
 #define __GAME_COMMON_REFRESH_H__
 
-// A combination of patch data and its lump number.
-typedef struct dpatch_s {
-    int             width, height;
-    int             leftOffset, topOffset;
-    lumpnum_t       lump;
-} dpatch_t;
-
 // Translate between fixed screen dimensions to actual, current.
 #define FIXXTOSCREENX(x) (scrwidth * ((x) / (float) SCREENWIDTH))
 #define FIXYTOSCREENY(y) (scrheight * ((y) / (float) SCREENHEIGHT))
@@ -53,7 +46,6 @@ boolean         R_IsFullScreenViewWindow(void);
 boolean         R_MapObscures(int playerid, int x, int y, int w, int h);
 
 void            R_PrecachePSprites(void);
-void            R_CachePatch(dpatch_t* dp, const char* name);
 
 void            R_GetGammaMessageStrings(void);
 void            R_CycleGammaLevel(void);

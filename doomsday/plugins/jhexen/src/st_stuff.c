@@ -171,33 +171,33 @@ static void updateViewWindow(cvar_t* cvar);
 
 static hudstate_t hudStates[MAXPLAYERS];
 
-static dpatch_t dpStatusBar;
-static dpatch_t dpStatusBarTop;
-static dpatch_t dpKills;
-static dpatch_t dpStatBar;
-static dpatch_t dpKeyBar;
-static dpatch_t dpKeySlot[NUM_KEY_TYPES];
-static dpatch_t dpArmorSlot[NUMARMOR];
-static dpatch_t dpINumbers[10];
-static dpatch_t dpNegative;
-static dpatch_t dpManaAVials[2];
-static dpatch_t dpManaBVials[2];
-static dpatch_t dpManaAIcons[2];
-static dpatch_t dpManaBIcons[2];
-static dpatch_t dpInventoryBar;
-static dpatch_t dpWeaponSlot[3]; // [Fighter, Cleric, Mage]
-static dpatch_t dpWeaponFull[3]; // [Fighter, Cleric, Mage]
-static dpatch_t dpLifeGem[3][8]; // [Fighter, Cleric, Mage][color]
-static dpatch_t dpWeaponPiece1[3]; // [Fighter, Cleric, Mage]
-static dpatch_t dpWeaponPiece2[3]; // [Fighter, Cleric, Mage]
-static dpatch_t dpWeaponPiece3[3]; // [Fighter, Cleric, Mage]
-static dpatch_t dpChain[3]; // [Fighter, Cleric, Mage]
-static dpatch_t dpInvItemFlash[5];
-static dpatch_t dpSpinFly[16];
-static dpatch_t dpSpinMinotaur[16];
-static dpatch_t dpSpinSpeed[16];
-static dpatch_t dpSpinDefense[16];
-static dpatch_t dpTeleIcon;
+static patchinfo_t dpStatusBar;
+static patchinfo_t dpStatusBarTop;
+static patchinfo_t dpKills;
+static patchinfo_t dpStatBar;
+static patchinfo_t dpKeyBar;
+static patchinfo_t dpKeySlot[NUM_KEY_TYPES];
+static patchinfo_t dpArmorSlot[NUMARMOR];
+static patchinfo_t dpINumbers[10];
+static patchinfo_t dpNegative;
+static patchinfo_t dpManaAVials[2];
+static patchinfo_t dpManaBVials[2];
+static patchinfo_t dpManaAIcons[2];
+static patchinfo_t dpManaBIcons[2];
+static patchinfo_t dpInventoryBar;
+static patchinfo_t dpWeaponSlot[3]; // [Fighter, Cleric, Mage]
+static patchinfo_t dpWeaponFull[3]; // [Fighter, Cleric, Mage]
+static patchinfo_t dpLifeGem[3][8]; // [Fighter, Cleric, Mage][color]
+static patchinfo_t dpWeaponPiece1[3]; // [Fighter, Cleric, Mage]
+static patchinfo_t dpWeaponPiece2[3]; // [Fighter, Cleric, Mage]
+static patchinfo_t dpWeaponPiece3[3]; // [Fighter, Cleric, Mage]
+static patchinfo_t dpChain[3]; // [Fighter, Cleric, Mage]
+static patchinfo_t dpInvItemFlash[5];
+static patchinfo_t dpSpinFly[16];
+static patchinfo_t dpSpinMinotaur[16];
+static patchinfo_t dpSpinSpeed[16];
+static patchinfo_t dpSpinDefense[16];
+static patchinfo_t dpTeleIcon;
 
 // CVARs for the HUD/Statusbar
 cvar_t sthudCVars[] = {
@@ -739,105 +739,104 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
 
 void ST_loadGraphics(void)
 {
-    int                 i;
-    char                namebuf[9];
+    char namebuf[9];
+    int i;
 
+    R_PrecachePatch("H2BAR", &dpStatusBar);
+    R_PrecachePatch("H2TOP", &dpStatusBarTop);
+    R_PrecachePatch("INVBAR", &dpInventoryBar);
+    R_PrecachePatch("STATBAR", &dpStatBar);
+    R_PrecachePatch("KEYBAR", &dpKeyBar);
 
-    R_CachePatch(&dpStatusBar, "H2BAR");
-    R_CachePatch(&dpStatusBarTop, "H2TOP");
-    R_CachePatch(&dpInventoryBar, "INVBAR");
-    R_CachePatch(&dpStatBar, "STATBAR");
-    R_CachePatch(&dpKeyBar, "KEYBAR");
+    R_PrecachePatch("MANAVL1D", &dpManaAVials[0]);
+    R_PrecachePatch("MANAVL2D", &dpManaBVials[0]);
+    R_PrecachePatch("MANAVL1", &dpManaAVials[1]);
+    R_PrecachePatch("MANAVL2", &dpManaBVials[1]);
 
-    R_CachePatch(&dpManaAVials[0], "MANAVL1D");
-    R_CachePatch(&dpManaBVials[0], "MANAVL2D");
-    R_CachePatch(&dpManaAVials[1], "MANAVL1");
-    R_CachePatch(&dpManaBVials[1], "MANAVL2");
+    R_PrecachePatch("MANADIM1", &dpManaAIcons[0]);
+    R_PrecachePatch("MANADIM2", &dpManaBIcons[0]);
+    R_PrecachePatch("MANABRT1", &dpManaAIcons[1]);
+    R_PrecachePatch("MANABRT2", &dpManaBIcons[1]);
 
-    R_CachePatch(&dpManaAIcons[0], "MANADIM1");
-    R_CachePatch(&dpManaBIcons[0], "MANADIM2");
-    R_CachePatch(&dpManaAIcons[1], "MANABRT1");
-    R_CachePatch(&dpManaBIcons[1], "MANABRT2");
-
-    R_CachePatch(&dpNegative, "NEGNUM");
-    R_CachePatch(&dpKills, "KILLS");
+    R_PrecachePatch("NEGNUM", &dpNegative);
+    R_PrecachePatch("KILLS", &dpKills);
 
     for(i = 0; i < NUM_KEY_TYPES; ++i)
     {
         sprintf(namebuf, "KEYSLOT%X", i + 1);
-        R_CachePatch(&dpKeySlot[i], namebuf);
+        R_PrecachePatch(namebuf, &dpKeySlot[i]);
     }
 
     for(i = 0; i < NUMARMOR; ++i)
     {
         sprintf(namebuf, "ARMSLOT%d", i + 1);
-        R_CachePatch(&dpArmorSlot[i], namebuf);
+        R_PrecachePatch(namebuf, &dpArmorSlot[i]);
     }
 
     for(i = 0; i < 16; ++i)
     {
         sprintf(namebuf, "SPFLY%d", i);
-        R_CachePatch(&dpSpinFly[i], namebuf);
+        R_PrecachePatch(namebuf, &dpSpinFly[i]);
 
         sprintf(namebuf, "SPMINO%d", i);
-        R_CachePatch(&dpSpinMinotaur[i], namebuf);
+        R_PrecachePatch(namebuf, &dpSpinMinotaur[i]);
 
         sprintf(namebuf, "SPBOOT%d", i);
-        R_CachePatch(&dpSpinSpeed[i], namebuf);
+        R_PrecachePatch(namebuf, &dpSpinSpeed[i]);
 
         sprintf(namebuf, "SPSHLD%d", i);
-        R_CachePatch(&dpSpinDefense[i], namebuf);
+        R_PrecachePatch(namebuf, &dpSpinDefense[i]);
     }
 
     // Fighter:
-    R_CachePatch(&dpWeaponPiece1[PCLASS_FIGHTER], "WPIECEF1");
-    R_CachePatch(&dpWeaponPiece2[PCLASS_FIGHTER], "WPIECEF2");
-    R_CachePatch(&dpWeaponPiece3[PCLASS_FIGHTER], "WPIECEF3");
-    R_CachePatch(&dpChain[PCLASS_FIGHTER], "CHAIN");
-    R_CachePatch(&dpWeaponSlot[PCLASS_FIGHTER], "WPSLOT0");
-    R_CachePatch(&dpWeaponFull[PCLASS_FIGHTER], "WPFULL0");
-    R_CachePatch(&dpLifeGem[PCLASS_FIGHTER][0], "LIFEGEM");
+    R_PrecachePatch("WPIECEF1", &dpWeaponPiece1[PCLASS_FIGHTER]);
+    R_PrecachePatch("WPIECEF2", &dpWeaponPiece2[PCLASS_FIGHTER]);
+    R_PrecachePatch("WPIECEF3", &dpWeaponPiece3[PCLASS_FIGHTER]);
+    R_PrecachePatch("CHAIN", &dpChain[PCLASS_FIGHTER]);
+    R_PrecachePatch("WPSLOT0", &dpWeaponSlot[PCLASS_FIGHTER]);
+    R_PrecachePatch("WPFULL0", &dpWeaponFull[PCLASS_FIGHTER]);
+    R_PrecachePatch("LIFEGEM", &dpLifeGem[PCLASS_FIGHTER][0]);
     for(i = 1; i < 8; ++i)
     {
         sprintf(namebuf, "LIFEGMF%d", i + 1);
-        R_CachePatch(&dpLifeGem[PCLASS_FIGHTER][i], namebuf);
+        R_PrecachePatch(namebuf, &dpLifeGem[PCLASS_FIGHTER][i]);
     }
 
     // Cleric:
-    R_CachePatch(&dpWeaponPiece1[PCLASS_CLERIC], "WPIECEC1");
-    R_CachePatch(&dpWeaponPiece2[PCLASS_CLERIC], "WPIECEC2");
-    R_CachePatch(&dpWeaponPiece3[PCLASS_CLERIC], "WPIECEC3");
-    R_CachePatch(&dpChain[PCLASS_CLERIC], "CHAIN2");
-    R_CachePatch(&dpWeaponSlot[PCLASS_CLERIC], "WPSLOT1");
-    R_CachePatch(&dpWeaponFull[PCLASS_CLERIC], "WPFULL1");
+    R_PrecachePatch("WPIECEC1", &dpWeaponPiece1[PCLASS_CLERIC]);
+    R_PrecachePatch("WPIECEC2", &dpWeaponPiece2[PCLASS_CLERIC]);
+    R_PrecachePatch("WPIECEC3", &dpWeaponPiece3[PCLASS_CLERIC]);
+    R_PrecachePatch("CHAIN2", &dpChain[PCLASS_CLERIC]);
+    R_PrecachePatch("WPSLOT1", &dpWeaponSlot[PCLASS_CLERIC]);
+    R_PrecachePatch("WPFULL1", &dpWeaponFull[PCLASS_CLERIC]);
     for(i = 0; i < 8; ++i)
     {
         sprintf(namebuf, "LIFEGMC%d", i + 1);
-        R_CachePatch(&dpLifeGem[PCLASS_CLERIC][i], namebuf);
+        R_PrecachePatch(namebuf, &dpLifeGem[PCLASS_CLERIC][i]);
     }
 
     // Mage:
-    R_CachePatch(&dpWeaponPiece1[PCLASS_MAGE], "WPIECEM1");
-    R_CachePatch(&dpWeaponPiece2[PCLASS_MAGE], "WPIECEM2");
-    R_CachePatch(&dpWeaponPiece3[PCLASS_MAGE], "WPIECEM3");
-    R_CachePatch(&dpChain[PCLASS_MAGE], "CHAIN3");
-    R_CachePatch(&dpWeaponSlot[PCLASS_MAGE], "WPSLOT2");
-    R_CachePatch(&dpWeaponFull[PCLASS_MAGE], "WPFULL2");
+    R_PrecachePatch("WPIECEM1", &dpWeaponPiece1[PCLASS_MAGE]);
+    R_PrecachePatch("WPIECEM2", &dpWeaponPiece2[PCLASS_MAGE]);
+    R_PrecachePatch("WPIECEM3", &dpWeaponPiece3[PCLASS_MAGE]);
+    R_PrecachePatch("CHAIN3", &dpChain[PCLASS_MAGE]);
+    R_PrecachePatch("WPSLOT2", &dpWeaponSlot[PCLASS_MAGE]);
+    R_PrecachePatch("WPFULL2", &dpWeaponFull[PCLASS_MAGE]);
     for(i = 0; i < 8; ++i)
     {
         sprintf(namebuf, "LIFEGMM%d", i + 1);
-        R_CachePatch(&dpLifeGem[PCLASS_MAGE][i], namebuf);
+        R_PrecachePatch(namebuf, &dpLifeGem[PCLASS_MAGE][i]);
     }
 
     for(i = 0; i < 10; ++i)
     {
         sprintf(namebuf, "IN%d", i);
-        R_CachePatch(&dpINumbers[i], namebuf);
+        R_PrecachePatch(namebuf, &dpINumbers[i]);
     }
 
     // Inventory item flash anim.
     {
-    const char          invItemFlashAnim[5][9] = {
+    const char invItemFlashAnim[5][9] = {
         {"USEARTIA"},
         {"USEARTIB"},
         {"USEARTIC"},
@@ -847,11 +846,11 @@ void ST_loadGraphics(void)
 
     for(i = 0; i < 5; ++i)
     {
-        R_CachePatch(&dpInvItemFlash[i], invItemFlashAnim[i]);
+        R_PrecachePatch(invItemFlashAnim[i], &dpInvItemFlash[i]);
     }
     }
 
-    R_CachePatch(&dpTeleIcon, "TELEICON");
+    R_PrecachePatch("TELEICON", &dpTeleIcon);
 }
 
 void ST_loadData(void)
@@ -1259,7 +1258,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
     numDrawn = 0;
     for(i = 0; i < NUM_KEY_TYPES; ++i)
     {
-        const dpatch_t* patch;
+        const patchinfo_t* patch;
 
         if(!(plr->keys & (1 << i)))
             continue;
@@ -1305,7 +1304,7 @@ void drawSBarArmorIconsWidget(int player, float textAlpha, float iconAlpha,
     numDrawn = 0;
     for(i = 0; i < NUMARMOR; ++i)
     {
-        const dpatch_t* patch;
+        const patchinfo_t* patch;
         float alpha;
 
         if(!plr->armorPoints[i])
@@ -1818,9 +1817,9 @@ void drawBlueManaWidget(int player, float textAlpha, float iconAlpha,
 {
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
-    const dpatch_t* dim =  &dpManaAIcons[0];
-    const dpatch_t* bright = &dpManaAIcons[1];
-    const dpatch_t* patch = NULL;
+    const patchinfo_t* dim =  &dpManaAIcons[0];
+    const patchinfo_t* bright = &dpManaAIcons[1];
+    const patchinfo_t* patch = NULL;
 
     if(hud->statusbarActive)
         return;
@@ -1863,9 +1862,9 @@ void drawGreenManaWidget(int player, float textAlpha, float iconAlpha,
 {
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
-    const dpatch_t* dim = &dpManaBIcons[0];
-    const dpatch_t* bright = &dpManaBIcons[1];
-    const dpatch_t* patch = NULL;
+    const patchinfo_t* dim = &dpManaBIcons[0];
+    const patchinfo_t* bright = &dpManaBIcons[1];
+    const patchinfo_t* patch = NULL;
 
     if(hud->statusbarActive)
         return;
@@ -1939,7 +1938,7 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
 
     if(hud->currentInvItemFlash > 0)
     {
-        const dpatch_t* dp = &dpInvItemFlash[hud->currentInvItemFlash % 5];
+        const patchinfo_t* dp = &dpInvItemFlash[hud->currentInvItemFlash % 5];
 
         GL_DrawPatchLitAlpha(-30, -30, 1, iconAlpha / 2, dpInvItemBox.lump);
         GL_DrawPatchLitAlpha(-27, -30, 1, iconAlpha, dp->lump);

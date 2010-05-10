@@ -302,27 +302,6 @@ boolean R_MapObscures(int playerid, int x, int y, int w, int h)
     return retVal;
 }
 
-void R_CachePatch(dpatch_t* dp, const char* name)
-{
-    lumppatch_t*        patch;
-
-    if(IS_DEDICATED)
-        return;
-
-    dp->lump = W_CheckNumForName(name);
-    if(dp->lump == -1)
-        return;
-
-    patch = (lumppatch_t *) W_CacheLumpNum(dp->lump, PU_CACHE);
-    dp->width = SHORT(patch->width);
-    dp->height = SHORT(patch->height);
-    dp->leftOffset = SHORT(patch->leftOffset);
-    dp->topOffset = SHORT(patch->topOffset);
-
-    // Precache the patch while we're at it.
-    R_PrecachePatch(dp->lump);
-}
-
 #ifndef __JHEXEN__
 void R_GetGammaMessageStrings(void)
 {

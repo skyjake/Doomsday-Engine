@@ -109,30 +109,30 @@ static gamefont_t gFonts[NUM_GAME_FONTS];
 static gamefontid_t currentGFontIndex;
 
 #if __JHERETIC__ || __JHEXEN__
-dpatch_t dpSmallNumbers[10];
+patchinfo_t dpSmallNumbers[10];
 #endif
-dpatch_t huMinus;
+patchinfo_t huMinus;
 
 int typeInTime = 0;
 
 #if __JDOOM__ || __JDOOM64__
 // Name graphics of each map.
-dpatch_t* mapNamePatches = NULL;
+patchinfo_t* mapNamePatches = NULL;
 // Name graphics of each skill mode.
-dpatch_t skillModeNames[NUM_SKILL_MODES];
-dpatch_t m_pause; // Paused graphic.
+patchinfo_t skillModeNames[NUM_SKILL_MODES];
+patchinfo_t m_pause; // Paused graphic.
 #endif
 
 #if __JDOOM__
 // Name graphics of each episode.
-dpatch_t* episodeNamePatches = NULL;
+patchinfo_t* episodeNamePatches = NULL;
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-dpatch_t dpInvItemBox;
-dpatch_t dpInvSelectBox;
-dpatch_t dpInvPageLeft[2];
-dpatch_t dpInvPageRight[2];
+patchinfo_t dpInvItemBox;
+patchinfo_t dpInvSelectBox;
+patchinfo_t dpInvPageLeft[2];
+patchinfo_t dpInvPageRight[2];
 #endif
 
 boolean shiftdown = false;
@@ -180,7 +180,7 @@ const char shiftXForm[] = {
 
 static hudstate_t hudStates[MAXPLAYERS];
 
-static dpatch_t borderPatches[8];
+static patchinfo_t borderPatches[8];
 
 static fogeffectdata_t fogEffectData;
 
@@ -206,7 +206,7 @@ void R_SetFontCharacter(gamefontid_t fontid, byte ch, const char* lumpname)
     DD_SetInteger(DD_MONOCHROME_PATCHES, 2);
     DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, true);
 
-    R_CachePatch(&font->chars[ch].patch, font->chars[ch].lumpname);
+    R_PrecachePatch(font->chars[ch].lumpname, &font->chars[ch].patch);
 
     DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, false);
     DD_SetInteger(DD_MONOCHROME_PATCHES, 0);
@@ -682,45 +682,45 @@ void Hu_LoadData(void)
 
     // Load the border patches
     for(i = 1; i < 9; ++i)
-        R_CachePatch(&borderPatches[i-1], borderLumps[i]);
+        R_PrecachePatch(borderLumps[i], &borderPatches[i-1]);
 
     // Patch used for '-' (minus) in the status bar.
 #if __JDOOM__
-    R_CachePatch(&huMinus, "STTMINUS");
+    R_PrecachePatch("STTMINUS", &huMinus);
 #elif __JDOOM64__
-    R_CachePatch(&huMinus, "FONTB046");
+    R_PrecachePatch("FONTB046", &huMinus);
 #else
-    R_CachePatch(&huMinus, "FONTB13");
+    R_PrecachePatch("FONTB13", &huMinus);
 #endif
 
 #if __JDOOM__ || __JDOOM64__
     for(i = 0; i < NUM_SKILL_MODES; ++i)
     {
-        R_CachePatch(&skillModeNames[i], skillModePatchNames[i]);
+        R_PrecachePatch(skillModePatchNames[i], &skillModeNames[i]);
     }
 
-    R_CachePatch(&m_pause, "M_PAUSE");
+    R_PrecachePatch("M_PAUSE", &m_pause);
 
     // Load the map name patches.
 # if __JDOOM64__
     {
         int NUMCMAPS = 32;
-        mapNamePatches = Z_Malloc(sizeof(dpatch_t) * NUMCMAPS, PU_STATIC, 0);
+        mapNamePatches = Z_Malloc(sizeof(patchinfo_t) * NUMCMAPS, PU_STATIC, 0);
         for(i = 0; i < NUMCMAPS; ++i)
         {
             sprintf(name, "WILV%2.2d", i);
-            R_CachePatch(&mapNamePatches[i], name);
+            R_PrecachePatch(name, &mapNamePatches[i]);
         }
     }
 # else
     if(gameMode == commercial)
     {
         int NUMCMAPS = 32;
-        mapNamePatches = Z_Malloc(sizeof(dpatch_t) * NUMCMAPS, PU_STATIC, 0);
+        mapNamePatches = Z_Malloc(sizeof(patchinfo_t) * NUMCMAPS, PU_STATIC, 0);
         for(i = 0; i < NUMCMAPS; ++i)
         {
             sprintf(name, "CWILV%2.2d", i);
-            R_CachePatch(&mapNamePatches[i], name);
+            R_PrecachePatch(name, &mapNamePatches[i]);
         }
     }
     else
@@ -729,19 +729,19 @@ void Hu_LoadData(void)
 
         // Don't waste space - patches are loaded back to back
         // ie no space in the array is left for E1M10
-        mapNamePatches = Z_Malloc(sizeof(dpatch_t) * (9*4), PU_STATIC, 0);
+        mapNamePatches = Z_Malloc(sizeof(patchinfo_t) * (9*4), PU_STATIC, 0);
         for(i = 0; i < 4; ++i) // Number of episodes.
         {
             for(j = 0; j < 9; ++j) // Number of maps per episode.
             {
                 sprintf(name, "WILV%2.2d", (i * 10) + j);
-                R_CachePatch(&mapNamePatches[(i* 9) + j], name);
+                R_PrecachePatch(name, &mapNamePatches[(i* 9) + j]);
             }
         }
 
-        episodeNamePatches = Z_Malloc(sizeof(dpatch_t) * 4, PU_STATIC, 0);
+        episodeNamePatches = Z_Malloc(sizeof(patchinfo_t) * 4, PU_STATIC, 0);
         for(i = 0; i < 4; ++i)
-            R_CachePatch(&episodeNamePatches[i], episodePatchNames[i]);
+            R_PrecachePatch(episodePatchNames[i], &episodeNamePatches[i]);
     }
 # endif
 #endif
@@ -753,17 +753,17 @@ void Hu_LoadData(void)
     for(i = 0; i < 10; ++i)
     {
         sprintf(name, "SMALLIN%d", i);
-        R_CachePatch(&dpSmallNumbers[i], name);
+        R_PrecachePatch(name, &dpSmallNumbers[i]);
     }
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-    R_CachePatch(&dpInvItemBox, "ARTIBOX");
-    R_CachePatch(&dpInvSelectBox, "SELECTBO");
-    R_CachePatch(&dpInvPageLeft[0], "INVGEML1");
-    R_CachePatch(&dpInvPageLeft[1], "INVGEML2");
-    R_CachePatch(&dpInvPageRight[0], "INVGEMR1");
-    R_CachePatch(&dpInvPageRight[1], "INVGEMR2");
+    R_PrecachePatch("ARTIBOX", &dpInvItemBox);
+    R_PrecachePatch("SELECTBO", &dpInvSelectBox);
+    R_PrecachePatch("INVGEML1", &dpInvPageLeft[0]);
+    R_PrecachePatch("INVGEML2", &dpInvPageLeft[1]);
+    R_PrecachePatch("INVGEMR1", &dpInvPageRight[0]);
+    R_PrecachePatch("INVGEMR2", &dpInvPageRight[1]);
 #endif
 
     Chat_Init();
@@ -832,7 +832,7 @@ void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
     float scale, float r, float g, float b, float a, boolean alignRight)
 {
     const char* ch;
-    dpatch_t* p;
+    patchinfo_t* p;
     float w, h;
     char c;
 
@@ -1920,7 +1920,7 @@ void HUlib_drawTextLine2(int x, int y, const char* string, size_t len,
     {
         unsigned char       c = string[i];
         int                 w;
-        const dpatch_t*     p = &font->chars[c].patch;
+        const patchinfo_t*     p = &font->chars[c].patch;
 
         w = p->width;
         if(x + w > SCREENWIDTH)
@@ -1940,7 +1940,7 @@ void HUlib_drawTextLine2(int x, int y, const char* string, size_t len,
 void HU_DrawBNumber(signed int val, int x, int y, float red,
                     float green, float blue, float alpha)
 {
-    const dpatch_t*     patch;
+    const patchinfo_t*     patch;
     int                 xpos;
     int                 oldval;
 
@@ -2116,7 +2116,7 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g,
 void DrBNumber(int val, int x, int y, float red, float green, float blue,
                float alpha)
 {
-    dpatch_t*           patch;
+    patchinfo_t*           patch;
     int                 xpos;
     int                 oldval;
 
@@ -2340,7 +2340,7 @@ void Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha)
  *                      (ie it does not originate from a DED definition).
  */
 void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
-    const dpatch_t* patch, const char* altstring, boolean builtin, int halign)
+    const patchinfo_t* patch, const char* altstring, boolean builtin, int halign)
 {
     char def[80], *string;
     int patchString = 0, posx = x;
@@ -2401,7 +2401,7 @@ void M_DrawBackgroundBox(float x, float y, float w, float h, float red,
                          float green, float blue, float alpha,
                          boolean background, int border)
 {
-    dpatch_t*           t = 0, *b = 0, *l = 0, *r = 0, *tl = 0, *tr = 0, *br = 0, *bl = 0;
+    patchinfo_t*           t = 0, *b = 0, *l = 0, *r = 0, *tl = 0, *tr = 0, *br = 0, *bl = 0;
     int                 up = -1;
 
     switch(border)

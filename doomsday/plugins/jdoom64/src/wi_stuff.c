@@ -129,28 +129,28 @@ static int cntPar;
 
 static int cntPause;
 
-static dpatch_t bg; // Background (map of levels).
-static dpatch_t percent;
-static dpatch_t colon;
-static dpatch_t num[10]; // 0-9 graphic.
-static dpatch_t minus; // Minus sign.
-static dpatch_t finished; // "Finished!"
-static dpatch_t entering; // "Entering"
-static dpatch_t sp_secret; // "secret"
-static dpatch_t kills; // "Kills"
-static dpatch_t secret; // "Scrt"
-static dpatch_t items; // "Items"
-static dpatch_t frags; // "Frags"
-static dpatch_t time; // "Time"
-static dpatch_t par; // "Par"
-static dpatch_t sucks; // "Sucks!"
-static dpatch_t killers; // "killers"
-static dpatch_t victims; // "victims"
-static dpatch_t total; // "Total"
-static dpatch_t star; // Player icon (alive).
-static dpatch_t bstar; // Player icon (dead).
-static dpatch_t p[MAXPLAYERS]; // "red P[1..MAXPLAYERS]"
-static dpatch_t bp[MAXPLAYERS]; // "gray P[1..MAXPLAYERS]"
+static patchinfo_t bg; // Background (map of levels).
+static patchinfo_t percent;
+static patchinfo_t colon;
+static patchinfo_t num[10]; // 0-9 graphic.
+static patchinfo_t minus; // Minus sign.
+static patchinfo_t finished; // "Finished!"
+static patchinfo_t entering; // "Entering"
+static patchinfo_t sp_secret; // "secret"
+static patchinfo_t kills; // "Kills"
+static patchinfo_t secret; // "Scrt"
+static patchinfo_t items; // "Items"
+static patchinfo_t frags; // "Frags"
+static patchinfo_t time; // "Time"
+static patchinfo_t par; // "Par"
+static patchinfo_t sucks; // "Sucks!"
+static patchinfo_t killers; // "killers"
+static patchinfo_t victims; // "victims"
+static patchinfo_t total; // "Total"
+static patchinfo_t star; // Player icon (alive).
+static patchinfo_t bstar; // Player icon (dead).
+static patchinfo_t p[MAXPLAYERS]; // "red P[1..MAXPLAYERS]"
+static patchinfo_t bp[MAXPLAYERS]; // "gray P[1..MAXPLAYERS]"
 
 // CODE --------------------------------------------------------------------
 
@@ -1021,85 +1021,58 @@ void WI_Ticker(void)
 
 void WI_loadData(void)
 {
-    int                 i;
-    char                name[9];
-
-    strcpy(name, "INTERPIC");
+    char name[9];
+    int i;
 
     // Background.
-    R_CachePatch(&bg, name);
+    R_PrecachePatch("INTERPIC", &bg);
+    // Minus sign.
+    R_PrecachePatch("WIMINUS", &minus);
 
-    // More hacks on minus sign.
-    R_CachePatch(&minus, "WIMINUS");
-
+    // Numbers 0-9
     for(i = 0; i < 10; ++i)
     {
-        // Numbers 0-9
         sprintf(name, "WINUM%d", i);
-        // num[i] = W_CacheLumpName(name, PU_STATIC);
-        R_CachePatch(&num[i], name);
+        R_PrecachePatch(name, &num[i]);
     }
-
     // Percent sign.
-    R_CachePatch(&percent, "WIPCNT");
-
+    R_PrecachePatch("WIPCNT", &percent);
     // "finished"
-    R_CachePatch(&finished, "WIF");
-
+    R_PrecachePatch("WIF", &finished);
     // "entering"
-    R_CachePatch(&entering, "WIENTER");
-
+    R_PrecachePatch("WIENTER", &entering);
     // "kills"
-    R_CachePatch(&kills, "WIOSTK");
-
+    R_PrecachePatch("WIOSTK", &kills);
     // "scrt"
-    R_CachePatch(&secret, "WIOSTS");
-
+    R_PrecachePatch("WIOSTS", &secret);
     // "secret"
-    R_CachePatch(&sp_secret, "WISCRT2");
-
+    R_PrecachePatch("WISCRT2", &sp_secret);
     //items
-    R_CachePatch(&items, "WIOSTI");
-
+    R_PrecachePatch("WIOSTI", &items);
     // "frgs"
-    R_CachePatch(&frags, "WIFRGS");
-
+    R_PrecachePatch("WIFRGS", &frags);
     // ":"
-    R_CachePatch(&colon, "WICOLON");
-
+    R_PrecachePatch("WICOLON", &colon);
     // "time"
-    R_CachePatch(&time, "WITIME");
-
+    R_PrecachePatch("WITIME", &time);
     // "sucks"
-    R_CachePatch(&sucks, "WISUCKS");
-
+    R_PrecachePatch("WISUCKS", &sucks);
     // "par"
-    R_CachePatch(&par, "WIPAR");
-
+    R_PrecachePatch("WIPAR", &par);
     // "killers" (vertical)
-    R_CachePatch(&killers, "WIKILRS");
-
+    R_PrecachePatch("WIKILRS", &killers);
     // "victims" (horiz)
-    R_CachePatch(&victims, "WIVCTMS");
-
+    R_PrecachePatch("WIVCTMS", &victims);
     // "total"
-    R_CachePatch(&total, "WIMSTT");
-
-    // your face
-    //R_CachePatch(&star, "STFST01");
-
-    // dead face
-    //R_CachePatch(&bstar, "STFDEAD0");
+    R_PrecachePatch("WIMSTT", &total);
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        // "1,2,3,4"
         sprintf(name, "STPB%d", i);
-        R_CachePatch(&p[i], name);
+        R_PrecachePatch(name, &p[i]);
 
-        // "1,2,3,4"
         sprintf(name, "WIBP%d", i + 1);
-        R_CachePatch(&bp[i], name);
+        R_PrecachePatch(name, &bp[i]);
     }
 }
 

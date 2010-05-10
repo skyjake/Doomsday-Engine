@@ -48,7 +48,7 @@ typedef struct {
     const char*     text;
     void          (*func) (int option, void *data);
     int             option;
-    dpatch_t*       patch;
+    patchinfo_t*       patch;
     void*           data;
 } menuitem_t;
 

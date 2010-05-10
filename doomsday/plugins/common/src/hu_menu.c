@@ -221,7 +221,7 @@ static int SkullBaseLump;
 #endif
 
 static int cursors = NUMCURSORS;
-dpatch_t cursorst[NUMCURSORS];
+patchinfo_t cursorst[NUMCURSORS];
 
 #if __JHEXEN__
 static int MenuPClass;
@@ -254,31 +254,31 @@ static int quickload;
 static char notDesignedForMessage[80];
 
 #if __JDOOM__ || __JDOOM64__
-static dpatch_t m_doom;
-static dpatch_t m_newg;
-static dpatch_t m_skill;
-static dpatch_t m_episod;
-static dpatch_t m_ngame;
-static dpatch_t m_option;
-static dpatch_t m_loadg;
-static dpatch_t m_saveg;
-static dpatch_t m_rdthis;
-static dpatch_t m_quitg;
-static dpatch_t m_optttl;
-static dpatch_t dpLSLeft;
-static dpatch_t dpLSRight;
-static dpatch_t dpLSCntr;
+static patchinfo_t m_doom;
+static patchinfo_t m_newg;
+static patchinfo_t m_skill;
+static patchinfo_t m_episod;
+static patchinfo_t m_ngame;
+static patchinfo_t m_option;
+static patchinfo_t m_loadg;
+static patchinfo_t m_saveg;
+static patchinfo_t m_rdthis;
+static patchinfo_t m_quitg;
+static patchinfo_t m_optttl;
+static patchinfo_t dpLSLeft;
+static patchinfo_t dpLSRight;
+static patchinfo_t dpLSCntr;
 # if __JDOOM__
-static dpatch_t credit;
-static dpatch_t help;
-static dpatch_t help1;
-static dpatch_t help2;
+static patchinfo_t credit;
+static patchinfo_t help;
+static patchinfo_t help1;
+static patchinfo_t help2;
 # endif
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-static dpatch_t m_htic;
-static dpatch_t dpFSlot;
+static patchinfo_t m_htic;
+static patchinfo_t dpFSlot;
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
@@ -1197,46 +1197,46 @@ void Hu_MenuRegister(void)
  */
 void M_LoadData(void)
 {
-    int             i;
-    char            buffer[9];
+    int i;
+    char buffer[9];
 
     // Load the cursor patches
     for(i = 0; i < cursors; ++i)
     {
         sprintf(buffer, CURSORPREF, i+1);
-        R_CachePatch(&cursorst[i], buffer);
+        R_PrecachePatch(buffer, &cursorst[i]);
     }
 
 #if __JDOOM__ || __JDOOM64__
-    R_CachePatch(&m_doom, "M_DOOM");
-    R_CachePatch(&m_newg, "M_NEWG");
-    R_CachePatch(&m_skill, "M_SKILL");
-    R_CachePatch(&m_episod, "M_EPISOD");
-    R_CachePatch(&m_ngame, "M_NGAME");
-    R_CachePatch(&m_option, "M_OPTION");
-    R_CachePatch(&m_loadg, "M_LOADG");
-    R_CachePatch(&m_saveg, "M_SAVEG");
-    R_CachePatch(&m_rdthis, "M_RDTHIS");
-    R_CachePatch(&m_quitg, "M_QUITG");
-    R_CachePatch(&m_optttl, "M_OPTTTL");
-    R_CachePatch(&dpLSLeft, "M_LSLEFT");
-    R_CachePatch(&dpLSRight, "M_LSRGHT");
-    R_CachePatch(&dpLSCntr, "M_LSCNTR");
+    R_PrecachePatch("M_DOOM", &m_doom);
+    R_PrecachePatch("M_NEWG", &m_newg);
+    R_PrecachePatch("M_SKILL", &m_skill);
+    R_PrecachePatch("M_EPISOD", &m_episod);
+    R_PrecachePatch("M_NGAME", &m_ngame);
+    R_PrecachePatch("M_OPTION", &m_option);
+    R_PrecachePatch("M_LOADG", &m_loadg);
+    R_PrecachePatch("M_SAVEG", &m_saveg);
+    R_PrecachePatch("M_RDTHIS", &m_rdthis);
+    R_PrecachePatch("M_QUITG", &m_quitg);
+    R_PrecachePatch("M_OPTTTL", &m_optttl);
+    R_PrecachePatch("M_LSLEFT", &dpLSLeft);
+    R_PrecachePatch("M_LSRGHT", &dpLSRight);
+    R_PrecachePatch("M_LSCNTR", &dpLSCntr);
 # if __JDOOM__
     if(gameMode == retail || gameMode == commercial)
-        R_CachePatch(&credit, "CREDIT");
+        R_PrecachePatch("CREDIT", &credit);
     if(gameMode == commercial)
-        R_CachePatch(&help, "HELP");
+        R_PrecachePatch("HELP", &help);
     if(gameMode == shareware || gameMode == registered || gameMode == retail)
-        R_CachePatch(&help1, "HELP1");
+        R_PrecachePatch("HELP1", &help1);
     if(gameMode == shareware || gameMode == registered)
-        R_CachePatch(&help2, "HELP2");
+        R_PrecachePatch("HELP2", &help2);
 # endif
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-    R_CachePatch(&m_htic, "M_HTIC");
-    R_CachePatch(&dpFSlot, "M_FSLOT");
+    R_PrecachePatch("M_HTIC", &m_htic);
+    R_PrecachePatch("M_FSLOT", &dpFSlot);
 #endif
 }
 

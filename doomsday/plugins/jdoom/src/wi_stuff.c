@@ -105,7 +105,7 @@ typedef struct wianim_s {
     int             data1, data2;
 
     // Actual graphics for frames of animations.
-    dpatch_t        p[3];
+    patchinfo_t        p[3];
 
 // Following must be initialized to zero before use!
 
@@ -269,30 +269,30 @@ static wbstartstruct_t *wbs;
 
 static wbplayerstruct_t *plrs;  // wbs->plyr[]
 
-static dpatch_t bg; // Background (map of maps).
-static dpatch_t yah[2]; // You Are Here.
-static dpatch_t splat; // Splat.
-static dpatch_t percent; // % graphic.
-static dpatch_t colon; // : graphic.
-static dpatch_t num[10]; // 0-9 numbers.
-static dpatch_t wiminus; // Minus sign.
-static dpatch_t finished; // "Finished!"
-static dpatch_t entering; // "Entering"
-static dpatch_t sp_secret; // "secret"
-static dpatch_t kills; // "Kills"
-static dpatch_t secret; // "Scrt"
-static dpatch_t items; // "Items"
-static dpatch_t frags; // "Frags"
-static dpatch_t time; // "time"
-static dpatch_t par; // "par"
-static dpatch_t sucks; // "sucks!"
-static dpatch_t killers; // "killers"
-static dpatch_t victims; // "victims"
-static dpatch_t total; // "Total"
-static dpatch_t star; // Player live icon.
-static dpatch_t bstar; // Player dead icon.
-static dpatch_t p[MAXPLAYERS]; // "red P[1..MAXPLAYERS]"
-static dpatch_t bp[MAXPLAYERS]; // "gray P[1..MAXPLAYERS]"
+static patchinfo_t bg; // Background (map of maps).
+static patchinfo_t yah[2]; // You Are Here.
+static patchinfo_t splat; // Splat.
+static patchinfo_t percent; // % graphic.
+static patchinfo_t colon; // : graphic.
+static patchinfo_t num[10]; // 0-9 numbers.
+static patchinfo_t wiminus; // Minus sign.
+static patchinfo_t finished; // "Finished!"
+static patchinfo_t entering; // "Entering"
+static patchinfo_t sp_secret; // "secret"
+static patchinfo_t kills; // "Kills"
+static patchinfo_t secret; // "Scrt"
+static patchinfo_t items; // "Items"
+static patchinfo_t frags; // "Frags"
+static patchinfo_t time; // "time"
+static patchinfo_t par; // "par"
+static patchinfo_t sucks; // "sucks!"
+static patchinfo_t killers; // "killers"
+static patchinfo_t victims; // "victims"
+static patchinfo_t total; // "Total"
+static patchinfo_t star; // Player live icon.
+static patchinfo_t bstar; // Player dead icon.
+static patchinfo_t p[MAXPLAYERS]; // "red P[1..MAXPLAYERS]"
+static patchinfo_t bp[MAXPLAYERS]; // "gray P[1..MAXPLAYERS]"
 
 // CODE --------------------------------------------------------------------
 
@@ -391,17 +391,17 @@ void WI_drawEL(void)
                  mapName, false, ALIGN_CENTER);
 }
 
-void WI_DrawOnMapNode(int n, dpatch_t * c)
+void WI_DrawOnMapNode(int n, patchinfo_t* c)
 {
-    int                 i;
-    int                 left, top, right, bottom;
-    boolean             fits = false;
+    int left, top, right, bottom;
+    boolean fits = false;
+    int i;
 
     i = 0;
     do
     {
-        left = mapPoints[wbs->episode][n].x - c[i].leftOffset;
-        top = mapPoints[wbs->episode][n].y - c[i].topOffset;
+        left = mapPoints[wbs->episode][n].x - c[i].offset;
+        top  = mapPoints[wbs->episode][n].y - c[i].topOffset;
         right = left + c[i].width;
         bottom = top + c[i].height;
         if(left >= 0 && right < SCREENWIDTH && top >= 0 &&
@@ -413,8 +413,7 @@ void WI_DrawOnMapNode(int n, dpatch_t * c)
 
     if(fits && i < 2)
     {
-        WI_DrawPatch(mapPoints[wbs->episode][n].x, mapPoints[wbs->episode][n].y,
-                     1, 1, 1, 1,
+        WI_DrawPatch(mapPoints[wbs->episode][n].x, mapPoints[wbs->episode][n].y, 1, 1, 1, 1,
                      &c[i], NULL, false, ALIGN_LEFT);
     }
     else
@@ -1352,33 +1351,30 @@ void WI_Ticker(void)
 
 void WI_loadData(void)
 {
-    int                 i, j;
-    char                name[9];
-    wianim_t           *a;
+    int i, j;
+    char name[9];
+    wianim_t* a;
 
-    if(gameMode == commercial)
-        strcpy(name, "INTERPIC");
-    else
-        sprintf(name, "WIMAP%u", wbs->episode);
-
-    if(gameMode == retail)
+    if(gameMode == commercial || (gameMode == retail && wbs->episode > 2))
     {
-        if(wbs->episode > 2)
-            strcpy(name, "INTERPIC");
+        R_PrecachePatch("INTERPIC", &bg);
     }
-
-    R_CachePatch(&bg, name);
+    else
+    {
+        sprintf(name, "WIMAP%u", wbs->episode);
+        R_PrecachePatch(name, &bg);
+    }
 
     if(gameMode != commercial)
     {
         // You are here.
-        R_CachePatch(&yah[0], "WIURH0");
+        R_PrecachePatch("WIURH0", &yah[0]);
 
         // You are here (alt.)
-        R_CachePatch(&yah[1], "WIURH1");
+        R_PrecachePatch("WIURH1", &yah[1]);
 
         // Splat.
-        R_CachePatch(&splat, "WISPLAT");
+        R_PrecachePatch("WISPLAT", &splat);
 
         if(wbs->episode < 3)
         {
@@ -1392,11 +1388,11 @@ void WI_loadData(void)
                     {
                         // Animations
                         sprintf(name, "WIA%u%.2d%.2d", wbs->episode, j, i);
-                        R_CachePatch(&a->p[i], name);
+                        R_PrecachePatch(name, &a->p[i]);
                     }
                     else
                     {
-                        memcpy(&a->p[i], &anims[1][4].p[i], sizeof(dpatch_t));
+                        memcpy(&a->p[i], &anims[1][4].p[i], sizeof(patchinfo_t));
                     }
                     //// \kludge <
                 }
@@ -1404,75 +1400,57 @@ void WI_loadData(void)
         }
     }
 
-    R_CachePatch(&wiminus, "WIMINUS");
-
+    // Numbers 0-9.
     for(i = 0; i < 10; ++i)
     {
-        // Numbers 0-9.
         sprintf(name, "WINUM%d", i);
-        R_CachePatch(&num[i], name);
+        R_PrecachePatch(name, &num[i]);
     }
 
+    // Minus sign.
+    R_PrecachePatch("WIMINUS", &wiminus);
     // Percent sign.
-    R_CachePatch(&percent, "WIPCNT");
-
+    R_PrecachePatch("WIPCNT", &percent);
     // "finished"
-    R_CachePatch(&finished, "WIF");
-
+    R_PrecachePatch("WIF", &finished);
     // "entering"
-    R_CachePatch(&entering, "WIENTER");
-
+    R_PrecachePatch("WIENTER", &entering);
     // "kills"
-    R_CachePatch(&kills, "WIOSTK");
-
+    R_PrecachePatch("WIOSTK", &kills);
     // "scrt"
-    R_CachePatch(&secret, "WIOSTS");
-
+    R_PrecachePatch("WIOSTS", &secret);
     // "secret"
-    R_CachePatch(&sp_secret, "WISCRT2");
-
+    R_PrecachePatch("WISCRT2", &sp_secret);
     // "items"
-    R_CachePatch(&items, "WIOSTI");
-
+    R_PrecachePatch("WIOSTI", &items);
     // "frgs"
-    R_CachePatch(&frags, "WIFRGS");
-
+    R_PrecachePatch("WIFRGS", &frags);
     // ":"
-    R_CachePatch(&colon, "WICOLON");
-
+    R_PrecachePatch("WICOLON", &colon);
     // "time"
-    R_CachePatch(&time, "WITIME");
-
+    R_PrecachePatch("WITIME", &time);
     // "sucks"
-    R_CachePatch(&sucks, "WISUCKS");
-
+    R_PrecachePatch("WISUCKS", &sucks);
     // "par"
-    R_CachePatch(&par, "WIPAR");
-
+    R_PrecachePatch("WIPAR", &par);
     // "killers" (vertical)
-    R_CachePatch(&killers, "WIKILRS");
-
+    R_PrecachePatch("WIKILRS", &killers);
     // "victims" (horiz)
-    R_CachePatch(&victims, "WIVCTMS");
-
+    R_PrecachePatch("WIVCTMS", &victims);
     // "total"
-    R_CachePatch(&total, "WIMSTT");
-
+    R_PrecachePatch("WIMSTT", &total);
     // your face
-    R_CachePatch(&star, "STFST01");
-
+    R_PrecachePatch("STFST01", &star);
     // dead face
-    R_CachePatch(&bstar, "STFDEAD0");
+    R_PrecachePatch("STFDEAD0", &bstar);
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        // "1,2,3,4"
         sprintf(name, "STPB%d", i);
-        R_CachePatch(&p[i], name);
+        R_PrecachePatch(name, &p[i]);
 
-        // "1,2,3,4"
         sprintf(name, "WIBP%d", i + 1);
-        R_CachePatch(&bp[i], name);
+        R_PrecachePatch(name, &bp[i]);
     }
 }
 

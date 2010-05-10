@@ -171,24 +171,24 @@ static void updateViewWindow(cvar_t* cvar);
 
 static hudstate_t hudStates[MAXPLAYERS];
 
-static dpatch_t statusbar;
-static dpatch_t statusbarTopLeft;
-static dpatch_t statusbarTopRight;
-static dpatch_t chain;
-static dpatch_t statBar;
-static dpatch_t lifeBar;
-static dpatch_t invBar;
-static dpatch_t lifeGems[4];
-static dpatch_t iNumbers[10];
-static dpatch_t negative;
-static dpatch_t ammoIcons[11];
-static dpatch_t dpInvItemFlash[5];
-static dpatch_t spinBook[16];
-static dpatch_t spinFly[16];
-static dpatch_t keys[NUM_KEY_TYPES];
-static dpatch_t godLeft;
-static dpatch_t godRight;
-static dpatch_t lame;
+static patchinfo_t statusbar;
+static patchinfo_t statusbarTopLeft;
+static patchinfo_t statusbarTopRight;
+static patchinfo_t chain;
+static patchinfo_t statBar;
+static patchinfo_t lifeBar;
+static patchinfo_t invBar;
+static patchinfo_t lifeGems[4];
+static patchinfo_t iNumbers[10];
+static patchinfo_t negative;
+static patchinfo_t ammoIcons[11];
+static patchinfo_t dpInvItemFlash[5];
+static patchinfo_t spinBook[16];
+static patchinfo_t spinFly[16];
+static patchinfo_t keys[NUM_KEY_TYPES];
+static patchinfo_t godLeft;
+static patchinfo_t godRight;
+static patchinfo_t lame;
 
 // CVARs for the HUD/Statusbar
 cvar_t sthudCVars[] = {
@@ -1206,7 +1206,7 @@ void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
     /// For each type of ammo this weapon takes.
     for(ammoType = 0; ammoType < NUM_AMMO_TYPES; ++ammoType)
     {
-        const dpatch_t* dp;
+        const patchinfo_t* dp;
         if(!weaponInfo[plr->readyWeapon][plr->class].mode[lvl].ammoType[ammoType])
             continue;
         dp = &ammoIcons[plr->readyWeapon - 1];
@@ -1695,38 +1695,38 @@ void ST_loadGraphics(void)
     char nameBuf[9];
     int i;
 
-    R_CachePatch(&statusbar, "BARBACK");
-    R_CachePatch(&invBar, "INVBAR");
-    R_CachePatch(&chain, "CHAIN");
+    R_PrecachePatch("BARBACK", &statusbar);
+    R_PrecachePatch("INVBAR", &invBar);
+    R_PrecachePatch("CHAIN", &chain);
 
-    R_CachePatch(&statBar, "STATBAR");
-    R_CachePatch(&lifeBar, "LIFEBAR");
+    R_PrecachePatch("STATBAR", &statBar);
+    R_PrecachePatch("LIFEBAR", &lifeBar);
 
     // Order of lifeGems changed to match player color index.
-    R_CachePatch(&lifeGems[0], "LIFEGEM1");
-    R_CachePatch(&lifeGems[1], "LIFEGEM3");
-    R_CachePatch(&lifeGems[2], "LIFEGEM2");
-    R_CachePatch(&lifeGems[3], "LIFEGEM0");
+    R_PrecachePatch("LIFEGEM1", &lifeGems[0]);
+    R_PrecachePatch("LIFEGEM3", &lifeGems[1]);
+    R_PrecachePatch("LIFEGEM2", &lifeGems[2]);
+    R_PrecachePatch("LIFEGEM0", &lifeGems[3]);
 
-    R_CachePatch(&godLeft, "GOD1");
-    R_CachePatch(&godRight, "GOD2");
-    R_CachePatch(&statusbarTopLeft, "LTFCTOP");
-    R_CachePatch(&statusbarTopRight, "RTFCTOP");
-    R_CachePatch(&negative, "NEGNUM");
+    R_PrecachePatch("GOD1", &godLeft);
+    R_PrecachePatch("GOD2", &godRight);
+    R_PrecachePatch("LTFCTOP", &statusbarTopLeft);
+    R_PrecachePatch("RTFCTOP", &statusbarTopRight);
+    R_PrecachePatch("NEGNUM", &negative);
     for(i = 0; i < 16; ++i)
     {
         sprintf(nameBuf, "SPINBK%d", i);
-        R_CachePatch(&spinBook[i], nameBuf);
+        R_PrecachePatch(nameBuf, &spinBook[i]);
 
         sprintf(nameBuf, "SPFLY%d", i);
-        R_CachePatch(&spinFly[i], nameBuf);
+        R_PrecachePatch(nameBuf, &spinFly[i]);
     }
-    R_CachePatch(&lame, "LAME");
+    R_PrecachePatch("LAME", &lame);
 
     for(i = 0; i < 10; ++i)
     {
         sprintf(nameBuf, "IN%d", i);
-        R_CachePatch(&iNumbers[i], nameBuf);
+        R_PrecachePatch(nameBuf, &iNumbers[i]);
     }
 
     // Inventory item flash anim.
@@ -1741,7 +1741,7 @@ void ST_loadGraphics(void)
 
     for(i = 0; i < 5; ++i)
     {
-        R_CachePatch(&dpInvItemFlash[i], invItemFlashAnim[i]);
+        R_PrecachePatch(invItemFlashAnim[i], &dpInvItemFlash[i]);
     }
     }
 
@@ -1758,14 +1758,14 @@ void ST_loadGraphics(void)
 
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
-        R_CachePatch(&ammoIcons[i], ammoPic[i]);
+        R_PrecachePatch(ammoPic[i], &ammoIcons[i]);
     }
     }
 
     // Key cards.
-    R_CachePatch(&keys[0], "ykeyicon");
-    R_CachePatch(&keys[1], "gkeyicon");
-    R_CachePatch(&keys[2], "bkeyicon");
+    R_PrecachePatch("YKEYICON", &keys[0]);
+    R_PrecachePatch("GKEYICON", &keys[1]);
+    R_PrecachePatch("BKEYICON", &keys[2]);
 }
 
 void ST_loadData(void)

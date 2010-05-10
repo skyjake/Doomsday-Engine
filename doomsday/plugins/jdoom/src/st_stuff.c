@@ -228,31 +228,31 @@ static void updateViewWindow(cvar_t* cvar);
 static hudstate_t hudStates[MAXPLAYERS];
 
 // Main bar left.
-static dpatch_t statusbar;
+static patchinfo_t statusbar;
 
 // 0-9, tall numbers.
-static dpatch_t tallNum[10];
+static patchinfo_t tallNum[10];
 
 // Tall % sign.
-static dpatch_t tallPercent;
+static patchinfo_t tallPercent;
 
 // 0-9, short, yellow (,different!) numbers.
-static dpatch_t shortNum[10];
+static patchinfo_t shortNum[10];
 
 // 3 key-cards, 3 skulls.
-static dpatch_t keys[NUM_KEY_TYPES];
+static patchinfo_t keys[NUM_KEY_TYPES];
 
 // Face status patches.
-static dpatch_t faces[ST_NUMFACES];
+static patchinfo_t faces[ST_NUMFACES];
 
 // Face background.
-static dpatch_t faceBackground[4];
+static patchinfo_t faceBackground[4];
 
  // Main bar right.
-static dpatch_t armsBackground;
+static patchinfo_t armsBackground;
 
 // Weapon ownership patches.
-static dpatch_t arms[6][2];
+static patchinfo_t arms[6][2];
 
 // CVARs for the HUD/Statusbar:
 cvar_t sthudCVars[] =
@@ -326,7 +326,7 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha,
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float x = ORIGINX, y = ORIGINY, w = WIDTH, h = HEIGHT;
-    float armsBGX = ST_ARMSBGX - armsBackground.leftOffset;
+    float armsBGX = ST_ARMSBGX - armsBackground.offset;
     float cw, cw2, ch;
 
     if(!hud->statusbarActive)
@@ -488,7 +488,7 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha,
     // Faceback?
     if(IS_NETGAME)
     {
-        const dpatch_t* patch = &faceBackground[cfg.playerColor[player%MAXPLAYERS]%4];
+        const patchinfo_t* patch = &faceBackground[cfg.playerColor[player%MAXPLAYERS]%4];
 
         DGL_SetPatch(patch->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
@@ -1059,7 +1059,7 @@ void drawSBarFaceWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
     {
-    const dpatch_t* facePatch = &faces[hud->faceIndex%ST_NUMFACES];
+    const patchinfo_t* facePatch = &faces[hud->faceIndex%ST_NUMFACES];
     *drawnWidth = facePatch->width;
     *drawnHeight = facePatch->height;
     }
@@ -1084,7 +1084,7 @@ void drawSBarKeysWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
     for(i = 0; i < 3; ++i)
     {
-        const dpatch_t* patch;
+        const patchinfo_t* patch;
         if(hud->keyBoxes[i] == -1)
             continue;
         patch = &keys[hud->keyBoxes[i]%3];
@@ -1364,8 +1364,8 @@ void drawFaceWidget(int player, float textAlpha, float iconAlpha,
 {
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    const dpatch_t* facePatch = &faces[hud->faceIndex];
-    const dpatch_t* bgPatch = &faceBackground[cfg.playerColor[player]];
+    const patchinfo_t* facePatch = &faces[hud->faceIndex];
+    const patchinfo_t* bgPatch = &faceBackground[cfg.playerColor[player]];
     int x = -(bgPatch->width/2);
     if(hud->statusbarActive)
         return;
@@ -1766,25 +1766,23 @@ void ST_loadGraphics(void)
     for(i = 0; i < 10; ++i)
     {
         sprintf(nameBuf, "STTNUM%d", i);
-        R_CachePatch(&tallNum[i], nameBuf);
+        R_PrecachePatch(nameBuf, &tallNum[i]);
 
         sprintf(nameBuf, "STYSNUM%d", i);
-        R_CachePatch(&shortNum[i], nameBuf);
+        R_PrecachePatch(nameBuf, &shortNum[i]);
     }
-
-    // Load percent key.
-    // Note: why not load STMINUS here, too?
-    R_CachePatch(&tallPercent, "STTPRCNT");
 
     // Key cards:
     for(i = 0; i < NUM_KEY_TYPES; ++i)
     {
         sprintf(nameBuf, "STKEYS%d", i);
-        R_CachePatch(&keys[i], nameBuf);
+        R_PrecachePatch(nameBuf, &keys[i]);
     }
 
+    // Percent.
+    R_PrecachePatch("STTPRCNT", &tallPercent);
     // Arms background.
-    R_CachePatch(&armsBackground, "STARMS");
+    R_PrecachePatch("STARMS", &armsBackground);
 
     // Arms ownership widgets:
     for(i = 0; i < 6; ++i)
@@ -1792,21 +1790,21 @@ void ST_loadGraphics(void)
         sprintf(nameBuf, "STGNUM%d", i + 2);
 
         // gray #
-        R_CachePatch(&arms[i][0], nameBuf);
+        R_PrecachePatch(nameBuf, &arms[i][0]);
 
         // yellow #
-        memcpy(&arms[i][1], &shortNum[i + 2], sizeof(dpatch_t));
+        memcpy(&arms[i][1], &shortNum[i + 2], sizeof(patchinfo_t));
     }
 
     // Face backgrounds for different color players.
     for(i = 0; i < 4; ++i)
     {
         sprintf(nameBuf, "STFB%d", i);
-        R_CachePatch(&faceBackground[i], nameBuf);
+        R_PrecachePatch(nameBuf, &faceBackground[i]);
     }
 
     // Status bar background bits.
-    R_CachePatch(&statusbar, "STBAR");
+    R_PrecachePatch("STBAR", &statusbar);
 
     // Face states:
     faceNum = 0;
@@ -1815,21 +1813,21 @@ void ST_loadGraphics(void)
         for(j = 0; j < ST_NUMSTRAIGHTFACES; ++j)
         {
             sprintf(nameBuf, "STFST%d%d", i, j);
-            R_CachePatch(&faces[faceNum++], nameBuf);
+            R_PrecachePatch(nameBuf, &faces[faceNum++]);
         }
         sprintf(nameBuf, "STFTR%d0", i); // Turn right.
-        R_CachePatch(&faces[faceNum++], nameBuf);
+        R_PrecachePatch(nameBuf, &faces[faceNum++]);
         sprintf(nameBuf, "STFTL%d0", i); // Turn left.
-        R_CachePatch(&faces[faceNum++], nameBuf);
+        R_PrecachePatch(nameBuf, &faces[faceNum++]);
         sprintf(nameBuf, "STFOUCH%d", i); // Ouch.
-        R_CachePatch(&faces[faceNum++], nameBuf);
+        R_PrecachePatch(nameBuf, &faces[faceNum++]);
         sprintf(nameBuf, "STFEVL%d", i); // Evil grin.
-        R_CachePatch(&faces[faceNum++], nameBuf);
+        R_PrecachePatch(nameBuf, &faces[faceNum++]);
         sprintf(nameBuf, "STFKILL%d", i); // Pissed off.
-        R_CachePatch(&faces[faceNum++], nameBuf);
+        R_PrecachePatch(nameBuf, &faces[faceNum++]);
     }
-    R_CachePatch(&faces[faceNum++], "STFGOD0");
-    R_CachePatch(&faces[faceNum++], "STFDEAD0");
+    R_PrecachePatch("STFGOD0", &faces[faceNum++]);
+    R_PrecachePatch("STFDEAD0", &faces[faceNum++]);
 }
 
 void ST_loadData(void)

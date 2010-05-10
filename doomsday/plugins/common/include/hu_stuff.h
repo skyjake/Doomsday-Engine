@@ -56,25 +56,25 @@ typedef enum {
 typedef struct gamefont_s {
     struct gamefont_char_s {
         char            lumpname[9];
-        dpatch_t        patch;
+        patchinfo_t        patch;
     } chars[256];
 } gamefont_t;
 
-extern dpatch_t huMinus;
+extern patchinfo_t huMinus;
 #if __JHERETIC__ || __JHEXEN__
-extern dpatch_t dpSmallNumbers[10];
+extern patchinfo_t dpSmallNumbers[10];
 #endif
 
 // Name graphics of each map.
-extern dpatch_t* mapNamePatches;
+extern patchinfo_t* mapNamePatches;
 // Name graphics of each skill mode.
 #if __JDOOM__ || __JDOOM64__
-extern dpatch_t skillModeNames[NUM_SKILL_MODES];
-extern dpatch_t m_pause; // Paused graphic.
+extern patchinfo_t skillModeNames[NUM_SKILL_MODES];
+extern patchinfo_t m_pause; // Paused graphic.
 #endif
 // Name graphics of each episode.
 #if __JDOOM__
-extern dpatch_t* episodeNamePatches;
+extern patchinfo_t* episodeNamePatches;
 #endif
 
 extern const char shiftXForm[];
@@ -86,10 +86,10 @@ extern char *mapNamesPlut[32], *mapNamesTNT[32];
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-extern dpatch_t dpInvItemBox;
-extern dpatch_t dpInvSelectBox;
-extern dpatch_t dpInvPageLeft[2];
-extern dpatch_t dpInvPageRight[2];
+extern patchinfo_t dpInvItemBox;
+extern patchinfo_t dpInvSelectBox;
+extern patchinfo_t dpInvPageLeft[2];
+extern patchinfo_t dpInvPageRight[2];
 #endif
 
 void            Hu_LoadData(void);
@@ -103,7 +103,7 @@ void            Hu_DrawMapTitle(int x, int y, float scale);
 
 // Implements patch replacement.
 void        WI_DrawPatch(int x, int y, float r, float g, float b, float a,
-                         const dpatch_t* patch, const char* altstring,
+                         const patchinfo_t* patch, const char* altstring,
                          boolean builtin, int halign);
 void        WI_DrawParamText(int x, int y, const char* string,
                              gamefontid_t font, float defRed,

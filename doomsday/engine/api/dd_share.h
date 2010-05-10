@@ -972,18 +972,9 @@ typedef enum material_namespace_e {
 #define AGF_FIRST_ONLY      0x2
 #define AGF_PRECACHE        0x4000 // Group is just for precaching.
 
-typedef struct lumppatch_s {
-    short           width; // Bounding box size.
-    short           height;
-    short           leftOffset; // Pixels to the left of origin.
-    short           topOffset; // Pixels below the origin.
-    int             columnOfs[8]; /* Only [width] used the [0] is
-                                   &columnofs[width] */
-} lumppatch_t;
-
 typedef struct {
-    int             lump; // Lump number.
-    int             realLump; // Real lump number.
+    lumpnum_t       lump; // Lump number.
+    lumpnum_t       realLump; // Real lump number.
     int             flip;
     int             offset;
     int             topOffset;
@@ -994,7 +985,7 @@ typedef struct {
 
 typedef struct {
     struct material_s* material;
-    int             realLump; // Real lump number.
+    lumpnum_t       realLump; // Real lump number.
     int             flip;
     int             offset;
     int             topOffset;

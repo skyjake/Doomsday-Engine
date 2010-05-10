@@ -39,10 +39,10 @@ typedef struct {
     int             maxDigits; // Max # of digits in number.
     float           alpha;
     int*            num; // Pointer to current value.
-    dpatch_t*       p; // List of patches for 0-9.
+    patchinfo_t*       p; // List of patches for 0-9.
 } st_number_t;
 
-void            STlib_InitNum(st_number_t* n, int x, int y, dpatch_t* pl,
+void            STlib_InitNum(st_number_t* n, int x, int y, patchinfo_t* pl,
                               int* num, int maxDigits, float alpha);
 void            STlib_DrawNum(st_number_t* n, float alpha);
 
@@ -52,12 +52,12 @@ void            STlib_DrawNum(st_number_t* n, float alpha);
  */
 typedef struct {
     st_number_t     n; // Number.
-    dpatch_t*       p; // Percent sign graphic.
+    patchinfo_t*       p; // Percent sign graphic.
 } st_percent_t;
 
 void            STlib_InitPercent(st_percent_t* p, int x, int y,
-                                  dpatch_t* pl, int* num,
-                                  dpatch_t* percent, float alpha);
+                                  patchinfo_t* pl, int* num,
+                                  patchinfo_t* percent, float alpha);
 void            STlib_DrawPercent(st_percent_t* per, float alpha);
 
 /**
@@ -66,11 +66,11 @@ void            STlib_DrawPercent(st_percent_t* per, float alpha);
 typedef struct {
     int             x, y; // Center-justified location of icon.
     float           alpha;
-    dpatch_t*       p; // Icon.
+    patchinfo_t*       p; // Icon.
 } st_icon_t;
 
 void            STlib_InitIcon(st_icon_t* b, int x, int y,
-                               dpatch_t* i, float alpha);
+                               patchinfo_t* i, float alpha);
 void            STlib_DrawIcon(st_icon_t* bi, float alpha);
 
 /**
@@ -79,11 +79,11 @@ void            STlib_DrawIcon(st_icon_t* bi, float alpha);
 typedef struct {
     int             x, y; // Center-justified location of icons.
     float           alpha;
-    dpatch_t*       p; // List of icons.
+    patchinfo_t*       p; // List of icons.
 } st_multiicon_t;
 
 void            STlib_InitMultiIcon(st_multiicon_t* mi, int x, int y,
-                                    dpatch_t* il, float alpha);
+                                    patchinfo_t* il, float alpha);
 void            STlib_DrawMultiIcon(st_multiicon_t* mi, int icon, float alpha);
 
 #endif

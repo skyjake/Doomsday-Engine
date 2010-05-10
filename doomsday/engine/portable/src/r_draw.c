@@ -88,7 +88,7 @@ void R_SetBorderGfx(char* gfx[9])
 
 void R_InitViewBorder(void)
 {
-    lumppatch_t* patch = NULL;
+    patchinfo_t info;
     uint i;
 
     for(i = 0; i < 9; ++i)
@@ -101,8 +101,8 @@ void R_InitViewBorder(void)
         return;
     }
 
-    patch = (lumppatch_t*) W_CacheLumpNum(borderPatchLumps[BG_TOP], PU_CACHE);
-    bwidth = SHORT(patch->height);
+    R_PrecachePatch(borderPatchNames[BG_TOP], &info);
+    bwidth = info.height;
 }
 
 static void drawPatch(lumpnum_t lump, int x, int y, int w, int h)
