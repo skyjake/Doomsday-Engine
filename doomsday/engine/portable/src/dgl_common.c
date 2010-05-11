@@ -688,11 +688,10 @@ void DGL_SetNoMaterial(void)
 
 void DGL_SetPatch(lumpnum_t lump, int wrapS, int wrapT)
 {
-    GL_SetPatch(lump,
-        (wrapS == DGL_CLAMP? GL_CLAMP :
-         wrapS == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT),
-        (wrapT == DGL_CLAMP? GL_CLAMP :
-         wrapT == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
+    GL_BindTexture(GL_PreparePatch(R_GetPatchTex(lump)), glmode[texMagMode]);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (wrapS == DGL_CLAMP? GL_CLAMP : wrapS == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (wrapT == DGL_CLAMP? GL_CLAMP : wrapT == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
 }
 
 void DGL_SetTranslatedSprite(material_t* mat, int tclass, int tmap)

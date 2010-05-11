@@ -42,19 +42,12 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define PATCHTEX_HASH_SIZE  128
-#define PATCHTEX_HASH(x)    (patchtexhash + (((unsigned) x) & (PATCHTEX_HASH_SIZE - 1)))
-
 #define RAWTEX_HASH_SIZE    128
 #define RAWTEX_HASH(x)      (rawtexhash + (((unsigned) x) & (RAWTEX_HASH_SIZE - 1)))
 
 #define COLORPALETTENAME_MAXLEN     (32)
 
 // TYPES -------------------------------------------------------------------
-
-typedef struct patchtexhash_s {
-    patchtex_t*     first;
-} patchtexhash_t;
 
 typedef struct rawtexhash_s {
     rawtex_t*     first;
@@ -106,6 +99,9 @@ flat_t** flats = NULL;
 int numSpriteTextures = 0;
 spritetex_t** spriteTextures = NULL;
 
+int numDoomPatchDefs = 0;
+patchtex_t** doomPatchDefs = NULL;
+
 int numDetailTextures = 0;
 detailtex_t** detailTextures = NULL;
 
@@ -139,7 +135,6 @@ skinname_t* skinNames = NULL;
 static int numDoomTextureDefs;
 static doomtexturedef_t** doomTextureDefs;
 
-static patchtexhash_t patchtexhash[PATCHTEX_HASH_SIZE];
 static rawtexhash_t rawtexhash[RAWTEX_HASH_SIZE];
 
 static unsigned int numrendpolys = 0;
@@ -917,36 +912,21 @@ void R_ShutdownData(void)
     P_ShutdownMaterialManager();
 }
 
-/**
- * Returns a NULL-terminated array of pointers to all the patchetexs.
- * The array must be freed with Z_Free.
- */
-patchtex_t** R_CollectPatchTexs(int* count)
+static patchtex_t* getPatchTex(lumpnum_t lump)
 {
-    int                 i, num;
-    patchtex_t*         p, **list;
-
-    // First count the number of patchtexs.
-    for(num = 0, i = 0; i < PATCHTEX_HASH_SIZE; ++i)
-        for(p = patchtexhash[i].first; p; p = p->next)
-            num++;
-
-    // Tell this to the caller.
-    if(count)
-        *count = num;
-
-    // Allocate the array, plus one for the terminator.
-    list = Z_Malloc(sizeof(p) * (num + 1), PU_STATIC, NULL);
-
-    // Collect the pointers.
-    for(num = 0, i = 0; i < PATCHTEX_HASH_SIZE; ++i)
-        for(p = patchtexhash[i].first; p; p = p->next)
-            list[num++] = p;
-
-    // Terminate.
-    list[num] = NULL;
-
-    return list;
+    if(lump >= 0 && lump < numLumps)
+    {
+        int i;
+        for(i = 0; i < numDoomPatchDefs; ++i)
+        {
+            patchtex_t* patchTex = doomPatchDefs[i];
+            if(patchTex->lump == lump)
+            {
+                return patchTex;
+            }
+        }
+    }
+    return NULL;
 }
 
 /**
@@ -954,16 +934,10 @@ patchtex_t** R_CollectPatchTexs(int* count)
  */
 patchtex_t* R_FindPatchTex(lumpnum_t lump)
 {
-    patchtex_t*         i;
-    patchtexhash_t*     hash = PATCHTEX_HASH(lump);
-
-    for(i = hash->first; i; i = i->next)
-        if(i->lump == lump)
-        {
-            return i;
-        }
-
-    return NULL;
+    patchtex_t* patchTex = getPatchTex(lump);
+    if(!patchTex)
+        Con_Error("R_FindPatchText: Unknown patch lump %i.", lump);
+    return patchTex;
 }
 
 /**
@@ -972,34 +946,39 @@ patchtex_t* R_FindPatchTex(lumpnum_t lump)
  */
 patchtex_t* R_GetPatchTex(lumpnum_t lump)
 {
-    patchtex_t*         p = 0;
-    patchtexhash_t*     hash = 0;
-
-    if(lump >= numLumps)
-    {
-        Con_Error("R_GetPatchTex: lump = %i out of bounds (%i).\n",
-                  lump, numLumps);
-    }
-
-    p = R_FindPatchTex(lump);
-
-    if(!lump)
-        return NULL;
-
-    // Check if this lump has already been loaded as a patch.
-    if(p)
+    const lumppatch_t* patch;
+    patchtex_t* p;
+    // Already defined as a patch?
+    if((p = getPatchTex(lump)))
         return p;
 
-    // Hmm, this is an entirely new patch.
-    p = Z_Calloc(sizeof(*p), PU_PATCH, NULL);
-    hash = PATCHTEX_HASH(lump);
+    /// \fixme What about min lump size?
+    patch = (const lumppatch_t*) W_CacheLumpNum(lump, PU_STATIC);
 
-    // Link to the hash.
-    p->next = hash->first;
-    hash->first = p;
-
-    // Init the new one.
+    // An entirely new patch.
+    p = Z_Calloc(sizeof(*p), PU_STATIC, NULL);
     p->lump = lump;
+    /**
+     * \fixme: Cannot be sure this is in Patch format until a load attempt
+     * is made. We should not read this info here!
+     */
+    p->offX = -SHORT(patch->leftOffset);
+    p->offY = -SHORT(patch->topOffset);
+    p->width = SHORT(patch->width);
+    p->height = SHORT(patch->height);
+    p->extraOffset[VX] = p->extraOffset[VY] = 0;
+
+    // Register a gltexture for this.
+    {
+    const gltexture_t* glTex = GL_CreateGLTexture(W_LumpName(lump), lump, GLT_DOOMPATCH);
+    p->id = glTex->id;
+    }
+
+    // Add it to the pointer array.
+    doomPatchDefs = Z_Realloc(doomPatchDefs, sizeof(patchtex_t*) * ++numDoomPatchDefs, PU_STATIC);
+    doomPatchDefs[numDoomPatchDefs-1] = p;
+
+    W_ChangeCacheTag(lump, PU_CACHE);
     return p;
 }
 
@@ -1887,18 +1866,6 @@ void R_UpdateTexturesAndFlats(void)
     Z_FreeTags(PU_REFRESHTEX, PU_REFRESHTEX);
 }
 
-void R_InitPatches(void)
-{
-    memset(patchtexhash, 0, sizeof(patchtexhash));
-}
-
-void R_UpdatePatches(void)
-{
-    Z_FreeTags(PU_PATCH, PU_PATCH);
-    memset(patchtexhash, 0, sizeof(patchtexhash));
-    R_InitPatches();
-}
-
 void R_InitRawTexs(void)
 {
     memset(rawtexhash, 0, sizeof(rawtexhash));
@@ -1917,14 +1884,12 @@ void R_UpdateRawTexs(void)
  */
 void R_InitData(void)
 {
-    R_InitPatches();
     R_InitRawTexs();
     Cl_InitTranslations();
 }
 
 void R_UpdateData(void)
 {
-    R_UpdatePatches();
     R_UpdateRawTexs();
     Cl_InitTranslations();
 }
@@ -2009,6 +1974,12 @@ boolean R_IsAllowedDetailTex(ded_detailtexture_t* def, material_t* mat,
 void R_PrecachePatch(const char* name, patchinfo_t* info)
 {
     lumpnum_t lump;
+
+    if(info)
+    {
+        memset(info, 0, sizeof(patchinfo_t));
+        info->lump = -1; // Safety precaution.
+    }
 
     if(isDedicated)
         return;

@@ -98,14 +98,14 @@ char *pageName;
 // The patches used in drawing the view border.
 char *borderLumps[] = {
     "FTILEABC",
-    "brdr_t",
-    "brdr_r",
-    "brdr_b",
-    "brdr_l",
-    "brdr_tl",
-    "brdr_tr",
-    "brdr_br",
-    "brdr_bl"
+    "BRDR_T",
+    "BRDR_R",
+    "BRDR_B",
+    "BRDR_L",
+    "BRDR_TL",
+    "BRDR_TR",
+    "BRDR_BR",
+    "BRDR_BL"
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------

@@ -4278,8 +4278,7 @@ static void Rend_RenderBoundingBoxes(void)
     mat = P_GetMaterial(DDT_BBOX, MN_SYSTEM);
     Material_Prepare(&ms, mat, true, NULL);
 
-    GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id,
-                   ms.units[MTU_PRIMARY].magMode);
+    GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id, ms.units[MTU_PRIMARY].magMode);
     GL_BlendMode(BM_ADD);
 
     if(devMobjBBox)

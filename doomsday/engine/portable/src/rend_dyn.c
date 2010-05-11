@@ -404,7 +404,7 @@ static boolean genTexCoords(const pvec3_t point, float scale,
     vec3_t              vToPoint, right, up;
 
     buildUpRight(up, right, normal);
-    up[VZ] *= 1.2f; // Aspect correction.
+    up[VZ] *= 1.08f; // Counteract aspect correction slightly (not too round mind).
     V3_Subtract(vToPoint, v1, point);
     s[0] = V3_DotProduct(vToPoint, right) * scale + .5f;
     t[0] = V3_DotProduct(vToPoint, up) * scale + .5f;

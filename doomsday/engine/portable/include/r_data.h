@@ -154,21 +154,14 @@ typedef struct {
     gltextureid_t   id;
 } skinname_t;
 
-// Patch flags.
-#define PF_MONOCHROME         0x1
-#define PF_UPSCALE_AND_SHARPEN 0x2
-
 // A patchtex is a lumppatch that has been prepared for render.
 typedef struct patchtex_s {
     lumpnum_t       lump;
     short           offX, offY;
     short           extraOffset[2]; // Only used with upscaled and sharpened patches.
-    int             flags; // Possible modifier filters to apply (monochrome, scale+sharp)
 
-    DGLuint         tex; // Name of the associated DGL texture.
+    gltextureid_t   id; // Name of the associated GL texture.
     short           width, height;
-
-    struct patchtex_s* next;
 } patchtex_t;
 
 typedef struct lumppatch_s {
@@ -347,9 +340,8 @@ masktex_t*      R_CreateMaskTexture(const ded_reflection_t* def);
 masktex_t*      R_GetMaskTexture(const char* external);
 void            R_DestroyMaskTextures(void); // Called at shutdown.
 
-patchtex_t*     R_FindPatchTex(lumpnum_t lump); // May return NULL.
+patchtex_t*     R_FindPatchTex(lumpnum_t lump);
 patchtex_t*     R_GetPatchTex(lumpnum_t lump); // Creates new entries.
-patchtex_t**    R_CollectPatchTexs(int* count);
 
 rawtex_t*       R_FindRawTex(lumpnum_t lump); // May return NULL.
 rawtex_t*       R_GetRawTex(lumpnum_t lump); // Creates new entries.

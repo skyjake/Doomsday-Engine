@@ -50,6 +50,7 @@ typedef enum {
     GLT_SYSTEM, // system texture e.g., the "missing" texture.
     GLT_FLAT,
     GLT_DOOMTEXTURE,
+    GLT_DOOMPATCH,
     GLT_SPRITE,
     GLT_DETAIL,
     GLT_SHINY,
@@ -63,6 +64,7 @@ typedef enum {
 
 #define GLTEXTURE_TYPE_STRING(t)     ((t) == GLT_FLAT? "flat" : \
     (t) == GLT_DOOMTEXTURE? "doomtexture" : \
+    (t) == GLT_DOOMPATCH? "doompatch" : \
     (t) == GLT_SPRITE? "sprite" : \
     (t) == GLT_DETAIL? "detailtex" : \
     (t) == GLT_SHINY? "shinytex" : \
@@ -180,8 +182,8 @@ byte            GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst, v
 byte            GL_LoadModelShinySkin(image_t* image, const gltexture_inst_t* inst, void* context);
 byte            GL_LoadLightMap(image_t* image, const gltexture_inst_t* inst, void* context);
 byte            GL_LoadFlareTexture(image_t* image, const gltexture_inst_t* inst, void* context);
+byte            GL_LoadDoomPatch(image_t* image, const gltexture_inst_t* inst, void* context);
 
-byte            GL_LoadDoomPatch(image_t* image, const patchtex_t* p);
 byte            GL_LoadRawTex(image_t* image, const rawtex_t* r);
 byte            GL_LoadExtTexture(image_t* image, ddresourceclass_t resClass,
                                   const char* name, gfxmode_t mode);
@@ -204,20 +206,15 @@ void            GL_SetMaterial(material_t* mat);
 void            GL_SetPSprite(material_t* mat);
 void            GL_SetTranslatedSprite(material_t* mat, int tclass, int tmap);
 
-void            GL_SetPatch(lumpnum_t lump, int wrapS, int wrapT); // No mipmaps are generated.
-
 void            GL_SetRawImage(lumpnum_t lump, int wrapS, int wrapT);
 
 
 // Management of and access to gltextures (via the texmanager):
-const gltexture_t* GL_CreateGLTexture(const char* name, int ofTypeID,
-                                      gltexture_type_t type);
+const gltexture_t* GL_CreateGLTexture(const char* name, int ofTypeID, gltexture_type_t type);
 void            GL_ReleaseGLTexture(gltextureid_t id);
-const gltexture_inst_t* GL_PrepareGLTexture(gltextureid_t id, void* context,
-                                            byte* result);
+const gltexture_inst_t* GL_PrepareGLTexture(gltextureid_t id, void* context, byte* result);
 const gltexture_t* GL_GetGLTexture(gltextureid_t id);
-const gltexture_t* GL_GetGLTextureByName(const char* name,
-                                         gltexture_type_t type);
+const gltexture_t* GL_GetGLTextureByName(const char* name, gltexture_type_t type);
 void            GL_SetAllGLTexturesMinMode(int minMode);
 void            GL_DeleteAllTexturesForGLTextures(gltexture_type_t);
 

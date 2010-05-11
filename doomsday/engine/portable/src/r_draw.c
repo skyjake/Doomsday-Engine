@@ -73,26 +73,17 @@ static lumpnum_t borderPatchLumps[9];
 
 // CODE --------------------------------------------------------------------
 
-void R_SetBorderGfx(char* gfx[9])
-{
-    uint i;
-    for(i = 0; i < 9; ++i)
-    {
-        if(gfx[i])
-            strcpy(borderPatchNames[i], gfx[i]);
-        else
-            strcpy(borderPatchNames[i], "-");
-    }
-    R_InitViewBorder();
-}
-
-void R_InitViewBorder(void)
+static void loadViewBorderPatches(void)
 {
     patchinfo_t info;
     uint i;
 
-    for(i = 0; i < 9; ++i)
-        borderPatchLumps[i] = W_CheckNumForName(borderPatchNames[i]);
+    borderPatchLumps[0] = -1;
+    for(i = 1; i < 9; ++i)
+    {
+        R_PrecachePatch(borderPatchNames[i], &info);
+        borderPatchLumps[i] = info.lump;
+    }
 
     // Detemine the view border width.
     if(borderPatchLumps[BG_TOP] == -1)
@@ -101,13 +92,40 @@ void R_InitViewBorder(void)
         return;
     }
 
-    R_PrecachePatch(borderPatchNames[BG_TOP], &info);
+    R_GetPatchInfo(borderPatchLumps[BG_TOP], &info);
     bwidth = info.height;
 }
 
-static void drawPatch(lumpnum_t lump, int x, int y, int w, int h)
+void R_SetBorderGfx(const char* lumpNames[9])
 {
-    patchtex_t* p = R_GetPatchTex(lump);
+    if(!lumpNames)
+        Con_Error("R_SetBorderGfx: Missing argument.");
+
+    {uint i;
+    for(i = 0; i < 9; ++i)
+    {
+        if(lumpNames[i] && lumpNames[i][0])
+        {
+            dd_snprintf(borderPatchNames[i], 9, "%s", lumpNames[i]);
+        }
+        else
+        {
+            borderPatchNames[i][0] = 0;
+        }
+    }}
+
+    loadViewBorderPatches();
+}
+
+void R_InitViewBorder(void)
+{
+    memset(borderPatchNames, 0, sizeof(borderPatchNames));
+    memset(borderPatchLumps, 0, sizeof(borderPatchLumps));
+    bwidth = 0;
+}
+
+static void drawPatch(patchtex_t* p, int x, int y, int w, int h)
+{
     assert(p);
 
     glBindTexture(GL_TEXTURE_2D, GL_PreparePatch(p));
@@ -118,9 +136,8 @@ static void drawPatch(lumpnum_t lump, int x, int y, int w, int h)
     GL_DrawRect(x, y, w, h, 1, 1, 1, 1);
 }
 
-static void drawPatchTiled(lumpnum_t lump, int x, int y, int w, int h, GLint wrapS, GLint wrapT)
+static void drawPatchTiled(patchtex_t* p, int x, int y, int w, int h, GLint wrapS, GLint wrapT)
 {
-    patchtex_t* p = R_GetPatchTex(lump);
     assert(p);
 
     glBindTexture(GL_TEXTURE_2D, GL_PreparePatch(p));
@@ -175,10 +192,10 @@ void R_DrawViewBorder(void)
 
     if(border != 0)
     {
-        drawPatchTiled(borderPatchLumps[BG_TOP], viewwindowx, viewwindowy - border, viewwidth, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
-        drawPatchTiled(borderPatchLumps[BG_BOTTOM], viewwindowx, viewwindowy + viewheight , viewwidth, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
-        drawPatchTiled(borderPatchLumps[BG_LEFT], viewwindowx - border, viewwindowy, border, viewheight, GL_CLAMP_TO_EDGE, GL_REPEAT);
-        drawPatchTiled(borderPatchLumps[BG_RIGHT], viewwindowx + viewwidth, viewwindowy, border, viewheight, GL_CLAMP_TO_EDGE, GL_REPEAT);
+        drawPatchTiled(R_FindPatchTex(borderPatchLumps[BG_TOP]), viewwindowx, viewwindowy - border, viewwidth, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
+        drawPatchTiled(R_FindPatchTex(borderPatchLumps[BG_BOTTOM]), viewwindowx, viewwindowy + viewheight , viewwidth, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
+        drawPatchTiled(R_FindPatchTex(borderPatchLumps[BG_LEFT]), viewwindowx - border, viewwindowy, border, viewheight, GL_CLAMP_TO_EDGE, GL_REPEAT);
+        drawPatchTiled(R_FindPatchTex(borderPatchLumps[BG_RIGHT]), viewwindowx + viewwidth, viewwindowy, border, viewheight, GL_CLAMP_TO_EDGE, GL_REPEAT);
     }
 
     glMatrixMode(GL_TEXTURE);
@@ -186,9 +203,9 @@ void R_DrawViewBorder(void)
 
     if(border != 0)
     {
-        drawPatch(borderPatchLumps[BG_TOPLEFT], viewwindowx - border, viewwindowy - border, border, border);
-        drawPatch(borderPatchLumps[BG_TOPRIGHT], viewwindowx + viewwidth, viewwindowy - border, border, border);
-        drawPatch(borderPatchLumps[BG_BOTTOMRIGHT], viewwindowx + viewwidth, viewwindowy + viewheight, border, border);
-        drawPatch(borderPatchLumps[BG_BOTTOMLEFT], viewwindowx - border, viewwindowy + viewheight, border, border);
+        drawPatch(R_FindPatchTex(borderPatchLumps[BG_TOPLEFT]), viewwindowx - border, viewwindowy - border, border, border);
+        drawPatch(R_FindPatchTex(borderPatchLumps[BG_TOPRIGHT]), viewwindowx + viewwidth, viewwindowy - border, border, border);
+        drawPatch(R_FindPatchTex(borderPatchLumps[BG_BOTTOMRIGHT]), viewwindowx + viewwidth, viewwindowy + viewheight, border, border);
+        drawPatch(R_FindPatchTex(borderPatchLumps[BG_BOTTOMLEFT]), viewwindowx - border, viewwindowy + viewheight, border, border);
     }
 }

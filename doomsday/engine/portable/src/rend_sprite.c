@@ -353,8 +353,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
         material_snapshot_t ms;
 
         Material_Prepare(&ms, mat, true, NULL);
-        GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id,
-                       ms.units[MTU_PRIMARY].magMode);
+        GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id, ms.units[MTU_PRIMARY].magMode);
     }
     else
     {
@@ -895,8 +894,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
             Material_Prepare(&ms, mat, true, NULL);
         }
 
-        GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id,
-                       ms.units[MTU_PRIMARY].magMode);
+        GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id, ms.units[MTU_PRIMARY].magMode);
     }
     else
     {

@@ -360,18 +360,13 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
                 haloPos[k] += mirror[k] * fl->offset;
         }
 
-        if(renderTextures)
-            GL_BindTexture(tex, GL_LINEAR);
-        else
-            glBindTexture(GL_TEXTURE_2D, 0);
+        GL_BindTexture(renderTextures? tex : 0, GL_LINEAR);
 
         // Don't wrap the texture. Evidently some drivers can't just
         // take a hint... (or then something's changing the wrapping
         // mode inadvertently)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,
-                        GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,
-                        GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
         glColor4fv(rgba);
 
