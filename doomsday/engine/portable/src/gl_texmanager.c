@@ -1894,91 +1894,6 @@ DGLuint GL_GetLightMapTexture(const char* name)
     return GL_PrepareLSTexture(LST_DYNAMIC);
 }
 
-#if 0
-/**
- * Flare textures are normally monochrome images but we'll allow full color.
- */
-void GL_LoadFlareTexture(ded_flaremap_t* map, int oldidx)
-{
-    boolean             loaded = false;
-
-    if(map->tex)
-        return; // Already loaded.
-
-    // Default texture (automatic).
-    map->tex = 0;
-
-    if(!strcmp(map->id, "-"))
-    {
-        // We don't know where to find the texture.
-        map->tex = 0;
-        map->disabled = true;
-        map->custom = false;
-        loaded = true;
-    }
-    else if(map->id[0]) // Not an empty string.
-    {
-        // A custom flare texture
-        map->custom = true;
-        map->disabled = false;
-
-        if prepareFails
-            setChosenTexture to default;
-    }
-
-    if(!loaded)
-    {   // External resource not found.
-        // Perhaps a "built-in" flare texture id?
-        char*               end;
-        int                 id = 0, pass;
-        boolean             ok;
-
-        // First pass:
-        // Try to convert str "map->tex" to a flare tex constant idx
-        // Second pass:
-        // Use oldidx (if available) as a flare tex constant idx
-        for(pass = 0; pass < 2 && !loaded; ++pass)
-        {
-            ok = false;
-            if(pass == 0 && map->id[0])
-            {
-                id = strtol(map->id, &end, 0);
-                if(!(*end && !isspace(*end)))
-                    ok = true;
-            }
-            else if(pass == 1 && oldIdx != -1)
-            {
-                id = oldIdx;
-                ok = true;
-            }
-
-            if(ok)
-            {   // Yes it is!
-                // Maybe Automatic OR dynlight?
-                if(id == 0 || id == 1)
-                {
-                    map->tex = (id? GL_PrepareLSTexture(LST_DYNAMIC) : 0);
-                    map->custom = false;
-                    map->disabled = false;
-                    loaded = true;
-                }
-                else
-                {
-                    id -= 2;
-                    if(id >= 0 && id < NUM_FLARE_TEXTURES)
-                    {
-                        map->tex = GL_PrepareFlareTexture(id);
-                        map->custom = false;
-                        map->disabled = false;
-                        loaded = true;
-                    }
-                }
-            }
-        }
-    }
-}
-#endif
-
 /**
  * Attempt to locate and prepare a flare texture.
  * Somewhat more complicated than it needs to be due to the fact there
@@ -2557,10 +2472,7 @@ static gltexture_inst_t* pickGLTextureInst(gltexture_t* tex, void* context)
 static gltexture_inst_t* pickDetailTextureInst(gltexture_t* tex, void* context)
 {
     gltexture_inst_node_t* node;
-    float               contrast = *((float*) context);
-
-    // Round off the contrast to nearest 0.1.
-    contrast = (int) ((contrast + .05f) * 10) / 10.f;
+    float contrast = *((float*) context);
 
     node = (gltexture_inst_node_t*) tex->instances;
     while(node)
@@ -2577,8 +2489,8 @@ static gltexture_inst_t* pickSpriteTextureInst(gltexture_t* tex, void* context)
 {
     gltexture_inst_node_t* node;
     material_load_params_t* params = (material_load_params_t*) context;
-    int                 tmap = 0, tclass = 0;
-    boolean             pSprite = false;
+    int tmap = 0, tclass = 0;
+    boolean pSprite = false;
 
     if(params)
     {
@@ -2602,7 +2514,11 @@ static gltexture_inst_t* pickSpriteTextureInst(gltexture_t* tex, void* context)
 
 gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* result)
 {
+    boolean monochrome    = ((tex->type != GLT_DETAIL && context)? (((material_load_params_t*) context)->flags & MLF_TEX_MONOCHROME) != 0 : false);
+    boolean noCompression = ((tex->type != GLT_DETAIL && context)? (((material_load_params_t*) context)->flags & MLF_TEX_NO_COMPRESSION) != 0 : false);
+    boolean scaleSharp    = ((tex->type != GLT_DETAIL && context)? (((material_load_params_t*) context)->flags & MLF_TEX_UPSCALE_AND_SHARPEN) != 0 : false);
     gltexture_inst_t* texInst = NULL;
+    float contrast = 1;
     byte tmpResult;
 
     if(tex->type < GLT_SYSTEM || tex->type >= NUM_GLTEXTURE_TYPES)
@@ -2613,7 +2529,11 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
     switch(tex->type)
     {
     case GLT_DETAIL:
-        texInst = pickDetailTextureInst(tex, context);
+        if(context)
+            // Round off the contrast to nearest 0.1.
+            contrast = (int) ((*((float*) context) + .05f) * 10) / 10.f;
+
+        texInst = pickDetailTextureInst(tex, &contrast);
         break;
 
     case GLT_SPRITE:
@@ -2631,9 +2551,6 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
     }
     else
     {
-        boolean monochrome    = (context? (((material_load_params_t*) context)->flags & MLF_TEX_MONOCHROME) != 0 : false);
-        boolean noCompression = (context? (((material_load_params_t*) context)->flags & MLF_TEX_NO_COMPRESSION) != 0 : false);
-        boolean scaleSharp    = (context? (((material_load_params_t*) context)->flags & MLF_TEX_UPSCALE_AND_SHARPEN) != 0 : false);
         gltexture_typedata_t* glTexType = &glTextureTypeData[tex->type];
         gltexture_inst_t localInst;
         boolean didDefer = false;
@@ -2731,237 +2648,139 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
             }
         }
 
-        switch(tex->type)
         {
-        case GLT_FLAT:
-            if(tmpResult)
-            {
-                texturecontent_t content;
+        int magFilter, minFilter, anisoFilter, wrapS, wrapT, grayMipmap = 0, flags = 0;
+        texturecontent_t content;
+        dgltexformat_t texFormat;
+        boolean alphaChannel;
 
-                GL_InitTextureContent(&content);
-                content.buffer = image.pixels;
-                content.format = (tmpResult == 2? (image.pixelSize == 4? DGL_RGBA : DGL_RGB) :
-                                  (image.pixelSize == 4? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8));
-                content.width = image.width;
-                content.height = image.height;
-                content.flags = TXCF_EASY_UPLOAD | TXCF_MIPMAP;
-                if(image.pixelSize > 1) content.flags |= TXCF_APPLY_GAMMACORRECTION;
-                if(image.pixelSize == 4) content.flags |= TXCF_UPLOAD_ARG_ALPHACHANNEL;
-                if(tmpResult == 2) content.flags |= TXCF_UPLOAD_ARG_RGBDATA;
-                content.minFilter = glmode[mipmapping];
-                content.magFilter = glmode[texMagMode];
-                content.anisoFilter = texAniso;
-                content.wrap[0] = GL_REPEAT;
-                content.wrap[1] = GL_REPEAT;
-                texInst->id = GL_NewTexture(&content, &didDefer);
+        // Disable compression?
+        if(noCompression || (image.width < 128 && image.height < 128) ||
+           tex->type == GLT_FLARE || tex->type == GLT_SHINY)
+            flags |= TXCF_NO_COMPRESSION;
 
-                if(image.isMasked)
-                    texInst->flags |= GLTF_MASKED;
-            }
-            break;
+        if(image.pixelSize > 1 || tex->type == GLT_MODELSKIN)
+            flags |= TXCF_APPLY_GAMMACORRECTION;
 
-        case GLT_DOOMTEXTURE:
-            if(tmpResult)
-            {
-                texturecontent_t content;
-                int flags = noCompression? TXCF_NO_COMPRESSION : 0;
-                boolean alphaChannel;
+        if(tex->type == GLT_SPRITE || tex->type == GLT_DOOMPATCH)
+            flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
 
-                if(image.pixelSize > 1)
-                    flags |= TXCF_APPLY_GAMMACORRECTION;
+        if(!(tex->type == GLT_DETAIL || tex->type == GLT_SYSTEM || tex->type == GLT_SHINY || tex->type == GLT_MASK))
+            flags |= TXCF_EASY_UPLOAD;
 
-                alphaChannel = ((tmpResult == 2 && image.pixelSize == 4) || (tmpResult == 1 && image.isMasked))? true : false;
+        if(!(tex->type == GLT_DOOMPATCH || tex->type == GLT_DETAIL || tex->type == GLT_LIGHTMAP || tex->type == GLT_FLARE))
+            flags |= TXCF_MIPMAP;
 
-                GL_InitTextureContent(&content);
-                content.buffer = image.pixels;
-                content.format = (tmpResult == 2? (alphaChannel? DGL_RGBA : DGL_RGB) :
-                                  (alphaChannel? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8));
-                content.width = image.width;
-                content.height = image.height;
-                content.flags = TXCF_EASY_UPLOAD | TXCF_MIPMAP | flags;
-                if(alphaChannel) content.flags |= TXCF_UPLOAD_ARG_ALPHACHANNEL;
-                if(tmpResult == 2) content.flags |= TXCF_UPLOAD_ARG_RGBDATA;
-                content.minFilter = glmode[mipmapping];
-                content.magFilter = glmode[texMagMode];
-                content.anisoFilter = texAniso;
-                content.wrap[0] = GL_REPEAT;
-                content.wrap[1] = GL_REPEAT;
-                texInst->id = GL_NewTexture(&content, &didDefer);
+        if(tex->type == GLT_SPRITE || tex->type == GLT_MODELSKIN || tex->type == GLT_MODELSHINYSKIN)
+        {
+            if(image.pixelSize > 1)
+                flags |= TXCF_UPLOAD_ARG_RGBDATA;
+        }
+        else if(tmpResult == 2)
+            flags |= TXCF_UPLOAD_ARG_RGBDATA;
 
-                if(image.isMasked)
-                    texInst->flags |= GLTF_MASKED;
-            }
-            break;
-
-        case GLT_DOOMPATCH:
-            if(tmpResult)
-            {
-                texturecontent_t content;
-
-                GL_InitTextureContent(&content);
-                content.buffer = image.pixels;
-                content.format = ( image.pixelSize > 1?
-                                    ( image.pixelSize != 3? DGL_RGBA :
-                                       DGL_RGB) :
-                                    ( image.pixelSize != 3?
-                                        DGL_COLOR_INDEX_8_PLUS_A8 :
-                                        DGL_COLOR_INDEX_8 ) );
-                content.width = image.width;
-                content.height = image.height;
-                content.flags = TXCF_EASY_UPLOAD; // No mipmapping.
-                if(image.pixelSize > 1) content.flags |= TXCF_APPLY_GAMMACORRECTION;
-                if(image.pixelSize != 3) content.flags |= TXCF_UPLOAD_ARG_ALPHACHANNEL;
-                if(tmpResult == 2) content.flags |= TXCF_UPLOAD_ARG_RGBDATA;
-                content.minFilter = GL_NEAREST;
-                content.magFilter = glmode[texMagMode];
-                content.anisoFilter = 0; // no aniso.
-                content.wrap[0] = GL_CLAMP_TO_EDGE;
-                content.wrap[1] = GL_CLAMP_TO_EDGE;
-                texInst->id = GL_NewTexture(&content, &didDefer);
-
-                if(image.isMasked)
-                    texInst->flags |= GLTF_MASKED;
-
-                /*if(scaleSharp)
-                {   // Can't do this here. Instead we must return these values to the caller.
-                    p->width += 2;
-                    p->height += 2;
-                    p->extraOffset[VX] = -1;
-                    p->extraOffset[VY] = -1;
-                }*/
-            }
-            break;
-
-        case GLT_SPRITE:
-        case GLT_DETAIL:
-        case GLT_SYSTEM:
-        case GLT_SHINY:
-        case GLT_MASK:
-        case GLT_MODELSKIN:
-        case GLT_MODELSHINYSKIN:
-        case GLT_LIGHTMAP:
-        case GLT_FLARE:
-            if(tmpResult)
-            {
-                texturecontent_t c;
-
-                // Disable compression?
-                if((image.width < 128 && image.height < 128) ||
-                   tex->type == GLT_FLARE || tex->type == GLT_SHINY)
-                    noCompression = true;
-
-                GL_InitTextureContent(&c);
-                if(tex->type == GLT_SPRITE)
-                {
-                    c.format = ( image.pixelSize > 1?
-                                    ( image.pixelSize != 3? DGL_RGBA :
-                                       DGL_RGB) :
-                                    ( image.pixelSize != 3?
-                                        DGL_COLOR_INDEX_8_PLUS_A8 :
-                                        DGL_COLOR_INDEX_8 ) );
-                }
-                else if(tex->type == GLT_MODELSKIN ||
-                        tex->type == GLT_MODELSHINYSKIN)
-                {
-                    c.format = (image.pixelSize == 4? DGL_RGBA : DGL_RGB);
-                }
-                else
-                {
-                    c.format = ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
-                                 image.pixelSize == 3 ? DGL_RGB :
-                                 image.pixelSize == 4 ? DGL_RGBA :
-                                    DGL_LUMINANCE );
-                }
-                c.width = image.width;
-                c.height = image.height;
-                c.buffer = image.pixels;
-                c.flags = noCompression? TXCF_NO_COMPRESSION : 0;
-
-                if(tex->type == GLT_SPRITE || tex->type == GLT_MODELSKIN ||
-                   tex->type == GLT_MODELSHINYSKIN ||
-                   tex->type == GLT_LIGHTMAP || tex->type == GLT_FLARE)
-                {
-                    c.flags |= TXCF_EASY_UPLOAD;
-                    if(tex->type == GLT_SPRITE)
-                        c.flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
-
-                    if(image.pixelSize != 3) c.flags |= TXCF_UPLOAD_ARG_ALPHACHANNEL;
-                    if(tex->type != GLT_LIGHTMAP && tex->type != GLT_FLARE)
-                    if(image.pixelSize > 1) c.flags |= TXCF_UPLOAD_ARG_RGBDATA;
-                }
-
-                if(tex->type == GLT_MODELSKIN)
-                    c.flags |= TXCF_APPLY_GAMMACORRECTION;
-
-                if(tex->type == GLT_DETAIL)
-                {
-                    float contrast = *((float*) context);
-
-                    /**
-                     * Detail textures are faded to gray depending on the contrast
-                     * factor. The texture is also progressively faded towards gray
-                     * when each mipmap level is loaded.
-                     */
-
-                    // Round off the contrast to nearest 0.1.
-                    contrast = (int) ((contrast + .05f) * 10) / 10.f;
-
-                    c.grayMipmap = MINMAX_OF(0, contrast * 255, 255);
-                    c.flags |= TXCF_GRAY_MIPMAP | (c.grayMipmap << TXCF_GRAY_MIPMAP_LEVEL_SHIFT);
-                    c.minFilter = GL_LINEAR_MIPMAP_LINEAR;
-
-                    texInst->data.detail.contrast = contrast;
-                }
-                else if(tex->type == GLT_SPRITE || tex->type == GLT_MASK ||
-                        tex->type == GLT_MODELSKIN ||
-                        tex->type == GLT_MODELSHINYSKIN ||
-                        tex->type == GLT_SYSTEM)
-                {
-                    c.flags |= TXCF_MIPMAP;
-                    c.minFilter = glmode[mipmapping];
-                }
-                else
-                {
-                    c.minFilter = GL_LINEAR;
-                }
-                c.magFilter = (tex->type == GLT_MASK? glmode[texMagMode] :
-                               tex->type == GLT_SPRITE?
-                                    (filterSprites ? GL_LINEAR : GL_NEAREST) :
-                               GL_LINEAR);
-
-                if(tex->type == GLT_FLARE)
-                    c.anisoFilter = 0 /*no anisotropy*/;
-                else
-                    c.anisoFilter = texAniso;
-
-                if(tex->type == GLT_SPRITE || tex->type == GLT_LIGHTMAP ||
-                   tex->type == GLT_FLARE)
-                    c.wrap[0] = c.wrap[1] = GL_CLAMP_TO_EDGE;
-                else
-                    c.wrap[0] = c.wrap[1] = GL_REPEAT;
-                texInst->id = GL_NewTexture(&c, &didDefer);
-            }
-            break;
-
-        default:
-            break;
+        if(tex->type == GLT_DETAIL)
+        {
+            /**
+             * Detail textures are faded to gray depending on the contrast
+             * factor. The texture is also progressively faded towards gray
+             * when each mipmap level is loaded.
+             */
+            grayMipmap = MINMAX_OF(0, contrast * 255, 255);
+            flags |= TXCF_GRAY_MIPMAP | (grayMipmap << TXCF_GRAY_MIPMAP_LEVEL_SHIFT);
         }
 
-        if(!didDefer)
+        if(tex->type == GLT_DOOMTEXTURE || tex->type == GLT_DOOMPATCH)
+            alphaChannel = ((tmpResult == 2 && image.pixelSize == 4) || (tmpResult == 1 && image.isMasked))? true : false;
+        else
+            alphaChannel = image.pixelSize == 4;
+
+        if(alphaChannel)
+            flags |= TXCF_UPLOAD_ARG_ALPHACHANNEL;
+
+        if(tex->type == GLT_FLAT || tex->type == GLT_DOOMTEXTURE || tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE)
         {
+            texFormat = ( image.pixelSize > 1?
+                            ( image.pixelSize != 3? DGL_RGBA : DGL_RGB) :
+                            ( image.pixelSize != 3? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8 ) );
+        }
+        else if(tex->type == GLT_MODELSKIN || tex->type == GLT_MODELSHINYSKIN)
+        {
+            texFormat = ( image.pixelSize == 4? DGL_RGBA : DGL_RGB );
+        }
+        else
+        {
+            texFormat = ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
+                          image.pixelSize == 3 ? DGL_RGB :
+                          image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE );
+        }
+
+        if(tex->type == GLT_FLAT || tex->type == GLT_DOOMTEXTURE || tex->type == GLT_DOOMPATCH || tex->type == GLT_MASK)
+            magFilter = glmode[texMagMode];
+        else if(tex->type == GLT_SPRITE)
+            magFilter = filterSprites ? GL_LINEAR : GL_NEAREST;
+        else
+            magFilter = GL_LINEAR;
+
+        if(tex->type == GLT_DETAIL)
+            minFilter = GL_LINEAR_MIPMAP_LINEAR;
+        else if(tex->type == GLT_DOOMPATCH)
+            minFilter = GL_NEAREST;
+        else if(tex->type == GLT_LIGHTMAP || tex->type == GLT_FLARE)
+            minFilter = GL_LINEAR;
+        else
+            minFilter = glmode[mipmapping];
+
+        if(tex->type == GLT_DOOMPATCH || tex->type == GLT_FLARE)
+            anisoFilter = 0 /*no anisotropic*/;
+        else
+            anisoFilter = texAniso;
+
+        if(tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE || tex->type == GLT_LIGHTMAP || tex->type == GLT_FLARE)
+            wrapS = wrapT = GL_CLAMP_TO_EDGE;
+        else
+            wrapS = wrapT = GL_REPEAT;
+
+        GL_InitTextureContent(&content);
+        content.buffer = image.pixels;
+        content.width = image.width;
+        content.height = image.height;
+        content.flags = flags;
+        content.format = texFormat;
+        content.minFilter = minFilter;
+        content.magFilter = magFilter;
+        content.anisoFilter = anisoFilter;
+        content.wrap[0] = wrapS;
+        content.wrap[1] = wrapT;
+        content.grayMipmap = grayMipmap;
+
+        texInst->id = GL_NewTexture(&content, &didDefer);
 #ifdef _DEBUG
-Con_Message("GLTexture_Prepare: Uploaded \"%s\" (%i) while not busy! "
-            "Should be precached in busy mode?\n", texInst->tex->name,
-            texInst->id);
+if(!didDefer)
+    Con_Message("GLTexture_Prepare: Uploaded \"%s\" (%i) while not busy! "
+                "Should be precached in busy mode?\n", texInst->tex->name, texInst->id);
 #endif
+
+        if(image.isMasked)
+            texInst->flags |= GLTF_MASKED;
+        if(tex->type == GLT_DETAIL)
+            texInst->data.detail.contrast = contrast;
+
+        /*if(tex->type == GLT_DOOMPATCH && scaleSharp)
+        {   // Can't do this here. Instead we must return these values to the caller.
+            patchtex_t* p = R_GetPatchText(inst->tex->ofTypeID);
+            p->width += 2;
+            p->height += 2;
+            p->extraOffset[VX] = -1;
+            p->extraOffset[VY] = -1;
+        }*/
         }
 
         if(tex->type == GLT_SPRITE)
         {
-            material_load_params_t* params =
-                (material_load_params_t*) context;
-            int                 tmap = 0, tclass = 0;
-            boolean             pSprite = false;
+            material_load_params_t* params = (material_load_params_t*) context;
+            int tmap = 0, tclass = 0;
+            boolean pSprite = false;
 
             if(params)
             {
@@ -2974,14 +2793,10 @@ Con_Message("GLTexture_Prepare: Uploaded \"%s\" (%i) while not busy! "
             texInst->data.sprite.tclass = tclass;
             texInst->data.sprite.pSprite = pSprite;
 
-            if(image.isMasked)
-                texInst->flags |= GLTF_MASKED;
-
             if(!pSprite)
             {
                 // Calculate light source properties.
-                GL_CalcLuminance(image.pixels, image.width, image.height,
-                                 image.pixelSize, 0,
+                GL_CalcLuminance(image.pixels, image.width, image.height, image.pixelSize, 0,
                                  &texInst->data.sprite.flareX,
                                  &texInst->data.sprite.flareY,
                                  &texInst->data.sprite.autoLightColor,
@@ -2997,20 +2812,13 @@ Con_Message("GLTexture_Prepare: Uploaded \"%s\" (%i) while not busy! "
             // Average color for glow planes and top line color.
             if(image.pixelSize > 1)
             {
-                averageColorRGB(texInst->data.texture.color, image.pixels,
-                                image.width, image.height);
-                lineAverageColorRGB(texInst->data.texture.topColor,
-                                    image.pixels, image.width, image.height,
-                                    0);
+                averageColorRGB(texInst->data.texture.color, image.pixels, image.width, image.height);
+                lineAverageColorRGB(texInst->data.texture.topColor, image.pixels, image.width, image.height, 0);
             }
             else
             {
-                averageColorIdx(texInst->data.texture.color, image.pixels,
-                                image.width, image.height, 0, false);
-
-                lineAverageColorIdx(texInst->data.texture.topColor,
-                                    image.pixels, image.width, image.height,
-                                    0, 0, false);
+                averageColorIdx(texInst->data.texture.color, image.pixels, image.width, image.height, 0, false);
+                lineAverageColorIdx(texInst->data.texture.topColor, image.pixels, image.width, image.height, 0, 0, false);
             }
         }
 
@@ -3018,14 +2826,12 @@ Con_Message("GLTexture_Prepare: Uploaded \"%s\" (%i) while not busy! "
 
         if(tmpResult && texInst == &localInst)
         {   // We have a new instance.
-            int                 flags = 0;
             gltexture_inst_node_t* node;
+            int flags = 0;
 
             if(tex->type != GLT_DETAIL)
             {
-                material_load_params_t* params =
-                    (material_load_params_t*) context;
-
+                material_load_params_t* params = (material_load_params_t*) context;
                 if(params)
                     flags = params->flags;
             }
