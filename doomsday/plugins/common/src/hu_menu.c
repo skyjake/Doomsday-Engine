@@ -2478,7 +2478,7 @@ void M_DrawClassMenu(void)
     DGL_SetTranslatedSprite(sprInfo.material, 1, tmap);
 
     DGL_DrawRect(BG_X + 56 - sprInfo.offset, BG_Y + 78 - sprInfo.topOffset,
-                 M_CeilPow2(sprInfo.width), M_CeilPow2(sprInfo.height),
+                 sprInfo.width * sprInfo.texCoord[0], sprInfo.height * sprInfo.texCoord[1],
                  1, 1, 1, menuAlpha);
 
 #undef BG_X

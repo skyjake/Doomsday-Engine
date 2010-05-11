@@ -1192,18 +1192,12 @@ DGL_Enable(DGL_TEXTURING);
                 if(spr)
                 {
                     spriteinfo_t sprInfo;
-                    int w, h, w2, h2;
-                    float s, t, scale;
+                    int w, h;
+                    float scale;
 
                     R_GetSpriteInfo(spr, 0, &sprInfo);
                     w = sprInfo.width;
                     h = sprInfo.height;
-                    w2 = M_CeilPow2(w);
-                    h2 = M_CeilPow2(h);
-                    // Let's calculate texture coordinates.
-                    // To remove a possible edge artifact, move the corner a bit up/left.
-                    s = (w - 0.4f) / w2;
-                    t = (h - 0.4f) / h2;
 
                     if(h > w)
                         scale = (lineHeight - CELL_PADDING * 2) / h;
@@ -1219,7 +1213,7 @@ DGL_Enable(DGL_TEXTURING);
 
                     DGL_SetMaterial(sprInfo.material);
 
-                    drawQuad(cX, cY, w, h, s, t, 1, 1, 1, alpha);
+                    drawQuad(cX, cY, w, h, sprInfo.texCoord[0], sprInfo.texCoord[1], 1, 1, 1, alpha);
                 }
 #endif
                 break;
@@ -1727,6 +1721,7 @@ void WI_DrawParamText(int x, int y, const char* inString, gamefontid_t defFont,
             }
             else
             {
+                curCase = 0;
                 // Find the end of the visible part of the string.
                 for(; *end && *end != '{'; end++);
             }

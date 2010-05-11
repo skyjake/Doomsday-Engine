@@ -446,7 +446,7 @@ void DrawPlayerSetupMenu(void)
     int                 numColors = 4;
     static const int    sprites[3] = {SPR_PLAY, SPR_PLAY, SPR_PLAY};
 #endif
-    float               x, y, w, h, w2, h2;
+    float               x, y, w, h;
     float               s, t, scale;
 
     M_DrawTitle(GET_TXT(TXT_PLAYERSETUP), menu->y - 28);
@@ -473,12 +473,11 @@ void DrawPlayerSetupMenu(void)
 
     w = sprInfo.width;
     h = sprInfo.height;
-    w2 = M_CeilPow2(w);
-    h2 = M_CeilPow2(h);
+
     // Let's calculate texture coordinates.
     // To remove a possible edge artifact, move the corner a bit up/left.
-    s = (w - 0.4f) / w2 + 1.f / sprInfo.offset;
-    t = (h - 0.4f) / h2 + 1.f / sprInfo.topOffset;
+    s = sprInfo.texCoord[0];
+    t = sprInfo.texCoord[1];
 
     if(h > w)
         scale = AVAILABLE_HEIGHT / h;

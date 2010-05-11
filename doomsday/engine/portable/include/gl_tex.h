@@ -31,6 +31,9 @@
 
 #include "gl_texmanager.h"
 
+#define MINTEXWIDTH             8
+#define MINTEXHEIGHT            8
+
 boolean         GL_OptimalSize(int width, int height, int *optWidth,
                                int *optHeight, boolean noStretch,
                                boolean isMipMapped);

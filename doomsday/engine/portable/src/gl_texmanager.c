@@ -91,7 +91,6 @@ void            GLTexture_SetMinMode(gltexture_t* tex, int minMode);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void GL_SetTexCoords(float* tc, int wid, int hgt);
 static void calcGammaTable(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -1680,7 +1679,7 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
         patch = W_CacheLumpNum(sprTex->lump, PU_STATIC);
     }
 
-    DrawRealPatch(image->pixels, image->width, image->height, patch, 0, 0, false, false);
+    image->isMasked = DrawRealPatch(image->pixels, image->width, image->height, patch, 0, 0, false, true);
 
     if(freePatch)
         M_Free(tmp);
@@ -2206,24 +2205,6 @@ void GL_DeleteRawImages(void)
 }
 
 /**
- * Calculates texture coordinates based on the given dimensions. The
- * coordinates are calculated as width/CeilPow2(width), or 1 if the
- * CeilPow2 would go over glMaxTexSize.
- */
-static void GL_SetTexCoords(float *tc, int wid, int hgt)
-{
-    int                 pw = M_CeilPow2(wid), ph = M_CeilPow2(hgt);
-
-    if(pw > GL_state.maxTexSize || ph > GL_state.maxTexSize)
-        tc[VX] = tc[VY] = 1;
-    else
-    {
-        tc[VX] = wid / (float) pw;
-        tc[VY] = hgt / (float) ph;
-    }
-}
-
-/**
  * Returns true if the given path name refers to an image, which should
  * be color keyed. Color keying is done for both (0,255,255) and
  * (255,0,255).
@@ -2530,10 +2511,13 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
     {
     case GLT_DETAIL:
         if(context)
+        {
             // Round off the contrast to nearest 0.1.
             contrast = (int) ((*((float*) context) + .05f) * 10) / 10.f;
+            context = (void*) &contrast;
+        }
 
-        texInst = pickDetailTextureInst(tex, &contrast);
+        texInst = pickDetailTextureInst(tex, context);
         break;
 
     case GLT_SPRITE:
@@ -2575,8 +2559,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
         }
 
         // Too big for us?
-        if(image.width  > GL_state.maxTexSize ||
-           image.height > GL_state.maxTexSize)
+        if(image.width  > GL_state.maxTexSize || image.height > GL_state.maxTexSize)
         {
             if(image.pixelSize == 3 || image.pixelSize == 4)
             {
@@ -2629,7 +2612,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
             }
         }
 
-        if(fillOutlines && !scaleSharp && image.pixelSize == 1 /*&& image.isMasked*/)
+        if(fillOutlines && !scaleSharp && image.pixelSize == 1 && image.isMasked)
             ColorOutlines(image.pixels, image.width, image.height);
 
         // Lightmaps and flare textures should always be monochrome images.
@@ -2655,21 +2638,17 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
         boolean alphaChannel;
 
         // Disable compression?
-        if(noCompression || (image.width < 128 && image.height < 128) ||
-           tex->type == GLT_FLARE || tex->type == GLT_SHINY)
+        if(noCompression || (image.width < 128 && image.height < 128) || tex->type == GLT_FLARE || tex->type == GLT_SHINY)
             flags |= TXCF_NO_COMPRESSION;
 
         if(image.pixelSize > 1 || tex->type == GLT_MODELSKIN)
             flags |= TXCF_APPLY_GAMMACORRECTION;
 
-        if(tex->type == GLT_SPRITE || tex->type == GLT_DOOMPATCH)
+        if(tex->type == GLT_SPRITE /*|| tex->type == GLT_DOOMPATCH*/)
             flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
 
         if(!(tex->type == GLT_DETAIL || tex->type == GLT_SYSTEM || tex->type == GLT_SHINY || tex->type == GLT_MASK))
             flags |= TXCF_EASY_UPLOAD;
-
-        if(!(tex->type == GLT_DOOMPATCH || tex->type == GLT_DETAIL || tex->type == GLT_LIGHTMAP || tex->type == GLT_FLARE))
-            flags |= TXCF_MIPMAP;
 
         if(tex->type == GLT_SPRITE || tex->type == GLT_MODELSKIN || tex->type == GLT_MODELSHINYSKIN)
         {
@@ -2689,8 +2668,10 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
             grayMipmap = MINMAX_OF(0, contrast * 255, 255);
             flags |= TXCF_GRAY_MIPMAP | (grayMipmap << TXCF_GRAY_MIPMAP_LEVEL_SHIFT);
         }
+        else if(!(tex->type == GLT_DOOMPATCH || tex->type == GLT_LIGHTMAP || tex->type == GLT_FLARE || (tex->type == GLT_SPRITE && context && ((material_load_params_t*)context)->pSprite)))
+            flags |= TXCF_MIPMAP;
 
-        if(tex->type == GLT_DOOMTEXTURE || tex->type == GLT_DOOMPATCH)
+        if(tex->type == GLT_DOOMTEXTURE || tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE)
             alphaChannel = ((tmpResult == 2 && image.pixelSize == 4) || (tmpResult == 1 && image.isMasked))? true : false;
         else
             alphaChannel = image.pixelSize == 4;
@@ -2701,12 +2682,12 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
         if(tex->type == GLT_FLAT || tex->type == GLT_DOOMTEXTURE || tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE)
         {
             texFormat = ( image.pixelSize > 1?
-                            ( image.pixelSize != 3? DGL_RGBA : DGL_RGB) :
-                            ( image.pixelSize != 3? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8 ) );
+                            ( alphaChannel? DGL_RGBA : DGL_RGB) :
+                            ( alphaChannel? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8 ) );
         }
         else if(tex->type == GLT_MODELSKIN || tex->type == GLT_MODELSHINYSKIN)
         {
-            texFormat = ( image.pixelSize == 4? DGL_RGBA : DGL_RGB );
+            texFormat = ( alphaChannel? DGL_RGBA : DGL_RGB );
         }
         else
         {
@@ -2724,15 +2705,15 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
 
         if(tex->type == GLT_DETAIL)
             minFilter = GL_LINEAR_MIPMAP_LINEAR;
-        else if(tex->type == GLT_DOOMPATCH)
+        else if(tex->type == GLT_DOOMPATCH || (tex->type == GLT_SPRITE && context && ((material_load_params_t*)context)->pSprite))
             minFilter = GL_NEAREST;
         else if(tex->type == GLT_LIGHTMAP || tex->type == GLT_FLARE)
             minFilter = GL_LINEAR;
         else
             minFilter = glmode[mipmapping];
 
-        if(tex->type == GLT_DOOMPATCH || tex->type == GLT_FLARE)
-            anisoFilter = 0 /*no anisotropic*/;
+        if(tex->type == GLT_DOOMPATCH || tex->type == GLT_FLARE || (tex->type == GLT_SPRITE && context && ((material_load_params_t*)context)->pSprite))
+            anisoFilter = 0 /*no anisotropic filtering*/;
         else
             anisoFilter = texAniso;
 
@@ -2774,11 +2755,11 @@ if(!didDefer)
             p->extraOffset[VX] = -1;
             p->extraOffset[VY] = -1;
         }*/
-        }
 
         if(tex->type == GLT_SPRITE)
         {
             material_load_params_t* params = (material_load_params_t*) context;
+            float* tc = texInst->data.sprite.texCoord;
             int tmap = 0, tclass = 0;
             boolean pSprite = false;
 
@@ -2794,17 +2775,28 @@ if(!didDefer)
             texInst->data.sprite.pSprite = pSprite;
 
             if(!pSprite)
-            {
-                // Calculate light source properties.
+            {   // Calculate light source properties.
                 GL_CalcLuminance(image.pixels, image.width, image.height, image.pixelSize, 0,
-                                 &texInst->data.sprite.flareX,
-                                 &texInst->data.sprite.flareY,
-                                 &texInst->data.sprite.autoLightColor,
-                                 &texInst->data.sprite.lumSize);
+                                 &texInst->data.sprite.flareX, &texInst->data.sprite.flareY,
+                                 &texInst->data.sprite.autoLightColor, &texInst->data.sprite.lumSize);
             }
 
-            // Determine coordinates for the texture.
-            GL_SetTexCoords(texInst->data.sprite.texCoord, image.width, image.height);
+            /**
+             * Calculates texture coordinates based on the image dimensions. The
+             * coordinates are calculated as width/CeilPow2(width), or 1 if larger
+             * than the maximum texture size.
+             */
+            if(GL_state.textureNonPow2 && (pSprite || !(flags & TXCF_UPLOAD_ARG_NOSTRETCH)) &&
+               !(image.width < MINTEXWIDTH || image.height < MINTEXHEIGHT))
+            {
+                tc[0] = tc[1] = 1;
+            }
+            else
+            {
+                int pw = M_CeilPow2(image.width), ph = M_CeilPow2(image.height);
+                tc[0] = image.width  / (float) pw;
+                tc[1] = image.height / (float) ph;
+            }
         }
 
         if(tex->type == GLT_FLAT || tex->type == GLT_DOOMTEXTURE)
@@ -2820,6 +2812,7 @@ if(!didDefer)
                 averageColorIdx(texInst->data.texture.color, image.pixels, image.width, image.height, 0, false);
                 lineAverageColorIdx(texInst->data.texture.topColor, image.pixels, image.width, image.height, 0, 0, false);
             }
+        }
         }
 
         GL_DestroyImage(&image);

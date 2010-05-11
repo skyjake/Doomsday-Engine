@@ -40,9 +40,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MINTEXWIDTH             8
-#define MINTEXHEIGHT            8
-
 // TYPES -------------------------------------------------------------------
 
 // posts are runs of non masked source pixels
@@ -435,7 +432,7 @@ boolean GL_OptimalSize(int width, int height, int *optWidth, int *optHeight,
  *                      checked for alpha pixels and will return accordingly
  *                      if present.
  *
- * @return              If @c checkForAlpha == false,, will return
+ * @return              If @c checkForAlpha == false, will return
  *                      @c false,. Else, @c true, if the
  *                      buffer really has alpha information.
  */

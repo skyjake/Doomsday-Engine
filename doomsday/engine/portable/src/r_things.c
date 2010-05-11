@@ -723,6 +723,9 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     info->topOffset = sprTex->offY;
     info->width = ms.width;
     info->height = ms.height;
+    info->texCoord[0] = ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[0];
+    info->texCoord[1] = ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[1];
+
     return true;
 }
 

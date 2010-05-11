@@ -1279,29 +1279,20 @@ static void setupGLStateForMap(const automap_t* map,
                     w = sprInfo.width;
                     h = sprInfo.height;
 
-                    {
-                    float s, t;
-
-                    // Let's calculate texture coordinates.
-                    // To remove a possible edge artifact, move the corner a bit up/left.
-                    s = (w - 0.4f) / M_CeilPow2(w);
-                    t = (h - 0.4f) / M_CeilPow2(h);
-
                     DGL_Color4f(1, 1, 1, iconAlpha);
                     DGL_Begin(DGL_QUADS);
                         DGL_TexCoord2f(0, 0, 0);
                         DGL_Vertex2f(x, y);
 
-                        DGL_TexCoord2f(0, s, 0);
+                        DGL_TexCoord2f(0, sprInfo.texCoord[0], 0);
                         DGL_Vertex2f(x + w * scale, y);
 
-                        DGL_TexCoord2f(0, s, t);
+                        DGL_TexCoord2f(0, sprInfo.texCoord[0], sprInfo.texCoord[1]);
                         DGL_Vertex2f(x + w * scale, y + h * scale);
 
-                        DGL_TexCoord2f(0, 0, t);
+                        DGL_TexCoord2f(0, 0, sprInfo.texCoord[1]);
                         DGL_Vertex2f(x, y + h * scale);
                     DGL_End();
-                    }
 
                     y += spacing;
                 }

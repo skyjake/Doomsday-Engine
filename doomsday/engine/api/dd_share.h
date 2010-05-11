@@ -991,6 +991,7 @@ typedef struct {
     int             topOffset;
     int             width;
     int             height;
+    float           texCoord[2]; // Prepared texture coordinates.
     int             numFrames; // Number of frames the sprite has.
 } spriteinfo_t;
 
