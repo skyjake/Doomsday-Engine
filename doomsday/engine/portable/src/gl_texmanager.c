@@ -755,8 +755,7 @@ byte GL_LoadDDTexture(image_t* image, const gltexture_inst_t* inst,
  *                      1 = a lump resource.
  *                      2 = an external resource.
  */
-byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst,
-                          void* context)
+byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst, void* context)
 {
     detailtex_t* dTex;
 
@@ -769,12 +768,10 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst,
     {
         filename_t fileName;
 
-        if(!(R_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, fileName,
-                             dTex->external, NULL, FILENAME_T_MAXLEN) &&
+        if(!(R_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, fileName, dTex->external, NULL, FILENAME_T_MAXLEN) &&
              GL_LoadImage(image, fileName)))
         {
-            VERBOSE(Con_Message("GL_LoadDetailTexture: "
-                                "Failed to load: %s\n", dTex->external));
+            VERBOSE(Con_Message("GL_LoadDetailTexture: Failed to load: %s\n", dTex->external));
             return 0;
         }
 
@@ -788,8 +785,7 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst,
         if(PCX_MemoryGetSize(data, &image->width, &image->height))
         {   // Nice...
             image->pixels = M_Malloc(image->width * image->height * 3);
-            PCX_MemoryLoad(data, W_LumpLength(dTex->lump),
-                           image->width, image->height, image->pixels);
+            PCX_MemoryLoad(data, W_LumpLength(dTex->lump), image->width, image->height, image->pixels);
         }
         else // It must be a raw image.
         {
@@ -809,12 +805,8 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst,
                     if(lumpLength != 64 * 64)
                     {
                         W_ChangeCacheTag(dTex->lump, PU_CACHE);
-
-                        Con_Error
-                            ("GL_LoadDetailTexture: Must be 256x256, "
-                             "128x128 or 64x64.\n");
+                        Con_Error("GL_LoadDetailTexture: Must be 256x256, 128x128 or 64x64.\n");
                     }
-
                     image->width = image->height = 64;
                 }
                 else
@@ -826,8 +818,7 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst,
                 image->width = image->height = 256;
 
             image->pixels = M_Malloc(image->width * image->height);
-            memcpy(image->pixels, W_CacheLumpNum(dTex->lump, PU_CACHE),
-                   image->width * image->height);
+            memcpy(image->pixels, data, image->width * image->height);
             image->pixelSize = 1;
         }
 
@@ -1975,6 +1966,54 @@ static void BlackOutlines(byte* pixels, int width, int height)
     M_Free(dark);
 }
 
+static void Equalize(byte* pixels, int width, int height)
+{
+    byte min = 255, max = 0;
+    int i, avg = 0;
+    float hiMul, loMul, baMul;
+    byte* pix;
+
+    for(i = 0, pix = pixels; i < width * height; ++i, pix += 1)
+    {
+        if(*pix < min) min = *pix;
+        if(*pix > max) max = *pix;
+        avg += *pix;
+    }
+
+    if(max <= min || max == 0 || min == 255)
+        return; // Nothing we can do.
+
+    avg /= width * height;
+
+    // Allow a small margin of variance with the balance multiplier.
+    baMul = (!INRANGE_OF(avg, 127, 4)? (float)127/avg : 1);
+    if(baMul != 1)
+    {
+        if(max < 255)
+            max = (byte) MAX_OF(1, (float)max - (255-max) * baMul, 255);
+        if(min > 0)
+            min = (byte) MAX_OF(0, (float)min + min * baMul, 255);
+    }
+
+    hiMul = (max < 255?    (float)255/max  : 1);
+    loMul = (min > 0  ? 1-((float)min/255) : 1);
+
+    if(baMul == 1 && hiMul == 1 && loMul == 1)
+        return; // Artist has God-like skillz.
+
+    for(i = 0, pix = pixels; i < width * height; ++i, pix += 1)
+    {
+        // First balance.
+        *pix = (byte) MINMAX_OF(0, ((float)*pix) * baMul, 255);
+
+        // Now amplify.
+        if(*pix > 127)
+            *pix = (byte) MINMAX_OF(0, ((float)*pix) * hiMul, 255);
+        else
+            *pix = (byte) MINMAX_OF(0, ((float)*pix) * loMul, 255);
+    }
+}
+
 #if 0 // Currently unused.
 static void EnhanceContrast(byte *pixels, int width, int height)
 {
@@ -2615,6 +2654,11 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
         if(fillOutlines && !scaleSharp && image.pixelSize == 1 && image.isMasked)
             ColorOutlines(image.pixels, image.width, image.height);
 
+        if(tex->type == GLT_DETAIL && image.pixelSize == 1)
+        {
+            Equalize(image.pixels, image.width, image.height);
+        }
+
         // Lightmaps and flare textures should always be monochrome images.
         if((tex->type == GLT_LIGHTMAP || (tex->type == GLT_FLARE && image.pixelSize != 4)) &&
            !image.isMasked)
@@ -2715,7 +2759,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
         if(tex->type == GLT_DOOMPATCH || tex->type == GLT_FLARE || (tex->type == GLT_SPRITE && context && ((material_load_params_t*)context)->pSprite))
             anisoFilter = 0 /*no anisotropic filtering*/;
         else
-            anisoFilter = texAniso;
+            anisoFilter = texAniso; /// \fixme is "best" truely a suitable default for ALL texture types?
 
         if(tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE || tex->type == GLT_LIGHTMAP || tex->type == GLT_FLARE)
             wrapS = wrapT = GL_CLAMP_TO_EDGE;
