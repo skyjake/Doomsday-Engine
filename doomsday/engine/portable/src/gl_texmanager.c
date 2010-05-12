@@ -2695,7 +2695,8 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
         if(noCompression || (image.width < 128 && image.height < 128) || tex->type == GLT_FLARE || tex->type == GLT_SHINY)
             flags |= TXCF_NO_COMPRESSION;
 
-        if(!(tex->type == GLT_MASK || tex->type == GLT_SHINY) && (image.pixelSize > 1 || tex->type == GLT_MODELSKIN))
+        if(!(tex->type == GLT_MASK || tex->type == GLT_SHINY || tex->type == GLT_LIGHTMAP) &&
+           (image.pixelSize > 1 || tex->type == GLT_MODELSKIN))
             flags |= TXCF_APPLY_GAMMACORRECTION;
 
         if(tex->type == GLT_SPRITE /*|| tex->type == GLT_DOOMPATCH*/)
@@ -2709,7 +2710,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
             if(image.pixelSize > 1)
                 flags |= TXCF_UPLOAD_ARG_RGBDATA;
         }
-        else if(tmpResult == 2 && !(tex->type == GLT_SHINY || tex->type == GLT_MASK))
+        else if(tmpResult == 2 && !(tex->type == GLT_SHINY || tex->type == GLT_MASK || tex->type == GLT_LIGHTMAP))
             flags |= TXCF_UPLOAD_ARG_RGBDATA;
 
         if(tex->type == GLT_DETAIL)
@@ -2728,7 +2729,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
         if(tex->type == GLT_DOOMTEXTURE || tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE)
             alphaChannel = ((tmpResult == 2 && image.pixelSize == 4) || (tmpResult == 1 && image.isMasked))? true : false;
         else
-            alphaChannel = image.pixelSize == 4 && !(tex->type == GLT_MASK || tex->type == GLT_SHINY);
+            alphaChannel = image.pixelSize != 3 && !(tex->type == GLT_MASK || tex->type == GLT_SHINY);
 
         if(alphaChannel)
             flags |= TXCF_UPLOAD_ARG_ALPHACHANNEL;
