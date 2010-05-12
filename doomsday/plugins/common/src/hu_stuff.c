@@ -179,12 +179,15 @@ const char shiftXForm[] = {
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static hudstate_t hudStates[MAXPLAYERS];
-
-static patchinfo_t borderPatches[8];
-
 static fogeffectdata_t fogEffectData;
 
-// Code -------------------------------------------------------------------
+static patchinfo_t borderPatches[8];
+static patchinfo_t dpSliderLeft;
+static patchinfo_t dpSliderMiddle;
+static patchinfo_t dpSliderRight;
+static patchinfo_t dpSliderHandle;
+
+// CODE -------------------------------------------------------------------
 
 void R_SetFontCharacter(gamefontid_t fontid, byte ch, const char* lumpname)
 {
@@ -691,6 +694,18 @@ void Hu_LoadData(void)
     R_PrecachePatch("FONTB046", &huMinus);
 #else
     R_PrecachePatch("FONTB13", &huMinus);
+#endif
+
+#if __JDOOM__ || __JDOOM64__
+    R_PrecachePatch("M_THERML", &dpSliderLeft);
+    R_PrecachePatch("M_THERM2", &dpSliderMiddle);
+    R_PrecachePatch("M_THERMR", &dpSliderRight);
+    R_PrecachePatch("M_THERMO", &dpSliderHandle);
+#elif __JHERETIC__ || __JHEXEN__
+    R_PrecachePatch("M_SLDLT", &dpSliderLeft);
+    R_PrecachePatch("M_SLDMD1", &dpSliderMiddle);
+    R_PrecachePatch("M_SLDRT", &dpSliderRight);
+    R_PrecachePatch("M_SLDKB", &dpSliderHandle);
 #endif
 
 #if __JDOOM__ || __JDOOM64__
@@ -2670,14 +2685,14 @@ void M_DrawSlider(int x, int y, int width, int height, int slot, float alpha)
 
     DGL_Color4f( 1, 1, 1, alpha);
 
-    GL_DrawPatch_CS(x - 32, y, W_GetNumForName("M_SLDLT"));
-    GL_DrawPatch_CS(x + width * 8, y, W_GetNumForName("M_SLDRT"));
+    GL_DrawPatch_CS(x - 32, y, dpSliderLeft.lump);
+    GL_DrawPatch_CS(x + width * 8, y, dpSliderRight.lump);
 
-    DGL_SetPatch(W_GetNumForName("M_SLDMD1"), DGL_REPEAT, DGL_REPEAT);
+    DGL_SetPatch(dpSliderMiddle.lump, DGL_REPEAT, DGL_REPEAT);
     DGL_DrawRectTiled(x - 1, y + 1, width * 8 + 2, 13, 8, 13);
 
     DGL_Color4f( 1, 1, 1, alpha);
-    GL_DrawPatch_CS(x + 4 + slot * unit, y + 7, W_GetNumForName("M_SLDKB"));
+    GL_DrawPatch_CS(x + 4 + slot * unit, y + 7, dpSliderHandle.lump);
 #else
     float xx, scale = height / 13.0f;
 
@@ -2692,18 +2707,17 @@ void M_DrawSlider(int x, int y, int width, int height, int slot, float alpha)
     }
 
     xx = x;
-    DGL_SetPatch(W_GetNumForName("M_THERML"), DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_SetPatch(dpSliderLeft.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
     DGL_DrawRect(xx, y, 6 * scale, height, 1, 1, 1, alpha);
     xx += 6 * scale;
-    DGL_SetPatch(W_GetNumForName("M_THERM2"), DGL_REPEAT, DGL_CLAMP_TO_EDGE);
+    DGL_SetPatch(dpSliderMiddle.lump, DGL_REPEAT, DGL_CLAMP_TO_EDGE);
     DGL_DrawRectTiled(xx, y, 8 * width * scale, height, 8 * scale, height);
     xx += 8 * width * scale;
-    DGL_SetPatch(W_GetNumForName("M_THERMR"), DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_SetPatch(dpSliderRight.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
     DGL_DrawRect(xx, y, 6 * scale, height, 1, 1, 1, alpha);
 
-    DGL_SetPatch(W_GetNumForName("M_THERMO"), DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-    DGL_DrawRect(x + (6 + slot * 8) * scale, y, 6 * scale, height, 1, 1, 1,
-                 alpha);
+    DGL_SetPatch(dpSliderHandle.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_DrawRect(x + (6 + slot * 8) * scale, y, 6 * scale, height, 1, 1, 1, alpha);
 #endif
 }
 
