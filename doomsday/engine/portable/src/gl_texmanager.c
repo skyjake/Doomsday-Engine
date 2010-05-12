@@ -1983,9 +1983,9 @@ static void Equalize(byte* pixels, int width, int height)
     if(baMul != 1)
     {
         if(max < 255)
-            max = (byte) MAX_OF(1, (float)max - (255-max) * baMul, 255);
+            max = (byte) MINMAX_OF(1, (float)max - (255-max) * baMul, 255);
         if(min > 0)
-            min = (byte) MAX_OF(0, (float)min + min * baMul, 255);
+            min = (byte) MINMAX_OF(0, (float)min + min * baMul, 255);
     }
 
     hiMul = (max < 255?    (float)255/max  : 1);
