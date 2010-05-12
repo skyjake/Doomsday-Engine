@@ -1493,7 +1493,7 @@ void drawKillsWidget(int player, float textAlpha, float iconAlpha,
 
     *drawnHeight = M_StringHeight(buf, GF_FONTA);
     *drawnWidth = M_StringWidth(buf, GF_FONTA);
-    M_WriteText3(0, -(*drawnHeight), buf, GF_FONTA, 1, 1, 1, textAlpha, false, false, 0);
+    M_WriteText3(0, -(*drawnHeight), buf, GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha, false, false, 0);
 }
 
 void drawItemsWidget(int player, float textAlpha, float iconAlpha,
@@ -1524,7 +1524,7 @@ void drawItemsWidget(int player, float textAlpha, float iconAlpha,
 
     *drawnHeight = M_StringHeight(buf, GF_FONTA);
     *drawnWidth = M_StringWidth(buf, GF_FONTA);
-    M_WriteText3(0, -(*drawnHeight), buf, GF_FONTA, 1, 1, 1, textAlpha, false, false, 0);
+    M_WriteText3(0, -(*drawnHeight), buf, GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha, false, false, 0);
 }
 
 void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
@@ -1555,7 +1555,7 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
 
     *drawnHeight = M_StringHeight(buf, GF_FONTA);
     *drawnWidth = M_StringWidth(buf, GF_FONTA);
-    M_WriteText3(0, -(*drawnHeight), buf, GF_FONTA, 1, 1, 1, textAlpha, false, false, 0);
+    M_WriteText3(0, -(*drawnHeight), buf, GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha, false, false, 0);
 }
 
 typedef struct {
