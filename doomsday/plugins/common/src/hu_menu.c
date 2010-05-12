@@ -3854,9 +3854,8 @@ void MN_DrawColorBox(const menu_t* menu, int index, float r, float g,
  */
 void MN_DrawSlider(const menu_t* menu, int item, int width, int slot)
 {
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    int                 x;
-    int                 y;
+#if __JHERETIC__ || __JHEXEN__
+    int x, y;
 
     if(!MN_IsItemVisible(menu, item))
         return;
@@ -3866,9 +3865,8 @@ void MN_DrawSlider(const menu_t* menu, int item, int width, int slot)
 
     M_DrawSlider(x, y, width, slot, menuAlpha);
 #else
-    int                 x = 0, y = 0;
-    int                 height = menu->itemHeight - 1;
-    float               scale = height / 13.0f;
+    int x = 0, y = 0, height = menu->itemHeight - 1;
+    float scale = height / 13.0f;
 
     if(!MN_IsItemVisible(menu, item))
         return;

@@ -157,6 +157,8 @@ void        M_DrawSlider(int x, int y, int width, int height, int slot,
                          float alpha);
 #endif
 
+void            M_DrawGlowBar(const float a[2], const float b[2], float thickness, boolean left, boolean right, boolean caps, float red, float green, float blue, float alpha);
+
 void        Draw_BeginZoom(float s, float originX, float originY);
 void        Draw_EndZoom(void);
 

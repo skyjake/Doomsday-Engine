@@ -1861,6 +1861,186 @@ int M_StringHeight(const char* string, gamefontid_t fontId)
     return h;
 }
 
+void M_DrawGlowBar(const float a[2], const float b[2], float thickness,
+    boolean left, boolean right, boolean caps, float red, float green,
+    float blue, float alpha)
+{
+    float length, delta[2], normal[2], unit[2];
+    DGLuint tex;
+
+    if(!left && !right && !caps)
+        return;
+    if(!(alpha > 0))
+        return;
+
+    delta[0] = b[0] - a[0];
+    delta[1] = b[1] - a[1];
+    length = sqrt(delta[0] * delta[0] + delta[1] * delta[1]);
+    if(length <= 0)
+        return;
+
+    unit[0] = delta[0] / length;
+    unit[1] = delta[1] / length;
+    normal[0] = unit[1];
+    normal[1] = -unit[0];
+
+    tex = Get(DD_DYNLIGHT_TEXTURE);
+
+    if(caps)
+    {   // Draw a "cap" at the start of the line.
+        float v1[2], v2[2], v3[2], v4[2];
+
+        v1[0] = a[0] - unit[0] * thickness + normal[0] * thickness;
+        v1[1] = a[1] - unit[1] * thickness + normal[1] * thickness;
+        v2[0] = a[0] + normal[0] * thickness;
+        v2[1] = a[1] + normal[1] * thickness;
+        v3[0] = a[0] - normal[0] * thickness;
+        v3[1] = a[1] - normal[1] * thickness;
+        v4[0] = a[0] - unit[0] * thickness - normal[0] * thickness;
+        v4[1] = a[1] - unit[1] * thickness - normal[1] * thickness;
+
+        DGL_Bind(tex);
+        DGL_Color4f(red, green, blue, alpha);
+
+        DGL_Begin(DGL_QUADS);
+            DGL_TexCoord2f(0, 0, 0);
+            DGL_Vertex2f(v1[0], v1[1]);
+
+            DGL_TexCoord2f(0, .5f, 0);
+            DGL_Vertex2f(v2[0], v2[1]);
+
+            DGL_TexCoord2f(0, .5f, 1);
+            DGL_Vertex2f(v3[0], v3[1]);
+
+            DGL_TexCoord2f(0, 0, 1);
+            DGL_Vertex2f(v4[0], v4[1]);
+        DGL_End();
+    }
+
+    // The middle part of the line.
+    if(left && right)
+    {
+        float v1[2], v2[2], v3[2], v4[2];
+
+        v1[0] = a[0] + normal[0] * thickness;
+        v1[1] = a[1] + normal[1] * thickness;
+        v2[0] = b[0] + normal[0] * thickness;
+        v2[1] = b[1] + normal[1] * thickness;
+        v3[0] = b[0] - normal[0] * thickness;
+        v3[1] = b[1] - normal[1] * thickness;
+        v4[0] = a[0] - normal[0] * thickness;
+        v4[1] = a[1] - normal[1] * thickness;
+
+        DGL_Bind(tex);
+        DGL_Color4f(red, green, blue, alpha);
+
+        DGL_Begin(DGL_QUADS);
+            DGL_TexCoord2f(0, .5f, 0);
+            DGL_Vertex2f(v1[0], v1[1]);
+
+            DGL_TexCoord2f(0, .5f, 0);
+            DGL_Vertex2f(v2[0], v2[1]);
+
+            DGL_TexCoord2f(0, .5f, 1);
+            DGL_Vertex2f(v3[0], v3[1]);
+
+            DGL_TexCoord2f(0, .5f, 1);
+            DGL_Vertex2f(v4[0], v4[1]);
+        DGL_End();
+    }
+    else if(left)
+    {
+        float v1[2], v2[2], v3[2], v4[2];
+
+        v1[0] = a[0] + normal[0] * thickness;
+        v1[1] = a[1] + normal[1] * thickness;
+        v2[0] = b[0] + normal[0] * thickness;
+        v2[1] = b[1] + normal[1] * thickness;
+        v3[0] = b[0];
+        v3[1] = b[1];
+        v4[0] = a[0];
+        v4[1] = a[1];
+
+        DGL_Bind(tex);
+        DGL_Color4f(red, green, blue, alpha);
+
+        DGL_Begin(DGL_QUADS);
+            DGL_TexCoord2f(0, 0, .25f);
+            DGL_Vertex2f(v1[0], v1[1]);
+
+            DGL_TexCoord2f(0, 0, .25f);
+            DGL_Vertex2f(v2[0], v2[1]);
+
+            DGL_TexCoord2f(0, .5f, .25f);
+            DGL_Vertex2f(v3[0], v3[1]);
+
+            DGL_TexCoord2f(0, .5f, .25f);
+            DGL_Vertex2f(v4[0], v4[1]);
+        DGL_End();
+    }
+    else // right
+    {
+        float v1[2], v2[2], v3[2], v4[2];
+
+        v1[0] = a[0];
+        v1[1] = a[1];
+        v2[0] = b[0];
+        v2[1] = b[1];
+        v3[0] = b[0] - normal[0] * thickness;
+        v3[1] = b[1] - normal[1] * thickness;
+        v4[0] = a[0] - normal[0] * thickness;
+        v4[1] = a[1] - normal[1] * thickness;
+
+        DGL_Bind(tex);
+        DGL_Color4f(red, green, blue, alpha);
+
+        DGL_Begin(DGL_QUADS);
+            DGL_TexCoord2f(0, .75f, .5f);
+            DGL_Vertex2f(v1[0], v1[1]);
+
+            DGL_TexCoord2f(0, .75f, .5f);
+            DGL_Vertex2f(v2[0], v2[1]);
+
+            DGL_TexCoord2f(0, .75f, 1);
+            DGL_Vertex2f(v3[0], v3[1]);
+
+            DGL_TexCoord2f(0, .75f, 1);
+            DGL_Vertex2f(v4[0], v4[1]);
+        DGL_End();
+    }
+
+    if(caps)
+    {
+        float v1[2], v2[2], v3[2], v4[2];
+
+        v1[0] = b[0] + normal[0] * thickness;
+        v1[1] = b[1] + normal[1] * thickness;
+        v2[0] = b[0] + unit[0] * thickness + normal[0] * thickness;
+        v2[1] = b[1] + unit[1] * thickness + normal[1] * thickness;
+        v3[0] = b[0] + unit[0] * thickness - normal[0] * thickness;
+        v3[1] = b[1] + unit[1] * thickness - normal[1] * thickness;
+        v4[0] = b[0] - normal[0] * thickness;
+        v4[1] = b[1] - normal[1] * thickness;
+
+        DGL_Bind(tex);
+        DGL_Color4f(red, green, blue, alpha);
+
+        DGL_Begin(DGL_QUADS);
+            DGL_TexCoord2f(0, .5f, 0);
+            DGL_Vertex2f(v1[0], v1[1]);
+
+            DGL_TexCoord2f(0, 1, 0);
+            DGL_Vertex2f(v2[0], v2[1]);
+
+            DGL_TexCoord2f(0, 1, 1);
+            DGL_Vertex2f(v3[0], v3[1]);
+
+            DGL_TexCoord2f(0, .5, 1);
+            DGL_Vertex2f(v4[0], v4[1]);
+        DGL_End();
+    }
+}
+
 void M_LetterFlash(int x, int y, int w, int h, int bright, float r, float g,
                    float b, float a)
 {
@@ -2503,6 +2683,16 @@ void M_DrawSlider(int x, int y, int width, int height, int slot, float alpha)
 #else
     int         xx;
     float       scale = height / 13.0f;
+
+    if(cfg.menuShadow > 0)
+    {
+        float from[2], to[2];
+        from[0] = x+4;
+        from[1] = y+1+height/2;
+        to[0] = x + (6 + 8 * width * scale) - 4;
+        to[1] = y+1+height/2;
+        M_DrawGlowBar(from, to, height*1.1f, true, true, true, 0, 0, 0, alpha * cfg.menuShadow);
+    }
 
     xx = x;
     DGL_SetPatch(W_GetNumForName("M_THERML"), DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
