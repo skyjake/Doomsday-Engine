@@ -898,20 +898,18 @@ byte GL_LoadFlareTexture(image_t* image, const gltexture_inst_t* inst,
 byte GL_LoadShinyTexture(image_t* image, const gltexture_inst_t* inst,
                          void* context)
 {
-    filename_t          fileName;
-    shinytex_t*         sTex;
+    filename_t fileName;
+    shinytex_t* sTex;
 
     if(!image)
         return 0; // Wha?
 
     sTex = shinyTextures[inst->tex->ofTypeID];
 
-    if(!(R_FindResource2(RT_GRAPHIC, DDRC_LIGHTMAP, fileName, sTex->external,
-                         NULL, FILENAME_T_MAXLEN) &&
+    if(!(R_FindResource2(RT_GRAPHIC, DDRC_LIGHTMAP, fileName, sTex->external, NULL, FILENAME_T_MAXLEN) &&
          GL_LoadImage(image, fileName)))
     {
-        VERBOSE(Con_Printf("GL_LoadShinyTexture: %s not found!\n",
-                           sTex->external));
+        VERBOSE(Con_Printf("GL_LoadShinyTexture: %s not found!\n", sTex->external));
         return 0;
     }
 
@@ -1198,9 +1196,9 @@ byte GL_LoadFlat(image_t* img, const gltexture_inst_t* inst,
  */
 static byte* loadImage(image_t* img, const char* imagefn)
 {
-    DFILE*              file;
-    char*               p;
-    int                 format;
+    DFILE* file;
+    char* p;
+    int format;
 
     // We know how to load PCX, TGA and PNG.
     p = M_FindFileExtension(img->fileName);
@@ -1227,8 +1225,7 @@ static byte* loadImage(image_t* img, const char* imagefn)
 
             // Allocate a big enough buffer and read in the image.
             img->pixels = M_Malloc(4 * img->width * img->height);
-            format = TGA_Load32_rgba8888(file, img->width, img->height,
-                                         img->pixels);
+            format = TGA_Load32_rgba8888(file, img->width, img->height, img->pixels);
             if(format == TGA_TARGA24)
             {
                 img->pixelSize = 3;
@@ -1243,8 +1240,7 @@ static byte* loadImage(image_t* img, const char* imagefn)
         }
         else if(!strcmp(p, "png"))
         {
-            img->pixels = PNG_Load(img->fileName, &img->width, &img->height,
-                                   &img->pixelSize);
+            img->pixels = PNG_Load(img->fileName, &img->width, &img->height, &img->pixelSize);
             img->originalBits = 8 * img->pixelSize;
 
             if(img->pixels == NULL)
@@ -1252,17 +1248,14 @@ static byte* loadImage(image_t* img, const char* imagefn)
         }
     }
 
-    VERBOSE(Con_Message("LoadImage: %s (%ix%i)\n",
-                        M_PrettyPath(img->fileName), img->width,
-                        img->height));
+    VERBOSE(Con_Message("LoadImage: %s (%ix%i)\n", M_PrettyPath(img->fileName), img->width, img->height));
 
     // How about some color-keying?
     if(GL_IsColorKeyed(img->fileName))
     {
-        byte               *out;
+        byte* out;
 
-        out = GL_ApplyColorKeying(img->pixels, img->pixelSize, img->width,
-                                  img->height);
+        out = GL_ApplyColorKeying(img->pixels, img->pixelSize, img->width, img->height);
         if(out)
         {
             // Had to allocate a larger buffer, free the old and attach the new.
@@ -2676,7 +2669,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
         }
 
         {
-        int magFilter, minFilter, anisoFilter, wrapS, wrapT, grayMipmap = 0, flags = 0;
+        int magFilter, minFilter, anisoFilter, wrapS, wrapT, grayMipmap = -1, flags = 0;
         texturecontent_t content;
         dgltexformat_t texFormat;
         boolean alphaChannel;
@@ -2685,7 +2678,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
         if(noCompression || (image.width < 128 && image.height < 128) || tex->type == GLT_FLARE || tex->type == GLT_SHINY)
             flags |= TXCF_NO_COMPRESSION;
 
-        if(image.pixelSize > 1 || tex->type == GLT_MODELSKIN)
+        if(!(tex->type == GLT_MASK || tex->type == GLT_SHINY) && (image.pixelSize > 1 || tex->type == GLT_MODELSKIN))
             flags |= TXCF_APPLY_GAMMACORRECTION;
 
         if(tex->type == GLT_SPRITE /*|| tex->type == GLT_DOOMPATCH*/)
@@ -2699,7 +2692,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
             if(image.pixelSize > 1)
                 flags |= TXCF_UPLOAD_ARG_RGBDATA;
         }
-        else if(tmpResult == 2)
+        else if(tmpResult == 2 && !(tex->type == GLT_SHINY || tex->type == GLT_MASK))
             flags |= TXCF_UPLOAD_ARG_RGBDATA;
 
         if(tex->type == GLT_DETAIL)
@@ -2712,13 +2705,13 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
             grayMipmap = MINMAX_OF(0, contrast * 255, 255);
             flags |= TXCF_GRAY_MIPMAP | (grayMipmap << TXCF_GRAY_MIPMAP_LEVEL_SHIFT);
         }
-        else if(!(tex->type == GLT_DOOMPATCH || tex->type == GLT_LIGHTMAP || tex->type == GLT_FLARE || (tex->type == GLT_SPRITE && context && ((material_load_params_t*)context)->pSprite)))
+        else if(!(tex->type == GLT_SHINY || tex->type == GLT_DOOMPATCH || tex->type == GLT_LIGHTMAP || tex->type == GLT_FLARE || (tex->type == GLT_SPRITE && context && ((material_load_params_t*)context)->pSprite)))
             flags |= TXCF_MIPMAP;
 
         if(tex->type == GLT_DOOMTEXTURE || tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE)
             alphaChannel = ((tmpResult == 2 && image.pixelSize == 4) || (tmpResult == 1 && image.isMasked))? true : false;
         else
-            alphaChannel = image.pixelSize == 4;
+            alphaChannel = image.pixelSize == 4 && !(tex->type == GLT_MASK || tex->type == GLT_SHINY);
 
         if(alphaChannel)
             flags |= TXCF_UPLOAD_ARG_ALPHACHANNEL;
@@ -2751,7 +2744,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
             minFilter = GL_LINEAR_MIPMAP_LINEAR;
         else if(tex->type == GLT_DOOMPATCH || (tex->type == GLT_SPRITE && context && ((material_load_params_t*)context)->pSprite))
             minFilter = GL_NEAREST;
-        else if(tex->type == GLT_LIGHTMAP || tex->type == GLT_FLARE)
+        else if(tex->type == GLT_LIGHTMAP || tex->type == GLT_FLARE || tex->type == GLT_SHINY)
             minFilter = GL_LINEAR;
         else
             minFilter = glmode[mipmapping];
