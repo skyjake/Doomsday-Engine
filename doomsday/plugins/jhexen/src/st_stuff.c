@@ -2013,7 +2013,7 @@ void drawWorldTimerWidget(int player, float textAlpha, float iconAlpha,
     }
     *drawnWidth = M_StringWidth(buf, GF_FONTA);
     *drawnHeight = M_StringHeight(buf, GF_FONTA);
-    WI_DrawParamText(0, 0, buf, GF_FONTA, 1, 1, 1, textAlpha, false, false, ALIGN_RIGHT);
+    WI_DrawParamText(0, 0, buf, GF_FONTA, 1, 1, 1, textAlpha, false, false, false, ALIGN_RIGHT);
 }
 
 typedef struct {

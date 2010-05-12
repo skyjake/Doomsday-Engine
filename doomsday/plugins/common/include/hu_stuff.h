@@ -108,7 +108,7 @@ void        WI_DrawPatch(int x, int y, float r, float g, float b, float a,
 void        WI_DrawParamText(int x, int y, const char* string,
                              gamefontid_t font, float defRed,
                              float defGreen, float defBlue, float defAlpha,
-                             boolean defCase, boolean defTypeIn,
+                             boolean defCase, boolean defTypeIn, boolean defShadow,
                              int halign);
 void        M_WriteText(int x, int y, const char *string);
 void        M_WriteText2(int x, int y, const char *string,

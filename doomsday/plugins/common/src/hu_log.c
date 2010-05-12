@@ -413,7 +413,7 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
         // Draw using param text.
         // Messages may use the params to override the way the message is
         // is displayed, e.g. colour (Hexen's important messages).
-        WI_DrawParamText(0, y, msg->text, GF_FONTA, col[CR], col[CG], col[CB], col[CA], false, false, cfg.msgAlign);
+        WI_DrawParamText(0, y, msg->text, GF_FONTA, col[CR], col[CG], col[CB], col[CA], false, false, false, cfg.msgAlign);
 
         width = M_StringWidth(msg->text, GF_FONTA);
         height = M_StringHeight(msg->text, GF_FONTA);
@@ -852,7 +852,7 @@ void Chat_Drawer(int player, float textAlpha, float iconAlpha,
             xOffset = -M_CharWidth('_', GF_FONTA);
     }
 
-    WI_DrawParamText(xOffset, 0, str, GF_FONTA, cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha, false, false, cfg.msgAlign);
+    WI_DrawParamText(xOffset, 0, str, GF_FONTA, cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha, false, false, false, cfg.msgAlign);
     *drawnWidth = M_StringWidth(chat->buffer.l.l, GF_FONTA) + M_CharWidth('_', GF_FONTA);
     *drawnHeight = MAX_OF(M_StringHeight(chat->buffer.l.l, GF_FONTA), M_CharHeight('_', GF_FONTA));
     }

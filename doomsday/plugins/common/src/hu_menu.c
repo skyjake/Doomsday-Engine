@@ -1726,7 +1726,7 @@ void Hu_MenuDrawer(void)
                                  currentMenu->items[i].text, currentMenu->font,
                                  r, g, b, menuAlpha,
                                  false,
-                                 cfg.usePatchReplacement? true : false,
+                                 cfg.usePatchReplacement? true : false, true,
                                  ALIGN_LEFT);
             }
 
@@ -2292,7 +2292,7 @@ void M_DrawTitle(char *text, int y)
 {
     WI_DrawParamText(160 - M_StringWidth(text, GF_FONTB) / 2, y, text,
                      GF_FONTB, cfg.menuColor[0], cfg.menuColor[1],
-                     cfg.menuColor[2], menuAlpha, true, true, ALIGN_LEFT);
+                     cfg.menuColor[2], menuAlpha, true, true, true, ALIGN_LEFT);
 }
 
 boolean MN_IsItemVisible(const menu_t* menu, int item)

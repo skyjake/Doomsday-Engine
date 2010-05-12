@@ -1472,7 +1472,7 @@ float WI_ParseFloat(char** str)
  */
 void WI_DrawParamText(int x, int y, const char* inString, gamefontid_t defFont,
     float defRed, float defGreen, float defBlue, float defAlpha, boolean defCase,
-    boolean defTypeIn, int halign)
+    boolean defTypeIn, boolean defShadow, int halign)
 {
 #define SMALLBUFF_SIZE  80
 
@@ -1762,8 +1762,7 @@ void WI_DrawParamText(int x, int y, const char* inString, gamefontid_t defFont,
             DGL_Scalef(scaleX, scaleY * extraScale, 1);
 
             // Draw it.
-            M_WriteText3(0, 0, temp, font, r, g, b, a, typeIn, false,
-                         typeIn ? charCount : 0);
+            M_WriteText3(0, 0, temp, font, r, g, b, a, typeIn, defShadow, typeIn ? charCount : 0);
             charCount += strlen(temp);
 
             // Advance the current position.
@@ -2350,7 +2349,7 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
     {   // We have already determined a string to replace this with.
         if(W_IsFromIWAD(patch->lump))
         {
-            WI_DrawParamText(x, y, altstring, GF_FONTB, r, g, b, a, false, true, halign);
+            WI_DrawParamText(x, y, altstring, GF_FONTB, r, g, b, a, false, true, true, halign);
             return;
         }
     }
@@ -2366,14 +2365,14 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
             // A user replacement?
             if(patchString)
             {
-                WI_DrawParamText(x, y, string, GF_FONTB, r, g, b, a, false, true, halign);
+                WI_DrawParamText(x, y, string, GF_FONTB, r, g, b, a, false, true, true, halign);
                 return;
             }
 
             // A built-in replacement?
             if(cfg.usePatchReplacement == 2 && altstring && altstring[0])
             {
-                WI_DrawParamText(x, y, altstring, GF_FONTB, r, g, b, a, false, true, halign);
+                WI_DrawParamText(x, y, altstring, GF_FONTB, r, g, b, a, false, true, true, halign);
                 return;
             }
         }
