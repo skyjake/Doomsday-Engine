@@ -225,12 +225,13 @@ static uiwidgetgroup_t* groupForName(int name, boolean canCreate)
 }
 
 static void drawWidget(const uiwidget_t* w, short flags, float alpha,
-    int* drawnWidth, int* drawnHeight)
+    float* drawnWidth, float* drawnHeight)
 {
     float textAlpha = (flags & UWF_OVERRIDE_ALPHA)? alpha : w->textAlpha? alpha * *w->textAlpha : alpha;
     float iconAlpha = (flags & UWF_OVERRIDE_ALPHA)? alpha : w->iconAlpha? alpha * *w->iconAlpha : alpha;
-    boolean scaled = false;
+    int width, height;
     float scale = 1;
+    boolean scaled = false;
 
     if(w->scale || w->extraScale != 1)
     {
@@ -244,7 +245,9 @@ static void drawWidget(const uiwidget_t* w, short flags, float alpha,
         }
     }
 
-    w->draw(w->player, textAlpha, iconAlpha, drawnWidth, drawnHeight);
+    w->draw(w->player, textAlpha, iconAlpha, &width, &height);
+    *drawnWidth = width;
+    *drawnHeight = height;
 
     if(scaled)
     {
@@ -383,17 +386,18 @@ void GUI_GroupSetFlags(int name, short flags)
 }
 
 void GUI_DrawWidgets(int group, byte flags, int x, int y, int availWidth,
-    int availHeight, float alpha, int* drawnWidth, int* drawnHeight)
+    int availHeight, float alpha, int* rDrawnWidth, int* rDrawnHeight)
 {
     assert(inited);
     {
     const uiwidgetgroup_t* grp;
+    float drawnWidth = 0, drawnHeight = 0;
     size_t i, numDrawnWidgets = 0;
 
-    if(drawnWidth)
-        *drawnWidth = 0;
-    if(drawnHeight)
-        *drawnHeight = 0;
+    if(rDrawnWidth)
+        *rDrawnWidth = 0;
+    if(rDrawnHeight)
+        *rDrawnHeight = 0;
 
     if(!(alpha > 0) || availWidth == 0 || availHeight == 0)
         return;
@@ -417,7 +421,7 @@ void GUI_DrawWidgets(int group, byte flags, int x, int y, int availWidth,
     for(i = 0; i < grp->num; ++i)
     {
         const uiwidget_t* w = toWidget(grp->widgetIds[i]);
-        int wDrawnWidth = 0, wDrawnHeight = 0;
+        float wDrawnWidth = 0, wDrawnHeight = 0;
 
         if(w->id != -1)
         {
@@ -449,21 +453,15 @@ void GUI_DrawWidgets(int group, byte flags, int x, int y, int availWidth,
             else if(grp->flags & UWGF_TOP2BOTTOM)
                 y += wDrawnHeight + grp->padding;
 
-            if(drawnWidth)
-            {
-                if(grp->flags & (UWGF_LEFT2RIGHT|UWGF_RIGHT2LEFT))
-                    *drawnWidth += wDrawnWidth;
-                else if(wDrawnWidth > *drawnWidth)
-                    *drawnWidth = wDrawnWidth;
-            }
+            if(grp->flags & (UWGF_LEFT2RIGHT|UWGF_RIGHT2LEFT))
+                drawnWidth += wDrawnWidth;
+            else if(wDrawnWidth > drawnWidth)
+                drawnWidth = wDrawnWidth;
 
-            if(drawnHeight)
-            {
-                if(grp->flags & (UWGF_TOP2BOTTOM|UWGF_BOTTOM2TOP))
-                    *drawnHeight += wDrawnHeight;
-                else if(wDrawnHeight > *drawnHeight)
-                    *drawnHeight = wDrawnHeight;
-            }
+            if(grp->flags & (UWGF_TOP2BOTTOM|UWGF_BOTTOM2TOP))
+                drawnHeight += wDrawnHeight;
+            else if(wDrawnHeight > drawnHeight)
+                drawnHeight = wDrawnHeight;
         }
     }
 
@@ -472,11 +470,16 @@ void GUI_DrawWidgets(int group, byte flags, int x, int y, int availWidth,
 
     if(numDrawnWidgets)
     {
-        if(drawnWidth && (grp->flags & (UWGF_LEFT2RIGHT|UWGF_RIGHT2LEFT)))
-            *drawnWidth += (numDrawnWidgets-1) * grp->padding;
+        if(grp->flags & (UWGF_LEFT2RIGHT|UWGF_RIGHT2LEFT))
+            drawnWidth += (numDrawnWidgets-1) * grp->padding;
 
-        if(drawnHeight && (grp->flags & (UWGF_TOP2BOTTOM|UWGF_BOTTOM2TOP)))
-            *drawnHeight += (numDrawnWidgets-1) * grp->padding;
+        if(grp->flags & (UWGF_TOP2BOTTOM|UWGF_BOTTOM2TOP))
+            drawnHeight += (numDrawnWidgets-1) * grp->padding;
     }
+
+    if(rDrawnWidth)
+        *rDrawnWidth = drawnWidth;
+    if(rDrawnHeight)
+        *rDrawnHeight = drawnHeight;
     }
 }
