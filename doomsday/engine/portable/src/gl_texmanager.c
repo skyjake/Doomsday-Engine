@@ -2080,10 +2080,10 @@ DGLuint GL_PreparePatch(patchtex_t* patchTex)
         material_load_params_t params;
         const gltexture_inst_t* texInst;
         memset(&params, 0, sizeof(params));
-        if(upscaleAndSharpenPatches)
-            params.flags |= MLF_TEX_UPSCALE_AND_SHARPEN;
-        if(monochrome)
+        if(patchTex->flags & PF_MONOCHROME)
             params.flags |= MLF_TEX_MONOCHROME;
+        if(patchTex->flags & PF_UPSCALE_AND_SHARPEN)
+            params.flags |= MLF_TEX_UPSCALE_AND_SHARPEN;
         if((texInst = GL_PrepareGLTexture(patchTex->id, &params, NULL)))
             return texInst->id;
     }
@@ -2600,31 +2600,24 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
             return NULL;
         }
 
-        // Too big for us?
-        if(image.width  > GL_state.maxTexSize || image.height > GL_state.maxTexSize)
+        if(image.pixelSize == 1)
         {
-            if(image.pixelSize == 3 || image.pixelSize == 4)
-            {
-                int newWidth = MIN_OF(image.width, GL_state.maxTexSize);
-                int newHeight = MIN_OF(image.height, GL_state.maxTexSize);
-                byte* temp = M_Malloc(newWidth * newHeight * image.pixelSize);
+            if(fillOutlines && !scaleSharp && image.isMasked)
+                ColorOutlines(image.pixels, image.width, image.height);
 
-                GL_ScaleBuffer32(image.pixels, image.width, image.height, temp, newWidth, newHeight, image.pixelSize);
-                M_Free(image.pixels);
-                image.pixels = temp;
-                image.width = newWidth;
-                image.height = newHeight;
-            }
-            else
+            if(tex->type == GLT_DETAIL)
             {
-                Con_Message("GLTexture_Prepare: Warning, non RGB(A) texture larger than max size (%ix%i bpp%i).\n",
-                            image.width, image.height, image.pixelSize);
+                float baMul, hiMul, loMul;
+                Equalize(image.pixels, image.width, image.height, &baMul, &hiMul, &loMul);
+                if(verbose && (baMul != 1 || hiMul != 1 || loMul != 1))
+                {
+                    Con_Message("GLTexture_Prepare: Equalized detail texture \"%s\" "
+                                "(balance: %g, high amp: %g, low amp: %g).\n",
+                                texInst->tex->name, baMul, hiMul, loMul);
+                }
             }
-        }
 
-        if(scaleSharp)
-        {
-            if(image.pixelSize == 1)
+            if(scaleSharp)
             {
                 int numpels = image.width * image.height;
                 byte* rgbaPixels = M_Malloc(numpels * 4 * 2);
@@ -2648,24 +2641,27 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
                 M_Free(image.pixels);
                 image.pixels = rgbaPixels;
             }
-            else
-            {
-                Con_Message("GLTexture_Prepare: Warning, Upscale and Sharpen not supported for this pixel size (%i).\n", image.pixelSize);
-            }
         }
 
-        if(fillOutlines && !scaleSharp && image.pixelSize == 1 && image.isMasked)
-            ColorOutlines(image.pixels, image.width, image.height);
-
-        if(tex->type == GLT_DETAIL && image.pixelSize == 1)
+        // Too big for us?
+        if(image.width  > GL_state.maxTexSize || image.height > GL_state.maxTexSize)
         {
-            float baMul, hiMul, loMul;
-            Equalize(image.pixels, image.width, image.height, &baMul, &hiMul, &loMul);
-            if(verbose && (baMul != 1 || hiMul != 1 || loMul != 1))
+            if(image.pixelSize == 3 || image.pixelSize == 4)
             {
-                Con_Message("GLTexture_Prepare: Equalized detail texture \"%s\" "
-                            "(balance: %g, high amp: %g, low amp: %g).\n",
-                            texInst->tex->name, baMul, hiMul, loMul);
+                int newWidth = MIN_OF(image.width, GL_state.maxTexSize);
+                int newHeight = MIN_OF(image.height, GL_state.maxTexSize);
+                byte* temp = M_Malloc(newWidth * newHeight * image.pixelSize);
+
+                GL_ScaleBuffer32(image.pixels, image.width, image.height, temp, newWidth, newHeight, image.pixelSize);
+                M_Free(image.pixels);
+                image.pixels = temp;
+                image.width = newWidth;
+                image.height = newHeight;
+            }
+            else
+            {
+                Con_Message("GLTexture_Prepare: Warning, non RGB(A) texture larger than max size (%ix%i bpp%i).\n",
+                            image.width, image.height, image.pixelSize);
             }
         }
 
@@ -2801,15 +2797,6 @@ if(!didDefer)
             texInst->flags |= GLTF_MASKED;
         if(tex->type == GLT_DETAIL)
             texInst->data.detail.contrast = contrast;
-
-        /*if(tex->type == GLT_DOOMPATCH && scaleSharp)
-        {   // Can't do this here. Instead we must return these values to the caller.
-            patchtex_t* p = R_GetPatchText(inst->tex->ofTypeID);
-            p->width += 2;
-            p->height += 2;
-            p->extraOffset[VX] = -1;
-            p->extraOffset[VY] = -1;
-        }*/
 
         if(tex->type == GLT_SPRITE)
         {

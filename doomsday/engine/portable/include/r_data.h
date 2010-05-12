@@ -154,9 +154,14 @@ typedef struct {
     gltextureid_t   id;
 } skinname_t;
 
+// Patch flags.
+#define PF_MONOCHROME         0x1
+#define PF_UPSCALE_AND_SHARPEN 0x2
+
 // A patchtex is a lumppatch that has been prepared for render.
 typedef struct patchtex_s {
     lumpnum_t       lump;
+    short           flags;
     short           offX, offY;
     short           extraOffset[2]; // Only used with upscaled and sharpened patches.
 

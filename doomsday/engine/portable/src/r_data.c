@@ -966,7 +966,23 @@ patchtex_t* R_GetPatchTex(lumpnum_t lump)
     p->offY = -SHORT(patch->topOffset);
     p->width = SHORT(patch->width);
     p->height = SHORT(patch->height);
-    p->extraOffset[VX] = p->extraOffset[VY] = 0;
+
+    // Take a copy of the current patch loading state so that future texture
+    // loads will produce the same results.
+    if(monochrome)
+        p->flags |= PF_MONOCHROME;
+    if(upscaleAndSharpenPatches)
+    {
+        p->flags |= PF_UPSCALE_AND_SHARPEN;
+        /**
+         * This border will be added to the texture during the upscale process.
+         * Strictly speaking we should specify the border dimension here and
+         * reference it when upscaling.
+         */
+        p->width += 2;
+        p->height += 2;
+        p->extraOffset[0] = p->extraOffset[1] = -1;
+    }
 
     // Register a gltexture for this.
     {

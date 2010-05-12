@@ -129,7 +129,7 @@ extern int texMagMode, texAniso;
 extern int useSmartFilter;
 extern byte loadExtAlways;
 extern int texMagMode;
-extern int upscaleAndSharpenPatches;
+extern int monochrome, upscaleAndSharpenPatches;
 extern int glmode[6];
 
 void            GL_TexRegister(void);

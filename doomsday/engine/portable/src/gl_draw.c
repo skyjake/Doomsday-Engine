@@ -153,10 +153,10 @@ void GL_DrawPatch_CS(int posX, int posY, lumpnum_t lump)
         // This offset is used only for the extra borders in the
         // "upscaled and sharpened" patches, so we can tweak the values
         // to our liking a bit more.
-        x += p->extraOffset[VX] * .75f;
-        y += p->extraOffset[VY] * .75f;
-        w -= fabs(p->extraOffset[VX]) / 2;
-        h -= fabs(p->extraOffset[VY]) / 2;
+        x -= p->extraOffset[VX] * .75f;
+        y -= p->extraOffset[VY] * .75f;
+        w += fabs(p->extraOffset[VX]) / 2;
+        h += fabs(p->extraOffset[VY]) / 2;
     }
 
     glBegin(GL_QUADS);
