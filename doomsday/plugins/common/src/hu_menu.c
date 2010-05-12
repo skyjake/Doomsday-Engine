@@ -2445,10 +2445,11 @@ void M_DrawClassMenu(void)
 #define BG_X            (174)
 #define BG_Y            (8)
 
-    menu_t*             menu = &ClassDef;
-    int                 pClass;
-    spriteinfo_t        sprInfo;
-    int                 tmap = 1, hasFocus = MAX_OF(0, itemOn);
+    menu_t* menu = &ClassDef;
+    float x, y, w, h, s, t;
+    int pClass;
+    spriteinfo_t sprInfo;
+    int tmap = 1, hasFocus = MAX_OF(0, itemOn);
     static char* boxLumpName[3] = {
         "m_fbox",
         "m_cbox",
@@ -2475,11 +2476,30 @@ void M_DrawClassMenu(void)
     if(pClass == PCLASS_FIGHTER)
         tmap = 2;
 
-    DGL_SetTranslatedSprite(sprInfo.material, 1, tmap);
+    x = BG_X + 56 - sprInfo.offset;
+    y = BG_Y + 78 - sprInfo.topOffset;
+    w = sprInfo.width;
+    h = sprInfo.height;
 
-    DGL_DrawRect(BG_X + 56 - sprInfo.offset, BG_Y + 78 - sprInfo.topOffset,
-                 sprInfo.width * sprInfo.texCoord[0], sprInfo.height * sprInfo.texCoord[1],
-                 1, 1, 1, menuAlpha);
+    s = sprInfo.texCoord[0];
+    t = sprInfo.texCoord[1],
+
+    DGL_SetTranslatedSprite(sprInfo.material, 1, tmap);
+    
+    DGL_Color4f(1, 1, 1, menuAlpha);
+    DGL_Begin(DGL_QUADS);
+        DGL_TexCoord2f(0, 0 * s, 0);
+        DGL_Vertex2f(x, y);
+
+        DGL_TexCoord2f(0, 1 * s, 0);
+        DGL_Vertex2f(x + w, y);
+
+        DGL_TexCoord2f(0, 1 * s, t);
+        DGL_Vertex2f(x + w, y + h);
+
+        DGL_TexCoord2f(0, 0 * s, t);
+        DGL_Vertex2f(x, y + h);
+    DGL_End();
 
 #undef BG_X
 #undef BG_Y

@@ -474,8 +474,6 @@ void DrawPlayerSetupMenu(void)
     w = sprInfo.width;
     h = sprInfo.height;
 
-    // Let's calculate texture coordinates.
-    // To remove a possible edge artifact, move the corner a bit up/left.
     s = sprInfo.texCoord[0];
     t = sprInfo.texCoord[1];
 
