@@ -620,11 +620,11 @@ void M_DrawControlsMenu(void)
 #if __JDOOM__ || __JDOOM64__
     M_DrawTitle("CONTROLS", menu->y - 28);
     Hu_MenuPageString(buf, menu);
-    M_WriteText2(160 - M_StringWidth(buf, GF_FONTA) / 2, menu->y - 12, buf,
-                 GF_FONTA, 1, .7f, .3f, Hu_MenuAlpha());
+    M_WriteText3(160 - M_StringWidth(buf, GF_FONTA) / 2, menu->y - 12, buf,
+                 GF_FONTA, 1, .7f, .3f, Hu_MenuAlpha(), true, true, 0);
 #else
-    M_WriteText2(120, 100 - 98/cfg.menuScale, "CONTROLS", GF_FONTB, cfg.menuColor[0],
-                 cfg.menuColor[1], cfg.menuColor[2], Hu_MenuAlpha());
+    M_WriteText3(120, 100 - 98/cfg.menuScale, "CONTROLS", GF_FONTB, cfg.menuColor[0],
+                 cfg.menuColor[1], cfg.menuColor[2], Hu_MenuAlpha(), true, true, 0);
 
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 
@@ -637,14 +637,14 @@ void M_DrawControlsMenu(void)
 #endif
 
     strcpy(buf, "Select to assign new, [Del] to clear");
-    M_WriteText2(160 - M_StringWidth(buf, GF_FONTA) / 2,
+    M_WriteText3(160 - M_StringWidth(buf, GF_FONTA) / 2,
                  100 + (95/cfg.menuScale) - M_StringHeight(buf, GF_FONTA), buf, GF_FONTA,
 #if __JDOOM__
                  1, .7f, .3f,
 #else
                  1, 1, 1,
 #endif
-                 Hu_MenuAlpha());
+                 Hu_MenuAlpha(), true, true, 0);
 
     for(i = 0; i < menu->numVisItems && menu->firstItem + i < menu->itemCount;
         i++, item++)

@@ -2385,21 +2385,19 @@ void M_WriteText3(int x, int y, const char* string, gamefontid_t font,
             // Do the type-in effect?
             if(flagTypeIn && cfg.menuEffects != 0)
             {
-                int                 maxCount =
-                    (typeInTime > 0? typeInTime * 2 : 0);
+                int maxCount = (typeInTime > 0? typeInTime * 2 : 0);
 
                 if(count == maxCount)
                 {
                     flash = 1;
                     if(red >= 0)
-                        DGL_Color4f(1, 1, 1, 1);
+                        DGL_Color4f(1, 1, 1, alpha);
                 }
                 else if(count + 1 == maxCount)
                 {
                     flash = 0.5f;
                     if(red >= 0)
-                        DGL_Color4f((1 + red) / 2, (1 + green) / 2, (1 + blue) / 2,
-                                   alpha);
+                        DGL_Color4f((1 + red) / 2, (1 + green) / 2, (1 + blue) / 2, alpha);
                 }
                 else if(count + 2 == maxCount)
                 {
@@ -2681,8 +2679,7 @@ void M_DrawSlider(int x, int y, int width, int height, int slot, float alpha)
     DGL_Color4f( 1, 1, 1, alpha);
     GL_DrawPatch_CS(x + 4 + slot * unit, y + 7, W_GetNumForName("M_SLDKB"));
 #else
-    int         xx;
-    float       scale = height / 13.0f;
+    float xx, scale = height / 13.0f;
 
     if(cfg.menuShadow > 0)
     {
