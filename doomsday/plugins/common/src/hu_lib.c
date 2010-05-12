@@ -385,13 +385,13 @@ void GUI_GroupSetFlags(int name, short flags)
     }
 }
 
-void GUI_DrawWidgets(int group, byte flags, int x, int y, int availWidth,
+void GUI_DrawWidgets(int group, byte flags, int inX, int inY, int availWidth,
     int availHeight, float alpha, int* rDrawnWidth, int* rDrawnHeight)
 {
     assert(inited);
     {
     const uiwidgetgroup_t* grp;
-    float drawnWidth = 0, drawnHeight = 0;
+    float x = inX, y = inY, drawnWidth = 0, drawnHeight = 0;
     size_t i, numDrawnWidgets = 0;
 
     if(rDrawnWidth)
