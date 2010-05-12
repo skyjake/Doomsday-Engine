@@ -1959,7 +1959,8 @@ static void BlackOutlines(byte* pixels, int width, int height)
     M_Free(dark);
 }
 
-static void Equalize(byte* pixels, int width, int height)
+static void Equalize(byte* pixels, int width, int height, float* rBaMul,
+    float* rHiMul, float* rLoMul)
 {
     byte min = 255, max = 0;
     int i, avg = 0;
@@ -1974,7 +1975,12 @@ static void Equalize(byte* pixels, int width, int height)
     }
 
     if(max <= min || max == 0 || min == 255)
+    {
+        if(rBaMul) *rBaMul = -1;
+        if(rHiMul) *rHiMul = -1;
+        if(rLoMul) *rLoMul = -1;
         return; // Nothing we can do.
+    }
 
     avg /= width * height;
 
@@ -2005,6 +2011,10 @@ static void Equalize(byte* pixels, int width, int height)
         else
             *pix = (byte) MINMAX_OF(0, ((float)*pix) * loMul, 255);
     }
+
+    if(rBaMul) *rBaMul = baMul;
+    if(rHiMul) *rHiMul = hiMul;
+    if(rLoMul) *rLoMul = loMul;
 }
 
 #if 0 // Currently unused.
@@ -2649,7 +2659,14 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
 
         if(tex->type == GLT_DETAIL && image.pixelSize == 1)
         {
-            Equalize(image.pixels, image.width, image.height);
+            float baMul, hiMul, loMul;
+            Equalize(image.pixels, image.width, image.height, &baMul, &hiMul, &loMul);
+            if(verbose && (baMul != 1 || hiMul != 1 || loMul != 1))
+            {
+                Con_Message("GLTexture_Prepare: Equalized detail texture \"%s\" "
+                            "(balance: %g, high amp: %g, low amp: %g).\n",
+                            texInst->tex->name, baMul, hiMul, loMul);
+            }
         }
 
         // Lightmaps and flare textures should always be monochrome images.
