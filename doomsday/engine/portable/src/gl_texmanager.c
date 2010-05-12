@@ -1140,8 +1140,8 @@ byte GL_LoadExtTexture(image_t* image, ddresourceclass_t resClass,
 byte GL_LoadFlat(image_t* img, const gltexture_inst_t* inst,
                  void* context)
 {
-    const flat_t*       flat;
-    size_t              lumpLength;
+    const flat_t* flat;
+    size_t lumpLength;
 
     if(!img)
         return 0; // Wha?
@@ -1149,24 +1149,20 @@ byte GL_LoadFlat(image_t* img, const gltexture_inst_t* inst,
     flat = flats[inst->tex->ofTypeID];
 
     // Try to load a high resolution version of this flat?
-    if(!noHighResTex && (loadExtAlways || highResWithPWAD ||
-                         GLTexture_IsFromIWAD(inst->tex)))
+    if(!noHighResTex && (loadExtAlways || highResWithPWAD || GLTexture_IsFromIWAD(inst->tex)))
     {
-        filename_t          file;
-        boolean             found;
-        const char*         lumpName = W_LumpName(flat->lump);
+        const char* lumpName = W_LumpName(flat->lump);
+        filename_t file;
+        boolean found;
 
         // First try the Flats category.
-        if(!(found =
-            R_FindResource2(RT_GRAPHIC, DDRC_FLAT, file, lumpName, NULL,
-                            FILENAME_T_MAXLEN)))
+        if(!(found = R_FindResource2(RT_GRAPHIC, DDRC_FLAT, file, lumpName, NULL, FILENAME_T_MAXLEN)))
         {   // Try the old-fashioned "Flat-NAME" in the Textures category.
-            filename_t          resource;
+            filename_t resource;
 
             dd_snprintf(resource, FILENAME_T_MAXLEN, "flat-%s", lumpName);
 
-            found = R_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, file,
-                                    resource, NULL, FILENAME_T_MAXLEN);
+            found = R_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, file, resource, NULL, FILENAME_T_MAXLEN);
         }
 
         if(found && GL_LoadImage(img, file))
@@ -2722,7 +2718,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
         else if(!(tex->type == GLT_SHINY || tex->type == GLT_DOOMPATCH || tex->type == GLT_LIGHTMAP || tex->type == GLT_FLARE || (tex->type == GLT_SPRITE && context && ((material_load_params_t*)context)->pSprite)))
             flags |= TXCF_MIPMAP;
 
-        if(tex->type == GLT_DOOMTEXTURE || tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE)
+        if(tex->type == GLT_DOOMTEXTURE || tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE || tex->type == GLT_FLAT)
             alphaChannel = ((tmpResult == 2 && image.pixelSize == 4) || (tmpResult == 1 && image.isMasked))? true : false;
         else
             alphaChannel = image.pixelSize != 3 && !(tex->type == GLT_MASK || tex->type == GLT_SHINY);
