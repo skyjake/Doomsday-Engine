@@ -920,14 +920,6 @@ void DGL_DrawPatch(patchid_t id, int x, int y)
     DGL_DrawPatch_CS(id, x, y);
 }
 
-void DGL_DrawAltFuzzPatch(patchid_t id, int x, int y)
-{
-    if(id < 0)
-        return;
-    DGL_Color4f(1, 1, 1, .666f);
-    DGL_DrawPatch_CS(id, x, y);
-}
-
 void DGL_DrawShadowedPatch(patchid_t id, int x, int y)
 {
     if(id < 0)
