@@ -948,6 +948,10 @@ patchtex_t* R_GetPatchTex(lumpnum_t lump)
 {
     const lumppatch_t* patch;
     patchtex_t* p;
+
+    if(lump < 0 || lump >= numLumps)
+        return NULL;
+
     // Already defined as a patch?
     if((p = getPatchTex(lump)))
         return p;
