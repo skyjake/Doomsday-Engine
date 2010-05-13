@@ -63,6 +63,7 @@ void            G_SaveGame(int slot, const char* description);
 uint            G_GetNextMap(uint episode, uint map, boolean secretExit);
 
 boolean         P_MapExists(uint episode, uint map);
+const char*     P_MapSourceFile(uint episode, uint map);
+void            P_MapId(uint episode, uint map, char* name);
 
-void            P_GetMapLumpName(uint episode, uint map, char* lumpName);
 #endif

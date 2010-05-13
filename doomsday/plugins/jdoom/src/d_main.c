@@ -224,17 +224,17 @@ static boolean lumpsFound(char **list)
 static void identifyFromData(void)
 {
     typedef struct {
-        char  **lumps;
+        char** lumps;
         gamemode_t mode;
     } identify_t;
 
-    char   *shareware_lumps[] = {
+    char* shareware_lumps[] = {
         // List of lumps to detect shareware with.
         "e1m1", "e1m2", "e1m3", "e1m4", "e1m5", "e1m6",
         "e1m7", "e1m8", "e1m9",
         "d_e1m1", "floor4_8", "floor7_2", NULL
     };
-    char   *registered_lumps[] = {
+    char* registered_lumps[] = {
         // List of lumps to detect registered with.
         "e2m1", "e2m2", "e2m3", "e2m4", "e2m5", "e2m6",
         "e2m7", "e2m8", "e2m9",
@@ -242,22 +242,22 @@ static void identifyFromData(void)
         "e3m7", "e3m8", "e3m9",
         "cybre1", "cybrd8", "floor7_2", NULL
     };
-    char   *retail_lumps[] = {
+    char* retail_lumps[] = {
         // List of lumps to detect Ultimate Doom with.
         "e4m1", "e4m2", "e4m3", "e4m4", "e4m5", "e4m6",
         "e4m7", "e4m8", "e4m9",
         "m_epi4", NULL
     };
-    char   *commercial_lumps[] = {
+    char* commercial_lumps[] = {
         // List of lumps to detect Doom II with.
         "map01", "map02", "map03", "map04", "map10", "map20",
         "map25", "map30",
         "vilen1", "vileo1", "vileq1", "grnrock", NULL
     };
-    char   *plutonia_lumps[] = {
+    char* plutonia_lumps[] = {
         "_deutex_", "mc5", "mc11", "mc16", "mc20", NULL
     };
-    char   *tnt_lumps[] = {
+    char* tnt_lumps[] = {
         "cavern5", "cavern7", "stonew1", NULL
     };
     identify_t list[] = {
@@ -266,7 +266,7 @@ static void identifyFromData(void)
         {registered_lumps, registered},
         {shareware_lumps, shareware}
     };
-    int         i, num = sizeof(list) / sizeof(identify_t);
+    int i, num = sizeof(list) / sizeof(identify_t);
 
     // First check the command line.
     if(ArgCheck("-sdoom"))
@@ -530,13 +530,11 @@ void G_PreInit(void)
  */
 void G_PostInit(void)
 {
-    int                 p;
-    filename_t          file;
-    char                mapStr[6];
+    filename_t file;
+    int p;
 
     // Border background changes depending on mission.
-    if(gameMission == GM_DOOM2 || gameMission == GM_PLUT ||
-       gameMission == GM_TNT)
+    if(gameMission == GM_DOOM2 || gameMission == GM_PLUT || gameMission == GM_TNT)
         borderLumps[0] = "GRNROCK";
 
     // Common post init routine
@@ -607,9 +605,7 @@ void G_PostInit(void)
     p = ArgCheck("-timer");
     if(p && p < myargc - 1 && deathmatch)
     {
-        int                 time;
-
-        time = atoi(Argv(p + 1));
+        int time = atoi(Argv(p + 1));
         Con_Message("Maps will end after %d minute", time);
         if(time > 1)
             Con_Message("s");
@@ -637,7 +633,7 @@ void G_PostInit(void)
     turboMul = 1.0f;
     if(p)
     {
-        int                 scale = 200;
+        int scale = 200;
 
         turboParm = true;
         if(p < myargc - 1)
@@ -655,35 +651,24 @@ void G_PostInit(void)
     if(autoStart)
     {
         if(gameMode == commercial)
-            Con_Message("Warp to Map %d, Skill %d\n", startMap+1,
-                        startSkill + 1);
+            Con_Message("Warp to Map %d, Skill %d\n", startMap+1, startSkill + 1);
         else
-            Con_Message("Warp to Episode %d, Map %d, Skill %d\n",
-                        startEpisode+1, startMap+1, startSkill + 1);
+            Con_Message("Warp to Episode %d, Map %d, Skill %d\n", startEpisode+1, startMap+1, startSkill + 1);
     }
 
     // Load a saved game?
     p = ArgCheck("-loadgame");
     if(p && p < myargc - 1)
     {
-        SV_GetSaveGameFileName(file, Argv(p + 1)[0] - '0',
-                               FILENAME_T_MAXLEN);
+        SV_GetSaveGameFileName(file, Argv(p + 1)[0] - '0', FILENAME_T_MAXLEN);
         G_LoadGame(file);
     }
 
     // Check valid episode and map
-    if(autoStart || IS_NETGAME)
+    if((autoStart || IS_NETGAME) && !P_MapExists((gameMode == commercial)? startEpisode : 0, startMap))
     {
-        if(gameMode == commercial)
-            sprintf(mapStr, "MAP%2.2d", startMap+1);
-        else
-            sprintf(mapStr, "E%d%d", startEpisode+1, startMap+1);
-
-        if(!W_CheckNumForName(mapStr))
-        {
-            startEpisode = 0;
-            startMap = 0;
-        }
+        startEpisode = 0;
+        startMap = 0;
     }
 
     // Print a string showing the state of the game parameters

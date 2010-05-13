@@ -481,15 +481,15 @@ int Cht_MyPosFunc(const int* args, int player)
 
 static void printDebugInfo(player_t* plr)
 {
-    char lumpName[9], textBuffer[256];
+    char mapId[9], textBuffer[256];
     subsector_t* sub;
 
     if(!plr->plr->mo || !userGame)
         return;
 
-    P_GetMapLumpName(gameEpisode, gameMap, lumpName);
+    P_MapId(gameEpisode, gameMap, mapId);
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-            lumpName, plr->plr->mo->pos[VX], plr->plr->mo->pos[VY],
+            mapId, plr->plr->mo->pos[VX], plr->plr->mo->pos[VY],
             plr->plr->mo->pos[VZ]);
     P_SetMessage(plr, textBuffer, false);
 

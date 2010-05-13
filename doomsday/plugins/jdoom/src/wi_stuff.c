@@ -359,7 +359,7 @@ void WI_drawEL(void)
     char                lumpName[10];
 
     // See if there is a map name.
-    P_GetMapLumpName(wbs->episode, wbs->nextMap, lumpName);
+    P_MapId(wbs->episode, wbs->nextMap, lumpName);
     if(Def_Get(DD_DEF_MAP_INFO, lumpName, &minfo) && minfo.name)
     {
         if(Def_Get(DD_DEF_TEXT, minfo.name, &mapName) == -1)

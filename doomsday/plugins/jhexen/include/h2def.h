@@ -459,6 +459,4 @@ char            CT_dequeueChatChar(void);
 
 extern boolean  chatmodeon;
 
-void        Draw_TeleportIcon(void);
-
 #endif // __H2DEF_H__

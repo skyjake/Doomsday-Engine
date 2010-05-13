@@ -55,7 +55,7 @@ void S_MapMusic(uint episode, uint map)
     ddmapinfo_t mapInfo;
     char mapId[8];
 
-    P_GetMapLumpName(episode, map, mapId);
+    P_MapId(episode, map, mapId);
 
     if(Def_Get(DD_DEF_MAP_INFO, mapId, &mapInfo))
     {

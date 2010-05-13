@@ -1742,12 +1742,11 @@ void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
     nextMapEntryPoint = _entryPoint;
 #else
     secretExit = _secretExit;
-  #if __JDOOM__
+# if __JDOOM__
       // If no Wolf3D maps, no secret exit!
-      if(secretExit && (gameMode == commercial) &&
-         W_CheckNumForName("map31") < 0)
+      if(secretExit && (gameMode == commercial) && !P_MapExists(0, 30))
           secretExit = false;
-  #endif
+# endif
 #endif
 
     G_SetGameAction(GA_MAPCOMPLETED);
@@ -1847,7 +1846,7 @@ void G_DoMapCompleted(void)
     ddmapinfo_t minfo;
     char levid[8];
 
-    P_GetMapLumpName(gameEpisode, gameMap, levid);
+    P_MapId(gameEpisode, gameMap, levid);
 
     if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && (minfo.flags & MIF_NO_INTERMISSION))
     {
@@ -1922,7 +1921,7 @@ void G_PrepareWIData(void)
 
     info->maxFrags = 0;
 
-    P_GetMapLumpName(gameEpisode, gameMap, levid);
+    P_MapId(gameEpisode, gameMap, levid);
 
     // See if there is a par time definition.
     if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && minfo.parTime > 0)
@@ -2265,7 +2264,7 @@ uint G_GetMapNumber(uint episode, uint map)
 /**
  * Compose the name of the map lump identifier.
  */
-void P_GetMapLumpName(uint episode, uint map, char* lumpName)
+void P_MapId(uint episode, uint map, char* lumpName)
 {
 #if __JDOOM64__
     sprintf(lumpName, "MAP%02u", map+1);
@@ -2282,14 +2281,26 @@ void P_GetMapLumpName(uint episode, uint map, char* lumpName)
 }
 
 /**
- * Returns true if the specified ep/map exists in a WAD.
+ * return               @c true if the specified map is present.
  */
 boolean P_MapExists(uint episode, uint map)
 {
-    char                buf[20];
-
-    P_GetMapLumpName(episode, map, buf);
+    char buf[9];
+    P_MapId(episode, map, buf);
     return W_CheckNumForName(buf) >= 0;
+}
+
+/**
+ * return               Name of the source file containing the map if present, else 0.
+ */
+const char* P_MapSourceFile(uint episode, uint map)
+{
+    lumpnum_t lump;
+    char buf[9];
+    P_MapId(episode, map, buf);
+    if((lump = W_CheckNumForName(buf)) >= 0)
+        return W_LumpSourceFile(lump);
+    return 0;
 }
 
 /**
@@ -2298,7 +2309,7 @@ boolean P_MapExists(uint episode, uint map)
  */
 boolean G_ValidateMap(uint* episode, uint* map)
 {
-    boolean             ok = true;
+    boolean ok = true;
 
 #if __JDOOM64__
     if(*map > 98)
@@ -2551,7 +2562,7 @@ const char* P_GetMapName(uint episode, uint map)
     ddmapinfo_t         info;
 
     // Compose the map identifier.
-    P_GetMapLumpName(episode, map, id);
+    P_MapId(episode, map, id);
 
     // Get the map info definition.
     if(!Def_Get(DD_DEF_MAP_INFO, id, &info))
@@ -2572,10 +2583,9 @@ const char* P_GetMapName(uint episode, uint map)
  */
 void G_PrintFormattedMapList(uint episode, const char** files, uint count)
 {
-    const char*         current = NULL;
-    char                lump[20];
-    uint                i, k;
-    uint                rangeStart = 0, len;
+    const char* current = NULL;
+    uint i, k, rangeStart = 0, len;
+    char mapId[9];
 
     for(i = 0; i < count; ++i)
     {
@@ -2593,16 +2603,16 @@ void G_PrintFormattedMapList(uint episode, const char** files, uint count)
             {
                 for(k = rangeStart; k < i; ++k)
                 {
-                    P_GetMapLumpName(episode, k, lump);
-                    Con_Printf("%s%s", lump, k != i ? "," : "");
+                    P_MapId(episode, k, mapId);
+                    Con_Printf("%s%s", mapId, k != i ? "," : "");
                 }
             }
             else
             {
-                P_GetMapLumpName(episode, rangeStart, lump);
-                Con_Printf("%s-", lump);
-                P_GetMapLumpName(episode, i, lump);
-                Con_Printf("%s", lump);
+                P_MapId(episode, rangeStart, mapId);
+                Con_Printf("%s-", mapId);
+                P_MapId(episode, i, mapId);
+                Con_Printf("%s", mapId);
             }
             Con_Printf(": %s\n", M_PrettyPath(current));
 
@@ -2619,10 +2629,8 @@ void G_PrintFormattedMapList(uint episode, const char** files, uint count)
  */
 void G_PrintMapList(void)
 {
-    const char*         sourceList[100];
-    lumpnum_t           lump;
-    uint                episode, map, numEpisodes, maxMapsPerEpisode;
-    char                mapLump[20];
+    uint episode, map, numEpisodes, maxMapsPerEpisode;
+    const char* sourceList[100];
 
 #if __JDOOM__
     if(gameMode == registered)
@@ -2655,19 +2663,12 @@ void G_PrintMapList(void)
 
     for(episode = 0; episode < numEpisodes; ++episode)
     {
-        memset((void *) sourceList, 0, sizeof(sourceList));
+        memset((void*) sourceList, 0, sizeof(sourceList));
 
         // Find the name of each map (not all may exist).
         for(map = 0; map < maxMapsPerEpisode-1; ++map)
         {
-            P_GetMapLumpName(episode, map, mapLump);
-
-            // Does the lump exist?
-            if((lump = W_CheckNumForName(mapLump)) >= 0)
-            {
-                // Get the name of the WAD.
-                sourceList[map] = W_LumpSourceFile(lump);
-            }
+            sourceList[map] = P_MapSourceFile(episode, map);
         }
 
         G_PrintFormattedMapList(episode, sourceList, 99);

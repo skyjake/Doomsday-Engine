@@ -375,7 +375,7 @@ static void printDebugInfo(int player)
     if(!plr->plr->mo || !userGame)
         return;
 
-    P_GetMapLumpName(gameEpisode, gameMap, lumpName);
+    P_MapId(gameEpisode, gameMap, lumpName);
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
             lumpName, plr->plr->mo->pos[VX], plr->plr->mo->pos[VY],
             plr->plr->mo->pos[VZ]);

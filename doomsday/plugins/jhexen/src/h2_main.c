@@ -194,17 +194,15 @@ void G_IdentifyVersion(void)
     strcpy(gameModeString, "hexen-demo");
     G_SetGameMode(shareware);
 
-    if(W_CheckNumForName("MAP05") >= 0)
-    {
-        // Normal Hexen.
+    if(P_MapExists(0, 4))
+    {   // Normal Hexen.
         strcpy(gameModeString, "hexen");
         G_SetGameMode(registered);
     }
 
     // This is not a very accurate test...
-    if(W_CheckNumForName("MAP59") >= 0 && W_CheckNumForName("MAP60") >= 0)
-    {
-        // It must be Deathkings!
+    if(P_MapExists(0, 58) >= 0 && P_MapExists(0, 59) >= 0)
+    {   // It must be Deathkings!
         strcpy(gameModeString, "hexen-dk");
         G_SetGameMode(extended);
     }
@@ -385,9 +383,7 @@ void G_PreInit(void)
  */
 void G_PostInit(void)
 {
-    int                     p;
-    int                     pClass;
-    char                    mapStr[6];
+    int p, pClass;
 
     // Do this early as other systems need to know.
     P_InitPlayerClassInfo();
@@ -478,14 +474,9 @@ void G_PostInit(void)
     }
 
     // Check valid episode and map.
-    if(autoStart || IS_NETGAME)
+    if((autoStart || IS_NETGAME) && !P_MapExists(0, startMap))
     {
-        sprintf(mapStr,"MAP%2.2d", startMap+1);
-
-        if(!W_CheckNumForName(mapStr))
-        {
-            startMap = 0;
-        }
+        startMap = 0;
     }
 
     if(G_GetGameAction() != GA_LOADGAME)

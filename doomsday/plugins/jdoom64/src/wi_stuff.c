@@ -204,7 +204,7 @@ void WI_drawEL(void)
     ddmapinfo_t         minfo;
     char                levid[10];
 
-    P_GetMapLumpName(wbs->episode, wbs->nextMap, levid);
+    P_MapId(wbs->episode, wbs->nextMap, levid);
 
     // See if there is a level name.
     if(Def_Get(DD_DEF_MAP_INFO, levid, &minfo) && minfo.name)

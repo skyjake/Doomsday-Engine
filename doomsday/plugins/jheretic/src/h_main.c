@@ -231,9 +231,8 @@ void G_IdentifyVersion(void)
     // The game mode string is used in netgames.
     strcpy(gameModeString, "heretic");
 
-    if(W_CheckNumForName("E2M1") == -1)
-    {
-        // Can't find episode 2 maps, must be the shareware WAD
+    if(!P_MapExists(1, 0) == -1)
+    {   // Can't find episode 2 maps, must be the shareware WAD
         strcpy(gameModeString, "heretic-share");
     }
     else if(W_CheckNumForName("EXTENDED") != -1)
@@ -421,7 +420,7 @@ void G_PreInit(void)
     cfg.tomeSound = 3;
 
     // Shareware WAD has different border background
-    if(W_CheckNumForName("E2M1") == -1)
+    if(!P_MapExists(1, 0))
         borderLumps[0] = "FLOOR04";
 
     // Do the common pre init routine;
@@ -434,11 +433,10 @@ void G_PreInit(void)
  */
 void G_PostInit(void)
 {
-    int                 e, m, p;
-    filename_t          file;
-    char                mapStr[6];
+    int e, m, p;
+    filename_t file;
 
-    if(W_CheckNumForName("E2M1") == -1)
+    if(!P_MapExists(1, 0))
         // Can't find episode 2 maps, must be the shareware WAD.
         G_SetGameMode(shareware);
     else if(W_CheckNumForName("EXTENDED") != -1)
@@ -554,21 +552,15 @@ void G_PostInit(void)
     p = ArgCheck("-loadgame");
     if(p && p < myargc - 1)
     {
-        SV_GetSaveGameFileName(file, Argv(p + 1)[0] - '0',
-                               FILENAME_T_MAXLEN);
+        SV_GetSaveGameFileName(file, Argv(p + 1)[0] - '0', FILENAME_T_MAXLEN);
         G_LoadGame(file);
     }
 
     // Check valid episode and map
-    if(autoStart || IS_NETGAME && !devMap)
+    if(!devMap && (autoStart || IS_NETGAME) && !P_MapExists(startEpisode, startMap))
     {
-        sprintf(mapStr, "E%d%d", startEpisode+1, startMap+1);
-
-        if(!W_CheckNumForName(mapStr))
-        {
-            startEpisode = 0;
-            startMap = 0;
-        }
+        startEpisode = 0;
+        startMap = 0;
     }
 
     if(G_GetGameAction() != GA_LOADGAME)

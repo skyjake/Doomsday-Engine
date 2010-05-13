@@ -93,6 +93,8 @@ void            G_LeaveMap(uint newMap, uint entryPoint, boolean secretExit);
 uint            G_GetNextMap(uint episode, uint map, boolean secretExit);
 
 boolean         P_MapExists(uint episode, uint map);
+const char*     P_MapSourceFile(uint episode, uint map);
+void            P_MapId(uint episode, uint map, char* id);
 
 void            G_WorldDone(void);
 
@@ -100,6 +102,4 @@ void            G_Ticker(timespan_t ticLength);
 boolean         G_Responder(event_t* ev);
 
 void            G_ScreenShot(void);
-
-void            P_GetMapLumpName(uint episode, uint map, char* lumpName);
 #endif

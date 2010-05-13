@@ -357,7 +357,6 @@ int Cht_WarpFunc(const int* args, int player)
     player_t* plr = &players[player];
     int i, tens, ones;
     uint map;
-    char mapName[9];
 
     if(IS_NETGAME)
         return false;
@@ -378,8 +377,7 @@ int Cht_WarpFunc(const int* args, int player)
     }
 
     // Search primary lumps.
-    sprintf(mapName, "MAP%02u", map+1);
-    if(W_CheckNumForName(mapName) == -1)
+    if(!P_MapExists(0, map))
     {   // Can't find.
         P_SetMessage(plr, TXT_CHEATNOMAP, false);
         return false;
@@ -447,7 +445,7 @@ static void printDebugInfo(int player)
     if(!plr->plr->mo)
         return;
 
-    P_GetMapLumpName(gameEpisode, gameMap, lumpName);
+    P_MapId(gameEpisode, gameMap, lumpName);
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
             lumpName, plr->plr->mo->pos[VX], plr->plr->mo->pos[VY],
             plr->plr->mo->pos[VZ]);

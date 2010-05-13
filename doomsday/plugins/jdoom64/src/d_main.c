@@ -175,7 +175,7 @@ void G_DetectIWADs(void)
     }
 }
 
-static boolean lumpsFound(char **list)
+static boolean lumpsFound(char** list)
 {
     for(; *list; list++)
         if(W_CheckNumForName(*list) == -1)
@@ -192,18 +192,18 @@ static boolean lumpsFound(char **list)
 static void identifyFromData(void)
 {
     typedef struct {
-        char          **lumps;
-        gamemode_t      mode;
+        char** lumps;
+        gamemode_t mode;
     } identify_t;
-    char               *commercialLumps[] = {
+    char* commercialLumps[] = {
         // List of lumps to detect registered with.
         "map01", "map02", "map38",
         "f_suck", NULL
     };
-    identify_t          list[] = {
+    identify_t list[] = {
         {commercialLumps, commercial},
     };
-    int                 i, num = sizeof(list) / sizeof(identify_t);
+    int i, num = sizeof(list) / sizeof(identify_t);
 
     // Now we must look at the lumps.
     for(i = 0; i < num; ++i)
@@ -405,9 +405,8 @@ void G_PreInit(void)
  */
 void G_PostInit(void)
 {
-    int                 p;
-    filename_t          file;
-    char                mapStr[6];
+    filename_t file;
+    int p;
 
     // Common post init routine.
     G_CommonPostInit();
@@ -419,8 +418,7 @@ void G_PostInit(void)
     P_InitWeaponInfo();
 
     // Print a game mode banner with rulers.
-    Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER,
-                "Doom64 Startup\n");
+    Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER, "Doom64 Startup\n");
     Con_FPrintf(CBLF_RULER, "");
 
     // Game parameters.
@@ -456,9 +454,7 @@ void G_PostInit(void)
     p = ArgCheck("-timer");
     if(p && p < myargc - 1 && deathmatch)
     {
-        int                 time;
-
-        time = atoi(Argv(p + 1));
+        int time = atoi(Argv(p + 1));
         Con_Message("Levels will end after %d minute", time);
         if(time > 1)
             Con_Message("s");
@@ -477,7 +473,7 @@ void G_PostInit(void)
     turboMul = 1.0f;
     if(p)
     {
-        int                 scale = 200;
+        int scale = 200;
 
         turboParm = true;
         if(p < myargc - 1)
@@ -502,21 +498,15 @@ void G_PostInit(void)
     p = ArgCheck("-loadgame");
     if(p && p < myargc - 1)
     {
-        SV_GetSaveGameFileName(file, Argv(p + 1)[0] - '0',
-                               FILENAME_T_MAXLEN);
+        SV_GetSaveGameFileName(file, Argv(p + 1)[0] - '0', FILENAME_T_MAXLEN);
         G_LoadGame(file);
     }
 
     // Check valid episode and map.
-    if((autoStart || IS_NETGAME))
+    if((autoStart || IS_NETGAME) && !P_MapExists(0, startMap))
     {
-        sprintf(mapStr, "MAP%2.2d", startMap+1);
-
-        if(!W_CheckNumForName(mapStr))
-        {
-            startEpisode = 0;
-            startMap = 0;
-        }
+        startEpisode = 0;
+        startMap = 0;
     }
 
     // Print a string showing the state of the game parameters.

@@ -724,7 +724,7 @@ int P_SetupMapWorker(void* ptr)
 
     Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
-    P_GetMapLumpName(param->episode, param->map, mapID);
+    P_MapId(param->episode, param->map, mapID);
     if(!P_LoadMap(mapID))
     {
         Con_Error("P_SetupMap: Failed loading map \"%s\".\n", mapID);
@@ -1011,7 +1011,7 @@ const char* P_GetMapNiceName(void)
 boolean P_IsMapFromIWAD(uint episode, uint map)
 {
     char lumpName[9];
-    P_GetMapLumpName(episode, map, lumpName);
+    P_MapId(episode, map, lumpName);
     return W_IsFromIWAD(W_GetNumForName(lumpName));
 }
 
