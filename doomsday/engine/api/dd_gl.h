@@ -242,6 +242,16 @@ void            DGL_DrawRect(float x, float y, float w, float h, float r, float 
 void            DGL_DrawRectTiled(float x, float y, float w, float h, int tw, int th);
 void            DGL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th, int txoff, int tyoff, float cx, float cy, float cw, float ch);
 
+void            DGL_DrawPatch(patchid_t id, int x, int y);
+void            DGL_DrawPatch_CS(patchid_t id, int x, int y);
+void            DGL_DrawPatchLitAlpha(patchid_t id, int x, int y, float light, float alpha);
+void            DGL_DrawFuzzPatch(patchid_t id, int x, int y);
+void            DGL_DrawAltFuzzPatch(patchid_t id, int x, int y);
+void            DGL_DrawShadowedPatch(patchid_t id, int x, int y);
+
+void            DGL_DrawRawScreen(lumpnum_t lump, float offx, float offy);
+void            DGL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy, float scalex, float scaley);
+
 /**
  * \todo The following routines should not be necessary once materials can
  * be created dynamically.

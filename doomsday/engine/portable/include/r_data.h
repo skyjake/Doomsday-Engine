@@ -161,12 +161,12 @@ typedef struct {
 // A patchtex is a lumppatch that has been prepared for render.
 typedef struct patchtex_s {
     lumpnum_t       lump;
+    gltextureid_t   id; // Name of the associated GL texture.
+    boolean         isCustom;
     short           flags;
+    short           width, height;
     short           offX, offY;
     short           extraOffset[2]; // Only used with upscaled and sharpened patches.
-
-    gltextureid_t   id; // Name of the associated GL texture.
-    short           width, height;
 } patchtex_t;
 
 typedef struct lumppatch_s {

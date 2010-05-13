@@ -88,14 +88,13 @@ extern          "C" {
     void            DD_ClearKeyRepeaters(void);
     int             DD_GetKeyCode(const char* name);
 
-    // Base: WAD.
+    // Base: File system.
     lumpnum_t       W_CheckNumForName(const char* name);
     lumpnum_t       W_GetNumForName(const char* name);
     size_t          W_LumpLength(lumpnum_t lump);
     const char*     W_LumpName(lumpnum_t lump);
     void            W_ReadLump(lumpnum_t lump, void* dest);
-    void            W_ReadLumpSection(lumpnum_t lump, void* dest,
-                                      size_t startOffset, size_t length);
+    void            W_ReadLumpSection(lumpnum_t lump, void* dest, size_t startOffset, size_t length);
     const void*     W_CacheLumpNum(lumpnum_t lump, int tag);
     const void*     W_CacheLumpName(const char* name, int tag);
     void            W_ChangeCacheTag(lumpnum_t lump, int tag);
@@ -115,8 +114,7 @@ extern          "C" {
     void            Z_CheckHeap(void);
 
     // Console.
-    int             Con_Busy(int flags, const char* taskName,
-                             int (*workerFunc)(void*), void* workerData);
+    int             Con_Busy(int flags, const char* taskName, int (*workerFunc)(void*), void* workerData);
     void            Con_BusyWorkerEnd(void);
     boolean         Con_IsBusy(void);
     void            Con_Open(int yes);
@@ -130,28 +128,21 @@ extern          "C" {
     int             Con_GetInteger(const char* name);
     float           Con_GetFloat(const char* name);
     char*           Con_GetString(const char* name);
-    void            Con_SetInteger(const char* name, int value,
-                                   byte override);
-    void            Con_SetFloat(const char* name, float value,
-                                 byte override);
-    void            Con_SetString(const char* name, char* text,
-                                  byte override);
+    void            Con_SetInteger(const char* name, int value, byte override);
+    void            Con_SetFloat(const char* name, float value, byte override);
+    void            Con_SetString(const char* name, char* text, byte override);
     void            Con_Printf(const char* format, ...) PRINTF_F(1,2);
     void            Con_FPrintf(int flags, const char* format, ...) PRINTF_F(2,3);
-    int             DD_Execute(int silent, const char* command);
-    int             DD_Executef(int silent, const char* command, ...);
     void            Con_Message(const char* message, ...) PRINTF_F(1,2);
     void            Con_Error(const char* error, ...) PRINTF_F(1,2);
 
+    int             DD_Execute(int silent, const char* command);
+    int             DD_Executef(int silent, const char* command, ...);
+
     // Console: Bindings.
-    void            B_SetContextFallback(const char* name,
-                                         int (*responderFunc)(event_t*));
-    int             B_BindingsForCommand(const char* cmd, char* buf,
-                                         size_t bufSize);
-    int             B_BindingsForControl(int localPlayer,
-                                         const char* controlName,
-                                         int inverse,
-                                         char* buf, size_t bufSize);
+    void            B_SetContextFallback(const char* name, int (*responderFunc)(event_t*));
+    int             B_BindingsForCommand(const char* cmd, char* buf, size_t bufSize);
+    int             B_BindingsForControl(int localPlayer, const char* controlName, int inverse, char* buf, size_t bufSize);
 
     // System.
     void            Sys_TicksPerSecond(float num);
@@ -172,40 +163,19 @@ extern          "C" {
 
     uint            MPE_VertexCreate(float x, float y);
     boolean         MPE_VertexCreatev(size_t num, float* values, uint* indices);
-    uint            MPE_SidedefCreate(uint sector, short flags,
-                                      materialnum_t topMaterial,
-                                      float topOffsetX, float topOffsetY, float topRed,
-                                      float topGreen, float topBlue,
-                                      materialnum_t middleMaterial,
-                                      float middleOffsetX, float middleOffsetY,
-                                      float middleRed, float middleGreen,
-                                      float middleBlue, float middleAlpha,
-                                      materialnum_t bottomMaterial,
-                                      float bottomOffsetX, float bottomOffsetY,
-                                      float bottomRed, float bottomGreen,
-                                      float bottomBlue);
-    uint            MPE_LinedefCreate(uint v1, uint v2, uint frontSide,
-                                      uint backSide, int flags);
+    uint            MPE_SidedefCreate(uint sector, short flags, materialnum_t topMaterial, float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue, materialnum_t middleMaterial, float middleOffsetX, float middleOffsetY, float middleRed, float middleGreen, float middleBlue, float middleAlpha, materialnum_t bottomMaterial, float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen, float bottomBlue);
+    uint            MPE_LinedefCreate(uint v1, uint v2, uint frontSide, uint backSide, int flags);
     uint            MPE_SectorCreate(float lightlevel, float red, float green, float blue);
-    uint            MPE_PlaneCreate(uint sector, float height,
-                                    materialnum_t num,
-                                    float matOffsetX, float matOffsetY,
-                                    float r, float g, float b, float a,
-                                    float normalX, float normalY, float normalZ);
-    uint            MPE_PolyobjCreate(uint* lines, uint linecount,
-                                      int tag, int sequenceType, float anchorX, float anchorY);
-    boolean         MPE_GameObjProperty(const char* objName, uint idx,
-                                        const char* propName, valuetype_t type,
-                                        void* data);
+    uint            MPE_PlaneCreate(uint sector, float height, materialnum_t num, float matOffsetX, float matOffsetY, float r, float g, float b, float a, float normalX, float normalY, float normalZ);
+    uint            MPE_PolyobjCreate(uint* lines, uint linecount, int tag, int sequenceType, float anchorX, float anchorY);
+    boolean         MPE_GameObjProperty(const char* objName, uint idx, const char* propName, valuetype_t type, void* data);
 
     // Custom map object data types.
     boolean         P_RegisterMapObj(int identifier, const char* name);
-    boolean         P_RegisterMapObjProperty(int identifier, int propIdentifier,
-                                             const char* propName, valuetype_t type);
+    boolean         P_RegisterMapObjProperty(int identifier, int propIdentifier, const char* propName, valuetype_t type);
 
     // Network.
-    void            Net_SendPacket(int to_player, int type, void* data,
-                                   size_t length);
+    void            Net_SendPacket(int to_player, int type, void* data, size_t length);
     int             Net_GetTicCmd(void* command, int player);
     const char*     Net_GetPlayerName(int player);
     ident_t         Net_GetPlayerID(int player);
@@ -214,45 +184,26 @@ extern          "C" {
     float           P_AccurateDistance(float dx, float dy);
     float           P_ApproxDistance(float dx, float dy);
     float           P_ApproxDistance3(float dx, float dy, float dz);
-    int             P_PointOnLinedefSide(float x, float y,
-                                         const struct linedef_s* line);
+    int             P_PointOnLinedefSide(float x, float y, const struct linedef_s* line);
     int             P_BoxOnLineSide(const float* tmbox, const struct linedef_s* ld);
     void            P_MakeDivline(struct linedef_s* li, divline_t* dl);
-    int             P_PointOnDivlineSide(float x, float y,
-                                         const divline_t* line);
+    int             P_PointOnDivlineSide(float x, float y, const divline_t* line);
     float           P_InterceptVector(divline_t* v2, divline_t* v1);
     void            P_LineOpening(struct linedef_s* linedef);
 
     // Object in bounding box iterators.
-    boolean         P_MobjsBoxIterator(const float box[4],
-                                       boolean (*func) (struct mobj_s*, void*),
-                                       void* data);
-    boolean         P_LinesBoxIterator(const float box[4],
-                                       boolean (*func) (struct linedef_s*, void*),
-                                       void* data);
-    boolean         P_AllLinesBoxIterator(const float box[4],
-                                          boolean (*func) (struct linedef_s*, void*),
-                                          void* data);
-    boolean         P_SubsectorsBoxIterator(const float box[4], sector_t* sector,
-                                           boolean (*func) (subsector_t*, void*),
-                                           void* data);
-    boolean         P_PolyobjsBoxIterator(const float box[4],
-                                          boolean (*func) (struct polyobj_s*, void*),
-                                          void* data);
+    boolean         P_MobjsBoxIterator(const float box[4], boolean (*func) (struct mobj_s*, void*), void* data);
+    boolean         P_LinesBoxIterator(const float box[4], boolean (*func) (struct linedef_s*, void*), void* data);
+    boolean         P_AllLinesBoxIterator(const float box[4], boolean (*func) (struct linedef_s*, void*), void* data);
+    boolean         P_SubsectorsBoxIterator(const float box[4], sector_t* sector, boolean (*func) (subsector_t*, void*), void* data);
+    boolean         P_PolyobjsBoxIterator(const float box[4], boolean (*func) (struct polyobj_s*, void*), void* data);
 
     // Object type touching mobjs iterators.
-    boolean         P_LineMobjsIterator(struct linedef_s* line,
-                                        boolean (*func) (struct mobj_s*,
-                                                         void *), void* data);
-    boolean         P_SectorTouchingMobjsIterator
-                        (sector_t* sector, boolean (*func) (struct mobj_s*, void*),
-                         void* data);
+    boolean         P_LineMobjsIterator(struct linedef_s* line, boolean (*func) (struct mobj_s*, void*), void* data);
+    boolean         P_SectorTouchingMobjsIterator(sector_t* sector, boolean (*func) (struct mobj_s*, void*), void* data);
 
-    boolean         P_PathTraverse(float x1, float y1, float x2, float y2,
-                                   int flags,
-                                   boolean (*trav) (intercept_t*));
-    boolean         P_CheckLineSight(const float from[3], const float to[3],
-                                     float bottomSlope, float topSlope, int flags);
+    boolean         P_PathTraverse(float x1, float y1, float x2, float y2, int flags, boolean (*trav) (intercept_t*));
+    boolean         P_CheckLineSight(const float from[3], const float to[3], float bottomSlope, float topSlope, int flags);
 
     // Play: Controls.
     void            P_NewPlayerControl(int id, controltype_t type, const char* name, const char* bindContext);
@@ -265,12 +216,9 @@ extern          "C" {
     // Play: Map Data Updates and Information Access.
     unsigned int    P_ToIndex(const void* ptr);
     void*           P_ToPtr(int type, uint index);
-    int             P_Callback(int type, uint index, void* context,
-                               int (*callback)(void* p, void* ctx));
-    int             P_Callbackp(int type, void* ptr, void* context,
-                                int (*callback)(void* p, void* ctx));
-    int             P_Iteratep(void *ptr, uint prop, void* context,
-                               int (*callback) (void* p, void* ctx));
+    int             P_Callback(int type, uint index, void* context, int (*callback)(void* p, void* ctx));
+    int             P_Callbackp(int type, void* ptr, void* context, int (*callback)(void* p, void* ctx));
+    int             P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, void* ctx));
 
     /* dummy functions */
     void*           P_AllocDummy(int type, void* extraData);
@@ -357,25 +305,18 @@ extern          "C" {
 
     // Play: Misc.
     void            P_MergeCommand(ticcmd_t* dest, ticcmd_t* src); // temporary.
-    void            P_SpawnDamageParticleGen(struct mobj_s* mo,
-                                             struct mobj_s* inflictor,
-                                             int amount);
+    void            P_SpawnDamageParticleGen(struct mobj_s* mo, struct mobj_s* inflictor, int amount);
 
     // Play: Mobjs.
-    struct mobj_s*  P_MobjCreate(think_t function, float x, float y, float z,
-                                 angle_t angle, float radius, float height, int ddflags);
+    struct mobj_s*  P_MobjCreate(think_t function, float x, float y, float z, angle_t angle, float radius, float height, int ddflags);
     void            P_MobjDestroy(struct mobj_s* mo);
     void            P_MobjSetState(struct mobj_s* mo, int statenum);
     void            P_MobjLink(struct mobj_s* mo, byte flags);
     int             P_MobjUnlink(struct mobj_s* mo);
 
     // Mobj linked object iterators.
-    boolean         P_MobjLinesIterator(struct mobj_s* mo,
-                                        boolean (*func) (struct linedef_s*,
-                                                          void*), void*);
-    boolean         P_MobjSectorsIterator(struct mobj_s* mo,
-                                          boolean (*func) (sector_t*, void*),
-                                          void* data);
+    boolean         P_MobjLinesIterator(struct mobj_s* mo, boolean (*func) (struct linedef_s*, void*), void*);
+    boolean         P_MobjSectorsIterator(struct mobj_s* mo, boolean (*func) (sector_t*, void*), void* data);
 
     // Play: Polyobjs.
     boolean         P_PolyobjMove(struct polyobj_s* po, float x, float y);
@@ -416,23 +357,18 @@ extern          "C" {
     void            R_SetViewWindow(int x, int y, int w, int h);
     int             R_GetViewPort(int player, int* x, int* y, int* w, int* h);
     void            R_SetBorderGfx(const char* lumps[9]);
-    boolean         R_GetSpriteInfo(int sprite, int frame,
-                                    spriteinfo_t* sprinfo);
+    boolean         R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
     boolean         R_GetPatchInfo(patchid_t id, patchinfo_t* info);
     int             R_CreateAnimGroup(int flags);
-    void            R_AddToAnimGroup(int groupNum, materialnum_t num,
-                                     int tics, int randomTics);
+    void            R_AddToAnimGroup(int groupNum, materialnum_t num, int tics, int randomTics);
     void            R_HSVToRGB(float* rgb, float h, float s, float v);
-    angle_t         R_PointToAngle2(float x1, float y1, float x2,
-                                    float y2);
+    angle_t         R_PointToAngle2(float x1, float y1, float x2, float y2);
     struct subsector_s* R_PointInSubsector(float x, float y);
 
-    colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
-                                          const byte* data, size_t num);
+    colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name, const byte* data, size_t num);
     colorpaletteid_t R_GetColorPaletteNumForName(const char* name);
     const char*     R_GetColorPaletteNameForNum(colorpaletteid_t id);
-    void            R_GetColorPaletteRGBf(colorpaletteid_t id, float rgb[3],
-                                          int idx, boolean correctGamma);
+    void            R_GetColorPaletteRGBf(colorpaletteid_t id, float rgb[3], int idx, boolean correctGamma);
 
     // Renderer.
     void            Rend_Reset(void);
@@ -441,44 +377,21 @@ extern          "C" {
     // Graphics.
     void            GL_UseFog(int yes);
     byte*           GL_GrabScreen(void);
-    DGLuint         GL_LoadGraphics(ddresourceclass_t resClass,
-                                     const char* name, gfxmode_t mode,
-                                     int useMipmap, boolean clamped,
-                                     int otherFlags);
-    DGLuint         GL_NewTextureWithParams3(int format, int width,
-                                             int height, void* pixels,
-                                             int flags, int minFilter,
-                                             int magFilter, int anisoFilter,
-                                             int wrapS, int wrapT);
+    DGLuint         GL_LoadGraphics(ddresourceclass_t resClass, const char* name, gfxmode_t mode, int useMipmap, boolean clamped, int otherFlags);
+    DGLuint         GL_NewTextureWithParams3(int format, int width, int height, void* pixels, int flags, int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT);
     void            GL_SetFilter(boolean enable);
     void            GL_SetFilterColor(float r, float g, float b, float a);
 
-    // Graphics: 2D drawing.
-    void            GL_DrawPatch(patchid_t id, int x, int y);
-    void            GL_DrawPatch_CS(patchid_t id, int x, int y);
-    void            GL_DrawPatchLitAlpha(patchid_t id, int x, int y, float light, float alpha);
-    void            GL_DrawFuzzPatch(patchid_t id, int x, int y);
-    void            GL_DrawAltFuzzPatch(patchid_t id, int x, int y);
-    void            GL_DrawShadowedPatch(patchid_t id, int x, int y);
-
-    void            GL_DrawRawScreen(lumpnum_t lump, float offx, float offy);
-    void            GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy, float scalex, float scaley);
-
     // Audio.
     void            S_MapChange(void);
-    int             S_LocalSoundAtVolumeFrom(int sound_id,
-                                             struct mobj_s* origin,
-                                             float* pos, float volume);
-    int             S_LocalSoundAtVolume(int soundID, struct mobj_s* origin,
-                                         float volume);
+    int             S_LocalSoundAtVolumeFrom(int sound_id, struct mobj_s* origin, float* pos, float volume);
+    int             S_LocalSoundAtVolume(int soundID, struct mobj_s* origin, float volume);
     int             S_LocalSound(int soundID, struct mobj_s* origin);
     int             S_LocalSoundFrom(int soundID, float* fixedpos);
     int             S_StartSound(int soundId, struct mobj_s* origin);
     int             S_StartSoundEx(int soundId, struct mobj_s* origin);
-    int             S_StartSoundAtVolume(int soundID, struct mobj_s* origin,
-                                         float volume);
-    int             S_ConsoleSound(int soundID, struct mobj_s* origin,
-                                   int targetConsole);
+    int             S_StartSoundAtVolume(int soundID, struct mobj_s* origin, float volume);
+    int             S_ConsoleSound(int soundID, struct mobj_s* origin, int targetConsole);
     void            S_StopSound(int soundID, struct mobj_s* origin);
     int             S_IsPlaying(int soundID, struct mobj_s* origin);
     int             S_StartMusic(const char* musicID, boolean looped);
@@ -489,15 +402,12 @@ extern          "C" {
     // Miscellaneous.
     size_t          M_ReadFile(const char* name, byte** buffer);
     size_t          M_ReadFileCLib(const char* name, byte** buffer);
-    boolean         M_WriteFile(const char* name, void* source,
-                                size_t length);
-    void            M_ExtractFileBase(char* dest, const char* path,
-                                      size_t len);
+    boolean         M_WriteFile(const char* name, void* source, size_t length);
+    void            M_ExtractFileBase(char* dest, const char* path, size_t len);
     char*           M_FindFileExtension(char* path);
     boolean         M_CheckPath(const char* path);
     int             M_FileExists(const char* file);
-    void            M_TranslatePath(char* translated, const char* path,
-                                    size_t len);
+    void            M_TranslatePath(char* translated, const char* path, size_t len);
     const char*     M_PrettyPath(const char* path);
     char*           M_SkipWhite(char* str);
     char*           M_FindWhite(char* str);
@@ -516,19 +426,16 @@ extern          "C" {
 
     // Miscellaneous: Math.
     void            V2_Rotate(float vec[2], float radians);
-    float           V2_Intersection(const float* p1, const float* delta1, const float* p2,
-                                    const float* delta2, float point[2]);
+    float           V2_Intersection(const float* p1, const float* delta1, const float* p2, const float* delta2, float point[2]);
 
     int             P_PointOnLineSide(float x, float y, float lX, float lY, float lDX, float lDY);
     float           M_PointLineDistance(const float* a, const float* b, const float* c);
-    float           M_ProjectPointOnLine(const float* point, const float* linepoint,
-                                         const float* delta, float gap, float* result);
+    float           M_ProjectPointOnLine(const float* point, const float* linepoint, const float* delta, float gap, float* result);
 
     binangle_t      bamsAtan2(int y, int x);
 
     // Miscellaneous: Command line.
-    void _DECALL    ArgAbbreviate(const char* longName,
-                                  const char* shortName);
+    void _DECALL    ArgAbbreviate(const char* longName, const char* shortName);
     int _DECALL     Argc(void);
     const char* _DECALL Argv(int i);
     const char** _DECALL ArgvPtr(int i);

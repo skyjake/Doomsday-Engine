@@ -740,12 +740,14 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
 
     if(lump >= 0 && lump < numLumps)
     {
-        const lumppatch_t* patch = (const lumppatch_t*) W_CacheLumpNum(lump, PU_CACHE);
+        const lumppatch_t* patch = (const lumppatch_t*) W_CacheLumpNum(lump, PU_STATIC);
         info->id = id;
         info->width = SHORT(patch->width);
         info->height = SHORT(patch->height);
         info->topOffset = -SHORT(patch->topOffset);
         info->offset = -SHORT(patch->leftOffset);
+        info->isCustom = !W_IsFromIWAD(lump);
+        W_ChangeCacheTag(lump, PU_CACHE);
         return true;
     }
 

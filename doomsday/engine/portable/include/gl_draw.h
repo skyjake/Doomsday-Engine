@@ -29,19 +29,7 @@
 #ifndef __DOOMSDAY_GRAPHICS_DRAW_H__
 #define __DOOMSDAY_GRAPHICS_DRAW_H__
 
-void            GL_UsePatchOffset(boolean enable);
-
 // 2D drawing routines:
-void            GL_DrawPatch_CS(patchid_t id, int x, int y);
-void            GL_DrawPatch(patchid_t id, int x, int y);
-void            GL_DrawPatchLitAlpha(patchid_t id, int x, int y, float light, float alpha);
-void            GL_DrawFuzzPatch(patchid_t id, int x, int y);
-void            GL_DrawAltFuzzPatch(patchid_t id, int x, int y);
-void            GL_DrawShadowedPatch(patchid_t id, int x, int y);
-
-void            GL_DrawRawScreen(lumpnum_t lump, float offx, float offy);
-void            GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy, float scalex, float scaley);
-
 void            GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a);
 void            GL_DrawRect(float x, float y, float w, float h, float r, float g, float b, float a);
 void            GL_DrawRectTiled(float x, float y, float w, float h, int tw, int th);

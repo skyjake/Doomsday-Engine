@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2004-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
+#include <math.h>
 
 #include "de_base.h"
 #include "de_graphics.h"
@@ -808,3 +809,140 @@ int DGL_Project(int num, dgl_fc3vertex_t *inVertices,
     return numOut;
 }
 #endif
+
+/**
+ * \todo No need for this special method now. Refactor callers to use the
+ * normal DGL drawing methods.
+ */
+void DGL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
+                         float scalex, float scaley)
+{
+    float pixelBorder = 0;
+    rawtex_t* raw;
+
+    if(lump < 0 || lump >= numLumps)
+        return;
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    // Setup offset and scale.
+    // Scale the offsets to match the resolution.
+    glTranslatef(offx * theWindow->width / 320.0f,
+                 offy * theWindow->height / 200.0f, 0);
+    glScalef(scalex, scaley, 1);
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+
+    GL_SetRawImage(lump, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+    raw = R_GetRawTex(lump);
+    // Bottom texture coordinate.
+    pixelBorder = raw->width * theWindow->width / 320;
+
+    // The first part is rendered in any case.
+    glBegin(GL_QUADS);
+        glTexCoord2f(0, 0);
+        glVertex2f(0, 0);
+        glTexCoord2f(1, 0);
+        glVertex2f(pixelBorder, 0);
+        glTexCoord2f(1, 1);
+        glVertex2f(pixelBorder, theWindow->height);
+        glTexCoord2f(0, 1);
+        glVertex2f(0, theWindow->height);
+    glEnd();
+
+    // Restore the old projection matrix.
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+/**
+ * Raw screens are 320 x 200.
+ */
+void DGL_DrawRawScreen(lumpnum_t lump, float offx, float offy)
+{
+    glColor3f(1, 1, 1);
+    DGL_DrawRawScreen_CS(lump, offx, offy, 1, 1);
+}
+
+/**
+ * Drawing with the Current State.
+ */
+void DGL_DrawPatch_CS(patchid_t id, int posX, int posY)
+{
+    float x = posX, y = posY, w, h;
+    patchtex_t* p = R_FindPatchTex(id);
+
+    // Set the texture.
+    GL_BindTexture(GL_PreparePatch(p), glmode[texMagMode]);
+
+    w = (float) p->width;
+    h = (float) p->height;
+
+    x += (float) p->offX;
+    y += (float) p->offY;
+
+    if(p->extraOffset[VX])
+    {
+        // This offset is used only for the extra borders in the
+        // "upscaled and sharpened" patches, so we can tweak the values
+        // to our liking a bit more.
+        x += p->extraOffset[VX];
+        y += p->extraOffset[VY];
+        w += fabs(p->extraOffset[VX])*2;
+        h += fabs(p->extraOffset[VY])*2;
+    }
+
+    glBegin(GL_QUADS);
+        glTexCoord2f(0, 0);
+        glVertex2f(x, y);
+        glTexCoord2f(1, 0);
+        glVertex2f(x + w, y);
+        glTexCoord2f(1, 1);
+        glVertex2f(x + w, y + h);
+        glTexCoord2f(0, 1);
+        glVertex2f(x, y + h);
+    glEnd();
+}
+
+void DGL_DrawPatchLitAlpha(patchid_t id, int x, int y, float light, float alpha)
+{
+    glColor4f(light, light, light, alpha);
+    DGL_DrawPatch_CS(id, x, y);
+}
+
+void DGL_DrawPatch(patchid_t id, int x, int y)
+{
+    if(id < 0)
+        return;
+    DGL_DrawPatchLitAlpha(id, x, y, 1, 1);
+}
+
+void DGL_DrawFuzzPatch(patchid_t id, int x, int y)
+{
+    if(id < 0)
+        return;
+    DGL_DrawPatchLitAlpha(id, x, y, 1, .333f);
+}
+
+void DGL_DrawAltFuzzPatch(patchid_t id, int x, int y)
+{
+    if(id < 0)
+        return;
+    DGL_DrawPatchLitAlpha(id, x, y, 1, .666f);
+}
+
+void DGL_DrawShadowedPatch(patchid_t id, int x, int y)
+{
+    if(id < 0)
+        return;
+    DGL_DrawPatchLitAlpha(id, x + 2, y + 2, 0, .4f);
+    DGL_DrawPatchLitAlpha(id, x, y, 1, 1);
+}

@@ -338,7 +338,7 @@ void IN_Drawer(void)
     if(interState)
         return;
 
-    GL_DrawRawScreen(W_GetNumForName("INTERPIC"), 0, 0);
+    DGL_DrawRawScreen(W_GetNumForName("INTERPIC"), 0, 0);
 
     if(gameType != SINGLE)
     {
@@ -354,8 +354,8 @@ static void drawDeathTally(void)
     int i, j, x, y, temp;
     boolean bold;
 
-    GL_DrawPatch(dpTallyTop.id, TALLY_TOP_X, TALLY_TOP_Y);
-    GL_DrawPatch(dpTallyLeft.id, TALLY_LEFT_X, TALLY_LEFT_Y);
+    DGL_DrawPatch(dpTallyTop.id, TALLY_TOP_X, TALLY_TOP_Y);
+    DGL_DrawPatch(dpTallyLeft.id, TALLY_LEFT_X, TALLY_LEFT_Y);
 
     if(interTime < TALLY_EFFECT_TICKS)
     {

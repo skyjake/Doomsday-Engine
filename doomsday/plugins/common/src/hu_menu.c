@@ -2383,16 +2383,16 @@ void M_DrawMainMenu(void)
     int frame = (menuTime / 5) % 7;
 
     DGL_Color4f(1, 1, 1, menuAlpha);
-    GL_DrawPatch_CS(m_htic.id, 88, 0);
-    GL_DrawPatch_CS(dpBullWithFire[(frame + 2) % 7].id, 37, 80);
-    GL_DrawPatch_CS(dpBullWithFire[frame].id, 278, 80);
+    DGL_DrawPatch_CS(m_htic.id, 88, 0);
+    DGL_DrawPatch_CS(dpBullWithFire[(frame + 2) % 7].id, 37, 80);
+    DGL_DrawPatch_CS(dpBullWithFire[frame].id, 278, 80);
 
 #elif __JHERETIC__
     WI_DrawPatch(88, 0, 1, 1, 1, menuAlpha, &m_htic, NULL, false, ALIGN_LEFT);
 
     DGL_Color4f(1, 1, 1, menuAlpha);
-    GL_DrawPatch_CS(dpRotatingSkull[17 - frame].id, 40, 10);
-    GL_DrawPatch_CS(dpRotatingSkull[frame].id, 232, 10);
+    DGL_DrawPatch_CS(dpRotatingSkull[17 - frame].id, 40, 10);
+    DGL_DrawPatch_CS(dpRotatingSkull[frame].id, 232, 10);
 #elif __JDOOM__ || __JDOOM64__
     WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, &m_doom, NULL, false, ALIGN_LEFT);
 #endif
@@ -2461,7 +2461,7 @@ void M_DrawClassMenu(void)
                     ((menuTime >> 3) & 3), &sprInfo);
 
     DGL_Color4f(1, 1, 1, menuAlpha);
-    GL_DrawPatch_CS(dpPlayerClassBG[pClass % 3].id, BG_X, BG_Y);
+    DGL_DrawPatch_CS(dpPlayerClassBG[pClass % 3].id, BG_X, BG_Y);
 
     // Fighter's colors are a bit different.
     if(pClass == PCLASS_FIGHTER)
@@ -2689,7 +2689,7 @@ void M_DrawSaveLoadBorder(int x, int y, int width)
 {
 #if __JHERETIC__ || __JHEXEN__
     DGL_Color4f(1, 1, 1, menuAlpha);
-    GL_DrawPatch_CS(dpFSlot.id, x - 8, y - 4);
+    DGL_DrawPatch_CS(dpFSlot.id, x - 8, y - 4);
 #else
     DGL_Color4f(1, 1, 1, menuAlpha);
 
@@ -3109,9 +3109,9 @@ void M_DrawHUDMenu(void)
 
     // Draw the page arrows.
     token = &dpInvPageLeft[!menu->firstItem || (menuTime & 8)];
-    GL_DrawPatch_CS(token->id, menu->x, menu->y - 22);
+    DGL_DrawPatch_CS(token->id, menu->x, menu->y - 22);
     token = &dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)];
-    GL_DrawPatch_CS(token->id, 312 - menu->x, menu->y - 22);
+    DGL_DrawPatch_CS(token->id, 312 - menu->x, menu->y - 22);
 #endif
 
     idx = 0;

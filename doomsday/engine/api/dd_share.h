@@ -974,12 +974,11 @@ typedef enum material_namespace_e {
 
 typedef struct {
     patchid_t       id;
-    int             flip;
+    boolean         isCustom; // @c true if the patch does not originate from an IWAD.
     int             offset;
     int             topOffset;
     int             width;
     int             height;
-    int             numFrames; // Number of frames the sprite has.
 } patchinfo_t;
 
 typedef struct {

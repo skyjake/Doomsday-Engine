@@ -1809,13 +1809,13 @@ void FI_Drawer(void)
         }
         else if(pic->flags.is_patch)
         {
-            GL_DrawPatch_CS((patchid_t)pic->tex[sq], 0, 0);
+            DGL_DrawPatch_CS((patchid_t)pic->tex[sq], 0, 0);
         }
         else
         {
             //// \fixme The raw screen drawer should not ignore rotation.
             //// It should allow the caller to set up a transformation matrix.
-            GL_DrawRawScreen_CS(pic->tex[sq],
+            DGL_DrawRawScreen_CS(pic->tex[sq],
                                 pic->object.x.value - fi->imgOffset[0].value,
                                 pic->object.y.value - fi->imgOffset[1].value,
                                 (pic->flip[sq] ? -1 : 1) *

@@ -403,6 +403,14 @@ EXPORTS
     DGL_DrawRect                @128 NONAME
     DGL_DrawRectTiled           @129 NONAME
     DGL_DrawCutRectTiled        @130 NONAME
+    DGL_DrawPatch               @120 NONAME
+    DGL_DrawPatch_CS            @121 NONAME
+    DGL_DrawPatchLitAlpha       @122 NONAME
+    DGL_DrawFuzzPatch           @123 NONAME
+    DGL_DrawAltFuzzPatch        @124 NONAME
+    DGL_DrawShadowedPatch       @125 NONAME
+    DGL_DrawRawScreen           @126 NONAME
+    DGL_DrawRawScreen_CS        @235 NONAME
 
 ; Renderer.
     Rend_Reset                  @103 NONAME
@@ -415,16 +423,6 @@ EXPORTS
     GL_NewTextureWithParams3    @329 NONAME
     GL_SetFilter                @132 NONAME
     GL_SetFilterColor           @441 NONAME
-
-; Graphics: 2D drawing.
-    GL_DrawPatch                @120 NONAME
-    GL_DrawPatch_CS             @121 NONAME
-    GL_DrawPatchLitAlpha        @122 NONAME
-    GL_DrawFuzzPatch            @123 NONAME
-    GL_DrawAltFuzzPatch         @124 NONAME
-    GL_DrawShadowedPatch        @125 NONAME
-    GL_DrawRawScreen            @126 NONAME
-    GL_DrawRawScreen_CS         @235 NONAME
 
 ; Audio.
     S_MapChange                 @225 NONAME

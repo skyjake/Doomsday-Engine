@@ -970,6 +970,7 @@ patchtex_t* R_GetPatchTex(lumpnum_t lump)
     p->offY = -SHORT(patch->topOffset);
     p->width = SHORT(patch->width);
     p->height = SHORT(patch->height);
+    p->isCustom = !W_IsFromIWAD(lump);
 
     // Take a copy of the current patch loading state so that future texture
     // loads will produce the same results.
