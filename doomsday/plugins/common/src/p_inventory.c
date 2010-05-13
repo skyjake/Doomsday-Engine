@@ -321,7 +321,7 @@ static acfnptr_t getActionPtr(const char* name)
  */
 void P_InitInventory(void)
 {
-    int                 i;
+    int i;
 
     memset(invItems, 0, sizeof(invItems));
     for(i = 0; i < NUM_INVENTORYITEM_TYPES - 1; ++i)
@@ -329,12 +329,14 @@ void P_InitInventory(void)
         inventoryitemtype_t type = IIT_FIRST + i;
         const def_invitem_t* def = P_GetInvItemDef(type);
         invitem_t* data = &invItems[i];
+        patchinfo_t info;
 
         data->type = type;
         data->niceName = Def_Get(DD_DEF_TEXT, (char*) def->niceName, NULL);
         data->action = getActionPtr(def->action);
         data->useSnd = Def_Get(DD_DEF_SOUND, (char*) def->useSnd, NULL);
-        data->patchLump = W_CheckNumForName(def->patch);
+        R_PrecachePatch(def->patch, &info);
+        data->patchLump = info.lump;
     }
 
     memset(inventories, 0, sizeof(inventories));

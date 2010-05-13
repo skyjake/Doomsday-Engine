@@ -2256,19 +2256,6 @@ void ST_Drawer(int player)
 }
 
 /**
- * Draw teleport icon and show it on screen.
- */
-void Draw_TeleportIcon(void)
-{
-    // Dedicated servers don't draw anything.
-    if(IS_DEDICATED)
-        return;
-
-    GL_DrawRawScreen(W_CheckNumForName("TRAVLPIC"), 0, 0);
-    GL_DrawPatch(100, 68, dpTeleIcon.lump);
-}
-
-/**
  * Called when the statusbar scale cvar changes.
  */
 static void updateViewWindow(cvar_t* cvar)

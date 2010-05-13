@@ -698,12 +698,8 @@ void FI_End(void)
     if(oldMode == FIMODE_AFTER) // A map has been completed.
     {
         if(IS_CLIENT)
-        {
-#if __JHEXEN__ || __JSTRIFE__
-            Draw_TeleportIcon();
-#endif
             return;
-        }
+
         G_SetGameAction(GA_MAPCOMPLETED);
 
         // Don't play the debriefing again.
@@ -776,7 +772,7 @@ int FI_Briefing(uint episode, uint map, ddfinale_t* fin)
         return false;
 
     // Is there such a finale definition?
-    P_GetMapLumpName(episode, map, mid);
+    P_MapId(episode, map, mid);
 
     return Def_Get(DD_DEF_FINALE_BEFORE, mid, fin);
 }
@@ -802,7 +798,7 @@ int FI_Debriefing(uint episode, uint map, ddfinale_t* fin)
         return false;
 
     // Is there such a finale definition?
-    P_GetMapLumpName(episode, map, mid);
+    P_MapId(episode, map, mid);
     return Def_Get(DD_DEF_FINALE_AFTER, mid, fin);
 }
 
@@ -2158,36 +2154,40 @@ void FIC_XImage(void)
 
 void FIC_Patch(void)
 {
-    fipic_t*            pic = FI_GetPic(FI_GetToken());
-    const char*         name;
+    fipic_t* pic = FI_GetPic(FI_GetToken());
+    const char* name;
+    patchinfo_t info;
 
     FI_InitValue(&pic->object.x, FI_GetFloat());
     FI_InitValue(&pic->object.y, FI_GetFloat());
     FI_ClearAnimation(pic);
 
     name = FI_GetToken();
-    if((pic->lump[0] = W_CheckNumForName(name)) == -1)
-        Con_Message("FIC_Patch: Warning, missing lump \"%s\".\n", name);
+    R_PrecachePatch(name, &info);
+    if(info.lump == -1)
+        Con_Message("FIC_Patch: Warning, missing Patch \"%s\".\n", name);
 
+    pic->lump[0] = info.lump;
     pic->flags.is_patch = true;
     pic->flags.is_rect = false;
 }
 
 void FIC_SetPatch(void)
 {
-    int                 num;
-    fipic_t*            pic = FI_GetPic(FI_GetToken());
-    const char*         name = FI_GetToken();
+    fipic_t* pic = FI_GetPic(FI_GetToken());
+    const char* name = FI_GetToken();
+    patchinfo_t info;
 
-    if((num = W_CheckNumForName(name))!= -1)
+    R_PrecachePatch(name, &info);
+    if(info.lump != -1)
     {
-        pic->lump[0] = num;
+        pic->lump[0] = info.lump;
         pic->flags.is_patch = true;
         pic->flags.is_rect = false;
     }
     else
     {
-        Con_Message("FIC_SetPatch: Warning, missing lump \"%s\".\n", name);
+        Con_Message("FIC_SetPatch: Warning, missing Patch \"%s\".\n", name);
     }
 }
 
@@ -2200,23 +2200,24 @@ void FIC_ClearAnim(void)
 
 void FIC_Anim(void)
 {
-    fipic_t            *pic = FI_GetPic(FI_GetToken());
-    int                 i, lump, time;
-    const char*         name = FI_GetToken();
+    fipic_t* pic = FI_GetPic(FI_GetToken());
+    const char* name = FI_GetToken();
+    patchinfo_t info;
+    int i, time;
 
-    if((lump = W_CheckNumForName(name)) == -1)
-        Con_Message("FIC_Anim: Warning, lump \"%s\" not found.\n", name);
+    R_PrecachePatch(name, &info);
+    if(info.lump == -1)
+        Con_Message("FIC_Anim: Warning, Patch \"%s\" not found.\n", name);
 
     time = FI_GetTics();
     // Find the next sequence spot.
     i = FI_GetNextSeq(pic);
     if(i == MAX_SEQUENCE)
     {
-        Con_Message("FIC_Anim: Warning, too many frames in anim sequence "
-                    "(max %i).\n", MAX_SEQUENCE);
+        Con_Message("FIC_Anim: Warning, too many frames in anim sequence (max %i).\n", MAX_SEQUENCE);
         return; // Can't do it...
     }
-    pic->lump[i] = lump;
+    pic->lump[i] = info.lump;
     pic->seqWait[i] = time;
     pic->flags.is_patch = true;
     pic->flags.done = false;
