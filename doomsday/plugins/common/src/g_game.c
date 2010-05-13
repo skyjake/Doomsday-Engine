@@ -2029,9 +2029,7 @@ void G_DoLoadGame(void)
     FI_Reset();
     G_SetGameAction(GA_NONE);
 
-#if __JHEXEN__ || __JSTRIFE__
-    GL_DrawPatch(100, 68, W_GetNumForName("loadicon"));
-
+#if __JHEXEN__
     SV_LoadGame(gameLoadSlot);
     if(!IS_NETGAME)
     {                           // Copy the base slot to the reborn slot
@@ -2059,12 +2057,10 @@ void G_SaveGame(int slot, const char* description)
  */
 void G_DoSaveGame(void)
 {
-#if __JHEXEN__ || __JSTRIFE__
-    GL_DrawPatch(100, 68, W_GetNumForName("SAVEICON"));
-
+#if __JHEXEN__
     SV_SaveGame(saveGameSlot, saveDescription);
 #else
-    filename_t              name;
+    filename_t name;
 
     SV_GetSaveGameFileName(name, saveGameSlot, FILENAME_T_MAXLEN);
     SV_SaveGame(name, saveDescription);
