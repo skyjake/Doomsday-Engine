@@ -354,8 +354,8 @@ static void drawDeathTally(void)
     int i, j, x, y, temp;
     boolean bold;
 
-    GL_DrawPatch(TALLY_TOP_X, TALLY_TOP_Y, dpTallyTop.lump);
-    GL_DrawPatch(TALLY_LEFT_X, TALLY_LEFT_Y, dpTallyLeft.lump);
+    GL_DrawPatch(TALLY_TOP_X, TALLY_TOP_Y, dpTallyTop.id);
+    GL_DrawPatch(TALLY_LEFT_X, TALLY_LEFT_Y, dpTallyLeft.id);
 
     if(interTime < TALLY_EFFECT_TICKS)
     {

@@ -1131,15 +1131,15 @@ static void drawMarks(const automap_t* map)
 
     for(i = 0; i < numMarks; ++i)
     {
-        const patchinfo_t* patch;
+        const patchinfo_t* info;
         float point[2], w, h;
 
         if(!Automap_GetMark(map, i, &point[0], &point[1], NULL))
             continue;
 
-        patch = &markerPatches[i];
-        w = patch->width  * stom;
-        h = patch->height * stom;
+        info = &markerPatches[i];
+        w = info->width  * stom;
+        h = info->height * stom;
 
         positionPointInView(map, point, topLeft, topRight, bottomRight, bottomLeft, viewPoint);
 
@@ -1148,7 +1148,7 @@ static void drawMarks(const automap_t* map)
         DGL_Translatef(point[0], point[1], 0);
         DGL_Rotatef(angle, 0, 0, 1);
 
-        DGL_SetPatch(patch->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_SetPatch(info->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
         DGL_DrawRect(-w/2, h/2, w, -h, 1, 1, 1, alpha);
 
         DGL_MatrixMode(DGL_MODELVIEW);

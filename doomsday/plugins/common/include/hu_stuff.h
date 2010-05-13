@@ -56,7 +56,7 @@ typedef enum {
 typedef struct gamefont_s {
     struct gamefont_char_s {
         char            lumpname[9];
-        patchinfo_t        patch;
+        patchinfo_t     pInfo;
     } chars[256];
 } gamefont_t;
 

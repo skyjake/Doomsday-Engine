@@ -336,7 +336,7 @@ void P_InitInventory(void)
         data->action = getActionPtr(def->action);
         data->useSnd = Def_Get(DD_DEF_SOUND, (char*) def->useSnd, NULL);
         R_PrecachePatch(def->patch, &info);
-        data->patchLump = info.lump;
+        data->patchId = info.id;
     }
 
     memset(inventories, 0, sizeof(inventories));

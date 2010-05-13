@@ -102,7 +102,7 @@ typedef struct fipic_s {
     } flags;
     int             seq;
     int             seqWait[MAX_SEQUENCE], seqTimer;
-    int             lump[MAX_SEQUENCE];
+    int             tex[MAX_SEQUENCE];
     char            flip[MAX_SEQUENCE];
     short           sound[MAX_SEQUENCE];
 
@@ -495,14 +495,14 @@ void FI_NewState(const char *script)
 
 void FI_DeleteXImage(fipic_t *pic)
 {
-    DGL_DeleteTextures(1, (DGLuint*)&pic->lump[0]);
-    pic->lump[0] = 0;
+    DGL_DeleteTextures(1, (DGLuint*)&pic->tex[0]);
+    pic->tex[0] = 0;
     pic->flags.is_ximage = false;
 }
 
 void FI_PopState(void)
 {
-    int                 i;
+    int i;
 
 #ifdef _DEBUG
     Con_Printf("FI_PopState: fi=%p (%i)\n", fi, fi - fiStateStack);
@@ -1035,7 +1035,7 @@ void FI_ClearAnimation(fipic_t* pic)
     if(pic->flags.is_ximage)
         FI_DeleteXImage(pic);
 
-    memset(pic->lump, -1, sizeof(pic->lump));
+    memset(pic->tex, -1, sizeof(pic->tex));
     memset(pic->flip, 0, sizeof(pic->flip));
     memset(pic->sound, -1, sizeof(pic->sound));
     memset(pic->seqWait, 0, sizeof(pic->seqWait));
@@ -1045,20 +1045,18 @@ void FI_ClearAnimation(fipic_t* pic)
 
 int FI_GetNextSeq(fipic_t* pic)
 {
-    int                 i;
-
+    int i;
     for(i = 0; i < MAX_SEQUENCE; ++i)
     {
-        if(pic->lump[i] <= 0)
+        if(pic->tex[i] <= 0)
             break;
     }
-
     return i;
 }
 
 fipic_t* FI_FindPic(const char* handle)
 {
-    int                 i;
+    int i;
 
     if(!handle)
         return NULL;
@@ -1077,7 +1075,7 @@ fipic_t* FI_FindPic(const char* handle)
 
 void FI_InitRect(fipic_t* pic)
 {
-    int                 i;
+    int i;
 
     FI_InitValue(&pic->object.x, 0);
     FI_InitValue(&pic->object.y, 0);
@@ -1097,7 +1095,7 @@ void FI_InitRect(fipic_t* pic)
 
 fitext_t* FI_FindText(const char* handle)
 {
-    int                 i;
+    int i;
 
     for(i = 0; i < MAX_TEXT; ++i)
     {
@@ -1281,13 +1279,13 @@ void FI_Ticker(void)
             {
                 // Advance the sequence position. k = next pos.
                 k = pic->seq + 1;
-                if(k == MAX_SEQUENCE || pic->lump[k] == FI_REPEAT)
+                if(k == MAX_SEQUENCE || pic->tex[k] == FI_REPEAT)
                 {
                     // Rewind back to beginning.
                     k = 0;
                     pic->flags.done = true;
                 }
-                else if(pic->lump[k] <= 0)
+                else if(pic->tex[k] <= 0)
                 {
                     // This is the end. Stop sequence.
                     pic->seqWait[k = pic->seq] = 0;
@@ -1685,9 +1683,9 @@ void FI_GetTurnCenter(fipic_t *pic, float *center)
     }
     else if(pic->flags.is_patch)
     {
-        patchinfo_t         info;
+        patchinfo_t info;
 
-        if(R_GetPatchInfo(pic->lump[pic->seq], &info))
+        if(R_GetPatchInfo(pic->tex[pic->seq], &info))
         {
             center[VX] = info.width / 2 - info.offset;
             center[VY] = info.height / 2 - info.topOffset;
@@ -1765,7 +1763,7 @@ void FI_Drawer(void)
             if(pic->flags.is_ximage)
             {
                 DGL_Enable(DGL_TEXTURING);
-                DGL_Bind(pic->lump[sq]);
+                DGL_Bind((DGLuint)pic->tex[sq]);
             }
             else
             {
@@ -1811,13 +1809,13 @@ void FI_Drawer(void)
         }
         else if(pic->flags.is_patch)
         {
-            GL_DrawPatch_CS(0, 0, pic->lump[sq]);
+            GL_DrawPatch_CS(0, 0, (patchid_t)pic->tex[sq]);
         }
         else
         {
             //// \fixme The raw screen drawer should not ignore rotation.
             //// It should allow the caller to set up a transformation matrix.
-            GL_DrawRawScreen_CS(pic->lump[sq],
+            GL_DrawRawScreen_CS(pic->tex[sq],
                                 pic->object.x.value - fi->imgOffset[0].value,
                                 pic->object.y.value - fi->imgOffset[1].value,
                                 (pic->flip[sq] ? -1 : 1) *
@@ -2093,7 +2091,7 @@ void FIC_Marker(void)
 
 void FIC_Delete(void)
 {
-    fiobj_t*            obj = FI_FindObject(FI_GetToken());
+    fiobj_t* obj = FI_FindObject(FI_GetToken());
 
     if(obj)
     {
@@ -2103,12 +2101,12 @@ void FIC_Delete(void)
 
 void FIC_Image(void)
 {
-    fipic_t*            pic = FI_GetPic(FI_GetToken());
-    const char*         name = FI_GetToken();
+    fipic_t* pic = FI_GetPic(FI_GetToken());
+    const char* name = FI_GetToken();
 
     FI_ClearAnimation(pic);
 
-    if((pic->lump[0] = W_CheckNumForName(name)) == -1)
+    if((pic->tex[0] = W_CheckNumForName(name)) == -1)
         Con_Message("FIC_Image: Warning, missing lump \"%s\".\n", name);
 
     pic->flags.is_patch = false;
@@ -2118,15 +2116,15 @@ void FIC_Image(void)
 
 void FIC_ImageAt(void)
 {
-    fipic_t*            pic = FI_GetPic(FI_GetToken());
-    const char*         name;
+    fipic_t* pic = FI_GetPic(FI_GetToken());
+    const char* name;
 
     FI_InitValue(&pic->object.x, FI_GetFloat());
     FI_InitValue(&pic->object.y, FI_GetFloat());
     FI_ClearAnimation(pic);
 
     name = FI_GetToken();
-    if((pic->lump[0] = W_CheckNumForName(name)) == -1)
+    if((pic->tex[0] = W_CheckNumForName(name)) == -1)
         Con_Message("FIC_ImageAt: Warning, missing lump \"%s\".\n", name);
 
     pic->flags.is_patch = false;
@@ -2136,15 +2134,14 @@ void FIC_ImageAt(void)
 
 void FIC_XImage(void)
 {
-    fipic_t*            pic = FI_GetPic(FI_GetToken());
-    const char*         fileName;
+    fipic_t* pic = FI_GetPic(FI_GetToken());
+    const char* fileName;
 
     FI_ClearAnimation(pic);
 
     // Load the external resource.
     fileName = FI_GetToken();
-    if((pic->lump[0] = GL_LoadGraphics(DDRC_GRAPHICS, fileName, LGM_NORMAL,
-                                   false, true, 0)) == 0)
+    if((pic->tex[0] = GL_LoadGraphics(DDRC_GRAPHICS, fileName, LGM_NORMAL, false, true, 0)) == 0)
         Con_Message("FIC_XImage: Warning, missing graphic \"%s\".\n", fileName);
 
     pic->flags.is_patch = false;
@@ -2164,10 +2161,10 @@ void FIC_Patch(void)
 
     name = FI_GetToken();
     R_PrecachePatch(name, &info);
-    if(info.lump == -1)
+    if(info.id == -1)
         Con_Message("FIC_Patch: Warning, missing Patch \"%s\".\n", name);
 
-    pic->lump[0] = info.lump;
+    pic->tex[0] = info.id;
     pic->flags.is_patch = true;
     pic->flags.is_rect = false;
 }
@@ -2179,9 +2176,9 @@ void FIC_SetPatch(void)
     patchinfo_t info;
 
     R_PrecachePatch(name, &info);
-    if(info.lump != -1)
+    if(info.id != -1)
     {
-        pic->lump[0] = info.lump;
+        pic->tex[0] = info.id;
         pic->flags.is_patch = true;
         pic->flags.is_rect = false;
     }
@@ -2193,8 +2190,7 @@ void FIC_SetPatch(void)
 
 void FIC_ClearAnim(void)
 {
-    fipic_t*            pic = FI_GetPic(FI_GetToken());
-
+    fipic_t* pic = FI_GetPic(FI_GetToken());
     FI_ClearAnimation(pic);
 }
 
@@ -2206,7 +2202,7 @@ void FIC_Anim(void)
     int i, time;
 
     R_PrecachePatch(name, &info);
-    if(info.lump == -1)
+    if(info.id == -1)
         Con_Message("FIC_Anim: Warning, Patch \"%s\" not found.\n", name);
 
     time = FI_GetTics();
@@ -2217,7 +2213,7 @@ void FIC_Anim(void)
         Con_Message("FIC_Anim: Warning, too many frames in anim sequence (max %i).\n", MAX_SEQUENCE);
         return; // Can't do it...
     }
-    pic->lump[i] = info.lump;
+    pic->tex[i] = info.id;
     pic->seqWait[i] = time;
     pic->flags.is_patch = true;
     pic->flags.done = false;
@@ -2225,9 +2221,9 @@ void FIC_Anim(void)
 
 void FIC_AnimImage(void)
 {
-    fipic_t            *pic = FI_GetPic(FI_GetToken());
-    int                 i, lump, time;
-    const char*         name = FI_GetToken();
+    fipic_t* pic = FI_GetPic(FI_GetToken());
+    const char* name = FI_GetToken();
+    int i, lump, time;
 
     if((lump = W_CheckNumForName(name)) == -1)
         Con_Message("FIC_AnimImage: Warning, lump \"%s\" not found.\n", name);
@@ -2242,7 +2238,7 @@ void FIC_AnimImage(void)
         return; // Can't do it...
     }
 
-    pic->lump[i] = lump;
+    pic->tex[i] = lump;
     pic->seqWait[i] = time;
     pic->flags.is_patch = false;
     pic->flags.is_rect = false;
@@ -2251,21 +2247,21 @@ void FIC_AnimImage(void)
 
 void FIC_Repeat(void)
 {
-    fipic_t            *pic = FI_GetPic(FI_GetToken());
-    int                 i = FI_GetNextSeq(pic);
+    fipic_t* pic = FI_GetPic(FI_GetToken());
+    int i = FI_GetNextSeq(pic);
 
     if(i == MAX_SEQUENCE)
         return;
-    pic->lump[i] = FI_REPEAT;
+    pic->tex[i] = FI_REPEAT;
 }
 
 void FIC_StateAnim(void)
 {
-    fipic_t            *pic = FI_GetPic(FI_GetToken());
-    int                 i;
-    int                 s = Def_Get(DD_DEF_STATE, FI_GetToken(), 0);
-    int                 count = FI_GetInteger();
-    spriteinfo_t        sinf;
+    fipic_t* pic = FI_GetPic(FI_GetToken());
+    int i;
+    int s = Def_Get(DD_DEF_STATE, FI_GetToken(), 0);
+    int count = FI_GetInteger();
+    spriteinfo_t sinf;
 
     // Animate N states starting from the given one.
     pic->flags.is_patch = true;
@@ -2273,14 +2269,14 @@ void FIC_StateAnim(void)
     pic->flags.done = false;
     for(; count > 0 && s > 0; count--)
     {
-        state_t            *st = &STATES[s];
+        state_t* st = &STATES[s];
 
         i = FI_GetNextSeq(pic);
         if(i == MAX_SEQUENCE)
             break; // No room!
 
         R_GetSpriteInfo(st->sprite, st->frame & 0x7fff, &sinf);
-        pic->lump[i] = sinf.realLump;
+        pic->tex[i] = sinf.realLump;
         pic->flip[i] = sinf.flip;
         pic->seqWait[i] = st->tics;
         if(pic->seqWait[i] == 0)
@@ -2293,8 +2289,8 @@ void FIC_StateAnim(void)
 
 void FIC_PicSound(void)
 {
-    fipic_t            *pic = FI_GetPic(FI_GetToken());
-    int                 i;
+    fipic_t* pic = FI_GetPic(FI_GetToken());
+    int i;
 
     i = FI_GetNextSeq(pic) - 1;
     if(i < 0)
@@ -2304,8 +2300,8 @@ void FIC_PicSound(void)
 
 void FIC_ObjectOffX(void)
 {
-    fiobj_t            *obj = FI_FindObject(FI_GetToken());
-    float               value = FI_GetFloat();
+    fiobj_t* obj = FI_FindObject(FI_GetToken());
+    float value = FI_GetFloat();
 
     if(obj)
     {
@@ -2315,8 +2311,8 @@ void FIC_ObjectOffX(void)
 
 void FIC_ObjectOffY(void)
 {
-    fiobj_t            *obj = FI_FindObject(FI_GetToken());
-    float               value = FI_GetFloat();
+    fiobj_t* obj = FI_FindObject(FI_GetToken());
+    float value = FI_GetFloat();
 
     if(obj)
     {
@@ -2326,15 +2322,15 @@ void FIC_ObjectOffY(void)
 
 void FIC_ObjectRGB(void)
 {
-    fiobj_t            *obj = FI_FindObject(FI_GetToken());
-    fipic_t            *pic = FI_FindPic(obj ? obj->handle : NULL);
-    int                 i;
+    fiobj_t* obj = FI_FindObject(FI_GetToken());
+    fipic_t* pic = FI_FindPic(obj ? obj->handle : NULL);
+    int i;
 
     for(i = 0; i < 3; ++i)
     {
         if(obj)
         {
-            float               value = FI_GetFloat();
+            float value = FI_GetFloat();
 
             FI_SetValue(obj->color + i, value);
 
@@ -2355,9 +2351,9 @@ void FIC_ObjectRGB(void)
 
 void FIC_ObjectAlpha(void)
 {
-    fiobj_t            *obj = FI_FindObject(FI_GetToken());
-    fipic_t            *pic = FI_FindPic(obj ? obj->handle : NULL);
-    float               value = FI_GetFloat();
+    fiobj_t* obj = FI_FindObject(FI_GetToken());
+    fipic_t* pic = FI_FindPic(obj ? obj->handle : NULL);
+    float value = FI_GetFloat();
 
     if(obj)
     {
@@ -2374,8 +2370,8 @@ void FIC_ObjectAlpha(void)
 
 void FIC_ObjectScaleX(void)
 {
-    fiobj_t            *obj = FI_FindObject(FI_GetToken());
-    float               value = FI_GetFloat();
+    fiobj_t* obj = FI_FindObject(FI_GetToken());
+    float value = FI_GetFloat();
 
     if(obj)
     {
@@ -2385,8 +2381,8 @@ void FIC_ObjectScaleX(void)
 
 void FIC_ObjectScaleY(void)
 {
-    fiobj_t            *obj = FI_FindObject(FI_GetToken());
-    float               value = FI_GetFloat();
+    fiobj_t* obj = FI_FindObject(FI_GetToken());
+    float value = FI_GetFloat();
 
     if(obj)
     {
@@ -2396,8 +2392,8 @@ void FIC_ObjectScaleY(void)
 
 void FIC_ObjectScale(void)
 {
-    fiobj_t            *obj = FI_FindObject(FI_GetToken());
-    float               value = FI_GetFloat();
+    fiobj_t* obj = FI_FindObject(FI_GetToken());
+    float value = FI_GetFloat();
 
     if(obj)
     {
@@ -2408,9 +2404,9 @@ void FIC_ObjectScale(void)
 
 void FIC_ObjectScaleXY(void)
 {
-    fiobj_t            *obj = FI_FindObject(FI_GetToken());
-    float               x = FI_GetFloat();
-    float               y = FI_GetFloat();
+    fiobj_t* obj = FI_FindObject(FI_GetToken());
+    float x = FI_GetFloat();
+    float y = FI_GetFloat();
 
     if(obj)
     {
@@ -2421,8 +2417,8 @@ void FIC_ObjectScaleXY(void)
 
 void FIC_ObjectAngle(void)
 {
-    fiobj_t            *obj = FI_FindObject(FI_GetToken());
-    float               value = FI_GetFloat();
+    fiobj_t* obj = FI_FindObject(FI_GetToken());
+    float value = FI_GetFloat();
 
     if(obj)
     {
@@ -2432,7 +2428,7 @@ void FIC_ObjectAngle(void)
 
 void FIC_Rect(void)
 {
-    fipic_t            *pic = FI_GetPic(FI_GetToken());
+    fipic_t* pic = FI_GetPic(FI_GetToken());
 
     FI_InitRect(pic);
 
@@ -2450,11 +2446,11 @@ void FIC_Rect(void)
 
 void FIC_FillColor(void)
 {
-    fiobj_t            *obj = FI_FindObject(FI_GetToken());
-    fipic_t            *pic;
-    int                 which = 0;
-    int                 i;
-    float               color;
+    fiobj_t* obj = FI_FindObject(FI_GetToken());
+    fipic_t* pic;
+    int which = 0;
+    int i;
+    float color;
 
     if(!obj)
     {
@@ -2488,11 +2484,11 @@ void FIC_FillColor(void)
 
 void FIC_EdgeColor(void)
 {
-    fiobj_t            *obj = FI_FindObject(FI_GetToken());
-    fipic_t            *pic;
-    int                 which = 0;
-    int                 i;
-    float               color;
+    fiobj_t* obj = FI_FindObject(FI_GetToken());
+    fipic_t* pic;
+    int which = 0;
+    int i;
+    float color;
 
     if(!obj)
     {
@@ -2536,16 +2532,15 @@ void FIC_OffsetY(void)
 
 void FIC_Sound(void)
 {
-    int                 num = Def_Get(DD_DEF_SOUND, FI_GetToken(), NULL);
-
+    int num = Def_Get(DD_DEF_SOUND, FI_GetToken(), NULL);
     if(num > 0)
         S_LocalSound(num, NULL);
 }
 
 void FIC_SoundAt(void)
 {
-    int                 num = Def_Get(DD_DEF_SOUND, FI_GetToken(), NULL);
-    float               vol = FI_GetFloat();
+    int num = Def_Get(DD_DEF_SOUND, FI_GetToken(), NULL);
+    float vol = FI_GetFloat();
 
     if(vol > 1)
         vol = 1;
@@ -2555,7 +2550,7 @@ void FIC_SoundAt(void)
 
 void FIC_SeeSound(void)
 {
-    int                 num = Def_Get(DD_DEF_MOBJ, FI_GetToken(), NULL);
+    int num = Def_Get(DD_DEF_MOBJ, FI_GetToken(), NULL);
 
     if(num < 0 || MOBJINFO[num].seeSound <= 0)
         return;
@@ -2564,7 +2559,7 @@ void FIC_SeeSound(void)
 
 void FIC_DieSound(void)
 {
-    int                 num = Def_Get(DD_DEF_MOBJ, FI_GetToken(), NULL);
+    int num = Def_Get(DD_DEF_MOBJ, FI_GetToken(), NULL);
 
     if(num < 0 || MOBJINFO[num].deathSound <= 0)
         return;
@@ -2583,15 +2578,14 @@ void FIC_MusicOnce(void)
 
 void FIC_Filter(void)
 {
-    int                 i;
-
+    int i;
     for(i = 0; i < 4; ++i)
         FI_SetValue(fi->filter + i, FI_GetFloat());
 }
 
 void FIC_Text(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
+    fitext_t* tex = FI_GetText(FI_GetToken());
 
     FI_InitValue(&tex->object.x, FI_GetFloat());
     FI_InitValue(&tex->object.y, FI_GetFloat());
@@ -2601,8 +2595,8 @@ void FIC_Text(void)
 
 void FIC_TextFromDef(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
-    char               *str;
+    fitext_t* tex = FI_GetText(FI_GetToken());
+    char* str;
 
     FI_InitValue(&tex->object.x, FI_GetFloat());
     FI_InitValue(&tex->object.y, FI_GetFloat());
@@ -2614,8 +2608,8 @@ void FIC_TextFromDef(void)
 
 void FIC_TextFromLump(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
-    int                 lnum;
+    fitext_t* tex = FI_GetText(FI_GetToken());
+    int lnum;
 
     FI_InitValue(&tex->object.x, FI_GetFloat());
     FI_InitValue(&tex->object.y, FI_GetFloat());
@@ -2626,9 +2620,9 @@ void FIC_TextFromLump(void)
     }
     else
     {
-        size_t              i, incount, buflen;
-        const char*         data;
-        char*               str, *out;
+        size_t i, incount, buflen;
+        const char* data;
+        char* str, *out;
 
         // Load the lump.
         data = W_CacheLumpNum(lnum, PU_STATIC);
@@ -2656,15 +2650,15 @@ void FIC_TextFromLump(void)
 
 void FIC_SetText(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
+    fitext_t* tex = FI_GetText(FI_GetToken());
 
     FI_SetText(tex, FI_GetToken());
 }
 
 void FIC_SetTextDef(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
-    char               *str;
+    fitext_t* tex = FI_GetText(FI_GetToken());
+    char* str;
 
     if(!Def_Get(DD_DEF_TEXT, FI_GetToken(), &str))
         str = "(undefined)"; // Not found!
@@ -2673,7 +2667,7 @@ void FIC_SetTextDef(void)
 
 void FIC_DeleteText(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
+    fitext_t* tex = FI_GetText(FI_GetToken());
 
     tex->object.used = false;
     if(tex->text)
@@ -2686,7 +2680,7 @@ void FIC_DeleteText(void)
 
 void FIC_TextColor(void)
 {
-    int                 idx = FI_GetInteger(), c;
+    int idx = FI_GetInteger(), c;
 
     if(idx < 1)
         idx = 1;
@@ -2699,8 +2693,8 @@ void FIC_TextColor(void)
 
 void FIC_TextRGB(void)
 {
-    int                 i;
-    fitext_t           *tex = FI_GetText(FI_GetToken());
+    int i;
+    fitext_t* tex = FI_GetText(FI_GetToken());
 
     for(i = 0; i < 3; ++i)
         FI_SetValue(&tex->object.color[i], FI_GetFloat());
@@ -2708,72 +2702,62 @@ void FIC_TextRGB(void)
 
 void FIC_TextAlpha(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
-
+    fitext_t* tex = FI_GetText(FI_GetToken());
     FI_SetValue(&tex->object.color[3], FI_GetFloat());
 }
 
 void FIC_TextOffX(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
-
+    fitext_t* tex = FI_GetText(FI_GetToken());
     FI_SetValue(&tex->object.x, FI_GetFloat());
 }
 
 void FIC_TextOffY(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
-
+    fitext_t* tex = FI_GetText(FI_GetToken());
     FI_SetValue(&tex->object.y, FI_GetFloat());
 }
 
 void FIC_TextCenter(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
-
+    fitext_t* tex = FI_GetText(FI_GetToken());
     tex->flags.centered = true;
 }
 
 void FIC_TextNoCenter(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
-
+    fitext_t* tex = FI_GetText(FI_GetToken());
     tex->flags.centered = false;
 }
 
 void FIC_TextScroll(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
-
+    fitext_t* tex = FI_GetText(FI_GetToken());
     tex->scrollTimer = 0;
     tex->scrollWait = FI_GetInteger();
 }
 
 void FIC_TextPos(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
-
+    fitext_t* tex = FI_GetText(FI_GetToken());
     tex->pos = FI_GetInteger();
 }
 
 void FIC_TextRate(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
-
+    fitext_t* tex = FI_GetText(FI_GetToken());
     tex->wait = FI_GetInteger();
 }
 
 void FIC_TextLineHeight(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
-
+    fitext_t* tex = FI_GetText(FI_GetToken());
     tex->lineheight = FI_GetInteger();
 }
 
 void FIC_FontA(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
-
+    fitext_t* tex = FI_GetText(FI_GetToken());
     tex->flags.font_b = false;
     // Set line height to font A.
 #if __JDOOM__
@@ -2785,7 +2769,7 @@ void FIC_FontA(void)
 
 void FIC_FontB(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
+    fitext_t* tex = FI_GetText(FI_GetToken());
 
     tex->flags.font_b = true;
 #if __JDOOM__
@@ -2803,22 +2787,19 @@ void FIC_NoMusic(void)
 
 void FIC_TextScaleX(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
-
+    fitext_t* tex = FI_GetText(FI_GetToken());
     FI_SetValue(&tex->object.scale[0], FI_GetFloat());
 }
 
 void FIC_TextScaleY(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
-
+    fitext_t* tex = FI_GetText(FI_GetToken());
     FI_SetValue(&tex->object.scale[1], FI_GetFloat());
 }
 
 void FIC_TextScale(void)
 {
-    fitext_t           *tex = FI_GetText(FI_GetToken());
-
+    fitext_t* tex = FI_GetText(FI_GetToken());
     FI_SetValue(&tex->object.scale[0], FI_GetFloat());
     FI_SetValue(&tex->object.scale[1], FI_GetFloat());
 }

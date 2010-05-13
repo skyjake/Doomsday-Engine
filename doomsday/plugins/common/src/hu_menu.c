@@ -1776,7 +1776,7 @@ void Hu_MenuDrawer(void)
         offset[VY] = mn->y + MENUCURSOR_OFFSET_Y * scale;
         offset[VY] += (hasFocus - mn->firstItem) * mn->itemHeight + mn->itemHeight / 2;
 
-        DGL_SetPatch(cursorst[whichSkull].lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_SetPatch(cursorst[whichSkull].id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
@@ -2383,16 +2383,16 @@ void M_DrawMainMenu(void)
     int frame = (menuTime / 5) % 7;
 
     DGL_Color4f(1, 1, 1, menuAlpha);
-    GL_DrawPatch_CS(88, 0, m_htic.lump);
-    GL_DrawPatch_CS(37, 80, dpBullWithFire[(frame + 2) % 7].lump);
-    GL_DrawPatch_CS(278, 80, dpBullWithFire[frame].lump);
+    GL_DrawPatch_CS(88, 0, m_htic.id);
+    GL_DrawPatch_CS(37, 80, dpBullWithFire[(frame + 2) % 7].id);
+    GL_DrawPatch_CS(278, 80, dpBullWithFire[frame].id);
 
 #elif __JHERETIC__
     WI_DrawPatch(88, 0, 1, 1, 1, menuAlpha, &m_htic, NULL, false, ALIGN_LEFT);
 
     DGL_Color4f(1, 1, 1, menuAlpha);
-    GL_DrawPatch_CS(40, 10, dpRotatingSkull[17 - frame].lump);
-    GL_DrawPatch_CS(232, 10, dpRotatingSkull[frame].lump);
+    GL_DrawPatch_CS(40, 10, dpRotatingSkull[17 - frame].id);
+    GL_DrawPatch_CS(232, 10, dpRotatingSkull[frame].id);
 #elif __JDOOM__ || __JDOOM64__
     WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, &m_doom, NULL, false, ALIGN_LEFT);
 #endif
@@ -2407,7 +2407,7 @@ void M_DrawNewGameMenu(void)
 #if __JHERETIC__
 static void composeNotDesignedForMessage(const char* str)
 {
-    char*               buf = notDesignedForMessage, *in, tmp[2];
+    char* buf = notDesignedForMessage, *in, tmp[2];
 
     buf[0] = 0;
     tmp[1] = 0;
@@ -2461,7 +2461,7 @@ void M_DrawClassMenu(void)
                     ((menuTime >> 3) & 3), &sprInfo);
 
     DGL_Color4f(1, 1, 1, menuAlpha);
-    GL_DrawPatch_CS(BG_X, BG_Y, dpPlayerClassBG[pClass % 3].lump);
+    GL_DrawPatch_CS(BG_X, BG_Y, dpPlayerClassBG[pClass % 3].id);
 
     // Fighter's colors are a bit different.
     if(pClass == PCLASS_FIGHTER)
@@ -2687,22 +2687,19 @@ void M_DrawSave(void)
  */
 void M_DrawSaveLoadBorder(int x, int y, int width)
 {
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     DGL_Color4f(1, 1, 1, menuAlpha);
-    GL_DrawPatch_CS(x - 8, y - 4, dpFSlot.lump);
+    GL_DrawPatch_CS(x - 8, y - 4, dpFSlot.id);
 #else
     DGL_Color4f(1, 1, 1, menuAlpha);
 
-    DGL_SetPatch(dpLSLeft.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_SetPatch(dpLSLeft.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
     DGL_DrawRect(x, y - 3, dpLSLeft.width, dpLSLeft.height, 1, 1, 1, menuAlpha);
-    DGL_SetPatch(dpLSRight.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-    DGL_DrawRect(x + width - dpLSRight.width, y - 3, dpLSRight.width,
-                 dpLSRight.height, 1, 1, 1, menuAlpha);
+    DGL_SetPatch(dpLSRight.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_DrawRect(x + width - dpLSRight.width, y - 3, dpLSRight.width, dpLSRight.height, 1, 1, 1, menuAlpha);
 
-    DGL_SetPatch(dpLSCntr.lump, DGL_REPEAT, DGL_REPEAT);
-    DGL_DrawRectTiled(x + dpLSLeft.width, y - 3,
-                      width - dpLSLeft.width - dpLSRight.width,
-                      14, 8, 14);
+    DGL_SetPatch(dpLSCntr.id, DGL_REPEAT, DGL_REPEAT);
+    DGL_DrawRectTiled(x + dpLSLeft.width, y - 3, width - dpLSLeft.width - dpLSRight.width, 14, 8, 14);
 #endif
 }
 
@@ -3112,9 +3109,9 @@ void M_DrawHUDMenu(void)
 
     // Draw the page arrows.
     token = &dpInvPageLeft[!menu->firstItem || (menuTime & 8)];
-    GL_DrawPatch_CS(menu->x, menu->y - 22, token->lump);
+    GL_DrawPatch_CS(menu->x, menu->y - 22, token->id);
     token = &dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)];
-    GL_DrawPatch_CS(312 - menu->x, menu->y - 22, token->lump);
+    GL_DrawPatch_CS(312 - menu->x, menu->y - 22, token->id);
 #endif
 
     idx = 0;

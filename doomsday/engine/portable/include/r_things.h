@@ -212,7 +212,7 @@ extern vispsprite_t visPSprites[DDMAXPSPRITES];
 
 material_t*     R_GetMaterialForSprite(int sprite, int frame);
 boolean         R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
-boolean         R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info);
+boolean         R_GetPatchInfo(patchid_t num, patchinfo_t* info);
 float           R_VisualRadius(struct mobj_s* mo);
 float           R_GetBobOffset(struct mobj_s* mo);
 float           R_MovementYaw(float momx, float momy);

@@ -686,9 +686,9 @@ void DGL_SetNoMaterial(void)
     GL_SetNoTexture();
 }
 
-void DGL_SetPatch(lumpnum_t lump, int wrapS, int wrapT)
+void DGL_SetPatch(patchid_t num, int wrapS, int wrapT)
 {
-    GL_BindTexture(GL_PreparePatch(R_GetPatchTex(lump)), glmode[texMagMode]);
+    GL_BindTexture(GL_PreparePatch(R_FindPatchTex(num)), glmode[texMagMode]);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (wrapS == DGL_CLAMP? GL_CLAMP : wrapS == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (wrapT == DGL_CLAMP? GL_CLAMP : wrapT == DGL_CLAMP_TO_EDGE? GL_CLAMP_TO_EDGE : GL_REPEAT));

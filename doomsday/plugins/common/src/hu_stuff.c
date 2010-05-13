@@ -209,7 +209,7 @@ void R_SetFontCharacter(gamefontid_t fontid, byte ch, const char* lumpname)
     DD_SetInteger(DD_MONOCHROME_PATCHES, 2);
     DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, true);
 
-    R_PrecachePatch(font->chars[ch].lumpname, &font->chars[ch].patch);
+    R_PrecachePatch(font->chars[ch].lumpname, &font->chars[ch].pInfo);
 
     DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, false);
     DD_SetInteger(DD_MONOCHROME_PATCHES, 0);
@@ -847,7 +847,7 @@ void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
     float scale, float r, float g, float b, float a, boolean alignRight)
 {
     const char* ch;
-    patchinfo_t* p;
+    patchinfo_t* info;
     float w, h;
     char c;
 
@@ -864,11 +864,11 @@ void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
             if(!c)
                 break;
 
-            if(!gFonts[font].chars[(byte) c].patch.lump)
+            if(!gFonts[font].chars[(byte) c].pInfo.id)
                 continue;
-            p = &gFonts[font].chars[(byte) c].patch;
+            info = &gFonts[font].chars[(byte) c].pInfo;
 
-            x -= p->width * scale;
+            x -= info->width * scale;
         }
     }
 
@@ -889,14 +889,14 @@ void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
         if(!c)
             break;
 
-        if(!gFonts[font].chars[(byte) c].patch.lump)
+        if(!gFonts[font].chars[(byte) c].pInfo.id)
             continue;
-        p = &gFonts[font].chars[(byte) c].patch;
+        info = &gFonts[font].chars[(byte) c].pInfo;
 
-        w = p->width;
-        h = p->height;
+        w = info->width;
+        h = info->height;
 
-        GL_DrawPatch_CS(x, y, p->lump);
+        GL_DrawPatch_CS(x, y, info->id);
 
         x += w;
     }
@@ -1655,7 +1655,7 @@ void WI_DrawParamText(int x, int y, const char* inString, gamefontid_t defFont,
                 {
                     string += 5;
                     cx = x;
-                    cy += scaleY * gFonts[font].chars[0].patch.height;
+                    cy += scaleY * gFonts[font].chars[0].pInfo.height;
                 }
                 else if(!strnicmp(string, "r", 1))
                 {
@@ -1814,7 +1814,7 @@ int M_StringWidth(const char* string, gamefontid_t font)
             skip = true;
 
         if(skip == false && string[i] != '\n')
-            w += gFonts[font].chars[c].patch.width;
+            w += gFonts[font].chars[c].pInfo.width;
 
         if(string[i] == '}')
             skip = false;
@@ -1836,12 +1836,12 @@ int M_StringWidth(const char* string, gamefontid_t font)
 
 int M_CharWidth(unsigned char ch, gamefontid_t font)
 {
-    return gFonts[font].chars[ch].patch.width;
+    return gFonts[font].chars[ch].pInfo.width;
 }
 
 int M_CharHeight(unsigned char ch, gamefontid_t font)
 {
-    return gFonts[font].chars[ch].patch.height;
+    return gFonts[font].chars[ch].pInfo.height;
 }
 
 int M_StringHeight(const char* string, gamefontid_t fontId)
@@ -1863,13 +1863,13 @@ int M_StringHeight(const char* string, gamefontid_t fontId)
     {
         if(string[i] == '\n')
         {
-            h += currentLineHeight == 0? font->chars['A'].patch.height : currentLineHeight;
+            h += currentLineHeight == 0? font->chars['A'].pInfo.height : currentLineHeight;
             currentLineHeight = 0;
             continue;
         }
 
-        if(font->chars[string[i] % 256].patch.height > currentLineHeight)
-            currentLineHeight = font->chars[string[i] % 256].patch.height;
+        if(font->chars[string[i] % 256].pInfo.height > currentLineHeight)
+            currentLineHeight = font->chars[string[i] % 256].pInfo.height;
     }
     h += currentLineHeight;
 
@@ -2090,48 +2090,43 @@ void M_LetterFlash(int x, int y, int w, int h, int bright, float r, float g,
 
 void M_DrawChar(int x, int y, unsigned char ch, gamefontid_t font)
 {
-    lumpnum_t           lump;
-
-    lump = gFonts[font].chars[ch].patch.lump;
-
-    GL_DrawPatch_CS(x, y, lump);
+    assert(font >= GF_FIRST && font < NUM_GAME_FONTS);
+    GL_DrawPatch_CS(x, y, gFonts[font].chars[ch].pInfo.id);
 }
 
 void HUlib_drawTextLine2(int x, int y, const char* string, size_t len,
                          gamefontid_t fontid, boolean drawCursor)
 {
-    const gamefont_t*   font = &gFonts[fontid];
-    size_t              i;
+    const gamefont_t* font = &gFonts[fontid];
+    size_t i;
 
     DGL_Color3fv(cfg.hudColor);
 
     for(i = 0; i < len; ++i)
     {
-        unsigned char       c = string[i];
-        int                 w;
-        const patchinfo_t*     p = &font->chars[c].patch;
+        unsigned char c = string[i];
+        const patchinfo_t* info = &font->chars[c].pInfo;
+        int w;
 
-        w = p->width;
+        w = info->width;
         if(x + w > SCREENWIDTH)
             break;
 
-        GL_DrawPatch_CS(x, y, p->lump);
+        GL_DrawPatch_CS(x, y, info->id);
         x += w;
     }
 
     // Draw the cursor if requested.
-    if(drawCursor &&
-       x + font->chars['_'].patch.width <= SCREENWIDTH)
-        GL_DrawPatch_CS(x, y, font->chars['_'].patch.lump);
+    if(drawCursor && x + font->chars['_'].pInfo.width <= SCREENWIDTH)
+        GL_DrawPatch_CS(x, y, font->chars['_'].pInfo.id);
 }
 
 #if __JHERETIC__
 void HU_DrawBNumber(signed int val, int x, int y, float red,
                     float green, float blue, float alpha)
 {
-    const patchinfo_t*     patch;
-    int                 xpos;
-    int                 oldval;
+    const patchinfo_t* pInfo;
+    int xpos, oldval;
 
     oldval = val;
     xpos = x;
@@ -2142,12 +2137,11 @@ void HU_DrawBNumber(signed int val, int x, int y, float red,
 
     if(val > 99)
     {
-        patch = &gFonts[GF_FONTB].chars['0' + val / 100].patch;
+        pInfo = &gFonts[GF_FONTB].chars['0' + val / 100].pInfo;
 
-        GL_DrawPatchLitAlpha(xpos + 8 - patch->width / 2, y +2, 0, alpha * .4f,
-                             patch->lump);
+        GL_DrawPatchLitAlpha(xpos + 8 - pInfo->width / 2, y +2, 0, alpha * .4f, pInfo->id);
         DGL_Color4f(red, green, blue, alpha);
-        GL_DrawPatch_CS(xpos + 6 - patch->width / 2, y, patch->lump);
+        GL_DrawPatch_CS(xpos + 6 - pInfo->width / 2, y, pInfo->id);
         DGL_Color4f(1, 1, 1, 1);
     }
 
@@ -2155,23 +2149,21 @@ void HU_DrawBNumber(signed int val, int x, int y, float red,
     xpos += 12;
     if(val > 9 || oldval > 99)
     {
-        patch = &gFonts[GF_FONTB].chars['0' + val / 10].patch;
+        pInfo = &gFonts[GF_FONTB].chars['0' + val / 10].pInfo;
 
-        GL_DrawPatchLitAlpha(xpos + 8 - patch->width / 2, y +2, 0, alpha * .4f,
-                             patch->lump);
+        GL_DrawPatchLitAlpha(xpos + 8 - pInfo->width / 2, y +2, 0, alpha * .4f, pInfo->id);
         DGL_Color4f(red, green, blue, alpha);
-        GL_DrawPatch_CS(xpos + 6 - patch->width / 2, y, patch->lump);
+        GL_DrawPatch_CS(xpos + 6 - pInfo->width / 2, y, pInfo->id);
         DGL_Color4f(1, 1, 1, 1);
     }
 
     val = val % 10;
     xpos += 12;
-    patch = &gFonts[GF_FONTB].chars['0' + val].patch;
+    pInfo = &gFonts[GF_FONTB].chars['0' + val].pInfo;
 
-    GL_DrawPatchLitAlpha(xpos + 8 - patch->width / 2, y +2, 0, alpha * .4f,
-                         patch->lump);
+    GL_DrawPatchLitAlpha(xpos + 8 - pInfo->width / 2, y +2, 0, alpha * .4f, pInfo->id);
     DGL_Color4f(red, green, blue, alpha);
-    GL_DrawPatch_CS(xpos + 6 - patch->width / 2, y, patch->lump);
+    GL_DrawPatch_CS(xpos + 6 - pInfo->width / 2, y, pInfo->id);
     DGL_Color4f(1, 1, 1, 1);
 }
 #endif
@@ -2179,30 +2171,26 @@ void HU_DrawBNumber(signed int val, int x, int y, float red,
 #if __JHERETIC__
 void IN_DrawShadowChar(int x, int y, unsigned char ch, gamefontid_t font)
 {
-    GL_DrawPatchLitAlpha(x+2, y+2, 0, .4f,
-                         gFonts[font].chars[ch].patch.lump);
+    GL_DrawPatchLitAlpha(x+2, y+2, 0, .4f, gFonts[font].chars[ch].pInfo.id);
     DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     M_DrawChar(x, y, ch, font);
 }
 #elif __JHEXEN__
-void GL_DrawShadowedPatch2(float x, float y, float r, float g, float b,
-                           float a, lumpnum_t lump)
+void GL_DrawShadowedPatch2(float x, float y, float r, float g, float b, float a,
+    patchid_t id)
 {
-    GL_DrawPatchLitAlpha(x + 2, y + 2, 0, a * .4f, lump);
+    GL_DrawPatchLitAlpha(x + 2, y + 2, 0, a * .4f, id);
     DGL_Color4f(r, g, b, a);
-    GL_DrawPatch_CS(x, y, lump);
+    GL_DrawPatch_CS(x, y, id);
     DGL_Color4f(1, 1, 1, 1);
 }
 #endif
 
 #if __JHERETIC__
-void IN_DrawNumber(int val, int x, int y, int digits, float r, float g,
-                   float b, float a)
+void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b, float a)
 {
-    int                 xpos;
-    int                 oldval;
-    int                 realdigits;
-    boolean             neg;
+    int xpos, oldval, realdigits;
+    boolean neg;
 
     oldval = val;
     xpos = x;
@@ -2251,18 +2239,18 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g,
 
     if(digits == 4)
     {
-        GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 1000].patch.width / 2 - 12, y + 2, 0, .4f, gFonts[GF_FONTB].chars['0' + val / 1000].patch.lump);
+        GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 1000].pInfo.width / 2 - 12, y + 2, 0, .4f, gFonts[GF_FONTB].chars['0' + val / 1000].pInfo.id);
         DGL_Color4f(r, g, b, a);
-        GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars['0' + val / 1000].patch.width / 2 - 12, y, gFonts[GF_FONTB].chars['0' + val / 1000].patch.lump);
+        GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars['0' + val / 1000].pInfo.width / 2 - 12, y, gFonts[GF_FONTB].chars['0' + val / 1000].pInfo.id);
     }
 
     if(digits > 2)
     {
         if(realdigits > 2)
         {
-            GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 100].patch.width / 2, y+2, 0, .4f, gFonts[GF_FONTB].chars['0' + val / 100].patch.lump);
+            GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 100].pInfo.width / 2, y+2, 0, .4f, gFonts[GF_FONTB].chars['0' + val / 100].pInfo.id);
             DGL_Color4f(r, g, b, a);
-            GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars['0' + val / 100].patch.width / 2, y, gFonts[GF_FONTB].chars['0' + val / 100].patch.lump);
+            GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars['0' + val / 100].pInfo.width / 2, y, gFonts[GF_FONTB].chars['0' + val / 100].pInfo.id);
         }
         xpos += 12;
     }
@@ -2272,28 +2260,28 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g,
     {
         if(val > 9)
         {
-            GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 10].patch.width / 2, y+2, 0, .4f, gFonts[GF_FONTB].chars['0' + val / 10].patch.lump);
+            GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 10].pInfo.width / 2, y+2, 0, .4f, gFonts[GF_FONTB].chars['0' + val / 10].pInfo.id);
             DGL_Color4f(r, g, b, a);
-            GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars['0' + val / 10].patch.width / 2, y, gFonts[GF_FONTB].chars['0' + val / 10].patch.lump);
+            GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars['0' + val / 10].pInfo.width / 2, y, gFonts[GF_FONTB].chars['0' + val / 10].pInfo.id);
         }
         else if(digits == 2 || oldval > 99)
         {
-            GL_DrawPatchLitAlpha(xpos+2, y+2, 0, .4f, gFonts[GF_FONTB].chars['0'].patch.lump);
+            GL_DrawPatchLitAlpha(xpos+2, y+2, 0, .4f, gFonts[GF_FONTB].chars['0'].pInfo.id);
             DGL_Color4f(r, g, b, a);
-            GL_DrawPatch_CS(xpos, y, gFonts[GF_FONTB].chars['0'].patch.lump);
+            GL_DrawPatch_CS(xpos, y, gFonts[GF_FONTB].chars['0'].pInfo.id);
         }
         xpos += 12;
     }
 
     val = val % 10;
-    GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars['0' + val].patch.width / 2, y+2, 0, .4f, gFonts[GF_FONTB].chars['0' + val].patch.lump);
+    GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars['0' + val].pInfo.width / 2, y+2, 0, .4f, gFonts[GF_FONTB].chars['0' + val].pInfo.id);
     DGL_Color4f(r, g, b, a);
-    GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars['0' + val].patch.width / 2, y, gFonts[GF_FONTB].chars['0' + val].patch.lump);
+    GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars['0' + val].pInfo.width / 2, y, gFonts[GF_FONTB].chars['0' + val].pInfo.id);
     if(neg)
     {
-        GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars['-'].patch.width / 2 - 12 * (realdigits), y+2, 0, .4f, gFonts[GF_FONTB].chars['-'].patch.lump);
+        GL_DrawPatchLitAlpha(xpos + 8 - gFonts[GF_FONTB].chars['-'].pInfo.width / 2 - 12 * (realdigits), y+2, 0, .4f, gFonts[GF_FONTB].chars['-'].pInfo.id);
         DGL_Color4f(r, g, b, a);
-        GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars['-'].patch.width / 2 - 12 * (realdigits), y, gFonts[GF_FONTB].chars['-'].patch.lump);
+        GL_DrawPatch_CS(xpos + 6 - gFonts[GF_FONTB].chars['-'].pInfo.width / 2 - 12 * (realdigits), y, gFonts[GF_FONTB].chars['-'].pInfo.id);
     }
 }
 #endif
@@ -2305,9 +2293,9 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g,
 void DrBNumber(int val, int x, int y, float red, float green, float blue,
                float alpha)
 {
-    patchinfo_t*           patch;
-    int                 xpos;
-    int                 oldval;
+    const patchinfo_t* pInfo;
+    int xpos;
+    int oldval;
 
     // Limit to three digits.
     if(val > 999)
@@ -2324,25 +2312,22 @@ void DrBNumber(int val, int x, int y, float red, float green, float blue,
 
     if(val > 99)
     {
-        patch = &gFonts[GF_FONTB].chars['0' + val / 100].patch;
-        GL_DrawShadowedPatch2(xpos + 6 - patch->width / 2, y, red, green,
-                              blue, alpha, patch->lump);
+        pInfo = &gFonts[GF_FONTB].chars['0' + val / 100].pInfo;
+        GL_DrawShadowedPatch2(xpos + 6 - pInfo->width / 2, y, red, green, blue, alpha, pInfo->id);
     }
 
     val = val % 100;
     xpos += 12;
     if(val > 9 || oldval > 99)
     {
-        patch = &gFonts[GF_FONTB].chars['0' + val / 10].patch;
-        GL_DrawShadowedPatch2(xpos + 6 - patch->width / 2, y, red, green,
-                              blue, alpha, patch->lump);
+        pInfo = &gFonts[GF_FONTB].chars['0' + val / 10].pInfo;
+        GL_DrawShadowedPatch2(xpos + 6 - pInfo->width / 2, y, red, green, blue, alpha, pInfo->id);
     }
 
     val = val % 10;
     xpos += 12;
-    patch = &gFonts[GF_FONTB].chars['0' + val].patch;
-    GL_DrawShadowedPatch2(xpos + 6 - patch->width / 2, y, red, green, blue,
-                          alpha, patch->lump);
+    pInfo = &gFonts[GF_FONTB].chars['0' + val].pInfo;
+    GL_DrawShadowedPatch2(xpos + 6 - pInfo->width / 2, y, red, green, blue, alpha, pInfo->id);
 }
 #endif
 
@@ -2443,16 +2428,16 @@ void M_WriteText3(int x, int y, const char* string, gamefontid_t font,
                 continue;
             }
 
-            w = gFonts[font].chars[c].patch.width;
-            h = gFonts[font].chars[c].patch.height;
+            w = gFonts[font].chars[c].pInfo.width;
+            h = gFonts[font].chars[c].pInfo.height;
 
-            if(gFonts[font].chars[c].patch.lump && c != ' ')
+            if(gFonts[font].chars[c].pInfo.id && c != ' ')
             {
                 // A character we have a patch for that is not white space.
                 if(pass)
                 {
                     // The character itself.
-                    GL_DrawPatch_CS(cx, cy + yoff, gFonts[font].chars[c].patch.lump);
+                    GL_DrawPatch_CS(cx, cy + yoff, gFonts[font].chars[c].pInfo.id);
 
                     // Do something flashy!
                     if(flash > 0)
@@ -2540,7 +2525,7 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
 
     if(altstring && altstring[0] && !builtin)
     {   // We have already determined a string to replace this with.
-        if(W_IsFromIWAD(patch->lump))
+        if(W_IsFromIWAD((lumpnum_t)patch->id))
         {
             WI_DrawParamText(x, y, altstring, GF_FONTB, r, g, b, a, false, true, true, halign);
             return;
@@ -2549,11 +2534,11 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
     else if(cfg.usePatchReplacement)
     {   // We might be able to replace the patch with a string
         strcpy(def, "Patch Replacement|");
-        strcat(def, W_LumpName(patch->lump));
+        strcat(def, W_LumpName((lumpnum_t)patch->id));
 
         patchString = Def_Get(DD_DEF_VALUE, def, &string);
 
-        if(W_IsFromIWAD(patch->lump))
+        if(W_IsFromIWAD((lumpnum_t)patch->id))
         {
             // A user replacement?
             if(patchString)
@@ -2578,7 +2563,7 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
         posx -= patch->width;
 
     DGL_Color4f(1, 1, 1, a);
-    GL_DrawPatch_CS(posx, y, patch->lump);
+    GL_DrawPatch_CS(posx, y, patch->id);
 }
 
 /**
@@ -2635,37 +2620,37 @@ void M_DrawBackgroundBox(float x, float y, float w, float h, float red,
     if(border)
     {
         // Top
-        DGL_SetPatch(t->lump, DGL_REPEAT, DGL_REPEAT);
+        DGL_SetPatch(t->id, DGL_REPEAT, DGL_REPEAT);
         DGL_DrawRectTiled(x, y - t->height, w, t->height,
                           up * t->width, up * t->height);
         // Bottom
-        DGL_SetPatch(b->lump, DGL_REPEAT, DGL_REPEAT);
+        DGL_SetPatch(b->id, DGL_REPEAT, DGL_REPEAT);
         DGL_DrawRectTiled(x, y + h, w, b->height, up * b->width,
                           up * b->height);
         // Left
-        DGL_SetPatch(l->lump, DGL_REPEAT, DGL_REPEAT);
+        DGL_SetPatch(l->id, DGL_REPEAT, DGL_REPEAT);
         DGL_DrawRectTiled(x - l->width, y, l->width, h,
                           up * l->width, up * l->height);
         // Right
-        DGL_SetPatch(r->lump, DGL_REPEAT, DGL_REPEAT);
+        DGL_SetPatch(r->id, DGL_REPEAT, DGL_REPEAT);
         DGL_DrawRectTiled(x + w, y, r->width, h, up * r->width,
                           up * r->height);
 
         // Top Left
-        DGL_SetPatch(tl->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_SetPatch(tl->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
         DGL_DrawRect(x - tl->width, y - tl->height,
                      tl->width, tl->height,
                      red, green, blue, alpha);
         // Top Right
-        DGL_SetPatch(tr->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_SetPatch(tr->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
         DGL_DrawRect(x + w, y - tr->height, tr->width, tr->height,
                      red, green, blue, alpha);
         // Bottom Right
-        DGL_SetPatch(br->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_SetPatch(br->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
         DGL_DrawRect(x + w, y + h, br->width, br->height,
                      red, green, blue, alpha);
         // Bottom Left
-        DGL_SetPatch(bl->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_SetPatch(bl->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
         DGL_DrawRect(x - bl->width, y + h, bl->width, bl->height,
                      red, green, blue, alpha);
     }
@@ -2681,18 +2666,18 @@ void M_DrawSlider(int x, int y, int width, int height, int slot, float alpha)
 #endif
 {
 #if __JHERETIC__ || __JHEXEN__
-    float               unit = (width * 8 + 2) / width;
+    float unit = (width * 8 + 2) / width;
 
     DGL_Color4f( 1, 1, 1, alpha);
 
-    GL_DrawPatch_CS(x - 32, y, dpSliderLeft.lump);
-    GL_DrawPatch_CS(x + width * 8, y, dpSliderRight.lump);
+    GL_DrawPatch_CS(x - 32, y, dpSliderLeft.id);
+    GL_DrawPatch_CS(x + width * 8, y, dpSliderRight.id);
 
-    DGL_SetPatch(dpSliderMiddle.lump, DGL_REPEAT, DGL_REPEAT);
+    DGL_SetPatch(dpSliderMiddle.id, DGL_REPEAT, DGL_REPEAT);
     DGL_DrawRectTiled(x - 1, y + 1, width * 8 + 2, 13, 8, 13);
 
     DGL_Color4f( 1, 1, 1, alpha);
-    GL_DrawPatch_CS(x + 4 + slot * unit, y + 7, dpSliderHandle.lump);
+    GL_DrawPatch_CS(x + 4 + slot * unit, y + 7, dpSliderHandle.id);
 #else
     float xx, scale = height / 13.0f;
 
@@ -2707,16 +2692,16 @@ void M_DrawSlider(int x, int y, int width, int height, int slot, float alpha)
     }
 
     xx = x;
-    DGL_SetPatch(dpSliderLeft.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_SetPatch(dpSliderLeft.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
     DGL_DrawRect(xx, y, 6 * scale, height, 1, 1, 1, alpha);
     xx += 6 * scale;
-    DGL_SetPatch(dpSliderMiddle.lump, DGL_REPEAT, DGL_CLAMP_TO_EDGE);
+    DGL_SetPatch(dpSliderMiddle.id, DGL_REPEAT, DGL_CLAMP_TO_EDGE);
     DGL_DrawRectTiled(xx, y, 8 * width * scale, height, 8 * scale, height);
     xx += 8 * width * scale;
-    DGL_SetPatch(dpSliderRight.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_SetPatch(dpSliderRight.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
     DGL_DrawRect(xx, y, 6 * scale, height, 1, 1, 1, alpha);
 
-    DGL_SetPatch(dpSliderHandle.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_SetPatch(dpSliderHandle.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
     DGL_DrawRect(x + (6 + slot * 8) * scale, y, 6 * scale, height, 1, 1, 1, alpha);
 #endif
 }

@@ -973,8 +973,7 @@ typedef enum material_namespace_e {
 #define AGF_PRECACHE        0x4000 // Group is just for precaching.
 
 typedef struct {
-    lumpnum_t       lump; // Lump number.
-    lumpnum_t       realLump; // Real lump number.
+    patchid_t       id;
     int             flip;
     int             offset;
     int             topOffset;

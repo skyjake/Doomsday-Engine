@@ -418,7 +418,7 @@ extern          "C" {
     void            R_SetBorderGfx(const char* lumps[9]);
     boolean         R_GetSpriteInfo(int sprite, int frame,
                                     spriteinfo_t* sprinfo);
-    boolean         R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info);
+    boolean         R_GetPatchInfo(patchid_t num, patchinfo_t* info);
     int             R_CreateAnimGroup(int flags);
     void            R_AddToAnimGroup(int groupNum, materialnum_t num,
                                      int tics, int randomTics);
@@ -454,18 +454,16 @@ extern          "C" {
     void            GL_SetFilterColor(float r, float g, float b, float a);
 
     // Graphics: 2D drawing.
-    void            GL_DrawPatch(int x, int y, lumpnum_t lump);
-    void            GL_DrawPatch_CS(int x, int y, lumpnum_t lump);
+    void            GL_DrawPatch(int x, int y, patchid_t num);
+    void            GL_DrawPatch_CS(int x, int y, patchid_t num);
     void            GL_DrawPatchLitAlpha(int x, int y, float light,
-                                         float alpha, lumpnum_t lump);
-    void            GL_DrawFuzzPatch(int x, int y, lumpnum_t lump);
-    void            GL_DrawAltFuzzPatch(int x, int y, lumpnum_t lump);
-    void            GL_DrawShadowedPatch(int x, int y, lumpnum_t lump);
-    void            GL_DrawRawScreen(lumpnum_t lump, float offx,
-                                     float offy);
-    void            GL_DrawRawScreen_CS(lumpnum_t lump, float offx,
-                                        float offy, float scalex,
-                                        float scaley);
+                                         float alpha, patchid_t num);
+    void            GL_DrawFuzzPatch(int x, int y, patchid_t num);
+    void            GL_DrawAltFuzzPatch(int x, int y, patchid_t num);
+    void            GL_DrawShadowedPatch(int x, int y, patchid_t num);
+
+    void            GL_DrawRawScreen(lumpnum_t lump, float offx, float offy);
+    void            GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy, float scalex, float scaley);
 
     // Audio.
     void            S_MapChange(void);

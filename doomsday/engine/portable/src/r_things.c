@@ -729,8 +729,10 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     return true;
 }
 
-boolean R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info)
+boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
 {
+    lumpnum_t lump = (lumpnum_t) id;
+
     if(!info)
         return false;
 
@@ -739,7 +741,7 @@ boolean R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info)
     if(lump >= 0 && lump < numLumps)
     {
         const lumppatch_t* patch = (const lumppatch_t*) W_CacheLumpNum(lump, PU_CACHE);
-        info->lump = info->realLump = lump;
+        info->id = id;
         info->width = SHORT(patch->width);
         info->height = SHORT(patch->height);
         info->topOffset = -SHORT(patch->topOffset);
@@ -748,9 +750,9 @@ boolean R_GetPatchInfo(lumpnum_t lump, patchinfo_t* info)
     }
 
     // Safety precaution.
-    info->lump = -1;
+    info->id = -1;
 
-    VERBOSE(Con_Message("R_GetPatchInfo: Warning, invalid lumpnum %i.\n", lump));
+    VERBOSE(Con_Message("R_GetPatchInfo: Warning, unknown Patch %i.\n", id));
     return false;
 }
 

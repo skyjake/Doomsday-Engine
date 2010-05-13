@@ -323,7 +323,7 @@ void drawChainWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    DGL_SetPatch(chain.lump, DGL_REPEAT, DGL_CLAMP);
+    DGL_SetPatch(chain.id, DGL_REPEAT, DGL_CLAMP);
 
     DGL_Color4f(1, 1, 1, iconAlpha);
 
@@ -368,7 +368,7 @@ void drawChainWidget(int player, float textAlpha, float iconAlpha,
     }
 
     // Draw the life gem.
-    GL_DrawPatchLitAlpha(x + gemXOffset, chainY, 1, iconAlpha, lifeGems[gemNum].lump);
+    GL_DrawPatchLitAlpha(x + gemXOffset, chainY, 1, iconAlpha, lifeGems[gemNum].id);
 
     shadeChain(ORIGINX, ORIGINY-ST_HEIGHT, iconAlpha/3);
 
@@ -417,28 +417,28 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
     if(!(iconAlpha < 1))
     {   // We can just render the full thing as normal.
         // Top bits.
-        GL_DrawPatch(ORIGINX, ORIGINY-10, statusbarTopLeft.lump);
-        GL_DrawPatch(ORIGINX+290, ORIGINY-10, statusbarTopRight.lump);
+        GL_DrawPatch(ORIGINX, ORIGINY-10, statusbarTopLeft.id);
+        GL_DrawPatch(ORIGINX+290, ORIGINY-10, statusbarTopRight.id);
 
         // Faces.
-        GL_DrawPatch(ORIGINX, ORIGINY, statusbar.lump);
+        GL_DrawPatch(ORIGINX, ORIGINY, statusbar.id);
 
         if(P_GetPlayerCheats(plr) & CF_GODMODE)
         {
-            GL_DrawPatch(ORIGINX+16, ORIGINY+9, godLeft.lump);
-            GL_DrawPatch(ORIGINX+287, ORIGINY+9, godRight.lump);
+            GL_DrawPatch(ORIGINX+16, ORIGINY+9, godLeft.id);
+            GL_DrawPatch(ORIGINX+287, ORIGINY+9, godRight.id);
         }
 
         if(!Hu_InventoryIsOpen(player))
         {
             if(deathmatch)
-                GL_DrawPatch(ORIGINX+34, ORIGINY+2, statBar.lump);
+                GL_DrawPatch(ORIGINX+34, ORIGINY+2, statBar.id);
             else
-                GL_DrawPatch(ORIGINX+34, ORIGINY+2, lifeBar.lump);
+                GL_DrawPatch(ORIGINX+34, ORIGINY+2, lifeBar.id);
         }
         else
         {
-            GL_DrawPatch(ORIGINX+34, ORIGINY+2, invBar.lump);
+            GL_DrawPatch(ORIGINX+34, ORIGINY+2, invBar.id);
         }
     }
     else
@@ -446,10 +446,10 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
         DGL_Color4f(1, 1, 1, iconAlpha);
 
         // Top bits.
-        GL_DrawPatch_CS(ORIGINX, ORIGINY-10, statusbarTopLeft.lump);
-        GL_DrawPatch_CS(ORIGINX+290, ORIGINY-10, statusbarTopRight.lump);
+        GL_DrawPatch_CS(ORIGINX, ORIGINY-10, statusbarTopLeft.id);
+        GL_DrawPatch_CS(ORIGINX+290, ORIGINY-10, statusbarTopRight.id);
 
-        DGL_SetPatch(statusbar.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_SetPatch(statusbar.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
         // Top border.
         DGL_DrawCutRectTiled(ORIGINX+34, ORIGINY, 248, 2, 320, 42, 34, 0, ORIGINX, ORIGINY, 0, 0);
@@ -464,8 +464,8 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
             DGL_DrawCutRectTiled(ORIGINX, ORIGINY, 34, 42, 320, 42, 0, 0, ORIGINX+16, ORIGINY+9, 16, 8);
             DGL_DrawCutRectTiled(ORIGINX+282, ORIGINY, 38, 42, 320, 42, 282, 0, ORIGINX+287, ORIGINY+9, 16, 8);
 
-            GL_DrawPatch_CS(ORIGINX+16, ORIGINY+9, godLeft.lump);
-            GL_DrawPatch_CS(ORIGINX+287, ORIGINY+9, godRight.lump);
+            GL_DrawPatch_CS(ORIGINX+16, ORIGINY+9, godLeft.id);
+            GL_DrawPatch_CS(ORIGINX+287, ORIGINY+9, godRight.id);
         }
         else
         {
@@ -476,13 +476,13 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
         if(!Hu_InventoryIsOpen(player))
         {
             if(deathmatch)
-                GL_DrawPatch_CS(ORIGINX+34, ORIGINY+2, statBar.lump);
+                GL_DrawPatch_CS(ORIGINX+34, ORIGINY+2, statBar.id);
             else
-                GL_DrawPatch_CS(ORIGINX+34, ORIGINY+2, lifeBar.lump);
+                GL_DrawPatch_CS(ORIGINX+34, ORIGINY+2, lifeBar.id);
         }
         else
         {
-            GL_DrawPatch_CS(ORIGINX+34, ORIGINY+2, invBar.lump);
+            GL_DrawPatch_CS(ORIGINX+34, ORIGINY+2, invBar.id);
         }
     }
 
@@ -898,13 +898,13 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
         
         if(hud->currentInvItemFlash > 0)
         {
-            patch = dpInvItemFlash[hud->currentInvItemFlash % 5].lump;
+            patch = dpInvItemFlash[hud->currentInvItemFlash % 5].id;
             x = ORIGINX+ST_INVITEMX + 2;
             y = ORIGINY+ST_INVITEMY + 1;
         }
         else
         {
-            patch = P_GetInvItem(readyItem-1)->patchLump;
+            patch = P_GetInvItem(readyItem-1)->patchId;
             x = ORIGINX+ST_INVITEMX;
             y = ORIGINY+ST_INVITEMY;
         }
@@ -961,30 +961,30 @@ static void drawINumber(signed int val, int x, int y, float r, float g, float b,
     {
         if(val < -9)
         {
-            GL_DrawPatch_CS(x + 1, y + 1, lame.lump);
+            GL_DrawPatch_CS(x + 1, y + 1, lame.id);
         }
         else
         {
             val = -val;
-            GL_DrawPatch_CS(x + 18, y, iNumbers[val].lump);
-            GL_DrawPatch_CS(x + 9, y, negative.lump);
+            GL_DrawPatch_CS(x + 18, y, iNumbers[val].id);
+            GL_DrawPatch_CS(x + 9, y, negative.id);
         }
         return;
     }
 
     if(val > 99)
     {
-        GL_DrawPatch_CS(x, y, iNumbers[val / 100].lump);
+        GL_DrawPatch_CS(x, y, iNumbers[val / 100].id);
     }
 
     val = val % 100;
     if(val > 9 || oldval > 99)
     {
-        GL_DrawPatch_CS(x + 9, y, iNumbers[val / 10].lump);
+        GL_DrawPatch_CS(x + 9, y, iNumbers[val / 10].id);
     }
 
     val = val % 10;
-    GL_DrawPatch_CS(x + 18, y, iNumbers[val].lump);
+    GL_DrawPatch_CS(x + 18, y, iNumbers[val].id);
 }
 
 /**
@@ -1077,7 +1077,7 @@ void drawFlightWidget(int player, float textAlpha, float iconAlpha,
                 hud->hitCenterFrame = true;
             }
         }
-        drawPatch(spinFly[frame].lump, 16, 14, iconAlpha, true);
+        drawPatch(spinFly[frame].id, 16, 14, iconAlpha, true);
     }
     /// \kludge calculate dimensions properly!
     *drawnWidth = 32;
@@ -1105,7 +1105,7 @@ void drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha,
         float alpha = iconAlpha;
         if(cfg.tomeCounter && plr->powers[PT_WEAPONLEVEL2] < 35)
             alpha *= plr->powers[PT_WEAPONLEVEL2] / 35.0f;
-        drawPatch(spinBook[frame].lump, -13, 13, alpha, true);
+        drawPatch(spinBook[frame].id, -13, 13, alpha, true);
         /// \kludge calculate dimensions properly!
         *drawnWidth += 26;
         *drawnHeight += 26;
@@ -1118,9 +1118,9 @@ void drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha,
 
         int val = 1 + plr->powers[PT_WEAPONLEVEL2] / 35, w, h;
         if(val > 9)
-            drawPatch(dpSmallNumbers[(val / 10) % 10].lump, -12+3, 13+13, textAlpha, true);
+            drawPatch(dpSmallNumbers[(val / 10) % 10].id, -12+3, 13+13, textAlpha, true);
         val = val % 10;
-        drawPatch(dpSmallNumbers[val].lump, -12+7, 13+13, textAlpha, true);
+        drawPatch(dpSmallNumbers[val].id, -12+7, 13+13, textAlpha, true);
 
         /// \kludge calculate dimensions properly!
         w = M_NumDigits(val) * dpSmallNumbers[0].width;
@@ -1210,7 +1210,7 @@ void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
         if(!weaponInfo[plr->readyWeapon][plr->class].mode[lvl].ammoType[ammoType])
             continue;
         dp = &ammoIcons[plr->readyWeapon - 1];
-        drawPatch(dp->lump, 0, 0, iconAlpha, false);
+        drawPatch(dp->id, 0, 0, iconAlpha, false);
         drawINumber(plr->ammo[ammoType].owned, dp->width+1, -2, 1, 1, 1, textAlpha);
         /// \kludge calculate the visual dimensions properly!
         *drawnWidth += dp->width + 2 + (iNumbers[0].width+1) * 3 - 1;
@@ -1277,7 +1277,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
 
     if(plr->keys[KT_YELLOW])
     {
-        drawPatch(keys[0].lump, x, -keys[0].height, iconAlpha, false);
+        drawPatch(keys[0].id, x, -keys[0].height, iconAlpha, false);
         x += keys[0].width + 1;
         *drawnWidth += keys[0].width;
         if(keys[0].height > *drawnHeight)
@@ -1287,7 +1287,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
 
     if(plr->keys[KT_GREEN])
     {
-        drawPatch(keys[1].lump, x, -keys[1].height, iconAlpha, false);
+        drawPatch(keys[1].id, x, -keys[1].height, iconAlpha, false);
         x += keys[1].width + 1;
         *drawnWidth += keys[1].width;
         if(keys[1].height > *drawnHeight)
@@ -1297,7 +1297,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
 
     if(plr->keys[KT_BLUE])
     {
-        drawPatch(keys[2].lump, x, -keys[2].height, iconAlpha, false);
+        drawPatch(keys[2].id, x, -keys[2].height, iconAlpha, false);
         x += keys[2].width;
         *drawnWidth += keys[1].width;
         if(keys[2].height > *drawnHeight)
@@ -1345,8 +1345,8 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
 
     if(hud->currentInvItemFlash > 0)
     {
-        drawPatch(dpInvItemBox.lump, -dpInvItemBox.width, -dpInvItemBox.height, iconAlpha / 2, false);
-        drawPatch(dpInvItemFlash[hud->currentInvItemFlash % 5].lump, -dpInvItemBox.width, -dpInvItemBox.height + 1, iconAlpha, true);
+        drawPatch(dpInvItemBox.id, -dpInvItemBox.width, -dpInvItemBox.height, iconAlpha / 2, false);
+        drawPatch(dpInvItemFlash[hud->currentInvItemFlash % 5].id, -dpInvItemBox.width, -dpInvItemBox.height + 1, iconAlpha, true);
     }
     else
     {
@@ -1354,10 +1354,10 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
 
         if(readyItem != IIT_NONE)
         {
-            lumpnum_t patch = P_GetInvItem(readyItem-1)->patchLump;
+            patchid_t patch = P_GetInvItem(readyItem-1)->patchId;
             uint count;
 
-            drawPatch(dpInvItemBox.lump, -dpInvItemBox.width, -dpInvItemBox.height, iconAlpha / 2, false);
+            drawPatch(dpInvItemBox.id, -dpInvItemBox.width, -dpInvItemBox.height, iconAlpha / 2, false);
             drawPatch(patch, -dpInvItemBox.width, -dpInvItemBox.height, iconAlpha, true);
             if((count = P_InventoryCount(player, readyItem)) > 1)
                 Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, -1, -7, textAlpha);

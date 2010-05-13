@@ -932,11 +932,11 @@ static patchtex_t* getPatchTex(lumpnum_t lump)
 /**
  * Returns a patchtex_t* for the given lump, if one already exists.
  */
-patchtex_t* R_FindPatchTex(lumpnum_t lump)
+patchtex_t* R_FindPatchTex(patchid_t num)
 {
-    patchtex_t* patchTex = getPatchTex(lump);
+    patchtex_t* patchTex = getPatchTex((lumpnum_t)num);
     if(!patchTex)
-        Con_Error("R_FindPatchText: Unknown patch lump %i.", lump);
+        Con_Error("R_FindPatchText: Unknown patch %i.", num);
     return patchTex;
 }
 
@@ -1998,7 +1998,7 @@ void R_PrecachePatch(const char* name, patchinfo_t* info)
     if(info)
     {
         memset(info, 0, sizeof(patchinfo_t));
-        info->lump = -1; // Safety precaution.
+        info->id = -1; // Safety precaution.
     }
 
     if(isDedicated)
@@ -2010,7 +2010,7 @@ void R_PrecachePatch(const char* name, patchinfo_t* info)
         GL_PreparePatch(patch);
         if(info)
         {
-            R_GetPatchInfo(lump, info);
+            R_GetPatchInfo((patchid_t)lump, info);
         }
     }
 }

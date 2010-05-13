@@ -367,9 +367,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
             light = (maxVisSlots - i) * lightDelta;
         a = i == selected? .5f : light / 2;
 
-        GL_DrawPatchLitAlpha(x + slot * ST_INVSLOTWIDTH + ST_INVSLOTOFFX,
-                             y, light, a * iconAlpha,
-                             dpInvItemBox.lump);
+        GL_DrawPatchLitAlpha(x + slot * ST_INVSLOTWIDTH + ST_INVSLOTOFFX, y, light, a * iconAlpha, dpInvItemBox.id);
 
         if(i >= startSlot && i < endSlot)
         {
@@ -383,10 +381,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
 #else
                 int posX = x + slot * ST_INVSLOTWIDTH;
 #endif
-                GL_DrawPatchLitAlpha(posX,
-                                     y + ST_INVICONOFFY, 1,
-                                     slot == selected? iconAlpha : iconAlpha / 3,
-                                     item->patchLump);
+                GL_DrawPatchLitAlpha(posX, y + ST_INVICONOFFY, 1, slot == selected? iconAlpha : iconAlpha / 3, item->patchId);
 
                 if(count > 1)
                     Hu_DrawSmallNum(P_InventoryCount(player, item->type),
@@ -402,9 +397,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
         slot++;
     }
 
-    GL_DrawPatchLitAlpha(x + selected * ST_INVSLOTWIDTH,
-                         y + ST_INVSELECTOFFY - BORDER,
-                         1, iconAlpha, dpInvSelectBox.lump);
+    GL_DrawPatchLitAlpha(x + selected * ST_INVSLOTWIDTH, y + ST_INVSELECTOFFY - BORDER, 1, iconAlpha, dpInvSelectBox.id);
 
     if(inv->numUsedSlots > maxVisSlots)
     {
@@ -413,18 +406,12 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
 
         if(cfg.inventoryWrap || first != 0)
         {
-            GL_DrawPatchLitAlpha(x - dpInvPageLeft[0].width - ARROW_RELXOFF,
-                                 y + ARROW_YOFFSET,
-                                 1, iconAlpha,
-                                 dpInvPageLeft[!(mapTime & 4)? 1 : 0].lump);
+            GL_DrawPatchLitAlpha(x - dpInvPageLeft[0].width - ARROW_RELXOFF, y + ARROW_YOFFSET, 1, iconAlpha, dpInvPageLeft[!(mapTime & 4)? 1 : 0].id);
         }
 
         if(cfg.inventoryWrap || inv->numUsedSlots - first > numVisSlots)
         {
-            GL_DrawPatchLitAlpha(x + numVisSlots * ST_INVSLOTWIDTH + ARROW_RELXOFF + 1,
-                                 y + ARROW_YOFFSET,
-                                 1, iconAlpha,
-                                 dpInvPageRight[!(mapTime & 4)? 1 : 0].lump);
+            GL_DrawPatchLitAlpha(x + numVisSlots * ST_INVSLOTWIDTH + ARROW_RELXOFF + 1, y + ARROW_YOFFSET, 1, iconAlpha, dpInvPageRight[!(mapTime & 4)? 1 : 0].id);
         }
 
 #undef ARROW_XOFFSET
@@ -470,23 +457,15 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
     {
         if(i >= startSlot && i < endSlot)
         {
-            uint                count;
-            const invitem_t*    item =
-                P_GetInvItem(inv->slots[idx]);
+            const invitem_t* item = P_GetInvItem(inv->slots[idx]);
+            uint count;
 
             if((count = P_InventoryCount(player, item->type)))
             {
-                GL_DrawPatchLitAlpha(x + slot * ST_INVSLOTWIDTH,
-                                     y + ST_INVICONOFFY, 1,
-                                     alpha,
-                                     item->patchLump);
+                GL_DrawPatchLitAlpha(x + slot * ST_INVSLOTWIDTH, y + ST_INVICONOFFY, 1, alpha, item->patchId);
 
                 if(count > 1)
-                    Hu_DrawSmallNum(P_InventoryCount(player, item->type),
-                                    ST_INVCOUNTDIGITS,
-                                    x + slot * ST_INVSLOTWIDTH + ST_INVCOUNTOFFX,
-                                    y + ST_INVCOUNTOFFY,
-                                    alpha);
+                    Hu_DrawSmallNum(P_InventoryCount(player, item->type), ST_INVCOUNTDIGITS, x + slot * ST_INVSLOTWIDTH + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, alpha);
             }
 
             if(++idx > inv->numOwnedItemTypes - 1)
@@ -496,9 +475,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
         slot++;
     }
 
-    GL_DrawPatchLitAlpha(x + cursor * ST_INVSLOTWIDTH,
-                         y + ST_INVSELECTOFFY - BORDER,
-                         1, alpha, dpInvSelectBox.lump);
+    GL_DrawPatchLitAlpha(x + cursor * ST_INVSLOTWIDTH, y + ST_INVSELECTOFFY - BORDER, 1, alpha, dpInvSelectBox.id);
 
     if(inv->numUsedSlots > NUMVISINVSLOTS)
     {
@@ -511,7 +488,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
                                  x - 12, y - 1,
 #endif
                                  1, alpha,
-                                 dpInvPageLeft[!(mapTime & 4)? 1 : 0].lump);
+                                 dpInvPageLeft[!(mapTime & 4)? 1 : 0].id);
 
         // Draw more right indicator.
         if(cfg.inventoryWrap || inv->numUsedSlots - first > NUMVISINVSLOTS)
@@ -522,7 +499,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
                                  y - 1,
 #endif
                                  1, alpha,
-                                 dpInvPageRight[!(mapTime & 4)? 1 : 0].lump);
+                                 dpInvPageRight[!(mapTime & 4)? 1 : 0].id);
     }
 
 #undef BORDER

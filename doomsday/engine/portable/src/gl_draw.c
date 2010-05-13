@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -128,13 +128,10 @@ void GL_DrawRawScreen(lumpnum_t lump, float offx, float offy)
 /**
  * Drawing with the Current State.
  */
-void GL_DrawPatch_CS(int posX, int posY, lumpnum_t lump)
+void GL_DrawPatch_CS(int posX, int posY, patchid_t num)
 {
     float x = posX, y = posY, w, h;
-    patchtex_t* p = R_GetPatchTex(lump);
-
-    if(!p)
-        return;
+    patchtex_t* p = R_FindPatchTex(num);
 
     // Set the texture.
     GL_BindTexture(GL_PreparePatch(p), glmode[texMagMode]);
@@ -171,44 +168,42 @@ void GL_DrawPatch_CS(int posX, int posY, lumpnum_t lump)
     glEnd();
 }
 
-void GL_DrawPatchLitAlpha(int x, int y, float light, float alpha,
-                          lumpnum_t lump)
+void GL_DrawPatchLitAlpha(int x, int y, float light, float alpha, patchid_t num)
 {
     glColor4f(light, light, light, alpha);
-    GL_DrawPatch_CS(x, y, lump);
+    GL_DrawPatch_CS(x, y, num);
 }
 
-void GL_DrawPatch(int x, int y, lumpnum_t lump)
+void GL_DrawPatch(int x, int y, patchid_t num)
 {
-    if(lump < 0)
+    if(num < 0)
         return;
-    GL_DrawPatchLitAlpha(x, y, 1, 1, lump);
+    GL_DrawPatchLitAlpha(x, y, 1, 1, num);
 }
 
-void GL_DrawFuzzPatch(int x, int y, lumpnum_t lump)
+void GL_DrawFuzzPatch(int x, int y, patchid_t num)
 {
-    if(lump < 0)
+    if(num < 0)
         return;
-    GL_DrawPatchLitAlpha(x, y, 1, .333f, lump);
+    GL_DrawPatchLitAlpha(x, y, 1, .333f, num);
 }
 
-void GL_DrawAltFuzzPatch(int x, int y, lumpnum_t lump)
+void GL_DrawAltFuzzPatch(int x, int y, patchid_t num)
 {
-    if(lump < 0)
+    if(num < 0)
         return;
-    GL_DrawPatchLitAlpha(x, y, 1, .666f, lump);
+    GL_DrawPatchLitAlpha(x, y, 1, .666f, num);
 }
 
-void GL_DrawShadowedPatch(int x, int y, lumpnum_t lump)
+void GL_DrawShadowedPatch(int x, int y, patchid_t num)
 {
-    if(lump < 0)
+    if(num < 0)
         return;
-    GL_DrawPatchLitAlpha(x + 2, y + 2, 0, .4f, lump);
-    GL_DrawPatchLitAlpha(x, y, 1, 1, lump);
+    GL_DrawPatchLitAlpha(x + 2, y + 2, 0, .4f, num);
+    GL_DrawPatchLitAlpha(x, y, 1, 1, num);
 }
 
-void GL_DrawRect(float x, float y, float w, float h, float r, float g,
-                 float b, float a)
+void GL_DrawRect(float x, float y, float w, float h, float r, float g, float b, float a)
 {
     glColor4f(r, g, b, a);
     glBegin(GL_QUADS);

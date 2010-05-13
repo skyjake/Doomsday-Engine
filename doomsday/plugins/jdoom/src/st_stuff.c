@@ -336,7 +336,7 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha,
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
-    DGL_SetPatch(statusbar.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_SetPatch(statusbar.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
     DGL_Color4f(1, 1, 1, iconAlpha);
 
     if(!(iconAlpha < 1))
@@ -466,7 +466,7 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha,
 
     if(!deathmatch)
     {   // Draw the ARMS background.
-        DGL_SetPatch(armsBackground.lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_SetPatch(armsBackground.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
         x = ORIGINX + armsBGX;
         y = ORIGINY + armsBackground.topOffset;
@@ -490,7 +490,7 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha,
     {
         const patchinfo_t* patch = &faceBackground[cfg.playerColor[player%MAXPLAYERS]%4];
 
-        DGL_SetPatch(patch->lump, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+        DGL_SetPatch(patch->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
         x = ORIGINX + (ST_FX - ST_X);
         y = ORIGINY + (HEIGHT - 30);
@@ -1364,8 +1364,8 @@ void drawFaceWidget(int player, float textAlpha, float iconAlpha,
         return;
     DGL_Color4f(1, 1, 1, iconAlpha);
     if(IS_NETGAME)
-        GL_DrawPatch_CS(x, -bgPatch->height + 1, bgPatch->lump);
-    GL_DrawPatch_CS(x, -bgPatch->height, facePatch->lump);
+        GL_DrawPatch_CS(x, -bgPatch->height + 1, bgPatch->id);
+    GL_DrawPatch_CS(x, -bgPatch->height, facePatch->id);
     *drawnWidth = bgPatch->width;
     *drawnHeight = bgPatch->height;
 }

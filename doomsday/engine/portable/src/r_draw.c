@@ -82,7 +82,7 @@ static void loadViewBorderPatches(void)
     for(i = 1; i < 9; ++i)
     {
         R_PrecachePatch(borderPatchNames[i], &info);
-        borderPatchLumps[i] = info.lump;
+        borderPatchLumps[i] = (lumpnum_t) info.id;
     }
 
     // Detemine the view border width.

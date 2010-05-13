@@ -559,7 +559,7 @@ void IN_Drawer(void)
     case 1: // Leaving old level.
         if(wbs->episode < 3)
         {
-            GL_DrawPatch(0, 0, dpInterPic.lump);
+            GL_DrawPatch(0, 0, dpInterPic.id);
             IN_DrawOldLevel();
         }
         break;
@@ -567,7 +567,7 @@ void IN_Drawer(void)
     case 2: // Going to the next level.
         if(wbs->episode < 3)
         {
-            GL_DrawPatch(0, 0, dpInterPic.lump);
+            GL_DrawPatch(0, 0, dpInterPic.id);
             IN_DrawYAH();
         }
         break;
@@ -575,7 +575,7 @@ void IN_Drawer(void)
     case 3: // Waiting before going to the next level.
         if(wbs->episode < 3)
         {
-            GL_DrawPatch(0, 0, dpInterPic.lump);
+            GL_DrawPatch(0, 0, dpInterPic.id);
         }
         break;
 
@@ -611,12 +611,12 @@ void IN_DrawOldLevel(void)
         uint i;
         for(i = 0; i < wbs->nextMap; ++i)
         {
-            GL_DrawPatch(YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y, dpBeenThere.lump);
+            GL_DrawPatch(YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y, dpBeenThere.id);
         }
 
         if(!(interTime & 16))
         {
-            GL_DrawPatch(YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y, dpBeenThere.lump);
+            GL_DrawPatch(YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y, dpBeenThere.id);
         }
     }
     else
@@ -624,17 +624,17 @@ void IN_DrawOldLevel(void)
         uint i;
         for(i = 0; i < wbs->currentMap; ++i)
         {
-            GL_DrawPatch(YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y, dpBeenThere.lump);
+            GL_DrawPatch(YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y, dpBeenThere.id);
         }
 
         if(players[CONSOLEPLAYER].didSecret)
         {
-            GL_DrawPatch(YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y, dpBeenThere.lump);
+            GL_DrawPatch(YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y, dpBeenThere.id);
         }
 
         if(!(interTime & 16))
         {
-            GL_DrawPatch(YAHspot[wbs->episode][wbs->currentMap].x, YAHspot[wbs->episode][wbs->currentMap].y, dpBeenThere.lump);
+            GL_DrawPatch(YAHspot[wbs->episode][wbs->currentMap].x, YAHspot[wbs->episode][wbs->currentMap].y, dpBeenThere.id);
         }
     }
 }
@@ -655,17 +655,17 @@ void IN_DrawYAH(void)
 
     for(i = 0; i < wbs->nextMap; ++i)
     {
-        GL_DrawPatch(YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y, dpBeenThere.lump);
+        GL_DrawPatch(YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y, dpBeenThere.id);
     }
 
     if(players[CONSOLEPLAYER].didSecret)
     {
-        GL_DrawPatch(YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y, dpBeenThere.lump);
+        GL_DrawPatch(YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y, dpBeenThere.id);
     }
 
     if(!(interTime & 16) || interState == 3)
     {   // Draw the destination 'X'
-        GL_DrawPatch(YAHspot[wbs->episode][wbs->nextMap].x, YAHspot[wbs->episode][wbs->nextMap].y, dpGoingThere.lump);
+        GL_DrawPatch(YAHspot[wbs->episode][wbs->nextMap].x, YAHspot[wbs->episode][wbs->nextMap].y, dpGoingThere.id);
     }
 }
 
@@ -804,9 +804,9 @@ void IN_DrawCoopStats(void)
     {
         if(teamInfo[i].members)
         {
-            GL_DrawPatchLitAlpha(27, ypos+2, 0, .4f, dpFaceAlive[i].lump);
+            GL_DrawPatchLitAlpha(27, ypos+2, 0, .4f, dpFaceAlive[i].id);
             DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            GL_DrawPatch_CS(25, ypos, dpFaceAlive[i].lump);
+            GL_DrawPatch_CS(25, ypos, dpFaceAlive[i].id);
 
             if(interTime < 40)
             {
@@ -862,8 +862,8 @@ void IN_DrawDMStats(void)
         {
             if(teamInfo[i].members)
             {
-                GL_DrawShadowedPatch(40, ((ypos << FRACBITS) + dSlideY[i] * interTime) >> FRACBITS, dpFaceAlive[i].lump);
-                GL_DrawShadowedPatch(((xpos << FRACBITS) + dSlideX[i] * interTime) >> FRACBITS, 18, dpFaceDead[i].lump);
+                GL_DrawShadowedPatch(40, ((ypos << FRACBITS) + dSlideY[i] * interTime) >> FRACBITS, dpFaceAlive[i].id);
+                GL_DrawShadowedPatch(((xpos << FRACBITS) + dSlideX[i] * interTime) >> FRACBITS, 18, dpFaceDead[i].id);
             }
         }
 
@@ -889,13 +889,13 @@ void IN_DrawDMStats(void)
         {
             if(interTime < 100 || i == playerTeam[CONSOLEPLAYER])
             {
-                GL_DrawShadowedPatch(40, ypos, dpFaceAlive[i].lump);
-                GL_DrawShadowedPatch(xpos, 18, dpFaceDead[i].lump);
+                GL_DrawShadowedPatch(40, ypos, dpFaceAlive[i].id);
+                GL_DrawShadowedPatch(xpos, 18, dpFaceDead[i].id);
             }
             else
             {
-                GL_DrawFuzzPatch(40, ypos, dpFaceAlive[i].lump);
-                GL_DrawFuzzPatch(xpos, 18, dpFaceDead[i].lump);
+                GL_DrawFuzzPatch(40, ypos, dpFaceAlive[i].id);
+                GL_DrawFuzzPatch(xpos, 18, dpFaceDead[i].id);
             }
 
             kpos = 86;
@@ -903,9 +903,7 @@ void IN_DrawDMStats(void)
             {
                 if(teamInfo[j].members)
                 {
-                    IN_DrawNumber(teamInfo[i].frags[j], kpos, ypos + 10,
-                                  3, defFontRGB[0], defFontRGB[1],
-                                  defFontRGB[2], 1);
+                    IN_DrawNumber(teamInfo[i].frags[j], kpos, ypos + 10, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
                     kpos += 43;
                 }
             }
@@ -914,14 +912,12 @@ void IN_DrawDMStats(void)
             {
                 if(!(interTime & 16))
                 {
-                    IN_DrawNumber(teamInfo[i].totalFrags, 263, ypos + 10, 3,
-                            defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+                    IN_DrawNumber(teamInfo[i].totalFrags, 263, ypos + 10, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
                 }
             }
             else
             {
-                IN_DrawNumber(teamInfo[i].totalFrags, 263, ypos + 10, 3,
-                            defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+                IN_DrawNumber(teamInfo[i].totalFrags, 263, ypos + 10, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
             }
 
             ypos += 36;
