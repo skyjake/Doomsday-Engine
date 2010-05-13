@@ -665,7 +665,7 @@ void G_PostInit(void)
     }
 
     // Check valid episode and map
-    if((autoStart || IS_NETGAME) && !P_MapExists((gameMode == commercial)? startEpisode : 0, startMap))
+    if((autoStart || IS_NETGAME) && !P_MapExists((gameMode != commercial)? startEpisode : 0, startMap))
     {
         startEpisode = 0;
         startMap = 0;
