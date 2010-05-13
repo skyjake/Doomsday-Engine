@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -105,14 +105,8 @@ static signed int totalFrags[MAXPLAYERS];
 
 static int hubCount;
 
-static int patchInterpicLumpRS; // A raw screen.
-static int fontBNumbersLump[10];
-static int fontBNegativeLump;
-static int fontBSlashLump;
-static int fontBPercentLump;
-static int fontABaseLump;
-static int fontBLump;
-static int fontBLumpBase;
+static patchinfo_t dpTallyTop;
+static patchinfo_t dpTallyLeft;
 
 // CODE --------------------------------------------------------------------
 
@@ -167,7 +161,6 @@ void IN_Init(void)
 
     WI_initVariables();
     loadPics();
-
     initStats();
 }
 
@@ -183,8 +176,8 @@ void IN_WaitStop(void)
 void IN_Stop(void)
 {
     NetSv_Intermission(IMF_END, 0, 0);
-    intermission = false;
     unloadPics();
+    intermission = false;
 }
 
 /**
@@ -237,23 +230,10 @@ static void initStats(void)
 
 static void loadPics(void)
 {
-    int                 i;
-
-    if(hubCount || gameType == DEATHMATCH)
+    if(gameType != SINGLE)
     {
-        patchInterpicLumpRS = W_GetNumForName("INTERPIC");
-        fontBLumpBase = W_GetNumForName("FONTB16");
-        for(i = 0; i < 10; ++i)
-        {
-            fontBNumbersLump[i] = fontBLumpBase + i;
-        }
-
-        fontBLump = W_GetNumForName("FONTB_S") + 1;
-        fontBNegativeLump = W_GetNumForName("FONTB13");
-        fontABaseLump = W_GetNumForName("FONTA_S") + 1;
-
-        fontBSlashLump = W_GetNumForName("FONTB15");
-        fontBPercentLump = W_GetNumForName("FONTB05");
+        R_PrecachePatch("TALLYTOP", &dpTallyTop);
+        R_PrecachePatch("TALLYLFT", &dpTallyLeft);
     }
 }
 
@@ -358,7 +338,7 @@ void IN_Drawer(void)
     if(interState)
         return;
 
-    GL_DrawRawScreen(patchInterpicLumpRS, 0, 0);
+    GL_DrawRawScreen(W_GetNumForName("INTERPIC"), 0, 0);
 
     if(gameType != SINGLE)
     {
@@ -368,18 +348,14 @@ void IN_Drawer(void)
 
 static void drawDeathTally(void)
 {
-    static boolean      showTotals;
+    static boolean showTotals;
 
-    int                 i, j;
-    fixed_t             xPos, yPos;
-    fixed_t             xDelta, yDelta;
-    fixed_t             xStart, scale;
-    int                 x, y;
-    boolean             bold;
-    int                 temp;
+    fixed_t xPos, yPos, xDelta, yDelta, xStart, scale;
+    int i, j, x, y, temp;
+    boolean bold;
 
-    GL_DrawPatch(TALLY_TOP_X, TALLY_TOP_Y, W_GetNumForName("tallytop"));
-    GL_DrawPatch(TALLY_LEFT_X, TALLY_LEFT_Y, W_GetNumForName("tallylft"));
+    GL_DrawPatch(TALLY_TOP_X, TALLY_TOP_Y, dpTallyTop.lump);
+    GL_DrawPatch(TALLY_LEFT_X, TALLY_LEFT_Y, dpTallyLeft.lump);
 
     if(interTime < TALLY_EFFECT_TICKS)
     {
@@ -387,19 +363,15 @@ static void drawDeathTally(void)
         scale = (interTime * FRACUNIT) / TALLY_EFFECT_TICKS;
         xDelta = FixedMul(scale, TALLY_FINAL_X_DELTA);
         yDelta = FixedMul(scale, TALLY_FINAL_Y_DELTA);
-        xStart =
-            TALLY_START_XPOS - FixedMul(scale,
-                                        TALLY_START_XPOS - TALLY_STOP_XPOS);
-        yPos =
-            TALLY_START_YPOS - FixedMul(scale,
-                                        TALLY_START_YPOS - TALLY_STOP_YPOS);
+        xStart = TALLY_START_XPOS - FixedMul(scale, TALLY_START_XPOS - TALLY_STOP_XPOS);
+        yPos   = TALLY_START_YPOS - FixedMul(scale, TALLY_START_YPOS - TALLY_STOP_YPOS);
     }
     else
     {
         xDelta = TALLY_FINAL_X_DELTA;
         yDelta = TALLY_FINAL_Y_DELTA;
         xStart = TALLY_STOP_XPOS;
-        yPos = TALLY_STOP_YPOS;
+        yPos   = TALLY_STOP_YPOS;
     }
 
     if(interTime >= TALLY_EFFECT_TICKS && showTotals == false)
@@ -454,7 +426,7 @@ static void drawDeathTally(void)
 
 static void drawNumber(int val, int x, int y, int wrapThresh)
 {
-    char                buff[8] = "XX";
+    char buff[8] = "XX";
 
     if(!(val < -9 && wrapThresh < 1000))
     {

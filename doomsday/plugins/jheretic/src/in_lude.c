@@ -111,15 +111,16 @@ static int secretPercent[NUMTEAMS];
 static int playerTeam[MAXPLAYERS];
 static teaminfo_t teamInfo[NUMTEAMS];
 
-static int interPic, beenThere, goingThere;
-
-static int patchFaceOkayBase;
-static int patchFaceDeadBase;
+static patchinfo_t dpInterPic;
+static patchinfo_t dpBeenThere;
+static patchinfo_t dpGoingThere;
+static patchinfo_t dpFaceAlive[NUMTEAMS];
+static patchinfo_t dpFaceDead[NUMTEAMS];
 
 static fixed_t dSlideX[NUMTEAMS];
 static fixed_t dSlideY[NUMTEAMS];
 
-static char *killersText[] = { "K", "I", "L", "L", "E", "R", "S" };
+static char* killersText[] = { "K", "I", "L", "L", "E", "R", "S" };
 
 static yahpt_t YAHspot[3][9] = {
     {
@@ -364,26 +365,22 @@ void IN_InitStats(void)
 
 void IN_LoadPics(void)
 {
-    switch(wbs->episode)
+    char buf[9];
+    int i;
+
+    if(wbs->episode < 3)
+        R_PrecachePatch(wbs->episode == 0? "MAPE1" : wbs->episode == 1? "MAPE2" : "MAPE3", &dpInterPic);
+
+    R_PrecachePatch("IN_X", &dpBeenThere);
+    R_PrecachePatch("IN_YAH", &dpGoingThere);
+
+    for(i = 0; i < NUMTEAMS; ++i)
     {
-    case 0:
-        interPic = W_GetNumForName("MAPE1");
-        break;
-    case 1:
-        interPic = W_GetNumForName("MAPE2");
-        break;
-    case 2:
-        interPic = W_GetNumForName("MAPE3");
-        break;
-    default:
-        break;
+        dd_snprintf(buf, 9, "FACEA%i", i);
+        R_PrecachePatch(buf, &dpFaceAlive[i]);
+        dd_snprintf(buf, 9, "FACEB%i", i);
+        R_PrecachePatch(buf, &dpFaceDead[i]);
     }
-
-    beenThere = W_GetNumForName("IN_X");
-    goingThere = W_GetNumForName("IN_YAH");
-
-    patchFaceOkayBase = W_GetNumForName("FACEA0");
-    patchFaceDeadBase = W_GetNumForName("FACEB0");
 }
 
 void IN_UnloadPics(void)
@@ -562,7 +559,7 @@ void IN_Drawer(void)
     case 1: // Leaving old level.
         if(wbs->episode < 3)
         {
-            GL_DrawPatch(0, 0, interPic);
+            GL_DrawPatch(0, 0, dpInterPic.lump);
             IN_DrawOldLevel();
         }
         break;
@@ -570,7 +567,7 @@ void IN_Drawer(void)
     case 2: // Going to the next level.
         if(wbs->episode < 3)
         {
-            GL_DrawPatch(0, 0, interPic);
+            GL_DrawPatch(0, 0, dpInterPic.lump);
             IN_DrawYAH();
         }
         break;
@@ -578,7 +575,7 @@ void IN_Drawer(void)
     case 3: // Waiting before going to the next level.
         if(wbs->episode < 3)
         {
-            GL_DrawPatch(0, 0, interPic);
+            GL_DrawPatch(0, 0, dpInterPic.lump);
         }
         break;
 
@@ -614,14 +611,12 @@ void IN_DrawOldLevel(void)
         uint i;
         for(i = 0; i < wbs->nextMap; ++i)
         {
-            GL_DrawPatch(YAHspot[wbs->episode][i].x,
-                         YAHspot[wbs->episode][i].y, beenThere);
+            GL_DrawPatch(YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y, dpBeenThere.lump);
         }
 
         if(!(interTime & 16))
         {
-            GL_DrawPatch(YAHspot[wbs->episode][8].x,
-                         YAHspot[wbs->episode][8].y, beenThere);
+            GL_DrawPatch(YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y, dpBeenThere.lump);
         }
     }
     else
@@ -629,20 +624,17 @@ void IN_DrawOldLevel(void)
         uint i;
         for(i = 0; i < wbs->currentMap; ++i)
         {
-            GL_DrawPatch(YAHspot[wbs->episode][i].x,
-                         YAHspot[wbs->episode][i].y, beenThere);
+            GL_DrawPatch(YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y, dpBeenThere.lump);
         }
 
         if(players[CONSOLEPLAYER].didSecret)
         {
-            GL_DrawPatch(YAHspot[wbs->episode][8].x,
-                         YAHspot[wbs->episode][8].y, beenThere);
+            GL_DrawPatch(YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y, dpBeenThere.lump);
         }
 
         if(!(interTime & 16))
         {
-            GL_DrawPatch(YAHspot[wbs->episode][wbs->currentMap].x,
-                         YAHspot[wbs->episode][wbs->currentMap].y, beenThere);
+            GL_DrawPatch(YAHspot[wbs->episode][wbs->currentMap].x, YAHspot[wbs->episode][wbs->currentMap].y, dpBeenThere.lump);
         }
     }
 }
@@ -663,20 +655,17 @@ void IN_DrawYAH(void)
 
     for(i = 0; i < wbs->nextMap; ++i)
     {
-        GL_DrawPatch(YAHspot[wbs->episode][i].x,
-                     YAHspot[wbs->episode][i].y, beenThere);
+        GL_DrawPatch(YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y, dpBeenThere.lump);
     }
 
     if(players[CONSOLEPLAYER].didSecret)
     {
-        GL_DrawPatch(YAHspot[wbs->episode][8].x,
-                     YAHspot[wbs->episode][8].y, beenThere);
+        GL_DrawPatch(YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y, dpBeenThere.lump);
     }
 
     if(!(interTime & 16) || interState == 3)
     {   // Draw the destination 'X'
-        GL_DrawPatch(YAHspot[wbs->episode][wbs->nextMap].x,
-                     YAHspot[wbs->episode][wbs->nextMap].y, goingThere);
+        GL_DrawPatch(YAHspot[wbs->episode][wbs->nextMap].x, YAHspot[wbs->episode][wbs->nextMap].y, dpGoingThere.lump);
     }
 }
 
@@ -815,9 +804,9 @@ void IN_DrawCoopStats(void)
     {
         if(teamInfo[i].members)
         {
-            GL_DrawPatchLitAlpha(27, ypos+2, 0, .4f, patchFaceOkayBase + i);
+            GL_DrawPatchLitAlpha(27, ypos+2, 0, .4f, dpFaceAlive[i].lump);
             DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            GL_DrawPatch_CS(25, ypos, patchFaceOkayBase + i);
+            GL_DrawPatch_CS(25, ypos, dpFaceAlive[i].lump);
 
             if(interTime < 40)
             {
@@ -873,13 +862,8 @@ void IN_DrawDMStats(void)
         {
             if(teamInfo[i].members)
             {
-                GL_DrawShadowedPatch(40,
-                                     ((ypos << FRACBITS) +
-                                      dSlideY[i] * interTime) >> FRACBITS,
-                                     patchFaceOkayBase + i);
-                GL_DrawShadowedPatch(((xpos << FRACBITS) +
-                                      dSlideX[i] * interTime) >> FRACBITS,
-                                     18, patchFaceDeadBase + i);
+                GL_DrawShadowedPatch(40, ((ypos << FRACBITS) + dSlideY[i] * interTime) >> FRACBITS, dpFaceAlive[i].lump);
+                GL_DrawShadowedPatch(((xpos << FRACBITS) + dSlideX[i] * interTime) >> FRACBITS, 18, dpFaceDead[i].lump);
             }
         }
 
@@ -905,13 +889,13 @@ void IN_DrawDMStats(void)
         {
             if(interTime < 100 || i == playerTeam[CONSOLEPLAYER])
             {
-                GL_DrawShadowedPatch(40, ypos, patchFaceOkayBase + i);
-                GL_DrawShadowedPatch(xpos, 18, patchFaceDeadBase + i);
+                GL_DrawShadowedPatch(40, ypos, dpFaceAlive[i].lump);
+                GL_DrawShadowedPatch(xpos, 18, dpFaceDead[i].lump);
             }
             else
             {
-                GL_DrawFuzzPatch(40, ypos, patchFaceOkayBase + i);
-                GL_DrawFuzzPatch(xpos, 18, patchFaceDeadBase + i);
+                GL_DrawFuzzPatch(40, ypos, dpFaceAlive[i].lump);
+                GL_DrawFuzzPatch(xpos, 18, dpFaceDead[i].lump);
             }
 
             kpos = 86;
