@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,6 +41,7 @@ extern uint gameMap;
 extern skillmode_t gameSkill;
 extern boolean deathmatch;
 extern boolean userGame;
+extern boolean customPal;
 
 extern skillmode_t dSkill;
 

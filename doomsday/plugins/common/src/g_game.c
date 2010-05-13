@@ -200,6 +200,7 @@ int totalKills, totalItems, totalSecret; // For intermission.
 boolean singledemo; // Quit after playing a demo from cmdline.
 
 boolean precache = true; // If @c true, load all graphics at start.
+boolean customPal = false; // If @c true, a non-IWAD palette is in use.
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 wbstartstruct_t wmInfo; // Params for world map / intermission.
@@ -559,8 +560,10 @@ void R_LoadColorPalettes(void)
     lumpnum_t lump = W_GetNumForName(PALLUMPNAME);
     byte data[PALENTRIES*3];
 
-    W_ReadLumpSection(lump, data, 0 + PALID * (PALENTRIES * 3), PALENTRIES * 3);
+    // Record whether we are using a custom palette.
+    customPal = !W_IsFromIWAD(lump);
 
+    W_ReadLumpSection(lump, data, 0 + PALID * (PALENTRIES * 3), PALENTRIES * 3);
     R_CreateColorPalette("R8G8B8", PALLUMPNAME, data, PALENTRIES);
 
     /**

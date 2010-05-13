@@ -1008,6 +1008,13 @@ const char* P_GetMapNiceName(void)
     return lname;
 }
 
+boolean P_IsMapFromIWAD(uint episode, uint map)
+{
+    char lumpName[9];
+    P_GetMapLumpName(episode, map, lumpName);
+    return W_IsFromIWAD(W_GetNumForName(lumpName));
+}
+
 const char* P_GetMapAuthor(boolean surpressIWADAuthors)
 {
     const char* author = (const char*) DD_GetVariable(DD_MAP_AUTHOR);
@@ -1017,10 +1024,7 @@ const char* P_GetMapAuthor(boolean surpressIWADAuthors)
 
     if(surpressIWADAuthors)
     {
-        char lumpName[9];
-
-        P_GetMapLumpName(gameEpisode, gameMap, lumpName);
-        if(W_IsFromIWAD(W_GetNumForName(lumpName)))
+        if(P_IsMapFromIWAD(gameEpisode, gameMap))
             return NULL;
 
         // @kludge We need DED Reader 2.0 to handle this the Right Way...
@@ -1047,16 +1051,6 @@ const char* P_GetMapAuthor(boolean surpressIWADAuthors)
 
     return author;
 }
-
-#if !__JHEXEN__
-static boolean isIWADMap(uint episode, uint map)
-{
-    char lumpName[9];
-
-    P_GetMapLumpName(episode, map, lumpName);
-    return W_IsFromIWAD(W_GetNumForName(lumpName));
-}
-#endif
 
 /**
  * Prints a banner to the console containing information pertinent to the
@@ -1087,7 +1081,7 @@ static void P_PrintMapBanner(uint episode, uint map)
     static const char* unknownAuthorStr = "Unknown";
     const char* lauthor;
 
-    lauthor = P_GetMapAuthor(!isIWADMap(episode, map));
+    lauthor = P_GetMapAuthor(!P_IsMapFromIWAD(episode, map));
     if(!lauthor)
         lauthor = unknownAuthorStr;
 

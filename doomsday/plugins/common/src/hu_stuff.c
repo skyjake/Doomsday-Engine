@@ -120,8 +120,8 @@ int typeInTime = 0;
 patchinfo_t* mapNamePatches = NULL;
 // Name graphics of each skill mode.
 patchinfo_t skillModeNames[NUM_SKILL_MODES];
-patchinfo_t m_pause; // Paused graphic.
 #endif
+patchinfo_t m_pause; // Paused graphic.
 
 #if __JDOOM__
 // Name graphics of each episode.
@@ -701,11 +701,13 @@ void Hu_LoadData(void)
     R_PrecachePatch("M_THERM2", &dpSliderMiddle);
     R_PrecachePatch("M_THERMR", &dpSliderRight);
     R_PrecachePatch("M_THERMO", &dpSliderHandle);
+    R_PrecachePatch("M_PAUSE", &m_pause);
 #elif __JHERETIC__ || __JHEXEN__
     R_PrecachePatch("M_SLDLT", &dpSliderLeft);
     R_PrecachePatch("M_SLDMD1", &dpSliderMiddle);
     R_PrecachePatch("M_SLDRT", &dpSliderRight);
     R_PrecachePatch("M_SLDKB", &dpSliderHandle);
+    R_PrecachePatch("PAUSED", &m_pause);
 #endif
 
 #if __JDOOM__ || __JDOOM64__
@@ -713,8 +715,6 @@ void Hu_LoadData(void)
     {
         R_PrecachePatch(skillModePatchNames[i], &skillModeNames[i]);
     }
-
-    R_PrecachePatch("M_PAUSE", &m_pause);
 
     // Load the map name patches.
 # if __JDOOM64__
@@ -2931,11 +2931,7 @@ void Hu_Drawer(void)
         else
             DGL_Scalef((float)winWidth/SCREENWIDTH, (float)winWidth/SCREENWIDTH, 1);
 
-#if __JDOOM__ || __JDOOM64__
         WI_DrawPatch(0, 0, 1, 1, 1, 1, &m_pause, NULL, false, ALIGN_CENTER);
-#elif __JHERETIC__ || __JHEXEN__
-        GL_DrawPatch(0, 0, W_GetNumForName("PAUSED"));
-#endif
 
         DGL_MatrixMode(DGL_PROJECTION);
         DGL_PopMatrix();

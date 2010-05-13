@@ -70,8 +70,9 @@ extern patchinfo_t* mapNamePatches;
 // Name graphics of each skill mode.
 #if __JDOOM__ || __JDOOM64__
 extern patchinfo_t skillModeNames[NUM_SKILL_MODES];
-extern patchinfo_t m_pause; // Paused graphic.
 #endif
+extern patchinfo_t m_pause; // Paused graphic.
+
 // Name graphics of each episode.
 #if __JDOOM__
 extern patchinfo_t* episodeNamePatches;

@@ -609,13 +609,13 @@ void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, voi
  */
 void M_DrawControlsMenu(void)
 {
-    int                 i;
-    char                buf[1024];
 #if __JHERETIC__ || __JHEXEN__
-    char*               token;
+    const patchinfo_t* token;
 #endif
-    const menu_t*       menu = &ControlsDef;
-    const menuitem_t*   item = menu->items + menu->firstItem;
+    const menu_t* menu = &ControlsDef;
+    const menuitem_t* item = menu->items + menu->firstItem;
+    char buf[1024];
+    int i;
 
 #if __JDOOM__ || __JDOOM64__
     M_DrawTitle("CONTROLS", menu->y - 28);
@@ -629,11 +629,10 @@ void M_DrawControlsMenu(void)
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 
     // Draw the page arrows.
-    token = (!menu->firstItem || menuTime & 8) ? "invgeml2" : "invgeml1";
-    GL_DrawPatch_CS(menu->x, menu->y - 12, W_GetNumForName(token));
-    token = (menu->firstItem + menu->numVisItems >= menu->itemCount ||
-             menuTime & 8) ? "invgemr2" : "invgemr1";
-    GL_DrawPatch_CS(312 - menu->x, menu->y - 12, W_GetNumForName(token));
+    token = &dpInvPageLeft[!menu->firstItem || (menuTime & 8)];
+    GL_DrawPatch_CS(menu->x, menu->y - 12, token->lump);
+    token = &dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)];
+    GL_DrawPatch_CS(312 - menu->x, menu->y - 12, token->lump);
 #endif
 
     strcpy(buf, "Select to assign new, [Del] to clear");

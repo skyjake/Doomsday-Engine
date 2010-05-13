@@ -295,10 +295,8 @@ void AM_Register(void)
 
 static void initAutomapConfig(int player)
 {
-    automapcfg_t*       mcfg = &automapCFGs[player];
-    float               rgb[3];
-    boolean             customPal =
-        !W_IsFromIWAD(W_GetNumForName("PLAYPAL"));
+    automapcfg_t* mcfg = &automapCFGs[player];
+    float rgb[3];
 
     // Initialize.
     // \fixme Put these values into an array (or read from a lump?).
@@ -1743,15 +1741,15 @@ menu_t MapDef = {
  */
 void M_DrawMapMenu(void)
 {
-    static char*        hudviewnames[3] = { "NONE", "CURRENT", "STATUSBAR" };
-    static char*        yesno[2] = { "NO", "YES" };
-    static char*        customColors[3] = { "NEVER", "AUTO", "ALWAYS" };
-    float               menuAlpha;
-    uint                idx;
+    static const char* hudviewnames[3] = { "NONE", "CURRENT", "STATUSBAR" };
+    static const char* yesno[2] = { "NO", "YES" };
+    static const char* customColors[3] = { "NEVER", "AUTO", "ALWAYS" };
+    float menuAlpha;
+    uint idx;
 #if __JHERETIC__ || __JHEXEN__
-    char*               token;
+    const patchinfo_t* token;
 #endif
-    const menu_t*       menu = &MapDef;
+    const menu_t* menu = &MapDef;
 
     menuAlpha = Hu_MenuAlpha();
 
@@ -1761,11 +1759,10 @@ void M_DrawMapMenu(void)
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 
     // Draw the page arrows.
-    token = (!menu->firstItem || menuTime & 8) ? "invgeml2" : "invgeml1";
-    GL_DrawPatch_CS(menu->x, menu->y - 22, W_GetNumForName(token));
-    token = (menu->firstItem + menu->numVisItems >= menu->itemCount ||
-             menuTime & 8) ? "invgemr2" : "invgemr1";
-    GL_DrawPatch_CS(312 - menu->x, menu->y - 22, W_GetNumForName(token));
+    token = &dpInvPageLeft[!menu->firstItem || (menuTime & 8)];
+    GL_DrawPatch_CS(menu->x, menu->y - 22, token->lump);
+    token = &dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)];
+    GL_DrawPatch_CS(312 - menu->x, menu->y - 22, token->lump);
 #endif
 
     idx = 0;

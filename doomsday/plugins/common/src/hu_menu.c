@@ -280,6 +280,9 @@ static patchinfo_t help2;
 static patchinfo_t m_htic;
 static patchinfo_t dpFSlot;
 #endif
+#if __JHEXEN__
+static patchinfo_t dpPlayerClassBG[3];
+#endif
 
 #if __JHERETIC__ || __JHEXEN__
 # define READTHISID      3
@@ -1238,6 +1241,11 @@ void M_LoadData(void)
     R_PrecachePatch("M_HTIC", &m_htic);
     R_PrecachePatch("M_FSLOT", &dpFSlot);
 #endif
+#if __JHEXEN__
+    R_PrecachePatch("M_FBOX", &dpPlayerClassBG[0]);
+    R_PrecachePatch("M_CBOX", &dpPlayerClassBG[1]);
+    R_PrecachePatch("M_MBOX", &dpPlayerClassBG[2]);
+#endif
 }
 
 #if __JDOOM__ || __JHERETIC__
@@ -1415,7 +1423,7 @@ void Hu_MenuInit(void)
     item->func = M_ReadThis;
 #endif
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     SkullBaseLump = W_GetNumForName(SKULLBASELMP);
 #endif
 
@@ -2378,27 +2386,6 @@ void M_DrawMainMenu(void)
 #elif __JDOOM__ || __JDOOM64__
     WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, &m_doom,
                  NULL, false, ALIGN_LEFT);
-#elif __JSTRIFE__
-    menu_t     *menu = &MainDef;
-    int         yoffset = 0;
-
-    WI_DrawPatch(84, 2, 1, 1, 1, menuAlpha, W_GetNumForName("M_STRIFE"),
-                 NULL, false, ALIGN_LEFT);
-
-    WI_DrawPatch(menu->x, menu->y + yoffset, 1, 1, 1, menuAlpha,
-                 W_GetNumForName("M_NGAME"), NULL, false, ALIGN_LEFT);
-    WI_DrawPatch(menu->x, menu->y + (yoffset+= menu->itemHeight), 1, 1, 1,
-                 menuAlpha, W_GetNumForName("M_NGAME"), NULL, false, ALIGN_LEFT);
-    WI_DrawPatch(menu->x, menu->y + (yoffset+= menu->itemHeight), 1, 1, 1,
-                 menuAlpha, W_GetNumForName("M_OPTION"), NULL, false, ALIGN_LEFT);
-    WI_DrawPatch(menu->x, menu->y + (yoffset+= menu->itemHeight), 1, 1, 1,
-                 menuAlpha, W_GetNumForName("M_LOADG"), NULL, false, ALIGN_LEFT);
-    WI_DrawPatch(menu->x, menu->y + (yoffset+= menu->itemHeight), 1, 1, 1,
-                 menuAlpha, W_GetNumForName("M_SAVEG"), NULL, false, ALIGN_LEFT);
-    WI_DrawPatch(menu->x, menu->y + (yoffset+= menu->itemHeight), 1, 1, 1,
-                 menuAlpha, W_GetNumForName("M_RDTHIS"), NULL, false, ALIGN_LEFT);
-    WI_DrawPatch(menu->x, menu->y + (yoffset+= menu->itemHeight), 1, 1, 1,
-                 menuAlpha, W_GetNumForName("M_QUITG"), NULL, false, ALIGN_LEFT);
 #endif
 }
 
@@ -2450,11 +2437,6 @@ void M_DrawClassMenu(void)
     int pClass;
     spriteinfo_t sprInfo;
     int tmap = 1, hasFocus = MAX_OF(0, itemOn);
-    static char* boxLumpName[3] = {
-        "m_fbox",
-        "m_cbox",
-        "m_mbox"
-    };
 
     M_WriteText3(34, 24, "CHOOSE CLASS:", GF_FONTB, menu->color[0],
                  menu->color[1], menu->color[2], menuAlpha, true, true, 0);
@@ -2470,7 +2452,7 @@ void M_DrawClassMenu(void)
                     ((menuTime >> 3) & 3), &sprInfo);
 
     DGL_Color4f(1, 1, 1, menuAlpha);
-    GL_DrawPatch_CS(BG_X, BG_Y, W_GetNumForName(boxLumpName[pClass % 3]));
+    GL_DrawPatch_CS(BG_X, BG_Y, dpPlayerClassBG[pClass % 3].lump);
 
     // Fighter's colors are a bit different.
     if(pClass == PCLASS_FIGHTER)
@@ -3102,7 +3084,7 @@ void M_DrawHUDMenu(void)
     char buf[1024];
 #endif
 #if __JHERETIC__ || __JHEXEN__
-    char* token;
+    const patchinfo_t* token;
 #endif
     static const char* xhairnames[7] = {
         "NONE", "CROSS", "ANGLES", "SQUARE", "OPEN SQUARE", "DIAMOND", "V"
@@ -3120,11 +3102,10 @@ void M_DrawHUDMenu(void)
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 
     // Draw the page arrows.
-    token = (!menu->firstItem || menuTime & 8) ? "invgeml2" : "invgeml1";
-    GL_DrawPatch_CS(menu->x, menu->y - 22, W_GetNumForName(token));
-    token = (menu->firstItem + menu->numVisItems >= menu->itemCount ||
-             menuTime & 8) ? "invgemr2" : "invgemr1";
-    GL_DrawPatch_CS(312 - menu->x, menu->y - 22, W_GetNumForName(token));
+    token = &dpInvPageLeft[!menu->firstItem || (menuTime & 8)];
+    GL_DrawPatch_CS(menu->x, menu->y - 22, token->lump);
+    token = &dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)];
+    GL_DrawPatch_CS(312 - menu->x, menu->y - 22, token->lump);
 #endif
 
     idx = 0;

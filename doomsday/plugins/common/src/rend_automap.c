@@ -1585,7 +1585,7 @@ DGL_Enable(DGL_TEXTURING);
 
         params.flags = Automap_GetFlags(map);
         params.vg = AM_GetVectorGraphic(mcfg, AMO_THING);
-        AM_GetMapColor(params.rgb, cfg.automapMobj, THINGCOLORS, !W_IsFromIWAD(W_GetNumForName("PLAYPAL")));
+        AM_GetMapColor(params.rgb, cfg.automapMobj, THINGCOLORS, customPal);
         params.alpha = MINMAX_OF(0.f, cfg.automapLineAlpha * Automap_GetOpacity(map), 1.f);
 
         Automap_PVisibleAABounds(map, &aabb[BOXLEFT], &aabb[BOXRIGHT], &aabb[BOXBOTTOM], &aabb[BOXTOP]);
