@@ -244,7 +244,6 @@ void            DGL_DrawCutRectTiled(float x, float y, float w, float h, int tw,
 
 void            DGL_DrawPatch(patchid_t id, int x, int y);
 void            DGL_DrawPatch_CS(patchid_t id, int x, int y);
-void            DGL_DrawFuzzPatch(patchid_t id, int x, int y);
 void            DGL_DrawAltFuzzPatch(patchid_t id, int x, int y);
 void            DGL_DrawShadowedPatch(patchid_t id, int x, int y);
 

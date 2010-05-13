@@ -895,8 +895,9 @@ void IN_DrawDMStats(void)
             }
             else
             {
-                DGL_DrawFuzzPatch(dpFaceAlive[i].id, 40, ypos);
-                DGL_DrawFuzzPatch(dpFaceDead[i].id, xpos, 18);
+                DGL_Color4f(1, 1, 1, .333f);
+                DGL_DrawPatch_CS(dpFaceAlive[i].id, 40, ypos);
+                DGL_DrawPatch_CS(dpFaceDead[i].id, xpos, 18);
             }
 
             kpos = 86;
