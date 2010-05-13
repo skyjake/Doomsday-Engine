@@ -211,13 +211,15 @@ short whichSkull; // Which skull to draw.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean menuActive;
+static boolean menuActive = false;
 
 static float menuAlpha = 0; // Alpha level for the entire menu.
 static float menuTargetAlpha = 0; // Target alpha for the entire UI.
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-static int SkullBaseLump;
+#if __JHERETIC__
+static patchinfo_t dpRotatingSkull[18];
+#elif __JHEXEN__
+static patchinfo_t dpBullWithFire[8];
 #endif
 
 static int cursors = NUMCURSORS;
@@ -1200,8 +1202,8 @@ void Hu_MenuRegister(void)
  */
 void M_LoadData(void)
 {
-    int i;
     char buffer[9];
+    int i;
 
     // Load the cursor patches
     for(i = 0; i < cursors; ++i)
@@ -1241,7 +1243,22 @@ void M_LoadData(void)
     R_PrecachePatch("M_HTIC", &m_htic);
     R_PrecachePatch("M_FSLOT", &dpFSlot);
 #endif
+
+#if __JHERETIC__
+    for(i = 0; i < 18; ++i)
+    {
+        dd_snprintf(buffer, 9, "M_SKL%02d", i);
+        R_PrecachePatch(buffer, &dpRotatingSkull[i]);
+    }
+#endif
+
 #if __JHEXEN__
+    for(i = 0; i < 7; ++i)
+    {
+        dd_snprintf(buffer, 9, "FBUL%c0", 'A'+i);
+        R_PrecachePatch(buffer, &dpBullWithFire[i]);
+    }
+
     R_PrecachePatch("M_FBOX", &dpPlayerClassBG[0]);
     R_PrecachePatch("M_CBOX", &dpPlayerClassBG[1]);
     R_PrecachePatch("M_MBOX", &dpPlayerClassBG[2]);
@@ -1421,10 +1438,6 @@ void Hu_MenuInit(void)
 #elif __JHERETIC__ || __JHEXEN__
     item = &MainItems[READTHISID]; // Read This!
     item->func = M_ReadThis;
-#endif
-
-#if __JHERETIC__ || __JHEXEN__
-    SkullBaseLump = W_GetNumForName(SKULLBASELMP);
 #endif
 
 #if __JDOOM__ || __JHERETIC__
@@ -2367,31 +2380,27 @@ void M_SaveSelect(int option, void* context)
 void M_DrawMainMenu(void)
 {
 #if __JHEXEN__
-    int         frame;
-
-    frame = (menuTime / 5) % 7;
+    int frame = (menuTime / 5) % 7;
 
     DGL_Color4f(1, 1, 1, menuAlpha);
     GL_DrawPatch_CS(88, 0, m_htic.lump);
-    GL_DrawPatch_CS(37, 80, SkullBaseLump + (frame + 2) % 7);
-    GL_DrawPatch_CS(278, 80, SkullBaseLump + frame);
+    GL_DrawPatch_CS(37, 80, dpBullWithFire[(frame + 2) % 7].lump);
+    GL_DrawPatch_CS(278, 80, dpBullWithFire[frame].lump);
 
 #elif __JHERETIC__
-    WI_DrawPatch(88, 0, 1, 1, 1, menuAlpha, &m_htic, NULL, false,
-                 ALIGN_LEFT);
+    WI_DrawPatch(88, 0, 1, 1, 1, menuAlpha, &m_htic, NULL, false, ALIGN_LEFT);
 
     DGL_Color4f(1, 1, 1, menuAlpha);
-    GL_DrawPatch_CS(40, 10, SkullBaseLump + (17 - frame));
-    GL_DrawPatch_CS(232, 10, SkullBaseLump + frame);
+    GL_DrawPatch_CS(40, 10, dpRotatingSkull[17 - frame].lump);
+    GL_DrawPatch_CS(232, 10, dpRotatingSkull[frame].lump);
 #elif __JDOOM__ || __JDOOM64__
-    WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, &m_doom,
-                 NULL, false, ALIGN_LEFT);
+    WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, &m_doom, NULL, false, ALIGN_LEFT);
 #endif
 }
 
 void M_DrawNewGameMenu(void)
 {
-    menu_t*             menu = &NewGameDef;
+    menu_t* menu = &NewGameDef;
     M_DrawTitle(GET_TXT(TXT_PICKGAMETYPE), menu->y - 30);
 }
 
