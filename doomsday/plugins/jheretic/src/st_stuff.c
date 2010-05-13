@@ -368,7 +368,8 @@ void drawChainWidget(int player, float textAlpha, float iconAlpha,
     }
 
     // Draw the life gem.
-    DGL_DrawPatchLitAlpha(lifeGems[gemNum].id, x + gemXOffset, chainY, 1, iconAlpha);
+    DGL_Color4f(1, 1, 1, iconAlpha);
+    DGL_DrawPatch_CS(lifeGems[gemNum].id, x + gemXOffset, chainY);
 
     shadeChain(ORIGINX, ORIGINY-ST_HEIGHT, iconAlpha/3);
 

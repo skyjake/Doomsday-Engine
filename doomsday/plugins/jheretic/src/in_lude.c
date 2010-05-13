@@ -804,7 +804,8 @@ void IN_DrawCoopStats(void)
     {
         if(teamInfo[i].members)
         {
-            DGL_DrawPatchLitAlpha(dpFaceAlive[i].id, 27, ypos+2, 0, .4f);
+            DGL_Color4f(0, 0, 0, .4f);
+            DGL_DrawPatch_CS(dpFaceAlive[i].id, 27, ypos+2);
             DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
             DGL_DrawPatch_CS(dpFaceAlive[i].id, 25, ypos);
 

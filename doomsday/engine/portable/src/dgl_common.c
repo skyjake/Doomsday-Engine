@@ -912,37 +912,37 @@ void DGL_DrawPatch_CS(patchid_t id, int posX, int posY)
     glEnd();
 }
 
-void DGL_DrawPatchLitAlpha(patchid_t id, int x, int y, float light, float alpha)
-{
-    glColor4f(light, light, light, alpha);
-    DGL_DrawPatch_CS(id, x, y);
-}
-
 void DGL_DrawPatch(patchid_t id, int x, int y)
 {
     if(id < 0)
         return;
-    DGL_DrawPatchLitAlpha(id, x, y, 1, 1);
+    DGL_Color4f(1, 1, 1, 1);
+    DGL_DrawPatch_CS(id, x, y);
 }
 
 void DGL_DrawFuzzPatch(patchid_t id, int x, int y)
 {
     if(id < 0)
         return;
-    DGL_DrawPatchLitAlpha(id, x, y, 1, .333f);
+    DGL_Color4f(1, 1, 1, .333f);
+    DGL_DrawPatch_CS(id, x, y);
 }
 
 void DGL_DrawAltFuzzPatch(patchid_t id, int x, int y)
 {
     if(id < 0)
         return;
-    DGL_DrawPatchLitAlpha(id, x, y, 1, .666f);
+    DGL_Color4f(1, 1, 1, .666f);
+    DGL_DrawPatch_CS(id, x, y);
 }
 
 void DGL_DrawShadowedPatch(patchid_t id, int x, int y)
 {
     if(id < 0)
         return;
-    DGL_DrawPatchLitAlpha(id, x + 2, y + 2, 0, .4f);
-    DGL_DrawPatchLitAlpha(id, x, y, 1, 1);
+    DGL_Color4f(0, 0, 0, .4f);
+    DGL_DrawPatch_CS(id, x+2, y+2);
+
+    DGL_Color4f(1, 1, 1, 1);
+    DGL_DrawPatch_CS(id, x, y);
 }

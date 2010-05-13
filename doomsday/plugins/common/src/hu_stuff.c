@@ -2139,7 +2139,8 @@ void HU_DrawBNumber(signed int val, int x, int y, float red,
     {
         pInfo = &gFonts[GF_FONTB].chars['0' + val / 100].pInfo;
 
-        DGL_DrawPatchLitAlpha(pInfo->id, xpos + 8 - pInfo->width / 2, y +2, 0, alpha * .4f);
+        DGL_Color4f(0, 0, 0, alpha * .4f);
+        DGL_DrawPatch_CS(pInfo->id, xpos + 8 - pInfo->width / 2, y +2);
         DGL_Color4f(red, green, blue, alpha);
         DGL_DrawPatch_CS(pInfo->id, xpos + 6 - pInfo->width / 2, y);
         DGL_Color4f(1, 1, 1, 1);
@@ -2150,8 +2151,8 @@ void HU_DrawBNumber(signed int val, int x, int y, float red,
     if(val > 9 || oldval > 99)
     {
         pInfo = &gFonts[GF_FONTB].chars['0' + val / 10].pInfo;
-
-        DGL_DrawPatchLitAlpha(pInfo->id, xpos + 8 - pInfo->width / 2, y +2, 0, alpha * .4f);
+        DGL_Color4f(0, 0, 0, alpha * .4f);
+        DGL_DrawPatch_CS(pInfo->id, xpos + 8 - pInfo->width / 2, y +2);
         DGL_Color4f(red, green, blue, alpha);
         DGL_DrawPatch_CS(pInfo->id, xpos + 6 - pInfo->width / 2, y);
         DGL_Color4f(1, 1, 1, 1);
@@ -2161,7 +2162,8 @@ void HU_DrawBNumber(signed int val, int x, int y, float red,
     xpos += 12;
     pInfo = &gFonts[GF_FONTB].chars['0' + val].pInfo;
 
-    DGL_DrawPatchLitAlpha(pInfo->id, xpos + 8 - pInfo->width / 2, y +2, 0, alpha * .4f);
+    DGL_Color4f(0, 0, 0, alpha * .4f);
+    DGL_DrawPatch_CS(pInfo->id, xpos + 8 - pInfo->width / 2, y +2);
     DGL_Color4f(red, green, blue, alpha);
     DGL_DrawPatch_CS(pInfo->id, xpos + 6 - pInfo->width / 2, y);
     DGL_Color4f(1, 1, 1, 1);
@@ -2171,7 +2173,8 @@ void HU_DrawBNumber(signed int val, int x, int y, float red,
 #if __JHERETIC__
 void IN_DrawShadowChar(int x, int y, unsigned char ch, gamefontid_t font)
 {
-    DGL_DrawPatchLitAlpha(gFonts[font].chars[ch].pInfo.id, x+2, y+2, 0, .4f);
+    DGL_Color4f(0, 0, 0, .4f);
+    DGL_DrawPatch_CS(gFonts[font].chars[ch].pInfo.id, x+2, y+2);
     DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     M_DrawChar(x, y, ch, font);
 }
@@ -2179,7 +2182,8 @@ void IN_DrawShadowChar(int x, int y, unsigned char ch, gamefontid_t font)
 void GL_DrawShadowedPatch2(float x, float y, float r, float g, float b, float a,
     patchid_t id)
 {
-    DGL_DrawPatchLitAlpha(id, x + 2, y + 2, 0, a * .4f);
+    DGL_Color4f(0, 0, 0, a * .4f);
+    DGL_DrawPatch_CS(id, x + 2, y + 2);
     DGL_Color4f(r, g, b, a);
     DGL_DrawPatch_CS(id, x, y);
     DGL_Color4f(1, 1, 1, 1);
@@ -2239,7 +2243,8 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
 
     if(digits == 4)
     {
-        DGL_DrawPatchLitAlpha(gFonts[GF_FONTB].chars['0' + val / 1000].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 1000].pInfo.width / 2 - 12, y + 2, 0, .4f);
+        DGL_Color4f(0, 0, 0, .4f);
+        DGL_DrawPatch_CS(gFonts[GF_FONTB].chars['0' + val / 1000].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 1000].pInfo.width / 2 - 12, y + 2);
         DGL_Color4f(r, g, b, a);
         DGL_DrawPatch_CS(gFonts[GF_FONTB].chars['0' + val / 1000].pInfo.id, xpos + 6 - gFonts[GF_FONTB].chars['0' + val / 1000].pInfo.width / 2 - 12, y);
     }
@@ -2248,7 +2253,8 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
     {
         if(realdigits > 2)
         {
-            DGL_DrawPatchLitAlpha(gFonts[GF_FONTB].chars['0' + val / 100].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 100].pInfo.width / 2, y+2, 0, .4f);
+            DGL_Color4f(0, 0, 0, .4f);
+            DGL_DrawPatch_CS(gFonts[GF_FONTB].chars['0' + val / 100].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 100].pInfo.width / 2, y+2);
             DGL_Color4f(r, g, b, a);
             DGL_DrawPatch_CS(gFonts[GF_FONTB].chars['0' + val / 100].pInfo.id, xpos + 6 - gFonts[GF_FONTB].chars['0' + val / 100].pInfo.width / 2, y);
         }
@@ -2260,13 +2266,15 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
     {
         if(val > 9)
         {
-            DGL_DrawPatchLitAlpha(gFonts[GF_FONTB].chars['0' + val / 10].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 10].pInfo.width / 2, y+2, 0, .4f);
+            DGL_Color4f(0, 0, 0, .4f);
+            DGL_DrawPatch_CS(gFonts[GF_FONTB].chars['0' + val / 10].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 10].pInfo.width / 2, y+2);
             DGL_Color4f(r, g, b, a);
             DGL_DrawPatch_CS(gFonts[GF_FONTB].chars['0' + val / 10].pInfo.id, xpos + 6 - gFonts[GF_FONTB].chars['0' + val / 10].pInfo.width / 2, y);
         }
         else if(digits == 2 || oldval > 99)
         {
-            DGL_DrawPatchLitAlpha(gFonts[GF_FONTB].chars['0'].pInfo.id, xpos+2, y+2, 0, .4f);
+            DGL_Color4f(0, 0, 0, .4f);
+            DGL_DrawPatch_CS(gFonts[GF_FONTB].chars['0'].pInfo.id, xpos+2, y+2);
             DGL_Color4f(r, g, b, a);
             DGL_DrawPatch_CS(gFonts[GF_FONTB].chars['0'].pInfo.id, xpos, y);
         }
@@ -2274,12 +2282,14 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
     }
 
     val = val % 10;
-    DGL_DrawPatchLitAlpha(gFonts[GF_FONTB].chars['0' + val].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['0' + val].pInfo.width / 2, y+2, 0, .4f);
+    DGL_Color4f(0, 0, 0, .4f);
+    DGL_DrawPatch_CS(gFonts[GF_FONTB].chars['0' + val].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['0' + val].pInfo.width / 2, y+2);
     DGL_Color4f(r, g, b, a);
     DGL_DrawPatch_CS(gFonts[GF_FONTB].chars['0' + val].pInfo.id, xpos + 6 - gFonts[GF_FONTB].chars['0' + val].pInfo.width / 2, y);
     if(neg)
     {
-        DGL_DrawPatchLitAlpha(gFonts[GF_FONTB].chars['-'].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['-'].pInfo.width / 2 - 12 * (realdigits), y+2, 0, .4f);
+        DGL_Color4f(0, 0, 0, .4f);
+        DGL_DrawPatch_CS(gFonts[GF_FONTB].chars['-'].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['-'].pInfo.width / 2 - 12 * (realdigits), y+2);
         DGL_Color4f(r, g, b, a);
         DGL_DrawPatch_CS(gFonts[GF_FONTB].chars['-'].pInfo.id, xpos + 6 - gFonts[GF_FONTB].chars['-'].pInfo.width / 2 - 12 * (realdigits), y);
     }

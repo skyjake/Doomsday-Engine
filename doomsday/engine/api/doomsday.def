@@ -24,6 +24,7 @@ NAME            "DOOMSDAY"
 ; 113 formerly DGL_Color
 ; 116 formerly GL_SetSprite
 ; 118 formerly GL_SetTexture
+; 122 formerly GL_DrawPatchLitAlpha
 ; 131 formerly GL_DrawPSprite
 ; 144 formerly M_FRandom
 ; 197 formerly PCX_GetSize
@@ -405,7 +406,6 @@ EXPORTS
     DGL_DrawCutRectTiled        @130 NONAME
     DGL_DrawPatch               @120 NONAME
     DGL_DrawPatch_CS            @121 NONAME
-    DGL_DrawPatchLitAlpha       @122 NONAME
     DGL_DrawFuzzPatch           @123 NONAME
     DGL_DrawAltFuzzPatch        @124 NONAME
     DGL_DrawShadowedPatch       @125 NONAME

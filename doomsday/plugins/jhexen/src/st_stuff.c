@@ -286,7 +286,8 @@ void drawFlightWidget(int player, float textAlpha, float iconAlpha,
                 hud->hitCenterFrame = true;
             }
         }
-        DGL_DrawPatchLitAlpha(dpSpinFly[frame].id, 16, 14, 1, iconAlpha);
+        DGL_Color4f(1, 1, 1, iconAlpha);
+        DGL_DrawPatch_CS(dpSpinFly[frame].id, 16, 14);
     }
     *drawnWidth = 32;
     *drawnHeight = 28;
@@ -303,7 +304,10 @@ void drawBootsWidget(int player, float textAlpha, float iconAlpha,
     if(!plr->powers[PT_SPEED])
         return;
     if(plr->powers[PT_SPEED] > BLINKTHRESHOLD || !(plr->powers[PT_SPEED] & 16))
-        DGL_DrawPatchLitAlpha(dpSpinSpeed[(mapTime / 3) & 15].id, 12, 14, 1, iconAlpha);
+    {
+        DGL_Color4f(1, 1, 1, iconAlpha);
+        DGL_DrawPatch_CS(dpSpinSpeed[(mapTime / 3) & 15].id, 12, 14);
+    }
     *drawnWidth = 24;
     *drawnHeight = 28;
 }
@@ -319,7 +323,10 @@ void drawDefenseWidget(int player, float textAlpha, float iconAlpha,
     if(!plr->powers[PT_INVULNERABILITY])
         return;
     if(plr->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD || !(plr->powers[PT_INVULNERABILITY] & 16))
-        DGL_DrawPatchLitAlpha(dpSpinDefense[(mapTime / 3) & 15].id, -13, 14, 1, iconAlpha);
+    {
+        DGL_Color4f(1, 1, 1, iconAlpha);
+        DGL_DrawPatch_CS(dpSpinDefense[(mapTime / 3) & 15].id, -13, 14);
+    }
     *drawnWidth = 26;
     *drawnHeight = 28;
 }
@@ -335,7 +342,10 @@ void drawServantWidget(int player, float textAlpha, float iconAlpha,
     if(!plr->powers[PT_MINOTAUR])
         return;
     if(plr->powers[PT_MINOTAUR] > BLINKTHRESHOLD || !(plr->powers[PT_MINOTAUR] & 16))
-        DGL_DrawPatchLitAlpha(dpSpinMinotaur[(mapTime / 3) & 15].id, -13, 17, 1, iconAlpha);
+    {
+        DGL_Color4f(1, 1, 1, iconAlpha);
+        DGL_DrawPatch_CS(dpSpinMinotaur[(mapTime / 3) & 15].id, -13, 17);
+    }
     *drawnWidth = 26;
     *drawnHeight = 29;
 }
@@ -359,23 +369,27 @@ void drawWeaponPiecesWidget(int player, float textAlpha, float iconAlpha,
 
     if(plr->pieces == 7)
     {
-        DGL_DrawPatchLitAlpha(dpWeaponFull[pClass].id, ORIGINX+190, ORIGINY, 1, iconAlpha);
+        DGL_Color4f(1, 1, 1, iconAlpha);
+        DGL_DrawPatch_CS(dpWeaponFull[pClass].id, ORIGINX+190, ORIGINY);
     }
     else
     {
         if(plr->pieces & WPIECE1)
         {
-            DGL_DrawPatchLitAlpha(dpWeaponPiece1[pClass].id, ORIGINX+PCLASS_INFO(pClass)->pieceX[0], ORIGINY, 1, iconAlpha);
+            DGL_Color4f(1, 1, 1, iconAlpha);
+            DGL_DrawPatch_CS(dpWeaponPiece1[pClass].id, ORIGINX+PCLASS_INFO(pClass)->pieceX[0], ORIGINY);
         }
 
         if(plr->pieces & WPIECE2)
         {
-            DGL_DrawPatchLitAlpha(dpWeaponPiece2[pClass].id, ORIGINX+PCLASS_INFO(pClass)->pieceX[1], ORIGINY, 1, iconAlpha);
+            DGL_Color4f(1, 1, 1, iconAlpha);
+            DGL_DrawPatch_CS(dpWeaponPiece2[pClass].id, ORIGINX+PCLASS_INFO(pClass)->pieceX[1], ORIGINY);
         }
 
         if(plr->pieces & WPIECE3)
         {
-            DGL_DrawPatchLitAlpha(dpWeaponPiece3[pClass].id, ORIGINX+PCLASS_INFO(pClass)->pieceX[2], ORIGINY, 1, iconAlpha);
+            DGL_Color4f(1, 1, 1, iconAlpha);
+            DGL_DrawPatch_CS(dpWeaponPiece3[pClass].id, ORIGINX+PCLASS_INFO(pClass)->pieceX[2], ORIGINY);
         }
     }
 
@@ -1264,7 +1278,8 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
             continue;
 
         patch = &dpKeySlot[i];
-        DGL_DrawPatchLitAlpha(patch->id, ORIGINX + 46 + numDrawn * 20, ORIGINY + 1, 1, iconAlpha);
+        DGL_Color4f(1, 1, 1, iconAlpha);
+        DGL_DrawPatch_CS(patch->id, ORIGINX + 46 + numDrawn * 20, ORIGINY + 1);
 
         *drawnWidth += patch->width;
         if(patch->height > *drawnHeight)
@@ -1318,7 +1333,8 @@ void drawSBarArmorIconsWidget(int player, float textAlpha, float iconAlpha,
         else
             alpha = 1;
 
-        DGL_DrawPatchLitAlpha(patch->id, ORIGINX + 150 + 31 * i, ORIGINY + 2, 1, iconAlpha * alpha);
+        DGL_Color4f(1, 1, 1, iconAlpha * alpha);
+        DGL_DrawPatch_CS(patch->id, ORIGINX + 150 + 31 * i, ORIGINY + 2);
 
         *drawnWidth += patch->width;
         if(patch->height > *drawnHeight)
@@ -1851,7 +1867,8 @@ void drawBlueManaWidget(int player, float textAlpha, float iconAlpha,
         break;
     }
 
-    DGL_DrawPatchLitAlpha(patch->id, 0, 0, 1, iconAlpha);
+    DGL_Color4f(1, 1, 1, iconAlpha);
+    DGL_DrawPatch_CS(patch->id, 0, 0);
     DrINumber(plr->ammo[AT_BLUEMANA].owned, patch->width+2, 0, 1, 1, 1, textAlpha);
     *drawnWidth = patch->width+2+dpINumbers[0].width*3;
     *drawnHeight = MAX_OF(patch->height, dpINumbers[0].height);
@@ -1896,7 +1913,8 @@ void drawGreenManaWidget(int player, float textAlpha, float iconAlpha,
         break;
     }
 
-    DGL_DrawPatchLitAlpha(patch->id, 0, 0, 1, iconAlpha);
+    DGL_Color4f(1, 1, 1, iconAlpha);
+    DGL_DrawPatch_CS(patch->id, 0, 0);
     DrINumber(plr->ammo[AT_GREENMANA].owned, patch->width+2, 0, 1, 1, 1, textAlpha);
     *drawnWidth = patch->width+2+dpINumbers[0].width*3;
     *drawnHeight = MAX_OF(patch->height, dpINumbers[0].height);
@@ -1940,8 +1958,10 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
     {
         const patchinfo_t* dp = &dpInvItemFlash[hud->currentInvItemFlash % 5];
 
-        DGL_DrawPatchLitAlpha(dpInvItemBox.id, -30, -30, 1, iconAlpha / 2);
-        DGL_DrawPatchLitAlpha(dp->id, -27, -30, 1, iconAlpha);
+        DGL_Color4f(1, 1, 1, iconAlpha/2);
+        DGL_DrawPatch_CS(dpInvItemBox.id, -30, -30);
+        DGL_Color4f(1, 1, 1, iconAlpha);
+        DGL_DrawPatch_CS(dp->id, -27, -30);
     }
     else
     {
@@ -1952,8 +1972,10 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
             patchid_t patch = P_GetInvItem(readyItem-1)->patchId;
             uint count;
 
-            DGL_DrawPatchLitAlpha(dpInvItemBox.id, -30, -30, 1, iconAlpha / 2);
-            DGL_DrawPatchLitAlpha(patch, -32, -31, 1, iconAlpha);
+            DGL_Color4f(1, 1, 1, iconAlpha/2);
+            DGL_DrawPatch_CS(dpInvItemBox.id, -30, -30);
+            DGL_Color4f(1, 1, 1, iconAlpha);
+            DGL_DrawPatch_CS(patch, -32, -31);
             if((count = P_InventoryCount(player, readyItem)) > 1)
                 Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, -2, -7, textAlpha);
         }
