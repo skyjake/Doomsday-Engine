@@ -1809,7 +1809,7 @@ void FI_Drawer(void)
         }
         else if(pic->flags.is_patch)
         {
-            GL_DrawPatch_CS(0, 0, (patchid_t)pic->tex[sq]);
+            GL_DrawPatch_CS((patchid_t)pic->tex[sq], 0, 0);
         }
         else
         {

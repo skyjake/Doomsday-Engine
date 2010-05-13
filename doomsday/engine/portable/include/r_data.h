@@ -345,7 +345,7 @@ masktex_t*      R_CreateMaskTexture(const ded_reflection_t* def);
 masktex_t*      R_GetMaskTexture(const char* external);
 void            R_DestroyMaskTextures(void); // Called at shutdown.
 
-patchtex_t*     R_FindPatchTex(patchid_t num);
+patchtex_t*     R_FindPatchTex(patchid_t id);
 patchtex_t*     R_GetPatchTex(lumpnum_t lump); // Creates new entries.
 
 rawtex_t*       R_FindRawTex(lumpnum_t lump); // May return NULL.

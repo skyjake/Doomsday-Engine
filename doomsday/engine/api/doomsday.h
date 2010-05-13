@@ -418,7 +418,7 @@ extern          "C" {
     void            R_SetBorderGfx(const char* lumps[9]);
     boolean         R_GetSpriteInfo(int sprite, int frame,
                                     spriteinfo_t* sprinfo);
-    boolean         R_GetPatchInfo(patchid_t num, patchinfo_t* info);
+    boolean         R_GetPatchInfo(patchid_t id, patchinfo_t* info);
     int             R_CreateAnimGroup(int flags);
     void            R_AddToAnimGroup(int groupNum, materialnum_t num,
                                      int tics, int randomTics);
@@ -454,13 +454,12 @@ extern          "C" {
     void            GL_SetFilterColor(float r, float g, float b, float a);
 
     // Graphics: 2D drawing.
-    void            GL_DrawPatch(int x, int y, patchid_t num);
-    void            GL_DrawPatch_CS(int x, int y, patchid_t num);
-    void            GL_DrawPatchLitAlpha(int x, int y, float light,
-                                         float alpha, patchid_t num);
-    void            GL_DrawFuzzPatch(int x, int y, patchid_t num);
-    void            GL_DrawAltFuzzPatch(int x, int y, patchid_t num);
-    void            GL_DrawShadowedPatch(int x, int y, patchid_t num);
+    void            GL_DrawPatch(patchid_t id, int x, int y);
+    void            GL_DrawPatch_CS(patchid_t id, int x, int y);
+    void            GL_DrawPatchLitAlpha(patchid_t id, int x, int y, float light, float alpha);
+    void            GL_DrawFuzzPatch(patchid_t id, int x, int y);
+    void            GL_DrawAltFuzzPatch(patchid_t id, int x, int y);
+    void            GL_DrawShadowedPatch(patchid_t id, int x, int y);
 
     void            GL_DrawRawScreen(lumpnum_t lump, float offx, float offy);
     void            GL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy, float scalex, float scaley);

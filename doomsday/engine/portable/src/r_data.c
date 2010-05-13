@@ -932,11 +932,11 @@ static patchtex_t* getPatchTex(lumpnum_t lump)
 /**
  * Returns a patchtex_t* for the given lump, if one already exists.
  */
-patchtex_t* R_FindPatchTex(patchid_t num)
+patchtex_t* R_FindPatchTex(patchid_t id)
 {
-    patchtex_t* patchTex = getPatchTex((lumpnum_t)num);
+    patchtex_t* patchTex = getPatchTex((lumpnum_t)id);
     if(!patchTex)
-        Con_Error("R_FindPatchText: Unknown patch %i.", num);
+        Con_Error("R_FindPatchText: Unknown patch %i.", id);
     return patchTex;
 }
 

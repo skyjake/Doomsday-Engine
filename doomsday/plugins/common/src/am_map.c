@@ -1760,9 +1760,9 @@ void M_DrawMapMenu(void)
 
     // Draw the page arrows.
     token = &dpInvPageLeft[!menu->firstItem || (menuTime & 8)];
-    GL_DrawPatch_CS(menu->x, menu->y - 22, token->id);
+    GL_DrawPatch_CS(token->id, menu->x, menu->y - 22);
     token = &dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)];
-    GL_DrawPatch_CS(312 - menu->x, menu->y - 22, token->id);
+    GL_DrawPatch_CS(token->id, 312 - menu->x, menu->y - 22);
 #endif
 
     idx = 0;

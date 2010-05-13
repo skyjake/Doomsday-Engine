@@ -128,10 +128,10 @@ void GL_DrawRawScreen(lumpnum_t lump, float offx, float offy)
 /**
  * Drawing with the Current State.
  */
-void GL_DrawPatch_CS(int posX, int posY, patchid_t num)
+void GL_DrawPatch_CS(patchid_t id, int posX, int posY)
 {
     float x = posX, y = posY, w, h;
-    patchtex_t* p = R_FindPatchTex(num);
+    patchtex_t* p = R_FindPatchTex(id);
 
     // Set the texture.
     GL_BindTexture(GL_PreparePatch(p), glmode[texMagMode]);
@@ -168,39 +168,39 @@ void GL_DrawPatch_CS(int posX, int posY, patchid_t num)
     glEnd();
 }
 
-void GL_DrawPatchLitAlpha(int x, int y, float light, float alpha, patchid_t num)
+void GL_DrawPatchLitAlpha(patchid_t id, int x, int y, float light, float alpha)
 {
     glColor4f(light, light, light, alpha);
-    GL_DrawPatch_CS(x, y, num);
+    GL_DrawPatch_CS(id, x, y);
 }
 
-void GL_DrawPatch(int x, int y, patchid_t num)
+void GL_DrawPatch(patchid_t id, int x, int y)
 {
-    if(num < 0)
+    if(id < 0)
         return;
-    GL_DrawPatchLitAlpha(x, y, 1, 1, num);
+    GL_DrawPatchLitAlpha(id, x, y, 1, 1);
 }
 
-void GL_DrawFuzzPatch(int x, int y, patchid_t num)
+void GL_DrawFuzzPatch(patchid_t id, int x, int y)
 {
-    if(num < 0)
+    if(id < 0)
         return;
-    GL_DrawPatchLitAlpha(x, y, 1, .333f, num);
+    GL_DrawPatchLitAlpha(id, x, y, 1, .333f);
 }
 
-void GL_DrawAltFuzzPatch(int x, int y, patchid_t num)
+void GL_DrawAltFuzzPatch(patchid_t id, int x, int y)
 {
-    if(num < 0)
+    if(id < 0)
         return;
-    GL_DrawPatchLitAlpha(x, y, 1, .666f, num);
+    GL_DrawPatchLitAlpha(id, x, y, 1, .666f);
 }
 
-void GL_DrawShadowedPatch(int x, int y, patchid_t num)
+void GL_DrawShadowedPatch(patchid_t id, int x, int y)
 {
-    if(num < 0)
+    if(id < 0)
         return;
-    GL_DrawPatchLitAlpha(x + 2, y + 2, 0, .4f, num);
-    GL_DrawPatchLitAlpha(x, y, 1, 1, num);
+    GL_DrawPatchLitAlpha(id, x + 2, y + 2, 0, .4f);
+    GL_DrawPatchLitAlpha(id, x, y, 1, 1);
 }
 
 void GL_DrawRect(float x, float y, float w, float h, float r, float g, float b, float a)

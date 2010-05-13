@@ -630,9 +630,9 @@ void M_DrawControlsMenu(void)
 
     // Draw the page arrows.
     token = &dpInvPageLeft[!menu->firstItem || (menuTime & 8)];
-    GL_DrawPatch_CS(menu->x, menu->y - 12, token->id);
+    GL_DrawPatch_CS(token->id, menu->x, menu->y - 12);
     token = &dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)];
-    GL_DrawPatch_CS(312 - menu->x, menu->y - 12, token->id);
+    GL_DrawPatch_CS(token->id, 312 - menu->x, menu->y - 12);
 #endif
 
     strcpy(buf, "Select to assign new, [Del] to clear");

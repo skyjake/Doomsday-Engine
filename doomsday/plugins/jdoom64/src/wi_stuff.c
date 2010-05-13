@@ -156,7 +156,7 @@ static patchinfo_t bp[MAXPLAYERS]; // "gray P[1..MAXPLAYERS]"
 
 void WI_slamBackground(void)
 {
-    GL_DrawPatch(0, 0, bg.id);
+    GL_DrawPatch(bg.id, 0, 0);
 }
 
 /**
