@@ -1021,6 +1021,7 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
         return true;
     }
     info->id = -1; // Safety Precaution.
+    VERBOSE(Con_Message("R_GetPatchInfo: Warning, unknown Patch %i.\n", id));
     return false;
     }
 }
