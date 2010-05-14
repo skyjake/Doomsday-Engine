@@ -2080,7 +2080,7 @@ DGLuint GL_PreparePatch(patchtex_t* patchTex)
             params.flags |= MLF_TEX_MONOCHROME;
         if(patchTex->flags & PF_UPSCALE_AND_SHARPEN)
             params.flags |= MLF_TEX_UPSCALE_AND_SHARPEN;
-        if((texInst = GL_PrepareGLTexture(patchTex->id, &params, NULL)))
+        if((texInst = GL_PrepareGLTexture(patchTex->texId, &params, NULL)))
             return texInst->id;
     }
     return 0;

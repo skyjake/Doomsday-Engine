@@ -161,7 +161,7 @@ typedef struct {
 // A patchtex is a lumppatch that has been prepared for render.
 typedef struct patchtex_s {
     lumpnum_t       lump;
-    gltextureid_t   id; // Name of the associated GL texture.
+    gltextureid_t   texId; // Name of the associated GL texture.
     boolean         isCustom;
     short           flags;
     short           width, height;
@@ -312,7 +312,6 @@ boolean         R_UpdateSurface(struct surface_s* suf, boolean forceUpdate);
 
 void            R_PrecacheMap(void);
 void            R_PrecacheMobjNum(int mobjtypeNum);
-void            R_PrecachePatch(const char* name, patchinfo_t* info);
 
 doomtexturedef_t* R_GetDoomTextureDef(int num);
 
@@ -345,7 +344,9 @@ masktex_t*      R_CreateMaskTexture(const ded_reflection_t* def);
 masktex_t*      R_GetMaskTexture(const char* external);
 void            R_DestroyMaskTextures(void); // Called at shutdown.
 
+patchid_t       R_PrecachePatch(const char* name, patchinfo_t* info);
 patchtex_t*     R_GetPatchTex(lumpnum_t lump); // Creates new entries.
+
 patchtex_t*     R_FindPatchTex(patchid_t id);
 boolean         R_GetPatchInfo(patchid_t id, patchinfo_t* info);
 

@@ -3192,6 +3192,9 @@ void Hu_DrawPatch(patchid_t id, int posX, int posY, boolean usePatchOffset)
     float x = posX, y = posY, w, h;
     patchinfo_t info;
 
+    if(id == -1)
+        return;
+
     DGL_SetPatch(id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
     if(!R_GetPatchInfo(id, &info))
         return;
@@ -3205,15 +3208,15 @@ void Hu_DrawPatch(patchid_t id, int posX, int posY, boolean usePatchOffset)
         y += (float) info.topOffset;
     }
 
-    if(info.extraOffset[VX])
+    if(info.extraOffset[0])
     {
         // This offset is used only for the extra borders in the
         // "upscaled and sharpened" patches, so we can tweak the values
         // to our liking a bit more.
-        x += info.extraOffset[VX];
-        y += info.extraOffset[VY];
-        w += fabs(info.extraOffset[VX])*2;
-        h += fabs(info.extraOffset[VY])*2;
+        x += info.extraOffset[0];
+        y += info.extraOffset[1];
+        w += fabs(info.extraOffset[0])*2;
+        h += fabs(info.extraOffset[1])*2;
     }
 
     DGL_Begin(DGL_QUADS);

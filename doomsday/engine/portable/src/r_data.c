@@ -984,15 +984,13 @@ patchtex_t* R_GetPatchTex(lumpnum_t lump)
          * Strictly speaking we should specify the border dimension here and
          * reference it when upscaling.
          */
-        p->width += 2;
-        p->height += 2;
         p->extraOffset[0] = p->extraOffset[1] = -1;
     }
 
     // Register a gltexture for this.
     {
     const gltexture_t* glTex = GL_CreateGLTexture(W_LumpName(lump), lump, GLT_DOOMPATCH);
-    p->id = glTex->id;
+    p->texId = glTex->id;
     }
 
     // Add it to the pointer array.
@@ -1005,36 +1003,29 @@ patchtex_t* R_GetPatchTex(lumpnum_t lump)
 
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
 {
-    lumpnum_t lump = (lumpnum_t) id;
-
     if(!info)
-        return false;
-
-    memset(info, 0, sizeof(*info));
-
-    if(lump >= 0 && lump < numLumps)
+        Con_Error("R_GetPatchInfo: Info argument cannot be NULL.");
     {
-        const lumppatch_t* patch = (const lumppatch_t*) W_CacheLumpNum(lump, PU_STATIC);
+    const patchtex_t* p;
+    memset(info, 0, sizeof(*info));
+    if((p = getPatchTex(id)) != NULL)
+    {
         info->id = id;
-        info->width = SHORT(patch->width);
-        info->height = SHORT(patch->height);
-        info->topOffset = -SHORT(patch->topOffset);
-        info->offset = -SHORT(patch->leftOffset);
-        info->isCustom = !W_IsFromIWAD(lump);
-        /// \fixme
-        info->extraOffset[0] = info->extraOffset[1] = 0;
-        W_ChangeCacheTag(lump, PU_CACHE);
+        info->width = p->width;
+        info->height = p->height;
+        info->offset = p->offX;
+        info->topOffset = p->offY;
+        info->isCustom = p->isCustom;
+        info->extraOffset[0] = p->extraOffset[0];
+        info->extraOffset[1] = p->extraOffset[1];
         return true;
     }
-
-    // Safety precaution.
-    info->id = -1;
-
-    VERBOSE(Con_Message("R_GetPatchInfo: Warning, unknown Patch %i.\n", id));
+    info->id = -1; // Safety Precaution.
     return false;
+    }
 }
 
-void R_PrecachePatch(const char* name, patchinfo_t* info)
+patchid_t R_PrecachePatch(const char* name, patchinfo_t* info)
 {
     lumpnum_t lump;
 
@@ -1045,7 +1036,7 @@ void R_PrecachePatch(const char* name, patchinfo_t* info)
     }
 
     if(isDedicated)
-        return;
+        return -1;
 
     if((lump = W_CheckNumForName(name)) != -1)
     {
@@ -1055,7 +1046,9 @@ void R_PrecachePatch(const char* name, patchinfo_t* info)
         {
             R_GetPatchInfo((patchid_t)lump, info);
         }
+        return (patchid_t)lump;
     }
+    return -1;
 }
 
 /**
