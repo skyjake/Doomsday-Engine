@@ -82,7 +82,12 @@ InFine {
       Patch cursor 248 180 M_SKULL1
     ;
     ELSE DO
-      Patch back 0 0 "HELP1"
+      IF commercial DO
+        Patch back 0 0 "HELP"
+      ;
+      ELSE DO
+        Patch back 0 0 "HELP1"
+      ;
       Patch cursor 298 160 M_SKULL1
     ;
 
