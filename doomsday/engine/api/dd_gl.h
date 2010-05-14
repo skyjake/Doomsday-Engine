@@ -243,7 +243,6 @@ void            DGL_DrawRectTiled(float x, float y, float w, float h, int tw, in
 void            DGL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th, int txoff, int tyoff, float cx, float cy, float cw, float ch);
 
 void            DGL_DrawPatch(patchid_t id, int x, int y);
-void            DGL_DrawShadowedPatch(patchid_t id, int x, int y);
 
 void            DGL_DrawRawScreen(lumpnum_t lump, float offx, float offy);
 void            DGL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy, float scalex, float scaley);

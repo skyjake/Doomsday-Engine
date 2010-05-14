@@ -3195,3 +3195,14 @@ void Hu_EndBorderedProjection(borderedprojectionstate_t* s)
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PopMatrix();
 }
+
+void Hu_DrawShadowedPatch(patchid_t id, int x, int y)
+{
+    if(id < 0)
+        return;
+    DGL_Color4f(0, 0, 0, .4f);
+    DGL_DrawPatch(id, x+2, y+2);
+
+    DGL_Color4f(1, 1, 1, 1);
+    DGL_DrawPatch(id, x, y);
+}

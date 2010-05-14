@@ -911,14 +911,3 @@ void DGL_DrawPatch(patchid_t id, int posX, int posY)
         glVertex2f(x, y + h);
     glEnd();
 }
-
-void DGL_DrawShadowedPatch(patchid_t id, int x, int y)
-{
-    if(id < 0)
-        return;
-    DGL_Color4f(0, 0, 0, .4f);
-    DGL_DrawPatch(id, x+2, y+2);
-
-    DGL_Color4f(1, 1, 1, 1);
-    DGL_DrawPatch(id, x, y);
-}
