@@ -610,7 +610,7 @@ void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, voi
 void M_DrawControlsMenu(void)
 {
 #if __JHERETIC__ || __JHEXEN__
-    const patchinfo_t* token;
+    patchid_t token;
 #endif
     const menu_t* menu = &ControlsDef;
     const menuitem_t* item = menu->items + menu->firstItem;
@@ -629,10 +629,10 @@ void M_DrawControlsMenu(void)
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 
     // Draw the page arrows.
-    token = &dpInvPageLeft[!menu->firstItem || (menuTime & 8)];
-    Hu_DrawPatch(token->id, menu->x, menu->y - 12, true);
-    token = &dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)];
-    Hu_DrawPatch(token->id, 312 - menu->x, menu->y - 12, true);
+    token = dpInvPageLeft[!menu->firstItem || (menuTime & 8)].id;
+    Hu_DrawPatch(token, menu->x, menu->y - 12);
+    token = dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)].id;
+    Hu_DrawPatch(token, 312 - menu->x, menu->y - 12);
 #endif
 
     strcpy(buf, "Select to assign new, [Del] to clear");

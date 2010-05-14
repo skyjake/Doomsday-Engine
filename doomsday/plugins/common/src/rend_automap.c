@@ -1323,7 +1323,7 @@ static void restoreGLStateFromMap(rautomap_data_t* rmap)
 }
 
 static void drawMapName(float x, float y, float scale, float alpha,
-    patchinfo_t* patch, const char* lname)
+    patchid_t patch, const char* lname)
 {
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_Translatef(x, y, 0);
@@ -1348,7 +1348,7 @@ static void renderMapName(const automap_t* map)
 {
     float x, y;
     const char* lname;
-    patchinfo_t* patch = NULL;
+    patchid_t patch = -1;
 #if __JDOOM__ || __JDOOM64__
     int mapNum;
 #endif
@@ -1368,14 +1368,14 @@ static void renderMapName(const automap_t* map)
         // Compose the mapnumber used to check the map name patches array.
 #if __JDOOM64__
         mapNum = gameMap;
-        patch = &mapNamePatches[mapNum];
+        patch = mapNamePatches[mapNum].id;
 #elif __JDOOM__
         if(gameMode == commercial)
             mapNum = gameMap;
         else
             mapNum = (gameEpisode * 9) + gameMap;
 
-        patch = &mapNamePatches[mapNum];
+        patch = mapNamePatches[mapNum].id;
 #endif
 
         //Automap_GetWindow(map, &wx, &wy, &ww, &wh);

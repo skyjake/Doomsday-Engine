@@ -560,7 +560,7 @@ void IN_Drawer(void)
         if(wbs->episode < 3)
         {
             DGL_Color4f(1, 1, 1, 1);
-            Hu_DrawPatch(dpInterPic.id, 0, 0, true);
+            Hu_DrawPatch(dpInterPic.id, 0, 0);
             IN_DrawOldLevel();
         }
         break;
@@ -569,7 +569,7 @@ void IN_Drawer(void)
         if(wbs->episode < 3)
         {
             DGL_Color4f(1, 1, 1, 1);
-            Hu_DrawPatch(dpInterPic.id, 0, 0, true);
+            Hu_DrawPatch(dpInterPic.id, 0, 0);
             IN_DrawYAH();
         }
         break;
@@ -578,7 +578,7 @@ void IN_Drawer(void)
         if(wbs->episode < 3)
         {
             DGL_Color4f(1, 1, 1, 1);
-            Hu_DrawPatch(dpInterPic.id, 0, 0, true);
+            Hu_DrawPatch(dpInterPic.id, 0, 0);
         }
         break;
 
@@ -615,12 +615,12 @@ void IN_DrawOldLevel(void)
         DGL_Color4f(1, 1, 1, 1);
         for(i = 0; i < wbs->nextMap; ++i)
         {
-            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y, true);
+            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
         }
 
         if(!(interTime & 16))
         {
-            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y, true);
+            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
         }
     }
     else
@@ -629,17 +629,17 @@ void IN_DrawOldLevel(void)
         DGL_Color4f(1, 1, 1, 1);
         for(i = 0; i < wbs->currentMap; ++i)
         {
-            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y, true);
+            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
         }
 
         if(players[CONSOLEPLAYER].didSecret)
         {
-            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y, true);
+            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
         }
 
         if(!(interTime & 16))
         {
-            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][wbs->currentMap].x, YAHspot[wbs->episode][wbs->currentMap].y, true);
+            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][wbs->currentMap].x, YAHspot[wbs->episode][wbs->currentMap].y);
         }
     }
 }
@@ -659,17 +659,17 @@ void IN_DrawYAH(void)
     DGL_Color4f(1, 1, 1, 1);
     for(i = 0; i < wbs->nextMap; ++i)
     {
-        Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y, true);
+        Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
     }
 
     if(players[CONSOLEPLAYER].didSecret)
     {
-        Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y, true);
+        Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
     }
 
     if(!(interTime & 16) || interState == 3)
     {   // Draw the destination 'X'
-        Hu_DrawPatch(dpGoingThere.id, YAHspot[wbs->episode][wbs->nextMap].x, YAHspot[wbs->episode][wbs->nextMap].y, true);
+        Hu_DrawPatch(dpGoingThere.id, YAHspot[wbs->episode][wbs->nextMap].x, YAHspot[wbs->episode][wbs->nextMap].y);
     }
 }
 
@@ -809,10 +809,10 @@ void IN_DrawCoopStats(void)
         if(teamInfo[i].members)
         {
             DGL_Color4f(0, 0, 0, .4f);
-            Hu_DrawPatch(dpFaceAlive[i].id, 27, ypos+2, true);
+            Hu_DrawPatch(dpFaceAlive[i].id, 27, ypos+2);
 
             DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            Hu_DrawPatch(dpFaceAlive[i].id, 25, ypos, true);
+            Hu_DrawPatch(dpFaceAlive[i].id, 25, ypos);
 
             if(interTime < 40)
             {
@@ -826,15 +826,12 @@ void IN_DrawCoopStats(void)
                 sounds++;
             }
 
-            IN_DrawNumber(killPercent[i], 85, ypos + 10, 3, defFontRGB[0],
-                          defFontRGB[1], defFontRGB[2], 1);
+            IN_DrawNumber(killPercent[i], 85, ypos + 10, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
             IN_DrawShadowChar(121, ypos + 10, '%', GF_FONTB);
-            IN_DrawNumber(bonusPercent[i], 160, ypos + 10, 3, defFontRGB[0],
-                          defFontRGB[1], defFontRGB[2], 1);
+            IN_DrawNumber(bonusPercent[i], 160, ypos + 10, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
             IN_DrawShadowChar(196, ypos + 10, '%', GF_FONTB);
-            IN_DrawNumber(secretPercent[i], 237, ypos + 10, 3,
-                          defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+            IN_DrawNumber(secretPercent[i], 237, ypos + 10, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
             IN_DrawShadowChar(273, ypos + 10, '%', GF_FONTB);
             ypos += 37;
         }
@@ -868,8 +865,8 @@ void IN_DrawDMStats(void)
         {
             if(teamInfo[i].members)
             {
-                Hu_DrawShadowedPatch(dpFaceAlive[i].id, 40, ((ypos << FRACBITS) + dSlideY[i] * interTime) >> FRACBITS, true);
-                Hu_DrawShadowedPatch(dpFaceDead[i].id, ((xpos << FRACBITS) + dSlideX[i] * interTime) >> FRACBITS, 18, true);
+                Hu_DrawShadowedPatch(dpFaceAlive[i].id, 40, ((ypos << FRACBITS) + dSlideY[i] * interTime) >> FRACBITS);
+                Hu_DrawShadowedPatch(dpFaceDead[i].id, ((xpos << FRACBITS) + dSlideX[i] * interTime) >> FRACBITS, 18);
             }
         }
 
@@ -895,14 +892,14 @@ void IN_DrawDMStats(void)
         {
             if(interTime < 100 || i == playerTeam[CONSOLEPLAYER])
             {
-                Hu_DrawShadowedPatch(dpFaceAlive[i].id, 40, ypos, true);
-                Hu_DrawShadowedPatch(dpFaceDead[i].id, xpos, 18, true);
+                Hu_DrawShadowedPatch(dpFaceAlive[i].id, 40, ypos);
+                Hu_DrawShadowedPatch(dpFaceDead[i].id, xpos, 18);
             }
             else
             {
                 DGL_Color4f(1, 1, 1, .333f);
-                Hu_DrawPatch(dpFaceAlive[i].id, 40, ypos, true);
-                Hu_DrawPatch(dpFaceDead[i].id, xpos, 18, true);
+                Hu_DrawPatch(dpFaceAlive[i].id, 40, ypos);
+                Hu_DrawPatch(dpFaceDead[i].id, xpos, 18);
             }
 
             kpos = 86;

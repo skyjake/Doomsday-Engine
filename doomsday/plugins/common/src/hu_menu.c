@@ -223,7 +223,7 @@ static patchinfo_t dpBullWithFire[8];
 #endif
 
 static int cursors = NUMCURSORS;
-patchinfo_t cursorst[NUMCURSORS];
+static patchinfo_t cursorst[NUMCURSORS];
 
 #if __JHEXEN__
 static int MenuPClass;
@@ -1737,7 +1737,7 @@ void Hu_MenuDrawer(void)
             if(currentMenu->items[i].patch)
             {
                 WI_DrawPatch(pos[VX], pos[VY], r, g, b, menuAlpha,
-                             currentMenu->items[i].patch,
+                             currentMenu->items[i].patch->id,
                              (currentMenu->items[i].flags & MIF_NOTALTTXT)? NULL :
                              currentMenu->items[i].text, true, ALIGN_LEFT);
             }
@@ -2383,18 +2383,18 @@ void M_DrawMainMenu(void)
     int frame = (menuTime / 5) % 7;
 
     DGL_Color4f(1, 1, 1, menuAlpha);
-    Hu_DrawPatch(m_htic.id, 88, 0, true);
-    Hu_DrawPatch(dpBullWithFire[(frame + 2) % 7].id, 37, 80, true);
-    Hu_DrawPatch(dpBullWithFire[frame].id, 278, 80, true);
+    Hu_DrawPatch(m_htic.id, 88, 0);
+    Hu_DrawPatch(dpBullWithFire[(frame + 2) % 7].id, 37, 80);
+    Hu_DrawPatch(dpBullWithFire[frame].id, 278, 80);
 
 #elif __JHERETIC__
-    WI_DrawPatch(88, 0, 1, 1, 1, menuAlpha, &m_htic, NULL, false, ALIGN_LEFT);
+    WI_DrawPatch(88, 0, 1, 1, 1, menuAlpha, m_htic.id, NULL, false, ALIGN_LEFT);
 
     DGL_Color4f(1, 1, 1, menuAlpha);
-    Hu_DrawPatch(dpRotatingSkull[17 - frame].id, 40, 10, true);
-    Hu_DrawPatch(dpRotatingSkull[frame].id, 232, 10, true);
+    Hu_DrawPatch(dpRotatingSkull[17 - frame].id, 40, 10);
+    Hu_DrawPatch(dpRotatingSkull[frame].id, 232, 10);
 #elif __JDOOM__ || __JDOOM64__
-    WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, &m_doom, NULL, false, ALIGN_LEFT);
+    WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, m_doom.id, NULL, false, ALIGN_LEFT);
 #endif
 }
 
@@ -2457,11 +2457,10 @@ void M_DrawClassMenu(void)
         pClass = (menuTime / 5) % (menu->itemCount - 1);
     }
 
-    R_GetSpriteInfo(STATES[PCLASS_INFO(pClass)->normalState].sprite,
-                    ((menuTime >> 3) & 3), &sprInfo);
+    R_GetSpriteInfo(STATES[PCLASS_INFO(pClass)->normalState].sprite, ((menuTime >> 3) & 3), &sprInfo);
 
     DGL_Color4f(1, 1, 1, menuAlpha);
-    Hu_DrawPatch(dpPlayerClassBG[pClass % 3].id, BG_X, BG_Y, true);
+    Hu_DrawPatch(dpPlayerClassBG[pClass % 3].id, BG_X, BG_Y);
 
     // Fighter's colors are a bit different.
     if(pClass == PCLASS_FIGHTER)
@@ -2521,7 +2520,7 @@ void M_DrawEpisode(void)
     }
 #else // __JDOOM__
     WI_DrawPatch(50, 40, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
-                 &m_episod, "{case}Which Episode{scaley=1.25,y=-3}?",
+                 m_episod.id, "{case}Which Episode{scaley=1.25,y=-3}?",
                  true, ALIGN_LEFT);
 #endif
 }
@@ -2535,11 +2534,8 @@ void M_DrawSkillMenu(void)
     M_DrawTitle("SKILL LEVEL?", 4);
 #elif __JDOOM__ || __JDOOM64__
     menu_t *menu = &SkillDef;
-    WI_DrawPatch(96, 14, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
-                 &m_newg, "{case}NEW GAME", true, ALIGN_LEFT);
-    WI_DrawPatch(54, 38, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
-                 &m_skill, "{case}Choose Skill Level:", true,
-                 ALIGN_LEFT);
+    WI_DrawPatch(96, 14, menu->color[0], menu->color[1], menu->color[2], menuAlpha, m_newg.id, "{case}NEW GAME", true, ALIGN_LEFT);
+    WI_DrawPatch(54, 38, menu->color[0], menu->color[1], menu->color[2], menuAlpha, m_skill.id, "{case}Choose Skill Level:", true, ALIGN_LEFT);
 #endif
 }
 
@@ -2595,17 +2591,15 @@ static void updateSaveList(void)
 
 void M_DrawLoad(void)
 {
-    int                 i;
-    menu_t*             menu = &LoadDef;
-    float               t, r, g, b;
-    int                 width =
-        M_StringWidth("a", menu->font) * (HU_SAVESTRINGSIZE - 1);
+    menu_t* menu = &LoadDef;
+    int width = M_StringWidth("a", menu->font) * (HU_SAVESTRINGSIZE - 1);
+    float t, r, g, b;
+    int i;
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     M_DrawTitle("LOAD GAME", 4);
 #else
-    WI_DrawPatch(72, 24, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
-                 &m_loadg, "{case}LOAD GAME", true, ALIGN_LEFT);
+    WI_DrawPatch(72, 24, menu->color[0], menu->color[1], menu->color[2], menuAlpha, m_loadg.id, "{case}LOAD GAME", true, ALIGN_LEFT);
 #endif
 
     if(menu_color <= 50)
@@ -2633,17 +2627,15 @@ void M_DrawLoad(void)
 
 void M_DrawSave(void)
 {
-    int                 i;
-    menu_t*             menu = &SaveDef;
-    float               t, r, g, b;
-    int                 width =
-        M_StringWidth("a", menu->font) * (HU_SAVESTRINGSIZE - 1);
+    menu_t* menu = &SaveDef;
+    int width = M_StringWidth("a", menu->font) * (HU_SAVESTRINGSIZE - 1);
+    float t, r, g, b;
+    int i;
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     M_DrawTitle("SAVE GAME", 4);
 #else
-    WI_DrawPatch(72, 24, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
-                 &m_saveg, "{case}SAVE GAME", true, ALIGN_LEFT);
+    WI_DrawPatch(72, 24, menu->color[0], menu->color[1], menu->color[2], menuAlpha, m_saveg.id, "{case}SAVE GAME", true, ALIGN_LEFT);
 #endif
 
     if(menu_color <= 50)
@@ -2656,8 +2648,7 @@ void M_DrawSave(void)
 
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
-        M_DrawSaveLoadBorder(SaveDef.x - 8, SAVEGAME_BOX_YOFFSET + SaveDef.y +
-                             (menu->itemHeight * i), width + 16);
+        M_DrawSaveLoadBorder(SaveDef.x - 8, SAVEGAME_BOX_YOFFSET + SaveDef.y + (menu->itemHeight * i), width + 16);
 
         M_WriteText3(SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 +
                      (menu->itemHeight * i),
@@ -2670,7 +2661,7 @@ void M_DrawSave(void)
 
     if(saveStringEnter)
     {
-        size_t              len = strlen(savegamestrings[saveSlot]);
+        size_t len = strlen(savegamestrings[saveSlot]);
 
         if(len < HU_SAVESTRINGSIZE)
         {
@@ -2689,7 +2680,7 @@ void M_DrawSaveLoadBorder(int x, int y, int width)
 {
 #if __JHERETIC__ || __JHEXEN__
     DGL_Color4f(1, 1, 1, menuAlpha);
-    Hu_DrawPatch(dpFSlot.id, x - 8, y - 4, true);
+    Hu_DrawPatch(dpFSlot.id, x - 8, y - 4);
 #else
     DGL_Color4f(1, 1, 1, menuAlpha);
 
@@ -2817,26 +2808,22 @@ void M_ReadThis(int option, void* context)
 
 void M_DrawOptions(void)
 {
-    menu_t*             menu = &OptionsDef;
+    menu_t* menu = &OptionsDef;
 
 #if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
     M_DrawTitle("OPTIONS", menu->y - 32);
 #else
 # if __JDOOM64__
-    WI_DrawPatch(160, menu->y - 20, cfg.menuColor[0], cfg.menuColor[1],
-                 cfg.menuColor[2], menuAlpha, 0, "{case}OPTIONS", true,
-                 ALIGN_CENTER);
+    WI_DrawPatch(160, menu->y - 20, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], menuAlpha, -1, "{case}OPTIONS", true, ALIGN_CENTER);
 #else
-    WI_DrawPatch(160, menu->y - 20, cfg.menuColor[0], cfg.menuColor[1],
-                 cfg.menuColor[2], menuAlpha, &m_optttl, "{case}OPTIONS", true,
-                 ALIGN_CENTER);
+    WI_DrawPatch(160, menu->y - 20, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], menuAlpha, m_optttl.id, "{case}OPTIONS", true, ALIGN_CENTER);
 # endif
 #endif
 }
 
 void M_DrawOptions2(void)
 {
-    menu_t*             menu = &Options2Def;
+    menu_t* menu = &Options2Def;
 
 #if __JDOOM__ || __JDOOM64__
     M_DrawTitle("SOUND OPTIONS", menu->y - 20);
@@ -3090,7 +3077,7 @@ void M_DrawHUDMenu(void)
     char buf[1024];
 #endif
 #if __JHERETIC__ || __JHEXEN__
-    const patchinfo_t* token;
+    patchid_t token;
 #endif
     static const char* xhairnames[7] = {
         "NONE", "CROSS", "ANGLES", "SQUARE", "OPEN SQUARE", "DIAMOND", "V"
@@ -3108,10 +3095,10 @@ void M_DrawHUDMenu(void)
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 
     // Draw the page arrows.
-    token = &dpInvPageLeft[!menu->firstItem || (menuTime & 8)];
-    Hu_DrawPatch(token->id, menu->x, menu->y - 22, true);
-    token = &dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)];
-    Hu_DrawPatch(token->id, 312 - menu->x, menu->y - 22, true);
+    token = dpInvPageLeft[!menu->firstItem || (menuTime & 8)].id;
+    Hu_DrawPatch(token, menu->x, menu->y - 22);
+    token = dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)].id;
+    Hu_DrawPatch(token, 312 - menu->x, menu->y - 22);
 #endif
 
     idx = 0;

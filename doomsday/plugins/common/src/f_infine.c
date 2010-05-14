@@ -1687,6 +1687,7 @@ void FI_GetTurnCenter(fipic_t *pic, float *center)
 
         if(R_GetPatchInfo(pic->tex[pic->seq], &info))
         {
+            /// \fixme what about extraOffset?
             center[VX] = info.width / 2 - info.offset;
             center[VY] = info.height / 2 - info.topOffset;
         }
@@ -1809,7 +1810,7 @@ void FI_Drawer(void)
         }
         else if(pic->flags.is_patch)
         {
-            Hu_DrawPatch((patchid_t)pic->tex[sq], 0, 0, true);
+            Hu_DrawPatch((patchid_t)pic->tex[sq], 0, 0);
         }
         else
         {
@@ -2157,18 +2158,17 @@ void FIC_Patch(void)
 {
     fipic_t* pic = FI_GetPic(FI_GetToken());
     const char* name;
-    patchinfo_t info;
+    patchid_t patch;
 
     FI_InitValue(&pic->object.x, FI_GetFloat());
     FI_InitValue(&pic->object.y, FI_GetFloat());
     FI_ClearAnimation(pic);
 
     name = FI_GetToken();
-    R_PrecachePatch(name, &info);
-    if(info.id == -1)
+    if((patch = R_PrecachePatch(name, NULL)) == -1)
         Con_Message("FIC_Patch: Warning, missing Patch \"%s\".\n", name);
 
-    pic->tex[0] = info.id;
+    pic->tex[0] = patch;
     pic->flags.is_patch = true;
     pic->flags.is_rect = false;
 }
@@ -2177,12 +2177,11 @@ void FIC_SetPatch(void)
 {
     fipic_t* pic = FI_GetPic(FI_GetToken());
     const char* name = FI_GetToken();
-    patchinfo_t info;
+    patchid_t patch;
 
-    R_PrecachePatch(name, &info);
-    if(info.id != -1)
+    if((patch = R_PrecachePatch(name, NULL)) != -1)
     {
-        pic->tex[0] = info.id;
+        pic->tex[0] = patch;
         pic->flags.is_patch = true;
         pic->flags.is_rect = false;
     }
@@ -2202,11 +2201,10 @@ void FIC_Anim(void)
 {
     fipic_t* pic = FI_GetPic(FI_GetToken());
     const char* name = FI_GetToken();
-    patchinfo_t info;
+    patchid_t patch;
     int i, time;
 
-    R_PrecachePatch(name, &info);
-    if(info.id == -1)
+    if((patch = R_PrecachePatch(name, NULL)) == -1)
         Con_Message("FIC_Anim: Warning, Patch \"%s\" not found.\n", name);
 
     time = FI_GetTics();
@@ -2217,7 +2215,7 @@ void FIC_Anim(void)
         Con_Message("FIC_Anim: Warning, too many frames in anim sequence (max %i).\n", MAX_SEQUENCE);
         return; // Can't do it...
     }
-    pic->tex[i] = info.id;
+    pic->tex[i] = patch;
     pic->seqWait[i] = time;
     pic->flags.is_patch = true;
     pic->flags.done = false;

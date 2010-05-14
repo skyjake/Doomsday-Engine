@@ -1747,7 +1747,7 @@ void M_DrawMapMenu(void)
     float menuAlpha;
     uint idx;
 #if __JHERETIC__ || __JHEXEN__
-    const patchinfo_t* token;
+    patchid_t token;
 #endif
     const menu_t* menu = &MapDef;
 
@@ -1759,10 +1759,10 @@ void M_DrawMapMenu(void)
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 
     // Draw the page arrows.
-    token = &dpInvPageLeft[!menu->firstItem || (menuTime & 8)];
-    Hu_DrawPatch(token->id, menu->x, menu->y - 22, true);
-    token = &dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)];
-    Hu_DrawPatch(token->id, 312 - menu->x, menu->y - 22, true);
+    token = dpInvPageLeft[!menu->firstItem || (menuTime & 8)].id;
+    Hu_DrawPatch(token, menu->x, menu->y - 22);
+    token = dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)].id;
+    Hu_DrawPatch(token, 312 - menu->x, menu->y - 22);
 #endif
 
     idx = 0;

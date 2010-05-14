@@ -329,14 +329,12 @@ void P_InitInventory(void)
         inventoryitemtype_t type = IIT_FIRST + i;
         const def_invitem_t* def = P_GetInvItemDef(type);
         invitem_t* data = &invItems[i];
-        patchinfo_t info;
 
         data->type = type;
         data->niceName = Def_Get(DD_DEF_TEXT, (char*) def->niceName, NULL);
         data->action = getActionPtr(def->action);
         data->useSnd = Def_Get(DD_DEF_SOUND, (char*) def->useSnd, NULL);
-        R_PrecachePatch(def->patch, &info);
-        data->patchId = info.id;
+        data->patchId = R_PrecachePatch(def->patch, NULL);
     }
 
     memset(inventories, 0, sizeof(inventories));

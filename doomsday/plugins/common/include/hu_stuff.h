@@ -104,7 +104,7 @@ void            Hu_DrawMapTitle(int x, int y, float scale);
 
 // Implements patch replacement.
 void        WI_DrawPatch(int x, int y, float r, float g, float b, float a,
-                         const patchinfo_t* patch, const char* altstring,
+                         patchid_t id, const char* altstring,
                          boolean builtin, int halign);
 void        WI_DrawParamText(int x, int y, const char* string,
                              gamefontid_t font, float defRed,
@@ -186,8 +186,20 @@ void            Hu_ConfigureBorderedProjection(borderedprojectionstate_t* s);
 void            Hu_BeginBorderedProjection(borderedprojectionstate_t* s);
 void            Hu_EndBorderedProjection(borderedprojectionstate_t* s);
 
-void            Hu_DrawPatch(patchid_t id, int x, int y, boolean usePatchOffset);
-void            Hu_DrawShadowedPatch(patchid_t id, int x, int y, boolean usePatchOffset);
-void            Hu_DrawShadowedPatch2(patchid_t id, int x, int y, float r, float g, float b, float a, boolean usePatchOffset);
+/**
+ * @defGroup drawPatchFlags Draw Patch Flags.
+ */
+/*@{*/
+#define DPF_ALIGN_LEFT      0x1
+#define DPF_ALIGN_RIGHT     0x2
+#define DPF_NO_OFFSETX      0x4
+#define DPF_NO_OFFSETY      0x8
+#define DPF_NO_OFFSET       (DPF_NO_OFFSETX | DPF_NO_OFFSETY)
+/*@}*/
+
+void            Hu_DrawPatch(patchid_t id, int x, int y);
+void            Hu_DrawPatch2(patchid_t id, int x, int y, byte flags);
+void            Hu_DrawShadowedPatch(patchid_t id, int x, int y);
+void            Hu_DrawShadowedPatch2(patchid_t id, int x, int y, float r, float g, float b, float a, byte flags);
 
 #endif

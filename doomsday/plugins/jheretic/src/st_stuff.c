@@ -369,7 +369,7 @@ void drawChainWidget(int player, float textAlpha, float iconAlpha,
 
     // Draw the life gem.
     DGL_Color4f(1, 1, 1, iconAlpha);
-    Hu_DrawPatch(lifeGems[gemNum].id, x + gemXOffset, chainY, true);
+    Hu_DrawPatch(lifeGems[gemNum].id, x + gemXOffset, chainY);
 
     shadeChain(ORIGINX, ORIGINY-ST_HEIGHT, iconAlpha/3);
 
@@ -419,28 +419,28 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
     {   // We can just render the full thing as normal.
         // Top bits.
         DGL_Color4f(1, 1, 1, 1);
-        Hu_DrawPatch(statusbarTopLeft.id, ORIGINX, ORIGINY-10, true);
-        Hu_DrawPatch(statusbarTopRight.id, ORIGINX+290, ORIGINY-10, true);
+        Hu_DrawPatch(statusbarTopLeft.id, ORIGINX, ORIGINY-10);
+        Hu_DrawPatch(statusbarTopRight.id, ORIGINX+290, ORIGINY-10);
 
         // Faces.
-        Hu_DrawPatch(statusbar.id, ORIGINX, ORIGINY, true);
+        Hu_DrawPatch(statusbar.id, ORIGINX, ORIGINY);
 
         if(P_GetPlayerCheats(plr) & CF_GODMODE)
         {
-            Hu_DrawPatch(godLeft.id, ORIGINX+16, ORIGINY+9, true);
-            Hu_DrawPatch(godRight.id, ORIGINX+287, ORIGINY+9, true);
+            Hu_DrawPatch(godLeft.id, ORIGINX+16, ORIGINY+9);
+            Hu_DrawPatch(godRight.id, ORIGINX+287, ORIGINY+9);
         }
 
         if(!Hu_InventoryIsOpen(player))
         {
             if(deathmatch)
-                Hu_DrawPatch(statBar.id, ORIGINX+34, ORIGINY+2, true);
+                Hu_DrawPatch(statBar.id, ORIGINX+34, ORIGINY+2);
             else
-                Hu_DrawPatch(lifeBar.id, ORIGINX+34, ORIGINY+2, true);
+                Hu_DrawPatch(lifeBar.id, ORIGINX+34, ORIGINY+2);
         }
         else
         {
-            Hu_DrawPatch(invBar.id, ORIGINX+34, ORIGINY+2, true);
+            Hu_DrawPatch(invBar.id, ORIGINX+34, ORIGINY+2);
         }
     }
     else
@@ -448,8 +448,8 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
         DGL_Color4f(1, 1, 1, iconAlpha);
 
         // Top bits.
-        Hu_DrawPatch(statusbarTopLeft.id, ORIGINX, ORIGINY-10, true);
-        Hu_DrawPatch(statusbarTopRight.id, ORIGINX+290, ORIGINY-10, true);
+        Hu_DrawPatch(statusbarTopLeft.id, ORIGINX, ORIGINY-10);
+        Hu_DrawPatch(statusbarTopRight.id, ORIGINX+290, ORIGINY-10);
 
         DGL_SetPatch(statusbar.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
@@ -466,8 +466,8 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
             DGL_DrawCutRectTiled(ORIGINX, ORIGINY, 34, 42, 320, 42, 0, 0, ORIGINX+16, ORIGINY+9, 16, 8);
             DGL_DrawCutRectTiled(ORIGINX+282, ORIGINY, 38, 42, 320, 42, 282, 0, ORIGINX+287, ORIGINY+9, 16, 8);
 
-            Hu_DrawPatch(godLeft.id, ORIGINX+16, ORIGINY+9, true);
-            Hu_DrawPatch(godRight.id, ORIGINX+287, ORIGINY+9, true);
+            Hu_DrawPatch(godLeft.id, ORIGINX+16, ORIGINY+9);
+            Hu_DrawPatch(godRight.id, ORIGINX+287, ORIGINY+9);
         }
         else
         {
@@ -478,13 +478,13 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
         if(!Hu_InventoryIsOpen(player))
         {
             if(deathmatch)
-                Hu_DrawPatch(statBar.id, ORIGINX+34, ORIGINY+2, true);
+                Hu_DrawPatch(statBar.id, ORIGINX+34, ORIGINY+2);
             else
-                Hu_DrawPatch(lifeBar.id, ORIGINX+34, ORIGINY+2, true);
+                Hu_DrawPatch(lifeBar.id, ORIGINX+34, ORIGINY+2);
         }
         else
         {
-            Hu_DrawPatch(invBar.id, ORIGINX+34, ORIGINY+2, true);
+            Hu_DrawPatch(invBar.id, ORIGINX+34, ORIGINY+2);
         }
     }
 
@@ -499,7 +499,7 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
 
 void ST_updateWidgets(int player)
 {
-    static int          largeammo = 1994; // Means "n/a".
+    static int largeammo = 1994; // Means "n/a".
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
@@ -912,7 +912,7 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
         }
 
         DGL_Color4f(1, 1, 1, iconAlpha);
-        Hu_DrawPatch(patch, x, y, true);
+        Hu_DrawPatch(patch, x, y);
 
         if(!(hud->currentInvItemFlash > 0))
         {
@@ -963,30 +963,30 @@ static void drawINumber(signed int val, int x, int y, float r, float g, float b,
     {
         if(val < -9)
         {
-            Hu_DrawPatch(lame.id, x + 1, y + 1, true);
+            Hu_DrawPatch(lame.id, x + 1, y + 1);
         }
         else
         {
             val = -val;
-            Hu_DrawPatch(iNumbers[val].id, x + 18, y, true);
-            Hu_DrawPatch(negative.id, x + 9, y, true);
+            Hu_DrawPatch(iNumbers[val].id, x + 18, y);
+            Hu_DrawPatch(negative.id, x + 9, y);
         }
         return;
     }
 
     if(val > 99)
     {
-        Hu_DrawPatch(iNumbers[val / 100].id, x, y, true);
+        Hu_DrawPatch(iNumbers[val / 100].id, x, y);
     }
 
     val = val % 100;
     if(val > 9 || oldval > 99)
     {
-        Hu_DrawPatch(iNumbers[val / 10].id, x + 9, y, true);
+        Hu_DrawPatch(iNumbers[val / 10].id, x + 9, y);
     }
 
     val = val % 10;
-    Hu_DrawPatch(iNumbers[val].id, x + 18, y, true);
+    Hu_DrawPatch(iNumbers[val].id, x + 18, y);
 }
 
 /**
@@ -1049,7 +1049,7 @@ void drawFlightWidget(int player, float textAlpha, float iconAlpha,
             }
         }
         DGL_Color4f(1, 1, 1, iconAlpha);
-        Hu_DrawPatch(spinFly[frame].id, 16, 14, true);
+        Hu_DrawPatch(spinFly[frame].id, 16, 14);
     }
     /// \kludge calculate dimensions properly!
     *drawnWidth = 32;
@@ -1078,7 +1078,7 @@ void drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha,
         if(cfg.tomeCounter && plr->powers[PT_WEAPONLEVEL2] < 35)
             alpha *= plr->powers[PT_WEAPONLEVEL2] / 35.0f;
         DGL_Color4f(1, 1, 1, alpha);
-        Hu_DrawPatch(spinBook[frame].id, -13, 13, true);
+        Hu_DrawPatch(spinBook[frame].id, -13, 13);
         /// \kludge calculate dimensions properly!
         *drawnWidth += 26;
         *drawnHeight += 26;
@@ -1092,9 +1092,9 @@ void drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha,
         int val = 1 + plr->powers[PT_WEAPONLEVEL2] / 35, w, h;
         DGL_Color4f(1, 1, 1, textAlpha);
         if(val > 9)           
-            Hu_DrawPatch(dpSmallNumbers[(val / 10) % 10].id, -12+3, 13+13, true);
+            Hu_DrawPatch(dpSmallNumbers[(val / 10) % 10].id, -12+3, 13+13);
         val = val % 10;
-        Hu_DrawPatch(dpSmallNumbers[val].id, -12+7, 13+13, true);
+        Hu_DrawPatch(dpSmallNumbers[val].id, -12+7, 13+13);
 
         /// \kludge calculate dimensions properly!
         w = M_NumDigits(val) * dpSmallNumbers[0].width;
@@ -1185,7 +1185,7 @@ void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
             continue;
         dp = &ammoIcons[plr->readyWeapon - 1];
         DGL_Color4f(1, 1, 1, iconAlpha);
-        Hu_DrawPatch(dp->id, 0, 0, false);
+        Hu_DrawPatch2(dp->id, 0, 0, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
         drawINumber(plr->ammo[ammoType].owned, dp->width+1, -2, 1, 1, 1, textAlpha);
         /// \kludge calculate the visual dimensions properly!
         *drawnWidth += dp->width + 2 + (iNumbers[0].width+1) * 3 - 1;
@@ -1253,7 +1253,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
     if(plr->keys[KT_YELLOW])
     {
         DGL_Color4f(1, 1, 1, iconAlpha);
-        Hu_DrawPatch(keys[0].id, x, -keys[0].height, false);
+        Hu_DrawPatch2(keys[0].id, x, -keys[0].height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
         x += keys[0].width + 1;
         *drawnWidth += keys[0].width;
         if(keys[0].height > *drawnHeight)
@@ -1264,7 +1264,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
     if(plr->keys[KT_GREEN])
     {
         DGL_Color4f(1, 1, 1, iconAlpha);
-        Hu_DrawPatch(keys[1].id, x, -keys[1].height, false);
+        Hu_DrawPatch2(keys[1].id, x, -keys[1].height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
         x += keys[1].width + 1;
         *drawnWidth += keys[1].width;
         if(keys[1].height > *drawnHeight)
@@ -1275,7 +1275,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
     if(plr->keys[KT_BLUE])
     {
         DGL_Color4f(1, 1, 1, iconAlpha);
-        Hu_DrawPatch(keys[2].id, x, -keys[2].height, false);
+        Hu_DrawPatch2(keys[2].id, x, -keys[2].height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
         x += keys[2].width;
         *drawnWidth += keys[1].width;
         if(keys[2].height > *drawnHeight)
@@ -1324,9 +1324,9 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
     if(hud->currentInvItemFlash > 0)
     {
         DGL_Color4f(1, 1, 1, iconAlpha/2);
-        Hu_DrawPatch(dpInvItemBox.id, -dpInvItemBox.width, -dpInvItemBox.height, false);
+        Hu_DrawPatch2(dpInvItemBox.id, -dpInvItemBox.width, -dpInvItemBox.height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        Hu_DrawPatch(dpInvItemFlash[hud->currentInvItemFlash % 5].id, -dpInvItemBox.width, -dpInvItemBox.height + 1, true);
+        Hu_DrawPatch(dpInvItemFlash[hud->currentInvItemFlash % 5].id, -dpInvItemBox.width, -dpInvItemBox.height + 1);
     }
     else
     {
@@ -1338,9 +1338,9 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
             uint count;
 
             DGL_Color4f(1, 1, 1, iconAlpha/2);
-            Hu_DrawPatch(dpInvItemBox.id, -dpInvItemBox.width, -dpInvItemBox.height, false);
+            Hu_DrawPatch2(dpInvItemBox.id, -dpInvItemBox.width, -dpInvItemBox.height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
             DGL_Color4f(1, 1, 1, iconAlpha);
-            Hu_DrawPatch(patch, -dpInvItemBox.width, -dpInvItemBox.height, true);
+            Hu_DrawPatch(patch, -dpInvItemBox.width, -dpInvItemBox.height);
             if((count = P_InventoryCount(player, readyItem)) > 1)
                 Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, -1, -7, textAlpha);
         }

@@ -847,8 +847,6 @@ void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
     float scale, float r, float g, float b, float a, boolean alignRight)
 {
     const char* ch;
-    patchinfo_t* info;
-    float w, h;
     char c;
 
     if(!str || !str[0])
@@ -856,20 +854,7 @@ void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
 
     if(alignRight)
     {
-        ch = str;
-        for(;;)
-        {
-            c = *ch++;
-
-            if(!c)
-                break;
-
-            if(!gFonts[font].chars[(byte) c].pInfo.id)
-                continue;
-            info = &gFonts[font].chars[(byte) c].pInfo;
-
-            x -= info->width * scale;
-        }
+        x -= M_StringWidth(str, font) * scale;
     }
 
     DGL_Color4f(r, g, b, a);
@@ -885,20 +870,17 @@ void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
     for(;;)
     {
         c = *ch++;
-
         if(!c)
             break;
 
         if(!gFonts[font].chars[(byte) c].pInfo.id)
             continue;
-        info = &gFonts[font].chars[(byte) c].pInfo;
 
-        w = info->width;
-        h = info->height;
-
-        Hu_DrawPatch(info->id, x, y, true);
-
-        x += w;
+        {
+        patchinfo_t* info = &gFonts[font].chars[(byte) c].pInfo;
+        Hu_DrawPatch(info->id, x, y);
+        x += info->width;
+        }
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -2091,7 +2073,7 @@ void M_LetterFlash(int x, int y, int w, int h, int bright, float r, float g,
 void M_DrawChar(int x, int y, unsigned char ch, gamefontid_t font)
 {
     assert(font >= GF_FIRST && font < NUM_GAME_FONTS);
-    Hu_DrawPatch(gFonts[font].chars[ch].pInfo.id, x, y, true);
+    Hu_DrawPatch(gFonts[font].chars[ch].pInfo.id, x, y);
 }
 
 void HUlib_drawTextLine2(int x, int y, const char* string, size_t len,
@@ -2112,62 +2094,32 @@ void HUlib_drawTextLine2(int x, int y, const char* string, size_t len,
         if(x + w > SCREENWIDTH)
             break;
 
-        Hu_DrawPatch(info->id, x, y, true);
+        Hu_DrawPatch(info->id, x, y);
         x += w;
     }
 
     // Draw the cursor if requested.
     if(drawCursor && x + font->chars['_'].pInfo.width <= SCREENWIDTH)
-        Hu_DrawPatch(font->chars['_'].pInfo.id, x, y, true);
+        Hu_DrawPatch(font->chars['_'].pInfo.id, x, y);
 }
 
 #if __JHERETIC__
-void HU_DrawBNumber(signed int val, int x, int y, float red,
-                    float green, float blue, float alpha)
+void HU_DrawBNumber(int val, int x, int y, float red, float green, float blue,
+    float alpha)
 {
-    const patchinfo_t* pInfo;
-    int xpos, oldval;
-
-    oldval = val;
-    xpos = x;
-    if(val < 0)
-    {
-        val = 0;
-    }
+    int xpos = x, oldval = MAX_OF(val, 0);
 
     if(val > 99)
-    {
-        pInfo = &gFonts[GF_FONTB].chars['0' + val / 100].pInfo;
-
-        DGL_Color4f(0, 0, 0, alpha * .4f);
-        Hu_DrawPatch(pInfo->id, xpos + 8 - pInfo->width / 2, y +2, true);
-
-        DGL_Color4f(red, green, blue, alpha);
-        Hu_DrawPatch(pInfo->id, xpos + 6 - pInfo->width / 2, y, true);
-    }
+        Hu_DrawShadowedPatch2(gFonts[GF_FONTB].chars['0' + val / 100].pInfo.id, 0, xpos + 6, y, red, green, blue, alpha);
 
     val = val % 100;
     xpos += 12;
     if(val > 9 || oldval > 99)
-    {
-        pInfo = &gFonts[GF_FONTB].chars['0' + val / 10].pInfo;
-
-        DGL_Color4f(0, 0, 0, alpha * .4f);
-        Hu_DrawPatch(pInfo->id, xpos + 8 - pInfo->width / 2, y +2, true);
-
-        DGL_Color4f(red, green, blue, alpha);
-        Hu_DrawPatch(pInfo->id, xpos + 6 - pInfo->width / 2, y, true);
-    }
+        Hu_DrawShadowedPatch2(gFonts[GF_FONTB].chars['0' + val / 10].pInfo.id, 0, xpos + 6, y, red, green, blue, alpha);
 
     val = val % 10;
     xpos += 12;
-    pInfo = &gFonts[GF_FONTB].chars['0' + val].pInfo;
-
-    DGL_Color4f(0, 0, 0, alpha * .4f);
-    Hu_DrawPatch(pInfo->id, xpos + 8 - pInfo->width / 2, y +2, true);
-
-    DGL_Color4f(red, green, blue, alpha);
-    Hu_DrawPatch(pInfo->id, xpos + 6 - pInfo->width / 2, y, true);
+    Hu_DrawShadowedPatch2(gFonts[GF_FONTB].chars['0' + val].pInfo.id, 0, xpos + 6, y, red, green, blue, alpha);
 }
 #endif
 
@@ -2175,7 +2127,7 @@ void HU_DrawBNumber(signed int val, int x, int y, float red,
 void IN_DrawShadowChar(int x, int y, unsigned char ch, gamefontid_t font)
 {
     DGL_Color4f(0, 0, 0, .4f);
-    Hu_DrawPatch(gFonts[font].chars[ch].pInfo.id, x+2, y+2, true);
+    Hu_DrawPatch(gFonts[font].chars[ch].pInfo.id, x+2, y+2);
 
     DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     M_DrawChar(x, y, ch, font);
@@ -2236,9 +2188,9 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
     if(digits == 4)
     {
         DGL_Color4f(0, 0, 0, .4f);
-        Hu_DrawPatch(gFonts[GF_FONTB].chars['0' + val / 1000].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 1000].pInfo.width / 2 - 12, y + 2, true);
+        Hu_DrawPatch(gFonts[GF_FONTB].chars['0' + val / 1000].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 1000].pInfo.width / 2 - 12, y + 2);
         DGL_Color4f(r, g, b, a);
-        Hu_DrawPatch(gFonts[GF_FONTB].chars['0' + val / 1000].pInfo.id, xpos + 6 - gFonts[GF_FONTB].chars['0' + val / 1000].pInfo.width / 2 - 12, y, true);
+        Hu_DrawPatch(gFonts[GF_FONTB].chars['0' + val / 1000].pInfo.id, xpos + 6 - gFonts[GF_FONTB].chars['0' + val / 1000].pInfo.width / 2 - 12, y);
     }
 
     if(digits > 2)
@@ -2246,9 +2198,9 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
         if(realdigits > 2)
         {
             DGL_Color4f(0, 0, 0, .4f);
-            Hu_DrawPatch(gFonts[GF_FONTB].chars['0' + val / 100].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 100].pInfo.width / 2, y+2, true);
+            Hu_DrawPatch(gFonts[GF_FONTB].chars['0' + val / 100].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 100].pInfo.width / 2, y+2);
             DGL_Color4f(r, g, b, a);
-            Hu_DrawPatch(gFonts[GF_FONTB].chars['0' + val / 100].pInfo.id, xpos + 6 - gFonts[GF_FONTB].chars['0' + val / 100].pInfo.width / 2, y, true);
+            Hu_DrawPatch(gFonts[GF_FONTB].chars['0' + val / 100].pInfo.id, xpos + 6 - gFonts[GF_FONTB].chars['0' + val / 100].pInfo.width / 2, y);
         }
         xpos += 12;
     }
@@ -2259,31 +2211,31 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
         if(val > 9)
         {
             DGL_Color4f(0, 0, 0, .4f);
-            Hu_DrawPatch(gFonts[GF_FONTB].chars['0' + val / 10].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 10].pInfo.width / 2, y+2, true);
+            Hu_DrawPatch(gFonts[GF_FONTB].chars['0' + val / 10].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['0' + val / 10].pInfo.width / 2, y+2);
             DGL_Color4f(r, g, b, a);
-            Hu_DrawPatch(gFonts[GF_FONTB].chars['0' + val / 10].pInfo.id, xpos + 6 - gFonts[GF_FONTB].chars['0' + val / 10].pInfo.width / 2, y, true);
+            Hu_DrawPatch(gFonts[GF_FONTB].chars['0' + val / 10].pInfo.id, xpos + 6 - gFonts[GF_FONTB].chars['0' + val / 10].pInfo.width / 2, y);
         }
         else if(digits == 2 || oldval > 99)
         {
             DGL_Color4f(0, 0, 0, .4f);
-            Hu_DrawPatch(gFonts[GF_FONTB].chars['0'].pInfo.id, xpos+2, y+2, true);
+            Hu_DrawPatch(gFonts[GF_FONTB].chars['0'].pInfo.id, xpos+2, y+2);
             DGL_Color4f(r, g, b, a);
-            Hu_DrawPatch(gFonts[GF_FONTB].chars['0'].pInfo.id, xpos, y, true);
+            Hu_DrawPatch(gFonts[GF_FONTB].chars['0'].pInfo.id, xpos, y);
         }
         xpos += 12;
     }
 
     val = val % 10;
     DGL_Color4f(0, 0, 0, .4f);
-    Hu_DrawPatch(gFonts[GF_FONTB].chars['0' + val].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['0' + val].pInfo.width / 2, y+2, true);
+    Hu_DrawPatch(gFonts[GF_FONTB].chars['0' + val].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['0' + val].pInfo.width / 2, y+2);
     DGL_Color4f(r, g, b, a);
-    Hu_DrawPatch(gFonts[GF_FONTB].chars['0' + val].pInfo.id, xpos + 6 - gFonts[GF_FONTB].chars['0' + val].pInfo.width / 2, y, true);
+    Hu_DrawPatch(gFonts[GF_FONTB].chars['0' + val].pInfo.id, xpos + 6 - gFonts[GF_FONTB].chars['0' + val].pInfo.width / 2, y);
     if(neg)
     {
         DGL_Color4f(0, 0, 0, .4f);
-        Hu_DrawPatch(gFonts[GF_FONTB].chars['-'].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['-'].pInfo.width / 2 - 12 * (realdigits), y+2, true);
+        Hu_DrawPatch(gFonts[GF_FONTB].chars['-'].pInfo.id, xpos + 8 - gFonts[GF_FONTB].chars['-'].pInfo.width / 2 - 12 * (realdigits), y+2);
         DGL_Color4f(r, g, b, a);
-        Hu_DrawPatch(gFonts[GF_FONTB].chars['-'].pInfo.id, xpos + 6 - gFonts[GF_FONTB].chars['-'].pInfo.width / 2 - 12 * (realdigits), y, true);
+        Hu_DrawPatch(gFonts[GF_FONTB].chars['-'].pInfo.id, xpos + 6 - gFonts[GF_FONTB].chars['-'].pInfo.width / 2 - 12 * (realdigits), y);
     }
 }
 #endif
@@ -2314,7 +2266,7 @@ void DrBNumber(int val, int x, int y, float red, float green, float blue, float 
     if(val > 99)
     {
         pInfo = &gFonts[GF_FONTB].chars['0' + val / 100].pInfo;
-        Hu_DrawShadowedPatch2(pInfo->id, xpos + 6 - pInfo->width / 2, y, red, green, blue, alpha, true);
+        Hu_DrawShadowedPatch2(pInfo->id, 0, xpos + 6 - pInfo->width / 2, y, red, green, blue, alpha);
     }
 
     val = val % 100;
@@ -2322,13 +2274,13 @@ void DrBNumber(int val, int x, int y, float red, float green, float blue, float 
     if(val > 9 || oldval > 99)
     {
         pInfo = &gFonts[GF_FONTB].chars['0' + val / 10].pInfo;
-        Hu_DrawShadowedPatch2(pInfo->id, xpos + 6 - pInfo->width / 2, y, red, green, blue, alpha, true);
+        Hu_DrawShadowedPatch2(pInfo->id, 0, xpos + 6 - pInfo->width / 2, y, red, green, blue, alpha);
     }
 
     val = val % 10;
     xpos += 12;
     pInfo = &gFonts[GF_FONTB].chars['0' + val].pInfo;
-    Hu_DrawShadowedPatch2(pInfo->id, xpos + 6 - pInfo->width / 2, y, red, green, blue, alpha, true);
+    Hu_DrawShadowedPatch2(pInfo->id, 0, xpos + 6 - pInfo->width / 2, y, red, green, blue, alpha);
 }
 #endif
 
@@ -2438,7 +2390,7 @@ void M_WriteText3(int x, int y, const char* string, gamefontid_t font,
                 if(pass)
                 {
                     // The character itself.
-                    Hu_DrawPatch(gFonts[font].chars[c].pInfo.id, cx, cy + yoff, true);
+                    Hu_DrawPatch(gFonts[font].chars[c].pInfo.id, cx, cy + yoff);
 
                     // Do something flashy!
                     if(flash > 0)
@@ -2466,8 +2418,8 @@ void M_WriteText3(int x, int y, const char* string, gamefontid_t font,
 #if __JHERETIC__ || __JHEXEN__
 void Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha)
 {
-    int                 w = dpSmallNumbers[0].width;
-    boolean             drawMinus = false;
+    int w = dpSmallNumbers[0].width;
+    boolean drawMinus = false;
 
     if(val < 0)
     {
@@ -2481,22 +2433,19 @@ void Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha)
 
     // In the special case of 0, you draw 0.
     if(val == 0)
-        WI_DrawPatch(x - w, y, 1, 1, 1, alpha, &dpSmallNumbers[0], NULL,
-                     false, ALIGN_LEFT);
+        WI_DrawPatch(x - w, y, 1, 1, 1, alpha, dpSmallNumbers[0].id, NULL, false, ALIGN_LEFT);
 
     // Draw the number.
     while(val && numDigits--)
     {
         x -= w;
-        WI_DrawPatch(x, y, 1, 1, 1, alpha, &dpSmallNumbers[val % 10],
-                     NULL, false, ALIGN_LEFT);
+        WI_DrawPatch(x, y, 1, 1, 1, alpha, dpSmallNumbers[val % 10].id, NULL, false, ALIGN_LEFT);
         val /= 10;
     }
 
     // Draw a minus sign if necessary.
     if(drawMinus)
-        WI_DrawPatch(x - 8, y, 1, 1, 1, alpha, &huMinus, NULL, false,
-                     ALIGN_LEFT);
+        WI_DrawPatch(x - 8, y, 1, 1, 1, alpha, huMinus.id, NULL, false, ALIGN_LEFT);
 }
 #endif
 
@@ -2513,33 +2462,38 @@ void Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha)
  *                      (ie it does not originate from a DED definition).
  */
 void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
-    const patchinfo_t* patch, const char* altstring, boolean builtin, int halign)
+    patchid_t patch, const char* altstring, boolean builtin, int halign)
 {
-    char def[80], *string;
     int patchString = 0, posx = x;
+    char def[80], *string;
 
     if(IS_DEDICATED)
         return;
 
-    if(!patch)
+    if(patch == -1)
         return;
 
     if(altstring && altstring[0] && !builtin)
     {   // We have already determined a string to replace this with.
-        if(!patch->isCustom)
+        patchinfo_t info;
+        R_GetPatchInfo(patch, &info);
+        if(!info.isCustom)
         {
             WI_DrawParamText(x, y, altstring, GF_FONTB, r, g, b, a, false, true, true, halign);
             return;
         }
     }
     else if(cfg.usePatchReplacement)
-    {   // We might be able to replace the patch with a string
+    {   // We might be able to replace the patch with a string.
+        patchinfo_t info;
+        R_GetPatchInfo(patch, &info);
+
         strcpy(def, "Patch Replacement|");
-        strcat(def, W_LumpName((lumpnum_t)patch->id));
+        strcat(def, W_LumpName(patch));
 
         patchString = Def_Get(DD_DEF_VALUE, def, &string);
 
-        if(!patch->isCustom)
+        if(!info.isCustom)
         {
             // A user replacement?
             if(patchString)
@@ -2558,13 +2512,8 @@ void WI_DrawPatch(int x, int y, float r, float g, float b, float a,
     }
 
     // No replacement possible/wanted - use the original patch.
-    if(halign == ALIGN_CENTER)
-        posx -= patch->width /2;
-    else if(halign == ALIGN_RIGHT)
-        posx -= patch->width;
-
     DGL_Color4f(1, 1, 1, a);
-    Hu_DrawPatch(patch->id, posx, y, true);
+    Hu_DrawPatch2(patch, posx, y, (halign == ALIGN_LEFT? DPF_ALIGN_LEFT : halign == ALIGN_RIGHT? DPF_ALIGN_RIGHT : 0));
 }
 
 /**
@@ -2613,8 +2562,7 @@ void M_DrawBackgroundBox(float x, float y, float w, float h, float red,
 
     if(background)
     {
-        DGL_SetMaterial(P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName(borderLumps[0], MN_FLATS)));
+        DGL_SetMaterial(P_ToPtr(DMU_MATERIAL, P_MaterialNumForName(borderLumps[0], MN_FLATS)));
         DGL_DrawRectTiled(x, y, w, h, 64, 64);
     }
 
@@ -2622,38 +2570,29 @@ void M_DrawBackgroundBox(float x, float y, float w, float h, float red,
     {
         // Top
         DGL_SetPatch(t->id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x, y - t->height, w, t->height,
-                          up * t->width, up * t->height);
+        DGL_DrawRectTiled(x, y - t->height, w, t->height, up * t->width, up * t->height);
         // Bottom
         DGL_SetPatch(b->id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x, y + h, w, b->height, up * b->width,
-                          up * b->height);
+        DGL_DrawRectTiled(x, y + h, w, b->height, up * b->width, up * b->height);
         // Left
         DGL_SetPatch(l->id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x - l->width, y, l->width, h,
-                          up * l->width, up * l->height);
+        DGL_DrawRectTiled(x - l->width, y, l->width, h, up * l->width, up * l->height);
         // Right
         DGL_SetPatch(r->id, DGL_REPEAT, DGL_REPEAT);
-        DGL_DrawRectTiled(x + w, y, r->width, h, up * r->width,
-                          up * r->height);
+        DGL_DrawRectTiled(x + w, y, r->width, h, up * r->width, up * r->height);
 
         // Top Left
         DGL_SetPatch(tl->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x - tl->width, y - tl->height,
-                     tl->width, tl->height,
-                     red, green, blue, alpha);
+        DGL_DrawRect(x - tl->width, y - tl->height, tl->width, tl->height, red, green, blue, alpha);
         // Top Right
         DGL_SetPatch(tr->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x + w, y - tr->height, tr->width, tr->height,
-                     red, green, blue, alpha);
+        DGL_DrawRect(x + w, y - tr->height, tr->width, tr->height, red, green, blue, alpha);
         // Bottom Right
         DGL_SetPatch(br->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x + w, y + h, br->width, br->height,
-                     red, green, blue, alpha);
+        DGL_DrawRect(x + w, y + h, br->width, br->height, red, green, blue, alpha);
         // Bottom Left
         DGL_SetPatch(bl->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(x - bl->width, y + h, bl->width, bl->height,
-                     red, green, blue, alpha);
+        DGL_DrawRect(x - bl->width, y + h, bl->width, bl->height, red, green, blue, alpha);
     }
 }
 
@@ -2671,14 +2610,14 @@ void M_DrawSlider(int x, int y, int width, int height, int slot, float alpha)
 
     DGL_Color4f( 1, 1, 1, alpha);
 
-    Hu_DrawPatch(dpSliderLeft.id, x - 32, y, true);
-    Hu_DrawPatch(dpSliderRight.id, x + width * 8, y, true);
+    Hu_DrawPatch(dpSliderLeft.id, x - 32, y);
+    Hu_DrawPatch(dpSliderRight.id, x + width * 8, y);
 
     DGL_SetPatch(dpSliderMiddle.id, DGL_REPEAT, DGL_REPEAT);
     DGL_DrawRectTiled(x - 1, y + 1, width * 8 + 2, 13, 8, 13);
 
     DGL_Color4f( 1, 1, 1, alpha);
-    Hu_DrawPatch(dpSliderHandle.id, x + 4 + slot * unit, y + 7, true);
+    Hu_DrawPatch(dpSliderHandle.id, x + 4 + slot * unit, y + 7);
 #else
     float xx, scale = height / 13.0f;
 
@@ -2917,7 +2856,7 @@ void Hu_Drawer(void)
         else
             DGL_Scalef((float)winWidth/SCREENWIDTH, (float)winWidth/SCREENWIDTH, 1);
 
-        WI_DrawPatch(0, 0, 1, 1, 1, 1, &m_pause, NULL, false, ALIGN_CENTER);
+        WI_DrawPatch(0, 0, 1, 1, 1, 1, m_pause.id, NULL, false, ALIGN_CENTER);
 
         DGL_MatrixMode(DGL_PROJECTION);
         DGL_PopMatrix();
@@ -3012,7 +2951,7 @@ static void drawMapTitle(void)
     mapnum = gameMap;
 # endif
 
-    WI_DrawPatch(0, 0, 1, 1, 1, alpha, &mapNamePatches[mapnum], lname, false, ALIGN_CENTER);
+    WI_DrawPatch(0, 0, 1, 1, 1, alpha, mapNamePatches[mapnum].id, lname, false, ALIGN_CENTER);
     y += 14;
 
 #elif __JHERETIC__ || __JHEXEN__
@@ -3187,7 +3126,7 @@ void Hu_EndBorderedProjection(borderedprojectionstate_t* s)
     DGL_PopMatrix();
 }
 
-void Hu_DrawPatch(patchid_t id, int posX, int posY, boolean usePatchOffset)
+void Hu_DrawPatch2(patchid_t id, int posX, int posY, byte flags)
 {
     float x = posX, y = posY, w, h;
     patchinfo_t info;
@@ -3199,14 +3138,18 @@ void Hu_DrawPatch(patchid_t id, int posX, int posY, boolean usePatchOffset)
     if(!R_GetPatchInfo(id, &info))
         return;
 
+    if(flags & DPF_ALIGN_RIGHT)
+        x -= info.width;
+    else if(!(flags & DPF_ALIGN_LEFT))
+        x -= info.width /2;
+
     w = (float) info.width;
     h = (float) info.height;
 
-    if(usePatchOffset)
-    {
+    if(!(flags & DPF_NO_OFFSETX))
         x += (float) info.offset;
+    if(!(flags & DPF_NO_OFFSETY))
         y += (float) info.topOffset;
-    }
 
     if(info.extraOffset[0])
     {
@@ -3231,25 +3174,24 @@ void Hu_DrawPatch(patchid_t id, int posX, int posY, boolean usePatchOffset)
     DGL_End();
 }
 
-void Hu_DrawShadowedPatch(patchid_t id, int x, int y, boolean usePatchOffset)
+void Hu_DrawPatch(patchid_t id, int x, int y)
 {
-    if(id < 0)
-        return;
-    DGL_Color4f(0, 0, 0, .4f);
-    Hu_DrawPatch(id, x+2, y+2, usePatchOffset);
-
-    DGL_Color4f(1, 1, 1, 1);
-    Hu_DrawPatch(id, x, y, usePatchOffset);
+    Hu_DrawPatch2(id, x, y, DPF_ALIGN_LEFT);
 }
 
-void Hu_DrawShadowedPatch2(patchid_t id, int x, int y, float r, float g, float b,
-    float a, boolean usePatchOffset)
+void Hu_DrawShadowedPatch2(patchid_t id, int x, int y, float r, float g,
+    float b, float a, byte flags)
 {
     if(id < 0)
         return;
     DGL_Color4f(0, 0, 0, a * .4f);
-    Hu_DrawPatch(id, x+2, y+2, usePatchOffset);
+    Hu_DrawPatch2(id, x+2, y+2, flags);
 
     DGL_Color4f(r, g, b, a);
-    Hu_DrawPatch(id, x, y, usePatchOffset);
+    Hu_DrawPatch2(id, x, y, flags);
+}
+
+void Hu_DrawShadowedPatch(patchid_t id, int x, int y)
+{
+    Hu_DrawShadowedPatch2(id, x, y, 1, 1, 1, 1, DPF_ALIGN_LEFT);
 }

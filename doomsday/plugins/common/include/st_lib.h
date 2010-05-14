@@ -39,7 +39,7 @@ typedef struct {
     int             maxDigits; // Max # of digits in number.
     float           alpha;
     int*            num; // Pointer to current value.
-    patchinfo_t*       p; // List of patches for 0-9.
+    patchinfo_t*    p; // List of patches for 0-9.
 } st_number_t;
 
 void            STlib_InitNum(st_number_t* n, int x, int y, patchinfo_t* pl,
