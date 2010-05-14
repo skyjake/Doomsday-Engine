@@ -198,7 +198,7 @@ typedef struct jdoom64_config_s {
     byte            netBFGFreeLook; // Allow free-aim with BFG.
     byte            netMobDamageModifier; // Multiplier for non-player mobj damage.
     byte            netMobHealthModifier; // Health modifier for non-player mobjs.
-    int             netGravity; // Multiplayer custom gravity.
+    int             netGravity; // Custom gravity multiplier.
     byte            netNoMaxZRadiusAttack; // Radius attacks are infinitely tall.
     byte            netNoMaxZMonsterMeleeAttack; // Melee attacks are infinitely tall.
     byte            netNoMonsters;

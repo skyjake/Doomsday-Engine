@@ -3003,7 +3003,7 @@ float XS_Gravity(struct sector_s* sec)
         float               gravity = xsec->xg->info.gravity;
 
         // Apply gravity modifier.
-        if(IS_NETGAME && cfg.netGravity != -1)
+        if(cfg.netGravity != -1)
             gravity *= (float) cfg.netGravity / 100;
 
         return gravity;

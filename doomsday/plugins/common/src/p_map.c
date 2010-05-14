@@ -171,7 +171,7 @@ static byte* rejectMatrix = NULL; // For fast sight rejection.
 
 float P_GetGravity(void)
 {
-    if(IS_NETGAME && cfg.netGravity != -1)
+    if(cfg.netGravity != -1)
         return (float) cfg.netGravity / 100;
 
     return *((float*) DD_GetVariable(DD_GRAVITY));
