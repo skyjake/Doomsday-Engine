@@ -1003,6 +1003,61 @@ patchtex_t* R_GetPatchTex(lumpnum_t lump)
     return p;
 }
 
+boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
+{
+    lumpnum_t lump = (lumpnum_t) id;
+
+    if(!info)
+        return false;
+
+    memset(info, 0, sizeof(*info));
+
+    if(lump >= 0 && lump < numLumps)
+    {
+        const lumppatch_t* patch = (const lumppatch_t*) W_CacheLumpNum(lump, PU_STATIC);
+        info->id = id;
+        info->width = SHORT(patch->width);
+        info->height = SHORT(patch->height);
+        info->topOffset = -SHORT(patch->topOffset);
+        info->offset = -SHORT(patch->leftOffset);
+        info->isCustom = !W_IsFromIWAD(lump);
+        /// \fixme
+        info->extraOffset[0] = info->extraOffset[1] = 0;
+        W_ChangeCacheTag(lump, PU_CACHE);
+        return true;
+    }
+
+    // Safety precaution.
+    info->id = -1;
+
+    VERBOSE(Con_Message("R_GetPatchInfo: Warning, unknown Patch %i.\n", id));
+    return false;
+}
+
+void R_PrecachePatch(const char* name, patchinfo_t* info)
+{
+    lumpnum_t lump;
+
+    if(info)
+    {
+        memset(info, 0, sizeof(patchinfo_t));
+        info->id = -1; // Safety precaution.
+    }
+
+    if(isDedicated)
+        return;
+
+    if((lump = W_CheckNumForName(name)) != -1)
+    {
+        patchtex_t* patch = R_GetPatchTex(lump);
+        GL_PreparePatch(patch);
+        if(info)
+        {
+            R_GetPatchInfo((patchid_t)lump, info);
+        }
+    }
+}
+
 /**
  * Returns a NULL-terminated array of pointers to all the rawtexs.
  * The array must be freed with Z_Free.
@@ -1990,30 +2045,6 @@ boolean R_IsAllowedDetailTex(ded_detailtexture_t* def, material_t* mat,
         return !(def->flags & DTLF_NO_IWAD);
 
     return (def->flags & DTLF_PWAD) != 0;
-}
-
-void R_PrecachePatch(const char* name, patchinfo_t* info)
-{
-    lumpnum_t lump;
-
-    if(info)
-    {
-        memset(info, 0, sizeof(patchinfo_t));
-        info->id = -1; // Safety precaution.
-    }
-
-    if(isDedicated)
-        return;
-
-    if((lump = W_CheckNumForName(name)) != -1)
-    {
-        patchtex_t* patch = R_GetPatchTex(lump);
-        GL_PreparePatch(patch);
-        if(info)
-        {
-            R_GetPatchInfo((patchid_t)lump, info);
-        }
-    }
 }
 
 static boolean isInList(void** list, size_t len, void* elm)
