@@ -188,5 +188,6 @@ void            Hu_EndBorderedProjection(borderedprojectionstate_t* s);
 
 void            Hu_DrawPatch(patchid_t id, int x, int y, boolean usePatchOffset);
 void            Hu_DrawShadowedPatch(patchid_t id, int x, int y, boolean usePatchOffset);
+void            Hu_DrawShadowedPatch2(patchid_t id, int x, int y, float r, float g, float b, float a, boolean usePatchOffset);
 
 #endif

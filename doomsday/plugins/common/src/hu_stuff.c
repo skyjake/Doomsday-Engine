@@ -2180,16 +2180,6 @@ void IN_DrawShadowChar(int x, int y, unsigned char ch, gamefontid_t font)
     DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     M_DrawChar(x, y, ch, font);
 }
-#elif __JHEXEN__
-void GL_DrawShadowedPatch2(float x, float y, float r, float g, float b, float a,
-    patchid_t id)
-{
-    DGL_Color4f(0, 0, 0, a * .4f);
-    Hu_DrawPatch(id, x + 2, y + 2, true);
-
-    DGL_Color4f(r, g, b, a);
-    Hu_DrawPatch(id, x, y, true);
-}
 #endif
 
 #if __JHERETIC__
@@ -2302,8 +2292,7 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
 /**
  * Draws a three digit number using FontB
  */
-void DrBNumber(int val, int x, int y, float red, float green, float blue,
-               float alpha)
+void DrBNumber(int val, int x, int y, float red, float green, float blue, float alpha)
 {
     const patchinfo_t* pInfo;
     int xpos;
@@ -2325,7 +2314,7 @@ void DrBNumber(int val, int x, int y, float red, float green, float blue,
     if(val > 99)
     {
         pInfo = &gFonts[GF_FONTB].chars['0' + val / 100].pInfo;
-        GL_DrawShadowedPatch2(xpos + 6 - pInfo->width / 2, y, red, green, blue, alpha, pInfo->id);
+        Hu_DrawShadowedPatch2(pInfo->id, xpos + 6 - pInfo->width / 2, y, red, green, blue, alpha, true);
     }
 
     val = val % 100;
@@ -2333,13 +2322,13 @@ void DrBNumber(int val, int x, int y, float red, float green, float blue,
     if(val > 9 || oldval > 99)
     {
         pInfo = &gFonts[GF_FONTB].chars['0' + val / 10].pInfo;
-        GL_DrawShadowedPatch2(xpos + 6 - pInfo->width / 2, y, red, green, blue, alpha, pInfo->id);
+        Hu_DrawShadowedPatch2(pInfo->id, xpos + 6 - pInfo->width / 2, y, red, green, blue, alpha, true);
     }
 
     val = val % 10;
     xpos += 12;
     pInfo = &gFonts[GF_FONTB].chars['0' + val].pInfo;
-    GL_DrawShadowedPatch2(xpos + 6 - pInfo->width / 2, y, red, green, blue, alpha, pInfo->id);
+    Hu_DrawShadowedPatch2(pInfo->id, xpos + 6 - pInfo->width / 2, y, red, green, blue, alpha, true);
 }
 #endif
 
@@ -3247,5 +3236,17 @@ void Hu_DrawShadowedPatch(patchid_t id, int x, int y, boolean usePatchOffset)
     Hu_DrawPatch(id, x+2, y+2, usePatchOffset);
 
     DGL_Color4f(1, 1, 1, 1);
+    Hu_DrawPatch(id, x, y, usePatchOffset);
+}
+
+void Hu_DrawShadowedPatch2(patchid_t id, int x, int y, float r, float g, float b,
+    float a, boolean usePatchOffset)
+{
+    if(id < 0)
+        return;
+    DGL_Color4f(0, 0, 0, a * .4f);
+    Hu_DrawPatch(id, x+2, y+2, usePatchOffset);
+
+    DGL_Color4f(r, g, b, a);
     Hu_DrawPatch(id, x, y, usePatchOffset);
 }
