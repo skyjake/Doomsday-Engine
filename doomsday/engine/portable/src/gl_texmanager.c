@@ -75,7 +75,6 @@ typedef struct gltexture_typedata_s {
 D_CMD(LowRes);
 D_CMD(ResetTextures);
 D_CMD(MipMap);
-D_CMD(SmoothRaw);
 #ifdef _DEBUG
 D_CMD(TranslateFont);
 #endif
@@ -109,7 +108,7 @@ boolean load8bit = false; // Load textures as 8 bit? (w/paltex)
 int monochrome = 0; // desaturate a patch (average colours)
 int upscaleAndSharpenPatches = 0;
 int useSmartFilter = 0; // Smart filter mode (cvar: 1=hq2x)
-int mipmapping = 5, linearRaw = 1, texQuality = TEXQ_BEST;
+int mipmapping = 5, filterUI = 1, texQuality = TEXQ_BEST;
 int filterSprites = true;
 int texMagMode = 1; // Linear.
 int texAniso = -1; // Use best.
@@ -177,7 +176,7 @@ void GL_TexRegister(void)
                GL_DoTexReset);
     C_VAR_INT("rend-tex-filter-mag", &texMagMode, 0, 0, 1);
     C_VAR_INT("rend-tex-filter-sprite", &filterSprites, 0, 0, 1);
-    C_VAR_INT("rend-tex-filter-raw", &linearRaw, 0, 0, 1);
+    C_VAR_INT("rend-tex-filter-ui", &filterUI, 0, 0, 1);
     C_VAR_INT2("rend-tex-filter-smart", &useSmartFilter, 0, 0, 1,
                GL_DoTexReset);
     C_VAR_INT("rend-tex-filter-anisotropic", &texAniso, 0, -1, 4);
@@ -191,7 +190,6 @@ void GL_TexRegister(void)
     // Ccmds
     C_CMD_FLAGS("lowres", "", LowRes, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("mipmap", "i", MipMap, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("smoothscr", "i", SmoothRaw, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("texreset", "", ResetTextures, CMDF_NO_DEDICATED);
 #if _DEBUG
     C_CMD_FLAGS("translatefont", "ss", TranslateFont, CMDF_NO_DEDICATED);
@@ -1787,7 +1785,7 @@ DGLuint GL_PrepareRawTex2(rawtex_t* raw)
             raw->tex =
                 GL_UploadTexture(image.pixels, image.width, image.height,
                                  image.pixelSize == 4, false, true, false, false,
-                                 GL_NEAREST, (linearRaw ? GL_LINEAR : GL_NEAREST),
+                                 GL_NEAREST, (filterUI ? GL_LINEAR : GL_NEAREST),
                                  0 /*no anisotropy*/,
                                  GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                  (image.pixelSize == 4? TXCF_APPLY_GAMMACORRECTION : 0));
@@ -1805,7 +1803,7 @@ DGLuint GL_PrepareRawTex2(rawtex_t* raw)
             // Generate a texture.
             raw->tex = GL_UploadTexture(image.pixels, GL_state.textureNonPow2? image.width : 256, image.height,
                 false, false, rgbdata, false, false, GL_NEAREST,
-                (linearRaw? GL_LINEAR:GL_NEAREST), 0 /*no anisotropy*/,
+                (filterUI? GL_LINEAR:GL_NEAREST), 0 /*no anisotropy*/,
                 GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                 (rgbdata? TXCF_APPLY_GAMMACORRECTION : 0));
 
@@ -1845,7 +1843,7 @@ void GL_SetRawImage(lumpnum_t lump, int wrapS, int wrapT)
     {
         DGLuint tex = GL_PrepareRawTex(rawTex);
 
-        GL_BindTexture(tex, (linearRaw ? GL_LINEAR : GL_NEAREST));
+        GL_BindTexture(tex, (filterUI ? GL_LINEAR : GL_NEAREST));
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapS);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapT);
     }
@@ -3122,11 +3120,5 @@ D_CMD(ResetTextures)
 D_CMD(MipMap)
 {
     GL_UpdateTexParams(strtol(argv[1], NULL, 0));
-    return true;
-}
-
-D_CMD(SmoothRaw)
-{
-    linearRaw = strtol(argv[1], NULL, 0) ? GL_LINEAR : GL_NEAREST;
     return true;
 }

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -129,7 +129,7 @@ cvarbutton_t cvarbuttons[] = {
     {0, "rend-tex"},
     {0, "rend-tex-filter-sprite", "Sprite", "Sprite"},
     {0, "rend-tex-filter-mag", "World", "World"},
-    {0, "rend-tex-filter-raw", "Raw", "Raw"},
+    {0, "rend-tex-filter-ui", "UI", "UI"},
     {0, "rend-tex-filter-smart"},
     {0, "rend-tex-detail"},
     {0, "rend-tex-detail-multitex", "Detail", "Detail"},
@@ -536,7 +536,7 @@ ui_object_t ob_panel[] =
     { UI_TEXT,      0,  0,              300, 370, 0, 55,    "Bilinear filtering", UIText_Drawer },
     { UI_BUTTON2,   0,  0,              680, 370, 95, 55,   "rend-tex-filter-sprite", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_BUTTON2,   0,  0,              780, 370, 95, 55,   "rend-tex-filter-mag", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
-    { UI_BUTTON2,   0,  0,              880, 370, 95, 55,   "rend-tex-filter-raw", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
+    { UI_BUTTON2,   0,  0,              880, 370, 95, 55,   "rend-tex-filter-ui", UIButton_Drawer, UIButton_Responder, 0, CP_CvarButton },
     { UI_TEXT,      0,  0,              300, 430, 0, 55,    "Anisotropic filtering", UIText_Drawer },
     { UI_SLIDER,    0,  UIF_FADE_AWAY,  680, 430, 300, 55,  "",         UISlider_Drawer, UISlider_Responder, UISlider_Ticker, CP_CvarSlider, &sld_tex_aniso },
     { UI_TEXT,      0,  0,              300, 490, 0, 55,    "Enable detail textures", UIText_Drawer },

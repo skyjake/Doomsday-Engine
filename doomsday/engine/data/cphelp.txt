@@ -506,10 +506,6 @@ inf = Params: skydetail (num)\nFor example, 'skydetail 4'.
 desc = Set the number of sky sphere rows.
 inf = Params: skyrows (num)\nFor example, 'skyrows 8'.
 
-[smoothscr]
-desc = Set the rendering mode of fullscreen images.
-inf = Params: smoothscr (0-1)\n0 = GL_NEAREST\n1 = GL_LINEAR
-
 [stopdemo]
 desc = Stop currently playing demo.
 
@@ -743,8 +739,8 @@ desc = The quality of textures (0-8).
 [rend-tex-filter-sprite]
 desc = 1=Render smooth sprites.
 
-[rend-tex-filter-raw]
-desc = 1=Fullscreen images (320x200) use linear interpolation.
+[rend-tex-filter-ui]
+desc = 1=User interface uses linear interpolation.
 
 [rend-tex-filter-smart]
 desc = 1=Use hq2x-filtering on all textures.

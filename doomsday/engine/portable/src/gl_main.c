@@ -1033,7 +1033,7 @@ void GL_LowRes(void)
 {
     // Set everything as low as they go.
     filterSprites = 0;
-    linearRaw = 0;
+    filterUI = 0;
     texMagMode = 0;
 
     // And do a texreset so everything is updated.
