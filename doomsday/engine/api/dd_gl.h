@@ -244,8 +244,7 @@ void            DGL_DrawCutRectTiled(float x, float y, float w, float h, int tw,
 
 void            DGL_DrawPatch(patchid_t id, int x, int y);
 
-void            DGL_DrawRawScreen(lumpnum_t lump, float offx, float offy);
-void            DGL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy, float scalex, float scaley);
+void            DGL_DrawRawScreen(lumpnum_t lump, int x, int y);
 
 /**
  * \todo The following routines should not be necessary once materials can

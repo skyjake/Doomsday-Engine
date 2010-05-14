@@ -1813,14 +1813,18 @@ void FI_Drawer(void)
         }
         else
         {
-            //// \fixme The raw screen drawer should not ignore rotation.
-            //// It should allow the caller to set up a transformation matrix.
-            DGL_DrawRawScreen_CS(pic->tex[sq],
-                                pic->object.x.value - fi->imgOffset[0].value,
-                                pic->object.y.value - fi->imgOffset[1].value,
-                                (pic->flip[sq] ? -1 : 1) *
-                                pic->object.scale[0].value,
-                                pic->object.scale[1].value);
+            DGL_MatrixMode(DGL_MODELVIEW);
+            DGL_PushMatrix();
+            DGL_LoadIdentity();
+
+            /// \fixme What about rotaton?
+            DGL_Translatef(pic->object.x.value - fi->imgOffset[0].value, pic->object.y.value - fi->imgOffset[1].value, 0);
+            DGL_Scalef((pic->flip[sq]? -1 : 1) * pic->object.scale[0].value, pic->object.scale[1].value, 1);
+
+            DGL_DrawRawScreen(pic->tex[sq], 0, 0);
+
+            DGL_MatrixMode(DGL_MODELVIEW);
+            DGL_PopMatrix();
         }
 
         // Restore original transformation.

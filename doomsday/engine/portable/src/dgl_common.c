@@ -814,62 +814,27 @@ int DGL_Project(int num, dgl_fc3vertex_t *inVertices,
  * \todo No need for this special method now. Refactor callers to use the
  * normal DGL drawing methods.
  */
-void DGL_DrawRawScreen_CS(lumpnum_t lump, float offx, float offy,
-                         float scalex, float scaley)
+void DGL_DrawRawScreen(lumpnum_t lump, int x, int y)
 {
-    float pixelBorder = 0;
     rawtex_t* raw;
 
     if(lump < 0 || lump >= numLumps)
         return;
 
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    // Setup offset and scale.
-    // Scale the offsets to match the resolution.
-    glTranslatef(offx * theWindow->width / 320.0f,
-                 offy * theWindow->height / 200.0f, 0);
-    glScalef(scalex, scaley, 1);
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
-
     GL_SetRawImage(lump, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
     raw = R_GetRawTex(lump);
-    // Bottom texture coordinate.
-    pixelBorder = raw->width * theWindow->width / 320;
 
     // The first part is rendered in any case.
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
-        glVertex2f(0, 0);
+        glVertex2f(x, y);
         glTexCoord2f(1, 0);
-        glVertex2f(pixelBorder, 0);
+        glVertex2f(x + raw->width, y);
         glTexCoord2f(1, 1);
-        glVertex2f(pixelBorder, theWindow->height);
+        glVertex2f(x + raw->width, y + raw->height);
         glTexCoord2f(0, 1);
-        glVertex2f(0, theWindow->height);
+        glVertex2f(x, y + raw->height);
     glEnd();
-
-    // Restore the old projection matrix.
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-}
-
-/**
- * Raw screens are 320 x 200.
- */
-void DGL_DrawRawScreen(lumpnum_t lump, float offx, float offy)
-{
-    glColor3f(1, 1, 1);
-    DGL_DrawRawScreen_CS(lump, offx, offy, 1, 1);
 }
 
 /**

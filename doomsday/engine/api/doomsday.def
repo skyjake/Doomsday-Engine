@@ -21,7 +21,7 @@ NAME            "DOOMSDAY"
 ; 107 formerly GL_DoUpdate
 ; 108 formerly GL_ChangeResolution
 ; 112 formerly GL_TextureFilterMode
-; 113 formerly DGL_Color
+; 113 formerly GL_Color
 ; 116 formerly GL_SetSprite
 ; 118 formerly GL_SetTexture
 ; 121 formerly GL_DrawPatch_CS
@@ -41,7 +41,8 @@ NAME            "DOOMSDAY"
 ; 204 formerly TGA_Save16_rgb888
 ; 205 formerly TGA_GetSize
 ; 206 formerly GL_Update
-; 238 formerly DGL_Color2
+; 235 formerly GL_DrawRawScreen_CS
+; 238 formerly GL_Color2
 ; 255 formerly P_PointToBlock
 ; 326 formerly PO_Alloc
 ; 332 formerly P_ControlReset
@@ -50,7 +51,7 @@ NAME            "DOOMSDAY"
 ; 319 formerly P_Swap
 ; 320 formerly P_Swapp
 ; 328 formerly P_RegisterCustomMapProperty
-; 375 formerly DGL_MultiTexCoord2f
+; 375 formerly GL_MultiTexCoord2f
 
 EXPORTS
 ; Plugins.
@@ -408,9 +409,9 @@ EXPORTS
     DGL_DrawRect                @128 NONAME
     DGL_DrawRectTiled           @129 NONAME
     DGL_DrawCutRectTiled        @130 NONAME
+; Depreciated:
     DGL_DrawPatch               @120 NONAME
     DGL_DrawRawScreen           @126 NONAME
-    DGL_DrawRawScreen_CS        @235 NONAME
 
 ; Renderer.
     Rend_Reset                  @103 NONAME
