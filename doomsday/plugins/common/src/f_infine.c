@@ -1809,7 +1809,7 @@ void FI_Drawer(void)
         }
         else if(pic->flags.is_patch)
         {
-            Hu_DrawPatch((patchid_t)pic->tex[sq], 0, 0);
+            Hu_DrawPatch((patchid_t)pic->tex[sq], 0, 0, true);
         }
         else
         {

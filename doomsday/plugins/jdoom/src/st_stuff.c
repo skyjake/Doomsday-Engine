@@ -1364,8 +1364,8 @@ void drawFaceWidget(int player, float textAlpha, float iconAlpha,
         return;
     DGL_Color4f(1, 1, 1, iconAlpha);
     if(IS_NETGAME)
-        Hu_DrawPatch(bgPatch->id, x, -bgPatch->height + 1);
-    Hu_DrawPatch(facePatch->id, x, -bgPatch->height);
+        Hu_DrawPatch(bgPatch->id, x, -bgPatch->height + 1, true);
+    Hu_DrawPatch(facePatch->id, x, -bgPatch->height, true);
     *drawnWidth = bgPatch->width;
     *drawnHeight = bgPatch->height;
 }

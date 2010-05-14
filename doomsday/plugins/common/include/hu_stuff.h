@@ -186,7 +186,7 @@ void            Hu_ConfigureBorderedProjection(borderedprojectionstate_t* s);
 void            Hu_BeginBorderedProjection(borderedprojectionstate_t* s);
 void            Hu_EndBorderedProjection(borderedprojectionstate_t* s);
 
-void            Hu_DrawPatch(patchid_t id, int x, int y);
-void            Hu_DrawShadowedPatch(patchid_t id, int x, int y);
+void            Hu_DrawPatch(patchid_t id, int x, int y, boolean usePatchOffset);
+void            Hu_DrawShadowedPatch(patchid_t id, int x, int y, boolean usePatchOffset);
 
 #endif

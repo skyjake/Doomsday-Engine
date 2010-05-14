@@ -2383,16 +2383,16 @@ void M_DrawMainMenu(void)
     int frame = (menuTime / 5) % 7;
 
     DGL_Color4f(1, 1, 1, menuAlpha);
-    Hu_DrawPatch(m_htic.id, 88, 0);
-    Hu_DrawPatch(dpBullWithFire[(frame + 2) % 7].id, 37, 80);
-    Hu_DrawPatch(dpBullWithFire[frame].id, 278, 80);
+    Hu_DrawPatch(m_htic.id, 88, 0, true);
+    Hu_DrawPatch(dpBullWithFire[(frame + 2) % 7].id, 37, 80, true);
+    Hu_DrawPatch(dpBullWithFire[frame].id, 278, 80, true);
 
 #elif __JHERETIC__
     WI_DrawPatch(88, 0, 1, 1, 1, menuAlpha, &m_htic, NULL, false, ALIGN_LEFT);
 
     DGL_Color4f(1, 1, 1, menuAlpha);
-    Hu_DrawPatch(dpRotatingSkull[17 - frame].id, 40, 10);
-    Hu_DrawPatch(dpRotatingSkull[frame].id, 232, 10);
+    Hu_DrawPatch(dpRotatingSkull[17 - frame].id, 40, 10, true);
+    Hu_DrawPatch(dpRotatingSkull[frame].id, 232, 10, true);
 #elif __JDOOM__ || __JDOOM64__
     WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, &m_doom, NULL, false, ALIGN_LEFT);
 #endif
@@ -2461,7 +2461,7 @@ void M_DrawClassMenu(void)
                     ((menuTime >> 3) & 3), &sprInfo);
 
     DGL_Color4f(1, 1, 1, menuAlpha);
-    Hu_DrawPatch(dpPlayerClassBG[pClass % 3].id, BG_X, BG_Y);
+    Hu_DrawPatch(dpPlayerClassBG[pClass % 3].id, BG_X, BG_Y, true);
 
     // Fighter's colors are a bit different.
     if(pClass == PCLASS_FIGHTER)
@@ -2689,7 +2689,7 @@ void M_DrawSaveLoadBorder(int x, int y, int width)
 {
 #if __JHERETIC__ || __JHEXEN__
     DGL_Color4f(1, 1, 1, menuAlpha);
-    Hu_DrawPatch(dpFSlot.id, x - 8, y - 4);
+    Hu_DrawPatch(dpFSlot.id, x - 8, y - 4, true);
 #else
     DGL_Color4f(1, 1, 1, menuAlpha);
 
@@ -3109,9 +3109,9 @@ void M_DrawHUDMenu(void)
 
     // Draw the page arrows.
     token = &dpInvPageLeft[!menu->firstItem || (menuTime & 8)];
-    Hu_DrawPatch(token->id, menu->x, menu->y - 22);
+    Hu_DrawPatch(token->id, menu->x, menu->y - 22, true);
     token = &dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)];
-    Hu_DrawPatch(token->id, 312 - menu->x, menu->y - 22);
+    Hu_DrawPatch(token->id, 312 - menu->x, menu->y - 22, true);
 #endif
 
     idx = 0;

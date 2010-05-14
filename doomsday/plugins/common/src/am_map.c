@@ -1760,9 +1760,9 @@ void M_DrawMapMenu(void)
 
     // Draw the page arrows.
     token = &dpInvPageLeft[!menu->firstItem || (menuTime & 8)];
-    Hu_DrawPatch(token->id, menu->x, menu->y - 22);
+    Hu_DrawPatch(token->id, menu->x, menu->y - 22, true);
     token = &dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)];
-    Hu_DrawPatch(token->id, 312 - menu->x, menu->y - 22);
+    Hu_DrawPatch(token->id, 312 - menu->x, menu->y - 22, true);
 #endif
 
     idx = 0;

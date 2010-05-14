@@ -560,7 +560,7 @@ void IN_Drawer(void)
         if(wbs->episode < 3)
         {
             DGL_Color4f(1, 1, 1, 1);
-            Hu_DrawPatch(dpInterPic.id, 0, 0);
+            Hu_DrawPatch(dpInterPic.id, 0, 0, true);
             IN_DrawOldLevel();
         }
         break;
@@ -569,7 +569,7 @@ void IN_Drawer(void)
         if(wbs->episode < 3)
         {
             DGL_Color4f(1, 1, 1, 1);
-            Hu_DrawPatch(dpInterPic.id, 0, 0);
+            Hu_DrawPatch(dpInterPic.id, 0, 0, true);
             IN_DrawYAH();
         }
         break;
@@ -578,7 +578,7 @@ void IN_Drawer(void)
         if(wbs->episode < 3)
         {
             DGL_Color4f(1, 1, 1, 1);
-            Hu_DrawPatch(dpInterPic.id, 0, 0);
+            Hu_DrawPatch(dpInterPic.id, 0, 0, true);
         }
         break;
 
@@ -615,12 +615,12 @@ void IN_DrawOldLevel(void)
         DGL_Color4f(1, 1, 1, 1);
         for(i = 0; i < wbs->nextMap; ++i)
         {
-            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
+            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y, true);
         }
 
         if(!(interTime & 16))
         {
-            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
+            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y, true);
         }
     }
     else
@@ -629,17 +629,17 @@ void IN_DrawOldLevel(void)
         DGL_Color4f(1, 1, 1, 1);
         for(i = 0; i < wbs->currentMap; ++i)
         {
-            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
+            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y, true);
         }
 
         if(players[CONSOLEPLAYER].didSecret)
         {
-            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
+            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y, true);
         }
 
         if(!(interTime & 16))
         {
-            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][wbs->currentMap].x, YAHspot[wbs->episode][wbs->currentMap].y);
+            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][wbs->currentMap].x, YAHspot[wbs->episode][wbs->currentMap].y, true);
         }
     }
 }
@@ -659,17 +659,17 @@ void IN_DrawYAH(void)
     DGL_Color4f(1, 1, 1, 1);
     for(i = 0; i < wbs->nextMap; ++i)
     {
-        Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
+        Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y, true);
     }
 
     if(players[CONSOLEPLAYER].didSecret)
     {
-        Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
+        Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y, true);
     }
 
     if(!(interTime & 16) || interState == 3)
     {   // Draw the destination 'X'
-        Hu_DrawPatch(dpGoingThere.id, YAHspot[wbs->episode][wbs->nextMap].x, YAHspot[wbs->episode][wbs->nextMap].y);
+        Hu_DrawPatch(dpGoingThere.id, YAHspot[wbs->episode][wbs->nextMap].x, YAHspot[wbs->episode][wbs->nextMap].y, true);
     }
 }
 
@@ -809,9 +809,10 @@ void IN_DrawCoopStats(void)
         if(teamInfo[i].members)
         {
             DGL_Color4f(0, 0, 0, .4f);
-            Hu_DrawPatch(dpFaceAlive[i].id, 27, ypos+2);
+            Hu_DrawPatch(dpFaceAlive[i].id, 27, ypos+2, true);
+
             DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            Hu_DrawPatch(dpFaceAlive[i].id, 25, ypos);
+            Hu_DrawPatch(dpFaceAlive[i].id, 25, ypos, true);
 
             if(interTime < 40)
             {
@@ -867,8 +868,8 @@ void IN_DrawDMStats(void)
         {
             if(teamInfo[i].members)
             {
-                Hu_DrawShadowedPatch(dpFaceAlive[i].id, 40, ((ypos << FRACBITS) + dSlideY[i] * interTime) >> FRACBITS);
-                Hu_DrawShadowedPatch(dpFaceDead[i].id, ((xpos << FRACBITS) + dSlideX[i] * interTime) >> FRACBITS, 18);
+                Hu_DrawShadowedPatch(dpFaceAlive[i].id, 40, ((ypos << FRACBITS) + dSlideY[i] * interTime) >> FRACBITS, true);
+                Hu_DrawShadowedPatch(dpFaceDead[i].id, ((xpos << FRACBITS) + dSlideX[i] * interTime) >> FRACBITS, 18, true);
             }
         }
 
@@ -894,14 +895,14 @@ void IN_DrawDMStats(void)
         {
             if(interTime < 100 || i == playerTeam[CONSOLEPLAYER])
             {
-                Hu_DrawShadowedPatch(dpFaceAlive[i].id, 40, ypos);
-                Hu_DrawShadowedPatch(dpFaceDead[i].id, xpos, 18);
+                Hu_DrawShadowedPatch(dpFaceAlive[i].id, 40, ypos, true);
+                Hu_DrawShadowedPatch(dpFaceDead[i].id, xpos, 18, true);
             }
             else
             {
                 DGL_Color4f(1, 1, 1, .333f);
-                Hu_DrawPatch(dpFaceAlive[i].id, 40, ypos);
-                Hu_DrawPatch(dpFaceDead[i].id, xpos, 18);
+                Hu_DrawPatch(dpFaceAlive[i].id, 40, ypos, true);
+                Hu_DrawPatch(dpFaceDead[i].id, xpos, 18, true);
             }
 
             kpos = 86;
