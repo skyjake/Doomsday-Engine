@@ -369,7 +369,7 @@ void drawChainWidget(int player, float textAlpha, float iconAlpha,
 
     // Draw the life gem.
     DGL_Color4f(1, 1, 1, iconAlpha);
-    DGL_DrawPatch(lifeGems[gemNum].id, x + gemXOffset, chainY);
+    Hu_DrawPatch(lifeGems[gemNum].id, x + gemXOffset, chainY);
 
     shadeChain(ORIGINX, ORIGINY-ST_HEIGHT, iconAlpha/3);
 
@@ -419,28 +419,28 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
     {   // We can just render the full thing as normal.
         // Top bits.
         DGL_Color4f(1, 1, 1, 1);
-        DGL_DrawPatch(statusbarTopLeft.id, ORIGINX, ORIGINY-10);
-        DGL_DrawPatch(statusbarTopRight.id, ORIGINX+290, ORIGINY-10);
+        Hu_DrawPatch(statusbarTopLeft.id, ORIGINX, ORIGINY-10);
+        Hu_DrawPatch(statusbarTopRight.id, ORIGINX+290, ORIGINY-10);
 
         // Faces.
-        DGL_DrawPatch(statusbar.id, ORIGINX, ORIGINY);
+        Hu_DrawPatch(statusbar.id, ORIGINX, ORIGINY);
 
         if(P_GetPlayerCheats(plr) & CF_GODMODE)
         {
-            DGL_DrawPatch(godLeft.id, ORIGINX+16, ORIGINY+9);
-            DGL_DrawPatch(godRight.id, ORIGINX+287, ORIGINY+9);
+            Hu_DrawPatch(godLeft.id, ORIGINX+16, ORIGINY+9);
+            Hu_DrawPatch(godRight.id, ORIGINX+287, ORIGINY+9);
         }
 
         if(!Hu_InventoryIsOpen(player))
         {
             if(deathmatch)
-                DGL_DrawPatch(statBar.id, ORIGINX+34, ORIGINY+2);
+                Hu_DrawPatch(statBar.id, ORIGINX+34, ORIGINY+2);
             else
-                DGL_DrawPatch(lifeBar.id, ORIGINX+34, ORIGINY+2);
+                Hu_DrawPatch(lifeBar.id, ORIGINX+34, ORIGINY+2);
         }
         else
         {
-            DGL_DrawPatch(invBar.id, ORIGINX+34, ORIGINY+2);
+            Hu_DrawPatch(invBar.id, ORIGINX+34, ORIGINY+2);
         }
     }
     else
@@ -448,8 +448,8 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
         DGL_Color4f(1, 1, 1, iconAlpha);
 
         // Top bits.
-        DGL_DrawPatch(statusbarTopLeft.id, ORIGINX, ORIGINY-10);
-        DGL_DrawPatch(statusbarTopRight.id, ORIGINX+290, ORIGINY-10);
+        Hu_DrawPatch(statusbarTopLeft.id, ORIGINX, ORIGINY-10);
+        Hu_DrawPatch(statusbarTopRight.id, ORIGINX+290, ORIGINY-10);
 
         DGL_SetPatch(statusbar.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
@@ -466,8 +466,8 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
             DGL_DrawCutRectTiled(ORIGINX, ORIGINY, 34, 42, 320, 42, 0, 0, ORIGINX+16, ORIGINY+9, 16, 8);
             DGL_DrawCutRectTiled(ORIGINX+282, ORIGINY, 38, 42, 320, 42, 282, 0, ORIGINX+287, ORIGINY+9, 16, 8);
 
-            DGL_DrawPatch(godLeft.id, ORIGINX+16, ORIGINY+9);
-            DGL_DrawPatch(godRight.id, ORIGINX+287, ORIGINY+9);
+            Hu_DrawPatch(godLeft.id, ORIGINX+16, ORIGINY+9);
+            Hu_DrawPatch(godRight.id, ORIGINX+287, ORIGINY+9);
         }
         else
         {
@@ -478,13 +478,13 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
         if(!Hu_InventoryIsOpen(player))
         {
             if(deathmatch)
-                DGL_DrawPatch(statBar.id, ORIGINX+34, ORIGINY+2);
+                Hu_DrawPatch(statBar.id, ORIGINX+34, ORIGINY+2);
             else
-                DGL_DrawPatch(lifeBar.id, ORIGINX+34, ORIGINY+2);
+                Hu_DrawPatch(lifeBar.id, ORIGINX+34, ORIGINY+2);
         }
         else
         {
-            DGL_DrawPatch(invBar.id, ORIGINX+34, ORIGINY+2);
+            Hu_DrawPatch(invBar.id, ORIGINX+34, ORIGINY+2);
         }
     }
 
@@ -912,7 +912,7 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
         }
 
         DGL_Color4f(1, 1, 1, iconAlpha);
-        DGL_DrawPatch(patch, x, y);
+        Hu_DrawPatch(patch, x, y);
 
         if(!(hud->currentInvItemFlash > 0))
         {
@@ -963,30 +963,30 @@ static void drawINumber(signed int val, int x, int y, float r, float g, float b,
     {
         if(val < -9)
         {
-            DGL_DrawPatch(lame.id, x + 1, y + 1);
+            Hu_DrawPatch(lame.id, x + 1, y + 1);
         }
         else
         {
             val = -val;
-            DGL_DrawPatch(iNumbers[val].id, x + 18, y);
-            DGL_DrawPatch(negative.id, x + 9, y);
+            Hu_DrawPatch(iNumbers[val].id, x + 18, y);
+            Hu_DrawPatch(negative.id, x + 9, y);
         }
         return;
     }
 
     if(val > 99)
     {
-        DGL_DrawPatch(iNumbers[val / 100].id, x, y);
+        Hu_DrawPatch(iNumbers[val / 100].id, x, y);
     }
 
     val = val % 100;
     if(val > 9 || oldval > 99)
     {
-        DGL_DrawPatch(iNumbers[val / 10].id, x + 9, y);
+        Hu_DrawPatch(iNumbers[val / 10].id, x + 9, y);
     }
 
     val = val % 10;
-    DGL_DrawPatch(iNumbers[val].id, x + 18, y);
+    Hu_DrawPatch(iNumbers[val].id, x + 18, y);
 }
 
 /**

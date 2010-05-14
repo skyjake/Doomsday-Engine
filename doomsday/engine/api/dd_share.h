@@ -975,10 +975,12 @@ typedef enum material_namespace_e {
 typedef struct {
     patchid_t       id;
     boolean         isCustom; // @c true if the patch does not originate from an IWAD.
-    int             offset;
-    int             topOffset;
-    int             width;
-    int             height;
+    short           offset;
+    short           topOffset;
+    short           width;
+    short           height;
+    // temporary until the big DGL drawing rewrite.
+    short           extraOffset[2]; // Only used with upscaled and sharpened patches.
 } patchinfo_t;
 
 typedef struct {

@@ -358,8 +358,8 @@ static void drawDeathTally(void)
     boolean bold;
 
     DGL_Color4f(1, 1, 1, 1);
-    DGL_DrawPatch(dpTallyTop.id, TALLY_TOP_X, TALLY_TOP_Y);
-    DGL_DrawPatch(dpTallyLeft.id, TALLY_LEFT_X, TALLY_LEFT_Y);
+    Hu_DrawPatch(dpTallyTop.id, TALLY_TOP_X, TALLY_TOP_Y);
+    Hu_DrawPatch(dpTallyLeft.id, TALLY_LEFT_X, TALLY_LEFT_Y);
 
     if(interTime < TALLY_EFFECT_TICKS)
     {

@@ -747,6 +747,8 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
         info->topOffset = -SHORT(patch->topOffset);
         info->offset = -SHORT(patch->leftOffset);
         info->isCustom = !W_IsFromIWAD(lump);
+        /// \fixme
+        info->extraOffset[0] = info->extraOffset[1] = 0;
         W_ChangeCacheTag(lump, PU_CACHE);
         return true;
     }

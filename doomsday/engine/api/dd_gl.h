@@ -242,8 +242,6 @@ void            DGL_DrawRect(float x, float y, float w, float h, float r, float 
 void            DGL_DrawRectTiled(float x, float y, float w, float h, int tw, int th);
 void            DGL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th, int txoff, int tyoff, float cx, float cy, float cw, float ch);
 
-void            DGL_DrawPatch(patchid_t id, int x, int y);
-
 void            DGL_DrawRawScreen(lumpnum_t lump, int x, int y);
 
 /**
