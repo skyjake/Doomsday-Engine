@@ -287,7 +287,7 @@ void drawFlightWidget(int player, float textAlpha, float iconAlpha,
             }
         }
         DGL_Color4f(1, 1, 1, iconAlpha);
-        DGL_DrawPatch_CS(dpSpinFly[frame].id, 16, 14);
+        DGL_DrawPatch(dpSpinFly[frame].id, 16, 14);
     }
     *drawnWidth = 32;
     *drawnHeight = 28;
@@ -306,7 +306,7 @@ void drawBootsWidget(int player, float textAlpha, float iconAlpha,
     if(plr->powers[PT_SPEED] > BLINKTHRESHOLD || !(plr->powers[PT_SPEED] & 16))
     {
         DGL_Color4f(1, 1, 1, iconAlpha);
-        DGL_DrawPatch_CS(dpSpinSpeed[(mapTime / 3) & 15].id, 12, 14);
+        DGL_DrawPatch(dpSpinSpeed[(mapTime / 3) & 15].id, 12, 14);
     }
     *drawnWidth = 24;
     *drawnHeight = 28;
@@ -325,7 +325,7 @@ void drawDefenseWidget(int player, float textAlpha, float iconAlpha,
     if(plr->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD || !(plr->powers[PT_INVULNERABILITY] & 16))
     {
         DGL_Color4f(1, 1, 1, iconAlpha);
-        DGL_DrawPatch_CS(dpSpinDefense[(mapTime / 3) & 15].id, -13, 14);
+        DGL_DrawPatch(dpSpinDefense[(mapTime / 3) & 15].id, -13, 14);
     }
     *drawnWidth = 26;
     *drawnHeight = 28;
@@ -344,7 +344,7 @@ void drawServantWidget(int player, float textAlpha, float iconAlpha,
     if(plr->powers[PT_MINOTAUR] > BLINKTHRESHOLD || !(plr->powers[PT_MINOTAUR] & 16))
     {
         DGL_Color4f(1, 1, 1, iconAlpha);
-        DGL_DrawPatch_CS(dpSpinMinotaur[(mapTime / 3) & 15].id, -13, 17);
+        DGL_DrawPatch(dpSpinMinotaur[(mapTime / 3) & 15].id, -13, 17);
     }
     *drawnWidth = 26;
     *drawnHeight = 29;
@@ -370,26 +370,26 @@ void drawWeaponPiecesWidget(int player, float textAlpha, float iconAlpha,
     if(plr->pieces == 7)
     {
         DGL_Color4f(1, 1, 1, iconAlpha);
-        DGL_DrawPatch_CS(dpWeaponFull[pClass].id, ORIGINX+190, ORIGINY);
+        DGL_DrawPatch(dpWeaponFull[pClass].id, ORIGINX+190, ORIGINY);
     }
     else
     {
         if(plr->pieces & WPIECE1)
         {
             DGL_Color4f(1, 1, 1, iconAlpha);
-            DGL_DrawPatch_CS(dpWeaponPiece1[pClass].id, ORIGINX+PCLASS_INFO(pClass)->pieceX[0], ORIGINY);
+            DGL_DrawPatch(dpWeaponPiece1[pClass].id, ORIGINX+PCLASS_INFO(pClass)->pieceX[0], ORIGINY);
         }
 
         if(plr->pieces & WPIECE2)
         {
             DGL_Color4f(1, 1, 1, iconAlpha);
-            DGL_DrawPatch_CS(dpWeaponPiece2[pClass].id, ORIGINX+PCLASS_INFO(pClass)->pieceX[1], ORIGINY);
+            DGL_DrawPatch(dpWeaponPiece2[pClass].id, ORIGINX+PCLASS_INFO(pClass)->pieceX[1], ORIGINY);
         }
 
         if(plr->pieces & WPIECE3)
         {
             DGL_Color4f(1, 1, 1, iconAlpha);
-            DGL_DrawPatch_CS(dpWeaponPiece3[pClass].id, ORIGINX+PCLASS_INFO(pClass)->pieceX[2], ORIGINY);
+            DGL_DrawPatch(dpWeaponPiece3[pClass].id, ORIGINX+PCLASS_INFO(pClass)->pieceX[2], ORIGINY);
         }
     }
 
@@ -590,6 +590,7 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
 
     if(!(iconAlpha < 1))
     {
+        DGL_Color4f(1, 1, 1, 1);
         DGL_DrawPatch(dpStatusBar.id, ORIGINX, ORIGINY-28);
         /**
          * \kludge The Hexen statusbar graphic has a chain already in the
@@ -600,6 +601,7 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
         DGL_SetNoMaterial();
         DGL_DrawRect(ORIGINX+44, ORIGINY+31, 232, 7, .1f, .1f, .1f, 1);
         //// \kludge end
+        DGL_Color4f(1, 1, 1, 1);
         DGL_DrawPatch(dpStatusBarTop.id, ORIGINX, ORIGINY-28);
 
         if(!Hu_InventoryIsOpen(player))
@@ -611,7 +613,7 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
 
                 if(deathmatch)
                 {
-                    DGL_DrawPatch_CS(dpKills.id, ORIGINX+38, ORIGINY);
+                    DGL_DrawPatch(dpKills.id, ORIGINX+38, ORIGINY);
                 }
 
                 DGL_DrawPatch(dpWeaponSlot[pClass].id, ORIGINX+190, ORIGINY);
@@ -708,13 +710,13 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
                 DGL_SetPatch(dpStatBar.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
                 DGL_DrawCutRectTiled(x, y, w, h, dpStatBar.width, dpStatBar.height, deathmatch?30:0, 0, ORIGINX+190, ORIGINY, 57, 30);
 
-                DGL_DrawPatch_CS(dpWeaponSlot[pClass].id, ORIGINX+190, ORIGINY);
+                DGL_DrawPatch(dpWeaponSlot[pClass].id, ORIGINX+190, ORIGINY);
                 if(deathmatch)
-                    DGL_DrawPatch_CS(dpKills.id, ORIGINX+38, ORIGINY);
+                    DGL_DrawPatch(dpKills.id, ORIGINX+38, ORIGINY);
             }
             else
             {
-                DGL_DrawPatch_CS(dpKeyBar.id, ORIGINX+38, ORIGINY);
+                DGL_DrawPatch(dpKeyBar.id, ORIGINX+38, ORIGINY);
             }
         }
         else
@@ -1279,7 +1281,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
 
         patch = &dpKeySlot[i];
         DGL_Color4f(1, 1, 1, iconAlpha);
-        DGL_DrawPatch_CS(patch->id, ORIGINX + 46 + numDrawn * 20, ORIGINY + 1);
+        DGL_DrawPatch(patch->id, ORIGINX + 46 + numDrawn * 20, ORIGINY + 1);
 
         *drawnWidth += patch->width;
         if(patch->height > *drawnHeight)
@@ -1334,7 +1336,7 @@ void drawSBarArmorIconsWidget(int player, float textAlpha, float iconAlpha,
             alpha = 1;
 
         DGL_Color4f(1, 1, 1, iconAlpha * alpha);
-        DGL_DrawPatch_CS(patch->id, ORIGINX + 150 + 31 * i, ORIGINY + 2);
+        DGL_DrawPatch(patch->id, ORIGINX + 150 + 31 * i, ORIGINY + 2);
 
         *drawnWidth += patch->width;
         if(patch->height > *drawnHeight)
@@ -1523,7 +1525,7 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
     }
 
     DGL_Color4f(1, 1, 1, iconAlpha);
-    DGL_DrawPatch_CS(patch, ORIGINX+x, ORIGINY+y);
+    DGL_DrawPatch(patch, ORIGINX+x, ORIGINY+y);
 
     if(!(hud->currentInvItemFlash > 0))
     {
@@ -1686,28 +1688,28 @@ static void DrINumber(signed int val, int x, int y, float r, float g,
         }
         if(val > 9)
         {
-            DGL_DrawPatch_CS(dpINumbers[val / 10].id, x + 8, y);
-            DGL_DrawPatch_CS(dpNegative.id, x, y);
+            DGL_DrawPatch(dpINumbers[val / 10].id, x + 8, y);
+            DGL_DrawPatch(dpNegative.id, x, y);
         }
         else
         {
-            DGL_DrawPatch_CS(dpNegative.id, x + 8, y);
+            DGL_DrawPatch(dpNegative.id, x + 8, y);
         }
         val = val % 10;
-        DGL_DrawPatch_CS(dpINumbers[val].id, x + 16, y);
+        DGL_DrawPatch(dpINumbers[val].id, x + 16, y);
         return;
     }
     if(val > 99)
     {
-        DGL_DrawPatch_CS(dpINumbers[val / 100].id, x, y);
+        DGL_DrawPatch(dpINumbers[val / 100].id, x, y);
     }
     val = val % 100;
     if(val > 9 || oldval > 99)
     {
-        DGL_DrawPatch_CS(dpINumbers[val / 10].id, x + 8, y);
+        DGL_DrawPatch(dpINumbers[val / 10].id, x + 8, y);
     }
     val = val % 10;
-    DGL_DrawPatch_CS(dpINumbers[val].id, x + 16, y);
+    DGL_DrawPatch(dpINumbers[val].id, x + 16, y);
 
 }
 
@@ -1868,7 +1870,7 @@ void drawBlueManaWidget(int player, float textAlpha, float iconAlpha,
     }
 
     DGL_Color4f(1, 1, 1, iconAlpha);
-    DGL_DrawPatch_CS(patch->id, 0, 0);
+    DGL_DrawPatch(patch->id, 0, 0);
     DrINumber(plr->ammo[AT_BLUEMANA].owned, patch->width+2, 0, 1, 1, 1, textAlpha);
     *drawnWidth = patch->width+2+dpINumbers[0].width*3;
     *drawnHeight = MAX_OF(patch->height, dpINumbers[0].height);
@@ -1914,7 +1916,7 @@ void drawGreenManaWidget(int player, float textAlpha, float iconAlpha,
     }
 
     DGL_Color4f(1, 1, 1, iconAlpha);
-    DGL_DrawPatch_CS(patch->id, 0, 0);
+    DGL_DrawPatch(patch->id, 0, 0);
     DrINumber(plr->ammo[AT_GREENMANA].owned, patch->width+2, 0, 1, 1, 1, textAlpha);
     *drawnWidth = patch->width+2+dpINumbers[0].width*3;
     *drawnHeight = MAX_OF(patch->height, dpINumbers[0].height);
@@ -1959,9 +1961,9 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
         const patchinfo_t* dp = &dpInvItemFlash[hud->currentInvItemFlash % 5];
 
         DGL_Color4f(1, 1, 1, iconAlpha/2);
-        DGL_DrawPatch_CS(dpInvItemBox.id, -30, -30);
+        DGL_DrawPatch(dpInvItemBox.id, -30, -30);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        DGL_DrawPatch_CS(dp->id, -27, -30);
+        DGL_DrawPatch(dp->id, -27, -30);
     }
     else
     {
@@ -1973,9 +1975,9 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
             uint count;
 
             DGL_Color4f(1, 1, 1, iconAlpha/2);
-            DGL_DrawPatch_CS(dpInvItemBox.id, -30, -30);
+            DGL_DrawPatch(dpInvItemBox.id, -30, -30);
             DGL_Color4f(1, 1, 1, iconAlpha);
-            DGL_DrawPatch_CS(patch, -32, -31);
+            DGL_DrawPatch(patch, -32, -31);
             if((count = P_InventoryCount(player, readyItem)) > 1)
                 Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, -2, -7, textAlpha);
         }

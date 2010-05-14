@@ -354,6 +354,7 @@ static void drawDeathTally(void)
     int i, j, x, y, temp;
     boolean bold;
 
+    DGL_Color4f(1, 1, 1, 1);
     DGL_DrawPatch(dpTallyTop.id, TALLY_TOP_X, TALLY_TOP_Y);
     DGL_DrawPatch(dpTallyLeft.id, TALLY_LEFT_X, TALLY_LEFT_Y);
 

@@ -559,6 +559,7 @@ void IN_Drawer(void)
     case 1: // Leaving old level.
         if(wbs->episode < 3)
         {
+            DGL_Color4f(1, 1, 1, 1);
             DGL_DrawPatch(dpInterPic.id, 0, 0);
             IN_DrawOldLevel();
         }
@@ -567,6 +568,7 @@ void IN_Drawer(void)
     case 2: // Going to the next level.
         if(wbs->episode < 3)
         {
+            DGL_Color4f(1, 1, 1, 1);
             DGL_DrawPatch(dpInterPic.id, 0, 0);
             IN_DrawYAH();
         }
@@ -575,6 +577,7 @@ void IN_Drawer(void)
     case 3: // Waiting before going to the next level.
         if(wbs->episode < 3)
         {
+            DGL_Color4f(1, 1, 1, 1);
             DGL_DrawPatch(dpInterPic.id, 0, 0);
         }
         break;
@@ -609,6 +612,7 @@ void IN_DrawOldLevel(void)
     if(wbs->currentMap == 8)
     {
         uint i;
+        DGL_Color4f(1, 1, 1, 1);
         for(i = 0; i < wbs->nextMap; ++i)
         {
             DGL_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
@@ -622,6 +626,7 @@ void IN_DrawOldLevel(void)
     else
     {
         uint i;
+        DGL_Color4f(1, 1, 1, 1);
         for(i = 0; i < wbs->currentMap; ++i)
         {
             DGL_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
@@ -641,18 +646,17 @@ void IN_DrawOldLevel(void)
 
 void IN_DrawYAH(void)
 {
+    const char* mapName = P_GetShortMapName(wbs->episode, wbs->nextMap);
     uint i;
     int x;
-    const char* levelname;
-
-    levelname = P_GetShortMapName(wbs->episode, wbs->nextMap);
 
     x = 160 - M_StringWidth("NOW ENTERING:", GF_FONTA) / 2;
     M_WriteText2(x, 10, "NOW ENTERING:", GF_FONTA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
 
-    x = 160 - M_StringWidth(levelname, GF_FONTB) / 2;
-    M_WriteText2(x, 20, levelname, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    x = 160 - M_StringWidth(mapName, GF_FONTB) / 2;
+    M_WriteText2(x, 20, mapName, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
+    DGL_Color4f(1, 1, 1, 1);
     for(i = 0; i < wbs->nextMap; ++i)
     {
         DGL_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
@@ -805,9 +809,9 @@ void IN_DrawCoopStats(void)
         if(teamInfo[i].members)
         {
             DGL_Color4f(0, 0, 0, .4f);
-            DGL_DrawPatch_CS(dpFaceAlive[i].id, 27, ypos+2);
+            DGL_DrawPatch(dpFaceAlive[i].id, 27, ypos+2);
             DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            DGL_DrawPatch_CS(dpFaceAlive[i].id, 25, ypos);
+            DGL_DrawPatch(dpFaceAlive[i].id, 25, ypos);
 
             if(interTime < 40)
             {
@@ -896,8 +900,8 @@ void IN_DrawDMStats(void)
             else
             {
                 DGL_Color4f(1, 1, 1, .333f);
-                DGL_DrawPatch_CS(dpFaceAlive[i].id, 40, ypos);
-                DGL_DrawPatch_CS(dpFaceDead[i].id, xpos, 18);
+                DGL_DrawPatch(dpFaceAlive[i].id, 40, ypos);
+                DGL_DrawPatch(dpFaceDead[i].id, xpos, 18);
             }
 
             kpos = 86;

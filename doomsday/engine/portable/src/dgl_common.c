@@ -875,7 +875,7 @@ void DGL_DrawRawScreen(lumpnum_t lump, float offx, float offy)
 /**
  * Drawing with the Current State.
  */
-void DGL_DrawPatch_CS(patchid_t id, int posX, int posY)
+void DGL_DrawPatch(patchid_t id, int posX, int posY)
 {
     float x = posX, y = posY, w, h;
     patchtex_t* p = R_FindPatchTex(id);
@@ -912,21 +912,13 @@ void DGL_DrawPatch_CS(patchid_t id, int posX, int posY)
     glEnd();
 }
 
-void DGL_DrawPatch(patchid_t id, int x, int y)
-{
-    if(id < 0)
-        return;
-    DGL_Color4f(1, 1, 1, 1);
-    DGL_DrawPatch_CS(id, x, y);
-}
-
 void DGL_DrawShadowedPatch(patchid_t id, int x, int y)
 {
     if(id < 0)
         return;
     DGL_Color4f(0, 0, 0, .4f);
-    DGL_DrawPatch_CS(id, x+2, y+2);
+    DGL_DrawPatch(id, x+2, y+2);
 
     DGL_Color4f(1, 1, 1, 1);
-    DGL_DrawPatch_CS(id, x, y);
+    DGL_DrawPatch(id, x, y);
 }
