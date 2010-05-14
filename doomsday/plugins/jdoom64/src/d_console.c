@@ -275,8 +275,7 @@ void D_ConsoleBg(int *width, int *height)
  */
 void G_UpdateEyeHeight(cvar_t* unused)
 {
-    player_t*           plr = &players[CONSOLEPLAYER];
-
+    player_t* plr = &players[CONSOLEPLAYER];
     if(!(plr->plr->flags & DDPF_CAMERA))
         plr->viewHeight = (float) cfg.plrViewHeight;
 }
@@ -285,18 +284,18 @@ void G_UpdateEyeHeight(cvar_t* unused)
  * Draw (char *) text in the game's font.
  * Called by the console drawer.
  */
-int ConTextOut(const char* text, int x, int y)
+int ConTextOut(const char* string, int x, int y)
 {
-    M_WriteText3(x, y, text, GF_FONTA, -1, -1, -1, -1, false, false, 0);
+    M_WriteText3(string, x, y, GF_FONTA, -1, -1, -1, -1, false, false, 0);
     return 0;
 }
 
 /**
  * Get the visual width of (char*) text in the game's font.
  */
-int ConTextWidth(const char* text)
+int ConTextWidth(const char* string)
 {
-    return M_StringWidth(text, GF_FONTA);
+    return M_StringWidth(string, GF_FONTA);
 }
 
 /**

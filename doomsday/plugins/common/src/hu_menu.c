@@ -154,9 +154,6 @@ void M_DrawWeaponMenu(void);
 void M_DrawLoad(void);
 void M_DrawSave(void);
 void M_DrawFilesMenu(void);
-void M_DrawBackgroundBox(float x, float y, float w, float h,
-                         float r, float g, float b, float a,
-                         boolean background, int border);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -1736,19 +1733,11 @@ void Hu_MenuDrawer(void)
 #endif
             if(currentMenu->items[i].patch)
             {
-                WI_DrawPatch(pos[VX], pos[VY], r, g, b, menuAlpha,
-                             currentMenu->items[i].patch->id,
-                             (currentMenu->items[i].flags & MIF_NOTALTTXT)? NULL :
-                             currentMenu->items[i].text, true, ALIGN_LEFT);
+                WI_DrawPatch3(currentMenu->items[i].patch->id, pos[VX], pos[VY], (currentMenu->items[i].flags & MIF_NOTALTTXT)? NULL : currentMenu->items[i].text, true, ALIGN_LEFT, r, g, b, menuAlpha);
             }
             else if(currentMenu->items[i].text)
             {
-                WI_DrawParamText(pos[VX], pos[VY],
-                                 currentMenu->items[i].text, currentMenu->font,
-                                 r, g, b, menuAlpha,
-                                 false,
-                                 cfg.usePatchReplacement? true : false, true,
-                                 ALIGN_LEFT);
+                WI_DrawParamText(currentMenu->items[i].text, pos[VX], pos[VY], currentMenu->font, r, g, b, menuAlpha, false, cfg.usePatchReplacement? true : false, true, ALIGN_LEFT);
             }
 
             pos[VY] += currentMenu->itemHeight;
@@ -2211,50 +2200,34 @@ void DrawColorWidget(void)
 #else
                         180, (rgba? 170 : 140),
 #endif
-                             1, 1, 1, menuAlpha, true, BORDERUP);
+                             true, BORDERUP, 1, 1, 1, menuAlpha);
 
         DGL_SetNoMaterial();
-        DGL_DrawRect(menu->x+w, menu->y-30, 24, 22, currentcolor[0],
-                     currentcolor[1], currentcolor[2], currentcolor[3]);
-        M_DrawBackgroundBox(menu->x+w, menu->y-30, 24, 22, 1, 1, 1,
-                            menuAlpha, false, BORDERDOWN);
+        DGL_DrawRect(menu->x+w, menu->y-30, 24, 22, currentcolor[0], currentcolor[1], currentcolor[2], currentcolor[3]);
+        M_DrawBackgroundBox(menu->x+w, menu->y-30, 24, 22, false, BORDERDOWN, 1, 1, 1, menuAlpha);
 #if __JDOOM__ || __JDOOM64__
         MN_DrawSlider(menu, 0, 11, currentcolor[0] * 10 + .25f);
-        M_WriteText3(menu->x, menu->y, ColorWidgetItems[0].text,
-                     GF_FONTA, 1, 1, 1, menuAlpha, true, true, 0);
+        M_WriteText3(ColorWidgetItems[0].text, menu->x, menu->y, GF_FONTA, 1, 1, 1, menuAlpha, true, true, 0);
         MN_DrawSlider(menu, 1, 11, currentcolor[1] * 10 + .25f);
-        M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A),
-                     ColorWidgetItems[1].text, GF_FONTA, 1, 1, 1, menuAlpha,
-                     true, true, 0);
+        M_WriteText3(ColorWidgetItems[1].text, menu->x, menu->y + (LINEHEIGHT_A), GF_FONTA, 1, 1, 1, menuAlpha, true, true, 0);
         MN_DrawSlider(menu, 2, 11, currentcolor[2] * 10 + .25f);
-        M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 2),
-                     ColorWidgetItems[2].text, GF_FONTA, 1, 1, 1, menuAlpha,
-                     true, true, 0);
+        M_WriteText3(ColorWidgetItems[2].text, menu->x, menu->y + (LINEHEIGHT_A * 2), GF_FONTA, 1, 1, 1, menuAlpha, true, true, 0);
 #else
         MN_DrawSlider(menu, 1, 11, currentcolor[0] * 10 + .25f);
-        M_WriteText3(menu->x, menu->y, ColorWidgetItems[0].text,
-                     GF_FONTA, 1, 1, 1, menuAlpha, true, true, 0);
+        M_WriteText3(ColorWidgetItems[0].text, menu->x, menu->y, GF_FONTA, 1, 1, 1, menuAlpha, true, true, 0);
         MN_DrawSlider(menu, 4, 11, currentcolor[1] * 10 + .25f);
-        M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 3),
-                     ColorWidgetItems[3].text, GF_FONTA, 1, 1, 1, menuAlpha,
-                     true, true, 0);
+        M_WriteText3(ColorWidgetItems[3].text, menu->x, menu->y + (LINEHEIGHT_A * 3), GF_FONTA, 1, 1, 1, menuAlpha, true, true, 0);
         MN_DrawSlider(menu, 7, 11, currentcolor[2] * 10 + .25f);
-        M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 6),
-                     ColorWidgetItems[6].text, GF_FONTA, 1, 1, 1, menuAlpha,
-                     true, true, 0);
+        M_WriteText3(ColorWidgetItems[6].text, menu->x, menu->y + (LINEHEIGHT_A * 6), GF_FONTA, 1, 1, 1, menuAlpha, true, true, 0);
 #endif
         if(rgba)
         {
 #if __JDOOM__ || __JDOOM64__
             MN_DrawSlider(menu, 3, 11, currentcolor[3] * 10 + .25f);
-            M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 3),
-                         ColorWidgetItems[3].text, GF_FONTA, 1, 1, 1,
-                         menuAlpha, true, true, 0);
+            M_WriteText3(ColorWidgetItems[3].text, menu->x, menu->y + (LINEHEIGHT_A * 3), GF_FONTA, 1, 1, 1, menuAlpha, true, true, 0);
 #else
             MN_DrawSlider(menu, 10, 11, currentcolor[3] * 10 + .25f);
-            M_WriteText3(menu->x, menu->y + (LINEHEIGHT_A * 9),
-                         ColorWidgetItems[9].text, GF_FONTA, 1, 1, 1,
-                         menuAlpha, true, true, 0);
+            M_WriteText3(ColorWidgetItems[9].text, menu->x, menu->y + (LINEHEIGHT_A * 9), GF_FONTA, 1, 1, 1, menuAlpha, true, true, 0);
 #endif
         }
 
@@ -2300,7 +2273,7 @@ void SCColorWidget(int index, void* context)
 
 void M_ToggleVar(int index, void* context)
 {
-    char*               cvarname;
+    char* cvarname;
 
     if(!context)
         return;
@@ -2309,11 +2282,9 @@ void M_ToggleVar(int index, void* context)
     DD_Executef(true, "toggle %s", cvarname);
 }
 
-void M_DrawTitle(char *text, int y)
+void M_DrawTitle(const char* string, int y)
 {
-    WI_DrawParamText(160 - M_StringWidth(text, GF_FONTB) / 2, y, text,
-                     GF_FONTB, cfg.menuColor[0], cfg.menuColor[1],
-                     cfg.menuColor[2], menuAlpha, true, true, true, ALIGN_LEFT);
+    WI_DrawParamText(string, 160 - M_StringWidth(string, GF_FONTB) / 2, y, GF_FONTB, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], menuAlpha, true, true, true, ALIGN_LEFT);
 }
 
 boolean MN_IsItemVisible(const menu_t* menu, int item)
@@ -2323,9 +2294,9 @@ boolean MN_IsItemVisible(const menu_t* menu, int item)
     return true;
 }
 
-void M_WriteMenuText(const menu_t* menu, int index, const char* text)
+void M_WriteMenuText(const menu_t* menu, int index, const char* string)
 {
-    int                 off = 0;
+    int off = 0;
 
     if(!MN_IsItemVisible(menu, index))
         return;
@@ -2333,9 +2304,7 @@ void M_WriteMenuText(const menu_t* menu, int index, const char* text)
     if(menu->items[index].text)
         off = M_StringWidth(menu->items[index].text, menu->font) + 4;
 
-    M_WriteText3(menu->x + off,
-                 menu->y + menu->itemHeight * (index  - menu->firstItem),
-                 text, menu->font, 1, 1, 1, menuAlpha, true, true, 0);
+    M_WriteText3(string, menu->x + off, menu->y + menu->itemHeight * (index  - menu->firstItem), menu->font, 1, 1, 1, menuAlpha, true, true, 0);
 }
 
 /**
@@ -2343,9 +2312,9 @@ void M_WriteMenuText(const menu_t* menu, int index, const char* text)
  */
 void M_LoadSelect(int option, void* context)
 {
-    menu_t*             menu = &SaveDef;
+    menu_t* menu = &SaveDef;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    filename_t          name;
+    filename_t name;
 #endif
 
     menu->lastOn = option;
@@ -2388,13 +2357,13 @@ void M_DrawMainMenu(void)
     Hu_DrawPatch(dpBullWithFire[frame].id, 278, 80);
 
 #elif __JHERETIC__
-    WI_DrawPatch(88, 0, 1, 1, 1, menuAlpha, m_htic.id, NULL, false, ALIGN_LEFT);
+    WI_DrawPatch3(m_htic.id, 88, 0, NULL, false, ALIGN_LEFT, 1, 1, 1, menuAlpha);
 
     DGL_Color4f(1, 1, 1, menuAlpha);
     Hu_DrawPatch(dpRotatingSkull[17 - frame].id, 40, 10);
     Hu_DrawPatch(dpRotatingSkull[frame].id, 232, 10);
 #elif __JDOOM__ || __JDOOM64__
-    WI_DrawPatch(94, 2, 1, 1, 1, menuAlpha, m_doom.id, NULL, false, ALIGN_LEFT);
+    WI_DrawPatch3(m_doom.id, 94, 2, NULL, false, ALIGN_LEFT, 1, 1, 1, menuAlpha);
 #endif
 }
 
@@ -2447,8 +2416,7 @@ void M_DrawClassMenu(void)
     spriteinfo_t sprInfo;
     int tmap = 1, hasFocus = MAX_OF(0, itemOn);
 
-    M_WriteText3(34, 24, "CHOOSE CLASS:", GF_FONTB, menu->color[0],
-                 menu->color[1], menu->color[2], menuAlpha, true, true, 0);
+    M_WriteText3("CHOOSE CLASS:", 34, 24, GF_FONTB, menu->color[0], menu->color[1], menu->color[2], menuAlpha, true, true, 0);
 
     pClass = menu->items[hasFocus].option;
     if(pClass < 0)
@@ -2499,7 +2467,7 @@ void M_DrawClassMenu(void)
 #if __JDOOM__ || __JHERETIC__
 void M_DrawEpisode(void)
 {
-    menu_t*             menu = &EpiDef;
+    menu_t* menu = &EpiDef;
 
 #if __JHERETIC__
     M_DrawTitle("WHICH EPISODE?", 4);
@@ -2509,19 +2477,14 @@ void M_DrawEpisode(void)
      */
     if(itemOn >= 0 && menu->items[itemOn].option == 5)
     {
-        const char*         str = notDesignedForMessage;
+        const char* str = notDesignedForMessage;
 
         composeNotDesignedForMessage(GET_TXT(TXT_SINGLEPLAYER));
 
-        M_WriteText3(160 - M_StringWidth(str, GF_FONTA) / 2,
-                     200 - M_StringHeight(str, GF_FONTA) - 2, str, GF_FONTA,
-                     cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2],
-                     menuAlpha, true, true, 0);
+        M_WriteText3(str, 160 - M_StringWidth(str, GF_FONTA) / 2, 200 - M_StringHeight(str, GF_FONTA) - 2, GF_FONTA, cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2], menuAlpha, true, true, 0);
     }
 #else // __JDOOM__
-    WI_DrawPatch(50, 40, menu->color[0], menu->color[1], menu->color[2], menuAlpha,
-                 m_episod.id, "{case}Which Episode{scaley=1.25,y=-3}?",
-                 true, ALIGN_LEFT);
+    WI_DrawPatch3(m_episod.id, 50, 40, "{case}Which Episode{scaley=1.25,y=-3}?", true, ALIGN_LEFT, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
 #endif
 }
 #endif
@@ -2533,9 +2496,9 @@ void M_DrawSkillMenu(void)
 #elif __JHERETIC__
     M_DrawTitle("SKILL LEVEL?", 4);
 #elif __JDOOM__ || __JDOOM64__
-    menu_t *menu = &SkillDef;
-    WI_DrawPatch(96, 14, menu->color[0], menu->color[1], menu->color[2], menuAlpha, m_newg.id, "{case}NEW GAME", true, ALIGN_LEFT);
-    WI_DrawPatch(54, 38, menu->color[0], menu->color[1], menu->color[2], menuAlpha, m_skill.id, "{case}Choose Skill Level:", true, ALIGN_LEFT);
+    menu_t* menu = &SkillDef;
+    WI_DrawPatch3(m_newg.id, 96, 14, "{case}NEW GAME", true, ALIGN_LEFT, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
+    WI_DrawPatch3(m_skill.id, 54, 38, "{case}Choose Skill Level:", true, ALIGN_LEFT, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
 #endif
 }
 
@@ -2596,10 +2559,10 @@ void M_DrawLoad(void)
     float t, r, g, b;
     int i;
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     M_DrawTitle("LOAD GAME", 4);
 #else
-    WI_DrawPatch(72, 24, menu->color[0], menu->color[1], menu->color[2], menuAlpha, m_loadg.id, "{case}LOAD GAME", true, ALIGN_LEFT);
+    WI_DrawPatch3(m_loadg.id, 72, 24, "{case}LOAD GAME", true, ALIGN_LEFT, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
 #endif
 
     if(menu_color <= 50)
@@ -2612,16 +2575,8 @@ void M_DrawLoad(void)
 
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
-        M_DrawSaveLoadBorder(LoadDef.x - 8, SAVEGAME_BOX_YOFFSET + LoadDef.y +
-                             (menu->itemHeight * i), width + 16);
-
-        M_WriteText3(LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y + 1 +
-                     (menu->itemHeight * i),
-                     savegamestrings[i], menu->font,
-                     i == itemOn? r : menu->color[0],
-                     i == itemOn? g : menu->color[1],
-                     i == itemOn? b : menu->color[2], menuAlpha,
-                     true, true, 0);
+        M_DrawSaveLoadBorder(LoadDef.x - 8, SAVEGAME_BOX_YOFFSET + LoadDef.y + (menu->itemHeight * i), width + 16);
+        M_WriteText3(savegamestrings[i], LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y + 1 + (menu->itemHeight * i), menu->font, i == itemOn? r : menu->color[0], i == itemOn? g : menu->color[1], i == itemOn? b : menu->color[2], menuAlpha, true, true, 0);
     }
 }
 
@@ -2632,10 +2587,10 @@ void M_DrawSave(void)
     float t, r, g, b;
     int i;
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     M_DrawTitle("SAVE GAME", 4);
 #else
-    WI_DrawPatch(72, 24, menu->color[0], menu->color[1], menu->color[2], menuAlpha, m_saveg.id, "{case}SAVE GAME", true, ALIGN_LEFT);
+    WI_DrawPatch3(m_saveg.id, 72, 24, "{case}SAVE GAME", true, ALIGN_LEFT, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
 #endif
 
     if(menu_color <= 50)
@@ -2649,14 +2604,7 @@ void M_DrawSave(void)
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
         M_DrawSaveLoadBorder(SaveDef.x - 8, SAVEGAME_BOX_YOFFSET + SaveDef.y + (menu->itemHeight * i), width + 16);
-
-        M_WriteText3(SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 +
-                     (menu->itemHeight * i),
-                     savegamestrings[i], menu->font,
-                     i == itemOn? r : menu->color[0],
-                     i == itemOn? g : menu->color[1],
-                     i == itemOn? b : menu->color[2], menuAlpha,
-                     true, true, 0);
+        M_WriteText3(savegamestrings[i], SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 + (menu->itemHeight * i), menu->font, i == itemOn? r : menu->color[0], i == itemOn? g : menu->color[1], i == itemOn? b : menu->color[2], menuAlpha, true, true, 0);
     }
 
     if(saveStringEnter)
@@ -2666,9 +2614,7 @@ void M_DrawSave(void)
         if(len < HU_SAVESTRINGSIZE)
         {
             i = M_StringWidth(savegamestrings[saveSlot], GF_FONTA);
-            M_WriteText3(SaveDef.x + i, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 +
-                         (menu->itemHeight * saveSlot), "_", GF_FONTA,
-                         r, g, b, menuAlpha, true, true, 0);
+            M_WriteText3("_", SaveDef.x + i, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 + (menu->itemHeight * saveSlot), GF_FONTA, r, g, b, menuAlpha, true, true, 0);
         }
     }
 }
@@ -2814,9 +2760,9 @@ void M_DrawOptions(void)
     M_DrawTitle("OPTIONS", menu->y - 32);
 #else
 # if __JDOOM64__
-    WI_DrawPatch(160, menu->y - 20, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], menuAlpha, -1, "{case}OPTIONS", true, ALIGN_CENTER);
+    WI_DrawPatch3(-1, 160, menu->y - 20, "{case}OPTIONS", true, ALIGN_CENTER, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], menuAlpha);
 #else
-    WI_DrawPatch(160, menu->y - 20, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], menuAlpha, m_optttl.id, "{case}OPTIONS", true, ALIGN_CENTER);
+    WI_DrawPatch3(m_optttl.id, 160, menu->y - 20, "{case}OPTIONS", true, ALIGN_CENTER, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], menuAlpha);
 # endif
 #endif
 }
@@ -2914,10 +2860,7 @@ void M_DrawWeaponMenu(void)
     {
         const char* str = "Use left/right to move weapon up/down";
 
-        M_WriteText3(160 - M_StringWidth(str, GF_FONTA) / 2,
-                     200 - M_StringHeight(str, GF_FONTA) - 2, str, GF_FONTA,
-                     cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2],
-                     menuAlpha, true, true, 0);
+        M_WriteText3(str, 160 - M_StringWidth(str, GF_FONTA) / 2, 200 - M_StringHeight(str, GF_FONTA) - 2, GF_FONTA, cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2], menuAlpha, true, true, 0);
     }
 
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
@@ -3089,8 +3032,7 @@ void M_DrawHUDMenu(void)
     M_DrawTitle("HUD options", menu->y - 28);
 #if __JDOOM__ || __JDOOM64__
     Hu_MenuPageString(buf, menu);
-    M_WriteText3(160 - M_StringWidth(buf, GF_FONTA) / 2, menu->y - 12, buf,
-                 GF_FONTA, 1, .7f, .3f, Hu_MenuAlpha(), true, true, 0);
+    M_WriteText3(buf, 160 - M_StringWidth(buf, GF_FONTA) / 2, menu->y - 12, GF_FONTA, 1, .7f, .3f, Hu_MenuAlpha(), true, true, 0);
 #else
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 
@@ -3816,7 +3758,7 @@ void MN_DrawColorBox(const menu_t* menu, int index, float r, float g,
     y += COLORBOX_OFFSET_Y;
     w = h;
 
-    M_DrawBackgroundBox(x, y, w, h, 1, 1, 1, menuAlpha, true, 1);
+    M_DrawBackgroundBox(x, y, w, h, true, 1, 1, 1, 1, menuAlpha);
     DGL_SetNoMaterial();
     DGL_DrawRect(x, y, w, h, r, g, b, (a < 0? 1 : a) * menuAlpha);
 

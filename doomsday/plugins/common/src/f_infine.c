@@ -1519,7 +1519,7 @@ int FI_DrawChar(int x, int y, int ch, boolean fontb)
 {
     ch = FI_FilterChar(ch);
 
-    M_DrawChar(x, y, ch, fontb? GF_FONTB : GF_FONTA);
+    M_DrawChar(ch, x, y, fontb? GF_FONTB : GF_FONTA);
 
     return FI_CharWidth(ch, fontb);
 }

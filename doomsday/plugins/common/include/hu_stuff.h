@@ -83,7 +83,7 @@ extern int typeInTime;
 
 #if __JDOOM__
 // Plutonia and TNT map names.
-extern char *mapNamesPlut[32], *mapNamesTNT[32];
+extern char* mapNamesPlut[32],* mapNamesTNT[32];
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
@@ -96,83 +96,17 @@ extern patchinfo_t dpInvPageRight[2];
 void            Hu_LoadData(void);
 void            Hu_Drawer(void);
 void            Hu_Ticker(void);
-void            Hu_FogEffectTicker(timespan_t time);
+void            HU_Start(int player);
+void            Hu_UnloadData(void);
 
+void            Hu_FogEffectTicker(timespan_t time);
 void            Hu_FogEffectSetAlphaTarget(float alpha);
+void            Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2], float texAngle, float alpha, float arg1);
+
+void            HU_ScoreBoardUnHide(int player);
+void            HU_DrawScoreBoard(int player);
 
 void            Hu_DrawMapTitle(int x, int y, float scale);
-
-// Implements patch replacement.
-void        WI_DrawPatch(int x, int y, float r, float g, float b, float a,
-                         patchid_t id, const char* altstring,
-                         boolean builtin, int halign);
-void        WI_DrawParamText(int x, int y, const char* string,
-                             gamefontid_t font, float defRed,
-                             float defGreen, float defBlue, float defAlpha,
-                             boolean defCase, boolean defTypeIn, boolean defShadow,
-                             int halign);
-void        M_WriteText(int x, int y, const char *string);
-void        M_WriteText2(int x, int y, const char *string,
-                         gamefontid_t font, float red,
-                         float green, float blue, float alpha);
-void        M_WriteText3(int x, int y, const char *string,
-                         gamefontid_t font, float red, float green,
-                         float blue, float alpha,
-                         boolean flagTypeIn, boolean flagShadow,
-                         int initialCount);
-void        HUlib_drawTextLine2(int x, int y, const char* string,
-                                size_t len, gamefontid_t font,
-                                boolean drawcursor);
-void        M_DrawChar(int x, int y, unsigned char ch, gamefontid_t font);
-#if __JHERETIC__ || __JHEXEN__
-void        Hu_DrawSmallNum(int val, int numDigits, int x, int y,
-                            float alpha);
-#endif
-#if __JHERETIC__
-void HU_DrawBNumber(signed int val, int x, int y, float red,
-                    float green, float blue, float alpha);
-void IN_DrawNumber(int val, int x, int y, int digits, float r, float g,
-                   float b, float a);
-void IN_DrawShadowChar(int x, int y, unsigned char ch, gamefontid_t font);
-#endif
-#if __JHEXEN__
-void DrBNumber(int val, int x, int y, float red, float green, float blue,
-               float alpha);
-#endif
-int         M_DrawText(int x, int y, boolean direct, char *string);
-void        M_DrawTitle(char *text, int y);
-
-int         M_StringWidth(const char* string, gamefontid_t font);
-int         M_CharWidth(unsigned char ch, gamefontid_t font);
-int         M_CharHeight(unsigned char ch, gamefontid_t font);
-int         M_StringHeight(const char* string, gamefontid_t font);
-
-void        M_DrawBackgroundBox(float x, float y, float w, float h,
-                                float red, float green, float blue,
-                                float alpha, boolean background,
-                                int border);
-#if __JHERETIC__ || __JHEXEN__
-void        M_DrawSlider(int x, int y, int width, int slot, float alpha);
-#else
-void        M_DrawSlider(int x, int y, int width, int height, int slot,
-                         float alpha);
-#endif
-
-void            M_DrawGlowBar(const float a[2], const float b[2], float thickness, boolean left, boolean right, boolean caps, float red, float green, float blue, float alpha);
-
-void        Draw_BeginZoom(float s, float originX, float originY);
-void        Draw_EndZoom(void);
-
-void        HU_Start(int player);
-void        Hu_UnloadData(void);
-char        HU_dequeueChatChar(void);
-void        HU_Erase(void);
-
-void        Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
-                             float texAngle, float alpha, float arg1);
-
-void        HU_ScoreBoardUnHide(int player);
-void        HU_DrawScoreBoard(int player);
 
 typedef struct {
     int winWidth, winHeight;
@@ -185,6 +119,56 @@ void            Hu_ConfigureBorderedProjection(borderedprojectionstate_t* s);
 
 void            Hu_BeginBorderedProjection(borderedprojectionstate_t* s);
 void            Hu_EndBorderedProjection(borderedprojectionstate_t* s);
+
+void            Draw_BeginZoom(float s, float originX, float originY);
+void            Draw_EndZoom(void);
+
+/**
+ * Text string:
+ */
+void            M_WriteText(const char* string, int x, int y);
+void            M_WriteText2(const char* string, int x, int y, gamefontid_t font, float red, float green, float blue, float alpha);
+void            M_WriteText3(const char* string, int x, int y, gamefontid_t font, float red, float green, float blue, float alpha, boolean flagTypeIn, boolean flagShadow, int initialCount);
+void            HUlib_drawTextLine2(const char* string, int x, int y, size_t len, gamefontid_t font, boolean drawcursor);
+
+int             M_DrawText(const char* string, int x, int y, boolean direct);
+void            M_DrawTitle(const char* string, int y);
+
+void            WI_DrawParamText(const char* string, int x, int y, gamefontid_t font, float defRed, float defGreen, float defBlue, float defAlpha, boolean defCase, boolean defTypeIn, boolean defShadow, int halign);
+
+// Utility routines:
+int             M_StringWidth(const char* string, gamefontid_t font);
+int             M_StringHeight(const char* string, gamefontid_t font);
+
+/**
+ * Single character:
+ */
+void            M_DrawChar(unsigned char ch, int x, int y, gamefontid_t font);
+#if __JHERETIC__
+void            IN_DrawShadowChar(unsigned char ch, int x, int y, gamefontid_t font);
+#endif
+
+// Utility routines:
+int             M_CharWidth(unsigned char ch, gamefontid_t font);
+int             M_CharHeight(unsigned char ch, gamefontid_t font);
+
+/**
+ * Specialised text strings:
+ */
+#if __JHERETIC__ || __JHEXEN__
+void            Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha);
+#endif
+#if __JHERETIC__
+void            HU_DrawBNumber(int val, int x, int y, float red, float green, float blue, float alpha);
+void            IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b, float a);
+#endif
+#if __JHEXEN__
+void            DrBNumber(int val, int x, int y, float red, float green, float blue, float alpha);
+#endif
+
+/**
+ * Patches:
+ */
 
 /**
  * @defGroup drawPatchFlags Draw Patch Flags.
@@ -199,7 +183,25 @@ void            Hu_EndBorderedProjection(borderedprojectionstate_t* s);
 
 void            Hu_DrawPatch(patchid_t id, int x, int y);
 void            Hu_DrawPatch2(patchid_t id, int x, int y, byte flags);
+
 void            Hu_DrawShadowedPatch(patchid_t id, int x, int y);
-void            Hu_DrawShadowedPatch2(patchid_t id, int x, int y, float r, float g, float b, float a, byte flags);
+void            Hu_DrawShadowedPatch2(patchid_t id, int x, int y, byte flags);
+void            Hu_DrawShadowedPatch3(patchid_t id, int x, int y, byte flags, float r, float g, float b, float a);
+
+// Implements patch replacement.
+void            WI_DrawPatch(patchid_t id, int x, int y, const char* altstring, boolean builtin);
+void            WI_DrawPatch2(patchid_t id, int x, int y, const char* altstring, boolean builtin, int halign);
+void            WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, boolean builtin, int halign, float r, float g, float b, float a);
+
+/**
+ * Misc specialised elements:
+ */
+void            M_DrawBackgroundBox(float x, float y, float w, float h, boolean background, int border, float red, float green, float blue, float alpha);
+#if __JHERETIC__ || __JHEXEN__
+void            M_DrawSlider(int x, int y, int width, int slot, float alpha);
+#else
+void            M_DrawSlider(int x, int y, int width, int height, int slot, float alpha);
+#endif
+void            M_DrawGlowBar(const float a[2], const float b[2], float thickness, boolean left, boolean right, boolean caps, float red, float green, float blue, float alpha);
 
 #endif

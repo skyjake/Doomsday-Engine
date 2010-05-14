@@ -312,8 +312,8 @@ static int plrClass;
 
 int Executef(int silent, char* format, ...)
 {
-    va_list             argptr;
-    char                buffer[512];
+    va_list argptr;
+    char buffer[512];
 
     va_start(argptr, format);
     dd_vsnprintf(buffer, sizeof(buffer), format, argptr);
@@ -323,23 +323,19 @@ int Executef(int silent, char* format, ...)
 
 void DrANumber(int number, int x, int y)
 {
-    char                buff[40];
-
-    sprintf(buff, "%i", number);
-
-    M_WriteText2(x, y, buff, GF_FONTA, 1, 1, 1, Hu_MenuAlpha());
+    char buf[40];
+    sprintf(buf, "%i", number);
+    M_WriteText2(buf, x, y, GF_FONTA, 1, 1, 1, Hu_MenuAlpha());
 }
 
-void MN_DrCenterTextA_CS(char* text, int centerX, int y)
+void MN_DrCenterTextA_CS(char* string, int centerX, int y)
 {
-    M_WriteText2(centerX - M_StringWidth(text, GF_FONTA) / 2, y, text,
-                 GF_FONTA, 1, 0, 0, Hu_MenuAlpha());
+    M_WriteText2(string, centerX - M_StringWidth(string, GF_FONTA) / 2, y, GF_FONTA, 1, 0, 0, Hu_MenuAlpha());
 }
 
-void MN_DrCenterTextB_CS(char *text, int centerX, int y)
+void MN_DrCenterTextB_CS(char* string, int centerX, int y)
 {
-    M_WriteText2(centerX - M_StringWidth(text, GF_FONTB) / 2, y, text,
-                 GF_FONTB, 1, 0, 0, Hu_MenuAlpha());
+    M_WriteText2(string, centerX - M_StringWidth(string, GF_FONTB) / 2, y, GF_FONTB, 1, 0, 0, Hu_MenuAlpha());
 }
 
 void DrawMultiplayerMenu(void)
@@ -404,16 +400,14 @@ void DrawGameSetupMenu(void)
 
     sprintf(buf, "%u", cfg.netMap+1);
     M_WriteMenuText(menu, idx++, buf);
-    M_WriteText2(160 - M_StringWidth(mapName, GF_FONTA) / 2,
-                 menu->y + menu->itemHeight, mapName,
-                 GF_FONTA, 1, 0.7f, 0.3f, Hu_MenuAlpha());
+    M_WriteText2(mapName, 160 - M_StringWidth(mapName, GF_FONTA) / 2, menu->y + menu->itemHeight, GF_FONTA, 1, 0.7f, 0.3f, Hu_MenuAlpha());
 
     idx++;
     M_WriteMenuText(menu, idx++, skillText[cfg.netSkill]);
     M_WriteMenuText(menu, idx++, dmText[cfg.netDeathmatch]);
     M_WriteMenuText(menu, idx++, boolText[!cfg.netNoMonsters]);
     M_WriteMenuText(menu, idx++, boolText[cfg.netRandomClass]);
-#endif                          // __JHEXEN__
+#endif // __JHEXEN__
 
     M_WriteMenuText(menu, idx++, boolText[cfg.netNoMaxZRadiusAttack]);
     sprintf(buf, "%i", cfg.netMobDamageModifier);
@@ -507,7 +501,7 @@ void DrawPlayerSetupMenu(void)
 
     if(plrColor == numColors)
     {
-        M_WriteText2(184,
+        M_WriteText2("AUTOMATIC", 184,
 #if __JDOOM__ || __JDOOM64__
                       menu->y + 49,
 #elif __JHERETIC__
@@ -515,7 +509,7 @@ void DrawPlayerSetupMenu(void)
 #else
                       menu->y + 64,
 #endif
-                      "AUTOMATIC", GF_FONTA, 1, 1, 1, menuAlpha);
+                      GF_FONTA, 1, 1, 1, menuAlpha);
     }
 
 #undef AVAILABLE_WIDTH
@@ -916,9 +910,8 @@ void Ed_MakeCursorVisible(void)
 
 void DrawEditField(menu_t* menu, int index, editfield_t* ef)
 {
-    int                 vis;
-    char                buf[MAX_EDIT_LEN + 1], *text;
-    int                 width = M_StringWidth("a", GF_FONTA) * 27;
+    char buf[MAX_EDIT_LEN + 1], *text;
+    int vis, width = M_StringWidth("a", GF_FONTA) * 27;
 
     strcpy(buf, ef->text);
     strupr(buf);
@@ -929,13 +922,12 @@ void DrawEditField(menu_t* menu, int index, editfield_t* ef)
     text[vis] = 0;
 
     M_DrawSaveLoadBorder(menu->x - 8, menu->y + EDITFIELD_BOX_YOFFSET + (menu->itemHeight * index), width + 16);
-    M_WriteText2(menu->x, menu->y + EDITFIELD_BOX_YOFFSET + 1 + (menu->itemHeight * index),
-                 text, GF_FONTA, 1, 1, 1, Hu_MenuAlpha());
+    M_WriteText2(text, menu->x, menu->y + EDITFIELD_BOX_YOFFSET + 1 + (menu->itemHeight * index), GF_FONTA, 1, 1, 1, Hu_MenuAlpha());
 }
 
 void SCEditField(int efptr, void* data)
 {
-    editfield_t*        ef = data;
+    editfield_t* ef = data;
 
     // Activate this edit field.
     ActiveEdit = ef;

@@ -93,7 +93,7 @@ boolean HUlib_addCharToTextLine(hu_textline_t* t, char ch)
     return true;
 }
 
-boolean HUlib_delCharFromTextLine(hu_textline_t *t)
+boolean HUlib_delCharFromTextLine(hu_textline_t* t)
 {
     if(!t->len)
         return false;
@@ -103,10 +103,9 @@ boolean HUlib_delCharFromTextLine(hu_textline_t *t)
     return true;
 }
 
-void HUlib_drawTextLine(hu_textline_t* l, gamefontid_t font,
-                        boolean drawcursor)
+void HUlib_drawTextLine(hu_textline_t* l, gamefontid_t font, boolean drawcursor)
 {
-    HUlib_drawTextLine2(l->x, l->y, l->l, l->len, font, drawcursor);
+    HUlib_drawTextLine2(l->l, l->x, l->y, l->len, font, drawcursor);
 }
 
 /**

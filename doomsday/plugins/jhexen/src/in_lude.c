@@ -408,11 +408,11 @@ static void drawDeathTally(void)
                 temp = M_StringWidth("--", GF_FONTA) / 2;
                 if(bold)
                 {
-                    M_WriteText2(x - temp, y, "--", GF_FONTA, 1, 0.7f, 0.3f, 1);
+                    M_WriteText2("--", x - temp, y, GF_FONTA, 1, 0.7f, 0.3f, 1);
                 }
                 else
                 {
-                    M_WriteText2(x - temp, y, "--", GF_FONTA, 1, 1, 1, 1);
+                    M_WriteText2("--", x - temp, y, GF_FONTA, 1, 1, 1, 1);
                 }
             }
         }
@@ -430,26 +430,24 @@ static void drawDeathTally(void)
 
 static void drawNumber(int val, int x, int y, int wrapThresh)
 {
-    char buff[8] = "XX";
+    char buf[8] = "XX";
 
     if(!(val < -9 && wrapThresh < 1000))
     {
-        sprintf(buff, "%d", val >= wrapThresh ? val % wrapThresh : val);
+        sprintf(buf, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
-    M_WriteText2(x - M_StringWidth(buff, GF_FONTA) / 2, y, buff,
-                 GF_FONTA, 1, 1, 1, 1);
+    M_WriteText2(buf, x - M_StringWidth(buf, GF_FONTA) / 2, y, GF_FONTA, 1, 1, 1, 1);
 }
 
 static void drawNumberBold(int val, int x, int y, int wrapThresh)
 {
-    char                buff[8] = "XX";
+    char buf[8] = "XX";
 
     if(!(val < -9 && wrapThresh < 1000))
     {
-        sprintf(buff, "%d", val >= wrapThresh ? val % wrapThresh : val);
+        sprintf(buf, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
-    M_WriteText2(x - M_StringWidth(buff, GF_FONTA) / 2, y, buff,
-                 GF_FONTA, 1, 0.7f, 0.3f, 1);
+    M_WriteText2(buf, x - M_StringWidth(buf, GF_FONTA) / 2, y, GF_FONTA, 1, 0.7f, 0.3f, 1);
 }

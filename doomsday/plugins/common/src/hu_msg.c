@@ -187,14 +187,14 @@ static void composeYesNoMessage(void)
 
 static void drawMessage(void)
 {
-    int                 x, y;
-    char*               p;
+    int x, y;
+    char* p;
 
     y = 100 - M_StringHeight(msgText, GF_FONTA) / 2;
     p = msgText;
     while(*p)
     {
-        char*           string = p, c;
+        char* string = p, c;
 
         while((c = *p) && *p != '\n')
             p++;
@@ -202,9 +202,7 @@ static void drawMessage(void)
         *p = 0;
 
         x = 160 - M_StringWidth(string, GF_FONTA) / 2;
-        M_WriteText3(x, y, string, GF_FONTA, cfg.menuColor2[0],
-                     cfg.menuColor2[1], cfg.menuColor2[2], 1,
-                     true, true, 0);
+        M_WriteText3(string, x, y, GF_FONTA, cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2], 1, true, true, 0);
         y += M_StringHeight(string, GF_FONTA);
 
         if(((*p) = c))
@@ -218,21 +216,16 @@ static void drawMessage(void)
     {
     case MSG_ANYKEY:
         x = 160 - M_StringWidth(PRESSKEY, GF_FONTA) / 2;
-        M_WriteText3(x, y, PRESSKEY, GF_FONTA, cfg.menuColor2[0],
-                     cfg.menuColor2[1], cfg.menuColor2[2], 1,
-                     true, true, 0);
+        M_WriteText3(PRESSKEY, x, y, GF_FONTA, cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2], 1, true, true, 0);
         break;
 
     case MSG_YESNO:
         x = 160 - M_StringWidth(yesNoMessage, GF_FONTA) / 2;
-        M_WriteText3(x, y, yesNoMessage, GF_FONTA, cfg.menuColor2[0],
-                     cfg.menuColor2[1], cfg.menuColor2[2], 1,
-                     true, true, 0);
+        M_WriteText3(yesNoMessage, x, y, GF_FONTA, cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2], 1, true, true, 0);
         break;
 
     default:
-        Con_Error("drawMessage: Internal error, unknown message type %i.\n",
-                  (int) msgType);
+        Con_Error("drawMessage: Internal error, unknown message type %i.\n", (int) msgType);
     }
 }
 

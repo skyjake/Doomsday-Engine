@@ -102,7 +102,6 @@ extern menu_t   MultiplayerMenu;
 extern menu_t   GameSetupMenu;
 extern menu_t   PlayerSetupMenu;
 
-void    M_DrawTitle(char *text, int y);
 void    M_WriteMenuText(const menu_t *menu, int index, const char *text);
 
 // Color widget.

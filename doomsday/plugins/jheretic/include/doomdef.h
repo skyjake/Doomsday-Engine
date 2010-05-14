@@ -344,8 +344,6 @@ void            strcatQuoted(char *dest, char *src);
 
 void            M_ForceUppercase(char *text);
 
-int             M_DrawText(int x, int y, boolean direct, char *string);
-
 //-----------------
 // MENU (MN_menu.c)
 //-----------------

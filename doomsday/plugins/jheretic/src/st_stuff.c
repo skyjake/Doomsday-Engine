@@ -1211,8 +1211,8 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
     dd_snprintf(buf, 5, "%i", health);
     h = M_StringHeight(buf, GF_FONTB);
     w = M_StringWidth(buf, GF_FONTB);
-    M_WriteText2(2, -h + 1, buf, GF_FONTB, 0, 0, 0, textAlpha * .4f);
-    M_WriteText2(0, -h - 1, buf, GF_FONTB, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_WriteText2(buf, 2, -h + 1, GF_FONTB, 0, 0, 0, textAlpha * .4f);
+    M_WriteText2(buf, 0, -h - 1, GF_FONTB, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     *drawnWidth = w;
     *drawnHeight = h;
 }
@@ -1392,15 +1392,13 @@ void drawKillsWidget(int player, float textAlpha, float iconAlpha,
     }
     if(cfg.counterCheat & CCH_KILLS_PRCNT)
     {
-        sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_KILLS ? "(" : ""),
-                totalKills ? plr->killCount * 100 / totalKills : 100,
-                (cfg.counterCheat & CCH_KILLS ? ")" : ""));
+        sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_KILLS ? "(" : ""), totalKills ? plr->killCount * 100 / totalKills : 100, (cfg.counterCheat & CCH_KILLS ? ")" : ""));
         strcat(buf, tmp);
     }
 
     *drawnHeight = M_StringHeight(buf, GF_FONTA);
     *drawnWidth = M_StringWidth(buf, GF_FONTA);
-    M_WriteText2(0, -(*drawnHeight), buf, GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_WriteText2(buf, 0, -(*drawnHeight), GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 }
 
 void drawItemsWidget(int player, float textAlpha, float iconAlpha,
@@ -1424,15 +1422,13 @@ void drawItemsWidget(int player, float textAlpha, float iconAlpha,
     }
     if(cfg.counterCheat & CCH_ITEMS_PRCNT)
     {
-        sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_ITEMS ? "(" : ""),
-                totalItems ? plr->itemCount * 100 / totalItems : 100,
-                (cfg.counterCheat & CCH_ITEMS ? ")" : ""));
+        sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_ITEMS ? "(" : ""), totalItems ? plr->itemCount * 100 / totalItems : 100, (cfg.counterCheat & CCH_ITEMS ? ")" : ""));
         strcat(buf, tmp);
     }
 
     *drawnHeight = M_StringHeight(buf, GF_FONTA);
     *drawnWidth = M_StringWidth(buf, GF_FONTA);
-    M_WriteText2(0, -(*drawnHeight), buf, GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_WriteText2(buf, 0, -(*drawnHeight), GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 }
 
 void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
@@ -1456,15 +1452,13 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
     }
     if(cfg.counterCheat & CCH_SECRET_PRCNT)
     {
-        sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_SECRET ? "(" : ""),
-                totalSecret ? plr->secretCount * 100 / totalSecret : 100,
-                (cfg.counterCheat & CCH_SECRET ? ")" : ""));
+        sprintf(tmp, "%s%i%%%s", (cfg.counterCheat & CCH_SECRET ? "(" : ""), totalSecret ? plr->secretCount * 100 / totalSecret : 100, (cfg.counterCheat & CCH_SECRET ? ")" : ""));
         strcat(buf, tmp);
     }
 
     *drawnHeight = M_StringHeight(buf, GF_FONTA);
     *drawnWidth = M_StringWidth(buf, GF_FONTA);
-    M_WriteText2(0, -(*drawnHeight), buf, GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_WriteText2(buf, 0, -(*drawnHeight), GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 }
 
 typedef struct {

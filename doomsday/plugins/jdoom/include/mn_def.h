@@ -101,7 +101,6 @@ extern menu_t MultiplayerMenu;
 extern menu_t GameSetupMenu;
 extern menu_t PlayerSetupMenu;
 
-void            M_DrawTitle(char* text, int y);
 void            M_WriteMenuText(const menu_t* menu, int index, const char* text);
 
 // Color widget.
@@ -113,8 +112,7 @@ void            M_DrawSaveLoadBorder(int x, int y, int width);
 void            M_SetupNextMenu(menu_t* menu);
 void            M_DrawThermo(int x, int y, int thermWidth, int thermDot);
 void            MN_DrawSlider(const menu_t* menu, int item, int width, int slot);
-void            MN_DrawColorBox(const menu_t* menu, int index, float r,
-                                float g, float b, float a);
+void            MN_DrawColorBox(const menu_t* menu, int index, float r, float g, float b, float a);
 void            M_StartControlPanel(void);
 void            M_FloatMod10(float* variable, int option);
 

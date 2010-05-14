@@ -112,7 +112,6 @@ void        SCColorWidget(int index, void *data);
 void        M_WGCurrentColor(int option, void *data);
 
 void        M_SetupNextMenu(menu_t *    menudef);
-void        M_DrawTitle(char *text, int y);
 void        MN_DrawSlider(const menu_t *menu, int item, int width, int slot);
 void        MN_DrawColorBox(const menu_t *menu, int index, float r, float g,
                         float b, float a);
