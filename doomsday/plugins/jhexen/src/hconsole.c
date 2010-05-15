@@ -265,7 +265,7 @@ void G_UpdateEyeHeight(cvar_t* unused)
  */
 int ConTextOut(const char* string, int x, int y)
 {
-    M_WriteText3(string, x, y, GF_FONTA, -1, -1, -1, -1, false, false, 0);
+    M_DrawText3(string, x, y, GF_FONTA, -1, -1, -1, -1, false, false, 0);
     return 0;
 }
 
@@ -274,7 +274,7 @@ int ConTextOut(const char* string, int x, int y)
  */
 int ConTextWidth(const char* string)
 {
-    return M_StringWidth(string, GF_FONTA);
+    return M_TextWidth(string, GF_FONTA);
 }
 
 /**

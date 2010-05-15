@@ -560,7 +560,7 @@ void IN_Drawer(void)
         if(wbs->episode < 3)
         {
             DGL_Color4f(1, 1, 1, 1);
-            Hu_DrawPatch(dpInterPic.id, 0, 0);
+            M_DrawPatch(dpInterPic.id, 0, 0);
             IN_DrawOldLevel();
         }
         break;
@@ -569,7 +569,7 @@ void IN_Drawer(void)
         if(wbs->episode < 3)
         {
             DGL_Color4f(1, 1, 1, 1);
-            Hu_DrawPatch(dpInterPic.id, 0, 0);
+            M_DrawPatch(dpInterPic.id, 0, 0);
             IN_DrawYAH();
         }
         break;
@@ -578,7 +578,7 @@ void IN_Drawer(void)
         if(wbs->episode < 3)
         {
             DGL_Color4f(1, 1, 1, 1);
-            Hu_DrawPatch(dpInterPic.id, 0, 0);
+            M_DrawPatch(dpInterPic.id, 0, 0);
         }
         break;
 
@@ -603,11 +603,11 @@ void IN_DrawOldLevel(void)
 
     levelname = P_GetShortMapName(wbs->episode, wbs->currentMap);
 
-    x = 160 - M_StringWidth(levelname, GF_FONTB) / 2;
-    M_WriteText2(levelname, x, 3, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    x = 160 - M_TextWidth(levelname, GF_FONTB) / 2;
+    M_DrawText2(levelname, x, 3, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    x = 160 - M_StringWidth("FINISHED", GF_FONTA) / 2;
-    M_WriteText2("FINISHED", x, 25, GF_FONTA, defFontRGB2[0], defFontRGB2[1],defFontRGB2[2], 1);
+    x = 160 - M_TextWidth("FINISHED", GF_FONTA) / 2;
+    M_DrawText2("FINISHED", x, 25, GF_FONTA, defFontRGB2[0], defFontRGB2[1],defFontRGB2[2], 1);
 
     if(wbs->currentMap == 8)
     {
@@ -615,12 +615,12 @@ void IN_DrawOldLevel(void)
         DGL_Color4f(1, 1, 1, 1);
         for(i = 0; i < wbs->nextMap; ++i)
         {
-            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
+            M_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
         }
 
         if(!(interTime & 16))
         {
-            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
+            M_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
         }
     }
     else
@@ -629,17 +629,17 @@ void IN_DrawOldLevel(void)
         DGL_Color4f(1, 1, 1, 1);
         for(i = 0; i < wbs->currentMap; ++i)
         {
-            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
+            M_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
         }
 
         if(players[CONSOLEPLAYER].didSecret)
         {
-            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
+            M_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
         }
 
         if(!(interTime & 16))
         {
-            Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][wbs->currentMap].x, YAHspot[wbs->episode][wbs->currentMap].y);
+            M_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][wbs->currentMap].x, YAHspot[wbs->episode][wbs->currentMap].y);
         }
     }
 }
@@ -650,26 +650,26 @@ void IN_DrawYAH(void)
     uint i;
     int x;
 
-    x = 160 - M_StringWidth("NOW ENTERING:", GF_FONTA) / 2;
-    M_WriteText2("NOW ENTERING:", x, 10, GF_FONTA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+    x = 160 - M_TextWidth("NOW ENTERING:", GF_FONTA) / 2;
+    M_DrawText2("NOW ENTERING:", x, 10, GF_FONTA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
 
-    x = 160 - M_StringWidth(mapName, GF_FONTB) / 2;
-    M_WriteText2(mapName, x, 20, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    x = 160 - M_TextWidth(mapName, GF_FONTB) / 2;
+    M_DrawText2(mapName, x, 20, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     DGL_Color4f(1, 1, 1, 1);
     for(i = 0; i < wbs->nextMap; ++i)
     {
-        Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
+        M_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][i].x, YAHspot[wbs->episode][i].y);
     }
 
     if(players[CONSOLEPLAYER].didSecret)
     {
-        Hu_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
+        M_DrawPatch(dpBeenThere.id, YAHspot[wbs->episode][8].x, YAHspot[wbs->episode][8].y);
     }
 
     if(!(interTime & 16) || interState == 3)
     {   // Draw the destination 'X'
-        Hu_DrawPatch(dpGoingThere.id, YAHspot[wbs->episode][wbs->nextMap].x, YAHspot[wbs->episode][wbs->nextMap].y);
+        M_DrawPatch(dpGoingThere.id, YAHspot[wbs->episode][wbs->nextMap].x, YAHspot[wbs->episode][wbs->nextMap].y);
     }
 }
 
@@ -682,15 +682,15 @@ void IN_DrawSingleStats(void)
 
     levelname = P_GetShortMapName(wbs->episode, wbs->currentMap);
 
-    M_WriteText2("KILLS", 50, 65, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_WriteText2("ITEMS", 50, 90, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_WriteText2("SECRETS", 50, 115, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText2("KILLS", 50, 65, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText2("ITEMS", 50, 90, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText2("SECRETS", 50, 115, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    x = 160 - M_StringWidth(levelname, GF_FONTB) / 2;
-    M_WriteText2(levelname, x, 3, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    x = 160 - M_TextWidth(levelname, GF_FONTB) / 2;
+    M_DrawText2(levelname, x, 3, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    x = 160 - M_StringWidth("FINISHED", GF_FONTA) / 2;
-    M_WriteText2("FINISHED", x, 25, GF_FONTA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+    x = 160 - M_TextWidth("FINISHED", GF_FONTA) / 2;
+    M_DrawText2("FINISHED", x, 25, GF_FONTA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
 
     if(interTime < 30)
     {
@@ -705,7 +705,7 @@ void IN_DrawSingleStats(void)
     }
 
     IN_DrawNumber(players[CONSOLEPLAYER].killCount, 200, 65, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    IN_DrawShadowChar('/', 236, 65, GF_FONTB);
+    M_DrawShadowedChar2('/', 236, 65, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     IN_DrawNumber(totalKills, 248, 65, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     if(interTime < 60)
@@ -718,7 +718,7 @@ void IN_DrawSingleStats(void)
     }
 
     IN_DrawNumber(players[CONSOLEPLAYER].itemCount, 200, 90, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    IN_DrawShadowChar('/', 236, 90, GF_FONTB);
+    M_DrawShadowedChar2('/', 236, 90, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     IN_DrawNumber(totalItems, 248, 90, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     if(interTime < 90)
@@ -731,7 +731,7 @@ void IN_DrawSingleStats(void)
     }
 
     IN_DrawNumber(players[CONSOLEPLAYER].secretCount, 200, 115, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    IN_DrawShadowChar('/', 236, 115, GF_FONTB);
+    M_DrawShadowedChar2('/', 236, 115, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     IN_DrawNumber(totalSecret, 248, 115, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     if(interTime < 150)
@@ -747,18 +747,18 @@ void IN_DrawSingleStats(void)
 
     if(gameMode != extended || wbs->episode < 3)
     {
-        M_WriteText2("TIME", 85, 160, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+        M_DrawText2("TIME", 85, 160, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
         IN_DrawTime(155, 160, hours, minutes, seconds, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     }
     else
     {
-        x = 160 - M_StringWidth("NOW ENTERING:", GF_FONTA) / 2;
-        M_WriteText2("NOW ENTERING:", x, 160, GF_FONTA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+        x = 160 - M_TextWidth("NOW ENTERING:", GF_FONTA) / 2;
+        M_DrawText2("NOW ENTERING:", x, 160, GF_FONTA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
 
         levelname = P_GetShortMapName(wbs->episode, wbs->nextMap);
 
-        x = 160 - M_StringWidth(levelname, GF_FONTB) / 2;
-        M_WriteText2(levelname, x, 170, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+        x = 160 - M_TextWidth(levelname, GF_FONTB) / 2;
+        M_DrawText2(levelname, x, 170, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
         skipIntermission = false;
     }
@@ -773,15 +773,15 @@ void IN_DrawCoopStats(void)
 
     levelname = P_GetShortMapName(wbs->episode, wbs->currentMap);
 
-    M_WriteText2("KILLS", 95, 35, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_WriteText2("BONUS", 155, 35, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_WriteText2("SECRET", 232, 35, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText2("KILLS", 95, 35, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText2("BONUS", 155, 35, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText2("SECRET", 232, 35, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    x = 160 - M_StringWidth(levelname, GF_FONTB) / 2;
-    M_WriteText2(levelname, x, 3, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    x = 160 - M_TextWidth(levelname, GF_FONTB) / 2;
+    M_DrawText2(levelname, x, 3, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    x = 160 - M_StringWidth("FINISHED", GF_FONTA) / 2;
-    M_WriteText2("FINISHED", x, 25, GF_FONTA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+    x = 160 - M_TextWidth("FINISHED", GF_FONTA) / 2;
+    M_DrawText2("FINISHED", x, 25, GF_FONTA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
 
     ypos = 50;
     for(i = 0; i < NUMTEAMS; ++i)
@@ -789,10 +789,10 @@ void IN_DrawCoopStats(void)
         if(teamInfo[i].members)
         {
             DGL_Color4f(0, 0, 0, .4f);
-            Hu_DrawPatch(dpFaceAlive[i].id, 27, ypos+2);
+            M_DrawPatch(dpFaceAlive[i].id, 27, ypos+2);
 
             DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            Hu_DrawPatch(dpFaceAlive[i].id, 25, ypos);
+            M_DrawPatch(dpFaceAlive[i].id, 25, ypos);
 
             if(interTime < 40)
             {
@@ -807,12 +807,12 @@ void IN_DrawCoopStats(void)
             }
 
             IN_DrawNumber(killPercent[i], 85, ypos + 10, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            IN_DrawShadowChar('%', 121, ypos + 10, GF_FONTB);
+            M_DrawShadowedChar2('%', 121, ypos + 10, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
             IN_DrawNumber(bonusPercent[i], 160, ypos + 10, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-            IN_DrawShadowChar('%', 196, ypos + 10, GF_FONTB);
+            M_DrawShadowedChar2('%', 196, ypos + 10, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
             IN_DrawNumber(secretPercent[i], 237, ypos + 10, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            IN_DrawShadowChar('%', 273, ypos + 10, GF_FONTB);
+            M_DrawShadowedChar2('%', 273, ypos + 10, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
             ypos += 37;
         }
     }
@@ -824,12 +824,12 @@ void IN_DrawDMStats(void)
 
     int i, j, ypos = 55, xpos = 90, kpos;
 
-    M_WriteText2("TOTAL", 265, 30, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_WriteText2("VICTIMS", 140, 8, GF_FONTA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+    M_DrawText2("TOTAL", 265, 30, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText2("VICTIMS", 140, 8, GF_FONTA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
 
     for(i = 0; i < 7; ++i)
     {
-        M_WriteText2(killersText[i], 10, 80 + 9 * i, GF_FONTA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+        M_DrawText2(killersText[i], 10, 80 + 9 * i, GF_FONTA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
     }
 
     if(interTime < 20)
@@ -838,8 +838,8 @@ void IN_DrawDMStats(void)
         {
             if(teamInfo[i].members)
             {
-                Hu_DrawShadowedPatch(dpFaceAlive[i].id, 40, ((ypos << FRACBITS) + dSlideY[i] * interTime) >> FRACBITS);
-                Hu_DrawShadowedPatch(dpFaceDead[i].id, ((xpos << FRACBITS) + dSlideX[i] * interTime) >> FRACBITS, 18);
+                M_DrawShadowedPatch(dpFaceAlive[i].id, 40, ((ypos << FRACBITS) + dSlideY[i] * interTime) >> FRACBITS);
+                M_DrawShadowedPatch(dpFaceDead[i].id, ((xpos << FRACBITS) + dSlideX[i] * interTime) >> FRACBITS, 18);
             }
         }
 
@@ -865,14 +865,14 @@ void IN_DrawDMStats(void)
         {
             if(interTime < 100 || i == playerTeam[CONSOLEPLAYER])
             {
-                Hu_DrawShadowedPatch(dpFaceAlive[i].id, 40, ypos);
-                Hu_DrawShadowedPatch(dpFaceDead[i].id, xpos, 18);
+                M_DrawShadowedPatch(dpFaceAlive[i].id, 40, ypos);
+                M_DrawShadowedPatch(dpFaceDead[i].id, xpos, 18);
             }
             else
             {
                 DGL_Color4f(1, 1, 1, .333f);
-                Hu_DrawPatch(dpFaceAlive[i].id, 40, ypos);
-                Hu_DrawPatch(dpFaceDead[i].id, xpos, 18);
+                M_DrawPatch(dpFaceAlive[i].id, 40, ypos);
+                M_DrawPatch(dpFaceDead[i].id, xpos, 18);
             }
 
             kpos = 86;
@@ -909,7 +909,7 @@ void IN_DrawTime(int x, int y, int h, int m, int s, float r, float g,
     if(h)
     {
         IN_DrawNumber(h, x, y, 2, r, g, b, a);
-        M_WriteText2(":", x + 26, y, GF_FONTB, r, g, b, a);
+        M_DrawText2(":", x + 26, y, GF_FONTB, r, g, b, a);
     }
 
     x += 34;
@@ -919,6 +919,6 @@ void IN_DrawTime(int x, int y, int h, int m, int s, float r, float g,
     }
 
     x += 34;
-    M_WriteText2(":", x-8, y, GF_FONTB, r, g, b, a);
+    M_DrawText2(":", x-8, y, GF_FONTB, r, g, b, a);
     IN_DrawNumber(s, x, y, 2, r, g, b, a);
 }

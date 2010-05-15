@@ -34,17 +34,6 @@
 
 #include "r_common.h"
 
-typedef enum border_e {
-    BORDERUP = 1,
-    BORDERDOWN
-} border_t;
-
-enum {
-    ALIGN_LEFT = 0,
-    ALIGN_CENTER,
-    ALIGN_RIGHT
-};
-
 // The fonts.
 typedef enum {
     GF_FIRST = 0,
@@ -126,27 +115,31 @@ void            Draw_EndZoom(void);
 /**
  * Text string:
  */
-void            M_WriteText(const char* string, int x, int y);
-void            M_WriteText2(const char* string, int x, int y, gamefontid_t font, float red, float green, float blue, float alpha);
-void            M_WriteText3(const char* string, int x, int y, gamefontid_t font, float red, float green, float blue, float alpha, boolean flagTypeIn, boolean flagShadow, int initialCount);
-void            HUlib_drawTextLine2(const char* string, int x, int y, size_t len, gamefontid_t font, boolean drawcursor);
 
-int             M_DrawText(const char* string, int x, int y, boolean direct);
-void            M_DrawTitle(const char* string, int y);
+/**
+ * @defGroup drawTextFlags Draw Text Flags
+ */
+/*@{*/
+#define DTF_ALIGN_LEFT      0x1
+#define DTF_ALIGN_RIGHT     0x2
+/*@}*/
 
-void            WI_DrawParamText(const char* string, int x, int y, gamefontid_t font, float defRed, float defGreen, float defBlue, float defAlpha, boolean defCase, boolean defTypeIn, boolean defShadow, int halign);
+void            M_DrawText(const char* string, int x, int y);
+void            M_DrawText2(const char* string, int x, int y, gamefontid_t font, float red, float green, float blue, float alpha);
+void            M_DrawText3(const char* string, int x, int y, gamefontid_t font, float red, float green, float blue, float alpha, boolean flagTypeIn, boolean flagShadow, int initialCount);
+
+void            WI_DrawParamText(const char* string, int x, int y, gamefontid_t font, byte flags, float defRed, float defGreen, float defBlue, float defAlpha, boolean defCase, boolean defTypeIn, boolean defShadow);
 
 // Utility routines:
-int             M_StringWidth(const char* string, gamefontid_t font);
-int             M_StringHeight(const char* string, gamefontid_t font);
+int             M_TextWidth(const char* string, gamefontid_t font);
+int             M_TextHeight(const char* string, gamefontid_t font);
 
 /**
  * Single character:
  */
 void            M_DrawChar(unsigned char ch, int x, int y, gamefontid_t font);
-#if __JHERETIC__
-void            IN_DrawShadowChar(unsigned char ch, int x, int y, gamefontid_t font);
-#endif
+void            M_DrawShadowedChar(unsigned char ch, int x, int y, gamefontid_t font);
+void            M_DrawShadowedChar2(unsigned char ch, int x, int y, gamefontid_t font, float r, float g, float b, float a);
 
 // Utility routines:
 int             M_CharWidth(unsigned char ch, gamefontid_t font);
@@ -155,6 +148,7 @@ int             M_CharHeight(unsigned char ch, gamefontid_t font);
 /**
  * Specialised text strings:
  */
+void            HUlib_drawTextLine2(const char* string, int x, int y, size_t len, gamefontid_t font, boolean drawcursor);
 #if __JHERETIC__ || __JHEXEN__
 void            Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha);
 #endif
@@ -181,22 +175,30 @@ void            DrBNumber(int val, int x, int y, float red, float green, float b
 #define DPF_NO_OFFSET       (DPF_NO_OFFSETX | DPF_NO_OFFSETY)
 /*@}*/
 
-void            Hu_DrawPatch(patchid_t id, int x, int y);
-void            Hu_DrawPatch2(patchid_t id, int x, int y, byte flags);
+void            M_DrawPatch(patchid_t id, int x, int y);
+void            M_DrawPatch2(patchid_t id, int x, int y, byte flags);
 
-void            Hu_DrawShadowedPatch(patchid_t id, int x, int y);
-void            Hu_DrawShadowedPatch2(patchid_t id, int x, int y, byte flags);
-void            Hu_DrawShadowedPatch3(patchid_t id, int x, int y, byte flags, float r, float g, float b, float a);
+void            M_DrawShadowedPatch(patchid_t id, int x, int y);
+void            M_DrawShadowedPatch2(patchid_t id, int x, int y, byte flags);
+void            M_DrawShadowedPatch3(patchid_t id, int x, int y, byte flags, float r, float g, float b, float a);
 
 // Implements patch replacement.
 void            WI_DrawPatch(patchid_t id, int x, int y, const char* altstring, boolean builtin);
-void            WI_DrawPatch2(patchid_t id, int x, int y, const char* altstring, boolean builtin, int halign);
-void            WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, boolean builtin, int halign, float r, float g, float b, float a);
+void            WI_DrawPatch2(patchid_t id, int x, int y, const char* altstring, boolean builtin, byte flags);
+void            WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, boolean builtin, byte flags, float r, float g, float b, float a);
 
 /**
  * Misc specialised elements:
  */
+
+// Border drawing modes.
+typedef enum border_e {
+    BORDERUP = 1,
+    BORDERDOWN
+} border_t;
+
 void            M_DrawBackgroundBox(float x, float y, float w, float h, boolean background, int border, float red, float green, float blue, float alpha);
+
 #if __JHERETIC__ || __JHEXEN__
 void            M_DrawSlider(int x, int y, int width, int slot, float alpha);
 #else

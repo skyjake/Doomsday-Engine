@@ -368,7 +368,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
         a = i == selected? .5f : light / 2;
 
         DGL_Color4f(light, light, light, a * iconAlpha);
-        Hu_DrawPatch(dpInvItemBox.id, x + slot * ST_INVSLOTWIDTH + ST_INVSLOTOFFX, y);
+        M_DrawPatch(dpInvItemBox.id, x + slot * ST_INVSLOTWIDTH + ST_INVSLOTOFFX, y);
 
         if(i >= startSlot && i < endSlot)
         {
@@ -383,7 +383,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
                 int posX = x + slot * ST_INVSLOTWIDTH;
 #endif
                 DGL_Color4f(1, 1, 1, slot == selected? iconAlpha : iconAlpha / 3);
-                Hu_DrawPatch(item->patchId, posX, y + ST_INVICONOFFY);
+                M_DrawPatch(item->patchId, posX, y + ST_INVICONOFFY);
 
                 if(count > 1)
                     Hu_DrawSmallNum(P_InventoryCount(player, item->type), ST_INVCOUNTDIGITS, x + slot * ST_INVSLOTWIDTH + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, slot == selected? textAlpha : textAlpha / 2);
@@ -396,7 +396,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
     }
 
     DGL_Color4f(1, 1, 1, iconAlpha);
-    Hu_DrawPatch(dpInvSelectBox.id, x + selected * ST_INVSLOTWIDTH, y + ST_INVSELECTOFFY - BORDER);
+    M_DrawPatch(dpInvSelectBox.id, x + selected * ST_INVSLOTWIDTH, y + ST_INVSELECTOFFY - BORDER);
 
     if(inv->numUsedSlots > maxVisSlots)
     {
@@ -406,13 +406,13 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
         if(cfg.inventoryWrap || first != 0)
         {
             DGL_Color4f(1, 1, 1, iconAlpha);
-            Hu_DrawPatch(dpInvPageLeft[!(mapTime & 4)? 1 : 0].id, x - dpInvPageLeft[0].width - ARROW_RELXOFF, y + ARROW_YOFFSET);
+            M_DrawPatch(dpInvPageLeft[!(mapTime & 4)? 1 : 0].id, x - dpInvPageLeft[0].width - ARROW_RELXOFF, y + ARROW_YOFFSET);
         }
 
         if(cfg.inventoryWrap || inv->numUsedSlots - first > numVisSlots)
         {
             DGL_Color4f(1, 1, 1, iconAlpha);
-            Hu_DrawPatch(dpInvPageRight[!(mapTime & 4)? 1 : 0].id, x + numVisSlots * ST_INVSLOTWIDTH + ARROW_RELXOFF + 1, y + ARROW_YOFFSET);
+            M_DrawPatch(dpInvPageRight[!(mapTime & 4)? 1 : 0].id, x + numVisSlots * ST_INVSLOTWIDTH + ARROW_RELXOFF + 1, y + ARROW_YOFFSET);
         }
 
 #undef ARROW_XOFFSET
@@ -464,7 +464,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
             if((count = P_InventoryCount(player, item->type)))
             {
                 DGL_Color4f(1, 1, 1, alpha);
-                Hu_DrawPatch(item->patchId, x + slot * ST_INVSLOTWIDTH, y + ST_INVICONOFFY);
+                M_DrawPatch(item->patchId, x + slot * ST_INVSLOTWIDTH, y + ST_INVICONOFFY);
 
                 if(count > 1)
                     Hu_DrawSmallNum(P_InventoryCount(player, item->type), ST_INVCOUNTDIGITS, x + slot * ST_INVSLOTWIDTH + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, alpha);
@@ -478,7 +478,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
     }
 
     DGL_Color4f(1, 1, 1, alpha);
-    Hu_DrawPatch(dpInvSelectBox.id, x + cursor * ST_INVSLOTWIDTH, y + ST_INVSELECTOFFY - BORDER);
+    M_DrawPatch(dpInvSelectBox.id, x + cursor * ST_INVSLOTWIDTH, y + ST_INVSELECTOFFY - BORDER);
 
     if(inv->numUsedSlots > NUMVISINVSLOTS)
     {
@@ -486,7 +486,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
         if(cfg.inventoryWrap || first != 0)
         {
             DGL_Color4f(1, 1, 1, alpha);
-            Hu_DrawPatch(dpInvPageLeft[!(mapTime & 4)? 1 : 0].id,
+            M_DrawPatch(dpInvPageLeft[!(mapTime & 4)? 1 : 0].id,
 #if __JHEXEN__
                                  42, 163
 #else
@@ -499,7 +499,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
         if(cfg.inventoryWrap || inv->numUsedSlots - first > NUMVISINVSLOTS)
         {
             DGL_Color4f(1, 1, 1, alpha);
-            Hu_DrawPatch(dpInvPageRight[!(mapTime & 4)? 1 : 0].id, 269,
+            M_DrawPatch(dpInvPageRight[!(mapTime & 4)? 1 : 0].id, 269,
 #if __JHEXEN__
                                  163
 #else

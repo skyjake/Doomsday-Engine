@@ -1753,16 +1753,16 @@ void M_DrawMapMenu(void)
 
     menuAlpha = Hu_MenuAlpha();
 
-    M_DrawTitle("Automap OPTIONS", menu->y - 26);
+    MN_DrawTitle("Automap OPTIONS", menu->y - 26);
 
 #if __JHERETIC__ || __JHEXEN__
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 
     // Draw the page arrows.
     token = dpInvPageLeft[!menu->firstItem || (menuTime & 8)].id;
-    Hu_DrawPatch(token, menu->x, menu->y - 22);
+    M_DrawPatch(token, menu->x, menu->y - 22);
     token = dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)].id;
-    Hu_DrawPatch(token, 312 - menu->x, menu->y - 22);
+    M_DrawPatch(token, 312 - menu->x, menu->y - 22);
 #endif
 
     idx = 0;

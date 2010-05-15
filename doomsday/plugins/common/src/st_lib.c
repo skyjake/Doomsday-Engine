@@ -106,19 +106,19 @@ void STlib_DrawNum(st_number_t* n, float alpha)
 
     // In the special case of 0, you draw 0.
     if(!num)
-        WI_DrawPatch3(n->p[0].id, x - w, n->y, NULL, false, ALIGN_LEFT, 1, 1, 1, n->alpha * alpha);
+        WI_DrawPatch3(n->p[0].id, x - w, n->y, NULL, false, DPF_ALIGN_LEFT, 1, 1, 1, n->alpha * alpha);
 
     // Draw the number.
     while(num && numdigits--)
     {
         x -= w;
-        WI_DrawPatch3(n->p[num % 10].id, x, n->y, NULL, false, ALIGN_LEFT, 1, 1, 1, n->alpha * alpha);
+        WI_DrawPatch3(n->p[num % 10].id, x, n->y, NULL, false, DPF_ALIGN_LEFT, 1, 1, 1, n->alpha * alpha);
         num /= 10;
     }
 
     // Draw a minus sign if necessary.
     if(neg)
-        WI_DrawPatch3(huMinus.id, x - 8, n->y, NULL, false, ALIGN_LEFT, 1, 1, 1, n->alpha * alpha);
+        WI_DrawPatch3(huMinus.id, x - 8, n->y, NULL, false, DPF_ALIGN_LEFT, 1, 1, 1, n->alpha * alpha);
 }
 
 void STlib_InitPercent(st_percent_t* p, int x, int y, patchinfo_t* pl, int* num,
@@ -130,7 +130,7 @@ void STlib_InitPercent(st_percent_t* p, int x, int y, patchinfo_t* pl, int* num,
 
 void STlib_DrawPercent(st_percent_t* per, float alpha)
 {
-    WI_DrawPatch3(per->p->id, per->n.x, per->n.y, NULL, false, ALIGN_LEFT, 1, 1, 1, per->n.alpha * alpha);
+    WI_DrawPatch3(per->p->id, per->n.x, per->n.y, NULL, false, DPF_ALIGN_LEFT, 1, 1, 1, per->n.alpha * alpha);
     STlib_DrawNum(&per->n, alpha);
 }
 
@@ -144,7 +144,7 @@ void STlib_InitIcon(st_icon_t* b, int x, int y, patchinfo_t* i, float alpha)
 
 void STlib_DrawIcon(st_icon_t* bi, float alpha)
 {
-    WI_DrawPatch3(bi->p->id, bi->x, bi->y, NULL, false, ALIGN_LEFT, 1, 1, 1, bi->alpha * alpha);
+    WI_DrawPatch3(bi->p->id, bi->x, bi->y, NULL, false, DPF_ALIGN_LEFT, 1, 1, 1, bi->alpha * alpha);
 }
 
 void STlib_InitMultiIcon(st_multiicon_t* i, int x, int y, patchinfo_t* il, float alpha)
@@ -158,5 +158,5 @@ void STlib_InitMultiIcon(st_multiicon_t* i, int x, int y, patchinfo_t* il, float
 void STlib_DrawMultiIcon(st_multiicon_t* mi, int iconNum, float alpha)
 {
     if(iconNum >= 0)
-        WI_DrawPatch3(mi->p[iconNum].id, mi->x, mi->y, NULL, false, ALIGN_LEFT, 1, 1, 1, mi->alpha * alpha);
+        WI_DrawPatch3(mi->p[iconNum].id, mi->x, mi->y, NULL, false, DPF_ALIGN_LEFT, 1, 1, 1, mi->alpha * alpha);
 }

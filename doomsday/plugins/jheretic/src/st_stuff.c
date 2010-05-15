@@ -369,7 +369,7 @@ void drawChainWidget(int player, float textAlpha, float iconAlpha,
 
     // Draw the life gem.
     DGL_Color4f(1, 1, 1, iconAlpha);
-    Hu_DrawPatch(lifeGems[gemNum].id, x + gemXOffset, chainY);
+    M_DrawPatch(lifeGems[gemNum].id, x + gemXOffset, chainY);
 
     shadeChain(ORIGINX, ORIGINY-ST_HEIGHT, iconAlpha/3);
 
@@ -419,28 +419,28 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
     {   // We can just render the full thing as normal.
         // Top bits.
         DGL_Color4f(1, 1, 1, 1);
-        Hu_DrawPatch(statusbarTopLeft.id, ORIGINX, ORIGINY-10);
-        Hu_DrawPatch(statusbarTopRight.id, ORIGINX+290, ORIGINY-10);
+        M_DrawPatch(statusbarTopLeft.id, ORIGINX, ORIGINY-10);
+        M_DrawPatch(statusbarTopRight.id, ORIGINX+290, ORIGINY-10);
 
         // Faces.
-        Hu_DrawPatch(statusbar.id, ORIGINX, ORIGINY);
+        M_DrawPatch(statusbar.id, ORIGINX, ORIGINY);
 
         if(P_GetPlayerCheats(plr) & CF_GODMODE)
         {
-            Hu_DrawPatch(godLeft.id, ORIGINX+16, ORIGINY+9);
-            Hu_DrawPatch(godRight.id, ORIGINX+287, ORIGINY+9);
+            M_DrawPatch(godLeft.id, ORIGINX+16, ORIGINY+9);
+            M_DrawPatch(godRight.id, ORIGINX+287, ORIGINY+9);
         }
 
         if(!Hu_InventoryIsOpen(player))
         {
             if(deathmatch)
-                Hu_DrawPatch(statBar.id, ORIGINX+34, ORIGINY+2);
+                M_DrawPatch(statBar.id, ORIGINX+34, ORIGINY+2);
             else
-                Hu_DrawPatch(lifeBar.id, ORIGINX+34, ORIGINY+2);
+                M_DrawPatch(lifeBar.id, ORIGINX+34, ORIGINY+2);
         }
         else
         {
-            Hu_DrawPatch(invBar.id, ORIGINX+34, ORIGINY+2);
+            M_DrawPatch(invBar.id, ORIGINX+34, ORIGINY+2);
         }
     }
     else
@@ -448,8 +448,8 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
         DGL_Color4f(1, 1, 1, iconAlpha);
 
         // Top bits.
-        Hu_DrawPatch(statusbarTopLeft.id, ORIGINX, ORIGINY-10);
-        Hu_DrawPatch(statusbarTopRight.id, ORIGINX+290, ORIGINY-10);
+        M_DrawPatch(statusbarTopLeft.id, ORIGINX, ORIGINY-10);
+        M_DrawPatch(statusbarTopRight.id, ORIGINX+290, ORIGINY-10);
 
         DGL_SetPatch(statusbar.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
@@ -466,8 +466,8 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
             DGL_DrawCutRectTiled(ORIGINX, ORIGINY, 34, 42, 320, 42, 0, 0, ORIGINX+16, ORIGINY+9, 16, 8);
             DGL_DrawCutRectTiled(ORIGINX+282, ORIGINY, 38, 42, 320, 42, 282, 0, ORIGINX+287, ORIGINY+9, 16, 8);
 
-            Hu_DrawPatch(godLeft.id, ORIGINX+16, ORIGINY+9);
-            Hu_DrawPatch(godRight.id, ORIGINX+287, ORIGINY+9);
+            M_DrawPatch(godLeft.id, ORIGINX+16, ORIGINY+9);
+            M_DrawPatch(godRight.id, ORIGINX+287, ORIGINY+9);
         }
         else
         {
@@ -478,13 +478,13 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
         if(!Hu_InventoryIsOpen(player))
         {
             if(deathmatch)
-                Hu_DrawPatch(statBar.id, ORIGINX+34, ORIGINY+2);
+                M_DrawPatch(statBar.id, ORIGINX+34, ORIGINY+2);
             else
-                Hu_DrawPatch(lifeBar.id, ORIGINX+34, ORIGINY+2);
+                M_DrawPatch(lifeBar.id, ORIGINX+34, ORIGINY+2);
         }
         else
         {
-            Hu_DrawPatch(invBar.id, ORIGINX+34, ORIGINY+2);
+            M_DrawPatch(invBar.id, ORIGINX+34, ORIGINY+2);
         }
     }
 
@@ -912,7 +912,7 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
         }
 
         DGL_Color4f(1, 1, 1, iconAlpha);
-        Hu_DrawPatch(patch, x, y);
+        M_DrawPatch(patch, x, y);
 
         if(!(hud->currentInvItemFlash > 0))
         {
@@ -963,30 +963,30 @@ static void drawINumber(signed int val, int x, int y, float r, float g, float b,
     {
         if(val < -9)
         {
-            Hu_DrawPatch(lame.id, x + 1, y + 1);
+            M_DrawPatch(lame.id, x + 1, y + 1);
         }
         else
         {
             val = -val;
-            Hu_DrawPatch(iNumbers[val].id, x + 18, y);
-            Hu_DrawPatch(negative.id, x + 9, y);
+            M_DrawPatch(iNumbers[val].id, x + 18, y);
+            M_DrawPatch(negative.id, x + 9, y);
         }
         return;
     }
 
     if(val > 99)
     {
-        Hu_DrawPatch(iNumbers[val / 100].id, x, y);
+        M_DrawPatch(iNumbers[val / 100].id, x, y);
     }
 
     val = val % 100;
     if(val > 9 || oldval > 99)
     {
-        Hu_DrawPatch(iNumbers[val / 10].id, x + 9, y);
+        M_DrawPatch(iNumbers[val / 10].id, x + 9, y);
     }
 
     val = val % 10;
-    Hu_DrawPatch(iNumbers[val].id, x + 18, y);
+    M_DrawPatch(iNumbers[val].id, x + 18, y);
 }
 
 /**
@@ -1049,7 +1049,7 @@ void drawFlightWidget(int player, float textAlpha, float iconAlpha,
             }
         }
         DGL_Color4f(1, 1, 1, iconAlpha);
-        Hu_DrawPatch(spinFly[frame].id, 16, 14);
+        M_DrawPatch(spinFly[frame].id, 16, 14);
     }
     /// \kludge calculate dimensions properly!
     *drawnWidth = 32;
@@ -1078,7 +1078,7 @@ void drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha,
         if(cfg.tomeCounter && plr->powers[PT_WEAPONLEVEL2] < 35)
             alpha *= plr->powers[PT_WEAPONLEVEL2] / 35.0f;
         DGL_Color4f(1, 1, 1, alpha);
-        Hu_DrawPatch(spinBook[frame].id, -13, 13);
+        M_DrawPatch(spinBook[frame].id, -13, 13);
         /// \kludge calculate dimensions properly!
         *drawnWidth += 26;
         *drawnHeight += 26;
@@ -1092,9 +1092,9 @@ void drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha,
         int val = 1 + plr->powers[PT_WEAPONLEVEL2] / 35, w, h;
         DGL_Color4f(1, 1, 1, textAlpha);
         if(val > 9)           
-            Hu_DrawPatch(dpSmallNumbers[(val / 10) % 10].id, -12+3, 13+13);
+            M_DrawPatch(dpSmallNumbers[(val / 10) % 10].id, -12+3, 13+13);
         val = val % 10;
-        Hu_DrawPatch(dpSmallNumbers[val].id, -12+7, 13+13);
+        M_DrawPatch(dpSmallNumbers[val].id, -12+7, 13+13);
 
         /// \kludge calculate dimensions properly!
         w = M_NumDigits(val) * dpSmallNumbers[0].width;
@@ -1185,7 +1185,7 @@ void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
             continue;
         dp = &ammoIcons[plr->readyWeapon - 1];
         DGL_Color4f(1, 1, 1, iconAlpha);
-        Hu_DrawPatch2(dp->id, 0, 0, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
+        M_DrawPatch2(dp->id, 0, 0, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
         drawINumber(plr->ammo[ammoType].owned, dp->width+1, -2, 1, 1, 1, textAlpha);
         /// \kludge calculate the visual dimensions properly!
         *drawnWidth += dp->width + 2 + (iNumbers[0].width+1) * 3 - 1;
@@ -1209,10 +1209,10 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
     dd_snprintf(buf, 5, "%i", health);
-    h = M_StringHeight(buf, GF_FONTB);
-    w = M_StringWidth(buf, GF_FONTB);
-    M_WriteText2(buf, 2, -h + 1, GF_FONTB, 0, 0, 0, textAlpha * .4f);
-    M_WriteText2(buf, 0, -h - 1, GF_FONTB, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    h = M_TextHeight(buf, GF_FONTB);
+    w = M_TextWidth(buf, GF_FONTB);
+    M_DrawText2(buf, 2, -h + 1, GF_FONTB, 0, 0, 0, textAlpha * .4f);
+    M_DrawText2(buf, 0, -h - 1, GF_FONTB, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     *drawnWidth = w;
     *drawnHeight = h;
 }
@@ -1253,7 +1253,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
     if(plr->keys[KT_YELLOW])
     {
         DGL_Color4f(1, 1, 1, iconAlpha);
-        Hu_DrawPatch2(keys[0].id, x, -keys[0].height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
+        M_DrawPatch2(keys[0].id, x, -keys[0].height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
         x += keys[0].width + 1;
         *drawnWidth += keys[0].width;
         if(keys[0].height > *drawnHeight)
@@ -1264,7 +1264,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
     if(plr->keys[KT_GREEN])
     {
         DGL_Color4f(1, 1, 1, iconAlpha);
-        Hu_DrawPatch2(keys[1].id, x, -keys[1].height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
+        M_DrawPatch2(keys[1].id, x, -keys[1].height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
         x += keys[1].width + 1;
         *drawnWidth += keys[1].width;
         if(keys[1].height > *drawnHeight)
@@ -1275,7 +1275,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
     if(plr->keys[KT_BLUE])
     {
         DGL_Color4f(1, 1, 1, iconAlpha);
-        Hu_DrawPatch2(keys[2].id, x, -keys[2].height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
+        M_DrawPatch2(keys[2].id, x, -keys[2].height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
         x += keys[2].width;
         *drawnWidth += keys[1].width;
         if(keys[2].height > *drawnHeight)
@@ -1324,9 +1324,9 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
     if(hud->currentInvItemFlash > 0)
     {
         DGL_Color4f(1, 1, 1, iconAlpha/2);
-        Hu_DrawPatch2(dpInvItemBox.id, -dpInvItemBox.width, -dpInvItemBox.height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
+        M_DrawPatch2(dpInvItemBox.id, -dpInvItemBox.width, -dpInvItemBox.height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        Hu_DrawPatch(dpInvItemFlash[hud->currentInvItemFlash % 5].id, -dpInvItemBox.width, -dpInvItemBox.height + 1);
+        M_DrawPatch(dpInvItemFlash[hud->currentInvItemFlash % 5].id, -dpInvItemBox.width, -dpInvItemBox.height + 1);
     }
     else
     {
@@ -1338,9 +1338,9 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
             uint count;
 
             DGL_Color4f(1, 1, 1, iconAlpha/2);
-            Hu_DrawPatch2(dpInvItemBox.id, -dpInvItemBox.width, -dpInvItemBox.height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
+            M_DrawPatch2(dpInvItemBox.id, -dpInvItemBox.width, -dpInvItemBox.height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
             DGL_Color4f(1, 1, 1, iconAlpha);
-            Hu_DrawPatch(patch, -dpInvItemBox.width, -dpInvItemBox.height);
+            M_DrawPatch(patch, -dpInvItemBox.width, -dpInvItemBox.height);
             if((count = P_InventoryCount(player, readyItem)) > 1)
                 Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, -1, -7, textAlpha);
         }
@@ -1396,9 +1396,9 @@ void drawKillsWidget(int player, float textAlpha, float iconAlpha,
         strcat(buf, tmp);
     }
 
-    *drawnHeight = M_StringHeight(buf, GF_FONTA);
-    *drawnWidth = M_StringWidth(buf, GF_FONTA);
-    M_WriteText2(buf, 0, -(*drawnHeight), GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    *drawnHeight = M_TextHeight(buf, GF_FONTA);
+    *drawnWidth = M_TextWidth(buf, GF_FONTA);
+    M_DrawText2(buf, 0, -(*drawnHeight), GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 }
 
 void drawItemsWidget(int player, float textAlpha, float iconAlpha,
@@ -1426,9 +1426,9 @@ void drawItemsWidget(int player, float textAlpha, float iconAlpha,
         strcat(buf, tmp);
     }
 
-    *drawnHeight = M_StringHeight(buf, GF_FONTA);
-    *drawnWidth = M_StringWidth(buf, GF_FONTA);
-    M_WriteText2(buf, 0, -(*drawnHeight), GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    *drawnHeight = M_TextHeight(buf, GF_FONTA);
+    *drawnWidth = M_TextWidth(buf, GF_FONTA);
+    M_DrawText2(buf, 0, -(*drawnHeight), GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 }
 
 void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
@@ -1456,9 +1456,9 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
         strcat(buf, tmp);
     }
 
-    *drawnHeight = M_StringHeight(buf, GF_FONTA);
-    *drawnWidth = M_StringWidth(buf, GF_FONTA);
-    M_WriteText2(buf, 0, -(*drawnHeight), GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    *drawnHeight = M_TextHeight(buf, GF_FONTA);
+    *drawnWidth = M_TextWidth(buf, GF_FONTA);
+    M_DrawText2(buf, 0, -(*drawnHeight), GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 }
 
 typedef struct {

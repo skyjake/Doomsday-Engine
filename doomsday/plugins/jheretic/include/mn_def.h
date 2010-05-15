@@ -90,37 +90,37 @@ typedef enum {
     MENU_NONE
 } menutype_t;
 
-extern int      menuTime;
-extern boolean  shiftdown;
-extern menu_t  *currentMenu;
-extern short    itemOn;
+extern int menuTime;
+extern boolean shiftdown;
+extern menu_t* currentMenu;
+extern short itemOn;
 
-extern menu_t   MapDef;
+extern menu_t MapDef;
 
 // Multiplayer menus.
-extern menu_t   MultiplayerMenu;
-extern menu_t   GameSetupMenu;
-extern menu_t   PlayerSetupMenu;
-
-void    M_WriteMenuText(const menu_t* menu, int index, const char* string);
+extern menu_t MultiplayerMenu;
+extern menu_t GameSetupMenu;
+extern menu_t PlayerSetupMenu;
 
 // Color widget.
-void    DrawColorWidget();
-void    SCColorWidget(int index, void* data);
-void    M_WGCurrentColor(int option, void* data);
+void            MN_DrawColorWidget();
+void            SCColorWidget(int index, void* data);
+void            M_WGCurrentColor(int option, void* data);
+
+void            SCEnterMultiplayerMenu(int option, void* data);
 
 void            M_DrawSaveLoadBorder(int x, int y, int width);
-void    M_SetupNextMenu(menu_t* menudef);
-void    M_DrawThermo(int x, int y, int thermWidth, int thermDot);
-void    MN_DrawSlider(const menu_t* menu, int item, int width, int slot);
-void    MN_DrawColorBox(const menu_t* menu, int index, float r, float g, float b, float a);
-void    M_StartControlPanel(void);
-void    M_FloatMod10(float* variable, int option);
+void            M_SetupNextMenu(menu_t* menudef);
+void            M_DrawThermo(int x, int y, int thermWidth, int thermDot);
+void            M_WriteMenuText(const menu_t* menu, int index, const char* string);
 
-void    SCEnterMultiplayerMenu(int option, void *data);
+void            MN_DrawSlider(const menu_t* menu, int item, int width, int slot);
+void            MN_DrawColorBox(const menu_t* menu, int index, float r, float g, float b, float a);
+void            MN_TickerEx(void); // The extended ticker.
+void            MN_DrawTitle(const char* text, int y);
 
-void    MN_TickerEx(void); // The extended ticker.
-
+void            M_StartControlPanel(void);
+void            M_FloatMod10(float* variable, int option);
 void            M_ToggleVar(int option, void* context);
 
 #endif

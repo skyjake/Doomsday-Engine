@@ -98,51 +98,33 @@ extern menu_t MapDef;
 extern menu_t ControlsDef;
 
 // Multiplayer menus.
-extern menu_t   MultiplayerMenu;
-extern menu_t   GameSetupMenu;
-extern menu_t   PlayerSetupMenu;
-
-void        M_StartControlPanel(void);
-void            M_DrawSaveLoadBorder(int x, int y, int width);
-void        M_WriteMenuText(const menu_t *menu, int index, const char *text);
+extern menu_t MultiplayerMenu;
+extern menu_t GameSetupMenu;
+extern menu_t PlayerSetupMenu;
 
 // Color widget.
-void        DrawColorWidget();
-void        SCColorWidget(int index, void *data);
-void        M_WGCurrentColor(int option, void *data);
+void            MN_DrawColorWidget();
+void            SCColorWidget(int index, void* data);
+void            SCEnterMultiplayerMenu(int option, void* data);
 
-void        M_SetupNextMenu(menu_t *    menudef);
-void        MN_DrawSlider(const menu_t *menu, int item, int width, int slot);
-void        MN_DrawColorBox(const menu_t *menu, int index, float r, float g,
-                        float b, float a);
-void        M_FloatMod10(float *variable, int option);
+void            M_WGCurrentColor(int option, void* data);
+void            M_SetupNextMenu(menu_t* menudef);
+void            M_FloatMod10(float* variable, int option);
+void            M_ToggleVar(int option, void* context);
+void            M_StartControlPanel(void);
+void            M_DrawSaveLoadBorder(int x, int y, int width);
+void            M_WriteMenuText(const menu_t* menu, int index, const char* text);
 
-void        SCEnterMultiplayerMenu(int option, void *data);
-void        MN_TickerEx(void); // The extended ticker.
+void            MN_DrawSlider(const menu_t*menu, int item, int width, int slot);
+void            MN_DrawColorBox(const menu_t* menu, int index, float r, float g, float b, float a);
+void            MN_TickerEx(void); // The extended ticker.
+void            MN_DrTextA(char* text, int x, int y);
+void            MN_DrawTitle(const char* text, int y);
 
 // Widget routines.
-boolean     Cl_Responder(event_t *event); // Handles control in a menu widget
+boolean         Cl_Responder(event_t* ev); // Handles control in a menu widget
 
 // Edit field routines.
-boolean     Ed_Responder(event_t *event);
-
-void        MN_ActivateMenu(void);
-void        MN_DeactivateMenu(void);
-void        MN_TextFilter(char *text);
-void        MN_DrTextA(char *text, int x, int y);
-void        MN_DrTextAYellow(char *text, int x, int y);
-int         MN_TextAWidth(char *text);
-void        MN_DrTextB(char *text, int x, int y);
-int         MN_TextBWidth(char *text);
-void        MN_DrawTitle(char *text, int y);
-
-// Drawing text in the current state.
-void        MN_DrTextA_CS(char *text, int x, int y);
-void        MN_DrTextAYellow_CS(char *text, int x, int y);
-void        MN_DrTextB_CS(char *text, int x, int y);
-
-void        strcatQuoted(char *dest, char *src);
-
-void            M_ToggleVar(int option, void* context);
+boolean         Ed_Responder(event_t* ev);
 
 #endif

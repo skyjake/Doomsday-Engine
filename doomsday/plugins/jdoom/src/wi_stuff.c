@@ -299,7 +299,7 @@ static patchinfo_t bp[MAXPLAYERS]; // "gray P[1..MAXPLAYERS]"
 void WI_slamBackground(void)
 {
     DGL_Color4f(1, 1, 1, 1);
-    Hu_DrawPatch2(bg.id, 0, 0, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
+    M_DrawPatch2(bg.id, 0, 0, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
 }
 
 /**
@@ -338,12 +338,12 @@ void WI_drawLF(void)
     }
 
     // Draw <MapName>
-    WI_DrawPatch2(mapNamePatches[mapNum].id, SCREENWIDTH / 2, y, mapName, false, ALIGN_CENTER);
+    WI_DrawPatch2(mapNamePatches[mapNum].id, SCREENWIDTH / 2, y, mapName, false, 0);
 
     // Draw "Finished!"
     y += (5 * mapNamePatches[mapNum].height) / 4;
 
-    WI_DrawPatch2(finished.id, SCREENWIDTH / 2, y, NULL, false, ALIGN_CENTER);
+    WI_DrawPatch2(finished.id, SCREENWIDTH / 2, y, NULL, false, 0);
 }
 
 /**
@@ -378,12 +378,12 @@ void WI_drawEL(void)
     }
 
     // Draw "Entering"
-    WI_DrawPatch2(entering.id, SCREENWIDTH / 2, y, NULL, false, ALIGN_CENTER);
+    WI_DrawPatch2(entering.id, SCREENWIDTH / 2, y, NULL, false, 0);
 
     // Draw map.
     y += (5 * mapNamePatches[wbs->nextMap].height) / 4;
 
-    WI_DrawPatch2(mapNamePatches[(wbs->episode * 8) + wbs->nextMap].id, SCREENWIDTH / 2, y, mapName, false, ALIGN_CENTER);
+    WI_DrawPatch2(mapNamePatches[(wbs->episode * 8) + wbs->nextMap].id, SCREENWIDTH / 2, y, mapName, false, 0);
 }
 
 void WI_DrawOnMapNode(int n, patchinfo_t* c)
@@ -831,8 +831,8 @@ void WI_drawDeathmatchStats(void)
                 char tmp[20];
 
                 sprintf(tmp, "%i", teamInfo[i].members);
-                M_WriteText2(tmp, x - p[i].width / 2 + 1, DM_MATRIXY - WI_SPACINGY + p[i].height - 8, GF_FONTA, 1, 1, 1, 1);
-                M_WriteText2(tmp, DM_MATRIXX - p[i].width / 2 + 1, y + p[i].height - 8, GF_FONTA, 1, 1, 1, 1);
+                M_DrawText2(tmp, x - p[i].width / 2 + 1, DM_MATRIXY - WI_SPACINGY + p[i].height - 8, GF_FONTA, 1, 1, 1, 1);
+                M_DrawText2(tmp, DM_MATRIXX - p[i].width / 2 + 1, y + p[i].height - 8, GF_FONTA, 1, 1, 1, 1);
             }
         }
         else
@@ -1064,7 +1064,7 @@ void WI_drawNetgameStats(void)
             char tmp[40];
 
             sprintf(tmp, "%i", teamInfo[i].members);
-            M_WriteText2(tmp, x - p[i].width + 1, y + p[i].height - 8, GF_FONTA, 1, 1, 1, 1);
+            M_DrawText2(tmp, x - p[i].width + 1, y + p[i].height - 8, GF_FONTA, 1, 1, 1, 1);
         }
 
         if(i == myTeam)

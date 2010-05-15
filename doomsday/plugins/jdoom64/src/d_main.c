@@ -368,7 +368,7 @@ void G_PreInit(void)
     cfg.msgCount = 1;
     cfg.msgScale = .8f;
     cfg.msgUptime = 5;
-    cfg.msgAlign = ALIGN_LEFT;
+    cfg.msgAlign = 0; // Left.
     cfg.msgBlink = 5;
 
     cfg.msgColor[0] = cfg.msgColor[1] = cfg.msgColor[2] = 1;

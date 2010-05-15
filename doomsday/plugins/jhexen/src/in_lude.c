@@ -358,8 +358,8 @@ static void drawDeathTally(void)
     boolean bold;
 
     DGL_Color4f(1, 1, 1, 1);
-    Hu_DrawPatch(dpTallyTop.id, TALLY_TOP_X, TALLY_TOP_Y);
-    Hu_DrawPatch(dpTallyLeft.id, TALLY_LEFT_X, TALLY_LEFT_Y);
+    M_DrawPatch(dpTallyTop.id, TALLY_TOP_X, TALLY_TOP_Y);
+    M_DrawPatch(dpTallyLeft.id, TALLY_LEFT_X, TALLY_LEFT_Y);
 
     if(interTime < TALLY_EFFECT_TICKS)
     {
@@ -405,14 +405,14 @@ static void drawDeathTally(void)
             }
             else
             {
-                temp = M_StringWidth("--", GF_FONTA) / 2;
+                temp = M_TextWidth("--", GF_FONTA) / 2;
                 if(bold)
                 {
-                    M_WriteText2("--", x - temp, y, GF_FONTA, 1, 0.7f, 0.3f, 1);
+                    M_DrawText2("--", x - temp, y, GF_FONTA, 1, 0.7f, 0.3f, 1);
                 }
                 else
                 {
-                    M_WriteText2("--", x - temp, y, GF_FONTA, 1, 1, 1, 1);
+                    M_DrawText2("--", x - temp, y, GF_FONTA, 1, 1, 1, 1);
                 }
             }
         }
@@ -437,7 +437,7 @@ static void drawNumber(int val, int x, int y, int wrapThresh)
         sprintf(buf, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
-    M_WriteText2(buf, x - M_StringWidth(buf, GF_FONTA) / 2, y, GF_FONTA, 1, 1, 1, 1);
+    M_DrawText2(buf, x - M_TextWidth(buf, GF_FONTA) / 2, y, GF_FONTA, 1, 1, 1, 1);
 }
 
 static void drawNumberBold(int val, int x, int y, int wrapThresh)
@@ -449,5 +449,5 @@ static void drawNumberBold(int val, int x, int y, int wrapThresh)
         sprintf(buf, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
-    M_WriteText2(buf, x - M_StringWidth(buf, GF_FONTA) / 2, y, GF_FONTA, 1, 0.7f, 0.3f, 1);
+    M_DrawText2(buf, x - M_TextWidth(buf, GF_FONTA) / 2, y, GF_FONTA, 1, 0.7f, 0.3f, 1);
 }
