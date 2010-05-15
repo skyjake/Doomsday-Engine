@@ -2064,19 +2064,19 @@ void M_DrawChar(unsigned char ch, int x, int y, gamefontid_t font)
     M_DrawChar2(ch, x, y, font, DTF_ALIGN_LEFT);
 }
 
-void M_DrawShadowedChar2(unsigned char ch, int x, int y, gamefontid_t font,
+void M_DrawShadowedChar2(unsigned char ch, int x, int y, gamefontid_t font, byte flags,
     float r, float g, float b, float a)
 {
     DGL_Color4f(0, 0, 0, a * .4f);
-    M_DrawChar(ch, x+2, y+2, font);
+    M_DrawChar2(ch, x+2, y+2, font, flags);
 
     DGL_Color4f(r, g, b, a);
-    M_DrawChar(ch, x, y, font);
+    M_DrawChar2(ch, x, y, font, flags);
 }
 
 void M_DrawShadowedChar(unsigned char ch, int x, int y, gamefontid_t font)
 {
-    M_DrawShadowedChar2(ch, x, y, font, 1, 1, 1, 1);
+    M_DrawShadowedChar2(ch, x, y, font, DTF_ALIGN_LEFT, 1, 1, 1, 1);
 }
 
 int M_CharWidth(unsigned char ch, gamefontid_t font)

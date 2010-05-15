@@ -705,7 +705,7 @@ void IN_DrawSingleStats(void)
     }
 
     IN_DrawNumber(players[CONSOLEPLAYER].killCount, 200, 65, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_DrawShadowedChar2('/', 236, 65, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawShadowedChar2('/', 236, 65, GF_FONTB, DTF_ALIGN_LEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     IN_DrawNumber(totalKills, 248, 65, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     if(interTime < 60)
@@ -718,7 +718,7 @@ void IN_DrawSingleStats(void)
     }
 
     IN_DrawNumber(players[CONSOLEPLAYER].itemCount, 200, 90, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_DrawShadowedChar2('/', 236, 90, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawShadowedChar2('/', 236, 90, GF_FONTB, DTF_ALIGN_LEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     IN_DrawNumber(totalItems, 248, 90, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     if(interTime < 90)
@@ -731,7 +731,7 @@ void IN_DrawSingleStats(void)
     }
 
     IN_DrawNumber(players[CONSOLEPLAYER].secretCount, 200, 115, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_DrawShadowedChar2('/', 236, 115, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawShadowedChar2('/', 236, 115, GF_FONTB, DTF_ALIGN_LEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     IN_DrawNumber(totalSecret, 248, 115, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     if(interTime < 150)
@@ -807,12 +807,12 @@ void IN_DrawCoopStats(void)
             }
 
             IN_DrawNumber(killPercent[i], 85, ypos + 10, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            M_DrawShadowedChar2('%', 121, ypos + 10, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+            M_DrawShadowedChar2('%', 121, ypos + 10, GF_FONTB, DTF_ALIGN_LEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
             IN_DrawNumber(bonusPercent[i], 160, ypos + 10, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-            M_DrawShadowedChar2('%', 196, ypos + 10, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+            M_DrawShadowedChar2('%', 196, ypos + 10, GF_FONTB, DTF_ALIGN_LEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
             IN_DrawNumber(secretPercent[i], 237, ypos + 10, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            M_DrawShadowedChar2('%', 273, ypos + 10, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+            M_DrawShadowedChar2('%', 273, ypos + 10, GF_FONTB, DTF_ALIGN_LEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
             ypos += 37;
         }
     }
