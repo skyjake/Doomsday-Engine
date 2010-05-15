@@ -66,63 +66,8 @@
 
 // CODE --------------------------------------------------------------------
 
-void STlib_InitNum(st_number_t* n, int x, int y, patchinfo_t* pl, int* num,
-                   int maxDigits, float alpha)
-{
-    n->x = x;
-    n->y = y;
-    n->maxDigits = maxDigits;
-    n->alpha = alpha;
-    n->num = num;
-    n->p = pl;
-}
-
-void STlib_DrawNum(st_number_t* n, float alpha)
-{
-    int                 numdigits = n->maxDigits;
-    int                 num = *n->num;
-    int                 w = n->p[0].width;
-    int                 x = n->x;
-    int                 neg;
-
-    neg = num < 0;
-
-    if(neg)
-    {
-        if(numdigits == 2 && num < -9)
-            num = -9;
-        else if(numdigits == 3 && num < -99)
-            num = -99;
-        num = -num;
-    }
-
-    x = n->x - numdigits * w;
-
-    // If non-number, do not draw it.
-    if(num == 1994)
-        return;
-
-    x = n->x;
-
-    // In the special case of 0, you draw 0.
-    if(!num)
-        WI_DrawPatch3(n->p[0].id, x - w, n->y, NULL, false, DPF_ALIGN_LEFT, 1, 1, 1, n->alpha * alpha);
-
-    // Draw the number.
-    while(num && numdigits--)
-    {
-        x -= w;
-        WI_DrawPatch3(n->p[num % 10].id, x, n->y, NULL, false, DPF_ALIGN_LEFT, 1, 1, 1, n->alpha * alpha);
-        num /= 10;
-    }
-
-    // Draw a minus sign if necessary.
-    if(neg)
-        WI_DrawPatch3(huMinus.id, x - 8, n->y, NULL, false, DPF_ALIGN_LEFT, 1, 1, 1, n->alpha * alpha);
-}
-
-void STlib_InitNumFont(st_numberfont_t* n, int x, int y, gamefontid_t font, int* num,
-                   int maxDigits, float alpha)
+void STlib_InitNum(st_number_t* n, int x, int y, gamefontid_t font, int* num,
+    int maxDigits, boolean percent, float alpha)
 {
     n->x = x;
     n->y = y;
@@ -130,15 +75,16 @@ void STlib_InitNumFont(st_numberfont_t* n, int x, int y, gamefontid_t font, int*
     n->alpha = alpha;
     n->num = num;
     n->font = font;
+    n->percent = percent;
 }
 
-void STlib_DrawNumFont(st_numberfont_t* n, float alpha)
+void STlib_DrawNum(st_number_t* n)
 {
-    int                 numdigits = n->maxDigits;
-    int                 num = *n->num;
-    int                 w = M_CharWidth('0', n->font);
-    int                 x = n->x;
-    int                 neg;
+    int numdigits = n->maxDigits;
+    int num = *n->num;
+    int w = M_CharWidth('0', n->font);
+    int x = n->x;
+    int neg;
 
     neg = num < 0;
 
@@ -158,11 +104,6 @@ void STlib_DrawNumFont(st_numberfont_t* n, float alpha)
         return;
 
     x = n->x;
-#if __JDOOM64__
-    DGL_Color4f(1, 1, 1, n->alpha * alpha);
-#else
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], n->alpha * alpha);
-#endif
 
     // In the special case of 0, you draw 0.
     if(!num)
@@ -175,19 +116,13 @@ void STlib_DrawNumFont(st_numberfont_t* n, float alpha)
         M_DrawChar3('0' + (num % 10), x, n->y, n->font, DTF_ALIGN_LEFT);
         num /= 10;
     }
-}
 
-void STlib_InitPercent(st_percent_t* p, int x, int y, patchinfo_t* pl, int* num,
-    patchinfo_t* percent, float alpha)
-{
-    STlib_InitNum(&p->n, x, y, pl, num, 3, alpha);
-    p->p = percent;
-}
+    // Draw a minus sign if necessary.
+    if(neg)
+        M_DrawChar3('-', x - 8, n->y, n->font, DTF_ALIGN_LEFT);
 
-void STlib_DrawPercent(st_percent_t* per, float alpha)
-{
-    WI_DrawPatch3(per->p->id, per->n.x, per->n.y, NULL, false, DPF_ALIGN_LEFT, 1, 1, 1, per->n.alpha * alpha);
-    STlib_DrawNum(&per->n, alpha);
+    if(n->percent)
+        M_DrawChar3('%', n->x, n->y, n->font, DTF_ALIGN_LEFT);
 }
 
 void STlib_InitIcon(st_icon_t* b, int x, int y, patchinfo_t* i, float alpha)

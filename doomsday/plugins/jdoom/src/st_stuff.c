@@ -200,15 +200,15 @@ typedef struct {
     int             widgetGroupNames[NUM_UIWIDGET_GROUPS];
 
     // Widgets:
-    st_number_t     wReadyWeapon; // Ready-weapon widget.
-    st_number_t     wFrags; // In deathmatch only, summary of frags stats.
-    st_percent_t    wHealth; // Health widget.
+    st_number_t wReadyAmmo; // Ready-weapon widget.
+    st_number_t wFrags; // In deathmatch only, summary of frags stats.
+    st_number_t wHealth; // Health widget.
     st_multiicon_t  wArms[6]; // Weapon ownership widgets.
     st_multiicon_t  wFaces; // Face status widget.
     st_multiicon_t  wKeyBoxes[3]; // Keycard widgets.
-    st_percent_t    wArmor; // Armor widget.
-    st_numberfont_t wAmmo[NUM_AMMO_TYPES]; // Ammo widgets.
-    st_numberfont_t wMaxAmmo[NUM_AMMO_TYPES]; // Max ammo widgets.
+    st_number_t wArmor; // Armor widget.
+    st_number_t wAmmo[NUM_AMMO_TYPES]; // Ammo widgets.
+    st_number_t wMaxAmmo[NUM_AMMO_TYPES]; // Max ammo widgets.
 } hudstate_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -229,12 +229,6 @@ static hudstate_t hudStates[MAXPLAYERS];
 
 // Main bar left.
 static patchinfo_t statusbar;
-
-// 0-9, tall numbers.
-static patchinfo_t tallNum[10];
-
-// Tall % sign.
-static patchinfo_t tallPercent;
 
 // 3 key-cards, 3 skulls.
 static patchinfo_t keys[NUM_KEY_TYPES];
@@ -751,12 +745,12 @@ void ST_updateWidgets(int player)
             continue; // Weapon does not use this type of ammo.
 
         //// \todo Only supports one type of ammo per weapon
-        hud->wReadyWeapon.num = &plr->ammo[ammoType].owned;
+        hud->wReadyAmmo.num = &plr->ammo[ammoType].owned;
         found = true;
     }
     if(!found) // Weapon takes no ammo at all.
     {
-        hud->wReadyWeapon.num = &largeAmmo;
+        hud->wReadyAmmo.num = &largeAmmo;
     }
 
     // Update keycard multiple widgets.
@@ -918,11 +912,12 @@ void drawReadyAmmoWidget(int player, float textAlpha, float iconAlpha,
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
-    STlib_DrawNum(&hud->wReadyWeapon, textAlpha);
+    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], hud->wReadyAmmo.alpha * textAlpha);
+    STlib_DrawNum(&hud->wReadyAmmo);
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
-    *drawnWidth = tallNum[0].width * 3;
-    *drawnHeight = tallNum[0].height;
+    *drawnWidth = M_CharWidth('0', GF_STATUS) * 3;
+    *drawnHeight = M_CharHeight('0', GF_STATUS);
 }
 
 void drawOwnedAmmoWidget(int player, float textAlpha, float iconAlpha,
@@ -940,9 +935,10 @@ void drawOwnedAmmoWidget(int player, float textAlpha, float iconAlpha,
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], hud->wAmmo[0].alpha * textAlpha);
     for(i = 0; i < 4; ++i)
     {
-        STlib_DrawNumFont(&hud->wAmmo[i], textAlpha);
+        STlib_DrawNum(&hud->wAmmo[i]);
     }
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -965,9 +961,10 @@ void drawMaxAmmoWidget(int player, float textAlpha, float iconAlpha,
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], hud->wMaxAmmo[0].alpha * textAlpha);
     for(i = 0; i < 4; ++i)
     {
-        STlib_DrawNumFont(&hud->wMaxAmmo[i], textAlpha);
+        STlib_DrawNum(&hud->wMaxAmmo[i]);
     }
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -989,11 +986,12 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
-    STlib_DrawPercent(&hud->wHealth, textAlpha);
+    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], hud->wHealth.alpha * textAlpha);
+    STlib_DrawNum(&hud->wHealth);
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
-    *drawnWidth = tallNum[0].width * 3;
-    *drawnHeight = tallNum[0].height;
+    *drawnWidth = M_CharWidth('0', GF_STATUS) * 3;
+    *drawnHeight = M_CharHeight('0', GF_STATUS);
 }
 
 void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
@@ -1010,11 +1008,12 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
-    STlib_DrawPercent(&hud->wArmor, textAlpha);
+    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], hud->wArmor.alpha * textAlpha);
+    STlib_DrawNum(&hud->wArmor);
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
-    *drawnWidth = tallNum[0].width * 3;
-    *drawnHeight = tallNum[0].height;
+    *drawnWidth = M_CharWidth('0', GF_STATUS) * 3;
+    *drawnHeight = M_CharHeight('0', GF_STATUS);
 }
 
 void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
@@ -1031,11 +1030,12 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
-    STlib_DrawPercent(&hud->wArmor, textAlpha);
+    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], hud->wFrags.alpha * textAlpha);
+    STlib_DrawNum(&hud->wFrags);
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
-    *drawnWidth = tallNum[0].width * 3;
-    *drawnHeight = tallNum[0].height;
+    *drawnWidth = M_CharWidth('0', GF_STATUS) * 3;
+    *drawnHeight = M_CharHeight('0', GF_STATUS);
 }
 
 void drawSBarFaceWidget(int player, float textAlpha, float iconAlpha,
@@ -1748,13 +1748,6 @@ void ST_loadGraphics(void)
     int i, j, faceNum;
     char nameBuf[9];
 
-    // Load the numbers, tall and short.
-    for(i = 0; i < 10; ++i)
-    {
-        sprintf(nameBuf, "STTNUM%d", i);
-        R_PrecachePatch(nameBuf, &tallNum[i]);
-    }
-
     // Key cards:
     for(i = 0; i < NUM_KEY_TYPES; ++i)
     {
@@ -1762,12 +1755,10 @@ void ST_loadGraphics(void)
         R_PrecachePatch(nameBuf, &keys[i]);
     }
 
-    // Percent.
-    R_PrecachePatch("STTPRCNT", &tallPercent);
     // Arms background.
     R_PrecachePatch("STARMS", &armsBackground);
 
-    // Arms ownership widgets:
+    // Arms ownership icons:
     for(i = 0; i < 6; ++i)
     {
         // gray
@@ -1887,10 +1878,10 @@ void ST_createWidgets(int player)
         found = true;
     }
 
-    STlib_InitNum(&hud->wReadyWeapon, ORIGINX+ST_READYAMMOX, ORIGINY+ST_READYAMMOY, tallNum, ptr, ST_READYAMMOWIDTH, 1);
+    STlib_InitNum(&hud->wReadyAmmo, ORIGINX+ST_READYAMMOX, ORIGINY+ST_READYAMMOY, GF_STATUS, ptr, ST_READYAMMOWIDTH, false, 1);
 
-    // Health percentage.
-    STlib_InitPercent(&hud->wHealth, ORIGINX+ST_HEALTHX, ORIGINY+ST_HEALTHY, tallNum, &plr->health, &tallPercent, 1);
+    // Health.
+    STlib_InitNum(&hud->wHealth, ORIGINX+ST_HEALTHX, ORIGINY+ST_HEALTHY, GF_STATUS, &plr->health, ST_HEALTHWIDTH, true, 1);
 
     // Weapons owned.
     for(i = 0; i < 6; ++i)
@@ -1899,13 +1890,13 @@ void ST_createWidgets(int player)
     }
 
     // Frags sum.
-    STlib_InitNum(&hud->wFrags, ORIGINX+ST_FRAGSX, ORIGINY+ST_FRAGSY, tallNum, &hud->currentFragsCount, ST_FRAGSWIDTH, 1);
+    STlib_InitNum(&hud->wFrags, ORIGINX+ST_FRAGSX, ORIGINY+ST_FRAGSY, GF_STATUS, &hud->currentFragsCount, ST_FRAGSWIDTH, false, 1);
 
     // Faces.
     STlib_InitMultiIcon(&hud->wFaces, ORIGINX+ST_FACESX, ORIGINY+ST_FACESY, faces, 1);
 
-    // Armor percentage - should be colored later.
-    STlib_InitPercent(&hud->wArmor, ORIGINX+ST_ARMORX, ORIGINY+ST_ARMORY, tallNum, &plr->armorPoints, &tallPercent, 1);
+    // Armor.
+    STlib_InitNum(&hud->wArmor, ORIGINX+ST_ARMORX, ORIGINY+ST_ARMORY, GF_STATUS, &plr->armorPoints, ST_ARMORWIDTH, true, 1);
 
     // Keyboxes 0-2.
     STlib_InitMultiIcon(&hud->wKeyBoxes[0], ORIGINX+ST_KEY0X, ORIGINY+ST_KEY0Y, keys, 1);
@@ -1917,8 +1908,8 @@ void ST_createWidgets(int player)
     // Ammo count and max (all four kinds).
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
-        STlib_InitNumFont(&hud->wAmmo[i], ORIGINX+ammoPos[i].x, ORIGINY+ammoPos[i].y, GF_INDEX, &plr->ammo[i].owned, ST_AMMOWIDTH, 1);
-        STlib_InitNumFont(&hud->wMaxAmmo[i], ORIGINX+ammoMaxPos[i].x, ORIGINY+ammoMaxPos[i].y, GF_INDEX, &plr->ammo[i].max, ST_MAXAMMOWIDTH, 1);
+        STlib_InitNum(&hud->wAmmo[i], ORIGINX+ammoPos[i].x, ORIGINY+ammoPos[i].y, GF_INDEX, &plr->ammo[i].owned, ST_AMMOWIDTH, false, 1);
+        STlib_InitNum(&hud->wMaxAmmo[i], ORIGINX+ammoMaxPos[i].x, ORIGINY+ammoMaxPos[i].y, GF_INDEX, &plr->ammo[i].max, ST_MAXAMMOWIDTH, false, 1);
     }
 }
 

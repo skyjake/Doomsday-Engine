@@ -105,8 +105,6 @@ typedef struct fontpatch_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-patchinfo_t huMinus;
-
 int typeInTime = 0;
 
 #if __JDOOM__ || __JDOOM64__
@@ -183,6 +181,7 @@ static patchinfo_t dpSliderLeft;
 static patchinfo_t dpSliderMiddle;
 static patchinfo_t dpSliderRight;
 static patchinfo_t dpSliderHandle;
+static patchinfo_t huMinus;
 
 // CODE -------------------------------------------------------------------
 
@@ -313,6 +312,20 @@ void Hu_LoadData(void)
     };
 #endif
 #if __JDOOM__ || __JDOOM64__
+    static const fontpatch_t fontStatus[] = {
+        { 37, "STTPRCNT" }, // '%'
+        { 45, "STTMINUS" }, // '-'
+        { 48, "STTNUM0" }, // 0
+        { 49, "STTNUM1" }, // 1
+        { 50, "STTNUM2" }, // 2
+        { 51, "STTNUM3" }, // 3
+        { 52, "STTNUM4" }, // 4
+        { 53, "STTNUM5" }, // 5
+        { 54, "STTNUM6" }, // 6
+        { 55, "STTNUM7" }, // 7
+        { 56, "STTNUM8" }, // 8
+        { 57, "STTNUM9" } // 9
+    };
     static const fontpatch_t fontA[] = {
         { 32, "STCFN032" }, // ' '
         { 33, "STCFN033" }, // !
@@ -728,11 +741,7 @@ void Hu_LoadData(void)
         R_PrecachePatch(borderLumps[i], &borderPatches[i-1]);
 
     // Patch used for '-' (minus) in the status bar.
-#if __JDOOM__
-    R_PrecachePatch("STTMINUS", &huMinus);
-#elif __JDOOM64__
-    R_PrecachePatch("FONTB046", &huMinus);
-#else
+#if __JHERETIC__ || __JHEXEN__
     R_PrecachePatch("FONTB13", &huMinus);
 #endif
 
@@ -805,6 +814,9 @@ void Hu_LoadData(void)
     R_InitFont(GF_FONTB, fontB, sizeof(fontB) / sizeof(fontB[0]));
 #if __JDOOM__
     R_InitFont(GF_INDEX, fontIndex, sizeof(fontIndex) / sizeof(fontIndex[0]));
+#endif
+#if __JDOOM__ || __JDOOM64__
+    R_InitFont(GF_STATUS, fontStatus, sizeof(fontStatus) / sizeof(fontStatus[0]));
 #endif
 #if __JHERETIC__ || __JHEXEN__
     R_InitFont(GF_SMALLIN, fontSmallIn, sizeof(fontSmallIn) / sizeof(fontSmallIn[0]));

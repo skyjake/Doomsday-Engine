@@ -32,20 +32,6 @@
 #include "hu_stuff.h"
 
 /**
- * Number widget.
- */
-typedef struct {
-    int             x, y; // Upper right-hand corner of the number (right-justified).
-    int             maxDigits; // Max # of digits in number.
-    float           alpha;
-    int*            num; // Pointer to current value.
-    patchinfo_t*    p; // List of patches for 0-9.
-} st_number_t;
-
-void            STlib_InitNum(st_number_t* n, int x, int y, patchinfo_t* pl, int* num, int maxDigits, float alpha);
-void            STlib_DrawNum(st_number_t* n, float alpha);
-
-/**
  * Number widget (uses font drawing).
  */
 typedef struct {
@@ -54,22 +40,11 @@ typedef struct {
     float           alpha;
     int*            num; // Pointer to current value.
     gamefontid_t    font;
-} st_numberfont_t;
+    boolean         percent;
+} st_number_t;
 
-void            STlib_InitNumFont(st_numberfont_t* n, int x, int y, gamefontid_t font, int* num, int maxDigits, float alpha);
-void            STlib_DrawNumFont(st_numberfont_t* n, float alpha);
-
-/**
- * Percent widget
- * "child" of number widget, or, more precisely, contains a number widget.
- */
-typedef struct {
-    st_number_t     n; // Number.
-    patchinfo_t*    p; // Percent sign graphic.
-} st_percent_t;
-
-void            STlib_InitPercent(st_percent_t* p, int x, int y, patchinfo_t* pl, int* num, patchinfo_t* percent, float alpha);
-void            STlib_DrawPercent(st_percent_t* per, float alpha);
+void            STlib_InitNum(st_number_t* n, int x, int y, gamefontid_t font, int* num, int maxDigits, boolean percent, float alpha);
+void            STlib_DrawNum(st_number_t* n);
 
 /**
  * Icon widget.
