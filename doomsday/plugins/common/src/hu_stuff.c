@@ -2183,22 +2183,12 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
     }
 
     if(digits == 4)
-    {
-        DGL_Color4f(0, 0, 0, .4f);
-        M_DrawChar2('0' + val / 1000, xpos + 8 - 12, y + 2, GF_FONTB, 0);
-        DGL_Color4f(r, g, b, a);
-        M_DrawChar2('0' + val / 1000, xpos + 6 - 12, y, GF_FONTB, 0);
-    }
+        M_DrawShadowedChar2('0' + val / 1000, xpos + 6 - 12, y, GF_FONTB, 0, r, g, b, a);
 
     if(digits > 2)
     {
         if(realdigits > 2)
-        {
-            DGL_Color4f(0, 0, 0, .4f);
-            M_DrawChar2('0' + val / 100, xpos + 8, y+2, GF_FONTB, 0);
-            DGL_Color4f(r, g, b, a);
-            M_DrawChar2('0' + val / 100, xpos + 6, y, GF_FONTB, 0);
-        }
+            M_DrawShadowedChar2('0' + val / 100, xpos + 6, y, GF_FONTB, 0, r, g, b, a);
         xpos += 12;
     }
 
@@ -2206,34 +2196,16 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
     if(digits > 1)
     {
         if(val > 9)
-        {
-            DGL_Color4f(0, 0, 0, .4f);
-            M_DrawChar2('0' + val / 10, xpos + 8, y+2, GF_FONTB, 0);
-            DGL_Color4f(r, g, b, a);
-            M_DrawChar2('0' + val / 10, xpos + 6, y, GF_FONTB, 0);
-        }
+            M_DrawShadowedChar2('0' + val / 10, xpos + 6, y, GF_FONTB, 0, r, g, b, a);
         else if(digits == 2 || oldval > 99)
-        {
-            DGL_Color4f(0, 0, 0, .4f);
-            M_DrawChar('0', xpos+2, y+2, GF_FONTB);
-            DGL_Color4f(r, g, b, a);
-            M_DrawChar('0', xpos, y, GF_FONTB);
-        }
+            M_DrawShadowedChar('0', xpos, y, GF_FONTB);
         xpos += 12;
     }
 
     val = val % 10;
-    DGL_Color4f(0, 0, 0, .4f);
-    M_DrawChar2('0' + val, xpos + 8, y+2, GF_FONTB, 0);
-    DGL_Color4f(r, g, b, a);
-    M_DrawChar2('0' + val, xpos + 6, y, GF_FONTB, 0);
+    M_DrawShadowedChar2('0' + val, xpos + 6, y, GF_FONTB, 0, r, g, b, a);
     if(neg)
-    {
-        DGL_Color4f(0, 0, 0, .4f);
-        M_DrawChar2('-', xpos + 8 - 12 * (realdigits), y+2, GF_FONTB, 0);
-        DGL_Color4f(r, g, b, a);
-        M_DrawChar2('-', xpos + 6 - 12 * (realdigits), y, GF_FONTB, 0);
-    }
+        M_DrawShadowedChar2('-', xpos + 6 - 12 * (realdigits), y, GF_FONTB, 0, r, g, b, a);
 }
 #endif
 
