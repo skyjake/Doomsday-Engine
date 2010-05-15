@@ -2118,16 +2118,16 @@ void HU_DrawBNumber(int val, int x, int y, float red, float green, float blue,
     int xpos = x, oldval = MAX_OF(val, 0);
 
     if(val > 99)
-        M_DrawShadowedPatch3(patchForFontChar(GF_FONTB, '0' + val / 100), xpos + 6, y, 0, red, green, blue, alpha);
+        M_DrawShadowedChar2('0' + val / 100, xpos + 6, y, GF_FONTB, 0, red, green, blue, alpha);
 
     val = val % 100;
     xpos += 12;
     if(val > 9 || oldval > 99)
-        M_DrawShadowedPatch3(patchForFontChar(GF_FONTB, '0' + val / 10), xpos + 6, y, 0, red, green, blue, alpha);
+        M_DrawShadowedChar2('0' + val / 10, xpos + 6, y, GF_FONTB, 0, red, green, blue, alpha);
 
     val = val % 10;
     xpos += 12;
-    M_DrawShadowedPatch3(patchForFontChar(GF_FONTB, '0' + val), xpos + 6, y, 0, red, green, blue, alpha);
+    M_DrawShadowedChar2('0' + val, xpos + 6, y, GF_FONTB, 0, red, green, blue, alpha);
 }
 #endif
 
@@ -2233,19 +2233,19 @@ void DrBNumber(int val, int x, int y, float red, float green, float blue, float 
 
     if(val > 99)
     {
-        M_DrawShadowedPatch3(patchForFontChar(GF_FONTB, '0' + val / 100), xpos + 6 - M_CharWidth(GF_FONTB, '0' + val / 100) / 2, y, 0, red, green, blue, alpha);
+        M_DrawShadowedChar2('0' + val / 100, xpos + 6 - M_CharWidth(GF_FONTB, '0' + val / 100) / 2, y, GF_FONTB, 0, red, green, blue, alpha);
     }
 
     val = val % 100;
     xpos += 12;
     if(val > 9 || oldval > 99)
     {
-        M_DrawShadowedPatch3(patchForFontChar(GF_FONTB, '0' + val / 10), xpos + 6 - M_CharWidth(GF_FONTB, '0' + val / 10) / 2, y, 0, red, green, blue, alpha);
+        M_DrawShadowedChar2('0' + val / 10, xpos + 6 - M_CharWidth(GF_FONTB, '0' + val / 10) / 2, y, GF_FONTB, 0, red, green, blue, alpha);
     }
 
     val = val % 10;
     xpos += 12;
-    M_DrawShadowedPatch3(patchForFontChar(GF_FONTB, '0' + val), xpos + 6 - M_CharWidth(GF_FONTB, '0' + val) / 2, y, 0, red, green, blue, alpha);
+    M_DrawShadowedChar2('0' + val, xpos + 6 - M_CharWidth(GF_FONTB, '0' + val) / 2, y, GF_FONTB, 0, red, green, blue, alpha);
 }
 #endif
 
