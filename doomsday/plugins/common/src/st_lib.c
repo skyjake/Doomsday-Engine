@@ -121,6 +121,62 @@ void STlib_DrawNum(st_number_t* n, float alpha)
         WI_DrawPatch3(huMinus.id, x - 8, n->y, NULL, false, DPF_ALIGN_LEFT, 1, 1, 1, n->alpha * alpha);
 }
 
+void STlib_InitNumFont(st_numberfont_t* n, int x, int y, gamefontid_t font, int* num,
+                   int maxDigits, float alpha)
+{
+    n->x = x;
+    n->y = y;
+    n->maxDigits = maxDigits;
+    n->alpha = alpha;
+    n->num = num;
+    n->font = font;
+}
+
+void STlib_DrawNumFont(st_numberfont_t* n, float alpha)
+{
+    int                 numdigits = n->maxDigits;
+    int                 num = *n->num;
+    int                 w = M_CharWidth('0', n->font);
+    int                 x = n->x;
+    int                 neg;
+
+    neg = num < 0;
+
+    if(neg)
+    {
+        if(numdigits == 2 && num < -9)
+            num = -9;
+        else if(numdigits == 3 && num < -99)
+            num = -99;
+        num = -num;
+    }
+
+    x = n->x - numdigits * w;
+
+    // If non-number, do not draw it.
+    if(num == 1994)
+        return;
+
+    x = n->x;
+#if __JHERETIC__ || __JHEXEN__
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], n->alpha * alpha);
+#else
+    DGL_Color4f(1, 1, 1, n->alpha * alpha);
+#endif
+
+    // In the special case of 0, you draw 0.
+    if(!num)
+        M_DrawChar3('0', x - w, n->y, n->font, DPF_ALIGN_LEFT);
+
+    // Draw the number.
+    while(num && numdigits--)
+    {
+        x -= w;
+        M_DrawChar3('0' + (num % 10), x, n->y, n->font, DPF_ALIGN_LEFT);
+        num /= 10;
+    }
+}
+
 void STlib_InitPercent(st_percent_t* p, int x, int y, patchinfo_t* pl, int* num,
     patchinfo_t* percent, float alpha)
 {

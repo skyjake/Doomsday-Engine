@@ -143,8 +143,8 @@ typedef struct {
     // Widgets:
     st_multiicon_t  wManaA; // Current mana A icon.
     st_multiicon_t  wManaB; // Current mana B icon.
-    st_number_t     wManaACount; // Current mana A count.
-    st_number_t     wManaBCount; // Current mana B count.
+    st_numberfont_t wManaACount; // Current mana A count.
+    st_numberfont_t wManaBCount; // Current mana B count.
     st_multiicon_t  wManaAVial; // Current mana A vial.
     st_multiicon_t  wManaBVial; // Current mana B vial.
     st_number_t     wFrags; // In deathmatch only, summary of frags stats.
@@ -908,10 +908,10 @@ void ST_createWidgets(int player)
     STlib_InitNum(&hud->wArmor, ORIGINX+ST_ARMORX, ORIGINY+ST_ARMORY, dpINumbers, &hud->armorLevel, ST_ARMORWIDTH, 1);
 
     // ManaA count.
-    STlib_InitNum(&hud->wManaACount, ORIGINX+ST_MANAAX, ORIGINY+ST_MANAAY, dpSmallNumbers, &hud->manaACount, ST_MANAAWIDTH, 1);
+    STlib_InitNumFont(&hud->wManaACount, ORIGINX+ST_MANAAX, ORIGINY+ST_MANAAY, GF_SMALLIN, &hud->manaACount, ST_MANAAWIDTH, 1);
 
     // ManaB count.
-    STlib_InitNum(&hud->wManaBCount, ORIGINX+ST_MANABX, ORIGINY+ST_MANABY, dpSmallNumbers, &hud->manaBCount, ST_MANABWIDTH, 1);
+    STlib_InitNumFont(&hud->wManaBCount, ORIGINX+ST_MANABX, ORIGINY+ST_MANABY, GF_SMALLIN, &hud->manaBCount, ST_MANABWIDTH, 1);
 
     // Current mana A icon.
     STlib_InitMultiIcon(&hud->wManaA, ORIGINX+ST_MANAAICONX, ORIGINY+ST_MANAAICONY, dpManaAIcons, 1);
@@ -1449,14 +1449,14 @@ void drawSBarBlueManaWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    STlib_DrawNum(&hud->wManaACount, textAlpha);
+    STlib_DrawNumFont(&hud->wManaACount, textAlpha);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
     /// \fixme calculate dimensions properly!
-    *drawnWidth = dpSmallNumbers[0].width*3;
-    *drawnHeight = dpSmallNumbers[0].height;
+    *drawnWidth = M_CharWidth('0', GF_SMALLIN)*3;
+    *drawnHeight = M_CharHeight('0', GF_SMALLIN);
 }
 
 void drawSBarGreenManaWidget(int player, float textAlpha, float iconAlpha,
@@ -1476,14 +1476,14 @@ void drawSBarGreenManaWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    STlib_DrawNum(&hud->wManaBCount, textAlpha);
+    STlib_DrawNumFont(&hud->wManaBCount, textAlpha);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
     /// \fixme calculate dimensions properly!
-    *drawnWidth = dpSmallNumbers[0].width*3;
-    *drawnHeight = dpSmallNumbers[0].height;
+    *drawnWidth = M_CharWidth('0', GF_SMALLIN)*3;
+    *drawnHeight = M_CharHeight('0', GF_SMALLIN);
 }
 
 void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,

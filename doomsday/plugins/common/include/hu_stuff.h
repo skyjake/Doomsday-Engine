@@ -39,6 +39,9 @@ typedef enum {
     GF_FIRST = 0,
     GF_FONTA = GF_FIRST,
     GF_FONTB,
+#if __JHERETIC__ || __JHEXEN__
+    GF_SMALLIN,
+#endif
     NUM_GAME_FONTS
 } gamefontid_t;
 
@@ -50,9 +53,6 @@ typedef struct gamefont_s {
 } gamefont_t;
 
 extern patchinfo_t huMinus;
-#if __JHERETIC__ || __JHEXEN__
-extern patchinfo_t dpSmallNumbers[10];
-#endif
 
 // Name graphics of each map.
 extern patchinfo_t* mapNamePatches;
@@ -161,6 +161,7 @@ int             M_CharHeight(unsigned char ch, gamefontid_t font);
 void            Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha);
 #endif
 #if __JHERETIC__
+void            M_DrawSmallNumber(int val, int x, int y);
 void            IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b, float a);
 #endif
 

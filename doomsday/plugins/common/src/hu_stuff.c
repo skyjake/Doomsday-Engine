@@ -105,12 +105,6 @@ typedef struct fontpatch_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-static gamefont_t gFonts[NUM_GAME_FONTS];
-static gamefontid_t currentGFontIndex;
-
-#if __JHERETIC__ || __JHEXEN__
-patchinfo_t dpSmallNumbers[10];
-#endif
 patchinfo_t huMinus;
 
 int typeInTime = 0;
@@ -177,6 +171,9 @@ const char shiftXForm[] = {
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static gamefont_t gFonts[NUM_GAME_FONTS];
+static gamefontid_t currentGFontIndex;
 
 static hudstate_t hudStates[MAXPLAYERS];
 static fogeffectdata_t fogEffectData;
@@ -669,8 +666,22 @@ void Hu_LoadData(void)
         { 121, "FONTB57" }, // y
         { 122, "FONTB58" } // z
     };
+    static const fontpatch_t fontSmallIn[] = {
+        { 48, "SMALLIN0" }, // 0
+        { 49, "SMALLIN1" }, // 1
+        { 50, "SMALLIN2" }, // 2
+        { 51, "SMALLIN3" }, // 3
+        { 52, "SMALLIN4" }, // 4
+        { 53, "SMALLIN5" }, // 5
+        { 54, "SMALLIN6" }, // 6
+        { 55, "SMALLIN7" }, // 7
+        { 56, "SMALLIN8" }, // 8
+        { 57, "SMALLIN9" }, // 9
+    };
 #endif
+#if __JDOOM__ || __JDOOM64__
     char name[9];
+#endif
     int i;
 
     // Intialize the background fog effect.
@@ -778,13 +789,8 @@ void Hu_LoadData(void)
 
     R_InitFont(GF_FONTA, fontA, sizeof(fontA) / sizeof(fontA[0]));
     R_InitFont(GF_FONTB, fontB, sizeof(fontB) / sizeof(fontB[0]));
-
 #if __JHERETIC__ || __JHEXEN__
-    for(i = 0; i < 10; ++i)
-    {
-        sprintf(name, "SMALLIN%d", i);
-        R_PrecachePatch(name, &dpSmallNumbers[i]);
-    }
+    R_InitFont(GF_SMALLIN, fontSmallIn, sizeof(fontSmallIn) / sizeof(fontSmallIn[0]));
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
@@ -2104,6 +2110,16 @@ void M_DrawShadowedChar(unsigned char ch, int x, int y)
 }
 
 #if __JHERETIC__
+void M_DrawSmallNumber(int val, int x, int y)
+{
+    if(val > 9)           
+        M_DrawChar2('0' + ((val / 10) % 10), x+3, y+13, GF_SMALLIN);
+    val = val % 10;
+    M_DrawChar2('0' + (val % 10), x+7, y+13, GF_SMALLIN);
+}
+#endif
+
+#if __JHERETIC__
 void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b, float a)
 {
     int xpos, oldval, realdigits;
@@ -2315,7 +2331,7 @@ void M_DrawText(const char* string, int x, int y)
 #if __JHERETIC__ || __JHEXEN__
 void Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha)
 {
-    int w = dpSmallNumbers[0].width;
+    int w = M_CharWidth('0', GF_SMALLIN);
     boolean drawMinus = false;
 
     if(val < 0)
@@ -2328,21 +2344,23 @@ void Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha)
         drawMinus = true;
     }
 
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], alpha);
+
     // In the special case of 0, you draw 0.
     if(val == 0)
-        WI_DrawPatch3(dpSmallNumbers[0].id, x - w, y, NULL, false, DPF_ALIGN_LEFT, 1, 1, 1, alpha);
+        M_DrawPatch2(patchForFontChar(GF_SMALLIN, '0'), x - w, y, DPF_ALIGN_LEFT);
 
     // Draw the number.
     while(val && numDigits--)
     {
         x -= w;
-        WI_DrawPatch3(dpSmallNumbers[val % 10].id, x, y, NULL, false, DPF_ALIGN_LEFT, 1, 1, 1, alpha);
+        M_DrawPatch2(patchForFontChar(GF_SMALLIN, '0' + (val % 10)), x, y, DPF_ALIGN_LEFT);
         val /= 10;
     }
 
     // Draw a minus sign if necessary.
     if(drawMinus)
-        WI_DrawPatch3(huMinus.id, x - 8, y, NULL, false, DPF_ALIGN_LEFT, 1, 1, 1, alpha);
+        M_DrawPatch2(huMinus.id, x - 8, y, DPF_ALIGN_LEFT);
 }
 #endif
 

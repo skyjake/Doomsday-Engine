@@ -94,8 +94,9 @@ char gameModeString[17];
 boolean monsterInfight;
 
 // Default font colours.
-const float defFontRGB[] = { .425f, 0.986f, 0.378f};
-const float defFontRGB2[] = { 1.0f, 1.0f, 1.0f};
+const float defFontRGB[] = { .425f, .986f, .378f };
+const float defFontRGB2[] = { 1.0f, 1.0f, 1.0f };
+const float defFontRGB3[] = { 1, .65f, .275f };
 
 char *borderLumps[] = {
     "FLAT513", // background

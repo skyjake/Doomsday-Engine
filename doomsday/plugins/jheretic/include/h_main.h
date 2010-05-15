@@ -54,6 +54,7 @@ extern char gameModeString[];
 extern boolean monsterInfight;
 extern const float defFontRGB[];
 extern const float defFontRGB2[];
+extern const float defFontRGB3[];
 extern char *borderLumps[];
 extern char *wadFiles[];
 extern char *baseDefault;

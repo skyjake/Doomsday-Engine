@@ -47,6 +47,7 @@ extern char *borderLumps[];
 // Default font colours.
 extern const float defFontRGB[];
 extern const float defFontRGB2[];
+extern const float defFontRGB3[];
 
 void            G_DetectIWADs(void);
 void            G_PreInit(void);

@@ -42,9 +42,22 @@ typedef struct {
     patchinfo_t*    p; // List of patches for 0-9.
 } st_number_t;
 
-void            STlib_InitNum(st_number_t* n, int x, int y, patchinfo_t* pl,
-                              int* num, int maxDigits, float alpha);
+void            STlib_InitNum(st_number_t* n, int x, int y, patchinfo_t* pl, int* num, int maxDigits, float alpha);
 void            STlib_DrawNum(st_number_t* n, float alpha);
+
+/**
+ * Number widget (uses font drawing).
+ */
+typedef struct {
+    int             x, y; // Upper right-hand corner of the number (right-justified).
+    int             maxDigits; // Max # of digits in number.
+    float           alpha;
+    int*            num; // Pointer to current value.
+    gamefontid_t    font;
+} st_numberfont_t;
+
+void            STlib_InitNumFont(st_numberfont_t* n, int x, int y, gamefontid_t font, int* num, int maxDigits, float alpha);
+void            STlib_DrawNumFont(st_numberfont_t* n, float alpha);
 
 /**
  * Percent widget
@@ -52,12 +65,10 @@ void            STlib_DrawNum(st_number_t* n, float alpha);
  */
 typedef struct {
     st_number_t     n; // Number.
-    patchinfo_t*       p; // Percent sign graphic.
+    patchinfo_t*    p; // Percent sign graphic.
 } st_percent_t;
 
-void            STlib_InitPercent(st_percent_t* p, int x, int y,
-                                  patchinfo_t* pl, int* num,
-                                  patchinfo_t* percent, float alpha);
+void            STlib_InitPercent(st_percent_t* p, int x, int y, patchinfo_t* pl, int* num, patchinfo_t* percent, float alpha);
 void            STlib_DrawPercent(st_percent_t* per, float alpha);
 
 /**
@@ -66,11 +77,10 @@ void            STlib_DrawPercent(st_percent_t* per, float alpha);
 typedef struct {
     int             x, y; // Center-justified location of icon.
     float           alpha;
-    patchinfo_t*       p; // Icon.
+    patchinfo_t*    p; // Icon.
 } st_icon_t;
 
-void            STlib_InitIcon(st_icon_t* b, int x, int y,
-                               patchinfo_t* i, float alpha);
+void            STlib_InitIcon(st_icon_t* b, int x, int y, patchinfo_t* i, float alpha);
 void            STlib_DrawIcon(st_icon_t* bi, float alpha);
 
 /**
@@ -79,11 +89,10 @@ void            STlib_DrawIcon(st_icon_t* bi, float alpha);
 typedef struct {
     int             x, y; // Center-justified location of icons.
     float           alpha;
-    patchinfo_t*       p; // List of icons.
+    patchinfo_t*    p; // List of icons.
 } st_multiicon_t;
 
-void            STlib_InitMultiIcon(st_multiicon_t* mi, int x, int y,
-                                    patchinfo_t* il, float alpha);
+void            STlib_InitMultiIcon(st_multiicon_t* mi, int x, int y, patchinfo_t* il, float alpha);
 void            STlib_DrawMultiIcon(st_multiicon_t* mi, int icon, float alpha);
 
 #endif
