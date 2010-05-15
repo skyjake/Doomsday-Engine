@@ -195,6 +195,16 @@ static __inline patchid_t patchForFontChar(gamefontid_t font, unsigned char ch)
     return gFonts[font].chars[ch].pInfo.id;
 }
 
+static __inline byte translateTextToPatchDrawFlags(byte in)
+{
+    byte out = 0;
+    if(in & DTF_ALIGN_LEFT)
+        out |= DPF_ALIGN_LEFT;
+    if(in & DTF_ALIGN_RIGHT)
+        out |= DPF_ALIGN_RIGHT;
+    return out;
+}
+
 void R_SetFontCharacter(gamefontid_t fontid, byte ch, const char* lumpname)
 {
     gamefont_t* font;
@@ -870,18 +880,9 @@ void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
     DGL_Translatef(-x, -y, 0);
 
     ch = str;
-    for(;;)
+    while((c = *ch++))
     {
-        patchid_t patch;
-
-        c = *ch++;
-        if(!c)
-            break;
-
-        if((patch = patchForFontChar(font, c)) == -1)
-            continue;
-
-        M_DrawPatch2(patch, x, y, DPF_ALIGN_LEFT);
+        M_DrawChar(c, x, y, font);
         x += M_CharWidth(c, font);
     }
 
@@ -2053,9 +2054,14 @@ void M_LetterFlash(int x, int y, int w, int h, int bright, float r, float g,
     DGL_BlendMode(BM_NORMAL);
 }
 
+void M_DrawChar2(unsigned char ch, int x, int y, gamefontid_t font, byte flags)
+{
+    M_DrawPatch2(patchForFontChar(font, ch), x, y, translateTextToPatchDrawFlags(flags));
+}
+
 void M_DrawChar(unsigned char ch, int x, int y, gamefontid_t font)
 {
-    M_DrawPatch2(patchForFontChar(font, ch), x, y, DPF_ALIGN_LEFT);
+    M_DrawChar2(ch, x, y, font, DTF_ALIGN_LEFT);
 }
 
 void M_DrawShadowedChar2(unsigned char ch, int x, int y, gamefontid_t font,
@@ -2096,13 +2102,13 @@ void HUlib_drawTextLine2(const char* string, int x, int y, size_t len,
         int w = M_CharWidth(c, font);
         if(x + w > SCREENWIDTH)
             break;
-        M_DrawPatch2(patchForFontChar(c, font), x, y, DPF_ALIGN_LEFT);
+        M_DrawChar(c, x, y, font);
         x += w;
     }
 
     // Draw the cursor if requested.
     if(drawCursor && x + M_CharWidth('_', font) <= SCREENWIDTH)
-        M_DrawPatch2(patchForFontChar('_', font), x, y, DPF_ALIGN_LEFT);
+        M_DrawChar('_', x, y, font);
 }
 
 #if __JHERETIC__
@@ -2179,9 +2185,9 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
     if(digits == 4)
     {
         DGL_Color4f(0, 0, 0, .4f);
-        M_DrawPatch2(patchForFontChar(GF_FONTB, '0' + val / 1000), xpos + 8 - M_CharWidth(GF_FONTB, '0' + val / 1000) / 2 - 12, y + 2, DPF_ALIGN_LEFT);
+        M_DrawChar2('0' + val / 1000, xpos + 8 - M_CharWidth(GF_FONTB, '0' + val / 1000) / 2 - 12, y + 2, GF_FONTB, DTF_ALIGN_LEFT);
         DGL_Color4f(r, g, b, a);
-        M_DrawPatch2(patchForFontChar(GF_FONTB, '0' + val / 1000), xpos + 6 - M_CharWidth(GF_FONTB, '0' + val / 1000) / 2 - 12, y, DPF_ALIGN_LEFT);
+        M_DrawChar2('0' + val / 1000, xpos + 6 - M_CharWidth(GF_FONTB, '0' + val / 1000) / 2 - 12, y, GF_FONTB, DTF_ALIGN_LEFT);
     }
 
     if(digits > 2)
@@ -2189,9 +2195,9 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
         if(realdigits > 2)
         {
             DGL_Color4f(0, 0, 0, .4f);
-            M_DrawPatch2(patchForFontChar(GF_FONTB, '0' + val / 100), xpos + 8 - M_CharWidth(GF_FONTB, '0' + val / 100) / 2, y+2, DPF_ALIGN_LEFT);
+            M_DrawChar2('0' + val / 100, xpos + 8 - M_CharWidth(GF_FONTB, '0' + val / 100) / 2, y+2, GF_FONTB, DTF_ALIGN_LEFT);
             DGL_Color4f(r, g, b, a);
-            M_DrawPatch2(patchForFontChar(GF_FONTB, '0' + val / 100), xpos + 6 - M_CharWidth(GF_FONTB, '0' + val / 100) / 2, y, DPF_ALIGN_LEFT);
+            M_DrawChar2('0' + val / 100, xpos + 6 - M_CharWidth(GF_FONTB, '0' + val / 100) / 2, y, GF_FONTB, DTF_ALIGN_LEFT);
         }
         xpos += 12;
     }
@@ -2202,31 +2208,31 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
         if(val > 9)
         {
             DGL_Color4f(0, 0, 0, .4f);
-            M_DrawPatch2(patchForFontChar(GF_FONTB, '0' + val / 10), xpos + 8 - M_CharWidth(GF_FONTB, '0' + val / 10) / 2, y+2, DPF_ALIGN_LEFT);
+            M_DrawChar2('0' + val / 10, xpos + 8 - M_CharWidth(GF_FONTB, '0' + val / 10) / 2, y+2, GF_FONTB, DTF_ALIGN_LEFT);
             DGL_Color4f(r, g, b, a);
-            M_DrawPatch2(patchForFontChar(GF_FONTB, '0' + val / 10), xpos + 6 - M_CharWidth(GF_FONTB, '0' + val / 10) / 2, y, DPF_ALIGN_LEFT);
+            M_DrawChar2('0' + val / 10, xpos + 6 - M_CharWidth(GF_FONTB, '0' + val / 10) / 2, y, GF_FONTB, DTF_ALIGN_LEFT);
         }
         else if(digits == 2 || oldval > 99)
         {
             DGL_Color4f(0, 0, 0, .4f);
-            M_DrawPatch2(patchForFontChar(GF_FONTB, '0'), xpos+2, y+2, DPF_ALIGN_LEFT);
+            M_DrawChar('0', xpos+2, y+2, GF_FONTB);
             DGL_Color4f(r, g, b, a);
-            M_DrawPatch2(patchForFontChar(GF_FONTB, '0'), xpos, y, DPF_ALIGN_LEFT);
+            M_DrawChar('0', xpos, y, GF_FONTB);
         }
         xpos += 12;
     }
 
     val = val % 10;
     DGL_Color4f(0, 0, 0, .4f);
-    M_DrawPatch2(patchForFontChar(GF_FONTB, '0' + val), xpos + 8 - M_CharWidth(GF_FONTB, '0' + val) / 2, y+2, DPF_ALIGN_LEFT);
+    M_DrawChar2('0' + val, xpos + 8 - M_CharWidth(GF_FONTB, '0' + val) / 2, y+2, GF_FONTB, DTF_ALIGN_LEFT);
     DGL_Color4f(r, g, b, a);
-    M_DrawPatch2(patchForFontChar(GF_FONTB, '0' + val), xpos + 6 - M_CharWidth(GF_FONTB, '0' + val) / 2, y, DPF_ALIGN_LEFT);
+    M_DrawChar2('0' + val, xpos + 6 - M_CharWidth(GF_FONTB, '0' + val) / 2, y, GF_FONTB, DTF_ALIGN_LEFT);
     if(neg)
     {
         DGL_Color4f(0, 0, 0, .4f);
-        M_DrawPatch2(patchForFontChar(GF_FONTB, '-'), xpos + 8 - M_CharWidth(GF_FONTB, '-') / 2 - 12 * (realdigits), y+2, DPF_ALIGN_LEFT);
+        M_DrawChar2('-', xpos + 8 - M_CharWidth(GF_FONTB, '-') / 2 - 12 * (realdigits), y+2, GF_FONTB, DTF_ALIGN_LEFT);
         DGL_Color4f(r, g, b, a);
-        M_DrawPatch2(patchForFontChar(GF_FONTB, '-'), xpos + 6 - M_CharWidth(GF_FONTB, '-') / 2 - 12 * (realdigits), y, DPF_ALIGN_LEFT);
+        M_DrawChar2('-', xpos + 6 - M_CharWidth(GF_FONTB, '-') / 2 - 12 * (realdigits), y, GF_FONTB, DTF_ALIGN_LEFT);
     }
 }
 #endif
