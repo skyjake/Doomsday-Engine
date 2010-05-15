@@ -160,11 +160,7 @@ void            HUlib_drawTextLine2(const char* string, int x, int y, size_t len
 void            Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha);
 #endif
 #if __JHERETIC__
-void            HU_DrawBNumber(int val, int x, int y, float red, float green, float blue, float alpha);
 void            IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b, float a);
-#endif
-#if __JHEXEN__
-void            DrBNumber(int val, int x, int y, float red, float green, float blue, float alpha);
 #endif
 
 /**

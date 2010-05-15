@@ -2112,26 +2112,6 @@ void HUlib_drawTextLine2(const char* string, int x, int y, size_t len,
 }
 
 #if __JHERETIC__
-void HU_DrawBNumber(int val, int x, int y, float red, float green, float blue,
-    float alpha)
-{
-    int xpos = x, oldval = MAX_OF(val, 0);
-
-    if(val > 99)
-        M_DrawShadowedChar2('0' + val / 100, xpos + 6, y, GF_FONTB, 0, red, green, blue, alpha);
-
-    val = val % 100;
-    xpos += 12;
-    if(val > 9 || oldval > 99)
-        M_DrawShadowedChar2('0' + val / 10, xpos + 6, y, GF_FONTB, 0, red, green, blue, alpha);
-
-    val = val % 10;
-    xpos += 12;
-    M_DrawShadowedChar2('0' + val, xpos + 6, y, GF_FONTB, 0, red, green, blue, alpha);
-}
-#endif
-
-#if __JHERETIC__
 void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b, float a)
 {
     int xpos, oldval, realdigits;
@@ -2206,46 +2186,6 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
     M_DrawShadowedChar2('0' + val, xpos + 6, y, GF_FONTB, 0, r, g, b, a);
     if(neg)
         M_DrawShadowedChar2('-', xpos + 6 - 12 * (realdigits), y, GF_FONTB, 0, r, g, b, a);
-}
-#endif
-
-#if __JHEXEN__
-/**
- * Draws a three digit number using FontB
- */
-void DrBNumber(int val, int x, int y, float red, float green, float blue, float alpha)
-{
-    int xpos;
-    int oldval;
-
-    // Limit to three digits.
-    if(val > 999)
-        val = 999;
-    if(val < -999)
-        val = -999;
-
-    oldval = val;
-    xpos = x;
-    if(val < 0)
-    {
-        val = 0;
-    }
-
-    if(val > 99)
-    {
-        M_DrawShadowedChar2('0' + val / 100, xpos + 6 - M_CharWidth(GF_FONTB, '0' + val / 100) / 2, y, GF_FONTB, 0, red, green, blue, alpha);
-    }
-
-    val = val % 100;
-    xpos += 12;
-    if(val > 9 || oldval > 99)
-    {
-        M_DrawShadowedChar2('0' + val / 10, xpos + 6 - M_CharWidth(GF_FONTB, '0' + val / 10) / 2, y, GF_FONTB, 0, red, green, blue, alpha);
-    }
-
-    val = val % 10;
-    xpos += 12;
-    M_DrawShadowedChar2('0' + val, xpos + 6 - M_CharWidth(GF_FONTB, '0' + val) / 2, y, GF_FONTB, 0, red, green, blue, alpha);
 }
 #endif
 
