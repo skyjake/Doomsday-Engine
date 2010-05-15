@@ -882,7 +882,7 @@ void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
     ch = str;
     while((c = *ch++))
     {
-        M_DrawChar(c, x, y, font);
+        M_DrawChar2(c, x, y, font);
         x += M_CharWidth(c, font);
     }
 
@@ -1772,6 +1772,18 @@ void WI_DrawParamText(const char* inString, int x, int y, gamefontid_t defFont,
 #undef SMALLBUFF_SIZE
 }
 
+int M_CharWidth(unsigned char ch, gamefontid_t font)
+{
+    assert(font >= GF_FIRST && font < NUM_GAME_FONTS);
+    return gFonts[font].chars[ch].pInfo.width;
+}
+
+int M_CharHeight(unsigned char ch, gamefontid_t font)
+{
+    assert(font >= GF_FIRST && font < NUM_GAME_FONTS);
+    return gFonts[font].chars[ch].pInfo.height;
+}
+
 /**
  * Find string width from huFont chars
  * Skips parameter blocks eg "{param}Text" = 4 chars
@@ -2054,41 +2066,39 @@ void M_LetterFlash(int x, int y, int w, int h, int bright, float r, float g,
     DGL_BlendMode(BM_NORMAL);
 }
 
-void M_DrawChar2(unsigned char ch, int x, int y, gamefontid_t font, byte flags)
+void M_DrawChar3(unsigned char ch, int x, int y, gamefontid_t font, byte flags)
 {
     M_DrawPatch2(patchForFontChar(font, ch), x, y, translateTextToPatchDrawFlags(flags));
 }
 
-void M_DrawChar(unsigned char ch, int x, int y, gamefontid_t font)
+void M_DrawChar2(unsigned char ch, int x, int y, gamefontid_t font)
 {
-    M_DrawChar2(ch, x, y, font, DTF_ALIGN_LEFT);
+    M_DrawChar3(ch, x, y, font, DTF_ALIGN_LEFT);
 }
 
-void M_DrawShadowedChar2(unsigned char ch, int x, int y, gamefontid_t font, byte flags,
+void M_DrawChar(unsigned char ch, int x, int y)
+{
+    M_DrawChar2(ch, x, y, GF_FONTA);
+}
+
+void M_DrawShadowedChar3(unsigned char ch, int x, int y, gamefontid_t font, byte flags,
     float r, float g, float b, float a)
 {
     DGL_Color4f(0, 0, 0, a * .4f);
-    M_DrawChar2(ch, x+2, y+2, font, flags);
+    M_DrawChar3(ch, x+2, y+2, font, flags);
 
     DGL_Color4f(r, g, b, a);
-    M_DrawChar2(ch, x, y, font, flags);
+    M_DrawChar3(ch, x, y, font, flags);
 }
 
-void M_DrawShadowedChar(unsigned char ch, int x, int y, gamefontid_t font)
+void M_DrawShadowedChar2(unsigned char ch, int x, int y, gamefontid_t font)
 {
-    M_DrawShadowedChar2(ch, x, y, font, DTF_ALIGN_LEFT, 1, 1, 1, 1);
+    M_DrawShadowedChar3(ch, x, y, font, DTF_ALIGN_LEFT, 1, 1, 1, 1);
 }
 
-int M_CharWidth(unsigned char ch, gamefontid_t font)
+void M_DrawShadowedChar(unsigned char ch, int x, int y)
 {
-    assert(font >= GF_FIRST && font < NUM_GAME_FONTS);
-    return gFonts[font].chars[ch].pInfo.width;
-}
-
-int M_CharHeight(unsigned char ch, gamefontid_t font)
-{
-    assert(font >= GF_FIRST && font < NUM_GAME_FONTS);
-    return gFonts[font].chars[ch].pInfo.height;
+    M_DrawShadowedChar2(ch, x, y, GF_FONTA);
 }
 
 void HUlib_drawTextLine2(const char* string, int x, int y, size_t len,
@@ -2102,13 +2112,13 @@ void HUlib_drawTextLine2(const char* string, int x, int y, size_t len,
         int w = M_CharWidth(c, font);
         if(x + w > SCREENWIDTH)
             break;
-        M_DrawChar(c, x, y, font);
+        M_DrawChar2(c, x, y, font);
         x += w;
     }
 
     // Draw the cursor if requested.
     if(drawCursor && x + M_CharWidth('_', font) <= SCREENWIDTH)
-        M_DrawChar('_', x, y, font);
+        M_DrawChar2('_', x, y, font);
 }
 
 #if __JHERETIC__
@@ -2163,12 +2173,12 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
     }
 
     if(digits == 4)
-        M_DrawShadowedChar2('0' + val / 1000, xpos + 6 - 12, y, GF_FONTB, 0, r, g, b, a);
+        M_DrawShadowedChar3('0' + val / 1000, xpos + 6 - 12, y, GF_FONTB, 0, r, g, b, a);
 
     if(digits > 2)
     {
         if(realdigits > 2)
-            M_DrawShadowedChar2('0' + val / 100, xpos + 6, y, GF_FONTB, 0, r, g, b, a);
+            M_DrawShadowedChar3('0' + val / 100, xpos + 6, y, GF_FONTB, 0, r, g, b, a);
         xpos += 12;
     }
 
@@ -2176,16 +2186,16 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
     if(digits > 1)
     {
         if(val > 9)
-            M_DrawShadowedChar2('0' + val / 10, xpos + 6, y, GF_FONTB, 0, r, g, b, a);
+            M_DrawShadowedChar3('0' + val / 10, xpos + 6, y, GF_FONTB, 0, r, g, b, a);
         else if(digits == 2 || oldval > 99)
-            M_DrawShadowedChar('0', xpos, y, GF_FONTB);
+            M_DrawShadowedChar2('0', xpos, y, GF_FONTB);
         xpos += 12;
     }
 
     val = val % 10;
-    M_DrawShadowedChar2('0' + val, xpos + 6, y, GF_FONTB, 0, r, g, b, a);
+    M_DrawShadowedChar3('0' + val, xpos + 6, y, GF_FONTB, 0, r, g, b, a);
     if(neg)
-        M_DrawShadowedChar2('-', xpos + 6 - 12 * (realdigits), y, GF_FONTB, 0, r, g, b, a);
+        M_DrawShadowedChar3('-', xpos + 6 - 12 * (realdigits), y, GF_FONTB, 0, r, g, b, a);
 }
 #endif
 
@@ -2281,7 +2291,7 @@ void M_DrawText5(const char* string, int x, int y, gamefontid_t font, byte flags
                 if(pass)
                 {
                     // The character itself.
-                    M_DrawChar(c, cx, cy + yoff, font);
+                    M_DrawChar2(c, cx, cy + yoff, font);
 
                     if(flash > 0)
                     {   // Do something flashy.

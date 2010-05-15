@@ -142,11 +142,13 @@ int             M_TextHeight(const char* string, gamefontid_t font);
 /**
  * Single character:
  */
-void            M_DrawChar(unsigned char ch, int x, int y, gamefontid_t font);
-void            M_DrawChar2(unsigned char ch, int x, int y, gamefontid_t font, byte flags);
+void            M_DrawChar(unsigned char ch, int x, int y);
+void            M_DrawChar2(unsigned char ch, int x, int y, gamefontid_t font);
+void            M_DrawChar3(unsigned char ch, int x, int y, gamefontid_t font, byte flags);
 
-void            M_DrawShadowedChar(unsigned char ch, int x, int y, gamefontid_t font);
-void            M_DrawShadowedChar2(unsigned char ch, int x, int y, gamefontid_t font, byte flags, float r, float g, float b, float a);
+void            M_DrawShadowedChar(unsigned char ch, int x, int y);
+void            M_DrawShadowedChar2(unsigned char ch, int x, int y, gamefontid_t font);
+void            M_DrawShadowedChar3(unsigned char ch, int x, int y, gamefontid_t font, byte flags, float r, float g, float b, float a);
 
 // Utility routines:
 int             M_CharWidth(unsigned char ch, gamefontid_t font);
