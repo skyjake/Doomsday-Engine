@@ -158,21 +158,21 @@ void STlib_DrawNumFont(st_numberfont_t* n, float alpha)
         return;
 
     x = n->x;
-#if __JHERETIC__ || __JHEXEN__
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], n->alpha * alpha);
-#else
+#if __JDOOM64__
     DGL_Color4f(1, 1, 1, n->alpha * alpha);
+#else
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], n->alpha * alpha);
 #endif
 
     // In the special case of 0, you draw 0.
     if(!num)
-        M_DrawChar3('0', x - w, n->y, n->font, DPF_ALIGN_LEFT);
+        M_DrawChar3('0', x - w, n->y, n->font, DTF_ALIGN_LEFT);
 
     // Draw the number.
     while(num && numdigits--)
     {
         x -= w;
-        M_DrawChar3('0' + (num % 10), x, n->y, n->font, DPF_ALIGN_LEFT);
+        M_DrawChar3('0' + (num % 10), x, n->y, n->font, DTF_ALIGN_LEFT);
         num /= 10;
     }
 }

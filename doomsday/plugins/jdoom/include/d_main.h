@@ -47,6 +47,7 @@ extern int gameModeBits;
 extern gamemission_t gameMission;
 extern char gameModeString[];
 extern boolean monsterInfight;
+extern const float defFontRGB3[];
 extern char *borderLumps[];
 
 void            G_PostInit(void);

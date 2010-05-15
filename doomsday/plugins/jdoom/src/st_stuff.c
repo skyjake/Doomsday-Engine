@@ -207,8 +207,8 @@ typedef struct {
     st_multiicon_t  wFaces; // Face status widget.
     st_multiicon_t  wKeyBoxes[3]; // Keycard widgets.
     st_percent_t    wArmor; // Armor widget.
-    st_number_t     wAmmo[NUM_AMMO_TYPES]; // Ammo widgets.
-    st_number_t     wMaxAmmo[NUM_AMMO_TYPES]; // Max ammo widgets.
+    st_numberfont_t wAmmo[NUM_AMMO_TYPES]; // Ammo widgets.
+    st_numberfont_t wMaxAmmo[NUM_AMMO_TYPES]; // Max ammo widgets.
 } hudstate_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -235,9 +235,6 @@ static patchinfo_t tallNum[10];
 
 // Tall % sign.
 static patchinfo_t tallPercent;
-
-// 0-9, short, yellow (,different!) numbers.
-static patchinfo_t shortNum[10];
 
 // 3 key-cards, 3 skulls.
 static patchinfo_t keys[NUM_KEY_TYPES];
@@ -945,12 +942,12 @@ void drawOwnedAmmoWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
     for(i = 0; i < 4; ++i)
     {
-        STlib_DrawNum(&hud->wAmmo[i], textAlpha);
+        STlib_DrawNumFont(&hud->wAmmo[i], textAlpha);
     }
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
-    *drawnWidth = shortNum[0].width;
-    *drawnHeight = (shortNum[0].height + 10) * 4;
+    *drawnWidth = M_CharWidth('0', GF_INDEX);
+    *drawnHeight = (M_CharHeight('0', GF_INDEX) + 10) * 4;
 }
 
 void drawMaxAmmoWidget(int player, float textAlpha, float iconAlpha,
@@ -970,12 +967,12 @@ void drawMaxAmmoWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
     for(i = 0; i < 4; ++i)
     {
-        STlib_DrawNum(&hud->wMaxAmmo[i], textAlpha);
+        STlib_DrawNumFont(&hud->wMaxAmmo[i], textAlpha);
     }
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
-    *drawnWidth = shortNum[0].width;
-    *drawnHeight = (shortNum[0].height + 10) * 4;
+    *drawnWidth = M_CharWidth('0', GF_INDEX);
+    *drawnHeight = (M_CharHeight('0', GF_INDEX) + 10) * 4;
 }
 
 void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
@@ -1756,9 +1753,6 @@ void ST_loadGraphics(void)
     {
         sprintf(nameBuf, "STTNUM%d", i);
         R_PrecachePatch(nameBuf, &tallNum[i]);
-
-        sprintf(nameBuf, "STYSNUM%d", i);
-        R_PrecachePatch(nameBuf, &shortNum[i]);
     }
 
     // Key cards:
@@ -1776,13 +1770,13 @@ void ST_loadGraphics(void)
     // Arms ownership widgets:
     for(i = 0; i < 6; ++i)
     {
+        // gray
         sprintf(nameBuf, "STGNUM%d", i + 2);
-
-        // gray #
         R_PrecachePatch(nameBuf, &arms[i][0]);
 
-        // yellow #
-        memcpy(&arms[i][1], &shortNum[i + 2], sizeof(patchinfo_t));
+        // yellow
+        sprintf(nameBuf, "STYSNUM%d", i + 2);
+        R_PrecachePatch(nameBuf, &arms[i][1]);
     }
 
     // Face backgrounds for different color players.
@@ -1923,8 +1917,8 @@ void ST_createWidgets(int player)
     // Ammo count and max (all four kinds).
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
     {
-        STlib_InitNum(&hud->wAmmo[i], ORIGINX+ammoPos[i].x, ORIGINY+ammoPos[i].y, shortNum, &plr->ammo[i].owned, ST_AMMOWIDTH, 1);
-        STlib_InitNum(&hud->wMaxAmmo[i], ORIGINX+ammoMaxPos[i].x, ORIGINY+ammoMaxPos[i].y, shortNum, &plr->ammo[i].max, ST_MAXAMMOWIDTH, 1);
+        STlib_InitNumFont(&hud->wAmmo[i], ORIGINX+ammoPos[i].x, ORIGINY+ammoPos[i].y, GF_INDEX, &plr->ammo[i].owned, ST_AMMOWIDTH, 1);
+        STlib_InitNumFont(&hud->wMaxAmmo[i], ORIGINX+ammoMaxPos[i].x, ORIGINY+ammoMaxPos[i].y, GF_INDEX, &plr->ammo[i].max, ST_MAXAMMOWIDTH, 1);
     }
 }
 

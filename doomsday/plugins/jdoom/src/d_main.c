@@ -80,6 +80,9 @@ gamemission_t gameMission = GM_DOOM;
 // This is returned in D_Get(DD_GAME_MODE), max 16 chars.
 char gameModeString[17];
 
+// Default font colours.
+const float defFontRGB3[] = { 1, 1, .451f };
+
 // The patches used in drawing the view border.
 char *borderLumps[] = {
     "FLOOR7_2",

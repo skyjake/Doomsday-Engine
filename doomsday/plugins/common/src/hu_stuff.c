@@ -298,6 +298,20 @@ void Hu_LoadData(void)
  * \todo Read this information from a definition (ideally with more user
  * friendly mnemonics).
  */
+#if __JDOOM__
+    static const fontpatch_t fontIndex[] = {
+        { 48, "STYSNUM0" }, // 0
+        { 49, "STYSNUM1" }, // 1
+        { 50, "STYSNUM2" }, // 2
+        { 51, "STYSNUM3" }, // 3
+        { 52, "STYSNUM4" }, // 4
+        { 53, "STYSNUM5" }, // 5
+        { 54, "STYSNUM6" }, // 6
+        { 55, "STYSNUM7" }, // 7
+        { 56, "STYSNUM8" }, // 8
+        { 57, "STYSNUM9" } // 9
+    };
+#endif
 #if __JDOOM__ || __JDOOM64__
     static const fontpatch_t fontA[] = {
         { 32, "STCFN032" }, // ' '
@@ -789,6 +803,9 @@ void Hu_LoadData(void)
 
     R_InitFont(GF_FONTA, fontA, sizeof(fontA) / sizeof(fontA[0]));
     R_InitFont(GF_FONTB, fontB, sizeof(fontB) / sizeof(fontB[0]));
+#if __JDOOM__
+    R_InitFont(GF_INDEX, fontIndex, sizeof(fontIndex) / sizeof(fontIndex[0]));
+#endif
 #if __JHERETIC__ || __JHEXEN__
     R_InitFont(GF_SMALLIN, fontSmallIn, sizeof(fontSmallIn) / sizeof(fontSmallIn[0]));
 #endif
