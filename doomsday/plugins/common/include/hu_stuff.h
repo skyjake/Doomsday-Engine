@@ -122,13 +122,16 @@ void            Draw_EndZoom(void);
 /*@{*/
 #define DTF_ALIGN_LEFT      0x1
 #define DTF_ALIGN_RIGHT     0x2
+#define DTF_NO_TYPEIN       0x4
+#define DTF_NO_SHADOW       0x8
+#define DTF_NO_EFFECTS      (DTF_NO_TYPEIN|DTF_NO_SHADOW)
 /*@}*/
 
 void            M_DrawText(const char* string, int x, int y);
 void            M_DrawText2(const char* string, int x, int y, gamefontid_t font);
-void            M_DrawText3(const char* string, int x, int y, gamefontid_t font, boolean flagTypeIn, boolean flagShadow);
-void            M_DrawText4(const char* string, int x, int y, gamefontid_t font, boolean flagTypeIn, boolean flagShadow, float red, float green, float blue, float alpha);
-void            M_DrawText5(const char* string, int x, int y, gamefontid_t font, boolean flagTypeIn, boolean flagShadow, float red, float green, float blue, float alpha, int initialCount);
+void            M_DrawText3(const char* string, int x, int y, gamefontid_t font, byte flags);
+void            M_DrawText4(const char* string, int x, int y, gamefontid_t font, byte flags, float red, float green, float blue, float alpha);
+void            M_DrawText5(const char* string, int x, int y, gamefontid_t font, byte flags, float red, float green, float blue, float alpha, int initialCount);
 
 void            WI_DrawParamText(const char* string, int x, int y, gamefontid_t font, byte flags, float defRed, float defGreen, float defBlue, float defAlpha, boolean defCase, boolean defTypeIn, boolean defShadow);
 

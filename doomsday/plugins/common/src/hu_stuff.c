@@ -1271,14 +1271,14 @@ static void drawMapMetaData(float x, float y, gamefontid_t font, float alpha)
         lname = unnamed;
 
     // Map name:
-    M_DrawText4("map: ", x, y + 16, font, false, true, 1, 1, 1, alpha);
-    M_DrawText4(lname, x += M_TextWidth("map: ", font), y + 16, font, false, true, 1, 1, 1, alpha);
+    M_DrawText4("map: ", x, y + 16, font, DTF_NO_TYPEIN, 1, 1, 1, alpha);
+    M_DrawText4(lname, x += M_TextWidth("map: ", font), y + 16, font, DTF_NO_TYPEIN, 1, 1, 1, alpha);
 
     x += 8;
 
     // Game mode:
-    M_DrawText4("gamemode: ", x += M_TextWidth(lname, font), y + 16, font, false, true, 1, 1, 1, alpha);
-    M_DrawText4(P_GetGameModeName(), x += M_TextWidth("gamemode: ", font), y + 16, font, false, true, 1, 1, 1, alpha);
+    M_DrawText4("gamemode: ", x += M_TextWidth(lname, font), y + 16, font, DTF_NO_TYPEIN, 1, 1, 1, alpha);
+    M_DrawText4(P_GetGameModeName(), x += M_TextWidth("gamemode: ", font), y + 16, font, DTF_NO_TYPEIN, 1, 1, 1, alpha);
 }
 
 /**
@@ -1340,7 +1340,7 @@ void HU_DrawScoreBoard(int player)
     DGL_Enable(DGL_TEXTURING);
 
     // Title:
-    M_DrawText4("ranking", x + width / 2 - M_TextWidth("ranking", GF_FONTB) / 2, y + LINE_BORDER, GF_FONTB, false, true, 1, 0, 0, hud->scoreAlpha);
+    M_DrawText4("ranking", x + width / 2 - M_TextWidth("ranking", GF_FONTB) / 2, y + LINE_BORDER, GF_FONTB, DTF_NO_TYPEIN, 1, 0, 0, hud->scoreAlpha);
 
     drawMapMetaData(x, y + 16, GF_FONTA, hud->scoreAlpha);
 
@@ -1751,7 +1751,7 @@ void WI_DrawParamText(const char* inString, int x, int y, gamefontid_t defFont,
             DGL_Scalef(scaleX, scaleY * extraScale, 1);
 
             // Draw it.
-            M_DrawText5(temp, 0, 0, font, typeIn, defShadow, r, g, b, a, typeIn ? charCount : 0);
+            M_DrawText5(temp, 0, 0, font, flags, r, g, b, a, typeIn ? charCount : 0);
             charCount += strlen(temp);
 
             // Advance the current position.
@@ -2282,12 +2282,12 @@ void DrBNumber(int val, int x, int y, float red, float green, float blue, float 
 #endif
 
 /**
- * Write a string using a colored, custom font.
- * Also do a type-in effect.
+ * Write a string using a colored, custom font and do a type-in effect.
+ *
+ * \fixme What about the alignment flags?!
  */
-void M_DrawText5(const char* string, int x, int y, gamefontid_t font,
-    boolean flagTypeIn, boolean flagShadow, float red, float green, float blue, float alpha,
-    int initialCount)
+void M_DrawText5(const char* string, int x, int y, gamefontid_t font, byte flags,
+    float red, float green, float blue, float alpha, int initialCount)
 {
     int pass, w, h, cx, cy, count, yoff;
     float flash, flashColor[4];
@@ -2302,7 +2302,7 @@ void M_DrawText5(const char* string, int x, int y, gamefontid_t font,
     flashColor[CG] = (green >= 0? ((1 + 2 * MINMAX_OF(0, green, 1)) / 3) : 1);
     flashColor[CA] = cfg.menuGlitter * (alpha>=0? MINMAX_OF(0, alpha, 1) : 1);
 
-    for(pass = (flagShadow? 0 : 1); pass < 2; ++pass)
+    for(pass = ((flags & DTF_NO_SHADOW)? 1 : 0); pass < 2; ++pass)
     {
         count = initialCount;
 
@@ -2319,7 +2319,7 @@ void M_DrawText5(const char* string, int x, int y, gamefontid_t font,
             yoff = 0;
             flash = 0;
             // Do the type-in effect?
-            if(flagTypeIn && cfg.menuEffects != 0)
+            if(!(flags & DTF_NO_TYPEIN) && cfg.menuEffects != 0)
             {
                 int maxCount = (typeInTime > 0? typeInTime * 2 : 0);
 
@@ -2380,7 +2380,7 @@ void M_DrawText5(const char* string, int x, int y, gamefontid_t font,
                         M_LetterFlash(cx, cy + yoff, w, h, true, flashColor[CR], flashColor[CG], flashColor[CB], flashColor[CA] * flash);
                     }
                 }
-                else if(flagShadow && cfg.menuShadow > 0)
+                else if(!(flags & DTF_NO_SHADOW) && cfg.menuShadow > 0)
                 {   // Shadow.
                     M_LetterFlash(cx, cy + yoff, w, h, false, 1, 1, 1, (red < 0 ? DGL_GetInteger(DGL_CURRENT_COLOR_A) / 255.0f : alpha) * cfg.menuShadow);
                 }
@@ -2391,21 +2391,20 @@ void M_DrawText5(const char* string, int x, int y, gamefontid_t font,
     }
 }
 
-void M_DrawText4(const char* string, int x, int y, gamefontid_t font,
-    boolean flagTypeIn, boolean flagShadow, float red, float green, float blue, float alpha)
+void M_DrawText4(const char* string, int x, int y, gamefontid_t font, byte flags,
+    float red, float green, float blue, float alpha)
 {
-    M_DrawText5(string, x, y, font, flagTypeIn, flagShadow, red, green, blue, alpha, 0);
+    M_DrawText5(string, x, y, font, flags, red, green, blue, alpha, 0);
 }
 
-void M_DrawText3(const char* string, int x, int y, gamefontid_t font,
-    boolean flagTypeIn, boolean flagShadow)
+void M_DrawText3(const char* string, int x, int y, gamefontid_t font, byte flags)
 {
-    M_DrawText4(string, x, y, font, flagTypeIn, flagShadow, 1, 1, 1, 1);
+    M_DrawText4(string, x, y, font, flags, 1, 1, 1, 1);
 }
 
 void M_DrawText2(const char* string, int x, int y, gamefontid_t font)
 {
-    M_DrawText3(string, x, y, font, false, true);
+    M_DrawText3(string, x, y, font, DTF_NO_TYPEIN);
 }
 
 void M_DrawText(const char* string, int x, int y)
@@ -2967,14 +2966,14 @@ static void drawMapTitle(void)
 #elif __JHERETIC__ || __JHEXEN__
     if(lname)
     {
-        M_DrawText4(lname, -M_TextWidth(lname, GF_FONTB) / 2, 0, GF_FONTB, false, true, defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
+        M_DrawText4(lname, -M_TextWidth(lname, GF_FONTB) / 2, 0, GF_FONTB, DTF_NO_TYPEIN, defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
         y += 20;
     }
 #endif
 
     if(lauthor)
     {
-        M_DrawText4(lauthor, -M_TextWidth(lauthor, GF_FONTA) / 2, y, GF_FONTA, false, true, .5f, .5f, .5f, alpha);
+        M_DrawText4(lauthor, -M_TextWidth(lauthor, GF_FONTA) / 2, y, GF_FONTA, DTF_NO_TYPEIN, .5f, .5f, .5f, alpha);
     }
 }
 
