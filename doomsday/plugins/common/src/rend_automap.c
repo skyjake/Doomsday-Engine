@@ -1332,7 +1332,7 @@ static void drawMapName(float x, float y, float scale, float alpha,
     DGL_PushMatrix();
     DGL_Scalef(scale, scale, 1);
 
-    WI_DrawPatch3(patch, 0, -16, lname, false, 0, 1, 1, 1, alpha);
+    WI_DrawPatch3(patch, 0, -16, lname, false, DTF_NO_TYPEIN, 1, 1, 1, alpha);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();

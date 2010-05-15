@@ -1476,7 +1476,7 @@ void WI_DrawParamText(const char* inString, int x, int y, gamefontid_t defFont,
     float scaleX = 1, scaleY = 1, angle = 0, extraScale;
     float cx = x, cy = y;
     int charCount = 0;
-    boolean typeIn = (flags & DTF_NO_TYPEIN) == 0;
+    boolean typeIn = (flags & DTF_NO_TYPEIN) != 0;
     boolean caseScale = defCase;
     struct {
         float scale, offset;
