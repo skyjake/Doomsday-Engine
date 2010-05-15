@@ -1494,7 +1494,7 @@ int FI_CharWidth(int ch, boolean fontb)
 
 int FI_GetLineWidth(char* text, boolean fontb)
 {
-    int                 width = 0;
+    int width = 0;
 
     for(; *text; text++)
     {
@@ -1519,7 +1519,7 @@ int FI_DrawChar(int x, int y, int ch, boolean fontb)
 {
     ch = FI_FilterChar(ch);
 
-    M_DrawChar(ch, x, y, fontb? GF_FONTB : GF_FONTA);
+    M_DrawChar2(ch, x, y, fontb? GF_FONTB : GF_FONTA);
 
     return FI_CharWidth(ch, fontb);
 }

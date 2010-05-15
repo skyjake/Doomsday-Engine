@@ -103,12 +103,6 @@ boolean HUlib_delCharFromTextLine(hu_textline_t* t)
     return true;
 }
 
-void HUlib_drawTextLine(hu_textline_t* l, gamefontid_t font, boolean drawcursor)
-{
-    DGL_Color3fv(cfg.hudColor);
-    HUlib_drawTextLine2(l->l, l->x, l->y, l->len, font, drawcursor);
-}
-
 /**
  * Sorta called by HU_Erase and just better darn get things straight.
  */
@@ -173,16 +167,6 @@ boolean HUlib_keyInText(hu_text_t* it, unsigned char ch)
     }
 
     return false;
-}
-
-void HUlib_drawText(hu_text_t* it, gamefontid_t font)
-{
-    hu_textline_t*		l = &it->l;
-
-    if(!*it->on)
-        return;
-
-    HUlib_drawTextLine(l, font, true);
 }
 
 void HUlib_eraseText(hu_text_t* it)

@@ -113,7 +113,6 @@ void            HUlib_eraseLineFromText(hu_text_t* it);
 void            HUlib_resetText(hu_text_t* it);
 void            HUlib_addPrefixToText(hu_text_t* it, char* str);
 boolean         HUlib_keyInText(hu_text_t* it, unsigned char ch);
-void            HUlib_drawText(hu_text_t* it, gamefontid_t font);
 void            HUlib_eraseText(hu_text_t* it);
 
 #endif /* LIBCOMMON_UI_LIBRARY_H */

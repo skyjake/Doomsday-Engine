@@ -157,7 +157,6 @@ int             M_CharHeight(unsigned char ch, gamefontid_t font);
 /**
  * Specialised text strings:
  */
-void            HUlib_drawTextLine2(const char* string, int x, int y, size_t len, gamefontid_t font, boolean drawcursor);
 #if __JHERETIC__ || __JHEXEN__
 void            Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha);
 #endif

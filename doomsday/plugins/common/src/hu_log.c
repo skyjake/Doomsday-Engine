@@ -855,7 +855,7 @@ void Chat_Drawer(int player, float textAlpha, float iconAlpha,
             xOffset = -M_CharWidth('_', GF_FONTA);
     }
     textFlags = DTF_NO_EFFECTS | ((cfg.msgAlign == 0)? DTF_ALIGN_LEFT : (cfg.msgAlign == 2)? DTF_ALIGN_RIGHT : 0);
-    WI_DrawParamText(str, xOffset, 0, textFlags, GF_FONTA, cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha, false);
+    WI_DrawParamText(str, xOffset, 0, GF_FONTA, textFlags, cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha, false);
     *drawnWidth = M_TextWidth(chat->buffer.l.l, GF_FONTA) + M_CharWidth('_', GF_FONTA);
     *drawnHeight = MAX_OF(M_TextHeight(chat->buffer.l.l, GF_FONTA), M_CharHeight('_', GF_FONTA));
     }

@@ -243,6 +243,8 @@ void R_InitFont(gamefontid_t fontid, const fontpatch_t* patches, size_t num)
 
     font = &gFonts[fontid];
     memset(font, 0, sizeof(*font));
+    for(i = 0; i < 256; ++i)
+        font->chars[i].pInfo.id = -1;
 
     for(i = 0; i < num; ++i)
     {
@@ -1503,7 +1505,7 @@ void WI_DrawParamText(const char* inString, int x, int y, gamefontid_t defFont,
     {
         bigBuff = malloc(len+1);
         memcpy(bigBuff, inString, len);
-        bigBuff[len+1] = '\0';
+        bigBuff[len] = '\0';
 
         str = bigBuff;
     }
@@ -2099,26 +2101,6 @@ void M_DrawShadowedChar2(unsigned char ch, int x, int y, gamefontid_t font)
 void M_DrawShadowedChar(unsigned char ch, int x, int y)
 {
     M_DrawShadowedChar2(ch, x, y, GF_FONTA);
-}
-
-void HUlib_drawTextLine2(const char* string, int x, int y, size_t len,
-    gamefontid_t font, boolean drawCursor)
-{
-    size_t i;
-
-    for(i = 0; i < len; ++i)
-    {
-        unsigned char c = string[i];
-        int w = M_CharWidth(c, font);
-        if(x + w > SCREENWIDTH)
-            break;
-        M_DrawChar2(c, x, y, font);
-        x += w;
-    }
-
-    // Draw the cursor if requested.
-    if(drawCursor && x + M_CharWidth('_', font) <= SCREENWIDTH)
-        M_DrawChar2('_', x, y, font);
 }
 
 #if __JHERETIC__
