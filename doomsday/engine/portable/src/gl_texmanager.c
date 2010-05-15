@@ -2599,6 +2599,9 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
             if(fillOutlines && !scaleSharp && image.isMasked)
                 ColorOutlines(image.pixels, image.width, image.height);
 
+            if(monochrome && (tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE))
+                GL_DeSaturatePalettedImage(image.pixels, R_GetColorPalette(0), image.width, image.height);
+
             if(tex->type == GLT_DETAIL)
             {
                 float baMul, hiMul, loMul;
@@ -2617,7 +2620,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
                 byte* rgbaPixels = M_Malloc(numpels * 4 * 2);
                 byte* upscaledPixels = M_Malloc(numpels * 4 * 4);
 
-                GL_ConvertBuffer(image.width, image.height, 2, 4, image.pixels, rgbaPixels, 0, false);
+                GL_ConvertBuffer(image.width, image.height, image.isMasked? 2 : 1, 4, image.pixels, rgbaPixels, 0, false);
 
                 GL_SmartFilter2x(rgbaPixels, upscaledPixels, image.width, image.height, image.width * 8);
                 image.width *= 2;
@@ -2628,7 +2631,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
                 BlackOutlines(upscaledPixels, image.width, image.height);
 
                 // Back to indexed+alpha.
-                GL_ConvertBuffer(image.width, image.height, 4, 2, upscaledPixels, rgbaPixels, 0, false);
+                GL_ConvertBuffer(image.width, image.height, 4, image.isMasked? 2 : 1, upscaledPixels, rgbaPixels, 0, false);
 
                 // Replace the old buffer.
                 M_Free(upscaledPixels);
@@ -2665,14 +2668,6 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
         {
             // An alpha channel is required. If one is not in the image data, we'll generate it.
             GL_ConvertToAlpha(&image, true);
-        }
-
-        if(monochrome)
-        {
-            if((tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE) && image.pixelSize == 1)
-            {
-                GL_DeSaturatePalettedImage(image.pixels, R_GetColorPalette(0), image.width, image.height);
-            }
         }
 
         {

@@ -500,12 +500,11 @@ boolean GL_QuantizeImageToPalette(byte* out, int outformat,
  * looking up the nearest match in the palette. Increases the brightness
  * to maximum.
  */
-void GL_DeSaturatePalettedImage(byte* buffer, DGLuint palid, int width,
-                                int height)
+void GL_DeSaturatePalettedImage(byte* buffer, DGLuint palid, int width, int height)
 {
-    int                 i, max;
-    const int           numpels = width * height;
+    const int numpels = width * height;
     const gl_colorpalette_t* pal;
+    int i, max;
 
     if(!buffer || !palid || palid - 1 >= numColorPalettes)
         return;
@@ -522,9 +521,15 @@ void GL_DeSaturatePalettedImage(byte* buffer, DGLuint palid, int width,
     max = 0;
     for(i = 0; i < numpels; ++i)
     {
-        const DGLubyte*     rgb = &pal->data[
-            MINMAX_OF(0, buffer[i], pal->num) * 3];
-        int                 temp;
+        const DGLubyte* rgb = &pal->data[MINMAX_OF(0, buffer[i], pal->num) * 3];
+        int temp;
+
+        if(rgb[CR] == rgb[CG] && rgb[CR] == rgb[CB])
+        {
+            if(rgb[CR] > max)
+                max = rgb[CR];
+            continue;
+        }
 
         temp = (2 * (int)rgb[CR] + 4 * (int)rgb[CG] + 3 * (int)rgb[CB]) / 9;
         if(temp > max)
@@ -533,15 +538,16 @@ void GL_DeSaturatePalettedImage(byte* buffer, DGLuint palid, int width,
 
     for(i = 0; i < numpels; ++i)
     {
-        const DGLubyte*     rgb = &pal->data[
-            MINMAX_OF(0, buffer[i], pal->num) * 3];
-        int                 temp;
+        const DGLubyte* rgb = &pal->data[MINMAX_OF(0, buffer[i], pal->num) * 3];
+        int temp;
+
+        if(rgb[CR] == rgb[CG] && rgb[CR] == rgb[CB])
+            continue;
 
         // Calculate a weighted average.
         temp = (2 * (int)rgb[CR] + 4 * (int)rgb[CG] + 3 * (int)rgb[CB]) / 9;
         if(max)
             temp *= 255.f / max;
-
         buffer[i] = pal->pal18To8[RGB18(temp >> 2, temp >> 2, temp >> 2)];
     }
 }
