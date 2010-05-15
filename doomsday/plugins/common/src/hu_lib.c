@@ -105,6 +105,7 @@ boolean HUlib_delCharFromTextLine(hu_textline_t* t)
 
 void HUlib_drawTextLine(hu_textline_t* l, gamefontid_t font, boolean drawcursor)
 {
+    DGL_Color3fv(cfg.hudColor);
     HUlib_drawTextLine2(l->l, l->x, l->y, l->len, font, drawcursor);
 }
 
