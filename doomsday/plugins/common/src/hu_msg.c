@@ -202,7 +202,7 @@ static void drawMessage(void)
         *p = 0;
 
         x = 160 - M_TextWidth(string, GF_FONTA) / 2;
-        M_DrawText3(string, x, y, GF_FONTA, cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2], 1, true, true, 0);
+        M_DrawText4(string, x, y, GF_FONTA, true, true, cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2], 1);
         y += M_TextHeight(string, GF_FONTA);
 
         if(((*p) = c))
@@ -216,12 +216,12 @@ static void drawMessage(void)
     {
     case MSG_ANYKEY:
         x = 160 - M_TextWidth(PRESSKEY, GF_FONTA) / 2;
-        M_DrawText3(PRESSKEY, x, y, GF_FONTA, cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2], 1, true, true, 0);
+        M_DrawText4(PRESSKEY, x, y, GF_FONTA, true, true, cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2], 1);
         break;
 
     case MSG_YESNO:
         x = 160 - M_TextWidth(yesNoMessage, GF_FONTA) / 2;
-        M_DrawText3(yesNoMessage, x, y, GF_FONTA, cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2], 1, true, true, 0);
+        M_DrawText4(yesNoMessage, x, y, GF_FONTA, true, true, cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2], 1);
         break;
 
     default:

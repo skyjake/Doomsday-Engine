@@ -1211,8 +1211,8 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
     dd_snprintf(buf, 5, "%i", health);
     h = M_TextHeight(buf, GF_FONTB);
     w = M_TextWidth(buf, GF_FONTB);
-    M_DrawText2(buf, 2, -h + 1, GF_FONTB, 0, 0, 0, textAlpha * .4f);
-    M_DrawText2(buf, 0, -h - 1, GF_FONTB, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, 2, -h + 1, GF_FONTB, false, false, 0, 0, 0, textAlpha * .4f);
+    M_DrawText4(buf, 0, -h - 1, GF_FONTB, false, false, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     *drawnWidth = w;
     *drawnHeight = h;
 }
@@ -1398,7 +1398,7 @@ void drawKillsWidget(int player, float textAlpha, float iconAlpha,
 
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
-    M_DrawText2(buf, 0, -(*drawnHeight), GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, 0, -(*drawnHeight), GF_FONTA, false, false, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 }
 
 void drawItemsWidget(int player, float textAlpha, float iconAlpha,
@@ -1428,7 +1428,7 @@ void drawItemsWidget(int player, float textAlpha, float iconAlpha,
 
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
-    M_DrawText2(buf, 0, -(*drawnHeight), GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, 0, -(*drawnHeight), GF_FONTA, false, false, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 }
 
 void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
@@ -1458,7 +1458,7 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
 
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
-    M_DrawText2(buf, 0, -(*drawnHeight), GF_FONTA, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, 0, -(*drawnHeight), GF_FONTA, false, false, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 }
 
 typedef struct {

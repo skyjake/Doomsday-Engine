@@ -325,17 +325,17 @@ void DrANumber(int number, int x, int y)
 {
     char buf[40];
     sprintf(buf, "%i", number);
-    M_DrawText2(buf, x, y, GF_FONTA, 1, 1, 1, Hu_MenuAlpha());
+    M_DrawText4(buf, x, y, GF_FONTA, false, true, 1, 1, 1, Hu_MenuAlpha());
 }
 
 void MN_DrCenterTextA_CS(char* string, int centerX, int y)
 {
-    M_DrawText2(string, centerX - M_TextWidth(string, GF_FONTA) / 2, y, GF_FONTA, 1, 0, 0, Hu_MenuAlpha());
+    M_DrawText4(string, centerX - M_TextWidth(string, GF_FONTA) / 2, y, GF_FONTA, false, true, 1, 0, 0, Hu_MenuAlpha());
 }
 
 void MN_DrCenterTextB_CS(char* string, int centerX, int y)
 {
-    M_DrawText2(string, centerX - M_TextWidth(string, GF_FONTB) / 2, y, GF_FONTB, 1, 0, 0, Hu_MenuAlpha());
+    M_DrawText4(string, centerX - M_TextWidth(string, GF_FONTB) / 2, y, GF_FONTB, false, true, 1, 0, 0, Hu_MenuAlpha());
 }
 
 void DrawMultiplayerMenu(void)
@@ -400,7 +400,7 @@ void DrawGameSetupMenu(void)
 
     sprintf(buf, "%u", cfg.netMap+1);
     M_WriteMenuText(menu, idx++, buf);
-    M_DrawText2(mapName, 160 - M_TextWidth(mapName, GF_FONTA) / 2, menu->y + menu->itemHeight, GF_FONTA, 1, 0.7f, 0.3f, Hu_MenuAlpha());
+    M_DrawText4(mapName, 160 - M_TextWidth(mapName, GF_FONTA) / 2, menu->y + menu->itemHeight, GF_FONTA, true, true, 1, 0.7f, 0.3f, Hu_MenuAlpha());
 
     idx++;
     M_WriteMenuText(menu, idx++, skillText[cfg.netSkill]);
@@ -501,7 +501,7 @@ void DrawPlayerSetupMenu(void)
 
     if(plrColor == numColors)
     {
-        M_DrawText2("AUTOMATIC", 184,
+        M_DrawText4("AUTOMATIC", 184,
 #if __JDOOM__ || __JDOOM64__
                       menu->y + 49,
 #elif __JHERETIC__
@@ -509,7 +509,7 @@ void DrawPlayerSetupMenu(void)
 #else
                       menu->y + 64,
 #endif
-                      GF_FONTA, 1, 1, 1, menuAlpha);
+                      GF_FONTA, false, true, 1, 1, 1, menuAlpha);
     }
 
 #undef AVAILABLE_WIDTH
@@ -922,7 +922,7 @@ void DrawEditField(menu_t* menu, int index, editfield_t* ef)
     text[vis] = 0;
 
     M_DrawSaveLoadBorder(menu->x - 8, menu->y + EDITFIELD_BOX_YOFFSET + (menu->itemHeight * index), width + 16);
-    M_DrawText2(text, menu->x, menu->y + EDITFIELD_BOX_YOFFSET + 1 + (menu->itemHeight * index), GF_FONTA, 1, 1, 1, Hu_MenuAlpha());
+    M_DrawText4(text, menu->x, menu->y + EDITFIELD_BOX_YOFFSET + 1 + (menu->itemHeight * index), GF_FONTA, false, true, 1, 1, 1, Hu_MenuAlpha());
 }
 
 void SCEditField(int efptr, void* data)

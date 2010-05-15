@@ -604,10 +604,10 @@ void IN_DrawOldLevel(void)
     levelname = P_GetShortMapName(wbs->episode, wbs->currentMap);
 
     x = 160 - M_TextWidth(levelname, GF_FONTB) / 2;
-    M_DrawText2(levelname, x, 3, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText4(levelname, x, 3, GF_FONTB, false, true, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     x = 160 - M_TextWidth("FINISHED", GF_FONTA) / 2;
-    M_DrawText2("FINISHED", x, 25, GF_FONTA, defFontRGB2[0], defFontRGB2[1],defFontRGB2[2], 1);
+    M_DrawText4("FINISHED", x, 25, GF_FONTA, false, true, defFontRGB2[0], defFontRGB2[1],defFontRGB2[2], 1);
 
     if(wbs->currentMap == 8)
     {
@@ -651,10 +651,10 @@ void IN_DrawYAH(void)
     int x;
 
     x = 160 - M_TextWidth("NOW ENTERING:", GF_FONTA) / 2;
-    M_DrawText2("NOW ENTERING:", x, 10, GF_FONTA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+    M_DrawText4("NOW ENTERING:", x, 10, GF_FONTA, false, true, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
 
     x = 160 - M_TextWidth(mapName, GF_FONTB) / 2;
-    M_DrawText2(mapName, x, 20, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText4(mapName, x, 20, GF_FONTB, false, true, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     DGL_Color4f(1, 1, 1, 1);
     for(i = 0; i < wbs->nextMap; ++i)
@@ -682,15 +682,15 @@ void IN_DrawSingleStats(void)
 
     levelname = P_GetShortMapName(wbs->episode, wbs->currentMap);
 
-    M_DrawText2("KILLS", 50, 65, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_DrawText2("ITEMS", 50, 90, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_DrawText2("SECRETS", 50, 115, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText4("KILLS", 50, 65, GF_FONTB, false, true, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText4("ITEMS", 50, 90, GF_FONTB, false, true, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText4("SECRETS", 50, 115, GF_FONTB, false, true, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     x = 160 - M_TextWidth(levelname, GF_FONTB) / 2;
-    M_DrawText2(levelname, x, 3, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText4(levelname, x, 3, GF_FONTB, false, true, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     x = 160 - M_TextWidth("FINISHED", GF_FONTA) / 2;
-    M_DrawText2("FINISHED", x, 25, GF_FONTA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+    M_DrawText4("FINISHED", x, 25, GF_FONTA, false, true, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
 
     if(interTime < 30)
     {
@@ -747,18 +747,18 @@ void IN_DrawSingleStats(void)
 
     if(gameMode != extended || wbs->episode < 3)
     {
-        M_DrawText2("TIME", 85, 160, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+        M_DrawText4("TIME", 85, 160, GF_FONTB, false, true, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
         IN_DrawTime(155, 160, hours, minutes, seconds, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     }
     else
     {
         x = 160 - M_TextWidth("NOW ENTERING:", GF_FONTA) / 2;
-        M_DrawText2("NOW ENTERING:", x, 160, GF_FONTA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+        M_DrawText4("NOW ENTERING:", x, 160, GF_FONTA, false, true, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
 
         levelname = P_GetShortMapName(wbs->episode, wbs->nextMap);
 
         x = 160 - M_TextWidth(levelname, GF_FONTB) / 2;
-        M_DrawText2(levelname, x, 170, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+        M_DrawText4(levelname, x, 170, GF_FONTB, false, true, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
         skipIntermission = false;
     }
@@ -773,15 +773,15 @@ void IN_DrawCoopStats(void)
 
     levelname = P_GetShortMapName(wbs->episode, wbs->currentMap);
 
-    M_DrawText2("KILLS", 95, 35, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_DrawText2("BONUS", 155, 35, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_DrawText2("SECRET", 232, 35, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText4("KILLS", 95, 35, GF_FONTB, false, true, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText4("BONUS", 155, 35, GF_FONTB, false, true, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText4("SECRET", 232, 35, GF_FONTB, false, true, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     x = 160 - M_TextWidth(levelname, GF_FONTB) / 2;
-    M_DrawText2(levelname, x, 3, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText4(levelname, x, 3, GF_FONTB, false, true, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     x = 160 - M_TextWidth("FINISHED", GF_FONTA) / 2;
-    M_DrawText2("FINISHED", x, 25, GF_FONTA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+    M_DrawText4("FINISHED", x, 25, GF_FONTA, false, true, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
 
     ypos = 50;
     for(i = 0; i < NUMTEAMS; ++i)
@@ -824,12 +824,12 @@ void IN_DrawDMStats(void)
 
     int i, j, ypos = 55, xpos = 90, kpos;
 
-    M_DrawText2("TOTAL", 265, 30, GF_FONTB, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_DrawText2("VICTIMS", 140, 8, GF_FONTA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+    M_DrawText4("TOTAL", 265, 30, GF_FONTB, false, true, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText4("VICTIMS", 140, 8, GF_FONTA, false, true, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
 
     for(i = 0; i < 7; ++i)
     {
-        M_DrawText2(killersText[i], 10, 80 + 9 * i, GF_FONTA, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+        M_DrawText4(killersText[i], 10, 80 + 9 * i, GF_FONTA, false, true, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
     }
 
     if(interTime < 20)
@@ -909,7 +909,7 @@ void IN_DrawTime(int x, int y, int h, int m, int s, float r, float g,
     if(h)
     {
         IN_DrawNumber(h, x, y, 2, r, g, b, a);
-        M_DrawText2(":", x + 26, y, GF_FONTB, r, g, b, a);
+        M_DrawText4(":", x + 26, y, GF_FONTB, false, true, r, g, b, a);
     }
 
     x += 34;
@@ -919,6 +919,6 @@ void IN_DrawTime(int x, int y, int h, int m, int s, float r, float g,
     }
 
     x += 34;
-    M_DrawText2(":", x-8, y, GF_FONTB, r, g, b, a);
+    M_DrawText4(":", x-8, y, GF_FONTB, false, true, r, g, b, a);
     IN_DrawNumber(s, x, y, 2, r, g, b, a);
 }

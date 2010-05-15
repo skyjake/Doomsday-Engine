@@ -1825,7 +1825,7 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
     dd_snprintf(buf, 20, "%i", health);
     w = M_TextWidth(buf, GF_FONTB);
     h = M_TextHeight(buf, GF_FONTB);
-    M_DrawText2(buf, -1, -(h+1), GF_FONTB, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, -1, -(h+1), GF_FONTB, false, false, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     *drawnWidth = w;
     *drawnHeight = h;
 }

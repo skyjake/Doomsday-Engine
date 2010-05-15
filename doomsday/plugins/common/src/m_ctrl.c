@@ -437,7 +437,7 @@ static void M_DrawSmallText(const char* string, int x, int y)
     DGL_Scalef(SMALL_SCALE, SMALL_SCALE, 1);
     DGL_Translatef(-x, -y - height/2, 0);
 
-    M_DrawText2(string, x, y, GF_FONTA, 1, 1, 1, Hu_MenuAlpha());
+    M_DrawText4(string, x, y, GF_FONTA, false, true, 1, 1, 1, Hu_MenuAlpha());
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -617,9 +617,9 @@ void M_DrawControlsMenu(void)
 #if __JDOOM__ || __JDOOM64__
     MN_DrawTitle("CONTROLS", menu->y - 28);
     Hu_MenuPageString(buf, menu);
-    M_DrawText3(buf, 160 - M_TextWidth(buf, GF_FONTA) / 2, menu->y - 12, GF_FONTA, 1, .7f, .3f, Hu_MenuAlpha(), true, true, 0);
+    M_DrawText4(buf, 160 - M_TextWidth(buf, GF_FONTA) / 2, menu->y - 12, GF_FONTA, true, true, 1, .7f, .3f, Hu_MenuAlpha());
 #else
-    M_DrawText3("CONTROLS", 120, 100 - 98/cfg.menuScale, GF_FONTB, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], Hu_MenuAlpha(), true, true, 0);
+    M_DrawText4("CONTROLS", 120, 100 - 98/cfg.menuScale, GF_FONTB, true, true, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], Hu_MenuAlpha());
 
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 
@@ -631,13 +631,13 @@ void M_DrawControlsMenu(void)
 #endif
 
     strcpy(buf, "Select to assign new, [Del] to clear");
-    M_DrawText3(buf, 160 - M_TextWidth(buf, GF_FONTA) / 2, 100 + (95/cfg.menuScale) - M_TextHeight(buf, GF_FONTA), GF_FONTA,
+    M_DrawText4(buf, 160 - M_TextWidth(buf, GF_FONTA) / 2, 100 + (95/cfg.menuScale) - M_TextHeight(buf, GF_FONTA), GF_FONTA, true, true,
 #if __JDOOM__
                  1, .7f, .3f,
 #else
                  1, 1, 1,
 #endif
-                 Hu_MenuAlpha(), true, true, 0);
+                 Hu_MenuAlpha());
 
     for(i = 0; i < menu->numVisItems && menu->firstItem + i < menu->itemCount;
         i++, item++)
@@ -684,8 +684,8 @@ void M_ControlGrabDrawer(void)
     DGL_Translatef(-160, -100, 0);
 
     text = "press key or move controller for";
-    M_DrawText2(text, 160 - M_TextWidth(text, GF_FONTA)/2, 98 - M_TextHeight(text, GF_FONTA), GF_FONTA, .75f, .75f, .75f, 1);
-    M_DrawText2(grabbing->item->text, 160 - M_TextWidth(grabbing->item->text, GF_FONTB)/2, 102, GF_FONTB, 1, 1, 1, 1);
+    M_DrawText4(text, 160 - M_TextWidth(text, GF_FONTA)/2, 98 - M_TextHeight(text, GF_FONTA), GF_FONTA, false, true, .75f, .75f, .75f, 1);
+    M_DrawText4(grabbing->item->text, 160 - M_TextWidth(grabbing->item->text, GF_FONTB)/2, 102, GF_FONTB, false, true, 1, 1, 1, 1);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();

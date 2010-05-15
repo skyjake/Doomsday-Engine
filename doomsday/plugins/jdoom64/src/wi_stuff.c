@@ -515,8 +515,8 @@ void WI_drawDeathmatchStats(void)
                 char tmp[20];
 
                 sprintf(tmp, "%i", teamInfo[i].members);
-                M_DrawText2(tmp, x - p[i].width / 2 + 1, DM_MATRIXY - WI_SPACINGY + p[i].height - 8, GF_FONTA, 1, 1, 1, 1);
-                M_DrawText2(tmp, DM_MATRIXX - p[i].width / 2 + 1, y + p[i].height - 8, GF_FONTA, 1, 1, 1, 1);
+                M_DrawText(tmp, x - p[i].width / 2 + 1, DM_MATRIXY - WI_SPACINGY + p[i].height - 8);
+                M_DrawText(tmp, DM_MATRIXX - p[i].width / 2 + 1, y + p[i].height - 8);
             }
         }
         else
@@ -745,7 +745,7 @@ void WI_drawNetgameStats(void)
             char tmp[40];
 
             sprintf(tmp, "%i", teamInfo[i].members);
-            M_DrawText2(tmp, x - p[i].width + 1, y + p[i].height - 8, GF_FONTA, 1, 1, 1, 1);
+            M_DrawText(tmp, x - p[i].width + 1, y + p[i].height - 8);
         }
 
         if(i == myTeam)
