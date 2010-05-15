@@ -1464,7 +1464,7 @@ float WI_ParseFloat(char** str)
  */
 void WI_DrawParamText(const char* inString, int x, int y, gamefontid_t defFont,
     byte flags, float defRed, float defGreen, float defBlue, float defAlpha,
-    boolean defCase, boolean defTypeIn, boolean defShadow)
+    boolean defCase)
 {
 #define SMALLBUFF_SIZE  80
 
@@ -1476,7 +1476,7 @@ void WI_DrawParamText(const char* inString, int x, int y, gamefontid_t defFont,
     float scaleX = 1, scaleY = 1, angle = 0, extraScale;
     float cx = x, cy = y;
     int charCount = 0;
-    boolean typeIn = defTypeIn;
+    boolean typeIn = (flags & DTF_NO_TYPEIN) == 0;
     boolean caseScale = defCase;
     struct {
         float scale, offset;
@@ -2477,7 +2477,7 @@ void WI_DrawPatch3(patchid_t patch, int x, int y, const char* altstring,
         if(!info.isCustom)
         {
             byte textFlags = (flags & DPF_ALIGN_LEFT)? DTF_ALIGN_LEFT : (flags & DPF_ALIGN_RIGHT)? DTF_ALIGN_RIGHT : 0;
-            WI_DrawParamText(altstring, x, y, GF_FONTB, textFlags, r, g, b, a, false, true, true);
+            WI_DrawParamText(altstring, x, y, GF_FONTB, textFlags, r, g, b, a, false);
             return;
         }
     }
@@ -2497,7 +2497,7 @@ void WI_DrawPatch3(patchid_t patch, int x, int y, const char* altstring,
             if(patchString)
             {
                 byte textFlags = (flags & DPF_ALIGN_LEFT)? DTF_ALIGN_LEFT : (flags & DPF_ALIGN_RIGHT)? DTF_ALIGN_RIGHT : 0;
-                WI_DrawParamText(string, x, y, GF_FONTB, textFlags, r, g, b, a, false, true, true);
+                WI_DrawParamText(string, x, y, GF_FONTB, textFlags, r, g, b, a, false);
                 return;
             }
 
@@ -2505,7 +2505,7 @@ void WI_DrawPatch3(patchid_t patch, int x, int y, const char* altstring,
             if(cfg.usePatchReplacement == 2 && altstring && altstring[0])
             {
                 byte textFlags = (flags & DPF_ALIGN_LEFT)? DTF_ALIGN_LEFT : (flags & DPF_ALIGN_RIGHT)? DTF_ALIGN_RIGHT : 0;
-                WI_DrawParamText(altstring, x, y, GF_FONTB, textFlags, r, g, b, a, false, true, true);
+                WI_DrawParamText(altstring, x, y, GF_FONTB, textFlags, r, g, b, a, false);
                 return;
             }
         }

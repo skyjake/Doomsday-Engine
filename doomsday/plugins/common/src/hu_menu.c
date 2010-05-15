@@ -1737,7 +1737,7 @@ void Hu_MenuDrawer(void)
             }
             else if(currentMenu->items[i].text)
             {
-                WI_DrawParamText(currentMenu->items[i].text, pos[VX], pos[VY], currentMenu->font, DTF_ALIGN_LEFT, r, g, b, menuAlpha, false, cfg.usePatchReplacement? true : false, true);
+                WI_DrawParamText(currentMenu->items[i].text, pos[VX], pos[VY], currentMenu->font, DTF_ALIGN_LEFT, r, g, b, menuAlpha, false);
             }
 
             pos[VY] += currentMenu->itemHeight;
@@ -2284,7 +2284,7 @@ void M_ToggleVar(int index, void* context)
 
 void MN_DrawTitle(const char* string, int y)
 {
-    WI_DrawParamText(string, 160, y, GF_FONTB, 0, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], menuAlpha, true, true, true);
+    WI_DrawParamText(string, 160, y, GF_FONTB, 0, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], menuAlpha, true);
 }
 
 boolean MN_IsItemVisible(const menu_t* menu, int item)

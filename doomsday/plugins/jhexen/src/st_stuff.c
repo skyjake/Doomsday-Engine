@@ -2037,7 +2037,7 @@ void drawWorldTimerWidget(int player, float textAlpha, float iconAlpha,
     }
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
-    WI_DrawParamText(buf, 0, 0, GF_FONTA, DTF_ALIGN_RIGHT, 1, 1, 1, textAlpha, false, false, false);
+    WI_DrawParamText(buf, 0, 0, GF_FONTA, DTF_ALIGN_RIGHT|DTF_NO_EFFECTS, 1, 1, 1, textAlpha, false);
 }
 
 typedef struct {
