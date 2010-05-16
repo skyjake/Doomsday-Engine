@@ -267,12 +267,6 @@ static patchinfo_t m_optttl;
 static patchinfo_t dpLSLeft;
 static patchinfo_t dpLSRight;
 static patchinfo_t dpLSCntr;
-# if __JDOOM__
-static patchinfo_t credit;
-static patchinfo_t help;
-static patchinfo_t help1;
-static patchinfo_t help2;
-# endif
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
@@ -1224,16 +1218,6 @@ void M_LoadData(void)
     R_PrecachePatch("M_LSLEFT", &dpLSLeft);
     R_PrecachePatch("M_LSRGHT", &dpLSRight);
     R_PrecachePatch("M_LSCNTR", &dpLSCntr);
-# if __JDOOM__
-    if(gameMode == retail || gameMode == commercial)
-        R_PrecachePatch("CREDIT", &credit);
-    if(gameMode == commercial)
-        R_PrecachePatch("HELP", &help);
-    if(gameMode == shareware || gameMode == registered || gameMode == retail)
-        R_PrecachePatch("HELP1", &help1);
-    if(gameMode == shareware || gameMode == registered)
-        R_PrecachePatch("HELP2", &help2);
-# endif
 #endif
 
 #if __JHERETIC__ || __JHEXEN__

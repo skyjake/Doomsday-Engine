@@ -56,35 +56,23 @@ typedef struct gamefont_s {
     } chars[256];
 } gamefont_t;
 
-extern patchinfo_t huMinus;
-
-// Name graphics of each map.
-extern patchinfo_t* mapNamePatches;
-// Name graphics of each skill mode.
-#if __JDOOM__ || __JDOOM64__
-extern patchinfo_t skillModeNames[NUM_SKILL_MODES];
-#endif
 extern patchinfo_t m_pause; // Paused graphic.
-
-// Name graphics of each episode.
-#if __JDOOM__
-extern patchinfo_t* episodeNamePatches;
+extern patchinfo_t* mapNamePatches; // Name graphics of each map.
+#if __JDOOM__ || __JDOOM64__
+extern patchinfo_t skillModeNames[NUM_SKILL_MODES]; // Name graphics of each skill mode.
 #endif
-
-extern const char shiftXForm[];
-extern int typeInTime;
-
 #if __JDOOM__
-// Plutonia and TNT map names.
-extern char* mapNamesPlut[32],* mapNamesTNT[32];
+extern patchinfo_t* episodeNamePatches; // Name graphics of each episode.
 #endif
-
 #if __JHERETIC__ || __JHEXEN__
 extern patchinfo_t dpInvItemBox;
 extern patchinfo_t dpInvSelectBox;
 extern patchinfo_t dpInvPageLeft[2];
 extern patchinfo_t dpInvPageRight[2];
 #endif
+
+extern const char shiftXForm[];
+extern int typeInTime;
 
 void            Hu_LoadData(void);
 void            Hu_Drawer(void);
