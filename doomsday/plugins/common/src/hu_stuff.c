@@ -2552,56 +2552,52 @@ void M_DrawBackgroundBox(float x, float y, float w, float h, boolean background,
 }
 
 /**
- * Draws a menu slider control
+ * Draws a menu slider widget control.
  */
-#if __JHERETIC__ || __JHEXEN__
-void M_DrawSlider(int x, int y, int width, int slot, float alpha)
-#else
-void M_DrawSlider(int x, int y, int width, int height, int slot, float alpha)
-#endif
+void M_DrawSlider(int x, int y, int height, int range, int slot, float alpha)
 {
-#if __JHERETIC__ || __JHEXEN__
-    float pos;
-    if(width <= 0)
+#define WIDTH           (dpSliderMiddle.width)
+#define HEIGHT          (dpSliderMiddle.height)
+
+    float pos, scale;
+
+    if(range <= 1 || height <= 0 || HEIGHT <= 0)
         return;
-    pos = (float)slot / (width-1);
 
-    DGL_Color4f( 1, 1, 1, alpha);
+    pos = (float)slot / (range-1);
+    scale = (float) height / HEIGHT;
 
-    M_DrawPatch2(dpSliderLeft.id, x, y, DPF_ALIGN_RIGHT|DPF_NO_OFFSET);
-    M_DrawPatch2(dpSliderRight.id, x + width * 8, y, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
-
-    DGL_SetPatch(dpSliderMiddle.id, DGL_REPEAT, DGL_REPEAT);
-    DGL_DrawRectTiled(x, y + 1, width * 8, 13, 8, 13);
-
-    DGL_Color4f( 1, 1, 1, alpha);
-    M_DrawPatch(dpSliderHandle.id, x + (width * 8) * pos, y + 7);
-#else
-    float xx, scale = height / 13.0f;
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+    DGL_Translatef(x, y, 0);
+    DGL_Scalef(scale, scale, 1);
 
     if(cfg.menuShadow > 0)
     {
         float from[2], to[2];
-        from[0] = x+4;
-        from[1] = y+1+height/2;
-        to[0] = x + (6 + 8 * width * scale) - 4;
-        to[1] = y+1+height/2;
-        M_DrawGlowBar(from, to, height*1.1f, true, true, true, 0, 0, 0, alpha * cfg.menuShadow);
+        from[0] = -3;
+        from[1] = 1+HEIGHT/2;
+        to[0] = ((range+1) * WIDTH) - 6;
+        to[1] = 1+HEIGHT/2;
+        M_DrawGlowBar(from, to, HEIGHT*1.1f, true, true, true, 0, 0, 0, alpha * cfg.menuShadow);
     }
 
-    xx = x;
-    DGL_SetPatch(dpSliderLeft.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-    DGL_DrawRect(xx, y, 6 * scale, height, 1, 1, 1, alpha);
-    xx += 6 * scale;
-    DGL_SetPatch(dpSliderMiddle.id, DGL_REPEAT, DGL_CLAMP_TO_EDGE);
-    DGL_DrawRectTiled(xx, y, 8 * width * scale, height, 8 * scale, height);
-    xx += 8 * width * scale;
-    DGL_SetPatch(dpSliderRight.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-    DGL_DrawRect(xx, y, 6 * scale, height, 1, 1, 1, alpha);
+    DGL_Color4f( 1, 1, 1, alpha);
 
-    DGL_SetPatch(dpSliderHandle.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-    DGL_DrawRect(x + (6 + slot * 8) * scale, y, 6 * scale, height, 1, 1, 1, alpha);
-#endif
+    M_DrawPatch2(dpSliderLeft.id, 0, 0, DPF_ALIGN_RIGHT|DPF_NO_OFFSETX);
+    M_DrawPatch2(dpSliderRight.id, range * WIDTH, 0, DPF_ALIGN_LEFT);
+
+    DGL_SetPatch(dpSliderMiddle.id, DGL_REPEAT, DGL_REPEAT);
+    DGL_DrawRectTiled(0, dpSliderMiddle.topOffset, range * WIDTH, HEIGHT, dpSliderMiddle.width, dpSliderMiddle.height);
+
+    DGL_Color4f(1, 1, 1, alpha);
+    M_DrawPatch2(dpSliderHandle.id, range * WIDTH * pos, 1, DPF_NO_OFFSET);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
+
+#undef WIDTH
+#undef HEIGHT
 }
 
 void Draw_BeginZoom(float s, float originX, float originY)

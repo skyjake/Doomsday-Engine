@@ -3761,33 +3761,24 @@ void MN_DrawColorBox(const menu_t* menu, int index, float r, float g,
 /**
  * Draws a menu slider control
  */
-void MN_DrawSlider(const menu_t* menu, int item, int width, int slot)
+void MN_DrawSlider(const menu_t* menu, int item, int range, int pos)
 {
-#if __JHERETIC__ || __JHEXEN__
-    int x, y;
+    int x, y, height;
 
     if(!MN_IsItemVisible(menu, item))
         return;
 
+#if __JHERETIC__ || __JHEXEN__
     x = menu->x + 24;
     y = menu->y + 2 + (menu->itemHeight * (item  - menu->firstItem));
-
-    M_DrawSlider(x, y, width, slot, menuAlpha);
-#else
-    int x = 0, y = 0, height = menu->itemHeight - 1;
-    float scale = height / 13.0f;
-
-    if(!MN_IsItemVisible(menu, item))
-        return;
-
-    if(menu->items[item].text)
-        x = M_TextWidth(menu->items[item].text, menu->font);
-
-    x += menu->x + 6;
+    height = 13;
+#else   
+    x = menu->x + 6 + (menu->items[item].text? M_TextWidth(menu->items[item].text, menu->font) : 0);
     y = menu->y + menu->itemHeight * (item - menu->firstItem);
-
-    M_DrawSlider(x, y, width, height, slot, menuAlpha);
+    height = menu->itemHeight-1;
 #endif
+
+    M_DrawSlider(x, y, height, range, pos, menuAlpha);
 }
 
 /**

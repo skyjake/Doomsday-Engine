@@ -195,12 +195,7 @@ typedef enum border_e {
 } border_t;
 
 void            M_DrawBackgroundBox(float x, float y, float w, float h, boolean background, int border, float red, float green, float blue, float alpha);
-
-#if __JHERETIC__ || __JHEXEN__
-void            M_DrawSlider(int x, int y, int width, int slot, float alpha);
-#else
-void            M_DrawSlider(int x, int y, int width, int height, int slot, float alpha);
-#endif
+void            M_DrawSlider(int x, int y, int height, int range, int pos, float alpha);
 void            M_DrawGlowBar(const float a[2], const float b[2], float thickness, boolean left, boolean right, boolean caps, float red, float green, float blue, float alpha);
 
 #endif
