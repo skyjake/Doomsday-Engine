@@ -382,7 +382,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
 #else
                 int posX = x + slot * ST_INVSLOTWIDTH;
 #endif
-                DGL_Color4f(1, 1, 1, slot == selected? iconAlpha : iconAlpha / 3);
+                DGL_Color4f(1, 1, 1, slot == selected? iconAlpha : iconAlpha / 2);
                 M_DrawPatch(item->patchId, posX, y + ST_INVICONOFFY);
 
                 if(count > 1)
