@@ -143,8 +143,8 @@ typedef struct {
     // Widgets:
     st_multiicon_t  wManaA; // Current mana A icon.
     st_multiicon_t  wManaB; // Current mana B icon.
-    st_numberfont_t wManaACount; // Current mana A count.
-    st_numberfont_t wManaBCount; // Current mana B count.
+    st_number_t wManaACount; // Current mana A count.
+    st_number_t wManaBCount; // Current mana B count.
     st_multiicon_t  wManaAVial; // Current mana A vial.
     st_multiicon_t  wManaBVial; // Current mana B vial.
     st_number_t     wFrags; // In deathmatch only, summary of frags stats.
@@ -158,8 +158,7 @@ typedef struct {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void DrINumber(signed int val, int x, int y, float r, float g,
-                      float b, float a);
+static void DrINumber(int val, int x, int y, float r, float g, float b, float a);
 void ST_updateWidgets(int player);
 static void updateViewWindow(cvar_t* cvar);
 
@@ -178,8 +177,6 @@ static patchinfo_t dpStatBar;
 static patchinfo_t dpKeyBar;
 static patchinfo_t dpKeySlot[NUM_KEY_TYPES];
 static patchinfo_t dpArmorSlot[NUMARMOR];
-static patchinfo_t dpINumbers[10];
-static patchinfo_t dpNegative;
 static patchinfo_t dpManaAVials[2];
 static patchinfo_t dpManaBVials[2];
 static patchinfo_t dpManaAIcons[2];
@@ -197,7 +194,6 @@ static patchinfo_t dpSpinFly[16];
 static patchinfo_t dpSpinMinotaur[16];
 static patchinfo_t dpSpinSpeed[16];
 static patchinfo_t dpSpinDefense[16];
-static patchinfo_t dpTeleIcon;
 
 // CVARs for the HUD/Statusbar
 cvar_t sthudCVars[] = {
@@ -774,7 +770,6 @@ void ST_loadGraphics(void)
     R_PrecachePatch("MANABRT1", &dpManaAIcons[1]);
     R_PrecachePatch("MANABRT2", &dpManaBIcons[1]);
 
-    R_PrecachePatch("NEGNUM", &dpNegative);
     R_PrecachePatch("KILLS", &dpKills);
 
     for(i = 0; i < NUM_KEY_TYPES; ++i)
@@ -844,12 +839,6 @@ void ST_loadGraphics(void)
         R_PrecachePatch(namebuf, &dpLifeGem[PCLASS_MAGE][i]);
     }
 
-    for(i = 0; i < 10; ++i)
-    {
-        sprintf(namebuf, "IN%d", i);
-        R_PrecachePatch(namebuf, &dpINumbers[i]);
-    }
-
     // Inventory item flash anim.
     {
     const char invItemFlashAnim[5][9] = {
@@ -865,8 +854,6 @@ void ST_loadGraphics(void)
         R_PrecachePatch(invItemFlashAnim[i], &dpInvItemFlash[i]);
     }
     }
-
-    R_PrecachePatch("TELEICON", &dpTeleIcon);
 }
 
 void ST_loadData(void)
@@ -899,19 +886,19 @@ void ST_createWidgets(int player)
     hudstate_t* hud = &hudStates[player];
 
     // Health num.
-    STlib_InitNum(&hud->wHealth, ORIGINX+ST_HEALTHX, ORIGINY+ST_HEALTHY, dpINumbers, &plr->health, ST_HEALTHWIDTH, 1);
+    STlib_InitNum(&hud->wHealth, ORIGINX+ST_HEALTHX, ORIGINY+ST_HEALTHY, GF_STATUS, &plr->health, ST_HEALTHWIDTH, false, 1);
 
     // Frags sum.
-    STlib_InitNum(&hud->wFrags, ORIGINX+ST_FRAGSX, ORIGINY+ST_FRAGSY, dpINumbers, &hud->fragsCount, ST_FRAGSWIDTH, 1);
+    STlib_InitNum(&hud->wFrags, ORIGINX+ST_FRAGSX, ORIGINY+ST_FRAGSY, GF_STATUS, &hud->fragsCount, ST_FRAGSWIDTH, false, 1);
 
     // Armor num - should be colored later.
-    STlib_InitNum(&hud->wArmor, ORIGINX+ST_ARMORX, ORIGINY+ST_ARMORY, dpINumbers, &hud->armorLevel, ST_ARMORWIDTH, 1);
+    STlib_InitNum(&hud->wArmor, ORIGINX+ST_ARMORX, ORIGINY+ST_ARMORY, GF_STATUS, &hud->armorLevel, ST_ARMORWIDTH, false, 1);
 
     // ManaA count.
-    STlib_InitNumFont(&hud->wManaACount, ORIGINX+ST_MANAAX, ORIGINY+ST_MANAAY, GF_SMALLIN, &hud->manaACount, ST_MANAAWIDTH, 1);
+    STlib_InitNum(&hud->wManaACount, ORIGINX+ST_MANAAX, ORIGINY+ST_MANAAY, GF_SMALLIN, &hud->manaACount, ST_MANAAWIDTH, false, 1);
 
     // ManaB count.
-    STlib_InitNumFont(&hud->wManaBCount, ORIGINX+ST_MANABX, ORIGINY+ST_MANABY, GF_SMALLIN, &hud->manaBCount, ST_MANABWIDTH, 1);
+    STlib_InitNum(&hud->wManaBCount, ORIGINX+ST_MANABX, ORIGINY+ST_MANABY, GF_SMALLIN, &hud->manaBCount, ST_MANABWIDTH, false, 1);
 
     // Current mana A icon.
     STlib_InitMultiIcon(&hud->wManaA, ORIGINX+ST_MANAAICONX, ORIGINY+ST_MANAAICONY, dpManaAIcons, 1);
@@ -1368,14 +1355,15 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    STlib_DrawNum(&hud->wFrags, textAlpha);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], hud->wFrags.alpha * textAlpha);
+    STlib_DrawNum(&hud->wFrags);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
     /// \fixme calculate dimensions properly!
-    *drawnWidth = dpINumbers[0].width*3;
-    *drawnHeight = dpINumbers[0].height;
+    *drawnWidth = M_CharWidth('0', GF_STATUS)*3;
+    *drawnHeight = M_CharHeight('0', GF_STATUS);
 }
 
 void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
@@ -1395,14 +1383,15 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    STlib_DrawNum(&hud->wHealth, textAlpha);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], hud->wHealth.alpha * textAlpha);
+    STlib_DrawNum(&hud->wHealth);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
     /// \fixme calculate dimensions properly!
-    *drawnWidth = dpINumbers[0].width*3;
-    *drawnHeight = dpINumbers[0].height;
+    *drawnWidth = M_CharWidth('0', GF_STATUS)*3;
+    *drawnHeight = M_CharHeight('0', GF_STATUS);
 }
 
 void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
@@ -1422,14 +1411,15 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    STlib_DrawNum(&hud->wArmor, textAlpha);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], hud->wArmor.alpha * textAlpha);
+    STlib_DrawNum(&hud->wArmor);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
     /// \fixme calculate dimensions properly!
-    *drawnWidth = dpINumbers[0].width*2;
-    *drawnHeight = dpINumbers[0].height;
+    *drawnWidth = M_CharWidth('0', GF_STATUS)*2;
+    *drawnHeight = M_CharHeight('0', GF_STATUS);
 }
 
 void drawSBarBlueManaWidget(int player, float textAlpha, float iconAlpha,
@@ -1449,7 +1439,8 @@ void drawSBarBlueManaWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    STlib_DrawNumFont(&hud->wManaACount, textAlpha);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], hud->wManaACount.alpha * textAlpha);
+    STlib_DrawNum(&hud->wManaACount);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1476,7 +1467,8 @@ void drawSBarGreenManaWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    STlib_DrawNumFont(&hud->wManaBCount, textAlpha);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], hud->wManaBCount.alpha * textAlpha);
+    STlib_DrawNum(&hud->wManaBCount);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1665,10 +1657,10 @@ void drawGreenManaVialWidget(int player, float textAlpha, float iconAlpha,
 /**
  * Draws a three digit number.
  */
-static void DrINumber(signed int val, int x, int y, float r, float g,
+static void DrINumber(int val, int x, int y, float r, float g,
                       float b, float a)
 {
-    int         oldval;
+    int oldval;
 
     DGL_Color4f(r,g,b,a);
 
@@ -1688,28 +1680,28 @@ static void DrINumber(signed int val, int x, int y, float r, float g,
         }
         if(val > 9)
         {
-            M_DrawPatch(dpINumbers[val / 10].id, x + 8, y);
-            M_DrawPatch(dpNegative.id, x, y);
+            M_DrawChar2('0' + ((val/10)%10), x + 8, y, GF_STATUS);
+            M_DrawChar2('-', x, y, GF_STATUS);
         }
         else
         {
-            M_DrawPatch(dpNegative.id, x + 8, y);
+            M_DrawChar2('-', x + 8, y, GF_STATUS);
         }
         val = val % 10;
-        M_DrawPatch(dpINumbers[val].id, x + 16, y);
+        M_DrawChar2('0' + (val%10), x + 16, y, GF_STATUS);
         return;
     }
     if(val > 99)
     {
-        M_DrawPatch(dpINumbers[val / 100].id, x, y);
+        M_DrawChar2('0' + ((val/100)%10), x, y, GF_STATUS);
     }
     val = val % 100;
     if(val > 9 || oldval > 99)
     {
-        M_DrawPatch(dpINumbers[val / 10].id, x + 8, y);
+        M_DrawChar2('0' + ((val/10)%10), x + 8, y, GF_STATUS);
     }
     val = val % 10;
-    M_DrawPatch(dpINumbers[val].id, x + 16, y);
+    M_DrawChar2('0' + (val%10), x + 16, y, GF_STATUS);
 
 }
 
@@ -1871,9 +1863,9 @@ void drawBlueManaWidget(int player, float textAlpha, float iconAlpha,
 
     DGL_Color4f(1, 1, 1, iconAlpha);
     M_DrawPatch(patch->id, 0, 0);
-    DrINumber(plr->ammo[AT_BLUEMANA].owned, patch->width+2, 0, 1, 1, 1, textAlpha);
-    *drawnWidth = patch->width+2+dpINumbers[0].width*3;
-    *drawnHeight = MAX_OF(patch->height, dpINumbers[0].height);
+    DrINumber(plr->ammo[AT_BLUEMANA].owned, patch->width+2, 0, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    *drawnWidth = patch->width+2+M_CharWidth('0', GF_STATUS)*3;
+    *drawnHeight = MAX_OF(patch->height, M_CharHeight('0', GF_STATUS));
 }
 
 void drawGreenManaWidget(int player, float textAlpha, float iconAlpha,
@@ -1917,9 +1909,9 @@ void drawGreenManaWidget(int player, float textAlpha, float iconAlpha,
 
     DGL_Color4f(1, 1, 1, iconAlpha);
     M_DrawPatch(patch->id, 0, 0);
-    DrINumber(plr->ammo[AT_GREENMANA].owned, patch->width+2, 0, 1, 1, 1, textAlpha);
-    *drawnWidth = patch->width+2+dpINumbers[0].width*3;
-    *drawnHeight = MAX_OF(patch->height, dpINumbers[0].height);
+    DrINumber(plr->ammo[AT_GREENMANA].owned, patch->width+2, 0, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    *drawnWidth = patch->width+2+M_CharWidth('0', GF_STATUS)*3;
+    *drawnHeight = MAX_OF(patch->height, M_CharHeight('0', GF_STATUS));
 }
 
 void drawFragsWidget(int player, float textAlpha, float iconAlpha,
@@ -1937,10 +1929,10 @@ void drawFragsWidget(int player, float textAlpha, float iconAlpha,
     for(i = 0; i < MAXPLAYERS; ++i)
         if(plr->plr->inGame)
             numFrags += plr->frags[i];
-    DrINumber(numFrags, 0, -13, 1, 1, 1, textAlpha);
+    DrINumber(numFrags, 0, -13, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     /// \kludge calculate the visual dimensions properly!
-    *drawnWidth = (dpINumbers[0].width+1) * 3;
-    *drawnHeight = dpINumbers[0].height;
+    *drawnWidth = (M_CharWidth('0', GF_STATUS)+1) * 3;
+    *drawnHeight = M_CharHeight('0', GF_STATUS);
 }
 
 void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
