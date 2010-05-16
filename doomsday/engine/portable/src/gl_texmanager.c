@@ -2601,7 +2601,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
 
                 //EnhanceContrast(upscaledPixels, image.width,image.height);
                 SharpenPixels(upscaledPixels, image.width, image.height);
-                BlackOutlines(upscaledPixels, image.width, image.height);
+                //BlackOutlines(upscaledPixels, image.width, image.height);
 
                 // Back to indexed+alpha.
                 GL_ConvertBuffer(image.width, image.height, 4, image.isMasked? 2 : 1, upscaledPixels, rgbaPixels, 0, false);
