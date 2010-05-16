@@ -496,18 +496,18 @@ DGLuint GL_UploadTexture(byte *data, int width, int height,
  */
 DGLuint GL_UploadTexture2(texturecontent_t* content)
 {
-    byte*   data = content->buffer;
-    int     width = content->width;
-    int     height = content->height;
+    byte* data = content->buffer;
+    int width = content->width;
+    int height = content->height;
     boolean alphaChannel = ((content->flags & TXCF_UPLOAD_ARG_ALPHACHANNEL) != 0);
     boolean generateMipmaps = ((content->flags & TXCF_MIPMAP) != 0);
     boolean RGBData = ((content->flags & TXCF_UPLOAD_ARG_RGBDATA) != 0);
     boolean noStretch = ((content->flags & TXCF_UPLOAD_ARG_NOSTRETCH) != 0);
     boolean noSmartFilter = ((content->flags & TXCF_UPLOAD_ARG_NOSMARTFILTER) != 0);
     boolean applyTexGamma = ((content->flags & TXCF_APPLY_GAMMACORRECTION) != 0);
-    int     i, levelWidth, levelHeight; // width and height at the current level
-    int     comps;
-    byte   *buffer, *rgbaOriginal, *idxBuffer;
+    int i, levelWidth, levelHeight; // width and height at the current level
+    int comps;
+    byte* buffer, *rgbaOriginal, *idxBuffer;
     boolean freeOriginal;
     boolean freeBuffer;
 
@@ -516,8 +516,7 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
 
     // Calculate the real dimensions for the texture, as required by
     // the graphics hardware.
-    noStretch = GL_OptimalSize(width, height, &levelWidth, &levelHeight,
-                               noStretch, generateMipmaps);
+    noStretch = GL_OptimalSize(width, height, &levelWidth, &levelHeight, noStretch, generateMipmaps);
 
     // Get the RGB(A) version of the original texture.
     if(RGBData)
@@ -534,8 +533,7 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
         freeOriginal = true;
         comps = 4;
         rgbaOriginal = M_Malloc(width * height * comps);
-        GL_ConvertBuffer(width, height, alphaChannel ? 2 : 1, comps, data,
-                         rgbaOriginal, 0, !load8bit);
+        GL_ConvertBuffer(width, height, alphaChannel ? 2 : 1, comps, data, rgbaOriginal, 0, !load8bit);
 
         if(!alphaChannel)
         {
@@ -559,15 +557,14 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
     // If smart filtering is enabled, all textures are magnified 2x.
     if(useSmartFilter && !noSmartFilter /* && comps == 3 */ )
     {
-        byte*           filtered = M_Malloc(4 * width * height * 4);
+        byte* filtered = M_Malloc(4 * width * height * 4);
 
         if(comps == 3)
         {
             // Must convert to RGBA.
-            byte*           temp = M_Malloc(4 * width * height);
+            byte* temp = M_Malloc(4 * width * height);
 
-            GL_ConvertBuffer(width, height, 3, 4, rgbaOriginal, temp,
-                             0, !load8bit);
+            GL_ConvertBuffer(width, height, 3, 4, rgbaOriginal, temp, 0, !load8bit);
 
             if(freeOriginal)
                 M_Free(rgbaOriginal);
@@ -581,11 +578,7 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
         GL_SmartFilter2x(rgbaOriginal, filtered, width, height, width * 8);
         width *= 2;
         height *= 2;
-        noStretch =
-            GL_OptimalSize(width, height, &levelWidth, &levelHeight,
-                           noStretch, generateMipmaps);
-
-        /*memcpy(filtered, rgbaOriginal, comps * width * height); */
+        noStretch = GL_OptimalSize(width, height, &levelWidth, &levelHeight, noStretch, generateMipmaps);
 
         // The filtered copy is now the 'original' image data.
         if(freeOriginal)
@@ -613,16 +606,14 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
             // Copy the image into a buffer with power-of-two dimensions.
             memset(buffer, 0, levelWidth * levelHeight * comps);
             for(i = 0; i < height; ++i) // Copy line by line.
-                memcpy(buffer + levelWidth * comps * i,
-                       rgbaOriginal + width * comps * i, comps * width);
+                memcpy(buffer + levelWidth * comps * i, rgbaOriginal + width * comps * i, comps * width);
         }
         else
         {
             // Stretch to fit into power-of-two.
             if(width != levelWidth || height != levelHeight)
             {
-                GL_ScaleBuffer32(rgbaOriginal, width, height, buffer,
-                                 levelWidth, levelHeight, comps);
+                GL_ScaleBuffer32(rgbaOriginal, width, height, buffer, levelWidth, levelHeight, comps);
             }
         }
     }
@@ -640,12 +631,11 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
     if(load8bit)
     {
         // We are unable to generate mipmaps for paletted textures.
-        int             canGenMips = 0;
-        DGLuint         pal = R_GetColorPalette(content->palette);
+        DGLuint pal = R_GetColorPalette(content->palette);
+        int canGenMips = 0;
 
         // Prepare the palette indices buffer, to be handed over to DGL.
-        idxBuffer =
-            M_Malloc(levelWidth * levelHeight * (alphaChannel ? 2 : 1));
+        idxBuffer = M_Malloc(levelWidth * levelHeight * (alphaChannel ? 2 : 1));
 
         // Since this is a paletted texture, we may need to manually
         // generate the mipmaps.
@@ -657,21 +647,12 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
                 levelHeight = 1;
 
             // Convert to palette indices.
-            GL_ConvertBuffer(levelWidth, levelHeight, comps,
-                             alphaChannel ? 2 : 1, buffer, idxBuffer,
-                             content->palette, false);
+            GL_ConvertBuffer(levelWidth, levelHeight, comps, alphaChannel ? 2 : 1, buffer, idxBuffer, content->palette, false);
 
             // Upload it.
-            if(!GL_TexImage(alphaChannel ? DGL_COLOR_INDEX_8_PLUS_A8 :
-                            DGL_COLOR_INDEX_8, pal, levelWidth,
-                            levelHeight, generateMipmaps &&
-                            canGenMips ? true : generateMipmaps ? -i :
-                            false, idxBuffer))
+            if(!GL_TexImage(alphaChannel ? DGL_COLOR_INDEX_8_PLUS_A8 : DGL_COLOR_INDEX_8, pal, levelWidth, levelHeight, generateMipmaps && canGenMips ? true : generateMipmaps ? -i : false, idxBuffer))
             {
-                Con_Error
-                    ("GL_UploadTexture: TexImage failed (%i x %i) as "
-                     "8-bit, alpha:%i\n", levelWidth, levelHeight,
-                     alphaChannel);
+                Con_Error("GL_UploadTexture: TexImage failed (%i x %i) as 8-bit, alpha:%i\n", levelWidth, levelHeight, alphaChannel);
             }
 
             // If no mipmaps need to generated, quit now.
@@ -691,13 +672,9 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
     else
     {
         // DGL knows how to generate mipmaps for RGB(A) textures.
-        if(!GL_TexImage(alphaChannel ? DGL_RGBA : DGL_RGB, 0, levelWidth,
-                        levelHeight, generateMipmaps ? true : false,
-                        buffer))
+        if(!GL_TexImage(alphaChannel ? DGL_RGBA : DGL_RGB, 0, levelWidth, levelHeight, generateMipmaps ? true : false, buffer))
         {
-            Con_Error
-                ("GL_UploadTexture: TexImage failed (%i x %i), alpha:%i\n",
-                 levelWidth, levelHeight, alphaChannel);
+            Con_Error("GL_UploadTexture: TexImage failed (%i x %i), alpha:%i\n", levelWidth, levelHeight, alphaChannel);
         }
     }
 
@@ -2011,11 +1988,10 @@ static void Equalize(byte* pixels, int width, int height, float* rBaMul,
     if(rLoMul) *rLoMul = loMul;
 }
 
-#if 0 // Currently unused.
 static void EnhanceContrast(byte *pixels, int width, int height)
 {
-    int     i, c;
-    byte*   pix;
+    int i, c;
+    byte* pix;
 
     for(i = 0, pix = pixels; i < width * height; ++i, pix += 4)
     {
@@ -2031,14 +2007,13 @@ static void EnhanceContrast(byte *pixels, int width, int height)
         }
     }
 }
-#endif
 
 static void SharpenPixels(byte* pixels, int width, int height)
 {
-    int     x, y, c;
-    byte*   result = M_Calloc(4 * width * height);
+    int x, y, c;
+    byte* result = M_Calloc(4 * width * height);
     const float strength = .05f;
-    float   A, B, C;
+    float A, B, C;
 
     A = strength;
     B = .70710678 * strength; // 1/sqrt(2)
@@ -2573,7 +2548,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
     {
         gltexture_typedata_t* glTexType = &glTextureTypeData[tex->type];
         gltexture_inst_t localInst;
-        boolean didDefer = false;
+        boolean noSmartFilter = false, didDefer = false;
         image_t image;
 
         if(!texInst)
@@ -2608,9 +2583,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
                 Equalize(image.pixels, image.width, image.height, &baMul, &hiMul, &loMul);
                 if(verbose && (baMul != 1 || hiMul != 1 || loMul != 1))
                 {
-                    Con_Message("GLTexture_Prepare: Equalized detail texture \"%s\" "
-                                "(balance: %g, high amp: %g, low amp: %g).\n",
-                                texInst->tex->name, baMul, hiMul, loMul);
+                    Con_Message("GLTexture_Prepare: Equalized detail texture \"%s\" (balance: %g, high amp: %g, low amp: %g).\n", texInst->tex->name, baMul, hiMul, loMul);
                 }
             }
 
@@ -2637,6 +2610,9 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
                 M_Free(upscaledPixels);
                 M_Free(image.pixels);
                 image.pixels = rgbaPixels;
+
+                // Lets not do this again.
+                noSmartFilter = true;
             }
         }
 
@@ -2718,6 +2694,9 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
 
         if(alphaChannel)
             flags |= TXCF_UPLOAD_ARG_ALPHACHANNEL;
+
+        if(noSmartFilter)
+            flags |= TXCF_UPLOAD_ARG_NOSMARTFILTER;
 
         if(tex->type == GLT_FLAT || tex->type == GLT_DOOMTEXTURE || tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE)
         {
