@@ -2183,55 +2183,57 @@ int Hu_MenuResponder(event_t* ev)
  */
 void MN_DrawColorWidget(void)
 {
-    int         w = 0;
-    menu_t     *menu = &ColorWidgetMnu;
+#if __JDOOM__ || __JDOOM64__
+#define BGWIDTH     (160)
+#define BGHEIGHT    (rgba? 85 : 75)
+#else // __JHERETIC__ || __JHEXEN__
+#define BGWIDTH     (180)
+#define BGHEIGHT    (rgba? 170 : 140)
+#endif
 
-    if(widgetEdit)
+    menu_t* menu = &ColorWidgetMnu;
+    int x = menu->x - 24, y = menu->y - 40;
+
+    if(!widgetEdit)
+        return;
+
+    M_DrawBackgroundBox(x, y, BGWIDTH, BGHEIGHT, true, BORDERUP, 1, 1, 1, menuAlpha);
+
+    DGL_SetNoMaterial();
+    DGL_DrawRect(x + BGWIDTH/2 - 24/2, y + 10, 24, 22, currentcolor[0], currentcolor[1], currentcolor[2], currentcolor[3]);
+    M_DrawBackgroundBox(x + BGWIDTH/2 - 24/2, y + 10, 24, 22, false, BORDERDOWN, 1, 1, 1, menuAlpha);
+
+    x = menu->x;
+    y = menu->y;
+
+#if __JDOOM__ || __JDOOM64__
+    MN_DrawSlider(menu, 0, 11, currentcolor[0] * 10 + .25f);
+    M_DrawText4(ColorWidgetItems[0].text, x, y, GF_FONTA, 0, 1, 1, 1, menuAlpha);
+    MN_DrawSlider(menu, 1, 11, currentcolor[1] * 10 + .25f);
+    M_DrawText4(ColorWidgetItems[1].text, x, y + (LINEHEIGHT_A), GF_FONTA, 0, 1, 1, 1, menuAlpha);
+    MN_DrawSlider(menu, 2, 11, currentcolor[2] * 10 + .25f);
+    M_DrawText4(ColorWidgetItems[2].text, x, y + (LINEHEIGHT_A * 2), GF_FONTA, 0, 1, 1, 1, menuAlpha);
+#else
+    MN_DrawSlider(menu, 1, 11, currentcolor[0] * 10 + .25f);
+    M_DrawText4(ColorWidgetItems[0].text, x, y, GF_FONTA, 0, 1, 1, 1, menuAlpha);
+    MN_DrawSlider(menu, 4, 11, currentcolor[1] * 10 + .25f);
+    M_DrawText4(ColorWidgetItems[3].text, x, y + (LINEHEIGHT_A * 3), GF_FONTA, 0, 1, 1, 1, menuAlpha);
+    MN_DrawSlider(menu, 7, 11, currentcolor[2] * 10 + .25f);
+    M_DrawText4(ColorWidgetItems[6].text, x, y + (LINEHEIGHT_A * 6), GF_FONTA, 0, 1, 1, 1, menuAlpha);
+#endif
+    if(rgba)
     {
 #if __JDOOM__ || __JDOOM64__
-        w = 38;
+        MN_DrawSlider(menu, 3, 11, currentcolor[3] * 10 + .25f);
+        M_DrawText4(ColorWidgetItems[3].text, x, y + (LINEHEIGHT_A * 3), GF_FONTA, 0, 1, 1, 1, menuAlpha);
 #else
-        w = 46;
+        MN_DrawSlider(menu, 10, 11, currentcolor[3] * 10 + .25f);
+        M_DrawText4(ColorWidgetItems[9].text, x, y + (LINEHEIGHT_A * 9), GF_FONTA, 0, 1, 1, 1, menuAlpha);
 #endif
-
-        M_DrawBackgroundBox(menu->x -30, menu->y -40,
-#if __JDOOM__ || __JDOOM64__
-                        160, (rgba? 85 : 75),
-#else
-                        180, (rgba? 170 : 140),
-#endif
-                             true, BORDERUP, 1, 1, 1, menuAlpha);
-
-        DGL_SetNoMaterial();
-        DGL_DrawRect(menu->x+w, menu->y-30, 24, 22, currentcolor[0], currentcolor[1], currentcolor[2], currentcolor[3]);
-        M_DrawBackgroundBox(menu->x+w, menu->y-30, 24, 22, false, BORDERDOWN, 1, 1, 1, menuAlpha);
-#if __JDOOM__ || __JDOOM64__
-        MN_DrawSlider(menu, 0, 11, currentcolor[0] * 10 + .25f);
-        M_DrawText4(ColorWidgetItems[0].text, menu->x, menu->y, GF_FONTA, 0, 1, 1, 1, menuAlpha);
-        MN_DrawSlider(menu, 1, 11, currentcolor[1] * 10 + .25f);
-        M_DrawText4(ColorWidgetItems[1].text, menu->x, menu->y + (LINEHEIGHT_A), GF_FONTA, 0, 1, 1, 1, menuAlpha);
-        MN_DrawSlider(menu, 2, 11, currentcolor[2] * 10 + .25f);
-        M_DrawText4(ColorWidgetItems[2].text, menu->x, menu->y + (LINEHEIGHT_A * 2), GF_FONTA, 0, 1, 1, 1, menuAlpha);
-#else
-        MN_DrawSlider(menu, 1, 11, currentcolor[0] * 10 + .25f);
-        M_DrawText4(ColorWidgetItems[0].text, menu->x, menu->y, GF_FONTA, 0, 1, 1, 1, menuAlpha);
-        MN_DrawSlider(menu, 4, 11, currentcolor[1] * 10 + .25f);
-        M_DrawText4(ColorWidgetItems[3].text, menu->x, menu->y + (LINEHEIGHT_A * 3), GF_FONTA, 0, 1, 1, 1, menuAlpha);
-        MN_DrawSlider(menu, 7, 11, currentcolor[2] * 10 + .25f);
-        M_DrawText4(ColorWidgetItems[6].text, menu->x, menu->y + (LINEHEIGHT_A * 6), GF_FONTA, 0, 1, 1, 1, menuAlpha);
-#endif
-        if(rgba)
-        {
-#if __JDOOM__ || __JDOOM64__
-            MN_DrawSlider(menu, 3, 11, currentcolor[3] * 10 + .25f);
-            M_DrawText4(ColorWidgetItems[3].text, menu->x, menu->y + (LINEHEIGHT_A * 3), GF_FONTA, 0, 1, 1, 1, menuAlpha);
-#else
-            MN_DrawSlider(menu, 10, 11, currentcolor[3] * 10 + .25f);
-            M_DrawText4(ColorWidgetItems[9].text, menu->x, menu->y + (LINEHEIGHT_A * 9), GF_FONTA, 0, 1, 1, 1, menuAlpha);
-#endif
-        }
-
     }
+
+#undef BGWIDTH
+#undef BGHEIGHT
 }
 
 /**
@@ -2260,11 +2262,21 @@ void SCColorWidget(int index, void* context)
     {
         rgba = true;
         currentcolor[3] = *widgetcolors[index].a;
+#if __JHERETIC__ || __JHEXEN__
+        ColorWidgetMnu.itemCount = 12;
+#else
+        ColorWidgetMnu.itemCount = 4;
+#endif
     }
     else
     {
         rgba = false;
         currentcolor[3] = 1.0f;
+#if __JHERETIC__ || __JHEXEN__
+        ColorWidgetMnu.itemCount = 9;
+#else
+        ColorWidgetMnu.itemCount = 3;
+#endif
     }
 
     // Activate the widget
