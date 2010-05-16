@@ -96,12 +96,12 @@
 #define ST_FRAGSWIDTH       (2)
 
 // Counter Cheat flags.
-#define CCH_KILLS               0x1
-#define CCH_ITEMS               0x2
-#define CCH_SECRET              0x4
-#define CCH_KILLS_PRCNT         0x8
-#define CCH_ITEMS_PRCNT         0x10
-#define CCH_SECRET_PRCNT        0x20
+#define CCH_KILLS           0x01
+#define CCH_ITEMS           0x02
+#define CCH_SECRET          0x04
+#define CCH_KILLS_PRCNT     0x08
+#define CCH_ITEMS_PRCNT     0x10
+#define CCH_SECRET_PRCNT    0x20
 
 // TYPES -------------------------------------------------------------------
 
@@ -147,7 +147,7 @@ typedef struct {
 
     // Widgets:
     st_multiicon_t  wCurrentAmmoIcon; // Current ammo icon.
-    st_number_t     wReadyWeapon; // Ready-weapon.
+    st_number_t     wReadyAmmo; // Ready-weapon.
     st_number_t     wFrags; // In deathmatch only, summary of frags stats.
     st_number_t     wHealth; // Health.
     st_number_t     wArmor; // Armor.
@@ -179,8 +179,6 @@ static patchinfo_t statBar;
 static patchinfo_t lifeBar;
 static patchinfo_t invBar;
 static patchinfo_t lifeGems[4];
-static patchinfo_t iNumbers[10];
-static patchinfo_t negative;
 static patchinfo_t ammoIcons[11];
 static patchinfo_t dpInvItemFlash[5];
 static patchinfo_t spinBook[16];
@@ -188,7 +186,6 @@ static patchinfo_t spinFly[16];
 static patchinfo_t keys[NUM_KEY_TYPES];
 static patchinfo_t godLeft;
 static patchinfo_t godRight;
-static patchinfo_t lame;
 
 // CVARs for the HUD/Statusbar
 cvar_t sthudCVars[] = {
@@ -516,7 +513,7 @@ void ST_updateWidgets(int player)
             continue; // Weapon does not use this type of ammo.
 
         //// \todo Only supports one type of ammo per weapon.
-        hud->wReadyWeapon.num = &plr->ammo[ammoType].owned;
+        hud->wReadyAmmo.num = &plr->ammo[ammoType].owned;
 
         if(hud->oldReadyWeapon != plr->readyWeapon)
             hud->currentAmmoIconIdx = (int) ammoType;
@@ -526,7 +523,7 @@ void ST_updateWidgets(int player)
 
     if(!found) // Weapon takes no ammo at all.
     {
-        hud->wReadyWeapon.num = &largeammo;
+        hud->wReadyAmmo.num = &largeammo;
         hud->currentAmmoIconIdx = -1;
     }
 
@@ -733,7 +730,8 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    STlib_DrawNum(&hud->wFrags, textAlpha);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha * hud->wFrags.alpha);
+    STlib_DrawNum(&hud->wFrags);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -759,7 +757,8 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    STlib_DrawNum(&hud->wHealth, textAlpha);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha * hud->wHealth.alpha);
+    STlib_DrawNum(&hud->wHealth);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -784,7 +783,8 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    STlib_DrawNum(&hud->wArmor, textAlpha);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha * hud->wArmor.alpha);
+    STlib_DrawNum(&hud->wArmor);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -841,7 +841,8 @@ void drawSBarReadyWeaponWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    STlib_DrawNum(&hud->wReadyWeapon, iconAlpha);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], hud->wReadyAmmo.alpha * iconAlpha);
+    STlib_DrawNum(&hud->wReadyAmmo);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -961,32 +962,25 @@ static void drawINumber(signed int val, int x, int y, float r, float g, float b,
     oldval = val;
     if(val < 0)
     {
-        if(val < -9)
-        {
-            M_DrawPatch(lame.id, x + 1, y + 1);
-        }
-        else
-        {
-            val = -val;
-            M_DrawPatch(iNumbers[val].id, x + 18, y);
-            M_DrawPatch(negative.id, x + 9, y);
-        }
+        val = -val;
+        M_DrawChar2('0' + (val % 10), x + 18, y, GF_STATUS);
+        M_DrawChar2('-', x + 9, y, GF_STATUS);
         return;
     }
 
     if(val > 99)
     {
-        M_DrawPatch(iNumbers[val / 100].id, x, y);
+        M_DrawChar2('0' + ((val / 100)%10), x, y, GF_STATUS);
     }
 
     val = val % 100;
     if(val > 9 || oldval > 99)
     {
-        M_DrawPatch(iNumbers[val / 10].id, x + 9, y);
+        M_DrawChar2('0' + ((val / 10)%10), x + 9, y, GF_STATUS);
     }
 
     val = val % 10;
-    M_DrawPatch(iNumbers[val].id, x + 18, y);
+    M_DrawChar2('0' + (val%10), x + 18, y, GF_STATUS);
 }
 
 /**
@@ -1182,11 +1176,11 @@ void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
         dp = &ammoIcons[plr->readyWeapon - 1];
         DGL_Color4f(1, 1, 1, iconAlpha);
         M_DrawPatch2(dp->id, 0, 0, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
-        drawINumber(plr->ammo[ammoType].owned, dp->width+1, -2, 1, 1, 1, textAlpha);
+        drawINumber(plr->ammo[ammoType].owned, dp->width+1, -2, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
         /// \kludge calculate the visual dimensions properly!
-        *drawnWidth += dp->width + 2 + (iNumbers[0].width+1) * 3 - 1;
-        if(MAX_OF(dp->height, iNumbers[0].height) > *drawnHeight)
-            *drawnHeight = MAX_OF(dp->height, iNumbers[0].height);
+        *drawnWidth += dp->width + 2 + (M_CharWidth('0', GF_STATUS)+1) * 3 - 1;
+        if(MAX_OF(dp->height, M_CharHeight('0', GF_STATUS)) > *drawnHeight)
+            *drawnHeight = MAX_OF(dp->height, M_CharHeight('0', GF_STATUS));
         break;
     }
 }
@@ -1224,10 +1218,10 @@ void drawArmorWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-    drawINumber(plr->armorPoints, -1, -11, 1, 1, 1, textAlpha);
+    drawINumber(plr->armorPoints, -1, -11, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     /// \kludge calculate the visual dimensions properly!
-    *drawnWidth = (iNumbers[0].width+1) * 3 - 1;
-    *drawnHeight = iNumbers[0].height;
+    *drawnWidth = (M_CharWidth('0', GF_STATUS)+1) * 3 - 1;
+    *drawnHeight = M_CharHeight('0', GF_STATUS);
 }
 
 void drawKeysWidget(int player, float textAlpha, float iconAlpha,
@@ -1297,10 +1291,10 @@ void drawFragsWidget(int player, float textAlpha, float iconAlpha,
     for(i = 0; i < MAXPLAYERS; ++i)
         if(players[i].plr->inGame)
             numFrags += plr->frags[i];
-    drawINumber(numFrags, 0, -13, 1, 1, 1, textAlpha);
+    drawINumber(numFrags, 0, -13, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     /// \kludge calculate the visual dimensions properly!
-    *drawnWidth = (iNumbers[0].width+1) * 3;
-    *drawnHeight = iNumbers[0].height;
+    *drawnWidth = (M_CharWidth('0', GF_STATUS)+1) * 3;
+    *drawnHeight = M_CharHeight('0', GF_STATUS);
 }
 
 void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
@@ -1511,7 +1505,6 @@ void ST_Drawer(int player)
         };
         const uiwidgetdef_t widgetDefs[] = {
             { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawStatusBarBackground, &cfg.statusbarOpacity, &cfg.statusbarOpacity },
-            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawChainWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
             { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarInventoryWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
             { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarFragsWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
             { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarHealthWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
@@ -1520,6 +1513,7 @@ void ST_Drawer(int player)
             { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarReadyWeaponWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
             { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarCurrentAmmoWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
             { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawSBarCurrentItemWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
+            { UWG_STATUSBAR, -1, &cfg.statusbarScale, 1, drawChainWidget, &cfg.statusbarCounterAlpha, &cfg.statusbarCounterAlpha },
             { UWG_TOPLEFT, HUD_AMMO, &cfg.hudScale, 1, drawAmmoWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
             { UWG_TOPLEFT2, -1, &cfg.hudScale, 1, drawFlightWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
             { UWG_TOPRIGHT, -1, &cfg.hudScale, 1, drawTombOfPowerWidget, &cfg.hudColor[3], &cfg.hudIconAlpha },
@@ -1684,7 +1678,6 @@ void ST_loadGraphics(void)
     R_PrecachePatch("GOD2", &godRight);
     R_PrecachePatch("LTFCTOP", &statusbarTopLeft);
     R_PrecachePatch("RTFCTOP", &statusbarTopRight);
-    R_PrecachePatch("NEGNUM", &negative);
     for(i = 0; i < 16; ++i)
     {
         sprintf(nameBuf, "SPINBK%d", i);
@@ -1692,13 +1685,6 @@ void ST_loadGraphics(void)
 
         sprintf(nameBuf, "SPFLY%d", i);
         R_PrecachePatch(nameBuf, &spinFly[i]);
-    }
-    R_PrecachePatch("LAME", &lame);
-
-    for(i = 0; i < 10; ++i)
-    {
-        sprintf(nameBuf, "IN%d", i);
-        R_PrecachePatch(nameBuf, &iNumbers[i]);
     }
 
     // Inventory item flash anim.
@@ -1790,7 +1776,7 @@ void ST_createWidgets(int player)
         if(!weaponInfo[plr->readyWeapon][plr->class].mode[lvl].ammoType[ammoType])
             continue; // Weapon does not take this ammo.
 
-        STlib_InitNum(&hud->wReadyWeapon, ORIGINX+ST_AMMOX, ORIGINY+ST_AMMOY, iNumbers, &plr->ammo[ammoType].owned, ST_AMMOWIDTH, 1);
+        STlib_InitNum(&hud->wReadyAmmo, ORIGINX+ST_AMMOX, ORIGINY+ST_AMMOY, GF_STATUS, &plr->ammo[ammoType].owned, ST_AMMOWIDTH, false, 1);
 
         found = true;
     }
@@ -1800,25 +1786,25 @@ void ST_createWidgets(int player)
         // if weaponInfo[plr->readyWeapon].ammo == am_noammo
         // ...obviously a bug.
 
-        //STlib_InitNum(&wReadyWeapon, ORIGINX+ST_AMMOX, ST_AMMOY, iNumbers,
+        //STlib_InitNum(&wReadyAmmo, ORIGINX+ST_AMMOX, ST_AMMOY, GF_STATUS,
         //              &plr->ammo[weaponinfo[plr->readyWeapon].ammo],
         //              &statusbarActive, ST_AMMOWIDTH);
 
         // Ready weapon ammo.
-        STlib_InitNum(&hud->wReadyWeapon, ORIGINX+ST_AMMOX, ORIGINY+ST_AMMOY, iNumbers, &largeammo, ST_AMMOWIDTH, 1);
+        STlib_InitNum(&hud->wReadyAmmo, ORIGINX+ST_AMMOX, ORIGINY+ST_AMMOY, GF_STATUS, &largeammo, ST_AMMOWIDTH, false, 1);
     }
 
     // Ready weapon icon
     STlib_InitMultiIcon(&hud->wCurrentAmmoIcon, ORIGINX+ST_AMMOICONX, ORIGINY+ST_AMMOICONY, ammoIcons, 1);
 
     // Health num.
-    STlib_InitNum(&hud->wHealth, ORIGINX+ST_HEALTHX, ORIGINY+ST_HEALTHY, iNumbers, &plr->health, ST_HEALTHWIDTH, 1);
+    STlib_InitNum(&hud->wHealth, ORIGINX+ST_HEALTHX, ORIGINY+ST_HEALTHY, GF_STATUS, &plr->health, ST_HEALTHWIDTH, false, 1);
 
-    // Armor percentage - should be colored later.
-    STlib_InitNum(&hud->wArmor, ORIGINX+ST_ARMORX, ORIGINY+ST_ARMORY, iNumbers, &plr->armorPoints, ST_ARMORWIDTH, 1);
+    // Armor.
+    STlib_InitNum(&hud->wArmor, ORIGINX+ST_ARMORX, ORIGINY+ST_ARMORY, GF_STATUS, &plr->armorPoints, ST_ARMORWIDTH, false, 1);
 
     // Frags sum.
-    STlib_InitNum(&hud->wFrags, ORIGINX+ST_FRAGSX, ORIGINY+ST_FRAGSY, iNumbers, &hud->fragsCount, ST_FRAGSWIDTH, 1);
+    STlib_InitNum(&hud->wFrags, ORIGINX+ST_FRAGSX, ORIGINY+ST_FRAGSY, GF_STATUS, &hud->fragsCount, ST_FRAGSWIDTH, false, 1);
 
     // KeyBoxes 0-2.
     STlib_InitIcon(&hud->wKeyBoxes[0], ORIGINX+ST_KEY0X, ORIGINY+ST_KEY0Y, &keys[0], 1);

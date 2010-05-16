@@ -181,7 +181,6 @@ static patchinfo_t dpSliderLeft;
 static patchinfo_t dpSliderMiddle;
 static patchinfo_t dpSliderRight;
 static patchinfo_t dpSliderHandle;
-static patchinfo_t huMinus;
 
 // CODE -------------------------------------------------------------------
 
@@ -507,6 +506,19 @@ void Hu_LoadData(void)
         { 122, "FONTB090" } // z
     };
 #else // __JHERETIC__ || __JHEXEN__
+    static const fontpatch_t fontStatus[] = {
+        { 45, "NEGNUM" }, // -
+        { 48, "IN0" }, // 0
+        { 49, "IN1" }, // 1
+        { 50, "IN2" }, // 2
+        { 51, "IN3" }, // 3
+        { 52, "IN4" }, // 4
+        { 53, "IN5" }, // 5
+        { 54, "IN6" }, // 6
+        { 55, "IN7" }, // 7
+        { 56, "IN8" }, // 8
+        { 57, "IN9" }, // 9
+    };
     // Heretic/Hexen don't use ASCII numbered font patches
     // plus they don't even have a full set eg '!' = 1 '_'= 58 !!!
     static const fontpatch_t fontA[] = {
@@ -740,11 +752,6 @@ void Hu_LoadData(void)
     for(i = 1; i < 9; ++i)
         R_PrecachePatch(borderLumps[i], &borderPatches[i-1]);
 
-    // Patch used for '-' (minus) in the status bar.
-#if __JHERETIC__ || __JHEXEN__
-    R_PrecachePatch("FONTB13", &huMinus);
-#endif
-
 #if __JDOOM__ || __JDOOM64__
     R_PrecachePatch("M_THERML", &dpSliderLeft);
     R_PrecachePatch("M_THERM2", &dpSliderMiddle);
@@ -812,11 +819,9 @@ void Hu_LoadData(void)
 
     R_InitFont(GF_FONTA, fontA, sizeof(fontA) / sizeof(fontA[0]));
     R_InitFont(GF_FONTB, fontB, sizeof(fontB) / sizeof(fontB[0]));
+    R_InitFont(GF_STATUS, fontStatus, sizeof(fontStatus) / sizeof(fontStatus[0]));
 #if __JDOOM__
     R_InitFont(GF_INDEX, fontIndex, sizeof(fontIndex) / sizeof(fontIndex[0]));
-#endif
-#if __JDOOM__ || __JDOOM64__
-    R_InitFont(GF_STATUS, fontStatus, sizeof(fontStatus) / sizeof(fontStatus[0]));
 #endif
 #if __JHERETIC__ || __JHEXEN__
     R_InitFont(GF_SMALLIN, fontSmallIn, sizeof(fontSmallIn) / sizeof(fontSmallIn[0]));
@@ -2361,7 +2366,6 @@ void M_DrawText(const char* string, int x, int y)
 void Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha)
 {
     int w = M_CharWidth('0', GF_SMALLIN);
-    boolean drawMinus = false;
 
     if(val < 0)
     {
@@ -2370,7 +2374,6 @@ void Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha)
         else if(numDigits == 3 && val < -99)
             val = -99;
         val = -val;
-        drawMinus = true;
     }
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], alpha);
@@ -2386,10 +2389,6 @@ void Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha)
         M_DrawPatch2(patchForFontChar(GF_SMALLIN, '0' + (val % 10)), x, y, DPF_ALIGN_LEFT);
         val /= 10;
     }
-
-    // Draw a minus sign if necessary.
-    if(drawMinus)
-        M_DrawPatch2(huMinus.id, x - 8, y, DPF_ALIGN_LEFT);
 }
 #endif
 

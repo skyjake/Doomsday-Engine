@@ -39,11 +39,9 @@ typedef enum {
     GF_FIRST = 0,
     GF_FONTA = GF_FIRST,
     GF_FONTB,
+    GF_STATUS,
 #if __JDOOM__
     GF_INDEX,
-#endif
-#if __JDOOM__ || __JDOOM64__
-    GF_STATUS,
 #endif
 #if __JHERETIC__ || __JHEXEN__
     GF_SMALLIN,
