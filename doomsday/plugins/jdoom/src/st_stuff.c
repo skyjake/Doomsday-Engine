@@ -69,18 +69,16 @@
 #define ST_NUMTURNFACES     (2)
 #define ST_NUMSPECIALFACES  (3)
 
-#define ST_FACESTRIDE \
-          (ST_NUMSTRAIGHTFACES+ST_NUMTURNFACES+ST_NUMSPECIALFACES)
+#define ST_FACESTRIDE       (ST_NUMSTRAIGHTFACES+ST_NUMTURNFACES+ST_NUMSPECIALFACES)
 
 #define ST_NUMEXTRAFACES    (2)
 
-#define ST_NUMFACES \
-          (ST_FACESTRIDE*ST_NUMPAINFACES+ST_NUMEXTRAFACES)
+#define ST_NUMFACES         (ST_FACESTRIDE*ST_NUMPAINFACES+ST_NUMEXTRAFACES)
 
 #define ST_TURNOFFSET       (ST_NUMSTRAIGHTFACES)
 #define ST_OUCHOFFSET       (ST_TURNOFFSET + ST_NUMTURNFACES)
-#define ST_EVILGRINOFFSET       (ST_OUCHOFFSET + 1)
-#define ST_RAMPAGEOFFSET        (ST_EVILGRINOFFSET + 1)
+#define ST_EVILGRINOFFSET   (ST_OUCHOFFSET + 1)
+#define ST_RAMPAGEOFFSET    (ST_EVILGRINOFFSET + 1)
 #define ST_GODFACE          (ST_NUMPAINFACES*ST_FACESTRIDE)
 #define ST_DEADFACE         (ST_GODFACE+1)
 
@@ -147,12 +145,12 @@
 #define ST_MAXAMMOY         (5)
 
 // Counter Cheat flags.
-#define CCH_KILLS               0x1
-#define CCH_ITEMS               0x2
-#define CCH_SECRET              0x4
-#define CCH_KILLS_PRCNT         0x8
-#define CCH_ITEMS_PRCNT         0x10
-#define CCH_SECRET_PRCNT        0x20
+#define CCH_KILLS           0x01
+#define CCH_ITEMS           0x02
+#define CCH_SECRET          0x04
+#define CCH_KILLS_PRCNT     0x08
+#define CCH_ITEMS_PRCNT     0x10
+#define CCH_SECRET_PRCNT    0x20
 
 // TYPES -------------------------------------------------------------------
 
