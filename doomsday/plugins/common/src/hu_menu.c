@@ -3086,7 +3086,7 @@ void M_DrawHUDMenu(void)
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
-    MN_DrawSlider(menu, idx++, 11, cfg.msgScale * 10 + .25f);
+    MN_DrawSlider(menu, idx++, 11, cfg.msgScale * 11 - 1 + .25f);
 #if __JHERETIC__ || __JHEXEN__
     idx++;
 #endif
