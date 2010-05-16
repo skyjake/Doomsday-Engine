@@ -1759,9 +1759,9 @@ void M_DrawMapMenu(void)
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 
     // Draw the page arrows.
-    token = dpInvPageLeft[!menu->firstItem || (menuTime & 8)].id;
+    token = dpInvPageLeft[!menu->firstItem || (menuTime & 8)];
     M_DrawPatch(token, menu->x, menu->y - 22);
-    token = dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)].id;
+    token = dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)];
     M_DrawPatch(token, 312 - menu->x, menu->y - 22);
 #endif
 

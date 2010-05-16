@@ -56,19 +56,18 @@ typedef struct gamefont_s {
     } chars[256];
 } gamefont_t;
 
-extern patchinfo_t m_pause; // Paused graphic.
-extern patchinfo_t* mapNamePatches; // Name graphics of each map.
+extern patchid_t* mapNamePatches; // Name graphics of each map.
 #if __JDOOM__ || __JDOOM64__
-extern patchinfo_t skillModeNames[NUM_SKILL_MODES]; // Name graphics of each skill mode.
+extern patchid_t skillModeNames[NUM_SKILL_MODES]; // Name graphics of each skill mode.
 #endif
 #if __JDOOM__
-extern patchinfo_t* episodeNamePatches; // Name graphics of each episode.
+extern patchid_t* episodeNamePatches; // Name graphics of each episode.
 #endif
 #if __JHERETIC__ || __JHEXEN__
-extern patchinfo_t dpInvItemBox;
-extern patchinfo_t dpInvSelectBox;
-extern patchinfo_t dpInvPageLeft[2];
-extern patchinfo_t dpInvPageRight[2];
+extern patchid_t dpInvItemBox;
+extern patchid_t dpInvSelectBox;
+extern patchid_t dpInvPageLeft[2];
+extern patchid_t dpInvPageRight[2];
 #endif
 
 extern const char shiftXForm[];
@@ -112,20 +111,22 @@ void            Draw_EndZoom(void);
  * @defGroup drawTextFlags Draw Text Flags
  */
 /*@{*/
-#define DTF_ALIGN_LEFT      0x1
-#define DTF_ALIGN_RIGHT     0x2
-#define DTF_NO_TYPEIN       0x4
-#define DTF_NO_SHADOW       0x8
+#define DTF_ALIGN_LEFT      0x0001
+#define DTF_ALIGN_RIGHT     0x0002
+#define DTF_ALIGN_BOTTOM    0x0004
+#define DTF_ALIGN_TOP       0x0008
+#define DTF_NO_TYPEIN       0x0010
+#define DTF_NO_SHADOW       0x0020
 #define DTF_NO_EFFECTS      (DTF_NO_TYPEIN|DTF_NO_SHADOW)
 /*@}*/
 
 void            M_DrawText(const char* string, int x, int y);
 void            M_DrawText2(const char* string, int x, int y, gamefontid_t font);
-void            M_DrawText3(const char* string, int x, int y, gamefontid_t font, byte flags);
-void            M_DrawText4(const char* string, int x, int y, gamefontid_t font, byte flags, float red, float green, float blue, float alpha);
-void            M_DrawText5(const char* string, int x, int y, gamefontid_t font, byte flags, float red, float green, float blue, float alpha, int initialCount);
+void            M_DrawText3(const char* string, int x, int y, gamefontid_t font, short flags);
+void            M_DrawText4(const char* string, int x, int y, gamefontid_t font, short flags, float red, float green, float blue, float alpha);
+void            M_DrawText5(const char* string, int x, int y, gamefontid_t font, short flags, float red, float green, float blue, float alpha, int initialCount);
 
-void            WI_DrawParamText(const char* string, int x, int y, gamefontid_t font, byte flags, float defRed, float defGreen, float defBlue, float defAlpha, boolean defCase);
+void            WI_DrawParamText(const char* string, int x, int y, gamefontid_t font, short flags, float defRed, float defGreen, float defBlue, float defAlpha, boolean defCase);
 
 // Utility routines:
 int             M_TextWidth(const char* string, gamefontid_t font);
@@ -136,11 +137,11 @@ int             M_TextHeight(const char* string, gamefontid_t font);
  */
 void            M_DrawChar(unsigned char ch, int x, int y);
 void            M_DrawChar2(unsigned char ch, int x, int y, gamefontid_t font);
-void            M_DrawChar3(unsigned char ch, int x, int y, gamefontid_t font, byte flags);
+void            M_DrawChar3(unsigned char ch, int x, int y, gamefontid_t font, short flags);
 
 void            M_DrawShadowedChar(unsigned char ch, int x, int y);
 void            M_DrawShadowedChar2(unsigned char ch, int x, int y, gamefontid_t font);
-void            M_DrawShadowedChar3(unsigned char ch, int x, int y, gamefontid_t font, byte flags, float r, float g, float b, float a);
+void            M_DrawShadowedChar3(unsigned char ch, int x, int y, gamefontid_t font, short flags, float r, float g, float b, float a);
 
 // Utility routines:
 int             M_CharWidth(unsigned char ch, gamefontid_t font);
@@ -165,24 +166,26 @@ void            IN_DrawNumber(int val, int x, int y, int digits, float r, float 
  * @defGroup drawPatchFlags Draw Patch Flags.
  */
 /*@{*/
-#define DPF_ALIGN_LEFT      0x1
-#define DPF_ALIGN_RIGHT     0x2
-#define DPF_NO_OFFSETX      0x4
-#define DPF_NO_OFFSETY      0x8
+#define DPF_ALIGN_LEFT      0x0001
+#define DPF_ALIGN_RIGHT     0x0002
+#define DPF_ALIGN_BOTTOM    0x0004
+#define DPF_ALIGN_TOP       0x0008
+#define DPF_NO_OFFSETX      0x0010
+#define DPF_NO_OFFSETY      0x0020
 #define DPF_NO_OFFSET       (DPF_NO_OFFSETX | DPF_NO_OFFSETY)
 /*@}*/
 
 void            M_DrawPatch(patchid_t id, int x, int y);
-void            M_DrawPatch2(patchid_t id, int x, int y, byte flags);
+void            M_DrawPatch2(patchid_t id, int x, int y, short flags);
 
 void            M_DrawShadowedPatch(patchid_t id, int x, int y);
-void            M_DrawShadowedPatch2(patchid_t id, int x, int y, byte flags);
-void            M_DrawShadowedPatch3(patchid_t id, int x, int y, byte flags, float r, float g, float b, float a);
+void            M_DrawShadowedPatch2(patchid_t id, int x, int y, short flags);
+void            M_DrawShadowedPatch3(patchid_t id, int x, int y, short flags, float r, float g, float b, float a);
 
 // Implements patch replacement.
 void            WI_DrawPatch(patchid_t id, int x, int y, const char* altstring, boolean builtin);
-void            WI_DrawPatch2(patchid_t id, int x, int y, const char* altstring, boolean builtin, byte flags);
-void            WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, boolean builtin, byte flags, float r, float g, float b, float a);
+void            WI_DrawPatch2(patchid_t id, int x, int y, const char* altstring, boolean builtin, short flags);
+void            WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, boolean builtin, short flags, float r, float g, float b, float a);
 
 /**
  * Misc specialised elements:

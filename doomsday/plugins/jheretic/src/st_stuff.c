@@ -1175,7 +1175,7 @@ void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
             continue;
         dp = &ammoIcons[plr->readyWeapon - 1];
         DGL_Color4f(1, 1, 1, iconAlpha);
-        M_DrawPatch2(dp->id, 0, 0, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
+        M_DrawPatch2(dp->id, 0, 0, DPF_ALIGN_LEFT|DPF_ALIGN_TOP|DPF_NO_OFFSET);
         drawINumber(plr->ammo[ammoType].owned, dp->width+1, -2, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
         /// \kludge calculate the visual dimensions properly!
         *drawnWidth += dp->width + 2 + (M_CharWidth('0', GF_STATUS)+1) * 3 - 1;
@@ -1201,8 +1201,8 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
     dd_snprintf(buf, 5, "%i", health);
     h = M_TextHeight(buf, GF_FONTB);
     w = M_TextWidth(buf, GF_FONTB);
-    M_DrawText4(buf, 2, -h + 1, GF_FONTB, DTF_NO_EFFECTS, 0, 0, 0, textAlpha * .4f);
-    M_DrawText4(buf, 0, -h - 1, GF_FONTB, DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, 2, 1, GF_FONTB, DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, 0, 0, 0, textAlpha * .4f);
+    M_DrawText4(buf, 0, -1, GF_FONTB, DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     *drawnWidth = w;
     *drawnHeight = h;
 }
@@ -1243,7 +1243,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
     if(plr->keys[KT_YELLOW])
     {
         DGL_Color4f(1, 1, 1, iconAlpha);
-        M_DrawPatch2(keys[0].id, x, -keys[0].height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
+        M_DrawPatch2(keys[0].id, x, -keys[0].height, DPF_ALIGN_LEFT|DPF_ALIGN_TOP|DPF_NO_OFFSET);
         x += keys[0].width + 1;
         *drawnWidth += keys[0].width;
         if(keys[0].height > *drawnHeight)
@@ -1254,7 +1254,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
     if(plr->keys[KT_GREEN])
     {
         DGL_Color4f(1, 1, 1, iconAlpha);
-        M_DrawPatch2(keys[1].id, x, -keys[1].height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
+        M_DrawPatch2(keys[1].id, x, -keys[1].height, DPF_ALIGN_LEFT|DPF_ALIGN_TOP|DPF_NO_OFFSET);
         x += keys[1].width + 1;
         *drawnWidth += keys[1].width;
         if(keys[1].height > *drawnHeight)
@@ -1265,7 +1265,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
     if(plr->keys[KT_BLUE])
     {
         DGL_Color4f(1, 1, 1, iconAlpha);
-        M_DrawPatch2(keys[2].id, x, -keys[2].height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
+        M_DrawPatch2(keys[2].id, x, -keys[2].height, DPF_ALIGN_LEFT|DPF_ALIGN_TOP|DPF_NO_OFFSET);
         x += keys[2].width;
         *drawnWidth += keys[1].width;
         if(keys[2].height > *drawnHeight)
@@ -1303,6 +1303,7 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     inventoryitemtype_t readyItem;
+    patchinfo_t boxInfo;
 
     if(hud->statusbarActive || Hu_InventoryIsOpen(player))
         return;
@@ -1310,13 +1311,15 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
+    if(!R_GetPatchInfo(dpInvItemBox, &boxInfo))
+        return;
 
     if(hud->currentInvItemFlash > 0)
     {
         DGL_Color4f(1, 1, 1, iconAlpha/2);
-        M_DrawPatch2(dpInvItemBox.id, -dpInvItemBox.width, -dpInvItemBox.height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
+        M_DrawPatch2(dpInvItemBox, 0, 0, DPF_ALIGN_RIGHT|DPF_ALIGN_BOTTOM|DPF_NO_OFFSET);
         DGL_Color4f(1, 1, 1, iconAlpha);
-        M_DrawPatch(dpInvItemFlash[hud->currentInvItemFlash % 5].id, -dpInvItemBox.width, -dpInvItemBox.height + 1);
+        M_DrawPatch(dpInvItemFlash[hud->currentInvItemFlash % 5].id, -boxInfo.width, -boxInfo.height + 1);
     }
     else
     {
@@ -1328,15 +1331,15 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
             uint count;
 
             DGL_Color4f(1, 1, 1, iconAlpha/2);
-            M_DrawPatch2(dpInvItemBox.id, -dpInvItemBox.width, -dpInvItemBox.height, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
+            M_DrawPatch2(dpInvItemBox, 0, 0, DPF_ALIGN_RIGHT|DPF_ALIGN_BOTTOM|DPF_NO_OFFSET);
             DGL_Color4f(1, 1, 1, iconAlpha);
-            M_DrawPatch(patch, -dpInvItemBox.width, -dpInvItemBox.height);
+            M_DrawPatch(patch, -boxInfo.width, -boxInfo.height);
             if((count = P_InventoryCount(player, readyItem)) > 1)
                 Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, -1, -7, textAlpha);
         }
     }
-    *drawnWidth = dpInvItemBox.width;
-    *drawnHeight = dpInvItemBox.height;
+    *drawnWidth = boxInfo.width;
+    *drawnHeight = boxInfo.height;
 }
 
 void drawInventoryWidget(int player, float textAlpha, float iconAlpha,
@@ -1388,7 +1391,7 @@ void drawKillsWidget(int player, float textAlpha, float iconAlpha,
 
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
-    M_DrawText4(buf, 0, -(*drawnHeight), GF_FONTA, DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 }
 
 void drawItemsWidget(int player, float textAlpha, float iconAlpha,
@@ -1418,7 +1421,7 @@ void drawItemsWidget(int player, float textAlpha, float iconAlpha,
 
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
-    M_DrawText4(buf, 0, -(*drawnHeight), GF_FONTA, DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 }
 
 void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
@@ -1448,7 +1451,7 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
 
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
-    M_DrawText4(buf, 0, -(*drawnHeight), GF_FONTA, DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
 }
 
 typedef struct {

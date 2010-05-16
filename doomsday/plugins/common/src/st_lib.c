@@ -107,22 +107,22 @@ void STlib_DrawNum(st_number_t* n)
 
     // In the special case of 0, you draw 0.
     if(!num)
-        M_DrawChar3('0', x - w, n->y, n->font, DTF_ALIGN_LEFT);
+        M_DrawChar2('0', x - w, n->y, n->font);
 
     // Draw the number.
     while(num && numdigits--)
     {
         x -= w;
-        M_DrawChar3('0' + (num % 10), x, n->y, n->font, DTF_ALIGN_LEFT);
+        M_DrawChar2('0' + (num % 10), x, n->y, n->font);
         num /= 10;
     }
 
     // Draw a minus sign if necessary.
     if(neg)
-        M_DrawChar3('-', x - 8, n->y, n->font, DTF_ALIGN_LEFT);
+        M_DrawChar2('-', x - 8, n->y, n->font);
 
     if(n->percent)
-        M_DrawChar3('%', n->x, n->y, n->font, DTF_ALIGN_LEFT);
+        M_DrawChar2('%', n->x, n->y, n->font);
 }
 
 void STlib_InitIcon(st_icon_t* b, int x, int y, patchinfo_t* i, float alpha)
@@ -135,7 +135,7 @@ void STlib_InitIcon(st_icon_t* b, int x, int y, patchinfo_t* i, float alpha)
 
 void STlib_DrawIcon(st_icon_t* bi, float alpha)
 {
-    WI_DrawPatch3(bi->p->id, bi->x, bi->y, NULL, false, DPF_ALIGN_LEFT, 1, 1, 1, bi->alpha * alpha);
+    WI_DrawPatch3(bi->p->id, bi->x, bi->y, NULL, false, DPF_ALIGN_LEFT|DPF_ALIGN_TOP, 1, 1, 1, bi->alpha * alpha);
 }
 
 void STlib_InitMultiIcon(st_multiicon_t* i, int x, int y, patchinfo_t* il, float alpha)
@@ -149,5 +149,5 @@ void STlib_InitMultiIcon(st_multiicon_t* i, int x, int y, patchinfo_t* il, float
 void STlib_DrawMultiIcon(st_multiicon_t* mi, int iconNum, float alpha)
 {
     if(iconNum >= 0)
-        WI_DrawPatch3(mi->p[iconNum].id, mi->x, mi->y, NULL, false, DPF_ALIGN_LEFT, 1, 1, 1, mi->alpha * alpha);
+        WI_DrawPatch3(mi->p[iconNum].id, mi->x, mi->y, NULL, false, DPF_ALIGN_LEFT|DPF_ALIGN_TOP, 1, 1, 1, mi->alpha * alpha);
 }

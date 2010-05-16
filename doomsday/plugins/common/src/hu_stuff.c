@@ -109,22 +109,21 @@ int typeInTime = 0;
 
 #if __JDOOM__ || __JDOOM64__
 // Name graphics of each map.
-patchinfo_t* mapNamePatches = NULL;
+patchid_t* mapNamePatches = NULL;
 // Name graphics of each skill mode.
-patchinfo_t skillModeNames[NUM_SKILL_MODES];
+patchid_t skillModeNames[NUM_SKILL_MODES];
 #endif
-patchinfo_t m_pause; // Paused graphic.
 
 #if __JDOOM__
 // Name graphics of each episode.
-patchinfo_t* episodeNamePatches = NULL;
+patchid_t* episodeNamePatches = NULL;
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-patchinfo_t dpInvItemBox;
-patchinfo_t dpInvSelectBox;
-patchinfo_t dpInvPageLeft[2];
-patchinfo_t dpInvPageRight[2];
+patchid_t dpInvItemBox;
+patchid_t dpInvSelectBox;
+patchid_t dpInvPageLeft[2];
+patchid_t dpInvPageRight[2];
 #endif
 
 boolean shiftdown = false;
@@ -177,10 +176,11 @@ static hudstate_t hudStates[MAXPLAYERS];
 static fogeffectdata_t fogEffectData;
 
 static patchinfo_t borderPatches[8];
-static patchinfo_t dpSliderLeft;
-static patchinfo_t dpSliderMiddle;
-static patchinfo_t dpSliderRight;
-static patchinfo_t dpSliderHandle;
+static patchid_t dpSliderLeft;
+static patchid_t dpSliderMiddle;
+static patchid_t dpSliderRight;
+static patchid_t dpSliderHandle;
+static patchid_t m_pause; // Paused graphic.
 
 // CODE -------------------------------------------------------------------
 
@@ -190,13 +190,31 @@ static __inline patchid_t patchForFontChar(gamefontid_t font, unsigned char ch)
     return gFonts[font].chars[ch].pInfo.id;
 }
 
-static __inline byte translateTextToPatchDrawFlags(byte in)
+static __inline short translateTextToPatchDrawFlags(byte in)
 {
-    byte out = 0;
+    short out = 0;
     if(in & DTF_ALIGN_LEFT)
         out |= DPF_ALIGN_LEFT;
     if(in & DTF_ALIGN_RIGHT)
         out |= DPF_ALIGN_RIGHT;
+    if(in & DTF_ALIGN_BOTTOM)
+        out |= DPF_ALIGN_BOTTOM;
+    if(in & DTF_ALIGN_TOP)
+        out |= DPF_ALIGN_TOP;
+    return out;
+}
+
+static __inline short translatePatchToTextDrawFlags(short in)
+{
+    short out = DTF_NO_EFFECTS;
+    if(in & DPF_ALIGN_LEFT)
+        out |= DTF_ALIGN_LEFT;
+    if(in & DPF_ALIGN_RIGHT)
+        out |= DTF_ALIGN_RIGHT;
+    if(in & DPF_ALIGN_BOTTOM)
+        out |= DTF_ALIGN_BOTTOM;
+    if(in & DPF_ALIGN_TOP)
+        out |= DTF_ALIGN_TOP;
     return out;
 }
 
@@ -753,45 +771,45 @@ void Hu_LoadData(void)
         R_PrecachePatch(borderLumps[i], &borderPatches[i-1]);
 
 #if __JDOOM__ || __JDOOM64__
-    R_PrecachePatch("M_THERML", &dpSliderLeft);
-    R_PrecachePatch("M_THERM2", &dpSliderMiddle);
-    R_PrecachePatch("M_THERMR", &dpSliderRight);
-    R_PrecachePatch("M_THERMO", &dpSliderHandle);
-    R_PrecachePatch("M_PAUSE", &m_pause);
+    dpSliderLeft = R_PrecachePatch("M_THERML", NULL);
+    dpSliderMiddle = R_PrecachePatch("M_THERM2", NULL);
+    dpSliderRight = R_PrecachePatch("M_THERMR", NULL);
+    dpSliderHandle = R_PrecachePatch("M_THERMO", NULL);
+    m_pause = R_PrecachePatch("M_PAUSE", NULL);
 #elif __JHERETIC__ || __JHEXEN__
-    R_PrecachePatch("M_SLDLT", &dpSliderLeft);
-    R_PrecachePatch("M_SLDMD1", &dpSliderMiddle);
-    R_PrecachePatch("M_SLDRT", &dpSliderRight);
-    R_PrecachePatch("M_SLDKB", &dpSliderHandle);
-    R_PrecachePatch("PAUSED", &m_pause);
+    dpSliderLeft = R_PrecachePatch("M_SLDLT", NULL);
+    dpSliderMiddle = R_PrecachePatch("M_SLDMD1", NULL);
+    dpSliderRight = R_PrecachePatch("M_SLDRT", NULL);
+    dpSliderHandle = R_PrecachePatch("M_SLDKB", NULL);
+    m_pause = R_PrecachePatch("PAUSED", NULL);
 #endif
 
 #if __JDOOM__ || __JDOOM64__
     for(i = 0; i < NUM_SKILL_MODES; ++i)
     {
-        R_PrecachePatch(skillModePatchNames[i], &skillModeNames[i]);
+        skillModeNames[i] = R_PrecachePatch(skillModePatchNames[i], NULL);
     }
 
     // Load the map name patches.
 # if __JDOOM64__
     {
         int NUMCMAPS = 32;
-        mapNamePatches = Z_Malloc(sizeof(patchinfo_t) * NUMCMAPS, PU_STATIC, 0);
+        mapNamePatches = Z_Malloc(sizeof(patchid_t) * NUMCMAPS, PU_STATIC, 0);
         for(i = 0; i < NUMCMAPS; ++i)
         {
             sprintf(name, "WILV%2.2d", i);
-            R_PrecachePatch(name, &mapNamePatches[i]);
+            mapNamePatches[i] = R_PrecachePatch(name, NULL);
         }
     }
 # else
     if(gameMode == commercial)
     {
         int NUMCMAPS = 32;
-        mapNamePatches = Z_Malloc(sizeof(patchinfo_t) * NUMCMAPS, PU_STATIC, 0);
+        mapNamePatches = Z_Malloc(sizeof(patchid_t) * NUMCMAPS, PU_STATIC, 0);
         for(i = 0; i < NUMCMAPS; ++i)
         {
             sprintf(name, "CWILV%2.2d", i);
-            R_PrecachePatch(name, &mapNamePatches[i]);
+            mapNamePatches[i] = R_PrecachePatch(name, NULL);
         }
     }
     else
@@ -800,19 +818,19 @@ void Hu_LoadData(void)
 
         // Don't waste space - patches are loaded back to back
         // ie no space in the array is left for E1M10
-        mapNamePatches = Z_Malloc(sizeof(patchinfo_t) * (9*4), PU_STATIC, 0);
+        mapNamePatches = Z_Malloc(sizeof(patchid_t) * (9*4), PU_STATIC, 0);
         for(i = 0; i < 4; ++i) // Number of episodes.
         {
             for(j = 0; j < 9; ++j) // Number of maps per episode.
             {
                 sprintf(name, "WILV%2.2d", (i * 10) + j);
-                R_PrecachePatch(name, &mapNamePatches[(i* 9) + j]);
+                mapNamePatches[(i* 9) + j] = R_PrecachePatch(name, NULL);
             }
         }
 
-        episodeNamePatches = Z_Malloc(sizeof(patchinfo_t) * 4, PU_STATIC, 0);
+        episodeNamePatches = Z_Malloc(sizeof(patchid_t) * 4, PU_STATIC, 0);
         for(i = 0; i < 4; ++i)
-            R_PrecachePatch(episodePatchNames[i], &episodeNamePatches[i]);
+            episodeNamePatches[i] = R_PrecachePatch(episodePatchNames[i], NULL);
     }
 # endif
 #endif
@@ -828,12 +846,12 @@ void Hu_LoadData(void)
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-    R_PrecachePatch("ARTIBOX", &dpInvItemBox);
-    R_PrecachePatch("SELECTBO", &dpInvSelectBox);
-    R_PrecachePatch("INVGEML1", &dpInvPageLeft[0]);
-    R_PrecachePatch("INVGEML2", &dpInvPageLeft[1]);
-    R_PrecachePatch("INVGEMR1", &dpInvPageRight[0]);
-    R_PrecachePatch("INVGEMR2", &dpInvPageRight[1]);
+    dpInvItemBox = R_PrecachePatch("ARTIBOX", NULL);
+    dpInvSelectBox = R_PrecachePatch("SELECTBO", NULL);
+    dpInvPageLeft[0] = R_PrecachePatch("INVGEML1", NULL);
+    dpInvPageLeft[1] = R_PrecachePatch("INVGEML2", NULL);
+    dpInvPageRight[0] = R_PrecachePatch("INVGEMR1", NULL);
+    dpInvPageRight[1] = R_PrecachePatch("INVGEMR2", NULL);
 #endif
 
     Chat_Init();
@@ -1316,14 +1334,14 @@ static void drawMapMetaData(float x, float y, gamefontid_t font, float alpha)
         lname = unnamed;
 
     // Map name:
-    M_DrawText4("map: ", x, y + 16, font, DTF_NO_TYPEIN, 1, 1, 1, alpha);
-    M_DrawText4(lname, x += M_TextWidth("map: ", font), y + 16, font, DTF_NO_TYPEIN, 1, 1, 1, alpha);
+    M_DrawText4("map: ", x, y + 16, font, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, 1, 1, 1, alpha);
+    M_DrawText4(lname, x += M_TextWidth("map: ", font), y + 16, font, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, 1, 1, 1, alpha);
 
     x += 8;
 
     // Game mode:
-    M_DrawText4("gamemode: ", x += M_TextWidth(lname, font), y + 16, font, DTF_NO_TYPEIN, 1, 1, 1, alpha);
-    M_DrawText4(P_GetGameModeName(), x += M_TextWidth("gamemode: ", font), y + 16, font, DTF_NO_TYPEIN, 1, 1, 1, alpha);
+    M_DrawText4("gamemode: ", x += M_TextWidth(lname, font), y + 16, font, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, 1, 1, 1, alpha);
+    M_DrawText4(P_GetGameModeName(), x += M_TextWidth("gamemode: ", font), y + 16, font, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, 1, 1, 1, alpha);
 }
 
 /**
@@ -1385,7 +1403,7 @@ void HU_DrawScoreBoard(int player)
     DGL_Enable(DGL_TEXTURING);
 
     // Title:
-    M_DrawText4("ranking", x + width / 2 - M_TextWidth("ranking", GF_FONTB) / 2, y + LINE_BORDER, GF_FONTB, DTF_NO_TYPEIN, 1, 0, 0, hud->scoreAlpha);
+    M_DrawText4("ranking", x + width / 2, y + LINE_BORDER, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN, 1, 0, 0, hud->scoreAlpha);
 
     drawMapMetaData(x, y + 16, GF_FONTA, hud->scoreAlpha);
 
@@ -1508,7 +1526,7 @@ float WI_ParseFloat(char** str)
  * Draw a string of text controlled by parameter blocks.
  */
 void WI_DrawParamText(const char* inString, int x, int y, gamefontid_t defFont,
-    byte flags, float defRed, float defGreen, float defBlue, float defAlpha,
+    short flags, float defRed, float defGreen, float defBlue, float defAlpha,
     boolean defCase)
 {
 #define SMALLBUFF_SIZE  80
@@ -1563,7 +1581,7 @@ void WI_DrawParamText(const char* inString, int x, int y, gamefontid_t defFont,
         string = str;
         while(*string)
         {
-            if(*string == '{')      // Parameters included?
+            if(*string == '{') // Parameters included?
             {
                 string++;
                 while(*string && *string != '}')
@@ -1605,7 +1623,7 @@ void WI_DrawParamText(const char* inString, int x, int y, gamefontid_t defFont,
 
                 width += M_TextWidth(temp, font);
 
-                string = end;       // Continue from here.
+                string = end; // Continue from here.
             }
         }
         width /= 2;
@@ -1615,7 +1633,7 @@ void WI_DrawParamText(const char* inString, int x, int y, gamefontid_t defFont,
     while(*string)
     {
         // Parse and draw the replacement string.
-        if(*string == '{')      // Parameters included?
+        if(*string == '{') // Parameters included?
         {
             string++;
             while(*string && *string != '}')
@@ -1739,6 +1757,9 @@ void WI_DrawParamText(const char* inString, int x, int y, gamefontid_t defFont,
 
         for(end = string; *end && *end != '{';)
         {
+            // Horizontal alignment has already been taken care of, so align left.
+            short fragmentFlags = (flags & ~(DTF_ALIGN_RIGHT)) | DTF_ALIGN_LEFT;
+
             if(caseScale)
             {
                 curCase = -1;
@@ -1796,7 +1817,7 @@ void WI_DrawParamText(const char* inString, int x, int y, gamefontid_t defFont,
             DGL_Scalef(scaleX, scaleY * extraScale, 1);
 
             // Draw it.
-            M_DrawText5(temp, 0, 0, font, flags, r, g, b, a, typeIn ? charCount : 0);
+            M_DrawText5(temp, 0, 0, font, fragmentFlags, r, g, b, a, typeIn ? charCount : 0);
             charCount += strlen(temp);
 
             // Advance the current position.
@@ -2108,14 +2129,14 @@ void M_LetterFlash(int x, int y, int w, int h, int bright, float r, float g,
     DGL_BlendMode(BM_NORMAL);
 }
 
-void M_DrawChar3(unsigned char ch, int x, int y, gamefontid_t font, byte flags)
+void M_DrawChar3(unsigned char ch, int x, int y, gamefontid_t font, short flags)
 {
     M_DrawPatch2(patchForFontChar(font, ch), x, y, translateTextToPatchDrawFlags(flags));
 }
 
 void M_DrawChar2(unsigned char ch, int x, int y, gamefontid_t font)
 {
-    M_DrawChar3(ch, x, y, font, DTF_ALIGN_LEFT);
+    M_DrawChar3(ch, x, y, font, DTF_ALIGN_LEFT|DTF_ALIGN_TOP);
 }
 
 void M_DrawChar(unsigned char ch, int x, int y)
@@ -2123,7 +2144,7 @@ void M_DrawChar(unsigned char ch, int x, int y)
     M_DrawChar2(ch, x, y, GF_FONTA);
 }
 
-void M_DrawShadowedChar3(unsigned char ch, int x, int y, gamefontid_t font, byte flags,
+void M_DrawShadowedChar3(unsigned char ch, int x, int y, gamefontid_t font, short flags,
     float r, float g, float b, float a)
 {
     DGL_Color4f(0, 0, 0, a * .4f);
@@ -2135,7 +2156,7 @@ void M_DrawShadowedChar3(unsigned char ch, int x, int y, gamefontid_t font, byte
 
 void M_DrawShadowedChar2(unsigned char ch, int x, int y, gamefontid_t font)
 {
-    M_DrawShadowedChar3(ch, x, y, font, DTF_ALIGN_LEFT, 1, 1, 1, 1);
+    M_DrawShadowedChar3(ch, x, y, font, DTF_ALIGN_LEFT|DTF_ALIGN_TOP, 1, 1, 1, 1);
 }
 
 void M_DrawShadowedChar(unsigned char ch, int x, int y)
@@ -2205,12 +2226,12 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
     }
 
     if(digits == 4)
-        M_DrawShadowedChar3('0' + val / 1000, xpos + 6 - 12, y, GF_FONTB, 0, r, g, b, a);
+        M_DrawShadowedChar3('0' + val / 1000, xpos + 6 - 12, y, GF_FONTB, DTF_ALIGN_TOP, r, g, b, a);
 
     if(digits > 2)
     {
         if(realdigits > 2)
-            M_DrawShadowedChar3('0' + val / 100, xpos + 6, y, GF_FONTB, 0, r, g, b, a);
+            M_DrawShadowedChar3('0' + val / 100, xpos + 6, y, GF_FONTB, DTF_ALIGN_TOP, r, g, b, a);
         xpos += 12;
     }
 
@@ -2218,25 +2239,23 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
     if(digits > 1)
     {
         if(val > 9)
-            M_DrawShadowedChar3('0' + val / 10, xpos + 6, y, GF_FONTB, 0, r, g, b, a);
+            M_DrawShadowedChar3('0' + val / 10, xpos + 6, y, GF_FONTB, DTF_ALIGN_TOP, r, g, b, a);
         else if(digits == 2 || oldval > 99)
             M_DrawShadowedChar2('0', xpos, y, GF_FONTB);
         xpos += 12;
     }
 
     val = val % 10;
-    M_DrawShadowedChar3('0' + val, xpos + 6, y, GF_FONTB, 0, r, g, b, a);
+    M_DrawShadowedChar3('0' + val, xpos + 6, y, GF_FONTB, DTF_ALIGN_TOP, r, g, b, a);
     if(neg)
-        M_DrawShadowedChar3('-', xpos + 6 - 12 * (realdigits), y, GF_FONTB, 0, r, g, b, a);
+        M_DrawShadowedChar3('-', xpos + 6 - 12 * (realdigits), y, GF_FONTB, DTF_ALIGN_TOP, r, g, b, a);
 }
 #endif
 
 /**
  * Write a string using a colored, custom font and do a type-in effect.
- *
- * \fixme What about the alignment flags?!
  */
-void M_DrawText5(const char* string, int x, int y, gamefontid_t font, byte flags,
+void M_DrawText5(const char* string, int x, int y, gamefontid_t font, short flags,
     float red, float green, float blue, float alpha, int initialCount)
 {
     int pass, w, h, cx, cy, count, yoff;
@@ -2246,6 +2265,16 @@ void M_DrawText5(const char* string, int x, int y, gamefontid_t font, byte flags
 
     if(!string || !string[0])
         return;
+
+    if(flags & DTF_ALIGN_RIGHT)
+        x -= M_TextWidth(string, font);
+    else if(!(flags & DTF_ALIGN_LEFT))
+        x -= M_TextWidth(string, font)/2;
+
+    if(flags & DTF_ALIGN_BOTTOM)
+        y -= M_TextHeight(string, font);
+    else if(!(flags & DTF_ALIGN_TOP))
+        y -= M_TextHeight(string, font)/2;
 
     flashColor[CR] = (red >= 0?   ((1 + 2 * MINMAX_OF(0, red,   1)) / 3) : 1);
     flashColor[CB] = (blue >= 0?  ((1 + 2 * MINMAX_OF(0, blue,  1)) / 3) : 1);
@@ -2341,20 +2370,20 @@ void M_DrawText5(const char* string, int x, int y, gamefontid_t font, byte flags
     }
 }
 
-void M_DrawText4(const char* string, int x, int y, gamefontid_t font, byte flags,
+void M_DrawText4(const char* string, int x, int y, gamefontid_t font, short flags,
     float red, float green, float blue, float alpha)
 {
     M_DrawText5(string, x, y, font, flags, red, green, blue, alpha, 0);
 }
 
-void M_DrawText3(const char* string, int x, int y, gamefontid_t font, byte flags)
+void M_DrawText3(const char* string, int x, int y, gamefontid_t font, short flags)
 {
     M_DrawText4(string, x, y, font, flags, 1, 1, 1, 1);
 }
 
 void M_DrawText2(const char* string, int x, int y, gamefontid_t font)
 {
-    M_DrawText3(string, x, y, font, DTF_NO_TYPEIN);
+    M_DrawText3(string, x, y, font, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 }
 
 void M_DrawText(const char* string, int x, int y)
@@ -2380,13 +2409,13 @@ void Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha)
 
     // In the special case of 0, you draw 0.
     if(val == 0)
-        M_DrawPatch2(patchForFontChar(GF_SMALLIN, '0'), x - w, y, DPF_ALIGN_LEFT);
+        M_DrawPatch(patchForFontChar(GF_SMALLIN, '0'), x - w, y);
 
     // Draw the number.
     while(val && numDigits--)
     {
         x -= w;
-        M_DrawPatch2(patchForFontChar(GF_SMALLIN, '0' + (val % 10)), x, y, DPF_ALIGN_LEFT);
+        M_DrawPatch(patchForFontChar(GF_SMALLIN, '0' + (val % 10)), x, y);
         val /= 10;
     }
 }
@@ -2405,7 +2434,7 @@ void Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha)
  *                      (ie it does not originate from a DED definition).
  */
 void WI_DrawPatch3(patchid_t patch, int x, int y, const char* altstring,
-    boolean builtin, byte flags, float r, float g, float b, float a)
+    boolean builtin, short flags, float r, float g, float b, float a)
 {
     int patchString = 0, posx = x;
     char def[80], *string;
@@ -2422,8 +2451,7 @@ void WI_DrawPatch3(patchid_t patch, int x, int y, const char* altstring,
         R_GetPatchInfo(patch, &info);
         if(!info.isCustom)
         {
-            byte textFlags = (flags & DPF_ALIGN_LEFT)? DTF_ALIGN_LEFT : (flags & DPF_ALIGN_RIGHT)? DTF_ALIGN_RIGHT : 0;
-            WI_DrawParamText(altstring, x, y, GF_FONTB, textFlags, r, g, b, a, false);
+            WI_DrawParamText(altstring, x, y, GF_FONTB, translatePatchToTextDrawFlags(flags), r, g, b, a, false);
             return;
         }
     }
@@ -2442,16 +2470,14 @@ void WI_DrawPatch3(patchid_t patch, int x, int y, const char* altstring,
             // A user replacement?
             if(patchString)
             {
-                byte textFlags = (flags & DPF_ALIGN_LEFT)? DTF_ALIGN_LEFT : (flags & DPF_ALIGN_RIGHT)? DTF_ALIGN_RIGHT : 0;
-                WI_DrawParamText(string, x, y, GF_FONTB, textFlags, r, g, b, a, false);
+                WI_DrawParamText(string, x, y, GF_FONTB, translatePatchToTextDrawFlags(flags), r, g, b, a, false);
                 return;
             }
 
             // A built-in replacement?
             if(cfg.usePatchReplacement == 2 && altstring && altstring[0])
             {
-                byte textFlags = (flags & DPF_ALIGN_LEFT)? DTF_ALIGN_LEFT : (flags & DPF_ALIGN_RIGHT)? DTF_ALIGN_RIGHT : 0;
-                WI_DrawParamText(altstring, x, y, GF_FONTB, textFlags, r, g, b, a, false);
+                WI_DrawParamText(altstring, x, y, GF_FONTB, translatePatchToTextDrawFlags(flags), r, g, b, a, false);
                 return;
             }
         }
@@ -2462,14 +2488,14 @@ void WI_DrawPatch3(patchid_t patch, int x, int y, const char* altstring,
     M_DrawPatch2(patch, posx, y, flags);
 }
 
-void WI_DrawPatch2(patchid_t id, int x, int y, const char* altstring, boolean builtin, byte flags)
+void WI_DrawPatch2(patchid_t id, int x, int y, const char* altstring, boolean builtin, short flags)
 {
     WI_DrawPatch3(id, x, y, altstring, builtin, flags, 1, 1, 1, 1);
 }
 
 void WI_DrawPatch(patchid_t patch, int x, int y, const char* altstring, boolean builtin)
 {
-    WI_DrawPatch2(patch, x, y, altstring, builtin, DPF_ALIGN_LEFT);
+    WI_DrawPatch2(patch, x, y, altstring, builtin, DPF_ALIGN_LEFT|DPF_ALIGN_TOP);
 }
 
 /**
@@ -2556,12 +2582,17 @@ void M_DrawBackgroundBox(float x, float y, float w, float h, boolean background,
  */
 void M_DrawSlider(int x, int y, int height, int range, int slot, float alpha)
 {
-#define WIDTH           (dpSliderMiddle.width)
-#define HEIGHT          (dpSliderMiddle.height)
+#define WIDTH           (middleInfo.width)
+#define HEIGHT          (middleInfo.height)
 
+    patchinfo_t middleInfo;
     float pos, scale;
 
-    if(range <= 1 || height <= 0 || HEIGHT <= 0)
+    if(range <= 1 || height <= 0)
+        return;
+    if(!R_GetPatchInfo(dpSliderMiddle, &middleInfo))
+        return;
+    if(HEIGHT <= 0)
         return;
 
     pos = (float)slot / (range-1);
@@ -2584,14 +2615,14 @@ void M_DrawSlider(int x, int y, int height, int range, int slot, float alpha)
 
     DGL_Color4f( 1, 1, 1, alpha);
 
-    M_DrawPatch2(dpSliderLeft.id, 0, 0, DPF_ALIGN_RIGHT|DPF_NO_OFFSETX);
-    M_DrawPatch2(dpSliderRight.id, range * WIDTH, 0, DPF_ALIGN_LEFT);
+    M_DrawPatch2(dpSliderLeft, 0, 0, DPF_ALIGN_RIGHT|DPF_ALIGN_TOP|DPF_NO_OFFSETX);
+    M_DrawPatch(dpSliderRight, range * WIDTH, 0);
 
-    DGL_SetPatch(dpSliderMiddle.id, DGL_REPEAT, DGL_REPEAT);
-    DGL_DrawRectTiled(0, dpSliderMiddle.topOffset, range * WIDTH, HEIGHT, dpSliderMiddle.width, dpSliderMiddle.height);
+    DGL_SetPatch(dpSliderMiddle, DGL_REPEAT, DGL_REPEAT);
+    DGL_DrawRectTiled(0, middleInfo.topOffset, range * WIDTH, HEIGHT, middleInfo.width, middleInfo.height);
 
     DGL_Color4f(1, 1, 1, alpha);
-    M_DrawPatch2(dpSliderHandle.id, range * WIDTH * pos, 1, DPF_NO_OFFSET);
+    M_DrawPatch2(dpSliderHandle, range * WIDTH * pos, 1, DPF_ALIGN_TOP|DPF_NO_OFFSET);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -2810,7 +2841,7 @@ void Hu_Drawer(void)
         else
             DGL_Scalef((float)winWidth/SCREENWIDTH, (float)winWidth/SCREENWIDTH, 1);
 
-        WI_DrawPatch2(m_pause.id, 0, 0, NULL, false, DPF_NO_OFFSET);
+        WI_DrawPatch2(m_pause, 0, 0, NULL, false, DPF_ALIGN_TOP|DPF_NO_OFFSET);
 
         DGL_MatrixMode(DGL_PROJECTION);
         DGL_PopMatrix();
@@ -2905,20 +2936,20 @@ static void drawMapTitle(void)
     mapnum = gameMap;
 # endif
 
-    WI_DrawPatch3(mapNamePatches[mapnum].id, 0, 0, lname, false, 0, 1, 1, 1, alpha);
+    WI_DrawPatch3(mapNamePatches[mapnum], 0, 0, lname, false, DPF_ALIGN_TOP, 1, 1, 1, alpha);
     y += 14;
 
 #elif __JHERETIC__ || __JHEXEN__
     if(lname)
     {
-        M_DrawText4(lname, -M_TextWidth(lname, GF_FONTB) / 2, 0, GF_FONTB, DTF_NO_TYPEIN, defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
+        M_DrawText4(lname, 0, 0, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
         y += 20;
     }
 #endif
 
     if(lauthor)
     {
-        M_DrawText4(lauthor, -M_TextWidth(lauthor, GF_FONTA) / 2, y, GF_FONTA, DTF_NO_TYPEIN, .5f, .5f, .5f, alpha);
+        M_DrawText4(lauthor, 0, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN, .5f, .5f, .5f, alpha);
     }
 }
 
@@ -3076,7 +3107,7 @@ void Hu_EndBorderedProjection(borderedprojectionstate_t* s)
     DGL_PopMatrix();
 }
 
-void M_DrawPatch2(patchid_t id, int posX, int posY, byte flags)
+void M_DrawPatch2(patchid_t id, int posX, int posY, short flags)
 {
     float x = posX, y = posY, w, h;
     patchinfo_t info;
@@ -3092,6 +3123,11 @@ void M_DrawPatch2(patchid_t id, int posX, int posY, byte flags)
         x -= info.width;
     else if(!(flags & DPF_ALIGN_LEFT))
         x -= info.width /2;
+
+    if(flags & DPF_ALIGN_BOTTOM)
+        y += info.height;
+    else if(!(flags & DPF_ALIGN_TOP))
+        y += info.height/2;
 
     w = (float) info.width;
     h = (float) info.height;
@@ -3126,10 +3162,10 @@ void M_DrawPatch2(patchid_t id, int posX, int posY, byte flags)
 
 void M_DrawPatch(patchid_t id, int x, int y)
 {
-    M_DrawPatch2(id, x, y, DPF_ALIGN_LEFT);
+    M_DrawPatch2(id, x, y, DPF_ALIGN_LEFT|DPF_ALIGN_TOP);
 }
 
-void M_DrawShadowedPatch3(patchid_t id, int x, int y, byte flags, float r, float g,
+void M_DrawShadowedPatch3(patchid_t id, int x, int y, short flags, float r, float g,
     float b, float a)
 {
     if(id < 0)
@@ -3141,12 +3177,12 @@ void M_DrawShadowedPatch3(patchid_t id, int x, int y, byte flags, float r, float
     M_DrawPatch2(id, x, y, flags);
 }
 
-void M_DrawShadowedPatch2(patchid_t id, int x, int y, byte flags)
+void M_DrawShadowedPatch2(patchid_t id, int x, int y, short flags)
 {
     M_DrawShadowedPatch3(id, x, y, flags, 1, 1, 1, 1);
 }
 
 void M_DrawShadowedPatch(patchid_t id, int x, int y)
 {
-    M_DrawShadowedPatch2(id, x, y, DPF_ALIGN_LEFT);
+    M_DrawShadowedPatch2(id, x, y, DPF_ALIGN_LEFT|DPF_ALIGN_TOP);
 }

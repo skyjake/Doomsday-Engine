@@ -1332,7 +1332,7 @@ static void drawMapName(float x, float y, float scale, float alpha,
     DGL_PushMatrix();
     DGL_Scalef(scale, scale, 1);
 
-    WI_DrawPatch3(patch, 0, -16, lname, false, DTF_NO_TYPEIN, 1, 1, 1, alpha);
+    WI_DrawPatch3(patch, 0, -2, lname, false, DPF_ALIGN_BOTTOM, 1, 1, 1, alpha);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -1368,14 +1368,14 @@ static void renderMapName(const automap_t* map)
         // Compose the mapnumber used to check the map name patches array.
 #if __JDOOM64__
         mapNum = gameMap;
-        patch = mapNamePatches[mapNum].id;
+        patch = mapNamePatches[mapNum];
 #elif __JDOOM__
         if(gameMode == commercial)
             mapNum = gameMap;
         else
             mapNum = (gameEpisode * 9) + gameMap;
 
-        patch = mapNamePatches[mapNum].id;
+        patch = mapNamePatches[mapNum];
 #endif
 
         //Automap_GetWindow(map, &wx, &wy, &ww, &wh);

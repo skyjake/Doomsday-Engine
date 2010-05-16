@@ -437,7 +437,7 @@ static void M_DrawSmallText(const char* string, int x, int y)
     DGL_Scalef(SMALL_SCALE, SMALL_SCALE, 1);
     DGL_Translatef(-x, -y - height/2, 0);
 
-    M_DrawText4(string, x, y, GF_FONTA, DTF_NO_EFFECTS, 1, 1, 1, Hu_MenuAlpha());
+    M_DrawText4(string, x, y, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_EFFECTS, 1, 1, 1, Hu_MenuAlpha());
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -617,21 +617,21 @@ void M_DrawControlsMenu(void)
 #if __JDOOM__ || __JDOOM64__
     MN_DrawTitle("CONTROLS", menu->y - 28);
     Hu_MenuPageString(buf, menu);
-    M_DrawText4(buf, 160 - M_TextWidth(buf, GF_FONTA) / 2, menu->y - 12, GF_FONTA, 0, 1, .7f, .3f, Hu_MenuAlpha());
+    M_DrawText4(buf, 160, menu->y - 12, GF_FONTA, DTF_ALIGN_TOP, 1, .7f, .3f, Hu_MenuAlpha());
 #else
-    M_DrawText4("CONTROLS", 120, 100 - 98/cfg.menuScale, GF_FONTB, 0, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], Hu_MenuAlpha());
+    M_DrawText4("CONTROLS", 120, 100 - 98/cfg.menuScale, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], Hu_MenuAlpha());
 
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 
     // Draw the page arrows.
-    token = dpInvPageLeft[!menu->firstItem || (menuTime & 8)].id;
+    token = dpInvPageLeft[!menu->firstItem || (menuTime & 8)];
     M_DrawPatch(token, menu->x, menu->y - 12);
-    token = dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)].id;
+    token = dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)];
     M_DrawPatch(token, 312 - menu->x, menu->y - 12);
 #endif
 
     strcpy(buf, "Select to assign new, [Del] to clear");
-    M_DrawText4(buf, 160 - M_TextWidth(buf, GF_FONTA) / 2, 100 + (95/cfg.menuScale) - M_TextHeight(buf, GF_FONTA), GF_FONTA, 0,
+    M_DrawText4(buf, 160, 100 + (95/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM,
 #if __JDOOM__
                  1, .7f, .3f,
 #else
@@ -684,8 +684,8 @@ void M_ControlGrabDrawer(void)
     DGL_Translatef(-160, -100, 0);
 
     text = "press key or move controller for";
-    M_DrawText4(text, 160 - M_TextWidth(text, GF_FONTA)/2, 98 - M_TextHeight(text, GF_FONTA), GF_FONTA, DTF_NO_TYPEIN, .75f, .75f, .75f, 1);
-    M_DrawText4(grabbing->item->text, 160 - M_TextWidth(grabbing->item->text, GF_FONTB)/2, 102, GF_FONTB, DTF_NO_TYPEIN, 1, 1, 1, 1);
+    M_DrawText4(text, 160, 98, GF_FONTA, DTF_ALIGN_BOTTOM|DTF_NO_TYPEIN, .75f, .75f, .75f, 1);
+    M_DrawText4(grabbing->item->text, 160, 102, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN, 1, 1, 1, 1);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();

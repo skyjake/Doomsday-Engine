@@ -410,7 +410,7 @@ void ST_doFullscreenStuff(int player)
             i -= 18 * cfg.hudScale;
         }
         sprintf(buf, "FRAGS:%i", hud->currentFragsCount);
-        M_DrawText4(buf, HUDBORDERX, i, GF_FONTA, DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
+        M_DrawText4(buf, HUDBORDERX, i, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
     }
 
     // Setup the scaling matrix.
@@ -423,10 +423,10 @@ void ST_doFullscreenStuff(int player)
     {
         sprintf(buf, "HEALTH");
         pos = M_TextWidth(buf, GF_FONTA)/2;
-        M_DrawText4(buf, HUDBORDERX, h_height - HUDBORDERY - M_TextHeight("A", GF_FONTA) - 4, GF_FONTA, DTF_NO_EFFECTS, 1, 1, 1, iconalpha);
+        M_DrawText4(buf, HUDBORDERX, h_height - HUDBORDERY - 4, GF_FONTA, DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, 1, 1, 1, iconalpha);
 
         sprintf(buf, "%i", plr->health);
-        M_DrawText4(buf, HUDBORDERX + pos - (M_TextWidth(buf, GF_FONTB)/2), h_height - HUDBORDERY, GF_FONTB, DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
+        M_DrawText4(buf, HUDBORDERX + pos, h_height - HUDBORDERY, GF_FONTB, DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
 
         oldPos = pos;
         pos = HUDBORDERX * 2 + M_TextWidth(buf, GF_FONTB);
@@ -499,8 +499,8 @@ Draw_EndZoom();
                 continue;
 
             sprintf(buf, "%i", plr->ammo[ammotype]);
-            pos = (h_width/2) - (M_TextWidth(buf, GF_FONTB)/2);
-            M_DrawText4(buf, pos, h_height - HUDBORDERY, GF_FONTB, DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
+            pos = h_width/2;
+            M_DrawText4(buf, pos, h_height - HUDBORDERY, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
             break;
         }
     }
@@ -510,10 +510,10 @@ Draw_EndZoom();
     {
         sprintf(buf, "ARMOR");
         w = M_TextWidth(buf, GF_FONTA);
-        M_DrawText4(buf, h_width - w - HUDBORDERX, h_height - HUDBORDERY - M_TextHeight("A", GF_FONTA) - 4, GF_FONTA, DTF_NO_EFFECTS, 1, 1, 1, iconalpha);
+        M_DrawText4(buf, h_width - HUDBORDERX, h_height - HUDBORDERY - 4, GF_FONTA, DTF_ALIGN_RIGHT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, 1, 1, 1, iconalpha);
 
         sprintf(buf, "%i", plr->armorPoints);
-        M_DrawText4(buf, h_width - (w/2) - (M_TextWidth(buf, GF_FONTB)/2) - HUDBORDERX, h_height - HUDBORDERY, GF_FONTB, DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
+        M_DrawText4(buf, h_width - (w/2) - HUDBORDERX, h_height - HUDBORDERY, GF_FONTB, DTF_ALIGN_RIGHT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);

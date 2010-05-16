@@ -325,17 +325,17 @@ void DrANumber(int number, int x, int y)
 {
     char buf[40];
     sprintf(buf, "%i", number);
-    M_DrawText4(buf, x, y, GF_FONTA, DTF_NO_TYPEIN, 1, 1, 1, Hu_MenuAlpha());
+    M_DrawText4(buf, x, y, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, 1, 1, 1, Hu_MenuAlpha());
 }
 
 void MN_DrCenterTextA_CS(char* string, int centerX, int y)
 {
-    M_DrawText4(string, centerX - M_TextWidth(string, GF_FONTA) / 2, y, GF_FONTA, DTF_NO_TYPEIN, 1, 0, 0, Hu_MenuAlpha());
+    M_DrawText4(string, centerX, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN, 1, 0, 0, Hu_MenuAlpha());
 }
 
 void MN_DrCenterTextB_CS(char* string, int centerX, int y)
 {
-    M_DrawText4(string, centerX - M_TextWidth(string, GF_FONTB) / 2, y, GF_FONTB, DTF_NO_TYPEIN, 1, 0, 0, Hu_MenuAlpha());
+    M_DrawText4(string, centerX, y, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN, 1, 0, 0, Hu_MenuAlpha());
 }
 
 void DrawMultiplayerMenu(void)
@@ -396,11 +396,11 @@ void DrawGameSetupMenu(void)
     M_WriteMenuText(menu, idx++, boolText[cfg.noNetBFG]);
 # endif // __JDOOM__ || __JDOOM64__
     M_WriteMenuText(menu, idx++, boolText[cfg.noTeamDamage]);
-#elif __JHEXEN__ || __JSTRIFE__
+#elif __JHEXEN__
 
     sprintf(buf, "%u", cfg.netMap+1);
     M_WriteMenuText(menu, idx++, buf);
-    M_DrawText4(mapName, 160 - M_TextWidth(mapName, GF_FONTA) / 2, menu->y + menu->itemHeight, GF_FONTA, 0, 1, 0.7f, 0.3f, Hu_MenuAlpha());
+    M_DrawText4(mapName, 160, menu->y + menu->itemHeight, GF_FONTA, DTF_ALIGN_TOP, 1, 0.7f, 0.3f, Hu_MenuAlpha());
 
     idx++;
     M_WriteMenuText(menu, idx++, skillText[cfg.netSkill]);
@@ -509,7 +509,7 @@ void DrawPlayerSetupMenu(void)
 #else
                       menu->y + 64,
 #endif
-                      GF_FONTA, DTF_NO_TYPEIN, 1, 1, 1, menuAlpha);
+                      GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, 1, 1, 1, menuAlpha);
     }
 
 #undef AVAILABLE_WIDTH
@@ -922,7 +922,7 @@ void DrawEditField(menu_t* menu, int index, editfield_t* ef)
     text[vis] = 0;
 
     M_DrawSaveLoadBorder(menu->x - 8, menu->y + EDITFIELD_BOX_YOFFSET + (menu->itemHeight * index), width + 16);
-    M_DrawText4(text, menu->x, menu->y + EDITFIELD_BOX_YOFFSET + 1 + (menu->itemHeight * index), GF_FONTA, DTF_NO_TYPEIN, 1, 1, 1, Hu_MenuAlpha());
+    M_DrawText4(text, menu->x, menu->y + EDITFIELD_BOX_YOFFSET + 1 + (menu->itemHeight * index), GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, 1, 1, 1, Hu_MenuAlpha());
 }
 
 void SCEditField(int efptr, void* data)

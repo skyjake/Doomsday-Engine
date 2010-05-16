@@ -299,7 +299,7 @@ static patchinfo_t bp[MAXPLAYERS]; // "gray P[1..MAXPLAYERS]"
 void WI_slamBackground(void)
 {
     DGL_Color4f(1, 1, 1, 1);
-    M_DrawPatch2(bg.id, 0, 0, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
+    M_DrawPatch2(bg.id, 0, 0, DPF_ALIGN_LEFT|DPF_ALIGN_TOP|DPF_NO_OFFSET);
 }
 
 /**
@@ -338,12 +338,17 @@ void WI_drawLF(void)
     }
 
     // Draw <MapName>
-    WI_DrawPatch2(mapNamePatches[mapNum].id, SCREENWIDTH / 2, y, mapName, false, 0);
+    WI_DrawPatch2(mapNamePatches[mapNum], SCREENWIDTH / 2, y, mapName, false, DPF_ALIGN_TOP);
 
     // Draw "Finished!"
-    y += (5 * mapNamePatches[mapNum].height) / 4;
+    /// \fixme WI_DrawPatch2 should return the visible height.
+    {
+    patchinfo_t info;
+    if(R_GetPatchInfo(mapNamePatches[mapNum], &info))
+        y += (5 * info.height) / 4;
+    }
 
-    WI_DrawPatch2(finished.id, SCREENWIDTH / 2, y, NULL, false, 0);
+    WI_DrawPatch2(finished.id, SCREENWIDTH / 2, y, NULL, false, DPF_ALIGN_TOP);
 }
 
 /**
@@ -378,12 +383,16 @@ void WI_drawEL(void)
     }
 
     // Draw "Entering"
-    WI_DrawPatch2(entering.id, SCREENWIDTH / 2, y, NULL, false, 0);
+    WI_DrawPatch2(entering.id, SCREENWIDTH / 2, y, NULL, false, DPF_ALIGN_TOP);
 
     // Draw map.
-    y += (5 * mapNamePatches[wbs->nextMap].height) / 4;
+    {
+    patchinfo_t info;
+    if(R_GetPatchInfo(mapNamePatches[wbs->nextMap], &info))
+        y += (5 * info.height) / 4;
+    }
 
-    WI_DrawPatch2(mapNamePatches[(wbs->episode * 8) + wbs->nextMap].id, SCREENWIDTH / 2, y, mapName, false, 0);
+    WI_DrawPatch2(mapNamePatches[(wbs->episode * 8) + wbs->nextMap], SCREENWIDTH / 2, y, mapName, false, DPF_ALIGN_TOP);
 }
 
 void WI_DrawOnMapNode(int n, patchinfo_t* c)

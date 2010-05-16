@@ -288,14 +288,14 @@ void G_UpdateEyeHeight(cvar_t* unused)
  */
 int ConTextOut(const char* string, int x, int y)
 {
-    M_DrawText4(string, x, y, GF_FONTA, DTF_NO_EFFECTS, -1, -1, -1, -1);
+    M_DrawText4(string, x, y, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_EFFECTS, -1, -1, -1, -1);
     return 0;
 }
 
 /**
  * Get the visual width of (char*) text in the game's font.
  */
-int ConTextWidth(const char *text)
+int ConTextWidth(const char* text)
 {
     return M_TextWidth(text, GF_FONTA);
 }
