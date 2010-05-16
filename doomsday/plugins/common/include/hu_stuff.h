@@ -117,7 +117,13 @@ void            Draw_EndZoom(void);
 #define DTF_ALIGN_TOP       0x0008
 #define DTF_NO_TYPEIN       0x0010
 #define DTF_NO_SHADOW       0x0020
+
 #define DTF_NO_EFFECTS      (DTF_NO_TYPEIN|DTF_NO_SHADOW)
+#define DTF_ALIGN_TOPLEFT   (DTF_ALIGN_TOP|DTF_ALIGN_LEFT)
+#define DTF_ALIGN_BOTTOMLEFT (DTF_ALIGN_BOTTOM|DTF_ALIGN_LEFT)
+#define DTF_ALIGN_TOPRIGHT  (DTF_ALIGN_TOP|DTF_ALIGN_RIGHT)
+#define DTF_ALIGN_BOTTOMRIGHT (DTF_ALIGN_BOTTOM|DTF_ALIGN_RIGHT)
+
 /*@}*/
 
 void            M_DrawText(const char* string, int x, int y);
@@ -172,7 +178,12 @@ void            IN_DrawNumber(int val, int x, int y, int digits, float r, float 
 #define DPF_ALIGN_TOP       0x0008
 #define DPF_NO_OFFSETX      0x0010
 #define DPF_NO_OFFSETY      0x0020
-#define DPF_NO_OFFSET       (DPF_NO_OFFSETX | DPF_NO_OFFSETY)
+
+#define DPF_NO_OFFSET       (DPF_NO_OFFSETX|DPF_NO_OFFSETY)
+#define DPF_ALIGN_TOPLEFT   (DPF_ALIGN_TOP|DPF_ALIGN_LEFT)
+#define DPF_ALIGN_BOTTOMLEFT (DPF_ALIGN_BOTTOM|DPF_ALIGN_LEFT)
+#define DPF_ALIGN_TOPRIGHT  (DPF_ALIGN_TOP|DPF_ALIGN_RIGHT)
+#define DPF_ALIGN_BOTTOMRIGHT (DPF_ALIGN_BOTTOM|DPF_ALIGN_RIGHT)
 /*@}*/
 
 void            M_DrawPatch(patchid_t id, int x, int y);
