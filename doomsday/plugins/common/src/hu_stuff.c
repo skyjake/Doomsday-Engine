@@ -2561,18 +2561,21 @@ void M_DrawSlider(int x, int y, int width, int height, int slot, float alpha)
 #endif
 {
 #if __JHERETIC__ || __JHEXEN__
-    float unit = (width * 8 + 2) / width;
+    float pos;
+    if(width <= 0)
+        return;
+    pos = (float)slot / (width-1);
 
     DGL_Color4f( 1, 1, 1, alpha);
 
-    M_DrawPatch(dpSliderLeft.id, x - 32, y);
-    M_DrawPatch(dpSliderRight.id, x + width * 8, y);
+    M_DrawPatch2(dpSliderLeft.id, x, y, DPF_ALIGN_RIGHT|DPF_NO_OFFSET);
+    M_DrawPatch2(dpSliderRight.id, x + width * 8, y, DPF_ALIGN_LEFT|DPF_NO_OFFSET);
 
     DGL_SetPatch(dpSliderMiddle.id, DGL_REPEAT, DGL_REPEAT);
-    DGL_DrawRectTiled(x - 1, y + 1, width * 8 + 2, 13, 8, 13);
+    DGL_DrawRectTiled(x, y + 1, width * 8, 13, 8, 13);
 
     DGL_Color4f( 1, 1, 1, alpha);
-    M_DrawPatch(dpSliderHandle.id, x + 4 + slot * unit, y + 7);
+    M_DrawPatch(dpSliderHandle.id, x + (width * 8) * pos, y + 7);
 #else
     float xx, scale = height / 13.0f;
 
