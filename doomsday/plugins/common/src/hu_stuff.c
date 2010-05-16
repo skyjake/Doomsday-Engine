@@ -2811,7 +2811,7 @@ void Hu_Drawer(void)
         else
             DGL_Scalef((float)winWidth/SCREENWIDTH, (float)winWidth/SCREENWIDTH, 1);
 
-        WI_DrawPatch2(m_pause.id, 0, 0, NULL, false, 0);
+        WI_DrawPatch2(m_pause.id, 0, 0, NULL, false, DPF_NO_OFFSET);
 
         DGL_MatrixMode(DGL_PROJECTION);
         DGL_PopMatrix();
