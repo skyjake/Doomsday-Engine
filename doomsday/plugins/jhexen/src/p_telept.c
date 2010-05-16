@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -104,14 +104,12 @@ mobj_t* P_SpawnTeleFog(float x, float y, angle_t angle)
     return P_SpawnMobj3f(MT_TFOG, x, y, TELEFOGHEIGHT, angle, MSF_Z_FLOOR);
 }
 
-boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle,
-                   boolean useFog)
+boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle, boolean useFog)
 {
-    float               oldpos[3], aboveFloor, fogDelta;
-    player_t*           player;
-    unsigned int        an;
-    angle_t             oldAngle;
-    mobj_t*             fog;
+    float oldpos[3], aboveFloor, fogDelta;
+    unsigned int an;
+    angle_t oldAngle;
+    mobj_t* fog;
 
     memcpy(oldpos, mo->pos, sizeof(oldpos));
     oldAngle = mo->angle;
@@ -120,9 +118,11 @@ boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle,
     if(!P_TeleportMove(mo, x, y, false))
         return false;
 
-    if(mo->player)
+    // $voodoodolls Must be the real player.
+    if(mo->player && mo->player->plr->mo == mo)
     {
-        player = mo->player;
+        player_t* player = mo->player;
+
         player->plr->flags |= DDPF_FIXANGLES | DDPF_FIXPOS | DDPF_FIXMOM;
         if(player->powers[PT_FLIGHT] && aboveFloor > 0)
         {
@@ -131,19 +131,18 @@ boolean P_Teleport(mobj_t* mo, float x, float y, angle_t angle,
             {
                 mo->pos[VZ] = mo->ceilingZ - mo->height;
             }
-            player->viewZ = mo->pos[VZ] + player->viewHeight;
         }
         else
         {
             mo->pos[VZ] = mo->floorZ;
-            player->viewHeight = (float) cfg.plrViewHeight;
-            player->viewHeightDelta = 0;
-            player->viewZ = mo->pos[VZ] + player->viewHeight;
             if(useFog)
-            {
                 player->plr->lookDir = 0;
-            }
         }
+        player->viewHeight = (float) cfg.plrViewHeight;
+        player->viewHeightDelta = 0;
+        player->viewZ = mo->pos[VZ] + player->viewHeight;
+        player->viewOffset[VX] = player->viewOffset[VY] = player->viewOffset[VZ] = 0;
+        player->bob = 0;
     }
     else if(mo->flags & MF_MISSILE)
     {
