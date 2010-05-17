@@ -812,11 +812,11 @@ void IN_DrawDMStats(void)
     M_DrawText2("TOTAL", 265, 30, GF_FONTB);
 
     DGL_Color4f(defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
-    M_DrawText2("VICTIMS", 140, 8, GF_FONTA);
+    M_DrawText("VICTIMS", 140, 8);
 
     for(i = 0; i < 7; ++i)
     {
-        M_DrawText2(killersText[i], 10, 80 + 9 * i, GF_FONTA);
+        M_DrawText(killersText[i], 10, 80 + 9 * i);
     }
 
     if(interTime < 20)

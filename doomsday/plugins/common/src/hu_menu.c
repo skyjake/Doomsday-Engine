@@ -2193,38 +2193,38 @@ void MN_DrawColorWidget(void)
 #if __JDOOM__ || __JDOOM64__
     MN_DrawSlider(menu, 0, 11, currentcolor[0] * 10 + .25f);
     DGL_Color4f(1, 1, 1, menuAlpha);
-    M_DrawText2(ColorWidgetItems[0].text, x, y, GF_FONTA);
+    M_DrawText(ColorWidgetItems[0].text, x, y);
 
     MN_DrawSlider(menu, 1, 11, currentcolor[1] * 10 + .25f);
     DGL_Color4f(1, 1, 1, menuAlpha);
-    M_DrawText2(ColorWidgetItems[1].text, x, y + (LINEHEIGHT_A), GF_FONTA);
+    M_DrawText(ColorWidgetItems[1].text, x, y + (LINEHEIGHT_A));
 
     MN_DrawSlider(menu, 2, 11, currentcolor[2] * 10 + .25f);
     DGL_Color4f(1, 1, 1, menuAlpha);
-    M_DrawText2(ColorWidgetItems[2].text, x, y + (LINEHEIGHT_A * 2), GF_FONTA);
+    M_DrawText(ColorWidgetItems[2].text, x, y + (LINEHEIGHT_A * 2));
 #else
     MN_DrawSlider(menu, 1, 11, currentcolor[0] * 10 + .25f);
     DGL_Color4f(1, 1, 1, menuAlpha);
-    M_DrawText2(ColorWidgetItems[0].text, x, y, GF_FONTA);
+    M_DrawText(ColorWidgetItems[0].text, x, y);
 
     MN_DrawSlider(menu, 4, 11, currentcolor[1] * 10 + .25f);
     DGL_Color4f(1, 1, 1, menuAlpha);
-    M_DrawText2(ColorWidgetItems[3].text, x, y + (LINEHEIGHT_A * 3), GF_FONTA);
+    M_DrawText(ColorWidgetItems[3].text, x, y + (LINEHEIGHT_A * 3));
 
     MN_DrawSlider(menu, 7, 11, currentcolor[2] * 10 + .25f);
     DGL_Color4f(1, 1, 1, menuAlpha);
-    M_DrawText2(ColorWidgetItems[6].text, x, y + (LINEHEIGHT_A * 6), GF_FONTA);
+    M_DrawText(ColorWidgetItems[6].text, x, y + (LINEHEIGHT_A * 6));
 #endif
     if(rgba)
     {
 #if __JDOOM__ || __JDOOM64__
         MN_DrawSlider(menu, 3, 11, currentcolor[3] * 10 + .25f);
         DGL_Color4f(1, 1, 1, menuAlpha);
-        M_DrawText2(ColorWidgetItems[3].text, x, y + (LINEHEIGHT_A * 3), GF_FONTA);
+        M_DrawText(ColorWidgetItems[3].text, x, y + (LINEHEIGHT_A * 3));
 #else
         MN_DrawSlider(menu, 10, 11, currentcolor[3] * 10 + .25f);
         DGL_Color4f(1, 1, 1, menuAlpha);
-        M_DrawText2(ColorWidgetItems[9].text, x, y + (LINEHEIGHT_A * 9), GF_FONTA);
+        M_DrawText(ColorWidgetItems[9].text, x, y + (LINEHEIGHT_A * 9));
 #endif
     }
 
