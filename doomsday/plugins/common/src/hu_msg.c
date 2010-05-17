@@ -201,7 +201,7 @@ static void drawMessage(void)
     DGL_Color4f(cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2], 1);
 
     M_DrawText3(msgText, x, y, GF_FONTA, 0);
-    y += M_TextHeight(msgText, GF_FONTA);
+    y += M_TextHeight(msgText, GF_FONTA)/2;
     // An additional blank line between the message and response prompt.
     y += M_CharHeight('A', GF_FONTA);
 
