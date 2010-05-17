@@ -1849,7 +1849,7 @@ int M_TextFragmentHeight(const char* string, gamefontid_t font)
     height = 0;
     len = strlen(string);
     ch = string;
-    while(i++ < len && (c = *ch++) != '\n')
+    while(i++ < len && (c = *ch++) != 0 && c != '\n')
     {
         int charHeight = M_CharHeight(c, font);
         if(charHeight > height)
