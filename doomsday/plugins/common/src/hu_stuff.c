@@ -3127,9 +3127,9 @@ void M_DrawPatch2(patchid_t id, int posX, int posY, short flags)
         x -= info.width /2;
 
     if(flags & DPF_ALIGN_BOTTOM)
-        y += info.height;
+        y -= info.height;
     else if(!(flags & DPF_ALIGN_TOP))
-        y += info.height/2;
+        y -= info.height/2;
 
     w = (float) info.width;
     h = (float) info.height;
