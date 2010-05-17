@@ -184,6 +184,7 @@ void            DGL_Disable(int cap);
 boolean         DGL_GetIntegerv(int name, int* vec);
 int             DGL_GetInteger(int name);
 boolean         DGL_SetInteger(int name, int value);
+boolean         DGL_GetFloatv(int name, float* vec);
 float           DGL_GetFloat(int name);
 boolean         DGL_SetFloat(int name, float value);
 

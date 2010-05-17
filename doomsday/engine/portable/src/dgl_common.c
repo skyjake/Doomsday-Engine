@@ -513,6 +513,47 @@ boolean DGL_SetInteger(int name, int value)
     return true;
 }
 
+boolean DGL_GetFloatv(int name, float* v)
+{
+    float color[4];
+
+    switch(name)
+    {
+    case DGL_CURRENT_COLOR_R:
+        glGetFloatv(GL_CURRENT_COLOR, color);
+        *v = color[0];
+        break;
+
+    case DGL_CURRENT_COLOR_G:
+        glGetFloatv(GL_CURRENT_COLOR, color);
+        *v = color[1];
+        break;
+
+    case DGL_CURRENT_COLOR_B:
+        glGetFloatv(GL_CURRENT_COLOR, color);
+        *v = color[2];
+        break;
+
+    case DGL_CURRENT_COLOR_A:
+        glGetFloatv(GL_CURRENT_COLOR, color);
+        *v = color[3];
+        break;
+
+    case DGL_CURRENT_COLOR_RGBA:
+        {
+        int i;
+        glGetFloatv(GL_CURRENT_COLOR, color);
+        for(i = 0; i < 4; ++i)
+            v[i] = color[i];
+        break;
+        }
+    default:
+        return false;
+    }
+
+    return true;
+}
+
 float DGL_GetFloat(int name)
 {
     switch(name)

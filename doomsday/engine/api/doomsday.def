@@ -52,7 +52,6 @@ NAME            "DOOMSDAY"
 ; 319 formerly P_Swap
 ; 320 formerly P_Swapp
 ; 328 formerly P_RegisterCustomMapProperty
-; 375 formerly GL_MultiTexCoord2f
 
 EXPORTS
 ; Plugins.
@@ -367,6 +366,7 @@ EXPORTS
     DGL_GetIntegerv             @392 NONAME
     DGL_GetInteger              @393 NONAME
     DGL_SetInteger              @394 NONAME
+    DGL_GetFloatv               @375 NONAME
     DGL_GetFloat                @399 NONAME
     DGL_SetFloat                @401 NONAME
     DGL_BlendFunc               @389 NONAME
