@@ -1866,69 +1866,101 @@ int M_TextFragmentHeight(const char* string, gamefontid_t font)
  */
 int M_TextWidth(const char* string, gamefontid_t font)
 {
-    int w = 0, maxWidth = -1, c;
-    boolean skip;
-    uint i;
-
-    for(i = 0, skip = false; i < strlen(string); ++i)
+    assert(string);
     {
-        c = string[i];
+    int w, maxWidth = -1;
+    boolean skip = false;
+    const char* ch;
+    size_t i, len;
 
-        if(string[i] == '{')
+    if(!string[0])
+        return 0;
+    if(font < 0 || font >= NUM_GAME_FONTS)
+        return 0;
+
+    w = 0;
+    len = strlen(string);
+    ch = string;
+    for(i = 0; i < len; ++i, ch++)
+    {
+        unsigned char c = *ch;
+
+        if(c == '{')
             skip = true;
-
-        if(skip == false && string[i] != '\n')
-            w += M_CharWidth(c, font);
-
-        if(string[i] == '}')
+        else if(c == '}')
             skip = false;
+        if(skip)
+            continue;
 
-        if(string[i] == '\n')
+        if(c == '\n')
         {
             if(w > maxWidth)
                 maxWidth = w;
             w = 0;
+            continue;
         }
-        else if(i == strlen(string) - 1 && maxWidth == -1)
+
+        w += M_CharWidth(c, font);
+
+        if(i == len - 1 && maxWidth == -1)
         {
             maxWidth = w;
         }
     }
 
     return maxWidth;
+    }
 }
 
+/**
+ * Find the visible height of the whole formatted text string.
+ * Skips parameter blocks eg "{param}Text" = 4 chars
+ */
 int M_TextHeight(const char* string, gamefontid_t font)
 {
+    assert(string);
+    {
     int h, currentLineHeight;
-    uint i, len;
+    boolean skip = false;
+    const char* ch;
+    size_t i, len;
 
-    if(!string || !string[0])
+    if(!string[0])
         return 0;
     if(font < 0 || font >= NUM_GAME_FONTS)
         return 0;
     
+    currentLineHeight = 0;
     len = strlen(string);
     h = 0;
-    currentLineHeight = 0;
-    for(i = 0; i < len; ++i)
+    ch = string;
+    for(i = 0; i < len; ++i, ch++)
     {
+        unsigned char c = *ch;
         int charHeight;
 
-        if(string[i] == '\n')
+        if(c == '{')
+            skip = true;
+        else if(c == '}')
+            skip = false;
+        if(skip)
+            continue;
+
+        if(c == '\n')
         {
             h += currentLineHeight == 0? M_CharHeight('A', font) : currentLineHeight;
             currentLineHeight = 0;
             continue;
         }
 
-        charHeight = M_CharHeight(string[i], font);
+        charHeight = M_CharHeight(c, font);
         if(charHeight > currentLineHeight)
             currentLineHeight = charHeight;
     }
     h += currentLineHeight;
 
     return h;
+    }
 }
 
 void M_DrawGlowBar(const float a[2], const float b[2], float thickness,
