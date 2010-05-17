@@ -384,7 +384,7 @@ void DrawGameSetupMenu(void)
     sprintf(buf, "%u", cfg.netMap+1);
     M_WriteMenuText(menu, idx++, buf);
     DGL_Color4f(1, 0.7f, 0.3f, Hu_MenuAlpha());
-    M_DrawText3(mapName, 160, menu->y + menu->itemHeight, GF_FONTA, DTF_ALIGN_TOP);
+    M_DrawTextFragment3(mapName, 160, menu->y + menu->itemHeight, GF_FONTA, DTF_ALIGN_TOP);
 
     idx++;
     M_WriteMenuText(menu, idx++, skillText[cfg.netSkill]);
@@ -486,7 +486,7 @@ void DrawPlayerSetupMenu(void)
     if(plrColor == numColors)
     {
         DGL_Color4f(1, 1, 1, menuAlpha);
-        M_DrawText3("AUTOMATIC", 184,
+        M_DrawTextFragment3("AUTOMATIC", 184,
 #if __JDOOM__ || __JDOOM64__
                       menu->y + 49,
 #elif __JHERETIC__
@@ -908,7 +908,7 @@ void DrawEditField(menu_t* menu, int index, editfield_t* ef)
 
     M_DrawSaveLoadBorder(menu->x - 8, menu->y + EDITFIELD_BOX_YOFFSET + (menu->itemHeight * index), width + 16);
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
-    M_DrawText3(text, menu->x, menu->y + EDITFIELD_BOX_YOFFSET + 1 + (menu->itemHeight * index), GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
+    M_DrawTextFragment3(text, menu->x, menu->y + EDITFIELD_BOX_YOFFSET + 1 + (menu->itemHeight * index), GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
 }
 
 void SCEditField(int efptr, void* data)

@@ -438,7 +438,7 @@ static void M_DrawSmallText(const char* string, int x, int y)
     DGL_Translatef(-x, -y - height/2, 0);
 
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
-    M_DrawText3(string, x, y, GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
+    M_DrawTextFragment3(string, x, y, GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -619,10 +619,10 @@ void M_DrawControlsMenu(void)
     MN_DrawTitle("CONTROLS", menu->y - 28);
     Hu_MenuPageString(buf, menu);
     DGL_Color4f(1, .7f, .3f, Hu_MenuAlpha());
-    M_DrawText3(buf, 160, menu->y - 12, GF_FONTA, DTF_ALIGN_TOP);
+    M_DrawTextFragment3(buf, 160, menu->y - 12, GF_FONTA, DTF_ALIGN_TOP);
 #else
     DGL_Color4f(cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], Hu_MenuAlpha());
-    M_DrawText3("CONTROLS", 120, 100 - 98/cfg.menuScale, GF_FONTB, DTF_ALIGN_TOPLEFT);
+    M_DrawTextFragment3("CONTROLS", 120, 100 - 98/cfg.menuScale, GF_FONTB, DTF_ALIGN_TOPLEFT);
 
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 
@@ -639,7 +639,7 @@ void M_DrawControlsMenu(void)
 #else
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 #endif
-    M_DrawText3(buf, 160, 100 + (95/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM);
+    M_DrawTextFragment3(buf, 160, 100 + (95/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM);
 
     for(i = 0; i < menu->numVisItems && menu->firstItem + i < menu->itemCount;
         i++, item++)
@@ -684,10 +684,10 @@ void M_ControlGrabDrawer(void)
     DGL_Translatef(-(SCREENWIDTH/2), -(SCREENHEIGHT/2), 0);
 
     DGL_Color4f(.75f, .75f, .75f, 1);
-    M_DrawText3("press key or move controller for", 160, 98, GF_FONTA, DTF_ALIGN_BOTTOM|DTF_NO_TYPEIN);
+    M_DrawTextFragment3("press key or move controller for", 160, 98, GF_FONTA, DTF_ALIGN_BOTTOM|DTF_NO_TYPEIN);
 
     DGL_Color4f(1, 1, 1, 1);
-    M_DrawText3(grabbing->item->text, 160, 102, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    M_DrawTextFragment3(grabbing->item->text, 160, 102, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();

@@ -525,8 +525,8 @@ void WI_drawDeathmatchStats(void)
 
                 sprintf(tmp, "%i", teamInfo[i].members);
                 DGL_Color4f(1, 1, 1, 1);
-                M_DrawText(tmp, x - p[i].width / 2 + 1, DM_MATRIXY - WI_SPACINGY + p[i].height - 8);
-                M_DrawText(tmp, DM_MATRIXX - p[i].width / 2 + 1, y + p[i].height - 8);
+                M_DrawTextFragment(tmp, x - p[i].width / 2 + 1, DM_MATRIXY - WI_SPACINGY + p[i].height - 8);
+                M_DrawTextFragment(tmp, DM_MATRIXX - p[i].width / 2 + 1, y + p[i].height - 8);
             }
         }
         else
@@ -756,7 +756,7 @@ void WI_drawNetgameStats(void)
 
             sprintf(tmp, "%i", teamInfo[i].members);
             DGL_Color4f(1, 1, 1, 1);
-            M_DrawText(tmp, x - p[i].width + 1, y + p[i].height - 8);
+            M_DrawTextFragment(tmp, x - p[i].width + 1, y + p[i].height - 8);
         }
 
         if(i == myTeam)

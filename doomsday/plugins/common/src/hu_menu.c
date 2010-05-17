@@ -1721,7 +1721,7 @@ void Hu_MenuDrawer(void)
             }
             else if(currentMenu->items[i].text)
             {
-                WI_DrawParamText(currentMenu->items[i].text, pos[VX], pos[VY], currentMenu->font, DTF_ALIGN_TOPLEFT, r, g, b, menuAlpha, false);
+                M_DrawText(currentMenu->items[i].text, pos[VX], pos[VY], currentMenu->font, DTF_ALIGN_TOPLEFT, r, g, b, menuAlpha, false);
             }
 
             pos[VY] += currentMenu->itemHeight;
@@ -2193,38 +2193,38 @@ void MN_DrawColorWidget(void)
 #if __JDOOM__ || __JDOOM64__
     MN_DrawSlider(menu, 0, 11, currentcolor[0] * 10 + .25f);
     DGL_Color4f(1, 1, 1, menuAlpha);
-    M_DrawText(ColorWidgetItems[0].text, x, y);
+    M_DrawTextFragment(ColorWidgetItems[0].text, x, y);
 
     MN_DrawSlider(menu, 1, 11, currentcolor[1] * 10 + .25f);
     DGL_Color4f(1, 1, 1, menuAlpha);
-    M_DrawText(ColorWidgetItems[1].text, x, y + (LINEHEIGHT_A));
+    M_DrawTextFragment(ColorWidgetItems[1].text, x, y + (LINEHEIGHT_A));
 
     MN_DrawSlider(menu, 2, 11, currentcolor[2] * 10 + .25f);
     DGL_Color4f(1, 1, 1, menuAlpha);
-    M_DrawText(ColorWidgetItems[2].text, x, y + (LINEHEIGHT_A * 2));
+    M_DrawTextFragment(ColorWidgetItems[2].text, x, y + (LINEHEIGHT_A * 2));
 #else
     MN_DrawSlider(menu, 1, 11, currentcolor[0] * 10 + .25f);
     DGL_Color4f(1, 1, 1, menuAlpha);
-    M_DrawText(ColorWidgetItems[0].text, x, y);
+    M_DrawTextFragment(ColorWidgetItems[0].text, x, y);
 
     MN_DrawSlider(menu, 4, 11, currentcolor[1] * 10 + .25f);
     DGL_Color4f(1, 1, 1, menuAlpha);
-    M_DrawText(ColorWidgetItems[3].text, x, y + (LINEHEIGHT_A * 3));
+    M_DrawTextFragment(ColorWidgetItems[3].text, x, y + (LINEHEIGHT_A * 3));
 
     MN_DrawSlider(menu, 7, 11, currentcolor[2] * 10 + .25f);
     DGL_Color4f(1, 1, 1, menuAlpha);
-    M_DrawText(ColorWidgetItems[6].text, x, y + (LINEHEIGHT_A * 6));
+    M_DrawTextFragment(ColorWidgetItems[6].text, x, y + (LINEHEIGHT_A * 6));
 #endif
     if(rgba)
     {
 #if __JDOOM__ || __JDOOM64__
         MN_DrawSlider(menu, 3, 11, currentcolor[3] * 10 + .25f);
         DGL_Color4f(1, 1, 1, menuAlpha);
-        M_DrawText(ColorWidgetItems[3].text, x, y + (LINEHEIGHT_A * 3));
+        M_DrawTextFragment(ColorWidgetItems[3].text, x, y + (LINEHEIGHT_A * 3));
 #else
         MN_DrawSlider(menu, 10, 11, currentcolor[3] * 10 + .25f);
         DGL_Color4f(1, 1, 1, menuAlpha);
-        M_DrawText(ColorWidgetItems[9].text, x, y + (LINEHEIGHT_A * 9));
+        M_DrawTextFragment(ColorWidgetItems[9].text, x, y + (LINEHEIGHT_A * 9));
 #endif
     }
 
@@ -2293,7 +2293,7 @@ void M_ToggleVar(int index, void* context)
 void MN_DrawTitle(const char* string, int y)
 {
     DGL_Color4f(cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], menuAlpha);
-    M_DrawText3(string, SCREENWIDTH/2, y, GF_FONTB, DTF_ALIGN_TOP);
+    M_DrawTextFragment3(string, SCREENWIDTH/2, y, GF_FONTB, DTF_ALIGN_TOP);
 }
 
 boolean MN_IsItemVisible(const menu_t* menu, int item)
@@ -2314,7 +2314,7 @@ void M_WriteMenuText(const menu_t* menu, int index, const char* string)
         off = M_TextWidth(menu->items[index].text, menu->font) + 4;
 
     DGL_Color4f(1, 1, 1, menuAlpha);
-    M_DrawText3(string, menu->x + off, menu->y + menu->itemHeight * (index  - menu->firstItem), menu->font, DTF_ALIGN_TOPLEFT);
+    M_DrawTextFragment3(string, menu->x + off, menu->y + menu->itemHeight * (index  - menu->firstItem), menu->font, DTF_ALIGN_TOPLEFT);
 }
 
 /**
@@ -2427,7 +2427,7 @@ void M_DrawClassMenu(void)
     int tmap = 1, hasFocus = MAX_OF(0, itemOn);
 
     DGL_Color4f(menu->color[0], menu->color[1], menu->color[2], menuAlpha);
-    M_DrawText3("CHOOSE CLASS:", 34, 24, GF_FONTB, DTF_ALIGN_TOPLEFT);
+    M_DrawTextFragment3("CHOOSE CLASS:", 34, 24, GF_FONTB, DTF_ALIGN_TOPLEFT);
 
     pClass = menu->items[hasFocus].option;
     if(pClass < 0)
@@ -2491,7 +2491,7 @@ void M_DrawEpisode(void)
         const char* str = notDesignedForMessage;
         composeNotDesignedForMessage(GET_TXT(TXT_SINGLEPLAYER));
         DGL_Color4f(cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2], menuAlpha);
-        M_DrawText3(str, SCREENWIDTH/2, SCREENHEIGHT - 2, GF_FONTA, DTF_ALIGN_BOTTOM);
+        M_DrawTextFragment3(str, SCREENWIDTH/2, SCREENHEIGHT - 2, GF_FONTA, DTF_ALIGN_BOTTOM);
     }
 #else // __JDOOM__
     WI_DrawPatch3(m_episod.id, 50, 40, "{case}Which Episode{scaley=1.25,y=-3}?", true, DPF_ALIGN_TOPLEFT, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
@@ -2587,7 +2587,7 @@ void M_DrawLoad(void)
     {
         M_DrawSaveLoadBorder(LoadDef.x - 8, SAVEGAME_BOX_YOFFSET + LoadDef.y + (menu->itemHeight * i), width + 16);
         DGL_Color4f(i == itemOn? r : menu->color[0], i == itemOn? g : menu->color[1], i == itemOn? b : menu->color[2], menuAlpha);
-        M_DrawText3(savegamestrings[i], LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y + 1 + (menu->itemHeight * i), menu->font, DTF_ALIGN_TOPLEFT);
+        M_DrawTextFragment3(savegamestrings[i], LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y + 1 + (menu->itemHeight * i), menu->font, DTF_ALIGN_TOPLEFT);
     }
 }
 
@@ -2616,7 +2616,7 @@ void M_DrawSave(void)
     {
         M_DrawSaveLoadBorder(SaveDef.x - 8, SAVEGAME_BOX_YOFFSET + SaveDef.y + (menu->itemHeight * i), width + 16);
         DGL_Color4f(i == itemOn? r : menu->color[0], i == itemOn? g : menu->color[1], i == itemOn? b : menu->color[2], menuAlpha);
-        M_DrawText3(savegamestrings[i], SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 + (menu->itemHeight * i), menu->font, DTF_ALIGN_TOPLEFT);
+        M_DrawTextFragment3(savegamestrings[i], SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 + (menu->itemHeight * i), menu->font, DTF_ALIGN_TOPLEFT);
     }
 
     if(saveStringEnter)
@@ -2627,7 +2627,7 @@ void M_DrawSave(void)
         {
             i = M_TextWidth(savegamestrings[saveSlot], GF_FONTA);
             DGL_Color4f(r, g, b, menuAlpha);
-            M_DrawText3("_", SaveDef.x + i, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 + (menu->itemHeight * saveSlot), GF_FONTA, DTF_ALIGN_TOPLEFT);
+            M_DrawTextFragment3("_", SaveDef.x + i, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 + (menu->itemHeight * saveSlot), GF_FONTA, DTF_ALIGN_TOPLEFT);
         }
     }
 }
@@ -2873,7 +2873,7 @@ void M_DrawWeaponMenu(void)
     {
         const char* str = "Use left/right to move weapon up/down";
         DGL_Color4f(cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2], menuAlpha);
-        M_DrawText3(str, SCREENWIDTH/2, SCREENHEIGHT-2, GF_FONTA, DTF_ALIGN_BOTTOM);
+        M_DrawTextFragment3(str, SCREENWIDTH/2, SCREENHEIGHT-2, GF_FONTA, DTF_ALIGN_BOTTOM);
     }
 
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
@@ -3046,7 +3046,7 @@ void M_DrawHUDMenu(void)
 #if __JDOOM__ || __JDOOM64__
     Hu_MenuPageString(buf, menu);
     DGL_Color4f(1, .7f, .3f, Hu_MenuAlpha());
-    M_DrawText3(buf, SCREENWIDTH/2, menu->y - 12, GF_FONTA, DTF_ALIGN_TOP);
+    M_DrawTextFragment3(buf, SCREENWIDTH/2, menu->y - 12, GF_FONTA, DTF_ALIGN_TOP);
 #else
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 

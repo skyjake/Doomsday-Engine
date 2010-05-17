@@ -1272,7 +1272,7 @@ void drawFragsWidget(int player, float textAlpha, float iconAlpha,
         return;
     sprintf(buf, "FRAGS:%i", hud->currentFragsCount);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    M_DrawText3(buf, 0, 0, GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
+    M_DrawTextFragment3(buf, 0, 0, GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
 }
@@ -1294,7 +1294,7 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
     ST_HUDSpriteSize(SPR_STIM, &w, &h);
     sprintf(buf, "%i%%", plr->health);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    M_DrawText3(buf, w + 2, 0, GF_FONTB, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+    M_DrawTextFragment3(buf, w + 2, 0, GF_FONTB, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
     *drawnWidth = w + 2 + M_TextWidth(buf, GF_FONTB);
     *drawnHeight = MAX_OF(h, M_TextHeight(buf, GF_FONTB));
 }
@@ -1339,7 +1339,7 @@ void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
         ST_HUDSpriteSize(spr, &w, &h);
         sprintf(buf, "%i", plr->ammo[ammoType].owned);
         DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-        M_DrawText3(buf, w+2, 0, GF_FONTB, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+        M_DrawTextFragment3(buf, w+2, 0, GF_FONTB, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
         *drawnWidth += w+2+M_TextWidth(buf, GF_FONTB);
         *drawnHeight += MAX_OF(h, M_TextHeight(buf, GF_FONTB));
         break;
@@ -1391,7 +1391,7 @@ void drawArmorWidget(int player, float textAlpha, float iconAlpha,
     dd_snprintf(buf, 20, "%i%%", plr->armorPoints);
 
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    M_DrawText3(buf, 0, 0, GF_FONTB, DTF_ALIGN_BOTTOMRIGHT|DTF_NO_EFFECTS);
+    M_DrawTextFragment3(buf, 0, 0, GF_FONTB, DTF_ALIGN_BOTTOMRIGHT|DTF_NO_EFFECTS);
     spr = (plr->armorType == 2 ? SPR_ARM2 : SPR_ARM1);
     ST_drawHUDSprite(spr, -(armorOffset+2), 0, HOT_BRIGHT, 1, iconAlpha, false);
     ST_HUDSpriteSize(spr, &w, &h);
@@ -1493,7 +1493,7 @@ void drawKillsWidget(int player, float textAlpha, float iconAlpha,
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    M_DrawText3(buf, 0, 0, GF_FONTA, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+    M_DrawTextFragment3(buf, 0, 0, GF_FONTA, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 }
 
 void drawItemsWidget(int player, float textAlpha, float iconAlpha,
@@ -1525,7 +1525,7 @@ void drawItemsWidget(int player, float textAlpha, float iconAlpha,
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    M_DrawText3(buf, 0, 0, GF_FONTA, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+    M_DrawTextFragment3(buf, 0, 0, GF_FONTA, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 }
 
 void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
@@ -1557,7 +1557,7 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    M_DrawText3(buf, 0, 0, GF_FONTA, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+    M_DrawTextFragment3(buf, 0, 0, GF_FONTA, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 }
 
 typedef struct {
