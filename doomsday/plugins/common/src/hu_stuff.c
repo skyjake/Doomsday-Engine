@@ -1519,7 +1519,7 @@ void M_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
 {
 #define SMALLBUFF_SIZE  80
 
-    boolean typeIn = (flags & DTF_NO_TYPEIN) != 0;
+    boolean typeIn = (flags & DTF_NO_TYPEIN) == 0;
     float r = defRed, g = defGreen, b = defBlue, a = defAlpha;
     float offX = 0, offY = 0, width = 0, cx = x, cy = y;
     float scaleX = 1, scaleY = 1, angle = 0, extraScale, leading = .25f;
