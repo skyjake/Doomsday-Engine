@@ -896,7 +896,7 @@ void Ed_MakeCursorVisible(void)
 void DrawEditField(menu_t* menu, int index, editfield_t* ef)
 {
     char buf[MAX_EDIT_LEN + 1], *text;
-    int vis, width = M_TextWidth("a", GF_FONTA) * 27;
+    int vis, width = M_CharWidth('_', GF_FONTA) * 27;
 
     strcpy(buf, ef->text);
     strupr(buf);

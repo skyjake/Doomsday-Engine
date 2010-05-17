@@ -439,7 +439,7 @@ static void drawNumber(int val, int x, int y, int wrapThresh)
     }
 
     DGL_Color4f(1, 1, 1, 1);
-    M_DrawText(buf, x - M_TextWidth(buf, GF_FONTA) / 2, y);
+    M_DrawText3(buf, x, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_EFFECTS);
 }
 
 static void drawNumberBold(int val, int x, int y, int wrapThresh)

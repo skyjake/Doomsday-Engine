@@ -917,20 +917,10 @@ static void drawQuad(float x, float y, float w, float h, float s, float t,
 }
 
 void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
-    float scale, float r, float g, float b, float a, boolean alignRight)
+    float scale, float r, float g, float b, float a, short flags)
 {
-    const char* ch;
-    char c;
-
     if(!str || !str[0])
         return;
-
-    if(alignRight)
-    {
-        x -= M_TextWidth(str, font) * scale;
-    }
-
-    DGL_Color4f(r, g, b, a);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -939,12 +929,8 @@ void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
     DGL_Scalef(scale, scale, 1);
     DGL_Translatef(-x, -y, 0);
 
-    ch = str;
-    while((c = *ch++))
-    {
-        M_DrawChar2(c, x, y, font);
-        x += M_CharWidth(c, font);
-    }
+    DGL_Color4f(r, g, b, a);
+    M_DrawText3(str, x, y, font, flags);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -1126,7 +1112,7 @@ static void drawTable(float x, float ly, float width, float height,
     colW = calloc(1, sizeof(*colW) * numCols);
 
     lineHeight = height / (MAXPLAYERS + 1);
-    fontHeight = M_TextHeight("AgIq^_", GF_FONTA);
+    fontHeight = M_CharHeight('A', GF_FONTA);
     fontScale = (lineHeight - CELL_PADDING * 2) / fontHeight;
     fontOffsetY = 0;
     if(fontScale > 1)
@@ -1182,7 +1168,7 @@ static void drawTable(float x, float ly, float width, float height,
             cX += CELL_PADDING;
 
         HU_DrawText(columns[n].label, GF_FONTA, cX, cY,
-                    fontScale, 1.f, 1.f, 1.f, alpha, columns[n].alignRight);
+            fontScale, 1.f, 1.f, 1.f, alpha, DTF_ALIGN_TOP|DTF_NO_TYPEIN|(columns[n].alignRight? DTF_ALIGN_RIGHT : 0));
     }
     ly += lineHeight;
 
@@ -1282,21 +1268,21 @@ DGL_Enable(DGL_TEXTURING);
             case 1: // Name.
                 HU_DrawText(name, GF_FONTA, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
-                            alpha, false);
+                            alpha, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
                 break;
 
             case 2: // #Suicides.
                 sprintf(buf, "%4i", info->suicides);
                 HU_DrawText(buf, GF_FONTA, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
-                            alpha, true);
+                            alpha, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
                 break;
 
             case 3: // #Kills.
                 sprintf(buf, "%4i", info->kills);
                 HU_DrawText(buf, GF_FONTA, cX, cY + fontOffsetY, fontScale,
                             info->color[0], info->color[1], info->color[2],
-                            alpha, true);
+                            alpha, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
                 break;
             }
         }

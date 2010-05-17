@@ -1292,7 +1292,7 @@ void M_InitEpisodeMenu(void)
     EpiDef.items = EpisodeItems;
     EpiDef.itemCount = numEpisodes;
     EpiDef.numVisItems = MIN_OF(EpiDef.itemCount, 10);
-    EpiDef.x = 160 - maxw / 2 + 12; // Center the menu appropriately.
+    EpiDef.x = SCREENWIDTH/2 - maxw / 2 + 12; // Center the menu appropriately.
 }
 #endif
 
@@ -1386,7 +1386,7 @@ void Hu_MenuInit(void)
             maxw = w;
     }
     // Center the skill menu appropriately.
-    SkillDef.x = 160 - maxw / 2 + 12;
+    SkillDef.x = SCREENWIDTH/2 - maxw / 2 + 12;
 #endif
 
     // Play modes.
@@ -2491,7 +2491,7 @@ void M_DrawEpisode(void)
         const char* str = notDesignedForMessage;
         composeNotDesignedForMessage(GET_TXT(TXT_SINGLEPLAYER));
         DGL_Color4f(cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2], menuAlpha);
-        M_DrawText3(str, 160 - M_TextWidth(str, GF_FONTA) / 2, 200 - M_TextHeight(str, GF_FONTA) - 2, GF_FONTA, DTF_ALIGN_TOPLEFT);
+        M_DrawText3(str, SCREENWIDTH/2, SCREENHEIGHT - 2, GF_FONTA, DTF_ALIGN_BOTTOM);
     }
 #else // __JDOOM__
     WI_DrawPatch3(m_episod.id, 50, 40, "{case}Which Episode{scaley=1.25,y=-3}?", true, DPF_ALIGN_TOPLEFT, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
