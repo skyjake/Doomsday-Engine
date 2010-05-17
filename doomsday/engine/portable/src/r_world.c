@@ -1525,8 +1525,8 @@ void R_SetupMap(int mode, int flags)
         // Kill all local commands and determine the invoid status of players.
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t           *plr = &ddPlayers[i];
-            ddplayer_t         *ddpl = &plr->shared;
+            player_t* plr = &ddPlayers[i];
+            ddplayer_t* ddpl = &plr->shared;
 
             clients[i].numTics = 0;
 
@@ -1534,14 +1534,10 @@ void R_SetupMap(int mode, int flags)
             ddpl->inVoid = true;
             if(ddpl->mo)
             {
-                subsector_t        *ssec =
-                    R_PointInSubsector(ddpl->mo->pos[VX],
-                                       ddpl->mo->pos[VY]);
+                subsector_t* ssec = R_PointInSubsector(ddpl->mo->pos[VX], ddpl->mo->pos[VY]);
 
                 //// \fixme $nplanes
-                if(ssec &&
-                   ddpl->mo->pos[VZ] > ssec->sector->SP_floorvisheight + 4 &&
-                   ddpl->mo->pos[VZ] < ssec->sector->SP_ceilvisheight - 4)
+                if(ssec && ddpl->mo->pos[VZ] >= ssec->sector->SP_floorvisheight && ddpl->mo->pos[VZ] < ssec->sector->SP_ceilvisheight - 4)
                    ddpl->inVoid = false;
             }
         }
@@ -1733,14 +1729,13 @@ void R_UpdateLinedefsOfSector(sector_t* sec)
 
 boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
 {
-    boolean             changed = false;
-    boolean             hasGlow = false;
-    sector_t*           sec = pln->sector;
+    boolean changed = false;
+    boolean hasGlow = false;
+    sector_t* sec = pln->sector;
 
     // Update the glow properties.
     hasGlow = false;
-    if(pln->PS_material && ((pln->surface.flags & DDSUF_GLOW) ||
-       (pln->PS_material->flags & MATF_GLOW)))
+    if(pln->PS_material && ((pln->surface.flags & DDSUF_GLOW) || (pln->PS_material->flags & MATF_GLOW)))
     {
         material_snapshot_t ms;
 
@@ -1758,34 +1753,31 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
     }
     else
     {
-        pln->glowRGB[CR] = pln->glowRGB[CG] =
-            pln->glowRGB[CB] = 0;
+        pln->glowRGB[CR] = pln->glowRGB[CG] = pln->glowRGB[CB] = 0;
         pln->glow = 0;
     }
 
     // Geometry change?
     if(forceUpdate || pln->height != pln->oldHeight[1])
     {
-        uint                i;
-        subsector_t**       ssecp;
-        sidedef_t*          front = NULL, *back = NULL;
+        sidedef_t* front = NULL, *back = NULL;
+        subsector_t** ssecp;
+        uint i;
 
         // Check if there are any camera players in this sector. If their
         // height is now above the ceiling/below the floor they are now in
         // the void.
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t*           plr = &ddPlayers[i];
-            ddplayer_t*         ddpl = &plr->shared;
+            player_t* plr = &ddPlayers[i];
+            ddplayer_t* ddpl = &plr->shared;
 
             if(!ddpl->inGame || !ddpl->mo || !ddpl->mo->subsector)
                 continue;
 
             //// \fixme $nplanes
-            if((ddpl->flags & DDPF_CAMERA) &&
-               ddpl->mo->subsector->sector == sec &&
-               (ddpl->mo->pos[VZ] > sec->SP_ceilheight ||
-                ddpl->mo->pos[VZ] < sec->SP_floorheight))
+            if((ddpl->flags & DDPF_CAMERA) && ddpl->mo->subsector->sector == sec &&
+               (ddpl->mo->pos[VZ] > sec->SP_ceilheight - 4 || ddpl->mo->pos[VZ] < sec->SP_floorheight))
             {
                 ddpl->inVoid = true;
             }
@@ -1798,12 +1790,12 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
         ssecp = sec->ssectors;
         while(*ssecp)
         {
-            subsector_t*    ssec = *ssecp;
-            seg_t**         segp = ssec->segs;
+            subsector_t* ssec = *ssecp;
+            seg_t** segp = ssec->segs;
 
             while(*segp)
             {
-                seg_t*          seg = *segp;
+                seg_t* seg = *segp;
 
                 if(seg->lineDef)
                 {
