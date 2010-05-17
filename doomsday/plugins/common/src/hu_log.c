@@ -325,7 +325,7 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
     assert(player >= 0 && player < MAXPLAYERS);
     {
     msglog_t* log = &msgLogs[player];
-    int n, y, viewW, viewH, lineHeight = MAX_OF(7, M_CharHeight('Q', GF_FONTA));
+    int n, y, viewW, viewH, lineHeight;
     uint i, numVisible;
     float scale, yOffset;
     byte textFlags;
@@ -348,16 +348,12 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
         n += LOG_MAX_MESSAGES;
 
     {
-    int oldest = (unsigned) log->nextMsg - log->numVisibleMsgs;
     logmsg_t* msg;
-
-    if(oldest < 0)
-        oldest += LOG_MAX_MESSAGES;
-
-    msg = &log->msgs[oldest];
+    msg = &log->msgs[n];
+    lineHeight = M_TextHeight(msg->text, GF_FONTA)+1;
 
     if(msg->ticsRemain > 0 && msg->ticsRemain <= (unsigned) lineHeight)
-        yOffset = -lineHeight * (1.f - ((float)msg->ticsRemain/lineHeight));
+        yOffset = -(lineHeight-2) * (1.f - ((float)(msg->ticsRemain)/lineHeight));
     else
         yOffset = 0;
     }
@@ -377,6 +373,9 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
         logmsg_t* msg = &log->msgs[n];
         int width, height;
         float col[4];
+
+        width = M_TextWidth(msg->text, GF_FONTA);
+        height = M_TextHeight(msg->text, GF_FONTA);
 
         // Default colour and alpha.
         col[CR] = cfg.msgColor[CR];
@@ -408,8 +407,8 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
         else
         {
             // Fade alpha out.
-            if(i == 0 && msg->ticsRemain <= (unsigned) lineHeight)
-                col[CA] *= msg->ticsRemain / (float) lineHeight * .9f;
+            if(i == 0 && msg->ticsRemain <= (unsigned) height)
+                col[CA] *= msg->ticsRemain / (float) height * .9f;
         }
 
         // Draw using param text.
@@ -417,8 +416,6 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
         // is displayed, e.g. colour (Hexen's important messages).
         WI_DrawParamText(msg->text, 0, y, GF_FONTA, textFlags, col[CR], col[CG], col[CB], col[CA], false);
 
-        width = M_TextWidth(msg->text, GF_FONTA);
-        height = M_TextHeight(msg->text, GF_FONTA);
         if(width > *drawnWidth)
             *drawnWidth = width;
         *drawnHeight += height;
@@ -541,7 +538,7 @@ void Hu_LogRefresh(int player)
 
         // Change the tics remaining to that at post time plus a small bonus
         // so that they don't all disappear at once.
-        msg->ticsRemain = msg->tics + i * (TICSPERSEC >> 2);
+        msg->ticsRemain = msg->tics + i * TICSPERSEC;
         msg->flags &= ~MF_JUSTADDED;
 
         n = (n < LOG_MAX_MESSAGES - 1)? n + 1 : 0;
