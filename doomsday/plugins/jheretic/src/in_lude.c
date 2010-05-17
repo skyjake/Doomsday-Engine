@@ -598,12 +598,11 @@ void IN_DrawStatBack(void)
 
 void IN_DrawOldLevel(void)
 {
-    const char* levelname;
+    DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText4(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
-    levelname = P_GetShortMapName(wbs->episode, wbs->currentMap);
-
-    M_DrawText4(levelname, 160, 3, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_DrawText4("FINISHED", 160, 25, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB2[0], defFontRGB2[1],defFontRGB2[2], 1);
+    DGL_Color4f(defFontRGB2[0], defFontRGB2[1],defFontRGB2[2], 1);
+    M_DrawText4("FINISHED", 160, 25, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
     if(wbs->currentMap == 8)
     {
@@ -642,11 +641,13 @@ void IN_DrawOldLevel(void)
 
 void IN_DrawYAH(void)
 {
-    const char* mapName = P_GetShortMapName(wbs->episode, wbs->nextMap);
     uint i;
 
-    M_DrawText4("NOW ENTERING:", 160, 10, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
-    M_DrawText4(mapName, 160, 20, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    DGL_Color4f(defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+    M_DrawText4("NOW ENTERING:", 160, 10, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+
+    DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText4(P_GetShortMapName(wbs->episode, wbs->nextMap), 160, 20, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
     DGL_Color4f(1, 1, 1, 1);
     for(i = 0; i < wbs->nextMap; ++i)
@@ -669,14 +670,15 @@ void IN_DrawSingleStats(void)
 {
     static int sounds;
 
-    const char* levelname = P_GetShortMapName(wbs->episode, wbs->currentMap);
+    DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText4("KILLS", 50, 65, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    M_DrawText4("ITEMS", 50, 90, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    M_DrawText4("SECRETS", 50, 115, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
-    M_DrawText4("KILLS", 50, 65, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_DrawText4("ITEMS", 50, 90, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_DrawText4("SECRETS", 50, 115, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText4(P_GetShortMapName(wbs->episode, wbs->currentMap), 160, 3, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
-    M_DrawText4(levelname, 160, 3, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_DrawText4("FINISHED", 160, 25, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+    DGL_Color4f(defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+    M_DrawText4("FINISHED", 160, 25, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
     if(interTime < 30)
     {
@@ -733,16 +735,17 @@ void IN_DrawSingleStats(void)
 
     if(gameMode != extended || wbs->episode < 3)
     {
-        M_DrawText4("TIME", 85, 160, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+        DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+        M_DrawText4("TIME", 85, 160, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
         IN_DrawTime(155, 160, hours, minutes, seconds, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     }
     else
     {
-        M_DrawText4("NOW ENTERING:", 160, 160, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+        DGL_Color4f(defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+        M_DrawText4("NOW ENTERING:", SCREENWIDTH/2, 160, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
-        levelname = P_GetShortMapName(wbs->episode, wbs->nextMap);
-
-        M_DrawText4(levelname, 160, 170, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+        DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+        M_DrawText4(P_GetShortMapName(wbs->episode, wbs->nextMap), 160, 170, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
         skipIntermission = false;
     }
@@ -753,14 +756,16 @@ void IN_DrawCoopStats(void)
     static int sounds;
 
     int i, ypos;
-    const char* levelname = P_GetShortMapName(wbs->episode, wbs->currentMap);
 
-    M_DrawText4("KILLS", 95, 35, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_DrawText4("BONUS", 155, 35, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_DrawText4("SECRET", 232, 35, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText4("KILLS", 95, 35, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    M_DrawText4("BONUS", 155, 35, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    M_DrawText4("SECRET", 232, 35, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
-    M_DrawText4(levelname, 160, 3, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_DrawText4("FINISHED", 160, 25, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+    M_DrawText4(P_GetShortMapName(wbs->episode, wbs->currentMap), SCREENWIDTH/2, 3, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+
+    DGL_Color4f(defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+    M_DrawText4("FINISHED", SCREENWIDTH/2, 25, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
     ypos = 50;
     for(i = 0; i < NUMTEAMS; ++i)
@@ -803,12 +808,15 @@ void IN_DrawDMStats(void)
 
     int i, j, ypos = 55, xpos = 90, kpos;
 
-    M_DrawText4("TOTAL", 265, 30, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_DrawText4("VICTIMS", 140, 8, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+    DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawText4("TOTAL", 265, 30, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+
+    DGL_Color4f(defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+    M_DrawText4("VICTIMS", 140, 8, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
     for(i = 0; i < 7; ++i)
     {
-        M_DrawText4(killersText[i], 10, 80 + 9 * i, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, defFontRGB2[0], defFontRGB2[1], defFontRGB2[2], 1);
+        M_DrawText4(killersText[i], 10, 80 + 9 * i, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
     }
 
     if(interTime < 20)
@@ -888,7 +896,8 @@ void IN_DrawTime(int x, int y, int h, int m, int s, float r, float g,
     if(h)
     {
         IN_DrawNumber(h, x, y, 2, r, g, b, a);
-        M_DrawText4(":", x + 26, y, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, r, g, b, a);
+        DGL_Color4f(r, g, b, a);
+        M_DrawText4(":", x + 26, y, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
     }
 
     x += 34;
@@ -898,6 +907,7 @@ void IN_DrawTime(int x, int y, int h, int m, int s, float r, float g,
     }
 
     x += 34;
-    M_DrawText4(":", x-8, y, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, r, g, b, a);
+    DGL_Color4f(r, g, b, a);
+    M_DrawText4(":", x-8, y, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
     IN_DrawNumber(s, x, y, 2, r, g, b, a);
 }

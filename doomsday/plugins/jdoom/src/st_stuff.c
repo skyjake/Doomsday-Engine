@@ -1271,7 +1271,8 @@ void drawFragsWidget(int player, float textAlpha, float iconAlpha,
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
     sprintf(buf, "FRAGS:%i", hud->currentFragsCount);
-    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_EFFECTS);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
 }
@@ -1292,7 +1293,8 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
     ST_drawHUDSprite(SPR_STIM, 0, 0, HOT_BLEFT, 1, iconAlpha, false);
     ST_HUDSpriteSize(SPR_STIM, &w, &h);
     sprintf(buf, "%i%%", plr->health);
-    M_DrawText4(buf, w + 2, 0, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, w + 2, 0, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
     *drawnWidth = w + 2 + M_TextWidth(buf, GF_FONTB);
     *drawnHeight = MAX_OF(h, M_TextHeight(buf, GF_FONTB));
 }
@@ -1336,7 +1338,8 @@ void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
         ST_drawHUDSprite(spr, 0, 0, HOT_BLEFT, scale, iconAlpha, false);
         ST_HUDSpriteSize(spr, &w, &h);
         sprintf(buf, "%i", plr->ammo[ammoType].owned);
-        M_DrawText4(buf, w+2, 0, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+        DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+        M_DrawText4(buf, w+2, 0, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
         *drawnWidth += w+2+M_TextWidth(buf, GF_FONTB);
         *drawnHeight += MAX_OF(h, M_TextHeight(buf, GF_FONTB));
         break;
@@ -1387,7 +1390,8 @@ void drawArmorWidget(int player, float textAlpha, float iconAlpha,
 
     dd_snprintf(buf, 20, "%i%%", plr->armorPoints);
 
-    M_DrawText4(buf, 0, 0, GF_FONTB, DTF_ALIGN_RIGHT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, 0, 0, GF_FONTB, DTF_ALIGN_RIGHT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
     spr = (plr->armorType == 2 ? SPR_ARM2 : SPR_ARM1);
     ST_drawHUDSprite(spr, -(armorOffset+2), 0, HOT_BRIGHT, 1, iconAlpha, false);
     ST_HUDSpriteSize(spr, &w, &h);
@@ -1488,7 +1492,8 @@ void drawKillsWidget(int player, float textAlpha, float iconAlpha,
 
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
-    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
 }
 
 void drawItemsWidget(int player, float textAlpha, float iconAlpha,
@@ -1519,7 +1524,8 @@ void drawItemsWidget(int player, float textAlpha, float iconAlpha,
 
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
-    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
 }
 
 void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
@@ -1550,7 +1556,8 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
 
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
-    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
 }
 
 typedef struct {

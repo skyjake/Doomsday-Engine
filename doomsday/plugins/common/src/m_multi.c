@@ -325,17 +325,20 @@ void DrANumber(int number, int x, int y)
 {
     char buf[40];
     sprintf(buf, "%i", number);
-    M_DrawText4(buf, x, y, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, 1, 1, 1, Hu_MenuAlpha());
+    DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
+    M_DrawText4(buf, x, y, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 }
 
 void MN_DrCenterTextA_CS(char* string, int centerX, int y)
 {
-    M_DrawText4(string, centerX, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN, 1, 0, 0, Hu_MenuAlpha());
+    DGL_Color4f(1, 0, 0, Hu_MenuAlpha());
+    M_DrawText4(string, centerX, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 }
 
 void MN_DrCenterTextB_CS(char* string, int centerX, int y)
 {
-    M_DrawText4(string, centerX, y, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN, 1, 0, 0, Hu_MenuAlpha());
+    DGL_Color4f(1, 0, 0, Hu_MenuAlpha());
+    M_DrawText4(string, centerX, y, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 }
 
 void DrawMultiplayerMenu(void)
@@ -400,7 +403,8 @@ void DrawGameSetupMenu(void)
 
     sprintf(buf, "%u", cfg.netMap+1);
     M_WriteMenuText(menu, idx++, buf);
-    M_DrawText4(mapName, 160, menu->y + menu->itemHeight, GF_FONTA, DTF_ALIGN_TOP, 1, 0.7f, 0.3f, Hu_MenuAlpha());
+    DGL_Color4f(1, 0.7f, 0.3f, Hu_MenuAlpha());
+    M_DrawText4(mapName, 160, menu->y + menu->itemHeight, GF_FONTA, DTF_ALIGN_TOP);
 
     idx++;
     M_WriteMenuText(menu, idx++, skillText[cfg.netSkill]);
@@ -501,6 +505,7 @@ void DrawPlayerSetupMenu(void)
 
     if(plrColor == numColors)
     {
+        DGL_Color4f(1, 1, 1, menuAlpha);
         M_DrawText4("AUTOMATIC", 184,
 #if __JDOOM__ || __JDOOM64__
                       menu->y + 49,
@@ -509,7 +514,7 @@ void DrawPlayerSetupMenu(void)
 #else
                       menu->y + 64,
 #endif
-                      GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, 1, 1, 1, menuAlpha);
+                      GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
     }
 
 #undef AVAILABLE_WIDTH
@@ -922,7 +927,8 @@ void DrawEditField(menu_t* menu, int index, editfield_t* ef)
     text[vis] = 0;
 
     M_DrawSaveLoadBorder(menu->x - 8, menu->y + EDITFIELD_BOX_YOFFSET + (menu->itemHeight * index), width + 16);
-    M_DrawText4(text, menu->x, menu->y + EDITFIELD_BOX_YOFFSET + 1 + (menu->itemHeight * index), GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN, 1, 1, 1, Hu_MenuAlpha());
+    DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
+    M_DrawText4(text, menu->x, menu->y + EDITFIELD_BOX_YOFFSET + 1 + (menu->itemHeight * index), GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 }
 
 void SCEditField(int efptr, void* data)

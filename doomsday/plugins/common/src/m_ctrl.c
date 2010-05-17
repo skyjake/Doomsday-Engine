@@ -437,7 +437,8 @@ static void M_DrawSmallText(const char* string, int x, int y)
     DGL_Scalef(SMALL_SCALE, SMALL_SCALE, 1);
     DGL_Translatef(-x, -y - height/2, 0);
 
-    M_DrawText4(string, x, y, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_EFFECTS, 1, 1, 1, Hu_MenuAlpha());
+    DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
+    M_DrawText4(string, x, y, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_EFFECTS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -617,9 +618,11 @@ void M_DrawControlsMenu(void)
 #if __JDOOM__ || __JDOOM64__
     MN_DrawTitle("CONTROLS", menu->y - 28);
     Hu_MenuPageString(buf, menu);
-    M_DrawText4(buf, 160, menu->y - 12, GF_FONTA, DTF_ALIGN_TOP, 1, .7f, .3f, Hu_MenuAlpha());
+    DGL_Color4f(1, .7f, .3f, Hu_MenuAlpha());
+    M_DrawText4(buf, 160, menu->y - 12, GF_FONTA, DTF_ALIGN_TOP);
 #else
-    M_DrawText4("CONTROLS", 120, 100 - 98/cfg.menuScale, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], Hu_MenuAlpha());
+    DGL_Color4f(cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], Hu_MenuAlpha());
+    M_DrawText4("CONTROLS", 120, 100 - 98/cfg.menuScale, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_TOP);
 
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 
@@ -631,13 +634,12 @@ void M_DrawControlsMenu(void)
 #endif
 
     strcpy(buf, "Select to assign new, [Del] to clear");
-    M_DrawText4(buf, 160, 100 + (95/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM,
 #if __JDOOM__
-                 1, .7f, .3f,
+    DGL_Color4f(1, .7f, .3f, Hu_MenuAlpha());
 #else
-                 1, 1, 1,
+    DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 #endif
-                 Hu_MenuAlpha());
+    M_DrawText4(buf, 160, 100 + (95/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM);
 
     for(i = 0; i < menu->numVisItems && menu->firstItem + i < menu->itemCount;
         i++, item++)
@@ -668,24 +670,24 @@ void M_DrawControlsMenu(void)
 
 void M_ControlGrabDrawer(void)
 {
-    const char* text;
-
     if(!grabbing)
         return;
 
     DGL_SetNoMaterial();
-    DGL_DrawRect(0, 0, 320, 200, 0, 0, 0, .7f);
+    DGL_DrawRect(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0, 0, .7f);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
 
-    DGL_Translatef(160, 100, 0);
+    DGL_Translatef(SCREENWIDTH/2, SCREENHEIGHT/2, 0);
     DGL_Scalef(SMALL_SCALE, SMALL_SCALE, 1);
-    DGL_Translatef(-160, -100, 0);
+    DGL_Translatef(-(SCREENWIDTH/2), -(SCREENHEIGHT/2), 0);
 
-    text = "press key or move controller for";
-    M_DrawText4(text, 160, 98, GF_FONTA, DTF_ALIGN_BOTTOM|DTF_NO_TYPEIN, .75f, .75f, .75f, 1);
-    M_DrawText4(grabbing->item->text, 160, 102, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN, 1, 1, 1, 1);
+    DGL_Color4f(.75f, .75f, .75f, 1);
+    M_DrawText4("press key or move controller for", 160, 98, GF_FONTA, DTF_ALIGN_BOTTOM|DTF_NO_TYPEIN);
+
+    DGL_Color4f(1, 1, 1, 1);
+    M_DrawText4(grabbing->item->text, 160, 102, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();

@@ -354,7 +354,7 @@ static void drawDeathTally(void)
     static boolean showTotals;
 
     fixed_t xPos, yPos, xDelta, yDelta, xStart, scale;
-    int i, j, x, y, temp;
+    int i, j, x, y;
     boolean bold;
 
     DGL_Color4f(1, 1, 1, 1);
@@ -407,10 +407,12 @@ static void drawDeathTally(void)
             {
                 if(bold)
                 {
-                    M_DrawText4("--", x, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_EFFECTS, 1, 0.7f, 0.3f, 1);
+                    DGL_Color4f(1, 0.7f, 0.3f, 1);
+                    M_DrawText4("--", x, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_EFFECTS);
                 }
                 else
                 {
+                    DGL_Color4f(1, 1, 1, 1);
                     M_DrawText("--", x, y);
                 }
             }
@@ -436,6 +438,7 @@ static void drawNumber(int val, int x, int y, int wrapThresh)
         sprintf(buf, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
+    DGL_Color4f(1, 1, 1, 1);
     M_DrawText(buf, x - M_TextWidth(buf, GF_FONTA) / 2, y);
 }
 
@@ -448,5 +451,6 @@ static void drawNumberBold(int val, int x, int y, int wrapThresh)
         sprintf(buf, "%d", val >= wrapThresh ? val % wrapThresh : val);
     }
 
-    M_DrawText4(buf, x, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_EFFECTS, 1, 0.7f, 0.3f, 1);
+    DGL_Color4f(1, 0.7f, 0.3f, 1);
+    M_DrawText4(buf, x, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_EFFECTS);
 }

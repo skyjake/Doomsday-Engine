@@ -1190,7 +1190,7 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
 {
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
-    int w, h, health = MAX_OF(plr->plr->mo->health, 0);
+    int health = MAX_OF(plr->plr->mo->health, 0);
     char buf[20];
     if(hud->statusbarActive)
         return;
@@ -1198,13 +1198,17 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
+
     dd_snprintf(buf, 5, "%i", health);
-    h = M_TextHeight(buf, GF_FONTB);
-    w = M_TextWidth(buf, GF_FONTB);
-    M_DrawText4(buf, 2, 1, GF_FONTB, DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, 0, 0, 0, textAlpha * .4f);
-    M_DrawText4(buf, 0, -1, GF_FONTB, DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    *drawnWidth = w;
-    *drawnHeight = h;
+
+    DGL_Color4f(0, 0, 0, textAlpha * .4f);
+    M_DrawText4(buf, 2, 1, GF_FONTB, DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
+
+    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, 0, -1, GF_FONTB, DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
+
+    *drawnWidth = M_TextWidth(buf, GF_FONTB);
+    *drawnHeight = M_TextHeight(buf, GF_FONTB);
 }
 
 void drawArmorWidget(int player, float textAlpha, float iconAlpha,
@@ -1391,7 +1395,8 @@ void drawKillsWidget(int player, float textAlpha, float iconAlpha,
 
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
-    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
 }
 
 void drawItemsWidget(int player, float textAlpha, float iconAlpha,
@@ -1421,7 +1426,8 @@ void drawItemsWidget(int player, float textAlpha, float iconAlpha,
 
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
-    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
 }
 
 void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
@@ -1451,7 +1457,8 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
 
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
-    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
 }
 
 typedef struct {

@@ -1488,6 +1488,7 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
     inventoryitemtype_t readyItem;
+    patchinfo_t boxInfo;
     patchid_t patch;
     int x, y;
 
@@ -1498,6 +1499,8 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
     if((readyItem = P_InventoryReadyItem(player)) == IIT_NONE)
+        return;
+    if(!R_GetPatchInfo(dpInvItemBox, &boxInfo))
         return;
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1529,8 +1532,8 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    *drawnWidth = dpInvItemBox.width;
-    *drawnHeight = dpInvItemBox.height;
+    *drawnWidth = boxInfo.width;
+    *drawnHeight = boxInfo.height;
 
 #undef ORIGINX
 #undef ORIGINY
@@ -1817,7 +1820,8 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
     dd_snprintf(buf, 20, "%i", health);
     w = M_TextWidth(buf, GF_FONTB);
     h = M_TextHeight(buf, GF_FONTB);
-    M_DrawText4(buf, -1, -1, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS, cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+    M_DrawText4(buf, -1, -1, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
     *drawnWidth = w;
     *drawnHeight = h;
 }
@@ -1940,6 +1944,7 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
 {
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
+    patchinfo_t boxInfo;
 
     if(hud->statusbarActive || Hu_InventoryIsOpen(player))
         return;
@@ -1947,11 +1952,13 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
+    if(!R_GetPatchInfo(dpInvItemBox, &boxInfo))
+        return;
 
     if(hud->currentInvItemFlash > 0)
     {
         DGL_Color4f(1, 1, 1, iconAlpha/2);
-        M_DrawPatch(dpInvItemBox.id, -30, -30);
+        M_DrawPatch(dpInvItemBox, -30, -30);
 
         DGL_Color4f(1, 1, 1, iconAlpha);
         M_DrawPatch(dpInvItemFlash[hud->currentInvItemFlash % 5].id, -27, -30);
@@ -1966,7 +1973,7 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
             uint count;
 
             DGL_Color4f(1, 1, 1, iconAlpha/2);
-            M_DrawPatch(dpInvItemBox.id, -30, -30);
+            M_DrawPatch(dpInvItemBox, -30, -30);
 
             DGL_Color4f(1, 1, 1, iconAlpha);
             M_DrawPatch(patch, -32, -31);
@@ -1974,8 +1981,8 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
                 Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, -2, -7, textAlpha);
         }
     }
-    *drawnWidth = dpInvItemBox.width;
-    *drawnHeight = dpInvItemBox.height;
+    *drawnWidth = boxInfo.width;
+    *drawnHeight = boxInfo.height;
 }
 
 void drawInventoryWidget(int player, float textAlpha, float iconAlpha,
