@@ -1335,14 +1335,14 @@ static void drawMapMetaData(float x, float y, gamefontid_t font, float alpha)
 
     DGL_Color4f(1, 1, 1, alpha);
     // Map name:
-    M_DrawText4("map: ", x, y + 16, font, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
-    M_DrawText4(lname, x += M_TextWidth("map: ", font), y + 16, font, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    M_DrawText2("map: ", x, y + 16, font);
+    M_DrawText2(lname, x += M_TextWidth("map: ", font), y + 16, font);
 
     x += 8;
 
     // Game mode:
-    M_DrawText4("gamemode: ", x += M_TextWidth(lname, font), y + 16, font, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
-    M_DrawText4(P_GetGameModeName(), x += M_TextWidth("gamemode: ", font), y + 16, font, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    M_DrawText2("gamemode: ", x += M_TextWidth(lname, font), y + 16, font);
+    M_DrawText2(P_GetGameModeName(), x += M_TextWidth("gamemode: ", font), y + 16, font);
 }
 
 /**
@@ -1405,7 +1405,7 @@ void HU_DrawScoreBoard(int player)
 
     // Title:
     DGL_Color4f(1, 0, 0, hud->scoreAlpha);
-    M_DrawText4("ranking", x + width / 2, y + LINE_BORDER, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    M_DrawText3("ranking", x + width / 2, y + LINE_BORDER, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
     drawMapMetaData(x, y + 16, GF_FONTA, hud->scoreAlpha);
 
@@ -1820,7 +1820,7 @@ void WI_DrawParamText(const char* inString, int x, int y, gamefontid_t defFont,
 
             // Draw it.
             DGL_Color4f(r, g, b, a);
-            M_DrawText5(temp, 0, 0, font, fragmentFlags, typeIn ? charCount : 0);
+            M_DrawText4(temp, 0, 0, font, fragmentFlags, typeIn ? charCount : 0);
             charCount += strlen(temp);
 
             // Advance the current position.
@@ -2139,7 +2139,7 @@ void M_DrawChar3(unsigned char ch, int x, int y, gamefontid_t font, short flags)
 
 void M_DrawChar2(unsigned char ch, int x, int y, gamefontid_t font)
 {
-    M_DrawChar3(ch, x, y, font, DTF_ALIGN_LEFT|DTF_ALIGN_TOP);
+    M_DrawChar3(ch, x, y, font, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
 }
 
 void M_DrawChar(unsigned char ch, int x, int y)
@@ -2159,7 +2159,7 @@ void M_DrawShadowedChar3(unsigned char ch, int x, int y, gamefontid_t font, shor
 
 void M_DrawShadowedChar2(unsigned char ch, int x, int y, gamefontid_t font)
 {
-    M_DrawShadowedChar3(ch, x, y, font, DTF_ALIGN_LEFT|DTF_ALIGN_TOP, 1, 1, 1, 1);
+    M_DrawShadowedChar3(ch, x, y, font, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN, 1, 1, 1, 1);
 }
 
 void M_DrawShadowedChar(unsigned char ch, int x, int y)
@@ -2258,7 +2258,7 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
 /**
  * Write a string using a colored, custom font and do a type-in effect.
  */
-void M_DrawText5(const char* string, int x, int y, gamefontid_t font, short flags,
+void M_DrawText4(const char* string, int x, int y, gamefontid_t font, short flags,
     int initialCount)
 {
     boolean noTypein = ((flags & DTF_NO_TYPEIN) || cfg.menuEffects == 0);
@@ -2380,19 +2380,14 @@ void M_DrawText5(const char* string, int x, int y, gamefontid_t font, short flag
     }
 }
 
-void M_DrawText4(const char* string, int x, int y, gamefontid_t font, short flags)
-{
-    M_DrawText5(string, x, y, font, flags, 0);
-}
-
 void M_DrawText3(const char* string, int x, int y, gamefontid_t font, short flags)
 {
-    M_DrawText4(string, x, y, font, flags);
+    M_DrawText4(string, x, y, font, flags, 0);
 }
 
 void M_DrawText2(const char* string, int x, int y, gamefontid_t font)
 {
-    M_DrawText3(string, x, y, font, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    M_DrawText3(string, x, y, font, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
 }
 
 void M_DrawText(const char* string, int x, int y)
@@ -2514,7 +2509,7 @@ void WI_DrawPatch2(patchid_t id, int x, int y, const char* altstring, boolean bu
 
 void WI_DrawPatch(patchid_t patch, int x, int y, const char* altstring, boolean builtin)
 {
-    WI_DrawPatch2(patch, x, y, altstring, builtin, DPF_ALIGN_LEFT|DPF_ALIGN_TOP);
+    WI_DrawPatch2(patch, x, y, altstring, builtin, DPF_ALIGN_TOPLEFT);
 }
 
 /**
@@ -2962,7 +2957,7 @@ static void drawMapTitle(void)
     if(lname)
     {
         DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
-        M_DrawText4(lname, 0, 0, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+        M_DrawText3(lname, 0, 0, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
         y += 20;
     }
 #endif
@@ -2970,7 +2965,7 @@ static void drawMapTitle(void)
     if(lauthor)
     {
         DGL_Color4f(.5f, .5f, .5f, alpha);
-        M_DrawText4(lauthor, 0, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+        M_DrawText3(lauthor, 0, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
     }
 }
 
@@ -3183,7 +3178,7 @@ void M_DrawPatch2(patchid_t id, int posX, int posY, short flags)
 
 void M_DrawPatch(patchid_t id, int x, int y)
 {
-    M_DrawPatch2(id, x, y, DPF_ALIGN_LEFT|DPF_ALIGN_TOP);
+    M_DrawPatch2(id, x, y, DPF_ALIGN_TOPLEFT);
 }
 
 void M_DrawShadowedPatch3(patchid_t id, int x, int y, short flags, float r, float g,
@@ -3205,5 +3200,5 @@ void M_DrawShadowedPatch2(patchid_t id, int x, int y, short flags)
 
 void M_DrawShadowedPatch(patchid_t id, int x, int y)
 {
-    M_DrawShadowedPatch2(id, x, y, DPF_ALIGN_LEFT|DPF_ALIGN_TOP);
+    M_DrawShadowedPatch2(id, x, y, DPF_ALIGN_TOPLEFT);
 }

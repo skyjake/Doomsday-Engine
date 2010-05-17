@@ -157,7 +157,7 @@ static patchinfo_t bp[MAXPLAYERS]; // "gray P[1..MAXPLAYERS]"
 void WI_slamBackground(void)
 {
     DGL_Color4f(1, 1, 1, 1);
-    M_DrawPatch2(bg.id, 0, 0, DPF_ALIGN_LEFT|DPF_ALIGN_TOP|DPF_NO_OFFSET);
+    M_DrawPatch2(bg.id, 0, 0, DPF_ALIGN_TOPLEFT|DPF_NO_OFFSET);
 }
 
 /**

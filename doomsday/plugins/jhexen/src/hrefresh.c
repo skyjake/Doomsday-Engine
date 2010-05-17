@@ -53,8 +53,6 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-extern void MN_DrCenterTextA_CS(char *text, int center_x, int y);
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------

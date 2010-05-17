@@ -129,8 +129,7 @@ void            Draw_EndZoom(void);
 void            M_DrawText(const char* string, int x, int y);
 void            M_DrawText2(const char* string, int x, int y, gamefontid_t font);
 void            M_DrawText3(const char* string, int x, int y, gamefontid_t font, short flags);
-void            M_DrawText4(const char* string, int x, int y, gamefontid_t font, short flags);
-void            M_DrawText5(const char* string, int x, int y, gamefontid_t font, short flags, int initialCount);
+void            M_DrawText4(const char* string, int x, int y, gamefontid_t font, short flags, int initialCount);
 
 void            WI_DrawParamText(const char* string, int x, int y, gamefontid_t font, short flags, float defRed, float defGreen, float defBlue, float defAlpha, boolean defCase);
 

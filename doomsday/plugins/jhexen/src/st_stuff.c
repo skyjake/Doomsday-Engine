@@ -1821,7 +1821,7 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
     w = M_TextWidth(buf, GF_FONTB);
     h = M_TextHeight(buf, GF_FONTB);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    M_DrawText4(buf, -1, -1, GF_FONTB, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
+    M_DrawText3(buf, -1, -1, GF_FONTB, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
     *drawnWidth = w;
     *drawnHeight = h;
 }
@@ -2036,7 +2036,7 @@ void drawWorldTimerWidget(int player, float textAlpha, float iconAlpha,
     }
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
-    WI_DrawParamText(buf, 0, 0, GF_FONTA, DTF_ALIGN_RIGHT|DTF_ALIGN_TOP|DTF_NO_EFFECTS, 1, 1, 1, textAlpha, false);
+    WI_DrawParamText(buf, 0, 0, GF_FONTA, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 1, 1, 1, textAlpha, false);
 }
 
 typedef struct {

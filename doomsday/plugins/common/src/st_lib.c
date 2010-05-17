@@ -135,7 +135,7 @@ void STlib_InitIcon(st_icon_t* b, int x, int y, patchinfo_t* i, float alpha)
 
 void STlib_DrawIcon(st_icon_t* bi, float alpha)
 {
-    WI_DrawPatch3(bi->p->id, bi->x, bi->y, NULL, false, DPF_ALIGN_LEFT|DPF_ALIGN_TOP, 1, 1, 1, bi->alpha * alpha);
+    WI_DrawPatch3(bi->p->id, bi->x, bi->y, NULL, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, bi->alpha * alpha);
 }
 
 void STlib_InitMultiIcon(st_multiicon_t* i, int x, int y, patchinfo_t* il, float alpha)
@@ -149,5 +149,5 @@ void STlib_InitMultiIcon(st_multiicon_t* i, int x, int y, patchinfo_t* il, float
 void STlib_DrawMultiIcon(st_multiicon_t* mi, int iconNum, float alpha)
 {
     if(iconNum >= 0)
-        WI_DrawPatch3(mi->p[iconNum].id, mi->x, mi->y, NULL, false, DPF_ALIGN_LEFT|DPF_ALIGN_TOP, 1, 1, 1, mi->alpha * alpha);
+        WI_DrawPatch3(mi->p[iconNum].id, mi->x, mi->y, NULL, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, mi->alpha * alpha);
 }

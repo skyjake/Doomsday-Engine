@@ -288,7 +288,7 @@ void G_UpdateEyeHeight(cvar_t* unused)
  */
 int ConTextOut(const char* string, int x, int y)
 {
-    M_DrawText4(string, x, y, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_TOP|DTF_NO_EFFECTS);
+    M_DrawText3(string, x, y, GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
     return 0;
 }
 

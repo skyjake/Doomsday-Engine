@@ -1175,7 +1175,7 @@ void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
             continue;
         dp = &ammoIcons[plr->readyWeapon - 1];
         DGL_Color4f(1, 1, 1, iconAlpha);
-        M_DrawPatch2(dp->id, 0, 0, DPF_ALIGN_LEFT|DPF_ALIGN_TOP|DPF_NO_OFFSET);
+        M_DrawPatch2(dp->id, 0, 0, DPF_ALIGN_TOPLEFT|DPF_NO_OFFSET);
         drawINumber(plr->ammo[ammoType].owned, dp->width+1, -2, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
         /// \kludge calculate the visual dimensions properly!
         *drawnWidth += dp->width + 2 + (M_CharWidth('0', GF_STATUS)+1) * 3 - 1;
@@ -1202,10 +1202,10 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
     dd_snprintf(buf, 5, "%i", health);
 
     DGL_Color4f(0, 0, 0, textAlpha * .4f);
-    M_DrawText4(buf, 2, 1, GF_FONTB, DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
+    M_DrawText3(buf, 2, 1, GF_FONTB, DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
 
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    M_DrawText4(buf, 0, -1, GF_FONTB, DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
+    M_DrawText3(buf, 0, -1, GF_FONTB, DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
 
     *drawnWidth = M_TextWidth(buf, GF_FONTB);
     *drawnHeight = M_TextHeight(buf, GF_FONTB);
@@ -1247,7 +1247,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
     if(plr->keys[KT_YELLOW])
     {
         DGL_Color4f(1, 1, 1, iconAlpha);
-        M_DrawPatch2(keys[0].id, x, -keys[0].height, DPF_ALIGN_LEFT|DPF_ALIGN_TOP|DPF_NO_OFFSET);
+        M_DrawPatch2(keys[0].id, x, -keys[0].height, DPF_ALIGN_TOPLEFT|DPF_NO_OFFSET);
         x += keys[0].width + 1;
         *drawnWidth += keys[0].width;
         if(keys[0].height > *drawnHeight)
@@ -1258,7 +1258,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
     if(plr->keys[KT_GREEN])
     {
         DGL_Color4f(1, 1, 1, iconAlpha);
-        M_DrawPatch2(keys[1].id, x, -keys[1].height, DPF_ALIGN_LEFT|DPF_ALIGN_TOP|DPF_NO_OFFSET);
+        M_DrawPatch2(keys[1].id, x, -keys[1].height, DPF_ALIGN_TOPLEFT|DPF_NO_OFFSET);
         x += keys[1].width + 1;
         *drawnWidth += keys[1].width;
         if(keys[1].height > *drawnHeight)
@@ -1269,7 +1269,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
     if(plr->keys[KT_BLUE])
     {
         DGL_Color4f(1, 1, 1, iconAlpha);
-        M_DrawPatch2(keys[2].id, x, -keys[2].height, DPF_ALIGN_LEFT|DPF_ALIGN_TOP|DPF_NO_OFFSET);
+        M_DrawPatch2(keys[2].id, x, -keys[2].height, DPF_ALIGN_TOPLEFT|DPF_NO_OFFSET);
         x += keys[2].width;
         *drawnWidth += keys[1].width;
         if(keys[2].height > *drawnHeight)
@@ -1396,7 +1396,7 @@ void drawKillsWidget(int player, float textAlpha, float iconAlpha,
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
+    M_DrawText3(buf, 0, 0, GF_FONTA, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 }
 
 void drawItemsWidget(int player, float textAlpha, float iconAlpha,
@@ -1427,7 +1427,7 @@ void drawItemsWidget(int player, float textAlpha, float iconAlpha,
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
+    M_DrawText3(buf, 0, 0, GF_FONTA, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 }
 
 void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
@@ -1458,7 +1458,7 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    M_DrawText4(buf, 0, 0, GF_FONTA, DTF_ALIGN_LEFT|DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
+    M_DrawText3(buf, 0, 0, GF_FONTA, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
 }
 
 typedef struct {

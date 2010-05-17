@@ -408,7 +408,7 @@ static void drawDeathTally(void)
                 if(bold)
                 {
                     DGL_Color4f(1, 0.7f, 0.3f, 1);
-                    M_DrawText4("--", x, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_EFFECTS);
+                    M_DrawText3("--", x, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_EFFECTS);
                 }
                 else
                 {
@@ -452,5 +452,5 @@ static void drawNumberBold(int val, int x, int y, int wrapThresh)
     }
 
     DGL_Color4f(1, 0.7f, 0.3f, 1);
-    M_DrawText4(buf, x, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_EFFECTS);
+    M_DrawText3(buf, x, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_EFFECTS);
 }
