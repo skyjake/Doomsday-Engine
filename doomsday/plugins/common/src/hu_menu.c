@@ -45,8 +45,6 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
 #include "m_argv.h"
@@ -327,16 +325,6 @@ menu_t MainDef = {
     cfg.menuColor,
     LINEHEIGHT_B,
     0, 5
-#elif __JSTRIFE__
-    0,
-    97, 64,
-    M_DrawMainMenu,
-    6, MainItems,
-    0, MENU_NONE,
-    GF_FONTA,
-    cfg.menuColor,
-    LINEHEIGHT_B + 1,
-    0, 6
 #elif __JDOOM64__
     0,
     97, 64,
@@ -385,16 +373,6 @@ menu_t NewGameDef = {
     GF_FONTB,
     cfg.menuColor,
     LINEHEIGHT_B,
-    0, 2
-#elif __JSTRIFE__
-    0,
-    97, 64,
-    M_DrawNewGameMenu,
-    2, NewGameItems,
-    0, MENU_MAIN,
-    GF_FONTA,
-    cfg.menuColor,
-    LINEHEIGHT_B + 1,
     0, 2
 #elif __JDOOM64__
     0,
@@ -459,7 +437,7 @@ menu_t EpiDef = {
 #endif
 
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
 static menuitem_t FilesItems[] = {
     {ITT_EFUNC, 0, "load game", M_LoadGame, 0},
     {ITT_EFUNC, 0, "save game", M_SaveGame, 0}
@@ -536,28 +514,7 @@ static menu_t SaveDef = {
     0, NUMSAVESLOTS
 };
 
-#if __JSTRIFE__
-static menuitem_t SkillItems[] = {
-    {ITT_EFUNC, 0, NULL, M_ChooseSkill, SM_BABY},
-    {ITT_EFUNC, 0, NULL, M_ChooseSkill, SM_EASY},
-    {ITT_EFUNC, 0, NULL, M_ChooseSkill, SM_MEDIUM},
-    {ITT_EFUNC, 0, NULL, M_ChooseSkill, SM_HARD},
-    {ITT_EFUNC, 0, NULL, M_ChooseSkill, SM_NIGHTMARE}
-};
-
-static menu_t SkillDef = {
-    0,
-    120, 44,
-    M_DrawSkillMenu,
-    5, SkillItems,
-    2, MENU_NEWGAME,
-    GF_FONTB,
-    cfg.menuColor,
-    LINEHEIGHT,
-    0, 5
-};
-
-#elif __JHEXEN__
+#if __JHEXEN__
 static menuitem_t SkillItems[] = {
     {ITT_EFUNC, 0, NULL, M_ChooseSkill, SM_BABY},
     {ITT_EFUNC, 0, NULL, M_ChooseSkill, SM_EASY},
@@ -678,12 +635,12 @@ static menu_t OptionsDef = {
 
 static menuitem_t Options2Items[] = {
     {ITT_LRFUNC, 0, "SFX VOLUME :", M_SfxVol, 0},
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
     {ITT_LRFUNC, 0, "MUSIC VOLUME :", M_MusicVol, 0},
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     {ITT_EMPTY, 0, NULL, NULL, 0},
     {ITT_EMPTY, 0, NULL, NULL, 0},
 #endif
@@ -692,7 +649,7 @@ static menuitem_t Options2Items[] = {
 
 static menu_t Options2Def = {
     0,
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     70, 25,
 #elif __JHERETIC__
     70, 30,
@@ -956,7 +913,7 @@ static menuitem_t GameplayItems[] = {
     {ITT_EFUNC, 0, "ALWAYS RUN :", M_ToggleVar, 0, NULL, "ctl-run"},
     {ITT_EFUNC, 0, "USE LOOKSPRING :", M_ToggleVar, 0, NULL, "ctl-look-spring"},
     {ITT_EFUNC, 0, "USE AUTOAIM :", M_ToggleVar, 0, NULL, "ctl-aim-noauto"},
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__ || __JSTRIFE__
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     {ITT_EFUNC, 0, "ALLOW JUMPING :", M_ToggleVar, 0, NULL, "player-jump"},
 #endif
 
@@ -1684,7 +1641,7 @@ void Hu_MenuDrawer(void)
 #endif
             if(currentMenu->items[i].type == ITT_EMPTY)
             {
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
                 r = cfg.menuColor[0];
                 g = cfg.menuColor[1];
                 b = cfg.menuColor[2];
@@ -2501,7 +2458,7 @@ void M_DrawEpisode(void)
 
 void M_DrawSkillMenu(void)
 {
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     MN_DrawTitle("CHOOSE SKILL LEVEL:", 16);
 #elif __JHERETIC__
     MN_DrawTitle("SKILL LEVEL?", 4);
@@ -2572,7 +2529,7 @@ void M_DrawLoad(void)
 #if __JHERETIC__ || __JHEXEN__
     MN_DrawTitle("LOAD GAME", 4);
 #else
-    WI_DrawPatch3(m_loadg.id, 72, 24, "{case}LOAD GAME", true, DPF_ALIGN_TOPLEFT, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
+    WI_DrawPatch3(m_loadg.id, SCREENWIDTH/2, 24, "{case}LOAD GAME", true, DPF_ALIGN_TOP, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
 #endif
 
     if(menu_color <= 50)
@@ -2585,9 +2542,9 @@ void M_DrawLoad(void)
 
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
-        M_DrawSaveLoadBorder(LoadDef.x - 8, SAVEGAME_BOX_YOFFSET + LoadDef.y + (menu->itemHeight * i), width + 16);
+        M_DrawSaveLoadBorder(LoadDef.x - 4, SAVEGAME_BOX_YOFFSET + LoadDef.y + (menu->itemHeight * i), width + 16);
         DGL_Color4f(i == itemOn? r : menu->color[0], i == itemOn? g : menu->color[1], i == itemOn? b : menu->color[2], menuAlpha);
-        M_DrawTextFragment3(savegamestrings[i], LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y + 1 + (menu->itemHeight * i), menu->font, DTF_ALIGN_TOPLEFT);
+        M_DrawTextFragment3(savegamestrings[i], LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y + (menu->itemHeight * i), menu->font, DTF_ALIGN_TOPLEFT);
     }
 }
 
@@ -2601,7 +2558,7 @@ void M_DrawSave(void)
 #if __JHERETIC__ || __JHEXEN__
     MN_DrawTitle("SAVE GAME", 4);
 #else
-    WI_DrawPatch3(m_saveg.id, 72, 24, "{case}SAVE GAME", true, DPF_ALIGN_TOPLEFT, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
+    WI_DrawPatch3(m_saveg.id, SCREENWIDTH/2, 24, "{case}SAVE GAME", true, DPF_ALIGN_TOP, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
 #endif
 
     if(menu_color <= 50)
@@ -2614,9 +2571,9 @@ void M_DrawSave(void)
 
     for(i = 0; i < NUMSAVESLOTS; ++i)
     {
-        M_DrawSaveLoadBorder(SaveDef.x - 8, SAVEGAME_BOX_YOFFSET + SaveDef.y + (menu->itemHeight * i), width + 16);
+        M_DrawSaveLoadBorder(SaveDef.x - 4, SAVEGAME_BOX_YOFFSET + SaveDef.y + (menu->itemHeight * i), width + 16);
         DGL_Color4f(i == itemOn? r : menu->color[0], i == itemOn? g : menu->color[1], i == itemOn? b : menu->color[2], menuAlpha);
-        M_DrawTextFragment3(savegamestrings[i], SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + 1 + (menu->itemHeight * i), menu->font, DTF_ALIGN_TOPLEFT);
+        M_DrawTextFragment3(savegamestrings[i], SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + (menu->itemHeight * i), menu->font, DTF_ALIGN_TOPLEFT);
     }
 
     if(saveStringEnter)
@@ -2769,7 +2726,7 @@ void M_DrawOptions(void)
 {
     menu_t* menu = &OptionsDef;
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     MN_DrawTitle("OPTIONS", menu->y - 32);
 #else
 # if __JDOOM64__
@@ -3273,7 +3230,7 @@ void M_SecretCounter(int option, void *data)
 
 void M_Xhair(int option, void* context)
 {
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
     cfg.xhair += option == RIGHT_DIR ? 1 : -1;
     if(cfg.xhair < 0)
         cfg.xhair = 0;
@@ -3338,7 +3295,7 @@ void M_NewGame(int option, void* context)
     M_SetupNextMenu(&ClassDef);
 #elif __JHERETIC__
     M_SetupNextMenu(&EpiDef);
-#elif __JDOOM64__ || __JSTRIFE__
+#elif __JDOOM64__
     M_SetupNextMenu(&SkillDef);
 #else // __JDOOM__
     if(gameMode == commercial)
@@ -3661,7 +3618,7 @@ void M_ChooseSkill(int option, void* context)
     cfg.playerClass[CONSOLEPLAYER] = MenuPClass;
     G_DeferredNewGame(option);
 #else
-# if __JDOOM__ || __JSTRIFE__
+# if __JDOOM__
     if(option == SM_NIGHTMARE)
     {
         Hu_MsgStart(MSG_YESNO, NIGHTMARE, M_VerifyNightmare, NULL);
