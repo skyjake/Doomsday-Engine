@@ -717,6 +717,12 @@ void drawSBarInventoryWidget(int player, float textAlpha, float iconAlpha,
 void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define ORIGINX             (-ST_WIDTH/2)
+#define ORIGINY             (-ST_HEIGHT)
+#define X                   (ORIGINX+ST_FRAGSX)
+#define Y                   (ORIGINY+ST_FRAGSY)
+#define MAXDIGITS           (ST_FRAGSWIDTH)
+
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
@@ -726,11 +732,13 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
+    if(*hud->wFrags.num == 1994)
+        return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha * hud->wFrags.alpha);
-    STlib_DrawNum(&hud->wFrags);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    STlib_DrawNum(&hud->wFrags, X, Y, GF_STATUS, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -738,11 +746,23 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
     // \fixme calculate dimensions properly!
     *drawnWidth = 0;
     *drawnHeight = 0;
+
+#undef MAXDIGITS
+#undef Y
+#undef X
+#undef ORIGINY
+#undef ORIGINX
 }
 
 void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define ORIGINX             (-ST_WIDTH/2)
+#define ORIGINY             (-ST_HEIGHT)
+#define X                   (ORIGINX+ST_HEALTHX)
+#define Y                   (ORIGINY+ST_HEALTHY)
+#define MAXDIGITS           (ST_HEALTHWIDTH)
+
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
@@ -752,12 +772,13 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-
+    if(*hud->wHealth.num == 1994)
+        return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha * hud->wHealth.alpha);
-    STlib_DrawNum(&hud->wHealth);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    STlib_DrawNum(&hud->wHealth, X, Y, GF_STATUS, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -765,11 +786,23 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     // \fixme calculate dimensions properly!
     *drawnWidth = 0;
     *drawnHeight = 0;
+
+#undef MAXDIGITS
+#undef Y
+#undef X
+#undef ORIGINY
+#undef ORIGINX
 }
 
 void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define ORIGINX             (-ST_WIDTH/2)
+#define ORIGINY             (-ST_HEIGHT)
+#define X                   (ORIGINX+ST_ARMORX)
+#define Y                   (ORIGINY+ST_ARMORY)
+#define MAXDIGITS           (ST_ARMORWIDTH)
+
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
@@ -779,11 +812,13 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
+    if(*hud->wArmor.num == 1994)
+        return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha * hud->wArmor.alpha);
-    STlib_DrawNum(&hud->wArmor);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    STlib_DrawNum(&hud->wArmor, X, Y, GF_STATUS, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -791,6 +826,12 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     // \fixme calculate dimensions properly!
     *drawnWidth = 0;
     *drawnHeight = 0;
+
+#undef MAXDIGITS
+#undef Y
+#undef X
+#undef ORIGINY
+#undef ORIGINX
 }
 
 void drawSBarKeysWidget(int player, float textAlpha, float iconAlpha,
@@ -828,6 +869,12 @@ void drawSBarKeysWidget(int player, float textAlpha, float iconAlpha,
 void drawSBarReadyWeaponWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define ORIGINX             (-ST_WIDTH/2)
+#define ORIGINY             (-ST_HEIGHT)
+#define X                   (ORIGINX+ST_AMMOX)
+#define Y                   (ORIGINY+ST_AMMOY)
+#define MAXDIGITS           (ST_AMMOWIDTH)
+
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
@@ -837,11 +884,13 @@ void drawSBarReadyWeaponWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
+    if(*hud->wReadyAmmo.num == 1994)
+        return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], hud->wReadyAmmo.alpha * iconAlpha);
-    STlib_DrawNum(&hud->wReadyAmmo);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], iconAlpha);
+    STlib_DrawNum(&hud->wReadyAmmo, X, Y, GF_STATUS, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -849,6 +898,12 @@ void drawSBarReadyWeaponWidget(int player, float textAlpha, float iconAlpha,
     // \fixme calculate dimensions properly!
     *drawnWidth = 0;
     *drawnHeight = 0;
+
+#undef MAXDIGITS
+#undef Y
+#undef X
+#undef ORIGINY
+#undef ORIGINX
 }
 
 void drawSBarCurrentAmmoWidget(int player, float textAlpha, float iconAlpha,
@@ -927,8 +982,8 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
     *drawnWidth = 0;
     *drawnHeight = 0;
 
-#undef ORIGINX
 #undef ORIGINY
+#undef ORIGINX
 }
 
 void ST_FlashCurrentItem(int player)
@@ -1057,8 +1112,8 @@ void drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha,
         if(w > *drawnWidth)
             *drawnWidth += w;
         *drawnHeight += h;
-#undef COUNT_X
 #undef COUNT_Y
+#undef COUNT_X
     }
 }
 
@@ -1737,57 +1792,31 @@ void ST_createWidgets(int player)
 
     static int largeammo = 1994; // Means "n/a".
 
-    ammotype_t ammoType;
-    boolean found;
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    int lvl = (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
 
     // Ready weapon ammo.
-    //// \todo Only supports one type of ammo per weapon.
-    found = false;
-    for(ammoType = 0; ammoType < NUM_AMMO_TYPES && !found; ++ammoType)
-    {
-        if(!weaponInfo[plr->readyWeapon][plr->class].mode[lvl].ammoType[ammoType])
-            continue; // Weapon does not take this ammo.
-
-        STlib_InitNum(&hud->wReadyAmmo, ORIGINX+ST_AMMOX, ORIGINY+ST_AMMOY, GF_STATUS, &plr->ammo[ammoType].owned, ST_AMMOWIDTH, false, 1);
-
-        found = true;
-    }
-    if(!found) // Weapon requires no ammo at all.
-    {
-        // HERETIC.EXE returns an address beyond plr->ammo[NUM_AMMO_TYPES]
-        // if weaponInfo[plr->readyWeapon].ammo == am_noammo
-        // ...obviously a bug.
-
-        //STlib_InitNum(&wReadyAmmo, ORIGINX+ST_AMMOX, ST_AMMOY, GF_STATUS,
-        //              &plr->ammo[weaponinfo[plr->readyWeapon].ammo],
-        //              &statusbarActive, ST_AMMOWIDTH);
-
-        // Ready weapon ammo.
-        STlib_InitNum(&hud->wReadyAmmo, ORIGINX+ST_AMMOX, ORIGINY+ST_AMMOY, GF_STATUS, &largeammo, ST_AMMOWIDTH, false, 1);
-    }
+    STlib_InitNum(&hud->wReadyAmmo, &largeammo);
 
     // Ready weapon icon
     STlib_InitMultiIcon(&hud->wCurrentAmmoIcon, ORIGINX+ST_AMMOICONX, ORIGINY+ST_AMMOICONY, ammoIcons, 1);
 
     // Health num.
-    STlib_InitNum(&hud->wHealth, ORIGINX+ST_HEALTHX, ORIGINY+ST_HEALTHY, GF_STATUS, &plr->health, ST_HEALTHWIDTH, false, 1);
+    STlib_InitNum(&hud->wHealth, &plr->health);
 
     // Armor.
-    STlib_InitNum(&hud->wArmor, ORIGINX+ST_ARMORX, ORIGINY+ST_ARMORY, GF_STATUS, &plr->armorPoints, ST_ARMORWIDTH, false, 1);
+    STlib_InitNum(&hud->wArmor, &plr->armorPoints);
 
     // Frags sum.
-    STlib_InitNum(&hud->wFrags, ORIGINX+ST_FRAGSX, ORIGINY+ST_FRAGSY, GF_STATUS, &hud->fragsCount, ST_FRAGSWIDTH, false, 1);
+    STlib_InitNum(&hud->wFrags, &hud->fragsCount);
 
     // KeyBoxes 0-2.
     STlib_InitIcon(&hud->wKeyBoxes[0], ORIGINX+ST_KEY0X, ORIGINY+ST_KEY0Y, &keys[0], 1);
     STlib_InitIcon(&hud->wKeyBoxes[1], ORIGINX+ST_KEY1X, ORIGINY+ST_KEY1Y, &keys[1], 1);
     STlib_InitIcon(&hud->wKeyBoxes[2], ORIGINX+ST_KEY2X, ORIGINY+ST_KEY2Y, &keys[2], 1);
 
-#undef ORIGINX
 #undef ORIGINY
+#undef ORIGINX
 }
 
 void ST_Start(int player)

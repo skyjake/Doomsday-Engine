@@ -1674,7 +1674,7 @@ void Hu_MenuDrawer(void)
 #endif
             if(currentMenu->items[i].patch)
             {
-                WI_DrawPatch3(*currentMenu->items[i].patch, pos[VX], pos[VY], (currentMenu->items[i].flags & MIF_NOTALTTXT)? NULL : currentMenu->items[i].text, true, DPF_ALIGN_TOPLEFT, r, g, b, menuAlpha);
+                WI_DrawPatch4(*currentMenu->items[i].patch, pos[VX], pos[VY], (currentMenu->items[i].flags & MIF_NOTALTTXT)? NULL : currentMenu->items[i].text, currentMenu->font, true, DPF_ALIGN_TOPLEFT, r, g, b, menuAlpha);
             }
             else if(currentMenu->items[i].text)
             {
@@ -2324,13 +2324,13 @@ void M_DrawMainMenu(void)
     M_DrawPatch(dpBullWithFire[frame].id, 278, 80);
 
 #elif __JHERETIC__
-    WI_DrawPatch3(m_htic.id, 88, 0, NULL, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, menuAlpha);
+    WI_DrawPatch4(m_htic.id, 88, 0, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, menuAlpha);
 
     DGL_Color4f(1, 1, 1, menuAlpha);
     M_DrawPatch(dpRotatingSkull[17 - frame].id, 40, 10);
     M_DrawPatch(dpRotatingSkull[frame].id, 232, 10);
 #elif __JDOOM__ || __JDOOM64__
-    WI_DrawPatch3(m_doom.id, 94, 2, NULL, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, menuAlpha);
+    WI_DrawPatch4(m_doom.id, 94, 2, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, menuAlpha);
 #endif
 }
 
@@ -2451,7 +2451,7 @@ void M_DrawEpisode(void)
         M_DrawTextFragment3(str, SCREENWIDTH/2, SCREENHEIGHT - 2, GF_FONTA, DTF_ALIGN_BOTTOM);
     }
 #else // __JDOOM__
-    WI_DrawPatch3(m_episod.id, 50, 40, "{case}Which Episode{scaley=1.25,y=-3}?", true, DPF_ALIGN_TOPLEFT, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
+    WI_DrawPatch4(m_episod.id, 50, 40, "{case}Which Episode{scaley=1.25,y=-3}?", GF_FONTB, true, DPF_ALIGN_TOPLEFT, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
 #endif
 }
 #endif
@@ -2464,8 +2464,8 @@ void M_DrawSkillMenu(void)
     MN_DrawTitle("SKILL LEVEL?", 4);
 #elif __JDOOM__ || __JDOOM64__
     menu_t* menu = &SkillDef;
-    WI_DrawPatch3(m_newg.id, 96, 14, "{case}NEW GAME", true, DPF_ALIGN_TOPLEFT, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
-    WI_DrawPatch3(m_skill.id, 54, 38, "{case}Choose Skill Level:", true, DPF_ALIGN_TOPLEFT, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
+    WI_DrawPatch4(m_newg.id, 96, 14, "{case}NEW GAME", GF_FONTB, true, DPF_ALIGN_TOPLEFT, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
+    WI_DrawPatch4(m_skill.id, 54, 38, "{case}Choose Skill Level:", GF_FONTB, true, DPF_ALIGN_TOPLEFT, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
 #endif
 }
 
@@ -2529,7 +2529,7 @@ void M_DrawLoad(void)
 #if __JHERETIC__ || __JHEXEN__
     MN_DrawTitle("LOAD GAME", 4);
 #else
-    WI_DrawPatch3(m_loadg.id, SCREENWIDTH/2, 24, "{case}Load game", true, DPF_ALIGN_TOP, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
+    WI_DrawPatch4(m_loadg.id, SCREENWIDTH/2, 24, "{case}Load game", GF_FONTB, true, DPF_ALIGN_TOP, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
 #endif
 
     if(menu_color <= 50)
@@ -2558,7 +2558,7 @@ void M_DrawSave(void)
 #if __JHERETIC__ || __JHEXEN__
     MN_DrawTitle("SAVE GAME", 4);
 #else
-    WI_DrawPatch3(m_saveg.id, SCREENWIDTH/2, 24, "{case}Save game", true, DPF_ALIGN_TOP, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
+    WI_DrawPatch4(m_saveg.id, SCREENWIDTH/2, 24, "{case}Save game", GF_FONTB, true, DPF_ALIGN_TOP, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
 #endif
 
     if(menu_color <= 50)
@@ -2730,9 +2730,9 @@ void M_DrawOptions(void)
     MN_DrawTitle("OPTIONS", menu->y - 32);
 #else
 # if __JDOOM64__
-    WI_DrawPatch3(-1, 160, menu->y - 20, "{case}OPTIONS", true, DPF_ALIGN_TOP, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], menuAlpha);
+    WI_DrawPatch4(-1, 160, menu->y - 20, "{case}OPTIONS", GF_FONTB, true, DPF_ALIGN_TOP, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], menuAlpha);
 #else
-    WI_DrawPatch3(m_optttl.id, 160, menu->y - 20, "{case}OPTIONS", true, DPF_ALIGN_TOP, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], menuAlpha);
+    WI_DrawPatch4(m_optttl.id, 160, menu->y - 20, "{case}OPTIONS", GF_FONTB, true, DPF_ALIGN_TOP, cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], menuAlpha);
 # endif
 #endif
 }

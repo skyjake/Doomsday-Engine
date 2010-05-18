@@ -66,21 +66,14 @@
 
 // CODE --------------------------------------------------------------------
 
-void STlib_InitNum(st_number_t* n, int x, int y, gamefontid_t font, int* num,
-    int maxDigits, boolean percent, float alpha)
+void STlib_InitNum(st_number_t* n, int* num)
 {
-    n->x = x;
-    n->y = y;
-    n->maxDigits = maxDigits;
-    n->alpha = alpha;
     n->num = num;
-    n->font = font;
-    n->percent = percent;
 }
 
-void STlib_DrawNum(st_number_t* n)
+void STlib_DrawNum(st_number_t* n, int x, int y, gamefontid_t font, int maxDigits)
 {
-    Hu_DrawNum(*n->num, n->x, n->y, n->font, n->maxDigits, n->percent);
+    Hu_DrawNum(*n->num, x, y, font, maxDigits);
 }
 
 void STlib_InitIcon(st_icon_t* b, int x, int y, patchinfo_t* i, float alpha)
@@ -93,7 +86,7 @@ void STlib_InitIcon(st_icon_t* b, int x, int y, patchinfo_t* i, float alpha)
 
 void STlib_DrawIcon(st_icon_t* bi, float alpha)
 {
-    WI_DrawPatch3(bi->p->id, bi->x, bi->y, NULL, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, bi->alpha * alpha);
+    WI_DrawPatch4(bi->p->id, bi->x, bi->y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, bi->alpha * alpha);
 }
 
 void STlib_InitMultiIcon(st_multiicon_t* i, int x, int y, patchinfo_t* il, float alpha)
@@ -107,5 +100,5 @@ void STlib_InitMultiIcon(st_multiicon_t* i, int x, int y, patchinfo_t* il, float
 void STlib_DrawMultiIcon(st_multiicon_t* mi, int iconNum, float alpha)
 {
     if(iconNum >= 0)
-        WI_DrawPatch3(mi->p[iconNum].id, mi->x, mi->y, NULL, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, mi->alpha * alpha);
+        WI_DrawPatch4(mi->p[iconNum].id, mi->x, mi->y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, mi->alpha * alpha);
 }

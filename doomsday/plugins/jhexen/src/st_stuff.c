@@ -885,19 +885,19 @@ void ST_createWidgets(int player)
     hudstate_t* hud = &hudStates[player];
 
     // Health num.
-    STlib_InitNum(&hud->wHealth, ORIGINX+ST_HEALTHX, ORIGINY+ST_HEALTHY, GF_STATUS, &plr->health, ST_HEALTHWIDTH, false, 1);
+    STlib_InitNum(&hud->wHealth, &plr->health);
 
     // Frags sum.
-    STlib_InitNum(&hud->wFrags, ORIGINX+ST_FRAGSX, ORIGINY+ST_FRAGSY, GF_STATUS, &hud->fragsCount, ST_FRAGSWIDTH, false, 1);
+    STlib_InitNum(&hud->wFrags, &hud->fragsCount);
 
     // Armor num - should be colored later.
-    STlib_InitNum(&hud->wArmor, ORIGINX+ST_ARMORX, ORIGINY+ST_ARMORY, GF_STATUS, &hud->armorLevel, ST_ARMORWIDTH, false, 1);
+    STlib_InitNum(&hud->wArmor, &hud->armorLevel);
 
     // ManaA count.
-    STlib_InitNum(&hud->wManaACount, ORIGINX+ST_MANAAX, ORIGINY+ST_MANAAY, GF_SMALLIN, &hud->manaACount, ST_MANAAWIDTH, false, 1);
+    STlib_InitNum(&hud->wManaACount, &hud->manaACount);
 
     // ManaB count.
-    STlib_InitNum(&hud->wManaBCount, ORIGINX+ST_MANABX, ORIGINY+ST_MANABY, GF_SMALLIN, &hud->manaBCount, ST_MANABWIDTH, false, 1);
+    STlib_InitNum(&hud->wManaBCount, &hud->manaBCount);
 
     // Current mana A icon.
     STlib_InitMultiIcon(&hud->wManaA, ORIGINX+ST_MANAAICONX, ORIGINY+ST_MANAAICONY, dpManaAIcons, 1);
@@ -911,8 +911,8 @@ void ST_createWidgets(int player)
     // Current mana B vial.
     STlib_InitMultiIcon(&hud->wManaBVial, ORIGINX+ST_MANABVIALX, ORIGINY+ST_MANABVIALY, dpManaBVials, 1);
 
-#undef ORIGINX
 #undef ORIGINY
+#undef ORIGINX
 }
 
 void ST_Start(int player)
@@ -1240,8 +1240,8 @@ void drawSBarInventoryWidget(int player, float textAlpha, float iconAlpha,
 void drawKeysWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
-#define ORIGINX (-ST_WIDTH/2)
-#define ORIGINY (-ST_HEIGHT*hud->showBar)
+#define ORIGINX             (-ST_WIDTH/2)
+#define ORIGINY             (-ST_HEIGHT*hud->showBar)
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
@@ -1280,15 +1280,15 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
     if(numDrawn)
         *drawnWidth += (numDrawn-1)*20;
 
-#undef ORIGINX
 #undef ORIGINY
+#undef ORIGINX
 }
 
 void drawSBarArmorIconsWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
-#define ORIGINX (-ST_WIDTH/2)
-#define ORIGINY (-ST_HEIGHT*hud->showBar)
+#define ORIGINX             (-ST_WIDTH/2)
+#define ORIGINY             (-ST_HEIGHT*hud->showBar)
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
@@ -1340,6 +1340,12 @@ void drawSBarArmorIconsWidget(int player, float textAlpha, float iconAlpha,
 void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define ORIGINX             (-ST_WIDTH/2)
+#define ORIGINY             (-ST_HEIGHT)
+#define X                   (ORIGINX+ST_FRAGSX)
+#define Y                   (ORIGINY+ST_FRAGSY)
+#define MAXDIGITS           (ST_FRAGSWIDTH)
+
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
@@ -1350,12 +1356,13 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-
+    if(*hud->wFrags.num == 1994)
+        return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], hud->wFrags.alpha * textAlpha);
-    STlib_DrawNum(&hud->wFrags);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    STlib_DrawNum(&hud->wFrags, X, Y, GF_STATUS, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1363,11 +1370,23 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
     /// \fixme calculate dimensions properly!
     *drawnWidth = M_CharWidth('0', GF_STATUS)*3;
     *drawnHeight = M_CharHeight('0', GF_STATUS);
+
+#undef MAXDIGITS
+#undef Y
+#undef X
+#undef ORIGINY
+#undef ORIGINX
 }
 
 void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define ORIGINX             (-ST_WIDTH/2)
+#define ORIGINY             (-ST_HEIGHT)
+#define X                   (ORIGINX+ST_HEALTHX)
+#define Y                   (ORIGINY+ST_HEALTHY)
+#define MAXDIGITS           (ST_HEALTHWIDTH)
+
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
@@ -1378,12 +1397,13 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-
+    if(*hud->wHealth.num == 1994)
+        return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], hud->wHealth.alpha * textAlpha);
-    STlib_DrawNum(&hud->wHealth);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    STlib_DrawNum(&hud->wHealth, X, Y, GF_STATUS, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1391,11 +1411,24 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     /// \fixme calculate dimensions properly!
     *drawnWidth = M_CharWidth('0', GF_STATUS)*3;
     *drawnHeight = M_CharHeight('0', GF_STATUS);
+
+#undef MAXDIGITS
+#undef Y
+#undef X
+#undef ORIGINY
+#undef ORIGINX
+
 }
 
 void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define ORIGINX             (-ST_WIDTH/2)
+#define ORIGINY             (-ST_HEIGHT)
+#define X                   (ORIGINX+ST_ARMORX)
+#define Y                   (ORIGINY+ST_ARMORY)
+#define MAXDIGITS           (ST_ARMORWIDTH)
+
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
@@ -1406,12 +1439,13 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-
+    if(*hud->wArmor.num == 1994)
+        return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], hud->wArmor.alpha * textAlpha);
-    STlib_DrawNum(&hud->wArmor);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    STlib_DrawNum(&hud->wArmor, X, Y, GF_STATUS, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1419,11 +1453,23 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     /// \fixme calculate dimensions properly!
     *drawnWidth = M_CharWidth('0', GF_STATUS)*2;
     *drawnHeight = M_CharHeight('0', GF_STATUS);
+
+#undef MAXDIGITS
+#undef Y
+#undef X
+#undef ORIGINY
+#undef ORIGINX
 }
 
 void drawSBarBlueManaWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define ORIGINX             (-ST_WIDTH/2)
+#define ORIGINY             (-ST_HEIGHT)
+#define X                   (ORIGINX+ST_MANAAX)
+#define Y                   (ORIGINY+ST_MANAAY)
+#define MAXDIGITS           (ST_MANAAWIDTH)
+
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
@@ -1434,12 +1480,13 @@ void drawSBarBlueManaWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-
+    if(*hud->wManaACount.num == 1994)
+        return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], hud->wManaACount.alpha * textAlpha);
-    STlib_DrawNum(&hud->wManaACount);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    STlib_DrawNum(&hud->wManaACount, X, Y, GF_SMALLIN, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1447,11 +1494,23 @@ void drawSBarBlueManaWidget(int player, float textAlpha, float iconAlpha,
     /// \fixme calculate dimensions properly!
     *drawnWidth = M_CharWidth('0', GF_SMALLIN)*3;
     *drawnHeight = M_CharHeight('0', GF_SMALLIN);
+
+#undef MAXDIGITS
+#undef Y
+#undef X
+#undef ORIGINY
+#undef ORIGINX
 }
 
 void drawSBarGreenManaWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define ORIGINX             (-ST_WIDTH/2)
+#define ORIGINY             (-ST_HEIGHT)
+#define X                   (ORIGINX+ST_MANABX)
+#define Y                   (ORIGINY+ST_MANABY)
+#define MAXDIGITS           (ST_MANABWIDTH)
+
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
@@ -1462,12 +1521,13 @@ void drawSBarGreenManaWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-
+    if(*hud->wManaBCount.num == 1994)
+        return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], hud->wManaBCount.alpha * textAlpha);
-    STlib_DrawNum(&hud->wManaBCount);
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    STlib_DrawNum(&hud->wManaBCount, X, Y, GF_SMALLIN, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1475,13 +1535,19 @@ void drawSBarGreenManaWidget(int player, float textAlpha, float iconAlpha,
     /// \fixme calculate dimensions properly!
     *drawnWidth = M_CharWidth('0', GF_SMALLIN)*3;
     *drawnHeight = M_CharHeight('0', GF_SMALLIN);
+
+#undef MAXDIGITS
+#undef Y
+#undef X
+#undef ORIGINY
+#undef ORIGINX
 }
 
 void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
-#define ORIGINX (-ST_WIDTH/2)
-#define ORIGINY (-ST_HEIGHT)
+#define ORIGINX             (-ST_WIDTH/2)
+#define ORIGINY             (-ST_HEIGHT)
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
@@ -1534,8 +1600,8 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
     *drawnWidth = boxInfo.width;
     *drawnHeight = boxInfo.height;
 
-#undef ORIGINX
 #undef ORIGINY
+#undef ORIGINX
 }
 
 void drawBlueManaIconWidget(int player, float textAlpha, float iconAlpha,
@@ -1619,8 +1685,8 @@ void drawBlueManaVialWidget(int player, float textAlpha, float iconAlpha,
     *drawnWidth = dpManaAVials[hud->manaAVial%2].width;
     *drawnHeight = dpManaAVials[hud->manaAVial%2].height;
 
-#undef ORIGINX
 #undef ORIGINY
+#undef ORIGINX
 }
 
 void drawGreenManaVialWidget(int player, float textAlpha, float iconAlpha,
@@ -1652,8 +1718,8 @@ void drawGreenManaVialWidget(int player, float textAlpha, float iconAlpha,
     *drawnWidth = dpManaBVials[hud->manaBVial%2].width;
     *drawnHeight = dpManaBVials[hud->manaBVial%2].height;
 
-#undef ORIGINX
 #undef ORIGINY
+#undef ORIGINX
 }
 
 #if 0 // Unused atm

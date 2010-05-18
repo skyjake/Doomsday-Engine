@@ -162,7 +162,7 @@ int             M_CharHeight(unsigned char ch, gamefontid_t font);
 /**
  * Specialised text strings:
  */
-void            Hu_DrawNum(int val, int origX, int origY, gamefontid_t font, int numDigits, boolean drawPercent);
+void            Hu_DrawNum(int val, int origX, int origY, gamefontid_t font, int numDigits);
 #if __JHERETIC__ || __JHEXEN__
 void            Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha);
 void            DrINumber(int val, int x, int y, float r, float g, float b, float a);
@@ -203,9 +203,10 @@ void            M_DrawShadowedPatch2(patchid_t id, int x, int y, short flags);
 void            M_DrawShadowedPatch3(patchid_t id, int x, int y, short flags, float r, float g, float b, float a);
 
 // Implements patch replacement.
-void            WI_DrawPatch(patchid_t id, int x, int y, const char* altstring, boolean builtin);
-void            WI_DrawPatch2(patchid_t id, int x, int y, const char* altstring, boolean builtin, short flags);
-void            WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, boolean builtin, short flags, float r, float g, float b, float a);
+void            WI_DrawPatch(patchid_t id, int x, int y);
+void            WI_DrawPatch2(patchid_t id, int x, int y, const char* altstring, gamefontid_t font, boolean builtin);
+void            WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, gamefontid_t font, boolean builtin, short flags);
+void            WI_DrawPatch4(patchid_t id, int x, int y, const char* altstring, gamefontid_t font, boolean builtin, short flags, float r, float g, float b, float a);
 
 /**
  * Misc specialised elements:

@@ -35,16 +35,11 @@
  * Number widget (uses font drawing).
  */
 typedef struct {
-    int             x, y; // Upper right-hand corner of the number (right-justified).
-    int             maxDigits; // Max # of digits in number.
-    float           alpha;
     int*            num; // Pointer to current value.
-    gamefontid_t    font;
-    boolean         percent;
 } st_number_t;
 
-void            STlib_InitNum(st_number_t* n, int x, int y, gamefontid_t font, int* num, int maxDigits, boolean percent, float alpha);
-void            STlib_DrawNum(st_number_t* n);
+void            STlib_InitNum(st_number_t* n, int* num);
+void            STlib_DrawNum(st_number_t* n, int x, int y, gamefontid_t font, int maxDigits);
 
 /**
  * Icon widget.

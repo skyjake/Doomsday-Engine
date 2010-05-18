@@ -2286,7 +2286,7 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
         if(val > 9)
             M_DrawShadowedChar3('0' + val / 10, xpos + 6, y, GF_FONTB, DTF_ALIGN_TOP, r, g, b, a);
         else if(digits == 2 || oldval > 99)
-            M_DrawShadowedChar2('0', xpos, y, GF_FONTB);
+            M_DrawShadowedChar3('0', xpos, y, GF_FONTB, DTF_ALIGN_TOP, r, g, b, a);
         xpos += 12;
     }
 
@@ -2406,49 +2406,21 @@ void DrINumber(int val, int x, int y, float r, float g, float b, float a)
 }
 #endif
 
-void Hu_DrawNum(int val, int origX, int origY, gamefontid_t font, int numDigits, boolean drawPercent)
+void Hu_DrawNum(int val, int origX, int origY, gamefontid_t font, int numDigits)
 {
-    int w = M_CharWidth('0', font);
     int x = origX;
-    int neg;
-
-    neg = val < 0;
-
-    if(neg)
-    {
-        if(numDigits == 2 && val < -9)
-            val = -9;
-        else if(numDigits == 3 && val < -99)
-            val = -99;
-        val = -val;
-    }
-
-    x = origX - numDigits * w;
-
-    // If non-number, do not draw it.
-    if(val == 1994)
-        return;
-
-    x = origX;
 
     // In the special case of 0, you draw 0.
     if(!val)
-        M_DrawChar2('0', x - w, origY, font);
+        M_DrawChar3('0', x, origY, font, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     // Draw the number.
     while(val && numDigits--)
     {
-        x -= w;
+        x -= M_CharWidth('0', font);
         M_DrawChar2('0' + (val % 10), x, origY, font);
         val /= 10;
     }
-
-    // Draw a minus sign if necessary.
-    if(neg)
-        M_DrawChar2('-', x - 8, origY, font);
-
-    if(drawPercent)
-        M_DrawChar2('%', origX, origY, font);
 }
 
 /**
@@ -2626,8 +2598,8 @@ void Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha)
  * @param built-in      (True) if the altstring is a built-in replacement
  *                      (ie it does not originate from a DED definition).
  */
-void WI_DrawPatch3(patchid_t patch, int x, int y, const char* altstring,
-    boolean builtin, short flags, float r, float g, float b, float a)
+void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
+    gamefontid_t font, boolean builtin, short flags, float r, float g, float b, float a)
 {
     int patchString = 0, posx = x;
     char def[80], *string;
@@ -2644,7 +2616,7 @@ void WI_DrawPatch3(patchid_t patch, int x, int y, const char* altstring,
         R_GetPatchInfo(patch, &info);
         if(!info.isCustom)
         {
-            M_DrawText(altstring, x, y, GF_FONTB, translatePatchToTextDrawFlags(flags), r, g, b, a, false);
+            M_DrawText(altstring, x, y, font, translatePatchToTextDrawFlags(flags), r, g, b, a, false);
             return;
         }
     }
@@ -2673,14 +2645,14 @@ void WI_DrawPatch3(patchid_t patch, int x, int y, const char* altstring,
             // A user replacement?
             if(patchString)
             {
-                M_DrawText(string, x, y, GF_FONTB, textFlags, r, g, b, a, false);
+                M_DrawText(string, x, y, font, textFlags, r, g, b, a, false);
                 return;
             }
 
             // A built-in replacement?
             if(cfg.usePatchReplacement == 2 && altstring && altstring[0])
             {
-                M_DrawText(altstring, x, y, GF_FONTB, textFlags, r, g, b, a, false);
+                M_DrawText(altstring, x, y, font, textFlags, r, g, b, a, false);
                 return;
             }
         }
@@ -2691,14 +2663,19 @@ void WI_DrawPatch3(patchid_t patch, int x, int y, const char* altstring,
     M_DrawPatch2(patch, posx, y, flags);
 }
 
-void WI_DrawPatch2(patchid_t id, int x, int y, const char* altstring, boolean builtin, short flags)
+void WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, gamefontid_t font, boolean builtin, short flags)
 {
-    WI_DrawPatch3(id, x, y, altstring, builtin, flags, 1, 1, 1, 1);
+    WI_DrawPatch4(id, x, y, altstring, font, builtin, flags, 1, 1, 1, 1);
 }
 
-void WI_DrawPatch(patchid_t patch, int x, int y, const char* altstring, boolean builtin)
+void WI_DrawPatch2(patchid_t patch, int x, int y, const char* altstring, gamefontid_t font, boolean builtin)
 {
-    WI_DrawPatch2(patch, x, y, altstring, builtin, DPF_ALIGN_TOPLEFT);
+    WI_DrawPatch3(patch, x, y, altstring, font, builtin, DPF_ALIGN_TOPLEFT);
+}
+
+void WI_DrawPatch(patchid_t patch, int x, int y)
+{
+    WI_DrawPatch2(patch, x, y, NULL, GF_FONTB, false);
 }
 
 /**
@@ -3139,7 +3116,7 @@ static void drawMapTitle(void)
     mapnum = gameMap;
 # endif
 
-    WI_DrawPatch3(mapNamePatches[mapnum], 0, 0, lname, false, DPF_ALIGN_TOP, 1, 1, 1, alpha);
+    WI_DrawPatch4(mapNamePatches[mapnum], 0, 0, lname, GF_FONTB, false, DPF_ALIGN_TOP, 1, 1, 1, alpha);
     y += 14;
 
 #elif __JHERETIC__ || __JHEXEN__

@@ -304,11 +304,17 @@ void ST_doPaletteStuff(int player)
 
 static void drawWidgets(hudstate_t* hud)
 {
+#define MAXDIGITS           ST_FRAGSWIDTH
+
     if(deathmatch)
     {
-        DGL_Color4f(1, 1, 1, hud->alpha * hud->wFrags.alpha);
-        STlib_DrawNum(&hud->wFrags);
+        if(*hud->wFrags.num == 1994)
+            return;
+        DGL_Color4f(1, 1, 1, hud->alpha);
+        STlib_DrawNum(&hud->wFrags, ST_FRAGSX, ST_FRAGSY, GF_STATUS, MAXDIGITS);
     }
+
+#undef MAXDIGITS
 }
 
 void ST_doRefresh(int player)
@@ -572,7 +578,7 @@ void ST_createWidgets(int player)
     hudstate_t* hud = &hudStates[player];
 
     // Frags sum.
-    STlib_InitNum(&hud->wFrags, ST_FRAGSX, ST_FRAGSY, GF_STATUS, &hud->currentFragsCount, ST_FRAGSWIDTH, false, 1);
+    STlib_InitNum(&hud->wFrags, &hud->currentFragsCount);
 }
 
 void ST_Start(int player)
