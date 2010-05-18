@@ -599,10 +599,10 @@ void Hu_LoadData(void)
         { 88, "FONTA56" }, // X
         { 89, "FONTA57" }, // Y
         { 90, "FONTA58" }, // Z
-        { 91, "FONTA61" }, // [
-        { 92, "FONTA62" }, // '\'
-        { 93, "FONTA63" }, // ]
-        { 94, "FONTA64" }, // ^
+        { 91, "FONTA63" }, // [
+        { 92, "FONTA60" }, // '\'
+        { 93, "FONTA61" }, // ]
+        { 94, "FONTA62" }, // ^
         { 95, "FONTA59" }, // _
         { 97, "FONTA33" }, // a
         { 98, "FONTA34" }, // b
