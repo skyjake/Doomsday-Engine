@@ -80,49 +80,7 @@ void STlib_InitNum(st_number_t* n, int x, int y, gamefontid_t font, int* num,
 
 void STlib_DrawNum(st_number_t* n)
 {
-    int numdigits = n->maxDigits;
-    int num = *n->num;
-    int w = M_CharWidth('0', n->font);
-    int x = n->x;
-    int neg;
-
-    neg = num < 0;
-
-    if(neg)
-    {
-        if(numdigits == 2 && num < -9)
-            num = -9;
-        else if(numdigits == 3 && num < -99)
-            num = -99;
-        num = -num;
-    }
-
-    x = n->x - numdigits * w;
-
-    // If non-number, do not draw it.
-    if(num == 1994)
-        return;
-
-    x = n->x;
-
-    // In the special case of 0, you draw 0.
-    if(!num)
-        M_DrawChar2('0', x - w, n->y, n->font);
-
-    // Draw the number.
-    while(num && numdigits--)
-    {
-        x -= w;
-        M_DrawChar2('0' + (num % 10), x, n->y, n->font);
-        num /= 10;
-    }
-
-    // Draw a minus sign if necessary.
-    if(neg)
-        M_DrawChar2('-', x - 8, n->y, n->font);
-
-    if(n->percent)
-        M_DrawChar2('%', n->x, n->y, n->font);
+    Hu_DrawNum(*n->num, n->x, n->y, n->font, n->maxDigits, n->percent);
 }
 
 void STlib_InitIcon(st_icon_t* b, int x, int y, patchinfo_t* i, float alpha)

@@ -2295,7 +2295,161 @@ void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b,
     if(neg)
         M_DrawShadowedChar3('-', xpos + 6 - 12 * (realdigits), y, GF_FONTB, DTF_ALIGN_TOP, r, g, b, a);
 }
+
+void IN_DrawTime(int x, int y, int h, int m, int s, float r, float g, float b, float a)
+{
+    if(h)
+    {
+        IN_DrawNumber(h, x, y, 2, r, g, b, a);
+        DGL_Color4f(r, g, b, a);
+        M_DrawChar2(':', x + 26, y, GF_FONTB);
+    }
+
+    x += 34;
+    if(m || h)
+    {
+        IN_DrawNumber(m, x, y, 2, r, g, b, a);
+    }
+
+    x += 34;
+    DGL_Color4f(r, g, b, a);
+    M_DrawChar2(':', x-8, y, GF_FONTB);
+    IN_DrawNumber(s, x, y, 2, r, g, b, a);
+}
 #endif
+
+#if __JHEXEN__
+/**
+ * Draws a three digit number.
+ */
+void DrINumber(int val, int x, int y, float r, float g, float b, float a)
+{
+    int oldval;
+
+    DGL_Color4f(r,g,b,a);
+
+    // Make sure it's a three digit number.
+    if(val < -999)
+        val = -999;
+    if(val > 999)
+        val = 999;
+
+    oldval = val;
+    if(val < 0)
+    {
+        val = -val;
+        if(val > 99)
+        {
+            val = 99;
+        }
+        if(val > 9)
+        {
+            M_DrawChar2('0' + ((val/10)%10), x + 8, y, GF_STATUS);
+            M_DrawChar2('-', x, y, GF_STATUS);
+        }
+        else
+        {
+            M_DrawChar2('-', x + 8, y, GF_STATUS);
+        }
+        val = val % 10;
+        M_DrawChar2('0' + (val%10), x + 16, y, GF_STATUS);
+        return;
+    }
+    if(val > 99)
+    {
+        M_DrawChar2('0' + ((val/100)%10), x, y, GF_STATUS);
+    }
+    val = val % 100;
+    if(val > 9 || oldval > 99)
+    {
+        M_DrawChar2('0' + ((val/10)%10), x + 8, y, GF_STATUS);
+    }
+    val = val % 10;
+    M_DrawChar2('0' + (val%10), x + 16, y, GF_STATUS);
+
+}
+#endif
+
+#if __JHERETIC__
+void DrINumber(int val, int x, int y, float r, float g, float b, float a)
+{
+    int oldval;
+
+    DGL_Color4f(r, g, b, a);
+
+    // Limit to 999.
+    if(val > 999)
+        val = 999;
+
+    oldval = val;
+    if(val < 0)
+    {
+        val = -val;
+        M_DrawChar2('0' + (val % 10), x + 18, y, GF_STATUS);
+        M_DrawChar2('-', x + 9, y, GF_STATUS);
+        return;
+    }
+
+    if(val > 99)
+    {
+        M_DrawChar2('0' + ((val / 100)%10), x, y, GF_STATUS);
+    }
+
+    val = val % 100;
+    if(val > 9 || oldval > 99)
+    {
+        M_DrawChar2('0' + ((val / 10)%10), x + 9, y, GF_STATUS);
+    }
+
+    val = val % 10;
+    M_DrawChar2('0' + (val%10), x + 18, y, GF_STATUS);
+}
+#endif
+
+void Hu_DrawNum(int val, int origX, int origY, gamefontid_t font, int numDigits, boolean drawPercent)
+{
+    int w = M_CharWidth('0', font);
+    int x = origX;
+    int neg;
+
+    neg = val < 0;
+
+    if(neg)
+    {
+        if(numDigits == 2 && val < -9)
+            val = -9;
+        else if(numDigits == 3 && val < -99)
+            val = -99;
+        val = -val;
+    }
+
+    x = origX - numDigits * w;
+
+    // If non-number, do not draw it.
+    if(val == 1994)
+        return;
+
+    x = origX;
+
+    // In the special case of 0, you draw 0.
+    if(!val)
+        M_DrawChar2('0', x - w, origY, font);
+
+    // Draw the number.
+    while(val && numDigits--)
+    {
+        x -= w;
+        M_DrawChar2('0' + (val % 10), x, origY, font);
+        val /= 10;
+    }
+
+    // Draw a minus sign if necessary.
+    if(neg)
+        M_DrawChar2('-', x - 8, origY, font);
+
+    if(drawPercent)
+        M_DrawChar2('%', origX, origY, font);
+}
 
 /**
  * Write a string using a colored, custom font and do a type-in effect.

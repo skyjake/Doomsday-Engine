@@ -162,12 +162,15 @@ int             M_CharHeight(unsigned char ch, gamefontid_t font);
 /**
  * Specialised text strings:
  */
+void            Hu_DrawNum(int val, int origX, int origY, gamefontid_t font, int numDigits, boolean drawPercent);
 #if __JHERETIC__ || __JHEXEN__
 void            Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha);
+void            DrINumber(int val, int x, int y, float r, float g, float b, float a);
 #endif
 #if __JHERETIC__
 void            M_DrawSmallNumber(int val, int x, int y);
 void            IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b, float a);
+void            IN_DrawTime(int x, int y, int h, int m, int s, float r, float g, float b, float a);
 #endif
 
 /**

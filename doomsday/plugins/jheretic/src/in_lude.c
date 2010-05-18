@@ -68,8 +68,6 @@ void    IN_DrawStatBack(void);
 void    IN_DrawSingleStats(void);
 void    IN_DrawCoopStats(void);
 void    IN_DrawDMStats(void);
-void    IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b, float a);
-void    IN_DrawTime(int x, int y, int h, int m, int s, float r, float g, float b, float a);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -888,26 +886,4 @@ void IN_DrawDMStats(void)
             xpos += 43;
         }
     }
-}
-
-void IN_DrawTime(int x, int y, int h, int m, int s, float r, float g,
-    float b, float a)
-{
-    if(h)
-    {
-        IN_DrawNumber(h, x, y, 2, r, g, b, a);
-        DGL_Color4f(r, g, b, a);
-        M_DrawChar2(':', x + 26, y, GF_FONTB);
-    }
-
-    x += 34;
-    if(m || h)
-    {
-        IN_DrawNumber(m, x, y, 2, r, g, b, a);
-    }
-
-    x += 34;
-    DGL_Color4f(r, g, b, a);
-    M_DrawChar2(':', x-8, y, GF_FONTB);
-    IN_DrawNumber(s, x, y, 2, r, g, b, a);
 }

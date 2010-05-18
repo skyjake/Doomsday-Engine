@@ -160,7 +160,6 @@ typedef struct {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void drawINumber(signed int val, int x, int y, float r, float g, float b, float a);
 static void updateViewWindow(cvar_t* cvar);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -949,40 +948,6 @@ void ST_FlashCurrentItem(int player)
     hud->currentInvItemFlash = 4;
 }
 
-static void drawINumber(signed int val, int x, int y, float r, float g, float b, float a)
-{
-    int oldval;
-
-    DGL_Color4f(r, g, b, a);
-
-    // Limit to 999.
-    if(val > 999)
-        val = 999;
-
-    oldval = val;
-    if(val < 0)
-    {
-        val = -val;
-        M_DrawChar2('0' + (val % 10), x + 18, y, GF_STATUS);
-        M_DrawChar2('-', x + 9, y, GF_STATUS);
-        return;
-    }
-
-    if(val > 99)
-    {
-        M_DrawChar2('0' + ((val / 100)%10), x, y, GF_STATUS);
-    }
-
-    val = val % 100;
-    if(val > 9 || oldval > 99)
-    {
-        M_DrawChar2('0' + ((val / 10)%10), x + 9, y, GF_STATUS);
-    }
-
-    val = val % 10;
-    M_DrawChar2('0' + (val%10), x + 18, y, GF_STATUS);
-}
-
 /**
  * Unhides the current HUD display if hidden.
  *
@@ -1176,7 +1141,7 @@ void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
         dp = &ammoIcons[plr->readyWeapon - 1];
         DGL_Color4f(1, 1, 1, iconAlpha);
         M_DrawPatch2(dp->id, 0, 0, DPF_ALIGN_TOPLEFT|DPF_NO_OFFSET);
-        drawINumber(plr->ammo[ammoType].owned, dp->width+1, -2, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+        DrINumber(plr->ammo[ammoType].owned, dp->width+1, -2, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
         /// \kludge calculate the visual dimensions properly!
         *drawnWidth += dp->width + 2 + (M_CharWidth('0', GF_STATUS)+1) * 3 - 1;
         if(MAX_OF(dp->height, M_CharHeight('0', GF_STATUS)) > *drawnHeight)
@@ -1222,7 +1187,7 @@ void drawArmorWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-    drawINumber(plr->armorPoints, -1, -11, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    DrINumber(plr->armorPoints, -1, -11, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     /// \kludge calculate the visual dimensions properly!
     *drawnWidth = (M_CharWidth('0', GF_STATUS)+1) * 3 - 1;
     *drawnHeight = M_CharHeight('0', GF_STATUS);
@@ -1295,7 +1260,7 @@ void drawFragsWidget(int player, float textAlpha, float iconAlpha,
     for(i = 0; i < MAXPLAYERS; ++i)
         if(players[i].plr->inGame)
             numFrags += plr->frags[i];
-    drawINumber(numFrags, 0, -13, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    DrINumber(numFrags, 0, -13, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     /// \kludge calculate the visual dimensions properly!
     *drawnWidth = (M_CharWidth('0', GF_STATUS)+1) * 3;
     *drawnHeight = M_CharHeight('0', GF_STATUS);
