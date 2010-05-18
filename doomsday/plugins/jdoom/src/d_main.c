@@ -81,7 +81,7 @@ gamemission_t gameMission = GM_DOOM;
 char gameModeString[17];
 
 // Default font colours.
-const float defFontRGB2[] = { 1, 0, 0 };
+const float defFontRGB2[] = { .85f, 0, 0 };
 const float defFontRGB3[] = { 1, .9f, .4f };
 
 // The patches used in drawing the view border.
@@ -399,7 +399,7 @@ void G_PreInit(void)
         cfg.hudUnHide[i] = 1;
     cfg.hudScale = .6f;
     cfg.hudWideOffset = 1;
-    cfg.hudColor[0] = 1;
+    cfg.hudColor[0] = .85f;
     cfg.hudColor[1] = cfg.hudColor[2] = 0;
     cfg.hudColor[3] = 1;
     cfg.hudFog = 1;
@@ -432,8 +432,8 @@ void G_PreInit(void)
     cfg.plrViewHeight = DEFAULT_PLAYER_VIEWHEIGHT;
     cfg.mapTitle = true;
     cfg.hideIWADAuthor = true;
-    cfg.menuColor[0] = 1;
-    cfg.menuColor2[0] = 1;
+    cfg.menuColor[0] = .85f;
+    cfg.menuColor2[0] = .85f;
     cfg.menuSlam = false;
     cfg.menuHotkeys = true;
     cfg.menuNoStretch = false;
@@ -497,7 +497,7 @@ void G_PreInit(void)
     cfg.msgAlign = 0; // Left.
     cfg.msgBlink = 5;
 
-    cfg.msgColor[0] = 1;
+    cfg.msgColor[0] = .85f;
     cfg.msgColor[1] = cfg.msgColor[2] = 0;
 
     cfg.chatBeep = 1;
