@@ -285,8 +285,8 @@ menuitem_t MainItems[] = {
 #if __JDOOM__
     {ITT_SETMENU, 0, "{case}New Game", NULL, MENU_NEWGAME, &m_ngame.id},
     {ITT_SETMENU, 0, "{case}Options", NULL, MENU_OPTIONS, &m_option.id},
-    {ITT_EFUNC, 0, "{case}Load Game", M_LoadGame, 0, &m_loadg.id},
-    {ITT_EFUNC, 0, "{case}Save Game", M_SaveGame, 0, &m_saveg.id},
+    {ITT_EFUNC, 0, "{case}Load game", M_LoadGame, 0, &m_loadg.id},
+    {ITT_EFUNC, 0, "{case}Save game", M_SaveGame, 0, &m_saveg.id},
     {ITT_EFUNC, 0, "{case}Read This!", M_ReadThis, 0, &m_rdthis.id},
     {ITT_EFUNC, 0, "{case}Quit Game", M_QuitDOOM, 0, &m_quitg.id}
 #elif __JDOOM64__
@@ -2529,7 +2529,7 @@ void M_DrawLoad(void)
 #if __JHERETIC__ || __JHEXEN__
     MN_DrawTitle("LOAD GAME", 4);
 #else
-    WI_DrawPatch3(m_loadg.id, SCREENWIDTH/2, 24, "{case}LOAD GAME", true, DPF_ALIGN_TOP, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
+    WI_DrawPatch3(m_loadg.id, SCREENWIDTH/2, 24, "{case}Load game", true, DPF_ALIGN_TOP, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
 #endif
 
     if(menu_color <= 50)
@@ -2558,7 +2558,7 @@ void M_DrawSave(void)
 #if __JHERETIC__ || __JHEXEN__
     MN_DrawTitle("SAVE GAME", 4);
 #else
-    WI_DrawPatch3(m_saveg.id, SCREENWIDTH/2, 24, "{case}SAVE GAME", true, DPF_ALIGN_TOP, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
+    WI_DrawPatch3(m_saveg.id, SCREENWIDTH/2, 24, "{case}Save game", true, DPF_ALIGN_TOP, menu->color[0], menu->color[1], menu->color[2], menuAlpha);
 #endif
 
     if(menu_color <= 50)
