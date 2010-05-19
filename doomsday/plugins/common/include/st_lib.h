@@ -39,7 +39,6 @@ typedef struct {
 } st_number_t;
 
 void            STlib_InitNum(st_number_t* n, int* num);
-void            STlib_DrawNum(int val, int x, int y, gamefontid_t font, int maxDigits);
 
 /**
  * Icon widget.

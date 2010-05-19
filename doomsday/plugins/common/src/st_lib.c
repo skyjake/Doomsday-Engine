@@ -71,11 +71,6 @@ void STlib_InitNum(st_number_t* n, int* num)
     n->num = num;
 }
 
-void STlib_DrawNum(int val, int x, int y, gamefontid_t font, int maxDigits)
-{
-    Hu_DrawNum(val, x, y, font, maxDigits);
-}
-
 void STlib_InitIcon(st_icon_t* b, int x, int y, patchinfo_t* i, float alpha)
 {
     b->x = x;
