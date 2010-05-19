@@ -141,12 +141,8 @@ typedef struct {
     int             widgetGroupNames[NUM_UIWIDGET_GROUPS];
 
     // Widgets:
-    st_multiicon_t  wManaA; // Current mana A icon.
-    st_multiicon_t  wManaB; // Current mana B icon.
-    st_number_t wManaACount; // Current mana A count.
-    st_number_t wManaBCount; // Current mana B count.
-    st_multiicon_t  wManaAVial; // Current mana A vial.
-    st_multiicon_t  wManaBVial; // Current mana B vial.
+    st_number_t     wManaACount; // Current mana A count.
+    st_number_t     wManaBCount; // Current mana B count.
     st_number_t     wFrags; // In deathmatch only, summary of frags stats.
     st_number_t     wHealth; // Health.
     st_number_t     wArmor; // Armor.
@@ -878,9 +874,6 @@ static void initData(hudstate_t* hud)
 
 void ST_createWidgets(int player)
 {
-#define ORIGINX (-ST_WIDTH/2)
-#define ORIGINY (-ST_HEIGHT)
-
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
 
@@ -898,21 +891,6 @@ void ST_createWidgets(int player)
 
     // ManaB count.
     STlib_InitNum(&hud->wManaBCount, &hud->manaBCount);
-
-    // Current mana A icon.
-    STlib_InitMultiIcon(&hud->wManaA, ORIGINX+ST_MANAAICONX, ORIGINY+ST_MANAAICONY, dpManaAIcons, 1);
-
-    // Current mana B icon.
-    STlib_InitMultiIcon(&hud->wManaB, ORIGINX+ST_MANABICONX, ORIGINY+ST_MANABICONY, dpManaBIcons, 1);
-
-    // Current mana A vial.
-    STlib_InitMultiIcon(&hud->wManaAVial, ORIGINX+ST_MANAAVIALX, ORIGINY+ST_MANAAVIALY, dpManaAVials, 1);
-
-    // Current mana B vial.
-    STlib_InitMultiIcon(&hud->wManaBVial, ORIGINX+ST_MANABVIALX, ORIGINY+ST_MANABVIALY, dpManaBVials, 1);
-
-#undef ORIGINY
-#undef ORIGINX
 }
 
 void ST_Start(int player)
@@ -1607,6 +1585,11 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
 void drawBlueManaIconWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define ORIGINX             (-ST_WIDTH/2)
+#define ORIGINY             (-ST_HEIGHT)
+#define X                   (ORIGINX+ST_MANAAICONX)
+#define Y                   (ORIGINY+ST_MANAAICONY)
+
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
@@ -1621,18 +1604,29 @@ void drawBlueManaIconWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    STlib_DrawMultiIcon(&hud->wManaA, hud->manaAIcon, iconAlpha);
+    if(hud->manaAIcon >= 0)
+        WI_DrawPatch4(dpManaAIcons[hud->manaAIcon].id, X, Y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
     *drawnWidth = dpManaAIcons[hud->manaAIcon%2].width;
     *drawnHeight = dpManaAIcons[hud->manaAIcon%2].height;
+
+#undef Y
+#undef X
+#undef ORIGINY
+#undef ORIGINX
 }
 
 void drawGreenManaIconWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define ORIGINX             (-ST_WIDTH/2)
+#define ORIGINY             (-ST_HEIGHT)
+#define X                   (ORIGINX+ST_MANABICONX)
+#define Y                   (ORIGINY+ST_MANABICONY)
+
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
@@ -1647,20 +1641,28 @@ void drawGreenManaIconWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    STlib_DrawMultiIcon(&hud->wManaB, hud->manaBIcon, iconAlpha);
+    if(hud->manaBIcon >= 0)
+        WI_DrawPatch4(dpManaBIcons[hud->manaBIcon].id, X, Y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
     *drawnWidth = dpManaBIcons[hud->manaBIcon%2].width;
     *drawnHeight = dpManaBIcons[hud->manaBIcon%2].height;
+
+#undef Y
+#undef X
+#undef ORIGINY
+#undef ORIGINX
 }
 
 void drawBlueManaVialWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
-#define ORIGINX (-ST_WIDTH/2)
-#define ORIGINY (ST_HEIGHT*(1-hud->showBar))
+#define ORIGINX             (-ST_WIDTH/2)
+#define ORIGINY             (ST_HEIGHT*(1-hud->showBar))
+#define X                   (ORIGINX+ST_MANAAVIALX)
+#define Y                   (ORIGINY+ST_MANAAVIALY)
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
@@ -1675,7 +1677,9 @@ void drawBlueManaVialWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, ORIGINY, 0);
 
-    STlib_DrawMultiIcon(&hud->wManaAVial, hud->manaAVial, iconAlpha);
+    if(hud->manaAVial >= 0)
+        WI_DrawPatch4(dpManaAVials[hud->manaAVial].id, X, Y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
+
     DGL_SetNoMaterial();
     DGL_DrawRect(ORIGINX+95, -ST_HEIGHT+3, 3, 22 - (22 * plr->ammo[AT_BLUEMANA].owned) / MAX_MANA, 0, 0, 0, iconAlpha);
 
@@ -1685,6 +1689,8 @@ void drawBlueManaVialWidget(int player, float textAlpha, float iconAlpha,
     *drawnWidth = dpManaAVials[hud->manaAVial%2].width;
     *drawnHeight = dpManaAVials[hud->manaAVial%2].height;
 
+#undef Y
+#undef X
 #undef ORIGINY
 #undef ORIGINX
 }
@@ -1692,8 +1698,10 @@ void drawBlueManaVialWidget(int player, float textAlpha, float iconAlpha,
 void drawGreenManaVialWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
-#define ORIGINX (-ST_WIDTH/2)
-#define ORIGINY (ST_HEIGHT*(1-hud->showBar))
+#define ORIGINX             (-ST_WIDTH/2)
+#define ORIGINY             (ST_HEIGHT*(1-hud->showBar))
+#define X                   (ORIGINX+ST_MANABVIALX)
+#define Y                   (ORIGINY+ST_MANABVIALY)
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
@@ -1708,7 +1716,9 @@ void drawGreenManaVialWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, ORIGINY, 0);
 
-    STlib_DrawMultiIcon(&hud->wManaBVial, hud->manaBVial, iconAlpha);
+    if(hud->manaBVial >= 0)
+        WI_DrawPatch4(dpManaBVials[hud->manaBVial].id, X, Y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
+
     DGL_SetNoMaterial();
     DGL_DrawRect(ORIGINX+103, -ST_HEIGHT+3, 3, 22 - (22 * plr->ammo[AT_GREENMANA].owned) / MAX_MANA, 0, 0, 0, iconAlpha);
 
@@ -1718,6 +1728,8 @@ void drawGreenManaVialWidget(int player, float textAlpha, float iconAlpha,
     *drawnWidth = dpManaBVials[hud->manaBVial%2].width;
     *drawnHeight = dpManaBVials[hud->manaBVial%2].height;
 
+#undef Y
+#undef X
 #undef ORIGINY
 #undef ORIGINX
 }

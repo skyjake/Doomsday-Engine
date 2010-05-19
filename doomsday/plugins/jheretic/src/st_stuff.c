@@ -146,7 +146,6 @@ typedef struct {
     int             widgetGroupNames[NUM_UIWIDGET_GROUPS];
 
     // Widgets:
-    st_multiicon_t  wCurrentAmmoIcon; // Current ammo icon.
     st_number_t     wReadyAmmo; // Ready-weapon.
     st_number_t     wFrags; // In deathmatch only, summary of frags stats.
     st_number_t     wHealth; // Health.
@@ -925,6 +924,11 @@ void drawSBarReadyWeaponWidget(int player, float textAlpha, float iconAlpha,
 void drawSBarCurrentAmmoWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define ORIGINX             (-ST_WIDTH/2)
+#define ORIGINY             (-ST_HEIGHT)
+#define X                   (ORIGINX+ST_AMMOICONX)
+#define Y                   (ORIGINY+ST_AMMOICONY)
+
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
@@ -937,7 +941,8 @@ void drawSBarCurrentAmmoWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
-    STlib_DrawMultiIcon(&hud->wCurrentAmmoIcon, hud->currentAmmoIconIdx, textAlpha);
+    if(hud->currentAmmoIconIdx >= 0)
+        WI_DrawPatch4(ammoIcons[hud->currentAmmoIconIdx].id, X, Y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -945,6 +950,11 @@ void drawSBarCurrentAmmoWidget(int player, float textAlpha, float iconAlpha,
     // \fixme calculate dimensions properly!
     *drawnWidth = 0;
     *drawnHeight = 0;
+
+#undef Y
+#undef X
+#undef ORIGINY
+#undef ORIGINX
 }
 
 void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
@@ -1813,9 +1823,6 @@ void ST_createWidgets(int player)
 
     // Ready weapon ammo.
     STlib_InitNum(&hud->wReadyAmmo, &largeammo);
-
-    // Ready weapon icon
-    STlib_InitMultiIcon(&hud->wCurrentAmmoIcon, ORIGINX+ST_AMMOICONX, ORIGINY+ST_AMMOICONY, ammoIcons, 1);
 
     // Health num.
     STlib_InitNum(&hud->wHealth, &plr->health);

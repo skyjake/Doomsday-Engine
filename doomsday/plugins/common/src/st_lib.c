@@ -27,10 +27,6 @@
  * st_lib.c: The status bar widget code.
  */
 
-// HEADER FILES ------------------------------------------------------------
-
-#include <ctype.h>
-
 #if __JDOOM__
 #  include "jdoom.h"
 #  include "hu_stuff.h"
@@ -42,45 +38,11 @@
 #  include "hu_stuff.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
 #include "st_lib.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
 void STlib_InitNum(st_number_t* n, int* num)
 {
     n->num = num;
-}
-
-void STlib_InitMultiIcon(st_multiicon_t* i, int x, int y, patchinfo_t* il, float alpha)
-{
-    i->x = x;
-    i->y = y;
-    i->alpha = alpha;
-    i->p = il;
-}
-
-void STlib_DrawMultiIcon(st_multiicon_t* mi, int iconNum, float alpha)
-{
-    if(iconNum >= 0)
-        WI_DrawPatch4(mi->p[iconNum].id, mi->x, mi->y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, mi->alpha * alpha);
 }

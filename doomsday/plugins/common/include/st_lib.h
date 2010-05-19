@@ -29,8 +29,6 @@
 #ifndef __COMMON_STLIB__
 #define __COMMON_STLIB__
 
-#include "hu_stuff.h"
-
 /**
  * Number widget (uses font drawing).
  */
@@ -39,17 +37,5 @@ typedef struct {
 } st_number_t;
 
 void            STlib_InitNum(st_number_t* n, int* num);
-
-/**
- * Multi Icon widget.
- */
-typedef struct {
-    int             x, y; // Center-justified location of icons.
-    float           alpha;
-    patchinfo_t*    p; // List of icons.
-} st_multiicon_t;
-
-void            STlib_InitMultiIcon(st_multiicon_t* mi, int x, int y, patchinfo_t* il, float alpha);
-void            STlib_DrawMultiIcon(st_multiicon_t* mi, int icon, float alpha);
 
 #endif

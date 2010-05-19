@@ -201,9 +201,6 @@ typedef struct {
     st_number_t wReadyAmmo; // Ready-weapon widget.
     st_number_t wFrags; // In deathmatch only, summary of frags stats.
     st_number_t wHealth; // Health widget.
-    st_multiicon_t  wArms[6]; // Weapon ownership widgets.
-    st_multiicon_t  wFaces; // Face status widget.
-    st_multiicon_t  wKeyBoxes[3]; // Keycard widgets.
     st_number_t wArmor; // Armor widget.
     st_number_t wAmmo[NUM_AMMO_TYPES]; // Ammo widgets.
     st_number_t wMaxAmmo[NUM_AMMO_TYPES]; // Max ammo widgets.
@@ -1149,6 +1146,9 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
 void drawSBarFaceWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define ORIGINX (-ST_WIDTH/2)
+#define ORIGINY (-ST_HEIGHT)
+
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
@@ -1160,7 +1160,8 @@ void drawSBarFaceWidget(int player, float textAlpha, float iconAlpha,
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
-    STlib_DrawMultiIcon(&hud->wFaces, hud->faceIndex, iconAlpha);
+    if(hud->faceIndex >= 0)
+        WI_DrawPatch4(faces[hud->faceIndex].id, ORIGINX+ST_FACESX, ORIGINY+ST_FACESY, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
     {
@@ -1168,11 +1169,26 @@ void drawSBarFaceWidget(int player, float textAlpha, float iconAlpha,
     *drawnWidth = facePatch->width;
     *drawnHeight = facePatch->height;
     }
+
+#undef ORIGINY
+#undef ORIGINX
 }
 
 void drawSBarKeysWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define ORIGINX (-ST_WIDTH/2)
+#define ORIGINY (-ST_HEIGHT)
+
+    typedef struct {
+        int x, y;
+    } loc_t;
+    static const loc_t elements[] = {
+        { ORIGINX+ST_KEY0X, ORIGINY+ST_KEY0Y },
+        { ORIGINX+ST_KEY1X, ORIGINY+ST_KEY1Y },
+        { ORIGINX+ST_KEY2X, ORIGINY+ST_KEY2Y }
+    };
+
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     int i, numDrawnKeys = 0;
@@ -1190,10 +1206,14 @@ void drawSBarKeysWidget(int player, float textAlpha, float iconAlpha,
     for(i = 0; i < 3; ++i)
     {
         const patchinfo_t* patch;
+        const loc_t* element;
+        uint key;
         if(hud->keyBoxes[i] == -1)
             continue;
-        patch = &keys[hud->keyBoxes[i]%3];
-        STlib_DrawMultiIcon(&hud->wKeyBoxes[i], hud->keyBoxes[i], iconAlpha);
+        key = hud->keyBoxes[i];
+        element = &elements[key%3];
+        patch = &keys[key];
+        WI_DrawPatch4(patch->id, element->x, element->y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
         if(patch->width > *drawnWidth)
             *drawnWidth = patch->width;
         *drawnHeight += patch->height;
@@ -1201,32 +1221,43 @@ void drawSBarKeysWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
     *drawnHeight += (numDrawnKeys-1) * 10;
+
+#undef ORIGINY
+#undef ORIGINX
 }
 
 typedef struct {
     hudstate_t*     hud;
-    int             slot;
-    float           alpha;
-} drawownedweapondisply_params_t;
+    int             numOwned;
+} countownedweaponsinslot_params_t;
 
-int drawOwnedWeaponWidget2(weapontype_t type, void* context)
+int countOwnedWeaponsInSlot(weapontype_t type, void* context)
 {
-    drawownedweapondisply_params_t* params = (drawownedweapondisply_params_t*) context;
+    countownedweaponsinslot_params_t* params = (countownedweaponsinslot_params_t*) context;
     const player_t* plr = &players[params->hud - hudStates];
-
-    if(cfg.fixStatusbarOwnedWeapons)
-    {
-        if(!plr->weapons[type].owned)
-            return 1; // Continue iteration.
-    }
-
-    STlib_DrawMultiIcon(&params->hud->wArms[params->slot], plr->weapons[type].owned ? 1 : 0, params->alpha);
-    return 0; // Stop iteration.
+    if(plr->weapons[type].owned)
+        params->numOwned++;
+    return 1; // Continue iteration.
 }
 
 void drawOwnedWeaponWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define ORIGINX (-ST_WIDTH/2)
+#define ORIGINY (-ST_HEIGHT)
+
+    typedef struct {
+        int x, y;
+    } loc_t;
+    static const loc_t elements[] = {
+        { ORIGINX+ST_ARMSX,                     ORIGINY+ST_ARMSY },
+        { ORIGINX+ST_ARMSX + ST_ARMSXSPACE,     ORIGINY+ST_ARMSY },
+        { ORIGINX+ST_ARMSX + ST_ARMSXSPACE*2,   ORIGINY+ST_ARMSY },
+        { ORIGINX+ST_ARMSX,                     ORIGINY+ST_ARMSY + ST_ARMSYSPACE },
+        { ORIGINX+ST_ARMSX + ST_ARMSXSPACE,     ORIGINY+ST_ARMSY + ST_ARMSYSPACE },
+        { ORIGINX+ST_ARMSX + ST_ARMSXSPACE*2,   ORIGINY+ST_ARMSY + ST_ARMSYSPACE },
+    };
+
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
@@ -1241,22 +1272,29 @@ void drawOwnedWeaponWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
     for(i = 0; i < 6; ++i)
     {
-        drawownedweapondisply_params_t params;
-        int result;
+        const loc_t* element = &elements[i];
+        boolean usedSlot = false;
 
-        params.hud = hud;
-        params.slot = i;
-        params.alpha = textAlpha;
-
-        result = P_IterateWeaponsInSlot(i+1, true, drawOwnedWeaponWidget2, &params);
-
-        if(cfg.fixStatusbarOwnedWeapons && result)
-        {   // No weapon bound to slot is owned by player.
-            STlib_DrawMultiIcon(&hud->wArms[i], 0, textAlpha);
+        if(cfg.fixStatusbarOwnedWeapons)
+        {   // Does the player own any weapon bound to this slot?
+            countownedweaponsinslot_params_t params;
+            params.hud = hud;
+            params.numOwned = 0;
+            P_IterateWeaponsInSlot(i+1, false, countOwnedWeaponsInSlot, &params);
+            usedSlot = params.numOwned > 0;
         }
+        else
+        {   // Does the player own the originally hardwired weapon to this slot?
+            usedSlot = plr->weapons[i+1].owned;
+        }
+
+        WI_DrawPatch4(arms[i][usedSlot?1:0].id, element->x, element->y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, textAlpha);
     }
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
+
+#undef ORIGINY
+#undef ORIGINX
 }
 
 static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeight)
@@ -1952,9 +1990,6 @@ static void initData(hudstate_t* hud)
 
 void ST_createWidgets(int player)
 {
-#define ORIGINX (-ST_WIDTH/2)
-#define ORIGINY (-ST_HEIGHT)
-
     static int largeAmmo = 1994; // means "n/a"
 
     player_t* plr = &players[player];
@@ -1967,27 +2002,11 @@ void ST_createWidgets(int player)
     // Health.
     STlib_InitNum(&hud->wHealth, &plr->health);
 
-    // Weapons owned.
-    for(i = 0; i < 6; ++i)
-    {
-        STlib_InitMultiIcon(&hud->wArms[i], ORIGINX+ST_ARMSX + (i % 3) * ST_ARMSXSPACE, ORIGINY+ST_ARMSY + (i / 3) * ST_ARMSYSPACE, arms[i], 1);
-    }
-
     // Frags sum.
     STlib_InitNum(&hud->wFrags, &hud->currentFragsCount);
 
-    // Faces.
-    STlib_InitMultiIcon(&hud->wFaces, ORIGINX+ST_FACESX, ORIGINY+ST_FACESY, faces, 1);
-
     // Armor.
     STlib_InitNum(&hud->wArmor, &plr->armorPoints);
-
-    // Keyboxes 0-2.
-    STlib_InitMultiIcon(&hud->wKeyBoxes[0], ORIGINX+ST_KEY0X, ORIGINY+ST_KEY0Y, keys, 1);
-
-    STlib_InitMultiIcon(&hud->wKeyBoxes[1], ORIGINX+ST_KEY1X, ORIGINY+ST_KEY1Y, keys, 1);
-
-    STlib_InitMultiIcon(&hud->wKeyBoxes[2], ORIGINX+ST_KEY2X, ORIGINY+ST_KEY2Y, keys, 1);
 
     // Ammo count and max (all four kinds).
     for(i = 0; i < NUM_AMMO_TYPES; ++i)
@@ -1995,9 +2014,6 @@ void ST_createWidgets(int player)
         STlib_InitNum(&hud->wAmmo[i], &plr->ammo[i].owned);
         STlib_InitNum(&hud->wMaxAmmo[i], &plr->ammo[i].max);
     }
-
-#undef ORIGINY
-#undef ORIGINX
 }
 
 void ST_Start(int player)
