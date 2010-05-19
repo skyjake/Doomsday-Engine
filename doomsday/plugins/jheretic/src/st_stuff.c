@@ -151,7 +151,6 @@ typedef struct {
     st_number_t     wFrags; // In deathmatch only, summary of frags stats.
     st_number_t     wHealth; // Health.
     st_number_t     wArmor; // Armor.
-    st_icon_t       wKeyBoxes[3]; // Owned keys.
 } hudstate_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -837,6 +836,18 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
 void drawSBarKeysWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define ORIGINX (-ST_WIDTH/2)
+#define ORIGINY (-ST_HEIGHT)
+
+    typedef struct {
+        int x, y;
+    } loc_t;
+    static const loc_t elements[] = {
+        { ORIGINX+ST_KEY0X, ORIGINY+ST_KEY0Y },
+        { ORIGINX+ST_KEY1X, ORIGINY+ST_KEY1Y },
+        { ORIGINX+ST_KEY2X, ORIGINY+ST_KEY2Y }
+    };
+
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
@@ -854,8 +865,10 @@ void drawSBarKeysWidget(int player, float textAlpha, float iconAlpha,
     // Draw keys.
     for(i = 0; i < 3; ++i)
     {
-        if(hud->keyBoxes[i])
-            STlib_DrawIcon(&hud->wKeyBoxes[i], iconAlpha);
+        const loc_t* loc = &elements[i];
+        if(!hud->keyBoxes[i])
+            continue;
+        WI_DrawPatch4(keys[i].id, loc->x, loc->y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -864,6 +877,9 @@ void drawSBarKeysWidget(int player, float textAlpha, float iconAlpha,
     // \fixme calculate dimensions properly!
     *drawnWidth = 0;
     *drawnHeight = 0;
+
+#undef ORIGINY
+#undef ORIGINX
 }
 
 void drawSBarReadyWeaponWidget(int player, float textAlpha, float iconAlpha,
@@ -1809,11 +1825,6 @@ void ST_createWidgets(int player)
 
     // Frags sum.
     STlib_InitNum(&hud->wFrags, &hud->fragsCount);
-
-    // KeyBoxes 0-2.
-    STlib_InitIcon(&hud->wKeyBoxes[0], ORIGINX+ST_KEY0X, ORIGINY+ST_KEY0Y, &keys[0], 1);
-    STlib_InitIcon(&hud->wKeyBoxes[1], ORIGINX+ST_KEY1X, ORIGINY+ST_KEY1Y, &keys[1], 1);
-    STlib_InitIcon(&hud->wKeyBoxes[2], ORIGINX+ST_KEY2X, ORIGINY+ST_KEY2Y, &keys[2], 1);
 
 #undef ORIGINY
 #undef ORIGINX

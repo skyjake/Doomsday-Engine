@@ -41,18 +41,6 @@ typedef struct {
 void            STlib_InitNum(st_number_t* n, int* num);
 
 /**
- * Icon widget.
- */
-typedef struct {
-    int             x, y; // Center-justified location of icon.
-    float           alpha;
-    patchinfo_t*    p; // Icon.
-} st_icon_t;
-
-void            STlib_InitIcon(st_icon_t* b, int x, int y, patchinfo_t* i, float alpha);
-void            STlib_DrawIcon(st_icon_t* bi, float alpha);
-
-/**
  * Multi Icon widget.
  */
 typedef struct {

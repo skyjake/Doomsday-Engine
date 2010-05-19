@@ -71,19 +71,6 @@ void STlib_InitNum(st_number_t* n, int* num)
     n->num = num;
 }
 
-void STlib_InitIcon(st_icon_t* b, int x, int y, patchinfo_t* i, float alpha)
-{
-    b->x = x;
-    b->y = y;
-    b->alpha = alpha;
-    b->p = i;
-}
-
-void STlib_DrawIcon(st_icon_t* bi, float alpha)
-{
-    WI_DrawPatch4(bi->p->id, bi->x, bi->y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, bi->alpha * alpha);
-}
-
 void STlib_InitMultiIcon(st_multiicon_t* i, int x, int y, patchinfo_t* il, float alpha)
 {
     i->x = x;
