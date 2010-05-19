@@ -920,7 +920,7 @@ void drawReadyAmmoWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    STlib_DrawNum(&hud->wReadyAmmo, X, Y, GF_STATUS, MAXDIGITS);
+    STlib_DrawNum(*hud->wReadyAmmo.num, X, Y, GF_STATUS, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -967,8 +967,9 @@ void drawOwnedAmmoWidget(int player, float textAlpha, float iconAlpha,
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     for(i = 0; i < 4; ++i)
     {
-        if(*hud->wAmmo[i].num != 1994)
-            STlib_DrawNum(&hud->wAmmo[i], ORIGINX+ammoPos[i].x, ORIGINY+ammoPos[i].y, GF_INDEX, MAXDIGITS);
+        int val = *hud->wAmmo[i].num;
+        if(val != 1994)
+            STlib_DrawNum(val, ORIGINX+ammoPos[i].x, ORIGINY+ammoPos[i].y, GF_INDEX, MAXDIGITS);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1014,8 +1015,9 @@ void drawMaxAmmoWidget(int player, float textAlpha, float iconAlpha,
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     for(i = 0; i < 4; ++i)
     {
-        if(*hud->wMaxAmmo[i].num != 1994)
-            STlib_DrawNum(&hud->wMaxAmmo[i], ORIGINX+ammoMaxPos[i].x, ORIGINY+ammoMaxPos[i].y, GF_INDEX, MAXDIGITS);
+        int val = *hud->wMaxAmmo[i].num;
+        if(val != 1994)
+            STlib_DrawNum(val, ORIGINX+ammoMaxPos[i].x, ORIGINY+ammoMaxPos[i].y, GF_INDEX, MAXDIGITS);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1052,7 +1054,7 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    STlib_DrawNum(&hud->wHealth, X, Y, GF_STATUS, MAXDIGITS);
+    STlib_DrawNum(*hud->wHealth.num, X, Y, GF_STATUS, MAXDIGITS);
     M_DrawChar2('%', X, Y, GF_STATUS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1091,7 +1093,7 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    STlib_DrawNum(&hud->wArmor, X, Y, GF_STATUS, MAXDIGITS);
+    STlib_DrawNum(*hud->wArmor.num, X, Y, GF_STATUS, MAXDIGITS);
     M_DrawChar2('%', X, Y, GF_STATUS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1130,7 +1132,7 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-    STlib_DrawNum(&hud->wFrags, X, Y, GF_STATUS, MAXDIGITS);
+    STlib_DrawNum(*hud->wFrags.num, X, Y, GF_STATUS, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);

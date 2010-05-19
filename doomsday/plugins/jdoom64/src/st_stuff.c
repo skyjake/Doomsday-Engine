@@ -311,7 +311,7 @@ static void drawWidgets(hudstate_t* hud)
         if(*hud->wFrags.num == 1994)
             return;
         DGL_Color4f(1, 1, 1, hud->alpha);
-        STlib_DrawNum(&hud->wFrags, ST_FRAGSX, ST_FRAGSY, GF_STATUS, MAXDIGITS);
+        STlib_DrawNum(*hud->wFrags.num, ST_FRAGSX, ST_FRAGSY, GF_STATUS, MAXDIGITS);
     }
 
 #undef MAXDIGITS
