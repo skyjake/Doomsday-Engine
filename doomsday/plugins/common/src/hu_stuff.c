@@ -2186,7 +2186,7 @@ void M_DrawChar3(unsigned char ch, int x, int y, gamefontid_t font, short flags)
 
 void M_DrawChar2(unsigned char ch, int x, int y, gamefontid_t font)
 {
-    M_DrawChar3(ch, x, y, font, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
+    M_DrawChar3(ch, x, y, font, DTF_ALIGN_TOPLEFT);
 }
 
 void M_DrawChar(unsigned char ch, int x, int y)
@@ -2362,42 +2362,6 @@ void DrINumber(int val, int x, int y, float r, float g, float b, float a)
     val = val % 10;
     M_DrawChar2('0' + (val%10), x + 16, y, GF_STATUS);
 
-}
-#endif
-
-#if __JHERETIC__
-void DrINumber(int val, int x, int y, float r, float g, float b, float a)
-{
-    int oldval;
-
-    DGL_Color4f(r, g, b, a);
-
-    // Limit to 999.
-    if(val > 999)
-        val = 999;
-
-    oldval = val;
-    if(val < 0)
-    {
-        val = -val;
-        M_DrawChar2('0' + (val % 10), x + 18, y, GF_STATUS);
-        M_DrawChar2('-', x + 9, y, GF_STATUS);
-        return;
-    }
-
-    if(val > 99)
-    {
-        M_DrawChar2('0' + ((val / 100)%10), x, y, GF_STATUS);
-    }
-
-    val = val % 100;
-    if(val > 9 || oldval > 99)
-    {
-        M_DrawChar2('0' + ((val / 10)%10), x + 9, y, GF_STATUS);
-    }
-
-    val = val % 10;
-    M_DrawChar2('0' + (val%10), x + 18, y, GF_STATUS);
 }
 #endif
 

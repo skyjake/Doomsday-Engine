@@ -361,7 +361,7 @@ void drawChainWidget(int player, float textAlpha, float iconAlpha,
     DGL_Color4f(1, 1, 1, iconAlpha);
     M_DrawPatch(lifeGems[gemNum].id, x + gemXOffset, chainY);
 
-    shadeChain(ORIGINX, ORIGINY-ST_HEIGHT, iconAlpha/3);
+    shadeChain(ORIGINX, ORIGINY-ST_HEIGHT, iconAlpha/2);
 
     // How about a glowing gem?
     DGL_BlendMode(BM_ADD);
@@ -736,9 +736,8 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    // \fixme calculate dimensions properly!
-    *drawnWidth = 0;
-    *drawnHeight = 0;
+    *drawnWidth = M_TextFragmentWidth(buf, GF_STATUS);
+    *drawnHeight = M_TextFragmentHeight(buf, GF_STATUS);
 
 #undef MAXDIGITS
 #undef Y
@@ -755,6 +754,7 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
 #define X                   (ORIGINX+ST_HEALTHX)
 #define Y                   (ORIGINY+ST_HEALTHY)
 #define MAXDIGITS           (ST_HEALTHWIDTH)
+#define TRACKING            (1)
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
@@ -775,15 +775,15 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    M_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+    M_DrawTextFragment4(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    // \fixme calculate dimensions properly!
-    *drawnWidth = 0;
-    *drawnHeight = 0;
+    *drawnWidth = M_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
+    *drawnHeight = M_TextFragmentHeight(buf, GF_STATUS);
 
+#undef TRACKING
 #undef MAXDIGITS
 #undef Y
 #undef X
@@ -799,6 +799,7 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
 #define X                   (ORIGINX+ST_ARMORX)
 #define Y                   (ORIGINY+ST_ARMORY)
 #define MAXDIGITS           (ST_ARMORWIDTH)
+#define TRACKING            (1)
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
@@ -819,15 +820,15 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    M_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+    M_DrawTextFragment4(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    // \fixme calculate dimensions properly!
-    *drawnWidth = 0;
-    *drawnHeight = 0;
+    *drawnWidth = M_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
+    *drawnHeight = M_TextFragmentHeight(buf, GF_STATUS);
 
+#undef TRACKING
 #undef MAXDIGITS
 #undef Y
 #undef X
@@ -892,6 +893,7 @@ void drawSBarReadyWeaponWidget(int player, float textAlpha, float iconAlpha,
 #define X                   (ORIGINX+ST_AMMOX)
 #define Y                   (ORIGINY+ST_AMMOY)
 #define MAXDIGITS           (ST_AMMOWIDTH)
+#define TRACKING            (1)
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
@@ -905,20 +907,22 @@ void drawSBarReadyWeaponWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(hud->readyAmmo == 1994)
         return;
+
+    dd_snprintf(buf, 20, "%i", hud->readyAmmo);
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], iconAlpha);
-    dd_snprintf(buf, 20, "%i", hud->readyAmmo);
-    M_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+    M_DrawTextFragment4(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    // \fixme calculate dimensions properly!
-    *drawnWidth = 0;
-    *drawnHeight = 0;
+    *drawnWidth = M_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
+    *drawnHeight = M_TextFragmentHeight(buf, GF_STATUS);
 
+#undef TRACKING
 #undef MAXDIGITS
 #undef Y
 #undef X
@@ -943,18 +947,19 @@ void drawSBarCurrentAmmoWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
+    if(hud->currentAmmoIconIdx < 0)
+        return;
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
-
-    if(hud->currentAmmoIconIdx >= 0)
-        WI_DrawPatch4(ammoIcons[hud->currentAmmoIconIdx].id, X, Y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
+   
+    WI_DrawPatch4(ammoIcons[hud->currentAmmoIconIdx].id, X, Y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    // \fixme calculate dimensions properly!
-    *drawnWidth = 0;
-    *drawnHeight = 0;
+    *drawnWidth = ammoIcons[hud->currentAmmoIconIdx].width;
+    *drawnHeight = ammoIcons[hud->currentAmmoIconIdx].height;
 
 #undef Y
 #undef X
@@ -1129,8 +1134,9 @@ void drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha,
             alpha *= plr->powers[PT_WEAPONLEVEL2] / 35.0f;
         DGL_Color4f(1, 1, 1, alpha);
         M_DrawPatch(spinBook[frame].id, -13, 13);
-        *drawnWidth += spinBook[frame].width;
-        *drawnHeight += spinBook[frame].height;
+        // \fixme Determine the actual center point of the animation at widget creation time.
+        *drawnWidth += 25;//spinBook[frame].width;
+        *drawnHeight += 25;//spinBook[frame].height;
     }
 
     if(plr->powers[PT_WEAPONLEVEL2] < cfg.tomeCounter * 35)
@@ -1212,6 +1218,8 @@ static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
 void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define TRACKING                (1)
+
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
     int lvl = (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
@@ -1232,23 +1240,36 @@ void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
     for(ammoType = 0; ammoType < NUM_AMMO_TYPES; ++ammoType)
     {
         const patchinfo_t* dp;
+        char buf[20];
+        int h;
+
         if(!weaponInfo[plr->readyWeapon][plr->class].mode[lvl].ammoType[ammoType])
             continue;
+
         dp = &ammoIcons[plr->readyWeapon - 1];
+        dd_snprintf(buf, 20, "%i", plr->ammo[ammoType].owned);
+
         DGL_Color4f(1, 1, 1, iconAlpha);
         M_DrawPatch2(dp->id, 0, 0, DPF_ALIGN_TOPLEFT|DPF_NO_OFFSET);
-        DrINumber(plr->ammo[ammoType].owned, dp->width+1, -2, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-        /// \kludge calculate the visual dimensions properly!
-        *drawnWidth += dp->width + 2 + (M_CharWidth('0', GF_STATUS)+1) * 3 - 1;
-        if(MAX_OF(dp->height, M_CharHeight('0', GF_STATUS)) > *drawnHeight)
-            *drawnHeight = MAX_OF(dp->height, M_CharHeight('0', GF_STATUS));
+
+        DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+        M_DrawTextFragment4(buf, dp->width+2, -2, GF_STATUS, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
+
+        *drawnWidth += dp->width + 2 + M_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
+        h = M_TextFragmentHeight(buf, GF_STATUS);
+        if(MAX_OF(dp->height, h) > *drawnHeight)
+            *drawnHeight = MAX_OF(dp->height, h);
         break;
     }
+
+#undef TRACKING
 }
 
 void drawHealthWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define TRACKING                (1)
+
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
     int health = MAX_OF(plr->plr->mo->health, 0);
@@ -1263,30 +1284,42 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
     dd_snprintf(buf, 5, "%i", health);
 
     DGL_Color4f(0, 0, 0, textAlpha * .4f);
-    M_DrawTextFragment3(buf, 2, 1, GF_FONTB, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+    M_DrawTextFragment4(buf, 2, 1, GF_FONTB, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS, TRACKING);
 
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    M_DrawTextFragment3(buf, 0, -1, GF_FONTB, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+    M_DrawTextFragment4(buf, 0, -1, GF_FONTB, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS, TRACKING);
 
-    *drawnWidth = M_TextWidth(buf, GF_FONTB);
-    *drawnHeight = M_TextHeight(buf, GF_FONTB);
+    *drawnWidth = M_TextFragmentWidth2(buf, GF_FONTB, TRACKING);
+    *drawnHeight = M_TextFragmentHeight(buf, GF_FONTB);
+
+#undef TRACKING
 }
 
 void drawArmorWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define TRACKING                (1)
+
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
+    char buf[20];
+
     if(hud->statusbarActive)
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-    DrINumber(plr->armorPoints, -1, -11, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    /// \kludge calculate the visual dimensions properly!
-    *drawnWidth = (M_CharWidth('0', GF_STATUS)+1) * 3 - 1;
-    *drawnHeight = M_CharHeight('0', GF_STATUS);
+
+    dd_snprintf(buf, 20, "%i", plr->armorPoints);
+
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    M_DrawTextFragment4(buf, -1, -11, GF_STATUS, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
+
+    *drawnWidth = M_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
+    *drawnHeight = M_TextFragmentHeight(buf, GF_STATUS);
+
+#undef TRACKING
 }
 
 void drawKeysWidget(int player, float textAlpha, float iconAlpha,
@@ -1344,22 +1377,31 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
 void drawFragsWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define TRACKING                (1)
+
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
     int i, numFrags = 0;
+    char buf[20];
     if(hud->statusbarActive || !deathmatch)
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
+
     for(i = 0; i < MAXPLAYERS; ++i)
         if(players[i].plr->inGame)
             numFrags += plr->frags[i];
-    DrINumber(numFrags, 0, -13, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    /// \kludge calculate the visual dimensions properly!
-    *drawnWidth = (M_CharWidth('0', GF_STATUS)+1) * 3;
-    *drawnHeight = M_CharHeight('0', GF_STATUS);
+    dd_snprintf(buf, 20, "%i", numFrags);
+
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    M_DrawTextFragment4(buf, 0, 0, GF_STATUS, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS, TRACKING);
+
+    *drawnWidth = M_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
+    *drawnHeight = M_TextFragmentHeight(buf, GF_STATUS);
+
+#undef TRACKING
 }
 
 void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
