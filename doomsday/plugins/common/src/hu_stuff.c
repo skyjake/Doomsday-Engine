@@ -2215,16 +2215,6 @@ void M_DrawShadowedChar(unsigned char ch, int x, int y)
 }
 
 #if __JHERETIC__
-void M_DrawSmallNumber(int val, int x, int y)
-{
-    if(val > 9)           
-        M_DrawChar2('0' + ((val / 10) % 10), x+3, y+13, GF_SMALLIN);
-    val = val % 10;
-    M_DrawChar2('0' + (val % 10), x+7, y+13, GF_SMALLIN);
-}
-#endif
-
-#if __JHERETIC__
 void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b, float a)
 {
     int xpos, oldval, realdigits;

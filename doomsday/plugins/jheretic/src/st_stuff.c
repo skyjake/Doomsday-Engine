@@ -1135,14 +1135,18 @@ void drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha,
 #define COUNT_Y             (30)
 
         int val = 1 + plr->powers[PT_WEAPONLEVEL2] / 35, w, h;
+        char buf[20];
+
+        dd_snprintf(buf, 20, "%i", val);
+
         DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-        M_DrawSmallNumber(val, -12, 13);
-        /// \kludge calculate dimensions properly!
-        w = M_NumDigits(val) * M_CharWidth('0', GF_SMALLIN);
-        h = M_CharHeight('0', GF_SMALLIN);
+        M_DrawTextFragment4(buf, 0, 26, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_TYPEIN, 2);
+
+        w = M_TextFragmentWidth(buf, GF_SMALLIN);
+        h = M_TextFragmentHeight(buf, GF_SMALLIN);
         if(w > *drawnWidth)
             *drawnWidth += w;
-        *drawnHeight += h;
+        *drawnHeight += h + 1;
 #undef COUNT_Y
 #undef COUNT_X
     }
