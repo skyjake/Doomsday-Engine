@@ -524,7 +524,6 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
         // The source image can be used as-is.
         freeOriginal = false;
         rgbaOriginal = data;
-
     }
     else
     {
@@ -1930,8 +1929,8 @@ static void BlackOutlines(byte* pixels, int width, int height)
     M_Free(dark);
 }
 
-static void Equalize(byte* pixels, int width, int height, float* rBaMul,
-    float* rHiMul, float* rLoMul)
+static void Equalize(byte* pixels, int width, int height,
+    float* rBaMul, float* rHiMul, float* rLoMul)
 {
     byte min = 255, max = 0;
     int i, avg = 0;
@@ -1988,6 +1987,39 @@ static void Equalize(byte* pixels, int width, int height, float* rBaMul,
     if(rLoMul) *rLoMul = loMul;
 }
 
+static void Desaturate(byte* pixels, int width, int height, int comps)
+{
+    byte* pix;
+    int i;
+
+    for(i = 0, pix = pixels; i < width * height; ++i, pix += comps)
+    {
+        int min = MIN_OF(pix[CR], MIN_OF(pix[CG], pix[CB]));
+        int max = MAX_OF(pix[CR], MAX_OF(pix[CG], pix[CB]));
+        pix[CR] = pix[CG] = pix[CB] = (min + max) / 2;
+    }
+}
+
+static void Amplify(byte* pixels, int width, int height)
+{
+    int i, max = 0;
+    byte* pix;
+
+    for(i = 0, pix = pixels; i < width * height; ++i, pix += 1)
+    {
+        if(*pix > max)
+            max = *pix;
+    }
+
+    if(!max || max == 255)
+        return;
+
+    for(i = 0, pix = pixels; i < width * height; ++i, pix += 1)
+    {
+        *pix = (byte) MINMAX_OF(0, (float)*pix / max * 255, 255);
+    }
+}
+
 static void EnhanceContrast(byte *pixels, int width, int height)
 {
     int i, c;
@@ -1998,10 +2030,10 @@ static void EnhanceContrast(byte *pixels, int width, int height)
         for(c = 0; c < 3; ++c)
         {
             float f = pix[c];
-            if(f < 90) // Darken dark parts.
-                f = (f - 90) * 3 + 90;
-            else if(f > 200) // Lighten light parts.
-                f = (f - 200) * 2 + 200;
+            if(f < 60) // Darken dark parts.
+                f = (f - 70) * 1.0125f + 70;
+            else if(f > 185) // Lighten light parts.
+                f = (f - 185) * 1.0125f + 185;
 
             pix[c] = MINMAX_OF(0, f, 255);
         }
@@ -2574,7 +2606,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
             if(fillOutlines && !scaleSharp && image.isMasked)
                 ColorOutlines(image.pixels, image.width, image.height);
 
-            if(monochrome && (tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE))
+            if(monochrome && !scaleSharp && (tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE))
                 GL_DeSaturatePalettedImage(image.pixels, R_GetColorPalette(0), image.width, image.height);
 
             if(tex->type == GLT_DETAIL)
@@ -2595,21 +2627,37 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
 
                 GL_ConvertBuffer(image.width, image.height, image.isMasked? 2 : 1, 4, image.pixels, rgbaPixels, 0, false);
 
+                if(monochrome && (tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE))
+                    Desaturate(rgbaPixels, image.width, image.height, 4);
+
                 GL_SmartFilter2x(rgbaPixels, upscaledPixels, image.width, image.height, image.width * 8);
                 image.width *= 2;
                 image.height *= 2;
 
-                //EnhanceContrast(upscaledPixels, image.width,image.height);
-                SharpenPixels(upscaledPixels, image.width, image.height);
+                EnhanceContrast(upscaledPixels, image.width,image.height);
+                //SharpenPixels(upscaledPixels, image.width, image.height);
                 //BlackOutlines(upscaledPixels, image.width, image.height);
 
-                // Back to indexed+alpha.
-                GL_ConvertBuffer(image.width, image.height, 4, image.isMasked? 2 : 1, upscaledPixels, rgbaPixels, 0, false);
+                // Back to indexed+alpha?
+                if(monochrome && (tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE))
+                {   // No. We'll convert from RGB(+A) to Luminance(+A) and upload as is.
+                    // Replace the old buffer.
+                    M_Free(rgbaPixels);
+                    M_Free(image.pixels);
+                    image.pixels = upscaledPixels;
+                    image.pixelSize = 4;
 
-                // Replace the old buffer.
-                M_Free(upscaledPixels);
-                M_Free(image.pixels);
-                image.pixels = rgbaPixels;
+                    GL_ConvertToLuminance(&image);
+                    Amplify(image.pixels, image.width, image.height);
+                }
+                else
+                {   // Yes. Quantize down from RGA(+A) to Indexed(+A).
+                    GL_ConvertBuffer(image.width, image.height, 4, image.isMasked? 2 : 1, upscaledPixels, rgbaPixels, 0, false);
+                    // Replace the old buffer.
+                    M_Free(upscaledPixels);
+                    M_Free(image.pixels);
+                    image.pixels = rgbaPixels;
+                }
 
                 // Lets not do this again.
                 noSmartFilter = true;
@@ -2657,15 +2705,17 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
             flags |= TXCF_NO_COMPRESSION;
 
         if(!(tex->type == GLT_MASK || tex->type == GLT_SHINY || tex->type == GLT_LIGHTMAP) &&
-           (image.pixelSize > 1 || tex->type == GLT_MODELSKIN))
+           (image.pixelSize > 2 || tex->type == GLT_MODELSKIN))
             flags |= TXCF_APPLY_GAMMACORRECTION;
 
         if(tex->type == GLT_SPRITE /*|| tex->type == GLT_DOOMPATCH*/)
             flags |= TXCF_UPLOAD_ARG_NOSTRETCH;
 
-        if(!(tex->type == GLT_DETAIL || tex->type == GLT_SYSTEM || tex->type == GLT_SHINY || tex->type == GLT_MASK))
+        if(!monochrome && !(tex->type == GLT_DETAIL || tex->type == GLT_SYSTEM || tex->type == GLT_SHINY || tex->type == GLT_MASK))
             flags |= TXCF_EASY_UPLOAD;
 
+        if(!monochrome)
+        {
         if(tex->type == GLT_SPRITE || tex->type == GLT_MODELSKIN || tex->type == GLT_MODELSHINYSKIN)
         {
             if(image.pixelSize > 1)
@@ -2673,6 +2723,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
         }
         else if(tmpResult == 2 && !(tex->type == GLT_SHINY || tex->type == GLT_MASK || tex->type == GLT_LIGHTMAP))
             flags |= TXCF_UPLOAD_ARG_RGBDATA;
+        }
 
         if(tex->type == GLT_DETAIL)
         {
@@ -2698,7 +2749,11 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
         if(noSmartFilter)
             flags |= TXCF_UPLOAD_ARG_NOSMARTFILTER;
 
-        if(tex->type == GLT_FLAT || tex->type == GLT_DOOMTEXTURE || tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE)
+        if(monochrome)
+        {
+            texFormat = ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : DGL_LUMINANCE );
+        }
+        else if(tex->type == GLT_FLAT || tex->type == GLT_DOOMTEXTURE || tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE)
         {
             texFormat = ( image.pixelSize > 1?
                             ( alphaChannel? DGL_RGBA : DGL_RGB) :

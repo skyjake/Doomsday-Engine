@@ -561,21 +561,42 @@ void GL_TranslatePatch(lumppatch_t *patch, byte *transTable)
 /**
  * Converts the image data to grayscale luminance in-place.
  */
-void GL_ConvertToLuminance(image_t *image)
+void GL_ConvertToLuminance(image_t* image)
 {
-    int         p, total = image->width * image->height;
-    byte       *ptr = image->pixels;
+    int p, total = image->width * image->height;
+    byte* alphaChannel = NULL;
+    byte* ptr = image->pixels;
 
-    if(image->pixelSize == 1)
-    {
-        // No need to convert anything.
+    if(image->pixelSize < 3)
+    {   // No need to convert anything.
         return;
     }
 
+    // Do we need to relocate the alpha data?
+    if(image->pixelSize == 4)
+    {   // Yes. Take a copy.
+        alphaChannel = malloc(total);
+        ptr = image->pixels;
+        for(p = 0; p < total; ++p, ptr += image->pixelSize)
+            alphaChannel[p] = ptr[3];
+    }
+
     // Average the RGB colors.
+    ptr = image->pixels;
     for(p = 0; p < total; ++p, ptr += image->pixelSize)
     {
-        image->pixels[p] = (ptr[0] + ptr[1] + ptr[2]) / 3;
+        int min = MIN_OF(ptr[0], MIN_OF(ptr[1], ptr[2]));
+        int max = MAX_OF(ptr[0], MAX_OF(ptr[1], ptr[2]));
+        image->pixels[p] = (min + max) / 2;
+    }
+
+    // Do we need to relocate the alpha data?
+    if(alphaChannel)
+    {
+        memcpy(image->pixels + total, alphaChannel, total);
+        image->pixelSize = 2;
+        free(alphaChannel);
+        return;
     }
 
     image->pixelSize = 1;
