@@ -2603,9 +2603,6 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
 
         if(image.pixelSize == 1)
         {
-            if(fillOutlines && !scaleSharp && image.isMasked)
-                ColorOutlines(image.pixels, image.width, image.height);
-
             if(monochrome && !scaleSharp && (tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE))
                 GL_DeSaturatePalettedImage(image.pixels, R_GetColorPalette(0), image.width, image.height);
 
@@ -2662,6 +2659,9 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
                 // Lets not do this again.
                 noSmartFilter = true;
             }
+
+            if(fillOutlines /*&& !scaleSharp*/ && image.isMasked && image.pixelSize == 1)
+                ColorOutlines(image.pixels, image.width, image.height);
         }
 
         // Too big for us?
