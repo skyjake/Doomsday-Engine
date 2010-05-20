@@ -2313,58 +2313,6 @@ void IN_DrawTime(int x, int y, int h, int m, int s, float r, float g, float b, f
 }
 #endif
 
-#if __JHEXEN__
-/**
- * Draws a three digit number.
- */
-void DrINumber(int val, int x, int y, float r, float g, float b, float a)
-{
-    int oldval;
-
-    DGL_Color4f(r,g,b,a);
-
-    // Make sure it's a three digit number.
-    if(val < -999)
-        val = -999;
-    if(val > 999)
-        val = 999;
-
-    oldval = val;
-    if(val < 0)
-    {
-        val = -val;
-        if(val > 99)
-        {
-            val = 99;
-        }
-        if(val > 9)
-        {
-            M_DrawChar2('0' + ((val/10)%10), x + 8, y, GF_STATUS);
-            M_DrawChar2('-', x, y, GF_STATUS);
-        }
-        else
-        {
-            M_DrawChar2('-', x + 8, y, GF_STATUS);
-        }
-        val = val % 10;
-        M_DrawChar2('0' + (val%10), x + 16, y, GF_STATUS);
-        return;
-    }
-    if(val > 99)
-    {
-        M_DrawChar2('0' + ((val/100)%10), x, y, GF_STATUS);
-    }
-    val = val % 100;
-    if(val > 9 || oldval > 99)
-    {
-        M_DrawChar2('0' + ((val/10)%10), x + 8, y, GF_STATUS);
-    }
-    val = val % 10;
-    M_DrawChar2('0' + (val%10), x + 16, y, GF_STATUS);
-
-}
-#endif
-
 /**
  * Write a string using a colored, custom font and do a type-in effect.
  */

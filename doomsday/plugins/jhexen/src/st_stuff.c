@@ -1343,6 +1343,7 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
 #define X                   (ORIGINX+ST_HEALTHX)
 #define Y                   (ORIGINY+ST_HEALTHY)
 #define MAXDIGITS           (ST_HEALTHWIDTH)
+#define TRACKING            (1)
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
@@ -1363,14 +1364,15 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    M_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+    M_DrawTextFragment4(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    *drawnWidth = M_TextFragmentWidth(buf, GF_STATUS);
+    *drawnWidth = M_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
     *drawnHeight = M_TextFragmentHeight(buf, GF_STATUS);
 
+#undef TRACKING
 #undef MAXDIGITS
 #undef Y
 #undef X
@@ -1387,6 +1389,7 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
 #define X                   (ORIGINX+ST_ARMORX)
 #define Y                   (ORIGINY+ST_ARMORY)
 #define MAXDIGITS           (ST_ARMORWIDTH)
+#define TRACKING            (1)
 
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
@@ -1398,7 +1401,7 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(hud->armorLevel)
+    if(hud->armorLevel == 1994)
         return;
 
     dd_snprintf(buf, 20, "%i", hud->armorLevel);
@@ -1407,14 +1410,15 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    M_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+    M_DrawTextFragment4(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    *drawnWidth = M_TextFragmentWidth(buf, GF_STATUS);
+    *drawnWidth = M_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
     *drawnHeight = M_TextFragmentHeight(buf, GF_STATUS);
 
+#undef TRACKING
 #undef MAXDIGITS
 #undef Y
 #undef X
@@ -1560,7 +1564,7 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
             char buf[20];
             DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
             dd_snprintf(buf, 20, "%i", count);
-            M_DrawTextFragment4(buf, ORIGINX+ST_INVITEMCX, ORIGINY+ST_INVITEMCY, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 2);
+            M_DrawTextFragment3(buf, ORIGINX+ST_INVITEMCX, ORIGINY+ST_INVITEMCY, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
         }
     }
 
@@ -1726,65 +1730,6 @@ void drawGreenManaVialWidget(int player, float textAlpha, float iconAlpha,
 #undef ORIGINX
 }
 
-#if 0 // Unused atm
-/**
- * Displays sound debugging information.
- */
-static void DrawSoundInfo(void)
-{
-    int         i;
-    SoundInfo_t s;
-    ChanInfo_t *c;
-    char        text[32];
-    int         x;
-    int         y;
-    int         xPos[7] = { 1, 75, 112, 156, 200, 230, 260 };
-
-    if(mapTime & 16)
-    {
-        MN_DrTextA("*** SOUND DEBUG INFO ***", xPos[0], 20);
-    }
-    S_GetChannelInfo(&s);
-    if(s.channelCount == 0)
-    {
-        return;
-    }
-    x = 0;
-    MN_DrTextA("NAME", xPos[x++], 30);
-    MN_DrTextA("MO.T", xPos[x++], 30);
-    MN_DrTextA("MO.X", xPos[x++], 30);
-    MN_DrTextA("MO.Y", xPos[x++], 30);
-    MN_DrTextA("ID", xPos[x++], 30);
-    MN_DrTextA("PRI", xPos[x++], 30);
-    MN_DrTextA("DIST", xPos[x++], 30);
-    for(i = 0; i < s.channelCount; ++i)
-    {
-        c = &s.chan[i];
-        x = 0;
-        y = 40 + i * 10;
-        if(c->mo == NULL)
-        {                       // Channel is unused
-            MN_DrTextA("------", xPos[0], y);
-            continue;
-        }
-        sprintf(text, "%s", c->name);
-        strupr(text);
-        MN_DrTextA(text, xPos[x++], y);
-        sprintf(text, "%d", c->mo->type);
-        MN_DrTextA(text, xPos[x++], y);
-        sprintf(text, "%d", c->mo->x >> FRACBITS);
-        MN_DrTextA(text, xPos[x++], y);
-        sprintf(text, "%d", c->mo->y >> FRACBITS);
-        MN_DrTextA(text, xPos[x++], y);
-        sprintf(text, "%d", c->id);
-        MN_DrTextA(text, xPos[x++], y);
-        sprintf(text, "%d", S_sfx[c->id].usefulness);
-        MN_DrTextA(text, xPos[x++], y);
-        sprintf(text, "%d", c->distance);
-    }
-}
-#endif
-
 /**
  * Unhides the current HUD display if hidden.
  *
@@ -1825,9 +1770,11 @@ static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeigh
 void drawHealthWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define TRACKING                (1)
+
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
-    int w, h, health = MAX_OF(plr->plr->mo->health, 0);
+    int health = MAX_OF(plr->plr->mo->health, 0);
     char buf[20];
     if(hud->statusbarActive)
         return;
@@ -1835,23 +1782,29 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
+
     dd_snprintf(buf, 20, "%i", health);
-    w = M_TextWidth(buf, GF_FONTB);
-    h = M_TextHeight(buf, GF_FONTB);
+
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
-    M_DrawTextFragment3(buf, -1, -1, GF_FONTB, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
-    *drawnWidth = w;
-    *drawnHeight = h;
+    M_DrawTextFragment4(buf, -1, -1, GF_FONTB, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS, TRACKING);
+
+    *drawnWidth = M_TextFragmentWidth2(buf, GF_FONTB, TRACKING);
+    *drawnHeight = M_TextFragmentHeight(buf, GF_FONTB);
+
+#undef TRACKING
 }
 
 void drawBlueManaWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define TRACKING                (1)
+
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
     const patchinfo_t* dim =  &dpManaAIcons[0];
     const patchinfo_t* bright = &dpManaAIcons[1];
     const patchinfo_t* patch = NULL;
+    char buf[20];
 
     if(hud->statusbarActive)
         return;
@@ -1883,21 +1836,31 @@ void drawBlueManaWidget(int player, float textAlpha, float iconAlpha,
         break;
     }
 
+    dd_snprintf(buf, 20, "%i", plr->ammo[AT_BLUEMANA].owned);
+
     DGL_Color4f(1, 1, 1, iconAlpha);
     M_DrawPatch(patch->id, 0, 0);
-    DrINumber(plr->ammo[AT_BLUEMANA].owned, patch->width+2, 0, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    *drawnWidth = patch->width+2+M_CharWidth('0', GF_STATUS)*3;
-    *drawnHeight = MAX_OF(patch->height, M_CharHeight('0', GF_STATUS));
+
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    M_DrawTextFragment4(buf, patch->width+2, 0, GF_STATUS, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
+
+    *drawnWidth = patch->width+2+M_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
+    *drawnHeight = MAX_OF(patch->height, M_TextFragmentHeight(buf, GF_STATUS));
+
+#undef TRACKING
 }
 
 void drawGreenManaWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define TRACKING                (1)
+
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
     const patchinfo_t* dim = &dpManaBIcons[0];
     const patchinfo_t* bright = &dpManaBIcons[1];
     const patchinfo_t* patch = NULL;
+    char buf[20];
 
     if(hud->statusbarActive)
         return;
@@ -1929,32 +1892,49 @@ void drawGreenManaWidget(int player, float textAlpha, float iconAlpha,
         break;
     }
 
+    dd_snprintf(buf, 20, "%i", plr->ammo[AT_GREENMANA].owned);
+
     DGL_Color4f(1, 1, 1, iconAlpha);
     M_DrawPatch(patch->id, 0, 0);
-    DrINumber(plr->ammo[AT_GREENMANA].owned, patch->width+2, 0, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    *drawnWidth = patch->width+2+M_CharWidth('0', GF_STATUS)*3;
-    *drawnHeight = MAX_OF(patch->height, M_CharHeight('0', GF_STATUS));
+
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    M_DrawTextFragment4(buf, patch->width+2, 0, GF_STATUS, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
+
+    *drawnWidth = patch->width+2+M_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
+    *drawnHeight = MAX_OF(patch->height, M_TextFragmentHeight(buf, GF_STATUS));
+
+#undef TRACKING
 }
 
 void drawFragsWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)
 {
+#define TRACKING                (1)
+
     player_t* plr = &players[player];
     hudstate_t* hud = &hudStates[player];
     int i, numFrags = 0;
+    char buf[20];
+
     if(hud->statusbarActive || !deathmatch)
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
+
     for(i = 0; i < MAXPLAYERS; ++i)
         if(plr->plr->inGame)
             numFrags += plr->frags[i];
-    DrINumber(numFrags, 0, -13, defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    /// \kludge calculate the visual dimensions properly!
-    *drawnWidth = (M_CharWidth('0', GF_STATUS)+1) * 3;
-    *drawnHeight = M_CharHeight('0', GF_STATUS);
+    dd_snprintf(buf, 20, "%i", numFrags);
+
+    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+    M_DrawTextFragment4(buf, 0, -13, GF_STATUS, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
+
+    *drawnWidth = M_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
+    *drawnHeight = M_TextFragmentHeight(buf, GF_STATUS);
+
+#undef TRACKING
 }
 
 void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
@@ -2000,7 +1980,7 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
                 char buf[20];
                 DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
                 dd_snprintf(buf, 20, "%i", count);
-                M_DrawTextFragment4(buf, -2, -7, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 2);
+                M_DrawTextFragment3(buf, -2, -7, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
             }
         }
     }
@@ -2057,9 +2037,10 @@ void drawWorldTimerWidget(int player, float textAlpha, float iconAlpha,
             strncat(buf2, "\nYOU FREAK!!!", 20);
         strncat(buf, buf2, 60);
     }
+    M_DrawText(buf, 0, 0, GF_FONTA, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 0, 1, 1, 1, textAlpha, false);
+
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
-    M_DrawText(buf, 0, 0, GF_FONTA, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 0, 1, 1, 1, textAlpha, false);
 }
 
 typedef struct {

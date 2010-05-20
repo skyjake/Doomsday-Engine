@@ -297,7 +297,12 @@ static void inventoryIndexes(const player_t* plr, const hud_inventory_t* inv,
 
 void Hu_InventoryDraw(int player, int x, int y, float textAlpha, float iconAlpha)
 {
-#define BORDER              1
+#define BORDER                  (1)
+#if __JHERETIC__
+# define TRACKING               (2)
+#else
+# define TRACKING               (0)
+#endif
 
     const hud_inventory_t* inv;
     uint i, from, to, idx, slot, first, selected, numVisSlots, maxVisSlots, startSlot, endSlot;
@@ -315,8 +320,7 @@ void Hu_InventoryDraw(int player, int x, int y, float textAlpha, float iconAlpha
     else
         maxVisSlots = NUM_INVENTORYITEM_TYPES - 1;
 
-    inventoryIndexes(plr, inv, maxVisSlots, inv->varCursorPos,
-                     &first, &selected, &startSlot, &endSlot);
+    inventoryIndexes(plr, inv, maxVisSlots, inv->varCursorPos, &first, &selected, &startSlot, &endSlot);
 
     numVisSlots = maxVisSlots;
 
@@ -390,7 +394,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
                     char buf[20];
                     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], slot == selected? textAlpha : textAlpha / 2);
                     dd_snprintf(buf, 20, "%i", count);
-                    M_DrawTextFragment4(buf, x + slot * ST_INVSLOTWIDTH + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 2);
+                    M_DrawTextFragment4(buf, x + slot * ST_INVSLOTWIDTH + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
                 }
             }
 
@@ -426,17 +430,22 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
 
 Draw_EndZoom();
 
+#undef TRACKING
 #undef BORDER
 }
 
 void Hu_InventoryDraw2(int player, int x, int y, float alpha)
 {
-#define BORDER          1
+#define BORDER                  (1)
+#if __JHERETIC__
+# define TRACKING               (2)
+#else
+# define TRACKING               (0)
+#endif
 
+    uint i, idx, slot, from, to, first, cursor, startSlot, endSlot;
     const hud_inventory_t* inv;
-    player_t*           plr;
-    uint                i, idx, slot, from, to, first, cursor, startSlot,
-                        endSlot;
+    player_t* plr;
 
     if(alpha <= 0)
         return;
@@ -446,9 +455,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
     inv = &hudInventories[player];
     plr = &players[player];
 
-    inventoryIndexes(plr, inv, NUMVISINVSLOTS,
-                     inv->fixedCursorPos, &first, &cursor,
-                     &startSlot, &endSlot);
+    inventoryIndexes(plr, inv, NUMVISINVSLOTS, inv->fixedCursorPos, &first, &cursor, &startSlot, &endSlot);
 
     idx = first;
     from = startSlot;
@@ -459,6 +466,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
         to = endSlot - startSlot;
     if(inv->numUsedSlots - 1 < endSlot - startSlot)
         to = from + inv->numUsedSlots;
+
     for(i = from; i < to; ++i)
     {
         if(i >= startSlot && i < endSlot)
@@ -476,7 +484,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
                     char buf[20];
                     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], alpha);
                     dd_snprintf(buf, 20, "%i", count);
-                    M_DrawTextFragment4(buf, x + slot * ST_INVSLOTWIDTH + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 2);
+                    M_DrawTextFragment4(buf, x + slot * ST_INVSLOTWIDTH + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
                 }
             }
 
@@ -519,6 +527,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
         }
     }
 
+#undef TRACKING
 #undef BORDER
 }
 
