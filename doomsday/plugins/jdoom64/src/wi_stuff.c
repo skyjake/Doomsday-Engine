@@ -55,7 +55,7 @@
 
 // NET GAME STUFF
 #define NG_STATSY           (50)
-#define NG_STATSX           (32 + star.width /2 + 32*!doFrags)
+#define NG_STATSX           (32)
 #define NG_SPACINGX         (64)
 
 // DEATHMATCH STUFF
@@ -129,31 +129,31 @@ static int cntPar;
 
 static int cntPause;
 
-static patchinfo_t bg; // Background (map of levels).
-static patchinfo_t finished; // "Finished!"
-static patchinfo_t entering; // "Entering"
-static patchinfo_t sp_secret; // "secret"
-static patchinfo_t kills; // "Kills"
-static patchinfo_t secret; // "Scrt"
-static patchinfo_t items; // "Items"
-static patchinfo_t frags; // "Frags"
-static patchinfo_t time; // "Time"
-static patchinfo_t par; // "Par"
+static patchid_t bg; // Background (map of levels).
+static patchid_t finished; // "Finished!"
+static patchid_t entering; // "Entering"
+static patchid_t sp_secret; // "secret"
+static patchid_t kills; // "Kills"
+static patchid_t secret; // "Scrt"
+static patchid_t items; // "Items"
+static patchid_t frags; // "Frags"
+static patchid_t time; // "Time"
+static patchid_t par; // "Par"
 static patchid_t sucks; // "Sucks!"
-static patchinfo_t killers; // "killers"
-static patchinfo_t victims; // "victims"
-static patchinfo_t total; // "Total"
-static patchinfo_t star; // Player icon (alive).
-static patchinfo_t bstar; // Player icon (dead).
-static patchinfo_t p[NUM_TEAMS]; // "red P[1..NUM_TEAMS]"
-static patchinfo_t bp[NUM_TEAMS]; // "gray P[1..NUM_TEAMS]"
+static patchid_t killers; // "killers"
+static patchid_t victims; // "victims"
+static patchid_t total; // "Total"
+static patchid_t star; // Player icon (alive).
+static patchid_t bstar; // Player icon (dead).
+static patchid_t p[NUM_TEAMS]; // "red P[1..NUM_TEAMS]"
+static patchid_t bp[NUM_TEAMS]; // "gray P[1..NUM_TEAMS]"
 
 // CODE --------------------------------------------------------------------
 
 void WI_slamBackground(void)
 {
     DGL_Color4f(1, 1, 1, 1);
-    M_DrawPatch2(bg.id, 0, 0, DPF_ALIGN_TOPLEFT|DPF_NO_OFFSET);
+    M_DrawPatch2(bg, 0, 0, DPF_ALIGN_TOPLEFT|DPF_NO_OFFSET);
 }
 
 /**
@@ -190,7 +190,7 @@ void WI_drawLF(void)
         y += (5 * info.height) / 4;
     }
 
-    WI_DrawPatch2(finished.id, SCREENWIDTH / 2, y, NULL, false, DPF_ALIGN_TOP);
+    WI_DrawPatch2(finished, SCREENWIDTH / 2, y, NULL, false, DPF_ALIGN_TOP);
 }
 
 /**
@@ -221,7 +221,7 @@ void WI_drawEL(void)
     }
 
     // Draw "Entering"
-    WI_DrawPatch2(entering.id, SCREENWIDTH / 2, y, NULL, false, DPF_ALIGN_TOP);
+    WI_DrawPatch2(entering, SCREENWIDTH / 2, y, NULL, false, DPF_ALIGN_TOP);
 
     // Draw level.
     {
@@ -497,7 +497,9 @@ void WI_updateDeathmatchStats(void)
 
 void WI_drawDeathmatchStats(void)
 {
-    int i, j, x, y, w, lh = WI_SPACINGY; // Line height.
+    int i, j, x, y, w, lh; // Line height.
+
+    lh = WI_SPACINGY;
 
     WI_slamBackground();
 
@@ -506,12 +508,15 @@ void WI_drawDeathmatchStats(void)
     WI_drawLF();
 
     // Draw stat titles (top line).
-    WI_DrawPatch(total.id, DM_TOTALSX - total.width / 2, DM_MATRIXY - WI_SPACINGY + 10);
+    {
+    patchinfo_t info;
+    if(R_GetPatchInfo(total, &info))
+        WI_DrawPatch(total, DM_TOTALSX - info.width / 2, DM_MATRIXY - WI_SPACINGY + 10);
+    }
 
-    WI_DrawPatch(killers.id, DM_KILLERSX, DM_KILLERSY);
-    WI_DrawPatch(victims.id, DM_VICTIMSX, DM_VICTIMSY);
+    WI_DrawPatch(killers, DM_KILLERSX, DM_KILLERSY);
+    WI_DrawPatch(victims, DM_VICTIMSX, DM_VICTIMSY);
 
-    // Draw P?
     x = DM_MATRIXX + DM_SPACINGX;
     y = DM_MATRIXY;
 
@@ -519,13 +524,18 @@ void WI_drawDeathmatchStats(void)
     {
         if(teamInfo[i].members)
         {
-            WI_DrawPatch(p[i].id, x - p[i].width / 2, DM_MATRIXY - WI_SPACINGY);
-            WI_DrawPatch(p[i].id, DM_MATRIXX - p[i].width / 2, y);
+            patchid_t patch = p[i];
+            patchinfo_t info;
+
+            R_GetPatchInfo(patch, &info);
+
+            WI_DrawPatch(patch, x - info.width / 2, DM_MATRIXY - WI_SPACINGY);
+            WI_DrawPatch(patch, DM_MATRIXX - info.width / 2, y);
 
             if(i == myTeam)
             {
-                WI_DrawPatch(bstar.id, x - p[i].width / 2, DM_MATRIXY - WI_SPACINGY);
-                WI_DrawPatch(star.id, DM_MATRIXX - p[i].width / 2, y);
+                WI_DrawPatch(bstar, x - info.width / 2, DM_MATRIXY - WI_SPACINGY);
+                WI_DrawPatch(star, DM_MATRIXX - info.width / 2, y);
             }
 
             // If more than 1 member, show the member count.
@@ -535,14 +545,17 @@ void WI_drawDeathmatchStats(void)
 
                 sprintf(tmp, "%i", teamInfo[i].members);
                 DGL_Color4f(1, 1, 1, 1);
-                M_DrawTextFragment(tmp, x - p[i].width / 2 + 1, DM_MATRIXY - WI_SPACINGY + p[i].height - 8);
-                M_DrawTextFragment(tmp, DM_MATRIXX - p[i].width / 2 + 1, y + p[i].height - 8);
+                M_DrawTextFragment(tmp, x - info.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.height - 8);
+                M_DrawTextFragment(tmp, DM_MATRIXX - info.width / 2 + 1, y + info.height - 8);
             }
         }
         else
         {
-            WI_DrawPatch(bp[i].id, x - bp[i].width / 2, DM_MATRIXY - WI_SPACINGY);
-            WI_DrawPatch(bp[i].id, DM_MATRIXX - bp[i].width / 2, y);
+            patchid_t patch = bp[i];
+            patchinfo_t info;
+            R_GetPatchInfo(patch, &info);
+            WI_DrawPatch(patch, x - info.width / 2, DM_MATRIXY - WI_SPACINGY);
+            WI_DrawPatch(patch, DM_MATRIXX - info.width / 2, y);
         }
 
         x += DM_SPACINGX;
@@ -558,15 +571,18 @@ void WI_drawDeathmatchStats(void)
         x = DM_MATRIXX + DM_SPACINGX;
         if(teamInfo[i].members)
         {
+            char buf[20];
             for(j = 0; j < NUM_TEAMS; ++j)
             {
                 if(teamInfo[j].members)
-                    WI_drawNum(x + w, y, dmFrags[i][j], 2);
-
+                {
+                    dd_snprintf(buf, 20, "%i", dmFrags[i][j]);
+                    M_DrawTextFragment3(buf, x + w, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+                }
                 x += DM_SPACINGX;
             }
-
-            WI_drawNum(DM_TOTALSX + w, y, dmTotals[i], 2);
+            dd_snprintf(buf, 20, "%i", dmTotals[i]);
+            M_DrawTextFragment3(buf, DM_TOTALSX + w, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
         }
 
         y += WI_SPACINGY;
@@ -730,7 +746,13 @@ void WI_updateNetgameStats(void)
 
 void WI_drawNetgameStats(void)
 {
-    int i, x, y, pwidth = M_CharWidth('%', GF_SMALL);
+#define ORIGINX             (NG_STATSX + starWidth/2 + NG_STATSX*!doFrags)
+
+    int i, x, y, starWidth, pwidth = M_CharWidth('%', GF_SMALL);
+    patchinfo_t info;
+
+    R_GetPatchInfo(star, &info);
+    starWidth = info.width;
 
     WI_slamBackground();
 
@@ -740,25 +762,34 @@ void WI_drawNetgameStats(void)
     WI_drawLF();
 
     // Draw stat titles (top line).
-    WI_DrawPatch(kills.id, NG_STATSX + NG_SPACINGX - kills.width, NG_STATSY);
+    R_GetPatchInfo(kills, &info);
+    WI_DrawPatch(kills, ORIGINX + NG_SPACINGX - info.width, NG_STATSY);
+    y = NG_STATSY + info.height;
 
-    WI_DrawPatch(items.id, NG_STATSX + 2 * NG_SPACINGX - items.width, NG_STATSY);
+    R_GetPatchInfo(items, &info);
+    WI_DrawPatch(items, ORIGINX + 2 * NG_SPACINGX - info.width, NG_STATSY);
 
-    WI_DrawPatch(secret.id, NG_STATSX + 3 * NG_SPACINGX - secret.width, NG_STATSY);
+    R_GetPatchInfo(secret, &info);
+    WI_DrawPatch(secret, ORIGINX + 3 * NG_SPACINGX - info.width, NG_STATSY);
 
     if(doFrags)
-        WI_DrawPatch(frags.id, NG_STATSX + 4 * NG_SPACINGX - frags.width, NG_STATSY);
+    {
+        R_GetPatchInfo(frags, &info);
+        WI_DrawPatch(frags, ORIGINX + 4 * NG_SPACINGX - info.width, NG_STATSY);
+    }
 
     // Draw stats.
-    y = NG_STATSY + kills.height;
-
     for(i = 0; i < NUM_TEAMS; ++i)
     {
+        patchinfo_t info;
+
         if(!teamInfo[i].members)
             continue;
 
-        x = NG_STATSX;
-        WI_DrawPatch(p[i].id, x - p[i].width, y);
+        x = ORIGINX;
+        R_GetPatchInfo(p[i], &info);
+        WI_DrawPatch(p[i], x - info.width, y);
+
         // If more than 1 member, show the member count.
         if(teamInfo[i].members > 1)
         {
@@ -766,25 +797,33 @@ void WI_drawNetgameStats(void)
 
             sprintf(tmp, "%i", teamInfo[i].members);
             DGL_Color4f(1, 1, 1, 1);
-            M_DrawTextFragment(tmp, x - p[i].width + 1, y + p[i].height - 8);
+            M_DrawTextFragment(tmp, x - info.width + 1, y + info.height - 8);
         }
 
         if(i == myTeam)
-            WI_DrawPatch(star.id, x - p[i].width, y);
-
+            WI_DrawPatch(star, x - info.width, y);
         x += NG_SPACINGX;
+
         WI_drawPercent(x - pwidth, y + 10, cntKills[i]);
         x += NG_SPACINGX;
+
         WI_drawPercent(x - pwidth, y + 10, cntItems[i]);
         x += NG_SPACINGX;
+
         WI_drawPercent(x - pwidth, y + 10, cntSecret[i]);
         x += NG_SPACINGX;
 
         if(doFrags)
-            WI_drawNum(x, y + 10, cntFrags[i], -1);
+        {
+            char buf[20];
+            dd_snprintf(buf, 20, "%i", cntFrags[i]);
+            M_DrawTextFragment3(buf, x, y + 10, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+        }
 
         y += WI_SPACINGY;
     }
+
+#undef ORIGINX
 }
 
 void WI_initStats(void)
@@ -914,22 +953,22 @@ void WI_drawStats(void)
 
     WI_drawLF();
 
-    WI_DrawPatch(kills.id, SP_STATSX, SP_STATSY);
+    WI_DrawPatch(kills, SP_STATSX, SP_STATSY);
     WI_drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY, cntKills[0]);
 
-    WI_DrawPatch(items.id, SP_STATSX, SP_STATSY + lh);
+    WI_DrawPatch(items, SP_STATSX, SP_STATSY + lh);
     WI_drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY + lh, cntItems[0]);
 
-    WI_DrawPatch(sp_secret.id, SP_STATSX, SP_STATSY + 2 * lh);
+    WI_DrawPatch(sp_secret, SP_STATSX, SP_STATSY + 2 * lh);
     WI_drawPercent(SCREENWIDTH - SP_STATSX, SP_STATSY + 2 * lh, cntSecret[0]);
 
-    WI_DrawPatch(time.id, SP_TIMEX, SP_TIMEY);
+    WI_DrawPatch(time, SP_TIMEX, SP_TIMEY);
     if(cntTime >= 0)
         WI_drawTime(SCREENWIDTH / 2 - SP_TIMEX, SP_TIMEY, cntTime / TICRATE);
 
     if(wbs->parTime != -1)
     {
-        WI_DrawPatch(par.id, SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY);
+        WI_DrawPatch(par, SCREENWIDTH / 2 + SP_TIMEX, SP_TIMEY);
         if(cntPar >= 0)
             WI_drawTime(SCREENWIDTH - SP_TIMEX, SP_TIMEY, cntPar / TICRATE);
     }
@@ -999,28 +1038,28 @@ void WI_loadData(void)
     char name[9];
     int i;
 
-    R_PrecachePatch("INTERPIC", &bg); // Background.
-    R_PrecachePatch("WIF", &finished); // "finished"
-    R_PrecachePatch("WIENTER", &entering); // "entering"
-    R_PrecachePatch("WIOSTK", &kills); // "kills"
-    R_PrecachePatch("WIOSTS", &secret); // "scrt"
-    R_PrecachePatch("WISCRT2", &sp_secret); // "secret"
-    R_PrecachePatch("WIOSTI", &items); //items
-    R_PrecachePatch("WIFRGS", &frags); // "frgs"
-    R_PrecachePatch("WITIME", &time); // "time"
+    bg = R_PrecachePatch("INTERPIC", NULL); // Background.
+    finished = R_PrecachePatch("WIF", NULL); // "finished"
+    entering = R_PrecachePatch("WIENTER", NULL); // "entering"
+    kills = R_PrecachePatch("WIOSTK", NULL); // "kills"
+    secret = R_PrecachePatch("WIOSTS", NULL); // "scrt"
+    sp_secret = R_PrecachePatch("WISCRT2", NULL); // "secret"
+    items = R_PrecachePatch("WIOSTI", NULL); //items
+    frags = R_PrecachePatch("WIFRGS", NULL); // "frgs"
+    time = R_PrecachePatch("WITIME", NULL); // "time"
     sucks = R_PrecachePatch("WISUCKS", NULL); // "sucks"
-    R_PrecachePatch("WIPAR", &par); // "par"
-    R_PrecachePatch("WIKILRS", &killers); // "killers" (vertical)
-    R_PrecachePatch("WIVCTMS", &victims); // "victims" (horiz)
-    R_PrecachePatch("WIMSTT", &total); // "total"
+    par = R_PrecachePatch("WIPAR", NULL); // "par"
+    killers = R_PrecachePatch("WIKILRS", NULL); // "killers" (vertical)
+    victims = R_PrecachePatch("WIVCTMS", NULL); // "victims" (horiz)
+    total = R_PrecachePatch("WIMSTT", NULL); // "total"
 
     for(i = 0; i < NUM_TEAMS; ++i)
     {
         sprintf(name, "STPB%d", i);
-        R_PrecachePatch(name, &p[i]);
+        p[i] = R_PrecachePatch(name, NULL);
 
         sprintf(name, "WIBP%d", i + 1);
-        R_PrecachePatch(name, &bp[i]);
+        bp[i] = R_PrecachePatch(name, NULL);
     }
 }
 
