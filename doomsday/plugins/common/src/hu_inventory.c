@@ -386,7 +386,12 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
                 M_DrawPatch(item->patchId, posX, y + ST_INVICONOFFY);
 
                 if(count > 1)
-                    Hu_DrawSmallNum(P_InventoryCount(player, item->type), ST_INVCOUNTDIGITS, x + slot * ST_INVSLOTWIDTH + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, slot == selected? textAlpha : textAlpha / 2);
+                {
+                    char buf[20];
+                    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], slot == selected? textAlpha : textAlpha / 2);
+                    dd_snprintf(buf, 20, "%i", count);
+                    M_DrawTextFragment4(buf, x + slot * ST_INVSLOTWIDTH + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 2);
+                }
             }
 
             if(++idx > inv->numOwnedItemTypes - 1)
@@ -467,7 +472,12 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
                 M_DrawPatch(item->patchId, x + slot * ST_INVSLOTWIDTH, y + ST_INVICONOFFY);
 
                 if(count > 1)
-                    Hu_DrawSmallNum(P_InventoryCount(player, item->type), ST_INVCOUNTDIGITS, x + slot * ST_INVSLOTWIDTH + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, alpha);
+                {
+                    char buf[20];
+                    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], alpha);
+                    dd_snprintf(buf, 20, "%i", count);
+                    M_DrawTextFragment4(buf, x + slot * ST_INVSLOTWIDTH + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 2);
+                }
             }
 
             if(++idx > inv->numOwnedItemTypes - 1)

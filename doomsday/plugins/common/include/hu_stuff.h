@@ -165,7 +165,6 @@ int             M_CharHeight(unsigned char ch, gamefontid_t font);
  * Specialised text strings:
  */
 #if __JHERETIC__ || __JHEXEN__
-void            Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha);
 void            DrINumber(int val, int x, int y, float r, float g, float b, float a);
 #endif
 #if __JHERETIC__

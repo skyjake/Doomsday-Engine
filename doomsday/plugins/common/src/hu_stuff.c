@@ -2539,36 +2539,6 @@ void M_DrawTextFragment(const char* string, int x, int y)
     M_DrawTextFragment2(string, x, y, GF_FONTA);
 }
 
-#if __JHERETIC__ || __JHEXEN__
-void Hu_DrawSmallNum(int val, int numDigits, int x, int y, float alpha)
-{
-    int w = M_CharWidth('0', GF_SMALLIN);
-
-    if(val < 0)
-    {
-        if(numDigits == 2 && val < -9)
-            val = -9;
-        else if(numDigits == 3 && val < -99)
-            val = -99;
-        val = -val;
-    }
-
-    DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], alpha);
-
-    // In the special case of 0, you draw 0.
-    if(val == 0)
-        M_DrawPatch(patchForFontChar(GF_SMALLIN, '0'), x - w, y);
-
-    // Draw the number.
-    while(val && numDigits--)
-    {
-        x -= w;
-        M_DrawPatch(patchForFontChar(GF_SMALLIN, '0' + (val % 10)), x, y);
-        val /= 10;
-    }
-}
-#endif
-
 /**
  * This routine tests for a string-replacement for the patch.
  * If one is found, it's used instead of the original graphic.

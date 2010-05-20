@@ -1003,9 +1003,14 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
         if(!(hud->currentInvItemFlash > 0))
         {
             uint count = P_InventoryCount(player, readyItem);
-
             if(count > 1)
-                Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, ORIGINX+ST_INVITEMCX, ORIGINY+ST_INVITEMCY, textAlpha);
+            {
+                char buf[20];
+                dd_snprintf(buf, 20, "%i", count);
+
+                DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+                M_DrawTextFragment4(buf, ORIGINX+ST_INVITEMCX, ORIGINY+ST_INVITEMCY, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 2);
+            }
         }
     }
 
@@ -1395,7 +1400,12 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
             DGL_Color4f(1, 1, 1, iconAlpha);
             M_DrawPatch(patch, -boxInfo.width, -boxInfo.height);
             if((count = P_InventoryCount(player, readyItem)) > 1)
-                Hu_DrawSmallNum(count, ST_INVITEMCWIDTH, -1, -7, textAlpha);
+            {
+                char buf[20];
+                DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
+                dd_snprintf(buf, 20, "%i", count);
+                M_DrawTextFragment4(buf, -1, -7, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 2);
+            }
         }
     }
     *drawnWidth = boxInfo.width;
