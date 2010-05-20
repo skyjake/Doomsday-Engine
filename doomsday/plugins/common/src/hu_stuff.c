@@ -2406,23 +2406,6 @@ void DrINumber(int val, int x, int y, float r, float g, float b, float a)
 }
 #endif
 
-void Hu_DrawNum(int val, int origX, int origY, gamefontid_t font, int numDigits)
-{
-    int x = origX;
-
-    // In the special case of 0, you draw 0.
-    if(!val)
-        M_DrawChar3('0', x, origY, font, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
-
-    // Draw the number.
-    while(val && numDigits--)
-    {
-        x -= M_CharWidth('0', font);
-        M_DrawChar2('0' + (val % 10), x, origY, font);
-        val /= 10;
-    }
-}
-
 /**
  * Write a string using a colored, custom font and do a type-in effect.
  */

@@ -715,6 +715,7 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
+    char buf[20];
     if(!hud->statusbarActive || !deathmatch || Hu_InventoryIsOpen(player))
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
@@ -723,11 +724,14 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(hud->fragsCount == 1994)
         return;
+
+    dd_snprintf(buf, 20, "%i", hud->fragsCount);
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    Hu_DrawNum(hud->fragsCount, X, Y, GF_STATUS, MAXDIGITS);
+    M_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -755,6 +759,7 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
+    char buf[20];
     if(!hud->statusbarActive || deathmatch || Hu_InventoryIsOpen(player))
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
@@ -763,11 +768,14 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(hud->health == 1994)
         return;
+
+    dd_snprintf(buf, 20, "%i", hud->health);
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    Hu_DrawNum(hud->health, X, Y, GF_STATUS, MAXDIGITS);
+    M_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -795,6 +803,7 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
+    char buf[20];
     if(!hud->statusbarActive || Hu_InventoryIsOpen(player))
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
@@ -803,11 +812,14 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(hud->armor == 1994)
         return;
+
+    dd_snprintf(buf, 20, "%i", hud->armor);
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    Hu_DrawNum(hud->armor, X, Y, GF_STATUS, MAXDIGITS);
+    M_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -884,6 +896,7 @@ void drawSBarReadyWeaponWidget(int player, float textAlpha, float iconAlpha,
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
+    char buf[20];
     if(!hud->statusbarActive || Hu_InventoryIsOpen(player))
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
@@ -896,7 +909,8 @@ void drawSBarReadyWeaponWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], iconAlpha);
-    Hu_DrawNum(hud->readyAmmo, X, Y, GF_STATUS, MAXDIGITS);
+    dd_snprintf(buf, 20, "%i", hud->readyAmmo);
+    M_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);

@@ -1304,7 +1304,7 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
-
+    char buf[20];
     if(!hud->statusbarActive || !deathmatch || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
@@ -1313,11 +1313,14 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(hud->fragsCount == 1994)
         return;
+
+    dd_snprintf(buf, 20, "%i", hud->fragsCount);
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    Hu_DrawNum(hud->fragsCount, X, Y, GF_STATUS, MAXDIGITS);
+    M_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1345,7 +1348,7 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
-
+    char buf[20];
     if(!hud->statusbarActive || deathmatch || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
@@ -1354,11 +1357,14 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(hud->health == 1994)
         return;
+
+    dd_snprintf(buf, 20, "%i", hud->health);
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    Hu_DrawNum(hud->health, X, Y, GF_STATUS, MAXDIGITS);
+    M_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1387,7 +1393,7 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
-
+    char buf[20];
     if(!hud->statusbarActive || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
@@ -1396,11 +1402,14 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(hud->armorLevel)
         return;
+
+    dd_snprintf(buf, 20, "%i", hud->armorLevel);
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    Hu_DrawNum(hud->armorLevel, X, Y, GF_STATUS, MAXDIGITS);
+    M_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1428,7 +1437,7 @@ void drawSBarBlueManaWidget(int player, float textAlpha, float iconAlpha,
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
-
+    char buf[20];
     if(!hud->statusbarActive || hud->manaACount <= 0 || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
@@ -1437,11 +1446,14 @@ void drawSBarBlueManaWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(hud->manaACount == 1994)
         return;
+
+    dd_snprintf(buf, 20, "%i", hud->manaACount);
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    Hu_DrawNum(hud->manaACount, X, Y, GF_SMALLIN, MAXDIGITS);
+    M_DrawTextFragment3(buf, X, Y, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1469,7 +1481,7 @@ void drawSBarGreenManaWidget(int player, float textAlpha, float iconAlpha,
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
-
+    char buf[20];
     if(!hud->statusbarActive || hud->manaBCount <= 0 || Hu_InventoryIsOpen(player) || AM_IsActive(AM_MapForPlayer(player)))
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
@@ -1478,11 +1490,14 @@ void drawSBarGreenManaWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(hud->manaBCount == 1994)
         return;
+
+    dd_snprintf(buf, 20, "%i", hud->manaBCount);
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    Hu_DrawNum(hud->manaBCount, X, Y, GF_SMALLIN, MAXDIGITS);
+    M_DrawTextFragment3(buf, X, Y, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);

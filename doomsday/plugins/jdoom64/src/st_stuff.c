@@ -304,10 +304,12 @@ static void drawWidgets(hudstate_t* hud)
 
     if(deathmatch)
     {
+        char buf[20];
         if(hud->currentFragsCount == 1994)
             return;
+        dd_snprintf(buf, 20, "%i", hud->currentFragsCount);
         DGL_Color4f(1, 1, 1, hud->alpha);
-        Hu_DrawNum(hud->currentFragsCount, ST_FRAGSX, ST_FRAGSY, GF_STATUS, MAXDIGITS);
+        M_DrawTextFragment3(buf, ST_FRAGSX, ST_FRAGSY, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
     }
 
 #undef MAXDIGITS
