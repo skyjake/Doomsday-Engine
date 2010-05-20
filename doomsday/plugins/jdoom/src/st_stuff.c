@@ -913,18 +913,20 @@ void drawReadyAmmoWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(hud->readyAmmo == 1994)
         return;
+
+    dd_snprintf(buf, 20, "%i", hud->readyAmmo);
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
-
-    dd_snprintf(buf, 20, "%i", hud->readyAmmo);
     M_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
-    *drawnWidth = M_CharWidth('0', GF_STATUS) * 3;
-    *drawnHeight = M_CharHeight('0', GF_STATUS);
+
+    *drawnWidth = M_TextFragmentWidth(buf, GF_STATUS);
+    *drawnHeight = M_TextFragmentHeight(buf, GF_STATUS);
 
 #undef MAXDIGITS
 #undef Y
@@ -960,6 +962,7 @@ void drawOwnedAmmoWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
@@ -976,7 +979,8 @@ void drawOwnedAmmoWidget(int player, float textAlpha, float iconAlpha,
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
-    *drawnWidth = M_CharWidth('0', GF_INDEX);
+
+    *drawnWidth = M_CharWidth('0', GF_INDEX) * 3;
     *drawnHeight = (M_CharHeight('0', GF_INDEX) + 10) * 4;
 
 #undef MAXDIGITS
@@ -1011,6 +1015,7 @@ void drawMaxAmmoWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
@@ -1027,7 +1032,8 @@ void drawMaxAmmoWidget(int player, float textAlpha, float iconAlpha,
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
-    *drawnWidth = M_CharWidth('0', GF_INDEX);
+
+    *drawnWidth = M_CharWidth('0', GF_INDEX) * 3;
     *drawnHeight = (M_CharHeight('0', GF_INDEX) + 10) * 4;
 
 #undef MAXDIGITS
@@ -1068,8 +1074,9 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
-    *drawnWidth = M_CharWidth('0', GF_STATUS) * 3;
-    *drawnHeight = M_CharHeight('0', GF_STATUS);
+
+    *drawnWidth = M_TextFragmentWidth(buf, GF_STATUS) + M_CharWidth('%', GF_STATUS);
+    *drawnHeight = MAX_OF(M_TextFragmentHeight(buf, GF_STATUS), M_CharHeight('%', GF_STATUS));
 
 #undef MAXDIGITS
 #undef Y
@@ -1111,8 +1118,9 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
-    *drawnWidth = M_CharWidth('0', GF_STATUS) * 3;
-    *drawnHeight = M_CharHeight('0', GF_STATUS);
+
+    *drawnWidth = M_TextFragmentWidth(buf, GF_STATUS) + M_CharWidth('%', GF_STATUS);
+    *drawnHeight = MAX_OF(M_TextFragmentHeight(buf, GF_STATUS), M_CharHeight('%', GF_STATUS));
 
 #undef MAXDIGITS
 #undef Y
@@ -1153,8 +1161,9 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
-    *drawnWidth = M_CharWidth('0', GF_STATUS) * 3;
-    *drawnHeight = M_CharHeight('0', GF_STATUS);
+
+    *drawnWidth = M_TextFragmentWidth(buf, GF_STATUS);
+    *drawnHeight = M_TextFragmentHeight(buf, GF_STATUS);
 
 #undef MAXDIGITS
 #undef Y
