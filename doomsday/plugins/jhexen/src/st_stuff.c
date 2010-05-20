@@ -32,7 +32,6 @@
 #include <assert.h>
 
 #include "jhexen.h"
-#include "st_lib.h"
 #include "d_net.h"
 
 #include "p_tick.h" // for P_IsPaused
@@ -135,17 +134,10 @@ typedef struct {
     int             manaACount;
     int             manaBCount;
     int             fragsCount; // Number of frags so far in deathmatch.
-
+    int             health;
     int             healthMarker;
 
     int             widgetGroupNames[NUM_UIWIDGET_GROUPS];
-
-    // Widgets:
-    st_number_t     wManaACount; // Current mana A count.
-    st_number_t     wManaBCount; // Current mana B count.
-    st_number_t     wFrags; // In deathmatch only, summary of frags stats.
-    st_number_t     wHealth; // Health.
-    st_number_t     wArmor; // Armor.
 } hudstate_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -867,30 +859,14 @@ static void initData(hudstate_t* hud)
     hud->healthMarker = 0;
     hud->showBar = 1;
 
+    hud->health = 1994;
+    hud->manaACount = 1994;
+    hud->manaBCount = 1994;
+    hud->fragsCount = 1994;
+
     ST_updateWidgets(player);
 
     ST_HUDUnHide(player, HUE_FORCE);
-}
-
-void ST_createWidgets(int player)
-{
-    player_t* plr = &players[player];
-    hudstate_t* hud = &hudStates[player];
-
-    // Health num.
-    STlib_InitNum(&hud->wHealth, &plr->health);
-
-    // Frags sum.
-    STlib_InitNum(&hud->wFrags, &hud->fragsCount);
-
-    // Armor num - should be colored later.
-    STlib_InitNum(&hud->wArmor, &hud->armorLevel);
-
-    // ManaA count.
-    STlib_InitNum(&hud->wManaACount, &hud->manaACount);
-
-    // ManaB count.
-    STlib_InitNum(&hud->wManaBCount, &hud->manaBCount);
 }
 
 void ST_Start(int player)
@@ -906,7 +882,6 @@ void ST_Start(int player)
         ST_Stop(player);
 
     initData(hud);
-    ST_createWidgets(player);
 
     hud->stopped = false;
 }
@@ -1039,6 +1014,8 @@ void ST_updateWidgets(int player)
             hud->manaBIcon = 1;
         }
     }
+
+    hud->health = plr->health;
 }
 
 void ST_Ticker(timespan_t ticLength)
@@ -1334,13 +1311,13 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(*hud->wFrags.num == 1994)
+    if(hud->fragsCount == 1994)
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    Hu_DrawNum(*hud->wFrags.num, X, Y, GF_STATUS, MAXDIGITS);
+    Hu_DrawNum(hud->fragsCount, X, Y, GF_STATUS, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1375,13 +1352,13 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(*hud->wHealth.num == 1994)
+    if(hud->health == 1994)
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    Hu_DrawNum(*hud->wHealth.num, X, Y, GF_STATUS, MAXDIGITS);
+    Hu_DrawNum(hud->health, X, Y, GF_STATUS, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1417,13 +1394,13 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(*hud->wArmor.num == 1994)
+    if(hud->armorLevel)
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    Hu_DrawNum(*hud->wArmor.num, X, Y, GF_STATUS, MAXDIGITS);
+    Hu_DrawNum(hud->armorLevel, X, Y, GF_STATUS, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1458,13 +1435,13 @@ void drawSBarBlueManaWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(*hud->wManaACount.num == 1994)
+    if(hud->manaACount == 1994)
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    Hu_DrawNum(*hud->wManaACount.num, X, Y, GF_SMALLIN, MAXDIGITS);
+    Hu_DrawNum(hud->manaACount, X, Y, GF_SMALLIN, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1499,13 +1476,13 @@ void drawSBarGreenManaWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(*hud->wManaBCount.num == 1994)
+    if(hud->manaBCount == 1994)
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    Hu_DrawNum(*hud->wManaBCount.num, X, Y, GF_SMALLIN, MAXDIGITS);
+    Hu_DrawNum(hud->manaBCount, X, Y, GF_SMALLIN, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);

@@ -38,7 +38,6 @@
 #include "jdoom64.h"
 
 #include "d_net.h"
-#include "st_lib.h"
 #include "hu_stuff.h"
 #include "am_map.h"
 #include "p_tick.h" // for P_IsPaused
@@ -73,9 +72,6 @@ typedef struct {
     boolean         firstTime;  // ST_Start() has just been called.
     boolean         statusbarActive; // Whether the HUD is on.
     int             currentFragsCount; // Number of frags so far in deathmatch.
-
-    // Widgets:
-    st_number_t     wFrags; // In deathmatch only, summary of frags stats.
 } hudstate_t;
 
 typedef enum hotloc_e {
@@ -308,10 +304,10 @@ static void drawWidgets(hudstate_t* hud)
 
     if(deathmatch)
     {
-        if(*hud->wFrags.num == 1994)
+        if(hud->currentFragsCount == 1994)
             return;
         DGL_Color4f(1, 1, 1, hud->alpha);
-        Hu_DrawNum(*hud->wFrags.num, ST_FRAGSX, ST_FRAGSY, GF_STATUS, MAXDIGITS);
+        Hu_DrawNum(hud->currentFragsCount, ST_FRAGSX, ST_FRAGSY, GF_STATUS, MAXDIGITS);
     }
 
 #undef MAXDIGITS
@@ -573,14 +569,6 @@ static void initData(hudstate_t* hud)
     ST_HUDUnHide(player, HUE_FORCE);
 }
 
-void ST_createWidgets(int player)
-{
-    hudstate_t* hud = &hudStates[player];
-
-    // Frags sum.
-    STlib_InitNum(&hud->wFrags, &hud->currentFragsCount);
-}
-
 void ST_Start(int player)
 {
     hudstate_t* hud;
@@ -594,7 +582,6 @@ void ST_Start(int player)
         ST_Stop(player);
 
     initData(hud);
-    ST_createWidgets(player);
 
     hud->stopped = false;
 }

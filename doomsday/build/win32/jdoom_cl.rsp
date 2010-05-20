@@ -46,7 +46,6 @@
  .\..\..\plugins\common\src\x_hair.c
  .\..\..\plugins\jdoom\src\wi_stuff.c
  .\..\..\plugins\jdoom\src\st_stuff.c
- .\..\..\plugins\common\src\st_lib.c
  .\..\..\plugins\common\src\hu_stuff.c
  .\..\..\plugins\common\src\hu_pspr.c
  .\..\..\plugins\common\src\hu_log.c

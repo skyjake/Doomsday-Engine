@@ -43,7 +43,6 @@
  .\..\..\plugins\common\src\g_update.c
  .\..\..\plugins\common\src\f_infine.c
  .\..\..\plugins\common\src\hu_stuff.c
- .\..\..\plugins\common\src\st_lib.c
  .\..\..\plugins\common\src\hu_lib.c
  .\..\..\plugins\common\src\hu_log.c
  .\..\..\plugins\common\src\hu_msg.c

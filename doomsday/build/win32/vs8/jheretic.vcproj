@@ -984,10 +984,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\include\st_lib.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\common\include\x_hair.h"
 				>
 			</File>
@@ -1189,10 +1185,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\src\rend_automap.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\common\src\st_lib.c"
 				>
 			</File>
 			<File

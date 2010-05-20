@@ -44,7 +44,6 @@
  .\..\..\plugins\common\src\r_common.c
  .\..\..\plugins\common\src\r_vectorgraphic.c
  .\..\..\plugins\common\src\rend_automap.c
- .\..\..\plugins\common\src\st_lib.c
  .\..\..\plugins\common\src\x_hair.c
  .\..\..\plugins\jdoom64\src\acfnlink.c
  .\..\..\plugins\jdoom64\src\d_api.c

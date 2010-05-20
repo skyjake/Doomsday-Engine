@@ -33,7 +33,6 @@
 #include "jheretic.h"
 
 #include "d_net.h"
-#include "st_lib.h"
 #include "hu_stuff.h"
 #include "p_tick.h" // for P_IsPaused
 #include "p_player.h"
@@ -142,14 +141,11 @@ typedef struct {
 
     int             oldAmmoIconIdx;
     int             oldReadyWeapon;
+    int             readyAmmo;
+    int             health;
+    int             armor;
 
     int             widgetGroupNames[NUM_UIWIDGET_GROUPS];
-
-    // Widgets:
-    st_number_t     wReadyAmmo; // Ready-weapon.
-    st_number_t     wFrags; // In deathmatch only, summary of frags stats.
-    st_number_t     wHealth; // Health.
-    st_number_t     wArmor; // Armor.
 } hudstate_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -493,8 +489,6 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
 
 void ST_updateWidgets(int player)
 {
-    static int largeammo = 1994; // Means "n/a".
-
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     int lvl = (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
@@ -510,7 +504,7 @@ void ST_updateWidgets(int player)
             continue; // Weapon does not use this type of ammo.
 
         //// \todo Only supports one type of ammo per weapon.
-        hud->wReadyAmmo.num = &plr->ammo[ammoType].owned;
+        hud->readyAmmo = plr->ammo[ammoType].owned;
 
         if(hud->oldReadyWeapon != plr->readyWeapon)
             hud->currentAmmoIconIdx = (int) ammoType;
@@ -520,7 +514,7 @@ void ST_updateWidgets(int player)
 
     if(!found) // Weapon takes no ammo at all.
     {
-        hud->wReadyAmmo.num = &largeammo;
+        hud->readyAmmo = 1994; // Means n/a.
         hud->currentAmmoIconIdx = -1;
     }
 
@@ -530,16 +524,13 @@ void ST_updateWidgets(int player)
         hud->keyBoxes[i] = plr->keys[i] ? true : false;
     }
 
-    // Used by wFrags widget.
     hud->fragsCount = 0;
-
     for(i = 0; i < MAXPLAYERS; ++i)
-    {
-        if(!players[i].plr->inGame)
-            continue;
+        if(players[i].plr->inGame)
+            hud->fragsCount += plr->frags[i] * (i != player ? 1 : -1);
 
-        hud->fragsCount += plr->frags[i] * (i != player ? 1 : -1);
-    }
+    hud->health = plr->health;
+    hud->armor = plr->armorPoints;
 }
 
 void ST_Ticker(timespan_t ticLength)
@@ -730,13 +721,13 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(*hud->wFrags.num == 1994)
+    if(hud->fragsCount == 1994)
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    Hu_DrawNum(*hud->wFrags.num, X, Y, GF_STATUS, MAXDIGITS);
+    Hu_DrawNum(hud->fragsCount, X, Y, GF_STATUS, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -770,13 +761,13 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(*hud->wHealth.num == 1994)
+    if(hud->health == 1994)
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    Hu_DrawNum(*hud->wHealth.num, X, Y, GF_STATUS, MAXDIGITS);
+    Hu_DrawNum(hud->health, X, Y, GF_STATUS, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -810,13 +801,13 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(*hud->wArmor.num == 1994)
+    if(hud->armor == 1994)
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-    Hu_DrawNum(*hud->wArmor.num, X, Y, GF_STATUS, MAXDIGITS);
+    Hu_DrawNum(hud->armor, X, Y, GF_STATUS, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -899,13 +890,13 @@ void drawSBarReadyWeaponWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-    if(*hud->wReadyAmmo.num == 1994)
+    if(hud->readyAmmo == 1994)
         return;
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], iconAlpha);
-    Hu_DrawNum(*hud->wReadyAmmo.num, X, Y, GF_STATUS, MAXDIGITS);
+    Hu_DrawNum(hud->readyAmmo, X, Y, GF_STATUS, MAXDIGITS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1808,33 +1799,12 @@ static void initData(hudstate_t* hud)
     hud->oldReadyWeapon = -1;
     hud->currentAmmoIconIdx = 0;
 
+    hud->health = 1994;
+    hud->readyAmmo = 1994;
+    hud->armor = 1994;
+    hud->fragsCount = 1994;
+
     ST_HUDUnHide(player, HUE_FORCE);
-}
-
-void ST_createWidgets(int player)
-{
-#define ORIGINX (-ST_WIDTH/2)
-#define ORIGINY (-ST_HEIGHT)
-
-    static int largeammo = 1994; // Means "n/a".
-
-    hudstate_t* hud = &hudStates[player];
-    player_t* plr = &players[player];
-
-    // Ready weapon ammo.
-    STlib_InitNum(&hud->wReadyAmmo, &largeammo);
-
-    // Health num.
-    STlib_InitNum(&hud->wHealth, &plr->health);
-
-    // Armor.
-    STlib_InitNum(&hud->wArmor, &plr->armorPoints);
-
-    // Frags sum.
-    STlib_InitNum(&hud->wFrags, &hud->fragsCount);
-
-#undef ORIGINY
-#undef ORIGINX
 }
 
 void ST_Start(int player)
@@ -1850,7 +1820,6 @@ void ST_Start(int player)
         ST_Stop(player);
 
     initData(hud);
-    ST_createWidgets(player);
 
     hud->stopped = false;
 }
