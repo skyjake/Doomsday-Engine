@@ -184,7 +184,6 @@ typedef struct {
 
     boolean         statusbarActive; // Whether the statusbar is active.
     int             currentFragsCount; // Number of frags so far in deathmatch.
-    int             keyBoxes[3]; // Holds key-type for each key box on bar.
     int             readyAmmo;
     int             health;
     int             armor;
@@ -742,15 +741,6 @@ void ST_updateWidgets(int player)
         hud->readyAmmo = 1994; // Means "n/a".
     }
 
-    // Update keycard multiple widgets.
-    for(i = 0; i < 3; ++i)
-    {
-        hud->keyBoxes[i] = plr->keys[i] ? i : -1;
-
-        if(plr->keys[i + 3])
-            hud->keyBoxes[i] = i + 3;
-    }
-
     // Refresh everything if this is him coming back to life.
     ST_updateFaceWidget(player);
 
@@ -1234,18 +1224,28 @@ void drawSBarKeysWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
     for(i = 0; i < 3; ++i)
     {
+        const loc_t* element = &elements[i];
         const patchinfo_t* patch;
-        const loc_t* element;
-        uint key;
-        if(hud->keyBoxes[i] == -1)
-            continue;
-        key = hud->keyBoxes[i];
-        element = &elements[key%3];
-        patch = &keys[key];
-        WI_DrawPatch4(patch->id, element->x, element->y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
-        if(patch->width > *drawnWidth)
-            *drawnWidth = patch->width;
-        *drawnHeight += patch->height;
+        int offset = ((!cfg.hudKeysCombine && plr->keys[i] && plr->keys[i+3])? -1 : 0);
+
+        if(plr->keys[i+3] || (cfg.hudKeysCombine && plr->keys[i]))
+        {
+            patch = &keys[i+3];
+            WI_DrawPatch4(patch->id, element->x + offset, element->y + offset, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
+            if(patch->width > *drawnWidth)
+                *drawnWidth = patch->width;
+            *drawnHeight += patch->height;
+        }
+
+        if(!cfg.hudKeysCombine && plr->keys[i])
+        {
+            patch = &keys[i];
+            WI_DrawPatch4(patch->id, element->x - offset, element->y - offset, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
+            if(patch->width + 2 > *drawnWidth)
+                *drawnWidth = patch->width + 2;
+            if(patch->height + 2 > *drawnHeight)
+                *drawnHeight = patch->height + 2;
+        }
     }
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -2003,11 +2003,6 @@ static void initData(hudstate_t* hud)
     hud->priority = 0;
     hud->lastAttackDown = -1;
     hud->showBar = 1;
-
-    for(i = 0; i < 3; ++i)
-    {
-        hud->keyBoxes[i] = -1;
-    }
 
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
