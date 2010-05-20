@@ -1325,9 +1325,8 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    /// \fixme calculate dimensions properly!
-    *drawnWidth = M_CharWidth('0', GF_STATUS)*3;
-    *drawnHeight = M_CharHeight('0', GF_STATUS);
+    *drawnWidth = M_TextFragmentWidth(buf, GF_STATUS);
+    *drawnHeight = M_TextFragmentHeight(buf, GF_STATUS);
 
 #undef MAXDIGITS
 #undef Y
@@ -1369,9 +1368,8 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    /// \fixme calculate dimensions properly!
-    *drawnWidth = M_CharWidth('0', GF_STATUS)*3;
-    *drawnHeight = M_CharHeight('0', GF_STATUS);
+    *drawnWidth = M_TextFragmentWidth(buf, GF_STATUS);
+    *drawnHeight = M_TextFragmentHeight(buf, GF_STATUS);
 
 #undef MAXDIGITS
 #undef Y
@@ -1414,9 +1412,8 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    /// \fixme calculate dimensions properly!
-    *drawnWidth = M_CharWidth('0', GF_STATUS)*2;
-    *drawnHeight = M_CharHeight('0', GF_STATUS);
+    *drawnWidth = M_TextFragmentWidth(buf, GF_STATUS);
+    *drawnHeight = M_TextFragmentHeight(buf, GF_STATUS);
 
 #undef MAXDIGITS
 #undef Y
@@ -1458,9 +1455,8 @@ void drawSBarBlueManaWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    /// \fixme calculate dimensions properly!
-    *drawnWidth = M_CharWidth('0', GF_SMALLIN)*3;
-    *drawnHeight = M_CharHeight('0', GF_SMALLIN);
+    *drawnWidth = M_TextFragmentWidth(buf, GF_SMALLIN);
+    *drawnHeight = M_TextFragmentHeight(buf, GF_SMALLIN);
 
 #undef MAXDIGITS
 #undef Y
@@ -1502,9 +1498,8 @@ void drawSBarGreenManaWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
-    /// \fixme calculate dimensions properly!
-    *drawnWidth = M_CharWidth('0', GF_SMALLIN)*3;
-    *drawnHeight = M_CharHeight('0', GF_SMALLIN);
+    *drawnWidth = M_TextFragmentWidth(buf, GF_SMALLIN);
+    *drawnHeight = M_TextFragmentHeight(buf, GF_SMALLIN);
 
 #undef MAXDIGITS
 #undef Y
