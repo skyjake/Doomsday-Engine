@@ -130,10 +130,6 @@ static int cntPar;
 static int cntPause;
 
 static patchinfo_t bg; // Background (map of levels).
-static patchinfo_t percent;
-static patchinfo_t colon;
-static patchinfo_t num[10]; // 0-9 graphic.
-static patchinfo_t minus; // Minus sign.
 static patchinfo_t finished; // "Finished!"
 static patchinfo_t entering; // "Entering"
 static patchinfo_t sp_secret; // "secret"
@@ -143,14 +139,14 @@ static patchinfo_t items; // "Items"
 static patchinfo_t frags; // "Frags"
 static patchinfo_t time; // "Time"
 static patchinfo_t par; // "Par"
-static patchinfo_t sucks; // "Sucks!"
+static patchid_t sucks; // "Sucks!"
 static patchinfo_t killers; // "killers"
 static patchinfo_t victims; // "victims"
 static patchinfo_t total; // "Total"
 static patchinfo_t star; // Player icon (alive).
 static patchinfo_t bstar; // Player icon (dead).
-static patchinfo_t p[MAXPLAYERS]; // "red P[1..MAXPLAYERS]"
-static patchinfo_t bp[MAXPLAYERS]; // "gray P[1..MAXPLAYERS]"
+static patchinfo_t p[NUM_TEAMS]; // "red P[1..NUM_TEAMS]"
+static patchinfo_t bp[NUM_TEAMS]; // "gray P[1..NUM_TEAMS]"
 
 // CODE --------------------------------------------------------------------
 
@@ -261,7 +257,7 @@ void WI_drawAnimatedBack(void)
  */
 int WI_drawNum(int x, int y, int n, int digits)
 {
-    int                 fontwidth = num[0].width;
+    int                 fontwidth = M_CharWidth('0', GF_SMALL);
     int                 neg, temp;
 
     if(digits < 0)
@@ -296,53 +292,67 @@ int WI_drawNum(int x, int y, int n, int digits)
     while(digits--)
     {
         x -= fontwidth;
-        WI_DrawPatch(num[n % 10].id, x, y);
+        M_DrawChar2('0' + (n % 10), x, y, GF_SMALL);
         n /= 10;
     }
 
     // Draw a minus sign if necessary.
     if(neg)
-        WI_DrawPatch(minus.id, x -= 8, y);
+    {
+        M_DrawChar2('-', x - 8, y, GF_SMALL);
+        x -= 8;
+    }
 
     return x;
 }
 
 void WI_drawPercent(int x, int y, int p)
 {
+    char buf[20];
+
     if(p < 0)
         return;
 
-    WI_DrawPatch(percent.id, x, y);
-    WI_drawNum(x, y, p, -1);
+    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
+    M_DrawChar2('%', x, y, GF_SMALL);
+
+    dd_snprintf(buf, 20, "%i", p);
+    M_DrawTextFragment3(buf, x, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 }
 
 /**
- * Display level completion time and par, or "sucks" message if overflow.
+ * Display map completion time and par, or "sucks" message if overflow.
  */
 void WI_drawTime(int x, int y, int t)
 {
-    int div, n;
-
     if(t < 0)
         return;
 
     if(t <= 61 * 59)
     {
-        div = 1;
-        do
+        int seconds = t % 60, minutes = t / 60 % 60;
+        char buf[20];
+
+        x -= 22;
+        
+        DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
+        M_DrawChar2(':', x, y, GF_SMALL);
+        if(minutes > 0)
         {
-            n = (t / div) % 60;
-            x = WI_drawNum(x, y, n, 2) - colon.width;
-            div *= 60;
-
-            if(div == 60 || t / div)
-                WI_DrawPatch(colon.id, x, y);
-
-        } while(t / div);
+            dd_snprintf(buf, 20, "%d", minutes);
+            M_DrawTextFragment3(buf, x, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+        }
+        dd_snprintf(buf, 20, "%02d", seconds);
+        M_DrawTextFragment2(buf, x+M_CharWidth(':', GF_SMALL), y, GF_SMALL);
+        return;
     }
-    else
-    {   // "sucks"
-        WI_DrawPatch(sucks.id, x - sucks.width, y);
+
+    // "sucks"
+    {
+    patchinfo_t info;
+    if(!R_GetPatchInfo(sucks, &info))
+        return;
+    WI_DrawPatch4(sucks, x - info.width, y, NULL, GF_SMALL, false, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
     }
 }
 
@@ -541,7 +551,7 @@ void WI_drawDeathmatchStats(void)
 
     // Draw stats.
     y = DM_MATRIXY + 10;
-    w = num[0].width;
+    w = M_CharWidth('0', GF_SMALL);
 
     for(i = 0; i < NUM_TEAMS; ++i)
     {
@@ -720,7 +730,7 @@ void WI_updateNetgameStats(void)
 
 void WI_drawNetgameStats(void)
 {
-    int i, x, y, pwidth = percent.width;
+    int i, x, y, pwidth = M_CharWidth('%', GF_SMALL);
 
     WI_slamBackground();
 
@@ -895,7 +905,7 @@ void WI_updateStats(void)
 
 void WI_drawStats(void)
 {
-    int lh = (3 * num[0].height) / 2; // Line height.
+    int lh = (3 * M_CharHeight('0', GF_SMALL)) / 2; // Line height.
 
     WI_slamBackground();
 
@@ -989,49 +999,22 @@ void WI_loadData(void)
     char name[9];
     int i;
 
-    // Background.
-    R_PrecachePatch("INTERPIC", &bg);
-    // Minus sign.
-    R_PrecachePatch("WIMINUS", &minus);
+    R_PrecachePatch("INTERPIC", &bg); // Background.
+    R_PrecachePatch("WIF", &finished); // "finished"
+    R_PrecachePatch("WIENTER", &entering); // "entering"
+    R_PrecachePatch("WIOSTK", &kills); // "kills"
+    R_PrecachePatch("WIOSTS", &secret); // "scrt"
+    R_PrecachePatch("WISCRT2", &sp_secret); // "secret"
+    R_PrecachePatch("WIOSTI", &items); //items
+    R_PrecachePatch("WIFRGS", &frags); // "frgs"
+    R_PrecachePatch("WITIME", &time); // "time"
+    sucks = R_PrecachePatch("WISUCKS", NULL); // "sucks"
+    R_PrecachePatch("WIPAR", &par); // "par"
+    R_PrecachePatch("WIKILRS", &killers); // "killers" (vertical)
+    R_PrecachePatch("WIVCTMS", &victims); // "victims" (horiz)
+    R_PrecachePatch("WIMSTT", &total); // "total"
 
-    // Numbers 0-9
-    for(i = 0; i < 10; ++i)
-    {
-        sprintf(name, "WINUM%d", i);
-        R_PrecachePatch(name, &num[i]);
-    }
-    // Percent sign.
-    R_PrecachePatch("WIPCNT", &percent);
-    // "finished"
-    R_PrecachePatch("WIF", &finished);
-    // "entering"
-    R_PrecachePatch("WIENTER", &entering);
-    // "kills"
-    R_PrecachePatch("WIOSTK", &kills);
-    // "scrt"
-    R_PrecachePatch("WIOSTS", &secret);
-    // "secret"
-    R_PrecachePatch("WISCRT2", &sp_secret);
-    //items
-    R_PrecachePatch("WIOSTI", &items);
-    // "frgs"
-    R_PrecachePatch("WIFRGS", &frags);
-    // ":"
-    R_PrecachePatch("WICOLON", &colon);
-    // "time"
-    R_PrecachePatch("WITIME", &time);
-    // "sucks"
-    R_PrecachePatch("WISUCKS", &sucks);
-    // "par"
-    R_PrecachePatch("WIPAR", &par);
-    // "killers" (vertical)
-    R_PrecachePatch("WIKILRS", &killers);
-    // "victims" (horiz)
-    R_PrecachePatch("WIVCTMS", &victims);
-    // "total"
-    R_PrecachePatch("WIMSTT", &total);
-
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(i = 0; i < NUM_TEAMS; ++i)
     {
         sprintf(name, "STPB%d", i);
         R_PrecachePatch(name, &p[i]);

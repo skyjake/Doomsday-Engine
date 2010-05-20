@@ -327,6 +327,8 @@ void Hu_LoadData(void)
         { 56, "STYSNUM8" }, // 8
         { 57, "STYSNUM9" } // 9
     };
+#endif
+#if __JDOOM__ || __JDOOM64__
     static const fontpatch_t fontSmall[] = {
         { 37, "WIPCNT" }, // %
         { 45, "WIMINUS" }, // -
@@ -342,8 +344,6 @@ void Hu_LoadData(void)
         { 57, "WINUM9" }, // 9
         { 58, "WICOLON" }, // :
     };
-#endif
-#if __JDOOM__ || __JDOOM64__
     static const fontpatch_t fontStatus[] = {
         { 37, "STTPRCNT" }, // %
         { 45, "STTMINUS" }, // -
@@ -855,6 +855,8 @@ void Hu_LoadData(void)
     R_InitFont(GF_STATUS, fontStatus, sizeof(fontStatus) / sizeof(fontStatus[0]));
 #if __JDOOM__
     R_InitFont(GF_INDEX, fontIndex, sizeof(fontIndex) / sizeof(fontIndex[0]));
+#endif
+#if __JDOOM__ || __JDOOM64__
     R_InitFont(GF_SMALL, fontSmall, sizeof(fontSmall) / sizeof(fontSmall[0]));
 #endif
 #if __JHERETIC__ || __JHEXEN__

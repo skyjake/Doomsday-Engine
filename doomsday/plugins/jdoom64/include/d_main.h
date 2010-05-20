@@ -57,6 +57,7 @@ extern char title[];
 extern int demoSequence;
 extern int pageTic;
 extern char *pageName;
+extern const float defFontRGB2[];
 extern char *borderLumps[];
 
 void            G_PostInit(void);

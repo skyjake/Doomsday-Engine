@@ -95,6 +95,9 @@ int demoSequence;
 int pageTic;
 char *pageName;
 
+// Default font colours.
+const float defFontRGB2[] = { .85f, 0, 0 };
+
 // The patches used in drawing the view border.
 char *borderLumps[] = {
     "FTILEABC",
