@@ -526,10 +526,10 @@ void WI_drawTime(int x, int y, int t)
         M_DrawChar2(':', x, y, GF_SMALL);
         if(minutes > 0)
         {
-            dd_snprintf(buf, 20, "%i", minutes);
-            M_DrawTextFragment3(buf, x-M_CharWidth(':', GF_SMALL), y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+            dd_snprintf(buf, 20, "%d", minutes);
+            M_DrawTextFragment3(buf, x, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
         }
-        dd_snprintf(buf, 20, "%i", seconds);
+        dd_snprintf(buf, 20, "%02d", seconds);
         M_DrawTextFragment2(buf, x+M_CharWidth(':', GF_SMALL), y, GF_SMALL);
         return;
     }
