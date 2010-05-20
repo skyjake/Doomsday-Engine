@@ -1514,7 +1514,7 @@ float WI_ParseFloat(char** str)
  * Draw a string of text controlled by parameter blocks.
  */
 void M_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
-    short flags, float defRed, float defGreen, float defBlue, float defAlpha,
+    short flags, int defTracking, float defRed, float defGreen, float defBlue, float defAlpha,
     boolean defCase)
 {
 #define SMALLBUFF_SIZE  80
@@ -1523,7 +1523,7 @@ void M_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
     float r = defRed, g = defGreen, b = defBlue, a = defAlpha;
     float offX = 0, offY = 0, width = 0, cx = x, cy = y;
     float scaleX = 1, scaleY = 1, angle = 0, extraScale, leading = .25f;
-    int charCount = 0, curCase = -1;
+    int charCount = 0, curCase = -1, tracking = defTracking;
     char smallBuff[SMALLBUFF_SIZE+1], *bigBuff = NULL;
     char temp[256], *str, *string, *end;
     gamefontid_t font = defFont;
@@ -1734,7 +1734,7 @@ void M_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
                 // We'll take care of horizontal positioning of the fragment so align left.
                 fragmentFlags = (flags & ~(DTF_ALIGN_RIGHT)) | DTF_ALIGN_LEFT;
                 if(flags & DTF_ALIGN_RIGHT)
-                    alignx = -M_TextFragmentWidth(temp, font) * scaleX;
+                    alignx = -M_TextFragmentWidth2(temp, font, tracking) * scaleX;
             }
 
             // Setup the scaling.
@@ -1760,13 +1760,13 @@ void M_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
 
             // Draw it.
             DGL_Color4f(r, g, b, a);
-            M_DrawTextFragment4(temp, 0, 0, font, fragmentFlags, typeIn ? charCount : 0);
+            M_DrawTextFragment5(temp, 0, 0, font, fragmentFlags, tracking, typeIn ? charCount : 0);
             charCount += strlen(temp);
 
             // Advance the current position?
             if(!newline)
             {
-                cx += (float) M_TextFragmentWidth(temp, font) * scaleX;
+                cx += (float) M_TextFragmentWidth2(temp, font, tracking) * scaleX;
             }
             else
             {
@@ -1803,7 +1803,7 @@ int M_CharHeight(unsigned char ch, gamefontid_t font)
  * \note Does NOT skip paramater blocks - assumes the caller has dealt
  * with them and not passed them.
  */
-int M_TextFragmentWidth(const char* string, gamefontid_t font)
+int M_TextFragmentWidth2(const char* string, gamefontid_t font, int tracking)
 {
     assert(string);
     {
@@ -1823,8 +1823,13 @@ int M_TextFragmentWidth(const char* string, gamefontid_t font)
     while(i++ < len && (c = *ch++) != 0 && c != '\n')
         width += M_CharWidth(c, font);
 
-    return width;
+    return width + tracking * len;
     }
+}
+
+int M_TextFragmentWidth(const char* string, gamefontid_t font)
+{
+    return M_TextFragmentWidth2(string, font, 0);
 }
 
 /**
@@ -2409,8 +2414,8 @@ void DrINumber(int val, int x, int y, float r, float g, float b, float a)
 /**
  * Write a string using a colored, custom font and do a type-in effect.
  */
-void M_DrawTextFragment4(const char* string, int x, int y, gamefontid_t font, short flags,
-    int initialCount)
+void M_DrawTextFragment5(const char* string, int x, int y, gamefontid_t font, short flags,
+    int tracking, int initialCount)
 {
     boolean noTypein = ((flags & DTF_NO_TYPEIN) || cfg.menuEffects == 0);
     boolean noShadow = ((flags & DTF_NO_SHADOW) || !(cfg.menuShadow > 0));
@@ -2423,9 +2428,9 @@ void M_DrawTextFragment4(const char* string, int x, int y, gamefontid_t font, sh
         return;
 
     if(flags & DTF_ALIGN_RIGHT)
-        x -= M_TextFragmentWidth(string, font);
+        x -= M_TextFragmentWidth2(string, font, tracking);
     else if(!(flags & DTF_ALIGN_LEFT))
-        x -= M_TextFragmentWidth(string, font)/2;
+        x -= M_TextFragmentWidth2(string, font, tracking)/2;
 
     if(flags & DTF_ALIGN_BOTTOM)
         y -= M_TextFragmentHeight(string, font);
@@ -2514,7 +2519,7 @@ void M_DrawTextFragment4(const char* string, int x, int y, gamefontid_t font, sh
                 }
             }
 
-            cx += w;
+            cx += w + tracking;
         }
     }
 
@@ -2522,6 +2527,11 @@ void M_DrawTextFragment4(const char* string, int x, int y, gamefontid_t font, sh
     {   // Ensure we restore the original color.
         DGL_Color4fv(origColor);
     }
+}
+
+void M_DrawTextFragment4(const char* string, int x, int y, gamefontid_t font, short flags, int tracking)
+{
+    M_DrawTextFragment5(string, x, y, font, flags, tracking, 0);
 }
 
 void M_DrawTextFragment3(const char* string, int x, int y, gamefontid_t font, short flags)
@@ -2599,7 +2609,7 @@ void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
         R_GetPatchInfo(patch, &info);
         if(!info.isCustom)
         {
-            M_DrawText(altstring, x, y, font, translatePatchToTextDrawFlags(flags), r, g, b, a, false);
+            M_DrawText(altstring, x, y, font, translatePatchToTextDrawFlags(flags), 0, r, g, b, a, false);
             return;
         }
     }
@@ -2628,14 +2638,14 @@ void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
             // A user replacement?
             if(patchString)
             {
-                M_DrawText(string, x, y, font, textFlags, r, g, b, a, false);
+                M_DrawText(string, x, y, font, textFlags, 0, r, g, b, a, false);
                 return;
             }
 
             // A built-in replacement?
             if(cfg.usePatchReplacement == 2 && altstring && altstring[0])
             {
-                M_DrawText(altstring, x, y, font, textFlags, r, g, b, a, false);
+                M_DrawText(altstring, x, y, font, textFlags, 0, r, g, b, a, false);
                 return;
             }
         }

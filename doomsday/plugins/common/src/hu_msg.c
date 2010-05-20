@@ -198,7 +198,7 @@ static void drawMessage(void)
         Con_Error("drawMessage: Internal error, unknown message type %i.\n", (int) msgType);
     }
 
-    M_DrawText(msgText, x, y, GF_FONTA, DTF_ALIGN_TOP, cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2], 1, false);
+    M_DrawText(msgText, x, y, GF_FONTA, DTF_ALIGN_TOP, 0, cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2], 1, false);
     y += M_TextHeight(msgText, GF_FONTA);
     // An additional blank line between the message and response prompt.
     y += M_CharHeight('A', GF_FONTA);

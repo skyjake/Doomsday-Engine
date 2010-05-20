@@ -2049,7 +2049,7 @@ void drawWorldTimerWidget(int player, float textAlpha, float iconAlpha,
     }
     *drawnWidth = M_TextWidth(buf, GF_FONTA);
     *drawnHeight = M_TextHeight(buf, GF_FONTA);
-    M_DrawText(buf, 0, 0, GF_FONTA, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 1, 1, 1, textAlpha, false);
+    M_DrawText(buf, 0, 0, GF_FONTA, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 0, 1, 1, 1, textAlpha, false);
 }
 
 typedef struct {

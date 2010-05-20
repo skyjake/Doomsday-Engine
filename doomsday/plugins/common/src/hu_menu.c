@@ -1678,7 +1678,7 @@ void Hu_MenuDrawer(void)
             }
             else if(currentMenu->items[i].text)
             {
-                M_DrawText(currentMenu->items[i].text, pos[VX], pos[VY], currentMenu->font, DTF_ALIGN_TOPLEFT, r, g, b, menuAlpha, false);
+                M_DrawText(currentMenu->items[i].text, pos[VX], pos[VY], currentMenu->font, DTF_ALIGN_TOPLEFT, 0, r, g, b, menuAlpha, false);
             }
 
             pos[VY] += currentMenu->itemHeight;
