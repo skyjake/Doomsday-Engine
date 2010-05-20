@@ -1823,7 +1823,7 @@ int M_TextFragmentWidth2(const char* string, gamefontid_t font, int tracking)
     while(i++ < len && (c = *ch++) != 0 && c != '\n')
         width += M_CharWidth(c, font);
 
-    return width + tracking * len;
+    return width + (tracking-1) * len;
     }
 }
 
