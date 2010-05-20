@@ -238,7 +238,6 @@ static boolean snlPointerOn = false;
 
 static int spState, dmState, ngState;
 
-// specifies current state
 static interludestate_t state;
 
 static int dmFrags[NUM_TEAMS][NUM_TEAMS];
@@ -246,7 +245,6 @@ static int dmTotals[NUM_TEAMS];
 
 static int doFrags;
 
-// wbs->pnum
 static int me;
 static int myTeam;
 
@@ -265,17 +263,13 @@ static int cntPar;
 static int cntPause;
 
 // Contains information passed into intermission.
-static wbstartstruct_t *wbs;
+static wbstartstruct_t* wbs;
 
-static wbplayerstruct_t *plrs;  // wbs->plyr[]
+static wbplayerstruct_t* plrs;  // wbs->plyr[]
 
 static patchinfo_t bg; // Background (map of maps).
 static patchinfo_t yah[2]; // You Are Here.
 static patchinfo_t splat; // Splat.
-static patchinfo_t percent; // % graphic.
-static patchinfo_t colon; // : graphic.
-static patchinfo_t num[10]; // 0-9 numbers.
-static patchinfo_t wiminus; // Minus sign.
 static patchinfo_t finished; // "Finished!"
 static patchinfo_t entering; // "Entering"
 static patchinfo_t sp_secret; // "secret"
@@ -291,8 +285,8 @@ static patchinfo_t victims; // "victims"
 static patchinfo_t total; // "Total"
 static patchinfo_t star; // Player live icon.
 static patchinfo_t bstar; // Player dead icon.
-static patchinfo_t p[MAXPLAYERS]; // "red P[1..MAXPLAYERS]"
-static patchinfo_t bp[MAXPLAYERS]; // "gray P[1..MAXPLAYERS]"
+static patchinfo_t p[NUM_TEAMS]; // "red P[1..NUM_TEAMS]"
+static patchinfo_t bp[NUM_TEAMS]; // "gray P[1..NUM_TEAMS]"
 
 // CODE --------------------------------------------------------------------
 
@@ -502,67 +496,18 @@ void WI_drawAnimatedBack(void)
     }
 }
 
-/**
- * Draw a number.
- *
- * @param digits        If > 0, then use that many digits minimum,
- *                      otherwise only use as many as necessary.
- * @return              New x position.
- */
-int WI_drawNum(int x, int y, int n, int digits)
-{
-    int fontwidth = num[0].width;
-    int neg, temp;
-
-    if(digits < 0)
-    {
-        if(!n)
-        {
-            // Make variable-length zeros 1 digit long.
-            digits = 1;
-        }
-        else
-        {
-            // Figure out # of digits in #.
-            digits = 0;
-            temp = n;
-            while(temp)
-            {
-                temp /= 10;
-                digits++;
-            }
-        }
-    }
-    neg = n < 0;
-    if(neg)
-        n = -n;
-
-    // If non-number, do not draw it.
-    if(n == 1994)
-        return 0;
-
-    // Draw the new number.
-    while(digits--)
-    {
-        x -= fontwidth;
-        WI_DrawPatch(num[n % 10].id, x, y);
-        n /= 10;
-    }
-
-    // Draw a minus sign if necessary.
-    if(neg)
-        WI_DrawPatch(wiminus.id, x -= 8, y);
-
-    return x;
-}
-
 void WI_drawPercent(int x, int y, int p)
 {
+    char buf[20];
+
     if(p < 0)
         return;
 
-    WI_DrawPatch(percent.id, x, y);
-    WI_drawNum(x, y, p, -1);
+    DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
+    M_DrawChar2('%', x, y, GF_SMALL);
+
+    dd_snprintf(buf, 20, "%i", p);
+    M_DrawTextFragment3(buf, x, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 }
 
 /**
@@ -577,22 +522,25 @@ void WI_drawTime(int x, int y, int t)
 
     if(t <= 61 * 59)
     {
-        div = 1;
-        do
+        int seconds = t % 60, minutes = t / 60 % 60;
+        char buf[20];
+
+        x -= 22;
+        
+        DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
+        M_DrawChar2(':', x, y, GF_SMALL);
+        if(minutes > 0)
         {
-            n = (t / div) % 60;
-            x = WI_drawNum(x, y, n, 2) - colon.width;
-            div *= 60;
-
-            if(div == 60 || t / div)
-                WI_DrawPatch(colon.id, x, y);
-
-        } while(t / div);
+            dd_snprintf(buf, 20, "%i", minutes);
+            M_DrawTextFragment3(buf, x-M_CharWidth(':', GF_SMALL), y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+        }
+        dd_snprintf(buf, 20, "%i", seconds);
+        M_DrawTextFragment2(buf, x+M_CharWidth(':', GF_SMALL), y, GF_SMALL);
+        return;
     }
-    else
-    {   // "sucks"
-        WI_DrawPatch(sucks.id, x - sucks.width, y);
-    }
+
+    // "sucks"
+    WI_DrawPatch4(sucks.id, x - sucks.width, y, NULL, GF_SMALL, false, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 }
 
 void WI_End(void)
@@ -857,20 +805,25 @@ void WI_drawDeathmatchStats(void)
 
     // Draw stats.
     y = DM_MATRIXY + 10;
-    w = num[0].width;
+    w = M_CharWidth('0', GF_SMALL);
 
     for(i = 0; i < NUM_TEAMS; ++i)
     {
         x = DM_MATRIXX + DM_SPACINGX;
         if(teamInfo[i].members)
         {
+            char buf[20];
             for(j = 0; j < NUM_TEAMS; ++j)
             {
                 if(teamInfo[j].members)
-                    WI_drawNum(x + w, y, dmFrags[i][j], 2);
+                {
+                    dd_snprintf(buf, 20, "%i", dmFrags[i][j]);
+                    M_DrawTextFragment3(buf, x + w, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+                }
                 x += DM_SPACINGX;
             }
-            WI_drawNum(DM_TOTALSX + w, y, dmTotals[i], 2);
+            dd_snprintf(buf, 20, "%i", dmTotals[i]);
+            M_DrawTextFragment3(buf, DM_TOTALSX + w, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
         }
 
         y += WI_SPACINGY;
@@ -1038,7 +991,7 @@ void WI_updateNetgameStats(void)
 
 void WI_drawNetgameStats(void)
 {
-    int i, x, y, pwidth = percent.width;
+    int i, x, y, pwidth = M_CharWidth('%', GF_SMALL);
 
     WI_slamBackground();
 
@@ -1080,17 +1033,23 @@ void WI_drawNetgameStats(void)
 
         if(i == myTeam)
             WI_DrawPatch(star.id, x - p[i].width, y);
-
         x += NG_SPACINGX;
+
         WI_drawPercent(x - pwidth, y + 10, cntKills[i]);
         x += NG_SPACINGX;
+
         WI_drawPercent(x - pwidth, y + 10, cntItems[i]);
         x += NG_SPACINGX;
+
         WI_drawPercent(x - pwidth, y + 10, cntSecret[i]);
         x += NG_SPACINGX;
 
         if(doFrags)
-            WI_drawNum(x, y + 10, cntFrags[i], -1);
+        {
+            char buf[20];
+            dd_snprintf(buf, 20, "%i", cntFrags[i]);
+            M_DrawTextFragment3(buf, x, y + 10, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+        }
 
         y += WI_SPACINGY;
     }
@@ -1218,7 +1177,7 @@ void WI_updateStats(void)
 
 void WI_drawStats(void)
 {
-    int lh = (3 * num[0].height) / 2; // Line height.
+    int lh = (3 * M_CharHeight('0', GF_SMALL)) / 2; // Line height.
 
     WI_slamBackground();
 
@@ -1367,17 +1326,6 @@ void WI_loadData(void)
         }
     }
 
-    // Numbers 0-9.
-    for(i = 0; i < 10; ++i)
-    {
-        sprintf(name, "WINUM%d", i);
-        R_PrecachePatch(name, &num[i]);
-    }
-
-    // Minus sign.
-    R_PrecachePatch("WIMINUS", &wiminus);
-    // Percent sign.
-    R_PrecachePatch("WIPCNT", &percent);
     // "finished"
     R_PrecachePatch("WIF", &finished);
     // "entering"
@@ -1392,8 +1340,6 @@ void WI_loadData(void)
     R_PrecachePatch("WIOSTI", &items);
     // "frgs"
     R_PrecachePatch("WIFRGS", &frags);
-    // ":"
-    R_PrecachePatch("WICOLON", &colon);
     // "time"
     R_PrecachePatch("WITIME", &time);
     // "sucks"
@@ -1411,7 +1357,7 @@ void WI_loadData(void)
     // dead face
     R_PrecachePatch("STFDEAD0", &bstar);
 
-    for(i = 0; i < MAXPLAYERS; ++i)
+    for(i = 0; i < NUM_TEAMS; ++i)
     {
         sprintf(name, "STPB%d", i);
         R_PrecachePatch(name, &p[i]);

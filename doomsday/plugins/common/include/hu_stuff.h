@@ -41,7 +41,8 @@ typedef enum {
     GF_FONTB,
     GF_STATUS,
 #if __JDOOM__
-    GF_INDEX,
+    GF_INDEX, // Used for the ready/max ammo on the statusbar
+    GF_SMALL, // Used on the intermission.
 #endif
 #if __JHERETIC__ || __JHEXEN__
     GF_SMALLIN,

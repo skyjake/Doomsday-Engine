@@ -327,11 +327,26 @@ void Hu_LoadData(void)
         { 56, "STYSNUM8" }, // 8
         { 57, "STYSNUM9" } // 9
     };
+    static const fontpatch_t fontSmall[] = {
+        { 37, "WIPCNT" }, // %
+        { 45, "WIMINUS" }, // -
+        { 48, "WINUM0" }, // 0
+        { 49, "WINUM1" }, // 1
+        { 50, "WINUM2" }, // 2
+        { 51, "WINUM3" }, // 3
+        { 52, "WINUM4" }, // 4
+        { 53, "WINUM5" }, // 5
+        { 54, "WINUM6" }, // 6
+        { 55, "WINUM7" }, // 7
+        { 56, "WINUM8" }, // 8
+        { 57, "WINUM9" }, // 9
+        { 58, "WICOLON" }, // :
+    };
 #endif
 #if __JDOOM__ || __JDOOM64__
     static const fontpatch_t fontStatus[] = {
-        { 37, "STTPRCNT" }, // '%'
-        { 45, "STTMINUS" }, // '-'
+        { 37, "STTPRCNT" }, // %
+        { 45, "STTMINUS" }, // -
         { 48, "STTNUM0" }, // 0
         { 49, "STTNUM1" }, // 1
         { 50, "STTNUM2" }, // 2
@@ -840,6 +855,7 @@ void Hu_LoadData(void)
     R_InitFont(GF_STATUS, fontStatus, sizeof(fontStatus) / sizeof(fontStatus[0]));
 #if __JDOOM__
     R_InitFont(GF_INDEX, fontIndex, sizeof(fontIndex) / sizeof(fontIndex[0]));
+    R_InitFont(GF_SMALL, fontSmall, sizeof(fontSmall) / sizeof(fontSmall[0]));
 #endif
 #if __JHERETIC__ || __JHEXEN__
     R_InitFont(GF_SMALLIN, fontSmallIn, sizeof(fontSmallIn) / sizeof(fontSmallIn[0]));
