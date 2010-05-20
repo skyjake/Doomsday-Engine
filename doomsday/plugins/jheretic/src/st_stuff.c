@@ -1124,29 +1124,30 @@ void drawTombOfPowerWidget(int player, float textAlpha, float iconAlpha,
             alpha *= plr->powers[PT_WEAPONLEVEL2] / 35.0f;
         DGL_Color4f(1, 1, 1, alpha);
         M_DrawPatch(spinBook[frame].id, -13, 13);
-        /// \kludge calculate dimensions properly!
-        *drawnWidth += 26;
-        *drawnHeight += 26;
+        *drawnWidth += spinBook[frame].width;
+        *drawnHeight += spinBook[frame].height;
     }
 
     if(plr->powers[PT_WEAPONLEVEL2] < cfg.tomeCounter * 35)
     {
 #define COUNT_X             (303)
 #define COUNT_Y             (30)
+#define TRACKING            (2)
 
-        int val = 1 + plr->powers[PT_WEAPONLEVEL2] / 35, w, h;
         char buf[20];
+        int w;
 
-        dd_snprintf(buf, 20, "%i", val);
+        dd_snprintf(buf, 20, "%i", 1 + plr->powers[PT_WEAPONLEVEL2] / 35);
 
         DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
-        M_DrawTextFragment4(buf, 0, 26, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_TYPEIN, 2);
+        M_DrawTextFragment4(buf, 0, *drawnHeight+2, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_TYPEIN, TRACKING);
 
-        w = M_TextFragmentWidth(buf, GF_SMALLIN);
-        h = M_TextFragmentHeight(buf, GF_SMALLIN);
+        w = M_TextFragmentWidth2(buf, GF_SMALLIN, TRACKING);
         if(w > *drawnWidth)
             *drawnWidth += w;
-        *drawnHeight += h + 1;
+        *drawnHeight += M_TextFragmentHeight(buf, GF_SMALLIN) + 2;
+
+#undef TRACKING
 #undef COUNT_Y
 #undef COUNT_X
     }
