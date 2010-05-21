@@ -620,10 +620,6 @@ void R_SetupFrame(player_t* player)
     if(resetNextViewer ||
        V3_Distance(vd->current.pos, sharpView.pos) > VIEWPOS_MAX_SMOOTHDISTANCE)
     {
-        // Keep reseting until a new sharp world has arrived.
-        if(resetNextViewer > 1)
-            resetNextViewer = 0;
-
         // Just view from the sharp position.
         R_CopyViewer(&vd->current, &sharpView);
 
@@ -996,6 +992,10 @@ void R_RenderViewPorts(void)
             // affect the FPS counter.
             frameCount++;
         }
+
+    // Keep reseting until a new sharp world has arrived.
+    if(resetNextViewer > 1)
+        resetNextViewer = 0;
 
     // Restore things back to normal.
     displayPlayer = oldDisplay;
