@@ -1155,3 +1155,47 @@ byte *GL_ApplyColorKeying(byte *buf, uint pixelSize, uint width,
 
     return NULL;
 }
+
+void GL_ScaleBufferNearest(const byte* in, int width, int height,
+    byte* out, int outWidth, int outHeight, int comps)
+{
+    int ratioX = (int)(width << 16 ) / outWidth + 1;
+    int ratioY = (int)(height << 16) / outHeight + 1;
+    int i, j;
+
+    int shearY = 0;
+    for(i = 0; i < outHeight; ++i, shearY += ratioY)
+    {
+        int shearX = 0;
+        int shearY2 = (shearY >> 16) * width;
+        for(j = 0; j < outWidth; ++j, out += comps, shearX += ratioX)
+        {
+            int c, n = (shearY2 + (shearX >> 16)) * comps;
+            for(c = 0; c < comps; ++c, n++)
+                out[c] = in[n];
+        }
+    }
+}
+
+int GL_PickSmartScaleMethod(int width, int height)
+{
+    if(width >= MINTEXWIDTH && height >= MINTEXHEIGHT)
+        return 2; // hq2x
+    return 1; // nearest neighbor.
+}
+
+void GL_SmartFilter(int method, byte* in, byte* out, int width, int height)
+{
+    switch(method)
+    {
+    default: // linear interpolation.
+        GL_ScaleBuffer32(in, width, height, out, width*2, height*2, 4);
+        break;
+    case 1: // nearest neighbor.
+        GL_ScaleBufferNearest(in, width, height, out, width*2, height*2, 4);
+        break;
+    case 2: // hq2x
+        GL_SmartFilter2x(in, out, width, height, width * 8);
+        break;
+    };
+}

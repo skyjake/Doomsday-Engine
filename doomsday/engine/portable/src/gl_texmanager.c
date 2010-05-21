@@ -574,7 +574,7 @@ DGLuint GL_UploadTexture2(texturecontent_t* content)
             alphaChannel = true;
         }
 
-        GL_SmartFilter2x(rgbaOriginal, filtered, width, height, width * 8);
+        GL_SmartFilter(GL_PickSmartScaleMethod(width, height), rgbaOriginal, filtered, width, height);
         width *= 2;
         height *= 2;
         noStretch = GL_OptimalSize(width, height, &levelWidth, &levelHeight, noStretch, generateMipmaps);
@@ -2618,6 +2618,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
 
             if(scaleSharp)
             {
+                int scaleMethod = GL_PickSmartScaleMethod(image.width, image.height);
                 int numpels = image.width * image.height;
                 byte* rgbaPixels = M_Malloc(numpels * 4 * 2);
                 byte* upscaledPixels = M_Malloc(numpels * 4 * 4);
@@ -2627,7 +2628,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
                 if(monochrome && (tex->type == GLT_DOOMPATCH || tex->type == GLT_SPRITE))
                     Desaturate(rgbaPixels, image.width, image.height, 4);
 
-                GL_SmartFilter2x(rgbaPixels, upscaledPixels, image.width, image.height, image.width * 8);
+                GL_SmartFilter(scaleMethod, rgbaPixels, upscaledPixels, image.width, image.height);
                 image.width *= 2;
                 image.height *= 2;
 
@@ -2770,7 +2771,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
                           image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE );
         }
 
-        if(tex->type == GLT_FLAT || tex->type == GLT_DOOMTEXTURE || tex->type == GLT_DOOMPATCH || tex->type == GLT_MASK)
+        if(tex->type == GLT_FLAT || tex->type == GLT_DOOMTEXTURE || tex->type == GLT_MASK)
             magFilter = glmode[texMagMode];
         else if(tex->type == GLT_SPRITE)
             magFilter = filterSprites ? GL_LINEAR : GL_NEAREST;

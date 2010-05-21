@@ -73,4 +73,7 @@ int             DrawRealPatch(byte* buffer, int texwidth, int texheight,
                               boolean checkForAlpha);
 boolean         ImageHasAlpha(image_t *image);
 void            GL_TranslatePatch(lumppatch_t* patch, byte* transTable);
+
+int             GL_PickSmartScaleMethod(int width, int height);
+void            GL_SmartFilter(int method, byte* in, byte* out, int width, int height);
 #endif
