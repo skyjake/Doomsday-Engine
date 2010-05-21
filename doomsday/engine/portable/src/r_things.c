@@ -499,6 +499,11 @@ void R_PreInitSprites(void)
                 sprTex->width = SHORT(patch->width);
                 sprTex->height = SHORT(patch->height);
 
+                // An extra offset is applied during drawing and the sprite
+                // loaded with an additional border to counteract GL edge
+                // filtering artefacts.
+                sprTex->extraOffset[0] = sprTex->extraOffset[1] = -1;
+
                 glTex = GL_CreateGLTexture(name, idx++, GLT_SPRITE);
 
                 // Create a new material for this sprite patch.
@@ -721,8 +726,8 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     info->flip = sprFrame->flip[0];
     info->offset = sprTex->offX;
     info->topOffset = sprTex->offY;
-    info->width = ms.width;
-    info->height = ms.height;
+    info->width = ms.width + abs(sprTex->extraOffset[0])*2;
+    info->height = ms.height + abs(sprTex->extraOffset[1])*2;
     info->texCoord[0] = ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[0];
     info->texCoord[1] = ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[1];
 
@@ -970,8 +975,8 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
 
     sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
 
-    params->width = ms.width;
-    params->height = ms.height;
+    params->width = ms.width + fabs(sprTex->extraOffset[0])*2;
+    params->height = ms.height + fabs(sprTex->extraOffset[1])*2;
 
     params->center[VX] = x;
     params->center[VY] = y;
@@ -980,7 +985,8 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->srvo[VY] = visOffY;
     params->srvo[VZ] = visOffZ;
     params->distance = distance;
-    params->viewOffX = (float) sprTex->offX - ms.width / 2.0f;
+    params->viewOffX = (float) sprTex->offX - ms.width / 2.0f - sprTex->extraOffset[0];
+    params->viewOffY = -sprTex->extraOffset[1];
     params->subsector = ssec;
     params->viewAligned = viewAligned;
     params->noZWrite = noSpriteZWrite;

@@ -146,6 +146,7 @@ typedef struct flat_s {
 typedef struct {
     lumpnum_t       lump; // Real lump number.
     short           width, height, offX, offY;
+    int             extraOffset[2]; // Used on ALL sprites to hide edge filtering artefacts.
 } spritetex_t;
 
 // Model skin.

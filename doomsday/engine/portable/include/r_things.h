@@ -87,6 +87,7 @@ typedef struct rendspriteparams_s {
     float           center[3]; // The real center point.
     float           width, height;
     float           viewOffX; // View-aligned offset to center point.
+    float           viewOffY;
     float           srvo[3]; // Short-range visual offset.
     float           distance; // Distance from viewer.
     boolean         viewAligned;

@@ -1611,8 +1611,8 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
     const lumppatch_t*  patch;
     void* tmp = NULL;
 
-    image->width = sprTex->width;
-    image->height = sprTex->height;
+    image->width = sprTex->width+abs(sprTex->extraOffset[0])*2;
+    image->height = sprTex->height+abs(sprTex->extraOffset[1])*2;
     image->pixelSize = 1;
     image->pixels = M_Calloc(2 * image->width * image->height);
 
@@ -1633,7 +1633,7 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
         patch = W_CacheLumpNum(sprTex->lump, PU_STATIC);
     }
 
-    image->isMasked = DrawRealPatch(image->pixels, image->width, image->height, patch, 0, 0, false, true);
+    image->isMasked = DrawRealPatch(image->pixels, image->width, image->height, patch, abs(sprTex->extraOffset[0]), abs(sprTex->extraOffset[1]), false, true);
 
     if(freePatch)
         M_Free(tmp);
@@ -2860,8 +2860,8 @@ if(!didDefer)
             else
             {
                 int pw = M_CeilPow2(image.width), ph = M_CeilPow2(image.height);
-                tc[0] = image.width  / (float) pw;
-                tc[1] = image.height / (float) ph;
+                tc[0] = (image.width-1)  / (float) pw;
+                tc[1] = (image.height-1) / (float) ph;
             }
         }
 

@@ -272,11 +272,10 @@ static void setupPSpriteParams(rendpspriteparams_t* params,
     Material_Prepare(&ms, sprFrame->mats[0], true, &mparams);
 
     sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
-    params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX];
-    params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX];
-    params->pos[VY] = offScaleY * (psp->pos[VY] - sprTex->offY) + pspOffset[VY];
-    params->width = ms.width;
-    params->height = ms.height;
+    params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX] + sprTex->extraOffset[0];
+    params->pos[VY] = offScaleY * (psp->pos[VY] - sprTex->offY) + pspOffset[VY] + sprTex->extraOffset[1];
+    params->width = ms.width + fabs(sprTex->extraOffset[0])*2;
+    params->height = ms.height + fabs(sprTex->extraOffset[1])*2;
 
     // Calculate texture coordinates.
     params->texOffset[0] = ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[VX];
@@ -914,8 +913,8 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
     v3[VX] = v4[VX];
     v3[VY] = v4[VY];
 
-    v1[VZ] = v4[VZ] = spriteCenter[VZ] - params->height / 2;
-    v2[VZ] = v3[VZ] = spriteCenter[VZ] + params->height / 2;
+    v1[VZ] = v4[VZ] = spriteCenter[VZ] - params->height / 2 + params->viewOffY;
+    v2[VZ] = v3[VZ] = spriteCenter[VZ] + params->height / 2 + params->viewOffY;
 
     // Calculate the surface normal.
     M_PointCrossProduct(v2, v1, v3, surfaceNormal);
