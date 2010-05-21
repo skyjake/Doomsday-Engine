@@ -110,6 +110,7 @@ typedef struct jheretic_config_s {
     byte            weaponAutoSwitch;
     byte            noWeaponAutoSwitchIfFiring;
     byte            ammoAutoSwitch;
+    byte            weaponCycleSequential; // if true multiple next/prev weapon impulses can be chained to allow the user to "count-click-switch".
     int             weaponOrder[NUM_WEAPON_TYPES];
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
     byte            secretMsg;

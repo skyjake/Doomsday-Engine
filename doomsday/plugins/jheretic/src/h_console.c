@@ -158,8 +158,8 @@ cvar_t gameCVars[] = {
     {"player-weapon-order7", 0, CVT_INT, &cfg.weaponOrder[7], 0, NUM_WEAPON_TYPES},
     {"player-weapon-order8", 0, CVT_INT, &cfg.weaponOrder[8], 0, NUM_WEAPON_TYPES},
 
-    {"player-weapon-nextmode", 0, CVT_BYTE,
-        &cfg.weaponNextMode, 0, 1},
+    {"player-weapon-nextmode", 0, CVT_BYTE, &cfg.weaponNextMode, 0, 1},
+    {"player-weapon-cycle-sequential", 0, CVT_BYTE, &cfg.weaponCycleSequential, 0, 1},
 
     // Misc
     {"player-camera-noclip", 0, CVT_INT, &cfg.cameraNoClip, 0, 1},

@@ -866,47 +866,51 @@ static menuitem_t WeaponItems[] = {
 #if __JDOOM64__
     {ITT_LRFUNC, 0, "10 :", M_WeaponOrder, 9 << NUM_WEAPON_TYPES },
 #endif
-    {ITT_EFUNC,  0, "Use with Next/Previous :", M_ToggleVar, 0, NULL, "player-weapon-nextmode"},
     {ITT_EMPTY,  0, NULL, NULL, 0},
-    {ITT_EMPTY,  0, "AUTOSWITCH", NULL, 0},
-    {ITT_LRFUNC, 0, "PICKUP WEAPON :", M_WeaponAutoSwitch, 0},
-    {ITT_EFUNC,  0, "   IF NOT FIRING :", M_ToggleVar, 0, NULL, "player-autoswitch-notfiring"},
-    {ITT_LRFUNC, 0, "PICKUP AMMO :", M_AmmoAutoSwitch, 0},
+    {ITT_EMPTY,  0, "Cycling", NULL, 0 },
+    {ITT_EFUNC,  0, "Use Priority Order :", M_ToggleVar, 0, NULL, "player-weapon-nextmode"},
+    {ITT_LRFUNC, 0, "Sequential :", M_ToggleVar, 0, NULL, "player-weapon-cycle-sequential"},
+    {ITT_EMPTY,  0, NULL, NULL, 0},
+    {ITT_EMPTY,  0, "Autoswitch", NULL, 0},
+    {ITT_LRFUNC, 0, "Pickup Weapon :", M_WeaponAutoSwitch, 0},
+    {ITT_EFUNC,  0, "   If Not Firing :", M_ToggleVar, 0, NULL, "player-autoswitch-notfiring"},
+    {ITT_LRFUNC, 0, "Pickup Ammo :", M_AmmoAutoSwitch, 0},
 #if __JDOOM__ || __JDOOM64__
-    {ITT_EFUNC,  0, "PICKUP BERSERK :", M_ToggleVar, 0, NULL, "player-autoswitch-berserk"}
+    {ITT_EFUNC,  0, "Pickup Beserk :", M_ToggleVar, 0, NULL, "player-autoswitch-berserk"}
 #endif
 };
 
 static menu_t WeaponDef = {
     MNF_NOHOTKEYS,
 #if __JDOOM__ || __JDOOM64__
-    68, 34,
-#else
-    78, 28,
+    78, 40,
+#elif __JHERETIC__
+    78, 26,
+#else // __JHEXEN__
+    78, 38,
 #endif
     M_DrawWeaponMenu,
 #if __JDOOM64__
-    18, WeaponItems,
+    21,
 #elif __JDOOM__
-    17, WeaponItems,
+    20,
 #elif __JHERETIC__
-    15, WeaponItems,
+    18,
 #elif __JHEXEN__
-    11, WeaponItems,
+    14,
 #endif
-    0, MENU_OPTIONS,
+    WeaponItems,
+    1, MENU_OPTIONS,
     GF_FONTA,
     cfg.menuColor2,
     LINEHEIGHT_A,
-#if __JDOOM64__
-    0, 21
-#elif __JDOOM__
-    0, 20
+#if __JDOOM__ || __JDOOM64__
+    0, 17, { 17, 40 }
 #elif __JHERETIC__
-    0, 18
-#elif __JHEXEN__
+    0, 15, { 15, 26 }
+#else // __JHEXEN__
     0, 14
-#endif
+#endif  
 };
 
 static menuitem_t GameplayItems[] = {
@@ -1517,7 +1521,7 @@ void Hu_MenuTicker(timespan_t ticLength)
 void Hu_MenuPageString(char* page, const menu_t* menu)
 {
     sprintf(page, "PAGE %i/%i", (menu->firstItem + menu->numVisItems/2) / menu->numVisItems + 1,
-            (menu->itemCount + menu->numVisItems/2) / menu->numVisItems);
+            (int)ceil((float)menu->itemCount/menu->numVisItems));
 }
 
 static void M_UpdateMenuVisibleItems(void)
@@ -2810,18 +2814,33 @@ void M_DrawGameplay(void)
 
 void M_DrawWeaponMenu(void)
 {
-    menu_t     *menu = &WeaponDef;
-    int         i = 0;
-    char       *autoswitch[] = { "NEVER", "IF BETTER", "ALWAYS" };
+    menu_t* menu = &WeaponDef;
+    int i = 0;
+    char* autoswitch[] = { "NEVER", "IF BETTER", "ALWAYS" };
 #if __JHEXEN__
-    char       *weaponids[] = { "First", "Second", "Third", "Fourth"};
+    char* weaponids[] = { "First", "Second", "Third", "Fourth"};
 #endif
-
 #if __JDOOM__ || __JDOOM64__
-    byte berserkAutoSwitch = cfg.berserkAutoSwitch;
+    char buf[1024];
+#endif
+#if __JHERETIC__
+    patchid_t token;
 #endif
 
     MN_DrawTitle("WEAPONS", menu->y - 26);
+#if __JDOOM__ || __JDOOM64__
+    Hu_MenuPageString(buf, menu);
+    DGL_Color4f(1, .7f, .3f, Hu_MenuAlpha());
+    M_DrawTextFragment3(buf, SCREENWIDTH/2, menu->y - 12, GF_FONTA, DTF_ALIGN_TOP);
+#elif __JHERETIC__
+    DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
+
+    // Draw the page arrows.
+    token = dpInvPageLeft[!menu->firstItem || (menuTime & 8)];
+    M_DrawPatch(token, menu->x, menu->y - 22);
+    token = dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)];
+    M_DrawPatch(token, 312 - menu->x, menu->y - 22);
+#endif
 
     /**
      * \kludge Inform the user how to change the order.
@@ -2829,8 +2848,12 @@ void M_DrawWeaponMenu(void)
     if(itemOn - 1 >= 0 && itemOn - 1 < NUM_WEAPON_TYPES)
     {
         const char* str = "Use left/right to move weapon up/down";
+#if __JDOOM__
+        DGL_Color4f(1, .7f, .3f, menuAlpha);
+#else
         DGL_Color4f(cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2], menuAlpha);
-        M_DrawTextFragment3(str, SCREENWIDTH/2, SCREENHEIGHT-2, GF_FONTA, DTF_ALIGN_BOTTOM);
+#endif
+        M_DrawTextFragment3(str, SCREENWIDTH/2, SCREENHEIGHT/2 + (95/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM);
     }
 
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
@@ -2855,27 +2878,31 @@ void M_DrawWeaponMenu(void)
     }
 
 #if __JHEXEN__
-    M_WriteMenuText(menu, 5, yesno[cfg.weaponNextMode]);
-    M_WriteMenuText(menu, 8, autoswitch[cfg.weaponAutoSwitch]);
-    M_WriteMenuText(menu, 9, yesno[cfg.noWeaponAutoSwitchIfFiring]);
-    M_WriteMenuText(menu, 10, autoswitch[cfg.ammoAutoSwitch]);
+    M_WriteMenuText(menu, 7, yesno[cfg.weaponNextMode]);
+    M_WriteMenuText(menu, 8, yesno[cfg.weaponCycleSequential]);
+    M_WriteMenuText(menu, 11, autoswitch[cfg.weaponAutoSwitch]);
+    M_WriteMenuText(menu, 12, yesno[cfg.noWeaponAutoSwitchIfFiring]);
+    M_WriteMenuText(menu, 13, autoswitch[cfg.ammoAutoSwitch]);
 #elif __JHERETIC__
-    M_WriteMenuText(menu, 9, yesno[cfg.weaponNextMode]);
-    M_WriteMenuText(menu, 12, autoswitch[cfg.weaponAutoSwitch]);
-    M_WriteMenuText(menu, 13, yesno[cfg.noWeaponAutoSwitchIfFiring]);
-    M_WriteMenuText(menu, 14, autoswitch[cfg.ammoAutoSwitch]);
-#elif __JDOOM64__
     M_WriteMenuText(menu, 11, yesno[cfg.weaponNextMode]);
-    M_WriteMenuText(menu, 14, autoswitch[cfg.weaponAutoSwitch]);
-    M_WriteMenuText(menu, 15, yesno[cfg.noWeaponAutoSwitchIfFiring]);
-    M_WriteMenuText(menu, 16, autoswitch[cfg.ammoAutoSwitch]);
-    M_WriteMenuText(menu, 17, yesno[berserkAutoSwitch != 0]);
+    M_WriteMenuText(menu, 12, yesno[cfg.weaponCycleSequential]);
+    M_WriteMenuText(menu, 15, autoswitch[cfg.weaponAutoSwitch]);
+    M_WriteMenuText(menu, 16, yesno[cfg.noWeaponAutoSwitchIfFiring]);
+    M_WriteMenuText(menu, 17, autoswitch[cfg.ammoAutoSwitch]);
+#elif __JDOOM64__
+    M_WriteMenuText(menu, 12, yesno[cfg.weaponNextMode]);
+    M_WriteMenuText(menu, 13, yesno[cfg.weaponCycleSequential]);
+    M_WriteMenuText(menu, 16, autoswitch[cfg.weaponAutoSwitch]);
+    M_WriteMenuText(menu, 17, yesno[cfg.noWeaponAutoSwitchIfFiring]);
+    M_WriteMenuText(menu, 18, autoswitch[cfg.ammoAutoSwitch]);
+    M_WriteMenuText(menu, 19, yesno[cfg.berserkAutoSwitch != 0]);
 #elif __JDOOM__
-    M_WriteMenuText(menu, 10, yesno[cfg.weaponNextMode]);
-    M_WriteMenuText(menu, 13, autoswitch[cfg.weaponAutoSwitch]);
-    M_WriteMenuText(menu, 14, yesno[cfg.noWeaponAutoSwitchIfFiring]);
-    M_WriteMenuText(menu, 15, autoswitch[cfg.ammoAutoSwitch]);
-    M_WriteMenuText(menu, 16, yesno[berserkAutoSwitch != 0]);
+    M_WriteMenuText(menu, 12, yesno[cfg.weaponNextMode]);
+    M_WriteMenuText(menu, 13, yesno[cfg.weaponCycleSequential]);
+    M_WriteMenuText(menu, 16, autoswitch[cfg.weaponAutoSwitch]);
+    M_WriteMenuText(menu, 17, yesno[cfg.noWeaponAutoSwitchIfFiring]);
+    M_WriteMenuText(menu, 18, autoswitch[cfg.ammoAutoSwitch]);
+    M_WriteMenuText(menu, 19, yesno[cfg.berserkAutoSwitch != 0]);
 #endif
 }
 

@@ -519,6 +519,7 @@ void G_PreInit(void)
     cfg.weaponOrder[7] = WT_SEVENTH;
     cfg.weaponOrder[8] = WT_FIRST;
 
+    cfg.weaponCycleSequential = true;
     cfg.berserkAutoSwitch = true;
 
     // Use the DOOM transition by default.

@@ -609,7 +609,7 @@ boolean P_CheckAmmo(player_t* plr)
  */
 weapontype_t P_PlayerFindWeapon(player_t* player, boolean prev)
 {
-    weapontype_t*       list, w = 0;
+    weapontype_t*       list, w = 0, initial;
     int                 lvl, i;
 #if __JDOOM__
     static weapontype_t wp_list[] = {
@@ -653,11 +653,17 @@ weapontype_t P_PlayerFindWeapon(player_t* player, boolean prev)
     for(i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
         w = list[i];
-        if(w == player->readyWeapon)
+        if(!cfg.weaponCycleSequential || player->pendingWeapon == WT_NOCHANGE)
+        {
+            if(w == player->readyWeapon)
+                break;
+        }
+        else if(w == player->pendingWeapon)
             break;
     }
 
     // Locate the next or previous weapon owned by the player.
+    initial = w;
     for(;;)
     {
         // Move the iterator.
@@ -674,7 +680,7 @@ weapontype_t P_PlayerFindWeapon(player_t* player, boolean prev)
         w = list[i];
 
         // Have we circled around?
-        if(w == player->readyWeapon)
+        if(w == initial)
             break;
 
         // Available in this game mode? And a valid weapon?

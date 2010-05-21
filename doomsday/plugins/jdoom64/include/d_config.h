@@ -110,10 +110,11 @@ typedef struct jdoom64_config_s {
     byte            moveCheckZ; // If true, mobjs can move over/under each other.
     byte            weaponAutoSwitch;
     byte            noWeaponAutoSwitchIfFiring;
+    byte            weaponCycleSequential; // if true multiple next/prev weapon impulses can be chained to allow the user to "count-click-switch".
+    byte            weaponNextMode; // if true use the weaponOrder for next/previous.
     byte            ammoAutoSwitch;
     byte            berserkAutoSwitch;
     int             weaponOrder[NUM_WEAPON_TYPES];
-    byte            weaponNextMode; // if true use the weaponOrder for next/previous.
     byte            weaponRecoil; // jd64
     byte            secretMsg;
     float           filterStrength;

@@ -113,6 +113,7 @@ typedef struct jdoom_config_s {
     byte            berserkAutoSwitch;
     int             weaponOrder[NUM_WEAPON_TYPES];
     byte            weaponNextMode; // if true use the weaponOrder for next/previous.
+    byte            weaponCycleSequential; // if true multiple next/prev weapon impulses can be chained to allow the user to "count-click-switch".
     byte            secretMsg;
     float           filterStrength;
     int             plrViewHeight;

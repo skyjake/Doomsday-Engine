@@ -413,6 +413,8 @@ void G_PreInit(void)
     cfg.weaponOrder[6] = WT_EIGHTH;     // gauntlets \ beak
     cfg.weaponOrder[7] = WT_FIRST;      // staff \ beak
 
+    cfg.weaponCycleSequential = true;
+
     cfg.menuEffects = 0;
     cfg.hudFog = 5;
 

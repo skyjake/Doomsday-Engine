@@ -835,6 +835,9 @@ desc = Weapon change order, slot 2.
 [player-weapon-order3]
 desc = Weapon change order, slot 3.
 
+[player-weapon-cycle-sequential]
+desc = 1=Allow sequential weapon cycling whilst lowering.
+
 [player-weapon-nextmode]
 desc = 1= Use custom weapon order with Next/Previous weapon.
 

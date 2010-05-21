@@ -370,9 +370,7 @@ void G_PreInit(void)
     cfg.weaponOrder[2] = WT_SECOND;
     cfg.weaponOrder[3] = WT_FIRST;
 
-    // Hexen has a nifty "Ethereal Travel" screen, so don't show the
-    // console during map setup.
-    Con_SetInteger("con-show-during-setup", 0, true);
+    cfg.weaponCycleSequential = true;
 
     // Do the common pre init routine.
     G_CommonPreInit();

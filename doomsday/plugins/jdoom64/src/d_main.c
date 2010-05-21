@@ -396,6 +396,7 @@ void G_PreInit(void)
     cfg.weaponOrder[9] = WT_FIRST;
     cfg.weaponRecoil = true;
 
+    cfg.weaponCycleSequential = true;
     cfg.berserkAutoSwitch = true;
 
     // Do the common pre init routine.
