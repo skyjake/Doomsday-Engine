@@ -768,30 +768,27 @@ void P_SetYellowMessage(player_t* pl, char *msg, boolean noHide)
 }
 #endif
 
-void P_Thrust3D(player_t *player, angle_t angle, float lookdir,
-                int forwardmovex, int sidemovex)
+void P_Thrust3D(player_t* player, angle_t angle, float lookdir,
+                float forwardMove, float sideMove)
 {
-    angle_t             pitch = LOOKDIR2DEG(lookdir) / 360 * ANGLE_MAX;
-    angle_t             sideangle = angle - ANG90;
-    mobj_t             *mo = player->plr->mo;
-    float               zmul;
-    float               mom[3];
-    float               forwardmove = FIX2FLT(forwardmovex);
-    float               sidemove = FIX2FLT(sidemovex);
+    angle_t pitch = LOOKDIR2DEG(lookdir) / 360 * ANGLE_MAX;
+    angle_t sideangle = angle - ANG90;
+    mobj_t* mo = player->plr->mo;
+    float zmul, mom[3];
 
     angle >>= ANGLETOFINESHIFT;
     pitch >>= ANGLETOFINESHIFT;
-    mom[MX] = forwardmove * FIX2FLT(finecosine[angle]);
-    mom[MY] = forwardmove * FIX2FLT(finesine[angle]);
-    mom[MZ] = forwardmove * FIX2FLT(finesine[pitch]);
+    mom[MX] = forwardMove * FIX2FLT(finecosine[angle]);
+    mom[MY] = forwardMove * FIX2FLT(finesine[angle]);
+    mom[MZ] = forwardMove * FIX2FLT(finesine[pitch]);
 
     zmul = FIX2FLT(finecosine[pitch]);
     mom[MX] *= zmul;
     mom[MY] *= zmul;
 
     sideangle >>= ANGLETOFINESHIFT;
-    mom[MX] += sidemove * FIX2FLT(finecosine[sideangle]);
-    mom[MY] += sidemove * FIX2FLT(finesine[sideangle]);
+    mom[MX] += sideMove * FIX2FLT(finecosine[sideangle]);
+    mom[MY] += sideMove * FIX2FLT(finesine[sideangle]);
 
     mo->mom[MX] += mom[MX];
     mo->mom[MY] += mom[MY];

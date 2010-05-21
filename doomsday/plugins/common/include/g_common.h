@@ -72,8 +72,7 @@ void            G_SetGameAction(gameaction_t action);
 
 int             P_CameraXYMovement(mobj_t* mo);
 int             P_CameraZMovement(mobj_t* mo);
-void            P_Thrust3D(struct player_s* player, angle_t angle,
-                           float lookdir, int forwardmove, int sidemove);
+void            P_Thrust3D(struct player_s* player, angle_t angle, float lookdir, float forwardMove, float sideMove);
 
 DEFCC( CCmdMakeLocal );
 DEFCC( CCmdSetCamera );

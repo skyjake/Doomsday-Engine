@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2000-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2000-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -383,12 +383,13 @@ void P_MovePlayer(player_t *player)
     onground = P_IsPlayerOnGround(player);
     if(dp->flags & DDPF_CAMERA)    // $democam
     {
-        static const fixed_t cameraSpeed[2] = {0x19, 0x31};
+        static const float cameraSpeed[2] = { FIX2FLT(0x19), FIX2FLT(0x54) };
+        int moveMul = 2048;
 
         // Cameramen have a 3D thrusters!
         P_Thrust3D(player, plrmo->angle, dp->lookDir,
-                   brain->forwardMove * cameraSpeed[speed] * 2048,
-                   brain->sideMove * cameraSpeed[speed] * 2048);
+                   brain->forwardMove * cameraSpeed[speed] * moveMul,
+                   brain->sideMove    * cameraSpeed[speed] * moveMul);
     }
     else
     {
