@@ -1680,7 +1680,8 @@ void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
              * and/or shadow when they should. This should be addressed
              * by redesigning the API for patch replacement.
              */
-            textFlags &= ~DTF_NO_EFFECTS;
+            if(cfg.menuEffects)
+                textFlags &= ~DTF_NO_EFFECTS;
 
             // A user replacement?
             if(patchString)

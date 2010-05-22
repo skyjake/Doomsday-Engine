@@ -1682,7 +1682,8 @@ void Hu_MenuDrawer(void)
             }
             else if(currentMenu->items[i].text)
             {
-                GL_DrawText(currentMenu->items[i].text, pos[VX], pos[VY], currentMenu->font, DTF_ALIGN_TOPLEFT, 0, r, g, b, menuAlpha, false);
+                DGL_Color4f(r, g, b, menuAlpha);
+                M_DrawMenuText2(currentMenu->items[i].text, pos[VX], pos[VY], currentMenu->font);
             }
 
             pos[VY] += currentMenu->itemHeight;
@@ -2567,7 +2568,7 @@ void M_DrawLoad(void)
     {
         M_DrawSaveLoadBorder(LoadDef.x - 4, SAVEGAME_BOX_YOFFSET + LoadDef.y + (menu->itemHeight * i), width + 16);
         DGL_Color4f(i == itemOn? r : menu->color[0], i == itemOn? g : menu->color[1], i == itemOn? b : menu->color[2], menuAlpha);
-        M_DrawMenuText2(savegamestrings[i], LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y + (menu->itemHeight * i), menu->font);
+        M_DrawMenuText3(savegamestrings[i], LoadDef.x, SAVEGAME_BOX_YOFFSET + LoadDef.y + (menu->itemHeight * i), menu->font, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
     }
 }
 
@@ -2596,7 +2597,7 @@ void M_DrawSave(void)
     {
         M_DrawSaveLoadBorder(SaveDef.x - 4, SAVEGAME_BOX_YOFFSET + SaveDef.y + (menu->itemHeight * i), width + 16);
         DGL_Color4f(i == itemOn? r : menu->color[0], i == itemOn? g : menu->color[1], i == itemOn? b : menu->color[2], menuAlpha);
-        M_DrawMenuText2(savegamestrings[i], SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + (menu->itemHeight * i), menu->font);
+        M_DrawMenuText3(savegamestrings[i], SaveDef.x, SAVEGAME_BOX_YOFFSET + SaveDef.y + (menu->itemHeight * i), menu->font, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
     }
 
     if(saveStringEnter)
