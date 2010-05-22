@@ -84,7 +84,7 @@ void            R_InitFont(gamefontid_t fontid, const fontpatch_t* patches, size
 /*@}*/
 
 /**
- * Text strings (formatted).
+ * Text strings: A block of possibly formatted and/or multi-line text.
  */
 void            GL_DrawText(const char* string, int x, int y, gamefontid_t font, short flags, int defTracking, float defRed, float defGreen, float defBlue, float defAlpha, boolean defCase);
 
@@ -93,7 +93,7 @@ int             GL_TextWidth(const char* string, gamefontid_t font);
 int             GL_TextHeight(const char* string, gamefontid_t font);
 
 /**
- * Text string fragments:
+ * Text string fragments: A single line of unformatted text.
  */
 void            GL_DrawTextFragment(const char* string, int x, int y);
 void            GL_DrawTextFragment2(const char* string, int x, int y, gamefontid_t font);
@@ -108,7 +108,7 @@ int             GL_TextFragmentWidth2(const char* string, gamefontid_t font, int
 int             GL_TextFragmentHeight(const char* string, gamefontid_t font);
 
 /**
- * Single character:
+ * Single character.
  */
 void            GL_DrawChar(unsigned char ch, int x, int y);
 void            GL_DrawChar2(unsigned char ch, int x, int y, gamefontid_t font);
