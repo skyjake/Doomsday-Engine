@@ -135,6 +135,8 @@ void            M_DrawTextFragment3(const char* string, int x, int y, gamefontid
 void            M_DrawTextFragment4(const char* string, int x, int y, gamefontid_t font, short flags, int tracking);
 void            M_DrawTextFragment5(const char* string, int x, int y, gamefontid_t font, short flags, int tracking, int initialCount);
 
+void            M_DrawTextFragmentShadowed(const char* string, int x, int y, gamefontid_t font, short flags, int tracking, float r, float g, float b, float a);
+
 // Utility routines:
 int             M_TextFragmentWidth(const char* string, gamefontid_t font);
 int             M_TextFragmentWidth2(const char* string, gamefontid_t font, int tracking);
@@ -163,14 +165,6 @@ void            M_DrawShadowedChar3(unsigned char ch, int x, int y, gamefontid_t
 // Utility routines:
 int             M_CharWidth(unsigned char ch, gamefontid_t font);
 int             M_CharHeight(unsigned char ch, gamefontid_t font);
-
-/**
- * Specialised text strings:
- */
-#if __JHERETIC__
-void            IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b, float a);
-void            IN_DrawTime(int x, int y, int h, int m, int s, float r, float g, float b, float a);
-#endif
 
 /**
  * Patches:

@@ -158,6 +158,32 @@ static yahpt_t YAHspot[3][9] = {
 
 // CODE --------------------------------------------------------------------
 
+void IN_DrawTime(int x, int y, int h, int m, int s, gamefontid_t font, int tracking, float r, float g, float b, float a)
+{
+    char buf[20];
+
+    dd_snprintf(buf, 20, "%02d", s);
+    M_DrawTextFragmentShadowed(buf, x, y, font, DTF_ALIGN_TOPRIGHT, tracking, r, g, b, a);
+    x -= M_TextFragmentWidth2(buf, font, tracking) + tracking * 3;
+    M_DrawShadowedChar3(':', x, y, font, DTF_ALIGN_TOPRIGHT, r, g, b, a);
+    x -= M_CharWidth(':', font) + 3;
+
+    if(m || h)
+    {
+        dd_snprintf(buf, 20, "%02d", m);
+        M_DrawTextFragmentShadowed(buf, x, y, font, DTF_ALIGN_TOPRIGHT, tracking, r, g, b, a);
+        x -= M_TextFragmentWidth2(buf, font, tracking) + tracking * 3;
+    }
+   
+    if(h)
+    {
+        dd_snprintf(buf, 20, "%02d", h);
+        M_DrawShadowedChar3(':', x, y, font, DTF_ALIGN_TOPRIGHT, r, g, b, a);
+        x -= M_CharWidth(':', font) + tracking * 3;
+        M_DrawTextFragmentShadowed(buf, x, y, font, DTF_ALIGN_TOPRIGHT, tracking, r, g, b, a);
+    }
+}
+
 void WI_initVariables(wbstartstruct_t * wbstartstruct)
 {
     wbs = wbstartstruct;
@@ -666,7 +692,10 @@ void IN_DrawYAH(void)
 
 void IN_DrawSingleStats(void)
 {
+#define TRACKING                (1)
+
     static int sounds;
+    char buf[20];
 
     DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     M_DrawTextFragment2("KILLS", 50, 65, GF_FONTB);
@@ -690,9 +719,13 @@ void IN_DrawSingleStats(void)
         sounds++;
     }
 
-    IN_DrawNumber(players[CONSOLEPLAYER].killCount, 200, 65, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_DrawShadowedChar3('/', 236, 65, GF_FONTB, DTF_ALIGN_TOPLEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    IN_DrawNumber(totalKills, 248, 65, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    dd_snprintf(buf, 20, "%i", players[CONSOLEPLAYER].killCount);
+    M_DrawTextFragmentShadowed(buf, 236, 65, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+
+    M_DrawShadowedChar3('/', 241, 65, GF_FONTB, DTF_ALIGN_TOPLEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+
+    dd_snprintf(buf, 20, "%i", totalKills);
+    M_DrawTextFragmentShadowed(buf, 284, 65, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     if(interTime < 60)
         return;
@@ -703,9 +736,13 @@ void IN_DrawSingleStats(void)
         sounds++;
     }
 
-    IN_DrawNumber(players[CONSOLEPLAYER].itemCount, 200, 90, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_DrawShadowedChar3('/', 236, 90, GF_FONTB, DTF_ALIGN_TOPLEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    IN_DrawNumber(totalItems, 248, 90, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    dd_snprintf(buf, 20, "%i", players[CONSOLEPLAYER].itemCount);
+    M_DrawTextFragmentShadowed(buf, 236, 90, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+
+    M_DrawShadowedChar3('/', 241, 90, GF_FONTB, DTF_ALIGN_TOPLEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+
+    dd_snprintf(buf, 20, "%i", totalItems);
+    M_DrawTextFragmentShadowed(buf, 284, 90, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     if(interTime < 90)
         return;
@@ -716,9 +753,13 @@ void IN_DrawSingleStats(void)
         sounds++;
     }
 
-    IN_DrawNumber(players[CONSOLEPLAYER].secretCount, 200, 115, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    M_DrawShadowedChar3('/', 236, 115, GF_FONTB, DTF_ALIGN_TOPLEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    IN_DrawNumber(totalSecret, 248, 115, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    dd_snprintf(buf, 20, "%i", players[CONSOLEPLAYER].secretCount);
+    M_DrawTextFragmentShadowed(buf, 236, 115, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+
+    M_DrawShadowedChar3('/', 241, 115, GF_FONTB, DTF_ALIGN_TOPLEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+
+    dd_snprintf(buf, 20, "%i", totalSecret);
+    M_DrawTextFragmentShadowed(buf, 284, 115, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     if(interTime < 150)
     {
@@ -735,7 +776,7 @@ void IN_DrawSingleStats(void)
     {
         DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
         M_DrawTextFragment2("TIME", 85, 160, GF_FONTB);
-        IN_DrawTime(155, 160, hours, minutes, seconds, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+        IN_DrawTime(284, 160, hours, minutes, seconds, GF_FONTB, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
     }
     else
     {
@@ -747,6 +788,8 @@ void IN_DrawSingleStats(void)
 
         skipIntermission = false;
     }
+
+#undef TRACKING
 }
 
 void IN_DrawCoopStats(void)
@@ -770,6 +813,10 @@ void IN_DrawCoopStats(void)
     {
         if(teamInfo[i].members)
         {
+#define TRACKING                    (1)
+
+            char buf[20];
+
             DGL_Color4f(0, 0, 0, .4f);
             M_DrawPatch(dpFaceAlive[i].id, 27, ypos+2);
 
@@ -788,14 +835,21 @@ void IN_DrawCoopStats(void)
                 sounds++;
             }
 
-            IN_DrawNumber(killPercent[i], 85, ypos + 10, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+            dd_snprintf(buf, 20, "%i", killPercent[i]);
+            M_DrawTextFragmentShadowed(buf, 121, ypos + 10, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
             M_DrawShadowedChar3('%', 121, ypos + 10, GF_FONTB, DTF_ALIGN_TOPLEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            IN_DrawNumber(bonusPercent[i], 160, ypos + 10, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
+            dd_snprintf(buf, 20, "%i", bonusPercent[i]);
+            M_DrawTextFragmentShadowed(buf, 196, ypos + 10, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
             M_DrawShadowedChar3('%', 196, ypos + 10, GF_FONTB, DTF_ALIGN_TOPLEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            IN_DrawNumber(secretPercent[i], 237, ypos + 10, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+
+            dd_snprintf(buf, 20, "%i", secretPercent[i]);
+            M_DrawTextFragmentShadowed(buf, 273, ypos + 10, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
             M_DrawShadowedChar3('%', 273, ypos + 10, GF_FONTB, DTF_ALIGN_TOPLEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+
             ypos += 37;
+
+#undef TRACKING
         }
     }
 }
@@ -848,6 +902,10 @@ void IN_DrawDMStats(void)
     {
         if(teamInfo[i].members)
         {
+#define TRACKING                (1)
+
+            char buf[20];
+
             if(interTime < 100 || i == playerTeam[CONSOLEPLAYER])
             {
                 M_DrawShadowedPatch(dpFaceAlive[i].id, 40, ypos);
@@ -860,12 +918,13 @@ void IN_DrawDMStats(void)
                 M_DrawPatch(dpFaceDead[i].id, xpos, 18);
             }
 
-            kpos = 86;
+            kpos = 122;
             for(j = 0; j < NUMTEAMS; ++j)
             {
                 if(teamInfo[j].members)
                 {
-                    IN_DrawNumber(teamInfo[i].frags[j], kpos, ypos + 10, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+                    dd_snprintf(buf, 20, "%i", teamInfo[i].frags[j]);
+                    M_DrawTextFragmentShadowed(buf, kpos, ypos + 10, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
                     kpos += 43;
                 }
             }
@@ -874,16 +933,20 @@ void IN_DrawDMStats(void)
             {
                 if(!(interTime & 16))
                 {
-                    IN_DrawNumber(teamInfo[i].totalFrags, 263, ypos + 10, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+                    dd_snprintf(buf, 20, "%i", teamInfo[i].totalFrags);
+                    M_DrawTextFragmentShadowed(buf, 263, ypos + 10, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
                 }
             }
             else
             {
-                IN_DrawNumber(teamInfo[i].totalFrags, 263, ypos + 10, 3, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+                dd_snprintf(buf, 20, "%i", teamInfo[i].totalFrags);
+                M_DrawTextFragmentShadowed(buf, 263, ypos + 10, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
             }
 
             ypos += 36;
             xpos += 43;
+
+#undef TRACKING
         }
     }
 }

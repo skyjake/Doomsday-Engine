@@ -2232,104 +2232,14 @@ void M_DrawShadowedChar(unsigned char ch, int x, int y)
     M_DrawShadowedChar2(ch, x, y, GF_FONTA);
 }
 
-#if __JHERETIC__
-void IN_DrawNumber(int val, int x, int y, int digits, float r, float g, float b, float a)
+void M_DrawTextFragmentShadowed(const char* string, int x, int y, gamefontid_t font, short flags, int tracking, float r, float g, float b, float a)
 {
-    int xpos, oldval, realdigits;
-    boolean neg;
+    DGL_Color4f(0, 0, 0, a * .4f);
+    M_DrawTextFragment4(string, x+2, y+2, font, flags, tracking);
 
-    oldval = val;
-    xpos = x;
-    neg = false;
-    realdigits = 1;
-
-    if(val < 0)
-    {
-        val = -val;
-        neg = true;
-        if(val > 99)
-        {
-            val = 99;
-        }
-    }
-
-    if(val > 9)
-    {
-        realdigits++;
-        if(digits < realdigits)
-        {
-            realdigits = digits;
-            val = 9;
-        }
-    }
-
-    if(val > 99)
-    {
-        realdigits++;
-        if(digits < realdigits)
-        {
-            realdigits = digits;
-            val = 99;
-        }
-    }
-
-    if(val > 999)
-    {
-        realdigits++;
-        if(digits < realdigits)
-        {
-            realdigits = digits;
-            val = 999;
-        }
-    }
-
-    if(digits == 4)
-        M_DrawShadowedChar3('0' + val / 1000, xpos + 6 - 12, y, GF_FONTB, DTF_ALIGN_TOP, r, g, b, a);
-
-    if(digits > 2)
-    {
-        if(realdigits > 2)
-            M_DrawShadowedChar3('0' + val / 100, xpos + 6, y, GF_FONTB, DTF_ALIGN_TOP, r, g, b, a);
-        xpos += 12;
-    }
-
-    val = val % 100;
-    if(digits > 1)
-    {
-        if(val > 9)
-            M_DrawShadowedChar3('0' + val / 10, xpos + 6, y, GF_FONTB, DTF_ALIGN_TOP, r, g, b, a);
-        else if(digits == 2 || oldval > 99)
-            M_DrawShadowedChar3('0', xpos, y, GF_FONTB, DTF_ALIGN_TOP, r, g, b, a);
-        xpos += 12;
-    }
-
-    val = val % 10;
-    M_DrawShadowedChar3('0' + val, xpos + 6, y, GF_FONTB, DTF_ALIGN_TOP, r, g, b, a);
-    if(neg)
-        M_DrawShadowedChar3('-', xpos + 6 - 12 * (realdigits), y, GF_FONTB, DTF_ALIGN_TOP, r, g, b, a);
-}
-
-void IN_DrawTime(int x, int y, int h, int m, int s, float r, float g, float b, float a)
-{
-    if(h)
-    {
-        IN_DrawNumber(h, x, y, 2, r, g, b, a);
-        DGL_Color4f(r, g, b, a);
-        M_DrawChar2(':', x + 26, y, GF_FONTB);
-    }
-
-    x += 34;
-    if(m || h)
-    {
-        IN_DrawNumber(m, x, y, 2, r, g, b, a);
-    }
-
-    x += 34;
     DGL_Color4f(r, g, b, a);
-    M_DrawChar2(':', x-8, y, GF_FONTB);
-    IN_DrawNumber(s, x, y, 2, r, g, b, a);
+    M_DrawTextFragment4(string, x, y, font, flags, tracking);
 }
-#endif
 
 /**
  * Write a string using a colored, custom font and do a type-in effect.
