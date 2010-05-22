@@ -266,7 +266,7 @@ void G_UpdateEyeHeight(cvar_t* unused)
  */
 int ConTextOut(const char* string, int x, int y)
 {
-    M_DrawTextFragment3(string, x, y, GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
+    GL_DrawTextFragment3(string, x, y, GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
     return 0;
 }
 
@@ -275,7 +275,7 @@ int ConTextOut(const char* string, int x, int y)
  */
 int ConTextWidth(const char* string)
 {
-    return M_TextWidth(string, GF_FONTA);
+    return GL_TextWidth(string, GF_FONTA);
 }
 
 /**

@@ -30,34 +30,13 @@
 #ifndef __COMMON_HU_STUFF_H__
 #define __COMMON_HU_STUFF_H__
 
-#include "doomsday.h"
+#include "gl_drawcompositefont.h"
 
-#include "r_common.h"
-
-// The fonts.
-typedef enum {
-    GF_FIRST = 0,
-    GF_FONTA = GF_FIRST,
-    GF_FONTB,
-    GF_STATUS,
-#if __JDOOM__
-    GF_INDEX, // Used for the ready/max ammo on the statusbar
+#if __JHEXEN__
+# include "h2def.h"
+#else
+# include "doomdef.h"
 #endif
-#if __JDOOM__ || __JDOOM64__
-    GF_SMALL, // Used on the intermission.
-#endif
-#if __JHERETIC__ || __JHEXEN__
-    GF_SMALLIN,
-#endif
-    NUM_GAME_FONTS
-} gamefontid_t;
-
-typedef struct gamefont_s {
-    struct gamefont_char_s {
-        char            lumpname[9];
-        patchinfo_t     pInfo;
-    } chars[256];
-} gamefont_t;
 
 extern patchid_t* mapNamePatches; // Name graphics of each map.
 #if __JDOOM__ || __JDOOM64__
@@ -106,65 +85,11 @@ void            Hu_EndBorderedProjection(borderedprojectionstate_t* s);
 void            Draw_BeginZoom(float s, float originX, float originY);
 void            Draw_EndZoom(void);
 
-/**
- * Text string fragments:
- */
-
-/**
- * @defGroup drawTextFlags Draw Text Flags
- */
-/*@{*/
-#define DTF_ALIGN_LEFT      0x0001
-#define DTF_ALIGN_RIGHT     0x0002
-#define DTF_ALIGN_BOTTOM    0x0004
-#define DTF_ALIGN_TOP       0x0008
-#define DTF_NO_TYPEIN       0x0010
-#define DTF_NO_SHADOW       0x0020
-
-#define DTF_NO_EFFECTS      (DTF_NO_TYPEIN|DTF_NO_SHADOW)
-#define DTF_ALIGN_TOPLEFT   (DTF_ALIGN_TOP|DTF_ALIGN_LEFT)
-#define DTF_ALIGN_BOTTOMLEFT (DTF_ALIGN_BOTTOM|DTF_ALIGN_LEFT)
-#define DTF_ALIGN_TOPRIGHT  (DTF_ALIGN_TOP|DTF_ALIGN_RIGHT)
-#define DTF_ALIGN_BOTTOMRIGHT (DTF_ALIGN_BOTTOM|DTF_ALIGN_RIGHT)
-
-/*@}*/
-
-void            M_DrawTextFragment(const char* string, int x, int y);
-void            M_DrawTextFragment2(const char* string, int x, int y, gamefontid_t font);
-void            M_DrawTextFragment3(const char* string, int x, int y, gamefontid_t font, short flags);
-void            M_DrawTextFragment4(const char* string, int x, int y, gamefontid_t font, short flags, int tracking);
-void            M_DrawTextFragment5(const char* string, int x, int y, gamefontid_t font, short flags, int tracking, int initialCount);
-
 void            M_DrawTextFragmentShadowed(const char* string, int x, int y, gamefontid_t font, short flags, int tracking, float r, float g, float b, float a);
-
-// Utility routines:
-int             M_TextFragmentWidth(const char* string, gamefontid_t font);
-int             M_TextFragmentWidth2(const char* string, gamefontid_t font, int tracking);
-int             M_TextFragmentHeight(const char* string, gamefontid_t font);
-
-/**
- * Text strings (formatted).
- */
-void            M_DrawText(const char* string, int x, int y, gamefontid_t font, short flags, int defTracking, float defRed, float defGreen, float defBlue, float defAlpha, boolean defCase);
-
-// Utility routines:
-int             M_TextWidth(const char* string, gamefontid_t font);
-int             M_TextHeight(const char* string, gamefontid_t font);
-
-/**
- * Single character:
- */
-void            M_DrawChar(unsigned char ch, int x, int y);
-void            M_DrawChar2(unsigned char ch, int x, int y, gamefontid_t font);
-void            M_DrawChar3(unsigned char ch, int x, int y, gamefontid_t font, short flags);
 
 void            M_DrawShadowedChar(unsigned char ch, int x, int y);
 void            M_DrawShadowedChar2(unsigned char ch, int x, int y, gamefontid_t font);
 void            M_DrawShadowedChar3(unsigned char ch, int x, int y, gamefontid_t font, short flags, float r, float g, float b, float a);
-
-// Utility routines:
-int             M_CharWidth(unsigned char ch, gamefontid_t font);
-int             M_CharHeight(unsigned char ch, gamefontid_t font);
 
 /**
  * Patches:

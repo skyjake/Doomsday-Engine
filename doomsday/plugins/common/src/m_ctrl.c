@@ -428,7 +428,7 @@ void M_InitControlsMenu(void)
 
 static void M_DrawSmallText(const char* string, int x, int y)
 {
-    int height = M_TextHeight(string, GF_FONTA);
+    int height = GL_TextHeight(string, GF_FONTA);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -438,7 +438,7 @@ static void M_DrawSmallText(const char* string, int x, int y)
     DGL_Translatef(-x, -y - height/2, 0);
 
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
-    M_DrawTextFragment3(string, x, y, GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
+    GL_DrawTextFragment3(string, x, y, GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -459,8 +459,8 @@ static void M_DrawBinding(bindingitertype_t type, int bid, const char* name, boo
 
     if(type == MIBT_KEY)
     {
-        width = M_TextWidth(name, GF_FONTA);
-        height = M_TextHeight(name, GF_FONTA);
+        width = GL_TextWidth(name, GF_FONTA);
+        height = GL_TextHeight(name, GF_FONTA);
 
         DGL_SetNoMaterial();
         DGL_DrawRect(d->x, d->y, width*SMALL_SCALE + 2, height, bgRGB[0], bgRGB[1], bgRGB[2], Hu_MenuAlpha() * .6f);
@@ -474,8 +474,8 @@ static void M_DrawBinding(bindingitertype_t type, int bid, const char* name, boo
 
         sprintf(temp, "%s%c%s", type == MIBT_MOUSE? "mouse" : "joy", isInverse? '-' : '+', name);
 
-        width = M_TextWidth(temp, GF_FONTA);
-        height = M_TextHeight(temp, GF_FONTA);
+        width = GL_TextWidth(temp, GF_FONTA);
+        height = GL_TextHeight(temp, GF_FONTA);
 
         M_DrawSmallText(temp, d->x, d->y);
 
@@ -619,10 +619,10 @@ void M_DrawControlsMenu(void)
     MN_DrawTitle("CONTROLS", menu->y - 28);
     Hu_MenuPageString(buf, menu);
     DGL_Color4f(1, .7f, .3f, Hu_MenuAlpha());
-    M_DrawTextFragment3(buf, 160, menu->y - 12, GF_FONTA, DTF_ALIGN_TOP);
+    M_DrawMenuText3(buf, 160, menu->y - 12, GF_FONTA, DTF_ALIGN_TOP);
 #else
     DGL_Color4f(cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], Hu_MenuAlpha());
-    M_DrawTextFragment3("CONTROLS", 120, 100 - 98/cfg.menuScale, GF_FONTB, DTF_ALIGN_TOPLEFT);
+    M_DrawMenuText2("CONTROLS", 120, 100 - 98/cfg.menuScale, GF_FONTB);
 
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 
@@ -639,7 +639,7 @@ void M_DrawControlsMenu(void)
 #else
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
 #endif
-    M_DrawTextFragment3(buf, 160, 100 + (95/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM);
+    M_DrawMenuText3(buf, 160, 100 + (95/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM);
 
     for(i = 0; i < menu->numVisItems && menu->firstItem + i < menu->itemCount;
         i++, item++)
@@ -684,10 +684,10 @@ void M_ControlGrabDrawer(void)
     DGL_Translatef(-(SCREENWIDTH/2), -(SCREENHEIGHT/2), 0);
 
     DGL_Color4f(.75f, .75f, .75f, 1);
-    M_DrawTextFragment3("press key or move controller for", 160, 98, GF_FONTA, DTF_ALIGN_BOTTOM|DTF_NO_TYPEIN);
+    M_DrawMenuText3("press key or move controller for", 160, 98, GF_FONTA, DTF_ALIGN_BOTTOM|DTF_NO_TYPEIN);
 
     DGL_Color4f(1, 1, 1, 1);
-    M_DrawTextFragment3(grabbing->item->text, 160, 102, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    M_DrawMenuText3(grabbing->item->text, 160, 102, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();

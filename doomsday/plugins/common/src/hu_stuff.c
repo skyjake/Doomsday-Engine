@@ -90,11 +90,6 @@ typedef struct fogeffectdata_s {
     boolean         scrollDir;
 } fogeffectdata_t;
 
-typedef struct fontpatch_s {
-    byte        ch;
-    char        lumpName[9];
-} fontpatch_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -169,9 +164,6 @@ const char shiftXForm[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static gamefont_t gFonts[NUM_GAME_FONTS];
-static gamefontid_t currentGFontIndex;
-
 static hudstate_t hudStates[MAXPLAYERS];
 static fogeffectdata_t fogEffectData;
 
@@ -183,26 +175,6 @@ static patchid_t dpSliderHandle;
 static patchid_t m_pause; // Paused graphic.
 
 // CODE -------------------------------------------------------------------
-
-static __inline patchid_t patchForFontChar(gamefontid_t font, unsigned char ch)
-{
-    assert(font >= GF_FIRST && font < NUM_GAME_FONTS);
-    return gFonts[font].chars[ch].pInfo.id;
-}
-
-static __inline short translateTextToPatchDrawFlags(byte in)
-{
-    short out = 0;
-    if(in & DTF_ALIGN_LEFT)
-        out |= DPF_ALIGN_LEFT;
-    if(in & DTF_ALIGN_RIGHT)
-        out |= DPF_ALIGN_RIGHT;
-    if(in & DTF_ALIGN_BOTTOM)
-        out |= DPF_ALIGN_BOTTOM;
-    if(in & DTF_ALIGN_TOP)
-        out |= DPF_ALIGN_TOP;
-    return out;
-}
 
 static __inline short translatePatchToTextDrawFlags(short in)
 {
@@ -216,71 +188,6 @@ static __inline short translatePatchToTextDrawFlags(short in)
     if(in & DPF_ALIGN_TOP)
         out |= DTF_ALIGN_TOP;
     return out;
-}
-
-void R_SetFontCharacter(gamefontid_t fontid, byte ch, const char* lumpname)
-{
-    gamefont_t* font;
-
-    if(!(fontid >= GF_FIRST && fontid < NUM_GAME_FONTS))
-    {
-        Con_Message("R_SetFontCharacter: Warning, unknown font id %i.\n", (int) fontid);
-        return;
-    }
-
-    font = &gFonts[fontid];
-    memset(font->chars[ch].lumpname, 0, sizeof(font->chars[ch].lumpname));
-    strncpy(font->chars[ch].lumpname, lumpname, 8);
-
-    // Instruct Doomsday to load the patch in monochrome mode.
-    // (2 = weighted average).
-    DD_SetInteger(DD_MONOCHROME_PATCHES, 2);
-    DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, true);
-
-    R_PrecachePatch(font->chars[ch].lumpname, &font->chars[ch].pInfo);
-
-    DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, false);
-    DD_SetInteger(DD_MONOCHROME_PATCHES, 0);
-}
-
-void R_InitFont(gamefontid_t fontid, const fontpatch_t* patches, size_t num)
-{
-    gamefont_t* font;
-    size_t i;
-
-    if(!(fontid >= GF_FIRST && fontid < NUM_GAME_FONTS))
-    {
-        Con_Message("R_InitFont: Warning, unknown font id %i.\n", (int) fontid);
-        return;
-    }
-
-    font = &gFonts[fontid];
-    memset(font, 0, sizeof(*font));
-    for(i = 0; i < 256; ++i)
-        font->chars[i].pInfo.id = -1;
-
-    for(i = 0; i < num; ++i)
-    {
-        const fontpatch_t* p = &patches[i];
-        R_SetFontCharacter(fontid, p->ch, p->lumpName);
-    }
-}
-
-/**
- * Change the current font.
- */
-void R_SetFont(gamefontid_t fontid)
-{
-    if(!(fontid >= GF_FIRST && fontid < NUM_GAME_FONTS))
-        return; // No such font.
-    currentGFontIndex = fontid;
-}
-
-gamefontid_t R_GetCurrentFont(void)
-{
-    if(currentGFontIndex == -1)
-        return 0;
-    return currentGFontIndex;
 }
 
 /**
@@ -948,7 +855,7 @@ void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
     DGL_Translatef(-x, -y, 0);
 
     DGL_Color4f(r, g, b, a);
-    M_DrawTextFragment3(str, x, y, font, flags);
+    GL_DrawTextFragment3(str, x, y, font, flags);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -1130,7 +1037,7 @@ static void drawTable(float x, float ly, float width, float height,
     colW = calloc(1, sizeof(*colW) * numCols);
 
     lineHeight = height / (MAXPLAYERS + 1);
-    fontHeight = M_CharHeight('A', GF_FONTA);
+    fontHeight = GL_CharHeight('A', GF_FONTA);
     fontScale = (lineHeight - CELL_PADDING * 2) / fontHeight;
     fontOffsetY = 0;
     if(fontScale > 1)
@@ -1147,7 +1054,7 @@ static void drawTable(float x, float ly, float width, float height,
 
         if(columns[n].flags & CF_FIXEDWIDTH)
         {
-            colW[n] = M_TextWidth(columns[n].label, GF_FONTA) + CELL_PADDING * 2;
+            colW[n] = GL_TextWidth(columns[n].label, GF_FONTA) + CELL_PADDING * 2;
             fixedWidth += colW[n];
         }
     }
@@ -1339,14 +1246,14 @@ static void drawMapMetaData(float x, float y, gamefontid_t font, float alpha)
 
     DGL_Color4f(1, 1, 1, alpha);
     // Map name:
-    M_DrawTextFragment2("map: ", x, y + 16, font);
-    M_DrawTextFragment2(lname, x += M_TextWidth("map: ", font), y + 16, font);
+    GL_DrawTextFragment2("map: ", x, y + 16, font);
+    GL_DrawTextFragment2(lname, x += GL_TextWidth("map: ", font), y + 16, font);
 
     x += 8;
 
     // Game mode:
-    M_DrawTextFragment2("gamemode: ", x += M_TextWidth(lname, font), y + 16, font);
-    M_DrawTextFragment2(P_GetGameModeName(), x += M_TextWidth("gamemode: ", font), y + 16, font);
+    GL_DrawTextFragment2("gamemode: ", x += GL_TextWidth(lname, font), y + 16, font);
+    GL_DrawTextFragment2(P_GetGameModeName(), x += GL_TextWidth("gamemode: ", font), y + 16, font);
 }
 
 /**
@@ -1409,7 +1316,7 @@ void HU_DrawScoreBoard(int player)
 
     // Title:
     DGL_Color4f(1, 0, 0, hud->scoreAlpha);
-    M_DrawTextFragment3("ranking", x + width / 2, y + LINE_BORDER, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    GL_DrawTextFragment3("ranking", x + width / 2, y + LINE_BORDER, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_EFFECTS);
 
     drawMapMetaData(x, y + 16, GF_FONTA, hud->scoreAlpha);
 
@@ -1508,482 +1415,6 @@ void Hu_FogEffectTicker(timespan_t ticLength)
     }
 #undef fog
 #undef FOGALPHA_FADE_STEP
-}
-
-/**
- * Expected: <whitespace> = <whitespace> <float>
- */
-float WI_ParseFloat(char** str)
-{
-    float value;
-    char* end;
-
-    *str = M_SkipWhite(*str);
-    if(**str != '=')
-        return 0; // Now I'm confused!
-
-    *str = M_SkipWhite(*str + 1);
-    value = strtod(*str, &end);
-    *str = end;
-    return value;
-}
-
-/**
- * Draw a string of text controlled by parameter blocks.
- */
-void M_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
-    short flags, int defTracking, float defRed, float defGreen, float defBlue, float defAlpha,
-    boolean defCase)
-{
-#define SMALLBUFF_SIZE  80
-
-    boolean typeIn = (flags & DTF_NO_TYPEIN) == 0;
-    float r = defRed, g = defGreen, b = defBlue, a = defAlpha;
-    float offX = 0, offY = 0, width = 0, cx = x, cy = y;
-    float scaleX = 1, scaleY = 1, angle = 0, extraScale, leading = .25f;
-    int charCount = 0, curCase = -1, tracking = defTracking;
-    char smallBuff[SMALLBUFF_SIZE+1], *bigBuff = NULL;
-    char temp[256], *str, *string, *end;
-    gamefontid_t font = defFont;
-    boolean caseScale = defCase;
-    struct {
-        float scale, offset;
-    } caseMod[2]; // 1=upper, 0=lower
-    size_t len;
-
-    if(!inString || !inString[0])
-        return;
-
-    len = strlen(inString);
-    if(len < SMALLBUFF_SIZE)
-    {
-        memcpy(smallBuff, inString, len);
-        smallBuff[len] = '\0';
-
-        str = smallBuff;
-    }
-    else
-    {
-        bigBuff = malloc(len+1);
-        memcpy(bigBuff, inString, len);
-        bigBuff[len] = '\0';
-
-        str = bigBuff;
-    }
-
-    caseMod[0].scale = 1;
-    caseMod[0].offset = 3;
-    caseMod[1].scale = 1.25f;
-    caseMod[1].offset = 0;
-
-    string = str;
-    while(*string)
-    {
-        // Parse and draw the replacement string.
-        if(*string == '{') // Parameters included?
-        {
-            string++;
-            while(*string && *string != '}')
-            {
-                string = M_SkipWhite(string);
-
-                // What do we have here?
-                if(!strnicmp(string, "fonta", 5))
-                {
-                    font = GF_FONTA;
-                    string += 5;
-                }
-                else if(!strnicmp(string, "fontb", 5))
-                {
-                    font = GF_FONTB;
-                    string += 5;
-                }
-                else if(!strnicmp(string, "flash", 5))
-                {
-                    string += 5;
-                    typeIn = true;
-                }
-                else if(!strnicmp(string, "noflash", 7))
-                {
-                    string += 7;
-                    typeIn = false;
-                }
-                else if(!strnicmp(string, "case", 4))
-                {
-                    string += 4;
-                    caseScale = true;
-                }
-                else if(!strnicmp(string, "nocase", 6))
-                {
-                    string += 6;
-                    caseScale = false;
-                }
-                else if(!strnicmp(string, "ups", 3))
-                {
-                    string += 3;
-                    caseMod[1].scale = WI_ParseFloat(&string);
-                }
-                else if(!strnicmp(string, "upo", 3))
-                {
-                    string += 3;
-                    caseMod[1].offset = WI_ParseFloat(&string);
-                }
-                else if(!strnicmp(string, "los", 3))
-                {
-                    string += 3;
-                    caseMod[0].scale = WI_ParseFloat(&string);
-                }
-                else if(!strnicmp(string, "loo", 3))
-                {
-                    string += 3;
-                    caseMod[0].offset = WI_ParseFloat(&string);
-                }
-                else if(!strnicmp(string, "break", 5))
-                {
-                    string += 5;
-                    cx = x;
-                    cy += scaleY * M_CharHeight(0, font);
-                }
-                else if(!strnicmp(string, "r", 1))
-                {
-                    string++;
-                    r = WI_ParseFloat(&string);
-                }
-                else if(!strnicmp(string, "g", 1))
-                {
-                    string++;
-                    g = WI_ParseFloat(&string);
-                }
-                else if(!strnicmp(string, "b", 1))
-                {
-                    string++;
-                    b = WI_ParseFloat(&string);
-                }
-                else if(!strnicmp(string, "x", 1))
-                {
-                    string++;
-                    offX = WI_ParseFloat(&string);
-                }
-                else if(!strnicmp(string, "y", 1))
-                {
-                    string++;
-                    offY = WI_ParseFloat(&string);
-                }
-                else if(!strnicmp(string, "scalex", 6))
-                {
-                    string += 6;
-                    scaleX = WI_ParseFloat(&string);
-                }
-                else if(!strnicmp(string, "scaley", 6))
-                {
-                    string += 6;
-                    scaleY = WI_ParseFloat(&string);
-                }
-                else if(!strnicmp(string, "scale", 5))
-                {
-                    string += 5;
-                    scaleX = scaleY = WI_ParseFloat(&string);
-                }
-                else if(!strnicmp(string, "angle", 5))
-                {
-                    string += 5;
-                    angle = WI_ParseFloat(&string);
-                }
-                else
-                {
-                    // Unknown, skip it.
-                    if(*string != '}')
-                        string++;
-                }
-            }
-
-            // Skip over the closing brace.
-            if(*string)
-                string++;
-        }
-
-        for(end = string; *end && *end != '{';)
-        {
-            boolean newline = false;
-            short fragmentFlags;
-            int alignx = 0;
-
-            // Find the end of the next fragment.
-            if(caseScale)
-            {
-                curCase = -1;
-                // Select a substring with characters of the same case (or whitespace).
-                for(; *end && *end != '{' && *end != '\n'; end++)
-                {
-                    // We can other skip whitespace.
-                    if(isspace(*end))
-                        continue;
-
-                    if(curCase < 0)
-                        curCase = (isupper(*end) != 0);
-                    else if(curCase != (isupper(*end) != 0))
-                        break;
-                }
-            }
-            else
-            {
-                curCase = 0;
-                for(; *end && *end != '{' && *end != '\n'; end++);
-            }
-
-            strncpy(temp, string, end - string);
-            temp[end - string] = 0;
-
-            if(end && *end == '\n')
-            {
-                newline = true;
-                ++end;
-            }
-
-            // Continue from here.
-            string = end;
-
-            if(!(flags & (DTF_ALIGN_LEFT|DTF_ALIGN_RIGHT)))
-            {
-                fragmentFlags = flags;
-            }
-            else
-            {
-                // We'll take care of horizontal positioning of the fragment so align left.
-                fragmentFlags = (flags & ~(DTF_ALIGN_RIGHT)) | DTF_ALIGN_LEFT;
-                if(flags & DTF_ALIGN_RIGHT)
-                    alignx = -M_TextFragmentWidth2(temp, font, tracking) * scaleX;
-            }
-
-            // Setup the scaling.
-            DGL_MatrixMode(DGL_MODELVIEW);
-            DGL_PushMatrix();
-
-            // Rotate.
-            if(angle != 0)
-            {
-                // The origin is the specified (x,y) for the patch.
-                // We'll undo the VGA aspect ratio (otherwise the result would
-                // be skewed).
-                DGL_Translatef(x, y, 0);
-                DGL_Scalef(1, 200.0f / 240.0f, 1);
-                DGL_Rotatef(angle, 0, 0, 1);
-                DGL_Scalef(1, 240.0f / 200.0f, 1);
-                DGL_Translatef(-x, -y, 0);
-            }
-
-            DGL_Translatef(cx + offX + alignx, cy + offY + (caseScale ? caseMod[curCase].offset : 0), 0);
-            extraScale = (caseScale ? caseMod[curCase].scale : 1);
-            DGL_Scalef(scaleX, scaleY * extraScale, 1);
-
-            // Draw it.
-            DGL_Color4f(r, g, b, a);
-            M_DrawTextFragment5(temp, 0, 0, font, fragmentFlags, tracking, typeIn ? charCount : 0);
-            charCount += strlen(temp);
-
-            // Advance the current position?
-            if(!newline)
-            {
-                cx += (float) M_TextFragmentWidth2(temp, font, tracking) * scaleX;
-            }
-            else
-            {
-                cx = x;
-                cy += (float) M_TextFragmentHeight(temp, font) * (1+leading) * scaleY;
-            }
-
-            DGL_MatrixMode(DGL_MODELVIEW);
-            DGL_PopMatrix();
-        }
-    }
-
-    // Free temporary storage.
-    if(bigBuff)
-        free(bigBuff);
-
-#undef SMALLBUFF_SIZE
-}
-
-int M_CharWidth(unsigned char ch, gamefontid_t font)
-{
-    assert(font >= GF_FIRST && font < NUM_GAME_FONTS);
-    return gFonts[font].chars[ch].pInfo.width;
-}
-
-int M_CharHeight(unsigned char ch, gamefontid_t font)
-{
-    assert(font >= GF_FIRST && font < NUM_GAME_FONTS);
-    return gFonts[font].chars[ch].pInfo.height;
-}
-
-/**
- * Find the visible width of the text string fragment.
- * \note Does NOT skip paramater blocks - assumes the caller has dealt
- * with them and not passed them.
- */
-int M_TextFragmentWidth2(const char* string, gamefontid_t font, int tracking)
-{
-    assert(string);
-    {
-    const char* ch;
-    unsigned char c;
-    size_t len;
-    int width;
-    uint i;
-
-    if(!string[0])
-        return 0;
-
-    i = 0;
-    width = 0;
-    len = strlen(string);
-    ch = string;
-    while(i++ < len && (c = *ch++) != 0 && c != '\n')
-        width += M_CharWidth(c, font);
-
-    return width + tracking * (len-1);
-    }
-}
-
-int M_TextFragmentWidth(const char* string, gamefontid_t font)
-{
-    return M_TextFragmentWidth2(string, font, 0);
-}
-
-/**
- * Find the visible height of the text string fragment.
- * \note Does NOT skip paramater blocks - assumes the caller has dealt
- * with them and not passed them.
- */
-int M_TextFragmentHeight(const char* string, gamefontid_t font)
-{
-    assert(string);
-    {
-    const char* ch;
-    unsigned char c;
-    size_t len;
-    int height;
-    uint i;
-
-    if(!string[0])
-        return 0;
-
-    i = 0;
-    height = 0;
-    len = strlen(string);
-    ch = string;
-    while(i++ < len && (c = *ch++) != 0 && c != '\n')
-    {
-        int charHeight = M_CharHeight(c, font);
-        if(charHeight > height)
-            height = charHeight;
-    }
-
-    return height;
-    }
-}
-
-/**
- * Find the visible width of the whole formatted text string.
- * Skips parameter blocks eg "{param}Text" = 4 chars
- */
-int M_TextWidth(const char* string, gamefontid_t font)
-{
-    assert(string);
-    {
-    int w, maxWidth = -1;
-    boolean skip = false;
-    const char* ch;
-    size_t i, len;
-
-    if(!string[0])
-        return 0;
-    if(font < 0 || font >= NUM_GAME_FONTS)
-        return 0;
-
-    w = 0;
-    len = strlen(string);
-    ch = string;
-    for(i = 0; i < len; ++i, ch++)
-    {
-        unsigned char c = *ch;
-
-        if(c == '{')
-            skip = true;
-        else if(c == '}')
-            skip = false;
-        if(skip)
-            continue;
-
-        if(c == '\n')
-        {
-            if(w > maxWidth)
-                maxWidth = w;
-            w = 0;
-            continue;
-        }
-
-        w += M_CharWidth(c, font);
-
-        if(i == len - 1 && maxWidth == -1)
-        {
-            maxWidth = w;
-        }
-    }
-
-    return maxWidth;
-    }
-}
-
-/**
- * Find the visible height of the whole formatted text string.
- * Skips parameter blocks eg "{param}Text" = 4 chars
- */
-int M_TextHeight(const char* string, gamefontid_t font)
-{
-    assert(string);
-    {
-    int h, currentLineHeight;
-    boolean skip = false;
-    const char* ch;
-    size_t i, len;
-
-    if(!string[0])
-        return 0;
-    if(font < 0 || font >= NUM_GAME_FONTS)
-        return 0;
-    
-    currentLineHeight = 0;
-    len = strlen(string);
-    h = 0;
-    ch = string;
-    for(i = 0; i < len; ++i, ch++)
-    {
-        unsigned char c = *ch;
-        int charHeight;
-
-        if(c == '{')
-            skip = true;
-        else if(c == '}')
-            skip = false;
-        if(skip)
-            continue;
-
-        if(c == '\n')
-        {
-            h += currentLineHeight == 0? M_CharHeight('A', font) : currentLineHeight;
-            currentLineHeight = 0;
-            continue;
-        }
-
-        charHeight = M_CharHeight(c, font);
-        if(charHeight > currentLineHeight)
-            currentLineHeight = charHeight;
-    }
-    h += currentLineHeight;
-
-    return h;
-    }
 }
 
 void M_DrawGlowBar(const float a[2], const float b[2], float thickness,
@@ -2166,60 +1597,14 @@ void M_DrawGlowBar(const float a[2], const float b[2], float thickness,
     }
 }
 
-void M_LetterFlash(int x, int y, int w, int h, int bright, float r, float g,
-                   float b, float a)
-{
-    float fsize = 4 + bright, red, green, blue, alpha;
-    float fw = fsize * w / 2.0f, fh = fsize * h / 2.0f;
-
-    // Don't draw anything for very small letters.
-    if(h <= 4)
-        return;
-
-    // Don't bother with hidden letters.
-    if(!(a > 0.f))
-        return;
-
-    red   = MINMAX_OF(0.f, r, 1.f);
-    green = MINMAX_OF(0.f, g, 1.f);
-    blue  = MINMAX_OF(0.f, b, 1.f);
-    alpha = MINMAX_OF(0.f, a, 1.f);
-
-    DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
-
-    if(bright)
-        DGL_BlendMode(BM_ADD);
-    else
-        DGL_BlendFunc(DGL_ZERO, DGL_ONE_MINUS_SRC_ALPHA);
-
-    DGL_DrawRect(x + w / 2.0f - fw / 2, y + h / 2.0f - fh / 2, fw, fh, red, green, blue, alpha);
-
-    DGL_BlendMode(BM_NORMAL);
-}
-
-void M_DrawChar3(unsigned char ch, int x, int y, gamefontid_t font, short flags)
-{
-    M_DrawPatch2(patchForFontChar(font, ch), x, y, translateTextToPatchDrawFlags(flags));
-}
-
-void M_DrawChar2(unsigned char ch, int x, int y, gamefontid_t font)
-{
-    M_DrawChar3(ch, x, y, font, DTF_ALIGN_TOPLEFT);
-}
-
-void M_DrawChar(unsigned char ch, int x, int y)
-{
-    M_DrawChar2(ch, x, y, GF_FONTA);
-}
-
 void M_DrawShadowedChar3(unsigned char ch, int x, int y, gamefontid_t font, short flags,
     float r, float g, float b, float a)
 {
     DGL_Color4f(0, 0, 0, a * .4f);
-    M_DrawChar3(ch, x+2, y+2, font, flags);
+    GL_DrawChar3(ch, x+2, y+2, font, flags);
 
     DGL_Color4f(r, g, b, a);
-    M_DrawChar3(ch, x, y, font, flags);
+    GL_DrawChar3(ch, x, y, font, flags);
 }
 
 void M_DrawShadowedChar2(unsigned char ch, int x, int y, gamefontid_t font)
@@ -2235,148 +1620,10 @@ void M_DrawShadowedChar(unsigned char ch, int x, int y)
 void M_DrawTextFragmentShadowed(const char* string, int x, int y, gamefontid_t font, short flags, int tracking, float r, float g, float b, float a)
 {
     DGL_Color4f(0, 0, 0, a * .4f);
-    M_DrawTextFragment4(string, x+2, y+2, font, flags, tracking);
+    GL_DrawTextFragment4(string, x+2, y+2, font, flags, tracking);
 
     DGL_Color4f(r, g, b, a);
-    M_DrawTextFragment4(string, x, y, font, flags, tracking);
-}
-
-/**
- * Write a string using a colored, custom font and do a type-in effect.
- */
-void M_DrawTextFragment5(const char* string, int x, int y, gamefontid_t font, short flags,
-    int tracking, int initialCount)
-{
-    boolean noTypein = ((flags & DTF_NO_TYPEIN) || cfg.menuEffects == 0);
-    boolean noShadow = ((flags & DTF_NO_SHADOW) || !(cfg.menuShadow > 0));
-    int i, pass, w, h, cx, cy, count, yoff;
-    float flash, origColor[4], flashColor[4];
-    unsigned char c;
-    const char* ch;
-
-    if(!string || !string[0])
-        return;
-
-    if(flags & DTF_ALIGN_RIGHT)
-        x -= M_TextFragmentWidth2(string, font, tracking);
-    else if(!(flags & DTF_ALIGN_LEFT))
-        x -= M_TextFragmentWidth2(string, font, tracking)/2;
-
-    if(flags & DTF_ALIGN_BOTTOM)
-        y -= M_TextFragmentHeight(string, font);
-    else if(!(flags & DTF_ALIGN_TOP))
-        y -= M_TextFragmentHeight(string, font)/2;
-
-    if(!noTypein || !noShadow)
-        DGL_GetFloatv(DGL_CURRENT_COLOR_RGBA, origColor);
-
-    if(!noTypein)
-    {
-        for(i = 0; i < 3; ++i)
-            flashColor[i] = (1 + 2 * origColor[i]) / 3;
-        flashColor[CA] = cfg.menuGlitter * origColor[CA];
-    }
-
-    for(pass = (noShadow? 1 : 0); pass < 2; ++pass)
-    {
-        count = initialCount;
-        ch = string;
-        cx = x;
-        cy = y;
-
-        if(!noTypein || !noShadow)
-            DGL_Color4fv(origColor);
-
-        for(;;)
-        {
-            c = *ch++;
-            yoff = 0;
-            flash = 0;
-            // Do the type-in effect?
-            if(!noTypein)
-            {
-                int maxCount = (typeInTime > 0? typeInTime * 2 : 0);
-
-                if(count == maxCount)
-                {
-                    flash = 1;
-                    DGL_Color4f(1, 1, 1, origColor[CA]);
-                }
-                else if(count + 1 == maxCount)
-                {
-                    flash = 0.5f;
-                    DGL_Color4f((1 + origColor[CR]) / 2, (1 + origColor[CG]) / 2, (1 + origColor[CB]) / 2, origColor[CA]);
-                }
-                else if(count + 2 == maxCount)
-                {
-                    flash = 0.25f;
-                    DGL_Color4fv(origColor);
-                }
-                else if(count + 3 == maxCount)
-                {
-                    flash = 0.12f;
-                    DGL_Color4fv(origColor);
-                }
-                else if(count > maxCount)
-                {
-                    break;
-                }
-            }
-            count++;
-
-            if(!c || c == '\n')
-                break;
-
-            w = M_CharWidth(c, font);
-            h = M_CharHeight(c, font);
-
-            if(patchForFontChar(font, c) != -1 && c != ' ')
-            {
-                // A character we have a patch for that is not white space.
-                if(pass)
-                {
-                    // The character itself.
-                    M_DrawChar2(c, cx, cy + yoff, font);
-
-                    if(flash > 0)
-                    {   // Do something flashy.
-                        M_LetterFlash(cx, cy + yoff, w, h, true, flashColor[CR], flashColor[CG], flashColor[CB], flashColor[CA] * flash);
-                    }
-                }
-                else if(!noShadow)
-                {   // Shadow.
-                    M_LetterFlash(cx, cy + yoff, w, h, false, 1, 1, 1, origColor[CA] * cfg.menuShadow);
-                }
-            }
-
-            cx += w + tracking;
-        }
-    }
-
-    if(!noTypein || !noShadow)
-    {   // Ensure we restore the original color.
-        DGL_Color4fv(origColor);
-    }
-}
-
-void M_DrawTextFragment4(const char* string, int x, int y, gamefontid_t font, short flags, int tracking)
-{
-    M_DrawTextFragment5(string, x, y, font, flags, tracking, 0);
-}
-
-void M_DrawTextFragment3(const char* string, int x, int y, gamefontid_t font, short flags)
-{
-    M_DrawTextFragment4(string, x, y, font, flags, 0);
-}
-
-void M_DrawTextFragment2(const char* string, int x, int y, gamefontid_t font)
-{
-    M_DrawTextFragment3(string, x, y, font, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
-}
-
-void M_DrawTextFragment(const char* string, int x, int y)
-{
-    M_DrawTextFragment2(string, x, y, GF_FONTA);
+    GL_DrawTextFragment4(string, x, y, font, flags, tracking);
 }
 
 /**
@@ -2409,7 +1656,7 @@ void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
         R_GetPatchInfo(patch, &info);
         if(!info.isCustom)
         {
-            M_DrawText(altstring, x, y, font, translatePatchToTextDrawFlags(flags), 0, r, g, b, a, false);
+            GL_DrawText(altstring, x, y, font, translatePatchToTextDrawFlags(flags), 0, r, g, b, a, false);
             return;
         }
     }
@@ -2438,14 +1685,14 @@ void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
             // A user replacement?
             if(patchString)
             {
-                M_DrawText(string, x, y, font, textFlags, 0, r, g, b, a, false);
+                GL_DrawText(string, x, y, font, textFlags, 0, r, g, b, a, false);
                 return;
             }
 
             // A built-in replacement?
             if(cfg.usePatchReplacement == 2 && altstring && altstring[0])
             {
-                M_DrawText(altstring, x, y, font, textFlags, 0, r, g, b, a, false);
+                GL_DrawText(altstring, x, y, font, textFlags, 0, r, g, b, a, false);
                 return;
             }
         }
@@ -2916,7 +2163,7 @@ static void drawMapTitle(void)
     if(lname)
     {
         DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
-        M_DrawTextFragment3(lname, 0, 0, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+        GL_DrawTextFragment3(lname, 0, 0, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
         y += 20;
     }
 #endif
@@ -2924,7 +2171,7 @@ static void drawMapTitle(void)
     if(lauthor)
     {
         DGL_Color4f(.5f, .5f, .5f, alpha);
-        M_DrawTextFragment3(lauthor, 0, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+        GL_DrawTextFragment3(lauthor, 0, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
     }
 }
 

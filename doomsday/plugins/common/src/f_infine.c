@@ -1489,7 +1489,7 @@ int FI_CharWidth(int ch, boolean fontb)
 {
     ch = FI_FilterChar(ch);
 
-    return M_CharWidth(ch, fontb? GF_FONTB : GF_FONTA);
+    return GL_CharWidth(ch, fontb? GF_FONTB : GF_FONTA);
 }
 
 int FI_GetLineWidth(char* text, boolean fontb)
@@ -1519,7 +1519,7 @@ int FI_DrawChar(int x, int y, int ch, boolean fontb)
 {
     ch = FI_FilterChar(ch);
 
-    M_DrawChar2(ch, x, y, fontb? GF_FONTB : GF_FONTA);
+    GL_DrawChar2(ch, x, y, fontb? GF_FONTB : GF_FONTA);
 
     return FI_CharWidth(ch, fontb);
 }

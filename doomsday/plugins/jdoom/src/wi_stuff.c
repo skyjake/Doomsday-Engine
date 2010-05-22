@@ -501,10 +501,10 @@ void WI_drawPercent(int x, int y, int p)
         return;
 
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
-    M_DrawChar2('%', x, y, GF_SMALL);
+    GL_DrawChar2('%', x, y, GF_SMALL);
 
     dd_snprintf(buf, 20, "%i", p);
-    M_DrawTextFragment3(buf, x, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+    GL_DrawTextFragment3(buf, x, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
 }
 
 /**
@@ -523,14 +523,14 @@ void WI_drawTime(int x, int y, int t)
         x -= 22;
         
         DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
-        M_DrawChar2(':', x, y, GF_SMALL);
+        GL_DrawChar2(':', x, y, GF_SMALL);
         if(minutes > 0)
         {
             dd_snprintf(buf, 20, "%d", minutes);
-            M_DrawTextFragment3(buf, x, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+            GL_DrawTextFragment3(buf, x, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
         }
         dd_snprintf(buf, 20, "%02d", seconds);
-        M_DrawTextFragment2(buf, x+M_CharWidth(':', GF_SMALL), y, GF_SMALL);
+        GL_DrawTextFragment2(buf, x+GL_CharWidth(':', GF_SMALL), y, GF_SMALL);
         return;
     }
 
@@ -795,8 +795,8 @@ void WI_drawDeathmatchStats(void)
 
                 sprintf(tmp, "%i", teamInfo[i].members);
                 DGL_Color4f(1, 1, 1, 1);
-                M_DrawTextFragment(tmp, x - info.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.height - 8);
-                M_DrawTextFragment(tmp, DM_MATRIXX - info.width / 2 + 1, y + info.height - 8);
+                GL_DrawTextFragment(tmp, x - info.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.height - 8);
+                GL_DrawTextFragment(tmp, DM_MATRIXX - info.width / 2 + 1, y + info.height - 8);
             }
         }
         else
@@ -814,7 +814,7 @@ void WI_drawDeathmatchStats(void)
 
     // Draw stats.
     y = DM_MATRIXY + 10;
-    w = M_CharWidth('0', GF_SMALL);
+    w = GL_CharWidth('0', GF_SMALL);
 
     for(i = 0; i < NUM_TEAMS; ++i)
     {
@@ -827,12 +827,12 @@ void WI_drawDeathmatchStats(void)
                 if(teamInfo[j].members)
                 {
                     dd_snprintf(buf, 20, "%i", dmFrags[i][j]);
-                    M_DrawTextFragment3(buf, x + w, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+                    GL_DrawTextFragment3(buf, x + w, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
                 }
                 x += DM_SPACINGX;
             }
             dd_snprintf(buf, 20, "%i", dmTotals[i]);
-            M_DrawTextFragment3(buf, DM_TOTALSX + w, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+            GL_DrawTextFragment3(buf, DM_TOTALSX + w, y, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
         }
 
         y += WI_SPACINGY;
@@ -1002,7 +1002,7 @@ void WI_drawNetgameStats(void)
 {
 #define ORIGINX             (NG_STATSX + starWidth/2 + NG_STATSX*!doFrags)
 
-    int i, x, y, starWidth, pwidth = M_CharWidth('%', GF_SMALL);
+    int i, x, y, starWidth, pwidth = GL_CharWidth('%', GF_SMALL);
     patchinfo_t info;
 
     R_GetPatchInfo(star, &info);
@@ -1051,7 +1051,7 @@ void WI_drawNetgameStats(void)
 
             sprintf(tmp, "%i", teamInfo[i].members);
             DGL_Color4f(1, 1, 1, 1);
-            M_DrawTextFragment(tmp, x - info.width + 1, y + info.height - 8);
+            GL_DrawTextFragment(tmp, x - info.width + 1, y + info.height - 8);
         }
 
         if(i == myTeam)
@@ -1071,7 +1071,7 @@ void WI_drawNetgameStats(void)
         {
             char buf[20];
             dd_snprintf(buf, 20, "%i", cntFrags[i]);
-            M_DrawTextFragment3(buf, x, y + 10, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+            GL_DrawTextFragment3(buf, x, y + 10, GF_SMALL, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
         }
 
         y += WI_SPACINGY;
@@ -1202,7 +1202,7 @@ void WI_updateStats(void)
 
 void WI_drawStats(void)
 {
-    int lh = (3 * M_CharHeight('0', GF_SMALL)) / 2; // Line height.
+    int lh = (3 * GL_CharHeight('0', GF_SMALL)) / 2; // Line height.
 
     WI_slamBackground();
 

@@ -99,6 +99,7 @@
 		<Unit filename="..\..\plugins\common\include\g_common.h" />
 		<Unit filename="..\..\plugins\common\include\g_controls.h" />
 		<Unit filename="..\..\plugins\common\include\g_update.h" />
+		<Unit filename="..\..\plugins\common\include\gl_drawcompositefont.h" />
 		<Unit filename="..\..\plugins\common\include\hu_lib.h" />
 		<Unit filename="..\..\plugins\common\include\hu_log.h" />
 		<Unit filename="..\..\plugins\common\include\hu_menu.h" />
@@ -165,6 +166,7 @@
 		<Unit filename="..\..\plugins\common\src\g_update.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\plugins\common\src\gl_drawcompositefont.c" />
 		<Unit filename="..\..\plugins\common\src\hu_lib.c">
 			<Option compilerVar="CC" />
 		</Unit>

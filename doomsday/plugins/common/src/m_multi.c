@@ -46,8 +46,6 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
 #include "hu_stuff.h"
@@ -384,7 +382,7 @@ void DrawGameSetupMenu(void)
     sprintf(buf, "%u", cfg.netMap+1);
     M_WriteMenuText(menu, idx++, buf);
     DGL_Color4f(1, 0.7f, 0.3f, Hu_MenuAlpha());
-    M_DrawTextFragment3(mapName, 160, menu->y + menu->itemHeight, GF_FONTA, DTF_ALIGN_TOP);
+    M_DrawMenuText3(mapName, 160, menu->y + menu->itemHeight, GF_FONTA, DTF_ALIGN_TOP);
 
     idx++;
     M_WriteMenuText(menu, idx++, skillText[cfg.netSkill]);
@@ -485,8 +483,14 @@ void DrawPlayerSetupMenu(void)
 
     if(plrColor == numColors)
     {
+        short textFlags = DTF_ALIGN_TOPLEFT;
+        if(cfg.menuEffects == 0)
+            textFlags |= DTF_NO_TYPEIN;
+        if(!(cfg.menuShadow > 0))
+            textFlags |= DTF_NO_SHADOW;
+
         DGL_Color4f(1, 1, 1, menuAlpha);
-        M_DrawTextFragment3("AUTOMATIC", 184,
+        GL_DrawTextFragment3("AUTOMATIC", 184,
 #if __JDOOM__ || __JDOOM64__
                       menu->y + 49,
 #elif __JHERETIC__
@@ -494,7 +498,7 @@ void DrawPlayerSetupMenu(void)
 #else
                       menu->y + 64,
 #endif
-                      GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
+                      GF_FONTA, textFlags);
     }
 
 #undef AVAILABLE_WIDTH
@@ -877,7 +881,7 @@ void Ed_MakeCursorVisible(void)
     len = strlen(buf);
     for(i = 0; i < len; i++)
     {
-        vis = Ed_VisibleSlotChars(buf + i, M_TextWidth);
+        vis = Ed_VisibleSlotChars(buf + i, GL_TextWidth);
 
         if(i + vis >= len)
         {
@@ -896,19 +900,19 @@ void Ed_MakeCursorVisible(void)
 void DrawEditField(menu_t* menu, int index, editfield_t* ef)
 {
     char buf[MAX_EDIT_LEN + 1], *text;
-    int vis, width = M_CharWidth('_', GF_FONTA) * 27;
+    int vis, width = GL_CharWidth('_', GF_FONTA) * 27;
 
     strcpy(buf, ef->text);
     strupr(buf);
     if(ActiveEdit == ef && menuTime & 0x8)
         strcat(buf, "_");
     text = buf + ef->firstVisible;
-    vis = Ed_VisibleSlotChars(text, M_TextWidth);
+    vis = Ed_VisibleSlotChars(text, GL_TextWidth);
     text[vis] = 0;
 
     M_DrawSaveLoadBorder(menu->x - 8, menu->y + EDITFIELD_BOX_YOFFSET + (menu->itemHeight * index), width + 16);
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
-    M_DrawTextFragment3(text, menu->x, menu->y + EDITFIELD_BOX_YOFFSET + 1 + (menu->itemHeight * index), GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
+    GL_DrawTextFragment3(text, menu->x, menu->y + EDITFIELD_BOX_YOFFSET + 1 + (menu->itemHeight * index), GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
 }
 
 void SCEditField(int efptr, void* data)

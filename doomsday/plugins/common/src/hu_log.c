@@ -350,7 +350,7 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
     {
     logmsg_t* msg;
     msg = &log->msgs[n];
-    lineHeight = M_TextHeight(msg->text, GF_FONTA)+1;
+    lineHeight = GL_TextHeight(msg->text, GF_FONTA)+1;
 
     if(msg->ticsRemain > 0 && msg->ticsRemain <= (unsigned) lineHeight)
         yOffset = -(lineHeight-2) * (1.f - ((float)(msg->ticsRemain)/lineHeight));
@@ -374,8 +374,8 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
         int width, height;
         float col[4];
 
-        width = M_TextWidth(msg->text, GF_FONTA);
-        height = M_TextHeight(msg->text, GF_FONTA);
+        width = GL_TextWidth(msg->text, GF_FONTA);
+        height = GL_TextHeight(msg->text, GF_FONTA);
 
         // Default colour and alpha.
         col[CR] = cfg.msgColor[CR];
@@ -414,7 +414,7 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
         // Draw using param text.
         // Messages may use the params to override the way the message is
         // is displayed, e.g. colour (Hexen's important messages).
-        M_DrawText(msg->text, 0, y, GF_FONTA, textFlags, 0, col[CR], col[CG], col[CB], col[CA], false);
+        GL_DrawText(msg->text, 0, y, GF_FONTA, textFlags, 0, col[CR], col[CG], col[CB], col[CA], false);
 
         if(width > *drawnWidth)
             *drawnWidth = width;
@@ -843,18 +843,18 @@ void Chat_Drawer(int player, float textAlpha, float iconAlpha,
         dd_snprintf(buf, HU_MAXLINELENGTH+1, "%s_", chat->buffer.l.l);
         str = buf;
         if(cfg.msgAlign == 1)
-            xOffset = M_CharWidth('_', GF_FONTA)/2;
+            xOffset = GL_CharWidth('_', GF_FONTA)/2;
     }
     else
     {
         str = chat->buffer.l.l;
         if(cfg.msgAlign == 2)
-            xOffset = -M_CharWidth('_', GF_FONTA);
+            xOffset = -GL_CharWidth('_', GF_FONTA);
     }
     textFlags = DTF_ALIGN_TOP|DTF_NO_EFFECTS | ((cfg.msgAlign == 0)? DTF_ALIGN_LEFT : (cfg.msgAlign == 2)? DTF_ALIGN_RIGHT : 0);
-    M_DrawText(str, xOffset, 0, GF_FONTA, textFlags, 0, cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha, false);
-    *drawnWidth = M_TextWidth(chat->buffer.l.l, GF_FONTA) + M_CharWidth('_', GF_FONTA);
-    *drawnHeight = MAX_OF(M_TextHeight(chat->buffer.l.l, GF_FONTA), M_CharHeight('_', GF_FONTA));
+    GL_DrawText(str, xOffset, 0, GF_FONTA, textFlags, 0, cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha, false);
+    *drawnWidth = GL_TextWidth(chat->buffer.l.l, GF_FONTA) + GL_CharWidth('_', GF_FONTA);
+    *drawnHeight = MAX_OF(GL_TextHeight(chat->buffer.l.l, GF_FONTA), GL_CharHeight('_', GF_FONTA));
     }
 }
 
