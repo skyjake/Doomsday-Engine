@@ -61,7 +61,6 @@ static void drawFlash(int x, int y, int w, int h, int bright, float r, float g, 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static gamefont_t gFonts[NUM_GAME_FONTS];
-static gamefontid_t currentGFontIndex;
 
 // CODE --------------------------------------------------------------------
 
@@ -149,23 +148,6 @@ void R_InitFont(gamefontid_t fontid, const fontpatch_t* patches, size_t num)
         const fontpatch_t* p = &patches[i];
         R_SetFontCharacter(fontid, p->ch, p->lumpName);
     }
-}
-
-/**
- * Change the current font.
- */
-void R_SetFont(gamefontid_t fontid)
-{
-    if(!(fontid >= GF_FIRST && fontid < NUM_GAME_FONTS))
-        return; // No such font.
-    currentGFontIndex = fontid;
-}
-
-gamefontid_t R_GetCurrentFont(void)
-{
-    if(currentGFontIndex == -1)
-        return 0;
-    return currentGFontIndex;
 }
 
 /**
