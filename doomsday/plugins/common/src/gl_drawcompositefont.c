@@ -46,6 +46,30 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct {
+    struct compositefont_char_s {
+        char            lumpname[9];
+        patchinfo_t     pInfo;
+    } chars[256];
+} compositefont_t;
+
+typedef struct {
+    gamefontid_t font;
+    float scaleX, scaleY;
+    float offX, offY;
+    float angle;
+    float color[4];
+    float tracking;
+    float leading;
+    boolean typeIn;
+    boolean caseScale;
+    struct {
+        float scale, offset;
+    } caseMod[2]; // 1=upper, 0=lower
+
+    int numBreaks;
+} drawtextstate_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -60,14 +84,14 @@ static void drawFlash(int x, int y, int w, int h, int bright, float r, float g, 
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static gamefont_t gFonts[NUM_GAME_FONTS];
+static compositefont_t fonts[NUM_GAME_FONTS];
 
 // CODE --------------------------------------------------------------------
 
 static __inline patchid_t patchForFontChar(gamefontid_t font, unsigned char ch)
 {
     assert(font >= GF_FIRST && font < NUM_GAME_FONTS);
-    return gFonts[font].chars[ch].pInfo.id;
+    return fonts[font].chars[ch].pInfo.id;
 }
 
 static __inline short translateTextToPatchDrawFlags(byte in)
@@ -102,9 +126,130 @@ static float parseFloat(char** str)
     return value;
 }
 
+static void parseParamaterBlock(char** strPtr, drawtextstate_t* state)
+{
+    (*strPtr)++;
+    while(*(*strPtr) && *(*strPtr) != '}')
+    {
+        (*strPtr) = M_SkipWhite((*strPtr));
+
+        // What do we have here?
+        if(!strnicmp((*strPtr), "fonta", 5))
+        {
+            state->font = GF_FONTA;
+            (*strPtr) += 5;
+        }
+        else if(!strnicmp((*strPtr), "fontb", 5))
+        {
+            state->font = GF_FONTB;
+            (*strPtr) += 5;
+        }
+        else if(!strnicmp((*strPtr), "flash", 5))
+        {
+            (*strPtr) += 5;
+            state->typeIn = true;
+        }
+        else if(!strnicmp((*strPtr), "noflash", 7))
+        {
+            (*strPtr) += 7;
+            state->typeIn = false;
+        }
+        else if(!strnicmp((*strPtr), "case", 4))
+        {
+            (*strPtr) += 4;
+            state->caseScale = true;
+        }
+        else if(!strnicmp((*strPtr), "nocase", 6))
+        {
+            (*strPtr) += 6;
+            state->caseScale = false;
+        }
+        else if(!strnicmp((*strPtr), "ups", 3))
+        {
+            (*strPtr) += 3;
+            state->caseMod[1].scale = parseFloat(&(*strPtr));
+        }
+        else if(!strnicmp((*strPtr), "upo", 3))
+        {
+            (*strPtr) += 3;
+            state->caseMod[1].offset = parseFloat(&(*strPtr));
+        }
+        else if(!strnicmp((*strPtr), "los", 3))
+        {
+            (*strPtr) += 3;
+            state->caseMod[0].scale = parseFloat(&(*strPtr));
+        }
+        else if(!strnicmp((*strPtr), "loo", 3))
+        {
+            (*strPtr) += 3;
+            state->caseMod[0].offset = parseFloat(&(*strPtr));
+        }
+        else if(!strnicmp((*strPtr), "break", 5))
+        {
+            (*strPtr) += 5;
+            state->numBreaks++;
+        }
+        else if(!strnicmp((*strPtr), "r", 1))
+        {
+            (*strPtr)++;
+            state->color[CR] = parseFloat(&(*strPtr));
+        }
+        else if(!strnicmp((*strPtr), "g", 1))
+        {
+            (*strPtr)++;
+            state->color[CG] = parseFloat(&(*strPtr));
+        }
+        else if(!strnicmp((*strPtr), "b", 1))
+        {
+            (*strPtr)++;
+            state->color[CB] = parseFloat(&(*strPtr));
+        }
+        else if(!strnicmp((*strPtr), "x", 1))
+        {
+            (*strPtr)++;
+            state->offX = parseFloat(&(*strPtr));
+        }
+        else if(!strnicmp((*strPtr), "y", 1))
+        {
+            (*strPtr)++;
+            state->offY = parseFloat(&(*strPtr));
+        }
+        else if(!strnicmp((*strPtr), "scalex", 6))
+        {
+            (*strPtr) += 6;
+            state->scaleX = parseFloat(&(*strPtr));
+        }
+        else if(!strnicmp((*strPtr), "scaley", 6))
+        {
+            (*strPtr) += 6;
+            state->scaleY = parseFloat(&(*strPtr));
+        }
+        else if(!strnicmp((*strPtr), "scale", 5))
+        {
+            (*strPtr) += 5;
+            state->scaleX = state->scaleY = parseFloat(&(*strPtr));
+        }
+        else if(!strnicmp((*strPtr), "angle", 5))
+        {
+            (*strPtr) += 5;
+            state->angle = parseFloat(&(*strPtr));
+        }
+        else
+        {
+            // Unknown, skip it.
+            if(*(*strPtr) != '}')
+                (*strPtr)++;
+        }
+    }
+
+    // Skip over the closing brace.
+    if(*(*strPtr))
+        (*strPtr)++;
+}
+
 void R_SetFontCharacter(gamefontid_t fontid, byte ch, const char* lumpname)
 {
-    gamefont_t* font;
+    compositefont_t* font;
 
     if(!(fontid >= GF_FIRST && fontid < NUM_GAME_FONTS))
     {
@@ -112,7 +257,7 @@ void R_SetFontCharacter(gamefontid_t fontid, byte ch, const char* lumpname)
         return;
     }
 
-    font = &gFonts[fontid];
+    font = &fonts[fontid];
     memset(font->chars[ch].lumpname, 0, sizeof(font->chars[ch].lumpname));
     strncpy(font->chars[ch].lumpname, lumpname, 8);
 
@@ -129,7 +274,7 @@ void R_SetFontCharacter(gamefontid_t fontid, byte ch, const char* lumpname)
 
 void R_InitFont(gamefontid_t fontid, const fontpatch_t* patches, size_t num)
 {
-    gamefont_t* font;
+    compositefont_t* font;
     size_t i;
 
     if(!(fontid >= GF_FIRST && fontid < NUM_GAME_FONTS))
@@ -138,7 +283,7 @@ void R_InitFont(gamefontid_t fontid, const fontpatch_t* patches, size_t num)
         return;
     }
 
-    font = &gFonts[fontid];
+    font = &fonts[fontid];
     memset(font, 0, sizeof(*font));
     for(i = 0; i < 256; ++i)
         font->chars[i].pInfo.id = -1;
@@ -150,6 +295,24 @@ void R_InitFont(gamefontid_t fontid, const fontpatch_t* patches, size_t num)
     }
 }
 
+static void initDrawTextState(drawtextstate_t* state)
+{
+    state->font = GF_FONTA;
+    state->scaleX = state->scaleY = 1;
+    state->offX = state->offY = 0;
+    state->angle = 0;
+    state->color[CR] = state->color[CG] = state->color[CB] = state->color[CA] = 1;
+    state->tracking = 0;
+    state->leading = .25f;
+    state->typeIn = true;
+    state->caseScale = false;
+    state->caseMod[0].scale = 1;
+    state->caseMod[0].offset = 3;
+    state->caseMod[1].scale = 1.25f;
+    state->caseMod[1].offset = 0;
+    state->numBreaks = 0;
+}
+
 /**
  * Draw a string of text controlled by parameter blocks.
  */
@@ -159,18 +322,11 @@ void GL_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
 {
 #define SMALLBUFF_SIZE  80
 
-    boolean typeIn = (flags & DTF_NO_TYPEIN) == 0;
-    float r = defRed, g = defGreen, b = defBlue, a = defAlpha;
-    float offX = 0, offY = 0, width = 0, cx = x, cy = y;
-    float scaleX = 1, scaleY = 1, angle = 0, extraScale, leading = .25f;
-    int charCount = 0, curCase = -1, tracking = defTracking;
     char smallBuff[SMALLBUFF_SIZE+1], *bigBuff = NULL;
     char temp[256], *str, *string, *end;
-    gamefontid_t font = defFont;
-    boolean caseScale = defCase;
-    struct {
-        float scale, offset;
-    } caseMod[2]; // 1=upper, 0=lower
+    int charCount = 0, curCase = -1;
+    float cx = x, cy = y, width = 0, extraScale;
+    drawtextstate_t state;
     size_t len;
 
     if(!inString || !inString[0])
@@ -193,10 +349,16 @@ void GL_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
         str = bigBuff;
     }
 
-    caseMod[0].scale = 1;
-    caseMod[0].offset = 3;
-    caseMod[1].scale = 1.25f;
-    caseMod[1].offset = 0;
+    initDrawTextState(&state);
+    // Apply defaults:
+    state.font = defFont;
+    state.typeIn = (flags & DTF_NO_TYPEIN) == 0;
+    state.color[CR] = defRed;
+    state.color[CG] = defGreen;
+    state.color[CB] = defBlue;
+    state.color[CA] = defAlpha;
+    state.tracking = defTracking;
+    state.caseScale = defCase;
 
     string = str;
     while(*string)
@@ -204,124 +366,17 @@ void GL_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
         // Parse and draw the replacement string.
         if(*string == '{') // Parameters included?
         {
-            string++;
-            while(*string && *string != '}')
+            gamefontid_t oldFont = state.font;
+            float oldScaleY = state.scaleY;
+            float oldLeading = state.leading;
+
+            parseParamaterBlock(&string, &state);
+
+            while(state.numBreaks-- > 0)
             {
-                string = M_SkipWhite(string);
-
-                // What do we have here?
-                if(!strnicmp(string, "fonta", 5))
-                {
-                    font = GF_FONTA;
-                    string += 5;
-                }
-                else if(!strnicmp(string, "fontb", 5))
-                {
-                    font = GF_FONTB;
-                    string += 5;
-                }
-                else if(!strnicmp(string, "flash", 5))
-                {
-                    string += 5;
-                    typeIn = true;
-                }
-                else if(!strnicmp(string, "noflash", 7))
-                {
-                    string += 7;
-                    typeIn = false;
-                }
-                else if(!strnicmp(string, "case", 4))
-                {
-                    string += 4;
-                    caseScale = true;
-                }
-                else if(!strnicmp(string, "nocase", 6))
-                {
-                    string += 6;
-                    caseScale = false;
-                }
-                else if(!strnicmp(string, "ups", 3))
-                {
-                    string += 3;
-                    caseMod[1].scale = parseFloat(&string);
-                }
-                else if(!strnicmp(string, "upo", 3))
-                {
-                    string += 3;
-                    caseMod[1].offset = parseFloat(&string);
-                }
-                else if(!strnicmp(string, "los", 3))
-                {
-                    string += 3;
-                    caseMod[0].scale = parseFloat(&string);
-                }
-                else if(!strnicmp(string, "loo", 3))
-                {
-                    string += 3;
-                    caseMod[0].offset = parseFloat(&string);
-                }
-                else if(!strnicmp(string, "break", 5))
-                {
-                    string += 5;
-                    cx = x;
-                    cy += scaleY * GL_CharHeight(0, font);
-                }
-                else if(!strnicmp(string, "r", 1))
-                {
-                    string++;
-                    r = parseFloat(&string);
-                }
-                else if(!strnicmp(string, "g", 1))
-                {
-                    string++;
-                    g = parseFloat(&string);
-                }
-                else if(!strnicmp(string, "b", 1))
-                {
-                    string++;
-                    b = parseFloat(&string);
-                }
-                else if(!strnicmp(string, "x", 1))
-                {
-                    string++;
-                    offX = parseFloat(&string);
-                }
-                else if(!strnicmp(string, "y", 1))
-                {
-                    string++;
-                    offY = parseFloat(&string);
-                }
-                else if(!strnicmp(string, "scalex", 6))
-                {
-                    string += 6;
-                    scaleX = parseFloat(&string);
-                }
-                else if(!strnicmp(string, "scaley", 6))
-                {
-                    string += 6;
-                    scaleY = parseFloat(&string);
-                }
-                else if(!strnicmp(string, "scale", 5))
-                {
-                    string += 5;
-                    scaleX = scaleY = parseFloat(&string);
-                }
-                else if(!strnicmp(string, "angle", 5))
-                {
-                    string += 5;
-                    angle = parseFloat(&string);
-                }
-                else
-                {
-                    // Unknown, skip it.
-                    if(*string != '}')
-                        string++;
-                }
+                cx = x;
+                cy += GL_CharHeight(0, oldFont) * (1+oldLeading) * oldScaleY;
             }
-
-            // Skip over the closing brace.
-            if(*string)
-                string++;
         }
 
         for(end = string; *end && *end != '{';)
@@ -331,7 +386,7 @@ void GL_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
             int alignx = 0;
 
             // Find the end of the next fragment.
-            if(caseScale)
+            if(state.caseScale)
             {
                 curCase = -1;
                 // Select a substring with characters of the same case (or whitespace).
@@ -374,7 +429,7 @@ void GL_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
                 // We'll take care of horizontal positioning of the fragment so align left.
                 fragmentFlags = (flags & ~(DTF_ALIGN_RIGHT)) | DTF_ALIGN_LEFT;
                 if(flags & DTF_ALIGN_RIGHT)
-                    alignx = -GL_TextFragmentWidth2(temp, font, tracking) * scaleX;
+                    alignx = -GL_TextFragmentWidth2(temp, state.font, state.tracking) * state.scaleX;
             }
 
             // Setup the scaling.
@@ -382,36 +437,36 @@ void GL_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
             DGL_PushMatrix();
 
             // Rotate.
-            if(angle != 0)
+            if(state.angle != 0)
             {
                 // The origin is the specified (x,y) for the patch.
                 // We'll undo the VGA aspect ratio (otherwise the result would
                 // be skewed).
                 DGL_Translatef(x, y, 0);
                 DGL_Scalef(1, 200.0f / 240.0f, 1);
-                DGL_Rotatef(angle, 0, 0, 1);
+                DGL_Rotatef(state.angle, 0, 0, 1);
                 DGL_Scalef(1, 240.0f / 200.0f, 1);
                 DGL_Translatef(-x, -y, 0);
             }
 
-            DGL_Translatef(cx + offX + alignx, cy + offY + (caseScale ? caseMod[curCase].offset : 0), 0);
-            extraScale = (caseScale ? caseMod[curCase].scale : 1);
-            DGL_Scalef(scaleX, scaleY * extraScale, 1);
+            DGL_Translatef(cx + state.offX + alignx, cy + state.offY + (state.caseScale ? state.caseMod[curCase].offset : 0), 0);
+            extraScale = (state.caseScale ? state.caseMod[curCase].scale : 1);
+            DGL_Scalef(state.scaleX, state.scaleY * extraScale, 1);
 
             // Draw it.
-            DGL_Color4f(r, g, b, a);
-            GL_DrawTextFragment5(temp, 0, 0, font, fragmentFlags, tracking, typeIn ? charCount : 0);
+            DGL_Color4fv(state.color);
+            GL_DrawTextFragment5(temp, 0, 0, state.font, fragmentFlags, state.tracking, state.typeIn ? charCount : 0);
             charCount += strlen(temp);
 
             // Advance the current position?
             if(!newline)
             {
-                cx += (float) GL_TextFragmentWidth2(temp, font, tracking) * scaleX;
+                cx += (float) GL_TextFragmentWidth2(temp, state.font, state.tracking) * state.scaleX;
             }
             else
             {
                 cx = x;
-                cy += (float) GL_TextFragmentHeight(temp, font) * (1+leading) * scaleY;
+                cy += (float) GL_TextFragmentHeight(temp, state.font) * (1+state.leading) * state.scaleY;
             }
 
             DGL_MatrixMode(DGL_MODELVIEW);
@@ -429,13 +484,13 @@ void GL_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
 int GL_CharWidth(unsigned char ch, gamefontid_t font)
 {
     assert(font >= GF_FIRST && font < NUM_GAME_FONTS);
-    return gFonts[font].chars[ch].pInfo.width;
+    return fonts[font].chars[ch].pInfo.width;
 }
 
 int GL_CharHeight(unsigned char ch, gamefontid_t font)
 {
     assert(font >= GF_FIRST && font < NUM_GAME_FONTS);
-    return gFonts[font].chars[ch].pInfo.height;
+    return fonts[font].chars[ch].pInfo.height;
 }
 
 /**

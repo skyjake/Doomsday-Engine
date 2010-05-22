@@ -49,13 +49,6 @@ typedef enum {
     NUM_GAME_FONTS
 } gamefontid_t;
 
-typedef struct gamefont_s {
-    struct gamefont_char_s {
-        char            lumpname[9];
-        patchinfo_t     pInfo;
-    } chars[256];
-} gamefont_t;
-
 // Used during font creation/registration.
 // \todo Refactor me away.
 typedef struct fontpatch_s {
