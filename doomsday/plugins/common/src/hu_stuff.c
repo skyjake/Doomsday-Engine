@@ -1701,7 +1701,7 @@ void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
 
     // No replacement possible/wanted - use the original patch.
     DGL_Color4f(1, 1, 1, a);
-    M_DrawPatch2(patch, posx, y, flags);
+    GL_DrawPatch2(patch, posx, y, flags);
 }
 
 void WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, gamefontid_t font, boolean builtin, short flags)
@@ -1836,14 +1836,14 @@ void M_DrawSlider(int x, int y, int height, int range, int slot, float alpha)
 
     DGL_Color4f( 1, 1, 1, alpha);
 
-    M_DrawPatch2(dpSliderLeft, 0, 0, DPF_ALIGN_RIGHT|DPF_ALIGN_TOP|DPF_NO_OFFSETX);
-    M_DrawPatch(dpSliderRight, range * WIDTH, 0);
+    GL_DrawPatch2(dpSliderLeft, 0, 0, DPF_ALIGN_RIGHT|DPF_ALIGN_TOP|DPF_NO_OFFSETX);
+    GL_DrawPatch(dpSliderRight, range * WIDTH, 0);
 
     DGL_SetPatch(dpSliderMiddle, DGL_REPEAT, DGL_REPEAT);
     DGL_DrawRectTiled(0, middleInfo.topOffset, range * WIDTH, HEIGHT, middleInfo.width, middleInfo.height);
 
     DGL_Color4f(1, 1, 1, alpha);
-    M_DrawPatch2(dpSliderHandle, range * WIDTH * pos, 1, DPF_ALIGN_TOP|DPF_NO_OFFSET);
+    GL_DrawPatch2(dpSliderHandle, range * WIDTH * pos, 1, DPF_ALIGN_TOP|DPF_NO_OFFSET);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -2330,74 +2330,16 @@ void Hu_EndBorderedProjection(borderedprojectionstate_t* s)
     DGL_PopMatrix();
 }
 
-void M_DrawPatch2(patchid_t id, int posX, int posY, short flags)
-{
-    float x = posX, y = posY, w, h;
-    patchinfo_t info;
-
-    if(id == -1)
-        return;
-
-    DGL_SetPatch(id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-    if(!R_GetPatchInfo(id, &info))
-        return;
-
-    if(flags & DPF_ALIGN_RIGHT)
-        x -= info.width;
-    else if(!(flags & DPF_ALIGN_LEFT))
-        x -= info.width /2;
-
-    if(flags & DPF_ALIGN_BOTTOM)
-        y -= info.height;
-    else if(!(flags & DPF_ALIGN_TOP))
-        y -= info.height/2;
-
-    w = (float) info.width;
-    h = (float) info.height;
-
-    if(!(flags & DPF_NO_OFFSETX))
-        x += (float) info.offset;
-    if(!(flags & DPF_NO_OFFSETY))
-        y += (float) info.topOffset;
-
-    if(info.extraOffset[0])
-    {
-        // This offset is used only for the extra borders in the
-        // "upscaled and sharpened" patches, so we can tweak the values
-        // to our liking a bit more.
-        x += info.extraOffset[0];
-        y += info.extraOffset[1];
-        w += fabs(info.extraOffset[0])*2;
-        h += fabs(info.extraOffset[1])*2;
-    }
-
-    DGL_Begin(DGL_QUADS);
-        DGL_TexCoord2f(0, 0, 0);
-        DGL_Vertex2f(x, y);
-        DGL_TexCoord2f(0, 1, 0);
-        DGL_Vertex2f(x + w, y);
-        DGL_TexCoord2f(0, 1, 1);
-        DGL_Vertex2f(x + w, y + h);
-        DGL_TexCoord2f(0, 0, 1);
-        DGL_Vertex2f(x, y + h);
-    DGL_End();
-}
-
-void M_DrawPatch(patchid_t id, int x, int y)
-{
-    M_DrawPatch2(id, x, y, DPF_ALIGN_TOPLEFT);
-}
-
 void M_DrawShadowedPatch3(patchid_t id, int x, int y, short flags, float r, float g,
     float b, float a)
 {
     if(id < 0)
         return;
     DGL_Color4f(0, 0, 0, a * .4f);
-    M_DrawPatch2(id, x+2, y+2, flags);
+    GL_DrawPatch2(id, x+2, y+2, flags);
 
     DGL_Color4f(r, g, b, a);
-    M_DrawPatch2(id, x, y, flags);
+    GL_DrawPatch2(id, x, y, flags);
 }
 
 void M_DrawShadowedPatch2(patchid_t id, int x, int y, short flags)

@@ -849,6 +849,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\plugins\common\include\gl_drawpatch.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\plugins\common\include\hu_lib.h"
 				>
 			</File>
@@ -1042,6 +1046,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\src\gl_drawcompositefont.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\plugins\common\src\gl_drawpatch.c"
 				>
 			</File>
 			<File

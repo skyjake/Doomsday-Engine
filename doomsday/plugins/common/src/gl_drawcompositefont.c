@@ -39,8 +39,8 @@
 #  include "jhexen.h"
 #endif
 
+#include "gl_drawpatch.h"
 #include "gl_drawcompositefont.h"
-#include "hu_stuff.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -748,7 +748,7 @@ void GL_DrawTextFragment(const char* string, int x, int y)
 
 void GL_DrawChar3(unsigned char ch, int x, int y, gamefontid_t font, short flags)
 {
-    M_DrawPatch2(patchForFontChar(font, ch), x, y, translateTextToPatchDrawFlags(flags));
+    GL_DrawPatch2(patchForFontChar(font, ch), x, y, translateTextToPatchDrawFlags(flags));
 }
 
 void GL_DrawChar2(unsigned char ch, int x, int y, gamefontid_t font)

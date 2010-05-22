@@ -288,7 +288,7 @@ static patchid_t bp[NUM_TEAMS]; // "gray P[1..NUM_TEAMS]"
 void WI_slamBackground(void)
 {
     DGL_Color4f(1, 1, 1, 1);
-    M_DrawPatch2(bg, 0, 0, DPF_ALIGN_TOPLEFT|DPF_NO_OFFSET);
+    GL_DrawPatch2(bg, 0, 0, DPF_ALIGN_TOPLEFT|DPF_NO_OFFSET);
 }
 
 /**

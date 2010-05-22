@@ -31,6 +31,7 @@
 #define __COMMON_HU_STUFF_H__
 
 #include "gl_drawcompositefont.h"
+#include "gl_drawpatch.h"
 
 #if __JHEXEN__
 # include "h2def.h"
@@ -90,31 +91,6 @@ void            M_DrawTextFragmentShadowed(const char* string, int x, int y, gam
 void            M_DrawShadowedChar(unsigned char ch, int x, int y);
 void            M_DrawShadowedChar2(unsigned char ch, int x, int y, gamefontid_t font);
 void            M_DrawShadowedChar3(unsigned char ch, int x, int y, gamefontid_t font, short flags, float r, float g, float b, float a);
-
-/**
- * Patches:
- */
-
-/**
- * @defGroup drawPatchFlags Draw Patch Flags.
- */
-/*@{*/
-#define DPF_ALIGN_LEFT      0x0001
-#define DPF_ALIGN_RIGHT     0x0002
-#define DPF_ALIGN_BOTTOM    0x0004
-#define DPF_ALIGN_TOP       0x0008
-#define DPF_NO_OFFSETX      0x0010
-#define DPF_NO_OFFSETY      0x0020
-
-#define DPF_NO_OFFSET       (DPF_NO_OFFSETX|DPF_NO_OFFSETY)
-#define DPF_ALIGN_TOPLEFT   (DPF_ALIGN_TOP|DPF_ALIGN_LEFT)
-#define DPF_ALIGN_BOTTOMLEFT (DPF_ALIGN_BOTTOM|DPF_ALIGN_LEFT)
-#define DPF_ALIGN_TOPRIGHT  (DPF_ALIGN_TOP|DPF_ALIGN_RIGHT)
-#define DPF_ALIGN_BOTTOMRIGHT (DPF_ALIGN_BOTTOM|DPF_ALIGN_RIGHT)
-/*@}*/
-
-void            M_DrawPatch(patchid_t id, int x, int y);
-void            M_DrawPatch2(patchid_t id, int x, int y, short flags);
 
 void            M_DrawShadowedPatch(patchid_t id, int x, int y);
 void            M_DrawShadowedPatch2(patchid_t id, int x, int y, short flags);

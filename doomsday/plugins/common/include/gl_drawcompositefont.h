@@ -84,9 +84,17 @@ void            R_InitFont(gamefontid_t fontid, const fontpatch_t* patches, size
 /*@}*/
 
 /**
+ * Text strings (formatted).
+ */
+void            GL_DrawText(const char* string, int x, int y, gamefontid_t font, short flags, int defTracking, float defRed, float defGreen, float defBlue, float defAlpha, boolean defCase);
+
+// Utility routines:
+int             GL_TextWidth(const char* string, gamefontid_t font);
+int             GL_TextHeight(const char* string, gamefontid_t font);
+
+/**
  * Text string fragments:
  */
-
 void            GL_DrawTextFragment(const char* string, int x, int y);
 void            GL_DrawTextFragment2(const char* string, int x, int y, gamefontid_t font);
 void            GL_DrawTextFragment3(const char* string, int x, int y, gamefontid_t font, short flags);
@@ -96,16 +104,8 @@ void            GL_DrawTextFragment5(const char* string, int x, int y, gamefonti
 // Utility routines:
 int             GL_TextFragmentWidth(const char* string, gamefontid_t font);
 int             GL_TextFragmentWidth2(const char* string, gamefontid_t font, int tracking);
+
 int             GL_TextFragmentHeight(const char* string, gamefontid_t font);
-
-/**
- * Text strings (formatted).
- */
-void            GL_DrawText(const char* string, int x, int y, gamefontid_t font, short flags, int defTracking, float defRed, float defGreen, float defBlue, float defAlpha, boolean defCase);
-
-// Utility routines:
-int             GL_TextWidth(const char* string, gamefontid_t font);
-int             GL_TextHeight(const char* string, gamefontid_t font);
 
 /**
  * Single character:

@@ -2343,16 +2343,16 @@ void M_DrawMainMenu(void)
     int frame = (menuTime / 5) % 7;
 
     DGL_Color4f(1, 1, 1, menuAlpha);
-    M_DrawPatch(m_htic.id, 88, 0);
-    M_DrawPatch(dpBullWithFire[(frame + 2) % 7].id, 37, 80);
-    M_DrawPatch(dpBullWithFire[frame].id, 278, 80);
+    GL_DrawPatch(m_htic.id, 88, 0);
+    GL_DrawPatch(dpBullWithFire[(frame + 2) % 7].id, 37, 80);
+    GL_DrawPatch(dpBullWithFire[frame].id, 278, 80);
 
 #elif __JHERETIC__
     WI_DrawPatch4(m_htic.id, 88, 0, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, menuAlpha);
 
     DGL_Color4f(1, 1, 1, menuAlpha);
-    M_DrawPatch(dpRotatingSkull[17 - frame].id, 40, 10);
-    M_DrawPatch(dpRotatingSkull[frame].id, 232, 10);
+    GL_DrawPatch(dpRotatingSkull[17 - frame].id, 40, 10);
+    GL_DrawPatch(dpRotatingSkull[frame].id, 232, 10);
 #elif __JDOOM__ || __JDOOM64__
     WI_DrawPatch4(m_doom.id, 94, 2, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, menuAlpha);
 #endif
@@ -2420,7 +2420,7 @@ void M_DrawClassMenu(void)
     R_GetSpriteInfo(STATES[PCLASS_INFO(pClass)->normalState].sprite, ((menuTime >> 3) & 3), &sprInfo);
 
     DGL_Color4f(1, 1, 1, menuAlpha);
-    M_DrawPatch(dpPlayerClassBG[pClass % 3].id, BG_X, BG_Y);
+    GL_DrawPatch(dpPlayerClassBG[pClass % 3].id, BG_X, BG_Y);
 
     // Fighter's colors are a bit different.
     if(pClass == PCLASS_FIGHTER)
@@ -2620,7 +2620,7 @@ void M_DrawSaveLoadBorder(int x, int y, int width)
 {
 #if __JHERETIC__ || __JHEXEN__
     DGL_Color4f(1, 1, 1, menuAlpha);
-    M_DrawPatch(dpFSlot.id, x - 8, y - 4);
+    GL_DrawPatch(dpFSlot.id, x - 8, y - 4);
 #else
     DGL_Color4f(1, 1, 1, menuAlpha);
 
@@ -2857,9 +2857,9 @@ void M_DrawWeaponMenu(void)
 
     // Draw the page arrows.
     token = dpInvPageLeft[!menu->firstItem || (menuTime & 8)];
-    M_DrawPatch(token, menu->x, menu->y - 22);
+    GL_DrawPatch(token, menu->x, menu->y - 22);
     token = dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)];
-    M_DrawPatch(token, 312 - menu->x, menu->y - 22);
+    GL_DrawPatch(token, 312 - menu->x, menu->y - 22);
 #endif
 
     /**
@@ -3056,9 +3056,9 @@ void M_DrawHUDMenu(void)
 
     // Draw the page arrows.
     token = dpInvPageLeft[!menu->firstItem || (menuTime & 8)];
-    M_DrawPatch(token, menu->x, menu->y - 22);
+    GL_DrawPatch(token, menu->x, menu->y - 22);
     token = dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)];
-    M_DrawPatch(token, 312 - menu->x, menu->y - 22);
+    GL_DrawPatch(token, 312 - menu->x, menu->y - 22);
 #endif
 
     idx = 0;
