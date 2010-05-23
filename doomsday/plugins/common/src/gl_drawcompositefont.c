@@ -44,6 +44,12 @@
 
 // MACROS ------------------------------------------------------------------
 
+#define DEFAULT_FONTID              (GF_FONTA)
+#define DEFAULT_LEADING             (.25)
+#define DEFAULT_TRACKING            (0)
+#define DEFAULT_DRAWFLAGS           (DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS)
+#define DEFAULT_INITIALCOUNT        (0)
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
@@ -76,7 +82,7 @@ typedef struct {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void drawFlash(int x, int y, int w, int h, int bright, float r, float g, float b, float a);
+static void drawFlash(int x, int y, int w, int h, int bright);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -88,10 +94,20 @@ static compositefont_t fonts[NUM_GAME_FONTS];
 
 // CODE --------------------------------------------------------------------
 
-static __inline patchid_t patchForFontChar(gamefontid_t font, unsigned char ch)
+static __inline boolean isValidFontId(fontId)
 {
-    assert(font >= GF_FIRST && font < NUM_GAME_FONTS);
-    return fonts[font].chars[ch].pInfo.id;
+    return (fontId >= GF_FIRST && fontId < NUM_GAME_FONTS);
+}
+
+static __inline compositefont_t* fontForId(gamefontid_t fontId)
+{
+    assert(isValidFontId(fontId));
+    return &fonts[fontId];
+}
+
+static __inline patchid_t patchForFontChar(gamefontid_t id, unsigned char ch)
+{
+    return fontForId(id)->chars[ch].pInfo.id;
 }
 
 static __inline short translateTextToPatchDrawFlags(byte in)
@@ -247,20 +263,14 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state)
         (*strPtr)++;
 }
 
-void R_SetFontCharacter(gamefontid_t fontid, byte ch, const char* lumpname)
+static void setFontCharacterPatch(compositefont_t* font, unsigned char ch, const char* lumpname)
 {
-    compositefont_t* font;
-
-    if(!(fontid >= GF_FIRST && fontid < NUM_GAME_FONTS))
-    {
-        Con_Message("R_SetFontCharacter: Warning, unknown font id %i.\n", (int) fontid);
-        return;
-    }
-
-    font = &fonts[fontid];
     memset(font->chars[ch].lumpname, 0, sizeof(font->chars[ch].lumpname));
     strncpy(font->chars[ch].lumpname, lumpname, 8);
+}
 
+static void precacheFontCharacterPatch(compositefont_t* font, unsigned char ch)
+{
     // Instruct Doomsday to load the patch in monochrome mode.
     // (2 = weighted average).
     DD_SetInteger(DD_MONOCHROME_PATCHES, 2);
@@ -272,18 +282,33 @@ void R_SetFontCharacter(gamefontid_t fontid, byte ch, const char* lumpname)
     DD_SetInteger(DD_MONOCHROME_PATCHES, 0);
 }
 
-void R_InitFont(gamefontid_t fontid, const fontpatch_t* patches, size_t num)
+void R_SetFontCharacter(gamefontid_t fontId, unsigned char ch, const char* lumpname)
+{
+    compositefont_t* font;
+
+    if(!isValidFontId(fontId))
+    {
+        Con_Message("R_SetFontCharacter: Warning, unknown font id %i.\n", (int) fontId);
+        return;
+    }
+
+    font = fontForId(fontId);
+    setFontCharacterPatch(font, ch, lumpname);
+    precacheFontCharacterPatch(font, ch);
+}
+
+void R_InitFont(gamefontid_t fontId, const fontpatch_t* patches, size_t num)
 {
     compositefont_t* font;
     size_t i;
 
-    if(!(fontid >= GF_FIRST && fontid < NUM_GAME_FONTS))
+    if(!isValidFontId(fontId))
     {
-        Con_Message("R_InitFont: Warning, unknown font id %i.\n", (int) fontid);
+        Con_Message("R_InitFont: Warning, unknown font id %i.\n", (int) fontId);
         return;
     }
 
-    font = &fonts[fontid];
+    font = fontForId(fontId);
     memset(font, 0, sizeof(*font));
     for(i = 0; i < 256; ++i)
         font->chars[i].pInfo.id = -1;
@@ -291,19 +316,19 @@ void R_InitFont(gamefontid_t fontid, const fontpatch_t* patches, size_t num)
     for(i = 0; i < num; ++i)
     {
         const fontpatch_t* p = &patches[i];
-        R_SetFontCharacter(fontid, p->ch, p->lumpName);
+        setFontCharacterPatch(font, p->ch, p->lumpName);
     }
 }
 
 static void initDrawTextState(drawtextstate_t* state)
 {
-    state->font = GF_FONTA;
+    state->font = DEFAULT_FONTID;
     state->scaleX = state->scaleY = 1;
     state->offX = state->offY = 0;
     state->angle = 0;
     state->color[CR] = state->color[CG] = state->color[CB] = state->color[CA] = 1;
-    state->tracking = 0;
-    state->leading = .25f;
+    state->tracking = DEFAULT_TRACKING;
+    state->leading = DEFAULT_LEADING;
     state->typeIn = true;
     state->caseScale = false;
     state->caseMod[0].scale = 1;
@@ -484,16 +509,41 @@ void GL_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
 #undef SMALLBUFF_SIZE
 }
 
-int GL_CharWidth(unsigned char ch, gamefontid_t font)
+void GL_CharDimensions(int* width, int* height, unsigned char ch, gamefontid_t font)
 {
-    assert(font >= GF_FIRST && font < NUM_GAME_FONTS);
-    return fonts[font].chars[ch].pInfo.width;
+    if(!width && !height)
+        return;
+    if(width)
+        *width = GL_CharWidth(ch, font);
+    if(height)
+        *height = GL_CharHeight(ch, font);
 }
 
-int GL_CharHeight(unsigned char ch, gamefontid_t font)
+int GL_CharWidth(unsigned char ch, gamefontid_t fontId)
 {
-    assert(font >= GF_FIRST && font < NUM_GAME_FONTS);
-    return fonts[font].chars[ch].pInfo.height;
+    return fontForId(fontId)->chars[ch].pInfo.width;
+}
+
+int GL_CharHeight(unsigned char ch, gamefontid_t fontId)
+{
+    return fontForId(fontId)->chars[ch].pInfo.height;
+}
+
+void GL_TextFragmentDimensions2(int* width, int* height, const char* string,
+    gamefontid_t fontId, int tracking)
+{
+    if(!width && !height)
+        return;
+    if(width)
+        *width = GL_TextFragmentWidth2(string, fontId, tracking);
+    if(height)
+        *height = GL_TextFragmentHeight(string, fontId);
+}
+
+void GL_TextFragmentDimensions(int* width, int* height, const char* string,
+    gamefontid_t fontId)
+{
+    GL_TextFragmentDimensions2(width, height, string, fontId, DEFAULT_TRACKING);
 }
 
 /**
@@ -501,9 +551,10 @@ int GL_CharHeight(unsigned char ch, gamefontid_t font)
  * \note Does NOT skip paramater blocks - assumes the caller has dealt
  * with them and not passed them.
  */
-int GL_TextFragmentWidth2(const char* string, gamefontid_t font, int tracking)
+int GL_TextFragmentWidth2(const char* string, gamefontid_t fontId, int tracking)
 {
     assert(string);
+    assert(isValidFontId(fontId));
     {
     const char* ch;
     unsigned char c;
@@ -519,15 +570,15 @@ int GL_TextFragmentWidth2(const char* string, gamefontid_t font, int tracking)
     len = strlen(string);
     ch = string;
     while(i++ < len && (c = *ch++) != 0 && c != '\n')
-        width += GL_CharWidth(c, font);
+        width += GL_CharWidth(c, fontId);
 
     return width + tracking * (len-1);
     }
 }
 
-int GL_TextFragmentWidth(const char* string, gamefontid_t font)
+int GL_TextFragmentWidth(const char* string, gamefontid_t fontId)
 {
-    return GL_TextFragmentWidth2(string, font, 0);
+    return GL_TextFragmentWidth2(string, fontId, DEFAULT_TRACKING);
 }
 
 /**
@@ -535,9 +586,10 @@ int GL_TextFragmentWidth(const char* string, gamefontid_t font)
  * \note Does NOT skip paramater blocks - assumes the caller has dealt
  * with them and not passed them.
  */
-int GL_TextFragmentHeight(const char* string, gamefontid_t font)
+int GL_TextFragmentHeight(const char* string, gamefontid_t fontId)
 {
     assert(string);
+    assert(isValidFontId(fontId));
     {
     const char* ch;
     unsigned char c;
@@ -554,7 +606,7 @@ int GL_TextFragmentHeight(const char* string, gamefontid_t font)
     ch = string;
     while(i++ < len && (c = *ch++) != 0 && c != '\n')
     {
-        int charHeight = GL_CharHeight(c, font);
+        int charHeight = GL_CharHeight(c, fontId);
         if(charHeight > height)
             height = charHeight;
     }
@@ -563,13 +615,24 @@ int GL_TextFragmentHeight(const char* string, gamefontid_t font)
     }
 }
 
+void GL_TextDimensions(int* width, int* height, const char* string, gamefontid_t fontId)
+{
+    if(!width && !height)
+        return;
+    if(width)
+        *width = GL_TextWidth(string, fontId);
+    if(height)
+        *height = GL_TextHeight(string, fontId);
+}
+
 /**
  * Find the visible width of the whole formatted text string.
  * Skips parameter blocks eg "{param}Text" = 4 chars
  */
-int GL_TextWidth(const char* string, gamefontid_t font)
+int GL_TextWidth(const char* string, gamefontid_t fontId)
 {
     assert(string);
+    assert(isValidFontId(fontId));
     {
     int w, maxWidth = -1;
     boolean skip = false;
@@ -577,8 +640,6 @@ int GL_TextWidth(const char* string, gamefontid_t font)
     size_t i, len;
 
     if(!string[0])
-        return 0;
-    if(font < 0 || font >= NUM_GAME_FONTS)
         return 0;
 
     w = 0;
@@ -603,7 +664,7 @@ int GL_TextWidth(const char* string, gamefontid_t font)
             continue;
         }
 
-        w += GL_CharWidth(c, font);
+        w += GL_CharWidth(c, fontId);
 
         if(i == len - 1 && maxWidth == -1)
         {
@@ -619,9 +680,10 @@ int GL_TextWidth(const char* string, gamefontid_t font)
  * Find the visible height of the whole formatted text string.
  * Skips parameter blocks eg "{param}Text" = 4 chars
  */
-int GL_TextHeight(const char* string, gamefontid_t font)
+int GL_TextHeight(const char* string, gamefontid_t fontId)
 {
     assert(string);
+    assert(isValidFontId(fontId));
     {
     int h, currentLineHeight;
     boolean skip = false;
@@ -629,8 +691,6 @@ int GL_TextHeight(const char* string, gamefontid_t font)
     size_t i, len;
 
     if(!string[0])
-        return 0;
-    if(font < 0 || font >= NUM_GAME_FONTS)
         return 0;
     
     currentLineHeight = 0;
@@ -651,12 +711,12 @@ int GL_TextHeight(const char* string, gamefontid_t font)
 
         if(c == '\n')
         {
-            h += currentLineHeight == 0? GL_CharHeight('A', font) : currentLineHeight;
+            h += currentLineHeight == 0? GL_CharHeight('A', fontId) : currentLineHeight;
             currentLineHeight = 0;
             continue;
         }
 
-        charHeight = GL_CharHeight(c, font);
+        charHeight = GL_CharHeight(c, fontId);
         if(charHeight > currentLineHeight)
             currentLineHeight = charHeight;
     }
@@ -669,9 +729,12 @@ int GL_TextHeight(const char* string, gamefontid_t font)
 /**
  * Write a string using a colored, custom font and do a type-in effect.
  */
-void GL_DrawTextFragment5(const char* string, int x, int y, gamefontid_t font, short flags,
+void GL_DrawTextFragment5(const char* string, int x, int y, gamefontid_t fontId, short flags,
     int tracking, int initialCount)
 {
+    assert(string);
+    assert(isValidFontId(fontId));
+    {
     boolean noTypein = (flags & DTF_NO_TYPEIN) != 0;
     boolean noShadow = (flags & DTF_NO_SHADOW) != 0;
     int i, pass, w, h, cx, cy, count, yoff;
@@ -679,18 +742,18 @@ void GL_DrawTextFragment5(const char* string, int x, int y, gamefontid_t font, s
     unsigned char c;
     const char* ch;
 
-    if(!string || !string[0])
+    if(!string[0])
         return;
 
     if(flags & DTF_ALIGN_RIGHT)
-        x -= GL_TextFragmentWidth2(string, font, tracking);
+        x -= GL_TextFragmentWidth2(string, fontId, tracking);
     else if(!(flags & DTF_ALIGN_LEFT))
-        x -= GL_TextFragmentWidth2(string, font, tracking)/2;
+        x -= GL_TextFragmentWidth2(string, fontId, tracking)/2;
 
     if(flags & DTF_ALIGN_BOTTOM)
-        y -= GL_TextFragmentHeight(string, font);
+        y -= GL_TextFragmentHeight(string, fontId);
     else if(!(flags & DTF_ALIGN_TOP))
-        y -= GL_TextFragmentHeight(string, font)/2;
+        y -= GL_TextFragmentHeight(string, fontId)/2;
 
     if(!noTypein || !noShadow)
         DGL_GetFloatv(DGL_CURRENT_COLOR_RGBA, origColor);
@@ -752,25 +815,27 @@ void GL_DrawTextFragment5(const char* string, int x, int y, gamefontid_t font, s
             if(!c || c == '\n')
                 break;
 
-            w = GL_CharWidth(c, font);
-            h = GL_CharHeight(c, font);
+            w = GL_CharWidth(c, fontId);
+            h = GL_CharHeight(c, fontId);
 
-            if(patchForFontChar(font, c) != -1 && c != ' ')
+            if(patchForFontChar(fontId, c) != -1 && c != ' ')
             {
                 // A character we have a patch for that is not white space.
                 if(pass)
                 {
                     // The character itself.
-                    GL_DrawChar2(c, cx, cy + yoff, font);
+                    GL_DrawChar2(c, cx, cy + yoff, fontId);
 
                     if(flash > 0)
                     {   // Do something flashy.
-                        drawFlash(cx, cy + yoff, w, h, true, flashColor[CR], flashColor[CG], flashColor[CB], flashColor[CA] * flash);
+                        DGL_Color4f(flashColor[CR], flashColor[CG], flashColor[CB], flashColor[CA] * flash);
+                        drawFlash(cx, cy + yoff, w, h, true);
                     }
                 }
                 else if(!noShadow)
                 {   // Shadow.
-                    drawFlash(cx, cy + yoff, w, h, false, 1, 1, 1, origColor[CA] * cfg.menuShadow);
+                    DGL_Color4f(1, 1, 1, origColor[CA] * cfg.menuShadow);
+                    drawFlash(cx, cy + yoff, w, h, false);
                 }
             }
 
@@ -782,61 +847,56 @@ void GL_DrawTextFragment5(const char* string, int x, int y, gamefontid_t font, s
     {   // Ensure we restore the original color.
         DGL_Color4fv(origColor);
     }
+    }
 }
 
-void GL_DrawTextFragment4(const char* string, int x, int y, gamefontid_t font, short flags, int tracking)
+void GL_DrawTextFragment4(const char* string, int x, int y, gamefontid_t fontId, short flags, int tracking)
 {
-    GL_DrawTextFragment5(string, x, y, font, flags, tracking, 0);
+    GL_DrawTextFragment5(string, x, y, fontId, flags, tracking, DEFAULT_INITIALCOUNT);
 }
 
-void GL_DrawTextFragment3(const char* string, int x, int y, gamefontid_t font, short flags)
+void GL_DrawTextFragment3(const char* string, int x, int y, gamefontid_t fontId, short flags)
 {
-    GL_DrawTextFragment4(string, x, y, font, flags, 0);
+    GL_DrawTextFragment4(string, x, y, fontId, flags, DEFAULT_TRACKING);
 }
 
-void GL_DrawTextFragment2(const char* string, int x, int y, gamefontid_t font)
+void GL_DrawTextFragment2(const char* string, int x, int y, gamefontid_t fontId)
 {
-    GL_DrawTextFragment3(string, x, y, font, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN);
+    GL_DrawTextFragment3(string, x, y, fontId, DEFAULT_DRAWFLAGS);
 }
 
 void GL_DrawTextFragment(const char* string, int x, int y)
 {
-    GL_DrawTextFragment2(string, x, y, GF_FONTA);
+    GL_DrawTextFragment2(string, x, y, DEFAULT_FONTID);
 }
 
-void GL_DrawChar3(unsigned char ch, int x, int y, gamefontid_t font, short flags)
+void GL_DrawChar3(unsigned char ch, int x, int y, gamefontid_t fontId, short flags)
 {
-    GL_DrawPatch2(patchForFontChar(font, ch), x, y, translateTextToPatchDrawFlags(flags));
+    GL_DrawPatch2(patchForFontChar(fontId, ch), x, y, translateTextToPatchDrawFlags(flags));
 }
 
-void GL_DrawChar2(unsigned char ch, int x, int y, gamefontid_t font)
+void GL_DrawChar2(unsigned char ch, int x, int y, gamefontid_t fontId)
 {
-    GL_DrawChar3(ch, x, y, font, DTF_ALIGN_TOPLEFT);
+    GL_DrawChar3(ch, x, y, fontId, DEFAULT_DRAWFLAGS);
 }
 
 void GL_DrawChar(unsigned char ch, int x, int y)
 {
-    GL_DrawChar2(ch, x, y, GF_FONTA);
+    GL_DrawChar2(ch, x, y, DEFAULT_FONTID);
 }
 
-static void drawFlash(int x, int y, int w, int h, int bright, float r,
-    float g, float b, float a)
+static void drawFlash(int x, int y, int w, int h, int bright)
 {
-    float fsize = 4 + bright, red, green, blue, alpha;
-    float fw = fsize * w / 2.0f, fh = fsize * h / 2.0f;
+    float fsize = 4 + bright, fw = fsize * w / 2.0f, fh = fsize * h / 2.0f;
 
     // Don't draw anything for very small letters.
     if(h <= 4)
         return;
 
-    // Don't bother with hidden letters.
-    if(!(a > 0.f))
-        return;
-
-    red   = MINMAX_OF(0.f, r, 1.f);
-    green = MINMAX_OF(0.f, g, 1.f);
-    blue  = MINMAX_OF(0.f, b, 1.f);
-    alpha = MINMAX_OF(0.f, a, 1.f);
+    x += w / 2.0f - fw / 2;
+    y += h / 2.0f - fh / 2;
+    w = fw;
+    h = fh;
 
     DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
 
@@ -845,7 +905,16 @@ static void drawFlash(int x, int y, int w, int h, int bright, float r,
     else
         DGL_BlendFunc(DGL_ZERO, DGL_ONE_MINUS_SRC_ALPHA);
 
-    DGL_DrawRect(x + w / 2.0f - fw / 2, y + h / 2.0f - fh / 2, fw, fh, red, green, blue, alpha);
+    DGL_Begin(DGL_QUADS);
+        DGL_TexCoord2f(0, 0, 0);
+        DGL_Vertex2f(x, y);
+        DGL_TexCoord2f(0, 1, 0);
+        DGL_Vertex2f(x + w, y);
+        DGL_TexCoord2f(0, 1, 1);
+        DGL_Vertex2f(x + w, y + h);
+        DGL_TexCoord2f(0, 0, 1);
+        DGL_Vertex2f(x, y + h);
+    DGL_End();
 
     DGL_BlendMode(BM_NORMAL);
 }
