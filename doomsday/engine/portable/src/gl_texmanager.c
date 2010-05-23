@@ -2000,21 +2000,38 @@ static void Desaturate(byte* pixels, int width, int height, int comps)
     }
 }
 
-static void Amplify(byte* pixels, int width, int height)
+static void Amplify(byte* pixels, int width, int height, boolean hasAlpha)
 {
-    int i, max = 0;
+    size_t i, numPels = width * height;
+    byte max = 0;
     byte* pix;
 
-    for(i = 0, pix = pixels; i < width * height; ++i, pix += 1)
+    if(hasAlpha)
     {
-        if(*pix > max)
-            max = *pix;
+        byte* apix;
+        for(i = 0, pix = pixels, apix = pixels + numPels; i < numPels; ++i, pix++, apix++)
+        {
+            // Only non-masked pixels count.
+            if(!(*apix > 0))
+                continue;
+
+            if(*pix > max)
+                max = *pix;
+        }
+    }
+    else
+    {
+        for(i = 0, pix = pixels; i < numPels; ++i, pix++)
+        {
+            if(*pix > max)
+                max = *pix;
+        }
     }
 
     if(!max || max == 255)
         return;
 
-    for(i = 0, pix = pixels; i < width * height; ++i, pix += 1)
+    for(i = 0, pix = pixels; i < numPels; ++i, pix++)
     {
         *pix = (byte) MINMAX_OF(0, (float)*pix / max * 255, 255);
     }
@@ -2646,7 +2663,7 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
                     image.pixelSize = 4;
 
                     GL_ConvertToLuminance(&image);
-                    Amplify(image.pixels, image.width, image.height);
+                    Amplify(image.pixels, image.width, image.height, image.pixelSize == 2);
                 }
                 else
                 {   // Yes. Quantize down from RGA(+A) to Indexed(+A).
@@ -2663,6 +2680,14 @@ gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* resul
 
             if(fillOutlines /*&& !scaleSharp*/ && image.isMasked && image.pixelSize == 1)
                 ColorOutlines(image.pixels, image.width, image.height);
+        }
+        else
+        {
+            if(monochrome && tex->type == GLT_DOOMPATCH && image.pixelSize > 2)
+            {
+                GL_ConvertToLuminance(&image);
+                Amplify(image.pixels, image.width, image.height, image.pixelSize == 2);
+            }
         }
 
         // Too big for us?
