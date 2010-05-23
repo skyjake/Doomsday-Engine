@@ -372,10 +372,13 @@ void GL_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
 
             parseParamaterBlock(&string, &state);
 
-            while(state.numBreaks-- > 0)
+            if(state.numBreaks > 0)
             {
-                cx = x;
-                cy += GL_CharHeight(0, oldFont) * (1+oldLeading) * oldScaleY;
+                do
+                {
+                    cx = x;
+                    cy += GL_CharHeight(0, oldFont) * (1+oldLeading) * oldScaleY;
+                } while(--state.numBreaks > 0);
             }
         }
 
