@@ -1002,7 +1002,7 @@ patchid_t R_RegisterAsPatch(const char* name)
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
 {
     if(!info)
-        Con_Error("R_GetPatchInfo: Info argument cannot be NULL.");
+        Con_Error("R_GetPatchInfo: Argument 'info' cannot be NULL.");
     {
     const patchtex_t* p;
     memset(info, 0, sizeof(*info));
@@ -1042,6 +1042,7 @@ patchid_t R_PrecachePatch(const char* name, patchinfo_t* info)
         if(info)
             R_GetPatchInfo(patch, info);
     }
+    VERBOSE(Con_Message("R_GeR_PrecachePatch: Warning, unknown Patch %s.\n", name));
     return patch;
     }
 }
