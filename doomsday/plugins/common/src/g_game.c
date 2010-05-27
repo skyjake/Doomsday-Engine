@@ -1247,6 +1247,7 @@ void G_Ticker(timespan_t ticLength)
     Hu_FogEffectTicker(ticLength);
     Hu_MenuTicker(ticLength);
     Hu_MsgTicker(ticLength);
+    R_TextTicker(ticLength);
 
     if(IS_CLIENT && !Get(DD_GAME_READY))
         return;

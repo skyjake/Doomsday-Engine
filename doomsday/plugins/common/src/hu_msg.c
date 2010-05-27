@@ -275,8 +275,7 @@ boolean Hu_IsMessageActive(void)
 /**
  * Begin a new message.
  */
-void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback,
-                 void* context)
+void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback, void* context)
 {
     assert(msg);
 
@@ -295,7 +294,7 @@ void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback,
     if(msgType == MSG_YESNO)
         composeYesNoMessage();
 
-    typeInTime = 0;
+    R_ResetTextTypeInTimer();
 
     // If the console is open, close it. This message must be noticed!
     Con_Open(false);

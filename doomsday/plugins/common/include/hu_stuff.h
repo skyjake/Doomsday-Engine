@@ -54,7 +54,6 @@ extern patchid_t dpInvPageRight[2];
 #endif
 
 extern const char shiftXForm[];
-extern int typeInTime;
 
 void            Hu_LoadData(void);
 void            Hu_Drawer(void);

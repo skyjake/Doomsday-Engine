@@ -100,8 +100,6 @@ typedef struct fogeffectdata_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int typeInTime = 0;
-
 #if __JDOOM__ || __JDOOM64__
 // Name graphics of each map.
 patchid_t* mapNamePatches = NULL;

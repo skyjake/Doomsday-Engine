@@ -58,6 +58,9 @@ typedef struct fontpatch_s {
 
 void            R_InitFont(gamefontid_t fontid, const fontpatch_t* patches, size_t num);
 
+void            R_TextTicker(timespan_t ticLength);
+void            R_ResetTextTypeInTimer(void);
+
 /**
  * @defGroup drawTextFlags Draw Text Flags
  */

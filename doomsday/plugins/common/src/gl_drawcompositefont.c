@@ -65,7 +65,7 @@ typedef struct {
     float offX, offY;
     float angle;
     float color[4];
-    float tracking;
+    int tracking;
     float leading;
     boolean typeIn;
     boolean caseScale;
@@ -92,6 +92,8 @@ static void drawFlash(int x, int y, int w, int h, int bright);
 
 static compositefont_t fonts[NUM_GAME_FONTS];
 
+static int typeInTime = 0;
+
 // CODE --------------------------------------------------------------------
 
 static __inline boolean isValidFontId(fontId)
@@ -110,7 +112,7 @@ static __inline patchid_t patchForFontChar(gamefontid_t id, unsigned char ch)
     return fontForId(id)->chars[ch].pInfo.id;
 }
 
-static __inline short translateTextToPatchDrawFlags(byte in)
+static __inline short translateTextToPatchDrawFlags(short in)
 {
     short out = 0;
     if(in & DTF_ALIGN_LEFT)
@@ -137,7 +139,7 @@ static float parseFloat(char** str)
         return 0; // Now I'm confused!
 
     *str = M_SkipWhite(*str + 1);
-    value = strtod(*str, &end);
+    value = (float) strtod(*str, &end);
     *str = end;
     return value;
 }
@@ -321,6 +323,22 @@ void R_InitFont(gamefontid_t fontId, const fontpatch_t* patches, size_t num)
     }
 }
 
+void R_TextTicker(timespan_t ticLength)
+{
+    static trigger_t fixed = { 1 / 35.0 };
+
+    // Restricted to fixed 35 Hz ticks.
+    if(!M_RunTrigger(&fixed, ticLength))
+        return; // It's too soon.
+
+    typeInTime++;
+}
+
+void R_ResetTextTypeInTimer(void)
+{
+    typeInTime = 0;
+}
+
 static void initDrawTextState(drawtextstate_t* state)
 {
     state->font = DEFAULT_FONTID;
@@ -351,7 +369,7 @@ void GL_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
     char smallBuff[SMALLBUFF_SIZE+1], *bigBuff = NULL;
     char temp[256], *str, *string, *end;
     int charCount = 0, curCase = -1;
-    float cx = x, cy = y, width = 0, extraScale;
+    float cx = (float) x, cy = (float) y, width = 0, extraScale;
     drawtextstate_t state;
     size_t len;
 
@@ -402,7 +420,7 @@ void GL_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
             {
                 do
                 {
-                    cx = x;
+                    cx = (float) x;
                     cy += GL_CharHeight(0, oldFont) * (1+oldLeading) * oldScaleY;
                 } while(--state.numBreaks > 0);
             }
@@ -412,7 +430,7 @@ void GL_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
         {
             boolean newline = false;
             short fragmentFlags;
-            int alignx = 0;
+            float alignx = 0;
 
             // Find the end of the next fragment.
             if(state.caseScale)
@@ -471,11 +489,11 @@ void GL_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
                 // The origin is the specified (x,y) for the patch.
                 // We'll undo the VGA aspect ratio (otherwise the result would
                 // be skewed).
-                DGL_Translatef(x, y, 0);
+                DGL_Translatef((float)x, (float)y, 0);
                 DGL_Scalef(1, 200.0f / 240.0f, 1);
                 DGL_Rotatef(state.angle, 0, 0, 1);
                 DGL_Scalef(1, 240.0f / 200.0f, 1);
-                DGL_Translatef(-x, -y, 0);
+                DGL_Translatef(-(float)x, -(float)y, 0);
             }
 
             DGL_Translatef(cx + state.offX + alignx, cy + state.offY + (state.caseScale ? state.caseMod[curCase].offset : 0), 0);
@@ -494,7 +512,7 @@ void GL_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
             }
             else
             {
-                cx = x;
+                cx = (float) x;
                 cy += (float) GL_TextFragmentHeight(temp, state.font) * (1+state.leading) * state.scaleY;
             }
 
@@ -888,18 +906,18 @@ void GL_DrawChar(unsigned char ch, int x, int y)
 
 static void drawFlash(int x, int y, int w, int h, int bright)
 {
-    float fsize = 4 + bright, fw = fsize * w / 2.0f, fh = fsize * h / 2.0f;
+    float fsize = 4.f + bright, fw = fsize * w / 2.0f, fh = fsize * h / 2.0f;
 
     // Don't draw anything for very small letters.
     if(h <= 4)
         return;
 
-    x += w / 2.0f - fw / 2;
-    y += h / 2.0f - fh / 2;
-    w = fw;
-    h = fh;
+    x += (int) (w / 2.0f - fw / 2);
+    y += (int) (h / 2.0f - fh / 2);
+    w = (int) fw;
+    h = (int) fh;
 
-    DGL_Bind(Get(DD_DYNLIGHT_TEXTURE));
+    DGL_Bind(DD_GetInteger(DD_DYNLIGHT_TEXTURE));
 
     if(bright)
         DGL_BlendMode(BM_ADD);

@@ -1496,8 +1496,6 @@ void Hu_MenuTicker(timespan_t ticLength)
     if(!M_RunTrigger(&fixed, ticLength))
         return; // It's too soon.
 
-    typeInTime++;
-
     if(menuActive || menuAlpha > 0)
     {
         menuTime++;
@@ -1582,7 +1580,7 @@ void M_SetupNextMenu(menu_t* menudef)
 
     menu_color = 0;
     skull_angle = 0;
-    typeInTime = 0;
+    R_ResetTextTypeInTimer();
 }
 
 /**
@@ -1822,7 +1820,7 @@ void Hu_MenuCommand(menucommand_e cmd)
             skull_angle = 0;
             currentMenu = &MainDef;
             itemOn = currentMenu->lastOn;
-            typeInTime = 0;
+            R_ResetTextTypeInTimer();
 
             // Enable the menu binding class
             DD_Execute(true, "activatebcontext menu");
