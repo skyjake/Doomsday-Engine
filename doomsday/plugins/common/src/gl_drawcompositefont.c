@@ -317,6 +317,7 @@ void R_InitFont(gamefontid_t fontId, const fontpatch_t* patches, size_t num)
     {
         const fontpatch_t* p = &patches[i];
         setFontCharacterPatch(font, p->ch, p->lumpName);
+        precacheFontCharacterPatch(font, p->ch);
     }
 }
 
