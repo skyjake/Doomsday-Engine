@@ -919,18 +919,11 @@ static patchtex_t* getPatchTex(patchid_t id)
     return NULL;
 }
 
-static patchid_t patchForLump(lumpnum_t lump)
+static patchid_t patchForName(const char* name)
 {
-    if(lump >= 0 && lump < numLumps)
-    {
-        uint i;
-        for(i = 0; i < numDoomPatchDefs; ++i)
-        {
-            patchtex_t* patchTex = doomPatchDefs[i];
-            if(patchTex->lump == lump)
-                return i + 1;
-        }
-    }
+    const gltexture_t* glTex;
+    if((glTex = GL_GetGLTextureByName(name, GLT_DOOMPATCH)))
+        return glTex->ofTypeID;
     return 0;
 }
 
@@ -949,18 +942,24 @@ patchtex_t* R_FindPatchTex(patchid_t id)
  * Get a patchtex_t data structure for a patch specified with a WAD lump
  * number. Allocates a new patchtex_t if it hasn't been loaded yet.
  */
-patchid_t R_RegisterAsPatch(lumpnum_t lump)
+patchid_t R_RegisterAsPatch(const char* name)
 {
+    assert(name);
+    {
     const lumppatch_t* patch;
+    lumpnum_t lump;
     patchid_t id;
     patchtex_t* p;
 
-    if(lump < 0 || lump >= numLumps)
-        return -1;
+    if(!name[0])
+        return 0;
 
     // Already defined as a patch?
-    if((id = patchForLump(lump)) != 0)
+    if((id = patchForName(name)) != 0)
         return id;
+
+    if((lump = W_CheckNumForName(name)) == -1)
+        return 0;
 
     /// \fixme What about min lump size?
     patch = (const lumppatch_t*) W_CacheLumpNum(lump, PU_STATIC);
@@ -987,7 +986,7 @@ patchid_t R_RegisterAsPatch(lumpnum_t lump)
 
     // Register a gltexture for this.
     {
-    const gltexture_t* glTex = GL_CreateGLTexture(W_LumpName(lump), ++numDoomPatchDefs, GLT_DOOMPATCH);
+    const gltexture_t* glTex = GL_CreateGLTexture(name, ++numDoomPatchDefs, GLT_DOOMPATCH);
     p->texId = glTex->id;
     }
 
@@ -997,6 +996,7 @@ patchid_t R_RegisterAsPatch(lumpnum_t lump)
 
     W_ChangeCacheTag(lump, PU_CACHE);
     return numDoomPatchDefs;
+    }
 }
 
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
@@ -1025,27 +1025,25 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
 
 patchid_t R_PrecachePatch(const char* name, patchinfo_t* info)
 {
-    lumpnum_t lump;
+    if(!name)
+        Con_Error("R_PrecachePatch: Argument 'name' cannot be NULL.");
 
     if(info)
-    {
         memset(info, 0, sizeof(patchinfo_t));
-    }
 
     if(isDedicated)
         return 0;
 
-    if((lump = W_CheckNumForName(name)) != -1)
     {
-        patchid_t patch = R_RegisterAsPatch(lump);
+    patchid_t patch;
+    if((patch = R_RegisterAsPatch(name)) != 0)
+    {
         GL_PreparePatch(getPatchTex(patch));
         if(info)
-        {
             R_GetPatchInfo(patch, info);
-        }
-        return patch;
     }
-    return 0;
+    return patch;
+    }
 }
 
 /**

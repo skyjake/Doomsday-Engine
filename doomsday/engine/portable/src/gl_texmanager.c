@@ -2974,6 +2974,9 @@ boolean GLTexture_IsFromIWAD(const gltexture_t* tex)
     case GLT_SPRITE:
         return W_IsFromIWAD(spriteTextures[tex->ofTypeID]->lump);
 
+    case GLT_DOOMPATCH:
+        return !R_FindPatchTex(tex->ofTypeID)->isCustom;
+
     case GLT_DETAIL:
     case GLT_SHINY:
     case GLT_MASK:
@@ -3007,6 +3010,9 @@ float GLTexture_GetWidth(const gltexture_t* tex)
 
     case GLT_SPRITE:
         return spriteTextures[tex->ofTypeID]->width;
+
+    case GLT_DOOMPATCH:
+        return R_FindPatchTex(tex->ofTypeID)->width;
 
     case GLT_DETAIL:
         return 128;
@@ -3047,6 +3053,9 @@ float GLTexture_GetHeight(const gltexture_t* tex)
 
     case GLT_SPRITE:
         return spriteTextures[tex->ofTypeID]->height;
+
+    case GLT_DOOMPATCH:
+        return R_FindPatchTex(tex->ofTypeID)->height;
 
     case GLT_DETAIL:
         return 128;
