@@ -785,16 +785,16 @@ static void R_ScaleModel(modeldef_t *mf, float destHeight, float offset)
 
 static void R_ScaleModelToSprite(modeldef_t* mf, int sprite, int frame)
 {
-    int                 off;
-    spritedef_t*        spr = &sprites[sprite];
+    spritedef_t* spr = &sprites[sprite];
     material_snapshot_t ms;
+    int off;
 
     if(!spr->numFrames || spr->spriteFrames == NULL)
         return;
+
     Material_Prepare(&ms, spr->spriteFrames[frame].mats[0], true, NULL);
 
-    off = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID]->offY -
-        ms.height;
+    off = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID]->offY - ms.height;
     if(off < 0)
         off = 0;
 

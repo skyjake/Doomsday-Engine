@@ -97,6 +97,7 @@ typedef struct gltexture_s {
 typedef struct gltexture_inst_s {
     DGLuint         id; // Name of the associated DGL texture.
     byte            flags; // GLTF_* flags.
+    byte            border; // In texels, added to all four edges of the texture.
     boolean         isMasked;
     const gltexture_t* tex;
     union {

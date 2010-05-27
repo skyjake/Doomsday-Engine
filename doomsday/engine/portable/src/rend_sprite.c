@@ -267,15 +267,18 @@ static void setupPSpriteParams(rendpspriteparams_t* params,
 
     sprFrame = &sprDef->spriteFrames[frame];
     flip = sprFrame->flip[0];
+
     memset(&mparams, 0, sizeof(mparams));
     mparams.pSprite = true;
+    mparams.tex.border = 1;
+
     Material_Prepare(&ms, sprFrame->mats[0], true, &mparams);
 
     sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
-    params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX] + sprTex->extraOffset[0];
-    params->pos[VY] = offScaleY * (psp->pos[VY] - sprTex->offY) + pspOffset[VY] + sprTex->extraOffset[1];
-    params->width = ms.width + fabs(sprTex->extraOffset[0])*2;
-    params->height = ms.height + fabs(sprTex->extraOffset[1])*2;
+    params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX] + -ms.units[MTU_PRIMARY].texInst->border;
+    params->pos[VY] = offScaleY * (psp->pos[VY] - sprTex->offY) + pspOffset[VY] + -ms.units[MTU_PRIMARY].texInst->border;
+    params->width = ms.width + ms.units[MTU_PRIMARY].texInst->border*2;
+    params->height = ms.height + ms.units[MTU_PRIMARY].texInst->border*2;
 
     // Calculate texture coordinates.
     params->texOffset[0] = ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[VX];
@@ -337,10 +340,10 @@ static void setupPSpriteParams(rendpspriteparams_t* params,
 
 void Rend_DrawPSprite(const rendpspriteparams_t *params)
 {
-    int                 i;
-    float               v1[2], v2[2], v3[2], v4[2];
-    dgl_color_t          quadColors[4];
-    dgl_vertex_t         quadNormals[4];
+    float v1[2], v2[2], v3[2], v4[2];
+    dgl_vertex_t quadNormals[4];
+    dgl_color_t quadColors[4];
+    int i;
 
     if(renderTextures == 1)
     {
@@ -348,7 +351,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     }
     else if(renderTextures == 2)
     {   // For lighting debug, render all solid surfaces using the gray texture.
-        material_t*         mat = P_GetMaterial(DDT_GRAY, MN_SYSTEM);
+        material_t* mat = P_GetMaterial(DDT_GRAY, MN_SYSTEM);
         material_snapshot_t ms;
 
         Material_Prepare(&ms, mat, true, NULL);
@@ -857,16 +860,16 @@ boolean drawVLightVector(const vlight_t* light, void* context)
 
 void Rend_RenderSprite(const rendspriteparams_t* params)
 {
-    int                 i;
-    dgl_color_t          quadColors[4];
-    dgl_vertex_t         quadNormals[4];
-    boolean             restoreMatrix = false;
-    boolean             restoreZ = false;
-    float               spriteCenter[3];
-    float               surfaceNormal[3];
-    float               v1[3], v2[3], v3[3], v4[3];
-    material_t*         mat = NULL;
+    float v1[3], v2[3], v3[3], v4[3];
+    dgl_color_t quadColors[4];
+    dgl_vertex_t quadNormals[4];
+    boolean restoreMatrix = false;
+    boolean restoreZ = false;
+    float spriteCenter[3];
+    float surfaceNormal[3];
+    material_t* mat = NULL;
     material_snapshot_t ms;
+    int i;
 
     if(renderTextures == 1)
         mat = params->mat;
@@ -877,22 +880,15 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
     if(mat)
     {
         // Might we need a colour translation?
-        if(renderTextures == 1)
-        {   // Possibly.
-            material_load_params_t mparams;
+        material_load_params_t mparams;
 
-            memset(&mparams, 0, sizeof(mparams));
-            mparams.tmap = params->tMap;
-            mparams.tclass = params->tClass;
-            mparams.pSprite = false;
+        memset(&mparams, 0, sizeof(mparams));
+        mparams.tmap = (renderTextures == 1? params->tMap : 0);
+        mparams.tclass = (renderTextures == 1? params->tClass : 0);
+        mparams.pSprite = false;
+        mparams.tex.border = 1;
 
-            Material_Prepare(&ms, mat, true, &mparams);
-        }
-        else
-        {
-            Material_Prepare(&ms, mat, true, NULL);
-        }
-
+        Material_Prepare(&ms, mat, true, &mparams);
         GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id, ms.units[MTU_PRIMARY].magMode);
     }
     else

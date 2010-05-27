@@ -39,6 +39,7 @@ typedef struct {
     boolean         pSprite;
     struct {
         byte            flags; // @see GLTextureFlags
+        byte            border;
     } tex;
 } material_load_params_t;
 

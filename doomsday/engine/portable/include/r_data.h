@@ -146,7 +146,6 @@ typedef struct flat_s {
 typedef struct {
     lumpnum_t       lump; // Real lump number.
     short           width, height, offX, offY;
-    int             extraOffset[2]; // Used on ALL sprites to hide edge filtering artefacts.
 } spritetex_t;
 
 // Model skin.
@@ -167,7 +166,6 @@ typedef struct patchtex_s {
     short           flags;
     short           width, height;
     short           offX, offY;
-    short           extraOffset[2]; // Only used with upscaled and sharpened patches.
 } patchtex_t;
 
 typedef struct lumppatch_s {

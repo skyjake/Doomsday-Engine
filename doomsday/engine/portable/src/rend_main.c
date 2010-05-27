@@ -411,7 +411,7 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside)
 
         if(side->SW_middlematerial)
         {
-            material_t*         mat = side->SW_middlematerial;
+            material_t* mat = side->SW_middlematerial;
             material_snapshot_t ms;
 
             // Ensure we have up to date info.
@@ -420,8 +420,8 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside)
             if(ms.isOpaque && !side->SW_middleblendmode &&
                side->SW_middlergba[3] >= 1)
             {
-                float               openTop[2], matTop[2];
-                float               openBottom[2], matBottom[2];
+                float openTop[2], matTop[2];
+                float openBottom[2], matBottom[2];
 
                 if(side->flags & SDF_MIDDLE_STRETCH)
                     return true;

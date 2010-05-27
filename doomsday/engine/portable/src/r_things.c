@@ -469,9 +469,9 @@ void R_PreInitSprites(void)
 
     if(numSpritePatches)
     {
-        int                 idx = 0;
-        spritetex_t*        storage;
-        spriterecord_t*     rec = spriteRecords;
+        spriterecord_t* rec = spriteRecords;
+        spritetex_t* storage;
+        int idx = 0;
 
         spriteTextures = Z_Malloc(sizeof(spritetex_t*) * numSpriteTextures, PU_SPRITE, 0);
         storage = Z_Malloc(sizeof(spritetex_t) * numSpriteTextures, PU_SPRITE, 0);
@@ -482,15 +482,14 @@ void R_PreInitSprites(void)
 
             do
             {
-                const char*         name;
-                const lumppatch_t*  patch;
-                spritetex_t*        sprTex;
-                const gltexture_t*  glTex;
+                const lumppatch_t* patch;
+                const gltexture_t* glTex;
+                spritetex_t* sprTex;
+                const char* name;
 
                 spriteTextures[idx] = sprTex = &storage[idx];
 
-                patch = (const lumppatch_t *)
-                    W_CacheLumpNum(frame->lump, PU_CACHE);
+                patch = (const lumppatch_t*) W_CacheLumpNum(frame->lump, PU_CACHE);
                 name = W_LumpName(frame->lump);
 
                 sprTex->lump = frame->lump;
@@ -499,22 +498,15 @@ void R_PreInitSprites(void)
                 sprTex->width = SHORT(patch->width);
                 sprTex->height = SHORT(patch->height);
 
-                // An extra offset is applied during drawing and the sprite
-                // loaded with an additional border to counteract GL edge
-                // filtering artefacts.
-                sprTex->extraOffset[0] = sprTex->extraOffset[1] = -1;
-
                 glTex = GL_CreateGLTexture(name, idx++, GLT_SPRITE);
 
                 // Create a new material for this sprite patch.
-                frame->mat = P_MaterialCreate(name, sprTex->width,
-                    sprTex->height, 0, glTex->id, MN_SPRITES, NULL);
+                frame->mat = P_MaterialCreate(name, sprTex->width, sprTex->height, 0, glTex->id, MN_SPRITES, NULL);
             } while((frame = frame->next));
         } while((rec = rec->next));
     }
 
-    VERBOSE(Con_Message("R_InitSpriteRecords: Done in %.2f seconds.\n",
-                        Sys_GetSeconds() - startTime));
+    VERBOSE(Con_Message("R_InitSpriteRecords: Done in %.2f seconds.\n", Sys_GetSeconds() - startTime));
 }
 
 static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
@@ -697,6 +689,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     spriteframe_t*      sprFrame;
     spritetex_t*        sprTex;
     material_t*         mat;
+    material_load_params_t params;
     material_snapshot_t ms;
 
     if((unsigned) sprite >= (unsigned) numSprites)
@@ -716,7 +709,10 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
 
     sprFrame = &sprDef->spriteFrames[frame];
     mat = sprFrame->mats[0];
-    Material_Prepare(&ms, mat, false, NULL);
+
+    memset(&params, 0, sizeof(params));
+    params.tex.border = 1;
+    Material_Prepare(&ms, mat, false, &params);
 
     sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
 
@@ -726,8 +722,8 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
     info->flip = sprFrame->flip[0];
     info->offset = sprTex->offX;
     info->topOffset = sprTex->offY;
-    info->width = ms.width + abs(sprTex->extraOffset[0])*2;
-    info->height = ms.height + abs(sprTex->extraOffset[1])*2;
+    info->width = ms.width + ms.units[MTU_PRIMARY].texInst->border*2;
+    info->height = ms.height + ms.units[MTU_PRIMARY].texInst->border*2;
     info->texCoord[0] = ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[0];
     info->texCoord[1] = ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[1];
 
@@ -739,7 +735,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
  */
 float R_VisualRadius(mobj_t* mo)
 {
-    modeldef_t*         mf, *nextmf;
+    modeldef_t* mf, *nextmf;
     material_snapshot_t ms;
 
     // If models are being used, use the model's radius.
@@ -754,8 +750,7 @@ float R_VisualRadius(mobj_t* mo)
     }
 
     // Use the sprite frame's width.
-    Material_Prepare(&ms, R_GetMaterialForSprite(mo->sprite, mo->frame),
-                     true, NULL);
+    Material_Prepare(&ms, R_GetMaterialForSprite(mo->sprite, mo->frame), true, NULL);
     return ms.width / 2;
 }
 
@@ -970,13 +965,14 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     memset(&mparams, 0, sizeof(mparams));
     mparams.tmap = transMap;
     mparams.tclass = transClass;
+    mparams.tex.border = 1;
 
     Material_Prepare(&ms, mat, true, &mparams);
 
     sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
 
-    params->width = ms.width + fabs(sprTex->extraOffset[0])*2;
-    params->height = ms.height + fabs(sprTex->extraOffset[1])*2;
+    params->width = ms.width + ms.units[MTU_PRIMARY].texInst->border*2;
+    params->height = ms.height + ms.units[MTU_PRIMARY].texInst->border*2;
 
     params->center[VX] = x;
     params->center[VY] = y;
@@ -985,8 +981,8 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     params->srvo[VY] = visOffY;
     params->srvo[VZ] = visOffZ;
     params->distance = distance;
-    params->viewOffX = (float) sprTex->offX - ms.width / 2.0f - sprTex->extraOffset[0];
-    params->viewOffY = -sprTex->extraOffset[1];
+    params->viewOffX = (float) sprTex->offX - ms.width / 2.0f - -ms.units[MTU_PRIMARY].texInst->border;
+    params->viewOffY = ms.units[MTU_PRIMARY].texInst->border;
     params->subsector = ssec;
     params->viewAligned = viewAligned;
     params->noZWrite = noSpriteZWrite;
@@ -1218,6 +1214,7 @@ void R_ProjectSprite(mobj_t* mo)
     memset(&mparams, 0, sizeof(mparams));
     mparams.tmap = tmap;
     mparams.tclass = tclass;
+    mparams.tex.border = 1;
 
     Material_Prepare(&ms, mat, true, &mparams);
 
@@ -1525,10 +1522,7 @@ void R_ProjectSprite(mobj_t* mo)
         sprFrame = &sprDef->spriteFrames[mo->frame];
         if(sprFrame->rotate)
         {
-            mat =
-                sprFrame->
-                mats[(R_PointToAngle(mo->pos[VX], mo->pos[VY]) - mo->angle +
-                      (unsigned) (ANG45 / 2) * 9) >> 29];
+            mat = sprFrame->mats[(R_PointToAngle(mo->pos[VX], mo->pos[VY]) - mo->angle + (unsigned) (ANG45 / 2) * 9) >> 29];
         }
         else
         {

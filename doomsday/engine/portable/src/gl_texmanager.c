@@ -1553,6 +1553,7 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
     const spritetex_t*  sprTex;
     int tmap = 0, tclass = 0;
     boolean pSprite = false;
+    byte border = 0;
 
     if(!image)
         return 0; // Wha?
@@ -1564,6 +1565,7 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
         tmap = params->tmap;
         tclass = params->tclass;
         pSprite = params->pSprite;
+        border = params->tex.border;
     }
 
     // Attempt to load a high resolution version of this sprite?
@@ -1603,8 +1605,8 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
     const lumppatch_t*  patch;
     void* tmp = NULL;
 
-    image->width = sprTex->width+abs(sprTex->extraOffset[0])*2;
-    image->height = sprTex->height+abs(sprTex->extraOffset[1])*2;
+    image->width = sprTex->width+border*2;
+    image->height = sprTex->height+border*2;
     image->pixelSize = 1;
     image->pixels = M_Calloc(2 * image->width * image->height);
 
@@ -1625,7 +1627,7 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
         patch = W_CacheLumpNum(sprTex->lump, PU_STATIC);
     }
 
-    image->isMasked = DrawRealPatch(image->pixels, image->width, image->height, patch, abs(sprTex->extraOffset[0]), abs(sprTex->extraOffset[1]), false, true);
+    image->isMasked = DrawRealPatch(image->pixels, image->width, image->height, patch, border, border, false, true);
 
     if(freePatch)
         M_Free(tmp);
@@ -1643,6 +1645,7 @@ void GL_SetPSprite(material_t* mat)
 
     memset(&params, 0, sizeof(params));
     params.pSprite = true;
+    params.tex.border = 1;
 
     Material_Prepare(&ms, mat, true, &params);
 
@@ -1659,6 +1662,7 @@ void GL_SetTranslatedSprite(material_t* mat, int tclass, int tmap)
     memset(&params, 0, sizeof(params));
     params.tmap = tmap;
     params.tclass = tclass;
+    params.tex.border = 1;
 
     Material_Prepare(&ms, mat, true, &params);
     GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id, ms.units[MTU_PRIMARY].magMode);
@@ -2093,7 +2097,10 @@ DGLuint GL_PreparePatch(patchtex_t* patchTex)
         if(patchTex->flags & PF_MONOCHROME)
             params.tex.flags |= GLTF_MONOCHROME;
         if(patchTex->flags & PF_UPSCALE_AND_SHARPEN)
+        {
             params.tex.flags |= GLTF_UPSCALE_AND_SHARPEN;
+            params.tex.border = 1;
+        }
         if((texInst = GL_PrepareGLTexture(patchTex->texId, &params, NULL)))
             return texInst->id;
     }
@@ -2486,19 +2493,20 @@ static gltexture_inst_t* pickGLTextureInst(gltexture_t* tex, void* context)
 {
     material_load_params_t* params = (material_load_params_t*) context;
     gltexture_inst_node_t* node;
-    byte texFlags = 0;
+    byte texFlags = 0, border = 0;
     int flags = 0;
 
     if(params)
     {
         flags = params->flags;
         texFlags = params->tex.flags;
+        border = params->tex.border;
     }
 
     node = (gltexture_inst_node_t*) tex->instances;
     while(node)
     {
-        if(node->flags == flags && node->inst.flags == texFlags)
+        if(node->flags == flags && node->inst.flags == texFlags && node->inst.border == border)
             return &node->inst;
         node = node->next;
     }
@@ -2528,7 +2536,7 @@ static gltexture_inst_t* pickSpriteTextureInst(gltexture_t* tex, void* context)
     material_load_params_t* params = (material_load_params_t*) context;
     int tmap = 0, tclass = 0;
     boolean pSprite = false;
-    byte texFlags = 0;
+    byte texFlags = 0, border = 0;
 
     if(params)
     {
@@ -2536,6 +2544,7 @@ static gltexture_inst_t* pickSpriteTextureInst(gltexture_t* tex, void* context)
         tclass = params->tclass;
         pSprite = params->pSprite;
         texFlags = params->tex.flags;
+        border = params->tex.border;
     }
 
     node = (gltexture_inst_node_t*) tex->instances;
@@ -2544,7 +2553,8 @@ static gltexture_inst_t* pickSpriteTextureInst(gltexture_t* tex, void* context)
         if(node->inst.data.sprite.pSprite == pSprite &&
            node->inst.data.sprite.tmap == tmap &&
            node->inst.data.sprite.tclass == tclass &&
-           node->inst.flags == texFlags)
+           node->inst.flags == texFlags &&
+           node->inst.border == border)
             return &node->inst;
         node = node->next;
     }
@@ -2848,15 +2858,17 @@ if(!didDefer)
         else
         {
             material_load_params_t* params = (material_load_params_t*) context;
-            byte texFlags = 0;
+            byte texFlags = 0, border = 0;
 
             if(params)
             {
                 texFlags = params->tex.flags;
+                border = params->tex.border;
             }
 
             texInst->flags = texFlags;
             texInst->isMasked = image.isMasked;
+            texInst->border = border;
         }
 
         if(tex->type == GLT_SPRITE)

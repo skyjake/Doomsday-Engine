@@ -357,11 +357,10 @@ void Rend_RenderSkyHemisphere(int whichHemi)
     {
         if(slayer->flags & SLF_ENABLED)
         {
-            byte            result = 0;
+            byte result = 0;
 
             if(!slayer->mat)
-                Con_Error("Rend_RenderSkyHemisphere: Sky layer "
-                          "without a material!\n");
+                Con_Error("Rend_RenderSkyHemisphere: Sky layer without a material!\n");
 
             // The texture is actually loaded when an update is done.
             if(renderTextures)
@@ -376,10 +375,8 @@ void Rend_RenderSkyHemisphere(int whichHemi)
                     params.tex.flags |= GLTF_ZEROMASK;
 
                 result = Material_Prepare(&ms, slayer->mat, true, &params);
-                skyTexWidth =
-                    GLTexture_GetWidth(ms.units[MTU_PRIMARY].texInst->tex);
-                skyTexHeight =
-                    GLTexture_GetHeight(ms.units[MTU_PRIMARY].texInst->tex);
+                skyTexWidth = GLTexture_GetWidth(ms.units[MTU_PRIMARY].texInst->tex);
+                skyTexHeight = GLTexture_GetHeight(ms.units[MTU_PRIMARY].texInst->tex);
 
                 if(result)
                 {   // Texture was reloaded.

@@ -977,15 +977,7 @@ patchtex_t* R_GetPatchTex(lumpnum_t lump)
     if(monochrome)
         p->flags |= PF_MONOCHROME;
     if(upscaleAndSharpenPatches)
-    {
         p->flags |= PF_UPSCALE_AND_SHARPEN;
-        /**
-         * This border will be added to the texture during the upscale process.
-         * Strictly speaking we should specify the border dimension here and
-         * reference it when upscaling.
-         */
-        p->extraOffset[0] = p->extraOffset[1] = -1;
-    }
 
     // Register a gltexture for this.
     {
@@ -1016,8 +1008,8 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
         info->offset = p->offX;
         info->topOffset = p->offY;
         info->isCustom = p->isCustom;
-        info->extraOffset[0] = p->extraOffset[0];
-        info->extraOffset[1] = p->extraOffset[1];
+        info->extraOffset[0] = 0;//p->extraOffset[0];
+        info->extraOffset[1] = 0;//p->extraOffset[1];
         return true;
     }
     info->id = -1; // Safety Precaution.
@@ -2129,13 +2121,13 @@ void R_PrecacheMobjNum(int num)
  */
 void R_PrecacheMap(void)
 {
-    uint                i, j;
-    size_t              n;
-    sector_t*           sec;
-    sidedef_t*          side;
-    float               startTime;
-    material_t*         mat, **matPresent;
-    materialnum_t       numMaterials;
+    uint i, j;
+    size_t n;
+    sector_t* sec;
+    sidedef_t* side;
+    float startTime;
+    material_t* mat, **matPresent;
+    materialnum_t numMaterials;
 
     // Don't precache when playing demo.
     if(isDedicated || playback)
@@ -2183,26 +2175,26 @@ void R_PrecacheMap(void)
     // Precache sprites?
     if(precacheSprites)
     {
-        int                 i;
+        int i;
 
         for(i = 0; i < numSprites; ++i)
         {
-            spritedef_t*        sprDef = &sprites[i];
+            spritedef_t* sprDef = &sprites[i];
 
             if(!P_IterateThinkers(gx.MobjThinker, 0x1, // All mobjs are public
                                   findSpriteOwner, sprDef))
             {   // This sprite is used by some state of at least one mobj.
-                int                 j;
+                int j;
 
                 // Precache all the frames.
                 for(j = 0; j < sprDef->numFrames; ++j)
                 {
-                    int                 k;
-                    spriteframe_t*      sprFrame = &sprDef->spriteFrames[j];
+                    spriteframe_t* sprFrame = &sprDef->spriteFrames[j];
+                    int k;
 
                     for(k = 0; k < 8; ++k)
                     {
-                        material_t*         mat = sprFrame->mats[k];
+                        material_t* mat = sprFrame->mats[k];
 
                         if(mat && !isInList((void**) matPresent, n, mat))
                             matPresent[n++] = mat;
