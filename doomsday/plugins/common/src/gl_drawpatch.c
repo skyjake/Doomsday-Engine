@@ -53,7 +53,7 @@ void GL_DrawPatch2(patchid_t id, int posX, int posY, short flags)
     float x = (float) posX, y = (float) posY, w, h;
     patchinfo_t info;
 
-    if(id == -1)
+    if(id == 0)
         return;
 
     DGL_SetPatch(id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);

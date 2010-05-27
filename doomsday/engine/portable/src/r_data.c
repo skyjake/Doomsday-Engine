@@ -99,7 +99,7 @@ flat_t** flats = NULL;
 int numSpriteTextures = 0;
 spritetex_t** spriteTextures = NULL;
 
-int numDoomPatchDefs = 0;
+uint numDoomPatchDefs = 0;
 patchtex_t** doomPatchDefs = NULL;
 
 int numDetailTextures = 0;
@@ -912,21 +912,26 @@ void R_ShutdownData(void)
     P_ShutdownMaterialManager();
 }
 
-static patchtex_t* getPatchTex(lumpnum_t lump)
+static patchtex_t* getPatchTex(patchid_t id)
+{
+    if(id != 0 && id <= numDoomPatchDefs)
+        return doomPatchDefs[id-1];
+    return NULL;
+}
+
+static patchid_t patchForLump(lumpnum_t lump)
 {
     if(lump >= 0 && lump < numLumps)
     {
-        int i;
+        uint i;
         for(i = 0; i < numDoomPatchDefs; ++i)
         {
             patchtex_t* patchTex = doomPatchDefs[i];
             if(patchTex->lump == lump)
-            {
-                return patchTex;
-            }
+                return i + 1;
         }
     }
-    return NULL;
+    return 0;
 }
 
 /**
@@ -934,7 +939,7 @@ static patchtex_t* getPatchTex(lumpnum_t lump)
  */
 patchtex_t* R_FindPatchTex(patchid_t id)
 {
-    patchtex_t* patchTex = getPatchTex((lumpnum_t)id);
+    patchtex_t* patchTex = getPatchTex(id);
     if(!patchTex)
         Con_Error("R_FindPatchText: Unknown patch %i.", id);
     return patchTex;
@@ -944,17 +949,18 @@ patchtex_t* R_FindPatchTex(patchid_t id)
  * Get a patchtex_t data structure for a patch specified with a WAD lump
  * number. Allocates a new patchtex_t if it hasn't been loaded yet.
  */
-patchtex_t* R_GetPatchTex(lumpnum_t lump)
+patchid_t R_RegisterAsPatch(lumpnum_t lump)
 {
     const lumppatch_t* patch;
+    patchid_t id;
     patchtex_t* p;
 
     if(lump < 0 || lump >= numLumps)
-        return NULL;
+        return -1;
 
     // Already defined as a patch?
-    if((p = getPatchTex(lump)))
-        return p;
+    if((id = patchForLump(lump)) != 0)
+        return id;
 
     /// \fixme What about min lump size?
     patch = (const lumppatch_t*) W_CacheLumpNum(lump, PU_STATIC);
@@ -981,16 +987,16 @@ patchtex_t* R_GetPatchTex(lumpnum_t lump)
 
     // Register a gltexture for this.
     {
-    const gltexture_t* glTex = GL_CreateGLTexture(W_LumpName(lump), lump, GLT_DOOMPATCH);
+    const gltexture_t* glTex = GL_CreateGLTexture(W_LumpName(lump), ++numDoomPatchDefs, GLT_DOOMPATCH);
     p->texId = glTex->id;
     }
 
     // Add it to the pointer array.
-    doomPatchDefs = Z_Realloc(doomPatchDefs, sizeof(patchtex_t*) * ++numDoomPatchDefs, PU_STATIC);
+    doomPatchDefs = Z_Realloc(doomPatchDefs, sizeof(patchtex_t*) * numDoomPatchDefs, PU_STATIC);
     doomPatchDefs[numDoomPatchDefs-1] = p;
 
     W_ChangeCacheTag(lump, PU_CACHE);
-    return p;
+    return numDoomPatchDefs;
 }
 
 boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
@@ -1012,7 +1018,6 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
         info->extraOffset[1] = 0;//p->extraOffset[1];
         return true;
     }
-    info->id = -1; // Safety Precaution.
     VERBOSE(Con_Message("R_GetPatchInfo: Warning, unknown Patch %i.\n", id));
     return false;
     }
@@ -1025,23 +1030,22 @@ patchid_t R_PrecachePatch(const char* name, patchinfo_t* info)
     if(info)
     {
         memset(info, 0, sizeof(patchinfo_t));
-        info->id = -1; // Safety precaution.
     }
 
     if(isDedicated)
-        return -1;
+        return 0;
 
     if((lump = W_CheckNumForName(name)) != -1)
     {
-        patchtex_t* patch = R_GetPatchTex(lump);
-        GL_PreparePatch(patch);
+        patchid_t patch = R_RegisterAsPatch(lump);
+        GL_PreparePatch(getPatchTex(patch));
         if(info)
         {
-            R_GetPatchInfo((patchid_t)lump, info);
+            R_GetPatchInfo(patch, info);
         }
-        return (patchid_t)lump;
+        return patch;
     }
-    return -1;
+    return 0;
 }
 
 /**

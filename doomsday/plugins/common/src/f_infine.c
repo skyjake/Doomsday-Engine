@@ -1035,7 +1035,7 @@ void FI_ClearAnimation(fipic_t* pic)
     if(pic->flags.is_ximage)
         FI_DeleteXImage(pic);
 
-    memset(pic->tex, -1, sizeof(pic->tex));
+    memset(pic->tex, 0, sizeof(pic->tex));
     memset(pic->flip, 0, sizeof(pic->flip));
     memset(pic->sound, -1, sizeof(pic->sound));
     memset(pic->seqWait, 0, sizeof(pic->seqWait));
@@ -2165,7 +2165,7 @@ void FIC_Patch(void)
     FI_ClearAnimation(pic);
 
     name = FI_GetToken();
-    if((patch = R_PrecachePatch(name, NULL)) == -1)
+    if((patch = R_PrecachePatch(name, NULL)) == 0)
         Con_Message("FIC_Patch: Warning, missing Patch \"%s\".\n", name);
 
     pic->tex[0] = patch;
@@ -2179,7 +2179,7 @@ void FIC_SetPatch(void)
     const char* name = FI_GetToken();
     patchid_t patch;
 
-    if((patch = R_PrecachePatch(name, NULL)) != -1)
+    if((patch = R_PrecachePatch(name, NULL)) != 0)
     {
         pic->tex[0] = patch;
         pic->flags.is_patch = true;
@@ -2204,7 +2204,7 @@ void FIC_Anim(void)
     patchid_t patch;
     int i, time;
 
-    if((patch = R_PrecachePatch(name, NULL)) == -1)
+    if((patch = R_PrecachePatch(name, NULL)) == 0)
         Con_Message("FIC_Anim: Warning, Patch \"%s\" not found.\n", name);
 
     time = FI_GetTics();

@@ -311,7 +311,7 @@ void R_InitFont(gamefontid_t fontId, const fontpatch_t* patches, size_t num)
     font = fontForId(fontId);
     memset(font, 0, sizeof(*font));
     for(i = 0; i < 256; ++i)
-        font->chars[i].pInfo.id = -1;
+        font->chars[i].pInfo.id = 0;
 
     for(i = 0; i < num; ++i)
     {
@@ -819,7 +819,7 @@ void GL_DrawTextFragment5(const char* string, int x, int y, gamefontid_t fontId,
             w = GL_CharWidth(c, fontId);
             h = GL_CharHeight(c, fontId);
 
-            if(patchForFontChar(fontId, c) != -1 && c != ' ')
+            if(patchForFontChar(fontId, c) != 0 && c != ' ')
             {
                 // A character we have a patch for that is not white space.
                 if(pass)
