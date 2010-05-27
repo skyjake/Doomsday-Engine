@@ -1423,12 +1423,11 @@ static void bufferSkyTexture(const doomtexturedef_t* texDef, byte** outbuffer,
  *                      1 = loaded data from a lump resource.
  *                      2 = loaded data from an external resource.
  */
-byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst,
-                           void* context)
+byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst, void* context)
 {
-    int                 i, flags = 0;
-    doomtexturedef_t*   texDef;
-    boolean             loadAsSky = false, zeroMask = false;
+    int i, flags = 0;
+    doomtexturedef_t* texDef;
+    boolean loadAsSky = false, zeroMask = false;
     material_load_params_t* params = (material_load_params_t*) context;
 
     if(!image)
@@ -1437,19 +1436,17 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst,
     if(params)
     {
         loadAsSky = (params->flags & MLF_LOAD_AS_SKY)? true : false;
-        zeroMask = (params->flags & MLF_TEX_ZEROMASK)? true : false;
+        zeroMask = (params->tex.flags & GLTF_ZEROMASK)? true : false;
     }
 
     texDef = R_GetDoomTextureDef(inst->tex->ofTypeID);
 
     // Try to load a high resolution version of this texture?
-    if(!noHighResTex && (loadExtAlways || highResWithPWAD ||
-                         GLTexture_IsFromIWAD(inst->tex)))
+    if(!noHighResTex && (loadExtAlways || highResWithPWAD || GLTexture_IsFromIWAD(inst->tex)))
     {
-        filename_t          fileName;
+        filename_t fileName;
 
-        if(R_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, fileName, texDef->name,
-                           "-ck", FILENAME_T_MAXLEN))
+        if(R_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, fileName, texDef->name, "-ck", FILENAME_T_MAXLEN))
             if(GL_LoadImage(image, fileName))
                 return 2; // High resolution texture loaded.
     }
@@ -1461,8 +1458,7 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst,
 
     if(loadAsSky)
     {
-        bufferSkyTexture(texDef, &image->pixels, image->width,
-                         image->height, zeroMask);
+        bufferSkyTexture(texDef, &image->pixels, image->width, image->height, zeroMask);
         image->isMasked = zeroMask;
     }
     else
@@ -1472,9 +1468,7 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst,
          * we are needlessly duplicating work.
          */
         image->pixels = M_Malloc(2 * image->width * image->height);
-        image->isMasked =
-            bufferTexture(texDef, image->pixels, image->width,
-                          image->height, &i);
+        image->isMasked = bufferTexture(texDef, image->pixels, image->width, image->height, &i);
 
         // The -bigmtex option allows the engine to resize masked
         // textures whose patches are too big to fit the texture.
@@ -1485,9 +1479,7 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst,
             // Get a new buffer.
             M_Free(image->pixels);
             image->pixels = M_Malloc(2 * image->width * image->height);
-            image->isMasked =
-                bufferTexture(texDef, image->pixels, image->width,
-                              image->height, 0);
+            image->isMasked = bufferTexture(texDef, image->pixels, image->width, image->height, 0);
         }
 
     }
@@ -1515,7 +1507,7 @@ byte GL_LoadDoomPatch(image_t* image, const gltexture_inst_t* inst,
 
     if(params)
     {
-        scaleSharp = (params->flags & MLF_TEX_UPSCALE_AND_SHARPEN) != 0;
+        scaleSharp = (params->tex.flags & GLTF_UPSCALE_AND_SHARPEN) != 0;
     }
 
     // Try to load an external replacement for this version of the patch?
@@ -2099,9 +2091,9 @@ DGLuint GL_PreparePatch(patchtex_t* patchTex)
         const gltexture_inst_t* texInst;
         memset(&params, 0, sizeof(params));
         if(patchTex->flags & PF_MONOCHROME)
-            params.flags |= MLF_TEX_MONOCHROME;
+            params.tex.flags |= GLTF_MONOCHROME;
         if(patchTex->flags & PF_UPSCALE_AND_SHARPEN)
-            params.flags |= MLF_TEX_UPSCALE_AND_SHARPEN;
+            params.tex.flags |= GLTF_UPSCALE_AND_SHARPEN;
         if((texInst = GL_PrepareGLTexture(patchTex->texId, &params, NULL)))
             return texInst->id;
     }
@@ -2474,9 +2466,9 @@ const gltexture_t* GL_GetGLTexture(gltextureid_t id)
 
 const gltexture_t* GL_GetGLTextureByName(const char* rawName, gltexture_type_t type)
 {
-    int                 n;
-    uint                hash;
-    char                name[9];
+    char name[9];
+    uint hash;
+    int n;
 
     if(!rawName || !rawName[0])
         return NULL;
@@ -2492,17 +2484,21 @@ const gltexture_t* GL_GetGLTextureByName(const char* rawName, gltexture_type_t t
 
 static gltexture_inst_t* pickGLTextureInst(gltexture_t* tex, void* context)
 {
-    gltexture_inst_node_t* node;
     material_load_params_t* params = (material_load_params_t*) context;
-    int                 flags = 0;
+    gltexture_inst_node_t* node;
+    byte texFlags = 0;
+    int flags = 0;
 
     if(params)
+    {
         flags = params->flags;
+        texFlags = params->tex.flags;
+    }
 
     node = (gltexture_inst_node_t*) tex->instances;
     while(node)
     {
-        if(node->flags == flags)
+        if(node->flags == flags && node->inst.flags == texFlags)
             return &node->inst;
         node = node->next;
     }
@@ -2532,12 +2528,14 @@ static gltexture_inst_t* pickSpriteTextureInst(gltexture_t* tex, void* context)
     material_load_params_t* params = (material_load_params_t*) context;
     int tmap = 0, tclass = 0;
     boolean pSprite = false;
+    byte texFlags = 0;
 
     if(params)
     {
         tmap = params->tmap;
         tclass = params->tclass;
         pSprite = params->pSprite;
+        texFlags = params->tex.flags;
     }
 
     node = (gltexture_inst_node_t*) tex->instances;
@@ -2545,7 +2543,8 @@ static gltexture_inst_t* pickSpriteTextureInst(gltexture_t* tex, void* context)
     {
         if(node->inst.data.sprite.pSprite == pSprite &&
            node->inst.data.sprite.tmap == tmap &&
-           node->inst.data.sprite.tclass == tclass)
+           node->inst.data.sprite.tclass == tclass &&
+           node->inst.flags == texFlags)
             return &node->inst;
         node = node->next;
     }
@@ -2555,9 +2554,9 @@ static gltexture_inst_t* pickSpriteTextureInst(gltexture_t* tex, void* context)
 
 gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex, void* context, byte* result)
 {
-    boolean monochrome    = ((tex->type != GLT_DETAIL && context)? (((material_load_params_t*) context)->flags & MLF_TEX_MONOCHROME) != 0 : false);
-    boolean noCompression = ((tex->type != GLT_DETAIL && context)? (((material_load_params_t*) context)->flags & MLF_TEX_NO_COMPRESSION) != 0 : false);
-    boolean scaleSharp    = ((tex->type != GLT_DETAIL && context)? (((material_load_params_t*) context)->flags & MLF_TEX_UPSCALE_AND_SHARPEN) != 0 : false);
+    boolean monochrome    = ((tex->type != GLT_DETAIL && context)? (((material_load_params_t*) context)->tex.flags & GLTF_MONOCHROME) != 0 : false);
+    boolean noCompression = ((tex->type != GLT_DETAIL && context)? (((material_load_params_t*) context)->tex.flags & GLTF_NO_COMPRESSION) != 0 : false);
+    boolean scaleSharp    = ((tex->type != GLT_DETAIL && context)? (((material_load_params_t*) context)->tex.flags & GLTF_UPSCALE_AND_SHARPEN) != 0 : false);
     gltexture_inst_t* texInst = NULL;
     float contrast = 1;
     byte tmpResult;
@@ -2842,10 +2841,23 @@ if(!didDefer)
                 "Should be precached in busy mode?\n", texInst->tex->name, texInst->id);
 #endif
 
-        if(image.isMasked)
-            texInst->flags |= GLTF_MASKED;
         if(tex->type == GLT_DETAIL)
+        {
             texInst->data.detail.contrast = contrast;
+        }
+        else
+        {
+            material_load_params_t* params = (material_load_params_t*) context;
+            byte texFlags = 0;
+
+            if(params)
+            {
+                texFlags = params->tex.flags;
+            }
+
+            texInst->flags = texFlags;
+            texInst->isMasked = image.isMasked;
+        }
 
         if(tex->type == GLT_SPRITE)
         {

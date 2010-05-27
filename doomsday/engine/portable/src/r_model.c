@@ -1268,7 +1268,7 @@ void R_PrecacheModelSkins(modeldef_t* modef)
                 material_load_params_t params;
 
                 memset(&params, 0, sizeof(params));
-                params.flags = (!mdl->allowTexComp? MLF_TEX_NO_COMPRESSION : 0);
+                params.tex.flags = (!mdl->allowTexComp? GLTF_NO_COMPRESSION : 0);
 
                 GL_PrepareGLTexture(sn->id, &params, NULL);
             }

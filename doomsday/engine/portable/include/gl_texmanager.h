@@ -84,12 +84,20 @@ typedef struct gltexture_s {
     uint            hashNext; // 1-based index
 } gltexture_t;
 
-// gltexture flags:
-#define GLTF_MASKED         0x1
+/**
+ * @defGroup GLTextureFlags GLTexture Flags
+ */
+/*@{*/
+#define GLTF_ZEROMASK               0x1 // Zero the alpha of loaded textures.
+#define GLTF_NO_COMPRESSION         0x2 // Do not compress the loaded textures.
+#define GLTF_UPSCALE_AND_SHARPEN    0x4
+#define GLTF_MONOCHROME             0x8
+/*@}*/
 
 typedef struct gltexture_inst_s {
     DGLuint         id; // Name of the associated DGL texture.
     byte            flags; // GLTF_* flags.
+    boolean         isMasked;
     const gltexture_t* tex;
     union {
         struct {

@@ -227,8 +227,7 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
     if(mat->layers[0].tex)
     {
         const gltexture_t*  tex = GL_GetGLTexture(mat->layers[0].tex);
-        int                 c;
-        int                 magMode = glmode[texMagMode];
+        int c, magMode = glmode[texMagMode];
 
         if(tex->type == GLT_SPRITE)
             magMode = filterSprites? GL_LINEAR : GL_NEAREST;
@@ -236,7 +235,7 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
         setTexUnit(snapshot, MTU_PRIMARY, BM_NORMAL, magMode, texInst[0],
                    1.f / snapshot->width, 1.f / snapshot->height, 0, 0, 1);
 
-        snapshot->isOpaque = !(texInst[0]->flags & GLTF_MASKED);
+        snapshot->isOpaque = !texInst[0]->isMasked;
 
         /// \fixme what about the other texture types?
         if(tex->type == GLT_DOOMTEXTURE || tex->type == GLT_FLAT)
@@ -249,11 +248,8 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
         }
         else
         {
-            snapshot->color[CR] = snapshot->color[CG] =
-                snapshot->color[CB] = 1;
-
-            snapshot->topColor[CR] = snapshot->topColor[CG] =
-                snapshot->topColor[CB] = 1;
+            snapshot->color[CR] = snapshot->color[CG] = snapshot->color[CB] = 1;
+            snapshot->topColor[CR] = snapshot->topColor[CG] = snapshot->topColor[CB] = 1;
         }
     }
 

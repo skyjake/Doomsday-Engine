@@ -32,15 +32,14 @@
 
 // Material load flags:
 #define MLF_LOAD_AS_SKY             0x0001
-#define MLF_TEX_ZEROMASK            0x0002 // Zero the alpha of loaded textures.
-#define MLF_TEX_NO_COMPRESSION      0x0004 // Do not compress the loaded textures.
-#define MLF_TEX_UPSCALE_AND_SHARPEN 0x0008
-#define MLF_TEX_MONOCHROME          0x0010
 
 typedef struct {
     short           flags; // MLF_* material load flags
     int             tmap, tclass;
     boolean         pSprite;
+    struct {
+        byte            flags; // @see GLTextureFlags
+    } tex;
 } material_load_params_t;
 
 // Material texture unit idents:

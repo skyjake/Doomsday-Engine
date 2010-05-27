@@ -311,9 +311,10 @@ static void setupFadeout(skylayer_t* slayer)
 
         // Ensure we have up to date info on the material.
         memset(&params, 0, sizeof(params));
-        params.flags = MLF_LOAD_AS_SKY | MLF_TEX_NO_COMPRESSION;
+        params.flags = MLF_LOAD_AS_SKY;
+        params.tex.flags = GLTF_NO_COMPRESSION;
         if(slayer->flags & SLF_MASKED)
-            params.flags |= MLF_TEX_ZEROMASK;
+            params.tex.flags |= GLTF_ZEROMASK;
 
         Material_Prepare(&ms, slayer->mat, true, &params);
         slayer->fadeout.rgb[CR] = ms.topColor[CR];
@@ -369,9 +370,10 @@ void Rend_RenderSkyHemisphere(int whichHemi)
                 material_snapshot_t ms;
 
                 memset(&params, 0, sizeof(params));
-                params.flags = MLF_LOAD_AS_SKY | MLF_TEX_NO_COMPRESSION;
+                params.flags = MLF_LOAD_AS_SKY;
+                params.tex.flags = GLTF_NO_COMPRESSION;
                 if(slayer->flags & SLF_MASKED)
-                    params.flags |= MLF_TEX_ZEROMASK;
+                    params.tex.flags |= GLTF_ZEROMASK;
 
                 result = Material_Prepare(&ms, slayer->mat, true, &params);
                 skyTexWidth =
@@ -572,9 +574,10 @@ static void internalSkyParams(skylayer_t* slayer, int param, void* data)
             material_load_params_t params;
 
             memset(&params, 0, sizeof(params));
-            params.flags = MLF_LOAD_AS_SKY | MLF_TEX_NO_COMPRESSION;
+            params.flags = MLF_LOAD_AS_SKY;
+            params.tex.flags = GLTF_NO_COMPRESSION;
             if(slayer->flags & SLF_MASKED)
-                params.flags |= MLF_TEX_ZEROMASK;
+                params.tex.flags |= GLTF_ZEROMASK;
 
             Material_Prepare(NULL, slayer->mat, true, &params);
         }
