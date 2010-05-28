@@ -1073,6 +1073,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\gl_drawcompositefont.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\gl_drawpatch.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\gl_font.c"
 				>
 			</File>
@@ -2634,6 +2642,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\api\dd_compositefont.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\dd_def.h"
 				>
 			</File>
@@ -2787,6 +2799,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\gl_draw.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\gl_drawpatch.h"
 				>
 			</File>
 			<File

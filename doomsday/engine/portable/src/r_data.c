@@ -1014,8 +1014,8 @@ boolean R_GetPatchInfo(patchid_t id, patchinfo_t* info)
         info->offset = p->offX;
         info->topOffset = p->offY;
         info->isCustom = p->isCustom;
-        info->extraOffset[0] = 0;//p->extraOffset[0];
-        info->extraOffset[1] = 0;//p->extraOffset[1];
+        /// \kludge:
+        info->extraOffset[0] = info->extraOffset[1] = (p->flags & PF_UPSCALE_AND_SHARPEN)? -1 : 0;
         return true;
     }
     VERBOSE(Con_Message("R_GetPatchInfo: Warning, unknown Patch %i.\n", id));

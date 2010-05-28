@@ -103,10 +103,10 @@ float           Hu_MenuAlpha(void);
 void            Hu_MenuPageString(char* page, const menu_t* menu);
 
 void            M_DrawMenuText(const char* string, int x, int y);
-void            M_DrawMenuText2(const char* string, int x, int y, gamefontid_t font);
-void            M_DrawMenuText3(const char* string, int x, int y, gamefontid_t font, short flags);
-void            M_DrawMenuText4(const char* string, int x, int y, gamefontid_t font, short flags, float glitterStrength);
-void            M_DrawMenuText5(const char* string, int x, int y, gamefontid_t font, short flags, float glitterStrength, float shadowStrength);
+void            M_DrawMenuText2(const char* string, int x, int y, compositefontid_t font);
+void            M_DrawMenuText3(const char* string, int x, int y, compositefontid_t font, short flags);
+void            M_DrawMenuText4(const char* string, int x, int y, compositefontid_t font, short flags, float glitterStrength);
+void            M_DrawMenuText5(const char* string, int x, int y, compositefontid_t font, short flags, float glitterStrength, float shadowStrength);
 
 boolean         M_EditResponder(event_t* ev);
 

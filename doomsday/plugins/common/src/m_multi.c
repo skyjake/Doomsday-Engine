@@ -852,7 +852,7 @@ void MN_TickerEx(void)
     }
 }
 
-int Ed_VisibleSlotChars(char* text, int (*widthFunc) (const char* text, gamefontid_t font))
+int Ed_VisibleSlotChars(char* text, int (*widthFunc) (const char* text, compositefontid_t font))
 {
     char                cbuf[2] = { 0, 0 };
     int                 i, w;

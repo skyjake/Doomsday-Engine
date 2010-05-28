@@ -755,17 +755,17 @@ void Hu_LoadData(void)
 # endif
 #endif
 
-    R_InitFont(GF_FONTA, fontA, sizeof(fontA) / sizeof(fontA[0]));
-    R_InitFont(GF_FONTB, fontB, sizeof(fontB) / sizeof(fontB[0]));
-    R_InitFont(GF_STATUS, fontStatus, sizeof(fontStatus) / sizeof(fontStatus[0]));
+    R_NewCompositeFont(GF_FONTA, "a", fontA, sizeof(fontA) / sizeof(fontA[0]));
+    R_NewCompositeFont(GF_FONTB, "b", fontB, sizeof(fontB) / sizeof(fontB[0]));
+    R_NewCompositeFont(GF_STATUS, "status", fontStatus, sizeof(fontStatus) / sizeof(fontStatus[0]));
 #if __JDOOM__
-    R_InitFont(GF_INDEX, fontIndex, sizeof(fontIndex) / sizeof(fontIndex[0]));
+    R_NewCompositeFont(GF_INDEX, "index", fontIndex, sizeof(fontIndex) / sizeof(fontIndex[0]));
 #endif
 #if __JDOOM__ || __JDOOM64__
-    R_InitFont(GF_SMALL, fontSmall, sizeof(fontSmall) / sizeof(fontSmall[0]));
+    R_NewCompositeFont(GF_SMALL, "small", fontSmall, sizeof(fontSmall) / sizeof(fontSmall[0]));
 #endif
 #if __JHERETIC__ || __JHEXEN__
-    R_InitFont(GF_SMALLIN, fontSmallIn, sizeof(fontSmallIn) / sizeof(fontSmallIn[0]));
+    R_NewCompositeFont(GF_SMALLIN, "smallin", fontSmallIn, sizeof(fontSmallIn) / sizeof(fontSmallIn[0]));
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
@@ -839,7 +839,7 @@ static void drawQuad(float x, float y, float w, float h, float s, float t,
     DGL_End();
 }
 
-void HU_DrawText(const char* str, gamefontid_t font, float x, float y,
+void HU_DrawText(const char* str, compositefontid_t font, float x, float y,
     float scale, float r, float g, float b, float a, short flags)
 {
     if(!str || !str[0])
@@ -1234,7 +1234,7 @@ const char* P_GetGameModeName(void)
     return sp;
 }
 
-static void drawMapMetaData(float x, float y, gamefontid_t font, float alpha)
+static void drawMapMetaData(float x, float y, compositefontid_t font, float alpha)
 {
     static const char*  unnamed = "unnamed";
     const char* lname = P_GetMapNiceName();
@@ -1595,7 +1595,7 @@ void M_DrawGlowBar(const float a[2], const float b[2], float thickness,
     }
 }
 
-void M_DrawShadowedChar3(unsigned char ch, int x, int y, gamefontid_t font, short flags,
+void M_DrawShadowedChar3(unsigned char ch, int x, int y, compositefontid_t font, short flags,
     float r, float g, float b, float a)
 {
     DGL_Color4f(0, 0, 0, a * .4f);
@@ -1605,7 +1605,7 @@ void M_DrawShadowedChar3(unsigned char ch, int x, int y, gamefontid_t font, shor
     GL_DrawChar3(ch, x, y, font, flags);
 }
 
-void M_DrawShadowedChar2(unsigned char ch, int x, int y, gamefontid_t font)
+void M_DrawShadowedChar2(unsigned char ch, int x, int y, compositefontid_t font)
 {
     M_DrawShadowedChar3(ch, x, y, font, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN, 1, 1, 1, 1);
 }
@@ -1615,7 +1615,7 @@ void M_DrawShadowedChar(unsigned char ch, int x, int y)
     M_DrawShadowedChar2(ch, x, y, GF_FONTA);
 }
 
-void M_DrawTextFragmentShadowed(const char* string, int x, int y, gamefontid_t font, short flags, int tracking, float r, float g, float b, float a)
+void M_DrawTextFragmentShadowed(const char* string, int x, int y, compositefontid_t font, short flags, int tracking, float r, float g, float b, float a)
 {
     DGL_Color4f(0, 0, 0, a * .4f);
     GL_DrawTextFragment4(string, x+2, y+2, font, flags, tracking);
@@ -1637,7 +1637,7 @@ void M_DrawTextFragmentShadowed(const char* string, int x, int y, gamefontid_t f
  *                      (ie it does not originate from a DED definition).
  */
 void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
-    gamefontid_t font, boolean builtin, short flags, float r, float g, float b, float a)
+    compositefontid_t font, boolean builtin, short flags, float r, float g, float b, float a)
 {
     int patchString = 0, posx = x;
     char def[80], *string;
@@ -1702,12 +1702,12 @@ void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
     GL_DrawPatch2(patch, posx, y, flags);
 }
 
-void WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, gamefontid_t font, boolean builtin, short flags)
+void WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, compositefontid_t font, boolean builtin, short flags)
 {
     WI_DrawPatch4(id, x, y, altstring, font, builtin, flags, 1, 1, 1, 1);
 }
 
-void WI_DrawPatch2(patchid_t patch, int x, int y, const char* altstring, gamefontid_t font, boolean builtin)
+void WI_DrawPatch2(patchid_t patch, int x, int y, const char* altstring, compositefontid_t font, boolean builtin)
 {
     WI_DrawPatch3(patch, x, y, altstring, font, builtin, DPF_ALIGN_TOPLEFT);
 }

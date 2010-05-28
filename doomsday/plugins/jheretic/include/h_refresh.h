@@ -32,7 +32,7 @@
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include "hu_stuff.h" // For gamefontid_t
+#include "hu_stuff.h" // For compositefontid_t
 
 #include "p_mobj.h"
 
@@ -41,7 +41,7 @@ extern float quitDarkenOpacity;
 void            H_Display(int layer);
 void            H_Display2(void);
 
-void            R_DrawMapTitle(int x, int y, float alpha, gamefontid_t font, boolean center);
+void            R_DrawMapTitle(int x, int y, float alpha, compositefontid_t font, boolean center);
 
 void            P_SetDoomsdayFlags(mobj_t* mo);
 void            R_SetAllDoomsdayFlags(void);

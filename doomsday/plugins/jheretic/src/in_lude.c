@@ -158,7 +158,7 @@ static yahpt_t YAHspot[3][9] = {
 
 // CODE --------------------------------------------------------------------
 
-void IN_DrawTime(int x, int y, int h, int m, int s, gamefontid_t font, int tracking, float r, float g, float b, float a)
+void IN_DrawTime(int x, int y, int h, int m, int s, compositefontid_t font, int tracking, float r, float g, float b, float a)
 {
     char buf[20];
 

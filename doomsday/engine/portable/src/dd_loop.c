@@ -66,6 +66,7 @@
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void            Net_ResetTimer(void);
+void            R_TextTicker(timespan_t ticLength);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -317,6 +318,9 @@ void DD_Ticker(timespan_t time)
              * so that frametime always stays within the range 0..1.
              */
             realFrameTimePos += time * TICSPERSEC;
+
+            // Temporary: move me someplace more suitable.
+            R_TextTicker(time);
 
             // Game logic.
             gx.Ticker(time);

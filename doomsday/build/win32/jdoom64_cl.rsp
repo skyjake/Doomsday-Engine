@@ -8,7 +8,6 @@
  .\..\..\plugins\common\src\g_defs.c
  .\..\..\plugins\common\src\g_game.c
  .\..\..\plugins\common\src\g_update.c
- .\..\..\plugins\common\src\gl_drawcompositefont.c
  .\..\..\plugins\common\src\gl_drawpatch.c
  .\..\..\plugins\common\src\hu_lib.c
  .\..\..\plugins\common\src\hu_log.c

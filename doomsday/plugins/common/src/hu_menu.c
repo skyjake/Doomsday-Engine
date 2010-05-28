@@ -2119,7 +2119,7 @@ int Hu_MenuResponder(event_t* ev)
     return false;
 }
 
-void M_DrawMenuText5(const char* string, int x, int y, gamefontid_t font, short flags,
+void M_DrawMenuText5(const char* string, int x, int y, compositefontid_t font, short flags,
     float glitterStrength, float shadowStrength)
 {
     if(cfg.menuEffects == 0)
@@ -2132,17 +2132,17 @@ void M_DrawMenuText5(const char* string, int x, int y, gamefontid_t font, short 
     GL_DrawTextFragment7(string, x, y, font, flags, 0, 0, glitterStrength, shadowStrength);
 }
 
-void M_DrawMenuText4(const char* string, int x, int y, gamefontid_t font, short flags, float glitterStrength)
+void M_DrawMenuText4(const char* string, int x, int y, compositefontid_t font, short flags, float glitterStrength)
 {
     M_DrawMenuText5(string, x, y, font, flags, glitterStrength, cfg.menuShadow);
 }
 
-void M_DrawMenuText3(const char* string, int x, int y, gamefontid_t font, short flags)
+void M_DrawMenuText3(const char* string, int x, int y, compositefontid_t font, short flags)
 {
     M_DrawMenuText4(string, x, y, font, flags, cfg.menuGlitter);
 }
 
-void M_DrawMenuText2(const char* string, int x, int y, gamefontid_t font)
+void M_DrawMenuText2(const char* string, int x, int y, compositefontid_t font)
 {
     M_DrawMenuText3(string, x, y, font, DTF_ALIGN_TOPLEFT);
 }

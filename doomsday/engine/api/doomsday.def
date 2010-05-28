@@ -17,32 +17,8 @@ NAME            "DOOMSDAY"
 ; 98 formerly R_TextureNameForNum
 ; 99 formerly R_MaterialSetTranslation
 ; 100 formerly R_SetTextureTranslation
-; 106 formerly DD_GetDGLProcAddress
-; 107 formerly GL_DoUpdate
-; 108 formerly GL_ChangeResolution
-; 112 formerly GL_TextureFilterMode
-; 113 formerly GL_Color
-; 116 formerly GL_SetSprite
-; 118 formerly GL_SetTexture
-; 120 formerly GL_DrawPatch
-; 121 formerly GL_DrawPatch_CS
-; 122 formerly GL_DrawPatchLitAlpha
-; 123 formerly GL_DrawFuzzPatch
-; 124 formerly GL_DrawAltFuzzPatch
-; 125 formerly GL_DrawShadowedPatch
 ; 131 formerly GL_DrawPSprite
 ; 144 formerly M_FRandom
-; 197 formerly PCX_GetSize
-; 198 formerly PCX_Load
-; 199 formerly PCX_MemoryLoad
-; 200 formerly PNG_Load
-; 201 formerly TGA_Save24_rgb565
-; 202 formerly TGA_Save24_rgb888
-; 203 formerly TGA_Save24_rgba8888
-; 204 formerly TGA_Save16_rgb888
-; 205 formerly TGA_GetSize
-; 206 formerly GL_Update
-; 235 formerly GL_DrawRawScreen_CS
 ; 238 formerly GL_Color2
 ; 255 formerly P_PointToBlock
 ; 326 formerly PO_Alloc
@@ -424,6 +400,39 @@ EXPORTS
     GL_NewTextureWithParams3    @329 NONAME
     GL_SetFilter                @132 NONAME
     GL_SetFilterColor           @441 NONAME
+
+; Graphics: Text
+	R_NewCompositeFont                  @106 NONAME
+	R_ResetTextTypeInTimer      @107 NONAME
+
+	GL_DrawText                 @108 NONAME
+
+	GL_TextDimensions           @112 NONAME
+	GL_TextWidth                @113 NONAME
+	GL_TextHeight               @116 NONAME
+
+	GL_DrawTextFragment         @118 NONAME
+	GL_DrawTextFragment2        @120 NONAME
+	GL_DrawTextFragment3        @121 NONAME
+	GL_DrawTextFragment4        @122 NONAME
+	GL_DrawTextFragment5        @123 NONAME
+	GL_DrawTextFragment6        @124 NONAME
+	GL_DrawTextFragment7        @125 NONAME
+
+	GL_TextFragmentDimensions   @197 NONAME
+	GL_TextFragmentDimensions2  @198 NONAME
+
+	GL_TextFragmentWidth        @199 NONAME
+	GL_TextFragmentWidth2       @200 NONAME
+	GL_TextFragmentHeight       @201 NONAME
+
+	GL_DrawChar                 @202 NONAME
+	GL_DrawChar2                @203 NONAME
+	GL_DrawChar3                @204 NONAME
+
+	GL_CharDimensions           @205 NONAME
+	GL_CharWidth                @206 NONAME
+	GL_CharHeight               @235 NONAME
 
 ; Audio.
     S_MapChange                 @225 NONAME

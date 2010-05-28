@@ -41,7 +41,6 @@
  .\..\..\plugins\common\src\g_controls.c
  .\..\..\plugins\common\src\g_game.c
  .\..\..\plugins\common\src\g_update.c
- .\..\..\plugins\common\src\gl_drawcompositefont.c
  .\..\..\plugins\common\src\gl_drawpatch.c
  .\..\..\plugins\common\src\f_infine.c
  .\..\..\plugins\common\src\hu_stuff.c

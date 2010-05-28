@@ -70,7 +70,7 @@ typedef struct {
     const menuitem_t* items;
     int             lastOn;
     int             prevMenu; // menutype_t
-    gamefontid_t    font; // Font for menu items.
+    compositefontid_t    font; // Font for menu items.
     float*          color;
     int             itemHeight;
     // For multipage menus.

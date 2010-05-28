@@ -30,8 +30,25 @@
 #ifndef __COMMON_HU_STUFF_H__
 #define __COMMON_HU_STUFF_H__
 
-#include "gl_drawcompositefont.h"
 #include "gl_drawpatch.h"
+
+// The fonts.
+typedef enum {
+    GF_FIRST = 1,
+    GF_FONTA = GF_FIRST,
+    GF_FONTB,
+    GF_STATUS,
+#if __JDOOM__
+    GF_INDEX, // Used for the ready/max ammo on the statusbar
+#endif
+#if __JDOOM__ || __JDOOM64__
+    GF_SMALL, // Used on the intermission.
+#endif
+#if __JHERETIC__ || __JHEXEN__
+    GF_SMALLIN,
+#endif
+    NUM_GAME_FONTS
+} compositefontid_t;
 
 #if __JHEXEN__
 # include "h2def.h"
@@ -85,11 +102,11 @@ void            Hu_EndBorderedProjection(borderedprojectionstate_t* s);
 void            Draw_BeginZoom(float s, float originX, float originY);
 void            Draw_EndZoom(void);
 
-void            M_DrawTextFragmentShadowed(const char* string, int x, int y, gamefontid_t font, short flags, int tracking, float r, float g, float b, float a);
+void            M_DrawTextFragmentShadowed(const char* string, int x, int y, compositefontid_t font, short flags, int tracking, float r, float g, float b, float a);
 
 void            M_DrawShadowedChar(unsigned char ch, int x, int y);
-void            M_DrawShadowedChar2(unsigned char ch, int x, int y, gamefontid_t font);
-void            M_DrawShadowedChar3(unsigned char ch, int x, int y, gamefontid_t font, short flags, float r, float g, float b, float a);
+void            M_DrawShadowedChar2(unsigned char ch, int x, int y, compositefontid_t font);
+void            M_DrawShadowedChar3(unsigned char ch, int x, int y, compositefontid_t font, short flags, float r, float g, float b, float a);
 
 void            M_DrawShadowedPatch(patchid_t id, int x, int y);
 void            M_DrawShadowedPatch2(patchid_t id, int x, int y, short flags);
@@ -97,9 +114,9 @@ void            M_DrawShadowedPatch3(patchid_t id, int x, int y, short flags, fl
 
 // Implements patch replacement.
 void            WI_DrawPatch(patchid_t id, int x, int y);
-void            WI_DrawPatch2(patchid_t id, int x, int y, const char* altstring, gamefontid_t font, boolean builtin);
-void            WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, gamefontid_t font, boolean builtin, short flags);
-void            WI_DrawPatch4(patchid_t id, int x, int y, const char* altstring, gamefontid_t font, boolean builtin, short flags, float r, float g, float b, float a);
+void            WI_DrawPatch2(patchid_t id, int x, int y, const char* altstring, compositefontid_t font, boolean builtin);
+void            WI_DrawPatch3(patchid_t id, int x, int y, const char* altstring, compositefontid_t font, boolean builtin, short flags);
+void            WI_DrawPatch4(patchid_t id, int x, int y, const char* altstring, compositefontid_t font, boolean builtin, short flags, float r, float g, float b, float a);
 
 /**
  * Misc specialised elements:

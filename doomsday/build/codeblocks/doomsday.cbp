@@ -141,6 +141,7 @@
 		</VirtualTargets>
 		<Unit filename="..\..\engine\api\Doomsday.def" />
 		<Unit filename="..\..\engine\api\dd_api.h" />
+		<Unit filename="..\..\engine\api\dd_compositefont.h" />
 		<Unit filename="..\..\engine\api\dd_gl.h" />
 		<Unit filename="..\..\engine\api\dd_maptypes.h" />
 		<Unit filename="..\..\engine\api\dd_plugin.h" />
@@ -495,9 +496,8 @@
 		<Unit filename="..\..\engine\portable\src\gl_defer.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\gl_draw.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="..\..\engine\portable\src\gl_draw.c" />
+		<Unit filename="..\..\engine\portable\src\gl_drawcompositefont.c" />
 		<Unit filename="..\..\engine\portable\src\gl_font.c">
 			<Option compilerVar="CC" />
 		</Unit>
