@@ -86,6 +86,8 @@ typedef enum menucommand_e {
 #define SFX_QUICKLOAD_PROMPT (SFX_CHAT)
 #endif
 
+extern float menu_glitter, menu_shadow;
+
 void            Hu_MenuRegister(void);
 void            Hu_MenuInit(void);
 
@@ -100,10 +102,12 @@ void            Hu_MenuSetAlpha(float alpha);
 float           Hu_MenuAlpha(void);
 void            Hu_MenuPageString(char* page, const menu_t* menu);
 
-
-void            M_DrawMenuText3(const char* string, int x, int y, gamefontid_t font, short flags);
-void            M_DrawMenuText2(const char* string, int x, int y, gamefontid_t font);
 void            M_DrawMenuText(const char* string, int x, int y);
+void            M_DrawMenuText2(const char* string, int x, int y, gamefontid_t font);
+void            M_DrawMenuText3(const char* string, int x, int y, gamefontid_t font, short flags);
+void            M_DrawMenuText4(const char* string, int x, int y, gamefontid_t font, short flags, float glitterStrength);
+void            M_DrawMenuText5(const char* string, int x, int y, gamefontid_t font, short flags, float glitterStrength, float shadowStrength);
+
 boolean         M_EditResponder(event_t* ev);
 
 DEFCC(CCmdMenuAction);

@@ -28,29 +28,29 @@
 #include <string.h>
 #include <ctype.h>
 
-// \todo Only included for the config. Refactor away.
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
-
 #include "gl_drawpatch.h"
 #include "gl_drawcompositefont.h"
+
+#ifdef WIN32
+// Disable annoying MSVC warnings.
+// 4761: integral size mismatch in argument
+// 4244: conversion from 'type1' to 'type2', possible loss of data
+#pragma warning (disable:4761 4244)
+#endif
 
 // MACROS ------------------------------------------------------------------
 
 #define DEFAULT_FONTID              (GF_FONTA)
+#define DEFAULT_GLITTER             (0)
+#define DEFAULT_SHADOW              (0)
 #define DEFAULT_LEADING             (.25)
 #define DEFAULT_TRACKING            (0)
 #define DEFAULT_DRAWFLAGS           (DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS)
 #define DEFAULT_INITIALCOUNT        (0)
 
 // TYPES -------------------------------------------------------------------
+
+enum { CR, CG, CB, CA };           // Color indices.
 
 typedef struct {
     struct compositefont_char_s {
@@ -65,6 +65,7 @@ typedef struct {
     float offX, offY;
     float angle;
     float color[4];
+    float glitter, shadow;
     int tracking;
     float leading;
     boolean typeIn;
@@ -252,6 +253,16 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state)
             (*strPtr) += 5;
             state->angle = parseFloat(&(*strPtr));
         }
+        else if(!strnicmp((*strPtr), "glitter", 7))
+        {
+            (*strPtr) += 7;
+            state->glitter = parseFloat(&(*strPtr));
+        }
+        else if(!strnicmp((*strPtr), "shadow", 6))
+        {
+            (*strPtr) += 6;
+            state->shadow = parseFloat(&(*strPtr));
+        }
         else
         {
             // Unknown, skip it.
@@ -346,6 +357,8 @@ static void initDrawTextState(drawtextstate_t* state)
     state->offX = state->offY = 0;
     state->angle = 0;
     state->color[CR] = state->color[CG] = state->color[CB] = state->color[CA] = 1;
+    state->glitter = DEFAULT_GLITTER;
+    state->shadow = DEFAULT_SHADOW;
     state->tracking = DEFAULT_TRACKING;
     state->leading = DEFAULT_LEADING;
     state->typeIn = true;
@@ -362,7 +375,7 @@ static void initDrawTextState(drawtextstate_t* state)
  */
 void GL_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
     short flags, int defTracking, float defRed, float defGreen, float defBlue, float defAlpha,
-    boolean defCase)
+    float defGlitter, float defShadow, boolean defCase)
 {
 #define SMALLBUFF_SIZE  80
 
@@ -401,6 +414,8 @@ void GL_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
     state.color[CG] = defGreen;
     state.color[CB] = defBlue;
     state.color[CA] = defAlpha;
+    state.glitter = defGlitter;
+    state.shadow = defShadow;
     state.tracking = defTracking;
     state.caseScale = defCase;
 
@@ -502,7 +517,7 @@ void GL_DrawText(const char* inString, int x, int y, gamefontid_t defFont,
 
             // Draw it.
             DGL_Color4fv(state.color);
-            GL_DrawTextFragment5(temp, 0, 0, state.font, fragmentFlags, state.tracking, state.typeIn ? charCount : 0);
+            GL_DrawTextFragment7(temp, 0, 0, state.font, fragmentFlags, state.tracking, state.typeIn ? charCount : 0, state.glitter, state.shadow);
             charCount += strlen(temp);
 
             // Advance the current position?
@@ -748,18 +763,22 @@ int GL_TextHeight(const char* string, gamefontid_t fontId)
 /**
  * Write a string using a colored, custom font and do a type-in effect.
  */
-void GL_DrawTextFragment5(const char* string, int x, int y, gamefontid_t fontId, short flags,
-    int tracking, int initialCount)
+void GL_DrawTextFragment7(const char* string, int x, int y, gamefontid_t fontId, short flags,
+    int tracking, int initialCount, float glitterStrength, float shadowStrength)
 {
     assert(string);
     assert(isValidFontId(fontId));
     {
     boolean noTypein = (flags & DTF_NO_TYPEIN) != 0;
-    boolean noShadow = (flags & DTF_NO_SHADOW) != 0;
+    boolean noShadow = (shadowStrength <= 0? true : false);
+    boolean noGlitter = (glitterStrength <= 0? true : false);
     int i, pass, w, h, cx, cy, count, yoff;
-    float flash, origColor[4], flashColor[4];
+    float flash, shadow, shadowMul, flashMul, origColor[4], flashColor[3];
     unsigned char c;
     const char* ch;
+
+    flash = (noGlitter? 0 : glitterStrength);
+    shadow = (noShadow? 0 : shadowStrength);
 
     if(!string[0])
         return;
@@ -774,14 +793,13 @@ void GL_DrawTextFragment5(const char* string, int x, int y, gamefontid_t fontId,
     else if(!(flags & DTF_ALIGN_TOP))
         y -= GL_TextFragmentHeight(string, fontId)/2;
 
-    if(!noTypein || !noShadow)
+    if(!(noTypein && noShadow && noGlitter))
         DGL_GetFloatv(DGL_CURRENT_COLOR_RGBA, origColor);
 
-    if(!noTypein)
+    if(!(noTypein && noGlitter))
     {
         for(i = 0; i < 3; ++i)
             flashColor[i] = (1 + 2 * origColor[i]) / 3;
-        flashColor[CA] = cfg.menuGlitter * origColor[CA];
     }
 
     for(pass = (noShadow? 1 : 0); pass < 2; ++pass)
@@ -791,42 +809,69 @@ void GL_DrawTextFragment5(const char* string, int x, int y, gamefontid_t fontId,
         cx = x;
         cy = y;
 
-        if(!noTypein || !noShadow)
-            DGL_Color4fv(origColor);
-
         for(;;)
         {
             c = *ch++;
             yoff = 0;
-            flash = 0;
+            flash = (noGlitter? 0 : glitterStrength);
+            flashMul = 0;
+
+            shadow = (noShadow? 0 : shadowStrength);
+            shadowMul = origColor[CA];
+
+            if(!(noTypein && noShadow && noGlitter))
+                DGL_Color4fv(origColor);
+
             // Do the type-in effect?
-            if(!noTypein)
+            if(!noTypein && ((!noGlitter && pass) || (!noShadow && !pass)))
             {
                 int maxCount = (typeInTime > 0? typeInTime * 2 : 0);
 
-                if(count == maxCount)
+                if(pass)
                 {
-                    flash = 1;
-                    DGL_Color4f(1, 1, 1, origColor[CA]);
+                    if(count == maxCount)
+                    {
+                        flashMul = 1;
+                        flashColor[CR] = origColor[CR];
+                        flashColor[CG] = origColor[CG];
+                        flashColor[CB] = origColor[CB];
+                    }
+                    else if(count + 1 == maxCount)
+                    {
+                        flashMul = 0.88f;
+                        flashColor[CR] = (1 + origColor[CR]) / 2;
+                        flashColor[CG] = (1 + origColor[CG]) / 2;
+                        flashColor[CB] = (1 + origColor[CB]) / 2;
+                    }
+                    else if(count + 2 == maxCount)
+                    {
+                        flashMul = 0.75f;
+                        flashColor[CR] = origColor[CR];
+                        flashColor[CG] = origColor[CG];
+                        flashColor[CB] = origColor[CB];
+                    }
+                    else if(count + 3 == maxCount)
+                    {
+                        flashMul = 0.5f;
+                        flashColor[CR] = origColor[CR];
+                        flashColor[CG] = origColor[CG];
+                        flashColor[CB] = origColor[CB];
+                    }
+                    else if(count > maxCount)
+                    {
+                        break;
+                    }
                 }
-                else if(count + 1 == maxCount)
+                else
                 {
-                    flash = 0.5f;
-                    DGL_Color4f((1 + origColor[CR]) / 2, (1 + origColor[CG]) / 2, (1 + origColor[CB]) / 2, origColor[CA]);
-                }
-                else if(count + 2 == maxCount)
-                {
-                    flash = 0.25f;
-                    DGL_Color4fv(origColor);
-                }
-                else if(count + 3 == maxCount)
-                {
-                    flash = 0.12f;
-                    DGL_Color4fv(origColor);
-                }
-                else if(count > maxCount)
-                {
-                    break;
+                    if(count + 1 == maxCount)
+                        shadowMul *= .75f;
+                    else if(count + 2 == maxCount)
+                        shadowMul *= .5f;
+                    else if(count + 3 == maxCount)
+                        shadowMul *= .25f;
+                    else if(count > maxCount)
+                        break;
                 }
             }
             count++;
@@ -847,13 +892,13 @@ void GL_DrawTextFragment5(const char* string, int x, int y, gamefontid_t fontId,
 
                     if(flash > 0)
                     {   // Do something flashy.
-                        DGL_Color4f(flashColor[CR], flashColor[CG], flashColor[CB], flashColor[CA] * flash);
+                        DGL_Color4f(flashColor[CR], flashColor[CG], flashColor[CB], flash * flashMul);
                         drawFlash(cx, cy + yoff, w, h, true);
                     }
                 }
                 else if(!noShadow)
                 {   // Shadow.
-                    DGL_Color4f(1, 1, 1, origColor[CA] * cfg.menuShadow);
+                    DGL_Color4f(1, 1, 1, shadow * shadowMul);
                     drawFlash(cx, cy + yoff, w, h, false);
                 }
             }
@@ -862,11 +907,23 @@ void GL_DrawTextFragment5(const char* string, int x, int y, gamefontid_t fontId,
         }
     }
 
-    if(!noTypein || !noShadow)
+    if(!(noTypein && noGlitter && noShadow))
     {   // Ensure we restore the original color.
         DGL_Color4fv(origColor);
     }
     }
+}
+
+void GL_DrawTextFragment6(const char* string, int x, int y, gamefontid_t fontId, short flags,
+    int tracking, int initialCount, float glitterStrength)
+{
+    GL_DrawTextFragment7(string, x, y, fontId, flags, tracking, initialCount, glitterStrength, DEFAULT_SHADOW);
+}
+
+void GL_DrawTextFragment5(const char* string, int x, int y, gamefontid_t fontId, short flags,
+    int tracking, int initialCount)
+{
+    GL_DrawTextFragment6(string, x, y, fontId, flags, tracking, initialCount, DEFAULT_GLITTER);
 }
 
 void GL_DrawTextFragment4(const char* string, int x, int y, gamefontid_t fontId, short flags, int tracking)

@@ -486,9 +486,6 @@ void DrawPlayerSetupMenu(void)
         short textFlags = DTF_ALIGN_TOPLEFT;
         if(cfg.menuEffects == 0)
             textFlags |= DTF_NO_TYPEIN;
-        if(!(cfg.menuShadow > 0))
-            textFlags |= DTF_NO_SHADOW;
-
         DGL_Color4f(1, 1, 1, menuAlpha);
         GL_DrawTextFragment3("AUTOMATIC", 184,
 #if __JDOOM__ || __JDOOM64__

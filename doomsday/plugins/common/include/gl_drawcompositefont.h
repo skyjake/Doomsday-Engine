@@ -70,9 +70,8 @@ void            R_ResetTextTypeInTimer(void);
 #define DTF_ALIGN_BOTTOM    0x0004
 #define DTF_ALIGN_TOP       0x0008
 #define DTF_NO_TYPEIN       0x0010
-#define DTF_NO_SHADOW       0x0020
 
-#define DTF_NO_EFFECTS      (DTF_NO_TYPEIN|DTF_NO_SHADOW)
+#define DTF_NO_EFFECTS      (DTF_NO_TYPEIN)
 #define DTF_ALIGN_TOPLEFT   (DTF_ALIGN_TOP|DTF_ALIGN_LEFT)
 #define DTF_ALIGN_BOTTOMLEFT (DTF_ALIGN_BOTTOM|DTF_ALIGN_LEFT)
 #define DTF_ALIGN_TOPRIGHT  (DTF_ALIGN_TOP|DTF_ALIGN_RIGHT)
@@ -82,7 +81,7 @@ void            R_ResetTextTypeInTimer(void);
 /**
  * Text strings: A block of possibly formatted and/or multi-line text.
  */
-void            GL_DrawText(const char* string, int x, int y, gamefontid_t font, short flags, int defTracking, float defRed, float defGreen, float defBlue, float defAlpha, boolean defCase);
+void            GL_DrawText(const char* string, int x, int y, gamefontid_t font, short flags, int defTracking, float defRed, float defGreen, float defBlue, float defAlpha, float defGlitter, float defShadow, boolean defCase);
 
 // Utility routines:
 void            GL_TextDimensions(int* width, int* height, const char* string, gamefontid_t font);
@@ -97,6 +96,8 @@ void            GL_DrawTextFragment2(const char* string, int x, int y, gamefonti
 void            GL_DrawTextFragment3(const char* string, int x, int y, gamefontid_t font, short flags);
 void            GL_DrawTextFragment4(const char* string, int x, int y, gamefontid_t font, short flags, int tracking);
 void            GL_DrawTextFragment5(const char* string, int x, int y, gamefontid_t font, short flags, int tracking, int initialCount);
+void            GL_DrawTextFragment6(const char* string, int x, int y, gamefontid_t font, short flags, int tracking, int initialCount, float glitterStrength);
+void            GL_DrawTextFragment7(const char* string, int x, int y, gamefontid_t font, short flags, int tracking, int initialCount, float glitterStrength, float shadowStrength);
 
 // Utility routines:
 void            GL_TextFragmentDimensions(int* width, int* height, const char* string, gamefontid_t font);

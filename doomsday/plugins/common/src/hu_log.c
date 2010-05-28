@@ -414,7 +414,7 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
         // Draw using param text.
         // Messages may use the params to override the way the message is
         // is displayed, e.g. colour (Hexen's important messages).
-        GL_DrawText(msg->text, 0, y, GF_FONTA, textFlags, 0, col[CR], col[CG], col[CB], col[CA], false);
+        GL_DrawText(msg->text, 0, y, GF_FONTA, textFlags, 0, col[CR], col[CG], col[CB], col[CA], 0, 0, false);
 
         if(width > *drawnWidth)
             *drawnWidth = width;
@@ -852,7 +852,7 @@ void Chat_Drawer(int player, float textAlpha, float iconAlpha,
             xOffset = -GL_CharWidth('_', GF_FONTA);
     }
     textFlags = DTF_ALIGN_TOP|DTF_NO_EFFECTS | ((cfg.msgAlign == 0)? DTF_ALIGN_LEFT : (cfg.msgAlign == 2)? DTF_ALIGN_RIGHT : 0);
-    GL_DrawText(str, xOffset, 0, GF_FONTA, textFlags, 0, cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha, false);
+    GL_DrawText(str, xOffset, 0, GF_FONTA, textFlags, 0, cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha, 0, 0, false);
     *drawnWidth = GL_TextWidth(chat->buffer.l.l, GF_FONTA) + GL_CharWidth('_', GF_FONTA);
     *drawnHeight = MAX_OF(GL_TextHeight(chat->buffer.l.l, GF_FONTA), GL_CharHeight('_', GF_FONTA));
     }
