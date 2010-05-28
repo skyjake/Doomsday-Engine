@@ -2037,7 +2037,7 @@ void drawWorldTimerWidget(int player, float textAlpha, float iconAlpha,
             strncat(buf2, "\nYOU FREAK!!!", 20);
         strncat(buf, buf2, 60);
     }
-    GL_DrawText(buf, 0, 0, GF_FONTA, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 0, 1, 1, 1, textAlpha, false);
+    GL_DrawText(buf, 0, 0, GF_FONTA, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, 0, 1, 1, 1, textAlpha, 0, false);
 
     *drawnWidth = GL_TextWidth(buf, GF_FONTA);
     *drawnHeight = GL_TextHeight(buf, GF_FONTA);

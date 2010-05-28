@@ -194,6 +194,7 @@ int epi;
 #endif
 
 int menu_color = 0;
+float menu_glitter = 0;
 float skull_angle = 0;
 
 int frame; // Used by any graphic animations that need to be pumped.
@@ -1428,7 +1429,7 @@ void Hu_MenuTicker(timespan_t ticLength)
     // Move towards the target alpha level for the entire menu.
     if(menuAlpha != menuTargetAlpha)
     {
-#define MENUALPHA_FADE_STEP (.07)
+#define MENUALPHA_FADE_STEP (.0825)
 
         float diff = menuTargetAlpha - menuAlpha;
         if(fabs(diff) > MENUALPHA_FADE_STEP)
@@ -2117,13 +2118,23 @@ int Hu_MenuResponder(event_t* ev)
     return false;
 }
 
-void M_DrawMenuText3(const char* string, int x, int y, gamefontid_t font, short flags)
+void M_DrawMenuText4(const char* string, int x, int y, gamefontid_t font, short flags, float glitterStrength)
 {
     if(cfg.menuEffects == 0)
         flags |= DTF_NO_TYPEIN;
+
+    if(cfg.menuEffects == 0)
+        glitterStrength = 0;
+
     if(!(cfg.menuShadow > 0))
         flags |= DTF_NO_SHADOW;
-    GL_DrawTextFragment3(string, x, y, font, flags);
+
+    GL_DrawTextFragment6(string, x, y, font, flags, 0, 0, glitterStrength);
+}
+
+void M_DrawMenuText3(const char* string, int x, int y, gamefontid_t font, short flags)
+{
+    M_DrawMenuText4(string, x, y, font, flags, cfg.menuGlitter);
 }
 
 void M_DrawMenuText2(const char* string, int x, int y, gamefontid_t font)
