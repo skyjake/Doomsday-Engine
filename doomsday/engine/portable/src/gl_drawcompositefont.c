@@ -33,7 +33,6 @@
 #include "de_misc.h"
 
 #include "gl_drawpatch.h"
-//#include "gl_drawcompositefont.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -48,11 +47,11 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    char            name[9];
-    compositefontid_t    id;
+    char name[9];
+    compositefontid_t id;
     struct compositefont_char_s {
-        char            lumpname[9];
-        patchinfo_t     pInfo;
+        char lumpname[9];
+        patchinfo_t pInfo;
     } chars[256];
 } compositefont_t;
 
