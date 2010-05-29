@@ -1376,10 +1376,10 @@ void AM_SetVectorGraphic(automapcfg_t* cfg, int objectname, int vgname)
     }
 }
 
-vectorgraphicname_t AM_GetVectorGraphic(const automapcfg_t* cfg, int objectname)
+vectorgraphicid_t AM_GetVectorGraphic(const automapcfg_t* cfg, int objectname)
 {
     if(!cfg)
-        return VG_NONE;
+        return 0;
 
     if(objectname < 0 || objectname >= AMO_NUMOBJECTS)
         Con_Error("AM_GetVectorGraphic: Unknown object %i.", objectname);
@@ -1398,7 +1398,7 @@ vectorgraphicname_t AM_GetVectorGraphic(const automapcfg_t* cfg, int objectname)
         break;
     }
 
-    return VG_NONE;
+    return 0;
 }
 
 static void registerSpecialLine(automapcfg_t* cfg, int cheatLevel, int lineSpecial,

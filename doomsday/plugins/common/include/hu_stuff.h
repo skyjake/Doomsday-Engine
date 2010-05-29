@@ -31,6 +31,11 @@
 #define __COMMON_HU_STUFF_H__
 
 #include "gl_drawpatch.h"
+#if __JHEXEN__
+# include "h2def.h"
+#else
+# include "doomdef.h"
+#endif
 
 // The fonts.
 typedef enum {
@@ -50,11 +55,23 @@ typedef enum {
     NUM_GAME_FONTS
 } compositefontid_t;
 
-#if __JHEXEN__
-# include "h2def.h"
-#else
-# include "doomdef.h"
+// Vector graphics.
+typedef enum {
+    VG_FIRST = 1,
+    VG_KEYSQUARE = VG_FIRST,
+    VG_TRIANGLE,
+    VG_ARROW,
+#if !__JHEXEN__
+    VG_CHEATARROW,
 #endif
+    VG_XHAIR1,
+    VG_XHAIR2,
+    VG_XHAIR3,
+    VG_XHAIR4,
+    VG_XHAIR5,
+    VG_XHAIR6,
+    NUM_VECTOR_GRAPHICS
+} vectorgraphicid_t;
 
 extern patchid_t* mapNamePatches; // Name graphics of each map.
 #if __JDOOM__ || __JDOOM64__

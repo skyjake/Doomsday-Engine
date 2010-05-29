@@ -27,33 +27,27 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
-#if __JDOOM__
-#  include "jdoom.h"
-#elif __JDOOM64__
-#  include "jdoom64.h"
-#elif __JHERETIC__
-#  include "jheretic.h"
-#elif __JHEXEN__
-#  include "jhexen.h"
-#endif
-
+#include "doomsday.h"
 #include "r_vectorgraphic.h"
 
 // MACROS ------------------------------------------------------------------
 
+#define DEFAULT_SCALE               (0)
+#define DEFAULT_ANGLE               (0)
+
 // TYPES -------------------------------------------------------------------
 
-typedef struct {
-    float pos[3];
-} mpoint_t;
+enum { VX, VY, VZ }; // Vertex indices.
 
-typedef struct vgline_s {
-    mpoint_t a, b;
-} vgline_t;
+typedef struct vectorgraphic_s {
+    vectorgraphicid_t id;
+    DGLuint dlist;
+    size_t count;
+    struct vgline_s* lines;
+} vectorgraphic_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -65,156 +59,28 @@ typedef struct vgline_s {
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-#define R (1.0f)
-
-vgline_t keysquare[] = {
-    {{0, 0}, {R / 4, -R / 2}},
-    {{R / 4, -R / 2}, {R / 2, -R / 2}},
-    {{R / 2, -R / 2}, {R / 2, R / 2}},
-    {{R / 2, R / 2}, {R / 4, R / 2}},
-    {{R / 4, R / 2}, {0, 0}}, // Handle part type thing.
-    {{0, 0}, {-R, 0}}, // Stem.
-    {{-R, 0}, {-R, -R / 2}}, // End lockpick part.
-    {{-3 * R / 4, 0}, {-3 * R / 4, -R / 4}}
-};
-
-vgline_t thintriangle_guy[] = {
-    {{-R / 2, R - R / 2}, {R, 0}}, // >
-    {{R, 0}, {-R / 2, -R + R / 2}},
-    {{-R / 2, -R + R / 2}, {-R / 2, R - R / 2}} // |>
-};
-
-#if __JDOOM__ || __JDOOM64__
-vgline_t player_arrow[] = {
-    {{-R + R / 8, 0}, {R, 0}}, // -----
-    {{R, 0}, {R - R / 2, R / 4}}, // ----->
-    {{R, 0}, {R - R / 2, -R / 4}},
-    {{-R + R / 8, 0}, {-R - R / 8, R / 4}}, // >---->
-    {{-R + R / 8, 0}, {-R - R / 8, -R / 4}},
-    {{-R + 3 * R / 8, 0}, {-R + R / 8, R / 4}}, // >>--->
-    {{-R + 3 * R / 8, 0}, {-R + R / 8, -R / 4}}
-};
-
-vgline_t cheat_player_arrow[] = {
-    {{-R + R / 8, 0}, {R, 0}}, // -----
-    {{R, 0}, {R - R / 2, R / 6}}, // ----->
-    {{R, 0}, {R - R / 2, -R / 6}},
-    {{-R + R / 8, 0}, {-R - R / 8, R / 6}}, // >----->
-    {{-R + R / 8, 0}, {-R - R / 8, -R / 6}},
-    {{-R + 3 * R / 8, 0}, {-R + R / 8, R / 6}}, // >>----->
-    {{-R + 3 * R / 8, 0}, {-R + R / 8, -R / 6}},
-    {{-R / 2, 0}, {-R / 2, -R / 6}}, // >>-d--->
-    {{-R / 2, -R / 6}, {-R / 2 + R / 6, -R / 6}},
-    {{-R / 2 + R / 6, -R / 6}, {-R / 2 + R / 6, R / 4}},
-    {{-R / 6, 0}, {-R / 6, -R / 6}}, // >>-dd-->
-    {{-R / 6, -R / 6}, {0, -R / 6}},
-    {{0, -R / 6}, {0, R / 4}},
-    {{R / 6, R / 4}, {R / 6, -R / 7}}, // >>-ddt->
-    {{R / 6, -R / 7}, {R / 6 + R / 32, -R / 7 - R / 32}},
-    {{R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7}}
-};
-
-#elif __JHERETIC__
-vgline_t player_arrow[] = {
-    {{-R + R / 4, 0}, {0, 0}}, // center line.
-    {{-R + R / 4, R / 8}, {R, 0}}, // blade
-    {{-R + R / 4, -R / 8}, {R, 0}},
-    {{-R + R / 4, -R / 4}, {-R + R / 4, R / 4}}, // crosspiece
-    {{-R + R / 8, -R / 4}, {-R + R / 8, R / 4}},
-    {{-R + R / 8, -R / 4}, {-R + R / 4, -R / 4}}, //crosspiece connectors
-    {{-R + R / 8, R / 4}, {-R + R / 4, R / 4}},
-    {{-R - R / 4, R / 8}, {-R - R / 4, -R / 8}}, // pommel
-    {{-R - R / 4, R / 8}, {-R + R / 8, R / 8}},
-    {{-R - R / 4, -R / 8}, {-R + R / 8, -R / 8}}
-};
-
-vgline_t cheat_player_arrow[] = {
-    {{-R + R / 8, 0}, {R, 0}}, // -----
-    {{R, 0}, {R - R / 2, R / 6}}, // ----->
-    {{R, 0}, {R - R / 2, -R / 6}},
-    {{-R + R / 8, 0}, {-R - R / 8, R / 6}}, // >----->
-    {{-R + R / 8, 0}, {-R - R / 8, -R / 6}},
-    {{-R + 3 * R / 8, 0}, {-R + R / 8, R / 6}}, // >>----->
-    {{-R + 3 * R / 8, 0}, {-R + R / 8, -R / 6}},
-    {{-R / 2, 0}, {-R / 2, -R / 6}}, // >>-d--->
-    {{-R / 2, -R / 6}, {-R / 2 + R / 6, -R / 6}},
-    {{-R / 2 + R / 6, -R / 6}, {-R / 2 + R / 6, R / 4}},
-    {{-R / 6, 0}, {-R / 6, -R / 6}}, // >>-dd-->
-    {{-R / 6, -R / 6}, {0, -R / 6}},
-    {{0, -R / 6}, {0, R / 4}},
-    {{R / 6, R / 4}, {R / 6, -R / 7}}, // >>-ddt->
-    {{R / 6, -R / 7}, {R / 6 + R / 32, -R / 7 - R / 32}},
-    {{R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7}}
-};
-
-#elif __JHEXEN__
-vgline_t player_arrow[] = {
-    {{-R + R / 4, 0}, {0, 0}}, // center line.
-    {{-R + R / 4, R / 8}, {R, 0}}, // blade
-    {{-R + R / 4, -R / 8}, {R, 0}},
-    {{-R + R / 4, -R / 4}, {-R + R / 4, R / 4}}, // crosspiece
-    {{-R + R / 8, -R / 4}, {-R + R / 8, R / 4}},
-    {{-R + R / 8, -R / 4}, {-R + R / 4, -R / 4}}, // crosspiece connectors
-    {{-R + R / 8, R / 4}, {-R + R / 4, R / 4}},
-    {{-R - R / 4, R / 8}, {-R - R / 4, -R / 8}}, // pommel
-    {{-R - R / 4, R / 8}, {-R + R / 8, R / 8}},
-    {{-R - R / 4, -R / 8}, {-R + R / 8, -R / 8}}
-};
-#endif
-
-#define XL(x1,y1,x2,y2) {{x1,y1},{x2,y2}}
-
-vgline_t crossHair1[] = { // + (open center)
-    {{-1, 0}, {-.4f, 0}},
-    {{0, -1}, {0, -.4f}},
-    {{1, 0}, {.4f, 0}},
-    {{0, 1}, {0, .4f}}
-};
-  
-vgline_t crossHair2[] = { // > <
-    {{-1, -.714f}, {-.286f, 0}},
-    {{-1, .714f}, {-.286f, 0}},
-    {{1, -.714f}, {.286f, 0}},
-    {{1, .714f}, {.286f, 0}}
-};
-
-vgline_t crossHair3[] = { // square
-    {{-1, -1}, {-1, 1}},
-    {{-1, 1}, {1, 1}},
-    {{1, 1}, {1, -1}},
-    {{1, -1}, {-1, -1}}
-};
-
-vgline_t crossHair4[] = { // square (open center)
-    {{-1, -1}, {-1, -.5f}},
-    {{-1, .5f}, {-1, 1}},
-    {{-1, 1}, {-.5f, 1}},
-    {{.5f, 1}, {1, 1}},
-    {{1, 1}, {1, .5f}},
-    {{1, -.5f}, {1, -1}},
-    {{1, -1}, {.5f, -1}},
-    {{-.5f, -1}, {-1, -1}}
-};
-
-vgline_t crossHair5[] = { // diamond
-    {{0, -1}, {1, 0}},
-    {{1, 0}, {0, 1}},
-    {{0, 1}, {-1, 0}},
-    {{-1, 0}, {0, -1}}
-};
-
-vgline_t crossHair6[] = { // ^
-    {{-1, -1}, {0, 0}},
-    {{0, 0}, {1, -1}}
-};
-
-#undef R
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static vectorgraphic_t* vectorGraphics[NUM_VECTOR_GRAPHICS];
+static boolean inited = false;
+static uint numVectorGraphics;
+static vectorgraphic_t* vectorGraphics;
 
 // CODE --------------------------------------------------------------------
+
+static vectorgraphic_t* vectorGraphicForId(vectorgraphicid_t id)
+{
+    if(numVectorGraphics && id != 0)
+    {
+        uint i;
+        for(i = 0; i < numVectorGraphics; ++i)
+        {
+            vectorgraphic_t* vg = &vectorGraphics[i];
+            if(vg->id == id)
+                return vg;
+        }
+    }
+    return 0;
+}
 
 static void draw(const vectorgraphic_t* vg)
 {
@@ -243,25 +109,38 @@ static DGLuint constructDisplayList(DGLuint name, const vectorgraphic_t* vg)
 
 void R_InitVectorGraphics(void)
 {
-    memset(vectorGraphics, 0, sizeof(vectorGraphics));
+    if(inited)
+        return;
+    numVectorGraphics = 0;
+    vectorGraphics = 0;
+    inited = true;
 }
 
 void R_ShutdownVectorGraphics(void)
 {
-    uint i;
-    for(i = 0; i < NUM_VECTOR_GRAPHICS; ++i)
+    if(!inited)
+        return;
+
+    if(numVectorGraphics != 0)
     {
-        vectorgraphic_t* vg = vectorGraphics[i];
-        if(!vg)
-            continue;
-        if(!(Get(DD_NOVIDEO) || IS_DEDICATED))
+        uint i;
+        for(i = 0; i < numVectorGraphics; ++i)
         {
-            if(vg->dlist)
-                DGL_DeleteLists(vg->dlist, 1);
+            vectorgraphic_t* vg = &vectorGraphics[i];
+            if(!vg)
+                continue;
+            if(!(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED)))
+            {
+                if(vg->dlist)
+                    DGL_DeleteLists(vg->dlist, 1);
+            }
+            free(vg->lines);
         }
-        free(vg->lines);
-        free(vg);
+        free(vectorGraphics);
+        vectorGraphics = 0;
+        numVectorGraphics = 0;
     }
+    inited = false;
 }
 
 /**
@@ -270,118 +149,99 @@ void R_ShutdownVectorGraphics(void)
  */
 void R_UnloadVectorGraphics(void)
 {
-    if(Get(DD_NOVIDEO) || IS_DEDICATED)
+    if(!inited)
+        return;
+    if(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED))
         return; // Nothing to do.
 
     {uint i;
-    for(i = 0; i < NUM_VECTOR_GRAPHICS; ++i)
+    for(i = 0; i < numVectorGraphics; ++i)
     {
-        vectorgraphic_t* vg = R_PrepareVectorGraphic(i);
-        if(!vg)
-            continue;
+        vectorgraphic_t* vg = &vectorGraphics[i];
         if(vg->dlist)
             DGL_DeleteLists(vg->dlist, 1);
         vg->dlist = 0;
     }}
 }
 
-void R_DrawVectorGraphic(vectorgraphic_t* vg)
-{
-    assert(vg);
-
-    if(!vg->dlist)
-        vg->dlist = constructDisplayList(0, vg);
-
-    if(vg->dlist)
-    {   // We have a display list available; call it and get out of here.
-        DGL_CallList(vg->dlist);
-        return;
-    }
-
-    // No display list available. Lets draw it manually.
-    draw(vg);
-}
-
-vectorgraphic_t* R_PrepareVectorGraphic(vectorgraphicname_t id)
+static vectorgraphic_t* prepareVectorGraphic(vectorgraphicid_t vgId)
 {
     vectorgraphic_t* vg;
-    vgline_t* lines;
+    if((vg = vectorGraphicForId(vgId)))
+    {
+        if(!vg->dlist)
+        {
+            vg->dlist = constructDisplayList(0, vg);
+        }
+        return vg;
+    }
+    Con_Message("prepareVectorGraphic: Warning, no vectorgraphic is known by id %i.", (int) vgId);
+    return NULL;
+}
 
-    if(id > NUM_VECTOR_GRAPHICS - 1)
-        return NULL;
+void GL_DrawVectorGraphic3(vectorgraphicid_t vgId, float x, float y, float scale, float angle)
+{
+    vectorgraphic_t* vg;
+    
+    if((vg = prepareVectorGraphic(vgId)))
+    {
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(x, y, 0);
+        if(angle != 0 || scale != 0)
+        {
+            DGL_PushMatrix();
+            DGL_Rotatef(angle, 0, 0, 1);
+            DGL_Scalef(scale, scale, 1);
+        }
 
-    if(vectorGraphics[id])
-        return vectorGraphics[id];
+        if(vg->dlist)
+        {   // We have a display list available; call it and get out of here.
+            DGL_CallList(vg->dlist);
+        }
+        else
+        {   // No display list available. Lets draw it manually.
+            draw(vg);
+        }
+
+        DGL_MatrixMode(DGL_MODELVIEW);
+        if(angle != 0 || scale != 0)
+            DGL_PopMatrix();
+        DGL_Translatef(-x, -y, 0);
+    }
+}
+
+void GL_DrawVectorGraphic2(vectorgraphicid_t vgId, float x, float y, float scale)
+{
+    GL_DrawVectorGraphic3(vgId, x, y, scale, DEFAULT_ANGLE);
+}
+
+void GL_DrawVectorGraphic(vectorgraphicid_t vgId, float x, float y)
+{
+    GL_DrawVectorGraphic2(vgId, x, y, DEFAULT_SCALE);
+}
+
+void R_NewVectorGraphic(vectorgraphicid_t vgId, const vgline_t* lines, size_t numLines)
+{
+    vectorgraphic_t* vg;
+    size_t i;
+
+    // Valid id?
+    if(vgId == 0)
+        Con_Error("R_NewVectorGraphic: Invalid id, zero is reserved.");
+
+    // Already a vector graphic with this id?
+    if(vectorGraphicForId(vgId))
+        Con_Error("R_NewVectorGraphic: A vector graphic with id %i already exists.", (int) vgId);
 
     // Not loaded yet.
-    vg = vectorGraphics[id] = malloc(sizeof(*vg));
-    {
-    uint i, linecount;
-    switch(id)
-    {
-    case VG_KEYSQUARE:
-        lines = keysquare;
-        linecount = sizeof(keysquare) / sizeof(vgline_t);
-        break;
-
-    case VG_TRIANGLE:
-        lines = thintriangle_guy;
-        linecount = sizeof(thintriangle_guy) / sizeof(vgline_t);
-        break;
-
-    case VG_ARROW:
-        lines = player_arrow;
-        linecount = sizeof(player_arrow) / sizeof(vgline_t);
-        break;
-
-#if !__JHEXEN__
-    case VG_CHEATARROW:
-        lines = cheat_player_arrow;
-        linecount = sizeof(cheat_player_arrow) / sizeof(vgline_t);
-        break;
-#endif
-
-    case VG_XHAIR1:
-        lines = crossHair1;
-        linecount = sizeof(crossHair1) / sizeof(vgline_t);
-        break;
-
-    case VG_XHAIR2:
-        lines = crossHair2;
-        linecount = sizeof(crossHair2) / sizeof(vgline_t);
-        break;
-
-    case VG_XHAIR3:
-        lines = crossHair3;
-        linecount = sizeof(crossHair3) / sizeof(vgline_t);
-        break;
-
-    case VG_XHAIR4:
-        lines = crossHair4;
-        linecount = sizeof(crossHair4) / sizeof(vgline_t);
-        break;
-
-    case VG_XHAIR5:
-        lines = crossHair5;
-        linecount = sizeof(crossHair5) / sizeof(vgline_t);
-        break;
-
-    case VG_XHAIR6:
-        lines = crossHair6;
-        linecount = sizeof(crossHair6) / sizeof(vgline_t);
-        break;
-
-    default:
-        Con_Error("R_PrepareVectorGraphic: Unknown id %i.", id);
-        break;
-    }
-
-    vg->lines = malloc(linecount * sizeof(vgline_t));
-    vg->count = linecount;
+    vectorGraphics = realloc(vectorGraphics, sizeof(*vectorGraphics) * ++numVectorGraphics);
+    vg = &vectorGraphics[numVectorGraphics-1];
+    vg->id = vgId;
     vg->dlist = 0;
-    for(i = 0; i < linecount; ++i)
+    vg->count = numLines;
+    vg->lines = malloc(numLines * sizeof(vgline_t));
+    for(i = 0; i < numLines; ++i)
+    {
         memcpy(&vg->lines[i], &lines[i], sizeof(vgline_t));
     }
-
-    return vg;
 }

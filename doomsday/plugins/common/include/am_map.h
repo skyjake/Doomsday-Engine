@@ -325,8 +325,8 @@ typedef struct automapcfg_s {
     float           openSeconds; // Num seconds it takes for the map to open/close.
     automapspecialline_t specialLines[AM_MAXSPECIALLINES];
     uint            numSpecialLines;
-    vectorgraphicname_t vectorGraphicForPlayer;
-    vectorgraphicname_t vectorGraphicForThing;
+    vectorgraphicid_t vectorGraphicForPlayer;
+    vectorgraphicid_t vectorGraphicForThing;
     int             cheating;
     boolean         revealed;
     uint            followPlayer; // Player id of that to follow.
@@ -387,6 +387,6 @@ void AM_SetColorAndAlpha(automapid_t id, int objectname, float r, float g,
 
 void AM_GetMapColor(float* rgb, const float* uColor, int palidx,
                     boolean customPal);
-vectorgraphicname_t AM_GetVectorGraphic(const automapcfg_t* cfg, int objectname);
+vectorgraphicid_t AM_GetVectorGraphic(const automapcfg_t* cfg, int objectname);
 void AM_SetVectorGraphic(automapcfg_t* cfg, int objectname, int vgname);
 #endif

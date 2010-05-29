@@ -220,7 +220,7 @@ void Hu_LoadData(void)
  * friendly mnemonics).
  */
 #if __JDOOM__
-    static const fontpatch_t fontIndex[] = {
+    const fontpatch_t fontIndex[] = {
         { 48, "STYSNUM0" }, // 0
         { 49, "STYSNUM1" }, // 1
         { 50, "STYSNUM2" }, // 2
@@ -234,7 +234,7 @@ void Hu_LoadData(void)
     };
 #endif
 #if __JDOOM__ || __JDOOM64__
-    static const fontpatch_t fontSmall[] = {
+    const fontpatch_t fontSmall[] = {
         { 37, "WIPCNT" }, // %
         { 45, "WIMINUS" }, // -
         { 48, "WINUM0" }, // 0
@@ -249,7 +249,7 @@ void Hu_LoadData(void)
         { 57, "WINUM9" }, // 9
         { 58, "WICOLON" }, // :
     };
-    static const fontpatch_t fontStatus[] = {
+    const fontpatch_t fontStatus[] = {
         { 37, "STTPRCNT" }, // %
         { 45, "STTMINUS" }, // -
         { 48, "STTNUM0" }, // 0
@@ -263,7 +263,7 @@ void Hu_LoadData(void)
         { 56, "STTNUM8" }, // 8
         { 57, "STTNUM9" } // 9
     };
-    static const fontpatch_t fontA[] = {
+    const fontpatch_t fontA[] = {
         { 32, "STCFN032" }, // ' '
         { 33, "STCFN033" }, // !
         { 34, "STCFN034" }, // "
@@ -356,7 +356,7 @@ void Hu_LoadData(void)
         { 121, "STCFN089" }, // y
         { 122, "STCFN090" } // z
     };
-    static const fontpatch_t fontB[] = {
+    const fontpatch_t fontB[] = {
         { 32, "FONTB032" }, // ' '
         { 33, "FONTB033" }, // !
         { 34, "FONTB034" }, // "
@@ -444,7 +444,7 @@ void Hu_LoadData(void)
         { 122, "FONTB090" } // z
     };
 #else // __JHERETIC__ || __JHEXEN__
-    static const fontpatch_t fontStatus[] = {
+    const fontpatch_t fontStatus[] = {
         { 45, "NEGNUM" }, // -
         { 48, "IN0" }, // 0
         { 49, "IN1" }, // 1
@@ -459,7 +459,7 @@ void Hu_LoadData(void)
     };
     // Heretic/Hexen don't use ASCII numbered font patches
     // plus they don't even have a full set eg '!' = 1 '_'= 58 !!!
-    static const fontpatch_t fontA[] = {
+    const fontpatch_t fontA[] = {
         { 32, "FONTA00" }, // ' '
         { 33, "FONTA01" }, // !
         { 34, "FONTA02" }, // "
@@ -551,7 +551,7 @@ void Hu_LoadData(void)
         { 121, "FONTA57" }, // y
         { 122, "FONTA58" } // z
     };
-    static const fontpatch_t fontB[] = {
+    const fontpatch_t fontB[] = {
         { 32, "FONTB00" }, // ' '
         { 33, "FONTB01" }, // !
         { 34, "FONTB02" }, // "
@@ -643,7 +643,7 @@ void Hu_LoadData(void)
         { 121, "FONTB57" }, // y
         { 122, "FONTB58" } // z
     };
-    static const fontpatch_t fontSmallIn[] = {
+    const fontpatch_t fontSmallIn[] = {
         { 48, "SMALLIN0" }, // 0
         { 49, "SMALLIN1" }, // 1
         { 50, "SMALLIN2" }, // 2
@@ -656,6 +656,134 @@ void Hu_LoadData(void)
         { 57, "SMALLIN9" }, // 9
     };
 #endif
+#define R (1.0f)
+    const vgline_t keysquare[] = {
+        { {0, 0}, {R / 4, -R / 2} },
+        { {R / 4, -R / 2}, {R / 2, -R / 2} },
+        { {R / 2, -R / 2}, {R / 2, R / 2} },
+        { {R / 2, R / 2}, {R / 4, R / 2} },
+        { {R / 4, R / 2}, {0, 0} }, // Handle part type thing.
+        { {0, 0}, {-R, 0} }, // Stem.
+        { {-R, 0}, {-R, -R / 2} }, // End lockpick part.
+        { {-3 * R / 4, 0}, {-3 * R / 4, -R / 4} }
+    };
+    const vgline_t thintriangle_guy[] = {
+        { {-R / 2, R - R / 2}, {R, 0} }, // >
+        { {R, 0}, {-R / 2, -R + R / 2} },
+        { {-R / 2, -R + R / 2}, {-R / 2, R - R / 2} } // |>
+    };
+#if __JDOOM__ || __JDOOM64__
+    const vgline_t player_arrow[] = {
+        { {-R + R / 8, 0}, {R, 0} }, // -----
+        { {R, 0}, {R - R / 2, R / 4} }, // ----->
+        { {R, 0}, {R - R / 2, -R / 4} },
+        { {-R + R / 8, 0}, {-R - R / 8, R / 4} }, // >---->
+        { {-R + R / 8, 0}, {-R - R / 8, -R / 4} },
+        { {-R + 3 * R / 8, 0}, {-R + R / 8, R / 4} }, // >>--->
+        { {-R + 3 * R / 8, 0}, {-R + R / 8, -R / 4} }
+    };
+    const vgline_t cheat_player_arrow[] = {
+        { {-R + R / 8, 0}, {R, 0} }, // -----
+        { {R, 0}, {R - R / 2, R / 6} }, // ----->
+        { {R, 0}, {R - R / 2, -R / 6} },
+        { {-R + R / 8, 0}, {-R - R / 8, R / 6} }, // >----->
+        { {-R + R / 8, 0}, {-R - R / 8, -R / 6} },
+        { {-R + 3 * R / 8, 0}, {-R + R / 8, R / 6} }, // >>----->
+        { {-R + 3 * R / 8, 0}, {-R + R / 8, -R / 6} },
+        { {-R / 2, 0}, {-R / 2, -R / 6} }, // >>-d--->
+        { {-R / 2, -R / 6}, {-R / 2 + R / 6, -R / 6} },
+        { {-R / 2 + R / 6, -R / 6}, {-R / 2 + R / 6, R / 4} },
+        { {-R / 6, 0}, {-R / 6, -R / 6} }, // >>-dd-->
+        { {-R / 6, -R / 6}, {0, -R / 6} },
+        { {0, -R / 6}, {0, R / 4} },
+        { {R / 6, R / 4}, {R / 6, -R / 7} }, // >>-ddt->
+        { {R / 6, -R / 7}, {R / 6 + R / 32, -R / 7 - R / 32} },
+        { {R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7} }
+    };
+#elif __JHERETIC__
+    const vgline_t player_arrow[] = {
+        { {-R + R / 4, 0}, {0, 0} }, // center line.
+        { {-R + R / 4, R / 8}, {R, 0} }, // blade
+        { {-R + R / 4, -R / 8}, {R, 0} },
+        { {-R + R / 4, -R / 4}, {-R + R / 4, R / 4} }, // crosspiece
+        { {-R + R / 8, -R / 4}, {-R + R / 8, R / 4} },
+        { {-R + R / 8, -R / 4}, {-R + R / 4, -R / 4} }, //crosspiece connectors
+        { {-R + R / 8, R / 4}, {-R + R / 4, R / 4} },
+        { {-R - R / 4, R / 8}, {-R - R / 4, -R / 8} }, // pommel
+        { {-R - R / 4, R / 8}, {-R + R / 8, R / 8} },
+        { {-R - R / 4, -R / 8}, {-R + R / 8, -R / 8} }
+    };
+    const vgline_t cheat_player_arrow[] = {
+        { {-R + R / 8, 0}, {R, 0} }, // -----
+        { {R, 0}, {R - R / 2, R / 6} }, // ----->
+        { {R, 0}, {R - R / 2, -R / 6} },
+        { {-R + R / 8, 0}, {-R - R / 8, R / 6} }, // >----->
+        { {-R + R / 8, 0}, {-R - R / 8, -R / 6} },
+        { {-R + 3 * R / 8, 0}, {-R + R / 8, R / 6} }, // >>----->
+        { {-R + 3 * R / 8, 0}, {-R + R / 8, -R / 6} },
+        { {-R / 2, 0}, {-R / 2, -R / 6} }, // >>-d--->
+        { {-R / 2, -R / 6}, {-R / 2 + R / 6, -R / 6} },
+        { {-R / 2 + R / 6, -R / 6}, {-R / 2 + R / 6, R / 4} },
+        { {-R / 6, 0}, {-R / 6, -R / 6} }, // >>-dd-->
+        { {-R / 6, -R / 6}, {0, -R / 6} },
+        { {0, -R / 6}, {0, R / 4} },
+        { {R / 6, R / 4}, {R / 6, -R / 7} }, // >>-ddt->
+        { {R / 6, -R / 7}, {R / 6 + R / 32, -R / 7 - R / 32} },
+        { {R / 6 + R / 32, -R / 7 - R / 32}, {R / 6 + R / 10, -R / 7} }
+    };
+#elif __JHEXEN__
+    const vgline_t player_arrow[] = {
+        { {-R + R / 4, 0}, {0, 0} }, // center line.
+        { {-R + R / 4, R / 8}, {R, 0} }, // blade
+        { {-R + R / 4, -R / 8}, {R, 0} },
+        { {-R + R / 4, -R / 4}, {-R + R / 4, R / 4} }, // crosspiece
+        { {-R + R / 8, -R / 4}, {-R + R / 8, R / 4} },
+        { {-R + R / 8, -R / 4}, {-R + R / 4, -R / 4} }, // crosspiece connectors
+        { {-R + R / 8, R / 4}, {-R + R / 4, R / 4} },
+        { {-R - R / 4, R / 8}, {-R - R / 4, -R / 8} }, // pommel
+        { {-R - R / 4, R / 8}, {-R + R / 8, R / 8} },
+        { {-R - R / 4, -R / 8}, {-R + R / 8, -R / 8} }
+    };
+#endif
+#undef R
+    const vgline_t crossHair1[] = { // + (open center)
+        { {-1,  0}, {-.4f, 0} },
+        { { 0, -1}, { 0,  -.4f} },
+        { { 1,  0}, { .4f, 0} },
+        { { 0,  1}, { 0,   .4f} }
+    };   
+    const vgline_t crossHair2[] = { // > <
+        { {-1, -.714f}, {-.286f, 0} },
+        { {-1,  .714f}, {-.286f, 0} },
+        { { 1, -.714f}, { .286f, 0} },
+        { { 1,  .714f}, { .286f, 0} }
+    };
+    const vgline_t crossHair3[] = { // square
+        { {-1, -1}, {-1,  1} },
+        { {-1,  1}, { 1,  1} },
+        { { 1,  1}, { 1, -1} },
+        { { 1, -1}, {-1, -1} }
+    };
+    const vgline_t crossHair4[] = { // square (open center)
+        { {-1, -1}, {-1, -.5f} },
+        { {-1, .5f}, {-1, 1} },
+        { {-1, 1}, {-.5f, 1} },
+        { {.5f, 1}, {1, 1} },
+        { { 1, 1}, {1, .5f} },
+        { { 1, -.5f}, {1, -1} },
+        { { 1, -1}, {.5f, -1} },
+        { {-.5f, -1}, {-1, -1} }
+    };
+    const vgline_t crossHair5[] = { // diamond
+        { { 0, -1}, { 1,  0} },
+        { { 1,  0}, { 0,  1} },
+        { { 0,  1}, {-1,  0} },
+        { {-1,  0}, { 0, -1} }
+    };
+    const vgline_t crossHair6[] = { // ^
+        { {-1, -1}, { 0,  0} },
+        { { 0,  0}, { 1, -1} }
+    };
 #if __JDOOM__ || __JDOOM64__
     char name[9];
 #endif
@@ -767,6 +895,19 @@ void Hu_LoadData(void)
 #if __JHERETIC__ || __JHEXEN__
     R_NewCompositeFont(GF_SMALLIN, "smallin", fontSmallIn, sizeof(fontSmallIn) / sizeof(fontSmallIn[0]));
 #endif
+
+    R_NewVectorGraphic(VG_KEYSQUARE, keysquare, sizeof(keysquare) / sizeof(keysquare[0]));
+    R_NewVectorGraphic(VG_TRIANGLE, thintriangle_guy, sizeof(thintriangle_guy) / sizeof(thintriangle_guy[0]));
+    R_NewVectorGraphic(VG_ARROW, player_arrow, sizeof(player_arrow) / sizeof(player_arrow[0]));
+#if !__JHEXEN__
+    R_NewVectorGraphic(VG_CHEATARROW, cheat_player_arrow, sizeof(cheat_player_arrow) / sizeof(cheat_player_arrow[0]));
+#endif
+    R_NewVectorGraphic(VG_XHAIR1, crossHair1, sizeof(crossHair1) / sizeof(crossHair1[0]));
+    R_NewVectorGraphic(VG_XHAIR2, crossHair2, sizeof(crossHair2) / sizeof(crossHair2[0]));
+    R_NewVectorGraphic(VG_XHAIR3, crossHair3, sizeof(crossHair3) / sizeof(crossHair3[0]));
+    R_NewVectorGraphic(VG_XHAIR4, crossHair4, sizeof(crossHair4) / sizeof(crossHair4[0]));
+    R_NewVectorGraphic(VG_XHAIR5, crossHair5, sizeof(crossHair5) / sizeof(crossHair5[0]));
+    R_NewVectorGraphic(VG_XHAIR6, crossHair6, sizeof(crossHair6) / sizeof(crossHair6[0]));
 
 #if __JHERETIC__ || __JHEXEN__
     dpInvItemBox = R_PrecachePatch("ARTIBOX", NULL);

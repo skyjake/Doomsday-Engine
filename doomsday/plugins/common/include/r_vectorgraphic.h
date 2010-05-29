@@ -28,34 +28,28 @@
 #ifndef LIBCOMMON_VECTORGRAPHIC_H
 #define LIBCOMMON_VECTORGRAPHIC_H
 
-typedef enum {
-    VG_NONE = -1,
-    VG_KEYSQUARE,
-    VG_TRIANGLE,
-    VG_ARROW,
-#if !__JHEXEN__
-    VG_CHEATARROW,
-#endif
-    VG_XHAIR1,
-    VG_XHAIR2,
-    VG_XHAIR3,
-    VG_XHAIR4,
-    VG_XHAIR5,
-    VG_XHAIR6,
-    NUM_VECTOR_GRAPHICS
-} vectorgraphicname_t;
+#include "dd_types.h"
 
-typedef struct vectorgrap_s {
-    DGLuint dlist;
-    uint count;
-    struct vgline_s* lines;
-} vectorgraphic_t;
+typedef uint32_t vectorgraphicid_t;
+
+// Used during vector graphic creation/registration.
+// \todo Refactor me away.
+typedef struct {
+    float pos[3];
+} mpoint_t;
+
+typedef struct vgline_s {
+    mpoint_t a, b;
+} vgline_t;
 
 void                R_InitVectorGraphics(void);
 void                R_UnloadVectorGraphics(void);
 void                R_ShutdownVectorGraphics(void);
 
-vectorgraphic_t*    R_PrepareVectorGraphic(vectorgraphicname_t id);
-void                R_DrawVectorGraphic(vectorgraphic_t* vg);
+void                R_NewVectorGraphic(vectorgraphicid_t vgId, const vgline_t* lines, size_t numLines);
+
+void                GL_DrawVectorGraphic(vectorgraphicid_t vgId, float x, float y);
+void                GL_DrawVectorGraphic2(vectorgraphicid_t vgId, float x, float y, float scale);
+void                GL_DrawVectorGraphic3(vectorgraphicid_t vgId, float x, float y, float scale, float angle);
 
 #endif /* LIBCOMMON_VECTORGRAPHIC_H */

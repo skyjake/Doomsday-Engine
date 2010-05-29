@@ -932,16 +932,9 @@ static void renderXGLinedefs(const automap_t* map, const automapcfg_t* cfg,
 #endif
 }
 
-static void drawVectorGraphic(vectorgraphic_t* vg, float x, float y, float angle,
+static void drawVectorGraphic(vectorgraphicid_t vgId, float x, float y, float angle,
     float scale, const float rgb[3], float alpha, blendmode_t blendmode)
 {
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PushMatrix();
-
-    DGL_Translatef(x, y, 1);
-    DGL_Rotatef(angle, 0, 0, 1);
-    DGL_Scalef(scale, scale, 1);
-
     DGL_MatrixMode(DGL_TEXTURE);
     DGL_PushMatrix();
     DGL_Translatef(x, y, 1);
@@ -949,22 +942,18 @@ static void drawVectorGraphic(vectorgraphic_t* vg, float x, float y, float angle
     DGL_Color4f(rgb[0], rgb[1], rgb[2], alpha);
     DGL_BlendMode(blendmode);
 
-    R_DrawVectorGraphic(vg);
+    GL_DrawVectorGraphic3(vgId, x, y, scale, angle);
 
     DGL_MatrixMode(DGL_TEXTURE);
-    DGL_PopMatrix();
-
-    DGL_MatrixMode(DGL_PROJECTION);
     DGL_PopMatrix();
 }
 
 /**
  * Draws all players on the map using a line character
  */
-static void renderPlayers(const automap_t* map, const automapcfg_t* mcfg,
-                          int player)
+static void renderPlayers(const automap_t* map, const automapcfg_t* mcfg, int player)
 {
-    vectorgraphicname_t vg = AM_GetVectorGraphic(mcfg, AMO_THINGPLAYER);
+    vectorgraphicid_t vgId = AM_GetVectorGraphic(mcfg, AMO_THINGPLAYER);
     float size = PLAYERRADIUS;
     int i;
  
@@ -994,7 +983,7 @@ static void renderPlayers(const automap_t* map, const automapcfg_t* mcfg,
         mo = p->plr->mo;
 
         /* $unifiedangles */
-        drawVectorGraphic(R_PrepareVectorGraphic(vg), mo->pos[VX], mo->pos[VY],
+        drawVectorGraphic(vgId, mo->pos[VX], mo->pos[VY],
                           mo->angle / (float) ANGLE_MAX * 360, size,
                           rgb, alpha, BM_NORMAL);
     }
@@ -1032,7 +1021,7 @@ static int getKeyColorForMobjType(int type)
 
 typedef struct {
     int flags; // AMF_* flags.
-    vectorgraphicname_t vg;
+    vectorgraphicid_t vgId;
     float rgb[3], alpha;
 } renderthing_params_t;
 
@@ -1048,19 +1037,17 @@ static boolean renderThing(mobj_t* mo, void* context)
     {
         if(p->flags & AMF_REND_KEYS)
         {
-            int                 keyColor;
+            int keyColor;
 
             // Is this a key?
             if((keyColor = getKeyColorForMobjType(mo->type)) != -1)
             {   // This mobj is indeed a key.
-                float               rgb[4];
+                float rgb[4];
 
                 R_GetColorPaletteRGBf(0, rgb, keyColor, false);
 
                 /* $unifiedangles */
-                drawVectorGraphic(R_PrepareVectorGraphic(VG_KEYSQUARE),
-                                    mo->pos[VX], mo->pos[VY], 0,
-                                    PLAYERRADIUS, rgb, p->alpha, BM_NORMAL);
+                drawVectorGraphic(VG_KEYSQUARE, mo->pos[VX], mo->pos[VY], 0, PLAYERRADIUS, rgb, p->alpha, BM_NORMAL);
                 return true; // Continue iteration.
             }
         }
@@ -1068,7 +1055,7 @@ static boolean renderThing(mobj_t* mo, void* context)
         if(p->flags & AMF_REND_THINGS)
         {   // Something else.
             /* $unifiedangles */
-            drawVectorGraphic(R_PrepareVectorGraphic(p->vg), mo->pos[VX], mo->pos[VY],
+            drawVectorGraphic(p->vgId, mo->pos[VX], mo->pos[VY],
                               mo->angle / (float) ANGLE_MAX * 360,
                               PLAYERRADIUS, p->rgb, p->alpha, BM_NORMAL);
         }
@@ -1584,7 +1571,7 @@ DGL_Enable(DGL_TEXTURING);
         float aabb[4];
 
         params.flags = Automap_GetFlags(map);
-        params.vg = AM_GetVectorGraphic(mcfg, AMO_THING);
+        params.vgId = AM_GetVectorGraphic(mcfg, AMO_THING);
         AM_GetMapColor(params.rgb, cfg.automapMobj, THINGCOLORS, customPal);
         params.alpha = MINMAX_OF(0.f, cfg.automapLineAlpha * Automap_GetOpacity(map), 1.f);
 
