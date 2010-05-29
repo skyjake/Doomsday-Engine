@@ -893,7 +893,7 @@ static void setSideShadowParams(rendershadowseg_params_t* p,
                                 const float* lineLength,
                                 const shadowcorner_t* sideCn)
 {
-    p->shadowMul = sideCn[rightSide? 1 : 0].corner;
+    p->shadowMul = sideCn[rightSide? 1 : 0].corner * .8f;
     p->shadowMul *= p->shadowMul * p->shadowMul;
     p->horizontal = true;
     p->texOffset[VY] = bottom - *fFloor;
