@@ -344,6 +344,7 @@ masktex_t*      R_GetMaskTexture(const char* external);
 void            R_DestroyMaskTextures(void); // Called at shutdown.
 
 patchid_t       R_PrecachePatch(const char* name, patchinfo_t* info);
+patchid_t       R_RegisterAsPatch(const char* name);
 
 patchtex_t*     R_FindPatchTex(patchid_t id);
 boolean         R_GetPatchInfo(patchid_t id, patchinfo_t* info);

@@ -31,7 +31,6 @@
 
 #include "gl_main.h"
 #include "gl_draw.h"
-#include "gl_drawpatch.h"
 #include "gl_texmanager.h"
 #include "gl_tex.h"
 #include "gl_hq2x.h"

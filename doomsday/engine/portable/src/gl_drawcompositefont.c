@@ -29,10 +29,9 @@
 #include <ctype.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_refresh.h"
 #include "de_misc.h"
-
-#include "gl_drawpatch.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -44,33 +43,18 @@
 #define DEFAULT_DRAWFLAGS           (DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS)
 #define DEFAULT_INITIALCOUNT        (0)
 
-/**
- * @defGroup drawPatchFlags Draw Patch Flags.
- */
-/*@{*/
-#define DPF_ALIGN_LEFT      0x0001
-#define DPF_ALIGN_RIGHT     0x0002
-#define DPF_ALIGN_BOTTOM    0x0004
-#define DPF_ALIGN_TOP       0x0008
-#define DPF_NO_OFFSETX      0x0010
-#define DPF_NO_OFFSETY      0x0020
-
-#define DPF_NO_OFFSET       (DPF_NO_OFFSETX|DPF_NO_OFFSETY)
-#define DPF_ALIGN_TOPLEFT   (DPF_ALIGN_TOP|DPF_ALIGN_LEFT)
-#define DPF_ALIGN_BOTTOMLEFT (DPF_ALIGN_BOTTOM|DPF_ALIGN_LEFT)
-#define DPF_ALIGN_TOPRIGHT  (DPF_ALIGN_TOP|DPF_ALIGN_RIGHT)
-#define DPF_ALIGN_BOTTOMRIGHT (DPF_ALIGN_BOTTOM|DPF_ALIGN_RIGHT)
-/*@}*/
-
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
     char* name;
     compositefontid_t id;
+    boolean needsUpdate;
     struct compositefont_char_s {
-        char lumpname[9];
+        patchid_t patch;
+        short width, height;
+        short offset, topOffset;
+        DGLuint tex;
         DGLuint dlist;
-        patchinfo_t pInfo;
     } chars[256];
 } compositefont_t;
 
@@ -98,7 +82,7 @@ typedef struct {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void drawChar(patchid_t id, int posX, int posY, short flags);
+static void drawChar(unsigned char ch, int posX, int posY, compositefont_t* font, short flags);
 static void drawFlash(int x, int y, int w, int h, int bright);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -146,29 +130,96 @@ static compositefont_t* fontForName(const char* name)
     return 0;
 }
 
+static void drawQuad(float x, float y, float w, float h)
+{
+    // During load we add an additional 1 texel border around the patch.
+    // Here we compensate for this by enlarging the quad.
+    x -= 1;
+    y -= 1;
+    w += 2;
+    h += 2;
+
+    glBegin(GL_QUADS);
+        glTexCoord2f(0, 0);
+        glVertex2f(x, y);
+        glTexCoord2f(1, 0);
+        glVertex2f(x + w, y);
+        glTexCoord2f(1, 1);
+        glVertex2f(x + w, y + h);
+        glTexCoord2f(0, 1);
+        glVertex2f(x, y + h);
+    glEnd();
+}
+
+static DGLuint constructDisplayList(DGLuint name, unsigned char ch, compositefont_t* font)
+{
+    if(DGL_NewList(name, DGL_COMPILE))
+    {
+        drawQuad(font->chars[ch].offset, font->chars[ch].topOffset, font->chars[ch].width, font->chars[ch].height);
+        return DGL_EndList();
+    }
+    return 0;
+}
+
+static void unloadCompositeFont(compositefont_t* font)
+{
+    uint i;
+    if(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED))
+        return;
+    for(i = 0; i < 256; ++i)
+    {
+        if(font->chars[i].dlist)
+            DGL_DeleteLists(font->chars[i].dlist, 1);
+        font->chars[i].dlist = 0;
+    }
+    font->needsUpdate = true;
+}
+
+static void prepareCompositeFont(compositefont_t* font)
+{
+    uint i;
+
+    if(!font->needsUpdate)
+        return;
+
+    for(i = 0; i < 256; ++i)
+    {
+        patchid_t patch;
+        patchinfo_t info;
+
+        if(!(patch = font->chars[i].patch))
+            continue;
+
+        font->chars[i].tex = GL_PreparePatch(R_FindPatchTex(patch));
+        R_GetPatchInfo(patch, &info);
+        font->chars[i].width = info.width;
+        font->chars[i].height = info.height;
+        font->chars[i].offset = info.offset;
+        font->chars[i].topOffset = info.topOffset;
+
+        if(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED))
+            continue;
+        if(font->chars[i].dlist || Con_IsBusy()) // Cannot do this while in busy mode.
+            continue;
+
+        font->chars[i].dlist = constructDisplayList(0, i, font);
+    }
+
+    // Could not complete all tasks in busy mode.
+    if(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED) || !Con_IsBusy())
+        font->needsUpdate = false;
+}
+
 static patchid_t patchForFontChar(compositefontid_t id, unsigned char ch)
 {
-    const compositefont_t* font;
+    compositefont_t* font;
     if((font = fontForId(id)))
     {
-        return font->chars[ch].pInfo.id;
+        prepareCompositeFont(font);
+        return font->chars[ch].patch;
     }
     Con_Error("patchForFontChar: Invalid font id %i.", (int) id);
     return 0; // Unreachable.
-}
-
-static __inline short translateTextToPatchDrawFlags(short in)
-{
-    short out = 0;
-    if(in & DTF_ALIGN_LEFT)
-        out |= DPF_ALIGN_LEFT;
-    if(in & DTF_ALIGN_RIGHT)
-        out |= DPF_ALIGN_RIGHT;
-    if(in & DTF_ALIGN_BOTTOM)
-        out |= DPF_ALIGN_BOTTOM;
-    if(in & DTF_ALIGN_TOP)
-        out |= DPF_ALIGN_TOP;
-    return out;
 }
 
 /**
@@ -329,18 +380,20 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state)
 
 static void setFontCharacterPatch(compositefont_t* font, unsigned char ch, const char* lumpname)
 {
-    memset(font->chars[ch].lumpname, 0, sizeof(font->chars[ch].lumpname));
-    strncpy(font->chars[ch].lumpname, lumpname, 8);
-}
-
-static void precacheFontCharacterPatch(compositefont_t* font, unsigned char ch)
-{
     // Instruct Doomsday to load the patch in monochrome mode.
     // (2 = weighted average).
     DD_SetInteger(DD_MONOCHROME_PATCHES, 2);
     DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, true);
 
-    R_PrecachePatch(font->chars[ch].lumpname, &font->chars[ch].pInfo);
+    font->chars[ch].patch = R_RegisterAsPatch(lumpname);
+    font->chars[ch].tex = 0;
+    if(!(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED)))
+    {
+        if(font->chars[ch].dlist)
+            DGL_DeleteLists(font->chars[ch].dlist, 1);
+        font->chars[ch].dlist = 0;
+    }
+    font->needsUpdate = true;
 
     DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, false);
     DD_SetInteger(DD_MONOCHROME_PATCHES, 0);
@@ -356,7 +409,6 @@ void R_SetCompositeFontChar(compositefontid_t fontId, unsigned char ch, const ch
     if((font = fontForId(fontId)))
     {
         setFontCharacterPatch(font, ch, lumpname);
-        precacheFontCharacterPatch(font, ch);
         return;
     }
     Con_Message("R_SetCompositeFontChar: Warning, unknown font id %i.\n", (int) fontId);
@@ -417,8 +469,9 @@ void R_NewCompositeFont(compositefontid_t fontId, const char name[9], const font
     {
         const fontpatch_t* p = &patches[i];
         setFontCharacterPatch(font, p->ch, p->lumpName);
-        precacheFontCharacterPatch(font, p->ch);
     }
+
+    prepareCompositeFont(font);
 }
 
 void R_InitCompositeFonts(void)
@@ -434,9 +487,11 @@ void R_InitCompositeFonts(void)
 
 void R_UnloadCompositeFonts(void)
 {
+    uint i;
     if(!inited)
         return;
-    // Nothing to do.
+    for(i = 0; i < numFonts; ++i)
+        unloadCompositeFont(&fonts[i]);
 }
 
 void R_ShutdownCompositeFonts(void)
@@ -691,12 +746,13 @@ void GL_CharDimensions(int* width, int* height, unsigned char ch, compositefonti
 
 int GL_CharWidth(unsigned char ch, compositefontid_t fontId)
 {
-    const compositefont_t* font;
+    compositefont_t* font;
     if(!inited)
         Con_Error("GL_CharWidth: Composite font system not yet initialized.");
     if((font = fontForId(fontId)))
     {
-        return font->chars[ch].pInfo.width;
+        prepareCompositeFont(font);
+        return font->chars[ch].width;
     }
     Con_Message("GL_CharWidth: Warning, unknown font id %i.\n", (int) fontId);
     return 0;
@@ -704,12 +760,13 @@ int GL_CharWidth(unsigned char ch, compositefontid_t fontId)
 
 int GL_CharHeight(unsigned char ch, compositefontid_t fontId)
 {
-    const compositefont_t* font;
+    compositefont_t* font;
     if(!inited)
         Con_Error("GL_CharHeight: Composite font system not yet initialized.");
     if((font = fontForId(fontId)))
     {
-        return font->chars[ch].pInfo.height;
+        prepareCompositeFont(font);
+        return font->chars[ch].height;
     }
     Con_Message("GL_CharHeight: Warning, unknown font id %i.\n", (int) fontId);
     return 0;
@@ -1109,7 +1166,15 @@ void GL_DrawTextFragment(const char* string, int x, int y)
 
 void GL_DrawChar3(unsigned char ch, int x, int y, compositefontid_t fontId, short flags)
 {
-    drawChar(patchForFontChar(fontId, ch), x, y, translateTextToPatchDrawFlags(flags));
+    compositefont_t* font;
+    if(fontId == 0)
+        return;
+    if((font = fontForId(fontId)))
+    {
+        drawChar(ch, x, y, font, flags);
+        return;
+    }
+    Con_Message("GL_DrawChar3: Warning, unknown/invalid font id %i.\n", (int)fontId);
 }
 
 void GL_DrawChar2(unsigned char ch, int x, int y, compositefontid_t fontId)
@@ -1122,63 +1187,43 @@ void GL_DrawChar(unsigned char ch, int x, int y)
     GL_DrawChar2(ch, x, y, DEFAULT_FONTID);
 }
 
-static void drawChar(patchid_t id, int posX, int posY, short flags)
+static void drawChar(unsigned char ch, int posX, int posY, compositefont_t* font, short flags)
 {
-    float x = (float) posX, y = (float) posY, w, h;
-    patchinfo_t info;
+    float x = (float) posX, y = (float) posY;
+    patchid_t patch;
 
-    if(id == 0)
+    prepareCompositeFont(font);
+    if(!(patch = font->chars[ch].patch))
         return;
 
-    GL_BindTexture(GL_PreparePatch(R_FindPatchTex(id)), (filterUI ? GL_LINEAR : GL_NEAREST));
+    if(flags & DTF_ALIGN_RIGHT)
+        x -= font->chars[ch].width;
+    else if(!(flags & DTF_ALIGN_LEFT))
+        x -= font->chars[ch].width /2;
+
+    if(flags & DTF_ALIGN_BOTTOM)
+        y -= font->chars[ch].height;
+    else if(!(flags & DTF_ALIGN_TOP))
+        y -= font->chars[ch].height/2;
+
+    GL_BindTexture(font->chars[ch].tex, (filterUI ? GL_LINEAR : GL_NEAREST));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    if(!R_GetPatchInfo(id, &info))
-        return;
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(x, y, 0);
 
-    // \kludge:
-    info.extraOffset[0] = info.extraOffset[1] = -1;
-
-    if(flags & DPF_ALIGN_RIGHT)
-        x -= info.width;
-    else if(!(flags & DPF_ALIGN_LEFT))
-        x -= info.width /2;
-
-    if(flags & DPF_ALIGN_BOTTOM)
-        y -= info.height;
-    else if(!(flags & DPF_ALIGN_TOP))
-        y -= info.height/2;
-
-    w = (float) info.width;
-    h = (float) info.height;
-
-    if(!(flags & DPF_NO_OFFSETX))
-        x += (float) info.offset;
-    if(!(flags & DPF_NO_OFFSETY))
-        y += (float) info.topOffset;
-
-    if(info.extraOffset[0])
+    if(font->chars[ch].dlist)
     {
-        // This offset is used only for the extra borders in the
-        // "upscaled and sharpened" patches, so we can tweak the values
-        // to our liking a bit more.
-        x += info.extraOffset[0];
-        y += info.extraOffset[1];
-        w += abs(info.extraOffset[0])*2;
-        h += abs(info.extraOffset[1])*2;
+        GL_CallList(font->chars[ch].dlist);
+    }
+    else
+    {
+        drawQuad(font->chars[ch].offset, font->chars[ch].topOffset, font->chars[ch].width, font->chars[ch].height);
     }
 
-    glBegin(GL_QUADS);
-        glTexCoord2f(0, 0);
-        glVertex2f(x, y);
-        glTexCoord2f(1, 0);
-        glVertex2f(x + w, y);
-        glTexCoord2f(1, 1);
-        glVertex2f(x + w, y + h);
-        glTexCoord2f(0, 1);
-        glVertex2f(x, y + h);
-    glEnd();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_Translatef(-x, -y, 0);
 }
 
 static void drawFlash(int x, int y, int w, int h, int bright)
