@@ -328,8 +328,6 @@ static boolean checkMapSpotSpawnFlags(const mapspot_t* spot)
     };
 #endif
 
-    int spawnMask;
-
     // Don't spawn things flagged for Multiplayer if we're not in a netgame.
     if(!IS_NETGAME && (spot->flags & MSF_NOTSINGLE))
         return false;
@@ -343,18 +341,7 @@ static boolean checkMapSpotSpawnFlags(const mapspot_t* spot)
         return false;
 
     // Check for appropriate skill level.
-    if(gameSkill == SM_BABY || gameSkill == SM_EASY)
-        spawnMask = MSF_EASY;
-    else if(gameSkill == SM_HARD
-#if !__JDOOM64__
-        || gameSkill == SM_NIGHTMARE
-#endif
-        )
-        spawnMask = MSF_HARD;
-    else
-        spawnMask = MSF_MEDIUM;
-
-    if(!(spot->flags & spawnMask))
+    if(!(spot->skillModes & (1 << gameSkill)))
         return false;
 
 #if __JHEXEN__
@@ -368,9 +355,8 @@ static boolean checkMapSpotSpawnFlags(const mapspot_t* spot)
     }
     else if(deathmatch == false)
     {   // Cooperative.
-        int i;
+        int i, spawnMask = 0;
 
-        spawnMask = 0;
         for(i = 0; i < MAXPLAYERS; ++i)
         {
             if(players[i].plr->inGame)
@@ -529,6 +515,7 @@ static void loadMapSpots(void)
         spot->pos[VZ] = P_GetGMOFloat(MO_THING, i, MO_Z);
 
         spot->doomEdNum = P_GetGMOInt(MO_THING, i, MO_DOOMEDNUM);
+        spot->skillModes = P_GetGMOInt(MO_THING, i, MO_SKILLMODES);
         spot->flags = P_GetGMOInt(MO_THING, i, MO_FLAGS);
         spot->angle = P_GetGMOAngle(MO_THING, i, MO_ANGLE);
 

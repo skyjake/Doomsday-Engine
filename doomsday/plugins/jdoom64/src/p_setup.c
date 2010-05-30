@@ -65,6 +65,7 @@ void P_RegisterMapObjs(void)
     P_RegisterMapObjProperty(MO_THING, MO_ID, "ID", DDVT_SHORT);
     P_RegisterMapObjProperty(MO_THING, MO_ANGLE, "Angle", DDVT_ANGLE);
     P_RegisterMapObjProperty(MO_THING, MO_DOOMEDNUM, "DoomEdNum", DDVT_INT);
+    P_RegisterMapObjProperty(MO_THING, MO_SKILLMODES, "SkillModes", DDVT_INT);
     P_RegisterMapObjProperty(MO_THING, MO_FLAGS, "Flags", DDVT_INT);
 
     P_RegisterMapObj(MO_XLINEDEF, "XLinedef");

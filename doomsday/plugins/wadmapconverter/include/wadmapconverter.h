@@ -108,6 +108,7 @@ typedef struct mthing_s {
     angle_t         angle;
     int16_t         doomEdNum;
     int32_t         flags;
+    int32_t         skillModes;
 
     // Hexen format members:
     int16_t         xTID;

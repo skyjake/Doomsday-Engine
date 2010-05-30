@@ -45,6 +45,7 @@ enum {
     MO_ANGLE,
     MO_TYPE,
     MO_DOOMEDNUM,
+    MO_SKILLMODES,
     MO_FLAGS,
     MO_TAG
 };
@@ -52,8 +53,6 @@ enum {
 void            P_Init(void);
 void            P_RegisterMapObjs(void);
 
-int             P_HandleMapDataPropertyValue(uint id, int dtype, int prop,
-                                             valuetype_t type, void *data);
-int             P_HandleMapObjectStatusReport(int code, uint id, int dtype,
-                                              void *data);
+int             P_HandleMapDataPropertyValue(uint id, int dtype, int prop, valuetype_t type, void *data);
+int             P_HandleMapObjectStatusReport(int code, uint id, int dtype, void *data);
 #endif

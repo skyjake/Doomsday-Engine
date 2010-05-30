@@ -1443,6 +1443,13 @@ static boolean loadThings(const byte* buf, size_t len)
             t->angle = ANG45 * (SHORT(*((const int16_t*) (ptr+4))) / 45);
             t->doomEdNum = SHORT(*((const int16_t*) (ptr+6)));
             t->flags = SHORT(*((const int16_t*) (ptr+8)));
+            t->skillModes = 0;
+            if(t->flags & MTF_EASY)
+                t->skillModes |= 0x00000001 | 0x00000002;
+            if(t->flags & MTF_MEDIUM)
+                t->skillModes |= 0x00000004;
+            if(t->flags & MTF_HARD)
+                t->skillModes |= 0x00000008 | 0x00000010;
             t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
             // DOOM format things spawn on the floor by default unless their
             // type-specific flags override.
@@ -1491,6 +1498,13 @@ static boolean loadThings(const byte* buf, size_t len)
             t->doomEdNum = SHORT(*((const int16_t*) (ptr+8)));
 
             t->flags = SHORT(*((const int16_t*) (ptr+10)));
+            t->skillModes = 0;
+            if(t->flags & MTF_EASY)
+                t->skillModes |= 0x00000001;
+            if(t->flags & MTF_MEDIUM)
+                t->skillModes |= 0x00000002;
+            if(t->flags & MTF_HARD)
+                t->skillModes |= 0x00000004 | 0x00000008;
             t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
             // DOOM64 format things spawn relative to the floor by default
             // unless their type-specific flags override.
@@ -1519,7 +1533,7 @@ static boolean loadThings(const byte* buf, size_t len)
  * Hexen Thing flags:
  */
 #define MTF_EASY            0x00000001
-#define MTF_NORMAL          0x00000002
+#define MTF_MEDIUM          0x00000002
 #define MTF_HARD            0x00000004
 #define MTF_AMBUSH          0x00000008
 #define MTF_DORMANT         0x00000010
@@ -1536,7 +1550,7 @@ static boolean loadThings(const byte* buf, size_t len)
 #define MTF_STILL           0x00004000 // (ZDOOM) Thing stands still (only useful for specific Strife monsters or friendlies).
 
 #define MASK_UNKNOWN_THING_FLAGS (0xffffffff \
-    ^ (MTF_EASY|MTF_NORMAL|MTF_HARD|MTF_AMBUSH|MTF_DORMANT|MTF_FIGHTER|MTF_CLERIC|MTF_MAGE|MTF_GSINGLE|MTF_GCOOP|MTF_GDEATHMATCH|MTF_SHADOW|MTF_INVISIBLE|MTF_FRIENDLY|MTF_STILL))
+    ^ (MTF_EASY|MTF_MEDIUM|MTF_HARD|MTF_AMBUSH|MTF_DORMANT|MTF_FIGHTER|MTF_CLERIC|MTF_MAGE|MTF_GSINGLE|MTF_GCOOP|MTF_GDEATHMATCH|MTF_SHADOW|MTF_INVISIBLE|MTF_FRIENDLY|MTF_STILL))
 
         for(n = 0, ptr = buf; n < num; ++n, ptr += elmSize)
         {
@@ -1558,6 +1572,13 @@ static boolean loadThings(const byte* buf, size_t len)
                t->doomEdNum != PO_SPAWNCRUSH_DOOMEDNUM)
                 t->angle = ANG45 * (t->angle / 45);
             t->flags = SHORT(*((const int16_t*) (ptr+12)));
+            t->skillModes = 0;
+            if(t->flags & MTF_EASY)
+                t->skillModes |= 0x00000001 | 0x00000002;
+            if(t->flags & MTF_MEDIUM)
+                t->skillModes |= 0x00000004;
+            if(t->flags & MTF_HARD)
+                t->skillModes |= 0x00000008 | 0x00000010;
             t->flags &= ~MASK_UNKNOWN_THING_FLAGS;
 
             /**
@@ -1870,6 +1891,7 @@ boolean TransferMap(void)
         MPE_GameObjProperty("Thing", i, "Z", DDVT_SHORT, &th->pos[VZ]);
         MPE_GameObjProperty("Thing", i, "Angle", DDVT_ANGLE, &th->angle);
         MPE_GameObjProperty("Thing", i, "DoomEdNum", DDVT_SHORT, &th->doomEdNum);
+        MPE_GameObjProperty("Thing", i, "SkillModes", DDVT_INT, &th->skillModes);
         MPE_GameObjProperty("Thing", i, "Flags", DDVT_INT, &th->flags);
 
         if(map->format == MF_DOOM64)

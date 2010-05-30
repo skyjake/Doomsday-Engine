@@ -316,10 +316,12 @@ static void SV_ReadMobj(void)
     mo->spawnSpot.angle = (angle_t) (ANG45 * ((int)SV_ReadShort() / 45));
     /* mo->spawnSpot.type = (int) */ SV_ReadShort();
 
-    mo->spawnSpot.flags = (int) SV_ReadShort();
-    mo->spawnSpot.flags &= ~MASK_UNKNOWN_MSF_FLAGS;
+    {
+    int spawnFlags = ((int) SV_ReadShort()) & ~MASK_UNKNOWN_MSF_FLAGS;
     // Spawn on the floor by default unless the mobjtype flags override.
-    mo->spawnSpot.flags |= MSF_Z_FLOOR;
+    spawnFlags |= MSF_Z_FLOOR;
+    mo->spawnSpot.flags = spawnFlags;
+    }
 
     // Thing being chased/attacked for tracers.
     SV_ReadLong();

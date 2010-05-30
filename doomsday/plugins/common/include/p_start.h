@@ -39,9 +39,9 @@
  * Map Spot Flags (MSF):
  * \todo Commonize these flags and introduce translations where needed.
  */
-#define MSF_EASY            0x00000001 // Appears in easy skill modes.
-#define MSF_MEDIUM          0x00000002 // Appears in medium skill modes.
-#define MSF_HARD            0x00000004 // Appears in hard skill modes.
+#define MSF_UNUSED1         0x00000001 // Appears in easy skill modes.
+#define MSF_UNUSED2         0x00000002 // Appears in medium skill modes.
+#define MSF_UNUSED3         0x00000004 // Appears in hard skill modes.
 
 #if __JDOOM__ || __JDOOM64__
 # define MSF_DEAF           0x00000008 // Thing is deaf.
@@ -89,16 +89,16 @@
 // Unknown flag mask:
 #if __JDOOM__
 #define MASK_UNKNOWN_MSF_FLAGS (0xffffffff \
-    ^ (MSF_EASY|MSF_MEDIUM|MSF_HARD|MSF_DEAF|MSF_NOTSINGLE|MSF_NOTDM|MSF_NOTCOOP|MSF_FRIENDLY))
+    ^ (MSF_UNUSED1|MSF_UNUSED2|MSF_UNUSED3|MSF_DEAF|MSF_NOTSINGLE|MSF_NOTDM|MSF_NOTCOOP|MSF_FRIENDLY))
 #elif __JDOOM64__
 #define MASK_UNKNOWN_MSF_FLAGS (0xffffffff \
-    ^ (MSF_EASY|MSF_MEDIUM|MSF_HARD|MSF_DEAF|MSF_NOTSINGLE|MSF_DONTSPAWNATSTART|MSF_SCRIPT_TOUCH|MSF_SCRIPT_DEATH|MSF_SECRET|MSF_NOTARGET|MSF_NOTDM|MSF_NOTCOOP))
+    ^ (MSF_UNUSED1|MSF_UNUSED2|MSF_UNUSED3|MSF_DEAF|MSF_NOTSINGLE|MSF_DONTSPAWNATSTART|MSF_SCRIPT_TOUCH|MSF_SCRIPT_DEATH|MSF_SECRET|MSF_NOTARGET|MSF_NOTDM|MSF_NOTCOOP))
 #elif __JHERETIC__
 #define MASK_UNKNOWN_MSF_FLAGS (0xffffffff \
-    ^ (MSF_EASY|MSF_MEDIUM|MSF_HARD|MSF_AMBUSH|MSF_NOTSINGLE|MSF_NOTDM|MSF_NOTCOOP|MSF_FRIENDLY))
+    ^ (MSF_UNUSED1|MSF_UNUSED2|MSF_UNUSED3|MSF_AMBUSH|MSF_NOTSINGLE|MSF_NOTDM|MSF_NOTCOOP|MSF_FRIENDLY))
 #elif __JHEXEN__
 #define MASK_UNKNOWN_MSF_FLAGS (0xffffffff \
-    ^ (MSF_EASY|MTF_NORMAL|MSF_HARD|MSF_AMBUSH|MTF_DORMANT|MSF_FIGHTER|MSF_CLERIC|MSF_MAGE|MSF_GSINGLE|MSF_GCOOP|MSF_GDEATHMATCH|MSF_SHADOW|MSF_INVISIBLE|MSF_FRIENDLY|MSF_STILL))
+    ^ (MSF_UNUSED1|MSF_UNUSED2|MSF_UNUSED3|MSF_AMBUSH|MSF_DORMANT|MSF_FIGHTER|MSF_CLERIC|MSF_MAGE|MSF_GSINGLE|MSF_GCOOP|MSF_GDEATHMATCH|MSF_SHADOW|MSF_INVISIBLE|MSF_FRIENDLY|MSF_STILL))
 #endif
 
 typedef struct {
@@ -108,6 +108,7 @@ typedef struct {
     float           pos[3];
     angle_t         angle;
     int             doomEdNum;
+    int             skillModes;
     int             flags;
 #if __JHEXEN__
     byte            special;

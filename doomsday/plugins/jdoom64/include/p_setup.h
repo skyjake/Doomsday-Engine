@@ -47,6 +47,7 @@ enum {
     MO_ANGLE,
     MO_TYPE,
     MO_DOOMEDNUM,
+    MO_SKILLMODES,
     MO_USETYPE,
     MO_FLAGS,
     MO_TAG,
