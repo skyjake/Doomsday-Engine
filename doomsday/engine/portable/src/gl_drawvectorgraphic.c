@@ -190,7 +190,7 @@ void GL_DrawVectorGraphic3(vectorgraphicid_t vgId, float x, float y, float scale
     {
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_Translatef(x, y, 0);
-        if(angle != 0 || scale != 0)
+        if(angle != 0 || scale != 1)
         {
             DGL_PushMatrix();
             DGL_Rotatef(angle, 0, 0, 1);
@@ -207,7 +207,7 @@ void GL_DrawVectorGraphic3(vectorgraphicid_t vgId, float x, float y, float scale
         }
 
         DGL_MatrixMode(DGL_MODELVIEW);
-        if(angle != 0 || scale != 0)
+        if(angle != 0 || scale != 1)
             DGL_PopMatrix();
         DGL_Translatef(-x, -y, 0);
     }
