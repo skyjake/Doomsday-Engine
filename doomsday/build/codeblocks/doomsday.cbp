@@ -147,6 +147,7 @@
 		<Unit filename="..\..\engine\api\dd_plugin.h" />
 		<Unit filename="..\..\engine\api\dd_share.h" />
 		<Unit filename="..\..\engine\api\dd_types.h" />
+		<Unit filename="..\..\engine\api\dd_vectorgraphic.h" />
 		<Unit filename="..\..\engine\api\doomsday.h" />
 		<Unit filename="..\..\engine\api\sys_audiod.h" />
 		<Unit filename="..\..\engine\api\sys_audiod_mus.h" />
@@ -498,6 +499,7 @@
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\gl_draw.c" />
 		<Unit filename="..\..\engine\portable\src\gl_drawcompositefont.c" />
+		<Unit filename="..\..\engine\portable\src\gl_drawvectorgraphic.c" />
 		<Unit filename="..\..\engine\portable\src\gl_font.c">
 			<Option compilerVar="CC" />
 		</Unit>

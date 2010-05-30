@@ -66,7 +66,6 @@
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 void            Net_ResetTimer(void);
-void            R_TextTicker(timespan_t ticLength);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 

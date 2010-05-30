@@ -236,6 +236,9 @@ boolean R_SetViewGrid(int numCols, int numRows)
 void R_Init(void)
 {
     R_InitData();
+    R_InitCompositeFonts();
+    R_InitVectorGraphics();
+
     // viewwidth / viewheight / detailLevel are set by the defaults
     R_SetViewWindow(0, 0, 320, 200);
     R_InitSprites(); // Fully initialize sprites.
@@ -339,6 +342,8 @@ void R_Update(void)
 void R_Shutdown(void)
 {
     R_ShutdownModels();
+    R_ShutdownCompositeFonts();
+    R_ShutdownVectorGraphics();
     R_ShutdownData();
     R_ShutdownResourceLocator();
     // Most allocated memory goes down with the zone.

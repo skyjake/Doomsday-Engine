@@ -1081,6 +1081,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\gl_drawvectorgraphic.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\gl_font.c"
 				>
 			</File>
@@ -2687,6 +2691,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\api\dd_types.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_vectorgraphic.h"
 				>
 			</File>
 			<File

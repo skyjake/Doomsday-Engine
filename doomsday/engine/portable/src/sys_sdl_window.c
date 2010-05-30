@@ -730,6 +730,9 @@ extern boolean usingFog;
             hadFog = usingFog;
             GL_TotalReset();
             gx.UpdateState(DD_RENDER_RESTART_PRE);
+
+            R_UnloadCompositeFonts();
+            R_UnloadVectorGraphics();
             GL_ClearSystemTextures();
         }
 

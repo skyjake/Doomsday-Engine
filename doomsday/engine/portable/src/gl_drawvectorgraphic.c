@@ -22,7 +22,7 @@
  */
 
 /**
- * r_vectorgraphic.c: Vector graphics.
+ * gl_drawvectorgraphic.c: Vector graphics.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -30,17 +30,15 @@
 #include <string.h>
 #include <assert.h>
 
-#include "doomsday.h"
-#include "r_vectorgraphic.h"
+#include "de_base.h"
+#include "de_refresh.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define DEFAULT_SCALE               (0)
+#define DEFAULT_SCALE               (1)
 #define DEFAULT_ANGLE               (0)
 
 // TYPES -------------------------------------------------------------------
-
-enum { VX, VY, VZ }; // Vertex indices.
 
 typedef struct vectorgraphic_s {
     vectorgraphicid_t id;
@@ -107,63 +105,6 @@ static DGLuint constructDisplayList(DGLuint name, const vectorgraphic_t* vg)
     return 0;
 }
 
-void R_InitVectorGraphics(void)
-{
-    if(inited)
-        return;
-    numVectorGraphics = 0;
-    vectorGraphics = 0;
-    inited = true;
-}
-
-void R_ShutdownVectorGraphics(void)
-{
-    if(!inited)
-        return;
-
-    if(numVectorGraphics != 0)
-    {
-        uint i;
-        for(i = 0; i < numVectorGraphics; ++i)
-        {
-            vectorgraphic_t* vg = &vectorGraphics[i];
-            if(!vg)
-                continue;
-            if(!(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED)))
-            {
-                if(vg->dlist)
-                    DGL_DeleteLists(vg->dlist, 1);
-            }
-            free(vg->lines);
-        }
-        free(vectorGraphics);
-        vectorGraphics = 0;
-        numVectorGraphics = 0;
-    }
-    inited = false;
-}
-
-/**
- * Unload any resources needed for vector graphics.
- * Called during shutdown and before a renderer restart.
- */
-void R_UnloadVectorGraphics(void)
-{
-    if(!inited)
-        return;
-    if(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED))
-        return; // Nothing to do.
-
-    {uint i;
-    for(i = 0; i < numVectorGraphics; ++i)
-    {
-        vectorgraphic_t* vg = &vectorGraphics[i];
-        if(vg->dlist)
-            DGL_DeleteLists(vg->dlist, 1);
-        vg->dlist = 0;
-    }}
-}
-
 static vectorgraphic_t* prepareVectorGraphic(vectorgraphicid_t vgId)
 {
     vectorgraphic_t* vg;
@@ -177,6 +118,68 @@ static vectorgraphic_t* prepareVectorGraphic(vectorgraphicid_t vgId)
     }
     Con_Message("prepareVectorGraphic: Warning, no vectorgraphic is known by id %i.", (int) vgId);
     return NULL;
+}
+
+static void unloadVectorGraphic(vectorgraphic_t* vg)
+{
+    if(!(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED)))
+    {
+        if(vg->dlist)
+            DGL_DeleteLists(vg->dlist, 1);
+    }
+    vg->dlist = 0;
+}
+
+static void deleteVectorGraphic(vectorgraphic_t* vg)
+{
+    unloadVectorGraphic(vg);
+    free(vg->lines);
+    vg->lines = 0;
+}
+
+static void deleteVectorGraphics(void)
+{
+    if(numVectorGraphics != 0)
+    {
+        uint i;
+        for(i = 0; i < numVectorGraphics; ++i)
+            deleteVectorGraphic(&vectorGraphics[i]);
+        free(vectorGraphics);
+        vectorGraphics = 0;
+        numVectorGraphics = 0;
+    }
+}
+
+void R_InitVectorGraphics(void)
+{
+    if(inited)
+        return;
+    numVectorGraphics = 0;
+    vectorGraphics = 0;
+    inited = true;
+}
+
+void R_ShutdownVectorGraphics(void)
+{
+    if(!inited)
+        return;
+    deleteVectorGraphics();
+    inited = false;
+}
+
+/**
+ * Unload any resources needed for vector graphics.
+ * Called during shutdown and before a renderer restart.
+ */
+void R_UnloadVectorGraphics(void)
+{
+    uint i;
+    if(!inited)
+        return;
+    if(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED))
+        return; // Nothing to do.
+    for(i = 0; i < numVectorGraphics; ++i)
+        unloadVectorGraphic(&vectorGraphics[i]);
 }
 
 void GL_DrawVectorGraphic3(vectorgraphicid_t vgId, float x, float y, float scale, float angle)
@@ -230,14 +233,18 @@ void R_NewVectorGraphic(vectorgraphicid_t vgId, const vgline_t* lines, size_t nu
         Con_Error("R_NewVectorGraphic: Invalid id, zero is reserved.");
 
     // Already a vector graphic with this id?
-    if(vectorGraphicForId(vgId))
-        Con_Error("R_NewVectorGraphic: A vector graphic with id %i already exists.", (int) vgId);
+    if((vg = vectorGraphicForId(vgId)))
+    {   // We are replacing an existing vector graphic.
+        deleteVectorGraphic(vg);
+    }
+    else
+    {   // A new vector graphic.
+        vectorGraphics = realloc(vectorGraphics, sizeof(*vectorGraphics) * ++numVectorGraphics);
+        vg = &vectorGraphics[numVectorGraphics-1];
+        vg->id = vgId;
+        vg->dlist = 0;
+    }
 
-    // Not loaded yet.
-    vectorGraphics = realloc(vectorGraphics, sizeof(*vectorGraphics) * ++numVectorGraphics);
-    vg = &vectorGraphics[numVectorGraphics-1];
-    vg->id = vgId;
-    vg->dlist = 0;
     vg->count = numLines;
     vg->lines = malloc(numLines * sizeof(vgline_t));
     for(i = 0; i < numLines; ++i)

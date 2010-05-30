@@ -22,13 +22,11 @@
  */
 
 /**
- * r_vectorgraphic.h: Vector graphics.
+ * dd_vectorgraphic.h: Vector graphics.
  */
 
-#ifndef LIBCOMMON_VECTORGRAPHIC_H
-#define LIBCOMMON_VECTORGRAPHIC_H
-
-#include "dd_types.h"
+#ifndef LIBDENG_VECTORGRAPHIC_H
+#define LIBDENG_VECTORGRAPHIC_H
 
 typedef uint32_t vectorgraphicid_t;
 
@@ -42,14 +40,10 @@ typedef struct vgline_s {
     mpoint_t a, b;
 } vgline_t;
 
-void                R_InitVectorGraphics(void);
-void                R_UnloadVectorGraphics(void);
-void                R_ShutdownVectorGraphics(void);
+void            R_NewVectorGraphic(vectorgraphicid_t vgId, const vgline_t* lines, size_t numLines);
 
-void                R_NewVectorGraphic(vectorgraphicid_t vgId, const vgline_t* lines, size_t numLines);
+void            GL_DrawVectorGraphic(vectorgraphicid_t vgId, float x, float y);
+void            GL_DrawVectorGraphic2(vectorgraphicid_t vgId, float x, float y, float scale);
+void            GL_DrawVectorGraphic3(vectorgraphicid_t vgId, float x, float y, float scale, float angle);
 
-void                GL_DrawVectorGraphic(vectorgraphicid_t vgId, float x, float y);
-void                GL_DrawVectorGraphic2(vectorgraphicid_t vgId, float x, float y, float scale);
-void                GL_DrawVectorGraphic3(vectorgraphicid_t vgId, float x, float y, float scale, float angle);
-
-#endif /* LIBCOMMON_VECTORGRAPHIC_H */
+#endif /* LIBDENG_VECTORGRAPHIC_H */

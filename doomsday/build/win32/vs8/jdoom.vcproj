@@ -977,10 +977,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\include\r_vectorgraphic.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\common\include\rend_automap.h"
 				>
 			</File>
@@ -1178,10 +1174,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\plugins\common\src\r_common.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\plugins\common\src\r_vectorgraphic.c"
 				>
 			</File>
 			<File

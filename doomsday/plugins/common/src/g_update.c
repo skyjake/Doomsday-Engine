@@ -47,7 +47,6 @@
 #include "hu_menu.h"
 #include "rend_automap.h"
 #include "p_inventory.h"
-#include "r_vectorgraphic.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -177,13 +176,11 @@ void G_UpdateState(int step)
     case DD_RENDER_RESTART_PRE:
         Hu_UnloadData();
         Rend_AutomapUnloadData();
-        R_UnloadVectorGraphics();
         break;
 
     case DD_RENDER_RESTART_POST:
         Hu_LoadData();
         Rend_AutomapLoadData();
-        R_UnloadVectorGraphics();
         break;
     }
 }

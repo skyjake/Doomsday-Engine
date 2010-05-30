@@ -29,8 +29,6 @@
 #ifndef __COMMON_AUTOMAP_MANAGER__
 #define __COMMON_AUTOMAP_MANAGER__
 
-#include "r_vectorgraphic.h"
-
 #define AUTOMAP_OPEN_SECONDS    (.3f) // Num of seconds to open/close the map.
 
 #if __JDOOM__ || __JDOOM64__

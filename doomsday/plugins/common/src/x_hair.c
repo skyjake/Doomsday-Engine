@@ -43,7 +43,6 @@
 
 #include "x_hair.h"
 #include "p_user.h"
-#include "r_vectorgraphic.h"
 
 // MACROS ------------------------------------------------------------------
 

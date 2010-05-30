@@ -23,10 +23,6 @@ NAME            "DOOMSDAY"
 ; 255 formerly P_PointToBlock
 ; 326 formerly PO_Alloc
 ; 332 formerly P_ControlReset
-; 317 formerly P_Copy
-; 318 formerly P_Copyp
-; 319 formerly P_Swap
-; 320 formerly P_Swapp
 ; 328 formerly P_RegisterCustomMapProperty
 
 EXPORTS
@@ -402,7 +398,7 @@ EXPORTS
     GL_SetFilterColor           @441 NONAME
 
 ; Graphics: Text
-	R_NewCompositeFont                  @106 NONAME
+	R_NewCompositeFont          @106 NONAME
 	R_ResetTextTypeInTimer      @107 NONAME
 
 	GL_DrawText                 @108 NONAME
@@ -433,6 +429,13 @@ EXPORTS
 	GL_CharDimensions           @205 NONAME
 	GL_CharWidth                @206 NONAME
 	GL_CharHeight               @235 NONAME
+
+; Graphics: SVG
+    R_NewVectorGraphic          @317 NONAME
+
+    GL_DrawVectorGraphic        @318 NONAME
+    GL_DrawVectorGraphic2       @319 NONAME
+    GL_DrawVectorGraphic3       @320 NONAME
 
 ; Audio.
     S_MapChange                 @225 NONAME

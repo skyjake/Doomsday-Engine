@@ -360,4 +360,14 @@ boolean         R_IsAllowedDetailTex(ded_detailtexture_t* def, material_t* mat,
                                      boolean hasExternal);
 boolean         R_IsValidLightDecoration(const ded_decorlight_t* lightDef);
 
+void            R_InitVectorGraphics(void);
+void            R_UnloadVectorGraphics(void);
+void            R_ShutdownVectorGraphics(void);
+void            R_TextTicker(timespan_t ticLength);
+
+void            R_InitCompositeFonts(void);
+void            R_UnloadCompositeFonts(void);
+void            R_ShutdownCompositeFonts(void);
+void            R_SetCompositeFontChar(compositefontid_t fontId, unsigned char ch, const char* lumpname);
+
 #endif

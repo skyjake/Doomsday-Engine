@@ -591,7 +591,6 @@ void G_Shutdown(void)
     P_DestroySectorTagLists();
     P_ShutdownInventory();
     AM_Shutdown();
-    R_ShutdownVectorGraphics();
     P_FreeWeaponSlots();
     GUI_Shutdown();
 }

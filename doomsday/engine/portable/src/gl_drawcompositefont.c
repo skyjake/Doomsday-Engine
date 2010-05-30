@@ -47,7 +47,7 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
-    char name[9];
+    char* name;
     compositefontid_t id;
     struct compositefont_char_s {
         char lumpname[9];
@@ -87,10 +87,11 @@ static void drawFlash(int x, int y, int w, int h, int bright);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static uint numFonts = 0;
-static compositefont_t* fonts = 0;
+static boolean inited = false;
+static uint numFonts;
+static compositefont_t* fonts;
 
-static int typeInTime = 0;
+static int typeInTime;
 
 // CODE --------------------------------------------------------------------
 
@@ -325,22 +326,29 @@ static void precacheFontCharacterPatch(compositefont_t* font, unsigned char ch)
     DD_SetInteger(DD_MONOCHROME_PATCHES, 0);
 }
 
-void R_SetFontCharacter(compositefontid_t fontId, unsigned char ch, const char* lumpname)
+void R_SetCompositeFontChar(compositefontid_t fontId, unsigned char ch, const char* lumpname)
 {
     compositefont_t* font;
+
+    if(!inited)
+        Con_Error("R_NewCompositeFont: Not yet initialized.");
+
     if((font = fontForId(fontId)))
     {
         setFontCharacterPatch(font, ch, lumpname);
         precacheFontCharacterPatch(font, ch);
         return;
     }
-    Con_Message("R_SetFontCharacter: Warning, unknown font id %i.\n", (int) fontId);
+    Con_Message("R_SetCompositeFontChar: Warning, unknown font id %i.\n", (int) fontId);
 }
 
 void R_NewCompositeFont(compositefontid_t fontId, const char name[9], const fontpatch_t* patches, size_t num)
 {
     compositefont_t* font;
-    size_t i;
+    size_t i, len;
+
+    if(!inited)
+        Con_Error("R_NewCompositeFont: Not yet initialized.");
 
     // Valid id?
     if(fontId == 0)
@@ -350,19 +358,37 @@ void R_NewCompositeFont(compositefontid_t fontId, const char name[9], const font
     if(!name || !name[0])
         Con_Error("R_NewCompositeFont: A valid name is required (not NULL or zero-length).");
 
+    len = strlen(name);
+
     // Already a font with this id?
-    if(fontForId(fontId))
-        Con_Error("R_NewCompositeFont: A font with id %i already exists.", (int) fontId);
+    if((font = fontForId(fontId)))
+    {   // We are replacing an existing font.
+        if(strnicmp(font->name, name, len))
+        {   // Name change.
+            // Already a font with this name?
+            const compositefont_t* otherFont;
+            if((otherFont = fontForName(name)) && otherFont != font)
+                Con_Error("R_NewCompositeFont: A font with name %s already exists.", name);
 
-    // Already a font with this name?
-    if(fontForName(name))
-        Con_Error("R_NewCompositeFont: A font with name %s already exists.", name);
+            free(font->name);
+            memset(font, 0, sizeof(*font));
+            font->name = malloc(len+1);
+            dd_snprintf(font->name, len+1, "%s", name);
+        }
+    }
+    else
+    {   // A new font.
+        // Already a font with this name?
+        if(fontForName(name))
+            Con_Error("R_NewCompositeFont: A font with name %s already exists.", name);
 
-    fonts = Z_Realloc(fonts, sizeof(*fonts) * ++numFonts, PU_STATIC);
-    font = &fonts[numFonts-1];
-    memset(font, 0, sizeof(*font));
-    dd_snprintf(font->name, 9, "%s", name);
-    font->id = fontId;
+        fonts = realloc(fonts, sizeof(*fonts) * ++numFonts);
+        font = &fonts[numFonts-1];
+        memset(font, 0, sizeof(*font));
+        font->name = malloc(len+1);
+        dd_snprintf(font->name, len+1, "%s", name);
+        font->id = fontId;
+    }
 
     if(!patches)
         return; // Hmm, going to complete this later presumably.
@@ -375,10 +401,51 @@ void R_NewCompositeFont(compositefontid_t fontId, const char name[9], const font
     }
 }
 
+void R_InitCompositeFonts(void)
+{
+    if(inited)
+        return;
+
+    numFonts = 0;
+    fonts = 0;
+    typeInTime = 0;
+    inited = true;
+}
+
+void R_UnloadCompositeFonts(void)
+{
+    if(!inited)
+        return;
+    // Nothing to do.
+}
+
+void R_ShutdownCompositeFonts(void)
+{
+    if(!inited)
+        return;
+
+    if(numFonts != 0)
+    {
+        uint i;
+        for(i = 0; i < numFonts; ++i)
+        {
+            compositefont_t* font = &fonts[i];
+            free(font->name);
+        }
+        free(fonts);
+    }
+    numFonts = 0;
+    fonts = 0;
+    typeInTime = 0;
+    inited = false;
+}
+
 void R_TextTicker(timespan_t ticLength)
 {
     static trigger_t fixed = { 1 / 35.0 };
 
+    if(!inited)
+        return;
     // Restricted to fixed 35 Hz ticks.
     if(!M_RunTrigger(&fixed, ticLength))
         return; // It's too soon.
@@ -388,6 +455,8 @@ void R_TextTicker(timespan_t ticLength)
 
 void R_ResetTextTypeInTimer(void)
 {
+    if(!inited)
+        return;
     typeInTime = 0;
 }
 
@@ -427,6 +496,9 @@ void GL_DrawText(const char* inString, int x, int y, compositefontid_t defFont,
     size_t charCount = 0;
     int curCase = -1;
     size_t len;
+
+    if(!inited)
+        Con_Error("GL_DrawText: Composite font system not yet initialized.");
 
     if(!inString || !inString[0])
         return;
@@ -587,6 +659,8 @@ void GL_DrawText(const char* inString, int x, int y, compositefontid_t defFont,
 
 void GL_CharDimensions(int* width, int* height, unsigned char ch, compositefontid_t font)
 {
+    if(!inited)
+        Con_Error("GL_CharDimensions: Composite font system not yet initialized.");
     if(!width && !height)
         return;
     if(width)
@@ -598,6 +672,8 @@ void GL_CharDimensions(int* width, int* height, unsigned char ch, compositefonti
 int GL_CharWidth(unsigned char ch, compositefontid_t fontId)
 {
     const compositefont_t* font;
+    if(!inited)
+        Con_Error("GL_CharWidth: Composite font system not yet initialized.");
     if((font = fontForId(fontId)))
     {
         return font->chars[ch].pInfo.width;
@@ -609,6 +685,8 @@ int GL_CharWidth(unsigned char ch, compositefontid_t fontId)
 int GL_CharHeight(unsigned char ch, compositefontid_t fontId)
 {
     const compositefont_t* font;
+    if(!inited)
+        Con_Error("GL_CharHeight: Composite font system not yet initialized.");
     if((font = fontForId(fontId)))
     {
         return font->chars[ch].pInfo.height;
@@ -620,6 +698,8 @@ int GL_CharHeight(unsigned char ch, compositefontid_t fontId)
 void GL_TextFragmentDimensions2(int* width, int* height, const char* string,
     compositefontid_t fontId, int tracking)
 {
+    if(!inited)
+        Con_Error("GL_TextFragmentDimensions: Composite font system not yet initialized.");
     if(!width && !height)
         return;
     if(width)
@@ -649,6 +729,8 @@ int GL_TextFragmentWidth2(const char* string, compositefontid_t fontId, int trac
     int width;
     uint i;
 
+    if(!inited)
+        Con_Error("GL_TextFragmentWidth: Composite font system not yet initialized.");
     if(!string[0])
         return 0;
 
@@ -683,6 +765,8 @@ int GL_TextFragmentHeight(const char* string, compositefontid_t fontId)
     int height;
     uint i;
 
+    if(!inited)
+        Con_Error("GL_TextFragmentHeight: Composite font system not yet initialized.");
     if(!string[0])
         return 0;
 
@@ -703,6 +787,8 @@ int GL_TextFragmentHeight(const char* string, compositefontid_t fontId)
 
 void GL_TextDimensions(int* width, int* height, const char* string, compositefontid_t fontId)
 {
+    if(!inited)
+        Con_Error("GL_TextDimensions: Composite font system not yet initialized.");
     if(!width && !height)
         return;
     if(width)
@@ -724,6 +810,8 @@ int GL_TextWidth(const char* string, compositefontid_t fontId)
     const char* ch;
     size_t i, len;
 
+    if(!inited)
+        Con_Error("GL_TextWidth: Composite font system not yet initialized.");
     if(!string[0])
         return 0;
 
@@ -774,6 +862,8 @@ int GL_TextHeight(const char* string, compositefontid_t fontId)
     const char* ch;
     size_t i, len;
 
+    if(!inited)
+        Con_Error("GL_TextHeight: Composite font system not yet initialized.");
     if(!string[0])
         return 0;
     
@@ -829,6 +919,8 @@ void GL_DrawTextFragment7(const char* string, int x, int y, compositefontid_t fo
     flash = (noGlitter? 0 : glitterStrength);
     shadow = (noShadow? 0 : shadowStrength);
 
+    if(!inited)
+        Con_Error("GL_DrawTextFragment: Composite font system not yet initialized.");
     if(!string[0])
         return;
 

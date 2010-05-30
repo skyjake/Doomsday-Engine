@@ -136,7 +136,6 @@
 		<Unit filename="..\..\plugins\common\include\p_xgline.h" />
 		<Unit filename="..\..\plugins\common\include\p_xgsec.h" />
 		<Unit filename="..\..\plugins\common\include\r_common.h" />
-		<Unit filename="..\..\plugins\common\include\r_vectorgraphic.h" />
 		<Unit filename="..\..\plugins\common\include\rend_automap.h" />
 		<Unit filename="..\..\plugins\common\include\x_hair.h" />
 		<Unit filename="..\..\plugins\common\include\xgclass.h" />
@@ -265,7 +264,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\plugins\common\src\r_common.c" />
-		<Unit filename="..\..\plugins\common\src\r_vectorgraphic.c" />
 		<Unit filename="..\..\plugins\common\src\rend_automap.c" />
 		<Unit filename="..\..\plugins\common\src\x_hair.c" />
 		<Unit filename="..\..\plugins\jdoom\include\acfnlink.h" />
@@ -291,9 +289,7 @@
 		<Unit filename="..\..\plugins\jdoom\include\m_menu.h" />
 		<Unit filename="..\..\plugins\jdoom\include\m_random.h" />
 		<Unit filename="..\..\plugins\jdoom\include\mn_def.h" />
-		<Unit filename="..\..\plugins\jdoom\include\oldinfo.h">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
+		<Unit filename="..\..\plugins\jdoom\include\oldinfo.h" />
 		<Unit filename="..\..\plugins\jdoom\include\p_enemy.h" />
 		<Unit filename="..\..\plugins\jdoom\include\p_inter.h" />
 		<Unit filename="..\..\plugins\jdoom\include\p_lights.h" />

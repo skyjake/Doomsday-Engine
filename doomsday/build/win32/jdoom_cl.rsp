@@ -55,7 +55,6 @@
  .\..\..\plugins\common\src\am_map.c
  .\..\..\plugins\jdoom\src\tables.c
  .\..\..\plugins\common\src\r_common.c
- .\..\..\plugins\common\src\r_vectorgraphic.c
  .\..\..\plugins\common\src\rend_automap.c
  .\..\..\plugins\jdoom\src\m_random.c
  .\..\..\plugins\common\src\m_fixed.c

@@ -43,7 +43,6 @@
  .\..\..\plugins\common\src\p_xgsave.c
  .\..\..\plugins\common\src\p_xgsec.c
  .\..\..\plugins\common\src\r_common.c
- .\..\..\plugins\common\src\r_vectorgraphic.c
  .\..\..\plugins\common\src\rend_automap.c
  .\..\..\plugins\common\src\x_hair.c
  .\..\..\plugins\jdoom64\src\acfnlink.c
