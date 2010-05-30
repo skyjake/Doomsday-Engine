@@ -44,6 +44,24 @@
 #define DEFAULT_DRAWFLAGS           (DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS)
 #define DEFAULT_INITIALCOUNT        (0)
 
+/**
+ * @defGroup drawPatchFlags Draw Patch Flags.
+ */
+/*@{*/
+#define DPF_ALIGN_LEFT      0x0001
+#define DPF_ALIGN_RIGHT     0x0002
+#define DPF_ALIGN_BOTTOM    0x0004
+#define DPF_ALIGN_TOP       0x0008
+#define DPF_NO_OFFSETX      0x0010
+#define DPF_NO_OFFSETY      0x0020
+
+#define DPF_NO_OFFSET       (DPF_NO_OFFSETX|DPF_NO_OFFSETY)
+#define DPF_ALIGN_TOPLEFT   (DPF_ALIGN_TOP|DPF_ALIGN_LEFT)
+#define DPF_ALIGN_BOTTOMLEFT (DPF_ALIGN_BOTTOM|DPF_ALIGN_LEFT)
+#define DPF_ALIGN_TOPRIGHT  (DPF_ALIGN_TOP|DPF_ALIGN_RIGHT)
+#define DPF_ALIGN_BOTTOMRIGHT (DPF_ALIGN_BOTTOM|DPF_ALIGN_RIGHT)
+/*@}*/
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct {
@@ -51,6 +69,7 @@ typedef struct {
     compositefontid_t id;
     struct compositefont_char_s {
         char lumpname[9];
+        DGLuint dlist;
         patchinfo_t pInfo;
     } chars[256];
 } compositefont_t;
@@ -79,6 +98,7 @@ typedef struct {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static void drawChar(patchid_t id, int posX, int posY, short flags);
 static void drawFlash(int x, int y, int w, int h, int bright);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -1089,7 +1109,7 @@ void GL_DrawTextFragment(const char* string, int x, int y)
 
 void GL_DrawChar3(unsigned char ch, int x, int y, compositefontid_t fontId, short flags)
 {
-    GL_DrawPatch2(patchForFontChar(fontId, ch), x, y, translateTextToPatchDrawFlags(flags));
+    drawChar(patchForFontChar(fontId, ch), x, y, translateTextToPatchDrawFlags(flags));
 }
 
 void GL_DrawChar2(unsigned char ch, int x, int y, compositefontid_t fontId)
@@ -1100,6 +1120,65 @@ void GL_DrawChar2(unsigned char ch, int x, int y, compositefontid_t fontId)
 void GL_DrawChar(unsigned char ch, int x, int y)
 {
     GL_DrawChar2(ch, x, y, DEFAULT_FONTID);
+}
+
+static void drawChar(patchid_t id, int posX, int posY, short flags)
+{
+    float x = (float) posX, y = (float) posY, w, h;
+    patchinfo_t info;
+
+    if(id == 0)
+        return;
+
+    GL_BindTexture(GL_PreparePatch(R_FindPatchTex(id)), (filterUI ? GL_LINEAR : GL_NEAREST));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    if(!R_GetPatchInfo(id, &info))
+        return;
+
+    // \kludge:
+    info.extraOffset[0] = info.extraOffset[1] = -1;
+
+    if(flags & DPF_ALIGN_RIGHT)
+        x -= info.width;
+    else if(!(flags & DPF_ALIGN_LEFT))
+        x -= info.width /2;
+
+    if(flags & DPF_ALIGN_BOTTOM)
+        y -= info.height;
+    else if(!(flags & DPF_ALIGN_TOP))
+        y -= info.height/2;
+
+    w = (float) info.width;
+    h = (float) info.height;
+
+    if(!(flags & DPF_NO_OFFSETX))
+        x += (float) info.offset;
+    if(!(flags & DPF_NO_OFFSETY))
+        y += (float) info.topOffset;
+
+    if(info.extraOffset[0])
+    {
+        // This offset is used only for the extra borders in the
+        // "upscaled and sharpened" patches, so we can tweak the values
+        // to our liking a bit more.
+        x += info.extraOffset[0];
+        y += info.extraOffset[1];
+        w += abs(info.extraOffset[0])*2;
+        h += abs(info.extraOffset[1])*2;
+    }
+
+    glBegin(GL_QUADS);
+        glTexCoord2f(0, 0);
+        glVertex2f(x, y);
+        glTexCoord2f(1, 0);
+        glVertex2f(x + w, y);
+        glTexCoord2f(1, 1);
+        glVertex2f(x + w, y + h);
+        glTexCoord2f(0, 1);
+        glVertex2f(x, y + h);
+    glEnd();
 }
 
 static void drawFlash(int x, int y, int w, int h, int bright)
