@@ -1141,26 +1141,6 @@ void M_DrawGlowBar(const float a[2], const float b[2], float thickness,
     }
 }
 
-void M_DrawShadowedChar3(unsigned char ch, int x, int y, compositefontid_t font, short flags,
-    float r, float g, float b, float a)
-{
-    DGL_Color4f(0, 0, 0, a * .4f);
-    GL_DrawChar3(ch, x+2, y+2, font, flags);
-
-    DGL_Color4f(r, g, b, a);
-    GL_DrawChar3(ch, x, y, font, flags);
-}
-
-void M_DrawShadowedChar2(unsigned char ch, int x, int y, compositefontid_t font)
-{
-    M_DrawShadowedChar3(ch, x, y, font, DTF_ALIGN_TOPLEFT|DTF_NO_TYPEIN, 1, 1, 1, 1);
-}
-
-void M_DrawShadowedChar(unsigned char ch, int x, int y)
-{
-    M_DrawShadowedChar2(ch, x, y, GF_FONTA);
-}
-
 void M_DrawTextFragmentShadowed(const char* string, int x, int y, compositefontid_t font, short flags, int tracking, float r, float g, float b, float a)
 {
     DGL_Color4f(0, 0, 0, a * .4f);

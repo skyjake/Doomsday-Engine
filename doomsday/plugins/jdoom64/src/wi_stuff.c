@@ -248,64 +248,6 @@ void WI_drawAnimatedBack(void)
     // Nothing to do.
 }
 
-/**
- * Draws a number.
- * If digits > 0, then use that many digits minimum, otherwise only use as
- * many as necessary.
- *
- * @return              New x position.
- */
-int WI_drawNum(int x, int y, int n, int digits)
-{
-    int                 fontwidth = GL_CharWidth('0', GF_SMALL);
-    int                 neg, temp;
-
-    if(digits < 0)
-    {
-        if(!n)
-        {
-            // Make variable-length zeros 1 digit long.
-            digits = 1;
-        }
-        else
-        {
-            // Figure out # of digits in #
-            digits = 0;
-            temp = n;
-            while(temp)
-            {
-                temp /= 10;
-                digits++;
-            }
-        }
-    }
-
-    neg = n < 0;
-    if(neg)
-        n = -n;
-
-    // If non-number, do not draw it.
-    if(n == 1994)
-        return 0;
-
-    // Draw the new number.
-    while(digits--)
-    {
-        x -= fontwidth;
-        GL_DrawChar2('0' + (n % 10), x, y, GF_SMALL);
-        n /= 10;
-    }
-
-    // Draw a minus sign if necessary.
-    if(neg)
-    {
-        GL_DrawChar2('-', x - 8, y, GF_SMALL);
-        x -= 8;
-    }
-
-    return x;
-}
-
 void WI_drawPercent(int x, int y, int p)
 {
     char buf[20];

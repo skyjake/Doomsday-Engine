@@ -121,10 +121,6 @@ void            Draw_EndZoom(void);
 
 void            M_DrawTextFragmentShadowed(const char* string, int x, int y, compositefontid_t font, short flags, int tracking, float r, float g, float b, float a);
 
-void            M_DrawShadowedChar(unsigned char ch, int x, int y);
-void            M_DrawShadowedChar2(unsigned char ch, int x, int y, compositefontid_t font);
-void            M_DrawShadowedChar3(unsigned char ch, int x, int y, compositefontid_t font, short flags, float r, float g, float b, float a);
-
 void            M_DrawShadowedPatch(patchid_t id, int x, int y);
 void            M_DrawShadowedPatch2(patchid_t id, int x, int y, short flags);
 void            M_DrawShadowedPatch3(patchid_t id, int x, int y, short flags, float r, float g, float b, float a);

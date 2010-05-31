@@ -165,7 +165,7 @@ void IN_DrawTime(int x, int y, int h, int m, int s, compositefontid_t font, int 
     dd_snprintf(buf, 20, "%02d", s);
     M_DrawTextFragmentShadowed(buf, x, y, font, DTF_ALIGN_TOPRIGHT, tracking, r, g, b, a);
     x -= GL_TextFragmentWidth2(buf, font, tracking) + tracking * 3;
-    M_DrawShadowedChar3(':', x, y, font, DTF_ALIGN_TOPRIGHT, r, g, b, a);
+    M_DrawTextFragmentShadowed(":", x, y, font, DTF_ALIGN_TOPRIGHT, tracking, r, g, b, a);
     x -= GL_CharWidth(':', font) + 3;
 
     if(m || h)
@@ -178,7 +178,7 @@ void IN_DrawTime(int x, int y, int h, int m, int s, compositefontid_t font, int 
     if(h)
     {
         dd_snprintf(buf, 20, "%02d", h);
-        M_DrawShadowedChar3(':', x, y, font, DTF_ALIGN_TOPRIGHT, r, g, b, a);
+        M_DrawTextFragmentShadowed(":", x, y, font, DTF_ALIGN_TOPRIGHT, tracking, r, g, b, a);
         x -= GL_CharWidth(':', font) + tracking * 3;
         M_DrawTextFragmentShadowed(buf, x, y, font, DTF_ALIGN_TOPRIGHT, tracking, r, g, b, a);
     }
@@ -722,7 +722,7 @@ void IN_DrawSingleStats(void)
     dd_snprintf(buf, 20, "%i", players[CONSOLEPLAYER].killCount);
     M_DrawTextFragmentShadowed(buf, 236, 65, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    M_DrawShadowedChar3('/', 241, 65, GF_FONTB, DTF_ALIGN_TOPLEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawTextFragmentShadowed("/", 241, 65, GF_FONTB, DTF_ALIGN_TOPLEFT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     dd_snprintf(buf, 20, "%i", totalKills);
     M_DrawTextFragmentShadowed(buf, 284, 65, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
@@ -739,7 +739,7 @@ void IN_DrawSingleStats(void)
     dd_snprintf(buf, 20, "%i", players[CONSOLEPLAYER].itemCount);
     M_DrawTextFragmentShadowed(buf, 236, 90, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    M_DrawShadowedChar3('/', 241, 90, GF_FONTB, DTF_ALIGN_TOPLEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawTextFragmentShadowed("/", 241, 90, GF_FONTB, DTF_ALIGN_TOPLEFT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     dd_snprintf(buf, 20, "%i", totalItems);
     M_DrawTextFragmentShadowed(buf, 284, 90, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
@@ -756,7 +756,7 @@ void IN_DrawSingleStats(void)
     dd_snprintf(buf, 20, "%i", players[CONSOLEPLAYER].secretCount);
     M_DrawTextFragmentShadowed(buf, 236, 115, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    M_DrawShadowedChar3('/', 241, 115, GF_FONTB, DTF_ALIGN_TOPLEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+    M_DrawTextFragmentShadowed("/", 241, 115, GF_FONTB, DTF_ALIGN_TOPLEFT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
     dd_snprintf(buf, 20, "%i", totalSecret);
     M_DrawTextFragmentShadowed(buf, 284, 115, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
@@ -837,15 +837,15 @@ void IN_DrawCoopStats(void)
 
             dd_snprintf(buf, 20, "%i", killPercent[i]);
             M_DrawTextFragmentShadowed(buf, 121, ypos + 10, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            M_DrawShadowedChar3('%', 121, ypos + 10, GF_FONTB, DTF_ALIGN_TOPLEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+            M_DrawTextFragmentShadowed("%", 121, ypos + 10, GF_FONTB, DTF_ALIGN_TOPLEFT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
             dd_snprintf(buf, 20, "%i", bonusPercent[i]);
             M_DrawTextFragmentShadowed(buf, 196, ypos + 10, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            M_DrawShadowedChar3('%', 196, ypos + 10, GF_FONTB, DTF_ALIGN_TOPLEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+            M_DrawTextFragmentShadowed("%", 196, ypos + 10, GF_FONTB, DTF_ALIGN_TOPLEFT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
             dd_snprintf(buf, 20, "%i", secretPercent[i]);
             M_DrawTextFragmentShadowed(buf, 273, ypos + 10, GF_FONTB, DTF_ALIGN_TOPRIGHT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            M_DrawShadowedChar3('%', 273, ypos + 10, GF_FONTB, DTF_ALIGN_TOPLEFT, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+            M_DrawTextFragmentShadowed("%", 273, ypos + 10, GF_FONTB, DTF_ALIGN_TOPLEFT, TRACKING, defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
             ypos += 37;
 
