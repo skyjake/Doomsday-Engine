@@ -17,7 +17,6 @@ NAME            "DOOMSDAY"
 ; 98 formerly R_TextureNameForNum
 ; 99 formerly R_MaterialSetTranslation
 ; 100 formerly R_SetTextureTranslation
-; 131 formerly GL_DrawPSprite
 ; 144 formerly M_FRandom
 ; 238 formerly GL_Color2
 ; 255 formerly P_PointToBlock
@@ -398,10 +397,11 @@ EXPORTS
     GL_SetFilterColor           @441 NONAME
 
 ; Graphics: Text
-	R_NewCompositeFont          @106 NONAME
-	R_ResetTextTypeInTimer      @107 NONAME
+    R_NewCompositeFont          @106 NONAME
+    R_ResetTextTypeInTimer      @107 NONAME
+    R_CompositeFontNumForName   @131 NONAME
 
-	GL_DrawText                 @108 NONAME
+    GL_DrawText                 @108 NONAME
 
 	GL_TextDimensions           @112 NONAME
 	GL_TextWidth                @113 NONAME

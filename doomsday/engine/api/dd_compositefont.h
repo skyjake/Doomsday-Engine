@@ -38,7 +38,8 @@ typedef struct fontpatch_s {
     char        lumpName[9];
 } fontpatch_t;
 
-void            R_NewCompositeFont(compositefontid_t fontid, const char name[9], const fontpatch_t* patches, size_t num);
+void            R_NewCompositeFont(compositefontid_t fontid, const char* name, const fontpatch_t* patches, size_t num);
+compositefontid_t R_CompositeFontNumForName(const char* name);
 void            R_ResetTextTypeInTimer(void);
 
 /**

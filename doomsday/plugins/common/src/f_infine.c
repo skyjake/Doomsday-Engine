@@ -40,8 +40,6 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
 #include "hu_log.h"
@@ -116,13 +114,13 @@ typedef struct fitext_s {
     fiobj_t         object;
     struct fitextflags_s {
         char            centered:1;
-        char            font_b:1;
         char            all_visible:1;
     } flags;
     int             scrollWait, scrollTimer; // Automatic scrolling upwards.
     int             pos;
     int             wait, timer;
-    int             lineheight;
+    float           lineheight;
+    compositefontid_t font;
     char*           text;
 } fitext_t;
 
@@ -231,6 +229,7 @@ void    FIC_TextFromLump(void);
 void    FIC_SetText(void);
 void    FIC_SetTextDef(void);
 void    FIC_DeleteText(void);
+void    FIC_Font(void);
 void    FIC_FontA(void);
 void    FIC_FontB(void);
 void    FIC_TextColor(void);
@@ -353,6 +352,7 @@ static ficmd_t fiCommands[] = {
     {"scroll", 2, FIC_TextScroll},  // scroll (handle) (speed)
     {"pos", 2, FIC_TextPos},    // pos (handle) (pos)
     {"rate", 2, FIC_TextRate},  // rate (handle) (rate)
+    {"font", 2, FIC_Font}, // font (handle) (font)
     {"fonta", 1, FIC_FontA},    // fonta (handle)
     {"fontb", 1, FIC_FontB},    // fontb (handle)
     {"linehgt", 2, FIC_TextLineHeight}, // linehgt (hndl) (hgt)
@@ -1169,8 +1169,10 @@ fipic_t* FI_GetPic(const char* handle)
 
 fitext_t* FI_GetText(char* handle)
 {
-    int                 i;
-    fitext_t*           unused = NULL;
+#define LEADING             (1.5f)
+
+    fitext_t* unused = NULL;
+    int i;
 
     for(i = 0; i < MAX_TEXT; ++i)
     {
@@ -1199,20 +1201,18 @@ fitext_t* FI_GetText(char* handle)
     strncpy(unused->object.handle, handle, sizeof(unused->object.handle) - 1);
     unused->object.used = true;
     unused->wait = 3;
-#if __JDOOM__
-    unused->lineheight = 11;
-    FI_InitValue(&unused->object.color[0], 1); // Red text by default.
-#else
-    unused->lineheight = 9;
-    // White text.
+    unused->font = GF_FONTA;
+    unused->lineheight = LEADING;
+    // Red text by default.
     for(i = 0; i < 3; ++i)
-        FI_InitValue(&unused->object.color[i], 1);
-#endif
-    FI_InitValue(&unused->object.color[3], 1); // Opaque.
+        FI_InitValue(&unused->object.color[i], defFontRGB2[i]);
+    FI_InitValue(&unused->object.color[CA], 1); // Opaque.
     for(i = 0; i < 2; ++i)
         FI_InitValue(&unused->object.scale[i], 1);
 
     return unused;
+
+#undef LEADING
 }
 
 void FI_SetText(fitext_t* tex, char* str)
@@ -1485,14 +1485,13 @@ int FI_FilterChar(int ch)
     return ch;
 }
 
-int FI_CharWidth(int ch, boolean fontb)
+int FI_CharWidth(int ch, compositefontid_t font)
 {
     ch = FI_FilterChar(ch);
-
-    return GL_CharWidth(ch, fontb? GF_FONTB : GF_FONTA);
+    return GL_CharWidth(ch, font);
 }
 
-int FI_GetLineWidth(char* text, boolean fontb)
+int FI_GetLineWidth(char* text, compositefontid_t font)
 {
     int width = 0;
 
@@ -1509,19 +1508,17 @@ int FI_GetLineWidth(char* text, boolean fontb)
             if(*text == 'w' || *text == 'W' || *text == 'p' || *text == 'P')
                 continue;
         }
-        width += FI_CharWidth(*text, fontb);
+        width += FI_CharWidth(*text, font);
     }
 
     return width;
 }
 
-int FI_DrawChar(int x, int y, int ch, boolean fontb)
+int FI_DrawChar(int x, int y, int ch, compositefontid_t font)
 {
     ch = FI_FilterChar(ch);
-
-    GL_DrawChar2(ch, x, y, fontb? GF_FONTB : GF_FONTA);
-
-    return FI_CharWidth(ch, fontb);
+    GL_DrawChar2(ch, x, y, font);
+    return FI_CharWidth(ch, font);
 }
 
 void FI_UseColor(fivalue_t *color, int components)
@@ -1532,8 +1529,7 @@ void FI_UseColor(fivalue_t *color, int components)
     }
     else if(components == 4)
     {
-        DGL_Color4f(color[0].value, color[1].value, color[2].value,
-                   color[3].value);
+        DGL_Color4f(color[0].value, color[1].value, color[2].value, color[3].value);
     }
 }
 
@@ -1615,7 +1611,7 @@ void FI_DrawText(fitext_t *tex)
         ptr++)
     {
         if(linew < 0)
-            linew = FI_GetLineWidth(ptr, tex->flags.font_b);
+            linew = FI_GetLineWidth(ptr, tex->font);
 
         ch = *ptr;
         if(*ptr == '\\') // Escape?
@@ -1649,7 +1645,7 @@ void FI_DrawText(fitext_t *tex)
             if(*ptr == 'n' || *ptr == 'N') // Newline?
             {
                 x = 0;
-                y += tex->lineheight;
+                y += GL_CharHeight('A', tex->font) * tex->lineheight;
                 linew = -1;
                 cnt++; // Include newlines in the wait count.
                 continue;
@@ -1664,8 +1660,7 @@ void FI_DrawText(fitext_t *tex)
            -tex->object.scale[1].value * tex->lineheight &&
            tex->object.scale[1].value * y + tex->object.y.value < 200)
         {
-            x += FI_DrawChar(tex->flags.centered ? x - linew / 2 : x, y, ch,
-                             tex->flags.font_b);
+            x += FI_DrawChar(tex->flags.centered ? x - linew / 2 : x, y, ch, tex->font);
         }
 
         cnt++; // Actual character drawn.
@@ -2754,31 +2749,32 @@ void FIC_TextRate(void)
 void FIC_TextLineHeight(void)
 {
     fitext_t* tex = FI_GetText(FI_GetToken());
-    tex->lineheight = FI_GetInteger();
+    tex->lineheight = FI_GetFloat();
+}
+
+void FIC_Font(void)
+{
+    fitext_t* tex = FI_GetText(FI_GetToken());
+    const char* fontName = FI_GetToken();
+    compositefontid_t font;
+    if((font = R_CompositeFontNumForName(fontName)))
+    {
+        tex->font = font;
+        return;
+    }
+    Con_Message("FIC_Font: Warning, unknown font '%s'.\n", fontName);
 }
 
 void FIC_FontA(void)
 {
     fitext_t* tex = FI_GetText(FI_GetToken());
-    tex->flags.font_b = false;
-    // Set line height to font A.
-#if __JDOOM__
-    tex->lineheight = 11;
-#else
-    tex->lineheight = 9;
-#endif
+    tex->font = GF_FONTA;
 }
 
 void FIC_FontB(void)
 {
     fitext_t* tex = FI_GetText(FI_GetToken());
-
-    tex->flags.font_b = true;
-#if __JDOOM__
-    tex->lineheight = 15;
-#else
-    tex->lineheight = 20;
-#endif
+    tex->font = GF_FONTB;
 }
 
 void FIC_NoMusic(void)

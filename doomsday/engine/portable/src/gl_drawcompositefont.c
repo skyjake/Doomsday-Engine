@@ -414,7 +414,7 @@ void R_SetCompositeFontChar(compositefontid_t fontId, unsigned char ch, const ch
     Con_Message("R_SetCompositeFontChar: Warning, unknown font id %i.\n", (int) fontId);
 }
 
-void R_NewCompositeFont(compositefontid_t fontId, const char name[9], const fontpatch_t* patches, size_t num)
+void R_NewCompositeFont(compositefontid_t fontId, const char* name, const fontpatch_t* patches, size_t num)
 {
     compositefont_t* font;
     size_t i, len;
@@ -472,6 +472,14 @@ void R_NewCompositeFont(compositefontid_t fontId, const char name[9], const font
     }
 
     prepareCompositeFont(font);
+}
+
+compositefontid_t R_CompositeFontNumForName(const char* name)
+{
+    compositefont_t* font;
+    if((font = fontForName(name)))
+        return font->id;
+    return 0;
 }
 
 void R_InitCompositeFonts(void)
