@@ -62,7 +62,7 @@ void            R_ResetTextTypeInTimer(void);
 /**
  * Text strings: A block of possibly formatted and/or multi-line text.
  */
-void            GL_DrawText(const char* string, int x, int y, compositefontid_t font, short flags, int defTracking, float defRed, float defGreen, float defBlue, float defAlpha, float defGlitter, float defShadow, boolean defCase);
+void            GL_DrawText(const char* string, int x, int y, compositefontid_t font, short flags, float defLeading, int defTracking, float defRed, float defGreen, float defBlue, float defAlpha, float defGlitter, float defShadow, boolean defCase);
 
 // Utility routines:
 void            GL_TextDimensions(int* width, int* height, const char* string, compositefontid_t font);

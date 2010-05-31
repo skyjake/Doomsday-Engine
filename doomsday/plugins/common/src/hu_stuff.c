@@ -1200,7 +1200,7 @@ void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
         R_GetPatchInfo(patch, &info);
         if(!info.isCustom)
         {
-            GL_DrawText(altstring, x, y, font, translatePatchToTextDrawFlags(flags), 0, r, g, b, a, menu_glitter, menu_shadow, false);
+            GL_DrawText(altstring, x, y, font, translatePatchToTextDrawFlags(flags), .5f, 0, r, g, b, a, menu_glitter, menu_shadow, false);
             return;
         }
     }
@@ -1230,14 +1230,14 @@ void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
             // A user replacement?
             if(patchString)
             {
-                GL_DrawText(string, x, y, font, textFlags, 0, r, g, b, a, menu_glitter, menu_shadow, false);
+                GL_DrawText(string, x, y, font, textFlags, .5f, 0, r, g, b, a, menu_glitter, menu_shadow, false);
                 return;
             }
 
             // A built-in replacement?
             if(cfg.usePatchReplacement == 2 && altstring && altstring[0])
             {
-                GL_DrawText(altstring, x, y, font, textFlags, 0, r, g, b, a, menu_glitter, menu_shadow, false);
+                GL_DrawText(altstring, x, y, font, textFlags, .5f, 0, r, g, b, a, menu_glitter, menu_shadow, false);
                 return;
             }
         }

@@ -1169,7 +1169,7 @@ fipic_t* FI_GetPic(const char* handle)
 
 fitext_t* FI_GetText(char* handle)
 {
-#define LEADING             (1.5f)
+#define LEADING             (11.f/7-1)
 
     fitext_t* unused = NULL;
     int i;
@@ -1203,7 +1203,6 @@ fitext_t* FI_GetText(char* handle)
     unused->wait = 3;
     unused->font = GF_FONTA;
     unused->lineheight = LEADING;
-    // Red text by default.
     for(i = 0; i < 3; ++i)
         FI_InitValue(&unused->object.color[i], defFontRGB2[i]);
     FI_InitValue(&unused->object.color[CA], 1); // Opaque.
@@ -1472,22 +1471,8 @@ int FI_Responder(event_t* ev)
     return FI_SkipRequest();
 }
 
-int FI_FilterChar(int ch)
-{
-    // Filter it.
-    if(ch == '_')
-        ch = '[';
-    else if(ch == '\\')
-        ch = '/';
-    else if(ch < ' ' || ch > 'z')
-        ch = ' '; // We don't have this char.
-
-    return ch;
-}
-
 int FI_CharWidth(int ch, compositefontid_t font)
 {
-    ch = FI_FilterChar(ch);
     return GL_CharWidth(ch, font);
 }
 
@@ -1512,13 +1497,6 @@ int FI_GetLineWidth(char* text, compositefontid_t font)
     }
 
     return width;
-}
-
-int FI_DrawChar(int x, int y, int ch, compositefontid_t font)
-{
-    ch = FI_FilterChar(ch);
-    GL_DrawChar2(ch, x, y, font);
-    return FI_CharWidth(ch, font);
 }
 
 void FI_UseColor(fivalue_t *color, int components)
@@ -1590,25 +1568,23 @@ void FI_Rotate(float angle)
     DGL_Scalef(1, 240.0f / 200.0f, 1);
 }
 
-void FI_DrawText(fitext_t *tex)
+void FI_DrawText(fitext_t* tex)
 {
-    int                 cnt, x = 0, y = 0;
-    char               *ptr;
-    int                 linew = -1;
-    int                 ch;
+    int cnt, x = 0, y = 0;
+    int ch, linew = -1;
+    char* ptr;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
     DGL_Translatef(tex->object.x.value, tex->object.y.value, 0);
+
     FI_Rotate(tex->object.angle.value);
     DGL_Scalef(tex->object.scale[0].value, tex->object.scale[1].value, 1);
 
+    // Draw it.
     // Set color zero (the normal color).
     FI_UseTextColor(tex, 0);
-
-    // Draw it.
-    for(cnt = 0, ptr = tex->text; *ptr && (!tex->wait || cnt < tex->pos);
-        ptr++)
+    for(cnt = 0, ptr = tex->text; *ptr && (!tex->wait || cnt < tex->pos); ptr++)
     {
         if(linew < 0)
             linew = FI_GetLineWidth(ptr, tex->font);
@@ -1630,7 +1606,7 @@ void FI_DrawText(fitext_t *tex)
             if(*ptr == 'w' || *ptr == 'W') // Wait?
             {
                 if(tex->wait)
-                    cnt += (int) (35.0 / tex->wait / (*ptr == 'w' ? 2 : 1));
+                    cnt += (int) ((float)TICRATE / tex->wait / (*ptr == 'w' ? 2 : 1));
                 continue;
             }
 
@@ -1638,7 +1614,7 @@ void FI_DrawText(fitext_t *tex)
             if(*ptr == 'p' || *ptr == 'P') // Longer pause?
             {
                 if(tex->wait)
-                    cnt += (int) (35.0 / tex->wait * (*ptr == 'p' ? 5 : 10));
+                    cnt += (int) ((float)TICRATE / tex->wait * (*ptr == 'p' ? 5 : 10));
                 continue;
             }
 
@@ -1656,11 +1632,11 @@ void FI_DrawText(fitext_t *tex)
         }
 
         // Let's do Y-clipping (in case of tall text blocks).
-        if(tex->object.scale[1].value * y + tex->object.y.value >=
-           -tex->object.scale[1].value * tex->lineheight &&
-           tex->object.scale[1].value * y + tex->object.y.value < 200)
+        if(tex->object.scale[1].value * y + tex->object.y.value >= -tex->object.scale[1].value * tex->lineheight &&
+           tex->object.scale[1].value * y + tex->object.y.value < SCREENHEIGHT)
         {
-            x += FI_DrawChar(tex->flags.centered ? x - linew / 2 : x, y, ch, tex->font);
+            GL_DrawChar2(ch, tex->flags.centered ? x - linew / 2 : x, y, tex->font);
+            x += FI_CharWidth(ch, tex->font);
         }
 
         cnt++; // Actual character drawn.

@@ -38,7 +38,7 @@
 #define DEFAULT_FONTID              (0)
 #define DEFAULT_GLITTER             (0)
 #define DEFAULT_SHADOW              (0)
-#define DEFAULT_LEADING             (.25)
+#define DEFAULT_LEADING             (.5)
 #define DEFAULT_TRACKING            (0)
 #define DEFAULT_DRAWFLAGS           (DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS)
 #define DEFAULT_INITIALCOUNT        (0)
@@ -567,17 +567,18 @@ static void initDrawTextState(drawtextstate_t* state)
  * Draw a string of text controlled by parameter blocks.
  */
 void GL_DrawText(const char* inString, int x, int y, compositefontid_t defFont,
-    short flags, int defTracking, float defRed, float defGreen, float defBlue, float defAlpha,
+    short flags, float defLeading, int defTracking, float defRed, float defGreen, float defBlue, float defAlpha,
     float defGlitter, float defShadow, boolean defCase)
 {
-#define SMALLBUFF_SIZE  80
+#define SMALLBUFF_SIZE          (80)
+#define MAX_FRAGMENTLENGTH      (256)
 
     float cx = (float) x, cy = (float) y, width = 0, extraScale;
     char smallBuff[SMALLBUFF_SIZE+1], *bigBuff = NULL;
-    char temp[256], *str, *string, *end;
+    char temp[MAX_FRAGMENTLENGTH+1], *str, *string, *end;
     drawtextstate_t state;
     size_t charCount = 0;
-    int curCase = -1;
+    int curCase = -1, lastLineHeight;
     size_t len;
 
     if(!inited)
@@ -614,7 +615,10 @@ void GL_DrawText(const char* inString, int x, int y, compositefontid_t defFont,
     state.glitter = defGlitter;
     state.shadow = defShadow;
     state.tracking = defTracking;
+    state.leading = defLeading;
     state.caseScale = defCase;
+
+    lastLineHeight = GL_CharHeight('A', state.font) * state.scaleY;
 
     string = str;
     while(*string)
@@ -633,7 +637,7 @@ void GL_DrawText(const char* inString, int x, int y, compositefontid_t defFont,
                 do
                 {
                     cx = (float) x;
-                    cy += GL_CharHeight(0, oldFont) * (1+oldLeading) * oldScaleY;
+                    cy += lastLineHeight * (1+oldLeading);
                 } while(--state.numBreaks > 0);
             }
         }
@@ -667,8 +671,8 @@ void GL_DrawText(const char* inString, int x, int y, compositefontid_t defFont,
                 for(; *end && *end != '{' && *end != '\n'; end++);
             }
 
-            strncpy(temp, string, end - string);
-            temp[end - string] = 0;
+            strncpy(temp, string, MIN_OF(MAX_FRAGMENTLENGTH, end - string));
+            temp[MIN_OF(MAX_FRAGMENTLENGTH, end - string)] = '\0';
 
             if(end && *end == '\n')
             {
@@ -724,8 +728,11 @@ void GL_DrawText(const char* inString, int x, int y, compositefontid_t defFont,
             }
             else
             {
+                if(strlen(temp) > 0)
+                    lastLineHeight = GL_TextFragmentHeight(temp, state.font);
+
                 cx = (float) x;
-                cy += (float) GL_TextFragmentHeight(temp, state.font) * (1+state.leading) * state.scaleY;
+                cy += (float) lastLineHeight * (1+state.leading);
             }
 
             glMatrixMode(GL_MODELVIEW);
@@ -737,6 +744,7 @@ void GL_DrawText(const char* inString, int x, int y, compositefontid_t defFont,
     if(bigBuff)
         free(bigBuff);
 
+#undef MAX_FRAGMENTLENGTH
 #undef SMALLBUFF_SIZE
 }
 
