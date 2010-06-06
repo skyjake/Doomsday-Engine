@@ -73,6 +73,8 @@ void S_MapMusic(uint episode, uint map)
 
     // Update the 'currentmap' music definition.
     Def_Set(DD_DEF_MUSIC, idx, DD_LUMP, P_GetMapSongLump(map));
+    // @fixme  Convert @a map to the "logical" map number. -s
+    Con_Message("S_MapMusic: Map %i, lump %s\n", map, P_GetMapSongLump(map));
     cdTrack = P_GetMapCDTrack(map);
     Def_Set(DD_DEF_MUSIC, idx, DD_CD_TRACK, &cdTrack);
     if(S_StartMusic("currentmap", true))
