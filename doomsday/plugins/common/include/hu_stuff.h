@@ -38,7 +38,7 @@
 #endif
 
 // The fonts.
-typedef enum {
+enum {
     GF_FIRST = 1,
     GF_FONTA = GF_FIRST,
     GF_FONTB,
@@ -53,10 +53,10 @@ typedef enum {
     GF_SMALLIN,
 #endif
     NUM_GAME_FONTS
-} compositefontid_t;
+}; /* compositefontid_t*/
 
 // Vector graphics.
-typedef enum {
+enum {
     VG_FIRST = 1,
     VG_KEYSQUARE = VG_FIRST,
     VG_TRIANGLE,
@@ -71,7 +71,7 @@ typedef enum {
     VG_XHAIR5,
     VG_XHAIR6,
     NUM_VECTOR_GRAPHICS
-} vectorgraphicid_t;
+}; /* vectorgraphicid_t*/
 
 extern patchid_t* mapNamePatches; // Name graphics of each map.
 #if __JDOOM__ || __JDOOM64__
