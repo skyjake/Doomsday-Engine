@@ -305,7 +305,7 @@ void G_PreInit(void)
     cfg.airborneMovement = 1;
     cfg.weaponAutoSwitch = 1; // IF BETTER
     cfg.noWeaponAutoSwitchIfFiring = false;
-    cfg.ammoAutoSwitch = 0; // never
+    cfg.ammoAutoSwitch = 0; // Never.
     cfg.slidingCorpses = false;
     cfg.fastMonsters = false;
     cfg.secretMsg = true;
@@ -313,19 +313,19 @@ void G_PreInit(void)
     cfg.netEpisode = 0;
     cfg.netMap = 1;
     cfg.netSkill = SM_MEDIUM;
-    cfg.netColor = 4;           // Use the default color by default.
+    cfg.netColor = 4; // Use the default color by default.
     cfg.netMobDamageModifier = 1;
     cfg.netMobHealthModifier = 1;
-    cfg.netGravity = -1;        // use map default
+    cfg.netGravity = -1; // Use map default.
     cfg.plrViewHeight = DEFAULT_PLAYER_VIEWHEIGHT;
     cfg.mapTitle = true;
     cfg.hideIWADAuthor = true;
-    cfg.menuColor[0] = defFontRGB[0]; // use the default colour by default.
-    cfg.menuColor[1] = defFontRGB[1];
-    cfg.menuColor[2] = defFontRGB[2];
-    cfg.menuColor2[0] = defFontRGB2[0]; // use the default colour by default.
-    cfg.menuColor2[1] = defFontRGB2[1];
-    cfg.menuColor2[2] = defFontRGB2[2];
+    cfg.menuColors[0][0] = defFontRGB[0];
+    cfg.menuColors[0][1] = defFontRGB[1];
+    cfg.menuColors[0][2] = defFontRGB[2];
+    cfg.menuColors[1][0] = defFontRGB2[0];
+    cfg.menuColors[1][1] = defFontRGB2[1];
+    cfg.menuColors[1][2] = defFontRGB2[2];
     cfg.menuSlam = true;
     cfg.menuHotkeys = true;
     cfg.askQuickSaveLoad = true;
@@ -341,7 +341,7 @@ void G_PreInit(void)
     cfg.statusbarCounterAlpha = 1;
 
     cfg.automapCustomColors = 0; // Never.
-    cfg.automapL0[0] = .455f; // Unseen areas
+    cfg.automapL0[0] = .455f; // Unseen areas.
     cfg.automapL0[1] = .482f;
     cfg.automapL0[2] = .439f;
 

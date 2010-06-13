@@ -118,8 +118,7 @@ typedef struct jdoom_config_s {
     float           filterStrength;
     int             plrViewHeight;
     byte            mapTitle, hideIWADAuthor;
-    float           menuColor[3];
-    float           menuColor2[3];
+    float           menuColors[NUM_MENU_COLORS][3];
     byte            noCoopDamage;
     byte            noTeamDamage;
     byte            noCoopWeapons;

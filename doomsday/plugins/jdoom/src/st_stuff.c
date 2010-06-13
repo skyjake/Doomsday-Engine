@@ -47,6 +47,7 @@
 #include "am_map.h"
 #include "p_user.h"
 #include "hu_log.h"
+#include "r_common.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -208,6 +209,7 @@ typedef struct {
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void updateViewWindow(cvar_t* cvar);
+static void unhideHUD(cvar_t* cvar);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -239,34 +241,34 @@ static patchinfo_t arms[6][2];
 cvar_t sthudCVars[] =
 {
     // HUD scale
-    {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 1},
-    {"hud-wideoffset", 0, CVT_FLOAT, &cfg.hudWideOffset, 0, 1},
+    {"hud-scale", 0, CVT_FLOAT, &cfg.hudScale, 0.1f, 1, unhideHUD},
+    {"hud-wideoffset", 0, CVT_FLOAT, &cfg.hudWideOffset, 0, 1, unhideHUD},
 
     {"hud-status-size", 0, CVT_FLOAT, &cfg.statusbarScale, 0.1f, 1, updateViewWindow},
 
     // HUD colour + alpha
-    {"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1},
-    {"hud-color-g", 0, CVT_FLOAT, &cfg.hudColor[1], 0, 1},
-    {"hud-color-b", 0, CVT_FLOAT, &cfg.hudColor[2], 0, 1},
-    {"hud-color-a", 0, CVT_FLOAT, &cfg.hudColor[3], 0, 1},
-    {"hud-icon-alpha", 0, CVT_FLOAT, &cfg.hudIconAlpha, 0, 1},
+    {"hud-color-r", 0, CVT_FLOAT, &cfg.hudColor[0], 0, 1, unhideHUD},
+    {"hud-color-g", 0, CVT_FLOAT, &cfg.hudColor[1], 0, 1, unhideHUD},
+    {"hud-color-b", 0, CVT_FLOAT, &cfg.hudColor[2], 0, 1, unhideHUD},
+    {"hud-color-a", 0, CVT_FLOAT, &cfg.hudColor[3], 0, 1, unhideHUD},
+    {"hud-icon-alpha", 0, CVT_FLOAT, &cfg.hudIconAlpha, 0, 1, unhideHUD},
 
     {"hud-face-ouchfix", 0, CVT_BYTE, &cfg.fixOuchFace, 0, 1},
 
-    {"hud-status-alpha", 0, CVT_FLOAT, &cfg.statusbarOpacity, 0, 1},
-    {"hud-status-icon-a", 0, CVT_FLOAT, &cfg.statusbarCounterAlpha, 0, 1},
-    {"hud-status-weaponslots-ownedfix", 0, CVT_BYTE, &cfg.fixStatusbarOwnedWeapons, 0, 1},
+    {"hud-status-alpha", 0, CVT_FLOAT, &cfg.statusbarOpacity, 0, 1, unhideHUD},
+    {"hud-status-icon-a", 0, CVT_FLOAT, &cfg.statusbarCounterAlpha, 0, 1, unhideHUD},
+    {"hud-status-weaponslots-ownedfix", 0, CVT_BYTE, &cfg.fixStatusbarOwnedWeapons, 0, 1, unhideHUD},
 
     // HUD icons
-    {"hud-face", 0, CVT_BYTE, &cfg.hudShown[HUD_FACE], 0, 1},
-    {"hud-health", 0, CVT_BYTE, &cfg.hudShown[HUD_HEALTH], 0, 1},
-    {"hud-armor", 0, CVT_BYTE, &cfg.hudShown[HUD_ARMOR], 0, 1},
-    {"hud-ammo", 0, CVT_BYTE, &cfg.hudShown[HUD_AMMO], 0, 1},
-    {"hud-keys", 0, CVT_BYTE, &cfg.hudShown[HUD_KEYS], 0, 1},
-    {"hud-keys-combine", 0, CVT_BYTE, &cfg.hudKeysCombine, 0, 1},
+    {"hud-face", 0, CVT_BYTE, &cfg.hudShown[HUD_FACE], 0, 1, unhideHUD},
+    {"hud-health", 0, CVT_BYTE, &cfg.hudShown[HUD_HEALTH], 0, 1, unhideHUD},
+    {"hud-armor", 0, CVT_BYTE, &cfg.hudShown[HUD_ARMOR], 0, 1, unhideHUD},
+    {"hud-ammo", 0, CVT_BYTE, &cfg.hudShown[HUD_AMMO], 0, 1, unhideHUD},
+    {"hud-keys", 0, CVT_BYTE, &cfg.hudShown[HUD_KEYS], 0, 1, unhideHUD},
+    {"hud-keys-combine", 0, CVT_BYTE, &cfg.hudKeysCombine, 0, 1, unhideHUD},
 
     // HUD displays
-    {"hud-frags", 0, CVT_BYTE, &cfg.hudShown[HUD_FRAGS], 0, 1},
+    {"hud-frags", 0, CVT_BYTE, &cfg.hudShown[HUD_FRAGS], 0, 1, unhideHUD},
 
     {"hud-timer", 0, CVT_FLOAT, &cfg.hudTimer, 0, 60},
 
@@ -278,8 +280,8 @@ cvar_t sthudCVars[] =
     {"hud-unhide-pickup-ammo", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_AMMO], 0, 1},
     {"hud-unhide-pickup-key", 0, CVT_BYTE, &cfg.hudUnHide[HUE_ON_PICKUP_KEY], 0, 1},
 
-    {"hud-cheat-counter", 0, CVT_BYTE, &cfg.counterCheat, 0, 63},
-    {"hud-cheat-counter-scale", 0, CVT_FLOAT, &cfg.counterCheatScale, .1f, 1},
+    {"hud-cheat-counter", 0, CVT_BYTE, &cfg.counterCheat, 0, 63, unhideHUD},
+    {"hud-cheat-counter-scale", 0, CVT_FLOAT, &cfg.counterCheatScale, .1f, 1, unhideHUD},
     {NULL}
 };
 
@@ -2063,6 +2065,18 @@ void ST_Init(void)
  */
 static void updateViewWindow(cvar_t* cvar)
 {
+    int i;
     R_UpdateViewWindow(true);
-    ST_HUDUnHide(CONSOLEPLAYER, HUE_FORCE); // So the user can see the change.
+    for(i = 0; i < MAXPLAYERS; ++i)
+        ST_HUDUnHide(i, HUE_FORCE); // So the user can see the change.
+}
+
+/**
+ * Called when a cvar changes that affects the look/behavior of the HUD in order to unhide it.
+ */
+static void unhideHUD(cvar_t* unused)
+{
+    int i;
+    for(i = 0; i < MAXPLAYERS; ++i)
+        ST_HUDUnHide(i, HUE_FORCE);
 }

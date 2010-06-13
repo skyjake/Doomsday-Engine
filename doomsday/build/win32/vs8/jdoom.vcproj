@@ -1277,10 +1277,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jdoom\include\mn_def.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jdoom\include\oldinfo.h"
 				>
 			</File>

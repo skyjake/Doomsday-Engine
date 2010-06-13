@@ -356,4 +356,11 @@ void            MN_DrTextA_CS(char *text, int x, int y);
 void            MN_DrTextAGreen_CS(char *text, int x, int y);
 void            MN_DrTextB_CS(char *text, int x, int y);
 
+enum {
+    MENU_COLOR,
+    MENU_COLOR2,
+    MENU_COLOR3,
+    NUM_MENU_COLORS
+};
+
 #endif

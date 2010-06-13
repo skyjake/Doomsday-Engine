@@ -66,30 +66,14 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-// Menu routines.
-void            M_DrawMapMenu(void);
-void            M_MapPosition(int option, void* data);
-void            M_MapWidth(int option, void* data);
-void            M_MapHeight(int option, void* data);
-void            M_MapOpacity(int option, void* data);
-void            M_MapLineAlpha(int option, void* data);
-void            M_MapDoorColors(int option, void* data);
-void            M_MapDoorGlow(int option, void* data);
-void            M_MapRotate(int option, void* data);
-void            M_MapStatusbar(int option, void* data);
-void            M_MapCustomColors(int option, void* data);
+void M_DrawMapMenu(const mn_page_t* page, int x, int y);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void registerSpecialLine(automapcfg_t* cfg, int cheatLevel, int lineSpecial,
-                            int sided, float r, float g, float b, float a,
-                            blendmode_t blendmode,
-                            glowtype_t glowType, float glowAlpha,
-                            float glowWidth, boolean scaleGlowWithView);
-static void setColorAndAlpha(automapcfg_t* cfg, int objectname, float r,
-                             float g, float b, float a);
+static void registerSpecialLine(automapcfg_t* cfg, int cheatLevel, int lineSpecial, int sided, float r, float g, float b, float a, blendmode_t blendmode, glowtype_t glowType, float glowAlpha, float glowWidth, boolean scaleGlowWithView);
+static void setColorAndAlpha(automapcfg_t* cfg, int objectname, float r, float g, float b, float a);
 
-static void     findMinMaxBoundaries(void);
+static void findMinMaxBoundaries(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -1682,188 +1666,86 @@ void AM_Drawer(int player)
 // Automap Menu
 //-------------------------------------------------------------------------------
 
-menuitem_t MAPItems[] = {
-    {ITT_LRFUNC, 0, "opacity :", M_MapOpacity, 0},
-#if __JHERETIC__ || __JHEXEN__
-    {ITT_EMPTY, 0, NULL, NULL, 0 },
-    {ITT_EMPTY, 0, NULL, NULL, 0 },
-#endif
-    {ITT_LRFUNC, 0, "line opacity :", M_MapLineAlpha, 0 },
-#if __JHERETIC__ || __JHEXEN__
-    {ITT_EMPTY, 0, NULL, NULL, 0 },
-    {ITT_EMPTY, 0, NULL, NULL, 0 },
-#endif
-    {ITT_LRFUNC, 0, "hud display :", M_MapStatusbar, 0 },
-    {ITT_EFUNC, 0, "door colors :", M_MapDoorColors, 0 },
-    {ITT_LRFUNC, 0, "door glow : ", M_MapDoorGlow, 0 },
-#if __JHERETIC__ || __JHEXEN__
-    {ITT_EMPTY, 0, NULL, NULL, 0 },
-    {ITT_EMPTY, 0, NULL, NULL, 0 },
-#endif
-#if __JDOOM__ || __JDOOM64__
-    {ITT_EMPTY, 0, NULL, NULL, 0 },
-#endif
-    {ITT_LRFUNC, 0, "use custom colors :", M_MapCustomColors, 0 },
-    {ITT_EFUNC, 0, "   wall", SCColorWidget, 1 },
-    {ITT_EFUNC, 0, "   floor height change", SCColorWidget, 2 },
-    {ITT_EFUNC, 0, "   ceiling height change", SCColorWidget, 3 },
-    {ITT_EFUNC, 0, "   unseen", SCColorWidget, 0 },
-    {ITT_EFUNC, 0, "   thing", SCColorWidget, 6 },
-    {ITT_EFUNC, 0, "   background", SCColorWidget, 4 },
+mndata_slider_t sld_map_opacity = { 0, 1, 0, 0.1f, true, "map-opacity" };
+mndata_slider_t sld_map_lineopacity = { 0, 1, 0, 0.1f, true, "map-alpha-lines" };
+mndata_slider_t sld_map_doorglow = { 0, 200, 0, 10, true, "map-door-glow" };
+
+mndata_listitem_t lstit_map_statusbar[] = {
+    { "NONE", 0 },
+    { "CURRENT", 1 },
+    { "STATUSBAR", 2 }
+};
+mndata_list_t lst_map_statusbar = {
+    lstit_map_statusbar, NUMLISTITEMS(lstit_map_statusbar), "map-huddisplay"
 };
 
-menu_t MapDef = {
+mndata_listitem_t lstit_map_customcolors[] = {
+    { "NEVER", 0 },
+    { "AUTO", 1 },
+    { "ALWAYS", 2 }
+};
+mndata_list_t lst_map_customcolors = {
+    lstit_map_customcolors, NUMLISTITEMS(lstit_map_customcolors), "map-customcolors"
+};
+
+mn_object_t MAPItems[] = {
+    { MN_TEXT,      0,  0,              "Opacity",  GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_SLIDER,    0,  0,              "",         GF_FONTA, 0, MNSlider_Drawer, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_map_opacity },
+    { MN_TEXT,      0,  0,              "Line Opacity", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_SLIDER,    0,  0,              "",         GF_FONTA, 0, MNSlider_Drawer, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_map_lineopacity },
+    { MN_TEXT,      0,  0,              "HUD Display", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LIST,      0,  0,              "",         GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, Hu_MenuCvarList, &lst_map_statusbar },
+    { MN_TEXT,      0,  0,              "Door Colors", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,              "map-door-colors", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,              "Door Glow", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_SLIDER,    0,  0,              "",         GF_FONTA, 0, MNSlider_Drawer, MNSlider_Dimensions, Hu_MenuCvarSlider, &sld_map_doorglow },
+    { MN_TEXT,      0,  0,              "Use Custom Colors", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LIST,      0,  0,              "",         GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, Hu_MenuCvarList, &lst_map_customcolors },
+    { MN_TEXT,      0,  0,              "Wall",     GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNColorBox_Drawer, MNColorBox_Dimensions, MN_ActivateColorBox, 0, 1 },
+    { MN_TEXT,      0,  0,              "Floor Height Change", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNColorBox_Drawer, MNColorBox_Dimensions, MN_ActivateColorBox, 0, 2 },
+    { MN_TEXT,      0,  0,              "Ceiling Height Change", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNColorBox_Drawer, MNColorBox_Dimensions, MN_ActivateColorBox, 0, 3 },
+    { MN_TEXT,      0,  0,              "Unseen",   GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNColorBox_Drawer, MNColorBox_Dimensions, MN_ActivateColorBox, 0, 0 },
+    { MN_TEXT,      0,  0,              "Thing",    GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNColorBox_Drawer, MNColorBox_Dimensions, MN_ActivateColorBox, 0, 6 },
+    { MN_TEXT,      0,  0,              "Background", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_COLORBOX,  0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNColorBox_Drawer, MNColorBox_Dimensions, MN_ActivateColorBox, 0, 4 },
+    { MN_NONE }
+};
+
+mn_page_t AutomapMenu = {
+    MAPItems, 24,
     0,
-#if __JDOOM__ || __JDOOM64__
-    70, 40,
-#else
+#if __JHERETIC__ || __JHEXEN__
     64, 28,
+#else
+    70, 40,
 #endif
     M_DrawMapMenu,
+    0, &OptionsMenu,
+    .2f,
 #if __JHERETIC__ || __JHEXEN__
-    18, MAPItems,
+    0, 11, { 11, 28 }
 #else
-    13, MAPItems,
-#endif
-    0, MENU_OPTIONS,
-    GF_FONTA,
-    cfg.menuColor2,
-    LINEHEIGHT_A,
-#if __JHERETIC__ || __JHEXEN__
-    0, 11
-#else
-    0, 13
+    0, 13, { 13, 40 }
 #endif
 };
 
 /**
  * Draws the automap options menu
  */
-void M_DrawMapMenu(void)
+void M_DrawMapMenu(const mn_page_t* page, int x, int y)
 {
-    static const char* hudviewnames[3] = { "NONE", "CURRENT", "STATUSBAR" };
-    static const char* yesno[2] = { "NO", "YES" };
-    static const char* customColors[3] = { "NEVER", "AUTO", "ALWAYS" };
-    float menuAlpha;
-    uint idx;
-#if __JHERETIC__ || __JHEXEN__
-    patchid_t token;
-#endif
-    const menu_t* menu = &MapDef;
-
-    menuAlpha = Hu_MenuAlpha();
-
-    MN_DrawTitle("Automap OPTIONS", menu->y - 26);
+    DGL_Color4f(cfg.menuColors[0][0], cfg.menuColors[0][1], cfg.menuColors[0][2], Hu_MenuAlpha());
+    M_DrawMenuText3("Automap OPTIONS", SCREENWIDTH/2, y-26, GF_FONTB, DTF_ALIGN_TOP);
 
 #if __JHERETIC__ || __JHEXEN__
-    DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
-
     // Draw the page arrows.
-    token = dpInvPageLeft[!menu->firstItem || (menuTime & 8)];
-    GL_DrawPatch(token, menu->x, menu->y - 22);
-    token = dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)];
-    GL_DrawPatch(token, 312 - menu->x, menu->y - 22);
+    DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
+    GL_DrawPatch(dpInvPageLeft[!page->firstObject || (mnTime & 8)], x, y - 22);
+    GL_DrawPatch(dpInvPageRight[page->firstObject + page->numVisObjects >= page->count || (mnTime & 8)], 312 - x, y - 22);
 #endif
-
-    idx = 0;
-#if __JHERETIC__ || __JHEXEN__
-    idx++;
-#endif
-    MN_DrawSlider(menu, idx++, 11, cfg.automapOpacity * 10 + .5f);
-#if __JHERETIC__ || __JHEXEN__
-    idx+= 2;
-#endif
-    MN_DrawSlider(menu, idx++, 11, cfg.automapLineAlpha * 10 + .5f);
-#if __JHERETIC__ || __JHEXEN__
-    idx++;
-#endif
-    M_WriteMenuText(menu, idx++, hudviewnames[cfg.automapHudDisplay % 3]);
-    M_WriteMenuText(menu, idx++, yesno[cfg.automapShowDoors]);
-#if __JHERETIC__ || __JHEXEN__
-    idx++;
-#endif
-    MN_DrawSlider(menu, idx++, 21, (cfg.automapDoorGlow - 1) / 10 + .5f );
-    idx++;
-
-    M_WriteMenuText(menu, idx++, customColors[cfg.automapCustomColors % 3]);
-    MN_DrawColorBox(menu, idx++, cfg.automapL1[0], cfg.automapL1[1], cfg.automapL1[2], 1);
-    MN_DrawColorBox(menu, idx++, cfg.automapL2[0], cfg.automapL2[1], cfg.automapL2[2], 1);
-    MN_DrawColorBox(menu, idx++, cfg.automapL3[0], cfg.automapL3[1], cfg.automapL3[2], 1);
-    MN_DrawColorBox(menu, idx++, cfg.automapL0[0], cfg.automapL0[1], cfg.automapL0[2], 1);
-    MN_DrawColorBox(menu, idx++, cfg.automapMobj[0], cfg.automapMobj[1], cfg.automapMobj[2], 1);
-    MN_DrawColorBox(menu, idx, cfg.automapBack[0], cfg.automapBack[1], cfg.automapBack[2], 1);
-}
-
-/**
- * Set automap line alpha
- */
-void M_MapOpacity(int option, void* data)
-{
-    M_FloatMod10(&cfg.automapOpacity, option);
-}
-
-/**
- * Set automap line alpha
- */
-void M_MapLineAlpha(int option, void* data)
-{
-    M_FloatMod10(&cfg.automapLineAlpha, option);
-}
-
-/**
- * Set show line/teleport lines in different color
- */
-void M_MapDoorColors(int option, void *data)
-{
-    cfg.automapShowDoors = !cfg.automapShowDoors;
-}
-
-/**
- * Set glow line amount
- */
-void M_MapDoorGlow(int option, void *data)
-{
-    if(option == RIGHT_DIR)
-    {
-        if(cfg.automapDoorGlow < 200)
-            cfg.automapDoorGlow++;
-    }
-    else if(cfg.automapDoorGlow > 0)
-        cfg.automapDoorGlow--;
-}
-
-/**
- * Set rotate mode
- */
-void M_MapRotate(int option, void *data)
-{
-    cfg.automapRotate = !cfg.automapRotate;
-
-    Automap_SetViewRotate(getAutomap(AM_MapForPlayer(CONSOLEPLAYER)),
-                          cfg.automapRotate);
-}
-
-/**
- * Set which HUD to draw when in automap
- */
-void M_MapStatusbar(int option, void *data)
-{
-    if(option == RIGHT_DIR)
-    {
-        if(cfg.automapHudDisplay < 2)
-            cfg.automapHudDisplay++;
-    }
-    else if(cfg.automapHudDisplay > 0)
-        cfg.automapHudDisplay--;
-}
-
-void M_MapCustomColors(int option, void* data)
-{
-    if(option == RIGHT_DIR)
-    {
-        if(cfg.automapCustomColors < 2)
-            cfg.automapCustomColors++;
-    }
-    else if(cfg.automapCustomColors > 0)
-        cfg.automapCustomColors--;
 }

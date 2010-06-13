@@ -422,7 +422,9 @@ DEFCC( CCmdDefaultGameBinds )
 
         // Menu events:
         "bindevent menu:key-backspace menuback",
-        "bindevent menu:mouse-right-down menuback",
+        "bindevent menu:key-backspace-repeat menuback",
+        "bindevent menu:mouse-right menuback",
+        "bindevent menu:mouse-right-repeat menuback",
         "bindevent menu:key-up menuup",
         "bindevent menu:key-up-repeat menuup",
         "bindevent menu:key-w menuup",

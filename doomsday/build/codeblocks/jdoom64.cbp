@@ -285,7 +285,6 @@
 		<Unit filename="..\..\plugins\jdoom64\include\m_cheat.h" />
 		<Unit filename="..\..\plugins\jdoom64\include\m_menu.h" />
 		<Unit filename="..\..\plugins\jdoom64\include\m_random.h" />
-		<Unit filename="..\..\plugins\jdoom64\include\mn_def.h" />
 		<Unit filename="..\..\plugins\jdoom64\include\p_enemy.h" />
 		<Unit filename="..\..\plugins\jdoom64\include\p_inter.h" />
 		<Unit filename="..\..\plugins\jdoom64\include\p_lights.h" />

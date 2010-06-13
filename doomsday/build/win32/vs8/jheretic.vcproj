@@ -1288,10 +1288,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jheretic\include\mn_def.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jheretic\include\p_enemy.h"
 				>
 			</File>

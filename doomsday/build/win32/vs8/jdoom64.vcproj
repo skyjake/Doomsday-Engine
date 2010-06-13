@@ -1261,10 +1261,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jdoom64\include\mn_def.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jdoom64\include\p_enemy.h"
 				>
 			</File>

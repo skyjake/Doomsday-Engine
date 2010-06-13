@@ -207,7 +207,7 @@ wbstartstruct_t wmInfo; // Params for world map / intermission.
 #endif
 
 int saveGameSlot;
-char saveDescription[HU_SAVESTRINGSIZE];
+char saveDescription[MNDATA_EDIT_TEXT_MAX_LENGTH];
 
 #if __JDOOM__ || __JDOOM64__
 mobj_t *bodyQueue[BODYQUEUESIZE];
@@ -1630,8 +1630,8 @@ boolean G_Responder(event_t *ev)
         }
     }
 
-    // Try the edit responder.
-    if(M_EditResponder(ev))
+    // Try a menu object responder.
+    if(Hu_MenuObjectResponder(ev))
         return true;
 
     // We may wish to eat the event depending on type...
@@ -2654,7 +2654,7 @@ void G_DoLoadGame(void)
 void G_SaveGame(int slot, const char* description)
 {
     saveGameSlot = slot;
-    strncpy(saveDescription, description, HU_SAVESTRINGSIZE);
+    strncpy(saveDescription, description, MNDATA_EDIT_TEXT_MAX_LENGTH);
     G_SetGameAction(GA_SAVEGAME);
 }
 
@@ -3218,7 +3218,7 @@ void G_PrintFormattedMapList(uint episode, const char** files, uint count)
             {
                 P_MapId(episode, rangeStart, mapId);
                 Con_Printf("%s-", mapId);
-                P_MapId(episode, i, mapId);
+                P_MapId(episode, i-1, mapId);
                 Con_Printf("%s", mapId);
             }
             Con_Printf(": %s\n", M_PrettyPath(current));

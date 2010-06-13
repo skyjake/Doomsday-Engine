@@ -31,6 +31,7 @@
 #define __COMMON_HUD_MENU__
 
 #include "dd_types.h"
+#include "m_defs.h"
 
 typedef enum menucommand_e {
     MCMD_OPEN, // Open the menu.
@@ -46,9 +47,6 @@ typedef enum menucommand_e {
     MCMD_SELECT, // Execute whatever action is attaced to the current item.
     MCMD_DELETE
 } menucommand_e;
-
-// Not to be confused with the size of the description in the save file.
-#define HU_SAVESTRINGSIZE       (24)
 
 // Sounds played in the menu.
 #if __JDOOM__ || __JDOOM64__
@@ -93,6 +91,7 @@ void            Hu_MenuInit(void);
 
 void            Hu_MenuTicker(timespan_t time);
 int             Hu_MenuResponder(event_t* ev);
+int             Hu_MenuObjectResponder(event_t* ev);
 void            Hu_MenuDrawer(void);
 
 void            Hu_MenuCommand(menucommand_e cmd);
@@ -100,7 +99,13 @@ void            Hu_MenuCommand(menucommand_e cmd);
 boolean         Hu_MenuIsActive(void);
 void            Hu_MenuSetAlpha(float alpha);
 float           Hu_MenuAlpha(void);
-void            Hu_MenuPageString(char* page, const menu_t* menu);
+void            Hu_MenuPageString(char* string, const mn_page_t* page);
+
+void            Hu_MenuCvarButton(mn_object_t* obj, int option);
+void            Hu_MenuCvarList(mn_object_t* obj, int option);
+void            Hu_MenuCvarSlider(mn_object_t* obj, int option);
+
+void            Hu_MenuBindings(mn_object_t* obj, int option);
 
 void            M_DrawMenuText(const char* string, int x, int y);
 void            M_DrawMenuText2(const char* string, int x, int y, compositefontid_t font);
@@ -108,8 +113,13 @@ void            M_DrawMenuText3(const char* string, int x, int y, compositefonti
 void            M_DrawMenuText4(const char* string, int x, int y, compositefontid_t font, short flags, float glitterStrength);
 void            M_DrawMenuText5(const char* string, int x, int y, compositefontid_t font, short flags, float glitterStrength, float shadowStrength);
 
-boolean         M_EditResponder(event_t* ev);
+void            M_SetEditFieldText(mndata_edit_t* ef, const char* string);
+void            M_ActivateEditField(mn_object_t* obj, int option);
+
+// @todo Remove this placeholder.
+void            MN_DrawSlider(const mn_page_t* page, int index, int x, int y, int range, int pos);
 
 DEFCC(CCmdMenuAction);
+DEFCC(CCmdShortcut);
 
 #endif

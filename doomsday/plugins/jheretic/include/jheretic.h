@@ -48,7 +48,6 @@
 #include "../../jheretic/include/m_cheat.h"
 #include "../../jheretic/include/m_random.h"
 #include "../../jheretic/include/m_menu.h"
-#include "../../jheretic/include/mn_def.h"
 #include "../../jheretic/include/p_enemy.h"
 #include "../../jheretic/include/p_inter.h"
 #include "../../jheretic/include/p_lights.h"

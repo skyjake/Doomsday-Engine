@@ -867,8 +867,6 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&defResX, &defResX},
     {&defResY, &defResY},
     {&skyDetail, 0},
-    {&sfxVolume, &sfxVolume},
-    {&musVolume, &musVolume},
     {0, 0}, //{&mouseInverseY, &mouseInverseY},
     {&levelFullBright, &levelFullBright},
     {&CmdReturnValue, 0},

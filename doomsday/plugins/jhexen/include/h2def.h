@@ -459,4 +459,11 @@ char            CT_dequeueChatChar(void);
 
 extern boolean  chatmodeon;
 
+enum {
+    MENU_COLOR,
+    MENU_COLOR2,
+    MENU_COLOR3,
+    NUM_MENU_COLORS
+};
+
 #endif // __H2DEF_H__

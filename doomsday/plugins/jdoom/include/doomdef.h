@@ -261,4 +261,12 @@ enum { CR, CG, CB, CA }; // Color indices.
 #define GAMETIC             (*((timespan_t*) DD_GetVariable(DD_GAMETIC)))
 
 #define DEFAULT_PLAYER_VIEWHEIGHT (41)
+
+enum {
+    MENU_COLOR,
+    MENU_COLOR2,
+    MENU_COLOR3,
+    NUM_MENU_COLORS
+};
+
 #endif

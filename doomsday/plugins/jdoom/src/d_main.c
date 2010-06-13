@@ -432,8 +432,15 @@ void G_PreInit(void)
     cfg.plrViewHeight = DEFAULT_PLAYER_VIEWHEIGHT;
     cfg.mapTitle = true;
     cfg.hideIWADAuthor = true;
-    cfg.menuColor[0] = .85f;
-    cfg.menuColor2[0] = .85f;
+    cfg.menuColors[0][CR] = .85f;
+    cfg.menuColors[0][CG] = 0;
+    cfg.menuColors[0][CB] = 0;
+    cfg.menuColors[1][CR] = 1;
+    cfg.menuColors[1][CG] = .7f;
+    cfg.menuColors[1][CB] = .3f;
+    cfg.menuColors[2][CR] = 1;
+    cfg.menuColors[2][CG] = 1;
+    cfg.menuColors[2][CB] = 1;
     cfg.menuSlam = false;
     cfg.menuHotkeys = true;
     cfg.menuNoStretch = false;

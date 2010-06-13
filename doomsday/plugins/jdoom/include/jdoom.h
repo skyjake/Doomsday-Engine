@@ -47,7 +47,6 @@
 #include "../../jdoom/include/m_cheat.h"
 #include "../../jdoom/include/m_random.h"
 #include "../../jdoom/include/m_menu.h"
-#include "../../jdoom/include/mn_def.h"
 #include "../../jdoom/include/p_enemy.h"
 #include "../../jdoom/include/p_inter.h"
 #include "../../jdoom/include/p_lights.h"

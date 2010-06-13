@@ -162,8 +162,7 @@ typedef struct {
     float           flashColor[3];
     int             flashSpeed;
     byte            turningSkull;
-    float           menuColor[3];
-    float           menuColor2[3];
+    float           menuColors[3][3];
     byte            menuSlam;
     byte            menuHotkeys;
     byte            menuNoStretch;

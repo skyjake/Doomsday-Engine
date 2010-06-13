@@ -176,8 +176,6 @@ enum {
     DD_DEFAULT_RES_X,
     DD_DEFAULT_RES_Y,
     DD_SKY_DETAIL,
-    DD_SFX_VOLUME,
-    DD_MUSIC_VOLUME,
     DD_MOUSE_INVERSE_Y,
     DD_FULLBRIGHT, // Render everything fullbright?
     DD_CCMD_RETURN,

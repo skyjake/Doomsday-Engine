@@ -53,44 +53,32 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define SLOT_WIDTH          (200)
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void            DrawMultiplayerMenu(void);
-void            DrawGameSetupMenu(void);
-void            DrawPlayerSetupMenu(void);
+void            DrawMultiplayerMenu(const mn_page_t* page, int x, int y);
+void            DrawGameSetupMenu(const mn_page_t* page, int x, int y);
+void            DrawPlayerSetupMenu(const mn_page_t* page, int x, int y);
 
-void            SCEnterHostMenu(int option, void* data);
-void            SCEnterJoinMenu(int option, void* data);
-void            SCEnterGameSetup(int option, void* data);
-void            SCSetProtocol(int option, void* data);
-void            SCGameSetupFunc(int option, void* data);
-void            SCGameSetupEpisode(int option, void* data);
-void            SCGameSetupMap(int option, void* data);
-void            SCGameSetupSkill(int option, void* data);
-void            SCGameSetupDeathmatch(int option, void* data);
-void            SCGameSetupDamageMod(int option, void* data);
-void            SCGameSetupHealthMod(int option, void* data);
-void            SCGameSetupGravity(int option, void* data);
-void            SCOpenServer(int option, void* data);
-void            SCCloseServer(int option, void* data);
-void            SCChooseHost(int option, void* data);
-void            SCStartStopDisconnect(int option, void* data);
-void            SCEnterPlayerSetupMenu(int option, void* data);
-void            SCPlayerClass(int option, void* data);
-void            SCPlayerColor(int option, void* data);
-void            SCAcceptPlayer(int option, void* data);
+void            SCGameSetupMap(mn_object_t* obj, int option);
+void            SCGameSetupDamageMod(mn_object_t* obj, int option);
+void            SCGameSetupHealthMod(mn_object_t* obj, int option);
+void            SCGameSetupGravity(mn_object_t* obj, int option);
+#if __JHEXEN__
+void            SCPlayerClass(mn_object_t* obj, int option);
+#endif
+void            SCPlayerColor(mn_object_t* obj, int option);
 
-void            ResetJoinMenuItems();
-
-// Edit fields.
-void            DrawEditField(menu_t* menu, int index, editfield_t* ef);
-void            SCEditField(int efptr, void* data);
+void            SCOpenServer(mn_object_t* obj, int option);
+void            SCCloseServer(mn_object_t* obj, int option);
+void            SCEnterPlayerSetupMenu(mn_object_t* obj, int option);
+void            SCAcceptPlayer(mn_object_t* obj, int option);
+void            SCEnterHostMenu(mn_object_t* obj, int option);
+void            SCEnterJoinMenu(mn_object_t* obj, int option);
+void            SCEnterGameSetup(mn_object_t* obj, int option);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -98,204 +86,176 @@ void            SCEditField(int efptr, void* data);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-editfield_t* ActiveEdit = NULL; // No active edit field by default.
-editfield_t plrNameEd;
+mndata_edit_t plrNameEd;
 int CurrentPlrFrame = 0;
 
-menuitem_t MultiplayerItems[] = {
-    {ITT_EFUNC, 0, "player setup", SCEnterPlayerSetupMenu, 0 },
-    {ITT_EFUNC, 0, "join game", SCEnterJoinMenu, 0 },
-    {ITT_EFUNC, 0, "host game", SCEnterHostMenu, 0 },
+mn_object_t MultiplayerItems[] = {
+    { MN_BUTTON,    0,  0,  "Player Setup", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterPlayerSetupMenu },
+    { MN_BUTTON,    0,  0,  "Join Game",    GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterJoinMenu },
+    { MN_BUTTON,    0,  0,  "Host Game",    GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterHostMenu },
+    { MN_NONE }
 };
 
-menuitem_t MultiplayerServerItems[] = {
-    {ITT_EFUNC, 0, "player setup", SCEnterPlayerSetupMenu, 0 },
-    {ITT_EFUNC, 0, "game setup", SCEnterHostMenu, 0 },
-    {ITT_EFUNC, 0, "close server", SCCloseServer, 0 }
+mn_object_t MultiplayerServerItems[] = {
+    { MN_BUTTON,    0,  0,  "Player Setup", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterPlayerSetupMenu },
+    { MN_BUTTON,    0,  0,  "Game Setup",   GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterHostMenu },
+    { MN_BUTTON,    0,  0,  "Close Server", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCCloseServer },
+    { MN_NONE }
 };
 
-menuitem_t MultiplayerClientItems[] = {
-    {ITT_EFUNC, 0, "player setup", SCEnterPlayerSetupMenu, 0 },
-    {ITT_EFUNC, 0, "disconnect", SCEnterJoinMenu, 0 }
+mn_object_t MultiplayerClientItems[] = {
+    { MN_BUTTON,    0,  0,  "Player Setup", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterPlayerSetupMenu },
+    { MN_BUTTON,    0,  0,  "Disconnect",   GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCEnterJoinMenu },
+    { MN_NONE}
 };
 
-menu_t MultiplayerMenu = {
+mn_page_t MultiplayerMenu = {
+    MultiplayerItems, 3,
     0,
     116, 70,
     DrawMultiplayerMenu,
-    3, MultiplayerItems,
-    0, MENU_NEWGAME,
-    GF_FONTA,cfg.menuColor2,
-    LINEHEIGHT_A,
+    0, &GameTypeMenu,
+    .2f,
     0, 3
 };
 
-#if __JHEXEN__ || __JSTRIFE__
-
-#  define NUM_GAMESETUP_ITEMS       11
-
-menuitem_t GameSetupItems1[] = {
-    {ITT_LRFUNC, 0, "MAP:", SCGameSetupMap, 0},
-    {ITT_EMPTY, 0, NULL, NULL, 0},
-    {ITT_LRFUNC, 0, "SKILL:", SCGameSetupSkill, 0},
-    {ITT_EFUNC, 0, "DEATHMATCH:", SCGameSetupFunc, 0, NULL, &cfg.netDeathmatch },
-    {ITT_EFUNC, 0, "MONSTERS:", SCGameSetupFunc, 0, NULL, &cfg.netNoMonsters },
-    {ITT_EFUNC, 0, "RANDOM CLASSES:", SCGameSetupFunc, 0, NULL, &cfg.netRandomClass },
-    {ITT_EFUNC, 0, "NO MAX Z RADIUS ATTACKS", SCGameSetupFunc, 0, NULL, &cfg.netNoMaxZRadiusAttack },
-    {ITT_LRFUNC, 0, "DAMAGE MULTIPLIER:", SCGameSetupDamageMod, 0},
-    {ITT_LRFUNC, 0, "HEALTH MULTIPLIER:", SCGameSetupHealthMod, 0},
-    {ITT_LRFUNC, 0, "GRAVITY MULTIPLIER:", SCGameSetupGravity, 0},
-    {ITT_EFUNC, 0, "PROCEED...", SCOpenServer, 0}
+#if __JDOOM__ || __JHERETIC__
+mndata_list_t lst_net_episode = {
+    0, 0, "server-game-episode"
 };
-
-#else
-
-#  if __JHERETIC__
-
-#    define NUM_GAMESETUP_ITEMS     14
-
-menuitem_t GameSetupItems1[] =  // for Heretic
-{
-    {ITT_LRFUNC, 0, "EPISODE :", SCGameSetupEpisode, 0},
-    {ITT_LRFUNC, 0, "MAP :", SCGameSetupMap, 0},
-    {ITT_LRFUNC, 0, "SKILL :", SCGameSetupSkill, 0},
-    {ITT_LRFUNC, 0, "DEATHMATCH :", SCGameSetupDeathmatch, 0},
-    {ITT_EFUNC, 0, "MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netNoMonsters },
-    {ITT_EFUNC, 0, "RESPAWN MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netRespawn },
-    {ITT_EFUNC, 0, "ALLOW JUMPING :", SCGameSetupFunc, 0, NULL, &cfg.netJumping },
-    {ITT_EFUNC, 0, "NO COOP DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noCoopDamage },
-    {ITT_EFUNC, 0, "NO TEAM DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noTeamDamage },
-    {ITT_EFUNC, 0, "NO MAX Z RADIUS ATTACKS", SCGameSetupFunc, 0, NULL, &cfg.netNoMaxZRadiusAttack },
-    {ITT_LRFUNC, 0, "DAMAGE MULTIPLIER:", SCGameSetupDamageMod, 0},
-    {ITT_LRFUNC, 0, "HEALTH MULTIPLIER:", SCGameSetupHealthMod, 0},
-    {ITT_LRFUNC, 0, "GRAVITY MULTIPLIER:", SCGameSetupGravity, 0},
-    {ITT_EFUNC, 0, "PROCEED...", SCOpenServer, 0 }
-};
-
-#  elif __JDOOM__
-
-#    define NUM_GAMESETUP_ITEMS     19
-
-menuitem_t GameSetupItems1[] =  // for Doom 1
-{
-    {ITT_LRFUNC, 0, "EPISODE :", SCGameSetupEpisode, 0},
-    {ITT_LRFUNC, 0, "MAP :", SCGameSetupMap, 0},
-    {ITT_LRFUNC, 0, "SKILL :", SCGameSetupSkill, 0},
-    {ITT_LRFUNC, 0, "MODE :", SCGameSetupDeathmatch, 0},
-    {ITT_EFUNC, 0, "MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netNoMonsters },
-    {ITT_EFUNC, 0, "RESPAWN MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netRespawn },
-    {ITT_EFUNC, 0, "ALLOW JUMPING :", SCGameSetupFunc, 0, NULL, &cfg.netJumping },
-    {ITT_EFUNC, 0, "ALLOW BFG AIMING :", SCGameSetupFunc, 0, NULL, &cfg.netBFGFreeLook},
-    {ITT_EFUNC, 0, "NO COOP DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noCoopDamage },
-    {ITT_EFUNC, 0, "NO COOP WEAPONS :", SCGameSetupFunc, 0, NULL, &cfg.noCoopWeapons },
-    {ITT_EFUNC, 0, "NO COOP OBJECTS :", SCGameSetupFunc, 0, NULL, &cfg.noCoopAnything },
-    {ITT_EFUNC, 0, "COOP ITEMS RESPAWN :", SCGameSetupFunc, 0, NULL, &cfg.coopRespawnItems },
-    {ITT_EFUNC, 0, "NO BFG 9000 :", SCGameSetupFunc, 0, NULL, &cfg.noNetBFG },
-    {ITT_EFUNC, 0, "NO TEAM DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noTeamDamage },
-    {ITT_EFUNC, 0, "NO MAX Z RADIUS ATTACKS", SCGameSetupFunc, 0, NULL, &cfg.netNoMaxZRadiusAttack },
-    {ITT_LRFUNC, 0, "DAMAGE MULTIPLIER:", SCGameSetupDamageMod, 0},
-    {ITT_LRFUNC, 0, "HEALTH MULTIPLIER:", SCGameSetupHealthMod, 0},
-    {ITT_LRFUNC, 0, "GRAVITY MULTIPLIER:", SCGameSetupGravity, 0},
-    {ITT_EFUNC, 0, "PROCEED...", SCOpenServer, 0 }
-};
-
-menuitem_t GameSetupItems2[] =  // for Doom 2
-{
-    {ITT_LRFUNC, 0, "MAP :", SCGameSetupMap, 0},
-    {ITT_LRFUNC, 0, "SKILL :", SCGameSetupSkill, 0},
-    {ITT_LRFUNC, 0, "MODE :", SCGameSetupDeathmatch, 0},
-    {ITT_EFUNC, 0, "MONSTERS :", SCGameSetupFunc, 0, NULL,  &cfg.netNoMonsters },
-    {ITT_EFUNC, 0, "RESPAWN MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netRespawn },
-    {ITT_EFUNC, 0, "ALLOW JUMPING :", SCGameSetupFunc, 0, NULL, &cfg.netJumping },
-    {ITT_EFUNC, 0, "ALLOW BFG AIMING :", SCGameSetupFunc, 0, NULL, &cfg.netBFGFreeLook},
-    {ITT_EFUNC, 0, "NO COOP DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noCoopDamage },
-    {ITT_EFUNC, 0, "NO COOP WEAPONS :", SCGameSetupFunc, 0, NULL, &cfg.noCoopWeapons },
-    {ITT_EFUNC, 0, "NO COOP OBJECTS :", SCGameSetupFunc, 0, NULL, &cfg.noCoopAnything },
-    {ITT_EFUNC, 0, "COOP ITEMS RESPAWN :", SCGameSetupFunc, 0, NULL, &cfg.coopRespawnItems },
-    {ITT_EFUNC, 0, "NO BFG 9000 :", SCGameSetupFunc, 0, NULL, &cfg.noNetBFG },
-    {ITT_EFUNC, 0, "NO TEAM DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noTeamDamage },
-    {ITT_EFUNC, 0, "NO MAX Z RADIUS ATTACKS", SCGameSetupFunc, 0, NULL, &cfg.netNoMaxZRadiusAttack },
-    {ITT_LRFUNC, 0, "DAMAGE MULTIPLIER:", SCGameSetupDamageMod, 0},
-    {ITT_LRFUNC, 0, "HEALTH MULTIPLIER:", SCGameSetupHealthMod, 0},
-    {ITT_LRFUNC, 0, "GRAVITY MULTIPLIER:", SCGameSetupGravity, 0},
-    {ITT_EFUNC, 0, "PROCEED...", SCOpenServer, 0 }
-};
-
-#  elif __JDOOM64__
-
-#    define NUM_GAMESETUP_ITEMS     18
-
-menuitem_t GameSetupItems1[] =
-{
-    {ITT_LRFUNC, 0, "MAP :", SCGameSetupMap, 0},
-    {ITT_LRFUNC, 0, "SKILL :", SCGameSetupSkill, 0},
-    {ITT_LRFUNC, 0, "MODE :", SCGameSetupDeathmatch, 0},
-    {ITT_EFUNC, 0, "MONSTERS :", SCGameSetupFunc, 0, NULL,  &cfg.netNoMonsters },
-    {ITT_EFUNC, 0, "RESPAWN MONSTERS :", SCGameSetupFunc, 0, NULL, &cfg.netRespawn },
-    {ITT_EFUNC, 0, "ALLOW JUMPING :", SCGameSetupFunc, 0, NULL, &cfg.netJumping },
-    {ITT_EFUNC, 0, "ALLOW BFG AIMING :", SCGameSetupFunc, 0, NULL, &cfg.netBFGFreeLook},
-    {ITT_EFUNC, 0, "NO COOP DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noCoopDamage },
-    {ITT_EFUNC, 0, "NO COOP WEAPONS :", SCGameSetupFunc, 0, NULL, &cfg.noCoopWeapons },
-    {ITT_EFUNC, 0, "NO COOP OBJECTS :", SCGameSetupFunc, 0, NULL, &cfg.noCoopAnything },
-    {ITT_EFUNC, 0, "COOP ITEMS RESPAWN :", SCGameSetupFunc, 0, NULL, &cfg.coopRespawnItems },
-    {ITT_EFUNC, 0, "NO BFG 9000 :", SCGameSetupFunc, 0, NULL, &cfg.noNetBFG },
-    {ITT_EFUNC, 0, "NO TEAM DAMAGE :", SCGameSetupFunc, 0, NULL, &cfg.noTeamDamage },
-    {ITT_EFUNC, 0, "NO MAX Z RADIUS ATTACKS", SCGameSetupFunc, 0, NULL, &cfg.netNoMaxZRadiusAttack },
-    {ITT_LRFUNC, 0, "DAMAGE MULTIPLIER:", SCGameSetupDamageMod, 0},
-    {ITT_LRFUNC, 0, "HEALTH MULTIPLIER:", SCGameSetupHealthMod, 0},
-    {ITT_LRFUNC, 0, "GRAVITY MULTIPLIER:", SCGameSetupGravity, 0},
-    {ITT_EFUNC, 0, "PROCEED...", SCOpenServer, 0 }
-};
-
-#  endif
-
 #endif
 
-menu_t GameSetupMenu = {
-    0,
-#  if __JDOOM__ || __JDOOM64__
-    90, 54,
-#  elif __JHERETIC__
-    74, 64,
-#  elif __JHEXEN__  || __JSTRIFE__
-    90, 64,
-#  endif
-    DrawGameSetupMenu,
-    NUM_GAMESETUP_ITEMS, GameSetupItems1,
-    0, MENU_MULTIPLAYER,
-    GF_FONTA,                  //1, 0, 0,
-    cfg.menuColor2,
-    LINEHEIGHT_A,
-    0, NUM_GAMESETUP_ITEMS
+mndata_listitem_t lstit_net_skill[NUM_SKILL_MODES];
+mndata_list_t lst_net_skill = {
+    lstit_net_skill, NUMLISTITEMS(lstit_net_skill), "server-game-skill"
 };
 
-#if __JHEXEN__ || __JSTRIFE__
-#  define NUM_PLAYERSETUP_ITEMS 6
-#else
-#  define NUM_PLAYERSETUP_ITEMS 6
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+mndata_listitem_t lstit_net_gamemode[] = {
+    { "CoOperative",  0 },
+    { "Deathmatch 1", 1 },
+    { "Deathmatch 2", 2 }
+};
+mndata_list_t lst_net_gamemode = {
+    lstit_net_gamemode, NUMLISTITEMS(lstit_net_gamemode), "server-game-deathmatch"
+};
 #endif
 
-menuitem_t PlayerSetupItems[] = {
-    {ITT_EFUNC, 0, "", SCEditField, 0, NULL, &plrNameEd },
-    {ITT_EMPTY, 0, NULL, NULL, 0},
+#if __JDOOM__
+# define NUM_GAMESETUP_ITEMS        34
+#elif __JDOOM64__
+# define NUM_GAMESETUP_ITEMS        32
+#elif __JHERETIC__
+# define NUM_GAMESETUP_ITEMS        24
+#elif __JHEXEN__
+# define NUM_GAMESETUP_ITEMS        17
+#endif
+
+mn_object_t GameSetupItems[] = {
+#if __JDOOM__ || __JHERETIC__
+    { MN_TEXT,      0,  0,  "Episode",      GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LIST,      0,  0,  "",             GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, Hu_MenuCvarList, &lst_net_episode },
+#endif
+    { MN_TEXT,      0,  0,  "Map",          GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LIST,      0,  0,  "",             GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, SCGameSetupMap },
+    { MN_TEXT,      0,  0,  "Skill",        GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LIST,      0,  0,  "",             GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, Hu_MenuCvarList, &lst_net_skill },
 #if __JHEXEN__
-    {ITT_LRFUNC, 0, "Class:", SCPlayerClass, 0},
+    { MN_TEXT,      0,  0,  "Deathmatch",   GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-deathmatch", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Random Classes", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-randclass", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
 #else
-    {ITT_EMPTY, 0, NULL, NULL, 0},
+    { MN_TEXT,      0,  0,  "Mode",         GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LIST,      0,  0,  "",             GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, Hu_MenuCvarList, &lst_net_gamemode },
 #endif
-    {ITT_LRFUNC, 0, "Color:", SCPlayerColor, 0},
-    {ITT_EMPTY, 0, NULL, NULL, 0},
-    {ITT_EFUNC, 0, "Accept Changes", SCAcceptPlayer, 0 }
+    { MN_TEXT,      0,  0,  "Monsters",     GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-nomonsters", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    { MN_TEXT,      0,  0,  "Respawn Monsters", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-respawn", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "Allow Jumping", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-jump", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+#endif
+#if __JDOOM__ || __JDOOM64__
+    { MN_TEXT,      0,  0,  "Allow BFG Aiming", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-bfg-freeaim", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+#endif
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    { MN_TEXT,      0,  0,  "No CoOp Damage", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-coop-nodamage", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+#endif
+#if __JDOOM__ || __JDOOM64__
+    { MN_TEXT,      0,  0,  "No CoOp Weapons", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-coop-noweapons", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "No CoOp Objects", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-coop-nothing", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "CoOp Items Respawn", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-coop-respawn-items", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_TEXT,      0,  0,  "No BFG 9000",  GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-nobfg",  GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+#endif
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    { MN_TEXT,      0,  0,  "No Team Damage", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-noteamdamage", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+#endif
+    { MN_TEXT,      0,  0,  "No Max Z Radius Attacks", GF_FONTA, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_BUTTON2,   0,  0,  "server-game-radiusattack-nomaxz", GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, Hu_MenuCvarButton },
+    { MN_LIST,      0,  0,  "Damage Multiplier", GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, SCGameSetupDamageMod },
+    { MN_LIST,      0,  0,  "Health Multiplier", GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, SCGameSetupHealthMod },
+    { MN_LIST,      0,  0,  "Gravity Multiplier", GF_FONTA, 0, MNList_InlineDrawer, MNList_InlineDimensions, SCGameSetupGravity },
+    { MN_BUTTON,    0,  0,  "Proceed...",   GF_FONTA, 0, MNButton_Drawer, MNButton_Dimensions, SCOpenServer },
+    { MN_NONE }
 };
 
-menu_t PlayerSetupMenu = {
+mn_page_t GameSetupMenu = {
+    GameSetupItems, NUM_GAMESETUP_ITEMS,
+    0,
+#if __JDOOM__ || __JDOOM64__
+    90, 54,
+#elif __JHERETIC__
+    74, 64,
+#elif __JHEXEN__
+    90, 64,
+#endif
+    DrawGameSetupMenu,
+    0, &MultiplayerMenu,
+    .2f,
+#if __JHERETIC__ || __JHEXEN__
+    0, 11, { 11, 64 }
+#else
+    0, 13, { 13, 54 }
+#endif
+};
+
+mn_object_t PlayerSetupItems[] = {
+    { MN_EDIT,      0,  MNF_INACTIVE,   "",         GF_FONTA, 0, MNEdit_Drawer, MNEdit_Dimensions, M_ActivateEditField, &plrNameEd },
+#if __JHEXEN__
+    { MN_TEXT,      0,  0,              "Class",    GF_FONTB, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LIST,      0,  0,              "",         GF_FONTB, 0, MNList_InlineDrawer, MNList_InlineDimensions, SCPlayerClass },
+#endif
+    { MN_TEXT,      0,  0,              "Color",    GF_FONTB, 0, MNText_Drawer, MNText_Dimensions },
+    { MN_LIST,      0,  0,              "",         GF_FONTB, 0, MNList_InlineDrawer, MNList_InlineDimensions, SCPlayerColor },
+    { MN_BUTTON,    0,  0,              "Accept Changes", GF_FONTB, 0, MNButton_Drawer, MNButton_Dimensions, SCAcceptPlayer },
+    { MN_NONE }
+};
+
+mn_page_t PlayerSetupMenu = {
+#if __JHEXEN__
+    PlayerSetupItems, 5,
+#else
+    PlayerSetupItems, 4,
+#endif
     0,
     60, 52,
     DrawPlayerSetupMenu,
-    NUM_PLAYERSETUP_ITEMS, PlayerSetupItems,
-    0, MENU_MULTIPLAYER,
-    GF_FONTB, cfg.menuColor, LINEHEIGHT_B,
-    0, NUM_PLAYERSETUP_ITEMS
+    0, &MultiplayerMenu,
+    .2f,
+#if __JHEXEN__
+    0, 4
+#else
+    0, 3
+#endif
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -308,42 +268,22 @@ static int plrClass;
 
 // CODE --------------------------------------------------------------------
 
-int Executef(int silent, char* format, ...)
+void DrawMultiplayerMenu(const mn_page_t* page, int x, int y)
 {
-    va_list argptr;
-    char buffer[512];
-
-    va_start(argptr, format);
-    dd_vsnprintf(buffer, sizeof(buffer), format, argptr);
-    va_end(argptr);
-    return DD_Execute(silent, buffer);
+    DGL_Color4f(cfg.menuColors[0][0], cfg.menuColors[0][1], cfg.menuColors[0][2], Hu_MenuAlpha());
+    M_DrawMenuText3(GET_TXT(TXT_MULTIPLAYER), SCREENWIDTH/2, y-30, GF_FONTB, DTF_ALIGN_TOP);
 }
 
-void DrawMultiplayerMenu(void)
+void DrawGameSetupMenu(const mn_page_t* page, int x, int y)
 {
-    MN_DrawTitle(GET_TXT(TXT_MULTIPLAYER), MultiplayerMenu.y - 30);
-}
-
-void DrawGameSetupMenu(void)
-{
-    char*               boolText[] = {"NO", "YES"};
-    char*               skillText[] = {"BABY", "EASY", "MEDIUM", "HARD", "NIGHTMARE"};
-#if __JDOOM__ || __JDOOM64__
-    //char*             freeLookText[3] = {"NO", "NOT BFG", "ALL"};
-    char*               dmText[] = {"COOPERATIVE", "DEATHMATCH 1", "DEATHMATCH 2"};
-#else
-    char*               dmText[] = {"NO", "YES", "YES"};
-#endif
-    char                buf[50];
-    menu_t*             menu = &GameSetupMenu;
-    int                 idx;
+    char buf[50];
+    int idx;
 #if __JHEXEN__
-    char*               mapName = P_GetMapName(P_TranslateMap(cfg.netMap));
-#elif __JSTRIFE__
-    char*               mapName = "unnamed";
+    char* mapName = P_GetMapName(P_TranslateMap(cfg.netMap));
 #endif
 
-    MN_DrawTitle(GET_TXT(TXT_GAMESETUP), menu->y - 20);
+    DGL_Color4f(cfg.menuColors[0][0], cfg.menuColors[0][1], cfg.menuColors[0][2], Hu_MenuAlpha());
+    M_DrawMenuText3(GET_TXT(TXT_GAMESETUP), SCREENWIDTH/2, y-20, GF_FONTB, DTF_ALIGN_TOP);
 
     idx = 0;
 
@@ -355,82 +295,75 @@ void DrawGameSetupMenu(void)
 #  endif
     {
         sprintf(buf, "%u", cfg.netEpisode+1);
-        M_WriteMenuText(menu, idx++, buf);
+        //M_WriteMenuText(menu, idx++, x, y, buf);
     }
 # endif
     sprintf(buf, "%u", cfg.netMap+1);
-    M_WriteMenuText(menu, idx++, buf);
-    M_WriteMenuText(menu, idx++, skillText[cfg.netSkill]);
-    M_WriteMenuText(menu, idx++, dmText[cfg.netDeathmatch]);
-    M_WriteMenuText(menu, idx++, boolText[!cfg.netNoMonsters]);
-    M_WriteMenuText(menu, idx++, boolText[cfg.netRespawn]);
-    M_WriteMenuText(menu, idx++, boolText[cfg.netJumping]);
-
-# if __JDOOM__ || __JDOOM64__
-    M_WriteMenuText(menu, idx++, boolText[cfg.netBFGFreeLook]);
-# endif // __JDOOM__ || __JDOOM64__
-    M_WriteMenuText(menu, idx++, boolText[cfg.noCoopDamage]);
-# if __JDOOM__ || __JDOOM64__
-    M_WriteMenuText(menu, idx++, boolText[cfg.noCoopWeapons]);
-    M_WriteMenuText(menu, idx++, boolText[cfg.noCoopAnything]);
-    M_WriteMenuText(menu, idx++, boolText[cfg.coopRespawnItems]);
-    M_WriteMenuText(menu, idx++, boolText[cfg.noNetBFG]);
-# endif // __JDOOM__ || __JDOOM64__
-    M_WriteMenuText(menu, idx++, boolText[cfg.noTeamDamage]);
+    //M_WriteMenuText(menu, idx++, x, y, buf);
 #elif __JHEXEN__
 
     sprintf(buf, "%u", cfg.netMap+1);
-    M_WriteMenuText(menu, idx++, buf);
+    //M_WriteMenuText(menu, idx++, x, y, buf);
     DGL_Color4f(1, 0.7f, 0.3f, Hu_MenuAlpha());
-    M_DrawMenuText3(mapName, 160, menu->y + menu->itemHeight, GF_FONTA, DTF_ALIGN_TOP);
+    //M_DrawMenuText3(mapName, 160, y + page->itemHeight, GF_FONTA, DTF_ALIGN_TOP);
 
     idx++;
-    M_WriteMenuText(menu, idx++, skillText[cfg.netSkill]);
-    M_WriteMenuText(menu, idx++, dmText[cfg.netDeathmatch]);
-    M_WriteMenuText(menu, idx++, boolText[!cfg.netNoMonsters]);
-    M_WriteMenuText(menu, idx++, boolText[cfg.netRandomClass]);
 #endif // __JHEXEN__
 
-    M_WriteMenuText(menu, idx++, boolText[cfg.netNoMaxZRadiusAttack]);
     sprintf(buf, "%i", cfg.netMobDamageModifier);
-    M_WriteMenuText(menu, idx++, buf);
+    //M_WriteMenuText(menu, idx++, x, y, buf);
     sprintf(buf, "%i", cfg.netMobHealthModifier);
-    M_WriteMenuText(menu, idx++, buf);
+    //M_WriteMenuText(menu, idx++, x, y, buf);
 
     if(cfg.netGravity != -1)
         sprintf(buf, "%i", cfg.netGravity);
     else
         sprintf(buf, "MAP DEFAULT");
-    M_WriteMenuText(menu, idx++, buf);
+    //M_WriteMenuText(menu, idx++, x, y, buf);
 }
 
-void DrawPlayerSetupMenu(void)
+void DrawPlayerSetupMenu(const mn_page_t* page, int inX, int inY)
 {
 #define AVAILABLE_WIDTH     38
 #define AVAILABLE_HEIGHT    52
 
-    spriteinfo_t        sprInfo;
-    menu_t*             menu = &PlayerSetupMenu;
-    int                 useColor = plrColor;
-    float               menuAlpha = Hu_MenuAlpha();
-    int                 tclass = 0;
+    spriteinfo_t sprInfo;
+    int useColor = plrColor;
+    float mnAlpha = Hu_MenuAlpha();
+    int tclass = 0;
 #if __JHEXEN__
-    int                 numColors = 8;
+    int numColors = 8;
     static const int sprites[3] = {SPR_PLAY, SPR_CLER, SPR_MAGE};
 #else
-    int                 plrClass = 0;
-    int                 numColors = 4;
-    static const int    sprites[3] = {SPR_PLAY, SPR_PLAY, SPR_PLAY};
+    int plrClass = 0;
+    int numColors = 4;
+    static const int sprites[3] = {SPR_PLAY, SPR_PLAY, SPR_PLAY};
 #endif
-    float               x, y, w, h;
-    float               s, t, scale;
+    float x = inX, y = inY, w, h;
+    float s, t, scale;
 
-    MN_DrawTitle(GET_TXT(TXT_PLAYERSETUP), menu->y - 28);
-
-    DrawEditField(menu, 0, &plrNameEd);
+    DGL_Color4f(cfg.menuColors[0][0], cfg.menuColors[0][1], cfg.menuColors[0][2], mnAlpha);
+    M_DrawMenuText3(GET_TXT(TXT_PLAYERSETUP), SCREENWIDTH/2, y-28, GF_FONTB, DTF_ALIGN_TOP);
 
     if(useColor == numColors)
-        useColor = menuTime / 5 % numColors;
+        useColor = mnTime / 5 % numColors;
+    if(plrColor == numColors)
+    {
+        short textFlags = DTF_ALIGN_TOPLEFT;
+        if(cfg.menuEffects == 0)
+            textFlags |= DTF_NO_TYPEIN;
+        DGL_Color4f(1, 1, 1, mnAlpha);
+        GL_DrawTextFragment3("AUTOMATIC", 184,
+#if __JDOOM__ || __JDOOM64__
+                      y + 49,
+#elif __JHERETIC__
+                      y + 65,
+#else
+                      y + 64,
+#endif
+                      GF_FONTA, textFlags);
+    }
+
 #if __JHEXEN__
     R_GetTranslation(plrClass, useColor, &tclass, &useColor);
 #endif
@@ -438,13 +371,13 @@ void DrawPlayerSetupMenu(void)
     // Draw the color selection as a random player frame.
     R_GetSpriteInfo(sprites[plrClass], CurrentPlrFrame, &sprInfo);
 
-    x = 162;
+    x += 102;
 #if __JDOOM__ || __JDOOM64__
-    y = menu->y + 70;
+    y += 70;
 #elif __JHERETIC__
-    y = menu->y + 80;
+    y += 80;
 #else
-    y = menu->y + 90;
+    y += 90;
 #endif
 
     w = sprInfo.width;
@@ -466,7 +399,7 @@ void DrawPlayerSetupMenu(void)
 
     DGL_SetTranslatedSprite(sprInfo.material, tclass, useColor);
 
-    DGL_Color4f(1, 1, 1, menuAlpha);
+    DGL_Color4f(1, 1, 1, mnAlpha);
     DGL_Begin(DGL_QUADS);
         DGL_TexCoord2f(0, 0 * s, 0);
         DGL_Vertex2f(x, y);
@@ -481,72 +414,76 @@ void DrawPlayerSetupMenu(void)
         DGL_Vertex2f(x, y + h);
     DGL_End();
 
-    if(plrColor == numColors)
-    {
-        short textFlags = DTF_ALIGN_TOPLEFT;
-        if(cfg.menuEffects == 0)
-            textFlags |= DTF_NO_TYPEIN;
-        DGL_Color4f(1, 1, 1, menuAlpha);
-        GL_DrawTextFragment3("AUTOMATIC", 184,
-#if __JDOOM__ || __JDOOM64__
-                      menu->y + 49,
-#elif __JHERETIC__
-                      menu->y + 65,
-#else
-                      menu->y + 64,
-#endif
-                      GF_FONTA, textFlags);
-    }
-
 #undef AVAILABLE_WIDTH
 #undef AVAILABLE_HEIGHT
 }
 
-void SCEnterMultiplayerMenu(int option, void* data)
+void SCEnterMultiplayerMenu(mn_object_t* obj, int option)
 {
-    int                 count;
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    int i;
+#endif
+    int count;
 
     // Choose the correct items for the Game Setup menu.
 #if __JDOOM__
-    if(gameMode == commercial)
+    if(gameMode != commercial)
     {
-        GameSetupMenu.items = GameSetupItems2;
-        GameSetupMenu.itemCount = GameSetupMenu.numVisItems =
-            NUM_GAMESETUP_ITEMS - 1;
+        // Neutralize the Episode select objects.
+        GameSetupItems[0].flags |= MNF_HIDDEN;
+        GameSetupItems[1].flags |= MNF_HIDDEN;
     }
-    else
 #endif
+
+#if __JDOOM__ || __JHERETIC__
+    // Allocate and populate the episode list.
+# if __JHERETIC__
+    lst_net_episode.count = (gameMode == shareware? 1 : gameMode == extended? 6 : 3);
+# else // __JDOOM__
+    lst_net_episode.count = (gameMode == shareware? 1 : gameMode == retail ? 4 : 3);
+# endif
+    lst_net_episode.items = Z_Malloc(sizeof(mndata_listitem_t)*lst_net_episode.count, PU_STATIC, 0);
+    for(i = 0; i < lst_net_episode.count; ++i)
     {
-        GameSetupMenu.items = GameSetupItems1;
-        GameSetupMenu.itemCount = GameSetupMenu.numVisItems =
-            NUM_GAMESETUP_ITEMS;
+        mndata_listitem_t* item = &((mndata_listitem_t*)lst_net_episode.items)[i];
+        dd_snprintf(item->text, 256, "%s", GET_TXT(TXT_EPISODE1 + i));
+        item->data = i;
     }
+#endif
+
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    // Populate the skillmode list.
+    for(i = 0; i < NUM_SKILL_MODES; ++i)
+    {
+        mndata_listitem_t* item = &((mndata_listitem_t*)lstit_net_skill)[i];
+        dd_snprintf(item->text, 256, "%s", GET_TXT(TXT_SKILL1 + i));
+        item->data = i;
+    }
+#endif
 
     // Show the appropriate menu.
     if(IS_NETGAME)
     {
-        MultiplayerMenu.items =
-            IS_SERVER ? MultiplayerServerItems : MultiplayerClientItems;
+        MultiplayerMenu.objects = IS_SERVER ? MultiplayerServerItems : MultiplayerClientItems;
         count = IS_SERVER ? 3 : 2;
     }
     else
     {
-        MultiplayerMenu.items = MultiplayerItems;
+        MultiplayerMenu.objects = MultiplayerItems;
         count = 3;
     }
-    MultiplayerMenu.itemCount = MultiplayerMenu.numVisItems = count;
+    MultiplayerMenu.count = MultiplayerMenu.numVisObjects = count;
+    MultiplayerMenu.focus = 0;
 
-    MultiplayerMenu.lastOn = 0;
-
-    M_SetupNextMenu(&MultiplayerMenu);
+    MN_GotoPage(&MultiplayerMenu);
 }
 
-void SCEnterHostMenu(int option, void* data)
+void SCEnterHostMenu(mn_object_t* obj, int option)
 {
-    SCEnterGameSetup(0, NULL);
+    SCEnterGameSetup(NULL, 0);
 }
 
-void SCEnterJoinMenu(int option, void* data)
+void SCEnterJoinMenu(mn_object_t* obj, int option)
 {
     if(IS_NETGAME)
     {
@@ -558,7 +495,7 @@ void SCEnterJoinMenu(int option, void* data)
     DD_Execute(false, "net setup client");
 }
 
-void SCEnterGameSetup(int option, void* data)
+void SCEnterGameSetup(mn_object_t* obj, int option)
 {
     // See to it that the episode and map numbers are correct.
 #if __JDOOM64__
@@ -596,79 +533,14 @@ void SCEnterGameSetup(int option, void* data)
         cfg.netEpisode = 5;
     if(cfg.netEpisode == 5 && cfg.netMap > 2)
         cfg.netMap = 2;
-#elif __JHEXEN__ || __JSTRIFE__
+#elif __JHEXEN__
     if(cfg.netMap > 30)
         cfg.netMap = 30;
 #endif
-    M_SetupNextMenu(&GameSetupMenu);
+    MN_GotoPage(&GameSetupMenu);
 }
 
-void SCGameSetupFunc(int option, void* data)
-{
-    byte*               ptr = data;
-
-    *ptr ^= 1;
-}
-
-void SCGameSetupDeathmatch(int option, void* data)
-{
-    if(option == RIGHT_DIR)
-    {
-#if __JDOOM__ || __JDOOM64__
-        if(cfg.netDeathmatch < 2)
-#else
-        if(cfg.netDeathmatch < 1)
-#endif
-            cfg.netDeathmatch++;
-    }
-    else if(cfg.netDeathmatch > 0)
-    {
-        cfg.netDeathmatch--;
-    }
-}
-
-#if __JDOOM__ || __JHERETIC__
-void SCGameSetupEpisode(int option, void* data)
-{
-# if __JDOOM__
-    if(gameMode == shareware)
-    {
-        cfg.netEpisode = 0;
-        return;
-    }
-
-    if(option == RIGHT_DIR)
-    {
-        if(cfg.netEpisode < (gameMode == retail ? 3 : 2))
-            cfg.netEpisode++;
-    }
-    else if(cfg.netEpisode != 0)
-    {
-        cfg.netEpisode--;
-    }
-# elif __JHERETIC__
-    if(shareware)
-    {
-        cfg.netEpisode = 0;
-        return;
-    }
-
-    if(option == RIGHT_DIR)
-    {
-        if(cfg.netEpisode < (gameMode == extended? 5 : 2))
-            cfg.netEpisode++;
-    }
-    else if(cfg.netEpisode != 0)
-    {
-        cfg.netEpisode--;
-    }
-    if(cfg.netMap > (cfg.netEpisode == 5? 2 : 8))
-        cfg.netMap = (cfg.netEpisode == 5? 2 : 8);
-# endif
-}
-#endif
-
-void SCGameSetupMap(int option, void* data)
+void SCGameSetupMap(mn_object_t* obj, int option)
 {
     if(option == RIGHT_DIR)
     {
@@ -681,7 +553,7 @@ void SCGameSetupMap(int option, void* data)
 #elif __JHERETIC__
         if(cfg.netMap < (cfg.netEpisode == 5? 2 : 8))
             cfg.netMap++;
-#elif __JHEXEN__ || __JSTRIFE__
+#elif __JHEXEN__
         if(cfg.netMap < 30)
             cfg.netMap++;
 #endif
@@ -692,30 +564,17 @@ void SCGameSetupMap(int option, void* data)
     }
 }
 
-void SCGameSetupSkill(int option, void* data)
-{
-    if(option == RIGHT_DIR)
-    {
-        if(cfg.netSkill < NUM_SKILL_MODES - 1)
-            cfg.netSkill++;
-    }
-    else if(cfg.netSkill > 0)
-    {
-        cfg.netSkill--;
-    }
-}
-
-void SCOpenServer(int option, void* data)
+void SCOpenServer(mn_object_t* obj, int option)
 {
     if(IS_NETGAME)
     {
         // Game already running, just change map.
-#if __JHEXEN__ || __JSTRIFE__
-        Executef(false, "setmap %u", cfg.netMap+1);
+#if __JHEXEN__
+        DD_Executef(false, "setmap %u", cfg.netMap+1);
 #elif __JDOOM64__
-        Executef(false, "setmap 1 %u", cfg.netMap+1);
+        DD_Executef(false, "setmap 1 %u", cfg.netMap+1);
 #else
-        Executef(false, "setmap %u %u", cfg.netEpisode+1, cfg.netMap+1);
+        DD_Executef(false, "setmap %u %u", cfg.netEpisode+1, cfg.netMap+1);
 #endif
 
         Hu_MenuCommand(MCMD_CLOSE);
@@ -726,24 +585,24 @@ void SCOpenServer(int option, void* data)
     DD_Execute(false, "net setup server");
 }
 
-void SCCloseServer(int option, void* data)
+void SCCloseServer(mn_object_t* obj, int option)
 {
     DD_Execute(false, "net server close");
     Hu_MenuCommand(MCMD_CLOSE);
 }
 
-void SCEnterPlayerSetupMenu(int option, void* data)
+void SCEnterPlayerSetupMenu(mn_object_t* obj, int option)
 {
-    strncpy(plrNameEd.text, *(char **) Con_GetVariable("net-name")->ptr, 255);
+    M_SetEditFieldText(&plrNameEd, *(char**) Con_GetVariable("net-name")->ptr);
     plrColor = cfg.netColor;
 #if __JHEXEN__
     plrClass = cfg.netClass;
 #endif
-    M_SetupNextMenu(&PlayerSetupMenu);
+    MN_GotoPage(&PlayerSetupMenu);
 }
 
 #if __JHEXEN__
-void SCPlayerClass(int option, void* data)
+void SCPlayerClass(mn_object_t* obj, int option)
 {
     if(option == RIGHT_DIR)
     {
@@ -755,7 +614,7 @@ void SCPlayerClass(int option, void* data)
 }
 #endif
 
-void SCPlayerColor(int option, void* data)
+void SCPlayerColor(mn_object_t* obj, int option)
 {
     if(option == RIGHT_DIR)
     {
@@ -771,9 +630,9 @@ void SCPlayerColor(int option, void* data)
         plrColor--;
 }
 
-void SCAcceptPlayer(int option, void* data)
+void SCAcceptPlayer(mn_object_t* obj, int option)
 {
-    char                buf[300];
+    char buf[300];
 
     cfg.netColor = plrColor;
 #if __JHEXEN__
@@ -794,15 +653,15 @@ void SCAcceptPlayer(int option, void* data)
         // until the server sends us a notification -- this means if we do
         // 'setcolor' first, the 'setclass' after it will override the color
         // change (or such would appear to be the case).
-        Executef(false, "setclass %i", plrClass);
+        DD_Executef(false, "setclass %i", plrClass);
 #endif
-        Executef(false, "setcolor %i", plrColor);
+        DD_Executef(false, "setcolor %i", plrColor);
     }
 
-    M_SetupNextMenu(&MultiplayerMenu);
+    MN_GotoPage(&MultiplayerMenu);
 }
 
-void SCGameSetupDamageMod(int option, void* data)
+void SCGameSetupDamageMod(mn_object_t* obj, int option)
 {
     if(option == RIGHT_DIR)
     {
@@ -813,7 +672,7 @@ void SCGameSetupDamageMod(int option, void* data)
         cfg.netMobDamageModifier--;
 }
 
-void SCGameSetupHealthMod(int option, void* data)
+void SCGameSetupHealthMod(mn_object_t* obj, int option)
 {
     if(option == RIGHT_DIR)
     {
@@ -824,7 +683,7 @@ void SCGameSetupHealthMod(int option, void* data)
         cfg.netMobHealthModifier--;
 }
 
-void SCGameSetupGravity(int option, void* data)
+void SCGameSetupGravity(mn_object_t* obj, int option)
 {
     if(option == RIGHT_DIR)
     {
@@ -840,9 +699,9 @@ void SCGameSetupGravity(int option, void* data)
  */
 void MN_TickerEx(void)
 {
-    static int          frameTimer = 0;
+    static int frameTimer = 0;
 
-    if(currentMenu == &PlayerSetupMenu)
+    if(MN_CurrentPage() == &PlayerSetupMenu)
     {
         if(frameTimer++ >= 14)
         {
@@ -850,74 +709,4 @@ void MN_TickerEx(void)
             CurrentPlrFrame = M_Random() % 8;
         }
     }
-}
-
-int Ed_VisibleSlotChars(char* text, int (*widthFunc) (const char* text, compositefontid_t font))
-{
-    char                cbuf[2] = { 0, 0 };
-    int                 i, w;
-
-    for(i = 0, w = 0; text[i]; ++i)
-    {
-        cbuf[0] = text[i];
-        w += widthFunc(cbuf, GF_FONTA);
-        if(w > SLOT_WIDTH)
-            break;
-    }
-    return i;
-}
-
-void Ed_MakeCursorVisible(void)
-{
-    char                buf[MAX_EDIT_LEN + 1];
-    int                 i, len, vis;
-
-    strcpy(buf, ActiveEdit->text);
-    strupr(buf);
-    strcat(buf, "_");           // The cursor.
-    len = strlen(buf);
-    for(i = 0; i < len; i++)
-    {
-        vis = Ed_VisibleSlotChars(buf + i, GL_TextWidth);
-
-        if(i + vis >= len)
-        {
-            ActiveEdit->firstVisible = i;
-            break;
-        }
-    }
-}
-
-#if __JDOOM__ || __JDOOM64__
-#define EDITFIELD_BOX_YOFFSET 3
-#else
-#define EDITFIELD_BOX_YOFFSET 5
-#endif
-
-void DrawEditField(menu_t* menu, int index, editfield_t* ef)
-{
-    char buf[MAX_EDIT_LEN + 1], *text;
-    int vis, width = GL_CharWidth('_', GF_FONTA) * 27;
-
-    strcpy(buf, ef->text);
-    strupr(buf);
-    if(ActiveEdit == ef && menuTime & 0x8)
-        strcat(buf, "_");
-    text = buf + ef->firstVisible;
-    vis = Ed_VisibleSlotChars(text, GL_TextWidth);
-    text[vis] = 0;
-
-    M_DrawSaveLoadBorder(menu->x - 8, menu->y + EDITFIELD_BOX_YOFFSET + (menu->itemHeight * index), width + 16);
-    DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
-    GL_DrawTextFragment3(text, menu->x, menu->y + EDITFIELD_BOX_YOFFSET + 1 + (menu->itemHeight * index), GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
-}
-
-void SCEditField(int efptr, void* data)
-{
-    editfield_t* ef = data;
-
-    // Activate this edit field.
-    ActiveEdit = ef;
-    strcpy(ef->oldtext, ef->text);
-    Ed_MakeCursorVisible();
 }

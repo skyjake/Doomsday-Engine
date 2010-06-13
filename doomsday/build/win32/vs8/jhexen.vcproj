@@ -1249,10 +1249,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\jhexen\include\mn_def.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\plugins\jhexen\include\p_acs.h"
 				>
 			</File>

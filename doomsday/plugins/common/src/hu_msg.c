@@ -187,7 +187,7 @@ static void composeYesNoMessage(void)
 
 static void drawMessage(void)
 {
-#define LEADING             (.5f)
+#define LEADING             (0)
 
     int x = SCREENWIDTH/2, y = SCREENHEIGHT/2;
     const char* questionString;
@@ -200,7 +200,7 @@ static void drawMessage(void)
         Con_Error("drawMessage: Internal error, unknown message type %i.\n", (int) msgType);
     }
 
-    GL_DrawText(msgText, x, y, GF_FONTA, DTF_ALIGN_TOP, LEADING, 0, cfg.menuColor2[0], cfg.menuColor2[1], cfg.menuColor2[2], 1, cfg.menuGlitter, cfg.menuShadow, false);
+    GL_DrawText(msgText, x, y, GF_FONTA, DTF_ALIGN_TOP, LEADING, 0, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], 1, cfg.menuGlitter, cfg.menuShadow, false);
     y += GL_TextHeight(msgText, GF_FONTA);
     // An additional blank line between the message and response prompt.
     y += GL_CharHeight('A', GF_FONTA) * (1+LEADING);
@@ -221,11 +221,11 @@ void Hu_MsgDrawer(void)
     // Scale by the hudScale.
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
-    DGL_Translatef(160, 100, 0);
+    DGL_Translatef(SCREENWIDTH/2, SCREENHEIGHT/2, 0);
 
     DGL_Scalef(cfg.hudScale, cfg.hudScale, 1);
 
-    DGL_Translatef(-160, -100, 0);
+    DGL_Translatef(-(SCREENWIDTH/2), -(SCREENHEIGHT/2), 0);
 
     // Draw the message.
     drawMessage();

@@ -166,10 +166,6 @@ static hudstate_t hudStates[MAXPLAYERS];
 static fogeffectdata_t fogEffectData;
 
 static patchinfo_t borderPatches[8];
-static patchid_t dpSliderLeft;
-static patchid_t dpSliderMiddle;
-static patchid_t dpSliderRight;
-static patchid_t dpSliderHandle;
 static patchid_t m_pause; // Paused graphic.
 
 // CODE -------------------------------------------------------------------
@@ -250,16 +246,8 @@ void Hu_LoadData(void)
         R_PrecachePatch(borderLumps[i], &borderPatches[i-1]);
 
 #if __JDOOM__ || __JDOOM64__
-    dpSliderLeft = R_PrecachePatch("M_THERML", NULL);
-    dpSliderMiddle = R_PrecachePatch("M_THERM2", NULL);
-    dpSliderRight = R_PrecachePatch("M_THERMR", NULL);
-    dpSliderHandle = R_PrecachePatch("M_THERMO", NULL);
     m_pause = R_PrecachePatch("M_PAUSE", NULL);
 #elif __JHERETIC__ || __JHEXEN__
-    dpSliderLeft = R_PrecachePatch("M_SLDLT", NULL);
-    dpSliderMiddle = R_PrecachePatch("M_SLDMD1", NULL);
-    dpSliderRight = R_PrecachePatch("M_SLDRT", NULL);
-    dpSliderHandle = R_PrecachePatch("M_SLDKB", NULL);
     m_pause = R_PrecachePatch("PAUSED", NULL);
 #endif
 
@@ -1320,60 +1308,6 @@ void M_DrawBackgroundBox(float x, float y, float w, float h, boolean background,
         DGL_SetPatch(bl->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
         DGL_DrawRect(x - bl->width, y + h, bl->width, bl->height, red, green, blue, alpha);
     }
-}
-
-/**
- * Draws a menu slider widget control.
- */
-void M_DrawSlider(int x, int y, int height, int range, int slot, float alpha)
-{
-#define WIDTH           (middleInfo.width)
-#define HEIGHT          (middleInfo.height)
-
-    patchinfo_t middleInfo;
-    float pos, scale;
-
-    if(range <= 1 || height <= 0)
-        return;
-    if(!R_GetPatchInfo(dpSliderMiddle, &middleInfo))
-        return;
-    if(HEIGHT <= 0)
-        return;
-
-    pos = (float)slot / (range-1);
-    scale = (float) height / HEIGHT;
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-    DGL_Translatef(x, y, 0);
-    DGL_Scalef(scale, scale, 1);
-
-    if(cfg.menuShadow > 0)
-    {
-        float from[2], to[2];
-        from[0] = -3;
-        from[1] = 1+HEIGHT/2;
-        to[0] = ((range+1) * WIDTH) - 6;
-        to[1] = 1+HEIGHT/2;
-        M_DrawGlowBar(from, to, HEIGHT*1.1f, true, true, true, 0, 0, 0, alpha * cfg.menuShadow);
-    }
-
-    DGL_Color4f( 1, 1, 1, alpha);
-
-    GL_DrawPatch2(dpSliderLeft, 0, 0, DPF_ALIGN_RIGHT|DPF_ALIGN_TOP|DPF_NO_OFFSETX);
-    GL_DrawPatch(dpSliderRight, range * WIDTH, 0);
-
-    DGL_SetPatch(dpSliderMiddle, DGL_REPEAT, DGL_REPEAT);
-    DGL_DrawRectTiled(0, middleInfo.topOffset, range * WIDTH, HEIGHT, middleInfo.width, middleInfo.height);
-
-    DGL_Color4f(1, 1, 1, alpha);
-    GL_DrawPatch2(dpSliderHandle, range * WIDTH * pos, 1, DPF_ALIGN_TOP|DPF_NO_OFFSET);
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-
-#undef WIDTH
-#undef HEIGHT
 }
 
 void Draw_BeginZoom(float s, float originX, float originY)

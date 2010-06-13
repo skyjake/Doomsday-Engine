@@ -117,8 +117,7 @@ typedef struct jheretic_config_s {
     float           filterStrength;
     int             plrViewHeight;
     byte            mapTitle, hideIWADAuthor;
-    float           menuColor[3];
-    float           menuColor2[3];
+    float           menuColors[3][3];
     byte            noCoopDamage;
     byte            noTeamDamage;
     byte            respawnMonstersNightmare;

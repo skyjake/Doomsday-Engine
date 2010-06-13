@@ -27,56 +27,248 @@
  * m_defs.h: Common menu defines and types.
  */
 
-#ifndef __MENU_COMMON_DEFS_H_
-#define __MENU_COMMON_DEFS_H_
+#ifndef LIBCOMMON_MENU_MAIN_H
+#define LIBCOMMON_MENU_MAIN_H
 
 #include "r_common.h"
 
+#define LEFT_DIR                0
+#define RIGHT_DIR               1
+
+// Menu object types.
 typedef enum {
-    ITT_EMPTY,
-    ITT_EFUNC,
-    ITT_LRFUNC,
-    ITT_SETMENU
-} menuitemtype_t;
+    MN_NONE,
+    MN_TEXT,
+    MN_BUTTON,
+    MN_BUTTON2, // Staydown/2-state button.
+    MN_BUTTON2EX, // Staydown/2-state with additional data.
+    MN_EDIT,
+    MN_LIST,
+    MN_SLIDER,
+    MN_COLORBOX,
+    MN_BINDINGS
+} mn_obtype_e;
 
-// Menu item flags
-#define MIF_NOTALTTXT           0x01 // Don't use alt text instead of lump (M_NMARE)
+/**
+ * @defgroup menuObjectFlags Menu Object Flags
+ */
+/*@{*/
+#define MNF_HIDDEN              0x1
+#define MNF_DISABLED            0x2 // Can't be interacted with.
+//#define MNF_PAUSED              0x4 // Ticker not called.
+//#define MNF_CLICKED             0x8
+#define MNF_INACTIVE            0x10 // Object active.
+//#define MNF_FOCUS               0x20 // Has focus.
+//#define MNF_NO_FOCUS            0x40 // Can't receive focus.
+//#define MNF_DEFAULT             0x80 // Has focus by default.
+//#define MNF_LEFT_ALIGN          0x100
+//#define MNF_FADE_AWAY           0x200 // Fade UI away while the control is active.
+//#define MNF_NEVER_FADE          0x400
+#define MNF_NO_ALTTEXT          0x800 // Don't use alt text instead of lump (M_NMARE)
+#define MNF_ID0                 0x10000000
+#define MNF_ID1                 0x20000000
+#define MNF_ID2                 0x40000000
+#define MNF_ID3                 0x80000000
+/*@}*/
 
-typedef struct {
-    menuitemtype_t  type;
-    int             flags;
+typedef struct mn_object_s {
+    mn_obtype_e     type; // Type of the object.
+    int             group;
+    int             flags; // @see menuObjectFlags.
     const char*     text;
-    void          (*func) (int option, void *data);
-    int             option;
+    compositefontid_t font;
     patchid_t*      patch;
-    void*           data;
-} menuitem_t;
+    void          (*drawer) (const struct mn_object_s* obj, int x, int y, float alpha);
+    void          (*dimensions) (const struct mn_object_s* obj, int* width, int* height);
+    void          (*action) (struct mn_object_s* obj, int option);
+    void*           data; // Pointer to extra data.
+    int             data2; // Extra numerical data.
+    int             timer;
+} mn_object_t;
 
-// Menu flags
-#define MNF_NOHOTKEYS           0x00000001 // Hotkeys are disabled.
-#define MNF_DELETEFUNC          0x00000002 // MCMD_DELETE causes a call to item's func
+/**
+ * @defGroup menuPageFlags Menu Page Flags
+ */
+/*@{*/
+#define MNPF_NOHOTKEYS          0x00000001 // Hotkeys are disabled.
+/*@}*/
 
-typedef struct unscaledmenustate_s {
-    int             numVisItems;
+typedef struct mn_page_unscaledstate_s {
+    int             numVisObjects;
     int             y;
-} unscaledmenustate_t;
+} mn_page_unscaledstate_t;
+
+typedef struct mn_page_s {
+    mn_object_t*    objects; // List of objects.
+    int             count;
+    int             flags; // @see menuPageFlags.
+    int             originX;
+    int             originY;
+    void          (*drawer) (const struct mn_page_s*, int, int);
+    int             focus; // Index of the focus object.
+    struct mn_page_s* previous; // Pointer to the previous page, if any.
+    float           leading;
+    // For scrollable multi-pages.
+    int             firstObject, numVisObjects;
+    // Scalable pages.
+    mn_page_unscaledstate_t unscaled;
+} mn_page_t;
+
+mn_page_t*      MN_CurrentPage(void);
+
+void            MNText_Drawer(const mn_object_t* obj, int x, int y, float alpha);
+void            MNText_Dimensions(const mn_object_t* obj, int* width, int* height);
+
+/**
+ * Two-state button.
+ */
+typedef struct mndata_button_s {
+    void*           data;
+    const char*     yes, *no;
+} mndata_button_t;
+
+void            MNButton_Drawer(const mn_object_t* obj, int x, int y, float alpha);
+void            MNButton_Dimensions(const mn_object_t* obj, int* width, int* height);
+
+/**
+ * Edit field.
+ */
+#define MNDATA_EDIT_TEXT_MAX_LENGTH 24
+
+typedef struct mndata_edit_s {
+    char            text[MNDATA_EDIT_TEXT_MAX_LENGTH+1];
+    char            oldtext[MNDATA_EDIT_TEXT_MAX_LENGTH+1]; // If the current edit is canceled...
+    uint            maxVisibleChars;
+    const char*     emptyString; // Drawn when editfield is empty/null.
+    int             data;
+    void          (*onChange) (const struct mndata_edit_s*);
+} mndata_edit_t;
+
+void            MNEdit_Drawer(const mn_object_t* obj, int x, int y, float alpha);
+boolean         MNEdit_Responder(mn_object_t* obj, const event_t* ev);
+void            MNEdit_Dimensions(const mn_object_t* obj, int* width, int* height);
+
+/**
+ * List selection.
+ */
+#define MNDATA_LIST_LEADING     .5f
+#define NUMLISTITEMS(x) (sizeof(x)/sizeof(mndata_listitem_t))
 
 typedef struct {
-    int             flags;
-    int             x;
-    int             y;
-    void          (*drawFunc) (void);
-    int             itemCount;
-    const menuitem_t* items;
-    int             lastOn;
-    int             prevMenu; // menutype_t
-    compositefontid_t    font; // Font for menu items.
-    float*          color;
-    int             itemHeight;
-    // For multipage menus.
-    int             firstItem, numVisItems;
-    // Scalable menus.
-    unscaledmenustate_t unscaled;
-} menu_t;
+    char            text[256];
+    int             data;
+    int             data2;
+} mndata_listitem_t;
 
+typedef struct mndata_list_s {
+    void*           items;
+    int             count; // Number of items.
+    void*           data;
+    int             selection; // Selected item (-1 if none).
+    int             first; // First visible item.
+} mndata_list_t;
+
+void            MNList_Drawer(const mn_object_t* obj, int x, int y, float alpha);
+void            MNList_Dimensions(const mn_object_t* obj, int* width, int* height);
+
+void            MNList_InlineDrawer(const mn_object_t* obj, int x, int y, float alpha);
+void            MNList_InlineDimensions(const mn_object_t* obj, int* width, int* height);
+
+/**
+ * Color preview box.
+ */
+#define MNDATA_COLORBOX_WIDTH   4 // Inner width in fixed 320x200 space.
+#define MNDATA_COLORBOX_HEIGHT  4 // Inner height in fixed 320x200 space.
+
+void            MNColorBox_Drawer(const mn_object_t* obj, int x, int y, float alpha);
+void            MNColorBox_Dimensions(const mn_object_t* obj, int* width, int* height);
+
+/**
+ * Graphical slider.
+ */
+#define MNDATA_SLIDER_SLOTS     10
+#define MNDATA_SLIDER_SCALE     .75f
+
+typedef struct mndata_slider_s {
+    float           min, max;
+    float           value;
+    float           step; // Button step.
+    boolean         floatMode; // Otherwise only integers are allowed.
+    void*           data;
+} mndata_slider_t;
+
+void            MNSlider_Drawer(const mn_object_t* obj, int x, int y, float alpha);
+void            MNSlider_Dimensions(const mn_object_t* obj, int* width, int* height);
+int             MNSlider_ThumbPos(const mn_object_t* obj);
+
+/**
+ * Bindings visualizer.
+ */
+typedef struct mndata_bindings_s {
+    const char*     text;
+    const char*     bindContext;
+    const char*     controlName;
+    const char*     command;
+    int             flags;
+} mndata_bindings_t;
+
+void            MNBindings_Drawer(const mn_object_t* obj, int x, int y, float alpha);
+void            MNBindings_Dimensions(const mn_object_t* obj, int* width, int* height);
+
+#define MN_CURSOR_COUNT         2
+#define MN_CURSOR_TICSPERFRAME  8
+
+#if __JHEXEN__
+# define NUMSAVESLOTS           6
+#else
+# define NUMSAVESLOTS           8
 #endif
+
+extern int mnTime;
+extern boolean shiftdown;
+extern mn_page_t* mnCurrentPage;
+extern short mnFocusObjectIndex;
+
+extern mn_page_t MainMenu;
+extern mn_page_t GameTypeMenu;
+#if __JHEXEN__
+extern mn_page_t PlayerClassMenu;
+#endif
+#if __JDOOM__ || __JHERETIC__
+extern mn_page_t EpisodeMenu;
+#endif
+extern mn_page_t SkillLevelMenu;
+extern mn_page_t OptionsMenu;
+extern mn_page_t SoundMenu;
+extern mn_page_t GameplayMenu;
+extern mn_page_t HUDMenu;
+extern mn_page_t AutomapMenu;
+#if __JHERETIC__ || __JHEXEN__
+extern mn_page_t FilesMenu;
+#endif
+extern mn_page_t LoadMenu;
+extern mn_page_t SaveMenu;
+extern mn_page_t MultiplayerMenu;
+extern mn_page_t GameSetupMenu;
+extern mn_page_t PlayerSetupMenu;
+#if __JHERETIC__ || __JHEXEN__
+extern mn_page_t InventoryMenu;
+#endif
+extern mn_page_t WeaponMenu;
+extern mn_page_t ControlsMenu;
+
+void            M_DrawSaveLoadBorder(int x, int y, int width);
+void            MN_GotoPage(mn_page_t* page);
+
+void            M_StartControlPanel(void);
+void            M_FloatMod10(float* variable, int option);
+
+void            SCEnterMultiplayerMenu(mn_object_t* obj, int option);
+
+void            MN_TickerEx(void); // The extended ticker.
+
+// Color widget.
+void            MN_ActivateColorBox(mn_object_t* obj, int option);
+void            M_WGCurrentColor(mn_object_t* obj, int option);
+
+#endif /* LIBCOMMON_MENU_MAIN_H */

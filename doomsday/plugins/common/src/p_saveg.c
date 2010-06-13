@@ -133,7 +133,7 @@ typedef struct saveheader_s {
     int             magic;
     int             version;
     int             gameMode;
-    char            description[SAVESTRINGSIZE];
+    char            description[SAVESTRINGSIZE+1];
     byte            skill;
     byte            episode;
     byte            map;
@@ -4815,7 +4815,8 @@ int SV_GetSaveDescription(char* str, const char* filename, size_t len)
     if(hdr.magic != MY_SAVE_MAGIC)
         // This isn't a proper savegame file.
         return false;
-    strncpy(str, hdr.description, len);
+    memcpy(str, hdr.description, len);
+    str[len] = '\0';
     return true;
 #endif
 }
@@ -4947,7 +4948,7 @@ int SV_SaveGameWorker(void* ptr)
 # endif
 
     strncpy(hdr.description, param->description, SAVESTRINGSIZE);
-    hdr.description[SAVESTRINGSIZE - 1] = 0;
+    hdr.description[SAVESTRINGSIZE] = 0;
     hdr.skill = gameSkill;
     if(fastParm)
         hdr.skill |= 0x80;      // Set high byte.

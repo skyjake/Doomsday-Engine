@@ -263,4 +263,11 @@ enum { CR, CG, CB, CA }; // Color indices.
 
 #define DEFAULT_PLAYER_VIEWHEIGHT (54)
 
+enum {
+    MENU_COLOR,
+    MENU_COLOR2,
+    MENU_COLOR3,
+    NUM_MENU_COLORS
+};
+
 #endif

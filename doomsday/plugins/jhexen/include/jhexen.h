@@ -40,7 +40,6 @@
 #include "../../jhexen/include/m_cheat.h"
 #include "../../jhexen/include/m_menu.h"
 #include "../../jhexen/include/m_random.h"
-#include "../../jhexen/include/mn_def.h"
 #include "../../jhexen/include/p_acs.h"
 #include "../../jhexen/include/p_anim.h"
 #include "../../jhexen/include/p_enemy.h"

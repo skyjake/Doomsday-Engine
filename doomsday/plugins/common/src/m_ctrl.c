@@ -55,10 +55,9 @@
 #define CCF_REPEAT              0x8
 #define CCF_SIDESTEP_MODIFIER   0x10
 
-#define BIND_GAP                2
 #define SMALL_SCALE             .75f
 
-// Binding iteration flags for M_IterateBindings().
+// Binding iteration flags for MN_IterateBindings().
 #define MIBF_IGNORE_REPEATS     0x1
 
 // TYPES -------------------------------------------------------------------
@@ -69,158 +68,131 @@ typedef enum {
     MIBT_JOY
 } bindingitertype_t;
 
-/** Menu items in the Controls menu are created based on this data. */
-typedef struct controlconfig_s {
-    const char*     itemText;
-    const char*     bindContext;
-    const char*     controlName;
-    const char*     command;
-    int             flags;
-
-    // Automatically set:
-    menuitem_t*     item;
-} controlconfig_t;
-
 typedef struct bindingdrawerdata_s {
     int             x;
     int             y;
+    float           alpha;
 } bindingdrawerdata_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void M_DrawControlsMenu(void);
+void M_DrawControlsMenu(const mn_page_t* page, int x, int y);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, void* data,
-                       void (*callback)(bindingitertype_t type, int bid, const char* event,
-                                        boolean isInverse, void *data));
+void MN_IterateBindings(mndata_bindings_t* obj, const char* bindings, int flags, void* data, void (*callback)(bindingitertype_t type, int bid, const char* event, boolean isInverse, void *data));
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-static menuitem_t* ControlsItems;
+static mn_object_t* ControlsItems;
 
 #if __JDOOM__ || __JDOOM64__
-menu_t ControlsDef = {
-    MNF_NOHOTKEYS | MNF_DELETEFUNC,
+mn_page_t ControlsMenu = {
+    NULL, 0,
+    MNPF_NOHOTKEYS,
     32, 40,
     M_DrawControlsMenu,
-    0, NULL,
-    1, MENU_OPTIONS,
-    GF_FONTA,                    //1, 0, 0,
-    cfg.menuColor2,
-    LINEHEIGHT_A,
+    0, &OptionsMenu,
+    .2f,
     0, 17, { 17, 40 }
 };
 #endif
 
 #ifdef __JHERETIC__
-menu_t ControlsDef = {
-    MNF_NOHOTKEYS | MNF_DELETEFUNC,
+mn_page_t ControlsMenu = {
+    NULL, 0,
+    MNPF_NOHOTKEYS,
     32, 26,
     M_DrawControlsMenu,
-    0, NULL,
-    1, MENU_OPTIONS,
-    GF_FONTA,                    //1, 0, 0,
-    cfg.menuColor2,
-    LINEHEIGHT_A,
+    0, &OptionsMenu,
+    .2f,
     0, 15, { 15, 26 }
 };
 #endif
 
 #ifdef __JHEXEN__
-menu_t ControlsDef = {
-    MNF_NOHOTKEYS | MNF_DELETEFUNC,
+mn_page_t ControlsMenu = {
+    NULL, 0,
+    MNPF_NOHOTKEYS,
     32, 21,
     M_DrawControlsMenu,
-    0, NULL,
-    1, MENU_OPTIONS,
-    GF_FONTA,                    //1, 0, 0,
-    cfg.menuColor2,
-    LINEHEIGHT_A,
+    0, &OptionsMenu,
+    .2f,
     0, 16, { 16, 21 }
 };
 #endif
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-controlconfig_t* grabbing = 0;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static controlconfig_t controlConfig[] =
+static mndata_bindings_t controlConfig[] =
 {
-    { "movement" },
-    { "forward", 0, "walk", 0, CCF_NON_INVERSE },
-    { "backward", 0, "walk", 0, CCF_INVERSE },
-    { "strafe left", 0, "sidestep", 0, CCF_INVERSE },
-    { "strafe right", 0, "sidestep", 0, CCF_NON_INVERSE },
-    { "turn left", 0, "turn", 0, CCF_STAGED | CCF_INVERSE | CCF_SIDESTEP_MODIFIER },
-    { "turn right", 0, "turn", 0, CCF_STAGED | CCF_NON_INVERSE | CCF_SIDESTEP_MODIFIER },
-    { "jump", 0, 0, "impulse jump" },
-    { "use", 0, 0, "impulse use" },
-    { "fly up", 0, "zfly", 0, CCF_STAGED | CCF_NON_INVERSE },
-    { "fly down", 0, "zfly", 0, CCF_STAGED | CCF_INVERSE },
-    { "fall to ground", 0, 0, "impulse falldown" },
-    { "speed", 0, "speed" },
-    { "strafe", 0, "strafe" },
+    { "Movement" },
+    { "Forward", 0, "walk", 0, CCF_NON_INVERSE },
+    { "Backward", 0, "walk", 0, CCF_INVERSE },
+    { "Strafe Left", 0, "sidestep", 0, CCF_INVERSE },
+    { "Strafe Right", 0, "sidestep", 0, CCF_NON_INVERSE },
+    { "Turn Left", 0, "turn", 0, CCF_STAGED | CCF_INVERSE | CCF_SIDESTEP_MODIFIER },
+    { "Turn Right", 0, "turn", 0, CCF_STAGED | CCF_NON_INVERSE | CCF_SIDESTEP_MODIFIER },
+    { "Jump", 0, 0, "impulse jump" },
+    { "Use", 0, 0, "impulse use" },
+    { "Fly Up", 0, "zfly", 0, CCF_STAGED | CCF_NON_INVERSE },
+    { "Fly Down", 0, "zfly", 0, CCF_STAGED | CCF_INVERSE },
+    { "Fall To Ground", 0, 0, "impulse falldown" },
+    { "Speed", 0, "speed" },
+    { "Strafe", 0, "strafe" },
 
-    { NULL },
+    { "Looking" },
+    { "Look Up", 0, "look", 0, CCF_STAGED | CCF_NON_INVERSE },
+    { "Look Down", 0, "look", 0, CCF_STAGED | CCF_INVERSE },
+    { "Look Center", 0, 0, "impulse lookcenter" },
 
-    { "looking" },
-    { "look up", 0, "look", 0, CCF_STAGED | CCF_NON_INVERSE },
-    { "look down", 0, "look", 0, CCF_STAGED | CCF_INVERSE },
-    { "look center", 0, 0, "impulse lookcenter" },
-
-    { NULL },
-
-    { "weapons" },
-    { "attack/fire", 0, "attack" },
-    { "next weapon", 0, 0, "impulse nextweapon" },
-    { "previous weapon", 0, 0, "impulse prevweapon" },
+    { "Weapons" },
+    { "Attack/Fire", 0, "attack" },
+    { "Next Weapon", 0, 0, "impulse nextweapon" },
+    { "Previous Weapon", 0, 0, "impulse prevweapon" },
 
 #if __JDOOM__ || __JDOOM64__
-    { "fist/chainsaw", 0, 0, "impulse weapon1" },
-    { "chainsaw/fist", 0, 0, "impulse weapon8" },
-    { "pistol", 0, 0, "impulse weapon2" },
-    { "shotgun/super sg", 0, 0, "impulse weapon3" },
-    { "super sg/shotgun", 0, 0, "impulse weapon9" },
-    { "chaingun", 0, 0, "impulse weapon4" },
-    { "rocket launcher", 0, 0, "impulse weapon5" },
-    { "plasma rifle", 0, 0, "impulse weapon6" },
-    { "bfg 9000", 0, 0, "impulse weapon7" },
+    { "Fist/Chainsaw", 0, 0, "impulse weapon1" },
+    { "Chainsaw/Fist", 0, 0, "impulse weapon8" },
+    { "Pistol", 0, 0, "impulse weapon2" },
+    { "Shotgun/Super SG", 0, 0, "impulse weapon3" },
+    { "Super SG/Shotgun", 0, 0, "impulse weapon9" },
+    { "Chaingun", 0, 0, "impulse weapon4" },
+    { "Rocket Launcher", 0, 0, "impulse weapon5" },
+    { "Plasma Rifle", 0, 0, "impulse weapon6" },
+    { "BFG 9000", 0, 0, "impulse weapon7" },
 #endif
 #if __JDOOM64__
-    { "unmaker", 0, 0, "impulse weapon10" },
+    { "Unmaker", 0, 0, "impulse weapon10" },
 #endif
 
 #if __JHERETIC__
-    { "staff/gauntlets", 0, 0, "impulse weapon1" },
-    { "elvenwand", 0, 0, "impulse weapon2" },
-    { "crossbow", 0, 0, "impulse weapon3" },
-    { "dragon claw", 0, 0, "impulse weapon4" },
-    { "hellstaff", 0, 0, "impulse weapon5" },
-    { "phoenix rod", 0, 0, "impulse weapon6" },
-    { "firemace", 0, 0, "impulse weapon7" },
+    { "Staff/Gauntlets", 0, 0, "impulse weapon1" },
+    { "Elvenwand", 0, 0, "impulse weapon2" },
+    { "Crossbow", 0, 0, "impulse weapon3" },
+    { "Dragon Claw", 0, 0, "impulse weapon4" },
+    { "Hellstaff", 0, 0, "impulse weapon5" },
+    { "Phoenix Rod", 0, 0, "impulse weapon6" },
+    { "Firemace", 0, 0, "impulse weapon7" },
 #endif
 
 #if __JHEXEN__
-    { "weapon 1", 0, 0, "impulse weapon1" },
-    { "weapon 2", 0, 0, "impulse weapon2" },
-    { "weapon 3", 0, 0, "impulse weapon3" },
-    { "weapon 4", 0, 0, "impulse weapon4" },
+    { "Weapon 1", 0, 0, "impulse weapon1" },
+    { "Weapon 2", 0, 0, "impulse weapon2" },
+    { "Weapon 3", 0, 0, "impulse weapon3" },
+    { "Weapon 4", 0, 0, "impulse weapon4" },
 #endif
 
 #if __JHERETIC__ || __JHEXEN__
-    { NULL },
-
-    { "inventory" },
-    { "move left", 0, 0, "impulse previtem", CCF_REPEAT },
-    { "move right", 0, 0, "impulse nextitem", CCF_REPEAT },
-    { "use item", 0, 0, "impulse useitem" },
-    { "panic!", 0, 0, "impulse panic" },
+    { "Inventory" },
+    { "Move Left", 0, 0, "impulse previtem", CCF_REPEAT },
+    { "Move Right", 0, 0, "impulse nextitem", CCF_REPEAT },
+    { "Use Item", 0, 0, "impulse useitem" },
+    { "Panic!", 0, 0, "impulse panic" },
 #endif
 
 #ifdef __JHERETIC__
@@ -251,182 +223,192 @@ static controlconfig_t controlConfig[] =
     { (const char*) TXT_TXT_INV_EGG, 0, 0, "impulse egg" },
 #endif
 
-    { NULL },
-
-    { "chat" },
-    { "open chat", 0, 0, "beginchat" },
+    { "Chat" },
+    { "Open Chat", 0, 0, "beginchat" },
 
 #if __JDOOM__ || __JDOOM64__
-    { "green chat", 0, 0, "beginchat 0" },
-    { "indigo chat", 0, 0, "beginchat 1" },
-    { "brown chat", 0, 0, "beginchat 2" },
-    { "red chat", 0, 0, "beginchat 3" },
+    { "Green Chat", 0, 0, "beginchat 0" },
+    { "Indigo Chat", 0, 0, "beginchat 1" },
+    { "Brown Chat", 0, 0, "beginchat 2" },
+    { "Red Chat", 0, 0, "beginchat 3" },
 #endif
 
 #if __JHERETIC__
-    { "green chat", 0, 0, "beginchat 0" },
-    { "yellow chat", 0, 0, "beginchat 1" },
-    { "red chat", 0, 0, "beginchat 2" },
-    { "blue chat", 0, 0, "beginchat 3" },
+    { "Green Chat", 0, 0, "beginchat 0" },
+    { "Yellow Chat", 0, 0, "beginchat 1" },
+    { "Red Chat", 0, 0, "beginchat 2" },
+    { "Blue Chat", 0, 0, "beginchat 3" },
 #endif
 
-    { "send message", "chat", 0, "chatcomplete" },
-    { "cancel message", "chat", 0, "chatcancel" },
-    { "macro 1", "chat", 0, "chatsendmacro 0" },
-    { "macro 2", "chat", 0, "chatsendmacro 1" },
-    { "macro 3", "chat", 0, "chatsendmacro 2" },
-    { "macro 4", "chat", 0, "chatsendmacro 3" },
-    { "macro 5", "chat", 0, "chatsendmacro 4" },
-    { "macro 6", "chat", 0, "chatsendmacro 5" },
-    { "macro 7", "chat", 0, "chatsendmacro 6" },
-    { "macro 8", "chat", 0, "chatsendmacro 7" },
-    { "macro 9", "chat", 0, "chatsendmacro 8" },
-    { "macro 10", "chat", 0, "chatsendmacro 9" },
-    { "backspace", "chat", 0, "chatdelete" },
+    { "Send Message", "chat", 0, "chatcomplete" },
+    { "Cancel Message", "chat", 0, "chatcancel" },
+    { "Macro 1", "chat", 0, "chatsendmacro 0" },
+    { "Macro 2", "chat", 0, "chatsendmacro 1" },
+    { "Macro 3", "chat", 0, "chatsendmacro 2" },
+    { "Macro 4", "chat", 0, "chatsendmacro 3" },
+    { "Macro 5", "chat", 0, "chatsendmacro 4" },
+    { "Macro 6", "chat", 0, "chatsendmacro 5" },
+    { "Macro 7", "chat", 0, "chatsendmacro 6" },
+    { "Macro 8", "chat", 0, "chatsendmacro 7" },
+    { "Macro 9", "chat", 0, "chatsendmacro 8" },
+    { "Macro 10", "chat", 0, "chatsendmacro 9" },
+    { "Backspace", "chat", 0, "chatdelete", CCF_REPEAT },
 
-    { NULL },
+    { "Map" },
+    { "Show/Hide Map", 0, 0, "impulse automap" },
+    { "Zoom In", 0, "mapzoom", 0, CCF_NON_INVERSE },
+    { "Zoom Out", 0, "mapzoom", 0, CCF_INVERSE },
+    { "Zoom Maximum", "map", 0, "impulse zoommax" },
+    { "Pan Left", 0, "mappanx", 0, CCF_INVERSE },
+    { "Pan Right", 0, "mappanx", 0, CCF_NON_INVERSE },
+    { "Pan Up", 0, "mappany", 0, CCF_NON_INVERSE },
+    { "Pan Down", 0, "mappany", 0, CCF_INVERSE },
+    { "Toggle Follow", "map", 0, "impulse follow" },
+    { "Toggle Rotation", "map", 0, "impulse rotate" },
+    { "Add Mark", "map", 0, "impulse addmark" },
+    { "Clear Marks", "map", 0, "impulse clearmarks" },
 
-    { "map" },
-    { "show/hide map", 0, 0, "impulse automap" },
-    { "zoom in", 0, "mapzoom", 0, CCF_NON_INVERSE },
-    { "zoom out", 0, "mapzoom", 0, CCF_INVERSE },
-    { "zoom maximum", "map", 0, "impulse zoommax" },
-    { "pan left", 0, "mappanx", 0, CCF_INVERSE },
-    { "pan right", 0, "mappanx", 0, CCF_NON_INVERSE },
-    { "pan up", 0, "mappany", 0, CCF_NON_INVERSE },
-    { "pan down", 0, "mappany", 0, CCF_INVERSE },
-    { "toggle follow", "map", 0, "impulse follow" },
-    { "toggle rotation", "map", 0, "impulse rotate" },
-    { "add mark", "map", 0, "impulse addmark" },
-    { "clear marks", "map", 0, "impulse clearmarks" },
+    { "HUD" },
+    { "Show HUD", 0, 0, "impulse showhud" },
+    { "Show Score", 0, 0, "impulse showscore", CCF_REPEAT },
+    { "Smaller View", 0, 0, "sub view-size 1", CCF_REPEAT },
+    { "Larger View", 0, 0, "add view-size 1", CCF_REPEAT },
 
-    { NULL },
+    { "Message Refresh", 0, 0, "impulse msgrefresh" },
 
-    { "hud" },
-    { "show hud", 0, 0, "impulse showhud" },
-    { "show score", 0, 0, "impulse showscore", CCF_REPEAT },
-    { "smaller view", 0, 0, "sub view-size 1", CCF_REPEAT },
-    { "larger view", 0, 0, "add view-size 1", CCF_REPEAT },
-
-    { "message refresh", 0, 0, "impulse msgrefresh" },
-
-    { NULL },
-
-    { "shortcuts" },
-    { "pause game", 0, 0, "pause" },
+    { "Shortcuts" },
+    { "Pause Game", 0, 0, "pause" },
 #if !__JDOOM64__
-    { "help screen", "shortcut", 0, "helpscreen" },
+    { "Help Screen", "shortcut", 0, "helpscreen" },
 #endif
-    { "end game", "shortcut", 0, "endgame" },
-    { "save game", "shortcut", 0, "savegame" },
-    { "load game", "shortcut", 0, "loadgame" },
-    { "quick save", "shortcut", 0, "quicksave" },
-    { "quick load", "shortcut", 0, "quickload" },
-    { "sound options", "shortcut", 0, "soundmenu" },
-    { "toggle messages", "shortcut", 0, "togglemsgs" },
-    { "gamma correction", "shortcut", 0, "togglegamma" },
-    { "screenshot", "shortcut", 0, "screenshot" },
-    { "quit", "shortcut", 0, "quit" },
+    { "End Game", "shortcut", 0, "endgame" },
+    { "Save Game", "shortcut", 0, "savegame" },
+    { "Load Game", "shortcut", 0, "loadgame" },
+    { "Quick Save", "shortcut", 0, "quicksave" },
+    { "Quick Load", "shortcut", 0, "quickload" },
+    { "Sound Options", "shortcut", 0, "soundmenu" },
+    { "Toggle Messages", "shortcut", 0, "togglemsgs" },
+    { "Gamma Correction", "shortcut", 0, "togglegamma" },
+    { "Screenshot", "shortcut", 0, "screenshot" },
+    { "Quit", "shortcut", 0, "quit" },
 
-    { NULL },
+    { "Menu" },
+    { "Show/Hide Menu", "shortcut", 0, "menu" },
+    { "Previous Menu", "menu", 0, "menuback", CCF_REPEAT },
+    { "Move Up", "menu", 0, "menuup", CCF_REPEAT },
+    { "Move Down", "menu", 0, "menudown", CCF_REPEAT },
+    { "Move Left", "menu", 0, "menuleft", CCF_REPEAT },
+    { "Move Right", "menu", 0, "menuright", CCF_REPEAT },
+    { "Select", "menu", 0, "menuselect" },
 
-    { "menu" },
-    { "show/hide menu", "shortcut", 0, "menu" },
-    { "previous menu", "menu", 0, "menuback" },
-    { "move up", "menu", 0, "menuup", CCF_REPEAT },
-    { "move down", "menu", 0, "menudown", CCF_REPEAT },
-    { "move left", "menu", 0, "menuleft", CCF_REPEAT },
-    { "move right", "menu", 0, "menuright", CCF_REPEAT },
-    { "select", "menu", 0, "menuselect" },
-
-    { NULL },
-
-    { "on-screen questions" },
-    { "answer yes", "message", 0, "messageyes" },
-    { "answer no", "message", 0, "messageno" },
-    { "cancel", "message", 0, "messagecancel" },
+    { "On-Screen Questions" },
+    { "Answer Yes", "message", 0, "messageyes" },
+    { "Answer No", "message", 0, "messageno" },
+    { "Cancel", "message", 0, "messagecancel" },
 };
 
 // CODE --------------------------------------------------------------------
 
-static void M_DeleteBinding(bindingitertype_t type, int bid, const char* name, boolean isInverse,
-                            void* data)
+static void deleteBinding(bindingitertype_t type, int bid, const char* name, boolean isInverse, void* data)
 {
     DD_Executef(true, "delbind %i", bid);
 }
 
-static void M_EFuncControlConfig(int option, void* data)
+static void Hu_MenuBindings(mn_object_t* obj, int option)
 {
-    controlconfig_t*    cc = data;
-    char                buf[1024];
+    mndata_bindings_t* binds = obj->data;
+    char buf[1024];
 
     if(option == -1)
     {
-        if(cc->controlName)
+        if(binds->controlName)
         {
-            B_BindingsForControl(0, cc->controlName, BFCI_BOTH, buf, sizeof(buf));
+            B_BindingsForControl(0, binds->controlName, BFCI_BOTH, buf, sizeof(buf));
         }
         else
         {
-            B_BindingsForCommand(cc->command, buf, sizeof(buf));
+            B_BindingsForCommand(binds->command, buf, sizeof(buf));
         }
 
-        M_IterateBindings(cc, buf, 0, NULL, M_DeleteBinding);
+        MN_IterateBindings(binds, buf, 0, NULL, deleteBinding);
     }
     else
     {
-        // Start grabbing for this control.
-        grabbing = cc;
+        obj->flags &= ~MNF_INACTIVE; // Start grabbing for this control.
         DD_SetInteger(DD_SYMBOLIC_ECHO, true);
     }
 }
 
 void M_InitControlsMenu(void)
 {
-    int                 i, count =
-        sizeof(controlConfig) / sizeof(controlConfig[0]);
-
+    int i, n, count, configCount = sizeof(controlConfig) / sizeof(controlConfig[0]);
 
     VERBOSE( Con_Message("M_InitControlsMenu: Creating controls items.\n") );
 
-    // Allocate the menu items array.
-    ControlsItems = Z_Calloc(sizeof(menuitem_t) * count, PU_STATIC, 0);
-
-    for(i = 0; i < count; ++i)
+    count = 0;
+    for(i = 0; i < configCount; ++i)
     {
-        controlconfig_t* cc = &controlConfig[i];
-        menuitem_t* item = &ControlsItems[i];
-
-        cc->item = item;
-
-
-        if(cc->itemText && ((unsigned int) cc->itemText < NUMTEXT))
-        {
-            item->text = GET_TXT((unsigned int)cc->itemText);
-        }
+        mndata_bindings_t* binds = &controlConfig[i];
+        if(!binds->command && !binds->controlName)
+            count+=1;
         else
-        {
-            item->text = (char*) cc->itemText;
-        }
+            count+=2;
+    }
+    count += 1; // For the terminator.
 
-        // Inert items.
-        if(!cc->itemText || (!cc->command && !cc->controlName))
-        {
-            item->type = ITT_EMPTY;
+    // Allocate the menu items array.
+    ControlsItems = Z_Calloc(sizeof(mn_object_t) * count, PU_STATIC, 0);
+
+    for(i = 0, n = 0; i < configCount; ++i)
+    {
+        mndata_bindings_t* binds = &controlConfig[i];
+
+        if(!binds->command && !binds->controlName)
+        {   // Inert.
+            mn_object_t* obj = &ControlsItems[n++];
+            obj->type = MN_TEXT;
+            obj->text = (char*) binds->text;
+            obj->font = GF_FONTA;
+            obj->drawer = MNText_Drawer;
+            obj->dimensions = MNText_Dimensions;
+            obj->data2 = MENU_COLOR2; 
         }
-        else
+        else 
         {
-            item->type = ITT_EFUNC;
-            item->func = M_EFuncControlConfig;
-            item->data = cc;
+            mn_object_t* labelObj = &ControlsItems[n++];
+            mn_object_t* displayObj = &ControlsItems[n++];
+
+            labelObj->type = MN_TEXT;
+            if(binds->text && ((unsigned int) binds->text < NUMTEXT))
+            {
+                labelObj->text = GET_TXT((unsigned int)binds->text);
+            }
+            else
+            {
+                labelObj->text = (char*) binds->text;
+            }
+            labelObj->drawer = MNText_Drawer;
+            labelObj->dimensions = MNText_Dimensions;
+            labelObj->font = GF_FONTA;
+
+            displayObj->type = MN_BINDINGS;
+            displayObj->flags = MNF_INACTIVE;
+            displayObj->drawer = MNBindings_Drawer;
+            displayObj->dimensions = MNBindings_Dimensions;
+            displayObj->action = Hu_MenuBindings;
+            displayObj->data = binds;
+
+            if(!ControlsMenu.focus)
+                ControlsMenu.focus = displayObj - ControlsItems;
         }
     }
+    ControlsItems[count].type = MN_NONE; // Terminate.
 
-    ControlsDef.items = ControlsItems;
-    ControlsDef.itemCount = count;
+    ControlsMenu.objects = ControlsItems;
+    ControlsMenu.count = count;
 }
 
-static void M_DrawSmallText(const char* string, int x, int y)
+static void drawSmallText(const char* string, int x, int y)
 {
     int height = GL_TextHeight(string, GF_FONTA);
 
@@ -444,14 +426,16 @@ static void M_DrawSmallText(const char* string, int x, int y)
     DGL_PopMatrix();
 }
 
-static void M_DrawBinding(bindingitertype_t type, int bid, const char* name, boolean isInverse, void *data)
+static void drawBinding(bindingitertype_t type, int bid, const char* name, boolean isInverse, void *data)
 {
+#define BIND_GAP                (2)
+
 #if __JHERETIC__
-    static const float  bgRGB[] = { 0, .5f, 0 };
+    static const float bgRGB[] = { 0, .5f, 0 };
 #elif __JHEXEN__
-    static const float  bgRGB[] = { .5f, 0, 0 };
+    static const float bgRGB[] = { .5f, 0, 0 };
 #else
-    static const float  bgRGB[] = { 0, 0, 0 };
+    static const float bgRGB[] = { 0, 0, 0 };
 #endif
 
     bindingdrawerdata_t* d = data;
@@ -464,7 +448,7 @@ static void M_DrawBinding(bindingitertype_t type, int bid, const char* name, boo
 
         DGL_SetNoMaterial();
         DGL_DrawRect(d->x, d->y, width*SMALL_SCALE + 2, height, bgRGB[0], bgRGB[1], bgRGB[2], Hu_MenuAlpha() * .6f);
-        M_DrawSmallText(name, d->x + 1, d->y);
+        drawSmallText(name, d->x + 1, d->y);
 
         d->x += width * SMALL_SCALE + 2 + BIND_GAP;
     }
@@ -477,20 +461,21 @@ static void M_DrawBinding(bindingitertype_t type, int bid, const char* name, boo
         width = GL_TextWidth(temp, GF_FONTA);
         height = GL_TextHeight(temp, GF_FONTA);
 
-        M_DrawSmallText(temp, d->x, d->y);
+        drawSmallText(temp, d->x, d->y);
 
         d->x += width * SMALL_SCALE + BIND_GAP;
     }
+
+#undef BIND_GAP
 }
 
 static const char* findInString(const char* str, const char* token, int n)
 {
-    int                 tokenLen = strlen(token);
-    const char*         at = strstr(str, token);
+    int tokenLen = strlen(token);
+    const char* at = strstr(str, token);
 
     if(!at)
-    {
-        // Not there at all.
+    {   // Not there at all.
         return NULL;
     }
 
@@ -503,15 +488,14 @@ static const char* findInString(const char* str, const char* token, int n)
     return NULL;
 }
 
-void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, void* data,
-                       void (*callback)(bindingitertype_t type, int bid, const char* event,
-                                        boolean isInverse, void *data))
+void MN_IterateBindings(mndata_bindings_t* binds, const char* bindings, int flags, void* data,
+    void (*callback)(bindingitertype_t type, int bid, const char* ev, boolean isInverse, void *data))
 {
-    const char*         ptr = strchr(bindings, ':');
-    const char*         begin, *end, *end2, *k, *bindingStart, *bindingEnd;
-    int                 bid;
-    char                buf[80], *b;
-    boolean             isInverse;
+    const char* ptr = strchr(bindings, ':');
+    const char* begin, *end, *end2, *k, *bindingStart, *bindingEnd;
+    char buf[80], *b;
+    boolean isInverse;
+    int bid;
 
     memset(buf, 0, sizeof(buf));
 
@@ -568,9 +552,9 @@ void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, voi
                !strncmp(ptr, "mouse-left", 10) || !strncmp(ptr, "mouse-middle", 12) ||
                !strncmp(ptr, "mouse-right", 11))
             {
-                if(((cc->flags & CCF_INVERSE) && isInverse) ||
-                   ((cc->flags & CCF_NON_INVERSE) && !isInverse) ||
-                   !(cc->flags & (CCF_INVERSE | CCF_NON_INVERSE)))
+                if(((binds->flags & CCF_INVERSE) && isInverse) ||
+                   ((binds->flags & CCF_NON_INVERSE) && !isInverse) ||
+                   !(binds->flags & (CCF_INVERSE | CCF_NON_INVERSE)))
                 {
                     callback(!strncmp(ptr, "key", 3)? MIBT_KEY :
                              !strncmp(ptr, "mouse", 5)? MIBT_MOUSE : MIBT_JOY, bid, buf,
@@ -579,7 +563,7 @@ void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, voi
             }
             else
             {
-                if(!(cc->flags & (CCF_INVERSE | CCF_NON_INVERSE)) || (cc->flags & CCF_INVERSE))
+                if(!(binds->flags & (CCF_INVERSE | CCF_NON_INVERSE)) || (binds->flags & CCF_INVERSE))
                 {
                     isInverse = !isInverse;
                 }
@@ -602,76 +586,66 @@ void M_IterateBindings(controlconfig_t* cc, const char* bindings, int flags, voi
     }
 }
 
+void MNBindings_Drawer(const mn_object_t* obj, int x, int y, float alpha)
+{
+    mndata_bindings_t* binds = (mndata_bindings_t*) obj->data;
+    bindingdrawerdata_t draw;
+    char buf[1024];
+
+    if(binds->controlName)
+    {
+        B_BindingsForControl(0, binds->controlName, BFCI_BOTH, buf, sizeof(buf));
+    }
+    else
+    {
+        B_BindingsForCommand(binds->command, buf, sizeof(buf));
+    }
+    draw.x = x;
+    draw.y = y;
+    draw.alpha = alpha;
+    MN_IterateBindings(binds, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
+}
+
+void MNBindings_Dimensions(const mn_object_t* obj, int* width, int* height)
+{
+    // @fixme calculate visible dimensions properly!
+    if(width)
+        *width = 60;
+    if(height)
+        *height = 10 * SMALL_SCALE;
+}
+
 /**
  * M_DrawControlsMenu
  */
-void M_DrawControlsMenu(void)
+void M_DrawControlsMenu(const mn_page_t* page, int x, int y)
 {
-#if __JHERETIC__ || __JHEXEN__
-    patchid_t token;
-#endif
-    const menu_t* menu = &ControlsDef;
-    const menuitem_t* item = menu->items + menu->firstItem;
+#if __JDOOM__ || __JDOOM64__
     char buf[1024];
-    int i;
+#endif
+
+    DGL_Color4f(cfg.menuColors[0][0], cfg.menuColors[0][1], cfg.menuColors[0][2], Hu_MenuAlpha());
+    M_DrawMenuText3("CONTROLS", SCREENWIDTH/2, y-28, GF_FONTB, DTF_ALIGN_TOP);
 
 #if __JDOOM__ || __JDOOM64__
-    MN_DrawTitle("CONTROLS", menu->y - 28);
-    Hu_MenuPageString(buf, menu);
-    DGL_Color4f(1, .7f, .3f, Hu_MenuAlpha());
-    M_DrawMenuText3(buf, 160, menu->y - 12, GF_FONTA, DTF_ALIGN_TOP);
+    Hu_MenuPageString(buf, page);
+    DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], Hu_MenuAlpha());
+    M_DrawMenuText3(buf, SCREENWIDTH/2, y - 12, GF_FONTA, DTF_ALIGN_TOP);
 #else
-    DGL_Color4f(cfg.menuColor[0], cfg.menuColor[1], cfg.menuColor[2], Hu_MenuAlpha());
-    M_DrawMenuText2("CONTROLS", 120, 100 - 98/cfg.menuScale, GF_FONTB);
-
-    DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
-
     // Draw the page arrows.
-    token = dpInvPageLeft[!menu->firstItem || (menuTime & 8)];
-    GL_DrawPatch(token, menu->x, menu->y - 12);
-    token = dpInvPageRight[menu->firstItem + menu->numVisItems >= menu->itemCount || (menuTime & 8)];
-    GL_DrawPatch(token, 312 - menu->x, menu->y - 12);
-#endif
-
-    strcpy(buf, "Select to assign new, [Del] to clear");
-#if __JDOOM__
-    DGL_Color4f(1, .7f, .3f, Hu_MenuAlpha());
-#else
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
+    GL_DrawPatch(dpInvPageLeft[!page->firstObject || (mnTime & 8)], x, y - 12);
+    GL_DrawPatch(dpInvPageRight[page->firstObject + page->numVisObjects >= page->count || (mnTime & 8)], 312 - x, y - 12);
 #endif
-    M_DrawMenuText3(buf, 160, 100 + (95/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM);
 
-    for(i = 0; i < menu->numVisItems && menu->firstItem + i < menu->itemCount;
-        i++, item++)
-    {
-        controlconfig_t* cc = item->data;
-        bindingdrawerdata_t draw;
-
-        if(item->type != ITT_EFUNC)
-            continue;
-
-        if(cc->controlName)
-        {
-            B_BindingsForControl(0, cc->controlName, BFCI_BOTH, buf, sizeof(buf));
-        }
-        else
-        {
-            B_BindingsForCommand(cc->command, buf, sizeof(buf));
-        }
-#if __JHEXEN__
-        draw.x = menu->x + 154;
-#else
-        draw.x = menu->x + 134;
-#endif
-        draw.y = menu->y + (i * menu->itemHeight);
-        M_IterateBindings(cc, buf, MIBF_IGNORE_REPEATS, &draw, M_DrawBinding);
-    }
+    DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], Hu_MenuAlpha());
+    M_DrawMenuText3("Select to assign new, [Del] to clear", SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM);
 }
 
 void M_ControlGrabDrawer(void)
 {
-    if(!grabbing)
-        return;
+    mn_object_t* grabbing = &MN_CurrentPage()->objects[mnFocusObjectIndex];
+    mndata_bindings_t* binds = (mndata_bindings_t*) grabbing->data;
 
     DGL_SetNoMaterial();
     DGL_DrawRect(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0, 0, .7f);
@@ -683,11 +657,11 @@ void M_ControlGrabDrawer(void)
     DGL_Scalef(SMALL_SCALE, SMALL_SCALE, 1);
     DGL_Translatef(-(SCREENWIDTH/2), -(SCREENHEIGHT/2), 0);
 
-    DGL_Color4f(.75f, .75f, .75f, 1);
-    M_DrawMenuText3("press key or move controller for", 160, 98, GF_FONTA, DTF_ALIGN_BOTTOM|DTF_NO_TYPEIN);
+    DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], 1);
+    M_DrawMenuText3("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, GF_FONTA, DTF_ALIGN_BOTTOM|DTF_NO_TYPEIN);
 
-    DGL_Color4f(1, 1, 1, 1);
-    M_DrawMenuText3(grabbing->item->text, 160, 102, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+    DGL_Color4f(cfg.menuColors[2][CR], cfg.menuColors[2][CG], cfg.menuColors[2][CB], 1);
+    M_DrawMenuText3(binds->text, SCREENWIDTH/2, SCREENHEIGHT/2+2, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -695,12 +669,14 @@ void M_ControlGrabDrawer(void)
 
 int M_ControlsPrivilegedResponder(event_t* ev)
 {
+    mn_object_t* grabbing = &MN_CurrentPage()->objects[mnFocusObjectIndex];
     // We're interested in key or button down events.
     if(grabbing && ev->type == EV_SYMBOLIC)
     {
-        char            cmd[512];
-        const char*     symbol = 0;
-        const char*     bindContext = "game";
+        mndata_bindings_t* binds = (mndata_bindings_t*) grabbing->data;
+        const char* bindContext = "game";
+        const char* symbol = 0;
+        char cmd[512];
 
         if(sizeof(const char*) == sizeof(ev->data1)) // 32-bit
         {
@@ -720,41 +696,40 @@ int M_ControlsPrivilegedResponder(event_t* ev)
            return false;
         }
 
-        if(grabbing->bindContext)
+        if(binds->bindContext)
         {
-            bindContext = grabbing->bindContext;
+            bindContext = binds->bindContext;
         }
 
-        if(grabbing->command)
+        if(binds->command)
         {
-            sprintf(cmd, "bindevent {%s:%s} {%s}", bindContext, &symbol[5], grabbing->command);
+            sprintf(cmd, "bindevent {%s:%s} {%s}", bindContext, &symbol[5], binds->command);
 
             // Check for repeats.
-            if(grabbing->flags & CCF_REPEAT)
+            if(binds->flags & CCF_REPEAT)
             {
-                const char*         downPtr = 0;
-                char                temp[256];
+                const char* downPtr = 0;
+                char temp[256];
 
                 downPtr = strstr(symbol + 5, "-down");
                 if(downPtr)
                 {
-                    char                temp2[256];
+                    char temp2[256];
 
                     memset(temp2, 0, sizeof(temp2));
                     strncpy(temp2, symbol + 5, downPtr - symbol - 5);
-                    sprintf(temp, "; bindevent {%s:%s-repeat} {%s}", bindContext, temp2,
-                            grabbing->command);
+                    sprintf(temp, "; bindevent {%s:%s-repeat} {%s}", bindContext, temp2, binds->command);
                     strcat(cmd, temp);
                 }
             }
         }
-        else if(grabbing->controlName)
+        else if(binds->controlName)
         {   // Have to exclude the state part.
-            boolean             inv = (grabbing->flags & CCF_INVERSE) != 0;
-            boolean             isStaged = (grabbing->flags & CCF_STAGED) != 0;
-            char                temp3[256];
-            char                extra[256];
-            const char*         end = strchr(symbol + 5, '-');
+            boolean inv = (binds->flags & CCF_INVERSE) != 0;
+            boolean isStaged = (binds->flags & CCF_STAGED) != 0;
+            const char* end = strchr(symbol + 5, '-');
+            char temp3[256];
+            char extra[256];
 
             end = strchr(end + 1, '-');
 
@@ -784,7 +759,7 @@ int M_ControlsPrivilegedResponder(event_t* ev)
             }
 
             strcpy(extra, "");
-            if(grabbing->flags & CCF_SIDESTEP_MODIFIER)
+            if(binds->flags & CCF_SIDESTEP_MODIFIER)
             {
                 sprintf(cmd, "bindcontrol sidestep {%s + modifier-1-down}", temp3);
                 DD_Execute(true, cmd);
@@ -792,7 +767,7 @@ int M_ControlsPrivilegedResponder(event_t* ev)
                 strcpy(extra, " + modifier-1-up");
             }
 
-            sprintf(cmd, "bindcontrol {%s} {%s%s}", grabbing->controlName, temp3, extra);
+            sprintf(cmd, "bindcontrol {%s} {%s%s}", binds->controlName, temp3, extra);
         }
 
         VERBOSE( Con_Message("M_ControlsPrivilegedResponder: %s\n", cmd) );
@@ -804,31 +779,30 @@ int M_ControlsPrivilegedResponder(event_t* ev)
         B_FormEventString(evname, ev->type, ev->state, ev->data1);
 
         // If this binding already exists, remove it.
-        sprintf(cmd, "%s%s", grabbing->flags & CLF_ACTION ? "+" : "",
-                grabbing->command);
+        sprintf(cmd, "%s%s", binds->flags & CLF_ACTION ? "+" : "", binds->command);
 
         memset(buff, 0, sizeof(buff));
 
         // Check for bindings in this class only?
-        if(B_BindingsForCommand(cmd, buff, grabbing->bindContext, false))
-            if(findtoken(buff, evname, " "))    // Get rid of it?
+        if(B_BindingsForCommand(cmd, buff, binds->bindContext, false))
+            if(findtoken(buff, evname, " ")) // Get rid of it?
             {
                 del = true;
                 strcpy(buff, "");
             }
 
         if(!del)
-            sprintf(buff, "\"%s\"", grabbing->command);
+            sprintf(buff, "\"%s\"", binds->command);
 
         sprintf(cmd, "%s bdc%d %s %s",
-                grabbing->flags & CLF_REPEAT ? "bindr" : "bind",
-                grabbing->bindContext, evname + 1, buff);
+                binds->flags & CLF_REPEAT ? "bindr" : "bind",
+                binds->bindContext, evname + 1, buff);
 
         DD_Execute(false, cmd);
          */
 
         // We've finished the grab.
-        grabbing = 0;
+        MN_CurrentPage()->objects[mnFocusObjectIndex].flags |= MNF_INACTIVE;
         DD_SetInteger(DD_SYMBOLIC_ECHO, false);
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         return true;

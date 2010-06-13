@@ -39,12 +39,11 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
 #include "am_map.h"
 #include "p_player.h"
+#include "r_common.h"
 
 // MACROS ------------------------------------------------------------------
 
