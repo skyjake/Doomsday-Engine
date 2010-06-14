@@ -89,7 +89,7 @@ static dynlist_t* dynlightLinkLists;
 void DL_Register(void)
 {
     // Cvars
-    C_VAR_INT("rend-glow", &glowingTextures, 0, 0, 1);
+    C_VAR_FLOAT("rend-glow", &glowingTextures, 0, 0, 1);
     C_VAR_INT("rend-glow-wall", &useWallGlow, 0, 0, 1);
     C_VAR_INT("rend-glow-height", &glowHeightMax, 0, 0, 1024);
     C_VAR_FLOAT("rend-glow-scale", &glowHeightFactor, 0, 0.1f, 10);
@@ -518,7 +518,7 @@ boolean DLIT_SurfaceLumobjContacts(void* ptr, void* data)
     case LT_PLANE:
         if(!(params->flags & DLF_NO_PLANAR))
             tex = LUM_PLANE(lum)->tex;
-
+        lightBrightness = LUM_PLANE(lum)->intensity;
         if(tex)
         {
             lightRGB = LUM_PLANE(lum)->color;

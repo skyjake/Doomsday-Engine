@@ -531,29 +531,6 @@ VERBOSE( Con_Printf("Sv_WriteSectorDelta: (%i) Absolute ceiling height=%f\n",
         Msg_WriteByte((byte) (255 * d->planes[PLN_CEILING].surface.rgba[1]));
     if(df & SDF_CEIL_COLOR_BLUE)
         Msg_WriteByte((byte) (255 * d->planes[PLN_CEILING].surface.rgba[2]));
-
-    if(df & SDF_FLOOR_GLOW_RED)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_FLOOR].glowRGB[0]));
-    if(df & SDF_FLOOR_GLOW_GREEN)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_FLOOR].glowRGB[1]));
-    if(df & SDF_FLOOR_GLOW_BLUE)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_FLOOR].glowRGB[2]));
-
-    if(df & SDF_CEIL_GLOW_RED)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_CEILING].glowRGB[0]));
-    if(df & SDF_CEIL_GLOW_GREEN)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_CEILING].glowRGB[1]));
-    if(df & SDF_CEIL_GLOW_BLUE)
-        Msg_WriteByte((byte) (255 * d->planes[PLN_CEILING].glowRGB[2]));
-
-    if(df & SDF_FLOOR_GLOW)
-        Msg_WriteShort(d->planes[PLN_FLOOR].glow < 0 ? 0 :
-                       d->planes[PLN_FLOOR].glow > 1 ? DDMAXSHORT :
-                       (short)(d->planes[PLN_FLOOR].glow * DDMAXSHORT));
-    if(df & SDF_CEIL_GLOW)
-        Msg_WriteShort(d->planes[PLN_CEILING].glow < 0 ? 0 :
-                       d->planes[PLN_CEILING].glow > 1 ? DDMAXSHORT :
-                       (short)(d->planes[PLN_CEILING].glow * DDMAXSHORT));
 }
 
 /**

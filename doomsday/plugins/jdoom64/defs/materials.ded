@@ -33,7 +33,7 @@ Material {
 Material {
   ID = "CBTRAKA";
   Namespace = textures;
-  Flags = glow;
+  Layer { Stage { Glow = .9; } }
 }
 
 * Material { ID = "CRTRAKA"; }

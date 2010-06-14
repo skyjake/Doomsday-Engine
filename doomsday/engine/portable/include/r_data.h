@@ -239,7 +239,7 @@ extern nodepile_t* mobjNodes, *lineNodes;
 
 extern int viewwidth, viewheight;
 extern int levelFullBright;
-extern int glowingTextures;
+extern float glowingTextures;
 extern byte precacheSprites, precacheSkins;
 
 extern int numFlats;

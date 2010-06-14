@@ -516,6 +516,7 @@ typedef struct ded_material_layer_stage_s {
     int             type; // Material tex type, @see gltexture_type_t.
     int             tics;
     float           variance; // Stage variance (time).
+    float           glow;
 } ded_material_layer_stage_t;
 
 typedef struct ded_material_layer_s {

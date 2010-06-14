@@ -682,7 +682,7 @@ desc = Reduce brightness if surface/view angle too steep.
 desc = 1=Use special light color in sky sectors.
 
 [rend-glow]
-desc = 1=Enable glowing textures.
+desc = Glow strength factor (default: 1).
 
 [rend-glow-wall]
 desc = 1=Render glow on walls.

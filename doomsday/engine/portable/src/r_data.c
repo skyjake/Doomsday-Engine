@@ -118,7 +118,7 @@ int numMaskTextures = 0;
 masktex_t** maskTextures = NULL;
 
 // Glowing textures are always rendered fullbright.
-int glowingTextures = true;
+float glowingTextures = 1.0f;
 
 byte rendInfoRPolys = 0;
 

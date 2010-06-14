@@ -275,14 +275,13 @@ static int C_DECL DivSortDescend(const void *e1, const void *e2)
     return 0;
 }
 
-void Rend_VertexColorsGlow(rcolor_t* colors, size_t num)
+void Rend_VertexColorsGlow(rcolor_t* colors, size_t num, float glow)
 {
-    size_t              i;
-
+    size_t i;
     for(i = 0; i < num; ++i)
     {
-        rcolor_t*           c = &colors[i];
-        c->rgba[CR] = c->rgba[CG] = c->rgba[CB] = 1;
+        rcolor_t* c = &colors[i];
+        c->rgba[CR] = c->rgba[CG] = c->rgba[CB] = glow;
     }
 }
 
@@ -853,7 +852,7 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices,
                         const rcolor_t* rcolors, float wallLength,
                         float texWidth, float texHeight,
                         const float texOffset[2], blendmode_t blendMode,
-                        uint lightListIdx, boolean glow, boolean masked,
+                        uint lightListIdx, float glow, boolean masked,
                         const rtexmapunit_t rTU[NUM_TEXMAP_UNITS])
 {
     vissprite_t*        vis = R_NewVisSprite();
@@ -895,7 +894,7 @@ void Rend_AddMaskedPoly(const rvertex_t* rvertices,
     vis->data.wall.blendMode = blendMode;
 
     //// \fixme Semitransparent masked polys arn't lit atm
-    if(!glow && lightListIdx && numTexUnits > 1 && envModAdd &&
+    if(glow < 1 && lightListIdx && numTexUnits > 1 && envModAdd &&
        !(rcolors[0].rgba[CA] < 1))
     {
         dynlight_t*         dyn = NULL;
@@ -1373,7 +1372,7 @@ typedef struct {
     const float*    surfaceColor;
 
     uint            lightListIdx; // List of lights that affect this poly.
-    boolean         glowing;
+    float           glowing;
     boolean         reflective;
     boolean         forceOpaque;
 
@@ -1405,7 +1404,8 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     DGLuint             modTex = 0;
     float               modTexTC[2][2];
     float               modColor[3];
-    boolean             drawAsVisSprite = false, isGlowing = p->glowing;
+    float               glowing = msA->glowing;
+    boolean             drawAsVisSprite = false;
     rtexmapunit_t       rTU[NUM_TEXMAP_UNITS], rTUs[NUM_TEXMAP_UNITS];
 
     if(!p->forceOpaque && p->type != RPT_SKY_MASK &&
@@ -1446,7 +1446,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
          * In multiplicative mode, glowing surfaces are fullbright.
          * Rendering lights on them would be pointless.
          */
-        if(!isGlowing)
+        if(glowing < 1)
         {
             useLights = (p->lightListIdx? true : false);
 
@@ -1552,9 +1552,9 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     // Light this polygon.
     if(p->type != RPT_SKY_MASK)
     {
-        if(isGlowing || levelFullBright)
+        if(levelFullBright || glowing > 0)
         {   // Uniform colour. Apply to all vertices.
-            Rend_VertexColorsGlow(rcolors, numVertices);
+            Rend_VertexColorsGlow(rcolors, numVertices, *p->sectorLightLevel + (levelFullBright? 1 : glowing));
         }
         else
         {   // Non-uniform color.
@@ -1698,7 +1698,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
          */
         Rend_AddMaskedPoly(rvertices, rcolors, *p->segLength,
                            msA->width, msA->height, p->texOffset,
-                           p->blendMode, p->lightListIdx, isGlowing,
+                           p->blendMode, p->lightListIdx, glowing,
                            !msA->isOpaque, rTU);
         R_FreeRendTexCoords(rtexcoords);
         if(rtexcoords2)
@@ -1938,8 +1938,8 @@ static boolean doRenderSeg(seg_t* seg,
         if(params.type != RPT_SKY_MASK && addFakeRadio)
         {
             rendsegradio_params_t radioParams;
+            float ll;
 
-            radioParams.sectorLightLevel = lightLevel;
             radioParams.linedefLength = &seg->lineDef->length;
             radioParams.botCn = side->bottomCorners;
             radioParams.topCn = side->topCorners;
@@ -1967,7 +1967,23 @@ static boolean doRenderSeg(seg_t* seg,
             // Top Right.
             V3_Set(rvertices[3].pos, to->pos[VX], to->pos[VY], top);
 
-            Rend_RadioSegSection(rvertices, divs, &radioParams);
+            ll = *lightLevel;
+            Rend_ApplyLightAdaptation(&ll);
+            if(ll > 0)
+            {
+                // Determine the shadow properties.
+                // \fixme Make cvars out of constants.
+                radioParams.shadowSize = 2 * (8 + 16 - ll * 16);
+                radioParams.shadowDark = Rend_RadioCalcShadowDarkness(ll) * isGlowing? .25f : .5f;
+
+                if(radioParams.shadowSize > 0)
+                {
+                    float v = (msA->color[CR] + msA->color[CG] + msA->color[CB]) /3;
+                    radioParams.shadowRGB[CR] = radioParams.shadowRGB[CG] = radioParams.shadowRGB[CB] = 1-v*3;
+
+                    Rend_RadioSegSection(rvertices, divs, &radioParams);
+                }
+            }
         }
 
         R_FreeRendVertices(rvertices);
@@ -1981,12 +1997,12 @@ static boolean doRenderSeg(seg_t* seg,
 
 static void renderPlane(subsector_t* ssec, planetype_t type,
                         float height, const vectorcomp_t normal[3],
-                        material_t* inMat, short sufInFlags,
+                        material_t* inMat, int sufFlags, short sufInFlags,
                         const float sufColor[4], blendmode_t blendMode,
                         const float texTL[3], const float texBR[3],
                         const float texOffset[2], const float texScale[2],
                         boolean skyMasked,
-                        boolean addDLights, boolean isGlowing,
+                        boolean addDLights,
                         biassurface_t* bsuf, uint elmIdx /*tmp*/,
                         int texMode /*tmp*/)
 {
@@ -2043,11 +2059,6 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
         params.type = RPT_NORMAL;
         mat = inMat;
 
-        if(isGlowing)
-        {
-            params.glowing = true; // Make it stand out
-        }
-
         if(type != PLN_MID)
         {
             params.blendMode = BM_NORMAL;
@@ -2075,7 +2086,7 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
             blended = true;
 
         // Dynamic lights.
-        if(addDLights && !params.glowing)
+        if(addDLights && params.glowing < 1)
         {
             params.lightListIdx =
                 DL_ProjectOnSurface(ssec, params.texTL, params.texBR, normal,
@@ -2096,6 +2107,11 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
     if(params.type != RPT_SKY_MASK)
     {
         inter = getSnapshots(&msA, blended? &msB : NULL, mat);
+
+        if(texMode == 1 || msA.glowing > 0)
+        {
+            params.glowing = msA.glowing; // Make it stand out
+        }
     }
 
     renderWorldPoly(rvertices, numVertices, NULL, &params,
@@ -2106,11 +2122,11 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
 
 static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
                              float height, const vectorcomp_t normal[3],
-                             material_t* inMat, short sufInFlags,
+                             material_t* inMat, int sufFlags, short sufInFlags,
                              const float sufColor[4], blendmode_t blendMode,
                              const float texOffset[2], const float texScale[2],
                              boolean skyMasked,
-                             boolean addDLights, boolean isGlowing,
+                             boolean addDLights,
                              biassurface_t* bsuf, uint elmIdx /*tmp*/,
                              int texMode /*tmp*/)
 {
@@ -2134,9 +2150,9 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
         V3_Set(texBR, ssec->bBox[1].pos[VX],
                ssec->bBox[type == PLN_FLOOR? 0 : 1].pos[VY], height);
 
-        renderPlane(ssec, type, height, normal, inMat, sufInFlags,
+        renderPlane(ssec, type, height, normal, inMat, sufFlags, sufInFlags,
                     sufColor, blendMode, texTL, texBR, texOffset, texScale,
-                    skyMasked, addDLights, isGlowing, bsuf, elmIdx, texMode);
+                    skyMasked, addDLights, bsuf, elmIdx, texMode);
     }
 }
 
@@ -2321,10 +2337,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
                     blendMode = surface->blendMode;
             }
 
-            if(glowingTextures &&
-               ((surfaceFlags & DDSUF_GLOW) ||
-               (surface->material && (surface->material->flags & MATF_GLOW))))
-                isGlowing = true;
+
 
             addFakeRadio = !(surfaceInFlags & SUIF_NO_RADIO);
         }
@@ -2339,6 +2352,9 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
         if(type != RPT_SKY_MASK)
         {
             inter = getSnapshots(&msA, blended? &msB : NULL, mat);
+
+            if(msA.glowing > 0)
+                isGlowing = true;
         }
 
         if(addDLights && !isGlowing)
@@ -3320,15 +3336,10 @@ static void Rend_RenderSubsector(uint ssecidx)
         texScale[VX] = ((suf->flags & DDSUF_MATERIAL_FLIPH)? -1 : 1);
         texScale[VY] = ((suf->flags & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
-        if(glowingTextures &&
-           (texMode == 1 || ((suf->flags & DDSUF_GLOW) ||
-                             (mat && (mat->flags & MATF_GLOW)))))
-            isGlowing = true;
-
         Rend_RenderPlane(ssec, plane->type, height, suf->normal, mat,
-                         suf->inFlags, suf->rgba,
+                         suf->flags, suf->inFlags, suf->rgba,
                          suf->blendMode, texOffset, texScale,
-                         R_IsSkySurface(suf), true, isGlowing,
+                         R_IsSkySurface(suf), true,
                          ssec->bsuf[plane->planeID], plane->planeID,
                          texMode);
     }
@@ -3358,11 +3369,10 @@ static void Rend_RenderSubsector(uint ssecidx)
 
             Rend_RenderPlane(ssec, PLN_MID, plane->visHeight, normal,
                              P_GetMaterial(DDT_GRAY, MN_SYSTEM),
-                             suf->inFlags, suf->rgba,
+                             suf->flags, suf->inFlags, suf->rgba,
                              BM_NORMAL, NULL, NULL, false,
                              (vy > plane->visHeight? true : false),
-                             false, NULL,
-                             plane->planeID, 2);
+                             NULL, plane->planeID, 2);
         }
 
         if(sect->SP_ceilvisheight < skyFix[PLN_CEILING].height &&
@@ -3378,11 +3388,10 @@ static void Rend_RenderSubsector(uint ssecidx)
 
             Rend_RenderPlane(ssec, PLN_MID, plane->visHeight, normal,
                              P_GetMaterial(DDT_GRAY, MN_SYSTEM),
-                             suf->inFlags, suf->rgba,
+                             suf->flags, suf->inFlags, suf->rgba,
                              BM_NORMAL, NULL, NULL, false,
                              (vy < plane->visHeight? true : false),
-                             false, NULL,
-                             plane->planeID, 2);
+                             NULL, plane->planeID, 2);
         }
     }
 }

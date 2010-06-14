@@ -30,7 +30,8 @@
 #define __DOOMSDAY_RENDER_FAKERADIO_H__
 
 typedef struct {
-    const float*        sectorLightLevel;
+    float               shadowRGB[3], shadowDark;
+    float               shadowSize;
     const shadowcorner_t* botCn, *topCn, *sideCn;
     const edgespan_t*   spans;
     const float*        segOffset;
@@ -40,6 +41,7 @@ typedef struct {
 } rendsegradio_params_t;
 
 void            Rend_RadioRegister(void);
+float           Rend_RadioCalcShadowDarkness(float lightLevel);
 void            Rend_RadioUpdateLinedef(linedef_t* line, boolean backSide);
 void            Rend_RadioSegSection(const rvertex_t* rvertices,
                                      const walldiv_t* divs,

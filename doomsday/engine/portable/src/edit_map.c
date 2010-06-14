@@ -1363,10 +1363,6 @@ static void hardenPlanes(gamemap_t* dest, editmap_t* src)
             plane_t*            destP = R_NewPlaneForSector(destS);
             plane_t*            srcP = srcS->planes[j];
 
-            destP->glow = srcP->glow;
-            destP->glowRGB[CR] = srcP->glowRGB[CR];
-            destP->glowRGB[CG] = srcP->glowRGB[CG];
-            destP->glowRGB[CB] = srcP->glowRGB[CB];
             destP->height = destP->oldHeight[0] = destP->oldHeight[1] =
                 destP->visHeight = srcP->height;
             destP->visHeightDelta = 0;

@@ -1078,6 +1078,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                                 else
                                 RV_INT("Tics", st->tics)
                                 RV_FLT("Rnd", st->variance)
+                                RV_FLT("Glow", st->glow)
                                 RV_END
                                 CHECKSC;
                             }

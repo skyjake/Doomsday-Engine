@@ -222,6 +222,7 @@ byte Material_Prepare(material_snapshot_t* snapshot, material_t* mat,
 
     snapshot->width = mat->width;
     snapshot->height = mat->height;
+    snapshot->glowing = mat->layers[0].glow * glowingTextures;
 
     // Setup the primary texturing pass.
     if(mat->layers[0].tex)

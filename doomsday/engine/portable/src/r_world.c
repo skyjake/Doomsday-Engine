@@ -550,8 +550,6 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
 
     // Initalize the plane.
     plane->surface.owner = (void*) plane;
-    plane->glowRGB[CR] = plane->glowRGB[CG] = plane->glowRGB[CB] = 1;
-    plane->glow = 0;
     plane->sector = sec;
     plane->height = plane->oldHeight[0] = plane->oldHeight[1] = 0;
     plane->visHeight = plane->visHeightDelta = 0;
@@ -1595,9 +1593,10 @@ void R_ClearSectorFlags(void)
  */
 boolean R_IsGlowingPlane(const plane_t* pln)
 {
-    material_t*         mat = pln->surface.material;
-
-    return ((mat && (mat->flags & MATF_NO_DRAW)) || pln->glow > 0 ||
+    material_t* mat = pln->surface.material;
+    material_snapshot_t ms;
+    Material_Prepare(&ms, mat, true, 0);
+    return ((mat && (mat->flags & MATF_NO_DRAW)) || ms.glowing > 0 ||
             R_IsSkySurface(&pln->surface));
 }
 
@@ -1729,33 +1728,8 @@ void R_UpdateLinedefsOfSector(sector_t* sec)
 
 boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
 {
-    boolean changed = false;
-    boolean hasGlow = false;
     sector_t* sec = pln->sector;
-
-    // Update the glow properties.
-    hasGlow = false;
-    if(pln->PS_material && ((pln->surface.flags & DDSUF_GLOW) || (pln->PS_material->flags & MATF_GLOW)))
-    {
-        material_snapshot_t ms;
-
-        Material_Prepare(&ms, pln->PS_material, true, NULL);
-        pln->glowRGB[CR] = ms.color[CR];
-        pln->glowRGB[CG] = ms.color[CG];
-        pln->glowRGB[CB] = ms.color[CB];
-        hasGlow = true;
-        changed = true;
-    }
-
-    if(hasGlow)
-    {
-        pln->glow = 4; // Default height factor is 4
-    }
-    else
-    {
-        pln->glowRGB[CR] = pln->glowRGB[CG] = pln->glowRGB[CB] = 0;
-        pln->glow = 0;
-    }
+    boolean changed = false;
 
     // Geometry change?
     if(forceUpdate || pln->height != pln->oldHeight[1])

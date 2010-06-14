@@ -635,9 +635,8 @@ enum /* Do not change the numerical values of the constants! */
 
 // Surface flags:
 // For use with P_Set/Get(DMU_SURFACE, n, DMU_FLAGS).
-#define DDSUF_GLOW              0x00000001 // Surface glows (fully bright).
-#define DDSUF_MATERIAL_FLIPH    0x00000002 // Surface material is flipped horizontally.
-#define DDSUF_MATERIAL_FLIPV    0x00000004 // Surface material is flipped vertically.
+#define DDSUF_MATERIAL_FLIPH    0x00000001 // Surface material is flipped horizontally.
+#define DDSUF_MATERIAL_FLIPV    0x00000002 // Surface material is flipped vertically.
 
 // Map Update status code constants.
 // Sent to the game when various map update events occur.
@@ -964,8 +963,7 @@ typedef enum material_namespace_e {
 // Material flags:
 #define MATF_CUSTOM             0x0001 // Material is not derived from an IWAD resource (directly, at least).
 #define MATF_NO_DRAW            0x0002 // Material should never be drawn.
-#define MATF_GLOW               0x0004 // Glowing material.
-#define MATF_SKYMASK            0x0008 // Sky-mask surfaces using this material.
+#define MATF_SKYMASK            0x0004 // Sky-mask surfaces using this material.
 
 // Animation group flags.
 #define AGF_SMOOTH          0x1

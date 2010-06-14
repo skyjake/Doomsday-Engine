@@ -577,8 +577,8 @@ END_PROF( PROF_LUMOBJ_FRAME_SORT );
  */
 static void createGlowLightPerPlaneForSubSector(subsector_t* ssec)
 {
-    uint                g;
-    plane_t*            glowPlanes[2], *pln;
+    plane_t* glowPlanes[2], *pln;
+    uint g;
 
     glowPlanes[PLN_FLOOR] = ssec->sector->planes[PLN_FLOOR];
     glowPlanes[PLN_CEILING] = ssec->sector->planes[PLN_CEILING];
@@ -586,12 +586,14 @@ static void createGlowLightPerPlaneForSubSector(subsector_t* ssec)
     //// \fixme $nplanes
     for(g = 0; g < 2; ++g)
     {
-        uint                lumIdx;
-        lumobj_t*           l;
+        material_snapshot_t ms;
+        uint lumIdx;
+        lumobj_t* l;
 
         pln = glowPlanes[g];
+        Material_Prepare(&ms, pln->PS_material, true, 0);
 
-        if(pln->glow <= 0)
+        if(ms.glowing <= 0)
             continue;
 
         lumIdx = LO_NewLuminous(LT_PLANE, ssec);
@@ -607,11 +609,11 @@ static void createGlowLightPerPlaneForSubSector(subsector_t* ssec)
         LUM_PLANE(l)->normal[VY] = pln->PS_normal[VY];
         LUM_PLANE(l)->normal[VZ] = pln->PS_normal[VZ];
 
-        LUM_PLANE(l)->color[CR] = pln->glowRGB[CR];
-        LUM_PLANE(l)->color[CG] = pln->glowRGB[CG];
-        LUM_PLANE(l)->color[CB] = pln->glowRGB[CB];
+        LUM_PLANE(l)->color[CR] = /*pln->glowRGB[CR] **/ ms.color[CR];
+        LUM_PLANE(l)->color[CG] = /*pln->glowRGB[CG] **/ ms.color[CG];
+        LUM_PLANE(l)->color[CB] = /*pln->glowRGB[CB] **/ ms.color[CB];
 
-        LUM_PLANE(l)->intensity = pln->glow;
+        LUM_PLANE(l)->intensity = /*pln->glow **/ ms.glowing;
         LUM_PLANE(l)->tex = GL_PrepareLSTexture(LST_GRADIENT);
 
         // Planar lights don't spread, so just link the lum to its own ssec.

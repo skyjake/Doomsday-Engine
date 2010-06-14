@@ -124,6 +124,7 @@ internal
 typedef struct materiallayer_s {
     int             stage; // -1 => layer not in use.
     short           tics;
+    float			glowing;
     gltextureid_t   tex;
 } material_layer_t;
 
@@ -239,8 +240,6 @@ struct plane
     -       surface_t   surface
     FLOAT   float       height // Current height
     -       float[2]    oldHeight
-    FLOAT   float       glow // Glow amount
-    FLOAT   float[3]    glowRGB // Glow color
     FLOAT   float       target // Target height
     FLOAT   float       speed // Move speed
     -       float       visHeight // Visible plane height (smoothed)
@@ -259,8 +258,6 @@ internal
 #define SP_planematerial(n)     SP_plane(n)->surface.material
 #define SP_planeoffset(n)       SP_plane(n)->surface.offset
 #define SP_planergb(n)          SP_plane(n)->surface.rgba
-#define SP_planeglow(n)         SP_plane(n)->glow
-#define SP_planeglowrgb(n)      SP_plane(n)->glowRGB
 #define SP_planetarget(n)       SP_plane(n)->target
 #define SP_planespeed(n)        SP_plane(n)->speed
 #define SP_planesoundorg(n)     SP_plane(n)->soundOrg
@@ -272,8 +269,6 @@ internal
 #define SP_ceilmaterial         SP_planematerial(PLN_CEILING)
 #define SP_ceiloffset           SP_planeoffset(PLN_CEILING)
 #define SP_ceilrgb              SP_planergb(PLN_CEILING)
-#define SP_ceilglow             SP_planeglow(PLN_CEILING)
-#define SP_ceilglowrgb          SP_planeglowrgb(PLN_CEILING)
 #define SP_ceiltarget           SP_planetarget(PLN_CEILING)
 #define SP_ceilspeed            SP_planespeed(PLN_CEILING)
 #define SP_ceilsoundorg         SP_planesoundorg(PLN_CEILING)
@@ -285,8 +280,6 @@ internal
 #define SP_floormaterial        SP_planematerial(PLN_FLOOR)
 #define SP_flooroffset          SP_planeoffset(PLN_FLOOR)
 #define SP_floorrgb             SP_planergb(PLN_FLOOR)
-#define SP_floorglow            SP_planeglow(PLN_FLOOR)
-#define SP_floorglowrgb         SP_planeglowrgb(PLN_FLOOR)
 #define SP_floortarget          SP_planetarget(PLN_FLOOR)
 #define SP_floorspeed           SP_planespeed(PLN_FLOOR)
 #define SP_floorsoundorg        SP_planesoundorg(PLN_FLOOR)

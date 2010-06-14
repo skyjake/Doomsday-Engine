@@ -555,10 +555,6 @@ static void writeSector(const gamemap_t *map, uint idx)
         plane_t            *p = s->planes[i];
 
         writeFloat(p->height);
-        writeFloat(p->glow);
-        writeFloat(p->glowRGB[CR]);
-        writeFloat(p->glowRGB[CG]);
-        writeFloat(p->glowRGB[CB]);
         writeFloat(p->target);
         writeFloat(p->speed);
         writeFloat(p->visHeight);
@@ -634,10 +630,6 @@ static void readSector(const gamemap_t *map, uint idx)
         plane_t            *p = R_NewPlaneForSector(s);
 
         p->height = readFloat();
-        p->glow = readFloat();
-        p->glowRGB[CR] = readFloat();
-        p->glowRGB[CG] = readFloat();
-        p->glowRGB[CB] = readFloat();
         p->target = readFloat();
         p->speed = readFloat();
         p->visHeight = readFloat();

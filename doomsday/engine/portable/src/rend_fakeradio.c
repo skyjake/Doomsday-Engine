@@ -100,9 +100,9 @@ void Rend_RadioRegister(void)
     C_VAR_FLOAT("rend-fakeradio-darkness", &rendFakeRadioDarkness, 0, 0, 2);
 }
 
-static __inline float calcShadowDarkness(float lightLevel)
+float Rend_RadioCalcShadowDarkness(float lightLevel)
 {
-    return (0.6f - lightLevel * 0.4f) * rendFakeRadioDarkness;
+    return (0.6f - lightLevel * 0.4f) * 0.75f * rendFakeRadioDarkness;
 }
 
 /**
@@ -139,22 +139,15 @@ void Rend_RadioUpdateLinedef(linedef_t* line, boolean backSide)
 /**
  * Set the vertex colors in the rendpoly.
  */
-static void setRendpolyColor(rcolor_t* rcolors, uint num, float darkness)
+static void setRendpolyColor(rcolor_t* rcolors, uint num, const float shadowRGB[3], float darkness)
 {
-    uint                i;
-
-    // Clamp it.
-    if(darkness < 0)
-        darkness = 0;
-    if(darkness > 1)
-        darkness = 1;
-
-    // Shadows are black.
+    uint i;
+    darkness = MINMAX_OF(0, darkness, 1);
     for(i = 0; i < num; ++i)
     {
-        rcolors[i].rgba[CR] =
-            rcolors[i].rgba[CG] =
-                rcolors[i].rgba[CB] = 0;
+        rcolors[i].rgba[CR] = shadowRGB[CR];
+        rcolors[i].rgba[CG] = shadowRGB[CG];
+        rcolors[i].rgba[CB] = shadowRGB[CB];
         rcolors[i].rgba[CA] = darkness;
     }
 }
@@ -1020,13 +1013,13 @@ static void quadTexCoords(rtexcoord_t* tc, const rvertex_t* rverts,
 static void renderShadowSeg(const rvertex_t* origVertices,
                             const walldiv_t* divs,
                             const rendershadowseg_params_t* p,
-                            float shadowDark)
+                            const float shadowRGB[3], float shadowDark)
 {
-    float               texOrigin[2][3];
-    rcolor_t*           rcolors;
-    rtexcoord_t*        rtexcoords;
-    rtexmapunit_t       rTU[NUM_TEXMAP_UNITS];
-    uint                realNumVertices = 4;
+    float texOrigin[2][3];
+    rcolor_t* rcolors;
+    rtexcoord_t* rtexcoords;
+    rtexmapunit_t rTU[NUM_TEXMAP_UNITS];
+    uint realNumVertices = 4;
 
     if(divs)
         realNumVertices = 3 + divs[0].num + 3 + divs[1].num;
@@ -1054,7 +1047,7 @@ static void renderShadowSeg(const rvertex_t* origVertices,
                   p->texHeight, texOrigin, p->texOffset,
                   p->horizontal);
 
-    setRendpolyColor(rcolors, 4, p->shadowMul * shadowDark);
+    setRendpolyColor(rcolors, 4, shadowRGB, shadowDark * p->shadowMul);
 
     if(rendFakeRadio != 2)
     {
@@ -1112,7 +1105,6 @@ static void renderShadowSeg(const rvertex_t* origVertices,
  */
 static void rendRadioSegSection(const rvertex_t* rvertices,
                                 const walldiv_t* divs,
-                                float shadowSize, float shadowDark,
                                 const rendsegradio_params_t* p)
 {
     const float* fFloor, *fCeil, *bFloor, *bCeil;
@@ -1136,15 +1128,15 @@ static void rendRadioSegSection(const rvertex_t* rvertices,
      */
     if(!topGlow)
     {
-        if(rvertices[3].pos[VZ] > *fCeil - shadowSize &&
+        if(rvertices[3].pos[VZ] > *fCeil - p->shadowSize &&
            rvertices[0].pos[VZ] < *fCeil)
         {
             rendershadowseg_params_t params;
 
-            setTopShadowParams(&params, shadowSize, rvertices[1].pos[VZ],
+            setTopShadowParams(&params, p->shadowSize, rvertices[1].pos[VZ],
                                p->segOffset, p->segLength, fFloor, fCeil,
                                p->botCn, p->topCn, p->sideCn, p->spans);
-            renderShadowSeg(rvertices, divs, &params, shadowDark);
+            renderShadowSeg(rvertices, divs, &params, p->shadowRGB, p->shadowDark);
         }
     }
 
@@ -1153,15 +1145,15 @@ static void rendRadioSegSection(const rvertex_t* rvertices,
      */
     if(!bottomGlow)
     {
-        if(rvertices[0].pos[VZ] < *fFloor + shadowSize &&
+        if(rvertices[0].pos[VZ] < *fFloor + p->shadowSize &&
            rvertices[3].pos[VZ] > *fFloor)
         {
             rendershadowseg_params_t params;
 
-            setBottomShadowParams(&params, shadowSize, rvertices[1].pos[VZ],
+            setBottomShadowParams(&params, p->shadowSize, rvertices[1].pos[VZ],
                                   p->segOffset, p->segLength, fFloor, fCeil,
                                   p->botCn, p->topCn, p->sideCn, p->spans);
-            renderShadowSeg(rvertices, divs, &params, shadowDark);
+            renderShadowSeg(rvertices, divs, &params, p->shadowRGB, p->shadowDark);
         }
     }
 
@@ -1173,32 +1165,32 @@ static void rendRadioSegSection(const rvertex_t* rvertices,
     /*
      * Left Shadow.
      */
-    if(p->sideCn[0].corner > 0 && *p->segOffset < shadowSize)
+    if(p->sideCn[0].corner > 0 && *p->segOffset < p->shadowSize)
     {
         rendershadowseg_params_t params;
 
-        setSideShadowParams(&params, shadowSize, rvertices[0].pos[VZ],
+        setSideShadowParams(&params, p->shadowSize, rvertices[0].pos[VZ],
                             rvertices[1].pos[VZ], false,
                             bottomGlow, topGlow, p->segOffset, p->segLength,
                             fFloor, fCeil, bFloor, bCeil, p->linedefLength,
                             p->sideCn);
-        renderShadowSeg(rvertices, divs, &params, shadowDark);
+        renderShadowSeg(rvertices, divs, &params, p->shadowRGB, p->shadowDark);
     }
 
     /*
      * Right Shadow.
      */
     if(p->sideCn[1].corner > 0 &&
-       *p->segOffset + *p->segLength > *p->linedefLength - shadowSize)
+       *p->segOffset + *p->segLength > *p->linedefLength - p->shadowSize)
     {
         rendershadowseg_params_t params;
 
-        setSideShadowParams(&params, shadowSize, rvertices[0].pos[VZ],
+        setSideShadowParams(&params, p->shadowSize, rvertices[0].pos[VZ],
                             rvertices[1].pos[VZ], true,
                             bottomGlow, topGlow, p->segOffset, p->segLength,
                             fFloor, fCeil, bFloor, bCeil, p->linedefLength,
                             p->sideCn);
-        renderShadowSeg(rvertices, divs, &params, shadowDark);
+        renderShadowSeg(rvertices, divs, &params, p->shadowRGB, p->shadowDark);
     }
 }
 
@@ -1208,29 +1200,11 @@ static void rendRadioSegSection(const rvertex_t* rvertices,
 void Rend_RadioSegSection(const rvertex_t* rvertices, const walldiv_t* divs,
                           const rendsegradio_params_t* params)
 {
-    float               lightLevel, shadowSize, shadowDark;
-
     if(!rendFakeRadio || levelFullBright) // Disabled?
         return;
-
     if(!rvertices || !params)
         return; // Wha?
-
-    lightLevel = *params->sectorLightLevel;
-    Rend_ApplyLightAdaptation(&lightLevel);
-    if(!(lightLevel > 0))
-        return; // No point drawing shadows in a PITCH black sector.
-
-    // Determine the shadow properties.
-    // \fixme Make cvars out of constants.
-    shadowSize = 2 * (8 + 16 - lightLevel * 16);
-
-    if(!(shadowSize > 0))
-        return;
-
-    shadowDark = calcShadowDarkness(lightLevel) *.8f;
-
-    rendRadioSegSection(rvertices, divs, shadowSize, shadowDark, params);
+    rendRadioSegSection(rvertices, divs, params);
 }
 
 /**
@@ -1321,8 +1295,8 @@ static uint radioEdgeHackType(linedef_t *line, sector_t *front,
  */
 static void radioAddShadowEdge(const linedef_t* line, byte side,
                                vec2_t inner[2], vec2_t outer[2], float z,
-                               float darkness, float sideOpen[2],
-                               float normal[3])
+                               const float shadowRGB[3], float darkness,
+                               float sideOpen[2], float normal[3])
 {
     static const uint   floorIndices[][4] = {{0, 1, 2, 3}, {1, 2, 3, 0}};
     static const uint   ceilIndices[][4]  = {{0, 3, 2, 1}, {1, 0, 3, 2}};
@@ -1358,8 +1332,9 @@ static void radioAddShadowEdge(const linedef_t* line, byte side,
     rvertices[idx[0]].pos[VY] = vtx0->V_pos[VY];
     rvertices[idx[0]].pos[VZ] = z;
 
-    rcolors[idx[0]].rgba[CR] = rcolors[idx[0]].rgba[CG] =
-        rcolors[idx[0]].rgba[CB] = (renderWireframe? 1 : 0);
+    rcolors[idx[0]].rgba[CR] = (renderWireframe? 1 : shadowRGB[CR]);
+    rcolors[idx[0]].rgba[CG] = (renderWireframe? 1 : shadowRGB[CG]);
+    rcolors[idx[0]].rgba[CB] = (renderWireframe? 1 : shadowRGB[CB]);
     rcolors[idx[0]].rgba[CA] = shadowAlpha;
     if(sideOpen[0] < 1)
         rcolors[idx[0]].rgba[CA] *= 1 - sideOpen[0];
@@ -1369,8 +1344,9 @@ static void radioAddShadowEdge(const linedef_t* line, byte side,
     rvertices[idx[1]].pos[VY] = vtx1->V_pos[VY];
     rvertices[idx[1]].pos[VZ] = z;
 
-    rcolors[idx[1]].rgba[CR] = rcolors[idx[1]].rgba[CG] =
-        rcolors[idx[1]].rgba[CB] = (renderWireframe? 1 : 0);
+    rcolors[idx[1]].rgba[CR] = (renderWireframe? 1 : shadowRGB[CR]);
+    rcolors[idx[1]].rgba[CG] = (renderWireframe? 1 : shadowRGB[CG]);
+    rcolors[idx[1]].rgba[CB] = (renderWireframe? 1 : shadowRGB[CB]);
     rcolors[idx[1]].rgba[CA] = shadowAlpha;
     if(sideOpen[1] < 1)
         rcolors[idx[1]].rgba[CA] *= 1 - sideOpen[1];
@@ -1380,8 +1356,9 @@ static void radioAddShadowEdge(const linedef_t* line, byte side,
     rvertices[idx[2]].pos[VY] = inner[1][VY];
     rvertices[idx[2]].pos[VZ] = z;
 
-    rcolors[idx[2]].rgba[CR] = rcolors[idx[2]].rgba[CG] =
-        rcolors[idx[2]].rgba[CB] = (renderWireframe? 1 : 0);
+    rcolors[idx[2]].rgba[CR] = (renderWireframe? 1 : shadowRGB[CR]);
+    rcolors[idx[2]].rgba[CG] = (renderWireframe? 1 : shadowRGB[CG]);
+    rcolors[idx[2]].rgba[CB] = (renderWireframe? 1 : shadowRGB[CB]);
     rcolors[idx[2]].rgba[CA] = 0;
 
     // Left inner corner.
@@ -1389,8 +1366,9 @@ static void radioAddShadowEdge(const linedef_t* line, byte side,
     rvertices[idx[3]].pos[VY] = inner[0][VY];
     rvertices[idx[3]].pos[VZ] = z;
 
-    rcolors[idx[3]].rgba[CR] = rcolors[idx[3]].rgba[CG] =
-        rcolors[idx[3]].rgba[CB] = (renderWireframe? 1 : 0);
+    rcolors[idx[3]].rgba[CR] = (renderWireframe? 1 : shadowRGB[CR]);
+    rcolors[idx[3]].rgba[CG] = (renderWireframe? 1 : shadowRGB[CG]);
+    rcolors[idx[3]].rgba[CB] = (renderWireframe? 1 : shadowRGB[CB]);
     rcolors[idx[3]].rgba[CA] = 0;
 
     if(rendFakeRadio != 2)
@@ -1420,7 +1398,7 @@ static void radioSubsectorEdges(const subsector_t* subsector)
     shadowlink_t*       link;
     vec2_t              inner[2], outer[2];
     boolean             workToDo = false;
-    float               shadowSize, shadowDark;
+    float               shadowSize, shadowDark, shadowRGB[3];
     float               sectorlight = subsector->sector->lightLevel;
 
     Rend_ApplyLightAdaptation(&sectorlight);
@@ -1431,7 +1409,7 @@ static void radioSubsectorEdges(const subsector_t* subsector)
     // Determine the shadow properties.
     // \fixme Make cvars out of constants.
     shadowSize = 2 * (8 + 16 - sectorlight * 16);
-    shadowDark = calcShadowDarkness(sectorlight) *.8f;
+    shadowDark = Rend_RadioCalcShadowDarkness(sectorlight);
 
     vec[VX] = vx - subsector->midPoint.pos[VX];
     vec[VY] = vz - subsector->midPoint.pos[VY];
@@ -1454,8 +1432,8 @@ static void radioSubsectorEdges(const subsector_t* subsector)
     {
         plane_t            *plane = subsector->sector->planes[pln];
 
-        if(R_IsGlowingPlane(plane))
-            continue;
+        //if(R_IsGlowingPlane(plane))
+        //    continue;
 
         vec[VZ] = vy - plane->visHeight;
 
@@ -1503,7 +1481,7 @@ static void radioSubsectorEdges(const subsector_t* subsector)
             vec[VZ] = vy - plnHeight;
 
             // Glowing surfaces or missing textures shouldn't have shadows.
-            if((suf->inFlags & SUIF_NO_RADIO) || !suf->material)
+            if((suf->inFlags & SUIF_NO_RADIO) || !suf->material || R_IsSkySurface(suf))
                 continue;
 
             if(line->L_backside)
@@ -1594,8 +1572,27 @@ static void radioSubsectorEdges(const subsector_t* subsector)
                 }
             }
 
+            {
+            material_snapshot_t ms;
+            float shadowAlpha;
+            Material_Prepare(&ms, plane->PS_material, true, 0);
+            if(ms.glowing > 0)
+            {
+                shadowRGB[CR] = ms.color[CR];
+                shadowRGB[CG] = ms.color[CG];
+                shadowRGB[CB] = ms.color[CB];
+                shadowAlpha = ms.glowing * .125f * (1 - open);
+            }
+            else
+            {
+                float v = (ms.color[CR] + ms.color[CG] + ms.color[CB]) /3;
+                shadowRGB[CR] = shadowRGB[CG] = shadowRGB[CB] = 1-v*3;
+                shadowAlpha = shadowDark * (1 - open);
+            }
+
             radioAddShadowEdge(line, side, inner, outer, plnHeight,
-                               shadowDark * (1 - open), sideOpen, suf->normal);
+                               shadowRGB, shadowAlpha, sideOpen, suf->normal);
+            }
         }
     }
 }

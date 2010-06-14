@@ -165,25 +165,6 @@ if(!mat)
     if(df & SDF_CEIL_COLOR_BLUE)
         Surface_SetColorB(&sec->SP_ceilsurface, Msg_ReadByte() / 255.f);
 
-    if(df & SDF_FLOOR_GLOW_RED)
-        sec->SP_floorglowrgb[0] = Msg_ReadByte() / 255.f;
-    if(df & SDF_FLOOR_GLOW_GREEN)
-        sec->SP_floorglowrgb[1] = Msg_ReadByte() / 255.f;
-    if(df & SDF_FLOOR_GLOW_BLUE)
-        sec->SP_floorglowrgb[2] = Msg_ReadByte() / 255.f;
-
-    if(df & SDF_CEIL_GLOW_RED)
-        sec->SP_ceilglowrgb[0] = Msg_ReadByte() / 255.f;
-    if(df & SDF_CEIL_GLOW_GREEN)
-        sec->SP_ceilglowrgb[1] = Msg_ReadByte() / 255.f;
-    if(df & SDF_CEIL_GLOW_BLUE)
-        sec->SP_ceilglowrgb[2] = Msg_ReadByte() / 255.f;
-
-    if(df & SDF_FLOOR_GLOW)
-        sec->SP_floorglow = (float) (Msg_ReadShort() / DDMAXSHORT);
-    if(df & SDF_CEIL_GLOW)
-        sec->SP_ceilglow = (float) (Msg_ReadShort() / DDMAXSHORT);
-
     // Do we need to start any moving planes?
     if(df & (SDF_FLOOR_TARGET | SDF_FLOOR_SPEED))
     {

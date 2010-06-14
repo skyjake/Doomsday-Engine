@@ -356,6 +356,7 @@ static material_t* createMaterial(short width, short height, byte flags,
     mat->flags &= ~MATF_CUSTOM;
     for(i = 0; i < mat->numLayers; ++i)
     {
+        mat->layers[i].glow = (def? def->layers[i].stages[0].glow : 0);
         if(!GLTexture_IsFromIWAD(GL_GetGLTexture(mat->layers[i].tex)))
         {
             mat->flags |= MATF_CUSTOM;
@@ -518,6 +519,7 @@ Con_Message("P_MaterialCreate: Warning, attempted to create material in "
         mat->flags &= ~MATF_CUSTOM;
         for(i = 0; i < mat->numLayers; ++i)
         {
+            mat->layers[i].glow = (def && def->layers[i].stageCount.num >= 1? def->layers[i].stages[0].glow : 0);
             if(!GLTexture_IsFromIWAD(GL_GetGLTexture(mat->layers[i].tex)))
             {
                 mat->flags |= MATF_CUSTOM;

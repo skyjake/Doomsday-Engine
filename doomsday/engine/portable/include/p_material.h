@@ -63,6 +63,7 @@ typedef struct material_textureunit_s {
 typedef struct material_snapshot_s {
     short           width, height; // In world units.
     boolean         isOpaque;
+    float           glowing;
     float           color[3]; // Average color (for lighting).
     float           topColor[3]; // Averaged top line color, used for sky fadeouts.
     material_textureunit_t units[NUM_MATERIAL_TEXTURE_UNITS];

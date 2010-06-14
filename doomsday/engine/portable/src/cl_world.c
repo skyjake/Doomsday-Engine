@@ -596,25 +596,6 @@ if(num >= numSectors)
     if(df & SDF_CEIL_COLOR_BLUE)
         Surface_SetColorB(&sec->SP_ceilsurface, Msg_ReadByte() / 255.f);
 
-    if(df & SDF_FLOOR_GLOW_RED)
-        sec->planes[PLN_FLOOR]->glowRGB[0] = Msg_ReadByte() / 255.f;
-    if(df & SDF_FLOOR_GLOW_GREEN)
-        sec->planes[PLN_FLOOR]->glowRGB[1] = Msg_ReadByte() / 255.f;
-    if(df & SDF_FLOOR_GLOW_BLUE)
-        sec->planes[PLN_FLOOR]->glowRGB[2] = Msg_ReadByte() / 255.f;
-
-    if(df & SDF_CEIL_GLOW_RED)
-        sec->planes[PLN_CEILING]->glowRGB[0] = Msg_ReadByte() / 255.f;
-    if(df & SDF_CEIL_GLOW_GREEN)
-        sec->planes[PLN_CEILING]->glowRGB[1] = Msg_ReadByte() / 255.f;
-    if(df & SDF_CEIL_GLOW_BLUE)
-        sec->planes[PLN_CEILING]->glowRGB[2] = Msg_ReadByte() / 255.f;
-
-    if(df & SDF_FLOOR_GLOW)
-        sec->planes[PLN_FLOOR]->glow = (float) Msg_ReadShort() / DDMAXSHORT;
-    if(df & SDF_CEIL_GLOW)
-        sec->planes[PLN_CEILING]->glow = (float) Msg_ReadShort() / DDMAXSHORT;
-
     // The whole delta has been read. If we're about to skip, let's do so.
     if(skip)
         return;
