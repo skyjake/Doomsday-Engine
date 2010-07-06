@@ -379,7 +379,7 @@ int DED_AddMaterialLayerStage(ded_material_layer_t* ml)
     ded_material_layer_stage_t* stage =
         DED_NewEntry((void **) &ml->stages, &ml->stageCount, sizeof(*stage));
 
-    stage->type = -1; // Unused.
+    stage->type = GLT_ANY; // Unused.
     return stage - ml->stages;
 }
 

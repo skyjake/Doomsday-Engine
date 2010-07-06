@@ -81,7 +81,6 @@ material_env_class_t Material_GetEnvClass(material_t* mat);
 
 void            Material_SetTranslation(material_t* mat, material_t* current, material_t* next, float inter);
 
-byte            Material_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean smoothed, material_load_params_t* params);
 void            Material_Ticker(material_t* mat, timespan_t time);
 void            Material_DeleteTextures(material_t* mat);
 

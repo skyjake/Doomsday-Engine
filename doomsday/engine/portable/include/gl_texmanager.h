@@ -225,6 +225,7 @@ void            GL_ReleaseGLTexture(gltextureid_t id);
 const gltexture_inst_t* GL_PrepareGLTexture(gltextureid_t id, void* context, byte* result);
 const gltexture_t* GL_GetGLTexture(gltextureid_t id);
 const gltexture_t* GL_GetGLTextureByName(const char* name, gltexture_type_t type);
+gltextureid_t   GL_ToGLTextureId(const gltexture_t*);
 void            GL_SetAllGLTexturesMinMode(int minMode);
 void            GL_DeleteAllTexturesForGLTextures(gltexture_type_t);
 

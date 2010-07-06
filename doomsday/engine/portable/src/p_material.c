@@ -88,21 +88,31 @@ void Material_Ticker(material_t* mat, timespan_t time)
             if(lsDef->variance != 0)
                 layer->tics = lsDef->tics * (1 - lsDef->variance * RNG_RandFloat());
             else
-                layer->tics = lsDef->tics;
+                layer->tics = lsDef->tics;           
+
+            inter = 0;
+        }
+        else
+        {
+            lsDef = &lDef->stages[layer->stage];
+            inter = 1.0f - (layer->tics - frameTimePos) / (float) lsDef->tics;
         }
 
-        lsDef = &lDef->stages[layer->stage];
-        lsDefNext = &lDef->stages[(layer->stage+1) % lDef->stageCount.num];
-        inter = 1.0f - (layer->tics - frameTimePos) / (float) lsDef->tics;
-        
+        if(lsDef->name && lsDef->name[0] && lsDef->type != GLT_ANY)
+        {
+            const gltexture_t* glTex = GL_GetGLTextureByName(lsDef->name, lsDef->type);
+            layer->tex = (glTex? glTex->id : 0);
+            mat->inter = inter;
+        }
+
         if(inter == 0)
         {
             layer->glow = lsDef->glow;
             continue;
         }
+        lsDefNext = &lDef->stages[(layer->stage+1) % lDef->stageCount.num];
 
-        //layer->glow = (lsDef->glow * (1 - frameTimePos) + lsDefNext->glow * frameTimePos - lsDefNext->glow);
-        layer->glow = lsDefNext->glow * inter + lsDef->glow * (1 - inter);
+        layer->glow = lsDefNext->glow *inter + lsDef->glow * (1 - inter);
     }
 }
 

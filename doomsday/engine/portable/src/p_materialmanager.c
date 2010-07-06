@@ -1330,7 +1330,7 @@ boolean Materials_IsPrecacheAnimGroup(int groupNum)
     return false;
 }
 
-static void animateAnimGroup(animgroup_t* group)
+void Materials_AnimateAnimGroup(animgroup_t* group)
 {
     // The Precache groups are not intended for animation.
     if((group->flags & AGF_PRECACHE) || !group->count)
@@ -1374,6 +1374,9 @@ static void animateAnimGroup(animgroup_t* group)
     {
         material_t* mat = group->frames[i].mat;
 
+        if(mat->def && mat->def->layers[0].stageCount.num > 1)
+            continue; // Animated elsewhere.
+
         if(group->flags & AGF_SMOOTH)
         {
             mat->inter = 1 - group->timer / (float) group->maxTimer;
@@ -1394,7 +1397,7 @@ static void animateAnimGroups(void)
     int i;
     for(i = 0; i < numgroups; ++i)
     {
-        animateAnimGroup(&groups[i]);
+        Materials_AnimateAnimGroup(&groups[i]);
     }
 }
 
@@ -1405,8 +1408,22 @@ static void animateAnimGroups(void)
 void Materials_ResetAnimGroups(void)
 {
     animgroup_t* group;
-    int i;
 
+    {uint i;
+    for(i = 0; i < Materials_Count(); ++i)
+    {
+        material_t* mat = P_ToMaterial((materialnum_t)(i+1));
+        uint j;
+        for(j = 0; j < mat->numLayers; ++j)
+        {
+            material_layer_t* ml = &mat->layers[j];
+            if(ml->stage == -1)
+                break;
+            ml->stage = 0;
+        }
+    }}
+
+    {int i;
     for(i = 0, group = groups; i < numgroups; ++i, group++)
     {
         // The Precache groups are not intended for animation.
@@ -1419,7 +1436,7 @@ void Materials_ResetAnimGroups(void)
         // The anim group should start from the first step using the
         // correct timings.
         group->index = group->count - 1;
-    }
+    }}
 
     // This'll get every group started on the first step.
     animateAnimGroups();
