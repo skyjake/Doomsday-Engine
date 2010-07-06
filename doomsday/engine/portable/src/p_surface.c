@@ -83,8 +83,9 @@ boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
         {
             if(ddMapSetup)
             {
-                if(suf->material)
-                    P_MaterialPrecache(suf->material, false);
+                /// @todo Implement Material reference counting?
+                //if(suf->material)
+                //    P_MaterialPrecache(suf->material, false);
                 P_MaterialPrecache(mat, true);
             }
             else
