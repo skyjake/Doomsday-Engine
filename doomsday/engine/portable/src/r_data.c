@@ -2193,11 +2193,6 @@ void R_PrecacheMap(void)
             boolean hasDecorations;
             uint j;
 
-            if(mat->inAnimGroup)
-            {   // The material belongs in one or more animgroups, precache the group.
-                Materials_PrecacheAnimGroup(mat);
-            }
-
             // Just this one material.
             Materials_Prepare(&ms, mat, true, 0);
             hasDecorations = ms.decorated;

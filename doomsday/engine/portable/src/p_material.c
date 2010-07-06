@@ -98,12 +98,17 @@ void Material_Ticker(material_t* mat, timespan_t time)
             inter = 1.0f - (layer->tics - frameTimePos) / (float) lsDef->tics;
         }
 
-        if(lsDef->name && lsDef->name[0] && lsDef->type != GLT_ANY)
+        {const gltexture_t* glTex;
+        if((glTex = GL_GetGLTextureByName(lsDef->name, lsDef->type)))
         {
-            const gltexture_t* glTex = GL_GetGLTextureByName(lsDef->name, lsDef->type);
-            layer->tex = (glTex? glTex->id : 0);
+            layer->tex = glTex->id;
             mat->inter = inter;
         }
+        else
+        {
+            layer->tex = 0;
+            mat->inter = 0;
+        }}
 
         if(inter == 0)
         {

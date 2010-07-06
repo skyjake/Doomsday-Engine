@@ -82,5 +82,5 @@ boolean         Materials_MaterialLinkedToAnimGroup(int animGroupNum, material_t
 boolean         Materials_IsPrecacheAnimGroup(int groupNum);
 
 // @todo Refactor away.
-void            Materials_PrecacheAnimGroup(material_t* mat);
+void            Materials_PrecacheAnimGroup(material_t* mat, boolean yes);
 #endif

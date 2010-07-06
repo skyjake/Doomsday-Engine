@@ -794,7 +794,7 @@ const char* P_GetMaterialName(material_t* mat)
  *
  * @param mat           The material to be precached.
  */
-void P_MaterialPrecache(material_t* mat, boolean yes)
+void P_MaterialPrecache2(material_t* mat, boolean yes, boolean inGroup)
 {
     if(!initedOk)
         return;
@@ -804,6 +804,16 @@ void P_MaterialPrecache(material_t* mat, boolean yes)
         mat->inFlags |= MATIF_PRECACHE;
     else
         mat->inFlags &= ~MATIF_PRECACHE;
+
+    if(inGroup && mat->inAnimGroup)
+    {   // The material belongs in one or more animgroups, precache the group.
+        Materials_PrecacheAnimGroup(mat, yes);
+    }
+}
+
+void P_MaterialPrecache(material_t* mat, boolean yes)
+{
+    P_MaterialPrecache2(mat, yes, true);
 }
 
 /**
@@ -1245,11 +1255,10 @@ int Materials_AnimGroupCount(void)
  */
 int Materials_CreateAnimGroup(int flags)
 {
-    animgroup_t*        group;
+    animgroup_t* group;
 
     // Allocating one by one is inefficient, but it doesn't really matter.
-    groups =
-        Z_Realloc(groups, sizeof(animgroup_t) * (numgroups + 1), PU_STATIC);
+    groups = Z_Realloc(groups, sizeof(animgroup_t) * (numgroups + 1), PU_STATIC);
 
     // Init the new group.
     group = &groups[numgroups];
@@ -1375,7 +1384,10 @@ void Materials_AnimateAnimGroup(animgroup_t* group)
         material_t* mat = group->frames[i].mat;
 
         if(mat->def && mat->def->layers[0].stageCount.num > 1)
-            continue; // Animated elsewhere.
+        {
+            if(GL_GetGLTextureByName(mat->def->layers[0].stages[0].name, mat->def->layers[0].stages[0].type))
+                continue; // Animated elsewhere.
+        }
 
         if(group->flags & AGF_SMOOTH)
         {
@@ -1442,21 +1454,18 @@ void Materials_ResetAnimGroups(void)
     animateAnimGroups();
 }
 
-void Materials_PrecacheAnimGroup(material_t* mat)
+void Materials_PrecacheAnimGroup(material_t* mat, boolean yes)
 {
     int i;
-
     for(i = 0; i < numgroups; ++i)
     {
         if(isInAnimGroup(&groups[i], mat))
         {
             int k;
-
             // Precache this group.
             for(k = 0; k < groups[i].count; ++k)
             {
-                animframe_t* frame = &groups[i].frames[k];
-                Materials_Prepare(NULL, frame->mat, true, NULL);
+                P_MaterialPrecache2(groups[i].frames[k].mat, yes, false);
             }
         }
     }
