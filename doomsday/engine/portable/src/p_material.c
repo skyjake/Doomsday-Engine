@@ -108,7 +108,7 @@ void Material_Ticker(material_t* mat, timespan_t time)
         {
             /// @fixme Should reset this to the non-stage animated texture here.
             //layer->tex = 0;
-            mat->inter = 0;
+            //mat->inter = 0;
         }}
 
         if(inter == 0)
