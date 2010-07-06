@@ -1399,7 +1399,7 @@ static __inline void initSurfaceMaterialOffset(surface_t *suf)
  */
 void R_SetupMap(int mode, int flags)
 {
-    uint        i;
+    uint i;
 
     switch(mode)
     {
@@ -1410,6 +1410,10 @@ void R_SetupMap(int mode, int flags)
 
         // A new map is about to be setup.
         ddMapSetup = true;
+
+        // Reset Material precache status.
+        for(i = 0; i < numMaterials; ++i)
+            P_MaterialPrecache(P_ToMaterial(i+1), false);
         return;
 
     case DDSMM_AFTER_LOADING:

@@ -2142,9 +2142,6 @@ void R_PrecacheMap(void)
     // Precache all materials used on world surfaces.
     numMaterials = numMaterialBinds;
 
-    for(i = 0; i < numMaterials; ++i)
-        P_MaterialPrecache(P_ToMaterial(i+1), false);
-
     for(i = 0; i < numSideDefs; ++i)
     {
         side = SIDE_PTR(i);
