@@ -437,7 +437,7 @@ ded_decor_t* Def_GetDecoration(material_t* mat, boolean hasExt)
 
     for(i = defs.count.decorations.num - 1, def = defs.decorations + i; i >= 0; i--, def--)
     {
-        material_t* defMat =P_ToMaterial(P_MaterialNumForName(def->material.name, def->material.mnamespace));
+        material_t* defMat =P_ToMaterial(Materials_NumForName(def->material.name, def->material.mnamespace));
 
         if(mat == defMat)
         {
@@ -459,7 +459,7 @@ ded_reflection_t* Def_GetReflection(material_t* mat, boolean hasExt)
         i >= 0; i--, def--)
     {
         material_t*         defMat =
-            P_ToMaterial(P_MaterialNumForName(def->material.name,
+            P_ToMaterial(Materials_NumForName(def->material.name,
                                                     def->material.mnamespace));
         if(mat == defMat)
         {
@@ -482,7 +482,7 @@ ded_detailtexture_t* Def_GetDetailTex(material_t* mat, boolean hasExt)
         i >= 0; i--, def--)
     {
         material_t*         defMat =
-            P_ToMaterial(P_MaterialNumForName(def->material1.name,
+            P_ToMaterial(Materials_NumForName(def->material1.name,
                                                     def->material1.mnamespace));
         if(mat == defMat)
         {
@@ -492,7 +492,7 @@ ded_detailtexture_t* Def_GetDetailTex(material_t* mat, boolean hasExt)
         }
 
         defMat =
-            P_ToMaterial(P_MaterialNumForName(def->material2.name,
+            P_ToMaterial(Materials_NumForName(def->material2.name,
                                                     def->material2.mnamespace));
         if(mat == defMat)
         {
@@ -516,7 +516,7 @@ ded_ptcgen_t* Def_GetGenerator(material_t* mat, boolean hasExt)
         material_t*         defMat;
 
         if(!(defMat = P_ToMaterial(
-                P_MaterialNumForName(def->material.name, def->material.mnamespace))))
+                Materials_NumForName(def->material.name, def->material.mnamespace))))
             continue;
 
         if(def->flags & PGF_GROUP)
@@ -1388,9 +1388,9 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
     l->actLineType = def->actLineType;
     l->deactLineType = def->deactLineType;
     l->wallSection = def->wallSection;
-    l->actMaterial = P_MaterialCheckNumForName(def->actMaterial.name,
+    l->actMaterial = Materials_CheckNumForName(def->actMaterial.name,
                                                def->actMaterial.mnamespace);
-    l->deactMaterial = P_MaterialCheckNumForName(def->deactMaterial.name,
+    l->deactMaterial = Materials_CheckNumForName(def->deactMaterial.name,
                                                  def->deactMaterial.mnamespace);
     l->actMsg = def->actMsg;
     l->deactMsg = def->deactMsg;
@@ -1421,7 +1421,7 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
                     l->iparm[k] = -1;
                 else
                     l->iparm[k] =
-                        P_MaterialCheckNumForName(def->iparmStr[k], MN_ANY);
+                        Materials_CheckNumForName(def->iparmStr[k], MN_ANY);
             }
         }
         else if(a & MAP_MUS)

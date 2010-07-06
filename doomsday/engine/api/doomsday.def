@@ -283,9 +283,9 @@ EXPORTS
     P_SetPolyobjCallback        @83 NONAME
 
 ; Play: Materials.
-    P_MaterialCheckNumForName   @336 NONAME
+    Materials_CheckNumForName   @336 NONAME
     P_GetMaterialName           @337 NONAME
-    P_MaterialNumForName        @97 NONAME
+    Materials_NumForName        @97 NONAME
     P_MaterialCheckNumForIndex  @438 NONAME
     P_MaterialNumForIndex       @437 NONAME
     P_MaterialPrecache          @436 NONAME

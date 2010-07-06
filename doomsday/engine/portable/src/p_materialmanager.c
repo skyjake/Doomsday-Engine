@@ -683,7 +683,7 @@ materialnum_t P_MaterialNumForIndex(uint idx, material_namespace_t mnamespace)
  *
  * @return              Unique number of the found material, else zero.
  */
-materialnum_t P_MaterialCheckNumForName(const char* rawName,
+materialnum_t Materials_CheckNumForName(const char* rawName,
                                         material_namespace_t mnamespace)
 {
     int                 n;
@@ -736,7 +736,7 @@ Con_Message("P_GetMaterial: Internal error, invalid namespace '%i'\n",
 /**
  * Given a name and namespace, search the materials db for a match.
  * \note Part of the Doomsday public API.
- * \note2 Same as P_MaterialCheckNumForName except will log an error
+ * \note2 Same as Materials_CheckNumForName except will log an error
  *        message if the material being searched for is not found.
  *
  * @param name          Name of the material to search for.
@@ -744,7 +744,7 @@ Con_Message("P_GetMaterial: Internal error, invalid namespace '%i'\n",
  *
  * @return              Unique identifier of the found material, else zero.
  */
-materialnum_t P_MaterialNumForName(const char* name,
+materialnum_t Materials_NumForName(const char* name,
                                    material_namespace_t mnamespace)
 {
     materialnum_t       result;
@@ -758,11 +758,11 @@ materialnum_t P_MaterialNumForName(const char* name,
     if(!name || !name[0] || name[0] == '-')
         return 0;
 
-    result = P_MaterialCheckNumForName(name, mnamespace);
+    result = Materials_CheckNumForName(name, mnamespace);
 
     // Not found?
     if(verbose && result == 0 && !ddMapSetup) // Don't announce during map setup.
-        Con_Message("P_MaterialNumForName: \"%.8s\" in namespace %i not found!\n",
+        Con_Message("Materials_NumForName: \"%.8s\" in namespace %i not found!\n",
                     name, mnamespace);
     return result;
 }

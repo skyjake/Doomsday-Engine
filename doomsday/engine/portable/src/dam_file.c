@@ -184,7 +184,7 @@ static material_t* lookupMaterialFromDict(materialdict_t* dict, int idx)
     if(!strncmp(e->name, BADTEXNAME, 8))
         return NULL;
 
-    return P_ToMaterial(P_MaterialNumForName(e->name, e->mnamespace));
+    return P_ToMaterial(Materials_NumForName(e->name, e->mnamespace));
 }
 
 static boolean openMapFile(char* path, boolean write)

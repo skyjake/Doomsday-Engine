@@ -207,7 +207,7 @@ void P_InitTerrainTypes(void)
         {
             material_t*         mat =
                 P_ToPtr(DMU_MATERIAL,
-                        P_MaterialCheckNumForName(matTTypeDefs[i].matName,
+                        Materials_CheckNumForName(matTTypeDefs[i].matName,
                                                   matTTypeDefs[i].matGroup));
             if(mat)
             {

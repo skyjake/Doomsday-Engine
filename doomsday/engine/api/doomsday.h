@@ -328,8 +328,8 @@ extern          "C" {
     void            P_SetPolyobjCallback(void (*func)(struct mobj_s*, void*, void*));
 
     // Play: Materials.
-    materialnum_t   P_MaterialCheckNumForName(const char* name, material_namespace_t mnamespace);
-    materialnum_t   P_MaterialNumForName(const char* name, material_namespace_t mnamespace);
+    materialnum_t   Materials_CheckNumForName(const char* name, material_namespace_t mnamespace);
+    materialnum_t   Materials_NumForName(const char* name, material_namespace_t mnamespace);
     materialnum_t   P_MaterialCheckNumForIndex(uint idx, material_namespace_t mnamespace);
     materialnum_t   P_MaterialNumForIndex(uint idx, material_namespace_t mnamespace);
     const char*     P_GetMaterialName(material_t* mat);

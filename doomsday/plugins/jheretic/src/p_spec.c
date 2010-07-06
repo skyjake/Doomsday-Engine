@@ -326,7 +326,7 @@ static void loadAnimDefs(animdef_t* animDefs)
                     for(n = startFrame; n <= endFrame; n++)
                     {
                         materialnum_t       frame =
-                            P_MaterialCheckNumForName(W_LumpName(n),
+                            Materials_CheckNumForName(W_LumpName(n),
                                                       MN_FLATS);
 
                         if(frame != 0)
@@ -338,7 +338,7 @@ static void loadAnimDefs(animdef_t* animDefs)
                     for(n = endFrame; n >= startFrame; n--)
                     {
                         materialnum_t       frame =
-                            P_MaterialCheckNumForName(W_LumpName(n),
+                            Materials_CheckNumForName(W_LumpName(n),
                                                       MN_FLATS);
 
                         if(frame != 0)
@@ -352,9 +352,9 @@ static void loadAnimDefs(animdef_t* animDefs)
             {   // Same as above but for texture groups.
             materialnum_t       startFrame, endFrame, n;
 
-            if((startFrame = P_MaterialCheckNumForName(animDefs[i].startname,
+            if((startFrame = Materials_CheckNumForName(animDefs[i].startname,
                                                        MN_TEXTURES)) == 0 ||
-               (endFrame = P_MaterialCheckNumForName(animDefs[i].endname,
+               (endFrame = Materials_CheckNumForName(animDefs[i].endname,
                                                      MN_TEXTURES)) == 0)
                 continue;
 

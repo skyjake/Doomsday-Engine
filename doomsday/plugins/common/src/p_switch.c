@@ -178,9 +178,9 @@ void P_InitSwitchList(void)
             break;
 
         switchlist[index++] = P_ToPtr(DMU_MATERIAL,
-            P_MaterialCheckNumForName(switchInfo[i].name1, MN_TEXTURES));
+            Materials_CheckNumForName(switchInfo[i].name1, MN_TEXTURES));
         switchlist[index++] = P_ToPtr(DMU_MATERIAL,
-            P_MaterialCheckNumForName(switchInfo[i].name2, MN_TEXTURES));
+            Materials_CheckNumForName(switchInfo[i].name2, MN_TEXTURES));
     }
 
     numswitches = index / 2;

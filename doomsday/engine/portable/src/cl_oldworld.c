@@ -90,7 +90,7 @@ int Cl_ReadSectorDelta(void)
         if((lumpNum = Cl_TranslateLump(Msg_ReadPackedShort())) != 0)
         {
             material_t*         mat = P_ToMaterial(
-                P_MaterialNumForName(W_LumpName(lumpNum), MN_FLATS));
+                Materials_NumForName(W_LumpName(lumpNum), MN_FLATS));
 #if _DEBUG
 if(!mat)
     Con_Message("Cl_ReadSectorDelta: No material for flat %i.",
@@ -108,7 +108,7 @@ if(!mat)
         if((lumpNum = Cl_TranslateLump(Msg_ReadPackedShort())) != 0)
         {
             material_t*         mat = P_ToMaterial(
-                P_MaterialNumForName(W_LumpName(lumpNum), MN_FLATS));
+                Materials_NumForName(W_LumpName(lumpNum), MN_FLATS));
 #if _DEBUG
 if(!mat)
     Con_Message("Cl_ReadSectorDelta: No material for flat %i.",
