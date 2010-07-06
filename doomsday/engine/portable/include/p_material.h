@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright Â© 2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,12 +21,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_material.h: Materials for world surfaces.
- */
-
-#ifndef __DOOMSDAY_MATERIAL_H__
-#define __DOOMSDAY_MATERIAL_H__
+#ifndef LIBDENG2_MATERIAL_H
+#define LIBDENG2_MATERIAL_H
 
 #include "p_dmu.h"
 
@@ -83,14 +79,10 @@ boolean         Material_SetProperty(material_t* mat, const setargs_t* args);
 
 material_env_class_t Material_GetEnvClass(material_t* mat);
 
-void            Material_SetTranslation(material_t* mat,
-                                        material_t* current,
-                                        material_t* next, float inter);
+void            Material_SetTranslation(material_t* mat, material_t* current, material_t* next, float inter);
 
-byte            Material_Prepare(material_snapshot_t* snapshot,
-                                 material_t* mat, boolean smoothed,
-                                 material_load_params_t* params);
-//void            Material_Ticker(material_t* mat, timespan_t time);
+byte            Material_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean smoothed, material_load_params_t* params);
+void            Material_Ticker(material_t* mat, timespan_t time);
 void            Material_DeleteTextures(material_t* mat);
 
-#endif
+#endif /* LIBDENG2_MATERIAL_H */

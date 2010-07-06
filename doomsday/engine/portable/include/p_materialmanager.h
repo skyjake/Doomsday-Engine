@@ -62,20 +62,25 @@ materialnum_t   P_MaterialNumForIndex(uint idx, material_namespace_t mnamespace)
 
 void            P_MaterialPrecache(material_t* mat, boolean yes);
 
+uint                Materials_Count(void);
+
 byte                Materials_Prepare(struct material_snapshot_s* snapshot, material_t* mat, boolean smoothed, struct material_load_params_s* params);
 const ded_detailtexture_t* Materials_Detail(materialnum_t num);
 const ded_reflection_t* Materials_Reflection(materialnum_t num);
 const ded_decor_t*  Materials_Decoration(materialnum_t num);
 const ded_ptcgen_t* Materials_PtcGen(materialnum_t num);
 
-// Anim groups:
-int             R_NumAnimGroups(void);
-int             R_CreateAnimGroup(int flags);
-void            R_AddToAnimGroup(int animGroupNum, materialnum_t num, int tics,
-                                 int randomTics);
-boolean         R_IsInAnimGroup(int animGroupNum, material_t* mat);
-boolean         R_IsPrecacheGroup(int groupNum);
-void            R_DestroyAnimGroups(void);
-void            R_ResetAnimGroups(void);
-void            R_MaterialsPrecacheGroup(material_t* mat);
+int             Materials_AnimGroupCount(void);
+void            Materials_ResetAnimGroups(void);
+void            Materials_DestroyAnimGroups(void);
+
+int             Materials_CreateAnimGroup(int flags);
+void            Materials_AddAnimGroupFrame(int animGroupNum, materialnum_t num, int tics, int randomTics);
+boolean         Materials_MaterialLinkedToAnimGroup(int animGroupNum, material_t* mat);
+
+// @todo Refactor interface, doesn't fit the current design.
+boolean         Materials_IsPrecacheAnimGroup(int groupNum);
+
+// @todo Refactor away.
+void            Materials_PrecacheAnimGroup(material_t* mat);
 #endif

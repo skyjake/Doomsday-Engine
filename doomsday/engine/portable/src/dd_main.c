@@ -847,7 +847,7 @@ void DD_UpdateEngineState(void)
     gx.UpdateState(DD_POST);
 
     // Reset the anim groups (if in-game)
-    R_ResetAnimGroups();
+    Materials_ResetAnimGroups();
 }
 
 /* *INDENT-OFF* */

@@ -82,7 +82,7 @@ static void parseAnimGroup(material_namespace_t mnamespace)
     }
 
     if(!ignore)
-        groupNumber = R_CreateAnimGroup(AGF_SMOOTH | AGF_FIRST_ONLY);
+        groupNumber = Materials_CreateAnimGroup(AGF_SMOOTH | AGF_FIRST_ONLY);
 
     done = false;
     do
@@ -124,7 +124,7 @@ static void parseAnimGroup(material_namespace_t mnamespace)
                          * same order as they are defined in the
                          * TEXTURE(1...) lump(s).
                          */
-                        R_AddToAnimGroup(groupNumber, matNumBase + picNum - 1,
+                        Materials_AddAnimGroupFrame(groupNumber, matNumBase + picNum - 1,
                                          min, (max > 0? max - min : 0));
                     }
                     else
@@ -133,7 +133,7 @@ static void parseAnimGroup(material_namespace_t mnamespace)
                             P_MaterialCheckNumForName(W_LumpName(lumpNumBase + picNum - 1),
                                                       MN_FLATS);
 
-                        R_AddToAnimGroup(groupNumber, frame,
+                        Materials_AddAnimGroupFrame(groupNumber, frame,
                                          min, (max > 0? max - min : 0));
                     }
                 }

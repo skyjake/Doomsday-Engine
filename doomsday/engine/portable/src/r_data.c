@@ -2195,7 +2195,7 @@ void R_PrecacheMap(void)
 
             if(mat->inAnimGroup)
             {   // The material belongs in one or more animgroups, precache the group.
-                R_MaterialsPrecacheGroup(mat);
+                Materials_PrecacheAnimGroup(mat);
             }
 
             // Just this one material.
@@ -2284,10 +2284,10 @@ void R_InitAnimGroup(ded_group_t* def)
         if(groupNumber == -1)
         {
             // Create a new animation group.
-            groupNumber = R_CreateAnimGroup(def->flags);
+            groupNumber = Materials_CreateAnimGroup(def->flags);
         }
 
-        R_AddToAnimGroup(groupNumber, num, gm->tics, gm->randomTics);
+        Materials_AddAnimGroupFrame(groupNumber, num, gm->tics, gm->randomTics);
     }
 }
 

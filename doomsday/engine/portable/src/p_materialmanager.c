@@ -811,21 +811,19 @@ void P_MaterialPrecache(material_t* mat, boolean yes)
  */
 void P_MaterialManagerTicker(timespan_t time)
 {
-//    material_t*         mat;
-    static trigger_t    fixed = { 1.0 / 35, 0 };
+    static trigger_t fixed = { 1.0 / 35, 0 };
+    material_t* mat;
 
     // The animation will only progress when the game is not paused.
     if(clientPaused)
         return;
 
-#if 0
     mat = materialsHead;
     while(mat)
     {
         Material_Ticker(mat, time);
         mat = mat->globalNext;
     }
-#endif
 
     if(!M_RunTrigger(&fixed, time))
         return;
@@ -1107,6 +1105,13 @@ const ded_ptcgen_t* Materials_PtcGen(materialnum_t num)
     return 0;
 }
 
+uint Materials_Count(void)
+{
+    if(initedOk)
+        return numMaterialBinds;
+    return 0;
+}
+
 static void printMaterialInfo(materialnum_t num, boolean printNamespace)
 {
     const materialbind_t* mb = &materialBinds[num];
@@ -1178,30 +1183,6 @@ static void printMaterials(material_namespace_t mnamespace, const char* like)
     }
 }
 
-D_CMD(ListMaterials)
-{
-    material_namespace_t     mnamespace = MN_ANY;
-
-    if(argc > 1)
-    {
-        mnamespace = atoi(argv[1]);
-        if(mnamespace < MN_FIRST)
-        {
-            mnamespace = MN_ANY;
-        }
-        else if(!(mnamespace < NUM_MATERIAL_NAMESPACES))
-        {
-            Con_Printf("Invalid namespace \"%s\".\n", argv[1]);
-            return false;
-        }
-    }
-
-    printMaterials(mnamespace, argc > 2? argv[2] : NULL);
-    return true;
-}
-
-// Code bellow needs re-implementing --------------------------------------
-
 typedef struct animframe_s {
     material_t*     mat;
     ushort          tics;
@@ -1248,12 +1229,12 @@ static boolean isInAnimGroup(animgroup_t* group, const material_t* mat)
     return false;
 }
 
-boolean R_IsInAnimGroup(int groupNum, material_t* mat)
+boolean Materials_MaterialLinkedToAnimGroup(int groupNum, material_t* mat)
 {
     return isInAnimGroup(getAnimGroup(groupNum), mat);
 }
 
-int R_NumAnimGroups(void)
+int Materials_AnimGroupCount(void)
 {
     return numgroups;
 }
@@ -1262,7 +1243,7 @@ int R_NumAnimGroups(void)
  * Create a new animation group. Returns the group number.
  * \note Part of the Doomsday public API.
  */
-int R_CreateAnimGroup(int flags)
+int Materials_CreateAnimGroup(int flags)
 {
     animgroup_t*        group;
 
@@ -1284,7 +1265,7 @@ int R_CreateAnimGroup(int flags)
 /**
  * Called during engine reset to clear the existing animation groups.
  */
-void R_DestroyAnimGroups(void)
+void Materials_DestroyAnimGroups(void)
 {
     int                 i;
 
@@ -1305,7 +1286,7 @@ void R_DestroyAnimGroups(void)
 /**
  * \note Part of the Doomsday public API.
  */
-void R_AddToAnimGroup(int groupNum, materialnum_t num, int tics,
+void Materials_AddAnimGroupFrame(int groupNum, materialnum_t num, int tics,
                       int randomTics)
 {
     animgroup_t*        group;
@@ -1314,11 +1295,11 @@ void R_AddToAnimGroup(int groupNum, materialnum_t num, int tics,
 
     group = getAnimGroup(groupNum);
     if(!group)
-        Con_Error("R_AddToAnimGroup: Unknown anim group '%i'\n.", groupNum);
+        Con_Error("Materials_AddAnimGroupFrame: Unknown anim group '%i'\n.", groupNum);
 
     if(!num || !(mat = getMaterialByNum(num - 1)))
     {
-        Con_Message("R_AddToAnimGroup: Invalid material num '%i'\n.", num);
+        Con_Message("Materials_AddAnimGroupFrame: Invalid material num '%i'\n.", num);
         return;
     }
 
@@ -1337,7 +1318,7 @@ void R_AddToAnimGroup(int groupNum, materialnum_t num, int tics,
     frame->random = randomTics;
 }
 
-boolean R_IsPrecacheGroup(int groupNum)
+boolean Materials_IsPrecacheAnimGroup(int groupNum)
 {
     animgroup_t*        group;
 
@@ -1349,68 +1330,71 @@ boolean R_IsPrecacheGroup(int groupNum)
     return false;
 }
 
-static void animateAnimGroups(void)
+static void animateAnimGroup(animgroup_t* group)
 {
-    int                 i, timer, k;
-    animgroup_t*        group;
+    // The Precache groups are not intended for animation.
+    if((group->flags & AGF_PRECACHE) || !group->count)
+        return;
 
-    for(i = 0, group = groups; i < numgroups; ++i, group++)
+    if(--group->timer <= 0)
     {
-        // The Precache groups are not intended for animation.
-        if((group->flags & AGF_PRECACHE) || !group->count)
-            continue;
+        // Advance to next frame.
+        int i, timer;
 
-        if(--group->timer <= 0)
+        group->index = (group->index + 1) % group->count;
+        timer = (int) group->frames[group->index].tics;
+
+        if(group->frames[group->index].random)
         {
-            // Advance to next frame.
-            group->index = (group->index + 1) % group->count;
-            timer = (int) group->frames[group->index].tics;
+            timer += (int) RNG_RandByte() % (group->frames[group->index].random + 1);
+        }
+        group->timer = group->maxTimer = timer;
 
-            if(group->frames[group->index].random)
-            {
-                timer += (int) RNG_RandByte() % (group->frames[group->index].random + 1);
-            }
-            group->timer = group->maxTimer = timer;
+        // Update translations.
+        for(i = 0; i < group->count; ++i)
+        {
+            material_t* real, *current, *next;
 
-            // Update translations.
-            for(k = 0; k < group->count; ++k)
-            {
-                material_t*            real, *current, *next;
+            real    = group->frames[i].mat;
+            current = group->frames[(group->index + i    ) % group->count].mat;
+            next    = group->frames[(group->index + i + 1) % group->count].mat;
 
-                real = group->frames[k].mat;
-                current =
-                    group->frames[(group->index + k) % group->count].mat;
-                next =
-                    group->frames[(group->index + k + 1) % group->count].mat;
+            Material_SetTranslation(real, current, next, 0);
 
-                Material_SetTranslation(real, current, next, 0);
+            // Just animate the first in the sequence?
+            if(group->flags & AGF_FIRST_ONLY)
+                break;
+        }
+        return;
+    }
 
-                // Just animate the first in the sequence?
-                if(group->flags & AGF_FIRST_ONLY)
-                    break;
-            }
+    // Update the interpolation point of animated group members.
+    {int i;
+    for(i = 0; i < group->count; ++i)
+    {
+        material_t* mat = group->frames[i].mat;
+
+        if(group->flags & AGF_SMOOTH)
+        {
+            mat->inter = 1 - group->timer / (float) group->maxTimer;
         }
         else
         {
-            // Update the interpolation point of animated group members.
-            for(k = 0; k < group->count; ++k)
-            {
-                material_t*            mat = group->frames[k].mat;
-
-                if(group->flags & AGF_SMOOTH)
-                {
-                    mat->inter = 1 - group->timer / (float) group->maxTimer;
-                }
-                else
-                {
-                    mat->inter = 0;
-                }
-
-                // Just animate the first in the sequence?
-                if(group->flags & AGF_FIRST_ONLY)
-                    break;
-            }
+            mat->inter = 0;
         }
+
+        // Just animate the first in the sequence?
+        if(group->flags & AGF_FIRST_ONLY)
+            break;
+    }}
+}
+
+static void animateAnimGroups(void)
+{
+    int i;
+    for(i = 0; i < numgroups; ++i)
+    {
+        animateAnimGroup(&groups[i]);
     }
 }
 
@@ -1418,10 +1402,10 @@ static void animateAnimGroups(void)
  * All animation groups are reseted back to their original state.
  * Called when setting up a map.
  */
-void R_ResetAnimGroups(void)
+void Materials_ResetAnimGroups(void)
 {
-    int                 i;
-    animgroup_t*        group;
+    animgroup_t* group;
+    int i;
 
     for(i = 0, group = groups; i < numgroups; ++i, group++)
     {
@@ -1441,23 +1425,44 @@ void R_ResetAnimGroups(void)
     animateAnimGroups();
 }
 
-void R_MaterialsPrecacheGroup(material_t* mat)
+void Materials_PrecacheAnimGroup(material_t* mat)
 {
-    int                 i;
+    int i;
 
     for(i = 0; i < numgroups; ++i)
     {
         if(isInAnimGroup(&groups[i], mat))
         {
-            int                 k;
+            int k;
 
             // Precache this group.
             for(k = 0; k < groups[i].count; ++k)
             {
-                animframe_t*        frame = &groups[i].frames[k];
-
+                animframe_t* frame = &groups[i].frames[k];
                 Materials_Prepare(NULL, frame->mat, true, NULL);
             }
         }
     }
+}
+
+D_CMD(ListMaterials)
+{
+    material_namespace_t mnamespace = MN_ANY;
+
+    if(argc > 1)
+    {
+        mnamespace = atoi(argv[1]);
+        if(mnamespace < MN_FIRST)
+        {
+            mnamespace = MN_ANY;
+        }
+        else if(!(mnamespace < NUM_MATERIAL_NAMESPACES))
+        {
+            Con_Printf("Invalid namespace \"%s\".\n", argv[1]);
+            return false;
+        }
+    }
+
+    printMaterials(mnamespace, argc > 2? argv[2] : NULL);
+    return true;
 }

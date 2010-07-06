@@ -306,7 +306,7 @@ static void loadAnimDefs(animdef_t* animDefs)
             if(startFrame && endFrame)
             {   // We have a valid animation.
                 // Create a new animation group for it.
-                groupNum = R_CreateAnimGroup(AGF_SMOOTH);
+                groupNum = Materials_CreateAnimGroup(AGF_SMOOTH);
 
                 /**
                  * Doomsday's group animation needs to know the texture/flat
@@ -330,7 +330,7 @@ static void loadAnimDefs(animdef_t* animDefs)
                                                       MN_FLATS);
 
                         if(frame != 0)
-                            R_AddToAnimGroup(groupNum, frame, ticsPerFrame, 0);
+                            Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
                     }
                 }
                 else
@@ -342,7 +342,7 @@ static void loadAnimDefs(animdef_t* animDefs)
                                                       MN_FLATS);
 
                         if(frame != 0)
-                            R_AddToAnimGroup(groupNum, frame, ticsPerFrame, 0);
+                            Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
                     }
                 }
             }
@@ -367,7 +367,7 @@ static void loadAnimDefs(animdef_t* animDefs)
 
             if(startFrame && endFrame)
             {
-                groupNum = R_CreateAnimGroup(AGF_SMOOTH);
+                groupNum = Materials_CreateAnimGroup(AGF_SMOOTH);
 
                 VERBOSE(Con_Message("P_InitPicAnims: ADD (\"%s\" > \"%s\" %d)\n",
                                     animDefs[i].startname, animDefs[i].endname,
@@ -380,12 +380,12 @@ static void loadAnimDefs(animdef_t* animDefs)
                 if(endFrame > startFrame)
                 {
                     for(n = startFrame; n <= endFrame; n++)
-                        R_AddToAnimGroup(groupNum, n, ticsPerFrame, 0);
+                        Materials_AddAnimGroupFrame(groupNum, n, ticsPerFrame, 0);
                 }
                 else
                 {
                     for(n = endFrame; n >= startFrame; n--)
-                        R_AddToAnimGroup(groupNum, n, ticsPerFrame, 0);
+                        Materials_AddAnimGroupFrame(groupNum, n, ticsPerFrame, 0);
                 }
             }
             break;

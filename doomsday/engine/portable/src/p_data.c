@@ -336,7 +336,7 @@ boolean P_LoadMap(const char *mapID)
         R_ResetViewer();
 
         // Texture animations should begin from their first step.
-        R_ResetAnimGroups();
+        Materials_ResetAnimGroups();
 
         R_InitObjLinksForMap();
         LO_InitForMap(); // Lumobj management.

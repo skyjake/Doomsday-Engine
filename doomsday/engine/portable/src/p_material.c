@@ -56,11 +56,10 @@
 
 // CODE --------------------------------------------------------------------
 
-#if 0 // Currently unused.
 void Material_Ticker(material_t* mat, timespan_t time)
 {
-    uint                i;
     const ded_material_t* def = mat->def;
+    uint i;
 
     if(!def)
         return; // Its a system generated material.
@@ -68,33 +67,47 @@ void Material_Ticker(material_t* mat, timespan_t time)
     // Update layers
     for(i = 0; i < mat->numLayers; ++i)
     {
-        material_layer_t*   layer = &mat->layers[i];
+        const ded_material_layer_t* lDef = &def->layers[i];
+        const ded_material_layer_stage_t* lsDef, *lsDefNext;
+        material_layer_t* layer = &mat->layers[i];
+        float inter;
 
-        if(!(def->layers[i].stageCount.num > 1))
+        if(!(lDef->stageCount.num > 1))
             continue;
 
         if(layer->tics-- <= 0)
         {
             // Advance to next stage.
-            if(++layer->stage == def->layers[i].stageCount.num)
+            if(++layer->stage == lDef->stageCount.num)
             {
                 // Loop back to the beginning.
                 layer->stage = 0;
-                continue;
             }
 
-            layer->tics = def->layers[i].stages[layer->stage].tics *
-                (1 - def->layers[i].stages[layer->stage].variance *
-                    RNG_RandFloat()) * TICSPERSEC;
+            lsDef = &lDef->stages[layer->stage];
+            if(lsDef->variance != 0)
+                layer->tics = lsDef->tics * (1 - lsDef->variance * RNG_RandFloat());
+            else
+                layer->tics = lsDef->tics;
         }
+
+        lsDef = &lDef->stages[layer->stage];
+        lsDefNext = &lDef->stages[(layer->stage+1) % lDef->stageCount.num];
+        inter = 1.0f - (layer->tics - frameTimePos) / (float) lsDef->tics;
+        
+        if(inter == 0)
+        {
+            layer->glow = lsDef->glow;
+            continue;
+        }
+
+        //layer->glow = (lsDef->glow * (1 - frameTimePos) + lsDefNext->glow * frameTimePos - lsDefNext->glow);
+        layer->glow = lsDefNext->glow * inter + lsDef->glow * (1 - inter);
     }
 }
-#endif
 
-void Material_SetTranslation(material_t* mat, material_t* current,
-                              material_t* next, float inter)
+void Material_SetTranslation(material_t* mat, material_t* current, material_t* next, float inter)
 {
-
     if(!mat || !current || !next)
     {
 #if _DEBUG

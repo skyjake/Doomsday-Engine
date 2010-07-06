@@ -1412,7 +1412,7 @@ void R_SetupMap(int mode, int flags)
         ddMapSetup = true;
 
         // Reset Material precache status.
-        for(i = 0; i < numMaterials; ++i)
+        for(i = 0; i < Materials_Count(); ++i)
             P_MaterialPrecache(P_ToMaterial(i+1), false);
         return;
 

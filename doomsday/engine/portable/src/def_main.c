@@ -527,13 +527,13 @@ ded_ptcgen_t* Def_GetGenerator(material_t* mat, boolean hasExt)
              */
             if(defMat->inAnimGroup && mat->inAnimGroup)
             {
-                int                 g, numGroups = R_NumAnimGroups();
+                int                 g, numGroups = Materials_AnimGroupCount();
 
                 for(g = 0; g < numGroups; ++g)
                 {
-                    if(R_IsInAnimGroup(g, defMat) && R_IsInAnimGroup(g, mat))
+                    if(Materials_MaterialLinkedToAnimGroup(g, defMat) && Materials_MaterialLinkedToAnimGroup(g, mat))
                     {
-                        if(R_IsPrecacheGroup(g))
+                        if(Materials_IsPrecacheAnimGroup(g))
                             continue; // Precache groups don't apply.
 
                         // Both are in this group! This def will do.
@@ -1310,7 +1310,7 @@ void Def_PostInit(void)
     }
 
     // Animation groups.
-    R_DestroyAnimGroups();
+    Materials_DestroyAnimGroups();
     for(i = 0; i < defs.count.groups.num; ++i)
     {
         R_InitAnimGroup(&defs.groups[i]);

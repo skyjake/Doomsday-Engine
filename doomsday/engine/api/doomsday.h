@@ -359,8 +359,8 @@ extern          "C" {
     void            R_SetBorderGfx(const char* lumps[9]);
     boolean         R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
     boolean         R_GetPatchInfo(patchid_t id, patchinfo_t* info);
-    int             R_CreateAnimGroup(int flags);
-    void            R_AddToAnimGroup(int groupNum, materialnum_t num, int tics, int randomTics);
+    int             Materials_CreateAnimGroup(int flags);
+    void            Materials_AddAnimGroupFrame(int groupNum, materialnum_t num, int tics, int randomTics);
     void            R_HSVToRGB(float* rgb, float h, float s, float v);
     angle_t         R_PointToAngle2(float x1, float y1, float x2, float y2);
     struct subsector_s* R_PointInSubsector(float x, float y);

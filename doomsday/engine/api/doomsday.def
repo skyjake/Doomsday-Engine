@@ -315,8 +315,8 @@ EXPORTS
     R_GetPatchInfo              @237 NONAME
     R_PointToAngle2             @101 NONAME
     R_PointInSubsector          @102 NONAME
-    R_CreateAnimGroup           @241 NONAME
-    R_AddToAnimGroup            @242 NONAME
+    Materials_CreateAnimGroup           @241 NONAME
+    Materials_AddAnimGroupFrame            @242 NONAME
     R_HSVToRGB                  @439 NONAME
     R_CreateColorPalette		@444 NONAME
     R_GetColorPaletteNumForName @446 NONAME
