@@ -404,9 +404,9 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside)
     // the location of any secret areas (false walls)).
     if(line->L_backside)
     {
-        sector_t*           front = line->L_sector(backside);
-        sector_t*           back  = line->L_sector(backside^1);
-        sidedef_t*          side  = line->L_side(backside);
+        sector_t* front = line->L_sector(backside);
+        sector_t* back  = line->L_sector(backside^1);
+        sidedef_t* side  = line->L_side(backside);
 
         if(side->SW_middlematerial)
         {
@@ -414,7 +414,7 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside)
             material_snapshot_t ms;
 
             // Ensure we have up to date info.
-            Material_Prepare(&ms, mat, true, NULL);
+            Materials_Prepare(&ms, mat, true, NULL);
 
             if(ms.isOpaque && !side->SW_middleblendmode &&
                side->SW_middlergba[3] >= 1)
@@ -1185,7 +1185,7 @@ static float getSnapshots(material_snapshot_t* msA, material_snapshot_t* msB,
 {
     float               interPos = 0;
 
-    Material_Prepare(msA, mat, true, NULL);
+    Materials_Prepare(msA, mat, true, NULL);
 
     // Smooth Texture Animation?
     if(msB)
@@ -1197,7 +1197,7 @@ static float getSnapshots(material_snapshot_t* msA, material_snapshot_t* msB,
            !(!usingFog && mat->inter < 0))
         {
             // Prepare the inter texture.
-            Material_Prepare(msB, mat->next, false, NULL);
+            Materials_Prepare(msB, mat->next, false, NULL);
             interPos = mat->inter;
         }
     }
@@ -1373,7 +1373,6 @@ typedef struct {
 
     uint            lightListIdx; // List of lights that affect this poly.
     float           glowing;
-    boolean         reflective;
     boolean         forceOpaque;
 
 // For bias:
@@ -1432,7 +1431,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     if(p->type != RPT_SKY_MASK)
     {
         // ShinySurface?
-        if(p->reflective && rTUs[TU_PRIMARY].tex && !drawAsVisSprite)
+        if(useShinySurfaces && rTUs[TU_PRIMARY].tex && !drawAsVisSprite)
         {
             // We'll reuse the same verts but we need new colors.
             shinyColors = R_AllocRendColors(realNumVertices);
@@ -1487,9 +1486,8 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             quadTexCoords(rtexcoords2, rvertices, *p->segLength, p->texTL);
 
         // Shiny texture coordinates.
-        if(p->reflective && rTUs[TU_PRIMARY].tex && !drawAsVisSprite)
-            quadShinyTexCoords(shinyTexCoords, &rvertices[1], &rvertices[2],
-                               *p->segLength);
+        if(useShinySurfaces && rTUs[TU_PRIMARY].tex && !drawAsVisSprite)
+            quadShinyTexCoords(shinyTexCoords, &rvertices[1], &rvertices[2], *p->segLength);
 
         // First light texture coordinates.
         if(numLights > 0 && RL_IsMTexLights())
@@ -1497,12 +1495,12 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     }
     else
     {
-        uint                i;
+        uint i;
 
         for(i = 0; i < numVertices; ++i)
         {
-            const rvertex_t*    vtx = &rvertices[i];
-            float               xyz[3];
+            const rvertex_t* vtx = &rvertices[i];
+            float xyz[3];
 
             xyz[VX] = vtx->pos[VX] - p->texTL[VX];
             xyz[VY] = vtx->pos[VY] - p->texTL[VY];
@@ -1511,7 +1509,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             // Primary texture coordinates.
             if(rTU[TU_PRIMARY].tex)
             {
-                rtexcoord_t*        tc = &rtexcoords[i];
+                rtexcoord_t* tc = &rtexcoords[i];
 
                 tc->st[0] =  xyz[VX];
                 tc->st[1] = -xyz[VY];
@@ -1527,7 +1525,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             }
 
             // Shiny texture coordinates.
-            if(p->reflective && rTUs[TU_PRIMARY].tex)
+            if(useShinySurfaces && rTUs[TU_PRIMARY].tex)
             {
                 flatShinyTexCoords(&shinyTexCoords[i], vtx->pos);
             }
@@ -1535,16 +1533,14 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             // First light texture coordinates.
             if(numLights > 0 && RL_IsMTexLights())
             {
-                rtexcoord_t*        tc = &rtexcoords5[i];
-                float               width, height;
+                rtexcoord_t* tc = &rtexcoords5[i];
+                float width, height;
 
                 width  = p->texBR[VX] - p->texTL[VX];
                 height = p->texBR[VY] - p->texTL[VY];
 
-                tc->st[0] = ((p->texBR[VX] - vtx->pos[VX]) / width * modTexTC[0][0]) +
-                    (xyz[VX] / width * modTexTC[0][1]);
-                tc->st[1] = ((p->texBR[VY] - vtx->pos[VY]) / height * modTexTC[1][0]) +
-                    (xyz[VY] / height * modTexTC[1][1]);
+                tc->st[0] = ((p->texBR[VX] - vtx->pos[VX]) / width  * modTexTC[0][0]) + (xyz[VX] / width  * modTexTC[0][1]);
+                tc->st[1] = ((p->texBR[VY] - vtx->pos[VY]) / height * modTexTC[1][0]) + (xyz[VY] / height * modTexTC[1][1]);
             }
         }
     }
@@ -1639,9 +1635,9 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             Rend_VertexColorsApplyTorchLight(rcolors, rvertices, numVertices);
         }
 
-        if(p->reflective && rTUs[TU_PRIMARY].tex && !drawAsVisSprite)
+        if(useShinySurfaces && rTUs[TU_PRIMARY].tex && !drawAsVisSprite)
         {
-            uint                i;
+            uint i;
 
             // Strength of the shine.
             for(i = 0; i < numVertices; ++i)
@@ -1806,7 +1802,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
 
                    rtexcoords5, rcolors, 3 + divs[0].num,
                    numLights, modTex, modColor, rTU);
-        if(p->reflective && rTUs[TU_PRIMARY].tex)
+        if(useShinySurfaces && rTUs[TU_PRIMARY].tex)
         {
             RL_AddPoly(PT_FAN, RPT_SHINY, rvertices + 3 + divs[0].num,
                        shinyTexCoords? shinyTexCoords + 3 + divs[0].num : NULL,
@@ -1825,7 +1821,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                    rtexcoords, rtexcoords2, rtexcoords5, rcolors,
 
                    numVertices, numLights, modTex, modColor, rTU);
-        if(p->reflective && rTUs[TU_PRIMARY].tex)
+        if(useShinySurfaces && rTUs[TU_PRIMARY].tex)
             RL_AddPoly(p->isWall? PT_TRIANGLE_STRIP : PT_FAN, RPT_SHINY,
                        rvertices, shinyTexCoords,
                        rTUs[TU_INTER].tex? rtexcoords : NULL,
@@ -1857,7 +1853,7 @@ static boolean doRenderSeg(seg_t* seg,
                            uint lightListIdx,
                            const walldiv_t* divs,
                            boolean skyMask,
-                           boolean addFakeRadio, boolean addReflection,
+                           boolean addFakeRadio,
                            boolean isGlowing,
                            const float texTL[3], const float texBR[3],
                            const float texOffset[2],
@@ -1921,12 +1917,6 @@ static boolean doRenderSeg(seg_t* seg,
     // Top Right.
     V3_Set(rvertices[3].pos, to->pos[VX], to->pos[VY], top);
 
-    // Is reflective?
-    if(addReflection)
-    {
-        params.reflective = true;
-    }
-
     // Make it fullbright?
     if(isGlowing)
         params.glowing = true;
@@ -1978,9 +1968,8 @@ static boolean doRenderSeg(seg_t* seg,
 
                 if(radioParams.shadowSize > 0)
                 {
-                    float v = (msA->color[CR] + msA->color[CG] + msA->color[CB]) /3;
-                    radioParams.shadowRGB[CR] = radioParams.shadowRGB[CG] = radioParams.shadowRGB[CB] = 1-v*3;
-
+                    // Shadows are black.
+                    radioParams.shadowRGB[CR] = radioParams.shadowRGB[CG] = radioParams.shadowRGB[CB] = 0;
                     Rend_RadioSegSection(rvertices, divs, &radioParams);
                 }
             }
@@ -2045,7 +2034,7 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
         {
             params.type = RPT_NORMAL;
             params.blendMode = BM_NORMAL;
-            params.glowing = true;
+            params.glowing = 1;
             params.forceOpaque = true;
             mat = inMat;
         }
@@ -2092,12 +2081,6 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
                 DL_ProjectOnSurface(ssec, params.texTL, params.texBR, normal,
                                     (DLF_NO_PLANAR |
                                      (type == PLN_FLOOR? DLF_TEX_FLOOR : DLF_TEX_CEILING)));
-        }
-
-        // Render Shiny polys?
-        if(useShinySurfaces && mat && mat->reflection)
-        {
-            params.reflective = true;
         }
     }
 
@@ -2257,7 +2240,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
         boolean             isTwoSided = (seg->lineDef &&
             seg->lineDef->L_frontside && seg->lineDef->L_backside)? true:false;
         blendmode_t         blendMode = BM_NORMAL;
-        boolean             addFakeRadio = false, addReflection = false,
+        boolean             addFakeRadio = false,
                             isGlowing = false, blended = false;
         const float*        color = NULL, *color2 = NULL;
         material_snapshot_t msA, msB;
@@ -2337,8 +2320,6 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
                     blendMode = surface->blendMode;
             }
 
-
-
             addFakeRadio = !(surfaceInFlags & SUIF_NO_RADIO);
         }
 
@@ -2364,7 +2345,6 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
                                     ((section == SEG_MIDDLE && isTwoSided)? DLF_SORT_LUMADSC : 0));
 
         addFakeRadio = ((addFakeRadio && !isGlowing)? true : false);
-        addReflection = (useShinySurfaces && mat && mat->reflection? true : false);
 
         selectSurfaceColors(&color, &color2, SEG_SIDEDEF(seg), section);
 
@@ -2396,7 +2376,6 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
                                (divs[0].num > 0 || divs[1].num > 0)? divs : NULL,
                                skyMask,
                                addFakeRadio,
-                               addReflection,
                                isGlowing,
                                texTL, texBR, texOffset, texScale, blendMode,
                                color, color2,
@@ -2864,7 +2843,7 @@ static void prepareSkyMaskPoly(rvertex_t verts[4], rtexcoord_t coords[4],
     // In devRendSkyMode mode we render all polys destined for the skymask as
     // regular world polys (with a few obvious properties).
 
-    Material_Prepare(&ms, mat, true, NULL);
+    Materials_Prepare(&ms, mat, true, NULL);
 
     rTU[TU_PRIMARY].tex = ms.units[MTU_PRIMARY].texInst->id;
     rTU[TU_PRIMARY].magMode = ms.units[MTU_PRIMARY].magMode;
@@ -3180,7 +3159,6 @@ static void Rend_RenderSubsector(uint ssecidx)
     Rend_MarkSegsFacingFront(ssec);
 
     R_InitForSubsector(ssec);
-
     Rend_RadioSubsectorEdges(ssec);
 
     occludeSubsector(ssec, false);
@@ -4285,7 +4263,7 @@ static void Rend_RenderBoundingBoxes(void)
     glDisable(GL_CULL_FACE);
 
     mat = P_GetMaterial(DDT_BBOX, MN_SYSTEM);
-    Material_Prepare(&ms, mat, true, NULL);
+    Materials_Prepare(&ms, mat, true, NULL);
 
     GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id, ms.units[MTU_PRIMARY].magMode);
     GL_BlendMode(BM_ADD);

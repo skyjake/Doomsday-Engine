@@ -2109,7 +2109,7 @@ void R_PrecacheMobjNum(int num)
                 spriteframe_t*      sprFrame = &sprDef->spriteFrames[j];
 
                 for(k = 0; k < 8; ++k)
-                    Material_Precache(sprFrame->mats[k]);
+                    P_MaterialPrecache(sprFrame->mats[k], true);
             }
         }
     }
@@ -2125,11 +2125,9 @@ void R_PrecacheMobjNum(int num)
 void R_PrecacheMap(void)
 {
     uint i, j;
-    size_t n;
     sector_t* sec;
     sidedef_t* side;
     float startTime;
-    material_t* mat, **matPresent;
     materialnum_t numMaterials;
 
     // Don't precache when playing demo.
@@ -2143,36 +2141,23 @@ void R_PrecacheMap(void)
 
     // Precache all materials used on world surfaces.
     numMaterials = numMaterialBinds;
-    matPresent = M_Calloc(sizeof(material_t*) * numMaterials);
-    n = 0;
+
+    for(i = 0; i < numMaterials; ++i)
+        P_MaterialPrecache(P_ToMaterial(i+1), false);
 
     for(i = 0; i < numSideDefs; ++i)
     {
         side = SIDE_PTR(i);
-
-        mat = side->SW_topmaterial;
-        if(mat && !isInList((void**) matPresent, n, mat))
-            matPresent[n++] = mat;
-
-        mat = side->SW_middlematerial;
-        if(mat && !isInList((void**) matPresent, n, mat))
-            matPresent[n++] = mat;
-
-        mat = side->SW_bottommaterial;
-        if(mat && !isInList((void**) matPresent, n, mat))
-            matPresent[n++] = mat;
+        P_MaterialPrecache(side->SW_topmaterial, true);
+        P_MaterialPrecache(side->SW_middlematerial, true);
+        P_MaterialPrecache(side->SW_bottommaterial, true);
     }
 
     for(i = 0; i < numSectors; ++i)
     {
         sec = SECTOR_PTR(i);
-
         for(j = 0; j < sec->planeCount; ++j)
-        {
-            mat = sec->SP_planematerial(j);
-            if(mat && !isInList((void**) matPresent, n, mat))
-                matPresent[n++] = mat;
-        }
+            P_MaterialPrecache(sec->SP_planematerial(j), true);
     }
 
     // Precache sprites?
@@ -2184,8 +2169,7 @@ void R_PrecacheMap(void)
         {
             spritedef_t* sprDef = &sprites[i];
 
-            if(!P_IterateThinkers(gx.MobjThinker, 0x1, // All mobjs are public
-                                  findSpriteOwner, sprDef))
+            if(!P_IterateThinkers(gx.MobjThinker, 0x1 /* All mobjs are public */, findSpriteOwner, sprDef))
             {   // This sprite is used by some state of at least one mobj.
                 int j;
 
@@ -2194,14 +2178,8 @@ void R_PrecacheMap(void)
                 {
                     spriteframe_t* sprFrame = &sprDef->spriteFrames[j];
                     int k;
-
                     for(k = 0; k < 8; ++k)
-                    {
-                        material_t* mat = sprFrame->mats[k];
-
-                        if(mat && !isInList((void**) matPresent, n, mat))
-                            matPresent[n++] = mat;
-                    }
+                        P_MaterialPrecache(sprFrame->mats[k], true);
                 }
             }
         }
@@ -2209,13 +2187,70 @@ void R_PrecacheMap(void)
 
     // \fixme Precache sky materials!
 
-    i = 0;
-    while(i < numMaterials && matPresent[i])
-        Material_Precache(matPresent[i++]);
+    for(i = 0; i < numMaterials; ++i)
+    {
+        material_t* mat;
+        if((mat = P_ToMaterial(i+1))->inFlags & MATIF_PRECACHE)
+        {
+            material_snapshot_t ms;
+            boolean hasDecorations;
+            uint j;
 
-    // We are done with list of used materials.
-    M_Free(matPresent);
-    matPresent = NULL;
+            if(mat->inAnimGroup)
+            {   // The material belongs in one or more animgroups, precache the group.
+                R_MaterialsPrecacheGroup(mat);
+            }
+
+            // Just this one material.
+            Materials_Prepare(&ms, mat, true, 0);
+            hasDecorations = ms.decorated;
+
+            if(ms.glowing > 0 || hasDecorations)
+            {
+                for(j = 0; j < numSideDefs; ++j)
+                {
+                    sidedef_t* side = &sideDefs[j];
+                    if(side->SW_middlematerial == mat)
+                    {
+                        if(ms.glowing > 0)
+                            R_SurfaceListAdd(glowingSurfaceList, &side->SW_middlesurface);
+                        if(hasDecorations)
+                            R_SurfaceListAdd(decoratedSurfaceList, &side->SW_middlesurface);
+                    }
+                    if(side->SW_bottommaterial == mat)
+                    {
+                        if(ms.glowing > 0)
+                            R_SurfaceListAdd(glowingSurfaceList, &side->SW_bottomsurface);
+                        if(hasDecorations)
+                            R_SurfaceListAdd(decoratedSurfaceList, &side->SW_bottomsurface);
+                    }
+                    if(side->SW_topmaterial == mat)
+                    {
+                        if(ms.glowing > 0)
+                            R_SurfaceListAdd(glowingSurfaceList, &side->SW_topsurface);
+                        if(hasDecorations)
+                            R_SurfaceListAdd(decoratedSurfaceList, &side->SW_topsurface);
+                    }
+                }
+                for(j = 0; j < numSectors; ++j)
+                {
+                    sector_t* sec = &sectors[j];
+                    uint k;
+                    for(k = 0; k < sec->planeCount; ++k)
+                    {
+                        plane_t* pln = sec->planes[k];
+                        if(pln->PS_material == mat)
+                        {
+                            if(ms.glowing > 0)
+                                R_SurfaceListAdd(glowingSurfaceList, &pln->surface);
+                            if(hasDecorations)
+                                R_SurfaceListAdd(decoratedSurfaceList, &pln->surface);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     // Precache model skins?
     if(useModels && precacheSkins)

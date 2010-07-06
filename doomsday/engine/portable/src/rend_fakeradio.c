@@ -1398,7 +1398,7 @@ static void radioSubsectorEdges(const subsector_t* subsector)
     shadowlink_t*       link;
     vec2_t              inner[2], outer[2];
     boolean             workToDo = false;
-    float               shadowSize, shadowDark, shadowRGB[3];
+    float               shadowWallSize, shadowDark, shadowRGB[3];
     float               sectorlight = subsector->sector->lightLevel;
 
     Rend_ApplyLightAdaptation(&sectorlight);
@@ -1408,7 +1408,7 @@ static void radioSubsectorEdges(const subsector_t* subsector)
 
     // Determine the shadow properties.
     // \fixme Make cvars out of constants.
-    shadowSize = 2 * (8 + 16 - sectorlight * 16);
+    shadowWallSize = 2 * (8 + 16 - sectorlight * 16);
     shadowDark = Rend_RadioCalcShadowDarkness(sectorlight);
 
     vec[VX] = vx - subsector->midPoint.pos[VX];
@@ -1575,20 +1575,13 @@ static void radioSubsectorEdges(const subsector_t* subsector)
             {
             material_snapshot_t ms;
             float shadowAlpha;
-            Material_Prepare(&ms, plane->PS_material, true, 0);
+            Materials_Prepare(&ms, plane->PS_material, true, 0);
             if(ms.glowing > 0)
-            {
-                shadowRGB[CR] = ms.color[CR];
-                shadowRGB[CG] = ms.color[CG];
-                shadowRGB[CB] = ms.color[CB];
-                shadowAlpha = ms.glowing * .125f * (1 - open);
-            }
-            else
-            {
-                float v = (ms.color[CR] + ms.color[CG] + ms.color[CB]) /3;
-                shadowRGB[CR] = shadowRGB[CG] = shadowRGB[CB] = 1-v*3;
-                shadowAlpha = shadowDark * (1 - open);
-            }
+                continue;
+
+            // Shadows are black
+            shadowRGB[CR] = shadowRGB[CG] = shadowRGB[CB] = 0;
+            shadowAlpha = shadowDark * 1.5f * (1 - open);
 
             radioAddShadowEdge(line, side, inner, outer, plnHeight,
                                shadowRGB, shadowAlpha, sideOpen, suf->normal);

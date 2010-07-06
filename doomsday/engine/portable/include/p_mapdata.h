@@ -213,6 +213,7 @@ extern sidedef_t* sideDefs;
 extern watchedplanelist_t* watchedPlaneList;
 extern surfacelist_t* movingSurfaceList;
 extern surfacelist_t* decoratedSurfaceList;
+extern surfacelist_t* glowingSurfaceList;
 
 extern float mapGravity;
 
@@ -253,6 +254,7 @@ typedef struct gamemap_s {
     watchedplanelist_t watchedPlaneList;
     surfacelist_t   movingSurfaceList;
     surfacelist_t   decoratedSurfaceList;
+    surfacelist_t   glowingSurfaceList;
 
     blockmap_t*     blockMap;
     blockmap_t*     ssecBlockMap;

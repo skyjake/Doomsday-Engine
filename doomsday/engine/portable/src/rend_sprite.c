@@ -272,7 +272,7 @@ static void setupPSpriteParams(rendpspriteparams_t* params,
     mparams.pSprite = true;
     mparams.tex.border = 1;
 
-    Material_Prepare(&ms, sprFrame->mats[0], true, &mparams);
+    Materials_Prepare(&ms, sprFrame->mats[0], true, &mparams);
 
     sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
     params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX] + -ms.units[MTU_PRIMARY].texInst->border;
@@ -354,7 +354,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
         material_t* mat = P_GetMaterial(DDT_GRAY, MN_SYSTEM);
         material_snapshot_t ms;
 
-        Material_Prepare(&ms, mat, true, NULL);
+        Materials_Prepare(&ms, mat, true, NULL);
         GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id, ms.units[MTU_PRIMARY].magMode);
     }
     else
@@ -888,7 +888,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
         mparams.pSprite = false;
         mparams.tex.border = 1;
 
-        Material_Prepare(&ms, mat, true, &mparams);
+        Materials_Prepare(&ms, mat, true, &mparams);
         GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id, ms.units[MTU_PRIMARY].magMode);
     }
     else

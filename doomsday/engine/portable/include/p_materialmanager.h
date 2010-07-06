@@ -30,6 +30,7 @@
 #define __DOOMSDAY_MATERIAL_MANAGER_H__
 
 #include "gl_texmanager.h"
+#include "def_data.h"
 
 extern materialnum_t numMaterialBinds;
 
@@ -40,6 +41,7 @@ void            P_MaterialManagerTicker(timespan_t time);
 void            P_InitMaterialManager(void);
 void            P_ShutdownMaterialManager(void);
 void            P_DeleteMaterialTextures(material_namespace_t mnamespace);
+void            P_LinkAssociatedDefinitionsToMaterials(void);
 
 material_t*     P_MaterialCreate(const char* name, short width,
                                  short height, byte flags, gltextureid_t tex,
@@ -58,7 +60,13 @@ material_t*     P_GetMaterial(int ofTypeID, material_namespace_t mnamespace);
 materialnum_t   P_MaterialCheckNumForIndex(uint idx, material_namespace_t mnamespace);
 materialnum_t   P_MaterialNumForIndex(uint idx, material_namespace_t mnamespace);
 
-void            P_MaterialPrecache(material_t* mat);
+void            P_MaterialPrecache(material_t* mat, boolean yes);
+
+byte                Materials_Prepare(struct material_snapshot_s* snapshot, material_t* mat, boolean smoothed, struct material_load_params_s* params);
+const ded_detailtexture_t* Materials_Detail(materialnum_t num);
+const ded_reflection_t* Materials_Reflection(materialnum_t num);
+const ded_decor_t*  Materials_Decoration(materialnum_t num);
+const ded_ptcgen_t* Materials_PtcGen(materialnum_t num);
 
 // Anim groups:
 int             R_NumAnimGroups(void);

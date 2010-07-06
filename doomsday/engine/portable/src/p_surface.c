@@ -69,6 +69,39 @@ boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
     if(mat && (suf->oldFlags & SUIF_MATERIAL_FIX))
         suf->inFlags &= ~SUIF_MATERIAL_FIX;
 
+    if(mat != suf->material)
+    {
+        if(!ddMapSetup)
+        {
+            // If this plane's surface is in the deocrated list, remove it.
+            R_SurfaceListRemove(decoratedSurfaceList, suf);
+            // If this plane's surface is in the glowing list, remove it.
+            R_SurfaceListRemove(glowingSurfaceList, suf);
+        }
+
+        if(mat)
+        {
+            if(ddMapSetup)
+            {
+                if(suf->material)
+                    P_MaterialPrecache(suf->material, false);
+                P_MaterialPrecache(mat, true);
+            }
+            else
+            {
+                material_snapshot_t ms;
+                const ded_decor_t* decor;
+
+                Materials_Prepare(&ms, mat, true, 0);
+                if(ms.glowing > 0)
+                    R_SurfaceListAdd(glowingSurfaceList, suf);
+                // Materials_Decoration will call Materials_Prepare :(
+                decor = Materials_Decoration(P_ToMaterialNum(mat));
+                if(decor)
+                    R_SurfaceListAdd(decoratedSurfaceList, suf);
+            }
+        }
+    }
     suf->material = mat;
 
     suf->inFlags |= SUIF_UPDATE_DECORATIONS;

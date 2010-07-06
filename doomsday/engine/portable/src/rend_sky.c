@@ -316,7 +316,7 @@ static void setupFadeout(skylayer_t* slayer)
         if(slayer->flags & SLF_MASKED)
             params.tex.flags |= GLTF_ZEROMASK;
 
-        Material_Prepare(&ms, slayer->mat, true, &params);
+        Materials_Prepare(&ms, slayer->mat, true, &params);
         slayer->fadeout.rgb[CR] = ms.topColor[CR];
         slayer->fadeout.rgb[CG] = ms.topColor[CG];
         slayer->fadeout.rgb[CB] = ms.topColor[CB];
@@ -374,7 +374,7 @@ void Rend_RenderSkyHemisphere(int whichHemi)
                 if(slayer->flags & SLF_MASKED)
                     params.tex.flags |= GLTF_ZEROMASK;
 
-                result = Material_Prepare(&ms, slayer->mat, true, &params);
+                result = Materials_Prepare(&ms, slayer->mat, true, &params);
                 skyTexWidth = GLTexture_GetWidth(ms.units[MTU_PRIMARY].texInst->tex);
                 skyTexHeight = GLTexture_GetHeight(ms.units[MTU_PRIMARY].texInst->tex);
 
@@ -576,7 +576,7 @@ static void internalSkyParams(skylayer_t* slayer, int param, void* data)
             if(slayer->flags & SLF_MASKED)
                 params.tex.flags |= GLTF_ZEROMASK;
 
-            Material_Prepare(NULL, slayer->mat, true, &params);
+            Materials_Prepare(NULL, slayer->mat, true, &params);
         }
 
         setupFadeout(slayer);

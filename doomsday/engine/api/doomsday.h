@@ -334,7 +334,7 @@ extern          "C" {
     materialnum_t   P_MaterialNumForIndex(uint idx, material_namespace_t mnamespace);
     const char*     P_GetMaterialName(material_t* mat);
 
-    void            P_MaterialPrecache(material_t* mat);
+    void            P_MaterialPrecache(material_t* mat, boolean yes);
 
     // Play: Thinkers.
     void            DD_InitThinkers(void);

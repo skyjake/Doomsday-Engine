@@ -160,7 +160,7 @@ const char* DMU_Str(uint prop)
  *
  * @param ptr  Pointer to a map data object.
  */
-static int DMU_GetType(const void* ptr)
+int DMU_GetType(const void* ptr)
 {
     int                 type;
 

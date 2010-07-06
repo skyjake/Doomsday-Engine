@@ -1647,7 +1647,7 @@ void GL_SetPSprite(material_t* mat)
     params.pSprite = true;
     params.tex.border = 1;
 
-    Material_Prepare(&ms, mat, true, &params);
+    Materials_Prepare(&ms, mat, true, &params);
 
     GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id, ms.units[MTU_PRIMARY].magMode);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -1664,7 +1664,7 @@ void GL_SetTranslatedSprite(material_t* mat, int tclass, int tmap)
     params.tclass = tclass;
     params.tex.border = 1;
 
-    Material_Prepare(&ms, mat, true, &params);
+    Materials_Prepare(&ms, mat, true, &params);
     GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id, ms.units[MTU_PRIMARY].magMode);
 }
 
@@ -2284,7 +2284,7 @@ void GL_SetMaterial(material_t* mat)
     if(!mat)
         return; // \fixme we need a "NULL material".
 
-    Material_Prepare(&ms, mat, true, NULL);
+    Materials_Prepare(&ms, mat, true, NULL);
     GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id, ms.units[MTU_PRIMARY].magMode);
 }
 
@@ -2927,6 +2927,9 @@ if(!didDefer)
                 averageColorIdx(texInst->data.texture.color, image.pixels, image.width, image.height, 0, false);
                 lineAverageColorIdx(texInst->data.texture.topColor, image.pixels, image.width, image.height, 0, 0, false);
             }
+
+            memcpy(texInst->data.texture.colorAmplified, texInst->data.texture.color, sizeof(texInst->data.texture.colorAmplified));
+            amplify(texInst->data.texture.colorAmplified);
         }
         }
 

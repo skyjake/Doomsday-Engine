@@ -55,6 +55,7 @@ void       *P_DummyExtraData(void* dummy);
 uint        P_ToIndex(const void* ptr);
 
 const char *DMU_Str(uint prop);
+int         DMU_GetType(const void* ptr);
 void        DMU_SetValue(valuetype_t valueType, void* dst,
                          const setargs_t* args, uint index);
 void        DMU_GetValue(valuetype_t valueType, const void* src,

@@ -31,6 +31,7 @@
 #include "de_dam.h"
 #include "de_misc.h"
 #include "de_refresh.h"
+#include "de_render.h"
 #include "de_defs.h"
 #include "de_edit.h"
 
@@ -516,15 +517,12 @@ boolean DAM_AttemptMapLoad(const char* mapID)
             // Must be called before any mobjs are spawned.
             R_InitLinks(map);
 
+            Rend_DecorInit();
+
             R_BuildSectorLinks(map);
 
             // Init blockmap for searching subsectors.
             P_BuildSubsectorBlockMap(map);
-
-            // Init the watched object lists.
-            memset(&map->watchedPlaneList, 0, sizeof(map->watchedPlaneList));
-            memset(&map->movingSurfaceList, 0, sizeof(map->movingSurfaceList));
-            memset(&map->decoratedSurfaceList, 0, sizeof(map->decoratedSurfaceList));
 
             strncpy(map->mapID, dam->identifier, 8);
             strncpy(map->uniqueID, P_GenerateUniqueMapID(dam->identifier),
@@ -565,9 +563,7 @@ boolean DAM_AttemptMapLoad(const char* mapID)
 
             {
             uint                startTime = Sys_GetRealTime();
-
             R_InitSkyFix();
-
             // How much time did we spend?
             VERBOSE(Con_Message
                     ("  InitialSkyFix: Done in %.2f seconds.\n",

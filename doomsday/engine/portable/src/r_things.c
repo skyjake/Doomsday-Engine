@@ -712,7 +712,7 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
 
     memset(&params, 0, sizeof(params));
     params.tex.border = 1;
-    Material_Prepare(&ms, mat, false, &params);
+    Materials_Prepare(&ms, mat, false, &params);
 
     sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
 
@@ -750,7 +750,7 @@ float R_VisualRadius(mobj_t* mo)
     }
 
     // Use the sprite frame's width.
-    Material_Prepare(&ms, R_GetMaterialForSprite(mo->sprite, mo->frame), true, NULL);
+    Materials_Prepare(&ms, R_GetMaterialForSprite(mo->sprite, mo->frame), true, NULL);
     return ms.width / 2;
 }
 
@@ -967,7 +967,7 @@ static void setupSpriteParamsForVisSprite(rendspriteparams_t *params,
     mparams.tclass = transClass;
     mparams.tex.border = 1;
 
-    Material_Prepare(&ms, mat, true, &mparams);
+    Materials_Prepare(&ms, mat, true, &mparams);
 
     sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
 
@@ -1216,7 +1216,7 @@ void R_ProjectSprite(mobj_t* mo)
     mparams.tclass = tclass;
     mparams.tex.border = 1;
 
-    Material_Prepare(&ms, mat, true, &mparams);
+    Materials_Prepare(&ms, mat, true, &mparams);
 
     sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
 
@@ -1536,7 +1536,7 @@ if(!mat)
 #endif
 
         // Ensure we have up-to-date information about the material.
-        Material_Prepare(&ms, mat, true, NULL);
+        Materials_Prepare(&ms, mat, true, NULL);
         if(ms.units[MTU_PRIMARY].texInst->tex->type != GLT_SPRITE)
             return; // *Very* strange...
         texInst = ms.units[MTU_PRIMARY].texInst;

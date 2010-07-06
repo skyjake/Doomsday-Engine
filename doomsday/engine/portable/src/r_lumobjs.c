@@ -392,7 +392,7 @@ if(!mat)
 #endif
 
         // Ensure we have up-to-date information about the material.
-        Material_Prepare(&ms, mat, true, NULL);
+        Materials_Prepare(&ms, mat, true, NULL);
 
         if(ms.units[MTU_PRIMARY].texInst->tex->type != GLT_SPRITE)
             return; // *Very* strange...
@@ -575,56 +575,61 @@ END_PROF( PROF_LUMOBJ_FRAME_SORT );
  *
  * @param ssec          Ptr to the subsector to process.
  */
-static void createGlowLightPerPlaneForSubSector(subsector_t* ssec)
+static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
 {
-    plane_t* glowPlanes[2], *pln;
-    uint g;
-
-    glowPlanes[PLN_FLOOR] = ssec->sector->planes[PLN_FLOOR];
-    glowPlanes[PLN_CEILING] = ssec->sector->planes[PLN_CEILING];
-
-    //// \fixme $nplanes
-    for(g = 0; g < 2; ++g)
+    switch(DMU_GetType(suf->owner))
     {
-        material_snapshot_t ms;
-        uint lumIdx;
-        lumobj_t* l;
-
-        pln = glowPlanes[g];
-        Material_Prepare(&ms, pln->PS_material, true, 0);
-
-        if(ms.glowing <= 0)
-            continue;
-
-        lumIdx = LO_NewLuminous(LT_PLANE, ssec);
-
-        l = LO_GetLuminous(lumIdx);
-        l->pos[VX] = ssec->midPoint.pos[VX];
-        l->pos[VY] = ssec->midPoint.pos[VY];
-        l->pos[VZ] = pln->visHeight;
-        l->maxDistance = 0;
-        l->decorSource = NULL;
-
-        LUM_PLANE(l)->normal[VX] = pln->PS_normal[VX];
-        LUM_PLANE(l)->normal[VY] = pln->PS_normal[VY];
-        LUM_PLANE(l)->normal[VZ] = pln->PS_normal[VZ];
-
-        LUM_PLANE(l)->color[CR] = /*pln->glowRGB[CR] **/ ms.color[CR];
-        LUM_PLANE(l)->color[CG] = /*pln->glowRGB[CG] **/ ms.color[CG];
-        LUM_PLANE(l)->color[CB] = /*pln->glowRGB[CB] **/ ms.color[CB];
-
-        LUM_PLANE(l)->intensity = /*pln->glow **/ ms.glowing;
-        LUM_PLANE(l)->tex = GL_PrepareLSTexture(LST_GRADIENT);
-
-        // Planar lights don't spread, so just link the lum to its own ssec.
+    case DMU_PLANE:
         {
-        linkobjtossecparams_t params;
+        plane_t* pln = (plane_t*)suf->owner;
+        sector_t* sec = pln->sector;
+        lumobj_t* l;
+        uint i;
+        for(i = 0; i < sec->ssectorCount; ++i)
+        {
+            subsector_t* ssec = pln->sector->ssectors[i];
+            uint lumIdx = LO_NewLuminous(LT_PLANE, ssec);
+            material_snapshot_t ms;
 
-        params.obj = l;
-        params.type = OT_LUMOBJ;
-        RIT_LinkObjToSubSector(l->subsector, &params);
+            l = LO_GetLuminous(lumIdx);
+
+            l->pos[VX] = ssec->midPoint.pos[VX];
+            l->pos[VY] = ssec->midPoint.pos[VY];
+            l->pos[VZ] = pln->visHeight;
+
+            LUM_PLANE(l)->normal[VX] = pln->PS_normal[VX];
+            LUM_PLANE(l)->normal[VY] = pln->PS_normal[VY];
+            LUM_PLANE(l)->normal[VZ] = pln->PS_normal[VZ];
+
+            Materials_Prepare(&ms, suf->material, true, 0);
+            LUM_PLANE(l)->color[CR] = ms.colorAmplified[CR];
+            LUM_PLANE(l)->color[CG] = ms.colorAmplified[CG];
+            LUM_PLANE(l)->color[CB] = ms.colorAmplified[CB];
+            LUM_PLANE(l)->intensity = ms.glowing;
+
+            l->maxDistance = 0;
+            l->decorSource = NULL;
+
+            LUM_PLANE(l)->tex = GL_PrepareLSTexture(LST_GRADIENT);
+
+            // Planar lights don't spread, so just link the lum to its own ssec.
+            {
+            linkobjtossecparams_t params;
+
+            params.obj = l;
+            params.type = OT_LUMOBJ;
+            RIT_LinkObjToSubSector(l->subsector, &params);
+            }
         }
+        break;
+        }
+    case DMU_SIDEDEF:
+        return true; // Not yet supported by this algorithm.
+
+    default:
+        Con_Error("createGlowLightForSurface: Internal error, unknown type %s.", DMU_Str(DMU_GetType(suf->owner)));
     }
+    return true;
 }
 
 /**
@@ -632,38 +637,30 @@ static void createGlowLightPerPlaneForSubSector(subsector_t* ssec)
  */
 void LO_AddLuminousMobjs(void)
 {
-    uint                i;
-    sector_t*           seciter;
-
     if(!useDynLights && !useWallGlow)
         return;
 
 BEGIN_PROF( PROF_LUMOBJ_INIT_ADD );
 
-    for(i = 0, seciter = sectors; i < numSectors; seciter++, ++i)
+    if(useDynLights)
     {
-        if(useDynLights)
+        uint i;
+        sector_t* seciter;
+        for(i = 0, seciter = sectors; i < numSectors; seciter++, ++i)
         {
-            mobj_t*             iter;
-
+            mobj_t* iter;
             for(iter = seciter->mobjList; iter; iter = iter->sNext)
             {
                 LO_AddLuminous(iter);
             }
         }
+    }
 
-        // If the segs of this subsector are affected by glowing planes we need
-        // to create dynlights and link them.
-        if(useWallGlow && seciter->ssectors)
-        {
-            subsector_t**       ssec = seciter->ssectors;
-
-            while(*ssec)
-            {
-                createGlowLightPerPlaneForSubSector(*ssec);
-                *ssec++;
-            }
-        }
+    // If the segs of this subsector are affected by glowing planes we need
+    // to create dynlights and link them.
+    if(useWallGlow)
+    {
+        R_SurfaceListIterate(glowingSurfaceList, createGlowLightForSurface, 0);
     }
 
 END_PROF( PROF_LUMOBJ_INIT_ADD );
@@ -946,7 +943,7 @@ void LO_DrawLumobjs(void)
 
         case LT_PLANE:
             {
-            float               scale = LUM_PLANE(lum)->intensity * 10;
+            float               scale = LUM_PLANE(lum)->intensity * 200;
 
             color[CR] = LUM_PLANE(lum)->color[CR];
             color[CG] = LUM_PLANE(lum)->color[CG];

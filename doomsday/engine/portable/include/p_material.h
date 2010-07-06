@@ -33,7 +33,7 @@
 // Material load flags:
 #define MLF_LOAD_AS_SKY             0x0001
 
-typedef struct {
+typedef struct material_load_params_s {
     short           flags; // MLF_* material load flags
     int             tmap, tclass;
     boolean         pSprite;
@@ -64,7 +64,9 @@ typedef struct material_snapshot_s {
     short           width, height; // In world units.
     boolean         isOpaque;
     float           glowing;
+    boolean         decorated;
     float           color[3]; // Average color (for lighting).
+    float           colorAmplified[3]; // Average color amplified (for lighting).
     float           topColor[3]; // Averaged top line color, used for sky fadeouts.
     material_textureunit_t units[NUM_MATERIAL_TEXTURE_UNITS];
 
@@ -79,8 +81,6 @@ typedef struct material_snapshot_s {
 boolean         Material_GetProperty(const material_t* mat, setargs_t* args);
 boolean         Material_SetProperty(material_t* mat, const setargs_t* args);
 
-const ded_decor_t* Material_GetDecoration(material_t* mat);
-const ded_ptcgen_t* Material_GetPtcGen(material_t* mat);
 material_env_class_t Material_GetEnvClass(material_t* mat);
 
 void            Material_SetTranslation(material_t* mat,
@@ -92,6 +92,5 @@ byte            Material_Prepare(material_snapshot_t* snapshot,
                                  material_load_params_t* params);
 //void            Material_Ticker(material_t* mat, timespan_t time);
 void            Material_DeleteTextures(material_t* mat);
-void            Material_Precache(material_t* mat);
 
 #endif

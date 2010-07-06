@@ -103,6 +103,7 @@ typedef struct gltexture_inst_s {
     union {
         struct {
             float           color[3]; // Average color (for lighting).
+            float           colorAmplified[3]; // Average color amplified (for lighting).
             float           topColor[3]; // Averaged top line color, used for sky fadeouts.
         } texture; // also used with GLT_FLAT.
         struct {

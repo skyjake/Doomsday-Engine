@@ -63,10 +63,12 @@ void MPE_PrintMapErrors(void);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+editmap_t editMap;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean editMapInited = false;
-static editmap_t editMap, *map = &editMap;
+static editmap_t* map = &editMap;
 
 static gamemap_t *lastBuiltMap = NULL;
 
@@ -123,6 +125,8 @@ static sidedef_t* createSide(void)
 
     side->buildData.index = map->numSideDefs; // 1-based index, 0 = NIL.
     side->SW_bottomsurface.owner = (void*) side;
+    side->SW_middlesurface.owner = (void*) side;
+    side->SW_topsurface.owner = (void*) side;
     return side;
 }
 
@@ -1369,6 +1373,7 @@ static void hardenPlanes(gamemap_t* dest, editmap_t* src)
             memcpy(&destP->surface, &srcP->surface, sizeof(destP->surface));
             destP->type = srcP->type;
             destP->sector = destS;
+            destP->surface.owner = destP;
         }
     }
 }
@@ -2175,6 +2180,7 @@ uint MPE_PlaneCreate(uint sector, float height, materialnum_t material,
     s = map->sectors[sector - 1];
 
     pln = M_Calloc(sizeof(plane_t));
+    pln->surface.owner = (void*) pln;
     pln->height = height;
     Surface_SetMaterial(&pln->surface, P_ToMaterial(material));
     Surface_SetColorRGBA(&pln->surface, r, g, b, a);

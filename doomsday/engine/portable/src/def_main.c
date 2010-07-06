@@ -432,15 +432,12 @@ ded_material_t* Def_GetMaterial(const char* name, material_namespace_t mnamespac
 
 ded_decor_t* Def_GetDecoration(material_t* mat, boolean hasExt)
 {
-    int                 i;
-    ded_decor_t*        def;
+    int i;
+    ded_decor_t* def;
 
-    for(i = defs.count.decorations.num - 1, def = defs.decorations + i;
-        i >= 0; i--, def--)
+    for(i = defs.count.decorations.num - 1, def = defs.decorations + i; i >= 0; i--, def--)
     {
-        material_t*         defMat =
-            P_ToMaterial(P_MaterialNumForName(def->material.name,
-                                                    def->material.mnamespace));
+        material_t* defMat =P_ToMaterial(P_MaterialNumForName(def->material.name, def->material.mnamespace));
 
         if(mat == defMat)
         {
@@ -1004,6 +1001,7 @@ void Def_Read(void)
         P_MaterialCreate(def->id.name, width, height, def->flags,
                          tex? tex->id : 0, mnamespace, def);
     }
+    P_LinkAssociatedDefinitionsToMaterials();
 
     // Dynamic lights. Update the sprite numbers.
     for(i = 0; i < defs.count.lights.num; ++i)

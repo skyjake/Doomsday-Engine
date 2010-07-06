@@ -778,13 +778,13 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
 
     if(renderTextures == 2)
     {   // For lighting debug, render all surfaces using the gray texture.
-        material_t*         mat = P_GetMaterial(DDT_GRAY, MN_SYSTEM);
+        material_t* mat = P_GetMaterial(DDT_GRAY, MN_SYSTEM);
 
         if(mat)
         {
             material_snapshot_t ms;
 
-            Material_Prepare(&ms, mat, true, NULL);
+            Materials_Prepare(&ms, mat, true, NULL);
             skinTexture = ms.units[MTU_PRIMARY].texInst->id;
         }
         else

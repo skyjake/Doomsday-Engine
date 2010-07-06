@@ -22,7 +22,7 @@ Material {
 Material {
   ID = "FLATHUH1";
   Namespace = flats;
-  Flags = glow;
+  Layer { Stage { Glow = .9; } }
 }
 
 * Material { ID = "FLATHUH2"; }
@@ -36,7 +36,7 @@ Material {
 Material {
   ID = "LAVAFL1";
   Namespace = textures;
-  Flags = glow;
+  Layer { Stage { Glow = .9; } }
 }
 
 * Material { ID = "LAVAFL2"; }

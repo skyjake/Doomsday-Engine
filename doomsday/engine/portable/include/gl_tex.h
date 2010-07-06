@@ -66,6 +66,7 @@ int             lineAverageColorIdx(rgbcol_t col, byte* data, int w, int h,
                                     boolean hasAlpha);
 int             lineAverageColorRGB(rgbcol_t col, byte* data, int w, int h,
                                     int line);
+void            amplify(float* rgb);
 void            ColorOutlines(byte* buffer, int width, int height);
 int             DrawRealPatch(byte* buffer, int texwidth, int texheight,
                               const lumppatch_t* patch, int origx,

@@ -1398,8 +1398,8 @@ static boolean P_HasActivePtcGen(sector_t* sector, int isCeiling)
  */
 void P_CheckPtcPlanes(void)
 {
-    uint                i, p;
-    sector_t*           sector;
+    sector_t* sector;
+    uint i, p;
 
     if(isDedicated || !useParticles)
         return;
@@ -1413,9 +1413,9 @@ void P_CheckPtcPlanes(void)
         sector = SECTOR_PTR(i);
         for(p = 0; p < 2; ++p)
         {
-            uint                plane = p;
-            material_t*         mat = sector->SP_planematerial(plane);
-            const ded_ptcgen_t* def = Material_GetPtcGen(mat);
+            uint plane = p;
+            material_t* mat = sector->SP_planematerial(plane);
+            const ded_ptcgen_t* def = Materials_PtcGen(P_ToMaterialNum(mat));
 
             if(!def)
                 continue;

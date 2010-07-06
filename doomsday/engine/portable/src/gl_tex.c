@@ -706,10 +706,10 @@ void ColorOutlines(byte *buffer, int width, int height)
  * The given RGB color is scaled uniformly so that the highest component
  * becomes one.
  */
-static void amplify(float *rgb)
+void amplify(float* rgb)
 {
-    int         i;
-    float       max = 0;
+    float max = 0;
+    int i;
 
     for(i = 0; i < 3; ++i)
         if(rgb[i] > max)
@@ -726,19 +726,18 @@ static void amplify(float *rgb)
 }
 
 /**
- * Used by flares and dynamic lights. The resulting average color is
- * amplified to be as bright as possible.
+ * Used by flares and dynamic lights.
  */
 void averageColorIdx(rgbcol_t col, byte* data, int w, int h,
-                     colorpaletteid_t palid, boolean hasAlpha)
+    colorpaletteid_t palid, boolean hasAlpha)
 {
-    int                 i;
-    uint                count;
-    const int           numpels = w * h;
-    byte*               alphaStart = data + numpels;
-    DGLubyte            rgbUBV[3];
-    float               r, g, b;
-    DGLuint             pal = R_GetColorPalette(palid);
+    const int numpels = w * h;
+    byte* alphaStart = data + numpels;
+    DGLubyte rgbUBV[3];
+    float r, g, b;
+    DGLuint pal = R_GetColorPalette(palid);
+    uint count;
+    int i;
 
     // First clear them.
     for(i = 0; i < 3; ++i)
@@ -766,9 +765,6 @@ void averageColorIdx(rgbcol_t col, byte* data, int w, int h,
     col[0] = r / count;
     col[1] = g / count;
     col[2] = b / count;
-
-    // Make it glow (average colors are used with flares and dynlights).
-    amplify(col);
 }
 
 int lineAverageColorIdx(rgbcol_t col, byte* data, int w, int h, int line,
@@ -856,8 +852,6 @@ void averageColorRGB(rgbcol_t col, byte *data, int w, int h)
 
     for(i = 0; i < 3; ++i)
         col[i] = cumul[i] / numpels;
-
-    amplify(col);
 }
 
 /**

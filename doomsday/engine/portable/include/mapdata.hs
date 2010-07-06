@@ -136,12 +136,15 @@ typedef enum {
     MEC_CLOTH,
     NUM_MATERIAL_ENV_CLASSES
 } material_env_class_t;
+
+#define MATIF_PRECACHE		0x1
 end
 
 struct material
     INT     material_namespace_t mnamespace
     -       ded_material_s* def // Can be NULL (was generated automatically).
     SHORT   short           flags // MATF_* flags
+    -       byte            inFlags // MATIF_* flags
     SHORT	short           width // Defined width & height of the material (not texture!).
     SHORT   short           height
     -       material_layer_t layers[DDMAX_MATERIAL_LAYERS]

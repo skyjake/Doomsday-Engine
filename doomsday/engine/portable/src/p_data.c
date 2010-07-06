@@ -94,6 +94,7 @@ sidedef_t* sideDefs = NULL;
 watchedplanelist_t* watchedPlaneList = NULL;
 surfacelist_t* movingSurfaceList = NULL;
 surfacelist_t* decoratedSurfaceList = NULL;
+surfacelist_t* glowingSurfaceList = NULL;
 
 blockmap_t* BlockMap = NULL;
 blockmap_t* SSecBlockMap = NULL;
@@ -199,6 +200,7 @@ void P_SetCurrentMap(gamemap_t* map)
     watchedPlaneList = &map->watchedPlaneList;
     movingSurfaceList = &map->movingSurfaceList;
     decoratedSurfaceList = &map->decoratedSurfaceList;
+    glowingSurfaceList = &map->glowingSurfaceList;
 
     numPolyObjs = map->numPolyObjs;
     polyObjs = map->polyObjs;

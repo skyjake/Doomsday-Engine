@@ -129,20 +129,19 @@ typedef enum {
     NUM_MATERIAL_ENV_CLASSES
 } material_env_class_t;
 
+#define MATIF_PRECACHE		0x1
+
 typedef struct material_s {
     runtime_mapdata_header_t header;
     material_namespace_t mnamespace;
     struct ded_material_s* def;        // Can be NULL (was generated automatically).
     short               flags;         // MATF_* flags
+    byte                inFlags;       // MATIF_* flags
     short               width;         // Defined width & height of the material (not texture!).
     short               height;
     material_layer_t    layers[DDMAX_MATERIAL_LAYERS];
     unsigned int        numLayers;
     material_env_class_t envClass;     // Used for environmental sound properties.
-    struct ded_detailtexture_s* detail;
-    struct ded_decor_s* decoration;
-    struct ded_ptcgen_s* ptcGen;
-    struct ded_reflection_s* reflection;
     boolean             inAnimGroup;   // True if belongs to some animgroup.
     struct material_s*  current;
     struct material_s*  next;

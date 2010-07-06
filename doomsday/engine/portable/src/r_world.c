@@ -664,8 +664,10 @@ void R_DestroyPlaneOfSector(uint id, sector_t* sec)
     R_RemoveWatchedPlane(watchedPlaneList, plane);
     // If this plane's surface is in the moving list, remove it.
     R_SurfaceListRemove(movingSurfaceList, &plane->surface);
-    // If this plane's surface if in the deocrated list, remove it.
+    // If this plane's surface is in the deocrated list, remove it.
     R_SurfaceListRemove(decoratedSurfaceList, &plane->surface);
+    // If this plane's surface is in the glowing list, remove it.
+    R_SurfaceListRemove(glowingSurfaceList, &plane->surface);
 
     // Destroy the biassurfaces for this plane.
     ssecPtr = sec->ssectors;
@@ -1595,7 +1597,7 @@ boolean R_IsGlowingPlane(const plane_t* pln)
 {
     material_t* mat = pln->surface.material;
     material_snapshot_t ms;
-    Material_Prepare(&ms, mat, true, 0);
+    Materials_Prepare(&ms, mat, true, 0);
     return ((mat && (mat->flags & MATF_NO_DRAW)) || ms.glowing > 0 ||
             R_IsSkySurface(&pln->surface));
 }
