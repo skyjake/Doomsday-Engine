@@ -102,7 +102,7 @@ void Rend_RadioRegister(void)
 
 float Rend_RadioCalcShadowDarkness(float lightLevel)
 {
-    return (0.6f - lightLevel * 0.4f) * 0.75f * rendFakeRadioDarkness;
+    return (0.6f - lightLevel * 0.4f) * 0.65f * rendFakeRadioDarkness;
 }
 
 /**
@@ -1430,10 +1430,7 @@ static void radioSubsectorEdges(const subsector_t* subsector)
     // See if any of this subsector's planes will get shadows.
     for(pln = 0; pln < subsector->sector->planeCount; ++pln)
     {
-        plane_t            *plane = subsector->sector->planes[pln];
-
-        //if(R_IsGlowingPlane(plane))
-        //    continue;
+        plane_t* plane = subsector->sector->planes[pln];
 
         vec[VZ] = vy - plane->visHeight;
 
@@ -1465,7 +1462,7 @@ static void radioSubsectorEdges(const subsector_t* subsector)
 
         for(pln = 0; pln < subsector->sector->planeCount; ++pln)
         {
-            plane_t*                plane;
+            plane_t* plane;
 
             if(!doPlane[pln])
                 continue;
@@ -1581,7 +1578,7 @@ static void radioSubsectorEdges(const subsector_t* subsector)
 
             // Shadows are black
             shadowRGB[CR] = shadowRGB[CG] = shadowRGB[CB] = 0;
-            shadowAlpha = shadowDark * 1.5f * (1 - open);
+            shadowAlpha = shadowDark * (1 - open);
 
             radioAddShadowEdge(line, side, inner, outer, plnHeight,
                                shadowRGB, shadowAlpha, sideOpen, suf->normal);

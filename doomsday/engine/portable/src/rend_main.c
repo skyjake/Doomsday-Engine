@@ -1964,7 +1964,7 @@ static boolean doRenderSeg(seg_t* seg,
                 // Determine the shadow properties.
                 // \fixme Make cvars out of constants.
                 radioParams.shadowSize = 2 * (8 + 16 - ll * 16);
-                radioParams.shadowDark = Rend_RadioCalcShadowDarkness(ll) * isGlowing? .25f : .5f;
+                radioParams.shadowDark = Rend_RadioCalcShadowDarkness(ll);
 
                 if(radioParams.shadowSize > 0)
                 {
