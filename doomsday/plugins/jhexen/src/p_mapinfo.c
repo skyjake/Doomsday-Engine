@@ -168,7 +168,7 @@ void P_InitMapInfo(void)
     defMapInfo.nextMap = 0; // Always go to map 0 if not specified.
     defMapInfo.cdTrack = 1;
     defMapInfo.sky1Material =
-        P_MaterialNumForName(shareware ? "SKY2" : DEFAULT_SKY_NAME, MN_TEXTURES);
+        Materials_NumForName(shareware ? "SKY2" : DEFAULT_SKY_NAME, MN_TEXTURES);
     defMapInfo.sky2Material = defMapInfo.sky1Material;
     defMapInfo.sky1ScrollDelta = 0;
     defMapInfo.sky2ScrollDelta = 0;
@@ -255,7 +255,7 @@ void P_InitMapInfo(void)
             case MCMD_SKY1:
                 SC_MustGetString();
                 info->sky1Material =
-                    P_MaterialNumForName(sc_String, MN_TEXTURES);
+                    Materials_NumForName(sc_String, MN_TEXTURES);
                 SC_MustGetNumber();
                 info->sky1ScrollDelta = (float) sc_Number / 256;
                 break;
@@ -263,7 +263,7 @@ void P_InitMapInfo(void)
             case MCMD_SKY2:
                 SC_MustGetString();
                 info->sky2Material =
-                    P_MaterialNumForName(sc_String, MN_TEXTURES);
+                    Materials_NumForName(sc_String, MN_TEXTURES);
                 SC_MustGetNumber();
                 info->sky2ScrollDelta = (float) sc_Number / 256;
                 break;

@@ -1276,7 +1276,7 @@ void M_DrawBackgroundBox(float x, float y, float w, float h, boolean background,
 
     if(background)
     {
-        DGL_SetMaterial(P_ToPtr(DMU_MATERIAL, P_MaterialNumForName(borderLumps[0], MN_FLATS)));
+        DGL_SetMaterial(P_ToPtr(DMU_MATERIAL, Materials_NumForName(borderLumps[0], MN_FLATS)));
         DGL_DrawRectTiled(x, y, w, h, 64, 64);
     }
 

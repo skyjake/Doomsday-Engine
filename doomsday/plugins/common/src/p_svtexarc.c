@@ -219,7 +219,7 @@ material_t* SV_GetArchiveMaterial(int archivenum, int group)
         return NULL;
     else
         return P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName(matArchive.table[archivenum].name,
+            Materials_NumForName(matArchive.table[archivenum].name,
                                  matArchive.table[archivenum].mnamespace));
 }
 

@@ -3062,7 +3062,7 @@ static int SV_ReadFloor(floor_t* floor)
             floor->material = SV_GetArchiveMaterial(SV_ReadShort(), 0);
         else
             floor->material = P_ToPtr(DMU_MATERIAL,
-                P_MaterialNumForName(W_LumpName(SV_ReadShort()), MN_FLATS));
+                Materials_NumForName(W_LumpName(SV_ReadShort()), MN_FLATS));
 
         floor->floorDestHeight = (float) SV_ReadShort();
         floor->speed = FIX2FLT(SV_ReadLong());
@@ -3108,7 +3108,7 @@ static int SV_ReadFloor(floor_t* floor)
         floor->state = (int) SV_ReadLong();
         floor->newSpecial = SV_ReadLong();
         floor->material = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForName(W_LumpName(SV_ReadShort()), MN_FLATS));
+            Materials_NumForName(W_LumpName(SV_ReadShort()), MN_FLATS));
 
         floor->floorDestHeight = FIX2FLT((fixed_t) SV_ReadLong());
         floor->speed = FIX2FLT((fixed_t) SV_ReadLong());
