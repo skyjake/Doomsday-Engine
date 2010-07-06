@@ -50,6 +50,8 @@ typedef struct editmap_s {
     gameobjdata_t   gameObjData;
 } editmap_t;
 
+editmap_t editMap;
+
 boolean         MPE_Begin(const char *name);
 boolean         MPE_End(void);
 
