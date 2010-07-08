@@ -308,10 +308,11 @@ cvarbutton_t mnCVarButtons[] = {
     { 0, 0 }
 };
 
+mn_page_t* mnCurrentPage;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean mnActive = false;
-static mn_page_t* mnCurrentPage;
 static float mnAlpha = 0; // Alpha level for the entire menu.
 static float mnTargetAlpha = 0; // Target alpha for the entire UI.
 
@@ -544,7 +545,7 @@ static mn_object_t FilesItems[] = {
     { MN_NONE }
 };
 
-static mn_page_t FilesMenu = {
+mn_page_t FilesMenu = {
     FilesItems, 2,
     0,
     110, 60,
@@ -570,7 +571,7 @@ static mn_object_t LoadItems[] = {
     { MN_NONE }
 };
 
-static mn_page_t LoadMenu = {
+mn_page_t LoadMenu = {
     LoadItems, NUMSAVESLOTS,
     0,
 #if __JDOOM__ || __JDOOM64__
@@ -603,7 +604,7 @@ static mn_object_t SaveItems[] = {
     { MN_NONE }
 };
 
-static mn_page_t SaveMenu = {
+mn_page_t SaveMenu = {
     SaveItems, 1+NUMSAVESLOTS,
     0,
 #if __JDOOM__ || __JDOOM64__
@@ -627,7 +628,7 @@ static mn_object_t SkillItems[] = {
     { MN_NONE }
 };
 
-static mn_page_t SkillLevelMenu = {
+mn_page_t SkillLevelMenu = {
     SkillItems, 5,
     0,
     120, 44,
@@ -646,7 +647,7 @@ static mn_object_t SkillItems[] = {
     { MN_NONE }
 };
 
-static mn_page_t SkillLevelMenu = {
+mn_page_t SkillLevelMenu = {
     SkillItems, 5,
     0,
     38, 30,
@@ -682,7 +683,7 @@ static mn_object_t SkillItems[] = {
     { MN_NONE }
 };
 
-static mn_page_t SkillLevelMenu = {
+mn_page_t SkillLevelMenu = {
     SkillItems, 5,
     0,
     48, 63,

@@ -31,6 +31,7 @@
 
 #include "gl_texmanager.h"
 #include "def_data.h"
+#include "p_material.h"
 
 extern materialnum_t numMaterialBinds;
 
