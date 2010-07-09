@@ -437,7 +437,7 @@ ded_decor_t* Def_GetDecoration(material_t* mat, boolean hasExt)
 
     for(i = defs.count.decorations.num - 1, def = defs.decorations + i; i >= 0; i--, def--)
     {
-        material_t* defMat =P_ToMaterial(Materials_NumForName(def->material.name, def->material.mnamespace));
+        material_t* defMat =Materials_ToMaterial(Materials_NumForName(def->material.name, def->material.mnamespace));
 
         if(mat == defMat)
         {
@@ -459,7 +459,7 @@ ded_reflection_t* Def_GetReflection(material_t* mat, boolean hasExt)
         i >= 0; i--, def--)
     {
         material_t*         defMat =
-            P_ToMaterial(Materials_NumForName(def->material.name,
+            Materials_ToMaterial(Materials_NumForName(def->material.name,
                                                     def->material.mnamespace));
         if(mat == defMat)
         {
@@ -482,7 +482,7 @@ ded_detailtexture_t* Def_GetDetailTex(material_t* mat, boolean hasExt)
         i >= 0; i--, def--)
     {
         material_t*         defMat =
-            P_ToMaterial(Materials_NumForName(def->material1.name,
+            Materials_ToMaterial(Materials_NumForName(def->material1.name,
                                                     def->material1.mnamespace));
         if(mat == defMat)
         {
@@ -492,7 +492,7 @@ ded_detailtexture_t* Def_GetDetailTex(material_t* mat, boolean hasExt)
         }
 
         defMat =
-            P_ToMaterial(Materials_NumForName(def->material2.name,
+            Materials_ToMaterial(Materials_NumForName(def->material2.name,
                                                     def->material2.mnamespace));
         if(mat == defMat)
         {
@@ -515,7 +515,7 @@ ded_ptcgen_t* Def_GetGenerator(material_t* mat, boolean hasExt)
     {
         material_t*         defMat;
 
-        if(!(defMat = P_ToMaterial(
+        if(!(defMat = Materials_ToMaterial(
                 Materials_NumForName(def->material.name, def->material.mnamespace))))
             continue;
 
@@ -998,10 +998,10 @@ void Def_Read(void)
             }
         }
 
-        P_MaterialCreate(def->id.name, width, height, def->flags,
+        Materials_New(def->id.name, width, height, def->flags,
                          tex? tex->id : 0, mnamespace, def);
     }
-    P_LinkAssociatedDefinitionsToMaterials();
+    Materials_LinkAssociatedDefinitions();
 
     // Dynamic lights. Update the sprite numbers.
     for(i = 0; i < defs.count.lights.num; ++i)

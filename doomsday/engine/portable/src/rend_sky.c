@@ -566,7 +566,7 @@ static void internalSkyParams(skylayer_t* slayer, int param, void* data)
         break;
 
     case DD_MATERIAL:
-        if((slayer->mat = P_ToMaterial(*(materialnum_t*) data)))
+        if((slayer->mat = Materials_ToMaterial(*(materialnum_t*) data)))
         {
             material_load_params_t params;
 

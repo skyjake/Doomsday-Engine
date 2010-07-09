@@ -84,15 +84,14 @@ static ownernode_t *unusedNodeList = NULL;
  * @return              If found; material type associated to the texture,
  *                      else @c MEC_UNKNOWN.
  */
-material_env_class_t S_MaterialClassForName(const char* name,
-                                            material_namespace_t mnamespace)
+material_env_class_t S_MaterialClassForName(const char* name, material_namespace_t mnamespace)
 {
-    int                 i;
-    ded_tenviron_t*     env;
+    ded_tenviron_t* env;
+    int i;
 
     for(i = 0, env = defs.textureEnv; i < defs.count.textureEnv.num; ++i, env++)
     {
-        int                 j;
+        int j;
 
         for(j = 0; j < env->count.num; ++j)
         {
@@ -100,7 +99,7 @@ material_env_class_t S_MaterialClassForName(const char* name,
 
             if(mid->mnamespace == mnamespace && !stricmp(mid->name, name))
             {   // A match!
-                material_env_class_t     k;
+                material_env_class_t k;
 
                 // See if we recognise the material name.
                 for(k = 0; k < NUM_MATERIAL_ENV_CLASSES; ++k)
@@ -117,7 +116,7 @@ material_env_class_t S_MaterialClassForName(const char* name,
 
 static ownernode_t* newOwnerNode(void)
 {
-    ownernode_t*        node;
+    ownernode_t* node;
 
     if(unusedNodeList)
     {   // An existing node is available for re-use.
@@ -257,11 +256,11 @@ void S_DetermineSubSecsAffectingSectorReverb(gamemap_t* map)
 
 static boolean calcSSecReverb(subsector_t* ssec)
 {
-    uint                i, v;
-    seg_t**             ptr;
-    float               total = 0;
-    material_env_class_t     mclass;
-    float               materials[NUM_MATERIAL_ENV_CLASSES];
+    float materials[NUM_MATERIAL_ENV_CLASSES];
+    material_env_class_t mclass;
+    float total = 0;
+    uint i, v;
+    seg_t** ptr;
 
     if(!ssec->sector)
     {
@@ -283,12 +282,11 @@ static boolean calcSSecReverb(subsector_t* ssec)
     ptr = ssec->segs;
     while(*ptr)
     {
-        seg_t*              seg = *ptr;
+        seg_t* seg = *ptr;
 
-        if(seg->lineDef && SEG_SIDEDEF(seg) &&
-           SEG_SIDEDEF(seg)->SW_middlematerial)
+        if(seg->lineDef && SEG_SIDEDEF(seg) && SEG_SIDEDEF(seg)->SW_middlematerial)
         {
-            material_t*         mat = SEG_SIDEDEF(seg)->SW_middlematerial;
+            material_t* mat = SEG_SIDEDEF(seg)->SW_middlematerial;
 
             // The material determines its type.
             mclass = Material_GetEnvClass(mat);

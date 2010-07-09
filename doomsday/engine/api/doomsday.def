@@ -284,11 +284,11 @@ EXPORTS
 
 ; Play: Materials.
     Materials_CheckNumForName   @336 NONAME
-    P_GetMaterialName           @337 NONAME
+    Materials_GetName           @337 NONAME
     Materials_NumForName        @97 NONAME
-    P_MaterialCheckNumForIndex  @438 NONAME
-    P_MaterialNumForIndex       @437 NONAME
-    P_MaterialPrecache          @436 NONAME
+    Materials_CheckNumForIndex  @438 NONAME
+    Materials_NumForIndex       @437 NONAME
+    Materials_Precache          @436 NONAME
 
 ; Play: Thinkers.
     DD_ThinkerAdd               @86 NONAME

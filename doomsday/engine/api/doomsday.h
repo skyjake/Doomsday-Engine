@@ -330,11 +330,11 @@ extern          "C" {
     // Play: Materials.
     materialnum_t   Materials_CheckNumForName(const char* name, material_namespace_t mnamespace);
     materialnum_t   Materials_NumForName(const char* name, material_namespace_t mnamespace);
-    materialnum_t   P_MaterialCheckNumForIndex(uint idx, material_namespace_t mnamespace);
-    materialnum_t   P_MaterialNumForIndex(uint idx, material_namespace_t mnamespace);
-    const char*     P_GetMaterialName(material_t* mat);
+    materialnum_t   Materials_CheckNumForIndex(uint idx, material_namespace_t mnamespace);
+    materialnum_t   Materials_NumForIndex(uint idx, material_namespace_t mnamespace);
+    const char*     Materials_GetName(material_t* mat);
 
-    void            P_MaterialPrecache(material_t* mat, boolean yes);
+    void            Materials_Precache(material_t* mat, boolean yes);
 
     // Play: Thinkers.
     void            DD_InitThinkers(void);

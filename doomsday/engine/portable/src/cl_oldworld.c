@@ -89,7 +89,7 @@ int Cl_ReadSectorDelta(void)
         // A bit convoluted; the delta is a server-side (flat) lump number.
         if((lumpNum = Cl_TranslateLump(Msg_ReadPackedShort())) != 0)
         {
-            material_t*         mat = P_ToMaterial(
+            material_t*         mat = Materials_ToMaterial(
                 Materials_NumForName(W_LumpName(lumpNum), MN_FLATS));
 #if _DEBUG
 if(!mat)
@@ -107,7 +107,7 @@ if(!mat)
         // A bit convoluted; the delta is a server-side (flat) lump number.
         if((lumpNum = Cl_TranslateLump(Msg_ReadPackedShort())) != 0)
         {
-            material_t*         mat = P_ToMaterial(
+            material_t*         mat = Materials_ToMaterial(
                 Materials_NumForName(W_LumpName(lumpNum), MN_FLATS));
 #if _DEBUG
 if(!mat)
@@ -211,7 +211,7 @@ int Cl_ReadSideDelta(void)
          * The delta is a server-side texture num.
          * \fixme What if client and server texture nums differ?
          */
-        mat = P_GetMaterial(Msg_ReadPackedShort(), MN_TEXTURES);
+        mat = Materials_ToMaterial2(Msg_ReadPackedShort(), MN_TEXTURES);
         Surface_SetMaterial(&sid->SW_topsurface, mat);
     }
     if(df & SIDF_MID_MATERIAL)
@@ -221,7 +221,7 @@ int Cl_ReadSideDelta(void)
          * The delta is a server-side texture num.
          * \fixme What if client and server texture nums differ?
          */
-        mat = P_GetMaterial(Msg_ReadPackedShort(), MN_TEXTURES);
+        mat = Materials_ToMaterial2(Msg_ReadPackedShort(), MN_TEXTURES);
         Surface_SetMaterial(&sid->SW_middlesurface, mat);
     }
     if(df & SIDF_BOTTOM_MATERIAL)
@@ -231,7 +231,7 @@ int Cl_ReadSideDelta(void)
          * The delta is a server-side texture num.
          * \fixme What if client and server texture nums differ?
          */
-        mat = P_GetMaterial(Msg_ReadPackedShort(), MN_TEXTURES);
+        mat = Materials_ToMaterial2(Msg_ReadPackedShort(), MN_TEXTURES);
         Surface_SetMaterial(&sid->SW_bottomsurface, mat);
     }
 

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,21 +22,35 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_svtexarc.c: Archived material names (save games).
- */
+#ifndef LIBCOMMON_MATERIAL_ARCHIVE_H
+#define LIBCOMMON_MATERIAL_ARCHIVE_H
 
-#ifndef __DD_SAVEGAME_MATERIAL_ARCHIVE_H__
-#define __DD_SAVEGAME_MATERIAL_ARCHIVE_H__
+typedef struct {
+    int             version;
 
-#define MATERIAL_ARCHIVE_VERSION (1)
+    uint            count;
+    struct materialarchive_record_s* table;
 
-void            SV_InitMaterialArchives(void);
+    // Used with older versions.
+    uint            numFlats;
+} materialarchive_t;
 
-unsigned short  SV_MaterialArchiveNum(material_t* mat);
-material_t*     SV_GetArchiveMaterial(int archiveID, int group);
+typedef unsigned short materialarchive_serialid_t;
 
-void            SV_WriteMaterialArchive(void);
-void            SV_ReadMaterialArchive(int version);
+materialarchive_t* P_CreateMaterialArchive(void);
+materialarchive_t* P_CreateEmptyMaterialArchive(void);
+void            P_DestroyMaterialArchive(materialarchive_t* materialArchive);
 
+materialarchive_serialid_t MaterialArchive_Add(materialarchive_t* mArc, material_t* mat);
+materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(materialarchive_t* mArc, material_t* mat);
+
+materialnum_t   MaterialArchive_Find(materialarchive_t* mArc, materialarchive_serialid_t serialId, int group);
+
+void            MaterialArchive_Write(materialarchive_t* mArc);
+void            MaterialArchive_Read(materialarchive_t* mArc, int version);
+
+#if _DEBUG
+void            MaterialArchive_Print(const materialarchive_t* mArc);
 #endif
+
+#endif /* LIBCOMMON_MATERIAL_ARCHIVE_H */

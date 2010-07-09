@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,8 +26,28 @@
  * p_saveg.h: Common save game handling.
  */
 
-#ifndef __P_SAVEG_H__
-#define __P_SAVEG_H__
+#ifndef LIBCOMMON_SAVESTATE_H
+#define LIBCOMMON_SAVESTATE_H
+
+#include "p_svtexarc.h"
+
+typedef enum gamearchivesegment_e {
+    ASEG_GAME_HEADER = 101, //jhexen only
+    ASEG_MAP_HEADER, //jhexen only
+    ASEG_WORLD,
+    ASEG_POLYOBJS, //jhexen only
+    ASEG_MOBJS, //jhexen < ver 4 only
+    ASEG_THINKERS,
+    ASEG_SCRIPTS, //jhexen only
+    ASEG_PLAYERS,
+    ASEG_SOUNDS, //jhexen only
+    ASEG_MISC, //jhexen only
+    ASEG_END,
+    ASEG_MATERIAL_ARCHIVE,
+    ASEG_MAP_HEADER2, //jhexen only
+    ASEG_PLAYER_HEADER,
+    ASEG_GLOBALSCRIPTDATA //jhexen only
+} gamearchivesegment_t;
 
 /**
  * Original indices must remain unchanged!
@@ -70,8 +90,10 @@ typedef enum thinkclass_e {
 
 void            SV_Init(void);
 void            SV_GetSaveGameFileName(char* str, int slot, size_t len);
-int             SV_GetSaveDescription(char* str, const char* filename,
-                                      size_t len);
+int             SV_GetSaveDescription(char* str, const char* filename, size_t len);
+
+materialarchive_t* SV_MaterialArchive(void);
+
 #if __JHEXEN__
 boolean         SV_SaveGame(int slot, const char* description);
 boolean         SV_LoadGame(int slot);
@@ -100,6 +122,11 @@ unsigned short  SV_ThingArchiveNum(mobj_t* mo);
 #endif
 mobj_t*         SV_GetArchiveThing(int thingid, void* address);
 
+material_t*     SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group);
+
+void            SV_AssertSegment(int segType);
+void            SV_BeginSegment(int segType);
+
 void            SV_Write(const void* data, int len);
 void            SV_WriteByte(byte val);
 #if __JHEXEN__
@@ -121,4 +148,4 @@ float           SV_ReadFloat(void);
 
 // Misc save/load routines.
 void            SV_UpdateReadMobjFlags(mobj_t* mo, int ver);
-#endif
+#endif /* LIBCOMMON_SAVESTATE_H */

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,12 +22,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_material.c: Materials for world surfaces.
- */
-
-// HEADER FILES ------------------------------------------------------------
-
 #include "de_base.h"
 #include "de_refresh.h"
 #include "de_render.h"
@@ -38,26 +32,10 @@
 
 #include "s_environ.h"
 
-// MACROS ------------------------------------------------------------------
-
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
-
 void Material_Ticker(material_t* mat, timespan_t time)
 {
+    assert(mat);
+    {
     const ded_material_t* def = mat->def;
     uint i;
 
@@ -120,11 +98,14 @@ void Material_Ticker(material_t* mat, timespan_t time)
 
         layer->glow = lsDefNext->glow *inter + lsDef->glow * (1 - inter);
     }
+    }
 }
 
 void Material_SetTranslation(material_t* mat, material_t* current, material_t* next, float inter)
 {
-    if(!mat || !current || !next)
+    assert(mat);
+    assert(current);
+    if(!next)
     {
 #if _DEBUG
 Con_Error("Material_SetTranslation: Invalid paramaters.");
@@ -137,33 +118,26 @@ Con_Error("Material_SetTranslation: Invalid paramaters.");
     mat->inter = 0;
 }
 
-material_env_class_t Material_GetEnvClass(material_t* mat)
+material_env_class_t Material_GetEnvClass(const material_t* mat)
 {
-    if(mat)
-    {
-        if(mat->envClass == MEC_UNKNOWN)
-        {
-            mat->envClass =
-                S_MaterialClassForName(P_GetMaterialName(mat), mat->mnamespace);
-        }
+    assert(mat);
+    if(mat->flags & MATF_NO_DRAW)
+        return MEC_UNKNOWN;
+    return mat->envClass;
+}
 
-        if(!(mat->flags & MATF_NO_DRAW))
-        {
-            return mat->envClass;
-        }
-    }
-
-    return MEC_UNKNOWN;
+void Material_SetEnvClass(material_t* mat, material_env_class_t envClass)
+{
+    assert(mat);
+    mat->envClass = envClass;
 }
 
 void Material_DeleteTextures(material_t* mat)
 {
-    if(mat)
-    {
-        uint                i;
-
-        for(i = 0; i < mat->numLayers; ++i)
-            GL_ReleaseGLTexture(mat->layers[i].tex);
+    assert(mat);
+    {uint i;
+    for(i = 0; i < mat->numLayers; ++i)
+        GL_ReleaseGLTexture(mat->layers[i].tex);
     }
 }
 
@@ -172,14 +146,8 @@ void Material_DeleteTextures(material_t* mat)
  */
 boolean Material_SetProperty(material_t* mat, const setargs_t* args)
 {
-    switch(args->prop)
-    {
-    default:
-        Con_Error("Material_SetProperty: Property %s is not writable.\n",
-                  DMU_Str(args->prop));
-    }
-
-    return true; // Continue iteration.
+    Con_Error("Material_SetProperty: Property %s is not writable.\n", DMU_Str(args->prop));
+    return true; // Unreachable.
 }
 
 /**
@@ -202,9 +170,7 @@ boolean Material_GetProperty(const material_t* mat, setargs_t* args)
         DMU_GetValue(DMT_MATERIAL_MNAMESPACE, &mat->mnamespace, args, 0);
         break;
     default:
-        Con_Error("Sector_GetProperty: No property %s.\n",
-                  DMU_Str(args->prop));
+        Con_Error("Sector_GetProperty: No property %s.\n", DMU_Str(args->prop));
     }
-
     return true; // Continue iteration.
 }

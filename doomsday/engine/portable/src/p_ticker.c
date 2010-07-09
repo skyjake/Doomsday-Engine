@@ -129,7 +129,7 @@ void P_Ticker(timespan_t time)
     static trigger_t    fixed = { 1.0 / 35, 0 };
 
     P_ControlTicker(time);
-    P_MaterialManagerTicker(time);
+    Materials_Ticker(time);
 
     if(!P_ThinkerListInited())
         return; // Not initialized yet.

@@ -107,7 +107,7 @@ static uint hashTable[NUM_MATERIAL_NAMESPACES][MATERIAL_NAME_HASH_SIZE];
 
 // CODE --------------------------------------------------------------------
 
-void P_MaterialManagerRegister(void)
+void P_MaterialsRegister(void)
 {
     C_CMD("listmaterials",  NULL,     ListMaterials);
 }
@@ -250,7 +250,7 @@ static void newMaterialNameBinding(material_t* mat, const char* name,
 /**
  * Find name-associated definitions for the known material bindings.
  */
-void P_LinkAssociatedDefinitionsToMaterials(void)
+void Materials_LinkAssociatedDefinitions(void)
 {
     uint i;
     for(i = 0; i < numMaterialBinds; ++i)
@@ -280,7 +280,7 @@ void P_LinkAssociatedDefinitionsToMaterials(void)
 /**
  * One time initialization of the materials list. Called during init.
  */
-void P_InitMaterialManager(void)
+void Materials_Initialize(void)
 {
     if(initedOk)
         return; // Already been here.
@@ -302,7 +302,7 @@ void P_InitMaterialManager(void)
  * Release all memory acquired for the materials list.
  * Called during shutdown.
  */
-void P_ShutdownMaterialManager(void)
+void Materials_Shutdown(void)
 {
     if(!initedOk)
         return;
@@ -329,7 +329,7 @@ void P_ShutdownMaterialManager(void)
  *                      Only delete those currently in use by materials
  *                      in the specified namespace.
  */
-void P_DeleteMaterialTextures(material_namespace_t mnamespace)
+void Materials_DeleteTextures(material_namespace_t mnamespace)
 {
     if(mnamespace == MN_ANY)
     {   // Delete the lot.
@@ -338,7 +338,7 @@ void P_DeleteMaterialTextures(material_namespace_t mnamespace)
     }
 
     if(!isKnownMNamespace(mnamespace))
-        Con_Error("P_DeleteMaterialTextures: Internal error, "
+        Con_Error("Materials_DeleteTextures: Internal error, "
                   "invalid materialgroup '%i'.", (int) mnamespace);
 
     if(materialBinds)
@@ -369,11 +369,11 @@ void P_DeleteMaterialTextures(material_namespace_t mnamespace)
 }
 
 static material_t* createMaterial(short width, short height, byte flags,
-                                  material_namespace_t mnamespace,
-                                  ded_material_t* def, gltextureid_t tex)
+    material_namespace_t mnamespace, material_env_class_t envClass,
+    ded_material_t* def, gltextureid_t tex)
 {
-    uint                i;
-    material_t*         mat = Z_BlockNewElement(materialsBlockSet);
+    material_t* mat = Z_BlockNewElement(materialsBlockSet);
+    uint i;
 
     memset(mat, 0, sizeof(*mat));
     mat->header.type = DMU_MATERIAL;
@@ -381,7 +381,7 @@ static material_t* createMaterial(short width, short height, byte flags,
     mat->width = width;
     mat->height = height;
     mat->flags = flags;
-    mat->envClass = MEC_UNKNOWN;
+    mat->envClass = envClass;
     mat->current = mat->next = mat;
     mat->def = def;
     mat->layers[0].tex = tex;
@@ -421,7 +421,7 @@ static material_t* getMaterialByNum(materialnum_t num)
  *
  * @return              The associated material, ELSE @c NULL.
  */
-material_t* P_ToMaterial(materialnum_t num)
+material_t* Materials_ToMaterial(materialnum_t num)
 {
     if(!initedOk)
         return NULL;
@@ -439,7 +439,7 @@ material_t* P_ToMaterial(materialnum_t num)
  *
  * @return              The associated unique number.
  */
-materialnum_t P_ToMaterialNum(const material_t* mat)
+materialnum_t Materials_ToMaterialNum(const material_t* mat)
 {
     if(mat)
     {
@@ -469,16 +469,15 @@ materialnum_t P_ToMaterialNum(const material_t* mat)
  *
  * @return              The created material, ELSE @c NULL.
  */
-material_t* P_MaterialCreate(const char* rawName, short width, short height,
-                             byte flags, gltextureid_t tex,
-                             material_namespace_t mnamespace,
-                             ded_material_t* def)
+material_t* Materials_New(const char* rawName, short width, short height, byte flags,
+    gltextureid_t tex, material_namespace_t mnamespace, ded_material_t* def)
 {
-    int                 n;
-    uint                hash;
-    char                name[9];
-    materialnum_t       oldMat;
-    material_t*         mat;
+    material_env_class_t envClass;
+    materialnum_t oldMat;
+    material_t* mat;
+    char name[9];
+    uint hash;
+    int n;
 
     if(!initedOk)
         return NULL;
@@ -489,7 +488,7 @@ material_t* P_MaterialCreate(const char* rawName, short width, short height,
     if(!rawName || !rawName[0] || rawName[0] == '-')
     {
 #if _DEBUG
-Con_Message("P_MaterialCreate: Warning, attempted to create material with "
+Con_Message("Materials_New: Warning, attempted to create material with "
             "NULL name\n.");
 #endif
         return NULL;
@@ -516,7 +515,7 @@ Con_Message("P_MaterialCreate: Warning, attempted to create material with "
         if(!isKnownMNamespace(mnamespace))
         {
 #if _DEBUG
-Con_Message("P_MaterialCreate: Warning, attempted to create material in "
+Con_Message("Materials_New: Warning, attempted to create material in "
             "unknown namespace '%i'.\n", (int) mnamespace);
 #endif
             return NULL;
@@ -524,6 +523,8 @@ Con_Message("P_MaterialCreate: Warning, attempted to create material in "
 
         oldMat = getMaterialNumForName(name, hash, mnamespace);
     }
+
+    envClass = S_MaterialClassForName(name, mnamespace);
 
     if(oldMat)
     {   // We are updating an existing material.
@@ -544,7 +545,7 @@ Con_Message("P_MaterialCreate: Warning, attempted to create material in "
         mat->current = mat->next = mat;
         mat->def = def;
         mat->inter = 0;
-        mat->envClass = MEC_UNKNOWN;
+        mat->envClass = envClass;
         mat->mnamespace = mnamespace;
 
         // Is this a custom material?
@@ -564,7 +565,7 @@ Con_Message("P_MaterialCreate: Warning, attempted to create material in "
     if(mnamespace == MN_ANY)
     {
 #if _DEBUG
-Con_Message("P_MaterialCreate: Warning, attempted to create material "
+Con_Message("Materials_New: Warning, attempted to create material "
             "without specifying a namespace.\n");
 #endif
         return NULL;
@@ -579,7 +580,7 @@ Con_Message("P_MaterialCreate: Warning, attempted to create material "
     if(tex == 0 || !(width > 0) || !(height > 0))
         return NULL;
 
-    mat = createMaterial(width, height, flags, mnamespace, def, tex);
+    mat = createMaterial(width, height, flags, mnamespace, envClass, def, tex);
 
     // Now create a name binding for it.
     newMaterialNameBinding(mat, name, mnamespace, hash);
@@ -596,7 +597,7 @@ Con_Message("P_MaterialCreate: Warning, attempted to create material "
  *
  * @return              The associated material, ELSE @c NULL.
  */
-material_t* P_GetMaterial(int ofTypeID, material_namespace_t mnamespace)
+material_t* Materials_ToMaterial2(int ofTypeID, material_namespace_t mnamespace)
 {
     if(!initedOk)
         return 0;
@@ -604,7 +605,7 @@ material_t* P_GetMaterial(int ofTypeID, material_namespace_t mnamespace)
     if(!isKnownMNamespace(mnamespace)) // MN_ANY is considered invalid.
     {
 #if _DEBUG
-Con_Message("P_GetMaterial: Internal error, invalid namespace '%i'\n",
+Con_Message("Materials_ToMaterial2: Internal error, invalid namespace '%i'\n",
             (int) mnamespace);
 #endif
         return 0;
@@ -626,7 +627,7 @@ Con_Message("P_GetMaterial: Internal error, invalid namespace '%i'\n",
     return 0;
 }
 
-materialnum_t P_MaterialCheckNumForIndex(uint idx, material_namespace_t mnamespace)
+materialnum_t Materials_CheckNumForIndex(uint idx, material_namespace_t mnamespace)
 {
     if(!initedOk)
         return 0;
@@ -635,7 +636,7 @@ materialnum_t P_MaterialCheckNumForIndex(uint idx, material_namespace_t mnamespa
     if(!isKnownMNamespace(mnamespace))
     {
 #if _DEBUG
-Con_Message("P_GetMaterial: Internal error, invalid namespace '%i'\n",
+Con_Message("Materials_ToMaterial2: Internal error, invalid namespace '%i'\n",
             (int) mnamespace);
 #endif
         return 0;
@@ -648,7 +649,7 @@ Con_Message("P_GetMaterial: Internal error, invalid namespace '%i'\n",
  * Given a texture/flat/sprite/etc index num, search the materials db for
  * a name-bound material.
  * \note Part of the Doomsday public API.
- * \note2 Sames as P_MaterialCheckNumForIndex except will log an error
+ * \note2 Sames as Materials_CheckNumForIndex except will log an error
  *        message if the material being searched for is not found.
  *
  * @param idx           Index of the texture/flat/sprite/etc.
@@ -656,13 +657,13 @@ Con_Message("P_GetMaterial: Internal error, invalid namespace '%i'\n",
  *
  * @return              Unique identifier of the found material, else zero.
  */
-materialnum_t P_MaterialNumForIndex(uint idx, material_namespace_t mnamespace)
+materialnum_t Materials_NumForIndex(uint idx, material_namespace_t mnamespace)
 {
-    materialnum_t       result = P_MaterialCheckNumForIndex(idx, mnamespace);
+    materialnum_t       result = Materials_CheckNumForIndex(idx, mnamespace);
 
     // Not found? Don't announce during map setup or if not yet inited.
     if(verbose && result == 0 && (!ddMapSetup || !initedOk))
-        Con_Message("P_MaterialNumForIndex: %u in namespace %i not found!\n",
+        Con_Message("Materials_NumForIndex: %u in namespace %i not found!\n",
                     idx, mnamespace);
     return result;
 }
@@ -702,7 +703,7 @@ materialnum_t Materials_CheckNumForName(const char* rawName,
     if(mnamespace != MN_ANY && !isKnownMNamespace(mnamespace))
     {
 #if _DEBUG
-Con_Message("P_GetMaterial: Internal error, invalid namespace '%i'\n",
+Con_Message("Materials_ToMaterial2: Internal error, invalid namespace '%i'\n",
             (int) mnamespace);
 #endif
         return 0;
@@ -775,14 +776,14 @@ materialnum_t Materials_NumForName(const char* name,
  *
  * @return              The associated name.
  */
-const char* P_GetMaterialName(material_t* mat)
+const char* Materials_GetName(material_t* mat)
 {
-    materialnum_t       num;
+    materialnum_t num;
 
     if(!initedOk)
         return NULL;
 
-    if(mat && (num = P_ToMaterialNum(mat)))
+    if(mat && (num = Materials_ToMaterialNum(mat)))
         return materialBinds[num-1].name;
 
     return "NOMAT"; // Should never happen.
@@ -811,7 +812,7 @@ void P_MaterialPrecache2(material_t* mat, boolean yes, boolean inGroup)
     }
 }
 
-void P_MaterialPrecache(material_t* mat, boolean yes)
+void Materials_Precache(material_t* mat, boolean yes)
 {
     P_MaterialPrecache2(mat, yes, true);
 }
@@ -819,7 +820,7 @@ void P_MaterialPrecache(material_t* mat, boolean yes)
 /**
  * Called every tic by P_Ticker.
  */
-void P_MaterialManagerTicker(timespan_t time)
+void Materials_Ticker(timespan_t time)
 {
     static trigger_t fixed = { 1.0 / 35, 0 };
     material_t* mat;
@@ -880,7 +881,7 @@ static __inline void setTexUnit(material_snapshot_t* ss, byte unit,
 byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean smoothed, material_load_params_t* params)
 {
     materialnum_t num;
-    if((num = P_ToMaterialNum(mat)))
+    if((num = Materials_ToMaterialNum(mat)))
     {
         materialbind_t* mb;
         const gltexture_inst_t* texInst[DDMAX_MATERIAL_LAYERS];
@@ -1071,7 +1072,7 @@ const ded_reflection_t* Materials_Reflection(materialnum_t num)
 {
     if(num > 0)
     {
-        const materialbind_t* mb = bindForMaterial(P_ToMaterial(num));
+        const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
             Materials_Prepare(NULL, mb->mat, false, 0);
         return mb->reflection[mb->prepared? mb->prepared-1:0];
@@ -1083,7 +1084,7 @@ const ded_detailtexture_t* Materials_Detail(materialnum_t num)
 {
     if(num > 0)
     {
-        const materialbind_t* mb = bindForMaterial(P_ToMaterial(num));
+        const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
             Materials_Prepare(NULL, mb->mat, false, 0);
         return mb->detail[mb->prepared? mb->prepared-1:0];
@@ -1095,7 +1096,7 @@ const ded_decor_t* Materials_Decoration(materialnum_t num)
 {
     if(num > 0)
     {
-        const materialbind_t* mb = bindForMaterial(P_ToMaterial(num));
+        const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
             Materials_Prepare(NULL, mb->mat, false, 0);
         return mb->decoration[mb->prepared? mb->prepared-1:0];
@@ -1107,7 +1108,7 @@ const ded_ptcgen_t* Materials_PtcGen(materialnum_t num)
 {
     if(num > 0)
     {
-        const materialbind_t* mb = bindForMaterial(P_ToMaterial(num));
+        const materialbind_t* mb = bindForMaterial(Materials_ToMaterial(num));
         if(!mb->prepared)
             Materials_Prepare(NULL, mb->mat, false, 0);
         return mb->ptcGen[mb->prepared? mb->prepared-1:0];
@@ -1424,7 +1425,7 @@ void Materials_ResetAnimGroups(void)
     {uint i;
     for(i = 0; i < Materials_Count(); ++i)
     {
-        material_t* mat = P_ToMaterial((materialnum_t)(i+1));
+        material_t* mat = Materials_ToMaterial((materialnum_t)(i+1));
         uint j;
         for(j = 0; j < mat->numLayers; ++j)
         {

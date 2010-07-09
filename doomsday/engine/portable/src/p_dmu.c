@@ -396,7 +396,7 @@ uint P_ToIndex(const void* ptr)
         return GET_PLANE_IDX((plane_t*) ptr);
 
     case DMU_MATERIAL:
-        return P_ToMaterialNum((material_t*) ptr);
+        return Materials_ToMaterialNum((material_t*) ptr);
 
     default:
         Con_Error("P_ToIndex: Unknown type %s.\n", DMU_Str(DMU_GetType(ptr)));
@@ -438,7 +438,7 @@ void* P_ToPtr(int type, uint index)
         break;
 
     case DMU_MATERIAL:
-        return P_ToMaterial(index);
+        return Materials_ToMaterial(index);
 
     default:
         Con_Error("P_ToPtr: unknown type %s.\n", DMU_Str(type));
@@ -602,8 +602,8 @@ int P_Callback(int type, uint index, void* context,
         break;
 
     case DMU_MATERIAL:
-        if(index < numMaterialBinds)
-            return callback(P_ToMaterial(index), context);
+        if(index < Materials_Count())
+            return callback(Materials_ToMaterial(index), context);
         break;
 
     case DMU_LINEDEF_BY_TAG:

@@ -593,7 +593,7 @@ static int DD_StartupWorker(void *parm)
     GL_EarlyInitTextureManager();
 
     // Get the material manager up and running.
-    P_InitMaterialManager();
+    Materials_Initialize();
     R_InitTextures();
     R_InitFlats();
     R_PreInitSprites();
@@ -998,8 +998,11 @@ void* DD_GetVariable(int ddvalue)
             return &numNodes;
 
         case DD_MATERIAL_COUNT:
-            return &numMaterialBinds;
-
+            {
+            static uint value;
+            value = Materials_Count();
+            return &value;
+            }
         case DD_TRACE_ADDRESS:
             return &traceLOS;
 
@@ -1013,7 +1016,7 @@ void* DD_GetVariable(int ddvalue)
 
             if(mapInfo && mapInfo->name[0])
             {
-                int                 id;
+                int id;
 
                 if((id = Def_Get(DD_DEF_TEXT, mapInfo->name, NULL)) != -1)
                 {

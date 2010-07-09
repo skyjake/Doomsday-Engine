@@ -227,10 +227,10 @@ void printDebugInfo(player_t* plr)
     Con_Message("\nSubsector %i:\n", P_ToIndex(sub));
     Con_Message("  FloorZ:%g Material:%s\n",
                 P_GetFloatp(sub, DMU_FLOOR_HEIGHT),
-                P_GetMaterialName(P_GetPtrp(sub, DMU_FLOOR_MATERIAL)));
+                Materials_GetName(P_GetPtrp(sub, DMU_FLOOR_MATERIAL)));
     Con_Message("  CeilingZ:%g Material:%s\n",
                 P_GetFloatp(sub, DMU_CEILING_HEIGHT),
-                P_GetMaterialName(P_GetPtrp(sub, DMU_CEILING_MATERIAL)));
+                Materials_GetName(P_GetPtrp(sub, DMU_CEILING_MATERIAL)));
     Con_Message("Player height:%g   Player radius:%g\n",
                 plr->plr->mo->height, plr->plr->mo->radius);
 }

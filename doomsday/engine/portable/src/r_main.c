@@ -124,7 +124,7 @@ void R_Register(void)
 
     C_CMD("viewgrid", "ii", ViewGrid);
 
-    P_MaterialManagerRegister();
+    P_MaterialsRegister();
 }
 
 /**

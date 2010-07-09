@@ -909,7 +909,7 @@ void R_DivVertColors(rcolor_t* dst, const rcolor_t* src,
 
 void R_ShutdownData(void)
 {
-    P_ShutdownMaterialManager();
+    Materials_Shutdown();
 }
 
 static patchtex_t* getPatchTex(patchid_t id)
@@ -1677,7 +1677,7 @@ void R_InitTextures(void)
             tex = GL_CreateGLTexture(texDef->name, i, GLT_DOOMTEXTURE);
 
             // Create a material for this texture.
-            mat = P_MaterialCreate(texDef->name, texDef->width, texDef->height,
+            mat = Materials_New(texDef->name, texDef->width, texDef->height,
                                    ((texDef->flags & TXDF_NODRAW)? MATF_NO_DRAW : 0),
                                    tex->id, MN_TEXTURES, NULL);
         }
@@ -1794,7 +1794,7 @@ void R_InitFlats(void)
 
         // Create a material for this flat.
         // \note that width = 64, height = 64 regardless of the flat dimensions.
-        P_MaterialCreate(W_LumpName(flat->lump), 64, 64, 0, tex->id, MN_FLATS, NULL);
+        Materials_New(W_LumpName(flat->lump), 64, 64, 0, tex->id, MN_FLATS, NULL);
     }
 
     VERBOSE(Con_Message("R_InitFlats: Done in %.2f seconds.\n",
@@ -2109,7 +2109,7 @@ void R_PrecacheMobjNum(int num)
                 spriteframe_t*      sprFrame = &sprDef->spriteFrames[j];
 
                 for(k = 0; k < 8; ++k)
-                    P_MaterialPrecache(sprFrame->mats[k], true);
+                    Materials_Precache(sprFrame->mats[k], true);
             }
         }
     }
@@ -2128,7 +2128,6 @@ void R_PrecacheMap(void)
     sector_t* sec;
     sidedef_t* side;
     float startTime;
-    materialnum_t numMaterials;
 
     // Don't precache when playing demo.
     if(isDedicated || playback)
@@ -2139,22 +2138,19 @@ void R_PrecacheMap(void)
 
     startTime = Sys_GetSeconds();
 
-    // Precache all materials used on world surfaces.
-    numMaterials = numMaterialBinds;
-
+    // Always precache all materials used on world surfaces.
     for(i = 0; i < numSideDefs; ++i)
     {
         side = SIDE_PTR(i);
-        P_MaterialPrecache(side->SW_topmaterial, true);
-        P_MaterialPrecache(side->SW_middlematerial, true);
-        P_MaterialPrecache(side->SW_bottommaterial, true);
+        Materials_Precache(side->SW_topmaterial, true);
+        Materials_Precache(side->SW_middlematerial, true);
+        Materials_Precache(side->SW_bottommaterial, true);
     }
-
     for(i = 0; i < numSectors; ++i)
     {
         sec = SECTOR_PTR(i);
         for(j = 0; j < sec->planeCount; ++j)
-            P_MaterialPrecache(sec->SP_planematerial(j), true);
+            Materials_Precache(sec->SP_planematerial(j), true);
     }
 
     // Precache sprites?
@@ -2176,7 +2172,7 @@ void R_PrecacheMap(void)
                     spriteframe_t* sprFrame = &sprDef->spriteFrames[j];
                     int k;
                     for(k = 0; k < 8; ++k)
-                        P_MaterialPrecache(sprFrame->mats[k], true);
+                        Materials_Precache(sprFrame->mats[k], true);
                 }
             }
         }
@@ -2184,10 +2180,10 @@ void R_PrecacheMap(void)
 
     // \fixme Precache sky materials!
 
-    for(i = 0; i < numMaterials; ++i)
+    for(i = 0; i < Materials_Count(); ++i)
     {
         material_t* mat;
-        if((mat = P_ToMaterial(i+1))->inFlags & MATIF_PRECACHE)
+        if((mat = Materials_ToMaterial(i+1))->inFlags & MATIF_PRECACHE)
         {
             material_snapshot_t ms;
             boolean hasDecorations;
@@ -2254,8 +2250,7 @@ void R_PrecacheMap(void)
     // Sky models usually have big skins.
     R_PrecacheSky();
 
-    VERBOSE(Con_Message("Precaching took %.2f seconds.\n",
-                        Sys_GetSeconds() - startTime))
+    VERBOSE(Con_Message("Precaching took %.2f seconds.\n", Sys_GetSeconds() - startTime))
 }
 
 /**

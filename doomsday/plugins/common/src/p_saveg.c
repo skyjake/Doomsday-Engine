@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,7 +54,6 @@
 #include "p_saveg.h"
 #include "f_infine.h"
 #include "d_net.h"
-#include "p_svtexarc.h"
 #include "dmu_lib.h"
 #include "p_map.h"
 #include "p_mapsetup.h"
@@ -160,24 +159,6 @@ typedef struct playerheader_s {
     int             numArmorTypes;
 #endif
 } playerheader_t;
-
-typedef enum gamearchivesegment_e {
-    ASEG_GAME_HEADER = 101, //jhexen only
-    ASEG_MAP_HEADER, //jhexen only
-    ASEG_WORLD,
-    ASEG_POLYOBJS, //jhexen only
-    ASEG_MOBJS, //jhexen < ver 4 only
-    ASEG_THINKERS,
-    ASEG_SCRIPTS, //jhexen only
-    ASEG_PLAYERS,
-    ASEG_SOUNDS, //jhexen only
-    ASEG_MISC, //jhexen only
-    ASEG_END,
-    ASEG_MATERIAL_ARCHIVE,
-    ASEG_MAP_HEADER2, //jhexen only
-    ASEG_PLAYER_HEADER,
-    ASEG_GLOBALSCRIPTDATA //jhexen only
-} gamearchivesegment_t;
 
 #if __JHEXEN__
 static union saveptr_u {
@@ -318,6 +299,8 @@ static boolean savingPlayers;
 #else
 static int numSoundTargets = 0;
 #endif
+
+static materialarchive_t* materialArchive = 0;
 
 static byte* junkbuffer; // Old save data is read into here.
 
@@ -503,7 +486,7 @@ static thinkerinfo_t thinkerInfo[] = {
  *
  * @param segType       Value by which to check for alignment.
  */
-static void AssertSegment(int segType)
+void SV_AssertSegment(int segType)
 {
 #if __JHEXEN__
     if(SV_ReadLong() != segType)
@@ -514,7 +497,7 @@ static void AssertSegment(int segType)
 #endif
 }
 
-static void SV_BeginSegment(int segType)
+void SV_BeginSegment(int segType)
 {
 #if __JHEXEN__
     SV_WriteLong(segType);
@@ -677,6 +660,12 @@ unsigned short SV_ThingArchiveNum(mobj_t* mo)
     // OK, place it in an empty pos.
     thingArchive[firstEmpty] = mo;
     return firstEmpty + 1;
+}
+
+material_t* SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group)
+{
+    assert(materialArchive);
+    return P_ToPtr(DMU_MATERIAL, MaterialArchive_Find(materialArchive, serialId, group));
 }
 
 #if __JHEXEN__
@@ -2065,7 +2054,7 @@ static void P_UnArchivePlayerHeader(void)
     {
         int     ver;
 
-        AssertSegment(ASEG_PLAYER_HEADER);
+        SV_AssertSegment(ASEG_PLAYER_HEADER);
         ver = SV_ReadByte();
 
         playerHeader.numPowers = SV_ReadLong();
@@ -2230,8 +2219,8 @@ static void SV_WriteSector(sector_t *sec)
 
     SV_WriteShort(floorheight);
     SV_WriteShort(ceilingheight);
-    SV_WriteShort(SV_MaterialArchiveNum(floorMaterial));
-    SV_WriteShort(SV_MaterialArchiveNum(ceilingMaterial));
+    SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, floorMaterial));
+    SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, ceilingMaterial));
     SV_WriteShort(floorFlags);
     SV_WriteShort(ceilingFlags);
 #if __JHEXEN__
@@ -2333,25 +2322,22 @@ static void SV_ReadSector(sector_t *sec)
 #if !__JHEXEN__
     if(hdr.version == 1)
     {   // Flat numbers are the original flat lump indices - (lump) "F_START".
-        floorMaterial = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForIndex(SV_ReadShort(), MN_FLATS));
-        ceilingMaterial = P_ToPtr(DMU_MATERIAL,
-            P_MaterialNumForIndex(SV_ReadShort(), MN_FLATS));
+        floorMaterial   = P_ToPtr(DMU_MATERIAL, Materials_NumForIndex(SV_ReadShort(), MN_FLATS));
+        ceilingMaterial = P_ToPtr(DMU_MATERIAL, Materials_NumForIndex(SV_ReadShort(), MN_FLATS));
     }
     else if(hdr.version >= 4)
 #endif
-    {
-        // The flat numbers are actually archive numbers.
-        floorMaterial = SV_GetArchiveMaterial(SV_ReadShort(), 0);
+    {   // The flat numbers are actually archive numbers.
+        floorMaterial   = SV_GetArchiveMaterial(SV_ReadShort(), 0);
         ceilingMaterial = SV_GetArchiveMaterial(SV_ReadShort(), 0);
     }
 
-    P_SetPtrp(sec, DMU_FLOOR_MATERIAL, floorMaterial);
+    P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   floorMaterial);
     P_SetPtrp(sec, DMU_CEILING_MATERIAL, ceilingMaterial);
 
     if(ver >= 3)
     {
-        P_SetIntp(sec, DMU_FLOOR_FLAGS, SV_ReadShort());
+        P_SetIntp(sec, DMU_FLOOR_FLAGS,   SV_ReadShort());
         P_SetIntp(sec, DMU_CEILING_FLAGS, SV_ReadShort());
     }
 
@@ -2481,9 +2467,9 @@ static void SV_WriteLine(linedef_t* li)
         SV_WriteShort(P_GetIntp(si, DMU_MIDDLE_FLAGS));
         SV_WriteShort(P_GetIntp(si, DMU_BOTTOM_FLAGS));
 
-        SV_WriteShort(SV_MaterialArchiveNum(P_GetPtrp(si, DMU_TOP_MATERIAL)));
-        SV_WriteShort(SV_MaterialArchiveNum(P_GetPtrp(si, DMU_BOTTOM_MATERIAL)));
-        SV_WriteShort(SV_MaterialArchiveNum(P_GetPtrp(si, DMU_MIDDLE_MATERIAL)));
+        SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, P_GetPtrp(si, DMU_TOP_MATERIAL)));
+        SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, P_GetPtrp(si, DMU_BOTTOM_MATERIAL)));
+        SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, P_GetPtrp(si, DMU_MIDDLE_MATERIAL)));
 
         P_GetFloatpv(si, DMU_TOP_COLOR, rgba);
         for(j = 0; j < 3; ++j)
@@ -2614,7 +2600,7 @@ static void SV_ReadLine(linedef_t *li)
     // For each side
     for(i = 0; i < 2; ++i)
     {
-        sidedef_t*          si = P_GetPtrp(li, (i? DMU_SIDEDEF1:DMU_SIDEDEF0));
+        sidedef_t* si = P_GetPtrp(li, (i? DMU_SIDEDEF1:DMU_SIDEDEF0));
 
         if(!si)
             continue;
@@ -2622,7 +2608,7 @@ static void SV_ReadLine(linedef_t *li)
         // Versions latter than 2 store per surface texture offsets.
         if(ver >= 2)
         {
-            float               offset[2];
+            float offset[2];
 
             offset[VX] = (float) SV_ReadShort();
             offset[VY] = (float) SV_ReadShort();
@@ -2638,19 +2624,19 @@ static void SV_ReadLine(linedef_t *li)
         }
         else
         {
-            float       offset[2];
+            float offset[2];
 
             offset[VX] = (float) SV_ReadShort();
             offset[VY] = (float) SV_ReadShort();
 
-            P_SetFloatpv(si, DMU_TOP_MATERIAL_OFFSET_XY, offset);
+            P_SetFloatpv(si, DMU_TOP_MATERIAL_OFFSET_XY,    offset);
             P_SetFloatpv(si, DMU_MIDDLE_MATERIAL_OFFSET_XY, offset);
             P_SetFloatpv(si, DMU_BOTTOM_MATERIAL_OFFSET_XY, offset);
         }
 
         if(ver >= 3)
         {
-            P_SetIntp(si, DMU_TOP_FLAGS, SV_ReadShort());
+            P_SetIntp(si, DMU_TOP_FLAGS,    SV_ReadShort());
             P_SetIntp(si, DMU_MIDDLE_FLAGS, SV_ReadShort());
             P_SetIntp(si, DMU_BOTTOM_FLAGS, SV_ReadShort());
         }
@@ -2659,20 +2645,19 @@ static void SV_ReadLine(linedef_t *li)
         if(hdr.version >= 4)
 #endif
         {
-            // The texture numbers are archive numbers.
-            topMaterial = SV_GetArchiveMaterial(SV_ReadShort(), 1);
+            topMaterial    = SV_GetArchiveMaterial(SV_ReadShort(), 1);
             bottomMaterial = SV_GetArchiveMaterial(SV_ReadShort(), 1);
             middleMaterial = SV_GetArchiveMaterial(SV_ReadShort(), 1);
         }
 
-        P_SetPtrp(si, DMU_TOP_MATERIAL, topMaterial);
+        P_SetPtrp(si, DMU_TOP_MATERIAL,    topMaterial);
         P_SetPtrp(si, DMU_BOTTOM_MATERIAL, bottomMaterial);
         P_SetPtrp(si, DMU_MIDDLE_MATERIAL, middleMaterial);
 
         // Ver2 includes surface colours
         if(ver >= 2)
         {
-            float           rgba[4];
+            float rgba[4];
 
             for(j = 0; j < 3; ++j)
                 rgba[j] = (float) SV_ReadByte() / 255.f;
@@ -2743,10 +2728,9 @@ static int SV_ReadPolyObj(void)
  */
 static void P_ArchiveWorld(void)
 {
-    uint                i;
+    uint i;
 
-    SV_BeginSegment(ASEG_MATERIAL_ARCHIVE);
-    SV_WriteMaterialArchive();
+    MaterialArchive_Write(materialArchive);
 
     SV_BeginSegment(ASEG_WORLD);
     for(i = 0; i < numsectors; ++i)
@@ -2765,10 +2749,8 @@ static void P_ArchiveWorld(void)
 
 static void P_UnArchiveWorld(void)
 {
-    uint                i;
-    int                 matArchiveVer = -1;
-
-    AssertSegment(ASEG_MATERIAL_ARCHIVE);
+    int matArchiveVer = -1;
+    uint i;
 
 #if __JHEXEN__
     if(saveVersion < 6)
@@ -2781,9 +2763,13 @@ static void P_UnArchiveWorld(void)
 #if !__JHEXEN__
     if(hdr.version >= 4)
 #endif
-        SV_ReadMaterialArchive(matArchiveVer);
+        MaterialArchive_Read(materialArchive, matArchiveVer);
 
-    AssertSegment(ASEG_WORLD);
+/*#if _DEBUG
+    MaterialArchive_Print(materialArchive);
+#endif*/
+
+    SV_AssertSegment(ASEG_WORLD);
     // Load sectors.
     for(i = 0; i < numsectors; ++i)
         SV_ReadSector(P_ToPtr(DMU_SECTOR, i));
@@ -2794,7 +2780,7 @@ static void P_UnArchiveWorld(void)
 
 #if __JHEXEN__
     // Load polyobjects.
-    AssertSegment(ASEG_POLYOBJS);
+    SV_AssertSegment(ASEG_POLYOBJS);
     if(SV_ReadLong() != numpolyobjs)
         Con_Error("UnarchivePolyobjs: Bad polyobj count");
 
@@ -3016,7 +3002,7 @@ static void SV_WriteFloor(const floor_t *floor)
     SV_WriteLong((int) floor->state);
     SV_WriteLong(floor->newSpecial);
 
-    SV_WriteShort(SV_MaterialArchiveNum(floor->material));
+    SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, floor->material));
 
     SV_WriteShort((int) floor->floorDestHeight);
     SV_WriteLong(FLT2FIX(floor->speed));
@@ -3061,8 +3047,7 @@ static int SV_ReadFloor(floor_t* floor)
         if(ver >= 2)
             floor->material = SV_GetArchiveMaterial(SV_ReadShort(), 0);
         else
-            floor->material = P_ToPtr(DMU_MATERIAL,
-                Materials_NumForName(W_LumpName(SV_ReadShort()), MN_FLATS));
+            floor->material = P_ToPtr(DMU_MATERIAL, Materials_NumForName(W_LumpName(SV_ReadShort()), MN_FLATS));
 
         floor->floorDestHeight = (float) SV_ReadShort();
         floor->speed = FIX2FLT(SV_ReadLong());
@@ -4011,12 +3996,12 @@ static void SV_WriteMaterialChanger(const materialchanger_t* mchanger)
     SV_WriteLong(mchanger->timer);
     SV_WriteLong(P_ToIndex(mchanger->side));
     SV_WriteByte((byte) mchanger->ssurfaceID);
-    SV_WriteShort(SV_MaterialArchiveNum(mchanger->material));
+    SV_WriteShort(MaterialArchive_FindUniqueSerialId(materialArchive, mchanger->material));
 }
 
 static int SV_ReadMaterialChanger(materialchanger_t* mchanger)
 {
-    sidedef_t*          side;
+    sidedef_t* side;
     /*int ver =*/ SV_ReadByte(); // version byte.
 
     SV_ReadByte(); // Type byte.
@@ -4185,10 +4170,10 @@ static void P_UnArchiveThinkers(void)
 
 #if __JHEXEN__
     if(saveVersion < 4)
-        AssertSegment(ASEG_MOBJS);
+        SV_AssertSegment(ASEG_MOBJS);
     else
 #endif
-        AssertSegment(ASEG_THINKERS);
+        SV_AssertSegment(ASEG_THINKERS);
 
 #if __JHEXEN__
     targetPlayerAddrs = NULL;
@@ -4223,7 +4208,7 @@ static void P_UnArchiveThinkers(void)
 
             if(tClass == TC_MOBJ && i == thingArchiveSize)
             {
-                AssertSegment(ASEG_THINKERS);
+                SV_AssertSegment(ASEG_THINKERS);
                 // We have reached the begining of the "specials" block.
                 doSpecials = true;
                 continue;
@@ -4487,7 +4472,7 @@ static void P_UnArchiveSounds(void)
     int             polySnd, secNum, ver;
     mobj_t*         sndMobj = NULL;
 
-    AssertSegment(ASEG_SOUNDS);
+    SV_AssertSegment(ASEG_SOUNDS);
 
     // Reload and restart all sound sequences
     numSequences = SV_ReadLong();
@@ -4541,7 +4526,7 @@ static void P_UnArchiveScripts(void)
 {
     int         i;
 
-    AssertSegment(ASEG_SCRIPTS);
+    SV_AssertSegment(ASEG_SCRIPTS);
     for(i = 0; i < ACScriptCount; ++i)
     {
         ACSInfo[i].state = SV_ReadShort();
@@ -4580,7 +4565,7 @@ static void P_UnArchiveGlobalScriptData(void)
 
     if(saveVersion >= 7)
     {
-        AssertSegment(ASEG_GLOBALSCRIPTDATA);
+        SV_AssertSegment(ASEG_GLOBALSCRIPTDATA);
         ver = SV_ReadByte();
     }
 
@@ -4660,7 +4645,7 @@ static void P_UnArchiveMisc(void)
 {
     int         ix;
 
-    AssertSegment(ASEG_MISC);
+    SV_AssertSegment(ASEG_MISC);
     for(ix = 0; ix < MAXPLAYERS; ++ix)
     {
         localQuakeHappening[ix] = SV_ReadLong();
@@ -4685,8 +4670,6 @@ static void P_ArchiveMap(boolean savePlayers)
     // Clear the sound target count (determined while saving sectors).
     numSoundTargets = 0;
 #endif
-
-    SV_InitMaterialArchives();
 
     P_ArchiveWorld();
     P_ArchiveThinkers(savePlayers);
@@ -4715,7 +4698,7 @@ static void P_ArchiveMap(boolean savePlayers)
 static void P_UnArchiveMap(void)
 {
 #if __JHEXEN__
-    int                 segType = SV_ReadLong();
+    int segType = SV_ReadLong();
 
     // Determine the map version.
     if(segType == ASEG_MAP_HEADER2)
@@ -4732,7 +4715,7 @@ static void P_UnArchiveMap(void)
                   ASEG_MAP_HEADER);
     }
 #else
-    AssertSegment(ASEG_MAP_HEADER2);
+    SV_AssertSegment(ASEG_MAP_HEADER2);
 #endif
 
 #if __JHEXEN__
@@ -4761,7 +4744,7 @@ static void P_UnArchiveMap(void)
     }
 #endif
 
-    AssertSegment(ASEG_END);
+    SV_AssertSegment(ASEG_END);
 }
 
 int SV_GetSaveDescription(char* str, const char* filename, size_t len)
@@ -4819,6 +4802,14 @@ int SV_GetSaveDescription(char* str, const char* filename, size_t len)
     str[len] = '\0';
     return true;
 #endif
+}
+
+/**
+ * @return              Pointer to the (currently in-use) material archive.
+ */
+materialarchive_t* SV_MaterialArchive(void)
+{
+    return materialArchive;
 }
 
 /**
@@ -4973,6 +4964,9 @@ int SV_SaveGameWorker(void* ptr)
     SV_WriteLong(thingArchiveSize);
 #endif
 
+    // Create and populate the MaterialArchive.
+    materialArchive = P_CreateMaterialArchive();
+
     P_ArchivePlayerHeader();
     P_ArchivePlayers();
 
@@ -5003,6 +4997,10 @@ int SV_SaveGameWorker(void* ptr)
 #else
     P_ArchiveMap(true);
 #endif
+
+    // We are done with the MaterialArchive.
+    P_DestroyMaterialArchive(materialArchive);
+    materialArchive = NULL;
 
 #if!__JHEXEN__
     // To be absolutely sure...
@@ -5091,7 +5089,7 @@ static boolean readSaveHeader(saveheader_t *hdr, LZFILE *savefile)
 
     saveptr.b += HXS_VERSION_TEXT_LENGTH;
 
-    AssertSegment(ASEG_GAME_HEADER);
+    SV_AssertSegment(ASEG_GAME_HEADER);
 
     gameEpisode = 0;
     gameMap = SV_ReadByte() - 1;
@@ -5176,9 +5174,13 @@ static boolean SV_LoadGame2(void)
     SV_InitThingArchive(true, true);
 #endif
 
+    // Create and populate the MaterialArchive.
+    materialArchive = P_CreateEmptyMaterialArchive();
+
+    
     P_UnArchivePlayerHeader();
     // Read the player structures
-    AssertSegment(ASEG_PLAYERS);
+    SV_AssertSegment(ASEG_PLAYERS);
 
     // We don't have the right to say which players are in the game. The
     // players that already are will continue to be. If the data for a given
@@ -5195,7 +5197,7 @@ static boolean SV_LoadGame2(void)
 
     memset(loaded, 0, sizeof(loaded));
     P_UnArchivePlayers(infile, loaded);
-    AssertSegment(ASEG_END);
+    SV_AssertSegment(ASEG_END);
 
 #if __JHEXEN__
     Z_Free(saveBuffer);
@@ -5207,11 +5209,22 @@ static boolean SV_LoadGame2(void)
 #if !__JHEXEN__
     // Check consistency.
     if(SV_ReadByte() != CONSISTENCY)
+    {
         Con_Error("SV_LoadGame: Bad savegame (consistency test failed!)\n");
+    }
+#endif
 
-    // We're done.
-    SV_FreeThingArchive();
+#if !__JHEXEN__
     lzClose(savefile);
+#endif
+
+    // We are done with the MaterialArchive.
+    P_DestroyMaterialArchive(materialArchive);
+    materialArchive = NULL;
+
+#if !__JHEXEN__
+    // We're done with the ThingArchive.
+    SV_FreeThingArchive();
 #endif
 
 #if __JHEXEN__
@@ -5222,7 +5235,7 @@ static boolean SV_LoadGame2(void)
     // Notify the players that weren't in the savegame.
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        boolean             notLoaded = false;
+        boolean notLoaded = false;
 
 #if __JHEXEN__
         if(players[i].plr->inGame)
@@ -5376,7 +5389,14 @@ void SV_SaveClient(unsigned int gameID)
     P_ArchivePlayerHeader();
     SV_WritePlayer(CONSOLEPLAYER);
 
+    // Create and populate the MaterialArchive.
+    materialArchive = P_CreateMaterialArchive();
+
     P_ArchiveMap(true);
+
+    // We are done with the MaterialArchive.
+    P_DestroyMaterialArchive(materialArchive);
+    materialArchive = NULL;
 
     lzClose(savefile);
     free(junkbuffer);
@@ -5438,7 +5458,20 @@ void SV_LoadClient(unsigned int gameid)
     P_UnArchivePlayerHeader();
     SV_ReadPlayer(cpl);
 
+    /**
+     * Create and populate the MaterialArchive.
+     *
+     * @fixme Does this really need to be done at all as a client?
+     * When the client connects to the server it should send a copy
+     * of the map upon joining, so why are we reading it here?
+     */
+    materialArchive = P_CreateMaterialArchive();
+
     P_UnArchiveMap();
+
+    // We are done with the MaterialArchive.
+    P_DestroyMaterialArchive(materialArchive);
+    materialArchive = NULL;
 
     lzClose(savefile);
     free(junkbuffer);
@@ -5511,6 +5544,9 @@ void SV_MapTeleport(uint map, uint position)
             // Set the mobj archive numbers
             SV_InitThingArchive(false, false);
 
+            // Create and populate the MaterialArchive.
+            materialArchive = P_CreateMaterialArchive();
+
             // Open the output file
             dd_snprintf(fileName, FILENAME_T_MAXLEN, "%shex6%02u.hxs",
                      savePath, gameMap+1);
@@ -5518,6 +5554,10 @@ void SV_MapTeleport(uint map, uint position)
             OpenStreamOut(fileName);
 
             P_ArchiveMap(false);
+
+            // We are done with the MaterialArchive.
+            P_DestroyMaterialArchive(materialArchive);
+            materialArchive = NULL;
 
             // Close the output file
             CloseStreamOut();
@@ -5554,7 +5594,14 @@ void SV_MapTeleport(uint map, uint position)
 
     if(revisit)
     {   // Been here before, load the previous map state.
+        // Create the MaterialArchive.
+        materialArchive = P_CreateEmptyMaterialArchive();
+
         unarchiveMap();
+
+        // We are done with the MaterialArchive.
+        P_DestroyMaterialArchive(materialArchive);
+        materialArchive = NULL;
     }
     else
     {   // First visit.

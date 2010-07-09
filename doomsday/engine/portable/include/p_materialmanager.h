@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,53 +22,47 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * p_materialmanager.h: Materials manager.
- */
-
-#ifndef __DOOMSDAY_MATERIAL_MANAGER_H__
-#define __DOOMSDAY_MATERIAL_MANAGER_H__
+#ifndef LIBDENG2_MATERIALS_H
+#define LIBDENG2_MATERIALS_H
 
 #include "gl_texmanager.h"
 #include "def_data.h"
 
-extern materialnum_t numMaterialBinds;
+void            P_MaterialsRegister(void);
 
-void            P_MaterialManagerRegister(void);
+void            Materials_Initialize(void);
+void            Materials_Shutdown(void);
 
-void            P_MaterialManagerTicker(timespan_t time);
+void            Materials_Ticker(timespan_t elapsed);
 
-void            P_InitMaterialManager(void);
-void            P_ShutdownMaterialManager(void);
-void            P_DeleteMaterialTextures(material_namespace_t mnamespace);
-void            P_LinkAssociatedDefinitionsToMaterials(void);
+void            Materials_DeleteTextures(material_namespace_t mnamespace);
+void            Materials_LinkAssociatedDefinitions(void);
 
-material_t*     P_MaterialCreate(const char* name, short width,
-                                 short height, byte flags, gltextureid_t tex,
-                                 material_namespace_t mnamespace, ded_material_t* def);
+material_t*     Materials_New(const char* name, short width, short height, byte flags, gltextureid_t tex,
+                              material_namespace_t mnamespace, ded_material_t* def);
 
-material_t*     P_ToMaterial(materialnum_t num);
-materialnum_t   P_ToMaterialNum(const material_t* mat);
+material_t*     Materials_ToMaterial(materialnum_t num);
+material_t*     Materials_ToMaterial2(int ofTypeID, material_namespace_t mnamespace);
 
-// Lookup:
-const char*     P_GetMaterialName(material_t* mat);
+materialnum_t   Materials_ToMaterialNum(const material_t* mat);
+materialnum_t   Materials_CheckNumForIndex(uint idx, material_namespace_t mnamespace);
+materialnum_t   Materials_NumForIndex(uint idx, material_namespace_t mnamespace);
 
 materialnum_t   Materials_CheckNumForName(const char* name, material_namespace_t mnamespace);
 materialnum_t   Materials_NumForName(const char* name, material_namespace_t mnamespace);
 
-material_t*     P_GetMaterial(int ofTypeID, material_namespace_t mnamespace);
-materialnum_t   P_MaterialCheckNumForIndex(uint idx, material_namespace_t mnamespace);
-materialnum_t   P_MaterialNumForIndex(uint idx, material_namespace_t mnamespace);
+const char*     Materials_GetName(material_t* mat);
 
-void            P_MaterialPrecache(material_t* mat, boolean yes);
+void            Materials_Precache(material_t* mat, boolean yes);
 
-uint                Materials_Count(void);
+uint            Materials_Count(void);
 
-byte                Materials_Prepare(struct material_snapshot_s* snapshot, material_t* mat, boolean smoothed, struct material_load_params_s* params);
 const ded_detailtexture_t* Materials_Detail(materialnum_t num);
 const ded_reflection_t* Materials_Reflection(materialnum_t num);
 const ded_decor_t*  Materials_Decoration(materialnum_t num);
 const ded_ptcgen_t* Materials_PtcGen(materialnum_t num);
+
+byte            Materials_Prepare(struct material_snapshot_s* snapshot, material_t* mat, boolean smoothed, struct material_load_params_s* params);
 
 int             Materials_AnimGroupCount(void);
 void            Materials_ResetAnimGroups(void);
@@ -83,4 +77,4 @@ boolean         Materials_IsPrecacheAnimGroup(int groupNum);
 
 // @todo Refactor away.
 void            Materials_PrecacheAnimGroup(material_t* mat, boolean yes);
-#endif
+#endif /* LIBDENG2_MATERIALS_H */

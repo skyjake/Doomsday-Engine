@@ -501,7 +501,7 @@ void R_PreInitSprites(void)
                 glTex = GL_CreateGLTexture(name, idx++, GLT_SPRITE);
 
                 // Create a new material for this sprite patch.
-                frame->mat = P_MaterialCreate(name, sprTex->width, sprTex->height, 0, glTex->id, MN_SPRITES, NULL);
+                frame->mat = Materials_New(name, sprTex->width, sprTex->height, 0, glTex->id, MN_SPRITES, NULL);
             } while((frame = frame->next));
         } while((rec = rec->next));
     }

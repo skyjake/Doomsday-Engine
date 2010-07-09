@@ -77,7 +77,8 @@ typedef struct material_snapshot_s {
 boolean         Material_GetProperty(const material_t* mat, setargs_t* args);
 boolean         Material_SetProperty(material_t* mat, const setargs_t* args);
 
-material_env_class_t Material_GetEnvClass(material_t* mat);
+material_env_class_t Material_GetEnvClass(const material_t* mat);
+void            Material_SetEnvClass(material_t* mat, material_env_class_t envClass);
 
 void            Material_SetTranslation(material_t* mat, material_t* current, material_t* next, float inter);
 

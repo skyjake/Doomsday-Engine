@@ -358,7 +358,7 @@ void GL_LoadSystemTextures(void)
 
         tex = GL_CreateGLTexture(ddtexdefs[i].name, ddtexdefs[i].id, GLT_SYSTEM);
 
-        mat = P_MaterialCreate(ddtexdefs[i].name, 64, 64, 0, tex->id,
+        mat = Materials_New(ddtexdefs[i].name, 64, 64, 0, tex->id,
                                MN_SYSTEM, NULL);
     }
 
@@ -398,7 +398,7 @@ void GL_ClearSystemTextures(void)
         glDeleteTextures(1, (const GLuint*) &sysFlareTextures[i].tex);
     memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
 
-    P_DeleteMaterialTextures(MN_SYSTEM);
+    Materials_DeleteTextures(MN_SYSTEM);
     UI_ClearTextures();
 
     // Delete the particle textures.

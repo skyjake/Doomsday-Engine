@@ -85,8 +85,8 @@ boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
             {
                 /// @todo Implement Material reference counting?
                 //if(suf->material)
-                //    P_MaterialPrecache(suf->material, false);
-                P_MaterialPrecache(mat, true);
+                //    Materials_Precache(suf->material, false);
+                Materials_Precache(mat, true);
             }
             else
             {
@@ -97,7 +97,7 @@ boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
                 if(ms.glowing > 0)
                     R_SurfaceListAdd(glowingSurfaceList, suf);
                 // Materials_Decoration will call Materials_Prepare :(
-                decor = Materials_Decoration(P_ToMaterialNum(mat));
+                decor = Materials_Decoration(Materials_ToMaterialNum(mat));
                 if(decor)
                     R_SurfaceListAdd(decoratedSurfaceList, suf);
             }
