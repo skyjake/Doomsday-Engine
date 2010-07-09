@@ -27,6 +27,7 @@
 
 #include "gl_texmanager.h"
 #include "def_data.h"
+#include "p_material.h"
 
 void            P_MaterialsRegister(void);
 

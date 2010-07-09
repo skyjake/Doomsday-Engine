@@ -314,7 +314,7 @@ static void deleteBinding(bindingitertype_t type, int bid, const char* name, boo
     DD_Executef(true, "delbind %i", bid);
 }
 
-static void Hu_MenuBindings(mn_object_t* obj, int option)
+void Hu_MenuBindings(mn_object_t* obj, int option)
 {
     mndata_bindings_t* binds = obj->data;
     char buf[1024];
