@@ -187,8 +187,9 @@ static int readRecord_v186(materialarchive_record_t* rec, material_namespace_t m
 static void readMaterialGroup(materialarchive_t* mArc, material_namespace_t defaultNamespace)
 {
     // Read the group header.
-    uint i, num = SV_ReadShort();
+    uint num = SV_ReadShort();
 
+    {uint i;
     for(i = 0; i < num; ++i)
     {
         materialarchive_record_t temp;
@@ -200,16 +201,19 @@ static void readMaterialGroup(materialarchive_t* mArc, material_namespace_t defa
             readRecord_v186(&temp, defaultNamespace);
 
         insertSerialId(mArc, mArc->count+1, temp.name, temp.mnamespace);
-    }
+    }}
 }
 
 static void writeMaterialGroup(const materialarchive_t* mArc)
 {
-    uint i;
+    // Write the group header.
+    SV_WriteShort(mArc->count);
+
+    {uint i;
     for(i = 0; i < mArc->count; ++i)
     {
         writeRecord(&mArc->table[i]);
-    }
+    }}
 }
 
 static void writeHeader(const materialarchive_t* mArc)
@@ -275,10 +279,6 @@ void MaterialArchive_Write(materialarchive_t* materialArchive)
 {
     assert(materialArchive);
     writeHeader(materialArchive);
-
-    // Write the group header.
-    SV_WriteShort(materialArchive->count);
-
     writeMaterialGroup(materialArchive);
 }
 
