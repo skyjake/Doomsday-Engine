@@ -365,6 +365,11 @@ void Cl_GetPackets(void)
             netLoggedIn = Msg_ReadByte();
             break;
 
+        case PSV_FINALE:
+        case PSV_FINALE2:
+            Cl_Finale(netBuffer.msg.type, netBuffer.msg.data);
+            break;
+
         default:
             if(netBuffer.msg.type >= PKT_GAME_MARKER)
             {
@@ -374,8 +379,7 @@ void Cl_GetPackets(void)
             else
             {
 #ifdef _DEBUG
-Con_Printf("Cl_GetPackets: Packet (type %i) was discarded!\n",
-           netBuffer.msg.type);
+Con_Printf("Cl_GetPackets: Packet (type %i) was discarded!\n", netBuffer.msg.type);
 #endif
             }
         }

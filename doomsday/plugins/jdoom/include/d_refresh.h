@@ -21,12 +21,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * d_refresh.h:
- */
-
-#ifndef __D_REFRESH_H__
-#define __D_REFRESH_H__
+#ifndef JDOOM_REFRESH_H
+#define JDOOM_REFRESH_H
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -42,4 +38,5 @@ void            D_Display2(void);
 void            P_SetDoomsdayFlags(mobj_t* mo);
 void            R_SetAllDoomsdayFlags(void);
 boolean         R_GetFilterColor(float rgba[4], int filter);
-#endif
+
+#endif /* JDOOM_REFRESH_H */

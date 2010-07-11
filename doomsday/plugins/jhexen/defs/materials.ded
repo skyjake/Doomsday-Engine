@@ -22,7 +22,7 @@ Material {
 Material {
   ID = "X_001";
   Namespace = flats;
-  Layer { Stage { Glow = 9; } }
+  Layer { Stage { Glow = .9; } }
 }
 
 * Material { ID = "X_002"; }
@@ -36,7 +36,7 @@ Material {
 Material {
   ID = "X_FIRE01";
   Namespace = textures;
-  Layer { Stage { Glow = 9; } }
+  Layer { Stage { Glow = .9; } }
 }
 
 * Material { ID = "X_FIRE02"; }

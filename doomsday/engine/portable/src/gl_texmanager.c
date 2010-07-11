@@ -1308,20 +1308,6 @@ DGLuint GL_PrepareExtTexture(ddresourceclass_t resClass, const char* name,
 }
 
 /**
- * Part of the Doomsday public API.
- */
-DGLuint GL_LoadGraphics(ddresourceclass_t resClass, const char *name,
-                        gfxmode_t mode, int useMipmap, boolean clamped,
-                        int otherFlags)
-{
-    return GL_PrepareExtTexture(resClass, name, mode, useMipmap,
-                            GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
-                            clamped? GL_CLAMP_TO_EDGE : GL_REPEAT,
-                            clamped? GL_CLAMP_TO_EDGE : GL_REPEAT,
-                            otherFlags);
-}
-
-/**
  * Renders the given texture into the buffer.
  */
 static boolean bufferTexture(const doomtexturedef_t* texDef, byte* buffer,

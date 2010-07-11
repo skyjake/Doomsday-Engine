@@ -32,7 +32,6 @@
 
 #include "d_net.h"
 #include "hu_stuff.h"
-#include "f_infine.h"
 #include "g_common.h"
 #include "g_controls.h"
 #include "p_inventory.h"
@@ -190,11 +189,6 @@ ccmd_t  gameCCmds[] = {
 
     {"hexenfont",   "",     CCmdHexenFont},
     {"conbg",       "s",    CCmdConBackground},
-
-    // $infine
-    {"startinf",    "s",    CCmdStartInFine},
-    {"stopinf",     "",     CCmdStopInFine},
-    {"stopfinale",  "",     CCmdStopInFine},
 
     {"spawnmobj",   NULL,   CCmdSpawnMobj},
     {"coord",       "",     CCmdPrintPlayerCoords},

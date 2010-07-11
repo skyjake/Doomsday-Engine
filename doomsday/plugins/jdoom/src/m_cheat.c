@@ -34,7 +34,6 @@
 
 #include "jdoom.h"
 
-#include "f_infine.h"
 #include "d_net.h"
 #include "g_common.h"
 #include "p_player.h"

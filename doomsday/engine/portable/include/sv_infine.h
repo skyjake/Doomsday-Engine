@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,23 +17,19 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, 
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef JHEXEN_REFRESH_H
-#define JHEXEN_REFRESH_H
+/**
+ * Server-side inFine.
+ */
 
-#ifndef __JHEXEN__
-#  error "Using jHexen headers without __JHEXEN__"
-#endif
+#ifndef LIBDENG_SERVER_INFINE
+#define LIBDENG_SERVER_INFINE
 
-extern float quitDarkenOpacity;
+#include "de_infine.h"
 
-void            G_Display(int layer);
-void            G_Display2(void);
+void            Sv_Finale(int flags, const char* script, const byte* conditions, size_t size);
 
-void            R_SetAllDoomsdayFlags(void);
-boolean         R_GetFilterColor(float rgba[4], int filter);
-
-#endif /* JHEXEN_REFRESH_H */
+#endif /* LIBDENG_SERVER_INFINE */

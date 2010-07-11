@@ -186,6 +186,157 @@ int DD_GameLoop(void)
     return exitCode;
 }
 
+enum {
+    STRETCH = 0,
+    PILLARBOX,
+    LETTERBOX,
+};
+
+typedef struct {
+    int winWidth, winHeight;
+    float scale;
+    int displayMode;
+    int scissorState[5];
+} borderedprojectionstate_t;
+
+static int pickBorderedScalingStrategy(int winWidth, int winHeight, float* outScale)
+{
+    float scale = (winWidth >= winHeight? (float)winHeight/SCREENHEIGHT : (float)winWidth/SCREENWIDTH);
+    float a = (float)winWidth/winHeight;
+    float b = (float)SCREENWIDTH/SCREENHEIGHT;
+    int displayMode = STRETCH;
+
+    if(!INRANGE_OF(a, b, .001f) && (Con_GetByte("finale-nostretch") || !INRANGE_OF(a, b, .38f)))
+    {
+        if(SCREENWIDTH * scale > winWidth || SCREENHEIGHT * scale < winHeight)
+        {
+            scale *= (float)winWidth/(SCREENWIDTH*scale);
+            displayMode = LETTERBOX;
+        }
+        else if(SCREENWIDTH * scale < winWidth)
+        {
+            displayMode = PILLARBOX;
+        }
+    }
+    if(outScale)
+        *outScale = scale;
+    return displayMode;
+}
+
+static void configureBorderedProjection(borderedprojectionstate_t* s)
+{
+    s->winWidth = theWindow->width;
+    s->winHeight = theWindow->height;
+    s->displayMode = pickBorderedScalingStrategy(s->winWidth, s->winHeight, &s->scale);
+    memset(s->scissorState, 0, sizeof(s->scissorState));
+}
+
+static void beginBorderedProjection(borderedprojectionstate_t* s)
+{
+    assert(s);
+
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    switch(s->displayMode)
+    {
+    case PILLARBOX:
+        {
+        /**
+         * Use an orthographic projection in native screenspace. Then
+         * translate and scale the projection to produce an aspect
+         * corrected coordinate space at 4:3, centered horizontally
+         * in the window.
+         */
+        int w = (s->winWidth-SCREENWIDTH*s->scale)/2;
+        glOrtho(0, s->winWidth, s->winHeight, 0, -1, 1);
+
+        DGL_GetIntegerv(DGL_SCISSOR_TEST, s->scissorState);
+        DGL_GetIntegerv(DGL_SCISSOR_BOX, s->scissorState + 1);
+        DGL_Scissor(w, 0, SCREENWIDTH*s->scale, s->winHeight);
+
+        glEnable(GL_SCISSOR_TEST);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glTranslatef((float)s->winWidth/2, (float)s->winHeight/2, 0);
+        glScalef(s->scale, s->scale, 1);
+        glTranslatef(-SCREENWIDTH/2, -SCREENHEIGHT/2, 0);
+        break;
+        }
+    case LETTERBOX:
+        {
+        /**
+         * Use an orthographic projection in native screenspace. Then
+         * translate and scale the projection to produce an aspect
+         * corrected coordinate space at 4:3, centered vertically in
+         * the window.
+         */
+        int h = (s->winHeight-SCREENHEIGHT*s->scale)/2;
+        glOrtho(0, s->winWidth, s->winHeight, 0, -1, 1);
+
+        DGL_GetIntegerv(DGL_SCISSOR_TEST, s->scissorState);
+        DGL_GetIntegerv(DGL_SCISSOR_BOX, s->scissorState + 1);
+        DGL_Scissor(0, h, s->winWidth, SCREENHEIGHT*s->scale);
+
+        glEnable(GL_SCISSOR_TEST);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glTranslatef((float)s->winWidth/2, (float)s->winHeight/2, 0);
+        glScalef(s->scale, s->scale, 1);
+        glTranslatef(-SCREENWIDTH/2, -SCREENHEIGHT/2, 0);
+        }
+        break;
+
+    default: // STRETCH
+        glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
+        break;
+    }
+}
+
+static void endBorderedProjection(borderedprojectionstate_t* s)
+{
+    if(s->displayMode != STRETCH)
+    {
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+
+        if(!s->scissorState[0])
+            glDisable(GL_SCISSOR_TEST);
+
+        DGL_Scissor(s->scissorState[1], s->scissorState[2], s->scissorState[3], s->scissorState[4]);
+
+        switch(s->displayMode)
+        {
+        case PILLARBOX:
+            {
+            int w = (s->winWidth-SCREENWIDTH*s->scale)/2;
+
+            DGL_SetNoMaterial();
+            DGL_DrawRect(0, 0, w, s->winHeight, 0, 0, 0, 1);
+            DGL_DrawRect(s->winWidth - w, 0, w, s->winHeight, 0, 0, 0, 1);
+            break;
+            }
+        case LETTERBOX:
+            {
+            int h = (s->winHeight-SCREENHEIGHT*s->scale)/2;
+
+            DGL_SetNoMaterial();
+            DGL_DrawRect(0, 0, s->winWidth, h, 0, 0, 0, 1);
+            DGL_DrawRect(0, s->winHeight - h, s->winWidth, h, 0, 0, 0, 1);
+            }
+            break;
+
+        default: // STRETCH
+            break;
+        }
+    }
+    
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+}
+
 /**
  * Drawing anything outside this routine is frowned upon.
  * Seriously frowned!
@@ -214,11 +365,25 @@ void DD_DrawAndBlit(void)
 
         R_RenderViewPorts();
 
-        // Draw any over/outside view window game graphics (e.g. fullscreen
-        // menus and other displays).
+        // Draw any over/outside view window game graphics (e.g. fullscreen menus and other displays).
         if(gx.G_Drawer2 && !(UI_IsActive() && UI_Alpha() >= 1.0))
         {
+            borderedprojectionstate_t borderedProjection;
+            boolean bordered = (FI_Active() && FI_CmdExecuted());
+
+            if(bordered)
+            {   // Draw using the special bordered projection.
+                configureBorderedProjection(&borderedProjection);
+                beginBorderedProjection(&borderedProjection);
+            }
+
+            FI_Drawer();
+
+            // Draw HUD displays; menu, messages.
             gx.G_Drawer2();
+
+            if(bordered)
+                endBorderedProjection(&borderedProjection);
         }
     }
 
@@ -301,7 +466,7 @@ float DD_GetFrameRate(void)
  */
 void DD_Ticker(timespan_t time)
 {
-    static float        realFrameTimePos = 0;
+    static float realFrameTimePos = 0;
 
     if(!Con_TransitionInProgress())
     {
@@ -311,21 +476,22 @@ void DD_Ticker(timespan_t time)
         P_Ticker(time);
 
         if(tickFrame || netGame)
-        {   // Advance frametime
+        {
             /**
              * It will be reduced when new sharp world positions are calculated,
              * so that frametime always stays within the range 0..1.
              */
             realFrameTimePos += time * TICSPERSEC;
 
-            // Temporary: move me someplace more suitable.
-            R_TextTicker(time);
+            // InFine ticks whenever it's active.
+            FI_Ticker(time);
 
             // Game logic.
             gx.Ticker(time);
 
+            // Advance global fixed time (35Hz).
             if(M_RunTrigger(&sharedFixedTrigger, time))
-            {   // A new 35 Hz tick begins.
+            {   // A new 35 Hz tick has begun.
                 // Clear the player fixangles flags which have been in effect
                 // for any fractional ticks since they were set.
                 //Sv_FixLocalAngles(true /* just clear flags; don't apply */);

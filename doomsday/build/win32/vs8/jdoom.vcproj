@@ -821,7 +821,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\include\f_infine.h"
+				RelativePath="..\..\..\plugins\common\include\fi_lib.h"
 				>
 			</File>
 			<File
@@ -1013,7 +1013,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\plugins\common\src\f_infine.c"
+				RelativePath="..\..\..\plugins\common\src\fi_lib.c"
 				>
 			</File>
 			<File

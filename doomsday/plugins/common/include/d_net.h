@@ -59,7 +59,7 @@ enum {
     GPT_FLOOR_MOVE_SOUND,
     GPT_CEILING_MOVE_SOUND,
     GPT_INTERMISSION,
-    GPT_FINALE,
+    GPT_RESERVED1,                 // Old GPT_FINALE, now handled by the engine.
     GPT_PLAYER_INFO,
     GPT_SAVE,
     GPT_LOAD,
@@ -68,7 +68,7 @@ enum {
     GPT_PLAYER_STATE2,
     GPT_YELLOW_MESSAGE,            // jHexen: yellow message.
     GPT_PAUSE,
-    GPT_FINALE2,
+    GPT_RESERVED2,                 // Old GPT_FINALE2, now handled by the engine.
     GPT_CHEAT_REQUEST,
     GPT_JUMP_POWER,                // Jump power (0 = no jumping)
     GPT_ACTION_REQUEST,
@@ -159,14 +159,6 @@ enum {
 #define IMF_END             0x02
 #define IMF_STATE           0x04
 #define IMF_TIME            0x08
-
-// Finale flags.
-#define FINF_BEGIN          0x01
-#define FINF_END            0x02
-#define FINF_SCRIPT         0x04   // Script included.
-#define FINF_AFTER          0x08   // Otherwise before.
-#define FINF_SKIP           0x10
-#define FINF_OVERLAY        0x20   // Otherwise before (or after).
 
 // Ticcmd flags.
 #define CMDF_FORWARDMOVE    0x01

@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,19 +21,22 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef JHEXEN_REFRESH_H
-#define JHEXEN_REFRESH_H
+#ifndef LIBCOMMON_INFINE_LIB
+#define LIBCOMMON_INFINE_LIB
 
-#ifndef __JHEXEN__
-#  error "Using jHexen headers without __JHEXEN__"
-#endif
+#include "dd_share.h"
 
-extern float quitDarkenOpacity;
+typedef struct finale_conditions_s {
+    // Bits:
+    uint        secret : 1;
+    uint        leavehub : 1;
+} finale_conditions_t;
 
-void            G_Display(int layer);
-void            G_Display2(void);
+#define FIRCF_LEAVEHUB          0x1
 
-void            R_SetAllDoomsdayFlags(void);
-boolean         R_GetFilterColor(float rgba[4], int filter);
+void            FI_RegisterHooks(void);
 
-#endif /* JHEXEN_REFRESH_H */
+int             FI_GetGameState(void);
+void            FI_DemoEnds(void);
+
+#endif /* LIBCOMMON_INFINE_LIB */

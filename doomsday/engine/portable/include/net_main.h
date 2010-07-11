@@ -99,11 +99,16 @@ enum {
     PSV_PLAYER_FIX = 27,            // Fix angles/pos/mom.
     PCL_ACK_PLAYER_FIX = 28,        // Acknowledge player fix. /* 28 */
     PKT_COMMAND2 = 29,
-
+    
     PCL_COMMANDS = DDPT_COMMANDS,   // 32; ticcmds (handled by game)
 
     // Game specific events.
-    PKT_GAME_MARKER = DDPT_FIRST_GAME_EVENT // 64
+    PKT_GAME_MARKER = DDPT_FIRST_GAME_EVENT, // 64
+
+    // Older versions put the task of interpreting InFine packet types in
+    // the hands of the game, hence their type ids being >= 64
+    PSV_FINALE = 76,
+    PSV_FINALE2 = 85
 };
 
 // Use the number defined in dd_share.h for sound packets.

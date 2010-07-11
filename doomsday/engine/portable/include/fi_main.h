@@ -22,47 +22,35 @@
  * Boston, MA  02110-1301  USA
  */
 
+#ifndef LIBDENG_INFINE_MAIN_H
+#define LIBDENG_INFINE_MAIN_H
+
 /**
- * f_infine.h:
+ * @defgroup playsimServerFinaleFlags Play-simulation Server-side Finale Flags.
+ *
+ * Packet: PSV_FINALE Finale flags. Used with GPT_FINALE and GPT_FINALE2
  */
+/*@{*/
+#define FINF_BEGIN          0x01
+#define FINF_END            0x02
+#define FINF_SCRIPT         0x04   // Script included.
+#define FINF_AFTER          0x08   // Otherwise before.
+#define FINF_SKIP           0x10
+#define FINF_OVERLAY        0x20   // Otherwise before (or after).
+/*@}*/
 
-#ifndef __F_INFINE_H__
-#define __F_INFINE_H__
+#define INFINE_CLIENTSTATE_SIZE      gx.finaleConditionsSize
 
-// Condition truth values (that clients can't deduce on their own).
-enum {
-    FICOND_SECRET,
-    FICOND_LEAVEHUB,
-    NUM_FICONDS
-};
-
-typedef enum infinemode_e {
-    FIMODE_LOCAL,
-    FIMODE_OVERLAY,
-    FIMODE_BEFORE,
-    FIMODE_AFTER
-} infinemode_t;
-
-extern boolean fiActive;
-extern boolean fiCmdExecuted; // Set to true after first command.
-extern boolean briefDisabled;
+extern float fiDefaultTextRGB[];
 
 void            FI_Register(void);
 
-void            FI_Reset(void);
-void            FI_Start(char* finalescript, infinemode_t mode);
-void            FI_End(void);
-void            FI_SetCondition(int index, boolean value);
-int             FI_Briefing(uint episode, uint map, ddfinale_t* fin);
-int             FI_Debriefing(uint episode, uint map, ddfinale_t* fin);
-void            FI_DemoEnds(void);
-int             FI_SkipRequest(void);
-void            FI_Ticker(void);
-int             FI_Responder(event_t* ev);
+int             FI_Responder(ddevent_t* ev);
 void            FI_Drawer(void);
-boolean         FI_IsMenuTrigger(event_t* ev);
 
-DEFCC(CCmdStartInFine);
-DEFCC(CCmdStopInFine);
+void            FI_Ticker(timespan_t time);
 
-#endif
+int             FI_SkipRequest(void);
+boolean         FI_CmdExecuted(void);
+
+#endif /* LIBDENG_INFINE_MAIN_H */

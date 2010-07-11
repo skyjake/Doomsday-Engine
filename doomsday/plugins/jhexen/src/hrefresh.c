@@ -33,7 +33,6 @@
 
 #include "jhexen.h"
 
-#include "f_infine.h"
 #include "r_common.h"
 #include "p_mapsetup.h"
 #include "g_controls.h"
@@ -256,22 +255,9 @@ void G_Display(int layer)
 
 void G_Display2(void)
 {
-    if((fiActive && fiCmdExecuted) || G_GetGameState() == GS_INTERMISSION)
+    if(G_GetGameState() == GS_INTERMISSION)
     {
-        borderedprojectionstate_t borderedProjection;
-        Hu_ConfigureBorderedProjection(&borderedProjection);
-
-        Hu_BeginBorderedProjection(&borderedProjection);
-
-        // InFine is drawn whenever active.
-        FI_Drawer();
-
-        if(G_GetGameState() == GS_INTERMISSION)
-        {
-            IN_Drawer();
-        }
-
-        Hu_EndBorderedProjection(&borderedProjection);
+        IN_Drawer();
     }
 
     // Draw HUD displays; menu, messages.

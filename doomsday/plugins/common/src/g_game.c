@@ -57,6 +57,7 @@
 #include "p_actor.h"
 #include "p_tick.h"
 #include "am_map.h"
+#include "fi_lib.h"
 #include "hu_stuff.h"
 #include "hu_menu.h"
 #include "hu_log.h"
@@ -70,7 +71,6 @@
 #include "p_player.h"
 #include "r_common.h"
 #include "p_mapspec.h"
-#include "f_infine.h"
 #include "p_start.h"
 #include "p_inventory.h"
 #if __JHERETIC__ || __JHEXEN__
@@ -198,6 +198,7 @@ int mapStartTic; // Game tic at map start.
 int totalKills, totalItems, totalSecret; // For intermission.
 
 boolean singledemo; // Quit after playing a demo from cmdline.
+boolean briefDisabled = false;
 
 boolean precache = true; // If @c true, load all graphics at start.
 boolean customPal = false; // If @c true, a non-IWAD palette is in use.
@@ -480,7 +481,6 @@ void G_CommonPreInit(void)
     D_NetConsoleRegistration(); // For network.
     G_Register();               // Read-only game status cvars (for playsim).
     G_ControlRegister();        // For controls/input.
-    FI_Register();
     AM_Register();              // For the automap.
     Hu_MenuRegister();          // For the menu.
     Hu_LogRegister();           // For the player message logs.
@@ -1201,7 +1201,7 @@ void R_LoadVectorGraphics(void)
         { { 0, -1}, { 0,  -.4f} },
         { { 1,  0}, { .4f, 0} },
         { { 0,  1}, { 0,   .4f} }
-    };   
+    };
     const vgline_t crossHair2[] = { // > <
         { {-1, -.714f}, {-.286f, 0} },
         { {-1,  .714f}, {-.286f, 0} },
@@ -1370,7 +1370,7 @@ int G_UIResponder(event_t* ev)
     {
         // Any key/button down pops up menu if in demos.
         if((G_GetGameAction() == GA_NONE && !singledemo && Get(DD_PLAYBACK)) ||
-           (G_GetGameState() == GS_INFINE && !FI_IsMenuTrigger(NULL)))
+           (G_GetGameState() == GS_INFINE && !FI_IsMenuTrigger()))
         {
             Hu_MenuCommand(MCMD_OPEN);
             return true;
@@ -1431,24 +1431,76 @@ VERBOSE(Con_Message("G_ChangeGameState: New state %s.\n",
     DD_Executef(true, "%sactivatebcontext game", gameActive? "" : "de");
 }
 
+static void initFinaleConditions(finale_conditions_t* cons)
+{
+    memset(cons, 0, sizeof(*cons));
+
+    // Only the server is able to figure out the truth values of all the conditions
+    // (clients use the server-provided presets).
+    if(!IS_SERVER)
+        return;
+
+#if __JHEXEN__
+    cons->secret = false;
+
+    // Current hub has been completed?
+    cons->leavehub = (P_GetMapCluster(gameMap) != P_GetMapCluster(nextMap));
+#else
+    cons->secret = secretExit;
+    // Only Hexen has hubs.
+    cons->leavehub = false;
+#endif
+}
+
+static void startFinale(const char* script, finale_mode_t mode)
+{
+    finale_conditions_t c, *cons = &c;
+    gamestate_t prevGameState = G_GetGameState();
+
+    G_SetGameAction(GA_NONE);
+
+    initFinaleConditions(&c);
+    if(mode != FIMODE_OVERLAY)
+    {
+        G_ChangeGameState(GS_INFINE);
+    }
+
+    FI_ScriptBegin(script, mode, prevGameState, IS_SERVER? cons : 0);
+}
+
+boolean G_StartFinale2(const char* script, finale_mode_t mode)
+{
+    startFinale(script, mode);
+    return true;
+}
+
+boolean G_StartFinale(const char* finaleName, finale_mode_t mode)
+{
+    void* script;
+
+    if(Def_Get(DD_DEF_FINALE, finaleName, &script))
+    {
+        startFinale(script, mode);
+        return true;
+    }
+
+    Con_Message("G_StartFinale: Warning, script \"%s\" not defined.\n", finaleName);
+    return false;
+}
+
 /**
  * Begin the titlescreen animation sequence.
  */
 void G_StartTitle(void)
 {
-    char* name = "title";
-    void* script;
-
     G_StopDemo();
     userGame = false;
 
     // The title script must always be defined.
-    if(!Def_Get(DD_DEF_FINALE, name, &script))
+    if(!G_StartFinale("title", FIMODE_LOCAL))
     {
-        Con_Error("G_StartTitle: Script \"%s\" not defined.\n", name);
+        Con_Error("G_StartTitle: A title script must be defined.");
     }
-
-    FI_Start(script, FIMODE_LOCAL);
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
@@ -1457,18 +1509,8 @@ void G_StartTitle(void)
  */
 void G_StartHelp(void)
 {
-    char* name = "help";
-    void* script;
-
     Hu_MenuCommand(MCMD_CLOSEFAST);
-
-    // The help script must always be defined.
-    if(!Def_Get(DD_DEF_FINALE, name, &script))
-    {
-        Con_Error("G_StartHelp: Script \"%s\" not defined.\n", name);
-    }
-
-    FI_Start(script, FIMODE_LOCAL);
+    G_StartFinale("help", FIMODE_LOCAL);
 }
 #endif
 
@@ -1479,7 +1521,7 @@ void G_DoLoadMap(void)
     ddfinale_t fin;
     boolean hasBrief;
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     static int firstFragReset = 1;
 #endif
 
@@ -1495,7 +1537,7 @@ void G_DoLoadMap(void)
         if(plr->plr->inGame && plr->playerState == PST_DEAD)
             plr->playerState = PST_REBORN;
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
         if(!IS_NETGAME || (IS_NETGAME != 0 && deathmatch != 0) ||
             firstFragReset == 1)
         {
@@ -1507,7 +1549,7 @@ void G_DoLoadMap(void)
 #endif
     }
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     SN_StopAllSequences();
 #endif
 
@@ -1520,7 +1562,7 @@ void G_DoLoadMap(void)
 
     // Determine whether there is a briefing to run before the map starts
     // (played after the map has been loaded).
-    hasBrief = FI_Briefing(gameEpisode, gameMap, &fin);
+    hasBrief = G_BriefingEnabled(gameEpisode, gameMap, &fin);
     if(!hasBrief)
     {
 #if __JHEXEN__
@@ -1591,7 +1633,7 @@ void G_DoLoadMap(void)
     // Start a briefing, if there is one.
     if(hasBrief)
     {
-        FI_Start(fin.script, FIMODE_BEFORE);
+        G_StartFinale2(fin.script, FIMODE_BEFORE);
     }
     else // No briefing, start the map.
     {
@@ -1610,24 +1652,17 @@ boolean G_Responder(event_t *ev)
         return false; // Eat all events once shutdown has begun.
 
     // With the menu active, none of these should respond to input events.
-    if(!Hu_MenuIsActive() && !Hu_IsMessageActive())
+    if(G_GetGameState() == GS_MAP && !Hu_MenuIsActive() && !Hu_IsMessageActive())
     {
-        // Try Infine.
-        if(FI_Responder(ev))
+        // Try the chatmode responder.
+        if(Chat_Responder(ev))
             return true;
 
-        if(G_GetGameState() == GS_MAP)
-        {
-            // Try the chatmode responder.
-            if(Chat_Responder(ev))
-                return true;
-
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
-            // Check for cheats.
-            if(G_EventSequenceResponder(ev))
-                return true;
+        // Check for cheats.
+        if(G_EventSequenceResponder(ev))
+            return true;
 #endif
-        }
     }
 
     // Try a menu object responder.
@@ -1973,9 +2008,6 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
 
         // Update the game status cvars for player data.
         G_UpdateGSVarsForPlayer(&players[CONSOLEPLAYER]);
-
-        // InFine ticks whenever it's active.
-        FI_Ticker();
 
         // Servers will have to update player information and do such stuff.
         if(!IS_CLIENT)
@@ -2554,29 +2586,24 @@ void G_PrepareWIData(void)
 
 void G_WorldDone(void)
 {
+    ddfinale_t fin;
+
 #if __JDOOM__ || __JDOOM64__
     if(secretExit)
         players[CONSOLEPLAYER].didSecret = true;
 #endif
 
     // Clear the currently playing script, if any.
-    // @note FI_Reset() changes the game state so we must determine
-    // whether the debrief is enabled first.
-    {
-    ddfinale_t fin;
-    boolean doDebrief = FI_Debriefing(gameEpisode, gameMap, &fin);
-
     FI_Reset();
 
-    if(doDebrief)
+    if(G_DebriefingEnabled(gameEpisode, gameMap, &fin) &&
+       G_StartFinale(fin.script, FIMODE_AFTER))
     {
-        FI_Start(fin.script, FIMODE_AFTER);
         return;
     }
 
     // We have either just returned from a debriefing or there wasn't one.
     briefDisabled = false;
-    }
 
     G_SetGameAction(GA_LEAVEMAP);
 }
@@ -3280,6 +3307,49 @@ void G_PrintMapList(void)
 
         G_PrintFormattedMapList(episode, sourceList, 99);
     }
+}
+
+/**
+ * Check if there is a finale before the map.
+ * Returns true if a finale was found.
+ */
+int G_BriefingEnabled(uint episode, uint map, ddfinale_t* fin)
+{
+    char mid[20];
+
+    // If we're already in the INFINE state, don't start a finale.
+    if(briefDisabled || G_GetGameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
+        return false;
+
+    // Is there such a finale definition?
+    P_MapId(episode, map, mid);
+
+    return Def_Get(DD_DEF_FINALE_BEFORE, mid, fin);
+}
+
+/**
+ * Check if there is a finale after the map.
+ * Returns true if a finale was found.
+ */
+int G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin)
+{
+    char mid[20];
+
+    // If we're already in the INFINE state, don't start a finale.
+    if(briefDisabled)
+        return false;
+#if __JHEXEN__
+    if(cfg.overrideHubMsg && G_GetGameState() == GS_MAP &&
+       !(nextMap == DDMAXINT && nextMapEntryPoint == DDMAXINT) &&
+       P_GetMapCluster(map) != P_GetMapCluster(nextMap))
+        return false;
+#endif
+    if(G_GetGameState() == GS_INFINE || IS_CLIENT || Get(DD_PLAYBACK))
+        return false;
+
+    // Is there such a finale definition?
+    P_MapId(episode, map, mid);
+    return Def_Get(DD_DEF_FINALE_AFTER, mid, fin);
 }
 
 /**

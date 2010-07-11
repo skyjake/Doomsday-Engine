@@ -48,6 +48,7 @@ extern skillmode_t dSkill;
 extern uint rebornPosition;
 extern uint nextMap;
 extern uint nextMapEntryPoint;
+extern boolean briefDisabled;
 
 extern int gsvMapMusic;
 
@@ -61,6 +62,9 @@ void            G_PlayerReborn(int player);
 void            G_SaveGame(int slot, const char* description);
 
 uint            G_GetNextMap(uint episode, uint map, boolean secretExit);
+
+int             G_BriefingEnabled(uint episode, uint map, ddfinale_t* fin);
+int             G_DebriefingEnabled(uint episode, uint map, ddfinale_t* fin);
 
 boolean         P_MapExists(uint episode, uint map);
 const char*     P_MapSourceFile(uint episode, uint map);

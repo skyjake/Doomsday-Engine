@@ -104,18 +104,6 @@ void            HU_DrawScoreBoard(int player);
 
 void            Hu_DrawMapTitle(int x, int y, float scale);
 
-typedef struct {
-    int winWidth, winHeight;
-    float scale;
-    int displayMode;
-    int scissorState[5];
-} borderedprojectionstate_t;
-
-void            Hu_ConfigureBorderedProjection(borderedprojectionstate_t* s);
-
-void            Hu_BeginBorderedProjection(borderedprojectionstate_t* s);
-void            Hu_EndBorderedProjection(borderedprojectionstate_t* s);
-
 void            Draw_BeginZoom(float s, float originX, float originY);
 void            Draw_EndZoom(void);
 

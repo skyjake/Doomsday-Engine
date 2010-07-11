@@ -2,6 +2,7 @@
  .\..\..\plugins\common\src\d_netcl.c
  .\..\..\plugins\common\src\d_net.c
  .\..\..\plugins\common\src\dmu_lib.c
+ .\..\..\plugins\common\src\fi_lib.c
  .\..\..\plugins\common\src\m_multi.c
  .\..\..\plugins\common\src\hu_menu.c
  .\..\..\plugins\jdoom\src\g_ctrl.c
@@ -51,7 +52,6 @@
  .\..\..\plugins\common\src\hu_log.c
  .\..\..\plugins\common\src\hu_lib.c
  .\..\..\plugins\common\src\hu_msg.c
- .\..\..\plugins\common\src\f_infine.c
  .\..\..\plugins\common\src\am_map.c
  .\..\..\plugins\jdoom\src\tables.c
  .\..\..\plugins\common\src\r_common.c

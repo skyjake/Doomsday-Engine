@@ -1502,7 +1502,7 @@ void R_SetupMap(int mode, int flags)
         ded_mapinfo_t*      mapInfo = Def_GetMapInfo(P_GetMapID(map));
 
         if(mapInfo && mapInfo->execute)
-            Con_Execute(CMDS_DED, mapInfo->execute, true, false);
+            Con_Execute(CMDS_SCRIPT, mapInfo->execute, true, false);
         }
 
         // The map setup has been completed. Run the special map setup
@@ -1514,7 +1514,7 @@ void R_SetupMap(int mode, int flags)
             sprintf(cmd, "init-%s", mapID);
             if(Con_IsValidCommand(cmd))
             {
-                Con_Executef(CMDS_DED, false, cmd);
+                Con_Executef(CMDS_SCRIPT, false, cmd);
             }
         }
 

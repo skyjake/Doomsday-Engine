@@ -52,7 +52,6 @@
 #include "hu_log.h"
 #include "p_mapsetup.h"
 #include "p_tick.h"
-#include "f_infine.h"
 #include "am_map.h"
 
 // MACROS ------------------------------------------------------------------
@@ -1444,11 +1443,6 @@ static void drawFogEffect(void)
 {
 #define mfd                 (&fogEffectData)
 
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-    DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
-
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
 
@@ -1462,9 +1456,6 @@ static void drawFogEffect(void)
 
     // Restore original matrices.
     DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-
-    DGL_MatrixMode(DGL_PROJECTION);
     DGL_PopMatrix();
 
 #undef mfd
@@ -1492,7 +1483,7 @@ static boolean __inline pickScalingStrategy(int winWidth, int winHeight)
 void Hu_Drawer(void)
 {
     boolean menuOrMessageVisible = (Hu_MenuIsActive() || Hu_MenuAlpha() > 0) || Hu_IsMessageActive();
-    boolean pauseGraphicVisible = paused && !fiActive;
+    boolean pauseGraphicVisible = paused && !FI_Active();
     int winWidth, winHeight;
 
     if(!menuOrMessageVisible && !pauseGraphicVisible)
@@ -1529,6 +1520,10 @@ void Hu_Drawer(void)
     if(!menuOrMessageVisible)
         return;
 
+    // Draw the fog effect?
+    if(fogEffectData.alpha > 0 && cfg.hudFog)
+        drawFogEffect();
+
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadIdentity();
@@ -1563,10 +1558,6 @@ void Hu_Drawer(void)
             DGL_Translatef(0, -(SCREENHEIGHT/2), 0);
         }
     }
-
-    // Draw the fog effect?
-    if(fogEffectData.alpha > 0 && cfg.hudFog)
-        drawFogEffect();
 
     if(Hu_IsMessageActive())
         Hu_MsgDrawer();
@@ -1644,147 +1635,6 @@ void Hu_DrawMapTitle(int x, int y, float scale)
     drawMapTitle();
 
     DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PopMatrix();
-}
-
-enum {
-    STRETCH = 0,
-    PILLARBOX,
-    LETTERBOX,
-};
-
-static int pickBorderedScalingStrategy(int winWidth, int winHeight, float* outScale)
-{
-    float scale = (winWidth >= winHeight? (float)winHeight/SCREENHEIGHT : (float)winWidth/SCREENWIDTH);
-    float a = (float)winWidth/winHeight;
-    float b = (float)SCREENWIDTH/SCREENHEIGHT;
-    int displayMode = STRETCH;
-
-    if(!INRANGE_OF(a, b, .001f) && (cfg.fiNoStretch || !INRANGE_OF(a, b, .38f)))
-    {
-        if(SCREENWIDTH * scale > winWidth || SCREENHEIGHT * scale < winHeight)
-        {
-            scale *= (float)winWidth/(SCREENWIDTH*scale);
-            displayMode = LETTERBOX;
-        }
-        else if(SCREENWIDTH * scale < winWidth)
-        {
-            displayMode = PILLARBOX;
-        }
-    }
-    if(outScale)
-        *outScale = scale;
-    return displayMode;
-}
-
-void Hu_ConfigureBorderedProjection(borderedprojectionstate_t* s)
-{
-    s->winWidth = Get(DD_WINDOW_WIDTH);
-    s->winHeight = Get(DD_WINDOW_HEIGHT);
-    s->displayMode = pickBorderedScalingStrategy(s->winWidth, s->winHeight, &s->scale);
-    memset(s->scissorState, 0, sizeof(s->scissorState));
-}
-
-void Hu_BeginBorderedProjection(borderedprojectionstate_t* s)
-{
-    assert(s);
-
-    DGL_MatrixMode(DGL_PROJECTION);
-    DGL_PushMatrix();
-    DGL_LoadIdentity();
-    switch(s->displayMode)
-    {
-    case PILLARBOX:
-        {
-        /**
-         * Use an orthographic projection in native screenspace. Then
-         * translate and scale the projection to produce an aspect
-         * corrected coordinate space at 4:3, centered horizontally
-         * in the window.
-         */
-        int w = (s->winWidth-SCREENWIDTH*s->scale)/2;
-        DGL_Ortho(0, 0, s->winWidth, s->winHeight, -1, 1);
-
-        DGL_GetIntegerv(DGL_SCISSOR_TEST, s->scissorState);
-        DGL_GetIntegerv(DGL_SCISSOR_BOX, s->scissorState + 1);
-        DGL_Scissor(w, 0, SCREENWIDTH*s->scale, s->winHeight);
-        DGL_Enable(DGL_SCISSOR_TEST);
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PushMatrix();
-        DGL_Translatef((float)s->winWidth/2, (float)s->winHeight/2, 0);
-        DGL_Scalef(s->scale, s->scale, 1);
-        DGL_Translatef(-SCREENWIDTH/2, -SCREENHEIGHT/2, 0);
-        break;
-        }
-    case LETTERBOX:
-        {
-        /**
-         * Use an orthographic projection in native screenspace. Then
-         * translate and scale the projection to produce an aspect
-         * corrected coordinate space at 4:3, centered vertically in
-         * the window.
-         */
-        int h = (s->winHeight-SCREENHEIGHT*s->scale)/2;
-        DGL_Ortho(0, 0, s->winWidth, s->winHeight, -1, 1);
-
-        DGL_GetIntegerv(DGL_SCISSOR_TEST, s->scissorState);
-        DGL_GetIntegerv(DGL_SCISSOR_BOX, s->scissorState + 1);
-        DGL_Scissor(0, h, s->winWidth, SCREENHEIGHT*s->scale);
-        DGL_Enable(DGL_SCISSOR_TEST);
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PushMatrix();
-        DGL_Translatef((float)s->winWidth/2, (float)s->winHeight/2, 0);
-        DGL_Scalef(s->scale, s->scale, 1);
-        DGL_Translatef(-SCREENWIDTH/2, -SCREENHEIGHT/2, 0);
-        }
-        break;
-
-    default: // STRETCH
-        DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
-        break;
-    }
-}
-
-void Hu_EndBorderedProjection(borderedprojectionstate_t* s)
-{
-    if(s->displayMode != STRETCH)
-    {
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PopMatrix();
-
-        if(!s->scissorState[0])
-            DGL_Disable(DGL_SCISSOR_TEST);
-        DGL_Scissor(s->scissorState[1], s->scissorState[2], s->scissorState[3], s->scissorState[4]);
-
-        switch(s->displayMode)
-        {
-        case PILLARBOX:
-            {
-            int w = (s->winWidth-SCREENWIDTH*s->scale)/2;
-
-            DGL_SetNoMaterial();
-            DGL_DrawRect(0, 0, w, s->winHeight, 0, 0, 0, 1);
-            DGL_DrawRect(s->winWidth - w, 0, w, s->winHeight, 0, 0, 0, 1);
-            break;
-            }
-        case LETTERBOX:
-            {
-            int h = (s->winHeight-SCREENHEIGHT*s->scale)/2;
-
-            DGL_SetNoMaterial();
-            DGL_DrawRect(0, 0, s->winWidth, h, 0, 0, 0, 1);
-            DGL_DrawRect(0, s->winHeight - h, s->winWidth, h, 0, 0, 0, 1);
-            }
-            break;
-
-        default: // STRETCH
-            break;
-        }
-    }
-    
-    DGL_MatrixMode(DGL_PROJECTION);
     DGL_PopMatrix();
 }
 

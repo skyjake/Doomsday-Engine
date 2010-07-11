@@ -209,7 +209,7 @@ void P_MobjSetState(mobj_t* mobj, int statenum)
     }
 
     if(defs.states[statenum].execute)
-        Con_Execute(CMDS_DED, defs.states[statenum].execute, true, false);
+        Con_Execute(CMDS_SCRIPT, defs.states[statenum].execute, true, false);
 }
 
 /**

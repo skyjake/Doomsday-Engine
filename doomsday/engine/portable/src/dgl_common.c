@@ -857,23 +857,23 @@ int DGL_Project(int num, dgl_fc3vertex_t *inVertices,
  */
 void DGL_DrawRawScreen(lumpnum_t lump, int x, int y)
 {
-    rawtex_t* raw;
-
     if(lump < 0 || lump >= numLumps)
         return;
 
     GL_SetRawImage(lump, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-    raw = R_GetRawTex(lump);
-
-    // The first part is rendered in any case.
-    glBegin(GL_QUADS);
-        glTexCoord2f(0, 0);
-        glVertex2f(x, y);
-        glTexCoord2f(1, 0);
-        glVertex2f(x + raw->width, y);
-        glTexCoord2f(1, 1);
-        glVertex2f(x + raw->width, y + raw->height);
-        glTexCoord2f(0, 1);
-        glVertex2f(x, y + raw->height);
-    glEnd();
+    {rawtex_t* raw;
+    if((raw = R_GetRawTex(lump)))
+    {
+        // The first part is rendered in any case.
+        glBegin(GL_QUADS);
+            glTexCoord2f(0, 0);
+            glVertex2f(x, y);
+            glTexCoord2f(1, 0);
+            glVertex2f(x + raw->width, y);
+            glTexCoord2f(1, 1);
+            glVertex2f(x + raw->width, y + raw->height);
+            glTexCoord2f(0, 1);
+            glVertex2f(x, y + raw->height);
+        glEnd();
+    }}
 }

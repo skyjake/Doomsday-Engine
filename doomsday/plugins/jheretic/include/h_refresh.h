@@ -21,12 +21,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * h_refresh.h:
- */
-
-#ifndef __JHERETIC_REFRESH_H__
-#define __JHERETIC_REFRESH_H__
+#ifndef JHERETIC_REFRESH_H
+#define JHERETIC_REFRESH_H
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -46,4 +42,5 @@ void            R_DrawMapTitle(int x, int y, float alpha, compositefontid_t font
 void            P_SetDoomsdayFlags(mobj_t* mo);
 void            R_SetAllDoomsdayFlags(void);
 boolean         R_GetFilterColor(float rgba[4], int filter);
-#endif
+
+#endif /* JHERETIC_REFRESH_H */

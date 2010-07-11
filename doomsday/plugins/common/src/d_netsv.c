@@ -805,66 +805,14 @@ void NetSv_Intermission(int flags, int state, int time)
         *ptr++ = state;
     if(flags & IMF_TIME)
         WRITE_SHORT(ptr, time);
-    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, GPT_INTERMISSION, buffer,
-                   ptr - buffer);
-}
-
-/**
- * The actual script is sent to the clients. 'script' can be NULL.
- */
-void NetSv_Finale(int flags, const char* script, const boolean* conds, byte numConds)
-{
-    size_t              len, scriptLen = 0;
-    byte*               buffer, *ptr;
-
-    if(IS_CLIENT)
-        return;
-
-    // How much memory do we need?
-    if(script)
-    {
-        flags |= FINF_SCRIPT;
-        scriptLen = strlen(script) + 1;
-        len = scriptLen + 2; // The end null and flags byte.
-
-        // The number of conditions and their values.
-        len += 1 + numConds;
-    }
-    else
-    {
-        // Just enough memory for the flags byte.
-        len = 1;
-    }
-
-    ptr = buffer = Z_Malloc(len, PU_STATIC, 0);
-
-    // First the flags.
-    *ptr++ = flags;
-
-    if(script)
-    {
-        int                 i;
-
-        // The conditions.
-        *ptr++ = numConds;
-        for(i = 0; i < numConds; ++i)
-            *ptr++ = conds[i];
-
-        // Then the script itself.
-        memcpy(ptr, script, scriptLen + 1);
-        ptr[scriptLen] = '\0';
-    }
-
-    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, GPT_FINALE2, buffer, len);
-
-    Z_Free(buffer);
+    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, GPT_INTERMISSION, buffer, ptr - buffer);
 }
 
 void NetSv_SendGameState(int flags, int to)
 {
-    byte        buffer[256], *ptr;
-    int         i;
-    fixed_t     gravity;
+    byte buffer[256], *ptr;
+    fixed_t gravity;
+    int i;
 
     if(IS_CLIENT)
         return;

@@ -93,7 +93,7 @@
 		<Unit filename="..\..\plugins\common\include\d_netcl.h" />
 		<Unit filename="..\..\plugins\common\include\d_netsv.h" />
 		<Unit filename="..\..\plugins\common\include\dmu_lib.h" />
-		<Unit filename="..\..\plugins\common\include\f_infine.h" />
+		<Unit filename="..\..\plugins\common\include\fi_lib.h" />
 		<Unit filename="..\..\plugins\common\include\g_defs.h" />
 		<Unit filename="..\..\plugins\common\include\g_eventsequence.h" />
 		<Unit filename="..\..\plugins\common\include\g_common.h" />
@@ -149,9 +149,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\plugins\common\src\dmu_lib.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\plugins\common\src\f_infine.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\plugins\common\src\g_defs.c" />

@@ -190,6 +190,7 @@
 		<Unit filename="..\..\engine\portable\include\bsp_superblock.h" />
 		<Unit filename="..\..\engine\portable\include\cl_def.h" />
 		<Unit filename="..\..\engine\portable\include\cl_frame.h" />
+		<Unit filename="..\..\engine\portable\include\cl_infine.h" />
 		<Unit filename="..\..\engine\portable\include\cl_mobj.h" />
 		<Unit filename="..\..\engine\portable\include\cl_player.h" />
 		<Unit filename="..\..\engine\portable\include\cl_sound.h" />
@@ -223,6 +224,7 @@
 		<Unit filename="..\..\engine\portable\include\de_defs.h" />
 		<Unit filename="..\..\engine\portable\include\de_edit.h" />
 		<Unit filename="..\..\engine\portable\include\de_graphics.h" />
+		<Unit filename="..\..\engine\portable\include\de_infine.h" />
 		<Unit filename="..\..\engine\portable\include\de_misc.h" />
 		<Unit filename="..\..\engine\portable\include\de_network.h" />
 		<Unit filename="..\..\engine\portable\include\de_platform.h" />
@@ -236,6 +238,7 @@
 		<Unit filename="..\..\engine\portable\include\def_share.h" />
 		<Unit filename="..\..\engine\portable\include\edit_bias.h" />
 		<Unit filename="..\..\engine\portable\include\edit_map.h" />
+		<Unit filename="..\..\engine\portable\include\fi_main.h" />
 		<Unit filename="..\..\engine\portable\include\gl_defer.h" />
 		<Unit filename="..\..\engine\portable\include\gl_draw.h" />
 		<Unit filename="..\..\engine\portable\include\gl_font.h" />
@@ -330,6 +333,7 @@
 		<Unit filename="..\..\engine\portable\include\s_wav.h" />
 		<Unit filename="..\..\engine\portable\include\sv_def.h" />
 		<Unit filename="..\..\engine\portable\include\sv_frame.h" />
+		<Unit filename="..\..\engine\portable\include\sv_infine.h" />
 		<Unit filename="..\..\engine\portable\include\sv_missile.h" />
 		<Unit filename="..\..\engine\portable\include\sv_pool.h" />
 		<Unit filename="..\..\engine\portable\include\sv_sound.h" />
@@ -494,6 +498,7 @@
 		<Unit filename="..\..\engine\portable\src\edit_map.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\fi_main.c" />
 		<Unit filename="..\..\engine\portable\src\gl_defer.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -761,9 +766,8 @@
 		<Unit filename="..\..\engine\portable\src\s_wav.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\sv_frame.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="..\..\engine\portable\src\sv_frame.c" />
+		<Unit filename="..\..\engine\portable\src\sv_infine.c" />
 		<Unit filename="..\..\engine\portable\src\sv_main.c">
 			<Option compilerVar="CC" />
 		</Unit>

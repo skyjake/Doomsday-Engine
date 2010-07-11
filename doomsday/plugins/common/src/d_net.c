@@ -502,11 +502,6 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
         NetCl_Intermission(data);
         break;
 
-    case GPT_FINALE:
-    case GPT_FINALE2:
-        NetCl_Finale(type, data);
-        break;
-
     case GPT_PLAYER_INFO:
         NetCl_UpdatePlayerInfo(data);
         break;

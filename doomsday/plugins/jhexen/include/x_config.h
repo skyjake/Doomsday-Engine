@@ -142,8 +142,6 @@ typedef struct {
     byte            automapPanResetOnOpen;
     float           automapOpenSeconds;
 
-    byte            fiNoStretch; // Do not stretch finales to fill the screen at near 4:3 aspect ratios.
-
     int             messagesOn;
     char*           chatMacros[10];
     byte            chatBeep;

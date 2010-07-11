@@ -55,6 +55,7 @@
 #include "de_ui.h"
 #include "de_misc.h"
 #include "de_bsp.h"
+#include "de_infine.h"
 
 #ifdef TextOut
 // Windows has its own TextOut.
@@ -87,7 +88,7 @@ enum {
         : src == CMDS_CONFIG? "a cfg file" \
         : src == CMDS_PROFILE? "a player profile" \
         : src == CMDS_CMDLINE? "the command line" \
-        : src == CMDS_DED? "an action command" : "???")
+        : src == CMDS_SCRIPT? "an action command" : "???")
 
 // TYPES -------------------------------------------------------------------
 
@@ -411,6 +412,7 @@ boolean Con_Init(void)
     UI_Register();
     Demo_Register();
     P_ControlRegister();
+    FI_Register();
 
     Con_Message("Con_Init: Initializing the console.\n");
     return true;
@@ -730,7 +732,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
             case CMDS_CONFIG:
             case CMDS_PROFILE:
             case CMDS_CMDLINE:
-            case CMDS_DED:
+            case CMDS_SCRIPT:
                 Con_Printf("executeSubCmd: Blocked command. A client"
                            " attempted to use '%s' via %s.\n"
                            "This invocation method is not permitted "
@@ -785,7 +787,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
                 canExecute = false;
             break;
 
-        case CMDS_DED:
+        case CMDS_SCRIPT:
             if(ccmd->flags & CMDF_DED)
                 canExecute = false;
             break;

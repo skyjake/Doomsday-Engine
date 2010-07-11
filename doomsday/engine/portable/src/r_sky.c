@@ -137,7 +137,7 @@ void R_SkyTicker(void)
 
             // Execute a console command?
             if(sky->def->execute)
-                Con_Execute(CMDS_DED, sky->def->execute, true, false);
+                Con_Execute(CMDS_SCRIPT, sky->def->execute, true, false);
         }
     }
 }

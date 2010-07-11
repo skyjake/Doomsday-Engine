@@ -39,7 +39,6 @@ void            NetCl_UpdatePlayerState2(byte* data, int plrNum);
 void            NetCl_UpdatePSpriteState(byte* data);
 void            NetCl_UpdateJumpPower(void* data);
 void            NetCl_Intermission(byte* data);
-void            NetCl_Finale(int packetType, byte* data);
 void            NetCl_UpdatePlayerInfo(byte* data);
 void            NetCl_SendPlayerInfo(void);
 void            NetCl_SaveGame(void* data);

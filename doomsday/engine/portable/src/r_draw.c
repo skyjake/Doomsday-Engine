@@ -124,7 +124,7 @@ void R_InitViewBorder(void)
     bwidth = 0;
 }
 
-static void drawPatch(patchtex_t* p, int x, int y, int w, int h)
+void R_DrawPatch3(patchtex_t* p, int x, int y, int w, int h, boolean useOffsets)
 {
     assert(p);
 
@@ -133,10 +133,26 @@ static void drawPatch(patchtex_t* p, int x, int y, int w, int h)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, glmode[texMagMode]);
 
+    if(useOffsets)
+    {
+        x += p->offX;
+        y += p->offY;
+    }
+
     GL_DrawRect(x, y, w, h, 1, 1, 1, 1);
 }
 
-static void drawPatchTiled(patchtex_t* p, int x, int y, int w, int h, GLint wrapS, GLint wrapT)
+void R_DrawPatch2(patchtex_t* p, int x, int y, int w, int h)
+{
+    R_DrawPatch3(p, x, y, w, h, true);
+}
+
+void R_DrawPatch(patchtex_t* p, int x, int y)
+{
+    R_DrawPatch2(p, x, y, p->width, p->height);
+}
+
+void R_DrawPatchTiled(patchtex_t* p, int x, int y, int w, int h, GLint wrapS, GLint wrapT)
 {
     assert(p);
 
@@ -192,10 +208,10 @@ void R_DrawViewBorder(void)
 
     if(border != 0)
     {
-        drawPatchTiled(R_FindPatchTex(borderPatches[BG_TOP]), viewwindowx, viewwindowy - border, viewwidth, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
-        drawPatchTiled(R_FindPatchTex(borderPatches[BG_BOTTOM]), viewwindowx, viewwindowy + viewheight , viewwidth, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
-        drawPatchTiled(R_FindPatchTex(borderPatches[BG_LEFT]), viewwindowx - border, viewwindowy, border, viewheight, GL_CLAMP_TO_EDGE, GL_REPEAT);
-        drawPatchTiled(R_FindPatchTex(borderPatches[BG_RIGHT]), viewwindowx + viewwidth, viewwindowy, border, viewheight, GL_CLAMP_TO_EDGE, GL_REPEAT);
+        R_DrawPatchTiled(R_FindPatchTex(borderPatches[BG_TOP]), viewwindowx, viewwindowy - border, viewwidth, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
+        R_DrawPatchTiled(R_FindPatchTex(borderPatches[BG_BOTTOM]), viewwindowx, viewwindowy + viewheight , viewwidth, border, GL_REPEAT, GL_CLAMP_TO_EDGE);
+        R_DrawPatchTiled(R_FindPatchTex(borderPatches[BG_LEFT]), viewwindowx - border, viewwindowy, border, viewheight, GL_CLAMP_TO_EDGE, GL_REPEAT);
+        R_DrawPatchTiled(R_FindPatchTex(borderPatches[BG_RIGHT]), viewwindowx + viewwidth, viewwindowy, border, viewheight, GL_CLAMP_TO_EDGE, GL_REPEAT);
     }
 
     glMatrixMode(GL_TEXTURE);
@@ -203,9 +219,9 @@ void R_DrawViewBorder(void)
 
     if(border != 0)
     {
-        drawPatch(R_FindPatchTex(borderPatches[BG_TOPLEFT]), viewwindowx - border, viewwindowy - border, border, border);
-        drawPatch(R_FindPatchTex(borderPatches[BG_TOPRIGHT]), viewwindowx + viewwidth, viewwindowy - border, border, border);
-        drawPatch(R_FindPatchTex(borderPatches[BG_BOTTOMRIGHT]), viewwindowx + viewwidth, viewwindowy + viewheight, border, border);
-        drawPatch(R_FindPatchTex(borderPatches[BG_BOTTOMLEFT]), viewwindowx - border, viewwindowy + viewheight, border, border);
+        R_DrawPatch3(R_FindPatchTex(borderPatches[BG_TOPLEFT]), viewwindowx - border, viewwindowy - border, border, border, false);
+        R_DrawPatch3(R_FindPatchTex(borderPatches[BG_TOPRIGHT]), viewwindowx + viewwidth, viewwindowy - border, border, border, false);
+        R_DrawPatch3(R_FindPatchTex(borderPatches[BG_BOTTOMRIGHT]), viewwindowx + viewwidth, viewwindowy + viewheight, border, border, false);
+        R_DrawPatch3(R_FindPatchTex(borderPatches[BG_BOTTOMLEFT]), viewwindowx - border, viewwindowy + viewheight, border, border, false);
     }
 }

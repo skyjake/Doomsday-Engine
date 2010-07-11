@@ -43,7 +43,6 @@
 #include "g_common.h"
 #include "r_common.h"
 #include "d_net.h"
-#include "f_infine.h"
 #include "x_hair.h"
 #include "g_controls.h"
 #include "p_mapsetup.h"
@@ -318,22 +317,9 @@ void D_Display(int layer)
 
 void D_Display2(void)
 {
-    if((fiActive && fiCmdExecuted) || G_GetGameState() == GS_INTERMISSION)
+    if(G_GetGameState() == GS_INTERMISSION)
     {
-        borderedprojectionstate_t borderedProjection;
-        Hu_ConfigureBorderedProjection(&borderedProjection);
-
-        Hu_BeginBorderedProjection(&borderedProjection);
-
-        // InFine is drawn whenever active.
-        FI_Drawer();
-
-        if(G_GetGameState() == GS_INTERMISSION)
-        {
-            WI_Drawer();
-        }
-
-        Hu_EndBorderedProjection(&borderedProjection);
+        WI_Drawer();
     }
 
     // Draw HUD displays; menu, messages.

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_infine.h"
 #include "de_system.h"
 #include "de_misc.h"
 #include "de_ui.h"
@@ -871,9 +872,10 @@ static void dispatchEvents(timespan_t ticLength)
             if(gx.PrivilegedResponder(&ev))
                 continue;
 
+        if(FI_Responder(ddev))
+            continue;
         if(UI_Responder(ddev))
             continue;
-        // The console.
         if(Con_Responder(ddev))
             continue;
 

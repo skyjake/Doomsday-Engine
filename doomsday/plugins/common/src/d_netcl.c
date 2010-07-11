@@ -45,7 +45,6 @@
 #include "p_saveg.h"
 #include "d_net.h"
 #include "d_netsv.h"
-#include "f_infine.h"
 #include "p_player.h"
 #include "p_map.h"
 #include "g_common.h"
@@ -678,60 +677,12 @@ void NetCl_Intermission(byte* data)
 }
 
 /**
- * This is where clients start their InFine interludes.
- */
-void NetCl_Finale(int packetType, byte *data)
-{
-    int         flags, len, numConds, i;
-    byte       *script = NULL;
-
-    NetCl_SetReadBuffer(data);
-    flags = NetCl_ReadByte();
-    if(flags & FINF_SCRIPT)
-    {
-        // First read the values of the conditions.
-        if(packetType == GPT_FINALE2)
-        {
-            numConds = NetCl_ReadByte();
-            for(i = 0; i < numConds; ++i)
-            {
-                FI_SetCondition(i, NetCl_ReadByte());
-            }
-        }
-
-        // Read the script into map-scope memory. It will be freed
-        // when the next map is loaded.
-        len = strlen((char*)readbuffer);
-        script = Z_Malloc(len + 1, PU_MAP, 0);
-        strcpy((char*)script, (char*)readbuffer);
-    }
-
-    if(flags & FINF_BEGIN && script)
-    {
-        // Start the script.
-        FI_Start((char*)script,
-                 (flags & FINF_AFTER) ? FIMODE_AFTER : (flags & FINF_OVERLAY) ?
-                 FIMODE_OVERLAY : FIMODE_BEFORE);
-    }
-
-    if(flags & FINF_END)
-    {   // Stop InFine.
-        FI_End();
-    }
-
-    if(flags & FINF_SKIP)
-    {
-        FI_SkipRequest();
-    }
-}
-
-/**
  * Clients have other players' info, but it's only "FYI"; they don't
  * really need it.
  */
-void NetCl_UpdatePlayerInfo(byte *data)
+void NetCl_UpdatePlayerInfo(byte* data)
 {
-    int                 num;
+    int num;
 
     NetCl_SetReadBuffer(data);
     num = NetCl_ReadByte();

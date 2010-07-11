@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,12 +21,8 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * d_refresh.h:
- */
-
-#ifndef __D_REFRESH_H__
-#define __D_REFRESH_H__
+#ifndef JDOOM64_REFRESH_H
+#define JDOOM64_REFRESH_H
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
@@ -45,4 +41,5 @@ void            R_DrawMapTitle(void);
 void            P_SetDoomsdayFlags(mobj_t* mo);
 void            R_SetAllDoomsdayFlags(void);
 boolean         R_GetFilterColor(float rgba[4], int filter);
-#endif
+
+#endif /* JDOOM64_REFRESH_H */

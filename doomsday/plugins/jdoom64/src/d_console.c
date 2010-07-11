@@ -34,7 +34,6 @@
 #include "jdoom64.h"
 
 #include "hu_stuff.h"
-#include "f_infine.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -217,11 +216,6 @@ ccmd_t  gameCCmds[] = {
 
     {"doom64font",  "",     CCmdDoom64Font},
     {"conbg",       "s",    CCmdConBackground},
-
-    // $infine
-    {"startinf",    "s",    CCmdStartInFine},
-    {"stopinf",     "",     CCmdStopInFine},
-    {"stopfinale",  "",     CCmdStopInFine},
 
     {"spawnmobj",   NULL,   CCmdSpawnMobj},
     {"coord",       "",     CCmdPrintPlayerCoords},

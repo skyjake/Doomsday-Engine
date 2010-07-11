@@ -901,6 +901,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\cl_infine.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\cl_main.c"
 				>
 			</File>
@@ -1062,6 +1066,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\edit_map.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\fi_main.c"
 				>
 			</File>
 			<File
@@ -1434,6 +1442,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\sv_frame.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\sv_infine.c"
 				>
 			</File>
 			<File
@@ -2582,6 +2594,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\cl_infine.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\cl_mobj.h"
 				>
 			</File>
@@ -2655,6 +2671,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\dd_help.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_infine.h"
 				>
 			</File>
 			<File
@@ -2742,6 +2762,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\de_infine.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\de_misc.h"
 				>
 			</File>
@@ -2795,6 +2819,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\edit_map.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\fi_main.h"
 				>
 			</File>
 			<File
@@ -3171,6 +3199,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\sv_frame.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\sv_infine.h"
 				>
 			</File>
 			<File

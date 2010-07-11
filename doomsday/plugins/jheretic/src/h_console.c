@@ -31,7 +31,6 @@
 #include "jheretic.h"
 
 #include "hu_stuff.h"
-#include "f_infine.h"
 #include "p_inventory.h"
 
 // MACROS ------------------------------------------------------------------
@@ -205,11 +204,6 @@ ccmd_t gameCCmds[] = {
 
     {"hereticfont", "",     CCmdHereticFont},
     {"conbg",       "s",    CCmdConBackground},
-
-    // $infine
-    {"startinf",    "s",    CCmdStartInFine},
-    {"stopinf",     "",     CCmdStopInFine},
-    {"stopfinale",  "",     CCmdStopInFine},
 
     {"spawnmobj",   NULL,   CCmdSpawnMobj},
     {"coord",       "",     CCmdPrintPlayerCoords},

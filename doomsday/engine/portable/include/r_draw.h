@@ -23,11 +23,11 @@
  */
 
 /**
- * r_draw.h: Drawing Routines
+ * Misc drawing routines.
  */
 
-#ifndef __DOOMSDAY_REFRESH_DRAW_H__
-#define __DOOMSDAY_REFRESH_DRAW_H__
+#ifndef LIBDENG_REFRESH_DRAW_H
+#define LIBDENG_REFRESH_DRAW_H
 
 extern byte* translationTables;
 
@@ -37,4 +37,10 @@ void            R_InitViewBorder(void);
 void            R_SetBorderGfx(const char* gfx[9]);
 void            R_DrawViewBorder(void);
 
-#endif
+void            R_DrawPatch(patchtex_t* p, int x, int y);
+void            R_DrawPatch2(patchtex_t* p, int x, int y, int w, int h);
+void            R_DrawPatch3(patchtex_t* p, int x, int y, int w, int h, boolean useOffsets);
+
+void            R_DrawPatchTiled(patchtex_t* p, int x, int y, int w, int h, GLint wrapS, GLint wrapT);
+
+#endif /* LIBDENG_REFRESH_DRAW_H */

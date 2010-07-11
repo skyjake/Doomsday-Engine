@@ -12,17 +12,10 @@ NAME            "DOOMSDAY"
 ; 70 formerly P_BlockPolyobjsIterator
 ; 77 formerly P_LoadBlockMap
 ; 78 formerly P_LoadReject
-; 95 formerly R_FlatNumForName
-; 96 formerly R_CheckTextureNumForName
-; 98 formerly R_TextureNameForNum
-; 99 formerly R_MaterialSetTranslation
-; 100 formerly R_SetTextureTranslation
-; 144 formerly M_FRandom
-; 238 formerly GL_Color2
+; 244 formerly GL_LoadGraphics
 ; 255 formerly P_PointToBlock
 ; 326 formerly PO_Alloc
 ; 332 formerly P_ControlReset
-; 328 formerly P_RegisterCustomMapProperty
 
 EXPORTS
 ; Plugins.
@@ -315,8 +308,8 @@ EXPORTS
     R_GetPatchInfo              @237 NONAME
     R_PointToAngle2             @101 NONAME
     R_PointInSubsector          @102 NONAME
-    Materials_CreateAnimGroup           @241 NONAME
-    Materials_AddAnimGroupFrame            @242 NONAME
+    Materials_CreateAnimGroup   @241 NONAME
+    Materials_AddAnimGroupFrame @242 NONAME
     R_HSVToRGB                  @439 NONAME
     R_CreateColorPalette		@444 NONAME
     R_GetColorPaletteNumForName @446 NONAME
@@ -381,17 +374,35 @@ EXPORTS
     DGL_DrawRect                @128 NONAME
     DGL_DrawRectTiled           @129 NONAME
     DGL_DrawCutRectTiled        @130 NONAME
+
 ; Depreciated:
     DGL_DrawRawScreen           @126 NONAME
 
 ; Renderer.
     Rend_Reset                  @103 NONAME
     Rend_SkyParams              @105 NONAME
+    GL_UseFog                   @104 NONAME
+
+; InFine.
+    FI_Active                   @95 NONAME
+    FI_Reset                    @238 NONAME
+    FI_IsMenuTrigger            @328 NONAME
+
+    FI_GetClientsideDefaultState @96 NONAME
+    FI_SetClientsideDefaultState @98 NONAME
+
+    FI_ScriptBegin              @99 NONAME
+    FI_ScriptTerminate          @100 NONAME
+
+; SVG
+    R_NewVectorGraphic          @317 NONAME
+
+    GL_DrawVectorGraphic        @318 NONAME
+    GL_DrawVectorGraphic2       @319 NONAME
+    GL_DrawVectorGraphic3       @320 NONAME
 
 ; Graphics.
-    GL_UseFog                   @104 NONAME
     GL_GrabScreen               @109 NONAME
-    GL_LoadGraphics             @244 NONAME
     GL_NewTextureWithParams3    @329 NONAME
     GL_SetFilter                @132 NONAME
     GL_SetFilterColor           @441 NONAME
@@ -429,13 +440,6 @@ EXPORTS
 	GL_CharDimensions           @205 NONAME
 	GL_CharWidth                @206 NONAME
 	GL_CharHeight               @235 NONAME
-
-; Graphics: SVG
-    R_NewVectorGraphic          @317 NONAME
-
-    GL_DrawVectorGraphic        @318 NONAME
-    GL_DrawVectorGraphic2       @319 NONAME
-    GL_DrawVectorGraphic3       @320 NONAME
 
 ; Audio.
     S_MapChange                 @225 NONAME

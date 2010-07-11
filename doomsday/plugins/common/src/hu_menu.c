@@ -49,7 +49,6 @@
 #include "hu_log.h"
 #include "hu_msg.h"
 #include "hu_stuff.h"
-#include "f_infine.h"
 #include "am_map.h"
 #include "x_hair.h"
 #include "p_player.h"
@@ -1913,7 +1912,7 @@ void Hu_MenuCommand(menucommand_e cmd)
 
     if(!mnActive)
     {
-        if(cmd == MCMD_OPEN && !FI_IsMenuTrigger(NULL))
+        if(cmd == MCMD_OPEN && !FI_IsMenuTrigger())
         {
             S_LocalSound(SFX_MENU_OPEN, NULL);
 

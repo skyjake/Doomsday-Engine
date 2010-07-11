@@ -53,6 +53,7 @@ extern "C" {
 #include "dd_maptypes.h"
 #include "dd_gl.h"
 #include "dd_compositefont.h"
+#include "dd_infine.h"
 #include "dd_vectorgraphic.h"
 #include "../portable/include/p_think.h" // \todo Not officially a public header file!
 #include "../portable/include/def_share.h" // \todo Not officially a public header file!
@@ -1063,7 +1064,7 @@ enum {
     CMDS_CONFIG, // Sent via config file
     CMDS_PROFILE, // Sent via player profile
     CMDS_CMDLINE, // Sent via the command line
-    CMDS_DED // Sent based on a def in a DED file eg (state->execute)
+    CMDS_SCRIPT // Sent based on a def in a DED file eg (state->execute)
 };
 
 // Helper macro for defining console command functions.

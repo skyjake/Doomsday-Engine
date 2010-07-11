@@ -105,6 +105,9 @@ typedef struct {
     size_t          mobjSize; // sizeof(mobj_t)
     size_t          polyobjSize; // sizeof(polyobj_t)
 
+    // Misc structure sizes.
+    size_t          finaleConditionsSize; // sizeof(finale_conditions_t);
+
     // Map data setup
     // This routine is called before any data is read
     // (with the number of items to be read) to allow the
@@ -128,6 +131,9 @@ typedef struct {
     // take further action.
     int           (*HandleMapObjectStatusReport) (int code, uint id, int dtype,
                                                   void* data);
+
+    void           (*FI_DemoEnds) (void);
+    int            (*FI_GetGameState) (void);
 } game_export_t;
 
 typedef game_export_t* (*GETGAMEAPI) (game_import_t *);

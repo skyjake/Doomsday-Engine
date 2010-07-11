@@ -52,7 +52,6 @@
 #endif
 
 #include "p_saveg.h"
-#include "f_infine.h"
 #include "d_net.h"
 #include "dmu_lib.h"
 #include "p_map.h"
