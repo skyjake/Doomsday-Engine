@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1548,27 +1548,34 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     // Light this polygon.
     if(p->type != RPT_SKY_MASK)
     {
-        if(levelFullBright || glowing > 0)
+        if(levelFullBright || !(glowing < 1))
         {   // Uniform colour. Apply to all vertices.
             Rend_VertexColorsGlow(rcolors, numVertices, *p->sectorLightLevel + (levelFullBright? 1 : glowing));
         }
         else
         {   // Non-uniform color.
             if(useBias && p->bsuf)
-            {
-                // Do BIAS lighting for this poly.
-                SB_RendPoly(rcolors, p->bsuf, rvertices, numVertices,
-                            p->normal, *p->sectorLightLevel,
-                            p->mapObject, p->elmIdx, p->isWall);
+            {   // Do BIAS lighting for this poly.
+                SB_RendPoly(rcolors, p->bsuf, rvertices, numVertices, p->normal, *p->sectorLightLevel, p->mapObject, p->elmIdx, p->isWall);
+                if(glowing > 0)
+                {
+                    uint i;
+                    for(i = 0; i < numVertices; ++i)
+                    {
+                        rcolors[i].rgba[CR] = MINMAX_OF(0, rcolors[i].rgba[CR] + glowing, 1);
+                        rcolors[i].rgba[CG] = MINMAX_OF(0, rcolors[i].rgba[CG] + glowing, 1);
+                        rcolors[i].rgba[CB] = MINMAX_OF(0, rcolors[i].rgba[CB] + glowing, 1);
+                    }
+                }
             }
             else
             {
+                float llL = MINMAX_OF(0, *p->sectorLightLevel + p->surfaceLightLevelDL + glowing, 1);
+                float llR = MINMAX_OF(0, *p->sectorLightLevel + p->surfaceLightLevelDR + glowing, 1);
                 uint i;
                 
-
                 // Calculate the color for each vertex, blended with plane color?
-                if(p->surfaceColor[0] < 1 || p->surfaceColor[1] < 1 ||
-                   p->surfaceColor[2] < 1)
+                if(p->surfaceColor[0] < 1 || p->surfaceColor[1] < 1 || p->surfaceColor[2] < 1)
                 {
                     float vColor[4];
 
@@ -1580,9 +1587,6 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
 
                     if(p->isWall)
                     {
-                        float llL = *p->sectorLightLevel + p->surfaceLightLevelDL;
-                        float llR = *p->sectorLightLevel + p->surfaceLightLevelDR;
-
                         lightVertex(&rcolors[0], &rvertices[0], llL, vColor);
                         lightVertex(&rcolors[1], &rvertices[1], llL, vColor);
                         lightVertex(&rcolors[2], &rvertices[2], llR, vColor);
@@ -1590,18 +1594,14 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                     }
                     else
                     {
-                        float ll = *p->sectorLightLevel + p->surfaceLightLevelDL;
                         for(i = 0; i < numVertices; ++i)
-                            lightVertex(&rcolors[i], &rvertices[i], ll, vColor);
+                            lightVertex(&rcolors[i], &rvertices[i], llL, vColor);
                     }
                 }
                 else
                 {   // Use sector light+color only.
                     if(p->isWall)
                     {
-                        float llL = *p->sectorLightLevel + p->surfaceLightLevelDL;
-                        float llR = *p->sectorLightLevel + p->surfaceLightLevelDR;
-
                         lightVertex(&rcolors[0], &rvertices[0], llL, p->sectorLightColor);
                         lightVertex(&rcolors[1], &rvertices[1], llL, p->sectorLightColor);
                         lightVertex(&rcolors[2], &rvertices[2], llR, p->sectorLightColor);
@@ -1609,10 +1609,8 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                     }
                     else
                     {
-                        float ll = *p->sectorLightLevel + p->surfaceLightLevelDL;
                         for(i = 0; i < numVertices; ++i)
-                            lightVertex(&rcolors[i], &rvertices[i], ll,
-                                        p->sectorLightColor);
+                            lightVertex(&rcolors[i], &rvertices[i], llL, p->sectorLightColor);
                     }
                 }
 
@@ -1627,8 +1625,8 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                     vColor[CB] = p->surfaceColor2[CB] * p->sectorLightColor[CB];
                     vColor[CA] = 1;
 
-                    lightVertex(&rcolors[0], &rvertices[0], *p->sectorLightLevel + p->surfaceLightLevelDL, vColor);
-                    lightVertex(&rcolors[2], &rvertices[2], *p->sectorLightLevel + p->surfaceLightLevelDR, vColor);
+                    lightVertex(&rcolors[0], &rvertices[0], llL, vColor);
+                    lightVertex(&rcolors[2], &rvertices[2], llR, vColor);
                 }
             }
 
@@ -1642,12 +1640,9 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             // Strength of the shine.
             for(i = 0; i < numVertices; ++i)
             {
-                shinyColors[i].rgba[CR] =
-                    MAX_OF(rcolors[i].rgba[CR], msA->shiny.minColor[CR]);
-                shinyColors[i].rgba[CG] =
-                    MAX_OF(rcolors[i].rgba[CG], msA->shiny.minColor[CG]);
-                shinyColors[i].rgba[CB] =
-                    MAX_OF(rcolors[i].rgba[CB], msA->shiny.minColor[CB]);
+                shinyColors[i].rgba[CR] = MAX_OF(rcolors[i].rgba[CR], msA->shiny.minColor[CR]);
+                shinyColors[i].rgba[CG] = MAX_OF(rcolors[i].rgba[CG], msA->shiny.minColor[CG]);
+                shinyColors[i].rgba[CB] = MAX_OF(rcolors[i].rgba[CB], msA->shiny.minColor[CB]);
                 shinyColors[i].rgba[CA] = rTUs[TU_PRIMARY].blend;
             }
         }
@@ -1655,26 +1650,22 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
         // Apply uniform alpha.
         Rend_VertexColorsAlpha(rcolors, numVertices, p->alpha);
     }
-    else
-    {
-        memset(rcolors, 0, sizeof(rcolor_t) * numVertices);
-    }
 
     if(IS_MUL && useLights)
     {
         // Surfaces lit by dynamic lights may need to be rendered
         // differently than non-lit surfaces.
-        uint                i;
-        float               avglightlevel = 0;
+        float avglightlevel = 0;
 
         // Determine the average light level of this rend poly,
         // if too bright; do not bother with lights.
+        {uint i;
         for(i = 0; i < numVertices; ++i)
         {
             avglightlevel += rcolors[i].rgba[CR];
             avglightlevel += rcolors[i].rgba[CG];
             avglightlevel += rcolors[i].rgba[CB];
-        }
+        }}
         avglightlevel /= (float) numVertices * 3;
 
         if(avglightlevel > 0.98f)
@@ -2064,41 +2055,31 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
         }
     }
 
-    /**
-     * If this poly is destined for the skymask, we don't need to
-     * do any further processing.
-     */
+    rvertices = R_AllocRendVertices(numVertices);
+    Rend_PreparePlane(rvertices, numVertices, height, ssec, !(normal[VZ] > 0));
+
     if(params.type != RPT_SKY_MASK)
     {
         // Smooth Texture Animation?
         if(smoothTexAnim && texMode != 1)
             blended = true;
 
-        // Dynamic lights.
-        if(addDLights && params.glowing < 1)
-        {
-            params.lightListIdx =
-                DL_ProjectOnSurface(ssec, params.texTL, params.texBR, normal,
-                                    (DLF_NO_PLANAR |
-                                     (type == PLN_FLOOR? DLF_TEX_FLOOR : DLF_TEX_CEILING)));
-        }
-    }
-
-    rvertices = R_AllocRendVertices(numVertices);
-    Rend_PreparePlane(rvertices, numVertices, height, ssec, !(normal[VZ] > 0));
-
-    if(params.type != RPT_SKY_MASK)
-    {
         inter = getSnapshots(&msA, blended? &msB : NULL, mat);
 
         if(texMode == 1 || msA.glowing > 0)
         {
             params.glowing = msA.glowing; // Make it stand out
         }
+
+        // Dynamic lights.
+        if(addDLights && params.glowing < 1)
+        {
+            params.lightListIdx = DL_ProjectOnSurface(ssec, params.texTL, params.texBR, normal,
+                (DLF_NO_PLANAR | (type == PLN_FLOOR? DLF_TEX_FLOOR : DLF_TEX_CEILING)));
+        }
     }
 
-    renderWorldPoly(rvertices, numVertices, NULL, &params,
-                    &msA, inter, blended? &msB : NULL);
+    renderWorldPoly(rvertices, numVertices, NULL, &params, &msA, inter, blended? &msB : NULL);
 
     R_FreeRendVertices(rvertices);
 }
@@ -2119,8 +2100,7 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
     if(!inMat || (inMat->flags & MATF_NO_DRAW))
         return;
 
-    V3_Set(vec, vx - ssec->midPoint.pos[VX], vz - ssec->midPoint.pos[VY],
-           vy - height);
+    V3_Set(vec, vx - ssec->midPoint.pos[VX], vz - ssec->midPoint.pos[VY], vy - height);
 
     // Don't bother with planes facing away from the camera.
     if(!(V3_DotProduct(vec, normal) < 0))
@@ -2128,10 +2108,8 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
         float texTL[3], texBR[3];
 
         // Set the texture origin, Y is flipped for the ceiling.
-        V3_Set(texTL, ssec->bBox[0].pos[VX],
-               ssec->bBox[type == PLN_FLOOR? 1 : 0].pos[VY], height);
-        V3_Set(texBR, ssec->bBox[1].pos[VX],
-               ssec->bBox[type == PLN_FLOOR? 0 : 1].pos[VY], height);
+        V3_Set(texTL, ssec->bBox[0].pos[VX], ssec->bBox[type == PLN_FLOOR? 1 : 0].pos[VY], height);
+        V3_Set(texBR, ssec->bBox[1].pos[VX], ssec->bBox[type == PLN_FLOOR? 0 : 1].pos[VY], height);
 
         renderPlane(ssec, type, height, normal, inMat, sufFlags, sufInFlags,
                     sufColor, blendMode, texTL, texBR, texOffset, texScale,
@@ -2336,17 +2314,14 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
 
             if(msA.glowing > 0)
                 isGlowing = true;
+
+            if(addDLights && msA.glowing < 1)
+                lightListIdx = DL_ProjectOnSurface(ssec, texTL, texBR, SEG_SIDEDEF(seg)->SW_middlenormal, ((section == SEG_MIDDLE && isTwoSided)? DLF_SORT_LUMADSC : 0));
+
+            addFakeRadio = ((addFakeRadio && !isGlowing)? true : false);
+
+            selectSurfaceColors(&color, &color2, SEG_SIDEDEF(seg), section);
         }
-
-        if(addDLights && !isGlowing)
-            lightListIdx =
-                DL_ProjectOnSurface(ssec, texTL, texBR,
-                                    SEG_SIDEDEF(seg)->SW_middlenormal,
-                                    ((section == SEG_MIDDLE && isTwoSided)? DLF_SORT_LUMADSC : 0));
-
-        addFakeRadio = ((addFakeRadio && !isGlowing)? true : false);
-
-        selectSurfaceColors(&color, &color2, SEG_SIDEDEF(seg), section);
 
         // Check for neighborhood division?
         divs[0].num = divs[1].num = 0;

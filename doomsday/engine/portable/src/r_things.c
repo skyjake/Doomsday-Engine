@@ -750,6 +750,7 @@ float R_VisualRadius(mobj_t* mo)
     }
 
     // Use the sprite frame's width.
+    // @fixme What about rotation?
     Materials_Prepare(&ms, R_GetMaterialForSprite(mo->sprite, mo->frame), true, NULL);
     return ms.width / 2;
 }

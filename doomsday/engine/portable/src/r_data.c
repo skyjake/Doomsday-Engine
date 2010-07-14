@@ -2182,8 +2182,8 @@ void R_PrecacheMap(void)
 
     for(i = 0; i < Materials_Count(); ++i)
     {
-        material_t* mat;
-        if((mat = Materials_ToMaterial(i+1))->inFlags & MATIF_PRECACHE)
+        material_t* mat = Materials_ToMaterial(i+1);
+        if(mat->inFlags & MATIF_PRECACHE)
         {
             material_snapshot_t ms;
             boolean hasDecorations;

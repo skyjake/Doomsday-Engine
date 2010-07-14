@@ -911,60 +911,63 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
 
         if((mb = bindForMaterial(mat)))
         {
-            // Do we need to reproject any decorations?
-            if(tmpResult)
-                decor = mb->decoration[tmpResult-1];
-
-            // Do we need to prepare a detail texture?
-            if(tmpResult && (detail = mb->detail[tmpResult-1]))
-            {
-                detailtex_t* dTex;
-                lumpnum_t lump = W_CheckNumForName(detail->detailLump.path);
-                const char* external = (detail->isExternal? detail->detailLump.path : NULL);
-
-                /**
-                 * \todo No need to look up the detail texture record every time!
-                 * This will change anyway once the gltexture for the detailtex is
-                 * linked to (and prepared) via the layers (above).
-                 */
-
-                if((dTex = R_GetDetailTexture(lump, external)))
-                {
-                    float contrast = detail->strength * detailFactor;
-
-                    // Pick an instance matching the specified context.
-                    detailInst = GL_PrepareGLTexture(dTex->id, &contrast, NULL);
-                }
-            }
-
-            // Do we need to prepare a shiny texture (and possibly a mask)?
-            if(tmpResult && (reflection = mb->reflection[tmpResult-1]))
-            {
-                shinytex_t* sTex;
-                masktex_t* mTex;
-
-                /**
-                 * \todo No need to look up the shiny texture record every time!
-                 * This will change anyway once the gltexture for the shinytex is
-                 * linked to (and prepared) via the layers (above).
-                 */
-
-                if((sTex = R_GetShinyTexture(reflection->shinyMap.path)))
-                {
-                    // Pick an instance matching the specified context.
-                    shinyInst = GL_PrepareGLTexture(sTex->id, NULL, NULL);
-                }
-
-                if(shinyInst && // Don't bother searching unless the above succeeds.
-                   (mTex = R_GetMaskTexture(reflection->maskMap.path)))
-                {
-                    // Pick an instance matching the specified context.
-                    shinyMaskInst = GL_PrepareGLTexture(mTex->id, NULL, NULL);
-                }
-            }
-
             if(tmpResult)
                 mb->prepared = tmpResult;
+
+            decor = mb->decoration[mb->prepared-1];
+            detail = mb->detail[mb->prepared-1];
+            reflection = mb->reflection[mb->prepared-1];
+
+            if(tmpResult)
+            {   // A texture was loaded.
+                // Do we need to prepare a detail texture?
+                if(detail)
+                {
+                    detailtex_t* dTex;
+                    lumpnum_t lump = W_CheckNumForName(detail->detailLump.path);
+                    const char* external = (detail->isExternal? detail->detailLump.path : NULL);
+
+                    /**
+                     * \todo No need to look up the detail texture record every time!
+                     * This will change anyway once the gltexture for the detailtex is
+                     * linked to (and prepared) via the layers (above).
+                     */
+
+                    if((dTex = R_GetDetailTexture(lump, external)))
+                    {
+                        float contrast = detail->strength * detailFactor;
+
+                        // Pick an instance matching the specified context.
+                        detailInst = GL_PrepareGLTexture(dTex->id, &contrast, NULL);
+                    }
+                }
+
+                // Do we need to prepare a shiny texture (and possibly a mask)?
+                if(reflection)
+                {
+                    shinytex_t* sTex;
+                    masktex_t* mTex;
+
+                    /**
+                     * \todo No need to look up the shiny texture record every time!
+                     * This will change anyway once the gltexture for the shinytex is
+                     * linked to (and prepared) via the layers (above).
+                     */
+
+                    if((sTex = R_GetShinyTexture(reflection->shinyMap.path)))
+                    {
+                        // Pick an instance matching the specified context.
+                        shinyInst = GL_PrepareGLTexture(sTex->id, NULL, NULL);
+                    }
+
+                    if(shinyInst && // Don't bother searching unless the above succeeds.
+                       (mTex = R_GetMaskTexture(reflection->maskMap.path)))
+                    {
+                        // Pick an instance matching the specified context.
+                        shinyMaskInst = GL_PrepareGLTexture(mTex->id, NULL, NULL);
+                    }
+                }
+            }
         }
 
         // If we arn't taking a snapshot, get out of here.
