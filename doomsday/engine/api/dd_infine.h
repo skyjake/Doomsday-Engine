@@ -60,14 +60,13 @@ struct fi_object_s;
 #define FIOBJECT_BASE_ELEMENTS() \
     fi_obtype_e     type; /* Type of the object. */ \
     fi_objectname_t name; \
-    boolean         used; \
     animatorvector2_t pos; \
     animator_t      angle; \
     animatorvector4_t color; \
     animatorvector2_t scale;
 
 /**
- * Image sequence.
+ * Rectangle/Image sequence.
  */
 #define FIDATA_PIC_MAX_SEQUENCE     64
 

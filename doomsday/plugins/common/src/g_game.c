@@ -2597,7 +2597,7 @@ void G_WorldDone(void)
     FI_Reset();
 
     if(G_DebriefingEnabled(gameEpisode, gameMap, &fin) &&
-       G_StartFinale(fin.script, FIMODE_AFTER))
+       G_StartFinale2(fin.script, FIMODE_AFTER))
     {
         return;
     }

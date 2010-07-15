@@ -48,8 +48,6 @@
 
 #define STACK_SIZE          (16) // Size of the InFine state stack.
 #define MAX_TOKEN_LEN       (8192)
-#define MAX_PICS            (128)
-#define MAX_TEXT            (64)
 #define MAX_HANDLERS        (128)
 
 #define FI_REPEAT           (-2)
@@ -65,8 +63,8 @@ typedef struct fi_handler_s {
 } fi_handler_t;
 
 typedef struct fi_object_collection_s {
-    fidata_pic_t    pics[MAX_PICS];
-    fidata_text_t   text[MAX_TEXT];
+    uint            num;
+    fi_object_t**   vector;
 } fi_object_collection_t;
 
 typedef struct fi_state_s {
@@ -115,6 +113,12 @@ typedef struct fi_cmd_s {
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+fidata_text_t*  P_CreateText(const char* name);
+void            P_DestroyText(fidata_text_t* text);
+
+fidata_pic_t*   P_CreatePic(const char* name);
+void            P_DestroyPic(fidata_pic_t* pic);
 
 // Command functions.
 DEFFC(Do);
@@ -402,16 +406,6 @@ static void objectSetUniqueName(fi_object_t* obj, const char* name)
     strncpy(obj->name, name, sizeof(obj->name) - 1);
 }
 
-void FIObject_Think(fi_object_t* obj)
-{
-    assert(obj);
-
-    AnimatorVector2_Think(obj->pos);
-    AnimatorVector2_Think(obj->scale);
-    AnimatorVector4_Think(obj->color);
-    Animator_Think(&obj->angle);
-}
-
 static fi_state_t* allocState(void)
 {
     fi_state_t* s;
@@ -455,133 +449,63 @@ static fi_state_t* newState(const char* script)
 static void objectsThink(fi_object_collection_t* c)
 {
     uint i;
-    // Pic objects.
-    for(i = 0; i < MAX_PICS; ++i)
+    for(i = 0; i < c->num; ++i)
     {
-        fidata_pic_t* pic = &c->pics[i];
-        if(!pic->used)
-            continue;
-        FIData_PicThink(pic);
+        fi_object_t* obj = c->vector[i];
+        switch(obj->type)
+        {
+        case FI_PIC:    FIData_PicThink((fidata_pic_t*)obj);    break;
+        case FI_TEXT:   FIData_TextThink((fidata_text_t*)obj);  break;
+        default: break;
+        }
     }
+}
 
-    // Text objects.
-    for(i = 0; i < MAX_TEXT; ++i)
+static void objectsDraw2(fi_object_collection_t* c, fi_obtype_e type, float xOffset, float yOffset)
+{
+    uint i;
+    for(i = 0; i < c->num; ++i)
     {
-        fidata_text_t* text = &c->text[i];
-        if(!text->used)
+        fi_object_t* obj = c->vector[i];
+        if(obj->type != type)
             continue;
-        FIData_TextThink(text);
+        switch(obj->type)
+        {
+        case FI_PIC:    FIData_PicDraw((fidata_pic_t*)obj, xOffset, yOffset);   break;
+        case FI_TEXT:   FIData_TextDraw((fidata_text_t*)obj, xOffset, yOffset); break;
+        default: break;
+        }
     }
 }
 
 static void objectsDraw(fi_object_collection_t* c, float picXOffset, float picYOffset)
 {
-    uint i;
-    // Draw images.    
-    for(i = 0; i < MAX_PICS; ++i)
-    {
-        fidata_pic_t* pic = &c->pics[i];
-        if(!pic->used)
-            continue;
-        FIData_PicDraw(pic, picXOffset, picYOffset);
-    }
-
-    // Draw text.
-    for(i = 0; i < MAX_TEXT; ++i)
-    {
-        fidata_text_t* tex = &c->text[i];
-        if(!tex->used)
-            continue;
-        FIData_TextDraw(tex, 0, 0);
-    }
+    // Images first, then text.
+    objectsDraw2(c, FI_PIC, picXOffset, picYOffset);
+    objectsDraw2(c, FI_TEXT, 0, 0);
 }
 
 static void objectsClear(fi_object_collection_t* c)
 {
-    uint i;
-    // Delete external images.
-    for(i = 0; i < MAX_PICS; ++i)
+    // Delete external images, text strings etc.
+    if(c->vector)
     {
-        fidata_pic_t* pic = &c->pics[i];
-        if(pic->flags.is_ximage)
+        uint i;
+        for(i = 0; i < c->num; ++i)
         {
-            FIData_PicDeleteXImage(pic);
+            fi_object_t* obj = c->vector[i];
+            switch(obj->type)
+            {
+            case FI_PIC:    P_DestroyPic((fidata_pic_t*)obj);   break;
+            case FI_TEXT:   P_DestroyText((fidata_text_t*)obj); break;
+            default:
+                break;
+            }
         }
+        Z_Free(c->vector);
     }
-    memset(c->pics, 0, sizeof(c->pics));
-
-    // Free all text strings.
-    for(i = 0; i < MAX_TEXT; ++i)
-    {
-        fidata_text_t* text = &c->text[i];
-        if(text->text)
-        {
-            Z_Free(text->text);
-        }
-    }
-    memset(c->text, 0, sizeof(c->text));
-}
-
-static fidata_text_t* objectsFindText(fi_object_collection_t* c, const char* name)
-{
-    assert(name && name[0]);
-    {uint i;
-    for(i = 0; i < MAX_TEXT; ++i)
-    {
-        fidata_text_t* obj = &c->text[i];
-        if(obj->used && !stricmp(obj->name, name))
-        {
-            return &c->text[i];
-        }
-    }}
-    return NULL;
-}
-
-static fidata_pic_t* objectsFindPic(fi_object_collection_t* c, const char* name)
-{
-    assert(name && name[0]);
-    {uint i;
-    for(i = 0; i < MAX_PICS; ++i)
-    {
-        fidata_pic_t* obj = &c->pics[i];
-        if(obj->used && !stricmp(obj->name, name))
-        {
-            return &c->pics[i];
-        }
-    }}
-    return 0;
-}
-
-static fidata_pic_t* objectsFindUnusedPic(fi_object_collection_t* c)
-{
-    {uint i;
-    for(i = 0; i < MAX_PICS; ++i)
-    {
-        fidata_pic_t* obj = &c->pics[i];
-        if(!obj->used)
-        {
-            memset(obj, 0, sizeof(*obj));
-            obj->type = FI_PIC;
-            return obj;
-        }
-    }}
-    return 0; /// @todo Oh noes! Remove fixed limit.
-}
-
-static fidata_text_t* objectsFindUnusedText(fi_object_collection_t* c)
-{
-    {uint i;
-    for(i = 0; i < MAX_TEXT; ++i)
-    {
-        fidata_text_t* obj = &c->text[i];
-        if(!obj->used)
-        {
-            memset(obj, 0, sizeof(*obj));
-            obj->type = FI_TEXT;
-            return obj;
-        }
-    }}
-    return 0; /// @todo Oh noes! Remove fixed limit.
+    c->vector = NULL;
+    c->num = 0;
 }
 
 static fi_object_t* objectsFind2(fi_object_collection_t* c, const char* name, fi_obtype_e type)
@@ -589,31 +513,15 @@ static fi_object_t* objectsFind2(fi_object_collection_t* c, const char* name, fi
     assert(name && name[0]);
     assert(type > FI_NONE);
     {uint i;
-    switch(type)
+    for(i = 0; i < c->num; ++i)
     {
-    case FI_TEXT:
-        for(i = 0; i < MAX_TEXT; ++i)
+        fi_object_t* obj = c->vector[i];
+        if(obj->type == type && !stricmp(obj->name, name))
         {
-            fidata_text_t* obj = &c->text[i];
-            if(obj->used && !stricmp(obj->name, name))
-            {
-                return (fi_object_t*)obj;
-            }
+            return obj;
         }
-        break;
-    case FI_PIC:
-        for(i = 0; i < MAX_PICS; ++i)
-        {
-            fidata_pic_t* obj = &c->pics[i];
-            if(obj->used && !stricmp(obj->name, name))
-            {
-                return (fi_object_t*)obj;
-            }
-        }
-        break;
-    }
+    }}
     return NULL;
-    }
 }
 
 static fi_object_t* objectsFind(fi_object_collection_t* c, const char* name)
@@ -629,6 +537,40 @@ static fi_object_t* objectsFind(fi_object_collection_t* c, const char* name)
         return obj;
 
     return NULL;
+}
+
+static fi_object_t* objectsAdd(fi_object_collection_t* c, fi_object_t* obj)
+{
+    // Link with this state.
+    c->vector = Z_Realloc(c->vector, sizeof(obj) * ++c->num, PU_STATIC);
+    c->vector[c->num-1] = obj;
+    return obj;
+}
+
+static void objectsRemove(fi_object_collection_t* c, fi_object_t* obj)
+{
+    uint i;
+    for(i = 0; i < c->num; ++i)
+    {
+        fi_object_t* other = c->vector[i];
+        if(other == obj)
+        {
+            if(i != c->num-1)
+                memmove(&c->vector[i], &c->vector[i+1], sizeof(*c->vector) * (c->num-i));
+
+            if(c->num > 1)
+            {
+                c->vector = Z_Realloc(c->vector, sizeof(*c->vector) * --c->num, PU_STATIC);
+            }
+            else
+            {
+                Z_Free(c->vector);
+                c->vector = NULL;
+                c->num = 0;
+            }
+            return;
+        }
+    }
 }
 
 static void stateChangeMode(fi_state_t* s, finale_mode_t mode)
@@ -949,7 +891,7 @@ static boolean scriptExecuteCommand(fi_state_t* s, const char* commandString)
                 s->lastSkipped = true;
             }
         }
-        return false;
+        return true; // Success!
     }
 
     // We're now going to execute a command.
@@ -982,65 +924,12 @@ static boolean scriptExecuteCommand(fi_state_t* s, const char* commandString)
 
 static boolean scriptExecuteNextCommand(fi_state_t* s)
 {
-    const char* cmd;
-    if((cmd = scriptNextToken(s)))
+    const char* token;
+    if((token = scriptNextToken(s)))
     {
-        return scriptExecuteCommand(s, cmd);
+        return scriptExecuteCommand(s, token);
     }
     return false;
-}
-
-static fidata_pic_t* createPic(fi_state_t* s, const char* name)
-{
-    fidata_pic_t* obj;
-    if((obj = objectsFindUnusedPic(&s->objects)))
-    {
-        // Mark it used.
-        obj->used = true;
-
-        // Initialize it.
-        objectSetUniqueName((fi_object_t*)obj, name);
-        AnimatorVector4_Init(obj->color, 1, 1, 1, 1);
-        AnimatorVector2_Init(obj->scale, 1, 1);
-
-        FIData_PicClearAnimation(obj);
-        return obj;
-    }
-    return 0;
-}
-
-static fidata_text_t* createText(fi_state_t* s, const char* name)
-{
-    fidata_text_t* obj;
-    if((obj = objectsFindUnusedText(&s->objects)))
-    {
-#define LEADING             (11.f/7-1)
-
-        float rgba[4];
-
-        {int i;
-        for(i = 0; i < 3; ++i)
-            rgba[i] = fiDefaultTextRGB[i];
-        }
-        rgba[CA] = 1; // Opaque.
-
-        // Mark it used.
-        obj->used = true;
-
-        // Initialize it.
-        objectSetUniqueName((fi_object_t*)obj, name);
-        AnimatorVector4_Init(obj->color, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
-        AnimatorVector2_Init(obj->scale, 1, 1);
-
-        obj->wait = 3;
-        obj->font = R_CompositeFontNumForName("a");
-        obj->lineheight = LEADING;
-
-        return obj;
-
-#undef LEADING
-    }
-    return 0;
 }
 
 /**
@@ -1084,17 +973,12 @@ static fidata_pic_t* stateGetPic(fi_state_t* s, const char* name)
 {
     assert(name && name[0]);
     {
-    fidata_pic_t* pic;
+    fidata_pic_t* obj;
     // An exisiting Pic?
-    if((pic = objectsFindPic(&s->objects, name)))
-        return pic;
-    
-    // Try allocate another?
-    if((pic = createPic(s, name)))
-        return pic;
-
-    Con_Message("InFine: No room for Pic \"%s\".\n", name);
-    return &dummyPic; // No more space.
+    if((obj = (fidata_pic_t*)objectsFind2(&s->objects, name, FI_PIC)))
+        return obj;
+    // Allocate and attach another.
+    return (fidata_pic_t*)objectsAdd(&s->objects, (fi_object_t*)P_CreatePic(name));
     }
 }
 
@@ -1102,17 +986,12 @@ static fidata_text_t* stateGetText(fi_state_t* s, const char* name)
 {
     assert(name && name);
     {
-    fidata_text_t* text;
+    fidata_text_t* obj;
     // An existing Text?
-    if((text = objectsFindText(&s->objects, name)))
-        return text;
-
-    // Try allocate another?
-    if((text = createText(s, name)))
-        return text;
-
-    Con_Message("InFine: No room for Text \"%s\".\n", name);
-    return &dummyText; // No more space.
+    if((obj = (fidata_text_t*)objectsFind2(&s->objects, name, FI_TEXT)))
+        return obj;
+    // Allocate and attach another.
+    return (fidata_text_t*)objectsAdd(&s->objects, (fi_object_t*)P_CreateText(name));
     }
 }
 
@@ -1259,6 +1138,79 @@ static void demoEnds(void)
     active = true;
 
     gx.FI_DemoEnds();
+}
+
+fidata_pic_t* P_CreatePic(const char* name)
+{
+    fidata_pic_t* obj = Z_Calloc(sizeof(*obj), PU_STATIC, 0);
+
+    obj->type = FI_PIC;
+    objectSetUniqueName((fi_object_t*)obj, name);
+    AnimatorVector4_Init(obj->color, 1, 1, 1, 1);
+    AnimatorVector2_Init(obj->scale, 1, 1);
+
+    FIData_PicClearAnimation(obj);
+    return obj;
+}
+
+void P_DestroyPic(fidata_pic_t* pic)
+{
+    assert(pic);
+    if(pic->flags.is_ximage)
+    {
+        FIData_PicDeleteXImage(pic);
+    }
+    Z_Free(pic);
+}
+
+fidata_text_t* P_CreateText(const char* name)
+{
+#define LEADING             (11.f/7-1)
+
+    fidata_text_t* obj = Z_Calloc(sizeof(*obj), PU_STATIC, 0);
+    float rgba[4];
+
+    {int i;
+    for(i = 0; i < 3; ++i)
+        rgba[i] = fiDefaultTextRGB[i];
+    }
+    rgba[CA] = 1; // Opaque.
+
+    // Initialize it.
+    obj->type = FI_TEXT;
+    objectSetUniqueName((fi_object_t*)obj, name);
+    AnimatorVector4_Init(obj->color, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
+    AnimatorVector2_Init(obj->scale, 1, 1);
+
+    obj->wait = 3;
+    obj->font = R_CompositeFontNumForName("a");
+    obj->lineheight = LEADING;
+
+    return obj;
+
+#undef LEADING
+}
+
+void P_DestroyText(fidata_text_t* text)
+{
+    assert(text);
+    if(text->text)
+    {
+        // Free the memory allocated for the text string.
+        Z_Free(text->text);
+        text->text = NULL;
+    }
+    Z_Free(text);
+}
+
+void FIObject_Think(fi_object_t* obj)
+{
+    assert(obj);
+
+    AnimatorVector2_Think(obj->pos);
+    AnimatorVector2_Think(obj->scale);
+    AnimatorVector4_Think(obj->color);
+    Animator_Think(&obj->angle);
 }
 
 boolean FI_Active(void)
@@ -1613,7 +1565,9 @@ void FIData_PicDraw(fidata_pic_t* pic, float xOffset, float yOffset)
     }
     else if(pic->flags.is_patch)
     {
-        R_DrawPatch(R_FindPatchTex((patchid_t)pic->tex[sq]), 0, 0);
+        patchtex_t* patch;
+        if((patch = R_FindPatchTex((patchid_t)pic->tex[sq])))
+            R_DrawPatch(patch, 0, 0);
     }
     else
     {
@@ -2094,7 +2048,13 @@ DEFFC(Delete)
     fi_object_t* obj;
     if((obj = objectsFind(&s->objects, scriptNextToken(s))))
     {
-        obj->used = false;
+        objectsRemove(&s->objects, obj);
+        switch(obj->type)
+        {
+        case FI_PIC:    P_DestroyPic((fidata_pic_t*)obj);   break;
+        case FI_TEXT:   P_DestroyText((fidata_text_t*)obj); break;
+        default: break;
+        }
     }
 }
 
@@ -2314,8 +2274,7 @@ DEFFC(ObjectOffY)
 
 DEFFC(ObjectRGB)
 {
-    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
-    fidata_pic_t* pic = objectsFindPic(&s->objects, obj ? obj->name : NULL);
+    fidata_pic_t* obj = (fidata_pic_t*)objectsFind2(&s->objects, scriptNextToken(s), FI_PIC);
     float rgb[3];
     
     {int i;
@@ -2327,30 +2286,29 @@ DEFFC(ObjectRGB)
     {
         AnimatorVector3_Set(obj->color, rgb[CR], rgb[CG], rgb[CB], s->inTime);
 
-        if(pic && pic->flags.is_rect)
+        if(obj->flags.is_rect)
         {
             // This affects all the colors.
-            AnimatorVector3_Set(pic->otherColor, rgb[CR], rgb[CG], rgb[CB], s->inTime);
-            AnimatorVector3_Set(pic->edgeColor, rgb[CR], rgb[CG], rgb[CB], s->inTime);
-            AnimatorVector3_Set(pic->otherEdgeColor, rgb[CR], rgb[CG], rgb[CB], s->inTime);
+            AnimatorVector3_Set(obj->otherColor, rgb[CR], rgb[CG], rgb[CB], s->inTime);
+            AnimatorVector3_Set(obj->edgeColor, rgb[CR], rgb[CG], rgb[CB], s->inTime);
+            AnimatorVector3_Set(obj->otherEdgeColor, rgb[CR], rgb[CG], rgb[CB], s->inTime);
         }
     }
 }
 
 DEFFC(ObjectAlpha)
 {
-    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
-    fidata_pic_t* pic = objectsFindPic(&s->objects, obj ? obj->name : NULL);
+    fidata_pic_t* obj = (fidata_pic_t*)objectsFind2(&s->objects, scriptNextToken(s), FI_PIC);
     float value = scriptParseFloat(s);
     if(obj)
     {
         Animator_Set(&obj->color[3], value, s->inTime);
 
-        if(pic && pic->flags.is_rect)
+        if(obj && obj->flags.is_rect)
         {
-            Animator_Set(&pic->otherColor[3], value, s->inTime);
-            /*Animator_Set(&pic->edgeColor[3], value, s->inTime);
-            Animator_Set(&pic->otherEdgeColor[3], value, s->inTime); */
+            Animator_Set(&obj->otherColor[3], value, s->inTime);
+            /*Animator_Set(&obj->edgeColor[3], value, s->inTime);
+            Animator_Set(&obj->otherEdgeColor[3], value, s->inTime); */
         }
     }
 }
@@ -2632,13 +2590,11 @@ DEFFC(SetTextDef)
 
 DEFFC(DeleteText)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    tex->used = false;
-    if(tex->text)
+    fi_object_t* obj;
+    if((obj = (fi_object_t*)stateGetText(s, scriptNextToken(s))))
     {
-        // Free the memory allocated for the text string.
-        Z_Free(tex->text);
-        tex->text = NULL;
+        objectsRemove(&s->objects, obj);
+        P_DestroyText((fidata_text_t*)obj);
     }
 }
 
