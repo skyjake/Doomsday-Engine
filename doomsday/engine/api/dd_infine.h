@@ -25,20 +25,11 @@
 #ifndef LIBDENG_API_INFINE_H
 #define LIBDENG_API_INFINE_H
 
+#include "dd_animator.h"
 #include "dd_compositefont.h"
 
 typedef char fi_name_t[32];
 typedef fi_name_t fi_objectname_t;
-
-typedef struct {
-    float           value;
-    float           target;
-    int             steps;
-} fi_value_t;
-
-typedef fi_value_t fi_value2_t[2];
-typedef fi_value_t fi_value3_t[3];
-typedef fi_value_t fi_value4_t[4];
 
 typedef enum infinemode_e {
     FIMODE_LOCAL,
@@ -63,15 +54,17 @@ typedef enum {
     FI_PIC
 } fi_obtype_e;
 
-typedef struct fidata_object_s {
-    fi_obtype_e     type; // Type of the object.
-    fi_objectname_t name;
-    boolean         used;
-    fi_value2_t     pos;
-    fi_value_t      angle;
-    fi_value4_t     color;
-    fi_value2_t     scale;
-} fi_object_t;
+struct fi_object_s;
+
+// Base fi_objects_t elements. All objects MUST use this as their basis.
+#define FIOBJECT_BASE_ELEMENTS() \
+    fi_obtype_e     type; /* Type of the object. */ \
+    fi_objectname_t name; \
+    boolean         used; \
+    animatorvector2_t pos; \
+    animator_t      angle; \
+    animatorvector4_t color; \
+    animatorvector2_t scale;
 
 /**
  * Image sequence.
@@ -79,7 +72,7 @@ typedef struct fidata_object_s {
 #define FIDATA_PIC_MAX_SEQUENCE     64
 
 typedef struct fidata_pic_s {
-    fi_object_t     object;
+    FIOBJECT_BASE_ELEMENTS()
     struct fidata_pic_flags_s {
         char            is_patch:1; // Raw image or patch.
         char            done:1; // Animation finished (or repeated).
@@ -94,9 +87,9 @@ typedef struct fidata_pic_s {
     short           sound[FIDATA_PIC_MAX_SEQUENCE];
 
     // For rectangle-objects.
-    fi_value4_t      otherColor;
-    fi_value4_t      edgeColor;
-    fi_value4_t      otherEdgeColor;
+    animatorvector4_t otherColor;
+    animatorvector4_t edgeColor;
+    animatorvector4_t otherEdgeColor;
 } fidata_pic_t;
 
 void                FIData_PicThink(fidata_pic_t* pic);
@@ -111,7 +104,7 @@ void                FIData_PicRotationOrigin(const fidata_pic_t* pic, float cent
  * Text.
  */
 typedef struct fidata_text_s {
-    fi_object_t     object;
+    FIOBJECT_BASE_ELEMENTS()
     struct fidata_text_flags_s {
         char            centered:1;
         char            all_visible:1;

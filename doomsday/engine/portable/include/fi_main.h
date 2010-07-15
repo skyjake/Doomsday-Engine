@@ -25,6 +25,11 @@
 #ifndef LIBDENG_INFINE_MAIN_H
 #define LIBDENG_INFINE_MAIN_H
 
+// We'll use the base template directly as our object.
+typedef struct fi_object_s {
+    FIOBJECT_BASE_ELEMENTS()
+} fi_object_t;
+
 /**
  * @defgroup playsimServerFinaleFlags Play-simulation Server-side Finale Flags.
  *

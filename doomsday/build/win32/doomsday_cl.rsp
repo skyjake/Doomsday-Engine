@@ -1,3 +1,4 @@
+ .\..\..\engine\portable\src\animator.c
  .\..\..\engine\portable\src\def_read.c
  .\..\..\engine\portable\src\def_main.c
  .\..\..\engine\portable\src\def_data.c

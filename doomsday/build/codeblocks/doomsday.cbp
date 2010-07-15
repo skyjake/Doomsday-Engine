@@ -141,6 +141,7 @@
 		</VirtualTargets>
 		<Unit filename="..\..\engine\api\Doomsday.def" />
 		<Unit filename="..\..\engine\api\dd_api.h" />
+		<Unit filename="..\..\engine\api\dd_animator.h" />
 		<Unit filename="..\..\engine\api\dd_compositefont.h" />
 		<Unit filename="..\..\engine\api\dd_gl.h" />
 		<Unit filename="..\..\engine\api\dd_maptypes.h" />
@@ -357,6 +358,7 @@
 		<Unit filename="..\..\engine\portable\include\ui_main.h" />
 		<Unit filename="..\..\engine\portable\include\ui_mpi.h" />
 		<Unit filename="..\..\engine\portable\include\ui_panel.h" />
+		<Unit filename="..\..\engine\portable\src\animator.c" />
 		<Unit filename="..\..\engine\portable\src\b_command.c">
 			<Option compilerVar="CC" />
 		</Unit>

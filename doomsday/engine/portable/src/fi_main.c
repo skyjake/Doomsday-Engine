@@ -70,7 +70,7 @@ typedef struct fi_object_collection_s {
 } fi_object_collection_t;
 
 typedef struct fi_state_s {
-    struct fistate_flags_s {
+    struct fi_state_flags_s {
         char            can_skip:1;
         char            suspended:1;
         char            paused:1;
@@ -91,11 +91,11 @@ typedef struct fi_state_s {
     fidata_text_t*  waitingText;
     fidata_pic_t*   waitingPic;
     material_t*     bgMaterial;
-    fi_value4_t     bgColor;
-    fi_value4_t     imgColor;
-    fi_value2_t     imgOffset;
-    fi_value4_t     filter;
-    fi_value3_t     textColor[9];
+    animatorvector4_t bgColor;
+    animatorvector4_t imgColor;
+    animatorvector2_t imgOffset;
+    animatorvector4_t filter;
+    animatorvector3_t textColor[9];
 
     int             initialGameState; // Game state before the script began.
     int             overlayGameState; // Overlay scripts run only in one gameMode.
@@ -375,7 +375,7 @@ static fi_cmd_t* findCommand(const char* name)
     return 0; // Not found.
 }
 
-static void useColor(fi_value_t *color, int components)
+static void useColor(animator_t *color, int components)
 {
     if(components == 3)
     {
@@ -397,87 +397,6 @@ static DGLuint loadGraphics(ddresourceclass_t resClass, const char* name,
                                 otherFlags);
 }
 
-static void valueInit(fi_value_t* v, float value)
-{
-    v->target = v->value = value;
-    v->steps = 0;
-}
-
-static void value2Init(fi_value2_t val, float x, float y)
-{
-    valueInit(&val[0], x);
-    valueInit(&val[1], y);
-}
-
-static void value3Init(fi_value3_t val, float x, float y, float z)
-{
-    value2Init(val, x, y);
-    valueInit(&val[2], z);
-}
-
-static void value4Init(fi_value4_t val, float x, float y, float z, float w)
-{
-    value3Init(val, x, y, z);
-    valueInit(&val[3], w);
-}
-
-static void valueSet(fi_value_t* v, float value, int steps)
-{
-    v->target = value;
-    v->steps = steps;
-    if(!v->steps)
-        v->value = v->target;
-}
-
-static void value2Set(fi_value2_t v, float x, float y, int steps)
-{
-    valueSet(&v[0], x, steps);
-    valueSet(&v[1], y, steps);
-}
-
-static void value3Set(fi_value3_t v, float x, float y, float z, int steps)
-{
-    value2Set(v, x, y, steps);
-    valueSet(&v[2], z, steps);
-}
-
-static void value4Set(fi_value4_t v, float x, float y, float z, float w, int steps)
-{
-    value3Set(v, x, y, z, steps);
-    valueSet(&v[3], w, steps);
-}
-
-static void valueThink(fi_value_t* val)
-{
-    if(val->steps <= 0)
-    {
-        val->steps = 0;
-        val->value = val->target;
-        return;
-    }
-
-    val->value += (val->target - val->value) / val->steps;
-    val->steps--;
-}
-
-static void value2Think(fi_value2_t val)
-{
-    valueThink(&val[0]);
-    valueThink(&val[1]);
-}
-
-static void value3Think(fi_value3_t val)
-{
-    value2Think(val);
-    valueThink(&val[2]);
-}
-
-static void value4Think(fi_value4_t val)
-{
-    value3Think(val);
-    valueThink(&val[3]);
-}
-
 static void objectSetUniqueName(fi_object_t* obj, const char* name)
 {
     strncpy(obj->name, name, sizeof(obj->name) - 1);
@@ -487,10 +406,10 @@ void FIObject_Think(fi_object_t* obj)
 {
     assert(obj);
 
-    value2Think(obj->pos);
-    value2Think(obj->scale);
-    value4Think(obj->color);
-    valueThink(&obj->angle);
+    AnimatorVector2_Think(obj->pos);
+    AnimatorVector2_Think(obj->scale);
+    AnimatorVector4_Think(obj->color);
+    Animator_Think(&obj->angle);
 }
 
 static fi_state_t* allocState(void)
@@ -540,7 +459,7 @@ static void objectsThink(fi_object_collection_t* c)
     for(i = 0; i < MAX_PICS; ++i)
     {
         fidata_pic_t* pic = &c->pics[i];
-        if(!pic->object.used)
+        if(!pic->used)
             continue;
         FIData_PicThink(pic);
     }
@@ -549,7 +468,7 @@ static void objectsThink(fi_object_collection_t* c)
     for(i = 0; i < MAX_TEXT; ++i)
     {
         fidata_text_t* text = &c->text[i];
-        if(!text->object.used)
+        if(!text->used)
             continue;
         FIData_TextThink(text);
     }
@@ -562,8 +481,7 @@ static void objectsDraw(fi_object_collection_t* c, float picXOffset, float picYO
     for(i = 0; i < MAX_PICS; ++i)
     {
         fidata_pic_t* pic = &c->pics[i];
-        fi_object_t* obj = &pic->object;
-        if(!pic->object.used)
+        if(!pic->used)
             continue;
         FIData_PicDraw(pic, picXOffset, picYOffset);
     }
@@ -572,7 +490,7 @@ static void objectsDraw(fi_object_collection_t* c, float picXOffset, float picYO
     for(i = 0; i < MAX_TEXT; ++i)
     {
         fidata_text_t* tex = &c->text[i];
-        if(!tex->object.used)
+        if(!tex->used)
             continue;
         FIData_TextDraw(tex, 0, 0);
     }
@@ -610,7 +528,7 @@ static fidata_text_t* objectsFindText(fi_object_collection_t* c, const char* nam
     {uint i;
     for(i = 0; i < MAX_TEXT; ++i)
     {
-        fi_object_t* obj = &c->text[i].object;
+        fidata_text_t* obj = &c->text[i];
         if(obj->used && !stricmp(obj->name, name))
         {
             return &c->text[i];
@@ -625,7 +543,7 @@ static fidata_pic_t* objectsFindPic(fi_object_collection_t* c, const char* name)
     {uint i;
     for(i = 0; i < MAX_PICS; ++i)
     {
-        fi_object_t* obj = &c->pics[i].object;
+        fidata_pic_t* obj = &c->pics[i];
         if(obj->used && !stricmp(obj->name, name))
         {
             return &c->pics[i];
@@ -639,13 +557,12 @@ static fidata_pic_t* objectsFindUnusedPic(fi_object_collection_t* c)
     {uint i;
     for(i = 0; i < MAX_PICS; ++i)
     {
-        fidata_pic_t* pic = &c->pics[i];
-        fi_object_t* obj = &pic->object;
+        fidata_pic_t* obj = &c->pics[i];
         if(!obj->used)
         {
-            memset(pic, 0, sizeof(*pic));
-            pic->object.type = FI_PIC;
-            return pic;
+            memset(obj, 0, sizeof(*obj));
+            obj->type = FI_PIC;
+            return obj;
         }
     }}
     return 0; /// @todo Oh noes! Remove fixed limit.
@@ -656,13 +573,12 @@ static fidata_text_t* objectsFindUnusedText(fi_object_collection_t* c)
     {uint i;
     for(i = 0; i < MAX_TEXT; ++i)
     {
-        fidata_text_t* text = &c->text[i];
-        fi_object_t* obj = &text->object;
+        fidata_text_t* obj = &c->text[i];
         if(!obj->used)
         {
-            memset(text, 0, sizeof(*text));
-            text->object.type = FI_TEXT;
-            return text;
+            memset(obj, 0, sizeof(*obj));
+            obj->type = FI_TEXT;
+            return obj;
         }
     }}
     return 0; /// @todo Oh noes! Remove fixed limit.
@@ -678,20 +594,20 @@ static fi_object_t* objectsFind2(fi_object_collection_t* c, const char* name, fi
     case FI_TEXT:
         for(i = 0; i < MAX_TEXT; ++i)
         {
-            fi_object_t* obj = &c->text[i].object;
+            fidata_text_t* obj = &c->text[i];
             if(obj->used && !stricmp(obj->name, name))
             {
-                return obj;
+                return (fi_object_t*)obj;
             }
         }
         break;
     case FI_PIC:
         for(i = 0; i < MAX_PICS; ++i)
         {
-            fi_object_t* obj = &c->pics[i].object;
+            fidata_pic_t* obj = &c->pics[i];
             if(obj->used && !stricmp(obj->name, name))
             {
-                return obj;
+                return (fi_object_t*)obj;
             }
         }
         break;
@@ -784,13 +700,13 @@ static void stateClear(fi_state_t* s)
     memset(s->imgOffset, 0, sizeof(s->imgOffset));
     memset(s->filter, 0, sizeof(s->filter));
     
-    value4Init(s->bgColor, 1, 1, 1, 1);
+    AnimatorVector4_Init(s->bgColor, 1, 1, 1, 1);
 
     objectsClear(&s->objects);
 
     for(i = 0; i < 9; ++i)
     {
-        value3Init(s->textColor[i], 1, 1, 1);
+        AnimatorVector3_Init(s->textColor[i], 1, 1, 1);
     }
 }
 
@@ -1076,33 +992,30 @@ static boolean scriptExecuteNextCommand(fi_state_t* s)
 
 static fidata_pic_t* createPic(fi_state_t* s, const char* name)
 {
-    fidata_pic_t* pic;
-    if((pic = objectsFindUnusedPic(&s->objects)))
+    fidata_pic_t* obj;
+    if((obj = objectsFindUnusedPic(&s->objects)))
     {
-        fi_object_t* obj = &pic->object;
-
         // Mark it used.
         obj->used = true;
 
         // Initialize it.
-        objectSetUniqueName(obj, name);
-        value4Init(obj->color, 1, 1, 1, 1);
-        value2Init(obj->scale, 1, 1);
+        objectSetUniqueName((fi_object_t*)obj, name);
+        AnimatorVector4_Init(obj->color, 1, 1, 1, 1);
+        AnimatorVector2_Init(obj->scale, 1, 1);
 
-        FIData_PicClearAnimation(pic);
-        return pic;
+        FIData_PicClearAnimation(obj);
+        return obj;
     }
     return 0;
 }
 
 static fidata_text_t* createText(fi_state_t* s, const char* name)
 {
-    fidata_text_t* text;
-    if((text = objectsFindUnusedText(&s->objects)))
+    fidata_text_t* obj;
+    if((obj = objectsFindUnusedText(&s->objects)))
     {
 #define LEADING             (11.f/7-1)
 
-        fi_object_t* obj = &text->object;
         float rgba[4];
 
         {int i;
@@ -1115,15 +1028,15 @@ static fidata_text_t* createText(fi_state_t* s, const char* name)
         obj->used = true;
 
         // Initialize it.
-        objectSetUniqueName(obj, name);
-        value4Init(obj->color, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
-        value2Init(obj->scale, 1, 1);
+        objectSetUniqueName((fi_object_t*)obj, name);
+        AnimatorVector4_Init(obj->color, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
+        AnimatorVector2_Init(obj->scale, 1, 1);
 
-        text->wait = 3;
-        text->font = R_CompositeFontNumForName("a");
-        text->lineheight = LEADING;
+        obj->wait = 3;
+        obj->font = R_CompositeFontNumForName("a");
+        obj->lineheight = LEADING;
 
-        return text;
+        return obj;
 
 #undef LEADING
     }
@@ -1226,11 +1139,11 @@ static void scriptTick(fi_state_t* s)
     s->timer++;
 
     // Interpolateable values.
-    value4Think(s->bgColor);
-    value2Think(s->imgOffset);
-    value4Think(s->filter);
+    AnimatorVector4_Think(s->bgColor);
+    AnimatorVector2_Think(s->imgOffset);
+    AnimatorVector4_Think(s->filter);
     for(i = 0; i < 9; ++i)
-        value3Think(s->textColor[i]);
+        AnimatorVector3_Think(s->textColor[i]);
 
     objectsThink(&s->objects);
 
@@ -1331,21 +1244,6 @@ static void stateDraw(fi_state_t* s)
         glEnd();
 
         DGL_Enable(DGL_TEXTURING);
-    }
-}
-
-static void scriptUseTextColor(fi_state_t* s, fidata_text_t* text, int idx)
-{
-    if(!idx)
-    {   // Use the default color for the text.
-        useColor(text->object.color, 4);
-    }
-    else
-    {
-        glColor4f(s->textColor[idx - 1][0].value,
-                  s->textColor[idx - 1][1].value,
-                  s->textColor[idx - 1][2].value,
-                  text->object.color[3].value);
     }
 }
 
@@ -1598,11 +1496,11 @@ void FIData_PicThink(fidata_pic_t* p)
     assert(p);
 
     // Call parent thinker.
-    FIObject_Think(&p->object);
+    FIObject_Think((fi_object_t*)p);
 
-    value4Think(p->otherColor);
-    value4Think(p->edgeColor);
-    value4Think(p->otherEdgeColor);
+    AnimatorVector4_Think(p->otherColor);
+    AnimatorVector4_Think(p->edgeColor);
+    AnimatorVector4_Think(p->otherEdgeColor);
 
     // If animating, decrease the sequence timer.
     if(p->seqWait[p->seq])
@@ -1639,29 +1537,28 @@ void FIData_PicDraw(fidata_pic_t* pic, float xOffset, float yOffset)
 {
     assert(pic);
     {
-    fi_object_t* obj = &pic->object;
     float mid[2];
     int sq = pic->seq;
 
     // Fully transparent pics will not be drawn.
-    if(obj->color[3].value == 0)
+    if(pic->color[3].value == 0)
         return;
 
     DGL_SetNoMaterial(); // Hmm...
-    useColor(obj->color, 4);
+    useColor(pic->color, 4);
     FIData_PicRotationOrigin(pic, mid);
 
     // Setup the transformation.
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(obj->pos[0].value + xOffset, obj->pos[1].value + yOffset, 0);
+    glTranslatef(pic->pos[0].value + xOffset, pic->pos[1].value + yOffset, 0);
     glTranslatef(mid[VX], mid[VY], 0);
 
-    rotate(obj->angle.value);
+    rotate(pic->angle.value);
 
     // Move to origin.
     glTranslatef(-mid[VX], -mid[VY], 0);
-    glScalef((pic->flip[sq] ? -1 : 1) * obj->scale[0].value, obj->scale[1].value, 1);
+    glScalef((pic->flip[sq] ? -1 : 1) * pic->scale[0].value, pic->scale[1].value, 1);
 
     // Draw it.
     if(pic->flags.is_rect)
@@ -1678,7 +1575,7 @@ void FIData_PicDraw(fidata_pic_t* pic, float xOffset, float yOffset)
         }
 
         glBegin(GL_QUADS);
-            useColor(obj->color, 4);
+            useColor(pic->color, 4);
             glTexCoord2f(0, 0);
             glVertex2f(0, 0);
 
@@ -1725,8 +1622,8 @@ void FIData_PicDraw(fidata_pic_t* pic, float xOffset, float yOffset)
         glLoadIdentity();
 
         /// \fixme What about rotaton?
-        glTranslatef(obj->pos[0].value + xOffset, obj->pos[1].value + yOffset, 0);
-        glScalef((pic->flip[sq]? -1 : 1) * obj->scale[0].value, obj->scale[1].value, 1);
+        glTranslatef(pic->pos[0].value + xOffset, pic->pos[1].value + yOffset, 0);
+        glScalef((pic->flip[sq]? -1 : 1) * pic->scale[0].value, pic->scale[1].value, 1);
 
         DGL_DrawRawScreen(pic->tex[sq], 0, 0);
 
@@ -1744,16 +1641,16 @@ void FIData_PicInit(fidata_pic_t* pic)
 {
     assert(pic);
 
-    value2Init(pic->object.pos, 0, 0);
-    value2Init(pic->object.scale, 1, 1);
+    AnimatorVector2_Init(pic->pos, 0, 0);
+    AnimatorVector2_Init(pic->scale, 1, 1);
 
     // Default colors.
-    value4Init(pic->object.color, 1, 1, 1, 1);
-    value4Init(pic->otherColor, 1, 1, 1, 1);
+    AnimatorVector4_Init(pic->color, 1, 1, 1, 1);
+    AnimatorVector4_Init(pic->otherColor, 1, 1, 1, 1);
 
     // Edge alpha is zero by default.
-    value4Init(pic->edgeColor, 1, 1, 1, 0);
-    value4Init(pic->otherEdgeColor, 1, 1, 1, 0);
+    AnimatorVector4_Init(pic->edgeColor, 1, 1, 1, 0);
+    AnimatorVector4_Init(pic->otherEdgeColor, 1, 1, 1, 0);
 }
 
 void FIData_PicDeleteXImage(fidata_pic_t* pic)
@@ -1824,8 +1721,8 @@ void FIData_PicRotationOrigin(const fidata_pic_t* pic, float center[2])
         center[VY] = 100;
     }
 
-    center[VX] *= pic->object.scale[VX].value;
-    center[VY] *= pic->object.scale[VY].value;
+    center[VX] *= pic->scale[VX].value;
+    center[VY] *= pic->scale[VY].value;
 }
 
 void FIData_TextThink(fidata_text_t* t)
@@ -1833,7 +1730,7 @@ void FIData_TextThink(fidata_text_t* t)
     assert(t);
 
     // Call parent thinker.
-    FIObject_Think(&t->object);
+    FIObject_Think((fi_object_t*)t);
 
     if(t->wait)
     {
@@ -1849,8 +1746,8 @@ void FIData_TextThink(fidata_text_t* t)
         if(--t->scrollTimer <= 0)
         {
             t->scrollTimer = t->scrollWait;
-            t->object.pos[1].target -= 1;
-            t->object.pos[1].steps = t->scrollWait;
+            t->pos[1].target -= 1;
+            t->pos[1].steps = t->scrollWait;
         }
     }
 
@@ -1872,14 +1769,14 @@ void FIData_TextDraw(fidata_text_t* tex, float xOffset, float yOffset)
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(tex->object.pos[0].value + xOffset, tex->object.pos[1].value + yOffset, 0);
+    glTranslatef(tex->pos[0].value + xOffset, tex->pos[1].value + yOffset, 0);
 
-    rotate(tex->object.angle.value);
-    glScalef(tex->object.scale[0].value, tex->object.scale[1].value, 1);
+    rotate(tex->angle.value);
+    glScalef(tex->scale[0].value, tex->scale[1].value, 1);
 
     // Draw it.
     // Set color zero (the normal color).
-    scriptUseTextColor(s, tex, 0);
+    useColor(tex->color, 4);
     for(cnt = 0, ptr = tex->text; *ptr && (!tex->wait || cnt < tex->cursorPos); ptr++)
     {
         if(linew < 0)
@@ -1894,7 +1791,15 @@ void FIData_TextDraw(fidata_text_t* tex, float xOffset, float yOffset)
             // Change of color.
             if(*ptr >= '0' && *ptr <= '9')
             {
-                scriptUseTextColor(s, tex, *ptr - '0');
+                animatorvector3_t* color;
+                uint colorIdx = *ptr - '0';
+
+                if(!colorIdx)
+                    color = (animatorvector3_t*) &tex->color; // Use the default color.
+                else
+                    color = &s->textColor[colorIdx-1];
+
+                glColor4f((*color)[0].value, (*color)[1].value, (*color)[2].value, tex->color[3].value);
                 continue;
             }
 
@@ -1928,8 +1833,8 @@ void FIData_TextDraw(fidata_text_t* tex, float xOffset, float yOffset)
         }
 
         // Let's do Y-clipping (in case of tall text blocks).
-        if(tex->object.scale[1].value * y + tex->object.pos[1].value >= -tex->object.scale[1].value * tex->lineheight &&
-           tex->object.scale[1].value * y + tex->object.pos[1].value < SCREENHEIGHT)
+        if(tex->scale[1].value * y + tex->pos[1].value >= -tex->scale[1].value * tex->lineheight &&
+           tex->scale[1].value * y + tex->pos[1].value < SCREENHEIGHT)
         {
             GL_DrawChar2(ch, tex->flags.centered ? x - linew / 2 : x, y, tex->font);
             x += GL_CharWidth(ch, tex->font);
@@ -2053,12 +1958,12 @@ DEFFC(WaitAnim)
 
 DEFFC(Color)
 {
-    value3Set(s->bgColor, scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), s->inTime);
+    AnimatorVector3_Set(s->bgColor, scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), s->inTime);
 }
 
 DEFFC(ColorAlpha)
 {
-    value4Set(s->bgColor, scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), s->inTime);
+    AnimatorVector4_Set(s->bgColor, scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), s->inTime);
 }
 
 DEFFC(Pause)
@@ -2213,7 +2118,7 @@ DEFFC(ImageAt)
     fidata_pic_t* pic = stateGetPic(s, scriptNextToken(s));
     const char* name;
 
-    value2Init(pic->object.pos, scriptParseFloat(s), scriptParseFloat(s));
+    AnimatorVector2_Init(pic->pos, scriptParseFloat(s), scriptParseFloat(s));
     FIData_PicClearAnimation(pic);
 
     name = scriptNextToken(s);
@@ -2248,7 +2153,7 @@ DEFFC(Patch)
     const char* name;
     patchid_t patch;
 
-    value2Init(pic->object.pos, scriptParseFloat(s), scriptParseFloat(s));
+    AnimatorVector2_Init(pic->pos, scriptParseFloat(s), scriptParseFloat(s));
     FIData_PicClearAnimation(pic);
 
     name = scriptNextToken(s);
@@ -2392,7 +2297,7 @@ DEFFC(ObjectOffX)
 
     if(obj)
     {
-        valueSet(&obj->pos[0], value, s->inTime);
+        Animator_Set(&obj->pos[0], value, s->inTime);
     }
 }
 
@@ -2403,7 +2308,7 @@ DEFFC(ObjectOffY)
 
     if(obj)
     {
-        valueSet(&obj->pos[1], value, s->inTime);
+        Animator_Set(&obj->pos[1], value, s->inTime);
     }
 }
 
@@ -2420,14 +2325,14 @@ DEFFC(ObjectRGB)
 
     if(obj)
     {
-        value3Set(obj->color, rgb[CR], rgb[CG], rgb[CB], s->inTime);
+        AnimatorVector3_Set(obj->color, rgb[CR], rgb[CG], rgb[CB], s->inTime);
 
         if(pic && pic->flags.is_rect)
         {
             // This affects all the colors.
-            value3Set(pic->otherColor, rgb[CR], rgb[CG], rgb[CB], s->inTime);
-            value3Set(pic->edgeColor, rgb[CR], rgb[CG], rgb[CB], s->inTime);
-            value3Set(pic->otherEdgeColor, rgb[CR], rgb[CG], rgb[CB], s->inTime);
+            AnimatorVector3_Set(pic->otherColor, rgb[CR], rgb[CG], rgb[CB], s->inTime);
+            AnimatorVector3_Set(pic->edgeColor, rgb[CR], rgb[CG], rgb[CB], s->inTime);
+            AnimatorVector3_Set(pic->otherEdgeColor, rgb[CR], rgb[CG], rgb[CB], s->inTime);
         }
     }
 }
@@ -2439,13 +2344,13 @@ DEFFC(ObjectAlpha)
     float value = scriptParseFloat(s);
     if(obj)
     {
-        valueSet(&obj->color[3], value, s->inTime);
+        Animator_Set(&obj->color[3], value, s->inTime);
 
         if(pic && pic->flags.is_rect)
         {
-            valueSet(&pic->otherColor[3], value, s->inTime);
-            /*valueSet(&pic->edgeColor[3], value, s->inTime);
-            valueSet(&pic->otherEdgeColor[3], value, s->inTime); */
+            Animator_Set(&pic->otherColor[3], value, s->inTime);
+            /*Animator_Set(&pic->edgeColor[3], value, s->inTime);
+            Animator_Set(&pic->otherEdgeColor[3], value, s->inTime); */
         }
     }
 }
@@ -2456,7 +2361,7 @@ DEFFC(ObjectScaleX)
     float value = scriptParseFloat(s);
     if(obj)
     {
-        valueSet(&obj->scale[0], value, s->inTime);
+        Animator_Set(&obj->scale[0], value, s->inTime);
     }
 }
 
@@ -2466,7 +2371,7 @@ DEFFC(ObjectScaleY)
     float value = scriptParseFloat(s);
     if(obj)
     {
-        valueSet(&obj->scale[1], value, s->inTime);
+        Animator_Set(&obj->scale[1], value, s->inTime);
     }
 }
 
@@ -2476,7 +2381,7 @@ DEFFC(ObjectScale)
     float value = scriptParseFloat(s);
     if(obj)
     {
-        value2Set(obj->scale, value, value, s->inTime);
+        AnimatorVector2_Set(obj->scale, value, value, s->inTime);
     }
 }
 
@@ -2487,7 +2392,7 @@ DEFFC(ObjectScaleXY)
     float y = scriptParseFloat(s);
     if(obj)
     {
-        value2Set(obj->scale, x, y, s->inTime);
+        AnimatorVector2_Set(obj->scale, x, y, s->inTime);
     }
 }
 
@@ -2497,7 +2402,7 @@ DEFFC(ObjectAngle)
     float value = scriptParseFloat(s);
     if(obj)
     {
-        valueSet(&obj->angle, value, s->inTime);
+        Animator_Set(&obj->angle, value, s->inTime);
     }
 }
 
@@ -2508,8 +2413,8 @@ DEFFC(Rect)
     FIData_PicInit(pic);
 
     // Position and size.
-    value2Init(pic->object.pos, scriptParseFloat(s), scriptParseFloat(s));
-    value2Init(pic->object.scale, scriptParseFloat(s), scriptParseFloat(s));
+    AnimatorVector2_Init(pic->pos, scriptParseFloat(s), scriptParseFloat(s));
+    AnimatorVector2_Init(pic->scale, scriptParseFloat(s), scriptParseFloat(s));
 
     pic->flags.is_rect = true;
     pic->flags.is_patch = false;
@@ -2549,9 +2454,9 @@ DEFFC(FillColor)
     }
 
     if(which & 1)
-        value4Set(obj->color, rgba[CR], rgba[CG], rgba[CB], rgba[CA], s->inTime);
+        AnimatorVector4_Set(obj->color, rgba[CR], rgba[CG], rgba[CB], rgba[CA], s->inTime);
     if(which & 2)
-        value4Set(pic->otherColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], s->inTime);
+        AnimatorVector4_Set(pic->otherColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], s->inTime);
 }
 
 DEFFC(EdgeColor)
@@ -2586,19 +2491,19 @@ DEFFC(EdgeColor)
     }
 
     if(which & 1)
-        value4Set(pic->edgeColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], s->inTime);
+        AnimatorVector4_Set(pic->edgeColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], s->inTime);
     if(which & 2)
-        value4Set(pic->otherEdgeColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], s->inTime);
+        AnimatorVector4_Set(pic->otherEdgeColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], s->inTime);
 }
 
 DEFFC(OffsetX)
 {
-    valueSet(&s->imgOffset[0], scriptParseFloat(s), s->inTime);
+    Animator_Set(&s->imgOffset[0], scriptParseFloat(s), s->inTime);
 }
 
 DEFFC(OffsetY)
 {
-    valueSet(&s->imgOffset[1], scriptParseFloat(s), s->inTime);
+    Animator_Set(&s->imgOffset[1], scriptParseFloat(s), s->inTime);
 }
 
 DEFFC(Sound)
@@ -2645,14 +2550,14 @@ DEFFC(MusicOnce)
 
 DEFFC(Filter)
 {
-    value4Set(s->filter, scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), s->inTime);
+    AnimatorVector4_Set(s->filter, scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), s->inTime);
 }
 
 DEFFC(Text)
 {
     fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
 
-    value2Init(tex->object.pos, scriptParseFloat(s), scriptParseFloat(s));
+    AnimatorVector2_Init(tex->pos, scriptParseFloat(s), scriptParseFloat(s));
     FIData_TextCopy(tex, scriptNextToken(s));
     tex->cursorPos = 0; // Restart the text.
 }
@@ -2662,7 +2567,7 @@ DEFFC(TextFromDef)
     fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
     char* str;
 
-    value2Init(tex->object.pos, scriptParseFloat(s), scriptParseFloat(s));
+    AnimatorVector2_Init(tex->pos, scriptParseFloat(s), scriptParseFloat(s));
     if(!Def_Get(DD_DEF_TEXT, scriptNextToken(s), &str))
         str = "(undefined)"; // Not found!
     FIData_TextCopy(tex, str);
@@ -2674,7 +2579,7 @@ DEFFC(TextFromLump)
     fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
     int lnum;
 
-    value2Init(tex->object.pos, scriptParseFloat(s), scriptParseFloat(s));
+    AnimatorVector2_Init(tex->pos, scriptParseFloat(s), scriptParseFloat(s));
     lnum = W_CheckNumForName(scriptNextToken(s));
     if(lnum < 0)
     {
@@ -2728,7 +2633,7 @@ DEFFC(SetTextDef)
 DEFFC(DeleteText)
 {
     fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    tex->object.used = false;
+    tex->used = false;
     if(tex->text)
     {
         // Free the memory allocated for the text string.
@@ -2741,31 +2646,31 @@ DEFFC(TextColor)
 {
     int idx = scriptParseInteger(s);
     idx = MINMAX_OF(1, idx, 9);
-    value3Set(s->textColor[idx - 1], scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), s->inTime);
+    AnimatorVector3_Set(s->textColor[idx - 1], scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), s->inTime);
 }
 
 DEFFC(TextRGB)
 {
     fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    value3Set(tex->object.color, scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), s->inTime);
+    AnimatorVector3_Set(tex->color, scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), s->inTime);
 }
 
 DEFFC(TextAlpha)
 {
     fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    valueSet(&tex->object.color[CA], scriptParseFloat(s), s->inTime);
+    Animator_Set(&tex->color[CA], scriptParseFloat(s), s->inTime);
 }
 
 DEFFC(TextOffX)
 {
     fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    valueSet(&tex->object.pos[0], scriptParseFloat(s), s->inTime);
+    Animator_Set(&tex->pos[0], scriptParseFloat(s), s->inTime);
 }
 
 DEFFC(TextOffY)
 {
     fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    valueSet(&tex->object.pos[1], scriptParseFloat(s), s->inTime);
+    Animator_Set(&tex->pos[1], scriptParseFloat(s), s->inTime);
 }
 
 DEFFC(TextCenter)
@@ -2839,19 +2744,19 @@ DEFFC(NoMusic)
 DEFFC(TextScaleX)
 {
     fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    valueSet(&tex->object.scale[0], scriptParseFloat(s), s->inTime);
+    Animator_Set(&tex->scale[0], scriptParseFloat(s), s->inTime);
 }
 
 DEFFC(TextScaleY)
 {
     fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    valueSet(&tex->object.scale[1], scriptParseFloat(s), s->inTime);
+    Animator_Set(&tex->scale[1], scriptParseFloat(s), s->inTime);
 }
 
 DEFFC(TextScale)
 {
     fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    value2Set(tex->object.scale, scriptParseFloat(s), scriptParseFloat(s), s->inTime);
+    AnimatorVector2_Set(tex->scale, scriptParseFloat(s), scriptParseFloat(s), s->inTime);
 }
 
 DEFFC(PlayDemo)
@@ -2863,8 +2768,7 @@ DEFFC(PlayDemo)
     // The only argument is the demo file name.
     // Start playing the demo.
     if(!Con_Executef(CMDS_DDAY, true, "playdemo \"%s\"", scriptNextToken(s)))
-    {
-        // Demo playback failed. Here we go again...
+    {   // Demo playback failed. Here we go again...
         demoEnds();
     }
 }
@@ -2898,7 +2802,6 @@ D_CMD(StartFinale)
         return false;
     }
 
-    // The overlay mode doesn't affect the current game state.
     FI_ScriptBegin(script, mode, gx.FI_GetGameState(), 0);
     return true;
 }

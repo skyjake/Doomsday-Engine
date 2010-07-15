@@ -853,6 +853,10 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
+				RelativePath="..\..\..\engine\portable\src\animator.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\b_command.c"
 				>
 			</File>
@@ -2651,6 +2655,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\dam_main.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_animator.h"
 				>
 			</File>
 			<File
