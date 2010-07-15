@@ -57,7 +57,14 @@ void*           FI_GetClientsideDefaultState(void);
 void            FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, void* extraData);
 void            FI_ScriptTerminate(void);
 
+typedef enum {
+    FI_NONE,
+    FI_TEXT,
+    FI_PIC
+} fi_obtype_e;
+
 typedef struct fidata_object_s {
+    fi_obtype_e     type; // Type of the object.
     fi_objectname_t name;
     boolean         used;
     fi_value2_t     pos;
@@ -72,15 +79,16 @@ typedef struct fidata_object_s {
 #define FIDATA_PIC_MAX_SEQUENCE     64
 
 typedef struct fidata_pic_s {
-    fi_object_t         object;
-    struct fipicflags_s {
+    fi_object_t     object;
+    struct fidata_pic_flags_s {
         char            is_patch:1; // Raw image or patch.
         char            done:1; // Animation finished (or repeated).
         char            is_rect:1;
         char            is_ximage:1; // External graphics resource.
     } flags;
-    int             seq;
-    int             seqWait[FIDATA_PIC_MAX_SEQUENCE], seqTimer;
+
+    int             seq, seqTimer;
+    int             seqWait[FIDATA_PIC_MAX_SEQUENCE];
     int             tex[FIDATA_PIC_MAX_SEQUENCE];
     char            flip[FIDATA_PIC_MAX_SEQUENCE];
     short           sound[FIDATA_PIC_MAX_SEQUENCE];
@@ -92,6 +100,7 @@ typedef struct fidata_pic_s {
 } fidata_pic_t;
 
 void                FIData_PicThink(fidata_pic_t* pic);
+void                FIData_PicDraw(fidata_pic_t* pic, float x, float y);
 void                FIData_PicClearAnimation(fidata_pic_t* pic);
 void                FIData_PicDeleteXImage(fidata_pic_t* pic);
 
@@ -102,11 +111,12 @@ void                FIData_PicRotationOrigin(const fidata_pic_t* pic, float cent
  * Text.
  */
 typedef struct fidata_text_s {
-    fi_object_t         object;
-    struct fitextflags_s {
+    fi_object_t     object;
+    struct fidata_text_flags_s {
         char            centered:1;
         char            all_visible:1;
     } flags;
+
     int             scrollWait, scrollTimer; // Automatic scrolling upwards.
     int             cursorPos;
     int             wait, timer;
@@ -116,7 +126,7 @@ typedef struct fidata_text_s {
 } fidata_text_t;
 
 void                FIData_TextThink(fidata_text_t* text);
-void                FIData_TextDraw(fidata_text_t* tex);
+void                FIData_TextDraw(fidata_text_t* tex, float xOffset, float yOffset);
 void                FIData_TextCopy(fidata_text_t* text, const char* str);
 int                 FIData_TextLength(fidata_text_t* tex);
 

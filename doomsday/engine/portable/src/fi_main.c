@@ -64,6 +64,11 @@ typedef struct fihandler_s {
     fi_objectname_t marker;
 } fihandler_t;
 
+typedef struct fi_object_collection_s {
+    fidata_pic_t    pics[MAX_PICS];
+    fidata_text_t   text[MAX_TEXT];
+} fi_object_collection_t;
+
 typedef struct fistate_s {
     char*           script; // A copy of the script.
     const char*     cp; // The command cursor.
@@ -88,8 +93,7 @@ typedef struct fistate_s {
     fi_value2_t     imgOffset;
     fi_value4_t     filter;
     fi_value3_t     textColor[9];
-    fidata_pic_t    pics[MAX_PICS];
-    fidata_text_t   text[MAX_TEXT];
+    fi_object_collection_t objects;
 } fistate_t;
 
 typedef struct ficmd_s {
@@ -521,79 +525,185 @@ static fistate_t* newState(const char* script)
     return s;
 }
 
-static fidata_pic_t* stateFindPic(fistate_t* s, const char* name)
+static void objectsThink(fi_object_collection_t* c)
 {
-    assert(name && name[0]);
-    {int i;
+    uint i;
+    // Pic objects.
     for(i = 0; i < MAX_PICS; ++i)
     {
-        fi_object_t* obj = &s->pics[i].object;
+        fidata_pic_t* pic = &c->pics[i];
+        if(!pic->object.used)
+            continue;
+        FIData_PicThink(pic);
+    }
+
+    // Text objects.
+    for(i = 0; i < MAX_TEXT; ++i)
+    {
+        fidata_text_t* text = &c->text[i];
+        if(!text->object.used)
+            continue;
+        FIData_TextThink(text);
+    }
+}
+
+static void objectsDraw(fi_object_collection_t* c, float picXOffset, float picYOffset)
+{
+    uint i;
+    // Draw images.    
+    for(i = 0; i < MAX_PICS; ++i)
+    {
+        fidata_pic_t* pic = &c->pics[i];
+        fi_object_t* obj = &pic->object;
+        if(!pic->object.used)
+            continue;
+        FIData_PicDraw(pic, picXOffset, picYOffset);
+    }
+
+    // Draw text.
+    for(i = 0; i < MAX_TEXT; ++i)
+    {
+        fidata_text_t* tex = &c->text[i];
+        if(!tex->object.used)
+            continue;
+        FIData_TextDraw(tex, 0, 0);
+    }
+}
+
+static void objectsClear(fi_object_collection_t* c)
+{
+    uint i;
+    // Delete external images.
+    for(i = 0; i < MAX_PICS; ++i)
+    {
+        fidata_pic_t* pic = &c->pics[i];
+        if(pic->flags.is_ximage)
+        {
+            FIData_PicDeleteXImage(pic);
+        }
+    }
+    memset(c->pics, 0, sizeof(c->pics));
+
+    // Free all text strings.
+    for(i = 0; i < MAX_TEXT; ++i)
+    {
+        fidata_text_t* text = &c->text[i];
+        if(text->text)
+        {
+            Z_Free(text->text);
+        }
+    }
+    memset(c->text, 0, sizeof(c->text));
+}
+
+static fidata_text_t* objectsFindText(fi_object_collection_t* c, const char* name)
+{
+    assert(name && name[0]);
+    {uint i;
+    for(i = 0; i < MAX_TEXT; ++i)
+    {
+        fi_object_t* obj = &c->text[i].object;
         if(obj->used && !stricmp(obj->name, name))
         {
-            return &s->pics[i];
+            return &c->text[i];
+        }
+    }}
+    return NULL;
+}
+
+static fidata_pic_t* objectsFindPic(fi_object_collection_t* c, const char* name)
+{
+    assert(name && name[0]);
+    {uint i;
+    for(i = 0; i < MAX_PICS; ++i)
+    {
+        fi_object_t* obj = &c->pics[i].object;
+        if(obj->used && !stricmp(obj->name, name))
+        {
+            return &c->pics[i];
         }
     }}
     return 0;
 }
 
-static fidata_pic_t* stateFindUnusedPic(fistate_t* s)
+static fidata_pic_t* objectsFindUnusedPic(fi_object_collection_t* c)
 {
-    {int i;
+    {uint i;
     for(i = 0; i < MAX_PICS; ++i)
     {
-        fidata_pic_t* pic = &s->pics[i];
+        fidata_pic_t* pic = &c->pics[i];
         fi_object_t* obj = &pic->object;
         if(!obj->used)
         {
             memset(pic, 0, sizeof(*pic));
+            pic->object.type = FI_PIC;
             return pic;
         }
     }}
     return 0; /// @todo Oh noes! Remove fixed limit.
 }
 
-static fidata_text_t* stateFindText(fistate_t* s, const char* name)
+static fidata_text_t* objectsFindUnusedText(fi_object_collection_t* c)
 {
-    assert(name && name[0]);
-    {int i;
+    {uint i;
     for(i = 0; i < MAX_TEXT; ++i)
     {
-        fi_object_t* obj = &s->text[i].object;
-        if(obj->used && !stricmp(obj->name, name))
-        {
-            return &s->text[i];
-        }
-    }}
-    return NULL;
-}
-
-static fidata_text_t* stateFindUnusedText(fistate_t* s)
-{
-    {int i;
-    for(i = 0; i < MAX_TEXT; ++i)
-    {
-        fidata_text_t* text = &s->text[i];
+        fidata_text_t* text = &c->text[i];
         fi_object_t* obj = &text->object;
         if(!obj->used)
         {
             memset(text, 0, sizeof(*text));
+            text->object.type = FI_TEXT;
             return text;
         }
     }}
     return 0; /// @todo Oh noes! Remove fixed limit.
 }
 
-static fi_object_t* stateFindObject(fistate_t* s, const char* name)
+static fi_object_t* objectsFind2(fi_object_collection_t* c, const char* name, fi_obtype_e type)
 {
-    {fidata_pic_t* pic; // First check all pics.
-    if((pic = stateFindPic(s, name)) != NULL)
-        return &pic->object;
+    assert(name && name[0]);
+    assert(type > FI_NONE);
+    {uint i;
+    switch(type)
+    {
+    case FI_TEXT:
+        for(i = 0; i < MAX_TEXT; ++i)
+        {
+            fi_object_t* obj = &c->text[i].object;
+            if(obj->used && !stricmp(obj->name, name))
+            {
+                return obj;
+            }
+        }
+        break;
+    case FI_PIC:
+        for(i = 0; i < MAX_PICS; ++i)
+        {
+            fi_object_t* obj = &c->pics[i].object;
+            if(obj->used && !stricmp(obj->name, name))
+            {
+                return obj;
+            }
+        }
+        break;
     }
+    return NULL;
+    }
+}
+
+static fi_object_t* objectsFind(fi_object_collection_t* c, const char* name)
+{
+    fi_object_t* obj;
     
-    {fidata_text_t* text; // Then check text objects.
-    if((text = stateFindText(s, name)) != NULL)
-        return &text->object;
-    }
+    // First check all pics.
+    if((obj = objectsFind2(c, name, FI_PIC)) != NULL)
+        return obj;
+    
+    // Then check text objects.
+    if((obj = objectsFind2(c, name, FI_TEXT)) != NULL)
+        return obj;
+
     return NULL;
 }
 
@@ -667,26 +777,7 @@ static void stateClear(fistate_t* s)
     
     value4Init(s->bgColor, 1, 1, 1, 1);
 
-    // Delete external images.
-    for(i = 0; i < MAX_PICS; ++i)
-    {
-        fidata_pic_t* pic = &s->pics[i];
-        if(pic->flags.is_ximage)
-        {
-            FIData_PicDeleteXImage(pic);
-        }
-    }
-    memset(s->pics, 0, sizeof(s->pics));
-
-    // Free all text strings.
-    for(i = 0; i < MAX_TEXT; ++i)
-    {
-        if(s->text[i].text)
-        {
-            Z_Free(s->text[i].text);
-        }
-    }
-    memset(s->text, 0, sizeof(s->text));
+    objectsClear(&s->objects);
 
     for(i = 0; i < 9; ++i)
     {
@@ -979,7 +1070,7 @@ static boolean scriptExecuteNextCommand(fistate_t* s)
 static fidata_pic_t* createPic(fistate_t* s, const char* name)
 {
     fidata_pic_t* pic;
-    if((pic = stateFindUnusedPic(s)))
+    if((pic = objectsFindUnusedPic(&s->objects)))
     {
         fi_object_t* obj = &pic->object;
 
@@ -1000,7 +1091,7 @@ static fidata_pic_t* createPic(fistate_t* s, const char* name)
 static fidata_text_t* createText(fistate_t* s, const char* name)
 {
     fidata_text_t* text;
-    if((text = stateFindUnusedText(s)))
+    if((text = objectsFindUnusedText(&s->objects)))
     {
 #define LEADING             (11.f/7-1)
 
@@ -1075,7 +1166,7 @@ static fidata_pic_t* stateGetPic(fistate_t* s, const char* name)
     {
     fidata_pic_t* pic;
     // An exisiting Pic?
-    if((pic = stateFindPic(s, name)))
+    if((pic = objectsFindPic(&s->objects, name)))
         return pic;
     
     // Try allocate another?
@@ -1093,7 +1184,7 @@ static fidata_text_t* stateGetText(fistate_t* s, const char* name)
     {
     fidata_text_t* text;
     // An existing Text?
-    if((text = stateFindText(s, name)))
+    if((text = objectsFindText(&s->objects, name)))
         return text;
 
     // Try allocate another?
@@ -1134,22 +1225,7 @@ static void scriptTick(fistate_t* s)
     for(i = 0; i < 9; ++i)
         value3Think(s->textColor[i]);
 
-    for(i = 0; i < MAX_PICS; ++i)
-    {
-        fidata_pic_t* pic = &s->pics[i];
-        if(!pic->object.used)
-            continue;
-        FIData_PicThink(pic);
-    }
-
-    // Text objects.
-    for(i = 0; i < MAX_TEXT; ++i)
-    {
-        fidata_text_t* text = &s->text[i];
-        if(!text->object.used)
-            continue;
-        FIData_TextThink(text);
-    }
+    objectsThink(&s->objects);
 
     // If we're waiting, don't execute any commands.
     if(s->wait && --s->wait)
@@ -1231,122 +1307,7 @@ static void stateDraw(fistate_t* s)
         DGL_Enable(DGL_TEXTURING);
     }
 
-    // Draw images.
-    {int i;
-    for(i = 0; i < MAX_PICS; ++i)
-    {
-        fidata_pic_t* pic = &s->pics[i];
-        fi_object_t* obj = &pic->object;
-        float mid[2];
-        int sq;
-
-        // Fully transparent pics will not be drawn.
-        if(!obj->used || obj->color[3].value == 0)
-            continue;
-
-        sq = pic->seq;
-
-        DGL_SetNoMaterial(); // Hmm...
-        useColor(obj->color, 4);
-        FIData_PicRotationOrigin(pic, mid);
-
-        // Setup the transformation.
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-        glTranslatef(obj->pos[0].value - s->imgOffset[0].value, obj->pos[1].value - s->imgOffset[1].value, 0);
-        glTranslatef(mid[VX], mid[VY], 0);
-
-        rotate(obj->angle.value);
-
-        // Move to origin.
-        glTranslatef(-mid[VX], -mid[VY], 0);
-        glScalef((pic->flip[sq] ? -1 : 1) * obj->scale[0].value, obj->scale[1].value, 1);
-
-        // Draw it.
-        if(pic->flags.is_rect)
-        {
-            if(pic->flags.is_ximage)
-            {
-                DGL_Enable(DGL_TEXTURING);
-                DGL_Bind((DGLuint)pic->tex[sq]);
-            }
-            else
-            {
-                // The fill.
-                DGL_Disable(DGL_TEXTURING);
-            }
-
-            glBegin(GL_QUADS);
-                useColor(obj->color, 4);
-                glTexCoord2f(0, 0);
-                glVertex2f(0, 0);
-
-                glTexCoord2f(1, 0);
-                glVertex2f(1, 0);
-
-                useColor(pic->otherColor, 4);
-                glTexCoord2f(1, 1);
-                glVertex2f(1, 1);
-
-                glTexCoord2f(0, 1);
-                glVertex2f(0, 1);
-            glEnd();
-
-            // The edges never have a texture.
-            DGL_Disable(DGL_TEXTURING);
-
-            glBegin(GL_LINES);
-                useColor(pic->edgeColor, 4);
-                glVertex2f(0, 0);
-                glVertex2f(1, 0);
-                glVertex2f(1, 0);
-
-                useColor(pic->otherEdgeColor, 4);
-                glVertex2f(1, 1);
-                glVertex2f(1, 1);
-                glVertex2f(0, 1);
-                glVertex2f(0, 1);
-
-                useColor(pic->edgeColor, 4);
-                glVertex2f(0, 0);
-            glEnd();
-
-            DGL_Enable(DGL_TEXTURING);
-        }
-        else if(pic->flags.is_patch)
-        {
-            R_DrawPatch(R_FindPatchTex((patchid_t)pic->tex[sq]), 0, 0);
-        }
-        else
-        {
-            glMatrixMode(GL_MODELVIEW);
-            glPushMatrix();
-            glLoadIdentity();
-
-            /// \fixme What about rotaton?
-            glTranslatef(obj->pos[0].value - s->imgOffset[0].value, obj->pos[1].value - s->imgOffset[1].value, 0);
-            glScalef((pic->flip[sq]? -1 : 1) * obj->scale[0].value, obj->scale[1].value, 1);
-
-            DGL_DrawRawScreen(pic->tex[sq], 0, 0);
-
-            glMatrixMode(GL_MODELVIEW);
-            glPopMatrix();
-        }
-
-        // Restore original transformation.
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
-    }}
-
-    // Draw text.
-    {int i;
-    for(i = 0; i < MAX_TEXT; ++i)
-    {
-        fidata_text_t* tex = &s->text[i];
-        if(!tex->object.used || !tex->text)
-            continue;
-        FIData_TextDraw(tex);
-    }}
+    objectsDraw(&s->objects, -s->imgOffset[0].value, -s->imgOffset[1].value);
 
     // Filter on top of everything.
     if(s->filter[3].value > 0)
@@ -1369,8 +1330,7 @@ static void stateDraw(fistate_t* s)
 static void scriptUseTextColor(fistate_t* s, fidata_text_t* text, int idx)
 {
     if(!idx)
-    {
-        // The default color of the text.
+    {   // Use the default color for the text.
         useColor(text->object.color, 4);
     }
     else
@@ -1673,6 +1633,111 @@ void FIData_PicThink(fidata_pic_t* p)
     }
 }
 
+void FIData_PicDraw(fidata_pic_t* pic, float xOffset, float yOffset)
+{
+    assert(pic);
+    {
+    fi_object_t* obj = &pic->object;
+    float mid[2];
+    int sq = pic->seq;
+
+    // Fully transparent pics will not be drawn.
+    if(obj->color[3].value == 0)
+        return;
+
+    DGL_SetNoMaterial(); // Hmm...
+    useColor(obj->color, 4);
+    FIData_PicRotationOrigin(pic, mid);
+
+    // Setup the transformation.
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glTranslatef(obj->pos[0].value + xOffset, obj->pos[1].value + yOffset, 0);
+    glTranslatef(mid[VX], mid[VY], 0);
+
+    rotate(obj->angle.value);
+
+    // Move to origin.
+    glTranslatef(-mid[VX], -mid[VY], 0);
+    glScalef((pic->flip[sq] ? -1 : 1) * obj->scale[0].value, obj->scale[1].value, 1);
+
+    // Draw it.
+    if(pic->flags.is_rect)
+    {
+        if(pic->flags.is_ximage)
+        {
+            DGL_Enable(DGL_TEXTURING);
+            DGL_Bind((DGLuint)pic->tex[sq]);
+        }
+        else
+        {
+            // The fill.
+            DGL_Disable(DGL_TEXTURING);
+        }
+
+        glBegin(GL_QUADS);
+            useColor(obj->color, 4);
+            glTexCoord2f(0, 0);
+            glVertex2f(0, 0);
+
+            glTexCoord2f(1, 0);
+            glVertex2f(1, 0);
+
+            useColor(pic->otherColor, 4);
+            glTexCoord2f(1, 1);
+            glVertex2f(1, 1);
+
+            glTexCoord2f(0, 1);
+            glVertex2f(0, 1);
+        glEnd();
+
+        // The edges never have a texture.
+        DGL_Disable(DGL_TEXTURING);
+
+        glBegin(GL_LINES);
+            useColor(pic->edgeColor, 4);
+            glVertex2f(0, 0);
+            glVertex2f(1, 0);
+            glVertex2f(1, 0);
+
+            useColor(pic->otherEdgeColor, 4);
+            glVertex2f(1, 1);
+            glVertex2f(1, 1);
+            glVertex2f(0, 1);
+            glVertex2f(0, 1);
+
+            useColor(pic->edgeColor, 4);
+            glVertex2f(0, 0);
+        glEnd();
+
+        DGL_Enable(DGL_TEXTURING);
+    }
+    else if(pic->flags.is_patch)
+    {
+        R_DrawPatch(R_FindPatchTex((patchid_t)pic->tex[sq]), 0, 0);
+    }
+    else
+    {
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+
+        /// \fixme What about rotaton?
+        glTranslatef(obj->pos[0].value + xOffset, obj->pos[1].value + yOffset, 0);
+        glScalef((pic->flip[sq]? -1 : 1) * obj->scale[0].value, obj->scale[1].value, 1);
+
+        DGL_DrawRawScreen(pic->tex[sq], 0, 0);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+    }
+
+    // Restore original transformation.
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    }
+}
+
 void FIData_PicInit(fidata_pic_t* pic)
 {
     assert(pic);
@@ -1791,7 +1856,7 @@ void FIData_TextThink(fidata_text_t* t)
     t->flags.all_visible = (!t->wait || t->cursorPos >= FIData_TextLength(t));
 }
 
-void FIData_TextDraw(fidata_text_t* tex)
+void FIData_TextDraw(fidata_text_t* tex, float xOffset, float yOffset)
 {
     assert(tex);
     {
@@ -1800,9 +1865,12 @@ void FIData_TextDraw(fidata_text_t* tex)
     int ch, linew = -1;
     char* ptr;
 
+    if(!tex->text)
+        return;
+
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(tex->object.pos[0].value, tex->object.pos[1].value, 0);
+    glTranslatef(tex->object.pos[0].value + xOffset, tex->object.pos[1].value + yOffset, 0);
 
     rotate(tex->object.angle.value);
     glScalef(tex->object.scale[0].value, tex->object.scale[1].value, 1);
@@ -2119,7 +2187,7 @@ DEFFC(Marker)
 DEFFC(Delete)
 {
     fi_object_t* obj;
-    if((obj = stateFindObject(s, scriptNextToken(s))))
+    if((obj = objectsFind(&s->objects, scriptNextToken(s))))
     {
         obj->used = false;
     }
@@ -2319,7 +2387,7 @@ DEFFC(PicSound)
 
 DEFFC(ObjectOffX)
 {
-    fi_object_t* obj = stateFindObject(s, scriptNextToken(s));
+    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
     float value = scriptParseFloat(s);
 
     if(obj)
@@ -2330,7 +2398,7 @@ DEFFC(ObjectOffX)
 
 DEFFC(ObjectOffY)
 {
-    fi_object_t* obj = stateFindObject(s, scriptNextToken(s));
+    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
     float value = scriptParseFloat(s);
 
     if(obj)
@@ -2341,8 +2409,8 @@ DEFFC(ObjectOffY)
 
 DEFFC(ObjectRGB)
 {
-    fi_object_t* obj = stateFindObject(s, scriptNextToken(s));
-    fidata_pic_t* pic = stateFindPic(s, obj ? obj->name : NULL);
+    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
+    fidata_pic_t* pic = objectsFindPic(&s->objects, obj ? obj->name : NULL);
     float rgb[3];
     
     {int i;
@@ -2366,8 +2434,8 @@ DEFFC(ObjectRGB)
 
 DEFFC(ObjectAlpha)
 {
-    fi_object_t* obj = stateFindObject(s, scriptNextToken(s));
-    fidata_pic_t* pic = stateFindPic(s, obj ? obj->name : NULL);
+    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
+    fidata_pic_t* pic = objectsFindPic(&s->objects, obj ? obj->name : NULL);
     float value = scriptParseFloat(s);
     if(obj)
     {
@@ -2384,7 +2452,7 @@ DEFFC(ObjectAlpha)
 
 DEFFC(ObjectScaleX)
 {
-    fi_object_t* obj = stateFindObject(s, scriptNextToken(s));
+    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
     float value = scriptParseFloat(s);
     if(obj)
     {
@@ -2394,7 +2462,7 @@ DEFFC(ObjectScaleX)
 
 DEFFC(ObjectScaleY)
 {
-    fi_object_t* obj = stateFindObject(s, scriptNextToken(s));
+    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
     float value = scriptParseFloat(s);
     if(obj)
     {
@@ -2404,7 +2472,7 @@ DEFFC(ObjectScaleY)
 
 DEFFC(ObjectScale)
 {
-    fi_object_t* obj = stateFindObject(s, scriptNextToken(s));
+    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
     float value = scriptParseFloat(s);
     if(obj)
     {
@@ -2414,7 +2482,7 @@ DEFFC(ObjectScale)
 
 DEFFC(ObjectScaleXY)
 {
-    fi_object_t* obj = stateFindObject(s, scriptNextToken(s));
+    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
     float x = scriptParseFloat(s);
     float y = scriptParseFloat(s);
     if(obj)
@@ -2425,7 +2493,7 @@ DEFFC(ObjectScaleXY)
 
 DEFFC(ObjectAngle)
 {
-    fi_object_t* obj = stateFindObject(s, scriptNextToken(s));
+    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
     float value = scriptParseFloat(s);
     if(obj)
     {
@@ -2451,7 +2519,7 @@ DEFFC(Rect)
 
 DEFFC(FillColor)
 {
-    fi_object_t* obj = stateFindObject(s, scriptNextToken(s));
+    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
     fidata_pic_t* pic;
     int which = 0;
     float rgba[4];
@@ -2488,7 +2556,7 @@ DEFFC(FillColor)
 
 DEFFC(EdgeColor)
 {
-    fi_object_t* obj = stateFindObject(s, scriptNextToken(s));
+    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
     fidata_pic_t* pic;
     int which = 0;
     float rgba[4];
@@ -2544,7 +2612,6 @@ DEFFC(SoundAt)
 {
     int num = Def_Get(DD_DEF_SOUND, scriptNextToken(s), NULL);
     float vol = scriptParseFloat(s);
-
     vol = MIN_OF(vol, 1);
     if(vol > 0 && num > 0)
         S_LocalSoundAtVolume(num, NULL, vol);
@@ -2553,7 +2620,6 @@ DEFFC(SoundAt)
 DEFFC(SeeSound)
 {
     int num = Def_Get(DD_DEF_MOBJ, scriptNextToken(s), NULL);
-
     if(num < 0 || mobjInfo[num].seeSound <= 0)
         return;
     S_LocalSound(mobjInfo[num].seeSound, NULL);
@@ -2562,7 +2628,6 @@ DEFFC(SeeSound)
 DEFFC(DieSound)
 {
     int num = Def_Get(DD_DEF_MOBJ, scriptNextToken(s), NULL);
-
     if(num < 0 || mobjInfo[num].deathSound <= 0)
         return;
     S_LocalSound(mobjInfo[num].deathSound, NULL);

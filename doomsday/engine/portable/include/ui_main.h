@@ -120,10 +120,10 @@ typedef struct ui_object_s {
     int             flags;
     int             relx, rely, relw, relh; // Relative placement.
     char            text[256];     // Used in various ways.
-    void            (*drawer) (struct ui_object_s *);
-    int             (*responder) (struct ui_object_s *, ddevent_t *);
-    void            (*ticker) (struct ui_object_s *);
-    void            (*action) (struct ui_object_s *);
+    void          (*drawer) (struct ui_object_s *);
+    int           (*responder) (struct ui_object_s *, ddevent_t *);
+    void          (*ticker) (struct ui_object_s *);
+    void          (*action) (struct ui_object_s *);
     void           *data;          // Pointer to extra data.
     int             data2;         // Extra numerical data.
     int             timer;
