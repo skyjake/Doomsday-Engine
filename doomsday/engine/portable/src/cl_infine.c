@@ -67,9 +67,9 @@ static void Read(byte *buf, size_t len)
 void Cl_Finale(int packetType, byte* data)
 {
     int gameState = 0;
-    void* conditions = 0;
-    byte flags, conditionFlags = 0;
-    boolean haveConditions = false;
+    void* extraData = 0;
+    byte flags, extraDataFlags = 0;
+    boolean haveExtraData = false;
     byte* script = 0;
 
     SetReadBuffer(data);
@@ -77,29 +77,29 @@ void Cl_Finale(int packetType, byte* data)
 
     if(packetType == PSV_FINALE2)
     {
-        // Read the values of the conditions.
-        conditionFlags = ReadByte();
+        // Read extra data.
+        extraDataFlags = ReadByte();
 
-        haveConditions = (conditionFlags > 0? true:false);
-        if(haveConditions)
+        haveExtraData = (extraDataFlags > 0? true:false);
+        if(haveExtraData)
         {
-            ddhook_deserializeconditions_paramaters_t p;
+            ddhook_finale_script_deserialize_extradata_t p;
 
-            conditions = (void*) malloc(INFINE_CLIENTSTATE_SIZE);
+            extraData = (void*) malloc(FINALE_SCRIPT_EXTRADATA_SIZE);
 
             memset(&p, 0, sizeof(p));
             p.inBuf = readbuffer;
             p.gameState = &gameState;
-            p.conditions = conditions;
+            p.extraData = extraData;
             p.bytesRead = 0;
 
-            if(Plug_DoHook(HOOK_INFINE_STATE_DESERIALIZE_EXTRADATA, conditionFlags, &p))
+            if(Plug_DoHook(HOOK_FINALE_SCRIPT_DESERIALIZE_EXTRADATA, extraDataFlags, &p))
             {
-                readbuffer += INFINE_CLIENTSTATE_SIZE;
+                readbuffer += FINALE_SCRIPT_EXTRADATA_SIZE;
             }
             else
             {
-                haveConditions = false;
+                haveExtraData = false;
             }
         }
     }
@@ -118,7 +118,7 @@ void Cl_Finale(int packetType, byte* data)
         if(flags & FINF_BEGIN)
         {   // Start the script.
             finale_mode_t mode = ((flags & FINF_AFTER) ? FIMODE_AFTER : (flags & FINF_OVERLAY) ? FIMODE_OVERLAY : FIMODE_BEFORE);
-            FI_ScriptBegin((const char*)script, mode, gameState, conditions);
+            FI_ScriptBegin((const char*)script, mode, gameState, extraData);
         }
     }
 
@@ -132,6 +132,6 @@ void Cl_Finale(int packetType, byte* data)
         FI_SkipRequest();
     }
 
-    if(conditions)
-        free(conditions);
+    if(extraData)
+        free(extraData);
 }

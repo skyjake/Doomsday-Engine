@@ -30,7 +30,7 @@ typedef struct finale_conditions_s {
     // Bits:
     uint        secret : 1;
     uint        leavehub : 1;
-} finale_conditions_t;
+} finale_extradata_t;
 
 #define FIRCF_LEAVEHUB          0x1
 

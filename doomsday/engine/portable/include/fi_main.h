@@ -39,7 +39,7 @@
 #define FINF_OVERLAY        0x20   // Otherwise before (or after).
 /*@}*/
 
-#define INFINE_CLIENTSTATE_SIZE      gx.finaleConditionsSize
+#define FINALE_SCRIPT_EXTRADATA_SIZE      gx.finaleConditionsSize
 
 extern float fiDefaultTextRGB[];
 

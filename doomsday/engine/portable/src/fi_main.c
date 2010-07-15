@@ -55,54 +55,62 @@
 #define FI_REPEAT           (-2)
 
 // Helper macro for defining infine command functions.
-#define DEFFC(name) void FIC_##name(ficmd_t* cmd, fistate_t* s)
+#define DEFFC(name) void FIC_##name(fi_cmd_t* cmd, fi_state_t* s)
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct fihandler_s {
+typedef struct fi_handler_s {
     int             code;
     fi_objectname_t marker;
-} fihandler_t;
+} fi_handler_t;
 
 typedef struct fi_object_collection_s {
     fidata_pic_t    pics[MAX_PICS];
     fidata_text_t   text[MAX_TEXT];
 } fi_object_collection_t;
 
-typedef struct fistate_s {
+typedef struct fi_state_s {
+    struct fistate_flags_s {
+        char            can_skip:1;
+        char            suspended:1;
+        char            paused:1;
+        char            eat_events:1; // Script will eat all input events.
+        char            show_menu:1;
+    } flags;
+    finale_mode_t   mode;
+    fi_object_collection_t objects;
+    fi_handler_t    eventHandlers[MAX_HANDLERS];
     char*           script; // A copy of the script.
     const char*     cp; // The command cursor.
-    finale_mode_t   mode;
-    int             initialGameState; // Game state before the script began.
-    int             overlayGameState; // Overlay scripts run only in one gameMode.
     int             timer;
-    void*           conditions;
     int             inTime;
-    boolean         canSkip, skipping;
+    boolean         skipping, lastSkipped, gotoSkip, skipNext;
     int             doLevel; // Level of DO-skipping.
     int             wait;
-    boolean         suspended, paused, eatEvents, showMenu;
-    boolean         gotoSkip, skipNext, lastSkipped;
     fi_objectname_t gotoTarget;
     fidata_text_t*  waitingText;
     fidata_pic_t*   waitingPic;
-    fihandler_t     keyHandlers[MAX_HANDLERS];
     material_t*     bgMaterial;
     fi_value4_t     bgColor;
     fi_value4_t     imgColor;
     fi_value2_t     imgOffset;
     fi_value4_t     filter;
     fi_value3_t     textColor[9];
-    fi_object_collection_t objects;
-} fistate_t;
 
-typedef struct ficmd_s {
+    int             initialGameState; // Game state before the script began.
+    int             overlayGameState; // Overlay scripts run only in one gameMode.
+    void*           extraData;
+} fi_state_t;
+
+typedef struct fi_cmd_s {
     char*           token;
-    int             operands;
-    void          (*func) (struct ficmd_s* cmd, fistate_t* s);
-    boolean         whenSkipping;
-    boolean         whenCondSkipping; // Skipping because condition failed.
-} ficmd_t;
+    int             numOperands;
+    void          (*func) (struct fi_cmd_s* cmd, fi_state_t* s);
+    struct fi_cmd_flags_s {
+        char            when_skipping:1;
+        char            when_condition_skipping; // Skipping because condition failed.
+    } flags;
+} fi_cmd_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -215,7 +223,7 @@ static boolean cmdExecuted = false; // Set to true after first command.
 
 // Time is measured in seconds.
 // Colors are floating point and [0,1].
-static ficmd_t commands[] = {
+static fi_cmd_t commands[] = {
     // Run Control
     { "DO",         0, FIC_Do, true, true },
     { "END",        0, FIC_End },
@@ -327,8 +335,8 @@ static ficmd_t commands[] = {
     { NULL, 0, NULL } // Terminate.
 };
 
-static fistate_t stateStack[STACK_SIZE];
-static fistate_t* fi; // Pointer to the current state in the stack.
+static fi_state_t stateStack[STACK_SIZE];
+static fi_state_t* fi; // Pointer to the current state in the stack.
 static char token[MAX_TOKEN_LEN];
 static fidata_pic_t dummyPic;
 static fidata_text_t dummyText;
@@ -353,12 +361,12 @@ void FI_Register(void)
     C_CMD("stopinf",        "",     StopFinale);
 }
 
-static ficmd_t* findCommand(const char* name)
+static fi_cmd_t* findCommand(const char* name)
 {
     int i;
     for(i = 0; commands[i].token; ++i)
     {
-        ficmd_t* cmd = &commands[i];
+        fi_cmd_t* cmd = &commands[i];
         if(!stricmp(name, cmd->token))
         {
             return cmd;
@@ -485,9 +493,9 @@ void FIObject_Think(fi_object_t* obj)
     valueThink(&obj->angle);
 }
 
-static fistate_t* allocState(void)
+static fi_state_t* allocState(void)
 {
-    fistate_t* s;
+    fi_state_t* s;
 
     if(!fi)
     {   // Start from the bottom of the stack.
@@ -509,9 +517,9 @@ Con_Printf("InFine state assigned index %i.\n", fi - stateStack);
     return s;
 }
 
-static fistate_t* newState(const char* script)
+static fi_state_t* newState(const char* script)
 {
-    fistate_t* s = allocState();
+    fi_state_t* s = allocState();
     size_t size;
 
     // Take a copy of the script.
@@ -707,30 +715,30 @@ static fi_object_t* objectsFind(fi_object_collection_t* c, const char* name)
     return NULL;
 }
 
-static void stateChangeMode(fistate_t* s, finale_mode_t mode)
+static void stateChangeMode(fi_state_t* s, finale_mode_t mode)
 {
     s->mode = mode;
 }
 
-static void stateSetData(fistate_t* s, const void* data)
+static void stateSetExtraData(fi_state_t* s, const void* data)
 {
     if(!data)
         return;
-    if(!s->conditions || !(INFINE_CLIENTSTATE_SIZE > 0))
+    if(!s->extraData || !(FINALE_SCRIPT_EXTRADATA_SIZE > 0))
         return;
-    memcpy(s->conditions, data, INFINE_CLIENTSTATE_SIZE);
+    memcpy(s->extraData, data, FINALE_SCRIPT_EXTRADATA_SIZE);
 }
 
-static void stateSetInitialGameState(fistate_t* s, int gameState, const void* clientState)
+static void stateSetInitialGameState(fi_state_t* s, int gameState, const void* clientState)
 {
     s->initialGameState = gameState;
-    s->showMenu = true; // Enabled by default.
+    s->flags.show_menu = true; // Enabled by default.
 
-    if(INFINE_CLIENTSTATE_SIZE > 0)
+    if(FINALE_SCRIPT_EXTRADATA_SIZE > 0)
     {
-        stateSetData(s, &defaultState);
+        stateSetExtraData(s, &defaultState);
         if(clientState)
-            stateSetData(s, clientState);
+            stateSetExtraData(s, clientState);
     }
 
     if(s->mode == FIMODE_OVERLAY)
@@ -739,7 +747,7 @@ static void stateSetInitialGameState(fistate_t* s, int gameState, const void* cl
     }
 }
 
-static void stateReleaseScript(fistate_t* s)
+static void stateReleaseScript(fi_state_t* s)
 {
     // Free the current state.
     if(s->script)
@@ -751,21 +759,22 @@ static void stateReleaseScript(fistate_t* s)
 /**
  * Clear the specified state to the default, blank state.
  */
-static void stateClear(fistate_t* s)
+static void stateClear(fi_state_t* s)
 {
     int i;
 
     active = true;
     cmdExecuted = false; // Nothing is drawn until a cmd has been executed.
 
-    s->suspended = false;
+    s->flags.suspended = false;
+    s->flags.can_skip = true; // By default skipping is enabled.
+    s->flags.paused = false;
+
     s->timer = 0;
-    s->canSkip = true; // By default skipping is enabled.
     s->skipping = false;
     s->wait = 0; // Not waiting for anything.
     s->inTime = 0; // Interpolation is off.
     s->bgMaterial = NULL; // No background material.
-    s->paused = false;
     s->gotoSkip = false;
     s->skipNext = false;
 
@@ -785,21 +794,21 @@ static void stateClear(fistate_t* s)
     }
 }
 
-static void stateInit(fistate_t* s, finale_mode_t mode, int gameState, const void* clientState)
+static void stateInit(fi_state_t* s, finale_mode_t mode, int gameState, const void* clientState)
 {
     stateClear(s);
     stateChangeMode(s, mode);
     stateSetInitialGameState(s, gameState, clientState);
 }
 
-static __inline fistate_t* stackTop(void)
+static __inline fi_state_t* stackTop(void)
 {
     return fi;
 }
 
 static void stackPop(void)
 {
-    fistate_t* s = stackTop();
+    fi_state_t* s = stackTop();
 
 /*#ifdef _DEBUG
 Con_Printf("InFine: s=%p (%i)\n", s, s - stateStack);
@@ -828,22 +837,22 @@ Con_Printf("InFine: Pop in NULL state!\n");
     }
 }
 
-static void scriptBegin(fistate_t* s)
+static void scriptBegin(fi_state_t* s)
 {
     if(s->mode != FIMODE_LOCAL)
     {
         int flags = FINF_BEGIN | (s->mode == FIMODE_AFTER ? FINF_AFTER : s->mode == FIMODE_OVERLAY ? FINF_OVERLAY : 0);
-        ddhook_serializeconditions_paramaters_t p;
+        ddhook_finale_script_serialize_extradata_t p;
         boolean haveExtraData = false;
 
         memset(&p, 0, sizeof(p));
 
-        if(s->conditions)
+        if(s->extraData)
         {
-            p.conditions = s->conditions;
+            p.extraData = s->extraData;
             p.outBuf = 0;
             p.outBufSize = 0;
-            haveExtraData = Plug_DoHook(HOOK_INFINE_STATE_SERIALIZE_EXTRADATA, 0, &p);
+            haveExtraData = Plug_DoHook(HOOK_FINALE_SCRIPT_SERIALIZE_EXTRADATA, 0, &p);
         }
 
         // Tell clients to start this script.
@@ -853,32 +862,32 @@ static void scriptBegin(fistate_t* s)
     memset(&dummyText, 0, sizeof(dummyText));
 
     // Any hooks?
-    Plug_DoHook(HOOK_INFINE_SCRIPT_BEGIN, (int) s->mode, s->conditions);
+    Plug_DoHook(HOOK_FINALE_SCRIPT_BEGIN, (int) s->mode, s->extraData);
 }
 
-static void scriptCanSkip(fistate_t* s, boolean yes)
+static void scriptCanSkip(fi_state_t* s, boolean yes)
 {
-    s->canSkip = yes;
+    s->flags.can_skip = yes;
 }
 
 /**
  * Stop playing the script and go to next game state.
  */
-static void scriptTerminate(fistate_t* s)
+static void scriptTerminate(fi_state_t* s)
 {
-    ddhook_scriptstop_paramaters_t p;
+    ddhook_finale_script_stop_paramaters_t p;
     int oldMode;
 
     if(!active)
         return;
-    if(!s->canSkip)
+    if(!s->flags.can_skip)
         return;
 
     oldMode = s->mode;
 
     memset(&p, 0, sizeof(p));
     p.initialGameState = s->initialGameState;
-    p.conditions = s->conditions;
+    p.extraData = s->extraData;
 
     // This'll set fi to NULL.
     stackPop();
@@ -889,10 +898,10 @@ static void scriptTerminate(fistate_t* s)
         Sv_Finale(FINF_END, 0, NULL, 0);
     }
 
-    Plug_DoHook(HOOK_INFINE_SCRIPT_TERMINATE, oldMode, &p);
+    Plug_DoHook(HOOK_FINALE_SCRIPT_TERMINATE, oldMode, &p);
 }
 
-static const char* scriptNextToken(fistate_t* s)
+static const char* scriptNextToken(fi_state_t* s)
 {
     char* out;
 
@@ -928,12 +937,12 @@ static const char* scriptNextToken(fistate_t* s)
     return token;
 }
 
-static int scriptParseInteger(fistate_t* s)
+static int scriptParseInteger(fi_state_t* s)
 {
     return strtol(scriptNextToken(s), NULL, 0);
 }
 
-static float scriptParseFloat(fistate_t* s)
+static float scriptParseFloat(fi_state_t* s)
 {
     return strtod(scriptNextToken(s), NULL);
 }
@@ -942,19 +951,19 @@ static float scriptParseFloat(fistate_t* s)
  * Reads the next token, which should be floating point number. It is
  * considered seconds, and converted to tics.
  */
-static int scriptReadTics(fistate_t* s)
+static int scriptReadTics(fi_state_t* s)
 {
     return (int) (scriptParseFloat(s) * 35 + 0.5);
 }
 
-static boolean parseOperands(int operands, const char* token, fistate_t* s)
+static boolean parseOperands(int numOperands, const char* token, fi_state_t* s)
 {
     const char* oldcp;
     int i;
 
     // i stays at zero if the number of operands is correct.
     oldcp = s->cp;
-    for(i = operands; i > 0; i--)
+    for(i = numOperands; i > 0; i--)
     {
         if(!scriptNextToken(s))
         {
@@ -969,33 +978,31 @@ static boolean parseOperands(int operands, const char* token, fistate_t* s)
     return !i;
 }
 
-static boolean stateSkipRequest(fistate_t* s)
+static boolean stateSkipRequest(fi_state_t* s)
 {
     s->waitingText = NULL; // Stop waiting for things.
     s->waitingPic = NULL;
-    if(s->paused)
+    if(s->flags.paused)
     {
-        // Un-pause.
-        s->paused = false;
+        s->flags.paused = false; // Un-pause.
         s->wait = 0;
         return true;
     }
 
-    if(s->canSkip)
+    if(s->flags.can_skip)
     {
-        // Start skipping ahead.
-        s->skipping = true;
+        s->skipping = true; // Start skipping ahead.
         s->wait = 0;
         return true;
     }
 
-    return s->eatEvents;
+    return s->flags.eat_events;
 }
 
-static boolean scriptSkipCommand(fistate_t* s, const ficmd_t* cmd)
+static boolean scriptSkipCommand(fi_state_t* s, const fi_cmd_t* cmd)
 {
-    if((s->skipNext && !cmd->whenCondSkipping) ||
-       ((s->skipping || s->gotoSkip) && !cmd->whenSkipping))
+    if((s->skipNext && !cmd->flags.when_condition_skipping) ||
+       ((s->skipping || s->gotoSkip) && !cmd->flags.when_skipping))
     {
         // While not DO-skipping, the condskip has now been done.
         if(!s->doLevel)
@@ -1012,7 +1019,7 @@ static boolean scriptSkipCommand(fistate_t* s, const ficmd_t* cmd)
 /**
  * Execute one (the next) command, advance script cursor.
  */
-static boolean scriptExecuteCommand(fistate_t* s, const char* commandString)
+static boolean scriptExecuteCommand(fi_state_t* s, const char* commandString)
 {
     // Semicolon terminates DO-blocks.
     if(!strcmp(commandString, ";"))
@@ -1033,11 +1040,11 @@ static boolean scriptExecuteCommand(fistate_t* s, const char* commandString)
     cmdExecuted = true;
 
     // Is this a command we know how to execute?
-    {ficmd_t* cmd;
+    {fi_cmd_t* cmd;
     if((cmd = findCommand(commandString)))
     {
         // Check that there are enough operands.
-        if(parseOperands(cmd->operands, cmd->token, s))
+        if(parseOperands(cmd->numOperands, cmd->token, s))
         {
             // Should we skip this command?
             if(scriptSkipCommand(s, cmd))
@@ -1057,7 +1064,7 @@ static boolean scriptExecuteCommand(fistate_t* s, const char* commandString)
     return false; // The command was not found.
 }
 
-static boolean scriptExecuteNextCommand(fistate_t* s)
+static boolean scriptExecuteNextCommand(fi_state_t* s)
 {
     const char* cmd;
     if((cmd = scriptNextToken(s)))
@@ -1067,7 +1074,7 @@ static boolean scriptExecuteNextCommand(fistate_t* s)
     return false;
 }
 
-static fidata_pic_t* createPic(fistate_t* s, const char* name)
+static fidata_pic_t* createPic(fi_state_t* s, const char* name)
 {
     fidata_pic_t* pic;
     if((pic = objectsFindUnusedPic(&s->objects)))
@@ -1088,7 +1095,7 @@ static fidata_pic_t* createPic(fistate_t* s, const char* name)
     return 0;
 }
 
-static fidata_text_t* createText(fistate_t* s, const char* name)
+static fidata_text_t* createText(fi_state_t* s, const char* name)
 {
     fidata_text_t* text;
     if((text = objectsFindUnusedText(&s->objects)))
@@ -1124,20 +1131,20 @@ static fidata_text_t* createText(fistate_t* s, const char* name)
 }
 
 /**
- * Find a @c fihandler_t for the specified ddkey code.
+ * Find a @c fi_handler_t for the specified ddkey code.
  * @param code              Unique id code of the ddkey event handler to look for.
- * @return                  Ptr to @c fihandler_t object. Either:
+ * @return                  Ptr to @c fi_handler_t object. Either:
  *                          1) Existing handler associated with unique @a code.
  *                          2) New object with unique @a code.
  *                          3) @c NULL - No more objects.
  */
-static fihandler_t* stateGetHandler(fistate_t* s, int code)
+static fi_handler_t* stateGetHandler(fi_state_t* s, int code)
 {
-    fihandler_t* unused = NULL;
+    fi_handler_t* unused = NULL;
     {int i;
     for(i = 0; i < MAX_HANDLERS; ++i)
     {
-        fihandler_t* hnd = &s->keyHandlers[i];
+        fi_handler_t* hnd = &s->eventHandlers[i];
 
         // Use this if a suitable handler is not already set?
         if(!unused && !hnd->code)
@@ -1160,7 +1167,7 @@ static fihandler_t* stateGetHandler(fistate_t* s, int code)
  *                          2) New object with unique @a name.
  *                          3) @c NULL - No more objects.
  */
-static fidata_pic_t* stateGetPic(fistate_t* s, const char* name)
+static fidata_pic_t* stateGetPic(fi_state_t* s, const char* name)
 {
     assert(name && name[0]);
     {
@@ -1178,7 +1185,7 @@ static fidata_pic_t* stateGetPic(fistate_t* s, const char* name)
     }
 }
 
-static fidata_text_t* stateGetText(fistate_t* s, const char* name)
+static fidata_text_t* stateGetText(fi_state_t* s, const char* name)
 {
     assert(name && name);
     {
@@ -1196,18 +1203,18 @@ static fidata_text_t* stateGetText(fistate_t* s, const char* name)
     }
 }
 
-static void scriptTick(fistate_t* s)
+static void scriptTick(fi_state_t* s)
 {
-    ddhook_scriptticker_paramaters_t p;
+    ddhook_finale_script_ticker_paramaters_t p;
     int i, last = 0;
 
     memset(&p, 0, sizeof(p));
     p.runTick = true;
-    p.canSkip = s->canSkip;
+    p.canSkip = s->flags.can_skip;
     p.gameState = (s->mode == FIMODE_OVERLAY? s->overlayGameState : s->initialGameState);
-    p.conditions = s->conditions;
+    p.extraData = s->extraData;
 
-    Plug_DoHook(HOOK_INFINE_SCRIPT_TICKER, s->mode, &p);
+    Plug_DoHook(HOOK_FINALE_SCRIPT_TICKER, s->mode, &p);
 
     if(!p.runTick)
         return;
@@ -1232,7 +1239,7 @@ static void scriptTick(fistate_t* s)
         return;
 
     // If we're paused we can't really do anything.
-    if(s->paused)
+    if(s->flags.paused)
         return;
 
     // If we're waiting for a text to finish typing, do nothing.
@@ -1265,7 +1272,7 @@ static void scriptTick(fistate_t* s)
     }
 }
 
-static void scriptSkipTo(fistate_t* s, const char* marker)
+static void scriptSkipTo(fi_state_t* s, const char* marker)
 {
     memset(s->gotoTarget, 0, sizeof(s->gotoTarget));
     strncpy(s->gotoTarget, marker, sizeof(s->gotoTarget) - 1);
@@ -1290,7 +1297,7 @@ static void rotate(float angle)
     glScalef(1, 240.0f / 200.0f, 1);
 }
 
-static void stateDraw(fistate_t* s)
+static void stateDraw(fi_state_t* s)
 {
     // Draw the background.
     if(s->bgMaterial)
@@ -1327,7 +1334,7 @@ static void stateDraw(fistate_t* s)
     }
 }
 
-static void scriptUseTextColor(fistate_t* s, fidata_text_t* text, int idx)
+static void scriptUseTextColor(fi_state_t* s, fidata_text_t* text, int idx)
 {
     if(!idx)
     {   // Use the default color for the text.
@@ -1344,13 +1351,13 @@ static void scriptUseTextColor(fistate_t* s, fidata_text_t* text, int idx)
 
 static void demoEnds(void)
 {
-    fistate_t* s = stackTop();
+    fi_state_t* s = stackTop();
 
-    if(!s || !s->suspended)
+    if(!s || !s->flags.suspended)
         return;
 
     // Restore the InFine state.
-    s->suspended = false;
+    s->flags.suspended = false;
     active = true;
 
     gx.FI_DemoEnds();
@@ -1371,12 +1378,12 @@ boolean FI_CmdExecuted(void)
  */
 void FI_Reset(void)
 {
-    fistate_t* s = stackTop();
+    fi_state_t* s = stackTop();
 
     // The state is suspended when the PlayDemo command is used.
     // Being suspended means that InFine is currently not active, but
     // will be restored at a later time.
-    if(s && s->suspended)
+    if(s && s->flags.suspended)
         return;
 
     // Pop all the states.
@@ -1391,7 +1398,7 @@ void FI_Reset(void)
  */
 void FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, const void* clientState)
 {
-    fistate_t* s;
+    fi_state_t* s;
 
     if(mode == FIMODE_LOCAL && isDedicated)
     {
@@ -1414,7 +1421,7 @@ void FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, co
 
 void FI_ScriptTerminate(void)
 {
-    fistate_t* s;
+    fi_state_t* s;
     if(!active)
         return;
     if((s = stackTop()))
@@ -1436,16 +1443,16 @@ void* FI_GetClientsideDefaultState(void)
 void FI_SetClientsideDefaultState(const void* data)
 {
     assert(data);
-    memcpy(&defaultState, data, sizeof(INFINE_CLIENTSTATE_SIZE));
+    memcpy(&defaultState, data, sizeof(FINALE_SCRIPT_EXTRADATA_SIZE));
 }
 
 /**
  * @return              @c true, if a command was found.
  *                      @c false if there are no more commands in the script.
  */
-fihandler_t* FI_GetHandler(int code)
+fi_handler_t* FI_GetHandler(int code)
 {
-    fistate_t* s;
+    fi_state_t* s;
     if((s = stackTop()))
     {
         return stateGetHandler(s, code);
@@ -1465,7 +1472,7 @@ void FI_Ticker(timespan_t ticLength)
         return;
 
     // A new 35 Hz tick has begun.
-    {fistate_t* s;
+    {fi_state_t* s;
     if((s = stackTop()))
     {
         scriptTick(s);
@@ -1477,7 +1484,7 @@ void FI_Ticker(timespan_t ticLength)
  */
 int FI_SkipRequest(void)
 {
-    fistate_t* s;
+    fi_state_t* s;
     if((s = stackTop()))
     {
         return stateSkipRequest(s);
@@ -1490,28 +1497,28 @@ int FI_SkipRequest(void)
  */
 boolean FI_IsMenuTrigger(void)
 {
-    fistate_t* s;
+    fi_state_t* s;
     if(!active)
         return false;
     if((s = stackTop()))
-        return !s->showMenu;
+        return !s->flags.show_menu;
     return false;
 }
 
 int FI_AteEvent(ddevent_t* ev)
 {
-    fistate_t* s;
+    fi_state_t* s;
     // We'll never eat up events.
     if(IS_TOGGLE_UP(ev))
         return false;
     if((s = stackTop()))
-        return s->eatEvents;
+        return s->flags.eat_events;
     return false;
 }
 
 int FI_Responder(ddevent_t* ev)
 {
-    fistate_t* s = stackTop();
+    fi_state_t* s = stackTop();
 
     if(!active || isClient)
         return false;
@@ -1526,16 +1533,16 @@ int FI_Responder(ddevent_t* ev)
         int i;
         for(i = 0; i < MAX_HANDLERS; ++i)
         {
-            if(s->keyHandlers[i].code == ev->toggle.id)
+            if(s->eventHandlers[i].code == ev->toggle.id)
             {
-                scriptSkipTo(s, s->keyHandlers[i].marker);
+                scriptSkipTo(s, s->eventHandlers[i].marker);
                 return FI_AteEvent(ev);
             }
         }
     }
 
     // If we can't skip, there's no interaction of any kind.
-    if(!s->canSkip && !s->paused)
+    if(!s->flags.can_skip && !s->flags.paused)
         return FI_AteEvent(ev);
 
     // We are only interested in key/button down presses.
@@ -1545,11 +1552,6 @@ int FI_Responder(ddevent_t* ev)
     // Servers tell clients to skip.
     Sv_Finale(FINF_SKIP, 0, NULL, 0);
     return FI_SkipRequest();
-}
-
-int FI_CharWidth(int ch, compositefontid_t font)
-{
-    return GL_CharWidth(ch, font);
 }
 
 int FI_GetLineWidth(char* text, compositefontid_t font)
@@ -1569,7 +1571,7 @@ int FI_GetLineWidth(char* text, compositefontid_t font)
             if(*text == 'w' || *text == 'W' || *text == 'p' || *text == 'P')
                 continue;
         }
-        width += FI_CharWidth(*text, font);
+        width += GL_CharWidth(*text, font);
     }
 
     return width;
@@ -1584,7 +1586,7 @@ void FI_Drawer(void)
     if(!active || !cmdExecuted)
         return;
 
-    {fistate_t* s;
+    {fi_state_t* s;
     if((s = stackTop()))
     {
         stateDraw(s);
@@ -1860,7 +1862,7 @@ void FIData_TextDraw(fidata_text_t* tex, float xOffset, float yOffset)
 {
     assert(tex);
     {
-    fistate_t* s = stackTop();
+    fi_state_t* s = stackTop();
     int cnt, x = 0, y = 0;
     int ch, linew = -1;
     char* ptr;
@@ -1930,7 +1932,7 @@ void FIData_TextDraw(fidata_text_t* tex, float xOffset, float yOffset)
            tex->object.scale[1].value * y + tex->object.pos[1].value < SCREENHEIGHT)
         {
             GL_DrawChar2(ch, tex->flags.centered ? x - linew / 2 : x, y, tex->font);
-            x += FI_CharWidth(ch, tex->font);
+            x += GL_CharWidth(ch, tex->font);
         }
 
         cnt++; // Actual character drawn.
@@ -2061,7 +2063,7 @@ DEFFC(ColorAlpha)
 
 DEFFC(Pause)
 {
-    s->paused = true;
+    s->flags.paused = true;
     s->wait = 1;
 }
 
@@ -2082,20 +2084,18 @@ DEFFC(SkipHere)
 
 DEFFC(Events)
 {
-    // Script will eat all input events.
-    s->eatEvents = true;
+    s->flags.eat_events = true;
 }
 
 DEFFC(NoEvents)
 {
-    // Script will pass unprocessed events to other responders.
-    s->eatEvents = false;
+    s->flags.eat_events = false;
 }
 
 DEFFC(OnKey)
 {
     int code;
-    fihandler_t* handler;
+    fi_handler_t* handler;
 
     // First argument is the key identifier.
     code = DD_GetKeyCode(scriptNextToken(s));
@@ -2113,7 +2113,7 @@ DEFFC(OnKey)
 
 DEFFC(UnsetKey)
 {
-    fihandler_t* handler = FI_GetHandler(DD_GetKeyCode(scriptNextToken(s)));
+    fi_handler_t* handler = FI_GetHandler(DD_GetKeyCode(scriptNextToken(s)));
 
     if(handler)
     {
@@ -2134,16 +2134,16 @@ DEFFC(If)
         val = netGame;
     }
     // Any hooks?
-    else if(Plug_CheckForHook(HOOK_INFINE_EVAL_IF))
+    else if(Plug_CheckForHook(HOOK_FINALE_EVAL_IF))
     {
-        ddhook_evalif_paramaters_t p;
+        ddhook_finale_script_evalif_paramaters_t p;
 
         memset(&p, 0, sizeof(p));
-        p.conditions = s->conditions;
+        p.extraData = s->extraData;
         p.token = token;
         p.returnVal = 0;
 
-        if(Plug_DoHook(HOOK_INFINE_EVAL_IF, 0, (void*) &p))
+        if(Plug_DoHook(HOOK_FINALE_EVAL_IF, 0, (void*) &p))
         {
             val = p.returnVal;
         }
@@ -2857,7 +2857,7 @@ DEFFC(TextScale)
 DEFFC(PlayDemo)
 {
     // Mark the current state as suspended, so we know to resume it when the demo ends.
-    s->suspended = true;
+    s->flags.suspended = true;
     active = false;
 
     // The only argument is the demo file name.
@@ -2876,12 +2876,12 @@ DEFFC(Command)
 
 DEFFC(ShowMenu)
 {
-    s->showMenu = true;
+    s->flags.show_menu = true;
 }
 
 DEFFC(NoShowMenu)
 {
-    s->showMenu = false;
+    s->flags.show_menu = false;
 }
 
 D_CMD(StartFinale)

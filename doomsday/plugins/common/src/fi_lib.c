@@ -46,25 +46,25 @@
 
 #include "fi_lib.h"
 
-int Hook_SerializeConditions(int hookType, int param, const void* paramaters);
-int Hook_DeserializeConditions(int hookType, int flags, const void* paramaters);
-int Hook_EvalIf(int hookType, int param, void* paramaters);
+int Hook_FinaleScriptSerializeExtraData(int hookType, int param, const void* paramaters);
+int Hook_FinaleScriptDeserializeExtraData(int hookType, int flags, const void* paramaters);
+int Hook_FinaleScriptEvalIf(int hookType, int param, void* paramaters);
 
-int Hook_ScriptStart(int hookType, int mode, void* paramaters);
-int Hook_ScriptStop(int hookType, int oldMode, void* paramaters);
-int Hook_ScriptTicker(int hookType, int mode, void* paramaters);
+int Hook_FinaleScriptStart(int hookType, int mode, void* paramaters);
+int Hook_FinaleScriptStop(int hookType, int oldMode, void* paramaters);
+int Hook_FinaleScriptTicker(int hookType, int mode, void* paramaters);
 
 int Hook_DemoStop(int hookType, int params, const void* paramaters);
 
 void FI_RegisterHooks(void)
 {
-    Plug_AddHook(HOOK_INFINE_STATE_SERIALIZE_EXTRADATA, Hook_SerializeConditions);
-    Plug_AddHook(HOOK_INFINE_STATE_DESERIALIZE_EXTRADATA, Hook_DeserializeConditions);
-    Plug_AddHook(HOOK_INFINE_EVAL_IF, Hook_EvalIf);
+    Plug_AddHook(HOOK_FINALE_SCRIPT_SERIALIZE_EXTRADATA, Hook_FinaleScriptSerializeExtraData);
+    Plug_AddHook(HOOK_FINALE_SCRIPT_DESERIALIZE_EXTRADATA, Hook_FinaleScriptDeserializeExtraData);
+    Plug_AddHook(HOOK_FINALE_EVAL_IF, Hook_FinaleScriptEvalIf);
 
-    Plug_AddHook(HOOK_INFINE_SCRIPT_BEGIN, Hook_ScriptStart);
-    Plug_AddHook(HOOK_INFINE_SCRIPT_TERMINATE, Hook_ScriptStop);
-    Plug_AddHook(HOOK_INFINE_SCRIPT_TICKER, Hook_ScriptTicker);
+    Plug_AddHook(HOOK_FINALE_SCRIPT_BEGIN, Hook_FinaleScriptStart);
+    Plug_AddHook(HOOK_FINALE_SCRIPT_TERMINATE, Hook_FinaleScriptStop);
+    Plug_AddHook(HOOK_FINALE_SCRIPT_TICKER, Hook_FinaleScriptTicker);
 }
 
 int FI_GetGameState(void)
@@ -83,7 +83,7 @@ void FI_DemoEnds(void)
     }
 }
 
-int Hook_ScriptStart(int hookType, int mode, void* unused)
+int Hook_FinaleScriptStart(int hookType, int mode, void* unused)
 {
     uint i;
    
@@ -99,10 +99,10 @@ int Hook_ScriptStart(int hookType, int mode, void* unused)
     return true;
 }
 
-int Hook_ScriptStop(int hookType, int mode, void* paramaters)
+int Hook_FinaleScriptStop(int hookType, int mode, void* paramaters)
 {
-    const ddhook_scriptstop_paramaters_t* p = (const ddhook_scriptstop_paramaters_t*) paramaters;
-    finale_conditions_t* conditions = (finale_conditions_t*) p->conditions;
+    const ddhook_finale_script_stop_paramaters_t* p = (const ddhook_finale_script_stop_paramaters_t*) paramaters;
+    finale_extradata_t* extraData = (finale_extradata_t*) p->extraData;
 
     if(FI_Active())
         return true;
@@ -139,9 +139,9 @@ int Hook_ScriptStop(int hookType, int mode, void* paramaters)
     return true;
 }
 
-int Hook_ScriptTicker(int hookType, int mode, void* paramaters)
+int Hook_FinaleScriptTicker(int hookType, int mode, void* paramaters)
 {
-    ddhook_scriptticker_paramaters_t* p = (ddhook_scriptticker_paramaters_t*) paramaters;
+    ddhook_finale_script_ticker_paramaters_t* p = (ddhook_finale_script_ticker_paramaters_t*) paramaters;
     gamestate_t gameState = G_GetGameState();
 
     /**
@@ -178,14 +178,14 @@ static int playerClassForName(const char* name)
 }
 #endif
 
-int Hook_EvalIf(int hookType, int unused, void* paramaters)
+int Hook_FinaleScriptEvalIf(int hookType, int unused, void* paramaters)
 {
-    ddhook_evalif_paramaters_t* p = (ddhook_evalif_paramaters_t*) paramaters;
-    finale_conditions_t* c = p->conditions;
+    ddhook_finale_script_evalif_paramaters_t* p = (ddhook_finale_script_evalif_paramaters_t*) paramaters;
+    finale_extradata_t* data = p->extraData;
 
     if(!stricmp(p->token, "secret"))
     {   // Secret exit was used?
-        p->returnVal = c->secret;
+        p->returnVal = data->secret;
         return true;
     }
 
@@ -231,7 +231,7 @@ int Hook_EvalIf(int hookType, int unused, void* paramaters)
 
     if(!stricmp(p->token, "leavehub"))
     {   // Current hub has been completed?
-        p->returnVal = c->leavehub;
+        p->returnVal = data->leavehub;
         return true;
     }
 
@@ -248,28 +248,28 @@ int Hook_EvalIf(int hookType, int unused, void* paramaters)
     return false;
 }
 
-int Hook_SerializeConditions(int hookType, int flags, const void* paramaters)
+int Hook_FinaleScriptSerializeExtraData(int hookType, int flags, const void* paramaters)
 {
-    ddhook_serializeconditions_paramaters_t* p = (ddhook_serializeconditions_paramaters_t*) paramaters;
-    const finale_conditions_t* c = (const finale_conditions_t*) p->conditions;
+    ddhook_finale_script_serialize_extradata_t* p = (ddhook_finale_script_serialize_extradata_t*) paramaters;
+    const finale_extradata_t* data = (const finale_extradata_t*) p->extraData;
     byte* ptr = p->outBuf;
 
-    *ptr++ = c->secret;
-    *ptr++ = c->leavehub;
+    *ptr++ = data->secret;
+    *ptr++ = data->leavehub;
     p->outBufSize = 2;
     
     return true;
 }
 
-int Hook_DeserializeConditions(int hookType, int flags, const void* paramaters)
+int Hook_FinaleScriptDeserializeExtraData(int hookType, int flags, const void* paramaters)
 {
-    const ddhook_deserializeconditions_paramaters_t* p = (const ddhook_deserializeconditions_paramaters_t*) paramaters;
+    const ddhook_finale_script_deserialize_extradata_t* p = (const ddhook_finale_script_deserialize_extradata_t*) paramaters;
     const byte* ptr = p->inBuf;
-    finale_conditions_t* c = (finale_conditions_t*) p->conditions;
+    finale_extradata_t* data = (finale_extradata_t*) p->extraData;
 
-    c->secret = *ptr++;
+    data->secret = *ptr++;
     if(flags & FIRCF_LEAVEHUB)
-        c->leavehub = *ptr;
+        data->leavehub = *ptr;
 
     *p->gameState = G_GetGameState();
 

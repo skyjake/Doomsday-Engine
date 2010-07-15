@@ -1431,9 +1431,9 @@ VERBOSE(Con_Message("G_ChangeGameState: New state %s.\n",
     DD_Executef(true, "%sactivatebcontext game", gameActive? "" : "de");
 }
 
-static void initFinaleConditions(finale_conditions_t* cons)
+static void initFinaleExtraData(finale_extradata_t* data)
 {
-    memset(cons, 0, sizeof(*cons));
+    memset(data, 0, sizeof(*data));
 
     // Only the server is able to figure out the truth values of all the conditions
     // (clients use the server-provided presets).
@@ -1441,31 +1441,31 @@ static void initFinaleConditions(finale_conditions_t* cons)
         return;
 
 #if __JHEXEN__
-    cons->secret = false;
+    data->secret = false;
 
     // Current hub has been completed?
-    cons->leavehub = (P_GetMapCluster(gameMap) != P_GetMapCluster(nextMap));
+    data->leavehub = (P_GetMapCluster(gameMap) != P_GetMapCluster(nextMap));
 #else
-    cons->secret = secretExit;
+    data->secret = secretExit;
     // Only Hexen has hubs.
-    cons->leavehub = false;
+    data->leavehub = false;
 #endif
 }
 
 static void startFinale(const char* script, finale_mode_t mode)
 {
-    finale_conditions_t c, *cons = &c;
+    finale_extradata_t extraData, *data = &extraData;
     gamestate_t prevGameState = G_GetGameState();
 
     G_SetGameAction(GA_NONE);
 
-    initFinaleConditions(&c);
+    initFinaleExtraData(data);
     if(mode != FIMODE_OVERLAY)
     {
         G_ChangeGameState(GS_INFINE);
     }
 
-    FI_ScriptBegin(script, mode, prevGameState, IS_SERVER? cons : 0);
+    FI_ScriptBegin(script, mode, prevGameState, IS_SERVER? data : 0);
 }
 
 boolean G_StartFinale2(const char* script, finale_mode_t mode)

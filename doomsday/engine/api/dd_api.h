@@ -106,7 +106,7 @@ typedef struct {
     size_t          polyobjSize; // sizeof(polyobj_t)
 
     // Misc structure sizes.
-    size_t          finaleConditionsSize; // sizeof(finale_conditions_t);
+    size_t          finaleConditionsSize; // sizeof(finale_extradata_t);
 
     // Map data setup
     // This routine is called before any data is read
