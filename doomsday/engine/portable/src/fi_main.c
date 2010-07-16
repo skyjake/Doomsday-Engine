@@ -342,8 +342,6 @@ static fi_cmd_t commands[] = {
 static fi_state_t stateStack[STACK_SIZE];
 static fi_state_t* fi; // Pointer to the current state in the stack.
 static char token[MAX_TOKEN_LEN];
-static fidata_pic_t dummyPic;
-static fidata_text_t dummyText;
 
 static void* defaultState = 0;
 
@@ -716,8 +714,6 @@ static void scriptBegin(fi_state_t* s)
         // Tell clients to start this script.
         Sv_Finale(flags, s->script, (haveExtraData? p.outBuf : 0), (haveExtraData? p.outBufSize : 0));
     }
-
-    memset(&dummyText, 0, sizeof(dummyText));
 
     // Any hooks?
     Plug_DoHook(HOOK_FINALE_SCRIPT_BEGIN, (int) s->mode, s->extraData);
@@ -1673,8 +1669,8 @@ void FIData_PicRotationOrigin(const fidata_pic_t* p, float center[2])
     }
     else
     {
-        center[VX] = 160;
-        center[VY] = 100;
+        center[VX] = SCREENWIDTH/2;
+        center[VY] = SCREENHEIGHT/2;
     }
 
     center[VX] *= p->scale[VX].value;
