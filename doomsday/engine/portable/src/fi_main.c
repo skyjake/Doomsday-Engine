@@ -1152,7 +1152,7 @@ fidata_pic_t* P_CreatePic(const char* name)
 void P_DestroyPic(fidata_pic_t* pic)
 {
     assert(pic);
-    if(pic->flags.is_ximage)
+    if(pic->frames[0].flags.is_ximage)
     {
         FIData_PicDeleteXImage(pic);
     }
@@ -1511,7 +1511,7 @@ void FIData_PicDraw(fidata_pic_t* p, float xOffset, float yOffset)
     // Draw it.
     if(p->flags.is_rect)
     {
-        if(p->flags.is_ximage)
+        if(p->frames[p->frame].flags.is_ximage)
         {
             DGL_Enable(DGL_TEXTURING);
             DGL_Bind((DGLuint)p->frames[p->frame].tex);
@@ -1558,7 +1558,7 @@ void FIData_PicDraw(fidata_pic_t* p, float xOffset, float yOffset)
 
         DGL_Enable(DGL_TEXTURING);
     }
-    else if(p->flags.is_patch)
+    else if(p->frames[p->frame].flags.is_patch)
     {
         patchtex_t* patch;
         if((patch = R_FindPatchTex((patchid_t)p->frames[p->frame].tex)))
@@ -1602,33 +1602,31 @@ void FIData_PicInit(fidata_pic_t* pic)
     AnimatorVector4_Init(pic->otherEdgeColor, 1, 1, 1, 0);
 }
 
-void FIData_PicDeleteXImage(fidata_pic_t* pic)
+void FIData_PicDeleteXImage(fidata_pic_t* p)
 {
-    assert(pic);
-
-    DGL_DeleteTextures(1, (DGLuint*)&pic->frames[0].tex);
-    pic->frames[0].tex = 0;
-    pic->flags.is_ximage = false;
+    assert(p);
+    DGL_DeleteTextures(1, (DGLuint*)&p->frames[0].tex);
+    p->frames[0].tex = 0;
+    p->frames[0].flags.is_ximage = false;
 }
 
-void FIData_PicClearAnimation(fidata_pic_t* pic)
+void FIData_PicClearAnimation(fidata_pic_t* p)
 {
-    assert(pic);
-
-    // Kill the old texture.
-    if(pic->flags.is_ximage)
-        FIData_PicDeleteXImage(pic);
-
+    assert(p);
     {uint i;
     for(i = 0; i < FIDATA_PIC_MAX_SEQUENCE; ++i)
     {
-        pic->frames[i].tex = 0;
-        pic->frames[i].flip = 0;
-        pic->frames[i].sound = -1;
-        pic->frames[i].tics = 0;
+        // Kill the old texture.
+        if(p->frames[i].flags.is_ximage)
+            FIData_PicDeleteXImage(p);
+
+        p->frames[i].tex = 0;
+        p->frames[i].flip = 0;
+        p->frames[i].sound = -1;
+        p->frames[i].tics = 0;
     }}
-    pic->frame = 0;
-    pic->animComplete = true;
+    p->frame = 0;
+    p->animComplete = true;
 }
 
 uint FIData_PicNextFrame(fidata_pic_t* pic)
@@ -1652,7 +1650,7 @@ void FIData_PicRotationOrigin(const fidata_pic_t* p, float center[2])
     {
         center[VX] = center[VY] = .5f;
     }
-    else if(p->flags.is_patch)
+    else if(p->frames[p->frame].flags.is_patch)
     {
         patchinfo_t info;
 
@@ -2060,82 +2058,75 @@ DEFFC(Delete)
 
 DEFFC(Image)
 {
-    fidata_pic_t* pic = stateGetPic(s, scriptNextToken(s));
+    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
     const char* name = scriptNextToken(s);
 
-    FIData_PicClearAnimation(pic);
-
-    if((pic->frames[0].tex = W_CheckNumForName(name)) == -1)
+    FIData_PicClearAnimation(obj);
+    obj->flags.is_rect = false;
+    if((obj->frames[0].tex = W_CheckNumForName(name)) == -1)
         Con_Message("FIC_Image: Warning, missing lump \"%s\".\n", name);
-
-    pic->flags.is_patch = false;
-    pic->flags.is_rect = false;
-    pic->flags.is_ximage = false;
+    obj->frames[0].flags.is_patch = false;
+    obj->frames[0].flags.is_ximage = false;
 }
 
 DEFFC(ImageAt)
 {
-    fidata_pic_t* pic = stateGetPic(s, scriptNextToken(s));
-    const char* name;
+    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
+    float x = scriptParseFloat(s);
+    float y = scriptParseFloat(s);
+    const char* name = scriptNextToken(s);
 
-    AnimatorVector2_Init(pic->pos, scriptParseFloat(s), scriptParseFloat(s));
-    FIData_PicClearAnimation(pic);
-
-    name = scriptNextToken(s);
-    if((pic->frames[0].tex = W_CheckNumForName(name)) == -1)
+    AnimatorVector2_Init(obj->pos, x, y);
+    FIData_PicClearAnimation(obj);
+    obj->flags.is_rect = false;
+    if((obj->frames[0].tex = W_CheckNumForName(name)) == -1)
         Con_Message("FIC_ImageAt: Warning, missing lump \"%s\".\n", name);
-
-    pic->flags.is_patch = false;
-    pic->flags.is_rect = false;
-    pic->flags.is_ximage = false;
+    obj->frames[0].flags.is_patch = false;
+    obj->frames[0].flags.is_ximage = false;
 }
 
 DEFFC(XImage)
 {
-    fidata_pic_t* pic = stateGetPic(s, scriptNextToken(s));
-    const char* fileName;
+    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
+    const char* fileName = scriptNextToken(s);
 
-    FIData_PicClearAnimation(pic);
-
+    FIData_PicClearAnimation(obj);
+    obj->flags.is_rect = true;
     // Load the external resource.
-    fileName = scriptNextToken(s);
-    if((pic->frames[0].tex = loadGraphics(DDRC_GRAPHICS, fileName, LGM_NORMAL, false, true, 0)) == 0)
+    if((obj->frames[0].tex = loadGraphics(DDRC_GRAPHICS, fileName, LGM_NORMAL, false, true, 0)) == 0)
         Con_Message("FIC_XImage: Warning, missing graphic \"%s\".\n", fileName);
-
-    pic->flags.is_patch = false;
-    pic->flags.is_rect = true;
-    pic->flags.is_ximage = true;
+    obj->frames[0].flags.is_patch = false;
+    obj->frames[0].flags.is_ximage = true;
 }
 
 DEFFC(Patch)
 {
-    fidata_pic_t* pic = stateGetPic(s, scriptNextToken(s));
-    const char* name;
+    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
+    float x = scriptParseFloat(s);
+    float y = scriptParseFloat(s);
+    const char* name = scriptNextToken(s);
     patchid_t patch;
 
-    AnimatorVector2_Init(pic->pos, scriptParseFloat(s), scriptParseFloat(s));
-    FIData_PicClearAnimation(pic);
-
-    name = scriptNextToken(s);
+    AnimatorVector2_Init(obj->pos, x, y);
+    FIData_PicClearAnimation(obj);
+    obj->flags.is_rect = false;
     if((patch = R_PrecachePatch(name, NULL)) == 0)
         Con_Message("FIC_Patch: Warning, missing Patch \"%s\".\n", name);
-
-    pic->frames[0].tex = patch;
-    pic->flags.is_patch = true;
-    pic->flags.is_rect = false;
+    obj->frames[0].tex = patch;
+    obj->frames[0].flags.is_patch = true;
 }
 
 DEFFC(SetPatch)
 {
-    fidata_pic_t* pic = stateGetPic(s, scriptNextToken(s));
+    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
     const char* name = scriptNextToken(s);
     patchid_t patch;
 
     if((patch = R_PrecachePatch(name, NULL)) != 0)
     {
-        pic->frames[0].tex = patch;
-        pic->flags.is_patch = true;
-        pic->flags.is_rect = false;
+        obj->flags.is_rect = false;
+        obj->frames[0].tex = patch;
+        obj->frames[0].flags.is_patch = true;
     }
     else
     {
@@ -2145,47 +2136,46 @@ DEFFC(SetPatch)
 
 DEFFC(ClearAnim)
 {
-    fidata_pic_t* pic = stateGetPic(s, scriptNextToken(s));
-    FIData_PicClearAnimation(pic);
+    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
+    FIData_PicClearAnimation(obj);
 }
 
 DEFFC(Anim)
 {
-    fidata_pic_t* pic = stateGetPic(s, scriptNextToken(s));
+    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
     const char* name = scriptNextToken(s);
+    int tics = scriptReadTics(s);
     patchid_t patch;
-    int i, tics;
+    uint i;
 
     if((patch = R_PrecachePatch(name, NULL)) == 0)
         Con_Message("FIC_Anim: Warning, Patch \"%s\" not found.\n", name);
 
-    tics = scriptReadTics(s);
     // Find the next sequence spot.
-    i = FIData_PicNextFrame(pic);
+    i = FIData_PicNextFrame(obj);
     if(i == FIDATA_PIC_MAX_SEQUENCE)
     {
         Con_Message("FIC_Anim: Warning, too many frames in anim sequence (max %i).\n", FIDATA_PIC_MAX_SEQUENCE);
         return; // Can't do it...
     }
-    pic->frames[i].tex = patch;
-    pic->frames[i].tics = tics;
-    pic->flags.is_patch = true;
-    pic->animComplete = false;
+    obj->frames[i].tex = patch;
+    obj->frames[i].tics = tics;
+    obj->frames[i].flags.is_patch = true;
+    obj->animComplete = false;
 }
 
 DEFFC(AnimImage)
 {
-    fidata_pic_t* pic = stateGetPic(s, scriptNextToken(s));
+    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
     const char* name = scriptNextToken(s);
-    int lump, tics;
+    int lump, tics = scriptReadTics(s);
     uint i;
 
     if((lump = W_CheckNumForName(name)) == -1)
         Con_Message("FIC_AnimImage: Warning, lump \"%s\" not found.\n", name);
 
-    tics = scriptReadTics(s);
     // Find the next sequence spot.
-    i = FIData_PicNextFrame(pic);
+    i = FIData_PicNextFrame(obj);
     if(i == FIDATA_PIC_MAX_SEQUENCE)
     {
         Con_Message("FIC_AnimImage: Warning, too many frames in anim sequence "
@@ -2193,47 +2183,47 @@ DEFFC(AnimImage)
         return; // Can't do it...
     }
 
-    pic->frames[i].tex = lump;
-    pic->frames[i].tics = tics;
-    pic->flags.is_patch = false;
-    pic->flags.is_rect = false;
-    pic->animComplete = false;
+    obj->frames[i].tex = lump;
+    obj->frames[i].tics = tics;
+    obj->frames[i].flags.is_patch = false;
+    obj->flags.is_rect = false;
+    obj->animComplete = false;
 }
 
 DEFFC(Repeat)
 {
-    fidata_pic_t* pic = stateGetPic(s, scriptNextToken(s));
-    uint i = FIData_PicNextFrame(pic);
+    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
+    uint i = FIData_PicNextFrame(obj);
     if(i == FIDATA_PIC_MAX_SEQUENCE)
         return;
-    pic->frames[i].tex = FI_REPEAT;
+    obj->frames[i].tex = FI_REPEAT;
 }
 
 DEFFC(StateAnim)
 {
-    fidata_pic_t* pic = stateGetPic(s, scriptNextToken(s));
+    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
     int stateId = Def_Get(DD_DEF_STATE, scriptNextToken(s), 0);
     int count = scriptParseInteger(s);
     spriteinfo_t sinf;
 
     // Animate N states starting from the given one.
-    pic->flags.is_patch = true;
-    pic->flags.is_rect = false;
-    pic->animComplete = false;
+    obj->flags.is_rect = false;
+    obj->animComplete = false;
     for(; count > 0 && stateId > 0; count--)
     {
         state_t* st = &states[stateId];
-        uint i = FIData_PicNextFrame(pic);
+        uint i = FIData_PicNextFrame(obj);
 
         if(i == FIDATA_PIC_MAX_SEQUENCE)
             break; // No room!
 
         R_GetSpriteInfo(st->sprite, st->frame & 0x7fff, &sinf);
-        pic->frames[i].tex = sinf.realLump;
-        pic->frames[i].flip = sinf.flip;
-        pic->frames[i].tics = st->tics;
-        if(pic->frames[i].tics == 0)
-            pic->frames[i].tics = 1;
+        obj->frames[i].tex = sinf.realLump;
+        obj->frames[i].flags.is_patch = true;
+        obj->frames[i].flip = sinf.flip;
+        obj->frames[i].tics = st->tics;
+        if(obj->frames[i].tics == 0)
+            obj->frames[i].tics = 1;
 
         // Go to the next state.
         stateId = st->nextState;
@@ -2365,18 +2355,22 @@ DEFFC(ObjectAngle)
 
 DEFFC(Rect)
 {
-    fidata_pic_t* pic = stateGetPic(s, scriptNextToken(s));
+    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
+    float x = scriptParseFloat(s);
+    float y = scriptParseFloat(s);
+    float scaleX = scriptParseFloat(s);
+    float scaleY = scriptParseFloat(s);
 
-    FIData_PicInit(pic);
+    FIData_PicInit(obj);
 
     // Position and size.
-    AnimatorVector2_Init(pic->pos, scriptParseFloat(s), scriptParseFloat(s));
-    AnimatorVector2_Init(pic->scale, scriptParseFloat(s), scriptParseFloat(s));
+    AnimatorVector2_Init(obj->pos, x, y);
+    AnimatorVector2_Init(obj->scale, scaleX, scaleY);
 
-    pic->flags.is_rect = true;
-    pic->flags.is_patch = false;
-    pic->flags.is_ximage = false;
-    pic->animComplete = true;
+    obj->animComplete = true;
+    obj->flags.is_rect = true;
+    obj->frames[0].flags.is_patch = false;
+    obj->frames[0].flags.is_ximage = false;
 }
 
 DEFFC(FillColor)

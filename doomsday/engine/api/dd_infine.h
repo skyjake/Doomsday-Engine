@@ -72,14 +72,15 @@ struct fi_object_s;
 typedef struct fidata_pic_s {
     FIOBJECT_BASE_ELEMENTS()
     struct fidata_pic_flags_s {
-        char            is_patch:1; // Raw image or patch.
         char            is_rect:1;
-        char            is_ximage:1; // External graphics resource.
     } flags;
-
     boolean         animComplete; // Animation finished (or repeated).
     int             frame, tics;
     struct fidata_pic_frame_s {
+        struct fidata_pic_frame_flags_s {
+            char            is_patch:1; // Raw image or patch.
+            char            is_ximage:1; // External graphics resource.
+        } flags;
         int             tics;
         int             tex;
         char            flip;
