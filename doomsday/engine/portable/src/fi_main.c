@@ -1037,7 +1037,7 @@ static void scriptTick(fi_state_t* s)
     // If we're waiting for a text to finish typing, do nothing.
     if(s->waitingText)
     {
-        if(!s->waitingText->flags.all_visible)
+        if(!s->waitingText->animComplete)
             return;
 
         s->waitingText = NULL;
@@ -1046,7 +1046,7 @@ static void scriptTick(fi_state_t* s)
     // Waiting for an animation to reach its end?
     if(s->waitingPic)
     {
-        if(!s->waitingPic->flags.done)
+        if(!s->waitingPic->animComplete)
             return;
 
         s->waitingPic = NULL;
@@ -1178,6 +1178,7 @@ fidata_text_t* P_CreateText(const char* name)
 
     // Initialize it.
     obj->type = FI_TEXT;
+    obj->textFlags = DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS;
     objectSetUniqueName((fi_object_t*)obj, name);
     AnimatorVector4_Init(obj->color, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
     AnimatorVector2_Init(obj->scale, 1, 1);
@@ -1209,7 +1210,6 @@ void FIObject_Think(fi_object_t* obj)
 
     AnimatorVector2_Think(obj->pos);
     AnimatorVector2_Think(obj->scale);
-    AnimatorVector4_Think(obj->color);
     Animator_Think(&obj->angle);
 }
 
@@ -1450,91 +1450,90 @@ void FIData_PicThink(fidata_pic_t* p)
     // Call parent thinker.
     FIObject_Think((fi_object_t*)p);
 
+    AnimatorVector4_Think(p->color);
     AnimatorVector4_Think(p->otherColor);
     AnimatorVector4_Think(p->edgeColor);
     AnimatorVector4_Think(p->otherEdgeColor);
 
     // If animating, decrease the sequence timer.
-    if(p->seqWait[p->seq])
+    if(p->frames[p->frame].tics)
     {
-        if(--p->seqTimer <= 0)
+        if(--p->tics <= 0)
         {
             // Advance the sequence position. k = next pos.
-            int next = p->seq + 1;
-            if(next == FIDATA_PIC_MAX_SEQUENCE || p->tex[next] == FI_REPEAT)
+            int next = p->frame + 1;
+            if(next == FIDATA_PIC_MAX_SEQUENCE || p->frames[next].tex == FI_REPEAT)
             {
                 // Rewind back to beginning.
                 next = 0;
-                p->flags.done = true;
+                p->animComplete = true;
             }
-            else if(p->tex[next] <= 0)
+            else if(p->frames[next].tex <= 0)
             {
                 // This is the end. Stop sequence.
-                p->seqWait[next = p->seq] = 0;
-                p->flags.done = true;
+                p->frames[next = p->frame].tics = 0;
+                p->animComplete = true;
             }
 
             // Advance to the next pos.
-            p->seq = next;
-            p->seqTimer = p->seqWait[next];
+            p->frame = next;
+            p->tics = p->frames[next].tics;
 
             // Play a sound?
-            if(p->sound[next] > 0)
-                S_LocalSound(p->sound[next], NULL);
+            if(p->frames[next].sound > 0)
+                S_LocalSound(p->frames[next].sound, NULL);
         }
     }
 }
 
-void FIData_PicDraw(fidata_pic_t* pic, float xOffset, float yOffset)
+void FIData_PicDraw(fidata_pic_t* p, float xOffset, float yOffset)
 {
-    assert(pic);
+    assert(p);
     {
     float mid[2];
-    int sq = pic->seq;
 
     // Fully transparent pics will not be drawn.
-    if(pic->color[3].value == 0)
+    if(p->color[3].value == 0)
         return;
 
     DGL_SetNoMaterial(); // Hmm...
-    useColor(pic->color, 4);
-    FIData_PicRotationOrigin(pic, mid);
+    useColor(p->color, 4);
+    FIData_PicRotationOrigin(p, mid);
 
     // Setup the transformation.
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(pic->pos[0].value + xOffset, pic->pos[1].value + yOffset, 0);
+    glTranslatef(p->pos[0].value + xOffset, p->pos[1].value + yOffset, 0);
     glTranslatef(mid[VX], mid[VY], 0);
 
-    rotate(pic->angle.value);
+    rotate(p->angle.value);
 
     // Move to origin.
     glTranslatef(-mid[VX], -mid[VY], 0);
-    glScalef((pic->flip[sq] ? -1 : 1) * pic->scale[0].value, pic->scale[1].value, 1);
+    glScalef((p->frames[p->frame].flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, 1);
 
     // Draw it.
-    if(pic->flags.is_rect)
+    if(p->flags.is_rect)
     {
-        if(pic->flags.is_ximage)
+        if(p->flags.is_ximage)
         {
             DGL_Enable(DGL_TEXTURING);
-            DGL_Bind((DGLuint)pic->tex[sq]);
+            DGL_Bind((DGLuint)p->frames[p->frame].tex);
         }
         else
-        {
-            // The fill.
+        {   // The fill.
             DGL_Disable(DGL_TEXTURING);
         }
 
         glBegin(GL_QUADS);
-            useColor(pic->color, 4);
+            useColor(p->color, 4);
             glTexCoord2f(0, 0);
             glVertex2f(0, 0);
 
             glTexCoord2f(1, 0);
             glVertex2f(1, 0);
 
-            useColor(pic->otherColor, 4);
+            useColor(p->otherColor, 4);
             glTexCoord2f(1, 1);
             glVertex2f(1, 1);
 
@@ -1546,27 +1545,27 @@ void FIData_PicDraw(fidata_pic_t* pic, float xOffset, float yOffset)
         DGL_Disable(DGL_TEXTURING);
 
         glBegin(GL_LINES);
-            useColor(pic->edgeColor, 4);
+            useColor(p->edgeColor, 4);
             glVertex2f(0, 0);
             glVertex2f(1, 0);
             glVertex2f(1, 0);
 
-            useColor(pic->otherEdgeColor, 4);
+            useColor(p->otherEdgeColor, 4);
             glVertex2f(1, 1);
             glVertex2f(1, 1);
             glVertex2f(0, 1);
             glVertex2f(0, 1);
 
-            useColor(pic->edgeColor, 4);
+            useColor(p->edgeColor, 4);
             glVertex2f(0, 0);
         glEnd();
 
         DGL_Enable(DGL_TEXTURING);
     }
-    else if(pic->flags.is_patch)
+    else if(p->flags.is_patch)
     {
         patchtex_t* patch;
-        if((patch = R_FindPatchTex((patchid_t)pic->tex[sq])))
+        if((patch = R_FindPatchTex((patchid_t)p->frames[p->frame].tex)))
             R_DrawPatch(patch, 0, 0);
     }
     else
@@ -1576,10 +1575,10 @@ void FIData_PicDraw(fidata_pic_t* pic, float xOffset, float yOffset)
         glLoadIdentity();
 
         /// \fixme What about rotaton?
-        glTranslatef(pic->pos[0].value + xOffset, pic->pos[1].value + yOffset, 0);
-        glScalef((pic->flip[sq]? -1 : 1) * pic->scale[0].value, pic->scale[1].value, 1);
+        glTranslatef(p->pos[0].value + xOffset, p->pos[1].value + yOffset, 0);
+        glScalef((p->frames[p->frame].flip? -1 : 1) * p->scale[0].value, p->scale[1].value, 1);
 
-        DGL_DrawRawScreen(pic->tex[sq], 0, 0);
+        DGL_DrawRawScreen(p->frames[p->frame].tex, 0, 0);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
@@ -1611,8 +1610,8 @@ void FIData_PicDeleteXImage(fidata_pic_t* pic)
 {
     assert(pic);
 
-    DGL_DeleteTextures(1, (DGLuint*)&pic->tex[0]);
-    pic->tex[0] = 0;
+    DGL_DeleteTextures(1, (DGLuint*)&pic->frames[0].tex);
+    pic->frames[0].tex = 0;
     pic->flags.is_ximage = false;
 }
 
@@ -1624,41 +1623,44 @@ void FIData_PicClearAnimation(fidata_pic_t* pic)
     if(pic->flags.is_ximage)
         FIData_PicDeleteXImage(pic);
 
-    memset(pic->tex, 0, sizeof(pic->tex));
-    memset(pic->flip, 0, sizeof(pic->flip));
-    memset(pic->sound, -1, sizeof(pic->sound));
-    memset(pic->seqWait, 0, sizeof(pic->seqWait));
-    pic->seq = 0;
-    pic->flags.done = true;
-}
-
-int FIData_PicNextFrame(fidata_pic_t* pic)
-{
-    assert(pic);
-    {
-    int i;
+    {uint i;
     for(i = 0; i < FIDATA_PIC_MAX_SEQUENCE; ++i)
     {
-        if(pic->tex[i] <= 0)
+        pic->frames[i].tex = 0;
+        pic->frames[i].flip = 0;
+        pic->frames[i].sound = -1;
+        pic->frames[i].tics = 0;
+    }}
+    pic->frame = 0;
+    pic->animComplete = true;
+}
+
+uint FIData_PicNextFrame(fidata_pic_t* pic)
+{
+    assert(pic);
+    {uint i;
+    for(i = 0; i < FIDATA_PIC_MAX_SEQUENCE; ++i)
+    {
+        if(pic->frames[i].tex <= 0)
             break;
     }
     return i;
     }
 }
 
-void FIData_PicRotationOrigin(const fidata_pic_t* pic, float center[2])
+void FIData_PicRotationOrigin(const fidata_pic_t* p, float center[2])
 {
-    assert(pic);
+    assert(p);
 
-    if(pic->flags.is_rect)
+    if(p->flags.is_rect)
     {
         center[VX] = center[VY] = .5f;
     }
-    else if(pic->flags.is_patch)
+    else if(p->flags.is_patch)
     {
         patchinfo_t info;
 
-        if(R_GetPatchInfo(pic->tex[pic->seq], &info))
+        if(R_GetPatchInfo(p->frames[p->frame].tex, &info))
         {
             /// \fixme what about extraOffset?
             center[VX] = info.width / 2 - info.offset;
@@ -1675,8 +1677,8 @@ void FIData_PicRotationOrigin(const fidata_pic_t* pic, float center[2])
         center[VY] = 100;
     }
 
-    center[VX] *= pic->scale[VX].value;
-    center[VY] *= pic->scale[VY].value;
+    center[VX] *= p->scale[VX].value;
+    center[VY] *= p->scale[VY].value;
 }
 
 void FIData_TextThink(fidata_text_t* t)
@@ -1685,6 +1687,8 @@ void FIData_TextThink(fidata_text_t* t)
 
     // Call parent thinker.
     FIObject_Think((fi_object_t*)t);
+
+    AnimatorVector4_Think(t->color);
 
     if(t->wait)
     {
@@ -1706,7 +1710,7 @@ void FIData_TextThink(fidata_text_t* t)
     }
 
     // Is the text object fully visible?
-    t->flags.all_visible = (!t->wait || t->cursorPos >= FIData_TextLength(t));
+    t->animComplete = (!t->wait || t->cursorPos >= FIData_TextLength(t));
 }
 
 void FIData_TextDraw(fidata_text_t* tex, float xOffset, float yOffset)
@@ -1790,7 +1794,7 @@ void FIData_TextDraw(fidata_text_t* tex, float xOffset, float yOffset)
         if(tex->scale[1].value * y + tex->pos[1].value >= -tex->scale[1].value * tex->lineheight &&
            tex->scale[1].value * y + tex->pos[1].value < SCREENHEIGHT)
         {
-            GL_DrawChar2(ch, tex->flags.centered ? x - linew / 2 : x, y, tex->font);
+            GL_DrawChar2(ch, (tex->textFlags & DTF_ALIGN_LEFT) ? x : x - linew / 2, y, tex->font);
             x += GL_CharWidth(ch, tex->font);
         }
 
@@ -2065,7 +2069,7 @@ DEFFC(Image)
 
     FIData_PicClearAnimation(pic);
 
-    if((pic->tex[0] = W_CheckNumForName(name)) == -1)
+    if((pic->frames[0].tex = W_CheckNumForName(name)) == -1)
         Con_Message("FIC_Image: Warning, missing lump \"%s\".\n", name);
 
     pic->flags.is_patch = false;
@@ -2082,7 +2086,7 @@ DEFFC(ImageAt)
     FIData_PicClearAnimation(pic);
 
     name = scriptNextToken(s);
-    if((pic->tex[0] = W_CheckNumForName(name)) == -1)
+    if((pic->frames[0].tex = W_CheckNumForName(name)) == -1)
         Con_Message("FIC_ImageAt: Warning, missing lump \"%s\".\n", name);
 
     pic->flags.is_patch = false;
@@ -2099,7 +2103,7 @@ DEFFC(XImage)
 
     // Load the external resource.
     fileName = scriptNextToken(s);
-    if((pic->tex[0] = loadGraphics(DDRC_GRAPHICS, fileName, LGM_NORMAL, false, true, 0)) == 0)
+    if((pic->frames[0].tex = loadGraphics(DDRC_GRAPHICS, fileName, LGM_NORMAL, false, true, 0)) == 0)
         Con_Message("FIC_XImage: Warning, missing graphic \"%s\".\n", fileName);
 
     pic->flags.is_patch = false;
@@ -2120,7 +2124,7 @@ DEFFC(Patch)
     if((patch = R_PrecachePatch(name, NULL)) == 0)
         Con_Message("FIC_Patch: Warning, missing Patch \"%s\".\n", name);
 
-    pic->tex[0] = patch;
+    pic->frames[0].tex = patch;
     pic->flags.is_patch = true;
     pic->flags.is_rect = false;
 }
@@ -2133,7 +2137,7 @@ DEFFC(SetPatch)
 
     if((patch = R_PrecachePatch(name, NULL)) != 0)
     {
-        pic->tex[0] = patch;
+        pic->frames[0].tex = patch;
         pic->flags.is_patch = true;
         pic->flags.is_rect = false;
     }
@@ -2154,12 +2158,12 @@ DEFFC(Anim)
     fidata_pic_t* pic = stateGetPic(s, scriptNextToken(s));
     const char* name = scriptNextToken(s);
     patchid_t patch;
-    int i, time;
+    int i, tics;
 
     if((patch = R_PrecachePatch(name, NULL)) == 0)
         Con_Message("FIC_Anim: Warning, Patch \"%s\" not found.\n", name);
 
-    time = scriptReadTics(s);
+    tics = scriptReadTics(s);
     // Find the next sequence spot.
     i = FIData_PicNextFrame(pic);
     if(i == FIDATA_PIC_MAX_SEQUENCE)
@@ -2167,22 +2171,23 @@ DEFFC(Anim)
         Con_Message("FIC_Anim: Warning, too many frames in anim sequence (max %i).\n", FIDATA_PIC_MAX_SEQUENCE);
         return; // Can't do it...
     }
-    pic->tex[i] = patch;
-    pic->seqWait[i] = time;
+    pic->frames[i].tex = patch;
+    pic->frames[i].tics = tics;
     pic->flags.is_patch = true;
-    pic->flags.done = false;
+    pic->animComplete = false;
 }
 
 DEFFC(AnimImage)
 {
     fidata_pic_t* pic = stateGetPic(s, scriptNextToken(s));
     const char* name = scriptNextToken(s);
-    int i, lump, time;
+    int lump, tics;
+    uint i;
 
     if((lump = W_CheckNumForName(name)) == -1)
         Con_Message("FIC_AnimImage: Warning, lump \"%s\" not found.\n", name);
 
-    time = scriptReadTics(s);
+    tics = scriptReadTics(s);
     // Find the next sequence spot.
     i = FIData_PicNextFrame(pic);
     if(i == FIDATA_PIC_MAX_SEQUENCE)
@@ -2192,48 +2197,47 @@ DEFFC(AnimImage)
         return; // Can't do it...
     }
 
-    pic->tex[i] = lump;
-    pic->seqWait[i] = time;
+    pic->frames[i].tex = lump;
+    pic->frames[i].tics = tics;
     pic->flags.is_patch = false;
     pic->flags.is_rect = false;
-    pic->flags.done = false;
+    pic->animComplete = false;
 }
 
 DEFFC(Repeat)
 {
     fidata_pic_t* pic = stateGetPic(s, scriptNextToken(s));
-    int i = FIData_PicNextFrame(pic);
-
+    uint i = FIData_PicNextFrame(pic);
     if(i == FIDATA_PIC_MAX_SEQUENCE)
         return;
-    pic->tex[i] = FI_REPEAT;
+    pic->frames[i].tex = FI_REPEAT;
 }
 
 DEFFC(StateAnim)
 {
     fidata_pic_t* pic = stateGetPic(s, scriptNextToken(s));
     int stateId = Def_Get(DD_DEF_STATE, scriptNextToken(s), 0);
-    int i, count = scriptParseInteger(s);
+    int count = scriptParseInteger(s);
     spriteinfo_t sinf;
 
     // Animate N states starting from the given one.
     pic->flags.is_patch = true;
     pic->flags.is_rect = false;
-    pic->flags.done = false;
+    pic->animComplete = false;
     for(; count > 0 && stateId > 0; count--)
     {
         state_t* st = &states[stateId];
+        uint i = FIData_PicNextFrame(pic);
 
-        i = FIData_PicNextFrame(pic);
         if(i == FIDATA_PIC_MAX_SEQUENCE)
             break; // No room!
 
         R_GetSpriteInfo(st->sprite, st->frame & 0x7fff, &sinf);
-        pic->tex[i] = sinf.realLump;
-        pic->flip[i] = sinf.flip;
-        pic->seqWait[i] = st->tics;
-        if(pic->seqWait[i] == 0)
-            pic->seqWait[i] = 1;
+        pic->frames[i].tex = sinf.realLump;
+        pic->frames[i].flip = sinf.flip;
+        pic->frames[i].tics = st->tics;
+        if(pic->frames[i].tics == 0)
+            pic->frames[i].tics = 1;
 
         // Go to the next state.
         stateId = st->nextState;
@@ -2243,11 +2247,10 @@ DEFFC(StateAnim)
 DEFFC(PicSound)
 {
     fidata_pic_t* pic = stateGetPic(s, scriptNextToken(s));
-    int i;
-    i = FIData_PicNextFrame(pic) - 1;
-    if(i < 0)
-        i = 0;
-    pic->sound[i] = Def_Get(DD_DEF_SOUND, scriptNextToken(s), 0);
+    uint i = FIData_PicNextFrame(pic);
+    if(i)
+        i -= 1; // Why?
+    pic->frames[i].sound = Def_Get(DD_DEF_SOUND, scriptNextToken(s), 0);
 }
 
 DEFFC(ObjectOffX)
@@ -2377,13 +2380,12 @@ DEFFC(Rect)
     pic->flags.is_rect = true;
     pic->flags.is_patch = false;
     pic->flags.is_ximage = false;
-    pic->flags.done = true;
+    pic->animComplete = true;
 }
 
 DEFFC(FillColor)
 {
     fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
-    fidata_pic_t* pic;
     int which = 0;
     float rgba[4];
 
@@ -2394,8 +2396,6 @@ DEFFC(FillColor)
             scriptNextToken(s);
         return;
     }
-
-    pic = stateGetPic(s, obj->name);
 
     // Which colors to modify?
     scriptNextToken(s);
@@ -2412,9 +2412,9 @@ DEFFC(FillColor)
     }
 
     if(which & 1)
-        AnimatorVector4_Set(obj->color, rgba[CR], rgba[CG], rgba[CB], rgba[CA], s->inTime);
+        AnimatorVector4_Set(((fidata_pic_t*)obj)->color, rgba[CR], rgba[CG], rgba[CB], rgba[CA], s->inTime);
     if(which & 2)
-        AnimatorVector4_Set(pic->otherColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], s->inTime);
+        AnimatorVector4_Set(((fidata_pic_t*)obj)->otherColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], s->inTime);
 }
 
 DEFFC(EdgeColor)
@@ -2632,13 +2632,13 @@ DEFFC(TextOffY)
 DEFFC(TextCenter)
 {
     fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    tex->flags.centered = true;
+    tex->textFlags &= ~(DTF_ALIGN_LEFT|DTF_ALIGN_RIGHT);
 }
 
 DEFFC(TextNoCenter)
 {
     fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    tex->flags.centered = false;
+    tex->textFlags |= DTF_ALIGN_LEFT;
 }
 
 DEFFC(TextScroll)

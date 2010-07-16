@@ -62,7 +62,6 @@ struct fi_object_s;
     fi_objectname_t name; \
     animatorvector2_t pos; \
     animator_t      angle; \
-    animatorvector4_t color; \
     animatorvector2_t scale;
 
 /**
@@ -74,16 +73,20 @@ typedef struct fidata_pic_s {
     FIOBJECT_BASE_ELEMENTS()
     struct fidata_pic_flags_s {
         char            is_patch:1; // Raw image or patch.
-        char            done:1; // Animation finished (or repeated).
         char            is_rect:1;
         char            is_ximage:1; // External graphics resource.
     } flags;
 
-    int             seq, seqTimer;
-    int             seqWait[FIDATA_PIC_MAX_SEQUENCE];
-    int             tex[FIDATA_PIC_MAX_SEQUENCE];
-    char            flip[FIDATA_PIC_MAX_SEQUENCE];
-    short           sound[FIDATA_PIC_MAX_SEQUENCE];
+    boolean         animComplete; // Animation finished (or repeated).
+    int             frame, tics;
+    struct fidata_pic_frame_s {
+        int             tics;
+        int             tex;
+        char            flip;
+        short           sound;
+    } frames[FIDATA_PIC_MAX_SEQUENCE];
+
+    animatorvector4_t color;
 
     // For rectangle-objects.
     animatorvector4_t otherColor;
@@ -95,8 +98,7 @@ void                FIData_PicThink(fidata_pic_t* pic);
 void                FIData_PicDraw(fidata_pic_t* pic, float x, float y);
 void                FIData_PicClearAnimation(fidata_pic_t* pic);
 void                FIData_PicDeleteXImage(fidata_pic_t* pic);
-
-int                 FIData_PicNextFrame(fidata_pic_t* pic);
+uint                FIData_PicNextFrame(fidata_pic_t* pic);
 void                FIData_PicRotationOrigin(const fidata_pic_t* pic, float center[2]);
 
 /**
@@ -104,11 +106,9 @@ void                FIData_PicRotationOrigin(const fidata_pic_t* pic, float cent
  */
 typedef struct fidata_text_s {
     FIOBJECT_BASE_ELEMENTS()
-    struct fidata_text_flags_s {
-        char            centered:1;
-        char            all_visible:1;
-    } flags;
-
+    animatorvector4_t color;
+    short           textFlags; // @see drawTextFlags
+    boolean         animComplete; // Animation finished (text-typein complete).
     int             scrollWait, scrollTimer; // Automatic scrolling upwards.
     int             cursorPos;
     int             wait, timer;
