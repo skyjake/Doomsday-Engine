@@ -1370,7 +1370,7 @@ int G_UIResponder(event_t* ev)
     {
         // Any key/button down pops up menu if in demos.
         if((G_GetGameAction() == GA_NONE && !singledemo && Get(DD_PLAYBACK)) ||
-           (G_GetGameState() == GS_INFINE && !FI_IsMenuTrigger()))
+           (G_GetGameState() == GS_INFINE && FI_IsMenuTrigger()))
         {
             Hu_MenuCommand(MCMD_OPEN);
             return true;

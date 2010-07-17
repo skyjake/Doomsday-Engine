@@ -50,15 +50,22 @@
 #define MAX_TOKEN_LEN       (8192)
 #define MAX_HANDLERS        (128)
 
-#define FI_REPEAT           (-2)
-
 // Helper macro for defining infine command functions.
-#define DEFFC(name) void FIC_##name(fi_cmd_t* cmd, fi_state_t* s)
+#define DEFFC(name) void FIC_##name(fi_cmd_t* cmd, fi_operand_t* ops, fi_state_t* s)
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct {
+    cvartype_t      type;
+    union {
+        int         integer;
+        float       flt;
+        const char* cstring;
+    } data;
+} fi_operand_t;
+
 typedef struct fi_handler_s {
-    int             code;
+    int             ddkey;
     fi_objectname_t marker;
 } fi_handler_t;
 
@@ -102,8 +109,8 @@ typedef struct fi_state_s {
 
 typedef struct fi_cmd_s {
     char*           token;
-    int             numOperands;
-    void          (*func) (struct fi_cmd_s* cmd, fi_state_t* s);
+    const char*     operands;
+    void          (*func) (struct fi_cmd_s* cmd, fi_operand_t* ops, fi_state_t* s);
     struct fi_cmd_flags_s {
         char            when_skipping:1;
         char            when_condition_skipping; // Skipping because condition failed.
@@ -229,112 +236,112 @@ static boolean cmdExecuted = false; // Set to true after first command.
 // Colors are floating point and [0,1].
 static fi_cmd_t commands[] = {
     // Run Control
-    { "DO",         0, FIC_Do, true, true },
-    { "END",        0, FIC_End },
-    { "IF",         1, FIC_If }, // if (value-id)
-    { "IFNOT",      1, FIC_IfNot }, // ifnot (value-id)
-    { "ELSE",       0, FIC_Else },
-    { "GOTO",       1, FIC_GoTo }, // goto (marker)
-    { "MARKER",     1, FIC_Marker, true },
-    { "in",         1, FIC_InTime }, // in (time)
-    { "pause",      0, FIC_Pause },
-    { "tic",        0, FIC_Tic },
-    { "wait",       1, FIC_Wait }, // wait (time)
-    { "waittext",   1, FIC_WaitText }, // waittext (id)
-    { "waitanim",   1, FIC_WaitAnim }, // waitanim (id)
-    { "canskip",    0, FIC_CanSkip },
-    { "noskip",     0, FIC_NoSkip },
-    { "skiphere",   0, FIC_SkipHere, true },
-    { "events",     0, FIC_Events },
-    { "noevents",   0, FIC_NoEvents },
-    { "onkey",      2, FIC_OnKey }, // onkey (keyname) (marker)
-    { "unsetkey",   1, FIC_UnsetKey }, // unsetkey (keyname)
+    { "DO",         "", FIC_Do, true, true },
+    { "END",        "", FIC_End },
+    { "IF",         "s", FIC_If }, // if (value-id)
+    { "IFNOT",      "s", FIC_IfNot }, // ifnot (value-id)
+    { "ELSE",       "", FIC_Else },
+    { "GOTO",       "s", FIC_GoTo }, // goto (marker)
+    { "MARKER",     "s", FIC_Marker, true },
+    { "in",         "f", FIC_InTime }, // in (time)
+    { "pause",      "", FIC_Pause },
+    { "tic",        "", FIC_Tic },
+    { "wait",       "f", FIC_Wait }, // wait (time)
+    { "waittext",   "s", FIC_WaitText }, // waittext (id)
+    { "waitanim",   "s", FIC_WaitAnim }, // waitanim (id)
+    { "canskip",    "", FIC_CanSkip },
+    { "noskip",     "", FIC_NoSkip },
+    { "skiphere",   "", FIC_SkipHere, true },
+    { "events",     "", FIC_Events },
+    { "noevents",   "", FIC_NoEvents },
+    { "onkey",      "ss", FIC_OnKey }, // onkey (keyname) (marker)
+    { "unsetkey",   "s", FIC_UnsetKey }, // unsetkey (keyname)
 
     // Screen Control
-    { "color",      3, FIC_Color }, // color (red) (green) (blue)
-    { "coloralpha", 4, FIC_ColorAlpha }, // coloralpha (r) (g) (b) (a)
-    { "flat",       1, FIC_BGFlat }, // flat (flat-id)
-    { "texture",    1, FIC_BGTexture }, // texture (texture-id)
-    { "noflat",     0, FIC_NoBGMaterial },
-    { "notexture",  0, FIC_NoBGMaterial },
-    { "offx",       1, FIC_OffsetX }, // offx (x)
-    { "offy",       1, FIC_OffsetY }, // offy (y)
-    { "filter",     4, FIC_Filter }, // filter (r) (g) (b) (a)
+    { "color",      "fff", FIC_Color }, // color (red) (green) (blue)
+    { "coloralpha", "ffff", FIC_ColorAlpha }, // coloralpha (r) (g) (b) (a)
+    { "flat",       "s", FIC_BGFlat }, // flat (flat-id)
+    { "texture",    "s", FIC_BGTexture }, // texture (texture-id)
+    { "noflat",     "", FIC_NoBGMaterial },
+    { "notexture",  "", FIC_NoBGMaterial },
+    { "offx",       "f", FIC_OffsetX }, // offx (x)
+    { "offy",       "f", FIC_OffsetY }, // offy (y)
+    { "filter",     "ffff", FIC_Filter }, // filter (r) (g) (b) (a)
 
     // Audio
-    { "sound",      1, FIC_Sound }, // sound (snd)
-    { "soundat",    2, FIC_SoundAt }, // soundat (snd) (vol:0-1)
-    { "seesound",   1, FIC_SeeSound }, // seesound (mobjtype)
-    { "diesound",   1, FIC_DieSound }, // diesound (mobjtype)
-    { "music",      1, FIC_Music }, // music (musicname)
-    { "musiconce",  1, FIC_MusicOnce }, // musiconce (musicname)
-    { "nomusic",    0, FIC_NoMusic },
+    { "sound",      "s", FIC_Sound }, // sound (snd)
+    { "soundat",    "sf", FIC_SoundAt }, // soundat (snd) (vol:0-1)
+    { "seesound",   "s", FIC_SeeSound }, // seesound (mobjtype)
+    { "diesound",   "s", FIC_DieSound }, // diesound (mobjtype)
+    { "music",      "s", FIC_Music }, // music (musicname)
+    { "musiconce",  "s", FIC_MusicOnce }, // musiconce (musicname)
+    { "nomusic",    "", FIC_NoMusic },
 
     // Objects
-    { "del",        1, FIC_Delete }, // del (id)
-    { "x",          2, FIC_ObjectOffX }, // x (id) (x)
-    { "y",          2, FIC_ObjectOffY }, // y (id) (y)
-    { "sx",         2, FIC_ObjectScaleX }, // sx (id) (x)
-    { "sy",         2, FIC_ObjectScaleY }, // sy (id) (y)
-    { "scale",      2, FIC_ObjectScale }, // scale (id) (factor)
-    { "scalexy",    3, FIC_ObjectScaleXY }, // scalexy (id) (x) (y)
-    { "rgb",        4, FIC_ObjectRGB }, // rgb (id) (r) (g) (b)
-    { "alpha",      2, FIC_ObjectAlpha }, // alpha (id) (alpha)
-    { "angle",      2, FIC_ObjectAngle }, // angle (id) (degrees)
+    { "del",        "s", FIC_Delete }, // del (id)
+    { "x",          "sf", FIC_ObjectOffX }, // x (id) (x)
+    { "y",          "sf", FIC_ObjectOffY }, // y (id) (y)
+    { "sx",         "sf", FIC_ObjectScaleX }, // sx (id) (x)
+    { "sy",         "sf", FIC_ObjectScaleY }, // sy (id) (y)
+    { "scale",      "sf", FIC_ObjectScale }, // scale (id) (factor)
+    { "scalexy",    "sff", FIC_ObjectScaleXY }, // scalexy (id) (x) (y)
+    { "rgb",        "sfff", FIC_ObjectRGB }, // rgb (id) (r) (g) (b)
+    { "alpha",      "sf", FIC_ObjectAlpha }, // alpha (id) (alpha)
+    { "angle",      "sf", FIC_ObjectAngle }, // angle (id) (degrees)
 
     // Rects
-    { "rect",       5, FIC_Rect }, // rect (hndl) (x) (y) (w) (h)
-    { "fillcolor",  6, FIC_FillColor }, // fillcolor (h) (top/bottom/both) (r) (g) (b) (a)
-    { "edgecolor",  6, FIC_EdgeColor }, // edgecolor (h) (top/bottom/both) (r) (g) (b) (a)
+    { "rect",       "sffff", FIC_Rect }, // rect (hndl) (x) (y) (w) (h)
+    { "fillcolor",  "ssffff", FIC_FillColor }, // fillcolor (h) (top/bottom/both) (r) (g) (b) (a)
+    { "edgecolor",  "ssffff", FIC_EdgeColor }, // edgecolor (h) (top/bottom/both) (r) (g) (b) (a)
 
     // Pics
-    { "image",      2, FIC_Image }, // image (id) (raw-image-lump)
-    { "imageat",    4, FIC_ImageAt }, // imageat (id) (x) (y) (raw)
-    { "ximage",     2, FIC_XImage }, // ximage (id) (ext-gfx-filename)
-    { "patch",      4, FIC_Patch }, // patch (id) (x) (y) (patch)
-    { "set",        2, FIC_SetPatch }, // set (id) (lump)
-    { "clranim",    1, FIC_ClearAnim }, // clranim (id)
-    { "anim",       3, FIC_Anim }, // anim (id) (patch) (time)
-    { "imageanim",  3, FIC_AnimImage }, // imageanim (hndl) (raw-img) (time)
-    { "picsound",   2, FIC_PicSound }, // picsound (hndl) (sound)
-    { "repeat",     1, FIC_Repeat }, // repeat (id)
-    { "states",     3, FIC_StateAnim }, // states (id) (state) (count)
+    { "image",      "ss", FIC_Image }, // image (id) (raw-image-lump)
+    { "imageat",    "sffs", FIC_ImageAt }, // imageat (id) (x) (y) (raw)
+    { "ximage",     "ss", FIC_XImage }, // ximage (id) (ext-gfx-filename)
+    { "patch",      "sffs", FIC_Patch }, // patch (id) (x) (y) (patch)
+    { "set",        "ss", FIC_SetPatch }, // set (id) (lump)
+    { "clranim",    "s", FIC_ClearAnim }, // clranim (id)
+    { "anim",       "ssf", FIC_Anim }, // anim (id) (patch) (time)
+    { "imageanim",  "ssf", FIC_AnimImage }, // imageanim (hndl) (raw-img) (time)
+    { "picsound",   "ss", FIC_PicSound }, // picsound (hndl) (sound)
+    { "repeat",     "s", FIC_Repeat }, // repeat (id)
+    { "states",     "ssi", FIC_StateAnim }, // states (id) (state) (count)
 
     // Text
-    { "text",       4, FIC_Text }, // text (hndl) (x) (y) (string)
-    { "textdef",    4, FIC_TextFromDef }, // textdef (hndl) (x) (y) (txt-id)
-    { "textlump",   4, FIC_TextFromLump }, // textlump (hndl) (x) (y) (lump)
-    { "settext",    2, FIC_SetText }, // settext (id) (newtext)
-    { "settextdef", 2, FIC_SetTextDef }, // settextdef (id) (txt-id)
-    { "precolor",   4, FIC_TextColor }, // precolor (num) (r) (g) (b)
-    { "center",     1, FIC_TextCenter }, // center (id)
-    { "nocenter",   1, FIC_TextNoCenter }, // nocenter (id)
-    { "scroll",     2, FIC_TextScroll }, // scroll (id) (speed)
-    { "pos",        2, FIC_TextPos }, // pos (id) (pos)
-    { "rate",       2, FIC_TextRate }, // rate (id) (rate)
-    { "font",       2, FIC_Font }, // font (id) (font)
-    { "fonta",      1, FIC_FontA }, // fonta (id)
-    { "fontb",      1, FIC_FontB }, // fontb (id)
-    { "linehgt",    2, FIC_TextLineHeight }, // linehgt (hndl) (hgt)
+    { "text",       "sffs", FIC_Text }, // text (hndl) (x) (y) (string)
+    { "textdef",    "sffs", FIC_TextFromDef }, // textdef (hndl) (x) (y) (txt-id)
+    { "textlump",   "sffs", FIC_TextFromLump }, // textlump (hndl) (x) (y) (lump)
+    { "settext",    "ss", FIC_SetText }, // settext (id) (newtext)
+    { "settextdef", "ss", FIC_SetTextDef }, // settextdef (id) (txt-id)
+    { "precolor",   "ifff", FIC_TextColor }, // precolor (num) (r) (g) (b)
+    { "center",     "s", FIC_TextCenter }, // center (id)
+    { "nocenter",   "s", FIC_TextNoCenter }, // nocenter (id)
+    { "scroll",     "sf", FIC_TextScroll }, // scroll (id) (speed)
+    { "pos",        "si", FIC_TextPos }, // pos (id) (pos)
+    { "rate",       "si", FIC_TextRate }, // rate (id) (rate)
+    { "font",       "ss", FIC_Font }, // font (id) (font)
+    { "fonta",      "s", FIC_FontA }, // fonta (id)
+    { "fontb",      "s", FIC_FontB }, // fontb (id)
+    { "linehgt",    "sf", FIC_TextLineHeight }, // linehgt (hndl) (hgt)
 
     // Game Control
-    { "playdemo",   1, FIC_PlayDemo }, // playdemo (filename)
-    { "cmd",        1, FIC_Command }, // cmd (console command)
-    { "trigger",    0, FIC_ShowMenu },
-    { "notrigger",  0, FIC_NoShowMenu },
+    { "playdemo",   "s", FIC_PlayDemo }, // playdemo (filename)
+    { "cmd",        "s", FIC_Command }, // cmd (console command)
+    { "trigger",    "", FIC_ShowMenu },
+    { "notrigger",  "", FIC_NoShowMenu },
 
     // Deprecated Pic commands
-    { "delpic",     1, FIC_Delete }, // delpic (id)
+    { "delpic",     "s", FIC_Delete }, // delpic (id)
 
     // Deprecated Text commands
-    { "deltext",    1, FIC_DeleteText }, // deltext (hndl)
-    { "textrgb",    4, FIC_TextRGB }, // textrgb (id) (r) (g) (b)
-    { "textalpha",  2, FIC_TextAlpha }, // textalpha (id) (alpha)
-    { "tx",         2, FIC_TextOffX }, // tx (id) (x)
-    { "ty",         2, FIC_TextOffY }, // ty (id) (y)
-    { "tsx",        2, FIC_TextScaleX }, // tsx (id) (x)
-    { "tsy",        2, FIC_TextScaleY }, // tsy (id) (y)
-    { "textscale",  3, FIC_TextScale }, // textscale (id) (x) (y)
+    { "deltext",    "s", FIC_DeleteText }, // deltext (hndl)
+    { "textrgb",    "sfff", FIC_TextRGB }, // textrgb (id) (r) (g) (b)
+    { "textalpha",  "sf", FIC_TextAlpha }, // textalpha (id) (alpha)
+    { "tx",         "sf", FIC_TextOffX }, // tx (id) (x)
+    { "ty",         "sf", FIC_TextOffY }, // ty (id) (y)
+    { "tsx",        "sf", FIC_TextScaleX }, // tsx (id) (x)
+    { "tsy",        "sf", FIC_TextScaleY }, // tsy (id) (y)
+    { "textscale",  "sf", FIC_TextScale }, // textscale (id) (x) (y)
 
     { NULL, 0, NULL } // Terminate.
 };
@@ -791,45 +798,87 @@ static const char* scriptNextToken(fi_state_t* s)
     return token;
 }
 
-static int scriptParseInteger(fi_state_t* s)
-{
-    return strtol(scriptNextToken(s), NULL, 0);
-}
-
-static float scriptParseFloat(fi_state_t* s)
-{
-    return strtod(scriptNextToken(s), NULL);
-}
-
 /**
- * Reads the next token, which should be floating point number. It is
- * considered seconds, and converted to tics.
+ * Parse the command operands from the script. If successfull, a ptr to a new
+ * vector of @c fi_operand_t objects is returned. Ownership of the vector is
+ * given to the caller.
+ *
+ * @return                      Ptr to a new vector of @c fi_operand_t or @c NULL.
  */
-static int scriptReadTics(fi_state_t* s)
+static fi_operand_t* scriptParseCommandOperands(fi_state_t* s, const fi_cmd_t* cmd, uint* count)
 {
-    return (int) (scriptParseFloat(s) * 35 + 0.5);
-}
+    const char* origCursorPos;
+    uint numOperands;
+    fi_operand_t* ops = 0;
 
-static boolean parseOperands(int numOperands, const char* token, fi_state_t* s)
-{
-    const char* oldcp;
-    int i;
+    if(!cmd->operands || !cmd->operands[0])
+        return NULL;
 
-    // i stays at zero if the number of operands is correct.
-    oldcp = s->cp;
-    for(i = numOperands; i > 0; i--)
+    origCursorPos = s->cp;
+    numOperands = (uint)strlen(cmd->operands);
+
+    // Operands are read sequentially. This is to potentially allow for
+    // command overloading at a later time.
+    {uint i = 0;
+    do
     {
+        char typeSymbol = cmd->operands[i];
+        fi_operand_t* op;
+        cvartype_t type;
+
         if(!scriptNextToken(s))
         {
-            s->cp = oldcp;
-            Con_Message("InFine: \"%s\" has too few operands.\n", token);
-            break;
+            s->cp = origCursorPos;
+            if(ops)
+                free(ops);
+            if(count)
+                *count = 0;
+            Con_Message("scriptParseCommandOperands: Too few operands for command '%s'.\n", cmd->token);
+            return NULL;
         }
-    }
 
-    // If there were enough operands, execute the command.
-    s->cp = oldcp;
-    return !i;
+        switch(typeSymbol)
+        {
+        // Supported operand type symbols:
+        case 'i': type = CVT_INT;      break;
+        case 'f': type = CVT_FLOAT;    break;
+        case 's': type = CVT_CHARPTR;  break;
+        default:
+            Con_Error("scriptParseCommandOperands: Invalid symbol '%c' in operand list for command '%s'.", typeSymbol, cmd->token);
+        }
+
+        if(!ops)
+            ops = malloc(sizeof(*ops));
+        else
+            ops = realloc(ops, sizeof(*ops) * (i+1));
+        op = &ops[i];
+
+        op->type = type;
+        switch(type)
+        {
+        case CVT_INT:
+            op->data.integer = strtol(token, NULL, 0);
+            break;
+
+        case CVT_FLOAT:
+            op->data.flt = strtod(token, NULL);
+            break;
+        case CVT_CHARPTR:
+            {
+            size_t len = strlen(token)+1;
+            char* str = malloc(len);
+            dd_snprintf(str, len, "%s", token);
+            op->data.cstring = str;
+            break;
+            }
+        }
+    } while(++i < numOperands);}
+
+    s->cp = origCursorPos;
+
+    if(count)
+        *count = numOperands;
+    return ops;
 }
 
 static boolean stateSkipRequest(fi_state_t* s)
@@ -897,15 +946,31 @@ static boolean scriptExecuteCommand(fi_state_t* s, const char* commandString)
     {fi_cmd_t* cmd;
     if((cmd = findCommand(commandString)))
     {
+        boolean requiredOperands = (cmd->operands && cmd->operands[0]);
+        fi_operand_t* ops = NULL;
+        size_t count;
+
         // Check that there are enough operands.
-        if(parseOperands(cmd->numOperands, cmd->token, s))
+        if(!requiredOperands || (ops = scriptParseCommandOperands(s, cmd, &count)))
         {
             // Should we skip this command?
             if(scriptSkipCommand(s, cmd))
                 return false;
 
             // Execute forthwith!
-            cmd->func(cmd, s);
+            cmd->func(cmd, ops, s);
+        }
+
+        if(ops)
+        {   // Destroy.
+            {uint i;
+            for(i = 0; i < count; ++i)
+            {
+                fi_operand_t* op = &ops[i];
+                if(op->type == CVT_CHARPTR)
+                    free((char*)op->data.cstring);
+            }}
+            free(ops);
         }
 
         // The END command may clear the current state.
@@ -913,9 +978,8 @@ static boolean scriptExecuteCommand(fi_state_t* s, const char* commandString)
         {   // Now we've executed the latest command.
             s->lastSkipped = false;
         }
-        return true; // Success!
     }}
-    return false; // The command was not found.
+    return true; // Success!
 }
 
 static boolean scriptExecuteNextCommand(fi_state_t* s)
@@ -923,38 +987,48 @@ static boolean scriptExecuteNextCommand(fi_state_t* s)
     const char* token;
     if((token = scriptNextToken(s)))
     {
-        return scriptExecuteCommand(s, token);
+        scriptExecuteCommand(s, token);
+        return true;
     }
     return false;
 }
 
+static fi_handler_t* stateFindHandler(fi_state_t* s, int ddkey)
+{
+    uint i;
+    for(i = 0; i < MAX_HANDLERS; ++i)
+    {
+        fi_handler_t* h = &s->eventHandlers[i];
+        if(h->ddkey == ddkey)
+            return h;
+    }
+    return 0;
+}
 /**
  * Find a @c fi_handler_t for the specified ddkey code.
- * @param code              Unique id code of the ddkey event handler to look for.
+ * @param ddkey             Unique id code of the ddkey event handler to look for.
  * @return                  Ptr to @c fi_handler_t object. Either:
  *                          1) Existing handler associated with unique @a code.
  *                          2) New object with unique @a code.
  *                          3) @c NULL - No more objects.
  */
-static fi_handler_t* stateGetHandler(fi_state_t* s, int code)
+static fi_handler_t* stateGetHandler(fi_state_t* s, int ddkey)
 {
-    fi_handler_t* unused = NULL;
-    {int i;
-    for(i = 0; i < MAX_HANDLERS; ++i)
+    // First, try to find an existing handler.
+    fi_handler_t* h;
+    if((h = stateFindHandler(s, ddkey)))
+        return h;
+    // Now lets try to create a new handler.
+    {uint i = 0;
+    while(!h && i++ < MAX_HANDLERS)
     {
-        fi_handler_t* hnd = &s->eventHandlers[i];
-
+        fi_handler_t* other = &s->eventHandlers[i];
         // Use this if a suitable handler is not already set?
-        if(!unused && !hnd->code)
-            unused = hnd;
-
-        if(hnd->code == code)
-        {
-            return hnd;
-        }
+        if(other->ddkey == 0)
+            h = other;
     }}
     // May be NULL, if no more handlers available.
-    return unused;
+    return h;
 }
 
 /**
@@ -1136,27 +1210,104 @@ static void demoEnds(void)
     gx.FI_DemoEnds();
 }
 
-fidata_pic_t* P_CreatePic(const char* name)
+static void picFrameDeleteXImage(fidata_pic_frame_t* f)
 {
-    fidata_pic_t* obj = Z_Calloc(sizeof(*obj), PU_STATIC, 0);
-
-    obj->type = FI_PIC;
-    objectSetUniqueName((fi_object_t*)obj, name);
-    AnimatorVector4_Init(obj->color, 1, 1, 1, 1);
-    AnimatorVector2_Init(obj->scale, 1, 1);
-
-    FIData_PicClearAnimation(obj);
-    return obj;
+    DGL_DeleteTextures(1, (DGLuint*)&f->texRef.tex);
+    f->texRef.tex = 0;
 }
 
-void P_DestroyPic(fidata_pic_t* pic)
+static fidata_pic_frame_t* createPicFrame(int type, int tics, void* texRef, short sound)
 {
-    assert(pic);
-    if(pic->frames[0].flags.is_ximage)
+    fidata_pic_frame_t* f = (fidata_pic_frame_t*) Z_Malloc(sizeof(*f), PU_STATIC, 0);
+    f->flags.flip = false;
+    f->type = type;
+    f->tics = tics;
+    switch(f->type)
     {
-        FIData_PicDeleteXImage(pic);
+    case PFT_MATERIAL:  f->texRef.material = ((material_t*)texRef);     break;
+    case PFT_PATCH:     f->texRef.patch = *((patchid_t*)texRef);    break;
+    case PFT_RAW:       f->texRef.lump  = *((lumpnum_t*)texRef);    break;
+    case PFT_XIMAGE:    f->texRef.tex = *((DGLuint*)texRef);        break;
+    default:
+        Con_Error("Error - InFine: unknown frame type %i.", (int)type);
     }
-    Z_Free(pic);
+    f->sound = sound;
+    return f;
+}
+
+static void destroyPicFrame(fidata_pic_frame_t* f)
+{
+    if(f->type == PFT_XIMAGE)
+        picFrameDeleteXImage(f);
+    Z_Free(f);
+}
+
+static fidata_pic_frame_t* picAddFrame(fidata_pic_t* p, fidata_pic_frame_t* f)
+{
+    p->frames = Z_Realloc(p->frames, sizeof(*p->frames) * ++p->numFrames, PU_STATIC);
+    p->frames[p->numFrames-1] = f;
+    return f;
+}
+
+static void picRotationOrigin(const fidata_pic_t* p, uint frame, float center[2])
+{
+    if(p->numFrames && frame < p->numFrames)
+    {
+        fidata_pic_frame_t* f = p->frames[frame];
+        switch(f->type)
+        {
+        case PFT_PATCH:
+            {
+            patchinfo_t info;
+            if(R_GetPatchInfo(f->texRef.patch, &info))
+            {
+                /// \fixme what about extraOffset?
+                center[VX] = info.width / 2 - info.offset;
+                center[VY] = info.height / 2 - info.topOffset;
+            }
+            else
+            {
+                center[VX] = center[VY] = 0;
+            }
+            break;
+            }
+        case PFT_RAW:
+        case PFT_XIMAGE:
+            center[VX] = SCREENWIDTH/2;
+            center[VY] = SCREENHEIGHT/2;
+            break;
+        case PFT_MATERIAL:
+            center[VX] = center[VY] = 0;
+            break;
+        }
+    }
+    else
+    {
+        center[VX] = center[VY] = .5f;
+    }
+
+    center[VX] *= p->scale[VX].value;
+    center[VY] *= p->scale[VY].value;
+}
+
+fidata_pic_t* P_CreatePic(const char* name)
+{
+    fidata_pic_t* p = Z_Calloc(sizeof(*p), PU_STATIC, 0);
+
+    p->type = FI_PIC;
+    objectSetUniqueName((fi_object_t*)p, name);
+    AnimatorVector4_Init(p->color, 1, 1, 1, 1);
+    AnimatorVector2_Init(p->scale, 1, 1);
+
+    FIData_PicClearAnimation(p);
+    return p;
+}
+
+void P_DestroyPic(fidata_pic_t* p)
+{
+    assert(p);
+    FIData_PicClearAnimation(p);
+    Z_Free(p);
 }
 
 fidata_text_t* P_CreateText(const char* name)
@@ -1292,20 +1443,6 @@ void FI_SetClientsideDefaultState(const void* data)
     memcpy(&defaultState, data, sizeof(FINALE_SCRIPT_EXTRADATA_SIZE));
 }
 
-/**
- * @return              @c true, if a command was found.
- *                      @c false if there are no more commands in the script.
- */
-fi_handler_t* FI_GetHandler(int code)
-{
-    fi_state_t* s;
-    if((s = stackTop()))
-    {
-        return stateGetHandler(s, code);
-    }
-    return 0;
-}
-
 void FI_Ticker(timespan_t ticLength)
 {
     // Always tic.
@@ -1347,7 +1484,7 @@ boolean FI_IsMenuTrigger(void)
     if(!active)
         return false;
     if((s = stackTop()))
-        return !s->flags.show_menu;
+        return s->flags.show_menu == true;
     return false;
 }
 
@@ -1358,7 +1495,7 @@ int FI_AteEvent(ddevent_t* ev)
     if(IS_TOGGLE_UP(ev))
         return false;
     if((s = stackTop()))
-        return s->flags.eat_events;
+        return s->flags.eat_events == true;
     return false;
 }
 
@@ -1373,17 +1510,14 @@ int FI_Responder(ddevent_t* ev)
     if(s->timer < 20)
         return FI_AteEvent(ev);
 
+    // Any handlers for this event?
     if(IS_KEY_DOWN(ev))
-    {
-        // Any handlers for this key event?
-        int i;
-        for(i = 0; i < MAX_HANDLERS; ++i)
+    {   
+        fi_handler_t* h;
+        if((h = stateFindHandler(s, ev->toggle.id)))
         {
-            if(s->eventHandlers[i].code == ev->toggle.id)
-            {
-                scriptSkipTo(s, s->eventHandlers[i].marker);
-                return FI_AteEvent(ev);
-            }
+            scriptSkipTo(s, h->marker);
+            return FI_AteEvent(ev);
         }
     }
 
@@ -1398,29 +1532,6 @@ int FI_Responder(ddevent_t* ev)
     // Servers tell clients to skip.
     Sv_Finale(FINF_SKIP, 0, NULL, 0);
     return FI_SkipRequest();
-}
-
-int FI_GetLineWidth(char* text, compositefontid_t font)
-{
-    int width = 0;
-
-    for(; *text; text++)
-    {
-        if(*text == '\\')
-        {
-            if(!*++text)
-                break;
-            if(*text == 'n')
-                break;
-            if(*text >= '0' && *text <= '9')
-                continue;
-            if(*text == 'w' || *text == 'W' || *text == 'p' || *text == 'P')
-                continue;
-        }
-        width += GL_CharWidth(*text, font);
-    }
-
-    return width;
 }
 
 /**
@@ -1451,52 +1562,278 @@ void FIData_PicThink(fidata_pic_t* p)
     AnimatorVector4_Think(p->edgeColor);
     AnimatorVector4_Think(p->otherEdgeColor);
 
+    if(!(p->numFrames > 1))
+        return;
+
     // If animating, decrease the sequence timer.
-    if(p->frames[p->frame].tics)
+    if(p->frames[p->curFrame]->tics > 0)
     {
         if(--p->tics <= 0)
         {
+            fidata_pic_frame_t* f;
             // Advance the sequence position. k = next pos.
-            int next = p->frame + 1;
-            if(next == FIDATA_PIC_MAX_SEQUENCE || p->frames[next].tex == FI_REPEAT)
-            {
-                // Rewind back to beginning.
-                next = 0;
+            int next = p->curFrame + 1;
+
+            if(next == p->numFrames)
+            {   // This is the end.
                 p->animComplete = true;
-            }
-            else if(p->frames[next].tex <= 0)
-            {
-                // This is the end. Stop sequence.
-                p->frames[next = p->frame].tics = 0;
-                p->animComplete = true;
+
+                // Stop the sequence?
+                if(p->flags.looping)
+                    next = 0; // Rewind back to beginning.
+                else // Yes.
+                    p->frames[next = p->curFrame]->tics = 0;
             }
 
             // Advance to the next pos.
-            p->frame = next;
-            p->tics = p->frames[next].tics;
+            f = p->frames[p->curFrame = next];
+            p->tics = f->tics;
 
             // Play a sound?
-            if(p->frames[next].sound > 0)
-                S_LocalSound(p->frames[next].sound, NULL);
+            if(f->sound > 0)
+                S_LocalSound(f->sound, NULL);
         }
     }
 }
 
-void FIData_PicDraw(fidata_pic_t* p, float xOffset, float yOffset)
+static void drawPicFrameBackground(fidata_pic_t* p, uint frame, float xOffset, float yOffset)
 {
-    assert(p);
+    float offset[2] = { 0, 0 }, scale[2] = { 1, 1 }, color[4], bottomColor[4];
+    int magMode = DGL_LINEAR, width = 1, height = 1;
+    DGLuint tex = 0;
+
+    if(p->numFrames && frame < p->numFrames)
+    {
+        fidata_pic_frame_t* f = (p->numFrames? p->frames[frame] : NULL);
+        switch(f->type)
+        {
+        case PFT_MATERIAL:
+            {
+            material_t* mat;
+            if((mat = f->texRef.material))
+            {
+                material_load_params_t params;
+                material_snapshot_t ms;
+                surface_t suf;
+
+                suf.header.type = DMU_SURFACE; /// \fixme: perhaps use the dummy object system?
+                suf.owner = 0;
+                suf.decorations = 0;
+                suf.numDecorations = 0;
+                suf.flags = suf.oldFlags = (f->flags.flip? DDSUF_MATERIAL_FLIPH : 0);
+                suf.inFlags = SUIF_PVIS|SUIF_BLEND;
+                suf.material = mat;
+                suf.normal[VX] = suf.oldNormal[VX] = 0;
+                suf.normal[VY] = suf.oldNormal[VY] = 0;
+                suf.normal[VZ] = suf.oldNormal[VZ] = 1; // toward the viewer.
+                suf.offset[0] = suf.visOffset[0] = suf.oldOffset[0][0] = suf.oldOffset[1][0] = xOffset;
+                suf.offset[1] = suf.visOffset[1] = suf.oldOffset[0][1] = suf.oldOffset[1][1] = yOffset;
+                suf.visOffsetDelta[0] = suf.visOffsetDelta[1] = 0;
+                suf.rgba[CR] = p->color[0].value;
+                suf.rgba[CG] = p->color[1].value;
+                suf.rgba[CB] = p->color[2].value;
+                suf.rgba[CA] = p->color[3].value;
+                suf.blendMode = BM_NORMAL;
+
+                memset(&params, 0, sizeof(params));
+                params.pSprite = false;
+                params.tex.border = 0; // Need to allow for repeating.
+                Materials_Prepare(&ms, suf.material, (suf.inFlags & SUIF_BLEND), &params);
+
+                {int i;
+                for(i = 0; i < 4; ++i)
+                    color[i] = bottomColor[i] = suf.rgba[i];
+                }
+
+                if(ms.units[MTU_PRIMARY].texInst)
+                {
+                    tex = ms.units[MTU_PRIMARY].texInst->id;
+                    magMode = ms.units[MTU_PRIMARY].magMode;
+                    offset[0] = ms.units[MTU_PRIMARY].offset[0];
+                    offset[1] = ms.units[MTU_PRIMARY].offset[1];
+                    scale[0] = 1;//ms.units[MTU_PRIMARY].scale[0];
+                    scale[1] = 1;//ms.units[MTU_PRIMARY].scale[1];
+                    color[CA] *= ms.units[MTU_PRIMARY].alpha;
+                    bottomColor[CA] *= ms.units[MTU_PRIMARY].alpha;
+                    width = ms.width;
+                    height = ms.height;
+                }
+            }
+            break;
+            }
+        case PFT_XIMAGE:
+            tex = (DGLuint)f->texRef.tex;
+            {int i;
+            for(i = 0; i < 4; ++i)
+                color[i] = bottomColor[i] = p->color[i].value;
+            }
+            break;
+        }
+    }
+    else
+    {
+        int i;
+        for(i = 0; i < 4; ++i)
+        {
+            color[i] = p->color[i].value;
+            bottomColor[i] = p->otherColor[i].value;
+        }
+    }
+
+    // The fill.
+    if(tex)
+    {
+        /// \fixme: do not override the value taken from the Material snapshot.
+        magMode = (filterUI ? GL_LINEAR : GL_NEAREST);
+
+        GL_BindTexture(tex, magMode);
+
+        glMatrixMode(GL_TEXTURE);
+        glPushMatrix();
+        glTranslatef(offset[0], offset[1], 0);
+        glScalef(scale[0], scale[1], 0);
+    }
+    else
+        DGL_Disable(DGL_TEXTURING);
+
+    glBegin(GL_QUADS);
+        glColor4fv(color);
+        glTexCoord2f(0, 0);
+        glVertex2f(0, 0);
+
+        glTexCoord2f(1, 0);
+        glVertex2f(0+width, 0);
+
+        glColor4fv(bottomColor);
+        glTexCoord2f(1, 1);
+        glVertex2f(0+width, 0+height);
+
+        glTexCoord2f(0, 1);
+        glVertex2f(0, 0+height);
+    glEnd();
+
+    if(tex)
+    {
+        glMatrixMode(GL_TEXTURE);
+        glPopMatrix();
+    }
+    else
+    {
+        DGL_Enable(DGL_TEXTURING);
+    }
+}
+
+static void drawPicFrame(fidata_pic_t* p, uint frame, float xOffset, float yOffset)
+{
+    if(p->numFrames && frame < p->numFrames)
+    {
+        fidata_pic_frame_t* f = p->frames[frame];
+        if(f->type == PFT_PATCH)
+        {
+            patchtex_t* patch;
+            if((patch = R_FindPatchTex(f->texRef.patch)))
+            {
+                DGLuint tex = GL_PreparePatch(patch);
+                float origin[3], toTopLeft[3], scale[3], angle;
+
+                // Calculate the offset to the top left of the patch, to center
+                // it at the offset as defined in the Patch definition.
+                toTopLeft[VX] = patch->width / 2 - patch->offX;
+                toTopLeft[VY] = patch->height / 2 - patch->offY;
+                toTopLeft[VZ] = 0;
+                if(patch->flags & PF_UPSCALE_AND_SHARPEN)
+                {
+                    toTopLeft[VX] += -1;
+                    toTopLeft[VY] += -1;
+                }
+
+                origin[VX] = p->pos[0].value + toTopLeft[VX] + xOffset;
+                origin[VY] = p->pos[1].value + toTopLeft[VY] + yOffset;
+                origin[VZ] = 0;
+
+                scale[VX] = (f->flags.flip ? -1 : 1) * p->scale[0].value;
+                scale[VY] = p->scale[1].value;
+                scale[VZ] = 0;
+
+                angle = p->angle.value;
+
+                glBindTexture(GL_TEXTURE_2D, tex);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filterUI ? GL_LINEAR : GL_NEAREST));
+
+                // Setup the transformation.
+                glMatrixMode(GL_MODELVIEW);
+                glPushMatrix();
+                glTranslatef(origin[VX], origin[VY], origin[VZ]);
+
+                // Counter the VGA aspect ratio.
+                if(angle != 0)
+                {
+                    glScalef(1, 200.0f / 240.0f, 1);
+                    glRotatef(angle, 0, 0, 1);
+                    glScalef(1, 240.0f / 200.0f, 1);
+                }
+
+                // Move to origin.
+                glTranslatef(-toTopLeft[VX], -toTopLeft[VY], -toTopLeft[VZ]);
+                glScalef(scale[VX], scale[VY], scale[VZ]);
+
+                /// \fixme we could use the color for tinting
+                /// useColor(p->color, 4);
+                GL_DrawRect(patch->offX, patch->offY, patch->width, patch->height, 1, 1, 1, 1);
+
+                // Restore original transformation.
+                glMatrixMode(GL_MODELVIEW);
+                glPopMatrix();
+            }
+            return;
+        }
+
+        if(f->type == PFT_RAW)
+        {
+            float mid[2];
+
+            picRotationOrigin(p, p->curFrame, mid);
+
+            // Setup the transformation.
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
+            glTranslatef(p->pos[0].value + xOffset, p->pos[1].value + yOffset, 0);
+            glTranslatef(mid[VX], mid[VY], 0);
+
+            rotate(p->angle.value);
+
+            // Move to origin.
+            glTranslatef(-mid[VX], -mid[VY], 0);
+            glScalef((p->numFrames && p->frames[p->curFrame]->flags.flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, 1);
+
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
+            glLoadIdentity();
+
+            /// \fixme What about rotaton?
+            glTranslatef(p->pos[0].value + xOffset, p->pos[1].value + yOffset, 0);
+            glScalef((f->flags.flip? -1 : 1) * p->scale[0].value, p->scale[1].value, 1);
+
+            useColor(p->color, 4);
+            DGL_DrawRawScreen(f->texRef.lump, 0, 0);
+
+            glMatrixMode(GL_MODELVIEW);
+            glPopMatrix();
+            // Restore original transformation.
+            glMatrixMode(GL_MODELVIEW);
+            glPopMatrix();
+            return;
+        }
+    }
+
+    // Setup the transformation.
     {
     float mid[2];
 
-    // Fully transparent pics will not be drawn.
-    if(p->color[3].value == 0)
-        return;
+    picRotationOrigin(p, p->curFrame, mid);
 
-    DGL_SetNoMaterial(); // Hmm...
-    useColor(p->color, 4);
-    FIData_PicRotationOrigin(p, mid);
-
-    // Setup the transformation.
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glTranslatef(p->pos[0].value + xOffset, p->pos[1].value + yOffset, 0);
@@ -1506,37 +1843,13 @@ void FIData_PicDraw(fidata_pic_t* p, float xOffset, float yOffset)
 
     // Move to origin.
     glTranslatef(-mid[VX], -mid[VY], 0);
-    glScalef((p->frames[p->frame].flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, 1);
+    glScalef((p->numFrames && p->frames[p->curFrame]->flags.flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, 1);
+    }
 
-    // Draw it.
-    if(p->flags.is_rect)
+    drawPicFrameBackground(p, frame, xOffset, yOffset);
+
+    if(p->numFrames == 0)
     {
-        if(p->frames[p->frame].flags.is_ximage)
-        {
-            DGL_Enable(DGL_TEXTURING);
-            DGL_Bind((DGLuint)p->frames[p->frame].tex);
-        }
-        else
-        {   // The fill.
-            DGL_Disable(DGL_TEXTURING);
-        }
-
-        glBegin(GL_QUADS);
-            useColor(p->color, 4);
-            glTexCoord2f(0, 0);
-            glVertex2f(0, 0);
-
-            glTexCoord2f(1, 0);
-            glVertex2f(1, 0);
-
-            useColor(p->otherColor, 4);
-            glTexCoord2f(1, 1);
-            glVertex2f(1, 1);
-
-            glTexCoord2f(0, 1);
-            glVertex2f(0, 1);
-        glEnd();
-
         // The edges never have a texture.
         DGL_Disable(DGL_TEXTURING);
 
@@ -1555,124 +1868,57 @@ void FIData_PicDraw(fidata_pic_t* p, float xOffset, float yOffset)
             useColor(p->edgeColor, 4);
             glVertex2f(0, 0);
         glEnd();
-
+        
         DGL_Enable(DGL_TEXTURING);
-    }
-    else if(p->frames[p->frame].flags.is_patch)
-    {
-        patchtex_t* patch;
-        if((patch = R_FindPatchTex((patchid_t)p->frames[p->frame].tex)))
-            R_DrawPatch(patch, 0, 0);
-    }
-    else
-    {
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-        glLoadIdentity();
-
-        /// \fixme What about rotaton?
-        glTranslatef(p->pos[0].value + xOffset, p->pos[1].value + yOffset, 0);
-        glScalef((p->frames[p->frame].flip? -1 : 1) * p->scale[0].value, p->scale[1].value, 1);
-
-        DGL_DrawRawScreen(p->frames[p->frame].tex, 0, 0);
-
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
     }
 
     // Restore original transformation.
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-    }
 }
 
-void FIData_PicInit(fidata_pic_t* pic)
-{
-    assert(pic);
-
-    AnimatorVector2_Init(pic->pos, 0, 0);
-    AnimatorVector2_Init(pic->scale, 1, 1);
-
-    // Default colors.
-    AnimatorVector4_Init(pic->color, 1, 1, 1, 1);
-    AnimatorVector4_Init(pic->otherColor, 1, 1, 1, 1);
-
-    // Edge alpha is zero by default.
-    AnimatorVector4_Init(pic->edgeColor, 1, 1, 1, 0);
-    AnimatorVector4_Init(pic->otherEdgeColor, 1, 1, 1, 0);
-}
-
-void FIData_PicDeleteXImage(fidata_pic_t* p)
+void FIData_PicDraw(fidata_pic_t* p, float xOffset, float yOffset)
 {
     assert(p);
-    DGL_DeleteTextures(1, (DGLuint*)&p->frames[0].tex);
-    p->frames[0].tex = 0;
-    p->frames[0].flags.is_ximage = false;
+    // Fully transparent pics will not be drawn.
+    if(p->color[3].value == 0)
+        return;
+    drawPicFrame(p, p->curFrame, xOffset, yOffset);
+}
+
+void FIData_PicInit(fidata_pic_t* p)
+{
+    assert(p);
+
+    AnimatorVector2_Init(p->pos, 0, 0);
+    AnimatorVector2_Init(p->scale, 1, 1);
+
+    // Default colors.
+    AnimatorVector4_Init(p->color, 1, 1, 1, 1);
+    AnimatorVector4_Init(p->otherColor, 1, 1, 1, 1);
+
+    p->flags.looping = false; // Yeah?
+
+    // Edge alpha is zero by default.
+    AnimatorVector4_Init(p->edgeColor, 1, 1, 1, 0);
+    AnimatorVector4_Init(p->otherEdgeColor, 1, 1, 1, 0);
 }
 
 void FIData_PicClearAnimation(fidata_pic_t* p)
 {
     assert(p);
-    {uint i;
-    for(i = 0; i < FIDATA_PIC_MAX_SEQUENCE; ++i)
+    if(p->frames)
     {
-        // Kill the old texture.
-        if(p->frames[i].flags.is_ximage)
-            FIData_PicDeleteXImage(p);
-
-        p->frames[i].tex = 0;
-        p->frames[i].flip = 0;
-        p->frames[i].sound = -1;
-        p->frames[i].tics = 0;
-    }}
-    p->frame = 0;
+        uint i;
+        for(i = 0; i < p->numFrames; ++i)
+            destroyPicFrame(p->frames[i]);
+        Z_Free(p->frames);
+    }
+    p->flags.looping = false; // Yeah?
+    p->frames = 0;
+    p->numFrames = 0;
+    p->curFrame = 0;
     p->animComplete = true;
-}
-
-uint FIData_PicNextFrame(fidata_pic_t* pic)
-{
-    assert(pic);
-    {uint i;
-    for(i = 0; i < FIDATA_PIC_MAX_SEQUENCE; ++i)
-    {
-        if(pic->frames[i].tex <= 0)
-            break;
-    }
-    return i;
-    }
-}
-
-void FIData_PicRotationOrigin(const fidata_pic_t* p, float center[2])
-{
-    assert(p);
-
-    if(p->flags.is_rect)
-    {
-        center[VX] = center[VY] = .5f;
-    }
-    else if(p->frames[p->frame].flags.is_patch)
-    {
-        patchinfo_t info;
-
-        if(R_GetPatchInfo(p->frames[p->frame].tex, &info))
-        {
-            /// \fixme what about extraOffset?
-            center[VX] = info.width / 2 - info.offset;
-            center[VY] = info.height / 2 - info.topOffset;
-        }
-        else
-        {
-            center[VX] = center[VY] = 0;
-        }
-    }
-    else
-    {
-        center[VX] = SCREENWIDTH/2;
-        center[VY] = SCREENHEIGHT/2;
-    }
-
-    center[VX] *= p->scale[VX].value;
-    center[VY] *= p->scale[VY].value;
 }
 
 void FIData_TextThink(fidata_text_t* t)
@@ -1707,6 +1953,29 @@ void FIData_TextThink(fidata_text_t* t)
     t->animComplete = (!t->wait || t->cursorPos >= FIData_TextLength(t));
 }
 
+static int textLineWidth(const char* text, compositefontid_t font)
+{
+    int width = 0;
+
+    for(; *text; text++)
+    {
+        if(*text == '\\')
+        {
+            if(!*++text)
+                break;
+            if(*text == 'n')
+                break;
+            if(*text >= '0' && *text <= '9')
+                continue;
+            if(*text == 'w' || *text == 'W' || *text == 'p' || *text == 'P')
+                continue;
+        }
+        width += GL_CharWidth(*text, font);
+    }
+
+    return width;
+}
+
 void FIData_TextDraw(fidata_text_t* tex, float xOffset, float yOffset)
 {
     assert(tex);
@@ -1732,7 +2001,7 @@ void FIData_TextDraw(fidata_text_t* tex, float xOffset, float yOffset)
     for(cnt = 0, ptr = tex->text; *ptr && (!tex->wait || cnt < tex->cursorPos); ptr++)
     {
         if(linew < 0)
-            linew = FI_GetLineWidth(ptr, tex->font);
+            linew = textLineWidth(ptr, tex->font);
 
         ch = *ptr;
         if(*ptr == '\\') // Escape?
@@ -1870,12 +2139,12 @@ DEFFC(End)
 
 DEFFC(BGFlat)
 {
-    s->bgMaterial = Materials_ToMaterial(Materials_CheckNumForName(scriptNextToken(s), MN_FLATS));
+    s->bgMaterial = Materials_ToMaterial(Materials_CheckNumForName(ops[0].data.cstring, MN_FLATS));
 }
 
 DEFFC(BGTexture)
 {
-    s->bgMaterial = Materials_ToMaterial(Materials_CheckNumForName(scriptNextToken(s), MN_TEXTURES));
+    s->bgMaterial = Materials_ToMaterial(Materials_CheckNumForName(ops[0].data.cstring, MN_TEXTURES));
 }
 
 DEFFC(NoBGMaterial)
@@ -1885,7 +2154,7 @@ DEFFC(NoBGMaterial)
 
 DEFFC(InTime)
 {
-    s->inTime = scriptReadTics(s);
+    s->inTime = (int) (ops[0].data.flt * 35 + 0.5);
 }
 
 DEFFC(Tic)
@@ -1895,27 +2164,27 @@ DEFFC(Tic)
 
 DEFFC(Wait)
 {
-    s->wait = scriptReadTics(s);
+    s->wait = (int) (ops[0].data.flt * 35 + 0.5);
 }
 
 DEFFC(WaitText)
 {
-    s->waitingText = stateGetText(s, scriptNextToken(s));
+    s->waitingText = stateGetText(s, ops[0].data.cstring);
 }
 
 DEFFC(WaitAnim)
 {
-    s->waitingPic = stateGetPic(s, scriptNextToken(s));
+    s->waitingPic = stateGetPic(s, ops[0].data.cstring);
 }
 
 DEFFC(Color)
 {
-    AnimatorVector3_Set(s->bgColor, scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), s->inTime);
+    AnimatorVector3_Set(s->bgColor, ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, s->inTime);
 }
 
 DEFFC(ColorAlpha)
 {
-    AnimatorVector4_Set(s->bgColor, scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), s->inTime);
+    AnimatorVector4_Set(s->bgColor, ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, s->inTime);
 }
 
 DEFFC(Pause)
@@ -1951,39 +2220,32 @@ DEFFC(NoEvents)
 
 DEFFC(OnKey)
 {
-    int code;
-    fi_handler_t* handler;
-
-    // First argument is the key identifier.
-    code = DD_GetKeyCode(scriptNextToken(s));
-
-    // Read the marker name into token.
-    scriptNextToken(s);
-
+    int ddkey = DD_GetKeyCode(ops[0].data.cstring);
+    const char* markerLabel = ops[1].data.cstring;
+    fi_handler_t* h;
     // Find an empty handler.
-    if((handler = FI_GetHandler(code)) != NULL)
+    if((h = stateGetHandler(s, ddkey)))
     {
-        handler->code = code;
-        strncpy(handler->marker, token, sizeof(handler->marker) - 1);
+        h->ddkey = ddkey;
+        dd_snprintf(h->marker, FI_NAME_MAX_LENGTH, "%s", markerLabel);
     }
 }
 
 DEFFC(UnsetKey)
 {
-    fi_handler_t* handler = FI_GetHandler(DD_GetKeyCode(scriptNextToken(s)));
-
-    if(handler)
+    int ddkey = DD_GetKeyCode(ops[0].data.cstring);
+    fi_handler_t* h;
+    if((h = stateFindHandler(s, ddkey)))
     {
-        handler->code = 0;
-        memset(handler->marker, 0, sizeof(handler->marker));
+        h->ddkey = 0;
+        memset(h->marker, 0, sizeof(h->marker));
     }
 }
 
 DEFFC(If)
 {
+    const char* token = ops[0].data.cstring;
     boolean val = false;
-
-    scriptNextToken(s);
 
     // Built-in conditions.
     if(!stricmp(token, "netgame"))
@@ -2017,7 +2279,7 @@ DEFFC(If)
 DEFFC(IfNot)
 {
     // This is the same as "if" but the skip condition is the opposite.
-    FIC_If(cmd, s);
+    FIC_If(cmd, ops, s);
     s->skipNext = !s->skipNext;
 }
 
@@ -2030,21 +2292,20 @@ DEFFC(Else)
 
 DEFFC(GoTo)
 {
-    scriptSkipTo(s, scriptNextToken(s));
+    scriptSkipTo(s, ops[0].data.cstring);
 }
 
 DEFFC(Marker)
 {
-    scriptNextToken(s);
     // Does it match the goto string?
-    if(!stricmp(s->gotoTarget, token))
+    if(!stricmp(s->gotoTarget, ops[0].data.cstring))
         s->gotoSkip = false;
 }
 
 DEFFC(Delete)
 {
     fi_object_t* obj;
-    if((obj = objectsFind(&s->objects, scriptNextToken(s))))
+    if((obj = objectsFind(&s->objects, ops[0].data.cstring)))
     {
         objectsRemove(&s->objects, obj);
         switch(obj->type)
@@ -2058,172 +2319,167 @@ DEFFC(Delete)
 
 DEFFC(Image)
 {
-    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
-    const char* name = scriptNextToken(s);
+    fidata_pic_t* obj = stateGetPic(s, ops[0].data.cstring);
+    const char* name = ops[1].data.cstring;
+    lumpnum_t lumpNum;
 
     FIData_PicClearAnimation(obj);
-    obj->flags.is_rect = false;
-    if((obj->frames[0].tex = W_CheckNumForName(name)) == -1)
+
+    if((lumpNum = W_CheckNumForName(name)) != -1)
+    {
+        picAddFrame(obj, createPicFrame(PFT_RAW, -1, &lumpNum, 0));
+    }
+    else
         Con_Message("FIC_Image: Warning, missing lump \"%s\".\n", name);
-    obj->frames[0].flags.is_patch = false;
-    obj->frames[0].flags.is_ximage = false;
 }
 
 DEFFC(ImageAt)
 {
-    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
-    float x = scriptParseFloat(s);
-    float y = scriptParseFloat(s);
-    const char* name = scriptNextToken(s);
+    fidata_pic_t* obj = stateGetPic(s, ops[0].data.cstring);
+    float x = ops[1].data.flt;
+    float y = ops[2].data.flt;
+    const char* name = ops[3].data.cstring;
+    lumpnum_t lumpNum;
 
     AnimatorVector2_Init(obj->pos, x, y);
     FIData_PicClearAnimation(obj);
-    obj->flags.is_rect = false;
-    if((obj->frames[0].tex = W_CheckNumForName(name)) == -1)
+
+    if((lumpNum = W_CheckNumForName(name)) != -1)
+    {
+        picAddFrame(obj, createPicFrame(PFT_RAW, -1, &lumpNum, 0));
+    }
+    else
         Con_Message("FIC_ImageAt: Warning, missing lump \"%s\".\n", name);
-    obj->frames[0].flags.is_patch = false;
-    obj->frames[0].flags.is_ximage = false;
 }
 
 DEFFC(XImage)
 {
-    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
-    const char* fileName = scriptNextToken(s);
+    fidata_pic_t* obj = stateGetPic(s, ops[0].data.cstring);
+    const char* fileName = ops[1].data.cstring;
+    DGLuint tex;
 
     FIData_PicClearAnimation(obj);
-    obj->flags.is_rect = true;
+
     // Load the external resource.
-    if((obj->frames[0].tex = loadGraphics(DDRC_GRAPHICS, fileName, LGM_NORMAL, false, true, 0)) == 0)
+    if((tex = loadGraphics(DDRC_GRAPHICS, fileName, LGM_NORMAL, false, true, 0)))
+    {
+        picAddFrame(obj, createPicFrame(PFT_XIMAGE, -1, &tex, 0));
+    }
+    else
         Con_Message("FIC_XImage: Warning, missing graphic \"%s\".\n", fileName);
-    obj->frames[0].flags.is_patch = false;
-    obj->frames[0].flags.is_ximage = true;
 }
 
 DEFFC(Patch)
 {
-    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
-    float x = scriptParseFloat(s);
-    float y = scriptParseFloat(s);
-    const char* name = scriptNextToken(s);
+    fidata_pic_t* obj = stateGetPic(s, ops[0].data.cstring);
+    float x = ops[1].data.flt;
+    float y = ops[2].data.flt;
+    const char* name = ops[3].data.cstring;
     patchid_t patch;
 
     AnimatorVector2_Init(obj->pos, x, y);
     FIData_PicClearAnimation(obj);
-    obj->flags.is_rect = false;
-    if((patch = R_PrecachePatch(name, NULL)) == 0)
+
+    if((patch = R_PrecachePatch(name, NULL)) != 0)
+    {
+        picAddFrame(obj, createPicFrame(PFT_PATCH, -1, &patch, 0));
+    }
+    else
         Con_Message("FIC_Patch: Warning, missing Patch \"%s\".\n", name);
-    obj->frames[0].tex = patch;
-    obj->frames[0].flags.is_patch = true;
 }
 
 DEFFC(SetPatch)
 {
-    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
-    const char* name = scriptNextToken(s);
+    fidata_pic_t* obj = stateGetPic(s, ops[0].data.cstring);
+    const char* name = ops[1].data.cstring;
     patchid_t patch;
 
     if((patch = R_PrecachePatch(name, NULL)) != 0)
     {
-        obj->flags.is_rect = false;
-        obj->frames[0].tex = patch;
-        obj->frames[0].flags.is_patch = true;
+        if(!obj->numFrames)
+        {
+            picAddFrame(obj, createPicFrame(PFT_PATCH, -1, &patch, 0));
+            return;
+        }
+
+        // Convert the first frame.
+        {
+        fidata_pic_frame_t* f = obj->frames[0];
+        f->type = PFT_PATCH;
+        f->texRef.patch = patch;
+        f->tics = -1;
+        f->sound = 0;
+        }
     }
     else
-    {
         Con_Message("FIC_SetPatch: Warning, missing Patch \"%s\".\n", name);
-    }
 }
 
 DEFFC(ClearAnim)
 {
-    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
-    FIData_PicClearAnimation(obj);
+    fi_object_t* obj;
+    if((obj = objectsFind2(&s->objects, ops[0].data.cstring, FI_PIC)))
+    {
+        FIData_PicClearAnimation((fidata_pic_t*)obj);
+    }
 }
 
 DEFFC(Anim)
 {
-    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
-    const char* name = scriptNextToken(s);
-    int tics = scriptReadTics(s);
+    fidata_pic_t* obj = stateGetPic(s, ops[0].data.cstring);
+    const char* name = ops[1].data.cstring;
+    int tics = (int) (ops[2].data.flt * 35 + 0.5);
     patchid_t patch;
-    uint i;
 
-    if((patch = R_PrecachePatch(name, NULL)) == 0)
+    if((patch = R_PrecachePatch(name, NULL)))
+    {
+        picAddFrame(obj, createPicFrame(PFT_PATCH, tics, &patch, 0));
+    }
+    else
         Con_Message("FIC_Anim: Warning, Patch \"%s\" not found.\n", name);
 
-    // Find the next sequence spot.
-    i = FIData_PicNextFrame(obj);
-    if(i == FIDATA_PIC_MAX_SEQUENCE)
-    {
-        Con_Message("FIC_Anim: Warning, too many frames in anim sequence (max %i).\n", FIDATA_PIC_MAX_SEQUENCE);
-        return; // Can't do it...
-    }
-    obj->frames[i].tex = patch;
-    obj->frames[i].tics = tics;
-    obj->frames[i].flags.is_patch = true;
     obj->animComplete = false;
 }
 
 DEFFC(AnimImage)
 {
-    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
-    const char* name = scriptNextToken(s);
-    int lump, tics = scriptReadTics(s);
-    uint i;
+    fidata_pic_t* obj = stateGetPic(s, ops[0].data.cstring);
+    const char* name = ops[1].data.cstring;
+    int tics = (int) (ops[2].data.flt * 35 + 0.5);
+    lumpnum_t lumpNum;
 
-    if((lump = W_CheckNumForName(name)) == -1)
-        Con_Message("FIC_AnimImage: Warning, lump \"%s\" not found.\n", name);
-
-    // Find the next sequence spot.
-    i = FIData_PicNextFrame(obj);
-    if(i == FIDATA_PIC_MAX_SEQUENCE)
+    if((lumpNum = W_CheckNumForName(name)) != -1)
     {
-        Con_Message("FIC_AnimImage: Warning, too many frames in anim sequence "
-                    "(max %i).\n", FIDATA_PIC_MAX_SEQUENCE);
-        return; // Can't do it...
+        picAddFrame(obj, createPicFrame(PFT_RAW, tics, &lumpNum, 0));
+        obj->animComplete = false;
     }
-
-    obj->frames[i].tex = lump;
-    obj->frames[i].tics = tics;
-    obj->frames[i].flags.is_patch = false;
-    obj->flags.is_rect = false;
-    obj->animComplete = false;
+    else
+        Con_Message("FIC_AnimImage: Warning, lump \"%s\" not found.\n", name);
 }
 
 DEFFC(Repeat)
 {
-    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
-    uint i = FIData_PicNextFrame(obj);
-    if(i == FIDATA_PIC_MAX_SEQUENCE)
-        return;
-    obj->frames[i].tex = FI_REPEAT;
+    fidata_pic_t* obj = stateGetPic(s, ops[0].data.cstring);
+    obj->flags.looping = true;
 }
 
 DEFFC(StateAnim)
 {
-    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
-    int stateId = Def_Get(DD_DEF_STATE, scriptNextToken(s), 0);
-    int count = scriptParseInteger(s);
-    spriteinfo_t sinf;
+    fidata_pic_t* obj = stateGetPic(s, ops[0].data.cstring);
+    int stateId = Def_Get(DD_DEF_STATE, ops[1].data.cstring, 0);
+    int count = ops[2].data.integer;
 
     // Animate N states starting from the given one.
-    obj->flags.is_rect = false;
     obj->animComplete = false;
     for(; count > 0 && stateId > 0; count--)
     {
         state_t* st = &states[stateId];
-        uint i = FIData_PicNextFrame(obj);
-
-        if(i == FIDATA_PIC_MAX_SEQUENCE)
-            break; // No room!
+        fidata_pic_frame_t* f;
+        spriteinfo_t sinf;
 
         R_GetSpriteInfo(st->sprite, st->frame & 0x7fff, &sinf);
-        obj->frames[i].tex = sinf.realLump;
-        obj->frames[i].flags.is_patch = true;
-        obj->frames[i].flip = sinf.flip;
-        obj->frames[i].tics = st->tics;
-        if(obj->frames[i].tics == 0)
-            obj->frames[i].tics = 1;
+        f = picAddFrame(obj, createPicFrame(PFT_MATERIAL, (st->tics <= 0? 1 : st->tics), sinf.material, 0));
+        f->flags.flip = sinf.flip;
 
         // Go to the next state.
         stateId = st->nextState;
@@ -2232,173 +2488,163 @@ DEFFC(StateAnim)
 
 DEFFC(PicSound)
 {
-    fidata_pic_t* pic = stateGetPic(s, scriptNextToken(s));
-    uint i = FIData_PicNextFrame(pic);
-    if(i)
-        i -= 1; // Why?
-    pic->frames[i].sound = Def_Get(DD_DEF_SOUND, scriptNextToken(s), 0);
+    fidata_pic_t* obj = stateGetPic(s, ops[0].data.cstring);
+    int sound = Def_Get(DD_DEF_SOUND, ops[1].data.cstring, 0);
+    if(!obj->numFrames)
+    {
+        picAddFrame(obj, createPicFrame(PFT_MATERIAL, -1, 0, sound));
+        return;
+    }
+    {fidata_pic_frame_t* f = obj->frames[obj->numFrames-1];
+    f->sound = sound;
+    }
 }
 
 DEFFC(ObjectOffX)
 {
-    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
-    float value = scriptParseFloat(s);
-
-    if(obj)
-    {
-        Animator_Set(&obj->pos[0], value, s->inTime);
-    }
+    fi_object_t* obj = objectsFind(&s->objects, ops[0].data.cstring);
+    if(!obj)
+        return;
+    Animator_Set(&obj->pos[0], ops[1].data.flt, s->inTime);
 }
 
 DEFFC(ObjectOffY)
 {
-    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
-    float value = scriptParseFloat(s);
-
-    if(obj)
-    {
-        Animator_Set(&obj->pos[1], value, s->inTime);
-    }
+    fi_object_t* obj = objectsFind(&s->objects, ops[0].data.cstring);
+    if(!obj)
+        return;
+    Animator_Set(&obj->pos[1], ops[1].data.flt, s->inTime);
 }
 
 DEFFC(ObjectRGB)
 {
-    fidata_pic_t* obj = (fidata_pic_t*)objectsFind2(&s->objects, scriptNextToken(s), FI_PIC);
+    fi_object_t* obj = objectsFind(&s->objects, ops[0].data.cstring);
     float rgb[3];
-    
-    {int i;
-    for(i = 0; i < 3; ++i)
-        rgb[i] = scriptParseFloat(s);
-    }
-
-    if(obj)
+    if(!obj || !(obj->type == FI_TEXT || obj->type == FI_PIC))
+        return;
+    rgb[CR] = ops[1].data.flt;
+    rgb[CG] = ops[2].data.flt;
+    rgb[CB] = ops[3].data.flt;
+    switch(obj->type)
     {
-        AnimatorVector3_Set(obj->color, rgb[CR], rgb[CG], rgb[CB], s->inTime);
-
-        if(obj->flags.is_rect)
+    case FI_TEXT:
         {
-            // This affects all the colors.
-            AnimatorVector3_Set(obj->otherColor, rgb[CR], rgb[CG], rgb[CB], s->inTime);
-            AnimatorVector3_Set(obj->edgeColor, rgb[CR], rgb[CG], rgb[CB], s->inTime);
-            AnimatorVector3_Set(obj->otherEdgeColor, rgb[CR], rgb[CG], rgb[CB], s->inTime);
+        fidata_text_t* t = (fidata_text_t*)obj;
+        AnimatorVector3_Set(t->color, rgb[CR], rgb[CG], rgb[CB], s->inTime);
+        break;
+        }
+    case FI_PIC:
+        {
+        fidata_pic_t* p = (fidata_pic_t*)obj;
+        AnimatorVector3_Set(p->color, rgb[CR], rgb[CG], rgb[CB], s->inTime);
+        // This affects all the colors.
+        AnimatorVector3_Set(p->otherColor, rgb[CR], rgb[CG], rgb[CB], s->inTime);
+        AnimatorVector3_Set(p->edgeColor, rgb[CR], rgb[CG], rgb[CB], s->inTime);
+        AnimatorVector3_Set(p->otherEdgeColor, rgb[CR], rgb[CG], rgb[CB], s->inTime);
+        break;
         }
     }
 }
 
 DEFFC(ObjectAlpha)
 {
-    fidata_pic_t* obj = (fidata_pic_t*)objectsFind2(&s->objects, scriptNextToken(s), FI_PIC);
-    float value = scriptParseFloat(s);
-    if(obj)
+    fi_object_t* obj = objectsFind(&s->objects, ops[0].data.cstring);
+    float alpha;
+    if(!obj || !(obj->type == FI_TEXT || obj->type == FI_PIC))
+        return;
+    alpha = ops[1].data.flt;
+    switch(obj->type)
     {
-        Animator_Set(&obj->color[3], value, s->inTime);
-
-        if(obj && obj->flags.is_rect)
+    case FI_TEXT:
         {
-            Animator_Set(&obj->otherColor[3], value, s->inTime);
-            /*Animator_Set(&obj->edgeColor[3], value, s->inTime);
-            Animator_Set(&obj->otherEdgeColor[3], value, s->inTime); */
+        fidata_text_t* t = (fidata_text_t*)obj;
+        Animator_Set(&t->color[3], alpha, s->inTime);
+        break;
+        }
+    case FI_PIC:
+        {
+        fidata_pic_t* p = (fidata_pic_t*)obj;
+        Animator_Set(&p->color[3], alpha, s->inTime);
+        Animator_Set(&p->otherColor[3], alpha, s->inTime);
+        /*Animator_Set(&p->edgeColor[3], alpha, s->inTime);
+        Animator_Set(&p->otherEdgeColor[3], alpha, s->inTime); */
+        break;
         }
     }
 }
 
 DEFFC(ObjectScaleX)
 {
-    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
-    float value = scriptParseFloat(s);
-    if(obj)
-    {
-        Animator_Set(&obj->scale[0], value, s->inTime);
-    }
+    fi_object_t* obj = objectsFind(&s->objects, ops[0].data.cstring);
+    if(!obj)
+        return;
+    Animator_Set(&obj->scale[0], ops[1].data.flt, s->inTime);
 }
 
 DEFFC(ObjectScaleY)
 {
-    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
-    float value = scriptParseFloat(s);
-    if(obj)
-    {
-        Animator_Set(&obj->scale[1], value, s->inTime);
-    }
+    fi_object_t* obj = objectsFind(&s->objects, ops[0].data.cstring);
+    if(!obj)
+        return;
+    Animator_Set(&obj->scale[1], ops[1].data.flt, s->inTime);
 }
 
 DEFFC(ObjectScale)
 {
-    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
-    float value = scriptParseFloat(s);
-    if(obj)
-    {
-        AnimatorVector2_Set(obj->scale, value, value, s->inTime);
-    }
+    fi_object_t* obj = objectsFind(&s->objects, ops[0].data.cstring);
+    if(!obj)
+        return;
+    AnimatorVector2_Set(obj->scale, ops[1].data.flt, ops[1].data.flt, s->inTime);
 }
 
 DEFFC(ObjectScaleXY)
 {
-    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
-    float x = scriptParseFloat(s);
-    float y = scriptParseFloat(s);
-    if(obj)
-    {
-        AnimatorVector2_Set(obj->scale, x, y, s->inTime);
-    }
+    fi_object_t* obj = objectsFind(&s->objects, ops[0].data.cstring);
+    if(!obj)
+        return;
+    AnimatorVector2_Set(obj->scale, ops[1].data.flt, ops[2].data.flt, s->inTime);
 }
 
 DEFFC(ObjectAngle)
 {
-    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
-    float value = scriptParseFloat(s);
-    if(obj)
-    {
-        Animator_Set(&obj->angle, value, s->inTime);
-    }
+    fi_object_t* obj = objectsFind(&s->objects, ops[0].data.cstring);
+    if(!obj)
+        return;
+    Animator_Set(&obj->angle, ops[1].data.flt, s->inTime);
 }
 
 DEFFC(Rect)
 {
-    fidata_pic_t* obj = stateGetPic(s, scriptNextToken(s));
-    float x = scriptParseFloat(s);
-    float y = scriptParseFloat(s);
-    float scaleX = scriptParseFloat(s);
-    float scaleY = scriptParseFloat(s);
+    fidata_pic_t* obj = stateGetPic(s, ops[0].data.cstring);
 
     FIData_PicInit(obj);
-
     // Position and size.
-    AnimatorVector2_Init(obj->pos, x, y);
-    AnimatorVector2_Init(obj->scale, scaleX, scaleY);
+    AnimatorVector2_Init(obj->pos, ops[1].data.flt, ops[2].data.flt);
+    AnimatorVector2_Init(obj->scale, ops[3].data.flt, ops[4].data.flt);
 
     obj->animComplete = true;
-    obj->flags.is_rect = true;
-    obj->frames[0].flags.is_patch = false;
-    obj->frames[0].flags.is_ximage = false;
 }
 
 DEFFC(FillColor)
 {
-    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
+    fi_object_t* obj = objectsFind(&s->objects, ops[0].data.cstring);
     int which = 0;
     float rgba[4];
 
     if(!obj)
-    {   // Skip the parms.
-        int i;
-        for(i = 0; i < 5; ++i)
-            scriptNextToken(s);
         return;
-    }
 
     // Which colors to modify?
-    scriptNextToken(s);
-    if(!stricmp(token, "top"))
+    if(!stricmp(ops[1].data.cstring, "top"))
         which |= 1;
-    else if(!stricmp(token, "bottom"))
+    else if(!stricmp(ops[1].data.cstring, "bottom"))
         which |= 2;
     else
         which = 3;
 
-    {int i;
+    {uint i;
     for(i = 0; i < 4; ++i)
-        rgba[i] = scriptParseFloat(s);
+        rgba[i] = ops[2+i].data.flt;
     }
 
     if(which & 1)
@@ -2409,70 +2655,60 @@ DEFFC(FillColor)
 
 DEFFC(EdgeColor)
 {
-    fi_object_t* obj = objectsFind(&s->objects, scriptNextToken(s));
-    fidata_pic_t* pic;
+    fidata_pic_t* obj = (fidata_pic_t*) objectsFind2(&s->objects, ops[0].data.cstring, FI_PIC);
     int which = 0;
     float rgba[4];
 
     if(!obj)
-    {   // Skip the parms.
-        int i;
-        for(i = 0; i < 5; ++i)
-            scriptNextToken(s);
         return;
-    }
-
-    pic = stateGetPic(s, obj->name);
 
     // Which colors to modify?
-    scriptNextToken(s);
-    if(!stricmp(token, "top"))
+    if(!stricmp(ops[1].data.cstring, "top"))
         which |= 1;
-    else if(!stricmp(token, "bottom"))
+    else if(!stricmp(ops[1].data.cstring, "bottom"))
         which |= 2;
     else
         which = 3;
 
-    {int i;
+    {uint i;
     for(i = 0; i < 4; ++i)
-        rgba[i] = scriptParseFloat(s);
+        rgba[i] = ops[2+i].data.flt;
     }
 
     if(which & 1)
-        AnimatorVector4_Set(pic->edgeColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], s->inTime);
+        AnimatorVector4_Set(obj->edgeColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], s->inTime);
     if(which & 2)
-        AnimatorVector4_Set(pic->otherEdgeColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], s->inTime);
+        AnimatorVector4_Set(obj->otherEdgeColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], s->inTime);
 }
 
 DEFFC(OffsetX)
 {
-    Animator_Set(&s->imgOffset[0], scriptParseFloat(s), s->inTime);
+    Animator_Set(&s->imgOffset[0], ops[0].data.flt, s->inTime);
 }
 
 DEFFC(OffsetY)
 {
-    Animator_Set(&s->imgOffset[1], scriptParseFloat(s), s->inTime);
+    Animator_Set(&s->imgOffset[1], ops[0].data.flt, s->inTime);
 }
 
 DEFFC(Sound)
 {
-    int num = Def_Get(DD_DEF_SOUND, scriptNextToken(s), NULL);
+    int num = Def_Get(DD_DEF_SOUND, ops[0].data.cstring, NULL);
     if(num > 0)
         S_LocalSound(num, NULL);
 }
 
 DEFFC(SoundAt)
 {
-    int num = Def_Get(DD_DEF_SOUND, scriptNextToken(s), NULL);
-    float vol = scriptParseFloat(s);
-    vol = MIN_OF(vol, 1);
-    if(vol > 0 && num > 0)
+    int num = Def_Get(DD_DEF_SOUND, ops[0].data.cstring, NULL);
+    float vol = MIN_OF(ops[1].data.flt, 1);
+    if(num > 0)
         S_LocalSoundAtVolume(num, NULL, vol);
 }
 
 DEFFC(SeeSound)
 {
-    int num = Def_Get(DD_DEF_MOBJ, scriptNextToken(s), NULL);
+    int num = Def_Get(DD_DEF_MOBJ, ops[0].data.cstring, NULL);
     if(num < 0 || mobjInfo[num].seeSound <= 0)
         return;
     S_LocalSound(mobjInfo[num].seeSound, NULL);
@@ -2480,7 +2716,7 @@ DEFFC(SeeSound)
 
 DEFFC(DieSound)
 {
-    int num = Def_Get(DD_DEF_MOBJ, scriptNextToken(s), NULL);
+    int num = Def_Get(DD_DEF_MOBJ, ops[0].data.cstring, NULL);
     if(num < 0 || mobjInfo[num].deathSound <= 0)
         return;
     S_LocalSound(mobjInfo[num].deathSound, NULL);
@@ -2488,35 +2724,33 @@ DEFFC(DieSound)
 
 DEFFC(Music)
 {
-    S_StartMusic(scriptNextToken(s), true);
+    S_StartMusic(ops[0].data.cstring, true);
 }
 
 DEFFC(MusicOnce)
 {
-    S_StartMusic(scriptNextToken(s), false);
+    S_StartMusic(ops[0].data.cstring, false);
 }
 
 DEFFC(Filter)
 {
-    AnimatorVector4_Set(s->filter, scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), s->inTime);
+    AnimatorVector4_Set(s->filter, ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, s->inTime);
 }
 
 DEFFC(Text)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-
-    AnimatorVector2_Init(tex->pos, scriptParseFloat(s), scriptParseFloat(s));
-    FIData_TextCopy(tex, scriptNextToken(s));
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
+    AnimatorVector2_Init(tex->pos, ops[1].data.flt, ops[2].data.flt);
+    FIData_TextCopy(tex, ops[3].data.cstring);
     tex->cursorPos = 0; // Restart the text.
 }
 
 DEFFC(TextFromDef)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
     char* str;
-
-    AnimatorVector2_Init(tex->pos, scriptParseFloat(s), scriptParseFloat(s));
-    if(!Def_Get(DD_DEF_TEXT, scriptNextToken(s), &str))
+    AnimatorVector2_Init(tex->pos, ops[1].data.flt, ops[2].data.flt);
+    if(!Def_Get(DD_DEF_TEXT, (char*)ops[3].data.cstring, &str))
         str = "(undefined)"; // Not found!
     FIData_TextCopy(tex, str);
     tex->cursorPos = 0; // Restart the text.
@@ -2524,11 +2758,11 @@ DEFFC(TextFromDef)
 
 DEFFC(TextFromLump)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
     int lnum;
 
-    AnimatorVector2_Init(tex->pos, scriptParseFloat(s), scriptParseFloat(s));
-    lnum = W_CheckNumForName(scriptNextToken(s));
+    AnimatorVector2_Init(tex->pos, ops[1].data.flt, ops[2].data.flt);
+    lnum = W_CheckNumForName(ops[3].data.cstring);
     if(lnum < 0)
     {
         FIData_TextCopy(tex, "(not found)");
@@ -2565,101 +2799,99 @@ DEFFC(TextFromLump)
 
 DEFFC(SetText)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    FIData_TextCopy(tex, scriptNextToken(s));
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
+    FIData_TextCopy(tex, ops[1].data.cstring);
 }
 
 DEFFC(SetTextDef)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
     char* str;
-    if(!Def_Get(DD_DEF_TEXT, scriptNextToken(s), &str))
+    if(!Def_Get(DD_DEF_TEXT, ops[1].data.cstring, &str))
         str = "(undefined)"; // Not found!
     FIData_TextCopy(tex, str);
 }
 
 DEFFC(DeleteText)
 {
-    fi_object_t* obj;
-    if((obj = (fi_object_t*)stateGetText(s, scriptNextToken(s))))
-    {
-        objectsRemove(&s->objects, obj);
-        P_DestroyText((fidata_text_t*)obj);
-    }
+    fi_object_t* obj = objectsFind2(&s->objects, ops[0].data.cstring, FI_TEXT);
+    if(!obj)
+        return;
+    objectsRemove(&s->objects, obj);
+    P_DestroyText((fidata_text_t*)obj);
 }
 
 DEFFC(TextColor)
 {
-    int idx = scriptParseInteger(s);
-    idx = MINMAX_OF(1, idx, 9);
-    AnimatorVector3_Set(s->textColor[idx - 1], scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), s->inTime);
+    int idx = MINMAX_OF(1, ops[0].data.integer, 9);
+    AnimatorVector3_Set(s->textColor[idx - 1], ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, s->inTime);
 }
 
 DEFFC(TextRGB)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    AnimatorVector3_Set(tex->color, scriptParseFloat(s), scriptParseFloat(s), scriptParseFloat(s), s->inTime);
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
+    AnimatorVector3_Set(tex->color, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, s->inTime);
 }
 
 DEFFC(TextAlpha)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    Animator_Set(&tex->color[CA], scriptParseFloat(s), s->inTime);
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
+    Animator_Set(&tex->color[CA], ops[1].data.flt, s->inTime);
 }
 
 DEFFC(TextOffX)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    Animator_Set(&tex->pos[0], scriptParseFloat(s), s->inTime);
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
+    Animator_Set(&tex->pos[0], ops[1].data.flt, s->inTime);
 }
 
 DEFFC(TextOffY)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    Animator_Set(&tex->pos[1], scriptParseFloat(s), s->inTime);
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
+    Animator_Set(&tex->pos[1], ops[1].data.flt, s->inTime);
 }
 
 DEFFC(TextCenter)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
     tex->textFlags &= ~(DTF_ALIGN_LEFT|DTF_ALIGN_RIGHT);
 }
 
 DEFFC(TextNoCenter)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
     tex->textFlags |= DTF_ALIGN_LEFT;
 }
 
 DEFFC(TextScroll)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
+    tex->scrollWait = ops[1].data.integer;
     tex->scrollTimer = 0;
-    tex->scrollWait = scriptParseInteger(s);
 }
 
 DEFFC(TextPos)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    tex->cursorPos = scriptParseInteger(s);
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
+    tex->cursorPos = ops[1].data.integer;
 }
 
 DEFFC(TextRate)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    tex->wait = scriptParseInteger(s);
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
+    tex->wait = ops[1].data.integer;
 }
 
 DEFFC(TextLineHeight)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    tex->lineheight = scriptParseFloat(s);
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
+    tex->lineheight = ops[1].data.flt;
 }
 
 DEFFC(Font)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    const char* fontName = scriptNextToken(s);
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
+    const char* fontName = ops[1].data.cstring;
     compositefontid_t font;
     if((font = R_CompositeFontNumForName(fontName)))
     {
@@ -2671,13 +2903,13 @@ DEFFC(Font)
 
 DEFFC(FontA)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
     tex->font = R_CompositeFontNumForName("a");
 }
 
 DEFFC(FontB)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
     tex->font = R_CompositeFontNumForName("b");
 }
 
@@ -2689,20 +2921,20 @@ DEFFC(NoMusic)
 
 DEFFC(TextScaleX)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    Animator_Set(&tex->scale[0], scriptParseFloat(s), s->inTime);
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
+    Animator_Set(&tex->scale[0], ops[1].data.flt, s->inTime);
 }
 
 DEFFC(TextScaleY)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    Animator_Set(&tex->scale[1], scriptParseFloat(s), s->inTime);
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
+    Animator_Set(&tex->scale[1], ops[1].data.flt, s->inTime);
 }
 
 DEFFC(TextScale)
 {
-    fidata_text_t* tex = stateGetText(s, scriptNextToken(s));
-    AnimatorVector2_Set(tex->scale, scriptParseFloat(s), scriptParseFloat(s), s->inTime);
+    fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
+    AnimatorVector2_Set(tex->scale, ops[1].data.flt, ops[2].data.flt, s->inTime);
 }
 
 DEFFC(PlayDemo)
@@ -2713,7 +2945,7 @@ DEFFC(PlayDemo)
 
     // The only argument is the demo file name.
     // Start playing the demo.
-    if(!Con_Executef(CMDS_DDAY, true, "playdemo \"%s\"", scriptNextToken(s)))
+    if(!Con_Executef(CMDS_DDAY, true, "playdemo \"%s\"", ops[0].data.cstring))
     {   // Demo playback failed. Here we go again...
         demoEnds();
     }
@@ -2721,7 +2953,7 @@ DEFFC(PlayDemo)
 
 DEFFC(Command)
 {
-    Con_Executef(CMDS_SCRIPT, false, scriptNextToken(s));
+    Con_Executef(CMDS_SCRIPT, false, ops[0].data.cstring);
 }
 
 DEFFC(ShowMenu)

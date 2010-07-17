@@ -28,7 +28,8 @@
 #include "dd_animator.h"
 #include "dd_compositefont.h"
 
-typedef char fi_name_t[32];
+#define FI_NAME_MAX_LENGTH          32
+typedef char fi_name_t[FI_NAME_MAX_LENGTH];
 typedef fi_name_t fi_objectname_t;
 
 typedef enum infinemode_e {
@@ -67,25 +68,36 @@ struct fi_object_s;
 /**
  * Rectangle/Image sequence.
  */
-#define FIDATA_PIC_MAX_SEQUENCE     64
+typedef struct fidata_pic_frame_s {
+    int             tics;
+    enum {
+        PFT_MATERIAL,
+        PFT_PATCH,
+        PFT_RAW,            // "Raw" graphic or PCX lump.
+        PFT_XIMAGE          // External graphics resource.
+    } type;
+    struct fidata_pic_frame_flags_s {
+        char            flip:1;
+    } flags;
+    union {
+        struct material_s* material;
+        patchid_t       patch;
+        lumpnum_t       lump;
+        DGLuint         tex;
+    } texRef;
+    short           sound;
+} fidata_pic_frame_t;
 
 typedef struct fidata_pic_s {
     FIOBJECT_BASE_ELEMENTS()
     struct fidata_pic_flags_s {
-        char            is_rect:1;
+        char            looping:1; // Frame sequence will loop.
     } flags;
     boolean         animComplete; // Animation finished (or repeated).
-    int             frame, tics;
-    struct fidata_pic_frame_s {
-        struct fidata_pic_frame_flags_s {
-            char            is_patch:1; // Raw image or patch.
-            char            is_ximage:1; // External graphics resource.
-        } flags;
-        int             tics;
-        int             tex;
-        char            flip;
-        short           sound;
-    } frames[FIDATA_PIC_MAX_SEQUENCE];
+    int             tics;
+    uint            curFrame;
+    fidata_pic_frame_t** frames;
+    uint            numFrames;
 
     animatorvector4_t color;
 
@@ -98,9 +110,6 @@ typedef struct fidata_pic_s {
 void                FIData_PicThink(fidata_pic_t* pic);
 void                FIData_PicDraw(fidata_pic_t* pic, float x, float y);
 void                FIData_PicClearAnimation(fidata_pic_t* pic);
-void                FIData_PicDeleteXImage(fidata_pic_t* pic);
-uint                FIData_PicNextFrame(fidata_pic_t* pic);
-void                FIData_PicRotationOrigin(const fidata_pic_t* pic, float center[2]);
 
 /**
  * Text.

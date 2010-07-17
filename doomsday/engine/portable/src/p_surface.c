@@ -51,6 +51,14 @@
 // CODE --------------------------------------------------------------------
 
 /**
+ * Is this surface part of the map geometry?
+ */
+boolean Surface_IsAttachedToMap(surface_t* suf)
+{
+    return (suf && suf->owner);
+}
+
+/**
  * Change the material to be used on the specified surface.
  *
  * @param suf           Ptr to the surface to chage the material of.
@@ -65,48 +73,53 @@ boolean Surface_SetMaterial(surface_t* suf, material_t* mat)
     if(suf->material == mat)
         return true;
 
-    // No longer a missing texture fix?
-    if(mat && (suf->oldFlags & SUIF_MATERIAL_FIX))
-        suf->inFlags &= ~SUIF_MATERIAL_FIX;
-
-    if(mat != suf->material)
+    // If the material has changed and this is a world surface.
+    if(Surface_IsAttachedToMap(suf))
     {
-        if(!ddMapSetup)
-        {
-            // If this plane's surface is in the deocrated list, remove it.
-            R_SurfaceListRemove(decoratedSurfaceList, suf);
-            // If this plane's surface is in the glowing list, remove it.
-            R_SurfaceListRemove(glowingSurfaceList, suf);
-        }
+        // No longer a missing texture fix?
+        if(mat && (suf->oldFlags & SUIF_MATERIAL_FIX))
+            suf->inFlags &= ~SUIF_MATERIAL_FIX;
 
-        if(mat)
+        if(mat != suf->material)
         {
-            if(ddMapSetup)
+            if(!ddMapSetup)
             {
-                /// @todo Implement Material reference counting?
-                //if(suf->material)
-                //    Materials_Precache(suf->material, false);
-                Materials_Precache(mat, true);
+                // If this plane's surface is in the deocrated list, remove it.
+                R_SurfaceListRemove(decoratedSurfaceList, suf);
+                // If this plane's surface is in the glowing list, remove it.
+                R_SurfaceListRemove(glowingSurfaceList, suf);
             }
-            else
-            {
-                material_snapshot_t ms;
-                const ded_decor_t* decor;
 
-                Materials_Prepare(&ms, mat, true, 0);
-                if(ms.glowing > 0)
-                    R_SurfaceListAdd(glowingSurfaceList, suf);
-                // Materials_Decoration will call Materials_Prepare :(
-                decor = Materials_Decoration(Materials_ToMaterialNum(mat));
-                if(decor)
-                    R_SurfaceListAdd(decoratedSurfaceList, suf);
+            if(mat)
+            {
+                if(ddMapSetup)
+                {
+                    /// @todo Implement Material reference counting?
+                    //if(suf->material)
+                    //    Materials_Precache(suf->material, false);
+                    Materials_Precache(mat, true);
+                }
+                else
+                {
+                    material_snapshot_t ms;
+                    const ded_decor_t* decor;
+
+                    Materials_Prepare(&ms, mat, true, 0);
+                    if(ms.glowing > 0)
+                        R_SurfaceListAdd(glowingSurfaceList, suf);
+                    // Materials_Decoration will call Materials_Prepare :(
+                    decor = Materials_Decoration(Materials_ToMaterialNum(mat));
+                    if(decor)
+                        R_SurfaceListAdd(decoratedSurfaceList, suf);
+                }
             }
         }
     }
-    suf->material = mat;
 
-    suf->inFlags |= SUIF_UPDATE_DECORATIONS;
+    suf->material = mat;
     suf->oldFlags = suf->inFlags;
+    if(Surface_IsAttachedToMap(suf))
+        suf->inFlags |= SUIF_UPDATE_DECORATIONS;
 
     return true;
 }
