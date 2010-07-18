@@ -1733,162 +1733,8 @@ static void drawPicFrameBackground(fidata_pic_t* p, uint frame, float xOffset, f
     }
 }
 
-static void drawPicFrame(fidata_pic_t* p, uint frame, float xOffset, float yOffset)
+static void drawRect(fidata_pic_t* p, uint frame, float angle, float worldOffset[3])
 {
-    if(p->numFrames && frame < p->numFrames)
-    {
-        fidata_pic_frame_t* f = p->frames[frame];
-        if(f->type == PFT_RAW)
-        {
-            float mid[3];
-
-            picRotationOrigin(p, frame, mid);
-
-            // Setup the transformation.
-            glMatrixMode(GL_MODELVIEW);
-            glPushMatrix();
-            glTranslatef(p->pos[0].value + xOffset, p->pos[1].value + yOffset, p->pos[2].value);
-            glTranslatef(mid[VX], mid[VY], 0);
-
-            rotate(p->angle.value);
-
-            // Move to origin.
-            glTranslatef(-mid[VX], -mid[VY], 0);
-            glScalef((f->flags.flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, p->scale[2].value);
-
-            glMatrixMode(GL_MODELVIEW);
-            glPushMatrix();
-            glLoadIdentity();
-
-            /// \fixme What about rotaton?
-            glTranslatef(p->pos[0].value + xOffset, p->pos[1].value + yOffset, p->pos[2].value);
-            glScalef((f->flags.flip? -1 : 1) * p->scale[0].value, p->scale[1].value, p->scale[2].value);
-
-            useColor(p->color, 4);
-            DGL_DrawRawScreen(f->texRef.lump, 0, 0);
-
-            glMatrixMode(GL_MODELVIEW);
-            glPopMatrix();
-            // Restore original transformation.
-            glMatrixMode(GL_MODELVIEW);
-            glPopMatrix();
-            return;
-        }
-
-        if(f->type == PFT_PATCH)
-        {
-            patchtex_t* patch;
-            if((patch = R_FindPatchTex(f->texRef.patch)))
-            {
-                DGLuint tex = (renderTextures==1? GL_PreparePatch(patch) : 0);
-                float center[3], dimensions[3], originOffset[3], scale[3], mid[2], rgba[4];
-                float angle = p->angle.value;
-                rvertex_t rvertices[4];
-                rcolor_t rcolors[4];
-                rtexcoord_t rcoords[4];
-
-                rgba[CR] = p->color[CR].value;
-                rgba[CG] = p->color[CG].value;
-                rgba[CB] = p->color[CB].value;
-                rgba[CA] = p->color[CA].value;
-
-                dimensions[VX] = patch->width;
-                dimensions[VY] = patch->height;
-                dimensions[VZ] = 1; /// \todo need to decide what if any significance this will have.
-
-                mid[VX] = dimensions[VX] / 2 - patch->offX;
-                mid[VY] = dimensions[VY] / 2 - patch->offY;
-                mid[VZ] = dimensions[VZ] / 2;
-
-                center[VX] = p->pos[VX].value + mid[VX] + xOffset;
-                center[VY] = p->pos[VY].value + mid[VY] + yOffset;
-                center[VZ] = p->pos[VZ].value + mid[VZ];
-
-                scale[VX] = p->scale[VX].value;
-                scale[VY] = p->scale[VY].value;
-                scale[VZ] = p->scale[VZ].value;
-
-                originOffset[VX] = -mid[VX] + (patch->offX * scale[VX]);
-                originOffset[VY] = -mid[VY] + (patch->offY * scale[VY]);
-                originOffset[VZ] = -mid[VZ];
-
-                scale[VX] *= dimensions[VX];
-                scale[VY] *= dimensions[VY];
-                scale[VZ] *= dimensions[VZ];
-
-                /**
-                 * Vertex layout:
-                 *
-                 * 0 - 1
-                 * | / |
-                 * 2 - 3
-                 */
-
-                V3_Set(rvertices[0].pos, 0, 0, 0);
-                V3_Set(rvertices[1].pos, 1, 0, 0);
-                V3_Set(rvertices[2].pos, 0, 1, 0);
-                V3_Set(rvertices[3].pos, 1, 1, 0);
-
-                if(tex)
-                {
-                    V2_Set(rcoords[0].st, (f->flags.flip? 1:0), 0);
-                    V2_Set(rcoords[1].st, (f->flags.flip? 0:1), 0);
-                    V2_Set(rcoords[2].st, (f->flags.flip? 1:0), 1);
-                    V2_Set(rcoords[3].st, (f->flags.flip? 0:1), 1);
-                }
-
-                V4_Copy(rcolors[0].rgba, rgba);
-                V4_Copy(rcolors[1].rgba, rgba);
-                V4_Copy(rcolors[2].rgba, rgba);
-                V4_Copy(rcolors[3].rgba, rgba);
-
-                glBindTexture(GL_TEXTURE_2D, tex);
-                if(tex)
-                {
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filterUI ? GL_LINEAR : GL_NEAREST));
-                }
-
-                // Setup the transformation.
-                glMatrixMode(GL_MODELVIEW);
-                glPushMatrix();
-
-                // Move to the object center.
-                glTranslatef(center[VX], center[VY], center[VZ]);
-
-                // Counter the VGA aspect ratio.
-                if(angle != 0)
-                {
-                    glScalef(1, 200.0f / 240.0f, 1);
-                    glRotatef(angle, 0, 0, 1);
-                    glScalef(1, 240.0f / 200.0f, 1);
-                }
-
-                // Move to origin.
-                glTranslatef(originOffset[VX], originOffset[VY], originOffset[VZ]);
-                glScalef(scale[VX], scale[VY], scale[VZ]);
-
-                glBegin(GL_TRIANGLE_STRIP);
-                {int i;
-                for(i = 0; i < 4; ++i)
-                {
-                    if(tex) glTexCoord2fv(rcoords[i].st);
-                    glColor4fv(rcolors[i].rgba);
-                    glVertex3fv(rvertices[i].pos);
-                }}
-                glEnd();
-
-                // Restore original transformation.
-                glMatrixMode(GL_MODELVIEW);
-                glPopMatrix();
-                return;
-            }
-        }
-    }
-
-    // Setup the transformation.
-    {
     float mid[3];
 
     if(p->numFrames && frame < p->numFrames)
@@ -1918,7 +1764,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, float xOffset, float yOffs
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(p->pos[0].value + xOffset, p->pos[1].value + yOffset, p->pos[2].value);
+    glTranslatef(p->pos[0].value + worldOffset[VX], p->pos[1].value + worldOffset[VY], p->pos[2].value);
     glTranslatef(mid[VX], mid[VY], mid[VZ]);
 
     // Counter the VGA aspect ratio.
@@ -1932,9 +1778,8 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, float xOffset, float yOffs
     // Move to origin.
     glTranslatef(-mid[VX], -mid[VY], -mid[VZ]);
     glScalef((p->numFrames && p->frames[p->curFrame]->flags.flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, p->scale[2].value);
-    }
 
-    drawPicFrameBackground(p, frame, xOffset, yOffset);
+    drawPicFrameBackground(p, frame, worldOffset[VX], worldOffset[VY]);
 
     if(p->numFrames == 0)
     {
@@ -1965,13 +1810,214 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, float xOffset, float yOffs
     glPopMatrix();
 }
 
+static void drawRaw(fidata_pic_t* p, uint frame, float worldOffset[3])
+{
+    fidata_pic_frame_t* f = p->frames[frame];
+    float mid[3];
+
+    picRotationOrigin(p, frame, mid);
+
+    // Setup the transformation.
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glTranslatef(p->pos[0].value + worldOffset[VX], p->pos[1].value + worldOffset[VY], p->pos[2].value + worldOffset[VZ]);
+    glTranslatef(mid[VX], mid[VY], 0);
+
+    rotate(p->angle.value);
+
+    // Move to origin.
+    glTranslatef(-mid[VX], -mid[VY], 0);
+    glScalef((f->flags.flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, p->scale[2].value);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    /// \fixme What about rotaton?
+    glTranslatef(p->pos[0].value + worldOffset[VX], p->pos[1].value + worldOffset[VY], p->pos[2].value + worldOffset[VZ]);
+    glScalef((f->flags.flip? -1 : 1) * p->scale[0].value, p->scale[1].value, p->scale[2].value);
+
+    useColor(p->color, 4);
+    DGL_DrawRawScreen(f->texRef.lump, 0, 0);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    // Restore original transformation.
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+static __inline boolean useRaw(const fidata_pic_t* p, uint frame)
+{
+    if(p->numFrames && frame < p->numFrames)
+    {
+        fidata_pic_frame_t* f = p->frames[frame];
+        if(f->type == PFT_RAW)
+            return true;
+    }
+    return false;
+}
+
+static __inline boolean useRect(const fidata_pic_t* p, uint frame)
+{
+    fidata_pic_frame_t* f;
+    if(!p->numFrames || frame >= p->numFrames)
+        return true;
+    f = p->frames[frame];
+    if(f->type == PFT_XIMAGE || f->type == PFT_MATERIAL)
+        return true;
+    return false;
+}
+
+/**
+ * Vertex layout:
+ *
+ * 0 - 1
+ * | / |
+ * 2 - 3
+ */
+static size_t buildGeometry(DGLuint tex, const float rgba[4], boolean flagTexFlip,
+    rvertex_t** verts, rcolor_t** colors, rtexcoord_t** coords)
+{
+    static rvertex_t rvertices[4];
+    static rcolor_t rcolors[4];
+    static rtexcoord_t rcoords[4];
+
+    V3_Set(rvertices[0].pos, 0, 0, 0);
+    V3_Set(rvertices[1].pos, 1, 0, 0);
+    V3_Set(rvertices[2].pos, 0, 1, 0);
+    V3_Set(rvertices[3].pos, 1, 1, 0);
+
+    if(tex)
+    {
+        V2_Set(rcoords[0].st, (flagTexFlip? 1:0), 0);
+        V2_Set(rcoords[1].st, (flagTexFlip? 0:1), 0);
+        V2_Set(rcoords[2].st, (flagTexFlip? 1:0), 1);
+        V2_Set(rcoords[3].st, (flagTexFlip? 0:1), 1);
+    }
+
+    V4_Copy(rcolors[0].rgba, rgba);
+    V4_Copy(rcolors[1].rgba, rgba);
+    V4_Copy(rcolors[2].rgba, rgba);
+    V4_Copy(rcolors[3].rgba, rgba);
+
+    *verts = rvertices;
+    *coords = (tex!=0? rcoords : 0);
+    *colors = rcolors;
+    return 4;
+}
+
+static void drawPicFrame(fidata_pic_t* p, uint frame, float origin[3], float scale[3],
+    float rgba[4], float angle, float worldOffset[3])
+{
+    if(useRaw(p, frame))
+    {
+        drawRaw(p, frame, worldOffset);
+        return;
+    }
+    if(useRect(p, frame))
+    {
+        drawRect(p, frame, angle, worldOffset);
+        return;
+    }
+
+    {
+    fidata_pic_frame_t* f = p->frames[frame];
+    float offset[3], dimensions[3], originOffset[3], center[3];
+    DGLuint tex;
+    rvertex_t* rvertices;
+    rcolor_t* rcolors;
+    rtexcoord_t* rcoords;
+    patchtex_t* patch;
+
+    if(f->type == PFT_PATCH && (patch = R_FindPatchTex(f->texRef.patch)))
+    {
+        tex = (renderTextures==1? GL_PreparePatch(patch) : 0);
+        V3_Set(offset, patch->offX, patch->offY, 0);
+        /// \todo need to decide what if any significance what depth will mean here.
+        V3_Set(dimensions, patch->width, patch->height, 1);
+    }
+    else
+    {
+        V3_Set(offset, 0, 0, 0);
+        V3_Set(dimensions, 1, 1, 1);
+    }
+    
+    V3_Set(center, dimensions[VX] / 2, dimensions[VY] / 2, dimensions[VZ] / 2);
+
+    V3_Sum(origin, origin, center);
+    V3_Subtract(origin, origin, offset);
+    V3_Sum(origin, origin, worldOffset);
+
+    V3_Subtract(originOffset, offset, center);              
+    offset[VX] *= scale[VX]; offset[VY] *= scale[VY]; offset[VZ] *= scale[VZ];
+    V3_Sum(originOffset, originOffset, offset);
+
+    buildGeometry(tex, rgba, f->flags.flip==true, &rvertices, &rcolors, &rcoords);
+
+    glBindTexture(GL_TEXTURE_2D, tex);
+    if(tex)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filterUI ? GL_LINEAR : GL_NEAREST));
+    }
+
+    // Setup the transformation.
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+
+    // Move to the object origin.
+    glTranslatef(origin[VX], origin[VY], origin[VZ]);
+
+    // Counter the VGA aspect ratio.
+    if(angle != 0)
+    {
+        glScalef(1, 200.0f / 240.0f, 1);
+        glRotatef(angle, 0, 0, 1);
+        glScalef(1, 240.0f / 200.0f, 1);
+    }
+
+    // Move to origin.
+    glTranslatef(originOffset[VX], originOffset[VY], originOffset[VZ]);
+    glScalef(scale[VX] * dimensions[VX], scale[VY] * dimensions[VY], scale[VZ] * dimensions[VZ]);
+
+    glBegin(GL_TRIANGLE_STRIP);
+    {int i;
+    for(i = 0; i < 4; ++i)
+    {
+        if(rcoords) glTexCoord2fv(rcoords[i].st);
+        if(rcolors) glColor4fv(rcolors[i].rgba);
+        glVertex3fv(rvertices[i].pos);
+    }}
+    glEnd();
+
+    // Restore original transformation.
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    }
+}
+
 void FIData_PicDraw(fidata_pic_t* p, float xOffset, float yOffset)
 {
     assert(p);
+    {
+    vec3_t scale, origin;
+    vec4_t rgba;
+    vec3_t worldOffset;
+
     // Fully transparent pics will not be drawn.
     if(!(p->color[CA].value > 0))
         return;
-    drawPicFrame(p, p->curFrame, xOffset, yOffset);
+
+    V3_Set(worldOffset, xOffset, yOffset, 0); /// \todo What is this for?
+
+    V3_Set(origin, p->pos[VX].value, p->pos[VY].value, p->pos[VZ].value);
+    V3_Set(scale, p->scale[VX].value, p->scale[VY].value, p->scale[VZ].value);
+    V4_Set(rgba, p->color[CR].value, p->color[CG].value, p->color[CB].value, p->color[CA].value);
+
+    drawPicFrame(p, p->curFrame, origin, scale, rgba, p->angle.value, worldOffset);
+    }
 }
 
 void FIData_PicInit(fidata_pic_t* p)
