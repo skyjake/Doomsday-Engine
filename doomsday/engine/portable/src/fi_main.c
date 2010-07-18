@@ -1907,6 +1907,33 @@ static size_t buildGeometry(DGLuint tex, const float rgba[4], boolean flagTexFli
     return 4;
 }
 
+static void drawGeometry(DGLuint tex, size_t numVerts, const rvertex_t* verts,
+    const rcolor_t* colors, const rtexcoord_t* coords)
+{
+    glBindTexture(GL_TEXTURE_2D, tex);
+    if(tex)
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filterUI ? GL_LINEAR : GL_NEAREST));
+    }
+    else
+        DGL_Disable(DGL_TEXTURING);
+
+    glBegin(GL_TRIANGLE_STRIP);
+    {size_t i;
+    for(i = 0; i < numVerts; ++i)
+    {
+        if(coords) glTexCoord2fv(coords[i].st);
+        if(colors) glColor4fv(colors[i].rgba);
+        glVertex3fv(verts[i].pos);
+    }}
+    glEnd();
+
+    if(!tex)
+        DGL_Enable(DGL_TEXTURING);
+}
+
 static void drawPicFrame(fidata_pic_t* p, uint frame, float origin[3], float scale[3],
     float rgba[4], float angle, float worldOffset[3])
 {
@@ -1925,6 +1952,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, float origin[3], float sca
     fidata_pic_frame_t* f = p->frames[frame];
     float offset[3], dimensions[3], originOffset[3], center[3];
     DGLuint tex;
+    size_t numVerts;
     rvertex_t* rvertices;
     rcolor_t* rcolors;
     rtexcoord_t* rcoords;
@@ -1953,15 +1981,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, float origin[3], float sca
     offset[VX] *= scale[VX]; offset[VY] *= scale[VY]; offset[VZ] *= scale[VZ];
     V3_Sum(originOffset, originOffset, offset);
 
-    buildGeometry(tex, rgba, f->flags.flip==true, &rvertices, &rcolors, &rcoords);
-
-    glBindTexture(GL_TEXTURE_2D, tex);
-    if(tex)
-    {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filterUI ? GL_LINEAR : GL_NEAREST));
-    }
+    numVerts = buildGeometry(tex, rgba, f->flags.flip==true, &rvertices, &rcolors, &rcoords);
 
     // Setup the transformation.
     glMatrixMode(GL_MODELVIEW);
@@ -1970,27 +1990,19 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, float origin[3], float sca
     // Move to the object origin.
     glTranslatef(origin[VX], origin[VY], origin[VZ]);
 
-    // Counter the VGA aspect ratio.
     if(angle != 0)
     {
+        // With rotation we must counter the VGA aspect ratio.
         glScalef(1, 200.0f / 240.0f, 1);
         glRotatef(angle, 0, 0, 1);
         glScalef(1, 240.0f / 200.0f, 1);
     }
 
-    // Move to origin.
+    // Translate to the object center.
     glTranslatef(originOffset[VX], originOffset[VY], originOffset[VZ]);
     glScalef(scale[VX] * dimensions[VX], scale[VY] * dimensions[VY], scale[VZ] * dimensions[VZ]);
 
-    glBegin(GL_TRIANGLE_STRIP);
-    {int i;
-    for(i = 0; i < 4; ++i)
-    {
-        if(rcoords) glTexCoord2fv(rcoords[i].st);
-        if(rcolors) glColor4fv(rcolors[i].rgba);
-        glVertex3fv(rvertices[i].pos);
-    }}
-    glEnd();
+    drawGeometry(tex, numVerts, rvertices, rcolors, rcoords);
 
     // Restore original transformation.
     glMatrixMode(GL_MODELVIEW);
