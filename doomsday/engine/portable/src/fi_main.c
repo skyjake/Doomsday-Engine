@@ -1611,82 +1611,56 @@ static void drawPicFrameBackground(fidata_pic_t* p, uint frame, float xOffset, f
     float offset[2] = { 0, 0 }, scale[2] = { 1, 1 }, color[4], bottomColor[4];
     int magMode = DGL_LINEAR, width = 1, height = 1;
     DGLuint tex = 0;
+    fidata_pic_frame_t* f = (p->numFrames? p->frames[frame] : NULL);
+    material_t* mat;
 
-    if(p->numFrames && frame < p->numFrames)
+    if((mat = f->texRef.material))
     {
-        fidata_pic_frame_t* f = (p->numFrames? p->frames[frame] : NULL);
-        switch(f->type)
-        {
-        case PFT_MATERIAL:
-            {
-            material_t* mat;
-            if((mat = f->texRef.material))
-            {
-                material_load_params_t params;
-                material_snapshot_t ms;
-                surface_t suf;
+        material_load_params_t params;
+        material_snapshot_t ms;
+        surface_t suf;
 
-                suf.header.type = DMU_SURFACE; /// \fixme: perhaps use the dummy object system?
-                suf.owner = 0;
-                suf.decorations = 0;
-                suf.numDecorations = 0;
-                suf.flags = suf.oldFlags = (f->flags.flip? DDSUF_MATERIAL_FLIPH : 0);
-                suf.inFlags = SUIF_PVIS|SUIF_BLEND;
-                suf.material = mat;
-                suf.normal[VX] = suf.oldNormal[VX] = 0;
-                suf.normal[VY] = suf.oldNormal[VY] = 0;
-                suf.normal[VZ] = suf.oldNormal[VZ] = 1; // toward the viewer.
-                suf.offset[0] = suf.visOffset[0] = suf.oldOffset[0][0] = suf.oldOffset[1][0] = xOffset;
-                suf.offset[1] = suf.visOffset[1] = suf.oldOffset[0][1] = suf.oldOffset[1][1] = yOffset;
-                suf.visOffsetDelta[0] = suf.visOffsetDelta[1] = 0;
-                suf.rgba[CR] = p->color[0].value;
-                suf.rgba[CG] = p->color[1].value;
-                suf.rgba[CB] = p->color[2].value;
-                suf.rgba[CA] = p->color[3].value;
-                suf.blendMode = BM_NORMAL;
+        suf.header.type = DMU_SURFACE; /// \fixme: perhaps use the dummy object system?
+        suf.owner = 0;
+        suf.decorations = 0;
+        suf.numDecorations = 0;
+        suf.flags = suf.oldFlags = (f->flags.flip? DDSUF_MATERIAL_FLIPH : 0);
+        suf.inFlags = SUIF_PVIS|SUIF_BLEND;
+        suf.material = mat;
+        suf.normal[VX] = suf.oldNormal[VX] = 0;
+        suf.normal[VY] = suf.oldNormal[VY] = 0;
+        suf.normal[VZ] = suf.oldNormal[VZ] = 1; // toward the viewer.
+        suf.offset[0] = suf.visOffset[0] = suf.oldOffset[0][0] = suf.oldOffset[1][0] = xOffset;
+        suf.offset[1] = suf.visOffset[1] = suf.oldOffset[0][1] = suf.oldOffset[1][1] = yOffset;
+        suf.visOffsetDelta[0] = suf.visOffsetDelta[1] = 0;
+        suf.rgba[CR] = p->color[0].value;
+        suf.rgba[CG] = p->color[1].value;
+        suf.rgba[CB] = p->color[2].value;
+        suf.rgba[CA] = p->color[3].value;
+        suf.blendMode = BM_NORMAL;
 
-                memset(&params, 0, sizeof(params));
-                params.pSprite = false;
-                params.tex.border = 0; // Need to allow for repeating.
-                Materials_Prepare(&ms, suf.material, (suf.inFlags & SUIF_BLEND), &params);
+        memset(&params, 0, sizeof(params));
+        params.pSprite = false;
+        params.tex.border = 0; // Need to allow for repeating.
+        Materials_Prepare(&ms, suf.material, (suf.inFlags & SUIF_BLEND), &params);
 
-                {int i;
-                for(i = 0; i < 4; ++i)
-                    color[i] = bottomColor[i] = suf.rgba[i];
-                }
-
-                if(ms.units[MTU_PRIMARY].texInst)
-                {
-                    tex = ms.units[MTU_PRIMARY].texInst->id;
-                    magMode = ms.units[MTU_PRIMARY].magMode;
-                    offset[0] = ms.units[MTU_PRIMARY].offset[0];
-                    offset[1] = ms.units[MTU_PRIMARY].offset[1];
-                    scale[0] = 1;//ms.units[MTU_PRIMARY].scale[0];
-                    scale[1] = 1;//ms.units[MTU_PRIMARY].scale[1];
-                    color[CA] *= ms.units[MTU_PRIMARY].alpha;
-                    bottomColor[CA] *= ms.units[MTU_PRIMARY].alpha;
-                    width = ms.width;
-                    height = ms.height;
-                }
-            }
-            break;
-            }
-        case PFT_XIMAGE:
-            tex = (DGLuint)f->texRef.tex;
-            {int i;
-            for(i = 0; i < 4; ++i)
-                color[i] = bottomColor[i] = p->color[i].value;
-            }
-            break;
-        }
-    }
-    else
-    {
-        int i;
+        {int i;
         for(i = 0; i < 4; ++i)
+            color[i] = bottomColor[i] = suf.rgba[i];
+        }
+
+        if(ms.units[MTU_PRIMARY].texInst)
         {
-            color[i] = p->color[i].value;
-            bottomColor[i] = p->otherColor[i].value;
+            tex = ms.units[MTU_PRIMARY].texInst->id;
+            magMode = ms.units[MTU_PRIMARY].magMode;
+            offset[0] = ms.units[MTU_PRIMARY].offset[0];
+            offset[1] = ms.units[MTU_PRIMARY].offset[1];
+            scale[0] = 1;//ms.units[MTU_PRIMARY].scale[0];
+            scale[1] = 1;//ms.units[MTU_PRIMARY].scale[1];
+            color[CA] *= ms.units[MTU_PRIMARY].alpha;
+            bottomColor[CA] *= ms.units[MTU_PRIMARY].alpha;
+            width = ms.width;
+            height = ms.height;
         }
     }
 
@@ -1735,32 +1709,14 @@ static void drawPicFrameBackground(fidata_pic_t* p, uint frame, float xOffset, f
 
 static void drawRect(fidata_pic_t* p, uint frame, float angle, const float worldOffset[3])
 {
+    assert(p->numFrames && frame < p->numFrames);
+    {
     float mid[3];
+    fidata_pic_frame_t* f = (p->numFrames? p->frames[frame] : NULL);
 
-    if(p->numFrames && frame < p->numFrames)
-    {
-        fidata_pic_frame_t* f = p->frames[frame];
-        switch(f->type)
-        {
-        case PFT_XIMAGE:
-            mid[VX] = SCREENWIDTH/2;
-            mid[VY] = SCREENHEIGHT/2;
-            mid[VZ] = 0;
-            break;
-        case PFT_MATERIAL:
-            mid[VX] = mid[VY] = mid[VZ] = 0;
-            break;
-        }
-    }
-    else
-    {
-        mid[VX] = mid[VY] = .5f;
-        mid[VZ] = 0;
-    }
+    assert(f->type == PFT_MATERIAL);
 
-    mid[VX] *= p->scale[VX].value;
-    mid[VY] *= p->scale[VY].value;
-    mid[VZ] *= p->scale[VZ].value;
+    mid[VX] = mid[VY] = mid[VZ] = 0;
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -1781,42 +1737,21 @@ static void drawRect(fidata_pic_t* p, uint frame, float angle, const float world
 
     drawPicFrameBackground(p, frame, worldOffset[VX], worldOffset[VY]);
 
-    if(p->numFrames == 0)
-    {
-        // The edges never have a texture.
-        DGL_Disable(DGL_TEXTURING);
-
-        glBegin(GL_LINES);
-            useColor(p->edgeColor, 4);
-            glVertex2f(0, 0);
-            glVertex2f(1, 0);
-            glVertex2f(1, 0);
-
-            useColor(p->otherEdgeColor, 4);
-            glVertex2f(1, 1);
-            glVertex2f(1, 1);
-            glVertex2f(0, 1);
-            glVertex2f(0, 1);
-
-            useColor(p->edgeColor, 4);
-            glVertex2f(0, 0);
-        glEnd();
-        
-        DGL_Enable(DGL_TEXTURING);
-    }
-
     // Restore original transformation.
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
+    }
 }
 
 static __inline boolean useRect(const fidata_pic_t* p, uint frame)
 {
     fidata_pic_frame_t* f;
-    if(!p->numFrames || frame >= p->numFrames)
+    if(!p->numFrames)
+        return false;
+    if(frame >= p->numFrames)
         return true;
     f = p->frames[frame];
-    if(f->type == PFT_XIMAGE || f->type == PFT_MATERIAL)
+    if(f->type == PFT_MATERIAL)
         return true;
     return false;
 }
@@ -1828,8 +1763,8 @@ static __inline boolean useRect(const fidata_pic_t* p, uint frame)
  * | / |
  * 2 - 3
  */
-static size_t buildGeometry(DGLuint tex, const float rgba[4], boolean flagTexFlip,
-    rvertex_t** verts, rcolor_t** colors, rtexcoord_t** coords)
+static size_t buildGeometry(DGLuint tex, const float rgba[4], const float rgba2[4],
+    boolean flagTexFlip, rvertex_t** verts, rcolor_t** colors, rtexcoord_t** coords)
 {
     static rvertex_t rvertices[4];
     static rcolor_t rcolors[4];
@@ -1850,8 +1785,8 @@ static size_t buildGeometry(DGLuint tex, const float rgba[4], boolean flagTexFli
 
     V4_Copy(rcolors[0].rgba, rgba);
     V4_Copy(rcolors[1].rgba, rgba);
-    V4_Copy(rcolors[2].rgba, rgba);
-    V4_Copy(rcolors[3].rgba, rgba);
+    V4_Copy(rcolors[2].rgba, rgba2);
+    V4_Copy(rcolors[3].rgba, rgba2);
 
     *verts = rvertices;
     *coords = (tex!=0? rcoords : 0);
@@ -1887,7 +1822,8 @@ static void drawGeometry(DGLuint tex, size_t numVerts, const rvertex_t* verts,
 }
 
 static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
-    const float scale[3], const float rgba[4], float angle, const float worldOffset[3])
+    const float scale[3], const float rgba[4], const float rgba2[4], float angle,
+    const float worldOffset[3])
 {
     if(useRect(p, frame))
     {
@@ -1897,7 +1833,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
 
     {
     vec3_t offset = { 0, 0, 0 }, dimensions, origin, originOffset, center;
-    boolean flipTextureS = false;
+    boolean showEdges = true, flipTextureS = false;
     DGLuint tex = 0;
     size_t numVerts;
     rvertex_t* rvertices;
@@ -1911,6 +1847,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
         rawtex_t* rawTex;
 
         flipTextureS = f->flags.flip == true;
+        showEdges = false;
 
         if(f->type == PFT_RAW && (rawTex = R_GetRawTex(f->texRef.lump)))
         {   
@@ -1918,12 +1855,13 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             V3_Set(offset, SCREENWIDTH/2, SCREENHEIGHT/2, 0);
             V3_Set(dimensions, rawTex->width, rawTex->height, 1);
         }
-        /*else if(f->type == PFT_XIMAGE)
+        else if(f->type == PFT_XIMAGE)
         {
             tex = (DGLuint)f->texRef.tex;
-            V3_Set(dimensions, 1, 1, 1);
+            V3_Set(offset, SCREENWIDTH/2, SCREENHEIGHT/2, 0);
+            V3_Set(dimensions, 1, 1, 1); /// \fixme.
         }
-        else if(f->type == PFT_MATERIAL)
+        /*else if(f->type == PFT_MATERIAL)
         {
             V3_Set(dimensions, 1, 1, 1);
         }*/
@@ -1952,7 +1890,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     offset[VX] *= scale[VX]; offset[VY] *= scale[VY]; offset[VZ] *= scale[VZ];
     V3_Sum(originOffset, originOffset, offset);
 
-    numVerts = buildGeometry(tex, rgba, flipTextureS, &rvertices, &rcolors, &rcoords);
+    numVerts = buildGeometry(tex, rgba, rgba2, flipTextureS, &rvertices, &rcolors, &rcoords);
 
     // Setup the transformation.
     glMatrixMode(GL_MODELVIEW);
@@ -1975,6 +1913,30 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
 
     drawGeometry(tex, numVerts, rvertices, rcolors, rcoords);
 
+    if(showEdges)
+    {
+        // The edges never have a texture.
+        DGL_Disable(DGL_TEXTURING);
+
+        glBegin(GL_LINES);
+            useColor(p->edgeColor, 4);
+            glVertex2f(0, 0);
+            glVertex2f(1, 0);
+            glVertex2f(1, 0);
+
+            useColor(p->otherEdgeColor, 4);
+            glVertex2f(1, 1);
+            glVertex2f(1, 1);
+            glVertex2f(0, 1);
+            glVertex2f(0, 1);
+
+            useColor(p->edgeColor, 4);
+            glVertex2f(0, 0);
+        glEnd();
+        
+        DGL_Enable(DGL_TEXTURING);
+    }
+
     // Restore original transformation.
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
@@ -1986,7 +1948,7 @@ void FIData_PicDraw(fidata_pic_t* p, float xOffset, float yOffset)
     assert(p);
     {
     vec3_t scale, origin;
-    vec4_t rgba;
+    vec4_t rgba, rgba2;
     vec3_t worldOffset;
 
     // Fully transparent pics will not be drawn.
@@ -1998,8 +1960,10 @@ void FIData_PicDraw(fidata_pic_t* p, float xOffset, float yOffset)
     V3_Set(origin, p->pos[VX].value, p->pos[VY].value, p->pos[VZ].value);
     V3_Set(scale, p->scale[VX].value, p->scale[VY].value, p->scale[VZ].value);
     V4_Set(rgba, p->color[CR].value, p->color[CG].value, p->color[CB].value, p->color[CA].value);
+    if(p->numFrames == 0)
+        V4_Set(rgba2, p->otherColor[CR].value, p->otherColor[CG].value, p->otherColor[CB].value, p->otherColor[CA].value);
 
-    drawPicFrame(p, p->curFrame, origin, scale, rgba, p->angle.value, worldOffset);
+    drawPicFrame(p, p->curFrame, origin, scale, rgba, (p->numFrames==0? rgba2 : rgba), p->angle.value, worldOffset);
     }
 }
 
