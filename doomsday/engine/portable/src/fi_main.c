@@ -1896,19 +1896,22 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     }
 
     {
-    fidata_pic_frame_t* f = p->frames[frame];
-    float offset[3] = { 0, 0, 0 }, dimensions[3], originOffset[3], center[3], origin[3];
-    DGLuint tex;
+    vec3_t offset = { 0, 0, 0 }, dimensions, origin, originOffset, center;
+    boolean flipTextureS = false;
+    DGLuint tex = 0;
     size_t numVerts;
     rvertex_t* rvertices;
     rcolor_t* rcolors;
     rtexcoord_t* rcoords;
-    patchtex_t* patch;
-    rawtex_t* rawTex;
 
     if(p->numFrames)
     {
-        f = p->frames[frame];
+        fidata_pic_frame_t* f = p->frames[frame];
+        patchtex_t* patch;
+        rawtex_t* rawTex;
+
+        flipTextureS = f->flags.flip == true;
+
         if(f->type == PFT_RAW && (rawTex = R_GetRawTex(f->texRef.lump)))
         {   
             tex = GL_PrepareRawTex(rawTex);
@@ -1949,7 +1952,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     offset[VX] *= scale[VX]; offset[VY] *= scale[VY]; offset[VZ] *= scale[VZ];
     V3_Sum(originOffset, originOffset, offset);
 
-    numVerts = buildGeometry(tex, rgba, f->flags.flip==true, &rvertices, &rcolors, &rcoords);
+    numVerts = buildGeometry(tex, rgba, flipTextureS, &rvertices, &rcolors, &rcoords);
 
     // Setup the transformation.
     glMatrixMode(GL_MODELVIEW);
