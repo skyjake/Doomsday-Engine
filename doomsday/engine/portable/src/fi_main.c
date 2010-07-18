@@ -1733,7 +1733,7 @@ static void drawPicFrameBackground(fidata_pic_t* p, uint frame, float xOffset, f
     }
 }
 
-static void drawRect(fidata_pic_t* p, uint frame, float angle, float worldOffset[3])
+static void drawRect(fidata_pic_t* p, uint frame, float angle, const float worldOffset[3])
 {
     float mid[3];
 
@@ -1808,54 +1808,6 @@ static void drawRect(fidata_pic_t* p, uint frame, float angle, float worldOffset
     // Restore original transformation.
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-}
-
-static void drawRaw(fidata_pic_t* p, uint frame, float worldOffset[3])
-{
-    fidata_pic_frame_t* f = p->frames[frame];
-    float mid[3];
-
-    picRotationOrigin(p, frame, mid);
-
-    // Setup the transformation.
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glTranslatef(p->pos[0].value + worldOffset[VX], p->pos[1].value + worldOffset[VY], p->pos[2].value + worldOffset[VZ]);
-    glTranslatef(mid[VX], mid[VY], 0);
-
-    rotate(p->angle.value);
-
-    // Move to origin.
-    glTranslatef(-mid[VX], -mid[VY], 0);
-    glScalef((f->flags.flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, p->scale[2].value);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    /// \fixme What about rotaton?
-    glTranslatef(p->pos[0].value + worldOffset[VX], p->pos[1].value + worldOffset[VY], p->pos[2].value + worldOffset[VZ]);
-    glScalef((f->flags.flip? -1 : 1) * p->scale[0].value, p->scale[1].value, p->scale[2].value);
-
-    useColor(p->color, 4);
-    DGL_DrawRawScreen(f->texRef.lump, 0, 0);
-
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-    // Restore original transformation.
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-}
-
-static __inline boolean useRaw(const fidata_pic_t* p, uint frame)
-{
-    if(p->numFrames && frame < p->numFrames)
-    {
-        fidata_pic_frame_t* f = p->frames[frame];
-        if(f->type == PFT_RAW)
-            return true;
-    }
-    return false;
 }
 
 static __inline boolean useRect(const fidata_pic_t* p, uint frame)
@@ -1934,14 +1886,9 @@ static void drawGeometry(DGLuint tex, size_t numVerts, const rvertex_t* verts,
         DGL_Enable(DGL_TEXTURING);
 }
 
-static void drawPicFrame(fidata_pic_t* p, uint frame, float origin[3], float scale[3],
-    float rgba[4], float angle, float worldOffset[3])
+static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
+    const float scale[3], const float rgba[4], float angle, const float worldOffset[3])
 {
-    if(useRaw(p, frame))
-    {
-        drawRaw(p, frame, worldOffset);
-        return;
-    }
     if(useRect(p, frame))
     {
         drawRect(p, frame, angle, worldOffset);
@@ -1950,30 +1897,51 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, float origin[3], float sca
 
     {
     fidata_pic_frame_t* f = p->frames[frame];
-    float offset[3], dimensions[3], originOffset[3], center[3];
+    float offset[3] = { 0, 0, 0 }, dimensions[3], originOffset[3], center[3], origin[3];
     DGLuint tex;
     size_t numVerts;
     rvertex_t* rvertices;
     rcolor_t* rcolors;
     rtexcoord_t* rcoords;
     patchtex_t* patch;
+    rawtex_t* rawTex;
 
-    if(f->type == PFT_PATCH && (patch = R_FindPatchTex(f->texRef.patch)))
+    if(p->numFrames)
     {
-        tex = (renderTextures==1? GL_PreparePatch(patch) : 0);
-        V3_Set(offset, patch->offX, patch->offY, 0);
-        /// \todo need to decide what if any significance what depth will mean here.
-        V3_Set(dimensions, patch->width, patch->height, 1);
+        f = p->frames[frame];
+        if(f->type == PFT_RAW && (rawTex = R_GetRawTex(f->texRef.lump)))
+        {   
+            tex = GL_PrepareRawTex(rawTex);
+            V3_Set(offset, SCREENWIDTH/2, SCREENHEIGHT/2, 0);
+            V3_Set(dimensions, rawTex->width, rawTex->height, 1);
+        }
+        /*else if(f->type == PFT_XIMAGE)
+        {
+            tex = (DGLuint)f->texRef.tex;
+            V3_Set(dimensions, 1, 1, 1);
+        }
+        else if(f->type == PFT_MATERIAL)
+        {
+            V3_Set(dimensions, 1, 1, 1);
+        }*/
+        else if(f->type == PFT_PATCH && (patch = R_FindPatchTex(f->texRef.patch)))
+        {
+            tex = (renderTextures==1? GL_PreparePatch(patch) : 0);
+            V3_Set(offset, patch->offX, patch->offY, 0);
+            /// \todo need to decide what if any significance what depth will mean here.
+            V3_Set(dimensions, patch->width, patch->height, 1);
+        }
     }
-    else
+
+    // If we've not chosen a texture by now set some defaults.
+    if(!tex)
     {
-        V3_Set(offset, 0, 0, 0);
         V3_Set(dimensions, 1, 1, 1);
     }
-    
+
     V3_Set(center, dimensions[VX] / 2, dimensions[VY] / 2, dimensions[VZ] / 2);
 
-    V3_Sum(origin, origin, center);
+    V3_Sum(origin, _origin, center);
     V3_Subtract(origin, origin, offset);
     V3_Sum(origin, origin, worldOffset);
 
