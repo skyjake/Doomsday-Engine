@@ -1728,73 +1728,11 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, float xOffset, float yOffs
     if(p->numFrames && frame < p->numFrames)
     {
         fidata_pic_frame_t* f = p->frames[frame];
-        if(f->type == PFT_PATCH)
-        {
-            patchtex_t* patch;
-            if((patch = R_FindPatchTex(f->texRef.patch)))
-            {
-                DGLuint tex = GL_PreparePatch(patch);
-                float origin[3], toTopLeft[3], scale[3], angle;
-
-                // Calculate the offset to the top left of the patch, to center
-                // it at the offset as defined in the Patch definition.
-                toTopLeft[VX] = patch->width / 2 - patch->offX;
-                toTopLeft[VY] = patch->height / 2 - patch->offY;
-                toTopLeft[VZ] = 0;
-                if(patch->flags & PF_UPSCALE_AND_SHARPEN)
-                {
-                    toTopLeft[VX] += -1;
-                    toTopLeft[VY] += -1;
-                }
-
-                origin[VX] = p->pos[0].value + toTopLeft[VX] + xOffset;
-                origin[VY] = p->pos[1].value + toTopLeft[VY] + yOffset;
-                origin[VZ] = 0;
-
-                scale[VX] = (f->flags.flip ? -1 : 1) * p->scale[0].value;
-                scale[VY] = p->scale[1].value;
-                scale[VZ] = 0;
-
-                angle = p->angle.value;
-
-                glBindTexture(GL_TEXTURE_2D, tex);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filterUI ? GL_LINEAR : GL_NEAREST));
-
-                // Setup the transformation.
-                glMatrixMode(GL_MODELVIEW);
-                glPushMatrix();
-                glTranslatef(origin[VX], origin[VY], origin[VZ]);
-
-                // Counter the VGA aspect ratio.
-                if(angle != 0)
-                {
-                    glScalef(1, 200.0f / 240.0f, 1);
-                    glRotatef(angle, 0, 0, 1);
-                    glScalef(1, 240.0f / 200.0f, 1);
-                }
-
-                // Move to origin.
-                glTranslatef(-toTopLeft[VX], -toTopLeft[VY], -toTopLeft[VZ]);
-                glScalef(scale[VX], scale[VY], scale[VZ]);
-
-                /// \fixme we could use the color for tinting
-                /// useColor(p->color, 4);
-                GL_DrawRect(patch->offX, patch->offY, patch->width, patch->height, 1, 1, 1, 1);
-
-                // Restore original transformation.
-                glMatrixMode(GL_MODELVIEW);
-                glPopMatrix();
-            }
-            return;
-        }
-
         if(f->type == PFT_RAW)
         {
             float mid[2];
 
-            picRotationOrigin(p, p->curFrame, mid);
+            picRotationOrigin(p, frame, mid);
 
             // Setup the transformation.
             glMatrixMode(GL_MODELVIEW);
@@ -1806,7 +1744,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, float xOffset, float yOffs
 
             // Move to origin.
             glTranslatef(-mid[VX], -mid[VY], 0);
-            glScalef((p->numFrames && p->frames[p->curFrame]->flags.flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, 1);
+            glScalef((f->flags.flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, 1);
 
             glMatrixMode(GL_MODELVIEW);
             glPushMatrix();
@@ -1826,20 +1764,146 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, float xOffset, float yOffs
             glPopMatrix();
             return;
         }
+
+        if(f->type == PFT_PATCH)
+        {
+            patchtex_t* patch;
+            if((patch = R_FindPatchTex(f->texRef.patch)))
+            {
+                DGLuint tex = (renderTextures==1? GL_PreparePatch(patch) : 0);
+                float mid[2], rgba[4], angle = p->angle.value;
+                rvertex_t rvertices[4];
+                rcolor_t rcolors[4];
+                rtexcoord_t rcoords[4];
+
+                rgba[CR] = p->color[CR].value;
+                rgba[CG] = p->color[CG].value;
+                rgba[CB] = p->color[CB].value;
+                rgba[CA] = p->color[CA].value;
+
+                glBindTexture(GL_TEXTURE_2D, tex);
+                if(tex)
+                {
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+                    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filterUI ? GL_LINEAR : GL_NEAREST));
+                }
+
+                mid[VX] = patch->width  / 2 - patch->offX;
+                mid[VY] = patch->height / 2 - patch->offY;
+
+                // Setup the transformation.
+                glMatrixMode(GL_MODELVIEW);
+                glPushMatrix();
+                glTranslatef(p->pos[0].value + xOffset, p->pos[1].value + yOffset, 0);
+                glTranslatef(mid[VX], mid[VY], 0);
+
+                // Counter the VGA aspect ratio.
+                if(angle != 0)
+                {
+                    glScalef(1, 200.0f / 240.0f, 1);
+                    glRotatef(angle, 0, 0, 1);
+                    glScalef(1, 240.0f / 200.0f, 1);
+                }
+
+                // Move to origin.
+                glTranslatef(-mid[VX], -mid[VY], 0);
+                glScalef((f->flags.flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, 1);
+
+                /**
+                 * Vertex layout:
+                 *
+                 * 0 - 1
+                 * | / |
+                 * 2 - 3
+                 */
+
+                {
+                float x = patch->offX, y = patch->offY, w = patch->width, h = patch->height;
+
+                V3_Set(rvertices[0].pos, x,   y,   0);
+                V3_Set(rvertices[1].pos, x+w, y,   0);
+                V3_Set(rvertices[2].pos, x,   y+h, 0);
+                V3_Set(rvertices[3].pos, x+w, y+h, 0);
+                }
+
+                if(tex)
+                {
+                    V2_Set(rcoords[0].st, 0, 0);
+                    V2_Set(rcoords[1].st, 1, 0);
+                    V2_Set(rcoords[2].st, 0, 1);
+                    V2_Set(rcoords[3].st, 1, 1);
+                }
+
+                V4_Copy(rcolors[0].rgba, rgba);
+                V4_Copy(rcolors[1].rgba, rgba);
+                V4_Copy(rcolors[2].rgba, rgba);
+                V4_Copy(rcolors[3].rgba, rgba);
+
+                glBegin(GL_TRIANGLE_STRIP);
+                    if(tex) glTexCoord2fv(rcoords[0].st);
+                    glColor4fv(rcolors[0].rgba);
+                    glVertex3fv(rvertices[0].pos);
+
+                    if(tex) glTexCoord2fv(rcoords[1].st);
+                    glColor4fv(rcolors[1].rgba);
+                    glVertex3fv(rvertices[1].pos);
+
+                    if(tex) glTexCoord2fv(rcoords[2].st);
+                    glColor4fv(rcolors[2].rgba);
+                    glVertex3fv(rvertices[2].pos);
+
+                    if(tex) glTexCoord2fv(rcoords[3].st);
+                    glColor4fv(rcolors[3].rgba);
+                    glVertex3fv(rvertices[3].pos);
+                glEnd();
+
+                // Restore original transformation.
+                glMatrixMode(GL_MODELVIEW);
+                glPopMatrix();
+                return;
+            }
+        }
     }
 
     // Setup the transformation.
     {
     float mid[2];
 
-    picRotationOrigin(p, p->curFrame, mid);
+    if(p->numFrames && frame < p->numFrames)
+    {
+        fidata_pic_frame_t* f = p->frames[frame];
+        switch(f->type)
+        {
+        case PFT_XIMAGE:
+            mid[VX] = SCREENWIDTH/2;
+            mid[VY] = SCREENHEIGHT/2;
+            break;
+        case PFT_MATERIAL:
+            mid[VX] = mid[VY] = 0;
+            break;
+        }
+    }
+    else
+    {
+        mid[VX] = mid[VY] = .5f;
+    }
+
+    mid[VX] *= p->scale[VX].value;
+    mid[VY] *= p->scale[VY].value;
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glTranslatef(p->pos[0].value + xOffset, p->pos[1].value + yOffset, 0);
     glTranslatef(mid[VX], mid[VY], 0);
 
-    rotate(p->angle.value);
+    // Counter the VGA aspect ratio.
+    if(p->angle.value != 0)
+    {
+        glScalef(1, 200.0f / 240.0f, 1);
+        glRotatef(p->angle.value, 0, 0, 1);
+        glScalef(1, 240.0f / 200.0f, 1);
+    }
 
     // Move to origin.
     glTranslatef(-mid[VX], -mid[VY], 0);
@@ -1881,7 +1945,7 @@ void FIData_PicDraw(fidata_pic_t* p, float xOffset, float yOffset)
 {
     assert(p);
     // Fully transparent pics will not be drawn.
-    if(p->color[3].value == 0)
+    if(!(p->color[CA].value > 0))
         return;
     drawPicFrame(p, p->curFrame, xOffset, yOffset);
 }

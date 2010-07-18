@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2004-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,10 +34,14 @@ typedef vectorcomp_t  vec2_t[2];
 typedef const float   const_pvec2_t[2];
 typedef vectorcomp_t  vec3_t[3];
 typedef const float   const_pvec3_t[3];
+typedef vectorcomp_t  vec4_t[4];
+typedef const float   const_pvec4_t[4];
 typedef vectorcomp_t *pvec2_t;
 typedef vectorcomp_t *pvec3_t;
+typedef vectorcomp_t *pvec4_t;
 typedef vec2_t       *arvec2_t;
 typedef vec3_t       *arvec3_t;
+typedef vec4_t       *arvec4_t;
 
 // 2-dimensions:
 void            V2_Set(pvec2_t vec, vectorcomp_t x, vectorcomp_t y);
@@ -70,8 +74,7 @@ void            V2_InitBox(arvec2_t box, const pvec2_t point);
 void            V2_AddToBox(arvec2_t box, const pvec2_t point);
 
 // 3-dimensions:
-void            V3_Set(pvec3_t vec, vectorcomp_t x, vectorcomp_t y,
-                       vectorcomp_t z);
+void            V3_Set(pvec3_t vec, vectorcomp_t x, vectorcomp_t y, vectorcomp_t z);
 void            V3_SetFixed(pvec3_t vec, fixed_t x, fixed_t y, fixed_t z);
 float           V3_Length(const pvec3_t vec);
 float           V3_Distance(const pvec3_t a, const pvec3_t b);
@@ -92,7 +95,18 @@ float           V3_ClosestPointOnPlane(pvec3_t dest,
                                        const pvec3_t arbPoint);
 int             V3_MajorAxis(const pvec3_t vec);
 boolean         V3_IsZero(const pvec3_t vec);
-void            V3_Lerp(pvec3_t dest, const pvec3_t a, const pvec3_t b,
-                        float c);
+void            V3_Lerp(pvec3_t dest, const pvec3_t a, const pvec3_t b, float c);
 
+// 4-dimensions:
+void            V4_Set(pvec4_t vec, vectorcomp_t x, vectorcomp_t y, vectorcomp_t z, vectorcomp_t w);
+void            V4_SetFixed(pvec4_t vec, fixed_t x, fixed_t y, fixed_t z, fixed_t w);
+float           V4_Length(const pvec4_t vec);
+float           V4_Distance(const pvec4_t a, const pvec4_t b);
+float           V4_Normalize(pvec4_t vec);
+void            V4_Copy(pvec4_t dest, const_pvec4_t src);
+void            V4_Scale(pvec4_t vec, float scalar);
+void            V4_Sum(pvec4_t dest, const_pvec4_t src1, const_pvec4_t src2);
+void            V4_Subtract(pvec4_t dest, const_pvec4_t src1, const_pvec4_t src2);
+boolean         V4_IsZero(const pvec4_t vec);
+void            V4_Lerp(pvec4_t dest, const pvec4_t a, const pvec4_t b, float c);
 #endif

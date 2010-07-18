@@ -546,3 +546,126 @@ void V3_Lerp(pvec3_t dest, const pvec3_t a, const pvec3_t b, float c)
         dest[i] = a[i] + c * (b[i] - a[i]);
     }
 }
+
+/**
+ * Set the vector's x, y, z and w components.
+ */
+void V4_Set(pvec4_t vec, vectorcomp_t x, vectorcomp_t y, vectorcomp_t z, vectorcomp_t w)
+{
+    vec[0] = x;
+    vec[1] = y;
+    vec[2] = z;
+    vec[3] = w;
+}
+
+void V4_SetFixed(pvec4_t vec, fixed_t x, fixed_t y, fixed_t z, fixed_t w)
+{
+    vec[0] = FIX2FLT(x);
+    vec[1] = FIX2FLT(y);
+    vec[2] = FIX2FLT(z);
+    vec[3] = FIX2FLT(w);
+}
+
+/**
+ * 4-dimensional vector length.
+ */
+float V4_Length(const pvec4_t vec)
+{
+    if(vec[0] == 0 && vec[1] == 0 && vec[2] == 0 && vec[3] == 0)
+        return 0;
+
+    return sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2] + vec[3] * vec[3]);
+}
+
+/**
+ * The distance between two points.
+ */
+float V4_Distance(const pvec4_t a, const pvec4_t b)
+{
+    vec4_t vec;
+    V4_Subtract(vec, b, a);
+    return V4_Length(vec);
+}
+
+/**
+ * Normalize a 4-dimensional vector.
+ *
+ * @return              The length of the vector.
+ */
+float V4_Normalize(pvec4_t vec)
+{
+    float len = V4_Length(vec);
+
+    if(len != 0)
+    {
+        vec[0] /= len;
+        vec[1] /= len;
+        vec[2] /= len;
+        vec[3] /= len;
+    }
+    return len;
+}
+
+/**
+ * Make a copy of the source vector.
+ */
+void V4_Copy(pvec4_t dest, const_pvec4_t src)
+{
+    dest[0] = src[0];
+    dest[1] = src[1];
+    dest[2] = src[2];
+    dest[3] = src[3];
+}
+
+/**
+ * Multiply the vector by the scalar.
+ */
+void V4_Scale(pvec4_t vec, float scalar)
+{
+    vec[0] *= scalar;
+    vec[1] *= scalar;
+    vec[2] *= scalar;
+    vec[3] *= scalar;
+}
+
+/**
+ * Calculate the sum of two 4-dimensional vectors.
+ */
+void V4_Sum(pvec4_t dest, const_pvec4_t src1, const_pvec4_t src2)
+{
+    dest[0] = src1[0] + src2[0];
+    dest[1] = src1[1] + src2[1];
+    dest[2] = src1[2] + src2[2];
+    dest[3] = src1[3] + src2[3];
+}
+
+/**
+ * Subtract src1 from src2, return result in 'dest'.
+ */
+void V4_Subtract(pvec4_t dest, const_pvec4_t src1, const_pvec4_t src2)
+{
+    dest[0] = src1[0] - src2[0];
+    dest[1] = src1[1] - src2[1];
+    dest[2] = src1[2] - src2[2];
+    dest[3] = src1[3] - src2[3];
+}
+
+/**
+ * @return              @c true, if the vector is a zero vector.
+ */
+boolean V4_IsZero(const pvec4_t vec)
+{
+    return vec[0] == 0 && vec[1] == 0 && vec[2] == 0 && vec[3] == 0;
+}
+
+/**
+ * Linear interpolation between a and b, by c.
+ */
+void V4_Lerp(pvec4_t dest, const pvec4_t a, const pvec4_t b, float c)
+{
+    uint i;
+    for(i = 0; i < 4; ++i)
+    {
+        dest[i] = a[i] + c * (b[i] - a[i]);
+    }
+}
