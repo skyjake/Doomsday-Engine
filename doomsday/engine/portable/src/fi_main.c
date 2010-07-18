@@ -1616,12 +1616,6 @@ void FIData_PicThink(fidata_pic_t* p)
     }
 }
 
-static void drawPicFrameBackground(fidata_pic_t* p, uint frame,
-                                   float xOffset, float yOffset)
-{
-
-}
-
 static void drawRect(fidata_pic_t* p, uint frame, float angle, const float worldOffset[3])
 {
     assert(p->numFrames && frame < p->numFrames);
