@@ -89,7 +89,7 @@ typedef struct fi_state_s {
     const char*     cp; // The command cursor.
     int             timer;
     int             inTime;
-    boolean         skipping, lastSkipped, gotoSkip, skipNext;
+    boolean         cmdExecuted, skipping, lastSkipped, gotoSkip, skipNext;
     int             doLevel; // Level of DO-skipping.
     int             wait;
     fi_objectname_t gotoTarget;
@@ -233,7 +233,6 @@ float fiDefaultTextRGB[3] = { 1, 1, 1 };
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean active = false;
-static boolean cmdExecuted = false; // Set to true after first command.
 
 // Time is measured in seconds.
 // Colors are floating point and [0,1].
@@ -434,7 +433,7 @@ static fi_state_t* allocState(void)
     }
 
 #ifdef _DEBUG // Is the stack leaking?
-Con_Printf("InFine state assigned index %i.\n", fi - stateStack);
+Con_Printf("  State index: %i.\n", fi - stateStack);
 #endif
 
     memset(s, 0, sizeof(*s));
@@ -633,13 +632,12 @@ static void stateClear(fi_state_t* s)
     int i;
 
     active = true;
-    cmdExecuted = false; // Nothing is drawn until a cmd has been executed.
-
     s->flags.suspended = false;
     s->flags.can_skip = true; // By default skipping is enabled.
     s->flags.paused = false;
 
     s->timer = 0;
+    s->cmdExecuted = false; // Nothing is drawn until a cmd has been executed.
     s->skipping = false;
     s->wait = 0; // Not waiting for anything.
     s->inTime = 0; // Interpolation is off.
@@ -749,6 +747,10 @@ static void scriptTerminate(fi_state_t* s)
         return;
     if(!s->flags.can_skip)
         return;
+
+#ifdef _DEBUG
+    Con_Printf("Finale End: mode=%i '%.30s'\n", s->mode, s->script);
+#endif
 
     oldMode = s->mode;
 
@@ -946,7 +948,7 @@ static boolean scriptExecuteCommand(fi_state_t* s, const char* commandString)
     }
 
     // We're now going to execute a command.
-    cmdExecuted = true;
+    s->cmdExecuted = true;
 
     // Is this a command we know how to execute?
     {fi_cmd_t* cmd;
@@ -1377,7 +1379,12 @@ boolean FI_Active(void)
 
 boolean FI_CmdExecuted(void)
 {
-    return cmdExecuted; // Set to true after first command.
+    fi_state_t* s;
+    if(active && (s = stackTop()))
+    {
+        return s->cmdExecuted; // Set to true after first command.
+    }
+    return false;
 }
 
 /**
@@ -1411,13 +1418,13 @@ void FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, co
     {
         // Dedicated servers don't play local scripts.
 #ifdef _DEBUG
-        Con_Printf("FI_ScriptBegin: No local scripts in dedicated mode.\n");
+        Con_Printf("Finale Begin: No local scripts in dedicated mode.\n");
 #endif
         return;
     }
 
 #ifdef _DEBUG
-    Con_Printf("FI_ScriptBegin: mode=%i '%.30s'\n", mode, scriptSrc);
+    Con_Printf("Finale Begin: mode=%i '%.30s'\n", mode, scriptSrc);
 #endif
 
     // Init InFine state.
@@ -1549,13 +1556,16 @@ int FI_Responder(ddevent_t* ev)
  */
 void FI_Drawer(void)
 {
-    // Don't draw anything until we are sure the script has started.
-    if(!active || !cmdExecuted)
+    if(!active)
         return;
 
     {fi_state_t* s;
     if((s = stackTop()))
     {
+        // Don't draw anything until we are sure the script has started.
+        if(!s->cmdExecuted)
+            return;
+
         stateDraw(s);
     }}
 }
@@ -1606,8 +1616,41 @@ void FIData_PicThink(fidata_pic_t* p)
     }
 }
 
-static void drawPicFrameBackground(fidata_pic_t* p, uint frame, float xOffset, float yOffset)
+static void drawPicFrameBackground(fidata_pic_t* p, uint frame,
+                                   float xOffset, float yOffset)
 {
+
+}
+
+static void drawRect(fidata_pic_t* p, uint frame, float angle, const float worldOffset[3])
+{
+    assert(p->numFrames && frame < p->numFrames);
+    {
+    float mid[3];
+    fidata_pic_frame_t* f = (p->numFrames? p->frames[frame] : NULL);
+
+    assert(f->type == PFT_MATERIAL);
+
+    mid[VX] = mid[VY] = mid[VZ] = 0;
+
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glTranslatef(p->pos[0].value + worldOffset[VX], p->pos[1].value + worldOffset[VY], p->pos[2].value);
+    glTranslatef(mid[VX], mid[VY], mid[VZ]);
+
+    // Counter the VGA aspect ratio.
+    if(p->angle.value != 0)
+    {
+        glScalef(1, 200.0f / 240.0f, 1);
+        glRotatef(p->angle.value, 0, 0, 1);
+        glScalef(1, 240.0f / 200.0f, 1);
+    }
+
+    // Move to origin.
+    glTranslatef(-mid[VX], -mid[VY], -mid[VZ]);
+    glScalef((p->numFrames && p->frames[p->curFrame]->flags.flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, p->scale[2].value);
+
+    {
     float offset[2] = { 0, 0 }, scale[2] = { 1, 1 }, color[4], bottomColor[4];
     int magMode = DGL_LINEAR, width = 1, height = 1;
     DGLuint tex = 0;
@@ -1630,8 +1673,8 @@ static void drawPicFrameBackground(fidata_pic_t* p, uint frame, float xOffset, f
         suf.normal[VX] = suf.oldNormal[VX] = 0;
         suf.normal[VY] = suf.oldNormal[VY] = 0;
         suf.normal[VZ] = suf.oldNormal[VZ] = 1; // toward the viewer.
-        suf.offset[0] = suf.visOffset[0] = suf.oldOffset[0][0] = suf.oldOffset[1][0] = xOffset;
-        suf.offset[1] = suf.visOffset[1] = suf.oldOffset[0][1] = suf.oldOffset[1][1] = yOffset;
+        suf.offset[0] = suf.visOffset[0] = suf.oldOffset[0][0] = suf.oldOffset[1][0] = worldOffset[VX];
+        suf.offset[1] = suf.visOffset[1] = suf.oldOffset[0][1] = suf.oldOffset[1][1] = worldOffset[VY];
         suf.visOffsetDelta[0] = suf.visOffsetDelta[1] = 0;
         suf.rgba[CR] = p->color[0].value;
         suf.rgba[CG] = p->color[1].value;
@@ -1705,37 +1748,7 @@ static void drawPicFrameBackground(fidata_pic_t* p, uint frame, float xOffset, f
     {
         DGL_Enable(DGL_TEXTURING);
     }
-}
-
-static void drawRect(fidata_pic_t* p, uint frame, float angle, const float worldOffset[3])
-{
-    assert(p->numFrames && frame < p->numFrames);
-    {
-    float mid[3];
-    fidata_pic_frame_t* f = (p->numFrames? p->frames[frame] : NULL);
-
-    assert(f->type == PFT_MATERIAL);
-
-    mid[VX] = mid[VY] = mid[VZ] = 0;
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glTranslatef(p->pos[0].value + worldOffset[VX], p->pos[1].value + worldOffset[VY], p->pos[2].value);
-    glTranslatef(mid[VX], mid[VY], mid[VZ]);
-
-    // Counter the VGA aspect ratio.
-    if(p->angle.value != 0)
-    {
-        glScalef(1, 200.0f / 240.0f, 1);
-        glRotatef(p->angle.value, 0, 0, 1);
-        glScalef(1, 240.0f / 200.0f, 1);
     }
-
-    // Move to origin.
-    glTranslatef(-mid[VX], -mid[VY], -mid[VZ]);
-    glScalef((p->numFrames && p->frames[p->curFrame]->flags.flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, p->scale[2].value);
-
-    drawPicFrameBackground(p, frame, worldOffset[VX], worldOffset[VY]);
 
     // Restore original transformation.
     glMatrixMode(GL_MODELVIEW);
