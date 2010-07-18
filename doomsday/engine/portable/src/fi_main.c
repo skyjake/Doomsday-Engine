@@ -167,10 +167,13 @@ DEFFC(ClearAnim);
 DEFFC(PicSound);
 DEFFC(ObjectOffX);
 DEFFC(ObjectOffY);
+DEFFC(ObjectOffZ);
 DEFFC(ObjectScaleX);
 DEFFC(ObjectScaleY);
+DEFFC(ObjectScaleZ);
 DEFFC(ObjectScale);
 DEFFC(ObjectScaleXY);
+DEFFC(ObjectScaleXYZ);
 DEFFC(ObjectRGB);
 DEFFC(ObjectAlpha);
 DEFFC(ObjectAngle);
@@ -281,10 +284,13 @@ static fi_cmd_t commands[] = {
     { "del",        "s", FIC_Delete }, // del (id)
     { "x",          "sf", FIC_ObjectOffX }, // x (id) (x)
     { "y",          "sf", FIC_ObjectOffY }, // y (id) (y)
+    { "z",          "sf", FIC_ObjectOffZ }, // z (id) (z)
     { "sx",         "sf", FIC_ObjectScaleX }, // sx (id) (x)
     { "sy",         "sf", FIC_ObjectScaleY }, // sy (id) (y)
+    { "sz",         "sf", FIC_ObjectScaleZ }, // sz (id) (z)
     { "scale",      "sf", FIC_ObjectScale }, // scale (id) (factor)
     { "scalexy",    "sff", FIC_ObjectScaleXY }, // scalexy (id) (x) (y)
+    { "scalexyz",   "sfff", FIC_ObjectScaleXYZ }, // scalexyz (id) (x) (y) (z)
     { "rgb",        "sfff", FIC_ObjectRGB }, // rgb (id) (r) (g) (b)
     { "alpha",      "sf", FIC_ObjectAlpha }, // alpha (id) (alpha)
     { "angle",      "sf", FIC_ObjectAngle }, // angle (id) (degrees)
@@ -1249,7 +1255,7 @@ static fidata_pic_frame_t* picAddFrame(fidata_pic_t* p, fidata_pic_frame_t* f)
     return f;
 }
 
-static void picRotationOrigin(const fidata_pic_t* p, uint frame, float center[2])
+static void picRotationOrigin(const fidata_pic_t* p, uint frame, float center[3])
 {
     if(p->numFrames && frame < p->numFrames)
     {
@@ -1264,10 +1270,11 @@ static void picRotationOrigin(const fidata_pic_t* p, uint frame, float center[2]
                 /// \fixme what about extraOffset?
                 center[VX] = info.width / 2 - info.offset;
                 center[VY] = info.height / 2 - info.topOffset;
+                center[VZ] = 0;
             }
             else
             {
-                center[VX] = center[VY] = 0;
+                center[VX] = center[VY] = center[VZ] = 0;
             }
             break;
             }
@@ -1275,19 +1282,22 @@ static void picRotationOrigin(const fidata_pic_t* p, uint frame, float center[2]
         case PFT_XIMAGE:
             center[VX] = SCREENWIDTH/2;
             center[VY] = SCREENHEIGHT/2;
+            center[VZ] = 0;
             break;
         case PFT_MATERIAL:
-            center[VX] = center[VY] = 0;
+            center[VX] = center[VY] = center[VZ] = 0;
             break;
         }
     }
     else
     {
         center[VX] = center[VY] = .5f;
+        center[VZ] = 0;
     }
 
     center[VX] *= p->scale[VX].value;
     center[VY] *= p->scale[VY].value;
+    center[VZ] *= p->scale[VZ].value;
 }
 
 fidata_pic_t* P_CreatePic(const char* name)
@@ -1297,7 +1307,7 @@ fidata_pic_t* P_CreatePic(const char* name)
     p->type = FI_PIC;
     objectSetUniqueName((fi_object_t*)p, name);
     AnimatorVector4_Init(p->color, 1, 1, 1, 1);
-    AnimatorVector2_Init(p->scale, 1, 1);
+    AnimatorVector3_Init(p->scale, 1, 1, 1);
 
     FIData_PicClearAnimation(p);
     return p;
@@ -1328,7 +1338,7 @@ fidata_text_t* P_CreateText(const char* name)
     obj->textFlags = DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS;
     objectSetUniqueName((fi_object_t*)obj, name);
     AnimatorVector4_Init(obj->color, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
-    AnimatorVector2_Init(obj->scale, 1, 1);
+    AnimatorVector3_Init(obj->scale, 1, 1, 1);
 
     obj->wait = 3;
     obj->font = R_CompositeFontNumForName("a");
@@ -1355,8 +1365,8 @@ void FIObject_Think(fi_object_t* obj)
 {
     assert(obj);
 
-    AnimatorVector2_Think(obj->pos);
-    AnimatorVector2_Think(obj->scale);
+    AnimatorVector3_Think(obj->pos);
+    AnimatorVector3_Think(obj->scale);
     Animator_Think(&obj->angle);
 }
 
@@ -1730,29 +1740,29 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, float xOffset, float yOffs
         fidata_pic_frame_t* f = p->frames[frame];
         if(f->type == PFT_RAW)
         {
-            float mid[2];
+            float mid[3];
 
             picRotationOrigin(p, frame, mid);
 
             // Setup the transformation.
             glMatrixMode(GL_MODELVIEW);
             glPushMatrix();
-            glTranslatef(p->pos[0].value + xOffset, p->pos[1].value + yOffset, 0);
+            glTranslatef(p->pos[0].value + xOffset, p->pos[1].value + yOffset, p->pos[2].value);
             glTranslatef(mid[VX], mid[VY], 0);
 
             rotate(p->angle.value);
 
             // Move to origin.
             glTranslatef(-mid[VX], -mid[VY], 0);
-            glScalef((f->flags.flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, 1);
+            glScalef((f->flags.flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, p->scale[2].value);
 
             glMatrixMode(GL_MODELVIEW);
             glPushMatrix();
             glLoadIdentity();
 
             /// \fixme What about rotaton?
-            glTranslatef(p->pos[0].value + xOffset, p->pos[1].value + yOffset, 0);
-            glScalef((f->flags.flip? -1 : 1) * p->scale[0].value, p->scale[1].value, 1);
+            glTranslatef(p->pos[0].value + xOffset, p->pos[1].value + yOffset, p->pos[2].value);
+            glScalef((f->flags.flip? -1 : 1) * p->scale[0].value, p->scale[1].value, p->scale[2].value);
 
             useColor(p->color, 4);
             DGL_DrawRawScreen(f->texRef.lump, 0, 0);
@@ -1771,7 +1781,8 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, float xOffset, float yOffs
             if((patch = R_FindPatchTex(f->texRef.patch)))
             {
                 DGLuint tex = (renderTextures==1? GL_PreparePatch(patch) : 0);
-                float mid[2], rgba[4], angle = p->angle.value;
+                float center[3], dimensions[3], originOffset[3], scale[3], mid[2], rgba[4];
+                float angle = p->angle.value;
                 rvertex_t rvertices[4];
                 rcolor_t rcolors[4];
                 rtexcoord_t rcoords[4];
@@ -1781,6 +1792,56 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, float xOffset, float yOffs
                 rgba[CB] = p->color[CB].value;
                 rgba[CA] = p->color[CA].value;
 
+                dimensions[VX] = patch->width;
+                dimensions[VY] = patch->height;
+                dimensions[VZ] = 1; /// \todo need to decide what if any significance this will have.
+
+                mid[VX] = dimensions[VX] / 2 - patch->offX;
+                mid[VY] = dimensions[VY] / 2 - patch->offY;
+                mid[VZ] = dimensions[VZ] / 2;
+
+                center[VX] = p->pos[VX].value + mid[VX] + xOffset;
+                center[VY] = p->pos[VY].value + mid[VY] + yOffset;
+                center[VZ] = p->pos[VZ].value + mid[VZ];
+
+                scale[VX] = p->scale[VX].value;
+                scale[VY] = p->scale[VY].value;
+                scale[VZ] = p->scale[VZ].value;
+
+                originOffset[VX] = -mid[VX] + (patch->offX * scale[VX]);
+                originOffset[VY] = -mid[VY] + (patch->offY * scale[VY]);
+                originOffset[VZ] = -mid[VZ];
+
+                scale[VX] *= dimensions[VX];
+                scale[VY] *= dimensions[VY];
+                scale[VZ] *= dimensions[VZ];
+
+                /**
+                 * Vertex layout:
+                 *
+                 * 0 - 1
+                 * | / |
+                 * 2 - 3
+                 */
+
+                V3_Set(rvertices[0].pos, 0, 0, 0);
+                V3_Set(rvertices[1].pos, 1, 0, 0);
+                V3_Set(rvertices[2].pos, 0, 1, 0);
+                V3_Set(rvertices[3].pos, 1, 1, 0);
+
+                if(tex)
+                {
+                    V2_Set(rcoords[0].st, (f->flags.flip? 1:0), 0);
+                    V2_Set(rcoords[1].st, (f->flags.flip? 0:1), 0);
+                    V2_Set(rcoords[2].st, (f->flags.flip? 1:0), 1);
+                    V2_Set(rcoords[3].st, (f->flags.flip? 0:1), 1);
+                }
+
+                V4_Copy(rcolors[0].rgba, rgba);
+                V4_Copy(rcolors[1].rgba, rgba);
+                V4_Copy(rcolors[2].rgba, rgba);
+                V4_Copy(rcolors[3].rgba, rgba);
+
                 glBindTexture(GL_TEXTURE_2D, tex);
                 if(tex)
                 {
@@ -1789,14 +1850,12 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, float xOffset, float yOffs
                     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filterUI ? GL_LINEAR : GL_NEAREST));
                 }
 
-                mid[VX] = patch->width  / 2 - patch->offX;
-                mid[VY] = patch->height / 2 - patch->offY;
-
                 // Setup the transformation.
                 glMatrixMode(GL_MODELVIEW);
                 glPushMatrix();
-                glTranslatef(p->pos[0].value + xOffset, p->pos[1].value + yOffset, 0);
-                glTranslatef(mid[VX], mid[VY], 0);
+
+                // Move to the object center.
+                glTranslatef(center[VX], center[VY], center[VZ]);
 
                 // Counter the VGA aspect ratio.
                 if(angle != 0)
@@ -1807,55 +1866,17 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, float xOffset, float yOffs
                 }
 
                 // Move to origin.
-                glTranslatef(-mid[VX], -mid[VY], 0);
-                glScalef((f->flags.flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, 1);
-
-                /**
-                 * Vertex layout:
-                 *
-                 * 0 - 1
-                 * | / |
-                 * 2 - 3
-                 */
-
-                {
-                float x = patch->offX, y = patch->offY, w = patch->width, h = patch->height;
-
-                V3_Set(rvertices[0].pos, x,   y,   0);
-                V3_Set(rvertices[1].pos, x+w, y,   0);
-                V3_Set(rvertices[2].pos, x,   y+h, 0);
-                V3_Set(rvertices[3].pos, x+w, y+h, 0);
-                }
-
-                if(tex)
-                {
-                    V2_Set(rcoords[0].st, 0, 0);
-                    V2_Set(rcoords[1].st, 1, 0);
-                    V2_Set(rcoords[2].st, 0, 1);
-                    V2_Set(rcoords[3].st, 1, 1);
-                }
-
-                V4_Copy(rcolors[0].rgba, rgba);
-                V4_Copy(rcolors[1].rgba, rgba);
-                V4_Copy(rcolors[2].rgba, rgba);
-                V4_Copy(rcolors[3].rgba, rgba);
+                glTranslatef(originOffset[VX], originOffset[VY], originOffset[VZ]);
+                glScalef(scale[VX], scale[VY], scale[VZ]);
 
                 glBegin(GL_TRIANGLE_STRIP);
-                    if(tex) glTexCoord2fv(rcoords[0].st);
-                    glColor4fv(rcolors[0].rgba);
-                    glVertex3fv(rvertices[0].pos);
-
-                    if(tex) glTexCoord2fv(rcoords[1].st);
-                    glColor4fv(rcolors[1].rgba);
-                    glVertex3fv(rvertices[1].pos);
-
-                    if(tex) glTexCoord2fv(rcoords[2].st);
-                    glColor4fv(rcolors[2].rgba);
-                    glVertex3fv(rvertices[2].pos);
-
-                    if(tex) glTexCoord2fv(rcoords[3].st);
-                    glColor4fv(rcolors[3].rgba);
-                    glVertex3fv(rvertices[3].pos);
+                {int i;
+                for(i = 0; i < 4; ++i)
+                {
+                    if(tex) glTexCoord2fv(rcoords[i].st);
+                    glColor4fv(rcolors[i].rgba);
+                    glVertex3fv(rvertices[i].pos);
+                }}
                 glEnd();
 
                 // Restore original transformation.
@@ -1868,7 +1889,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, float xOffset, float yOffs
 
     // Setup the transformation.
     {
-    float mid[2];
+    float mid[3];
 
     if(p->numFrames && frame < p->numFrames)
     {
@@ -1878,24 +1899,27 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, float xOffset, float yOffs
         case PFT_XIMAGE:
             mid[VX] = SCREENWIDTH/2;
             mid[VY] = SCREENHEIGHT/2;
+            mid[VZ] = 0;
             break;
         case PFT_MATERIAL:
-            mid[VX] = mid[VY] = 0;
+            mid[VX] = mid[VY] = mid[VZ] = 0;
             break;
         }
     }
     else
     {
         mid[VX] = mid[VY] = .5f;
+        mid[VZ] = 0;
     }
 
     mid[VX] *= p->scale[VX].value;
     mid[VY] *= p->scale[VY].value;
+    mid[VZ] *= p->scale[VZ].value;
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(p->pos[0].value + xOffset, p->pos[1].value + yOffset, 0);
-    glTranslatef(mid[VX], mid[VY], 0);
+    glTranslatef(p->pos[0].value + xOffset, p->pos[1].value + yOffset, p->pos[2].value);
+    glTranslatef(mid[VX], mid[VY], mid[VZ]);
 
     // Counter the VGA aspect ratio.
     if(p->angle.value != 0)
@@ -1906,8 +1930,8 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, float xOffset, float yOffs
     }
 
     // Move to origin.
-    glTranslatef(-mid[VX], -mid[VY], 0);
-    glScalef((p->numFrames && p->frames[p->curFrame]->flags.flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, 1);
+    glTranslatef(-mid[VX], -mid[VY], -mid[VZ]);
+    glScalef((p->numFrames && p->frames[p->curFrame]->flags.flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, p->scale[2].value);
     }
 
     drawPicFrameBackground(p, frame, xOffset, yOffset);
@@ -1954,8 +1978,8 @@ void FIData_PicInit(fidata_pic_t* p)
 {
     assert(p);
 
-    AnimatorVector2_Init(p->pos, 0, 0);
-    AnimatorVector2_Init(p->scale, 1, 1);
+    AnimatorVector3_Init(p->pos, 0, 0, 0);
+    AnimatorVector3_Init(p->scale, 1, 1, 1);
 
     // Default colors.
     AnimatorVector4_Init(p->color, 1, 1, 1, 1);
@@ -2054,10 +2078,10 @@ void FIData_TextDraw(fidata_text_t* tex, float xOffset, float yOffset)
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(tex->pos[0].value + xOffset, tex->pos[1].value + yOffset, 0);
+    glTranslatef(tex->pos[0].value + xOffset, tex->pos[1].value + yOffset, tex->pos[2].value);
 
     rotate(tex->angle.value);
-    glScalef(tex->scale[0].value, tex->scale[1].value, 1);
+    glScalef(tex->scale[0].value, tex->scale[1].value, tex->scale[2].value);
 
     // Draw it.
     // Set color zero (the normal color).
@@ -2405,7 +2429,7 @@ DEFFC(ImageAt)
     const char* name = ops[3].data.cstring;
     lumpnum_t lumpNum;
 
-    AnimatorVector2_Init(obj->pos, x, y);
+    AnimatorVector3_Init(obj->pos, x, y, 0);
     FIData_PicClearAnimation(obj);
 
     if((lumpNum = W_CheckNumForName(name)) != -1)
@@ -2441,7 +2465,7 @@ DEFFC(Patch)
     const char* name = ops[3].data.cstring;
     patchid_t patch;
 
-    AnimatorVector2_Init(obj->pos, x, y);
+    AnimatorVector3_Init(obj->pos, x, y, 0);
     FIData_PicClearAnimation(obj);
 
     if((patch = R_PrecachePatch(name, NULL)) != 0)
@@ -2580,6 +2604,14 @@ DEFFC(ObjectOffY)
     Animator_Set(&obj->pos[1], ops[1].data.flt, s->inTime);
 }
 
+DEFFC(ObjectOffZ)
+{
+    fi_object_t* obj = objectsFind(&s->objects, ops[0].data.cstring);
+    if(!obj)
+        return;
+    Animator_Set(&obj->pos[2], ops[1].data.flt, s->inTime);
+}
+
 DEFFC(ObjectRGB)
 {
     fi_object_t* obj = objectsFind(&s->objects, ops[0].data.cstring);
@@ -2653,6 +2685,14 @@ DEFFC(ObjectScaleY)
     Animator_Set(&obj->scale[1], ops[1].data.flt, s->inTime);
 }
 
+DEFFC(ObjectScaleZ)
+{
+    fi_object_t* obj = objectsFind(&s->objects, ops[0].data.cstring);
+    if(!obj)
+        return;
+    Animator_Set(&obj->scale[2], ops[1].data.flt, s->inTime);
+}
+
 DEFFC(ObjectScale)
 {
     fi_object_t* obj = objectsFind(&s->objects, ops[0].data.cstring);
@@ -2669,6 +2709,14 @@ DEFFC(ObjectScaleXY)
     AnimatorVector2_Set(obj->scale, ops[1].data.flt, ops[2].data.flt, s->inTime);
 }
 
+DEFFC(ObjectScaleXYZ)
+{
+    fi_object_t* obj = objectsFind(&s->objects, ops[0].data.cstring);
+    if(!obj)
+        return;
+    AnimatorVector3_Set(obj->scale, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, s->inTime);
+}
+
 DEFFC(ObjectAngle)
 {
     fi_object_t* obj = objectsFind(&s->objects, ops[0].data.cstring);
@@ -2683,8 +2731,8 @@ DEFFC(Rect)
 
     FIData_PicInit(obj);
     // Position and size.
-    AnimatorVector2_Init(obj->pos, ops[1].data.flt, ops[2].data.flt);
-    AnimatorVector2_Init(obj->scale, ops[3].data.flt, ops[4].data.flt);
+    AnimatorVector3_Init(obj->pos, ops[1].data.flt, ops[2].data.flt, 0);
+    AnimatorVector3_Init(obj->scale, ops[3].data.flt, ops[4].data.flt, 1);
 
     obj->animComplete = true;
 }
@@ -2804,7 +2852,7 @@ DEFFC(Filter)
 DEFFC(Text)
 {
     fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
-    AnimatorVector2_Init(tex->pos, ops[1].data.flt, ops[2].data.flt);
+    AnimatorVector3_Init(tex->pos, ops[1].data.flt, ops[2].data.flt, 0);
     FIData_TextCopy(tex, ops[3].data.cstring);
     tex->cursorPos = 0; // Restart the text.
 }
@@ -2813,7 +2861,7 @@ DEFFC(TextFromDef)
 {
     fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
     char* str;
-    AnimatorVector2_Init(tex->pos, ops[1].data.flt, ops[2].data.flt);
+    AnimatorVector3_Init(tex->pos, ops[1].data.flt, ops[2].data.flt, 0);
     if(!Def_Get(DD_DEF_TEXT, (char*)ops[3].data.cstring, &str))
         str = "(undefined)"; // Not found!
     FIData_TextCopy(tex, str);
@@ -2825,7 +2873,7 @@ DEFFC(TextFromLump)
     fidata_text_t* tex = stateGetText(s, ops[0].data.cstring);
     int lnum;
 
-    AnimatorVector2_Init(tex->pos, ops[1].data.flt, ops[2].data.flt);
+    AnimatorVector3_Init(tex->pos, ops[1].data.flt, ops[2].data.flt, 0);
     lnum = W_CheckNumForName(ops[3].data.cstring);
     if(lnum < 0)
     {

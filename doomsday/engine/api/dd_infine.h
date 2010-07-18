@@ -61,9 +61,9 @@ struct fi_object_s;
 #define FIOBJECT_BASE_ELEMENTS() \
     fi_obtype_e     type; /* Type of the object. */ \
     fi_objectname_t name; \
-    animatorvector2_t pos; \
+    animatorvector3_t pos; \
     animator_t      angle; \
-    animatorvector2_t scale;
+    animatorvector3_t scale;
 
 /**
  * Rectangle/Image sequence.
