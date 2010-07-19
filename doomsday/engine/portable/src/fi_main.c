@@ -225,6 +225,8 @@ D_CMD(StopFinale);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static fi_objectid_t toObjectId(fi_object_collection_t* c, const char* name, fi_obtype_e type);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -522,14 +524,30 @@ static void objectsClear(fi_object_collection_t* c)
     c->num = 0;
 }
 
+static fi_objectid_t objectsFind(fi_object_collection_t* c, const char* name)
+{
+    fi_objectid_t id;
+    // First check all pics.
+    id = toObjectId(c, name, FI_PIC);
+    // Then check text objects.
+    if(!id)
+        id = toObjectId(c, name, FI_TEXT);
+    return id;
+}
+
 static fi_objectid_t toObjectId(fi_object_collection_t* c, const char* name, fi_obtype_e type)
 {
     assert(name && name[0]);
+    if(type == FI_NONE)
+    {   // Use a priority-based search.
+        return objectsFind(c, name);
+    }
+
     {uint i;
     for(i = 0; i < c->num; ++i)
     {
         fi_object_t* obj = c->vector[i];
-        if((type == FI_NONE || obj->type == type) && !stricmp(obj->name, name))
+        if(obj->type == type && !stricmp(obj->name, name))
             return obj->id;
     }}
     return 0;
@@ -548,17 +566,6 @@ static fi_object_t* objectsById(fi_object_collection_t* c, fi_objectid_t id)
         }
     }
     return NULL;
-}
-
-static fi_objectid_t objectsFind(fi_object_collection_t* c, const char* name)
-{
-    fi_objectid_t id;
-    // First check all pics.
-    id = toObjectId(c, name, FI_PIC);
-    // Then check text objects.
-    if(!id)
-        id = toObjectId(c, name, FI_TEXT);
-    return id;
 }
 
 static fi_object_t* objectsAdd(fi_object_collection_t* c, fi_object_t* obj)
