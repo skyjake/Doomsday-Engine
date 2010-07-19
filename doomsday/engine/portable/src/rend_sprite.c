@@ -948,7 +948,7 @@ glEnable(GL_TEXTURE2D);
 /*#if _DEBUG
 if(params->vLightListIdx)
 {   // Draw the vlight vectors, for debug.
-    glDisable(GL_TEXTURE2D);
+    glDisable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
 
@@ -965,7 +965,7 @@ if(params->vLightListIdx)
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE2D);
+    glEnable(GL_TEXTURE_2D);
 }
 #endif*/
 
