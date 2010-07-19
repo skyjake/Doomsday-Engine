@@ -50,8 +50,10 @@
 #define MAX_TOKEN_LEN       (8192)
 #define MAX_HANDLERS        (128)
 
+#define FRACSECS_TO_TICKS(sec) ((int)(sec * TICSPERSEC + 0.5))
+
 // Helper macro for defining infine command functions.
-#define DEFFC(name) void FIC_##name(fi_cmd_t* cmd, fi_operand_t* ops, fi_state_t* s)
+#define DEFFC(name) void FIC_##name(const fi_cmd_t* cmd, const fi_operand_t* ops, fi_state_t* s)
 
 // TYPES -------------------------------------------------------------------
 
@@ -1392,18 +1394,19 @@ boolean FI_CmdExecuted(void)
  */
 void FI_Reset(void)
 {
-    fi_state_t* s = stackTop();
+    fi_state_t* s;
+    if(active && (s = stackTop()))
+    {
+        // The state is suspended when the PlayDemo command is used.
+        // Being suspended means that InFine is currently not active, but
+        // will be restored at a later time.
+        if(s && s->flags.suspended)
+            return;
 
-    // The state is suspended when the PlayDemo command is used.
-    // Being suspended means that InFine is currently not active, but
-    // will be restored at a later time.
-    if(s && s->flags.suspended)
-        return;
-
-    // Pop all the states.
-    while(fi)
-        stackPop();
-
+        // Pop all the states.
+        while(fi)
+            stackPop();
+    }
     active = false;
 }
 
@@ -1471,7 +1474,7 @@ void FI_Ticker(timespan_t ticLength)
     if(!M_CheckTrigger(&sharedFixedTrigger, ticLength))
         return;
 
-    // A new 35 Hz tick has begun.
+    // A new 'sharp' tick has begun.
     {fi_state_t* s;
     if((s = stackTop()))
     {
@@ -1505,7 +1508,7 @@ boolean FI_IsMenuTrigger(void)
     return false;
 }
 
-int FI_AteEvent(ddevent_t* ev)
+static int willEatEvent(ddevent_t* ev)
 {
     fi_state_t* s;
     // We'll never eat up events.
@@ -1525,7 +1528,7 @@ int FI_Responder(ddevent_t* ev)
 
     // During the first ~second disallow all events/skipping.
     if(s->timer < 20)
-        return FI_AteEvent(ev);
+        return willEatEvent(ev);
 
     // Any handlers for this event?
     if(IS_KEY_DOWN(ev))
@@ -1534,17 +1537,17 @@ int FI_Responder(ddevent_t* ev)
         if((h = stateFindHandler(s, ev->toggle.id)))
         {
             scriptSkipTo(s, h->marker);
-            return FI_AteEvent(ev);
+            return willEatEvent(ev);
         }
     }
 
     // If we can't skip, there's no interaction of any kind.
     if(!s->flags.can_skip && !s->flags.paused)
-        return FI_AteEvent(ev);
+        return willEatEvent(ev);
 
     // We are only interested in key/button down presses.
     if(!IS_TOGGLE_DOWN(ev))
-        return FI_AteEvent(ev);
+        return willEatEvent(ev);
 
     // Servers tell clients to skip.
     Sv_Finale(FINF_SKIP, 0, NULL, 0);
@@ -1974,24 +1977,6 @@ void FIData_PicDraw(fidata_pic_t* p, float xOffset, float yOffset)
     }
 }
 
-void FIData_PicInit(fidata_pic_t* p)
-{
-    assert(p);
-
-    AnimatorVector3_Init(p->pos, 0, 0, 0);
-    AnimatorVector3_Init(p->scale, 1, 1, 1);
-
-    // Default colors.
-    AnimatorVector4_Init(p->color, 1, 1, 1, 1);
-    AnimatorVector4_Init(p->otherColor, 1, 1, 1, 1);
-
-    p->flags.looping = false; // Yeah?
-
-    // Edge alpha is zero by default.
-    AnimatorVector4_Init(p->edgeColor, 1, 1, 1, 0);
-    AnimatorVector4_Init(p->otherEdgeColor, 1, 1, 1, 0);
-}
-
 void FIData_PicClearAnimation(fidata_pic_t* p)
 {
     assert(p);
@@ -2162,7 +2147,7 @@ void FIData_TextDraw(fidata_text_t* tex, float xOffset, float yOffset)
  */
 int FIData_TextLength(fidata_text_t* tex)
 {
-    float secondLen = (tex->wait ? 35.0f / tex->wait : 0);
+    float secondLen = (tex->wait ? TICRATE / tex->wait : 0);
     int cnt = 0;
 
     {char* ptr;
@@ -2203,10 +2188,6 @@ void FIData_TextCopy(fidata_text_t* t, const char* str)
     }
 }
 
-/**
- * Command functions can only call FI_GetToken once for each operand.
- * Otherwise the script cursor ends up in the wrong place.
- */
 DEFFC(Do)
 {
     // This command is called even when (cond)skipping.
@@ -2242,7 +2223,7 @@ DEFFC(NoBGMaterial)
 
 DEFFC(InTime)
 {
-    s->inTime = (int) (ops[0].data.flt * 35 + 0.5);
+    s->inTime = FRACSECS_TO_TICKS(ops[0].data.flt);
 }
 
 DEFFC(Tic)
@@ -2252,7 +2233,7 @@ DEFFC(Tic)
 
 DEFFC(Wait)
 {
-    s->wait = (int) (ops[0].data.flt * 35 + 0.5);
+    s->wait = FRACSECS_TO_TICKS(ops[0].data.flt);
 }
 
 DEFFC(WaitText)
@@ -2516,7 +2497,7 @@ DEFFC(Anim)
 {
     fidata_pic_t* obj = stateGetPic(s, ops[0].data.cstring);
     const char* name = ops[1].data.cstring;
-    int tics = (int) (ops[2].data.flt * 35 + 0.5);
+    int tics = FRACSECS_TO_TICKS(ops[2].data.flt);
     patchid_t patch;
 
     if((patch = R_PrecachePatch(name, NULL)))
@@ -2533,7 +2514,7 @@ DEFFC(AnimImage)
 {
     fidata_pic_t* obj = stateGetPic(s, ops[0].data.cstring);
     const char* name = ops[1].data.cstring;
-    int tics = (int) (ops[2].data.flt * 35 + 0.5);
+    int tics = FRACSECS_TO_TICKS(ops[2].data.flt);
     lumpnum_t lumpNum;
 
     if((lumpNum = W_CheckNumForName(name)) != -1)
@@ -2729,12 +2710,26 @@ DEFFC(Rect)
 {
     fidata_pic_t* obj = stateGetPic(s, ops[0].data.cstring);
 
-    FIData_PicInit(obj);
-    // Position and size.
+    /**
+     * We may be converting an existing Pic to a Rect, so re-init the expected
+     * default state accordingly.
+     *
+     * danij: This seems rather error-prone to me. How about we turn them into
+     * seperate object classes instead (Pic inheriting from Rect).
+     */
+    obj->animComplete = true;
+    obj->flags.looping = false; // Yeah?
+
     AnimatorVector3_Init(obj->pos, ops[1].data.flt, ops[2].data.flt, 0);
     AnimatorVector3_Init(obj->scale, ops[3].data.flt, ops[4].data.flt, 1);
 
-    obj->animComplete = true;
+    // Default colors.
+    AnimatorVector4_Init(obj->color, 1, 1, 1, 1);
+    AnimatorVector4_Init(obj->otherColor, 1, 1, 1, 1);
+
+    // Edge alpha is zero by default.
+    AnimatorVector4_Init(obj->edgeColor, 1, 1, 1, 0);
+    AnimatorVector4_Init(obj->otherEdgeColor, 1, 1, 1, 0);
 }
 
 DEFFC(FillColor)
