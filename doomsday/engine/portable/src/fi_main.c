@@ -113,7 +113,7 @@ typedef struct fi_cmd_s {
     void          (*func) (struct fi_cmd_s* cmd, fi_operand_t* ops, fi_state_t* s);
     struct fi_cmd_flags_s {
         char            when_skipping:1;
-        char            when_condition_skipping; // Skipping because condition failed.
+        char            when_condition_skipping:1; // Skipping because condition failed.
     } flags;
 } fi_cmd_t;
 
@@ -907,7 +907,7 @@ static boolean stateSkipRequest(fi_state_t* s)
         return true;
     }
 
-    return s->flags.eat_events;
+    return (s->flags.eat_events != 0);
 }
 
 static boolean scriptSkipCommand(fi_state_t* s, const fi_cmd_t* cmd)
@@ -1080,7 +1080,7 @@ static void scriptTick(fi_state_t* s)
 
     memset(&p, 0, sizeof(p));
     p.runTick = true;
-    p.canSkip = s->flags.can_skip;
+    p.canSkip = (s->flags.can_skip != 0);
     p.gameState = (s->mode == FIMODE_OVERLAY? s->overlayGameState : s->initialGameState);
     p.extraData = s->extraData;
 
@@ -1501,7 +1501,7 @@ boolean FI_IsMenuTrigger(void)
     if(!active)
         return false;
     if((s = stackTop()))
-        return s->flags.show_menu == true;
+        return (s->flags.show_menu != 0);
     return false;
 }
 
@@ -1512,7 +1512,7 @@ int FI_AteEvent(ddevent_t* ev)
     if(IS_TOGGLE_UP(ev))
         return false;
     if((s = stackTop()))
-        return s->flags.eat_events == true;
+        return (s->flags.eat_events != 0);
     return false;
 }
 
@@ -1853,7 +1853,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
         patchtex_t* patch;
         rawtex_t* rawTex;
 
-        flipTextureS = f->flags.flip == true;
+        flipTextureS = (f->flags.flip != 0);
         showEdges = false;
 
         if(f->type == PFT_RAW && (rawTex = R_GetRawTex(f->texRef.lump)))
