@@ -558,7 +558,7 @@ static fi_objectid_t objectsFind(fi_object_collection_t* c, const char* name)
     // Then check text objects.
     if(!id)
         id = toObjectId(c, name, FI_TEXT);
-    return 0;
+    return id;
 }
 
 static fi_object_t* objectsAdd(fi_object_collection_t* c, fi_object_t* obj)
