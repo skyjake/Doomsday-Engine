@@ -31,6 +31,7 @@
 #define FI_NAME_MAX_LENGTH          32
 typedef char fi_name_t[FI_NAME_MAX_LENGTH];
 typedef fi_name_t fi_objectname_t;
+typedef ident_t fi_objectid_t;
 
 typedef enum infinemode_e {
     FIMODE_LOCAL,
@@ -59,8 +60,9 @@ struct fi_object_s;
 
 // Base fi_objects_t elements. All objects MUST use this as their basis.
 #define FIOBJECT_BASE_ELEMENTS() \
+    fi_objectid_t   id; /* Unique id of the object. */ \
+    fi_objectname_t name; /* Object names are unique among objects of the same type and spawned by the same script. */ \
     fi_obtype_e     type; /* Type of the object. */ \
-    fi_objectname_t name; \
     animatorvector3_t pos; \
     animator_t      angle; \
     animatorvector3_t scale;
