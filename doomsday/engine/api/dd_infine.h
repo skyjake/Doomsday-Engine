@@ -110,7 +110,7 @@ typedef struct fidata_pic_s {
 } fidata_pic_t;
 
 void                FIData_PicThink(fidata_pic_t* pic);
-void                FIData_PicDraw(fidata_pic_t* pic, float x, float y);
+void                FIData_PicDraw(fidata_pic_t* pic, const float offset[3]);
 void                FIData_PicClearAnimation(fidata_pic_t* pic);
 
 /**
@@ -130,7 +130,7 @@ typedef struct fidata_text_s {
 } fidata_text_t;
 
 void                FIData_TextThink(fidata_text_t* text);
-void                FIData_TextDraw(fidata_text_t* tex, float xOffset, float yOffset);
+void                FIData_TextDraw(fidata_text_t* tex, const float offset[3]);
 void                FIData_TextCopy(fidata_text_t* text, const char* str);
 int                 FIData_TextLength(fidata_text_t* tex);
 

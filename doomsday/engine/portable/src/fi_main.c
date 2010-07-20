@@ -107,7 +107,6 @@ typedef struct fi_state_s {
     fi_object_t*    waitingPic;
     material_t*     bgMaterial;
     animatorvector4_t bgColor;
-    animatorvector4_t imgColor;
     animatorvector2_t imgOffset;
     animatorvector4_t filter;
     animatorvector3_t textColor[9];
@@ -490,8 +489,9 @@ static void thinkObjectsInScope(fi_namespace_t* names)
     }
 }
 
-static void drawObjectsInScope2(fi_namespace_t* names, fi_obtype_e type, float xOffset, float yOffset)
+static void drawObjectsInScope2(fi_namespace_t* names, fi_obtype_e type, float picOffsetX, float picOffsetY)
 {
+    static const vec3_t worldOrigin = { 0, 0, 0 };
     uint i;
     for(i = 0; i < names->num; ++i)
     {
@@ -500,8 +500,14 @@ static void drawObjectsInScope2(fi_namespace_t* names, fi_obtype_e type, float x
             continue;
         switch(obj->type)
         {
-        case FI_PIC:    FIData_PicDraw((fidata_pic_t*)obj, xOffset, yOffset);   break;
-        case FI_TEXT:   FIData_TextDraw((fidata_text_t*)obj, xOffset, yOffset); break;
+        case FI_PIC:
+            {
+            vec3_t offset;
+            V3_Set(offset, worldOrigin[VX]+picOffsetX, worldOrigin[VY]+picOffsetY, worldOrigin[VZ]);
+            FIData_PicDraw((fidata_pic_t*)obj, offset);
+            break;
+            }
+        case FI_TEXT:   FIData_TextDraw((fidata_text_t*)obj, worldOrigin); break;
         default: break;
         }
     }
@@ -2190,19 +2196,16 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     }
 }
 
-void FIData_PicDraw(fidata_pic_t* p, float xOffset, float yOffset)
+void FIData_PicDraw(fidata_pic_t* p, const float worldOffset[3])
 {
     assert(p);
     {
     vec3_t scale, origin;
     vec4_t rgba, rgba2;
-    vec3_t worldOffset;
 
     // Fully transparent pics will not be drawn.
     if(!(p->color[CA].value > 0))
         return;
-
-    V3_Set(worldOffset, xOffset, yOffset, 0); /// \todo What is this for?
 
     V3_Set(origin, p->pos[VX].value, p->pos[VY].value, p->pos[VZ].value);
     V3_Set(scale, p->scale[VX].value, p->scale[VY].value, p->scale[VZ].value);
@@ -2286,7 +2289,7 @@ static int textLineWidth(const char* text, compositefontid_t font)
     return width;
 }
 
-void FIData_TextDraw(fidata_text_t* tex, float xOffset, float yOffset)
+void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
 {
     assert(tex);
     {
@@ -2300,7 +2303,7 @@ void FIData_TextDraw(fidata_text_t* tex, float xOffset, float yOffset)
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(tex->pos[0].value + xOffset, tex->pos[1].value + yOffset, tex->pos[2].value);
+    glTranslatef(tex->pos[0].value + offset[VX], tex->pos[1].value + offset[VY], tex->pos[2].value + offset[VZ]);
 
     rotate(tex->angle.value);
     glScalef(tex->scale[0].value, tex->scale[1].value, tex->scale[2].value);
