@@ -53,7 +53,7 @@
 #define FRACSECS_TO_TICKS(sec) ((int)(sec * TICSPERSEC + 0.5))
 
 // Helper macro for defining infine command functions.
-#define DEFFC(name) void FIC_##name(const fi_cmd_t* cmd, const fi_operand_t* ops, fi_state_t* s)
+#define DEFFC(name) void FIC_##name(const struct fi_cmd_s* cmd, const fi_operand_t* ops, fi_state_t* s)
 
 // TYPES -------------------------------------------------------------------
 
@@ -119,7 +119,7 @@ typedef struct fi_state_s {
 typedef struct fi_cmd_s {
     char*           token;
     const char*     operands;
-    void          (*func) (struct fi_cmd_s* cmd, fi_operand_t* ops, fi_state_t* s);
+    void          (*func) (const struct fi_cmd_s* cmd, const fi_operand_t* ops, fi_state_t* s);
     struct fi_cmd_flags_s {
         char            when_skipping:1;
         char            when_condition_skipping:1; // Skipping because condition failed.
@@ -1059,7 +1059,7 @@ static boolean scriptExecuteCommand(fi_state_t* s, const char* commandString)
     {
         boolean requiredOperands = (cmd->operands && cmd->operands[0]);
         fi_operand_t* ops = NULL;
-        size_t count;
+        uint count;
 
         // Check that there are enough operands.
         if(!requiredOperands || (ops = scriptParseCommandOperands(s, cmd, &count)))
@@ -1579,7 +1579,7 @@ void FI_Reset(void)
 /**
  * Start playing the given script.
  */
-boolean FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, const void* clientState)
+boolean FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, void* clientState)
 {
     fi_state_t* s;
 
@@ -1653,7 +1653,7 @@ void* FI_GetClientsideDefaultState(void)
  * Set the truth conditions.
  * Used by clients after they've received a PSV_FINALE2 packet.
  */
-void FI_SetClientsideDefaultState(const void* data)
+void FI_SetClientsideDefaultState(void* data)
 {
     assert(data);
     if(!inited)
