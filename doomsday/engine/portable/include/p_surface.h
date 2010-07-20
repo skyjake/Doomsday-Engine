@@ -36,7 +36,7 @@ boolean         Surface_GetProperty(const surface_t* suf, setargs_t* args);
 boolean         Surface_SetProperty(surface_t* suf, const setargs_t* args);
 void            Surface_Update(surface_t* suf);
 
-boolean         Surface_IsAttachedToMap(suf);
+boolean         Surface_IsAttachedToMap(surface_t* suf);
 boolean         Surface_SetMaterial(surface_t* suf, material_t* mat);
 boolean         Surface_SetMaterialOffsetX(surface_t* suf, float x);
 boolean         Surface_SetMaterialOffsetY(surface_t* suf, float y);

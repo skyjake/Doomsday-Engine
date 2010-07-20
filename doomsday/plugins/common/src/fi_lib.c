@@ -46,15 +46,15 @@
 
 #include "fi_lib.h"
 
-int Hook_FinaleScriptSerializeExtraData(int hookType, int param, const void* paramaters);
-int Hook_FinaleScriptDeserializeExtraData(int hookType, int flags, const void* paramaters);
+int Hook_FinaleScriptSerializeExtraData(int hookType, int param, void* paramaters);
+int Hook_FinaleScriptDeserializeExtraData(int hookType, int flags, void* paramaters);
 int Hook_FinaleScriptEvalIf(int hookType, int param, void* paramaters);
 
 int Hook_FinaleScriptStart(int hookType, int mode, void* paramaters);
 int Hook_FinaleScriptStop(int hookType, int oldMode, void* paramaters);
 int Hook_FinaleScriptTicker(int hookType, int mode, void* paramaters);
 
-int Hook_DemoStop(int hookType, int params, const void* paramaters);
+int Hook_DemoStop(int hookType, int params, void* paramaters);
 
 void FI_RegisterHooks(void)
 {
