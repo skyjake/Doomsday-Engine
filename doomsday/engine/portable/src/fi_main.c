@@ -2738,7 +2738,7 @@ DEFFC(SetPatch)
 
 DEFFC(ClearAnim)
 {
-    if(ops[0].data.obj)
+    if(ops[0].data.obj && ops[0].data.obj->type == FI_PIC)
     {
         FIData_PicClearAnimation((fidata_pic_t*)ops[0].data.obj);
     }
@@ -3182,7 +3182,7 @@ DEFFC(SetTextDef)
 
 DEFFC(DeleteText)
 {
-    if(ops[0].data.obj)
+    if(ops[0].data.obj && ops[0].data.obj->type == FI_TEXT)
     {
         fi_object_t* obj = ops[0].data.obj;
         objectsRemove(&objects, scriptRemoveObjectInScope(s, obj));
