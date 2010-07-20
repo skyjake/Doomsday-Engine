@@ -250,6 +250,7 @@ void DD_ShutdownAll(void)
 {
     int                 i;
 
+    FI_Shutdown();
     Con_Shutdown();
     DD_ShutdownHelp();
     Zip_Shutdown();

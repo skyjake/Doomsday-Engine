@@ -76,6 +76,11 @@ typedef struct fi_object_collection_s {
     fi_object_t**   vector;
 } fi_object_collection_t;
 
+typedef struct fi_namespace_s {
+    uint            num;
+    fi_object_t**   vector;
+} fi_namespace_t;
+
 typedef struct fi_state_s {
     struct fi_state_flags_s {
         char            can_skip:1;
@@ -85,7 +90,10 @@ typedef struct fi_state_s {
         char            show_menu:1;
     } flags;
     finale_mode_t   mode;
-    fi_object_collection_t objects;
+
+    // Known symbols (to this script).
+    fi_namespace_t  _namespace;
+
     fi_handler_t    eventHandlers[MAX_HANDLERS];
     char*           script; // A copy of the script.
     const char*     cp; // The command cursor.
@@ -225,7 +233,7 @@ D_CMD(StopFinale);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static fi_objectid_t toObjectId(fi_object_collection_t* c, const char* name, fi_obtype_e type);
+static fi_objectid_t toObjectId(fi_namespace_t* names, const char* name, fi_obtype_e type);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -235,8 +243,6 @@ static fi_objectid_t toObjectId(fi_object_collection_t* c, const char* name, fi_
 float fiDefaultTextRGB[3] = { 1, 1, 1 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static boolean active = false;
 
 // Time is measured in seconds.
 // Colors are floating point and [0,1].
@@ -357,14 +363,21 @@ static fi_cmd_t commands[] = {
     { NULL, 0, NULL } // Terminate.
 };
 
-static fi_state_t stateStack[STACK_SIZE];
-static fi_state_t* fi; // Pointer to the current state in the stack.
-static char token[MAX_TOKEN_LEN];
-
-static void* defaultState = 0;
+static boolean inited = false;
+static boolean active = false; /// \todo refactor away.
 
 // Allow stretching to fill the screen at near 4:3 aspect ratios?
 static byte noStretch = false;
+
+// Finale script/state collection.
+static fi_state_t stateStack[STACK_SIZE];
+static fi_state_t* fi = 0; // Pointer to the current state in the stack.
+
+// Global Finale object store.
+static fi_object_collection_t objects;
+
+static char token[MAX_TOKEN_LEN];
+static void* defaultState = 0;
 
 // CODE --------------------------------------------------------------------
 
@@ -462,12 +475,12 @@ static fi_state_t* newState(const char* script)
     return s;
 }
 
-static void objectsThink(fi_object_collection_t* c)
+static void thinkObjectsInScope(fi_namespace_t* names)
 {
     uint i;
-    for(i = 0; i < c->num; ++i)
+    for(i = 0; i < names->num; ++i)
     {
-        fi_object_t* obj = c->vector[i];
+        fi_object_t* obj = names->vector[i];
         switch(obj->type)
         {
         case FI_PIC:    FIData_PicThink((fidata_pic_t*)obj);    break;
@@ -477,12 +490,12 @@ static void objectsThink(fi_object_collection_t* c)
     }
 }
 
-static void objectsDraw2(fi_object_collection_t* c, fi_obtype_e type, float xOffset, float yOffset)
+static void drawObjectsInScope2(fi_namespace_t* names, fi_obtype_e type, float xOffset, float yOffset)
 {
     uint i;
-    for(i = 0; i < c->num; ++i)
+    for(i = 0; i < names->num; ++i)
     {
-        fi_object_t* obj = c->vector[i];
+        fi_object_t* obj = names->vector[i];
         if(obj->type != type)
             continue;
         switch(obj->type)
@@ -494,84 +507,17 @@ static void objectsDraw2(fi_object_collection_t* c, fi_obtype_e type, float xOff
     }
 }
 
-static void objectsDraw(fi_object_collection_t* c, float picXOffset, float picYOffset)
+static void drawObjectsInScope(fi_namespace_t* names, float picXOffset, float picYOffset)
 {
     // Images first, then text.
-    objectsDraw2(c, FI_PIC, picXOffset, picYOffset);
-    objectsDraw2(c, FI_TEXT, 0, 0);
-}
-
-static void objectsClear(fi_object_collection_t* c)
-{
-    // Delete external images, text strings etc.
-    if(c->vector)
-    {
-        uint i;
-        for(i = 0; i < c->num; ++i)
-        {
-            fi_object_t* obj = c->vector[i];
-            switch(obj->type)
-            {
-            case FI_PIC:    P_DestroyPic((fidata_pic_t*)obj);   break;
-            case FI_TEXT:   P_DestroyText((fidata_text_t*)obj); break;
-            default:
-                break;
-            }
-        }
-        Z_Free(c->vector);
-    }
-    c->vector = NULL;
-    c->num = 0;
-}
-
-static fi_objectid_t objectsFind(fi_object_collection_t* c, const char* name)
-{
-    fi_objectid_t id;
-    // First check all pics.
-    id = toObjectId(c, name, FI_PIC);
-    // Then check text objects.
-    if(!id)
-        id = toObjectId(c, name, FI_TEXT);
-    return id;
-}
-
-static fi_objectid_t toObjectId(fi_object_collection_t* c, const char* name, fi_obtype_e type)
-{
-    assert(name && name[0]);
-    if(type == FI_NONE)
-    {   // Use a priority-based search.
-        return objectsFind(c, name);
-    }
-
-    {uint i;
-    for(i = 0; i < c->num; ++i)
-    {
-        fi_object_t* obj = c->vector[i];
-        if(obj->type == type && !stricmp(obj->name, name))
-            return obj->id;
-    }}
-    return 0;
-}
-
-static fi_object_t* objectsById(fi_object_collection_t* c, fi_objectid_t id)
-{
-    if(id != 0)
-    {
-        uint i;
-        for(i = 0; i < c->num; ++i)
-        {
-            fi_object_t* obj = c->vector[i];
-            if(obj->id == id)
-                return obj;
-        }
-    }
-    return NULL;
+    drawObjectsInScope2(names, FI_PIC, picXOffset, picYOffset);
+    drawObjectsInScope2(names, FI_TEXT, 0, 0);
 }
 
 static fi_object_t* objectsAdd(fi_object_collection_t* c, fi_object_t* obj)
 {
     // Link with this state.
-    c->vector = Z_Realloc(c->vector, sizeof(obj) * ++c->num, PU_STATIC);
+    c->vector = Z_Realloc(c->vector, sizeof(*c->vector) * ++c->num, PU_STATIC);
     c->vector[c->num-1] = obj;
     return obj;
 }
@@ -600,6 +546,94 @@ static void objectsRemove(fi_object_collection_t* c, fi_object_t* obj)
             return;
         }
     }
+}
+
+static void objectsEmpty(fi_object_collection_t* c)
+{
+    if(c->num)
+    {
+        uint i;
+        for(i = 0; i < c->num; ++i)
+        {
+            fi_object_t* obj = c->vector[i];
+            switch(obj->type)
+            {
+            case FI_PIC: P_DestroyPic((fidata_pic_t*)obj); break;
+            case FI_TEXT: P_DestroyText((fidata_text_t*)obj); break;
+            }
+        }
+        Z_Free(c->vector);
+    }
+    c->vector = 0;
+    c->num = 0;
+}
+
+static void destroyObjectsInScope(fi_namespace_t* names)
+{
+    // Delete external images, text strings etc.
+    if(names->vector)
+    {
+        uint i;
+        for(i = 0; i < names->num; ++i)
+        {
+            fi_object_t* obj = names->vector[i];
+            objectsRemove(&objects, obj);
+            switch(obj->type)
+            {
+            case FI_PIC:    P_DestroyPic((fidata_pic_t*)obj);   break;
+            case FI_TEXT:   P_DestroyText((fidata_text_t*)obj); break;
+            default:
+                break;
+            }
+        }
+        Z_Free(names->vector);
+    }
+    names->vector = NULL;
+    names->num = 0;
+}
+
+static fi_objectid_t findIdForName(fi_namespace_t* names, const char* name)
+{
+    fi_objectid_t id;
+    // First check all pics.
+    id = toObjectId(names, name, FI_PIC);
+    // Then check text objects.
+    if(!id)
+        id = toObjectId(names, name, FI_TEXT);
+    return id;
+}
+
+static fi_objectid_t toObjectId(fi_namespace_t* names, const char* name, fi_obtype_e type)
+{
+    assert(name && name[0]);
+    if(type == FI_NONE)
+    {   // Use a priority-based search.
+        return findIdForName(names, name);
+    }
+
+    {uint i;
+    for(i = 0; i < names->num; ++i)
+    {
+        fi_object_t* obj = names->vector[i];
+        if(obj->type == type && !stricmp(obj->name, name))
+            return obj->id;
+    }}
+    return 0;
+}
+
+static fi_object_t* objectsById(fi_object_collection_t* c, fi_objectid_t id)
+{
+    if(id != 0)
+    {
+        uint i;
+        for(i = 0; i < c->num; ++i)
+        {
+            fi_object_t* obj = c->vector[i];
+            if(obj->id == id)
+                return obj;
+        }
+    }
+    return NULL;
 }
 
 static void stateChangeMode(fi_state_t* s, finale_mode_t mode)
@@ -672,7 +706,7 @@ static void stateClear(fi_state_t* s)
     
     AnimatorVector4_Init(s->bgColor, 1, 1, 1, 1);
 
-    objectsClear(&s->objects);
+    destroyObjectsInScope(&s->_namespace);
 
     for(i = 0; i < 9; ++i)
     {
@@ -929,6 +963,50 @@ static boolean stateSkipRequest(fi_state_t* s)
     return (s->flags.eat_events != 0);
 }
 
+/**
+ * Does not check if the object already exists in this scope. Assumes the caller
+ * knows what they are doing.
+ */
+static fi_object_t* scriptAddObjectToScope(fi_state_t* s, fi_object_t* obj)
+{
+    fi_namespace_t* names = &s->_namespace;
+    names->vector = Z_Realloc(names->vector, sizeof(*names->vector) * ++names->num, PU_STATIC);
+    names->vector[names->num-1] = obj;
+    return obj;
+}
+
+/**
+ * Assumes there is at most one reference to the obj in the scope and that the
+ * caller knows what they are doing.
+ */
+static fi_object_t* scriptRemoveObjectInScope(fi_state_t* s, fi_object_t* obj)
+{
+    fi_namespace_t* names = &s->_namespace;
+    uint i;
+    for(i = 0; i < names->num; ++i)
+    {
+        fi_object_t* other = names->vector[i];
+        if(other == obj)
+        {
+            if(i != names->num-1)
+                memmove(&names->vector[i], &names->vector[i+1], sizeof(*names->vector) * (names->num-i));
+
+            if(names->num > 1)
+            {
+                names->vector = Z_Realloc(names->vector, sizeof(*names->vector) * --names->num, PU_STATIC);
+            }
+            else
+            {
+                Z_Free(names->vector);
+                names->vector = NULL;
+                names->num = 0;
+            }
+            break;
+        }
+    }
+    return obj;
+}
+
 static boolean scriptSkipCommand(fi_state_t* s, const fi_cmd_t* cmd)
 {
     if((s->skipNext && !cmd->flags.when_condition_skipping) ||
@@ -1061,16 +1139,11 @@ static fi_handler_t* stateGetHandler(fi_state_t* s, int ddkey)
 /**
  * @return                  A new (unused) unique object id.
  */
-static fi_objectid_t stateUniqueObjectId(fi_state_t* s)
+static fi_objectid_t objectsUniqueId(fi_object_collection_t* c)
 {
     fi_objectid_t id = 0;
-    while(objectsById(&s->objects, ++id));
+    while(objectsById(c, ++id));
     return id;
-}
-
-static fi_object_t* stateFindObject(fi_state_t*s, const char* name, fi_obtype_e type)
-{
-    return objectsById(&s->objects, toObjectId(&s->objects, name, type));
 }
 
 /**
@@ -1086,17 +1159,18 @@ static fi_object_t* stateGetObject(fi_state_t* s, const char* name, fi_obtype_e 
     assert(name && name);
     assert(type > FI_NONE);
     {
+    fi_objectid_t id;
     fi_object_t* obj;
     // An existing object?
-    if((obj = stateFindObject(s, name, type)))
-        return obj;
+    if((id = toObjectId(&s->_namespace, name, type)))
+        return objectsById(&objects, id);   
     // Allocate and attach another.
     switch(type)
     {
-    case FI_TEXT: obj = (fi_object_t*) P_CreateText(stateUniqueObjectId(s), name); break;
-    case FI_PIC:  obj = (fi_object_t*) P_CreatePic(stateUniqueObjectId(s), name); break;
+    case FI_TEXT: obj = (fi_object_t*) P_CreateText(objectsUniqueId(&objects), name); break;
+    case FI_PIC:  obj = (fi_object_t*) P_CreatePic(objectsUniqueId(&objects), name); break;
     }
-    return objectsAdd(&s->objects, obj);
+    return scriptAddObjectToScope(s, objectsAdd(&objects, obj));
     }
 }
 
@@ -1129,7 +1203,7 @@ static void scriptTick(fi_state_t* s)
     for(i = 0; i < 9; ++i)
         AnimatorVector3_Think(s->textColor[i]);
 
-    objectsThink(&s->objects);
+    thinkObjectsInScope(&s->_namespace);
 
     // If we're waiting, don't execute any commands.
     if(s->wait && --s->wait)
@@ -1211,7 +1285,7 @@ static void stateDraw(fi_state_t* s)
         DGL_Enable(DGL_TEXTURING);
     }
 
-    objectsDraw(&s->objects, -s->imgOffset[0].value, -s->imgOffset[1].value);
+    drawObjectsInScope(&s->_namespace, -s->imgOffset[0].value, -s->imgOffset[1].value);
 
     // Filter on top of everything.
     if(s->filter[3].value > 0)
@@ -1229,6 +1303,30 @@ static void stateDraw(fi_state_t* s)
 
         DGL_Enable(DGL_TEXTURING);
     }
+}
+
+/**
+ * Reset the entire InFine state stack.
+ */
+static void doReset(boolean doingShutdown)
+{
+    fi_state_t* s;
+    if(active && (s = stackTop()))
+    {
+        if(!doingShutdown)
+        {
+            // The state is suspended when the PlayDemo command is used.
+            // Being suspended means that InFine is currently not active, but
+            // will be restored at a later time.
+            if(s && s->flags.suspended)
+                return;
+        }
+
+        // Pop all the states.
+        while(fi)
+            stackPop();
+    }
+    active = false;
 }
 
 static void demoEnds(void)
@@ -1329,6 +1427,21 @@ static void picRotationOrigin(const fidata_pic_t* p, uint frame, float center[3]
     center[VZ] *= p->scale[VZ].value;
 }
 
+void FIObject_Destructor(fi_object_t* obj)
+{
+    assert(obj);
+    // Destroy all references to this object in all scopes.
+    if(fi)
+    {
+        int i;
+        for(i = 0; i < fi - stateStack; ++i)
+        {
+            scriptRemoveObjectInScope(&stateStack[i], obj);
+        }
+    }
+    Z_Free(obj);
+}
+
 fidata_pic_t* P_CreatePic(fi_objectid_t id, const char* name)
 {
     fidata_pic_t* p = Z_Calloc(sizeof(*p), PU_STATIC, 0);
@@ -1343,11 +1456,12 @@ fidata_pic_t* P_CreatePic(fi_objectid_t id, const char* name)
     return p;
 }
 
-void P_DestroyPic(fidata_pic_t* p)
+void P_DestroyPic(fidata_pic_t* pic)
 {
-    assert(p);
-    FIData_PicClearAnimation(p);
-    Z_Free(p);
+    assert(pic);
+    FIData_PicClearAnimation(pic);
+    // Call parent destructor.
+    FIObject_Destructor((fi_object_t*)pic);
 }
 
 fidata_text_t* P_CreateText(fi_objectid_t id, const char* name)
@@ -1389,7 +1503,8 @@ void P_DestroyText(fidata_text_t* text)
         Z_Free(text->text);
         text->text = NULL;
     }
-    Z_Free(text);
+    // Call parent destructor.
+    FIObject_Destructor((fi_object_t*)text);
 }
 
 void FIObject_Think(fi_object_t* obj)
@@ -1406,9 +1521,36 @@ boolean FI_Active(void)
     return active;
 }
 
+void FI_Init(void)
+{
+    if(inited)
+        return; // Already been here.
+    memset(&objects, 0, sizeof(objects));
+    memset(&stateStack, 0, sizeof(stateStack));
+    fi = NULL;
+    inited = true;
+}
+
+void FI_Shutdown(void)
+{
+    if(!inited)
+        return; // Huh?
+    doReset(true);
+    // Garbage collection.
+    objectsEmpty(&objects);
+    inited = false;
+}
+
 boolean FI_CmdExecuted(void)
 {
     fi_state_t* s;
+    if(!inited)
+    {
+#ifdef _DEBUG
+        Con_Printf("FI_CmdExecuted: Not initialized yet!\n");
+#endif
+        return false;
+    }
     if(active && (s = stackTop()))
     {
         return s->cmdExecuted; // Set to true after first command.
@@ -1416,33 +1558,39 @@ boolean FI_CmdExecuted(void)
     return false;
 }
 
-/**
- * Reset the entire InFine state stack.
- */
 void FI_Reset(void)
 {
-    fi_state_t* s;
-    if(active && (s = stackTop()))
+    if(!inited)
     {
-        // The state is suspended when the PlayDemo command is used.
-        // Being suspended means that InFine is currently not active, but
-        // will be restored at a later time.
-        if(s && s->flags.suspended)
-            return;
-
-        // Pop all the states.
-        while(fi)
-            stackPop();
+#ifdef _DEBUG
+        Con_Printf("FI_Reset: Not initialized yet!\n");
+#endif
+        return;
     }
-    active = false;
+    doReset(false);
 }
 
 /**
  * Start playing the given script.
  */
-void FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, const void* clientState)
+boolean FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, const void* clientState)
 {
     fi_state_t* s;
+
+    if(!inited)
+    {
+#ifdef _DEBUG
+        Con_Printf("FI_ScriptBegin: Not initialized yet!\n");
+#endif
+        return false;
+    }
+    if(!scriptSrc || !scriptSrc[0])
+    {
+#ifdef _DEBUG
+        Con_Printf("FI_ScriptBegin: Warning, attempt to play empty script (mode=%i).\n", (int)mode);
+#endif
+        return false;
+    }
 
     if(mode == FIMODE_LOCAL && isDedicated)
     {
@@ -1450,22 +1598,30 @@ void FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, co
 #ifdef _DEBUG
         Con_Printf("Finale Begin: No local scripts in dedicated mode.\n");
 #endif
-        return;
+        return false;
     }
 
 #ifdef _DEBUG
-    Con_Printf("Finale Begin: mode=%i '%.30s'\n", mode, scriptSrc);
+    Con_Printf("Finale Begin: mode=%i '%.30s'\n", (int)mode, scriptSrc);
 #endif
 
     // Init InFine state.
     s = newState(scriptSrc);
     stateInit(s, mode, gameState, clientState);
     scriptBegin(s);
+    return true;
 }
 
 void FI_ScriptTerminate(void)
 {
     fi_state_t* s;
+    if(!inited)
+    {
+#ifdef _DEBUG
+        Con_Printf("FI_ScriptTerminate: Not initialized yet!\n");
+#endif
+        return;
+    }
     if(!active)
         return;
     if((s = stackTop()))
@@ -1477,6 +1633,13 @@ void FI_ScriptTerminate(void)
 
 void* FI_GetClientsideDefaultState(void)
 {
+    if(!inited)
+    {
+#ifdef _DEBUG
+        Con_Printf("FI_GetClientsideDefaultState: Not initialized yet!\n");
+#endif
+        return 0;
+    }
     return &defaultState;
 }
 
@@ -1487,6 +1650,13 @@ void* FI_GetClientsideDefaultState(void)
 void FI_SetClientsideDefaultState(const void* data)
 {
     assert(data);
+    if(!inited)
+    {
+#ifdef _DEBUG
+        Con_Printf("FI_SetClientsideDefaultState: Not initialized yet!\n");
+#endif
+        return;
+    }
     memcpy(&defaultState, data, sizeof(FINALE_SCRIPT_EXTRADATA_SIZE));
 }
 
@@ -1494,6 +1664,14 @@ void FI_Ticker(timespan_t ticLength)
 {
     // Always tic.
     R_TextTicker(ticLength);
+
+    /*if(!inited)
+    {
+#ifdef _DEBUG
+        Con_Printf("FI_Ticker: Not initialized yet!\n");
+#endif
+        return;
+    }*/
 
     if(!active)
         return;
@@ -1515,6 +1693,13 @@ void FI_Ticker(timespan_t ticLength)
 int FI_SkipRequest(void)
 {
     fi_state_t* s;
+    if(!inited)
+    {
+#ifdef _DEBUG
+        Con_Printf("FI_SkipRequest: Not initialized yet!\n");
+#endif
+        return false;
+    }
     if((s = stackTop()))
     {
         return stateSkipRequest(s);
@@ -1528,6 +1713,13 @@ int FI_SkipRequest(void)
 boolean FI_IsMenuTrigger(void)
 {
     fi_state_t* s;
+    if(!inited)
+    {
+#ifdef _DEBUG
+        Con_Printf("FI_IsMenuTrigger: Not initialized yet!\n");
+#endif
+        return false;
+    }
     if(!active)
         return false;
     if((s = stackTop()))
@@ -1548,10 +1740,20 @@ static int willEatEvent(ddevent_t* ev)
 
 int FI_Responder(ddevent_t* ev)
 {
-    fi_state_t* s = stackTop();
+    fi_state_t* s;
+
+    if(!inited)
+    {
+#ifdef _DEBUG
+        Con_Printf("FI_Responder: Not initialized yet!\n");
+#endif
+        return false;
+    }
 
     if(!active || isClient)
         return false;
+
+    s = stackTop();
 
     // During the first ~second disallow all events/skipping.
     if(s->timer < 20)
@@ -1586,6 +1788,14 @@ int FI_Responder(ddevent_t* ev)
  */
 void FI_Drawer(void)
 {
+    if(!inited)
+    {
+#ifdef _DEBUG
+        Con_Printf("FI_Drawer: Not initialized yet!\n");
+#endif
+        return;
+    }
+
     if(!active)
         return;
 
@@ -2401,9 +2611,9 @@ DEFFC(Marker)
 DEFFC(Delete)
 {
     fi_object_t* obj;
-    if((obj = stateFindObject(s, ops[0].data.cstring, FI_NONE)))
+    if((obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE))))
     {
-        objectsRemove(&s->objects, obj);
+        objectsRemove(&objects, scriptRemoveObjectInScope(s, obj));
         switch(obj->type)
         {
         case FI_PIC:    P_DestroyPic((fidata_pic_t*)obj);   break;
@@ -2415,7 +2625,7 @@ DEFFC(Delete)
 
 DEFFC(Image)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) stateGetObject(s, ops[0].data.cstring, FI_PIC);
+    fidata_pic_t* obj = (fidata_pic_t*) objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_PIC));
     const char* name = ops[1].data.cstring;
     lumpnum_t lumpNum;
 
@@ -2514,7 +2724,7 @@ DEFFC(SetPatch)
 DEFFC(ClearAnim)
 {
     fi_object_t* obj;
-    if((obj = stateFindObject(s, ops[0].data.cstring, FI_PIC)))
+    if((obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_PIC))))
     {
         FIData_PicClearAnimation((fidata_pic_t*)obj);
     }
@@ -2598,7 +2808,7 @@ DEFFC(PicSound)
 
 DEFFC(ObjectOffX)
 {
-    fi_object_t* obj = stateFindObject(s, ops[0].data.cstring, FI_NONE);
+    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
     if(!obj)
         return;
     Animator_Set(&obj->pos[0], ops[1].data.flt, s->inTime);
@@ -2606,7 +2816,7 @@ DEFFC(ObjectOffX)
 
 DEFFC(ObjectOffY)
 {
-    fi_object_t* obj = stateFindObject(s, ops[0].data.cstring, FI_NONE);
+    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
     if(!obj)
         return;
     Animator_Set(&obj->pos[1], ops[1].data.flt, s->inTime);
@@ -2614,7 +2824,7 @@ DEFFC(ObjectOffY)
 
 DEFFC(ObjectOffZ)
 {
-    fi_object_t* obj = stateFindObject(s, ops[0].data.cstring, FI_NONE);
+    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
     if(!obj)
         return;
     Animator_Set(&obj->pos[2], ops[1].data.flt, s->inTime);
@@ -2622,7 +2832,7 @@ DEFFC(ObjectOffZ)
 
 DEFFC(ObjectRGB)
 {
-    fi_object_t* obj = stateFindObject(s, ops[0].data.cstring, FI_NONE);
+    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
     float rgb[3];
     if(!obj || !(obj->type == FI_TEXT || obj->type == FI_PIC))
         return;
@@ -2652,7 +2862,7 @@ DEFFC(ObjectRGB)
 
 DEFFC(ObjectAlpha)
 {
-    fi_object_t* obj = stateFindObject(s, ops[0].data.cstring, FI_NONE);
+    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
     float alpha;
     if(!obj || !(obj->type == FI_TEXT || obj->type == FI_PIC))
         return;
@@ -2679,7 +2889,7 @@ DEFFC(ObjectAlpha)
 
 DEFFC(ObjectScaleX)
 {
-    fi_object_t* obj = stateFindObject(s, ops[0].data.cstring, FI_NONE);
+    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
     if(!obj)
         return;
     Animator_Set(&obj->scale[0], ops[1].data.flt, s->inTime);
@@ -2687,7 +2897,7 @@ DEFFC(ObjectScaleX)
 
 DEFFC(ObjectScaleY)
 {
-    fi_object_t* obj = stateFindObject(s, ops[0].data.cstring, FI_NONE);
+    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
     if(!obj)
         return;
     Animator_Set(&obj->scale[1], ops[1].data.flt, s->inTime);
@@ -2695,7 +2905,7 @@ DEFFC(ObjectScaleY)
 
 DEFFC(ObjectScaleZ)
 {
-    fi_object_t* obj = stateFindObject(s, ops[0].data.cstring, FI_NONE);
+    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
     if(!obj)
         return;
     Animator_Set(&obj->scale[2], ops[1].data.flt, s->inTime);
@@ -2703,7 +2913,7 @@ DEFFC(ObjectScaleZ)
 
 DEFFC(ObjectScale)
 {
-    fi_object_t* obj = stateFindObject(s, ops[0].data.cstring, FI_NONE);
+    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
     if(!obj)
         return;
     AnimatorVector2_Set(obj->scale, ops[1].data.flt, ops[1].data.flt, s->inTime);
@@ -2711,7 +2921,7 @@ DEFFC(ObjectScale)
 
 DEFFC(ObjectScaleXY)
 {
-    fi_object_t* obj = stateFindObject(s, ops[0].data.cstring, FI_NONE);
+    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
     if(!obj)
         return;
     AnimatorVector2_Set(obj->scale, ops[1].data.flt, ops[2].data.flt, s->inTime);
@@ -2719,7 +2929,7 @@ DEFFC(ObjectScaleXY)
 
 DEFFC(ObjectScaleXYZ)
 {
-    fi_object_t* obj = stateFindObject(s, ops[0].data.cstring, FI_NONE);
+    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
     if(!obj)
         return;
     AnimatorVector3_Set(obj->scale, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, s->inTime);
@@ -2727,7 +2937,7 @@ DEFFC(ObjectScaleXYZ)
 
 DEFFC(ObjectAngle)
 {
-    fi_object_t* obj = stateFindObject(s, ops[0].data.cstring, FI_NONE);
+    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
     if(!obj)
         return;
     Animator_Set(&obj->angle, ops[1].data.flt, s->inTime);
@@ -2761,7 +2971,7 @@ DEFFC(Rect)
 
 DEFFC(FillColor)
 {
-    fi_object_t* obj = stateFindObject(s, ops[0].data.cstring, FI_NONE);
+    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
     int which = 0;
     float rgba[4];
 
@@ -2789,7 +2999,7 @@ DEFFC(FillColor)
 
 DEFFC(EdgeColor)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) stateFindObject(s, ops[0].data.cstring, FI_PIC);
+    fidata_pic_t* obj = (fidata_pic_t*) objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_PIC));
     int which = 0;
     float rgba[4];
 
@@ -2948,10 +3158,10 @@ DEFFC(SetTextDef)
 
 DEFFC(DeleteText)
 {
-    fi_object_t* obj = stateFindObject(s, ops[0].data.cstring, FI_TEXT);
+    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_TEXT));
     if(!obj)
         return;
-    objectsRemove(&s->objects, obj);
+    objectsRemove(&objects, scriptRemoveObjectInScope(s, obj));
     P_DestroyText((fidata_text_t*)obj);
 }
 

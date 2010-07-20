@@ -47,7 +47,7 @@ void            FI_Reset(void);
 void            FI_SetClientsideDefaultState(void* data);
 void*           FI_GetClientsideDefaultState(void);
 
-void            FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, void* extraData);
+boolean         FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, void* extraData);
 void            FI_ScriptTerminate(void);
 
 typedef enum {
@@ -75,8 +75,8 @@ typedef struct fidata_pic_frame_s {
     enum {
         PFT_MATERIAL,
         PFT_PATCH,
-        PFT_RAW,            // "Raw" graphic or PCX lump.
-        PFT_XIMAGE          // External graphics resource.
+        PFT_RAW,        // "Raw" graphic or PCX lump.
+        PFT_XIMAGE      // External graphics resource.
     } type;
     struct fidata_pic_frame_flags_s {
         char            flip:1;

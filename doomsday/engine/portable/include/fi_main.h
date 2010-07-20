@@ -50,6 +50,8 @@ extern float fiDefaultTextRGB[];
 
 void            FI_Register(void);
 
+void            FI_Init(void);
+void            FI_Shutdown(void);
 int             FI_Responder(ddevent_t* ev);
 void            FI_Drawer(void);
 

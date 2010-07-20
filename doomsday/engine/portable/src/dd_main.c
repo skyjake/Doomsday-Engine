@@ -643,6 +643,9 @@ static int DD_StartupWorker(void *parm)
     Net_InitGame();
     Demo_Init();
 
+    Con_Message("FI_Init: Initializing InFine.\n");
+    FI_Init();
+
     if(gx.PostInit)
         gx.PostInit();
 
