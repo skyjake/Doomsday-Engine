@@ -57,12 +57,20 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef enum {
+    FVT_INT,
+    FVT_FLOAT,
+    FVT_SCRIPT_STRING, // ptr points to a char*, which points to the string.
+    FVT_OBJECT
+} fi_operand_type_t;
+
 typedef struct {
-    cvartype_t      type;
+    fi_operand_type_t type;
     union {
         int         integer;
         float       flt;
         const char* cstring;
+        fi_object_t* obj;
     } data;
 } fi_operand_t;
 
@@ -289,19 +297,19 @@ static fi_cmd_t commands[] = {
     { "nomusic",    "", FIC_NoMusic },
 
     // Objects
-    { "del",        "s", FIC_Delete }, // del (id)
-    { "x",          "sf", FIC_ObjectOffX }, // x (id) (x)
-    { "y",          "sf", FIC_ObjectOffY }, // y (id) (y)
-    { "z",          "sf", FIC_ObjectOffZ }, // z (id) (z)
-    { "sx",         "sf", FIC_ObjectScaleX }, // sx (id) (x)
-    { "sy",         "sf", FIC_ObjectScaleY }, // sy (id) (y)
-    { "sz",         "sf", FIC_ObjectScaleZ }, // sz (id) (z)
-    { "scale",      "sf", FIC_ObjectScale }, // scale (id) (factor)
-    { "scalexy",    "sff", FIC_ObjectScaleXY }, // scalexy (id) (x) (y)
-    { "scalexyz",   "sfff", FIC_ObjectScaleXYZ }, // scalexyz (id) (x) (y) (z)
-    { "rgb",        "sfff", FIC_ObjectRGB }, // rgb (id) (r) (g) (b)
-    { "alpha",      "sf", FIC_ObjectAlpha }, // alpha (id) (alpha)
-    { "angle",      "sf", FIC_ObjectAngle }, // angle (id) (degrees)
+    { "del",        "o", FIC_Delete }, // del (obj)
+    { "x",          "of", FIC_ObjectOffX }, // x (obj) (x)
+    { "y",          "of", FIC_ObjectOffY }, // y (obj) (y)
+    { "z",          "of", FIC_ObjectOffZ }, // z (obj) (z)
+    { "sx",         "of", FIC_ObjectScaleX }, // sx (obj) (x)
+    { "sy",         "of", FIC_ObjectScaleY }, // sy (obj) (y)
+    { "sz",         "of", FIC_ObjectScaleZ }, // sz (obj) (z)
+    { "scale",      "of", FIC_ObjectScale }, // scale (obj) (factor)
+    { "scalexy",    "off", FIC_ObjectScaleXY }, // scalexy (obj) (x) (y)
+    { "scalexyz",   "offf", FIC_ObjectScaleXYZ }, // scalexyz (obj) (x) (y) (z)
+    { "rgb",        "offf", FIC_ObjectRGB }, // rgb (obj) (r) (g) (b)
+    { "alpha",      "of", FIC_ObjectAlpha }, // alpha (obj) (alpha)
+    { "angle",      "of", FIC_ObjectAngle }, // angle (obj) (degrees)
 
     // Rects
     { "rect",       "sffff", FIC_Rect }, // rect (hndl) (x) (y) (w) (h)
@@ -314,10 +322,10 @@ static fi_cmd_t commands[] = {
     { "ximage",     "ss", FIC_XImage }, // ximage (id) (ext-gfx-filename)
     { "patch",      "sffs", FIC_Patch }, // patch (id) (x) (y) (patch)
     { "set",        "ss", FIC_SetPatch }, // set (id) (lump)
-    { "clranim",    "s", FIC_ClearAnim }, // clranim (id)
+    { "clranim",    "o", FIC_ClearAnim }, // clranim (obj)
     { "anim",       "ssf", FIC_Anim }, // anim (id) (patch) (time)
-    { "imageanim",  "ssf", FIC_AnimImage }, // imageanim (hndl) (raw-img) (time)
-    { "picsound",   "ss", FIC_PicSound }, // picsound (hndl) (sound)
+    { "imageanim",  "ssf", FIC_AnimImage }, // imageanim (id) (raw-img) (time)
+    { "picsound",   "ss", FIC_PicSound }, // picsound (id) (sound)
     { "repeat",     "s", FIC_Repeat }, // repeat (id)
     { "states",     "ssi", FIC_StateAnim }, // states (id) (state) (count)
 
@@ -347,10 +355,10 @@ static fi_cmd_t commands[] = {
     { "precolor",   "ifff", FIC_PredefinedTextColor }, // precolor (num) (r) (g) (b)
 
     // Deprecated Pic commands
-    { "delpic",     "s", FIC_Delete }, // delpic (id)
+    { "delpic",     "o", FIC_Delete }, // delpic (obj)
 
     // Deprecated Text commands
-    { "deltext",    "s", FIC_DeleteText }, // deltext (hndl)
+    { "deltext",    "o", FIC_DeleteText }, // deltext (obj)
     { "textrgb",    "sfff", FIC_TextRGB }, // textrgb (id) (r) (g) (b)
     { "textalpha",  "sf", FIC_TextAlpha }, // textalpha (id) (alpha)
     { "tx",         "sf", FIC_TextOffX }, // tx (id) (x)
@@ -891,7 +899,7 @@ static fi_operand_t* scriptParseCommandOperands(fi_state_t* s, const fi_cmd_t* c
     {
         char typeSymbol = cmd->operands[i];
         fi_operand_t* op;
-        cvartype_t type;
+        fi_operand_type_t type;
 
         if(!scriptNextToken(s))
         {
@@ -907,9 +915,10 @@ static fi_operand_t* scriptParseCommandOperands(fi_state_t* s, const fi_cmd_t* c
         switch(typeSymbol)
         {
         // Supported operand type symbols:
-        case 'i': type = CVT_INT;      break;
-        case 'f': type = CVT_FLOAT;    break;
-        case 's': type = CVT_CHARPTR;  break;
+        case 'i': type = FVT_INT;           break;
+        case 'f': type = FVT_FLOAT;         break;
+        case 's': type = FVT_SCRIPT_STRING; break;
+        case 'o': type = FVT_OBJECT;        break;
         default:
             Con_Error("scriptParseCommandOperands: Invalid symbol '%c' in operand list for command '%s'.", typeSymbol, cmd->token);
         }
@@ -923,14 +932,14 @@ static fi_operand_t* scriptParseCommandOperands(fi_state_t* s, const fi_cmd_t* c
         op->type = type;
         switch(type)
         {
-        case CVT_INT:
+        case FVT_INT:
             op->data.integer = strtol(token, NULL, 0);
             break;
 
-        case CVT_FLOAT:
+        case FVT_FLOAT:
             op->data.flt = strtod(token, NULL);
             break;
-        case CVT_CHARPTR:
+        case FVT_SCRIPT_STRING:
             {
             size_t len = strlen(token)+1;
             char* str = malloc(len);
@@ -938,6 +947,9 @@ static fi_operand_t* scriptParseCommandOperands(fi_state_t* s, const fi_cmd_t* c
             op->data.cstring = str;
             break;
             }
+        case FVT_OBJECT:
+            op->data.obj = objectsById(&objects, toObjectId(&s->_namespace, token, FI_NONE));
+            break;
         }
     } while(++i < numOperands);}
 
@@ -1078,7 +1090,7 @@ static boolean scriptExecuteCommand(fi_state_t* s, const char* commandString)
             for(i = 0; i < count; ++i)
             {
                 fi_operand_t* op = &ops[i];
-                if(op->type == CVT_CHARPTR)
+                if(op->type == FVT_SCRIPT_STRING)
                     free((char*)op->data.cstring);
             }}
             free(ops);
@@ -2613,9 +2625,9 @@ DEFFC(Marker)
 
 DEFFC(Delete)
 {
-    fi_object_t* obj;
-    if((obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE))))
+    if(ops[0].data.obj)
     {
+        fi_object_t* obj = ops[0].data.obj;
         objectsRemove(&objects, scriptRemoveObjectInScope(s, obj));
         switch(obj->type)
         {
@@ -2628,7 +2640,7 @@ DEFFC(Delete)
 
 DEFFC(Image)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_PIC));
+    fidata_pic_t* obj = (fidata_pic_t*) stateGetObject(s, ops[0].data.cstring, FI_PIC);
     const char* name = ops[1].data.cstring;
     lumpnum_t lumpNum;
 
@@ -2726,10 +2738,9 @@ DEFFC(SetPatch)
 
 DEFFC(ClearAnim)
 {
-    fi_object_t* obj;
-    if((obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_PIC))))
+    if(ops[0].data.obj)
     {
-        FIData_PicClearAnimation((fidata_pic_t*)obj);
+        FIData_PicClearAnimation((fidata_pic_t*)ops[0].data.obj);
     }
 }
 
@@ -2811,31 +2822,34 @@ DEFFC(PicSound)
 
 DEFFC(ObjectOffX)
 {
-    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
-    if(!obj)
-        return;
-    Animator_Set(&obj->pos[0], ops[1].data.flt, s->inTime);
+    if(ops[0].data.obj)
+    {
+        fi_object_t* obj = ops[0].data.obj;
+        Animator_Set(&obj->pos[0], ops[1].data.flt, s->inTime);
+    }
 }
 
 DEFFC(ObjectOffY)
 {
-    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
-    if(!obj)
-        return;
-    Animator_Set(&obj->pos[1], ops[1].data.flt, s->inTime);
+    if(ops[0].data.obj)
+    {
+        fi_object_t* obj = ops[0].data.obj;
+        Animator_Set(&obj->pos[1], ops[1].data.flt, s->inTime);
+    }
 }
 
 DEFFC(ObjectOffZ)
 {
-    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
-    if(!obj)
-        return;
-    Animator_Set(&obj->pos[2], ops[1].data.flt, s->inTime);
+    if(ops[0].data.obj)
+    {
+        fi_object_t* obj = ops[0].data.obj;
+        Animator_Set(&obj->pos[2], ops[1].data.flt, s->inTime);
+    }
 }
 
 DEFFC(ObjectRGB)
 {
-    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
+    fi_object_t* obj = ops[0].data.obj;
     float rgb[3];
     if(!obj || !(obj->type == FI_TEXT || obj->type == FI_PIC))
         return;
@@ -2865,7 +2879,7 @@ DEFFC(ObjectRGB)
 
 DEFFC(ObjectAlpha)
 {
-    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
+    fi_object_t* obj = ops[0].data.obj;
     float alpha;
     if(!obj || !(obj->type == FI_TEXT || obj->type == FI_PIC))
         return;
@@ -2892,58 +2906,65 @@ DEFFC(ObjectAlpha)
 
 DEFFC(ObjectScaleX)
 {
-    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
-    if(!obj)
-        return;
-    Animator_Set(&obj->scale[0], ops[1].data.flt, s->inTime);
+    if(ops[0].data.obj)
+    {
+        fi_object_t* obj = ops[0].data.obj;
+        Animator_Set(&obj->scale[0], ops[1].data.flt, s->inTime);
+    }
 }
 
 DEFFC(ObjectScaleY)
 {
-    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
-    if(!obj)
-        return;
-    Animator_Set(&obj->scale[1], ops[1].data.flt, s->inTime);
+    if(ops[0].data.obj)
+    {
+        fi_object_t* obj = ops[0].data.obj;
+        Animator_Set(&obj->scale[1], ops[1].data.flt, s->inTime);
+    }
 }
 
 DEFFC(ObjectScaleZ)
 {
-    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
-    if(!obj)
-        return;
-    Animator_Set(&obj->scale[2], ops[1].data.flt, s->inTime);
+    if(ops[0].data.obj)
+    {
+        fi_object_t* obj = ops[0].data.obj;
+        Animator_Set(&obj->scale[2], ops[1].data.flt, s->inTime);
+    }
 }
 
 DEFFC(ObjectScale)
 {
-    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
-    if(!obj)
-        return;
-    AnimatorVector2_Set(obj->scale, ops[1].data.flt, ops[1].data.flt, s->inTime);
+    if(ops[0].data.obj)
+    {
+        fi_object_t* obj = ops[0].data.obj;
+        AnimatorVector2_Set(obj->scale, ops[1].data.flt, ops[1].data.flt, s->inTime);
+    }
 }
 
 DEFFC(ObjectScaleXY)
 {
-    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
-    if(!obj)
-        return;
-    AnimatorVector2_Set(obj->scale, ops[1].data.flt, ops[2].data.flt, s->inTime);
+    if(ops[0].data.obj)
+    {
+        fi_object_t* obj = ops[0].data.obj;
+        AnimatorVector2_Set(obj->scale, ops[1].data.flt, ops[2].data.flt, s->inTime);
+    }
 }
 
 DEFFC(ObjectScaleXYZ)
 {
-    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
-    if(!obj)
-        return;
-    AnimatorVector3_Set(obj->scale, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, s->inTime);
+    if(ops[0].data.obj)
+    {
+        fi_object_t* obj = ops[0].data.obj;
+        AnimatorVector3_Set(obj->scale, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, s->inTime);
+    }
 }
 
 DEFFC(ObjectAngle)
 {
-    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_NONE));
-    if(!obj)
-        return;
-    Animator_Set(&obj->angle, ops[1].data.flt, s->inTime);
+    if(ops[0].data.obj)
+    {
+        fi_object_t* obj = ops[0].data.obj;
+        Animator_Set(&obj->angle, ops[1].data.flt, s->inTime);
+    }
 }
 
 DEFFC(Rect)
@@ -3161,11 +3182,12 @@ DEFFC(SetTextDef)
 
 DEFFC(DeleteText)
 {
-    fi_object_t* obj = objectsById(&objects, toObjectId(&s->_namespace, ops[0].data.cstring, FI_TEXT));
-    if(!obj)
-        return;
-    objectsRemove(&objects, scriptRemoveObjectInScope(s, obj));
-    P_DestroyText((fidata_text_t*)obj);
+    if(ops[0].data.obj)
+    {
+        fi_object_t* obj = ops[0].data.obj;
+        objectsRemove(&objects, scriptRemoveObjectInScope(s, obj));
+        P_DestroyText((fidata_text_t*)obj);
+    }
 }
 
 DEFFC(PredefinedTextColor)
