@@ -79,7 +79,7 @@ DGLuint         GL_NewTextureWithParams2(dgltexformat_t format, int width,
                                          int magFilter, int anisoFilter,
                                          int wrapS, int wrapT);
 DGLuint         GL_NewTextureWithParams3(dgltexformat_t format, int width,
-                                         int height, void* pixels,
+                                         int height, const void* pixels,
                                          int flags, int minFilter,
                                          int magFilter, int anisoFilter,
                                          int wrapS, int wrapT);

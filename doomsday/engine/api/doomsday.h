@@ -377,7 +377,7 @@ extern          "C" {
     // Graphics.
     void            GL_UseFog(int yes);
     byte*           GL_GrabScreen(void);
-    DGLuint         GL_NewTextureWithParams3(int format, int width, int height, void* pixels, int flags, int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT);
+    DGLuint         GL_NewTextureWithParams3(int format, int width, int height, const void* pixels, int flags, int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT);
     void            GL_SetFilter(boolean enable);
     void            GL_SetFilterColor(float r, float g, float b, float a);
 

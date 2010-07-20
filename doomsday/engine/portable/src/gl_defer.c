@@ -432,7 +432,7 @@ DGLuint GL_NewTextureWithParams3(dgltexformat_t format, int width,
                                  int minFilter, int magFilter,
                                  int anisoFilter, int wrapS, int wrapT)
 {
-    return GL_NewTextureWithParams2(format, width, height, pixels, flags,
+    return GL_NewTextureWithParams2(format, width, height, (void*)pixels, flags,
         (minFilter == DGL_LINEAR? GL_LINEAR :
          minFilter == DGL_NEAREST? GL_NEAREST :
          minFilter == DGL_NEAREST_MIPMAP_NEAREST? GL_NEAREST_MIPMAP_NEAREST :
