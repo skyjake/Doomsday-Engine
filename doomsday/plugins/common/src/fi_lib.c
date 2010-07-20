@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -248,7 +248,7 @@ int Hook_FinaleScriptEvalIf(int hookType, int unused, void* paramaters)
     return false;
 }
 
-int Hook_FinaleScriptSerializeExtraData(int hookType, int flags, const void* paramaters)
+int Hook_FinaleScriptSerializeExtraData(int hookType, int flags, void* paramaters)
 {
     ddhook_finale_script_serialize_extradata_t* p = (ddhook_finale_script_serialize_extradata_t*) paramaters;
     const finale_extradata_t* data = (const finale_extradata_t*) p->extraData;
@@ -261,9 +261,9 @@ int Hook_FinaleScriptSerializeExtraData(int hookType, int flags, const void* par
     return true;
 }
 
-int Hook_FinaleScriptDeserializeExtraData(int hookType, int flags, const void* paramaters)
+int Hook_FinaleScriptDeserializeExtraData(int hookType, int flags, void* paramaters)
 {
-    const ddhook_finale_script_deserialize_extradata_t* p = (const ddhook_finale_script_deserialize_extradata_t*) paramaters;
+    ddhook_finale_script_deserialize_extradata_t* p = (ddhook_finale_script_deserialize_extradata_t*) paramaters;
     const byte* ptr = p->inBuf;
     finale_extradata_t* data = (finale_extradata_t*) p->extraData;
 
