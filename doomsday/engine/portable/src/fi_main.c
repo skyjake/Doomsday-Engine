@@ -650,6 +650,16 @@ static fi_object_t* objectsById(fi_object_collection_t* c, fi_objectid_t id)
     return NULL;
 }
 
+/**
+ * @return                  A new (unused) unique object id.
+ */
+static fi_objectid_t objectsUniqueId(fi_object_collection_t* c)
+{
+    fi_objectid_t id = 0;
+    while(objectsById(c, ++id));
+    return id;
+}
+
 static void stateChangeMode(fi_state_t* s, finale_mode_t mode)
 {
     s->mode = mode;
@@ -1189,9 +1199,8 @@ static void stateDestroyHandler(fi_state_t* s, fi_handler_t* h)
  * Find a @c fi_handler_t for the specified ddkey code.
  * @param ev                Input event to find a handler for.
  * @return                  Ptr to @c fi_handler_t object. Either:
- *                          1) Existing handler associated with unique @a code.
- *                          2) New object with unique @a code.
- *                          3) @c NULL - No more objects.
+ *                          a) Existing handler associated with unique @a code.
+ *                          b) New object with unique @a code.
  */
 static fi_handler_t* stateGetHandler(fi_state_t* s, const ddevent_t* ev)
 {
@@ -1208,22 +1217,11 @@ static fi_handler_t* stateGetHandler(fi_state_t* s, const ddevent_t* ev)
 }
 
 /**
- * @return                  A new (unused) unique object id.
- */
-static fi_objectid_t objectsUniqueId(fi_object_collection_t* c)
-{
-    fi_objectid_t id = 0;
-    while(objectsById(c, ++id));
-    return id;
-}
-
-/**
  * Find an @c fi_object_t of type with the type-unique name.
  * @param name              Unique name of the object we are looking for.
  * @return                  Ptr to @c fi_object_t Either:
- *                          1) Existing object associated with unique @a name.
- *                          2) New object with unique @a name.
- *                          3) @c NULL - No more objects.
+ *                          a) Existing object associated with unique @a name.
+ *                          b) New object with unique @a name.
  */
 static fi_object_t* stateGetObject(fi_state_t* s, const char* name, fi_obtype_e type)
 {
