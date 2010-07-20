@@ -48,7 +48,6 @@
 
 #define STACK_SIZE          (16) // Size of the InFine state stack.
 #define MAX_TOKEN_LEN       (8192)
-#define MAX_HANDLERS        (128)
 
 #define FRACSECS_TO_TICKS(sec) ((int)(sec * TICSPERSEC + 0.5))
 
@@ -75,7 +74,7 @@ typedef struct {
 } fi_operand_t;
 
 typedef struct fi_handler_s {
-    int             ddkey;
+    ddevent_t       ev; // Template.
     fi_objectname_t marker;
 } fi_handler_t;
 
@@ -102,7 +101,8 @@ typedef struct fi_state_s {
     // Known symbols (to this script).
     fi_namespace_t  _namespace;
 
-    fi_handler_t    eventHandlers[MAX_HANDLERS];
+    uint            numEventHandlers;
+    fi_handler_t*   eventHandlers;
     char*           script; // A copy of the script.
     const char*     cp; // The command cursor.
     int             timer;
@@ -691,6 +691,14 @@ static void stateReleaseScript(fi_state_t* s)
     s->cp = 0;
 }
 
+static void stateClearEventHandlers(fi_state_t* s)
+{
+    if(s->numEventHandlers)
+        Z_Free(s->eventHandlers);
+    s->eventHandlers = 0;
+    s->numEventHandlers = 0;
+}
+
 /**
  * Clear the specified state to the default, blank state.
  */
@@ -726,6 +734,8 @@ static void stateClear(fi_state_t* s)
     {
         AnimatorVector3_Init(s->textColor[i], 1, 1, 1);
     }
+
+    stateClearEventHandlers(s);
 }
 
 static void stateInit(fi_state_t* s, finale_mode_t mode, int gameState, const void* clientState)
@@ -1116,41 +1126,54 @@ static boolean scriptExecuteNextCommand(fi_state_t* s)
     return false;
 }
 
-static fi_handler_t* stateFindHandler(fi_state_t* s, int ddkey)
+static fi_handler_t* stateFindHandler(fi_state_t* s, const ddevent_t* ev)
 {
     uint i;
-    for(i = 0; i < MAX_HANDLERS; ++i)
+    for(i = 0; i < s->numEventHandlers; ++i)
     {
         fi_handler_t* h = &s->eventHandlers[i];
-        if(h->ddkey == ddkey)
-            return h;
+        if(h->ev.device != ev->device && h->ev.type != ev->type)
+            continue;
+        switch(h->ev.type)
+        {
+        case E_TOGGLE:
+            if(h->ev.toggle.id != ev->toggle.id)
+                continue;
+            break;
+        case E_AXIS:
+            if(h->ev.axis.id != ev->axis.id)
+                continue;
+            break;
+        case E_ANGLE:
+            if(h->ev.angle.id != ev->angle.id)
+                continue;
+            break;
+        default:
+            Con_Error("Internal error: Invalid event template (type=%i) in finale event handler.", (int) h->ev.type);
+        }
+        return h;
     }
     return 0;
 }
 /**
  * Find a @c fi_handler_t for the specified ddkey code.
- * @param ddkey             Unique id code of the ddkey event handler to look for.
+ * @param ev                Input event to find a handler for.
  * @return                  Ptr to @c fi_handler_t object. Either:
  *                          1) Existing handler associated with unique @a code.
  *                          2) New object with unique @a code.
  *                          3) @c NULL - No more objects.
  */
-static fi_handler_t* stateGetHandler(fi_state_t* s, int ddkey)
+static fi_handler_t* stateGetHandler(fi_state_t* s, const ddevent_t* ev)
 {
     // First, try to find an existing handler.
     fi_handler_t* h;
-    if((h = stateFindHandler(s, ddkey)))
+    if((h = stateFindHandler(s, ev)))
         return h;
-    // Now lets try to create a new handler.
-    {uint i = 0;
-    while(!h && i++ < MAX_HANDLERS)
-    {
-        fi_handler_t* other = &s->eventHandlers[i];
-        // Use this if a suitable handler is not already set?
-        if(other->ddkey == 0)
-            h = other;
-    }}
-    // May be NULL, if no more handlers available.
+    // Allocate and attach another.
+    s->eventHandlers = Z_Realloc(s->eventHandlers, sizeof(*h) * ++s->numEventHandlers, PU_STATIC);
+    h = &s->eventHandlers[s->numEventHandlers-1];
+    memset(h, 0, sizeof(*h));
+    memcpy(&h->ev, ev, sizeof(h->ev));
     return h;
 }
 
@@ -1781,7 +1804,7 @@ int FI_Responder(ddevent_t* ev)
     if(IS_KEY_DOWN(ev))
     {   
         fi_handler_t* h;
-        if((h = stateFindHandler(s, ev->toggle.id)))
+        if((h = stateFindHandler(s, ev)))
         {
             scriptSkipTo(s, h->marker);
             return willEatEvent(ev);
@@ -2541,24 +2564,34 @@ DEFFC(NoEvents)
 
 DEFFC(OnKey)
 {
-    int ddkey = DD_GetKeyCode(ops[0].data.cstring);
-    const char* markerLabel = ops[1].data.cstring;
     fi_handler_t* h;
-    // Find an empty handler.
-    if((h = stateGetHandler(s, ddkey)))
-    {
-        h->ddkey = ddkey;
-        dd_snprintf(h->marker, FI_NAME_MAX_LENGTH, "%s", markerLabel);
-    }
+    ddevent_t ev;
+
+    // Construct a template event for this handler.
+    memset(&ev, 0, sizeof(ev));
+    ev.device = IDEV_KEYBOARD;
+    ev.type = E_TOGGLE;
+    ev.toggle.id = DD_GetKeyCode(ops[0].data.cstring);
+    ev.toggle.state = ETOG_DOWN;
+    
+    h = stateGetHandler(s, &ev);
+    dd_snprintf(h->marker, FI_NAME_MAX_LENGTH, "%s", ops[1].data.cstring);
 }
 
 DEFFC(UnsetKey)
 {
-    int ddkey = DD_GetKeyCode(ops[0].data.cstring);
     fi_handler_t* h;
-    if((h = stateFindHandler(s, ddkey)))
+    ddevent_t ev;
+
+    // Construct a template event for what we want to "unset".
+    memset(&ev, 0, sizeof(ev));
+    ev.device = IDEV_KEYBOARD;
+    ev.type = E_TOGGLE;
+    ev.toggle.id = DD_GetKeyCode(ops[0].data.cstring);
+    ev.toggle.state = ETOG_DOWN;
+
+    if((h = stateFindHandler(s, &ev)))
     {
-        h->ddkey = 0;
         memset(h->marker, 0, sizeof(h->marker));
     }
 }
