@@ -1155,6 +1155,36 @@ static fi_handler_t* stateFindHandler(fi_state_t* s, const ddevent_t* ev)
     }
     return 0;
 }
+
+static void stateDestroyHandler(fi_state_t* s, fi_handler_t* h)
+{
+    assert(s && h);
+    {uint i;
+    for(i = 0; i < s->numEventHandlers; ++i)
+    {
+        fi_handler_t* other = &s->eventHandlers[i];
+
+        if(h != other)
+            continue;
+        
+        if(i != s->numEventHandlers-1)
+            memmove(&s->eventHandlers[i], &s->eventHandlers[i+1], sizeof(*s->eventHandlers) * (s->numEventHandlers-i));
+
+        // Resize storage?
+        if(s->numEventHandlers > 1)
+        {
+            s->eventHandlers = Z_Realloc(s->eventHandlers, sizeof(*s->eventHandlers) * --s->numEventHandlers, PU_STATIC);
+        }
+        else
+        {
+            Z_Free(s->eventHandlers);
+            s->eventHandlers = NULL;
+            s->numEventHandlers = 0;
+        }
+        return;
+    }}
+}
+
 /**
  * Find a @c fi_handler_t for the specified ddkey code.
  * @param ev                Input event to find a handler for.
@@ -2592,7 +2622,7 @@ DEFFC(UnsetKey)
 
     if((h = stateFindHandler(s, &ev)))
     {
-        memset(h->marker, 0, sizeof(h->marker));
+        stateDestroyHandler(s, h);
     }
 }
 
