@@ -96,7 +96,7 @@ static void loadViewBorderPatches(void)
     bwidth = info.height;
 }
 
-void R_SetBorderGfx(const char* lumpNames[9])
+void R_SetBorderGfx(char* const* lumpNames)
 {
     if(!lumpNames)
         Con_Error("R_SetBorderGfx: Missing argument.");

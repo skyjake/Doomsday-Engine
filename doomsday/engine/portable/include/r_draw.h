@@ -34,7 +34,7 @@ extern byte* translationTables;
 void            R_InitTranslationTables(void);
 void            R_UpdateTranslationTables(void);
 void            R_InitViewBorder(void);
-void            R_SetBorderGfx(const char* gfx[9]);
+void            R_SetBorderGfx(char* const* gfx);
 void            R_DrawViewBorder(void);
 
 void            R_DrawPatch(patchtex_t* p, int x, int y);

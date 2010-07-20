@@ -356,7 +356,7 @@ extern          "C" {
     void            R_RenderPlayerView(int num);
     void            R_SetViewWindow(int x, int y, int w, int h);
     int             R_GetViewPort(int player, int* x, int* y, int* w, int* h);
-    void            R_SetBorderGfx(const char* lumps[9]);
+    void            R_SetBorderGfx(char* const* lumps);
     boolean         R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
     boolean         R_GetPatchInfo(patchid_t id, patchinfo_t* info);
     int             Materials_CreateAnimGroup(int flags);
