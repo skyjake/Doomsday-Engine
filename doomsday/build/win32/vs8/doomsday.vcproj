@@ -1077,6 +1077,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\finaleinterpreter.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\gl_defer.c"
 				>
 			</File>
@@ -2831,6 +2835,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\fi_main.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\finaleinterpreter.h"
 				>
 			</File>
 			<File

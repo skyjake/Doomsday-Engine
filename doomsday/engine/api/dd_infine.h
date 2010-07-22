@@ -67,6 +67,8 @@ struct fi_object_s;
     animator_t      angle; \
     animatorvector3_t scale;
 
+struct fi_object_s* FI_Object(fi_objectid_t id);
+
 /**
  * Rectangle/Image sequence.
  */
@@ -111,6 +113,7 @@ typedef struct fidata_pic_s {
 
 void                FIData_PicThink(fidata_pic_t* pic);
 void                FIData_PicDraw(fidata_pic_t* pic, const float offset[3]);
+uint                FIData_PicAppendFrame(fidata_pic_t* pic, int type, int tics, void* texRef, short sound, boolean flagFlipH);
 void                FIData_PicClearAnimation(fidata_pic_t* pic);
 
 /**
