@@ -57,6 +57,7 @@ typedef enum {
 } fi_obtype_e;
 
 struct fi_object_s;
+struct fi_page_s;
 
 // Base fi_objects_t elements. All objects MUST use this as their basis.
 #define FIOBJECT_BASE_ELEMENTS() \
@@ -68,6 +69,9 @@ struct fi_object_s;
     animatorvector3_t scale;
 
 struct fi_object_s* FI_Object(fi_objectid_t id);
+
+struct fi_page_s*   FI_NewPage(void);
+void                FI_DeletePage(struct fi_page_s* page);
 
 /**
  * Rectangle/Image sequence.

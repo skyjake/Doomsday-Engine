@@ -79,14 +79,14 @@ static fi_objectid_t toObjectId(fi_namespace_t* names, const char* name, fi_obty
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean inited = false;
-static boolean active = false; // Interpreter active for the current pageStack top.
+static boolean active = false; // Interpreter active for the current finaleStack top.
 
 // Allow stretching to fill the screen at near 4:3 aspect ratios?
 static byte noStretch = false;
 
 // Finale script/page collection.
-static uint numPages;
-static fi_page_t** pageStack;
+static uint finaleStackSize;
+static finaleinterpreter_t** finaleStack;
 
 // Global Finale object store.
 static fi_object_collection_t objects;
@@ -321,38 +321,30 @@ static void pageClear(fi_page_t* p)
     }}
 }
 
-static fi_page_t* newPage(const char* scriptSrc, finale_mode_t mode, int gameState, const void* extraData)
+static fi_page_t* newPage(void)
 {
     fi_page_t* p = Z_Calloc(sizeof(*p), PU_STATIC, 0);
     pageClear(p);
-    FinaleInterpreter_LoadScript(&p->_interpreter, mode, scriptSrc, gameState, extraData);
-    active = true;
     return p;
 }
 
-static void deletePage(fi_page_t* p)
+static __inline finaleinterpreter_t* stackTop(void)
 {
-    pageClear(p);
-    Z_Free(p);
+    return (finaleStackSize == 0? 0 : finaleStack[finaleStackSize-1]);
 }
 
-static __inline fi_page_t* stackTop(void)
+static finaleinterpreter_t* stackPush(finaleinterpreter_t* fi)
 {
-    return (numPages == 0? 0 : pageStack[numPages-1]);
-}
-
-static fi_page_t* stackPush(fi_page_t* p)
-{
-    pageStack = Z_Realloc(pageStack, sizeof(*pageStack) * ++numPages, PU_STATIC);
-    pageStack[numPages-1] = p;
-    return p;
+    finaleStack = Z_Realloc(finaleStack, sizeof(*finaleStack) * ++finaleStackSize, PU_STATIC);
+    finaleStack[finaleStackSize-1] = fi;
+    return fi;
 }
 
 static boolean stackPop(void)
 {
-    fi_page_t* p = stackTop();
+    finaleinterpreter_t* fi = stackTop();
 
-    if(!p)
+    if(!fi)
     {
 #ifdef _DEBUG
 Con_Printf("InFine: Attempt to pop empty stack\n");
@@ -361,21 +353,20 @@ Con_Printf("InFine: Attempt to pop empty stack\n");
     }
 
     // Should we go back to NULL?
-    if(numPages > 1)
+    if(finaleStackSize > 1)
     {   // Return to previous state.
-        pageStack = Z_Realloc(pageStack, sizeof(*pageStack) * --numPages, PU_STATIC);
+        finaleStack = Z_Realloc(finaleStack, sizeof(*finaleStack) * --finaleStackSize, PU_STATIC);
         active = true;
     }
     else
     {
-        Z_Free(pageStack); pageStack = 0;
-        numPages = 0;
+        Z_Free(finaleStack); finaleStack = 0;
+        finaleStackSize = 0;
         active = false;
     }
 
-    FinaleInterpreter_StopScript(&p->_interpreter);
-    FinaleInterpreter_ReleaseScript(&p->_interpreter);
-    deletePage(p);
+    FI_DeletePage(fi->_page); fi->_page = 0;
+    P_DestroyFinaleInterpreter(fi);
 
     return active;
 }
@@ -383,29 +374,28 @@ Con_Printf("InFine: Attempt to pop empty stack\n");
 /**
  * Stop playing the script and go to next game state.
  */
-static void scriptTerminate(fi_page_t* p)
+static void scriptTerminate(finaleinterpreter_t* fi)
 {
     if(!active)
         return;
-    if(!FinaleInterpreter_CanSkip(&p->_interpreter))
+    if(!FinaleInterpreter_CanSkip(fi))
         return;
 
     // Should we go back to NULL?
-    if(numPages > 1)
+    if(finaleStackSize > 1)
     {   // Return to previous state.
-        pageStack = Z_Realloc(pageStack, sizeof(*pageStack) * --numPages, PU_STATIC);
+        finaleStack = Z_Realloc(finaleStack, sizeof(*finaleStack) * --finaleStackSize, PU_STATIC);
         active = true;
     }
     else
     {
-        Z_Free(pageStack); pageStack = 0;
-        numPages = 0;
+        Z_Free(finaleStack); finaleStack = 0;
+        finaleStackSize = 0;
         active = false;
     }
 
-    FinaleInterpreter_StopScript(&p->_interpreter);
-    FinaleInterpreter_ReleaseScript(&p->_interpreter);
-    deletePage(p);
+    FI_DeletePage(fi->_page); fi->_page = 0;
+    P_DestroyFinaleInterpreter(fi);
 }
 
 static uint objectIndexInNamespace(fi_namespace_t* names, fi_object_t* obj)
@@ -467,34 +457,6 @@ static fi_object_t* removeObjectInNamespace(fi_namespace_t* names, fi_object_t* 
     return obj;
 }
 
-static void scriptTick(fi_page_t* p)
-{
-    if(!FinaleInterpreter_RunTic(&p->_interpreter))
-        return;
-
-    // Test again - a call to scriptTerminate in a hook may have stopped the script.
-    if(!active)
-        return;
-
-    p->timer++;
-
-    // Interpolateable values.
-    AnimatorVector4_Think(p->bgColor);
-    AnimatorVector2_Think(p->imgOffset);
-    AnimatorVector4_Think(p->filter);
-    {uint i;
-    for(i = 0; i < 9; ++i)
-        AnimatorVector3_Think(p->textColor[i]);
-    }
-
-    thinkObjectsInScope(&p->_namespace);
-
-    if(FinaleInterpreter_RunCommands(&p->_interpreter))
-    {   // The script has ended!
-        scriptTerminate(p);
-    }
-}
-
 static void rotate(float angle)
 {
     // Counter the VGA aspect ratio.
@@ -544,15 +506,15 @@ static void pageDraw(fi_page_t* p)
  */
 static void doReset(boolean doingShutdown)
 {
-    fi_page_t* p;
-    if((p = stackTop()) && active)
+    finaleinterpreter_t* fi;
+    if((fi = stackTop()) && active)
     {
         if(!doingShutdown)
         {
             // The state is suspended when the PlayDemo command is used.
             // Being suspended means that InFine is currently not active, but
             // will be restored at a later time.
-            if(FinaleInterpreter_IsSuspended(&p->_interpreter))
+            if(FinaleInterpreter_IsSuspended(fi))
                 return;
         }
 
@@ -649,12 +611,13 @@ void FIObject_Destructor(fi_object_t* obj)
 {
     assert(obj);
     // Destroy all references to this object in all scopes.
-    if(numPages)
+    if(finaleStackSize)
     {
         uint i;
-        for(i = 0; i < numPages; ++i)
+        for(i = 0; i < finaleStackSize; ++i)
         {
-            FIPage_RemoveObject(pageStack[i], obj);
+            finaleinterpreter_t* fi = finaleStack[i];
+            FIPage_RemoveObject(fi->_page, obj);
         }
     }
     Z_Free(obj);
@@ -728,7 +691,7 @@ void FIObject_Think(fi_object_t* obj)
 
 boolean FI_Active(void)
 {
-    fi_page_t* p;
+    finaleinterpreter_t* fi;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -736,7 +699,7 @@ boolean FI_Active(void)
 #endif
         return false;
     }
-    if((p = stackTop()))
+    if((fi = stackTop()))
     {
         return active;
     }
@@ -748,8 +711,8 @@ void FI_Init(void)
     if(inited)
         return; // Already been here.
     memset(&objects, 0, sizeof(objects));
-    numPages = 0;
-    pageStack = 0;
+    finaleStackSize = 0;
+    finaleStack = 0;
 
     inited = true;
 }
@@ -766,7 +729,7 @@ void FI_Shutdown(void)
 
 boolean FI_CmdExecuted(void)
 {
-    fi_page_t* p;
+    finaleinterpreter_t* fi;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -774,9 +737,9 @@ boolean FI_CmdExecuted(void)
 #endif
         return false;
     }
-    if((p = stackTop()))
+    if((fi = stackTop()))
     {
-        return FinaleInterpreter_CommandExecuted(&p->_interpreter);
+        return FinaleInterpreter_CommandExecuted(fi);
     }
     return false;
 }
@@ -793,12 +756,24 @@ void FI_Reset(void)
     doReset(false);
 }
 
+fi_page_t* FI_NewPage(void)
+{
+    return newPage();
+}
+
+void FI_DeletePage(fi_page_t* p)
+{
+    if(!p) Con_Error("FI_DeletePage: Invalid page.");
+    pageClear(p);
+    Z_Free(p);
+}
+
 /**
  * Start playing the given script.
  */
-boolean FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, void* clientState)
+boolean FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, void* extraData)
 {
-    fi_page_t* p;
+    finaleinterpreter_t* fi;
 
     if(!inited)
     {
@@ -829,14 +804,16 @@ boolean FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState,
 #endif
 
     // Init InFine state.
-    p = stackPush(newPage(scriptSrc, mode, gameState, clientState));
+    fi = stackPush(P_CreateFinaleInterpreter());
+    FinaleInterpreter_LoadScript(fi, mode, scriptSrc, gameState, extraData);
+    active = true;
 
     return true;
 }
 
 void FI_ScriptTerminate(void)
 {
-    fi_page_t* p;
+    finaleinterpreter_t* fi;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -844,10 +821,10 @@ void FI_ScriptTerminate(void)
 #endif
         return;
     }
-    if((p = stackTop()) && active)
+    if((fi = stackTop()) && active)
     {
-        FinaleInterpreter_AllowSkip(&p->_interpreter, true);
-        scriptTerminate(p);
+        FinaleInterpreter_AllowSkip(fi, true);
+        scriptTerminate(fi);
     }
 }
 
@@ -863,26 +840,9 @@ fi_object_t* FI_Object(fi_objectid_t id)
     return objectsById(&objects, id);
 }
 
-finaleinterpreter_t* FI_ScriptInterpreter(void)
-{
-    fi_page_t* p;
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_ScriptInterpreter: Not initialized yet!\n");
-#endif
-        return 0;
-    }
-    if((p = stackTop()))
-    {
-        return &p->_interpreter;
-    }
-    return 0;
-}
-
 void* FI_ScriptExtraData(void)
 {
-    fi_page_t* p;
+    finaleinterpreter_t* fi;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -890,9 +850,9 @@ void* FI_ScriptExtraData(void)
 #endif
         return 0;
     }
-    if((p = stackTop()))
+    if((fi = stackTop()))
     {
-        return FinaleInterpreter_ExtraData(&p->_interpreter);
+        return FinaleInterpreter_ExtraData(fi);
     }
     return 0;
 }
@@ -928,6 +888,24 @@ void FI_DeleteObject(fi_object_t* obj)
     case FI_TEXT:   P_DestroyText((fidata_text_t*)obj); break;
     default:
         Con_Error("FI_DeleteObject: Invalid type %i.", (int) obj->type);
+    }
+}
+
+void FIPage_RunTic(fi_page_t* p)
+{
+    if(!p) Con_Error("FIPage_RunTic: Invalid page.");
+
+    p->timer++;
+
+    thinkObjectsInScope(&p->_namespace);
+
+    // Interpolateable values.
+    AnimatorVector4_Think(p->bgColor);
+    AnimatorVector2_Think(p->imgOffset);
+    AnimatorVector4_Think(p->filter);
+    {uint i;
+    for(i = 0; i < 9; ++i)
+        AnimatorVector3_Think(p->textColor[i]);
     }
 }
 
@@ -1030,13 +1008,19 @@ void FI_Ticker(timespan_t ticLength)
         return;
 
     // A new 'sharp' tick has begun.
-    {fi_page_t* p;
-    if((p = stackTop()) && active)
+    {finaleinterpreter_t* fi;
+    if((fi = stackTop()) && active)
     {
-        if(FinaleInterpreter_IsSuspended(&p->_interpreter))
-            return;
+        if(!FinaleInterpreter_IsSuspended(fi))
+            FIPage_RunTic(fi->_page);
 
-        scriptTick(p);
+        if(FinaleInterpreter_RunTic(fi))
+        {   // The script has ended!
+            if(!active)
+                return;
+
+            scriptTerminate(fi);
+        }
     }}
 }
 
@@ -1045,7 +1029,7 @@ void FI_Ticker(timespan_t ticLength)
  */
 int FI_SkipRequest(void)
 {
-    fi_page_t* p;
+    finaleinterpreter_t* fi;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -1053,23 +1037,11 @@ int FI_SkipRequest(void)
 #endif
         return false;
     }
-    if((p = stackTop()))
+    if((fi = stackTop()))
     {
-        return FinaleInterpreter_Skip(&p->_interpreter);
+        return FinaleInterpreter_Skip(fi);
     }
     return false;
-}
-
-fi_page_t* FI_PageStackTop(void)
-{
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_PageStackTop: Not initialized yet!\n");
-#endif
-        return 0;
-    }
-    return stackTop();
 }
 
 /**
@@ -1077,7 +1049,7 @@ fi_page_t* FI_PageStackTop(void)
  */
 boolean FI_IsMenuTrigger(void)
 {
-    fi_page_t* p;
+    finaleinterpreter_t* fi;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -1085,8 +1057,8 @@ boolean FI_IsMenuTrigger(void)
 #endif
         return false;
     }
-    if((p = stackTop()) && active)
-        return FinaleInterpreter_IsMenuTrigger(&p->_interpreter);
+    if((fi = stackTop()) && active)
+        return FinaleInterpreter_IsMenuTrigger(fi);
     return false;
 }
 
@@ -1099,15 +1071,10 @@ int FI_Responder(ddevent_t* ev)
 #endif
         return false;
     }
-    {fi_page_t* p;
-    if((p = stackTop()) && active)
-    {
-        // During the first ~second disallow all events/skipping.
-        if(p->timer < 20)
-            return false;
-
-        return FinaleInterpreter_Responder(&p->_interpreter, ev);
-    }}
+    {finaleinterpreter_t* fi;
+    if((fi = stackTop()) && active)
+        return FinaleInterpreter_Responder(fi, ev);
+    }
     return false;
 }
 
@@ -1124,17 +1091,17 @@ void FI_Drawer(void)
         return;
     }
 
-    {fi_page_t* p;
-    if((p = stackTop()) && active)
+    {finaleinterpreter_t* fi;
+    if((fi = stackTop()) && active)
     {
         // Don't draw anything until we are sure the script has started.
-        if(!FinaleInterpreter_CommandExecuted(&p->_interpreter))
+        if(!FinaleInterpreter_CommandExecuted(fi))
             return;
         // Don't draw anything if we are playing a demo.
-        if(FinaleInterpreter_IsSuspended(&p->_interpreter))
+        if(FinaleInterpreter_IsSuspended(fi))
             return;
 
-        pageDraw(p);
+        pageDraw(fi->_page);
     }}
 }
 
@@ -1623,7 +1590,7 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
 {
     assert(tex);
     {
-    fi_page_t* p = stackTop();
+    finaleinterpreter_t* fi = stackTop();
     int cnt, x = 0, y = 0;
     int ch, linew = -1;
     char* ptr;
@@ -1661,7 +1628,7 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
                 if(!colorIdx)
                     color = (animatorvector3_t*) &tex->color; // Use the default color.
                 else
-                    color = &p->textColor[colorIdx-1];
+                    color = &fi->_page->textColor[colorIdx-1];
 
                 glColor4f((*color)[0].value, (*color)[1].value, (*color)[2].value, tex->color[3].value);
                 continue;

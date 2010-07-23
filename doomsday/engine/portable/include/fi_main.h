@@ -37,7 +37,6 @@ void                FI_Drawer(void);
 
 int                 FI_SkipRequest(void);
 boolean             FI_CmdExecuted(void);
-finaleinterpreter_t* FI_ScriptInterpreter(void);
 void*               FI_ScriptExtraData(void);
 
 // We'll use the base template directly as our object.
@@ -57,9 +56,6 @@ typedef struct fi_page_s {
     // Known symbols (to this script).
     fi_namespace_t  _namespace;
 
-    // Interactive script interpreter.
-    finaleinterpreter_t _interpreter;
-
     struct material_s* bgMaterial;
     animatorvector4_t bgColor;
     animatorvector2_t imgOffset;
@@ -68,6 +64,8 @@ typedef struct fi_page_s {
 
     uint            timer;
 } fi_page_t;
+
+void                FIPage_RunTic(fi_page_t* page);
 
 fi_object_t*        FIPage_AddObject(fi_page_t* page, fi_object_t* obj);
 fi_object_t*        FIPage_RemoveObject(fi_page_t* page, fi_object_t* obj);
@@ -82,7 +80,5 @@ void                FIPage_SetImageOffsetY(fi_page_t* page, float y, int steps);
 void                FIPage_SetImageOffsetXY(fi_page_t* page, float x, float y, int steps);
 void                FIPage_SetFilterColorAndAlpha(fi_page_t* page, float red, float green, float blue, float alpha, int steps);
 void                FIPage_SetPredefinedColor(fi_page_t* page, uint idx, float red, float green, float blue, int steps);
-
-fi_page_t*          FI_PageStackTop(void);
 
 #endif /* LIBDENG_INFINE_MAIN_H */

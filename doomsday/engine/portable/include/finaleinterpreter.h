@@ -63,6 +63,7 @@ typedef struct finaleinterpreter_t {
     boolean         cmdExecuted; // Set to true after first command is executed.
     boolean         skipping, lastSkipped, gotoSkip, gotoEnd, skipNext;
     fi_objectname_t gotoTarget;
+    uint            timer;
     int             wait;
     int             inTime;
     struct fi_object_s* waitingText;
@@ -71,13 +72,21 @@ typedef struct finaleinterpreter_t {
     uint            numEventHandlers;
     fi_handler_t*   eventHandlers;
 
+    // The page all our objects are on.
+    struct fi_page_s* _page;
+
     int             initialGameState; // Game state before the script began.
     int             overlayGameState; // Overlay scripts run only in one gameMode.
     void*           extraData;
 } finaleinterpreter_t;
 
+finaleinterpreter_t* P_CreateFinaleInterpreter(void);
+void                P_DestroyFinaleInterpreter(finaleinterpreter_t* fi);
+
+boolean             FinaleInterpreter_RunTic(finaleinterpreter_t* fi);
+int                 FinaleInterpreter_Responder(finaleinterpreter_t* fi, ddevent_t* ev);
+
 void                FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, finale_mode_t mode, const char* script, int gameState, const void* extraData);
-void                FinaleInterpreter_StopScript(finaleinterpreter_t* fi);
 void                FinaleInterpreter_ReleaseScript(finaleinterpreter_t* fi);
 
 void*               FinaleInterpreter_ExtraData(finaleinterpreter_t* fi);
@@ -88,11 +97,7 @@ boolean             FinaleInterpreter_CommandExecuted(finaleinterpreter_t* fi);
 boolean             FinaleInterpreter_CanSkip(finaleinterpreter_t* fi);
 void                FinaleInterpreter_AllowSkip(finaleinterpreter_t* fi, boolean yes);
 
-boolean             FinaleInterpreter_RunTic(finaleinterpreter_t* fi);
-boolean             FinaleInterpreter_RunCommands(finaleinterpreter_t* fi);
 boolean             FinaleInterpreter_SkipToMarker(finaleinterpreter_t* fi, const char* marker);
 boolean             FinaleInterpreter_Skip(finaleinterpreter_t* fi);
-
-int                 FinaleInterpreter_Responder(finaleinterpreter_t* fi, ddevent_t* ev);
 
 #endif /* LIBDENG_FINALEINTERPRETER_H */
