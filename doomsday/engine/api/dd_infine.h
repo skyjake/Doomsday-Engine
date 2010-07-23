@@ -40,15 +40,15 @@ typedef enum infinemode_e {
     FIMODE_AFTER
 } finale_mode_t;
 
-boolean         FI_Active(void);
-boolean         FI_IsMenuTrigger(void);
-void            FI_Reset(void);
+boolean             FI_Active(void);
+boolean             FI_IsMenuTrigger(void);
+void                FI_Reset(void);
 
-void            FI_SetClientsideDefaultState(void* data);
-void*           FI_GetClientsideDefaultState(void);
+void                FI_SetClientsideDefaultState(void* data);
+void*               FI_GetClientsideDefaultState(void);
 
-boolean         FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, void* extraData);
-void            FI_ScriptTerminate(void);
+boolean             FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, void* extraData);
+void                FI_ScriptTerminate(void);
 
 typedef enum {
     FI_NONE,

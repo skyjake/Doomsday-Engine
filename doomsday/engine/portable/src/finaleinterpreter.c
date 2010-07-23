@@ -57,6 +57,23 @@
 
 // TYPES -------------------------------------------------------------------
 
+typedef enum {
+    FVT_INT,
+    FVT_FLOAT,
+    FVT_SCRIPT_STRING, // ptr points to a char*, which points to the string.
+    FVT_OBJECT
+} fi_operand_type_t;
+
+typedef struct {
+    fi_operand_type_t type;
+    union {
+        int         integer;
+        float       flt;
+        const char* cstring;
+        fi_object_t* obj;
+    } data;
+} fi_operand_t;
+
 typedef struct command_s {
     char*           token;
     const char*     operands;
@@ -426,7 +443,7 @@ static fi_operand_t* parseCommandArguments(finaleinterpreter_t* fi, const comman
             break;
             }
         case FVT_OBJECT:
-            op->data.obj = FI_Object(FI_FindObjectIdForName(FI_ScriptNamespace(), token, FI_NONE));
+            op->data.obj = FI_Object(FIPage_ObjectIdForName(FI_PageStackTop(), token, FI_NONE));
             break;
         }
     } while(++i < numOperands);}
@@ -541,15 +558,15 @@ static boolean executeNextCommand(finaleinterpreter_t* fi)
  *                          a) Existing object associated with unique @a name.
  *                          b) New object with unique @a name.
  */
-static fi_object_t* getObject(fi_obtype_e type, const char* name)
+static fi_object_t* getObject(fi_page_t* p, fi_obtype_e type, const char* name)
 {
     assert(name && name);
     {
     fi_objectid_t id;
     // An existing object?
-    if((id = FI_FindObjectIdForName(FI_ScriptNamespace(), name, type)))
+    if((id = FIPage_ObjectIdForName(p, name, type)))
         return FI_Object(id);
-    return FI_AddObjectInNamespace(FI_ScriptNamespace(), FI_NewObject(type, name));
+    return FIPage_AddObject(p, FI_NewObject(type, name));
     }
 }
 
@@ -869,17 +886,17 @@ DEFFC(End)
 
 DEFFC(BGFlat)
 {
-    FI_SetBackground(Materials_ToMaterial(Materials_CheckNumForName(ops[0].data.cstring, MN_FLATS)));
+    FIPage_SetBackground(FI_PageStackTop(), Materials_ToMaterial(Materials_CheckNumForName(ops[0].data.cstring, MN_FLATS)));
 }
 
 DEFFC(BGTexture)
 {
-    FI_SetBackground(Materials_ToMaterial(Materials_CheckNumForName(ops[0].data.cstring, MN_TEXTURES)));
+    FIPage_SetBackground(FI_PageStackTop(), Materials_ToMaterial(Materials_CheckNumForName(ops[0].data.cstring, MN_TEXTURES)));
 }
 
 DEFFC(NoBGMaterial)
 {
-    FI_SetBackground(NULL);
+    FIPage_SetBackground(FI_PageStackTop(), NULL);
 }
 
 DEFFC(InTime)
@@ -899,22 +916,22 @@ DEFFC(Wait)
 
 DEFFC(WaitText)
 {
-    fi->waitingText = getObject(FI_TEXT, ops[0].data.cstring);
+    fi->waitingText = getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
 }
 
 DEFFC(WaitAnim)
 {
-    fi->waitingPic = getObject(FI_PIC, ops[0].data.cstring);
+    fi->waitingPic = getObject(FI_PageStackTop(), FI_PIC, ops[0].data.cstring);
 }
 
 DEFFC(Color)
 {
-    FI_SetBackgroundColor(ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, fi->inTime);
+    FIPage_SetBackgroundColor(FI_PageStackTop(), ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, fi->inTime);
 }
 
 DEFFC(ColorAlpha)
 {
-    FI_SetBackgroundColorAndAlpha(ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->inTime);
+    FIPage_SetBackgroundColorAndAlpha(FI_PageStackTop(), ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->inTime);
 }
 
 DEFFC(Pause)
@@ -1052,7 +1069,7 @@ DEFFC(Delete)
 
 DEFFC(Image)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PIC, ops[0].data.cstring);
+    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PageStackTop(), FI_PIC, ops[0].data.cstring);
     const char* name = ops[1].data.cstring;
     lumpnum_t lumpNum;
 
@@ -1068,7 +1085,7 @@ DEFFC(Image)
 
 DEFFC(ImageAt)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PIC, ops[0].data.cstring);
+    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PageStackTop(), FI_PIC, ops[0].data.cstring);
     float x = ops[1].data.flt;
     float y = ops[2].data.flt;
     const char* name = ops[3].data.cstring;
@@ -1097,7 +1114,7 @@ static DGLuint loadGraphics(ddresourceclass_t resClass, const char* name,
 
 DEFFC(XImage)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PIC, ops[0].data.cstring);
+    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PageStackTop(), FI_PIC, ops[0].data.cstring);
     const char* fileName = ops[1].data.cstring;
     DGLuint tex;
 
@@ -1114,7 +1131,7 @@ DEFFC(XImage)
 
 DEFFC(Patch)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PIC, ops[0].data.cstring);
+    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PageStackTop(), FI_PIC, ops[0].data.cstring);
     float x = ops[1].data.flt;
     float y = ops[2].data.flt;
     const char* name = ops[3].data.cstring;
@@ -1133,7 +1150,7 @@ DEFFC(Patch)
 
 DEFFC(SetPatch)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PIC, ops[0].data.cstring);
+    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PageStackTop(), FI_PIC, ops[0].data.cstring);
     const char* name = ops[1].data.cstring;
     patchid_t patch;
 
@@ -1168,7 +1185,7 @@ DEFFC(ClearAnim)
 
 DEFFC(Anim)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PIC, ops[0].data.cstring);
+    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PageStackTop(), FI_PIC, ops[0].data.cstring);
     const char* name = ops[1].data.cstring;
     int tics = FRACSECS_TO_TICKS(ops[2].data.flt);
     patchid_t patch;
@@ -1185,7 +1202,7 @@ DEFFC(Anim)
 
 DEFFC(AnimImage)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PIC, ops[0].data.cstring);
+    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PageStackTop(), FI_PIC, ops[0].data.cstring);
     const char* name = ops[1].data.cstring;
     int tics = FRACSECS_TO_TICKS(ops[2].data.flt);
     lumpnum_t lumpNum;
@@ -1201,13 +1218,13 @@ DEFFC(AnimImage)
 
 DEFFC(Repeat)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PIC, ops[0].data.cstring);
+    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PageStackTop(), FI_PIC, ops[0].data.cstring);
     obj->flags.looping = true;
 }
 
 DEFFC(StateAnim)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PIC, ops[0].data.cstring);
+    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PageStackTop(), FI_PIC, ops[0].data.cstring);
     int stateId = Def_Get(DD_DEF_STATE, ops[1].data.cstring, 0);
     int count = ops[2].data.integer;
 
@@ -1228,7 +1245,7 @@ DEFFC(StateAnim)
 
 DEFFC(PicSound)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PIC, ops[0].data.cstring);
+    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PageStackTop(), FI_PIC, ops[0].data.cstring);
     int sound = Def_Get(DD_DEF_SOUND, ops[1].data.cstring, 0);
     if(!obj->numFrames)
     {
@@ -1389,7 +1406,7 @@ DEFFC(ObjectAngle)
 
 DEFFC(Rect)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PIC, ops[0].data.cstring);
+    fidata_pic_t* obj = (fidata_pic_t*) getObject(FI_PageStackTop(), FI_PIC, ops[0].data.cstring);
 
     /**
      * We may be converting an existing Pic to a Rect, so re-init the expected
@@ -1471,12 +1488,12 @@ DEFFC(EdgeColor)
 
 DEFFC(OffsetX)
 {
-    FI_SetImageOffsetX(ops[0].data.flt, fi->inTime);
+    FIPage_SetImageOffsetX(FI_PageStackTop(), ops[0].data.flt, fi->inTime);
 }
 
 DEFFC(OffsetY)
 {
-    FI_SetImageOffsetY(ops[0].data.flt, fi->inTime);
+    FIPage_SetImageOffsetY(FI_PageStackTop(), ops[0].data.flt, fi->inTime);
 }
 
 DEFFC(Sound)
@@ -1522,12 +1539,12 @@ DEFFC(MusicOnce)
 
 DEFFC(Filter)
 {
-    FI_SetFilterColorAndAlpha(ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->inTime);
+    FIPage_SetFilterColorAndAlpha(FI_PageStackTop(), ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->inTime);
 }
 
 DEFFC(Text)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     AnimatorVector3_Init(tex->pos, ops[1].data.flt, ops[2].data.flt, 0);
     FIData_TextCopy(tex, ops[3].data.cstring);
     tex->cursorPos = 0; // Restart the text.
@@ -1535,7 +1552,7 @@ DEFFC(Text)
 
 DEFFC(TextFromDef)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     char* str;
     AnimatorVector3_Init(tex->pos, ops[1].data.flt, ops[2].data.flt, 0);
     if(!Def_Get(DD_DEF_TEXT, (char*)ops[3].data.cstring, &str))
@@ -1546,7 +1563,7 @@ DEFFC(TextFromDef)
 
 DEFFC(TextFromLump)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     int lnum;
 
     AnimatorVector3_Init(tex->pos, ops[1].data.flt, ops[2].data.flt, 0);
@@ -1587,13 +1604,13 @@ DEFFC(TextFromLump)
 
 DEFFC(SetText)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     FIData_TextCopy(tex, ops[1].data.cstring);
 }
 
 DEFFC(SetTextDef)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     char* str;
     if(!Def_Get(DD_DEF_TEXT, ops[1].data.cstring, &str))
         str = "(undefined)"; // Not found!
@@ -1608,73 +1625,73 @@ DEFFC(DeleteText)
 
 DEFFC(PredefinedTextColor)
 {
-    FI_SetPredefinedColor(MINMAX_OF(1, ops[0].data.integer, 9)-1, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->inTime);
+    FIPage_SetPredefinedColor(FI_PageStackTop(), MINMAX_OF(1, ops[0].data.integer, 9)-1, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->inTime);
 }
 
 DEFFC(TextRGB)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     AnimatorVector3_Set(tex->color, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->inTime);
 }
 
 DEFFC(TextAlpha)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     Animator_Set(&tex->color[CA], ops[1].data.flt, fi->inTime);
 }
 
 DEFFC(TextOffX)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     Animator_Set(&tex->pos[0], ops[1].data.flt, fi->inTime);
 }
 
 DEFFC(TextOffY)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     Animator_Set(&tex->pos[1], ops[1].data.flt, fi->inTime);
 }
 
 DEFFC(TextCenter)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     tex->textFlags &= ~(DTF_ALIGN_LEFT|DTF_ALIGN_RIGHT);
 }
 
 DEFFC(TextNoCenter)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     tex->textFlags |= DTF_ALIGN_LEFT;
 }
 
 DEFFC(TextScroll)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     tex->scrollWait = ops[1].data.integer;
     tex->scrollTimer = 0;
 }
 
 DEFFC(TextPos)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     tex->cursorPos = ops[1].data.integer;
 }
 
 DEFFC(TextRate)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     tex->wait = ops[1].data.integer;
 }
 
 DEFFC(TextLineHeight)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     tex->lineheight = ops[1].data.flt;
 }
 
 DEFFC(Font)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     const char* fontName = ops[1].data.cstring;
     compositefontid_t font;
     if((font = R_CompositeFontNumForName(fontName)))
@@ -1687,13 +1704,13 @@ DEFFC(Font)
 
 DEFFC(FontA)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     tex->font = R_CompositeFontNumForName("a");
 }
 
 DEFFC(FontB)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     tex->font = R_CompositeFontNumForName("b");
 }
 
@@ -1705,19 +1722,19 @@ DEFFC(NoMusic)
 
 DEFFC(TextScaleX)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     Animator_Set(&tex->scale[0], ops[1].data.flt, fi->inTime);
 }
 
 DEFFC(TextScaleY)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     Animator_Set(&tex->scale[1], ops[1].data.flt, fi->inTime);
 }
 
 DEFFC(TextScale)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(FI_TEXT, ops[0].data.cstring);
+    fidata_text_t* tex = (fidata_text_t*) getObject(FI_PageStackTop(), FI_TEXT, ops[0].data.cstring);
     AnimatorVector2_Set(tex->scale, ops[1].data.flt, ops[2].data.flt, fi->inTime);
 }
 

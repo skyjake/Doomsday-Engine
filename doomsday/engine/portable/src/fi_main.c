@@ -55,33 +55,18 @@ typedef struct fi_object_collection_s {
     fi_object_t**   vector;
 } fi_object_collection_t;
 
-typedef struct fi_state_s {
-    finale_mode_t   mode;
-
-    // Interactive script interpreter.
-    finaleinterpreter_t _interpreter;
-
-    // Known symbols (to this script).
-    fi_namespace_t  _namespace;
-
-    int             timer;
-    material_t*     bgMaterial;
-    animatorvector4_t bgColor;
-    animatorvector2_t imgOffset;
-    animatorvector4_t filter;
-    animatorvector3_t textColor[9];
-
-    int             initialGameState; // Game state before the script began.
-    int             overlayGameState; // Overlay scripts run only in one gameMode.
-    void*           extraData;
-} fi_state_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 D_CMD(StartFinale);
 D_CMD(StopFinale);
+
+fidata_text_t*      P_CreateText(fi_objectid_t id, const char* name);
+void                P_DestroyText(fidata_text_t* text);
+
+fidata_pic_t*       P_CreatePic(fi_objectid_t id, const char* name);
+void                P_DestroyPic(fidata_pic_t* pic);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -91,20 +76,17 @@ static fi_objectid_t toObjectId(fi_namespace_t* names, const char* name, fi_obty
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-// Default color for Text objects.
-float fiDefaultTextRGB[3] = { 1, 1, 1 };
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean inited = false;
-static boolean active = false; // Interpreter active for the current stateStack top.
+static boolean active = false; // Interpreter active for the current pageStack top.
 
 // Allow stretching to fill the screen at near 4:3 aspect ratios?
 static byte noStretch = false;
 
-// Finale script/state collection.
-static uint numStates;
-static fi_state_t** stateStack;
+// Finale script/page collection.
+static uint numPages;
+static fi_page_t** pageStack;
 
 // Global Finale object store.
 static fi_object_collection_t objects;
@@ -191,7 +173,7 @@ static void drawObjectsInScope(fi_namespace_t* names, float picXOffset, float pi
 
 static fi_object_t* objectsAdd(fi_object_collection_t* c, fi_object_t* obj)
 {
-    // Link with this state.
+    // Link with this page.
     c->vector = Z_Realloc(c->vector, sizeof(*c->vector) * ++c->num, PU_STATIC);
     c->vector[c->num-1] = obj;
     return obj;
@@ -321,115 +303,115 @@ static fi_objectid_t objectsUniqueId(fi_object_collection_t* c)
     return id;
 }
 
-static void stateChangeMode(fi_state_t* s, finale_mode_t mode)
+static void pageChangeMode(fi_page_t* p, finale_mode_t mode)
 {
-    s->mode = mode;
+    p->mode = mode;
 }
 
-static void stateSetExtraData(fi_state_t* s, const void* data)
+static void pageSetExtraData(fi_page_t* p, const void* data)
 {
     if(!data)
         return;
-    if(!s->extraData || !(FINALE_SCRIPT_EXTRADATA_SIZE > 0))
+    if(!p->extraData || !(FINALE_SCRIPT_EXTRADATA_SIZE > 0))
         return;
-    memcpy(s->extraData, data, FINALE_SCRIPT_EXTRADATA_SIZE);
+    memcpy(p->extraData, data, FINALE_SCRIPT_EXTRADATA_SIZE);
 }
 
-static void stateSetInitialGameState(fi_state_t* s, int gameState, const void* clientState)
+static void pageSetInitialGameState(fi_page_t* p, int gameState, const void* clientState)
 {
-    s->initialGameState = gameState;
+    p->initialGameState = gameState;
 
     if(FINALE_SCRIPT_EXTRADATA_SIZE > 0)
     {
-        stateSetExtraData(s, &defaultState);
+        pageSetExtraData(p, &defaultState);
         if(clientState)
-            stateSetExtraData(s, clientState);
+            pageSetExtraData(p, clientState);
     }
 
-    if(s->mode == FIMODE_OVERLAY)
+    if(p->mode == FIMODE_OVERLAY)
     {   // Overlay scripts stop when the gameMode changes.
-        s->overlayGameState = gameState;
+        p->overlayGameState = gameState;
     }
 }
 
 /**
- * Clear the specified state to the default, blank state.
+ * Clear the specified page to the default, blank state.
  */
-static void stateClear(fi_state_t* s)
+static void pageClear(fi_page_t* p)
 {
-    s->timer = 0;
-    s->bgMaterial = NULL; // No background material.
+    p->timer = 0;
+    p->bgMaterial = NULL; // No background material.
 
-    destroyObjectsInScope(&s->_namespace);
+    destroyObjectsInScope(&p->_namespace);
 
-    AnimatorVector4_Init(s->filter, 0, 0, 0, 0);
-    AnimatorVector2_Init(s->imgOffset, 0, 0);  
-    AnimatorVector4_Init(s->bgColor, 1, 1, 1, 1);
+    AnimatorVector4_Init(p->filter, 0, 0, 0, 0);
+    AnimatorVector2_Init(p->imgOffset, 0, 0);  
+    AnimatorVector4_Init(p->bgColor, 1, 1, 1, 1);
     {uint i;
     for(i = 0; i < 9; ++i)
     {
-        AnimatorVector3_Init(s->textColor[i], 1, 1, 1);
+        AnimatorVector3_Init(p->textColor[i], 1, 1, 1);
     }}
 }
 
-static void stateInit(fi_state_t* s, finale_mode_t mode, int gameState, const void* clientState)
+static void pageInit(fi_page_t* p, finale_mode_t mode, int gameState, const void* clientState)
 {
-    stateClear(s);
-    stateChangeMode(s, mode);
-    stateSetInitialGameState(s, gameState, clientState);
+    pageClear(p);
+    pageChangeMode(p, mode);
+    pageSetInitialGameState(p, gameState, clientState);
 }
 
-static fi_state_t* newState(const char* scriptSrc)
+static fi_page_t* newPage(const char* scriptSrc)
 {
-    fi_state_t* s = Z_Calloc(sizeof(*s), PU_STATIC, 0);
-    FinaleInterpreter_LoadScript(&s->_interpreter, scriptSrc);
+    fi_page_t* p = Z_Calloc(sizeof(*p), PU_STATIC, 0);
+    FinaleInterpreter_LoadScript(&p->_interpreter, scriptSrc);
     active = true;
-    return s;
+    return p;
 }
 
-static void deleteState(fi_state_t* s)
+static void deletePage(fi_page_t* p)
 {
-    stateClear(s);
-    FinaleInterpreter_ReleaseScript(&s->_interpreter);
-    Z_Free(s);
+    pageClear(p);
+    FinaleInterpreter_ReleaseScript(&p->_interpreter);
+    Z_Free(p);
 }
 
-static __inline fi_state_t* stackTop(void)
+static __inline fi_page_t* stackTop(void)
 {
-    return (numStates == 0? 0 : stateStack[numStates-1]);
+    return (numPages == 0? 0 : pageStack[numPages-1]);
 }
 
-static fi_state_t* stackPush(fi_state_t* s)
+static fi_page_t* stackPush(fi_page_t* p)
 {
-    stateStack = Z_Realloc(stateStack, sizeof(*stateStack) * ++numStates, PU_STATIC);
-    stateStack[numStates-1] = s;
-    return s;
+    pageStack = Z_Realloc(pageStack, sizeof(*pageStack) * ++numPages, PU_STATIC);
+    pageStack[numPages-1] = p;
+    return p;
 }
 
 static boolean stackPop(void)
 {
-    fi_state_t* s = stackTop();
+    fi_page_t* p = stackTop();
 
-    if(!s)
+    if(!p)
     {
 #ifdef _DEBUG
-Con_Printf("InFine: Pop in NULL state!\n");
+Con_Printf("InFine: Attempt to pop empty stack\n");
 #endif
         return false;
     }
 
-    deleteState(s);
+    deletePage(p);
     
     // Should we go back to NULL?
-    if(numStates > 1)
+    if(numPages > 1)
     {   // Return to previous state.
-        stateStack = Z_Realloc(stateStack, sizeof(*stateStack) * --numStates, PU_STATIC);
+        pageStack = Z_Realloc(pageStack, sizeof(*pageStack) * --numPages, PU_STATIC);
         active = true;
     }
     else
     {
-        Z_Free(stateStack); stateStack = 0;
-        numStates = 0;
+        Z_Free(pageStack); pageStack = 0;
+        numPages = 0;
         active = false;
     }
     return active;
@@ -438,36 +420,34 @@ Con_Printf("InFine: Pop in NULL state!\n");
 /**
  * Stop playing the script and go to next game state.
  */
-static void scriptTerminate(fi_state_t* s)
+static void scriptTerminate(fi_page_t* p)
 {
-    ddhook_finale_script_stop_paramaters_t p;
     int oldMode;
 
     if(!active)
         return;
-    if(!FinaleInterpreter_CanSkip(&s->_interpreter))
+    if(!FinaleInterpreter_CanSkip(&p->_interpreter))
         return;
 
 #ifdef _DEBUG
-    Con_Printf("Finale End: mode=%i '%.30s'\n", s->mode, s->_interpreter.script);
+    Con_Printf("Finale End: mode=%i '%.30s'\n", p->mode, p->_interpreter.script);
 #endif
 
-    oldMode = s->mode;
-
-    memset(&p, 0, sizeof(p));
-    p.initialGameState = s->initialGameState;
-    p.extraData = s->extraData;
+    oldMode = p->mode;
 
     // This'll set fi to NULL.
     stackPop();
 
     if(oldMode != FIMODE_LOCAL)
-    {
-        // Tell clients to stop the finale.
+    {   // Tell clients to stop the finale.
         Sv_Finale(FINF_END, 0, NULL, 0);
     }
 
-    Plug_DoHook(HOOK_FINALE_SCRIPT_TERMINATE, oldMode, &p);
+    {ddhook_finale_script_stop_paramaters_t params;
+    memset(&params, 0, sizeof(params));
+    params.initialGameState = p->initialGameState;
+    params.extraData = p->extraData;
+    Plug_DoHook(HOOK_FINALE_SCRIPT_TERMINATE, oldMode, &params);}
 }
 
 static uint objectIndexInNamespace(fi_namespace_t* names, fi_object_t* obj)
@@ -483,6 +463,11 @@ static uint objectIndexInNamespace(fi_namespace_t* names, fi_object_t* obj)
         }
     }
     return 0;
+}
+
+static __inline boolean objectInNamespace(fi_namespace_t* names, fi_object_t* obj)
+{
+    return objectIndexInNamespace(names, obj) != 0;
 }
 
 /**
@@ -524,40 +509,39 @@ static fi_object_t* removeObjectInNamespace(fi_namespace_t* names, fi_object_t* 
     return obj;
 }
 
-static void scriptTick(fi_state_t* s)
+static void scriptTick(fi_page_t* p)
 {
-    ddhook_finale_script_ticker_paramaters_t p;
-    int i;
-
-    memset(&p, 0, sizeof(p));
-    p.runTick = true;
-    p.canSkip = FinaleInterpreter_CanSkip(&s->_interpreter);
-    p.gameState = (s->mode == FIMODE_OVERLAY? s->overlayGameState : s->initialGameState);
-    p.extraData = s->extraData;
-
-    Plug_DoHook(HOOK_FINALE_SCRIPT_TICKER, s->mode, &p);
-
-    if(!p.runTick)
+    ddhook_finale_script_ticker_paramaters_t params;
+ 
+    memset(&params, 0, sizeof(params));
+    params.runTick = true;
+    params.canSkip = FinaleInterpreter_CanSkip(&p->_interpreter);
+    params.gameState = (p->mode == FIMODE_OVERLAY? p->overlayGameState : p->initialGameState);
+    params.extraData = p->extraData;
+    Plug_DoHook(HOOK_FINALE_SCRIPT_TICKER, p->mode, &params);
+    if(!params.runTick)
         return;
 
     // Test again - a call to scriptTerminate in a hook may have stopped the script.
     if(!active)
         return;
 
-    s->timer++;
+    p->timer++;
 
     // Interpolateable values.
-    AnimatorVector4_Think(s->bgColor);
-    AnimatorVector2_Think(s->imgOffset);
-    AnimatorVector4_Think(s->filter);
+    AnimatorVector4_Think(p->bgColor);
+    AnimatorVector2_Think(p->imgOffset);
+    AnimatorVector4_Think(p->filter);
+    {uint i;
     for(i = 0; i < 9; ++i)
-        AnimatorVector3_Think(s->textColor[i]);
+        AnimatorVector3_Think(p->textColor[i]);
+    }
 
-    thinkObjectsInScope(&s->_namespace);
+    thinkObjectsInScope(&p->_namespace);
 
-    if(FinaleInterpreter_RunCommands(&s->_interpreter))
+    if(FinaleInterpreter_RunCommands(&p->_interpreter))
     {   // The script has ended!
-        scriptTerminate(s);
+        scriptTerminate(p);
     }
 }
 
@@ -569,30 +553,30 @@ static void rotate(float angle)
     glScalef(1, 240.0f / 200.0f, 1);
 }
 
-static void stateDraw(fi_state_t* s)
+static void pageDraw(fi_page_t* p)
 {
     // Draw the background.
-    if(s->bgMaterial)
+    if(p->bgMaterial)
     {
-        useColor(s->bgColor, 4);
-        DGL_SetMaterial(s->bgMaterial);
+        useColor(p->bgColor, 4);
+        DGL_SetMaterial(p->bgMaterial);
         DGL_DrawRectTiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
     }
-    else if(s->bgColor[3].value > 0)
+    else if(p->bgColor[3].value > 0)
     {
         // Just clear the screen, then.
         DGL_Disable(DGL_TEXTURING);
-        DGL_DrawRect(0, 0, SCREENWIDTH, SCREENHEIGHT, s->bgColor[0].value, s->bgColor[1].value, s->bgColor[2].value, s->bgColor[3].value);
+        DGL_DrawRect(0, 0, SCREENWIDTH, SCREENHEIGHT, p->bgColor[0].value, p->bgColor[1].value, p->bgColor[2].value, p->bgColor[3].value);
         DGL_Enable(DGL_TEXTURING);
     }
 
-    drawObjectsInScope(&s->_namespace, -s->imgOffset[0].value, -s->imgOffset[1].value);
+    drawObjectsInScope(&p->_namespace, -p->imgOffset[0].value, -p->imgOffset[1].value);
 
     // Filter on top of everything. Only draw if necessary.
-    if(s->filter[3].value > 0)
+    if(p->filter[3].value > 0)
     {
         DGL_Disable(DGL_TEXTURING);
-        useColor(s->filter, 4);
+        useColor(p->filter, 4);
 
         glBegin(GL_QUADS);
             glVertex2f(0, 0);
@@ -610,15 +594,15 @@ static void stateDraw(fi_state_t* s)
  */
 static void doReset(boolean doingShutdown)
 {
-    fi_state_t* s;
-    if((s = stackTop()) && active)
+    fi_page_t* p;
+    if((p = stackTop()) && active)
     {
         if(!doingShutdown)
         {
             // The state is suspended when the PlayDemo command is used.
             // Being suspended means that InFine is currently not active, but
             // will be restored at a later time.
-            if(s && FinaleInterpreter_Suspended(&s->_interpreter))
+            if(FinaleInterpreter_Suspended(&p->_interpreter))
                 return;
         }
 
@@ -715,13 +699,12 @@ void FIObject_Destructor(fi_object_t* obj)
 {
     assert(obj);
     // Destroy all references to this object in all scopes.
-    if(numStates)
+    if(numPages)
     {
         uint i;
-        for(i = 0; i < numStates; ++i)
+        for(i = 0; i < numPages; ++i)
         {
-            fi_state_t* s = stateStack[i];
-            removeObjectInNamespace(&s->_namespace, obj);
+            FIPage_RemoveObject(pageStack[i], obj);
         }
     }
     Z_Free(obj);
@@ -754,20 +737,13 @@ fidata_text_t* P_CreateText(fi_objectid_t id, const char* name)
 #define LEADING             (11.f/7-1)
 
     fidata_text_t* t = Z_Calloc(sizeof(*t), PU_STATIC, 0);
-    float rgba[4];
-
-    {int i;
-    for(i = 0; i < 3; ++i)
-        rgba[i] = fiDefaultTextRGB[i];
-    }
-    rgba[CA] = 1; // Opaque.
 
     // Initialize it.
     t->id = id;
     t->type = FI_TEXT;
     t->textFlags = DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS;
     objectSetName((fi_object_t*)t, name);
-    AnimatorVector4_Init(t->color, rgba[CR], rgba[CG], rgba[CB], rgba[CA]);
+    AnimatorVector4_Init(t->color, 1, 1, 1, 1);
     AnimatorVector3_Init(t->scale, 1, 1, 1);
 
     t->wait = 3;
@@ -802,7 +778,7 @@ void FIObject_Think(fi_object_t* obj)
 
 boolean FI_Active(void)
 {
-    fi_state_t* s;
+    fi_page_t* p;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -810,7 +786,7 @@ boolean FI_Active(void)
 #endif
         return false;
     }
-    if((s = stackTop()))
+    if((p = stackTop()))
     {
         return active;
     }
@@ -822,8 +798,8 @@ void FI_Init(void)
     if(inited)
         return; // Already been here.
     memset(&objects, 0, sizeof(objects));
-    numStates = 0;
-    stateStack = 0;
+    numPages = 0;
+    pageStack = 0;
 
     inited = true;
 }
@@ -840,7 +816,7 @@ void FI_Shutdown(void)
 
 boolean FI_CmdExecuted(void)
 {
-    fi_state_t* s;
+    fi_page_t* p;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -848,9 +824,9 @@ boolean FI_CmdExecuted(void)
 #endif
         return false;
     }
-    if((s = stackTop()))
+    if((p = stackTop()))
     {
-        return FinaleInterpreter_CommandExecuted(&s->_interpreter);
+        return FinaleInterpreter_CommandExecuted(&p->_interpreter);
     }
     return false;
 }
@@ -872,7 +848,7 @@ void FI_Reset(void)
  */
 boolean FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, void* clientState)
 {
-    fi_state_t* s;
+    fi_page_t* p;
 
     if(!inited)
     {
@@ -903,38 +879,38 @@ boolean FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState,
 #endif
 
     // Init InFine state.
-    s = stackPush(newState(scriptSrc));
-    stateInit(s, mode, gameState, clientState);
+    p = stackPush(newPage(scriptSrc));
+    pageInit(p, mode, gameState, clientState);
 
-    if(s->mode != FIMODE_LOCAL)
+    if(p->mode != FIMODE_LOCAL)
     {
-        int flags = FINF_BEGIN | (s->mode == FIMODE_AFTER ? FINF_AFTER : s->mode == FIMODE_OVERLAY ? FINF_OVERLAY : 0);
-        ddhook_finale_script_serialize_extradata_t p;
+        int flags = FINF_BEGIN | (p->mode == FIMODE_AFTER ? FINF_AFTER : p->mode == FIMODE_OVERLAY ? FINF_OVERLAY : 0);
+        ddhook_finale_script_serialize_extradata_t params;
         boolean haveExtraData = false;
 
-        memset(&p, 0, sizeof(p));
+        memset(&params, 0, sizeof(params));
 
-        if(s->extraData)
+        if(p->extraData)
         {
-            p.extraData = s->extraData;
-            p.outBuf = 0;
-            p.outBufSize = 0;
-            haveExtraData = Plug_DoHook(HOOK_FINALE_SCRIPT_SERIALIZE_EXTRADATA, 0, &p);
+            params.extraData = p->extraData;
+            params.outBuf = 0;
+            params.outBufSize = 0;
+            haveExtraData = Plug_DoHook(HOOK_FINALE_SCRIPT_SERIALIZE_EXTRADATA, 0, &params);
         }
 
         // Tell clients to start this script.
-        Sv_Finale(flags, scriptSrc, (haveExtraData? p.outBuf : 0), (haveExtraData? p.outBufSize : 0));
+        Sv_Finale(flags, scriptSrc, (haveExtraData? params.outBuf : 0), (haveExtraData? params.outBufSize : 0));
     }
 
     // Any hooks?
-    Plug_DoHook(HOOK_FINALE_SCRIPT_BEGIN, (int) s->mode, s->extraData);
+    Plug_DoHook(HOOK_FINALE_SCRIPT_BEGIN, (int) p->mode, p->extraData);
 
     return true;
 }
 
 void FI_ScriptTerminate(void)
 {
-    fi_state_t* s;
+    fi_page_t* p;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -942,10 +918,10 @@ void FI_ScriptTerminate(void)
 #endif
         return;
     }
-    if((s = stackTop()) && active)
+    if((p = stackTop()) && active)
     {
-        FinaleInterpreter_AllowSkip(&s->_interpreter, true);
-        scriptTerminate(s);
+        FinaleInterpreter_AllowSkip(&p->_interpreter, true);
+        scriptTerminate(p);
     }
 }
 
@@ -961,26 +937,9 @@ fi_object_t* FI_Object(fi_objectid_t id)
     return objectsById(&objects, id);
 }
 
-fi_namespace_t* FI_ScriptNamespace(void)
-{
-    fi_state_t* s;
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_ScriptNamespace: Not initialized yet!\n");
-#endif
-        return 0;
-    }
-    if((s = stackTop()))
-    {
-        return &s->_namespace;
-    }
-    return 0;
-}
-
 finaleinterpreter_t* FI_ScriptInterpreter(void)
 {
-    fi_state_t* s;
+    fi_page_t* p;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -988,16 +947,16 @@ finaleinterpreter_t* FI_ScriptInterpreter(void)
 #endif
         return 0;
     }
-    if((s = stackTop()))
+    if((p = stackTop()))
     {
-        return &s->_interpreter;
+        return &p->_interpreter;
     }
     return 0;
 }
 
 void* FI_ScriptExtraData(void)
 {
-    fi_state_t* s;
+    fi_page_t* p;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -1005,26 +964,11 @@ void* FI_ScriptExtraData(void)
 #endif
         return 0;
     }
-    if((s = stackTop()))
+    if((p = stackTop()))
     {
-        return s->extraData;
+        return p->extraData;
     }
     return 0;
-}
-
-fi_objectid_t FI_FindObjectIdForName(fi_namespace_t* names, const char* name, fi_obtype_e type)
-{
-    assert(names);
-    if(!name || !name[0])
-        return 0;
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_FindObjectIdForName: Not initialized yet!\n");
-#endif
-        return 0;
-    }
-    return toObjectId(names, name, type);
 }
 
 fi_object_t* FI_NewObject(fi_obtype_e type, const char* name)
@@ -1061,163 +1005,86 @@ void FI_DeleteObject(fi_object_t* obj)
     }
 }
 
-boolean FI_ObjectInNamespace(fi_namespace_t* names, fi_object_t* obj)
+fi_objectid_t FIPage_ObjectIdForName(fi_page_t* p, const char* name, fi_obtype_e type)
 {
-    assert(names);
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_ObjectInNamespace: Not initialized yet!\n");
-#endif
-        return false;
-    }
-    return objectIndexInNamespace(names, obj) != 0;
+    if(!p) Con_Error("FIPage_ObjectIdForName: Invalid page.");
+    if(!name || !name[0])
+        return 0;
+    return toObjectId(&p->_namespace, name, type);
 }
 
-fi_object_t* FI_AddObjectInNamespace(fi_namespace_t* names, fi_object_t* obj)
+boolean FIPage_HasObject(fi_page_t* p, fi_object_t* obj)
 {
-    assert(names);
-    if(!inited)
+    if(!p) Con_Error("FIPage_HasObject: Invalid page.");
+    return objectInNamespace(&p->_namespace, obj);
+}
+
+fi_object_t* FIPage_AddObject(fi_page_t* p, fi_object_t* obj)
+{
+    if(!p) Con_Error("FIPage_AddObject: Invalid page.");
+    if(obj && !objectIndexInNamespace(&p->_namespace, obj))
     {
-#ifdef _DEBUG
-        Con_Printf("FI_AddObjectToNamespace: Not initialized yet!\n");
-#endif
-        return obj;
-    }
-    if(obj && !objectIndexInNamespace(names, obj))
-    {
-        return addObjectToNamespace(names, obj);
+        return addObjectToNamespace(&p->_namespace, obj);
     }
     return obj;
 }
 
-fi_object_t* FI_RemoveObjectInNamespace(fi_namespace_t* names, fi_object_t* obj)
+fi_object_t* FIPage_RemoveObject(fi_page_t* p, fi_object_t* obj)
 {
-    assert(names);
-    if(!inited)
+    if(!p) Con_Error("FIPage_RemoveObject: Invalid page.");
+    if(obj && objectIndexInNamespace(&p->_namespace, obj))
     {
-#ifdef _DEBUG
-        Con_Printf("FI_AddObjectToNamespace: Not initialized yet!\n");
-#endif
-        return obj;
-    }
-    if(obj && objectIndexInNamespace(names, obj))
-    {
-        return removeObjectInNamespace(names, obj);
+        return removeObjectInNamespace(&p->_namespace, obj);
     }
     return obj;
 }
 
-void FI_SetBackground(material_t* mat)
+void FIPage_SetBackground(fi_page_t* p, material_t* mat)
 {
-    fi_state_t* s;
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_SetBackground: Not initialized yet!\n");
-#endif
-        return;
-    }
-    if((s = stackTop()))
-    {
-        s->bgMaterial = mat;
-    }
+    if(!p) Con_Error("FIPage_SetBackground: Invalid page.");
+    p->bgMaterial = mat;
 }
 
-void FI_SetBackgroundColor(float red, float green, float blue, int steps)
+void FIPage_SetBackgroundColor(fi_page_t* p, float red, float green, float blue, int steps)
 {
-    fi_state_t* s;
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_SetBackgroundColor: Not initialized yet!\n");
-#endif
-        return;
-    }
-    if((s = stackTop()))
-    {
-        AnimatorVector3_Set(s->bgColor, red, green, blue, steps);
-    }
+    if(!p) Con_Error("FIPage_SetBackgroundColor: Invalid page.");
+    AnimatorVector3_Set(p->bgColor, red, green, blue, steps);
 }
 
-void FI_SetBackgroundColorAndAlpha(float red, float green, float blue, float alpha, int steps)
+void FIPage_SetBackgroundColorAndAlpha(fi_page_t* p, float red, float green, float blue, float alpha, int steps)
 {
-    fi_state_t* s;
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_SetBackgroundColorAndAlpha: Not initialized yet!\n");
-#endif
-        return;
-    }
-    if((s = stackTop()))
-    {
-        AnimatorVector4_Set(s->bgColor, red, green, blue, alpha, steps);
-    }
+    if(!p) Con_Error("FIPage_SetBackgroundColorAndAlpha: Invalid page.");
+    AnimatorVector4_Set(p->bgColor, red, green, blue, alpha, steps);
 }
 
-void FI_SetImageOffsetX(float x, int steps)
+void FIPage_SetImageOffsetX(fi_page_t* p, float x, int steps)
 {
-    fi_state_t* s;
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_SetImageOffsetX: Not initialized yet!\n");
-#endif
-        return;
-    }
-    if((s = stackTop()))
-    {
-        Animator_Set(&s->imgOffset[0], x, steps);
-    }
+    if(!p) Con_Error("FIPage_SetImageOffsetX: Invalid page.");
+    Animator_Set(&p->imgOffset[0], x, steps);
 }
 
-void FI_SetImageOffsetY(float y, int steps)
+void FIPage_SetImageOffsetY(fi_page_t* p, float y, int steps)
 {
-    fi_state_t* s;
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_SetImageOffsetY: Not initialized yet!\n");
-#endif
-        return;
-    }
-    if((s = stackTop()))
-    {
-        Animator_Set(&s->imgOffset[1], y, steps);
-    }
+    if(!p) Con_Error("FIPage_SetImageOffsetY: Invalid page.");
+    Animator_Set(&p->imgOffset[1], y, steps);
 }
 
-void FI_SetFilterColorAndAlpha(float red, float green, float blue, float alpha, int steps)
+void FIPage_SetImageOffsetXY(fi_page_t* p, float x, float y, int steps)
 {
-    fi_state_t* s;
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_SetFilterColorAndAlpha: Not initialized yet!\n");
-#endif
-        return;
-    }
-    if((s = stackTop()))
-    {
-        AnimatorVector4_Set(s->filter, red, green, blue, alpha, steps);
-    }
+    if(!p) Con_Error("FIPage_SetImageOffsetXY: Invalid page.");
+    AnimatorVector2_Set(p->imgOffset, x, y, steps);
 }
 
-void FI_SetPredefinedColor(uint idx, float red, float green, float blue, int steps)
+void FIPage_SetFilterColorAndAlpha(fi_page_t* p, float red, float green, float blue, float alpha, int steps)
 {
-    fi_state_t* s;
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_SetPredefinedColor: Not initialized yet!\n");
-#endif
-        return;
-    }
-    if((s = stackTop()))
-    {
-        AnimatorVector3_Set(s->textColor[idx], red, green, blue, steps);
-    }
+    if(!p) Con_Error("FIPage_SetFilterColorAndAlpha: Invalid page.");
+    AnimatorVector4_Set(p->filter, red, green, blue, alpha, steps);
+}
+
+void FIPage_SetPredefinedColor(fi_page_t* p, uint idx, float red, float green, float blue, int steps)
+{
+    if(!p) Con_Error("FIPage_SetPredefinedColor: Invalid page.");
+    AnimatorVector3_Set(p->textColor[idx], red, green, blue, steps);
 }
 
 void* FI_GetClientsideDefaultState(void)
@@ -1266,13 +1133,13 @@ void FI_Ticker(timespan_t ticLength)
         return;
 
     // A new 'sharp' tick has begun.
-    {fi_state_t* s;
-    if((s = stackTop()) && active)
+    {fi_page_t* p;
+    if((p = stackTop()) && active)
     {
-        if(FinaleInterpreter_Suspended(&s->_interpreter))
+        if(FinaleInterpreter_Suspended(&p->_interpreter))
             return;
 
-        scriptTick(s);
+        scriptTick(p);
     }}
 }
 
@@ -1281,7 +1148,7 @@ void FI_Ticker(timespan_t ticLength)
  */
 int FI_SkipRequest(void)
 {
-    fi_state_t* s;
+    fi_page_t* p;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -1289,11 +1156,23 @@ int FI_SkipRequest(void)
 #endif
         return false;
     }
-    if((s = stackTop()))
+    if((p = stackTop()))
     {
-        return FinaleInterpreter_Skip(&s->_interpreter);
+        return FinaleInterpreter_Skip(&p->_interpreter);
     }
     return false;
+}
+
+fi_page_t* FI_PageStackTop(void)
+{
+    if(!inited)
+    {
+#ifdef _DEBUG
+        Con_Printf("FI_PageStackTop: Not initialized yet!\n");
+#endif
+        return 0;
+    }
+    return stackTop();
 }
 
 /**
@@ -1301,7 +1180,7 @@ int FI_SkipRequest(void)
  */
 boolean FI_IsMenuTrigger(void)
 {
-    fi_state_t* s;
+    fi_page_t* p;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -1309,8 +1188,8 @@ boolean FI_IsMenuTrigger(void)
 #endif
         return false;
     }
-    if((s = stackTop()) && active)
-        return FinaleInterpreter_IsMenuTrigger(&s->_interpreter);
+    if((p = stackTop()) && active)
+        return FinaleInterpreter_IsMenuTrigger(&p->_interpreter);
     return false;
 }
 
@@ -1323,14 +1202,14 @@ int FI_Responder(ddevent_t* ev)
 #endif
         return false;
     }
-    {fi_state_t* s;
-    if((s = stackTop()) && active)
+    {fi_page_t* p;
+    if((p = stackTop()) && active)
     {
         // During the first ~second disallow all events/skipping.
-        if(s->timer < 20)
+        if(p->timer < 20)
             return false;
 
-        return FinaleInterpreter_Responder(&s->_interpreter, ev);
+        return FinaleInterpreter_Responder(&p->_interpreter, ev);
     }}
     return false;
 }
@@ -1348,17 +1227,17 @@ void FI_Drawer(void)
         return;
     }
 
-    {fi_state_t* s;
-    if((s = stackTop()) && active)
+    {fi_page_t* p;
+    if((p = stackTop()) && active)
     {
         // Don't draw anything until we are sure the script has started.
-        if(!FinaleInterpreter_CommandExecuted(&s->_interpreter))
+        if(!FinaleInterpreter_CommandExecuted(&p->_interpreter))
             return;
         // Don't draw anything if we are playing a demo.
-        if(FinaleInterpreter_Suspended(&s->_interpreter))
+        if(FinaleInterpreter_Suspended(&p->_interpreter))
             return;
 
-        stateDraw(s);
+        pageDraw(p);
     }}
 }
 
@@ -1847,7 +1726,7 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
 {
     assert(tex);
     {
-    fi_state_t* s = stackTop();
+    fi_page_t* p = stackTop();
     int cnt, x = 0, y = 0;
     int ch, linew = -1;
     char* ptr;
@@ -1885,7 +1764,7 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
                 if(!colorIdx)
                     color = (animatorvector3_t*) &tex->color; // Use the default color.
                 else
-                    color = &s->textColor[colorIdx-1];
+                    color = &p->textColor[colorIdx-1];
 
                 glColor4f((*color)[0].value, (*color)[1].value, (*color)[2].value, tex->color[3].value);
                 continue;
