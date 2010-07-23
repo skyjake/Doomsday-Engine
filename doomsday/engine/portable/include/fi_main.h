@@ -27,22 +27,6 @@
 
 #include "finaleinterpreter.h"
 
-/**
- * @defgroup playsimServerFinaleFlags Play-simulation Server-side Finale Flags.
- *
- * Packet: PSV_FINALE Finale flags. Used with GPT_FINALE and GPT_FINALE2
- */
-/*@{*/
-#define FINF_BEGIN          0x01
-#define FINF_END            0x02
-#define FINF_SCRIPT         0x04   // Script included.
-#define FINF_AFTER          0x08   // Otherwise before.
-#define FINF_SKIP           0x10
-#define FINF_OVERLAY        0x20   // Otherwise before (or after).
-/*@}*/
-
-#define FINALE_SCRIPT_EXTRADATA_SIZE      gx.finaleConditionsSize
-
 void                FI_Register(void);
 void                FI_Init(void);
 void                FI_Shutdown(void);
@@ -70,14 +54,11 @@ typedef struct fi_namespace_s {
 } fi_namespace_t;
 
 typedef struct fi_page_s {
-    finale_mode_t   mode;
-    uint            timer;
+    // Known symbols (to this script).
+    fi_namespace_t  _namespace;
 
     // Interactive script interpreter.
     finaleinterpreter_t _interpreter;
-
-    // Known symbols (to this script).
-    fi_namespace_t  _namespace;
 
     struct material_s* bgMaterial;
     animatorvector4_t bgColor;
@@ -85,9 +66,7 @@ typedef struct fi_page_s {
     animatorvector4_t filter;
     animatorvector3_t textColor[9];
 
-    int             initialGameState; // Game state before the script began.
-    int             overlayGameState; // Overlay scripts run only in one gameMode.
-    void*           extraData;
+    uint            timer;
 } fi_page_t;
 
 fi_object_t*        FIPage_AddObject(fi_page_t* page, fi_object_t* obj);

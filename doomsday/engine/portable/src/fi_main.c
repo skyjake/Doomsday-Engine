@@ -91,8 +91,6 @@ static fi_page_t** pageStack;
 // Global Finale object store.
 static fi_object_collection_t objects;
 
-static void* defaultState = 0;
-
 // CODE --------------------------------------------------------------------
 
 /**
@@ -303,37 +301,6 @@ static fi_objectid_t objectsUniqueId(fi_object_collection_t* c)
     return id;
 }
 
-static void pageChangeMode(fi_page_t* p, finale_mode_t mode)
-{
-    p->mode = mode;
-}
-
-static void pageSetExtraData(fi_page_t* p, const void* data)
-{
-    if(!data)
-        return;
-    if(!p->extraData || !(FINALE_SCRIPT_EXTRADATA_SIZE > 0))
-        return;
-    memcpy(p->extraData, data, FINALE_SCRIPT_EXTRADATA_SIZE);
-}
-
-static void pageSetInitialGameState(fi_page_t* p, int gameState, const void* clientState)
-{
-    p->initialGameState = gameState;
-
-    if(FINALE_SCRIPT_EXTRADATA_SIZE > 0)
-    {
-        pageSetExtraData(p, &defaultState);
-        if(clientState)
-            pageSetExtraData(p, clientState);
-    }
-
-    if(p->mode == FIMODE_OVERLAY)
-    {   // Overlay scripts stop when the gameMode changes.
-        p->overlayGameState = gameState;
-    }
-}
-
 /**
  * Clear the specified page to the default, blank state.
  */
@@ -354,17 +321,11 @@ static void pageClear(fi_page_t* p)
     }}
 }
 
-static void pageInit(fi_page_t* p, finale_mode_t mode, int gameState, const void* clientState)
-{
-    pageClear(p);
-    pageChangeMode(p, mode);
-    pageSetInitialGameState(p, gameState, clientState);
-}
-
-static fi_page_t* newPage(const char* scriptSrc)
+static fi_page_t* newPage(const char* scriptSrc, finale_mode_t mode, int gameState, const void* extraData)
 {
     fi_page_t* p = Z_Calloc(sizeof(*p), PU_STATIC, 0);
-    FinaleInterpreter_LoadScript(&p->_interpreter, scriptSrc);
+    pageClear(p);
+    FinaleInterpreter_LoadScript(&p->_interpreter, mode, scriptSrc, gameState, extraData);
     active = true;
     return p;
 }
@@ -372,7 +333,6 @@ static fi_page_t* newPage(const char* scriptSrc)
 static void deletePage(fi_page_t* p)
 {
     pageClear(p);
-    FinaleInterpreter_ReleaseScript(&p->_interpreter);
     Z_Free(p);
 }
 
@@ -400,8 +360,6 @@ Con_Printf("InFine: Attempt to pop empty stack\n");
         return false;
     }
 
-    deletePage(p);
-    
     // Should we go back to NULL?
     if(numPages > 1)
     {   // Return to previous state.
@@ -414,6 +372,11 @@ Con_Printf("InFine: Attempt to pop empty stack\n");
         numPages = 0;
         active = false;
     }
+
+    FinaleInterpreter_StopScript(&p->_interpreter);
+    FinaleInterpreter_ReleaseScript(&p->_interpreter);
+    deletePage(p);
+
     return active;
 }
 
@@ -422,32 +385,27 @@ Con_Printf("InFine: Attempt to pop empty stack\n");
  */
 static void scriptTerminate(fi_page_t* p)
 {
-    int oldMode;
-
     if(!active)
         return;
     if(!FinaleInterpreter_CanSkip(&p->_interpreter))
         return;
 
-#ifdef _DEBUG
-    Con_Printf("Finale End: mode=%i '%.30s'\n", p->mode, p->_interpreter.script);
-#endif
-
-    oldMode = p->mode;
-
-    // This'll set fi to NULL.
-    stackPop();
-
-    if(oldMode != FIMODE_LOCAL)
-    {   // Tell clients to stop the finale.
-        Sv_Finale(FINF_END, 0, NULL, 0);
+    // Should we go back to NULL?
+    if(numPages > 1)
+    {   // Return to previous state.
+        pageStack = Z_Realloc(pageStack, sizeof(*pageStack) * --numPages, PU_STATIC);
+        active = true;
+    }
+    else
+    {
+        Z_Free(pageStack); pageStack = 0;
+        numPages = 0;
+        active = false;
     }
 
-    {ddhook_finale_script_stop_paramaters_t params;
-    memset(&params, 0, sizeof(params));
-    params.initialGameState = p->initialGameState;
-    params.extraData = p->extraData;
-    Plug_DoHook(HOOK_FINALE_SCRIPT_TERMINATE, oldMode, &params);}
+    FinaleInterpreter_StopScript(&p->_interpreter);
+    FinaleInterpreter_ReleaseScript(&p->_interpreter);
+    deletePage(p);
 }
 
 static uint objectIndexInNamespace(fi_namespace_t* names, fi_object_t* obj)
@@ -511,15 +469,7 @@ static fi_object_t* removeObjectInNamespace(fi_namespace_t* names, fi_object_t* 
 
 static void scriptTick(fi_page_t* p)
 {
-    ddhook_finale_script_ticker_paramaters_t params;
- 
-    memset(&params, 0, sizeof(params));
-    params.runTick = true;
-    params.canSkip = FinaleInterpreter_CanSkip(&p->_interpreter);
-    params.gameState = (p->mode == FIMODE_OVERLAY? p->overlayGameState : p->initialGameState);
-    params.extraData = p->extraData;
-    Plug_DoHook(HOOK_FINALE_SCRIPT_TICKER, p->mode, &params);
-    if(!params.runTick)
+    if(!FinaleInterpreter_RunTic(&p->_interpreter))
         return;
 
     // Test again - a call to scriptTerminate in a hook may have stopped the script.
@@ -602,7 +552,7 @@ static void doReset(boolean doingShutdown)
             // The state is suspended when the PlayDemo command is used.
             // Being suspended means that InFine is currently not active, but
             // will be restored at a later time.
-            if(FinaleInterpreter_Suspended(&p->_interpreter))
+            if(FinaleInterpreter_IsSuspended(&p->_interpreter))
                 return;
         }
 
@@ -879,31 +829,7 @@ boolean FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState,
 #endif
 
     // Init InFine state.
-    p = stackPush(newPage(scriptSrc));
-    pageInit(p, mode, gameState, clientState);
-
-    if(p->mode != FIMODE_LOCAL)
-    {
-        int flags = FINF_BEGIN | (p->mode == FIMODE_AFTER ? FINF_AFTER : p->mode == FIMODE_OVERLAY ? FINF_OVERLAY : 0);
-        ddhook_finale_script_serialize_extradata_t params;
-        boolean haveExtraData = false;
-
-        memset(&params, 0, sizeof(params));
-
-        if(p->extraData)
-        {
-            params.extraData = p->extraData;
-            params.outBuf = 0;
-            params.outBufSize = 0;
-            haveExtraData = Plug_DoHook(HOOK_FINALE_SCRIPT_SERIALIZE_EXTRADATA, 0, &params);
-        }
-
-        // Tell clients to start this script.
-        Sv_Finale(flags, scriptSrc, (haveExtraData? params.outBuf : 0), (haveExtraData? params.outBufSize : 0));
-    }
-
-    // Any hooks?
-    Plug_DoHook(HOOK_FINALE_SCRIPT_BEGIN, (int) p->mode, p->extraData);
+    p = stackPush(newPage(scriptSrc, mode, gameState, clientState));
 
     return true;
 }
@@ -966,7 +892,7 @@ void* FI_ScriptExtraData(void)
     }
     if((p = stackTop()))
     {
-        return p->extraData;
+        return FinaleInterpreter_ExtraData(&p->_interpreter);
     }
     return 0;
 }
@@ -1087,35 +1013,6 @@ void FIPage_SetPredefinedColor(fi_page_t* p, uint idx, float red, float green, f
     AnimatorVector3_Set(p->textColor[idx], red, green, blue, steps);
 }
 
-void* FI_GetClientsideDefaultState(void)
-{
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_GetClientsideDefaultState: Not initialized yet!\n");
-#endif
-        return 0;
-    }
-    return &defaultState;
-}
-
-/**
- * Set the truth conditions.
- * Used by clients after they've received a PSV_FINALE2 packet.
- */
-void FI_SetClientsideDefaultState(void* data)
-{
-    assert(data);
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_SetClientsideDefaultState: Not initialized yet!\n");
-#endif
-        return;
-    }
-    memcpy(&defaultState, data, sizeof(FINALE_SCRIPT_EXTRADATA_SIZE));
-}
-
 void FI_Ticker(timespan_t ticLength)
 {
     // Always tic.
@@ -1136,7 +1033,7 @@ void FI_Ticker(timespan_t ticLength)
     {fi_page_t* p;
     if((p = stackTop()) && active)
     {
-        if(FinaleInterpreter_Suspended(&p->_interpreter))
+        if(FinaleInterpreter_IsSuspended(&p->_interpreter))
             return;
 
         scriptTick(p);
@@ -1234,7 +1131,7 @@ void FI_Drawer(void)
         if(!FinaleInterpreter_CommandExecuted(&p->_interpreter))
             return;
         // Don't draw anything if we are playing a demo.
-        if(FinaleInterpreter_Suspended(&p->_interpreter))
+        if(FinaleInterpreter_IsSuspended(&p->_interpreter))
             return;
 
         pageDraw(p);

@@ -307,8 +307,40 @@ static command_t commands[] = {
 };
 
 static char token[MAX_TOKEN_LEN]; /// \todo token should be allocated (and owned) by the script parser!
+static void* defaultState = 0;
 
 // CODE --------------------------------------------------------------------
+
+static void changeMode(finaleinterpreter_t* fi, finale_mode_t mode)
+{
+    fi->mode = mode;
+}
+
+static void setExtraData(finaleinterpreter_t* fi, const void* data)
+{
+    if(!data)
+        return;
+    if(!fi->extraData || !(FINALE_SCRIPT_EXTRADATA_SIZE > 0))
+        return;
+    memcpy(fi->extraData, data, FINALE_SCRIPT_EXTRADATA_SIZE);
+}
+
+static void setInitialGameState(finaleinterpreter_t* fi, int gameState, const void* extraData)
+{
+    fi->initialGameState = gameState;
+
+    if(FINALE_SCRIPT_EXTRADATA_SIZE > 0)
+    {
+        setExtraData(fi, &defaultState);
+        if(extraData)
+            setExtraData(fi, extraData);
+    }
+
+    if(fi->mode == FIMODE_OVERLAY)
+    {   // Overlay scripts stop when the gameMode changes.
+        fi->overlayGameState = gameState;
+    }
+}
 
 static command_t* findCommand(const char* name)
 {
@@ -677,41 +709,15 @@ static boolean getEventHandler(finaleinterpreter_t* fi, const ddevent_t* ev, con
     return true;
 }
 
-boolean FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t* fi)
-{
-    assert(fi);
-    return (fi->flags.show_menu != 0);
-}
-
-boolean FinaleInterpreter_Suspended(finaleinterpreter_t* fi)
-{
-    assert(fi);
-    return (fi->flags.suspended != 0);
-}
-
-void FinaleInterpreter_AllowSkip(finaleinterpreter_t* fi, boolean yes)
-{
-    assert(fi);
-    fi->flags.can_skip = yes;
-}
-
-boolean FinaleInterpreter_CanSkip(finaleinterpreter_t* fi)
-{
-    assert(fi);
-    return (fi->flags.can_skip != 0);
-}
-
-boolean FinaleInterpreter_CommandExecuted(finaleinterpreter_t* fi)
-{
-    assert(fi);
-    return fi->cmdExecuted;
-}
-
-void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, const char* script)
+void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, finale_mode_t mode, const char* script,
+    int gameState, const void* extraData)
 {
     assert(fi && script && script[0]);
     {
     size_t size = strlen(script);
+
+    changeMode(fi, mode);
+    setInitialGameState(fi, gameState, extraData);
 
     // Take a copy of the script.
     fi->script = Z_Realloc(fi->script, size + 1, PU_STATIC);
@@ -736,14 +742,115 @@ void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, const char* script)
     memset(fi->gotoTarget, 0, sizeof(fi->gotoTarget));
 
     clearEventHandlers(fi);
+
+    if(fi->mode != FIMODE_LOCAL)
+    {
+        int flags = FINF_BEGIN | (fi->mode == FIMODE_AFTER ? FINF_AFTER : fi->mode == FIMODE_OVERLAY ? FINF_OVERLAY : 0);
+        ddhook_finale_script_serialize_extradata_t params;
+        boolean haveExtraData = false;
+
+        memset(&params, 0, sizeof(params));
+
+        if(fi->extraData)
+        {
+            params.extraData = fi->extraData;
+            params.outBuf = 0;
+            params.outBufSize = 0;
+            haveExtraData = Plug_DoHook(HOOK_FINALE_SCRIPT_SERIALIZE_EXTRADATA, 0, &params);
+        }
+
+        // Tell clients to start this script.
+        Sv_Finale(flags, fi->script, (haveExtraData? params.outBuf : 0), (haveExtraData? params.outBufSize : 0));
     }
+
+    // Any hooks?
+    Plug_DoHook(HOOK_FINALE_SCRIPT_BEGIN, (int) fi->mode, fi->extraData);
+    }
+}
+
+void FinaleInterpreter_StopScript(finaleinterpreter_t* fi)
+{
+    assert(fi);
+
+#ifdef _DEBUG
+    Con_Printf("Finale End: mode=%i '%.30s'\n", fi->mode, fi->script);
+#endif
+
+    fi->flags.stopped = true;
+
+    if(isServer && fi->mode != FIMODE_LOCAL)
+    {   // Tell clients to stop the finale.
+        Sv_Finale(FINF_END, 0, NULL, 0);
+    }
+
+    // Any hooks?
+    {ddhook_finale_script_stop_paramaters_t params;
+    memset(&params, 0, sizeof(params));
+    params.initialGameState = fi->initialGameState;
+    params.extraData = fi->extraData;
+    Plug_DoHook(HOOK_FINALE_SCRIPT_TERMINATE, fi->mode, &params);} 
 }
 
 void FinaleInterpreter_ReleaseScript(finaleinterpreter_t* fi)
 {
     assert(fi);
-    releaseScript(fi);
+    if(!fi->flags.stopped)
+    {
+        FinaleInterpreter_StopScript(fi);
+    }
     clearEventHandlers(fi);
+    releaseScript(fi);
+}
+
+void* FinaleInterpreter_ExtraData(finaleinterpreter_t* fi)
+{
+    assert(fi);
+    return fi->extraData;
+}
+
+boolean FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t* fi)
+{
+    assert(fi);
+    return (fi->flags.show_menu != 0);
+}
+
+boolean FinaleInterpreter_IsSuspended(finaleinterpreter_t* fi)
+{
+    assert(fi);
+    return (fi->flags.suspended != 0);
+}
+
+void FinaleInterpreter_AllowSkip(finaleinterpreter_t* fi, boolean yes)
+{
+    assert(fi);
+    fi->flags.can_skip = yes;
+}
+
+boolean FinaleInterpreter_CanSkip(finaleinterpreter_t* fi)
+{
+    assert(fi);
+    return (fi->flags.can_skip != 0);
+}
+
+boolean FinaleInterpreter_CommandExecuted(finaleinterpreter_t* fi)
+{
+    assert(fi);
+    return fi->cmdExecuted;
+}
+
+boolean FinaleInterpreter_RunTic(finaleinterpreter_t* fi)
+{
+    assert(fi);
+    {
+    ddhook_finale_script_ticker_paramaters_t params;
+    memset(&params, 0, sizeof(params));
+    params.runTick = true;
+    params.canSkip = FinaleInterpreter_CanSkip(fi);
+    params.gameState = (fi->mode == FIMODE_OVERLAY? fi->overlayGameState : fi->initialGameState);
+    params.extraData = fi->extraData;
+    Plug_DoHook(HOOK_FINALE_SCRIPT_TICKER, fi->mode, &params);
+    return params.runTick;
+    }
 }
 
 boolean FinaleInterpreter_RunCommands(finaleinterpreter_t* fi)
@@ -865,6 +972,21 @@ int FinaleInterpreter_Responder(finaleinterpreter_t* fi, ddevent_t* ev)
     // Servers tell clients to skip.
     Sv_Finale(FINF_SKIP, 0, NULL, 0);
     return FinaleInterpreter_Skip(fi);
+}
+
+void* FI_GetClientsideDefaultState(void)
+{
+    return &defaultState;
+}
+
+/**
+ * Set the truth conditions.
+ * Used by clients after they've received a PSV_FINALE2 packet.
+ */
+void FI_SetClientsideDefaultState(void* data)
+{
+    assert(data);
+    memcpy(&defaultState, data, sizeof(FINALE_SCRIPT_EXTRADATA_SIZE));
 }
 
 DEFFC(Do)

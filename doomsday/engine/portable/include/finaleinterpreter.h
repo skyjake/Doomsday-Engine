@@ -25,6 +25,22 @@
 #ifndef LIBDENG_FINALEINTERPRETER_H
 #define LIBDENG_FINALEINTERPRETER_H
 
+/**
+ * @defgroup playsimServerFinaleFlags Play-simulation Server-side Finale Flags.
+ *
+ * Packet: PSV_FINALE Finale flags. Used with GPT_FINALE and GPT_FINALE2
+ */
+/*@{*/
+#define FINF_BEGIN          0x01
+#define FINF_END            0x02
+#define FINF_SCRIPT         0x04   // Script included.
+#define FINF_AFTER          0x08   // Otherwise before.
+#define FINF_SKIP           0x10
+#define FINF_OVERLAY        0x20   // Otherwise before (or after).
+/*@}*/
+
+#define FINALE_SCRIPT_EXTRADATA_SIZE      gx.finaleConditionsSize
+
 /// \todo Should be private.
 typedef struct fi_handler_s {
     ddevent_t       ev; // Template.
@@ -32,7 +48,9 @@ typedef struct fi_handler_s {
 } fi_handler_t;
 
 typedef struct finaleinterpreter_t {
+    finale_mode_t   mode;
     struct finaleinterpreter_flags_s {
+        char            stopped:1;
         char            can_skip:1;
         char            suspended:1;
         char            paused:1;
@@ -52,16 +70,25 @@ typedef struct finaleinterpreter_t {
 
     uint            numEventHandlers;
     fi_handler_t*   eventHandlers;
+
+    int             initialGameState; // Game state before the script began.
+    int             overlayGameState; // Overlay scripts run only in one gameMode.
+    void*           extraData;
 } finaleinterpreter_t;
 
-void                FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, const char* script);
+void                FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, finale_mode_t mode, const char* script, int gameState, const void* extraData);
+void                FinaleInterpreter_StopScript(finaleinterpreter_t* fi);
 void                FinaleInterpreter_ReleaseScript(finaleinterpreter_t* fi);
+
+void*               FinaleInterpreter_ExtraData(finaleinterpreter_t* fi);
+
 boolean             FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t* fi);
-boolean             FinaleInterpreter_Suspended(finaleinterpreter_t* fi);
+boolean             FinaleInterpreter_IsSuspended(finaleinterpreter_t* fi);
 boolean             FinaleInterpreter_CommandExecuted(finaleinterpreter_t* fi);
 boolean             FinaleInterpreter_CanSkip(finaleinterpreter_t* fi);
 void                FinaleInterpreter_AllowSkip(finaleinterpreter_t* fi, boolean yes);
 
+boolean             FinaleInterpreter_RunTic(finaleinterpreter_t* fi);
 boolean             FinaleInterpreter_RunCommands(finaleinterpreter_t* fi);
 boolean             FinaleInterpreter_SkipToMarker(finaleinterpreter_t* fi, const char* marker);
 boolean             FinaleInterpreter_Skip(finaleinterpreter_t* fi);
