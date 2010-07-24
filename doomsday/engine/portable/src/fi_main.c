@@ -50,11 +50,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct fi_object_collection_s {
-    uint            num;
-    fi_object_t**   vector;
-} fi_object_collection_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -69,8 +64,6 @@ fidata_pic_t*       P_CreatePic(fi_objectid_t id, const char* name);
 void                P_DestroyPic(fidata_pic_t* pic);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static fi_objectid_t toObjectId(fi_namespace_t* names, const char* name, fi_obtype_e type);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -120,15 +113,15 @@ static void useColor(animator_t *color, int components)
 
 static void objectSetName(fi_object_t* obj, const char* name)
 {
-    strncpy(obj->name, name, sizeof(obj->name) - 1);
+    dd_snprintf(obj->name, FI_NAME_MAX_LENGTH, "%s", name);
 }
 
-static void thinkObjectsInScope(fi_namespace_t* names)
+static void thinkObjectsInScope(fi_object_collection_t* c)
 {
     uint i;
-    for(i = 0; i < names->num; ++i)
+    for(i = 0; i < c->num; ++i)
     {
-        fi_object_t* obj = names->vector[i];
+        fi_object_t* obj = c->vector[i];
         switch(obj->type)
         {
         case FI_PIC:    FIData_PicThink((fidata_pic_t*)obj);    break;
@@ -138,13 +131,13 @@ static void thinkObjectsInScope(fi_namespace_t* names)
     }
 }
 
-static void drawObjectsInScope2(fi_namespace_t* names, fi_obtype_e type, float picOffsetX, float picOffsetY)
+static void drawObjectsInScope2(fi_object_collection_t* c, fi_obtype_e type, float picOffsetX, float picOffsetY)
 {
     static const vec3_t worldOrigin = { 0, 0, 0 };
     uint i;
-    for(i = 0; i < names->num; ++i)
+    for(i = 0; i < c->num; ++i)
     {
-        fi_object_t* obj = names->vector[i];
+        fi_object_t* obj = c->vector[i];
         if(obj->type != type)
             continue;
         switch(obj->type)
@@ -162,45 +155,70 @@ static void drawObjectsInScope2(fi_namespace_t* names, fi_obtype_e type, float p
     }
 }
 
-static void drawObjectsInScope(fi_namespace_t* names, float picXOffset, float picYOffset)
+static void drawObjectsInScope(fi_object_collection_t* c, float picXOffset, float picYOffset)
 {
     // Images first, then text.
-    drawObjectsInScope2(names, FI_PIC, picXOffset, picYOffset);
-    drawObjectsInScope2(names, FI_TEXT, 0, 0);
+    drawObjectsInScope2(c, FI_PIC, picXOffset, picYOffset);
+    drawObjectsInScope2(c, FI_TEXT, 0, 0);
 }
 
+static uint objectsToIndex(fi_object_collection_t* c, fi_object_t* obj)
+{
+    if(obj)
+    {
+        uint i;
+        for(i = 0; i < c->num; ++i)
+        {
+            fi_object_t* other = c->vector[i];
+            if(other == obj)
+                return i+1;
+        }
+    }
+    return 0;
+}
+
+static __inline boolean objectsIsPresent(fi_object_collection_t* c, fi_object_t* obj)
+{
+    return objectsToIndex(c, obj) != 0;
+}
+
+/**
+ * Does not check if the object already exists in this scope. Assumes the caller
+ * knows what they are doing.
+ */
 static fi_object_t* objectsAdd(fi_object_collection_t* c, fi_object_t* obj)
 {
-    // Link with this page.
     c->vector = Z_Realloc(c->vector, sizeof(*c->vector) * ++c->num, PU_STATIC);
     c->vector[c->num-1] = obj;
     return obj;
 }
 
-static void objectsRemove(fi_object_collection_t* c, fi_object_t* obj)
+/**
+ * Assumes there is at most one reference to the obj in the scope and that the
+ * caller knows what they are doing.
+ */
+static fi_object_t* objectsRemove(fi_object_collection_t* c, fi_object_t* obj)
 {
-    uint i;
-    for(i = 0; i < c->num; ++i)
+    uint idx;
+    if((idx = objectsToIndex(c, obj)))
     {
-        fi_object_t* other = c->vector[i];
-        if(other == obj)
-        {
-            if(i != c->num-1)
-                memmove(&c->vector[i], &c->vector[i+1], sizeof(*c->vector) * (c->num-i));
+        idx -= 1; // Indices are 1-based.
 
-            if(c->num > 1)
-            {
-                c->vector = Z_Realloc(c->vector, sizeof(*c->vector) * --c->num, PU_STATIC);
-            }
-            else
-            {
-                Z_Free(c->vector);
-                c->vector = NULL;
-                c->num = 0;
-            }
-            return;
+        if(idx != c->num-1)
+            memmove(&c->vector[idx], &c->vector[idx+1], sizeof(*c->vector) * (c->num-idx));
+
+        if(c->num > 1)
+        {
+            c->vector = Z_Realloc(c->vector, sizeof(*c->vector) * --c->num, PU_STATIC);
+        }
+        else
+        {
+            Z_Free(c->vector);
+            c->vector = 0;
+            c->num = 0;
         }
     }
+    return obj;
 }
 
 static void objectsEmpty(fi_object_collection_t* c)
@@ -215,65 +233,14 @@ static void objectsEmpty(fi_object_collection_t* c)
             {
             case FI_PIC: P_DestroyPic((fidata_pic_t*)obj); break;
             case FI_TEXT: P_DestroyText((fidata_text_t*)obj); break;
+            default:
+                Con_Error("InFine: Unknown object type %i in objectsEmpty.", (int)obj->type);
             }
         }
         Z_Free(c->vector);
     }
     c->vector = 0;
     c->num = 0;
-}
-
-static void destroyObjectsInScope(fi_namespace_t* names)
-{
-    // Delete external images, text strings etc.
-    if(names->vector)
-    {
-        uint i;
-        for(i = 0; i < names->num; ++i)
-        {
-            fi_object_t* obj = names->vector[i];
-            objectsRemove(&objects, obj);
-            switch(obj->type)
-            {
-            case FI_PIC:    P_DestroyPic((fidata_pic_t*)obj);   break;
-            case FI_TEXT:   P_DestroyText((fidata_text_t*)obj); break;
-            default:
-                break;
-            }
-        }
-        Z_Free(names->vector);
-    }
-    names->vector = NULL;
-    names->num = 0;
-}
-
-static fi_objectid_t findIdForName(fi_namespace_t* names, const char* name)
-{
-    fi_objectid_t id;
-    // First check all pics.
-    id = toObjectId(names, name, FI_PIC);
-    // Then check text objects.
-    if(!id)
-        id = toObjectId(names, name, FI_TEXT);
-    return id;
-}
-
-static fi_objectid_t toObjectId(fi_namespace_t* names, const char* name, fi_obtype_e type)
-{
-    assert(name && name[0]);
-    if(type == FI_NONE)
-    {   // Use a priority-based search.
-        return findIdForName(names, name);
-    }
-
-    {uint i;
-    for(i = 0; i < names->num; ++i)
-    {
-        fi_object_t* obj = names->vector[i];
-        if(obj->type == type && !stricmp(obj->name, name))
-            return obj->id;
-    }}
-    return 0;
 }
 
 static fi_object_t* objectsById(fi_object_collection_t* c, fi_objectid_t id)
@@ -309,7 +276,12 @@ static void pageClear(fi_page_t* p)
     p->timer = 0;
     p->bgMaterial = NULL; // No background material.
 
-    destroyObjectsInScope(&p->_namespace);
+    if(p->_objects.vector)
+    {
+        Z_Free(p->_objects.vector);
+    }
+    p->_objects.vector = 0;
+    p->_objects.num = 0;
 
     AnimatorVector4_Init(p->filter, 0, 0, 0, 0);
     AnimatorVector2_Init(p->imgOffset, 0, 0);  
@@ -352,6 +324,8 @@ Con_Printf("InFine: Attempt to pop empty stack\n");
         return false;
     }
 
+    P_DestroyFinaleInterpreter(fi);
+
     // Should we go back to NULL?
     if(finaleStackSize > 1)
     {   // Return to previous state.
@@ -364,9 +338,6 @@ Con_Printf("InFine: Attempt to pop empty stack\n");
         finaleStackSize = 0;
         active = false;
     }
-
-    FI_DeletePage(fi->_page); fi->_page = 0;
-    P_DestroyFinaleInterpreter(fi);
 
     return active;
 }
@@ -394,67 +365,7 @@ static void scriptTerminate(finaleinterpreter_t* fi)
         active = false;
     }
 
-    FI_DeletePage(fi->_page); fi->_page = 0;
     P_DestroyFinaleInterpreter(fi);
-}
-
-static uint objectIndexInNamespace(fi_namespace_t* names, fi_object_t* obj)
-{
-    if(obj)
-    {
-        uint i;
-        for(i = 0; i < names->num; ++i)
-        {
-            fi_object_t* other = names->vector[i];
-            if(other == obj)
-                return i+1;
-        }
-    }
-    return 0;
-}
-
-static __inline boolean objectInNamespace(fi_namespace_t* names, fi_object_t* obj)
-{
-    return objectIndexInNamespace(names, obj) != 0;
-}
-
-/**
- * Does not check if the object already exists in this scope. Assumes the caller
- * knows what they are doing.
- */
-static fi_object_t* addObjectToNamespace(fi_namespace_t* names, fi_object_t* obj)
-{
-    names->vector = Z_Realloc(names->vector, sizeof(*names->vector) * ++names->num, PU_STATIC);
-    names->vector[names->num-1] = obj;
-    return obj;
-}
-
-/**
- * Assumes there is at most one reference to the obj in the scope and that the
- * caller knows what they are doing.
- */
-static fi_object_t* removeObjectInNamespace(fi_namespace_t* names, fi_object_t* obj)
-{
-    uint idx;
-    if((idx = objectIndexInNamespace(names, obj)))
-    {
-        idx -= 1; // Indices are 1-based.
-
-        if(idx != names->num-1)
-            memmove(&names->vector[idx], &names->vector[idx+1], sizeof(*names->vector) * (names->num-idx));
-
-        if(names->num > 1)
-        {
-            names->vector = Z_Realloc(names->vector, sizeof(*names->vector) * --names->num, PU_STATIC);
-        }
-        else
-        {
-            Z_Free(names->vector);
-            names->vector = NULL;
-            names->num = 0;
-        }
-    }
-    return obj;
 }
 
 static void rotate(float angle)
@@ -482,7 +393,7 @@ static void pageDraw(fi_page_t* p)
         DGL_Enable(DGL_TEXTURING);
     }
 
-    drawObjectsInScope(&p->_namespace, -p->imgOffset[0].value, -p->imgOffset[1].value);
+    drawObjectsInScope(&p->_objects, -p->imgOffset[0].value, -p->imgOffset[1].value);
 
     // Filter on top of everything. Only draw if necessary.
     if(p->filter[3].value > 0)
@@ -504,19 +415,16 @@ static void pageDraw(fi_page_t* p)
 /**
  * Reset the entire InFine state stack.
  */
-static void doReset(boolean doingShutdown)
+static void doReset(void)
 {
     finaleinterpreter_t* fi;
     if((fi = stackTop()) && active)
     {
-        if(!doingShutdown)
-        {
-            // The state is suspended when the PlayDemo command is used.
-            // Being suspended means that InFine is currently not active, but
-            // will be restored at a later time.
-            if(FinaleInterpreter_IsSuspended(fi))
-                return;
-        }
+        // The state is suspended when the PlayDemo command is used.
+        // Being suspended means that InFine is currently not active, but
+        // will be restored at a later time.
+        if(FinaleInterpreter_IsSuspended(fi))
+            return;
 
         // Pop all the states.
         while(stackPop());
@@ -620,6 +528,7 @@ void FIObject_Destructor(fi_object_t* obj)
             FIPage_RemoveObject(fi->_page, obj);
         }
     }
+    objectsRemove(&objects, obj);
     Z_Free(obj);
 }
 
@@ -721,9 +630,22 @@ void FI_Shutdown(void)
 {
     if(!inited)
         return; // Huh?
-    doReset(true);
+
+    if(finaleStackSize)
+    {
+        uint i;
+        for(i = 0; i < finaleStackSize; ++i)
+        {
+            P_DestroyFinaleInterpreter(finaleStack[i]);
+        }
+        Z_Free(finaleStack);
+    }
+    finaleStack = 0;
+    finaleStackSize = 0;
+
     // Garbage collection.
     objectsEmpty(&objects);
+    active = false;
     inited = false;
 }
 
@@ -753,7 +675,7 @@ void FI_Reset(void)
 #endif
         return;
     }
-    doReset(false);
+    doReset();
 }
 
 fi_page_t* FI_NewPage(void)
@@ -881,7 +803,6 @@ void FI_DeleteObject(fi_object_t* obj)
 #endif
         return;
     }
-    objectsRemove(&objects, obj);
     switch(obj->type)
     {
     case FI_PIC:    P_DestroyPic((fidata_pic_t*)obj);   break;
@@ -897,7 +818,7 @@ void FIPage_RunTic(fi_page_t* p)
 
     p->timer++;
 
-    thinkObjectsInScope(&p->_namespace);
+    thinkObjectsInScope(&p->_objects);
 
     // Interpolateable values.
     AnimatorVector4_Think(p->bgColor);
@@ -909,26 +830,18 @@ void FIPage_RunTic(fi_page_t* p)
     }
 }
 
-fi_objectid_t FIPage_ObjectIdForName(fi_page_t* p, const char* name, fi_obtype_e type)
-{
-    if(!p) Con_Error("FIPage_ObjectIdForName: Invalid page.");
-    if(!name || !name[0])
-        return 0;
-    return toObjectId(&p->_namespace, name, type);
-}
-
 boolean FIPage_HasObject(fi_page_t* p, fi_object_t* obj)
 {
     if(!p) Con_Error("FIPage_HasObject: Invalid page.");
-    return objectInNamespace(&p->_namespace, obj);
+    return objectsIsPresent(&p->_objects, obj);
 }
 
 fi_object_t* FIPage_AddObject(fi_page_t* p, fi_object_t* obj)
 {
     if(!p) Con_Error("FIPage_AddObject: Invalid page.");
-    if(obj && !objectIndexInNamespace(&p->_namespace, obj))
+    if(obj && !objectsToIndex(&p->_objects, obj))
     {
-        return addObjectToNamespace(&p->_namespace, obj);
+        return objectsAdd(&p->_objects, obj);
     }
     return obj;
 }
@@ -936,9 +849,9 @@ fi_object_t* FIPage_AddObject(fi_page_t* p, fi_object_t* obj)
 fi_object_t* FIPage_RemoveObject(fi_page_t* p, fi_object_t* obj)
 {
     if(!p) Con_Error("FIPage_RemoveObject: Invalid page.");
-    if(obj && objectIndexInNamespace(&p->_namespace, obj))
+    if(obj && objectsToIndex(&p->_objects, obj))
     {
-        return removeObjectInNamespace(&p->_namespace, obj);
+        return objectsRemove(&p->_objects, obj);
     }
     return obj;
 }

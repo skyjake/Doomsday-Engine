@@ -47,6 +47,12 @@ typedef struct fi_handler_s {
     fi_objectname_t marker;
 } fi_handler_t;
 
+/// \todo Should be private.
+typedef struct fi_namespace_s {
+    uint            num;
+    struct fi_namespace_record_s* vector;
+} fi_namespace_t;
+
 typedef struct finaleinterpreter_t {
     finale_mode_t   mode;
     struct finaleinterpreter_flags_s {
@@ -71,6 +77,9 @@ typedef struct finaleinterpreter_t {
 
     uint            numEventHandlers;
     fi_handler_t*   eventHandlers;
+
+    // Known symbols (to the loaded script).
+    fi_namespace_t  _namespace;
 
     // The page all our objects are on.
     struct fi_page_s* _page;

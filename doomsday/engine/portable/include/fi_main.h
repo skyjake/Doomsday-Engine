@@ -46,15 +46,14 @@ typedef struct fi_object_s {
 fi_object_t*        FI_NewObject(fi_obtype_e type, const char* name);
 void                FI_DeleteObject(fi_object_t* obj);
 
-/// \todo Should be private.
-typedef struct fi_namespace_s {
+typedef struct fi_object_collection_s {
     uint            num;
     fi_object_t**   vector;
-} fi_namespace_t;
+} fi_object_collection_t;
 
 typedef struct fi_page_s {
-    // Known symbols (to this script).
-    fi_namespace_t  _namespace;
+    // Objects visible on this page.
+    fi_object_collection_t _objects;
 
     struct material_s* bgMaterial;
     animatorvector4_t bgColor;
@@ -70,7 +69,6 @@ void                FIPage_RunTic(fi_page_t* page);
 fi_object_t*        FIPage_AddObject(fi_page_t* page, fi_object_t* obj);
 fi_object_t*        FIPage_RemoveObject(fi_page_t* page, fi_object_t* obj);
 boolean             FIPage_HasObject(fi_page_t* page, fi_object_t* obj);
-fi_objectid_t       FIPage_ObjectIdForName(fi_page_t* page, const char* name, fi_obtype_e type);
 
 void                FIPage_SetBackground(fi_page_t* page, struct material_s* mat);
 void                FIPage_SetBackgroundColor(fi_page_t* page, float red, float green, float blue, int steps);

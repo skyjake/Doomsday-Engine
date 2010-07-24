@@ -62,7 +62,7 @@ struct fi_page_s;
 // Base fi_objects_t elements. All objects MUST use this as their basis.
 #define FIOBJECT_BASE_ELEMENTS() \
     fi_objectid_t   id; /* Unique id of the object. */ \
-    fi_objectname_t name; /* Object names are unique among objects of the same type and spawned by the same script. */ \
+    fi_objectname_t name; /* Nice name. */ \
     fi_obtype_e     type; /* Type of the object. */ \
     animatorvector3_t pos; \
     animator_t      angle; \
