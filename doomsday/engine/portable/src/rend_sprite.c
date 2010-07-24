@@ -935,7 +935,7 @@ glEnable(GL_TEXTURE2D);
 
         glTranslatef(params->center[VX], params->center[VZ], params->center[VY]);
 
-        VL_ListIterator(params->vLightListIdx, &params->distance, R_DrawVLightVector);
+        VL_ListIterator(params->vLightListIdx, (float*)&params->distance, R_DrawVLightVector);
 
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();

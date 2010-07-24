@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,13 +23,13 @@
  */
 
 /**
- * rend_decor.h: Decorations
+ * Surface Decorations.
  */
 
-#ifndef __DOOMSDAY_RENDER_DECOR_H__
-#define __DOOMSDAY_RENDER_DECOR_H__
+#ifndef LIBDENG_RENDER_DECOR_H
+#define LIBDENG_RENDER_DECOR_H
 
-extern byte     useDecorations;
+extern byte     useLightDecorations, useModelDecorations;
 extern float    decorMaxDist;  // No decorations are visible beyond this.
 extern float    decorFactor;
 extern float    decorFadeAngle;
@@ -42,4 +42,4 @@ void            Rend_InitDecorationsForFrame(void);
 void            Rend_AddLuminousDecorations(void);
 void            Rend_ProjectDecorations(void);
 
-#endif
+#endif /* LIBDENG_RENDER_DECOR_H */

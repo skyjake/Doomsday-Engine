@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,9 +24,7 @@
  */
 
 /**
- * rend_decor.c: Decorations
- *
- * Surface decorations.
+ * Surface Decorations.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -88,7 +86,7 @@ static void updatePlaneDecorations(plane_t* pln);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-byte useDecorations = true;
+byte useLightDecorations = true, useModelDecorations = true;
 float decorMaxDist = 2048; // No decorations are visible beyond this.
 float decorFactor = 1;
 float decorFadeAngle = .1f;
@@ -103,7 +101,8 @@ static decorsource_t* sourceCursor = NULL;
 
 void Rend_DecorRegister(void)
 {
-    C_VAR_BYTE("rend-light-decor", &useDecorations, 0, 0, 1);
+    C_VAR_BYTE("rend-model-decor", &useModelDecorations, 0, 0, 1);
+    C_VAR_BYTE("rend-light-decor", &useLightDecorations, 0, 0, 1);
     C_VAR_FLOAT("rend-light-decor-angle", &decorFadeAngle, 0, 0, 1);
     C_VAR_FLOAT("rend-light-decor-bright", &decorFactor, 0, 0, 10);
 }
@@ -122,20 +121,20 @@ extern void setupModelParamsForVisSprite(rendmodelparams_t *params,
                                          float visOffX, float visOffY, float visOffZ, float gzt, float yaw, float yawAngleOffset, float pitch, float pitchAngleOffset,
                                          struct modeldef_s* mf, struct modeldef_s* nextMF, float inter,
                                          float ambientColorR, float ambientColorG, float ambientColorB, float alpha,
-                                         vlight_t* lightList, uint numLights,
+                                         uint lightListIdx,
                                          int id, int selector, subsector_t* ssec, int mobjDDFlags, int tmap,
                                          boolean viewAlign, boolean fullBright,
                                          boolean alwaysInterpolate);
+
 extern void getLightingParams(float x, float y, float z, subsector_t* ssec,
                               float distance, boolean fullBright,
-                              uint maxLights, float ambientColor[3],
-                              vlight_t** lights, uint* numLights);
+                              float ambientColor[3], uint* lightListIdx);
 
 static void projectDecoration(decorsource_t* src)
 {
-    float               v1[2], min, max;
-    vissprite_t*        vis;
-    float               distance, brightness;
+    float distance, brightness;
+    float v1[2], min, max;
+    vissprite_t* vis;
 
     // Does it pass the sector light limitation?
     if(src->type == DT_LIGHT)
@@ -146,11 +145,10 @@ static void projectDecoration(decorsource_t* src)
     else // Its a decor model.
     {
         min = src->data.model.def->lightLevels[0];
-        max = src->data.model.def->lightLevels[0];
+        max = src->data.model.def->lightLevels[1];
     }
 
-    if(!((brightness = R_CheckSectorLight(src->subsector->sector->lightLevel,
-                                          min, max)) > 0))
+    if(!((brightness = R_CheckSectorLight(src->subsector->sector->lightLevel, min, max)) > 0))
         return;
 
     if(src->fadeMul <= 0)
@@ -162,7 +160,7 @@ static void projectDecoration(decorsource_t* src)
         return;
 
     /// @fixme dj: Why is LO_GetLuminous returning NULL given a supposedly valid index?
-    if(!(src->type == DT_LIGHT) && !LO_GetLuminous(src->lumIdx))
+    if(src->type == DT_LIGHT && !LO_GetLuminous(src->lumIdx))
         return;
 
     // Calculate edges of the shape.
@@ -185,21 +183,19 @@ static void projectDecoration(decorsource_t* src)
     {
     case DT_MODEL:
         {
-        float           ambientColor[3];
-        vlight_t*       lightList = NULL;
-        uint            numLights = 0;
+        float ambientColor[3], alpha = src->fadeMul * (distance > (src->maxDistance/4)? (1 - distance / (src->maxDistance+(src->maxDistance/4))) : 1);
+        uint lightListIdx;
 
         getLightingParams(src->pos[VX], src->pos[VY], src->pos[VZ],
                           src->subsector, distance, levelFullBright,
-                          modelLight,
-                          ambientColor, &lightList, &numLights);
+                          ambientColor, &lightListIdx);
 
         setupModelParamsForVisSprite(&vis->data.model, src->pos[VX], src->pos[VY], src->pos[VZ],
                                      distance, 0, 0, 0, src->pos[VZ], src->data.model.yaw, 0,
                                      src->data.model.pitch, 0,
                                      src->data.model.mf, NULL, 0,
                                      ambientColor[CR], ambientColor[CG], ambientColor[CB],
-                                     src->fadeMul, lightList, numLights, 0, 0, src->subsector,
+                                     alpha, lightListIdx, 0, 0, src->subsector,
                                      0, 0, false, levelFullBright, true);
         break;
         }
@@ -216,8 +212,7 @@ static void projectDecoration(decorsource_t* src)
 
         if(def->haloRadius > 0)
         {
-            vis->data.flare.size = MAX_OF(1,
-                def->haloRadius * 60 * (50 + haloSize) / 100.0f);
+            vis->data.flare.size = MAX_OF(1, def->haloRadius * 60 * (50 + haloSize) / 100.0f);
         }
         else
         {
@@ -272,7 +267,7 @@ void Rend_DecorInit(void)
  */
 void Rend_ProjectDecorations(void)
 {
-    if(useDecorations && sourceFirst != sourceCursor)
+    if((useLightDecorations || useModelDecorations) && sourceFirst != sourceCursor)
     {
         decorsource_t* src = sourceFirst;
         do
@@ -284,29 +279,22 @@ void Rend_ProjectDecorations(void)
 
 static void addLuminousDecoration(decorsource_t* src)
 {
-    uint                i;
-    float               min, max;
-    uint                lumIdx;
-    lumobj_t*           l;
-    float               brightness;
     const ded_decorlight_t* def = src->data.light.def;
-
-    src->lumIdx = 0;
-    src->fadeMul = 1;
-
-    if(src->type != DT_LIGHT)
-        return;
+    float brightness;
+    uint i, lumIdx;
+    float min, max;
+    lumobj_t* l;
 
     // Does it pass the sector light limitation?
     min = def->lightLevels[0];
     max = def->lightLevels[1];
 
-    if(!((brightness = R_CheckSectorLight(
-            src->subsector->sector->lightLevel, min, max)) > 0))
+    if(!((brightness = R_CheckSectorLight(src->subsector->sector->lightLevel, min, max)) > 0))
         return;
 
     // Apply the brightness factor (was calculated using sector lightlevel).
-    src->fadeMul *= brightness * decorFactor;
+    src->fadeMul = brightness * decorFactor;
+    src->lumIdx = 0;
 
     if(src->fadeMul <= 0)
         return;
@@ -350,7 +338,7 @@ void Rend_AddLuminousDecorations(void)
 {
 BEGIN_PROF( PROF_DECOR_ADD_LUMINOUS );
 
-    if(useDecorations && sourceFirst != sourceCursor)
+    if(useLightDecorations && sourceFirst != sourceCursor)
     {
         decorsource_t* src = sourceFirst;
         do
@@ -409,11 +397,9 @@ static decorsource_t* addDecoration(void)
 /**
  * A decorsource is created from the specified surface decoration.
  */
-static void createDecorSource(const surface_t* suf,
-                              const surfacedecor_t* dec,
-                              const float maxDistance)
+static void createDecorSource(const surface_t* suf, const surfacedecor_t* dec, const float maxDistance)
 {
-    decorsource_t*      src;
+    decorsource_t* src;
 
     if(dec->type == DT_LIGHT)
     {
@@ -439,6 +425,7 @@ static void createDecorSource(const surface_t* suf,
     src->subsector = dec->subsector;
     src->surface = suf;
     src->type = dec->type;
+    src->fadeMul = 1;
     switch(src->type)
     {
     case DT_LIGHT:
@@ -497,11 +484,15 @@ boolean R_ProjectSurfaceDecorations(surface_t* suf, void* context)
         switch(d->type)
         {
         case DT_LIGHT:
+            if(!useLightDecorations)
+                continue;
             if(!R_IsValidLightDecoration(DEC_LIGHT(d)->def))
                 return true;
             break;
 
         case DT_MODEL:
+            if(!useModelDecorations)
+                continue;
             if(!R_IsValidModelDecoration(DEC_MODEL(d)->def))
                 return true;
             break;
@@ -874,7 +865,7 @@ void Rend_InitDecorationsForFrame(void)
 #endif
 
     // This only needs to be done if decorations have been enabled.
-    if(useDecorations)
+    if(useLightDecorations || useModelDecorations)
     {
 BEGIN_PROF( PROF_DECOR_PROJECT );
 

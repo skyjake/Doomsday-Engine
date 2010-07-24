@@ -3806,7 +3806,7 @@ void Rend_Vertexes(void)
 void Rend_RenderMap(void)
 {
     binangle_t viewside;
-    boolean doLums = (useDynLights || haloMode || spriteLight || useDecorations);
+    boolean doLums = (useDynLights || haloMode || spriteLight || useLightDecorations);
 
     // Set to true if dynlights are inited for this frame.
     loInited = false;
@@ -3824,6 +3824,10 @@ void Rend_RenderMap(void)
         RL_ClearLists(); // Clear the lists for new quads.
         C_ClearRanges(); // Clear the clipper.
 
+        // Recycle the vlight lists. Currently done here as the lists are
+        // not shared by all viewports.
+        VL_InitForNewFrame();
+
         // Make vissprites of all the visible decorations.
         Rend_ProjectDecorations();
 
@@ -3831,10 +3835,6 @@ void Rend_RenderMap(void)
 
         // Clear particle generator visibilty info.
         Rend_ParticleInitForNewFrame();
-
-        // Recycle the vlight lists. Currently done here as the lists are
-        // not shared by all viewports.
-        VL_InitForNewFrame();
 
         if(doLums)
         {
