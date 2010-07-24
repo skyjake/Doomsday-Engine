@@ -1054,6 +1054,9 @@ desc = 1=Render mobj bounding boxes (as used for collision detection).
 [rend-dev-polyobj-bbox]
 desc = 1=Render polyobj bounding boxes.
 
+[rend-dev-mobj-show-vlights]
+desc = 1=Render mobj vlight vectors (for debug).
+
 [rend-dev-sky]
 desc = 1=Render the sky as a solid surface. 2= Draw sky surface planes.
 

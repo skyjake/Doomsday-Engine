@@ -23,11 +23,11 @@
  */
 
 /**
- * r_data.h: Data Structures For Refresh
+ * Data structures for refresh.
  */
 
-#ifndef __DOOMSDAY_REFRESH_DATA_H__
-#define __DOOMSDAY_REFRESH_DATA_H__
+#ifndef LIBDENG_REFRESH_DATA_H
+#define LIBDENG_REFRESH_DATA_H
 
 #include "gl_main.h"
 #include "dd_def.h"
@@ -321,6 +321,8 @@ uint            R_RegisterSkin(char* fullpath, const char* skin,
                                size_t len);
 void            R_DestroySkins(void); // Called at shutdown.
 
+boolean         R_DrawVLightVector(const vlight_t* light, void* context);
+
 void            R_InitAnimGroup(ded_group_t* def);
 
 detailtex_t*    R_CreateDetailTexture(const ded_detailtexture_t* def);
@@ -371,4 +373,4 @@ void            R_UnloadCompositeFonts(void);
 void            R_ShutdownCompositeFonts(void);
 void            R_SetCompositeFontChar(compositefontid_t fontId, unsigned char ch, const char* lumpname);
 
-#endif
+#endif /* LIBDENG_REFRESH_DATA_H */

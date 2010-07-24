@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -86,8 +86,7 @@ void Rend_SpriteRegister(void)
     C_VAR_BYTE("rend-dev-nosprite", &devNoSprites, CVF_NO_ARCHIVE, 0, 1);
 }
 
-static __inline void renderQuad(dgl_vertex_t *v, dgl_color_t *c,
-                                dgl_texcoord_t *tc)
+static __inline void renderQuad(dgl_vertex_t *v, dgl_color_t *c, dgl_texcoord_t *tc)
 {
     glBegin(GL_QUADS);
         glColor4ubv(c[0].rgba);
@@ -838,26 +837,6 @@ void Rend_DrawMasked(void)
     }
 }
 
-#if _DEBUG
-boolean drawVLightVector(const vlight_t* light, void* context)
-{
-    float               scale = 100;
-
-    glBegin(GL_LINES);
-    {
-        glColor4f(light->color[CR], light->color[CG], light->color[CB], 1);
-        glVertex3f(scale * light->vector[VX],
-                     scale * light->vector[VZ],
-                     scale * light->vector[VY]);
-        glColor4f(0, 0, 0, 1);
-        glVertex3f(0, 0, 0);
-    }
-    glEnd();
-
-    return true; // Continue iteration.
-}
-#endif
-
 void Rend_RenderSprite(const rendspriteparams_t* params)
 {
     float v1[3], v2[3], v3[3], v4[3];
@@ -945,29 +924,26 @@ glEnable(GL_TEXTURE2D);
                          spriteLight + 1, params->ambientColor);
     }
 
-/*#if _DEBUG
-if(params->vLightListIdx)
-{   // Draw the vlight vectors, for debug.
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_CULL_FACE);
+    if(devMobjVLights && params->vLightListIdx)
+    {   // Draw the vlight vectors, for debug.
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
 
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
 
-    glTranslatef(params->center[VX], params->center[VZ],
-                 params->center[VY]);
+        glTranslatef(params->center[VX], params->center[VZ], params->center[VY]);
 
-    VL_ListIterator(params->vLightListIdx, NULL, drawVLightVector);
+        VL_ListIterator(params->vLightListIdx, &params->distance, R_DrawVLightVector);
 
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
 
-    glEnable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
-}
-#endif*/
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_TEXTURE_2D);
+    }
 
     // Do we need to do some aligning?
     if(params->viewAligned || alwaysAlign >= 2)

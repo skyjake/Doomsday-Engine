@@ -935,14 +935,13 @@ static void Mod_RenderSubModel(uint number, const rendmodelparams_t* params)
 /**
  * Render all the submodels of a model.
  */
-void Rend_RenderModel(const rendmodelparams_t *params)
+void Rend_RenderModel(const rendmodelparams_t* params)
 {
-    int         i;
-
     if(!params || !params->mf)
         return;
 
     // Render all the submodels of this model.
+    {uint i;
     for(i = 0; i < MAX_FRAME_MODELS; ++i)
     {
         if(params->mf->sub[i].model)
@@ -959,5 +958,26 @@ void Rend_RenderModel(const rendmodelparams_t *params)
             if(disableZ)
                 glDepthMask(GL_TRUE);
         }
+    }}
+
+    if(devMobjVLights && params->vLightListIdx)
+    {   // Draw the vlight vectors, for debug.
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+
+        glTranslatef(params->center[VX], params->center[VZ], params->center[VY]);
+
+        VL_ListIterator(params->vLightListIdx, &params->distance, R_DrawVLightVector);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_TEXTURE_2D);
     }
 }

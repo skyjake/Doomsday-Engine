@@ -106,6 +106,7 @@ byte devLightModRange = 0;
 
 float rendLightDistanceAttentuation = 1024;
 
+byte devMobjVLights = 0; // @c 1= Draw mobj vertex lighting vector.
 int devMobjBBox = 0; // 1 = Draw mobj bounding boxes (for debug)
 int devPolyobjBBox = 0; // 1 = Draw polyobj bounding boxes (for debug)
 DGLuint dlBBox = 0; // Display list: active-textured bbox model.
@@ -141,6 +142,7 @@ void Rend_Register(void)
     C_VAR_BYTE("rend-dev-freeze", &freezeRLs, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_INT("rend-dev-cull-subsectors", &devNoCulling,CVF_NO_ARCHIVE,0,1);
     C_VAR_INT("rend-dev-mobj-bbox", &devMobjBBox, CVF_NO_ARCHIVE, 0, 1);
+    C_VAR_BYTE("rend-dev-mobj-show-vlights", &devMobjVLights, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_INT("rend-dev-polyobj-bbox", &devPolyobjBBox, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-light-mod", &devLightModRange, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-tex-showfix", &devNoTexFix, CVF_NO_ARCHIVE, 0, 1);
@@ -1403,7 +1405,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
     DGLuint             modTex = 0;
     float               modTexTC[2][2];
     float               modColor[3];
-    float               glowing = msA->glowing;
+    float               glowing = p->glowing;
     boolean             drawAsVisSprite = false;
     rtexmapunit_t       rTU[NUM_TEXMAP_UNITS], rTUs[NUM_TEXMAP_UNITS];
 
@@ -1845,7 +1847,7 @@ static boolean doRenderSeg(seg_t* seg,
                            const walldiv_t* divs,
                            boolean skyMask,
                            boolean addFakeRadio,
-                           boolean isGlowing,
+                           float glowing,
                            const float texTL[3], const float texBR[3],
                            const float texOffset[2],
                            const float texScale[2],
@@ -1880,6 +1882,7 @@ static boolean doRenderSeg(seg_t* seg,
     params.sectorLightColor = lightColor;
     params.surfaceColor = color;
     params.surfaceColor2 = color2;
+    params.glowing = glowing;
     params.blendMode = blendMode;
     params.texOffset = texOffset;
     params.texScale = texScale;
@@ -1907,10 +1910,6 @@ static boolean doRenderSeg(seg_t* seg,
 
     // Top Right.
     V3_Set(rvertices[3].pos, to->pos[VX], to->pos[VY], top);
-
-    // Make it fullbright?
-    if(isGlowing)
-        params.glowing = true;
 
     // Draw this seg.
     if(renderWorldPoly(rvertices, 4, divs, &params, msA, inter, msB))
@@ -2016,8 +2015,7 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
 
     if(skyMasked)
     {
-        skyhemispheres |=
-            (type == PLN_FLOOR? SKYHEMI_LOWER : SKYHEMI_UPPER);
+        skyhemispheres |= (type == PLN_FLOOR? SKYHEMI_LOWER : SKYHEMI_UPPER);
 
         // In devRendSkyMode mode we render all polys destined for the
         // skymask as regular world polys (with a few obvious properties).
@@ -2066,9 +2064,16 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
 
         inter = getSnapshots(&msA, blended? &msB : NULL, mat);
 
-        if(texMode == 1 || msA.glowing > 0)
+        if(texMode == 0)
         {
-            params.glowing = msA.glowing; // Make it stand out
+            params.glowing = msA.glowing;
+        }
+        else
+        {
+            material_snapshot_t ms;
+            surface_t* suf = &ssec->sector->planes[elmIdx]->surface;
+            Materials_Prepare(&ms, suf->material, true, 0);
+            params.glowing = ms.glowing;
         }
 
         // Dynamic lights.
@@ -2210,7 +2215,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
         int                 texMode = 0;
         uint                lightListIdx = 0;
         float               texTL[3], texBR[3], texScale[2],
-                            inter = 0;
+                            inter = 0, glowing = 0;
         walldiv_t           divs[2];
         boolean             forceOpaque = false;
         material_t*         mat = NULL;
@@ -2218,8 +2223,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
         boolean             isTwoSided = (seg->lineDef &&
             seg->lineDef->L_frontside && seg->lineDef->L_backside)? true:false;
         blendmode_t         blendMode = BM_NORMAL;
-        boolean             addFakeRadio = false,
-                            isGlowing = false, blended = false;
+        boolean             addFakeRadio = false, blended = false;
         const float*        color = NULL, *color2 = NULL;
         material_snapshot_t msA, msB;
 
@@ -2240,8 +2244,9 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             if(devRendSkyMode)
             {
                 mat = surface->material;
+                // Lets make it stand out.
                 forceOpaque = true;
-                isGlowing = true;
+                glowing = 1.0;
             }
             else
             {   // We'll mask this.
@@ -2250,7 +2255,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
         }
         else
         {
-            int                 surfaceFlags, surfaceInFlags;
+            int surfaceFlags, surfaceInFlags;
 
             // Determine which texture to use.
             if(renderTextures == 2)
@@ -2278,7 +2283,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             surfaceInFlags = surface->inFlags;
             if(texMode == 1)
             {
-                isGlowing = true; // Make it stand out
+                glowing = 1.0; // Make it stand out.
             }
             else if(texMode == 2)
             {
@@ -2312,13 +2317,21 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
         {
             inter = getSnapshots(&msA, blended? &msB : NULL, mat);
 
-            if(msA.glowing > 0)
-                isGlowing = true;
+            if(texMode == 0)
+            {
+                glowing = msA.glowing;
+            }
+            else
+            {
+                material_snapshot_t ms;
+                Materials_Prepare(&ms, surface->material, true, 0);
+                glowing = ms.glowing;
+            }
 
             if(addDLights && msA.glowing < 1)
                 lightListIdx = DL_ProjectOnSurface(ssec, texTL, texBR, SEG_SIDEDEF(seg)->SW_middlenormal, ((section == SEG_MIDDLE && isTwoSided)? DLF_SORT_LUMADSC : 0));
 
-            addFakeRadio = ((addFakeRadio && !isGlowing)? true : false);
+            addFakeRadio = ((addFakeRadio && glowing == 0)? true : false);
 
             selectSurfaceColors(&color, &color2, SEG_SIDEDEF(seg), section);
         }
@@ -2351,7 +2364,7 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
                                (divs[0].num > 0 || divs[1].num > 0)? divs : NULL,
                                skyMask,
                                addFakeRadio,
-                               isGlowing,
+                               glowing,
                                texTL, texBR, texOffset, texScale, blendMode,
                                color, color2,
                                seg->bsuf[section], (uint) section,

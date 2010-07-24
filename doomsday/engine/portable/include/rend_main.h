@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,18 +23,18 @@
  */
 
 /**
- * rend_main.h: Rendering Subsystem
+ * Core of the rendering subsystem.
  */
 
-#ifndef __DOOMSDAY_REND_MAIN_H__
-#define __DOOMSDAY_REND_MAIN_H__
+#ifndef LIBDENG_REND_MAIN_H
+#define LIBDENG_REND_MAIN_H
 
 #include <math.h>
 #include "rend_list.h"
 #include "r_things.h"
 
 extern float vx, vy, vz, vang, vpitch, fieldOfView, yfov;
-extern byte smoothTexAnim;
+extern byte smoothTexAnim, devMobjVLights;
 extern float viewsidex, viewsidey;
 extern int missileBlend;
 extern boolean usingFog;
@@ -66,4 +66,5 @@ void            Rend_ApplyLightAdaptation(float* lightvalue);
 float           Rend_GetLightAdaptVal(float lightvalue);
 
 void            Rend_CalcLightModRange(struct cvar_s* unused);
-#endif
+
+#endif /* LIBDENG_REND_MAIN_H */

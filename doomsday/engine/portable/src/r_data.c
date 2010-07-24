@@ -29,6 +29,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <math.h>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
@@ -2664,4 +2666,21 @@ void R_DestroyMaskTextures(void)
         M_Free(maskTextures);
     maskTextures = NULL;
     numMaskTextures = 0;
+}
+
+boolean R_DrawVLightVector(const vlight_t* light, void* context)
+{
+    float distFromViewer = fabs(*((float*)context));
+    if(distFromViewer <= 1600)
+    {
+        float alpha = 1 - distFromViewer / 1600, scale = 100;
+
+        glBegin(GL_LINES);
+            glColor4f(light->color[CR], light->color[CG], light->color[CB], alpha);
+            glVertex3f(scale * light->vector[VX], scale * light->vector[VZ], scale * light->vector[VY]);
+            glColor4f(light->color[CR], light->color[CG], light->color[CB], 0);
+            glVertex3f(0, 0, 0);
+        glEnd();
+    }
+    return true; // Continue iteration.
 }
