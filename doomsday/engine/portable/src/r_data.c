@@ -2671,7 +2671,7 @@ void R_DestroyMaskTextures(void)
 boolean R_DrawVLightVector(const vlight_t* light, void* context)
 {
     float distFromViewer = fabs(*((float*)context));
-    if(distFromViewer <= 1600)
+    if(distFromViewer < 1600-8)
     {
         float alpha = 1 - distFromViewer / 1600, scale = 100;
 
