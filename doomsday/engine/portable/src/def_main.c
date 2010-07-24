@@ -437,8 +437,7 @@ ded_decor_t* Def_GetDecoration(material_t* mat, boolean hasExt)
 
     for(i = defs.count.decorations.num - 1, def = defs.decorations + i; i >= 0; i--, def--)
     {
-        material_t* defMat =Materials_ToMaterial(Materials_NumForName(def->material.name, def->material.mnamespace));
-
+        material_t* defMat = Materials_ToMaterial(Materials_NumForName(def->material.name, def->material.mnamespace));
         if(mat == defMat)
         {
             // Is this suitable?
@@ -452,15 +451,12 @@ ded_decor_t* Def_GetDecoration(material_t* mat, boolean hasExt)
 
 ded_reflection_t* Def_GetReflection(material_t* mat, boolean hasExt)
 {
-    int                 i;
-    ded_reflection_t*   def;
+    ded_reflection_t* def;
+    int i;
 
-    for(i = defs.count.reflections.num - 1, def = defs.reflections + i;
-        i >= 0; i--, def--)
+    for(i = defs.count.reflections.num - 1, def = defs.reflections + i; i >= 0; i--, def--)
     {
-        material_t*         defMat =
-            Materials_ToMaterial(Materials_NumForName(def->material.name,
-                                                    def->material.mnamespace));
+        material_t* defMat = Materials_ToMaterial(Materials_NumForName(def->material.name, def->material.mnamespace));
         if(mat == defMat)
         {
             // Is this suitable?
@@ -474,16 +470,12 @@ ded_reflection_t* Def_GetReflection(material_t* mat, boolean hasExt)
 
 ded_detailtexture_t* Def_GetDetailTex(material_t* mat, boolean hasExt)
 {
-    int                 i;
     ded_detailtexture_t* def;
+    int i;
 
-    // Search through the assignments.
-    for(i = defs.count.details.num - 1, def = defs.details + i;
-        i >= 0; i--, def--)
+    for(i = defs.count.details.num - 1, def = defs.details + i; i >= 0; i--, def--)
     {
-        material_t*         defMat =
-            Materials_ToMaterial(Materials_NumForName(def->material1.name,
-                                                    def->material1.mnamespace));
+        material_t* defMat = Materials_ToMaterial(Materials_NumForName(def->material1.name, def->material1.mnamespace));
         if(mat == defMat)
         {
             // Is this sutiable?
@@ -491,9 +483,7 @@ ded_detailtexture_t* Def_GetDetailTex(material_t* mat, boolean hasExt)
                 return def;
         }
 
-        defMat =
-            Materials_ToMaterial(Materials_NumForName(def->material2.name,
-                                                    def->material2.mnamespace));
+        defMat = Materials_ToMaterial(Materials_NumForName(def->material2.name, def->material2.mnamespace));
         if(mat == defMat)
         {
             // Is this sutiable?
@@ -507,16 +497,15 @@ ded_detailtexture_t* Def_GetDetailTex(material_t* mat, boolean hasExt)
 
 ded_ptcgen_t* Def_GetGenerator(material_t* mat, boolean hasExt)
 {
-    ded_ptcgen_t*       def;
-    int                 i;
+    ded_ptcgen_t* def;
+    int i;
 
     // The generator will be determined now.
     for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
     {
-        material_t*         defMat;
+        material_t* defMat;
 
-        if(!(defMat = Materials_ToMaterial(
-                Materials_NumForName(def->material.name, def->material.mnamespace))))
+        if(!(defMat = Materials_ToMaterial(Materials_NumForName(def->material.name, def->material.mnamespace))))
             continue;
 
         if(def->flags & PGF_GROUP)
@@ -527,7 +516,7 @@ ded_ptcgen_t* Def_GetGenerator(material_t* mat, boolean hasExt)
              */
             if(defMat->inAnimGroup && mat->inAnimGroup)
             {
-                int                 g, numGroups = Materials_AnimGroupCount();
+                int g, numGroups = Materials_AnimGroupCount();
 
                 for(g = 0; g < numGroups; ++g)
                 {

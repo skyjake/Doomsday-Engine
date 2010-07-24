@@ -1071,7 +1071,7 @@ void getLightingParams(float x, float y, float z, subsector_t* ssec,
 
         if(useBias)
         {
-            vec3_t              point;
+            vec3_t point;
 
             // Evaluate the position in the light grid.
             V3_Set(point, x, y, z);
@@ -1079,9 +1079,8 @@ void getLightingParams(float x, float y, float z, subsector_t* ssec,
         }
         else
         {
-            float               lightLevel = ssec->sector->lightLevel;
-            const float*        secColor =
-                R_GetSectorLightColor(ssec->sector);
+            float lightLevel = ssec->sector->lightLevel;
+            const float* secColor = R_GetSectorLightColor(ssec->sector);
 
             /* if(spr->type == VSPR_DECORATION)
             {
@@ -1727,10 +1726,9 @@ static void scaleFloatRGB(float* out, const float* in, float mul)
  */
 boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
 {
-    float               dist;
-    float               intensity;
-    boolean             addLight = false;
     vlightiterparams_t* params = (vlightiterparams_t*) data;
+    boolean addLight = false;
+    float dist, intensity;
 
     if(!(lum->type == LT_OMNI || lum->type == LT_PLANE))
         return true; // Continue iteration.
@@ -1740,9 +1738,8 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
     {
     case LT_OMNI:
         {
-        float               zDist;
+        float zDist = params->pos[VZ] - lum->pos[VZ] + LUM_OMNI(lum)->zOff;
 
-        zDist = params->pos[VZ] - lum->pos[VZ] + LUM_OMNI(lum)->zOff;
         dist = P_ApproxDistance(xyDist, zDist);
 
         if(dist < (float) loMaxRadius)
@@ -1759,13 +1756,12 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
            (LUM_PLANE(lum)->color[0] > 0 || LUM_PLANE(lum)->color[1] > 0 ||
             LUM_PLANE(lum)->color[2] > 0))
         {
-            float           glowHeight =
-                (MAX_GLOWHEIGHT * LUM_PLANE(lum)->intensity) * glowHeightFactor;
+            float glowHeight = (MAX_GLOWHEIGHT * LUM_PLANE(lum)->intensity) * glowHeightFactor;
 
             // Don't make too small or too large glows.
             if(glowHeight > 2)
             {
-                float           delta[3];
+                float delta[3];
 
                 if(glowHeight > glowHeightMax)
                     glowHeight = glowHeightMax;
@@ -1792,13 +1788,13 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
     // If the light is not close enough, skip it.
     if(addLight)
     {
-        vlightnode_t*       node = NULL;
+        vlightnode_t* node = NULL;
 
         node = newVLight();
 
         if(node)
         {
-            vlight_t*            vlight = &node->vlight;
+            vlight_t* vlight = &node->vlight;
 
             switch(lum->type)
             {
@@ -1813,8 +1809,7 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
                 // the light origin.
                 vlight->vector[VX] = (lum->pos[VX] - params->pos[VX]) / dist;
                 vlight->vector[VY] = (lum->pos[VY] - params->pos[VY]) / dist;
-                vlight->vector[VZ] = (lum->pos[VZ] + LUM_OMNI(lum)->zOff -
-                                        params->pos[VZ]) / dist;
+                vlight->vector[VZ] = (lum->pos[VZ] + LUM_OMNI(lum)->zOff - params->pos[VZ]) / dist;
 
                 vlight->color[CR] = LUM_OMNI(lum)->color[CR] * intensity;
                 vlight->color[CG] = LUM_OMNI(lum)->color[CG] * intensity;
@@ -1844,8 +1839,7 @@ boolean visSpriteLightIterator(const lumobj_t* lum, float xyDist, void* data)
                 break;
 
             default:
-                Con_Error("visSpriteLightIterator: Invalid value, "
-                          "lum->type = %i.", (int) lum->type);
+                Con_Error("visSpriteLightIterator: Invalid value, lum->type = %i.", (int) lum->type);
                 break;
             }
 
