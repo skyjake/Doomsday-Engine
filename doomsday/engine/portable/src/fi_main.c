@@ -839,7 +839,7 @@ boolean FIPage_HasObject(fi_page_t* p, fi_object_t* obj)
 fi_object_t* FIPage_AddObject(fi_page_t* p, fi_object_t* obj)
 {
     if(!p) Con_Error("FIPage_AddObject: Invalid page.");
-    if(obj && !objectsToIndex(&p->_objects, obj))
+    if(obj && !objectsIsPresent(&p->_objects, obj))
     {
         return objectsAdd(&p->_objects, obj);
     }
@@ -849,7 +849,7 @@ fi_object_t* FIPage_AddObject(fi_page_t* p, fi_object_t* obj)
 fi_object_t* FIPage_RemoveObject(fi_page_t* p, fi_object_t* obj)
 {
     if(!p) Con_Error("FIPage_RemoveObject: Invalid page.");
-    if(obj && objectsToIndex(&p->_objects, obj))
+    if(obj && objectsIsPresent(&p->_objects, obj))
     {
         return objectsRemove(&p->_objects, obj);
     }
