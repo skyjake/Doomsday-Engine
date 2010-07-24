@@ -1651,7 +1651,8 @@ static material_t* chooseFixMaterial(sidedef_t* s, segsection_t section)
         sector_t* backSec = s->line->L_sector(sid^1);
         surface_t* suf;
 
-        if(backSec)
+        if(backSec && ((section == SEG_BOTTOM && frontSec->SP_floorheight < backSec->SP_floorheight && frontSec->SP_ceilheight  > backSec->SP_floorheight)) ||
+                       (section == SEG_TOP    && frontSec->SP_ceilheight  > backSec->SP_ceilheight  && frontSec->SP_floorheight < backSec->SP_ceilheight))
         {
             suf = &backSec->SP_plane(section == SEG_BOTTOM? PLN_FLOOR : PLN_CEILING)->surface;
             if(suf->material && !R_IsSkySurface(suf))
