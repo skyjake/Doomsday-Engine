@@ -131,9 +131,8 @@ static void thinkObjectsInScope(fi_object_collection_t* c)
     }
 }
 
-static void drawObjectsInScope2(fi_object_collection_t* c, fi_obtype_e type, float picOffsetX, float picOffsetY)
+static void drawObjectsInScope(fi_object_collection_t* c, fi_obtype_e type, const float worldOrigin[3])
 {
-    static const vec3_t worldOrigin = { 0, 0, 0 };
     uint i;
     for(i = 0; i < c->num; ++i)
     {
@@ -142,24 +141,11 @@ static void drawObjectsInScope2(fi_object_collection_t* c, fi_obtype_e type, flo
             continue;
         switch(obj->type)
         {
-        case FI_PIC:
-            {
-            vec3_t offset;
-            V3_Set(offset, worldOrigin[VX]+picOffsetX, worldOrigin[VY]+picOffsetY, worldOrigin[VZ]);
-            FIData_PicDraw((fidata_pic_t*)obj, offset);
-            break;
-            }
+        case FI_PIC:    FIData_PicDraw((fidata_pic_t*)obj, worldOrigin); break;
         case FI_TEXT:   FIData_TextDraw((fidata_text_t*)obj, worldOrigin); break;
         default: break;
         }
     }
-}
-
-static void drawObjectsInScope(fi_object_collection_t* c, float picXOffset, float picYOffset)
-{
-    // Images first, then text.
-    drawObjectsInScope2(c, FI_PIC, picXOffset, picYOffset);
-    drawObjectsInScope2(c, FI_TEXT, 0, 0);
 }
 
 static uint objectsToIndex(fi_object_collection_t* c, fi_object_t* obj)
@@ -955,6 +941,35 @@ int FI_Responder(ddevent_t* ev)
     return false;
 }
 
+#if _DEBUG
+static void setupModelParamsForFIObject(rendmodelparams_t* params, const char* modelId, const float worldOffset[3])
+{
+    float pos[] = { SCREENWIDTH/2, SCREENHEIGHT/2, 0 };
+    modeldef_t* mf = R_CheckIDModelFor(modelId);
+
+    if(!mf)
+        return;
+
+    params->mf = mf;
+    params->center[VX] = worldOffset[VX] + pos[VX];
+    params->center[VY] = worldOffset[VZ] + pos[VZ];
+    params->center[VZ] = worldOffset[VY] + pos[VY];
+    params->distance = -10;
+    params->yawAngleOffset   = (SCREENWIDTH/2  - pos[VX]) * weaponOffsetScale + 90;
+    params->pitchAngleOffset = (SCREENHEIGHT/2 - pos[VY]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;
+    params->yaw = params->yawAngleOffset + 180;
+    params->pitch = params->yawAngleOffset + 90;
+    params->shineYawOffset = -vang;
+    params->shinePitchOffset = vpitch + 90;
+    params->shinepspriteCoordSpace = true;
+    params->ambientColor[CR] = params->ambientColor[CG] = params->ambientColor[CB] = 1;
+    params->ambientColor[CA] = 1;
+
+    // Lets get it spinning so we can better see whats going on.
+    params->yaw += rFrameCount;
+}
+#endif
+
 /**
  * Drawing is the most complex task here.
  */
@@ -1004,31 +1019,41 @@ void FI_Drawer(void)
     glLoadIdentity();
 
     // The 3D projection matrix.
-    /// \kludge not pretty.
-    {float oldViewPW = viewpw, oldViewPH = viewph, oldFOV = fieldOfView; 
-    viewpw = theWindow->width; viewph = theWindow->height; fieldOfView = 90;
-    GL_ProjectionMatrix();
-    viewpw = oldViewPW; viewph = oldViewPH; fieldOfView = oldFOV;
-    }
+    // We're assuming pixels are squares.
+    {float aspect = theWindow->width / (float) theWindow->height;
+    yfov = 2 * RAD2DEG(atan(tan(DEG2RAD(90) / 2) / aspect));
+    GL_InfinitePerspective(yfov, aspect, .05f);}
 
-    // Configure the coordinate space to put the objects at screen depth.
-    glScalef(1, -SCREENWIDTH/SCREENHEIGHT, 1); // This is the aspect correction.
-    glScalef(.1f/SCREENWIDTH, .1f/SCREENWIDTH, 1);
-    glTranslatef(-SCREENWIDTH/2, -SCREENHEIGHT/2, .05f/*equal to glNearClip*/);
+    // We need a left-handed yflipped coordinate system.
+    glScalef(1, -1, -1);
 
     // Clear Z buffer (prevent the objects being clipped by nearby polygons).
     glClear(GL_DEPTH_BUFFER_BIT);
 
     if(renderWireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
     glEnable(GL_ALPHA_TEST);
 
-    drawObjectsInScope(&page->_objects, -page->imgOffset[0].value, -page->imgOffset[1].value);
+    // Images first, then text.
+    {vec3_t worldOffset;
+    V3_Set(worldOffset, -SCREENWIDTH/2 + -page->imgOffset[0].value, -SCREENHEIGHT/2 + -page->imgOffset[1].value, .05f);
+    drawObjectsInScope(&page->_objects, FI_PIC, worldOffset);
+    V3_Set(worldOffset, -SCREENWIDTH/2, -SCREENHEIGHT/2, .05f);
+    drawObjectsInScope(&page->_objects, FI_TEXT, worldOffset);
+
+    /*{rendmodelparams_t params;
+    memset(&params, 0, sizeof(params));
+    worldOffset[VZ] += 20; // Not necessary.
+    setupModelParamsForFIObject(&params, "testmodel", worldOffset);
+    glEnable(GL_DEPTH_TEST);
+    Rend_RenderModel(&params);
+    glDisable(GL_DEPTH_TEST);}*/
+    }
 
     // Restore original matrices and state: back to normal 2D.
     glDisable(GL_ALPHA_TEST);
-    glDisable(GL_CULL_FACE);
+    //glDisable(GL_CULL_FACE);
     // Back from wireframe mode?
     if(renderWireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1251,17 +1276,18 @@ static __inline boolean useRect(const fidata_pic_t* p, uint frame)
  * | / |
  * 2 - 3
  */
-static size_t buildGeometry(DGLuint tex, const float rgba[4], const float rgba2[4],
-    boolean flagTexFlip, rvertex_t** verts, rcolor_t** colors, rtexcoord_t** coords)
+static size_t buildGeometry(const float dimensions[3], DGLuint tex, const float rgba[4],
+    const float rgba2[4], boolean flagTexFlip, rvertex_t** verts, rcolor_t** colors,
+    rtexcoord_t** coords)
 {
     static rvertex_t rvertices[4];
     static rcolor_t rcolors[4];
     static rtexcoord_t rcoords[4];
 
-    V3_Set(rvertices[0].pos, 0, 0, 0);
-    V3_Set(rvertices[1].pos, 1, 0, 0);
-    V3_Set(rvertices[2].pos, 0, 1, 0);
-    V3_Set(rvertices[3].pos, 1, 1, 0);
+    V3_Set(rvertices[0].pos, 0,              0,              0);
+    V3_Set(rvertices[1].pos, dimensions[VX], 0,              0);
+    V3_Set(rvertices[2].pos, 0,              dimensions[VY], 0);
+    V3_Set(rvertices[3].pos, dimensions[VX], dimensions[VY], 0);
 
     if(tex)
     {
@@ -1310,7 +1336,7 @@ static void drawGeometry(DGLuint tex, size_t numVerts, const rvertex_t* verts,
 }
 
 static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
-    const float scale[3], const float rgba[4], const float rgba2[4], float angle,
+    /*const*/ float scale[3], const float rgba[4], const float rgba2[4], float angle,
     const float worldOffset[3])
 {
     if(useRect(p, frame))
@@ -1365,7 +1391,8 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     // If we've not chosen a texture by now set some defaults.
     if(!tex)
     {
-        V3_Set(dimensions, 1, 1, 1);
+        V3_Copy(dimensions, scale);
+        V3_Set(scale, 1, 1, 1);
     }
 
     V3_Set(center, dimensions[VX] / 2, dimensions[VY] / 2, dimensions[VZ] / 2);
@@ -1378,11 +1405,12 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     offset[VX] *= scale[VX]; offset[VY] *= scale[VY]; offset[VZ] *= scale[VZ];
     V3_Sum(originOffset, originOffset, offset);
 
-    numVerts = buildGeometry(tex, rgba, rgba2, flipTextureS, &rvertices, &rcolors, &rcoords);
+    numVerts = buildGeometry(dimensions, tex, rgba, rgba2, flipTextureS, &rvertices, &rcolors, &rcoords);
 
     // Setup the transformation.
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
+    glScalef(.1f/SCREENWIDTH, .1f/SCREENWIDTH, 1);
 
     // Move to the object origin.
     glTranslatef(origin[VX], origin[VY], origin[VZ]);
@@ -1397,7 +1425,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
 
     // Translate to the object center.
     glTranslatef(originOffset[VX], originOffset[VY], originOffset[VZ]);
-    glScalef(scale[VX] * dimensions[VX], scale[VY] * dimensions[VY], scale[VZ] * dimensions[VZ]);
+    glScalef(scale[VX], scale[VY], scale[VZ]);
 
     drawGeometry(tex, numVerts, rvertices, rcolors, rcoords);
 
@@ -1409,14 +1437,14 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
         glBegin(GL_LINES);
             useColor(p->edgeColor, 4);
             glVertex2f(0, 0);
-            glVertex2f(1, 0);
-            glVertex2f(1, 0);
+            glVertex2f(dimensions[VX], 0);
+            glVertex2f(dimensions[VX], 0);
 
             useColor(p->otherEdgeColor, 4);
-            glVertex2f(1, 1);
-            glVertex2f(1, 1);
-            glVertex2f(0, 1);
-            glVertex2f(0, 1);
+            glVertex2f(dimensions[VX], dimensions[VY]);
+            glVertex2f(dimensions[VX], dimensions[VY]);
+            glVertex2f(0, dimensions[VY]);
+            glVertex2f(0, dimensions[VY]);
 
             useColor(p->edgeColor, 4);
             glVertex2f(0, 0);
@@ -1546,6 +1574,7 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
+    glScalef(.1f/SCREENWIDTH, .1f/SCREENWIDTH, 1);
     glTranslatef(tex->pos[0].value + offset[VX], tex->pos[1].value + offset[VY], tex->pos[2].value + offset[VZ]);
 
     rotate(tex->angle.value);
