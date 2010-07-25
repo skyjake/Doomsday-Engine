@@ -1004,10 +1004,12 @@ void FI_Drawer(void)
     glLoadIdentity();
 
     // The 3D projection matrix.
-    {float oldFOV = fieldOfView; /// \kludge not pretty.
-    fieldOfView = 90;
+    /// \kludge not pretty.
+    {float oldViewPW = viewpw, oldViewPH = viewph, oldFOV = fieldOfView; 
+    viewpw = theWindow->width; viewph = theWindow->height; fieldOfView = 90;
     GL_ProjectionMatrix();
-    fieldOfView = oldFOV;}
+    viewpw = oldViewPW; viewph = oldViewPH; fieldOfView = oldFOV;
+    }
 
     // Configure the coordinate space to put the objects at screen depth.
     glScalef(1, -SCREENWIDTH/SCREENHEIGHT, 1); // This is the aspect correction.
