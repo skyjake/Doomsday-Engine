@@ -954,7 +954,7 @@ static void setupModelParamsForFIObject(rendmodelparams_t* params, const char* m
     params->center[VX] = worldOffset[VX] + pos[VX];
     params->center[VY] = worldOffset[VZ] + pos[VZ];
     params->center[VZ] = worldOffset[VY] + pos[VY];
-    params->distance = -10;
+    params->distance = -10; /// \fixme inherit depth.
     params->yawAngleOffset   = (SCREENWIDTH/2  - pos[VX]) * weaponOffsetScale + 90;
     params->pitchAngleOffset = (SCREENHEIGHT/2 - pos[VY]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;
     params->yaw = params->yawAngleOffset + 180;
@@ -964,6 +964,15 @@ static void setupModelParamsForFIObject(rendmodelparams_t* params, const char* m
     params->shinepspriteCoordSpace = true;
     params->ambientColor[CR] = params->ambientColor[CG] = params->ambientColor[CB] = 1;
     params->ambientColor[CA] = 1;
+    /**
+     * \fixme This additional scale multiplier is necessary for the model
+     * to be drawn at a scale consistent with the other object types
+     * (e.g., Model compared to Pic).
+     *
+     * Both terms are also present in the other object scale calcs and can
+     * therefore be refactored away.
+     */
+    params->extraScale = .1f - (.05f * .05f);
 
     // Lets get it spinning so we can better see whats going on.
     params->yaw += rFrameCount;
@@ -1018,6 +1027,8 @@ void FI_Drawer(void)
     glPushMatrix();
     glLoadIdentity();
 
+    GL_SetMultisample(true);
+
     // The 3D projection matrix.
     // We're assuming pixels are squares.
     {float aspect = theWindow->width / (float) theWindow->height;
@@ -1044,10 +1055,22 @@ void FI_Drawer(void)
 
     /*{rendmodelparams_t params;
     memset(&params, 0, sizeof(params));
-    worldOffset[VZ] += 20; // Not necessary.
-    setupModelParamsForFIObject(&params, "testmodel", worldOffset);
+
     glEnable(GL_DEPTH_TEST);
+
+    worldOffset[VY] += 50.f / SCREENWIDTH * (40);
+    worldOffset[VZ] += 20; // Suitable default?
+    setupModelParamsForFIObject(&params, "testmodel", worldOffset);
     Rend_RenderModel(&params);
+
+    worldOffset[VX] -= 160.f / SCREENWIDTH * (40);
+    setupModelParamsForFIObject(&params, "testmodel", worldOffset);
+    Rend_RenderModel(&params);
+
+    worldOffset[VX] += 320.f / SCREENWIDTH * (40);
+    setupModelParamsForFIObject(&params, "testmodel", worldOffset);
+    Rend_RenderModel(&params);
+
     glDisable(GL_DEPTH_TEST);}*/
     }
 
@@ -1057,7 +1080,7 @@ void FI_Drawer(void)
     // Back from wireframe mode?
     if(renderWireframe)
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
+    
     // Filter on top of everything. Only draw if necessary.
     if(page->filter[3].value > 0)
     {
@@ -1071,6 +1094,8 @@ void FI_Drawer(void)
         glEnd();
         DGL_Enable(DGL_TEXTURING);
     }
+
+    GL_SetMultisample(false);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
