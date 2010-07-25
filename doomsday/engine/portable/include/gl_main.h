@@ -52,8 +52,6 @@ extern boolean  envModAdd;
 extern int      defResX, defResY, defBPP, defFullscreen;
 extern int      viewph, viewpw, viewpx, viewpy;
 extern int      r_framecounter;
-extern char     hiTexPath[], hiTexPath2[];
-extern int      UpdateState;
 extern float    vid_gamma, vid_bright, vid_contrast;
 extern int      glFontFixed, glFontVariable[NUM_GLFS];
 extern int      r_detail;
