@@ -285,7 +285,7 @@ static void pageClear(fi_page_t* p)
 
     AnimatorVector4_Init(p->filter, 0, 0, 0, 0);
     AnimatorVector2_Init(p->imgOffset, 0, 0);  
-    AnimatorVector4_Init(p->bgColor, 1, 1, 1, 1);
+    AnimatorVector4_Init(p->bgColor, 1, 1, 1, 0);
     {uint i;
     for(i = 0; i < 9; ++i)
     {
@@ -1042,7 +1042,6 @@ void FI_Drawer(void)
             glVertex2f(SCREENWIDTH, SCREENHEIGHT);
             glVertex2f(0, SCREENHEIGHT);
         glEnd();
-
         DGL_Enable(DGL_TEXTURING);
     }
 
@@ -1364,7 +1363,6 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     // If we've not chosen a texture by now set some defaults.
     if(!tex)
     {
-        //V3_Set(dimensions, scale[VX], scale[VY], 0);
         V3_Set(dimensions, 1, 1, 1);
     }
 
@@ -1408,18 +1406,18 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
 
         glBegin(GL_LINES);
             useColor(p->edgeColor, 4);
-            glVertex3f(0, 0, 0);
-            glVertex3f(1, 0, 0);
-            glVertex3f(1, 0, 0);
+            glVertex2f(0, 0);
+            glVertex2f(1, 0);
+            glVertex2f(1, 0);
 
             useColor(p->otherEdgeColor, 4);
-            glVertex3f(1, 1, 0);
-            glVertex3f(1, 1, 0);
-            glVertex3f(0, 1, 0);
-            glVertex3f(0, 1, 0);
+            glVertex2f(1, 1);
+            glVertex2f(1, 1);
+            glVertex2f(0, 1);
+            glVertex2f(0, 1);
 
             useColor(p->edgeColor, 4);
-            glVertex3f(0, 0, 0);
+            glVertex2f(0, 0);
         glEnd();
         
         DGL_Enable(DGL_TEXTURING);
@@ -1546,7 +1544,7 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(tex->pos[0].value + offset[VX], (tex->pos[1].value + offset[VY]), tex->pos[2].value + offset[VZ]);
+    glTranslatef(tex->pos[0].value + offset[VX], tex->pos[1].value + offset[VY], tex->pos[2].value + offset[VZ]);
 
     rotate(tex->angle.value);
     glScalef(tex->scale[0].value, tex->scale[1].value, tex->scale[2].value);
