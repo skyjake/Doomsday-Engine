@@ -376,42 +376,6 @@ static void rotate(float angle)
     glScalef(1, 240.0f / 200.0f, 1);
 }
 
-static void pageDraw(fi_page_t* p)
-{
-    // Draw the background.
-    if(p->bgMaterial)
-    {
-        useColor(p->bgColor, 4);
-        DGL_SetMaterial(p->bgMaterial);
-        DGL_DrawRectTiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
-    }
-    else if(p->bgColor[3].value > 0)
-    {
-        // Just clear the screen, then.
-        DGL_Disable(DGL_TEXTURING);
-        DGL_DrawRect(0, 0, SCREENWIDTH, SCREENHEIGHT, p->bgColor[0].value, p->bgColor[1].value, p->bgColor[2].value, p->bgColor[3].value);
-        DGL_Enable(DGL_TEXTURING);
-    }
-
-    drawObjectsInScope(&p->_objects, -p->imgOffset[0].value, -p->imgOffset[1].value);
-
-    // Filter on top of everything. Only draw if necessary.
-    if(p->filter[3].value > 0)
-    {
-        DGL_Disable(DGL_TEXTURING);
-        useColor(p->filter, 4);
-
-        glBegin(GL_QUADS);
-            glVertex2f(0, 0);
-            glVertex2f(SCREENWIDTH, 0);
-            glVertex2f(SCREENWIDTH, SCREENHEIGHT);
-            glVertex2f(0, SCREENHEIGHT);
-        glEnd();
-
-        DGL_Enable(DGL_TEXTURING);
-    }
-}
-
 /**
  * Reset the entire InFine state stack.
  */
@@ -996,6 +960,9 @@ int FI_Responder(ddevent_t* ev)
  */
 void FI_Drawer(void)
 {
+    finaleinterpreter_t* fi;
+    fi_page_t* page;
+
     if(!inited)
     {
 #ifdef _DEBUG
@@ -1004,18 +971,83 @@ void FI_Drawer(void)
         return;
     }
 
-    {finaleinterpreter_t* fi;
-    if((fi = stackTop()) && active)
-    {
-        // Don't draw anything until we are sure the script has started.
-        if(!FinaleInterpreter_CommandExecuted(fi))
-            return;
-        // Don't draw anything if we are playing a demo.
-        if(FinaleInterpreter_IsSuspended(fi))
-            return;
+    fi = stackTop();
+    if(!fi || !active)
+        return;
 
-        pageDraw(fi->_page);
-    }}
+    // Don't draw anything until we are sure the script has started.
+    if(!FinaleInterpreter_CommandExecuted(fi))
+        return;
+    // Don't draw anything if we are playing a demo.
+    if(FinaleInterpreter_IsSuspended(fi))
+        return;
+    page = fi->_page;
+
+    // First, draw the background.
+    if(page->bgMaterial)
+    {
+        useColor(page->bgColor, 4);
+        DGL_SetMaterial(page->bgMaterial);
+        DGL_DrawRectTiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
+    }
+    else if(page->bgColor[3].value > 0)
+    {
+        // Just clear the screen, then.
+        DGL_Disable(DGL_TEXTURING);
+        DGL_DrawRect(0, 0, SCREENWIDTH, SCREENHEIGHT, page->bgColor[0].value, page->bgColor[1].value, page->bgColor[2].value, page->bgColor[3].value);
+        DGL_Enable(DGL_TEXTURING);
+    }
+
+    // Now lets go into 3D mode for drawing the page objects.
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    // The 3D projection matrix.
+    {float oldFOV = fieldOfView; /// \kludge not pretty.
+    fieldOfView = 90;
+    GL_ProjectionMatrix();
+    fieldOfView = oldFOV;}
+
+    // Configure the coordinate space to put the objects at screen depth.
+    glScalef(1, -SCREENWIDTH/SCREENHEIGHT, 1); // This is the aspect correction.
+    glScalef(.1f/SCREENWIDTH, .1f/SCREENWIDTH, 1);
+    glTranslatef(-SCREENWIDTH/2, -SCREENHEIGHT/2, .05f/*equal to glNearClip*/);
+
+    // Clear Z buffer (prevent the objects being clipped by nearby polygons).
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    if(renderWireframe)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_ALPHA_TEST);
+
+    drawObjectsInScope(&page->_objects, -page->imgOffset[0].value, -page->imgOffset[1].value);
+
+    // Restore original matrices and state: back to normal 2D.
+    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_CULL_FACE);
+    // Back from wireframe mode?
+    if(renderWireframe)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    // Filter on top of everything. Only draw if necessary.
+    if(page->filter[3].value > 0)
+    {
+        DGL_Disable(DGL_TEXTURING);
+        useColor(page->filter, 4);
+        glBegin(GL_QUADS);
+            glVertex2f(0, 0);
+            glVertex2f(SCREENWIDTH, 0);
+            glVertex2f(SCREENWIDTH, SCREENHEIGHT);
+            glVertex2f(0, SCREENHEIGHT);
+        glEnd();
+
+        DGL_Enable(DGL_TEXTURING);
+    }
+
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
 }
 
 void FIData_PicThink(fidata_pic_t* p)
@@ -1308,30 +1340,31 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
         {   
             tex = GL_PrepareRawTex(rawTex);
             V3_Set(offset, SCREENWIDTH/2, SCREENHEIGHT/2, 0);
-            V3_Set(dimensions, rawTex->width, rawTex->height, 1);
+            V3_Set(dimensions, rawTex->width, rawTex->height, 0);
         }
         else if(f->type == PFT_XIMAGE)
         {
             tex = (DGLuint)f->texRef.tex;
             V3_Set(offset, SCREENWIDTH/2, SCREENHEIGHT/2, 0);
-            V3_Set(dimensions, 1, 1, 1); /// \fixme.
+            V3_Set(dimensions, 1, 1, 0); /// \fixme.
         }
         /*else if(f->type == PFT_MATERIAL)
         {
-            V3_Set(dimensions, 1, 1, 1);
+            V3_Set(dimensions, 1, 1, 0);
         }*/
         else if(f->type == PFT_PATCH && (patch = R_FindPatchTex(f->texRef.patch)))
         {
             tex = (renderTextures==1? GL_PreparePatch(patch) : 0);
             V3_Set(offset, patch->offX, patch->offY, 0);
             /// \todo need to decide what if any significance what depth will mean here.
-            V3_Set(dimensions, patch->width, patch->height, 1);
+            V3_Set(dimensions, patch->width, patch->height, 0);
         }
     }
 
     // If we've not chosen a texture by now set some defaults.
     if(!tex)
     {
+        //V3_Set(dimensions, scale[VX], scale[VY], 0);
         V3_Set(dimensions, 1, 1, 1);
     }
 
@@ -1375,18 +1408,18 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
 
         glBegin(GL_LINES);
             useColor(p->edgeColor, 4);
-            glVertex2f(0, 0);
-            glVertex2f(1, 0);
-            glVertex2f(1, 0);
+            glVertex3f(0, 0, 0);
+            glVertex3f(1, 0, 0);
+            glVertex3f(1, 0, 0);
 
             useColor(p->otherEdgeColor, 4);
-            glVertex2f(1, 1);
-            glVertex2f(1, 1);
-            glVertex2f(0, 1);
-            glVertex2f(0, 1);
+            glVertex3f(1, 1, 0);
+            glVertex3f(1, 1, 0);
+            glVertex3f(0, 1, 0);
+            glVertex3f(0, 1, 0);
 
             useColor(p->edgeColor, 4);
-            glVertex2f(0, 0);
+            glVertex3f(0, 0, 0);
         glEnd();
         
         DGL_Enable(DGL_TEXTURING);
@@ -1513,7 +1546,7 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
-    glTranslatef(tex->pos[0].value + offset[VX], tex->pos[1].value + offset[VY], tex->pos[2].value + offset[VZ]);
+    glTranslatef(tex->pos[0].value + offset[VX], (tex->pos[1].value + offset[VY]), tex->pos[2].value + offset[VZ]);
 
     rotate(tex->angle.value);
     glScalef(tex->scale[0].value, tex->scale[1].value, tex->scale[2].value);
