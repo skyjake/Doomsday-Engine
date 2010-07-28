@@ -460,11 +460,6 @@ static void setInitialGameState(finaleinterpreter_t* fi, int gameState, const vo
         if(extraData)
             setExtraData(fi, extraData);
     }
-
-    if(fi->mode == FIMODE_OVERLAY)
-    {   // Overlay scripts stop when the gameMode changes.
-        fi->overlayGameState = gameState;
-    }
 }
 
 static command_t* findCommand(const char* name)
@@ -651,6 +646,8 @@ static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString
 
     // We're now going to execute a command.
     fi->cmdExecuted = true;
+    // So unhide our UI page(s).
+    FIPage_MakeVisible(fi->_page, true);
 
     // Is this a command we know how to execute?
     {command_t* cmd;
@@ -734,7 +731,10 @@ static void demoEnds(finaleinterpreter_t* fi)
 
     // Restore the InFine state.
     fi->flags.suspended = false;
-
+    if(fi->cmdExecuted)
+    {
+        FIPage_MakeVisible(fi->_page, true);
+    }
     gx.FI_DemoEnds();
 }
 
@@ -882,6 +882,8 @@ void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, finale_mode_t mode,
     setInitialGameState(fi, gameState, extraData);
 
     fi->_page = FI_NewPage();
+    // Hide the page until command interpretation begins.
+    FIPage_MakeVisible(fi->_page, false);
 
     // Take a copy of the script.
     fi->script = Z_Realloc(fi->script, size + 1, PU_STATIC);
@@ -944,6 +946,21 @@ void FinaleInterpreter_ReleaseScript(finaleinterpreter_t* fi)
     releaseScript(fi);
 }
 
+void FinaleInterpreter_Resume(finaleinterpreter_t* fi)
+{
+    assert(fi);
+    // Do we need to unhide any pages?
+    if(!fi->cmdExecuted || fi->flags.suspended)
+        return; // No.
+    FIPage_MakeVisible(fi->_page, true);
+}
+
+void FinaleInterpreter_Suspend(finaleinterpreter_t* fi)
+{
+    assert(fi);
+    FIPage_MakeVisible(fi->_page, false);
+}
+
 void* FinaleInterpreter_ExtraData(finaleinterpreter_t* fi)
 {
     assert(fi);
@@ -986,7 +1003,7 @@ static boolean runTic(finaleinterpreter_t* fi)
     memset(&params, 0, sizeof(params));
     params.runTick = true;
     params.canSkip = FinaleInterpreter_CanSkip(fi);
-    params.gameState = (fi->mode == FIMODE_OVERLAY? fi->overlayGameState : fi->initialGameState);
+    params.gameState = fi->initialGameState;
     params.extraData = fi->extraData;
     Plug_DoHook(HOOK_FINALE_SCRIPT_TICKER, fi->mode, &params);
     return params.runTick;
@@ -2015,6 +2032,7 @@ DEFFC(PlayDemo)
 {
     // Mark the current state as suspended, so we know to resume it when the demo ends.
     fi->flags.suspended = true;
+    FIPage_MakeVisible(fi->_page, false);
 
     // The only argument is the demo file name.
     // Start playing the demo.

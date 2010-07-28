@@ -85,7 +85,6 @@ typedef struct finaleinterpreter_t {
     struct fi_page_s* _page;
 
     int             initialGameState; // Game state before the script began.
-    int             overlayGameState; // Overlay scripts run only in one gameMode.
     void*           extraData;
 } finaleinterpreter_t;
 
@@ -97,6 +96,8 @@ int                 FinaleInterpreter_Responder(finaleinterpreter_t* fi, ddevent
 
 void                FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, finale_mode_t mode, const char* script, int gameState, const void* extraData);
 void                FinaleInterpreter_ReleaseScript(finaleinterpreter_t* fi);
+void                FinaleInterpreter_Suspend(finaleinterpreter_t* fi);
+void                FinaleInterpreter_Resume(finaleinterpreter_t* fi);
 
 void*               FinaleInterpreter_ExtraData(finaleinterpreter_t* fi);
 

@@ -52,6 +52,9 @@ typedef struct fi_object_collection_s {
 } fi_object_collection_t;
 
 typedef struct fi_page_s {
+    struct fi_page_flags_s {
+        char            hidden:1;
+    } flags;
     // Objects visible on this page.
     fi_object_collection_t _objects;
 
@@ -64,6 +67,7 @@ typedef struct fi_page_s {
     uint            timer;
 } fi_page_t;
 
+void                FIPage_MakeVisible(fi_page_t* page, boolean yes);
 void                FIPage_RunTic(fi_page_t* page);
 
 fi_object_t*        FIPage_AddObject(fi_page_t* page, fi_object_t* obj);

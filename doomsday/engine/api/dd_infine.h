@@ -28,10 +28,12 @@
 #include "dd_animator.h"
 #include "dd_compositefont.h"
 
+typedef ident_t fi_objectid_t;
+typedef ident_t fi_scriptid_t;
+
 #define FI_NAME_MAX_LENGTH          32
 typedef char fi_name_t[FI_NAME_MAX_LENGTH];
 typedef fi_name_t fi_objectname_t;
-typedef ident_t fi_objectid_t;
 
 typedef enum infinemode_e {
     FIMODE_LOCAL,
@@ -47,7 +49,7 @@ void                FI_Reset(void);
 void                FI_SetClientsideDefaultState(void* data);
 void*               FI_GetClientsideDefaultState(void);
 
-boolean             FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, void* extraData);
+fi_scriptid_t       FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, void* extraData);
 void                FI_ScriptTerminate(void);
 
 typedef enum {
