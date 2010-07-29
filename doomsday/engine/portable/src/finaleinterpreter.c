@@ -445,14 +445,14 @@ static void setExtraData(finaleinterpreter_t* fi, const void* data)
 {
     if(!data)
         return;
-    if(!fi->extraData || !(FINALE_SCRIPT_EXTRADATA_SIZE > 0))
+    if(!fi->_extraData || !(FINALE_SCRIPT_EXTRADATA_SIZE > 0))
         return;
-    memcpy(fi->extraData, data, FINALE_SCRIPT_EXTRADATA_SIZE);
+    memcpy(fi->_extraData, data, FINALE_SCRIPT_EXTRADATA_SIZE);
 }
 
 static void setInitialGameState(finaleinterpreter_t* fi, int gameState, const void* extraData)
 {
-    fi->initialGameState = gameState;
+    fi->_initialGameState = gameState;
 
     if(FINALE_SCRIPT_EXTRADATA_SIZE > 0)
     {
@@ -478,10 +478,10 @@ static command_t* findCommand(const char* name)
 
 static void releaseScript(finaleinterpreter_t* fi)
 {
-    if(fi->script)
-        Z_Free(fi->script);
-    fi->script = 0;
-    fi->cp = 0;
+    if(fi->_script)
+        Z_Free(fi->_script);
+    fi->_script = 0;
+    fi->_cp = 0;
 }
 
 static const char* nextToken(finaleinterpreter_t* fi)
@@ -489,31 +489,31 @@ static const char* nextToken(finaleinterpreter_t* fi)
     char* out;
 
     // Skip whitespace.
-    while(*fi->cp && isspace(*fi->cp))
-        fi->cp++;
-    if(!*fi->cp)
+    while(*fi->_cp && isspace(*fi->_cp))
+        fi->_cp++;
+    if(!*fi->_cp)
         return NULL; // The end has been reached.
 
     out = token;
-    if(*fi->cp == '"') // A string?
+    if(*fi->_cp == '"') // A string?
     {
-        for(fi->cp++; *fi->cp; fi->cp++)
+        for(fi->_cp++; *fi->_cp; fi->_cp++)
         {
-            if(*fi->cp == '"')
+            if(*fi->_cp == '"')
             {
-                fi->cp++;
+                fi->_cp++;
                 // Convert double quotes to single ones.
-                if(*fi->cp != '"')
+                if(*fi->_cp != '"')
                     break;
             }
 
-            *out++ = *fi->cp;
+            *out++ = *fi->_cp;
         }
     }
     else
     {
-        while(!isspace(*fi->cp) && *fi->cp)
-            *out++ = *fi->cp++;
+        while(!isspace(*fi->_cp) && *fi->_cp)
+            *out++ = *fi->_cp++;
     }
     *out++ = 0;
 
@@ -536,7 +536,7 @@ static fi_operand_t* parseCommandArguments(finaleinterpreter_t* fi, const comman
     if(!cmd->operands || !cmd->operands[0])
         return NULL;
 
-    origCursorPos = fi->cp;
+    origCursorPos = fi->_cp;
     numOperands = (uint)strlen(cmd->operands);
 
     // Operands are read sequentially. This is to potentially allow for
@@ -550,7 +550,7 @@ static fi_operand_t* parseCommandArguments(finaleinterpreter_t* fi, const comman
 
         if(!nextToken(fi))
         {
-            fi->cp = origCursorPos;
+            fi->_cp = origCursorPos;
             if(ops)
                 free(ops);
             if(count)
@@ -600,7 +600,7 @@ static fi_operand_t* parseCommandArguments(finaleinterpreter_t* fi, const comman
         }
     } while(++i < numOperands);}
 
-    fi->cp = origCursorPos;
+    fi->_cp = origCursorPos;
 
     if(count)
         *count = numOperands;
@@ -609,15 +609,15 @@ static fi_operand_t* parseCommandArguments(finaleinterpreter_t* fi, const comman
 
 static boolean skippingCommand(finaleinterpreter_t* fi, const command_t* cmd)
 {
-    if((fi->skipNext && !cmd->flags.when_condition_skipping) ||
-       ((fi->skipping || fi->gotoSkip) && !cmd->flags.when_skipping))
+    if((fi->_skipNext && !cmd->flags.when_condition_skipping) ||
+       ((fi->_skipping || fi->_gotoSkip) && !cmd->flags.when_skipping))
     {
         // While not DO-skipping, the condskip has now been done.
-        if(!fi->doLevel)
+        if(!fi->_doLevel)
         {
-            if(fi->skipNext)
-                fi->lastSkipped = true;
-            fi->skipNext = false;
+            if(fi->_skipNext)
+                fi->_lastSkipped = true;
+            fi->_skipNext = false;
         }
         return true;
     }
@@ -632,20 +632,20 @@ static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString
     // Semicolon terminates DO-blocks.
     if(!strcmp(commandString, ";"))
     {
-        if(fi->doLevel > 0)
+        if(fi->_doLevel > 0)
         {
-            if(--fi->doLevel == 0)
+            if(--fi->_doLevel == 0)
             {
                 // The DO-skip has been completed.
-                fi->skipNext = false;
-                fi->lastSkipped = true;
+                fi->_skipNext = false;
+                fi->_lastSkipped = true;
             }
         }
         return true; // Success!
     }
 
     // We're now going to execute a command.
-    fi->cmdExecuted = true;
+    fi->_cmdExecuted = true;
     // So unhide our UI page(s).
     FIPage_MakeVisible(fi->_page, true);
 
@@ -668,15 +668,15 @@ static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString
             cmd->func(cmd, ops, fi);
         }
 
-        if(fi->gotoEnd)
+        if(fi->_gotoEnd)
         {
-            fi->wait = 1;
+            fi->_wait = 1;
             FI_ScriptTerminate();
             /// \note @var fi may now be invalid!
         }
         else
         {   // Now we've executed the latest command.
-            fi->lastSkipped = false;
+            fi->_lastSkipped = false;
         }
 
         if(ops)
@@ -726,18 +726,18 @@ static fi_object_t* getObject(finaleinterpreter_t* fi, fi_obtype_e type, const c
 
 static void clearEventHandlers(finaleinterpreter_t* fi)
 {
-    if(fi->numEventHandlers)
-        Z_Free(fi->eventHandlers);
-    fi->eventHandlers = 0;
-    fi->numEventHandlers = 0;
+    if(fi->_numEventHandlers)
+        Z_Free(fi->_eventHandlers);
+    fi->_eventHandlers = 0;
+    fi->_numEventHandlers = 0;
 }
 
 static fi_handler_t* findEventHandler(finaleinterpreter_t* fi, const ddevent_t* ev)
 {
     uint i;
-    for(i = 0; i < fi->numEventHandlers; ++i)
+    for(i = 0; i < fi->_numEventHandlers; ++i)
     {
-        fi_handler_t* h = &fi->eventHandlers[i];
+        fi_handler_t* h = &fi->_eventHandlers[i];
         if(h->ev.device != ev->device && h->ev.type != ev->type)
             continue;
         switch(h->ev.type)
@@ -765,8 +765,8 @@ static fi_handler_t* findEventHandler(finaleinterpreter_t* fi, const ddevent_t* 
 static fi_handler_t* createEventHandler(finaleinterpreter_t* fi, const ddevent_t* ev, const char* marker)
 {
     fi_handler_t* h;
-    fi->eventHandlers = Z_Realloc(fi->eventHandlers, sizeof(*h) * ++fi->numEventHandlers, PU_STATIC);
-    h = &fi->eventHandlers[fi->numEventHandlers-1];
+    fi->_eventHandlers = Z_Realloc(fi->_eventHandlers, sizeof(*h) * ++fi->_numEventHandlers, PU_STATIC);
+    h = &fi->_eventHandlers[fi->_numEventHandlers-1];
     memset(h, 0, sizeof(*h));
     memcpy(&h->ev, ev, sizeof(h->ev));
     dd_snprintf(h->marker, FI_NAME_MAX_LENGTH, "%s", marker);
@@ -777,26 +777,26 @@ static void destroyEventHandler(finaleinterpreter_t* fi, fi_handler_t* h)
 {
     assert(fi && h);
     {uint i;
-    for(i = 0; i < fi->numEventHandlers; ++i)
+    for(i = 0; i < fi->_numEventHandlers; ++i)
     {
-        fi_handler_t* other = &fi->eventHandlers[i];
+        fi_handler_t* other = &fi->_eventHandlers[i];
 
         if(h != other)
             continue;
 
-        if(i != fi->numEventHandlers-1)
-            memmove(&fi->eventHandlers[i], &fi->eventHandlers[i+1], sizeof(*fi->eventHandlers) * (fi->numEventHandlers-i));
+        if(i != fi->_numEventHandlers-1)
+            memmove(&fi->_eventHandlers[i], &fi->_eventHandlers[i+1], sizeof(*fi->_eventHandlers) * (fi->_numEventHandlers-i));
 
         // Resize storage?
-        if(fi->numEventHandlers > 1)
+        if(fi->_numEventHandlers > 1)
         {
-            fi->eventHandlers = Z_Realloc(fi->eventHandlers, sizeof(*fi->eventHandlers) * --fi->numEventHandlers, PU_STATIC);
+            fi->_eventHandlers = Z_Realloc(fi->_eventHandlers, sizeof(*fi->_eventHandlers) * --fi->_numEventHandlers, PU_STATIC);
         }
         else
         {
-            Z_Free(fi->eventHandlers);
-            fi->eventHandlers = NULL;
-            fi->numEventHandlers = 0;
+            Z_Free(fi->_eventHandlers);
+            fi->_eventHandlers = NULL;
+            fi->_numEventHandlers = 0;
         }
         return;
     }}
@@ -822,7 +822,7 @@ static boolean getEventHandler(finaleinterpreter_t* fi, const ddevent_t* ev, con
 static void stopScript(finaleinterpreter_t* fi)
 {
 #ifdef _DEBUG
-    Con_Printf("Finale End: mode=%i '%.30s'\n", fi->mode, fi->script);
+    Con_Printf("Finale End: mode=%i '%.30s'\n", fi->mode, fi->_script);
 #endif
 
     fi->flags.stopped = true;
@@ -835,8 +835,8 @@ static void stopScript(finaleinterpreter_t* fi)
     // Any hooks?
     {ddhook_finale_script_stop_paramaters_t params;
     memset(&params, 0, sizeof(params));
-    params.initialGameState = fi->initialGameState;
-    params.extraData = fi->extraData;
+    params.initialGameState = fi->_initialGameState;
+    params.extraData = fi->_extraData;
     Plug_DoHook(HOOK_FINALE_SCRIPT_TERMINATE, fi->mode, &params);} 
 }
 
@@ -871,27 +871,27 @@ void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, finale_mode_t mode,
     FIPage_MakeVisible(fi->_page, false);
 
     // Take a copy of the script.
-    fi->script = Z_Realloc(fi->script, size + 1, PU_STATIC);
-    memcpy(fi->script, script, size);
-    fi->script[size] = '\0';
-    fi->cp = fi->script; // Init cursor.
+    fi->_script = Z_Realloc(fi->_script, size + 1, PU_STATIC);
+    memcpy(fi->_script, script, size);
+    fi->_script[size] = '\0';
+    fi->_cp = fi->_script; // Init cursor.
     fi->flags.suspended = false;
     fi->flags.paused = false;
     fi->flags.show_menu = true; // Enabled by default.
     fi->flags.can_skip = true; // By default skipping is enabled.
 
-    fi->cmdExecuted = false; // Nothing is drawn until a cmd has been executed.
-    fi->skipping = false;
-    fi->wait = 0; // Not waiting for anything.
-    fi->inTime = 0; // Interpolation is off.
-    fi->timer = 0;
-    fi->gotoSkip = false;
-    fi->gotoEnd = false;
-    fi->skipNext = false;
+    fi->_cmdExecuted = false; // Nothing is drawn until a cmd has been executed.
+    fi->_skipping = false;
+    fi->_wait = 0; // Not waiting for anything.
+    fi->_inTime = 0; // Interpolation is off.
+    fi->_timer = 0;
+    fi->_gotoSkip = false;
+    fi->_gotoEnd = false;
+    fi->_skipNext = false;
 
-    fi->waitingText = NULL;
-    fi->waitingPic = NULL;
-    memset(fi->gotoTarget, 0, sizeof(fi->gotoTarget));
+    fi->_waitingText = 0;
+    fi->_waitingPic = 0;
+    memset(fi->_gotoTarget, 0, sizeof(fi->_gotoTarget));
 
     clearEventHandlers(fi);
 
@@ -903,20 +903,20 @@ void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, finale_mode_t mode,
 
         memset(&params, 0, sizeof(params));
 
-        if(fi->extraData)
+        if(fi->_extraData)
         {
-            params.extraData = fi->extraData;
+            params.extraData = fi->_extraData;
             params.outBuf = 0;
             params.outBufSize = 0;
             haveExtraData = Plug_DoHook(HOOK_FINALE_SCRIPT_SERIALIZE_EXTRADATA, 0, &params);
         }
 
         // Tell clients to start this script.
-        Sv_Finale(flags, fi->script, (haveExtraData? params.outBuf : 0), (haveExtraData? params.outBufSize : 0));
+        Sv_Finale(flags, fi->_script, (haveExtraData? params.outBuf : 0), (haveExtraData? params.outBufSize : 0));
     }
 
     // Any hooks?
-    Plug_DoHook(HOOK_FINALE_SCRIPT_BEGIN, (int) fi->mode, fi->extraData);
+    Plug_DoHook(HOOK_FINALE_SCRIPT_BEGIN, (int) fi->mode, fi->_extraData);
     }
 }
 
@@ -938,7 +938,7 @@ void FinaleInterpreter_Resume(finaleinterpreter_t* fi)
         return;
     fi->flags.suspended = false;
     // Do we need to unhide any pages?
-    if(fi->cmdExecuted)
+    if(fi->_cmdExecuted)
     {
         FIPage_MakeVisible(fi->_page, true);
     }
@@ -957,7 +957,7 @@ void FinaleInterpreter_Suspend(finaleinterpreter_t* fi)
 void* FinaleInterpreter_ExtraData(finaleinterpreter_t* fi)
 {
     assert(fi);
-    return fi->extraData;
+    return fi->_extraData;
 }
 
 boolean FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t* fi)
@@ -987,7 +987,7 @@ boolean FinaleInterpreter_CanSkip(finaleinterpreter_t* fi)
 boolean FinaleInterpreter_CommandExecuted(finaleinterpreter_t* fi)
 {
     assert(fi);
-    return fi->cmdExecuted;
+    return fi->_cmdExecuted;
 }
 
 static boolean runTic(finaleinterpreter_t* fi)
@@ -996,8 +996,8 @@ static boolean runTic(finaleinterpreter_t* fi)
     memset(&params, 0, sizeof(params));
     params.runTick = true;
     params.canSkip = FinaleInterpreter_CanSkip(fi);
-    params.gameState = fi->initialGameState;
-    params.extraData = fi->extraData;
+    params.gameState = fi->_initialGameState;
+    params.extraData = fi->_extraData;
     Plug_DoHook(HOOK_FINALE_SCRIPT_TICKER, fi->mode, &params);
     return params.runTick;
 }
@@ -1009,13 +1009,13 @@ boolean FinaleInterpreter_RunTic(finaleinterpreter_t* fi)
     if(fi->flags.stopped || fi->flags.suspended)
         return false;
 
-    fi->timer++;
+    fi->_timer++;
 
     if(!runTic(fi))
         return false;
 
     // If we're waiting, don't execute any commands.
-    if(fi->wait && --fi->wait)
+    if(fi->_wait && --fi->_wait)
         return false;
 
     // If we're paused we can't really do anything.
@@ -1023,27 +1023,27 @@ boolean FinaleInterpreter_RunTic(finaleinterpreter_t* fi)
         return false;
 
     // If we're waiting for a text to finish typing, do nothing.
-    if(fi->waitingText && fi->waitingText->type == FI_TEXT)
+    if(fi->_waitingText && fi->_waitingText->type == FI_TEXT)
     {
-        if(!((fidata_text_t*)fi->waitingText)->animComplete)
+        if(!((fidata_text_t*)fi->_waitingText)->animComplete)
             return false;
 
-        fi->waitingText = NULL;
+        fi->_waitingText = NULL;
     }
 
     // Waiting for an animation to reach its end?
-    if(fi->waitingPic && fi->waitingPic->type == FI_PIC)
+    if(fi->_waitingPic && fi->_waitingPic->type == FI_PIC)
     {
-        if(!((fidata_pic_t*)fi->waitingPic)->animComplete)
+        if(!((fidata_pic_t*)fi->_waitingPic)->animComplete)
             return false;
 
-        fi->waitingPic = NULL;
+        fi->_waitingPic = NULL;
     }
 
     // Execute commands until a wait time is set or we reach the end of
     // the script. If the end is reached, the finale really ends (terminates).
     {int last = 0;
-    while(FI_Active() && !fi->wait && !fi->waitingText && !fi->waitingPic && !last)
+    while(FI_Active() && !fi->_wait && !fi->_waitingText && !fi->_waitingPic && !last)
         last = !executeNextCommand(fi);
     return last;}
 }
@@ -1055,19 +1055,19 @@ boolean FinaleInterpreter_SkipToMarker(finaleinterpreter_t* fi, const char* mark
     if(!FI_Active() || !marker[0])
         return false;
 
-    memset(fi->gotoTarget, 0, sizeof(fi->gotoTarget));
-    strncpy(fi->gotoTarget, marker, sizeof(fi->gotoTarget) - 1);
+    memset(fi->_gotoTarget, 0, sizeof(fi->_gotoTarget));
+    strncpy(fi->_gotoTarget, marker, sizeof(fi->_gotoTarget) - 1);
 
     // Start skipping until the marker is found.
-    fi->gotoSkip = true;
+    fi->_gotoSkip = true;
 
     // Stop any waiting.
-    fi->wait = 0;
-    fi->waitingText = NULL;
-    fi->waitingPic = NULL;
+    fi->_wait = 0;
+    fi->_waitingText = NULL;
+    fi->_waitingPic = NULL;
 
     // Rewind the script so we can jump anywhere.
-    fi->cp = fi->script;
+    fi->_cp = fi->_script;
     return true;
 }
 
@@ -1075,26 +1075,26 @@ boolean FinaleInterpreter_Skip(finaleinterpreter_t* fi)
 {
     assert(fi);
 
-    fi->waitingText = NULL; // Stop waiting for things.
-    fi->waitingPic = NULL;
+    fi->_waitingText = NULL; // Stop waiting for things.
+    fi->_waitingPic = NULL;
     if(fi->flags.paused)
     {
         fi->flags.paused = false; // Un-pause.
-        fi->wait = 0;
+        fi->_wait = 0;
         return true;
     }
 
     if(fi->flags.can_skip)
     {
-        fi->skipping = true; // Start skipping ahead.
-        fi->wait = 0;
+        fi->_skipping = true; // Start skipping ahead.
+        fi->_wait = 0;
         return true;
     }
 
     return (fi->flags.eat_events != 0);
 }
 
-int FinaleInterpreter_Responder(finaleinterpreter_t* fi, ddevent_t* ev)
+int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev)
 {
     assert(fi);
 
@@ -1105,7 +1105,7 @@ int FinaleInterpreter_Responder(finaleinterpreter_t* fi, ddevent_t* ev)
         return false;
 
     // During the first ~second disallow all events/skipping.
-    if(fi->timer < 20)
+    if(fi->_timer < 20)
         return false;
 
     // Any handlers for this event?
@@ -1161,18 +1161,18 @@ static void changePageBackground(fi_page_t* p, material_t* mat)
 DEFFC(Do)
 {
     // This command is called even when (cond)skipping.
-    if(fi->skipNext)
+    if(fi->_skipNext)
     {
         // A conditional skip has been issued.
         // We'll go into DO-skipping mode. skipnext won't be cleared
         // until the matching semicolon is found.
-        fi->doLevel++;
+        fi->_doLevel++;
     }
 }
 
 DEFFC(End)
 {
-    fi->gotoEnd = true;
+    fi->_gotoEnd = true;
 }
 
 DEFFC(BGFlat)
@@ -1192,43 +1192,43 @@ DEFFC(NoBGMaterial)
 
 DEFFC(InTime)
 {
-    fi->inTime = FRACSECS_TO_TICKS(ops[0].data.flt);
+    fi->_inTime = FRACSECS_TO_TICKS(ops[0].data.flt);
 }
 
 DEFFC(Tic)
 {
-    fi->wait = 1;
+    fi->_wait = 1;
 }
 
 DEFFC(Wait)
 {
-    fi->wait = FRACSECS_TO_TICKS(ops[0].data.flt);
+    fi->_wait = FRACSECS_TO_TICKS(ops[0].data.flt);
 }
 
 DEFFC(WaitText)
 {
-    fi->waitingText = getObject(fi, FI_TEXT, ops[0].data.cstring);
+    fi->_waitingText = getObject(fi, FI_TEXT, ops[0].data.cstring);
 }
 
 DEFFC(WaitAnim)
 {
-    fi->waitingPic = getObject(fi, FI_PIC, ops[0].data.cstring);
+    fi->_waitingPic = getObject(fi, FI_PIC, ops[0].data.cstring);
 }
 
 DEFFC(Color)
 {
-    FIPage_SetBackgroundColor(fi->_page, ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, fi->inTime);
+    FIPage_SetBackgroundColor(fi->_page, ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, fi->_inTime);
 }
 
 DEFFC(ColorAlpha)
 {
-    FIPage_SetBackgroundColorAndAlpha(fi->_page, ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->inTime);
+    FIPage_SetBackgroundColorAndAlpha(fi->_page, ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->_inTime);
 }
 
 DEFFC(Pause)
 {
     fi->flags.paused = true;
-    fi->wait = 1;
+    fi->_wait = 1;
 }
 
 DEFFC(CanSkip)
@@ -1243,7 +1243,7 @@ DEFFC(NoSkip)
 
 DEFFC(SkipHere)
 {
-    fi->skipping = false;
+    fi->_skipping = false;
 }
 
 DEFFC(Events)
@@ -1323,21 +1323,20 @@ DEFFC(If)
     }
 
     // Skip the next command if the value is false.
-    fi->skipNext = !val;
+    fi->_skipNext = !val;
 }
 
 DEFFC(IfNot)
 {
     // This is the same as "if" but the skip condition is the opposite.
     FIC_If(cmd, ops, fi);
-    fi->skipNext = !fi->skipNext;
+    fi->_skipNext = !fi->_skipNext;
 }
 
 DEFFC(Else)
 {
-    // The only time the ELSE condition doesn't skip is immediately
-    // after a skip.
-    fi->skipNext = !fi->lastSkipped;
+    // The only time the ELSE condition doesn't skip is immediately after a skip.
+    fi->_skipNext = !fi->_lastSkipped;
 }
 
 DEFFC(GoTo)
@@ -1348,8 +1347,8 @@ DEFFC(GoTo)
 DEFFC(Marker)
 {
     // Does it match the goto string?
-    if(!stricmp(fi->gotoTarget, ops[0].data.cstring))
-        fi->gotoSkip = false;
+    if(!stricmp(fi->_gotoTarget, ops[0].data.cstring))
+        fi->_gotoSkip = false;
 }
 
 DEFFC(Delete)
@@ -1553,7 +1552,7 @@ DEFFC(ObjectOffX)
     if(ops[0].data.obj)
     {
         fi_object_t* obj = ops[0].data.obj;
-        Animator_Set(&obj->pos[0], ops[1].data.flt, fi->inTime);
+        Animator_Set(&obj->pos[0], ops[1].data.flt, fi->_inTime);
     }
 }
 
@@ -1562,7 +1561,7 @@ DEFFC(ObjectOffY)
     if(ops[0].data.obj)
     {
         fi_object_t* obj = ops[0].data.obj;
-        Animator_Set(&obj->pos[1], ops[1].data.flt, fi->inTime);
+        Animator_Set(&obj->pos[1], ops[1].data.flt, fi->_inTime);
     }
 }
 
@@ -1571,7 +1570,7 @@ DEFFC(ObjectOffZ)
     if(ops[0].data.obj)
     {
         fi_object_t* obj = ops[0].data.obj;
-        Animator_Set(&obj->pos[2], ops[1].data.flt, fi->inTime);
+        Animator_Set(&obj->pos[2], ops[1].data.flt, fi->_inTime);
     }
 }
 
@@ -1589,17 +1588,17 @@ DEFFC(ObjectRGB)
     case FI_TEXT:
         {
         fidata_text_t* t = (fidata_text_t*)obj;
-        AnimatorVector3_Set(t->color, rgb[CR], rgb[CG], rgb[CB], fi->inTime);
+        AnimatorVector3_Set(t->color, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
         break;
         }
     case FI_PIC:
         {
         fidata_pic_t* p = (fidata_pic_t*)obj;
-        AnimatorVector3_Set(p->color, rgb[CR], rgb[CG], rgb[CB], fi->inTime);
+        AnimatorVector3_Set(p->color, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
         // This affects all the colors.
-        AnimatorVector3_Set(p->otherColor, rgb[CR], rgb[CG], rgb[CB], fi->inTime);
-        AnimatorVector3_Set(p->edgeColor, rgb[CR], rgb[CG], rgb[CB], fi->inTime);
-        AnimatorVector3_Set(p->otherEdgeColor, rgb[CR], rgb[CG], rgb[CB], fi->inTime);
+        AnimatorVector3_Set(p->otherColor, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
+        AnimatorVector3_Set(p->edgeColor, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
+        AnimatorVector3_Set(p->otherEdgeColor, rgb[CR], rgb[CG], rgb[CB], fi->_inTime);
         break;
         }
     }
@@ -1617,16 +1616,16 @@ DEFFC(ObjectAlpha)
     case FI_TEXT:
         {
         fidata_text_t* t = (fidata_text_t*)obj;
-        Animator_Set(&t->color[3], alpha, fi->inTime);
+        Animator_Set(&t->color[3], alpha, fi->_inTime);
         break;
         }
     case FI_PIC:
         {
         fidata_pic_t* p = (fidata_pic_t*)obj;
-        Animator_Set(&p->color[3], alpha, fi->inTime);
-        Animator_Set(&p->otherColor[3], alpha, fi->inTime);
-        /*Animator_Set(&p->edgeColor[3], alpha, fi->inTime);
-        Animator_Set(&p->otherEdgeColor[3], alpha, fi->inTime); */
+        Animator_Set(&p->color[3], alpha, fi->_inTime);
+        Animator_Set(&p->otherColor[3], alpha, fi->_inTime);
+        /*Animator_Set(&p->edgeColor[3], alpha, fi->_inTime);
+        Animator_Set(&p->otherEdgeColor[3], alpha, fi->_inTime); */
         break;
         }
     }
@@ -1637,7 +1636,7 @@ DEFFC(ObjectScaleX)
     if(ops[0].data.obj)
     {
         fi_object_t* obj = ops[0].data.obj;
-        Animator_Set(&obj->scale[0], ops[1].data.flt, fi->inTime);
+        Animator_Set(&obj->scale[0], ops[1].data.flt, fi->_inTime);
     }
 }
 
@@ -1646,7 +1645,7 @@ DEFFC(ObjectScaleY)
     if(ops[0].data.obj)
     {
         fi_object_t* obj = ops[0].data.obj;
-        Animator_Set(&obj->scale[1], ops[1].data.flt, fi->inTime);
+        Animator_Set(&obj->scale[1], ops[1].data.flt, fi->_inTime);
     }
 }
 
@@ -1655,7 +1654,7 @@ DEFFC(ObjectScaleZ)
     if(ops[0].data.obj)
     {
         fi_object_t* obj = ops[0].data.obj;
-        Animator_Set(&obj->scale[2], ops[1].data.flt, fi->inTime);
+        Animator_Set(&obj->scale[2], ops[1].data.flt, fi->_inTime);
     }
 }
 
@@ -1664,7 +1663,7 @@ DEFFC(ObjectScale)
     if(ops[0].data.obj)
     {
         fi_object_t* obj = ops[0].data.obj;
-        AnimatorVector2_Set(obj->scale, ops[1].data.flt, ops[1].data.flt, fi->inTime);
+        AnimatorVector2_Set(obj->scale, ops[1].data.flt, ops[1].data.flt, fi->_inTime);
     }
 }
 
@@ -1673,7 +1672,7 @@ DEFFC(ObjectScaleXY)
     if(ops[0].data.obj)
     {
         fi_object_t* obj = ops[0].data.obj;
-        AnimatorVector2_Set(obj->scale, ops[1].data.flt, ops[2].data.flt, fi->inTime);
+        AnimatorVector2_Set(obj->scale, ops[1].data.flt, ops[2].data.flt, fi->_inTime);
     }
 }
 
@@ -1682,7 +1681,7 @@ DEFFC(ObjectScaleXYZ)
     if(ops[0].data.obj)
     {
         fi_object_t* obj = ops[0].data.obj;
-        AnimatorVector3_Set(obj->scale, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->inTime);
+        AnimatorVector3_Set(obj->scale, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->_inTime);
     }
 }
 
@@ -1691,7 +1690,7 @@ DEFFC(ObjectAngle)
     if(ops[0].data.obj)
     {
         fi_object_t* obj = ops[0].data.obj;
-        Animator_Set(&obj->angle, ops[1].data.flt, fi->inTime);
+        Animator_Set(&obj->angle, ops[1].data.flt, fi->_inTime);
     }
 }
 
@@ -1744,9 +1743,9 @@ DEFFC(FillColor)
     }
 
     if(which & 1)
-        AnimatorVector4_Set(((fidata_pic_t*)obj)->color, rgba[CR], rgba[CG], rgba[CB], rgba[CA], fi->inTime);
+        AnimatorVector4_Set(((fidata_pic_t*)obj)->color, rgba[CR], rgba[CG], rgba[CB], rgba[CA], fi->_inTime);
     if(which & 2)
-        AnimatorVector4_Set(((fidata_pic_t*)obj)->otherColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], fi->inTime);
+        AnimatorVector4_Set(((fidata_pic_t*)obj)->otherColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], fi->_inTime);
 }
 
 DEFFC(EdgeColor)
@@ -1772,19 +1771,19 @@ DEFFC(EdgeColor)
     }
 
     if(which & 1)
-        AnimatorVector4_Set(((fidata_pic_t*)obj)->edgeColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], fi->inTime);
+        AnimatorVector4_Set(((fidata_pic_t*)obj)->edgeColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], fi->_inTime);
     if(which & 2)
-        AnimatorVector4_Set(((fidata_pic_t*)obj)->otherEdgeColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], fi->inTime);
+        AnimatorVector4_Set(((fidata_pic_t*)obj)->otherEdgeColor, rgba[CR], rgba[CG], rgba[CB], rgba[CA], fi->_inTime);
 }
 
 DEFFC(OffsetX)
 {
-    FIPage_SetImageOffsetX(fi->_page, ops[0].data.flt, fi->inTime);
+    FIPage_SetImageOffsetX(fi->_page, ops[0].data.flt, fi->_inTime);
 }
 
 DEFFC(OffsetY)
 {
-    FIPage_SetImageOffsetY(fi->_page, ops[0].data.flt, fi->inTime);
+    FIPage_SetImageOffsetY(fi->_page, ops[0].data.flt, fi->_inTime);
 }
 
 DEFFC(Sound)
@@ -1830,7 +1829,7 @@ DEFFC(MusicOnce)
 
 DEFFC(Filter)
 {
-    FIPage_SetFilterColorAndAlpha(fi->_page, ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->inTime);
+    FIPage_SetFilterColorAndAlpha(fi->_page, ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->_inTime);
 }
 
 DEFFC(Text)
@@ -1916,31 +1915,31 @@ DEFFC(DeleteText)
 
 DEFFC(PredefinedTextColor)
 {
-    FIPage_SetPredefinedColor(fi->_page, MINMAX_OF(1, ops[0].data.integer, 9)-1, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->inTime);
+    FIPage_SetPredefinedColor(fi->_page, MINMAX_OF(1, ops[0].data.integer, 9)-1, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->_inTime);
 }
 
 DEFFC(TextRGB)
 {
     fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, ops[0].data.cstring);
-    AnimatorVector3_Set(tex->color, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->inTime);
+    AnimatorVector3_Set(tex->color, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->_inTime);
 }
 
 DEFFC(TextAlpha)
 {
     fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, ops[0].data.cstring);
-    Animator_Set(&tex->color[CA], ops[1].data.flt, fi->inTime);
+    Animator_Set(&tex->color[CA], ops[1].data.flt, fi->_inTime);
 }
 
 DEFFC(TextOffX)
 {
     fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, ops[0].data.cstring);
-    Animator_Set(&tex->pos[0], ops[1].data.flt, fi->inTime);
+    Animator_Set(&tex->pos[0], ops[1].data.flt, fi->_inTime);
 }
 
 DEFFC(TextOffY)
 {
     fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, ops[0].data.cstring);
-    Animator_Set(&tex->pos[1], ops[1].data.flt, fi->inTime);
+    Animator_Set(&tex->pos[1], ops[1].data.flt, fi->_inTime);
 }
 
 DEFFC(TextCenter)
@@ -2014,19 +2013,19 @@ DEFFC(NoMusic)
 DEFFC(TextScaleX)
 {
     fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, ops[0].data.cstring);
-    Animator_Set(&tex->scale[0], ops[1].data.flt, fi->inTime);
+    Animator_Set(&tex->scale[0], ops[1].data.flt, fi->_inTime);
 }
 
 DEFFC(TextScaleY)
 {
     fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, ops[0].data.cstring);
-    Animator_Set(&tex->scale[1], ops[1].data.flt, fi->inTime);
+    Animator_Set(&tex->scale[1], ops[1].data.flt, fi->_inTime);
 }
 
 DEFFC(TextScale)
 {
     fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, ops[0].data.cstring);
-    AnimatorVector2_Set(tex->scale, ops[1].data.flt, ops[2].data.flt, fi->inTime);
+    AnimatorVector2_Set(tex->scale, ops[1].data.flt, ops[2].data.flt, fi->_inTime);
 }
 
 DEFFC(PlayDemo)

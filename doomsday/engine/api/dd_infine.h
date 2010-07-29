@@ -25,11 +25,17 @@
 #ifndef LIBDENG_API_INFINE_H
 #define LIBDENG_API_INFINE_H
 
+/**
+ * @defgroup infine InFine System
+ *
+ * The "In Fine" finale sequence system.
+ */
+
 #include "dd_animator.h"
 #include "dd_compositefont.h"
 
 typedef ident_t fi_objectid_t;
-typedef ident_t fi_scriptid_t;
+typedef ident_t finaleid_t;
 
 #define FI_NAME_MAX_LENGTH          32
 typedef char fi_name_t[FI_NAME_MAX_LENGTH];
@@ -49,7 +55,7 @@ void                FI_Reset(void);
 void                FI_SetClientsideDefaultState(void* data);
 void*               FI_GetClientsideDefaultState(void);
 
-fi_scriptid_t       FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, void* extraData);
+finaleid_t          FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, void* extraData);
 void                FI_ScriptTerminate(void);
 
 typedef enum {
@@ -61,7 +67,11 @@ typedef enum {
 struct fi_object_s;
 struct fi_page_s;
 
-// Base fi_objects_t elements. All objects MUST use this as their basis.
+/**
+ * Base fi_objects_t elements. All objects MUST use this as their basis.
+ *
+ * @ingroup infine
+ */
 #define FIOBJECT_BASE_ELEMENTS() \
     fi_objectid_t   id; /* Unique id of the object. */ \
     fi_objectname_t name; /* Nice name. */ \
@@ -76,7 +86,9 @@ struct fi_page_s*   FI_NewPage(void);
 void                FI_DeletePage(struct fi_page_s* page);
 
 /**
- * Rectangle/Image sequence.
+ * Rectangle/Image sequence object.
+ *
+ * @ingroup infine
  */
 typedef struct fidata_pic_frame_s {
     int             tics;
@@ -123,7 +135,9 @@ uint                FIData_PicAppendFrame(fidata_pic_t* pic, int type, int tics,
 void                FIData_PicClearAnimation(fidata_pic_t* pic);
 
 /**
- * Text.
+ * Text object.
+ *
+ * @ingroup infine
  */
 typedef struct fidata_text_s {
     FIOBJECT_BASE_ELEMENTS()
@@ -131,7 +145,7 @@ typedef struct fidata_text_s {
     short           textFlags; // @see drawTextFlags
     boolean         animComplete; // Animation finished (text-typein complete).
     int             scrollWait, scrollTimer; // Automatic scrolling upwards.
-    int             cursorPos;
+    size_t          cursorPos;
     int             wait, timer;
     float           lineheight;
     compositefontid_t font;
@@ -139,8 +153,12 @@ typedef struct fidata_text_s {
 } fidata_text_t;
 
 void                FIData_TextThink(fidata_text_t* text);
-void                FIData_TextDraw(fidata_text_t* tex, const float offset[3]);
+void                FIData_TextDraw(fidata_text_t* text, const float offset[3]);
 void                FIData_TextCopy(fidata_text_t* text, const char* str);
-int                 FIData_TextLength(fidata_text_t* tex);
+
+/**
+ * @return          Length of the current text as a counter.
+ */
+size_t              FIData_TextLength(fidata_text_t* text);
 
 #endif /* LIBDENG_API_INFINE_H */

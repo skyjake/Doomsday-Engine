@@ -53,46 +53,63 @@ typedef struct fi_namespace_s {
     struct fi_namespace_record_s* vector;
 } fi_namespace_t;
 
-typedef struct finaleinterpreter_t {
-    finale_mode_t   mode;
+/**
+ * Interactive interpreter for Finale scripts. An instance of which is created
+ * (and owned) by each active (running) script.
+ *
+ * @see Finale
+ * @ingroup infine
+ */
+typedef struct finaleinterpreter_s {
     struct finaleinterpreter_flags_s {
-        char            stopped:1;
-        char            suspended:1;
-        char            paused:1;
-        char            can_skip:1;
-        char            eat_events:1; // Script will eat all input events.
-        char            show_menu:1;
+        char stopped:1;
+        char suspended:1;
+        char paused:1;
+        char can_skip:1;
+        char eat_events:1; /// Script will eat all input events.
+        char show_menu:1;
     } flags;
-    char*           script; // A copy of the script.
-    const char*     cp; // The command cursor.
-    int             doLevel; // Level of DO-skipping.
-    boolean         cmdExecuted; // Set to true after first command is executed.
-    boolean         skipping, lastSkipped, gotoSkip, gotoEnd, skipNext;
-    fi_objectname_t gotoTarget;
-    uint            timer;
-    int             wait;
-    int             inTime;
-    struct fi_object_s* waitingText;
-    struct fi_object_s* waitingPic;
+    finale_mode_t mode;
 
-    uint            numEventHandlers;
-    fi_handler_t*   eventHandlers;
+    /// Copy of the script being interpreted.
+    char* _script;
+    const char* _cp;
 
-    // Known symbols (to the loaded script).
-    fi_namespace_t  _namespace;
+    /// Event handlers defined by the loaded script.
+    uint _numEventHandlers;
+    fi_handler_t* _eventHandlers;
 
-    // The page all our objects are on.
+    /// Known symbols (to the loaded script).
+    fi_namespace_t _namespace;
+
+    /// Page on which objects created by this interpeter are visible.
     struct fi_page_s* _page;
 
-    int             initialGameState; // Game state before the script began.
-    void*           extraData;
+    /// Set to true after first command is executed.
+    boolean _cmdExecuted;
+    boolean _skipping, _lastSkipped, _gotoSkip, _gotoEnd, _skipNext;
+
+    /// Level of DO-skipping.
+    int _doLevel;
+
+    uint _timer;
+    int _wait, _inTime;
+
+    fi_objectname_t _gotoTarget;
+
+    struct fi_object_s* _waitingText;
+    struct fi_object_s* _waitingPic;
+
+    /// Gamestate before the script began.
+    int _initialGameState;
+    void* _extraData;
 } finaleinterpreter_t;
 
 finaleinterpreter_t* P_CreateFinaleInterpreter(void);
 void                P_DestroyFinaleInterpreter(finaleinterpreter_t* fi);
 
 boolean             FinaleInterpreter_RunTic(finaleinterpreter_t* fi);
-int                 FinaleInterpreter_Responder(finaleinterpreter_t* fi, ddevent_t* ev);
+int                 FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev);
 
 void                FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, finale_mode_t mode, const char* script, int gameState, const void* extraData);
 void                FinaleInterpreter_ReleaseScript(finaleinterpreter_t* fi);

@@ -22,15 +22,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * The "In Fine" finale sequence system.
- */
-
 // HEADER FILES ------------------------------------------------------------
-
-#include <ctype.h>
-#include <stdio.h>
-#include <string.h>
 
 #include "de_base.h"
 #include "de_console.h"
@@ -50,13 +42,24 @@
 
 // TYPES -------------------------------------------------------------------
 
+/**
+ * A Finale instance contains the high-level state of an InFine script.
+ *
+ * @see FinaleInterpreter (interactive script interpreter)
+ *
+ * @ingroup InFine
+ */
 typedef struct {
-    fi_scriptid_t   id;
+    /// Unique identifier/reference (chosen automatically).
+    finaleid_t id;
+
     struct fi_state_flags_s {
-        char active:1; // Interpreter is active.
+        char active:1; /// Interpreter is active.
     } flags;
-    finaleinterpreter_t* interpreter;
-} fi_state_t;
+
+    /// Interpreter for this script.
+    finaleinterpreter_t* _interpreter;
+} finale_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -81,17 +84,17 @@ void                P_DestroyPic(fidata_pic_t* pic);
 
 static boolean inited = false;
 
-// Allow stretching to fill the screen at near 4:3 aspect ratios?
+/// Allow stretching to fill the screen at near 4:3 aspect ratios?
 static byte noStretch = false;
 
 static uint numPages;
 static fi_page_t** pages;
 
-// Finale script state stack.
+/// Script state stack.
 static uint finaleStackSize;
-static fi_state_t* finaleStack;
+static finale_t* finaleStack;
 
-// Global Finale object store.
+/// Global object store.
 static fi_object_collection_t objects;
 
 // CODE --------------------------------------------------------------------
@@ -140,24 +143,39 @@ static fi_page_t* pagesRemove(fi_page_t* p)
     return p;
 }
 
-static void useColor(animator_t *color, int components)
+/**
+ * Clear the specified page to the default, blank state.
+ */
+static void pageClear(fi_page_t* p)
 {
-    if(components == 3)
+    p->timer = 0;
+    p->bgMaterial = NULL; // No background material.
+
+    if(p->_objects.vector)
     {
-        glColor3f(color[0].value, color[1].value, color[2].value);
+        Z_Free(p->_objects.vector);
     }
-    else if(components == 4)
+    p->_objects.vector = 0;
+    p->_objects.num = 0;
+
+    AnimatorVector4_Init(p->filter, 0, 0, 0, 0);
+    AnimatorVector2_Init(p->imgOffset, 0, 0);  
+    AnimatorVector4_Init(p->bgColor, 1, 1, 1, 0);
+    {uint i;
+    for(i = 0; i < 9; ++i)
     {
-        glColor4f(color[0].value, color[1].value, color[2].value, color[3].value);
-    }
+        AnimatorVector3_Init(p->textColor[i], 1, 1, 1);
+    }}
 }
 
-static void objectSetName(fi_object_t* obj, const char* name)
+static fi_page_t* newPage(void)
 {
-    dd_snprintf(obj->name, FI_NAME_MAX_LENGTH, "%s", name);
+    fi_page_t* p = Z_Calloc(sizeof(*p), PU_STATIC, 0);
+    pageClear(p);
+    return p;
 }
 
-static void thinkObjectsInScope(fi_object_collection_t* c)
+static void objectsThink(fi_object_collection_t* c)
 {
     uint i;
     for(i = 0; i < c->num; ++i)
@@ -172,7 +190,7 @@ static void thinkObjectsInScope(fi_object_collection_t* c)
     }
 }
 
-static void drawObjectsInScope(fi_object_collection_t* c, fi_obtype_e type, const float worldOrigin[3])
+static void objectsDraw(fi_object_collection_t* c, fi_obtype_e type, const float worldOrigin[3])
 {
     uint i;
     for(i = 0; i < c->num; ++i)
@@ -182,8 +200,8 @@ static void drawObjectsInScope(fi_object_collection_t* c, fi_obtype_e type, cons
             continue;
         switch(obj->type)
         {
-        case FI_PIC:    FIData_PicDraw((fidata_pic_t*)obj, worldOrigin); break;
-        case FI_TEXT:   FIData_TextDraw((fidata_text_t*)obj, worldOrigin); break;
+        case FI_PIC:    FIData_PicDraw((fidata_pic_t*)obj, worldOrigin);    break;
+        case FI_TEXT:   FIData_TextDraw((fidata_text_t*)obj, worldOrigin);  break;
         default: break;
         }
     }
@@ -210,8 +228,7 @@ static __inline boolean objectsIsPresent(fi_object_collection_t* c, fi_object_t*
 }
 
 /**
- * Does not check if the object already exists in this scope. Assumes the caller
- * knows what they are doing.
+ * \note Does not check if the object already exists in this collection.
  */
 static fi_object_t* objectsAdd(fi_object_collection_t* c, fi_object_t* obj)
 {
@@ -221,8 +238,7 @@ static fi_object_t* objectsAdd(fi_object_collection_t* c, fi_object_t* obj)
 }
 
 /**
- * Assumes there is at most one reference to the obj in the scope and that the
- * caller knows what they are doing.
+ * \assume There is at most one reference to the object in this collection.
  */
 static fi_object_t* objectsRemove(fi_object_collection_t* c, fi_object_t* obj)
 {
@@ -257,8 +273,8 @@ static void objectsEmpty(fi_object_collection_t* c)
             fi_object_t* obj = c->vector[i];
             switch(obj->type)
             {
-            case FI_PIC: P_DestroyPic((fidata_pic_t*)obj); break;
-            case FI_TEXT: P_DestroyText((fidata_text_t*)obj); break;
+            case FI_PIC:    P_DestroyPic((fidata_pic_t*)obj);   break;
+            case FI_TEXT:   P_DestroyText((fidata_text_t*)obj); break;
             default:
                 Con_Error("InFine: Unknown object type %i in objectsEmpty.", (int)obj->type);
             }
@@ -294,46 +310,14 @@ static fi_objectid_t objectsUniqueId(fi_object_collection_t* c)
     return id;
 }
 
-/**
- * Clear the specified page to the default, blank state.
- */
-static void pageClear(fi_page_t* p)
-{
-    p->timer = 0;
-    p->bgMaterial = NULL; // No background material.
-
-    if(p->_objects.vector)
-    {
-        Z_Free(p->_objects.vector);
-    }
-    p->_objects.vector = 0;
-    p->_objects.num = 0;
-
-    AnimatorVector4_Init(p->filter, 0, 0, 0, 0);
-    AnimatorVector2_Init(p->imgOffset, 0, 0);  
-    AnimatorVector4_Init(p->bgColor, 1, 1, 1, 0);
-    {uint i;
-    for(i = 0; i < 9; ++i)
-    {
-        AnimatorVector3_Init(p->textColor[i], 1, 1, 1);
-    }}
-}
-
-static fi_page_t* newPage(void)
-{
-    fi_page_t* p = Z_Calloc(sizeof(*p), PU_STATIC, 0);
-    pageClear(p);
-    return p;
-}
-
-static fi_state_t* scriptsById(fi_objectid_t id)
+static finale_t* scriptsById(finaleid_t id)
 {
     if(id != 0)
     {
         uint i;
         for(i = 0; i < finaleStackSize; ++i)
         {
-            fi_state_t* s = &finaleStack[i];
+            finale_t* s = &finaleStack[i];
             if(s->id == id)
                 return s;
         }
@@ -344,19 +328,19 @@ static fi_state_t* scriptsById(fi_objectid_t id)
 /**
  * @return                  A new (unused) unique script id.
  */
-static fi_scriptid_t scriptsUniqueId(void)
+static finaleid_t scriptsUniqueId(void)
 {
-    fi_scriptid_t id = 0;
+    finaleid_t id = 0;
     while(scriptsById(++id));
     return id;
 }
 
-static __inline fi_state_t* stackTop(void)
+static __inline finale_t* stackTop(void)
 {
     return (finaleStackSize == 0? 0 : &finaleStack[finaleStackSize-1]);
 }
 
-static fi_state_t* stackPush(fi_scriptid_t id)
+static finale_t* stackPush(finaleid_t id)
 {
     finaleStack = Z_Realloc(finaleStack, sizeof(*finaleStack) * ++finaleStackSize, PU_STATIC);
     finaleStack[finaleStackSize-1].id = id;
@@ -375,29 +359,55 @@ static boolean stackPop(void)
 
     // Return to previous state.
     finaleStack = Z_Realloc(finaleStack, sizeof(*finaleStack) * --finaleStackSize, PU_STATIC);
-    {fi_state_t* s = stackTop();
+    {finale_t* s = stackTop();
     s->flags.active = true;
-    FinaleInterpreter_Resume(s->interpreter);}
+    FinaleInterpreter_Resume(s->_interpreter);}
     return true;
 }
 
 /**
  * Stop playing the script and go to next game state.
  */
-static void scriptTerminate(fi_state_t* s)
+static void scriptTerminate(finale_t* s)
 {
     if(!s->flags.active)
         return;
     s->flags.active = false;
-    P_DestroyFinaleInterpreter(s->interpreter);
+    P_DestroyFinaleInterpreter(s->_interpreter);
 }
 
-static void rotate(float angle)
+static void scriptTicker(finale_t* s)
 {
-    // Counter the VGA aspect ratio.
-    glScalef(1, 200.0f / 240.0f, 1);
-    glRotatef(angle, 0, 0, 1);
-    glScalef(1, 240.0f / 200.0f, 1);
+    if(!s->flags.active)
+        return;
+
+    if(!FinaleInterpreter_IsSuspended(s->_interpreter))
+        FIPage_RunTic(s->_interpreter->_page);
+
+    if(FinaleInterpreter_RunTic(s->_interpreter))
+    {   // The script has ended!
+        scriptTerminate(s);
+        stackPop();
+    }
+}
+
+static boolean scriptRequestSkip(finale_t* s)
+{
+    return FinaleInterpreter_Skip(s->_interpreter);
+}
+
+static boolean scriptIsMenuTrigger(finale_t* s)
+{
+    if(s->flags.active)
+        return FinaleInterpreter_IsMenuTrigger(s->_interpreter);
+    return false;
+}
+
+static boolean scriptResponder(finale_t* s, ddevent_t* ev)
+{
+    if(s->flags.active)
+        return FinaleInterpreter_Responder(s->_interpreter, ev);
+    return false;
 }
 
 /**
@@ -405,13 +415,13 @@ static void rotate(float angle)
  */
 static void doReset(void)
 {
-    fi_state_t* s;
+    finale_t* s;
     if((s = stackTop()) && s->flags.active)
     {
         // The state is suspended when the PlayDemo command is used.
         // Being suspended means that InFine is currently not active, but
         // will be restored at a later time.
-        if(FinaleInterpreter_IsSuspended(s->interpreter))
+        if(FinaleInterpreter_IsSuspended(s->_interpreter))
             return;
 
         // Pop all the states.
@@ -437,7 +447,7 @@ static fidata_pic_frame_t* createPicFrame(int type, int tics, void* texRef, shor
     f->tics = tics;
     switch(f->type)
     {
-    case PFT_MATERIAL:  f->texRef.material = ((material_t*)texRef);     break;
+    case PFT_MATERIAL:  f->texRef.material = ((material_t*)texRef); break;
     case PFT_PATCH:     f->texRef.patch = *((patchid_t*)texRef);    break;
     case PFT_RAW:       f->texRef.lump  = *((lumpnum_t*)texRef);    break;
     case PFT_XIMAGE:    f->texRef.tex = *((DGLuint*)texRef);        break;
@@ -462,49 +472,9 @@ static fidata_pic_frame_t* picAddFrame(fidata_pic_t* p, fidata_pic_frame_t* f)
     return f;
 }
 
-static void picRotationOrigin(const fidata_pic_t* p, uint frame, float center[3])
+static void objectSetName(fi_object_t* obj, const char* name)
 {
-    if(p->numFrames && frame < p->numFrames)
-    {
-        fidata_pic_frame_t* f = p->frames[frame];
-        switch(f->type)
-        {
-        case PFT_PATCH:
-            {
-            patchinfo_t info;
-            if(R_GetPatchInfo(f->texRef.patch, &info))
-            {
-                /// \fixme what about extraOffset?
-                center[VX] = info.width / 2 - info.offset;
-                center[VY] = info.height / 2 - info.topOffset;
-                center[VZ] = 0;
-            }
-            else
-            {
-                center[VX] = center[VY] = center[VZ] = 0;
-            }
-            break;
-            }
-        case PFT_RAW:
-        case PFT_XIMAGE:
-            center[VX] = SCREENWIDTH/2;
-            center[VY] = SCREENHEIGHT/2;
-            center[VZ] = 0;
-            break;
-        case PFT_MATERIAL:
-            center[VX] = center[VY] = center[VZ] = 0;
-            break;
-        }
-    }
-    else
-    {
-        center[VX] = center[VY] = .5f;
-        center[VZ] = 0;
-    }
-
-    center[VX] *= p->scale[VX].value;
-    center[VY] *= p->scale[VY].value;
-    center[VZ] *= p->scale[VZ].value;
+    dd_snprintf(obj->name, FI_NAME_MAX_LENGTH, "%s", name);
 }
 
 void FIObject_Destructor(fi_object_t* obj)
@@ -547,7 +517,6 @@ fidata_text_t* P_CreateText(fi_objectid_t id, const char* name)
 
     fidata_text_t* t = Z_Calloc(sizeof(*t), PU_STATIC, 0);
 
-    // Initialize it.
     t->id = id;
     t->type = FI_TEXT;
     t->textFlags = DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS;
@@ -568,7 +537,7 @@ void P_DestroyText(fidata_text_t* text)
 {
     assert(text);
     if(text->text)
-    {   // Free the memory allocated for the text string.
+    {
         Z_Free(text->text); text->text = 0;
     }
     // Call parent destructor.
@@ -578,7 +547,6 @@ void P_DestroyText(fidata_text_t* text)
 void FIObject_Think(fi_object_t* obj)
 {
     assert(obj);
-
     AnimatorVector3_Think(obj->pos);
     AnimatorVector3_Think(obj->scale);
     Animator_Think(&obj->angle);
@@ -586,7 +554,7 @@ void FIObject_Think(fi_object_t* obj)
 
 boolean FI_Active(void)
 {
-    fi_state_t* s;
+    finale_t* s;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -622,8 +590,8 @@ void FI_Shutdown(void)
         uint i;
         for(i = 0; i < finaleStackSize; ++i)
         {
-            fi_state_t* s = &finaleStack[i];
-            P_DestroyFinaleInterpreter(s->interpreter);
+            finale_t* s = &finaleStack[i];
+            P_DestroyFinaleInterpreter(s->_interpreter);
         }
         Z_Free(finaleStack);
     }
@@ -649,7 +617,7 @@ void FI_Shutdown(void)
 
 boolean FI_CmdExecuted(void)
 {
-    fi_state_t* s;
+    finale_t* s;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -659,7 +627,7 @@ boolean FI_CmdExecuted(void)
     }
     if((s = stackTop()))
     {
-        return FinaleInterpreter_CommandExecuted(s->interpreter);
+        return FinaleInterpreter_CommandExecuted(s->_interpreter);
     }
     return false;
 }
@@ -692,7 +660,7 @@ void FI_DeletePage(fi_page_t* p)
 /**
  * Start playing the given script.
  */
-fi_scriptid_t FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, void* extraData)
+finaleid_t FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, void* extraData)
 {
     if(!inited)
     {
@@ -722,27 +690,27 @@ fi_scriptid_t FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int game
     Con_Printf("Finale Begin: mode=%i '%.30s'\n", (int)mode, scriptSrc);
 #endif
 
-    {fi_state_t* s;
+    {finale_t* s;
 
     // Only the top-most script is active.
     if((s = stackTop()))
     {
         s->flags.active = false;
-        FinaleInterpreter_Suspend(s->interpreter);
+        FinaleInterpreter_Suspend(s->_interpreter);
     }
 
     // Init new state.
     s = stackPush(scriptsUniqueId());
-    s->interpreter = P_CreateFinaleInterpreter();
+    s->_interpreter = P_CreateFinaleInterpreter();
     s->flags.active = true;
-    FinaleInterpreter_LoadScript(s->interpreter, mode, scriptSrc, gameState, extraData);
+    FinaleInterpreter_LoadScript(s->_interpreter, mode, scriptSrc, gameState, extraData);
     return s->id+1; // 1-based index.
     }
 }
 
 void FI_ScriptTerminate(void)
 {
-    fi_state_t* s;
+    finale_t* s;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -771,7 +739,7 @@ fi_object_t* FI_Object(fi_objectid_t id)
 
 void* FI_ScriptExtraData(void)
 {
-    fi_state_t* s;
+    finale_t* s;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -781,7 +749,7 @@ void* FI_ScriptExtraData(void)
     }
     if((s = stackTop()))
     {
-        return FinaleInterpreter_ExtraData(s->interpreter);
+        return FinaleInterpreter_ExtraData(s->_interpreter);
     }
     return 0;
 }
@@ -789,11 +757,10 @@ void* FI_ScriptExtraData(void)
 fi_object_t* FI_NewObject(fi_obtype_e type, const char* name)
 {
     fi_object_t* obj;
-    // Allocate and attach another.
     switch(type)
     {
-    case FI_TEXT: obj = (fi_object_t*) P_CreateText(objectsUniqueId(&objects), name); break;
-    case FI_PIC:  obj = (fi_object_t*) P_CreatePic(objectsUniqueId(&objects), name); break;
+    case FI_TEXT: obj = (fi_object_t*) P_CreateText(objectsUniqueId(&objects), name);   break;
+    case FI_PIC:  obj = (fi_object_t*) P_CreatePic(objectsUniqueId(&objects), name);    break;
     default:
         Con_Error("FI_NewObject: Unknown type %i.", type);
     }
@@ -831,9 +798,8 @@ void FIPage_RunTic(fi_page_t* p)
 
     p->timer++;
 
-    thinkObjectsInScope(&p->_objects);
+    objectsThink(&p->_objects);
 
-    // Interpolateable values.
     AnimatorVector4_Think(p->bgColor);
     AnimatorVector2_Think(p->imgOffset);
     AnimatorVector4_Think(p->filter);
@@ -940,17 +906,10 @@ void FI_Ticker(timespan_t ticLength)
         return;
 
     // A new 'sharp' tick has begun.
-    {fi_state_t* s;
-    if((s = stackTop()) && s->flags.active)
+    {finale_t* s;
+    if((s = stackTop()))
     {
-        if(!FinaleInterpreter_IsSuspended(s->interpreter))
-            FIPage_RunTic(s->interpreter->_page);
-
-        if(FinaleInterpreter_RunTic(s->interpreter))
-        {   // The script has ended!
-            scriptTerminate(s);
-            stackPop();
-        }
+        scriptTicker(s);
     }}
 }
 
@@ -959,7 +918,7 @@ void FI_Ticker(timespan_t ticLength)
  */
 int FI_SkipRequest(void)
 {
-    fi_state_t* s;
+    finale_t* s;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -969,7 +928,7 @@ int FI_SkipRequest(void)
     }
     if((s = stackTop()))
     {
-        return FinaleInterpreter_Skip(s->interpreter);
+        return scriptRequestSkip(s);
     }
     return false;
 }
@@ -979,7 +938,6 @@ int FI_SkipRequest(void)
  */
 boolean FI_IsMenuTrigger(void)
 {
-    fi_state_t* s;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -987,8 +945,10 @@ boolean FI_IsMenuTrigger(void)
 #endif
         return false;
     }
-    if((s = stackTop()) && s->flags.active)
-        return FinaleInterpreter_IsMenuTrigger(s->interpreter);
+    {finale_t* s;
+    if((s = stackTop()))
+        return scriptIsMenuTrigger(s);
+    }
     return false;
 }
 
@@ -1001,11 +961,23 @@ int FI_Responder(ddevent_t* ev)
 #endif
         return false;
     }
-    {fi_state_t* s;
-    if((s = stackTop()) && s->flags.active)
-        return FinaleInterpreter_Responder(s->interpreter, ev);
+    {finale_t* s;
+    if((s = stackTop()))
+        return scriptResponder(s, ev);
     }
     return false;
+}
+
+static void useColor(animator_t *color, int components)
+{
+    if(components == 3)
+    {
+        glColor3f(color[0].value, color[1].value, color[2].value);
+    }
+    else if(components == 4)
+    {
+        glColor4f(color[0].value, color[1].value, color[2].value, color[3].value);
+    }
 }
 
 #if _DEBUG
@@ -1109,9 +1081,9 @@ void FI_Drawer(void)
         // Images first, then text.
         {vec3_t worldOffset;
         V3_Set(worldOffset, -SCREENWIDTH/2 + -page->imgOffset[0].value, -SCREENHEIGHT/2 + -page->imgOffset[1].value, .05f);
-        drawObjectsInScope(&page->_objects, FI_PIC, worldOffset);
+        objectsDraw(&page->_objects, FI_PIC, worldOffset);
         V3_Set(worldOffset, -SCREENWIDTH/2, -SCREENHEIGHT/2, .05f);
-        drawObjectsInScope(&page->_objects, FI_TEXT, worldOffset);
+        objectsDraw(&page->_objects, FI_TEXT, worldOffset);
 
         /*{rendmodelparams_t params;
         memset(&params, 0, sizeof(params));
@@ -1650,10 +1622,11 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
 {
     assert(tex);
     {
-    fi_state_t* s = stackTop();
-    int cnt, x = 0, y = 0;
+    finale_t* s = stackTop();
+    int x = 0, y = 0;
     int ch, linew = -1;
     char* ptr;
+    size_t cnt;
 
     if(!tex->text)
         return;
@@ -1663,7 +1636,14 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
     glScalef(.1f/SCREENWIDTH, .1f/SCREENWIDTH, 1);
     glTranslatef(tex->pos[0].value + offset[VX], tex->pos[1].value + offset[VY], tex->pos[2].value + offset[VZ]);
 
-    rotate(tex->angle.value);
+    if(tex->angle.value != 0)
+    {
+        // Counter the VGA aspect ratio.
+        glScalef(1, 200.0f / 240.0f, 1);
+        glRotatef(tex->angle.value, 0, 0, 1);
+        glScalef(1, 240.0f / 200.0f, 1);
+    }
+
     glScalef(tex->scale[0].value, tex->scale[1].value, tex->scale[2].value);
 
     // Draw it.
@@ -1689,7 +1669,7 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
                 if(!colorIdx)
                     color = (animatorvector3_t*) &tex->color; // Use the default color.
                 else
-                    color = &s->interpreter->_page->textColor[colorIdx-1];
+                    color = &s->_interpreter->_page->textColor[colorIdx-1];
 
                 glColor4f((*color)[0].value, (*color)[1].value, (*color)[2].value, tex->color[3].value);
                 continue;
@@ -1740,14 +1720,11 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
     }
 }
 
-/**
- * @return                  The length as a counter.
- */
-int FIData_TextLength(fidata_text_t* tex)
+size_t FIData_TextLength(fidata_text_t* tex)
 {
     assert(tex);
     {
-    int cnt = 0;
+    size_t cnt = 0;
     if(tex->text)
     {
         float secondLen = (tex->wait ? TICRATE / tex->wait : 0);
@@ -1758,19 +1735,18 @@ int FIData_TextLength(fidata_text_t* tex)
             {
                 if(!*++ptr)
                     break;
-                if(*ptr == 'w')
-                    cnt += secondLen / 2;
-                if(*ptr == 'W')
-                    cnt += secondLen;
-                if(*ptr == 'p')
-                    cnt += 5 * secondLen;
-                if(*ptr == 'P')
-                    cnt += 10 * secondLen;
-                if((*ptr >= '0' && *ptr <= '9') || *ptr == 'n' || *ptr == 'N')
-                    continue;
+                switch(*ptr)
+                {
+                case 'w':   cnt += secondLen / 2;   break;
+                case 'W':   cnt += secondLen;       break;
+                case 'p':   cnt += 5 * secondLen;   break;
+                case 'P':   cnt += 10 * secondLen;  break;
+                default:
+                    if((*ptr >= '0' && *ptr <= '9') || *ptr == 'n' || *ptr == 'N')
+                        continue;
+                }
             }
-
-            cnt++; // An actual character.
+            cnt++;
         }
     }
     return cnt;
@@ -1784,7 +1760,7 @@ void FIData_TextCopy(fidata_text_t* t, const char* str)
     {
     size_t len = strlen(str) + 1;
     if(t->text)
-        Z_Free(t->text); // Free any previous text.
+        Z_Free(t->text);
     t->text = Z_Malloc(len, PU_STATIC, 0);
     memcpy(t->text, str, len);
     }
@@ -1792,7 +1768,7 @@ void FIData_TextCopy(fidata_text_t* t, const char* str)
 
 D_CMD(StartFinale)
 {
-    finale_mode_t mode = (FI_Active()? FIMODE_OVERLAY : FIMODE_LOCAL); //(G_GetGameState() == GS_MAP? FIMODE_OVERLAY : FIMODE_LOCAL);
+    finale_mode_t mode = (FI_Active()? FIMODE_OVERLAY : FIMODE_LOCAL);
     char* script;
 
     if(FI_Active())
