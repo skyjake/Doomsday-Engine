@@ -148,23 +148,23 @@ static fi_page_t* pagesRemove(fi_page_t* p)
  */
 static void pageClear(fi_page_t* p)
 {
-    p->timer = 0;
-    p->bgMaterial = NULL; // No background material.
+    p->_timer = 0;
+    p->_bgMaterial = 0; // No background material.
 
     if(p->_objects.vector)
     {
         Z_Free(p->_objects.vector);
     }
     p->_objects.vector = 0;
-    p->_objects.num = 0;
+    p->_objects.size = 0;
 
-    AnimatorVector4_Init(p->filter, 0, 0, 0, 0);
-    AnimatorVector2_Init(p->imgOffset, 0, 0);  
-    AnimatorVector4_Init(p->bgColor, 1, 1, 1, 0);
+    AnimatorVector4_Init(p->_filter, 0, 0, 0, 0);
+    AnimatorVector2_Init(p->_imgOffset, 0, 0);  
+    AnimatorVector4_Init(p->_bgColor, 1, 1, 1, 0);
     {uint i;
     for(i = 0; i < 9; ++i)
     {
-        AnimatorVector3_Init(p->textColor[i], 1, 1, 1);
+        AnimatorVector3_Init(p->_textColor[i], 1, 1, 1);
     }}
 }
 
@@ -178,7 +178,7 @@ static fi_page_t* newPage(void)
 static void objectsThink(fi_object_collection_t* c)
 {
     uint i;
-    for(i = 0; i < c->num; ++i)
+    for(i = 0; i < c->size; ++i)
     {
         fi_object_t* obj = c->vector[i];
         switch(obj->type)
@@ -193,7 +193,7 @@ static void objectsThink(fi_object_collection_t* c)
 static void objectsDraw(fi_object_collection_t* c, fi_obtype_e type, const float worldOrigin[3])
 {
     uint i;
-    for(i = 0; i < c->num; ++i)
+    for(i = 0; i < c->size; ++i)
     {
         fi_object_t* obj = c->vector[i];
         if(obj->type != type)
@@ -212,7 +212,7 @@ static uint objectsToIndex(fi_object_collection_t* c, fi_object_t* obj)
     if(obj)
     {
         uint i;
-        for(i = 0; i < c->num; ++i)
+        for(i = 0; i < c->size; ++i)
         {
             fi_object_t* other = c->vector[i];
             if(other == obj)
@@ -232,8 +232,8 @@ static __inline boolean objectsIsPresent(fi_object_collection_t* c, fi_object_t*
  */
 static fi_object_t* objectsAdd(fi_object_collection_t* c, fi_object_t* obj)
 {
-    c->vector = Z_Realloc(c->vector, sizeof(*c->vector) * ++c->num, PU_STATIC);
-    c->vector[c->num-1] = obj;
+    c->vector = Z_Realloc(c->vector, sizeof(*c->vector) * ++c->size, PU_STATIC);
+    c->vector[c->size-1] = obj;
     return obj;
 }
 
@@ -247,17 +247,17 @@ static fi_object_t* objectsRemove(fi_object_collection_t* c, fi_object_t* obj)
     {
         idx -= 1; // Indices are 1-based.
 
-        if(idx != c->num-1)
-            memmove(&c->vector[idx], &c->vector[idx+1], sizeof(*c->vector) * (c->num-idx));
+        if(idx != c->size-1)
+            memmove(&c->vector[idx], &c->vector[idx+1], sizeof(*c->vector) * (c->size-idx));
 
-        if(c->num > 1)
+        if(c->size > 1)
         {
-            c->vector = Z_Realloc(c->vector, sizeof(*c->vector) * --c->num, PU_STATIC);
+            c->vector = Z_Realloc(c->vector, sizeof(*c->vector) * --c->size, PU_STATIC);
         }
         else
         {
             Z_Free(c->vector); c->vector = 0;
-            c->num = 0;
+            c->size = 0;
         }
     }
     return obj;
@@ -265,10 +265,10 @@ static fi_object_t* objectsRemove(fi_object_collection_t* c, fi_object_t* obj)
 
 static void objectsEmpty(fi_object_collection_t* c)
 {
-    if(c->num)
+    if(c->size)
     {
         uint i;
-        for(i = 0; i < c->num; ++i)
+        for(i = 0; i < c->size; ++i)
         {
             fi_object_t* obj = c->vector[i];
             switch(obj->type)
@@ -282,7 +282,7 @@ static void objectsEmpty(fi_object_collection_t* c)
         Z_Free(c->vector);
     }
     c->vector = 0;
-    c->num = 0;
+    c->size = 0;
 }
 
 static fi_object_t* objectsById(fi_object_collection_t* c, fi_objectid_t id)
@@ -290,14 +290,14 @@ static fi_object_t* objectsById(fi_object_collection_t* c, fi_objectid_t id)
     if(id != 0)
     {
         uint i;
-        for(i = 0; i < c->num; ++i)
+        for(i = 0; i < c->size; ++i)
         {
             fi_object_t* obj = c->vector[i];
             if(obj->id == id)
                 return obj;
         }
     }
-    return NULL;
+    return 0;
 }
 
 /**
@@ -322,7 +322,7 @@ static finale_t* scriptsById(finaleid_t id)
                 return s;
         }
     }
-    return NULL;
+    return 0;
 }
 
 /**
@@ -796,16 +796,16 @@ void FIPage_RunTic(fi_page_t* p)
 {
     if(!p) Con_Error("FIPage_RunTic: Invalid page.");
 
-    p->timer++;
+    p->_timer++;
 
     objectsThink(&p->_objects);
 
-    AnimatorVector4_Think(p->bgColor);
-    AnimatorVector2_Think(p->imgOffset);
-    AnimatorVector4_Think(p->filter);
+    AnimatorVector4_Think(p->_bgColor);
+    AnimatorVector2_Think(p->_imgOffset);
+    AnimatorVector4_Think(p->_filter);
     {uint i;
     for(i = 0; i < 9; ++i)
-        AnimatorVector3_Think(p->textColor[i]);
+        AnimatorVector3_Think(p->_textColor[i]);
     }
 }
 
@@ -838,55 +838,55 @@ fi_object_t* FIPage_RemoveObject(fi_page_t* p, fi_object_t* obj)
 material_t* FIPage_Background(fi_page_t* p)
 {
     if(!p) Con_Error("FIPage_Background: Invalid page.");
-    return p->bgMaterial;
+    return p->_bgMaterial;
 }
 
 void FIPage_SetBackground(fi_page_t* p, material_t* mat)
 {
     if(!p) Con_Error("FIPage_SetBackground: Invalid page.");
-    p->bgMaterial = mat;
+    p->_bgMaterial = mat;
 }
 
 void FIPage_SetBackgroundColor(fi_page_t* p, float red, float green, float blue, int steps)
 {
     if(!p) Con_Error("FIPage_SetBackgroundColor: Invalid page.");
-    AnimatorVector3_Set(p->bgColor, red, green, blue, steps);
+    AnimatorVector3_Set(p->_bgColor, red, green, blue, steps);
 }
 
 void FIPage_SetBackgroundColorAndAlpha(fi_page_t* p, float red, float green, float blue, float alpha, int steps)
 {
     if(!p) Con_Error("FIPage_SetBackgroundColorAndAlpha: Invalid page.");
-    AnimatorVector4_Set(p->bgColor, red, green, blue, alpha, steps);
+    AnimatorVector4_Set(p->_bgColor, red, green, blue, alpha, steps);
 }
 
 void FIPage_SetImageOffsetX(fi_page_t* p, float x, int steps)
 {
     if(!p) Con_Error("FIPage_SetImageOffsetX: Invalid page.");
-    Animator_Set(&p->imgOffset[0], x, steps);
+    Animator_Set(&p->_imgOffset[0], x, steps);
 }
 
 void FIPage_SetImageOffsetY(fi_page_t* p, float y, int steps)
 {
     if(!p) Con_Error("FIPage_SetImageOffsetY: Invalid page.");
-    Animator_Set(&p->imgOffset[1], y, steps);
+    Animator_Set(&p->_imgOffset[1], y, steps);
 }
 
 void FIPage_SetImageOffsetXY(fi_page_t* p, float x, float y, int steps)
 {
     if(!p) Con_Error("FIPage_SetImageOffsetXY: Invalid page.");
-    AnimatorVector2_Set(p->imgOffset, x, y, steps);
+    AnimatorVector2_Set(p->_imgOffset, x, y, steps);
 }
 
 void FIPage_SetFilterColorAndAlpha(fi_page_t* p, float red, float green, float blue, float alpha, int steps)
 {
     if(!p) Con_Error("FIPage_SetFilterColorAndAlpha: Invalid page.");
-    AnimatorVector4_Set(p->filter, red, green, blue, alpha, steps);
+    AnimatorVector4_Set(p->_filter, red, green, blue, alpha, steps);
 }
 
 void FIPage_SetPredefinedColor(fi_page_t* p, uint idx, float red, float green, float blue, int steps)
 {
     if(!p) Con_Error("FIPage_SetPredefinedColor: Invalid page.");
-    AnimatorVector3_Set(p->textColor[idx], red, green, blue, steps);
+    AnimatorVector3_Set(p->_textColor[idx], red, green, blue, steps);
 }
 
 void FI_Ticker(timespan_t ticLength)
@@ -1040,17 +1040,17 @@ void FI_Drawer(void)
             continue;
 
         // First, draw the background.
-        if(page->bgMaterial)
+        if(page->_bgMaterial)
         {
-            useColor(page->bgColor, 4);
-            DGL_SetMaterial(page->bgMaterial);
+            useColor(page->_bgColor, 4);
+            DGL_SetMaterial(page->_bgMaterial);
             DGL_DrawRectTiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
         }
-        else if(page->bgColor[3].value > 0)
+        else if(page->_bgColor[3].value > 0)
         {
             // Just clear the screen, then.
             DGL_Disable(DGL_TEXTURING);
-            DGL_DrawRect(0, 0, SCREENWIDTH, SCREENHEIGHT, page->bgColor[0].value, page->bgColor[1].value, page->bgColor[2].value, page->bgColor[3].value);
+            DGL_DrawRect(0, 0, SCREENWIDTH, SCREENHEIGHT, page->_bgColor[0].value, page->_bgColor[1].value, page->_bgColor[2].value, page->_bgColor[3].value);
             DGL_Enable(DGL_TEXTURING);
         }
 
@@ -1080,7 +1080,7 @@ void FI_Drawer(void)
 
         // Images first, then text.
         {vec3_t worldOffset;
-        V3_Set(worldOffset, -SCREENWIDTH/2 + -page->imgOffset[0].value, -SCREENHEIGHT/2 + -page->imgOffset[1].value, .05f);
+        V3_Set(worldOffset, -SCREENWIDTH/2 + -page->_imgOffset[0].value, -SCREENHEIGHT/2 + -page->_imgOffset[1].value, .05f);
         objectsDraw(&page->_objects, FI_PIC, worldOffset);
         V3_Set(worldOffset, -SCREENWIDTH/2, -SCREENHEIGHT/2, .05f);
         objectsDraw(&page->_objects, FI_TEXT, worldOffset);
@@ -1114,10 +1114,10 @@ void FI_Drawer(void)
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         
         // Filter on top of everything. Only draw if necessary.
-        if(page->filter[3].value > 0)
+        if(page->_filter[3].value > 0)
         {
             DGL_Disable(DGL_TEXTURING);
-            useColor(page->filter, 4);
+            useColor(page->_filter, 4);
             glBegin(GL_QUADS);
                 glVertex2f(0, 0);
                 glVertex2f(SCREENWIDTH, 0);
@@ -1175,7 +1175,7 @@ void FIData_PicThink(fidata_pic_t* p)
 
             // Play a sound?
             if(f->sound > 0)
-                S_LocalSound(f->sound, NULL);
+                S_LocalSound(f->sound, 0);
         }
     }
 }
@@ -1185,7 +1185,7 @@ static void drawRect(fidata_pic_t* p, uint frame, float angle, const float world
     assert(p->numFrames && frame < p->numFrames);
     {
     float mid[3];
-    fidata_pic_frame_t* f = (p->numFrames? p->frames[frame] : NULL);
+    fidata_pic_frame_t* f = (p->numFrames? p->frames[frame] : 0);
 
     assert(f->type == PFT_MATERIAL);
 
@@ -1212,7 +1212,7 @@ static void drawRect(fidata_pic_t* p, uint frame, float angle, const float world
     float offset[2] = { 0, 0 }, scale[2] = { 1, 1 }, color[4], bottomColor[4];
     int magMode = DGL_LINEAR, width = 1, height = 1;
     DGLuint tex = 0;
-    fidata_pic_frame_t* f = (p->numFrames? p->frames[frame] : NULL);
+    fidata_pic_frame_t* f = (p->numFrames? p->frames[frame] : 0);
     material_t* mat;
 
     if((mat = f->texRef.material))
@@ -1669,7 +1669,7 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
                 if(!colorIdx)
                     color = (animatorvector3_t*) &tex->color; // Use the default color.
                 else
-                    color = &s->_interpreter->_page->textColor[colorIdx-1];
+                    color = &s->_interpreter->_page->_textColor[colorIdx-1];
 
                 glColor4f((*color)[0].value, (*color)[1].value, (*color)[2].value, tex->color[3].value);
                 continue;

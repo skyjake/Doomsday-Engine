@@ -48,15 +48,15 @@ typedef enum infinemode_e {
     FIMODE_AFTER
 } finale_mode_t;
 
-boolean             FI_Active(void);
-boolean             FI_IsMenuTrigger(void);
-void                FI_Reset(void);
+boolean FI_Active(void);
+boolean FI_IsMenuTrigger(void);
+void FI_Reset(void);
 
-void                FI_SetClientsideDefaultState(void* data);
-void*               FI_GetClientsideDefaultState(void);
+void FI_SetClientsideDefaultState(void* data);
+void* FI_GetClientsideDefaultState(void);
 
-finaleid_t          FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, void* extraData);
-void                FI_ScriptTerminate(void);
+finaleid_t FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, void* extraData);
+void FI_ScriptTerminate(void);
 
 typedef enum {
     FI_NONE,
@@ -70,7 +70,7 @@ struct fi_page_s;
 /**
  * Base fi_objects_t elements. All objects MUST use this as their basis.
  *
- * @ingroup infine
+ * @ingroup video
  */
 #define FIOBJECT_BASE_ELEMENTS() \
     fi_objectid_t   id; /* Unique id of the object. */ \
@@ -80,85 +80,154 @@ struct fi_page_s;
     animator_t      angle; \
     animatorvector3_t scale;
 
+struct fi_object_s* FI_NewObject(fi_obtype_e type, const char* name);
+void FI_DeleteObject(struct fi_object_s* obj);
 struct fi_object_s* FI_Object(fi_objectid_t id);
 
-struct fi_page_s*   FI_NewPage(void);
-void                FI_DeletePage(struct fi_page_s* page);
+/**
+ * A page is an aggregate visual/visual container.
+ *
+ * @ingroup video
+ */
+typedef struct {
+    struct fi_object_s** vector;
+    uint size;
+} fi_object_collection_t;
+
+typedef struct fi_page_s {
+    struct fi_page_flags_s {
+        char hidden:1; /// Page is currently hidden (not drawn).
+    } flags;
+
+    /// Child visuals (objects) visible on this page.
+    /// \note Unlike de::Visual the childern are not owned by the page.
+    fi_object_collection_t _objects;
+
+    struct material_s* _bgMaterial;
+    animatorvector4_t _bgColor;
+    animatorvector2_t _imgOffset;
+    animatorvector4_t _filter;
+    animatorvector3_t _textColor[9];
+
+    uint _timer;
+} fi_page_t;
+
+fi_page_t* FI_NewPage(void);
+void FI_DeletePage(fi_page_t* page);
+
+/// Adds a UI object to the page if not already present.
+struct fi_object_s* FIPage_AddObject(fi_page_t* page, struct fi_object_s* obj);
+
+/// Removes a UI object from the page if present.
+struct fi_object_s* FIPage_RemoveObject(fi_page_t* page, struct fi_object_s* obj);
+
+/// Is the UI object present on the page?
+boolean FIPage_HasObject(fi_page_t* page, struct fi_object_s* obj);
+
+/// Current background Material.
+struct material_s* FIPage_Background(fi_page_t* page);
+
+/// Sets the 'is-visible' state.
+void FIPage_MakeVisible(fi_page_t* page, boolean yes);
+
+/// Sets the background Material.
+void FIPage_SetBackground(fi_page_t* page, struct material_s* mat);
+
+/// Sets the background color.
+void FIPage_SetBackgroundColor(fi_page_t* page, float red, float green, float blue, int steps);
+
+/// Sets the background color and alpha.
+void FIPage_SetBackgroundColorAndAlpha(fi_page_t* page, float red, float green, float blue, float alpha, int steps);
+
+/// Sets the x-axis component of the image offset.
+void FIPage_SetImageOffsetX(fi_page_t* page, float x, int steps);
+
+/// Sets the y-axis component of the image offset.
+void FIPage_SetImageOffsetY(fi_page_t* page, float y, int steps);
+
+/// Sets the image offset.
+void FIPage_SetImageOffsetXY(fi_page_t* page, float x, float y, int steps);
+
+/// Sets the filter color and alpha.
+void FIPage_SetFilterColorAndAlpha(fi_page_t* page, float red, float green, float blue, float alpha, int steps);
+
+/// Sets a predefined color.
+void FIPage_SetPredefinedColor(fi_page_t* page, uint idx, float red, float green, float blue, int steps);
 
 /**
  * Rectangle/Image sequence object.
  *
- * @ingroup infine
+ * @ingroup video
  */
 typedef struct fidata_pic_frame_s {
-    int             tics;
+    int tics;
     enum {
         PFT_MATERIAL,
         PFT_PATCH,
-        PFT_RAW,        // "Raw" graphic or PCX lump.
-        PFT_XIMAGE      // External graphics resource.
+        PFT_RAW, /// "Raw" graphic or PCX lump.
+        PFT_XIMAGE /// External graphics resource.
     } type;
     struct fidata_pic_frame_flags_s {
-        char            flip:1;
+        char flip:1;
     } flags;
     union {
         struct material_s* material;
-        patchid_t       patch;
-        lumpnum_t       lump;
-        DGLuint         tex;
+        patchid_t patch;
+        lumpnum_t lump;
+        DGLuint tex;
     } texRef;
-    short           sound;
+    short sound;
 } fidata_pic_frame_t;
 
 typedef struct fidata_pic_s {
     FIOBJECT_BASE_ELEMENTS()
     struct fidata_pic_flags_s {
-        char            looping:1; // Frame sequence will loop.
+        char looping:1; /// Frame sequence will loop.
     } flags;
-    boolean         animComplete; // Animation finished (or repeated).
-    int             tics;
-    uint            curFrame;
+    boolean animComplete; /// Animation finished (or repeated).
+    int tics;
+    uint curFrame;
     fidata_pic_frame_t** frames;
-    uint            numFrames;
+    uint numFrames;
 
     animatorvector4_t color;
 
-    // For rectangle-objects.
+    /// For rectangle-objects.
     animatorvector4_t otherColor;
     animatorvector4_t edgeColor;
     animatorvector4_t otherEdgeColor;
 } fidata_pic_t;
 
-void                FIData_PicThink(fidata_pic_t* pic);
-void                FIData_PicDraw(fidata_pic_t* pic, const float offset[3]);
-uint                FIData_PicAppendFrame(fidata_pic_t* pic, int type, int tics, void* texRef, short sound, boolean flagFlipH);
-void                FIData_PicClearAnimation(fidata_pic_t* pic);
+void FIData_PicThink(fidata_pic_t* pic);
+void FIData_PicDraw(fidata_pic_t* pic, const float offset[3]);
+uint FIData_PicAppendFrame(fidata_pic_t* pic, int type, int tics, void* texRef, short sound, boolean flagFlipH);
+void FIData_PicClearAnimation(fidata_pic_t* pic);
 
 /**
  * Text object.
  *
- * @ingroup infine
+ * @ingroup video
  */
 typedef struct fidata_text_s {
     FIOBJECT_BASE_ELEMENTS()
     animatorvector4_t color;
-    short           textFlags; // @see drawTextFlags
-    boolean         animComplete; // Animation finished (text-typein complete).
-    int             scrollWait, scrollTimer; // Automatic scrolling upwards.
-    size_t          cursorPos;
-    int             wait, timer;
-    float           lineheight;
+    short textFlags; /// @see drawTextFlags
+    boolean animComplete; /// Animation finished (text-typein complete).
+    int scrollWait, scrollTimer; /// Automatic scrolling upwards.
+    size_t cursorPos;
+    int wait, timer;
+    float lineheight;
     compositefontid_t font;
-    char*           text;
+    char* text;
 } fidata_text_t;
 
-void                FIData_TextThink(fidata_text_t* text);
-void                FIData_TextDraw(fidata_text_t* text, const float offset[3]);
-void                FIData_TextCopy(fidata_text_t* text, const char* str);
+void FIData_TextThink(fidata_text_t* text);
+void FIData_TextDraw(fidata_text_t* text, const float offset[3]);
+void FIData_TextCopy(fidata_text_t* text, const char* str);
 
 /**
- * @return          Length of the current text as a counter.
+ * @return Length of the current text as a counter.
  */
-size_t              FIData_TextLength(fidata_text_t* text);
+size_t FIData_TextLength(fidata_text_t* text);
 
 #endif /* LIBDENG_API_INFINE_H */
