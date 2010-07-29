@@ -724,20 +724,6 @@ static fi_object_t* getObject(finaleinterpreter_t* fi, fi_obtype_e type, const c
     }
 }
 
-static void demoEnds(finaleinterpreter_t* fi)
-{
-    if(!fi->flags.suspended)
-        return;
-
-    // Restore the InFine state.
-    fi->flags.suspended = false;
-    if(fi->cmdExecuted)
-    {
-        FIPage_MakeVisible(fi->_page, true);
-    }
-    gx.FI_DemoEnds();
-}
-
 static void clearEventHandlers(finaleinterpreter_t* fi)
 {
     if(fi->numEventHandlers)
@@ -778,7 +764,6 @@ static fi_handler_t* findEventHandler(finaleinterpreter_t* fi, const ddevent_t* 
 
 static fi_handler_t* createEventHandler(finaleinterpreter_t* fi, const ddevent_t* ev, const char* marker)
 {
-    // First, try to find an existing handler.
     fi_handler_t* h;
     fi->eventHandlers = Z_Realloc(fi->eventHandlers, sizeof(*h) * ++fi->numEventHandlers, PU_STATIC);
     h = &fi->eventHandlers[fi->numEventHandlers-1];
@@ -890,10 +875,10 @@ void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, finale_mode_t mode,
     memcpy(fi->script, script, size);
     fi->script[size] = '\0';
     fi->cp = fi->script; // Init cursor.
-    fi->flags.show_menu = true; // Enabled by default.
     fi->flags.suspended = false;
-    fi->flags.can_skip = true; // By default skipping is enabled.
     fi->flags.paused = false;
+    fi->flags.show_menu = true; // Enabled by default.
+    fi->flags.can_skip = true; // By default skipping is enabled.
 
     fi->cmdExecuted = false; // Nothing is drawn until a cmd has been executed.
     fi->skipping = false;
@@ -949,15 +934,23 @@ void FinaleInterpreter_ReleaseScript(finaleinterpreter_t* fi)
 void FinaleInterpreter_Resume(finaleinterpreter_t* fi)
 {
     assert(fi);
+    if(!fi->flags.suspended)
+        return;
+    fi->flags.suspended = false;
     // Do we need to unhide any pages?
-    if(!fi->cmdExecuted || fi->flags.suspended)
-        return; // No.
-    FIPage_MakeVisible(fi->_page, true);
+    if(fi->cmdExecuted)
+    {
+        FIPage_MakeVisible(fi->_page, true);
+    }
 }
 
 void FinaleInterpreter_Suspend(finaleinterpreter_t* fi)
 {
     assert(fi);
+    if(fi->flags.suspended)
+        return;
+    fi->flags.suspended = true;
+    // While suspended, all pages will be hidden.
     FIPage_MakeVisible(fi->_page, false);
 }
 
@@ -1109,7 +1102,7 @@ int FinaleInterpreter_Responder(finaleinterpreter_t* fi, ddevent_t* ev)
         return false;
 
     if(fi->flags.suspended)
-        return false; // Busy playing a demo.
+        return false;
 
     // During the first ~second disallow all events/skipping.
     if(fi->timer < 20)
@@ -1157,6 +1150,14 @@ void FI_SetClientsideDefaultState(void* data)
     memcpy(&defaultState, data, sizeof(FINALE_SCRIPT_EXTRADATA_SIZE));
 }
 
+static void changePageBackground(fi_page_t* p, material_t* mat)
+{
+    // If the page does not yet have a background set we must setup the color+alpha.
+    if(mat && !FIPage_Background(p))
+        FIPage_SetBackgroundColorAndAlpha(p, 1, 1, 1, 1, 0);
+    FIPage_SetBackground(p, mat);
+}
+
 DEFFC(Do)
 {
     // This command is called even when (cond)skipping.
@@ -1176,17 +1177,17 @@ DEFFC(End)
 
 DEFFC(BGFlat)
 {
-    FIPage_SetBackground(fi->_page, Materials_ToMaterial(Materials_CheckNumForName(ops[0].data.cstring, MN_FLATS)));
+    changePageBackground(fi->_page, Materials_ToMaterial(Materials_CheckNumForName(ops[0].data.cstring, MN_FLATS)));
 }
 
 DEFFC(BGTexture)
 {
-    FIPage_SetBackground(fi->_page, Materials_ToMaterial(Materials_CheckNumForName(ops[0].data.cstring, MN_TEXTURES)));
+    changePageBackground(fi->_page, Materials_ToMaterial(Materials_CheckNumForName(ops[0].data.cstring, MN_TEXTURES)));
 }
 
 DEFFC(NoBGMaterial)
 {
-    FIPage_SetBackground(fi->_page, NULL);
+    changePageBackground(fi->_page, 0);
 }
 
 DEFFC(InTime)
@@ -2030,15 +2031,14 @@ DEFFC(TextScale)
 
 DEFFC(PlayDemo)
 {
-    // Mark the current state as suspended, so we know to resume it when the demo ends.
-    fi->flags.suspended = true;
-    FIPage_MakeVisible(fi->_page, false);
+    // While playing a demo we suspend command interpretation.
+    FinaleInterpreter_Suspend(fi);
 
-    // The only argument is the demo file name.
-    // Start playing the demo.
+    // Start the demo.
     if(!Con_Executef(CMDS_DDAY, true, "playdemo \"%s\"", ops[0].data.cstring))
     {   // Demo playback failed. Here we go again...
-        demoEnds(fi);
+        FinaleInterpreter_Resume(fi);
+        gx.FI_DemoEnds();
     }
 }
 

@@ -57,9 +57,9 @@ typedef struct finaleinterpreter_t {
     finale_mode_t   mode;
     struct finaleinterpreter_flags_s {
         char            stopped:1;
-        char            can_skip:1;
         char            suspended:1;
         char            paused:1;
+        char            can_skip:1;
         char            eat_events:1; // Script will eat all input events.
         char            show_menu:1;
     } flags;

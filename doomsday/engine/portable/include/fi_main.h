@@ -73,6 +73,7 @@ void                FIPage_RunTic(fi_page_t* page);
 fi_object_t*        FIPage_AddObject(fi_page_t* page, fi_object_t* obj);
 fi_object_t*        FIPage_RemoveObject(fi_page_t* page, fi_object_t* obj);
 boolean             FIPage_HasObject(fi_page_t* page, fi_object_t* obj);
+struct material_s*  FIPage_Background(fi_page_t* page);
 
 void                FIPage_SetBackground(fi_page_t* page, struct material_s* mat);
 void                FIPage_SetBackgroundColor(fi_page_t* page, float red, float green, float blue, int steps);

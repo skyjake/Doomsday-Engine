@@ -133,8 +133,7 @@ static fi_page_t* pagesRemove(fi_page_t* p)
         }
         else
         {
-            Z_Free(pages);
-            pages = 0;
+            Z_Free(pages); pages = 0;
             numPages = 0;
         }
     }
@@ -241,8 +240,7 @@ static fi_object_t* objectsRemove(fi_object_collection_t* c, fi_object_t* obj)
         }
         else
         {
-            Z_Free(c->vector);
-            c->vector = 0;
+            Z_Free(c->vector); c->vector = 0;
             c->num = 0;
         }
     }
@@ -367,33 +365,20 @@ static fi_state_t* stackPush(fi_scriptid_t id)
 
 static boolean stackPop(void)
 {
-    fi_state_t* s = stackTop();
-
-    if(!s)
-    {
-#ifdef _DEBUG
-Con_Printf("InFine: Attempt to pop empty stack\n");
-#endif
-        return false;
-    }
-
-    P_DestroyFinaleInterpreter(s->interpreter);
-
     // Should we go back to NULL?
-    if(finaleStackSize > 1)
-    {   // Return to previous state.
-        finaleStack = Z_Realloc(finaleStack, sizeof(*finaleStack) * --finaleStackSize, PU_STATIC);
-        s = stackTop();
-        s->flags.active = true;
-        FinaleInterpreter_Resume(s->interpreter);
-    }
-    else
+    if(!(finaleStackSize > 1))
     {
         Z_Free(finaleStack); finaleStack = 0;
         finaleStackSize = 0;
+        return 0;
     }
 
-    return finaleStackSize != 0;
+    // Return to previous state.
+    finaleStack = Z_Realloc(finaleStack, sizeof(*finaleStack) * --finaleStackSize, PU_STATIC);
+    {fi_state_t* s = stackTop();
+    s->flags.active = true;
+    FinaleInterpreter_Resume(s->interpreter);}
+    return true;
 }
 
 /**
@@ -403,23 +388,7 @@ static void scriptTerminate(fi_state_t* s)
 {
     if(!s->flags.active)
         return;
-    if(!FinaleInterpreter_CanSkip(s->interpreter))
-        return;
-
-    // Should we go back to NULL?
-    if(finaleStackSize > 1)
-    {   // Return to previous state.
-        finaleStack = Z_Realloc(finaleStack, sizeof(*finaleStack) * --finaleStackSize, PU_STATIC);
-        {fi_state_t* s2 = stackTop();
-        s2->flags.active = true;
-        FinaleInterpreter_Resume(s2->interpreter);}
-    }
-    else
-    {
-        Z_Free(finaleStack); finaleStack = 0;
-        finaleStackSize = 0;
-    }
-
+    s->flags.active = false;
     P_DestroyFinaleInterpreter(s->interpreter);
 }
 
@@ -446,7 +415,11 @@ static void doReset(void)
             return;
 
         // Pop all the states.
-        while(stackPop());
+        while((s = stackTop()))
+        {
+            scriptTerminate(s);
+            stackPop();
+        }
     }
 }
 
@@ -596,8 +569,7 @@ void P_DestroyText(fidata_text_t* text)
     assert(text);
     if(text->text)
     {   // Free the memory allocated for the text string.
-        Z_Free(text->text);
-        text->text = NULL;
+        Z_Free(text->text); text->text = 0;
     }
     // Call parent destructor.
     FIObject_Destructor((fi_object_t*)text);
@@ -780,8 +752,8 @@ void FI_ScriptTerminate(void)
     }
     if((s = stackTop()) && s->flags.active)
     {
-        FinaleInterpreter_AllowSkip(s->interpreter, true);
         scriptTerminate(s);
+        stackPop();
     }
 }
 
@@ -897,6 +869,12 @@ fi_object_t* FIPage_RemoveObject(fi_page_t* p, fi_object_t* obj)
     return obj;
 }
 
+material_t* FIPage_Background(fi_page_t* p)
+{
+    if(!p) Con_Error("FIPage_Background: Invalid page.");
+    return p->bgMaterial;
+}
+
 void FIPage_SetBackground(fi_page_t* p, material_t* mat)
 {
     if(!p) Con_Error("FIPage_SetBackground: Invalid page.");
@@ -970,10 +948,8 @@ void FI_Ticker(timespan_t ticLength)
 
         if(FinaleInterpreter_RunTic(s->interpreter))
         {   // The script has ended!
-            if(!s->flags.active)
-                return;
-
             scriptTerminate(s);
+            stackPop();
         }
     }}
 }
