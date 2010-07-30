@@ -198,18 +198,25 @@ static void objectsThink(fi_object_collection_t* c)
     }
 }
 
-static void objectsDraw(fi_object_collection_t* c, fi_obtype_e type, const float worldOrigin[3])
+static void objectsDraw(fi_object_collection_t* c, fi_obtype_e type,
+    const float worldOrigin[3], const float picOffset[3])
 {
     uint i;
     for(i = 0; i < c->size; ++i)
     {
         fi_object_t* obj = c->vector[i];
-        if(obj->type != type)
+        if(type != FI_NONE && obj->type != type)
             continue;
         switch(obj->type)
         {
-        case FI_PIC:    FIData_PicDraw((fidata_pic_t*)obj, worldOrigin);    break;
-        case FI_TEXT:   FIData_TextDraw((fidata_text_t*)obj, worldOrigin);  break;
+        case FI_PIC:
+            { // Pics have an additional offset.
+            vec3_t origin;
+            V3_Sum(origin, worldOrigin, picOffset);
+            FIData_PicDraw((fidata_pic_t*)obj, origin);
+            break;
+            }
+        case FI_TEXT: FIData_TextDraw((fidata_text_t*)obj, worldOrigin);  break;
         default: break;
         }
     }
@@ -386,10 +393,8 @@ void finaleTerminate(finaleid_t id)
         return;
     }
     {finale_t* f;
-    if((f = finalesById(id)))
+    if((f = finalesById(id)) && f->flags.active)
     {
-        if(!f->flags.active)
-            return;
         f->flags.active = false;
         P_DestroyFinaleInterpreter(f->_interpreter);
     }}
@@ -405,13 +410,13 @@ void finaleTicker(finaleid_t id)
         return;
     }
     {finale_t* f;
-    if((f = finalesById(id)))
+    if((f = finalesById(id)) && f->flags.active)
     {
-        if(!f->flags.active)
-            return;
-
         if(!FinaleInterpreter_IsSuspended(f->_interpreter))
-            FIPage_RunTic(f->_interpreter->_page);
+        {
+            FIPage_RunTic(f->_interpreter->_pages[PAGE_PICS]);
+            FIPage_RunTic(f->_interpreter->_pages[PAGE_TEXT]);
+        }
 
         if(FinaleInterpreter_RunTic(f->_interpreter))
         {   // The script has ended!
@@ -449,10 +454,9 @@ boolean finaleIsMenuTrigger(finaleid_t id)
         return false;
     }
     {finale_t* f;
-    if((f = finalesById(id)))
+    if((f = finalesById(id)) && f->flags.active)
     {
-        if(f->flags.active)
-            return FinaleInterpreter_IsMenuTrigger(f->_interpreter);
+        return FinaleInterpreter_IsMenuTrigger(f->_interpreter);
     }}
     return false;
 }
@@ -467,10 +471,9 @@ boolean finaleResponder(finaleid_t id, ddevent_t* ev)
         return false;
     }
     {finale_t* f;
-    if((f = finalesById(id)))
+    if((f = finalesById(id)) && f->flags.active)
     {
-        if(f->flags.active)
-            return FinaleInterpreter_Responder(f->_interpreter, ev);
+        return FinaleInterpreter_Responder(f->_interpreter, ev);
     }}
     return false;
 }
@@ -1188,12 +1191,10 @@ void FI_Drawer(void)
         //glEnable(GL_CULL_FACE);
         glEnable(GL_ALPHA_TEST);
 
-        // Images first, then text.
-        {vec3_t worldOffset;
-        V3_Set(worldOffset, -SCREENWIDTH/2 + -page->_imgOffset[0].value, -SCREENHEIGHT/2 + -page->_imgOffset[1].value, .05f);
-        objectsDraw(&page->_objects, FI_PIC, worldOffset);
+        {vec3_t worldOffset, picOffset;
         V3_Set(worldOffset, -SCREENWIDTH/2, -SCREENHEIGHT/2, .05f);
-        objectsDraw(&page->_objects, FI_TEXT, worldOffset);
+        V3_Set(picOffset, -page->_imgOffset[0].value, -page->_imgOffset[1].value, 0);
+        objectsDraw(&page->_objects, FI_NONE/* treated as 'any' */, worldOffset, picOffset);
 
         /*{rendmodelparams_t params;
         memset(&params, 0, sizeof(params));
@@ -1779,7 +1780,7 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
                 if(!colorIdx)
                     color = (animatorvector3_t*) &tex->color; // Use the default color.
                 else
-                    color = &f->_interpreter->_page->_textColor[colorIdx-1];
+                    color = &f->_interpreter->_pages[PAGE_TEXT]->_textColor[colorIdx-1];
 
                 glColor4f((*color)[0].value, (*color)[1].value, (*color)[2].value, tex->color[3].value);
                 continue;

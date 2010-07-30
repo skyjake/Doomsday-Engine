@@ -41,6 +41,13 @@
 
 #define FINALE_SCRIPT_EXTRADATA_SIZE      gx.finaleConditionsSize
 
+/**
+ * Interactive interpreter for Finale scripts. An instance of which is created
+ * (and owned) by each active (running) script.
+ *
+ * @see Finale
+ * @ingroup infine
+ */
 /// \todo Should be private.
 typedef struct fi_handler_s {
     ddevent_t       ev; // Template.
@@ -53,13 +60,12 @@ typedef struct fi_namespace_s {
     struct fi_namespace_record_s* vector;
 } fi_namespace_t;
 
-/**
- * Interactive interpreter for Finale scripts. An instance of which is created
- * (and owned) by each active (running) script.
- *
- * @see Finale
- * @ingroup infine
- */
+/// UIPage indices.
+enum {
+    PAGE_PICS = 0, /// \note also used for its background.
+    PAGE_TEXT = 1 /// \note also used for its filter.
+};
+
 typedef struct finaleinterpreter_s {
     struct finaleinterpreter_flags_s {
         char stopped:1;
@@ -82,8 +88,8 @@ typedef struct finaleinterpreter_s {
     /// Known symbols (to the loaded script).
     fi_namespace_t _namespace;
 
-    /// Page on which objects created by this interpeter are visible.
-    struct fi_page_s* _page;
+    /// Pages on which objects created by this interpeter are visible.
+    struct fi_page_s* _pages[2];
 
     /// Set to true after first command is executed.
     boolean _cmdExecuted;

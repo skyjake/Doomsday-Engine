@@ -647,7 +647,8 @@ static boolean executeCommand(finaleinterpreter_t* fi, const char* commandString
     // We're now going to execute a command.
     fi->_cmdExecuted = true;
     // So unhide our UI page(s).
-    FIPage_MakeVisible(fi->_page, true);
+    FIPage_MakeVisible(fi->_pages[PAGE_PICS], true);
+    FIPage_MakeVisible(fi->_pages[PAGE_TEXT], true);
 
     // Is this a command we know how to execute?
     {command_t* cmd;
@@ -705,6 +706,11 @@ static boolean executeNextCommand(finaleinterpreter_t* fi)
     return false;
 }
 
+static __inline uint pageForObjectType(fi_obtype_e type)
+{
+    return (type == FI_TEXT? PAGE_TEXT : PAGE_PICS);
+}
+
 /**
  * Find an @c fi_object_t of type with the type-unique name.
  * @param name              Unique name of the object we are looking for.
@@ -720,7 +726,7 @@ static fi_object_t* getObject(finaleinterpreter_t* fi, fi_obtype_e type, const c
     // An existing object?
     if((id = findObjectIdForName(&fi->_namespace, name, type)))
         return FI_Object(id);
-    return FIPage_AddObject(fi->_page, addObjectToNamespace(&fi->_namespace, name, FI_NewObject(type, name)));
+    return FIPage_AddObject(fi->_pages[pageForObjectType(type)], addObjectToNamespace(&fi->_namespace, name, FI_NewObject(type, name)));
     }
 }
 
@@ -840,6 +846,14 @@ static void stopScript(finaleinterpreter_t* fi)
     Plug_DoHook(HOOK_FINALE_SCRIPT_TERMINATE, fi->mode, &params);} 
 }
 
+static void changePageBackground(fi_page_t* p, material_t* mat)
+{
+    // If the page does not yet have a background set we must setup the color+alpha.
+    if(mat && !FIPage_Background(p))
+        FIPage_SetBackgroundColorAndAlpha(p, 1, 1, 1, 1, 0);
+    FIPage_SetBackground(p, mat);
+}
+
 finaleinterpreter_t* P_CreateFinaleInterpreter(void)
 {
     return Z_Calloc(sizeof(finaleinterpreter_t), PU_STATIC, 0);
@@ -852,7 +866,8 @@ void P_DestroyFinaleInterpreter(finaleinterpreter_t* fi)
     clearEventHandlers(fi);
     releaseScript(fi);
     destroyObjectsInScope(&fi->_namespace);
-    FI_DeletePage(fi->_page);
+    FI_DeletePage(fi->_pages[PAGE_PICS]);
+    FI_DeletePage(fi->_pages[PAGE_TEXT]);
     Z_Free(fi);
 }
 
@@ -866,9 +881,21 @@ void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, finale_mode_t mode,
     changeMode(fi, mode);
     setInitialGameState(fi, gameState, extraData);
 
-    fi->_page = FI_NewPage();
-    // Hide the page until command interpretation begins.
-    FIPage_MakeVisible(fi->_page, false);
+    /**
+     * InFine imposes a strict object drawing order:
+     *
+     * 1: Background flat (or a single-color background).
+     * 2: Picture objects (globally offseted with OffX and OffY), in the order in which they were created.
+     * 3: Text objects, in the order in which they were created.
+     * 4: Filter.
+     *
+     * For this we'll need two pages; one for it's background and for Pics and another for Text and it's filter.
+     */
+    fi->_pages[PAGE_PICS] = FI_NewPage();
+    fi->_pages[PAGE_TEXT] = FI_NewPage();
+    // Hide our pages until command interpretation begins.
+    FIPage_MakeVisible(fi->_pages[PAGE_PICS], false);
+    FIPage_MakeVisible(fi->_pages[PAGE_TEXT], false);
 
     // Take a copy of the script.
     fi->_script = Z_Realloc(fi->_script, size + 1, PU_STATIC);
@@ -940,7 +967,8 @@ void FinaleInterpreter_Resume(finaleinterpreter_t* fi)
     // Do we need to unhide any pages?
     if(fi->_cmdExecuted)
     {
-        FIPage_MakeVisible(fi->_page, true);
+        FIPage_MakeVisible(fi->_pages[PAGE_PICS], true);
+        FIPage_MakeVisible(fi->_pages[PAGE_TEXT], true);
     }
 }
 
@@ -951,7 +979,8 @@ void FinaleInterpreter_Suspend(finaleinterpreter_t* fi)
         return;
     fi->flags.suspended = true;
     // While suspended, all pages will be hidden.
-    FIPage_MakeVisible(fi->_page, false);
+    FIPage_MakeVisible(fi->_pages[PAGE_PICS], false);
+    FIPage_MakeVisible(fi->_pages[PAGE_TEXT], false);
 }
 
 void* FinaleInterpreter_ExtraData(finaleinterpreter_t* fi)
@@ -1150,14 +1179,6 @@ void FI_SetClientsideDefaultState(void* data)
     memcpy(&defaultState, data, sizeof(FINALE_SCRIPT_EXTRADATA_SIZE));
 }
 
-static void changePageBackground(fi_page_t* p, material_t* mat)
-{
-    // If the page does not yet have a background set we must setup the color+alpha.
-    if(mat && !FIPage_Background(p))
-        FIPage_SetBackgroundColorAndAlpha(p, 1, 1, 1, 1, 0);
-    FIPage_SetBackground(p, mat);
-}
-
 DEFFC(Do)
 {
     // This command is called even when (cond)skipping.
@@ -1177,17 +1198,17 @@ DEFFC(End)
 
 DEFFC(BGFlat)
 {
-    changePageBackground(fi->_page, Materials_ToMaterial(Materials_CheckNumForName(ops[0].data.cstring, MN_FLATS)));
+    changePageBackground(fi->_pages[PAGE_PICS], Materials_ToMaterial(Materials_CheckNumForName(ops[0].data.cstring, MN_FLATS)));
 }
 
 DEFFC(BGTexture)
 {
-    changePageBackground(fi->_page, Materials_ToMaterial(Materials_CheckNumForName(ops[0].data.cstring, MN_TEXTURES)));
+    changePageBackground(fi->_pages[PAGE_PICS], Materials_ToMaterial(Materials_CheckNumForName(ops[0].data.cstring, MN_TEXTURES)));
 }
 
 DEFFC(NoBGMaterial)
 {
-    changePageBackground(fi->_page, 0);
+    changePageBackground(fi->_pages[PAGE_PICS], 0);
 }
 
 DEFFC(InTime)
@@ -1217,12 +1238,12 @@ DEFFC(WaitAnim)
 
 DEFFC(Color)
 {
-    FIPage_SetBackgroundColor(fi->_page, ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, fi->_inTime);
+    FIPage_SetBackgroundColor(fi->_pages[PAGE_PICS], ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, fi->_inTime);
 }
 
 DEFFC(ColorAlpha)
 {
-    FIPage_SetBackgroundColorAndAlpha(fi->_page, ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->_inTime);
+    FIPage_SetBackgroundColorAndAlpha(fi->_pages[PAGE_PICS], ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->_inTime);
 }
 
 DEFFC(Pause)
@@ -1778,12 +1799,12 @@ DEFFC(EdgeColor)
 
 DEFFC(OffsetX)
 {
-    FIPage_SetImageOffsetX(fi->_page, ops[0].data.flt, fi->_inTime);
+    FIPage_SetImageOffsetX(fi->_pages[PAGE_PICS], ops[0].data.flt, fi->_inTime);
 }
 
 DEFFC(OffsetY)
 {
-    FIPage_SetImageOffsetY(fi->_page, ops[0].data.flt, fi->_inTime);
+    FIPage_SetImageOffsetY(fi->_pages[PAGE_PICS], ops[0].data.flt, fi->_inTime);
 }
 
 DEFFC(Sound)
@@ -1829,7 +1850,7 @@ DEFFC(MusicOnce)
 
 DEFFC(Filter)
 {
-    FIPage_SetFilterColorAndAlpha(fi->_page, ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->_inTime);
+    FIPage_SetFilterColorAndAlpha(fi->_pages[PAGE_TEXT], ops[0].data.flt, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->_inTime);
 }
 
 DEFFC(Text)
@@ -1915,7 +1936,7 @@ DEFFC(DeleteText)
 
 DEFFC(PredefinedTextColor)
 {
-    FIPage_SetPredefinedColor(fi->_page, MINMAX_OF(1, ops[0].data.integer, 9)-1, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->_inTime);
+    FIPage_SetPredefinedColor(fi->_pages[PAGE_TEXT], MINMAX_OF(1, ops[0].data.integer, 9)-1, ops[1].data.flt, ops[2].data.flt, ops[3].data.flt, fi->_inTime);
 }
 
 DEFFC(TextRGB)
