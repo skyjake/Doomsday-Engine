@@ -68,6 +68,9 @@ typedef struct {
 D_CMD(StartFinale);
 D_CMD(StopFinale);
 
+finale_t*           P_CreateFinale(void);
+void                P_DestroyFinale(finale_t* f);
+
 fidata_text_t*      P_CreateText(fi_objectid_t id, const char* name);
 void                P_DestroyText(fidata_text_t* text);
 
@@ -90,9 +93,13 @@ static byte noStretch = false;
 static uint numPages;
 static fi_page_t** pages;
 
+/// Scripts.
+static uint finalesSize;
+static finale_t* finales;
+
 /// Script state stack.
 static uint finaleStackSize;
-static finale_t* finaleStack;
+static finaleid_t* finaleStack;
 
 /// Global object store.
 static fi_object_collection_t objects;
@@ -139,6 +146,7 @@ static fi_page_t* pagesRemove(fi_page_t* p)
             Z_Free(pages); pages = 0;
             numPages = 0;
         }
+        break;
     }
     return p;
 }
@@ -310,16 +318,16 @@ static fi_objectid_t objectsUniqueId(fi_object_collection_t* c)
     return id;
 }
 
-static finale_t* scriptsById(finaleid_t id)
+static finale_t* finalesById(finaleid_t id)
 {
     if(id != 0)
     {
         uint i;
-        for(i = 0; i < finaleStackSize; ++i)
+        for(i = 0; i < finalesSize; ++i)
         {
-            finale_t* s = &finaleStack[i];
-            if(s->id == id)
-                return s;
+            finale_t* f = &finales[i];
+            if(f->id == id)
+                return f;
         }
     }
     return 0;
@@ -328,23 +336,23 @@ static finale_t* scriptsById(finaleid_t id)
 /**
  * @return                  A new (unused) unique script id.
  */
-static finaleid_t scriptsUniqueId(void)
+static finaleid_t finalesUniqueId(void)
 {
     finaleid_t id = 0;
-    while(scriptsById(++id));
+    while(finalesById(++id));
     return id;
 }
 
-static __inline finale_t* stackTop(void)
+static __inline finaleid_t stackTop(void)
 {
-    return (finaleStackSize == 0? 0 : &finaleStack[finaleStackSize-1]);
+    return (finaleStackSize == 0? 0 : finaleStack[finaleStackSize-1]);
 }
 
-static finale_t* stackPush(finaleid_t id)
+static finaleid_t stackPush(finaleid_t id)
 {
     finaleStack = Z_Realloc(finaleStack, sizeof(*finaleStack) * ++finaleStackSize, PU_STATIC);
-    finaleStack[finaleStackSize-1].id = id;
-    return &finaleStack[finaleStackSize-1];
+    finaleStack[finaleStackSize-1] = id;
+    return id;
 }
 
 static boolean stackPop(void)
@@ -359,54 +367,111 @@ static boolean stackPop(void)
 
     // Return to previous state.
     finaleStack = Z_Realloc(finaleStack, sizeof(*finaleStack) * --finaleStackSize, PU_STATIC);
-    {finale_t* s = stackTop();
-    s->flags.active = true;
-    FinaleInterpreter_Resume(s->_interpreter);}
+    {finale_t* f = finalesById(stackTop());
+    f->flags.active = true;
+    FinaleInterpreter_Resume(f->_interpreter);}
     return true;
 }
 
 /**
  * Stop playing the script and go to next game state.
  */
-static void scriptTerminate(finale_t* s)
+void finaleTerminate(finaleid_t id)
 {
-    if(!s->flags.active)
+    if(!inited)
+    {
+#ifdef _DEBUG
+        Con_Printf("finaleTerminate: Not initialized yet!\n");
+#endif
         return;
-    s->flags.active = false;
-    P_DestroyFinaleInterpreter(s->_interpreter);
-}
-
-static void scriptTicker(finale_t* s)
-{
-    if(!s->flags.active)
-        return;
-
-    if(!FinaleInterpreter_IsSuspended(s->_interpreter))
-        FIPage_RunTic(s->_interpreter->_page);
-
-    if(FinaleInterpreter_RunTic(s->_interpreter))
-    {   // The script has ended!
-        scriptTerminate(s);
-        stackPop();
     }
+    {finale_t* f;
+    if((f = finalesById(id)))
+    {
+        if(!f->flags.active)
+            return;
+        f->flags.active = false;
+        P_DestroyFinaleInterpreter(f->_interpreter);
+    }}
 }
 
-static boolean scriptRequestSkip(finale_t* s)
+void finaleTicker(finaleid_t id)
 {
-    return FinaleInterpreter_Skip(s->_interpreter);
+    if(!inited)
+    {
+#ifdef _DEBUG
+        Con_Printf("finaleTicker: Not initialized yet!\n");
+#endif
+        return;
+    }
+    {finale_t* f;
+    if((f = finalesById(id)))
+    {
+        if(!f->flags.active)
+            return;
+
+        if(!FinaleInterpreter_IsSuspended(f->_interpreter))
+            FIPage_RunTic(f->_interpreter->_page);
+
+        if(FinaleInterpreter_RunTic(f->_interpreter))
+        {   // The script has ended!
+            finaleTerminate(f->id);
+            P_DestroyFinale(f);
+            stackPop();
+        }
+    }}
 }
 
-static boolean scriptIsMenuTrigger(finale_t* s)
+boolean finaleRequestSkip(finaleid_t id)
 {
-    if(s->flags.active)
-        return FinaleInterpreter_IsMenuTrigger(s->_interpreter);
+    if(!inited)
+    {
+#ifdef _DEBUG
+        Con_Printf("finaleRequestSkip: Not initialized yet!\n");
+#endif
+        return false;
+    }
+    {finale_t* f;
+    if((f = finalesById(id)))
+    {
+        return FinaleInterpreter_Skip(f->_interpreter);
+    }}
     return false;
 }
 
-static boolean scriptResponder(finale_t* s, ddevent_t* ev)
+boolean finaleIsMenuTrigger(finaleid_t id)
 {
-    if(s->flags.active)
-        return FinaleInterpreter_Responder(s->_interpreter, ev);
+    if(!inited)
+    {
+#ifdef _DEBUG
+        Con_Printf("finaleIsMenuTrigger: Not initialized yet!\n");
+#endif
+        return false;
+    }
+    {finale_t* f;
+    if((f = finalesById(id)))
+    {
+        if(f->flags.active)
+            return FinaleInterpreter_IsMenuTrigger(f->_interpreter);
+    }}
+    return false;
+}
+
+boolean finaleResponder(finaleid_t id, ddevent_t* ev)
+{
+    if(!inited)
+    {
+#ifdef _DEBUG
+        Con_Printf("finaleResponder: Not initialized yet!\n");
+#endif
+        return false;
+    }
+    {finale_t* f;
+    if((f = finalesById(id)))
+    {
+        if(f->flags.active)
+            return FinaleInterpreter_Responder(f->_interpreter, ev);
+    }}
     return false;
 }
 
@@ -415,21 +480,23 @@ static boolean scriptResponder(finale_t* s, ddevent_t* ev)
  */
 static void doReset(void)
 {
-    finale_t* s;
-    if((s = stackTop()) && s->flags.active)
+    finale_t* f;
+    if((f = finalesById(stackTop())) && f->flags.active)
     {
         // The state is suspended when the PlayDemo command is used.
         // Being suspended means that InFine is currently not active, but
         // will be restored at a later time.
-        if(FinaleInterpreter_IsSuspended(s->_interpreter))
+        if(FinaleInterpreter_IsSuspended(f->_interpreter))
             return;
 
         // Pop all the states.
-        while((s = stackTop()))
+        {finaleid_t id;
+        while((id = stackTop()))
         {
-            scriptTerminate(s);
+            finaleTerminate(id);
+            P_DestroyFinale(finalesById(id));
             stackPop();
-        }
+        }}
     }
 }
 
@@ -475,6 +542,42 @@ static fidata_pic_frame_t* picAddFrame(fidata_pic_t* p, fidata_pic_frame_t* f)
 static void objectSetName(fi_object_t* obj, const char* name)
 {
     dd_snprintf(obj->name, FI_NAME_MAX_LENGTH, "%s", name);
+}
+
+finale_t* P_CreateFinale(void)
+{
+    finale_t* f;
+    finales = Z_Realloc(finales, sizeof(*finales) * ++finalesSize, PU_STATIC);
+    f = &finales[finalesSize-1];
+    f->id = finalesUniqueId();
+    f->_interpreter = P_CreateFinaleInterpreter();
+    f->flags.active = true;
+    return f;
+}
+
+void P_DestroyFinale(finale_t* f)
+{
+    assert(f);
+    {uint i;
+    for(i = 0; i < finalesSize; ++i)
+    {
+        if(&finales[i] != f)
+            continue;
+
+        if(i != finalesSize-1)
+            memmove(&finales[i], &finales[i+1], sizeof(*finales) * (finalesSize-i));
+
+        if(finalesSize > 1)
+        {
+            finales = Z_Realloc(finales, sizeof(*finales) * --finalesSize, PU_STATIC);
+        }
+        else
+        {
+            Z_Free(finales); finales = 0;
+            finalesSize = 0;
+        }
+        break;
+    }}
 }
 
 void FIObject_Destructor(fi_object_t* obj)
@@ -554,7 +657,7 @@ void FIObject_Think(fi_object_t* obj)
 
 boolean FI_Active(void)
 {
-    finale_t* s;
+    finale_t* f;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -562,9 +665,9 @@ boolean FI_Active(void)
 #endif
         return false;
     }
-    if((s = stackTop()))
+    if((f = finalesById(stackTop())))
     {
-        return (s->flags.active != 0);
+        return (f->flags.active != 0);
     }
     return false;
 }
@@ -574,6 +677,7 @@ void FI_Init(void)
     if(inited)
         return; // Already been here.
     memset(&objects, 0, sizeof(objects));
+    finales = 0; finalesSize = 0;
     finaleStack = 0; finaleStackSize = 0;
     pages = 0; numPages = 0;
 
@@ -585,16 +689,20 @@ void FI_Shutdown(void)
     if(!inited)
         return; // Huh?
 
-    if(finaleStackSize)
+    if(finalesSize)
     {
         uint i;
-        for(i = 0; i < finaleStackSize; ++i)
+        for(i = 0; i < finalesSize; ++i)
         {
-            finale_t* s = &finaleStack[i];
-            P_DestroyFinaleInterpreter(s->_interpreter);
+            finale_t* f = &finales[i];
+            P_DestroyFinaleInterpreter(f->_interpreter);
         }
-        Z_Free(finaleStack);
+        Z_Free(finales);
     }
+    finales = 0; finalesSize = 0;
+
+    if(finaleStack)
+        Z_Free(finaleStack);
     finaleStack = 0; finaleStackSize = 0;
 
     // Garbage collection.
@@ -617,7 +725,7 @@ void FI_Shutdown(void)
 
 boolean FI_CmdExecuted(void)
 {
-    finale_t* s;
+    finale_t* f;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -625,9 +733,9 @@ boolean FI_CmdExecuted(void)
 #endif
         return false;
     }
-    if((s = stackTop()))
+    if((f = finalesById(stackTop())))
     {
-        return FinaleInterpreter_CommandExecuted(s->_interpreter);
+        return FinaleInterpreter_CommandExecuted(f->_interpreter);
     }
     return false;
 }
@@ -679,9 +787,9 @@ finaleid_t FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameSta
 
     if(mode == FIMODE_LOCAL && isDedicated)
     {
-        // Dedicated servers don't play local scripts.
+        // Dedicated servers don't play local finales.
 #ifdef _DEBUG
-        Con_Printf("Finale Begin: No local scripts in dedicated mode.\n");
+        Con_Printf("Finale Begin: No local finales in dedicated mode.\n");
 #endif
         return 0;
     }
@@ -690,27 +798,24 @@ finaleid_t FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameSta
     Con_Printf("Finale Begin: mode=%i '%.30s'\n", (int)mode, scriptSrc);
 #endif
 
-    {finale_t* s;
+    {finale_t* f;
 
     // Only the top-most script is active.
-    if((s = stackTop()))
+    if((f = finalesById(stackTop())))
     {
-        s->flags.active = false;
-        FinaleInterpreter_Suspend(s->_interpreter);
+        f->flags.active = false;
+        FinaleInterpreter_Suspend(f->_interpreter);
     }
 
     // Init new state.
-    s = stackPush(scriptsUniqueId());
-    s->_interpreter = P_CreateFinaleInterpreter();
-    s->flags.active = true;
-    FinaleInterpreter_LoadScript(s->_interpreter, mode, scriptSrc, gameState, extraData);
-    return s->id+1; // 1-based index.
+    f = P_CreateFinale();
+    FinaleInterpreter_LoadScript(f->_interpreter, mode, scriptSrc, gameState, extraData);
+    return stackPush(f->id);
     }
 }
 
 void FI_ScriptTerminate(void)
 {
-    finale_t* s;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -718,11 +823,13 @@ void FI_ScriptTerminate(void)
 #endif
         return;
     }
-    if((s = stackTop()) && s->flags.active)
+    {finale_t* f;
+    if((f = finalesById(stackTop())) && f->flags.active)
     {
-        scriptTerminate(s);
+        finaleTerminate(f->id);
+        P_DestroyFinale(f);
         stackPop();
-    }
+    }}
 }
 
 fi_object_t* FI_Object(fi_objectid_t id)
@@ -739,7 +846,7 @@ fi_object_t* FI_Object(fi_objectid_t id)
 
 void* FI_ScriptExtraData(void)
 {
-    finale_t* s;
+    finale_t* f;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -747,9 +854,9 @@ void* FI_ScriptExtraData(void)
 #endif
         return 0;
     }
-    if((s = stackTop()))
+    if((f = finalesById(stackTop())))
     {
-        return FinaleInterpreter_ExtraData(s->_interpreter);
+        return FinaleInterpreter_ExtraData(f->_interpreter);
     }
     return 0;
 }
@@ -906,10 +1013,10 @@ void FI_Ticker(timespan_t ticLength)
         return;
 
     // A new 'sharp' tick has begun.
-    {finale_t* s;
-    if((s = stackTop()))
+    {finaleid_t id;
+    if((id = stackTop()))
     {
-        scriptTicker(s);
+        finaleTicker(id);
     }}
 }
 
@@ -918,7 +1025,7 @@ void FI_Ticker(timespan_t ticLength)
  */
 int FI_SkipRequest(void)
 {
-    finale_t* s;
+    
     if(!inited)
     {
 #ifdef _DEBUG
@@ -926,10 +1033,11 @@ int FI_SkipRequest(void)
 #endif
         return false;
     }
-    if((s = stackTop()))
+    {finaleid_t id;
+    if((id = stackTop()))
     {
-        return scriptRequestSkip(s);
-    }
+        return finaleRequestSkip(id);
+    }}
     return false;
 }
 
@@ -945,10 +1053,11 @@ boolean FI_IsMenuTrigger(void)
 #endif
         return false;
     }
-    {finale_t* s;
-    if((s = stackTop()))
-        return scriptIsMenuTrigger(s);
-    }
+    {finaleid_t id;
+    if((id = stackTop()))
+    {
+        return finaleIsMenuTrigger(id);
+    }}
     return false;
 }
 
@@ -961,10 +1070,11 @@ int FI_Responder(ddevent_t* ev)
 #endif
         return false;
     }
-    {finale_t* s;
-    if((s = stackTop()))
-        return scriptResponder(s, ev);
-    }
+    {finaleid_t id;
+    if((id = stackTop()))
+    {
+        return finaleResponder(id, ev);
+    }}
     return false;
 }
 
@@ -1622,7 +1732,7 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
 {
     assert(tex);
     {
-    finale_t* s = stackTop();
+    finale_t* f = finalesById(stackTop());
     int x = 0, y = 0;
     int ch, linew = -1;
     char* ptr;
@@ -1669,13 +1779,13 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
                 if(!colorIdx)
                     color = (animatorvector3_t*) &tex->color; // Use the default color.
                 else
-                    color = &s->_interpreter->_page->_textColor[colorIdx-1];
+                    color = &f->_interpreter->_page->_textColor[colorIdx-1];
 
                 glColor4f((*color)[0].value, (*color)[1].value, (*color)[2].value, tex->color[3].value);
                 continue;
             }
 
-            // 'w' = half a second wait, 'W' = second's wait
+            // 'w' = half a second wait, 'W' = second'f wait
             if(*ptr == 'w' || *ptr == 'W') // Wait?
             {
                 if(tex->wait)
@@ -1704,7 +1814,7 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
                 ch = ' ';
         }
 
-        // Let's do Y-clipping (in case of tall text blocks).
+        // Let'f do Y-clipping (in case of tall text blocks).
         if(tex->scale[1].value * y + tex->pos[1].value >= -tex->scale[1].value * tex->lineheight &&
            tex->scale[1].value * y + tex->pos[1].value < SCREENHEIGHT)
         {
