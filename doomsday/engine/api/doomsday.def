@@ -1,7 +1,7 @@
 NAME            "DOOMSDAY"
 
 ; Highest ordinal is currently
-; --> 448 <--
+; --> 460 <--
 ; Other free ordinals:
 ; 43 formerly P_RegisterPlayerControl
 ; 44 formerly B_FormEventString
@@ -33,6 +33,27 @@ EXPORTS
     DD_SetVariable              @249 NONAME
     DD_GetVariable              @250 NONAME
     DD_GetPlayer                @10 NONAME
+
+; Base: Types.
+    ; Animator.
+    Animator_Init               @449 NONAME
+    Animator_Set                @450 NONAME
+    Animator_Think              @451 NONAME
+
+	; 2D vector Animator.
+	AnimatorVector2_Init        @452 NONAME
+	AnimatorVector2_Set         @453 NONAME
+	AnimatorVector2_Think       @454 NONAME
+
+	; 3D vector Animator.
+	AnimatorVector3_Init        @455 NONAME
+	AnimatorVector3_Set         @456 NONAME
+	AnimatorVector3_Think       @457 NONAME
+
+	; 4D vector Animator.
+	AnimatorVector4_Init        @458 NONAME
+	AnimatorVector4_Set         @459 NONAME
+	AnimatorVector4_Think       @460 NONAME
 
 ; Base: Definitions.
     Def_Get                     @11 NONAME
