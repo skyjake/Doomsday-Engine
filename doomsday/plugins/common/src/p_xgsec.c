@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * p_xgsec.c: Extended Generalized Sector Types.
+ * Extended Generalized Sector Types.
  */
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
@@ -2099,7 +2099,7 @@ int C_DECL XSTrav_MimicSector(sector_t *sector, boolean ceiling,
 
     case SPREF_LINE_ACT_TAGGED_FLOOR:
     case SPREF_LINE_ACT_TAGGED_CEILING:
-        if(info->actTag >= 0);
+        if(info->actTag >= 0)
             refdata = info->actTag;
         break;
 
