@@ -964,6 +964,8 @@ void FinaleInterpreter_Resume(finaleinterpreter_t* fi)
     if(!fi->flags.suspended)
         return;
     fi->flags.suspended = false;
+    FIPage_Pause(fi->_pages[PAGE_PICS], false);
+    FIPage_Pause(fi->_pages[PAGE_TEXT], false);
     // Do we need to unhide any pages?
     if(fi->_cmdExecuted)
     {
@@ -978,8 +980,10 @@ void FinaleInterpreter_Suspend(finaleinterpreter_t* fi)
     if(fi->flags.suspended)
         return;
     fi->flags.suspended = true;
-    // While suspended, all pages will be hidden.
+    // While suspended, all pages will be paused and hidden.
+    FIPage_Pause(fi->_pages[PAGE_PICS], true);
     FIPage_MakeVisible(fi->_pages[PAGE_PICS], false);
+    FIPage_Pause(fi->_pages[PAGE_TEXT], true);
     FIPage_MakeVisible(fi->_pages[PAGE_TEXT], false);
 }
 

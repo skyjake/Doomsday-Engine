@@ -96,7 +96,8 @@ typedef struct {
 
 typedef struct fi_page_s {
     struct fi_page_flags_s {
-        char hidden:1; /// Page is currently hidden (not drawn).
+        char hidden:1; /// Currently hidden (not drawn).
+        char paused:1; /// Currently paused (does not tic).
     } flags;
 
     /// Child visuals (objects) visible on this page.
@@ -129,6 +130,9 @@ struct material_s* FIPage_Background(fi_page_t* page);
 
 /// Sets the 'is-visible' state.
 void FIPage_MakeVisible(fi_page_t* page, boolean yes);
+
+/// Sets the 'is-paused' state.
+void FIPage_Pause(fi_page_t* page, boolean yes);
 
 /// Sets the background Material.
 void FIPage_SetBackground(fi_page_t* page, struct material_s* mat);

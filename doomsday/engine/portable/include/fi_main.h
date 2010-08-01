@@ -44,6 +44,6 @@ int                 FI_SkipRequest(void);
 boolean             FI_CmdExecuted(void);
 void*               FI_ScriptExtraData(void);
 
-void                FIPage_RunTic(fi_page_t* page);
+void                FIPage_RunTic(fi_page_t* page, timespan_t ticLength);
 
 #endif /* LIBDENG_INFINE_MAIN_H */

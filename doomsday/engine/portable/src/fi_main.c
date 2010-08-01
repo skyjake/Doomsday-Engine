@@ -412,12 +412,6 @@ void finaleTicker(finaleid_t id)
     {finale_t* f;
     if((f = finalesById(id)) && f->flags.active)
     {
-        if(!FinaleInterpreter_IsSuspended(f->_interpreter))
-        {
-            FIPage_RunTic(f->_interpreter->_pages[PAGE_PICS]);
-            FIPage_RunTic(f->_interpreter->_pages[PAGE_TEXT]);
-        }
-
         if(FinaleInterpreter_RunTic(f->_interpreter))
         {   // The script has ended!
             finaleTerminate(f->id);
@@ -902,10 +896,19 @@ void FIPage_MakeVisible(fi_page_t* p, boolean yes)
     p->flags.hidden = !yes;
 }
 
-void FIPage_RunTic(fi_page_t* p)
+void FIPage_Pause(fi_page_t* p, boolean yes)
+{
+    if(!p) Con_Error("FIPage_Pause: Invalid page.");
+    p->flags.paused = yes;
+}
+
+void FIPage_RunTic(fi_page_t* p, timespan_t ticLength)
 {
     if(!p) Con_Error("FIPage_RunTic: Invalid page.");
 
+    if(!M_CheckTrigger(&sharedFixedTrigger, ticLength))
+        return;
+    // A new 'sharp' tick has begun.
     p->_timer++;
 
     objectsThink(&p->_objects);
@@ -1011,6 +1014,13 @@ void FI_Ticker(timespan_t ticLength)
 #endif
         return;
     }*/
+
+    // All pages tic unless paused.
+    { uint i;
+    for(i = 0; i < numPages; ++i)
+    {
+        FIPage_RunTic(pages[i], ticLength);
+    }}
 
     if(!M_CheckTrigger(&sharedFixedTrigger, ticLength))
         return;
