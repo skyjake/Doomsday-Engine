@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * r_world.c: World Setup and Refresh
+ * World Setup and Refresh.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -506,7 +506,7 @@ void R_MarkDependantSurfacesForDecorationUpdate(plane_t* pln)
                 Surface_Update(&li->L_side(side^1)->SW_surface(SEG_TOP));
         }
 
-        *linep++;
+        linep++;
     }
 }
 
@@ -614,7 +614,7 @@ plane_t* R_NewPlaneForSector(sector_t* sec)
 
         ssec->bsuf = newList;
 
-        *ssecPtr++;
+        ssecPtr++;
     }
 
     return plane;
@@ -673,12 +673,11 @@ void R_DestroyPlaneOfSector(uint id, sector_t* sec)
     ssecPtr = sec->ssectors;
     while(*ssecPtr)
     {
-        subsector_t*        ssec = *ssecPtr;
-
+        subsector_t* ssec = *ssecPtr;
         SB_DestroySurface(ssec->bsuf[id]);
         if(id < sec->planeCount)
             memmove(ssec->bsuf + id, ssec->bsuf + id + 1, sizeof(biassurface_t*));
-        *ssecPtr++;
+        ssecPtr++;
     }
 
     // Destroy the specified plane.
@@ -823,7 +822,7 @@ void R_UpdateSkyFixForSec(const sector_t* sec)
                     }
                 }
             }
-            *linePtr++;
+            linePtr++;
         }
     }
 }
@@ -1743,11 +1742,11 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
     {
         sidedef_t* front = NULL, *back = NULL;
         subsector_t** ssecp;
-        uint i;
 
         // Check if there are any camera players in this sector. If their
         // height is now above the ceiling/below the floor they are now in
         // the void.
+        { uint i;
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
             player_t* plr = &ddPlayers[i];
@@ -1762,7 +1761,7 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
             {
                 ddpl->inVoid = true;
             }
-        }
+        }}
 
         // Update the z position of the degenmobj for this plane.
         pln->soundOrg.pos[VZ] = pln->height;
@@ -1773,23 +1772,20 @@ boolean R_UpdatePlane(plane_t* pln, boolean forceUpdate)
         {
             subsector_t* ssec = *ssecp;
             seg_t** segp = ssec->segs;
-
             while(*segp)
             {
                 seg_t* seg = *segp;
-
                 if(seg->lineDef)
                 {
+                    uint i;
                     for(i = 0; i < 3; ++i)
                         SB_SurfaceMoved(seg->bsuf[i]);
                 }
-
-                *segp++;
+                segp++;
             }
 
             SB_SurfaceMoved(ssec->bsuf[pln->planeID]);
-
-            *ssecp++;
+            ssecp++;
         }
 
         // We need the decorations updated.

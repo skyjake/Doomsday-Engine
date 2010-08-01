@@ -1374,8 +1374,8 @@ typedef struct {
         n = 0;
         for(i = 0; i < numTexDefs; ++i, directory++)
         {
-            short               j;
-            doomtexturedef_t*       texDef;
+            doomtexturedef_t* texDef;
+            short j;
 
             if(!validTexDefs[i])
                 continue;
@@ -1385,25 +1385,23 @@ typedef struct {
             // Read and create the texture def.
             if(gameDataFormat == 0)
             {   // DOOM format.
-                texpatch_t*         patch;
-                mappatch_t*         mpatch;
-                maptexture_t*       mtexture =
-                    (maptexture_t *) ((byte *) maptex1 + offset);
+                texpatch_t* patch;
+                mappatch_t* mpatch;
+                maptexture_t* mtexture = (maptexture_t*) ((byte*) maptex1 + offset);
 
                 texDef = storage;
                 texDef->patchCount = texDefNumPatches[i];
-                strncpy(texDef->name, mtexture->name, 8);
+                strncpy(texDef->name, (const char*) mtexture->name, 8);
                 strupr(texDef->name);
                 texDef->width = SHORT(mtexture->width);
                 texDef->height = SHORT(mtexture->height);
-                storage = (byte *) storage + sizeof(doomtexturedef_t) +
-                    sizeof(texpatch_t) * texDef->patchCount;
+                storage = (byte *) storage + sizeof(doomtexturedef_t) + sizeof(texpatch_t) * texDef->patchCount;
 
                 mpatch = &mtexture->patches[0];
                 patch = &texDef->patches[0];
                 for(j = 0; j < SHORT(mtexture->patchCount); ++j, mpatch++)
                 {
-                    short               patchNum = SHORT(mpatch->patch);
+                    short patchNum = SHORT(mpatch->patch);
 
                     if(patchNum < 0 || (unsigned) patchNum >= numPatches ||
                        patchlookup[patchNum] == -1)
@@ -1417,25 +1415,23 @@ typedef struct {
             }
             else if(gameDataFormat == 3)
             {   // Strife format.
-                texpatch_t*         patch;
-                strifemappatch_t*   smpatch;
-                strifemaptexture_t* smtexture =
-                    (strifemaptexture_t *) ((byte *) maptex1 + offset);
+                texpatch_t* patch;
+                strifemappatch_t* smpatch;
+                strifemaptexture_t* smtexture = (strifemaptexture_t*) ((byte*) maptex1 + offset);
 
                 texDef = storage;
                 texDef->patchCount = texDefNumPatches[i];
-                strncpy(texDef->name, smtexture->name, 8);
+                strncpy(texDef->name, (const char*) smtexture->name, 8);
                 strupr(texDef->name);
                 texDef->width = SHORT(smtexture->width);
                 texDef->height = SHORT(smtexture->height);
-                storage = (byte *) storage + sizeof(doomtexturedef_t) +
-                    sizeof(texpatch_t) * texDef->patchCount;
+                storage = (byte*) storage + sizeof(doomtexturedef_t) + sizeof(texpatch_t) * texDef->patchCount;
 
                 smpatch = &smtexture->patches[0];
                 patch = &texDef->patches[0];
                 for(j = 0; j < SHORT(smtexture->patchCount); ++j, smpatch++)
                 {
-                    short               patchNum = SHORT(smpatch->patch);
+                    short patchNum = SHORT(smpatch->patch);
 
                     if(patchNum < 0 || (unsigned) patchNum >= numPatches ||
                        patchlookup[patchNum] == -1)

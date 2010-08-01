@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,8 +24,6 @@
  */
 
 /**
- * p_oldsvg.c:
- *
  * \bug Not 64bit clean: In function 'P_v13_UnArchivePlayers': cast from pointer to integer of different size
  * \bug Not 64bit clean: In function 'P_v13_UnArchiveThinkers': cast from pointer to integer of different size
  */
@@ -408,7 +406,7 @@ void P_v13_UnArchiveWorld(void)
         P_SetPtrp(sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, Materials_NumForIndex(*get++, MN_FLATS)));
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (*get++) / 255.0f);
         xsec->special = *get++; // needed?
-        /*xsec->tag =*/ *get++; // needed?
+        /*xsec->tag = **/get++; // needed?
         xsec->specialData = 0;
         xsec->soundTarget = 0;
     }
@@ -421,7 +419,7 @@ void P_v13_UnArchiveWorld(void)
 
         xline->flags = *get++;
         xline->special = *get++;
-        /*xline->tag =*/ *get++;
+        /*xline->tag = **/get++;
 
         for(j = 0; j < 2; j++)
         {

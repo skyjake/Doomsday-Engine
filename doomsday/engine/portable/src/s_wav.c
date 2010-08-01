@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -98,14 +98,14 @@ int WAV_CheckFormat(const char* data)
  * channel! All parameters must be passed, no NULLs are allowed.
  */
 void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits,
-                     int* rate, int* samples)
+    int* rate, int* samples)
 {
-    const byte*     end = data + datalength;
-    byte*           sampledata = NULL;
-    chunk_hdr_t*    riff_chunk;
-    wav_format_t*   wave_format = NULL;
+    const byte* end = data + datalength;
+    byte* sampledata = NULL;
+    chunk_hdr_t* riff_chunk;
+    wav_format_t* wave_format = NULL;
 
-    if(!WAV_CheckFormat(data))
+    if(!WAV_CheckFormat((const char*)data))
     {
         Con_Message("WAV_MemoryLoad: Not a WAV file.\n");
         return NULL;

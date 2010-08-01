@@ -1606,6 +1606,7 @@ DEFFC(ObjectRGB)
     rgb[CB] = ops[3].data.flt;
     switch(obj->type)
     {
+    default: Con_Error("FinaleInterpreter::FIC_ObjectRGB: Unknown type %i.", (int) obj->type);
     case FI_TEXT:
         {
         fidata_text_t* t = (fidata_text_t*)obj;
@@ -1634,6 +1635,7 @@ DEFFC(ObjectAlpha)
     alpha = ops[1].data.flt;
     switch(obj->type)
     {
+    default: Con_Error("FinaleInterpreter::FIC_ObjectAlpha: Unknown type %i.", (int) obj->type);
     case FI_TEXT:
         {
         fidata_text_t* t = (fidata_text_t*)obj;

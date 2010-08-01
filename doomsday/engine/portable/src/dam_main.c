@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  */
 
 /**
- * dam_main.c: Doomsday Archived Map (DAM), map management.
+ * Doomsday Archived Map (DAM), map management.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -306,20 +306,16 @@ static archivedmap_t* findArchivedMap(const char *mapID)
 {
     if(numArchivedMaps)
     {
-        archivedmap_t **p = archivedMaps;
-
+        archivedmap_t** p = archivedMaps;
         while(*p)
         {
             archivedmap_t *dam = *p;
-
-             if(!strnicmp(dam->identifier, mapID, 8))
+            if(!strnicmp(dam->identifier, mapID, 8))
                 return dam;
-
-            *p++;
+            p++;
         }
     }
-
-    return NULL;
+    return 0;
 }
 
 /**

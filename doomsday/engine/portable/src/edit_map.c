@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -963,7 +963,7 @@ static void updateSSecMidPoint(subsector_t *sub)
     sub->bBox[0].pos[VX] = sub->bBox[1].pos[VX] = sub->midPoint.pos[VX] = vtx->pos[VX];
     sub->bBox[0].pos[VY] = sub->bBox[1].pos[VY] = sub->midPoint.pos[VY] = vtx->pos[VY];
 
-    *ptr++;
+    ptr++;
     while(*ptr)
     {
         vtx = &((*ptr)->SG_v1->v);
@@ -978,7 +978,7 @@ static void updateSSecMidPoint(subsector_t *sub)
 
         sub->midPoint.pos[VX] += vtx->pos[VX];
         sub->midPoint.pos[VY] += vtx->pos[VY];
-        *ptr++;
+        ptr++;
     }
 
     sub->midPoint.pos[VX] /= sub->segCount; // num vertices.
@@ -1819,15 +1819,15 @@ boolean MPE_End(void)
     // Finish the polyobjs (after the vertexes are hardened).
     for(i = 0; i < gamemap->numPolyObjs; ++i)
     {
-        polyobj_t*          po = gamemap->polyObjs[i];
-        seg_t**             segPtr;
-        size_t              n;
+        polyobj_t* po = gamemap->polyObjs[i];
+        seg_t** segPtr;
+        size_t n;
 
         segPtr = po->segs;
         n = 0;
         while(*segPtr)
         {
-            seg_t*              seg = *segPtr;
+            seg_t* seg = *segPtr;
 
             seg->SG_v1 = seg->lineDef->L_v1;
             seg->SG_v2 = seg->lineDef->L_v2;
@@ -1837,7 +1837,7 @@ boolean MPE_End(void)
             po->originalPts[n].pos[VX] = seg->SG_v1pos[VX] - po->pos[VX];
             po->originalPts[n].pos[VY] = seg->SG_v1pos[VY] - po->pos[VY];
 
-            *segPtr++;
+            segPtr++;
             n++;
         }
     }

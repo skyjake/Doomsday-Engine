@@ -2766,7 +2766,7 @@ static void Rend_MarkSegsFacingFront(subsector_t *sub)
 
             Rend_MarkSegSectionsPVisible(seg);
         }
-        *ptr++;
+        ptr++;
      }
 
     if(sub->polyObj)
@@ -2803,7 +2803,7 @@ static void occludeFrontFacingSegsInSubsector(const subsector_t* ssec)
             if(!C_CheckViewRelSeg(seg->SG_v1pos[VX], seg->SG_v1pos[VY], seg->SG_v2pos[VX], seg->SG_v2pos[VY]))
                 seg->frameFlags &= ~SEGINF_FACINGFRONT;
         }
-        *ptr++;
+        ptr++;
     }
 
     if(ssec->polyObj)
@@ -3100,7 +3100,7 @@ static void occludeSubsector(const subsector_t* sub, boolean forwardFacing)
             }
         }
 
-        *ptr++;
+        ptr++;
     }
 }
 
@@ -3219,7 +3219,7 @@ static void Rend_RenderSubsector(uint ssecidx)
             }
         }
 
-        *ptr++;
+        ptr++;
     }
 
     // Is there a polyobj on board?

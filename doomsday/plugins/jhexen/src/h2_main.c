@@ -25,7 +25,7 @@
  */
 
 /**
- * h2_main.c: Hexen specifc Initialization.
+ * Hexen specifc Initialization.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -57,7 +57,7 @@
 
 typedef struct execopt_s {
     char*           name;
-    void          (*func) (const char** args, int tag);
+    void          (*func) (const char* const* args, int tag);
     int             requiredArgs;
     int             tag;
 } execopt_t;
@@ -72,10 +72,10 @@ extern void X_DestroyLUTs(void);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void handleArgs();
-static void execOptionScripts(const char** args, int tag);
-static void execOptionDevMaps(const char** args, int tag);
-static void execOptionSkill(const char** args, int tag);
-static void execOptionPlayDemo(const char** args, int tag);
+static void execOptionScripts(const char* const* args, int tag);
+static void execOptionDevMaps(const char* const* args, int tag);
+static void execOptionSkill(const char* const* args, int tag);
+static void execOptionPlayDemo(const char* const* args, int tag);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -396,7 +396,7 @@ void G_PostInit(void)
     Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER,
                 gameMode == shareware? "*** Hexen 4-map Beta Demo ***\n"
                     : "Hexen\n");
-    Con_FPrintf(CBLF_RULER, "");
+    Con_FPrintf(CBLF_RULER, 0);
 
     // Game parameters.
     /* None */
@@ -493,8 +493,8 @@ void G_PostInit(void)
 
 static void handleArgs(void)
 {
-    int                     p;
-    execopt_t              *opt;
+    execopt_t* opt;
+    int p;
 
     noMonstersParm = ArgExists("-nomonsters");
     respawnParm = ArgExists("-respawn");
@@ -509,7 +509,7 @@ static void handleArgs(void)
     turboMul = 1.0f;
     if(p)
     {
-        int                     scale = 200;
+        int scale = 200;
 
         turboParm = true;
         if(p < Argc() - 1)
@@ -534,30 +534,29 @@ static void handleArgs(void)
     }
 }
 
-static void execOptionSkill(const char** args, int tag)
+static void execOptionSkill(const char* const* args, int tag)
 {
     startSkill = args[1][0] - '1';
     autoStart = true;
 }
 
-static void execOptionPlayDemo(const char** args, int tag)
+static void execOptionPlayDemo(const char* const* args, int tag)
 {
-    char                file[256];
-
+    char file[256];
     sprintf(file, "%s.lmp", args[1]);
     DD_AddStartupWAD(file);
     Con_Message("Playing demo %s.lmp.\n", args[1]);
 }
 
-static void execOptionScripts(const char** args, int tag)
+static void execOptionScripts(const char* const* args, int tag)
 {
     sc_FileScripts = true;
     sc_ScriptsDir = args[1];
 }
 
-static void execOptionDevMaps(const char** args, int tag)
+static void execOptionDevMaps(const char* const* args, int tag)
 {
-    char*               str;
+    char* str;
 
     DevMaps = true;
     Con_Message("Map development mode enabled:\n");

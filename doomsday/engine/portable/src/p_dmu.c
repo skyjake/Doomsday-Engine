@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -446,10 +446,9 @@ void* P_ToPtr(int type, uint index)
     return NULL;
 }
 
-int P_Iteratep(void *ptr, uint prop, void* context,
-               int (*callback) (void* p, void* ctx))
+int P_Iteratep(void *ptr, uint prop, void* context, int (*callback) (void* p, void* ctx))
 {
-    int                 type = DMU_GetType(ptr);
+    int type = DMU_GetType(ptr);
 
     switch(type)
     {
@@ -457,81 +456,54 @@ int P_Iteratep(void *ptr, uint prop, void* context,
         switch(prop)
         {
         case DMU_LINEDEF:
-            {
-            sector_t*           sec = (sector_t*) ptr;
-            int                 result = 1;
-
+            { sector_t* sec = (sector_t*) ptr;
+            int result = 1;
             if(sec->lineDefs)
             {
-                linedef_t**         linePtr = sec->lineDefs;
-
+                linedef_t** linePtr = sec->lineDefs;
                 while(*linePtr && (result = callback(*linePtr, context)) != 0)
-                    *linePtr++;
+                    linePtr++;
             }
-
-            return result;
-            }
-
+            return result; }
         case DMU_PLANE:
-            {
-            sector_t*           sec = (sector_t*) ptr;
-            int                 result = 1;
-
+            { sector_t* sec = (sector_t*) ptr;
+            int result = 1;
             if(sec->planes)
             {
-                plane_t**           planePtr = sec->planes;
-
+                plane_t** planePtr = sec->planes;
                 while(*planePtr && (result = callback(*planePtr, context)) != 0)
-                    *planePtr++;
+                    planePtr++;
             }
-
-            return result;
-            }
-
+            return result; }
         case DMU_SUBSECTOR:
-            {
-            sector_t*           sec = (sector_t*) ptr;
-            int                 result = 1;
-
+            { sector_t* sec = (sector_t*) ptr;
+            int result = 1;
             if(sec->ssectors)
             {
-                subsector_t**       ssecPtr = sec->ssectors;
-
+                subsector_t** ssecPtr = sec->ssectors;
                 while(*ssecPtr && (result = callback(*ssecPtr, context)) != 0)
-                    *ssecPtr++;
+                    ssecPtr++;
             }
-
-            return result;
-            }
-
+            return result; }
         default:
-            Con_Error("P_Iteratep: Property %s unknown/not vector.\n",
-                      DMU_Str(prop));
+            Con_Error("P_Iteratep: Property %s unknown/not vector.\n", DMU_Str(prop));
         }
         break;
-
     case DMU_SUBSECTOR:
         switch(prop)
         {
         case DMU_SEG:
-            {
-            subsector_t*        ssec = (subsector_t*) ptr;
-            int                 result = 1;
-
+            { subsector_t* ssec = (subsector_t*) ptr;
+            int result = 1;
             if(ssec->segs)
             {
-                seg_t**             segPtr = ssec->segs;
-
+                seg_t** segPtr = ssec->segs;
                 while(*segPtr && (result = callback(*segPtr, context)) != 0)
-                    *segPtr++;
+                    segPtr++;
             }
-
-            return result;
-            }
-
+            return result; }
         default:
-            Con_Error("P_Iteratep: Property %s unknown/not vector.\n",
-                      DMU_Str(prop));
+            Con_Error("P_Iteratep: Property %s unknown/not vector.\n", DMU_Str(prop));
         }
         break;
 

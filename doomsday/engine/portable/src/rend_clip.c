@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,9 +23,7 @@
  */
 
 /**
- * rend_clip.c: Clipper
- *
- * Clipnodes and oranges.
+ * Angle Clipper (clipnodes and oranges).
  *
  * The idea is to keep track of occluded angles around the camera.
  * Since subsectors are rendered front-to-back, the occlusion lists
@@ -1302,7 +1300,7 @@ int C_CheckSubsector(subsector_t *ssec)
         // Shift for more accuracy.
         anglist[i++] = bamsAtan2((int) ((vtx->V_pos[VY] - vz) * 100),
                                  (int) ((vtx->V_pos[VX] - vx) * 100));
-        *ptr++;
+        ptr++;
     }
 
     // Check each of the ranges defined by the edges.

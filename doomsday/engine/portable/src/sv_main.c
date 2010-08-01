@@ -968,7 +968,7 @@ void Sv_StartNetGame(void)
     }
 }
 
-void Sv_SendText(int to, int con_flags, char *text)
+void Sv_SendText(int to, int con_flags, const char* text)
 {
     Msg_Begin(PSV_CONSOLE_TEXT);
     Msg_WriteLong(con_flags & ~CBLF_TRANSMIT);

@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -299,18 +299,15 @@ static void hardenLeaf(gamemap_t* map, subsector_t* dest,
     found = false;
     while(*segp)
     {
-        seg_t*              seg = *segp;
-
+        seg_t* seg = *segp;
         if(!found && seg->lineDef && SEG_SIDEDEF(seg))
         {
-            sidedef_t*          side = SEG_SIDEDEF(seg);
-
+            sidedef_t* side = SEG_SIDEDEF(seg);
             dest->sector = side->sector;
             found = true;
         }
-
         seg->subsector = dest;
-        *segp++;
+        segp++;
     }
 
     if(!dest->sector)

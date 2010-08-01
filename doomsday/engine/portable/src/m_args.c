@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * m_args.c: Command Line Arguments
+ * Command Line Arguments.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -289,7 +289,7 @@ const char* Argv(int i)
 /**
  * @return              Pointer to the i'th argument's pointer.
  */
-const char** ArgvPtr(int i)
+const char* const * ArgvPtr(int i)
 {
     if(i < 0 || i >= numArgs)
         Con_Error("ArgvPtr: There is no arg %i.\n", i);

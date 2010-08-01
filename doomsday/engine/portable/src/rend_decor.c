@@ -181,6 +181,7 @@ static void projectDecoration(decorsource_t* src)
 
     switch(src->type)
     {
+    default: Con_Error("projectDecoration: Unsupported decor type %i.", (int) src->type);
     case DT_MODEL:
         {
         float ambientColor[3], alpha = src->fadeMul * (distance > (src->maxDistance/4)? (1 - distance / (src->maxDistance+(src->maxDistance/4))) : 1);
@@ -428,6 +429,7 @@ static void createDecorSource(const surface_t* suf, const surfacedecor_t* dec, c
     src->fadeMul = 1;
     switch(src->type)
     {
+    default: Con_Error("createDecorSource: Unsupported type %i.", (int) src->type);
     case DT_LIGHT:
         src->data.light.def = DEC_LIGHT(dec)->def;
         break;
@@ -483,6 +485,7 @@ boolean R_ProjectSurfaceDecorations(surface_t* suf, void* context)
 
         switch(d->type)
         {
+        default: Con_Error("R_ProjectSurfaceDecorations: Internal Error, unknown decoration type %i.", d->type);
         case DT_LIGHT:
             if(!useLightDecorations)
                 continue;

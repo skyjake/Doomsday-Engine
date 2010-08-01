@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,10 +24,10 @@
  */
 
 /**
- * rend_automap.c : Automap drawing.
+ * Automap drawing.
  *
  * Code herein is considered a friend of automap_t. Consequently this means
- * that it need not negotiate the automap manager any may access automaps
+ * that it need not negotiate the automap manager and may access automaps
  * directly.
  */
 
@@ -851,13 +851,10 @@ int renderPolyObjSeg(void* obj, void* context)
 
 boolean drawSegsOfPolyobject(polyobj_t* po, void* context)
 {
-    seg_t**             segPtr;
-    int                 result = 1;
-
-    segPtr = po->segs;
+    int result = 1;
+    seg_t** segPtr = po->segs;
     while(*segPtr && (result = renderPolyObjSeg(*segPtr, context)) != 0)
-        *segPtr++;
-
+        segPtr++;
     return result;
 }
 

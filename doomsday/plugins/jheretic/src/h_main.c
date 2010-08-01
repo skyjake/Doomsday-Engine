@@ -25,7 +25,7 @@
  */
 
 /**
- * h_main.c: Game initialization - jHeretic specific.
+ * Game initialization - Heretic specific.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -459,7 +459,7 @@ void G_PostInit(void)
                 gameMode == registered? "Heretic Registered Startup\n" :
                 gameMode == extended? "Heretic: Shadow of the Serpent Riders Startup\n" :
                 "Public Heretic\n");
-    Con_FPrintf(CBLF_RULER, "");
+    Con_FPrintf(CBLF_RULER, 0);
 
     // Game parameters.
     monsterInfight = GetDefInt("AI|Infight", 0);

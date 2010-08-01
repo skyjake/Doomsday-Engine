@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -224,7 +224,7 @@ void P_MapInitPolyobjs(void)
             // All surfaces of a sidedef have the same normal.
             memcpy(side->SW_middlenormal, surface->normal, sizeof(surface->normal));
             memcpy(side->SW_bottomnormal, surface->normal, sizeof(surface->normal));
-            *segPtr++;
+            segPtr++;
         }
 
         avg.pos[VX] /= po->numSegs;
@@ -237,7 +237,7 @@ void P_MapInitPolyobjs(void)
             {
                 Con_Message("P_MapInitPolyobjs: Warning: Multiple polyobjs in a single subsector\n"
                             "  (ssec %ld, sector %ld). Previous polyobj overridden.\n",
-                            GET_SUBSECTOR_IDX(ssec), GET_SECTOR_IDX(ssec->sector));
+                            (long)GET_SUBSECTOR_IDX(ssec), (long)GET_SECTOR_IDX(ssec->sector));
             }
             ssec->polyObj = po;
             po->subsector = ssec;

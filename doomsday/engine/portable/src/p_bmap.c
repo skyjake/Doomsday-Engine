@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -479,27 +479,21 @@ typedef struct bmapiterparams_s {
 
 static boolean bmapBlockLinesIterator(void* ptr, void* context)
 {
-    bmapblock_t*        block = (bmapblock_t*) ptr;
-
+    bmapblock_t* block = (bmapblock_t*) ptr;
     if(block->lineDefs)
     {
-        linedef_t**         iter;
-        bmapiterparams_t*   args = (bmapiterparams_t*) context;
-
-        iter = block->lineDefs;
+        bmapiterparams_t* args = (bmapiterparams_t*) context;
+        linedef_t** iter = block->lineDefs;
         while(*iter)
         {
-            linedef_t*          line = *iter;
-
+            {linedef_t* line = *iter;
             if(line->validCount != args->localValidCount)
             {
                 line->validCount = args->localValidCount;
-
                 if(!args->func(line, args->param))
                     return false;
-            }
-
-            *iter++;
+            }}
+            iter++;
         }
     }
 
@@ -711,11 +705,11 @@ static boolean ssecBlockIterator(void* ptr, void* context)
 
         while(*iter)
         {
-            subsector_t*        ssec = *iter;
+            subsector_t* ssec = *iter;
 
             if(ssec->validCount != args->localValidCount)
             {
-                boolean             ok = true;
+                boolean ok = true;
 
                 ssec->validCount = args->localValidCount;
 
@@ -738,7 +732,7 @@ static boolean ssecBlockIterator(void* ptr, void* context)
                 }
             }
 
-            *iter++;
+            iter++;
         }
     }
 
@@ -1068,7 +1062,7 @@ static boolean rendBlockSubsector(subsector_t* ssec, void* data)
             glVertex2f(start[VX], end[VY]);
             glVertex2f(start[VX], start[VY]);
         glEnd();
-        *segs++;
+        segs++;
     }
     return true; // Continue iteration.
 }
@@ -1237,11 +1231,11 @@ static void drawBlockInfoBox(uint vBlock[2])
         lineCount = 0;
         if(block->lineDefs)
         {
-            linedef_t**         iter = block->lineDefs;
+            linedef_t** iter = block->lineDefs;
             while(*iter)
             {
                 lineCount++;
-                *iter++;
+                iter++;
             }
         }
 
@@ -1249,7 +1243,7 @@ static void drawBlockInfoBox(uint vBlock[2])
         moCount = 0;
         if(block->mobjLinks)
         {
-            linkmobj_t*         link = block->mobjLinks;
+            linkmobj_t* link = block->mobjLinks;
             while(link)
             {
                 if(link->mobj)
@@ -1262,7 +1256,7 @@ static void drawBlockInfoBox(uint vBlock[2])
         poCount = 0;
         if(block->polyLinks)
         {
-            linkpolyobj_t*      link = block->polyLinks;
+            linkpolyobj_t* link = block->polyLinks;
             while(link)
             {
                 if(link->polyobj)

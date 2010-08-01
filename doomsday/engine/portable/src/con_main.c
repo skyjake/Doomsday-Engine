@@ -1667,41 +1667,47 @@ void Con_AddRuler(void)
     }
 }
 
-void conPrintf(int flags, const char *format, va_list args)
+void conPrintf(int flags, const char* format, va_list args)
 {
+    const char* text = 0;
+
     if(flags & CBLF_RULER)
     {
         Con_AddRuler();
         flags &= ~CBLF_RULER;
     }
 
-    if(prbuff == NULL)
-        prbuff = M_Malloc(PRBUFF_SIZE);
-    else
-        memset(prbuff, 0, PRBUFF_SIZE);
+    if(format && format[0] && args)
+    {
+        if(prbuff == NULL)
+            prbuff = M_Malloc(PRBUFF_SIZE);
+        else
+            memset(prbuff, 0, PRBUFF_SIZE);
 
-    // Format the message to prbuff.
-    dd_vsnprintf(prbuff, PRBUFF_SIZE, format, args);
+        // Format the message to prbuff.
+        dd_vsnprintf(prbuff, PRBUFF_SIZE, format, args);
+        text = prbuff;
 
-    if(consoleDump)
-        fprintf(outFile, "%s", prbuff);
+        if(consoleDump)
+            fprintf(outFile, "%s", text);
+    }
 
     // Servers might have to send the text to a number of clients.
     if(isServer)
     {
         if(flags & CBLF_TRANSMIT)
-            Sv_SendText(NSP_BROADCAST, flags, prbuff);
+            Sv_SendText(NSP_BROADCAST, flags, text);
         else if(netRemoteUser) // Is somebody logged in?
-            Sv_SendText(netRemoteUser, flags | SV_CONSOLE_FLAGS, prbuff);
+            Sv_SendText(netRemoteUser, flags | SV_CONSOLE_FLAGS, text);
     }
 
     if(isDedicated)
     {
-        Sys_ConPrint(windowIDX, prbuff, flags);
+        Sys_ConPrint(windowIDX, text, flags);
     }
     else
     {
-        Con_BufferWrite(histBuf, flags, prbuff);
+        Con_BufferWrite(histBuf, flags, text);
 
         if(consoleSnapBackOnPrint)
         {
@@ -1714,28 +1720,33 @@ void conPrintf(int flags, const char *format, va_list args)
 /**
  * Print into the buffer.
  */
-void Con_Printf(const char *format, ...)
+void Con_Printf(const char* format, ...)
 {
     va_list args;
-
     if(!ConsoleInited || ConsoleSilent)
         return;
-
+    if(!format || !format[0])
+        return;
     va_start(args, format);
     conPrintf(CBLF_WHITE, format, args);
     va_end(args);
 }
 
-void Con_FPrintf(int flags, const char *format, ...)    // Flagged printf
+void Con_FPrintf(int flags, const char* format, ...)    // Flagged printf
 {
-    va_list args;
-
     if(!ConsoleInited || ConsoleSilent)
         return;
 
+    if(!format || !format[0])
+    {
+        conPrintf(flags, 0, 0);
+        return;
+    }
+
+    {va_list args;
     va_start(args, format);
     conPrintf(flags, format, args);
-    va_end(args);
+    va_end(args);}
 }
 
 /**

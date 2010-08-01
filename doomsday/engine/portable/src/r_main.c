@@ -259,7 +259,7 @@ void R_Init(void)
  */
 void R_Update(void)
 {
-    uint                i;
+    uint i;
 
     R_UpdateTexturesAndFlats();
     R_InitTextures();
@@ -283,9 +283,8 @@ void R_Update(void)
 
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        player_t*           plr = &ddPlayers[i];
-        ddplayer_t*         ddpl = &plr->shared;
-
+        player_t* plr = &ddPlayers[i];
+        ddplayer_t* ddpl = &plr->shared;
         // States have changed, the states are unknown.
         ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = NULL;
     }
@@ -293,17 +292,15 @@ void R_Update(void)
     // Update all world surfaces.
     for(i = 0; i < numSectors; ++i)
     {
-        uint                j;
-        sector_t*           sec = &sectors[i];
-
+        sector_t* sec = &sectors[i];
+        uint j;
         for(j = 0; j < sec->planeCount; ++j)
             Surface_Update(&sec->SP_planesurface(j));
     }
 
     for(i = 0; i < numSideDefs; ++i)
     {
-        sidedef_t*          side = &sideDefs[i];
-
+        sidedef_t* side = &sideDefs[i];
         Surface_Update(&side->SW_topsurface);
         Surface_Update(&side->SW_middlesurface);
         Surface_Update(&side->SW_bottomsurface);
@@ -311,16 +308,14 @@ void R_Update(void)
 
     for(i = 0; i < numPolyObjs; ++i)
     {
-        polyobj_t*          po = polyObjs[i];
-        seg_t**             segPtr = po->segs;
+        polyobj_t* po = polyObjs[i];
+        seg_t** segPtr = po->segs;
 
         while(*segPtr)
         {
-            sidedef_t*          side = SEG_SIDEDEF(*segPtr);
-
+            sidedef_t* side = SEG_SIDEDEF(*segPtr);
             Surface_Update(&side->SW_middlesurface);
-
-            *segPtr++;
+            segPtr++;
         }
     }
 

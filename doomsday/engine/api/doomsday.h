@@ -437,7 +437,7 @@ extern          "C" {
     void _DECALL    ArgAbbreviate(const char* longName, const char* shortName);
     int _DECALL     Argc(void);
     const char* _DECALL Argv(int i);
-    const char** _DECALL ArgvPtr(int i);
+    const char* const* _DECALL ArgvPtr(int i);
     const char* _DECALL ArgNext(void);
     int _DECALL     ArgCheck(const char* check);
     int _DECALL     ArgCheckWith(const char* check, int num);
