@@ -402,7 +402,7 @@ void M_InitControlsMenu(void)
                 ControlsMenu.focus = displayObj - ControlsItems;
         }
     }
-    ControlsItems[count].type = MN_NONE; // Terminate.
+    ControlsItems[count-1].type = MN_NONE; // Terminate.
 
     ControlsMenu.objects = ControlsItems;
     ControlsMenu.count = count;
