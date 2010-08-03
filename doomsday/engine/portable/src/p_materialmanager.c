@@ -918,7 +918,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
             detail = mb->detail[mb->prepared-1];
             reflection = mb->reflection[mb->prepared-1];
 
-            if(tmpResult)
+            if(mb->prepared)
             {   // A texture was loaded.
                 // Do we need to prepare a detail texture?
                 if(detail)
