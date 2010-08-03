@@ -33,6 +33,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <math.h>
+#include <assert.h>
 
 #if __JDOOM__
 #  include <stdlib.h>
@@ -150,6 +151,8 @@ void    H2_AdvanceDemo(void);
 #endif
 
 void    G_StopDemo(void);
+
+int Hook_DemoStop(int hookType, int val, void* paramaters);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -443,24 +446,23 @@ gameaction_t G_GetGameAction(void)
 void G_CommonPreInit(void)
 {
     filename_t file;
-    int i;
 
     // Make sure game.dll isn't newer than Doomsday...
     if(gi.version < DOOMSDAY_VERSION)
-        Con_Error(GAME_NICENAME " requires at least Doomsday " DOOMSDAY_VERSION_TEXT
-                  "!\n");
-#ifdef TIC_DEBUG
-    rndDebugfile = fopen("rndtrace.txt", "wt");
-#endif
+        Con_Error(GAME_NICENAME " requires at least Doomsday " DOOMSDAY_VERSION_TEXT "!\n");
 
     verbose = ArgExists("-verbose");
 
+    // Register hooks.
+    Plug_AddHook(HOOK_DEMO_STOP, Hook_DemoStop);
+
     // Setup the players.
+    { int i;
     for(i = 0; i < MAXPLAYERS; ++i)
     {
         players[i].plr = DD_GetPlayer(i);
-        players[i].plr->extraData = (void *) &players[i];
-    }
+        players[i].plr->extraData = (void*) &players[i];
+    }}
 
     dd_snprintf(file, FILENAME_T_MAXLEN, CONFIGFILE);
     DD_SetConfigFile(file);
@@ -488,6 +490,7 @@ void G_CommonPreInit(void)
     Hu_MsgRegister();           // For the game messages.
     ST_Register();              // For the hud/statusbar.
     X_Register();               // For the crosshair.
+    FI_Register();              // For the InFine lib.
 
     DD_AddStartupWAD( STARTUPPK3 );
     G_DetectIWADs();
@@ -1274,6 +1277,7 @@ void G_CommonPostInit(void)
 
     GUI_Init();
     R_InitRefresh();
+    FI_StackInit();
 
     // Init the save system and create the game save directory
     SV_Init();
@@ -1431,61 +1435,20 @@ VERBOSE(Con_Message("G_ChangeGameState: New state %s.\n",
     DD_Executef(true, "%sactivatebcontext game", gameActive? "" : "de");
 }
 
-static void initFinaleExtraData(finale_extradata_t* data)
+boolean G_StartFinale(const char* script, int flags, finale_mode_t mode)
 {
-    memset(data, 0, sizeof(*data));
-
-    // Only the server is able to figure out the truth values of all the conditions
-    // (clients use the server-provided presets).
-    if(!IS_SERVER)
-        return;
-
-#if __JHEXEN__
-    data->secret = false;
-
-    // Current hub has been completed?
-    data->leavehub = (P_GetMapCluster(gameMap) != P_GetMapCluster(nextMap));
-#else
-    data->secret = secretExit;
-    // Only Hexen has hubs.
-    data->leavehub = false;
-#endif
-}
-
-static void startFinale(const char* script, finale_mode_t mode)
-{
-    finale_extradata_t extraData, *data = &extraData;
-    gamestate_t prevGameState = G_GetGameState();
-
-    G_SetGameAction(GA_NONE);
-
-    initFinaleExtraData(data);
-    if(mode != FIMODE_OVERLAY)
+    assert(script && script[0]);
+    { uint i;
+    for(i = 0; i < MAXPLAYERS; ++i)
     {
-        G_ChangeGameState(GS_INFINE);
-    }
+        // Clear the message queue for all local players.
+        Hu_LogEmpty(i);
 
-    FI_ScriptBegin(script, mode, prevGameState, IS_SERVER? data : 0);
-}
-
-boolean G_StartFinale2(const char* script, finale_mode_t mode)
-{
-    startFinale(script, mode);
+        // Close the automap for all local players.
+        AM_Open(AM_MapForPlayer(i), false, true);
+    }}
+    FI_StackExecute(script, flags, mode);
     return true;
-}
-
-boolean G_StartFinale(const char* finaleName, finale_mode_t mode)
-{
-    void* script;
-
-    if(Def_Get(DD_DEF_FINALE, finaleName, &script))
-    {
-        startFinale(script, mode);
-        return true;
-    }
-
-    Con_Message("G_StartFinale: Warning, script \"%s\" not defined.\n", finaleName);
-    return false;
 }
 
 /**
@@ -1493,14 +1456,16 @@ boolean G_StartFinale(const char* finaleName, finale_mode_t mode)
  */
 void G_StartTitle(void)
 {
+    ddfinale_t fin;
+
     G_StopDemo();
     userGame = false;
 
     // The title script must always be defined.
-    if(!G_StartFinale("title", FIMODE_LOCAL))
-    {
+    if(!Def_Get(DD_DEF_FINALE, "title", &fin))
         Con_Error("G_StartTitle: A title script must be defined.");
-    }
+
+    G_StartFinale(fin.script, FF_LOCAL, FIMODE_NORMAL);
 }
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
@@ -1509,17 +1474,23 @@ void G_StartTitle(void)
  */
 void G_StartHelp(void)
 {
-    Hu_MenuCommand(MCMD_CLOSEFAST);
-    G_StartFinale("help", FIMODE_LOCAL);
+    ddfinale_t fin;
+    if(Def_Get(DD_DEF_FINALE, "help", &fin))
+    {
+        Hu_MenuCommand(MCMD_CLOSEFAST);
+        G_StartFinale(fin.script, FF_LOCAL, FIMODE_NORMAL);
+        return;
+    }
+    Con_Message("G_GetFinaleScript: Warning, script \"help\" not defined.\n");    
 }
 #endif
 
 void G_DoLoadMap(void)
 {
-    int i;
     char* lname, *ptr;
     ddfinale_t fin;
     boolean hasBrief;
+    int i;
 
 #if __JHEXEN__
     static int firstFragReset = 1;
@@ -1532,7 +1503,7 @@ void G_DoLoadMap(void)
 
     for(i = 0; i < MAXPLAYERS; ++i)
     {
-        player_t           *plr = &players[i];
+        player_t* plr = &players[i];
 
         if(plr->plr->inGame && plr->playerState == PST_DEAD)
             plr->playerState = PST_REBORN;
@@ -1633,7 +1604,7 @@ void G_DoLoadMap(void)
     // Start a briefing, if there is one.
     if(hasBrief)
     {
-        G_StartFinale2(fin.script, FIMODE_BEFORE);
+        G_StartFinale(fin.script, 0, FIMODE_BEFORE);
     }
     else // No briefing, start the map.
     {
@@ -2308,7 +2279,7 @@ void G_DoReborn(int plrNum)
         return; // Wha?
 
     // Clear the currently playing script, if any.
-    FI_Reset();
+    FI_StackClear();
 
     if(!IS_NETGAME)
     {
@@ -2594,10 +2565,10 @@ void G_WorldDone(void)
 #endif
 
     // Clear the currently playing script, if any.
-    FI_Reset();
+    FI_StackClear();
 
     if(G_DebriefingEnabled(gameEpisode, gameMap, &fin) &&
-       G_StartFinale2(fin.script, FIMODE_AFTER))
+       G_StartFinale(fin.script, 0, FIMODE_AFTER))
     {
         return;
     }
@@ -2659,7 +2630,7 @@ void G_LoadGame(const char* name)
 void G_DoLoadGame(void)
 {
     G_StopDemo();
-    FI_Reset();
+    FI_StackClear();
     G_SetGameAction(GA_NONE);
 
 #if __JHEXEN__
@@ -2770,7 +2741,7 @@ void G_InitNew(skillmode_t skill, uint episode, uint map)
             AM_Open(AM_MapForPlayer(i), false, true);
 
     // If there are any InFine scripts running, they must be stopped.
-    FI_Reset();
+    FI_StackClear();
 
     if(paused)
     {
@@ -3361,23 +3332,38 @@ void G_StopDemo(void)
     DD_Execute(true, "stopdemo");
 }
 
-void G_DemoEnds(void)
+int Hook_DemoStop(int hookType, int val, void* paramaters)
 {
+    boolean aborted = val != 0;
+
     G_ChangeGameState(GS_WAITING);
 
-    if(singledemo)
-    {
+    if(!aborted && singledemo)
+    {   // Playback ended normally.
         G_SetGameAction(GA_QUIT);
-        return;
+        return true;
     }
 
-    FI_DemoEnds();
-}
+    G_SetGameAction(GA_NONE);
 
-void G_DemoAborted(void)
-{
-    G_ChangeGameState(GS_WAITING);
-    FI_DemoEnds();
+    if(IS_NETGAME && IS_CLIENT)
+    {
+        // Restore normal game state?
+        deathmatch = false;
+        noMonstersParm = false;
+#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
+        respawnMonsters = false;
+#endif
+#if __JHEXEN__
+        randomClassParm = false;
+#endif
+    }
+
+    {int i;
+    for(i = 0; i < MAXPLAYERS; ++i)
+        AM_Open(AM_MapForPlayer(i), false, true);
+    }
+    return true;
 }
 
 void G_ScreenShot(void)

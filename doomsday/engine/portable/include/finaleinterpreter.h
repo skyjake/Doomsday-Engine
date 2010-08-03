@@ -25,21 +25,10 @@
 #ifndef LIBDENG_FINALEINTERPRETER_H
 #define LIBDENG_FINALEINTERPRETER_H
 
-/**
- * @defgroup playsimServerFinaleFlags Play-simulation Server-side Finale Flags.
- *
- * Packet: PSV_FINALE Finale flags. Used with GPT_FINALE and GPT_FINALE2
- */
-/*@{*/
 #define FINF_BEGIN          0x01
 #define FINF_END            0x02
-#define FINF_SCRIPT         0x04   // Script included.
-#define FINF_AFTER          0x08   // Otherwise before.
+#define FINF_SCRIPT         0x04 // Script included.
 #define FINF_SKIP           0x10
-#define FINF_OVERLAY        0x20   // Otherwise before (or after).
-/*@}*/
-
-#define FINALE_SCRIPT_EXTRADATA_SIZE      gx.finaleConditionsSize
 
 /**
  * Interactive interpreter for Finale scripts. An instance of which is created
@@ -66,6 +55,8 @@ enum {
     PAGE_TEXT = 1 /// \note also used for its filter.
 };
 
+#define FINALEINTERPRETER_MAX_TOKEN_LENGTH (8192)
+
 typedef struct finaleinterpreter_s {
     struct finaleinterpreter_flags_s {
         char stopped:1;
@@ -75,11 +66,16 @@ typedef struct finaleinterpreter_s {
         char eat_events:1; /// Script will eat all input events.
         char show_menu:1;
     } flags;
-    finale_mode_t mode;
+
+    /// Id of the Finale which owns this interpreter.
+    finaleid_t _id;
 
     /// Copy of the script being interpreted.
     char* _script;
     const char* _cp;
+
+    /// Script token read/parse buffer.
+    char _token[FINALEINTERPRETER_MAX_TOKEN_LENGTH];
 
     /// Event handlers defined by the loaded script.
     uint _numEventHandlers;
@@ -105,32 +101,26 @@ typedef struct finaleinterpreter_s {
 
     struct fi_object_s* _waitingText;
     struct fi_object_s* _waitingPic;
-
-    /// Gamestate before the script began.
-    int _initialGameState;
-    void* _extraData;
 } finaleinterpreter_t;
 
 finaleinterpreter_t* P_CreateFinaleInterpreter(void);
-void                P_DestroyFinaleInterpreter(finaleinterpreter_t* fi);
+void P_DestroyFinaleInterpreter(finaleinterpreter_t* fi);
 
-boolean             FinaleInterpreter_RunTic(finaleinterpreter_t* fi);
-int                 FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev);
+boolean FinaleInterpreter_RunTic(finaleinterpreter_t* fi);
+int FinaleInterpreter_Responder(finaleinterpreter_t* fi, const ddevent_t* ev);
 
-void                FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, finale_mode_t mode, const char* script, int gameState, const void* extraData);
-void                FinaleInterpreter_ReleaseScript(finaleinterpreter_t* fi);
-void                FinaleInterpreter_Suspend(finaleinterpreter_t* fi);
-void                FinaleInterpreter_Resume(finaleinterpreter_t* fi);
+void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, const char* script);
+void FinaleInterpreter_ReleaseScript(finaleinterpreter_t* fi);
+void FinaleInterpreter_Suspend(finaleinterpreter_t* fi);
+void FinaleInterpreter_Resume(finaleinterpreter_t* fi);
 
-void*               FinaleInterpreter_ExtraData(finaleinterpreter_t* fi);
+boolean FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t* fi);
+boolean FinaleInterpreter_IsSuspended(finaleinterpreter_t* fi);
+boolean FinaleInterpreter_CommandExecuted(finaleinterpreter_t* fi);
+boolean FinaleInterpreter_CanSkip(finaleinterpreter_t* fi);
+void FinaleInterpreter_AllowSkip(finaleinterpreter_t* fi, boolean yes);
 
-boolean             FinaleInterpreter_IsMenuTrigger(finaleinterpreter_t* fi);
-boolean             FinaleInterpreter_IsSuspended(finaleinterpreter_t* fi);
-boolean             FinaleInterpreter_CommandExecuted(finaleinterpreter_t* fi);
-boolean             FinaleInterpreter_CanSkip(finaleinterpreter_t* fi);
-void                FinaleInterpreter_AllowSkip(finaleinterpreter_t* fi, boolean yes);
-
-boolean             FinaleInterpreter_SkipToMarker(finaleinterpreter_t* fi, const char* marker);
-boolean             FinaleInterpreter_Skip(finaleinterpreter_t* fi);
+boolean FinaleInterpreter_SkipToMarker(finaleinterpreter_t* fi, const char* marker);
+boolean FinaleInterpreter_Skip(finaleinterpreter_t* fi);
 
 #endif /* LIBDENG_FINALEINTERPRETER_H */

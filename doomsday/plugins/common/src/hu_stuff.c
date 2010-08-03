@@ -53,6 +53,7 @@
 #include "p_mapsetup.h"
 #include "p_tick.h"
 #include "am_map.h"
+#include "fi_lib.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1483,7 +1484,7 @@ static boolean __inline pickScalingStrategy(int winWidth, int winHeight)
 void Hu_Drawer(void)
 {
     boolean menuOrMessageVisible = (Hu_MenuIsActive() || Hu_MenuAlpha() > 0) || Hu_IsMessageActive();
-    boolean pauseGraphicVisible = paused && !FI_Active();
+    boolean pauseGraphicVisible = paused && !FI_StackActive();
     int winWidth, winHeight;
 
     if(!menuOrMessageVisible && !pauseGraphicVisible)

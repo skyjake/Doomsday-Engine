@@ -7,14 +7,11 @@ NAME            "DOOMSDAY"
 ; 44 formerly B_FormEventString
 ; 45 formerly B_BindingsForCommand
 ; 65 formerly P_GetBlockRootIdx
-; 68 formerly P_BlockLinesIterator
-; 69 formerly P_BlockMobjsIterator
-; 70 formerly P_BlockPolyobjsIterator
-; 77 formerly P_LoadBlockMap
-; 78 formerly P_LoadReject
+; 238 formerly FI_Reset
 ; 244 formerly GL_LoadGraphics
 ; 255 formerly P_PointToBlock
 ; 326 formerly PO_Alloc
+; 328 formerly FI_IsMenuTrigger
 ; 332 formerly P_ControlReset
 
 EXPORTS
@@ -405,15 +402,16 @@ EXPORTS
     GL_UseFog                   @104 NONAME
 
 ; InFine.
-    FI_Active                   @95 NONAME
-    FI_Reset                    @238 NONAME
-    FI_IsMenuTrigger            @328 NONAME
-
-    FI_GetClientsideDefaultState @96 NONAME
-    FI_SetClientsideDefaultState @98 NONAME
-
-    FI_ScriptBegin              @99 NONAME
-    FI_ScriptTerminate          @100 NONAME
+    FI_Execute                  @68 NONAME
+    FI_ScriptTerminate          @69 NONAME
+    FI_ScriptSuspend            @70 NONAME
+    FI_ScriptResume             @77 NONAME
+    FI_ScriptActive             @78 NONAME
+    FI_ScriptSuspended          @95 NONAME
+    FI_ScriptIsMenuTrigger      @96 NONAME
+    FI_ScriptRequestSkip        @98 NONAME
+    FI_ScriptResponder          @99 NONAME
+    FI_ScriptFlags              @100 NONAME
 
 ; SVG
     R_NewVectorGraphic          @317 NONAME

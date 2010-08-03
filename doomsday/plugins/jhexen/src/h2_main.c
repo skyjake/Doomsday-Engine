@@ -38,6 +38,7 @@
 
 #include "jhexen.h"
 
+#include "fi_lib.h"
 #include "hu_log.h"
 #include "hu_menu.h"
 #include "hu_msg.h"
@@ -604,6 +605,7 @@ void G_Shutdown(void)
     AM_Shutdown();
     X_DestroyLUTs();
     P_FreeWeaponSlots();
+    FI_StackShutdown();
     GUI_Shutdown();
 }
 

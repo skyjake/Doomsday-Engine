@@ -403,8 +403,6 @@ void            G_WorldDone(void);
 void            G_ScreenShot(void);
 void            G_DoReborn(int playernum);
 void            G_StopDemo(void);
-void            G_DemoEnds(void);
-void            G_DemoAborted(void);
 
 void            G_Ticker(timespan_t ticLength);
 boolean         G_Responder(event_t* ev);

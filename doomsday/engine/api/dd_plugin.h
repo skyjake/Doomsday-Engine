@@ -36,57 +36,29 @@ typedef int     (*hookfunc_t) (int type, int parm, void *data);
 
 // Hook types.
 enum {
-    HOOK_STARTUP = 0,              // Called ASAP after startup.
-    HOOK_INIT = 1,                 // Called after engine has been initialized.
-    HOOK_DEFS = 2,                 // Called after DEDs have been loaded.
-    HOOK_MAP_CONVERT = 3,          // Called when a map needs converting.
-    HOOK_TICKER = 4,               // Called as part of the run loop.
-    HOOK_FINALE_SCRIPT_SERIALIZE_EXTRADATA = 5,
-    HOOK_FINALE_SCRIPT_DESERIALIZE_EXTRADATA = 6,
-    HOOK_FINALE_SCRIPT_BEGIN = 7,  // Called as a script begins.
-    HOOK_FINALE_SCRIPT_TERMINATE = 8, // Called as a script stops.
-    HOOK_FINALE_SCRIPT_TICKER = 9, // Called each time a script 'thinks'.
-    HOOK_FINALE_EVAL_IF = 10,      // Called to evaluate an IF conditional statement.
+    HOOK_STARTUP = 0,               // Called ASAP after startup.
+    HOOK_INIT = 1,                  // Called after engine has been initialized.
+    HOOK_DEFS = 2,                  // Called after DEDs have been loaded.
+    HOOK_MAP_CONVERT = 3,           // Called when a map needs converting.
+    HOOK_TICKER = 4,                // Called as part of the run loop.
+    HOOK_DEMO_STOP = 5,             // Called when demo playback completes.
+    HOOK_FINALE_SCRIPT_BEGIN = 6,   // Called as a script begins.
+    HOOK_FINALE_SCRIPT_STOP = 7,    // Called as a script stops.
+    HOOK_FINALE_SCRIPT_TICKER = 8,  // Called each time a script 'thinks'.
+    HOOK_FINALE_EVAL_IF = 9,        // Called to evaluate an IF conditional statement.
     NUM_HOOK_TYPES
 };
-
-// Paramaters for HOOK_FINALE_SCRIPT_SERIALIZE_EXTRADATA
-typedef struct {
-    // Args:
-    const void* extraData;
-
-    // Return values:
-    byte* outBuf;
-    size_t outBufSize;
-} ddhook_finale_script_serialize_extradata_t;
-
-// Paramaters for HOOK_FINALE_SCRIPT_DESERIALIZE_EXTRADATA
-typedef struct {
-    const byte* inBuf;
-    int* gameState;
-    const void* extraData;
-    size_t bytesRead;
-} ddhook_finale_script_deserialize_extradata_t;
 
 // Paramaters for HOOK_FINALE_EVAL_IF
 typedef struct {
     const char* token;
-    void*       extraData;
     boolean     returnVal;
 } ddhook_finale_script_evalif_paramaters_t;
-
-// Paramaters for HOOK_FINALE_SCRIPT_TERMINATE
-typedef struct {
-    int         initialGameState;
-    void*       extraData;
-} ddhook_finale_script_stop_paramaters_t;
 
 // Paramaters for HOOK_FINALE_SCRIPT_TICKER
 typedef struct {
     boolean     runTick;
     boolean     canSkip;
-    int         gameState;
-    void*       extraData;
 } ddhook_finale_script_ticker_paramaters_t;
 
 int             Plug_AddHook(int hook_type, hookfunc_t hook);

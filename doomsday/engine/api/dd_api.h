@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
  */
 
 /**
- * dd_api.h: Data Structures for the Engine/Game Interface
+ * Data Structures for the Engine/Game Interface.
  */
 
-#ifndef __DOOMSDAY_GAME_API_H__
-#define __DOOMSDAY_GAME_API_H__
+#ifndef LIBDENG_GAME_API_H
+#define LIBDENG_GAME_API_H
 
 #include "dd_share.h"
 
@@ -85,6 +85,7 @@ typedef struct {
     void          (*Ticker) (timespan_t ticLength);
 
     // Responders.
+    boolean       (*FinaleResponder) (const void* ev);
     boolean       (*PrivilegedResponder) (event_t* ev);
     boolean       (*G_Responder) (event_t* ev);
     boolean       (*FallbackResponder) (event_t* ev);
@@ -104,9 +105,6 @@ typedef struct {
     size_t          ticcmdSize; // sizeof(ticcmd_t)
     size_t          mobjSize; // sizeof(mobj_t)
     size_t          polyobjSize; // sizeof(polyobj_t)
-
-    // Misc structure sizes.
-    size_t          finaleConditionsSize; // sizeof(finale_extradata_t);
 
     // Map data setup
     // This routine is called before any data is read
@@ -129,13 +127,9 @@ typedef struct {
     // The engine calls this to inform the game of any changes it is
     // making to map data object to which the game might want to
     // take further action.
-    int           (*HandleMapObjectStatusReport) (int code, uint id, int dtype,
-                                                  void* data);
-
-    void           (*FI_DemoEnds) (void);
-    int            (*FI_GetGameState) (void);
+    int           (*HandleMapObjectStatusReport) (int code, uint id, int dtype, void* data);
 } game_export_t;
 
 typedef game_export_t* (*GETGAMEAPI) (game_import_t *);
 
-#endif
+#endif /* LIBDENG_GAME_API_H */

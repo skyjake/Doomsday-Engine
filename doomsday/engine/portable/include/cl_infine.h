@@ -28,6 +28,6 @@
 #ifndef LIBDENG_CLIENT_INFINE
 #define LIBDENG_CLIENT_INFINE
 
-void            Cl_Finale(int packetType, byte* data);
+void            Cl_Finale(int packetType, const byte* data);
 
 #endif /* LIBDENG_CLIENT_INFINE */

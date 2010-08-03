@@ -31,32 +31,85 @@
  * The "In Fine" finale sequence system.
  */
 
+/// Finale identifier. Used throughout the public API when referencing active Finales.
+typedef ident_t finaleid_t;
+
+/**
+ * @defgroup finaleFlags Finale Flags.
+ */
+/*@{*/
+#define FF_LOCAL            0x1 /// Local scripts are executed client-side.
+/*@}*/
+
+/**
+ * Execute a set of Finale commands.
+ * @param commands  One or more commands to be executed.
+ * @param flags  @see finaleFlags.
+ */
+finaleid_t FI_Execute(const char* commands, int flags);
+
+/**
+ * @return  @c true iff the specified Finale is active.
+ */
+boolean FI_ScriptActive(finaleid_t id);
+
+/**
+ * @return  @see finaleFlags.
+ */
+int FI_ScriptFlags(finaleid_t id);
+
+/**
+ * Immediately halt command interpretation and mark the script for termination.
+ */
+void FI_ScriptTerminate(finaleid_t id);
+
+/**
+ * Suspend command interpretation.
+ */
+void FI_ScriptSuspend(finaleid_t id);
+
+/**
+ * Resume command interpretation. 
+ */
+void FI_ScriptResume(finaleid_t id);
+
+/**
+ * @return  @c true iff the specified Finale is currently suspended.
+ */
+boolean FI_ScriptSuspended(finaleid_t id);
+
+/**
+ * @return  @c true iff the skip request was successful.
+ */
+boolean FI_ScriptRequestSkip(finaleid_t id);
+
+/**
+ * @return  @c true iff command interpretation has begun.
+ */
+boolean FI_ScriptCmdExecuted(finaleid_t id);
+
+/**
+ * @return  @c true iff the "menu trigger" is currently active.
+ */
+boolean FI_ScriptIsMenuTrigger(finaleid_t id);
+
+int FI_ScriptResponder(finaleid_t id, const void* ev);
+
+// -------------------------------------------------------------------------
+//
+// Here follows all the new FIPage stuff.
+// \todo Should be moved to a more suitable home.
+//
+// -------------------------------------------------------------------------
+
 #include "dd_animator.h"
 #include "dd_compositefont.h"
 
 typedef ident_t fi_objectid_t;
-typedef ident_t finaleid_t;
 
 #define FI_NAME_MAX_LENGTH          32
 typedef char fi_name_t[FI_NAME_MAX_LENGTH];
 typedef fi_name_t fi_objectname_t;
-
-typedef enum infinemode_e {
-    FIMODE_LOCAL,
-    FIMODE_OVERLAY,
-    FIMODE_BEFORE,
-    FIMODE_AFTER
-} finale_mode_t;
-
-boolean FI_Active(void);
-boolean FI_IsMenuTrigger(void);
-void FI_Reset(void);
-
-void FI_SetClientsideDefaultState(void* data);
-void* FI_GetClientsideDefaultState(void);
-
-finaleid_t FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, void* extraData);
-void FI_ScriptTerminate(void);
 
 typedef enum {
     FI_NONE,

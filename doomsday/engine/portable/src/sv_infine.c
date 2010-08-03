@@ -32,52 +32,31 @@
 /**
  * The actual script is sent to the clients. 'script' can be NULL.
  */
-void Sv_Finale(int flags, const char* script, const byte* conditions, size_t size)
+void Sv_Finale(int flags, const char* script)
 {
-    size_t len, scriptLen = 0;
-    byte* buffer, *ptr, *cons = 0;
+    size_t scriptLen = 0, len = 1 /* Just enough memory for the flags byte */;
+    byte* buffer, *ptr;
 
-    if(isClient)
-        return;
+    assert(isServer);
 
     // How much memory do we need?
-    if(script)
+    if(flags & FINF_SCRIPT)
     {
-        flags |= FINF_SCRIPT;
         scriptLen = strlen(script) + 1;
-        len = scriptLen + 2; // The end null and flags byte.
-
-        if(conditions && size)
-        {
-            len += 1 + size;
-        }
-    }
-    else
-    {
-        // Just enough memory for the flags byte.
-        len = 1;
+        len += scriptLen + 1; // The end null.
     }
 
-    ptr = buffer = Z_Malloc(len, PU_STATIC, 0);
+    ptr = buffer = malloc(len);
 
     // First the flags.
     *ptr++ = flags;
-
     if(script)
     {
-        // Then the conditions.
-        if(conditions)
-        {
-            *ptr++ = (conditions? 1 : 0);
-            memcpy(ptr, conditions, size); ptr += size;
-        }
-
-        // Then the script itself.
         memcpy(ptr, script, scriptLen + 1);
         ptr[scriptLen] = '\0';
     }
 
     Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, PSV_FINALE2, buffer, len);
 
-    Z_Free(buffer);
+    free(buffer);
 }

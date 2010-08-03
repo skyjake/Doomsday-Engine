@@ -52,6 +52,7 @@ extern "C" {
 #include "dd_types.h"
 #include "dd_maptypes.h"
 #include "dd_gl.h"
+#include "dd_animator.h"
 #include "dd_compositefont.h"
 #include "dd_infine.h"
 #include "dd_vectorgraphic.h"
@@ -471,7 +472,7 @@ typedef enum {
     NUM_EVENT_STATES
 } evstate_t;
 
-typedef struct {
+typedef struct event_s {
     evtype_t        type;
     evstate_t       state; // Only used with digital controls.
     int             data1; // Keys/mouse/joystick buttons.
@@ -1148,7 +1149,6 @@ typedef struct ticcmd_s {
         DDWE_HANDSHAKE, // Shake hands with a new player.
         DDWE_PROJECTILE, // Spawn a projectile.
         DDWE_SECTOR_SOUND, // Play a sector sound.
-        DDWE_DEMO_END // Demo playback ends.
     };
 
     /*

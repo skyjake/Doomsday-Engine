@@ -23,10 +23,12 @@
  */
 
 /**
- * fi_lib.c: Common game-side implemention for the InFine API.
+ * Helper routines and LIFO "script stack" functionality for use with
+ * Doomsday's InFine API.
  */
 
-#include <stdio.h>
+// HEADER FILES ------------------------------------------------------------
+
 #include <string.h>
 
 #if __JDOOM__
@@ -46,75 +48,254 @@
 
 #include "fi_lib.h"
 
-int Hook_FinaleScriptSerializeExtraData(int hookType, int param, void* paramaters);
-int Hook_FinaleScriptDeserializeExtraData(int hookType, int flags, void* paramaters);
-int Hook_FinaleScriptEvalIf(int hookType, int param, void* paramaters);
+// MACROS ------------------------------------------------------------------
 
-int Hook_FinaleScriptStart(int hookType, int mode, void* paramaters);
-int Hook_FinaleScriptStop(int hookType, int oldMode, void* paramaters);
-int Hook_FinaleScriptTicker(int hookType, int mode, void* paramaters);
+// TYPES -------------------------------------------------------------------
 
-int Hook_DemoStop(int hookType, int params, void* paramaters);
+typedef struct {
+    char secret:1;
+    char leave_hub:1;
+} fi_state_conditions_t;
 
-void FI_RegisterHooks(void)
+typedef struct {
+    finaleid_t finaleId;
+    finale_mode_t mode;
+    fi_state_conditions_t conditions;
+    /// Gamestate before the finale began.
+    gamestate_t initialGamestate;
+} fi_state_t;
+
+// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
+
+DEFCC(StartFinale);
+DEFCC(StopFinale);
+
+int Hook_FinaleScriptStop(int hookType, int finaleId, void* paramaters);
+int Hook_FinaleScriptTicker(int hookType, int finalId, void* paramaters);
+int Hook_FinaleScriptEvalIf(int hookType, int finaleId, void* paramaters);
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+// EXTERNAL DATA DECLARATIONS ----------------------------------------------
+
+// PUBLIC DATA DEFINITIONS -------------------------------------------------
+
+// PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+/// Script state stack.
+static boolean finaleStackInited = false;
+static uint finaleStackSize = 0;
+static fi_state_t* finaleStack = 0;
+
+// Console commands for this library:
+static ccmd_t ccmds[] = {
+    { "startfinale",    "s",    StartFinale },
+    { "startinf",       "s",    StartFinale },
+    { "stopfinale",     "",     StopFinale },
+    { "stopinf",        "",     StopFinale },
+    { NULL }
+};
+
+// CODE --------------------------------------------------------------------
+
+void FI_Register(void)
 {
-    Plug_AddHook(HOOK_FINALE_SCRIPT_SERIALIZE_EXTRADATA, Hook_FinaleScriptSerializeExtraData);
-    Plug_AddHook(HOOK_FINALE_SCRIPT_DESERIALIZE_EXTRADATA, Hook_FinaleScriptDeserializeExtraData);
+    int i;
+    for(i = 0; ccmds[i].name; ++i)
+        Con_AddCommand(ccmds + i);
+}
+
+static void initStateConditions(fi_state_t* s)
+{
+    // Only the server is able to figure out the truth values of all the conditions.
+    if(!IS_SERVER)
+    {   // Set the presets.
+        s->conditions.secret = false;
+        s->conditions.leave_hub = false;
+        return;
+    }
+
+#if __JHEXEN__
+    s->conditions.secret = false;
+
+    // Current hub has been completed?
+    s->conditions.leave_hub = (P_GetMapCluster(gameMap) != P_GetMapCluster(nextMap));
+#else
+    s->conditions.secret = secretExit;
+    // Only Hexen has hubs.
+    s->conditions.leave_hub = false;
+#endif
+}
+
+static fi_state_t* stateForFinaleId(finaleid_t id)
+{
+    if(finaleStackInited)
+    {
+        uint i;
+        for(i = 0; i < finaleStackSize; ++i)
+        {
+            fi_state_t* s = &finaleStack[i];
+            if(s->finaleId == id)
+                return s;
+        }
+    }
+    return 0;
+}
+
+static __inline fi_state_t* stackTop(void)
+{
+    return (finaleStackSize == 0? 0 : &finaleStack[finaleStackSize-1]);
+}
+
+static fi_state_t* stackPush(finaleid_t finaleId, finale_mode_t mode, gamestate_t prevGamestate)
+{
+    fi_state_t* s;
+    finaleStack = Z_Realloc(finaleStack, sizeof(*finaleStack) * ++finaleStackSize, PU_STATIC);
+    s = &finaleStack[finaleStackSize-1];
+    s->finaleId = finaleId;
+    s->mode = mode;
+    s->initialGamestate = prevGamestate;
+    initStateConditions(s);
+    return s;
+}
+
+static void Sv_SendFinaleState(fi_state_t* s)
+{
+#define BUF_SIZE            4
+
+    byte buffer[BUF_SIZE], *ptr = buffer;
+
+    // First the flags.
+    *ptr++ = (s->mode == FIMODE_AFTER ? FINF_AFTER : (s->mode == FIMODE_OVERLAY) ? FINF_OVERLAY : 0);
+
+    // Then the conditions.
+    *ptr++ = 2; // Number of conditions.
+    *ptr++ = s->conditions.secret;
+    *ptr++ = s->conditions.leave_hub;
+
+    Net_SendPacket(DDSP_ALL_PLAYERS | DDSP_ORDERED, 85 /*GPT_FINALE2*/, buffer, BUF_SIZE);
+
+#undef BUF_SIZE
+}
+
+void FI_StackInit(void)
+{
+    if(finaleStackInited) return;
+    finaleStack = 0; finaleStackSize = 0;
+
+    Plug_AddHook(HOOK_FINALE_SCRIPT_STOP, Hook_FinaleScriptStop);
+    Plug_AddHook(HOOK_FINALE_SCRIPT_TICKER, Hook_FinaleScriptTicker);
     Plug_AddHook(HOOK_FINALE_EVAL_IF, Hook_FinaleScriptEvalIf);
 
-    Plug_AddHook(HOOK_FINALE_SCRIPT_BEGIN, Hook_FinaleScriptStart);
-    Plug_AddHook(HOOK_FINALE_SCRIPT_TERMINATE, Hook_FinaleScriptStop);
-    Plug_AddHook(HOOK_FINALE_SCRIPT_TICKER, Hook_FinaleScriptTicker);
+    finaleStackInited = true;
 }
 
-int FI_GetGameState(void)
+void FI_StackShutdown(void)
 {
-    return G_GetGameState();
+    if(!finaleStackInited) return;
+    if(finaleStack)
+        Z_Free(finaleStack);
+    finaleStack = 0; finaleStackSize = 0;
+
+    Plug_RemoveHook(HOOK_FINALE_SCRIPT_STOP, Hook_FinaleScriptStop);
+    Plug_RemoveHook(HOOK_FINALE_SCRIPT_TICKER, Hook_FinaleScriptTicker);
+    Plug_RemoveHook(HOOK_FINALE_EVAL_IF, Hook_FinaleScriptEvalIf);
+
+    finaleStackInited = false;
 }
 
-void FI_DemoEnds(void)
+void FI_StackExecute(const char* scriptSrc, int flags, finale_mode_t mode)
 {
-    G_ChangeGameState(GS_INFINE);
+    fi_state_t* s;
+    gamestate_t prevGamestate;
+
+    if(!finaleStackInited) Con_Error("FI_StackExecute: Not initialized yet!");
+
     G_SetGameAction(GA_NONE);
-
-    {int i;
-    for(i = 0; i < MAXPLAYERS; ++i)
-        AM_Open(AM_MapForPlayer(i), false, true);
-    }
-}
-
-int Hook_FinaleScriptStart(int hookType, int mode, void* unused)
-{
-    uint i;
-   
-    for(i = 0; i < MAXPLAYERS; ++i)
+    prevGamestate = G_GetGameState();
+    if(mode != FIMODE_OVERLAY)
     {
-        // Clear the message queue for all local players.
-        Hu_LogEmpty(i);
-
-        // Close the automap for all local players.
-        AM_Open(AM_MapForPlayer(i), false, true);
+        G_ChangeGameState(GS_INFINE);
     }
 
-    return true;
+    // Only the top-most script is active.
+    if((s = stackTop()))
+    {
+        FI_ScriptSuspend(s->finaleId);
+    }
+
+    s = stackPush(FI_Execute(scriptSrc, flags), mode, prevGamestate);
+
+    // Do we need to transmit the state conditions to clients?
+    if(IS_SERVER && !(flags & FF_LOCAL))
+    {
+        Sv_SendFinaleState(s);
+    }
 }
 
-int Hook_FinaleScriptStop(int hookType, int mode, void* paramaters)
+boolean FI_StackActive(void)
 {
-    const ddhook_finale_script_stop_paramaters_t* p = (const ddhook_finale_script_stop_paramaters_t*) paramaters;
-    finale_extradata_t* extraData = (finale_extradata_t*) p->extraData;
+    if(!finaleStackInited) Con_Error("FI_StackActive: Not initialized yet!");
+    {fi_state_t* s;
+    if((s = stackTop()))
+    {
+        return FI_ScriptActive(s->finaleId);
+    }}
+    return false;
+}
 
-    if(FI_Active())
+void FI_StackClear(void)
+{
+    if(!finaleStackInited) Con_Error("FI_StackClear: Not initialized yet!");
+    {fi_state_t* s;
+    if((s = stackTop()) && FI_ScriptActive(s->finaleId))
+    {
+        // The state is suspended when the PlayDemo command is used.
+        // Being suspended means that InFine is currently not active, but
+        // will be restored at a later time.
+        if(FI_ScriptSuspended(s->finaleId))
+            return;
+
+        // Pop all the states.
+        while((s = stackTop()))
+        {
+            FI_ScriptTerminate(s->finaleId);
+        }
+    }}
+}
+
+int Hook_FinaleScriptStop(int hookType, int finaleId, void* paramaters)
+{
+    gamestate_t initialGamestate;
+    finale_mode_t mode;
+    { fi_state_t* s = stateForFinaleId(finaleId);
+    if(!s)
+    {   // Finale was not initiated by us.
         return true;
+    }
+    initialGamestate = s->initialGamestate;
+    mode = s->mode; }
+
+    // Should we go back to NULL?
+    if(finaleStackSize > 1)
+    {   // Resume the next script on the stack.
+        finaleStack = Z_Realloc(finaleStack, sizeof(*finaleStack) * --finaleStackSize, PU_STATIC);
+        FI_ScriptResume(stackTop()->finaleId);
+        return true;
+    }
 
     /**
      * No more scripts are left.
      */
+    Z_Free(finaleStack); finaleStack = 0;
+    finaleStackSize = 0;
 
     // Return to the previous game state?
-    if(mode == FIMODE_LOCAL)
+    if(FI_ScriptFlags(finaleId) & FF_LOCAL)
     {
-        G_ChangeGameState(p->initialGameState);
+        G_ChangeGameState(initialGamestate);
         return true;
     }
 
@@ -123,7 +304,6 @@ int Hook_FinaleScriptStop(int hookType, int mode, void* paramaters)
     {
         if(IS_CLIENT)
             return true;
-
         G_SetGameAction(GA_MAPCOMPLETED);
         // Don't play the debriefing again.
         briefDisabled = true;
@@ -139,10 +319,16 @@ int Hook_FinaleScriptStop(int hookType, int mode, void* paramaters)
     return true;
 }
 
-int Hook_FinaleScriptTicker(int hookType, int mode, void* paramaters)
+int Hook_FinaleScriptTicker(int hookType, int finaleId, void* paramaters)
 {
     ddhook_finale_script_ticker_paramaters_t* p = (ddhook_finale_script_ticker_paramaters_t*) paramaters;
-    gamestate_t gameState = G_GetGameState();
+    gamestate_t gamestate = G_GetGameState();
+    fi_state_t* s = stateForFinaleId(finaleId);
+
+    if(!s)
+    {   // Finale was not initiated by us, leave it alone.
+        return true;
+    }
 
     /**
      * Once the game state changes we suspend ticking of InFine scripts.
@@ -150,12 +336,12 @@ int Hook_FinaleScriptTicker(int hookType, int mode, void* paramaters)
      *
      * Is this really the best place to handle this?
      */
-    if(gameState != GS_INFINE && p->gameState != gameState)
+    if(gamestate != GS_INFINE && s->initialGamestate != gamestate)
     {
         // Overlay scripts don't survive this...
-        if(mode == FIMODE_OVERLAY && p->canSkip)
+        if(s->mode == FIMODE_OVERLAY && p->canSkip)
         {
-            FI_ScriptTerminate();
+            FI_ScriptTerminate(s->finaleId);
         }
         p->runTick = false;
     }
@@ -178,14 +364,19 @@ static int playerClassForName(const char* name)
 }
 #endif
 
-int Hook_FinaleScriptEvalIf(int hookType, int unused, void* paramaters)
+int Hook_FinaleScriptEvalIf(int hookType, int finaleId, void* paramaters)
 {
     ddhook_finale_script_evalif_paramaters_t* p = (ddhook_finale_script_evalif_paramaters_t*) paramaters;
-    finale_extradata_t* data = p->extraData;
+    fi_state_t* s = stateForFinaleId(finaleId);
+
+    if(!s)
+    {   // Finale was not initiated by us, therefore we have no say in this.
+        return false;
+    }
 
     if(!stricmp(p->token, "secret"))
     {   // Secret exit was used?
-        p->returnVal = data->secret;
+        p->returnVal = s->conditions.secret;
         return true;
     }
 
@@ -231,7 +422,7 @@ int Hook_FinaleScriptEvalIf(int hookType, int unused, void* paramaters)
 
     if(!stricmp(p->token, "leavehub"))
     {   // Current hub has been completed?
-        p->returnVal = data->leavehub;
+        p->returnVal = s->conditions.leave_hub;
         return true;
     }
 
@@ -248,30 +439,64 @@ int Hook_FinaleScriptEvalIf(int hookType, int unused, void* paramaters)
     return false;
 }
 
-int Hook_FinaleScriptSerializeExtraData(int hookType, int flags, void* paramaters)
+boolean FI_Responder(event_t* ev)
 {
-    ddhook_finale_script_serialize_extradata_t* p = (ddhook_finale_script_serialize_extradata_t*) paramaters;
-    const finale_extradata_t* data = (const finale_extradata_t*) p->extraData;
-    byte* ptr = p->outBuf;
+    if(!finaleStackInited) Con_Error("FI_Responder: Not initialized yet!");
+    {fi_state_t* s;
+    if((s = stackTop()))
+    {
+        return FI_ScriptResponder(s->finaleId, ev);
+    }}
+    return false;
+}
 
-    *ptr++ = data->secret;
-    *ptr++ = data->leavehub;
-    p->outBufSize = 2;
-    
+boolean FI_IsMenuTrigger(void)
+{
+    if(!finaleStackInited) Con_Error("FI_IsMenuTrigger: Not initialized yet!");
+    {fi_state_t* s;
+    if((s = stackTop()))
+    {
+        return FI_ScriptIsMenuTrigger(s->finaleId);
+    }}
+    return false;
+}
+
+boolean FI_RequestSkip(void)
+{
+    if(!finaleStackInited) Con_Error("FI_RequestSkip: Not initialized yet!");
+    {fi_state_t* s;
+    if((s = stackTop()))
+    {
+        return FI_ScriptRequestSkip(s->finaleId);
+    }}
+    return false;
+}
+
+DEFCC(StartFinale)
+{
+    ddfinale_t fin;
+    // Only one active overlay allowed.
+    if(FI_StackActive())
+        return false;
+    if(!Def_Get(DD_DEF_FINALE, argv[1], &fin))
+    {
+        Con_Printf("Script '%s' is not defined.\n", argv[1]);
+        return false;
+    }
+    FI_StackExecute(fin.script, FF_LOCAL, FIMODE_OVERLAY);
     return true;
 }
 
-int Hook_FinaleScriptDeserializeExtraData(int hookType, int flags, void* paramaters)
+DEFCC(StopFinale)
 {
-    ddhook_finale_script_deserialize_extradata_t* p = (ddhook_finale_script_deserialize_extradata_t*) paramaters;
-    const byte* ptr = p->inBuf;
-    finale_extradata_t* data = (finale_extradata_t*) p->extraData;
-
-    data->secret = *ptr++;
-    if(flags & FIRCF_LEAVEHUB)
-        data->leavehub = *ptr;
-
-    *p->gameState = G_GetGameState();
-
-    return true;
+    fi_state_t* s;
+    if(!FI_StackActive())
+        return false;
+    // Only 'overlays' can be explictly stopped this way.
+    if((s = stackTop()) && s->mode == FIMODE_OVERLAY)
+    {
+        FI_ScriptTerminate(s->finaleId);
+        return true;
+    }
+    return false;
 }

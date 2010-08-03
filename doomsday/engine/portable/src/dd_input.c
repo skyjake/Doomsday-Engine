@@ -854,11 +854,12 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
  */
 static void dispatchEvents(timespan_t ticLength)
 {
-    ddevent_t *ddev;
-    event_t     ev;
+    ddevent_t* ddev;
 
     while((ddev = DD_GetEvent()) != NULL)
     {
+        event_t ev;
+
         if(ignoreInput)
             continue;
 
@@ -872,7 +873,7 @@ static void dispatchEvents(timespan_t ticLength)
             if(gx.PrivilegedResponder(&ev))
                 continue;
 
-        if(FI_Responder(ddev))
+        if(gx.FinaleResponder && gx.FinaleResponder(ddev))
             continue;
         if(UI_Responder(ddev))
             continue;

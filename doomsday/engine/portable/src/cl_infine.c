@@ -25,15 +25,14 @@
 /**
  * Client-side InFine.
  */
-
 #include "de_base.h"
 #include "de_network.h"
 #include "de_infine.h"
 
-static byte *readbuffer;
+static const byte* readbuffer;
 
 // Mini-Msg routines.
-static void SetReadBuffer(byte *data)
+static void SetReadBuffer(const byte* data)
 {
     readbuffer = data;
 }
@@ -46,16 +45,16 @@ static byte ReadByte(void)
 static short ReadShort(void)
 {
     readbuffer += 2;
-    return SHORT( *(short *) (readbuffer - 2) );
+    return SHORT( *(const short*) (readbuffer - 2) );
 }
 
 static int ReadLong(void)
 {
     readbuffer += 4;
-    return LONG( *(int *) (readbuffer - 4) );
+    return LONG( *(const int*) (readbuffer - 4) );
 }
 
-static void Read(byte *buf, size_t len)
+static void Read(byte* buf, size_t len)
 {
     memcpy(buf, readbuffer, len);
     readbuffer += len;
@@ -64,74 +63,28 @@ static void Read(byte *buf, size_t len)
 /**
  * This is where clients start their InFine sequences.
  */
-void Cl_Finale(int packetType, byte* data)
+void Cl_Finale(int packetType, const byte* data)
 {
-    int gameState = 0;
-    void* extraData = 0;
-    byte flags, extraDataFlags = 0;
-    boolean haveExtraData = false;
-    byte* script = 0;
+    byte flags;
 
     SetReadBuffer(data);
     flags = ReadByte();
 
-    if(packetType == PSV_FINALE2)
-    {
-        // Read extra data.
-        extraDataFlags = ReadByte();
-
-        haveExtraData = (extraDataFlags > 0? true:false);
-        if(haveExtraData)
-        {
-            ddhook_finale_script_deserialize_extradata_t p;
-
-            extraData = (void*) malloc(FINALE_SCRIPT_EXTRADATA_SIZE);
-
-            memset(&p, 0, sizeof(p));
-            p.inBuf = readbuffer;
-            p.gameState = &gameState;
-            p.extraData = extraData;
-            p.bytesRead = 0;
-
-            if(Plug_DoHook(HOOK_FINALE_SCRIPT_DESERIALIZE_EXTRADATA, extraDataFlags, &p))
-            {
-                readbuffer += FINALE_SCRIPT_EXTRADATA_SIZE;
-            }
-            else
-            {
-                haveExtraData = false;
-            }
-        }
-    }
-
-    if(flags & FINF_SCRIPT)
-    {
-        /**
-         * @fixme: Need to rethink memory management here.
-         *
-         * Read the script into map-scope memory. It will be freed
-         * when the next map is loaded.
-         */
-        script = Z_Malloc(strlen((char*)readbuffer) + 1, PU_MAP, 0);
-        strcpy((char*)script, (char*)readbuffer);
-
-        if(flags & FINF_BEGIN)
-        {   // Start the script.
-            finale_mode_t mode = ((flags & FINF_AFTER) ? FIMODE_AFTER : (flags & FINF_OVERLAY) ? FIMODE_OVERLAY : FIMODE_BEFORE);
-            FI_ScriptBegin((const char*)script, mode, gameState, extraData);
-        }
+    if(flags & (FINF_SCRIPT|FINF_BEGIN))
+    {   // Start the script.
+#pragma message("WARNING: Cl_Finale does not presently read the state condition flags")
+        FI_Execute((const char*)readbuffer, FF_LOCAL);
     }
 
     if(flags & FINF_END)
-    {   // Stop InFine.
-        FI_ScriptTerminate();
+    {
+#pragma message("WARNING: Cl_Finale does not presently respond to FINF_END")
+        //FI_ScriptTerminate();
     }
 
     if(flags & FINF_SKIP)
     {
-        FI_SkipRequest();
+#pragma message("WARNING: Cl_Finale does not presently respond to FINF_SKIP")
+        //FI_ScriptRequestSkip();
     }
-
-    if(extraData)
-        free(extraData);
 }

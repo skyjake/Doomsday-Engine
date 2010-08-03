@@ -32,18 +32,17 @@ typedef struct fi_object_s {
     FIOBJECT_BASE_ELEMENTS()
 } fi_object_t;
 
-void                FI_Register(void);
-void                FI_Init(void);
-void                FI_Shutdown(void);
+/**
+ * Called during pre-init to register cvars and ccmds for the finale system.
+ */
+void FI_Register(void);
 
-void                FI_Ticker(timespan_t time);
-int                 FI_Responder(ddevent_t* ev);
-void                FI_Drawer(void);
+void FI_Init(void);
+void FI_Shutdown(void);
 
-int                 FI_SkipRequest(void);
-boolean             FI_CmdExecuted(void);
-void*               FI_ScriptExtraData(void);
+void FI_Ticker(timespan_t time);
+void FI_Drawer(void);
 
-void                FIPage_RunTic(fi_page_t* page, timespan_t ticLength);
+void FIPage_RunTic(fi_page_t* page, timespan_t ticLength);
 
 #endif /* LIBDENG_INFINE_MAIN_H */

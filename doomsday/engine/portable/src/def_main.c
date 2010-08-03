@@ -1568,17 +1568,19 @@ int Def_Get(int type, const char* id, void* out)
 
     case DD_DEF_FINALE:
         // Find InFine script by ID.
+        fin = (finalescript_t*) out;
         for(i = defs.count.finales.num - 1; i >= 0; i--)
             if(!stricmp(defs.finales[i].id, id))
             {
-                // This has a matching ID. Return a pointer to the script.
-                *(void **) out = defs.finales[i].script;
+                fin->before = defs.finales[i].before;
+                fin->after = defs.finales[i].after;
+                fin->script = defs.finales[i].script;
                 return true;
             }
         return false;
 
     case DD_DEF_FINALE_BEFORE:
-        fin = (finalescript_t *) out;
+        fin = (finalescript_t*) out;
         for(i = defs.count.finales.num - 1; i >= 0; i--)
             if(!stricmp(defs.finales[i].before, id))
             {
@@ -1590,7 +1592,7 @@ int Def_Get(int type, const char* id, void* out)
         return false;
 
     case DD_DEF_FINALE_AFTER:
-        fin = (finalescript_t *) out;
+        fin = (finalescript_t*) out;
         for(i = defs.count.finales.num - 1; i >= 0; i--)
             if(!stricmp(defs.finales[i].after, id))
             {

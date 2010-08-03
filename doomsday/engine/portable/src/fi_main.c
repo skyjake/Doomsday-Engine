@@ -50,23 +50,19 @@
  * @ingroup InFine
  */
 typedef struct {
+    /// @see finaleFlags
+    int flags;
     /// Unique identifier/reference (chosen automatically).
     finaleid_t id;
-
-    struct fi_state_flags_s {
-        char active:1; /// Interpreter is active.
-    } flags;
-
     /// Interpreter for this script.
     finaleinterpreter_t* _interpreter;
+    /// Interpreter is active?
+    boolean active;
 } finale_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-D_CMD(StartFinale);
-D_CMD(StopFinale);
 
 finale_t*           P_CreateFinale(void);
 void                P_DestroyFinale(finale_t* f);
@@ -97,26 +93,14 @@ static fi_page_t** pages;
 static uint finalesSize;
 static finale_t* finales;
 
-/// Script state stack.
-static uint finaleStackSize;
-static finaleid_t* finaleStack;
-
 /// Global object store.
 static fi_object_collection_t objects;
 
 // CODE --------------------------------------------------------------------
 
-/**
- * Called during pre-init to register cvars and ccmds for the finale system.
- */
 void FI_Register(void)
 {
     C_VAR_BYTE("finale-nostretch",  &noStretch, 0, 0, 1);
-
-    C_CMD("startfinale",    "s",    StartFinale);
-    C_CMD("startinf",       "s",    StartFinale);
-    C_CMD("stopfinale",     "",     StopFinale);
-    C_CMD("stopinf",        "",     StopFinale);
 }
 
 static fi_page_t* pagesAdd(fi_page_t* p)
@@ -316,7 +300,7 @@ static fi_object_t* objectsById(fi_object_collection_t* c, fi_objectid_t id)
 }
 
 /**
- * @return                  A new (unused) unique object id.
+ * @return  A new (unused) unique object id.
  */
 static fi_objectid_t objectsUniqueId(fi_object_collection_t* c)
 {
@@ -340,161 +324,22 @@ static finale_t* finalesById(finaleid_t id)
     return 0;
 }
 
+static void stopFinale(finale_t* f)
+{
+    if(!f || !f->active)
+        return;
+    f->active = false;
+    P_DestroyFinaleInterpreter(f->_interpreter);
+}
+
 /**
- * @return                  A new (unused) unique script id.
+ * @return  A new (unused) unique script id.
  */
 static finaleid_t finalesUniqueId(void)
 {
     finaleid_t id = 0;
     while(finalesById(++id));
     return id;
-}
-
-static __inline finaleid_t stackTop(void)
-{
-    return (finaleStackSize == 0? 0 : finaleStack[finaleStackSize-1]);
-}
-
-static finaleid_t stackPush(finaleid_t id)
-{
-    finaleStack = Z_Realloc(finaleStack, sizeof(*finaleStack) * ++finaleStackSize, PU_STATIC);
-    finaleStack[finaleStackSize-1] = id;
-    return id;
-}
-
-static boolean stackPop(void)
-{
-    // Should we go back to NULL?
-    if(!(finaleStackSize > 1))
-    {
-        Z_Free(finaleStack); finaleStack = 0;
-        finaleStackSize = 0;
-        return 0;
-    }
-
-    // Return to previous state.
-    finaleStack = Z_Realloc(finaleStack, sizeof(*finaleStack) * --finaleStackSize, PU_STATIC);
-    {finale_t* f = finalesById(stackTop());
-    f->flags.active = true;
-    FinaleInterpreter_Resume(f->_interpreter);}
-    return true;
-}
-
-/**
- * Stop playing the script and go to next game state.
- */
-void finaleTerminate(finaleid_t id)
-{
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("finaleTerminate: Not initialized yet!\n");
-#endif
-        return;
-    }
-    {finale_t* f;
-    if((f = finalesById(id)) && f->flags.active)
-    {
-        f->flags.active = false;
-        P_DestroyFinaleInterpreter(f->_interpreter);
-    }}
-}
-
-void finaleTicker(finaleid_t id)
-{
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("finaleTicker: Not initialized yet!\n");
-#endif
-        return;
-    }
-    {finale_t* f;
-    if((f = finalesById(id)) && f->flags.active)
-    {
-        if(FinaleInterpreter_RunTic(f->_interpreter))
-        {   // The script has ended!
-            finaleTerminate(f->id);
-            P_DestroyFinale(f);
-            stackPop();
-        }
-    }}
-}
-
-boolean finaleRequestSkip(finaleid_t id)
-{
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("finaleRequestSkip: Not initialized yet!\n");
-#endif
-        return false;
-    }
-    {finale_t* f;
-    if((f = finalesById(id)))
-    {
-        return FinaleInterpreter_Skip(f->_interpreter);
-    }}
-    return false;
-}
-
-boolean finaleIsMenuTrigger(finaleid_t id)
-{
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("finaleIsMenuTrigger: Not initialized yet!\n");
-#endif
-        return false;
-    }
-    {finale_t* f;
-    if((f = finalesById(id)) && f->flags.active)
-    {
-        return FinaleInterpreter_IsMenuTrigger(f->_interpreter);
-    }}
-    return false;
-}
-
-boolean finaleResponder(finaleid_t id, ddevent_t* ev)
-{
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("finaleResponder: Not initialized yet!\n");
-#endif
-        return false;
-    }
-    {finale_t* f;
-    if((f = finalesById(id)) && f->flags.active)
-    {
-        return FinaleInterpreter_Responder(f->_interpreter, ev);
-    }}
-    return false;
-}
-
-/**
- * Reset the entire InFine state stack.
- */
-static void doReset(void)
-{
-    finale_t* f;
-    if((f = finalesById(stackTop())) && f->flags.active)
-    {
-        // The state is suspended when the PlayDemo command is used.
-        // Being suspended means that InFine is currently not active, but
-        // will be restored at a later time.
-        if(FinaleInterpreter_IsSuspended(f->_interpreter))
-            return;
-
-        // Pop all the states.
-        {finaleid_t id;
-        while((id = stackTop()))
-        {
-            finaleTerminate(id);
-            P_DestroyFinale(finalesById(id));
-            stackPop();
-        }}
-    }
 }
 
 static void picFrameDeleteXImage(fidata_pic_frame_t* f)
@@ -548,7 +393,8 @@ finale_t* P_CreateFinale(void)
     f = &finales[finalesSize-1];
     f->id = finalesUniqueId();
     f->_interpreter = P_CreateFinaleInterpreter();
-    f->flags.active = true;
+    f->_interpreter->_id = f->id;
+    f->active = true;
     return f;
 }
 
@@ -575,6 +421,43 @@ void P_DestroyFinale(finale_t* f)
         }
         break;
     }}
+}
+
+boolean FI_ScriptRequestSkip(finaleid_t id)
+{
+    finale_t* f;
+    if(!inited)
+        Con_Error("FI_ScriptRequestSkip: Not initialized yet!");
+    f = finalesById(id);
+    if(!f)
+        Con_Error("FI_ScriptRequestSkip: Unknown finaleid %u.", id);
+    return FinaleInterpreter_Skip(f->_interpreter);
+}
+
+int FI_ScriptFlags(finaleid_t id)
+{
+    finale_t* f;
+    if(!inited)
+        Con_Error("FI_ScriptFlags: Not initialized yet!");
+    f = finalesById(id);
+    if(!f)
+        Con_Error("FI_ScriptFlags: Unknown finaleid %u.", id);
+    return f->flags;
+}
+
+boolean FI_ScriptIsMenuTrigger(finaleid_t id)
+{
+    finale_t* f;
+    if(!inited)
+        Con_Error("FI_ScriptIsMenuTrigger: Not initialized yet!");
+    f = finalesById(id);
+    if(!f)
+        Con_Error("FI_ScriptIsMenuTrigger: Unknown finaleid %u.", id);
+    if(f->active)
+    {
+        return FinaleInterpreter_IsMenuTrigger(f->_interpreter);
+    }
+    return false;
 }
 
 void FIObject_Destructor(fi_object_t* obj)
@@ -652,21 +535,20 @@ void FIObject_Think(fi_object_t* obj)
     Animator_Think(&obj->angle);
 }
 
-boolean FI_Active(void)
+boolean FI_ScriptActive(finaleid_t id)
 {
     finale_t* f;
     if(!inited)
     {
 #ifdef _DEBUG
-        Con_Printf("FI_Active: Not initialized yet!\n");
+        Con_Printf("FI_ScriptActive: Not initialized yet!\n");
 #endif
         return false;
     }
-    if((f = finalesById(stackTop())))
-    {
-        return (f->flags.active != 0);
-    }
-    return false;
+    f = finalesById(id);
+    if(!f)
+        Con_Error("FI_ScriptActive: Unknown finaleid %u.", id);
+    return (f->active != 0);
 }
 
 void FI_Init(void)
@@ -675,7 +557,6 @@ void FI_Init(void)
         return; // Already been here.
     memset(&objects, 0, sizeof(objects));
     finales = 0; finalesSize = 0;
-    finaleStack = 0; finaleStackSize = 0;
     pages = 0; numPages = 0;
 
     inited = true;
@@ -698,10 +579,6 @@ void FI_Shutdown(void)
     }
     finales = 0; finalesSize = 0;
 
-    if(finaleStack)
-        Z_Free(finaleStack);
-    finaleStack = 0; finaleStackSize = 0;
-
     // Garbage collection.
     objectsEmpty(&objects);
     if(numPages)
@@ -720,33 +597,20 @@ void FI_Shutdown(void)
     inited = false;
 }
 
-boolean FI_CmdExecuted(void)
+boolean FI_ScriptCmdExecuted(finaleid_t id)
 {
     finale_t* f;
     if(!inited)
     {
 #ifdef _DEBUG
-        Con_Printf("FI_CmdExecuted: Not initialized yet!\n");
+        Con_Printf("FI_ScriptCmdExecuted: Not initialized yet!\n");
 #endif
         return false;
     }
-    if((f = finalesById(stackTop())))
-    {
-        return FinaleInterpreter_CommandExecuted(f->_interpreter);
-    }
-    return false;
-}
-
-void FI_Reset(void)
-{
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_Reset: Not initialized yet!\n");
-#endif
-        return;
-    }
-    doReset();
+    f = finalesById(id);
+    if(!f)
+        Con_Error("FI_ScriptCmdExecuted: Unknown finaleid %u.", id);
+    return FinaleInterpreter_CommandExecuted(f->_interpreter);
 }
 
 fi_page_t* FI_NewPage(void)
@@ -762,57 +626,46 @@ void FI_DeletePage(fi_page_t* p)
     Z_Free(p);
 }
 
-/**
- * Start playing the given script.
- */
-finaleid_t FI_ScriptBegin(const char* scriptSrc, finale_mode_t mode, int gameState, void* extraData)
+finaleid_t FI_Execute(const char* scriptSrc, int flags)
 {
     if(!inited)
     {
 #ifdef _DEBUG
-        Con_Printf("FI_ScriptBegin: Not initialized yet!\n");
+        Con_Printf("FI_Execute: Not initialized yet!\n");
 #endif
         return 0;
     }
     if(!scriptSrc || !scriptSrc[0])
     {
 #ifdef _DEBUG
-        Con_Printf("FI_ScriptBegin: Warning, attempt to play empty script (mode=%i).\n", (int)mode);
+        Con_Printf("FI_Execute: Warning, attempt to play empty script.\n");
+#endif
+        return 0;
+    }
+    if((flags & FF_LOCAL) && isDedicated)
+    {   // Dedicated servers do not play local Finales.
+#ifdef _DEBUG
+        Con_Printf("FI_Execute: No local finales in dedicated mode.\n");
 #endif
         return 0;
     }
 
-    if(mode == FIMODE_LOCAL && isDedicated)
-    {
-        // Dedicated servers don't play local finales.
+    {finale_t* f = P_CreateFinale();
+    f->flags = flags;
+    FinaleInterpreter_LoadScript(f->_interpreter, scriptSrc);
+    if(!(flags & FF_LOCAL) && isServer)
+    {   // Instruct clients to start playing this Finale.
+        Sv_Finale(FINF_BEGIN|FINF_SCRIPT, scriptSrc);
+    }
 #ifdef _DEBUG
-        Con_Printf("Finale Begin: No local finales in dedicated mode.\n");
+    Con_Printf("Finale Begin - id:%u '%.30s'\n", f->id, scriptSrc);
 #endif
-        return 0;
-    }
-
-#ifdef _DEBUG
-    Con_Printf("Finale Begin: mode=%i '%.30s'\n", (int)mode, scriptSrc);
-#endif
-
-    {finale_t* f;
-
-    // Only the top-most script is active.
-    if((f = finalesById(stackTop())))
-    {
-        f->flags.active = false;
-        FinaleInterpreter_Suspend(f->_interpreter);
-    }
-
-    // Init new state.
-    f = P_CreateFinale();
-    FinaleInterpreter_LoadScript(f->_interpreter, mode, scriptSrc, gameState, extraData);
-    return stackPush(f->id);
-    }
+    return f->id; }
 }
 
-void FI_ScriptTerminate(void)
+void FI_ScriptTerminate(finaleid_t id)
 {
+    finale_t* f;
     if(!inited)
     {
 #ifdef _DEBUG
@@ -820,13 +673,14 @@ void FI_ScriptTerminate(void)
 #endif
         return;
     }
-    {finale_t* f;
-    if((f = finalesById(stackTop())) && f->flags.active)
+    f = finalesById(id);
+    if(!f)
+        Con_Error("FI_ScriptTerminate: Unknown finaleid %u.", id);
+    if(f->active)
     {
-        finaleTerminate(f->id);
+        stopFinale(f);
         P_DestroyFinale(f);
-        stackPop();
-    }}
+    }
 }
 
 fi_object_t* FI_Object(fi_objectid_t id)
@@ -839,23 +693,6 @@ fi_object_t* FI_Object(fi_objectid_t id)
         return 0;
     }
     return objectsById(&objects, id);
-}
-
-void* FI_ScriptExtraData(void)
-{
-    finale_t* f;
-    if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_ScriptGetExtraData: Not initialized yet!\n");
-#endif
-        return 0;
-    }
-    if((f = finalesById(stackTop())))
-    {
-        return FinaleInterpreter_ExtraData(f->_interpreter);
-    }
-    return 0;
 }
 
 fi_object_t* FI_NewObject(fi_obtype_e type, const char* name)
@@ -1024,74 +861,72 @@ void FI_Ticker(timespan_t ticLength)
 
     if(!M_CheckTrigger(&sharedFixedTrigger, ticLength))
         return;
-
     // A new 'sharp' tick has begun.
-    {finaleid_t id;
-    if((id = stackTop()))
-    {
-        finaleTicker(id);
-    }}
-}
-
-/**
- * The user has requested a skip. Returns true if the skip was done.
- */
-int FI_SkipRequest(void)
-{
     
-    if(!inited)
+    // All finales tic unless inactive.
+    { uint i;
+    for(i = 0; i < finalesSize; ++i)
     {
-#ifdef _DEBUG
-        Con_Printf("FI_SkipRequest: Not initialized yet!\n");
-#endif
-        return false;
-    }
-    {finaleid_t id;
-    if((id = stackTop()))
-    {
-        return finaleRequestSkip(id);
+        finale_t* f = &finales[i];
+        if(!f->active)
+            continue;
+        if(FinaleInterpreter_RunTic(f->_interpreter))
+        {   // The script has ended!
+            stopFinale(f);
+            P_DestroyFinale(f);
+        }
     }}
-    return false;
 }
 
-/**
- * @return              @c true, if the event should open the menu.
- */
-boolean FI_IsMenuTrigger(void)
+void FI_ScriptSuspend(finaleid_t id)
 {
+    finale_t* f;
     if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_IsMenuTrigger: Not initialized yet!\n");
-#endif
-        return false;
-    }
-    {finaleid_t id;
-    if((id = stackTop()))
-    {
-        return finaleIsMenuTrigger(id);
-    }}
-    return false;
+        Con_Error("FI_ScriptSuspend: Not initialized yet!");
+    f = finalesById(id);
+    if(!f)
+        Con_Error("FI_ScriptSuspend: Unknown finaleid %u.", id);
+    f->active = false;
+    FinaleInterpreter_Suspend(f->_interpreter);
 }
 
-int FI_Responder(ddevent_t* ev)
+void FI_ScriptResume(finaleid_t id)
 {
+    finale_t* f;
     if(!inited)
-    {
-#ifdef _DEBUG
-        Con_Printf("FI_Responder: Not initialized yet!\n");
-#endif
-        return false;
-    }
-    {finaleid_t id;
-    if((id = stackTop()))
-    {
-        return finaleResponder(id, ev);
-    }}
+        Con_Error("FI_ScriptResume: Not initialized yet!");
+    f = finalesById(id);
+    if(!f)
+        Con_Error("FI_ScriptResume: Unknown finaleid %u.", id);
+    f->active = true;
+    FinaleInterpreter_Resume(f->_interpreter);
+}
+
+boolean FI_ScriptSuspended(finaleid_t id)
+{
+    finale_t* f;
+    if(!inited)
+        Con_Error("FI_ScriptSuspended: Not initialized yet!");
+    f = finalesById(id);
+    if(!f)
+        Con_Error("FI_ScriptSuspended: Unknown finaleid %u.", id);
+    return FinaleInterpreter_IsSuspended(f->_interpreter);
+}
+
+int FI_ScriptResponder(finaleid_t id, const void* ev)
+{
+    finale_t* f;
+    if(!inited)
+        Con_Error("FI_ScriptResponder: Not initialized yet!");
+    f = finalesById(id);
+    if(!f)
+        Con_Error("FI_ScriptResponder: Unknown finaleid %u.", id);
+    if(f->active)
+        return FinaleInterpreter_Responder(f->_interpreter, (const ddevent_t*)ev);
     return false;
 }
 
-static void useColor(animator_t *color, int components)
+static void useColor(const animator_t* color, int components)
 {
     if(components == 3)
     {
@@ -1141,17 +976,25 @@ static void setupModelParamsForFIObject(rendmodelparams_t* params, const char* m
 }
 #endif
 
-/**
- * Drawing is the most complex task here.
- */
 void FI_Drawer(void)
 {
+    borderedprojectionstate_t borderedProjection;
+    boolean bordered;
+
     if(!inited)
     {
 #ifdef _DEBUG
         Con_Printf("FI_Drawer: Not initialized yet!\n");
 #endif
         return;
+    }
+
+    /// \fixme need to refactor.
+    bordered = true; //(FI_ScriptActive() && FI_ScriptCmdExecuted());
+    if(bordered)
+    {   // Draw using the special bordered projection.
+        R_ConfigureBorderedProjection(&borderedProjection);
+        R_BeginBorderedProjection(&borderedProjection);
     }
 
     {uint i;
@@ -1253,6 +1096,9 @@ void FI_Drawer(void)
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
     }}
+
+    if(bordered)
+        R_EndBorderedProjection(&borderedProjection);
 }
 
 void FIData_PicThink(fidata_pic_t* p)
@@ -1545,13 +1391,13 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
         if(f->type == PFT_RAW && (rawTex = R_GetRawTex(f->texRef.lump)))
         {   
             tex = GL_PrepareRawTex(rawTex);
-            V3_Set(offset, SCREENWIDTH/2, SCREENHEIGHT/2, 0);
+            V3_Set(offset, 0, 0, 0);
             V3_Set(dimensions, rawTex->width, rawTex->height, 0);
         }
         else if(f->type == PFT_XIMAGE)
         {
             tex = (DGLuint)f->texRef.tex;
-            V3_Set(offset, SCREENWIDTH/2, SCREENHEIGHT/2, 0);
+            V3_Set(offset, 0, 0, 0);
             V3_Set(dimensions, 1, 1, 0); /// \fixme.
         }
         /*else if(f->type == PFT_MATERIAL)
@@ -1743,7 +1589,6 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
 {
     assert(tex);
     {
-    finale_t* f = finalesById(stackTop());
     int x = 0, y = 0;
     int ch, linew = -1;
     char* ptr;
@@ -1787,10 +1632,15 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
                 animatorvector3_t* color;
                 uint colorIdx = *ptr - '0';
 
-                if(!colorIdx)
-                    color = (animatorvector3_t*) &tex->color; // Use the default color.
-                else
+                //if(!colorIdx)
+                {   // Use the default color.
+                    color = (animatorvector3_t*) &tex->color;
+                }
+                /*else
+                {   /// \fixme disabled for now as this violates our ownership model.
+                    finale_t* f = finalesById(stackTop());
                     color = &f->_interpreter->_pages[PAGE_TEXT]->_textColor[colorIdx-1];
+                }*/
 
                 glColor4f((*color)[0].value, (*color)[1].value, (*color)[2].value, tex->color[3].value);
                 continue;
@@ -1885,28 +1735,4 @@ void FIData_TextCopy(fidata_text_t* t, const char* str)
     t->text = Z_Malloc(len, PU_STATIC, 0);
     memcpy(t->text, str, len);
     }
-}
-
-D_CMD(StartFinale)
-{
-    finale_mode_t mode = (FI_Active()? FIMODE_OVERLAY : FIMODE_LOCAL);
-    char* script;
-
-    if(FI_Active())
-        return false;
-
-    if(!Def_Get(DD_DEF_FINALE, argv[1], &script))
-    {
-        Con_Printf("Script '%s' is not defined.\n", argv[1]);
-        return false;
-    }
-
-    FI_ScriptBegin(script, mode, gx.FI_GetGameState(), 0);
-    return true;
-}
-
-D_CMD(StopFinale)
-{
-    FI_ScriptTerminate();
-    return true;
 }

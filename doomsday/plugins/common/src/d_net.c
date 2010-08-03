@@ -316,18 +316,18 @@ long int D_NetPlayerEvent(int plrNumber, int peType, void *data)
     return true;
 }
 
-int D_NetWorldEvent(int type, int parm, void *data)
+int D_NetWorldEvent(int type, int parm, void* data)
 {
-    int         i;
+    int i;
 
-    switch (type)
+    switch(type)
     {
-        //
-        // Server events:
-        //
+    //
+    // Server events:
+    //
     case DDWE_HANDSHAKE:
         {
-        boolean             newPlayer = *((boolean*) data);
+        boolean newPlayer = *((boolean*) data);
 
         // A new player is entering the game. We as a server should send him
         // the handshake packet(s) to update his world.
@@ -340,8 +340,7 @@ int D_NetWorldEvent(int type, int parm, void *data)
         players[parm].update |= PSF_REBORN;
 
         // First, the game state.
-        NetSv_SendGameState(GSF_CHANGE_MAP | GSF_CAMERA_INIT |
-                            (newPlayer ? 0 : GSF_DEMO), parm);
+        NetSv_SendGameState(GSF_CHANGE_MAP | GSF_CAMERA_INIT | (newPlayer ? 0 : GSF_DEMO), parm);
 
         // Send info about all players to the new one.
         for(i = 0; i < MAXPLAYERS; ++i)
@@ -354,9 +353,9 @@ int D_NetWorldEvent(int type, int parm, void *data)
         break;
         }
 
-        //
-        // Client events:
-        //
+    //
+    // Client events:
+    //
 #if 0
     case DDWE_PROJECTILE:
 #  ifdef _DEBUG
@@ -392,32 +391,9 @@ int D_NetWorldEvent(int type, int parm, void *data)
     case DDWE_SECTOR_SOUND:
         // High word: sector number, low word: sound id.
         if(parm & 0xffff)
-            S_StartSound(parm & 0xffff,
-                         (mobj_t *) P_GetPtr(DMU_SECTOR, parm >> 16,
-                                             DMU_SOUND_ORIGIN));
+            S_StartSound(parm & 0xffff, (mobj_t*) P_GetPtr(DMU_SECTOR, parm >> 16, DMU_SOUND_ORIGIN));
         else
-            S_StopSound(0, (mobj_t *) P_GetPtr(DMU_SECTOR, parm >> 16,
-                                               DMU_SOUND_ORIGIN));
-
-        break;
-
-    case DDWE_DEMO_END:
-        // Demo playback has ended. Advance demo sequence.
-        if(parm)                // Playback was aborted.
-            G_DemoAborted();
-        else                    // Playback ended normally.
-            G_DemoEnds();
-
-        // Restore normal game state.
-        deathmatch = false;
-        noMonstersParm = false;
-#if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        respawnMonsters = false;
-#endif
-
-#if __JHEXEN__
-        randomClassParm = false;
-#endif
+            S_StopSound(0, (mobj_t*) P_GetPtr(DMU_SECTOR, parm >> 16, DMU_SOUND_ORIGIN));
         break;
 
     default:

@@ -156,6 +156,7 @@ game_export_t* GetGameAPI(game_import_t* imports)
     gx.G_Drawer2 = H_Display2;
     gx.PrivilegedResponder = (boolean (*)(event_t *)) G_PrivilegedResponder;
     gx.FallbackResponder = NULL; //Hu_MenuResponder;
+    gx.FinaleResponder = FI_Responder;
     gx.G_Responder = G_Responder;
     gx.MobjThinker = P_MobjThinker;
     gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
@@ -180,17 +181,12 @@ game_export_t* GetGameAPI(game_import_t* imports)
     gx.ticcmdSize = sizeof(ticcmd_t);
     gx.mobjSize = sizeof(mobj_t);
     gx.polyobjSize = sizeof(polyobj_t);
-    gx.finaleConditionsSize = sizeof(finale_extradata_t);
 
     gx.SetupForMapData = P_SetupForMapData;
 
     // These really need better names. Ideas?
     gx.HandleMapDataPropertyValue = P_HandleMapDataPropertyValue;
     gx.HandleMapObjectStatusReport = P_HandleMapObjectStatusReport;
-
-    gx.FI_GetGameState = FI_GetGameState;
-    gx.FI_DemoEnds = FI_DemoEnds;
-    FI_RegisterHooks();
 
     return &gx;
 }

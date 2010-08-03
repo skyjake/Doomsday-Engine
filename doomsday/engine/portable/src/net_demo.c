@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,13 +20,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- *
- * \bug - Demo playback is broken -> http://sourceforge.net/tracker/index.php?func=detail&aid=1693198&group_id=74815&atid=542099
  */
 
 /**
- * net_demo.c: Demos
- *
  * Handling of demo recording and playback.
  * Opening of, writing to, reading from and closing of demo files.
  */
@@ -401,9 +397,8 @@ boolean Demo_ReadPacket(void)
     if(lzEOF(playdemo))
     {
         Demo_StopPlayback();
-        // Tell the Game the demo has ended.
-        if(gx.NetWorldEvent)
-            gx.NetWorldEvent(DDWE_DEMO_END, 0, 0);
+        // Any interested parties?
+        Plug_DoHook(HOOK_DEMO_STOP, false, 0);
         return false;
     }
 
@@ -691,7 +686,7 @@ D_CMD(PauseDemo)
 
 D_CMD(StopDemo)
 {
-    int         plnum = consolePlayer;
+    int plnum = consolePlayer;
 
     if(argc > 2)
     {
@@ -708,10 +703,10 @@ D_CMD(StopDemo)
                clients[plnum].recording ? "recording" : "playback", plnum);
 
     if(playback)
-    {
+    {   // Aborted.
         Demo_StopPlayback();
-        // Tell the Game DLL that the playback was aborted.
-        gx.NetWorldEvent(DDWE_DEMO_END, true, 0);
+        // Any interested parties?
+        Plug_DoHook(HOOK_DEMO_STOP, true, 0);
     }
     else
         Demo_StopRecording(plnum);

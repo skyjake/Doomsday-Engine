@@ -37,6 +37,7 @@
 #include "jdoom64.h"
 
 #include "m_argv.h"
+#include "fi_lib.h"
 #include "hu_stuff.h"
 #include "hu_menu.h"
 #include "hu_log.h"
@@ -554,6 +555,7 @@ void G_Shutdown(void)
     P_ShutdownInventory();
     AM_Shutdown();
     P_FreeWeaponSlots();
+    FI_StackShutdown();
     GUI_Shutdown();
 }
 
