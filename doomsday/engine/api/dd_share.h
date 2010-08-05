@@ -52,10 +52,8 @@ extern "C" {
 #include "dd_types.h"
 #include "dd_maptypes.h"
 #include "dd_gl.h"
-#include "dd_animator.h"
-#include "dd_compositefont.h"
+#include "dd_ui.h"
 #include "dd_infine.h"
-#include "dd_vectorgraphic.h"
 #include "../portable/include/p_think.h" // \todo Not officially a public header file!
 #include "../portable/include/def_share.h" // \todo Not officially a public header file!
 

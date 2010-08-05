@@ -148,6 +148,7 @@
 		<Unit filename="..\..\engine\api\dd_plugin.h" />
 		<Unit filename="..\..\engine\api\dd_share.h" />
 		<Unit filename="..\..\engine\api\dd_types.h" />
+		<Unit filename="..\..\engine\api\dd_ui.h" />
 		<Unit filename="..\..\engine\api\dd_vectorgraphic.h" />
 		<Unit filename="..\..\engine\api\doomsday.h" />
 		<Unit filename="..\..\engine\api\sys_audiod.h" />

@@ -2722,6 +2722,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\api\dd_ui.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\api\dd_vectorgraphic.h"
 				>
 			</File>
