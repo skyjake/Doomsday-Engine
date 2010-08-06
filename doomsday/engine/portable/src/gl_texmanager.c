@@ -1143,11 +1143,11 @@ byte GL_LoadFlat(image_t* img, const gltexture_inst_t* inst,
             return 2;
     }
 
-    if((lumpLength = W_LumpLength(flat->lump)) < 4096)
-        return 0; // Too small.
-
     // Read in the flat.
-    img->pixels = M_Malloc(lumpLength);
+    lumpLength = W_LumpLength(flat->lump);
+    img->pixels = M_Malloc(MAX_OF(lumpLength, 4096));
+    if(lumpLength < 4096)
+        memset(img->pixels, 0, 4096);
     W_ReadLump(flat->lump, img->pixels);
 
     img->width = flat->width;
