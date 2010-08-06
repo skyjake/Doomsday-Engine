@@ -44,6 +44,7 @@
 #include "de_infine.h"
 #include "de_misc.h"
 #include "de_infine.h"
+#include "de_ui.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -846,8 +847,8 @@ void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, const char* script)
      *
      * For this we'll need two pages; one for it's background and for Pics and another for Text and it's filter.
      */
-    fi->_pages[PAGE_PICS] = FI_NewPage();
-    fi->_pages[PAGE_TEXT] = FI_NewPage();
+    fi->_pages[PAGE_PICS] = FI_NewPage(0);
+    fi->_pages[PAGE_TEXT] = FI_NewPage(0);
     // Hide our pages until command interpretation begins.
     FIPage_MakeVisible(fi->_pages[PAGE_PICS], false);
     FIPage_MakeVisible(fi->_pages[PAGE_TEXT], false);

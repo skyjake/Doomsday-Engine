@@ -528,16 +528,12 @@ D_CMD(BLEditor)
 
     if(!stricmp(cmd, "menu"))
     {
-        //extern int consolePlayer;
+        Con_Open(false); // Close the console if open.
 
-        //P_ControlReset(-1); // clear the actions array
-        Con_Open(false); // close the console if open
-
-        // show the bias menu interface
+        // Show the bias menu interface.
         UI_InitPage(&page_bias, ob_bias);
-        sprintf(page_bias.title, "Doomsday BIAS Light Editor");
-        page_bias.background = false;  // we don't want a background
-        UI_Init(false, true, true, true, false);
+        page_bias.flags.showBackground = false; // We don't want a background.
+        UI_PageInit(false, true, true, true, false);
         UI_SetPage(&page_bias);
         return true;
     }

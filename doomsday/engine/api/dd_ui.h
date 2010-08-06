@@ -96,6 +96,10 @@ typedef struct fi_page_s {
     animatorvector3_t _offset;
 
     void (*drawer) (struct fi_page_s* page);
+    void (*ticker) (struct fi_page_s* page, timespan_t ticLength);
+
+    /// Pointer to the previous page, if any.
+    struct fi_page_s* previous;
 
     struct material_s* _bgMaterial;
     animatorvector4_t _bgColor;
@@ -105,11 +109,14 @@ typedef struct fi_page_s {
     uint _timer;
 } fi_page_t;
 
-fi_page_t* FI_NewPage(void);
+fi_page_t* FI_NewPage(fi_page_t* prevPage);
 void FI_DeletePage(fi_page_t* page);
 
 /// Draws the page if not hidden.
-void FIPage_Drawer(fi_page_t* p);
+void FIPage_Drawer(fi_page_t* page);
+
+/// Tic the page if not paused.
+void FIPage_Ticker(fi_page_t* page, timespan_t ticLength);
 
 /// Adds a UI object to the page if not already present.
 struct fi_object_s* FIPage_AddObject(fi_page_t* page, struct fi_object_s* obj);

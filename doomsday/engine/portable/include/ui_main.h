@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * ui_main.h: Graphical User Interface
+ * Graphical User Interface
  */
 
 #ifndef __DOOMSDAY_UI_H__
@@ -130,20 +130,33 @@ typedef struct ui_object_s {
     int             x, y, w, h;    // Position and dimensions, auto-inited.
 } ui_object_t;
 
-// UI Pages consist of one or more controls.
+/**
+ * UI Pages consist of one or more controls.
+ */
 typedef struct ui_page_s {
-    ui_object_t    *objects;       // List of objects, UI_NONE terminates.
-    char            title[128];    // Title for the screen.
-    boolean         background;    // Draw the background?
-    boolean         header;        // Draw the header bar?
-    int             focus;         // Index of the focus object.
-    int             capture;       // Index of the capture object.
-    void            (*drawer) (struct ui_page_s *);
-    int             (*responder) (struct ui_page_s *, ddevent_t *);
-    void            (*ticker) (struct ui_page_s *);
-    struct ui_page_s *previous;    // Pointer to the previous page, if any.
-    int             timer;
-    int             count;         // Object count, no need to initialize.
+    /// List of objects, UI_NONE terminates.
+    ui_object_t* objects;
+
+    struct ui_page_flags_s {
+        char showBackground:1; /// Draw the background?
+    } flags;
+
+    /// Index of the focus object.
+    int focus;
+
+    /// Index of the capture object.
+    int capture;
+
+    void (*drawer) (struct ui_page_s*);
+    void (*ticker) (struct ui_page_s*);
+    int  (*responder) (struct ui_page_s*, ddevent_t*);
+
+    /// Pointer to the previous page, if any.
+    struct ui_page_s* previous;
+
+    uint _timer;
+    /// Object count, no need to initialize.
+    uint count;
 } ui_page_t;
 
 typedef struct {
@@ -190,7 +203,7 @@ typedef struct {
 void            UI_Register(void);
 
 // Functions.
-void            UI_Init(boolean halttime, boolean tckui, boolean tckframe,
+void            UI_PageInit(boolean halttime, boolean tckui, boolean tckframe,
                         boolean drwgame, boolean noescape);
 void            UI_End(void);
 boolean         UI_IsActive(void);

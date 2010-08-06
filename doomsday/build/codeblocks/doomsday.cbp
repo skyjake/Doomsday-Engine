@@ -360,6 +360,7 @@
 		<Unit filename="..\..\engine\portable\include\ui_main.h" />
 		<Unit filename="..\..\engine\portable\include\ui_mpi.h" />
 		<Unit filename="..\..\engine\portable\include\ui_panel.h" />
+		<Unit filename="..\..\engine\portable\include\ui2_main.h" />
 		<Unit filename="..\..\engine\portable\src\animator.c" />
 		<Unit filename="..\..\engine\portable\src\b_command.c">
 			<Option compilerVar="CC" />
@@ -831,6 +832,7 @@
 		<Unit filename="..\..\engine\portable\src\ui_panel.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\ui2_main.c" />
 		<Unit filename="..\..\engine\unix\include\dd_uinit.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

@@ -3,8 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,19 +21,18 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDENG_INFINE_MAIN_H
-#define LIBDENG_INFINE_MAIN_H
+#ifndef LIBDENG_UI2_MAIN_H
+#define LIBDENG_UI2_MAIN_H
 
-#include "finaleinterpreter.h"
+/// We'll use the base template directly as our object.
+typedef struct fi_object_s {
+    FIOBJECT_BASE_ELEMENTS()
+} fi_object_t;
 
-/**
- * Called during pre-init to register cvars and ccmds for the finale system.
- */
-void FI_Register(void);
+void UI_Init(void);
+void UI_Shutdown(void);
 
-void FI_Init(void);
-void FI_Shutdown(void);
+void UI2_Ticker(timespan_t ticLength);
+void UI2_Drawer(void);
 
-void FI_Ticker(timespan_t time);
-
-#endif /* LIBDENG_INFINE_MAIN_H */
+#endif /* LIBDENG_UI2_MAIN_H */

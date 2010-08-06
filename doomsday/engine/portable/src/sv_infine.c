@@ -28,6 +28,7 @@
 
 #include "de_base.h"
 #include "de_network.h"
+#include "de_infine.h"
 
 /**
  * The actual script is sent to the clients. 'script' can be NULL.

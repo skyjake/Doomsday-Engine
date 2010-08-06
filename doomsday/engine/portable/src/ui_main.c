@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * ui_main.c: Graphical User Interface
+ * Graphical User Interface
  *
  * Has ties to the console routines.
  */
@@ -97,8 +97,8 @@ static int     uiFontHgt;                   // Height of the UI font.
 static DGLuint uiTextures[NUM_UITEXTURES];  // Cursor texture.
 static int     uiCX, uiCY;                  // Cursor position.
 static int     uiRestCX, uiRestCY;
-static int     uiRestStart;                 // Start time of current resting.
-static int     uiRestTime = TICSPERSEC / 2; // 500 ms.
+static uint uiRestStart; /// Start time of current resting.
+static uint uiRestTime = TICSPERSEC / 2; /// 500 ms.
 static int     uiRestOffsetLimit = 2;
 static int     uiMoved;                     // True if the mouse has been moved.
 static float   uiAlpha = 1.0;               // Main alpha for the entire UI.
@@ -142,7 +142,7 @@ void UI_Register(void)
 /**
  * Called when entering a ui page
  */
-void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
+void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
              boolean noescape)
 {
     if(uiActive)
@@ -329,10 +329,10 @@ void UI_ClearTextures(void)
 /**
  * Sets focus to the object that should get focus by default.
  */
-void UI_DefaultFocus(ui_page_t *page)
+void UI_DefaultFocus(ui_page_t* page)
 {
-    ui_object_t *deffocus = NULL;
-    int         i;
+    ui_object_t* deffocus = NULL;
+    uint i;
 
     for(i = 0; i < page->count; ++i)
     {
@@ -364,20 +364,19 @@ void UI_DefaultFocus(ui_page_t *page)
 /**
  * Initialises ui page data prior to use
  */
-void UI_InitPage(ui_page_t *page, ui_object_t *objects)
+void UI_InitPage(ui_page_t* page, ui_object_t* objects)
 {
-    int         i;
     ui_object_t meta;
+    uint i;
 
     memset(&meta, 0, sizeof(meta));
     memset(page, 0, sizeof(*page));
     page->objects = objects;
-    page->capture = -1;    // No capture.
+    page->capture = -1; /// No capture.
     page->focus = -1;
     page->responder = UIPage_Responder;
     page->drawer = UIPage_Drawer;
-    page->background = true;    // render background by default
-    page->header = true;    // render header by default
+    page->flags.showBackground = true; /// Draw background by default.
     page->ticker = UIPage_Ticker;
     page->count = UI_CountObjects(objects);
     for(i = 0; i < page->count; ++i)
@@ -413,7 +412,7 @@ void UI_InitPage(ui_page_t *page, ui_object_t *objects)
         objects[i].relx += meta.relx;
         objects[i].rely += meta.rely;
         objects[i].relw += meta.relw;
-            objects[i].relh += meta.relh;
+        objects[i].relh += meta.relh;
     }
 }
 
@@ -459,10 +458,10 @@ int UI_ScreenH(int relh)
 /**
  * Change and prepare the active page.
  */
-void UI_SetPage(ui_page_t *page)
+void UI_SetPage(ui_page_t* page)
 {
-    int         i;
-    ui_object_t *ob;
+    ui_object_t* ob;
+    uint i;
 
     uiCurrentPage = page;
     if(!page)
@@ -687,11 +686,10 @@ ui_object_t *UI_FindObject(ui_object_t *list, int group, int flags)
  */
 void UI_MouseFocus(void)
 {
-    int         i;
-    ui_object_t *ob;
+    ui_object_t* ob;
+    uint i;
 
-    for(i = 0, ob = uiCurrentPage->objects; i < uiCurrentPage->count;
-        i++, ob++)
+    for(i = 0, ob = uiCurrentPage->objects; i < uiCurrentPage->count; ++i, ob++)
         if(!(ob->flags & UIF_NO_FOCUS) && UI_MouseInside(ob))
         {
             UI_Focus(ob);
@@ -700,11 +698,11 @@ void UI_MouseFocus(void)
 }
 
 /**
- * @param ob            Must be on the current page! It can't be NULL.
+ * @param ob Must be on the current page! It can't be NULL.
  */
-void UI_Focus(ui_object_t *ob)
+void UI_Focus(ui_object_t* ob)
 {
-    int         i;
+    uint i;
 
     if(!ob)
         Con_Error("UI_Focus: Tried to set focus on NULL.\n");
@@ -748,11 +746,11 @@ void UI_Capture(ui_object_t *ob)
 // Default Callback Functions
 //---------------------------------------------------------------------------
 
-int UIPage_Responder(ui_page_t *page, ddevent_t *ev)
+int UIPage_Responder(ui_page_t* page, ddevent_t* ev)
 {
-    int         i, k;
-    ui_object_t *ob;
-    ddevent_t   translated;
+    ui_object_t* ob;
+    ddevent_t translated;
+    uint i;
 
     // Translate mouse wheel?
     if(IS_MOUSE_DOWN(ev))
@@ -763,8 +761,7 @@ int UIPage_Responder(ui_page_t *page, ddevent_t *ev)
             translated.device = IDEV_KEYBOARD;
             translated.type = E_TOGGLE;
             translated.toggle.state = ETOG_DOWN;
-            translated.toggle.id =
-                (ev->toggle.id == DD_MWHEEL_UP ? DDKEY_UPARROW : DDKEY_DOWNARROW);
+            translated.toggle.id = (ev->toggle.id == DD_MWHEEL_UP ? DDKEY_UPARROW : DDKEY_DOWNARROW);
             ev = &translated;
         }
     }
@@ -789,15 +786,13 @@ int UIPage_Responder(ui_page_t *page, ddevent_t *ev)
             // If we have no more a page, disactive UI.
             if(!uiCurrentPage)
                 UI_End();
-            return true;        // The event was used.
+            return true; // The event was used.
         }
-//        // If current UI is a dialog not requiring input we'll ignore the event
-//        if(dialogActive && !dialogInput)
-//            return false;
 
         // Tab is used for navigation.
         if(ev->toggle.id == DDKEY_TAB)
         {
+            uint k;
             // Remove the focus flag from the current focus object.
             page->objects[page->focus].flags &= ~UIF_FOCUS;
             // Move focus.
@@ -808,27 +803,28 @@ int UIPage_Responder(ui_page_t *page, ddevent_t *ev)
                 // Check range.
                 if(page->focus < 0)
                     page->focus = page->count - 1;
-                else if(page->focus >= page->count)
+                else if((unsigned) page->focus >= page->count)
                     page->focus = 0;
-            }
-            while(++k < page->count &&
-                  (page->objects[page->focus].
-                   flags & (UIF_DISABLED | UIF_NO_FOCUS | UIF_HIDDEN)));
+            } while(++k < page->count && (page->objects[page->focus].flags & (UIF_DISABLED | UIF_NO_FOCUS | UIF_HIDDEN)));
+
             // Flag the new focus object.
             page->objects[page->focus].flags |= UIF_FOCUS;
-            return true;        // The event was used.
+            return true; // The event was used.
         }
     }
+
     // Call responders until someone uses the event.
     // We start with the focus object.
     for(i = 0; i < page->count; ++i)
     {
+        int k;
+
         // Determine the index of the object to process.
         k = page->focus + i;
         // Wrap around.
         if(k < 0)
             k += page->count;
-        if(k >= page->count)
+        if((unsigned)k >= page->count)
             k -= page->count;
         ob = page->objects + k;
         // Check the flags of this object.
@@ -843,11 +839,11 @@ int UIPage_Responder(ui_page_t *page, ddevent_t *ev)
             UI_DefaultFocus(page);
         }*/
         if(!ob->responder)
-            continue;           // Must have a responder.
+            continue; // Must have a responder.
         if(ob->responder(ob, ev))
         {
             // The event was used by this object.
-            UI_Focus(ob);       // Move focus to it.
+            UI_Focus(ob); // Move focus to it.
             return true;
         }
     }
@@ -865,11 +861,11 @@ int UIPage_Responder(ui_page_t *page, ddevent_t *ev)
 /**
  * Call the ticker routine for each object.
  */
-void UIPage_Ticker(ui_page_t *page)
+void UIPage_Ticker(ui_page_t* page)
 {
-    int         i;
-    ui_object_t *ob;
-    boolean     fadedAway = false;
+    boolean fadedAway = false;
+    ui_object_t* ob;
+    uint i;
 
     // Call the ticker of each object, unless they're hidden or paused.
     for(i = 0, ob = page->objects; i < page->count; ++i, ob++)
@@ -896,7 +892,7 @@ void UIPage_Ticker(ui_page_t *page)
         UI_SetAlpha(1.0);
     }
 
-    page->timer++;
+    page->_timer++;
 
     // Check mouse resting.
     if(abs(uiCX - uiRestCX) > uiRestOffsetLimit ||
@@ -905,27 +901,23 @@ void UIPage_Ticker(ui_page_t *page)
         // Restart resting period.
         uiRestCX = uiCX;
         uiRestCY = uiCY;
-        uiRestStart = page->timer;
+        uiRestStart = page->_timer;
     }
 }
 
 /**
  * Draws the ui including all objects on the current page
  */
-void UIPage_Drawer(ui_page_t *page)
+void UIPage_Drawer(ui_page_t* page)
 {
-    int         i;
-    float       t;
-    ui_object_t *ob;
-    ui_color_t  focuscol;
+    ui_object_t* ob;
+    ui_color_t focuscol;
+    float t;
+    uint i;
 
     // Draw background?
-    if(page->background)
+    if(page->flags.showBackground)
         UI_DrawDDBackground(0, 0, theWindow->width, theWindow->height, uiAlpha);
-
-    // Draw title?
-    //if(page->header)
-    //    UI_DrawTitle(page);
 
     // Draw each object, unless they're hidden.
     for(i = 0, ob = page->objects; i < page->count; ++i, ob++)
@@ -959,7 +951,7 @@ void UIPage_Drawer(ui_page_t *page)
         if((ob->flags & UIF_FOCUS) &&
             (ob->type != UI_EDIT || !(ob->flags & UIF_ACTIVE)))
         {
-            t = (1 + sin(page->timer / (float) TICSPERSEC * 1.5f * PI)) / 2;
+            t = (1 + sin(page->_timer / (float) TICSPERSEC * 1.5f * PI)) / 2;
             UI_MixColors(UI_Color(UIC_BRD_LOW), UI_Color(UIC_BRD_HI), &focuscol, t);
             UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER,
                      UI_Color(UIC_BRD_LOW), UI_Color(UIC_BRD_LOW), .2f + t * .3f, -1);
@@ -1884,38 +1876,36 @@ int UI_MouseInsideBox(int x, int y, int w, int h)
 }
 
 /**
- * @return              @c true, if the mouse is inside the object.
+ * @return @c true, if the mouse is inside the object.
  */
-int UI_MouseInside(ui_object_t *ob)
+int UI_MouseInside(ui_object_t* ob)
 {
     return UI_MouseInsideBox(ob->x, ob->y, ob->w, ob->h);
 }
 
 /**
- * @return              @c true, if the mouse hasn't been moved
- *                      for a while.
+ * @return @c true, if the mouse hasn't been moved for a while.
  */
-int UI_MouseResting(ui_page_t *page)
+int UI_MouseResting(ui_page_t* page)
 {
     if(!uiMoved)
         return false;
-    return page->timer - uiRestStart >= uiRestTime;
+    return page->_timer - uiRestStart >= uiRestTime;
 }
 
-void UI_MixColors(ui_color_t *a, ui_color_t *b, ui_color_t *dest,
-                  float amount)
+void UI_MixColors(ui_color_t* a, ui_color_t* b, ui_color_t* dest, float amount)
 {
-    dest->red = (1 - amount) * a->red + amount * b->red;
+    dest->red   = (1 - amount) * a->red   + amount * b->red;
     dest->green = (1 - amount) * a->green + amount * b->green;
-    dest->blue = (1 - amount) * a->blue + amount * b->blue;
+    dest->blue  = (1 - amount) * a->blue  + amount * b->blue;
 }
 
-void UI_SetColorA(ui_color_t *color, float alpha)
+void UI_SetColorA(ui_color_t* color, float alpha)
 {
     glColor4f(color->red, color->green, color->blue, alpha);
 }
 
-void UI_SetColor(ui_color_t *color)
+void UI_SetColor(ui_color_t* color)
 {
     glColor3f(color->red, color->green, color->blue);
 }

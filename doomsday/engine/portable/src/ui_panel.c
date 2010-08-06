@@ -1114,10 +1114,10 @@ void CP_InitCvarSliders(ui_object_t *ob)
  */
 D_CMD(OpenPanel)
 {
-    int         i;
-    ui_object_t *ob, *foc;
-    uidata_list_t *list;
-    cvarbutton_t *cvb;
+    ui_object_t* ob, *foc;
+    uidata_list_t* list;
+    cvarbutton_t* cvb;
+    int i;
 
     Con_Execute(CMDS_DDAY, "conclose", true, false);
 
@@ -1127,8 +1127,6 @@ D_CMD(OpenPanel)
     panel_help_source = NULL;
 
     UI_InitPage(&page_panel, ob_panel);
-    strcpy(page_panel.title,
-           "Doomsday " DOOMSDAY_VERSION_TEXT " Control Panel");
     page_panel.ticker = CP_Ticker;
     page_panel.drawer = CP_Drawer;
     if(argc != 2)
@@ -1224,7 +1222,7 @@ D_CMD(OpenPanel)
         CP_ResolutionList(ob);
     }
 
-    UI_Init(true, true, false, false, false);
+    UI_PageInit(true, true, false, false, false);
     UI_SetPage(&page_panel);
     UI_Focus(foc);
     return true;

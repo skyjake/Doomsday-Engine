@@ -626,8 +626,6 @@ void DD_NetSetup(int serverMode)
     {
         // Prepare Server Setup.
         UI_InitPage(&page_server, ob_server);
-        sprintf(page_server.title, "Doomsday %s Server Setup",
-                DOOMSDAY_VERSION_TEXT);
         strcpy(str_server, serverName);
         strcpy(str_desc, serverInfo);
 
@@ -640,8 +638,6 @@ void DD_NetSetup(int serverMode)
     {
         // Prepare Client Setup.
         UI_InitPage(&page_client, ob_client);
-        sprintf(page_client.title, "Doomsday %s Client Setup",
-                DOOMSDAY_VERSION_TEXT);
         strcpy(str_ipaddr, nptIPAddress);
 
         UI_FlagGroup(ob_client, 1, UIF_ACTIVE, searchMode == SEARCH_MASTER);
@@ -667,7 +663,7 @@ void DD_NetSetup(int serverMode)
     //sprintf(str_ipport, "%.10i", nptIPPort);
     //lst_protocol.selection = nptActive;
 
-    UI_Init(true, true, false, false, false);
+    UI_PageInit(true, true, false, false, false);
     UI_SetPage(serverMode ? &page_server : &page_client);
 
     CP_InitCvarSliders(ob_server);

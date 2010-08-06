@@ -62,6 +62,7 @@
 #include "de_audio.h"
 #include "de_misc.h"
 #include "de_dam.h"
+#include "de_ui.h"
 
 #include "dd_pinit.h"
 
@@ -645,6 +646,9 @@ static int DD_StartupWorker(void *parm)
 
     Con_Message("FI_Init: Initializing InFine.\n");
     FI_Init();
+
+    Con_Message("UI_PageInit: Initializing user interface.\n");
+    UI_Init();
 
     if(gx.PostInit)
         gx.PostInit();
