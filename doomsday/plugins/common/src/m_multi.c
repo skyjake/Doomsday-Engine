@@ -112,7 +112,7 @@ mn_object_t MultiplayerClientItems[] = {
 mn_page_t MultiplayerMenu = {
     MultiplayerItems, 3,
     0,
-    116, 70,
+    { 116, 70 },
     DrawMultiplayerMenu,
     0, &GameTypeMenu,
     .2f,
@@ -212,15 +212,14 @@ mn_page_t GameSetupMenu = {
     GameSetupItems, NUM_GAMESETUP_ITEMS,
     0,
 #if __JDOOM__ || __JDOOM64__
-    90, 54,
+    { 90, 54 },
 #elif __JHERETIC__
-    74, 64,
+    { 74, 64 },
 #elif __JHEXEN__
-    90, 64,
+    { 90, 64 },
 #endif
     DrawGameSetupMenu,
     0, &MultiplayerMenu,
-    .2f,
 #if __JHERETIC__ || __JHEXEN__
     0, 11, { 11, 64 }
 #else
@@ -247,7 +246,7 @@ mn_page_t PlayerSetupMenu = {
     PlayerSetupItems, 4,
 #endif
     0,
-    60, 52,
+    { 60, 52 },
     DrawPlayerSetupMenu,
     0, &MultiplayerMenu,
     .2f,
@@ -464,15 +463,15 @@ void SCEnterMultiplayerMenu(mn_object_t* obj, int option)
     // Show the appropriate menu.
     if(IS_NETGAME)
     {
-        MultiplayerMenu.objects = IS_SERVER ? MultiplayerServerItems : MultiplayerClientItems;
+        MultiplayerMenu._objects = IS_SERVER ? MultiplayerServerItems : MultiplayerClientItems;
         count = IS_SERVER ? 3 : 2;
     }
     else
     {
-        MultiplayerMenu.objects = MultiplayerItems;
+        MultiplayerMenu._objects = MultiplayerItems;
         count = 3;
     }
-    MultiplayerMenu.count = MultiplayerMenu.numVisObjects = count;
+    MultiplayerMenu._size = MultiplayerMenu.numVisObjects = count;
     MultiplayerMenu.focus = 0;
 
     MN_GotoPage(&MultiplayerMenu);

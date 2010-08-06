@@ -1289,7 +1289,7 @@ DEFFC(Delete)
 
 DEFFC(Image)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(fi, FI_PIC, OP_CSTRING(0));
+    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     const char* name = OP_CSTRING(1);
     lumpnum_t lumpNum;
 
@@ -1305,7 +1305,7 @@ DEFFC(Image)
 
 DEFFC(ImageAt)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(fi, FI_PIC, OP_CSTRING(0));
+    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     float x = OP_FLOAT(1);
     float y = OP_FLOAT(2);
     const char* name = OP_CSTRING(3);
@@ -1334,7 +1334,7 @@ static DGLuint loadGraphics(ddresourceclass_t resClass, const char* name,
 
 DEFFC(XImage)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(fi, FI_PIC, OP_CSTRING(0));
+    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     const char* fileName = OP_CSTRING(1);
     DGLuint tex;
 
@@ -1351,7 +1351,7 @@ DEFFC(XImage)
 
 DEFFC(Patch)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(fi, FI_PIC, OP_CSTRING(0));
+    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     const char* name = OP_CSTRING(3);
     patchid_t patch;
 
@@ -1368,13 +1368,13 @@ DEFFC(Patch)
 
 DEFFC(SetPatch)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(fi, FI_PIC, OP_CSTRING(0));
+    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     const char* name = OP_CSTRING(1);
     patchid_t patch;
 
     if((patch = R_PrecachePatch(name, NULL)) != 0)
     {
-        if(!obj->numFrames)
+        if(!((fidata_pic_t*)obj)->numFrames)
         {
             FIData_PicAppendFrame(obj, PFT_PATCH, -1, &patch, 0, false);
             return;
@@ -1382,7 +1382,7 @@ DEFFC(SetPatch)
 
         // Convert the first frame.
         {
-        fidata_pic_frame_t* f = obj->frames[0];
+        fidata_pic_frame_t* f = ((fidata_pic_t*)obj)->frames[0];
         f->type = PFT_PATCH;
         f->texRef.patch = patch;
         f->tics = -1;
@@ -1397,13 +1397,13 @@ DEFFC(ClearAnim)
 {
     if(OP_OBJECT(0) && OP_OBJECT(0)->type == FI_PIC)
     {
-        FIData_PicClearAnimation((fidata_pic_t*)OP_OBJECT(0));
+        FIData_PicClearAnimation(OP_OBJECT(0));
     }
 }
 
 DEFFC(Anim)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(fi, FI_PIC, OP_CSTRING(0));
+    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     const char* name = OP_CSTRING(1);
     int tics = FRACSECS_TO_TICKS(OP_FLOAT(2));
     patchid_t patch;
@@ -1411,16 +1411,15 @@ DEFFC(Anim)
     if((patch = R_PrecachePatch(name, NULL)))
     {
         FIData_PicAppendFrame(obj, PFT_PATCH, tics, &patch, 0, false);
+        ((fidata_pic_t*)obj)->animComplete = false;
     }
     else
         Con_Message("FIC_Anim: Warning, Patch '%s' not found.\n", name);
-
-    obj->animComplete = false;
 }
 
 DEFFC(AnimImage)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(fi, FI_PIC, OP_CSTRING(0));
+    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     const char* name = OP_CSTRING(1);
     int tics = FRACSECS_TO_TICKS(OP_FLOAT(2));
     lumpnum_t lumpNum;
@@ -1428,7 +1427,7 @@ DEFFC(AnimImage)
     if((lumpNum = W_CheckNumForName(name)) != -1)
     {
         FIData_PicAppendFrame(obj, PFT_RAW, tics, &lumpNum, 0, false);
-        obj->animComplete = false;
+        ((fidata_pic_t*)obj)->animComplete = false;
     }
     else
         Con_Message("FIC_AnimImage: Warning, lump '%s' not found.\n", name);
@@ -1436,18 +1435,18 @@ DEFFC(AnimImage)
 
 DEFFC(Repeat)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(fi, FI_PIC, OP_CSTRING(0));
-    obj->flags.looping = true;
+    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
+    ((fidata_pic_t*)obj)->flags.looping = true;
 }
 
 DEFFC(StateAnim)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(fi, FI_PIC, OP_CSTRING(0));
+    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     int stateId = Def_Get(DD_DEF_STATE, OP_CSTRING(1), 0);
     int count = OP_INT(2);
 
     // Animate N states starting from the given one.
-    obj->animComplete = false;
+    ((fidata_pic_t*)obj)->animComplete = false;
     for(; count > 0 && stateId > 0; count--)
     {
         state_t* st = &states[stateId];
@@ -1463,14 +1462,14 @@ DEFFC(StateAnim)
 
 DEFFC(PicSound)
 {
-    fidata_pic_t* obj = (fidata_pic_t*) getObject(fi, FI_PIC, OP_CSTRING(0));
+    fi_object_t* obj = getObject(fi, FI_PIC, OP_CSTRING(0));
     int sound = Def_Get(DD_DEF_SOUND, OP_CSTRING(1), 0);
-    if(!obj->numFrames)
+    if(!((fidata_pic_t*)obj)->numFrames)
     {
         FIData_PicAppendFrame(obj, PFT_MATERIAL, -1, 0, sound, false);
         return;
     }
-    {fidata_pic_frame_t* f = obj->frames[obj->numFrames-1];
+    {fidata_pic_frame_t* f = ((fidata_pic_t*)obj)->frames[((fidata_pic_t*)obj)->numFrames-1];
     f->sound = sound;
     }
 }
@@ -1706,12 +1705,12 @@ DEFFC(EdgeColor)
 
 DEFFC(OffsetX)
 {
-    FIPage_SetImageOffsetX(fi->_pages[PAGE_PICS], OP_FLOAT(0), fi->_inTime);
+    FIPage_SetOffsetX(fi->_pages[PAGE_PICS], OP_FLOAT(0), fi->_inTime);
 }
 
 DEFFC(OffsetY)
 {
-    FIPage_SetImageOffsetY(fi->_pages[PAGE_PICS], OP_FLOAT(0), fi->_inTime);
+    FIPage_SetOffsetY(fi->_pages[PAGE_PICS], OP_FLOAT(0), fi->_inTime);
 }
 
 DEFFC(Sound)
@@ -1762,33 +1761,33 @@ DEFFC(Filter)
 
 DEFFC(Text)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
-    AnimatorVector3_Init(tex->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
-    FIData_TextCopy(tex, OP_CSTRING(3));
-    tex->cursorPos = 0; // Restart the text.
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
+    FIData_TextCopy(obj, OP_CSTRING(3));
+    ((fidata_text_t*)obj)->cursorPos = 0; // Restart the text.
 }
 
 DEFFC(TextFromDef)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     char* str;
-    AnimatorVector3_Init(tex->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
+    AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
     if(!Def_Get(DD_DEF_TEXT, (char*)OP_CSTRING(3), &str))
         str = "(undefined)"; // Not found!
-    FIData_TextCopy(tex, str);
-    tex->cursorPos = 0; // Restart the text.
+    FIData_TextCopy(obj, str);
+    ((fidata_text_t*)obj)->cursorPos = 0; // Restart the text.
 }
 
 DEFFC(TextFromLump)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     int lnum;
 
-    AnimatorVector3_Init(tex->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
+    AnimatorVector3_Init(obj->pos, OP_FLOAT(1), OP_FLOAT(2), 0);
     lnum = W_CheckNumForName(OP_CSTRING(3));
     if(lnum < 0)
     {
-        FIData_TextCopy(tex, "(not found)");
+        FIData_TextCopy(obj, "(not found)");
     }
     else
     {
@@ -1814,25 +1813,25 @@ DEFFC(TextFromLump)
             }
         }
         W_ChangeCacheTag(lnum, PU_CACHE);
-        FIData_TextCopy(tex, str);
+        FIData_TextCopy(obj, str);
         free(str);
     }
-    tex->cursorPos = 0; // Restart.
+    ((fidata_text_t*)obj)->cursorPos = 0; // Restart.
 }
 
 DEFFC(SetText)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
-    FIData_TextCopy(tex, OP_CSTRING(1));
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    FIData_TextCopy(obj, OP_CSTRING(1));
 }
 
 DEFFC(SetTextDef)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     char* str;
     if(!Def_Get(DD_DEF_TEXT, OP_CSTRING(1), &str))
         str = "(undefined)"; // Not found!
-    FIData_TextCopy(tex, str);
+    FIData_TextCopy(obj, str);
 }
 
 DEFFC(DeleteText)
@@ -1848,73 +1847,73 @@ DEFFC(PredefinedTextColor)
 
 DEFFC(TextRGB)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
-    AnimatorVector3_Set(tex->color, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    AnimatorVector3_Set(((fidata_text_t*)obj)->color, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
 }
 
 DEFFC(TextAlpha)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
-    Animator_Set(&tex->color[CA], OP_FLOAT(1), fi->_inTime);
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    Animator_Set(&((fidata_text_t*)obj)->color[CA], OP_FLOAT(1), fi->_inTime);
 }
 
 DEFFC(TextOffX)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
-    Animator_Set(&tex->pos[0], OP_FLOAT(1), fi->_inTime);
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    Animator_Set(&obj->pos[0], OP_FLOAT(1), fi->_inTime);
 }
 
 DEFFC(TextOffY)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
-    Animator_Set(&tex->pos[1], OP_FLOAT(1), fi->_inTime);
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    Animator_Set(&obj->pos[1], OP_FLOAT(1), fi->_inTime);
 }
 
 DEFFC(TextCenter)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
-    tex->textFlags &= ~(DTF_ALIGN_LEFT|DTF_ALIGN_RIGHT);
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t*)obj)->textFlags &= ~(DTF_ALIGN_LEFT|DTF_ALIGN_RIGHT);
 }
 
 DEFFC(TextNoCenter)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
-    tex->textFlags |= DTF_ALIGN_LEFT;
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t*)obj)->textFlags |= DTF_ALIGN_LEFT;
 }
 
 DEFFC(TextScroll)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
-    tex->scrollWait = OP_INT(1);
-    tex->scrollTimer = 0;
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t*)obj)->scrollWait = OP_INT(1);
+    ((fidata_text_t*)obj)->scrollTimer = 0;
 }
 
 DEFFC(TextPos)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
-    tex->cursorPos = OP_INT(1);
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t*)obj)->cursorPos = OP_INT(1);
 }
 
 DEFFC(TextRate)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
-    tex->wait = OP_INT(1);
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t*)obj)->wait = OP_INT(1);
 }
 
 DEFFC(TextLineHeight)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
-    tex->lineheight = OP_FLOAT(1);
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t*)obj)->lineHeight = OP_FLOAT(1);
 }
 
 DEFFC(Font)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
     const char* fontName = OP_CSTRING(1);
     compositefontid_t font;
     if((font = R_CompositeFontNumForName(fontName)))
     {
-        tex->font = font;
+        ((fidata_text_t*)obj)->font = font;
         return;
     }
     Con_Message("FIC_Font: Warning, unknown font '%s'.\n", fontName);
@@ -1922,14 +1921,14 @@ DEFFC(Font)
 
 DEFFC(FontA)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
-    tex->font = R_CompositeFontNumForName("a");
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t*)obj)->font = R_CompositeFontNumForName("a");
 }
 
 DEFFC(FontB)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
-    tex->font = R_CompositeFontNumForName("b");
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    ((fidata_text_t*)obj)->font = R_CompositeFontNumForName("b");
 }
 
 DEFFC(NoMusic)
@@ -1940,20 +1939,20 @@ DEFFC(NoMusic)
 
 DEFFC(TextScaleX)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
-    Animator_Set(&tex->scale[0], OP_FLOAT(1), fi->_inTime);
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    Animator_Set(&obj->scale[0], OP_FLOAT(1), fi->_inTime);
 }
 
 DEFFC(TextScaleY)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
-    Animator_Set(&tex->scale[1], OP_FLOAT(1), fi->_inTime);
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    Animator_Set(&obj->scale[1], OP_FLOAT(1), fi->_inTime);
 }
 
 DEFFC(TextScale)
 {
-    fidata_text_t* tex = (fidata_text_t*) getObject(fi, FI_TEXT, OP_CSTRING(0));
-    AnimatorVector2_Set(tex->scale, OP_FLOAT(1), OP_FLOAT(2), fi->_inTime);
+    fi_object_t* obj = getObject(fi, FI_TEXT, OP_CSTRING(0));
+    AnimatorVector2_Set(obj->scale, OP_FLOAT(1), OP_FLOAT(2), fi->_inTime);
 }
 
 DEFFC(PlayDemo)

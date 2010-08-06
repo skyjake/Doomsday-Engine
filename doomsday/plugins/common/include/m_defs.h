@@ -94,22 +94,20 @@ typedef struct mn_object_s {
 /*@}*/
 
 typedef struct mn_page_unscaledstate_s {
-    int             numVisObjects;
+    uint            numVisObjects;
     int             y;
 } mn_page_unscaledstate_t;
 
 typedef struct mn_page_s {
-    mn_object_t*    objects; // List of objects.
-    int             count;
+    mn_object_t*    _objects; // List of objects.
+    uint            _size;
     int             flags; // @see menuPageFlags.
-    int             originX;
-    int             originY;
+    int             _offset[2];
     void          (*drawer) (const struct mn_page_s*, int, int);
     int             focus; // Index of the focus object.
     struct mn_page_s* previous; // Pointer to the previous page, if any.
-    float           leading;
     // For scrollable multi-pages.
-    int             firstObject, numVisObjects;
+    uint            firstObject, numVisObjects;
     // Scalable pages.
     mn_page_unscaledstate_t unscaled;
 } mn_page_t;

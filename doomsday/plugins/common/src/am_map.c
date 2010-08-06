@@ -1720,13 +1720,12 @@ mn_page_t AutomapMenu = {
     MAPItems, 24,
     0,
 #if __JHERETIC__ || __JHEXEN__
-    64, 28,
+    { 64, 28 },
 #else
-    70, 40,
+    { 70, 40 },
 #endif
     M_DrawMapMenu,
     0, &OptionsMenu,
-    .2f,
 #if __JHERETIC__ || __JHEXEN__
     0, 11, { 11, 28 }
 #else
@@ -1746,6 +1745,6 @@ void M_DrawMapMenu(const mn_page_t* page, int x, int y)
     // Draw the page arrows.
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
     GL_DrawPatch(dpInvPageLeft[!page->firstObject || (mnTime & 8)], x, y - 22);
-    GL_DrawPatch(dpInvPageRight[page->firstObject + page->numVisObjects >= page->count || (mnTime & 8)], 312 - x, y - 22);
+    GL_DrawPatch(dpInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (mnTime & 8)], 312 - x, y - 22);
 #endif
 }

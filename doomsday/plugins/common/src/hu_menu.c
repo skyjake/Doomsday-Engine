@@ -415,40 +415,36 @@ mn_object_t MainItems[] = {
 mn_page_t MainMenu = {
     MainItems, 5,
     0,
-    110, 50,
+    { 110, 50 },
     M_DrawMainMenu,
     0, 0,
-    .125f,
     0, 5
 };
 #elif __JHERETIC__
 mn_page_t MainMenu = {
     MainItems, 5,
     0,
-    110, 56,
+    { 110, 56 },
     M_DrawMainMenu,
     0, 0,
-    .125f,
     0, 5
 };
 #elif __JDOOM64__
 mn_page_t MainMenu = {
     MainItems, 5,
     0,
-    97, 64,
+    { 97, 64 },
     M_DrawMainMenu,
     0, 0,
-    .125f,
     0, 5
 };
 #elif __JDOOM__
 mn_page_t MainMenu = {
     MainItems, 6,
     0,
-    97, 64,
+    { 97, 64 },
     M_DrawMainMenu,
     0, 0,
-    .125f,
     0, 6
 };
 #endif
@@ -463,40 +459,36 @@ mn_object_t NewGameItems[] = {
 mn_page_t GameTypeMenu = {
     NewGameItems, 2,
     0,
-    110, 50,
+    { 110, 50 },
     M_DrawNewGameMenu,
     0, &MainMenu,
-    .125f,
     0, 2
 };
 #elif __JHERETIC__
 mn_page_t GameTypeMenu = {
     NewGameItems, 2,
     0,
-    110, 64,
+    { 110, 64 },
     M_DrawNewGameMenu,
     0, &MainMenu,
-    .125f,
     0, 2
 };
 #elif __JDOOM64__
 mn_page_t GameTypeMenu = {
     NewGameItems, 2,
     0,
-    97, 64,
+    { 97, 64 },
     M_DrawNewGameMenu,
     0, &MainMenu,
-    .125f,
     0, 2
 };
 #else
 mn_page_t GameTypeMenu = {
     NewGameItems, 2,
     0,
-    97, 64,
+    { 97, 64 },
     M_DrawNewGameMenu,
     0, &MainMenu,
-    .125f,
     0, 2
 };
 #endif
@@ -507,10 +499,9 @@ static mn_object_t* ClassItems;
 mn_page_t PlayerClassMenu = {
     0, 0,
     0,
-    66, 66,
+    { 66, 66 },
     M_DrawClassMenu,
     0, &GameTypeMenu,
-    .125f,
     0, 0
 };
 #endif
@@ -523,15 +514,13 @@ static mn_object_t* EpisodeItems;
 mn_page_t EpisodeMenu = {
     0, 0,
     0,
-    48,
 # if __JDOOM__
-    63,
+    { 48, 63 },
 # else
-    50,
+    { 48, 50 },
 # endif
     M_DrawEpisode,
     0, &GameTypeMenu,
-    .125f,
     0, 0
 };
 #endif
@@ -547,11 +536,9 @@ static mn_object_t FilesItems[] = {
 mn_page_t FilesMenu = {
     FilesItems, 2,
     0,
-    110, 60,
+    { 110, 60 },
     M_DrawFilesMenu,
     0, &MainMenu,
-    GF_FONTB,
-    .125f,
     0, 2
 };
 #endif
@@ -574,13 +561,12 @@ mn_page_t LoadMenu = {
     LoadItems, NUMSAVESLOTS,
     0,
 #if __JDOOM__ || __JDOOM64__
-    64, 44,
+    { 64, 44 },
 #else
-    64, 30,
+    { 64, 30 },
 #endif
     M_DrawLoad,
     0, &MainMenu,
-    .125f,
     0, NUMSAVESLOTS
 };
 
@@ -607,13 +593,12 @@ mn_page_t SaveMenu = {
     SaveItems, 1+NUMSAVESLOTS,
     0,
 #if __JDOOM__ || __JDOOM64__
-    64, 24,
+    { 64, 24 },
 #else
-    64, 10,
+    { 64, 10 },
 #endif
     NULL,
     1, &MainMenu,
-    .125f,
     0, 1+NUMSAVESLOTS
 };
 
@@ -630,10 +615,9 @@ static mn_object_t SkillItems[] = {
 mn_page_t SkillLevelMenu = {
     SkillItems, 5,
     0,
-    120, 44,
+    { 120, 44 },
     M_DrawSkillMenu,
     2, &PlayerClassMenu,
-    .125f,
     0, 5
 };
 #elif __JHERETIC__
@@ -649,10 +633,9 @@ static mn_object_t SkillItems[] = {
 mn_page_t SkillLevelMenu = {
     SkillItems, 5,
     0,
-    38, 30,
+    { 38, 30 },
     M_DrawSkillMenu,
     2, &EpisodeMenu,
-    .125f,
     0, 5
 };
 #elif __JDOOM64__
@@ -666,10 +649,9 @@ static mn_object_t SkillItems[] = {
 static mn_page_t SkillLevelMenu = {
     SkillItems, 4,
     0,
-    48, 63,
+    { 48, 63 },
     M_DrawSkillMenu,
     2, &GameTypeMenu,
-    .125f,
     0, 4
 };
 #else
@@ -685,10 +667,9 @@ static mn_object_t SkillItems[] = {
 mn_page_t SkillLevelMenu = {
     SkillItems, 5,
     0,
-    48, 63,
+    { 48, 63 },
     M_DrawSkillMenu,
     2, &EpisodeMenu,
-    .125f,
     0, 5
 };
 #endif
@@ -718,10 +699,9 @@ mn_page_t OptionsMenu = {
     10,
 #endif
     0,
-    110, 63,
+    { 110, 63 },
     M_DrawOptions,
     0, &MainMenu,
-    .2f,
     0,
 #if __JHERETIC__ || __JHEXEN__
     11
@@ -746,15 +726,14 @@ mn_page_t SoundMenu = {
     SoundMenuItems, 5,
     0,
 #if __JHEXEN__
-    70, 25,
+    { 70, 25 },
 #elif __JHERETIC__
-    70, 30,
+    { 70, 30 },
 #elif __JDOOM__ || __JDOOM64__
-    70, 40,
+    { 70, 40 },
 #endif
     M_DrawOptions2,
     0, &OptionsMenu,
-    .2f,
     0, 5
 };
 
@@ -902,13 +881,12 @@ mn_page_t HUDMenu = {
 #endif
     0,
 #if __JDOOM__ || __JDOOM64__
-    80, 40,
+    { 80, 40 },
 #else
-    80, 28,
+    { 80, 28 },
 #endif
     M_DrawHUDMenu,
     0, &OptionsMenu,
-    .2f,
 #if __JHEXEN__
     0, 15        // 21
 #elif __JHERETIC__
@@ -943,10 +921,9 @@ static mn_object_t InventoryItems[] = {
 mn_page_t InventoryMenu = {
     InventoryItems, 12,
     0,
-    78, 48,
+    { 78, 48 },
     M_DrawInventoryMenu,
     0, &OptionsMenu,
-    .2f,
     0, 12, { 12, 48 }
 };
 #endif
@@ -1006,15 +983,14 @@ mn_page_t WeaponMenu = {
 #endif
     MNPF_NOHOTKEYS,
 #if __JDOOM__ || __JDOOM64__
-    78, 40,
+    { 78, 40 },
 #elif __JHERETIC__
-    78, 26,
+    { 78, 26 },
 #elif __JHEXEN__
-    78, 38,
+    { 78, 38 },
 #endif
     M_DrawWeaponMenu,
     1, &OptionsMenu,
-    .2f,
     0, 12, { 12, 38 }
 };
 
@@ -1076,10 +1052,9 @@ static mn_object_t GameplayItems[] = {
 mn_page_t GameplayMenu = {
     GameplayItems, 6,
     0,
-    88, 25,
+    { 88, 25 },
     M_DrawGameplay,
     0, &OptionsMenu,
-    .2f,
     0, 6, { 6, 25 }
 };
 #else
@@ -1092,10 +1067,9 @@ mn_page_t GameplayMenu = {
     GameplayItems, 21,
 #endif
     0,
-    30, 40,
+    { 30, 40 },
     M_DrawGameplay,
     0, &OptionsMenu,
-    .2f,
 #if __JDOOM64__
     0, 16, { 16, 40 }
 #elif __JDOOM__
@@ -1121,10 +1095,9 @@ static mn_object_t ColorWidgetItems[] = {
 static mn_page_t ColorWidgetMenu = {
     ColorWidgetItems, 8,
     MNPF_NOHOTKEYS,
-    98, 60,
+    { 98, 60 },
     NULL,
     0, &OptionsMenu,
-    .2f,
     0, 8
 };
 
@@ -1204,7 +1177,7 @@ static __inline mn_object_t* focusObject(void)
 {
     if(!mnActive)
         return NULL;
-    return &mnCurrentPage->objects[mnFocusObjectIndex];
+    return &mnCurrentPage->_objects[mnFocusObjectIndex];
 }
 
 /**
@@ -1381,10 +1354,10 @@ void M_InitEpisodeMenu(void)
     EpisodeItems[i].type = MN_NONE;
 
     // Finalize setup.
-    EpisodeMenu.objects = EpisodeItems;
-    EpisodeMenu.count = numEpisodes;
-    EpisodeMenu.numVisObjects = MIN_OF(EpisodeMenu.count, 10);
-    EpisodeMenu.originX = SCREENWIDTH/2 - maxw / 2 + 18; // Center the menu appropriately.
+    EpisodeMenu._objects = EpisodeItems;
+    EpisodeMenu._size = numEpisodes;
+    EpisodeMenu.numVisObjects = MIN_OF(EpisodeMenu._size, 10);
+    EpisodeMenu._offset[VX] = SCREENWIDTH/2 - maxw / 2 + 18; // Center the menu appropriately.
 }
 #endif
 
@@ -1441,9 +1414,9 @@ void M_InitPlayerClassMenu(void)
     ClassItems[n].font = GF_FONTB;
 
     // Finalize setup.
-    PlayerClassMenu.objects = ClassItems;
-    PlayerClassMenu.count = count + 1;
-    PlayerClassMenu.numVisObjects = MIN_OF(PlayerClassMenu.count, 10);
+    PlayerClassMenu._objects = ClassItems;
+    PlayerClassMenu._size = count + 1;
+    PlayerClassMenu.numVisObjects = MIN_OF(PlayerClassMenu._size, 10);
 }
 #endif
 
@@ -1485,7 +1458,7 @@ void Hu_MenuInit(void)
             maxw = w;
     }
     // Center the skill menu appropriately.
-    SkillLevelMenu.originX = SCREENWIDTH/2 - maxw / 2 + 12;
+    SkillLevelMenu._offset[VX] = SCREENWIDTH/2 - maxw / 2 + 12;
 #endif
 
     // Play modes.
@@ -1519,8 +1492,8 @@ void Hu_MenuInit(void)
         obj->action = M_QuitDOOM;
         obj->text = "{case}Quit Game";
         obj->patch = &m_quitg.id;
-        MainMenu.count = 5;
-        MainMenu.originY += 8;
+        MainMenu._size = 5;
+        MainMenu._offset[VY] += 8;
         SkillLevelMenu.previous = &GameTypeMenu;
     }
 #elif __JHERETIC__ || __JHEXEN__
@@ -1667,13 +1640,13 @@ void Hu_MenuTicker(timespan_t ticLength)
 void Hu_MenuPageString(char* str, const mn_page_t* page)
 {
     sprintf(str, "PAGE %i/%i", (page->firstObject + page->numVisObjects/2) / page->numVisObjects + 1,
-            (int)ceil((float)page->count/page->numVisObjects));
+            (int)ceil((float)page->_size/page->numVisObjects));
 }
 
 static void calcNumVisObjects(mn_page_t* page)
 {
     page->firstObject = MAX_OF(0, mnFocusObjectIndex - page->numVisObjects/2);
-    page->firstObject = MIN_OF(page->firstObject, page->count - page->numVisObjects);
+    page->firstObject = MIN_OF(page->firstObject, page->_size - page->numVisObjects);
     page->firstObject = MAX_OF(0, page->firstObject);
 }
 
@@ -1699,16 +1672,15 @@ void MN_GotoPage(mn_page_t* page)
     }
     else
     {   // Select the first active obj in this menu.
-        int i;
-
-        for(i = 0; i < page->count; ++i)
+        uint i;
+        for(i = 0; i < page->_size; ++i)
         {
-            const mn_object_t* obj = &page->objects[i];
+            const mn_object_t* obj = &page->_objects[i];
             if(obj->action && !(obj->flags & (MNF_DISABLED|MNF_HIDDEN)))
                 break;
         }
 
-        if(i >= page->count)
+        if(i >= page->_size)
             mnFocusObjectIndex = -1;
         else
             mnFocusObjectIndex = i;
@@ -1729,7 +1701,7 @@ void MN_GotoPage(mn_page_t* page)
 void Hu_MenuDrawer(void)
 {
     float pos[2], offset[2];
-    int i;
+    uint i;
 
     // Popped at the end of the function.
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -1753,21 +1725,21 @@ void Hu_MenuDrawer(void)
     if(mnCurrentPage->unscaled.numVisObjects)
     {
         mnCurrentPage->numVisObjects = mnCurrentPage->unscaled.numVisObjects / cfg.menuScale;
-        mnCurrentPage->originY = (SCREENHEIGHT/2) - ((SCREENHEIGHT/2) - mnCurrentPage->unscaled.y) / cfg.menuScale;
+        mnCurrentPage->_offset[VY] = (SCREENHEIGHT/2) - ((SCREENHEIGHT/2) - mnCurrentPage->unscaled.y) / cfg.menuScale;
     }
 
     if(mnCurrentPage->drawer)
-        mnCurrentPage->drawer(mnCurrentPage, mnCurrentPage->originX, mnCurrentPage->originY);
+        mnCurrentPage->drawer(mnCurrentPage, mnCurrentPage->_offset[VX], mnCurrentPage->_offset[VY]);
 
-    pos[VX] = mnCurrentPage->originX;
-    pos[VY] = mnCurrentPage->originY;
+    pos[VX] = mnCurrentPage->_offset[VX];
+    pos[VY] = mnCurrentPage->_offset[VY];
 
     if(mnAlpha > 0.0125f)
     {
         const mn_object_t* focusObj = focusObject();
-        for(i = mnCurrentPage->firstObject; i < mnCurrentPage->count && i < mnCurrentPage->firstObject + mnCurrentPage->numVisObjects; ++i)
+        for(i = mnCurrentPage->firstObject; i < mnCurrentPage->_size && i < mnCurrentPage->firstObject + mnCurrentPage->numVisObjects; ++i)
         {
-            const mn_object_t* obj = &mnCurrentPage->objects[i];
+            const mn_object_t* obj = &mnCurrentPage->_objects[i];
             int height = 0;
 
             if(obj->type == MN_NONE||(obj->flags & MNF_HIDDEN)||!obj->drawer)
@@ -1850,7 +1822,7 @@ void Hu_MenuDrawer(void)
 
 void Hu_MenuNavigatePage(mn_page_t* page, int pageDelta)
 {
-    int index = MAX_OF(0, mnFocusObjectIndex), oldIndex = index;
+    uint index = MAX_OF(0, mnFocusObjectIndex), oldIndex = index;
 
     if(pageDelta < 0)
     {
@@ -1858,13 +1830,13 @@ void Hu_MenuNavigatePage(mn_page_t* page, int pageDelta)
     }
     else
     {
-        index = MIN_OF(page->count-1, index + page->numVisObjects);
+        index = MIN_OF(page->_size-1, index + page->numVisObjects);
     }
 
     // Don't land on empty objects.
-    while((!page->objects[index].action || (page->objects[index].flags & (MNF_DISABLED|MNF_HIDDEN))) && (index > 0))
+    while((!page->_objects[index].action || (page->_objects[index].flags & (MNF_DISABLED|MNF_HIDDEN))) && (index > 0))
         index--;
-    while((!page->objects[index].action || (page->objects[index].flags & (MNF_DISABLED|MNF_HIDDEN))) && index < page->count)
+    while((!page->_objects[index].action || (page->_objects[index].flags & (MNF_DISABLED|MNF_HIDDEN))) && index < page->_size)
         index++;
 
     if(index != oldIndex)
@@ -1935,9 +1907,9 @@ void Hu_MenuCommand(menucommand_e cmd)
     }
     else
     {
-        int i, hasFocus;
-        int firstVisible, lastVisible; // first and last visible obj
-        int numVisObjectsOffset = 0;
+        uint i, hasFocus;
+        uint firstVisible, lastVisible; // first and last visible obj
+        uint numVisObjectsOffset = 0;
         mn_object_t* obj, *focusObj = focusObject();
         mn_page_t* menu = mnCurrentPage;
         boolean updateFocus = true;
@@ -1956,9 +1928,9 @@ void Hu_MenuCommand(menucommand_e cmd)
 
         firstVisible = menu->firstObject;
         lastVisible = firstVisible + menu->numVisObjects - 1 - numVisObjectsOffset;
-        if(lastVisible > menu->count - 1 - numVisObjectsOffset)
-            lastVisible = menu->count - 1 - numVisObjectsOffset;
-        obj = &menu->objects[hasFocus];
+        if(lastVisible > menu->_size - 1 - numVisObjectsOffset)
+            lastVisible = menu->_size - 1 - numVisObjectsOffset;
+        obj = &menu->_objects[hasFocus];
 
         if(updateFocus)
             menu->focus = mnFocusObjectIndex;
@@ -1998,11 +1970,11 @@ void Hu_MenuCommand(menucommand_e cmd)
             i = 0;
             do
             {
-                if(hasFocus + 1 > menu->count - 1)
+                if(hasFocus + 1 > menu->_size - 1)
                     hasFocus = 0;
                 else
                     hasFocus++;
-            } while((!menu->objects[hasFocus].action || (menu->objects[hasFocus].flags & (MNF_DISABLED|MNF_HIDDEN))) && i++ < menu->count);
+            } while((!menu->_objects[hasFocus].action || (menu->_objects[hasFocus].flags & (MNF_DISABLED|MNF_HIDDEN))) && i++ < menu->_size);
             mnFocusObjectIndex = hasFocus;
             menu_color = 0;
             S_LocalSound(SFX_MENU_NAV_UP, NULL);
@@ -2014,10 +1986,10 @@ void Hu_MenuCommand(menucommand_e cmd)
             do
             {
                 if(hasFocus <= 0)
-                    hasFocus = menu->count - 1;
+                    hasFocus = menu->_size - 1;
                 else
                     hasFocus--;
-            } while((!menu->objects[hasFocus].action || (menu->objects[hasFocus].flags & (MNF_DISABLED|MNF_HIDDEN))) && i++ < menu->count);
+            } while((!menu->_objects[hasFocus].action || (menu->_objects[hasFocus].flags & (MNF_DISABLED|MNF_HIDDEN))) && i++ < menu->_size);
             mnFocusObjectIndex = hasFocus;
             menu_color = 0;
             S_LocalSound(SFX_MENU_NAV_UP, NULL);
@@ -2077,7 +2049,7 @@ int Hu_MenuObjectResponder(event_t* ev)
     mn_object_t* focusObj;
     if(!Hu_MenuIsActive())
         return false;
-    focusObj = &mnCurrentPage->objects[mnFocusObjectIndex];
+    focusObj = &mnCurrentPage->_objects[mnFocusObjectIndex];
     if(focusObj->type != MN_EDIT || (focusObj->flags & (MNF_DISABLED|MNF_INACTIVE|MNF_HIDDEN)))
         return false;
     return MNEdit_Responder(focusObj, ev);
@@ -2111,19 +2083,19 @@ int Hu_MenuResponder(event_t* ev)
     if(cfg.menuHotkeys && !(page->flags & MNPF_NOHOTKEYS) &&
        ev->type == EV_KEY && (ev->state == EVS_DOWN || ev->state == EVS_REPEAT))
     {
-        int i, first, last; // First and last, visible page objects.
+        uint i, first, last; // First and last, visible page objects.
         int cand = toupper(ev->data1);
 
         first = last = page->firstObject;
         last += page->numVisObjects - 1;
 
-        if(last > page->count - 1)
-            last = page->count - 1;
+        if(last > page->_size - 1)
+            last = page->_size - 1;
         page->focus = mnFocusObjectIndex;
 
         for(i = first; i <= last; ++i)
         {
-            const mn_object_t* obj = &page->objects[i];
+            const mn_object_t* obj = &page->_objects[i];
 
             if(obj->text && obj->text[0] && obj->action && !(obj->flags & (MNF_DISABLED|MNF_HIDDEN)))
             {
@@ -2223,8 +2195,8 @@ static void drawColorWidget(void)
 #endif
 
     const mn_page_t* page = &ColorWidgetMenu;
-    int x = ColorWidgetMenu.originX;
-    int y = ColorWidgetMenu.originY;
+    int x = ColorWidgetMenu._offset[VX];
+    int y = ColorWidgetMenu._offset[VY];
 
     M_DrawBackgroundBox(x-24, y-40, BGWIDTH, BGHEIGHT, true, BORDERUP, 1, 1, 1, mnAlpha);
 
@@ -2277,9 +2249,9 @@ void MN_ActivateColorBox(mn_object_t* obj, int option)
         rgba = true;
         currentcolor[3] = *widgetColors[option].a;
 #if __JHERETIC__ || __JHEXEN__
-        ColorWidgetMenu.count = 12;
+        ColorWidgetMenu._size = 12;
 #else
-        ColorWidgetMenu.count = 4;
+        ColorWidgetMenu._size = 4;
 #endif
     }
     else
@@ -2287,20 +2259,13 @@ void MN_ActivateColorBox(mn_object_t* obj, int option)
         rgba = false;
         currentcolor[3] = 1.0f;
 #if __JHERETIC__ || __JHEXEN__
-        ColorWidgetMenu.count = 9;
+        ColorWidgetMenu._size = 9;
 #else
-        ColorWidgetMenu.count = 3;
+        ColorWidgetMenu._size = 3;
 #endif
     }
 
     obj->flags &= ~MNF_INACTIVE; // Activate the widget.
-}
-
-boolean MN_IsObjectVisible(const mn_page_t* page, int obj)
-{
-    if(obj < page->firstObject || obj >= page->firstObject + page->numVisObjects)
-        return false;
-    return true;
 }
 
 /**
@@ -2400,7 +2365,7 @@ void M_DrawClassMenu(const mn_page_t* page, int x, int y)
     if(pClass < 0)
     {   // Random class.
         // Number of user-selectable classes.
-        pClass = (mnTime / 5) % (page->count - 1);
+        pClass = (mnTime / 5) % (page->_size - 1);
     }
 
     R_GetSpriteInfo(STATES[PCLASS_INFO(pClass)->normalState].sprite, ((mnTime >> 3) & 3), &sprInfo);
@@ -2452,7 +2417,7 @@ void M_DrawEpisode(const mn_page_t* page, int x, int y)
     /**
      * \kludge Inform the user episode 6 is designed for deathmatch only.
      */
-    if(mnFocusObjectIndex >= 0 && page->objects[mnFocusObjectIndex].data2 == 5)
+    if(mnFocusObjectIndex >= 0 && page->_objects[mnFocusObjectIndex].data2 == 5)
     {
         const char* str = notDesignedForMessage;
         composeNotDesignedForMessage(GET_TXT(TXT_SINGLEPLAYER));
@@ -3284,7 +3249,7 @@ void M_DrawWeaponMenu(const mn_page_t* page, int x, int y)
     // Draw the page arrows.
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
     GL_DrawPatch(dpInvPageLeft[!page->firstObject || (mnTime & 8)], x, y - 22);
-    GL_DrawPatch(dpInvPageRight[page->firstObject + page->numVisObjects >= page->count || (mnTime & 8)], 312 - x, y - 22);
+    GL_DrawPatch(dpInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (mnTime & 8)], 312 - x, y - 22);
 #endif
 
     /**
@@ -3390,7 +3355,7 @@ void M_DrawHUDMenu(const mn_page_t* page, int x, int y)
     // Draw the page arrows.
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
     GL_DrawPatch(dpInvPageLeft[!page->firstObject || (mnTime & 8)], x, y - 22);
-    GL_DrawPatch(dpInvPageRight[page->firstObject + page->numVisObjects >= page->count || (mnTime & 8)], 312 - x, y - 22);
+    GL_DrawPatch(dpInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (mnTime & 8)], 312 - x, y - 22);
 #endif
 
     // Auto-hide HUD options:
@@ -3720,7 +3685,7 @@ void M_ChooseClass(mn_object_t* obj, int option)
     if(option < 0)
     {   // Random class.
         // Number of user-selectable classes.
-        MenuPClass = (mnTime / 5) % (PlayerClassMenu.count - 1);
+        MenuPClass = (mnTime / 5) % (PlayerClassMenu._size - 1);
     }
     else
     {
@@ -3730,7 +3695,7 @@ void M_ChooseClass(mn_object_t* obj, int option)
     switch(MenuPClass)
     {
     case PCLASS_FIGHTER:
-        SkillLevelMenu.originX = 120;
+        SkillLevelMenu._offset[VX] = 120;
         SkillItems[0].text = GET_TXT(TXT_SKILLF1);
         SkillItems[1].text = GET_TXT(TXT_SKILLF2);
         SkillItems[2].text = GET_TXT(TXT_SKILLF3);
@@ -3739,7 +3704,7 @@ void M_ChooseClass(mn_object_t* obj, int option)
         break;
 
     case PCLASS_CLERIC:
-        SkillLevelMenu.originX = 116;
+        SkillLevelMenu._offset[VX] = 116;
         SkillItems[0].text = GET_TXT(TXT_SKILLC1);
         SkillItems[1].text = GET_TXT(TXT_SKILLC2);
         SkillItems[2].text = GET_TXT(TXT_SKILLC3);
@@ -3748,7 +3713,7 @@ void M_ChooseClass(mn_object_t* obj, int option)
         break;
 
     case PCLASS_MAGE:
-        SkillLevelMenu.originX = 112;
+        SkillLevelMenu._offset[VX] = 112;
         SkillItems[0].text = GET_TXT(TXT_SKILLM1);
         SkillItems[1].text = GET_TXT(TXT_SKILLM2);
         SkillItems[2].text = GET_TXT(TXT_SKILLM3);

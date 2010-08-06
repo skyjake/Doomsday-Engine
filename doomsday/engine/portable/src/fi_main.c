@@ -150,9 +150,9 @@ static void pageClear(fi_page_t* p)
     p->_objects.vector = 0;
     p->_objects.size = 0;
 
-    AnimatorVector4_Init(p->_filter, 0, 0, 0, 0);
-    AnimatorVector2_Init(p->_imgOffset, 0, 0);  
+    AnimatorVector3_Init(p->_offset, 0, 0, 0);  
     AnimatorVector4_Init(p->_bgColor, 1, 1, 1, 0);
+    AnimatorVector4_Init(p->_filter, 0, 0, 0, 0);
     {uint i;
     for(i = 0; i < 9; ++i)
     {
@@ -173,17 +173,12 @@ static void objectsThink(fi_object_collection_t* c)
     for(i = 0; i < c->size; ++i)
     {
         fi_object_t* obj = c->vector[i];
-        switch(obj->type)
-        {
-        case FI_PIC:    FIData_PicThink((fidata_pic_t*)obj);    break;
-        case FI_TEXT:   FIData_TextThink((fidata_text_t*)obj);  break;
-        default: break;
-        }
+        obj->thinker(obj);
     }
 }
 
 static void objectsDraw(fi_object_collection_t* c, fi_obtype_e type,
-    const float worldOrigin[3], const float picOffset[3])
+    const float worldOrigin[3])
 {
     uint i;
     for(i = 0; i < c->size; ++i)
@@ -191,18 +186,7 @@ static void objectsDraw(fi_object_collection_t* c, fi_obtype_e type,
         fi_object_t* obj = c->vector[i];
         if(type != FI_NONE && obj->type != type)
             continue;
-        switch(obj->type)
-        {
-        case FI_PIC:
-            { // Pics have an additional offset.
-            vec3_t origin;
-            V3_Sum(origin, worldOrigin, picOffset);
-            FIData_PicDraw((fidata_pic_t*)obj, origin);
-            break;
-            }
-        case FI_TEXT: FIData_TextDraw((fidata_text_t*)obj, worldOrigin);  break;
-        default: break;
-        }
+        obj->drawer(obj, worldOrigin);
     }
 }
 
@@ -476,20 +460,24 @@ fidata_pic_t* P_CreatePic(fi_objectid_t id, const char* name)
 {
     fidata_pic_t* p = Z_Calloc(sizeof(*p), PU_STATIC, 0);
 
-    p->id = id;
     p->type = FI_PIC;
+    p->drawer = FIData_PicDraw;
+    p->thinker = FIData_PicThink;
+    p->id = id;
+    p->flags.looping = false;
+    p->animComplete = true;
     objectSetName((fi_object_t*)p, name);
     AnimatorVector4_Init(p->color, 1, 1, 1, 1);
     AnimatorVector3_Init(p->scale, 1, 1, 1);
 
-    FIData_PicClearAnimation(p);
+    FIData_PicClearAnimation((fi_object_t*)p);
     return p;
 }
 
 void P_DestroyPic(fidata_pic_t* pic)
 {
     assert(pic);
-    FIData_PicClearAnimation(pic);
+    FIData_PicClearAnimation((fi_object_t*)pic);
     // Call parent destructor.
     FIObject_Destructor((fi_object_t*)pic);
 }
@@ -500,8 +488,12 @@ fidata_text_t* P_CreateText(fi_objectid_t id, const char* name)
 
     fidata_text_t* t = Z_Calloc(sizeof(*t), PU_STATIC, 0);
 
-    t->id = id;
     t->type = FI_TEXT;
+    t->drawer = FIData_TextDraw;
+    t->thinker = FIData_TextThink;
+    t->id = id;
+    t->flags.looping = false;
+    t->animComplete = true;
     t->textFlags = DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS;
     objectSetName((fi_object_t*)t, name);
     AnimatorVector4_Init(t->color, 1, 1, 1, 1);
@@ -509,7 +501,7 @@ fidata_text_t* P_CreateText(fi_objectid_t id, const char* name)
 
     t->wait = 3;
     t->font = R_CompositeFontNumForName("a");
-    t->lineheight = LEADING;
+    t->lineHeight = LEADING;
 
     return t;
 
@@ -750,8 +742,8 @@ void FIPage_RunTic(fi_page_t* p, timespan_t ticLength)
 
     objectsThink(&p->_objects);
 
+    AnimatorVector3_Think(p->_offset);
     AnimatorVector4_Think(p->_bgColor);
-    AnimatorVector2_Think(p->_imgOffset);
     AnimatorVector4_Think(p->_filter);
     {uint i;
     for(i = 0; i < 9; ++i)
@@ -809,22 +801,28 @@ void FIPage_SetBackgroundColorAndAlpha(fi_page_t* p, float red, float green, flo
     AnimatorVector4_Set(p->_bgColor, red, green, blue, alpha, steps);
 }
 
-void FIPage_SetImageOffsetX(fi_page_t* p, float x, int steps)
+void FIPage_SetOffsetX(fi_page_t* p, float x, int steps)
 {
-    if(!p) Con_Error("FIPage_SetImageOffsetX: Invalid page.");
-    Animator_Set(&p->_imgOffset[0], x, steps);
+    if(!p) Con_Error("FIPage_SetOffsetX: Invalid page.");
+    Animator_Set(&p->_offset[VX], x, steps);
 }
 
-void FIPage_SetImageOffsetY(fi_page_t* p, float y, int steps)
+void FIPage_SetOffsetY(fi_page_t* p, float y, int steps)
 {
-    if(!p) Con_Error("FIPage_SetImageOffsetY: Invalid page.");
-    Animator_Set(&p->_imgOffset[1], y, steps);
+    if(!p) Con_Error("FIPage_SetOffsetY: Invalid page.");
+    Animator_Set(&p->_offset[VY], y, steps);
 }
 
-void FIPage_SetImageOffsetXY(fi_page_t* p, float x, float y, int steps)
+void FIPage_SetOffsetZ(fi_page_t* p, float y, int steps)
 {
-    if(!p) Con_Error("FIPage_SetImageOffsetXY: Invalid page.");
-    AnimatorVector2_Set(p->_imgOffset, x, y, steps);
+    if(!p) Con_Error("FIPage_SetOffsetY: Invalid page.");
+    Animator_Set(&p->_offset[VZ], y, steps);
+}
+
+void FIPage_SetOffsetXYZ(fi_page_t* p, float x, float y, float z, int steps)
+{
+    if(!p) Con_Error("FIPage_SetOffsetXYZ: Invalid page.");
+    AnimatorVector3_Set(p->_offset, x, y, z, steps);
 }
 
 void FIPage_SetFilterColorAndAlpha(fi_page_t* p, float red, float green, float blue, float alpha, int steps)
@@ -1044,27 +1042,26 @@ void FI_Drawer(void)
         //glEnable(GL_CULL_FACE);
         glEnable(GL_ALPHA_TEST);
 
-        {vec3_t worldOffset, picOffset;
-        V3_Set(worldOffset, -SCREENWIDTH/2, -SCREENHEIGHT/2, .05f);
-        V3_Set(picOffset, -page->_imgOffset[0].value, -page->_imgOffset[1].value, 0);
-        objectsDraw(&page->_objects, FI_NONE/* treated as 'any' */, worldOffset, picOffset);
+        {vec3_t worldOrigin;
+        V3_Set(worldOrigin, -SCREENWIDTH/2 - page->_offset[VX].value, -SCREENHEIGHT/2 - page->_offset[VY].value, .05f - page->_offset[VZ].value);
+        objectsDraw(&page->_objects, FI_NONE/* treated as 'any' */, worldOrigin);
 
         /*{rendmodelparams_t params;
         memset(&params, 0, sizeof(params));
 
         glEnable(GL_DEPTH_TEST);
 
-        worldOffset[VY] += 50.f / SCREENWIDTH * (40);
-        worldOffset[VZ] += 20; // Suitable default?
-        setupModelParamsForFIObject(&params, "testmodel", worldOffset);
+        worldOrigin[VY] += 50.f / SCREENWIDTH * (40);
+        worldOrigin[VZ] += 20; // Suitable default?
+        setupModelParamsForFIObject(&params, "testmodel", worldOrigin);
         Rend_RenderModel(&params);
 
-        worldOffset[VX] -= 160.f / SCREENWIDTH * (40);
-        setupModelParamsForFIObject(&params, "testmodel", worldOffset);
+        worldOrigin[VX] -= 160.f / SCREENWIDTH * (40);
+        setupModelParamsForFIObject(&params, "testmodel", worldOrigin);
         Rend_RenderModel(&params);
 
-        worldOffset[VX] += 320.f / SCREENWIDTH * (40);
-        setupModelParamsForFIObject(&params, "testmodel", worldOffset);
+        worldOrigin[VX] += 320.f / SCREENWIDTH * (40);
+        setupModelParamsForFIObject(&params, "testmodel", worldOrigin);
         Rend_RenderModel(&params);
 
         glDisable(GL_DEPTH_TEST);}*/
@@ -1101,12 +1098,13 @@ void FI_Drawer(void)
         R_EndBorderedProjection(&borderedProjection);
 }
 
-void FIData_PicThink(fidata_pic_t* p)
+void FIData_PicThink(fi_object_t* obj)
 {
-    assert(p);
+    fidata_pic_t* p = (fidata_pic_t*)obj;
+    if(!obj || obj->type != FI_PIC) Con_Error("FIData_PicThink: Not a FI_PIC.");
 
     // Call parent thinker.
-    FIObject_Think((fi_object_t*)p);
+    FIObject_Think(obj);
 
     AnimatorVector4_Think(p->color);
     AnimatorVector4_Think(p->otherColor);
@@ -1484,9 +1482,11 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     }
 }
 
-void FIData_PicDraw(fidata_pic_t* p, const float worldOffset[3])
+void FIData_PicDraw(fi_object_t* obj, const float offset[3])
 {
-    assert(p);
+    fidata_pic_t* p = (fidata_pic_t*)obj;
+    if(!obj || obj->type != FI_PIC) Con_Error("FIData_PicDraw: Not a FI_PIC.");
+
     {
     vec3_t scale, origin;
     vec4_t rgba, rgba2;
@@ -1501,21 +1501,23 @@ void FIData_PicDraw(fidata_pic_t* p, const float worldOffset[3])
     if(p->numFrames == 0)
         V4_Set(rgba2, p->otherColor[CR].value, p->otherColor[CG].value, p->otherColor[CB].value, p->otherColor[CA].value);
 
-    drawPicFrame(p, p->curFrame, origin, scale, rgba, (p->numFrames==0? rgba2 : rgba), p->angle.value, worldOffset);
+    drawPicFrame(p, p->curFrame, origin, scale, rgba, (p->numFrames==0? rgba2 : rgba), p->angle.value, offset);
     }
 }
 
-uint FIData_PicAppendFrame(fidata_pic_t* p, int type, int tics, void* texRef, short sound,
+uint FIData_PicAppendFrame(fi_object_t* obj, int type, int tics, void* texRef, short sound,
     boolean flagFlipH)
 {
-    assert(p);
+    fidata_pic_t* p = (fidata_pic_t*)obj;
+    if(!obj || obj->type != FI_PIC) Con_Error("FIData_PicAppendFrame: Not a FI_PIC.");
     picAddFrame(p, createPicFrame(type, tics, texRef, sound, flagFlipH));
     return p->numFrames-1;
 }
 
-void FIData_PicClearAnimation(fidata_pic_t* p)
+void FIData_PicClearAnimation(fi_object_t* obj)
 {
-    assert(p);
+    fidata_pic_t* p = (fidata_pic_t*)obj;
+    if(!obj || obj->type != FI_PIC) Con_Error("FIData_PicClearAnimation: Not a FI_PIC.");
     if(p->frames)
     {
         uint i;
@@ -1530,12 +1532,13 @@ void FIData_PicClearAnimation(fidata_pic_t* p)
     p->animComplete = true;
 }
 
-void FIData_TextThink(fidata_text_t* t)
+void FIData_TextThink(fi_object_t* obj)
 {
-    assert(t);
+    fidata_text_t* t = (fidata_text_t*)obj;
+    if(!obj || obj->type != FI_PIC) Con_Error("FIData_TextThink: Not a FI_TEXT.");
 
     // Call parent thinker.
-    FIObject_Think((fi_object_t*)t);
+    FIObject_Think(obj);
 
     AnimatorVector4_Think(t->color);
 
@@ -1559,7 +1562,7 @@ void FIData_TextThink(fidata_text_t* t)
     }
 
     // Is the text object fully visible?
-    t->animComplete = (!t->wait || t->cursorPos >= FIData_TextLength(t));
+    t->animComplete = (!t->wait || t->cursorPos >= FIData_TextLength((fi_object_t*)t));
 }
 
 static int textLineWidth(const char* text, compositefontid_t font)
@@ -1585,40 +1588,42 @@ static int textLineWidth(const char* text, compositefontid_t font)
     return width;
 }
 
-void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
+void FIData_TextDraw(fi_object_t* obj, const float offset[3])
 {
-    assert(tex);
+    fidata_text_t* t = (fidata_text_t*)obj;
+    if(!obj || obj->type != FI_PIC) Con_Error("FIData_TextDraw: Not a FI_TEXT.");
+
     {
     int x = 0, y = 0;
     int ch, linew = -1;
     char* ptr;
     size_t cnt;
 
-    if(!tex->text)
+    if(!t->text)
         return;
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glScalef(.1f/SCREENWIDTH, .1f/SCREENWIDTH, 1);
-    glTranslatef(tex->pos[0].value + offset[VX], tex->pos[1].value + offset[VY], tex->pos[2].value + offset[VZ]);
+    glTranslatef(t->pos[0].value + offset[VX], t->pos[1].value + offset[VY], t->pos[2].value + offset[VZ]);
 
-    if(tex->angle.value != 0)
+    if(t->angle.value != 0)
     {
         // Counter the VGA aspect ratio.
         glScalef(1, 200.0f / 240.0f, 1);
-        glRotatef(tex->angle.value, 0, 0, 1);
+        glRotatef(t->angle.value, 0, 0, 1);
         glScalef(1, 240.0f / 200.0f, 1);
     }
 
-    glScalef(tex->scale[0].value, tex->scale[1].value, tex->scale[2].value);
+    glScalef(t->scale[0].value, t->scale[1].value, t->scale[2].value);
 
     // Draw it.
     // Set color zero (the normal color).
-    useColor(tex->color, 4);
-    for(cnt = 0, ptr = tex->text; *ptr && (!tex->wait || cnt < tex->cursorPos); ptr++)
+    useColor(t->color, 4);
+    for(cnt = 0, ptr = t->text; *ptr && (!t->wait || cnt < t->cursorPos); ptr++)
     {
         if(linew < 0)
-            linew = textLineWidth(ptr, tex->font);
+            linew = textLineWidth(ptr, t->font);
 
         ch = *ptr;
         if(*ptr == '\\') // Escape?
@@ -1634,7 +1639,7 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
 
                 //if(!colorIdx)
                 {   // Use the default color.
-                    color = (animatorvector3_t*) &tex->color;
+                    color = (animatorvector3_t*) &t->color;
                 }
                 /*else
                 {   /// \fixme disabled for now as this violates our ownership model.
@@ -1642,30 +1647,30 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
                     color = &f->_interpreter->_pages[PAGE_TEXT]->_textColor[colorIdx-1];
                 }*/
 
-                glColor4f((*color)[0].value, (*color)[1].value, (*color)[2].value, tex->color[3].value);
+                glColor4f((*color)[0].value, (*color)[1].value, (*color)[2].value, t->color[3].value);
                 continue;
             }
 
             // 'w' = half a second wait, 'W' = second'f wait
             if(*ptr == 'w' || *ptr == 'W') // Wait?
             {
-                if(tex->wait)
-                    cnt += (int) ((float)TICRATE / tex->wait / (*ptr == 'w' ? 2 : 1));
+                if(t->wait)
+                    cnt += (int) ((float)TICRATE / t->wait / (*ptr == 'w' ? 2 : 1));
                 continue;
             }
 
             // 'p' = 5 second wait, 'P' = 10 second wait
             if(*ptr == 'p' || *ptr == 'P') // Longer pause?
             {
-                if(tex->wait)
-                    cnt += (int) ((float)TICRATE / tex->wait * (*ptr == 'p' ? 5 : 10));
+                if(t->wait)
+                    cnt += (int) ((float)TICRATE / t->wait * (*ptr == 'p' ? 5 : 10));
                 continue;
             }
 
             if(*ptr == 'n' || *ptr == 'N') // Newline?
             {
                 x = 0;
-                y += GL_CharHeight('A', tex->font) * (1+tex->lineheight);
+                y += GL_CharHeight('A', t->font) * (1+t->lineHeight);
                 linew = -1;
                 cnt++; // Include newlines in the wait count.
                 continue;
@@ -1676,11 +1681,11 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
         }
 
         // Let'f do Y-clipping (in case of tall text blocks).
-        if(tex->scale[1].value * y + tex->pos[1].value >= -tex->scale[1].value * tex->lineheight &&
-           tex->scale[1].value * y + tex->pos[1].value < SCREENHEIGHT)
+        if(t->scale[1].value * y + t->pos[1].value >= -t->scale[1].value * t->lineHeight &&
+           t->scale[1].value * y + t->pos[1].value < SCREENHEIGHT)
         {
-            GL_DrawChar2(ch, (tex->textFlags & DTF_ALIGN_LEFT) ? x : x - linew / 2, y, tex->font);
-            x += GL_CharWidth(ch, tex->font);
+            GL_DrawChar2(ch, (t->textFlags & DTF_ALIGN_LEFT) ? x : x - linew / 2, y, t->font);
+            x += GL_CharWidth(ch, t->font);
         }
 
         cnt++; // Actual character drawn.
@@ -1691,16 +1696,18 @@ void FIData_TextDraw(fidata_text_t* tex, const float offset[3])
     }
 }
 
-size_t FIData_TextLength(fidata_text_t* tex)
+size_t FIData_TextLength(fi_object_t* obj)
 {
-    assert(tex);
+    fidata_text_t* t = (fidata_text_t*)obj;
+    if(!obj || obj->type != FI_PIC) Con_Error("FIData_TextLength: Not a FI_TEXT.");
+
     {
     size_t cnt = 0;
-    if(tex->text)
+    if(t->text)
     {
-        float secondLen = (tex->wait ? TICRATE / tex->wait : 0);
+        float secondLen = (t->wait ? TICRATE / t->wait : 0);
         const char* ptr;
-        for(ptr = tex->text; *ptr; ptr++)
+        for(ptr = t->text; *ptr; ptr++)
         {
             if(*ptr == '\\') // Escape?
             {
@@ -1724,15 +1731,20 @@ size_t FIData_TextLength(fidata_text_t* tex)
     }
 }
 
-void FIData_TextCopy(fidata_text_t* t, const char* str)
+void FIData_TextCopy(fi_object_t* obj, const char* str)
 {
-    assert(t);
-    assert(str && str[0]);
-    {
-    size_t len = strlen(str) + 1;
+    fidata_text_t* t = (fidata_text_t*)obj;
+    if(!obj || obj->type != FI_PIC) Con_Error("FIData_TextCopy: Not a FI_TEXT.");
+
     if(t->text)
-        Z_Free(t->text);
-    t->text = Z_Malloc(len, PU_STATIC, 0);
-    memcpy(t->text, str, len);
+    {
+        Z_Free(t->text); t->text = 0;
+    }
+
+    if(str && str[0])
+    {
+        size_t len = strlen(str) + 1;
+        t->text = Z_Malloc(len, PU_STATIC, 0);
+        memcpy(t->text, str, len);
     }
 }

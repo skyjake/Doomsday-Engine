@@ -54,12 +54,19 @@ struct fi_page_s;
  * @ingroup video
  */
 #define FIOBJECT_BASE_ELEMENTS() \
+    fi_obtype_e     type; /* Type of the object. */ \
+    int             group; \
+    struct { \
+        char looping:1; /* Animation will loop. */ \
+    } flags; \
+    boolean         animComplete; /* Animation finished (or repeated). */ \
     fi_objectid_t   id; /* Unique id of the object. */ \
     fi_objectname_t name; /* Nice name. */ \
-    fi_obtype_e     type; /* Type of the object. */ \
     animatorvector3_t pos; \
     animator_t      angle; \
-    animatorvector3_t scale;
+    animatorvector3_t scale; \
+    void          (*drawer) (struct fi_object_s*, const float offset[3]); \
+    void          (*thinker) (struct fi_object_s* obj);
 
 struct fi_object_s* FI_NewObject(fi_obtype_e type, const char* name);
 void FI_DeleteObject(struct fi_object_s* obj);
@@ -82,12 +89,14 @@ typedef struct fi_page_s {
     } flags;
 
     /// Child visuals (objects) visible on this page.
-    /// \note Unlike de::Visual the childern are not owned by the page.
+    /// \note Unlike de::Visual the children are not owned by the page.
     fi_object_collection_t _objects;
+
+    /// Offset the world origin.
+    animatorvector3_t _offset;
 
     struct material_s* _bgMaterial;
     animatorvector4_t _bgColor;
-    animatorvector2_t _imgOffset;
     animatorvector4_t _filter;
     animatorvector3_t _textColor[9];
 
@@ -124,14 +133,14 @@ void FIPage_SetBackgroundColor(fi_page_t* page, float red, float green, float bl
 /// Sets the background color and alpha.
 void FIPage_SetBackgroundColorAndAlpha(fi_page_t* page, float red, float green, float blue, float alpha, int steps);
 
-/// Sets the x-axis component of the image offset.
-void FIPage_SetImageOffsetX(fi_page_t* page, float x, int steps);
+/// Sets the x-axis component of the world offset.
+void FIPage_SetOffsetX(fi_page_t* page, float x, int steps);
 
-/// Sets the y-axis component of the image offset.
-void FIPage_SetImageOffsetY(fi_page_t* page, float y, int steps);
+/// Sets the y-axis component of the world offset.
+void FIPage_SetOffsetY(fi_page_t* page, float y, int steps);
 
-/// Sets the image offset.
-void FIPage_SetImageOffsetXY(fi_page_t* page, float x, float y, int steps);
+/// Sets the world offset.
+void FIPage_SetOffsetXYZ(fi_page_t* page, float x, float y, float z, int steps);
 
 /// Sets the filter color and alpha.
 void FIPage_SetFilterColorAndAlpha(fi_page_t* page, float red, float green, float blue, float alpha, int steps);
@@ -166,10 +175,6 @@ typedef struct fidata_pic_frame_s {
 
 typedef struct fidata_pic_s {
     FIOBJECT_BASE_ELEMENTS()
-    struct fidata_pic_flags_s {
-        char looping:1; /// Frame sequence will loop.
-    } flags;
-    boolean animComplete; /// Animation finished (or repeated).
     int tics;
     uint curFrame;
     fidata_pic_frame_t** frames;
@@ -183,10 +188,10 @@ typedef struct fidata_pic_s {
     animatorvector4_t otherEdgeColor;
 } fidata_pic_t;
 
-void FIData_PicThink(fidata_pic_t* pic);
-void FIData_PicDraw(fidata_pic_t* pic, const float offset[3]);
-uint FIData_PicAppendFrame(fidata_pic_t* pic, int type, int tics, void* texRef, short sound, boolean flagFlipH);
-void FIData_PicClearAnimation(fidata_pic_t* pic);
+void FIData_PicThink(struct fi_object_s* pic);
+void FIData_PicDraw(struct fi_object_s* pic, const float offset[3]);
+uint FIData_PicAppendFrame(struct fi_object_s* pic, int type, int tics, void* texRef, short sound, boolean flagFlipH);
+void FIData_PicClearAnimation(struct fi_object_s* pic);
 
 /**
  * Text object.
@@ -197,22 +202,21 @@ typedef struct fidata_text_s {
     FIOBJECT_BASE_ELEMENTS()
     animatorvector4_t color;
     short textFlags; /// @see drawTextFlags
-    boolean animComplete; /// Animation finished (text-typein complete).
     int scrollWait, scrollTimer; /// Automatic scrolling upwards.
     size_t cursorPos;
     int wait, timer;
-    float lineheight;
+    float lineHeight;
     compositefontid_t font;
     char* text;
 } fidata_text_t;
 
-void FIData_TextThink(fidata_text_t* text);
-void FIData_TextDraw(fidata_text_t* text, const float offset[3]);
-void FIData_TextCopy(fidata_text_t* text, const char* str);
+void FIData_TextThink(struct fi_object_s* text);
+void FIData_TextDraw(struct fi_object_s* text, const float offset[3]);
+void FIData_TextCopy(struct fi_object_s* text, const char* str);
 
 /**
  * @return Length of the current text as a counter.
  */
-size_t FIData_TextLength(fidata_text_t* text);
+size_t FIData_TextLength(struct fi_object_s* text);
 
-#endif /* LIBDENG_API_INFINE_H */
+#endif /* LIBDENG_API_GUI_H */

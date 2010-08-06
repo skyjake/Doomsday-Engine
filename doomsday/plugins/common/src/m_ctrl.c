@@ -95,7 +95,6 @@ mn_page_t ControlsMenu = {
     32, 40,
     M_DrawControlsMenu,
     0, &OptionsMenu,
-    .2f,
     0, 17, { 17, 40 }
 };
 #endif
@@ -107,7 +106,6 @@ mn_page_t ControlsMenu = {
     32, 26,
     M_DrawControlsMenu,
     0, &OptionsMenu,
-    .2f,
     0, 15, { 15, 26 }
 };
 #endif
@@ -119,7 +117,6 @@ mn_page_t ControlsMenu = {
     32, 21,
     M_DrawControlsMenu,
     0, &OptionsMenu,
-    .2f,
     0, 16, { 16, 21 }
 };
 #endif
@@ -404,8 +401,8 @@ void M_InitControlsMenu(void)
     }
     ControlsItems[count-1].type = MN_NONE; // Terminate.
 
-    ControlsMenu.objects = ControlsItems;
-    ControlsMenu.count = count;
+    ControlsMenu._objects = ControlsItems;
+    ControlsMenu._size = count;
 }
 
 static void drawSmallText(const char* string, int x, int y)
@@ -635,7 +632,7 @@ void M_DrawControlsMenu(const mn_page_t* page, int x, int y)
     // Draw the page arrows.
     DGL_Color4f(1, 1, 1, Hu_MenuAlpha());
     GL_DrawPatch(dpInvPageLeft[!page->firstObject || (mnTime & 8)], x, y - 12);
-    GL_DrawPatch(dpInvPageRight[page->firstObject + page->numVisObjects >= page->count || (mnTime & 8)], 312 - x, y - 12);
+    GL_DrawPatch(dpInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (mnTime & 8)], 312 - x, y - 12);
 #endif
 
     DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], Hu_MenuAlpha());
@@ -644,7 +641,7 @@ void M_DrawControlsMenu(const mn_page_t* page, int x, int y)
 
 void M_ControlGrabDrawer(void)
 {
-    mn_object_t* grabbing = &MN_CurrentPage()->objects[mnFocusObjectIndex];
+    mn_object_t* grabbing = &MN_CurrentPage()->_objects[mnFocusObjectIndex];
     mndata_bindings_t* binds = (mndata_bindings_t*) grabbing->data;
 
     DGL_SetNoMaterial();
@@ -669,7 +666,7 @@ void M_ControlGrabDrawer(void)
 
 int M_ControlsPrivilegedResponder(event_t* ev)
 {
-    mn_object_t* grabbing = &MN_CurrentPage()->objects[mnFocusObjectIndex];
+    mn_object_t* grabbing = &MN_CurrentPage()->_objects[mnFocusObjectIndex];
     // We're interested in key or button down events.
     if(grabbing && ev->type == EV_SYMBOLIC)
     {
@@ -802,7 +799,7 @@ int M_ControlsPrivilegedResponder(event_t* ev)
          */
 
         // We've finished the grab.
-        MN_CurrentPage()->objects[mnFocusObjectIndex].flags |= MNF_INACTIVE;
+        MN_CurrentPage()->_objects[mnFocusObjectIndex].flags |= MNF_INACTIVE;
         DD_SetInteger(DD_SYMBOLIC_ECHO, false);
         S_LocalSound(SFX_MENU_ACCEPT, NULL);
         return true;
