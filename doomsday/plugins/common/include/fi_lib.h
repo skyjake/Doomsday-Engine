@@ -56,7 +56,7 @@ typedef enum {
  * Called during engine initialization to register any ccmds and cvars
  * used by this library.
  */
-void FI_Register(void);
+void FI_StackRegister(void);
 
 /// Initialize the LIFO stack functionality.
 void FI_StackInit(void);

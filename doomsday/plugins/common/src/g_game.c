@@ -490,7 +490,7 @@ void G_CommonPreInit(void)
     Hu_MsgRegister();           // For the game messages.
     ST_Register();              // For the hud/statusbar.
     X_Register();               // For the crosshair.
-    FI_Register();              // For the InFine lib.
+    FI_StackRegister();         // For the InFine lib.
 
     DD_AddStartupWAD( STARTUPPK3 );
     G_DetectIWADs();

@@ -100,7 +100,7 @@ static ccmd_t ccmds[] = {
 
 // CODE --------------------------------------------------------------------
 
-void FI_Register(void)
+void FI_StackRegister(void)
 {
     int i;
     for(i = 0; ccmds[i].name; ++i)
