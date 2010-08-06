@@ -439,7 +439,7 @@ int Hook_FinaleScriptEvalIf(int hookType, int finaleId, void* paramaters)
     return false;
 }
 
-boolean FI_Responder(event_t* ev)
+boolean FI_Responder(const void* ev)
 {
     if(!finaleStackInited) Con_Error("FI_Responder: Not initialized yet!");
     {fi_state_t* s;
