@@ -955,17 +955,17 @@ ui_object_t *CP_FindHover(void)
 /**
  * Track the mouse and move the documentation window as needed.
  */
-void CP_Ticker(ui_page_t *page)
+void CP_Ticker(ui_page_t* page)
 {
-    int         off;
-    ui_object_t *ob;
-    void       *help;
+    ui_object_t* ob;
+    void* help;
+    int off;
 
     // Normal ticker actions first.
     UIPage_Ticker(page);
 
     // Check if the mouse is inside the options box.
-    ob = UI_FindObject(page->objects, 0, CPID_FRAME);
+    ob = UI_FindObject(page->_objects, 0, CPID_FRAME);
     if(!UI_MouseInside(ob) || !panel_show_help)
     {
         panel_help_active = false;

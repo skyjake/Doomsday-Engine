@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * ui_mpi.c: Multiplayer Setup Interface
+ * Multiplayer Setup Interface
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -356,24 +356,23 @@ void MPIUpdateServerInfo(ui_object_t *ob)
 /*
  * Draw a framed text box.
  */
-void MPIServerInfoDrawer(ui_object_t *ob)
+void MPIServerInfoDrawer(ui_object_t* ob)
 {
-    UI_DrawHelpBox(ob->x, ob->y, ob->w, ob->h,
-                   ob->flags & UIF_DISABLED ? .2f : 1, ob->data);
+    UI_DrawHelpBox(ob->x, ob->y, ob->w, ob->h, ob->flags & UIF_DISABLED ? .2f : 1, ob->data);
 }
 
-void MPIToggleMasterItems(ui_object_t *ob)
+void MPIToggleMasterItems(ui_object_t* ob)
 {
-    UI_FlagGroup(page_server.objects, 1, UIF_DISABLED, UIFG_XOR);
+    UI_FlagGroup(page_server._objects, 1, UIF_DISABLED, UIFG_XOR);
     MPIUpdatePublicButton();
 }
 
-void MPIGotoPage(ui_object_t *ob)
+void MPIGotoPage(ui_object_t* ob)
 {
-    UI_SetPage((ui_page_t *) ob->data);
+    UI_SetPage((ui_page_t*) ob->data);
 }
 
-void MPIGoBack(ui_object_t *ob)
+void MPIGoBack(ui_object_t* ob)
 {
     if(!UI_CurrentPage()->previous)
         UI_End();
@@ -381,7 +380,7 @@ void MPIGoBack(ui_object_t *ob)
         UI_SetPage(UI_CurrentPage()->previous);
 }
 
-void MPIStartServer(ui_object_t *ob)
+void MPIStartServer(ui_object_t* ob)
 {
     N_ShutdownService();
     Con_SetInteger("net-port-control", strtol(str_ipport, 0, 0), true);

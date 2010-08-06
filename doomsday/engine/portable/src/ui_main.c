@@ -74,7 +74,6 @@ int     UI_ListButtonHeight(ui_object_t *ob);
 int     UI_ListThumbPos(ui_object_t *ob);
 void    UI_StrCpyLen(char *dest, char *src, int maxWidth);
 int     UI_MouseInsideBox(int x, int y, int w, int h);
-void    UI_MouseFocus(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -139,11 +138,7 @@ void UI_Register(void)
     CP_Register();
 }
 
-/**
- * Called when entering a ui page
- */
-void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
-             boolean noescape)
+void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame, boolean noescape)
 {
     if(uiActive)
         return;
@@ -179,9 +174,6 @@ void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwg
     uiMoved = false;
 }
 
-/**
- * Called upon exiting a ui page
- */
 void UI_End(void)
 {
     ddevent_t           rel;
@@ -222,57 +214,35 @@ void UI_End(void)
     }
 }
 
-/**
- * @return              @c true, if the UI is currently active.
- */
 boolean UI_IsActive(void)
 {
     return uiActive;
 }
 
-/**
- * @return              Height of the current UI font.
- */
 int UI_FontHeight(void)
 {
     return uiFontHgt;
 }
 
-/**
- * @param id            Id number of the color to return e.g. "UIC_TEXT".
- */
-ui_color_t *UI_Color(uint id)
+ui_color_t* UI_Color(uint id)
 {
     if(id >= NUM_UI_COLORS)
         return NULL;
-
     return &ui_colors[id];
 }
 
-/**
- * Set the alpha level of the entire UI. Alpha levels below one automatically
- * show the game view in addition to the UI.
- *
- * @param alpha         Alpha level to set the UI too (0...1)
- */
 void UI_SetAlpha(float alpha)
 {
     // The UI's alpha will start moving towards this target value.
     uiTargetAlpha = alpha;
 }
 
-/**
- * @return              Current alpha level of the UI.
- */
 float UI_Alpha(void)
 {
     return uiAlpha;
 }
 
-/**
- * @return              Ptr to the current UI page if active.
- */
-ui_page_t *UI_CurrentPage(void)
+ui_page_t* UI_CurrentPage(void)
 {
     if(uiActive)
         return uiCurrentPage;
@@ -280,9 +250,6 @@ ui_page_t *UI_CurrentPage(void)
     return NULL;
 }
 
-/**
- * Called from GL_LoadSystemTextures.
- */
 void UI_LoadTextures(void)
 {
     int                 i;
@@ -326,9 +293,6 @@ void UI_ClearTextures(void)
     memset(uiTextures, 0, sizeof(uiTextures));
 }
 
-/**
- * Sets focus to the object that should get focus by default.
- */
 void UI_DefaultFocus(ui_page_t* page)
 {
     ui_object_t* deffocus = NULL;
@@ -336,13 +300,13 @@ void UI_DefaultFocus(ui_page_t* page)
 
     for(i = 0; i < page->count; ++i)
     {
-        page->objects[i].flags &= ~UIF_FOCUS;
-        if(page->objects[i].flags & UIF_DEFAULT)
-            deffocus = page->objects + i;
+        page->_objects[i].flags &= ~UIF_FOCUS;
+        if(page->_objects[i].flags & UIF_DEFAULT)
+            deffocus = page->_objects + i;
     }
     if(deffocus)
     {
-        page->focus = deffocus - page->objects;
+        page->focus = deffocus - page->_objects;
         deffocus->flags |= UIF_FOCUS;
     }
     else
@@ -350,20 +314,17 @@ void UI_DefaultFocus(ui_page_t* page)
         // Find an object for focus.
         for(i = 0; i < page->count; ++i)
         {
-            if(!(page->objects[i].flags & UIF_NO_FOCUS))
+            if(!(page->_objects[i].flags & UIF_NO_FOCUS))
             {
                 // Set default focus.
                 page->focus = i;
-                page->objects[i].flags |= UIF_FOCUS;
+                page->_objects[i].flags |= UIF_FOCUS;
                 break;
             }
         }
     }
 }
 
-/**
- * Initialises ui page data prior to use
- */
 void UI_InitPage(ui_page_t* page, ui_object_t* objects)
 {
     ui_object_t meta;
@@ -371,7 +332,7 @@ void UI_InitPage(ui_page_t* page, ui_object_t* objects)
 
     memset(&meta, 0, sizeof(meta));
     memset(page, 0, sizeof(*page));
-    page->objects = objects;
+    page->_objects = objects;
     page->capture = -1; /// No capture.
     page->focus = -1;
     page->responder = UIPage_Responder;
@@ -416,9 +377,6 @@ void UI_InitPage(ui_page_t* page, ui_object_t* objects)
     }
 }
 
-/**
- * The width of the available page area, in pixels.
- */
 int UI_AvailableWidth(void)
 {
     return theWindow->width - UI_BORDER * 4;
@@ -429,17 +387,11 @@ int UI_AvailableHeight(void)
     return theWindow->height - UI_BORDER * 4;
 }
 
-/**
- * Convert a relative coordinate to a screen coordinate.
- */
 int UI_ScreenX(int relx)
 {
     return UI_BORDER * 2 + ((relx / UI_WIDTH) * UI_AvailableWidth());
 }
 
-/**
- * Convert a relative coordinate to a screen coordinate.
- */
 int UI_ScreenY(int rely)
 {
     return UI_BORDER * 2 + ((rely / UI_HEIGHT) * UI_AvailableHeight());
@@ -455,9 +407,6 @@ int UI_ScreenH(int relh)
     return (relh / UI_HEIGHT) * UI_AvailableHeight();
 }
 
-/**
- * Change and prepare the active page.
- */
 void UI_SetPage(ui_page_t* page)
 {
     ui_object_t* ob;
@@ -467,7 +416,7 @@ void UI_SetPage(ui_page_t* page)
     if(!page)
         return;
     // Init objects.
-    for(i = 0, ob = page->objects; i < page->count; ++i, ob++)
+    for(i = 0, ob = page->_objects; i < page->count; ++i, ob++)
     {
         // Calculate real coordinates.
         ob->x = UI_ScreenX(ob->relx);
@@ -518,10 +467,7 @@ void UI_SetPage(ui_page_t* page)
     uiMoved = false;
 }
 
-/**
- * Directs events through the ui and current page if active
- */
-int UI_Responder(ddevent_t *ev)
+int UI_Responder(ddevent_t* ev)
 {
     if(!uiActive)
         return false;
@@ -596,9 +542,6 @@ void UI_Ticker(timespan_t time)
 #undef UIALPHA_FADE_STEP
 }
 
-/**
- * Draws the current ui page if active
- */
 void UI_Drawer(void)
 {
     if(!uiActive || !uiCurrentPage)
@@ -669,10 +612,7 @@ void UI_FlagGroup(ui_object_t *list, int group, int flags, int set)
         }
 }
 
-/**
- * All the specified flags must be set.
- */
-ui_object_t *UI_FindObject(ui_object_t *list, int group, int flags)
+ui_object_t* UI_FindObject(ui_object_t* list, int group, int flags)
 {
     for(; list->type; list++)
         if(list->group == group && (list->flags & flags) == flags)
@@ -681,15 +621,12 @@ ui_object_t *UI_FindObject(ui_object_t *list, int group, int flags)
     return NULL;
 }
 
-/**
- * Set focus to the object under the mouse cursor.
- */
 void UI_MouseFocus(void)
 {
     ui_object_t* ob;
     uint i;
 
-    for(i = 0, ob = uiCurrentPage->objects; i < uiCurrentPage->count; ++i, ob++)
+    for(i = 0, ob = uiCurrentPage->_objects; i < uiCurrentPage->count; ++i, ob++)
         if(!(ob->flags & UIF_NO_FOCUS) && UI_MouseInside(ob))
         {
             UI_Focus(ob);
@@ -697,9 +634,6 @@ void UI_MouseFocus(void)
         }
 }
 
-/**
- * @param ob Must be on the current page! It can't be NULL.
- */
 void UI_Focus(ui_object_t* ob)
 {
     uint i;
@@ -711,20 +645,16 @@ void UI_Focus(ui_object_t* ob)
     if(ob->flags & UIF_NO_FOCUS)
         return;
 
-    uiCurrentPage->focus = ob - uiCurrentPage->objects;
+    uiCurrentPage->focus = ob - uiCurrentPage->_objects;
     for(i = 0; i < uiCurrentPage->count; ++i)
     {
         if(i == uiCurrentPage->focus)
-            uiCurrentPage->objects[i].flags |= UIF_FOCUS;
+            uiCurrentPage->_objects[i].flags |= UIF_FOCUS;
         else
-            uiCurrentPage->objects[i].flags &= ~UIF_FOCUS;
+            uiCurrentPage->_objects[i].flags &= ~UIF_FOCUS;
     }
 }
 
-/**
- * @param ob            If @c NULL,, capture is ended.
- *                      Must be on the current page!
- */
 void UI_Capture(ui_object_t *ob)
 {
     if(!ob)
@@ -737,7 +667,7 @@ void UI_Capture(ui_object_t *ob)
         return;                 // Sorry, pal...
 
     // Set the capture object.
-    uiCurrentPage->capture = ob - uiCurrentPage->objects;
+    uiCurrentPage->capture = ob - uiCurrentPage->_objects;
     // Set focus.
     UI_Focus(ob);
 }
@@ -769,7 +699,7 @@ int UIPage_Responder(ui_page_t* page, ddevent_t* ev)
     if(page->capture >= 0)
     {
         // There is an object that has captured input.
-        ob = page->objects + page->capture;
+        ob = page->_objects + page->capture;
         // Capture objects must have a responder!
         // This object gets to decide what happens.
         return ob->responder(ob, ev);
@@ -794,7 +724,7 @@ int UIPage_Responder(ui_page_t* page, ddevent_t* ev)
         {
             uint k;
             // Remove the focus flag from the current focus object.
-            page->objects[page->focus].flags &= ~UIF_FOCUS;
+            page->_objects[page->focus].flags &= ~UIF_FOCUS;
             // Move focus.
             k = 0;
             do
@@ -805,10 +735,10 @@ int UIPage_Responder(ui_page_t* page, ddevent_t* ev)
                     page->focus = page->count - 1;
                 else if((unsigned) page->focus >= page->count)
                     page->focus = 0;
-            } while(++k < page->count && (page->objects[page->focus].flags & (UIF_DISABLED | UIF_NO_FOCUS | UIF_HIDDEN)));
+            } while(++k < page->count && (page->_objects[page->focus].flags & (UIF_DISABLED | UIF_NO_FOCUS | UIF_HIDDEN)));
 
             // Flag the new focus object.
-            page->objects[page->focus].flags |= UIF_FOCUS;
+            page->_objects[page->focus].flags |= UIF_FOCUS;
             return true; // The event was used.
         }
     }
@@ -826,7 +756,7 @@ int UIPage_Responder(ui_page_t* page, ddevent_t* ev)
             k += page->count;
         if((unsigned)k >= page->count)
             k -= page->count;
-        ob = page->objects + k;
+        ob = page->_objects + k;
         // Check the flags of this object.
         if((ob->flags & UIF_HIDDEN) || (ob->flags & UIF_DISABLED))
             continue;           // These flags prevent response.
@@ -858,9 +788,6 @@ int UIPage_Responder(ui_page_t* page, ddevent_t* ev)
     return false;
 }
 
-/**
- * Call the ticker routine for each object.
- */
 void UIPage_Ticker(ui_page_t* page)
 {
     boolean fadedAway = false;
@@ -868,7 +795,7 @@ void UIPage_Ticker(ui_page_t* page)
     uint i;
 
     // Call the ticker of each object, unless they're hidden or paused.
-    for(i = 0, ob = page->objects; i < page->count; ++i, ob++)
+    for(i = 0, ob = page->_objects; i < page->count; ++i, ob++)
     {
         if((ob->flags & UIF_PAUSED) || (ob->flags & UIF_HIDDEN))
             continue;
@@ -905,9 +832,6 @@ void UIPage_Ticker(ui_page_t* page)
     }
 }
 
-/**
- * Draws the ui including all objects on the current page
- */
 void UIPage_Drawer(ui_page_t* page)
 {
     ui_object_t* ob;
@@ -920,7 +844,7 @@ void UIPage_Drawer(ui_page_t* page)
         UI_DrawDDBackground(0, 0, theWindow->width, theWindow->height, uiAlpha);
 
     // Draw each object, unless they're hidden.
-    for(i = 0, ob = page->objects; i < page->count; ++i, ob++)
+    for(i = 0, ob = page->_objects; i < page->count; ++i, ob++)
     {
         float currentUIAlpha = uiAlpha;
 
@@ -1875,17 +1799,11 @@ int UI_MouseInsideBox(int x, int y, int w, int h)
     return (uiCX >= x && uiCX <= x + w && uiCY >= y && uiCY <= y + h);
 }
 
-/**
- * @return @c true, if the mouse is inside the object.
- */
 int UI_MouseInside(ui_object_t* ob)
 {
     return UI_MouseInsideBox(ob->x, ob->y, ob->w, ob->h);
 }
 
-/**
- * @return @c true, if the mouse hasn't been moved for a while.
- */
 int UI_MouseResting(ui_page_t* page)
 {
     if(!uiMoved)
@@ -2012,17 +1930,11 @@ void UI_Line(int x1, int y1, int x2, int y2, ui_color_t *start,
     glEnable(GL_TEXTURE_2D);
 }
 
-/**
- * Draw white, shadowed text.
- */
 void UI_TextOut(const char *text, int x, int y)
 {
     UI_TextOutEx(text, x, y, false, false, UI_Color(UIC_TEXT), 1);
 }
 
-/**
- * Draw shadowed text.
- */
 void UI_TextOutEx(const char *text, int x, int y, int horizCenter, int vertCenter,
                   ui_color_t *color, float alpha)
 {
@@ -2050,10 +1962,6 @@ int UI_TextOutWrap(const char *text, int x, int y, int w, int h)
     return UI_TextOutWrapEx(text, x, y, w, h, UI_Color(UIC_TEXT), 1);
 }
 
-/**
- * Draw line-wrapped text inside a box. Returns the Y coordinate of the
- * last word.
- */
 int UI_TextOutWrapEx(const char *text, int x, int y, int w, int h,
                      ui_color_t *color, float alpha)
 {
@@ -2287,10 +2195,6 @@ void UI_DrawTriangle(int x, int y, int radius, ui_color_t *hi,
     glEnable(GL_TEXTURE_2D);
 }
 
-/**
- * A horizontal triangle, pointing left or right. Positive radius
- * means left.
- */
 void UI_DrawHorizTriangle(int x, int y, int radius, ui_color_t *hi,
                           ui_color_t *med, ui_color_t *low, float alpha)
 {
@@ -2403,14 +2307,6 @@ void UI_DrawHelpBox(int x, int y, int w, int h, float alpha, char *text)
     }
 }
 
-/**
- * Draw the mouse cursor at the given x, y co-ordinates.
- *
- * @param x         X coordinate.
- * @param y         Y coordinate.
- * @param w         Width of the cursor.
- * @param h         Height of the cursor.
- */
 void UI_DrawMouse(int x, int y, int w, int h)
 {
     glColor3f(1, 1, 1);
@@ -2433,15 +2329,6 @@ void UI_DrawLogo(int x, int y, int w, int h)
     GL_DrawRect(x, y, w, h, 1, 1, 1, uiAlpha);
 }
 
-/**
- * Background with the "The Doomsday Engine" text superimposed.
- *
- * @param x         X coordinate (left) to draw the background.
- * @param y         Y coordinate (top) to draw the background.
- * @param w         Width (from left) to draw the background.
- * @param h         Height (from top) to draw the background.
- * @param alpha     Alpha level to use when drawing the background.
- */
 void UI_DrawDDBackground(float x, float y, float w, float h, float alpha)
 {
     float       mul = (uiTextures[UITEX_BACKGROUND]? 1.5f : 1.0f);
@@ -2484,8 +2371,8 @@ void UI_DrawDDBackground(float x, float y, float w, float h, float alpha)
  */
 D_CMD(UIColor)
 {
-    const char *objects[] =     // Also a mapping to UIC.
-    {
+    // Also a mapping to UIC.
+    const char* objects[] = {
         "text",
         "title",
         "shadow",
@@ -2498,14 +2385,14 @@ D_CMD(UIColor)
         "help",
         NULL
     };
-    int         i;
+    size_t i;
 
     for(i = 0; objects[i]; ++i)
         if(!stricmp(argv[1], objects[i]))
         {
-            ui_colors[i].red = strtod(argv[2], 0);
+            ui_colors[i].red   = strtod(argv[2], 0);
             ui_colors[i].green = strtod(argv[3], 0);
-            ui_colors[i].blue = strtod(argv[4], 0);
+            ui_colors[i].blue  = strtod(argv[4], 0);
             return true;
         }
 
