@@ -95,6 +95,8 @@ typedef struct fi_page_s {
     /// Offset the world origin.
     animatorvector3_t _offset;
 
+    void (*drawer) (struct fi_page_s* page);
+
     struct material_s* _bgMaterial;
     animatorvector4_t _bgColor;
     animatorvector4_t _filter;
@@ -105,6 +107,9 @@ typedef struct fi_page_s {
 
 fi_page_t* FI_NewPage(void);
 void FI_DeletePage(fi_page_t* page);
+
+/// Draws the page if not hidden.
+void FIPage_Drawer(fi_page_t* p);
 
 /// Adds a UI object to the page if not already present.
 struct fi_object_s* FIPage_AddObject(fi_page_t* page, struct fi_object_s* obj);

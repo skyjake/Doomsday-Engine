@@ -83,15 +83,15 @@ void                P_DestroyPic(fidata_pic_t* pic);
 
 static boolean inited = false;
 
+/// Scripts.
+static uint finalesSize;
+static finale_t* finales;
+
 /// Allow stretching to fill the screen at near 4:3 aspect ratios?
 static byte noStretch = false;
 
 static uint numPages;
 static fi_page_t** pages;
-
-/// Scripts.
-static uint finalesSize;
-static finale_t* finales;
 
 /// Global object store.
 static fi_object_collection_t objects;
@@ -163,6 +163,7 @@ static void pageClear(fi_page_t* p)
 static fi_page_t* newPage(void)
 {
     fi_page_t* p = Z_Calloc(sizeof(*p), PU_STATIC, 0);
+    p->drawer = FIPage_Drawer;
     pageClear(p);
     return p;
 }
@@ -719,6 +720,116 @@ void FI_DeleteObject(fi_object_t* obj)
     }
 }
 
+static void useColor(const animator_t* color, int components)
+{
+    if(components == 3)
+    {
+        glColor3f(color[0].value, color[1].value, color[2].value);
+    }
+    else if(components == 4)
+    {
+        glColor4f(color[0].value, color[1].value, color[2].value, color[3].value);
+    }
+}
+
+void FIPage_Drawer(fi_page_t* p)
+{
+    if(!p) Con_Error("FIPage_Drawer: Invalid page.");
+
+    if(p->flags.hidden)
+        return;
+
+    // First, draw the background.
+    if(p->_bgMaterial)
+    {
+        useColor(p->_bgColor, 4);
+        DGL_SetMaterial(p->_bgMaterial);
+        DGL_DrawRectTiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
+    }
+    else if(p->_bgColor[3].value > 0)
+    {
+        // Just clear the screen, then.
+        DGL_Disable(DGL_TEXTURING);
+        DGL_DrawRect(0, 0, SCREENWIDTH, SCREENHEIGHT, p->_bgColor[0].value, p->_bgColor[1].value, p->_bgColor[2].value, p->_bgColor[3].value);
+        DGL_Enable(DGL_TEXTURING);
+    }
+
+    // Now lets go into 3D mode for drawing the p objects.
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+
+    GL_SetMultisample(true);
+
+    // The 3D projection matrix.
+    // We're assuming pixels are squares.
+    {float aspect = theWindow->width / (float) theWindow->height;
+    yfov = 2 * RAD2DEG(atan(tan(DEG2RAD(90) / 2) / aspect));
+    GL_InfinitePerspective(yfov, aspect, .05f);}
+
+    // We need a left-handed yflipped coordinate system.
+    glScalef(1, -1, -1);
+
+    // Clear Z buffer (prevent the objects being clipped by nearby polygons).
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    if(renderWireframe)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //glEnable(GL_CULL_FACE);
+    glEnable(GL_ALPHA_TEST);
+
+    {vec3_t worldOrigin;
+    V3_Set(worldOrigin, -SCREENWIDTH/2 - p->_offset[VX].value, -SCREENHEIGHT/2 - p->_offset[VY].value, .05f - p->_offset[VZ].value);
+    objectsDraw(&p->_objects, FI_NONE/* treated as 'any' */, worldOrigin);
+
+    /*{rendmodelparams_t params;
+    memset(&params, 0, sizeof(params));
+
+    glEnable(GL_DEPTH_TEST);
+
+    worldOrigin[VY] += 50.f / SCREENWIDTH * (40);
+    worldOrigin[VZ] += 20; // Suitable default?
+    setupModelParamsForFIObject(&params, "testmodel", worldOrigin);
+    Rend_RenderModel(&params);
+
+    worldOrigin[VX] -= 160.f / SCREENWIDTH * (40);
+    setupModelParamsForFIObject(&params, "testmodel", worldOrigin);
+    Rend_RenderModel(&params);
+
+    worldOrigin[VX] += 320.f / SCREENWIDTH * (40);
+    setupModelParamsForFIObject(&params, "testmodel", worldOrigin);
+    Rend_RenderModel(&params);
+
+    glDisable(GL_DEPTH_TEST);}*/
+    }
+
+    // Restore original matrices and state: back to normal 2D.
+    glDisable(GL_ALPHA_TEST);
+    //glDisable(GL_CULL_FACE);
+    // Back from wireframe mode?
+    if(renderWireframe)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    
+    // Filter on top of everything. Only draw if necessary.
+    if(p->_filter[3].value > 0)
+    {
+        DGL_Disable(DGL_TEXTURING);
+        useColor(p->_filter, 4);
+        glBegin(GL_QUADS);
+            glVertex2f(0, 0);
+            glVertex2f(SCREENWIDTH, 0);
+            glVertex2f(SCREENWIDTH, SCREENHEIGHT);
+            glVertex2f(0, SCREENHEIGHT);
+        glEnd();
+        DGL_Enable(DGL_TEXTURING);
+    }
+
+    GL_SetMultisample(false);
+
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
 void FIPage_MakeVisible(fi_page_t* p, boolean yes)
 {
     if(!p) Con_Error("FIPage_MakeVisible: Invalid page.");
@@ -924,18 +1035,6 @@ int FI_ScriptResponder(finaleid_t id, const void* ev)
     return false;
 }
 
-static void useColor(const animator_t* color, int components)
-{
-    if(components == 3)
-    {
-        glColor3f(color[0].value, color[1].value, color[2].value);
-    }
-    else if(components == 4)
-    {
-        glColor4f(color[0].value, color[1].value, color[2].value, color[3].value);
-    }
-}
-
 #if _DEBUG
 static void setupModelParamsForFIObject(rendmodelparams_t* params, const char* modelId, const float worldOffset[3])
 {
@@ -999,99 +1098,7 @@ void FI_Drawer(void)
     for(i = 0; i < numPages; ++i)
     {
         fi_page_t* page = pages[i];
-
-        if(page->flags.hidden)
-            continue;
-
-        // First, draw the background.
-        if(page->_bgMaterial)
-        {
-            useColor(page->_bgColor, 4);
-            DGL_SetMaterial(page->_bgMaterial);
-            DGL_DrawRectTiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
-        }
-        else if(page->_bgColor[3].value > 0)
-        {
-            // Just clear the screen, then.
-            DGL_Disable(DGL_TEXTURING);
-            DGL_DrawRect(0, 0, SCREENWIDTH, SCREENHEIGHT, page->_bgColor[0].value, page->_bgColor[1].value, page->_bgColor[2].value, page->_bgColor[3].value);
-            DGL_Enable(DGL_TEXTURING);
-        }
-
-        // Now lets go into 3D mode for drawing the page objects.
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-        glLoadIdentity();
-
-        GL_SetMultisample(true);
-
-        // The 3D projection matrix.
-        // We're assuming pixels are squares.
-        {float aspect = theWindow->width / (float) theWindow->height;
-        yfov = 2 * RAD2DEG(atan(tan(DEG2RAD(90) / 2) / aspect));
-        GL_InfinitePerspective(yfov, aspect, .05f);}
-
-        // We need a left-handed yflipped coordinate system.
-        glScalef(1, -1, -1);
-
-        // Clear Z buffer (prevent the objects being clipped by nearby polygons).
-        glClear(GL_DEPTH_BUFFER_BIT);
-
-        if(renderWireframe)
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        //glEnable(GL_CULL_FACE);
-        glEnable(GL_ALPHA_TEST);
-
-        {vec3_t worldOrigin;
-        V3_Set(worldOrigin, -SCREENWIDTH/2 - page->_offset[VX].value, -SCREENHEIGHT/2 - page->_offset[VY].value, .05f - page->_offset[VZ].value);
-        objectsDraw(&page->_objects, FI_NONE/* treated as 'any' */, worldOrigin);
-
-        /*{rendmodelparams_t params;
-        memset(&params, 0, sizeof(params));
-
-        glEnable(GL_DEPTH_TEST);
-
-        worldOrigin[VY] += 50.f / SCREENWIDTH * (40);
-        worldOrigin[VZ] += 20; // Suitable default?
-        setupModelParamsForFIObject(&params, "testmodel", worldOrigin);
-        Rend_RenderModel(&params);
-
-        worldOrigin[VX] -= 160.f / SCREENWIDTH * (40);
-        setupModelParamsForFIObject(&params, "testmodel", worldOrigin);
-        Rend_RenderModel(&params);
-
-        worldOrigin[VX] += 320.f / SCREENWIDTH * (40);
-        setupModelParamsForFIObject(&params, "testmodel", worldOrigin);
-        Rend_RenderModel(&params);
-
-        glDisable(GL_DEPTH_TEST);}*/
-        }
-
-        // Restore original matrices and state: back to normal 2D.
-        glDisable(GL_ALPHA_TEST);
-        //glDisable(GL_CULL_FACE);
-        // Back from wireframe mode?
-        if(renderWireframe)
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        
-        // Filter on top of everything. Only draw if necessary.
-        if(page->_filter[3].value > 0)
-        {
-            DGL_Disable(DGL_TEXTURING);
-            useColor(page->_filter, 4);
-            glBegin(GL_QUADS);
-                glVertex2f(0, 0);
-                glVertex2f(SCREENWIDTH, 0);
-                glVertex2f(SCREENWIDTH, SCREENHEIGHT);
-                glVertex2f(0, SCREENHEIGHT);
-            glEnd();
-            DGL_Enable(DGL_TEXTURING);
-        }
-
-        GL_SetMultisample(false);
-
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
+        page->drawer(page);
     }}
 
     if(bordered)
