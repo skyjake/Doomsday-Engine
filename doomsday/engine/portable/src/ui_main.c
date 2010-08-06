@@ -142,7 +142,7 @@ void UI_Register(void)
 /**
  * Called when entering a ui page
  */
-void UI_Init(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
+void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwgame,
              boolean noescape)
 {
     if(uiActive)

@@ -1224,7 +1224,7 @@ D_CMD(OpenPanel)
         CP_ResolutionList(ob);
     }
 
-    UI_Init(true, true, false, false, false);
+    UI_PageInit(true, true, false, false, false);
     UI_SetPage(&page_panel);
     UI_Focus(foc);
     return true;

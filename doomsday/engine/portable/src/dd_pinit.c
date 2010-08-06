@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * dd_pinit.c: Portable Engine Initialization
+ * Portable Engine Initialization
  *
  * Platform independent routines for initializing the engine.
  */
@@ -44,6 +44,7 @@
 #include "de_refresh.h"
 #include "de_network.h"
 #include "de_misc.h"
+#include "de_ui.h"
 
 #include "def_main.h"
 
@@ -248,9 +249,10 @@ boolean DD_EarlyInit(void)
  */
 void DD_ShutdownAll(void)
 {
-    int                 i;
+    int i;
 
     FI_Shutdown();
+    UI_Shutdown();
     Con_Shutdown();
     DD_ShutdownHelp();
     Zip_Shutdown();

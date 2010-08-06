@@ -667,7 +667,7 @@ void DD_NetSetup(int serverMode)
     //sprintf(str_ipport, "%.10i", nptIPPort);
     //lst_protocol.selection = nptActive;
 
-    UI_Init(true, true, false, false, false);
+    UI_PageInit(true, true, false, false, false);
     UI_SetPage(serverMode ? &page_server : &page_client);
 
     CP_InitCvarSliders(ob_server);

@@ -44,6 +44,7 @@
 #include "de_infine.h"
 #include "de_misc.h"
 #include "de_infine.h"
+#include "de_ui.h"
 
 // MACROS ------------------------------------------------------------------
 

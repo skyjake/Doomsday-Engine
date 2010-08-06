@@ -216,7 +216,7 @@ void DD_DrawAndBlit(void)
 
         if(!(UI_IsActive() && UI_Alpha() >= 1.0))
         {
-            FI_Drawer();
+            UI2_Drawer();
 
             // Draw any over/outside view window game graphics (e.g. fullscreen menus and other displays).
             if(gx.G_Drawer2)
@@ -319,6 +319,8 @@ void DD_Ticker(timespan_t time)
              * so that frametime always stays within the range 0..1.
              */
             realFrameTimePos += time * TICSPERSEC;
+
+            UI2_Ticker(time);
 
             // InFine ticks whenever it's active.
             FI_Ticker(time);

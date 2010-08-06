@@ -5,6 +5,7 @@
  .\..\..\engine\portable\src\ui_panel.c
  .\..\..\engine\portable\src\ui_mpi.c
  .\..\..\engine\portable\src\ui_main.c
+ .\..\..\engine\portable\src\ui2_main.c
  .\..\..\engine\portable\src\tab_tables.c
  .\..\..\engine\portable\src\m_vector.c
  .\..\..\engine\portable\src\m_string.c

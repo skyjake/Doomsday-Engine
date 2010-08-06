@@ -537,7 +537,7 @@ D_CMD(BLEditor)
         UI_InitPage(&page_bias, ob_bias);
         sprintf(page_bias.title, "Doomsday BIAS Light Editor");
         page_bias.background = false;  // we don't want a background
-        UI_Init(false, true, true, true, false);
+        UI_PageInit(false, true, true, true, false);
         UI_SetPage(&page_bias);
         return true;
     }

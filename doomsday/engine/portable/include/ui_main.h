@@ -190,7 +190,7 @@ typedef struct {
 void            UI_Register(void);
 
 // Functions.
-void            UI_Init(boolean halttime, boolean tckui, boolean tckframe,
+void            UI_PageInit(boolean halttime, boolean tckui, boolean tckframe,
                         boolean drwgame, boolean noescape);
 void            UI_End(void);
 boolean         UI_IsActive(void);
