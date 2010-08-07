@@ -69,11 +69,10 @@ D_CMD(UIColor);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-int     UI_ListItemHeight(uidata_list_t *listdata);
-int     UI_ListButtonHeight(ui_object_t *ob);
-int     UI_ListThumbPos(ui_object_t *ob);
-void    UI_StrCpyLen(char *dest, char *src, int maxWidth);
-int     UI_MouseInsideBox(int x, int y, int w, int h);
+static int listItemHeight(uidata_list_t* listdata);
+static int listButtonHeight(ui_object_t* ob);
+static int listThumbPos(ui_object_t* ob);
+static void strCpyLen(char* dest, const char* src, int maxWidth);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -82,47 +81,46 @@ extern int gameDrawHUD;
 extern boolean stopTime;
 extern boolean tickUI;
 extern boolean drawGame;
-// extern boolean dialogActive;
-// extern boolean dialogInput;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean uiActive = false;            // The user interface is active.
+static boolean uiActive = false; /// The user interface is active.
 static boolean uiShowMouse = true;
-static ui_page_t *uiCurrentPage = 0;        // Currently active page.
-static int     uiFontHgt;                   // Height of the UI font.
-static DGLuint uiTextures[NUM_UITEXTURES];  // Cursor texture.
-static int     uiCX, uiCY;                  // Cursor position.
-static int     uiRestCX, uiRestCY;
+static ui_page_t* uiCurrentPage = 0; /// Currently active page.
+static int uiFontHgt; /// Height of the UI font.
+static DGLuint uiTextures[NUM_UITEXTURES]; /// Cursor texture.
+static int uiCX, uiCY; /// Cursor position.
+static int uiRestCX, uiRestCY;
 static uint uiRestStart; /// Start time of current resting.
 static uint uiRestTime = TICSPERSEC / 2; /// 500 ms.
-static int     uiRestOffsetLimit = 2;
-static int     uiMoved;                     // True if the mouse has been moved.
-static float   uiAlpha = 1.0;               // Main alpha for the entire UI.
-static float   uiTargetAlpha = 1.0;         // Target alpha for the entire UI.
-static boolean uiDrawGame = false;          // The game view should be drawn while
-                                            // the UI active.
+static int uiRestOffsetLimit = 2;
+static int uiMoved; /// True if the mouse has been moved.
+static float uiAlpha = 1.0; /// Main alpha for the entire UI.
+static float uiTargetAlpha = 1.0; // Target alpha for the entire UI.
 
-static float   uiCursorWidthMul = 0.75;
-static float   uiCursorHeightMul = 0.75;
+/// The game view should be drawn while the UI active.
+static boolean uiDrawGame = false;
 
-// Modify these colors to change the look of the UI.
+static float uiCursorWidthMul = 0.75;
+static float uiCursorHeightMul = 0.75;
+
+/// Modify these colors to change the look of the UI.
 static ui_color_t ui_colors[NUM_UI_COLORS] = {
-    /* UIC_TEXT */ {.85f, .87f, 1},
-    /* UIC_TITLE */ {1, 1, 1},
-    /* UIC_SHADOW */ {0, 0, 0},
-    /* UIC_BG_LIGHT */ {.18f, .18f, .22f},
-    /* UIC_BG_MEDIUM */ {.4f, .4f, .52f},
-    /* UIC_BG_DARK */ {.28f, .28f, .33f},
-    /* UIC_BRD_HI */ {1, 1, 1},
-    /* UIC_BRD_MED */ {0, 0, 0},
-    /* UIC_BRD_LOW */ {.25f, .25f, .55f},
-    /* UIC_HELP */ {.4f, .4f, .52f}
+    /* UIC_TEXT */      { .85f, .87f, 1 },
+    /* UIC_TITLE */     { 1, 1, 1 },
+    /* UIC_SHADOW */    { 0, 0, 0 },
+    /* UIC_BG_LIGHT */  { .18f, .18f, .22f },
+    /* UIC_BG_MEDIUM */ { .4f, .4f, .52f },
+    /* UIC_BG_DARK */   { .28f, .28f, .33f },
+    /* UIC_BRD_HI */    { 1, 1, 1 },
+    /* UIC_BRD_MED */   { 0, 0, 0 },
+    /* UIC_BRD_LOW */   { .25f, .25f, .55f },
+    /* UIC_HELP */      { .4f, .4f, .52f }
 };
 
-static boolean allowEscape; // Allow the user to exit a ui page using the escape key
+static boolean allowEscape; /// Allow the user to exit a ui page using the escape key.
 
 // CODE --------------------------------------------------------------------
 
@@ -176,7 +174,7 @@ void UI_PageInit(boolean halttime, boolean tckui, boolean tckframe, boolean drwg
 
 void UI_End(void)
 {
-    ddevent_t           rel;
+    ddevent_t rel;
 
     if(!uiActive)
         return;
@@ -246,13 +244,11 @@ ui_page_t* UI_CurrentPage(void)
 {
     if(uiActive)
         return uiCurrentPage;
-
     return NULL;
 }
 
 void UI_LoadTextures(void)
 {
-    int                 i;
     const char* picNames[NUM_UITEXTURES] = {
         "Mouse",
         "BoxCorner",
@@ -262,29 +258,30 @@ void UI_LoadTextures(void)
         "Logo",
         "Background",
     };
+    int i;
 
     for(i = 0; i < NUM_UITEXTURES; ++i)
-        if(!uiTextures[i])
-        {
-            image_t             image;
+    {
+        image_t image;
+        if(uiTextures[i])
+            continue;
+        
+        if(GL_LoadExtTexture(&image, DDRC_GRAPHICS, picNames[i], (i == UITEX_BACKGROUND? LGM_GRAYSCALE : LGM_NORMAL)))
+        {   // Loaded successfully and converted accordingly.
+            // Upload the image to GL.
+            uiTextures[i] = GL_NewTextureWithParams2(
+                ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
+                  image.pixelSize == 3 ? DGL_RGB :
+                  image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
+                image.width, image.height, image.pixels,
+                TXCF_NO_COMPRESSION, GL_LINEAR, GL_LINEAR,
+                0 /*no anisotropy*/, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
-            if(GL_LoadExtTexture(&image, DDRC_GRAPHICS, picNames[i],
-               (i == UITEX_BACKGROUND? LGM_GRAYSCALE : LGM_NORMAL)))
-            {   // Loaded successfully and converted accordingly.
-                // Upload the image to GL.
-                uiTextures[i] = GL_NewTextureWithParams2(
-                    ( image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 :
-                      image.pixelSize == 3 ? DGL_RGB :
-                      image.pixelSize == 4 ? DGL_RGBA : DGL_LUMINANCE ),
-                    image.width, image.height, image.pixels,
-                    TXCF_NO_COMPRESSION, GL_LINEAR, GL_LINEAR,
-                    0 /*no anisotropy*/, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
-
-                GL_DestroyImage(&image);
-            }
-            else
-                uiTextures[i] = 0;
+            GL_DestroyImage(&image);
         }
+        else
+            uiTextures[i] = 0;
+    }
 }
 
 void UI_ClearTextures(void)
@@ -304,23 +301,23 @@ void UI_DefaultFocus(ui_page_t* page)
         if(page->_objects[i].flags & UIF_DEFAULT)
             deffocus = page->_objects + i;
     }
+
     if(deffocus)
     {
         page->focus = deffocus - page->_objects;
         deffocus->flags |= UIF_FOCUS;
+        return;
     }
-    else
+
+    // Find an object for focus.
+    for(i = 0; i < page->count; ++i)
     {
-        // Find an object for focus.
-        for(i = 0; i < page->count; ++i)
+        if(!(page->_objects[i].flags & UIF_NO_FOCUS))
         {
-            if(!(page->_objects[i].flags & UIF_NO_FOCUS))
-            {
-                // Set default focus.
-                page->focus = i;
-                page->_objects[i].flags |= UIF_FOCUS;
-                break;
-            }
+            // Set default focus.
+            page->focus = i;
+            page->_objects[i].flags |= UIF_FOCUS;
+            break;
         }
     }
 }
@@ -429,12 +426,12 @@ void UI_SetPage(ui_page_t* page)
         {
             // Update edit box text.
             memset(ob->text, 0, sizeof(ob->text));
-            strncpy(ob->text, ((uidata_edit_t *) ob->data)->ptr, 255);
+            strncpy(ob->text, ((uidata_edit_t*) ob->data)->ptr, 255);
         }
         else if(ob->type == UI_BUTTON2)
         {
             // Stay-down button state.
-            if(*(char *) ob->data)
+            if(*(char*) ob->data)
                 ob->flags |= UIF_ACTIVE;
             else
                 ob->flags &= ~UIF_ACTIVE;
@@ -442,7 +439,7 @@ void UI_SetPage(ui_page_t* page)
         else if(ob->type == UI_BUTTON2EX)
         {
             // Stay-down button state, with extended data.
-            if(*(char *) ((uidata_button_t *)ob->data)->data)
+            if(*(char*) ((uidata_button_t*)ob->data)->data)
                 ob->flags |= UIF_ACTIVE;
             else
                 ob->flags &= ~UIF_ACTIVE;
@@ -450,9 +447,9 @@ void UI_SetPage(ui_page_t* page)
         else if(ob->type == UI_LIST)
         {
             // List box number of visible items.
-            uidata_list_t *dat = ob->data;
+            uidata_list_t* dat = ob->data;
 
-            dat->numvis = (ob->h - 2 * UI_BORDER) / UI_ListItemHeight(dat);
+            dat->numvis = (ob->h - 2 * UI_BORDER) / listItemHeight(dat);
             if(dat->selection >= 0)
             {
                 if(dat->selection < dat->first)
@@ -508,7 +505,7 @@ void UI_Ticker(timespan_t time)
 #define UIALPHA_FADE_STEP .07
 
     static trigger_t fixed = { 1 / 35.0, 0 };
-    float       diff = 0;
+    float diff = 0;
 
     if(!uiActive)
         return;
@@ -559,14 +556,12 @@ void UI_Drawer(void)
     // Draw mouse cursor?
     if(uiShowMouse)
     {
-        float           width, height, scale;
+        float width, height, scale;
 
         if(theWindow->width >= theWindow->height)
-            scale = (theWindow->width / UI_WIDTH) *
-                (theWindow->height / (float) theWindow->width);
+            scale = (theWindow->width  / UI_WIDTH)  * (theWindow->height / (float) theWindow->width);
         else
-            scale = (theWindow->height / UI_HEIGHT) *
-                (theWindow->width / (float) theWindow->height);
+            scale = (theWindow->height / UI_HEIGHT) * (theWindow->width  / (float) theWindow->height);
 
         width = UICURSORWIDTH * scale * uiCursorWidthMul;
         height = UICURSORHEIGHT * scale * uiCursorHeightMul;
@@ -579,37 +574,38 @@ void UI_Drawer(void)
     glPopMatrix();
 }
 
-int UI_CountObjects(ui_object_t *list)
+int UI_CountObjects(ui_object_t* list)
 {
-    int         count;
-
+    int count;
     for(count = 0; list->type != UI_NONE; list++, count++);
     return count;
 }
 
-void UI_FlagGroup(ui_object_t *list, int group, int flags, int set)
+void UI_FlagGroup(ui_object_t* list, int group, int flags, int set)
 {
     for(; list->type; list++)
-        if(list->group == group)
+    {
+        if(list->group != group)
+            continue;
+
+        switch(set)
         {
-            switch(set)
-            {
-            case UIFG_CLEAR:
-                list->flags &= ~flags;
-                break;
+        case UIFG_CLEAR:
+            list->flags &= ~flags;
+            break;
 
-            case UIFG_SET:
-                list->flags |= flags;
-                break;
+        case UIFG_SET:
+            list->flags |= flags;
+            break;
 
-            case UIFG_XOR:
-                list->flags ^= flags;
-                break;
-            default:
-                Con_Error("UI_FlagGroup: Unknown flag bit op %i\n", set);
-                break;
-            }
+        case UIFG_XOR:
+            list->flags ^= flags;
+            break;
+        default:
+            Con_Error("UI_FlagGroup: Unknown flag bit op %i\n", set);
+            break;
         }
+    }
 }
 
 ui_object_t* UI_FindObject(ui_object_t* list, int group, int flags)
@@ -617,7 +613,6 @@ ui_object_t* UI_FindObject(ui_object_t* list, int group, int flags)
     for(; list->type; list++)
         if(list->group == group && (list->flags & flags) == flags)
             return list;
-
     return NULL;
 }
 
@@ -655,7 +650,7 @@ void UI_Focus(ui_object_t* ob)
     }
 }
 
-void UI_Capture(ui_object_t *ob)
+void UI_Capture(ui_object_t* ob)
 {
     if(!ob)
     {
@@ -664,7 +659,7 @@ void UI_Capture(ui_object_t *ob)
         return;
     }
     if(!ob->responder)
-        return;                 // Sorry, pal...
+        return;
 
     // Set the capture object.
     uiCurrentPage->capture = ob - uiCurrentPage->_objects;
@@ -759,20 +754,12 @@ int UIPage_Responder(ui_page_t* page, ddevent_t* ev)
         ob = page->_objects + k;
         // Check the flags of this object.
         if((ob->flags & UIF_HIDDEN) || (ob->flags & UIF_DISABLED))
-            continue;           // These flags prevent response.
-        // When the UI is faded, a click on a nonfocusable object brings
-        // back the UI.
-        /*if(uiTargetAlpha < 1.0 && ev->type == EV_MOUSE_BUTTON && ev->data1 == EVS_DOWN &&
-           UI_MouseInside(ob) && (!ob->responder || (ob->flags & UIF_NO_FOCUS)))
-        {
-            // Restore default focus
-            UI_DefaultFocus(page);
-        }*/
+            continue; // These flags prevent response.
+
         if(!ob->responder)
             continue; // Must have a responder.
         if(ob->responder(ob, ev))
-        {
-            // The event was used by this object.
+        {   // The event was used by this object.
             UI_Focus(ob); // Move focus to it.
             return true;
         }
@@ -800,8 +787,7 @@ void UIPage_Ticker(ui_page_t* page)
         if((ob->flags & UIF_PAUSED) || (ob->flags & UIF_HIDDEN))
             continue;
 
-        // Fadeaway objects cause the UI to fade away when the mouse is over
-        // the control.
+        // Fadeaway objects cause the UI to fade away when the mouse is over the control.
         if((ob->flags & UIF_FOCUS) && (ob->flags & UIF_FADE_AWAY))
         {
             UI_SetAlpha(0);
@@ -822,8 +808,7 @@ void UIPage_Ticker(ui_page_t* page)
     page->_timer++;
 
     // Check mouse resting.
-    if(abs(uiCX - uiRestCX) > uiRestOffsetLimit ||
-       abs(uiCY - uiRestCY) > uiRestOffsetLimit)
+    if(abs(uiCX - uiRestCX) > uiRestOffsetLimit || abs(uiCY - uiRestCY) > uiRestOffsetLimit)
     {
         // Restart resting period.
         uiRestCX = uiCX;
@@ -877,12 +862,10 @@ void UIPage_Drawer(ui_page_t* page)
         {
             t = (1 + sin(page->_timer / (float) TICSPERSEC * 1.5f * PI)) / 2;
             UI_MixColors(UI_Color(UIC_BRD_LOW), UI_Color(UIC_BRD_HI), &focuscol, t);
-            UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER,
-                     UI_Color(UIC_BRD_LOW), UI_Color(UIC_BRD_LOW), .2f + t * .3f, -1);
+            UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_BRD_LOW), UI_Color(UIC_BRD_LOW), .2f + t * .3f, -1);
             GL_BlendMode(BM_ADD);
             // Draw a focus rectangle.
-            UI_DrawRect(ob->x - 1, ob->y - 1, ob->w + 2, ob->h + 2, UI_BORDER,
-                        &focuscol, 1);
+            UI_DrawRect(ob->x - 1, ob->y - 1, ob->w + 2, ob->h + 2, UI_BORDER, &focuscol, 1);
             GL_BlendMode(BM_NORMAL);
         }
 
@@ -891,36 +874,31 @@ void UIPage_Drawer(ui_page_t* page)
     }
 }
 
-void UIFrame_Drawer(ui_object_t *ob)
+void UIFrame_Drawer(ui_object_t* ob)
 {
-    int         b = UI_BORDER;
+    int b = UI_BORDER;
 
-    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, b, UI_Color(UIC_BG_MEDIUM), 0, .6f,
-                  0);
-    UI_DrawRect(ob->x, ob->y, ob->w, ob->h, b, UI_Color(UIC_BRD_HI)
-                /*, UI_Color(UIC_BRD_MED), UI_Color(UIC_BRD_LOW) */ , 1);
+    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, b, UI_Color(UIC_BG_MEDIUM), 0, .6f, 0);
+    UI_DrawRect(ob->x, ob->y, ob->w, ob->h, b, UI_Color(UIC_BRD_HI), 1);
 }
 
-void UIText_Drawer(ui_object_t *ob)
+void UIText_Drawer(ui_object_t* ob)
 {
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
-    UI_TextOutEx(ob->text, ob->x, ob->y + ob->h / 2, false, true,
-                 UI_Color(UIC_TEXT), ob->flags & UIF_DISABLED ? .2f : 1);
+    UI_TextOutEx(ob->text, ob->x, ob->y + ob->h / 2, false, true, UI_Color(UIC_TEXT), ob->flags & UIF_DISABLED ? .2f : 1);
 }
 
-void UIText_BrightDrawer(ui_object_t *ob)
+void UIText_BrightDrawer(ui_object_t* ob)
 {
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
-    UI_TextOutEx(ob->text, ob->x, ob->y + ob->h / 2, false, true,
-                 UI_Color(UIC_TITLE), ob->flags & UIF_DISABLED ? .2f : 1);
+    UI_TextOutEx(ob->text, ob->x, ob->y + ob->h / 2, false, true, UI_Color(UIC_TITLE), ob->flags & UIF_DISABLED ? .2f : 1);
 }
 
-int UIButton_Responder(ui_object_t *ob, ddevent_t *ev)
+int UIButton_Responder(ui_object_t* ob, ddevent_t* ev)
 {
     if(ob->flags & UIF_CLICKED)
     {
-        if((ev->device == IDEV_KEYBOARD || ev->device == IDEV_MOUSE) &&
-           IS_TOGGLE_UP(ev))
+        if((ev->device == IDEV_KEYBOARD || ev->device == IDEV_MOUSE) && IS_TOGGLE_UP(ev))
         {
             UI_Capture(0);
             ob->flags &= ~UIF_CLICKED;
@@ -950,14 +928,14 @@ int UIButton_Responder(ui_object_t *ob, ddevent_t *ev)
 
             if(ob->data)
             {
-                void    *data;
+                void* data;
 
                 if(ob->type == UI_BUTTON2EX)
-                    data = ((uidata_button_t *) ob->data)->data;
+                    data = ((uidata_button_t*) ob->data)->data;
                 else
                     data = ob->data;
 
-                *(char *) data = (ob->flags & UIF_ACTIVE) != 0;
+                *(char*) data = (ob->flags & UIF_ACTIVE) != 0;
             }
 
             // Call the action function.
@@ -970,20 +948,20 @@ int UIButton_Responder(ui_object_t *ob, ddevent_t *ev)
     return false;
 }
 
-void UIButton_Drawer(ui_object_t *ob)
+void UIButton_Drawer(ui_object_t* ob)
 {
-    int         dis = (ob->flags & UIF_DISABLED) != 0;
-    int         act = (ob->flags & UIF_ACTIVE) != 0;
-    int         click = (ob->flags & UIF_CLICKED) != 0;
-    boolean     down = act || click;
-    ui_color_t  back;
-    float       t = ob->timer / 15.0f;
-    float       alpha = (dis ? .2f : 1);
-    const char *text;
+    int dis = (ob->flags & UIF_DISABLED) != 0;
+    int act = (ob->flags & UIF_ACTIVE) != 0;
+    int click = (ob->flags & UIF_CLICKED) != 0;
+    boolean down = act || click;
+    ui_color_t back;
+    float t = ob->timer / 15.0f;
+    float alpha = (dis ? .2f : 1);
+    const char* text;
 
     if(ob->type == UI_BUTTON2EX)
     {
-        uidata_button_t *data = ob->data;
+        uidata_button_t* data = ob->data;
 
         if(down)
             text = data->yes;
@@ -1000,25 +978,18 @@ void UIButton_Drawer(ui_object_t *ob)
         t = .5f;
     if(act && t > .1f)
         t = .1f;
+
     UI_MixColors(UI_Color(UIC_TEXT), UI_Color(UIC_SHADOW), &back, t);
-    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER, &back, 0,
-                  alpha, 0);
-    UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER * (down ? -1 : 1),
-             UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
-    UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h,
-                  UI_BUTTON_BORDER * (down ? -1 : 1), false,
-                  UI_Color(UIC_BRD_HI), NULL, alpha, -1);
+    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER, &back, 0, alpha, 0);
+    UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER * (down ? -1 : 1), UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
+    UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER * (down ? -1 : 1), false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
-    UI_TextOutEx(text,
-                 down + ob->x +
-                 (ob->flags & UIF_LEFT_ALIGN ? UI_BUTTON_BORDER * 2 : ob->w /
-                  2), down + ob->y + ob->h / 2, !(ob->flags & UIF_LEFT_ALIGN),
-                 true, UI_Color(UIC_TITLE), alpha);
+    UI_TextOutEx(text, down + ob->x + (ob->flags & UIF_LEFT_ALIGN ? UI_BUTTON_BORDER * 2 : ob->w / 2), down + ob->y + ob->h / 2, !(ob->flags & UIF_LEFT_ALIGN), true, UI_Color(UIC_TITLE), alpha);
 }
 
-int UIEdit_Responder(ui_object_t *ob, ddevent_t *ev)
+int UIEdit_Responder(ui_object_t* ob, ddevent_t* ev)
 {
-    uidata_edit_t *dat = ob->data;
+    uidata_edit_t* dat = ob->data;
 
     if(ob->flags & UIF_ACTIVE)
     {
@@ -1049,10 +1020,9 @@ int UIEdit_Responder(ui_object_t *ob, ddevent_t *ev)
             if(dat->cp == 0)
                 break;
             dat->cp--;
-
+            // Fall through.
         case DDKEY_DEL:
-            memmove(ob->text + dat->cp, ob->text + dat->cp + 1,
-                    strlen(ob->text) - dat->cp);
+            memmove(ob->text + dat->cp, ob->text + dat->cp + 1, strlen(ob->text) - dat->cp);
             break;
 
         case DDKEY_RETURN:
@@ -1061,7 +1031,7 @@ int UIEdit_Responder(ui_object_t *ob, ddevent_t *ev)
             strncpy(dat->ptr, ob->text, dat->maxlen);
             if(ob->action)
                 ob->action(ob);
-
+            // Fall through.
         case DDKEY_ESCAPE:
             memset(ob->text, 0, sizeof(ob->text));
             strncpy(ob->text, dat->ptr, 255);
@@ -1071,11 +1041,9 @@ int UIEdit_Responder(ui_object_t *ob, ddevent_t *ev)
 
         default:
             if((int) strlen(ob->text) < dat->maxlen && ev->toggle.id >= 32 &&
-               (DD_ModKey(ev->toggle.id) <= 127 ||
-                DD_ModKey(ev->toggle.id) >= DD_HIGHEST_KEYCODE))
+               (DD_ModKey(ev->toggle.id) <= 127 || DD_ModKey(ev->toggle.id) >= DD_HIGHEST_KEYCODE))
             {
-                memmove(ob->text + dat->cp + 1, ob->text + dat->cp,
-                        strlen(ob->text) - dat->cp);
+                memmove(ob->text + dat->cp + 1, ob->text + dat->cp, strlen(ob->text) - dat->cp);
                 ob->text[dat->cp++] = DD_ModKey(ev->toggle.id);
             }
             break;
@@ -1098,27 +1066,25 @@ int UIEdit_Responder(ui_object_t *ob, ddevent_t *ev)
     return false;
 }
 
-void UIEdit_Drawer(ui_object_t *ob)
+void UIEdit_Drawer(ui_object_t* ob)
 {
-    uidata_edit_t *dat = ob->data;
-    int         act = (ob->flags & UIF_ACTIVE) != 0;
-    int         dis = (ob->flags & UIF_DISABLED) != 0;
-    int         textWidth;
-    ui_color_t  back;
-    float       t = ob->timer / 8.0f;
-    char        buf[256];
-    uint        curx, i, maxw = ob->w - UI_BORDER * 4, firstInBuf = 0;
-    float       alpha = (dis ? .2f : .5f);
+    uidata_edit_t* dat = ob->data;
+    int act = (ob->flags & UIF_ACTIVE) != 0;
+    int dis = (ob->flags & UIF_DISABLED) != 0;
+    int textWidth;
+    ui_color_t back;
+    float t = ob->timer / 8.0f;
+    char buf[256];
+    uint curx, i, maxw = ob->w - UI_BORDER * 4, firstInBuf = 0;
+    float alpha = (dis ? .2f : .5f);
 
     // Mix the background color.
     if(!act || t > 1)
         t = 1;
     UI_MixColors(UI_Color(UIC_TEXT), UI_Color(UIC_SHADOW), &back, t);
     UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER, &back, 0, alpha, 0);
-    UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_BRD_HI),
-             UI_Color(UIC_BRD_LOW), alpha / 3, -1);
-    UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER * (act ? -1 : 1),
-                  false, UI_Color(UIC_BRD_HI), NULL, dis ? .2f : 1, -1);
+    UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
+    UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER * (act ? -1 : 1), false, UI_Color(UIC_BRD_HI), NULL, dis ? .2f : 1, -1);
     // Draw text.
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     memset(buf, 0, sizeof(buf));
@@ -1126,10 +1092,9 @@ void UIEdit_Drawer(ui_object_t *ob)
     // Does all of it fit in the box?
     textWidth = FR_TextWidth(ob->text);
     if(textWidth > 0 && (unsigned) textWidth > maxw)
-    {
-        // No, it doesn't fit.
+    {   // No, it doesn't fit.
         if(!act)
-            UI_StrCpyLen(buf, ob->text, maxw);
+            strCpyLen(buf, ob->text, maxw);
         else
         {
             // Can we show to the cursor?
@@ -1139,33 +1104,29 @@ void UIEdit_Drawer(ui_object_t *ob)
             // How much do we need to skip forward?
             for(; curx > maxw; ++firstInBuf)
                 curx -= FR_CharWidth(ob->text[firstInBuf]);
-            UI_StrCpyLen(buf, ob->text + firstInBuf, maxw);
+            strCpyLen(buf, ob->text + firstInBuf, maxw);
         }
     }
     else
-    {
-        // It fits!
+    {   // It fits!
         strcpy(buf, ob->text);
     }
-    UI_TextOutEx(buf, ob->x + UI_BORDER * 2, ob->y + ob->h / 2, false, true,
-                 UI_Color(UIC_TEXT), dis ? .2f : 1);
+    UI_TextOutEx(buf, ob->x + UI_BORDER * 2, ob->y + ob->h / 2, false, true, UI_Color(UIC_TEXT), dis ? .2f : 1);
     if(act && ob->timer & 4)
     {
         // Draw cursor.
         // Determine position.
         for(curx = 0, i = firstInBuf; i < dat->cp; ++i)
             curx += FR_CharWidth(ob->text[i]);
-        UI_Gradient(ob->x + UI_BORDER * 2 + curx - 1,
-                    ob->y + ob->h / 2 - uiFontHgt / 2, 2, uiFontHgt,
-                    UI_Color(UIC_TEXT), 0, 1, 1);
+        UI_Gradient(ob->x + UI_BORDER * 2 + curx - 1, ob->y + ob->h / 2 - uiFontHgt / 2, 2, uiFontHgt, UI_Color(UIC_TEXT), 0, 1, 1);
     }
 }
 
-int UIList_Responder(ui_object_t *ob, ddevent_t *ev)
+int UIList_Responder(ui_object_t* ob, ddevent_t* ev)
 {
-    uidata_list_t *dat = ob->data;
-    int         i, oldsel = dat->selection, buth, barh;
-    int         used = false;
+    uidata_list_t* dat = ob->data;
+    int i, oldsel = dat->selection, buth, barh;
+    int used = false;
 
     if(ob->flags & UIF_CLICKED)
     {
@@ -1175,14 +1136,11 @@ int UIList_Responder(ui_object_t *ob, ddevent_t *ev)
             if(ev->type == E_AXIS)
             {
                 // Calculate the new position.
-                buth = UI_ListButtonHeight(ob);
+                buth = listButtonHeight(ob);
                 barh = ob->h - 2 * (UI_BORDER + buth);
                 if(barh - buth)
                 {
-                    dat->first =
-                        ((uiCY - ob->y - UI_BORDER -
-                          (buth * 3) / 2) * (dat->count - dat->numvis) + (barh - buth) /
-                         2) / (barh - buth);
+                    dat->first = ((uiCY - ob->y - UI_BORDER - (buth * 3) / 2) * (dat->count - dat->numvis) + (barh - buth) / 2) / (barh - buth);
                 }
                 else
                 {
@@ -1238,18 +1196,11 @@ int UIList_Responder(ui_object_t *ob, ddevent_t *ev)
             return false;
         // Now we know we're going to eat this event.
         used = true;
-        buth = UI_ListButtonHeight(ob);
+        buth = listButtonHeight(ob);
         // Clicked in the item section?
-        if(dat->count > 0 &&
-           UI_MouseInsideBox(ob->x + UI_BORDER, ob->y + UI_BORDER,
-                             ob->w - 2 * UI_BORDER - (dat->count >=
-                                                      dat->
-                                                      numvis ? UI_BAR_WDH : 0),
-                             ob->h - 2 * UI_BORDER))
+        if(dat->count > 0 && UI_MouseInsideBox(ob->x + UI_BORDER, ob->y + UI_BORDER, ob->w - 2 * UI_BORDER - (dat->count >= dat->numvis ? UI_BAR_WDH : 0), ob->h - 2 * UI_BORDER))
         {
-            dat->selection =
-                dat->first + (uiCY - ob->y -
-                              UI_BORDER) / UI_ListItemHeight(dat);
+            dat->selection = dat->first + (uiCY - ob->y - UI_BORDER) / listItemHeight(dat);
             if(dat->selection >= dat->count)
                 dat->selection = dat->count - 1;
         }
@@ -1259,29 +1210,23 @@ int UIList_Responder(ui_object_t *ob, ddevent_t *ev)
             return true;
         }
         // Clicked the Up button?
-        else if(UI_MouseInsideBox
-                (ob->x + ob->w - UI_BORDER - UI_BAR_WDH, ob->y + UI_BORDER,
-                 UI_BAR_WDH, buth))
+        else if(UI_MouseInsideBox(ob->x + ob->w - UI_BORDER - UI_BAR_WDH, ob->y + UI_BORDER, UI_BAR_WDH, buth))
         {
             // The Up button is now pressed.
             dat->button[0] = true;
-            ob->timer = SCROLL_TIME;    // Ticker does the scrolling.
+            ob->timer = SCROLL_TIME; // Ticker does the scrolling.
             return true;
         }
         // Clicked the Down button?
-        else if(UI_MouseInsideBox
-                (ob->x + ob->w - UI_BORDER - UI_BAR_WDH,
-                 ob->y + ob->h - UI_BORDER - buth, UI_BAR_WDH, buth))
+        else if(UI_MouseInsideBox(ob->x + ob->w - UI_BORDER - UI_BAR_WDH, ob->y + ob->h - UI_BORDER - buth, UI_BAR_WDH, buth))
         {
             // The Down button is now pressed.
             dat->button[2] = true;
-            ob->timer = SCROLL_TIME;    // Ticker does the scrolling.
+            ob->timer = SCROLL_TIME; // Ticker does the scrolling.
             return true;
         }
         // Clicked the Thumb?
-        else if(UI_MouseInsideBox
-                (ob->x + ob->w - UI_BORDER - UI_BAR_WDH, UI_ListThumbPos(ob),
-                 UI_BAR_WDH, buth))
+        else if(UI_MouseInsideBox(ob->x + ob->w - UI_BORDER - UI_BAR_WDH, listThumbPos(ob), UI_BAR_WDH, buth))
         {
             dat->button[1] = true;
             // Capture input and start tracking mouse movement.
@@ -1320,9 +1265,9 @@ int UIList_Responder(ui_object_t *ob, ddevent_t *ev)
     return used;
 }
 
-void UIList_Ticker(ui_object_t *ob)
+void UIList_Ticker(ui_object_t* ob)
 {
-    uidata_list_t *dat = ob->data;
+    uidata_list_t* dat = ob->data;
 
     if(ob->timer >= SCROLL_TIME && (dat->button[0] || dat->button[2]))
     {
@@ -1336,50 +1281,40 @@ void UIList_Ticker(ui_object_t *ob)
     }
 }
 
-void UIList_Drawer(ui_object_t *ob)
+void UIList_Drawer(ui_object_t* ob)
 {
-    uidata_list_t *dat = ob->data;
-    uidata_listitem_t *items = dat->items;
-    int         dis = (ob->flags & UIF_DISABLED) != 0;
-    int         i, c, x, y, ihgt, maxw = ob->w - 2 * UI_BORDER;
-    int         maxh = ob->h - 2 * UI_BORDER, buth;
-    char        buf[256], *ptr, *endptr, tmp[256];
-    float       alpha = dis ? .2f : 1;
-    int         barw;
+    uidata_list_t* dat = ob->data;
+    uidata_listitem_t* items = dat->items;
+    int dis = (ob->flags & UIF_DISABLED) != 0;
+    int i, c, x, y, ihgt, maxw = ob->w - 2 * UI_BORDER;
+    int maxh = ob->h - 2 * UI_BORDER, buth;
+    char buf[256], *ptr, *endptr, tmp[256];
+    float alpha = dis ? .2f : 1;
+    int barw;
 
     // The background.
-    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_SHADOW), 0,
-                  alpha / 2, 0);
+    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_SHADOW), 0, alpha / 2, 0);
     // The borders.
-    UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, -UI_BORDER, false,
-                  UI_Color(UIC_BRD_HI), NULL, alpha, -1);
+    UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, -UI_BORDER, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
     // The title.
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
-    UI_TextOutEx(ob->text, ob->x, ob->y - UI_BORDER - uiFontHgt, false, false,
-                 UI_Color(UIC_TEXT), alpha);
+    UI_TextOutEx(ob->text, ob->x, ob->y - UI_BORDER - uiFontHgt, false, false, UI_Color(UIC_TEXT), alpha);
     // Is a scroll bar necessary?
-    ihgt = UI_ListItemHeight(dat);
+    ihgt = listItemHeight(dat);
     if(dat->numvis < dat->count)
     {
         barw = UI_BAR_WDH;
         maxw -= barw;
-        buth = UI_ListButtonHeight(ob);
+        buth = listButtonHeight(ob);
         x = ob->x + ob->w - UI_BORDER - barw;
         y = ob->y + UI_BORDER;
-        UI_GradientEx(x, y, barw, maxh, UI_BAR_BUTTON_BORDER, UI_Color(UIC_TEXT),
-                      0, alpha * .2f, alpha * .2f);
+        UI_GradientEx(x, y, barw, maxh, UI_BAR_BUTTON_BORDER, UI_Color(UIC_TEXT), 0, alpha * .2f, alpha * .2f);
         // Up Button.
-        UI_DrawButton(x, y, barw, buth, UI_BAR_BUTTON_BORDER,
-                      !dat->first ? alpha * .2f : alpha, NULL, dat->button[0],
-                      dis, UIBA_UP);
+        UI_DrawButton(x, y, barw, buth, UI_BAR_BUTTON_BORDER, !dat->first ? alpha * .2f : alpha, NULL, dat->button[0], dis, UIBA_UP);
         // Thumb Button.
-        UI_DrawButton(x, UI_ListThumbPos(ob), barw, buth, UI_BAR_BUTTON_BORDER,
-                      alpha, NULL, dat->button[1], dis, UIBA_NONE);
+        UI_DrawButton(x, listThumbPos(ob), barw, buth, UI_BAR_BUTTON_BORDER, alpha, NULL, dat->button[1], dis, UIBA_NONE);
         // Down Button.
-        UI_DrawButton(x, y + maxh - buth, barw, buth, UI_BAR_BUTTON_BORDER,
-                      dat->first + dat->numvis >=
-                      dat->count ? alpha * .2f : alpha, NULL, dat->button[2],
-                      dis, UIBA_DOWN);
+        UI_DrawButton(x, y + maxh - buth, barw, buth, UI_BAR_BUTTON_BORDER, dat->first + dat->numvis >= dat->count ? alpha * .2f : alpha, NULL, dat->button[2], dis, UIBA_DOWN);
     }
     x = ob->x + UI_BORDER;
     y = ob->y + UI_BORDER;
@@ -1388,18 +1323,15 @@ void UIList_Drawer(ui_object_t *ob)
     {
         if(!dat->column[c] || dat->column[c] > maxw - 2 * UI_BORDER)
             continue;
-        UI_Gradient(x + UI_BORDER + dat->column[c] - 2, ob->y + UI_BORDER, 1,
-                    maxh, UI_Color(UIC_TEXT), 0, alpha * .5f, alpha * .5f);
+        UI_Gradient(x + UI_BORDER + dat->column[c] - 2, ob->y + UI_BORDER, 1, maxh, UI_Color(UIC_TEXT), 0, alpha * .5f, alpha * .5f);
     }
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
-    for(i = dat->first; i < dat->count && i < dat->first + dat->numvis;
-        ++i, y += ihgt)
+    for(i = dat->first; i < dat->count && i < dat->first + dat->numvis; ++i, y += ihgt)
     {
         // The selection has a white background.
         if(i == dat->selection)
         {
-            UI_GradientEx(x, y, maxw, ihgt, UI_BAR_BORDER, UI_Color(UIC_TEXT), 0,
-                          alpha * .6f, alpha * .2f);
+            UI_GradientEx(x, y, maxw, ihgt, UI_BAR_BORDER, UI_Color(UIC_TEXT), 0, alpha * .6f, alpha * .2f);
         }
         // The text, clipped w/columns.
         ptr = items[i].text;
@@ -1412,9 +1344,8 @@ void UIList_Drawer(ui_object_t *ob)
             else
                 strcpy(tmp, ptr);
             memset(buf, 0, sizeof(buf));
-            UI_StrCpyLen(buf, tmp, maxw - 2 * UI_BORDER - dat->column[c]);
-            UI_TextOutEx(buf, x + UI_BORDER + dat->column[c], y + ihgt / 2,
-                         false, true, UI_Color(UIC_TEXT), alpha);
+            strCpyLen(buf, tmp, maxw - 2 * UI_BORDER - dat->column[c]);
+            UI_TextOutEx(buf, x + UI_BORDER + dat->column[c], y + ihgt / 2, false, true, UI_Color(UIC_TEXT), alpha);
             if(!endptr)
                 break;
             ptr = endptr + 1;
@@ -1422,24 +1353,22 @@ void UIList_Drawer(ui_object_t *ob)
     }
 }
 
-int UI_SliderButtonWidth(ui_object_t *ob)
+int UI_SliderButtonWidth(ui_object_t* ob)
 {
-    //  uidata_slider_t *dat = ob->data;
-    int         width = ob->h - UI_BAR_BORDER * 2;
-
+    int width = ob->h - UI_BAR_BORDER * 2;
     if(width < UI_BAR_BORDER * 3)
         width = UI_BAR_BORDER * 3;
     return width;
 }
 
-int UI_SliderThumbPos(ui_object_t *ob)
+int UI_SliderThumbPos(ui_object_t* ob)
 {
-    uidata_slider_t *dat = ob->data;
-    float       range = dat->max - dat->min, useval;
-    int         butw = UI_SliderButtonWidth(ob);
+    uidata_slider_t* dat = ob->data;
+    float range = dat->max - dat->min, useval;
+    int butw = UI_SliderButtonWidth(ob);
 
     if(!range)
-        range = 1;              // Should never happen.
+        range = 1; // Should never happen.
     if(dat->floatmode)
         useval = dat->value;
     else
@@ -1450,17 +1379,15 @@ int UI_SliderThumbPos(ui_object_t *ob)
             useval = (int) (dat->value - .5f);
     }
     useval -= dat->min;
-    return ob->x + UI_BAR_BORDER + butw + useval / range * (ob->w -
-                                                            UI_BAR_BORDER * 2 -
-                                                            butw * 3);
+    return ob->x + UI_BAR_BORDER + butw + useval / range * (ob->w - UI_BAR_BORDER * 2 - butw * 3);
 }
 
-int UISlider_Responder(ui_object_t *ob, ddevent_t *ev)
+int UISlider_Responder(ui_object_t* ob, ddevent_t* ev)
 {
-    uidata_slider_t *dat = ob->data;
-    float       oldvalue = dat->value;
-    boolean     used = false;
-    int         i, butw, inw;
+    uidata_slider_t* dat = ob->data;
+    float oldvalue = dat->value;
+    boolean used = false;
+    int i, butw, inw;
 
     if(ob->flags & UIF_CLICKED)
     {
@@ -1474,11 +1401,7 @@ int UISlider_Responder(ui_object_t *ob, ddevent_t *ev)
                 inw = ob->w - 2 * UI_BAR_BORDER - 3 * butw;
                 if(inw > 0)
                 {
-                    dat->value =
-                        dat->min + (dat->max - dat->min) * (uiCX - ob->x -
-                                                            UI_BAR_BORDER -
-                                                            (3 * butw) / 2) /
-                        (float) inw;
+                    dat->value = dat->min + (dat->max - dat->min) * (uiCX - ob->x - UI_BAR_BORDER - (3 * butw) / 2) / (float) inw;
                 }
                 else
                 {
@@ -1552,16 +1475,14 @@ int UISlider_Responder(ui_object_t *ob, ddevent_t *ev)
         {
             // The Left button is now pressed.
             dat->button[0] = true;
-            ob->timer = SCROLL_TIME;    // Ticker does the scrolling.
+            ob->timer = SCROLL_TIME; // Ticker does the scrolling.
             return true;
         }
-        if(UI_MouseInsideBox
-           (ob->x + ob->w - butw - UI_BAR_BORDER, ob->y, butw + UI_BAR_BORDER,
-            ob->h))
+        if(UI_MouseInsideBox(ob->x + ob->w - butw - UI_BAR_BORDER, ob->y, butw + UI_BAR_BORDER, ob->h))
         {
             // The Right button is now pressed.
             dat->button[2] = true;
-            ob->timer = SCROLL_TIME;    // Tickes does the scrolling.
+            ob->timer = SCROLL_TIME; // Tickes does the scrolling.
             return true;
         }
         if(UI_MouseInsideBox(UI_SliderThumbPos(ob), ob->y, butw, ob->h))
@@ -1593,10 +1514,10 @@ int UISlider_Responder(ui_object_t *ob, ddevent_t *ev)
     return used;
 }
 
-void UISlider_Ticker(ui_object_t *ob)
+void UISlider_Ticker(ui_object_t* ob)
 {
-    uidata_slider_t *dat = ob->data;
-    float       oldval;
+    uidata_slider_t* dat = ob->data;
+    float oldval;
 
     if(ob->timer >= SCROLL_TIME && (dat->button[0] || dat->button[2]))
     {
@@ -1615,43 +1536,35 @@ void UISlider_Ticker(ui_object_t *ob)
     }
 }
 
-void UISlider_Drawer(ui_object_t *ob)
+void UISlider_Drawer(ui_object_t* ob)
 {
-    uidata_slider_t *dat = ob->data;
-    boolean     dis = (ob->flags & UIF_DISABLED) != 0;
-    int         inwidth = ob->w - UI_BAR_BORDER * 2;
-    int         inheight = ob->h - UI_BAR_BORDER * 2;
-    int         butw = UI_SliderButtonWidth(ob);
-    int         butbor = UI_BAR_BUTTON_BORDER;
-    int         x, y, thumbx;
-    float       alpha = dis ? .2f : 1;
-    char        buf[80];
+    uidata_slider_t* dat = ob->data;
+    boolean dis = (ob->flags & UIF_DISABLED) != 0;
+    int inwidth = ob->w - UI_BAR_BORDER * 2;
+    int inheight = ob->h - UI_BAR_BORDER * 2;
+    int butw = UI_SliderButtonWidth(ob);
+    int butbor = UI_BAR_BUTTON_BORDER;
+    int x, y, thumbx;
+    float alpha = dis ? .2f : 1;
+    char buf[80];
 
     // The background.
-    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BAR_BORDER,
-                  UI_Color(UIC_SHADOW), 0, alpha / 2, 0);
+    UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BAR_BORDER, UI_Color(UIC_SHADOW), 0, alpha / 2, 0);
 
     // The borders.
-    UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, -UI_BAR_BORDER, false,
-                  UI_Color(UIC_BRD_HI), NULL, alpha, -1);
+    UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, -UI_BAR_BORDER, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
 
     x = ob->x + UI_BAR_BORDER;
     y = ob->y + UI_BAR_BORDER;
 
     // The left button.
-    UI_DrawButton(x, y, butw, inheight, butbor,
-                  alpha * (dat->value == dat->min ? .2f : 1), NULL,
-                  dat->button[0], dis, UIBA_LEFT);
+    UI_DrawButton(x, y, butw, inheight, butbor, alpha * (dat->value == dat->min ? .2f : 1), NULL, dat->button[0], dis, UIBA_LEFT);
 
     // The right button.
-    UI_DrawButton(x + inwidth - butw, y, butw, inheight, butbor,
-                  alpha * (dat->value == dat->max ? .2f : 1), NULL,
-                  dat->button[2], dis, UIBA_RIGHT);
+    UI_DrawButton(x + inwidth - butw, y, butw, inheight, butbor, alpha * (dat->value == dat->max ? .2f : 1), NULL, dat->button[2], dis, UIBA_RIGHT);
 
     // The thumb.
-    UI_DrawButton(thumbx =
-                  UI_SliderThumbPos(ob), y, butw, inheight, butbor, alpha,
-                  NULL, dat->button[1], dis, UIBA_NONE);
+    UI_DrawButton(thumbx = UI_SliderThumbPos(ob), y, butw, inheight, butbor, alpha, NULL, dat->button[1], dis, UIBA_NONE);
 
     // The value.
     if(dat->floatmode)
@@ -1670,26 +1583,21 @@ void UISlider_Drawer(ui_object_t *ob)
     if(dat->zerotext && dat->value == dat->min)
         strcpy(buf, dat->zerotext);
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
-    UI_TextOutEx(buf,
-                 x + (dat->value <
-                      (dat->min + dat->max) / 2 ? inwidth - butw -
-                      UI_BAR_BORDER - FR_TextWidth(buf) : butw +
-                      UI_BAR_BORDER), y + inheight / 2, false, true,
-                 UI_Color(UIC_TEXT), alpha);
+    UI_TextOutEx(buf, x + (dat->value < (dat->min + dat->max) / 2 ? inwidth - butw - UI_BAR_BORDER - FR_TextWidth(buf) : butw + UI_BAR_BORDER), y + inheight / 2, false, true, UI_Color(UIC_TEXT), alpha);
 }
 
 //---------------------------------------------------------------------------
 // Helper Functions
 //---------------------------------------------------------------------------
 
-void UI_InitColumns(ui_object_t *ob)
+void UI_InitColumns(ui_object_t* ob)
 {
-    uidata_list_t *dat = ob->data;
-    uidata_listitem_t *list = dat->items;
-    int         i, c, w, sep, last, maxw;
-    char       *endptr, *ptr, temp[256];
-    int         width[UI_MAX_COLUMNS];
-    int         numcols = 1;
+    uidata_list_t* dat = ob->data;
+    uidata_listitem_t* list = dat->items;
+    int i, c, w, sep, last, maxw;
+    char* endptr, *ptr, temp[256];
+    int width[UI_MAX_COLUMNS];
+    int numcols = 1;
 
     memset(dat->column, 0, sizeof(dat->column));
     memset(width, 0, sizeof(width));
@@ -1722,8 +1630,7 @@ void UI_InitColumns(ui_object_t *ob)
             last = width[i];
     }
     // Calculate the offset for each column.
-    maxw = ob->w - 4 * UI_BORDER -
-                (dat->count > dat->numvis ? UI_BAR_WDH : 0);
+    maxw = ob->w - 4 * UI_BORDER - (dat->count > dat->numvis ? UI_BAR_WDH : 0);
     sep = maxw - w;
     if(numcols > 1)
         sep /= numcols - 1;
@@ -1736,52 +1643,47 @@ void UI_InitColumns(ui_object_t *ob)
     }
 }
 
-int UI_ListItemHeight(uidata_list_t *listdata)
+static int listItemHeight(uidata_list_t* listdata)
 {
-    int         h = listdata->itemhgt;
-
+    int h = listdata->itemhgt;
     if(h < uiFontHgt * 8 / 10)
         h = uiFontHgt * 8 / 10;
     return h;
 }
 
-int UI_ListButtonHeight(ui_object_t *ob)
+static int listButtonHeight(ui_object_t* ob)
 {
-    int         barh = ob->h - 2 * UI_BORDER;
-    int         buth = UI_BAR_WDH;
-
+    int barh = ob->h - 2 * UI_BORDER;
+    int buth = UI_BAR_WDH;
     if(buth > barh / 3)
         buth = barh / 3;
     return buth;
 }
 
-int UI_ListThumbPos(ui_object_t *ob)
+static int listThumbPos(ui_object_t* ob)
 {
-    uidata_list_t *dat = ob->data;
-    int         buth = UI_ListButtonHeight(ob);
-    int         barh = ob->h - 2 * (UI_BORDER + buth);
+    uidata_list_t* dat = ob->data;
+    int buth = listButtonHeight(ob);
+    int barh = ob->h - 2 * (UI_BORDER + buth);
 
     if(dat->count <= dat->numvis)
         return 0;
-    return ob->y + UI_BORDER + buth +
-        ((barh - buth) * dat->first) / (dat->count - dat->numvis);
+    return ob->y + UI_BORDER + buth + ((barh - buth) * dat->first) / (dat->count - dat->numvis);
 }
 
-int UI_ListFindItem(ui_object_t *ob, int data_value)
+int UI_ListFindItem(ui_object_t* ob, int dataValue)
 {
-    uidata_list_t *dat = ob->data;
-    int         i;
-
+    uidata_list_t* dat = ob->data;
+    int i;
     for(i = 0; i < dat->count; ++i)
-        if(((uidata_listitem_t *) dat->items)[i].data == data_value)
+        if(((uidata_listitem_t*) dat->items)[i].data == dataValue)
             return i;
     return -1;
 }
 
-void UI_StrCpyLen(char *dest, char *src, int maxWidth)
+static void strCpyLen(char* dest, const char* src, int maxWidth)
 {
-    int         i, width;
-
+    int i, width;
     for(i = 0, width = 0; src[i]; ++i)
     {
         dest[i] = src[i];
@@ -1828,15 +1730,15 @@ void UI_SetColor(ui_color_t* color)
     glColor3f(color->red, color->green, color->blue);
 }
 
-void UI_Shade(int x, int y, int w, int h, int border, ui_color_t *main,
-              ui_color_t *secondary, float alpha, float bottomAlpha)
+void UI_Shade(int x, int y, int w, int h, int border, ui_color_t* main,
+    ui_color_t *secondary, float alpha, float bottomAlpha)
 {
-    float       s[2][2] = { {0, 1}, {1, 0} };
-    float       t[2][2] = { {0, 1}, {1, 0} };
-    ui_color_t *color;
-    uint        i, flip = 0;
-    float      *u, *v;
-    float       beta = 1;
+    float s[2][2] = { {0, 1}, {1, 0} };
+    float t[2][2] = { {0, 1}, {1, 0} };
+    ui_color_t* color;
+    uint i, flip = 0;
+    float* u, *v;
+    float beta = 1;
 
     alpha *= uiAlpha;
     bottomAlpha *= uiAlpha;
@@ -1880,23 +1782,22 @@ void UI_Shade(int x, int y, int w, int h, int border, ui_color_t *main,
     GL_BlendMode(BM_NORMAL);
 }
 
-void UI_Gradient(int x, int y, int w, int h, ui_color_t *top,
-                 ui_color_t *bottom, float topAlpha, float bottomAlpha)
+void UI_Gradient(int x, int y, int w, int h, ui_color_t* top, ui_color_t* bottom,
+    float topAlpha, float bottomAlpha)
 {
     UI_GradientEx(x, y, w, h, 0, top, bottom, topAlpha, bottomAlpha);
 }
 
-void UI_GradientEx(int x, int y, int w, int h, int border, ui_color_t *top,
-                   ui_color_t *bottom, float topAlpha, float bottomAlpha)
+void UI_GradientEx(int x, int y, int w, int h, int border, ui_color_t* top,
+    ui_color_t* bottom, float topAlpha, float bottomAlpha)
 {
-    UI_DrawRectEx(x, y, w, h, border, true, top, bottom, topAlpha,
-                  bottomAlpha);
+    UI_DrawRectEx(x, y, w, h, border, true, top, bottom, topAlpha, bottomAlpha);
 }
 
-void UI_HorizGradient(int x, int y, int w, int h, ui_color_t *left,
-                      ui_color_t *right, float leftAlpha, float rightAlpha)
+void UI_HorizGradient(int x, int y, int w, int h, ui_color_t* left, ui_color_t* right,
+    float leftAlpha, float rightAlpha)
 {
-    leftAlpha *= uiAlpha;
+    leftAlpha  *= uiAlpha;
     rightAlpha *= uiAlpha;
 
     glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_HINT]);
@@ -1914,11 +1815,11 @@ void UI_HorizGradient(int x, int y, int w, int h, ui_color_t *left,
     glEnd();
 }
 
-void UI_Line(int x1, int y1, int x2, int y2, ui_color_t *start,
-             ui_color_t *end, float startAlpha, float endAlpha)
+void UI_Line(int x1, int y1, int x2, int y2, ui_color_t* start, ui_color_t* end,
+    float startAlpha, float endAlpha)
 {
     startAlpha *= uiAlpha;
-    endAlpha *= uiAlpha;
+    endAlpha   *= uiAlpha;
 
     glDisable(GL_TEXTURE_2D);
     glBegin(GL_LINES);
@@ -1930,13 +1831,13 @@ void UI_Line(int x1, int y1, int x2, int y2, ui_color_t *start,
     glEnable(GL_TEXTURE_2D);
 }
 
-void UI_TextOut(const char *text, int x, int y)
+void UI_TextOut(const char* text, int x, int y)
 {
     UI_TextOutEx(text, x, y, false, false, UI_Color(UIC_TEXT), 1);
 }
 
-void UI_TextOutEx(const char *text, int x, int y, int horizCenter, int vertCenter,
-                  ui_color_t *color, float alpha)
+void UI_TextOutEx(const char* text, int x, int y, int horizCenter, int vertCenter,
+    ui_color_t* color, float alpha)
 {
     alpha *= uiAlpha;
     if(alpha <= 0) return;
@@ -1945,30 +1846,24 @@ void UI_TextOutEx(const char *text, int x, int y, int horizCenter, int vertCente
     if(horizCenter)
         x -= FR_TextWidth(text) / 2;
     if(vertCenter)
-    {
-        //y -= FR_TextHeight(text) / 2;
         y -= FR_SingleLineHeight(text)/2 + FR_GlyphTopToAscent(text);
-    }
-    // Shadow.
-    //UI_SetColorA(UI_Color(UIC_SHADOW), .6f * alpha);
-    //FR_TextOut((char*)text, x + UI_SHADOW_OFFSET, y + UI_SHADOW_OFFSET);
     // Actual text.
     UI_SetColorA(color, alpha);
     FR_CustomShadowTextOut(text, x, y, UI_SHADOW_OFFSET, UI_SHADOW_OFFSET, .6f);
 }
 
-int UI_TextOutWrap(const char *text, int x, int y, int w, int h)
+int UI_TextOutWrap(const char* text, int x, int y, int w, int h)
 {
     return UI_TextOutWrapEx(text, x, y, w, h, UI_Color(UIC_TEXT), 1);
 }
 
-int UI_TextOutWrapEx(const char *text, int x, int y, int w, int h,
-                     ui_color_t *color, float alpha)
+int UI_TextOutWrapEx(const char* text, int x, int y, int w, int h, ui_color_t* color,
+    float alpha)
 {
-    char        word[2048], *wp = word;
-    int         len, tx = x, ty = y;
-    byte        c;
-    int         linehgt = FR_SingleLineHeight("A");
+    char word[2048], *wp = word;
+    int len, tx = x, ty = y;
+    int linehgt = FR_SingleLineHeight("A");
+    byte c;
 
     alpha *= uiAlpha;
 
@@ -1980,11 +1875,11 @@ int UI_TextOutWrapEx(const char *text, int x, int y, int w, int h,
         if(!c || c == ' ' || c == '\n' || c == '\b' || c == '-')
         {
             if(c == '-')
-                *wp++ = c;      // Hyphens should be included in the word.
+                *wp++ = c; // Hyphens should be included in the word.
             // Time to print the word.
             *wp = 0;
             len = FR_TextWidth(word);
-            if(tx + len > x + w)    // Doesn't fit?
+            if(tx + len > x + w) // Doesn't fit?
             {
                 tx = x;
                 ty += linehgt;
@@ -1999,7 +1894,7 @@ int UI_TextOutWrapEx(const char *text, int x, int y, int w, int h,
             switch (c)
             {
             case 0:
-                return ty;      // All of the text has been printed.
+                return ty; // All of the text has been printed.
 
             case ' ':
                 tx += FR_TextWidth(" ");
@@ -2010,7 +1905,7 @@ int UI_TextOutWrapEx(const char *text, int x, int y, int w, int h,
                 ty += linehgt;
                 break;
 
-            case '\b':          // Break.
+            case '\b': // Break.
                 tx = x;
                 ty += 3 * linehgt / 2;
                 break;
@@ -2027,11 +1922,10 @@ int UI_TextOutWrapEx(const char *text, int x, int y, int w, int h,
     }
 }
 
-void UI_DrawRectEx(int x, int y, int w, int h, int brd, boolean filled,
-                   ui_color_t *top, ui_color_t *bottom, float alpha,
-                   float bottomAlpha)
+void UI_DrawRectEx(int x, int y, int w, int h, int brd, boolean filled, ui_color_t* top,
+    ui_color_t* bottom, float alpha, float bottomAlpha)
 {
-    float       s[2] = { 0, 1 }, t[2] = { 0, 1 };
+    float s[2] = { 0, 1 }, t[2] = { 0, 1 };
 
     alpha *= uiAlpha;
     bottomAlpha *= uiAlpha;
@@ -2149,17 +2043,16 @@ void UI_DrawRectEx(int x, int y, int w, int h, int brd, boolean filled,
     glEnd();
 }
 
-void UI_DrawRect(int x, int y, int w, int h, int brd, ui_color_t *color,
-                 float alpha)
+void UI_DrawRect(int x, int y, int w, int h, int brd, ui_color_t* color, float alpha)
 {
     UI_DrawRectEx(x, y, w, h, brd, false, color, NULL, alpha, alpha);
 }
 
-void UI_DrawTriangle(int x, int y, int radius, ui_color_t *hi,
-                     ui_color_t *med, ui_color_t *low, float alpha)
+void UI_DrawTriangle(int x, int y, int radius, ui_color_t* hi, ui_color_t* med,
+    ui_color_t* low, float alpha)
 {
-    float       xrad = radius * .866f;  // cos(60)
-    float       yrad = radius / 2;  // sin(60)
+    float xrad = radius * .866f; // cos(60)
+    float yrad = radius / 2; // sin(60)
 
     alpha *= uiAlpha;
     if(alpha <= 0) return;
@@ -2195,11 +2088,11 @@ void UI_DrawTriangle(int x, int y, int radius, ui_color_t *hi,
     glEnable(GL_TEXTURE_2D);
 }
 
-void UI_DrawHorizTriangle(int x, int y, int radius, ui_color_t *hi,
-                          ui_color_t *med, ui_color_t *low, float alpha)
+void UI_DrawHorizTriangle(int x, int y, int radius, ui_color_t* hi, ui_color_t* med,
+    ui_color_t* low, float alpha)
 {
-    float       yrad = radius * .866f;  // cos(60)
-    float       xrad = radius / 2;  // sin(60)
+    float yrad = radius * .866f; // cos(60)
+    float xrad = radius / 2; // sin(60)
 
     alpha *= uiAlpha;
     if(alpha <= 0)
@@ -2239,18 +2132,17 @@ void UI_DrawHorizTriangle(int x, int y, int radius, ui_color_t *hi,
     glEnable(GL_TEXTURE_2D);
 }
 
-void UI_DefaultButtonBackground(ui_color_t *col, boolean down)
+void UI_DefaultButtonBackground(ui_color_t* col, boolean down)
 {
     UI_MixColors(UI_Color(UIC_TEXT), UI_Color(UIC_SHADOW), col, down ? .1f : .5f);
 }
 
 void UI_DrawButton(int x, int y, int w, int h, int brd, float alpha,
-                   ui_color_t *background, boolean down, boolean disabled,
-                   int arrow)
+    ui_color_t* background, boolean down, boolean disabled, int arrow)
 {
-    int         inside = MIN_OF(w - brd * 2, h - brd * 2);
-    int         boff = down ? 2 : 0;
-    ui_color_t  back;
+    int inside = MIN_OF(w - brd * 2, h - brd * 2);
+    int boff = down ? 2 : 0;
+    ui_color_t back;
 
     if(!background)
     {
@@ -2260,29 +2152,19 @@ void UI_DrawButton(int x, int y, int w, int h, int brd, float alpha,
     }
 
     UI_GradientEx(x, y, w, h, brd, background, 0, disabled ? .2f : 1, 0);
-    UI_Shade(x, y, w, h, UI_BUTTON_BORDER * (down ? -1 : 1),
-             UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
-    UI_DrawRectEx(x, y, w, h, brd * (down ? -1 : 1), false, UI_Color(UIC_BRD_HI),
-                  NULL, alpha, -1);
+    UI_Shade(x, y, w, h, UI_BUTTON_BORDER * (down ? -1 : 1), UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
+    UI_DrawRectEx(x, y, w, h, brd * (down ? -1 : 1), false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
 
     switch(arrow)
     {
     case UIBA_UP:
     case UIBA_DOWN:
-        UI_DrawTriangle(x + w / 2 + boff, y + h / 2 + boff,
-                        inside / 2.75f * (arrow == UIBA_DOWN ? -1 : 1),
-                        /*UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_MED), UI_Color(UIC_BRD_LOW), */
-                        UI_Color(UIC_TEXT), UI_Color(UIC_TEXT), UI_Color(UIC_TEXT),
-                        alpha * (disabled ? .2f : 1));
+        UI_DrawTriangle(x + w / 2 + boff, y + h / 2 + boff, inside / 2.75f * (arrow == UIBA_DOWN ? -1 : 1), UI_Color(UIC_TEXT), UI_Color(UIC_TEXT), UI_Color(UIC_TEXT), alpha * (disabled ? .2f : 1));
         break;
 
     case UIBA_LEFT:
     case UIBA_RIGHT:
-        UI_DrawHorizTriangle(x + w / 2 + boff, y + h / 2 + boff,
-                             inside / 2.75f * (arrow == UIBA_RIGHT ? -1 : 1),
-                             /*UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_MED), UI_Color(UIC_BRD_LOW), */
-                             UI_Color(UIC_TEXT), UI_Color(UIC_TEXT),
-                             UI_Color(UIC_TEXT), alpha * (disabled ? .2f : 1));
+        UI_DrawHorizTriangle(x + w / 2 + boff, y + h / 2 + boff, inside / 2.75f * (arrow == UIBA_RIGHT ? -1 : 1), UI_Color(UIC_TEXT), UI_Color(UIC_TEXT), UI_Color(UIC_TEXT), alpha * (disabled ? .2f : 1));
         break;
 
     default:
@@ -2290,21 +2172,19 @@ void UI_DrawButton(int x, int y, int w, int h, int brd, float alpha,
     }
 }
 
-void UI_DrawHelpBox(int x, int y, int w, int h, float alpha, char *text)
+void UI_DrawHelpBox(int x, int y, int w, int h, float alpha, char* text)
 {
-    int         bor = UI_BUTTON_BORDER;
+    int bor = UI_BUTTON_BORDER;
 
-    UI_GradientEx(x, y, w, h, bor, UI_Color(UIC_HELP), UI_Color(UIC_HELP),
-                  alpha / 4, alpha / 2);
+    UI_GradientEx(x, y, w, h, bor, UI_Color(UIC_HELP), UI_Color(UIC_HELP), alpha / 4, alpha / 2);
     UI_DrawRectEx(x, y, w, h, bor, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
 
-    if(text)
-    {
-        bor = 2 * UI_BORDER / 3;
-        FR_SetFont(glFontVariable[GLFS_LIGHT]);
-        UI_TextOutWrapEx(text, x + 2 * bor, y + 2 * bor, w - 4 * bor,
-                         h - 4 * bor, UI_Color(UIC_TEXT), alpha);
-    }
+    if(!text)
+        return;
+
+    bor = 2 * UI_BORDER / 3;
+    FR_SetFont(glFontVariable[GLFS_LIGHT]);
+    UI_TextOutWrapEx(text, x + 2 * bor, y + 2 * bor, w - 4 * bor, h - 4 * bor, UI_Color(UIC_TEXT), alpha);
 }
 
 void UI_DrawMouse(int x, int y, int w, int h)
@@ -2331,9 +2211,9 @@ void UI_DrawLogo(int x, int y, int w, int h)
 
 void UI_DrawDDBackground(float x, float y, float w, float h, float alpha)
 {
-    float       mul = (uiTextures[UITEX_BACKGROUND]? 1.5f : 1.0f);
-    ui_color_t *dark = UI_Color(UIC_BG_DARK);
-    ui_color_t *light = UI_Color(UIC_BG_LIGHT);
+    float mul = (uiTextures[UITEX_BACKGROUND]? 1.5f : 1.0f);
+    ui_color_t* dark = UI_Color(UIC_BG_DARK);
+    ui_color_t* light = UI_Color(UIC_BG_LIGHT);
 
     // Background gradient picture.
     glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_BACKGROUND]);
@@ -2371,31 +2251,34 @@ void UI_DrawDDBackground(float x, float y, float w, float h, float alpha)
  */
 D_CMD(UIColor)
 {
-    // Also a mapping to UIC.
-    const char* objects[] = {
-        "text",
-        "title",
-        "shadow",
-        "bglight",
-        "bgmed",
-        "bgdark",
-        "borhigh",
-        "bormed",
-        "borlow",
-        "help",
-        NULL
+    struct colorname_s {
+        const char* str;
+        uint colorIdx;
+    } colors[] =
+    {
+        { "text",       UIC_TEXT },
+        { "title",      UIC_TITLE },
+        { "shadow",     UIC_SHADOW },
+        { "bglight",    UIC_BG_LIGHT },
+        { "bgmed",      UIC_BG_MEDIUM },
+        { "bgdark",     UIC_BG_DARK },
+        { "borhigh",    UIC_BRD_HI },
+        { "bormed",     UIC_BRD_MED },
+        { "borlow",     UIC_BRD_LOW },
+        { "help",       UIC_HELP },
+        { 0, 0 }
     };
     size_t i;
-
-    for(i = 0; objects[i]; ++i)
-        if(!stricmp(argv[1], objects[i]))
+    for(i = 0; colors[i].str; ++i)
+        if(!stricmp(argv[1], colors[i].str))
         {
-            ui_colors[i].red   = strtod(argv[2], 0);
-            ui_colors[i].green = strtod(argv[3], 0);
-            ui_colors[i].blue  = strtod(argv[4], 0);
+            uint idx = colors[i].colorIdx;
+            ui_colors[idx].red   = strtod(argv[2], 0);
+            ui_colors[idx].green = strtod(argv[3], 0);
+            ui_colors[idx].blue  = strtod(argv[4], 0);
             return true;
         }
 
-    Con_Printf("Unknown UI object '%s'.\n", argv[1]);
+    Con_Printf("Unknown UI color '%s'.\n", argv[1]);
     return false;
 }
