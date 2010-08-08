@@ -2975,7 +2975,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                 if(!(backsec && R_IsSkySurface(&backsec->SP_floorsurface) && (devRendSkyMode || bfloor <= ffloor)))
                 {
                     top    = (!devRendSkyMode && backsec? bfloor : ffloor);
-                    bottom = (!devRendSkyMode && backSec? ffloor : skyFloor);
+                    bottom = (!devRendSkyMode && backsec? ffloor : skyFloor);
                 }
             }
 
