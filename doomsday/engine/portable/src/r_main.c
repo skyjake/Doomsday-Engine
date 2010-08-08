@@ -1058,9 +1058,11 @@ static void restoreDefaultGLState(void)
  */
 void R_RenderViewPorts(void)
 {
-    int                 oldDisplay = displayPlayer;
-    int                 x, y, p;
-    GLbitfield          bits = GL_DEPTH_BUFFER_BIT;
+    int oldDisplay = displayPlayer, x, y, p;
+    GLbitfield bits = GL_DEPTH_BUFFER_BIT;
+
+    if(!devRendSkyMode)
+        bits |= GL_STENCIL_BUFFER_BIT;
 
     if(/*firstFrameAfterLoad ||*/ freezeRLs)
     {
@@ -1068,11 +1070,11 @@ void R_RenderViewPorts(void)
     }
     else
     {
-        int                 i;
+        int i;
 
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
-            player_t*           plr = &ddPlayers[i];
+            player_t* plr = &ddPlayers[i];
 
             if(!plr->shared.inGame || !(plr->shared.flags & DDPF_LOCAL))
                 continue;

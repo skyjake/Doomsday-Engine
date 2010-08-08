@@ -63,11 +63,6 @@ cvar = rend-sky-distance
 def = 1600
 desc = The sky is composed of two capped hemispheres rendered around the camera location. The sky sphere radius is the radius of these hemispheres. The primary purpose of this setting is to determine how large an impact fog has on the sky. Larger radii will result in a sky with heavier fog.
 
-[Always render full sky]
-cvar = rend-sky-full
-def = No
-desc = Always render both the upper and lower sky hemispheres, even if one of them might be fully occluded by world geometry. If your video card has sufficient fill rate, keeping this set to Yes is a good idea. In some maps there may be a hall-of-mirrors effect visible in the sky when this is set to No.
-
 [Shadow visible distance]
 cvar = rend-shadow-far
 def = 1000
@@ -771,9 +766,6 @@ desc = Number of sky sphere rows.
 
 [rend-sky-distance]
 desc = Sky sphere radius.
-
-[rend-sky-full]
-desc = 1=Always render the full sky sphere.
 
 [rend-sky-simple]
 desc = Sky rendering mode: 0=normal, 1=quads.

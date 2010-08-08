@@ -206,8 +206,7 @@ typedef struct listhash_s {
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern int skyhemispheres;
-extern int devRendSkyMode;
+
 extern byte devRendSkyAlways;
 extern int useDynLights, dlBlend, simpleSky;
 extern boolean usingFog;
@@ -238,6 +237,7 @@ static dgl_texcoord_t* texCoords[NUM_TEXCOORD_ARRAYS];
 static dgl_color_t* colors;
 
 static uint numVertices, maxVertices;
+static boolean rDrawSky;
 
 /**
  * The rendering lists.
@@ -256,8 +256,6 @@ static listhash_t shinyHash[RL_HASH_SIZE];
 
 static listhash_t shadowHash[RL_HASH_SIZE];
 static rendlist_t skyMaskList;
-
-static boolean rendSky;
 
 static float blackColor[4] = { 0, 0, 0, 0 };
 
@@ -525,7 +523,7 @@ void RL_ClearLists(void)
     clearVertices();
 
     // \fixme Does this belong here?
-    skyhemispheres = 0;
+    rDrawSky = false;
 }
 
 static rendlist_t* createList(listhash_t* hash)
@@ -839,6 +837,9 @@ static void addPoly(primtype_t type, rendpolytype_t polyType,
     primhdr_t*          hdr;
     boolean             useLights =
         (polyType != RPT_LIGHT && numLights > 0);
+
+    if(polyType == RPT_SKY_MASK)
+        rDrawSky = true;
 
 BEGIN_PROF( PROF_RL_ADD_POLY );
 
@@ -1439,10 +1440,6 @@ static void setupPassState(listmode_t mode, uint coords[MAX_TEX_UNITS])
         glDepthMask(GL_TRUE);
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);
-
-        // We don't want to write to the color buffer.
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_ZERO, GL_ONE);
         break;
 
     case LM_BLENDED:
@@ -1786,30 +1783,41 @@ BEGIN_PROF( PROF_RL_RENDER_ALL );
     if(!freezeRLs) // Only update when lists are not frozen.
     {
         if(devRendSkyAlways)
-        {
-            rendSky = true;
-            skyhemispheres |= SKYHEMI_UPPER | SKYHEMI_LOWER;
-        }
-        else
-            rendSky = !P_IsInVoid(viewPlayer);
+            rDrawSky = true;
     }
 
-    // When in the void we don't render a sky.
-    // \fixme We could use a stencil when rendering the sky, using the
-    // already collected skymask polys as a mask.
-    if(rendSky && !devRendSkyMode)
-        // The sky might be visible. Render the needed hemispheres.
-        Rend_RenderSky(skyhemispheres);
-
-    // Mask the sky in the Z-buffer.
     lists[0] = &skyMaskList;
 
-    // \fixme As we arn't rendering the sky when in the void we have
-    // have no need to render the skymask.
+    // Is the sky visible?
+    if(!devRendSkyMode)
+    {
+        // We do not want to update color and/or depth.
+        glDisable(GL_DEPTH_TEST);
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+
+        // Mask out stencil buffer, setting the drawn areas to 1.
+        glEnable(GL_STENCIL_TEST);
+        glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+        glStencilFunc(GL_ALWAYS, 1, 0xffffffff);
+
 BEGIN_PROF( PROF_RL_RENDER_SKYMASK );
-    if(rendSky)
         renderLists(LM_SKYMASK, lists, 1);
 END_PROF( PROF_RL_RENDER_SKYMASK );
+
+        // Re-enable update of color and depth.
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glEnable(GL_DEPTH_TEST);
+
+        // Now, only render where the stencil is set to 1.
+        glStencilFunc(GL_EQUAL, 1, 0xffffffff);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+
+        Rend_RenderSky();
+
+        // Return GL state to normal.
+        glDisable(GL_STENCIL_TEST);
+        glEnable(GL_DEPTH_TEST);
+    }
 
     // Render the real surfaces of the visible world.
 

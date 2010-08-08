@@ -47,6 +47,12 @@
 
 #define SKYVTX_IDX(c, r)    ( (r)*skyColumns + (c)%skyColumns )
 
+// Sky hemispheres.
+#define SKYHEMI_UPPER       0x1
+#define SKYHEMI_LOWER       0x2
+#define SKYHEMI_JUST_CAP    0x4 // Just draw the top or bottom cap.
+#define SKYHEMI_FADEOUT_BG  0x8 // Draw the fadeout bg when drawing the cap.
+
 // TYPES -------------------------------------------------------------------
 
 typedef struct skyvertex_s {
@@ -76,9 +82,7 @@ int numSkyVerts = 0;
 
 int skyDetail = 6, simpleSky;
 int skyColumns, skyRows = 3;
-int skyhemispheres;
 float skyDist = 1600;
-int r_fullsky = false;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -98,7 +102,6 @@ void Rend_SkyRegister(void)
     C_VAR_INT("rend-sky-detail", &skyDetail, CVF_PROTECTED, 3, 7);
     C_VAR_INT("rend-sky-rows", &skyRows, CVF_PROTECTED, 1, 8);
     C_VAR_FLOAT("rend-sky-distance", &skyDist, CVF_NO_MAX, 1, 0);
-    C_VAR_INT("rend-sky-full", &r_fullsky, 0, 0, 1);
     C_VAR_INT("rend-sky-simple", &simpleSky, 0, 0, 2);
 
     // Ccmds
@@ -164,7 +167,7 @@ void Rend_RenderSkyModels(void)
     }
 
     // We don't want that anything interferes with what was drawn.
-    glClear(GL_DEPTH_BUFFER_BIT);
+    //glClear(GL_DEPTH_BUFFER_BIT);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
@@ -398,22 +401,21 @@ void Rend_RenderSkyHemisphere(int whichHemi)
     }
 }
 
-void Rend_RenderSky(int hemis)
+void Rend_RenderSky(void)
 {
     // IS there a sky to be rendered?
-    if(!hemis || firstLayer == -1)
+    if(firstLayer == -1)
         return;
 
     // If sky models have been inited, they will be used.
     if(!skyModelsInited || alwaysDrawSphere)
     {
-        // Always render the full sky?
-        if(r_fullsky)
-            hemis = SKYHEMI_UPPER | SKYHEMI_LOWER;
+        // Always render the full sky.
+        int hemis = SKYHEMI_UPPER | SKYHEMI_LOWER;
 
-        // We don't want anything written in the depth buffer, not yet.
+        // We don't want anything written in the depth buffer.
         glDisable(GL_DEPTH_TEST);
-        glDepthMask(GL_FALSE);
+        //glDepthMask(GL_FALSE);
         // Disable culling, all triangles face the viewer.
         glDisable(GL_CULL_FACE);
         GL_DisableArrays(true, true, DDMAXINT);
@@ -435,8 +437,8 @@ void Rend_RenderSky(int hemis)
 
         // Enable the disabled things.
         glEnable(GL_CULL_FACE);
-        glDepthMask(GL_TRUE);
-        glEnable(GL_DEPTH_TEST);
+        //glDepthMask(GL_TRUE);
+        //glEnable(GL_DEPTH_TEST);
     }
 
     // How about some 3D models?

@@ -580,14 +580,6 @@ void G_PostInit(void)
     startMap = 0;
     autoStart = false;
 
-    // Game mode specific settings.
-    // Plutonia and TNT automatically turn on the full sky.
-    if(gameMode == commercial &&
-       (gameMission == GM_PLUT || gameMission == GM_TNT))
-    {
-        Con_SetInteger("rend-sky-full", 1, true);
-    }
-
     // Command line options.
     noMonstersParm = ArgCheck("-nomonsters")? true : false;
     respawnParm = ArgCheck("-respawn")? true : false;

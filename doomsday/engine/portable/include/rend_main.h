@@ -42,6 +42,7 @@ extern float fogColor[4];
 extern int rAmbient;
 extern float rendLightDistanceAttentuation;
 extern float lightModRange[255];
+extern int devRendSkyMode;
 
 void            Rend_Register(void);
 void            Rend_Init(void);

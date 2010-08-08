@@ -190,7 +190,7 @@ static void testMultisampling(HDC hDC)
         WGL_COLOR_BITS_ARB,24,
         WGL_ALPHA_BITS_ARB,8,
         WGL_DEPTH_BITS_ARB,16,
-        WGL_STENCIL_BITS_ARB,0,
+        WGL_STENCIL_BITS_ARB,8,
         WGL_DOUBLE_BUFFER_ARB,GL_TRUE,
         WGL_SAMPLE_BUFFERS_ARB,GL_TRUE,
         WGL_SAMPLES_ARB,4,
@@ -245,10 +245,10 @@ static void createDummyWindow(application_t* app)
         pfd.iPixelType = PFD_TYPE_RGBA;
         pfd.iLayerType = PFD_MAIN_PLANE;
 #ifndef DRMESA
-        pfd.dwFlags =
-            PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+        pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
         pfd.cColorBits = 32;
         pfd.cDepthBits = 16;
+        pfd.cStencilBits = 8;
 #else /* Double Buffer, no alpha */
         pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL |
             PFD_GENERIC_FORMAT | PFD_DOUBLEBUFFER | PFD_SWAP_COPY;
@@ -259,7 +259,7 @@ static void createDummyWindow(application_t* app)
         pfd.cBlueBits = 8;
         pfd.cBlueShift = 16;
         pfd.cDepthBits = 16;
-        pfd.cStencilBits = 8;
+        pfd.cStencilBits = 2;
 #endif
 
         if(ok)

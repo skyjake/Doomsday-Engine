@@ -68,7 +68,6 @@ static DGLuint constructBBox(DGLuint name, float br);
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern int useDynLights, translucentIceCorpse;
-extern int skyhemispheres;
 extern int loMaxRadius;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -2015,8 +2014,6 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
 
     if(skyMasked)
     {
-        skyhemispheres |= (type == PLN_FLOOR? SKYHEMI_LOWER : SKYHEMI_UPPER);
-
         // In devRendSkyMode mode we render all polys destined for the
         // skymask as regular world polys (with a few obvious properties).
         if(devRendSkyMode)
@@ -2869,7 +2866,18 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
 
     if(devRendSkyMode)
     {
-        uint                i;
+        float lightVal = ssec->sector->lightLevel;
+
+        // Add extra light.
+        lightVal += R_ExtraLightDelta();
+        Rend_ApplyLightAdaptation(&lightVal);
+
+        { uint i;
+        for(i = 0; i < 4; ++i)
+        {
+            rcolors[i].rgba[CR] = rcolors[i].rgba[CG] = rcolors[i].rgba[CB] = lightVal;
+            rcolors[i].rgba[CA] = 1;
+        }}
 
         rtexcoords[0].st[0] = 0;
         rtexcoords[0].st[1] = 1;
@@ -2879,15 +2887,11 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
         rtexcoords[2].st[1] = 1;
         rtexcoords[3].st[0] = 1;
         rtexcoords[3].st[1] = 0;
-
-        for(i = 0; i < 4; ++i)
-            rcolors[i].rgba[CR] = rcolors[i].rgba[CG] =
-                rcolors[i].rgba[CB] = rcolors[i].rgba[CA] = 1;
     }
 
     vBL = rvertices[0].pos;
-    vBR = rvertices[2].pos;
     vTL = rvertices[1].pos;
+    vBR = rvertices[2].pos;
     vTR = rvertices[3].pos;
 
     num  = ssec->segCount;
@@ -2951,8 +2955,8 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
 
                 RL_AddPoly(PT_TRIANGLE_STRIP,
                            (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK),
-                           rvertices, rtexcoords, NULL, NULL,
-                           rcolors, 4, 0, 0, NULL, rTU);
+                           rvertices, (devRendSkyMode? rtexcoords : 0), 0, 0,
+                           rcolors, 4, 0, 0, 0, rTU);
             }
 
             // Ceiling.
@@ -2969,8 +2973,8 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
 
                 RL_AddPoly(PT_TRIANGLE_STRIP,
                            (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK),
-                           rvertices, rtexcoords, NULL, NULL,
-                           rcolors, 4, 0, 0, NULL, rTU);
+                           rvertices, (devRendSkyMode? rtexcoords : 0), 0, 0,
+                           rcolors, 4, 0, 0, 0, rTU);
             }
         }
 
@@ -2992,7 +2996,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
 
                     RL_AddPoly(PT_TRIANGLE_STRIP,
                                (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK),
-                               rvertices, rtexcoords, NULL, NULL,
+                               rvertices, (devRendSkyMode? rtexcoords : 0), 0, 0,
                                rcolors, 4, 0, 0, NULL, rTU);
                 }
 
@@ -3013,11 +3017,10 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                         prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length,
                                            frontsec->SP_ceilmaterial);
 
-
                     RL_AddPoly(PT_TRIANGLE_STRIP,
                                (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK),
-                               rvertices, rtexcoords, NULL, NULL,
-                               rcolors, 4, 0, 0, NULL, rTU);
+                               rvertices, (devRendSkyMode? rtexcoords : 0), 0, 0,
+                               rcolors, 4, 0, 0, 0, rTU);
                 }
 
                 // Ensure we add a solid view seg.
