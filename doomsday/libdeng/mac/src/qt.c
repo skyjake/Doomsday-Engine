@@ -31,7 +31,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdint.h>
-typedef uint64_t io_user_reference_t;
+//typedef uint64_t io_user_reference_t;
 
 //#include "doomsday.h"
 #include "sys_audiod.h"

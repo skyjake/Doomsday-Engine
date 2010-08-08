@@ -58,6 +58,7 @@ void Map::clear()
     // Clear thinkers.
     FOR_EACH(i, _thinkers, Thinkers::iterator)
     {
+        i->second->setMap(0);
         delete i->second;
     }
     _thinkers.clear();

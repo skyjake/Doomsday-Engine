@@ -177,8 +177,8 @@ void Net_Register(void)
 void Net_Init(void)
 {
     Net_AllocArrays();
-    memset(&netBuffer, 0, sizeof(netBuffer));
-    netBuffer.headerLength = netBuffer.msg.data - (byte *) &netBuffer.msg;
+    /*memset(&netBuffer, 0, sizeof(netBuffer));
+    netBuffer.headerLength = netBuffer.msg.data - (byte *) &netBuffer.msg;*/
     // The game is always started in single-player mode.
     netGame = false;
 }

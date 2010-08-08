@@ -967,7 +967,7 @@ void Sv_StartNetGame(void)
 
     netGame = true;
     isServer = true;
-    allowSending = true;
+    //allowSending = true;
 
     if(!isDedicated)
     {

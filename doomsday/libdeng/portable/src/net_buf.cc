@@ -60,8 +60,8 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-boolean allowSending;
-netbuffer_t netBuffer;
+//boolean allowSending;
+//netbuffer_t netBuffer;
 
 // The Sent Message Store: list of sent or queued messages waiting to be
 // confirmed.

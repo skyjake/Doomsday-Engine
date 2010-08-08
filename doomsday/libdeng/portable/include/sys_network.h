@@ -49,7 +49,7 @@ extern          "C" {
     } masteraction_t;
 
     extern size_t   maxDatagramSize;
-    extern boolean  allowSending;
+    //extern boolean  allowSending;
     extern int      maxQueuePackets;
 
     extern boolean  netServerMode;

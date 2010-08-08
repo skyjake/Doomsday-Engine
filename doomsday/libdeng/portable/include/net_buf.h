@@ -76,8 +76,8 @@ typedef struct netbuffer_s {
 /**
  * Globally accessible data.
  */
-extern netbuffer_t netBuffer;
-extern boolean  allowSending;
+//extern netbuffer_t netBuffer;
+//extern boolean  allowSending;
 
 /**
  * Functions.
