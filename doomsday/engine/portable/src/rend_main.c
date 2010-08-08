@@ -2866,6 +2866,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
 
     if(devRendSkyMode)
     {
+        const float* ambientColor = R_GetSectorLightColor(ssec->sector);
         float lightVal = ssec->sector->lightLevel;
 
         // Add extra light.
@@ -2875,7 +2876,9 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
         { uint i;
         for(i = 0; i < 4; ++i)
         {
-            rcolors[i].rgba[CR] = rcolors[i].rgba[CG] = rcolors[i].rgba[CB] = lightVal;
+            rcolors[i].rgba[CR] = lightVal * ambientColor[CR];
+            rcolors[i].rgba[CG] = lightVal * ambientColor[CG];
+            rcolors[i].rgba[CB] = lightVal * ambientColor[CB];
             rcolors[i].rgba[CA] = 1;
         }}
 
@@ -2899,6 +2902,8 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
 
     for(j = 0; j < num; ++j)
     {
+        float skyFloor, skyCeil;
+
         seg = list[j];
 
         if(!seg->lineDef) // "minisegs" have no linedefs.
@@ -2938,16 +2943,19 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
         vBR[VX] = vTR[VX] = seg->SG_v2pos[VX];
         vBR[VY] = vTR[VY] = seg->SG_v2pos[VY];
 
+        skyFloor = (P_IsInVoid(viewPlayer) && !devRendSkyMode)? ffloor : skyFix[PLN_FLOOR].height;
+        skyCeil  = (P_IsInVoid(viewPlayer) && !devRendSkyMode)? fceil  : skyFix[PLN_CEILING].height;
+
         // Upper/lower normal skyfixes.
         if(!backsec || backsec != seg->SG_frontsector)
         {
             // Floor.
             if(R_IsSkySurface(&frontsec->SP_floorsurface) &&
                !(backsec && R_IsSkySurface(&backsec->SP_floorsurface)) &&
-               ffloor > skyFix[PLN_FLOOR].height)
+               ffloor > skyFloor)
             {
                 vTL[VZ] = vTR[VZ] = ffloor;
-                vBL[VZ] = vBR[VZ] = skyFix[PLN_FLOOR].height;
+                vBL[VZ] = vBR[VZ] = skyFloor;
 
                 if(devRendSkyMode)
                     prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length,
@@ -2962,9 +2970,9 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
             // Ceiling.
             if(R_IsSkySurface(&frontsec->SP_ceilsurface) &&
                !(backsec && R_IsSkySurface(&backsec->SP_ceilsurface)) &&
-               fceil < skyFix[PLN_CEILING].height)
+               fceil < skyCeil)
             {
-                vTL[VZ] = vTR[VZ] = skyFix[PLN_CEILING].height;
+                vTL[VZ] = vTR[VZ] = skyCeil;
                 vBL[VZ] = vBR[VZ] = fceil;
 
                 if(devRendSkyMode)
@@ -2985,10 +2993,10 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
             if(R_IsSkySurface(&frontsec->SP_floorsurface) &&
                R_IsSkySurface(&backsec->SP_floorsurface))
             {
-                if(bfloor > skyFix[PLN_FLOOR].height)
+                if(bfloor > skyFloor)
                 {
                     vTL[VZ] = vTR[VZ] = bfloor;
-                    vBL[VZ] = vBR[VZ] = skyFix[PLN_FLOOR].height;
+                    vBL[VZ] = vBR[VZ] = skyFloor;
 
                     if(devRendSkyMode)
                         prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length,
@@ -3008,9 +3016,9 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
             if(R_IsSkySurface(&frontsec->SP_ceilsurface) &&
                R_IsSkySurface(&backsec->SP_ceilsurface))
             {
-                if(bceil < skyFix[PLN_CEILING].height)
+                if(bceil < skyCeil)
                 {
-                    vTL[VZ] = vTR[VZ] = skyFix[PLN_CEILING].height;
+                    vTL[VZ] = vTR[VZ] = skyCeil;
                     vBL[VZ] = vBR[VZ] = bceil;
 
                     if(devRendSkyMode)
@@ -3257,7 +3265,7 @@ static void Rend_RenderSubsector(uint ssecidx)
         boolean             isGlowing = false;
 
         // Determine plane height.
-        if(!R_IsSkySurface(suf))
+        if(!R_IsSkySurface(suf) || (P_IsInVoid(viewPlayer) && !devRendSkyMode))
         {
             height = plane->visHeight;
         }
