@@ -839,21 +839,63 @@ Con_Printf("  CmdLag=%i\n", cl->lag);
 #endif
 }
 
+/// @return  @c true iff a demo is currently being recorded.
+static boolean recordingDemo(void)
+{
+    int i;
+    for(i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        if(ddPlayers[i].shared.inGame && clients[i].recording)
+            return true;
+    }
+    return false;
+}
+
+void Net_DrawDemoOverlay(void)
+{
+    char buf[160], tmp[40];
+    int x = theWindow->width - 10, y = 10;
+
+    if(!recordingDemo() || !(SECONDS_TO_TICKS(gameTime) & 8))
+        return;
+
+    strcpy(buf, "[");
+    { int i, c;
+    for(i = c = 0; i < DDMAXPLAYERS; ++i)
+    {
+        if(!(!ddPlayers[i].shared.inGame || !clients[i].recording))
+        {
+            // This is a "real" player (or camera).
+            if(c++)
+                strcat(buf, ",");
+
+            sprintf(tmp, "%i:%s", i, clients[i].recordPaused ? "-P-" : "REC");
+            strcat(buf, tmp);
+        }
+    }}
+    strcat(buf, "]");
+
+    x -= FR_TextWidth(buf);
+
+    // Go into screen projection mode.
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+
+    glColor3f(1, 1, 1);
+    FR_ShadowTextOut(buf, x, y);
+
+    // Restore original matrix.
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+}
+
 /**
  * Does drawing for the engine's HUD, not just the net.
  */
 void Net_Drawer(void)
 {
-    char                buf[160], tmp[40];
-    int                 i, c;
-    boolean             showBlinkR = false;
-
-    for(i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        if(ddPlayers[i].shared.inGame && clients[i].recording)
-            showBlinkR = true;
-    }
-
     // Draw the Shadow Bias Editor HUD (if it is active).
     SBE_DrawHUD();
 
@@ -866,58 +908,8 @@ void Net_Drawer(void)
     // Draw the light range debug display.
     R_DrawLightRange();
 
-    if(!netDev && !showBlinkR && !consoleShowFPS)
-        return;
-
-    // Go into screen projection mode.
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
-
-    if(showBlinkR && SECONDS_TO_TICKS(gameTime) & 8)
-    {
-        strcpy(buf, "[");
-        for(i = c = 0; i < DDMAXPLAYERS; ++i)
-        {
-            if(!(!ddPlayers[i].shared.inGame || !clients[i].recording))
-            {
-                // This is a "real" player (or camera).
-                if(c++)
-                    strcat(buf, ",");
-
-                sprintf(tmp, "%i:%s", i, clients[i].recordPaused ? "-P-" : "REC");
-                strcat(buf, tmp);
-            }
-        }
-
-        strcat(buf, "]");
-        i = theWindow->width - FR_TextWidth(buf);
-        //glColor3f(0, 0, 0);
-        //FR_TextOut(buf, i - 8, 12);
-        glColor3f(1, 1, 1);
-        FR_ShadowTextOut(buf, i - 10, 10);
-    }
-
-    if(netDev)
-    {
-        /*      glColor3f(1, 1, 1);
-           sprintf(buf, "G%i", gametic);
-           FR_TextOut(buf, 10, 10);
-           for(i = 0, cl = clients; i<DDMAXPLAYERS; ++i, cl++)
-           if(ddPlayers[i].inGame)
-           {
-           sprintf(buf, "%02i:%+04i[%+03i](%02d/%03i) pf:%x", i, cl->lag,
-           cl->lagStress, cl->numtics, cl->runTime,
-           ddPlayers[i].flags);
-           FR_TextOut(buf, 10, 10+10*(i+1));
-           } */
-    }
-    Rend_ConsoleFPS(theWindow->width - 10, 30);
-
-    // Restore original matrix.
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
+    // Draw the demo recording overlay.
+    Net_DrawDemoOverlay();
 }
 
 /**

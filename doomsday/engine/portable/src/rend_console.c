@@ -549,12 +549,6 @@ static void drawConsole(void)
     fontSy = fontScaledY / gtosMulY;
     textOffsetY = fontScaledY / 4;
 
-    // Go into screen projection mode.
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
-
     drawConsoleBackground(0, (int) (ConsoleY * gtosMulY + 4),
                           theWindow->width, -theWindow->height - 4,
                           gtosMulY, consoleAlpha);
@@ -710,8 +704,6 @@ static void drawConsole(void)
     // Draw the console title bar.
     DrawConsoleTitleBar(consoleAlpha);
 
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
 }
 
 void Rend_Console(void)
@@ -719,10 +711,24 @@ void Rend_Console(void)
     if(isDedicated)
         return;
 
-    if(ConsoleY <= 0)
-        return; // We have nothing to do here.
+    if(ConsoleY <= 0 && !consoleShowFPS)
+        return;
 
-    drawConsole();
+    // Go into screen projection mode.
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
+
+    if(ConsoleY > 0)
+        drawConsole();
+
+    if(consoleShowFPS)
+        Rend_ConsoleFPS(theWindow->width - 10, 10 + (ConsoleY > 0? consoleAlpha * GetConsoleTitleBarHeight() : 0));
+
+    // Restore original matrix.
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
 }
 
 D_CMD(BackgroundTurn)
