@@ -1230,7 +1230,7 @@ void FIData_PicClearAnimation(fi_object_t* obj)
 void FIData_TextThink(fi_object_t* obj)
 {
     fidata_text_t* t = (fidata_text_t*)obj;
-    if(!obj || obj->type != FI_PIC) Con_Error("FIData_TextThink: Not a FI_TEXT.");
+    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextThink: Not a FI_TEXT.");
 
     // Call parent thinker.
     FIObject_Think(obj);
@@ -1286,7 +1286,7 @@ static int textLineWidth(const char* text, compositefontid_t font)
 void FIData_TextDraw(fi_object_t* obj, const float offset[3])
 {
     fidata_text_t* t = (fidata_text_t*)obj;
-    if(!obj || obj->type != FI_PIC) Con_Error("FIData_TextDraw: Not a FI_TEXT.");
+    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextDraw: Not a FI_TEXT.");
 
     {
     int x = 0, y = 0;
@@ -1394,7 +1394,7 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
 size_t FIData_TextLength(fi_object_t* obj)
 {
     fidata_text_t* t = (fidata_text_t*)obj;
-    if(!obj || obj->type != FI_PIC) Con_Error("FIData_TextLength: Not a FI_TEXT.");
+    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextLength: Not a FI_TEXT.");
 
     {
     size_t cnt = 0;
@@ -1429,7 +1429,7 @@ size_t FIData_TextLength(fi_object_t* obj)
 void FIData_TextCopy(fi_object_t* obj, const char* str)
 {
     fidata_text_t* t = (fidata_text_t*)obj;
-    if(!obj || obj->type != FI_PIC) Con_Error("FIData_TextCopy: Not a FI_TEXT.");
+    if(!obj || obj->type != FI_TEXT) Con_Error("FIData_TextCopy: Not a FI_TEXT.");
 
     if(t->text)
     {
