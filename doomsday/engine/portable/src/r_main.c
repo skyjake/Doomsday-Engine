@@ -275,10 +275,7 @@ void R_EndBorderedProjection(borderedprojectionstate_t* s)
  */
 boolean R_IsSkySurface(const surface_t* suf)
 {
-    if(suf && suf->material && (suf->material->flags & MATF_SKYMASK))
-        return true;
-
-    return false;
+    return (suf && suf->material && (suf->material->flags & MATF_SKYMASK) != 0);
 }
 
 /**

@@ -326,15 +326,11 @@ void Rend_ApplyTorchLight(float* color, float distance)
     }
 }
 
-static void lightVertex(rcolor_t* color, const rvertex_t* vtx,
-                        float lightLevel, const float* ambientColor)
+static void lightVertex(rcolor_t* color, const rvertex_t* vtx, float lightLevel,
+    const float* ambientColor)
 {
-    float               lightVal, dist;
-
-    dist = Rend_PointDist2D(vtx->pos);
-
-    // Apply distance attenuation.
-    lightVal = R_DistAttenuateLightLevel(dist, lightLevel);
+    float dist = Rend_PointDist2D(vtx->pos);
+    float lightVal = R_DistAttenuateLightLevel(dist, lightLevel);
 
     // Add extra light.
     lightVal += R_ExtraLightDelta();
@@ -347,23 +343,31 @@ static void lightVertex(rcolor_t* color, const rvertex_t* vtx,
     color->rgba[CB] = lightVal * ambientColor[CB];
 }
 
-void Rend_VertexColorsApplyTorchLight(rcolor_t* colors,
-                                      const rvertex_t* vertices,
-                                      size_t numVertices)
+static void lightVertices(size_t num, rcolor_t* colors, const rvertex_t* verts,
+    float lightLevel, const float* ambientColor)
 {
-    size_t              i;
-    ddplayer_t*         ddpl = &viewPlayer->shared;
+    size_t i;
+    for(i = 0; i < num; ++i)
+    {
+        lightVertex(colors+i, verts+i, lightLevel, ambientColor);
+    }
+}
+
+void Rend_VertexColorsApplyTorchLight(rcolor_t* colors, const rvertex_t* vertices,
+    size_t numVertices)
+{
+    ddplayer_t* ddpl = &viewPlayer->shared;
 
     if(!ddpl->fixedColorMap)
         return; // No need, its disabled.
 
+    { size_t i;
     for(i = 0; i < numVertices; ++i)
     {
-        const rvertex_t*    vtx = &vertices[i];
-        rcolor_t*           c = &colors[i];
-
+        const rvertex_t* vtx = &vertices[i];
+        rcolor_t* c = &colors[i];
         Rend_ApplyTorchLight(c->rgba, Rend_PointDist2D(vtx->pos));
-    }
+    }}
 }
 
 void Rend_PreparePlane(rvertex_t* rvertices, size_t numVertices,
@@ -1573,7 +1577,6 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
             {
                 float llL = MINMAX_OF(0, *p->sectorLightLevel + p->surfaceLightLevelDL + glowing, 1);
                 float llR = MINMAX_OF(0, *p->sectorLightLevel + p->surfaceLightLevelDR + glowing, 1);
-                uint i;
                 
                 // Calculate the color for each vertex, blended with plane color?
                 if(p->surfaceColor[0] < 1 || p->surfaceColor[1] < 1 || p->surfaceColor[2] < 1)
@@ -1586,7 +1589,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                     vColor[CB] = p->surfaceColor[CB] * p->sectorLightColor[CB];
                     vColor[CA] = 1;
 
-                    if(p->isWall)
+                    if(p->isWall && llL != llR)
                     {
                         lightVertex(&rcolors[0], &rvertices[0], llL, vColor);
                         lightVertex(&rcolors[1], &rvertices[1], llL, vColor);
@@ -1595,13 +1598,12 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                     }
                     else
                     {
-                        for(i = 0; i < numVertices; ++i)
-                            lightVertex(&rcolors[i], &rvertices[i], llL, vColor);
+                        lightVertices(numVertices, rcolors, rvertices, llL, vColor);
                     }
                 }
                 else
                 {   // Use sector light+color only.
-                    if(p->isWall)
+                    if(p->isWall && llL != llR)
                     {
                         lightVertex(&rcolors[0], &rvertices[0], llL, p->sectorLightColor);
                         lightVertex(&rcolors[1], &rvertices[1], llL, p->sectorLightColor);
@@ -1610,8 +1612,7 @@ static boolean renderWorldPoly(rvertex_t* rvertices, uint numVertices,
                     }
                     else
                     {
-                        for(i = 0; i < numVertices; ++i)
-                            lightVertex(&rcolors[i], &rvertices[i], llL, p->sectorLightColor);
+                        lightVertices(numVertices, rcolors, rvertices, llL, p->sectorLightColor);
                     }
                 }
 
