@@ -3312,11 +3312,6 @@ static void Rend_RenderSubsector(uint ssecidx)
         }
         else
         {
-            // We don't render planes for unclosed sectors when the polys would
-            // be added to the skymask (a DOOM.EXE renderer hack).
-            if(sect->flags & SECF_UNCLOSED)
-                return;
-
             if(plane->type != PLN_MID)
                 height = skyFix[plane->type].height;
             else
