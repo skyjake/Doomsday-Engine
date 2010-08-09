@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * p_materialmanager.c: Materials manager.
+ * Materials manager.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -112,6 +112,12 @@ void P_MaterialsRegister(void)
     C_CMD("listmaterials",  NULL,     ListMaterials);
 }
 
+static __inline materialbind_t* bindForMaterial(const material_t* mat)
+{
+    if(mat->_bindId) return &materialBinds[mat->_bindId-1];
+    return 0;
+}
+
 /**
  * Is the specified id a valid (known) material namespace.
  *
@@ -124,7 +130,6 @@ static boolean isKnownMNamespace(material_namespace_t mnamespace)
 {
     if(mnamespace >= MN_FIRST && mnamespace < NUM_MATERIAL_NAMESPACES)
         return true;
-
     return false;
 }
 
@@ -240,6 +245,7 @@ static void newMaterialNameBinding(material_t* mat, const char* name,
     strncpy(mb->name, name, 8);
     mb->name[8] = '\0';
     mb->mat = mat;
+    mat->_bindId = (mb - materialBinds) + 1;
     mb->prepared = 0;
 
     // We also hash the name for faster searching.
@@ -443,13 +449,10 @@ materialnum_t Materials_ToMaterialNum(const material_t* mat)
 {
     if(mat)
     {
-        materialnum_t       i;
-
-        for(i = 0; i < numMaterialBinds; ++i)
-            if(materialBinds[i].mat == mat)
-                return i + 1; // 1-based index.
+        materialbind_t* mb;
+        if((mb = bindForMaterial(mat)))
+            return (mb - materialBinds) + 1; // 1-based index.
     }
-
     return 0;
 }
 
@@ -840,21 +843,6 @@ void Materials_Ticker(timespan_t time)
         return;
 
     animateAnimGroups();
-}
-
-static materialbind_t* bindForMaterial(material_t* mat)
-{
-    if(materialBinds && mat)
-    {
-        uint i;
-        for(i = 0; i < numMaterialBinds; ++i)
-        {
-            materialbind_t* mb = &materialBinds[i];
-            if(mb->mat == mat)
-                return mb;
-        }
-    }
-    return NULL;
 }
 
 /**

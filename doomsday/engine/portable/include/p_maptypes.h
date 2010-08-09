@@ -147,6 +147,7 @@ typedef struct material_s {
     struct material_s*  next;
     float               inter;
     struct material_s*  globalNext;    // Linear list linking all materials.
+    unsigned int        _bindId;       // Name-binding if any.
 } material_t;
 
 // Internal surface flags:

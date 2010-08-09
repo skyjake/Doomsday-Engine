@@ -159,6 +159,7 @@ struct material
     -       material_s*		next
     -       float           inter
     -       material_s*		globalNext // Linear list linking all materials.
+    -       uint            _bindId   // Name-binding if any.
 end
 
 internal
