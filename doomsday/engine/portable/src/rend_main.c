@@ -2904,12 +2904,13 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
     for(j = 0; j < num; ++j)
     {
         float skyFloor, skyCeil;
-        boolean disableBacksecSkyFix = false;
+        linedef_t* line;
 
         seg = list[j];
 
         if(!seg->lineDef) // "minisegs" have no linedefs.
             continue;
+        line = seg->lineDef;
 
         // Let's first check which way this seg is facing.
         if(!(seg->frameFlags & SEGINF_FACINGFRONT))
@@ -2934,15 +2935,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
         {
             bceil = backsec->SP_ceilvisheight;
             bfloor = backsec->SP_floorvisheight;
-            if(!Rend_DoesMidTextureFillGap(seg->lineDef, seg->side))
-            {
-                bsh = bceil - bfloor;
-            }
-            else
-            {
-                disableBacksecSkyFix = true;
-                bsh = 0;
-            }
+            bsh = bceil - bfloor;
         }
         else
             bsh = bceil = bfloor = 0;
@@ -3028,53 +3021,102 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
             }
         }
 
-        // Upper/lower zero height backsec skyfixes.
-        if(!(!devRendSkyMode && P_IsInVoid(viewPlayer)) && backsec && bsh <= 0)
+        if(backsec && !(!devRendSkyMode && P_IsInVoid(viewPlayer)))
         {
-            // Floor.
-            if(R_IsSkySurface(&frontsec->SP_floorsurface) &&
-               R_IsSkySurface(&backsec->SP_floorsurface))
+            if(bsh > 0)
             {
-                if(bfloor > skyFloor)
+                plane_t* pffloor = frontsec->SP_plane(PLN_FLOOR);
+                plane_t* pfceil  = frontsec->SP_plane(PLN_CEILING);
+                plane_t* pbceil  = backsec->SP_plane(PLN_CEILING);
+                plane_t* pbfloor = backsec->SP_plane(PLN_FLOOR);
+                float bottom = 0, top = 0, texOffset[2];
+
+                if(side->SW_middleinflags & SUIF_PVIS)
+                   R_FindBottomTop(SEG_MIDDLE, seg->offset, &side->SW_middlesurface,
+                                   pffloor, pfceil, pbfloor, pbceil,
+                                   (line->flags & DDLF_DONTPEGBOTTOM)? true : false,
+                                   (line->flags & DDLF_DONTPEGTOP)? true : false,
+                                   (side->flags & SDF_MIDDLE_STRETCH)? true : false,
+                                   LINE_SELFREF(line)? true : false,
+                                   &bottom, &top, texOffset);
+
+                if(top > bottom)
                 {
-                    vTL[VZ] = vTR[VZ] = bfloor;
-                    vBL[VZ] = vBR[VZ] = skyFloor;
+                    // Floor.
+                    if(R_IsSkySurface(&frontsec->SP_floorsurface) && R_IsSkySurface(&backsec->SP_floorsurface) && bfloor > skyFloor)
+                    {
+                        vTL[VZ] = vTR[VZ] = MIN_OF(bfloor, bottom);
+                        vBL[VZ] = vBR[VZ] = skyFloor;
 
-                    if(devRendSkyMode)
-                        prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length, frontsec->SP_floormaterial);
+                        if(devRendSkyMode)
+                            prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length, frontsec->SP_floormaterial);
 
-                    RL_AddPoly(PT_TRIANGLE_STRIP,
-                               (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK),
-                               rvertices, (devRendSkyMode? rtexcoords : 0), 0, 0,
-                               rcolors, 4, 0, 0, NULL, rTU);
+                        RL_AddPoly(PT_TRIANGLE_STRIP,
+                                   (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK),
+                                   rvertices, (devRendSkyMode? rtexcoords : 0), 0, 0,
+                                   rcolors, 4, 0, 0, NULL, rTU);
+                    }
+
+                    // Ceiling.
+                    if(R_IsSkySurface(&frontsec->SP_ceilsurface) && R_IsSkySurface(&backsec->SP_ceilsurface) && bceil < skyCeil)
+                    {
+                        vTL[VZ] = vTR[VZ] = skyCeil;
+                        vBL[VZ] = vBR[VZ] = MAX_OF(bceil, top);
+
+                        if(devRendSkyMode)
+                            prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length, frontsec->SP_ceilmaterial);
+
+                        RL_AddPoly(PT_TRIANGLE_STRIP,
+                                   (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK),
+                                   rvertices, (devRendSkyMode? rtexcoords : 0), 0, 0,
+                                   rcolors, 4, 0, 0, 0, rTU);
+                    }
                 }
-
-                // Ensure we add a solid view seg?
-                if(!disableBacksecSkyFix)
-                    seg->frameFlags |= SEGINF_BACKSECSKYFIX;
+                // Other cases handled earlier.
             }
-
-            // Ceiling.
-            if(R_IsSkySurface(&frontsec->SP_ceilsurface) &&
-               R_IsSkySurface(&backsec->SP_ceilsurface))
-            {
-                if(bceil < skyCeil)
+            else
+            {   // Upper/lower zero height backsec skyfixes.
+                // Floor.
+                if(R_IsSkySurface(&frontsec->SP_floorsurface) && R_IsSkySurface(&backsec->SP_floorsurface))
                 {
-                    vTL[VZ] = vTR[VZ] = skyCeil;
-                    vBL[VZ] = vBR[VZ] = bceil;
+                    if(bfloor > skyFloor)
+                    {
+                        vTL[VZ] = vTR[VZ] = bfloor;
+                        vBL[VZ] = vBR[VZ] = skyFloor;
 
-                    if(devRendSkyMode)
-                        prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length, frontsec->SP_ceilmaterial);
+                        if(devRendSkyMode)
+                            prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length, frontsec->SP_floormaterial);
 
-                    RL_AddPoly(PT_TRIANGLE_STRIP,
-                               (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK),
-                               rvertices, (devRendSkyMode? rtexcoords : 0), 0, 0,
-                               rcolors, 4, 0, 0, 0, rTU);
+                        RL_AddPoly(PT_TRIANGLE_STRIP,
+                                   (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK),
+                                   rvertices, (devRendSkyMode? rtexcoords : 0), 0, 0,
+                                   rcolors, 4, 0, 0, NULL, rTU);
+                    }
+
+                    // Ensure we add a solid view seg.
+                    seg->frameFlags |= SEGINF_BACKSECSKYFIX;
                 }
 
-                // Ensure we add a solid view seg?
-                if(!disableBacksecSkyFix)
+                // Ceiling.
+                if(R_IsSkySurface(&frontsec->SP_ceilsurface) && R_IsSkySurface(&backsec->SP_ceilsurface))
+                {
+                    if(bceil < skyCeil)
+                    {
+                        vTL[VZ] = vTR[VZ] = skyCeil;
+                        vBL[VZ] = vBR[VZ] = bceil;
+
+                        if(devRendSkyMode)
+                            prepareSkyMaskPoly(rvertices, rtexcoords, rTU, seg->length, frontsec->SP_ceilmaterial);
+
+                        RL_AddPoly(PT_TRIANGLE_STRIP,
+                                   (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK),
+                                   rvertices, (devRendSkyMode? rtexcoords : 0), 0, 0,
+                                   rcolors, 4, 0, 0, 0, rTU);
+                    }
+
+                    // Ensure we add a solid view seg.
                     seg->frameFlags |= SEGINF_BACKSECSKYFIX;
+                }
             }
         }
     }
