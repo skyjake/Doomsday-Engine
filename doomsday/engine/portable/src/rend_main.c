@@ -2965,13 +2965,13 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
             top = bottom = 0;
             if(!P_IsInVoid(viewPlayer))
             {
-                if(R_IsSkySurface(&frontsec->SP_floorsurface) && !(backsec && R_IsSkySurface(&backsec->SP_floorsurface)) && ffloor < skyFloor)
+                if(R_IsSkySurface(&frontsec->SP_floorsurface) && !(backsec && R_IsSkySurface(&backsec->SP_floorsurface)) && ffloor > skyFloor)
                 {
                     top = ffloor;
                     bottom = skyFloor;
                 }
             }
-            else if(R_IsSkySurface(&frontsec->SP_floorsurface) && (!backsec || ((devRendSkyMode || R_IsSkySurface(&backsec->SP_floorsurface)) && bfloor < skyFloor)))
+            else if(R_IsSkySurface(&frontsec->SP_floorsurface) && (!backsec || ((devRendSkyMode || R_IsSkySurface(&backsec->SP_floorsurface)) && bfloor > skyFloor)))
             {
                 if(!(backsec && R_IsSkySurface(&backsec->SP_floorsurface) && (devRendSkyMode || bfloor <= ffloor)))
                 {
