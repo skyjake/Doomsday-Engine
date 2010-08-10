@@ -910,6 +910,23 @@ typedef struct {
 //
 //------------------------------------------------------------------------
 
+typedef enum {
+    GLT_ANY = -1,
+    GLT_SYSTEM, // system texture e.g., the "missing" texture.
+    GLT_FLAT,
+    GLT_DOOMTEXTURE,
+    GLT_DOOMPATCH,
+    GLT_SPRITE,
+    GLT_DETAIL,
+    GLT_SHINY,
+    GLT_MASK,
+    GLT_MODELSKIN,
+    GLT_MODELSHINYSKIN,
+    GLT_LIGHTMAP,
+    GLT_FLARE,
+    NUM_GLTEXTURE_TYPES
+} gltexture_type_t;
+
 /**
  * Resource classes. Each has its own subdir under Data\Game\.
  */

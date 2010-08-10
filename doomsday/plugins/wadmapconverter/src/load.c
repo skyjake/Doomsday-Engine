@@ -221,22 +221,18 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
         m = malloc(sizeof(*m));
         if(map->format == MF_DOOM64)
         {
-            int                 idx = *((int*) name);
+            int idx = *((int*) name);
 
             sprintf(m->name, "UNK%05i", idx);
             m->name[8] = '\0';
-            // First try the prefered namespace, then any.
-            if(!(m->num = Materials_CheckNumForIndex(idx,
-                                                     (isFlat? MN_FLATS : MN_TEXTURES))))
-                m->num = Materials_CheckNumForIndex(idx, MN_ANY);
+            m->num = DD_MaterialForTexture(1+idx, (isFlat? GLT_FLAT : GLT_DOOMTEXTURE));
         }
         else
         {
             memcpy(m->name, name, 8);
             m->name[8] = '\0';
             // First try the prefered namespace, then any.
-            if(!(m->num = Materials_CheckNumForName(m->name,
-                                                    (isFlat? MN_FLATS : MN_TEXTURES))))
+            if(!(m->num = Materials_CheckNumForName(m->name, (isFlat? MN_FLATS : MN_TEXTURES))))
                 m->num = Materials_CheckNumForName(m->name, MN_ANY);
         }
 

@@ -290,13 +290,13 @@ static void loadAnimDefs(animdef_t* animDefs)
         {
         case MN_FLATS:
             {
-            lumpnum_t           startFrame, endFrame, n;
+            uint startFrame, endFrame, n;
 
-            if((startFrame = W_CheckNumForName(animDefs[i].startname)) == -1 ||
-               (endFrame = W_CheckNumForName(animDefs[i].endname)) == -1)
+            if((startFrame = GL_CheckTextureNumForName(animDefs[i].startname, GLT_FLAT)) == -1 ||
+               (endFrame   = GL_CheckTextureNumForName(animDefs[i].endname, GLT_FLAT)) == -1)
                 continue;
 
-            numFrames = endFrame - startFrame + 1;
+            numFrames = (endFrame > startFrame? endFrame - startFrame : startFrame - endFrame) + 1;
             ticsPerFrame = LONG(animDefs[i].speed);
 
             if(numFrames < 2)
@@ -325,10 +325,7 @@ static void loadAnimDefs(animdef_t* animDefs)
                 {
                     for(n = startFrame; n <= endFrame; n++)
                     {
-                        materialnum_t       frame =
-                            Materials_CheckNumForName(W_LumpName(n),
-                                                      MN_FLATS);
-
+                        materialnum_t frame = DD_MaterialForTexture(n, GLT_FLAT);
                         if(frame != 0)
                             Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
                     }
@@ -337,10 +334,7 @@ static void loadAnimDefs(animdef_t* animDefs)
                 {
                     for(n = endFrame; n >= startFrame; n--)
                     {
-                        materialnum_t       frame =
-                            Materials_CheckNumForName(W_LumpName(n),
-                                                      MN_FLATS);
-
+                        materialnum_t frame = DD_MaterialForTexture(n, GLT_FLAT);
                         if(frame != 0)
                             Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
                     }
@@ -350,15 +344,13 @@ static void loadAnimDefs(animdef_t* animDefs)
             }
         case MN_TEXTURES:
             {   // Same as above but for texture groups.
-            materialnum_t       startFrame, endFrame, n;
+            uint startFrame, endFrame, n;
 
-            if((startFrame = Materials_CheckNumForName(animDefs[i].startname,
-                                                       MN_TEXTURES)) == 0 ||
-               (endFrame = Materials_CheckNumForName(animDefs[i].endname,
-                                                     MN_TEXTURES)) == 0)
+            if((startFrame = GL_CheckTextureNumForName(animDefs[i].startname, GLT_DOOMTEXTURE)) == 0 ||
+               (endFrame   = GL_CheckTextureNumForName(animDefs[i].endname, GLT_DOOMTEXTURE)) == 0)
                 continue;
 
-            numFrames = endFrame - startFrame + 1;
+            numFrames = (endFrame > startFrame? endFrame - startFrame : startFrame - endFrame) + 1;
             ticsPerFrame = LONG(animDefs[i].speed);
 
             if(numFrames < 2)
@@ -372,20 +364,23 @@ static void loadAnimDefs(animdef_t* animDefs)
                 VERBOSE(Con_Message("P_InitPicAnims: ADD (\"%s\" > \"%s\" %d)\n",
                                     animDefs[i].startname, animDefs[i].endname,
                                     ticsPerFrame));
-                /**
-                 * \fixme Here an assumption is made that MN_TEXTURES type
-                 * materials are registered in the same order as they are
-                 * defined in the TEXTURE(1...) lump(s).
-                 */
                 if(endFrame > startFrame)
                 {
                     for(n = startFrame; n <= endFrame; n++)
-                        Materials_AddAnimGroupFrame(groupNum, n, ticsPerFrame, 0);
+                    {
+                        materialnum_t frame = DD_MaterialForTexture(n, GLT_DOOMTEXTURE);
+                        if(frame != 0)
+                            Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
+                    }
                 }
                 else
                 {
                     for(n = endFrame; n >= startFrame; n--)
-                        Materials_AddAnimGroupFrame(groupNum, n, ticsPerFrame, 0);
+                    {
+                        materialnum_t frame = DD_MaterialForTexture(n, GLT_DOOMTEXTURE);
+                        if(frame != 0)
+                            Materials_AddAnimGroupFrame(groupNum, frame, ticsPerFrame, 0);
+                    }
                 }
             }
             break;

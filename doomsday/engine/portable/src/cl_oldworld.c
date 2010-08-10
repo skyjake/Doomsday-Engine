@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * cl_oldworld.c: Obsolete Clientside World Management
+ * Obsolete Clientside World Management
  *
  * This file contains obsolete delta routines. They are preserved so that
  * backwards compatibility is retained with older versions of the network
@@ -191,13 +191,12 @@ if(!mat)
  */
 int Cl_ReadSideDelta(void)
 {
-    short               num = Msg_ReadPackedShort(); // \fixme we support > 32768 sidedefs!
-    sidedef_t*          sid;
-    int                 df;
+    short num = Msg_ReadPackedShort(); // \fixme we support > 32768 sidedefs!
+    sidedef_t* sid;
+    int df;
 
     // Side number first (0 terminates).
-    if(!num)
-        return false;
+    if(!num) return false;
 
     sid = SIDE_PTR(--num);
 
@@ -206,48 +205,40 @@ int Cl_ReadSideDelta(void)
 
     if(df & SIDF_TOP_MATERIAL)
     {
-        material_t*         mat;
         /**
-         * The delta is a server-side texture num.
+         * The delta is actually a server-side texture num.
          * \fixme What if client and server texture nums differ?
          */
-        mat = Materials_ToMaterial2(Msg_ReadPackedShort(), MN_TEXTURES);
-        Surface_SetMaterial(&sid->SW_topsurface, mat);
+        Surface_SetMaterial(&sid->SW_topsurface, Materials_ToMaterial(DD_MaterialForTexture(Msg_ReadPackedShort()+1, GLT_DOOMTEXTURE)));
     }
     if(df & SIDF_MID_MATERIAL)
     {
-        material_t*         mat;
         /**
-         * The delta is a server-side texture num.
+         * The delta is actually a server-side texture num.
          * \fixme What if client and server texture nums differ?
          */
-        mat = Materials_ToMaterial2(Msg_ReadPackedShort(), MN_TEXTURES);
-        Surface_SetMaterial(&sid->SW_middlesurface, mat);
+        Surface_SetMaterial(&sid->SW_middlesurface, Materials_ToMaterial(DD_MaterialForTexture(Msg_ReadPackedShort()+1, GLT_DOOMTEXTURE)));
     }
     if(df & SIDF_BOTTOM_MATERIAL)
     {
-        material_t*         mat;
         /**
-         * The delta is a server-side texture num.
+         * The delta is actually a server-side texture num.
          * \fixme What if client and server texture nums differ?
          */
-        mat = Materials_ToMaterial2(Msg_ReadPackedShort(), MN_TEXTURES);
-        Surface_SetMaterial(&sid->SW_bottomsurface, mat);
+        Surface_SetMaterial(&sid->SW_bottomsurface, Materials_ToMaterial(DD_MaterialForTexture(Msg_ReadPackedShort()+1, GLT_DOOMTEXTURE)));
     }
 
     if(df & SIDF_LINE_FLAGS)
     {
-        byte                updatedFlags = Msg_ReadByte();
-        linedef_t*          line = R_GetLineForSide(num);
-
-        if(line)
+        byte updatedFlags = Msg_ReadByte();
+        linedef_t* line;
+        if((line = R_GetLineForSide(num)))
         {
             // The delta includes the lowest byte.
             line->flags &= ~0xff;
             line->flags |= updatedFlags;
 #if _DEBUG
-Con_Printf("lineflag %i: %02x\n", GET_LINE_IDX(line),
-           updatedFlags);
+Con_Printf("lineflag %i: %02x\n", GET_LINE_IDX(line), updatedFlags);
 #endif
         }
     }
@@ -280,8 +271,7 @@ Con_Printf("lineflag %i: %02x\n", GET_LINE_IDX(line),
 
     if(df & SIDF_FLAGS)
     {
-        byte    updatedFlags = Msg_ReadByte();
-
+        byte updatedFlags = Msg_ReadByte();
         // The delta includes the lowest byte.
         sid->flags &= ~0xff;
         sid->flags |= updatedFlags;

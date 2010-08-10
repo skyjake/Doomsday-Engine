@@ -1210,10 +1210,37 @@ void DD_SetVariable(int ddvalue, void *parm)
     }
 }
 
+material_namespace_t DD_MaterialNamespaceForTextureType(gltexture_type_t t)
+{
+    if(t < GLT_ANY || t >= NUM_GLTEXTURE_TYPES)
+        Con_Error("DD_MaterialNamespaceForTextureType: Internal error, invalid type %i.", (int) t);
+    switch(t)
+    {
+    case GLT_ANY:           return MN_ANY;
+    case GLT_DOOMTEXTURE:   return MN_TEXTURES;
+    case GLT_FLAT:          return MN_FLATS;
+    case GLT_SPRITE:        return MN_SPRITES;
+    case GLT_SYSTEM:        return MN_SYSTEM;
+    default:
+#if _DEBUG
+        Con_Message("DD_MaterialNamespaceForTextureType: No namespace for type %i:%s.", GLTEXTURE_TYPE_STRING(t));
+#endif
+        return 0;
+    }
+}
+
+materialnum_t DD_MaterialForTexture(uint ofTypeId, gltexture_type_t type)
+{
+    const gltexture_t* tex;
+    if(ofTypeId != 0 && (tex = GL_GetGLTextureByTypeId(ofTypeId-1, type)))
+        return Materials_CheckNumForName(GLTexture_Name(tex), DD_MaterialNamespaceForTextureType(type));
+    return 0;
+}
+
 /**
  * Gets the data of a player.
  */
-ddplayer_t *DD_GetPlayer(int number)
+ddplayer_t* DD_GetPlayer(int number)
 {
     return (ddplayer_t *) &ddPlayers[number].shared;
 }

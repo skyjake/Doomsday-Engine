@@ -78,6 +78,8 @@ extern          "C" {
     void            DD_SetVariable(int ddvalue, void* ptr);
     void*           DD_GetVariable(int ddvalue);
     ddplayer_t*     DD_GetPlayer(int number);
+    material_namespace_t DD_MaterialNamespaceForTextureType(gltexture_type_t t);
+    materialnum_t   DD_MaterialForTexture(uint ofTypeId, gltexture_type_t type);
 
     // Base: Definitions.
     int             Def_Get(int type, const char* id, void* out);
@@ -330,11 +332,10 @@ extern          "C" {
     // Play: Materials.
     materialnum_t   Materials_CheckNumForName(const char* name, material_namespace_t mnamespace);
     materialnum_t   Materials_NumForName(const char* name, material_namespace_t mnamespace);
-    materialnum_t   Materials_CheckNumForIndex(uint idx, material_namespace_t mnamespace);
-    materialnum_t   Materials_NumForIndex(uint idx, material_namespace_t mnamespace);
     const char*     Materials_GetName(material_t* mat);
-
     void            Materials_Precache(material_t* mat, boolean yes);
+    int             Materials_CreateAnimGroup(int flags);
+    void            Materials_AddAnimGroupFrame(int groupNum, materialnum_t num, int tics, int randomTics);
 
     // Play: Thinkers.
     void            DD_InitThinkers(void);
@@ -359,8 +360,6 @@ extern          "C" {
     void            R_SetBorderGfx(char* const* lumps);
     boolean         R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
     boolean         R_GetPatchInfo(patchid_t id, patchinfo_t* info);
-    int             Materials_CreateAnimGroup(int flags);
-    void            Materials_AddAnimGroupFrame(int groupNum, materialnum_t num, int tics, int randomTics);
     void            R_HSVToRGB(float* rgb, float h, float s, float v);
     angle_t         R_PointToAngle2(float x1, float y1, float x2, float y2);
     struct subsector_s* R_PointInSubsector(float x, float y);
@@ -380,6 +379,8 @@ extern          "C" {
     DGLuint         GL_NewTextureWithParams3(int format, int width, int height, const void* pixels, int flags, int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT);
     void            GL_SetFilter(boolean enable);
     void            GL_SetFilterColor(float r, float g, float b, float a);
+    uint            GL_TextureNumForName(const char* name, gltexture_type_t type);
+    uint            GL_CheckTextureNumForName(const char* name, gltexture_type_t type);
 
     // Audio.
     void            S_MapChange(void);

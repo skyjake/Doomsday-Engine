@@ -52,34 +52,22 @@
 
 // CODE --------------------------------------------------------------------
 
-static void parseAnimGroup(material_namespace_t mnamespace)
+static void parseAnimGroup(gltexture_type_t type)
 {
-    boolean             ignore;
-    boolean             done;
-    int                 groupNumber = 0;
-    materialnum_t       matNumBase = 0, lumpNumBase = 0;
+    boolean ignore = true, done;
+    int groupNumber = 0;
+    uint texNumBase = 0;
 
-    if(!(mnamespace == MN_FLATS || mnamespace == MN_TEXTURES))
-        Con_Error("parseAnimGroup: Internal Error, invalid namespace %i.",
-                  (int) mnamespace);
+    if(!(type == GLT_FLAT || type == GLT_DOOMTEXTURE))
+        Con_Error("parseAnimGroup: Internal Error, invalid type %i.", (int) type);
 
     if(!SC_GetString()) // Name.
     {
         SC_ScriptError("Missing string.");
     }
 
-    ignore = true;
-    if(mnamespace == MN_TEXTURES)
-    {
-        if((matNumBase = Materials_CheckNumForName(sc_String,
-                                                   MN_TEXTURES)) != 0)
-            ignore = false;
-    }
-    else
-    {
-        if((lumpNumBase = W_CheckNumForName(sc_String)) != -1)
-            ignore = false;
-    }
+    if((texNumBase = GL_CheckTextureNumForName(sc_String, DD_MaterialNamespaceForTextureType(type))) != 0)
+        ignore = false;
 
     if(!ignore)
         groupNumber = Materials_CreateAnimGroup(AGF_SMOOTH | AGF_FIRST_ONLY);
@@ -91,7 +79,7 @@ static void parseAnimGroup(material_namespace_t mnamespace)
         {
             if(SC_Compare("pic"))
             {
-                int                 picNum, min = 0, max = 0;
+                int picNum, min = 0, max = 0;
 
                 SC_MustGetNumber();
                 picNum = sc_Number;
@@ -116,26 +104,9 @@ static void parseAnimGroup(material_namespace_t mnamespace)
 
                 if(!ignore)
                 {
-                    if(mnamespace == MN_TEXTURES)
-                    {
-                        /**
-                         * \fixme Here an assumption is made that
-                         * MN_TEXTURES type materials are registered in the
-                         * same order as they are defined in the
-                         * TEXTURE(1...) lump(s).
-                         */
-                        Materials_AddAnimGroupFrame(groupNumber, matNumBase + picNum - 1,
-                                         min, (max > 0? max - min : 0));
-                    }
-                    else
-                    {
-                        materialnum_t       frame =
-                            Materials_CheckNumForName(W_LumpName(lumpNumBase + picNum - 1),
-                                                      MN_FLATS);
-
-                        Materials_AddAnimGroupFrame(groupNumber, frame,
-                                         min, (max > 0? max - min : 0));
-                    }
+                    materialnum_t frame = DD_MaterialForTexture(texNumBase + picNum - 1, DD_MaterialNamespaceForTextureType(type));
+                    if(frame != 0)
+                        Materials_AddAnimGroupFrame(groupNumber, frame, min, (max > 0? max - min : 0));
                 }
             }
             else
@@ -156,7 +127,7 @@ static void parseAnimGroup(material_namespace_t mnamespace)
  */
 void P_InitPicAnims(void)
 {
-    lumpnum_t       lump = W_CheckNumForName("ANIMDEFS");
+    lumpnum_t lump = W_CheckNumForName("ANIMDEFS");
 
     if(lump != -1)
     {
@@ -166,11 +137,11 @@ void P_InitPicAnims(void)
         {
             if(SC_Compare("flat"))
             {
-                parseAnimGroup(MN_FLATS);
+                parseAnimGroup(GLT_FLAT);
             }
             else if(SC_Compare("texture"))
             {
-                parseAnimGroup(MN_TEXTURES);
+                parseAnimGroup(GLT_DOOMTEXTURE);
             }
             else
             {

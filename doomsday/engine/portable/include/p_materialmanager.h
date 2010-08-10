@@ -43,11 +43,8 @@ material_t*     Materials_New(const char* name, short width, short height, byte 
                               material_namespace_t mnamespace, ded_material_t* def);
 
 material_t*     Materials_ToMaterial(materialnum_t num);
-material_t*     Materials_ToMaterial2(int ofTypeID, material_namespace_t mnamespace);
 
 materialnum_t   Materials_ToMaterialNum(const material_t* mat);
-materialnum_t   Materials_CheckNumForIndex(uint idx, material_namespace_t mnamespace);
-materialnum_t   Materials_NumForIndex(uint idx, material_namespace_t mnamespace);
 
 materialnum_t   Materials_CheckNumForName(const char* name, material_namespace_t mnamespace);
 materialnum_t   Materials_NumForName(const char* name, material_namespace_t mnamespace);

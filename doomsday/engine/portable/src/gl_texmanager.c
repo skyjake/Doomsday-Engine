@@ -2419,6 +2419,28 @@ if(type < GLT_SYSTEM || !(type < NUM_GLTEXTURE_TYPES))
     return tex;
 }
 
+uint GL_TextureNumForName(const char* name, gltexture_type_t type)
+{
+    const gltexture_t* glTex;
+    if(type < GLT_SYSTEM || !(type < NUM_GLTEXTURE_TYPES))
+        Con_Error("GL_TextureNumForName: Invalid type %i.", type);
+    if((glTex = GL_GetGLTextureByName(name, type)))
+        return glTex->ofTypeID + 1;
+    Con_Error("R_TextureNumForName: Unknown texture '%s' of type %s.", name, GLTEXTURE_TYPE_STRING(type));
+    return 0; // Unreachable.
+}
+
+uint GL_CheckTextureNumForName(const char* name, gltexture_type_t type)
+{
+    const gltexture_t* glTex;
+    if(type < GLT_SYSTEM || !(type < NUM_GLTEXTURE_TYPES))
+        Con_Error("GL_CheckTextureNumForName: Invalid type %i.", type);
+    if((glTex = GL_GetGLTextureByName(name, type)))
+        return glTex->ofTypeID + 1;
+    Con_Message("GL_CheckTextureNumForName: Warning, unknown texture '%s' of type %s.", name, GLTEXTURE_TYPE_STRING(type));
+    return 0;
+}
+
 const gltexture_inst_t* GL_PrepareGLTexture(gltextureid_t id, void* context,
                                             byte* result)
 {
@@ -2473,6 +2495,21 @@ const gltexture_t* GL_GetGLTextureByName(const char* rawName, gltexture_type_t t
     hash = hashForGLTextureName(name);
 
     return getGLTextureByName(name, hash, type);
+}
+
+const gltexture_t* GL_GetGLTextureByTypeId(int ofTypeId, gltexture_type_t type)
+{
+    if(type <= GLT_ANY || type >= NUM_GLTEXTURE_TYPES)
+        Con_Error("GL_GetGLTextureByTypeId: Internal error, invalid type %i.", (int) type);
+
+    { uint i;
+    for(i = 0; i < numGLTextures; ++i)
+    {
+        gltexture_t* tex = glTextures[i];
+        if(tex->type == type && tex->ofTypeID == ofTypeId)
+            return tex;
+    }}
+    return 0; // Not found.
 }
 
 static gltexture_inst_t* pickGLTextureInst(gltexture_t* tex, void* context)
@@ -2982,6 +3019,12 @@ boolean GLTexture_IsFromIWAD(const gltexture_t* tex)
     }
 
     return false; // Unreachable.
+}
+
+const char* GLTexture_Name(const gltexture_t* tex)
+{
+    assert(tex);
+    return tex->name;
 }
 
 float GLTexture_GetWidth(const gltexture_t* tex)

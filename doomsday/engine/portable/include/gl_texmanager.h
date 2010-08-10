@@ -45,23 +45,6 @@
  * they may be managed transparently.
  */
 
-typedef enum {
-    GLT_ANY = -1,
-    GLT_SYSTEM, // system texture e.g., the "missing" texture.
-    GLT_FLAT,
-    GLT_DOOMTEXTURE,
-    GLT_DOOMPATCH,
-    GLT_SPRITE,
-    GLT_DETAIL,
-    GLT_SHINY,
-    GLT_MASK,
-    GLT_MODELSKIN,
-    GLT_MODELSHINYSKIN,
-    GLT_LIGHTMAP,
-    GLT_FLARE,
-    NUM_GLTEXTURE_TYPES
-} gltexture_type_t;
-
 #define GLTEXTURE_TYPE_STRING(t)     ((t) == GLT_FLAT? "flat" : \
     (t) == GLT_DOOMTEXTURE? "doomtexture" : \
     (t) == GLT_DOOMPATCH? "doompatch" : \
@@ -220,16 +203,20 @@ void            GL_SetRawImage(lumpnum_t lump, int wrapS, int wrapT);
 
 
 // Management of and access to gltextures (via the texmanager):
-const gltexture_t* GL_CreateGLTexture(const char* name, int ofTypeID, gltexture_type_t type);
+const gltexture_t* GL_CreateGLTexture(const char* name, int ofTypeId, gltexture_type_t type);
 void            GL_ReleaseGLTexture(gltextureid_t id);
 const gltexture_inst_t* GL_PrepareGLTexture(gltextureid_t id, void* context, byte* result);
 const gltexture_t* GL_GetGLTexture(gltextureid_t id);
 const gltexture_t* GL_GetGLTextureByName(const char* name, gltexture_type_t type);
+const gltexture_t* GL_GetGLTextureByTypeId(int ofTypeId, gltexture_type_t type);
+uint            GL_CheckTextureNumForName(const char* name, gltexture_type_t type);
+uint            GL_TextureNumForName(const char* name, gltexture_type_t type);
 gltextureid_t   GL_ToGLTextureId(const gltexture_t*);
 void            GL_SetAllGLTexturesMinMode(int minMode);
 void            GL_DeleteAllTexturesForGLTextures(gltexture_type_t);
 
 /// \todo should not be visible outside the texmanager?
+const char*     GLTexture_Name(const gltexture_t* tex);
 float           GLTexture_GetWidth(const gltexture_t* tex);
 float           GLTexture_GetHeight(const gltexture_t* tex);
 boolean         GLTexture_IsFromIWAD(const gltexture_t* tex);

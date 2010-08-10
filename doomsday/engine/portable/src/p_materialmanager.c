@@ -198,33 +198,6 @@ static materialnum_t getMaterialNumForName(const char* name, uint hash,
     return 0; // Not found.
 }
 
-/**
- * Given an index and namespace, search the materials db for a match.
- * \assume Caller knows what it's doing; params arn't validity checked.
- *
- * @param id            gltextureid to search for.
- * @param mnamespace    Specific MG_* material namespace NOT @c MN_ANY.
- * @return              Unique number of the found material, else zero.
- */
-static materialnum_t getMaterialNumForIndex(uint idx,
-                                            material_namespace_t mnamespace)
-{
-    materialnum_t       i;
-
-    // Go through the candidates.
-    for(i = 0; i < numMaterialBinds; ++i)
-    {
-        materialbind_t*     mb = &materialBinds[i];
-        material_t*         mat = mb->mat;
-
-        if(mat->mnamespace == mnamespace &&
-           GL_GetGLTexture(mat->layers[0].tex)->ofTypeID == idx)
-            return ((mb) - materialBinds) + 1;
-    }
-
-    return 0; // Not found.
-}
-
 static void newMaterialNameBinding(material_t* mat, const char* name,
                                    material_namespace_t mnamespace,
                                    uint hash)
@@ -589,86 +562,6 @@ Con_Message("Materials_New: Warning, attempted to create material "
     newMaterialNameBinding(mat, name, mnamespace, hash);
 
     return mat;
-}
-
-/**
- * Given a Texture/Flat/Sprite etc idx and a MG_* namespace, search
- * for a matching material.
- *
- * @param ofTypeID      Texture/Flat/Sprite etc idx.
- * @param mnamespace    Specific MG_* namespace (not MN_ANY).
- *
- * @return              The associated material, ELSE @c NULL.
- */
-material_t* Materials_ToMaterial2(int ofTypeID, material_namespace_t mnamespace)
-{
-    if(!initedOk)
-        return 0;
-
-    if(!isKnownMNamespace(mnamespace)) // MN_ANY is considered invalid.
-    {
-#if _DEBUG
-Con_Message("Materials_ToMaterial2: Internal error, invalid namespace '%i'\n",
-            (int) mnamespace);
-#endif
-        return 0;
-    }
-
-    if(materialsHead)
-    {
-        material_t* mat = materialsHead;
-        do
-        {
-            if(mnamespace == mat->mnamespace && GL_GetGLTexture(mat->layers[0].tex)->ofTypeID == ofTypeID)
-            {
-                if(mat->flags & MATF_NO_DRAW)
-                   return 0;
-                return mat;
-            }
-        } while((mat = mat->globalNext));
-    }
-    return 0;
-}
-
-materialnum_t Materials_CheckNumForIndex(uint idx, material_namespace_t mnamespace)
-{
-    if(!initedOk)
-        return 0;
-
-    // Caller wants a material in a specific namespace.
-    if(!isKnownMNamespace(mnamespace))
-    {
-#if _DEBUG
-Con_Message("Materials_ToMaterial2: Internal error, invalid namespace '%i'\n",
-            (int) mnamespace);
-#endif
-        return 0;
-    }
-
-    return getMaterialNumForIndex(idx, mnamespace);
-}
-
-/**
- * Given a texture/flat/sprite/etc index num, search the materials db for
- * a name-bound material.
- * \note Part of the Doomsday public API.
- * \note2 Sames as Materials_CheckNumForIndex except will log an error
- *        message if the material being searched for is not found.
- *
- * @param idx           Index of the texture/flat/sprite/etc.
- * @param mnamespace    MG_* namespace.
- *
- * @return              Unique identifier of the found material, else zero.
- */
-materialnum_t Materials_NumForIndex(uint idx, material_namespace_t mnamespace)
-{
-    materialnum_t       result = Materials_CheckNumForIndex(idx, mnamespace);
-
-    // Not found? Don't announce during map setup or if not yet inited.
-    if(verbose && result == 0 && (!ddMapSetup || !initedOk))
-        Con_Message("Materials_NumForIndex: %u in namespace %i not found!\n",
-                    idx, mnamespace);
-    return result;
 }
 
 /**

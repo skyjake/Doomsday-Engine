@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
  */
 
 /**
- * dd_main.h: Engine Core
+ * Engine Core
  */
 
-#ifndef __DOOMSDAY_MAIN_H__
-#define __DOOMSDAY_MAIN_H__
+#ifndef LIBDENG_MAIN_H
+#define LIBDENG_MAIN_H
 
 #include "dd_types.h"
 
@@ -61,6 +61,8 @@ void            DD_SetInteger(int ddvalue, int parm);
 void            DD_SetVariable(int ddvalue, void* ptr);
 void*           DD_GetVariable(int ddvalue);
 ddplayer_t*     DD_GetPlayer(int number);
+material_namespace_t DD_MaterialNamespaceForTextureType(gltexture_type_t t);
+materialnum_t   DD_MaterialForTexture(uint ofTypeId, gltexture_type_t type);
 void            DD_CheckTimeDemo(void);
 const char*     value_Str(int val);
-#endif
+#endif /* LIBDENG_MAIN_H */

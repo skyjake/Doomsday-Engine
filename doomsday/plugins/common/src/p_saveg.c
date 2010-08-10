@@ -2321,8 +2321,8 @@ static void SV_ReadSector(sector_t *sec)
 #if !__JHEXEN__
     if(hdr.version == 1)
     {   // Flat numbers are the original flat lump indices - (lump) "F_START".
-        floorMaterial   = P_ToPtr(DMU_MATERIAL, Materials_NumForIndex(SV_ReadShort(), MN_FLATS));
-        ceilingMaterial = P_ToPtr(DMU_MATERIAL, Materials_NumForIndex(SV_ReadShort(), MN_FLATS));
+        floorMaterial   = P_ToPtr(DMU_MATERIAL, DD_MaterialForTexture(SV_ReadShort()+1, GLT_FLAT));
+        ceilingMaterial = P_ToPtr(DMU_MATERIAL, DD_MaterialForTexture(SV_ReadShort()+1, GLT_FLAT));
     }
     else if(hdr.version >= 4)
 #endif

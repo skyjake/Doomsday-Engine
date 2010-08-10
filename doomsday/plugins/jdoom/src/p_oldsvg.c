@@ -396,10 +396,8 @@ void P_v19_UnArchiveWorld(void)
 
         P_SetFloatp(sec, DMU_FLOOR_HEIGHT, (float) (*get++));
         P_SetFloatp(sec, DMU_CEILING_HEIGHT, (float) (*get++));
-        P_SetPtrp(sec, DMU_FLOOR_MATERIAL,
-                  P_ToPtr(DMU_MATERIAL, Materials_NumForIndex(*get++, MN_FLATS)));
-        P_SetPtrp(sec, DMU_CEILING_MATERIAL,
-                  P_ToPtr(DMU_MATERIAL, Materials_NumForIndex(*get++, MN_FLATS)));
+        P_SetPtrp(sec, DMU_FLOOR_MATERIAL,   P_ToPtr(DMU_MATERIAL, DD_MaterialForTexture(1+*get++, GLT_FLAT)));
+        P_SetPtrp(sec, DMU_CEILING_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTexture(1+*get++, GLT_FLAT)));
 
         P_SetFloatp(sec, DMU_LIGHT_LEVEL, (float) (*get++) / 255.0f);
         xsec->special = *get++; // needed?
@@ -431,12 +429,9 @@ void P_v19_UnArchiveWorld(void)
             P_SetFloatpv(sdef, DMU_MIDDLE_MATERIAL_OFFSET_XY, matOffset);
             P_SetFloatpv(sdef, DMU_BOTTOM_MATERIAL_OFFSET_XY, matOffset);
 
-            P_SetPtrp(sdef, DMU_TOP_MATERIAL,
-                      P_ToPtr(DMU_MATERIAL, Materials_NumForIndex(*get++, MN_TEXTURES)));
-            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL,
-                      P_ToPtr(DMU_MATERIAL, Materials_NumForIndex(*get++, MN_TEXTURES)));
-            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL,
-                      P_ToPtr(DMU_MATERIAL, Materials_NumForIndex(*get++, MN_TEXTURES)));
+            P_SetPtrp(sdef, DMU_TOP_MATERIAL,    P_ToPtr(DMU_MATERIAL, DD_MaterialForTexture(1+*get++, GLT_DOOMTEXTURE)));
+            P_SetPtrp(sdef, DMU_BOTTOM_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTexture(1+*get++, GLT_DOOMTEXTURE)));
+            P_SetPtrp(sdef, DMU_MIDDLE_MATERIAL, P_ToPtr(DMU_MATERIAL, DD_MaterialForTexture(1+*get++, GLT_DOOMTEXTURE)));
         }
     }
 

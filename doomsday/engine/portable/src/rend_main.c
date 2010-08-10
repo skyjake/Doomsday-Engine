@@ -2269,11 +2269,11 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             else if(texMode == 1)
                 // For debug, render the "missing" texture instead of the texture
                 // chosen for surfaces to fix the HOMs.
-                mat = Materials_ToMaterial2(DDT_MISSING, MN_SYSTEM);
+                mat = Materials_ToMaterial(Materials_NumForName("DDT_MISSING", MN_SYSTEM));
             else // texMode == 2
                 // For lighting debug, render all solid surfaces using the gray
                 // texture.
-                mat = Materials_ToMaterial2(DDT_GRAY, MN_SYSTEM);
+                mat = Materials_ToMaterial(Materials_NumForName("DDT_GRAY", MN_SYSTEM));
 
             // Make any necessary adjustments to the surface flags to suit the
             // current texture mode.
@@ -3332,10 +3332,10 @@ static void Rend_RenderSubsector(uint ssecidx)
         else if(texMode == 1)
             // For debug, render the "missing" texture instead of the texture
             // chosen for surfaces to fix the HOMs.
-            mat = Materials_ToMaterial2(DDT_MISSING, MN_SYSTEM);
+            mat = Materials_ToMaterial(Materials_NumForName("DDT_MISSING", MN_SYSTEM));
         else
             // For lighting debug, render all solid surfaces using the gray texture.
-            mat = Materials_ToMaterial2(DDT_GRAY, MN_SYSTEM);
+            mat = Materials_ToMaterial(Materials_NumForName("DDT_GRAY", MN_SYSTEM));
 
         V2_Copy(texOffset, suf->visOffset);
 
@@ -3382,7 +3382,7 @@ static void Rend_RenderSubsector(uint ssecidx)
                 normal[VZ] *= -1;
 
             Rend_RenderPlane(ssec, PLN_MID, plane->visHeight, normal,
-                             Materials_ToMaterial2(DDT_GRAY, MN_SYSTEM),
+                             Materials_ToMaterial(Materials_NumForName("DDT_GRAY", MN_SYSTEM)),
                              suf->flags, suf->inFlags, suf->rgba,
                              BM_NORMAL, NULL, NULL, false,
                              (vy > plane->visHeight? true : false),
@@ -3401,7 +3401,7 @@ static void Rend_RenderSubsector(uint ssecidx)
                 normal[VZ] *= -1;
 
             Rend_RenderPlane(ssec, PLN_MID, plane->visHeight, normal,
-                             Materials_ToMaterial2(DDT_GRAY, MN_SYSTEM),
+                             Materials_ToMaterial(Materials_NumForName("DDT_GRAY", MN_SYSTEM)),
                              suf->flags, suf->inFlags, suf->rgba,
                              BM_NORMAL, NULL, NULL, false,
                              (vy < plane->visHeight? true : false),
@@ -4298,7 +4298,7 @@ static void Rend_RenderBoundingBoxes(void)
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
 
-    mat = Materials_ToMaterial2(DDT_BBOX, MN_SYSTEM);
+    mat = Materials_ToMaterial(Materials_NumForName("DDT_BBOX", MN_SYSTEM));
     Materials_Prepare(&ms, mat, true, NULL);
 
     GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id, ms.units[MTU_PRIMARY].magMode);

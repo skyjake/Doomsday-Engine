@@ -3,8 +3,6 @@ NAME            "DOOMSDAY"
 ; Highest ordinal is currently
 ; --> 460 <--
 ; Other free ordinals:
-; 43 formerly P_RegisterPlayerControl
-; 44 formerly B_FormEventString
 ; 45 formerly B_BindingsForCommand
 ; 65 formerly P_GetBlockRootIdx
 ; 238 formerly FI_Reset
@@ -30,6 +28,8 @@ EXPORTS
     DD_SetVariable              @249 NONAME
     DD_GetVariable              @250 NONAME
     DD_GetPlayer                @10 NONAME
+    DD_MaterialNamespaceForTextureType @43 NONAME
+    DD_MaterialForTexture       @44 NONAME
 
 ; Base: Types.
     ; Animator.
@@ -297,9 +297,9 @@ EXPORTS
     Materials_CheckNumForName   @336 NONAME
     Materials_GetName           @337 NONAME
     Materials_NumForName        @97 NONAME
-    Materials_CheckNumForIndex  @438 NONAME
-    Materials_NumForIndex       @437 NONAME
     Materials_Precache          @436 NONAME
+    Materials_CreateAnimGroup   @241 NONAME
+    Materials_AddAnimGroupFrame @242 NONAME
 
 ; Play: Thinkers.
     DD_ThinkerAdd               @86 NONAME
@@ -326,8 +326,6 @@ EXPORTS
     R_GetPatchInfo              @237 NONAME
     R_PointToAngle2             @101 NONAME
     R_PointInSubsector          @102 NONAME
-    Materials_CreateAnimGroup   @241 NONAME
-    Materials_AddAnimGroupFrame @242 NONAME
     R_HSVToRGB                  @439 NONAME
     R_CreateColorPalette		@444 NONAME
     R_GetColorPaletteNumForName @446 NONAME
@@ -425,6 +423,8 @@ EXPORTS
     GL_NewTextureWithParams3    @329 NONAME
     GL_SetFilter                @132 NONAME
     GL_SetFilterColor           @441 NONAME
+    GL_TextureNumForName        @437 NONAME
+    GL_CheckTextureNumForName   @438 NONAME
 
 ; Graphics: Text
     R_NewCompositeFont          @106 NONAME
