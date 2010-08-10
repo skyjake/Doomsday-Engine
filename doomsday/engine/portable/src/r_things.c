@@ -25,7 +25,7 @@
  */
 
 /**
- * r_things.c: Object Management and Refresh
+ * Object Management and Refresh.
  */
 
 /**
@@ -1122,7 +1122,7 @@ void R_ProjectSprite(mobj_t* mo)
 {
     sector_t* sect = mo->subsector->sector;
     float thangle = 0, alpha, floorClip, secFloor, secCeil;
-    float pos[2], yaw, pitch;
+    float pos[2], yaw = 0, pitch = 0;
     vec3_t visOff;
     spritedef_t* sprDef;
     spriteframe_t* sprFrame = NULL;

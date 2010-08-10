@@ -1051,7 +1051,7 @@ void GL_DrawTextFragment7(const char* string, int x, int y, compositefontid_t fo
             flashMul = 0;
 
             shadow = (noShadow? 0 : shadowStrength);
-            shadowMul = origColor[CA];
+            shadowMul = (noShadow? 0 : origColor[CA]);
 
             if(!(noTypein && noShadow && noGlitter))
                 glColor4fv(origColor);
@@ -1124,7 +1124,7 @@ void GL_DrawTextFragment7(const char* string, int x, int y, compositefontid_t fo
                     // The character itself.
                     GL_DrawChar2(c, cx, cy + yoff, fontId);
 
-                    if(flash > 0)
+                    if(!noGlitter && flash > 0)
                     {   // Do something flashy.
                         glColor4f(flashColor[CR], flashColor[CG], flashColor[CB], flash * flashMul);
                         drawFlash(cx, cy + yoff, w, h, true);

@@ -24,7 +24,7 @@
  */
 
 /**
- * hu_inventory.c: Heads-up display(s) for the player inventory.
+ * Heads-up display(s) for the player inventory.
  */
 
 #if defined(__JHERETIC__) || defined(__JHEXEN__)
@@ -244,14 +244,7 @@ static void inventoryIndexes(const player_t* plr, const hud_inventory_t* inv,
             }
             else
             {
-                int                 last;
-
-                from = cursor - inv->selected;
-                if(from < 0)
-                    from = 0;
-
-                last = inv->numUsedSlots - 1 -
-                    (inv->selected + cursor);
+                from = MAX_OF(0, cursor - (unsigned)inv->selected);
                 to = maxVisSlots;
             }
         }

@@ -2050,6 +2050,11 @@ int C_DECL XSTrav_SectorLight(sector_t* sector, boolean ceiling,
 
             if(sector)
                 P_GetFloatpv(sector, DMU_COLOR, usergb);
+            else
+            {
+                XG_Dev("XSTrav_SectorLight: Warning, the referenced LineDef has no back sector. Using default color.");
+                memset(usergb, 0, sizeof(usergb));
+            }
             break;
             }
         case LIGHTREF_ORIGINAL:
