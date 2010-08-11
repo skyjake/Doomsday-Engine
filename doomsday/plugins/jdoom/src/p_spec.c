@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * p_spec.c: Implements map special effects.
+ * Implements map special effects.
  *
  * Texture animation, height or lighting changes according to adjacent
  * sectors, respective utility functions, etc.
@@ -93,6 +93,7 @@ static void shootSpecialLine(mobj_t* thing, linedef_t* line);
 static animdef_t animsShared[] = {
     {0, "BLOOD3",   "BLOOD1",   MACRO_LONG(8)},
     {0, "FWATER4",  "FWATER1",  MACRO_LONG(8)},
+    {0, "SWATER4",  "SWATER1",  MACRO_LONG(8)},
     {0, "LAVA4",    "LAVA1",    MACRO_LONG(8)},
     {0, "NUKAGE3",  "NUKAGE1",  MACRO_LONG(8)},
     {1, "BLODRIP4", "BLODRIP1", MACRO_LONG(8)},
