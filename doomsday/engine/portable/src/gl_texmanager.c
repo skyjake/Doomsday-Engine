@@ -2437,7 +2437,7 @@ uint GL_CheckTextureNumForName(const char* name, gltexture_type_t type)
         Con_Error("GL_CheckTextureNumForName: Invalid type %i.", type);
     if((glTex = GL_GetGLTextureByName(name, type)))
         return glTex->ofTypeID + 1;
-    Con_Message("GL_CheckTextureNumForName: Warning, unknown texture '%s' of type %s.", name, GLTEXTURE_TYPE_STRING(type));
+    Con_Message("GL_CheckTextureNumForName: Warning, unknown texture '%s' of type %s\n.", name, GLTEXTURE_TYPE_STRING(type));
     return 0;
 }
 
