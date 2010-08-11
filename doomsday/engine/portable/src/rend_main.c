@@ -2960,7 +2960,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
             {
                 if(R_IsSkySurface(&frontsec->SP_floorsurface) && !(backsec && R_IsSkySurface(&backsec->SP_floorsurface)) && ffloor > skyFloor)
                 {
-                    top = ffloor;
+                    top    = ffloor;
                     bottom = skyFloor;
                 }
             }
@@ -2972,6 +2972,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                     bottom = (!devRendSkyMode && backsec? ffloor : skyFloor);
                 }
             }
+            top = MIN_OF(top, fceil);
 
             if(top > bottom)
             {
@@ -2993,7 +2994,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
             {
                 if(R_IsSkySurface(&frontsec->SP_ceilsurface) && !(backsec && R_IsSkySurface(&backsec->SP_ceilsurface)) && fceil < skyCeil)
                 {
-                    top = skyCeil;
+                    top    = skyCeil;
                     bottom = fceil;
                 }
             }
@@ -3005,6 +3006,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                     bottom = (!devRendSkyMode && backsec? bceil : fceil);
                 }
             }
+            bottom = MAX_OF(bottom, ffloor);
 
             if(top > bottom)
             {
@@ -3021,7 +3023,7 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
             }
         }
 
-        if(backsec && !(!devRendSkyMode && P_IsInVoid(viewPlayer)))
+        if(!(!devRendSkyMode && P_IsInVoid(viewPlayer)) && backsec && !LINE_SELFREF(line))
         {
             if(bsh > 0)
             {
