@@ -3043,7 +3043,8 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                 if(top > bottom)
                 {
                     // Floor.
-                    if(R_IsSkySurface(&frontsec->SP_floorsurface) && R_IsSkySurface(&backsec->SP_floorsurface) && bfloor > skyFloor)
+                    if(R_IsSkySurface(&frontsec->SP_floorsurface) && R_IsSkySurface(&backsec->SP_floorsurface) &&
+                       bfloor > skyFloor && !(bottom > ffloor))
                     {
                         vTL[VZ] = vTR[VZ] = MIN_OF(bfloor, bottom);
                         vBL[VZ] = vBR[VZ] = skyFloor;
@@ -3058,7 +3059,8 @@ static void Rend_SSectSkyFixes(subsector_t *ssec)
                     }
 
                     // Ceiling.
-                    if(R_IsSkySurface(&frontsec->SP_ceilsurface) && R_IsSkySurface(&backsec->SP_ceilsurface) && bceil < skyCeil)
+                    if(R_IsSkySurface(&frontsec->SP_ceilsurface) && R_IsSkySurface(&backsec->SP_ceilsurface) &&
+                       bceil < skyCeil && !(top < fceil))
                     {
                         vTL[VZ] = vTR[VZ] = skyCeil;
                         vBL[VZ] = vBR[VZ] = MAX_OF(bceil, top);
