@@ -90,7 +90,7 @@ File* FS::interpret(File* sourceData)
     return sourceData;
 }
 
-void FS::find(const String& path, FoundFiles& found) const
+int FS::findAll(const String& path, FoundFiles& found) const
 {
     found.clear();
     String baseName = path.fileName().lower();
@@ -109,9 +109,10 @@ void FS::find(const String& path, FoundFiles& found) const
             found.push_back(file);
         }
     }
+    return found.size();
 }
 
-File& FS::findSingle(const String& path) const
+File& FS::find(const String& path) const
 {
     return find<File>(path);
 }

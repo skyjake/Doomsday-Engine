@@ -574,7 +574,7 @@ Record& App::importModule(const String& name, const String& fromPath)
         }
         else if(dir == "*")
         {
-            fileSystem().find(name + ".de", matching);
+            fileSystem().findAll(name + ".de", matching);
             if(matching.empty())
             {
                 continue;

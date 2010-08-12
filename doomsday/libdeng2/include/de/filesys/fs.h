@@ -107,8 +107,10 @@ namespace de
          *
          * @param path   Path or file name to look for.
          * @param found  Set of files that match the result.
+         *
+         * @return  Number of files found.
          */ 
-        void find(const String& path, FoundFiles& found) const;
+        int findAll(const String& path, FoundFiles& found) const;
         
         /**
          * Finds a single file matching a full or partial path.
@@ -117,7 +119,7 @@ namespace de
          * 
          * @return  The found file.
          */
-        File& findSingle(const String& path) const;
+        File& find(const String& path) const;
         
         /**
          * Finds a file of a specific type.
@@ -127,7 +129,7 @@ namespace de
         template <typename Type>
         Type& find(const String& path) const {
             FoundFiles found;
-            find(path, found);
+            findAll(path, found);
             // Filter out the wrong types.
             found.remove_if(internal::cannotCastFileTo<Type>);
             if(found.size() > 1) {
