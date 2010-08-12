@@ -23,21 +23,23 @@
  */
 
 /**
- * gl_draw.h: Basic Drawing Routines
+ * Basic Drawing Routines
  */
 
-#ifndef __DOOMSDAY_GRAPHICS_DRAW_H__
-#define __DOOMSDAY_GRAPHICS_DRAW_H__
+#ifndef LIBDENG_GRAPHICS_DRAW_H
+#define LIBDENG_GRAPHICS_DRAW_H
 
 // 2D drawing routines:
-void            GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a);
-void            GL_DrawRect(float x, float y, float w, float h, float r, float g, float b, float a);
-void            GL_DrawRectTiled(float x, float y, float w, float h, int tw, int th);
-void            GL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th, int txoff, int tyoff, float cx, float cy, float cw, float ch);
+void GL_DrawLine(float x1, float y1, float x2, float y2, float r, float g, float b, float a);
+void GL_DrawRect(float x, float y, float w, float h, float r, float g, float b, float a);
+void GL_DrawRect2(float x, float y, float w, float h, DGLuint tex, int texW, int texH, const float topColor[3], float topAlpha, const float bottomColor[3], float bottomAlpha);
+
+void GL_DrawRectTiled(float x, float y, float w, float h, int tw, int th);
+void GL_DrawCutRectTiled(float x, float y, float w, float h, int tw, int th, int txoff, int tyoff, float cx, float cy, float cw, float ch);
 
 // Filters:
-void            GL_SetFilter(boolean enable);
-void            GL_SetFilterColor(float r, float g, float b, float a);
-int             GL_DrawFilter(void);
+void GL_SetFilter(boolean enable);
+void GL_SetFilterColor(float r, float g, float b, float a);
+int GL_DrawFilter(void);
 
 #endif

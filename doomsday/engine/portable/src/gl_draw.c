@@ -23,7 +23,7 @@
  */
 
 /**
- * gl_draw.c: Basic (Generic) Drawing Routines
+ * Basic (Generic) Drawing Routines.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -70,6 +70,48 @@ void GL_DrawRect(float x, float y, float w, float h, float r, float g, float b, 
         glTexCoord2f(0, 1);
         glVertex2f(x, y + h);
     glEnd();
+}
+
+void GL_DrawRect2(float x, float y, float width, float height, DGLuint tex,
+    int texW, int texH, const float topColor[3], float topAlpha,
+    const float bottomColor[3], float bottomAlpha)
+{
+    if(!(topAlpha > 0 || bottomAlpha > 0))
+        return;
+
+    if(tex)
+        glBindTexture(GL_TEXTURE_2D, tex);
+    else
+        glDisable(GL_TEXTURE_2D);
+
+    if(tex || topAlpha < 1.0 || bottomAlpha < 1.0)
+    {
+        glEnable(GL_BLEND);
+        GL_BlendMode(BM_NORMAL);
+    }
+    else
+    {
+        glDisable(GL_BLEND);
+    }
+
+    glBegin(GL_QUADS);
+        // Top color.
+        glColor4f(topColor[0], topColor[1], topColor[2], topAlpha);
+        glTexCoord2f(0, 0);
+        glVertex2f(x, y);
+        glTexCoord2f(width / (float) texW, 0);
+        glVertex2f(x + width, y);
+
+        // Bottom color.
+        glColor4f(bottomColor[0], bottomColor[1], bottomColor[2], bottomAlpha);
+        glTexCoord2f(width / (float) texW, height / (float) texH);
+        glVertex2f(x + width, y + height);
+        glTexCoord2f(0, height / (float) texH);
+        glVertex2f(x, y + height);
+    glEnd();
+
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
 }
 
 void GL_DrawRectTiled(float x, float y, float w, float h, int tw, int th)

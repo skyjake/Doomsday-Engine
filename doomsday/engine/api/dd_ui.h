@@ -86,6 +86,7 @@ typedef struct fi_page_s {
     struct fi_page_flags_s {
         char hidden:1; /// Currently hidden (not drawn).
         char paused:1; /// Currently paused (does not tic).
+        char showBackground:1; /// Draw the background?
     } flags;
 
     /// Child visuals (objects) visible on this page.

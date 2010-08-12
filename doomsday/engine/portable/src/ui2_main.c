@@ -27,6 +27,7 @@
 #include "de_base.h"
 #include "de_ui.h"
 #include "de_render.h"
+#include "de_graphics.h"
 #include "de_audio.h"
 #include "de_misc.h"
 
@@ -99,6 +100,7 @@ static fi_page_t* pagesRemove(fi_page_t* p)
 static void pageClear(fi_page_t* p)
 {
     p->_timer = 0;
+    p->flags.showBackground = true; /// Draw background by default.
     p->_bg.material = 0; // No background material.
     p->_bg.tex = 0;
 
@@ -509,67 +511,28 @@ static void useColor(const animator_t* color, int components)
     }
 }
 
-static void drawPageBackground(fi_page_t* p, float light, float alpha)
+static void drawPageBackground(fi_page_t* p, float x, float y, float width, float height, float light, float alpha)
 {
-    static const float x = 0, y = 0, w = SCREENWIDTH, h = SCREENHEIGHT;
-    static const int tw = 64, th = 64;
-
-    const animator_t* topColor, *bottomColor;
-    float topAlpha, bottomAlpha;
-
-    if(!p->_bg.material && !p->_bg.tex && !(p->_bg.topColor[3].value > 0 || p->_bg.bottomColor[3].value > 0))
-        return;
-
-    topColor = p->_bg.topColor;
-    topAlpha = topColor[3].value * alpha;
-    bottomColor = p->_bg.bottomColor;
-    bottomAlpha = bottomColor[3].value * alpha;
-
+    vec3_t topColor, bottomColor;
+    DGLuint tex;
     if(p->_bg.material)
     {
-        GL_SetMaterial(p->_bg.material);
-        // Make sure the current texture will be tiled.
+        material_snapshot_t ms;
+        Materials_Prepare(&ms, p->_bg.material, true, NULL);
+        tex = ms.units[MTU_PRIMARY].texInst->id;
+
+    }
+    else
+        tex = p->_bg.tex;
+    if(tex)
+    {   // Make sure the current texture will be tiled.
+        glBindTexture(GL_TEXTURE_2D, tex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
-    else if(p->_bg.tex)
-    {
-        glBindTexture(GL_TEXTURE_2D, p->_bg.tex);
-        // Make sure the current texture will be tiled.
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    }
-    else
-        glDisable(GL_TEXTURE_2D);
-
-    if(topAlpha < 1.0 || bottomAlpha < 1.0)
-    {
-        glEnable(GL_BLEND);
-        GL_BlendMode(BM_NORMAL);
-    }
-    else
-    {
-        glDisable(GL_BLEND);
-    }
-
-    glBegin(GL_QUADS);
-        // Top color.
-        glColor4f(topColor[0].value * light, topColor[1].value * light, topColor[2].value * light, topAlpha);
-        glTexCoord2f(0, 0);
-        glVertex2f(x, y);
-        glTexCoord2f(w / (float) tw, 0);
-        glVertex2f(x + w, y);
-
-        // Bottom color.
-        glColor4f(bottomColor[0].value * light, bottomColor[1].value * light, bottomColor[2].value * light, bottomAlpha);
-        glTexCoord2f(w / (float) tw, h / (float) th);
-        glVertex2f(x + w, y + h);
-        glTexCoord2f(0, h / (float) th);
-        glVertex2f(x, y + h);
-    glEnd();
-
-    glEnable(GL_TEXTURE_2D);
-    glEnable(GL_BLEND);
+    V3_Set(topColor,    p->_bg.topColor   [0].value * light, p->_bg.topColor   [1].value * light, p->_bg.topColor   [2].value * light);
+    V3_Set(bottomColor, p->_bg.bottomColor[0].value * light, p->_bg.bottomColor[1].value * light, p->_bg.bottomColor[2].value * light);
+    GL_DrawRect2(x, y, width, height, tex, 64, 64, topColor, p->_bg.topColor[3].value * alpha, bottomColor, p->_bg.bottomColor[3].value * alpha);
 }
 
 void FIPage_Drawer(fi_page_t* p)
@@ -580,7 +543,8 @@ void FIPage_Drawer(fi_page_t* p)
         return;
 
     // First, draw the background.
-    drawPageBackground(p, 1.0, 1.0);
+    if(p->flags.showBackground)
+        drawPageBackground(p, 0, 0, SCREENWIDTH, SCREENHEIGHT, 1.0, 1.0);
 
     // Now lets go into 3D mode for drawing the p objects.
     glMatrixMode(GL_MODELVIEW);
@@ -642,13 +606,7 @@ void FIPage_Drawer(fi_page_t* p)
     if(p->_filter[3].value > 0)
     {
         DGL_Disable(DGL_TEXTURING);
-        useColor(p->_filter, 4);
-        glBegin(GL_QUADS);
-            glVertex2f(0, 0);
-            glVertex2f(SCREENWIDTH, 0);
-            glVertex2f(SCREENWIDTH, SCREENHEIGHT);
-            glVertex2f(0, SCREENHEIGHT);
-        glEnd();
+        GL_DrawRect(0, 0, SCREENWIDTH, SCREENHEIGHT, p->_filter[0].value, p->_filter[1].value, p->_filter[2].value, p->_filter[3].value);
         DGL_Enable(DGL_TEXTURING);
     }
 
@@ -906,36 +864,16 @@ void FIData_PicThink(fi_object_t* obj)
     }
 }
 
-static void drawRect(fidata_pic_t* p, uint frame, float angle, const float worldOffset[3])
+static void drawRect(fidata_pic_t* p, uint frame, const float origin[3], float angle, const float worldOffset[3])
 {
     assert(p->numFrames && frame < p->numFrames);
     {
-    float mid[3];
     fidata_pic_frame_t* f = (p->numFrames? p->frames[frame] : 0);
 
     assert(f->type == PFT_MATERIAL);
 
-    mid[VX] = mid[VY] = mid[VZ] = 0;
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glTranslatef(p->pos[0].value + worldOffset[VX], p->pos[1].value + worldOffset[VY], p->pos[2].value);
-    glTranslatef(mid[VX], mid[VY], mid[VZ]);
-
-    // Counter the VGA aspect ratio.
-    if(p->angle.value != 0)
     {
-        glScalef(1, 200.0f / 240.0f, 1);
-        glRotatef(p->angle.value, 0, 0, 1);
-        glScalef(1, 240.0f / 200.0f, 1);
-    }
-
-    // Move to origin.
-    glTranslatef(-mid[VX], -mid[VY], -mid[VZ]);
-    glScalef((p->numFrames && p->frames[p->curFrame]->flags.flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, p->scale[2].value);
-
-    {
-    float offset[2] = { 0, 0 }, scale[2] = { 1, 1 }, color[4], bottomColor[4];
+    float offset[2] = { 0, 0 }, color[4], bottomColor[4];
     int magMode = DGL_LINEAR, width = 1, height = 1;
     DGLuint tex = 0;
     fidata_pic_frame_t* f = (p->numFrames? p->frames[frame] : 0);
@@ -982,8 +920,8 @@ static void drawRect(fidata_pic_t* p, uint frame, float angle, const float world
             magMode = ms.units[MTU_PRIMARY].magMode;
             offset[0] = ms.units[MTU_PRIMARY].offset[0];
             offset[1] = ms.units[MTU_PRIMARY].offset[1];
-            scale[0] = 1;//ms.units[MTU_PRIMARY].scale[0];
-            scale[1] = 1;//ms.units[MTU_PRIMARY].scale[1];
+            //scale[0] = ms.units[MTU_PRIMARY].scale[0];
+            //scale[1] = ms.units[MTU_PRIMARY].scale[1];
             color[CA] *= ms.units[MTU_PRIMARY].alpha;
             bottomColor[CA] *= ms.units[MTU_PRIMARY].alpha;
             width = ms.width;
@@ -991,47 +929,35 @@ static void drawRect(fidata_pic_t* p, uint frame, float angle, const float world
         }
     }
 
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glScalef(.1f/SCREENWIDTH, .1f/SCREENWIDTH, 1);
+    glTranslatef(worldOffset[VX], worldOffset[VY], worldOffset[VZ]);
+    glTranslatef(origin[VX], origin[VY], origin[VZ]);
+
+    if(p->angle.value != 0)
+    {
+        // Counter the VGA aspect ratio.
+        glScalef(1, 200.0f / 240.0f, 1);
+        glRotatef(p->angle.value, 0, 0, 1);
+        glScalef(1, 240.0f / 200.0f, 1);
+    }
+
+    // Move to origin.
+    glTranslatef(offset[0], offset[1], 0);
+    glScalef((p->numFrames && p->frames[p->curFrame]->flags.flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, p->scale[2].value);
+    glTranslatef(-offset[0], -offset[1], 0);
+
     // The fill.
     if(tex)
     {
         /// \fixme: do not override the value taken from the Material snapshot.
         magMode = (filterUI ? GL_LINEAR : GL_NEAREST);
-
-        GL_BindTexture(tex, magMode);
-
-        glMatrixMode(GL_TEXTURE);
-        glPushMatrix();
-        glTranslatef(offset[0], offset[1], 0);
-        glScalef(scale[0], scale[1], 0);
+        glBindTexture(GL_TEXTURE_2D, tex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
     }
-    else
-        DGL_Disable(DGL_TEXTURING);
 
-    glBegin(GL_QUADS);
-        glColor4fv(color);
-        glTexCoord2f(0, 0);
-        glVertex2f(0, 0);
-
-        glTexCoord2f(1, 0);
-        glVertex2f(0+width, 0);
-
-        glColor4fv(bottomColor);
-        glTexCoord2f(1, 1);
-        glVertex2f(0+width, 0+height);
-
-        glTexCoord2f(0, 1);
-        glVertex2f(0, 0+height);
-    glEnd();
-
-    if(tex)
-    {
-        glMatrixMode(GL_TEXTURE);
-        glPopMatrix();
-    }
-    else
-    {
-        DGL_Enable(DGL_TEXTURING);
-    }
+    GL_DrawRect2(0, 0, width, height, tex, width, height, color, color[3], bottomColor, bottomColor[3]);
     }
 
     // Restore original transformation.
@@ -1125,7 +1051,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
 {
     if(useRect(p, frame))
     {
-        drawRect(p, frame, angle, worldOffset);
+        drawRect(p, frame, _origin, angle, worldOffset);
         return;
     }
 
