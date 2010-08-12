@@ -158,16 +158,18 @@ static void loadAnimDefs(animdef_t* animDefs)
             {
             uint startFrame, endFrame, n;
 
-            if((startFrame = GL_CheckTextureNumForName(animDefs[i].startname, GLT_FLAT)) == -1 ||
-               (endFrame   = GL_CheckTextureNumForName(animDefs[i].endname, GLT_FLAT)) == -1)
+            if((startFrame = GL_CheckTextureNumForName(animDefs[i].startname, GLT_FLAT)) == 0 ||
+               (endFrame   = GL_CheckTextureNumForName(animDefs[i].endname, GLT_FLAT)) == 0)
                 continue;
 
             numFrames = (endFrame > startFrame? endFrame - startFrame : startFrame - endFrame) + 1;
             ticsPerFrame = LONG(animDefs[i].speed);
 
             if(numFrames < 2)
-                Con_Error("P_InitPicAnims: bad cycle from %s to %s",
-                          animDefs[i].startname, animDefs[i].endname);
+            {
+                Con_Message("P_InitPicAnims: Warning, bad cycle from %s to %s.\n", animDefs[i].startname, animDefs[i].endname);
+                continue;
+            }
 
             if(startFrame && endFrame)
             {   // We have a valid animation.
@@ -220,8 +222,10 @@ static void loadAnimDefs(animdef_t* animDefs)
             ticsPerFrame = LONG(animDefs[i].speed);
 
             if(numFrames < 2)
-                Con_Error("P_InitPicAnims: bad cycle from %s to %s",
-                          animDefs[i].startname, animDefs[i].endname);
+            {
+                Con_Message("P_InitPicAnims: Warning, bad cycle from %s to %s.\n", animDefs[i].startname, animDefs[i].endname);
+                continue;
+            }
 
             if(startFrame && endFrame)
             {

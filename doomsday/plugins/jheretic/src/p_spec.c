@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * p_spec.c: Implements special effects.
+ * Implements special effects.
  *
  * Texture animation, height or lighting changes according to adjacent
  * sectors, respective utility functions, etc.
@@ -292,16 +292,18 @@ static void loadAnimDefs(animdef_t* animDefs)
             {
             uint startFrame, endFrame, n;
 
-            if((startFrame = GL_CheckTextureNumForName(animDefs[i].startname, GLT_FLAT)) == -1 ||
-               (endFrame   = GL_CheckTextureNumForName(animDefs[i].endname, GLT_FLAT)) == -1)
+            if((startFrame = GL_CheckTextureNumForName(animDefs[i].startname, GLT_FLAT)) == 0 ||
+               (endFrame   = GL_CheckTextureNumForName(animDefs[i].endname, GLT_FLAT)) == 0)
                 continue;
 
             numFrames = (endFrame > startFrame? endFrame - startFrame : startFrame - endFrame) + 1;
             ticsPerFrame = LONG(animDefs[i].speed);
 
             if(numFrames < 2)
-                Con_Error("P_InitPicAnims: bad cycle from %s to %s",
-                          animDefs[i].startname, animDefs[i].endname);
+            {
+                Con_Message("P_InitPicAnims: Warning, bad cycle from %s to %s.\n", animDefs[i].startname, animDefs[i].endname);
+                continue;
+            }
 
             if(startFrame && endFrame)
             {   // We have a valid animation.
@@ -354,8 +356,10 @@ static void loadAnimDefs(animdef_t* animDefs)
             ticsPerFrame = LONG(animDefs[i].speed);
 
             if(numFrames < 2)
-                Con_Error("P_InitPicAnims: bad cycle from %s to %s",
-                          animDefs[i].startname, animDefs[i].endname);
+            {
+                Con_Message("P_InitPicAnims: Warning, bad cycle from %s to %s.\n", animDefs[i].startname, animDefs[i].endname);
+                continue;
+            }
 
             if(startFrame && endFrame)
             {
