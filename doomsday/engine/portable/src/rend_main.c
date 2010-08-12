@@ -496,13 +496,11 @@ static void markSegSectionsPVisible(seg_t* seg)
 
     // Top.
     if((R_IsSkySurface(&fceil->surface) && R_IsSkySurface(&bceil->surface)) ||
-       (R_IsSkySurface(&bceil->surface) && (side->SW_topsurface.inFlags & SUIF_MATERIAL_FIX)) ||
        (fceil->visHeight <= bceil->visHeight))
         side->SW_topsurface   .inFlags &= ~SUIF_PVIS;
 
     // Bottom.
     if((R_IsSkySurface(&ffloor->surface) && R_IsSkySurface(&bfloor->surface)) ||
-       (R_IsSkySurface(&bfloor->surface) && (side->SW_bottomsurface.inFlags & SUIF_MATERIAL_FIX)) ||
        (ffloor->visHeight >= bfloor->visHeight))
         side->SW_bottomsurface.inFlags &= ~SUIF_PVIS;
 }
