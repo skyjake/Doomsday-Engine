@@ -101,8 +101,13 @@ typedef struct fi_page_s {
     /// Pointer to the previous page, if any.
     struct fi_page_s* previous;
 
-    struct material_s* _bgMaterial;
-    animatorvector4_t _bgColor;
+    struct fi_page_background_s {
+        struct material_s* material;
+        DGLuint tex;
+        animatorvector4_t topColor;
+        animatorvector4_t bottomColor;
+    } _bg;
+
     animatorvector4_t _filter;
     animatorvector3_t _textColor[9];
 
@@ -128,7 +133,7 @@ struct fi_object_s* FIPage_RemoveObject(fi_page_t* page, struct fi_object_s* obj
 boolean FIPage_HasObject(fi_page_t* page, struct fi_object_s* obj);
 
 /// Current background Material.
-struct material_s* FIPage_Background(fi_page_t* page);
+struct material_s* FIPage_BackgroundMaterial(fi_page_t* page);
 
 /// Sets the 'is-visible' state.
 void FIPage_MakeVisible(fi_page_t* page, boolean yes);
@@ -137,13 +142,19 @@ void FIPage_MakeVisible(fi_page_t* page, boolean yes);
 void FIPage_Pause(fi_page_t* page, boolean yes);
 
 /// Sets the background Material.
-void FIPage_SetBackground(fi_page_t* page, struct material_s* mat);
+void FIPage_SetBackgroundMaterial(fi_page_t* page, struct material_s* mat);
 
-/// Sets the background color.
-void FIPage_SetBackgroundColor(fi_page_t* page, float red, float green, float blue, int steps);
+/// Sets the background top color.
+void FIPage_SetBackgroundTopColor(fi_page_t* page, float red, float green, float blue, int steps);
 
-/// Sets the background color and alpha.
-void FIPage_SetBackgroundColorAndAlpha(fi_page_t* page, float red, float green, float blue, float alpha, int steps);
+/// Sets the background top color and alpha.
+void FIPage_SetBackgroundTopColorAndAlpha(fi_page_t* page, float red, float green, float blue, float alpha, int steps);
+
+/// Sets the background bottom color.
+void FIPage_SetBackgroundBottomColor(fi_page_t* page, float red, float green, float blue, int steps);
+
+/// Sets the background bottom color and alpha.
+void FIPage_SetBackgroundBottomColorAndAlpha(fi_page_t* page, float red, float green, float blue, float alpha, int steps);
 
 /// Sets the x-axis component of the world offset.
 void FIPage_SetOffsetX(fi_page_t* page, float x, int steps);

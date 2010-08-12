@@ -99,7 +99,8 @@ static fi_page_t* pagesRemove(fi_page_t* p)
 static void pageClear(fi_page_t* p)
 {
     p->_timer = 0;
-    p->_bgMaterial = 0; // No background material.
+    p->_bg.material = 0; // No background material.
+    p->_bg.tex = 0;
 
     if(p->_objects.vector)
     {
@@ -109,7 +110,8 @@ static void pageClear(fi_page_t* p)
     p->_objects.size = 0;
 
     AnimatorVector3_Init(p->_offset, 0, 0, 0);
-    AnimatorVector4_Init(p->_bgColor, 1, 1, 1, 0);
+    AnimatorVector4_Init(p->_bg.topColor, 1, 1, 1, 0);
+    AnimatorVector4_Init(p->_bg.bottomColor, 1, 1, 1, 0);
     AnimatorVector4_Init(p->_filter, 0, 0, 0, 0);
     {uint i;
     for(i = 0; i < 9; ++i)
@@ -507,6 +509,69 @@ static void useColor(const animator_t* color, int components)
     }
 }
 
+static void drawPageBackground(fi_page_t* p, float light, float alpha)
+{
+    static const float x = 0, y = 0, w = SCREENWIDTH, h = SCREENHEIGHT;
+    static const int tw = 64, th = 64;
+
+    const animator_t* topColor, *bottomColor;
+    float topAlpha, bottomAlpha;
+
+    if(!p->_bg.material && !p->_bg.tex && !(p->_bg.topColor[3].value > 0 || p->_bg.bottomColor[3].value > 0))
+        return;
+
+    topColor = p->_bg.topColor;
+    topAlpha = topColor[3].value * alpha;
+    bottomColor = p->_bg.bottomColor;
+    bottomAlpha = bottomColor[3].value * alpha;
+
+    if(p->_bg.material)
+    {
+        GL_SetMaterial(p->_bg.material);
+        // Make sure the current texture will be tiled.
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    }
+    else if(p->_bg.tex)
+    {
+        glBindTexture(GL_TEXTURE_2D, p->_bg.tex);
+        // Make sure the current texture will be tiled.
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    }
+    else
+        glDisable(GL_TEXTURE_2D);
+
+    if(topAlpha < 1.0 || bottomAlpha < 1.0)
+    {
+        glEnable(GL_BLEND);
+        GL_BlendMode(BM_NORMAL);
+    }
+    else
+    {
+        glDisable(GL_BLEND);
+    }
+
+    glBegin(GL_QUADS);
+        // Top color.
+        glColor4f(topColor[0].value * light, topColor[1].value * light, topColor[2].value * light, topAlpha);
+        glTexCoord2f(0, 0);
+        glVertex2f(x, y);
+        glTexCoord2f(w / (float) tw, 0);
+        glVertex2f(x + w, y);
+
+        // Bottom color.
+        glColor4f(bottomColor[0].value * light, bottomColor[1].value * light, bottomColor[2].value * light, bottomAlpha);
+        glTexCoord2f(w / (float) tw, h / (float) th);
+        glVertex2f(x + w, y + h);
+        glTexCoord2f(0, h / (float) th);
+        glVertex2f(x, y + h);
+    glEnd();
+
+    glEnable(GL_TEXTURE_2D);
+    glEnable(GL_BLEND);
+}
+
 void FIPage_Drawer(fi_page_t* p)
 {
     if(!p) Con_Error("FIPage_Drawer: Invalid page.");
@@ -515,19 +580,7 @@ void FIPage_Drawer(fi_page_t* p)
         return;
 
     // First, draw the background.
-    if(p->_bgMaterial)
-    {
-        useColor(p->_bgColor, 4);
-        DGL_SetMaterial(p->_bgMaterial);
-        DGL_DrawRectTiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);
-    }
-    else if(p->_bgColor[3].value > 0)
-    {
-        // Just clear the screen, then.
-        DGL_Disable(DGL_TEXTURING);
-        DGL_DrawRect(0, 0, SCREENWIDTH, SCREENHEIGHT, p->_bgColor[0].value, p->_bgColor[1].value, p->_bgColor[2].value, p->_bgColor[3].value);
-        DGL_Enable(DGL_TEXTURING);
-    }
+    drawPageBackground(p, 1.0, 1.0);
 
     // Now lets go into 3D mode for drawing the p objects.
     glMatrixMode(GL_MODELVIEW);
@@ -629,7 +682,8 @@ void FIPage_Ticker(fi_page_t* p, timespan_t ticLength)
     objectsThink(&p->_objects);
 
     AnimatorVector3_Think(p->_offset);
-    AnimatorVector4_Think(p->_bgColor);
+    AnimatorVector4_Think(p->_bg.topColor);
+    AnimatorVector4_Think(p->_bg.bottomColor);
     AnimatorVector4_Think(p->_filter);
     {uint i;
     for(i = 0; i < 9; ++i)
@@ -663,28 +717,40 @@ fi_object_t* FIPage_RemoveObject(fi_page_t* p, fi_object_t* obj)
     return obj;
 }
 
-material_t* FIPage_Background(fi_page_t* p)
+material_t* FIPage_BackgroundMaterial(fi_page_t* p)
 {
-    if(!p) Con_Error("FIPage_Background: Invalid page.");
-    return p->_bgMaterial;
+    if(!p) Con_Error("FIPage_BackgroundMaterial: Invalid page.");
+    return p->_bg.material;
 }
 
-void FIPage_SetBackground(fi_page_t* p, material_t* mat)
+void FIPage_SetBackgroundMaterial(fi_page_t* p, material_t* mat)
 {
-    if(!p) Con_Error("FIPage_SetBackground: Invalid page.");
-    p->_bgMaterial = mat;
+    if(!p) Con_Error("FIPage_SetBackgroundMaterial: Invalid page.");
+    p->_bg.material = mat;
 }
 
-void FIPage_SetBackgroundColor(fi_page_t* p, float red, float green, float blue, int steps)
+void FIPage_SetBackgroundTopColor(fi_page_t* p, float red, float green, float blue, int steps)
 {
-    if(!p) Con_Error("FIPage_SetBackgroundColor: Invalid page.");
-    AnimatorVector3_Set(p->_bgColor, red, green, blue, steps);
+    if(!p) Con_Error("FIPage_SetBackgroundTopColor: Invalid page.");
+    AnimatorVector3_Set(p->_bg.topColor, red, green, blue, steps);
 }
 
-void FIPage_SetBackgroundColorAndAlpha(fi_page_t* p, float red, float green, float blue, float alpha, int steps)
+void FIPage_SetBackgroundTopColorAndAlpha(fi_page_t* p, float red, float green, float blue, float alpha, int steps)
 {
-    if(!p) Con_Error("FIPage_SetBackgroundColorAndAlpha: Invalid page.");
-    AnimatorVector4_Set(p->_bgColor, red, green, blue, alpha, steps);
+    if(!p) Con_Error("FIPage_SetBackgroundTopColorAndAlpha: Invalid page.");
+    AnimatorVector4_Set(p->_bg.topColor, red, green, blue, alpha, steps);
+}
+
+void FIPage_SetBackgroundBottomColor(fi_page_t* p, float red, float green, float blue, int steps)
+{
+    if(!p) Con_Error("FIPage_SetBackgroundBottomColor: Invalid page.");
+    AnimatorVector3_Set(p->_bg.bottomColor, red, green, blue, steps);
+}
+
+void FIPage_SetBackgroundBottomColorAndAlpha(fi_page_t* p, float red, float green, float blue, float alpha, int steps)
+{
+    if(!p) Con_Error("FIPage_SetBackgroundBottomColorAndAlpha: Invalid page.");
+    AnimatorVector4_Set(p->_bg.bottomColor, red, green, blue, alpha, steps);
 }
 
 void FIPage_SetOffsetX(fi_page_t* p, float x, int steps)

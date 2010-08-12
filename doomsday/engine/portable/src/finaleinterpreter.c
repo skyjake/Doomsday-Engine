@@ -809,9 +809,12 @@ static void stopScript(finaleinterpreter_t* fi)
 static void changePageBackground(fi_page_t* p, material_t* mat)
 {
     // If the page does not yet have a background set we must setup the color+alpha.
-    if(mat && !FIPage_Background(p))
-        FIPage_SetBackgroundColorAndAlpha(p, 1, 1, 1, 1, 0);
-    FIPage_SetBackground(p, mat);
+    if(mat && !FIPage_BackgroundMaterial(p))
+    {
+        FIPage_SetBackgroundTopColorAndAlpha(p, 1, 1, 1, 1, 0);
+        FIPage_SetBackgroundBottomColorAndAlpha(p, 1, 1, 1, 1, 0);
+    }
+    FIPage_SetBackgroundMaterial(p, mat);
 }
 
 finaleinterpreter_t* P_CreateFinaleInterpreter(void)
@@ -1155,12 +1158,14 @@ DEFFC(WaitAnim)
 
 DEFFC(Color)
 {
-    FIPage_SetBackgroundColor(fi->_pages[PAGE_PICS], OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), fi->_inTime);
+    FIPage_SetBackgroundTopColor(fi->_pages[PAGE_PICS], OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), fi->_inTime);
+    FIPage_SetBackgroundBottomColor(fi->_pages[PAGE_PICS], OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), fi->_inTime);
 }
 
 DEFFC(ColorAlpha)
 {
-    FIPage_SetBackgroundColorAndAlpha(fi->_pages[PAGE_PICS], OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
+    FIPage_SetBackgroundTopColorAndAlpha(fi->_pages[PAGE_PICS], OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
+    FIPage_SetBackgroundBottomColorAndAlpha(fi->_pages[PAGE_PICS], OP_FLOAT(0), OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
 }
 
 DEFFC(Pause)
