@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * load.c: Load and analyzation of the map data structures.
+ * Load and analyzation of the map data structures.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -868,17 +868,17 @@ void AnalyzeMap(void)
         findPolyobjs();
 }
 
-boolean IsSupportedFormat(const int *lumpList, int numLumps)
+boolean IsSupportedFormat(const int* lumpList, int numLumps)
 {
-    int                 i;
-    boolean             supported = false;
+    boolean supported = false;
+    int i;
 
     // Lets first check for format specific lumps, as their prescense
     // determines the format of the map data. Assume DOOM format by default.
     map->format = MF_DOOM;
     for(i = 0; i < numLumps; ++i)
     {
-        const char*         lumpName = W_LumpName(lumpList[i]);
+        const char* lumpName = W_LumpName(lumpList[i]);
 
         if(!lumpName || !lumpName[0])
             continue;
@@ -900,9 +900,9 @@ boolean IsSupportedFormat(const int *lumpList, int numLumps)
 
     for(i = 0; i < numLumps; ++i)
     {
-        uint*               ptr;
-        size_t              elmSize = 0; // Num of bytes.
-        const char*         lumpName = W_LumpName(lumpList[i]);
+        const char* lumpName = W_LumpName(lumpList[i]);
+        size_t elmSize = 0; // Num of bytes.
+        uint* ptr;
 
         // Determine the number of map data objects of each data type.
         ptr = NULL;
@@ -910,32 +910,27 @@ boolean IsSupportedFormat(const int *lumpList, int numLumps)
         {
         case ML_VERTEXES:
             ptr = &map->numVertexes;
-            elmSize = (map->format == MF_DOOM64? SIZEOF_64VERTEX :
-                SIZEOF_VERTEX);
+            elmSize = (map->format == MF_DOOM64? SIZEOF_64VERTEX : SIZEOF_VERTEX);
             break;
 
         case ML_THINGS:
             ptr = &map->numThings;
-            elmSize = (map->format == MF_DOOM64? SIZEOF_64THING :
-                map->format == MF_HEXEN? SIZEOF_XTHING : SIZEOF_THING);
+            elmSize = (map->format == MF_DOOM64? SIZEOF_64THING : map->format == MF_HEXEN? SIZEOF_XTHING : SIZEOF_THING);
             break;
 
         case ML_LINEDEFS:
             ptr = &map->numLines;
-            elmSize = (map->format == MF_DOOM64? SIZEOF_64LINEDEF :
-                map->format == MF_HEXEN? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
+            elmSize = (map->format == MF_DOOM64? SIZEOF_64LINEDEF : map->format == MF_HEXEN? SIZEOF_XLINEDEF : SIZEOF_LINEDEF);
             break;
 
         case ML_SIDEDEFS:
             ptr = &map->numSides;
-            elmSize = (map->format == MF_DOOM64? SIZEOF_64SIDEDEF :
-                SIZEOF_SIDEDEF);
+            elmSize = (map->format == MF_DOOM64? SIZEOF_64SIDEDEF : SIZEOF_SIDEDEF);
             break;
 
         case ML_SECTORS:
             ptr = &map->numSectors;
-            elmSize =
-                (map->format == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
+            elmSize = (map->format == MF_DOOM64? SIZEOF_64SECTOR : SIZEOF_SECTOR);
             break;
 
         case ML_LIGHTS:
@@ -949,17 +944,14 @@ boolean IsSupportedFormat(const int *lumpList, int numLumps)
 
         if(ptr)
         {
-            size_t              lumpLength = W_LumpLength(lumpList[i]);
-
+            size_t lumpLength = W_LumpLength(lumpList[i]);
             if(0 != lumpLength % elmSize)
                 return false; // What is this??
-
             *ptr += lumpLength / elmSize;
         }
     }
 
-    if(map->numVertexes > 0 && map->numLines > 0 && map->numSides > 0 &&
-       map->numSectors > 0 && map->numThings > 0)
+    if(map->numVertexes > 0 && map->numLines > 0 && map->numSides > 0 && map->numSectors > 0)
     {
         supported = true;
     }
