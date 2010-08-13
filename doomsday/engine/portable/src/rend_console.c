@@ -723,7 +723,7 @@ void Rend_Console(void)
     if(ConsoleY > 0)
         drawConsole();
 
-    if(consoleShowFPS)
+    if(consoleShowFPS && !UI_IsActive())
         Rend_ConsoleFPS(theWindow->width - 10, 10 + (ConsoleY > 0? consoleAlpha * GetConsoleTitleBarHeight() : 0));
 
     // Restore original matrix.
