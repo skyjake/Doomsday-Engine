@@ -349,7 +349,7 @@ void Materials_DeleteTextures(material_namespace_t mnamespace)
 
 static material_t* createMaterial(short width, short height, byte flags,
     material_namespace_t mnamespace, material_env_class_t envClass,
-    ded_material_t* def, gltextureid_t tex)
+    gltextureid_t tex, short texOriginX, short texOriginY, ded_material_t* def)
 {
     material_t* mat = Z_BlockNewElement(materialsBlockSet);
     uint i;
@@ -364,18 +364,28 @@ static material_t* createMaterial(short width, short height, byte flags,
     mat->current = mat->next = mat;
     mat->def = def;
     mat->layers[0].tex = tex;
+    mat->layers[0].texOrigin[0] = texOriginX;
+    mat->layers[0].texOrigin[1] = texOriginY;
     mat->numLayers = 1;
+
+    if(def)
+    {
+        for(i = 0; i < mat->numLayers; ++i)
+        {
+            mat->layers[i].glow = def->layers[i].stages[0].glow;
+            mat->layers[i].texOrigin[0] = def->layers[i].stages[0].texOrigin[0];
+            mat->layers[i].texOrigin[1] = def->layers[i].stages[0].texOrigin[1];
+        }
+    }
 
     // Is this a custom material?
     mat->flags &= ~MATF_CUSTOM;
     for(i = 0; i < mat->numLayers; ++i)
     {
-        mat->layers[i].glow = (def? def->layers[i].stages[0].glow : 0);
-        if(!GLTexture_IsFromIWAD(GL_GetGLTexture(mat->layers[i].tex)))
-        {
-            mat->flags |= MATF_CUSTOM;
-            break;
-        }
+        if(GLTexture_IsFromIWAD(GL_GetGLTexture(mat->layers[i].tex)))
+            continue;
+        mat->flags |= MATF_CUSTOM;
+        break;
     }
 
     // Link the new material into the global list of materials.
@@ -435,18 +445,19 @@ materialnum_t Materials_ToMaterialNum(const material_t* mat)
  *
  * \note: May fail if the name is invalid.
  *
+ * @param mnamespace    MG_* material namespace.
  * @param name          Name of the new material.
  * @param width         Width of the material (not of the texture).
  * @param height        Height of the material (not of the texture).
  * @param flags         MATF_* material flags
  * @param tex           Texture to use with this material.
- * @param mnamespace    MG_* material namespace.
  *                      MN_ANY is only valid when updating an existing material.
  *
  * @return              The created material, ELSE @c NULL.
  */
-material_t* Materials_New(const char* rawName, short width, short height, byte flags,
-    gltextureid_t tex, material_namespace_t mnamespace, ded_material_t* def)
+material_t* Materials_New(material_namespace_t mnamespace, const char* rawName,
+    short width, short height, byte flags, gltextureid_t tex, short texOriginX,
+    short texOriginY, ded_material_t* def)
 {
     material_env_class_t envClass;
     materialnum_t oldMat;
@@ -556,7 +567,7 @@ Con_Message("Materials_New: Warning, attempted to create material "
     if(tex == 0 || !(width > 0) || !(height > 0))
         return NULL;
 
-    mat = createMaterial(width, height, flags, mnamespace, envClass, def, tex);
+    mat = createMaterial(width, height, flags, mnamespace, envClass, tex, texOriginX, texOriginY, def);
 
     // Now create a name binding for it.
     newMaterialNameBinding(mat, name, mnamespace, hash);
@@ -755,8 +766,8 @@ static __inline void setTexUnit(material_snapshot_t* ss, byte unit,
     mtp->alpha = MINMAX_OF(0, alpha, 1);
     mtp->scale[0] = sScale;
     mtp->scale[1] = tScale;
-    mtp->offset[0] = 0;
-    mtp->offset[1] = 0;
+    mtp->offset[0] = sOffset * sScale;
+    mtp->offset[1] = tOffset * tScale;
 }
 
 byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean smoothed, material_load_params_t* params)
@@ -873,12 +884,13 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
         {
             const gltexture_t*  tex = GL_GetGLTexture(mat->layers[0].tex);
             int c, magMode = glmode[texMagMode];
+            vec2_t scale;
 
             if(tex->type == GLT_SPRITE)
                 magMode = filterSprites? GL_LINEAR : GL_NEAREST;
+            V2_Set(scale, 1.f / snapshot->width, 1.f / snapshot->height);
 
-            setTexUnit(snapshot, MTU_PRIMARY, BM_NORMAL, magMode, texInst[0],
-                       1.f / snapshot->width, 1.f / snapshot->height, 0, 0, 1);
+            setTexUnit(snapshot, MTU_PRIMARY, BM_NORMAL, magMode, texInst[0], scale[0], scale[1], mat->layers[0].texOrigin[0], mat->layers[0].texOrigin[1], 1);
 
             snapshot->isOpaque = !texInst[0]->isMasked;
 
@@ -919,9 +931,7 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
                 if(detailScale > .001f)
                     scale *= detailScale;
 
-                setTexUnit(snapshot, MTU_DETAIL, BM_NORMAL,
-                           GL_LINEAR, detailInst, 1.f / width * scale,
-                           1.f / height * scale, 0, 0, 1);
+                setTexUnit(snapshot, MTU_DETAIL, BM_NORMAL, GL_LINEAR, detailInst, 1.f / width * scale, 1.f / height * scale, 0, 0, 1);
             }
 
             // Setup the reflection (aka shiny) texturing pass(es)?
@@ -931,19 +941,13 @@ byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean s
                 snapshot->shiny.minColor[CG] = reflection->minColor[CG];
                 snapshot->shiny.minColor[CB] = reflection->minColor[CB];
 
-                setTexUnit(snapshot, MTU_REFLECTION, reflection->blendMode,
-                           GL_LINEAR, shinyInst, 1, 1, 0, 0, reflection->shininess);
+                setTexUnit(snapshot, MTU_REFLECTION, reflection->blendMode, GL_LINEAR, shinyInst, 1, 1, 0, 0, reflection->shininess);
 
                 if(shinyMaskInst)
-                    setTexUnit(snapshot, MTU_REFLECTION_MASK, BM_NORMAL,
-                               snapshot->units[MTU_PRIMARY].magMode,
-                               shinyMaskInst,
-                               1.f / (snapshot->width * maskTextures[
-                                   shinyMaskInst->tex->ofTypeID]->width),
-                               1.f / (snapshot->height * maskTextures[
-                                   shinyMaskInst->tex->ofTypeID]->height),
-                               snapshot->units[MTU_PRIMARY].offset[0],
-                               snapshot->units[MTU_PRIMARY].offset[1], 1);
+                    setTexUnit(snapshot, MTU_REFLECTION_MASK, BM_NORMAL, snapshot->units[MTU_PRIMARY].magMode, shinyMaskInst,
+                               1.f / (snapshot->width * maskTextures[shinyMaskInst->tex->ofTypeID]->width),
+                               1.f / (snapshot->height * maskTextures[shinyMaskInst->tex->ofTypeID]->height),
+                               snapshot->units[MTU_PRIMARY].offset[0], snapshot->units[MTU_PRIMARY].offset[1], 1);
             }
         }
 

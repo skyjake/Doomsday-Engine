@@ -595,6 +595,7 @@ static int DD_StartupWorker(void *parm)
 
     // Get the material manager up and running.
     Materials_Initialize();
+    R_InitSystemTextures();
     R_InitTextures();
     R_InitFlats();
     R_PreInitSprites();

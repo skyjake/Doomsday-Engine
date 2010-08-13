@@ -517,6 +517,7 @@ typedef struct ded_material_layer_stage_s {
     int             tics;
     float           variance; // Stage variance (time).
     float           glow;
+    float           texOrigin[2];
 } ded_material_layer_stage_t;
 
 typedef struct ded_material_layer_s {

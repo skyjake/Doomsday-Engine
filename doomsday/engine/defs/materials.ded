@@ -1,0 +1,60 @@
+#
+# Doomsday Engine 1.9
+# Default Materials.
+#
+
+#
+# The "Unknown" material.
+# Used to render surfaces which do not specify a material.
+#
+Material {
+  Id = "unknown";
+  Namespace = system;
+  Width = 64;
+  Height = 64;
+  Layer {
+    Stage { System = "DDT_UNKN"; Tics = 16; Glow = 0; }
+    Stage { System = "DDT_UNKN"; Tics = 24; Glow = 1; }
+  }
+}
+
+#
+# The "Missing" material.
+# Used to render surfaces which specify a material but which cannot be found.
+#
+Material {
+  Id = "missing";
+  Namespace = system;
+  Width = 64;
+  Height = 64;
+  Layer {
+    Stage { System = "DDT_MISS"; Tics = 16; Glow = 0; }
+    Stage { System = "DDT_MISS"; Tics = 24; Glow = 1; }
+  }
+}
+
+#
+# Used when drawing bounding boxes, selection areas and more.
+#
+Material {
+  Id = "bbox";
+  Namespace = system;
+  Width = 64;
+  Height = 64;
+  Layer {
+    Stage { System = "DDT_BBOX"; Glow = 1; }
+  }
+}
+
+#
+# Basic mid-gray material used to render surfaces for various lighting debug displays.
+#
+Material {
+  Id = "gray";
+  Namespace = system;
+  Width = 64;
+  Height = 64;
+  Layer {
+    Stage { System = "DDT_GRAY"; }
+  }
+}

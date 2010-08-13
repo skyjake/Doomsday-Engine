@@ -334,33 +334,8 @@ int GL_InitPalettedTexture(void)
  */
 void GL_LoadSystemTextures(void)
 {
-    struct ddtexdef_s {
-        char            name[9];
-        int             id;
-        byte            flags; // MATF_* flags
-    } static const ddtexdefs[NUM_DD_TEXTURES] =
-    {
-        {"DDT_UNKN", DDT_UNKNOWN},
-        {"DDT_MISS", DDT_MISSING},
-        {"DDT_BBOX", DDT_BBOX},
-        {"DDT_GRAY", DDT_GRAY}
-    };
-    int                 i;
-
     if(!texInited)
         return;
-
-    i = 0;
-    for(i = 0; i < NUM_DD_TEXTURES; ++i)
-    {
-        material_t*         mat;
-        const gltexture_t*  tex;
-
-        tex = GL_CreateGLTexture(ddtexdefs[i].name, ddtexdefs[i].id, GLT_SYSTEM);
-
-        mat = Materials_New(ddtexdefs[i].name, 64, 64, 0, tex->id,
-                               MN_SYSTEM, NULL);
-    }
 
     UI_LoadTextures();
 
@@ -2437,7 +2412,7 @@ uint GL_CheckTextureNumForName(const char* name, gltexture_type_t type)
         Con_Error("GL_CheckTextureNumForName: Invalid type %i.", type);
     if((glTex = GL_GetGLTextureByName(name, type)))
         return glTex->ofTypeID + 1;
-    Con_Message("GL_CheckTextureNumForName: Warning, unknown texture '%s' of type %s\n.", name, GLTEXTURE_TYPE_STRING(type));
+    Con_Message("GL_CheckTextureNumForName: Warning, unknown texture '%s' of type %s.\n", name, GLTEXTURE_TYPE_STRING(type));
     return 0;
 }
 

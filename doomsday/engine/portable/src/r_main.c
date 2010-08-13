@@ -399,6 +399,7 @@ void R_Update(void)
     uint i;
 
     R_UpdateTexturesAndFlats();
+    R_InitSystemTextures();
     R_InitTextures();
     R_InitFlats();
     R_PreInitSprites();

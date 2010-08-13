@@ -914,6 +914,28 @@ void R_ShutdownData(void)
     Materials_Shutdown();
 }
 
+/**
+ * Registers the "system" textures that are part of the Doomsday data resource package.
+ * @fixme A nuisance really. Why not simply read the contents of e.g., "}doomsday/data/graphics/"
+ */
+void R_InitSystemTextures(void)
+{
+    struct ddtexdef_s {
+        char name[9];
+        uint id;
+    } static const ddtexdefs[NUM_DD_TEXTURES] = {
+        { "DDT_UNKN", DDT_UNKNOWN },
+        { "DDT_MISS", DDT_MISSING },
+        { "DDT_BBOX", DDT_BBOX },
+        { "DDT_GRAY", DDT_GRAY }
+    };
+    { uint i;
+    for(i = 0; i < NUM_DD_TEXTURES; ++i)
+    {
+        GL_CreateGLTexture(ddtexdefs[i].name, ddtexdefs[i].id, GLT_SYSTEM);
+    }}
+}
+
 static patchtex_t* getPatchTex(patchid_t id)
 {
     if(id != 0 && id <= numDoomPatchDefs)
@@ -1675,9 +1697,7 @@ void R_InitTextures(void)
             tex = GL_CreateGLTexture(texDef->name, i, GLT_DOOMTEXTURE);
 
             // Create a material for this texture.
-            mat = Materials_New(texDef->name, texDef->width, texDef->height,
-                                   ((texDef->flags & TXDF_NODRAW)? MATF_NO_DRAW : 0),
-                                   tex->id, MN_TEXTURES, NULL);
+            mat = Materials_New(MN_TEXTURES, texDef->name, texDef->width, texDef->height, ((texDef->flags & TXDF_NODRAW)? MATF_NO_DRAW : 0), tex->id, 0, 0, 0);
         }
     }
     else
@@ -1792,7 +1812,7 @@ void R_InitFlats(void)
 
         // Create a material for this flat.
         // \note that width = 64, height = 64 regardless of the flat dimensions.
-        Materials_New(W_LumpName(flat->lump), 64, 64, 0, tex->id, MN_FLATS, NULL);
+        Materials_New(MN_FLATS, W_LumpName(flat->lump), 64, 64, 0, tex->id, 0, 0, 0);
     }
 
     VERBOSE(Con_Message("R_InitFlats: Done in %.2f seconds.\n",

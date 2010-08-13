@@ -987,8 +987,7 @@ void Def_Read(void)
             }
         }
 
-        Materials_New(def->id.name, width, height, def->flags,
-                         tex? tex->id : 0, mnamespace, def);
+        Materials_New(mnamespace, def->id.name, width, height, def->flags, tex? tex->id : 0, 0, 0, def);
     }
     Materials_LinkAssociatedDefinitions();
 

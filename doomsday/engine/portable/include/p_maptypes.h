@@ -118,6 +118,7 @@ typedef struct materiallayer_s {
     short           tics;
     float           glow;
     gltextureid_t   tex;
+    float           texOrigin[2]; /// Origin of the texture in material-space.
 } material_layer_t;
 
 typedef enum {

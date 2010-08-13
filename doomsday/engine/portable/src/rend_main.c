@@ -2031,12 +2031,12 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
     if(params.type != RPT_SKY_MASK)
     {
         // Smooth Texture Animation?
-        if(smoothTexAnim && texMode != 1)
+        if(smoothTexAnim)
             blended = true;
 
         inter = getSnapshots(&msA, blended? &msB : NULL, mat);
 
-        if(texMode == 0)
+        if(texMode != 2)
         {
             params.glowing = msA.glowing;
         }
@@ -2243,21 +2243,17 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
             else if(texMode == 1)
                 // For debug, render the "missing" texture instead of the texture
                 // chosen for surfaces to fix the HOMs.
-                mat = Materials_ToMaterial(Materials_NumForName("DDT_MISSING", MN_SYSTEM));
+                mat = Materials_ToMaterial(Materials_NumForName("missing", MN_SYSTEM));
             else // texMode == 2
                 // For lighting debug, render all solid surfaces using the gray
                 // texture.
-                mat = Materials_ToMaterial(Materials_NumForName("DDT_GRAY", MN_SYSTEM));
+                mat = Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM));
 
             // Make any necessary adjustments to the surface flags to suit the
             // current texture mode.
             surfaceFlags = surface->flags;
             surfaceInFlags = surface->inFlags;
-            if(texMode == 1)
-            {
-                glowing = 1.0; // Make it stand out.
-            }
-            else if(texMode == 2)
+            if(texMode == 2)
             {
                 surfaceInFlags &= ~(SUIF_MATERIAL_FIX);
             }
@@ -2281,15 +2277,12 @@ static boolean rendSegSection(subsector_t* ssec, seg_t* seg,
         if(type != RPT_SKY_MASK)
         {
             // Smooth Texture Animation?
-            if(smoothTexAnim && texMode != 1)
+            if(smoothTexAnim)
                 blended = true;
-        }
 
-        if(type != RPT_SKY_MASK)
-        {
             inter = getSnapshots(&msA, blended? &msB : NULL, mat);
 
-            if(texMode == 0)
+            if(texMode != 2)
             {
                 glowing = msA.glowing;
             }
@@ -3341,10 +3334,10 @@ static void Rend_RenderSubsector(uint ssecidx)
         else if(texMode == 1)
             // For debug, render the "missing" texture instead of the texture
             // chosen for surfaces to fix the HOMs.
-            mat = Materials_ToMaterial(Materials_NumForName("DDT_MISSING", MN_SYSTEM));
+            mat = Materials_ToMaterial(Materials_NumForName("missing", MN_SYSTEM));
         else
             // For lighting debug, render all solid surfaces using the gray texture.
-            mat = Materials_ToMaterial(Materials_NumForName("DDT_GRAY", MN_SYSTEM));
+            mat = Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM));
 
         V2_Copy(texOffset, suf->visOffset);
 
@@ -3391,7 +3384,7 @@ static void Rend_RenderSubsector(uint ssecidx)
                 normal[VZ] *= -1;
 
             Rend_RenderPlane(ssec, PLN_MID, plane->visHeight, normal,
-                             Materials_ToMaterial(Materials_NumForName("DDT_GRAY", MN_SYSTEM)),
+                             Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)),
                              suf->flags, suf->inFlags, suf->rgba,
                              BM_NORMAL, NULL, NULL, false,
                              (vy > plane->visHeight? true : false),
@@ -3410,7 +3403,7 @@ static void Rend_RenderSubsector(uint ssecidx)
                 normal[VZ] *= -1;
 
             Rend_RenderPlane(ssec, PLN_MID, plane->visHeight, normal,
-                             Materials_ToMaterial(Materials_NumForName("DDT_GRAY", MN_SYSTEM)),
+                             Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)),
                              suf->flags, suf->inFlags, suf->rgba,
                              BM_NORMAL, NULL, NULL, false,
                              (vy < plane->visHeight? true : false),
@@ -4307,7 +4300,7 @@ static void Rend_RenderBoundingBoxes(void)
     glEnable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
 
-    mat = Materials_ToMaterial(Materials_NumForName("DDT_BBOX", MN_SYSTEM));
+    mat = Materials_ToMaterial(Materials_NumForName("bbox", MN_SYSTEM));
     Materials_Prepare(&ms, mat, true, NULL);
 
     GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id, ms.units[MTU_PRIMARY].magMode);

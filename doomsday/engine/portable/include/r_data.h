@@ -285,6 +285,7 @@ void            R_DivTexCoords(rtexcoord_t* dst, const rtexcoord_t* src,
                                float bR, float tR);
 
 void            R_UpdateTexturesAndFlats(void);
+void            R_InitSystemTextures(void);
 void            R_InitTextures(void);
 void            R_InitFlats(void);
 
