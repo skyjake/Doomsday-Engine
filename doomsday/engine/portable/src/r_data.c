@@ -1676,8 +1676,7 @@ static void loadDoomTextureDefs(void)
  */
 void R_InitTextures(void)
 {
-    int                 i;
-    float               startTime = Sys_GetSeconds();
+    float startTime = Sys_GetSeconds();
 
     numDoomTextureDefs = 0;
     doomTextureDefs = NULL;
@@ -1688,16 +1687,13 @@ void R_InitTextures(void)
     if(numDoomTextureDefs > 0)
     {
         // Create materials for the defined textures.
+        int i;
         for(i = 0; i < numDoomTextureDefs; ++i)
         {
-            doomtexturedef_t*     texDef = doomTextureDefs[i];
-            material_t*           mat;
-            const gltexture_t*    tex;
-
-            tex = GL_CreateGLTexture(texDef->name, i, GLT_DOOMTEXTURE);
-
+            doomtexturedef_t* texDef = doomTextureDefs[i];
+            const gltexture_t* tex = GL_CreateGLTexture(texDef->name, i, GLT_DOOMTEXTURE);
             // Create a material for this texture.
-            mat = Materials_New(MN_TEXTURES, texDef->name, texDef->width, texDef->height, ((texDef->flags & TXDF_NODRAW)? MATF_NO_DRAW : 0), tex->id, 0, 0, 0);
+            Materials_New(MN_TEXTURES, texDef->name, texDef->width, texDef->height, ((texDef->flags & TXDF_NODRAW)? MATF_NO_DRAW : 0), tex->id, 0, 0);
         }
     }
     else
@@ -1705,8 +1701,7 @@ void R_InitTextures(void)
         Con_Message("R_InitTextures: Warning, no textures found.\n");
     }
 
-    VERBOSE(Con_Message("R_InitTextures: Done in %.2f seconds.\n",
-                        Sys_GetSeconds() - startTime));
+    VERBOSE(Con_Message("R_InitTextures: Done in %.2f seconds.\n", Sys_GetSeconds() - startTime));
 }
 
 doomtexturedef_t* R_GetDoomTextureDef(int num)
@@ -1812,7 +1807,7 @@ void R_InitFlats(void)
 
         // Create a material for this flat.
         // \note that width = 64, height = 64 regardless of the flat dimensions.
-        Materials_New(MN_FLATS, W_LumpName(flat->lump), 64, 64, 0, tex->id, 0, 0, 0);
+        Materials_New(MN_FLATS, W_LumpName(flat->lump), 64, 64, 0, tex->id, 0, 0);
     }
 
     VERBOSE(Con_Message("R_InitFlats: Done in %.2f seconds.\n",

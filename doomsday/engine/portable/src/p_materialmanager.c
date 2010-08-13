@@ -347,38 +347,30 @@ void Materials_DeleteTextures(material_namespace_t mnamespace)
     }
 }
 
-static material_t* createMaterial(short width, short height, byte flags,
-    material_namespace_t mnamespace, material_env_class_t envClass,
-    gltextureid_t tex, short texOriginX, short texOriginY, ded_material_t* def)
+static material_t* allocMaterial(void)
 {
     material_t* mat = Z_BlockNewElement(materialsBlockSet);
-    uint i;
-
     memset(mat, 0, sizeof(*mat));
     mat->header.type = DMU_MATERIAL;
-    mat->mnamespace = mnamespace;
-    mat->width = width;
-    mat->height = height;
-    mat->flags = flags;
-    mat->envClass = envClass;
     mat->current = mat->next = mat;
-    mat->def = def;
-    mat->layers[0].tex = tex;
-    mat->layers[0].texOrigin[0] = texOriginX;
-    mat->layers[0].texOrigin[1] = texOriginY;
-    mat->numLayers = 1;
+    mat->envClass = MEC_UNKNOWN;
+    return mat;
+}
 
-    if(def)
-    {
-        for(i = 0; i < mat->numLayers; ++i)
-        {
-            mat->layers[i].glow = def->layers[i].stages[0].glow;
-            mat->layers[i].texOrigin[0] = def->layers[i].stages[0].texOrigin[0];
-            mat->layers[i].texOrigin[1] = def->layers[i].stages[0].texOrigin[1];
-        }
-    }
+/**
+ * Link the material into the global list of materials.
+ * \assume material is NOT already present in the global list.
+ */
+static material_t* linkMaterialToGlobalList(material_t* mat)
+{
+    mat->globalNext = materialsHead;
+    materialsHead = mat;
+    return mat;
+}
 
-    // Is this a custom material?
+static void materialUpdateCustomStatus(material_t* mat)
+{
+    uint i;
     mat->flags &= ~MATF_CUSTOM;
     for(i = 0; i < mat->numLayers; ++i)
     {
@@ -387,20 +379,65 @@ static material_t* createMaterial(short width, short height, byte flags,
         mat->flags |= MATF_CUSTOM;
         break;
     }
+}
 
-    // Link the new material into the global list of materials.
-    mat->globalNext = materialsHead;
-    materialsHead = mat;
+static material_t* createMaterial(material_namespace_t mnamespace, short width,
+    short height, byte flags, material_env_class_t envClass, gltextureid_t tex,
+    short texOriginX, short texOriginY)
+{
+    material_t* mat = linkMaterialToGlobalList(allocMaterial());
+    
+    mat->mnamespace = mnamespace;
+    mat->width = width;
+    mat->height = height;
+    mat->flags = flags;
+    mat->envClass = envClass;
 
+    mat->numLayers = 1;
+    mat->layers[0].tex = tex;
+    mat->layers[0].texOrigin[0] = texOriginX;
+    mat->layers[0].texOrigin[1] = texOriginY;
+
+    // Is this a custom material?
+    materialUpdateCustomStatus(mat);
     return mat;
+}
+
+static material_t* createMaterialFromDef(material_namespace_t mnamespace,
+    short width, short height, byte flags, material_env_class_t envClass,
+    const gltexture_t* tex, ded_material_t* def)
+{
+    assert(def);
+    {
+    material_t* mat = linkMaterialToGlobalList(allocMaterial());
+
+    mat->mnamespace = mnamespace;
+    mat->width = width;
+    mat->height = height;
+    mat->flags = flags;
+    mat->envClass = envClass;
+    mat->def = def;
+
+    mat->numLayers = 1;
+    { uint i;
+    for(i = 0; i < mat->numLayers; ++i)
+    {
+        mat->layers[i].tex = tex->id;
+        mat->layers[i].glow = def->layers[i].stages[0].glow;
+        mat->layers[i].texOrigin[0] = def->layers[i].stages[0].texOrigin[0];
+        mat->layers[i].texOrigin[1] = def->layers[i].stages[0].texOrigin[1];
+    }}
+
+    materialUpdateCustomStatus(mat);
+    return mat;
+    }
 }
 
 static material_t* getMaterialByNum(materialnum_t num)
 {
     if(num < numMaterialBinds)
         return materialBinds[num].mat;
-
-    return NULL;
+    return 0;
 }
 
 /**
@@ -457,7 +494,7 @@ materialnum_t Materials_ToMaterialNum(const material_t* mat)
  */
 material_t* Materials_New(material_namespace_t mnamespace, const char* rawName,
     short width, short height, byte flags, gltextureid_t tex, short texOriginX,
-    short texOriginY, ded_material_t* def)
+    short texOriginY)
 {
     material_env_class_t envClass;
     materialnum_t oldMat;
@@ -516,7 +553,6 @@ Con_Message("Materials_New: Warning, attempted to create material in "
     if(oldMat)
     {   // We are updating an existing material.
         materialbind_t* mb = &materialBinds[oldMat - 1];
-        uint i;
 
         mat = mb->mat;
 
@@ -530,23 +566,13 @@ Con_Message("Materials_New: Warning, attempted to create material in "
             mat->height = height;
         mat->inAnimGroup = false;
         mat->current = mat->next = mat;
-        mat->def = def;
+        //mat->def = 0;
         mat->inter = 0;
         mat->envClass = envClass;
         mat->mnamespace = mnamespace;
 
-        // Is this a custom material?
-        mat->flags &= ~MATF_CUSTOM;
-        for(i = 0; i < mat->numLayers; ++i)
-        {
-            mat->layers[i].glow = (def && def->layers[i].stageCount.num >= 1? def->layers[i].stages[0].glow : 0);
-            if(!GLTexture_IsFromIWAD(GL_GetGLTexture(mat->layers[i].tex)))
-            {
-                mat->flags |= MATF_CUSTOM;
-                break;
-            }
-        }
-        return mat; // Yep, return it.
+        materialUpdateCustomStatus(mat);
+        return mat;
     }
 
     if(mnamespace == MN_ANY)
@@ -567,12 +593,158 @@ Con_Message("Materials_New: Warning, attempted to create material "
     if(tex == 0 || !(width > 0) || !(height > 0))
         return NULL;
 
-    mat = createMaterial(width, height, flags, mnamespace, envClass, tex, texOriginX, texOriginY, def);
+    mat = createMaterial(mnamespace, width, height, flags, envClass, tex, texOriginX, texOriginY);
 
     // Now create a name binding for it.
     newMaterialNameBinding(mat, name, mnamespace, hash);
 
     return mat;
+}
+
+/**
+ * Create a new material. If there exists one by the same name and in the
+ * same namespace, it is returned else a new material is created.
+ *
+ * \note: May fail on invalid definitions.
+ *
+ * @param def           Material definition to construct from.
+ * @return              The created material, ELSE @c NULL.
+ */
+material_t* Materials_NewFromDef(ded_material_t* def)
+{
+    assert(def);
+    {
+    material_namespace_t mnamespace = MN_ANY; // No change.
+    const gltexture_t* tex = NULL; // No change.
+    float width = -1, height = -1; // No change.
+    material_env_class_t envClass;
+    materialnum_t oldMat;
+    const char* rawName;
+    material_t* mat;
+    char name[9];
+    byte flags;
+    uint hash;
+    int n;
+
+    if(!initedOk)
+        return NULL;
+
+    // Sanitize so that when updating we only change what is requested.
+    if(def->width > 0)
+        width = MAX_OF(1, def->width);
+    if(def->height > 0)
+        height = MAX_OF(1, def->height);
+    if(def->id.mnamespace != MN_ANY)
+        mnamespace = def->id.mnamespace;
+    rawName = def->id.name;
+    flags = def->flags;
+
+    if(def->layers[0].stageCount.num > 0)
+    {
+        const ded_material_layer_t* l = &def->layers[0];
+
+        if(l->stages[0].type != -1) // Not unused.
+        {
+            if(!(tex = GL_GetGLTextureByName(l->stages[0].name, l->stages[0].type)))
+                VERBOSE( Con_Message("Materials_NewFromDef: Warning, unknown %s '%s' in material '%s' (layer %i stage %i).\n",
+                                     GLTEXTURE_TYPE_STRING(l->stages[0].type), l->stages[0].name, def->id.name, 0, 0) );
+        }
+    }
+
+    // In original DOOM, texture name references beginning with the
+    // hypen '-' character are always treated as meaning "no reference"
+    // or "invalid texture" and surfaces using them were not drawn.
+    if(!rawName || !rawName[0] || rawName[0] == '-')
+    {
+#if _DEBUG
+Con_Message("Materials_New: Warning, attempted to create material with "
+            "NULL name\n.");
+#endif
+        return NULL;
+    }
+
+    // Prepare 'name'.
+    for(n = 0; *rawName && n < 8; ++n, rawName++)
+        name[n] = tolower(*rawName);
+    name[n] = '\0';
+    hash = hashForName(name);
+
+    // Check if we've already created a material for this.
+    if(mnamespace == MN_ANY)
+    {   // Caller doesn't care which namespace. This is only valid if we
+        // can find a material by this name using a priority search order.
+        oldMat = getMaterialNumForName(name, hash, MN_SPRITES);
+        if(!oldMat)
+            oldMat = getMaterialNumForName(name, hash, MN_TEXTURES);
+        if(!oldMat)
+            oldMat = getMaterialNumForName(name, hash, MN_FLATS);
+    }
+    else
+    {
+        if(!isKnownMNamespace(mnamespace))
+        {
+#if _DEBUG
+Con_Message("Materials_New: Warning, attempted to create material in "
+            "unknown namespace '%i'.\n", (int) mnamespace);
+#endif
+            return NULL;
+        }
+
+        oldMat = getMaterialNumForName(name, hash, mnamespace);
+    }
+
+    envClass = S_MaterialClassForName(name, mnamespace);
+
+    if(oldMat)
+    {   // We are updating an existing material.
+        materialbind_t* mb = &materialBinds[oldMat - 1];
+
+        mat = mb->mat;
+
+        // Update the (possibly new) meta data.
+        mat->flags = flags;
+        if(tex)
+            mat->layers[0].tex = tex->id;
+        if(width > 0)
+            mat->width = width;
+        if(height > 0)
+            mat->height = height;
+        mat->inAnimGroup = false;
+        mat->current = mat->next = mat;
+        mat->def = def;
+        mat->inter = 0;
+        mat->envClass = envClass;
+        mat->mnamespace = mnamespace;
+
+        materialUpdateCustomStatus(mat);
+        return mat;
+    }
+
+    if(mnamespace == MN_ANY)
+    {
+#if _DEBUG
+Con_Message("Materials_New: Warning, attempted to create material "
+            "without specifying a namespace.\n");
+#endif
+        return NULL;
+    }
+
+    /**
+     * A new material.
+     */
+
+    // Only create complete materials.
+    // \todo Doing this here isn't ideal.
+    if(tex == 0 || !(width > 0) || !(height > 0))
+        return NULL;
+
+    mat = createMaterialFromDef(mnamespace, width, height, flags, envClass, tex, def);
+
+    // Now create a name binding for it.
+    newMaterialNameBinding(mat, name, mnamespace, hash);
+
+    return mat;
+    }
 }
 
 /**

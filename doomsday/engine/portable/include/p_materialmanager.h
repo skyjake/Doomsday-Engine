@@ -39,7 +39,8 @@ void            Materials_Ticker(timespan_t elapsed);
 void            Materials_DeleteTextures(material_namespace_t mnamespace);
 void            Materials_LinkAssociatedDefinitions(void);
 
-material_t*     Materials_New(material_namespace_t mnamespace, const char* name, short width, short height, byte flags, gltextureid_t tex, short texOriginX, short texOriginY, ded_material_t* def);
+material_t*     Materials_New(material_namespace_t mnamespace, const char* name, short width, short height, byte flags, gltextureid_t tex, short texOriginX, short texOriginY);
+material_t*     Materials_NewFromDef(ded_material_t* def);
 
 material_t*     Materials_ToMaterial(materialnum_t num);
 
