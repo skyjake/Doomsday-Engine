@@ -496,11 +496,13 @@ static void markSegSectionsPVisible(seg_t* seg)
 
     // Top.
     if((R_IsSkySurface(&fceil->surface) && R_IsSkySurface(&bceil->surface)) ||
+       (R_IsSkySurface(&bceil->surface) && (side->SW_topsurface.inFlags & SUIF_MATERIAL_FIX)) ||
        (fceil->visHeight <= bceil->visHeight))
         side->SW_topsurface   .inFlags &= ~SUIF_PVIS;
 
     // Bottom.
     if((R_IsSkySurface(&ffloor->surface) && R_IsSkySurface(&bfloor->surface)) ||
+       (R_IsSkySurface(&bfloor->surface) && (side->SW_bottomsurface.inFlags & SUIF_MATERIAL_FIX)) ||
        (ffloor->visHeight >= bfloor->visHeight))
         side->SW_bottomsurface.inFlags &= ~SUIF_PVIS;
 }
@@ -2502,16 +2504,17 @@ boolean R_FindBottomTop(segsection_t section, float segOffset,
         }
         else
         {
-            boolean             clipBottom =
-                !(R_IsSkySurface(&ffloor->surface) &&
-                  R_IsSkySurface(&bfloor->surface));
-            boolean             clipTop =
-                !(R_IsSkySurface(&fceil->surface) &&
-                  R_IsSkySurface(&bceil->surface));
+            boolean clipBottom = true, clipTop = true;
+            
+            if(!P_IsInVoid(viewPlayer))
+            {
+                if(R_IsSkySurface(&ffloor->surface) && R_IsSkySurface(&bfloor->surface))
+                    clipBottom = false;
+                if(R_IsSkySurface(&fceil->surface)  && R_IsSkySurface(&bceil->surface))
+                    clipTop = false;
+            }
 
-            if(Rend_MidMaterialPos(bottom, &vR_ZBottom, top, &vR_ZTop,
-                    NULL, suf->visOffset[VY], mat->height, unpegBottom,
-                    clipTop, clipBottom))
+            if(Rend_MidMaterialPos(bottom, &vR_ZBottom, top, &vR_ZTop, 0, suf->visOffset[VY], mat->height, unpegBottom, clipTop, clipBottom))
             {
                 texOffset[VX] = suf->visOffset[VX] + segOffset;
                 texOffset[VY] = 0;
@@ -2914,8 +2917,8 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
         vBR[VX] = vTR[VX] = seg->SG_v2pos[VX];
         vBR[VY] = vTR[VY] = seg->SG_v2pos[VY];
 
-        skyFloor = (P_IsInVoid(viewPlayer) && !devRendSkyMode && !(R_IsSkySurface(&frontsec->SP_floorsurface) && backsec && R_IsSkySurface(&backsec->SP_floorsurface)))? ffloor : skyFix[PLN_FLOOR].height;
-        skyCeil  = (P_IsInVoid(viewPlayer) && !devRendSkyMode && !(R_IsSkySurface(&frontsec->SP_ceilsurface)  && backsec && R_IsSkySurface(&backsec->SP_ceilsurface))) ? fceil  : skyFix[PLN_CEILING].height;
+        skyFloor = (P_IsInVoid(viewPlayer) && !(R_IsSkySurface(&frontsec->SP_floorsurface) && backsec && R_IsSkySurface(&backsec->SP_floorsurface)))? ffloor : skyFix[PLN_FLOOR].height;
+        skyCeil  = (P_IsInVoid(viewPlayer) && !(R_IsSkySurface(&frontsec->SP_ceilsurface)  && backsec && R_IsSkySurface(&backsec->SP_ceilsurface))) ? fceil  : skyFix[PLN_CEILING].height;
 
         // Upper/lower normal skyfixes.
         if(!backsec || backsec != seg->SG_frontsector)
@@ -2933,12 +2936,12 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
                         bottom = skyFloor;
                     }
                 }
-                else if(!backsec || ((devRendSkyMode || R_IsSkySurface(&backsec->SP_floorsurface)) && bfloor > skyFloor))
+                else if(!backsec || (R_IsSkySurface(&backsec->SP_floorsurface) && bfloor > skyFloor))
                 {
-                    if(!(backsec && R_IsSkySurface(&backsec->SP_floorsurface) && (devRendSkyMode || bfloor <= ffloor)))
+                    if(!(backsec && R_IsSkySurface(&backsec->SP_floorsurface) && bfloor <= ffloor))
                     {
-                        top    = (!devRendSkyMode && backsec? bfloor : ffloor);
-                        bottom = (!devRendSkyMode && backsec? ffloor : skyFloor);
+                        top    = (backsec? bfloor : ffloor);
+                        bottom = (backsec? ffloor : skyFloor);
                     }
                 }
                 top = MIN_OF(top, fceil);
@@ -2968,12 +2971,12 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
                         bottom = fceil;
                     }
                 }
-                else if(!backsec || ((devRendSkyMode || R_IsSkySurface(&backsec->SP_ceilsurface)) && bceil < skyCeil))
+                else if(!backsec || (R_IsSkySurface(&backsec->SP_ceilsurface) && bceil < skyCeil))
                 {
-                    if(!(backsec && R_IsSkySurface(&backsec->SP_ceilsurface) && (devRendSkyMode || bceil >= fceil)))
+                    if(!(backsec && R_IsSkySurface(&backsec->SP_ceilsurface) && bceil >= fceil))
                     {
-                        top    = (!devRendSkyMode && backsec? fceil : skyCeil);
-                        bottom = (!devRendSkyMode && backsec? bceil : fceil);
+                        top    = (backsec? fceil : skyCeil);
+                        bottom = (backsec? bceil : fceil);
                     }
                 }
                 bottom = MAX_OF(bottom, ffloor);
@@ -2991,7 +2994,7 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
             }
         }
 
-        if(!(!devRendSkyMode && P_IsInVoid(viewPlayer)) && backsec && !LINE_SELFREF(line))
+        if(!P_IsInVoid(viewPlayer) && backsec && !LINE_SELFREF(line))
         {
             if(bsh > 0)
             {
@@ -3043,7 +3046,8 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
             else
             {   // Upper/lower zero height backsec skyfixes.
                 // Floor.
-                if(R_IsSkySurface(&frontsec->SP_floorsurface) && R_IsSkySurface(&backsec->SP_floorsurface))
+                if((R_IsSkySurface(&frontsec->SP_floorsurface) && R_IsSkySurface(&backsec->SP_floorsurface)) ||
+                   (R_IsSkySurface(&backsec->SP_floorsurface) && (side->SW_bottomsurface.inFlags & SUIF_MATERIAL_FIX)))
                 {
                     if(bfloor > skyFloor)
                     {
@@ -3061,7 +3065,8 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
                 }
 
                 // Ceiling.
-                if(R_IsSkySurface(&frontsec->SP_ceilsurface) && R_IsSkySurface(&backsec->SP_ceilsurface))
+                if((R_IsSkySurface(&frontsec->SP_ceilsurface) && R_IsSkySurface(&backsec->SP_ceilsurface)) ||
+                   (R_IsSkySurface(&backsec->SP_ceilsurface) && (side->SW_topsurface.inFlags & SUIF_MATERIAL_FIX)))
                 {
                     if(bceil < skyCeil)
                     {
@@ -3309,7 +3314,7 @@ static void Rend_RenderSubsector(uint ssecidx)
         boolean             isGlowing = false;
 
         // Determine plane height.
-        if(!R_IsSkySurface(suf) || (P_IsInVoid(viewPlayer) && !devRendSkyMode))
+        if(!R_IsSkySurface(suf) || P_IsInVoid(viewPlayer))
         {
             height = plane->visHeight;
         }
