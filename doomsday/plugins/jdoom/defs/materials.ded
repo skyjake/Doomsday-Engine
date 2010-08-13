@@ -45,8 +45,8 @@ Material {
 * Material {
   ID = "FWATER1";
   Layer {
-      Stage { Glow = .25; Tics = 24; Rnd = .5; }
-      Stage { Glow = .15; Tics = 24; Rnd = .5; }
+      Stage { Glow = .175; Tics = 24; Rnd = .5; }
+      Stage { Glow = .1;   Tics = 24; Rnd = .5; }
   }
 }
 * Material { ID = "FWATER2"; }
