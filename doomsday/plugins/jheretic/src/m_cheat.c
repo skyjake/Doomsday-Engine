@@ -327,7 +327,7 @@ int Cht_WarpFunc(const int* args, int player)
     S_LocalSound(SFX_DORCLS, NULL);
 
     // Clear the menu if open.
-    Hu_MenuCommand(MCMD_CLOSE);
+    Hu_MenuCommand(MCMD_CLOSEFAST);
 
     // So be it.
     briefDisabled = true;

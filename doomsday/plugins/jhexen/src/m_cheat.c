@@ -386,7 +386,7 @@ int Cht_WarpFunc(const int* args, int player)
     P_SetMessage(plr, TXT_CHEATWARP, false);
 
     // Clear the menu if open.
-    Hu_MenuCommand(MCMD_CLOSE);
+    Hu_MenuCommand(MCMD_CLOSEFAST);
 
     // Close any open automaps.
     for(i = 0; i < MAXPLAYERS; ++i)

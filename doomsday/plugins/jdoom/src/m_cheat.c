@@ -343,7 +343,7 @@ int Cht_WarpFunc(const int* args, int player)
     P_SetMessage(plr, STSTR_CLEV, false);
 
     // Clear the menu if open.
-    Hu_MenuCommand(MCMD_CLOSE);
+    Hu_MenuCommand(MCMD_CLOSEFAST);
 
     // So be it.
     briefDisabled = true;
