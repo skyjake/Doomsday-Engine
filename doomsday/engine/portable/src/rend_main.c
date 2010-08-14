@@ -1195,8 +1195,8 @@ static void setupRTU(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
     rTU[TU_PRIMARY].magMode = msA->units[MTU_PRIMARY].magMode;
     rTU[TU_PRIMARY].scale[0] = msA->units[MTU_PRIMARY].scale[0];
     rTU[TU_PRIMARY].scale[1] = msA->units[MTU_PRIMARY].scale[1];
-    rTU[TU_PRIMARY].offset[0] = msA->units[MTU_PRIMARY].offset[0];
-    rTU[TU_PRIMARY].offset[1] = msA->units[MTU_PRIMARY].offset[1];
+    rTU[TU_PRIMARY].offset[0] = msA->units[MTU_PRIMARY].offset[0] * rTU[TU_PRIMARY].scale[0];
+    rTU[TU_PRIMARY].offset[1] = msA->units[MTU_PRIMARY].offset[1] * rTU[TU_PRIMARY].scale[1];
     rTU[TU_PRIMARY].blendMode = msA->units[MTU_PRIMARY].blendMode;
     rTU[TU_PRIMARY].blend = msA->units[MTU_PRIMARY].alpha;
 
@@ -1206,8 +1206,8 @@ static void setupRTU(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
         rTU[TU_PRIMARY_DETAIL].magMode = msA->units[MTU_DETAIL].magMode;
         rTU[TU_PRIMARY_DETAIL].scale[0] = msA->units[MTU_DETAIL].scale[0];
         rTU[TU_PRIMARY_DETAIL].scale[1] = msA->units[MTU_DETAIL].scale[1];
-        rTU[TU_PRIMARY_DETAIL].offset[0] = msA->units[MTU_DETAIL].offset[0];
-        rTU[TU_PRIMARY_DETAIL].offset[1] = msA->units[MTU_DETAIL].offset[1];
+        rTU[TU_PRIMARY_DETAIL].offset[0] = msA->units[MTU_DETAIL].offset[0] * rTU[TU_PRIMARY_DETAIL].scale[0];
+        rTU[TU_PRIMARY_DETAIL].offset[1] = msA->units[MTU_DETAIL].offset[1] * rTU[TU_PRIMARY_DETAIL].scale[1];
         rTU[TU_PRIMARY_DETAIL].blendMode = msA->units[MTU_DETAIL].blendMode;
         rTU[TU_PRIMARY_DETAIL].blend = msA->units[MTU_DETAIL].alpha;
     }
@@ -1218,8 +1218,8 @@ static void setupRTU(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
         rTU[TU_INTER].magMode = msB->units[MTU_PRIMARY].magMode;
         rTU[TU_INTER].scale[0] = msB->units[MTU_PRIMARY].scale[0];
         rTU[TU_INTER].scale[1] = msB->units[MTU_PRIMARY].scale[1];
-        rTU[TU_INTER].offset[0] = msB->units[MTU_PRIMARY].offset[0];
-        rTU[TU_INTER].offset[1] = msB->units[MTU_PRIMARY].offset[1];
+        rTU[TU_INTER].offset[0] = msB->units[MTU_PRIMARY].offset[0] * rTU[TU_INTER].scale[0];
+        rTU[TU_INTER].offset[1] = msB->units[MTU_PRIMARY].offset[1] * rTU[TU_INTER].scale[1];
         rTU[TU_INTER].blendMode = msB->units[MTU_PRIMARY].blendMode;
         rTU[TU_INTER].blend = msB->units[MTU_PRIMARY].alpha;
 
@@ -1233,8 +1233,8 @@ static void setupRTU(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
         rTU[TU_INTER_DETAIL].magMode = msB->units[MTU_DETAIL].magMode;
         rTU[TU_INTER_DETAIL].scale[0] = msB->units[MTU_DETAIL].scale[0];
         rTU[TU_INTER_DETAIL].scale[1] = msB->units[MTU_DETAIL].scale[1];
-        rTU[TU_INTER_DETAIL].offset[0] = msB->units[MTU_DETAIL].offset[0];
-        rTU[TU_INTER_DETAIL].offset[1] = msB->units[MTU_DETAIL].offset[1];
+        rTU[TU_INTER_DETAIL].offset[0] = msB->units[MTU_DETAIL].offset[0] * rTU[TU_INTER_DETAIL].scale[0];
+        rTU[TU_INTER_DETAIL].offset[1] = msB->units[MTU_DETAIL].offset[1] * rTU[TU_INTER_DETAIL].scale[1];
         rTU[TU_INTER_DETAIL].blendMode = msB->units[MTU_DETAIL].blendMode;
         rTU[TU_INTER_DETAIL].blend = msB->units[MTU_DETAIL].alpha;
 
@@ -1248,8 +1248,8 @@ static void setupRTU(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
         rTUs[TU_PRIMARY].magMode = msA->units[MTU_REFLECTION].magMode;
         rTUs[TU_PRIMARY].scale[0] = msA->units[MTU_REFLECTION].scale[0];
         rTUs[TU_PRIMARY].scale[1] = msA->units[MTU_REFLECTION].scale[1];
-        rTUs[TU_PRIMARY].offset[0] = msA->units[MTU_REFLECTION].offset[0];
-        rTUs[TU_PRIMARY].offset[1] = msA->units[MTU_REFLECTION].offset[1];
+        rTUs[TU_PRIMARY].offset[0] = msA->units[MTU_REFLECTION].offset[0] * rTUs[TU_PRIMARY].scale[0];
+        rTUs[TU_PRIMARY].offset[1] = msA->units[MTU_REFLECTION].offset[1] * rTUs[TU_PRIMARY].scale[1];
         rTUs[TU_PRIMARY].blendMode = msA->units[MTU_REFLECTION].blendMode;
         rTUs[TU_PRIMARY].blend = msA->units[MTU_REFLECTION].alpha;
 
@@ -1259,8 +1259,8 @@ static void setupRTU(rtexmapunit_t rTU[NUM_TEXMAP_UNITS],
             rTUs[TU_INTER].magMode = msA->units[MTU_REFLECTION_MASK].magMode;
             rTUs[TU_INTER].scale[0] = msA->units[MTU_REFLECTION_MASK].scale[0];
             rTUs[TU_INTER].scale[1] = msA->units[MTU_REFLECTION_MASK].scale[1];
-            rTUs[TU_INTER].offset[0] = msA->units[MTU_REFLECTION_MASK].offset[0];
-            rTUs[TU_INTER].offset[1] = msA->units[MTU_REFLECTION_MASK].offset[1];
+            rTUs[TU_INTER].offset[0] = msA->units[MTU_REFLECTION_MASK].offset[0] * rTUs[TU_INTER].scale[0];
+            rTUs[TU_INTER].offset[1] = msA->units[MTU_REFLECTION_MASK].offset[1] * rTUs[TU_INTER].scale[1];
             rTUs[TU_INTER].blendMode = msA->units[MTU_REFLECTION_MASK].blendMode;
             rTUs[TU_INTER].blend = msA->units[MTU_REFLECTION_MASK].alpha;
         }
@@ -2805,8 +2805,8 @@ static void prepareSkyMaskPoly(rvertex_t verts[4], rtexcoord_t coords[4],
     rTU[TU_PRIMARY].magMode = ms.units[MTU_PRIMARY].magMode;
     rTU[TU_PRIMARY].scale[0] = ms.units[MTU_PRIMARY].scale[0];
     rTU[TU_PRIMARY].scale[1] = ms.units[MTU_PRIMARY].scale[1];
-    rTU[TU_PRIMARY].offset[0] = ms.units[MTU_PRIMARY].offset[0];
-    rTU[TU_PRIMARY].offset[1] = ms.units[MTU_PRIMARY].offset[1];
+    rTU[TU_PRIMARY].offset[0] = ms.units[MTU_PRIMARY].offset[0] * rTU[TU_PRIMARY].scale[0];
+    rTU[TU_PRIMARY].offset[1] = ms.units[MTU_PRIMARY].offset[1] * rTU[TU_PRIMARY].scale[1];
     rTU[TU_PRIMARY].blend = ms.units[MTU_PRIMARY].alpha;
     rTU[TU_PRIMARY].blendMode = ms.units[MTU_PRIMARY].blendMode;
 

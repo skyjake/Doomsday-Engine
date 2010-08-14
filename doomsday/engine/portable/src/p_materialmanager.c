@@ -938,8 +938,8 @@ static __inline void setTexUnit(material_snapshot_t* ss, byte unit,
     mtp->alpha = MINMAX_OF(0, alpha, 1);
     mtp->scale[0] = sScale;
     mtp->scale[1] = tScale;
-    mtp->offset[0] = sOffset * sScale;
-    mtp->offset[1] = tOffset * tScale;
+    mtp->offset[0] = sOffset;
+    mtp->offset[1] = tOffset;
 }
 
 byte Materials_Prepare(material_snapshot_t* snapshot, material_t* mat, boolean smoothed, material_load_params_t* params)

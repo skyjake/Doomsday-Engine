@@ -53,7 +53,8 @@ typedef struct material_textureunit_s {
     int             magMode;
     blendmode_t     blendMode; // Currently used only with reflection.
     float           alpha;
-    float           scale[2], offset[2]; // For use with the texture matrix.
+    float           scale[2]; // For use with the texture matrix.
+    float           offset[2]; /// Texture origin offset in material-space.
 } material_textureunit_t;
 
 typedef struct material_snapshot_s {

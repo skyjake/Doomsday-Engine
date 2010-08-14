@@ -864,121 +864,6 @@ void FIData_PicThink(fi_object_t* obj)
     }
 }
 
-static void drawRect(fidata_pic_t* p, uint frame, const float origin[3], float angle, const float worldOffset[3])
-{
-    assert(p->numFrames && frame < p->numFrames);
-    {
-    fidata_pic_frame_t* f = (p->numFrames? p->frames[frame] : 0);
-
-    assert(f->type == PFT_MATERIAL);
-
-    {
-    float offset[2] = { 0, 0 }, color[4], bottomColor[4];
-    int magMode = DGL_LINEAR, width = 1, height = 1;
-    DGLuint tex = 0;
-    fidata_pic_frame_t* f = (p->numFrames? p->frames[frame] : 0);
-    material_t* mat;
-
-    if((mat = f->texRef.material))
-    {
-        material_load_params_t params;
-        material_snapshot_t ms;
-        surface_t suf;
-
-        suf.header.type = DMU_SURFACE; /// \fixme: perhaps use the dummy object system?
-        suf.owner = 0;
-        suf.decorations = 0;
-        suf.numDecorations = 0;
-        suf.flags = suf.oldFlags = (f->flags.flip? DDSUF_MATERIAL_FLIPH : 0);
-        suf.inFlags = SUIF_PVIS|SUIF_BLEND;
-        suf.material = mat;
-        suf.normal[VX] = suf.oldNormal[VX] = 0;
-        suf.normal[VY] = suf.oldNormal[VY] = 0;
-        suf.normal[VZ] = suf.oldNormal[VZ] = 1; // toward the viewer.
-        suf.offset[0] = suf.visOffset[0] = suf.oldOffset[0][0] = suf.oldOffset[1][0] = worldOffset[VX];
-        suf.offset[1] = suf.visOffset[1] = suf.oldOffset[0][1] = suf.oldOffset[1][1] = worldOffset[VY];
-        suf.visOffsetDelta[0] = suf.visOffsetDelta[1] = 0;
-        suf.rgba[CR] = p->color[0].value;
-        suf.rgba[CG] = p->color[1].value;
-        suf.rgba[CB] = p->color[2].value;
-        suf.rgba[CA] = p->color[3].value;
-        suf.blendMode = BM_NORMAL;
-
-        memset(&params, 0, sizeof(params));
-        params.pSprite = false;
-        params.tex.border = 0; // Need to allow for repeating.
-        Materials_Prepare(&ms, suf.material, (suf.inFlags & SUIF_BLEND), &params);
-
-        {int i;
-        for(i = 0; i < 4; ++i)
-            color[i] = bottomColor[i] = suf.rgba[i];
-        }
-
-        if(ms.units[MTU_PRIMARY].texInst)
-        {
-            tex = ms.units[MTU_PRIMARY].texInst->id;
-            magMode = ms.units[MTU_PRIMARY].magMode;
-            offset[0] = ms.units[MTU_PRIMARY].offset[0];
-            offset[1] = ms.units[MTU_PRIMARY].offset[1];
-            //scale[0] = ms.units[MTU_PRIMARY].scale[0];
-            //scale[1] = ms.units[MTU_PRIMARY].scale[1];
-            color[CA] *= ms.units[MTU_PRIMARY].alpha;
-            bottomColor[CA] *= ms.units[MTU_PRIMARY].alpha;
-            width = ms.width;
-            height = ms.height;
-        }
-    }
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glScalef(.1f/SCREENWIDTH, .1f/SCREENWIDTH, 1);
-    glTranslatef(worldOffset[VX], worldOffset[VY], worldOffset[VZ]);
-    glTranslatef(origin[VX], origin[VY], origin[VZ]);
-
-    if(p->angle.value != 0)
-    {
-        // Counter the VGA aspect ratio.
-        glScalef(1, 200.0f / 240.0f, 1);
-        glRotatef(p->angle.value, 0, 0, 1);
-        glScalef(1, 240.0f / 200.0f, 1);
-    }
-
-    // Move to origin.
-    glTranslatef(offset[0], offset[1], 0);
-    glScalef((p->numFrames && p->frames[p->curFrame]->flags.flip ? -1 : 1) * p->scale[0].value, p->scale[1].value, p->scale[2].value);
-    glTranslatef(-offset[0], -offset[1], 0);
-
-    // The fill.
-    if(tex)
-    {
-        /// \fixme: do not override the value taken from the Material snapshot.
-        magMode = (filterUI ? GL_LINEAR : GL_NEAREST);
-        glBindTexture(GL_TEXTURE_2D, tex);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, magMode);
-    }
-
-    GL_DrawRect2(0, 0, width, height, tex, width, height, color, color[3], bottomColor, bottomColor[3]);
-    }
-
-    // Restore original transformation.
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-    }
-}
-
-static __inline boolean useRect(const fidata_pic_t* p, uint frame)
-{
-    fidata_pic_frame_t* f;
-    if(!p->numFrames)
-        return false;
-    if(frame >= p->numFrames)
-        return true;
-    f = p->frames[frame];
-    if(f->type == PFT_MATERIAL)
-        return true;
-    return false;
-}
-
 /**
  * Vertex layout:
  *
@@ -986,25 +871,25 @@ static __inline boolean useRect(const fidata_pic_t* p, uint frame)
  * | / |
  * 2 - 3
  */
-static size_t buildGeometry(const float dimensions[3], DGLuint tex, const float rgba[4],
-    const float rgba2[4], boolean flagTexFlip, rvertex_t** verts, rcolor_t** colors,
-    rtexcoord_t** coords)
+static size_t buildGeometry(const float dimensions[3], DGLuint tex,
+    boolean flipTextureS, const float rgba[4], const float rgba2[4],
+    rvertex_t** verts, rcolor_t** colors, rtexcoord_t** coords)
 {
     static rvertex_t rvertices[4];
     static rcolor_t rcolors[4];
     static rtexcoord_t rcoords[4];
 
-    V3_Set(rvertices[0].pos, 0,              0,              0);
-    V3_Set(rvertices[1].pos, dimensions[VX], 0,              0);
-    V3_Set(rvertices[2].pos, 0,              dimensions[VY], 0);
-    V3_Set(rvertices[3].pos, dimensions[VX], dimensions[VY], 0);
+    V3_Set(rvertices[0].pos, 0, 0, 0);
+    V3_Set(rvertices[1].pos, 1, 0, 0);
+    V3_Set(rvertices[2].pos, 0, 1, 0);
+    V3_Set(rvertices[3].pos, 1, 1, 0);
 
     if(tex)
     {
-        V2_Set(rcoords[0].st, (flagTexFlip? 1:0), 0);
-        V2_Set(rcoords[1].st, (flagTexFlip? 0:1), 0);
-        V2_Set(rcoords[2].st, (flagTexFlip? 1:0), 1);
-        V2_Set(rcoords[3].st, (flagTexFlip? 0:1), 1);
+        V2_Set(rcoords[0].st, (flipTextureS? 1:0), 0);
+        V2_Set(rcoords[1].st, (flipTextureS? 0:1), 0);
+        V2_Set(rcoords[2].st, (flipTextureS? 1:0), 1);
+        V2_Set(rcoords[3].st, (flipTextureS? 0:1), 1);
     }
 
     V4_Copy(rcolors[0].rgba, rgba);
@@ -1049,14 +934,8 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     /*const*/ float scale[3], const float rgba[4], const float rgba2[4], float angle,
     const float worldOffset[3])
 {
-    if(useRect(p, frame))
-    {
-        drawRect(p, frame, _origin, angle, worldOffset);
-        return;
-    }
-
-    {
     vec3_t offset = { 0, 0, 0 }, dimensions, origin, originOffset, center;
+    vec2_t texScale = { 1, 1 };
     boolean showEdges = true, flipTextureS = false;
     DGLuint tex = 0;
     size_t numVerts;
@@ -1073,28 +952,56 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
         flipTextureS = (f->flags.flip != 0);
         showEdges = false;
 
-        if(f->type == PFT_RAW && (rawTex = R_GetRawTex(f->texRef.lump)))
+        switch(f->type)
         {
-            tex = GL_PrepareRawTex(rawTex);
-            V3_Set(offset, 0, 0, 0);
-            V3_Set(dimensions, rawTex->width, rawTex->height, 0);
-        }
-        else if(f->type == PFT_XIMAGE)
-        {
+        case PFT_RAW:
+            if((rawTex = R_GetRawTex(f->texRef.lump)))
+            {
+                tex = GL_PrepareRawTex(rawTex);
+                V3_Set(offset, 0, 0, 0);
+                V3_Set(dimensions, rawTex->width, rawTex->height, 0);
+            }
+            break;
+        case PFT_XIMAGE:
             tex = (DGLuint)f->texRef.tex;
             V3_Set(offset, 0, 0, 0);
-            V3_Set(dimensions, 1, 1, 0); /// \fixme.
-        }
-        /*else if(f->type == PFT_MATERIAL)
-        {
             V3_Set(dimensions, 1, 1, 0);
-        }*/
-        else if(f->type == PFT_PATCH && (patch = R_FindPatchTex(f->texRef.patch)))
-        {
-            tex = (renderTextures==1? GL_PreparePatch(patch) : 0);
-            V3_Set(offset, patch->offX, patch->offY, 0);
-            /// \todo need to decide what if any significance what depth will mean here.
-            V3_Set(dimensions, patch->width, patch->height, 0);
+            break;
+        case PFT_MATERIAL:
+            {
+            material_t* mat;
+            if((mat = f->texRef.material))
+            {
+                material_load_params_t params;
+                material_snapshot_t ms;
+
+                memset(&ms, 0, sizeof(ms));
+                memset(&params, 0, sizeof(params));
+                params.pSprite = false;
+                params.tex.border = 1;
+                Materials_Prepare(&ms, mat, true, &params);
+
+                if(ms.units[MTU_PRIMARY].texInst)
+                {
+                    /// \todo Utilize *all* properties of the Material.
+                    tex = ms.units[MTU_PRIMARY].texInst->id;
+                    V3_Set(offset, -ms.units[MTU_PRIMARY].offset[0], -ms.units[MTU_PRIMARY].offset[1], 0);
+                    V3_Set(dimensions, ms.width + ms.units[MTU_PRIMARY].texInst->border*2, ms.height + ms.units[MTU_PRIMARY].texInst->border*2, 0);
+                    V2_Set(texScale, ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[0], ms.units[MTU_PRIMARY].texInst->data.sprite.texCoord[1]);
+                }
+            }
+            break;
+            }
+        case PFT_PATCH:
+            if((patch = R_FindPatchTex(f->texRef.patch)))
+            {
+                tex = (renderTextures==1? GL_PreparePatch(patch) : 0);
+                V3_Set(offset, patch->offX, patch->offY, 0);
+                V3_Set(dimensions, patch->width, patch->height, 0);
+            }
+            break;
+        default:
+            Con_Error("drawPicFrame: Invalid FI_PIC frame type %i.", (int)f->type);
         }
     }
 
@@ -1115,7 +1022,7 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     offset[VX] *= scale[VX]; offset[VY] *= scale[VY]; offset[VZ] *= scale[VZ];
     V3_Sum(originOffset, originOffset, offset);
 
-    numVerts = buildGeometry(dimensions, tex, rgba, rgba2, flipTextureS, &rvertices, &rcolors, &rcoords);
+    numVerts = buildGeometry(dimensions, tex, flipTextureS, rgba, rgba2, &rvertices, &rcolors, &rcoords);
 
     // Setup the transformation.
     glMatrixMode(GL_MODELVIEW);
@@ -1137,7 +1044,24 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     glTranslatef(originOffset[VX], originOffset[VY], originOffset[VZ]);
     glScalef(scale[VX], scale[VY], scale[VZ]);
 
+    glMatrixMode(GL_MODELVIEW);
+    // Scale up our unit-geometry to the desired dimensions.
+    glScalef(dimensions[VX], dimensions[VY], dimensions[VZ]);
+
+    if(tex)
+    {
+        glMatrixMode(GL_TEXTURE);
+        glPushMatrix();
+        glScalef(texScale[0], texScale[1], 1);
+    }
+
     drawGeometry(tex, numVerts, rvertices, rcolors, rcoords);
+
+    if(tex)
+    {
+        glMatrixMode(GL_TEXTURE);
+        glPopMatrix();
+    }
 
     if(showEdges)
     {
@@ -1147,14 +1071,14 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
         glBegin(GL_LINES);
             useColor(p->edgeColor, 4);
             glVertex2f(0, 0);
-            glVertex2f(dimensions[VX], 0);
-            glVertex2f(dimensions[VX], 0);
+            glVertex2f(1, 0);
+            glVertex2f(1, 0);
 
             useColor(p->otherEdgeColor, 4);
-            glVertex2f(dimensions[VX], dimensions[VY]);
-            glVertex2f(dimensions[VX], dimensions[VY]);
-            glVertex2f(0, dimensions[VY]);
-            glVertex2f(0, dimensions[VY]);
+            glVertex2f(1, 1);
+            glVertex2f(1, 1);
+            glVertex2f(0, 1);
+            glVertex2f(0, 1);
 
             useColor(p->edgeColor, 4);
             glVertex2f(0, 0);
@@ -1166,7 +1090,6 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
     // Restore original transformation.
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
-    }
 }
 
 void FIData_PicDraw(fi_object_t* obj, const float offset[3])
