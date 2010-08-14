@@ -90,7 +90,7 @@ const terraintype_t* P_MobjGetFloorTerrainType(mobj_t* mo)
 {
     sector_t*           sec = P_GetPtrp(mo->subsector, DMU_SECTOR);
 
-    return P_GetPlaneMaterialType(sec, PLN_FLOOR);
+    return P_PlaneMaterialTerrainType(sec, PLN_FLOOR);
 }
 
 /**

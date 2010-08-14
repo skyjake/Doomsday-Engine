@@ -44,16 +44,30 @@
 #endif
 
 #include "dmu_lib.h"
+#include "p_terraintype.h"
 
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
 
+typedef struct taglist_s {
+    iterlist_t* list;
+    int tag;
+} taglist_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
+iterlist_t* linespecials = 0; /// For surfaces that tick eg wall scrollers.
+
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+static taglist_t* lineTagLists = 0;
+static uint numLineTagLists = 0;
+
+static taglist_t* sectorTagLists = 0;
+static uint numSectorTagLists = 0;
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -75,16 +89,12 @@ void P_FreeDummyLine(linedef_t* line)
     P_FreeDummy(line);
 }
 
-/**
- * Copies all (changeable) properties from one line to another including the
- * extended properties.
- */
 void P_CopyLine(linedef_t* dest, linedef_t* src)
 {
-    int                 i, sidx;
-    sidedef_t*          sidefrom, *sideto;
-    xline_t*            xsrc = P_ToXLine(src);
-    xline_t*            xdest = P_ToXLine(dest);
+    sidedef_t* sidefrom, *sideto;
+    xline_t* xsrc = P_ToXLine(src);
+    xline_t* xdest = P_ToXLine(dest);
+    int i, sidx;
 
     if(src == dest)
         return; // no point copying self
@@ -156,14 +166,10 @@ void P_CopyLine(linedef_t* dest, linedef_t* src)
 #endif
 }
 
-/**
- * Copies all (changeable) properties from one sector to another including
- * the extended properties.
- */
 void P_CopySector(sector_t* dest, sector_t* src)
 {
-    xsector_t*          xsrc = P_ToXSector(src);
-    xsector_t*          xdest = P_ToXSector(dest);
+    xsector_t* xsrc = P_ToXSector(src);
+    xsector_t* xdest = P_ToXSector(dest);
 
     if(src == dest)
         return; // no point copying self.
@@ -239,6 +245,377 @@ void P_CopySector(sector_t* dest, sector_t* src)
 #endif
 }
 
+void P_DestroyLineTagLists(void)
+{
+    if(numLineTagLists == 0)
+        return;
+
+    { uint i; 
+    for(i = 0; i < numLineTagLists; ++i)
+    {
+        P_EmptyIterList(lineTagLists[i].list);
+        P_DestroyIterList(lineTagLists[i].list);
+    }}
+
+    free(lineTagLists);
+    lineTagLists = NULL;
+    numLineTagLists = 0;
+}
+
+iterlist_t* P_GetLineIterListForTag(int tag, boolean createNewList)
+{
+    taglist_t* tagList;
+    uint i;
+
+    // Do we have an existing list for this tag?
+    for(i = 0; i < numLineTagLists; ++i)
+        if(lineTagLists[i].tag == tag)
+            return lineTagLists[i].list;
+
+    if(!createNewList)
+        return NULL;
+
+    // Nope, we need to allocate another.
+    numLineTagLists++;
+    lineTagLists = realloc(lineTagLists, sizeof(taglist_t) * numLineTagLists);
+    tagList = &lineTagLists[numLineTagLists - 1];
+    tagList->tag = tag;
+
+    return (tagList->list = P_CreateIterList());
+}
+
+void P_DestroySectorTagLists(void)
+{
+    if(numSectorTagLists == 0)
+        return;
+
+    { uint i;
+    for(i = 0; i < numSectorTagLists; ++i)
+    {
+        P_EmptyIterList(sectorTagLists[i].list);
+        P_DestroyIterList(sectorTagLists[i].list);
+    }}
+
+    free(sectorTagLists);
+    sectorTagLists = NULL;
+    numSectorTagLists = 0;
+}
+
+iterlist_t* P_GetSectorIterListForTag(int tag, boolean createNewList)
+{
+    taglist_t* tagList;
+    uint i;
+
+    // Do we have an existing list for this tag?
+    for(i = 0; i < numSectorTagLists; ++i)
+        if(sectorTagLists[i].tag == tag)
+            return sectorTagLists[i].list;
+
+    if(!createNewList)
+        return NULL;
+
+    // Nope, we need to allocate another.
+    numSectorTagLists++;
+    sectorTagLists = realloc(sectorTagLists, sizeof(taglist_t) * numSectorTagLists);
+    tagList = &sectorTagLists[numSectorTagLists - 1];
+    tagList->tag = tag;
+
+    return (tagList->list = P_CreateIterList());
+}
+
+sector_t* P_GetNextSector(linedef_t* line, sector_t* sec)
+{
+    sector_t* frontSec;
+    if(!sec || !line)
+        return 0;
+    frontSec = P_GetPtrp(line, DMU_FRONT_SECTOR);
+    if(!frontSec)
+        return 0;
+    if(frontSec == sec)
+        return P_GetPtrp(line, DMU_BACK_SECTOR);
+    return frontSec;
+}
+
+int findExtremalLightLevelInAdjacentSectors(void* ptr, void* context)
+{
+    findlightlevelparams_t* params = (findlightlevelparams_t*) context;
+    sector_t* other = P_GetNextSector((linedef_t*) ptr, params->baseSec);
+    float lightLevel;
+
+    if(!other)
+        return 1; // Continue iteration.
+
+    lightLevel = P_GetFloatp(other, DMU_LIGHT_LEVEL);
+    if(params->flags & FELLF_MIN)
+    {
+        if(lightLevel < params->val)
+        {
+            params->val = lightLevel;
+            params->foundSec = other;
+            if(params->val <= 0)
+                return 0; // Stop iteration. Can't get any darker.
+        }
+    }
+    else if(lightLevel > params->val)
+    {
+        params->val = lightLevel;
+        params->foundSec = other;
+        if(params->val >= 1)
+            return 0; // Stop iteration. Can't get any brighter.
+    }
+    return 1; // Continue iteration.
+}
+
+sector_t* P_FindSectorSurroundingLowestLight(sector_t* sec, float* val)
+{
+    findlightlevelparams_t params;
+    params.flags = FELLF_MIN;
+    params.val = DDMAXFLOAT;
+    params.baseSec = sec;
+    params.foundSec = 0;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalLightLevelInAdjacentSectors);
+    if(*val)
+        *val = params.val;
+    return params.foundSec;
+}
+
+sector_t* P_FindSectorSurroundingHighestLight(sector_t* sec, float* val)
+{
+    findlightlevelparams_t params;
+
+    params.flags = 0;
+    params.val = DDMINFLOAT;
+    params.baseSec = sec;
+    params.foundSec = 0;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalLightLevelInAdjacentSectors);
+    if(val)
+        *val = params.val;
+    return params.foundSec;
+}
+
+int findNextLightLevel(void* ptr, void* context)
+{
+    findnextlightlevelparams_t *params = (findnextlightlevelparams_t*) context;
+    linedef_t* li = (linedef_t*) ptr;
+    sector_t* other = P_GetNextSector(li, params->baseSec);
+    float otherLight;
+
+    if(!other)
+        return 1; // Continue iteration.
+
+    otherLight = P_GetFloatp(other, DMU_LIGHT_LEVEL);
+    if(params->flags & FNLLF_ABOVE)
+    {
+        if(otherLight < params->val && otherLight > params->baseLight)
+        {
+            params->val = otherLight;
+            params->foundSec = other;
+
+            if(!(params->val > 0))
+                return 0; // Stop iteration. Can't get any darker.
+        }
+    }
+    else if(otherLight > params->val && otherLight < params->baseLight)
+    {
+        params->val = otherLight;
+        params->foundSec = other;
+
+        if(!(params->val < 1))
+            return 0; // Stop iteration. Can't get any brighter.
+    }
+    return 1; // Continue iteration.
+}
+
+sector_t* P_FindSectorSurroundingNextLowestLight(sector_t* sec, float baseLight, float* val)
+{
+    findnextlightlevelparams_t params;
+    params.flags = 0;
+    params.val = DDMINFLOAT;
+    params.baseSec = sec;
+    params.baseLight = baseLight;
+    params.foundSec = 0;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findNextLightLevel);
+    if(*val)
+        *val = params.val;
+    return params.foundSec;
+}
+
+sector_t* P_FindSectorSurroundingNextHighestLight(sector_t* sec, float baseLight, float* val)
+{
+    findnextlightlevelparams_t params;
+    params.flags = FNLLF_ABOVE;
+    params.val = DDMAXFLOAT;
+    params.baseSec = sec;
+    params.baseLight = baseLight;
+    params.foundSec = 0;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findNextLightLevel);
+    if(*val)
+        *val = params.val;
+    return params.foundSec;
+}
+
+int findExtremalPlaneHeight(void* ptr, void* context)
+{
+    findextremalplaneheightparams_t* params = (findextremalplaneheightparams_t*) context;
+    sector_t* other = P_GetNextSector((linedef_t*) ptr, params->baseSec);
+    float height;
+
+    if(!other)
+        return 1; // Continue iteration.
+
+    height = P_GetFloatp(other, ((params->flags & FEPHF_FLOOR)? DMU_FLOOR_HEIGHT : DMU_CEILING_HEIGHT));
+    if(params->flags & FEPHF_MIN)
+    {
+        if(height < params->val)
+        {
+            params->val = height;
+            params->foundSec = other;
+        }
+    }
+    else if(height > params->val)
+    {
+        params->val = height;
+        params->foundSec = other;
+    }
+
+    return 1; // Continue iteration.
+}
+
+sector_t* P_FindSectorSurroundingLowestFloor(sector_t* sec, float max, float* val)
+{
+    findextremalplaneheightparams_t params;
+    params.flags = FEPHF_MIN | FEPHF_FLOOR;
+    params.val = max;
+    params.baseSec = sec;
+    params.foundSec = 0;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalPlaneHeight);
+    if(val)
+        *val = params.val;
+    return params.foundSec;
+}
+
+sector_t* P_FindSectorSurroundingHighestFloor(sector_t* sec, float min, float* val)
+{
+    findextremalplaneheightparams_t params;
+    params.flags = FEPHF_FLOOR;
+    params.val = min;
+    params.baseSec = sec;
+    params.foundSec = 0;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalPlaneHeight);
+    if(val)
+        *val = params.val;
+    return params.foundSec;
+}
+
+sector_t* P_FindSectorSurroundingLowestCeiling(sector_t* sec, float max, float* val)
+{
+    findextremalplaneheightparams_t params;
+    params.flags = FEPHF_MIN;
+    params.val = max;
+    params.baseSec = sec;
+    params.foundSec = 0;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalPlaneHeight);
+    if(val)
+        *val = params.val;
+    return params.foundSec;
+}
+
+sector_t* P_FindSectorSurroundingHighestCeiling(sector_t* sec, float min, float* val)
+{
+    findextremalplaneheightparams_t params;
+    params.flags = 0;
+    params.val = min;
+    params.baseSec = sec;
+    params.foundSec = 0;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findExtremalPlaneHeight);
+    if(val)
+        *val = params.val;
+    return params.foundSec;
+}
+
+int findNextPlaneHeight(void* ptr, void* context)
+{
+    findnextplaneheightparams_t* params = (findnextplaneheightparams_t*) context;
+    sector_t* other = P_GetNextSector((linedef_t*) ptr, params->baseSec);
+    float otherHeight;
+
+    if(!other)
+        return 1; // Continue iteration.
+
+    otherHeight = P_GetFloatp(other, ((params->flags & FNPHF_FLOOR)? DMU_FLOOR_HEIGHT : DMU_CEILING_HEIGHT));
+    if(params->flags & FNPHF_ABOVE)
+    {
+        if(otherHeight < params->val && otherHeight > params->baseHeight)
+        {
+            params->val = otherHeight;
+            params->foundSec = other;
+        }
+    }
+    else if(otherHeight > params->val && otherHeight < params->baseHeight)
+    {
+        params->val = otherHeight;
+        params->foundSec = other;
+    }
+    return 1; // Continue iteration.
+}
+
+sector_t* P_FindSectorSurroundingNextHighestFloor(sector_t* sec, float baseHeight, float* val)
+{
+    findnextplaneheightparams_t params;
+
+    params.flags = FNPHF_FLOOR | FNPHF_ABOVE;
+    params.val = DDMAXFLOAT;
+    params.baseSec = sec;
+    params.baseHeight = baseHeight;
+    params.foundSec = 0;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findNextPlaneHeight);
+    if(val)
+        *val = params.val;
+    return params.foundSec;
+}
+
+sector_t* P_FindSectorSurroundingNextHighestCeiling(sector_t* sec, float baseHeight, float* val)
+{
+    findnextplaneheightparams_t params;
+    params.flags = FNPHF_ABOVE;
+    params.val = DDMAXFLOAT;
+    params.baseSec = sec;
+    params.baseHeight = baseHeight;
+    params.foundSec = 0;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findNextPlaneHeight);
+    if(val)
+        *val = params.val;
+    return params.foundSec;
+}
+
+sector_t* P_FindSectorSurroundingNextLowestFloor(sector_t* sec, float baseHeight, float* val)
+{
+    findnextplaneheightparams_t params;
+    params.flags = FNPHF_FLOOR;
+    params.val = DDMINFLOAT;
+    params.baseSec = sec;
+    params.baseHeight = baseHeight;
+    params.foundSec = 0;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findNextPlaneHeight);
+    if(val)
+        *val = params.val;
+    return params.foundSec;
+}
+
+sector_t* P_FindSectorSurroundingNextLowestCeiling(sector_t* sec, float baseHeight, float* val)
+{
+    findnextplaneheightparams_t params;
+    params.flags = 0;
+    params.val = DDMINFLOAT;
+    params.baseSec = sec;
+    params.baseHeight = baseHeight;
+    params.foundSec = 0;
+    P_Iteratep(sec, DMU_LINEDEF, &params, findNextPlaneHeight);
+    if(val)
+        *val = params.val;
+    return params.foundSec;
+}
+
 float P_SectorLight(sector_t* sector)
 {
     return P_GetFloatp(sector, DMU_LIGHT_LEVEL);
@@ -251,19 +628,21 @@ void P_SectorSetLight(sector_t* sector, float level)
 
 void P_SectorModifyLight(sector_t* sector, float value)
 {
-    float               level =
-        MINMAX_OF(0.f, P_SectorLight(sector) + value, 1.f);
-
+    float level = MINMAX_OF(0.f, P_SectorLight(sector) + value, 1.f);
     P_SectorSetLight(sector, level);
 }
 
 void P_SectorModifyLightx(sector_t* sector, fixed_t value)
 {
-    P_SetFloatp(sector, DMU_LIGHT_LEVEL,
-                P_SectorLight(sector) + FIX2FLT(value) / 255.0f);
+    P_SetFloatp(sector, DMU_LIGHT_LEVEL, P_SectorLight(sector) + FIX2FLT(value) / 255.0f);
 }
 
 void* P_SectorSoundOrigin(sector_t* sec)
 {
     return P_GetPtrp(sec, DMU_SOUND_ORIGIN);
+}
+
+const terraintype_t* P_PlaneMaterialTerrainType(sector_t* sec, int plane)
+{
+    return P_TerrainTypeForMaterial(P_GetPtrp(sec, (plane? DMU_CEILING_MATERIAL : DMU_FLOOR_MATERIAL)));
 }

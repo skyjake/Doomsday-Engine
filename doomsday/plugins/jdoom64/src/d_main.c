@@ -26,7 +26,7 @@
  */
 
 /**
- * d_main.c: Initialization - jDoom64 specifc.
+ * Initialization - DOOM64 specifc.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -37,6 +37,7 @@
 #include "jdoom64.h"
 
 #include "m_argv.h"
+#include "dmu_lib.h"
 #include "fi_lib.h"
 #include "hu_stuff.h"
 #include "hu_menu.h"

@@ -25,7 +25,7 @@
  */
 
 /**
- * d_main.c: Game initialization (jDoom-specific).
+ * Game initialization (jDoom-specific).
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -33,6 +33,7 @@
 #include "jdoom.h"
 
 #include "m_argv.h"
+#include "dmu_lib.h"
 #include "fi_lib.h"
 #include "hu_stuff.h"
 #include "hu_log.h"

@@ -53,6 +53,6 @@ typedef struct terraindef_s {
 
 void            P_InitTerrainTypes(void);
 const terraintype_t* P_TerrainTypeForMaterial(material_t* mat);
-const terraintype_t* P_GetPlaneMaterialType(sector_t* sec, int plane);
+const terraintype_t* P_PlaneMaterialTerrainType(sector_t* sec, int plane);
 
 #endif

@@ -50,6 +50,9 @@
 #  include "p_inventory.h"
 #endif
 
+#include "dmu_lib.h"
+#include "fi_lib.h"
+#include "hu_lib.h"
 #include "p_saveg.h"
 #include "g_controls.h"
 #include "g_eventsequence.h"
@@ -58,13 +61,11 @@
 #include "p_actor.h"
 #include "p_tick.h"
 #include "am_map.h"
-#include "fi_lib.h"
 #include "hu_stuff.h"
 #include "hu_menu.h"
 #include "hu_log.h"
 #include "hu_msg.h"
 #include "hu_pspr.h"
-#include "hu_lib.h"
 #include "g_common.h"
 #include "g_update.h"
 #include "d_net.h"

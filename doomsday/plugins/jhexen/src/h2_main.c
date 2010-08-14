@@ -38,6 +38,7 @@
 
 #include "jhexen.h"
 
+#include "dmu_lib.h"
 #include "fi_lib.h"
 #include "hu_log.h"
 #include "hu_menu.h"
