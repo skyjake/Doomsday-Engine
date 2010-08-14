@@ -42,6 +42,8 @@ void GameMap::load(const de::String& name)
 
 void GameMap::operator << (Reader& from)
 {
+    Map::operator << (from);
+    
     /*
     bool wasVoid = isVoid();
     

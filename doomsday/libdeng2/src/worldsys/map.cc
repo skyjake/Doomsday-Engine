@@ -251,7 +251,11 @@ void Map::think(const Time::Delta& elapsed)
 
 void Map::operator >> (Writer& to) const
 {
+    LOG_AS("Map::operator >>");
+    
     to << _name << _info;
+    
+    LOG_DEBUG("Serializing %i thinkers.") << _thinkers.size();
     
     // Thinkers.
     to << duint32(_thinkers.size());
@@ -263,6 +267,8 @@ void Map::operator >> (Writer& to) const
 
 void Map::operator << (Reader& from)
 {
+    LOG_AS("Map::operator <<");
+    
     clear();
     
     from >> _name >> _info;
@@ -270,6 +276,7 @@ void Map::operator << (Reader& from)
     // Thinkers.
     duint32 count;
     from >> count;
+    LOG_DEBUG("Deserializing %i thinkers.") << count;
     while(count--)
     {
         Thinker* thinker = Thinker::constructFrom(from);

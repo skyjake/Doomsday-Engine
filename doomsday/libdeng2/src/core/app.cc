@@ -476,7 +476,14 @@ void App::setCurrentMap(Map* map)
     
     if(map)
     {
-        LOG_VERBOSE("Current map set: ") << map->name();
+        if(!map->name().empty())
+        {
+            LOG_VERBOSE("Current map set: ") << map->name();
+        }
+        else
+        {
+            LOG_VERBOSE("Current map set to a void map.");
+        }
     }
     else
     {
