@@ -2901,13 +2901,13 @@ static int buildSkymaskSegGeometry(rendpolytype_t polyType, rvertex_t* rvertices
     return 4;
 }
 
-static __inline void translateGeometryAxis(rendpolytype_t polyType, byte axis, float delta,
+/*static __inline*/ void translateGeometryAxis(rendpolytype_t polyType, byte axis, float delta,
     rvertex_t* rvertices, rtexcoord_t* rtexcoord, rcolor_t* rcolor)
 {
     rvertices[0].pos[axis] += delta;
 }
 
-static __inline void translateGeometryX(rendpolytype_t polyType, vec3_t* deltas,
+/*static __inline*/ void translateGeometryX(rendpolytype_t polyType, vec3_t* deltas,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors)
 {
     size_t i;
@@ -2917,7 +2917,7 @@ static __inline void translateGeometryX(rendpolytype_t polyType, vec3_t* deltas,
     }
 }
 
-static __inline void translateGeometryY(rendpolytype_t polyType, vec3_t* deltas,
+/*static __inline*/ void translateGeometryY(rendpolytype_t polyType, vec3_t* deltas,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors)
 {
     size_t i;
@@ -2927,7 +2927,7 @@ static __inline void translateGeometryY(rendpolytype_t polyType, vec3_t* deltas,
     }
 }
 
-static __inline void translateGeometryZ(rendpolytype_t polyType, vec3_t* deltas,
+/*static __inline*/ void translateGeometryZ(rendpolytype_t polyType, vec3_t* deltas,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors)
 {
     size_t i;
@@ -2937,28 +2937,28 @@ static __inline void translateGeometryZ(rendpolytype_t polyType, vec3_t* deltas,
     }
 }
 
-static __inline void translateGeometryXY(rendpolytype_t polyType, vec3_t* deltas,
+/*static __inline*/ void translateGeometryXY(rendpolytype_t polyType, vec3_t* deltas,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors)
 {
     translateGeometryX(polyType, deltas, count, rvertices, rtexcoords, rcolors);
     translateGeometryY(polyType, deltas, count, rvertices, rtexcoords, rcolors);
 }
 
-static __inline void translateGeometryXYZ(rendpolytype_t polyType, vec3_t* deltas,
+/*static __inline*/ void translateGeometryXYZ(rendpolytype_t polyType, vec3_t* deltas,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors)
 {
     translateGeometryXY(polyType, deltas, count, rvertices, rtexcoords, rcolors);
     translateGeometryZ (polyType, deltas, count, rvertices, rtexcoords, rcolors);
 }
 
-static __inline void setGeometryAxis(rendpolytype_t polyType, byte axis, float delta,
+/*static __inline*/ void setGeometryAxis(rendpolytype_t polyType, byte axis, float delta,
     rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors)
 {
     rvertices[0].pos[axis] = 0;
     translateGeometryAxis(polyType, axis, delta, rvertices, rtexcoords, rcolors);
 }
 
-static __inline void setGeometryX(rendpolytype_t polyType, vec3_t* destPoints,
+/*static __inline*/ void setGeometryX(rendpolytype_t polyType, vec3_t* destPoints,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors)
 {
     size_t i;
@@ -2968,7 +2968,7 @@ static __inline void setGeometryX(rendpolytype_t polyType, vec3_t* destPoints,
     }
 }
 
-static __inline void setGeometryY(rendpolytype_t polyType, vec3_t* destPoints,
+/*static __inline*/ void setGeometryY(rendpolytype_t polyType, vec3_t* destPoints,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors)
 {
     size_t i;
@@ -2978,7 +2978,7 @@ static __inline void setGeometryY(rendpolytype_t polyType, vec3_t* destPoints,
     }
 }
 
-static __inline void setGeometryZ(rendpolytype_t polyType, vec3_t* destPoints,
+/*static __inline*/ void setGeometryZ(rendpolytype_t polyType, vec3_t* destPoints,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors)
 {
     size_t i;
@@ -2988,7 +2988,7 @@ static __inline void setGeometryZ(rendpolytype_t polyType, vec3_t* destPoints,
     }
 }
 
-static __inline void setGeometryXY(rendpolytype_t polyType, vec3_t* destPoints,
+/*static __inline*/ void setGeometryXY(rendpolytype_t polyType, vec3_t* destPoints,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors)
 {
     size_t i;
@@ -2999,7 +2999,7 @@ static __inline void setGeometryXY(rendpolytype_t polyType, vec3_t* destPoints,
     }
 }
 
-static __inline void setGeometryXYZ(rendpolytype_t polyType, vec3_t* destPoints,
+/*static __inline*/ void setGeometryXYZ(rendpolytype_t polyType, vec3_t* destPoints,
     size_t count, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors)
 {
     size_t i;
