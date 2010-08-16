@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * rend_list.c: Doomsday Rendering Lists v3.2
+ * Doomsday Rendering Lists v3.2
  *
  * 3.2 -- Shiny walls and floors
  * 3.1 -- Support for multiple shadow textures
@@ -1789,8 +1789,9 @@ BEGIN_PROF( PROF_RL_RENDER_ALL );
     lists[0] = &skyMaskList;
 
     // Is the sky visible?
-    if(!devRendSkyMode)
+    if(rDrawSky &&!devRendSkyMode)
     {
+BEGIN_PROF( PROF_RL_RENDER_SKYMASK );
         // We do not want to update color and/or depth.
         glDisable(GL_DEPTH_TEST);
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
@@ -1800,19 +1801,34 @@ BEGIN_PROF( PROF_RL_RENDER_ALL );
         glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
         glStencilFunc(GL_ALWAYS, 1, 0xffffffff);
 
-BEGIN_PROF( PROF_RL_RENDER_SKYMASK );
-        renderLists(LM_SKYMASK, lists, 1);
-END_PROF( PROF_RL_RENDER_SKYMASK );
+        if(!devRendSkyAlways)
+        {
+            renderLists(LM_SKYMASK, lists, 1);
+        }
+        else
+        {
+            glClearStencil(1);
+            glClear(GL_STENCIL_BUFFER_BIT);
+        }
 
         // Re-enable update of color and depth.
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glEnable(GL_DEPTH_TEST);
+        glDisable(GL_STENCIL_TEST);
+
+END_PROF( PROF_RL_RENDER_SKYMASK );
 
         // Now, only render where the stencil is set to 1.
+        glEnable(GL_STENCIL_TEST);
         glStencilFunc(GL_EQUAL, 1, 0xffffffff);
         glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 
         Rend_RenderSky();
+
+        if(!devRendSkyAlways)
+        {
+            glClearStencil(0);
+        }
 
         // Return GL state to normal.
         glDisable(GL_STENCIL_TEST);

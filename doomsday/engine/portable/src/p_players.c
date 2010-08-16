@@ -145,7 +145,7 @@ int P_GetDDPlayerIdx(ddplayer_t* ddpl)
  */
 boolean P_IsInVoid(player_t* player)
 {
-    ddplayer_t*         ddpl;
+    ddplayer_t* ddpl;
 
     if(!player)
         return false;
@@ -161,11 +161,11 @@ boolean P_IsInVoid(player_t* player)
 
         if(ddpl->mo && ddpl->mo->subsector)
         {
-            sector_t*           sec = ddpl->mo->subsector->sector;
+            sector_t* sec = ddpl->mo->subsector->sector;
 
             if(R_IsSkySurface(&sec->SP_ceilsurface))
             {
-               if(ddpl->mo->pos[VZ] > skyFix[PLN_CEILING].height - 4)
+               if(skyFix[PLN_CEILING].height < DDMAXFLOAT && ddpl->mo->pos[VZ] > skyFix[PLN_CEILING].height - 4)
                    return true;
             }
             else if(ddpl->mo->pos[VZ] > sec->SP_ceilvisheight - 4)
@@ -173,7 +173,7 @@ boolean P_IsInVoid(player_t* player)
 
             if(R_IsSkySurface(&sec->SP_floorsurface))
             {
-                if(ddpl->mo->pos[VZ] < skyFix[PLN_FLOOR].height + 4)
+                if(skyFix[PLN_FLOOR].height > DDMINFLOAT && ddpl->mo->pos[VZ] < skyFix[PLN_FLOOR].height + 4)
                     return true;
             }
             else if(ddpl->mo->pos[VZ] < sec->SP_floorvisheight + 4)
