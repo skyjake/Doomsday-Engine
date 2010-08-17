@@ -344,29 +344,25 @@ static void setupFadeout(skylayer_t* slayer)
 
 void Rend_RenderSkyHemisphere(int whichHemi)
 {
-    int                 i;
-    skylayer_t*         slayer;
+    skylayer_t* slayer;
+    int i;
 
     // The current fadeout is the first layer's fadeout.
     currentFO = &skyLayers[firstLayer].fadeout;
 
     // First render the cap and the background for fadeouts, if needed.
     // The color for both is the current fadeout color.
-    Rend_SkyRenderer(whichHemi | SKYHEMI_JUST_CAP |
-                     (currentFO->use ? SKYHEMI_FADEOUT_BG : 0));
+    Rend_SkyRenderer(whichHemi | SKYHEMI_JUST_CAP | (currentFO->use ? SKYHEMI_FADEOUT_BG : 0));
 
-    for(i = firstLayer, slayer = &skyLayers[firstLayer]; i < MAXSKYLAYERS;
-        ++i, slayer++)
+    for(i = firstLayer, slayer = &skyLayers[firstLayer]; i < MAXSKYLAYERS; ++i, slayer++)
     {
         if(slayer->flags & SLF_ENABLED)
         {
+            material_t* mat = (renderTextures? (renderTextures == 2? Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)) : (slayer->mat? slayer->mat : Materials_ToMaterial(Materials_NumForName("missing", MN_SYSTEM)))) : 0);
             byte result = 0;
-
-            if(!slayer->mat)
-                Con_Error("Rend_RenderSkyHemisphere: Sky layer without a material!\n");
-
+ 
             // The texture is actually loaded when an update is done.
-            if(renderTextures)
+            if(mat)
             {
                 material_load_params_t params;
                 material_snapshot_t ms;
@@ -377,7 +373,7 @@ void Rend_RenderSkyHemisphere(int whichHemi)
                 if(slayer->flags & SLF_MASKED)
                     params.tex.flags |= GLTF_ZEROMASK;
 
-                result = Materials_Prepare(&ms, slayer->mat, true, &params);
+                result = Materials_Prepare(&ms, mat, true, &params);
                 skyTexWidth = GLTexture_GetWidth(ms.units[MTU_PRIMARY].texInst->tex);
                 skyTexHeight = GLTexture_GetHeight(ms.units[MTU_PRIMARY].texInst->tex);
 
