@@ -1224,7 +1224,7 @@ material_namespace_t DD_MaterialNamespaceForTextureType(gltexture_type_t t)
     case GLT_SYSTEM:        return MN_SYSTEM;
     default:
 #if _DEBUG
-        Con_Message("DD_MaterialNamespaceForTextureType: No namespace for type %i:%s.", GLTEXTURE_TYPE_STRING(t));
+        Con_Message("DD_MaterialNamespaceForTextureType: No namespace for type %i:%s.", (int)t, GLTEXTURE_TYPE_STRING(t));
 #endif
         return 0;
     }
