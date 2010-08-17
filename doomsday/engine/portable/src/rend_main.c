@@ -1959,7 +1959,7 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
                         boolean skyMasked,
                         boolean addDLights,
                         biassurface_t* bsuf, uint elmIdx /*tmp*/,
-                        int texMode /*tmp*/)
+                        int texMode /*tmp*/, boolean flipSurfaceNormal)
 {
     float               inter = 0;
     rendworldpoly_params_t params;
@@ -2028,7 +2028,7 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
     }
 
     rvertices = R_AllocRendVertices(numVertices);
-    Rend_PreparePlane(rvertices, numVertices, height, ssec, !(normal[VZ] > 0));
+    Rend_PreparePlane(rvertices, numVertices, height, ssec, !(normal[VZ] > 0) ^ flipSurfaceNormal);
 
     if(params.type != RPT_SKY_MASK)
     {
@@ -2064,16 +2064,16 @@ static void renderPlane(subsector_t* ssec, planetype_t type,
 }
 
 static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
-                             float height, const vectorcomp_t normal[3],
+                             float height, const vectorcomp_t _normal[3],
                              material_t* inMat, int sufFlags, short sufInFlags,
                              const float sufColor[4], blendmode_t blendMode,
                              const float texOffset[2], const float texScale[2],
                              boolean skyMasked,
                              boolean addDLights,
                              biassurface_t* bsuf, uint elmIdx /*tmp*/,
-                             int texMode /*tmp*/)
+                             int texMode /*tmp*/, boolean flipNormal, boolean clipBackFacing)
 {
-    vec3_t vec;
+    vec3_t vec, normal;
 
     // Must have a visible surface.
     if(!inMat || (inMat->flags & MATF_NO_DRAW))
@@ -2081,8 +2081,17 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
 
     V3_Set(vec, vx - ssec->midPoint.pos[VX], vz - ssec->midPoint.pos[VY], vy - height);
 
+        /**
+         * Flip the plane normal according to the z positon of the
+         * viewer relative to the plane height so that the plane is
+         * always visible.
+         */
+    V3_Copy(normal, _normal);
+    if(flipNormal)
+        normal[VZ] *= -1;
+
     // Don't bother with planes facing away from the camera.
-    if(!(V3_DotProduct(vec, normal) < 0))
+    if(!(clipBackFacing && !(V3_DotProduct(vec, normal) < 0)))
     {
         float texTL[3], texBR[3];
 
@@ -2092,7 +2101,7 @@ static void Rend_RenderPlane(subsector_t* ssec, planetype_t type,
 
         renderPlane(ssec, type, height, normal, inMat, sufFlags, sufInFlags,
                     sufColor, blendMode, texTL, texBR, texOffset, texScale,
-                    skyMasked, addDLights, bsuf, elmIdx, texMode);
+                    skyMasked, addDLights, bsuf, elmIdx, texMode, flipNormal);
     }
 }
 
@@ -2923,21 +2932,6 @@ void lightGeometry(rendpolytype_t type, size_t count, rvertex_t* rvertices, rcol
         Rend_VertexColorsAlpha(rcolors, count, surfaceAlpha);
     }
     }
-#if 0
-    {
-    float lightVal = ambientLightLevel;
-    lightVal += R_ExtraLightDelta();
-    Rend_ApplyLightAdaptation(&lightVal);
-    { size_t i;
-    for(i = 0; i < count; ++i)
-    {
-        rcolors[i].rgba[CR] = lightVal * ambientColor[CR];
-        rcolors[i].rgba[CG] = lightVal * ambientColor[CG];
-        rcolors[i].rgba[CB] = lightVal * ambientColor[CB];
-        rcolors[i].rgba[CA] = 1;
-    }}
-    }
-#endif
 }
 
 static void prepareSkyMaskSurface(rendpolytype_t polyType, size_t count, rvertex_t* rvertices,
@@ -3146,18 +3140,61 @@ static int buildSkymaskSegGeometry(rendpolytype_t polyType, rvertex_t* rvertices
     *deltaL += (seg->offset / seg->lineDef->length) * diff; }
 }
 
+/*static __inline*/ void getGeometryDeltasZ(size_t count, float height, float* deltas)
+{
+    assert(count != 0 && deltas);
+    { size_t i;
+    for(i = 0; i < count; ++i)
+    {
+        V3_Set(deltas+i, 0, 0, height);
+    }}
+}
+
+/*static __inline*/ void translateGeometryDeltasZ(size_t count, vec3_t edgeDeltasZ[3],
+    float bottom, float top, rvertex_t* rvertices)
+{
+    assert(count != 0 && edgeDeltasZ && rvertices);
+    { size_t i;
+    for(i = 0; i < 1; ++i)
+    {
+        getGeometryDeltasZ(1, bottom,  edgeDeltasZ[i]);
+        getGeometryDeltasZ(1, top,     edgeDeltasZ[i+1]);
+        getGeometryDeltasZ(1, bottom,  edgeDeltasZ[i+2]);
+        getGeometryDeltasZ(1, top,     edgeDeltasZ[i+3]);
+    }}
+}
+
+/*static __inline*/ void getSurfaceNormal(float* normal, linedef_t* lineDef, byte side)
+{
+    assert(normal && lineDef && lineDef->L_side(side));
+    { sidedef_t* sideDef = lineDef->L_side(side);
+    V3_Copy(normal, sideDef->SW_middlenormal);
+    if(side)
+    {
+        normal[VZ] *= -1;
+    }
+    }
+}
+
 static void Rend_SSectSkyFixes(subsector_t* ssec)
 {
-    assert(ssec && ssec->sector && R_SectorContainsSkySurfaces(ssec->sector));
+    assert(ssec && ssec->sector && (devRendSkyMode == 2 || R_SectorContainsSkySurfaces(ssec->sector)));
     {
     rendpolytype_t polyType = (devRendSkyMode? RPT_NORMAL : RPT_SKY_MASK);
-    boolean clipBackFacing  = (polyType == RPT_NORMAL);
+    boolean clipBackFacing  = (devRendSkyMode == 2? false : polyType == RPT_NORMAL);
+    boolean flipSurfaceNormals = false;
     rtexmapunit_t rTU[NUM_TEXMAP_UNITS];
     rtexcoord_t rtexcoords[4];
     rvertex_t rvertices[4];
     rcolor_t rcolors[4], rcolorsShiny[4];
     size_t numVerts;
     seg_t** segPtr;
+
+    /// Setup GL state for skymask geometry construction.
+    /**
+     if(!clipBackFacing)
+        glDisable(GL_CULL_FACE);
+     */
 
     memset(rTU, 0, sizeof(rTU));
     numVerts = buildSkymaskSegGeometry(polyType, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0));
@@ -3167,6 +3204,7 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
     {
         vec3_t edgeDeltasXY[4];
         seg_t* seg = *segPtr;
+        vertex_t* vtx1 = seg->SG_v1, *vtx2 = seg->SG_v2;
 
         if(!skymaskSegIsVisible(seg, clipBackFacing))
         {
@@ -3175,23 +3213,31 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
         }
 
         // Get the start and end vertices, left then right. Top and bottom.
-        V3_Set(edgeDeltasXY[0], seg->SG_v1pos[VX], seg->SG_v1pos[VY], 0);
-        V3_Set(edgeDeltasXY[1], seg->SG_v1pos[VX], seg->SG_v1pos[VY], 0);
-        V3_Set(edgeDeltasXY[2], seg->SG_v2pos[VX], seg->SG_v2pos[VY], 0);
-        V3_Set(edgeDeltasXY[3], seg->SG_v2pos[VX], seg->SG_v2pos[VY], 0);
+        V3_Set(edgeDeltasXY[0], vtx1->V_pos[VX], vtx1->V_pos[VY], 0);
+        V3_Set(edgeDeltasXY[1], vtx1->V_pos[VX], vtx1->V_pos[VY], 0);
+        V3_Set(edgeDeltasXY[2], vtx2->V_pos[VX], vtx2->V_pos[VY], 0);
+        V3_Set(edgeDeltasXY[3], vtx2->V_pos[VX], vtx2->V_pos[VY], 0);
         setGeometryXY(polyType, edgeDeltasXY, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
 
         {
         linedef_t* lineDef = seg->lineDef;
         sidedef_t* sideDef = lineDef->L_side(seg->side);
         sector_t* frontsec = seg->SG_frontsector;
-        sector_t* backsec = seg->SG_backsector;
+        sector_t* backsec  = seg->SG_backsector;
         float ffloor, fceil, bfloor, bceil, bsh, skyFloor, skyCeil;
-        const float* ambientLightColor = R_GetSectorLightColor(ssec->sector);
+        const float* ambientLightColor = R_GetSectorLightColor(frontsec);
         float lightLevel = ssec->sector->lightLevel;
 
-        ffloor = frontsec->SP_floorvisheight;
-        fceil  = frontsec->SP_ceilvisheight;
+        if(frontsec)
+        {
+            ffloor = frontsec->SP_floorvisheight;
+            fceil  = frontsec->SP_ceilvisheight;
+        }
+        else
+        {
+            ffloor = fceil = 0;
+        }
+
         if(backsec)
         {
             bceil  = backsec->SP_ceilvisheight;
@@ -3199,7 +3245,9 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
             bsh = bceil - bfloor;
         }
         else
+        {
             bsh = bceil = bfloor = 0;
+        }
 
         skyFloor = ((P_IsInVoid(viewPlayer) && !(R_IsSkySurface(&frontsec->SP_floorsurface) && backsec && R_IsSkySurface(&backsec->SP_floorsurface)))? ffloor : (skyFix[PLN_FLOOR].height   < DDMAXFLOAT? skyFix[PLN_FLOOR].height   : 0));
         skyCeil  = ((P_IsInVoid(viewPlayer) && !(R_IsSkySurface(&frontsec->SP_ceilsurface)  && backsec && R_IsSkySurface(&backsec->SP_ceilsurface))) ? fceil  : (skyFix[PLN_CEILING].height > DDMINFLOAT? skyFix[PLN_CEILING].height : 0));
@@ -3237,13 +3285,12 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
                 {
                     float lightLevelDeltaLeft = 0, lightLevelDeltaRight = 0;
                     vec3_t edgeDeltasZ[4];
-                    V3_Set(edgeDeltasZ[0], 0, 0, bottom);
-                    V3_Set(edgeDeltasZ[1], 0, 0, top);
-                    V3_Set(edgeDeltasZ[2], 0, 0, bottom);
-                    V3_Set(edgeDeltasZ[3], 0, 0, top);
+                    vec3_t surfaceNormal;
+                    getSurfaceNormal(surfaceNormal, lineDef, seg->side^flipSurfaceNormals);
+                    translateGeometryDeltasZ(numVerts, edgeDeltasZ, bottom, top, rvertices);
                     getSurfaceLightLevelDeltas(seg, &lightLevelDeltaLeft, &lightLevelDeltaRight);
                     setGeometryZ(polyType, edgeDeltasZ, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
-                    prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, sideDef->SW_middlenormal, 0, 1, 0, ambientLightColor, lightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, 0, 0, 0, 0, seg->length, true, renderTextures!=2?frontsec->SP_floormaterial:Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)), false);
+                    prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, lightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, 0, 0, 0, 0, seg->length, true, renderTextures!=2?frontsec->SP_floormaterial:Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)), false);
                     RL_AddPoly(PT_TRIANGLE_STRIP, polyType,       rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), 0, 0, (polyType == RPT_NORMAL? rcolors : 0), numVerts, 0, 0, 0, rTU);
                 }
             }
@@ -3275,13 +3322,12 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
                 {
                     float lightLevelDeltaLeft = 0, lightLevelDeltaRight = 0;
                     vec3_t edgeDeltasZ[4];
-                    V3_Set(edgeDeltasZ[0], 0, 0, bottom);
-                    V3_Set(edgeDeltasZ[1], 0, 0, top);
-                    V3_Set(edgeDeltasZ[2], 0, 0, bottom);
-                    V3_Set(edgeDeltasZ[3], 0, 0, top);
+                    vec3_t surfaceNormal;
+                    getSurfaceNormal(surfaceNormal, lineDef, seg->side);
+                    translateGeometryDeltasZ(numVerts, edgeDeltasZ, bottom, top, rvertices);
                     getSurfaceLightLevelDeltas(seg, &lightLevelDeltaLeft, &lightLevelDeltaRight);
                     setGeometryZ(polyType, edgeDeltasZ, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
-                    prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, sideDef->SW_middlenormal, 0, 1, 0, ambientLightColor, lightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, 0, 0, 0, 0, seg->length, true, renderTextures!=2?frontsec->SP_ceilmaterial:Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)), false);
+                    prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, lightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, 0, 0, 0, 0, seg->length, true, renderTextures!=2?frontsec->SP_ceilmaterial:Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)), false);
                     RL_AddPoly(PT_TRIANGLE_STRIP, polyType,       rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), 0, 0, (polyType == RPT_NORMAL? rcolors : 0), numVerts, 0, 0, 0, rTU);
                 }
             }
@@ -3316,14 +3362,12 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
                         float sTop = MIN_OF(bfloor, bottom);
                         float sBottom = skyFloor;
                         vec3_t edgeDeltasZ[4];
-
-                        V3_Set(edgeDeltasZ[0], 0, 0, sBottom);
-                        V3_Set(edgeDeltasZ[1], 0, 0, sTop);
-                        V3_Set(edgeDeltasZ[2], 0, 0, sBottom);
-                        V3_Set(edgeDeltasZ[3], 0, 0, sTop);
+                        vec3_t surfaceNormal;
+                        getSurfaceNormal(surfaceNormal, lineDef, seg->side^flipSurfaceNormals);
+                        translateGeometryDeltasZ(numVerts, edgeDeltasZ, sBottom, sTop, rvertices);
                         getSurfaceLightLevelDeltas(seg, &lightLevelDeltaLeft, &lightLevelDeltaRight);
                         setGeometryZ(polyType, edgeDeltasZ, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
-                        prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, sideDef->SW_middlenormal, 0, 1, 0, ambientLightColor, lightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, 0, 0, 0, 0, seg->length, true, renderTextures!=2?frontsec->SP_floormaterial:Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)), false);
+                        prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, lightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, 0, 0, 0, 0, seg->length, true, renderTextures!=2?frontsec->SP_floormaterial:Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)), false);
                         RL_AddPoly(PT_TRIANGLE_STRIP, polyType,       rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), 0, 0, (polyType == RPT_NORMAL? rcolors : 0), numVerts, 0, 0, 0, rTU);
                     }
 
@@ -3335,14 +3379,12 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
                         float sTop = skyCeil;
                         float sBottom = MAX_OF(bceil, top);
                         vec3_t edgeDeltasZ[4];
-
-                        V3_Set(edgeDeltasZ[0], 0, 0, sBottom);
-                        V3_Set(edgeDeltasZ[1], 0, 0, sTop);
-                        V3_Set(edgeDeltasZ[2], 0, 0, sBottom);
-                        V3_Set(edgeDeltasZ[3], 0, 0, sTop);
+                        vec3_t surfaceNormal;
+                        getSurfaceNormal(surfaceNormal, lineDef, seg->side^flipSurfaceNormals);
+                        translateGeometryDeltasZ(numVerts, edgeDeltasZ, sBottom, sTop, rvertices);
                         getSurfaceLightLevelDeltas(seg, &lightLevelDeltaLeft, &lightLevelDeltaRight);
                         setGeometryZ(polyType, edgeDeltasZ, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
-                        prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, sideDef->SW_middlenormal, 0, 1, 0, ambientLightColor, lightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, 0, 0, 0, 0, seg->length, true, renderTextures!=2?frontsec->SP_ceilmaterial:Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)), false);
+                        prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, lightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, 0, 0, 0, 0, seg->length, true, renderTextures!=2?frontsec->SP_ceilmaterial:Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)), false);
                         RL_AddPoly(PT_TRIANGLE_STRIP, polyType,       rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), 0, 0, (polyType == RPT_NORMAL? rcolors : 0), numVerts, 0, 0, 0, rTU);
                     }
                 }
@@ -3357,17 +3399,15 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
                     if(bfloor > skyFloor)
                     {
                         float lightLevelDeltaLeft = 0, lightLevelDeltaRight = 0;
+                        float sTop = bfloor;
                         float sBottom = skyFloor;
                         vec3_t edgeDeltasZ[4];
-                        float sTop = bfloor;
-
-                        V3_Set(edgeDeltasZ[0], 0, 0, sBottom);
-                        V3_Set(edgeDeltasZ[1], 0, 0, sTop);
-                        V3_Set(edgeDeltasZ[2], 0, 0, sBottom);
-                        V3_Set(edgeDeltasZ[3], 0, 0, sTop);
+                        vec3_t surfaceNormal;
+                        getSurfaceNormal(surfaceNormal, lineDef, seg->side^flipSurfaceNormals);
+                        translateGeometryDeltasZ(numVerts, edgeDeltasZ, sBottom, sTop, rvertices);
                         getSurfaceLightLevelDeltas(seg, &lightLevelDeltaLeft, &lightLevelDeltaRight);
                         setGeometryZ(polyType, edgeDeltasZ, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
-                        prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, sideDef->SW_middlenormal, 0, 1, 0, ambientLightColor, lightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, 0, 0, 0, 0, seg->length, true, renderTextures!=2?frontsec->SP_floormaterial:Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)), false);
+                        prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, lightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, 0, 0, 0, 0, seg->length, true, renderTextures!=2?frontsec->SP_floormaterial:Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)), false);
                         RL_AddPoly(PT_TRIANGLE_STRIP, polyType,       rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), 0, 0, (polyType == RPT_NORMAL? rcolors : 0), numVerts, 0, 0, 0, rTU);
                     }
 
@@ -3382,17 +3422,15 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
                     if(bceil < skyCeil)
                     {
                         float lightLevelDeltaLeft = 0, lightLevelDeltaRight = 0;
-                        vec3_t edgeDeltasZ[4];
                         float sTop = skyCeil;
                         float sBottom = bceil;
-
-                        V3_Set(edgeDeltasZ[0], 0, 0, sBottom);
-                        V3_Set(edgeDeltasZ[1], 0, 0, sTop);
-                        V3_Set(edgeDeltasZ[2], 0, 0, sBottom);
-                        V3_Set(edgeDeltasZ[3], 0, 0, sTop);
+                        vec3_t edgeDeltasZ[4];
+                        vec3_t surfaceNormal;
+                        getSurfaceNormal(surfaceNormal, lineDef, seg->side^flipSurfaceNormals);
+                        translateGeometryDeltasZ(numVerts, edgeDeltasZ, sBottom, sTop, rvertices);
                         getSurfaceLightLevelDeltas(seg, &lightLevelDeltaLeft, &lightLevelDeltaRight);
                         setGeometryZ(polyType, edgeDeltasZ, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
-                        prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, sideDef->SW_middlenormal, 0, 1, 0, ambientLightColor, lightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, 0, 0, 0, 0, seg->length, true, renderTextures!=2?frontsec->SP_ceilmaterial:Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)), false);
+                        prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, lightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, 0, 0, 0, 0, seg->length, true, renderTextures!=2?frontsec->SP_ceilmaterial:Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)), false);
                         RL_AddPoly(PT_TRIANGLE_STRIP, polyType,       rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), 0, 0, (polyType == RPT_NORMAL? rcolors : 0), numVerts, 0, 0, 0, rTU);
                     }
 
@@ -3404,6 +3442,11 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
         }
         segPtr++;
     }
+
+    /// Restore original GL state.
+    /*
+     glEnable(GL_CULL_FACE);
+     */
     }
 }
 
@@ -3621,7 +3664,7 @@ static void Rend_RenderSubsector(uint ssecidx)
         boolean             isGlowing = false;
 
         // Determine plane height.
-        if(!R_IsSkySurface(suf) || P_IsInVoid(viewPlayer))
+        if(!R_IsSkySurface(suf) || (devRendSkyMode != 2 && P_IsInVoid(viewPlayer)))
         {
             height = plane->visHeight;
         }
@@ -3669,7 +3712,7 @@ static void Rend_RenderSubsector(uint ssecidx)
                          suf->blendMode, texOffset, texScale,
                          R_IsSkySurface(suf), true,
                          ssec->bsuf[plane->planeID], plane->planeID,
-                         texMode);
+                         texMode, (devRendSkyMode == 2? false : (i == 1? vy < height : vy > height)), R_IsSkySurface(suf) && devRendSkyMode != 2);
     }
 
     if(devRendSkyMode == 2)
@@ -3679,47 +3722,32 @@ static void Rend_RenderSubsector(uint ssecidx)
          * real "physical" height of any sky masked planes that are
          * drawn at a different height due to the skyFix.
          */
-        if(sect->SP_floorvisheight > skyFix[PLN_FLOOR].height &&
-           R_IsSkySurface(&sect->SP_floorsurface))
+        if(R_IsSkySurface(&sect->SP_floorsurface))
         {
-            vec3_t              normal;
-            const plane_t*      plane = sect->SP_plane(PLN_FLOOR);
-            const surface_t*    suf = &plane->surface;
-
-            /**
-             * Flip the plane normal according to the z positon of the
-             * viewer relative to the plane height so that the plane is
-             * always visible.
-             */
+            const plane_t* plane = sect->SP_plane(PLN_FLOOR);
+            const surface_t* suf = &plane->surface;
+            vec3_t normal;
             V3_Copy(normal, plane->PS_normal);
-            if(vy < plane->visHeight)
-                normal[VZ] *= -1;
-
             Rend_RenderPlane(ssec, PLN_MID, plane->visHeight, normal,
                              renderTextures!=2? sect->SP_floormaterial : Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)),
                              suf->flags, suf->inFlags, suf->rgba,
                              BM_NORMAL, NULL, NULL, false,
                              (vy > plane->visHeight? true : false),
-                             NULL, plane->planeID, 2);
+                             0, plane->planeID, 2, false, false);
         }
 
-        if(sect->SP_ceilvisheight < skyFix[PLN_CEILING].height &&
-           R_IsSkySurface(&sect->SP_ceilsurface))
+        if(R_IsSkySurface(&sect->SP_ceilsurface))
         {
-            vec3_t              normal;
-            const plane_t*      plane = sect->SP_plane(PLN_CEILING);
-            const surface_t*    suf = &plane->surface;
-
+            const plane_t* plane = sect->SP_plane(PLN_CEILING);
+            const surface_t* suf = &plane->surface;
+            vec3_t normal;
             V3_Copy(normal, plane->PS_normal);
-            if(vy > plane->visHeight)
-                normal[VZ] *= -1;
-
             Rend_RenderPlane(ssec, PLN_MID, plane->visHeight, normal,
                              renderTextures!=2? sect->SP_ceilmaterial : Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)),
                              suf->flags, suf->inFlags, suf->rgba,
                              BM_NORMAL, NULL, NULL, false,
                              (vy < plane->visHeight? true : false),
-                             NULL, plane->planeID, 2);
+                             0, plane->planeID, 2, true, false);
         }
     }
 }

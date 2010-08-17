@@ -1946,6 +1946,11 @@ float R_CheckSectorLight(float lightlevel, float min, float max)
  */
 const float *R_GetSectorLightColor(const sector_t *sector)
 {
+    static const float black[] = { 0, 0, 0 };
+    if(!sector)
+    {
+        return black;
+    }
     if(!rendSkyLight || noSkyColorGiven)
         return sector->rgb; // The sector's real color.
 
