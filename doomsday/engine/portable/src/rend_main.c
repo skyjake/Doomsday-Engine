@@ -3712,7 +3712,7 @@ static void Rend_RenderSubsector(uint ssecidx)
                          suf->blendMode, texOffset, texScale,
                          R_IsSkySurface(suf), true,
                          ssec->bsuf[plane->planeID], plane->planeID,
-                         texMode, (devRendSkyMode == 2? false : (i == 1? vy < height : vy > height)), R_IsSkySurface(suf) && devRendSkyMode != 2);
+                         texMode, (i == 1? vy < height : vy > height), !(R_IsSkySurface(suf) && devRendSkyMode != 2));
     }
 
     if(devRendSkyMode == 2)
@@ -3733,7 +3733,7 @@ static void Rend_RenderSubsector(uint ssecidx)
                              suf->flags, suf->inFlags, suf->rgba,
                              BM_NORMAL, NULL, NULL, false,
                              (vy > plane->visHeight? true : false),
-                             0, plane->planeID, 2, false, false);
+                             0, plane->planeID, 2, (vy < plane->visHeight), false);
         }
 
         if(R_IsSkySurface(&sect->SP_ceilsurface))
@@ -3747,7 +3747,7 @@ static void Rend_RenderSubsector(uint ssecidx)
                              suf->flags, suf->inFlags, suf->rgba,
                              BM_NORMAL, NULL, NULL, false,
                              (vy < plane->visHeight? true : false),
-                             0, plane->planeID, 2, true, false);
+                             0, plane->planeID, 2, (vy > plane->visHeight), false);
         }
     }
 }
