@@ -342,6 +342,12 @@ static void setupFadeout(skylayer_t* slayer)
     slayer->fadeout.use = true;
 }
 
+const fadeout_t* Rend_GetCurrentSkyFadeout(void)
+{
+    // The current fadeout is the first layer's fadeout.
+    return &skyLayers[firstLayer].fadeout;
+}
+
 void Rend_RenderSkyHemisphere(int whichHemi)
 {
     skylayer_t* slayer;

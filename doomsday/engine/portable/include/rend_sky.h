@@ -57,4 +57,6 @@ void Rend_SkyDetail(int quarterDivs, int rows);
 void Rend_SkyParams(int layer, int param, void* data);
 void Rend_RenderSky(void);
 
+const fadeout_t* Rend_GetCurrentSkyFadeout(void);
+
 #endif /* LIBDENG_RENDER_SKY_H */

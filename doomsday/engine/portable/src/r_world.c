@@ -64,6 +64,7 @@
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int rendSkyLight = 1; // cvar.
+float rendSkyColorBalance = 0.5f; // cvar.
 float rendLightWallAngle = 1.2f; // Intensity of angle-based wall lighting.
 byte rendLightWallAngleSmooth = true;
 
@@ -78,7 +79,7 @@ skyfix_t skyFix[2];
 
 static boolean noSkyColorGiven;
 static float skyColorRGB[4], balancedRGB[4];
-static float skyColorBalance;
+static float skyColorBalance = 0;
 
 static surfacelistnode_t* unusedSurfaceListNodes = NULL;
 
@@ -1944,44 +1945,63 @@ float R_CheckSectorLight(float lightlevel, float min, float max)
 /**
  * Sector light color may be affected by the sky light color.
  */
-const float *R_GetSectorLightColor(const sector_t *sector)
+const float* R_GetSectorLightColor(const sector_t* sector)
 {
     static const float black[] = { 0, 0, 0 };
     if(!sector)
     {
         return black;
     }
-    if(!rendSkyLight || noSkyColorGiven)
+    if(!rendSkyLight)
         return sector->rgb; // The sector's real color.
 
     if(!R_SectorContainsSkySurfaces(sector))
-    {
-        sector_t           *src;
-
-        // A dominant light source affects this sector?
-        src = sector->lightSource;
+    {   // A dominant light source affects this sector?
+        sector_t* src = sector->lightSource;
         if(src && src->lightLevel >= sector->lightLevel)
         {
             // The color shines here, too.
             return R_GetSectorLightColor(src);
         }
-
         return sector->rgb;
-/*
-        // Return the sector's real color (balanced against sky's).
-        if(skyColorBalance >= 1)
-        {
-            return sector->rgb;
-        }
-        else
-        {
-            int                 c;
+    }
 
-            for(c = 0; c < 3; ++c)
-                balancedRGB[c] = sector->rgb[c] * skyColorBalance;
-            return balancedRGB;
+    if(R_SectorContainsSkySurfaces(sector))
+    {
+        static float color[4];
+        const fadeout_t* fade;
+        float balance = 0;
+
+        color[0] =  color[1] = color[2] = 0;
+
+        // Return the sector's real color (balanced against sky's).
+        if(rendSkyColorBalance <= 1)
+        {
+            if(!noSkyColorGiven)
+            {
+                balance = skyColorBalance * rendSkyColorBalance;
+                color[0] = skyColorRGB[0];
+                color[1] = skyColorRGB[1];
+                color[2] = skyColorRGB[2];
+            }
+            else if((fade = Rend_GetCurrentSkyFadeout()))
+            {
+                balance = rendSkyColorBalance;
+                color[0] = fade->rgb[0];
+                color[1] = fade->rgb[1];
+                color[2] = fade->rgb[2];
+            }
         }
-*/
+
+        if(balance <= 0)
+            return sector->rgb;
+
+        { uint c;
+        for(c = 0; c < 3; ++c)
+        {
+            color[c] = sector->rgb[c] + color[c] * balance;
+        }}
+        return color;
     }
 
     // Return the sky color.
