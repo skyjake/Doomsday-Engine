@@ -3203,27 +3203,27 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
 #undef ZBIAS_FACTOR
 }
 
-/*static __inline*/ void getGeometryDeltasZ(size_t count, float height, float* deltas)
+/*static __inline*/ void getGeometryDeltasZ(size_t count, float height, vec3_t* deltas)
 {
     assert(count != 0 && deltas);
     { size_t i;
     for(i = 0; i < count; ++i)
     {
-        V3_Set(deltas+i, 0, 0, height);
+        V3_Set(deltas[i], 0, 0, height);
     }}
 }
 
-/*static __inline*/ void translateGeometryDeltasZ(size_t count, vec3_t edgeDeltasZ[3],
+/*static __inline*/ void translateGeometryDeltasZ(size_t count, vec3_t* edgeDeltasZ,
     float bottom, float top, rvertex_t* rvertices)
 {
     assert(count != 0 && edgeDeltasZ && rvertices);
     { size_t i;
     for(i = 0; i < 1; ++i)
     {
-        getGeometryDeltasZ(1, bottom,  edgeDeltasZ[i]);
-        getGeometryDeltasZ(1, top,     edgeDeltasZ[i+1]);
-        getGeometryDeltasZ(1, bottom,  edgeDeltasZ[i+2]);
-        getGeometryDeltasZ(1, top,     edgeDeltasZ[i+3]);
+        getGeometryDeltasZ(1, bottom,  edgeDeltasZ+i);
+        getGeometryDeltasZ(1, top,     edgeDeltasZ+i+1);
+        getGeometryDeltasZ(1, bottom,  edgeDeltasZ+i+2);
+        getGeometryDeltasZ(1, top,     edgeDeltasZ+i+3);
     }}
 }
 
