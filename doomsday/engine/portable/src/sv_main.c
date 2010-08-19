@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * sv_main.c: Network Server
+ * Network Server
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -348,7 +348,7 @@ void Sv_HandlePacket(void)
 
 #ifdef _DEBUG
 Con_Message("Sv_HandlePacket: type=%i\n", netBuffer.msg.type);
-Con_Message("Sv_HandlePacket: length=%i\n", netBuffer.length);
+Con_Message("Sv_HandlePacket: length=%ul\n", (unsigned int) netBuffer.length);
 #endif
 
     switch(netBuffer.msg.type)

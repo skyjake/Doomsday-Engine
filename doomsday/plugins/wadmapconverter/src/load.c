@@ -114,22 +114,20 @@ static int C_DECL compareMaterialNames(const void* a, const void* b)
 }
 
 static const materialref_t* getMaterial(const char* regName,
-                                        materialref_t* const ** list,
-                                        size_t size)
+    struct materialref_s ***list, size_t size)
 {
-    int                 result;
-    size_t              bottomIdx, topIdx, pivot;
+    size_t bottomIdx, topIdx, pivot;
     const materialref_t* m;
-    boolean             isDone;
-    char                name[9];
+    boolean isDone;
+    char name[9];
+    int result;
 
     if(size == 0)
         return NULL;
 
     if(map->format == MF_DOOM64)
     {
-        int                 idx = *((int*) regName);
-
+        int idx = *((int*) regName);
         sprintf(name, "UNK%05i", idx);
         name[8] = '\0';
     }

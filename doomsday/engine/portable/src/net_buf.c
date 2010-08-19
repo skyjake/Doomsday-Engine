@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * net_buf.c: Network Message Handling and Buffering
+ * Network Message Handling and Buffering
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -307,8 +307,7 @@ void N_SendPacket(int flags)
         // Ordered and confirmed messages are send over a TCP connection.
         N_SendDataBufferReliably(data, size, dest);
 #if _DEBUG
-VERBOSE2(
-Con_Message("N_SendPacket: Sending %ul bytes reliably to %i.\n", size, dest));
+VERBOSE2(Con_Message("N_SendPacket: Sending %ul bytes reliably to %i.\n", (unsigned int) size, dest));
 #endif
     }
     else
@@ -455,9 +454,8 @@ void N_PrintHuffmanStats(void)
     }
     else
     {
-        Con_Printf("Huffman efficiency: %.3f%% (data: %ul bytes, sent: %ul "
-                   "bytes)\n", 100 - (100.0f * numSentBytes) / numOutBytes,
-                   numOutBytes, numSentBytes);
+        Con_Printf("Huffman efficiency: %.3f%% (data: %ul bytes, sent: %ul bytes)\n",
+                   100 - (100.0f * numSentBytes) / numOutBytes, (unsigned int) numOutBytes, (unsigned int) numSentBytes);
     }
 }
 

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * cl_mobj.c: Client Map Objects
+ * Client Map Objects
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -846,8 +846,8 @@ Con_Printf("Cl_RMD2: Mo %i Hidden status lifted.\n", cmo->mo.thinker.id);
     }
 
 #ifdef _DEBUG
-VERBOSE2( Con_Printf("Cl_RevealMobj: Revealing id %i, state %p (%i)\n",
-                     cmo->mo.thinker.id, cmo->mo.state,
+VERBOSE2( Con_Printf("Cl_RevealMobj: Revealing id %u, state %p (%i)\n",
+                     (unsigned int) cmo->mo.thinker.id, cmo->mo.state,
                      cmo->mo.state - states) );
 #endif
 

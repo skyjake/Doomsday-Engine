@@ -238,7 +238,7 @@ int Cl_ReadSideDelta(void)
             line->flags &= ~0xff;
             line->flags |= updatedFlags;
 #if _DEBUG
-Con_Printf("lineflag %i: %02x\n", GET_LINE_IDX(line), updatedFlags);
+Con_Printf("lineflag %u: %02x\n",(unsigned int) GET_LINE_IDX(line), updatedFlags);
 #endif
         }
     }

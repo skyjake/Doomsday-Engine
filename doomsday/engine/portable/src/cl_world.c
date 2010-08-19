@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * cl_world.c: Clientside World Management
+ * Clientside World Management
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -774,8 +774,7 @@ if(num >= numSideDefs)
             line->flags &= ~0xff;
             line->flags |= lineFlags;
 #if _DEBUG
-Con_Printf("Cl_ReadSideDelta2: Lineflag %i: %02x\n",
-           GET_LINE_IDX(line), lineFlags);
+Con_Printf("Cl_ReadSideDelta2: Lineflag %u: %02x\n", (unsigned int) GET_LINE_IDX(line), lineFlags);
 #endif
         }
     }
