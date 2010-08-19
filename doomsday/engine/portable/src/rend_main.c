@@ -3252,7 +3252,7 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
         {
             if(!(backsec && R_IsSkySurface(&bfloor->surface)) && ffloor->visHeight > skyFloor)
             {
-                *top    = ffloor->visHeight;
+                *top    = MIN_OF(fceil->visHeight, ffloor->visHeight);
                 *bottom = skyFloor;
             }
         }
@@ -3260,11 +3260,10 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
         {
             if(!(backsec && R_IsSkySurface(&bfloor->surface) && bfloor->visHeight <= ffloor->visHeight))
             {
-                *top    = (backsec? bfloor->visHeight : ffloor->visHeight);
+                *top    = MIN_OF(fceil->visHeight, (backsec? bfloor->visHeight : ffloor->visHeight));
                 *bottom = (backsec? ffloor->visHeight : skyFloor);
             }
         }
-        *top = MIN_OF(*top, fceil->visHeight);
 }
 
 /*static*/ void getSkymaskBottomTop2(plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil,
@@ -3281,7 +3280,7 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
             if(!(backsec && R_IsSkySurface(&bceil->surface)) && fceil->visHeight < skyCeil)
             {
                 *top    = skyCeil;
-                *bottom = fceil->visHeight;
+                *bottom = MAX_OF(fceil->visHeight, ffloor->visHeight);
             }
         }
         else if(!backsec || (R_IsSkySurface(&bceil->surface) && bceil->visHeight < skyCeil))
@@ -3289,10 +3288,9 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
             if(!(backsec && R_IsSkySurface(&bceil->surface) && bceil->visHeight >= fceil->visHeight))
             {
                 *top    = (backsec? fceil->visHeight : skyCeil);
-                *bottom = (backsec? bceil->visHeight : fceil->visHeight);
+                *bottom = MAX_OF(ffloor->visHeight, (backsec? bceil->visHeight : fceil->visHeight));
             }
         }
-    *bottom = MAX_OF(*bottom, ffloor->visHeight);
 }
 
 /*static*/ void getSkymaskBottomTop3(plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil,
@@ -3416,6 +3414,18 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
     }
 }
 
+/*static*/ void writePoly(rendpolytype_t polyType, vec3_t* edgeDeltasZ, float bottom, float top,
+    float skyFloor, float skyCeil, float lightLevelDeltaLeft, float lightLevelDeltaRight,
+    float lightLevelDeltaBottom, float lightLevelDeltaTop, const float* ambientLightColor, float ambientLightLevel,       
+    vec3_t surfaceNormal, material_t* material, seg_t* seg, plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil,
+    size_t numVerts, rvertex_t* rvertices, rtexcoord_t* rtexcoords, rcolor_t* rcolors, rcolor_t* rcolorsShiny,
+    rtexmapunit_t* rTU, rtexmapunit_t* rTUs)
+{
+    setGeometryZ(polyType, edgeDeltasZ, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
+    prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, ambientLightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, 0, 0, 0, 0, seg->length, true, renderTextures!=2?material:Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)), false);
+    RL_AddPoly(PT_TRIANGLE_STRIP, polyType,       rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), 0, 0, (polyType == RPT_NORMAL? rcolors : 0), numVerts, 0, 0, 0, rTU);
+}
+
 static void Rend_SSectSkyFixes(subsector_t* ssec)
 {
     assert(ssec && ssec->sector && (devRendSkyMode == 2 || R_SectorContainsSkySurfaces(ssec->sector)));
@@ -3436,7 +3446,6 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
         glDisable(GL_CULL_FACE);
      */
 
-    memset(rTU, 0, sizeof(rTU));
     numVerts = buildSkymaskQuad(polyType, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0));
 
     segPtr = ssec->segs;
@@ -3462,7 +3471,7 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
         sector_t* frontsec = seg->SG_frontsector;
         sector_t* backsec  = seg->SG_backsector;
         const float* ambientLightColor = R_GetSectorLightColor(frontsec);
-        float lightLevel = frontsec->lightLevel;
+        float ambientLightLevel = frontsec->lightLevel;
         plane_t* ffloor = frontsec->SP_plane(PLN_FLOOR);
         plane_t* fceil  = frontsec->SP_plane(PLN_CEILING);
         plane_t* bceil  = backsec ? backsec->SP_plane(PLN_CEILING) : 0;
@@ -3475,89 +3484,92 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
 
         // Upper/lower normal skyfixes.
         // Floor.
+        { float bottom = 0, top = 0;
+        float lightLevelDeltaLeft = 0, lightLevelDeltaRight = 0, lightLevelDeltaBottom = 0, lightLevelDeltaTop = 0;
+        vec3_t edgeDeltasZ[4];
+        vec3_t surfaceNormal;
+        boolean addSolidViewSeg = false;
+        getSurfaceNormal(surfaceNormal, lineDef, seg->side^flipSurfaceNormals);
+        bottom = top = 0;
         if(!backsec || backsec != seg->SG_frontsector)
         {
-            float bottom = 0, top = 0;
             getSkymaskBottomTop(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, seg, lineDef, sideDef, frontsec, backsec, &bottom, &top);
-            if(top > bottom)
-            {
-                float lightLevelDeltaLeft = 0, lightLevelDeltaRight = 0, lightLevelDeltaBottom = 0, lightLevelDeltaTop = 0;
-                vec3_t edgeDeltasZ[4];
-                vec3_t surfaceNormal;
-                getSurfaceNormal(surfaceNormal, lineDef, seg->side^flipSurfaceNormals);
-                translateGeometryDeltasZ(numVerts, edgeDeltasZ, bottom, top, rvertices);
-                getSurfaceLightLevelDeltas(seg, ffloor, fceil, bfloor, bceil, bottom, top, skyFloor, skyCeil, &lightLevelDeltaLeft, &lightLevelDeltaRight, &lightLevelDeltaBottom, &lightLevelDeltaTop);
-                setGeometryZ(polyType, edgeDeltasZ, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
-                prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, lightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, 0, 0, 0, 0, seg->length, true, renderTextures!=2?frontsec->SP_floormaterial:Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)), false);
-                RL_AddPoly(PT_TRIANGLE_STRIP, polyType,       rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), 0, 0, (polyType == RPT_NORMAL? rcolors : 0), numVerts, 0, 0, 0, rTU);
-            }
         }
+        if(top > bottom)
+        {
+            memset(rTU, 0, sizeof(rTU));
+            getSurfaceLightLevelDeltas(seg, ffloor, fceil, bfloor, bceil, bottom, top, skyFloor, skyCeil, &lightLevelDeltaLeft, &lightLevelDeltaRight, &lightLevelDeltaBottom, &lightLevelDeltaTop);
+            translateGeometryDeltasZ(numVerts, edgeDeltasZ, bottom, top, rvertices);
+            writePoly(polyType, edgeDeltasZ, bottom, top, skyFloor, skyCeil, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, ambientLightColor, ambientLightLevel, surfaceNormal, ffloor->PS_material, seg, ffloor, fceil, bfloor, bceil,
+                      numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0/*(polyType == RPT_NORMAL? rTUs : 0)*/);
+        }
+        bottom = top = 0;
         if(!P_IsInVoid(viewPlayer) && backsec && !LINE_SELFREF(lineDef))
         {
-            float bottom = 0, top = 0;
-            boolean addSolidViewSeg = false;
+            memset(rTU, 0, sizeof(rTU));
             if((backsec && bfloor->visHeight < bceil->visHeight))
                 getSkymaskBottomTop3(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, seg, lineDef, sideDef, frontsec, backsec, &bottom, &top);
             else
                 getSkymaskBottomTop5(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, seg, lineDef, sideDef, frontsec, backsec, &bottom, &top, &addSolidViewSeg);
-            if(top > bottom)
-            {
-                float lightLevelDeltaLeft = 0, lightLevelDeltaRight = 0, lightLevelDeltaBottom = 0, lightLevelDeltaTop = 0;
-                vec3_t edgeDeltasZ[4];
-                vec3_t surfaceNormal;
-                getSurfaceNormal(surfaceNormal, lineDef, seg->side^flipSurfaceNormals);
-                translateGeometryDeltasZ(numVerts, edgeDeltasZ, bottom, top, rvertices);
-                getSurfaceLightLevelDeltas(seg, ffloor, fceil, bfloor, bceil, bottom, top, skyFloor, skyCeil, &lightLevelDeltaLeft, &lightLevelDeltaRight, &lightLevelDeltaBottom, &lightLevelDeltaTop);
-                setGeometryZ(polyType, edgeDeltasZ, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
-                prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, lightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, 0, 0, 0, 0, seg->length, true, renderTextures!=2?frontsec->SP_floormaterial:Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)), false);
-                RL_AddPoly(PT_TRIANGLE_STRIP, polyType,       rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), 0, 0, (polyType == RPT_NORMAL? rcolors : 0), numVerts, 0, 0, 0, rTU);
-            }
+        }
+        if(top > bottom)
+        {
+            memset(rTU, 0, sizeof(rTU));
+            getSurfaceLightLevelDeltas(seg, ffloor, fceil, bfloor, bceil, bottom, top, skyFloor, skyCeil, &lightLevelDeltaLeft, &lightLevelDeltaRight, &lightLevelDeltaBottom, &lightLevelDeltaTop);
+            translateGeometryDeltasZ(numVerts, edgeDeltasZ, bottom, top, rvertices);
+            writePoly(polyType, edgeDeltasZ, bottom, top, skyFloor, skyCeil, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, ambientLightColor, ambientLightLevel, surfaceNormal, ffloor->PS_material, seg, ffloor, fceil, bfloor, bceil,
+                      numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0/*(polyType == RPT_NORMAL? rTUs : 0)*/);
+        }
+
+        if(!P_IsInVoid(viewPlayer) && backsec && !LINE_SELFREF(lineDef))
+        {
             if(addSolidViewSeg)
                 seg->frameFlags |= SEGINF_BACKSECSKYFIX;
         }
+        }
 
         // Ceiling.
+        { float bottom = 0, top = 0;
+        float lightLevelDeltaLeft = 0, lightLevelDeltaRight = 0, lightLevelDeltaBottom = 0, lightLevelDeltaTop = 0;
+        vec3_t edgeDeltasZ[4];
+        vec3_t surfaceNormal;
+        boolean addSolidViewSeg = false;
+        getSurfaceNormal(surfaceNormal, lineDef, seg->side^flipSurfaceNormals);
+        bottom = top = 0;
         if(!backsec || backsec != seg->SG_frontsector)
         {
-            float bottom = 0, top = 0;
             getSkymaskBottomTop2(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, seg, lineDef, sideDef, frontsec, backsec, &bottom, &top);
-            if(top > bottom)
-            {
-                float lightLevelDeltaLeft = 0, lightLevelDeltaRight = 0, lightLevelDeltaBottom = 0, lightLevelDeltaTop = 0;
-                vec3_t edgeDeltasZ[4];
-                vec3_t surfaceNormal;
-                getSurfaceNormal(surfaceNormal, lineDef, seg->side^flipSurfaceNormals);
-                translateGeometryDeltasZ(numVerts, edgeDeltasZ, bottom, top, rvertices);
-                getSurfaceLightLevelDeltas(seg, ffloor, fceil, bfloor, bceil, bottom, top, skyFloor, skyCeil, &lightLevelDeltaLeft, &lightLevelDeltaRight, &lightLevelDeltaBottom, &lightLevelDeltaTop);
-                setGeometryZ(polyType, edgeDeltasZ, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
-                prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, lightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, 0, 0, 0, 0, seg->length, true, renderTextures!=2?frontsec->SP_ceilmaterial:Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)), false);
-                RL_AddPoly(PT_TRIANGLE_STRIP, polyType,       rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), 0, 0, (polyType == RPT_NORMAL? rcolors : 0), numVerts, 0, 0, 0, rTU);
-            }
         }
+        if(top > bottom)
+        {
+            memset(rTU, 0, sizeof(rTU));
+            getSurfaceLightLevelDeltas(seg, ffloor, fceil, bfloor, bceil, bottom, top, skyFloor, skyCeil, &lightLevelDeltaLeft, &lightLevelDeltaRight, &lightLevelDeltaBottom, &lightLevelDeltaTop);
+            translateGeometryDeltasZ(numVerts, edgeDeltasZ, bottom, top, rvertices);
+            writePoly(polyType, edgeDeltasZ, bottom, top, skyFloor, skyCeil, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, ambientLightColor, ambientLightLevel, surfaceNormal, fceil->PS_material, seg, ffloor, fceil, bfloor, bceil,
+                      numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0/*(polyType == RPT_NORMAL? rTUs : 0)*/);
+        }
+        bottom = top = 0;
         if(!P_IsInVoid(viewPlayer) && backsec && !LINE_SELFREF(lineDef))
         {
-            float bottom = 0, top = 0;
-            boolean addSolidViewSeg = false;
- 
             if((backsec && bfloor->visHeight < bceil->visHeight))
                 getSkymaskBottomTop4(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, seg, lineDef, sideDef, frontsec, backsec, &bottom, &top);
             else
                 getSkymaskBottomTop6(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, seg, lineDef, sideDef, frontsec, backsec, &bottom, &top, &addSolidViewSeg);
+        }
+        if(top > bottom)
+        {
+            memset(rTU, 0, sizeof(rTU));
+            getSurfaceLightLevelDeltas(seg, ffloor, fceil, bfloor, bceil, bottom, top, skyFloor, skyCeil, &lightLevelDeltaLeft, &lightLevelDeltaRight, &lightLevelDeltaBottom, &lightLevelDeltaTop);
+            translateGeometryDeltasZ(numVerts, edgeDeltasZ, bottom, top, rvertices);
+            writePoly(polyType, edgeDeltasZ, bottom, top, skyFloor, skyCeil, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, ambientLightColor, ambientLightLevel, surfaceNormal, fceil->PS_material, seg, ffloor, fceil, bfloor, bceil,
+                      numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0/*(polyType == RPT_NORMAL? rTUs : 0)*/);
+        }
 
-            if(top > bottom)
-            {
-                float lightLevelDeltaLeft = 0, lightLevelDeltaRight = 0, lightLevelDeltaBottom = 0, lightLevelDeltaTop = 0;
-                vec3_t edgeDeltasZ[4];
-                vec3_t surfaceNormal;
-                getSurfaceNormal(surfaceNormal, lineDef, seg->side^flipSurfaceNormals);
-                translateGeometryDeltasZ(numVerts, edgeDeltasZ, bottom, top, rvertices);
-                getSurfaceLightLevelDeltas(seg, ffloor, fceil, bfloor, bceil, bottom, top, skyFloor, skyCeil, &lightLevelDeltaLeft, &lightLevelDeltaRight, &lightLevelDeltaBottom, &lightLevelDeltaTop);
-                setGeometryZ(polyType, edgeDeltasZ, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
-                prepareSkyMaskSurface(polyType,     numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0, surfaceNormal, 0, 1, 0, ambientLightColor, lightLevel, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, 0, 0, 0, 0, seg->length, true, renderTextures!=2?frontsec->SP_ceilmaterial:Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)), false);
-                RL_AddPoly(PT_TRIANGLE_STRIP, polyType,       rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), 0, 0, (polyType == RPT_NORMAL? rcolors : 0), numVerts, 0, 0, 0, rTU);
-            }
+        if(!P_IsInVoid(viewPlayer) && backsec && !LINE_SELFREF(lineDef))
+        {
             if(addSolidViewSeg)
                 seg->frameFlags |= SEGINF_BACKSECSKYFIX;
+        }
         }
         }
         segPtr++;
