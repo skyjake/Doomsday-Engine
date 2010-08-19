@@ -403,7 +403,7 @@ void Rend_PreparePlane(rvertex_t* rvertices, size_t numVertices,
  * denote this. Is sensitive to plane heights, surface properties
  * (e.g. alpha) and surface texture properties.
  */
-boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside)
+boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside, boolean ignoreAlpha)
 {
     // Check for unmasked midtextures on twosided lines that completely
     // fill the gap between floor and ceiling (we don't want to give away
@@ -422,8 +422,7 @@ boolean Rend_DoesMidTextureFillGap(linedef_t *line, int backside)
             // Ensure we have up to date info.
             Materials_Prepare(&ms, mat, true, NULL);
 
-            if(ms.isOpaque && !side->SW_middleblendmode &&
-               side->SW_middlergba[3] >= 1)
+            if(ignoreAlpha || (ms.isOpaque && !side->SW_middleblendmode && side->SW_middlergba[3] >= 1))
             {
                 float openTop[2], matTop[2];
                 float openBottom[2], matBottom[2];
@@ -3315,7 +3314,7 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
                            bottom, top, texOffset);
     }
 
-    if(top > bottom)
+    if(*top > *bottom)
     {
         if(R_IsSkySurface(&frontsec->SP_floorsurface) && R_IsSkySurface(&backsec->SP_floorsurface) &&
             bfloor->visHeight > skyFloor && !(*bottom > ffloor->visHeight))
@@ -3357,7 +3356,7 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
                            bottom, top, texOffset);
     }
 
-    if(top > bottom)
+    if(*top > *bottom)
     {
         if(R_IsSkySurface(&fceil->surface) && R_IsSkySurface(&bceil->surface) &&
            bceil->visHeight < skyCeil && !(*top < fceil->visHeight))
@@ -3956,7 +3955,7 @@ static void Rend_RenderSubsector(uint ssecidx)
         isSkyMasked = false;
         addDLights = true;
         flipSurfaceNormal = false;
-        clipBackFacing = true;
+        clipBackFacing = false;
 
         plane = sect->planes[i];
         suf = &plane->surface;
@@ -4005,12 +4004,18 @@ static void Rend_RenderSubsector(uint ssecidx)
         texScale[VX] = ((suf->flags & DDSUF_MATERIAL_FLIPH)? -1 : 1);
         texScale[VY] = ((suf->flags & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
+        /// danij: It appears we are currently projecting dynlights onto the back
+        /// of the plane. Otherwise we could implement the dynamic normal flipping.
+
         flipSurfaceNormal = (i == 1? vy < height : vy > height);
         if(!devRendSkyMode)
+        {
             isSkyMasked = R_IsSkySurface(suf);
+            clipBackFacing = false;
+        }
         else
         {
-            clipBackFacing = false;//R_IsSkySurface(suf)? false : true;
+            //clipBackFacing = R_IsSkySurface(suf)? false : true;
             if(devRendSkyMode == 2)
                 flipSurfaceNormal = false;
         }
@@ -4026,9 +4031,8 @@ static void Rend_RenderSubsector(uint ssecidx)
     if(devRendSkyMode == 2)
     {
         /**
-         * In devSky mode 2, we draw additional geometry, showing the
-         * real "physical" height of any sky masked planes that are
-         * drawn at a different height due to the skyFix.
+         * In mode 2, we draw additional geometry, showing the real "physical" height
+         * of any sky masked planes that are drawn at a different height due to the skyFix.
          */
         if(R_IsSkySurface(&sect->SP_floorsurface))
         {

@@ -61,7 +61,7 @@ int             Rend_MidMaterialPos(float* bottomleft, float* bottomright,
                                     float* texoffy, float tcyoff, float texHeight,
                                     boolean lower_unpeg, boolean clipTop,
                                     boolean clipBottom);
-boolean         Rend_DoesMidTextureFillGap(linedef_t* line, int backside);
+boolean         Rend_DoesMidTextureFillGap(linedef_t* line, int backside, boolean ignoreAlpha);
 
 void            Rend_ApplyLightAdaptation(float* lightvalue);
 float           Rend_GetLightAdaptVal(float lightvalue);

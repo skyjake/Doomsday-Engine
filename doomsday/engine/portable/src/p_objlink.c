@@ -347,7 +347,7 @@ static void processSeg(seg_t* seg, void* data)
         // Don't spread if the middle material completely fills the gap between
         // floor and ceiling (direction is from dest to source).
         if(Rend_DoesMidTextureFillGap(seg->lineDef,
-            dest == seg->backSeg->subsector? false : true))
+            dest == seg->backSeg->subsector? false : true, (params->objType == OT_LUMOBJ? true:false)))
             return;
     }
 

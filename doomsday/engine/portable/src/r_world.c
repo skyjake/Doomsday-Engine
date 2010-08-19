@@ -1064,7 +1064,7 @@ linedef_t* R_FindSolidLineNeighbor(const sector_t* sector,
                       oFCeil > sector->SP_floorvisheight)))  )
             {
 
-                if(!Rend_DoesMidTextureFillGap(other, side))
+                if(!Rend_DoesMidTextureFillGap(other, side, false))
                     return 0;
             }
         }

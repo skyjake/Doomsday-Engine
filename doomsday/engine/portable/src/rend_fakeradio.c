@@ -1283,7 +1283,7 @@ static uint radioEdgeHackType(linedef_t *line, sector_t *front,
     // Check for unmasked midtextures on twosided lines that completely
     // fill the gap between floor and ceiling (we don't want to give away
     // the location of any secret areas (false walls)).
-    if(Rend_DoesMidTextureFillGap(line, backside))
+    if(Rend_DoesMidTextureFillGap(line, backside, false))
         return 1; // Consider it fully closed.
 
     return 0;
@@ -1532,7 +1532,7 @@ static void radioSubsectorEdges(const subsector_t* subsector)
                     {
                         sideOpen[i] = 1;
                     }
-                    else if(Rend_DoesMidTextureFillGap(neighbor, otherSide^1))
+                    else if(Rend_DoesMidTextureFillGap(neighbor, otherSide^1, false))
                     {
                         sideOpen[i] = 0;
                     }
