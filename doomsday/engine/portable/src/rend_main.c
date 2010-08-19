@@ -2990,17 +2990,12 @@ static void prepareSkyMaskSurface(rendpolytype_t polyType, size_t count, rvertex
     }
 }
 
-#define SQV_BL          (rvertices[0])
-#define SQV_TL          (rvertices[1])
-#define SQV_BR          (rvertices[2])
-#define SQV_TR          (rvertices[3])
-
-static int buildSkymaskQuad(rvertex_t* rvertices, rtexcoord_t* rtexcoords)
+static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexcoord_t* rtexcoords)
 {
-    V3_Set(SQV_BL.pos, 0, 0, 0);
-    V3_Set(SQV_TL.pos, 0, 0, 0);
-    V3_Set(SQV_BR.pos, 0, 0, 0);
-    V3_Set(SQV_TR.pos, 0, 0, 0);
+    V3_Set(rvertices[0].pos, 0, 0, 0);
+    V3_Set(rvertices[1].pos, 0, 0, 0);
+    V3_Set(rvertices[2].pos, 0, 0, 0);
+    V3_Set(rvertices[3].pos, 0, 0, 0);
 
     if(rtexcoords)
     {
@@ -3014,12 +3009,6 @@ static int buildSkymaskQuad(rvertex_t* rvertices, rtexcoord_t* rtexcoords)
         rtexcoords[3].st[1] = 0;
     }
 
-    return 4;
-}
-
-static int buildSkymaskSegGeometry(rendpolytype_t polyType, rvertex_t* rvertices, rtexcoord_t* rtexcoords)
-{
-    buildSkymaskQuad(rvertices, polyType == RPT_NORMAL? rtexcoords : 0);
     return 4;
 }
 
@@ -3448,7 +3437,7 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
      */
 
     memset(rTU, 0, sizeof(rTU));
-    numVerts = buildSkymaskSegGeometry(polyType, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0));
+    numVerts = buildSkymaskQuad(polyType, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0));
 
     segPtr = ssec->segs;
     while(*segPtr)
@@ -3463,12 +3452,7 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
         }
 
         // Get the start and end vertices, left then right. Top and bottom.
-        { vertex_t* vtx1 = seg->SG_v1, *vtx2 = seg->SG_v2;
-        V3_Set(edgeDeltasXY[0], vtx1->V_pos[VX], vtx1->V_pos[VY], 0);
-        V3_Set(edgeDeltasXY[1], vtx1->V_pos[VX], vtx1->V_pos[VY], 0);
-        V3_Set(edgeDeltasXY[2], vtx2->V_pos[VX], vtx2->V_pos[VY], 0);
-        V3_Set(edgeDeltasXY[3], vtx2->V_pos[VX], vtx2->V_pos[VY], 0);
-        }
+        Seg_GetGeometryDeltasXY(seg, false, edgeDeltasXY[0], edgeDeltasXY[1], edgeDeltasXY[2], edgeDeltasXY[3]);
 
         setGeometryXY(polyType, edgeDeltasXY, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
 
@@ -3478,7 +3462,7 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
         sector_t* frontsec = seg->SG_frontsector;
         sector_t* backsec  = seg->SG_backsector;
         const float* ambientLightColor = R_GetSectorLightColor(frontsec);
-        float lightLevel = ssec->sector->lightLevel;
+        float lightLevel = frontsec->lightLevel;
         plane_t* ffloor = frontsec->SP_plane(PLN_FLOOR);
         plane_t* fceil  = frontsec->SP_plane(PLN_CEILING);
         plane_t* bceil  = backsec ? backsec->SP_plane(PLN_CEILING) : 0;

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * r_seg.c: World segs.
+ * World segs.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -49,6 +49,19 @@
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
+
+void Seg_GetGeometryDeltasXY(seg_t* seg, boolean flipEdges,
+    vec3_t bottomLeft, vec3_t topLeft, vec3_t bottomRight, vec3_t topRight)
+{
+    assert(seg && bottomLeft && topLeft && bottomRight && topRight);
+    {
+    vertex_t* vtx1 = seg->SG_v(flipEdges?1:0), *vtx2 = seg->SG_v(flipEdges?0:1);
+    V3_Set(bottomLeft,  vtx1->V_pos[VX], vtx1->V_pos[VY], 0);
+    V3_Set(topLeft,     vtx1->V_pos[VX], vtx1->V_pos[VY], 0);
+    V3_Set(bottomRight, vtx2->V_pos[VX], vtx2->V_pos[VY], 0);
+    V3_Set(topRight,    vtx2->V_pos[VX], vtx2->V_pos[VY], 0);
+    }
+}
 
 /**
  * Update the seg, property is selected by DMU_* name.
