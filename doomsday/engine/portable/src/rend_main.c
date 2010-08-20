@@ -3465,28 +3465,13 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
     float* offsets, float* bottom, float* top, boolean* addSolidViewSeg)
 {
     assert(offsets && bottom && top && addSolidViewSeg);
+    *bottom = 0;
+    *top    = 0;
     *addSolidViewSeg = false;
-    getSkymaskBottomTop(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, seg, frontsec, backsec, bottom, top);
-    if(*top > *bottom)
+    if(!backsec || backsec != seg->SG_frontsector)
     {
-        offsets[0] = *bottom;
-        offsets[1] = *top;
-        offsets[2] = *bottom;
-        offsets[3] = *top;
+       getSkymaskBottomTop(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, seg, frontsec, backsec, bottom, top);
     }
-}
-
-/*static*/ void getSkymaskBottomOffsets2(seg_t* seg, sector_t* frontsec, sector_t* backsec,
-    plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil, float skyFloor, float skyCeil,
-    boolean bottomHasMaterialFix,
-    float* offsets, float* bottom, float* top, boolean* addSolidViewSeg)
-{
-    assert(offsets && bottom && top && addSolidViewSeg);
-    *addSolidViewSeg = false;
-    if((backsec && bfloor->visHeight < bceil->visHeight))
-        getSkymaskBottomTop3(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, seg, frontsec, backsec, bottom, top);
-    else
-        getSkymaskBottomTop5(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, bottomHasMaterialFix, seg, frontsec, backsec, bottom, top, addSolidViewSeg);
     if(*top > *bottom)
     {
         offsets[0] = *bottom;
@@ -3555,10 +3540,7 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
         // Upper/lower normal skyfixes.
         bottom = top = 0;
         { float offsets[4];
-        if(!backsec || backsec != seg->SG_frontsector)
-        {
-            getSkymaskBottomOffsets(seg, frontsec, backsec, ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, offsets, &bottom, &top, &addSolidViewSeg);
-        }
+        getSkymaskBottomOffsets(seg, frontsec, backsec, ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, offsets, &bottom, &top, &addSolidViewSeg);
         if(top > bottom)
         {
             getSurfaceLightLevelDeltas(seg, ffloor, fceil, bfloor, bceil, bottom, top, skyFloor, skyCeil, &lightLevelDeltaLeft, &lightLevelDeltaRight, &lightLevelDeltaBottom, &lightLevelDeltaTop);
@@ -3570,32 +3552,6 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
             writePoly(polyType, edgeDeltasZ, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, ambientLightColor, ambientLightLevel, surfaceNormal, ffloor->PS_material, seg->length,
                       numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0/*(polyType == RPT_NORMAL? rTUs : 0)*/);
         } }
-
-#if 1
-        bottom = top = 0;
-        { float offsets[4];
-        if(!P_IsInVoid(viewPlayer) && backsec && !LINE_SELFREF(lineDef) && (bfloor->visHeight >= fceil->visHeight||bceil->visHeight<= bfloor->visHeight))
-        {
-            getSkymaskBottomOffsets2(seg, frontsec, backsec, ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, (sideDef->SW_bottomsurface.inFlags & SUIF_MATERIAL_FIX) != 0, offsets, &bottom, &top, &addSolidViewSeg);
-        }
-        if(top > bottom)
-        {
-            getSurfaceLightLevelDeltas(seg, ffloor, fceil, bfloor, bceil, bottom, top, skyFloor, skyCeil, &lightLevelDeltaLeft, &lightLevelDeltaRight, &lightLevelDeltaBottom, &lightLevelDeltaTop);
-        }
-        if(top > bottom)
-        {
-            memset(rTU, 0, sizeof(rTU));
-            translateGeometryDeltasZ(numVerts, edgeDeltasZ, offsets, rvertices);
-            writePoly(polyType, edgeDeltasZ, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, ambientLightColor, ambientLightLevel, surfaceNormal, ffloor->PS_material, seg->length,
-                      numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0/*(polyType == RPT_NORMAL? rTUs : 0)*/);
-        } }
-
-        if(!P_IsInVoid(viewPlayer) && backsec && !LINE_SELFREF(lineDef))
-        {
-            if(addSolidViewSeg)
-                seg->frameFlags |= SEGINF_BACKSECSKYFIX;
-        }
-#endif
         }
         segPtr++;
     }
@@ -3606,27 +3562,13 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
     float* offsets, float* bottom, float* top, boolean* addSolidViewSeg)
 {
     assert(offsets && bottom && top && addSolidViewSeg);
+    *bottom = 0;
+    *top    = 0;
     *addSolidViewSeg = false;
-    getSkymaskBottomTop2(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, seg, frontsec, backsec, bottom, top);
-    if(*top > *bottom)
+    if(!backsec || backsec != seg->SG_frontsector)
     {
-        offsets[0] = *bottom;
-        offsets[1] = *top;
-        offsets[2] = *bottom;
-        offsets[3] = *top;
+        getSkymaskBottomTop2(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, seg, frontsec, backsec, bottom, top);
     }
-}
-
-/*static*/ void getSkymaskTopOffsets2(seg_t* seg, sector_t* frontsec, sector_t* backsec,
-    plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil, float skyFloor, float skyCeil, boolean topHasMaterialFix,
-    float* offsets, float* bottom, float* top, boolean* addSolidViewSeg)
-{
-    assert(offsets && bottom && top && addSolidViewSeg);
-    *addSolidViewSeg = false;
-    if((backsec && bfloor->visHeight < bceil->visHeight))
-        getSkymaskBottomTop4(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, seg, frontsec, backsec, bottom, top);
-    else
-        getSkymaskBottomTop6(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, topHasMaterialFix, seg, frontsec, backsec, bottom, top, addSolidViewSeg);
     if(*top > *bottom)
     {
         offsets[0] = *bottom;
@@ -3694,10 +3636,7 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
 
         bottom = top = 0;
         { float offsets[4];
-        if(!backsec || backsec != seg->SG_frontsector)
-        {
-            getSkymaskTopOffsets(seg, frontsec, backsec, ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, offsets, &bottom, &top, &addSolidViewSeg);
-        }
+        getSkymaskTopOffsets(seg, frontsec, backsec, ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, offsets, &bottom, &top, &addSolidViewSeg);
         if(top > bottom)
         {
             getSurfaceLightLevelDeltas(seg, ffloor, fceil, bfloor, bceil, bottom, top, skyFloor, skyCeil, &lightLevelDeltaLeft, &lightLevelDeltaRight, &lightLevelDeltaBottom, &lightLevelDeltaTop);
@@ -3709,14 +3648,122 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
             writePoly(polyType, edgeDeltasZ, lightLevelDeltaLeft, lightLevelDeltaRight, lightLevelDeltaBottom, lightLevelDeltaTop, ambientLightColor, ambientLightLevel, surfaceNormal, fceil->PS_material, seg->length,
                       numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0/*(polyType == RPT_NORMAL? rTUs : 0)*/);
         } }
+        }
+        segPtr++;
+    }
+}
 
-#if 1
+/*static*/ void getSkymaskClosedOffsets(seg_t* seg, sector_t* frontsec, sector_t* backsec,
+    plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil, float skyFloor, float skyCeil, boolean topHasMaterialFix,
+    float* offsets, float* bottom, float* top, boolean* addSolidViewSeg)
+{
+    assert(offsets && bottom && top && addSolidViewSeg);
+    *bottom = 0;
+    *top    = 0;
+    *addSolidViewSeg = false;
+    if(!P_IsInVoid(viewPlayer) && backsec && !(seg->lineDef && LINE_SELFREF(seg->lineDef)) && bceil && (bceil->visHeight <= ffloor->visHeight||bfloor->visHeight>= bceil->visHeight))
+    {
+        if((backsec && bfloor->visHeight < bceil->visHeight))
+            getSkymaskBottomTop4(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, seg, frontsec, backsec, bottom, top);
+        else
+            getSkymaskBottomTop6(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, topHasMaterialFix, seg, frontsec, backsec, bottom, top, addSolidViewSeg);
+    }
+    if(*top > *bottom)
+    {
+        offsets[0] = *bottom;
+        offsets[1] = *top;
+        offsets[2] = *bottom;
+        offsets[3] = *top;
+    }
+}
+
+/**
+ * danij: Still needed?
+ */
+/*static*/ void getSkymaskClosedOffsets2(seg_t* seg, sector_t* frontsec, sector_t* backsec,
+    plane_t* ffloor, plane_t* fceil, plane_t* bfloor, plane_t* bceil, float skyFloor, float skyCeil,
+    boolean bottomHasMaterialFix,
+    float* offsets, float* bottom, float* top, boolean* addSolidViewSeg)
+{
+    assert(offsets && bottom && top && addSolidViewSeg);
+    *bottom = 0;
+    *top    = 0;
+    *addSolidViewSeg = false;
+    if(!P_IsInVoid(viewPlayer) && backsec && !(seg->lineDef && LINE_SELFREF(seg->lineDef)) && bceil && (bceil->visHeight <= ffloor->visHeight||bfloor->visHeight>= bceil->visHeight))
+    {
+        if((backsec && bfloor->visHeight < bceil->visHeight))
+            getSkymaskBottomTop3(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, seg, frontsec, backsec, bottom, top);
+        else
+            getSkymaskBottomTop5(ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, bottomHasMaterialFix, seg, frontsec, backsec, bottom, top, addSolidViewSeg);
+    }
+    if(*top > *bottom)
+    {
+        offsets[0] = *bottom;
+        offsets[1] = *top;
+        offsets[2] = *bottom;
+        offsets[3] = *top;
+    }
+}
+
+/*static*/ void drawSSectSkyFixClosed(rendpolytype_t polyType, subsector_t* ssec, boolean clipBackFacing, boolean flipSurfaceNormals)
+{
+    rtexmapunit_t rTU[NUM_TEXMAP_UNITS];
+    rtexcoord_t rtexcoords[4];
+    rvertex_t rvertices[4];
+    rcolor_t rcolors[4], rcolorsShiny[4];
+    size_t numVerts;
+    seg_t** segPtr;
+
+    numVerts = buildSkymaskQuad(polyType, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0));
+
+    segPtr = ssec->segs;
+    while(*segPtr)
+    {
+        vec3_t edgeDeltasXY[4];
+        vertex_t* from, *to;
+        seg_t* seg = *segPtr;
+
+        if(!skymaskSegIsVisible(seg, clipBackFacing))
+        {
+            segPtr++;
+            continue;
+        }
+
+        // Get the start and end vertices, left then right, bottom and top.
+        from = seg->SG_v(flipSurfaceNormals?1:0);
+        V3_Set(edgeDeltasXY[0], from->V_pos[VX], from->V_pos[VY], 0);
+        V3_Set(edgeDeltasXY[1], from->V_pos[VX], from->V_pos[VY], 0);
+
+        to   = seg->SG_v(flipSurfaceNormals?0:1);
+        V3_Set(edgeDeltasXY[2], to->  V_pos[VX], to->  V_pos[VY], 0);
+        V3_Set(edgeDeltasXY[3], to->  V_pos[VX], to->  V_pos[VY], 0);
+
+        setGeometryXY(polyType, edgeDeltasXY, numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0));
+
+        {
+        linedef_t* lineDef = seg->lineDef;
+        sidedef_t* sideDef = lineDef->L_side(seg->side);
+        sector_t* frontsec = seg->SG_frontsector;
+        sector_t* backsec  = seg->SG_backsector;
+        const float* ambientLightColor = R_GetSectorLightColor(frontsec);
+        float ambientLightLevel = frontsec->lightLevel;
+        plane_t* ffloor = frontsec->SP_plane(PLN_FLOOR);
+        plane_t* fceil  = frontsec->SP_plane(PLN_CEILING);
+        plane_t* bceil  = backsec ? backsec->SP_plane(PLN_CEILING) : 0;
+        plane_t* bfloor = backsec ? backsec->SP_plane(PLN_FLOOR)   : 0;
+        float skyFloor = getSkyFloor(ffloor, fceil, bfloor, bceil);
+        float skyCeil  = getSkyCeiling(ffloor, fceil, bfloor, bceil);
+        vec3_t surfaceNormal;
+        float bottom = 0, top = 0;
+        float lightLevelDeltaLeft = 0, lightLevelDeltaRight = 0, lightLevelDeltaBottom = 0, lightLevelDeltaTop = 0;
+        vec3_t edgeDeltasZ[4];
+        boolean addSolidViewSeg = false;
+
+        getSurfaceNormal(surfaceNormal, lineDef, flipSurfaceNormals);
+
         bottom = top = 0;
         { float offsets[4];
-        if(!P_IsInVoid(viewPlayer) && backsec && !LINE_SELFREF(lineDef) && (bceil->visHeight <= ffloor->visHeight||bfloor->visHeight>= bceil->visHeight))
-        {
-            getSkymaskTopOffsets2(seg, frontsec, backsec, ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, (sideDef->SW_topsurface.inFlags & SUIF_MATERIAL_FIX) != 0, offsets, &bottom, &top, &addSolidViewSeg);
-        }
+        getSkymaskClosedOffsets(seg, frontsec, backsec, ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, (sideDef->SW_topsurface.inFlags & SUIF_MATERIAL_FIX) != 0, offsets, &bottom, &top, &addSolidViewSeg);
         if(top > bottom)
         {
             getSurfaceLightLevelDeltas(seg, ffloor, fceil, bfloor, bceil, bottom, top, skyFloor, skyCeil, &lightLevelDeltaLeft, &lightLevelDeltaRight, &lightLevelDeltaBottom, &lightLevelDeltaTop);
@@ -3734,7 +3781,6 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
             if(addSolidViewSeg)
                 seg->frameFlags |= SEGINF_BACKSECSKYFIX;
         }
-#endif
         }
         segPtr++;
     }
@@ -3756,6 +3802,7 @@ static void Rend_SSectSkyFixes(subsector_t* ssec)
 
     drawSSectSkyFixBottom(polyType, ssec, clipBackFacing, flipSurfaceNormals);
     drawSSectSkyFixTop   (polyType, ssec, clipBackFacing, flipSurfaceNormals);
+    drawSSectSkyFixClosed(polyType, ssec, clipBackFacing, flipSurfaceNormals);
 
     /// Restore original GL state.
     /*
