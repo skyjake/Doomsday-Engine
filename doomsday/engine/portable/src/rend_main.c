@@ -3301,17 +3301,26 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
 
     *bottom = 0;
     *top = 0;
-    if(lineDef)
+    if(!(bceil->visHeight <= ffloor->visHeight || bfloor->visHeight >= fceil->visHeight))
     {
-       sidedef_t* sideDef = SEG_SIDEDEF(seg);
-       if(sideDef && (sideDef->SW_middleinflags & SUIF_PVIS))
-           R_FindBottomTop(SEG_MIDDLE, seg->offset, &sideDef->SW_middlesurface,
-                           ffloor, fceil, bfloor, bceil,
-                           (lineDef->flags & DDLF_DONTPEGBOTTOM)? true : false,
-                           (lineDef->flags & DDLF_DONTPEGTOP)? true : false,
-                           (sideDef->flags & SDF_MIDDLE_STRETCH)? true : false,
-                           LINE_SELFREF(lineDef)? true : false,
-                           bottom, top, texOffset);
+        if(lineDef)
+        {
+           sidedef_t* sideDef = SEG_SIDEDEF(seg);
+           if(sideDef && (sideDef->SW_middleinflags & SUIF_PVIS))
+               R_FindBottomTop(SEG_MIDDLE, seg->offset, &sideDef->SW_middlesurface,
+                               ffloor, fceil, bfloor, bceil,
+                               (lineDef->flags & DDLF_DONTPEGBOTTOM)? true : false,
+                               (lineDef->flags & DDLF_DONTPEGTOP)? true : false,
+                               (sideDef->flags & SDF_MIDDLE_STRETCH)? true : false,
+                               LINE_SELFREF(lineDef)? true : false,
+                               bottom, top, texOffset);
+        }
+    }
+    else
+    {
+        *bottom = skyFloor;
+        *top = ffloor->visHeight;
+        return;
     }
 
     if(*top > *bottom)
@@ -3343,17 +3352,26 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
 
     *bottom = 0;
     *top = 0;
-    if(lineDef)
+    if(!(bceil->visHeight <= ffloor->visHeight || bfloor->visHeight >= fceil->visHeight))
     {
-        sidedef_t* sideDef = SEG_SIDEDEF(seg);
-        if(sideDef && (sideDef->SW_middleinflags & SUIF_PVIS))
-           R_FindBottomTop(SEG_MIDDLE, seg->offset, &sideDef->SW_middlesurface,
-                           ffloor, fceil, bfloor, bceil,
-                           (lineDef->flags & DDLF_DONTPEGBOTTOM)? true : false,
-                           (lineDef->flags & DDLF_DONTPEGTOP)? true : false,
-                           (sideDef->flags & SDF_MIDDLE_STRETCH)? true : false,
-                           LINE_SELFREF(lineDef)? true : false,
-                           bottom, top, texOffset);
+        if(lineDef)
+        {
+            sidedef_t* sideDef = SEG_SIDEDEF(seg);
+            if(sideDef && (sideDef->SW_middleinflags & SUIF_PVIS))
+               R_FindBottomTop(SEG_MIDDLE, seg->offset, &sideDef->SW_middlesurface,
+                               ffloor, fceil, bfloor, bceil,
+                               (lineDef->flags & DDLF_DONTPEGBOTTOM)? true : false,
+                               (lineDef->flags & DDLF_DONTPEGTOP)? true : false,
+                               (sideDef->flags & SDF_MIDDLE_STRETCH)? true : false,
+                               LINE_SELFREF(lineDef)? true : false,
+                               bottom, top, texOffset);
+        }
+    }
+    else
+    {
+        *bottom = ffloor->visHeight;
+        *top = skyCeil;
+        return;
     }
 
     if(*top > *bottom)
@@ -3553,9 +3571,10 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
                       numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0/*(polyType == RPT_NORMAL? rTUs : 0)*/);
         } }
 
+#if 1
         bottom = top = 0;
         { float offsets[4];
-        if(!P_IsInVoid(viewPlayer) && backsec && !LINE_SELFREF(lineDef))
+        if(!P_IsInVoid(viewPlayer) && backsec && !LINE_SELFREF(lineDef) && (bfloor->visHeight >= fceil->visHeight||bceil->visHeight<= bfloor->visHeight))
         {
             getSkymaskBottomOffsets2(seg, frontsec, backsec, ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, (sideDef->SW_bottomsurface.inFlags & SUIF_MATERIAL_FIX) != 0, offsets, &bottom, &top, &addSolidViewSeg);
         }
@@ -3576,6 +3595,7 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
             if(addSolidViewSeg)
                 seg->frameFlags |= SEGINF_BACKSECSKYFIX;
         }
+#endif
         }
         segPtr++;
     }
@@ -3690,9 +3710,10 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
                       numVerts, rvertices, (polyType == RPT_NORMAL? rtexcoords : 0), (polyType == RPT_NORMAL? rcolors : 0), (polyType == RPT_NORMAL? rcolorsShiny : 0), rTU, 0/*(polyType == RPT_NORMAL? rTUs : 0)*/);
         } }
 
+#if 1
         bottom = top = 0;
         { float offsets[4];
-        if(!P_IsInVoid(viewPlayer) && backsec && !LINE_SELFREF(lineDef))
+        if(!P_IsInVoid(viewPlayer) && backsec && !LINE_SELFREF(lineDef) && (bceil->visHeight <= ffloor->visHeight||bfloor->visHeight>= bceil->visHeight))
         {
             getSkymaskTopOffsets2(seg, frontsec, backsec, ffloor, fceil, bfloor, bceil, skyFloor, skyCeil, (sideDef->SW_topsurface.inFlags & SUIF_MATERIAL_FIX) != 0, offsets, &bottom, &top, &addSolidViewSeg);
         }
@@ -3713,6 +3734,7 @@ static __inline float getSkyCeiling(plane_t* ffloor, plane_t* fceil, plane_t* bf
             if(addSolidViewSeg)
                 seg->frameFlags |= SEGINF_BACKSECSKYFIX;
         }
+#endif
         }
         segPtr++;
     }
