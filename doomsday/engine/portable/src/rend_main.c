@@ -3319,7 +3319,7 @@ static int buildSkymaskQuad(rendpolytype_t polyType, rvertex_t* rvertices, rtexc
     else
     {
         *bottom = skyFloor;
-        *top = ffloor->visHeight;
+        *top = fceil->visHeight;
         return;
     }
 
