@@ -4006,9 +4006,8 @@ static void Rend_RenderSubsector(uint ssecidx)
         const plane_t* plane;
         const surface_t* suf;
         material_t* mat;
-        boolean isGlowing, isSkyMasked, addDLights, flipSurfaceNormal, clipBackFacing;
+        boolean isSkyMasked, addDLights, flipSurfaceNormal, clipBackFacing;
 
-        isGlowing = false;
         isSkyMasked = false;
         addDLights = true;
         flipSurfaceNormal = false;
@@ -4061,10 +4060,6 @@ static void Rend_RenderSubsector(uint ssecidx)
         texScale[VX] = ((suf->flags & DDSUF_MATERIAL_FLIPH)? -1 : 1);
         texScale[VY] = ((suf->flags & DDSUF_MATERIAL_FLIPV)? -1 : 1);
 
-        /// danij: It appears we are currently projecting dynlights onto the back
-        /// of the plane. Otherwise we could implement the dynamic normal flipping.
-
-        flipSurfaceNormal = (i == 1? vy < height : vy > height);
         if(!devRendSkyMode)
         {
             isSkyMasked = R_IsSkySurface(suf);
@@ -4073,8 +4068,10 @@ static void Rend_RenderSubsector(uint ssecidx)
         else
         {
             //clipBackFacing = R_IsSkySurface(suf)? false : true;
-            if(devRendSkyMode == 2)
-                flipSurfaceNormal = false;
+            if(R_IsSkySurface(suf) && devRendSkyMode == 2)
+            {
+                flipSurfaceNormal = (i == 0? vy < height : vy > height);
+            }
         }
 
         Rend_RenderPlane(ssec, plane->type, height, suf->normal, mat,
