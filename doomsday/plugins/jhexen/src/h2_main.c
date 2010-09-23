@@ -284,6 +284,9 @@ void G_PreInit(void)
     cfg.menuColors[1][0] = defFontRGB2[0]; // use the default colour by default.
     cfg.menuColors[1][1] = defFontRGB2[1];
     cfg.menuColors[1][2] = defFontRGB2[2];
+    cfg.menuColors[2][0] = defFontRGB3[0];
+    cfg.menuColors[2][1] = defFontRGB3[1];
+    cfg.menuColors[2][2] = defFontRGB3[2];
     cfg.menuEffects = 0;
     cfg.menuHotkeys = true;
     cfg.menuNoStretch = false;
