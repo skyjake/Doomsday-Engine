@@ -645,7 +645,7 @@ TARGET_LINK_LIBRARIES (doomsday ${SDL_LIBRARY} ${SDLMIXER_LIBRARY} ${SDLNET_LIBR
 
 IF (UNIX)
     IF (NOT WIN32)
-        TARGET_LINK_LIBRARIES (doomsday dl)
+        TARGET_LINK_LIBRARIES (doomsday dl m)
             IF (NOT APPLE)
                 TARGET_LINK_LIBRARIES (doomsday  ${X11_LIBRARIES})
             ENDIF (NOT APPLE)
