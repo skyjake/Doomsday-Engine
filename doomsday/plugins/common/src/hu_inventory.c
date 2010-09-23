@@ -278,6 +278,9 @@ static void inventoryIndexes(const player_t* plr, const hud_inventory_t* inv,
             first = 0;
     }
 
+    if(from < 0)
+        from = 0;
+
     if(firstVisible)
         *firstVisible = (unsigned) first;
     if(cursorPos)
@@ -365,7 +368,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
         a = i == selected? .5f : light / 2;
 
         DGL_Color4f(light, light, light, a * iconAlpha);
-        GL_DrawPatch(dpInvItemBox, x + slot * ST_INVSLOTWIDTH + ST_INVSLOTOFFX, y);
+        GL_DrawPatch(dpInvItemBox, x + slot * ST_INVSLOTWIDTH + (slot > 1? (slot-1) * ST_INVSLOTOFFX : 0), y);
 
         if(i >= startSlot && i < endSlot)
         {
@@ -375,9 +378,9 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
             if((count = P_InventoryCount(player, item->type)))
             {
 #if __JHEXEN__
-                int posX = x + slot * ST_INVSLOTWIDTH - 1;
+                int posX = x + slot * ST_INVSLOTWIDTH + (slot > 1? (slot-1) * ST_INVSLOTOFFX : 0) - 1;
 #else
-                int posX = x + slot * ST_INVSLOTWIDTH;
+                int posX = x + slot * ST_INVSLOTWIDTH + (slot > 1? (slot-1) * ST_INVSLOTOFFX : 0);
 #endif
                 DGL_Color4f(1, 1, 1, slot == selected? iconAlpha : iconAlpha / 2);
                 GL_DrawPatch(item->patchId, posX, y + ST_INVICONOFFY);
@@ -387,7 +390,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
                     char buf[20];
                     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], slot == selected? textAlpha : textAlpha / 2);
                     dd_snprintf(buf, 20, "%i", count);
-                    GL_DrawTextFragment4(buf, x + slot * ST_INVSLOTWIDTH + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
+                    GL_DrawTextFragment4(buf, posX + ST_INVCOUNTOFFX, y + ST_INVCOUNTOFFY, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
                 }
             }
 
@@ -398,7 +401,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
     }
 
     DGL_Color4f(1, 1, 1, iconAlpha);
-    GL_DrawPatch(dpInvSelectBox, x + selected * ST_INVSLOTWIDTH, y + ST_INVSELECTOFFY - BORDER);
+    GL_DrawPatch(dpInvSelectBox, x + selected * ST_INVSLOTWIDTH + (selected > 1? (selected-1) * ST_INVSLOTOFFX : 0), y + ST_INVSELECTOFFY - BORDER);
 
     if(inv->numUsedSlots > maxVisSlots)
     {
@@ -414,7 +417,7 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
         if(cfg.inventoryWrap || inv->numUsedSlots - first > numVisSlots)
         {
             DGL_Color4f(1, 1, 1, iconAlpha);
-            GL_DrawPatch(dpInvPageRight[!(mapTime & 4)? 1 : 0], x + numVisSlots * ST_INVSLOTWIDTH + ARROW_RELXOFF + 1, y + ARROW_YOFFSET);
+            GL_DrawPatch(dpInvPageRight[!(mapTime & 4)? 1 : 0], x + numVisSlots * ST_INVSLOTWIDTH + (numVisSlots > 1? (numVisSlots-1) * ST_INVSLOTOFFX : 0) + ARROW_RELXOFF - 2, y + ARROW_YOFFSET);
         }
 
 #undef ARROW_XOFFSET
@@ -497,26 +500,14 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
         if(cfg.inventoryWrap || first != 0)
         {
             DGL_Color4f(1, 1, 1, alpha);
-            GL_DrawPatch(dpInvPageLeft[!(mapTime & 4)? 1 : 0],
-#if __JHEXEN__
-                                 42, 163
-#else
-                                 x - 12, y - 1
-#endif
-                                 );
+            GL_DrawPatch(dpInvPageLeft[!(mapTime & 4)? 1 : 0], x - 12, y - 1);
         }
 
         // Draw more right indicator.
         if(cfg.inventoryWrap || inv->numUsedSlots - first > NUMVISINVSLOTS)
         {
             DGL_Color4f(1, 1, 1, alpha);
-            GL_DrawPatch(dpInvPageRight[!(mapTime & 4)? 1 : 0], 269,
-#if __JHEXEN__
-                                 163
-#else
-                                 y - 1
-#endif
-                                 );
+            GL_DrawPatch(dpInvPageRight[!(mapTime & 4)? 1 : 0], x + NUMVISINVSLOTS * ST_INVSLOTWIDTH + (NUMVISINVSLOTS-1) * ST_INVSLOTOFFX - 2, y - 1);
         }
     }
 

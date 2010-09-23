@@ -44,6 +44,7 @@
 #include "p_user.h"
 #include "p_start.h"
 #include "p_inventory.h"
+#include "hu_inventory.h"
 #include "g_eventsequence.h"
 
 // MACROS ------------------------------------------------------------------
@@ -390,8 +391,12 @@ int Cht_WarpFunc(const int* args, int player)
 
     // Close any open automaps.
     for(i = 0; i < MAXPLAYERS; ++i)
-        if(players[i].plr->inGame)
-            AM_Open(AM_MapForPlayer(i), false, true);
+    {
+        if(!players[i].plr->inGame)
+            continue;
+        AM_Open(AM_MapForPlayer(i), false, true);
+        Hu_InventoryOpen(i, false);
+    }
 
     // So be it.
     if(userGame)

@@ -938,6 +938,9 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
 
         // Don't die with the automap open.
         AM_Open(AM_MapForPlayer(target->player - players), false, false);
+#if __JHERETIC__ || __JHEXEN__
+        Hu_InventoryOpen(target->player - players, false);
+#endif
     }
 
     if(target->health < -target->info->spawnHealth &&

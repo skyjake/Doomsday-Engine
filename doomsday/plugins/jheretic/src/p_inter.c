@@ -36,6 +36,7 @@
 #include "dmu_lib.h"
 #include "p_player.h"
 #include "p_inventory.h"
+#include "hu_inventory.h"
 #include "p_tick.h"
 #include "p_user.h"
 #include "p_mapsetup.h"
@@ -968,6 +969,9 @@ void P_KillMobj(mobj_t* source, mobj_t* target)
 
         // Don't die with the automap open.
         AM_Open(AM_MapForPlayer(target->player - players), false, false);
+#if __JHERETIC__ || __JHEXEN__
+        Hu_InventoryOpen(target->player - players, false);
+#endif
     }
 
     if((state = P_GetState(target->type, SN_XDEATH)) != S_NULL &&

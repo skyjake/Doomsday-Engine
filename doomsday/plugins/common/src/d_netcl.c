@@ -50,6 +50,7 @@
 #include "g_common.h"
 #include "p_actor.h"
 #include "p_inventory.h"
+#include "hu_inventory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -605,9 +606,14 @@ void NetCl_Intermission(byte* data)
     {
         uint i;
 
-        // Close any automaps left open at the end of the previous map.
+        // Close any HUDs left open at the end of the previous map.
         for(i = 0; i < MAXPLAYERS; ++i)
+        {
             AM_Open(AM_MapForPlayer(i), false, true);
+#if __JHERETIC__ || __JHEXEN__
+            Hu_InventoryOpen(i, false);
+#endif
+        }
 
         GL_SetFilter(false);
 

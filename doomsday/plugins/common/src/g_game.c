@@ -1447,6 +1447,10 @@ boolean G_StartFinale(const char* script, int flags, finale_mode_t mode)
 
         // Close the automap for all local players.
         AM_Open(AM_MapForPlayer(i), false, true);
+
+#if __JHERETIC__ || __JHEXEN__
+        Hu_InventoryOpen(i, false);
+#endif
     }}
     FI_StackExecute(script, flags, mode);
     return true;
@@ -2437,6 +2441,10 @@ void G_DoMapCompleted(void)
         {
             AM_Open(AM_MapForPlayer(i), false, true);
 
+#if __JHERETIC__ || __JHEXEN__
+            Hu_InventoryOpen(i, false);
+#endif
+
             G_PlayerLeaveMap(i); // take away cards and stuff
 
             // Update this client's stats.
@@ -2738,8 +2746,14 @@ void G_InitNew(skillmode_t skill, uint episode, uint map)
 
     // Close any open automaps.
     for(i = 0; i < MAXPLAYERS; ++i)
-        if(players[i].plr->inGame)
-            AM_Open(AM_MapForPlayer(i), false, true);
+    {
+        if(!players[i].plr->inGame)
+            continue;
+        AM_Open(AM_MapForPlayer(i), false, true);
+#if __JHERETIC__ || __JHEXEN__
+        Hu_InventoryOpen(i, false);
+#endif
+    }
 
     // If there are any InFine scripts running, they must be stopped.
     FI_StackClear();
@@ -3362,8 +3376,12 @@ int Hook_DemoStop(int hookType, int val, void* paramaters)
 
     {int i;
     for(i = 0; i < MAXPLAYERS; ++i)
+    {
         AM_Open(AM_MapForPlayer(i), false, true);
-    }
+#if __JHERETIC__ || __JHEXEN__
+        Hu_InventoryOpen(i, false);
+#endif
+    }}
     return true;
 }
 
