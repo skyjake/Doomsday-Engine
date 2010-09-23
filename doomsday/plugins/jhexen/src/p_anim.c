@@ -66,7 +66,7 @@ static void parseAnimGroup(gltexture_type_t type)
         SC_ScriptError("Missing string.");
     }
 
-    if((texNumBase = GL_CheckTextureNumForName(sc_String, DD_MaterialNamespaceForTextureType(type))) != 0)
+    if((texNumBase = GL_CheckTextureNumForName(sc_String, type)) != 0)
         ignore = false;
 
     if(!ignore)
@@ -99,12 +99,12 @@ static void parseAnimGroup(gltexture_type_t type)
                 }
                 else
                 {
-                    SC_ScriptError(NULL);
+                    SC_ScriptError(0);
                 }
 
                 if(!ignore)
                 {
-                    materialnum_t frame = DD_MaterialForTexture(texNumBase + picNum - 1, DD_MaterialNamespaceForTextureType(type));
+                    materialnum_t frame = DD_MaterialForTexture(texNumBase + picNum - 1, type);
                     if(frame != 0)
                         Materials_AddAnimGroupFrame(groupNumber, frame, min, (max > 0? max - min : 0));
                 }
@@ -145,7 +145,7 @@ void P_InitPicAnims(void)
             }
             else
             {
-                SC_ScriptError(NULL);
+                SC_ScriptError(0);
             }
         }
 
