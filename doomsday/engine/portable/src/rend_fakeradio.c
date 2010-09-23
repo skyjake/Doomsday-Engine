@@ -1233,9 +1233,8 @@ static float radioEdgeOpenness(float fz, float bz, float bhz)
     return 2;
 }
 
-static void setRelativeHeights(sector_t *front, sector_t *back,
-                               boolean isCeiling,
-                               float *fz, float *bz, float *bhz)
+static void setRelativeHeights(const sector_t* front, const sector_t* back, boolean isCeiling,
+    float* fz, float* bz, float* bhz)
 {
     if(fz)
     {
@@ -1257,12 +1256,10 @@ static void setRelativeHeights(sector_t *front, sector_t *back,
     }
 }
 
-static uint radioEdgeHackType(linedef_t *line, sector_t *front,
-                              sector_t *back, int backside,
-                              boolean isCeiling, float fz, float bz)
+static uint radioEdgeHackType(const linedef_t* line, const sector_t* front, const sector_t* back,
+    int backside, boolean isCeiling, float fz, float bz)
 {
-    surface_t          *surface = &line->L_side(backside)->
-                             sections[isCeiling? SEG_TOP:SEG_BOTTOM];
+    surface_t* surface = &line->L_side(backside)->sections[isCeiling? SEG_TOP:SEG_BOTTOM];
 
     if(fz < bz && !surface->material &&
        !(surface->inFlags & SUIF_MATERIAL_FIX))
@@ -1283,98 +1280,245 @@ static uint radioEdgeHackType(linedef_t *line, sector_t *front,
     // Check for unmasked midtextures on twosided lines that completely
     // fill the gap between floor and ceiling (we don't want to give away
     // the location of any secret areas (false walls)).
-    if(Rend_DoesMidTextureFillGap(line, backside, false))
+    if(Rend_DoesMidTextureFillGap((linedef_t*)line, backside, false))
         return 1; // Consider it fully closed.
 
     return 0;
 }
 
 /**
- * Calculate the corner coordinates and add a new shadow polygon to the
- * rendering lists.
+ * Construct and write a new shadow polygon to the rendering lists.
  */
-static void radioAddShadowEdge(const linedef_t* line, byte side,
-                               vec2_t inner[2], vec2_t outer[2], float z,
-                               const float shadowRGB[3], float darkness,
-                               float sideOpen[2], float normal[3])
+/*static*/ void addShadowEdge(vec2_t inner[2], vec2_t outer[2], float innerLeftZ,
+    float innerRightZ, float outerLeftZ, float outerRightZ, const float sideOpen[2],
+    const float edgeOpen[2], boolean isFloor, const float shadowRGB[3], float shadowDark, const rtexmapunit_t rTU[NUM_TEXMAP_UNITS])
 {
-    static const uint   floorIndices[][4] = {{0, 1, 2, 3}, {1, 2, 3, 0}};
-    static const uint   ceilIndices[][4]  = {{0, 3, 2, 1}, {1, 0, 3, 2}};
+    static const uint floorIndices[][4] = {{0, 1, 2, 3}, {1, 2, 3, 0}};
+    static const uint ceilIndices[][4]  = {{0, 3, 2, 1}, {1, 0, 3, 2}};
 
-    uint                wind; // Winding: 0 = left, 1 = right
-    const uint*         idx;
-    rvertex_t           rvertices[4];
-    rcolor_t            rcolors[4];
-    rtexmapunit_t       rTU[NUM_TEXMAP_UNITS];
-    float               shadowAlpha;
-    vertex_t*           vtx0, *vtx1;
+    rvertex_t rvertices[4];
+    rcolor_t rcolors[4];
+    vec2_t outerAlpha;
+    const uint* idx;
+    uint winding; // Winding: 0 = left, 1 = right
 
-    if(darkness < 0)
+    V2_Set(outerAlpha, MIN_OF(shadowDark * (1 - edgeOpen[0]), 1), MIN_OF(shadowDark * (1 - edgeOpen[1]), 1));
+
+    if(!(outerAlpha[0] > .0001 && outerAlpha[1] > .0001))
         return;
-
-    shadowAlpha = MIN_OF(darkness, 1.0f);
-
-    vtx0 = line->L_v(side^0);
-    vtx1 = line->L_v(side^1);
 
     // What vertex winding order?
     // (for best results, the cross edge should always be the shortest).
-    wind = (V2_Distance(inner[1], vtx1->V_pos) >
-            V2_Distance(inner[0], vtx0->V_pos)? 1 : 0);
+    winding = (V2_Distance(inner[1], outer[1]) > V2_Distance(inner[0], outer[0])? 1 : 0);
 
-    memset(rTU, 0, sizeof(rTU));
-    rTU[TU_PRIMARY].blend = 1;
-
-    idx = (normal[VZ] > 0 ? floorIndices[wind] : ceilIndices[wind]);
+    idx = (isFloor ? floorIndices[winding] : ceilIndices[winding]);
 
     // Left outer corner.
-    rvertices[idx[0]].pos[VX] = vtx0->V_pos[VX];
-    rvertices[idx[0]].pos[VY] = vtx0->V_pos[VY];
-    rvertices[idx[0]].pos[VZ] = z;
-
-    rcolors[idx[0]].rgba[CR] = (renderWireframe? 1 : shadowRGB[CR]);
-    rcolors[idx[0]].rgba[CG] = (renderWireframe? 1 : shadowRGB[CG]);
-    rcolors[idx[0]].rgba[CB] = (renderWireframe? 1 : shadowRGB[CB]);
-    rcolors[idx[0]].rgba[CA] = shadowAlpha;
-    if(sideOpen[0] < 1)
-        rcolors[idx[0]].rgba[CA] *= 1 - sideOpen[0];
+    rvertices[idx[0]].pos[VX] = outer[0][VX];
+    rvertices[idx[0]].pos[VY] = outer[0][VY];
+    rvertices[idx[0]].pos[VZ] = outerLeftZ;
 
     // Right outer corner.
-    rvertices[idx[1]].pos[VX] = vtx1->V_pos[VX];
-    rvertices[idx[1]].pos[VY] = vtx1->V_pos[VY];
-    rvertices[idx[1]].pos[VZ] = z;
-
-    rcolors[idx[1]].rgba[CR] = (renderWireframe? 1 : shadowRGB[CR]);
-    rcolors[idx[1]].rgba[CG] = (renderWireframe? 1 : shadowRGB[CG]);
-    rcolors[idx[1]].rgba[CB] = (renderWireframe? 1 : shadowRGB[CB]);
-    rcolors[idx[1]].rgba[CA] = shadowAlpha;
-    if(sideOpen[1] < 1)
-        rcolors[idx[1]].rgba[CA] *= 1 - sideOpen[1];
+    rvertices[idx[1]].pos[VX] = outer[1][VX];
+    rvertices[idx[1]].pos[VY] = outer[1][VY];
+    rvertices[idx[1]].pos[VZ] = outerRightZ;
 
     // Right inner corner.
     rvertices[idx[2]].pos[VX] = inner[1][VX];
     rvertices[idx[2]].pos[VY] = inner[1][VY];
-    rvertices[idx[2]].pos[VZ] = z;
-
-    rcolors[idx[2]].rgba[CR] = (renderWireframe? 1 : shadowRGB[CR]);
-    rcolors[idx[2]].rgba[CG] = (renderWireframe? 1 : shadowRGB[CG]);
-    rcolors[idx[2]].rgba[CB] = (renderWireframe? 1 : shadowRGB[CB]);
-    rcolors[idx[2]].rgba[CA] = 0;
+    rvertices[idx[2]].pos[VZ] = innerRightZ;
 
     // Left inner corner.
     rvertices[idx[3]].pos[VX] = inner[0][VX];
     rvertices[idx[3]].pos[VY] = inner[0][VY];
-    rvertices[idx[3]].pos[VZ] = z;
+    rvertices[idx[3]].pos[VZ] = innerLeftZ;
 
-    rcolors[idx[3]].rgba[CR] = (renderWireframe? 1 : shadowRGB[CR]);
-    rcolors[idx[3]].rgba[CG] = (renderWireframe? 1 : shadowRGB[CG]);
-    rcolors[idx[3]].rgba[CB] = (renderWireframe? 1 : shadowRGB[CB]);
+    // Light this polygon.
+    { int i;
+    for(i = 0; i < 4; ++i)
+    {
+        rcolors[idx[i]].rgba[CR] = (renderWireframe? 1 : shadowRGB[CR]);
+        rcolors[idx[i]].rgba[CG] = (renderWireframe? 1 : shadowRGB[CG]);
+        rcolors[idx[i]].rgba[CB] = (renderWireframe? 1 : shadowRGB[CB]);
+    }}
+
+    // Right inner.
+    rcolors[idx[2]].rgba[CA] = 0;
+
+    // Left inner.
     rcolors[idx[3]].rgba[CA] = 0;
 
+    // Left outer.
+    rcolors[idx[0]].rgba[CA] = outerAlpha[0];
+    if(sideOpen[0] < 1)
+        rcolors[idx[0]].rgba[CA] *= 1 - sideOpen[0];
+
+    // Right outer.
+    rcolors[idx[1]].rgba[CA] = outerAlpha[1];
+    if(sideOpen[1] < 1)
+        rcolors[idx[1]].rgba[CA] *= 1 - sideOpen[1];
+
     if(rendFakeRadio != 2)
-        RL_AddPoly(PT_FAN, (renderWireframe? RPT_NORMAL : RPT_SHADOW),
-                   rvertices, NULL, NULL, NULL,
-                   rcolors, 4, 0, 0, NULL, rTU);
+        RL_AddPoly(PT_FAN, (renderWireframe? RPT_NORMAL : RPT_SHADOW), rvertices, NULL, NULL, NULL, rcolors, 4, 0, 0, NULL, rTU);
+}
+
+/*static*/ void drawEdgeShadow(const subsector_t* ssec, const linedef_t* lineDef, uint side,
+    uint planeId, float shadowDark)
+{
+    assert(ssec && lineDef && (side == FRONT || side == BACK) && lineDef->L_side(side) && planeId <= lineDef->L_sector(side)->planeCount);
+    {
+    const sidedef_t* sideDef = lineDef->L_side(side? BACK : FRONT);
+    const plane_t* pln = sideDef->sector->SP_plane(planeId);
+    float plnHeight, fz, bz, bhz;
+    vec2_t inner[2], outer[2], edgeOpen, sideOpen;
+    vec3_t shadowRGB;
+    sector_t* front, *back;
+    const surface_t* suf;
+
+    if(!(shadowDark > .0001))
+        return;
+
+    // Determine the openness of the lineDef. If this edge is edgeOpen,
+    // there won't be a shadow at all. Open neighbours cause some
+    // changes in the polygon corner vertices (placement, colour).
+
+    suf = &pln->surface;
+    plnHeight = pln->visHeight;
+
+    // Glowing surfaces or missing textures shouldn't have shadows.
+    if((suf->inFlags & SUIF_NO_RADIO) || !suf->material || R_IsSkySurface(suf))
+        return;
+
+    if(lineDef->L_backside)
+    {
+        uint hackType;
+
+        front = lineDef->L_sector(side);
+        back  = lineDef->L_sector(side ^ 1);
+        setRelativeHeights(front, back, planeId == PLN_CEILING, &fz, &bz, &bhz);
+
+        hackType = radioEdgeHackType(lineDef, front, back, side, planeId == PLN_CEILING, fz, bz);
+        if(hackType)
+        {
+            V2_Set(edgeOpen, hackType - 1, hackType - 1);
+        }
+        else
+        {
+            float openness = radioEdgeOpenness(fz, bz, bhz);
+            V2_Set(edgeOpen, openness, openness);
+        }
+    }
+    else
+        V2_Set(edgeOpen, 0, 0);
+
+    if(edgeOpen[0] >= 1 && edgeOpen[1] >= 1)
+        return;
+
+    // Find the neighbors of this edge and determine their 'openness'.
+    sideOpen[0] = sideOpen[1] = 0;
+    { int i;
+    for(i = 0; i < 2; ++i)
+    {
+        lineowner_t* vo;
+        linedef_t* neighbor;
+
+        vo = lineDef->L_vo(side^i)->link[i^1];
+        neighbor = vo->lineDef;
+
+        if(neighbor != lineDef && !neighbor->L_backside &&
+           neighbor->buildData.windowEffect &&
+           neighbor->L_frontsector != ssec->sector)
+        {   // A one-way window, edgeOpen side.
+            sideOpen[i] = 1;
+        }
+        else if(!(neighbor == lineDef || !neighbor->L_backside))
+        {
+            sector_t* othersec;
+            byte otherSide;
+
+            otherSide = (lineDef->L_v(i^side) == neighbor->L_v1? i : i^1);
+            othersec = neighbor->L_sector(otherSide);
+
+            // Exclude 'special' neighbors which we pretend to be solid.
+            if(LINE_SELFREF(neighbor) ||
+               ((R_IsSkySurface(&othersec->SP_planesurface(planeId)) ||
+                 R_IsSkySurface(&othersec->SP_planesurface(PLN_CEILING))) &&
+                othersec->SP_floorvisheight >= othersec->SP_ceilvisheight))
+            {
+                sideOpen[i] = 1;
+            }
+            else if(Rend_DoesMidTextureFillGap(neighbor, otherSide^1, false))
+            {
+                sideOpen[i] = 0;
+            }
+            else
+            {   // Its a normal neighbor.
+                if(neighbor->L_sector(otherSide) != lineDef->L_sector(side) &&
+                   !((pln->type == PLN_FLOOR && othersec->SP_ceilvisheight <= pln->visHeight) ||
+                     (pln->type == PLN_CEILING && othersec->SP_floorheight >= pln->visHeight)))
+                {
+                    front = lineDef->L_sector(side);
+                    back  = neighbor->L_sector(otherSide);
+
+                    setRelativeHeights(front, back, planeId == PLN_CEILING, &fz, &bz, &bhz);
+                    sideOpen[i] = radioEdgeOpenness(fz, bz, bhz);
+                }
+            }
+        }
+
+        if(sideOpen[i] < 1)
+        {
+            vo = lineDef->L_vo(i^side);
+            if(i)
+                vo = vo->LO_prev;
+
+            V2_Sum(inner[i], lineDef->L_vpos(i^side), vo->shadowOffsets.inner);
+        }
+        else
+        {
+            V2_Sum(inner[i], lineDef->L_vpos(i^side), vo->shadowOffsets.extended);
+        }
+    }}
+
+    V2_Copy(outer[0], lineDef->L_vpos(side));
+    V2_Copy(outer[1], lineDef->L_vpos(side^1));
+
+    { material_snapshot_t ms;
+    rtexmapunit_t rTU[NUM_TEXMAP_UNITS];
+
+    Materials_Prepare(&ms, pln->PS_material, true, 0);
+    if(ms.glowing > 0)
+        return;
+
+    memset(rTU, 0, sizeof(rTU));
+    rTU[TU_PRIMARY].blend = 1;
+
+    // Shadows are black
+    V3_Set(shadowRGB, 0, 0, 0);
+
+    addShadowEdge(inner, outer, plnHeight, plnHeight, plnHeight, plnHeight, sideOpen, edgeOpen, suf->normal[VZ] > 0, shadowRGB, shadowDark, rTU); }
+    }
+}
+
+static void drawLinkedEdgeShadows(const subsector_t* ssec, shadowlink_t* link, const byte* doPlanes, float shadowDark)
+{
+    assert(ssec && link && doPlanes);
+
+    if(!(shadowDark > .0001))
+        return;
+
+    if(doPlanes[PLN_FLOOR])
+        drawEdgeShadow(ssec, link->lineDef, link->side, PLN_FLOOR, shadowDark);
+    if(doPlanes[PLN_CEILING])
+        drawEdgeShadow(ssec, link->lineDef, link->side, PLN_CEILING, shadowDark);
+    { uint pln;
+    for(pln = PLN_MID; pln < ssec->sector->planeCount; ++pln)
+    {
+        drawEdgeShadow(ssec, link->lineDef, link->side, pln, shadowDark);
+    }}
+
+    // Mark it rendered for this frame.
+    link->lineDef->shadowVisFrame[link->side] = (ushort) frameCount;
 }
 
 /**
@@ -1386,20 +1530,13 @@ static void radioAddShadowEdge(const linedef_t* line, byte side,
  */
 static void radioSubsectorEdges(const subsector_t* subsector)
 {
-    static size_t       doPlaneSize = 0;
-    static byte*        doPlane = NULL;
+    static size_t doPlaneSize = 0;
+    static byte* doPlanes = NULL;
 
-    uint                i, pln, hack, side;
-    float               open, sideOpen[2], vec[3];
-    float               fz, bz, bhz, plnHeight;
-    sector_t*           front, *back;
-    linedef_t*          line;
-    surface_t*          suf;
-    shadowlink_t*       link;
-    vec2_t              inner[2], outer[2];
-    boolean             workToDo = false;
-    float               shadowWallSize, shadowDark, shadowRGB[3];
-    float               sectorlight = subsector->sector->lightLevel;
+    float sectorlight = subsector->sector->lightLevel;
+    float shadowWallSize, shadowDark;
+    boolean workToDo = false;
+    float vec[3];
 
     Rend_ApplyLightAdaptation(&sectorlight);
 
@@ -1413,8 +1550,9 @@ static void radioSubsectorEdges(const subsector_t* subsector)
 
     vec[VX] = vx - subsector->midPoint.pos[VX];
     vec[VY] = vz - subsector->midPoint.pos[VY];
+    vec[VZ] = 0;
 
-    // Do we need to enlarge the size of the doPlane array?
+    // Do we need to enlarge the size of the doPlanes array?
     if(subsector->sector->planeCount > doPlaneSize)
     {
         if(!doPlaneSize)
@@ -1422,15 +1560,16 @@ static void radioSubsectorEdges(const subsector_t* subsector)
         else
             doPlaneSize *= 2;
 
-        doPlane = Z_Realloc(doPlane, doPlaneSize, PU_STATIC);
+        doPlanes = Z_Realloc(doPlanes, doPlaneSize, PU_STATIC);
     }
 
-    memset(doPlane, 0, doPlaneSize);
+    memset(doPlanes, 0, doPlaneSize);
 
     // See if any of this subsector's planes will get shadows.
+    { uint pln;
     for(pln = 0; pln < subsector->sector->planeCount; ++pln)
     {
-        plane_t* plane = subsector->sector->planes[pln];
+        const plane_t* plane = subsector->sector->planes[pln];
 
         vec[VZ] = vy - plane->visHeight;
 
@@ -1438,153 +1577,24 @@ static void radioSubsectorEdges(const subsector_t* subsector)
         if(M_DotProduct(vec, plane->PS_normal) < 0)
             continue;
 
-        doPlane[pln] = true;
+        doPlanes[pln] = true;
         workToDo = true;
-    }
+    }}
 
     if(!workToDo)
         return;
 
     // We need to check all the shadow lines linked to this subsector for
     // the purpose of fakeradio shadowing.
+    { shadowlink_t* link;
     for(link = subsector->shadows; link != NULL; link = link->next)
     {
         // Already rendered during the current frame? We only want to
         // render each shadow once per frame.
         if(link->lineDef->shadowVisFrame[link->side] == (ushort) frameCount)
             continue;
-
-        // Now it will be rendered.
-        link->lineDef->shadowVisFrame[link->side] = (ushort) frameCount;
-
-        line = link->lineDef;
-        side = link->side;
-
-        for(pln = 0; pln < subsector->sector->planeCount; ++pln)
-        {
-            plane_t* plane;
-
-            if(!doPlane[pln])
-                continue;
-
-            plane = line->L_sector(side)->SP_plane(pln);
-
-            // Determine the openness of the line. If this edge is open,
-            // there won't be a shadow at all. Open neighbours cause some
-            // changes in the polygon corner vertices (placement, colour).
-
-            suf = &subsector->sector->planes[pln]->surface;
-            plnHeight = plane->visHeight;
-            vec[VZ] = vy - plnHeight;
-
-            // Glowing surfaces or missing textures shouldn't have shadows.
-            if((suf->inFlags & SUIF_NO_RADIO) || !suf->material || R_IsSkySurface(suf))
-                continue;
-
-            if(line->L_backside)
-            {
-                front = line->L_sector(side);
-                back  = line->L_sector(side ^ 1);
-                setRelativeHeights(front, back, pln, &fz, &bz, &bhz);
-
-                hack =
-                    radioEdgeHackType(line, front, back, side, pln, fz, bz);
-                if(hack)
-                    open = hack - 1;
-                else
-                    open = radioEdgeOpenness(fz, bz, bhz);
-            }
-            else
-                open = 0;
-
-            if(open >= 1)
-                continue;
-
-            // Find the neighbors of this edge and determine their 'openness'.
-            sideOpen[0] = sideOpen[1] = 0;
-            for(i = 0; i < 2; ++i)
-            {
-                lineowner_t*        vo;
-                linedef_t*          neighbor;
-
-                vo = line->L_vo(side^i)->link[i^1];
-                neighbor = vo->lineDef;
-
-                if(neighbor != line && !neighbor->L_backside &&
-                   neighbor->buildData.windowEffect &&
-                   neighbor->L_frontsector != subsector->sector)
-                {   // A one-way window, open side.
-                    sideOpen[i] = 1;
-                }
-                else if(!(neighbor == line || !neighbor->L_backside))
-                {
-                    sector_t*           othersec;
-                    byte                otherSide;
-
-                    otherSide = (line->L_v(i^side) == neighbor->L_v1? i : i^1);
-                    othersec = neighbor->L_sector(otherSide);
-
-                    // Exclude 'special' neighbors which we pretend to be solid.
-                    if(LINE_SELFREF(neighbor) ||
-                       ((R_IsSkySurface(&othersec->SP_planesurface(pln)) ||
-                         R_IsSkySurface(&othersec->SP_planesurface(PLN_CEILING))) &&
-                        othersec->SP_floorvisheight >= othersec->SP_ceilvisheight))
-                    {
-                        sideOpen[i] = 1;
-                    }
-                    else if(Rend_DoesMidTextureFillGap(neighbor, otherSide^1, false))
-                    {
-                        sideOpen[i] = 0;
-                    }
-                    else
-                    {   // Its a normal neighbor.
-                        if(neighbor->L_sector(otherSide) != line->L_sector(side) &&
-                           !((plane->type == PLN_FLOOR &&
-                                  othersec->SP_ceilvisheight <= plane->visHeight) ||
-                             (plane->type == PLN_CEILING &&
-                                  othersec->SP_floorheight >= plane->visHeight)))
-                        {
-                            front = line->L_sector(side);
-                            back  = neighbor->L_sector(otherSide);
-
-                            setRelativeHeights(front, back, pln, &fz, &bz, &bhz);
-                            sideOpen[i] = radioEdgeOpenness(fz, bz, bhz);
-                        }
-                    }
-                }
-
-                if(sideOpen[i] < 1)
-                {
-                    vo = line->L_vo(i^side);
-                    if(i)
-                        vo = vo->LO_prev;
-
-                    V2_Sum(inner[i], line->L_vpos(i^side),
-                           vo->shadowOffsets.inner);
-                }
-                else
-                {
-                    V2_Sum(inner[i], line->L_vpos(i^side),
-                           vo->shadowOffsets.extended);
-                }
-            }
-
-            {
-            material_snapshot_t ms;
-            float shadowAlpha;
-            Materials_Prepare(&ms, plane->PS_material, true, 0);
-            if(ms.glowing > 0)
-                continue;
-
-            // Shadows are black
-            shadowRGB[CR] = shadowRGB[CG] = shadowRGB[CB] = 0;
-            shadowAlpha = shadowDark * (1 - open);
-
-            radioAddShadowEdge(line, side, inner, outer, plnHeight,
-                               shadowRGB, shadowAlpha, sideOpen, suf->normal);
-            }
-        }
-    }
+        drawLinkedEdgeShadows(subsector, link, doPlanes, shadowDark);
+    }}
 }
 
 void Rend_RadioSubsectorEdges(subsector_t* subsector)
@@ -1657,8 +1667,8 @@ void Rend_DrawShadowOffsetVerts(void)
     static const float  red[4] = { 1.f, .2f, .2f, 1.f};
     static const float  yellow[4] = {.7f, .7f, .2f, 1.f};
 
-    uint                i, j, k;
-    float               pos[3];
+    uint i, j, k;
+    float pos[3];
 
     glDepthMask(GL_FALSE);
     glDisable(GL_DEPTH_TEST);
@@ -1667,12 +1677,12 @@ void Rend_DrawShadowOffsetVerts(void)
 
     for(i = 0; i < numLineDefs; ++i)
     {
-        linedef_t*          line = &lineDefs[i];
+        linedef_t* line = &lineDefs[i];
 
         for(k = 0; k < 2; ++k)
         {
-            vertex_t*           vtx = line->L_v(k);
-            lineowner_t*        vo = vtx->lineOwners;
+            vertex_t* vtx = line->L_v(k);
+            lineowner_t* vo = vtx->lineOwners;
 
             for(j = 0; j < vtx->numLineOwners; ++j)
             {
