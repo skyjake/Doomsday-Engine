@@ -1067,15 +1067,14 @@ static boolean rendBlockSubsector(subsector_t* ssec, void* data)
     return true; // Continue iteration.
 }
 
-void rendBlockLinedefs(void* blockPtr, void* param,
-                       float r, float g, float b, float a)
+void rendBlockLinedefs(void* blockPtr, void* param, float r, float g, float b, float a)
 {
-    bmapblock_t*        block = blockPtr;
+    bmapblock_t* block = blockPtr;
 
     // Lines?
     if(block->lineDefs)
     {
-        bmapiterparams_t    args;
+        bmapiterparams_t args;
 
         args.localValidCount = validCount;
         args.func = rendBlockLinedef;
@@ -1094,8 +1093,8 @@ void rendBlockLinedefs(void* blockPtr, void* param,
     // Polyobj lines?
     if(block->polyLinks)
     {
-        bmappoiterparams_t  args;
-        poiterparams_t      poargs;
+        bmappoiterparams_t args;
+        poiterparams_t poargs;
 
         poargs.func = rendBlockLinedef;
         poargs.param = param;
@@ -1115,10 +1114,9 @@ void rendBlockLinedefs(void* blockPtr, void* param,
     }
 }
 
-void rendBlockMobjs(void* blockPtr, void* data,
-                    float r, float g, float b, float a)
+void rendBlockMobjs(void* blockPtr, void* data, float r, float g, float b, float a)
 {
-    bmapblock_t*        block = blockPtr;
+    bmapblock_t* block = blockPtr;
 
     // Mobjs?
     if(block->mobjLinks)
@@ -1578,17 +1576,10 @@ void P_BlockmapDebug(void)
     glLoadIdentity();
     glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
 
-    if(followMobj && bmapShowDebug != 3)
-    {
-        uint                vBlock[2];
-
-        // Determine the block mobj is in.
-        if(P_ToBlockmapBlockIdx(blockmap, vBlock, followMobj->pos))
-        {
-            // Draw info about the block mobj is in.
-            drawBlockInfoBox(vBlock);
-        }
-    }
+    // Draw info about the block mobj is in?
+    { uint vBlock[2];
+    if(followMobj && bmapShowDebug != 3 && P_ToBlockmapBlockIdx(blockmap, vBlock, followMobj->pos))
+        drawBlockInfoBox(vBlock); }
 
     // Draw info about the blockmap.
     bmap = (bmap_t*) blockmap;

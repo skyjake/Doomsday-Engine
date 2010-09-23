@@ -607,10 +607,10 @@ desc = 1=Display lumobj debug display.
 [rend-dev-generator-show-indices]
 desc = 1=Display particle generator indices.
 
-[rend-dev-blockmap-debug]
+[rend-dev-blockmap]
 desc = Enable drawing of the blockmap debug display: 1=Mobjs, 2=Linedefs, 3=Subsectors.
 
-[rend-dev-blockmap-debug-size]
+[rend-dev-blockmap-size]
 desc = Scale multiplier for the blockmap debug display.
 
 [rend-dev-nosprite]

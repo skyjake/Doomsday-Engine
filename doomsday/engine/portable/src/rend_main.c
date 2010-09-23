@@ -146,8 +146,8 @@ void Rend_Register(void)
     C_VAR_INT("rend-dev-polyobj-bbox", &devPolyobjBBox, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-light-mod", &devLightModRange, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-tex-showfix", &devNoTexFix, CVF_NO_ARCHIVE, 0, 1);
-    C_VAR_BYTE("rend-dev-blockmap-debug", &bmapShowDebug, CVF_NO_ARCHIVE, 0, 3);
-    C_VAR_FLOAT("rend-dev-blockmap-debug-size", &bmapDebugSize, CVF_NO_ARCHIVE, .1f, 100);
+    C_VAR_BYTE("rend-dev-blockmap", &bmapShowDebug, CVF_NO_ARCHIVE, 0, 3);
+    C_VAR_FLOAT("rend-dev-blockmap-debug", &bmapDebugSize, CVF_NO_ARCHIVE, .1f, 100);
     C_VAR_BYTE("rend-dev-vertex-show-indices", &devVertexIndices, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-vertex-show-bars", &devVertexBars, CVF_NO_ARCHIVE, 0, 1);
     C_VAR_BYTE("rend-dev-surface-show-normals", &devSurfaceNormals, CVF_NO_ARCHIVE, 0, 1);
@@ -4347,10 +4347,9 @@ static void drawVertexBar(const vertex_t* vtx, float bottom, float top,
 #undef EXTEND_DIST
 }
 
-static void drawVertexIndex(const vertex_t* vtx, float z, float scale,
-                            float alpha)
+static void drawVertexIndex(const vertex_t* vtx, float z, float scale, float alpha)
 {
-    char                buf[80];
+    char buf[80];
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
