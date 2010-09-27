@@ -1000,7 +1000,6 @@ typedef struct {
 
 typedef struct {
     struct material_s* material;
-    lumpnum_t       realLump; // Real lump number.
     int             flip;
     int             offset;
     int             topOffset;

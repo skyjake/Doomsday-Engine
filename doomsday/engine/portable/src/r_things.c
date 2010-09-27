@@ -718,7 +718,6 @@ boolean R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* info)
 
     info->numFrames = sprDef->numFrames;
     info->material = mat;
-    info->realLump = sprTex->lump;
     info->flip = sprFrame->flip[0];
     info->offset = sprTex->offX;
     info->topOffset = sprTex->offY;
