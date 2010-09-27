@@ -35,6 +35,7 @@
 
 #include "am_map.h"
 #include "p_inventory.h"
+#include "hu_inventory.h"
 #include "p_player.h"
 #include "p_map.h"
 #include "p_user.h"
