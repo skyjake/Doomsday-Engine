@@ -331,12 +331,9 @@ void WI_drawLF(void)
 
     // Draw "Finished!"
     /// \fixme WI_DrawPatch2 should return the visible height.
-    {
-    patchinfo_t info;
+    { patchinfo_t info;
     if(R_GetPatchInfo(mapNamePatches[mapNum], &info))
-        y += (5 * info.height) / 4;
-    }
-
+        y += (5 * info.height) / 4; }
     WI_DrawPatch3(finished, SCREENWIDTH / 2, y, NULL, GF_FONTB, false, DPF_ALIGN_TOP);
 }
 
@@ -375,12 +372,9 @@ void WI_drawEL(void)
     WI_DrawPatch3(entering, SCREENWIDTH / 2, y, NULL, GF_FONTB, false, DPF_ALIGN_TOP);
 
     // Draw map.
-    {
-    patchinfo_t info;
+    { patchinfo_t info;
     if(R_GetPatchInfo(mapNamePatches[wbs->nextMap], &info))
-        y += (5 * info.height) / 4;
-    }
-
+        y += (5 * info.height) / 4; }
     WI_DrawPatch3(mapNamePatches[(wbs->episode * 8) + wbs->nextMap], SCREENWIDTH / 2, y, mapName, GF_FONTB, false, DPF_ALIGN_TOP);
 }
 
@@ -593,9 +587,6 @@ void WI_updateShowNextLoc(void)
 
 void WI_drawShowNextLoc(void)
 {
-    int                 i;
-    int                 last;
-
     WI_slamBackground();
 
     // Draw animated background.
@@ -609,11 +600,10 @@ void WI_drawShowNextLoc(void)
             return;
         }
 
-        last = (wbs->currentMap == 8) ? wbs->nextMap-1 : wbs->currentMap;
-
         // Draw a splat on taken cities.
+        { int i, last = (wbs->currentMap == 8) ? wbs->nextMap-1 : wbs->currentMap;
         for(i = 0; i <= last; ++i)
-            WI_DrawOnMapNode(i, &splat);
+            WI_DrawOnMapNode(i, &splat); }
 
         // Splat the secret map?
         if(wbs->didSecret)
@@ -758,11 +748,9 @@ void WI_drawDeathmatchStats(void)
     WI_drawLF();
 
     // Draw stat titles (top line).
-    {
-    patchinfo_t info;
+    { patchinfo_t info;
     if(R_GetPatchInfo(total, &info))
-        WI_DrawPatch(total, DM_TOTALSX - info.width / 2, DM_MATRIXY - WI_SPACINGY + 10);
-    }
+        WI_DrawPatch(total, DM_TOTALSX - info.width / 2, DM_MATRIXY - WI_SPACINGY + 10); }
 
     WI_DrawPatch(killers, DM_KILLERSX, DM_KILLERSY);
     WI_DrawPatch(victims, DM_VICTIMSX, DM_VICTIMSY);
