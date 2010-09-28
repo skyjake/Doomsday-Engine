@@ -238,30 +238,27 @@ void Spr_VertexColors(int count, dgl_color_t *out, dgl_vertex_t *normal,
     }
 }
 
-static void setupPSpriteParams(rendpspriteparams_t* params,
-                               vispsprite_t* spr)
+static void setupPSpriteParams(rendpspriteparams_t* params, vispsprite_t* spr)
 {
-    float               offScaleY = weaponOffsetScaleY / 1000.0f;
-    spritetex_t*        sprTex;
-    spritedef_t*        sprDef;
-    ddpsprite_t*        psp = spr->psp;
-    int                 sprite = psp->statePtr->sprite;
-    int                 frame = psp->statePtr->frame;
-    boolean             flip;
-    spriteframe_t*      sprFrame;
+    float offScaleY = weaponOffsetScaleY / 1000.0f;
+    ddpsprite_t* psp = spr->psp;
+    int sprite = psp->statePtr->sprite;
+    int frame = psp->statePtr->frame;
     material_load_params_t mparams;
+    const spritedef_t* sprDef;
+    const spritetex_t* sprTex;
+    const spriteframe_t* sprFrame;
     material_snapshot_t ms;
+    boolean flip;
 
 #ifdef RANGECHECK
     if((unsigned) sprite >= (unsigned) numSprites)
-        Con_Error("R_GetSpriteInfo: invalid sprite number %i.\n", sprite);
+        Con_Error("setupPSpriteParams: Invalid sprite number %i.\n", sprite);
 #endif
-
     sprDef = &sprites[sprite];
 #ifdef RANGECHECK
     if(frame >= sprDef->numFrames)
-        Con_Error("setupPSpriteParams: Invalid frame number %i for sprite %i",
-                  frame, sprite);
+        Con_Error("setupPSpriteParams: Invalid frame number %i for sprite %i", frame, sprite);
 #endif
 
     sprFrame = &sprDef->spriteFrames[frame];
@@ -274,6 +271,7 @@ static void setupPSpriteParams(rendpspriteparams_t* params,
     Materials_Prepare(&ms, sprFrame->mats[0], true, &mparams);
 
     sprTex = spriteTextures[ms.units[MTU_PRIMARY].texInst->tex->ofTypeID];
+
     params->pos[VX] = psp->pos[VX] - sprTex->offX + pspOffset[VX] + -ms.units[MTU_PRIMARY].texInst->border;
     params->pos[VY] = offScaleY * (psp->pos[VY] - sprTex->offY) + pspOffset[VY] + -ms.units[MTU_PRIMARY].texInst->border;
     params->width = ms.width + ms.units[MTU_PRIMARY].texInst->border*2;
@@ -395,13 +393,12 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     }
     else
     {   // Lit normally.
-        Spr_VertexColors(4, quadColors, quadNormals, params->vLightListIdx,
-                         spriteLight + 1, params->ambientColor);
+        Spr_VertexColors(4, quadColors, quadNormals, params->vLightListIdx, spriteLight + 1, params->ambientColor);
     }
 
     {
-    dgl_texcoord_t   tcs[4], *tc = tcs;
-    dgl_color_t     *c = quadColors;
+    dgl_texcoord_t tcs[4], *tc = tcs;
+    dgl_color_t* c = quadColors;
 
     tc[0].st[0] = params->texOffset[0] *  (params->texFlip[0]? 1:0);
     tc[0].st[1] = params->texOffset[1] *  (params->texFlip[1]? 1:0);
@@ -924,27 +921,6 @@ glEnable(GL_TEXTURE2D);
                          spriteLight + 1, params->ambientColor);
     }
 
-    if(devMobjVLights && params->vLightListIdx)
-    {   // Draw the vlight vectors, for debug.
-        glDisable(GL_TEXTURE_2D);
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_CULL_FACE);
-
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-
-        glTranslatef(params->center[VX], params->center[VZ], params->center[VY]);
-
-        VL_ListIterator(params->vLightListIdx, (float*)&params->distance, R_DrawVLightVector);
-
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
-
-        glEnable(GL_CULL_FACE);
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_TEXTURE_2D);
-    }
-
     // Do we need to do some aligning?
     if(params->viewAligned || alwaysAlign >= 2)
     {
@@ -1043,6 +1019,27 @@ glEnable(GL_TEXTURE2D);
     tc[3].st[1] = params->matOffset[1] * (!params->matFlip[1]? 1:0);
 
     renderQuad(v, quadColors, tc);
+    }
+
+    if(devMobjVLights && params->vLightListIdx)
+    {   // Draw the vlight vectors, for debug.
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_CULL_FACE);
+        glDisable(GL_TEXTURE_2D);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+
+        glTranslatef(params->center[VX], params->center[VZ], params->center[VY]);
+
+        VL_ListIterator(params->vLightListIdx, (float*)&params->distance, R_DrawVLightVector);
+
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+
+        glEnable(GL_TEXTURE_2D);
+        glEnable(GL_CULL_FACE);
+        glEnable(GL_DEPTH_TEST);
     }
 
     // Need to restore the original modelview matrix?
