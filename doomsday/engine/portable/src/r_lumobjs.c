@@ -569,6 +569,21 @@ BEGIN_PROF( PROF_LUMOBJ_FRAME_SORT );
 END_PROF( PROF_LUMOBJ_FRAME_SORT );
 }
 
+static __inline void setGlowLightProps(lumobj_t* l, surface_t* surface)
+{
+    assert(l && surface);
+    {
+    material_snapshot_t ms;
+    Materials_Prepare(&ms, surface->material, true, 0);
+    V3_Copy(LUM_PLANE(l)->normal, ((plane_t*)surface->owner)->PS_normal);
+    V3_Copy(LUM_PLANE(l)->color, ms.colorAmplified);
+    LUM_PLANE(l)->intensity = ms.glowing;
+    LUM_PLANE(l)->tex = GL_PrepareLSTexture(LST_GRADIENT);
+    l->maxDistance = 0;
+    l->decorSource = 0;
+    }
+}
+
 /**
  * Generate one dynlight node for each plane glow.
  * The light is attached to the appropriate dynlight node list.
@@ -583,49 +598,26 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
         {
         plane_t* pln = (plane_t*)suf->owner;
         sector_t* sec = pln->sector;
-        lumobj_t* l;
-        uint i;
 
         // Only produce a light for sectors with open space.
         if(sec->SP_floorvisheight >= sec->SP_ceilvisheight)
             return true; // Continue iteration.
 
+        { uint i;
         for(i = 0; i < sec->ssectorCount; ++i)
         {
             subsector_t* ssec = pln->sector->ssectors[i];
-            uint lumIdx = LO_NewLuminous(LT_PLANE, ssec);
-            material_snapshot_t ms;
+            lumobj_t* l = LO_GetLuminous(LO_NewLuminous(LT_PLANE, ssec));
 
-            l = LO_GetLuminous(lumIdx);
-
-            l->pos[VX] = ssec->midPoint.pos[VX];
-            l->pos[VY] = ssec->midPoint.pos[VY];
-            l->pos[VZ] = pln->visHeight;
-
-            LUM_PLANE(l)->normal[VX] = pln->PS_normal[VX];
-            LUM_PLANE(l)->normal[VY] = pln->PS_normal[VY];
-            LUM_PLANE(l)->normal[VZ] = pln->PS_normal[VZ];
-
-            Materials_Prepare(&ms, suf->material, true, 0);
-            LUM_PLANE(l)->color[CR] = ms.colorAmplified[CR];
-            LUM_PLANE(l)->color[CG] = ms.colorAmplified[CG];
-            LUM_PLANE(l)->color[CB] = ms.colorAmplified[CB];
-            LUM_PLANE(l)->intensity = ms.glowing;
-
-            l->maxDistance = 0;
-            l->decorSource = NULL;
-
-            LUM_PLANE(l)->tex = GL_PrepareLSTexture(LST_GRADIENT);
+            setGlowLightProps(l, suf);
+            V3_Set(l->pos, ssec->midPoint.pos[VX], ssec->midPoint.pos[VY], pln->visHeight);
 
             // Planar lights don't spread, so just link the lum to its own ssec.
-            {
-            linkobjtossecparams_t params;
-
+            { linkobjtossecparams_t params;
             params.obj = l;
             params.type = OT_LUMOBJ;
-            RIT_LinkObjToSubSector(l->subsector, &params);
-            }
-        }
+            RIT_LinkObjToSubSector(l->subsector, &params); }
+        }}
         break;
         }
     case DMU_SIDEDEF:
