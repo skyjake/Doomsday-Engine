@@ -1332,7 +1332,7 @@ static void renderMapName(const automap_t* map)
 {
     float x, y;
     const char* lname;
-    patchid_t patch = -1;
+    patchid_t patch = 0;
 #if __JDOOM__ || __JDOOM64__
     int mapNum;
 #endif
