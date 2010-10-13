@@ -29,7 +29,7 @@ inf = Params: conbg (materialname)
 desc = Print the coordinates of the consoleplayer.
 
 [doomfont]
-desc = Use the Doom font in the console.
+desc = Use the game font in the console.
 
 [endcycle]
 desc = End map rotation.
@@ -139,7 +139,7 @@ inf = Params: reveal (0-4)\nModes:\n 0=nothing\n 1=show unseen\n 2=full map\n 3=
 desc = Open the save game menu.
 
 [screenshot]
-desc = Takes a screenshot. Saved to DOOMnn.TGA.
+desc = Takes a screenshot.
 
 [setcolor]
 desc = Set player color.
