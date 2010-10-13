@@ -30,6 +30,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <assert.h>
+
 #include "jdoom.h"
 
 #include "m_argv.h"
@@ -109,47 +111,48 @@ static boolean autoStart;
 // CODE --------------------------------------------------------------------
 
 /**
+ * The game mode string is returned in DD_Get(DD_GAME_MODE).
+ * It is sent out in netgames, and the PCL_HELLO2 packet contains it.
+ * A client can't connect unless the same game mode is used.
+ */
+static __inline void setGameModeString(const char* str)
+{
+    assert(str && str[0]);
+    memset(gameModeString, 0, sizeof(gameModeString));
+    dd_snprintf(gameModeString, sizeof(gameModeString), "%s", str);
+}
+
+/**
  * Attempt to change the current game mode. Can only be done when not
  * actually in a map.
  *
  * \todo Doesn't actually do anything yet other than set the game mode
  * global vars.
  *
- * @param mode          The game mode to change to.
+ * @param mode          GameMode to change to.
+ * @param mission       Mission to change to.
+ * @param name          Name of the new mode.
  *
  * @return              @true, if we changed game modes successfully.
  */
-boolean G_SetGameMode(gamemode_t mode)
+boolean G_SetGameMode(gamemode_t mode, gamemission_t mission, const char* name)
 {
+    assert(name && name[0]);
+
     gameMode = mode;
+    gameMission = mission;
+    setGameModeString(name);
 
     if(G_GetGameState() == GS_MAP)
         return false;
 
     switch(mode)
     {
-    case shareware: // DOOM 1 shareware, E1, M9
-        gameModeBits = GM_SHAREWARE;
-        break;
-
-    case registered: // DOOM 1 registered, E3, M27
-        gameModeBits = GM_REGISTERED;
-        break;
-
-    case commercial: // DOOM 2 retail, E1 M34
-        gameModeBits = GM_COMMERCIAL;
-        break;
-
-    // DOOM 2 german edition not handled
-
-    case retail: // DOOM 1 retail, E4, M36
-        gameModeBits = GM_RETAIL;
-        break;
-
-    case indetermined: // Well, no IWAD found.
-        gameModeBits = GM_INDETERMINED;
-        break;
-
+    case shareware:     gameModeBits = GM_SHAREWARE;    break;
+    case registered:    gameModeBits = GM_REGISTERED;   break;
+    case commercial:    gameModeBits = GM_COMMERCIAL;   break;
+    case retail:        gameModeBits = GM_RETAIL;       break;
+    case indetermined:  gameModeBits = GM_INDETERMINED; break;
     default:
         Con_Error("G_SetGameMode: Unknown gameMode %i", mode);
     }
@@ -181,6 +184,7 @@ void G_DetectIWADs(void)
         0
     };
     fspec_t iwads[] = {
+        { "hacx.wad",       "-hacx" },
         { "tnt.wad",        "-tnt" },
         { "plutonia.wad",   "-plutonia" },
         { "doom2.wad",      "-doom2" },
@@ -230,8 +234,11 @@ static boolean lumpsFound(char **list)
 static void identifyFromData(void)
 {
     typedef struct {
-        char** lumps;
+        char* modeString;
         gamemode_t mode;
+        char** modeLumpNames;
+        gamemission_t mission;
+        char* cmdOverride, *cmdOverride2;
     } identify_t;
 
     char* shareware_lumps[] = {
@@ -266,73 +273,48 @@ static void identifyFromData(void)
     char* tnt_lumps[] = {
         "cavern5", "cavern7", "stonew1", NULL
     };
-    identify_t list[] = {
-        {commercial_lumps, commercial}, // Doom2 is easiest to detect.
-        {retail_lumps, retail}, // Ultimate Doom is obvious.
-        {registered_lumps, registered},
-        {shareware_lumps, shareware}
+    char* hacx_lumps[] = {
+        "hacx-r", NULL
     };
-    int i, num = sizeof(list) / sizeof(identify_t);
+    /// \note Order here is important - it specifies the order of identification tests.
+    identify_t list[] = {
+        /* Hacx */             { "hacx",            commercial,  hacx_lumps,        GM_DOOM2,   "hacx", 0 },
+        /* Doom2 (TNT) */      { "doom2-tnt",       commercial,  tnt_lumps,         GM_TNT,     "tnt", 0 },
+        /* Doom2 (Plutonia) */ { "doom2-plut",      commercial,  plutonia_lumps,    GM_PLUT,    "plutonia", "plut" },
+        /* Doom2 */            { "doom2",           commercial,  commercial_lumps,  GM_DOOM2,   "doom2", 0 },
+        /* Ultimate Doom */    { "doom1-ultimate",  retail,      retail_lumps,      GM_DOOM,    "ultimate", "udoom" },
+        /* Doom */             { "doom1",           registered,  registered_lumps,  GM_DOOM,    "doom", 0 },
+        /* Doom (shareware) */ { "doom1-share",     shareware,   shareware_lumps,   GM_DOOM,    "sdoom", 0 }
+    };
+    int num = sizeof(list) / sizeof(identify_t);
 
     // First check the command line.
-    if(ArgCheck("-sdoom"))
-    {
-        // Shareware DOOM.
-        G_SetGameMode(shareware);
-        return;
-    }
-
-    if(ArgCheck("-doom"))
-    {
-        // Registered DOOM.
-        G_SetGameMode(registered);
-        return;
-    }
-
-    if(ArgCheck("-doom2") || ArgCheck("-plutonia") || ArgCheck("-tnt"))
-    {
-        // DOOM 2.
-        G_SetGameMode(commercial);
-        gameMission = GM_DOOM2;
-        if(ArgCheck("-plutonia"))
-            gameMission = GM_PLUT;
-        if(ArgCheck("-tnt"))
-            gameMission = GM_TNT;
-        return;
-    }
-
-    if(ArgCheck("-ultimate") || ArgCheck("-udoom"))
-    {
-        // Retail DOOM 1: Ultimate DOOM.
-        G_SetGameMode(retail);
-        return;
-    }
-
-    // Now we must look at the lumps.
+    { int i;
     for(i = 0; i < num; ++i)
     {
-        // If all the listed lumps are found, selection is made.
-        // All found?
-        if(lumpsFound(list[i].lumps))
+        if(ArgCheck(list[i].cmdOverride) || ArgCheck(list[i].cmdOverride2))
         {
-            G_SetGameMode(list[i].mode);
-            // Check the mission packs.
-            if(lumpsFound(plutonia_lumps))
-                gameMission = GM_PLUT;
-            else if(lumpsFound(tnt_lumps))
-                gameMission = GM_TNT;
-            else if(gameMode == commercial)
-                gameMission = GM_DOOM2;
-            else
-                gameMission = GM_DOOM;
+            G_SetGameMode(list[i].mode, list[i].mission, list[i].modeString);
             return;
         }
-    }
+    }}
+
+    /**
+     * Attempt auto-selection by looking at the lumps.
+     * If all the listed lumps are found a selection is made.
+     */
+    { int i;
+    for(i = 0; i < num; ++i)
+    {
+        if(!lumpsFound(list[i].modeLumpNames))
+            continue;
+        G_SetGameMode(list[i].mode, list[i].mission, list[i].modeString);
+        return;
+    }}
 
     // A detection couldn't be made.
-    G_SetGameMode(shareware);       // Assume the minimum.
-    Con_Message("\nIdentifyVersion: DOOM version unknown.\n"
-                "** Important data might be missing! **\n\n");
+    G_SetGameMode(shareware, GM_DOOM, "doom1-share"); // Assume the minimum.
+    Con_Message("\nIdentifyVersion: Game version unknown.\n** Important data might be missing! **\n\n");
 }
 
 /**
@@ -341,20 +323,6 @@ static void identifyFromData(void)
 void G_IdentifyVersion(void)
 {
     identifyFromData();
-
-    // The game mode string is returned in DD_Get(DD_GAME_MODE).
-    // It is sent out in netgames, and the PCL_HELLO2 packet contains it.
-    // A client can't connect unless the same game mode is used.
-    memset(gameModeString, 0, sizeof(gameModeString));
-
-    strcpy(gameModeString,
-           gameMode == shareware ? "doom1-share" :
-           gameMode == registered ? "doom1" :
-           gameMode == retail ? "doom1-ultimate" :
-           gameMode == commercial ?
-                (gameMission == GM_PLUT ? "doom2-plut" :
-                 gameMission == GM_TNT ? "doom2-tnt" : "doom2") :
-           "-");
 }
 
 /**
@@ -363,9 +331,9 @@ void G_IdentifyVersion(void)
  */
 void G_PreInit(void)
 {
-    int                 i;
+    int i;
 
-    G_SetGameMode(indetermined);
+    G_SetGameMode(indetermined, GM_NONE, "-");
 
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
