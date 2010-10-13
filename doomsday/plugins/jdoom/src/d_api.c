@@ -101,6 +101,14 @@ void* G_GetVariable(int id)
     case DD_GAME_MODE:
         return gameModeString;
 
+    case DD_GAME_NICEMODE:
+        return (gameMode == retail ? "The Ultimate DOOM" :
+                gameMode == shareware ? "DOOM Shareware" :
+                gameMode == registered ? "DOOM Registered" :
+                    (gameMission == GM_PLUT ? "Final DOOM: The Plutonia Experiment" :
+                     gameMission == GM_TNT ? "Final DOOM: TNT: Evilution" :
+                     "DOOM 2: Hell on Earth"));
+
     case DD_GAME_CONFIG:
         return gameConfigString;
 

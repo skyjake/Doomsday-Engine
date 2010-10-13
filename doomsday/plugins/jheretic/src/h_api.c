@@ -101,6 +101,11 @@ void* G_GetVariable(int id)
     case DD_GAME_MODE:
         return gameModeString;
 
+    case DD_GAME_NICEMODE:
+        return (gameMode == shareware? "Heretic Shareware" :
+                gameMode == registered? "Heretic Registered" :
+                "Heretic: Shadow of the Serpent Riders");
+
     case DD_GAME_CONFIG:
         return gameConfigString;
 

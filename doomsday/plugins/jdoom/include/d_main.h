@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@
  * d_main.h:
  */
 
-#ifndef __D_MAIN_H__
-#define __D_MAIN_H__
+#ifndef JDOOM_MAIN
+#define JDOOM_MAIN
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -59,6 +59,4 @@ void            G_Shutdown(void);
 void            G_EndFrame(void);
 void            G_Ticker(timespan_t ticLength);
 
-boolean         G_SetGameMode(gamemode_t mode);
-
-#endif
+#endif /* JDOOM_MAIN */

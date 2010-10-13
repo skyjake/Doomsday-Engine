@@ -397,12 +397,6 @@ void G_PostInit(void)
     // Initialize weapon info using definitions.
     P_InitWeaponInfo();
 
-    // Print a game mode banner with rulers.
-    Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER,
-                gameMode == shareware? "*** Hexen 4-map Beta Demo ***\n"
-                    : "Hexen\n");
-    Con_FPrintf(CBLF_RULER, 0);
-
     // Game parameters.
     /* None */
 

@@ -101,6 +101,9 @@ void *G_GetVariable(int id)
     case DD_GAME_MODE:
         return gameModeString;
 
+    case DD_GAME_NICEMODE:
+        return "DOOM64";
+
     case DD_GAME_CONFIG:
         return gameConfigString;
 

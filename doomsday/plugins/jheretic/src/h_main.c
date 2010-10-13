@@ -458,14 +458,6 @@ void G_PostInit(void)
     // Initialize weapon info using definitions.
     P_InitWeaponInfo();
 
-    // Print a game mode banner with rulers.
-    Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER,
-                gameMode == shareware? "Heretic Shareware Startup\n" :
-                gameMode == registered? "Heretic Registered Startup\n" :
-                gameMode == extended? "Heretic: Shadow of the Serpent Riders Startup\n" :
-                "Public Heretic\n");
-    Con_FPrintf(CBLF_RULER, 0);
-
     // Game parameters.
     monsterInfight = GetDefInt("AI|Infight", 0);
 

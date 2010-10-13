@@ -224,8 +224,7 @@ static void identifyFromData(void)
 
     // A detection couldn't be made.
     G_SetGameMode(commercial); // Assume the minimum.
-    Con_Message("\nIdentifyVersion: DOOM64 version unknown.\n"
-                "** Important data might be missing! **\n\n");
+    Con_Message("\nIdentifyVersion: Game version unknown.\n** Important data might be missing! **\n\n");
 }
 
 /**
@@ -428,10 +427,6 @@ void G_PostInit(void)
 
     // Initialize weapon info.
     P_InitWeaponInfo();
-
-    // Print a game mode banner with rulers.
-    Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER, "Doom64 Startup\n");
-    Con_FPrintf(CBLF_RULER, "");
 
     // Game parameters.
     monsterInfight = GetDefInt("AI|Infight", 0);

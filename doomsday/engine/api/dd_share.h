@@ -233,6 +233,7 @@ enum {
     DD_PSPRITE_BOB_Y,
     DD_DEF_FINALE_AFTER,
     DD_DEF_FINALE_BEFORE,
+    DD_DEF_FINALE,
     DD_RENDER_RESTART_PRE,
     DD_RENDER_RESTART_POST,
     DD_DEF_SOUND_BY_NAME,
@@ -242,9 +243,9 @@ enum {
     DD_CD_TRACK,
     DD_SPRITE,
     DD_FRAME,
-    DD_GAME_MODE, // 16 chars max (swdoom, doom1, udoom, tnt, heretic...)
+    DD_GAME_MODE, // 16 chars max (e.g., swdoom, doom1, udoom, tnt, heretic..., suitable for use as a key/identifier)
+    DD_GAME_NICEMODE, // (e.g., DOOM Shareware, The Ultimate DOOM etc..., fancy name)
     DD_GAME_CONFIG, // String: dm/co-op, jumping, etc.
-    DD_DEF_FINALE,
     DD_GAME_NAME, // (e.g., jdoom, jheretic etc..., suitable for use with filepaths)
     DD_GAME_NICENAME, // (e.g., jDoom, MyGame:Episode2 etc..., fancy name)
     DD_GAME_DMUAPI_VER, // Version of the DMU API the game is using.

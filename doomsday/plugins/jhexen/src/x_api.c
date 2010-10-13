@@ -100,6 +100,9 @@ void *G_GetVariable(int id)
     case DD_GAME_MODE:
         return gameModeString;
 
+    case DD_GAME_NICEMODE:
+        return (gameMode == shareware? "Hexen 4-map Beta Demo" : "Hexen");
+
     case DD_GAME_CONFIG:
         return gameConfigString;
 

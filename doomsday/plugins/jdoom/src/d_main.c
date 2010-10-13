@@ -278,11 +278,11 @@ static void identifyFromData(void)
     };
     /// \note Order here is important - it specifies the order of identification tests.
     identify_t list[] = {
-        /* Hacx */             { "hacx",            commercial,  hacx_lumps,        GM_DOOM2,   "hacx", 0 },
+        /* HacX */             { "hacx",            commercial,  hacx_lumps,        GM_DOOM2,   "hacx", 0 },
         /* Doom2 (TNT) */      { "doom2-tnt",       commercial,  tnt_lumps,         GM_TNT,     "tnt", 0 },
         /* Doom2 (Plutonia) */ { "doom2-plut",      commercial,  plutonia_lumps,    GM_PLUT,    "plutonia", "plut" },
         /* Doom2 */            { "doom2",           commercial,  commercial_lumps,  GM_DOOM2,   "doom2", 0 },
-        /* Ultimate Doom */    { "doom1-ultimate",  retail,      retail_lumps,      GM_DOOM,    "ultimate", "udoom" },
+        /* Doom (Ultimate) */  { "doom1-ultimate",  retail,      retail_lumps,      GM_DOOM,    "ultimate", "udoom" },
         /* Doom */             { "doom1",           registered,  registered_lumps,  GM_DOOM,    "doom", 0 },
         /* Doom (shareware) */ { "doom1-share",     shareware,   shareware_lumps,   GM_DOOM,    "sdoom", 0 }
     };
@@ -526,19 +526,6 @@ void G_PostInit(void)
 
     // Initialize weapon info.
     P_InitWeaponInfo();
-
-    // Print a game mode banner with rulers.
-    Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER,
-                gameMode == retail ? "The Ultimate DOOM Startup\n" :
-                gameMode == shareware ? "DOOM Shareware Startup\n" :
-                gameMode == registered ? "DOOM Registered Startup\n" :
-                gameMode == commercial ?
-                    (gameMission == GM_PLUT ? "Final DOOM: The Plutonia Experiment\n" :
-                     gameMission == GM_TNT ? "Final DOOM: TNT: Evilution\n" :
-                     "DOOM 2: Hell on Earth\n") :
-                "Public DOOM\n");
-
-    Con_FPrintf(CBLF_RULER, "");
 
     // Game parameters.
     monsterInfight = GetDefInt("AI|Infight", 0);
