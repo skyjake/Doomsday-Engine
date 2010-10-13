@@ -242,5 +242,6 @@ IncludeIf doom1-share "doom1finales.ded";
 IncludeIf doom1-ultimate "doom1finales.ded";
 
 IncludeIf doom2 "doom2finales.ded";
+IncludeIf hacx "doom2finales.ded";
 IncludeIf doom2-tnt "doom2-tntfinales.ded";
 IncludeIf doom2-plut "doom2-plutfinales.ded";

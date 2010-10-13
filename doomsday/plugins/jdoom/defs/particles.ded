@@ -2,6 +2,7 @@
 
 Header { Version = 6; }
 
+SkipIf hacx;
 SkipIf -nodefaultfx; 
 
 ######=====---- PLAYER WEAPONS ----=====######

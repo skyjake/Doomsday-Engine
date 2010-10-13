@@ -8,3 +8,4 @@ IncludeIf doom1-ultimate "doom1skies.ded";
 IncludeIf doom2 "doom2skies.ded";
 IncludeIf doom2-plut "doom2skies.ded";
 IncludeIf doom2-tnt "doom2skies.ded";
+IncludeIf hacx "doom2skies.ded";

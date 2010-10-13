@@ -2,9 +2,6 @@
 
 Header { Version = 6; }
 
-# This file is skipped if not regular Doom II.
-SkipIf Not doom2;
-
 #####====--- LIGHT DECORATIONS FOR DOOM II ---====#####
 #
 # The default flags allow using these only with the original textures.

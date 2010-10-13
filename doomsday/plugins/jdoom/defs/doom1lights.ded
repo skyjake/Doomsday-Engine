@@ -2,10 +2,6 @@
 
 Header { Version = 5; }
 
-# This file is skipped if not Doom I/II.
-SkipIf doom2-plut;
-SkipIf doom2-tnt;
-
 #####====--- TEXTURE DECORATIONS FOR DOOM I ---====#####
 #
 # The default flags allow using these only with the original textures.

@@ -2,9 +2,6 @@
 
 Header { Version = 6; }
 
-# This file is skipped if not Doom II Plutonia.
-SkipIf Not doom2-plut;
-
 #####====--- LIGHT DECORATIONS FOR DOOM II PLUTONIA ---====#####
 #
 # The default flags allow using these only with the original textures.

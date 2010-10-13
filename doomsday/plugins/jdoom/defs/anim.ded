@@ -12,6 +12,9 @@ Header { Version = 6; }
 
 Include "doom1anim.ded";
 
+IncludeIf hacx "doom2anim.ded";
+SkipIf hacx
+
 IncludeIf doom2 "doom2anim.ded";
 IncludeIf doom2-tnt "doom2anim.ded";
 IncludeIf doom2-plut "doom2anim.ded";

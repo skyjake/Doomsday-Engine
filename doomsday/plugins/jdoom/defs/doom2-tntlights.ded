@@ -2,9 +2,6 @@
 
 Header { Version = 6; }
 
-# This file is skipped if not Doom II TNT.
-SkipIf Not doom2-tnt;
-
 #####====--- LIGHT DECORATIONS FOR DOOM II TNT ---====#####
 #
 # The default flags allow using these only with the original textures.

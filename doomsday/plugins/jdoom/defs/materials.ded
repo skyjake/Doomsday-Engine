@@ -5,6 +5,8 @@
 
 Header { Version = 6; }
 
+SkipIf hacx;
+
 #
 # Skymasked flats:
 #

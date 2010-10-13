@@ -8,3 +8,4 @@ IncludeIf doom1-ultimate "doom1maps.ded";
 IncludeIf doom2 "doom2maps.ded";
 IncludeIf doom2-plut "doom2-plutmaps.ded";
 IncludeIf doom2-tnt "doom2-tntmaps.ded";
+IncludeIf hacx "doom2maps.ded";
