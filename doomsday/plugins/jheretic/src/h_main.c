@@ -182,7 +182,7 @@ void G_IdentifyVersion(void)
     // The game mode string is used in netgames.
     strcpy(gameModeString, "heretic");
 
-    if(!P_MapExists(1, 0) == -1)
+    if(!P_MapExists(1, 0))
     {   // Can't find episode 2 maps, must be the shareware WAD
         strcpy(gameModeString, "heretic-share");
     }
