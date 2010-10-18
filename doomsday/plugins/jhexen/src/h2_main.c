@@ -173,7 +173,7 @@ void G_IdentifyVersion(void)
     }
 
     // This is not a very accurate test...
-    if(P_MapExists(0, 58) >= 0 && P_MapExists(0, 59) >= 0)
+    if(P_MapExists(0, 58) && P_MapExists(0, 59))
     {   // It must be Deathkings!
         strcpy(gameModeString, "hexen-dk");
         G_SetGameMode(extended);
