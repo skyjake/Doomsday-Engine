@@ -112,21 +112,7 @@ char *borderLumps[] = {
     "bordbl" // bottom left
 };
 
-char *wadFiles[MAXWADFILES] = {
-    "heretic.wad",
-    "texture1.lmp",
-    "texture2.lmp",
-    "pnames.lmp"
-};
-
-char *baseDefault = "heretic.cfg";
-
-char exrnWADs[80];
-char exrnWADs2[80];
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static boolean devMap;
 
 // CODE --------------------------------------------------------------------
 
@@ -171,44 +157,6 @@ boolean G_SetGameMode(gamemode_t mode)
     }
 
     return true;
-}
-
-static void addFile(char *file)
-{
-    int             numWADFiles;
-    char           *new;
-
-    for(numWADFiles = 0; wadFiles[numWADFiles]; numWADFiles++);
-
-    new = malloc(strlen(file) + 1);
-    strcpy(new, file);
-    if(strlen(exrnWADs) + strlen(file) < 78)
-    {
-        if(strlen(exrnWADs))
-        {
-            strcat(exrnWADs, ", ");
-        }
-        else
-        {
-            strcpy(exrnWADs, "External Wadfiles: ");
-        }
-        strcat(exrnWADs, file);
-    }
-    else if(strlen(exrnWADs2) + strlen(file) < 79)
-    {
-        if(strlen(exrnWADs2))
-        {
-            strcat(exrnWADs2, ", ");
-        }
-        else
-        {
-            strcpy(exrnWADs2, "     ");
-            strcat(exrnWADs, ",");
-        }
-        strcat(exrnWADs2, file);
-    }
-
-    wadFiles[numWADFiles] = new;
 }
 
 /**
@@ -440,8 +388,8 @@ void G_PreInit(void)
  */
 void G_PostInit(void)
 {
-    int e, m, p;
     filename_t file;
+    int p;
 
     if(!P_MapExists(1, 0))
         // Can't find episode 2 maps, must be the shareware WAD.
@@ -522,24 +470,6 @@ void G_PostInit(void)
         turboMul = scale / 100.f;
     }
 
-    // -DEVMAP <episode> <map>
-    // Adds a map wad from the development directory to the wad list,
-    // and sets the start episode and the start map.
-    devMap = false;
-    p = ArgCheck("-devmap");
-    if(p && p < myargc - 2)
-    {
-        e = Argv(p + 1)[0] - 1;
-        m = Argv(p + 2)[0] - 1;
-        sprintf(file, MAPDIR "E%cM%c.wad", e+1, m+1);
-        addFile(file);
-        printf("DEVMAP: Episode %c, Map %c.\n", e+1, m+1);
-        startEpisode = e;
-        startMap = m;
-        autoStart = true;
-        devMap = true;
-    }
-
     // Are we autostarting?
     if(autoStart)
     {
@@ -556,7 +486,7 @@ void G_PostInit(void)
     }
 
     // Check valid episode and map
-    if(!devMap && (autoStart || IS_NETGAME) && !P_MapExists(startEpisode, startMap))
+    if((autoStart || IS_NETGAME) && !P_MapExists(startEpisode, startMap))
     {
         startEpisode = 0;
         startMap = 0;
