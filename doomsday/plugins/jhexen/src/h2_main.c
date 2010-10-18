@@ -57,13 +57,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct execopt_s {
-    char*           name;
-    void          (*func) (const char* const* args, int tag);
-    int             requiredArgs;
-    int             tag;
-} execopt_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 extern void X_CreateLUTs(void);
@@ -72,11 +65,6 @@ extern void X_DestroyLUTs(void);
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-static void handleArgs();
-static void execOptionScripts(const char* const* args, int tag);
-static void execOptionSkill(const char* const* args, int tag);
-static void execOptionPlayDemo(const char* const* args, int tag);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -123,16 +111,6 @@ char* borderLumps[] = {
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static int warpMap;
-
-static execopt_t execOptions[] = {
-    {"-scripts", execOptionScripts, 1, 0},
-    {"-skill", execOptionSkill, 1, 0},
-    {"-playdemo", execOptionPlayDemo, 1, 0},
-    {"-timedemo", execOptionPlayDemo, 1, 0},
-    {NULL, NULL, 0, 0} // Terminator.
-};
 
 // CODE --------------------------------------------------------------------
 
@@ -376,7 +354,7 @@ void G_PreInit(void)
  */
 void G_PostInit(void)
 {
-    int p, pClass;
+    int p, pClass, warpMap;
 
     // Do this early as other systems need to know.
     P_InitPlayerClassInfo();
@@ -399,7 +377,53 @@ void G_PostInit(void)
     /* None */
 
     // Command line options.
-    handleArgs();
+    noMonstersParm = ArgExists("-nomonsters");
+    respawnParm = ArgExists("-respawn");
+    randomClassParm = ArgExists("-randclass");
+    devParm = ArgExists("-devparm");
+    netCheatParm = ArgExists("-netcheat");
+
+    cfg.netDeathmatch = ArgExists("-deathmatch");
+
+    // Turbo movement option.
+    p = ArgCheck("-turbo");
+    turboMul = 1.0f;
+    if(p)
+    {
+        int scale = 200;
+
+        turboParm = true;
+        if(p < Argc() - 1)
+            scale = atoi(Argv(p + 1));
+        if(scale < 10)
+            scale = 10;
+        if(scale > 400)
+            scale = 400;
+
+        Con_Message("turbo scale: %i%%\n", scale);
+        turboMul = scale / 100.f;
+    }
+
+    if((p = ArgCheckWith("-scripts", 1)) != 0)
+    {
+        sc_FileScripts = true;
+        sc_ScriptsDir = Argv(p + 1);
+    }
+
+    if((p = ArgCheckWith("-skill", 1)) != 0)
+    {
+        startSkill = (skillmode_t)(Argv(p + 1)[0] - '1');
+        autoStart = true;
+    }
+
+    if((p = ArgCheckWith("-playdemo", 1)) != 0 ||
+       (p = ArgCheckWith("-timedemo", 1)) != 0)
+    {
+        char file[256];
+        sprintf(file, "%s.lmp", Argv(p + 1));
+        DD_AddStartupWAD(file);
+        Con_Message("Playing demo %s.\n", file);
+    }
 
     // Check the -class argument.
     pClass = PCLASS_FIGHTER;
@@ -478,69 +502,6 @@ void G_PostInit(void)
             G_StartTitle();
         }
     }
-}
-
-static void handleArgs(void)
-{
-    execopt_t* opt;
-    int p;
-
-    noMonstersParm = ArgExists("-nomonsters");
-    respawnParm = ArgExists("-respawn");
-    randomClassParm = ArgExists("-randclass");
-    devParm = ArgExists("-devparm");
-    netCheatParm = ArgExists("-netcheat");
-
-    cfg.netDeathmatch = ArgExists("-deathmatch");
-
-    // Turbo movement option.
-    p = ArgCheck("-turbo");
-    turboMul = 1.0f;
-    if(p)
-    {
-        int scale = 200;
-
-        turboParm = true;
-        if(p < Argc() - 1)
-            scale = atoi(Argv(p + 1));
-        if(scale < 10)
-            scale = 10;
-        if(scale > 400)
-            scale = 400;
-
-        Con_Message("turbo scale: %i%%\n", scale);
-        turboMul = scale / 100.f;
-    }
-
-    // Process command line options.
-    for(opt = execOptions; opt->name != NULL; opt++)
-    {
-        p = ArgCheck(opt->name);
-        if(p && p < Argc() - opt->requiredArgs)
-        {
-            opt->func(ArgvPtr(p), opt->tag);
-        }
-    }
-}
-
-static void execOptionSkill(const char* const* args, int tag)
-{
-    startSkill = args[1][0] - '1';
-    autoStart = true;
-}
-
-static void execOptionPlayDemo(const char* const* args, int tag)
-{
-    char file[256];
-    sprintf(file, "%s.lmp", args[1]);
-    DD_AddStartupWAD(file);
-    Con_Message("Playing demo %s.lmp.\n", args[1]);
-}
-
-static void execOptionScripts(const char* const* args, int tag)
-{
-    sc_FileScripts = true;
-    sc_ScriptsDir = args[1];
 }
 
 void G_Shutdown(void)
