@@ -170,36 +170,43 @@ const char* value_Str(int val)
     return valStr;
 }
 
+static __inline int iwadListSize(void)
+{
+    int n;
+    for(n = 0; iwadList[n]; ++n);
+    return n;
+}
+
 /**
- * Adds the given IWAD to the list of default IWADs.
+ * Adds the given IWAD to the list of IWADs.
  */
 void DD_AddIWAD(const char* path)
 {
-    int                 i = 0;
-    filename_t          buf;
-
-    while(iwadList[i])
-        i++;
+    int numIWADs = iwadListSize();
+    filename_t buf;
 
     M_TranslatePath(buf, path, FILENAME_T_MAXLEN);
-    iwadList[i] = M_Calloc(strlen(buf) + 1);   // This mem is not freed?
-    strcpy(iwadList[i], buf);
+    iwadList[numIWADs] = M_Calloc(strlen(buf) + 1);   // This mem is not freed?
+    strcpy(iwadList[numIWADs], buf);
 }
 
-#define ATWSEPS ",; \t"
 static void AddToWadList(char* list)
 {
-    size_t          len = strlen(list);
-    char           *buffer = M_Malloc(len + 1), *token;
+#define ATWSEPS                 ",; \t"
+
+    size_t len = strlen(list);
+    char* buffer = M_Malloc(len + 1), *token;
 
     strcpy(buffer, list);
     token = strtok(buffer, ATWSEPS);
     while(token)
     {
-        DD_AddStartupWAD(token /*, false */ );
+        DD_AddStartupWAD(token);
         token = strtok(NULL, ATWSEPS);
     }
     M_Free(buffer);
+
+#undef ATWSEPS
 }
 
 /**
