@@ -14,7 +14,7 @@ IncludeIf doom2 "doom2lights.ded";
 IncludeIf doom2-tnt "doom2-tntlights.ded";
 IncludeIf doom2-plut "doom2-plutlights.ded";
 
-SkipIf hacx
+SkipIf hacx;
 
 #####====--- LIGHT SOURCE PROPERTIES ---====#####
 
