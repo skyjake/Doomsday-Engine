@@ -340,24 +340,23 @@ int ArgRecognize(const char* first, const char* second)
  */
 int ArgCheck(const char* check)
 {
-    int                 i;
-    boolean             isDone;
-
     lastMatch = 0;
-    i = 1;
-    isDone = false;
-    while(i < numArgs && !isDone)
+    if(check && check[0])
     {
-        // Check the short names for this arg, too.
-        if(ArgRecognize(check, args[i]))
+        int i = 1;
+        boolean isDone = false;
+        while(i < numArgs && !isDone)
         {
-            lastMatch = i;
-            isDone = true;
+            // Check the short names for this arg, too.
+            if(ArgRecognize(check, args[i]))
+            {
+                lastMatch = i;
+                isDone = true;
+            }
+            else
+                i++;
         }
-        else
-            i++;
     }
-
     return lastMatch;
 }
 
@@ -370,11 +369,9 @@ int ArgCheck(const char* check)
  */
 int ArgCheckWith(const char* check, int num)
 {
-    int                 i = ArgCheck(check);
-
+    int i = ArgCheck(check);
     if(!i || i + num >= numArgs)
         return 0;
-
     return i;
 }
 
@@ -396,11 +393,14 @@ int ArgIsOption(int i)
  */
 int ArgExists(const char* check)
 {
-    int                 i, count;
-
-    for(i = 1, count = 0; i < Argc(); ++i)
-        if(ArgRecognize(check, Argv(i)))
-            count++;
+    int count = 0;
+    if(check && check[0])
+    {
+        int i;
+        for(i = 1; i < Argc(); ++i)
+            if(ArgRecognize(check, Argv(i)))
+                count++;
+    }
 
     return count;
 }
