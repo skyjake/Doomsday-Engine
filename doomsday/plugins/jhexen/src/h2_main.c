@@ -75,7 +75,6 @@ extern void X_DestroyLUTs(void);
 
 static void handleArgs();
 static void execOptionScripts(const char* const* args, int tag);
-static void execOptionDevMaps(const char* const* args, int tag);
 static void execOptionSkill(const char* const* args, int tag);
 static void execOptionPlayDemo(const char* const* args, int tag);
 
@@ -84,9 +83,6 @@ static void execOptionPlayDemo(const char* const* args, int tag);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 int verbose;
-
-boolean DevMaps; // true = map development mode.
-char* DevMapsDir = ""; // Development maps directory.
 
 boolean noMonstersParm; // checkparm of -nomonsters
 boolean respawnParm; // checkparm of -respawn
@@ -112,13 +108,9 @@ const float defFontRGB[] = { .9f, .0f, .0f };
 const float defFontRGB2[] = { .9f, .9f, .9f };
 const float defFontRGB3[] = { 1, .65f, .275f };
 
-// Network games parameters.
-
 boolean autoStart;
 
-FILE   *debugFile;
-
-char   *borderLumps[] = {
+char* borderLumps[] = {
     "F_022", // Background.
     "bordt", // Top.
     "bordr", // Right.
@@ -136,7 +128,6 @@ static int warpMap;
 
 static execopt_t execOptions[] = {
     {"-scripts", execOptionScripts, 1, 0},
-    {"-devmaps", execOptionDevMaps, 1, 0},
     {"-skill", execOptionSkill, 1, 0},
     {"-playdemo", execOptionPlayDemo, 1, 0},
     {"-timedemo", execOptionPlayDemo, 1, 0},
@@ -219,8 +210,7 @@ void G_IdentifyVersion(void)
  */
 void G_DetectIWADs(void)
 {
-    // The startup WADs.
-    DD_AddIWAD("}data\\jhexen\\hexen.wad");
+    DD_AddIWAD("}data\\"GAMENAMETEXT"\\hexen.wad");
     DD_AddIWAD("}data\\hexen.wad");
     DD_AddIWAD("}hexen.wad");
     DD_AddIWAD("hexen.wad");
@@ -234,10 +224,10 @@ void G_PreInit(void)
 {
     int i;
 
+    G_SetGameMode(indetermined);
+
     // Calculate the various LUTs used by the playsim.
     X_CreateLUTs();
-
-    G_SetGameMode(indetermined);
 
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
@@ -551,42 +541,6 @@ static void execOptionScripts(const char* const* args, int tag)
 {
     sc_FileScripts = true;
     sc_ScriptsDir = args[1];
-}
-
-static void execOptionDevMaps(const char* const* args, int tag)
-{
-    char* str;
-
-    DevMaps = true;
-    Con_Message("Map development mode enabled:\n");
-    Con_Message("[config    ] = %s\n", args[1]);
-    SC_OpenFileCLib(args[1]);
-    SC_MustGetStringName("mapsdir");
-    SC_MustGetString();
-    Con_Message("[mapsdir   ] = %s\n", sc_String);
-    DevMapsDir = malloc(strlen(sc_String) + 1);
-    strcpy(DevMapsDir, sc_String);
-    SC_MustGetStringName("scriptsdir");
-    SC_MustGetString();
-    Con_Message("[scriptsdir] = %s\n", sc_String);
-    sc_FileScripts = true;
-    str = malloc(strlen(sc_String) + 1);
-    strcpy(str, sc_String);
-    sc_ScriptsDir = str;
-
-    while(SC_GetString())
-    {
-        if(SC_Compare("file"))
-        {
-            SC_MustGetString();
-            DD_AddStartupWAD(sc_String);
-        }
-        else
-        {
-            SC_ScriptError(NULL);
-        }
-    }
-    SC_Close();
 }
 
 void G_Shutdown(void)
