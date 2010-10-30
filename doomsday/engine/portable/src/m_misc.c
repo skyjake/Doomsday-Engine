@@ -1215,23 +1215,22 @@ void M_ReplaceFileExt(char* path, const char* newext, size_t len)
  */
 const char* M_PrettyPath(const char* path)
 {
-#define MAX_BUFS            8
+#define NUM_BUFS            8
 
-    static filename_t   buffers[MAX_BUFS];
-    static uint         index = 0;
-    char*               str;
-    size_t              len = path? strlen(path) : 0;
+    static filename_t buffers[NUM_BUFS];
+    static uint index = 0;
 
+    size_t len = path? MIN_OF(strlen(ddBasePath), strlen(path)) : 0;
     if(len > 0 && !strnicmp(path, ddBasePath, len))
     {
-        str = buffers[index++ % MAX_BUFS];
+        char* str = buffers[index++ % NUM_BUFS];
         M_RemoveBasePath(str, path, FILENAME_T_MAXLEN);
         Dir_FixSlashes(str, FILENAME_T_MAXLEN);
         return str;
     }
+    return path; // We don't know how to make this prettier.
 
-    // We don't know how to make this prettier.
-    return path;
+#undef NUM_BUFS
 }
 
 /**
