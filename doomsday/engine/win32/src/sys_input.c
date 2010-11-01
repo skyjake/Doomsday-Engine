@@ -82,7 +82,6 @@ static DIDEVICEINSTANCE firstJoystick;
 static int counter;
 
 // A customizable mapping of the scantokey array.
-//static char keyMapPath[NUMKKEYS] = "}Data\\KeyMaps\\";
 static byte* keymap = NULL;
 
 // CODE --------------------------------------------------------------------

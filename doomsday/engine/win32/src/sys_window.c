@@ -499,8 +499,6 @@ static boolean createContext(ddwindow_t *window)
     HDC                 hdc;
     boolean             ok = true;
 
-    Con_Message("createContext: OpenGL.\n");
-
     if(window->type != WT_NORMAL)
         Sys_CriticalMessage("createContext: Window type does not support "
                             "rendering contexts.");
