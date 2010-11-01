@@ -133,7 +133,7 @@ boolean M_CheckFileID(const char *path)
     if(!F_Access(path))
     {
         if(verbose)
-            Con_Message("CheckFile: %s not found.\n", path);
+            Con_Message("M_CheckFileID: Warning, \"%s\" not found!\n", path);
         return false;
     }
 
@@ -1228,6 +1228,11 @@ const char* M_PrettyPath(const char* path)
         Dir_FixSlashes(str, FILENAME_T_MAXLEN);
         return str;
     }
+    else if(len > 1 && (path[0] == '}' || path[0] == '>'))
+    {   // Skip over this special character.
+        return path+1;
+    }
+
     return path; // We don't know how to make this prettier.
 
 #undef NUM_BUFS
