@@ -29,6 +29,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <string.h>
+
 #include "jhexen.h"
 
 #include "dmu_lib.h"

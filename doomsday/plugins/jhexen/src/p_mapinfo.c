@@ -29,6 +29,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <stdio.h>
+#include <string.h>
+
 #include "jhexen.h"
 
 #include "r_common.h"
