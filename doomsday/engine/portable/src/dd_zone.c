@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 1999-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -180,8 +180,7 @@ memvolume_t *Z_Create(size_t volumeSize)
     block->seqFirst = block->seqLast = NULL;
     block->size = vol->zone->size - sizeof(memzone_t);
 
-    Con_Message("Z_Create: New %.1f MB memory volume.\n",
-           vol->size / 1024.0 / 1024.0);
+    VERBOSE(Con_Message("Z_Create: New %.1f MB memory volume.\n", vol->size / 1024.0 / 1024.0));
 
     return vol;
 }
