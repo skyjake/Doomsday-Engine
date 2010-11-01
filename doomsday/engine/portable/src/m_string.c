@@ -229,7 +229,7 @@ void Str_Prepend(ddstring_t *ds, const char *prepend_text)
 /**
  * This is safe for all strings.
  */
-char *Str_Text(ddstring_t *ds)
+char* Str_Text(const ddstring_t* ds)
 {
     return ds->str ? ds->str : "";
 }
@@ -237,7 +237,7 @@ char *Str_Text(ddstring_t *ds)
 /**
  * This is safe for all strings.
  */
-size_t Str_Length(ddstring_t *ds)
+size_t Str_Length(ddstring_t* ds)
 {
     if(ds->length)
         return ds->length;
@@ -247,7 +247,7 @@ size_t Str_Length(ddstring_t *ds)
 /**
  * Makes a true copy.
  */
-void Str_Copy(ddstring_t *dest, ddstring_t *src)
+void Str_Copy(ddstring_t* dest, const ddstring_t* src)
 {
     Str_Free(dest);
     dest->size = src->size;

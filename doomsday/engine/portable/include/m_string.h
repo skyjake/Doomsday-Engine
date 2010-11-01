@@ -3,7 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2008-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,21 +22,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * m_string.h: Dynamic Strings
+/**
+ * m_string.h: Dynamic Strings.
  */
 
-#ifndef __DOOMSDAY_DYN_STRING_H__
-#define __DOOMSDAY_DYN_STRING_H__
-
-// You can init with string constants, for example:
-// ddstring_t mystr = { "Hello world." };
-
-typedef struct ddstring_s {
-	char           *str;
-	size_t          length;		   // String length (no terminating nulls).
-	size_t          size;		   // Allocated memory (not necessarily string size).
-} ddstring_t;
+#ifndef LIBDENG_STRING_H
+#define LIBDENG_STRING_H
 
 // Format checking for Str_Appendf in GCC2
 #if defined(__GNUC__) && __GNUC__ >= 2
@@ -44,29 +36,45 @@ typedef struct ddstring_s {
 #   define PRINTF_F(f,v)
 #endif
 
-void            Str_Init(ddstring_t *ds);
-void            Str_Free(ddstring_t *ds);
-ddstring_t     *Str_New(void);
-void            Str_Delete(ddstring_t *ds);
-void            Str_Clear(ddstring_t *ds);
-void            Str_Reserve(ddstring_t *ds, size_t length);
-void            Str_Set(ddstring_t *ds, const char *text);
-void            Str_Append(ddstring_t *ds, const char *append_text);
+/**
+ * Dynamic String.
+ *
+ * \note: You can init with static string constants, for example:
+ * ddstring_t mystr = { "Hello world." };
+ */
+typedef struct ddstring_s {
+    /// String buffer.
+	char* str;
+
+    /// String length (no terminating nulls).
+    size_t length;
+
+    /// Allocated buffer size (note: not necessarily equal to ddstring_t::length).
+    size_t size;
+} ddstring_t;
+
+void            Str_Init(ddstring_t* ds);
+void            Str_Free(ddstring_t* ds);
+ddstring_t*     Str_New(void);
+void            Str_Delete(ddstring_t* ds);
+void            Str_Clear(ddstring_t* ds);
+void            Str_Reserve(ddstring_t* ds, size_t length);
+void            Str_Set(ddstring_t* ds, const char* text);
+void            Str_Append(ddstring_t* ds, const char* appendText);
 void            Str_AppendChar(ddstring_t* ds, char ch);
-void            Str_Appendf(ddstring_t * ds, const char *format, ...) PRINTF_F(2,3);
-void            Str_PartAppend(ddstring_t *dest, const char *src, int start,
-							   size_t count);
-void            Str_Prepend(ddstring_t *ds, const char *prepend_text);
-size_t          Str_Length(ddstring_t *ds);
-char           *Str_Text(ddstring_t *ds);
-void            Str_Copy(ddstring_t *dest, ddstring_t *src);
-void            Str_StripLeft(ddstring_t *ds);
-void            Str_StripRight(ddstring_t *ds);
-void            Str_Strip(ddstring_t *ds);
-const char     *Str_GetLine(ddstring_t *ds, const char *src);
-const char     *Str_CopyDelim(ddstring_t* dest, const char* src, char delim);
-int             Str_CompareIgnoreCase(ddstring_t *ds, const char *text);
+void            Str_Appendf(ddstring_t* ds, const char* format, ...) PRINTF_F(2,3);
+void            Str_PartAppend(ddstring_t* dest, const char* src, int start, size_t count);
+void            Str_Prepend(ddstring_t* ds, const char* prependText);
+size_t          Str_Length(ddstring_t* ds);
+char*           Str_Text(const ddstring_t* ds);
+void            Str_Copy(ddstring_t* dest, const ddstring_t* src);
+void            Str_StripLeft(ddstring_t* ds);
+void            Str_StripRight(ddstring_t* ds);
+void            Str_Strip(ddstring_t* ds);
+const char*     Str_GetLine(ddstring_t* ds, const char* src);
+const char*     Str_CopyDelim(ddstring_t* dest, const char* src, char delim);
+int             Str_CompareIgnoreCase(ddstring_t* ds, const char* text);
 char            Str_At(ddstring_t* str, int index);
 char            Str_RAt(ddstring_t* str, int reverseIndex);
 
-#endif
+#endif /* LIBDENG_STRING_H */
