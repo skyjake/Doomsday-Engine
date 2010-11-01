@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -429,35 +429,34 @@ int Mus_Start(ded_music_t* def, boolean looped)
             {   // Its an external file.
                 // The song may be in a virtual file, so we must buffer
                 // it ourselves.
-                DFILE*              file = F_Open(path, "rb");
-                size_t              len = F_Length(file);
+                DFILE* file = F_Open(path, "rb");
+                size_t len = F_Length(file);
 
                 if(!iMusic->Play)
                 {   // Music interface does not offer buffer playback.
                     // Write to disk and play from there.
-                    FILE*               outFile;
-                    void*               buf = malloc(len);
-                    filename_t          fname;
+                    filename_t fname;
 
-                    composeBufferedMusicFilename(fname, FILENAME_T_MAXLEN,
-                                                 currentBufFile ^= 1, NULL);
+                    composeBufferedMusicFilename(fname, FILENAME_T_MAXLEN, currentBufFile ^= 1, NULL);
 
-                    if((outFile = fopen(fname, "wb")) == NULL)
+                    { FILE* outFile;
+                    if((outFile = fopen(fname, "wb")))
                     {
-                        Con_Message("Mus_Start: Couldn't open %s for writing. %s\n",
-                                    fname, strerror(errno));
+                        void* buf = M_Malloc(len);
+
+                        F_Read(buf, len, file);
+                        fwrite(buf, 1, len, outFile);
+                        fclose(outFile);
                         F_Close(file);
-                        return false;
-                    }
 
-                    F_Read(buf, len, file);
+                        M_Free(buf);
 
-                    fwrite(buf, 1, len, outFile);
-                    fclose(outFile);
+                        return iMusic->PlayFile(fname, looped);
+                    }}
 
+                    Con_Message("Mus_Start: Couldn't open %s for writing. %s\n", fname, strerror(errno));
                     F_Close(file);
-
-                    return iMusic->PlayFile(fname, looped);
+                    return false;
                 }
                 else
                 {   // Music interface offers buffered playback. Use it.
