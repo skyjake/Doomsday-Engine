@@ -30,6 +30,7 @@
 
 #include <math.h>
 #include <string.h>
+#include <stdio.h>
 
 #if __JDOOM__
 #  include "jdoom.h"

@@ -33,24 +33,19 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <string.h>
 
 #if __JDOOM__
 #  include "jdoom.h"
-#  include "g_common.h"
 #elif __JDOOM64__
 #  include "jdoom64.h"
-#  include "g_common.h"
 #elif __JHERETIC__
 #  include "jheretic.h"
-#  include "g_common.h"
-#  include "r_common.h"
-#  include "p_inventory.h"
 #elif __JHEXEN__
-#  include <math.h>
 #  include "jhexen.h"
-#  include "p_inventory.h"
 #endif
 
+#include "g_common.h"
 #include "p_player.h"
 #include "p_tick.h" // for P_IsPaused()
 #include "p_view.h"
@@ -61,8 +56,11 @@
 #include "g_common.h"
 #include "am_map.h"
 #include "hu_log.h"
+#include "r_common.h"
+
 #if __JHERETIC__ || __JHEXEN__
-#include "hu_inventory.h"
+#  include "p_inventory.h"
+#  include "hu_inventory.h"
 #endif
 
 // MACROS ------------------------------------------------------------------
