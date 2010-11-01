@@ -37,6 +37,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <string.h>
+
 #include "jheretic.h"
 
 #include "m_argv.h"

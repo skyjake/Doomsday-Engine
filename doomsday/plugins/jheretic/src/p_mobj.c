@@ -30,6 +30,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <math.h>
+#include <string.h>
 
 #include "jheretic.h"
 

@@ -30,6 +30,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <stdio.h>
+#include <string.h>
+
 #include "jheretic.h"
 
 #include "dmu_lib.h"
