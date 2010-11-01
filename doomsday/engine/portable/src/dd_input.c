@@ -688,12 +688,13 @@ int DD_KeyOrCode(char *token)
  */
 void DD_InitInput(void)
 {
-    int     i;
-
+    int i;
     for(i = 0; i < 256; ++i)
     {
-        shiftKeyMappings[i] = i >= 32 && i <= 127 &&
-            defaultShiftTable[i - 32] ? defaultShiftTable[i - 32] : i;
+        if(i >= 32 && i <= 127)
+            shiftKeyMappings[i] = defaultShiftTable[i - 32] ? defaultShiftTable[i - 32] : i;
+        else
+            shiftKeyMappings[i] = i;
         altKeyMappings[i] = i;
     }
 }
