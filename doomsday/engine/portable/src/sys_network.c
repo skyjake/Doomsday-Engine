@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -515,7 +515,7 @@ void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
 
     result = SDLNet_TCP_Send(node->sock, transmissionBuffer, (int) size + 2);
 #ifdef _DEBUG
-    VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %ul bytes, result=%ul\n",
+    VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %lu bytes, result=%lu\n",
                           (unsigned long) (size + 2), result) );
 #endif
     if(result != size + 2)

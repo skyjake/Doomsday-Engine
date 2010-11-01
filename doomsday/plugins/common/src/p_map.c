@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -2272,8 +2272,7 @@ void P_UseLines(player_t* player)
     if(IS_CLIENT)
     {
 #ifdef _DEBUG
-        Con_Message("P_UseLines: Sending a use request for player %i.\n",
-                    player - players);
+        Con_Message("P_UseLines: Sending a use request for player %i.\n", (int) (player - players));
 #endif
         NetCl_PlayerActionRequest(player, GPA_USE);
         return;

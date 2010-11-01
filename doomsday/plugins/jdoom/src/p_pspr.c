@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -145,7 +145,7 @@ void P_BringUpWeapon(player_t *player)
 
 #ifdef _DEBUG
     Con_Message("P_BringUpWeapon: player %i, weapon pspr to %i\n",
-                player - players, wminfo->states[WSN_UP]);
+                (int) (player - players), wminfo->states[WSN_UP]);
 #endif
     P_SetPsprite(player, ps_weapon, wminfo->states[WSN_UP]);
 }

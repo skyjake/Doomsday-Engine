@@ -846,9 +846,9 @@ Con_Printf("Cl_RMD2: Mo %i Hidden status lifted.\n", cmo->mo.thinker.id);
     }
 
 #ifdef _DEBUG
-VERBOSE2( Con_Printf("Cl_RevealMobj: Revealing id %u, state %p (%i)\n",
-                     (unsigned int) cmo->mo.thinker.id, cmo->mo.state,
-                     cmo->mo.state - states) );
+VERBOSE2( Con_Printf("Cl_RevealMobj: Revealing id %lu, state %p (%lu)\n",
+                     (unsigned long) cmo->mo.thinker.id, cmo->mo.state,
+                     (unsigned long) (cmo->mo.state - states)) );
 #endif
 
     return true;
