@@ -22,7 +22,7 @@
 
 #include "deng.h"
 
-#include <string>
+#include <QString>
 #include <stdexcept>
 
 /**
@@ -38,24 +38,24 @@ namespace de
     class LIBDENG2_API Error : public std::runtime_error
     {
     public:
-        Error(const std::string& where, const std::string& message)
-            : std::runtime_error(std::string("(") + where + ") " + message), _name("") {}
+        Error(const QString& where, const QString& message)
+            : std::runtime_error(("(" + where + ") " + message).toStdString()), _name("") {}
         ~Error() throw() {}
         virtual void raise() const { throw *this; }
-        const std::string name() const { 
-            if(_name.empty()) return "Error";
+        QString name() const {
+            if(!_name.size()) return "Error";
             return _name; 
         }
-        virtual std::string asText() const {
+        virtual QString asText() const {
             return "[" + name() + "] " + std::runtime_error::what();
         }
     protected:
-        void setName(const std::string& name) {
-            if(!_name.empty()) _name += "_";
+        void setName(const QString& name) {
+            if(_name.size()) _name += "_";
             _name += name;
         }
     private:
-        std::string _name;
+        QString _name;
     };
 }
     
@@ -68,9 +68,9 @@ namespace de
 #define DEFINE_SUB_ERROR(Parent, Name) \
     class Name : public Parent { \
     public: \
-        Name(const std::string& message) \
+        Name(const QString& message) \
             : Parent("-", message) { Parent::setName(#Name); } \
-        Name(const std::string& where, const std::string& message) \
+        Name(const QString& where, const QString& message) \
             : Parent(where, message) { Parent::setName(#Name); } \
         virtual void raise() const { throw *this; } \
     };    

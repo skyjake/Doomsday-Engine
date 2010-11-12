@@ -26,7 +26,7 @@
 #include "../Reader"
 #include "../String"
 
-#include <sstream>
+#include <QTextStream>
 #include <cmath>
 
 namespace de
@@ -100,9 +100,10 @@ namespace de
             return std::sqrt(ddouble(x*x + y*y)); 
         }
         String asText() const { 
-            std::ostringstream s;
+            String str;
+            QTextStream s(&str);
             s << *this;
-            return s.str();
+            return str;
         }
         Vector2 min(const Vector2& other) const {
             return Vector2(de::min(x, other.x), de::min(y, other.y));
@@ -130,7 +131,7 @@ namespace de
     };
     
     template <typename Type> 
-    std::ostream& operator << (std::ostream& os, const Vector2<Type>& vec2)
+    QTextStream& operator << (QTextStream& os, const Vector2<Type>& vec2)
     {
         os << "(" << vec2.x << ", " << vec2.y << ")";
         return os;
@@ -204,9 +205,10 @@ namespace de
         ddouble length() const { return std::sqrt(Vector2<Type>::x*Vector2<Type>::x +
             Vector2<Type>::y*Vector2<Type>::y + z*z); }
         String asText() const { 
-            std::ostringstream os;
+            String str;
+            QTextStream os(&str);
             os << *this;
-            return os.str();
+            return str;
         }
         Vector3 min(const Vector3& other) const {
             return Vector3(de::min(Vector2<Type>::x, other.x), de::min(Vector2<Type>::y, other.y), 
@@ -237,7 +239,7 @@ namespace de
     };
     
     template <typename Type> 
-    std::ostream& operator << (std::ostream& os, const Vector3<Type>& vec3)
+    QTextStream& operator << (QTextStream& os, const Vector3<Type>& vec3)
     {
         os << "(" << vec3.x << ", " << vec3.y << ", " << vec3.z << ")";
         return os;
@@ -314,9 +316,10 @@ namespace de
             return Vector3<Type>::operator <= (other) && w <= other.w;
         }
         String asText() const { 
-            std::ostringstream os;
+            String str;
+            QTextStream os(&str);
             os << *this;
-            return os.str();
+            return str;
         }
         Vector4 min(const Vector4& other) const {
             return Vector4(de::min(Vector3<Type>::x, other.x), de::min(Vector3<Type>::y, other.y),
@@ -347,7 +350,7 @@ namespace de
     };
     
     template <typename Type> 
-    std::ostream& operator << (std::ostream& os, const Vector4<Type>& vec4)
+    QTextStream& operator << (QTextStream& os, const Vector4<Type>& vec4)
     {
         os << "(" << vec4.x << ", " << vec4.y << ", " << vec4.z << ", " << vec4.w << ")";
         return os;

@@ -37,7 +37,6 @@
 
 namespace de
 {
-    class Audio;
     class Config;
     class ISubsystem;
     class Library;
@@ -45,7 +44,6 @@ namespace de
     class LogBuffer;
     class Map;
     class Module;
-    class Video;
     class Zone;
     
     /**
@@ -77,13 +75,12 @@ namespace de
         /// An attempt is made to access the game library while one is not loaded.
         /// @ingroup errors
         DEFINE_ERROR(NoGameError);
-        
+
+#if 0
         /// An attempt is made to access the video subsystem while on is not available.
         /// @ingroup errors
         DEFINE_ERROR(NoVideoError);
-
-        /// There was a problem with SDL. Contains the SDL error message. @ingroup errors
-        DEFINE_ERROR(SDLError);
+#endif
         
         /// The object or resource that was being looked for was not found. @ingroup errors
         DEFINE_ERROR(NotFoundError);
@@ -214,10 +211,12 @@ namespace de
          */
         static Zone& memory();
 
+#if 0
         /**
          * Returns the video subsystem.
          */
         static Video& video();
+#endif
 
         /** 
          * Returns the file system.
@@ -253,12 +252,13 @@ namespace de
          * Determines whether a game library is currently available.
          */
         static bool hasGame();
-        
+
+#if 0
         /**
          * Determines whether a video subsystem is currently available.
          */
         static bool hasVideo();
-        
+#endif
         /**
          * Determines whether a map has currently been set.
          */
@@ -320,11 +320,13 @@ namespace de
         typedef std::list<ISubsystem*> Subsystems;
         Subsystems _subsystems;
         
+        /*
         /// The video subsystem. Can be NULL.
         Video* _video;
         
         /// The audio subsystem. Can be NULL.
         Audio* _audio;
+        */
 
         /// Modules.
         typedef std::map<String, Module*> Modules;

@@ -53,7 +53,7 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
 {
     std::auto_ptr<Value> value(evaluator.popResult());
     ArrayValue* args = dynamic_cast<ArrayValue*>(value.get());
-    assert(args != NULL); // must be an array
+    Q_ASSERT(args != NULL); // must be an array
     
     switch(_type)
     {
@@ -72,8 +72,8 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for " +
-                std::string(_type == DICTIONARY_KEYS? 
-                    "DICTIONARY_KEYS" : "DICTIONARY_VALUES"));
+                String(_type == DICTIONARY_KEYS?
+                       "DICTIONARY_KEYS" : "DICTIONARY_VALUES"));
         }
         
         const DictionaryValue* dict = dynamic_cast<const DictionaryValue*>(&args->at(1));
@@ -105,8 +105,7 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
         {
             throw WrongArgumentsError("BuiltInExpression::evaluate",
                 "Expected exactly one argument for " +
-                std::string(_type == RECORD_MEMBERS? 
-                    "RECORD_MEMBERS" : "RECORD_SUBRECORDS"));
+                String(_type == RECORD_MEMBERS? "RECORD_MEMBERS" : "RECORD_SUBRECORDS"));
         }
         
         const RecordValue* rec = dynamic_cast<const RecordValue*>(&args->at(1));
@@ -189,19 +188,20 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
             Reader reader(*block);
             return Value::constructFrom(reader);
         }
+        /*
         // Alternatively allow deserializing from a text value.
         const TextValue* text = dynamic_cast<const TextValue*>(&args->at(1));
         if(text)
         {
-            Reader reader(*text);
-            return Value::constructFrom(reader);
+            return Value::constructFrom(Reader(Block(text->asText().toUtf8())));
         }
+        */
         throw WrongArgumentsError("BuiltInExpression::evaluate",
-            "deserialize() can operate only on block and text values");
+            "deserialize() can operate only on block values");
     }
         
     default:
-        assert(false);
+        Q_ASSERT(false);
     }
     return NULL;
 }

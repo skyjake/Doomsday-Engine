@@ -109,7 +109,7 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
             throw NotFoundError("NameExpression::evaluate", 
                 "Cannot delete nonexistent identifier '" + _identifier + "'");
         }
-        assert(foundInNamespace != 0);
+        Q_ASSERT(foundInNamespace != 0);
         if(variable)
         {
             delete foundInNamespace->remove(*variable);

@@ -114,12 +114,14 @@ Writer& Writer::operator << (const ddouble& value)
 
 Writer& Writer::operator << (const String& text)
 {
+    Block bytes = text.toUtf8();
+
     // First write the length of the text.
-    duint size = text.length();
+    duint size = bytes.size();
     *this << size;
 
     _destination.set(_fixedOffset + _offset,
-                     reinterpret_cast<const IByteArray::Byte*>(text.c_str()),
+                     bytes.data(),
                      size);
     _offset += size;
     return *this;

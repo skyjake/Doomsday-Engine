@@ -19,67 +19,33 @@
 
 #include "de/Waitable"
 #include "de/Time"
-#include "../sdl.h"
-
-#include <SDL_thread.h>
 
 using namespace de;
 
-Waitable::Waitable(duint initialValue) : _semaphore(0)
-{
-    _semaphore = SDL_CreateSemaphore(initialValue);
-}
+#define WAITABLE_TIMEOUT     10
+
+Waitable::Waitable(duint initialValue) : _semaphore(initialValue)
+{}
     
 Waitable::~Waitable()
-{
-    SDL_sem* sem = static_cast<SDL_sem*>(_semaphore);
-
-    // The semaphore will be destroyed.  This'll make sure no new waits can begin.
-    _semaphore = 0;
-    
-    if(sem)
-    {
-        const unsigned SAFE_POST = 50;
-
-        // Let's first make sure that there will be no threads left
-        // waiting on the semaphore.
-        for(unsigned i = 0; i < SAFE_POST; ++i)
-        {
-            SDL_SemPost(sem);
-        }
-
-        SDL_DestroySemaphore(sem);
-    }
-}
+{}
 
 void Waitable::wait()
 {
-    // Wait until the resource becomes available.
-    if(SDL_SemWait(static_cast<SDL_sem*>(_semaphore)) < 0)
-    {
-        /// @throw WaitError Failed to secure the resource due to an error.
-        throw WaitError("Waitable::wait", SDL_GetError());
-    }
+    wait(WAITABLE_TIMEOUT);
 }
 
 void Waitable::wait(const Time::Delta& timeOut)
 {
-    int result = SDL_SemWaitTimeout(static_cast<SDL_sem*>(_semaphore),
-                                    duint32(timeOut.asMilliSeconds()));
-
-    if(result == SDL_MUTEX_TIMEDOUT)
+    // Wait until the resource becomes available.
+    if(!_semaphore.tryAcquire(1, int(timeOut.asMilliSeconds())))
     {
-        /// @throw TimeOutError Timeout expired before the resource was secured.
-        throw TimeOutError("Waitable::wait", "timed out");
-    }
-    if(result < 0)
-    {
-        /// @throw TimeOutError Failed to secure the resource due to an error.
-        throw WaitError("Waitable::wait", SDL_GetError());
+        /// @throw WaitError Failed to secure the resource due to an error.
+        throw WaitError("Waitable::wait", "Timed out");
     }
 }
 
 void Waitable::post()
 {
-    SDL_SemPost(static_cast<SDL_sem*>(_semaphore));
+    _semaphore.release();
 }

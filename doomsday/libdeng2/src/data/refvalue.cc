@@ -171,14 +171,14 @@ void RefValue::operator >> (Writer& to) const
     to << dereference();
 }
 
-void RefValue::operator << (Reader& from)
+void RefValue::operator << (Reader& /*from*/)
 {
     // Should never happen.
-    assert(false);
+    Q_ASSERT(false);
 }
 
 void RefValue::variableBeingDeleted(Variable& variable)
 {
-    assert(_variable == &variable);
+    Q_ASSERT(_variable == &variable);
     _variable = 0;
 }

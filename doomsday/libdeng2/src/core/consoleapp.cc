@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2006-2009 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2010 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,10 +17,14 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIBDENG2_SDL_H
-#define LIBDENG2_SDL_H
+#include "de/ConsoleApp"
 
-#include <SDL.h>
-#include <SDL_net.h>
+using namespace de;
 
-#endif /* LIBDENG2_SDL_H */
+ConsoleApp::ConsoleApp(int argc, char** argv,
+                       const String& configPath,
+                       const String& homeSubFolder,
+                       Log::LogLevel defaultLogLevel)
+    : QCoreApplication(argc, argv),
+      App(CommandLine(argc, argv), configPath, homeSubFolder, defaultLogLevel)
+{}

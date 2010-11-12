@@ -149,7 +149,7 @@ namespace de
          */
         template <typename Type>
         Type& add(Type* fileObject) {
-            assert(fileObject != 0);
+            Q_ASSERT(fileObject != 0);
             add(static_cast<File*>(fileObject));
             return *fileObject;
         }
@@ -174,7 +174,7 @@ namespace de
 
         template <typename Type>
         Type* remove(Type* fileObject) {
-            assert(fileObject != 0);
+            Q_ASSERT(fileObject != 0);
             remove(*static_cast<File*>(fileObject));
             return fileObject;
         }

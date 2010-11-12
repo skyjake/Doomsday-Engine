@@ -20,68 +20,55 @@
 #include "de/Thread"
 #include "de/Time"
 #include "de/Log"
-#include "../sdl.h"
-
-#include <SDL_thread.h>
 
 using namespace de;
 
-/**
- * Call the Thread instance's run() method.  Called by SDL when the
- * thread is created.
- */
-int Thread::runner(void* owner)
+// Milliseconds to wait until the thread stops.
+#define THREAD_QUIT_TIME 3000
+
+void Thread::Runner::run()
 {
-    Thread* self = static_cast<Thread*>(owner);
-    
-    self->run();
-    self->_thread = NULL;
-    self->_endOfThread.post();
+    _owner->run();
 
+    // Log messages from the thread can also be disposed.
     Log::disposeThreadLog();
-
-    // The return value is not used at the moment.
-    return 0;
 }
 
-Thread::Thread() : _stopNow(false), _thread(0)
-{}
+Thread::Thread() : _runner(0)
+{
+    _runner = new Runner(this);
+}
 
 Thread::~Thread()
 {
-    join(4);
+    Q_ASSERT(_runner == NULL);
+
+    // Stop the thread.
+    _runner->quit();
+    _runner->wait(THREAD_QUIT_TIME);
+    delete _runner;
 }
 
 void Thread::start()
 {
-    assert(_thread == NULL);
+    Q_ASSERT(_runner == NULL);
 
-    _stopNow = false;
-    _thread = SDL_CreateThread(runner, this);
+    _runner->start();
 }
 
 void Thread::stop()
 {
-    // We'll rely on run() to notice this and exit as soon as possible.
-    _stopNow = true;
+    // The thread will stop as soon as it can.
+    _runner->quit();
 }
 
 void Thread::join(const Time::Delta& timeOut)
 {
     stop();
-    if(_thread)
-    {
-        _endOfThread.wait(timeOut);
-        //assert(_thread == NULL);
-    }
-}
-
-bool Thread::shouldStopNow() const
-{
-    return _stopNow;
+    _runner->wait(timeOut.asMilliSeconds());
 }
 
 bool Thread::isRunning() const
 {
-    return _thread != 0;
+    return _runner->isRunning();
 }

@@ -23,7 +23,8 @@
 #include "../deng.h"
 #include "../String"
 
-#include <map>
+#include <QLibrary>
+#include <QMap>
 
 /**
  * Convenience macro for accessing symbols that have a type defined in de::Library
@@ -162,9 +163,9 @@ namespace de
                 
     private:  
         /// Handle to the shared library.
-        void* _handle;
+        QLibrary* _library;
         
-        typedef std::map<String, void*> Symbols;
+        typedef QMap<String, void*> Symbols;
         Symbols _symbols;
         
         /// Type identifier for the library (e.g., "deng-plugin/generic").

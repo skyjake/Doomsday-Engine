@@ -24,8 +24,6 @@
 #include "de/Date"
 #include "de/NumberValue"
 
-#include <sstream>
-
 using namespace de;
 
 File::File(const String& fileName)
@@ -179,7 +177,7 @@ File::Size File::size() const
     return status().size;
 }
 
-void File::get(Offset at, Byte* values, Size count) const
+void File::get(Offset at, Byte* /*values*/, Size count) const
 {
     if(at >= size() || at + count > size())
     {
@@ -187,7 +185,7 @@ void File::get(Offset at, Byte* values, Size count) const
     }
 }
 
-void File::set(Offset at, const Byte* values, Size count)
+void File::set(Offset /*at*/, const Byte* /*values*/, Size /*count*/)
 {
     verifyWriteAccess();
 }
@@ -202,7 +200,6 @@ void File::Accessor::update() const
     // We need to alter the value content.
     Accessor* nonConst = const_cast<Accessor*>(this);
     
-    std::ostringstream os;    
     switch(_prop)
     {
     case NAME:
@@ -218,13 +215,11 @@ void File::Accessor::update() const
         break;
 
     case SIZE:
-        os << _owner.status().size;
-        nonConst->setValue(os.str());
+        nonConst->setValue(QString::number(_owner.status().size));
         break;
 
     case MODIFIED_AT:
-        os << _owner.status().modifiedAt.asDate();
-        nonConst->setValue(os.str());
+        nonConst->setValue(_owner.status().modifiedAt.asText());
         break;
     }
 }

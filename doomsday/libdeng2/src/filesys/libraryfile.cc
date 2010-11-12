@@ -21,12 +21,14 @@
 #include "de/NativeFile"
 #include "de/Library"
 
+#include <QLibrary>
+
 using namespace de;
 
 LibraryFile::LibraryFile(File* source)
     : File(source->name()), _library(0)
 {
-    assert(source != 0);
+    Q_ASSERT(source != 0);
     setSource(source); // takes ownership
 }
 
@@ -76,21 +78,24 @@ bool LibraryFile::hasUnderscoreName(const String& nameAfterUnderscore) const
 
 bool LibraryFile::recognize(const File& file)
 {
-#if defined(MACOSX)
-    if(file.name().beginsWith("libdengplugin_") &&
-        file.name().fileNameExtension() == ".dylib")
+    // Check the extension first.
+    if(!QLibrary::isLibrary(file.name()))
+    {
+        return false;
+    }
+
+#if defined(Q_OS_MAC)
+    if(file.name().beginsWith("libdengplugin_"))
     {
         return true;
     }
-#elif defined(UNIX)
-    if(file.name().beginsWith("libdengplugin_") &&
-        file.name().fileNameExtension() == ".so")
+#elif defined(Q_OS_UNIX)
+    if(file.name().beginsWith("libdengplugin_"))
     {
         return true;
     }
-#elif defined(WIN32)
-    if(file.name().beginsWith("dengplugin_") &&
-        file.name().fileNameExtension() == ".dll")
+#elif defined(Q_OS_WIN32)
+    if(file.name().beginsWith("dengplugin_"))
     {
         return true;
     }

@@ -21,7 +21,7 @@
 #include "de/Writer"
 #include "de/Reader"
 
-#include <sstream>
+#include <QTextStream>
 
 using namespace de;
 
@@ -53,9 +53,10 @@ Value* BlockValue::duplicate() const
 
 Value::Text BlockValue::asText() const
 {
-    std::ostringstream os;
+    Text result;
+    QTextStream os(&result);
     os << "[Block of " << _value.size() << " bytes]";
-    return os.str();
+    return result;
 }
 
 dsize BlockValue::size() const

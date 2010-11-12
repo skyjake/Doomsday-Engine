@@ -25,7 +25,7 @@
 #include "de/Reader"
 #include "de/Log"
 
-#include <sstream>
+#include <QTextStream>
 
 using namespace de;
 
@@ -46,7 +46,8 @@ void PrintStatement::execute(Context& context) const
 {
     ArrayValue& value = context.evaluator().evaluateTo<ArrayValue>(_arg);
 
-    std::ostringstream os;
+    String msg;
+    QTextStream os(&msg);
     bool isFirst = true;
             
     FOR_EACH(i, value.elements(), ArrayValue::Elements::const_iterator)
@@ -62,7 +63,7 @@ void PrintStatement::execute(Context& context) const
        os << (*i)->asText();
     }
     
-    LOG_MESSAGE("") << os.str();
+    LOG_MESSAGE("") << msg;
     
     context.proceed();
 }

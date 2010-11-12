@@ -57,13 +57,13 @@ dsize Value::size() const
     throw IllegalError("Value::size", "Size is meaningless");
 }
 
-const Value& Value::element(const Value& index) const
+const Value& Value::element(const Value& /*index*/) const
 {
     /// @throw IllegalError Value cannot be indexed.
     throw IllegalError("Value::element", "Value cannot be indexed");
 }
 
-Value& Value::element(const Value& index)
+Value& Value::element(const Value& /*index*/)
 {
     /// @throw IllegalError Value cannot be indexed.
     throw IllegalError("Value::element", "Value cannot be indexed");
@@ -74,13 +74,13 @@ Value* Value::duplicateElement(const Value& index) const
     return element(index).duplicate();
 }
 
-void Value::setElement(const Value& index, Value* elementValue)
+void Value::setElement(const Value& /*index*/, Value* /*elementValue*/)
 {
     /// @throw IllegalError Value cannot be indexed.
     throw IllegalError("Value::setElement", "Value cannot be indexed");
 }
 
-bool Value::contains(const Value& value) const
+bool Value::contains(const Value& /*value*/) const
 {
     /// @throw IllegalError Value cannot contain other values.
     throw IllegalError("Value::contains", "Value is not a container");
@@ -117,31 +117,31 @@ void Value::negate()
     throw ArithmeticError("Value::negate", "Value cannot be negated");
 }
  
-void Value::sum(const Value& value)
+void Value::sum(const Value& /*value*/)
 {
     /// @throw ArithmeticError Value cannot be summed.
     throw ArithmeticError("Value::sum", "Value cannot be summed");
 }
 
-void Value::subtract(const Value& subtrahend)
+void Value::subtract(const Value& /*subtrahend*/)
 {
     /// @throw ArithmeticError Value cannot be subtracted from.
     throw ArithmeticError("Value::subtract", "Value cannot be subtracted from");    
 }
  
-void Value::divide(const Value& divisor)
+void Value::divide(const Value& /*divisor*/)
 {
     /// @throw ArithmeticError Value cannot be divided.
     throw ArithmeticError("Value::divide", "Value cannot be divided");
 }
  
-void Value::multiply(const Value& value)
+void Value::multiply(const Value& /*value*/)
 {
     /// @throw ArithmeticError Value cannot be multiplied.
     throw ArithmeticError("Value::multiply", "Value cannot be multiplied");
 }
  
-void Value::modulo(const Value& divisor)
+void Value::modulo(const Value& /*divisor*/)
 {
     /// @throw ArithmeticError Module operation is not defined for the value.
     throw ArithmeticError("Value::modulo", "Modulo not defined");
@@ -154,7 +154,7 @@ void Value::assign(Value* value)
     throw IllegalError("Value::assign", "Cannot assign to value");
 }
 
-void Value::call(Process& process, const Value& arguments) const
+void Value::call(Process& /*process*/, const Value& /*arguments*/) const
 {
     /// @throw IllegalError Value cannot be called.
     throw IllegalError("Value::call", "Value cannot be called");

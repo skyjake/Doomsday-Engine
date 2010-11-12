@@ -189,7 +189,7 @@ void* Zone::alloc(dsize size, PurgeTag tag, void* user)
             volume = newVolume(newVolumeSize);
         }
 
-        assert(volume->zone != 0);
+        Q_ASSERT(volume->zone != 0);
 
         // Scan through the block list looking for the first free block of
         // sufficient size, throwing out any purgable blocks along the
@@ -197,7 +197,7 @@ void* Zone::alloc(dsize size, PurgeTag tag, void* user)
 
         // If there is a free block behind the rover, back up over them.
         base = volume->zone->rover;
-        assert(base->prev);
+        Q_ASSERT(base->prev);
         if(!base->prev->user)
             base = base->prev;
 

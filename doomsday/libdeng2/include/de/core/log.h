@@ -233,8 +233,7 @@ namespace de
             enum Type {
                 INTEGER,
                 FLOATING_POINT,
-                STRING,
-                WIDE_STRING
+                STRING
             };
 
             /**
@@ -258,31 +257,20 @@ namespace de
                 virtual String asText() const {
                     throw TypeError("LogEntry::Arg::Base", "String not supported");
                 }
-                virtual std::wstring asWideString() const {
-                    throw TypeError("LogEntry::Arg::Base", "Wide string not supported");
-                }
             };
 
         public:
             Arg(dint i) : _type(INTEGER) { _data.intValue = i; }
             Arg(duint i) : _type(INTEGER) { _data.intValue = i; }
-#ifndef WIN32
-            Arg(dsize i) : _type(INTEGER) { _data.intValue = i; }
-#endif
+            Arg(duint64 i) : _type(INTEGER) { _data.intValue = dint64(i); }
             Arg(dint64 i) : _type(INTEGER) { _data.intValue = i; }
             Arg(ddouble d) : _type(FLOATING_POINT) { _data.floatValue = d; }
             Arg(const void* p) : _type(INTEGER) { _data.intValue = dint64(p); }
             Arg(const char* s) : _type(STRING) {
                 _data.stringValue = new String(s);
             }
-            Arg(const wchar_t* ws) : _type(WIDE_STRING) {
-                _data.wideStringValue = new std::wstring(ws);
-            }
             Arg(const String& s) : _type(STRING) {
                 _data.stringValue = new String(s); 
-            }
-            Arg(const std::wstring& ws) : _type(WIDE_STRING) {
-                _data.wideStringValue = new std::wstring(ws);
             }
             Arg(const Base& arg) : _type(arg.logEntryArgType()) {
                 switch(_type) {
@@ -295,36 +283,26 @@ namespace de
                 case STRING:
                     _data.stringValue = new String(arg.asText());
                     break;
-                case WIDE_STRING:
-                    _data.wideStringValue = new std::wstring(arg.asWideString());
-                    break;
                 }
             }
             ~Arg() {
                 if(_type == STRING) {
                     delete _data.stringValue;
                 }
-                else if(_type == WIDE_STRING) {
-                    delete _data.wideStringValue;
-                }
             }
             
             Type type() const { return _type; }
             dint64 intValue() const {
-                assert(_type == INTEGER);
+                Q_ASSERT(_type == INTEGER);
                 return _data.intValue;
             }
             ddouble floatValue() const {
-                assert(_type == FLOATING_POINT);
+                Q_ASSERT(_type == FLOATING_POINT);
                 return _data.floatValue;
             }
-            const std::string& stringValue() const {
-                assert(_type == STRING);
+            QString stringValue() const {
+                Q_ASSERT(_type == STRING);
                 return *_data.stringValue;
-            }
-            const std::wstring& wideStringValue() const {
-                assert(_type == WIDE_STRING);
-                return *_data.wideStringValue;
             }
 
             // Implements String::IPatternArg.
@@ -342,9 +320,6 @@ namespace de
                 if(_type == STRING) {
                     return *_data.stringValue;
                 }
-                else if(_type == WIDE_STRING) {
-                    return String::wideToString(*_data.wideStringValue);
-                }
                 throw TypeError("Log::Arg::asText",
                     "Number argument cannot be used a string");
             }
@@ -355,7 +330,6 @@ namespace de
                 dint64 intValue;
                 ddouble floatValue;
                 String* stringValue;
-                std::wstring* wideStringValue;
             } _data;
         };
         
@@ -413,7 +387,7 @@ namespace de
         Args _args;
     };
     
-    std::ostream& operator << (std::ostream& stream, const LogEntry::Arg& arg);
+    QTextStream& operator << (QTextStream& stream, const LogEntry::Arg& arg);
 }
 
 #endif /* LIBDENG2_LOG_H */

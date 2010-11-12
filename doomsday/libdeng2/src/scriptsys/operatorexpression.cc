@@ -86,7 +86,7 @@ void OperatorExpression::push(Evaluator& evaluator, Record* names) const
 
 Value* OperatorExpression::newBooleanValue(bool isTrue)
 {
-    return new NumberValue(isTrue? NumberValue::TRUE : NumberValue::FALSE);
+    return new NumberValue(isTrue? NumberValue::VALUE_TRUE : NumberValue::VALUE_FALSE);
 }
 
 void OperatorExpression::verifyAssignable(Value* value)
@@ -230,7 +230,7 @@ Value* OperatorExpression::evaluate(Evaluator& evaluator) const
             
             // Cleanup.
             delete leftValue;
-            assert(rightValue == NULL);
+            Q_ASSERT(rightValue == NULL);
 
             // The MEMBER operator does not evaluate to any result. 
             // Whatever is on the right side will be the result.
@@ -299,10 +299,10 @@ void OperatorExpression::operator << (Reader& from)
 
 Value* OperatorExpression::performSlice(Value* leftValue, Value* rightValue) const
 {
-    assert(rightValue->size() >= 2);
+    Q_ASSERT(rightValue->size() >= 2);
 
     const ArrayValue* args = dynamic_cast<ArrayValue*>(rightValue);
-    assert(args != NULL); // Parser makes sure.
+    Q_ASSERT(args != NULL); // Parser makes sure.
 
     // The resulting slice of leftValue's elements.
     std::auto_ptr<ArrayValue> slice(new ArrayValue());

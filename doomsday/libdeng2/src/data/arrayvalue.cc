@@ -23,15 +23,14 @@
 #include "de/Writer"
 #include "de/Reader"
 
-#include <sstream>
-#include <algorithm>
+#include <QTextStream>
 
 using namespace de;
 
 ArrayValue::ArrayValue() : Value(), _iteration(0)
 {}
 
-ArrayValue::ArrayValue(const ArrayValue& other)
+ArrayValue::ArrayValue(const ArrayValue& other) : Value()
 {
     for(Elements::const_iterator i = other._elements.begin();
         i != other._elements.end(); ++i)
@@ -53,7 +52,8 @@ Value* ArrayValue::duplicate() const
 
 Value::Text ArrayValue::asText() const
 {
-    std::ostringstream s;
+    Text result;
+    QTextStream s(&result);
     s << "[";
 
     bool isFirst = true;
@@ -71,7 +71,7 @@ Value::Text ArrayValue::asText() const
     }
     
     s << " ]";
-    return s.str();
+    return result;
 }
 
 dsize ArrayValue::size() const
@@ -260,7 +260,7 @@ void ArrayValue::remove(dint index)
     
 Value* ArrayValue::pop()
 {
-    assert(size() > 0);
+    Q_ASSERT(size() > 0);
     Value* popped = _elements.back();
     _elements.pop_back();
     return popped;

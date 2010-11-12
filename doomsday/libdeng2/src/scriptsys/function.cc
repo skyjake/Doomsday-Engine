@@ -25,7 +25,7 @@
 #include "de/Reader"
 #include "de/Log"
 
-#include <sstream>
+#include <QTextStream>
 
 using namespace de;
 
@@ -52,7 +52,8 @@ Function::~Function()
 
 String Function::asText() const
 {
-    std::ostringstream os;
+    String result;
+    QTextStream os(&result);
     os << "[Function " << this << " (";
     FOR_EACH(i, _arguments, Arguments::const_iterator)
     {
@@ -68,14 +69,14 @@ String Function::asText() const
         }
     }
     os << ")]";
-    return os.str();
+    return result;
 }
 
 void Function::mapArgumentValues(const ArrayValue& args, ArgumentValues& values) const
 {
     const DictionaryValue* labeledArgs = dynamic_cast<const DictionaryValue*>(
         args.elements().front());
-    assert(labeledArgs != NULL);
+    Q_ASSERT(labeledArgs != NULL);
 
     // First use all the unlabeled arguments.
     Arguments::const_iterator k = _arguments.begin();
@@ -102,7 +103,7 @@ void Function::mapArgumentValues(const ArrayValue& args, ArgumentValues& values)
         // Then apply the labeled arguments, falling back to default values.
         Arguments::const_iterator i = _arguments.begin();
         // Skip past arguments we already have a value for.
-        for(duint count = values.size(); count > 0; --count, ++i);
+        for(duint count = values.size(); count > 0; --count, ++i) {}
         for(; i != _arguments.end(); ++i)
         {
             try 
@@ -130,11 +131,11 @@ void Function::mapArgumentValues(const ArrayValue& args, ArgumentValues& values)
     // Check that the number of arguments matches what we expect.
     if(values.size() != _arguments.size())
     {
-        std::ostringstream os;
-        os << "Expected " << _arguments.size() << " arguments, but got " <<
-            values.size() << " arguments in function call";
         /// @throw WrongArgumentsError  Wrong number of argument specified.
-        throw WrongArgumentsError("Function::mapArgumentValues", os.str());
+        throw WrongArgumentsError("Function::mapArgumentValues",
+                                  "Expected " + QString::number(_arguments.size()) +
+                                  " arguments, but got " + QString::number(values.size()) +
+                                  " arguments in function call");
     }    
 }
 
@@ -158,9 +159,9 @@ Record* Function::globals() const
     return _globals;
 }
 
-bool Function::callNative(Context& context, const ArgumentValues& args) const
+bool Function::callNative(Context& /*context*/, const ArgumentValues& args) const
 {
-    assert(args.size() == _arguments.size());    
+    Q_ASSERT(args.size() == _arguments.size());
     
     // Do non-native function call.
     return false;
@@ -221,6 +222,6 @@ void Function::operator << (Reader& from)
 void Function::recordBeingDeleted(Record& record)
 {
     // The namespace of the record is being deleted.
-    assert(_globals == &record);
+    Q_ASSERT(_globals == &record);
     _globals = 0;
 }

@@ -22,7 +22,7 @@
 #include "de/Reader"
 #include "de/math.h"
 
-#include <sstream>
+#include <QTextStream>
 
 using namespace de;
 
@@ -42,9 +42,10 @@ Value::Number NumberValue::asNumber() const
 
 Value::Text NumberValue::asText() const
 {
-    std::ostringstream str;
-    str << _value;
-    return str.str();
+    Text result;
+    QTextStream s(&result);
+    s << _value;
+    return result;
 }
 
 bool NumberValue::isTrue() const

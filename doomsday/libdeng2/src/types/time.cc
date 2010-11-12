@@ -21,19 +21,8 @@
 #include "de/Date"
 #include "de/Writer"
 #include "de/Reader"
-#include "../sdl.h"
 
-#include <cmath>
-#include <sstream>
-#include <iomanip>
-
-#ifdef UNIX
-#   include <sys/time.h>
-#endif
-
-#ifdef WIN32
-#   include <sys/timeb.h>
-#endif
+#include <QDataStream>
 
 using namespace de;
 
@@ -52,90 +41,40 @@ Time::Delta Time::Delta::operator - (const ddouble& d) const
     return _seconds - d;
 }
 
-void Time::Delta::sleep() const
-{
-    SDL_Delay(duint32(asMilliSeconds()));
-}
-
-Time::Time() 
-{
-#ifdef UNIX
-    struct timeval tv;
-    gettimeofday(&tv, 0);
-    _time = tv.tv_sec;
-    _micro = tv.tv_usec;
-#endif
-
-#ifdef WIN32
-    struct __timeb64 tb;
-    _ftime64(&tb);
-    _time = tb.time;
-    _micro = tb.millitm * 1000;
-#endif
-}
+Time::Time() : _time(QDateTime::currentDateTime())
+{}
 
 bool Time::operator < (const Time& t) const
 {
-    if(_time > t._time)
-    {
-        return false;
-    }
-    return _time < t._time || _micro < t._micro;
+    return (_time < t._time);
 }
 
 bool Time::operator == (const Time& t) const
 {
-    return _time == t._time && _micro == t._micro;
+    return (_time == t._time);
 }
 
 Time Time::operator + (const Delta& delta) const
 {
     Time result = *this;
-    result += delta;
+    result._time.addMSecs(delta.asMilliSeconds());
     return result;
 }
 
 Time& Time::operator += (const Delta& delta)
 {
-    ddouble amount = std::fabs(delta);
-    ddouble fullSeconds = std::floor(amount);
-    ddouble fraction = amount - fullSeconds;
-    if(delta > 0.0)
-    {
-        _time += time_t(fullSeconds);
-        _micro += dint(fraction * 1.0e6);
-        if(_micro > 1000000)
-        {
-            _micro -= 1000000;
-            _time += 1;
-        }
-    }
-    else
-    {
-        _time -= time_t(fullSeconds);
-        _micro -= dint(fraction * 1.0e6);
-        if(_micro < 0)
-        {
-            _micro += 1000000;
-            _time -= 1;
-        }
-    }
+    _time.addMSecs(delta.asMilliSeconds());
     return *this;
 }
 
 Time::Delta Time::operator - (const Time& earlierTime) const
 {
-    ddouble seconds = std::difftime(_time, earlierTime._time);
-    // The fraction.
-    seconds += (_micro - earlierTime._micro) / 1.0e6;
-    return seconds;
+    return earlierTime._time.msecsTo(_time) / 1000.0;
 }
 
 String Time::asText() const
 {
-    std::ostringstream os;
-    os << _time << "." << std::setw(6) << std::setfill('0') << _micro;
-    return os.str();
+    return _time.toString("yyyy-MM-dd hh:mm:ss.zzz");
 }
 
 Date Time::asDate() const
@@ -145,18 +84,21 @@ Date Time::asDate() const
 
 void Time::operator >> (Writer& to) const
 {
-    to << duint64(_time) << _micro;
+    Block bytes;
+    QDataStream s(&bytes, QIODevice::WriteOnly);
+    s << _time;
+    to << bytes;
 }
 
 void Time::operator << (Reader& from)
 {
-    duint64 t;
-    from >> t;
-    _time = (time_t) t;
-    from >> _micro;
+    Block bytes;
+    from >> bytes;
+    QDataStream s(bytes);
+    s >> _time;
 }
 
-std::ostream& de::operator << (std::ostream& os, const Time& t)
+QTextStream& de::operator << (QTextStream& os, const Time& t)
 {
     os << t.asText();
     return os;

@@ -30,14 +30,14 @@
 #include "de/FunctionValue"
 #include "de/Vector"
 
-#include <iomanip>
+#include <QTextStream>
 
 using namespace de;
 
 Record::Record()
 {}
 
-Record::Record(const Record& other)
+Record::Record(const Record& other) : ISerializable(), LogEntry::Arg::Base()
 {
     for(Members::const_iterator i = other._members.begin(); i != other._members.end(); ++i)
     {
@@ -189,8 +189,8 @@ Variable& Record::operator [] (const String& name)
 const Variable& Record::operator [] (const String& name) const
 {
     // Path notation allows looking into subrecords.
-    String::size_type pos = name.find('.');
-    if(pos != String::npos)
+    int pos = name.indexOf('.');
+    if(pos >= 0)
     {
         String subName = name.substr(0, pos);
         String remaining = name.substr(pos + 1);
@@ -218,8 +218,8 @@ Record& Record::subrecord(const String& name)
 const Record& Record::subrecord(const String& name) const
 {
     // Path notation allows looking into subrecords.
-    String::size_type pos = name.find('.');
-    if(pos != String::npos)
+    int pos = name.indexOf('.');
+    if(pos >= 0)
     {
         return subrecord(name.substr(0, pos)).subrecord(name.substr(pos + 1));
     }
@@ -252,7 +252,8 @@ String Record::asText(const String& prefix, List* lines) const
     }
 
     // Top level of the recursion.
-    std::ostringstream os;
+    QString result;
+    QTextStream os(&result);
     List allLines;
     Vector2ui maxLength;
 
@@ -270,15 +271,15 @@ String Record::asText(const String& prefix, List* lines) const
     for(List::iterator i = allLines.begin(); i != allLines.end(); ++i)
     {
         if(i != allLines.begin()) os << "\n";
-        os << std::setw(maxLength.x) << i->first << ": ";
+        os << qSetFieldWidth(maxLength.x) << i->first << ": ";
         // Print the value line by line.
-        String::size_type pos = 0;
-        while(pos != String::npos)
+        int pos = 0;
+        while(pos >= 0)
         {
-            String::size_type next = i->second.find('\n', pos);
+            int next = i->second.indexOf('\n', pos);
             if(pos > 0)
             {
-                os << std::setw(maxLength.x) << "" << "  ";
+                os << qSetFieldWidth(maxLength.x) << "" << "  ";
             }
             os << i->second.substr(pos, next != String::npos? next - pos + 1 : next);
             pos = next;
@@ -286,7 +287,7 @@ String Record::asText(const String& prefix, List* lines) const
         }
     }
 
-    return os.str();    
+    return result;
 }
 
 const Function* Record::function(const String& name) const
@@ -343,7 +344,7 @@ void Record::operator << (Reader& from)
     }
 }
 
-std::ostream& de::operator << (std::ostream& os, const Record& record)
+QTextStream& de::operator << (QTextStream& os, const Record& record)
 {
     return os << record.asText();
 }

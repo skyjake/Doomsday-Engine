@@ -85,10 +85,10 @@ void Parser::parseCompound(Compound& compound)
 {
     while(_statementRange.size() > 0) 
     {
-        if(_statementRange.firstToken().equals("elsif") ||
-           _statementRange.firstToken().equals("else") ||
-           _statementRange.firstToken().equals("catch") ||
-           (_statementRange.size() == 1 && _statementRange.firstToken().equals("end")))
+        if(_statementRange.firstToken().equals(ScriptLex::ELSIF) ||
+           _statementRange.firstToken().equals(ScriptLex::ELSE) ||
+           _statementRange.firstToken().equals(ScriptLex::CATCH) ||
+           (_statementRange.size() == 1 && _statementRange.firstToken().equals(ScriptLex::END)))
         {
             // End of compound.
             break;
@@ -103,59 +103,59 @@ void Parser::parseCompound(Compound& compound)
 
 void Parser::parseStatement(Compound& compound)
 {
-    assert(!_statementRange.empty());
+    Q_ASSERT(!_statementRange.empty());
     
-    const TokenBuffer::Token& firstToken = _statementRange.firstToken();
+    const Token& firstToken = _statementRange.firstToken();
 
     // Statements with a compound: if, for, while, def.
-    if(firstToken.equals("if"))
+    if(firstToken.equals(ScriptLex::IF))
     {
         compound.add(parseIfStatement());
         return;
     }
-    else if(firstToken.equals("while"))
+    else if(firstToken.equals(ScriptLex::WHILE))
     {
         compound.add(parseWhileStatement());
         return;
     }
-    else if(firstToken.equals("for"))
+    else if(firstToken.equals(ScriptLex::FOR))
     {
         compound.add(parseForStatement());
         return;
     }
-    else if(firstToken.equals("def"))
+    else if(firstToken.equals(ScriptLex::DEF))
     {
         compound.add(parseFunctionStatement());
         return;
     }
-    else if(firstToken.equals("try"))
+    else if(firstToken.equals(ScriptLex::TRY))
     {
         parseTryCatchSequence(compound);
         return;
     }
     
     // Statements without a compound (must advance to next statement manually).
-    if(firstToken.equals("import"))
+    if(firstToken.equals(ScriptLex::IMPORT))
     {
         compound.add(parseImportStatement());
     }
-    else if(firstToken.equals("record"))
+    else if(firstToken.equals(ScriptLex::RECORD))
     {
         compound.add(parseDeclarationStatement());
     }
-    else if(firstToken.equals("del"))
+    else if(firstToken.equals(ScriptLex::DEL))
     {
         compound.add(parseDeleteStatement());
     }
-    else if(firstToken.equals("pass"))
+    else if(firstToken.equals(ScriptLex::PASS))
     {
         compound.add(new FlowStatement(FlowStatement::PASS));
     }
-    else if(firstToken.equals("continue"))
+    else if(firstToken.equals(ScriptLex::CONTINUE))
     {
         compound.add(new FlowStatement(FlowStatement::CONTINUE));
     }
-    else if(firstToken.equals("break"))
+    else if(firstToken.equals(ScriptLex::BREAK))
     {
         // Break may have an expression argument that tells us how many
         // nested compounds to break out of.
@@ -166,7 +166,7 @@ void Parser::parseStatement(Compound& compound)
         }
         compound.add(new FlowStatement(FlowStatement::BREAK, breakCount));
     }
-    else if(firstToken.equals("return") || firstToken.equals("throw"))
+    else if(firstToken.equals(ScriptLex::RETURN) || firstToken.equals(ScriptLex::THROW))
     {
         Expression* argValue = 0;
         if(_statementRange.size() > 1)
@@ -174,15 +174,16 @@ void Parser::parseStatement(Compound& compound)
             argValue = parseExpression(_statementRange.startingFrom(1));
         }
         compound.add(new FlowStatement(
-            firstToken.equals("return")? FlowStatement::RETURN : FlowStatement::THROW, 
+            firstToken.equals(ScriptLex::RETURN)? FlowStatement::RETURN : FlowStatement::THROW,
             argValue));
     }
-    else if(firstToken.equals("print"))
+    else if(firstToken.equals(ScriptLex::PRINT))
     {
         compound.add(parsePrintStatement());
     }
-    else if(_statementRange.hasBracketless("=") || _statementRange.hasBracketless(":=") ||
-        _statementRange.hasBracketless("?="))
+    else if(_statementRange.hasBracketless(ScriptLex::ASSIGN) ||
+            _statementRange.hasBracketless(ScriptLex::SCOPE_ASSIGN) ||
+            _statementRange.hasBracketless(ScriptLex::WEAK_ASSIGN))
     {
         compound.add(parseAssignStatement());
     }
@@ -198,7 +199,7 @@ void Parser::parseStatement(Compound& compound)
 IfStatement* Parser::parseIfStatement()
 {
     // The "end" keyword is necessary in the full form.
-    bool expectEnd = !_statementRange.has(":");
+    bool expectEnd = !_statementRange.has(Token::COLON);
     
     auto_ptr<IfStatement> statement(new IfStatement());
     statement->newBranch();
@@ -206,27 +207,27 @@ IfStatement* Parser::parseIfStatement()
         parseConditionalCompound(statement->branchCompound(), 
             HAS_CONDITION | STAY_AT_CLOSING_STATEMENT));
     
-    while(_statementRange.beginsWith("elsif"))
+    while(_statementRange.beginsWith(ScriptLex::ELSIF))
     {
-        expectEnd = !_statementRange.has(":");
+        expectEnd = !_statementRange.has(Token::COLON);
         statement->newBranch();
         statement->setBranchCondition(
             parseConditionalCompound(statement->branchCompound(), 
                 HAS_CONDITION | STAY_AT_CLOSING_STATEMENT));
     }
     
-    if(_statementRange.beginsWith("else"))
+    if(_statementRange.beginsWith(ScriptLex::ELSE))
     {
-        expectEnd = !_statementRange.has(":");
+        expectEnd = !_statementRange.has(Token::COLON);
         parseConditionalCompound(statement->elseCompound(), STAY_AT_CLOSING_STATEMENT);
     }
     
     if(expectEnd) 
     {
-        if(_statementRange.size() != 1 || !_statementRange.firstToken().equals("end"))
+        if(_statementRange.size() != 1 || !_statementRange.firstToken().equals(ScriptLex::END))
         {
-            throw UnexpectedTokenError("Parser::parseIfStatement", "Expected 'end', but got " + 
-                _statementRange.firstToken().asText());
+            throw UnexpectedTokenError("Parser::parseIfStatement", "Expected '" + ScriptLex::END +
+                                       "', but got " + _statementRange.firstToken().asText());
         }
         nextStatement();
     }
@@ -249,8 +250,8 @@ ForStatement* Parser::parseForStatement()
     // "for" by-ref-expr "in" expr ":" statement
     // "for" by-ref-expr "in" expr "\n" compound
     
-    dint colonPos = _statementRange.find(":");
-    dint inPos = _statementRange.find("in");
+    dint colonPos = _statementRange.find(Token::COLON);
+    dint inPos = _statementRange.find(ScriptLex::IN);
     if(inPos < 0 || (colonPos > 0 && inPos > colonPos))
     {
         throw MissingTokenError("Parser::parseForStatement",
@@ -281,14 +282,14 @@ ExpressionStatement* Parser::parseImportStatement()
     dint startAt = 1;
     ExpressionFlags flags = IMPORT_NAMESPACE | ALLOW_NEW_RECORDS | 
         REQUIRE_NEW_IDENTIFIER | LOCAL_NAMESPACE_ONLY;
-    if(_statementRange.size() >= 3 && _statementRange.token(1).equals("record"))
+    if(_statementRange.size() >= 3 && _statementRange.token(1).equals(ScriptLex::RECORD))
     {
         // Take a copy of the imported record instead of referencing it.
         flags |= BY_VALUE;
         flags &= ~ALLOW_NEW_RECORDS; // don't create a variable referencing it
         startAt = 2;
     }
-    return new ExpressionStatement(parseList(_statementRange.startingFrom(startAt), ",", flags));
+    return new ExpressionStatement(parseList(_statementRange.startingFrom(startAt), Token::COMMA, flags));
 }
 
 ExpressionStatement* Parser::parseDeclarationStatement()
@@ -301,7 +302,7 @@ ExpressionStatement* Parser::parseDeclarationStatement()
             "Expected identifier to follow " + _statementRange.firstToken().asText());
     }    
     ExpressionFlags flags = LOCAL_NAMESPACE_ONLY | ALLOW_NEW_RECORDS;
-    return new ExpressionStatement(parseList(_statementRange.startingFrom(1), ",", flags));
+    return new ExpressionStatement(parseList(_statementRange.startingFrom(1), Token::COMMA, flags));
 }
 
 ExpressionStatement* Parser::parseDeleteStatement()
@@ -313,13 +314,13 @@ ExpressionStatement* Parser::parseDeleteStatement()
         throw MissingTokenError("Parser::parseDeleteStatement",
             "Expected identifier to follow " + _statementRange.firstToken().asText());
     }    
-    return new ExpressionStatement(parseList(_statementRange.startingFrom(1), ",",
+    return new ExpressionStatement(parseList(_statementRange.startingFrom(1), Token::COMMA,
         DELETE_IDENTIFIER | LOCAL_NAMESPACE_ONLY));
 }
 
 FunctionStatement* Parser::parseFunctionStatement()
 {
-    dint pos = _statementRange.find("(");
+    dint pos = _statementRange.find(Token::PARENTHESIS_OPEN);
     if(pos < 0)
     {
         throw MissingTokenError("Parser::parseMethodStatement",
@@ -337,16 +338,16 @@ FunctionStatement* Parser::parseFunctionStatement()
     {
         // The arguments are comma-separated.
         TokenRange delim = argRange.undefinedRange();
-        while(argRange.getNextDelimited(",", delim))
+        while(argRange.getNextDelimited(Token::COMMA, delim))
         {
-            if(delim.size() == 1 && delim.firstToken().type() == TokenBuffer::Token::IDENTIFIER)
+            if(delim.size() == 1 && delim.firstToken().type() == Token::IDENTIFIER)
             {
                 // Just the name of the argument.
                 statement->addArgument(delim.firstToken().str());
             }
             else if(delim.size() >= 3 && 
-                delim.token(0).type() == TokenBuffer::Token::IDENTIFIER &&
-                delim.token(1).equals("="))
+                delim.token(0).type() == Token::IDENTIFIER &&
+                delim.token(1).equals(ScriptLex::ASSIGN))
             {
                 // Argument with a default value.
                 statement->addArgument(delim.firstToken().str(),
@@ -377,16 +378,16 @@ void Parser::parseTryCatchSequence(Compound& compound)
     compound.add(tryStat.release());
 
     // One catch is required.
-    if(!_statementRange.firstToken().equals("catch"))
+    if(!_statementRange.firstToken().equals(ScriptLex::CATCH))
     {
         throw UnexpectedTokenError("Parser::parseTryCatchSequence",
             "Expected 'catch', but got " + _statementRange.firstToken().asText());
     }
     CatchStatement* finalCatch = 0;
     bool expectEnd;
-    while(_statementRange.firstToken().equals("catch"))
+    while(_statementRange.firstToken().equals(ScriptLex::CATCH))
     {
-        dint colon = _statementRange.find(":");
+        dint colon = _statementRange.find(Token::COLON);
         expectEnd = (colon < 0);
 
         // Parse the arguments.
@@ -402,7 +403,7 @@ void Parser::parseTryCatchSequence(Compound& compound)
             {
                 argRange = _statementRange.between(1, colon);
             }
-            args.reset(parseList(argRange, ",", 
+            args.reset(parseList(argRange, Token::COMMA,
                 BY_REFERENCE | LOCAL_NAMESPACE_ONLY | ALLOW_NEW_VARIABLES));
         }
 
@@ -419,7 +420,7 @@ void Parser::parseTryCatchSequence(Compound& compound)
     finalCatch->flags.set(CatchStatement::FINAL_BIT);
     if(expectEnd)
     {
-        if(!_statementRange.firstToken().equals("end"))
+        if(!_statementRange.firstToken().equals(ScriptLex::END))
         {
             throw UnexpectedTokenError("Parser::parseTryCatchSequence",
             "Expected 'end', but got " + _statementRange.firstToken().asText());
@@ -448,20 +449,20 @@ AssignStatement* Parser::parseAssignStatement()
     ExpressionFlags flags = ALLOW_NEW_VARIABLES | BY_REFERENCE | LOCAL_NAMESPACE_ONLY;
     
     /// "const" makes read-only variables.
-    if(_statementRange.firstToken().equals("const"))
+    if(_statementRange.firstToken().equals(ScriptLex::CONST))
     {
         flags |= SET_READ_ONLY;
         _statementRange = _statementRange.startingFrom(1);
     }
     
-    dint pos = _statementRange.find("=");
+    dint pos = _statementRange.find(ScriptLex::ASSIGN);
     if(pos < 0)
     {
         flags &= ~LOCAL_NAMESPACE_ONLY;
-        pos = _statementRange.find(":=");
+        pos = _statementRange.find(ScriptLex::SCOPE_ASSIGN);
         if(pos < 0)
         {
-            pos = _statementRange.find("?=");
+            pos = _statementRange.find(ScriptLex::WEAK_ASSIGN);
             flags |= THROWAWAY_IF_IN_SCOPE;
         }
     }
@@ -472,7 +473,7 @@ AssignStatement* Parser::parseAssignStatement()
     dint bracketPos = pos - 1;
     try
     {
-        while(_statementRange.token(bracketPos).equals("]"))
+        while(_statementRange.token(bracketPos).equals(Token::BRACKET_CLOSE))
         {
             dint startPos = _statementRange.openingBracket(bracketPos);
             nameEndPos = startPos;
@@ -523,7 +524,7 @@ Expression* Parser::parseConditionalCompound(Compound& compound, const CompoundF
     TokenRange range = _statementRange;
     
     // See if there is a colon on this line.
-    dint colon = range.find(":");
+    dint colon = range.find(Token::COLON);
     
     auto_ptr<Expression> condition;
     if(flags[HAS_CONDITION_BIT])
@@ -561,7 +562,7 @@ Expression* Parser::parseConditionalCompound(Compound& compound, const CompoundF
     return condition.release();
 }
 
-ArrayExpression* Parser::parseList(const TokenRange& range, const char* separator, 
+ArrayExpression* Parser::parseList(const TokenRange& range, const QChar* separator,
     const ExpressionFlags& flags)
 {
     auto_ptr<ArrayExpression> exp(new ArrayExpression);
@@ -588,7 +589,7 @@ Expression* Parser::parseExpression(const TokenRange& fullRange, const Expressio
     }
     
     // We can ignore extra parenthesis around the range.
-    while(range.firstToken().equals("(") && range.closingBracket(0) == range.size() - 1)
+    while(range.firstToken().equals(Token::PARENTHESIS_OPEN) && range.closingBracket(0) == range.size() - 1)
     {
         range = range.shrink(1);
     }
@@ -628,7 +629,7 @@ Expression* Parser::parseExpression(const TokenRange& fullRange, const Expressio
 
 ArrayExpression* Parser::parseArrayExpression(const TokenRange& range)
 {
-    if(!range.firstToken().equals("[") ||
+    if(!range.firstToken().equals(Token::BRACKET_OPEN) ||
         range.closingBracket(0) != range.size() - 1)
     {
         throw MissingTokenError("Parser::parseArrayExpression",
@@ -640,7 +641,7 @@ ArrayExpression* Parser::parseArrayExpression(const TokenRange& range)
 
 DictionaryExpression* Parser::parseDictionaryExpression(const TokenRange& range)
 {
-    if(!range.firstToken().equals("{") ||
+    if(!range.firstToken().equals(Token::CURLY_OPEN) ||
         range.closingBracket(0) != range.size() - 1)
     {
         throw MissingTokenError("Parser::parseDictionaryExpression",
@@ -654,9 +655,9 @@ DictionaryExpression* Parser::parseDictionaryExpression(const TokenRange& range)
     {
         // The arguments are comma-separated.
         TokenRange delim = shrunk.undefinedRange();
-        while(shrunk.getNextDelimited(",", delim))
+        while(shrunk.getNextDelimited(Token::COMMA, delim))
         {
-            dint colonPos = delim.findBracketless(":");
+            dint colonPos = delim.findBracketless(Token::COLON);
             if(colonPos < 0)
             {
                 throw MissingTokenError("Parser::parseDictionaryExpression",
@@ -677,7 +678,7 @@ Expression* Parser::parseCallExpression(const TokenRange& nameRange, const Token
     //std::cerr << "call name: " << nameRange.asText() << "\n";
     //std::cerr << "call args: " << argumentRange.asText() << "\n";
     
-    if(!argumentRange.firstToken().equals("(") || 
+    if(!argumentRange.firstToken().equals(Token::PARENTHESIS_OPEN) ||
          argumentRange.closingBracket(0) < argumentRange.size() - 1)
     {
         throw SyntaxError("Parser::parseCallExpression",
@@ -697,14 +698,14 @@ Expression* Parser::parseCallExpression(const TokenRange& nameRange, const Token
     {
         // The arguments are comma-separated.
         TokenRange delim = argsRange.undefinedRange();
-        while(argsRange.getNextDelimited(",", delim))
+        while(argsRange.getNextDelimited(Token::COMMA, delim))
         {
-            if(delim.has("="))
+            if(delim.has(ScriptLex::ASSIGN))
             {
                 // A label is included.
                 if(delim.size() < 3 || 
-                    delim.firstToken().type() != TokenBuffer::Token::IDENTIFIER ||
-                    !delim.token(1).equals("="))
+                    delim.firstToken().type() != Token::IDENTIFIER ||
+                    !delim.token(1).equals(ScriptLex::ASSIGN))
                 {
                     throw UnexpectedTokenError("Parser::parseCallExpression",
                         "Labeled argument '" + delim.asText() + "' is malformed");
@@ -757,7 +758,7 @@ OperatorExpression* Parser::parseOperatorExpression(Operator op, const TokenRang
             
         // Binary operation.
         auto_ptr<Expression> leftOperand(parseExpression(leftSide, leftFlags));
-        auto_ptr<Expression> rightOperand(op == SLICE? parseList(rightSide, ":") :
+        auto_ptr<Expression> rightOperand(op == SLICE? parseList(rightSide, Token::COLON) :
             parseExpression(rightSide, rightFlags));
         OperatorExpression* x = new OperatorExpression(op, leftOperand.get(), rightOperand.get());
         rightOperand.release();
@@ -775,23 +776,23 @@ Expression* Parser::parseTokenExpression(const TokenRange& range, const Expressi
             range.buffer().at(range.tokenIndex(0)).asText());
     }
 
-    const TokenBuffer::Token& token = range.token(0);
+    const Token& token = range.token(0);
 
-    if(token.type() == TokenBuffer::Token::KEYWORD)
+    if(token.type() == Token::KEYWORD)
     {
-        if(token.equals("True"))
+        if(token.equals(ScriptLex::T_TRUE))
         {
             return ConstantExpression::True();
         }
-        else if(token.equals("False"))
+        else if(token.equals(ScriptLex::T_FALSE))
         {
             return ConstantExpression::False();
         }
-        else if(token.equals("None"))
+        else if(token.equals(ScriptLex::NONE))
         {
             return ConstantExpression::None();
         }
-        else if(token.equals("Pi"))
+        else if(token.equals(ScriptLex::PI))
         {
             return ConstantExpression::Pi();
         }
@@ -799,7 +800,7 @@ Expression* Parser::parseTokenExpression(const TokenRange& range, const Expressi
 
     switch(token.type())
     {
-    case TokenBuffer::Token::IDENTIFIER:
+    case Token::IDENTIFIER:
         if(range.size() == 1)
         {
             NameExpression::Flags nameFlags;
@@ -823,20 +824,20 @@ Expression* Parser::parseTokenExpression(const TokenRange& range, const Expressi
                 "Unexpected token " + range.token(1).asText());
         }
         
-    case TokenBuffer::Token::LITERAL_STRING_APOSTROPHE:
-    case TokenBuffer::Token::LITERAL_STRING_QUOTED:
-    case TokenBuffer::Token::LITERAL_STRING_LONG:
+    case Token::LITERAL_STRING_APOSTROPHE:
+    case Token::LITERAL_STRING_QUOTED:
+    case Token::LITERAL_STRING_LONG:
         return new ConstantExpression(
             new TextValue(ScriptLex::unescapeStringToken(token)));
 
-    case TokenBuffer::Token::LITERAL_NUMBER:
+    case Token::LITERAL_NUMBER:
         return new ConstantExpression(
             new NumberValue(ScriptLex::tokenToNumber(token)));
         
     default:
         throw UnexpectedTokenError("Parser::parseTokenExpression",
             token.asText() + " which was identified as " +
-            TokenBuffer::Token::typeToText(token.type()) + " was unexpected");
+            Token::typeToText(token.type()) + " was unexpected");
     }
 }
 
@@ -870,9 +871,9 @@ Operator Parser::findLowestOperator(const TokenRange& range, TokenRange& leftSid
         Operator op = NONE;
         Direction direction = LEFT_TO_RIGHT;
         
-        const TokenBuffer::Token& token = range.token(i);
+        const Token& token = range.token(i);
         
-        if(token.equals("("))
+        if(token.equals(Token::PARENTHESIS_OPEN))
         {
             continueFrom = range.closingBracket(i) + 1;
             if((previousOp == NONE || previousOp == INDEX || previousOp == SLICE ||
@@ -891,13 +892,13 @@ Operator Parser::findLowestOperator(const TokenRange& range, TokenRange& leftSid
                 rank = RANK_PARENTHESIS;
             }
         }
-        else if(token.equals("["))
+        else if(token.equals(Token::BRACKET_OPEN))
         {
             continueFrom = range.closingBracket(i) + 1;
             if((previousOp == NONE || previousOp == PARENTHESIS ||
                 previousOp == INDEX || previousOp == SLICE || previousOp == CALL) && i > 0)
             {
-                if(range.between(i + 1, continueFrom - 1).has(":"))
+                if(range.between(i + 1, continueFrom - 1).has(Token::COLON))
                 {
                     op = SLICE;
                     rank = RANK_SLICE;
@@ -914,7 +915,7 @@ Operator Parser::findLowestOperator(const TokenRange& range, TokenRange& leftSid
                 rank = RANK_ARRAY;
             }
         }
-        else if(token.equals("{"))
+        else if(token.equals(Token::CURLY_OPEN))
         {
             continueFrom = range.closingBracket(i) + 1;
             op = DICTIONARY;
@@ -970,7 +971,7 @@ Operator Parser::findLowestOperator(const TokenRange& range, TokenRange& leftSid
             // Check the rankings table.
             for(int k = 0; rankings[k].token; ++k)
             {
-                if(token.equals(rankings[k].token))
+                if(token.equals(String(rankings[k].token)))
                 {
                     op = rankings[k].op;
                     rank = rankings[k].rank;

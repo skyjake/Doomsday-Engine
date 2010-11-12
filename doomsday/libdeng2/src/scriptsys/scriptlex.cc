@@ -21,10 +21,39 @@
 #include "de/TokenBuffer"
 #include "de/Vector"
 
-#include <sstream>
-#include <iomanip>
-
 using namespace de;
+
+const String ScriptLex::AND("and");
+const String ScriptLex::OR("or");
+const String ScriptLex::NOT("not");
+const String ScriptLex::IF("if");
+const String ScriptLex::ELSIF("elsif");
+const String ScriptLex::ELSE("else");
+const String ScriptLex::END("end");
+const String ScriptLex::THROW("throw");
+const String ScriptLex::CATCH("catch");
+const String ScriptLex::IN("in");
+const String ScriptLex::WHILE("while");
+const String ScriptLex::FOR("for");
+const String ScriptLex::DEF("def");
+const String ScriptLex::TRY("try");
+const String ScriptLex::IMPORT("import");
+const String ScriptLex::RECORD("record");
+const String ScriptLex::DEL("del");
+const String ScriptLex::PASS("pass");
+const String ScriptLex::CONTINUE("continue");
+const String ScriptLex::BREAK("break");
+const String ScriptLex::RETURN("return");
+const String ScriptLex::CONST("const");
+const String ScriptLex::PRINT("print");
+const String ScriptLex::T_TRUE("True");
+const String ScriptLex::T_FALSE("False");
+const String ScriptLex::NONE("None");
+const String ScriptLex::PI("Pi");
+
+const String ScriptLex::ASSIGN("=");
+const String ScriptLex::SCOPE_ASSIGN(":=");
+const String ScriptLex::WEAK_ASSIGN("?=");
 
 ScriptLex::ScriptLex(const String& input) : Lex(input)
 {}
@@ -62,7 +91,7 @@ duint ScriptLex::getStatement(TokenBuffer& output)
             skipWhiteExceptNewline();
 
             // This will be the first character of the token.
-            duchar c = get();
+            QChar c = get();
             
             if(c == '\n' || c == ';')
             {
@@ -107,7 +136,7 @@ duint ScriptLex::getStatement(TokenBuffer& output)
                 bool isHex = (c == '0' && (peek() == 'x' || peek() == 'X'));
                 bool gotX = false;
                 
-                output.setType(TokenBuffer::Token::LITERAL_NUMBER);
+                output.setType(Token::LITERAL_NUMBER);
 
                 // Read until a non-numeric character is found.
                 while(isNumeric((c = peek())) || (isHex && isHexNumeric(c)) || 
@@ -128,7 +157,7 @@ duint ScriptLex::getStatement(TokenBuffer& output)
             // Alphanumeric characters are joined into a token.
             if(isAlphaNumeric(c))
             {
-                output.setType(TokenBuffer::Token::IDENTIFIER);
+                output.setType(Token::IDENTIFIER);
                 
                 while(isAlphaNumeric((c = peek())))
                 {
@@ -138,7 +167,7 @@ duint ScriptLex::getStatement(TokenBuffer& output)
                 // It might be that this is a keyword.
                 if(isKeyword(output.latest()))
                 {
-                    output.setType(TokenBuffer::Token::KEYWORD);
+                    output.setType(Token::KEYWORD);
                 }
                 
                 output.endToken();
@@ -148,7 +177,7 @@ duint ScriptLex::getStatement(TokenBuffer& output)
 
             if(isOperator(c))
             {
-                output.setType(TokenBuffer::Token::OPERATOR);
+                output.setType(Token::OPERATOR);
                 
                 if(combinesWith(c, peek()))
                 {
@@ -169,9 +198,10 @@ duint ScriptLex::getStatement(TokenBuffer& output)
                     if(Vector3i(bracketLevel).min() < 0)
                     {
                         // Very unusual!
-                        std::ostringstream os;
-                        os << "Mismatched bracket '" << c << "' on line " << lineNumber();
-                        throw MismatchedBracketError("ScriptLex::getStatement", os.str());
+                        throw MismatchedBracketError("ScriptLex::getStatement",
+                                                     "Mismatched bracket '" + QString(c) +
+                                                     "' on line " +
+                                                     QString::number(lineNumber()));
                     }
                 }
 
@@ -203,26 +233,26 @@ duint ScriptLex::getStatement(TokenBuffer& output)
     return counter;
 }
 
-TokenBuffer::Token::Type 
-ScriptLex::parseString(duchar startChar, duint startIndentation, TokenBuffer& output)
+Token::Type
+ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer& output)
 {
-    TokenBuffer::Token::Type type = 
-        ( startChar == '\''? TokenBuffer::Token::LITERAL_STRING_APOSTROPHE : 
-          TokenBuffer::Token::LITERAL_STRING_QUOTED );
+    Token::Type type =
+        ( startChar == '\''? Token::LITERAL_STRING_APOSTROPHE :
+          Token::LITERAL_STRING_QUOTED );
     bool longString = false;
     duint charLineNumber = lineNumber();
     
     ModeSpan readingMode(*this, SKIP_COMMENTS);
     
     // The token already contains the startChar.
-    duchar c = get();
+    QChar c = get();
     
     if(c == '\n')
     {
         // This can't be good.
-        std::ostringstream os;
-        os << "String on line " << charLineNumber << " is not terminated";
-        throw UnterminatedStringError("ScriptLex::parseString", os.str());
+        throw UnterminatedStringError("ScriptLex::parseString",
+                                      "String on line " + QString::number(charLineNumber) +
+                                      " is not terminated");
     }
 
     output.appendChar(c);
@@ -258,9 +288,10 @@ ScriptLex::parseString(duchar startChar, duint startIndentation, TokenBuffer& ou
         {
             if(!longString)
             {
-                std::ostringstream os;
-                os << "String on line " << charLineNumber << " is not terminated";
-                throw UnterminatedStringError("ScriptLex::parseString", os.str());
+                throw UnterminatedStringError("ScriptLex::parseString",
+                                              "String on line " +
+                                              QString::number(charLineNumber) +
+                                              " is not terminated");
             }
             // Skip whitespace according to the indentation.
             duint skipCount = startIndentation;
@@ -277,7 +308,7 @@ ScriptLex::parseString(duchar startChar, duint startIndentation, TokenBuffer& ou
             if(longString)
             {
                 c = get();
-                duchar d = get();
+                QChar d = get();
                 if(c != '"') 
                 {
                     throw UnexpectedCharacterError("ScriptLex::parseString",
@@ -295,10 +326,10 @@ ScriptLex::parseString(duchar startChar, duint startIndentation, TokenBuffer& ou
         }
     }
     
-    return (longString? TokenBuffer::Token::LITERAL_STRING_LONG : type);
+    return (longString? Token::LITERAL_STRING_LONG : type);
 }
 
-bool ScriptLex::isOperator(duchar c)
+bool ScriptLex::isOperator(QChar c)
 {
     return (c == '=' || c == ',' || c == '.' 
         || c == '-' || c == '+' || c == '/' || c == '*' || c == '%' 
@@ -307,7 +338,7 @@ bool ScriptLex::isOperator(duchar c)
         || c == ':' || c == '<' || c == '>' || c == '?');
 }
 
-bool ScriptLex::combinesWith(duchar a, duchar b)
+bool ScriptLex::combinesWith(QChar a, QChar b)
 {
     if(b == '=')
     {
@@ -322,37 +353,37 @@ bool ScriptLex::combinesWith(duchar a, duchar b)
     return false;
 }
 
-bool ScriptLex::isKeyword(const TokenBuffer::Token& token)
+bool ScriptLex::isKeyword(const Token& token)
 {
-    const char* keywords[] = 
+    const QChar* keywords[] =
     {
-        "and",
-        "break",
-        "catch",
-        "const",
-        "continue",
-        "def",
-        "del",
-        "else",
-        "elsif",
-        "end",
-        "for",
-        "if", 
-        "import",
-        "in",
-        "not",
-        "or",
-        "pass",
-        "print",
-        "record",
-        "return",
-        "throw",
-        "try",
-        "while",
-        "None",
-        "False",
-        "True",
-        "Pi",
+        AND,
+        BREAK,
+        CATCH,
+        CONST,
+        CONTINUE,
+        DEF,
+        DEL,
+        ELSE,
+        ELSIF,
+        END,
+        FOR,
+        IF,
+        IMPORT,
+        IN,
+        NOT,
+        OR,
+        PASS,
+        PRINT,
+        RECORD,
+        RETURN,
+        THROW,
+        TRY,
+        WHILE,
+        NONE,
+        T_FALSE,
+        T_TRUE,
+        PI,
         0
     };
     
@@ -366,22 +397,23 @@ bool ScriptLex::isKeyword(const TokenBuffer::Token& token)
     return false;
 }
 
-String ScriptLex::unescapeStringToken(const TokenBuffer::Token& token)
+String ScriptLex::unescapeStringToken(const Token& token)
 {
-    assert(token.type() == TokenBuffer::Token::LITERAL_STRING_APOSTROPHE
-        || token.type() == TokenBuffer::Token::LITERAL_STRING_QUOTED
-        || token.type() == TokenBuffer::Token::LITERAL_STRING_LONG);
+    Q_ASSERT(token.type() == Token::LITERAL_STRING_APOSTROPHE ||
+             token.type() == Token::LITERAL_STRING_QUOTED ||
+             token.type() == Token::LITERAL_STRING_LONG);
     
-    std::ostringstream os;
+    String result;
+    QTextStream os(&result);
     bool escaped = false;
     
-    const duchar* begin = token.begin();
-    const duchar* end = token.end();
+    const QChar* begin = token.begin();
+    const QChar* end = token.end();
     
     // A long string?
-    if(token.type() == TokenBuffer::Token::LITERAL_STRING_LONG)
+    if(token.type() == Token::LITERAL_STRING_LONG)
     {
-        assert(token.size() >= 6);
+        Q_ASSERT(token.size() >= 6);
         begin += 3;
         end -= 3;
     }
@@ -392,11 +424,11 @@ String ScriptLex::unescapeStringToken(const TokenBuffer::Token& token)
         --end;
     }
     
-    for(const duchar* ptr = begin; ptr != end; ++ptr)
+    for(const QChar* ptr = begin; ptr != end; ++ptr)
     {
         if(escaped)
         {
-            duchar c = '\\';
+            QChar c = '\\';
             escaped = false;
             if(*ptr == '\\')
             {
@@ -440,10 +472,9 @@ String ScriptLex::unescapeStringToken(const TokenBuffer::Token& token)
             }
             else if(*ptr == 'x' && (end - ptr > 2))
             {
-                std::istringstream is(std::string(reinterpret_cast<const char*>(ptr + 1), 2));
-                duint code = ' ';
-                is >> std::setbase(16) >> code;
-                c = duchar(code);
+                QString num(reinterpret_cast<const QChar*>(ptr + 1), 2);
+                duint code = num.toInt(0, 16);
+                c = QChar(code);
                 ptr += 2; 
             }
             else
@@ -464,25 +495,21 @@ String ScriptLex::unescapeStringToken(const TokenBuffer::Token& token)
             os << *ptr; 
         }
     }
-    assert(!escaped);
+    Q_ASSERT(!escaped);
     
-    return os.str();
+    return result;
 }
 
-ddouble ScriptLex::tokenToNumber(const TokenBuffer::Token& token)
+ddouble ScriptLex::tokenToNumber(const Token& token)
 {
-    std::istringstream is(token.str());
+    String str(token.str());
 
-    if(token.beginsWith("0x") || token.beginsWith("0X"))
+    if(token.beginsWith(String("0x")) || token.beginsWith(String("0X")))
     {
-        duint64 number = 0;
-        is >> std::hex >> number;
-        return ddouble(number);
+        return ddouble(str.toInt(0, 16));
     }
     else
     {
-        ddouble number = 0;
-        is >> number;
-        return number;
+        return str.toDouble();
     }
 }

@@ -123,7 +123,7 @@ void ArchiveFeed::populate(Folder& folder)
     }
 }
 
-bool ArchiveFeed::prune(File& file) const
+bool ArchiveFeed::prune(File& /*file*/) const
 {
     /// @todo  Prune based on entry status.
     return true;
@@ -138,7 +138,7 @@ File* ArchiveFeed::newFile(const String& name)
         throw AlreadyExistsError("ArchiveFeed::newFile", name + ": already exists");
     }
     // Add an empty entry.
-    archive().add(newEntry, String());
+    archive().add(newEntry, Block());
     File* file = new ArchiveFile(name, archive(), newEntry);
     file->setOriginFeed(this);
     return file;

@@ -23,6 +23,8 @@
 #include "../deng.h"
 #include "../Time"
 
+#include <QSemaphore>
+
 namespace de
 {
     /**
@@ -56,7 +58,7 @@ namespace de
         
     private:
         /// Pointer to the internal semaphore data.
-        void* _semaphore;
+        QSemaphore _semaphore;
     };
 }
 

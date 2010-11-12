@@ -28,7 +28,7 @@ Enumerator::Enumerator() : _current(NONE), _overflown(false)
 Enumerator::Type Enumerator::get()
 {
     Type previous = _current;
-    while(!++_current);
+    while(!++_current) {}
     if(_current < previous)
     {
         _overflown = true;

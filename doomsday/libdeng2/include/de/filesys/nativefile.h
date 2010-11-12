@@ -25,7 +25,7 @@
 #include "../Flag"
 #include "../String"
 
-#include <fstream>
+#include <QFile>
 
 namespace de
 {
@@ -73,10 +73,10 @@ namespace de
         
     protected:
         /// Returns the input stream.
-        std::ifstream& input() const;
+        QFile& input() const;
 
         /// Returns the output stream.
-        std::ofstream& output();
+        QFile& output();
 
         /// Close any open streams.
         void close();
@@ -86,10 +86,10 @@ namespace de
         String _nativePath;
         
         /// Input stream.
-        mutable std::ifstream* _in;
+        mutable QFile* _in;
         
         /// Output stream.
-        std::ofstream* _out;
+        QFile* _out;
     };
 }
 

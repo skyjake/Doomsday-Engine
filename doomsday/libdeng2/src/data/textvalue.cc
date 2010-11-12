@@ -24,15 +24,12 @@
 #include "de/Writer"
 #include "de/Reader"
 
+#include <QTextStream>
 #include <list>
-#include <string>
-#include <sstream>
-#include <cctype>
 #include <cmath>
 
 using namespace de;
 using std::list;
-using std::ostringstream;
 
 TextValue::TextValue(const String& initialValue)
     : _value(initialValue)
@@ -50,10 +47,7 @@ Value* TextValue::duplicate() const
 
 Value::Number TextValue::asNumber() const
 {
-    std::istringstream str(_value);
-    Number number = 0;
-    str >> number;
-    return number;
+    return _value.toDouble();
 }
 
 Value::Text TextValue::asText() const
@@ -71,7 +65,7 @@ bool TextValue::isTrue() const
     // If there is at least one nonwhite character, this is considered a truth.
     for(Text::const_iterator i = _value.begin(); i != _value.end(); ++i)
     {
-        if(!std::isspace(*i))
+        if(!(*i).isSpace())
             return true;
     }
     return false;
@@ -114,7 +108,8 @@ void TextValue::multiply(const Value& value)
     }
     else
     {
-        ostringstream os;
+        QString str;
+        QTextStream os(&str);
         while(factor-- > 1)
         {
             os << _value;
@@ -122,7 +117,7 @@ void TextValue::multiply(const Value& value)
         // The remainder.
         dint remain = dint(std::floor((factor + 1) * _value.size() + .5));
         os << _value.substr(0, remain);
-        _value = os.str();
+        _value = str;
     }
 }
 
@@ -160,12 +155,13 @@ void TextValue::modulo(const Value& value)
 
 String TextValue::substitutePlaceholders(const String& pattern, const std::list<const Value*>& args)
 {
-    ostringstream result;
+    QString result;
+    QTextStream out(&result);
     list<const Value*>::const_iterator arg = args.begin();
     
     for(String::const_iterator i = pattern.begin(); i != pattern.end(); ++i)
     {
-        char ch = *i;
+        QChar ch = *i;
         
         if(ch == '%')
         {
@@ -175,16 +171,16 @@ String TextValue::substitutePlaceholders(const String& pattern, const std::list<
                     "Too few substitution values");
             }
             
-            result << String::patternFormat(i, pattern.end(), **arg);
+            out << String::patternFormat(i, pattern.end(), **arg);
             ++arg;
         }
         else
         {
-            result << ch;
+            out << ch;
         }
     }
     
-    return result.str();
+    return result;
 }
 
 void TextValue::operator >> (Writer& to) const

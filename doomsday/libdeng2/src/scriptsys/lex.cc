@@ -36,23 +36,23 @@ duint Lex::pos() const
     return _state.pos;
 }
 
-duchar Lex::peek() const
+QChar Lex::peek() const
 {
-    if(_state.pos >= _input->size())
+    if(_state.pos >= duint(_input->size()))
     {
         // There is no more; trying to get() will throw an exception.
         return 0;
     }
     
-    duchar c = _input->at(_state.pos);
+    QChar c = _input->at(_state.pos);
 
     if(!_mode[SKIP_COMMENTS_BIT] && (c == _lineCommentChar))
     {
         // This isn't considered part of the input stream. Skip it.
         duint p = _state.pos;
-        while(p < _input->size() && _input->at(++p) != '\n');
+        while(p < duint(_input->size()) && _input->at(++p) != '\n') {}
         _nextPos = p + 1;
-        if(p == _input->size())
+        if(p == duint(_input->size()))
         {
             return 0;
         }
@@ -63,10 +63,10 @@ duchar Lex::peek() const
     return _input->at(_state.pos);
 }
     
-duchar Lex::get()
+QChar Lex::get()
 {
-    duchar c = peek();
-    if(!c)
+    QChar c = peek();
+    if(c == 0)
     {
         /// @throw OutOfInputError  No more characters left in input.
         throw OutOfInputError("Lex::get", "No more characters in input");
@@ -94,7 +94,7 @@ void Lex::skipWhite()
 
 void Lex::skipWhiteExceptNewline()
 {
-    duchar c = 0;
+    QChar c = 0;
     while(isWhite(c = peek()) && c != '\n')
     {
         get();
@@ -103,7 +103,7 @@ void Lex::skipWhiteExceptNewline()
 
 void Lex::skipToNextLine()
 {
-    while(get() != '\n');
+    while(get() != '\n') {}
 }
 
 bool Lex::onlyWhiteOnLine()
@@ -113,7 +113,7 @@ bool Lex::onlyWhiteOnLine()
     {
         for(;;)
         {
-            duchar c = get();
+            QChar c = get();
             if(c == '\n')
             {
                 _state = saved;
@@ -138,31 +138,31 @@ duint Lex::countLineStartSpace() const
     duint pos = _state.lineStartPos;
     duint count = 0;
     
-    while(pos < _input->size() && isWhite(_input->at(pos++))) count++;
+    while(pos < duint(_input->size()) && isWhite(_input->at(pos++))) count++;
     return count;
 }
 
-bool Lex::isWhite(duchar c)
+bool Lex::isWhite(QChar c)
 {
-    return std::isspace(c) != 0;
+    return c.isSpace();
 }
 
-bool Lex::isAlpha(duchar c)
+bool Lex::isAlpha(QChar c)
 {
-    return std::isalpha(c) != 0;   
+    return c.isLetter();
 }
 
-bool Lex::isNumeric(duchar c)
+bool Lex::isNumeric(QChar c)
 {
-    return std::isdigit(c) != 0;
+    return c.isDigit();
 }
 
-bool Lex::isHexNumeric(duchar c)
+bool Lex::isHexNumeric(QChar c)
 {
     return isNumeric(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
 
-bool Lex::isAlphaNumeric(duchar c)
+bool Lex::isAlphaNumeric(QChar c)
 {
-    return std::isalnum(c) != 0 || c == '_' || c == '@';
+    return c.isLetterOrNumber() || c == '_' || c == '@';
 }

@@ -118,7 +118,7 @@ void Process::stop()
             delete *i;
         }
     }
-    assert(!_stack.empty());
+    Q_ASSERT(!_stack.empty());
 
     // Erase all but the first context.
     _stack.erase(_stack.begin() + 1, _stack.end());
@@ -127,7 +127,7 @@ void Process::stop()
     context().reset();
 }
 
-void Process::execute(const Time::Delta& timeBox)
+void Process::execute()
 {
     if(_state == SUSPENDED || _state == STOPPED)
     {
@@ -228,7 +228,7 @@ bool Process::jumpIntoCatch(const Error& err)
 
 Context& Process::context(duint downDepth)
 {
-    assert(downDepth < depth());
+    Q_ASSERT(downDepth < depth());
     return **(_stack.rbegin() + downDepth);
 }
 
@@ -249,7 +249,7 @@ Context* Process::popContext()
 
 void Process::finish(Value* returnValue)
 {
-    assert(depth() >= 1);
+    Q_ASSERT(depth() >= 1);
 
     // Move one level downwards in the context stack.
     if(depth() > 1)
@@ -265,7 +265,7 @@ void Process::finish(Value* returnValue)
     }
     else
     {
-        assert(_stack.back()->type() == Context::PROCESS);
+        Q_ASSERT(_stack.back()->type() == Context::PROCESS);
         
         // This was the last level.
         _state = STOPPED;

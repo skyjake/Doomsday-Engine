@@ -377,7 +377,7 @@ namespace de
              * Returns the last block.
              */ 
             ZBlock* lastBlock() {
-                assert(_count > 0);
+                Q_ASSERT(_count > 0);
                 return &_blocks[_count - 1];
             }
 

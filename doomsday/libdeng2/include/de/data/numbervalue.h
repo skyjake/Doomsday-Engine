@@ -40,8 +40,8 @@ namespace de
         /// Truth values for logical operations. They are treated as
         /// number values.
         enum {
-            FALSE = 0,
-            TRUE = 1
+            VALUE_FALSE = 0,
+            VALUE_TRUE = 1
         };
         
     public:

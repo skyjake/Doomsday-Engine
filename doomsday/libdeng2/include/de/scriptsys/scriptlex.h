@@ -47,6 +47,40 @@ namespace de
         /// than opened, or when the input ends before all brackets are closed. @ingroup errors
         DEFINE_SUB_ERROR(SyntaxError, MismatchedBracketError);
         
+        // Keywords.
+        static const String AND;
+        static const String OR;
+        static const String NOT;
+        static const String ELSIF;
+        static const String ELSE;
+        static const String THROW;
+        static const String CATCH;
+        static const String IN;
+        static const String END;
+        static const String IF;
+        static const String WHILE;
+        static const String FOR;
+        static const String DEF;
+        static const String TRY;
+        static const String IMPORT;
+        static const String RECORD;
+        static const String DEL;
+        static const String PASS;
+        static const String CONTINUE;
+        static const String BREAK;
+        static const String RETURN;
+        static const String PRINT;
+        static const String CONST;
+        static const String T_TRUE;
+        static const String T_FALSE;
+        static const String NONE;
+        static const String PI;
+
+        // Operators.
+        static const String ASSIGN;
+        static const String SCOPE_ASSIGN;
+        static const String WEAK_ASSIGN;
+
     public:
         ScriptLex(const String& input = "");
         
@@ -69,25 +103,25 @@ namespace de
          *
          * @return Type of the parsed string.
          */
-        TokenBuffer::Token::Type parseString(duchar startChar, duint startIndentation, 
+        Token::Type parseString(QChar startChar, duint startIndentation,
             TokenBuffer& output);
 
     public:
         /// Determines whether a character is an operator character.
-        static bool isOperator(duchar c);
+        static bool isOperator(QChar c);
 
         /// Determines whether a token is a Haw script keyword.
-        static bool isKeyword(const TokenBuffer::Token& token);
+        static bool isKeyword(const Token& token);
         
         /// Determines whether one character should join another to 
         /// form a longer token.
-        static bool combinesWith(duchar a, duchar b);
+        static bool combinesWith(QChar a, QChar b);
         
         /// Unescapes a string token into a std::string.
-        static String unescapeStringToken(const TokenBuffer::Token& token);
+        static String unescapeStringToken(const Token& token);
         
         /// Converts a token to a number.
-        static ddouble tokenToNumber(const TokenBuffer::Token& token);
+        static ddouble tokenToNumber(const Token& token);
     };
 }
 

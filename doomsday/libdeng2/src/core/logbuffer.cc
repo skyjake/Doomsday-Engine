@@ -23,8 +23,8 @@
 #include "de/Writer"
 #include "de/FixedByteArray"
 
-#include <iostream>
-#include <iomanip>
+#include <stdio.h>
+#include <QTextStream>
 
 using namespace de;
 
@@ -123,8 +123,12 @@ void LogBuffer::flush()
     
     FOR_EACH(i, _toBeFlushed, EntryList::iterator)
     {
+        QScopedPointer<QTextStream> os(_standardOutput?
+                                       ((*i)->level() >= Log::ERROR? new QTextStream(stderr) :
+                                        new QTextStream(stdout)) : 0);
+
         // Error messages will go to stderr instead of stdout.
-        std::ostream* os = (_standardOutput? ((*i)->level() >= Log::ERROR? &std::cerr : &std::cout) : 0);
+        //std::ostream* os = (_standardOutput? ((*i)->level() >= Log::ERROR? &std::cerr : &std::cout) : 0);
         
         String message = (*i)->asText();
             
@@ -132,16 +136,16 @@ void LogBuffer::flush()
         String::size_type pos = 0;
         while(pos != String::npos)
         {
-            String::size_type next = message.find('\n', pos);
+            String::size_type next = message.indexOf('\n', pos);
             if(pos > 0)
             {
                 if(os)
                 {
-                    *os << std::setw(SIMPLE_INDENT) << "";
+                    *os << qSetFieldWidth(SIMPLE_INDENT) << "";
                 }
                 if(writer)
                 {
-                    *writer << FixedByteArray(String(SIMPLE_INDENT, ' '));
+                    *writer << FixedByteArray(String(SIMPLE_INDENT, ' ').toUtf8());
                 }
             }
             String lineText = message.substr(pos, next != String::npos? next - pos + 1 : next);
@@ -158,7 +162,7 @@ void LogBuffer::flush()
             }
             if(writer)
             {
-                *writer << FixedByteArray(lineText);
+                *writer << FixedByteArray(lineText.toUtf8());
             }
             pos = next;
             if(pos != String::npos) pos++;
@@ -170,7 +174,7 @@ void LogBuffer::flush()
         }
         if(writer)
         {
-            *writer << FixedByteArray(String("\n"));
+            *writer << FixedByteArray(String("\n").toUtf8());
         }
     }
     _toBeFlushed.clear();
@@ -195,7 +199,7 @@ void LogBuffer::flush()
 
 void LogBuffer::fileBeingDeleted(const File& file)
 {
-    assert(_outputFile == &file);
+    Q_ASSERT(_outputFile == &file);
     flush();
     _outputFile = 0;
 }

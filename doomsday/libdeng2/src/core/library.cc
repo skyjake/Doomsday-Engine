@@ -20,39 +20,25 @@
 #include "de/Library"
 #include "de/Log"
 
-#ifdef UNIX
-#   include <dlfcn.h>
-#endif
-
-#ifdef WIN32
-#   define WIN32_LEAN_AND_MEAN
-#   include <windows.h>
-#endif
-
 using namespace de;
 
 const char* Library::DEFAULT_TYPE = "library/generic";
 
 Library::Library(const String& nativePath)
-    : _handle(0), _type(DEFAULT_TYPE)
+    : _library(0), _type(DEFAULT_TYPE)
 {
     LOG_AS("Library::Library");
     LOG_VERBOSE("%s") << nativePath;
     
-#ifdef UNIX
-    if((_handle = dlopen(nativePath.c_str(), RTLD_LAZY)) == 0)
+    _library = new QLibrary(nativePath);
+    if(!_library->isLoaded())
     {
-        /// @throw LoadError Opening of the dynamic library failed.
-        throw LoadError("Library::Library", dlerror());
-    }
-#endif 
+        delete _library;
+        _library = 0;
 
-#ifdef WIN32
-    if(!(_handle = reinterpret_cast<void*>(LoadLibrary(nativePath.c_str()))))
-    {
-        throw LoadError("Library::Library", "LoadLibrary failed: '" + nativePath + "'");
+        /// @throw LoadError Opening of the dynamic library failed.
+        throw LoadError("Library::Library", _library->errorString());
     }
-#endif
 
     if(address("deng_LibraryType")) 
     {
@@ -69,7 +55,7 @@ Library::Library(const String& nativePath)
 
 Library::~Library()
 {
-    if(_handle)
+    if(_library)
     {
         if(_type.beginsWith("deng-plugin/") && address("deng_ShutdownPlugin")) 
         {
@@ -77,20 +63,13 @@ Library::~Library()
             SYMBOL(deng_ShutdownPlugin)();
         }
 
-#ifdef UNIX
-        // Close the library.
-        dlclose(_handle);
-#endif
-
-#ifdef WIN32
-        FreeLibrary(reinterpret_cast<HMODULE>(_handle));
-#endif
+        delete _library;
     }
 }
 
 void* Library::address(const String& name)
 {
-    if(!_handle)
+    if(!_library)
     {
         return 0;
     }
@@ -99,19 +78,10 @@ void* Library::address(const String& name)
     Symbols::iterator found = _symbols.find(name);
     if(found != _symbols.end())
     {
-        return found->second;
+        return found.value();
     }
     
-    void* ptr = 0;
-
-#ifdef UNIX
-    ptr = dlsym(_handle, name.c_str());
-#endif
-
-#ifdef WIN32
-    ptr = reinterpret_cast<void*>(
-        GetProcAddress(reinterpret_cast<HMODULE>(_handle), name.c_str()));
-#endif 
+    void* ptr = _library->resolve(name.toAscii().constData());
 
     if(!ptr)
     {

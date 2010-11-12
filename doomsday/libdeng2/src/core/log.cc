@@ -24,13 +24,10 @@
 #include "de/App"
 #include "de/LogBuffer"
 #include "de/math.h"
-#include "../sdl.h"
 
-#include <cstdlib>
-#include <cstring>
-#include <sstream>
-#include <iomanip>
-#include <map>
+#include <QMap>
+#include <QTextStream>
+#include <QThread>
 
 using namespace de;
 
@@ -40,15 +37,17 @@ const char* MAIN_SECTION = "";
  * The logs table is lockable so that multiple threads can access their
  * logs at the same time.
  */
-class Logs : public std::map<duint, Log*>, public Lockable
+class Logs : public QMap<QThread*, Log*>, public Lockable
 {
 public:
     Logs() {}
     ~Logs() {
+        lock();
         // The logs are owned by the logs table.
-        for(iterator i = begin(); i != end(); ++i) {
-            delete i->second;
+        foreach(Log* log, values()) {
+            delete log;
         }
+        unlock();
     }
 };
 
@@ -75,8 +74,9 @@ LogEntry::~LogEntry()
 String LogEntry::asText(const Flags& formattingFlags) const
 {
     Flags flags = formattingFlags;
-    std::ostringstream output;
-    
+    QString result;
+    QTextStream output(&result);
+
     if(_defaultFlags[SIMPLE_BIT])
     {
         flags |= SIMPLE;
@@ -88,7 +88,7 @@ String LogEntry::asText(const Flags& formattingFlags) const
         // Begin with the timestamp.
         if(flags[STYLED_BIT]) output << TEXT_STYLE_LOG_TIME;
     
-        output << Date(_when) << " ";
+        output << _when << " ";
 
         if(!flags[STYLED_BIT])
         {
@@ -102,7 +102,7 @@ String LogEntry::asText(const Flags& formattingFlags) const
                 "(ERR)",
                 "(!!!)"        
             };
-            output << std::setfill(' ') << std::setw(5) << levelNames[_level] << " ";
+            output << qSetPadChar(' ') << qSetFieldWidth(5) << levelNames[_level] << " ";
         }
         else
         {
@@ -181,10 +181,10 @@ String LogEntry::asText(const Flags& formattingFlags) const
         output << TEXT_STYLE_MESSAGE;
     }
     
-    return output.str();
+    return result;
 }
 
-std::ostream& de::operator << (std::ostream& stream, const LogEntry::Arg& arg)
+QTextStream& de::operator << (QTextStream& stream, const LogEntry::Arg& arg)
 {
     switch(arg.type())
     {
@@ -198,10 +198,6 @@ std::ostream& de::operator << (std::ostream& stream, const LogEntry::Arg& arg)
         
     case LogEntry::Arg::STRING:
         stream << arg.stringValue();
-        break;
-        
-    case LogEntry::Arg::WIDE_STRING:
-        stream << String::wideToString(arg.wideStringValue());
         break;
     }
     return stream;
@@ -235,7 +231,7 @@ void Log::beginSection(const char* name)
 
 void Log::endSection(const char* name)
 {
-    assert(_sectionStack.back() == name);
+    Q_ASSERT(_sectionStack.back() == name);
     _sectionStack.pop_back();
 }
 
@@ -282,7 +278,7 @@ LogEntry& Log::enter(Log::LogLevel level, const String& format)
 Log& Log::threadLog()
 {
     // Each thread has its own log.
-    duint thread = SDL_ThreadID();
+    QThread* thread = QThread::currentThread();
     Log* theLog = 0;
     logs.lock();
     Logs::iterator found = logs.find(thread);
@@ -294,7 +290,7 @@ Log& Log::threadLog()
     }
     else
     {
-        theLog = found->second;
+        theLog = found.value();
     }
     logs.unlock();
     return *theLog;
@@ -302,13 +298,13 @@ Log& Log::threadLog()
 
 void Log::disposeThreadLog()
 {
-    duint thread = SDL_ThreadID();
+    QThread* thread = QThread::currentThread();
     logs.lock();
     Logs::iterator found = logs.find(thread);
     if(found != logs.end())
     {
-        delete found->second;
-        logs.erase(found);
+        delete found.value();
+        logs.remove(found.key());
     }
     logs.unlock();
 }

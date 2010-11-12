@@ -23,6 +23,8 @@
 #include "../Time"
 #include "../Log"
 
+#include <QTextStream>
+
 namespace de
 {
     /**
@@ -30,16 +32,23 @@ namespace de
      *
      * @ingroup types
      */
-    class LIBDENG2_API Date : public LogEntry::Arg::Base
+    class LIBDENG2_API Date : public Time, public LogEntry::Arg::Base
     {
     public:
         /**
          * Constructs a new Date out of the current time.
          */
-        Date();        
-        
+        Date();
+
         Date(const Time& time);
         
+        int year() const { return asDateTime().date().year(); }
+        int month() const { return asDateTime().date().month(); }
+        int dayOfMonth() const { return asDateTime().date().day(); }
+        int hours() const { return asDateTime().time().hour(); }
+        int minutes() const { return asDateTime().time().minute(); }
+        int seconds() const { return asDateTime().time().second(); }
+
         /**
          * Forms a textual representation of the date.
          */
@@ -53,21 +62,12 @@ namespace de
         Time asTime() const;
         
         // Implements LogEntry::Arg::Base.
-        LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
-        
-    public:
-        dint microSeconds;
-        dint seconds;
-        dint minutes;
-        dint hours;
-        dint month;
-        dint year;
-        dint weekDay;
-        dint dayOfMonth;
-        dint dayOfYear;
+        LogEntry::Arg::Type logEntryArgType() const {
+            return LogEntry::Arg::STRING;
+        }
     };
     
-    LIBDENG2_API std::ostream& operator << (std::ostream& os, const Date& date);
+    LIBDENG2_API QTextStream& operator << (QTextStream& os, const Date& date);
 }
 
 #endif /* LIBDENG2_DATE_H */

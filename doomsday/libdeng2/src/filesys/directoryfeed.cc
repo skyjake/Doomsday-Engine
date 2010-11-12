@@ -25,20 +25,8 @@
 #include "de/Date"
 #include "de/Log"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <errno.h>
-#include <cstring>
-
-#ifdef UNIX
-#   include <dirent.h>
-#   include <unistd.h>
-#endif
-
-#ifdef WIN32
-#   include <io.h>
-#   include <direct.h>
-#endif
+#include <QDir>
+#include <QFileInfo>
 
 using namespace de;
 
@@ -58,53 +46,27 @@ void DirectoryFeed::populate(Folder& folder)
     {
         createDir(_nativePath);
     }
-    
-#ifdef UNIX
-    DIR* dir = opendir(_nativePath.empty()? "." : _nativePath.c_str());
-    if(!dir)
+
+    QDir dir(_nativePath);
+    if(!dir.isReadable())
     {
         /// @throw NotFoundError The native directory was not accessible.
-        throw NotFoundError("DirectoryFeed::populate", "Path '" + _nativePath + "' not found");
+        throw NotFoundError("DirectoryFeed::populate", "Path '" + _nativePath + "' inaccessible");
     }
-    struct dirent* entry;
-    while((entry = readdir(dir)) != 0)   
+    QStringList nameFilters;
+    nameFilters << "*";
+    foreach(QFileInfo entry,
+            dir.entryInfoList(nameFilters, QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot))
     {
-        const String entryName = entry->d_name;
-        switch(entry->d_type)
+        if(entry.isDir())
         {
-        case DT_DIR:
-            populateSubFolder(folder, entryName);
-            break;
-            
-        default:
-            populateFile(folder, entryName);
-            break;
+            populateSubFolder(folder, entry.fileName());
         }
-    } 
-    closedir(dir);
-#endif
-
-#ifdef WIN32
-    _finddata_t fd;
-    intptr_t handle;
-    if((handle = _findfirst(_nativePath.concatenateNativePath("*").c_str(), &fd)) != -1L)
-    {
-        do
+        else
         {
-            const String entryName = fd.name;
-            if(fd.attrib & _A_SUBDIR)
-            {
-                populateSubFolder(folder, entryName);
-            }
-            else
-            {
-                populateFile(folder, entryName);
-            }
-        } 
-        while(!_findnext(handle, &fd));
-        _findclose(handle);
+            populateFile(folder, entry.fileName());
+        }
     }
-#endif
 }
 
 void DirectoryFeed::populateSubFolder(Folder& folder, const String& entryName)
@@ -234,41 +196,18 @@ void DirectoryFeed::removeFile(const String& name)
         /// @throw NotFoundError  The file @a name does not exist in the native directory.
         throw NotFoundError("DirectoryFeed::removeFile", name + ": not found");
     }
-    
-#ifdef UNIX
-    if(unlink(path.c_str()))
-    {
-        /// @throw RemoveError  Failed to remove the native file.
-        throw RemoveError("DirectoryFeed::removeFile", name + ": " + strerror(errno));
-    }
-#endif
 
-#ifdef WIN32
-    if(_unlink(path.c_str()))
-    {
-        throw RemoveError("DirectoryFeed::removeFile", name + ": " + strerror(errno));
-    }
-#endif
+    QDir::current().remove(path);
 }
 
 void DirectoryFeed::changeWorkingDir(const String& nativePath)
 {
-#ifdef UNIX
-    if(chdir(nativePath.c_str()))
+    if(!QDir::setCurrent(nativePath))
     {
         /// @throw WorkingDirError Changing to @a nativePath failed.
         throw WorkingDirError("DirectoryFeed::changeWorkingDir",
-            nativePath + ": " + strerror(errno));
+                              "Failed to change to " + nativePath);
     }
-#endif
-
-#ifdef WIN32
-    if(_chdir(nativePath.c_str()))
-    {
-        throw WorkingDirError("DirectoryFeed::changeWorkingDir",
-            nativePath + ": " + strerror(errno));
-    }
-#endif
 }
 
 void DirectoryFeed::createDir(const String& nativePath)
@@ -278,54 +217,29 @@ void DirectoryFeed::createDir(const String& nativePath)
     {
         createDir(parentPath);
     }
-    
-#ifdef UNIX
-    if(mkdir(nativePath.c_str(), 0755))
+
+    if(!QDir::current().mkdir(nativePath))
     {
         /// @throw CreateDirError Failed to create directory @a nativePath.
-        throw CreateDirError("DirectoryFeed::createDir", nativePath + ": " + strerror(errno));
+        throw CreateDirError("DirectoryFeed::createDir", "Could not create: " + nativePath);
     }
-#endif
-
-#ifdef WIN32
-    if(_mkdir(nativePath.c_str()))  
-    {
-        throw CreateDirError("DirectoryFeed::createDir", nativePath + ": " + strerror(errno));
-    }
-#endif    
 }
 
 bool DirectoryFeed::exists(const String& nativePath)
 {
-#ifdef UNIX
-    struct stat s;
-    return !stat(nativePath.c_str(), &s);
-#endif
-
-#ifdef WIN32
-    return !_access_s(nativePath.c_str(), 0);
-#endif
+    return QDir::current().exists(nativePath);
 }
 
 File::Status DirectoryFeed::fileStatus(const String& nativePath)
 {
-#ifdef UNIX
-    // Get file status information.
-    struct stat s;
-    if(!stat(nativePath.c_str(), &s))
-    {                                                    
-        return File::Status(s.st_size, s.st_mtime);
-    }
-    /// @throw StatusError Determining the file status was not possible.
-    throw StatusError("DirectoryFeed::fileStatus", nativePath + ": " + strerror(errno));
-#endif
+    QFileInfo info(nativePath);
 
-#ifdef WIN32
-    struct _stat s;
-    if(!_stat(nativePath.c_str(), &s))
+    if(!info.exists())
     {
-        return File::Status(s.st_size, s.st_mtime);
+        /// @throw StatusError Determining the file status was not possible.
+        throw StatusError("DirectoryFeed::fileStatus", nativePath + " inaccessible");
     }
-    throw StatusError("DirectoryFeed::fileStatus", nativePath + ": " + strerror(errno));
-#endif
+
+    // Get file status information.
+    return File::Status(info.size(), info.lastModified());
 }

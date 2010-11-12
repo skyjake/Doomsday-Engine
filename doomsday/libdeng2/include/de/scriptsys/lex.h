@@ -62,6 +62,14 @@ namespace de
             Mode _originalMode;
         };
         
+        // Constants.
+        static const String T_PARENTHESIS_OPEN;
+        static const String T_PARENTHESIS_CLOSE;
+        static const String T_BRACKET_OPEN;
+        static const String T_BRACKET_CLOSE;
+        static const String T_CURLY_OPEN;
+        static const String T_CURLY_CLOSE;
+
     public:
         Lex(const String& input = "");
         
@@ -74,11 +82,11 @@ namespace de
         /// Returns the next character, according to the position.
         /// Characters past the end of the input string are returned 
         /// as zero.
-        duchar peek() const;
+        QChar peek() const;
         
         /// Returns the next character and increments the position.
         /// Returns zero if the end of the input is reached.
-        duchar get();
+        QChar get();
         
         /// Skips until a non-whitespace character is found.
         void skipWhite();
@@ -106,24 +114,24 @@ namespace de
     public:
         /// Determines whether a character is whitespace.
         /// @param c Character to check.
-        static bool isWhite(duchar c);      
+        static bool isWhite(QChar c);
         
         /// Determine whether a character is alphabetic.
         /// @param c Character to check.
-        static bool isAlpha(duchar c);
+        static bool isAlpha(QChar c);
         
         /// Determine whether a character is numeric.
         /// @param c Character to check.
-        static bool isNumeric(duchar c);
+        static bool isNumeric(QChar c);
         
         /// Determine whether a character is hexadecimal numeric.
         /// @param c Character to check.
-        static bool isHexNumeric(duchar c);
+        static bool isHexNumeric(QChar c);
         
         /// Determine whether a character is alphanumeric.
         /// @param c Character to check.
-        static bool isAlphaNumeric(duchar c);
-            
+        static bool isAlphaNumeric(QChar c);
+
     private:
         /// Input text being analyzed.
         const String* _input;

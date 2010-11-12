@@ -20,22 +20,21 @@
 #ifndef LIBDENG2_STRING_H
 #define LIBDENG2_STRING_H
 
-#include <string>
+#include <QString>
 
 #include "../deng.h"
 #include "../Error"
-#include "../IByteArray"
-#include "../IBlock"
+#include "../Block"
 
 namespace de
 {
     /**
-     * The String class extends the STL string class with the IByteArray
-     * interface.
+     * The String class extends the QString class with Block conversion and
+     * other convenience methods.
      *
      * @ingroup types
      */
-    class LIBDENG2_API String : public std::string, public IByteArray, public IBlock
+    class LIBDENG2_API String : public QString
     {
     public:
         /// Error related to String operations (note: shadows de::Error). @ingroup errors
@@ -69,29 +68,53 @@ namespace de
             /// Returns the value of the argument as a number.
             virtual ddouble asNumber() const = 0;
         };
-        
+
+        typedef dint size_type;
+
     public:
-        String(const std::string& text = "");
+        static const size_type npos;
+
+    public:
+        String();
         String(const String& other);
-        String(const IByteArray& array);
+        String(const QString& text);
         String(const char* cStr);
         String(const char* cStr, size_type length);
-        String(size_type length, const char& ch);
-        String(const std::string& str, size_type index, size_type length);
-        String(iterator start, iterator end);
+        String(const QChar* str, size_type length);
+        String(size_type length, QChar ch);
+        String(const QString& str, int index, size_type length);
         String(const_iterator start, const_iterator end);
+        String(iterator start, iterator end);
 
-        /// Checks if the string begins with the substring @a s.
-        bool beginsWith(const String& s) const;
+        /// Conversion to a character pointer.
+        operator const QChar* () const {
+            return data();
+        }
 
-        /// Checks if the string ends with the substring @a s.
-        bool endsWith(const String& s) const;
+        /// Determines whether the string is empty.
+        bool empty() const { return size() == 0; }
 
-        /// Checks if the string contains the substring @a s.
-        bool contains(const String& s) const;
+        /// Returns the first character of the string.
+        QChar first() const;
+
+        /// Returns the last character of the string.
+        QChar last() const;
+
+        bool beginsWith(const QString& s, Qt::CaseSensitivity cs = Qt::CaseSensitive) const {
+            return startsWith(s, cs);
+        }
+
+        String substr(int position, int n = -1) const {
+            return mid(position, n);
+        }
+
+        /// Returns the string as a UTF-8 C-string.
+        const char* c_str() const {
+            return toUtf8().constData();
+        }
 
         /// Does a path concatenation on this string and the argument.
-        String concatenatePath(const String& path, char dirChar = '/') const;
+        String concatenatePath(const String& path, QChar dirChar = '/') const;
 
         /// Does a path concatenation on this string and the argument.
         String operator / (const String& path) const;
@@ -120,9 +143,6 @@ namespace de
 
         /// Returns an upper-case version of the string.
         String upper() const;
-
-        /// Converts the string to a wide-character STL wstring.
-        std::wstring wide() const;
 
         /// Extracts the base name from the string (includes extension).
         String fileName() const;
@@ -164,26 +184,29 @@ namespace de
          */
         dint compareWithoutCase(const String& str) const;
         
-        // Implements IByteArray.
-        Size size() const;
-        void get(Offset at, Byte* values, Size count) const;
-        void set(Offset at, const Byte* values, Size count);    
-        
-        // Implements IBlock.
-        void clear() { std::string::clear(); }
-        void copyFrom(const IByteArray& array, Offset at, Size count);
-        void resize(Size size) { std::string::resize(size); }
-        const Byte* data() const { return reinterpret_cast<const Byte*>(std::string::data()); }
+        /**
+         * Converts the string to UTF-8 and returns it as a byte block.
+         */
+        Block toUtf8() const;
+
+        /**
+         * Converts the string to Latin1 and returns it as a byte block.
+         */
+        Block toLatin1() const;
 
     public:
-        static dint compareWithCase(const char* a, const char* b, dsize count);
-            
-        /// wstring to String conversion.
-        static String wideToString(const std::wstring& str);
-        
-        /// String to wstring conversion. @see wide()
-        static std::wstring stringToWide(const String& str);
-        
+        /**
+         * Builds a String out of an array of bytes that contains a UTF-8 string.
+         */
+        static String fromUtf8(const IByteArray& byteArray);
+
+        /**
+         * Builds a String out of an array of bytes that contains a Latin1 string.
+         */
+        static String fromLatin1(const IByteArray& byteArray);
+
+        static dint compareWithCase(const QChar* a, const QChar* b, dsize count);
+                   
         /**
          * Advances the iterator until a nonspace character is encountered.
          * 

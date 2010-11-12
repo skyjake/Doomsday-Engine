@@ -59,7 +59,7 @@ bool CatchStatement::matches(const Error& err) const
     }
     
     const NameExpression* name = dynamic_cast<const NameExpression*>(&_args->at(0));
-    assert(name != NULL);
+    Q_ASSERT(name != NULL);
     
     return (name->identifier() == err.name() ||
         String(err.name()).endsWith("_" + name->identifier()));

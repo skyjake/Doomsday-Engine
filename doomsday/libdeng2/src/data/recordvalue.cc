@@ -29,7 +29,7 @@ using namespace de;
 
 RecordValue::RecordValue(Record* record, const Ownership& o) : _record(record), _ownership(o)
 {
-    assert(_record != NULL);
+    Q_ASSERT(_record != NULL);
     if(!_ownership[OWNS_RECORD_BIT])
     {
         // If we don't own it, someone may delete the record.
@@ -157,7 +157,7 @@ void RecordValue::operator << (Reader& from)
 
 void RecordValue::recordBeingDeleted(Record& record)
 {
-    assert(_record == &record);
-    assert(!_ownership[OWNS_RECORD_BIT]);
+    Q_ASSERT(_record == &record);
+    Q_ASSERT(!_ownership[OWNS_RECORD_BIT]);
     _record = 0;
 }

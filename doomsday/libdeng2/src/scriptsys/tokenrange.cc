@@ -20,7 +20,7 @@
 #include "de/TokenRange"
 #include "de/TokenBuffer"
 
-#include <sstream>
+#include <QTextStream>
 
 using namespace de;
 
@@ -42,13 +42,13 @@ TokenRange::TokenRange(const TokenBuffer& tokens, duint start, duint end)
 
 duint TokenRange::tokenIndex(duint pos) const
 {
-    if(pos < 0 || pos >= size())
+    if(pos >= size())
     {
-        std::ostringstream message;
-        message << "Position " << pos << " is out of the range ("
-            << _start << ", " << _end << "), length " << size();
         /// @throw OutOfBoundsError  @a pos is out of range.
-        throw OutOfBoundsError("TokenRange::tokenIndex", message.str());
+        throw OutOfBoundsError("TokenRange::tokenIndex",
+                               "Position " + QString::number(pos) + " is out of the range (" +
+                               QString::number(_start) + ", " + QString::number(_end) +
+                               "), length " + QString::number(size()));
     }
     return _start + pos;
 }
@@ -57,29 +57,27 @@ duint TokenRange::tokenPos(duint index) const
 {
     if(index < _start)
     {
-        std::ostringstream message;
-        message << "Index " << index << " is out of the range ("
-            << _start << ", " << _end << ")";
         /// @throw OutOfBoundsError  @a index is out of range.
-        throw OutOfBoundsError("TokenRange::tokenPos", message.str());
+        throw OutOfBoundsError("TokenRange::tokenPos",
+                               "Index " + QString::number(index) + " is out of the range (" +
+                               QString::number(_start) + ", " + QString::number(_end) + ")");
     }
     return index - _start;
 }
 
-const TokenBuffer::Token& TokenRange::token(duint pos) const
+const Token& TokenRange::token(duint pos) const
 {
     if(pos >= size())
     {
-        std::ostringstream message;
-        message << "Position " << pos << " is out of the range ("
-            << _start << ", " << _end << ")";
         /// @throw OutOfBoundsError  @a pos is out of range.
-        throw OutOfBoundsError("TokenRange::token", message.str());
+        throw OutOfBoundsError("TokenRange::token",
+                               "Position " + QString::number(pos) + " is out of the range (" +
+                               QString::number(_start) + ", " + QString::number(_end) + ")");
     }
     return _tokens->at(tokenIndex(pos));
 }
 
-const TokenBuffer::Token& TokenRange::firstToken() const 
+const Token& TokenRange::firstToken() const
 {
     if(!size())
     {
@@ -89,7 +87,7 @@ const TokenBuffer::Token& TokenRange::firstToken() const
     return token(0);
 }
 
-const TokenBuffer::Token& TokenRange::lastToken() const 
+const Token& TokenRange::lastToken() const
 {
     if(!size())
     {
@@ -99,7 +97,7 @@ const TokenBuffer::Token& TokenRange::lastToken() const
     return token(size() - 1);
 }
 
-bool TokenRange::beginsWith(const char* str) const
+bool TokenRange::beginsWith(const QChar* str) const
 {
     if(size())
     {
@@ -115,13 +113,12 @@ TokenRange TokenRange::startingFrom(duint pos) const
 
 TokenRange TokenRange::endingTo(duint pos) const
 {
-    if(pos < 0 || pos > size())
+    if(pos > size())
     {
-        std::ostringstream message;
-        message << "Position " << pos << " is not within the range ("
-            << _start << ", " << _end << ")";
         /// @throw OutOfBoundsError  @a pos is out of range.
-        throw OutOfBoundsError("TokenRange::endingTo", message.str());
+        throw OutOfBoundsError("TokenRange::endingTo",
+                               "Position " + QString::number(pos) + " is not within the range (" +
+                               QString::number(_start) + ", " + QString::number(_end) + ")");
     }
     return TokenRange(*_tokens, _start, tokenIndex(pos));
 }
@@ -135,10 +132,10 @@ TokenRange TokenRange::between(duint startPos, duint endPos) const
     return TokenRange(*_tokens, tokenIndex(startPos), tokenIndex(endPos));
 }
 
-dint TokenRange::find(const char* token, dint startPos) const
+dint TokenRange::find(const QChar* token, dint startPos) const
 {
     duint len = size();
-    assert(startPos >= 0 && startPos <= dint(len));
+    Q_ASSERT(startPos >= 0 && startPos <= dint(len));
 
     for(dint i = startPos; i < dint(len); ++i)
     {
@@ -148,7 +145,7 @@ dint TokenRange::find(const char* token, dint startPos) const
     return -1;
 }
 
-dint TokenRange::findBracketless(const char* token, dint startPos) const
+dint TokenRange::findBracketless(const QChar* token, dint startPos) const
 {
     dint index = findIndexSkippingBrackets(token, tokenIndex(startPos));
     if(index >= 0)
@@ -158,14 +155,15 @@ dint TokenRange::findBracketless(const char* token, dint startPos) const
     return -1;
 }
 
-dint TokenRange::findIndexSkippingBrackets(const char* token, dint startIndex) const
+dint TokenRange::findIndexSkippingBrackets(const QChar* token, dint startIndex) const
 {
-    assert(startIndex >= dint(_start) && startIndex <= dint(_end));
+    Q_ASSERT(startIndex >= dint(_start) && startIndex <= dint(_end));
     
     for(duint i = startIndex; i < _end; ++i)
     {
-        const TokenBuffer::Token& t = _tokens->at(i);
-        if(t.equals("(") || t.equals("[") || t.equals("{"))
+        const Token& t = _tokens->at(i);
+        if(t.equals(Token::PARENTHESIS_OPEN) || t.equals(Token::BRACKET_OPEN) ||
+           t.equals(Token::CURLY_OPEN))
         {
             i = tokenIndex(closingBracket(tokenPos(i)));
             continue;
@@ -176,7 +174,7 @@ dint TokenRange::findIndexSkippingBrackets(const char* token, dint startIndex) c
     return -1;
 }
 
-bool TokenRange::getNextDelimited(const char* delimiter, TokenRange& subrange) const
+bool TokenRange::getNextDelimited(const QChar* delimiter, TokenRange& subrange) const
 {
     if(subrange.undefined())
     {
@@ -209,40 +207,40 @@ bool TokenRange::getNextDelimited(const char* delimiter, TokenRange& subrange) c
     return true;
 }
 
-void TokenRange::bracketTokens(const TokenBuffer::Token& openingToken, const char*& opening, 
-    const char*& closing)
+void TokenRange::bracketTokens(const Token& openingToken, const QChar*& opening,
+                               const QChar*& closing)
 {
     opening = NULL;
     closing = NULL;
     
-    if(openingToken.equals("("))
+    if(openingToken.equals(Token::PARENTHESIS_OPEN))
     {
-        opening = "(";
-        closing = ")";
+        opening = Token::PARENTHESIS_OPEN;
+        closing = Token::PARENTHESIS_CLOSE;
     }
-    else if(openingToken.equals("["))
+    else if(openingToken.equals(Token::BRACKET_OPEN))
     {
-        opening = "[";
-        closing = "]";
+        opening = Token::BRACKET_OPEN;
+        closing = Token::BRACKET_CLOSE;
     }
-    else if(openingToken.equals("{"))
+    else if(openingToken.equals(Token::CURLY_OPEN))
     {
-        opening = "{";
-        closing = "}";
+        opening = Token::CURLY_OPEN;
+        closing = Token::CURLY_CLOSE;
     }
 }
 
 duint TokenRange::closingBracket(duint openBracketPos) const
 {
-    const char* openingToken;
-    const char* closingToken;
+    const QChar* openingToken;
+    const QChar* closingToken;
     
     bracketTokens(token(openBracketPos), openingToken, closingToken);
     
     int level = 1;
     for(dint i = tokenIndex(openBracketPos + 1); i < dint(_end); ++i)
     {
-        const TokenBuffer::Token& token = _tokens->at(i);
+        const Token& token = _tokens->at(i);
         if(token.equals(closingToken))
         {
             --level;
@@ -258,14 +256,14 @@ duint TokenRange::closingBracket(duint openBracketPos) const
     }
     /// @throw MismatchedBracketError  Cannot find a closing bracket.
     throw MismatchedBracketError("TokenRange::closingBracket",
-        "Could not find closing bracket for '" + String(openingToken) +
+        "Could not find closing bracket for '" + QString(openingToken) +
         "' within '" + asText() + "'");
 }
 
 duint TokenRange::openingBracket(duint closeBracketPos) const
 {
-    const char* openingToken;
-    const char* closingToken;
+    const QChar* openingToken;
+    const QChar* closingToken;
     
     for(dint start = tokenIndex(closeBracketPos - 1); start >= 0; --start)
     {
@@ -283,13 +281,14 @@ duint TokenRange::openingBracket(duint closeBracketPos) const
     }
     /// @throw MismatchedBracketError  Cannot find an opening bracket.
     throw MismatchedBracketError("TokenRange::openingBracket",
-        "Could not find opening bracket for '" + std::string(token(closeBracketPos).str()) +
+        "Could not find opening bracket for '" + token(closeBracketPos).str() +
         "' within '" + asText() + "'");
 }
 
 String TokenRange::asText() const
 {
-    std::ostringstream os;
+    String result;
+    QTextStream os(&result);
     for(duint i = _start; i < _end; ++i)
     {
         if(i > _start) 
@@ -298,7 +297,7 @@ String TokenRange::asText() const
         }
         os << _tokens->at(i).str();
     }    
-    return os.str();
+    return result;
 }
 
 TokenRange TokenRange::undefinedRange() const

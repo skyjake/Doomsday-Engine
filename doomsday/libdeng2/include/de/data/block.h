@@ -23,7 +23,7 @@
 #include "../IByteArray"
 #include "../IBlock"
 
-#include <vector>
+#include <QByteArray>
 
 namespace de
 {
@@ -32,12 +32,14 @@ namespace de
      *
      * @ingroup data
      */
-    class LIBDENG2_API Block : public IByteArray, public IBlock
+    class LIBDENG2_API Block : public QByteArray, public IByteArray, public IBlock
     {
     public:
         Block(Size initialSize = 0);
-        Block(const IByteArray& other);
-        
+        Block(const IByteArray& array);
+        Block(const Block& other);
+        Block(const QByteArray& byteArray);
+
         /**
          * Construct a new block and copy its contents from the specified
          * location at another array.
@@ -58,13 +60,11 @@ namespace de
         void copyFrom(const IByteArray& array, Offset at, Size count);
         void resize(Size size);
         const Byte* data() const;        
-      
+
+        Byte* data();
+
         /// Appends a block after this one.
         Block& operator += (const Block& other);        
-        
-    private:
-        typedef std::vector<Byte> Data;
-        Data _data;
     };
 }
     

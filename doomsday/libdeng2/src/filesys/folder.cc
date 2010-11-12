@@ -23,8 +23,6 @@
 #include "de/NumberValue"
 #include "de/Log"
 
-#include <sstream>
-
 using namespace de;
 
 Folder::Folder(const String& name) : File(name)
@@ -210,7 +208,7 @@ bool Folder::has(const String& name) const
 
 File& Folder::add(File* file)
 {
-    assert(file != 0);
+    Q_ASSERT(file != 0);
     if(has(file->name()))
     {
         /// @throw DuplicateNameError All file names in a folder must be unique.
@@ -250,7 +248,7 @@ File* Folder::tryLocateFile(const String& path) const
     }
 
     // Extract the next component.
-    String::size_type end = path.find('/');
+    String::size_type end = path.indexOf('/');
     if(end == String::npos)
     {
         // No more slashes. What remains is the final component.
@@ -315,12 +313,10 @@ void Folder::Accessor::update() const
     // We need to alter the value content.
     Accessor* nonConst = const_cast<Accessor*>(this);
     
-    std::ostringstream os;
     switch(_prop)
     {
     case CONTENT_SIZE:
-        os << _owner._contents.size();
-        nonConst->setValue(os.str());
+        nonConst->setValue(QString::number(_owner._contents.size()));
         break;
     }    
 }

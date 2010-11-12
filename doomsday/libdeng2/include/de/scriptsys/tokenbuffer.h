@@ -28,6 +28,127 @@ namespace de
 {
     class String;
     
+    /**
+     * Character sequence allocated out of the token buffer.
+     */
+    class Token
+    {
+    public:
+        /// Types for tokens. This much can be analyzed without knowing
+        /// anything about the context.
+        enum Type {
+            UNKNOWN,
+            KEYWORD,
+            OPERATOR,
+            LITERAL_STRING_APOSTROPHE,
+            LITERAL_STRING_QUOTED,
+            LITERAL_STRING_LONG,
+            LITERAL_NUMBER,
+            IDENTIFIER
+        };
+
+        // Token constants.
+        static const String PARENTHESIS_OPEN;
+        static const String PARENTHESIS_CLOSE;
+        static const String BRACKET_OPEN;
+        static const String BRACKET_CLOSE;
+        static const String CURLY_OPEN;
+        static const String CURLY_CLOSE;
+        static const String COLON;
+        static const String COMMA;
+        static const String SEMICOLON;
+
+    public:
+        Token(QChar* begin = 0, QChar* end = 0, duint line = 0)
+            : _type(UNKNOWN), _begin(begin), _end(end), _line(line) {}
+
+        void setType(Type type) { _type = type; }
+
+        Type type() const { return _type; }
+
+        /// Returns the address of the beginning of the token.
+        /// @return Pointer to the first character of the token.
+        const QChar* begin() const { return _begin; }
+
+        /// Returns the address of the end of the token.
+        /// @return Pointer to the character just after the last
+        /// character of the token.
+        const QChar* end() const { return _end; }
+
+        /// Returns the address of the beginning of the token.
+        /// @return Pointer to the first character of the token.
+        QChar* begin() { return _begin; }
+
+        /// Returns the address of the end of the token.
+        /// @return Pointer to the character just after the last
+        /// character of the token. This is where a new character is
+        /// appended when the token is being compiled.
+        QChar* end() { return _end; }
+
+        /// Determines the length of the token.
+        /// @return Length of the token as number of characters.
+        int size() const {
+            if(!_begin || !_end) return 0;
+            return _end - _begin;
+        }
+
+        bool isEmpty() const {
+            return !size();
+        }
+
+        void appendChar(QChar c) {
+            *_end++ = c;
+        }
+
+        /// Determines whether the token equals @c str. Case sensitive.
+        /// @return @c true if an exact match, otherwise @c false.
+        bool equals(const QChar* str) const;
+
+        /// Determines whether the token begins with @c str. Case
+        /// sensitive. @return @c true if an exact match, otherwise @c false.
+        bool beginsWith(const QChar* str) const;
+
+        /// Determines the line on which the token begins in the source.
+        duint line() const { return _line; }
+
+        /// Converts the token into a String. This is human-readably output,
+        /// with the line number included.
+        String asText() const;
+
+        /// Converts a substring of the token into a String.
+        /// This includes nothing extra but the text of the token.
+        String str() const;
+
+        static const char* typeToText(Type type) {
+            switch(type)
+            {
+            case UNKNOWN:
+                return "UNKNOWN";
+            case KEYWORD:
+                return "KEYWORD";
+            case OPERATOR:
+                return "OPERATOR";
+            case LITERAL_STRING_APOSTROPHE:
+                return "LITERAL_STRING_APOSTROPHE";
+            case LITERAL_STRING_QUOTED:
+                return "LITERAL_STRING_QUOTED";
+            case LITERAL_STRING_LONG:
+                return "LITERAL_STRING_LONG";
+            case LITERAL_NUMBER:
+                return "LITERAL_NUMBER";
+            case IDENTIFIER:
+                return "IDENTIFIER";
+            }
+            return "";
+        }
+
+    private:
+        Type _type;     ///< Type of the token.
+        QChar* _begin;  ///< Points to the first character.
+        QChar* _end;    ///< Points to the last character + 1.
+        duint _line;    ///< On which line the token begins.
+    };
+
     /** 
      * Buffer of tokens, used as an efficient way to compile and store tokens.
      * Does its own memory management: tokens are allocated out of large blocks 
@@ -36,118 +157,7 @@ namespace de
      * @ingroup script
      */
     class TokenBuffer
-    {
-    public:
-        /**
-         * Character sequence allocated out of the token buffer.
-         */
-        class Token 
-        {
-        public:
-            /// Types for tokens. This much can be analyzed without knowing
-            /// anything about the context.
-            enum Type {
-                UNKNOWN,
-                KEYWORD,
-                OPERATOR,
-                LITERAL_STRING_APOSTROPHE,
-                LITERAL_STRING_QUOTED,
-                LITERAL_STRING_LONG,
-                LITERAL_NUMBER,
-                IDENTIFIER
-            };
-            
-        public:
-            Token(duchar* begin = 0, duchar* end = 0, duint line = 0) 
-                : _type(UNKNOWN), _begin(begin), _end(end), _line(line) {}
-
-            void setType(Type type) { _type = type; }
-            
-            Type type() const { return _type; }
-
-            /// Returns the address of the beginning of the token.
-            /// @return Pointer to the first character of the token.
-            const duchar* begin() const { return _begin; }
-
-            /// Returns the address of the end of the token.
-            /// @return Pointer to the character just after the last
-            /// character of the token.
-            const duchar* end() const { return _end; }
-
-            /// Returns the address of the beginning of the token.
-            /// @return Pointer to the first character of the token.
-            duchar* begin() { return _begin; }
-            
-            /// Returns the address of the end of the token.
-            /// @return Pointer to the character just after the last
-            /// character of the token. This is where a new character is
-            /// appended when the token is being compiled.
-            duchar* end() { return _end; }
-
-            /// Determines the length of the token.
-            /// @return Length of the token as number of characters.
-            duint size() const { 
-                if(!_begin || !_end) return 0; 
-                return _end - _begin; 
-            }
-            
-            bool isEmpty() const {
-                return !size();
-            }
-            
-            void appendChar(duchar c) {
-                *_end++ = c;
-            }
-            
-            /// Determines whether the token equals @c str. Case sensitive.
-            /// @return @c true if an exact match, otherwise @c false.
-            bool equals(const char* str) const;
-            
-            /// Determines whether the token begins with @c str. Case 
-            /// sensitive. @return @c true if an exact match, otherwise @c false.
-            bool beginsWith(const char* str) const;
-            
-            /// Determines the line on which the token begins in the source.
-            duint line() const { return _line; }
-            
-            /// Converts the token into a String. This is human-readably output, 
-            /// with the line number included.
-            String asText() const;
-            
-            /// Converts a substring of the token into a String. 
-            /// This includes nothing extra but the text of the token.
-            String str() const;
-            
-            static std::string typeToText(Type type) {
-                switch(type)
-                {    
-                case UNKNOWN:
-                    return "UNKNOWN";
-                case KEYWORD:
-                    return "KEYWORD";
-                case OPERATOR:
-                    return "OPERATOR";
-                case LITERAL_STRING_APOSTROPHE:
-                    return "LITERAL_STRING_APOSTROPHE";
-                case LITERAL_STRING_QUOTED:
-                    return "LITERAL_STRING_QUOTED";
-                case LITERAL_STRING_LONG:
-                    return "LITERAL_STRING_LONG";
-                case LITERAL_NUMBER:
-                    return "LITERAL_NUMBER";
-                case IDENTIFIER:
-                    return "IDENTIFIER";
-                }
-                return "";
-            }
-            
-        private:
-            Type _type;     ///< Type of the token.
-            duchar* _begin; ///< Points to the first character.
-            duchar* _end;   ///< Points to the last character + 1.
-            duint _line;    ///< On which line the token begins.
-        };
-        
+    {  
     public:
         /// Attempt to append characters while no token is being formed. @ingroup errors
         DEFINE_ERROR(TokenNotStartedError);
@@ -168,7 +178,7 @@ namespace de
         
         /// Appends a character to the Token being formed.
         /// @param c Character to append.
-        void appendChar(duchar c);
+        void appendChar(QChar c);
         
         /// Sets the type of the token being formed.
         void setType(Token::Type type);
@@ -184,7 +194,7 @@ namespace de
         /// Returns a specific token in the buffer.
         const Token& at(duint i) const;
         
-        const TokenBuffer::Token& latest() const;
+        const Token& latest() const;
         
     private:
         /**
@@ -194,14 +204,14 @@ namespace de
          * memory.
          */
         struct Pool {
-            duchar* chars;
+            QString chars;
             duint size;
             duint rover;
             
-            Pool() : chars(0), size(0), rover(0) {}
+            Pool() : size(0), rover(0) {}
         };
         
-        duchar* advanceToPoolWithSpace(duint minimum);
+        QChar* advanceToPoolWithSpace(duint minimum);
                 
         typedef std::vector<Pool> Pools;
         Pools _pools;

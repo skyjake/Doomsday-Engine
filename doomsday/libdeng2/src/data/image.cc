@@ -21,65 +21,9 @@
 
 using namespace de;
 
-Image::Image() : Block()
-{}
-
-void Image::set(Format format, const Dimensions& dims, const Byte* data, Size dataSize, duint linePitchBytes)
+QImage Image::luminocityToAlpha(const QImage& image)
 {
-    _format = format;
-    _dims = dims;
-
-    duint expectedSize = dims.x * dims.y * bytesPerPixel();
-    if(expectedSize > dataSize)
-    {
-        _dims = Dimensions();
-        throw DataError("Image::set", "Not enough data provided");
-    }
-
-    if(!linePitchBytes)
-    {
-        // Lines have no extra space between between, so just directly copy 
-        // the entire buffer.
-        Block::set(0, data, expectedSize);
-    }
-    else
-    {
-        // Copy line by line, then.
-        for(duint y = 0; y < dims.y; ++y)
-        {
-            Block::set(y * dims.x * bytesPerPixel(), &data[y * linePitchBytes], 
-                dims.x * bytesPerPixel());
-        }
-    }
-}
-
-Image::Format Image::format() const
-{
-    return _format;
-}
-
-duint Image::width() const
-{
-    return _dims.x;
-}
-
-duint Image::height() const
-{
-    return _dims.y;
-}
-
-Image::Dimensions Image::dimensions() const
-{
-    return _dims;
-}
-
-duint Image::bytesPerPixel() const
-{
-    return (_format == RGB? 3 : _format == RGBA? 4 : 0);
-}
-
-void Image::luminocityToAlpha()
-{
+    /*
     if(_format != RGB)
     {
         throw FilterError("Image::luminocityToAlpha", "Image must be in RGB format");
@@ -104,4 +48,8 @@ void Image::luminocityToAlpha()
 
     set(Image::RGBA, _dims, filtered, count);
     delete filtered;
+    */
+
+    /// @todo  Implement with Qt.
+    return image;
 }

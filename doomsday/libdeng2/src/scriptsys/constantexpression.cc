@@ -39,7 +39,7 @@ ConstantExpression::~ConstantExpression()
 
 Value* ConstantExpression::evaluate(Evaluator&) const
 {
-    assert(_value != 0);
+    Q_ASSERT(_value != 0);
     return _value->duplicate();
 }
 
@@ -50,12 +50,12 @@ ConstantExpression* ConstantExpression::None()
 
 ConstantExpression* ConstantExpression::True()
 {
-    return new ConstantExpression(new NumberValue(NumberValue::TRUE));
+    return new ConstantExpression(new NumberValue(NumberValue::VALUE_TRUE));
 }
 
 ConstantExpression* ConstantExpression::False()
 {
-    return new ConstantExpression(new NumberValue(NumberValue::FALSE));
+    return new ConstantExpression(new NumberValue(NumberValue::VALUE_FALSE));
 }
 
 ConstantExpression* ConstantExpression::Pi()

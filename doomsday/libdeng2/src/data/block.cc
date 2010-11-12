@@ -23,15 +23,19 @@ using namespace de;
 
 Block::Block(Size initialSize)
 {
-    _data.resize(initialSize);
+    resize(initialSize);
 }
 
 Block::Block(const IByteArray& other)
 {
     // Read the other's data directly into our data buffer.
-    _data.resize(other.size());
-    other.get(0, &_data[0], other.size());
+    resize(other.size());
+    other.get(0, (dbyte*) data(), other.size());
 }
+
+Block::Block(const QByteArray& byteArray)
+    : QByteArray(byteArray)
+{}
 
 Block::Block(const IByteArray& other, Offset at, Size count) : IByteArray()
 {
@@ -40,20 +44,20 @@ Block::Block(const IByteArray& other, Offset at, Size count) : IByteArray()
 
 Block::Size Block::size() const
 {
-    return _data.size();
+    return QByteArray::size();
 }
 
-void Block::get(Offset at, Byte* values, Size count) const
+void Block::get(Offset atPos, Byte* values, Size count) const
 {
-    if(at + count > size())
+    if(atPos + count > size())
     {
         /// @throw OffsetError The accessed region of the block was out of range.
         throw OffsetError("Block::get", "Out of range");
     }
 
-    for(Data::const_iterator i = _data.begin() + at; count > 0; ++i, --count)
+    for(Offset i = atPos; count > 0; ++i, --count)
     {
-        *values++ = *i;
+        *values++ = Byte(at(i));
     }
 }
 
@@ -64,35 +68,38 @@ void Block::set(Offset at, const Byte* values, Size count)
         /// @throw OffsetError The accessed region of the block was out of range.
         throw OffsetError("Block::set", "Out of range");
     }
-
-    _data.insert(_data.begin() + at, values, values + count);
+    replace(at, count, QByteArray((const char*) values, count));
 }
 
 void Block::copyFrom(const IByteArray& array, Offset at, Size count)
 {
     // Read the other's data directly into our data buffer.
-    _data.resize(count);
-    array.get(at, &_data[0], count);
+    resize(count);
+    array.get(at, data(), count);
 }
 
 void Block::resize(Size size)
 {
-    _data.resize(size);
+    QByteArray::resize(size);
+}
+
+Block::Byte* Block::data()
+{
+    return reinterpret_cast<Byte*>(QByteArray::data());
 }
 
 const Block::Byte* Block::data() const
 {
-    return &_data[0];
+    return reinterpret_cast<const Byte*>(QByteArray::data());
 }
 
 Block& Block::operator += (const Block& other)
 {
-    _data.reserve(size() + other.size());
-    _data.insert(_data.end(), other._data.begin(), other._data.end());
+    append(other);
     return *this;
 }
 
 void Block::clear()
 {
-    _data.clear();
+    QByteArray::clear();
 }

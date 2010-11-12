@@ -27,7 +27,7 @@
 #include "../Flag"
 #include "../ISerializable"
 
-#include <sstream>
+#include <QTextStream>
 
 namespace de
 {
@@ -90,9 +90,10 @@ namespace de
         }
 
         operator String () const {
-            std::ostringstream os;
+            String result;
+            QTextStream os(&result);
             os << now();
-            return os.str();
+            return result;
         }
 
         void setClock(const IClock& clock);

@@ -22,11 +22,15 @@
 
 #include "../deng.h"
 
+#include <QMutex>
+
 namespace de
 {
     /**
      * A mutex that can be used to synchronize access to a resource.  All classes 
-     * of lockable resources should be derived from this class.
+     * of lockable resources should be derived from this class. The mutex works
+     * in a recursive way: if lock() is called multiple times, unlock() must be
+     * called as many times.
      *
      * @ingroup data
      */
@@ -52,9 +56,9 @@ namespace de
         
     private:
         /// Pointer to the internal mutex data.
-        void* _mutex;
+        mutable QMutex _mutex;
         
-        mutable bool _isLocked;
+        mutable int _lockCount;
     };
 }
 

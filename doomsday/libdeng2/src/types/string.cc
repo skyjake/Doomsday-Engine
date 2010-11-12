@@ -18,7 +18,12 @@
  */
 
 #include "de/String"
+#include "de/Block"
 
+#include <QDir>
+#include <QTextStream>
+
+/*
 #include <cctype>
 #include <cstring>
 #include <cstdlib>
@@ -26,76 +31,63 @@
 #include <sstream>
 #include <iomanip>
 #include <algorithm>
-
-#ifdef UNIX
-#   include <strings.h> // strcasecmp
-#endif
-
-#ifdef WIN32
-#   define strcasecmp _stricmp
-#   define strncasecmp _strnicmp
-#endif
+ */
 
 using namespace de;
 
-String::String(const std::string& text) : std::string(text)
+const String::size_type String::npos = -1;
+
+String::String()
 {}
 
-String::String(const IByteArray& array)
+String::String(const String& other) : QString(other)
+{}
+
+String::String(const QString& text) : QString(text)
+{}
+
+String::String(const QChar* str, size_type length) : QString(str, length)
+{}
+
+String::String(const char* cStr) : QString(QString::fromUtf8(cStr))
+{}
+
+String::String(const char* cStr, size_type length) : QString(QString::fromUtf8(cStr, length))
+{}
+
+String::String(size_type length, QChar ch) : QString(length, ch)
+{}
+
+String::String(const QString& str, size_type index, size_type length)
+    : QString(str.mid(index, length))
+{}
+
+String::String(const_iterator start, const_iterator end)
 {
-    Size len = array.size();
-    Byte* buffer = new Byte[len + 1];
-    array.get(0, buffer, len);
-    buffer[len] = 0;
-    set(0, buffer, len);
-    delete [] buffer;
-}
-
-String::String(const String& other) : std::string(other)
-{}
-
-String::String(const char* cStr) : std::string(cStr)
-{}
-
-String::String(const char* cStr, size_type length) : std::string(cStr, length)
-{}
-
-String::String(size_type length, const char& ch) : std::string(length, ch)
-{}
-
-String::String(const std::string& str, size_type index, size_type length)
-    : std::string(str, index, length)
-{}
-
-String::String(iterator start, iterator end) : std::string(start, end)
-{}
-
-String::String(const_iterator start, const_iterator end) : std::string(start, end)
-{}
-
-bool String::beginsWith(const String& s) const
-{
-    if(size() < s.size())
+    for(const_iterator i = start; i < end; ++i)
     {
-        // This is too short to be a match.
-        return false;
+        append(*i);
     }
-    return std::equal(s.begin(), s.end(), begin());
 }
 
-bool String::endsWith(const String& s) const
+String::String(iterator start, iterator end)
 {
-    if(size() < s.size())
+    for(iterator i = start; i < end; ++i)
     {
-        // Too short to be a match.
-        return false;
+        append(*i);
     }
-    return std::equal(s.begin(), s.end(), s.end() - s.size());
 }
 
-bool String::contains(const String& s) const
+QChar String::first() const
 {
-    return find(s) != npos;
+    if(empty()) return 0;
+    return at(0);
+}
+
+QChar String::last() const
+{
+    if(empty()) return 0;
+    return at(size() - 1);
 }
 
 String String::operator / (const String& path) const
@@ -103,9 +95,9 @@ String String::operator / (const String& path) const
     return concatenatePath(path);
 }
 
-String String::concatenatePath(const String& other, char dirChar) const
+String String::concatenatePath(const String& other, QChar dirChar) const
 {
-    if(!other.empty() && other[0] == dirChar)
+    if(other.first() == dirChar)
     {
         // The other begins with a slash, therefore it's an absolute path.
         // Use it as is.
@@ -113,8 +105,9 @@ String String::concatenatePath(const String& other, char dirChar) const
     }
 
     String result = *this;
+
     // Do a path combination. Check for a slash.
-    if(!empty() && *rbegin() != dirChar)
+    if(!empty() && last() != dirChar)
     {
         result += dirChar;
     }
@@ -124,20 +117,21 @@ String String::concatenatePath(const String& other, char dirChar) const
 
 String String::concatenateNativePath(const String& nativePath) const
 {
-#ifdef UNIX
-    return concatenatePath(nativePath);
-#endif
+    return QDir(*this).filePath(nativePath);
 
-#ifdef WIN32
+    /*
+#ifdef Q_OS_WIN32
     /// @todo Check for "(drive-letter):" and "(drive-letter):\".
-
     return concatenatePath(nativePath, '\\');
-#endif
+#else
+    return concatenatePath(nativePath);
+
+#endif*/
 }
 
 String String::concatenateMember(const String& member) const
 {
-    if(member.size() && member.at(0) == '.')
+    if(member.first() == '.')
     {
         throw InvalidMemberError("String::concatenateMember", "Invalid: '" + member + "'");
     }
@@ -146,81 +140,40 @@ String String::concatenateMember(const String& member) const
 
 String String::strip() const
 {
-    return leftStrip().rightStrip();
+    return trimmed();
 }
 
 String String::leftStrip() const
 {
-    String result = *this;
-    String::iterator endOfSpace = result.begin();
-    while(endOfSpace != result.end() && std::isspace(*endOfSpace)) 
+    int endOfSpace = 0;
+    while(endOfSpace < size() && at(endOfSpace).isSpace())
     {
-        ++endOfSpace;   
+        ++endOfSpace;
     }
-    result.erase(result.begin(), endOfSpace);
-    return result;
+    return mid(endOfSpace);
 }
 
 String String::rightStrip() const
 {
-    String result = *this;
-    while(result.size() && std::isspace(*result.rbegin()))
+    int beginOfSpace = size() - 1;
+    while(beginOfSpace >= 0 && at(beginOfSpace).isSpace())
     {
-        result.erase(result.size() - 1, 1);
+        --beginOfSpace;
     }
-    return result;
+    return left(beginOfSpace + 1);
 }
 
 String String::lower() const
 {
-    std::ostringstream result;
-    for(String::const_iterator i = begin(); i != end(); ++i)
-    {
-        result << char(std::tolower(*i));
-    }
-    return result.str();
+    return toLower();
 }
 
 String String::upper() const
 {    
-    std::ostringstream result;
-    for(String::const_iterator i = begin(); i != end(); ++i)
-    {
-        result << char(std::toupper(*i));
-    }
-    return result.str();
+    return toUpper();
 }
 
-String::Size String::size() const
-{
-    return std::string::size();
-}
-
-void String::get(Offset at, Byte* values, Size count) const
-{
-    if(at + count > size())
-    {
-        throw OffsetError("String::get", "Out of range");
-    }
-    memcpy(values, c_str() + at, count);
-}
-
-void String::set(Offset at, const Byte* values, Size count)
-{
-    replace(at, count, reinterpret_cast<const char*>(values));
-}
-
-void String::copyFrom(const IByteArray& array, Offset at, Size count)
-{
-    resize(count);
-    array.get(at, const_cast<Byte*>(data()), count);
-}
-
-std::wstring String::wide() const
-{
-    return stringToWide(*this);
-}
-
+/*
 std::wstring String::stringToWide(const String& str)
 {
     duint inputSize = str.size();
@@ -349,13 +302,14 @@ String String::wideToString(const std::wstring& str)
     }
     return output;
 }
+*/
 
 String String::fileName() const
 {
-    size_type pos = find_last_of('/');
-    if(pos != npos)
+    size_type pos = lastIndexOf('/');
+    if(pos >= 0)
     {
-        return substr(pos + 1);
+        return mid(pos + 1);
     }
     return *this;
 }
@@ -363,25 +317,25 @@ String String::fileName() const
 String String::fileNameWithoutExtension() const
 {
     String name = fileName();
-    size_type pos = name.find_last_of('.');
-    if(pos != npos && pos > 0)
+    size_type pos = name.lastIndexOf('.');
+    if(pos > 0)
     {
-        return name.substr(0, pos);
+        return name.mid(0, pos);
     }
     return name;
 }
 
 String String::fileNameExtension() const
 {
-    size_type pos = find_last_of('.');
-    size_type slashPos = find_last_of('/');    
-    if(pos != npos && pos > 0)
+    size_type pos = lastIndexOf('.');
+    size_type slashPos = lastIndexOf('/');
+    if(pos > 0)
     {
         // If there is a directory included, make sure there it at least
         // one character's worth of file name before the period.
-        if(slashPos == npos || pos > slashPos + 1)
+        if(slashPos < 0 || pos > slashPos + 1)
         {
-            return substr(pos);
+            return mid(pos);
         }
     }
     return "";
@@ -389,43 +343,41 @@ String String::fileNameExtension() const
 
 String String::fileNamePath(char dirChar) const
 {
-    size_type pos = find_last_of(dirChar);
-    if(pos != npos)
+    size_type pos = lastIndexOf(dirChar);
+    if(pos >= 0)
     {
-        return substr(0, pos);
+        return mid(0, pos);
     }
     return "";
 }
 
 String String::fileNameNativePath() const
 {
-#ifdef UNIX
+#ifdef Q_OS_WIN32
+    return fileNamePath('\\');
+#else
     return fileNamePath();
 #endif
-
-#ifdef WIN32
-    return fileNamePath('\\');
-#endif    
 }
 
 dint String::compareWithCase(const String& str) const
 {
-    return strncmp(c_str(), str.c_str(), max(str.size(), size()));
+    return compare(str, Qt::CaseSensitive);
 }
 
 dint String::compareWithoutCase(const String& str) const
 {
-    return strcasecmp(c_str(), str.c_str());
+    return compare(str, Qt::CaseInsensitive);
 }
 
-dint String::compareWithCase(const char* a, const char* b, dsize count)
+dint String::compareWithCase(const QChar* a, const QChar* b, dsize count)
 {
-    return strncasecmp(a, b, count);
+    return QString(a, count).compare(QString(b, count), Qt::CaseSensitive);
 }
 
 void String::skipSpace(String::const_iterator& i, const String::const_iterator& end)
 {
-    while(i != end && std::isspace(*i)) ++i;
+    while(i != end && (*i).isSpace()) ++i;
 }
 
 void String::advanceFormat(String::const_iterator& i, const String::const_iterator& end)
@@ -443,12 +395,10 @@ String String::patternFormat(String::const_iterator& formatIter,
 {
     advanceFormat(formatIter, formatEnd);
 
-    std::ostringstream output;
-    
     // An argument comes here.
     bool rightAlign = true;
-    duint maxWidth = 0;
-    duint minWidth = 0;
+    dint maxWidth = 0;
+    dint minWidth = 0;
 
     if(*formatIter == '%')
     {
@@ -462,50 +412,51 @@ String String::patternFormat(String::const_iterator& formatIter,
         advanceFormat(formatIter, formatEnd);
     }
     String::const_iterator k = formatIter;
-    while(std::isdigit(*formatIter))
+    while((*formatIter).isDigit())
     {
         advanceFormat(formatIter, formatEnd);
     }
     if(k != formatIter)
     {
         // Got the minWidth.
-        minWidth = std::atoi(String(k, formatIter).c_str());
+        minWidth = String(k, formatIter).toInt();
     }
     if(*formatIter == '.')
     {
         advanceFormat(formatIter, formatEnd);
         k = formatIter;
         // There's also a maxWidth.
-        while(std::isdigit(*formatIter))
+        while((*formatIter).isDigit())
         {
             advanceFormat(formatIter, formatEnd);
         }
-        maxWidth = std::atoi(String(k, formatIter).c_str());
+        maxWidth = String(k, formatIter).toInt();
     }
     
     // Finally, the type formatting.
-    std::ostringstream valueStr;
-    switch(*formatIter)
+    QString result;
+    QTextStream output(&result);
+
+    switch((*formatIter).toLatin1())
     {
     case 's':
-        valueStr << arg.asText();
+        output << arg.asText();
         break;
         
     case 'i':
     case 'd':
-        valueStr << dint(arg.asNumber());
+        output << dint(arg.asNumber());
         break;
     
     case 'X':
-        valueStr << std::uppercase;
+        output << uppercasedigits;
     case 'x':
-        valueStr << "0x" << std::hex << dint(arg.asNumber()) <<
-            std::dec << std::nouppercase;
+        output << hex << dint(arg.asNumber()) << dec << lowercasedigits;
         break;
         
     case 'f':
         // Max width is interpreted as the number of decimal places.
-        valueStr << std::fixed << std::setprecision(maxWidth? maxWidth : 3) << arg.asNumber();
+        output << fixed << qSetRealNumberPrecision(maxWidth? maxWidth : 3) << arg.asNumber();
         maxWidth = 0;
         break;
         
@@ -513,26 +464,47 @@ String String::patternFormat(String::const_iterator& formatIter,
         throw IllegalPatternError("Log::Entry::str", 
             "Unknown format character '" + String(1, *formatIter) + "'");
     }
+
+    output.flush();
     
     // Align and fit.
-    String value = valueStr.str();
-    if(maxWidth && value.size() > maxWidth)
+    if(maxWidth && result.size() > maxWidth)
     {
         // Cut it.
-        value = value.substr(!rightAlign? 0 : value.size() - maxWidth, maxWidth);                    
+        result = result.mid(!rightAlign? 0 : result.size() - maxWidth, maxWidth);
     }
-    if(value.size() < minWidth)
+    if(result.size() < minWidth)
     {
         // Pad it.
-        String padding = String(minWidth - value.size(), ' ');
+        String padding = String(minWidth - result.size(), ' ');
         if(rightAlign)
         {
-            value = padding + value;
+            result = padding + result;
         }
         else
         {
-            value += padding;
+            result += padding;
         }
     }
-    return value;
+    return result;
+}
+
+Block String::toUtf8() const
+{
+    return QString::toUtf8();
+}
+
+Block String::toLatin1() const
+{
+    return QString::toLatin1();
+}
+
+String String::fromUtf8(const IByteArray& byteArray)
+{
+    return QString::fromUtf8(reinterpret_cast<char*>(Block(byteArray).data()));
+}
+
+String String::fromLatin1(const IByteArray& byteArray)
+{
+    return QString::fromLatin1(reinterpret_cast<const char*>(Block(byteArray).data()));
 }

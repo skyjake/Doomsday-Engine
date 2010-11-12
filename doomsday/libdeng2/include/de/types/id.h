@@ -89,7 +89,7 @@ namespace de
         static Type _generator;
     };
     
-    LIBDENG2_API std::ostream& operator << (std::ostream& os, const Id& id);
+    LIBDENG2_API QTextStream& operator << (QTextStream& os, const Id& id);
 }
 
 #endif /* LIBDENG2_ID_H */

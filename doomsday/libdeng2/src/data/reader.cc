@@ -23,9 +23,8 @@
 #include "de/ISerializable"
 #include "de/FixedByteArray"
 #include "de/data/byteorder.h"
-#include "../sdl.h"
 
-#include <sstream>
+#include <QTextStream>
 
 using namespace de;
 
@@ -104,14 +103,14 @@ Reader& Reader::operator >> (String& text)
     duint size = 0;
     *this >> size;
 
-    text.clear();
-    text.reserve(size);
+    Block bytes;
     for(duint i = 0; i < size; ++i)
     {
         IByteArray::Byte ch = 0;
         *this >> ch;
-        text.append(1, ch);
+        bytes.append(ch);
     }
+    text = String::fromUtf8(bytes);
     
     return *this;
 }
@@ -188,9 +187,10 @@ void Reader::rewind(dint count)
 {
     if(IByteArray::Offset(_offset - count) >= _source.size())
     {
-        std::ostringstream os;
+        QString msg;
+        QTextStream os(&msg);
         os << "(count: " << count << ", offset: " << _offset << ", size: " << _source.size() << ")";
-        throw IByteArray::OffsetError("Reader::rewind", "Rewound past bounds of source data " + os.str());
+        throw IByteArray::OffsetError("Reader::rewind", "Rewound past bounds of source data " + msg);
     }
     _offset -= count;
 }

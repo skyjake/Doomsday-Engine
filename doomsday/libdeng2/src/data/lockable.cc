@@ -19,53 +19,51 @@
 
 #include "de/Lockable"
 #include "de/error.h"
-#include "../sdl.h"
 
 using namespace de;
 
-Lockable::Lockable() : _isLocked(false)
-{
-    _mutex = SDL_CreateMutex();
-}
+#define LOCK_TIMEOUT_MS     10000
+
+Lockable::Lockable() : _mutex(QMutex::Recursive), _lockCount(0)
+{}
         
 Lockable::~Lockable()
 {
-    if(_isLocked)
+    while(_lockCount > 0)
     {
         unlock();
     }
-    SDL_DestroyMutex(static_cast<SDL_mutex*>(_mutex));
 }
 
 void Lockable::lock() const
 {
     // Acquire the lock.  Blocks until the operation succeeds.
-    if(SDL_LockMutex(static_cast<SDL_mutex*>(_mutex)) < 0)
+    if(!_mutex.tryLock(LOCK_TIMEOUT_MS))
     {
         /// @throw Error Acquiring the mutex failed due to an error.
-        throw Error("Lockable::lock", "SDL_LockMutex failed");
+        throw Error("Lockable::lock", "Failed to lock");
     }
 
-    _isLocked = true;
+    _lockCount++;
 }
 
 void Lockable::unlock() const
 {
-    if(_isLocked)
+    if(_lockCount > 0)
     {
-        _isLocked = false;
+        _lockCount--;
 
         // Release the lock.
-        SDL_UnlockMutex(static_cast<SDL_mutex*>(_mutex));
+        _mutex.unlock();
     }
 }
 
 bool Lockable::isLocked() const
 {
-    return _isLocked;
+    return _lockCount > 0;
 }
 
 void Lockable::assertLocked() const
 {
-    assert(_isLocked);
+    Q_ASSERT(isLocked());
 }

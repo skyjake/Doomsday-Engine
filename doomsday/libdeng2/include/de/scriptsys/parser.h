@@ -119,8 +119,9 @@ namespace de
         ExpressionStatement* parseExpressionStatement();
         
         /// Parse a range of tokens as a comma-separated argument list:
-        ArrayExpression* parseList(const TokenRange& range, const char* separator = ",",
-            const ExpressionFlags& flags = BY_VALUE);
+        ArrayExpression* parseList(const TokenRange& range,
+                                   const QChar* separator = Token::COMMA,
+                                   const ExpressionFlags& flags = BY_VALUE);
 
         /// Parse a range of tokens as an operator-based expression.
         Expression* parseExpression(const TokenRange& range, 

@@ -117,13 +117,10 @@ namespace de
         void stop();
 
         /*
-         * Execute the next command(s) in the script.
-         *
-         * @param timeBox  If defined, execution will continue at most for this
-         *                 period of time. By default execution continues until
-         *                 the script leaves RUNNING state.
+         * Execute the next command(s) in the script. Execution continues until
+         * the script leaves RUNNING state.
          */
-        void execute(const Time::Delta& timeBox = 0);
+        void execute();
 
         /**
          * Finish the execution of the topmost context. Execution will 

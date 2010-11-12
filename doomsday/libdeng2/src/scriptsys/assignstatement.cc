@@ -96,7 +96,7 @@ void AssignStatement::execute(Context& context) const
     const NameExpression* name = static_cast<const NameExpression*>(&_args.back());
     if(name->flags()[NameExpression::READ_ONLY_BIT])
     {
-        assert(ref->variable() != NULL);
+        Q_ASSERT(ref->variable() != NULL);
         ref->variable()->mode.set(Variable::READ_ONLY_BIT);
     }
 

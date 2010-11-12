@@ -22,8 +22,6 @@
 #include "de/Writer"
 #include "de/Reader"
 
-#include <sstream>
-
 using namespace de;
 
 // The Id generator starts from one.
@@ -41,8 +39,7 @@ Id::Id(const String& text) : _id(NONE)
 {
     if(text.beginsWith("{") && text.endsWith("}"))
     {
-        std::istringstream is(text.substr(1, text.size() - 2));
-        is >> _id;
+        _id = text.substr(1, text.size() - 2).toUInt();
     }
 }
 
@@ -61,14 +58,12 @@ Id::operator Value::Number () const
     
 String Id::asText() const
 {
-    std::ostringstream os;
-    os << *this;
-    return os.str();
+    return QString("{%1}").arg(_id);
 }
 
-std::ostream& de::operator << (std::ostream& os, const Id& id)
+QTextStream& de::operator << (QTextStream& os, const Id& id)
 {
-    os << "{" << duint(id) << "}";
+    os << id.asText();
     return os;
 }
 

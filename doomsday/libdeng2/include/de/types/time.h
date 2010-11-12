@@ -24,7 +24,8 @@
 #include "../ISerializable"
 #include "../String"
 
-#include <ctime>
+#include <QDateTime>
+#include <QTextStream>
 
 namespace de
 {
@@ -78,12 +79,7 @@ namespace de
              * @return  Milliseconds.
              */
             duint64 asMilliSeconds() const;
-            
-            /**
-             * Suspend execution for a period of time.
-             */
-            void sleep() const;
-            
+                        
         private:
             ddouble _seconds;
         };
@@ -93,8 +89,10 @@ namespace de
          * Constructor initializes the time to the current time.
          */
         Time();
-        
-        Time(const time_t& t, dint m = 0) : _time(t), _micro(m) {}
+
+        Time(const Time& other) : ISerializable(), _time(other._time) {}
+
+        Time(const QDateTime& t) : ISerializable(), _time(t) {}
 
         bool operator < (const Time& t) const;
 
@@ -178,6 +176,16 @@ namespace de
          * Makes a text representation of the time (default is seconds since the epoch).
          */
         String asText() const;
+
+        /**
+         * Converts the time to a QTime.
+         */
+        QDateTime& asDateTime() { return _time; }
+
+        /**
+         * Converts the time to a QTime.
+         */
+        const QDateTime& asDateTime() const { return _time; }
         
         /**
          * Converts the time into a Date.
@@ -188,17 +196,13 @@ namespace de
         void operator >> (Writer& to) const;
         void operator << (Reader& from);
 
-    public:
-        static void sleep(const Time::Delta& delta) { delta.sleep(); }
-
     private:
-        time_t _time;
-        dint32 _micro;
+        QDateTime _time;
 
         friend class Date;
     };
     
-    LIBDENG2_API std::ostream& operator << (std::ostream& os, const Time& t);
+    LIBDENG2_API QTextStream& operator << (QTextStream& os, const Time& t);
 }
 
 #endif /* LIBDENG2_TIME_H */

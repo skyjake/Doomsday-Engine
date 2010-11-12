@@ -44,7 +44,7 @@ Variable::Variable(const String& name, Value* initial, const Mode& m)
 }
 
 Variable::Variable(const Variable& other) 
-    : mode(other.mode), _name(other._name), _value(other._value->duplicate())
+    : ISerializable(), mode(other.mode), _name(other._name), _value(other._value->duplicate())
 {}
 
 Variable::~Variable()
@@ -82,13 +82,13 @@ void Variable::set(const Value& v)
 
 const Value& Variable::value() const
 {
-    assert(_value != 0);
+    Q_ASSERT(_value != 0);
     return *_value;
 }
 
 Value& Variable::value()
 {
-    assert(_value != 0);
+    Q_ASSERT(_value != 0);
     return *_value;
 }
 
@@ -130,7 +130,7 @@ void Variable::verifyWritable()
 
 void Variable::verifyName(const String& s)
 {
-    if(s.find('.') != String::npos)
+    if(s.indexOf('.') != String::npos)
     {
         /// @throw NameError The name cannot contain periods '.'.
         throw NameError("Variable::verifyName", "Name contains '.': " + s);

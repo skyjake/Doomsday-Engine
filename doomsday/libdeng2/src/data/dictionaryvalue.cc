@@ -22,15 +22,15 @@
 #include "de/Writer"
 #include "de/Reader"
 
-#include <sstream>
-#include <string>
+#include <QTextStream>
 
 using namespace de;
 
 DictionaryValue::DictionaryValue() : _iteration(0), _validIteration(false)
 {}
 
-DictionaryValue::DictionaryValue(const DictionaryValue& other) : _iteration(0), _validIteration(false)
+DictionaryValue::DictionaryValue(const DictionaryValue& other)
+    : Value(), _iteration(0), _validIteration(false)
 {
     for(Elements::const_iterator i = other._elements.begin(); i != other._elements.end(); ++i)
     {
@@ -81,7 +81,8 @@ Value* DictionaryValue::duplicate() const
 
 Value::Text DictionaryValue::asText() const
 {
-    std::ostringstream s;
+    Text result;
+    QTextStream s(&result);
     s << "{";
 
     bool isFirst = true;
@@ -98,7 +99,7 @@ Value::Text DictionaryValue::asText() const
     }
     
     s << " }";
-    return s.str();
+    return result;
 }
 
 dsize DictionaryValue::size() const

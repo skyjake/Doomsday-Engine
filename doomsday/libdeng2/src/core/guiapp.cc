@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libdeng2
  *
- * Copyright (c) 2009, 2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2010 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,31 +17,14 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "de/Date"
+#include "de/GUIApp"
 
 using namespace de;
 
-Date::Date()
+GUIApp::GUIApp(int argc, char** argv,
+               const String& configPath,
+               const String& homeSubFolder,
+               Log::LogLevel defaultLogLevel)
+    : QApplication(argc, argv),
+      App(CommandLine(argc, argv), configPath, homeSubFolder, defaultLogLevel)
 {}
-
-Date::Date(const Time& time) : Time(time)
-{}
-
-Time Date::asTime() const
-{
-    return *this;
-}
-
-String Date::asText() const
-{
-    String result;
-    QTextStream os(&result);
-    os << *this;
-    return result;
-}
-
-QTextStream& de::operator << (QTextStream& os, const Date& d)
-{
-    os << d.asDateTime().toString("yyyy-MM-dd");
-    return os;
-}

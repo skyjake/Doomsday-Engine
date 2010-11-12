@@ -17,32 +17,36 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LIBDENG2_INTERNAL_H
-#define LIBDENG2_INTERNAL_H
+#ifndef LIBDENG2_IMAGE_H
+#define LIBDENG2_IMAGE_H
 
 #include "de/deng.h"
-#include "de/Address"
-#include "sdl.h"
+#include <QImage>
 
-/**
- * @namespace de::internal
- *
- * Internal utilities.  These are not visible to the user of libdeng2.
- * These are mostly for encapsulating dependencies.
- */
 namespace de
 {
-    namespace internal
+    /**
+     * Image-related operations.
+     *
+     * @ingroup data
+     */ 
+    class LIBDENG2_API Image
     {
-        /// Convert an Address to SDL_net's IPaddress.
-        void convertAddress(const Address& address, IPaddress* ip);
-
-        /// Convert SDL_Net's IPaddress to an Address.
-        Address convertAddress(const IPaddress* ip);
-
-        /// Create an SDL surface.
-        SDL_Surface* createSDLSurface(duint flags, duint width, duint height, duint bitsPerPixel);
-    }
+    public:
+        /// An image filtering operation is done on inapproprite data. @ingroup errors
+        DEFINE_ERROR(FilterError);
+                      
+    public:
+        /**
+         * Converts an RGB image to RGBA so that the original RGB luminocity
+         * becomes the alpha value, and the RGB is replaced with white.
+         *
+         * @param image  Input image.
+         *
+         * @return  Converted image.
+         */
+        static QImage luminocityToAlpha(const QImage& image);
+    };
 }
 
-#endif /* LIBDENG2_INTERNAL_H */
+#endif /* LIBDENG2_IMAGE_H */

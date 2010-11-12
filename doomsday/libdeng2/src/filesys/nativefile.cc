@@ -75,31 +75,32 @@ NativeFile::Size NativeFile::size() const
 
 void NativeFile::get(Offset at, Byte* values, Size count) const
 {
-    std::ifstream& is = input();
+    QFile& in = input();
     if(at + count > size())
     {
         /// @throw IByteArray::OffsetError  The region specified for reading extends
         /// beyond the bounds of the file.
         throw OffsetError("NativeFile::get", "Cannot read past end of file");
     }
-    is.seekg(at);
-    is.read(reinterpret_cast<char*>(values), count);
+    in.seek(at);
+    in.read(reinterpret_cast<char*>(values), count);
 }
 
 void NativeFile::set(Offset at, const Byte* values, Size count)
 {
-    std::ofstream& os = output();
+    QFile& out = output();
     if(at > size())
     {
         /// @throw IByteArray::OffsetError  @a at specified a position beyond the
         /// end of the file.
         throw OffsetError("NativeFile::set", "Cannot write past end of file");
     }
-    os.seekp(at);
-    os.write(reinterpret_cast<const char*>(values), count);
-    if(!os.good())
+    out.seek(at);
+    out.write(reinterpret_cast<const char*>(values), count);
+    if(out.error() != QFile::NoError)
     {
-        throw OutputError("NativeFile::set", "Error writing to stream");
+        throw OutputError("NativeFile::set", "Error writing to file:" +
+                          out.errorString());
     }
     // Update status.
     Status st = status();
@@ -114,13 +115,13 @@ void NativeFile::setMode(const Mode& newMode)
     File::setMode(newMode);
 }
 
-std::ifstream& NativeFile::input() const
+QFile& NativeFile::input() const
 {
     if(!_in)
     {
         // Reading is allowed always.
-        _in = new std::ifstream(_nativePath.c_str(), std::ifstream::binary | std::ifstream::in);
-        if(!_in->good())
+        _in = new QFile(_nativePath);
+        if(!_in->open(QFile::ReadOnly))
         {
             delete _in;
             _in = 0;
@@ -131,20 +132,20 @@ std::ifstream& NativeFile::input() const
     return *_in;
 }
 
-std::ofstream& NativeFile::output()
+QFile& NativeFile::output()
 {
     if(!_out)
     {
         // Are we allowed to output?
         verifyWriteAccess();
         
-        std::ios::openmode bits = std::ios::binary | std::ios::out;
+        QFile::OpenMode fileMode = QFile::ReadWrite;
         if(mode()[TRUNCATE_BIT])
         {
-            bits |= std::ios::trunc;
+            fileMode |= QFile::Truncate;
         }
-        _out = new std::ofstream(_nativePath.c_str(), bits);
-        if(!_out->good())
+        _out = new QFile(_nativePath);
+        if(!_out->open(fileMode))
         {
             delete _out;
             _out = 0;

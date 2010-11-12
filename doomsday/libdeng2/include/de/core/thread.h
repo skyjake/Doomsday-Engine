@@ -23,6 +23,8 @@
 #include "../deng.h"
 #include "../Waitable"
 
+#include <QThread>
+
 namespace de
 {
     /**
@@ -59,25 +61,20 @@ namespace de
         /// This method is executed when the thread is started.
         virtual void run() = 0;
         
-        /// @return @c true, if the thread should stop itself as soon as
-        /// possible.
-        bool shouldStopNow() const;
-        
         /// @return @c true, if the thread is currently running.
         bool isRunning() const;
     
     private:
-        static int runner(void* owner);
- 
-        /// This is set to true when the thread should stop.
-        volatile bool _stopNow;
-        
-        /// Pointer to the internal thread data.
-        typedef void* Handle;
-        volatile Handle _thread;
-        
-        /// Signals the end of the thread.
-        Waitable _endOfThread;
+        class Runner : public QThread {
+        public:
+            Runner(Thread* owner) : _owner(owner) {}
+            void run();
+
+        private:
+            Thread* _owner;
+        };
+
+        Runner* _runner;
     };
 }
 

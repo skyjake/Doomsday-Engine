@@ -27,42 +27,19 @@
 #ifndef LIBDENG2_H
 #define LIBDENG2_H
 
-#include <cassert>
-#include <typeinfo>
-#include <memory>
+#include <QtCore/qglobal.h>
+#include <QScopedPointer>
 
-#ifdef WIN32
-#   ifdef LIBDENG2_EXPORTS
-#       define LIBDENG2_API __declspec(dllexport)
-#   else
-#       define LIBDENG2_API __declspec(dllimport)
-#   endif
-#   define LIBDENG2_EXPORT __declspec(dllexport)
+#include <typeinfo> // Standard C++ RTTI
 
-    // Disable warnings about non-exported (C++ standard library) base classes.
-#   pragma warning(disable: 4275)
-#   pragma warning(disable: 4251)
-    // Disable warning about using this pointer in initializer list.
-#   pragma warning(disable: 4355)
-
-#   if defined(_MSC_VER)
-        // Microsoft Visual C++ lacks stdint.h, so define the integer types manually.
-        typedef signed __int8       int8_t;
-        typedef unsigned __int8     uint8_t;
-        typedef signed __int16      int16_t;
-        typedef unsigned __int16    uint16_t;
-        typedef signed __int32      int32_t;
-        typedef unsigned __int32    uint32_t;
-        typedef signed __int64      int64_t;
-        typedef unsigned __int64    uint64_t;
-#   endif
+// Exporting and importing symbols.
+#if defined(LIBDENG2_EXPORTS)
+#  define LIBDENG2_API Q_DECL_EXPORT
 #else
-#   define LIBDENG2_API
-#   define LIBDENG2_EXPORT
-
-    // Standard integer types.
-#   include <stdint.h>
+#  define LIBDENG2_API Q_DECL_IMPORT
 #endif
+
+#define LIBDENG2_EXPORT Q_DECL_EXPORT
 
 /**
  * Macro for determining the name of a type (using RTTI).
@@ -70,7 +47,7 @@
 #define TYPE_NAME(x) (typeid(x).name())
 
 /**
- * Macro for iterating through a container.
+ * Macro for iterating through an STL container.
  *
  * @param Var           Name of the iterator variable.
  * @param ContainerRef  Container.
@@ -80,7 +57,7 @@
     for(IterClass Var = ContainerRef.begin(); Var != ContainerRef.end(); ++Var)
 
 /**
- * Macro for iterating through a container in reverse.
+ * Macro for iterating through an STL container in reverse.
  *
  * @param Var           Name of the iterator variable.
  * @param ContainerRef  Container.
@@ -88,8 +65,6 @@
  */
 #define FOR_EACH_REVERSE(Var, ContainerRef, IterClass) \
     for(IterClass Var = ContainerRef.rbegin(); Var != ContainerRef.rend(); ++Var)
-
-#define FOREVER for(;;)
 
 /**
  * @namespace de
@@ -107,24 +82,24 @@ namespace de
     
     //@{
     /// @ingroup types
-    typedef int8_t                  dchar;      ///< 8-bit signed integer.
-    typedef uint8_t                 dbyte;      ///< 8-bit unsigned integer.
-    typedef uint8_t                 duchar;     ///< 8-bit unsigned integer.
+    typedef qint8                   dchar;      ///< 8-bit signed integer.
+    typedef quint8                  dbyte;      ///< 8-bit unsigned integer.
+    typedef quint8                  duchar;     ///< 8-bit unsigned integer.
     typedef dchar                   dint8;      ///< 8-bit signed integer.
     typedef dbyte                   duint8;     ///< 8-bit unsigned integer.
-    typedef int16_t                 dint16;     ///< 16-bit signed integer.
-    typedef uint16_t                duint16;    ///< 16-bit unsigned integer.
+    typedef qint16                  dint16;     ///< 16-bit signed integer.
+    typedef quint16                 duint16;    ///< 16-bit unsigned integer.
     typedef dint16                  dshort;     ///< 16-bit signed integer.
     typedef duint16                 dushort;    ///< 16-bit unsigned integer.
-    typedef int32_t                 dint32;     ///< 32-bit signed integer.
-    typedef uint32_t                duint32;    ///< 32-bit unsigned integer.
+    typedef qint32                  dint32;     ///< 32-bit signed integer.
+    typedef quint32                 duint32;    ///< 32-bit unsigned integer.
     typedef dint32                  dint;       ///< 32-bit signed integer.
     typedef duint32                 duint;      ///< 32-bit unsigned integer.
-    typedef int64_t                 dint64;     ///< 64-bit signed integer.
-    typedef uint64_t                duint64;    ///< 64-bit unsigned integer.
+    typedef qint64                  dint64;     ///< 64-bit signed integer.
+    typedef quint64                 duint64;    ///< 64-bit unsigned integer.
     typedef float                   dfloat;     ///< 32-bit floating point number.
-    typedef double                  ddouble;    ///< 64-bit floating point number.
-    typedef size_t                  dsize;
+    typedef qreal                   ddouble;    ///< 64-bit floating point number.
+    typedef quint64                 dsize;
     //@}
 }
 

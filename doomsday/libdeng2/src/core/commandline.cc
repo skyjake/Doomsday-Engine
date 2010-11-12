@@ -20,14 +20,8 @@
 #include "de/CommandLine"
 #include "de/String"
 
-#ifdef WIN32
-#   define WIN32_LEAN_AND_MEAN
-#   include <windows.h>
-#endif
-
-#ifdef UNIX
-#   include <unistd.h>
-#endif
+#include <QFile>
+#include <QProcess>
 
 #include <fstream>
 #include <sstream>
@@ -105,7 +99,7 @@ dint CommandLine::check(const String& arg, dint numParams) const
 {
     // Do a search for arg.
     Arguments::const_iterator i = _arguments.begin();
-    for(; i != _arguments.end() && !matches(arg, *i); ++i);
+    for(; i != _arguments.end() && !matches(arg, *i); ++i) {}
     
     if(i == _arguments.end())
     {
@@ -159,7 +153,7 @@ bool CommandLine::isOption(duint pos) const
         /// @throw OutOfRangeError @a pos is out of range.
         throw OutOfRangeError("CommandLine::isOption", "Index out of range");
     }
-    assert(!_arguments[pos].empty());
+    Q_ASSERT(!_arguments[pos].empty());
     return isOption(_arguments[pos]);
 }
 
@@ -170,7 +164,7 @@ bool CommandLine::isOption(const String& arg)
 
 const char* const* CommandLine::argv() const
 {
-    assert(*_pointers.rbegin() == 0);
+    Q_ASSERT(*_pointers.rbegin() == 0);
     return &_pointers[0];
 }
 
@@ -199,7 +193,7 @@ void CommandLine::parse(const String& cmdLine)
 
         String word;
 
-        while(i != cmdLine.end() && (quote || !std::isspace(*i)))
+        while(i != cmdLine.end() && (quote || !(*i).isSpace()))
         {
             bool copyChar = true;
             if(!quote)
@@ -241,9 +235,11 @@ void CommandLine::parse(const String& cmdLine)
         if(isResponse) // Response file?
         {
             // This will quietly ignore missing response files.
-            std::stringbuf response;
-            std::ifstream(word.c_str()) >> &response;
-            parse(response.str());
+            QFile response(word.c_str());
+            if(response.open(QFile::ReadOnly | QFile::Text))
+            {
+                parse(QString::fromUtf8(response.readAll().constData()));
+            }
         }
         else if(word == "--") // End of arguments.
         {
@@ -288,7 +284,10 @@ bool CommandLine::matches(const String& full, const String& fullOrAlias) const
 
 void CommandLine::execute(char** envs) const
 {
-#ifdef UNIX
+    printf("should call QProcess to execute!\n");
+
+    /*
+#ifdef Q_OS_UNIX
     // Fork and execute new file.
     pid_t result = fork();
     if(!result)
@@ -326,4 +325,5 @@ void CommandLine::execute(char** envs) const
         throw ExecuteError("CommandLine::execute", "Could not create process");
     }
 #endif
+    */
 }

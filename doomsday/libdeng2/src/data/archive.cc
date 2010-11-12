@@ -308,7 +308,7 @@ Archive::Archive(const IByteArray& archive) : _source(&archive), _modified(false
             throw FormatError("Archive::Archive", "Corrupt central directory");
         }
             
-        String fileName(ByteSubArray(archive, reader.offset(), header.fileNameSize));
+        String fileName = String::fromLatin1(ByteSubArray(archive, reader.offset(), header.fileNameSize));
         
         // Advance the cursor past the variable sized fields.
         reader.seek(header.fileNameSize + header.extraFieldSize + header.commentSize);
@@ -346,14 +346,8 @@ Archive::Archive(const IByteArray& archive) : _source(&archive), _modified(false
         // Unpack the last modified time from the ZIP entry header.
         DOSDate lastModDate(header.lastModDate);
         DOSTime lastModTime(header.lastModTime);
-        Date modifiedAt;
-        modifiedAt.seconds = lastModTime.seconds;
-        modifiedAt.minutes = lastModTime.minutes;
-        modifiedAt.hours = lastModTime.hours;
-        modifiedAt.dayOfMonth = lastModDate.dayOfMonth;
-        modifiedAt.month = lastModDate.month;
-        modifiedAt.year = lastModDate.year + 1980;    
-        entry.modifiedAt = modifiedAt.asTime();
+        entry.modifiedAt = QDateTime(QDate(lastModDate.year + 1980, lastModDate.month, lastModDate.dayOfMonth),
+                                     QTime(lastModTime.hours, lastModTime.minutes, lastModTime.seconds));
         
         // Read the local file header, which contains the correct extra 
         // field size (Info-ZIP!).
@@ -528,7 +522,7 @@ void Archive::read(const String& path, IBlock& uncompressedData) const
         }
         else
         {
-            assert(_source != NULL);
+            Q_ASSERT(_source != NULL);
             uncompressedData.copyFrom(*_source, entry.offset, entry.size);
         }
     }
@@ -540,7 +534,7 @@ void Archive::read(const String& path, IBlock& uncompressedData) const
         // Take a copy of the compressed data for zlib.
         if(!entry.compressedData)
         {
-            assert(_source != NULL);
+            Q_ASSERT(_source != NULL);
             entry.compressedData = new Block(*_source, entry.offset, entry.sizeInArchive);
         }
 
@@ -642,8 +636,8 @@ void Archive::operator >> (Writer& to) const
         header.requiredVersion = 20;
         header.compression = entry.compression;
         Date at(entry.modifiedAt);
-        header.lastModTime = DOSTime(at.hours, at.minutes, at.seconds);
-        header.lastModDate = DOSDate(at.year - 1980, at.month, at.dayOfMonth);
+        header.lastModTime = DOSTime(at.hours(), at.minutes(), at.seconds());
+        header.lastModDate = DOSDate(at.year() - 1980, at.month(), at.dayOfMonth());
         header.crc32 = entry.crc32;
         header.compressedSize = entry.sizeInArchive;
         header.size = entry.size;
@@ -653,7 +647,7 @@ void Archive::operator >> (Writer& to) const
         if((entry.compressedData || _source) && !entry.mustCompress)
         {
             // Yes, we can.
-            writer << header << FixedByteArray(i->first);
+            writer << header << FixedByteArray(i->first.toLatin1());
             IByteArray::Offset newOffset = writer.offset();
             if(entry.compressedData)
             {
@@ -668,7 +662,7 @@ void Archive::operator >> (Writer& to) const
         }
         else 
         {
-            assert(entry.data != NULL);
+            Q_ASSERT(entry.data != NULL);
 
             // Let's try and compress.
             Block archived(Block::Size(REQUIRED_DEFLATE_PERCENTAGE * entry.data->size()));
@@ -696,7 +690,7 @@ void Archive::operator >> (Writer& to) const
                 // Compression was ok.
                 header.compression = entry.compression = DEFLATED;
                 header.compressedSize = entry.sizeInArchive = stream.total_out;
-                writer << header << FixedByteArray(i->first);
+                writer << header << FixedByteArray(i->first.toLatin1());
                 entry.offset = writer.offset();                
                 writer << FixedByteArray(archived, 0, entry.sizeInArchive);
             }
@@ -705,7 +699,7 @@ void Archive::operator >> (Writer& to) const
                 // We won't compress.
                 header.compression = entry.compression = NO_COMPRESSION;
                 header.compressedSize = entry.sizeInArchive = entry.data->size();
-                writer << header << FixedByteArray(i->first);
+                writer << header << FixedByteArray(i->first.toLatin1());
                 entry.offset = writer.offset();
                 writer << FixedByteArray(*entry.data);
             }            
@@ -729,8 +723,8 @@ void Archive::operator >> (Writer& to) const
         header.version = 20;
         header.requiredVersion = 20;
         Date at(entry.modifiedAt);
-        header.lastModTime = DOSTime(at.hours, at.minutes, at.seconds);
-        header.lastModDate = DOSDate(at.year - 1980, at.month, at.dayOfMonth);
+        header.lastModTime = DOSTime(at.hours(), at.minutes(), at.seconds());
+        header.lastModDate = DOSDate(at.year() - 1980, at.month(), at.dayOfMonth());
         header.compression = entry.compression;
         header.crc32 = entry.crc32;
         header.compressedSize = entry.sizeInArchive;
@@ -738,7 +732,7 @@ void Archive::operator >> (Writer& to) const
         header.fileNameSize = i->first.size();
         header.relOffset = entry.localHeaderOffset;
         
-        writer << header << FixedByteArray(i->first);
+        writer << header << FixedByteArray(i->first.toLatin1());
     }    
     
     // Size of the central directory.

@@ -18,7 +18,6 @@
  */
 
 #include "de/data/byteorder.h"
-#include "../sdl.h"
 
 using namespace de;
 

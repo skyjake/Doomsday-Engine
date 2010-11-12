@@ -26,12 +26,12 @@ Counted::Counted() : _refCount(1)
 
 Counted::~Counted()
 {
-    assert(_refCount == 0);
+    Q_ASSERT(_refCount == 0);
 }
 
 void Counted::release()
 {
-    assert(_refCount > 0);
+    Q_ASSERT(_refCount > 0);
     if(!--_refCount)
     {
         delete this;

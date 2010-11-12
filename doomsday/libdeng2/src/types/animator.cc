@@ -28,17 +28,18 @@
 using namespace de;
 
 Animator::Animator(ValueType initialValue)
-    : _clock(0), _motion(EASE_OUT), _start(initialValue), _startTime(0), 
+    : _clock(0), _motion(EASE_OUT), _start(initialValue),
       _transition(0), _transitionTime(0), _observer(0)
 {}
 
 Animator::Animator(const IClock& clock, ValueType initialValue)
-    : _clock(&clock), _motion(EASE_OUT), _start(initialValue), _startTime(0), 
+    : _clock(&clock), _motion(EASE_OUT), _start(initialValue),
       _transition(0), _transitionTime(0), _observer(0)
 {}
 
 Animator::Animator(const Animator& other)
-    : _clock(other._clock), _motion(other._motion), 
+    : ISerializable(),
+      _clock(other._clock), _motion(other._motion),
       _start(other._start), 
       _startTime(other._startTime), 
       _transition(other._transition), 

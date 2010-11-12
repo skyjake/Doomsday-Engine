@@ -47,8 +47,8 @@ void DictionaryExpression::clear()
 
 void DictionaryExpression::add(Expression* key, Expression* value)
 {
-    assert(key != NULL);
-    assert(value != NULL);
+    Q_ASSERT(key != NULL);
+    Q_ASSERT(value != NULL);
     _arguments.push_back(ExpressionPair(key, value));
 }
 

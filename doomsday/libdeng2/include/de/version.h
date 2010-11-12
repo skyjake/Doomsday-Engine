@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_VERSION_H
 #define LIBDENG2_VERSION_H
 
-#include <string>
+#include <QString>
 
 /**
  * @file version.h
@@ -56,7 +56,7 @@ namespace de
         duint major;
         duint minor;
         duint patchlevel;
-        std::string label;
+        QString label;
     };
 }
 

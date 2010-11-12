@@ -26,13 +26,10 @@
 #include "de/LogBuffer"
 #include "de/Module"
 #include "de/ISubsystem"
-#include "de/Audio"
-#include "de/Video"
 #include "de/Zone"
 #include "de/Thinker"
 #include "de/Object"
 #include "de/Map"
-#include "../sdl.h"
 
 using namespace de;
 
@@ -50,8 +47,6 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
       _config(0),
       _gameLib(0),
       _currentMap(0), 
-      _video(0), 
-      _audio(0),
       _runMainLoop(true), 
       _firstIteration(true), 
       _exitCode(0)
@@ -78,17 +73,6 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
         _logBuffer->enableStandardOutput();
     }
 
-    // Start by initializing SDL.
-    if(SDL_Init(SDL_INIT_TIMER) == -1)
-    {
-        /// @throw SDLError SDL initialization failed.
-        throw SDLError("App::App", SDL_GetError());
-    }
-    if(SDLNet_Init() == -1)
-    {
-        throw SDLError("App::App", SDLNet_GetError());
-    }
-
     try
     {
         // Define built-in constructors.
@@ -99,7 +83,7 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
         std::auto_ptr<Zone> memoryPtr(new Zone);
         _memory = memoryPtr.get();
 
-#if defined(MACOSX)
+#ifdef Q_OS_MAC
         // When the application is started through Finder, we get a special command
         // line argument. The working directory needs to be changed.
         if(_commandLine.count() >= 2 && String(_commandLine.at(1)).beginsWith("-psn"))
@@ -113,21 +97,21 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
         _fs = fsPtr.get();
 
         // Initialize the built-in folders.
-#if defined(MACOSX)
+#ifdef Q_OS_MAC
         _fs->getFolder("/bin").attach(new DirectoryFeed("MacOS"));
         _fs->getFolder("/data").attach(new DirectoryFeed("Resources"));
         _fs->getFolder("/config").attach(new DirectoryFeed("Resources/config"));
         //fs_->getFolder("/modules").attach(new DirectoryFeed("Resources/modules"));
 #endif
 
-#if defined(UNIX) && !defined(MACOSX)
+#if defined(Q_OS_UNIX) && !defined(Q_OS_MAC)
         _fs->getFolder("/bin").attach(new DirectoryFeed("bin"));
         _fs->getFolder("/data").attach(new DirectoryFeed("data"));
         _fs->getFolder("/config").attach(new DirectoryFeed("data/config"));
         //fs_->getFolder("/modules").attach(new DirectoryFeed("data/modules"));
 #endif
 
-#ifdef WIN32
+#ifdef Q_OS_WIN32
         _fs->getFolder("/bin").attach(new DirectoryFeed("bin"));
         _fs->getFolder("/data").attach(new DirectoryFeed("data"));
         _fs->getFolder("/config").attach(new DirectoryFeed("data\\config"));
@@ -190,10 +174,6 @@ App::~App()
     
     delete _memory;
     _memory = 0;
- 
-    // Shut down SDL.
-    SDLNet_Quit();
-    SDL_Quit();
 
     delete _logBuffer;
     _logBuffer = 0;
@@ -209,11 +189,13 @@ void App::loadPlugins()
     String gameName = "doom"; /// @todo There is no default game, really...
     _commandLine.getParameter("--game", gameName);
     
+    /*
     String videoName = config().gets("deng.video");
     _commandLine.getParameter("--video", videoName);
     
     String audioName = config().gets("deng.audio");
     _commandLine.getParameter("--audio", audioName);
+    */
 
     // Get the index of libraries.
     const FS::Index& index = _fs->indexFor(TYPE_NAME(LibraryFile));
@@ -243,6 +225,7 @@ void App::loadPlugins()
                     continue;
                 }
             }
+            /*
             else if(type == "deng-plugin/video")
             {
                 if(videoName != "none" && libFile.hasUnderscoreName(videoName) && !_video)
@@ -272,7 +255,8 @@ void App::loadPlugins()
                     libFile.clear();
                     continue;
                 }
-            }      
+            }
+            */
             
             LOG_VERBOSE("Loaded ") << libFile.path() << " [" << libFile.library().type() << "]";
         }
@@ -403,42 +387,42 @@ CommandLine& App::commandLine()
 LogBuffer& App::logBuffer()
 {
     App& self = app();
-    assert(self._logBuffer != 0);
+    Q_ASSERT(self._logBuffer != 0);
     return *self._logBuffer;
 }
 
 Zone& App::memory()
 {
     App& self = app();
-    assert(self._memory != 0);
+    Q_ASSERT(self._memory != 0);
     return *self._memory;
 }
 
 FS& App::fileSystem() 
 { 
     App& self = app();
-    assert(self._fs != 0);
+    Q_ASSERT(self._fs != 0);
     return *self._fs; 
 }
 
 Folder& App::fileRoot()
 {
     App& self = app();
-    assert(self._fs != 0);
+    Q_ASSERT(self._fs != 0);
     return self._fs->root();
 }
 
 Folder& App::homeFolder()
 {
     App& self = app();
-    assert(self._fs != 0);
+    Q_ASSERT(self._fs != 0);
     return self._fs->root().locate<Folder>("/home");
 }
 
 Config& App::config()
 {
     App& self = app();
-    assert(self._config != 0);
+    Q_ASSERT(self._config != 0);
     return *self._config; 
 }
 
@@ -491,6 +475,7 @@ void App::setCurrentMap(Map* map)
     }
 }
 
+/*
 Video& App::video()
 {
     App& self = app();
@@ -501,16 +486,19 @@ Video& App::video()
     }
     return *self._video;
 }
+*/
 
 bool App::hasGame() 
 { 
     return app()._gameLib != 0;
 }
 
+/*
 bool App::hasVideo() 
 { 
     return app()._video != 0; 
 }
+*/
 
 bool App::hasCurrentMap()
 {
@@ -588,7 +576,7 @@ Record& App::importModule(const String& name, const String& fromPath)
             }
             matching.sort(sortFilesByModifiedAt);
             found = matching.back();
-            LOG_VERBOSE("Chose ") << found->path() << " out of " << matching.size() << " candidates.";
+            LOG_VERBOSE("Chose ") << found->path() << " out of " << dint(matching.size()) << " candidates.";
         }
         else
         {
