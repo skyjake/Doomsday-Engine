@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1998-2003 Randy Heit <rheit@iastate.edu> (Zdoom)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1311,14 +1311,11 @@ int PatchThing(int thingy)
     if(thingNum < (unsigned) ded->count.mobjs.num)
     {
         info = ded->mobjs + thingNum;
-        if(verbose)
-            LPrintf("Thing %lu\n", (unsigned long) thingNum);
     }
     else
     {
         info = &dummy;
-        LPrintf("Thing %lu out of range. Create more Thing defs!\n",
-                (unsigned long) (thingNum + 1));
+        LPrintf("Thing %lu out of range. Create more Thing defs!\n", (unsigned long) (thingNum + 1));
     }
 
     while((result = GetLine()) == 1)
@@ -1419,10 +1416,6 @@ int PatchThing(int thingy)
 
                 if(v2changed)
                     info->flags[1] = value2;
-
-                if(verbose)
-                    LPrintf("Bits: %d,%d (0x%08x,0x%08x)\n", value, value2,
-                            value, value2);
             }
             else
                 LPrintf(unknown_str, Line1, "Thing", thingNum);
@@ -1508,7 +1501,7 @@ int PatchState(int stateNum)
         {"Unknown 2", 0 /*myoffsetof(ded_state_t,misc[1],0) */ },
         {NULL,}
     };
-    int     result;
+    int result;
     ded_state_t *info, dummy;
 
     // C doesn't allow non-constant initializers.
@@ -1518,8 +1511,6 @@ int PatchState(int stateNum)
     if(stateNum >= 0 && stateNum < ded->count.states.num)
     {
         info = ded->states + stateNum;
-        if(verbose)
-            LPrintf("State %d\n", stateNum);
     }
     else
     {
@@ -1547,15 +1538,9 @@ int PatchState(int stateNum)
 
 int PatchSprite(int sprNum)
 {
-    int     result;
-    int     offset = 0;
+    int result, offset = 0;
 
-    if(sprNum >= 0 && sprNum < NUMSPRITES)
-    {
-        if(verbose)
-            LPrintf("Sprite %d\n", sprNum);
-    }
-    else
+    if(sprNum < 0 || sprNum >= NUMSPRITES)
     {
         LPrintf("Sprite %d out of range. Create more Sprite defs!\n", sprNum);
         sprNum = -1;
@@ -1630,24 +1615,21 @@ void SetValueStr(const char *path, const char *id, char *str)
 
 void SetValueInt(const char *path, const char *id, int val)
 {
-    char    buf[80];
-
+    char buf[80];
     sprintf(buf, "%i", val);
     SetValueStr(path, id, buf);
 }
 
 int PatchAmmo(int ammoNum)
 {
-    int     result, max, per;
-    char   *ammostr[4] = { "Clip", "Shell", "Cell", "Misl" };
-    char   *theAmmo = NULL;
+    int result, max, per;
+    char* ammostr[4] = { "Clip", "Shell", "Cell", "Misl" };
+    char* theAmmo = 0;
 
     //  CString str;
 
     if(ammoNum >= 0 && ammoNum < 4)
     {
-        if(verbose)
-            LPrintf("Ammo %d.\n", ammoNum);
         theAmmo = ammostr[ammoNum];
     }
     else
@@ -1699,19 +1681,12 @@ int PatchNothing()
 
 int PatchWeapon(int weapNum)
 {
-    //  LPrintf("Weapon patches not supported.\n");
-    //  return PatchNothing();
-
-    char   *ammotypes[] =
-        { "clip", "shell", "cell", "misl", "-", "noammo", 0 };
-    char    buf[80];
-    int     val;
-    int     result;
+    char* ammotypes[] = { "clip", "shell", "cell", "misl", "-", "noammo", 0 };
+    char buf[80];
+    int val, result;
 
     if(weapNum >= 0)
     {
-        if(verbose)
-            LPrintf("Weapon %d\n", weapNum);
         sprintf(buf, "Weapon Info|%d", weapNum);
     }
     else
@@ -1720,34 +1695,8 @@ int PatchWeapon(int weapNum)
         return PatchNothing();
     }
 
-    /*  static const struct Key keys[] = {
-       { "Ammo type",           myoffsetof(weaponinfo_t,ammo) },
-       { "Deselect frame",      myoffsetof(weaponinfo_t,upstate) },
-       { "Select frame",        myoffsetof(weaponinfo_t,downstate) },
-       { "Bobbing frame",       myoffsetof(weaponinfo_t,readystate) },
-       { "Shooting frame",      myoffsetof(weaponinfo_t,atkstate) },
-       { "Firing frame",        myoffsetof(weaponinfo_t,flashstate) },
-       { NULL, }
-       };
-
-       weaponinfo_t *info, dummy;
-
-       if (weapNum >= 0 && weapNum < NUM_WEAPON_TYPES) {
-       info = &weaponinfo[weapNum];
-       DPrintf ("Weapon %d\n", weapNum);
-       } else {
-       info = &dummy;
-       Printf (PRINT_HIGH, "Weapon %d out of range.\n", weapNum);
-       }
-     */
     while((result = GetLine()) == 1)
     {
-        /*
-           if (HandleKey (keys, info, Line1, atoi (Line2)))
-           Printf (PRINT_HIGH, unknown_str, Line1, "Weapon", weapNum); */
-
-        //#define CHECKKEY2(a,b)        if (!stricmp (Line1, (a))) { (b) = atoi(Line2);
-
         val = atoi(Line2);
 
         if(!stricmp(Line1, "Ammo type"))
@@ -1772,14 +1721,9 @@ int PatchWeapon(int weapNum)
 
 int PatchPointer(int ptrNum)
 {
-    int     result;
+    int result;
 
-    if(ptrNum >= 0 && ptrNum < 448)
-    {
-        if(verbose)
-            LPrintf("Pointer %d\n", ptrNum);
-    }
-    else
+    if(ptrNum < 0 || ptrNum >= 448)
     {
         LPrintf("Pointer %d out of range.\n", ptrNum);
         ptrNum = -1;
@@ -1871,9 +1815,6 @@ int PatchMisc(int dummy)
     int     result;
     int     val;
 
-    if(verbose)
-        LPrintf("Misc\n");
-
     while((result = GetLine()) == 1)
     {
         val = atoi(Line2);
@@ -1934,12 +1875,9 @@ int PatchMisc(int dummy)
 
 int PatchPars(int dummy)
 {
-    char   *space, mapname[8], *moredata;
+    char* space, mapname[8], *moredata;
     ded_mapinfo_t *info;
-    int     result, par, i;
-
-    if(verbose)
-        LPrintf("[Pars]\n");
+    int result, par, i;
 
     while((result = GetLine()))
     {
@@ -2163,9 +2101,9 @@ static void patchText(const char* origStr, const char* newStr)
 
 int PatchText(int oldSize)
 {
-    int                 newSize;
-    char*               oldStr, *newStr, *temp;
-    boolean             parseError = false;
+    int newSize;
+    char* oldStr, *newStr, *temp;
+    boolean parseError = false;
 
     temp = COM_Parse(Line2); // Skip old size, since we already have it
     if(!COM_Parse(temp))
@@ -2180,7 +2118,7 @@ int PatchText(int oldSize)
 
     if(oldStr && newStr)
     {
-        boolean             good;
+        boolean good;
 
         good = ReadChars(&oldStr, oldSize, false);
         good += ReadChars(&newStr, newSize, true);
@@ -2189,12 +2127,6 @@ int PatchText(int oldSize)
         {
             if(!includenotext)
             {
-                if(verbose)
-                {
-                    LPrintf("Searching for text:\n%s\n", oldStr);
-                    LPrintf("<< TO BE REPLACED WITH:\n%s\n>>\n", newStr);
-                }
-
                 patchSpriteNames(oldStr, newStr);
                 patchMusicLumpNames(oldStr, newStr);
                 patchText(oldStr, newStr);
@@ -2313,6 +2245,7 @@ int DoInclude(int dummy)
 
     if(verbose)
         LPrintf("Including %s\n", com_token);
+
     savepatchfile = PatchFile;
     savepatchpt = PatchPt;
     savedversion = dversion;
