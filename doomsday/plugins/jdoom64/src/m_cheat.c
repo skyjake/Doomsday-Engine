@@ -32,6 +32,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "jdoom64.h"
 

@@ -535,13 +535,10 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         break;
 
     case IT_MEGASPHERE:
-        if(gameMode != commercial)
-            return false;
         plr->health = megaSphereHealth;
         plr->plr->mo->health = plr->health;
         plr->update |= PSF_HEALTH;
-        P_GiveArmor(plr, armorClass[1],
-                    armorPoints[MINMAX_OF(0, armorClass[1] - 1, 1)]);
+        P_GiveArmor(plr, armorClass[1], armorPoints[MINMAX_OF(0, armorClass[1] - 1, 1)]);
         P_SetMessage(plr, GOTMSPHERE, false);
         S_ConsoleSound(SFX_GETPOW, NULL, plr - players);
 
