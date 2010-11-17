@@ -29,10 +29,10 @@
 #ifndef LIBDENG_RENDER_DECOR_H
 #define LIBDENG_RENDER_DECOR_H
 
-extern byte     useLightDecorations, useModelDecorations;
+extern byte     useDecorations[NUM_DECORTYPES];
 extern float    decorMaxDist;  // No decorations are visible beyond this.
-extern float    decorFactor;
-extern float    decorFadeAngle;
+extern float    decorLightBrightFactor;
+extern float    decorLightFadeAngle;
 
 void            Rend_DecorRegister(void);
 

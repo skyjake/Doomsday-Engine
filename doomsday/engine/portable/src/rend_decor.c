@@ -86,25 +86,38 @@ static void updatePlaneDecorations(plane_t* pln);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-byte useLightDecorations = true, useModelDecorations = true;
+byte useDecorations[NUM_DECORTYPES] = { true, true };
 float decorMaxDist = 2048; // No decorations are visible beyond this.
-float decorFactor = 1;
-float decorFadeAngle = .1f;
+float decorLightBrightFactor = 1;
+float decorLightFadeAngle = .1f;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static uint numDecorLights = 0, numDecorModels = 0;
-static decorsource_t* sourceFirst = NULL;
-static decorsource_t* sourceCursor = NULL;
+static uint numDecorations[NUM_DECORTYPES] = { 0, 0 };
+
+static decorsource_t* sourceFirst = 0;
+static decorsource_t* sourceCursor = 0;
 
 // CODE --------------------------------------------------------------------
 
 void Rend_DecorRegister(void)
 {
-    C_VAR_BYTE("rend-model-decor", &useModelDecorations, 0, 0, 1);
-    C_VAR_BYTE("rend-light-decor", &useLightDecorations, 0, 0, 1);
-    C_VAR_FLOAT("rend-light-decor-angle", &decorFadeAngle, 0, 0, 1);
-    C_VAR_FLOAT("rend-light-decor-bright", &decorFactor, 0, 0, 10);
+    C_VAR_BYTE("rend-model-decor", &useDecorations[DT_MODEL], 0, 0, 1);
+    C_VAR_BYTE("rend-light-decor", &useDecorations[DT_LIGHT], 0, 0, 1);
+    C_VAR_FLOAT("rend-light-decor-angle", &decorLightFadeAngle, 0, 0, 1);
+    C_VAR_FLOAT("rend-light-decor-bright", &decorLightBrightFactor, 0, 0, 10);
+}
+
+/**
+ * @return                  @c true iff one or more decoration types are enabled.
+ */
+static __inline boolean decorationsEnabled(void)
+{
+    int i;
+    for(i = 0; i < NUM_DECORTYPES; ++i)
+        if(useDecorations[i])
+            break;
+    return (i != NUM_DECORTYPES);
 }
 
 /**
@@ -112,7 +125,7 @@ void Rend_DecorRegister(void)
  */
 static void clearDecorations(void)
 {
-    numDecorLights = numDecorModels = 0;
+    memset(numDecorations, 0, sizeof(numDecorations));
     sourceCursor = sourceFirst;
 }
 
@@ -232,7 +245,7 @@ static void projectDecoration(decorsource_t* src)
 
         // Halo brightness drops as the angle gets too big.
         vis->data.flare.mul = 1;
-        if(src->data.light.def->elevation < 2 && decorFadeAngle > 0) // Close the surface?
+        if(src->data.light.def->elevation < 2 && decorLightFadeAngle > 0) // Close the surface?
         {
             float vector[3], dot;
 
@@ -244,10 +257,10 @@ static void projectDecoration(decorsource_t* src)
                     src->surface->normal[VY] * vector[VY] +
                     src->surface->normal[VZ] * vector[VZ]);
 
-            if(dot < decorFadeAngle / 2)
+            if(dot < decorLightFadeAngle / 2)
                 vis->data.flare.mul = 0;
-            else if(dot < 3 * decorFadeAngle)
-                vis->data.flare.mul = (dot - decorFadeAngle / 2) / (2.5f * decorFadeAngle);
+            else if(dot < 3 * decorLightFadeAngle)
+                vis->data.flare.mul = (dot - decorLightFadeAngle / 2) / (2.5f * decorLightFadeAngle);
         }
         break;
         }
@@ -268,13 +281,16 @@ void Rend_DecorInit(void)
  */
 void Rend_ProjectDecorations(void)
 {
-    if((useLightDecorations || useModelDecorations) && sourceFirst != sourceCursor)
+    if(sourceFirst == sourceCursor)
+        return;
+    if(!decorationsEnabled())
+        return;
+
+    { decorsource_t* src = sourceFirst;
+    do
     {
-        decorsource_t* src = sourceFirst;
-        do
-        {
-            projectDecoration(src);
-        } while((src = src->next) != sourceCursor);
+        projectDecoration(src);
+    } while((src = src->next) != sourceCursor);
     }
 }
 
@@ -294,7 +310,7 @@ static void addLuminousDecoration(decorsource_t* src)
         return;
 
     // Apply the brightness factor (was calculated using sector lightlevel).
-    src->fadeMul = brightness * decorFactor;
+    src->fadeMul = brightness * decorLightBrightFactor;
     src->lumIdx = 0;
 
     if(src->fadeMul <= 0)
@@ -339,7 +355,7 @@ void Rend_AddLuminousDecorations(void)
 {
 BEGIN_PROF( PROF_DECOR_ADD_LUMINOUS );
 
-    if(useLightDecorations && sourceFirst != sourceCursor)
+    if(useDecorations[DT_LIGHT] && sourceFirst != sourceCursor)
     {
         decorsource_t* src = sourceFirst;
         do
@@ -400,22 +416,15 @@ static decorsource_t* addDecoration(void)
  */
 static void createDecorSource(const surface_t* suf, const surfacedecor_t* dec, const float maxDistance)
 {
+    static const uint maxDecorations[NUM_DECORTYPES] = {
+        MAX_DECOR_LIGHTS,
+        MAX_DECOR_MODELS
+    };
     decorsource_t* src;
 
-    if(dec->type == DT_LIGHT)
-    {
-        if(numDecorLights > MAX_DECOR_LIGHTS)
-            return; // Out of sources!
-
-        numDecorLights++;
-    }
-    else // It's a model decoration.
-    {
-        if(numDecorModels > MAX_DECOR_MODELS)
-            return; // Out of sources!
-
-        numDecorModels++;
-    }
+    if(numDecorations[dec->type] > maxDecorations[dec->type])
+        return; // Out of sources!
+    numDecorations[dec->type]++;
 
     // Fill in the data for a new surface decoration.
     src = addDecoration();
@@ -482,25 +491,8 @@ boolean R_ProjectSurfaceDecorations(surface_t* suf, void* context)
     for(i = 0; i < suf->numDecorations; ++i)
     {
         const surfacedecor_t* d = &suf->decorations[i];
-
-        switch(d->type)
-        {
-        default: Con_Error("R_ProjectSurfaceDecorations: Internal Error, unknown decoration type %i.", d->type);
-        case DT_LIGHT:
-            if(!useLightDecorations)
-                continue;
-            if(!R_IsValidLightDecoration(DEC_LIGHT(d)->def))
-                return true;
-            break;
-
-        case DT_MODEL:
-            if(!useModelDecorations)
-                continue;
-            if(!R_IsValidModelDecoration(DEC_MODEL(d)->def))
-                return true;
-            break;
-        }
-
+        if(!useDecorations[(int)d->type])
+            continue;
         createDecorSource(suf, d, maxDist);
     }
 
@@ -868,7 +860,7 @@ void Rend_InitDecorationsForFrame(void)
 #endif
 
     // This only needs to be done if decorations have been enabled.
-    if(useLightDecorations || useModelDecorations)
+    if(decorationsEnabled())
     {
 BEGIN_PROF( PROF_DECOR_PROJECT );
 
