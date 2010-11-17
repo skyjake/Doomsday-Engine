@@ -334,7 +334,6 @@ struct sector
     PTR     ddmobj_base_t soundOrg
     UINT    uint        planeCount
     -       plane_s**   planes // [planeCount+1] size.
-    -       sector_s*   lightSource // Main sky light source.
     -       uint        blockCount // Number of gridblocks in the sector.
     -       uint        changedBlockCount // Number of blocks to mark changed.
     -       ushort*     blocks // Light grid block indices.

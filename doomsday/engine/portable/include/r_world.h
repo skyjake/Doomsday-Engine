@@ -46,8 +46,8 @@ typedef struct skyfix_s {
     float           height;
 } skyfix_t;
 
-extern int rendSkyLight; // cvar
-extern float rendSkyColorBalance; // cvar.
+extern byte rendSkyLight; // cvar
+extern byte rendSkyLightBalance; // cvar.
 extern float rendLightWallAngle;
 extern byte rendLightWallAngleSmooth;
 extern boolean ddMapSetup;
@@ -59,7 +59,6 @@ extern skyfix_t skyFix[2]; // [floor, ceiling]
 void            R_SetupMap(int mode, int flags);
 void            R_InitLinks(gamemap_t* map);
 void            R_PolygonizeMap(gamemap_t* map);
-void            R_BuildSectorLinks(gamemap_t* map);
 void            R_SetupFog(float start, float end, float density, float* rgb);
 void            R_SetupFogDefaults(void);
 void            R_SetupSky(ded_sky_t* sky);

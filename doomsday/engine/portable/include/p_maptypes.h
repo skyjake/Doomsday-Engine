@@ -315,7 +315,6 @@ typedef struct sector_s {
     ddmobj_base_t       soundOrg;
     unsigned int        planeCount;
     struct plane_s**    planes;        // [planeCount+1] size.
-    struct sector_s*    lightSource;   // Main sky light source.
     unsigned int        blockCount;    // Number of gridblocks in the sector.
     unsigned int        changedBlockCount; // Number of blocks to mark changed.
     unsigned short*     blocks;        // Light grid block indices.

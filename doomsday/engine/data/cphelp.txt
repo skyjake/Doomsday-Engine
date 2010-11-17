@@ -674,10 +674,10 @@ desc = Brightness of light decorations.
 desc = Reduce brightness if surface/view angle too steep.
 
 [rend-light-sky]
-desc = 1=Use special light color in sky sectors.
+desc = 1=Use light color in sky sectors.
 
 [rend-light-sky-balance]
-desc = Sky light color balance factor (default: 0.5).
+desc = 1=Use color balancing on non-skylit sectors (so the skylight won't appear too bright).
 
 [rend-glow]
 desc = Glow strength factor (default: 1).
@@ -690,7 +690,6 @@ desc = Max height of wall glow (default: 100).
 
 [rend-glow-scale]
 desc = A multiplier for glow height (default: 1).
-
 
 [rend-halo]
 desc = Number of flares to draw per light.

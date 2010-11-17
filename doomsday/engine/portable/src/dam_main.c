@@ -515,8 +515,6 @@ boolean DAM_AttemptMapLoad(const char* mapID)
 
             Rend_DecorInit();
 
-            R_BuildSectorLinks(map);
-
             // Init blockmap for searching subsectors.
             P_BuildSubsectorBlockMap(map);
 

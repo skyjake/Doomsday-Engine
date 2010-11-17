@@ -115,9 +115,6 @@ byte devVertexBars = 0; // @c 1= Draw world vertex position bars.
 byte devSurfaceNormals = 0; // @c 1= Draw world surface normal tails.
 byte devNoTexFix = 0;
 
-// Current sector light color.
-const float* sLightColor;
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean firstsubsector; // No range checking for the first one.
@@ -131,8 +128,8 @@ void Rend_Register(void)
     C_VAR_INT("rend-tex-shiny", &useShinySurfaces, 0, 0, 1);
     C_VAR_FLOAT2("rend-light-compression", &lightRangeCompression, 0, -1, 1, Rend_CalcLightModRange);
     C_VAR_INT2("rend-light-ambient", &ambientLight, 0, 0, 255, Rend_CalcLightModRange);
-    C_VAR_INT2("rend-light-sky", &rendSkyLight, 0, 0, 1, LG_MarkAllForUpdate);
-    C_VAR_FLOAT("rend-light-sky-balance", &rendSkyColorBalance, 0, 0, 1);
+    C_VAR_BYTE2("rend-light-sky", &rendSkyLight, 0, 0, 1, LG_MarkAllForUpdate);
+    C_VAR_BYTE("rend-light-sky-balance", &rendSkyLightBalance, 0, 0, 1);
     C_VAR_FLOAT("rend-light-wall-angle", &rendLightWallAngle, CVF_NO_MAX, 0, 0);
     C_VAR_BYTE("rend-light-wall-angle-smooth", &rendLightWallAngleSmooth, 0, 0, 1);
     C_VAR_FLOAT("rend-light-attenuation", &rendLightDistanceAttentuation, CVF_NO_MAX, 0, 0);
@@ -187,9 +184,9 @@ float Rend_PointDist3D(const float c[3])
 
 void Rend_Init(void)
 {
-    C_Init();                   // Clipper.
-    RL_Init();                  // Rendering lists.
-    Rend_InitSky();             // The sky.
+    C_Init(); // Clipper.
+    RL_Init(); // Rendering lists.
+    Rend_InitSky(); // The sky.
 }
 
 /**
@@ -3912,9 +3909,6 @@ static void Rend_RenderSubsector(uint ssecidx)
 
     // Mark the sector visible for this frame.
     sect->frameFlags |= SIF_VISIBLE;
-
-    // Retrieve the sector light color.
-    sLightColor = R_GetSectorLightColor(sect);
 
     Rend_MarkSegsFacingFront(ssec);
 

@@ -583,7 +583,6 @@ static void writeSector(const gamemap_t *map, uint idx)
     writeFloat(s->bBox[BOXRIGHT]);
     writeFloat(s->bBox[BOXBOTTOM]);
     writeFloat(s->bBox[BOXTOP]);
-    writeLong(s->lightSource? ((s->lightSource - map->sectors) + 1) : 0);
     writeFloat(s->soundOrg.pos[VX]);
     writeFloat(s->soundOrg.pos[VY]);
     writeFloat(s->soundOrg.pos[VZ]);
@@ -665,7 +664,6 @@ static void readSector(const gamemap_t *map, uint idx)
     s->bBox[BOXBOTTOM] = readFloat();
     s->bBox[BOXTOP] = readFloat();
     secIdx = readLong();
-    s->lightSource = (secIdx == 0? NULL : &map->sectors[secIdx - 1]);
     s->soundOrg.pos[VX] = readFloat();
     s->soundOrg.pos[VY] = readFloat();
     s->soundOrg.pos[VZ] = readFloat();

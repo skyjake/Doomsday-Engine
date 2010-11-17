@@ -63,10 +63,11 @@
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-int rendSkyLight = 1; // cvar.
-float rendSkyColorBalance = 0.5f; // cvar.
 float rendLightWallAngle = 1.2f; // Intensity of angle-based wall lighting.
 byte rendLightWallAngleSmooth = true;
+
+byte rendSkyLight = true;
+byte rendSkyLightBalance = true;
 
 boolean firstFrameAfterLoad;
 boolean ddMapSetup;
@@ -77,11 +78,12 @@ skyfix_t skyFix[2];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean noSkyColorGiven;
-static float skyColorRGB[4], balancedRGB[4];
-static float skyColorBalance = 0;
+static boolean skyColorDefined;
+/// \fixme Not updated after a texture reset.
+static float skyColorRGB[3];
+static float skyColorBalance;
 
-static surfacelistnode_t* unusedSurfaceListNodes = NULL;
+static surfacelistnode_t* unusedSurfaceListNodes = 0;
 
 // CODE --------------------------------------------------------------------
 
@@ -878,12 +880,30 @@ void R_SetupFogDefaults(void)
     Con_Execute(CMDS_DDAY,"fog off", true, false);
 }
 
+static __inline const float* selectSkyColor(void)
+{
+    static float white[] = { 1, 1, 1 };
+    if(skyColorDefined)
+    {
+        return skyColorRGB;
+    }
+    { const fadeout_t* fade;
+    if((fade = Rend_GetCurrentSkyFadeout()))
+    {
+        return fade->rgb;
+    }}
+    /// \todo This *should* be unreachable...
+    return white;
+}
+
 void R_SetupSky(ded_sky_t* sky)
 {
-    int                 i;
-    int                 skyTex;
-    int                 ival = 0;
-    float               fval = 0;
+    int i, skyTex, ival = 0;
+    float fval = 0;
+
+    // There is no sky color defined.
+    skyColorDefined = false;
+    skyColorBalance = 1;
 
     if(!sky)
     {   // Go with the defaults.
@@ -898,9 +918,6 @@ void R_SetupSky(ded_sky_t* sky)
         fval = 0;
         Rend_SkyParams(0, DD_OFFSET, &fval);
         Rend_SkyParams(1, DD_DISABLE, NULL);
-
-        // There is no sky color.
-        noSkyColorGiven = true;
         return;
     }
 
@@ -939,28 +956,19 @@ void R_SetupSky(ded_sky_t* sky)
     R_SetupSkyModels(sky);
 
     // How about the sky color?
-    noSkyColorGiven = true;
     for(i = 0; i < 3; ++i)
     {
         skyColorRGB[i] = sky->color[i];
         if(sky->color[i] > 0)
-            noSkyColorGiven = false;
+            skyColorDefined = true;
     }
 
-    // Calculate a balancing factor, so the light in the non-skylit
-    // sectors won't appear too bright.
-    if(sky->color[0] > 0 || sky->color[1] > 0 ||
-        sky->color[2] > 0)
+    // Calculate a balancing factor so the light won't appear too bright.
+    { const float* color = selectSkyColor();
+    if(color[0] > 0 || color[1] > 0 || color[2] > 0)
     {
-        skyColorBalance =
-            (0 +
-             (sky->color[0] * 2 + sky->color[1] * 3 +
-              sky->color[2] * 2) / 7) / 1;
-    }
-    else
-    {
-        skyColorBalance = 1;
-    }
+        skyColorBalance = (0 + (color[0]*2 + color[1]*3 + color[2]*2) / 7) / 1;
+    }}
 }
 
 /**
@@ -1338,51 +1346,6 @@ static sector_t *getContainingSectorOf(gamemap_t* map, sector_t* sec)
 }
 #endif
 
-void R_BuildSectorLinks(gamemap_t *map)
-{
-#define DOMINANT_SIZE   1000
-
-    uint                i;
-
-    for(i = 0; i < map->numSectors; ++i)
-    {
-        sector_t           *sec = &map->sectors[i];
-
-        if(!sec->lineDefCount)
-            continue;
-
-        // Is this sector large enough to be a dominant light source?
-        if(sec->lightSource == NULL && sec->planeCount > 0 &&
-           sec->bBox[BOXRIGHT] - sec->bBox[BOXLEFT]   > DOMINANT_SIZE &&
-           sec->bBox[BOXTOP]   - sec->bBox[BOXBOTTOM] > DOMINANT_SIZE)
-        {
-            if(R_SectorContainsSkySurfaces(sec))
-            {
-                uint                k;
-
-                // All sectors touching this one will be affected.
-                for(k = 0; k < sec->lineDefCount; ++k)
-                {
-                    linedef_t*          lin = sec->lineDefs[k];
-                    sector_t           *other;
-
-                    other = lin->L_frontsector;
-                    if(other == sec)
-                    {
-                        if(lin->L_backside)
-                            other = lin->L_backsector;
-                    }
-
-                    if(other && other != sec)
-                        other->lightSource = sec;
-                }
-            }
-        }
-    }
-
-#undef DOMINANT_SIZE
-}
-
 static __inline void initSurfaceMaterialOffset(surface_t *suf)
 {
     if(!suf)
@@ -1614,20 +1577,15 @@ boolean R_IsGlowingPlane(const plane_t* pln)
  */
 boolean R_SectorContainsSkySurfaces(const sector_t* sec)
 {
-    uint                i;
-    boolean             sectorContainsSkySurfaces;
-
-    // Does this sector feature any sky surfaces?
-    sectorContainsSkySurfaces = false;
-    i = 0;
+    boolean sectorContainsSkySurfaces = false;
+    uint n = 0;
     do
     {
-        if(R_IsSkySurface(&sec->SP_planesurface(i)))
+        if(R_IsSkySurface(&sec->SP_planesurface(n)))
             sectorContainsSkySurfaces = true;
         else
-            i++;
-    } while(!sectorContainsSkySurfaces && i < sec->planeCount);
-
+            n++;
+    } while(!sectorContainsSkySurfaces && n < sec->planeCount);
     return sectorContainsSkySurfaces;
 }
 
@@ -1947,63 +1905,27 @@ float R_CheckSectorLight(float lightlevel, float min, float max)
  */
 const float* R_GetSectorLightColor(const sector_t* sector)
 {
-    static const float black[] = { 0, 0, 0 };
-    if(!sector)
+    assert(sector);
     {
-        return black;
-    }
-    if(!rendSkyLight)
-        return sector->rgb; // The sector's real color.
+    static float balancedRGB[3];
 
-    if(!R_SectorContainsSkySurfaces(sector))
-    {   // A dominant light source affects this sector?
-        sector_t* src = sector->lightSource;
-        if(src && src->lightLevel >= sector->lightLevel)
-        {
-            // The color shines here, too.
-            return R_GetSectorLightColor(src);
-        }
-        return sector->rgb;
-    }
-
-    if(R_SectorContainsSkySurfaces(sector))
+    if(rendSkyLight)
     {
-        static float color[4];
-        const fadeout_t* fade;
-        float balance = 0;
-
-        color[0] =  color[1] = color[2] = 0;
-
-        // Return the sector's real color (balanced against sky's).
-        if(rendSkyColorBalance <= 1)
+        if(R_SectorContainsSkySurfaces(sector))
         {
-            if(!noSkyColorGiven)
-            {
-                balance = skyColorBalance * rendSkyColorBalance;
-                color[0] = skyColorRGB[0];
-                color[1] = skyColorRGB[1];
-                color[2] = skyColorRGB[2];
-            }
-            else if((fade = Rend_GetCurrentSkyFadeout()))
-            {
-                balance = rendSkyColorBalance;
-                color[0] = fade->rgb[0];
-                color[1] = fade->rgb[1];
-                color[2] = fade->rgb[2];
-            }
+            return selectSkyColor();
         }
+        // else A non-skylight sector (i.e., everything else!)
 
-        if(balance <= 0)
-            return sector->rgb;
-
-        { uint c;
-        for(c = 0; c < 3; ++c)
+        // Balancing - darken this sector so the skylight won't appear too bright.
+        if(rendSkyLightBalance && skyColorBalance < 1)
         {
-            color[c] = sector->rgb[c] + color[c] * balance;
-        }}
-        return color;
+            balancedRGB[0] = sector->rgb[0] * skyColorBalance;
+            balancedRGB[1] = sector->rgb[1] * skyColorBalance;
+            balancedRGB[2] = sector->rgb[2] * skyColorBalance;
+            return balancedRGB;
+        }
     }
-
-    // Return the sky color.
-    return skyColorRGB;
+    return sector->rgb; // The sector's ambient light color.
+    }
 }
