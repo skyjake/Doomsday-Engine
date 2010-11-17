@@ -39,8 +39,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define DEFAULT_ARCHIVEPATH     "o:\\sound\\archive\\"
-
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -54,8 +52,6 @@
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static char ArchivePath[128];
 
 // CODE --------------------------------------------------------------------
 
@@ -92,8 +88,6 @@ void S_ParseSndInfoLump(void)
     char                buf[80];
     lumpnum_t           lump = W_CheckNumForName("SNDINFO");
 
-    strcpy(ArchivePath, DEFAULT_ARCHIVEPATH);
-
     if(lump != -1)
     {
         SC_OpenLump(lump);
@@ -105,7 +99,7 @@ void S_ParseSndInfoLump(void)
                 if(!stricmp(sc_String, "$ARCHIVEPATH"))
                 {
                     SC_MustGetString();
-                    strcpy(ArchivePath, sc_String);
+                    // Presently unused.
                 }
                 else if(!stricmp(sc_String, "$MAP"))
                 {
