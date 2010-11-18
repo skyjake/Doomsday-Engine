@@ -20,43 +20,40 @@
 #include "de/ListenSocket"
 #include "de/Address"
 #include "de/Socket"
-#include "../internal.h"
-#include "../sdl.h"
 
 using namespace de;
 
 ListenSocket::ListenSocket(duint16 port) : _socket(0), _port(port)
 {
-    // Listening address.
-    Address address(0, port);
-    IPaddress ip;
-
-    internal::convertAddress(address, &ip);
-
-    if((_socket = SDLNet_TCP_Open(&ip)) == 0)
+    _socket = new QTcpServer();
+    if(!_socket->listen(QHostAddress::Any, _port))
     {
         /// @throw OpenError Opening the socket failed.
-        throw OpenError("ListenSocket::ListenSocket", SDLNet_GetError());
+        throw OpenError("ListenSocket::ListenSocket", _socket->errorString());
     }
+
+    connect(_socket, SIGNAL(newConnection()), this, SLOT(acceptNewConnection()));
 }
 
 ListenSocket::~ListenSocket()
 {
-    if(_socket)
-    {
-        SDLNet_TCP_Close( static_cast<TCPsocket>(_socket) );
-    }
+    delete _socket;
+}
+
+void ListenSocket::acceptNewConnection()
+{
+    QTcpSocket* s = _socket->nextPendingConnection();
+    _incoming.append(s);
 }
 
 Socket* ListenSocket::accept()
 {
-    TCPsocket clientSocket = SDLNet_TCP_Accept(static_cast<TCPsocket>(_socket));
-    if(!clientSocket)
+    if(_incoming.empty())
     {
         return 0;
     }
     // We can use this constructor because we are Socket's friend.
-    return new Socket(clientSocket);
+    return new Socket(_incoming.takeFirst());
 }
 
 duint16 ListenSocket::port() const

@@ -21,10 +21,10 @@
 #define LIBDENG2_LINK_H
 
 #include "../Transceiver"
-#include "../SenderThread"
-#include "../ReceiverThread"
 #include "../Observers"
 #include "../Flag"
+
+#include <QAbstractSocket>
 
 namespace de
 {   
@@ -37,18 +37,17 @@ namespace de
      *
      * @ingroup net
      */
-    class LIBDENG2_API Link : public Transceiver
+    class LIBDENG2_API Link : public QObject, public Transceiver
     {
+        Q_OBJECT
+
     public:
         /// The remote end has closed the link. @ingroup errors
         DEFINE_ERROR(DisconnectedError);
         
         /// Sending on channel 1 instead of the default 0.
         DEFINE_FINAL_FLAG(CHANNEL_1, 0, Mode);
-        
-        typedef SenderThread::OutgoingBuffer OutgoingBuffer;
-        typedef ReceiverThread::IncomingBuffer IncomingBuffer;
-        
+               
     public:
         /**
          * Constructs a new communications link. A new socket is created for the link.
@@ -91,7 +90,11 @@ namespace de
         // Implements Transceiver.
         void send(const IByteArray& data);
         Message* receive();
-      
+
+    protected slots:
+        void socketDisconnected();
+        void socketError(QAbstractSocket::SocketError error);
+
     protected:
         void initialize();
 
@@ -104,18 +107,6 @@ namespace de
     private:
         /// Socket over which the link communicates.
         Socket* _socket; 
-
-        /// Address of the remote end.
-        Address _peerAddress;
-        
-        /// Thread that writes outgoing data to the socket.
-        SenderThread* _sender;
-        
-        /// Thread that reads incoming data from the socket.
-        ReceiverThread* _receiver;
-        
-        OutgoingBuffer _outgoing;
-        IncomingBuffer _incoming;
     };
 }
 

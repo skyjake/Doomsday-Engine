@@ -33,6 +33,9 @@ Block::Block(const IByteArray& other)
     other.get(0, (dbyte*) data(), other.size());
 }
 
+Block::Block(const Block& other) : QByteArray(other), IByteArray(), IBlock()
+{}
+
 Block::Block(const QByteArray& byteArray)
     : QByteArray(byteArray)
 {}

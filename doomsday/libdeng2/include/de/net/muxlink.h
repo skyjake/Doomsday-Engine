@@ -127,9 +127,9 @@ namespace de
     private:
         /// The link over which multiplexing is done.
         Link* _link;
-        
-        /// Each channel has its own incoming buffer.
-        Link::IncomingBuffer _buffers[NUM_CHANNELS];
+
+        /// Buffers for incoming messages.
+        QList<Message*> _buffers[2];
         
         Channel _defaultChannel;
     };

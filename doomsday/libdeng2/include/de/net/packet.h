@@ -41,7 +41,7 @@ namespace de
         DEFINE_SUB_ERROR(DeserializationError, InvalidTypeError);
         
         /// Length of a type identifier.
-        static const duint TYPE_SIZE = 4;
+        static const dint TYPE_SIZE = 4;
         
         typedef String Type;
         

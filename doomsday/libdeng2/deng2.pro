@@ -10,14 +10,12 @@ LIBDENG2_PATCHLEVEL     = 0
 
 SOURCES += \
     $$files(src/core/*.cc) \
-    $$files(src/filesys/*.cc) \
     $$files(src/data/*.cc) \
+    $$files(src/filesys/*.cc) \
+    $$files(src/net/*.cc) \
     $$files(src/types/*.cc) \
-    $$files(src/scriptsys/*.cc)
-#    src/net/*.cc \
-#    src/scriptsys/*.cc \
-#    src/types/*.cc \
-#    src/worldsys/*.cc
+    $$files(src/scriptsys/*.cc) \
+    $$files(src/worldsys/*.cc)
 
 HEADERS += \
     include/de/deng.h \

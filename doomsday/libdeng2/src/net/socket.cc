@@ -20,71 +20,59 @@
 #include "de/Socket"
 #include "de/Message"
 #include "de/String"
-#include "../internal.h"
-#include "../sdl.h"
+#include "de/ByteRefArray"
+#include "de/Writer"
+#include "de/Reader"
 
 using namespace de;
 
 /// Version of the block transfer protocol.
 static const duint PROTOCOL_VERSION = 0;
 
+/// Size of the message header in bytes.
+static const duint HEADER_SIZE = 4;
+
 Socket::Header::Header() : version(PROTOCOL_VERSION), huffman(false), channel(0), size(0) {}
 
-Socket::Socket(const Address& address) : _socket(0), _socketSet(0)
+Socket::Socket(const Address& address)
+    : _receptionState(RECEIVING_HEADER),
+      _bytesToBeWritten(0)
 {
-    IPaddress ip;
+    _socket = new QTcpSocket(this);
+    _socket->connectToHost(address.host(), address.port());
 
-    internal::convertAddress(address, &ip);
-    _socket = SDLNet_TCP_Open(&ip);
+/*
     if(_socket == 0)
     {
         /// @throw ConnectionError Opening the socket to @a address failed.
         throw ConnectionError("Socket::Socket", "Failed to connect: " +
             String(SDLNet_GetError()));
     }
-
-    initialize();
+*/
 }
 
-Socket::Socket(void* existingSocket) : _socket(existingSocket), _socketSet(0)
+Socket::Socket(QTcpSocket* existingSocket) : _socket(existingSocket)
 {
-    initialize();
+    _socket->setParent(this);
 }
 
 Socket::~Socket()
 {
-    close();
-
-    if(_socketSet)
-    {
-        SDLNet_FreeSocketSet(static_cast<SDLNet_SocketSet>(_socketSet));
-        _socketSet = 0;
-    }
+    _socket->close();
 }
 
 void Socket::initialize()
 {
-    // Allocate a socket set for waiting on.
-    _socketSet = SDLNet_AllocSocketSet(1);
-
-    SDLNet_AddSocket(static_cast<SDLNet_SocketSet>(_socketSet),
-        static_cast<SDLNet_GenericSocket>(_socket));
-
-    // Incoming packets will be marked with this address.
-    _peerAddress = peerAddress();
+    connect(_socket, SIGNAL(bytesWritten(qint64)), this, SLOT(bytesWereWritten(qint64)));
+    connect(_socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
+    connect(_socket, SIGNAL(error(QAbstractSocket::SocketError)), this,
+            SLOT(socketError(QAbstractSocket::SocketError)));
+    connect(_socket, SIGNAL(readyRead()), this, SLOT(readIncomingBytes()));
 }
 
 void Socket::close()
 {
-    // Close the socket.
-    if(_socket)
-    {
-        lock();
-        TCPsocket s = static_cast<TCPsocket>(_socket);
-        _socket = 0;
-        SDLNet_TCP_Close(s);
-        unlock();
-    }
+    _socket->close();
 }
 
 Socket& Socket::operator << (const IByteArray& packet)
@@ -93,35 +81,34 @@ Socket& Socket::operator << (const IByteArray& packet)
     return *this;
 }
 
-void Socket::writeHeader(const Header& header, IByteArray::Byte* buffer)
+duint32 Socket::packHeader(const Header& header)
 {
     /**
-     * Writes the 4-byte header to the beginning of the buffer.
+     * Composese the 4-byte header to the beginning of the buffer.
      * - 3 bits for flags.
      * - 2 bits for the protocol version number.
      * - 16+11 bits for the packet length (max: 134 MB).
      */
      
-    duint flags = 
+    duint32 flags =
         (header.huffman? Header::HUFFMAN : 0) |
         (header.channel == 1? Header::CHANNEL_1 : 0);
 
-    duint bits = ( (header.size & 0x7ffffff) |
-                   ((header.version & 3) << 27) |
-                   (flags << 29) );
+    duint32 bits = ( (header.size & 0x7ffffff) |
+                     ((header.version & 3) << 27) |
+                     (flags << 29) );
 
-    SDLNet_Write32(bits, buffer);
+    return bits;
 }
 
-void Socket::readHeader(duint headerBytes, Header& header)
+void Socket::unpackHeader(duint32 headerBytes, Header& header)
 {
-    duint hostHeader = SDLNet_Read32(&headerBytes);
-    duint flags = (hostHeader >> 29) & 7;
+    duint flags = (headerBytes >> 29) & 7;
     
-    header.version = (hostHeader >> 27) & 3;
+    header.version = (headerBytes >> 27) & 3;
     header.huffman = (flags & HUFFMAN) != 0;
     header.channel = (flags & CHANNEL_1? 1 : 0);
-    header.size = hostHeader & 0x7ffffff;
+    header.size = headerBytes & 0x7ffffff;
 }
 
 void Socket::send(const IByteArray& packet, duint channel)
@@ -129,40 +116,43 @@ void Socket::send(const IByteArray& packet, duint channel)
     if(!_socket) 
     {
         /// @throw DisconnectedError Sending is not possible because the socket has been closed.
-        throw DisconnectedError("Socket::operator << ", "Socket closed");
+        throw DisconnectedError("Socket::operator << ", "Socket is unavailable");
     }
 
-    duint packetSize = packet.size() + 4;
-    IByteArray::Byte* buffer = new IByteArray::Byte[packetSize];
+    // Keep track of where we are with the traffic.
+    _bytesToBeWritten += packet.size() + 4;
 
     // Write the packet header: packet length, version, possible flags.
     Header header;
     header.channel = channel;
     header.size = packet.size();
-    writeHeader(header, buffer);
-    
-    packet.get(0, buffer + 4, packet.size());
-    unsigned int sentBytes = SDLNet_TCP_Send(
-        static_cast<TCPsocket>(_socket), buffer, packetSize);
-    delete [] buffer;
 
-    // Did the transmission fail?
+    Block dest;
+    Writer(dest) << packHeader(header);
+    _socket->write(dest);
+
+    // Write the data itself.
+    _socket->write(Block(packet));
+
+/*    // Did the transmission fail?
     if(sentBytes != packetSize)
     {
         /// @throw DisconnectedError All the data was not sent successfully.
         throw DisconnectedError("Socket::operator << ", String(SDLNet_GetError()));
-    }
+    }*/
 }
 
+/*
 void Socket::checkValid()
 {
-    if(!_socket || !_socketSet)
+    if(!_socket)
     {
         /// @throw DisconnectedError The socket has been closed.
         throw DisconnectedError("Socket::receive", "Socket was closed");
     }
-}
+}*/
 
+/*
 void Socket::receiveBytes(duint count, dbyte* buffer)
 {
     duint received = 0;
@@ -225,9 +215,66 @@ void Socket::receiveBytes(duint count, dbyte* buffer)
         throw err;
     }
 }
+*/
+
+void Socket::readIncomingBytes()
+{
+    forever
+    {
+        if(_receptionState == RECEIVING_HEADER)
+        {
+            if(_socket->bytesAvailable() >= HEADER_SIZE)
+            {
+                // Get the header.
+                duint32 bits = 0;
+                Reader(Block(_socket->read(HEADER_SIZE))) >> bits;
+                unpackHeader(bits, _incomingHeader);
+
+                _receptionState = RECEIVING_PAYLOAD;
+            }
+            else
+            {
+                // Let's wait until more is available.
+                break;
+            }
+        }
+
+        if(_receptionState == RECEIVING_PAYLOAD)
+        {
+            if(_socket->bytesAvailable() >= _incomingHeader.size)
+            {
+                _receivedMessages.append(new Message(Address(_socket->peerAddress(),
+                                                             _socket->peerPort()),
+                                                     _incomingHeader.channel,
+                                                     Block(_socket->read(_incomingHeader.size))));
+
+                // Get the next message.
+                _receptionState = RECEIVING_HEADER;
+            }
+            else
+            {
+                // Let's wait until more is available.
+                break;
+            }
+        }
+    }
+
+    // Notification about available messages.
+    if(!_receivedMessages.isEmpty())
+    {
+        emit gotMessages();
+    }
+}
 
 Message* Socket::receive()
 {
+    if(_receivedMessages.isEmpty())
+    {
+        return 0;
+    }
+    return _receivedMessages.takeFirst();
+
+/*
     if(!_socket) 
     {
         /// @throw DisconnectedError Receiving data is not possible because the socket is closed.
@@ -253,18 +300,52 @@ Message* Socket::receive()
     std::auto_ptr<Message> data(new Message(_peerAddress, incoming.channel, incoming.size)); 
     receiveBytes(incoming.size, const_cast<dbyte*>(data.get()->data()));
     return data.release();
+    */
+}
+
+void Socket::flush()
+{
+    // Wait until data has been written.
+    _socket->flush();
+    _socket->waitForBytesWritten();
 }
 
 Address Socket::peerAddress() const
 {
-    if(_socket)
+    if(isOpen())
     {
-        IPaddress* ip = SDLNet_TCP_GetPeerAddress(static_cast<TCPsocket>(_socket));
-        if(ip)
-        {
-            return internal::convertAddress(ip);
-        }                
+        return Address(_socket->peerAddress(), _socket->peerPort());
     }
     /// @throw PeerError Could not determine the TCP/IP address of the socket.
-    throw PeerError("Socket::peerAddress", SDLNet_GetError());
+    throw PeerError("Socket::peerAddress", "Socket is unavailable");
+}
+
+bool Socket::isOpen() const
+{
+    return _socket && _socket->state() != QTcpSocket::UnconnectedState;
+}
+
+void Socket::socketDisconnected()
+{
+    emit disconnected();
+}
+
+void Socket::socketError(QAbstractSocket::SocketError socketError)
+{
+    emit error(socketError);
+}
+
+bool Socket::hasIncoming() const
+{
+    return !_receivedMessages.empty();
+}
+
+dsize Socket::bytesBuffered() const
+{
+    return _bytesToBeWritten;
+}
+
+void Socket::bytesWereWritten(qint64 bytes)
+{
+    _bytesToBeWritten -= bytes;
 }

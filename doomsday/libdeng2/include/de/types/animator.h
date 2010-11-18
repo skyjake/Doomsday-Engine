@@ -179,7 +179,7 @@ namespace de
         mutable Status _status;
     };
 
-    LIBDENG2_API std::ostream& operator << (std::ostream& os, const Animator& anim);
+    LIBDENG2_API QTextStream& operator << (QTextStream& os, const Animator& anim);
 
     /**
      * 2D vector animator.

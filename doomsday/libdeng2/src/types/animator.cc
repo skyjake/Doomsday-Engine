@@ -232,7 +232,7 @@ void AnimatorVector2::setObserver(Animator::IObserver* observer)
     y.setObserver(observer);
 }
 
-std::ostream& de::operator << (std::ostream& os, const Animator& anim)
+QTextStream& de::operator << (QTextStream& os, const Animator& anim)
 {
     os << anim.now() << " (=> " << anim.target() << ")";
     return os;

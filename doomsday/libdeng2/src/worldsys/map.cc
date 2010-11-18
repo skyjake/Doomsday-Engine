@@ -162,7 +162,7 @@ void Map::freezeThinkerList(bool freeze)
     else
     {
         _thinkersFrozen--;
-        assert(_thinkersFrozen >= 0);
+        Q_ASSERT(_thinkersFrozen >= 0);
         
         if(!_thinkersFrozen)
         {

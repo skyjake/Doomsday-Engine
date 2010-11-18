@@ -123,13 +123,11 @@ void LogBuffer::flush()
     
     FOR_EACH(i, _toBeFlushed, EntryList::iterator)
     {
+        // Error messages will go to stderr instead of stdout.
         QScopedPointer<QTextStream> os(_standardOutput?
                                        ((*i)->level() >= Log::ERROR? new QTextStream(stderr) :
                                         new QTextStream(stdout)) : 0);
 
-        // Error messages will go to stderr instead of stdout.
-        //std::ostream* os = (_standardOutput? ((*i)->level() >= Log::ERROR? &std::cerr : &std::cout) : 0);
-        
         String message = (*i)->asText();
             
         // Print line by line.

@@ -28,6 +28,9 @@
 
 using namespace de;
 
+Transceiver::~Transceiver()
+{}
+
 Transceiver& Transceiver::operator << (const IByteArray& data)
 {
     send(data);
@@ -49,6 +52,7 @@ void Transceiver::sendPacket(const Packet& packet)
 
 Packet* Transceiver::receivePacket(const Time::Delta& timeOut)
 {
+    /*
     Time startedAt;
     while(startedAt.since() <= timeOut)
     {
@@ -68,6 +72,8 @@ Packet* Transceiver::receivePacket(const Time::Delta& timeOut)
         }
         return packet;
     }
+    */
     /// @throw TimeOutError Timeout expired before anything was received.
-    throw TimeOutError("Transceiver::receivePacket", "Timeout expired before anything was received");
+    throw TimeOutError("Transceiver::receivePacket", "NOT IMPLEMENTED!");
+    //throw TimeOutError("Transceiver::receivePacket", "Timeout expired before anything was received");
 }

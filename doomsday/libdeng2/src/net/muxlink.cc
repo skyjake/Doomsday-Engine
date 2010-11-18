@@ -48,12 +48,12 @@ void MuxLink::demux()
 {
     while(_link->hasIncoming())
     {
-        std::auto_ptr<Message> message(_link->receive());
+        QScopedPointer<Message> message(_link->receive());
         // We will quietly ignore channels we can't receive.
         duint chan = message->channel();
         if(chan < NUM_CHANNELS)
         {
-            _buffers[chan].put(message.release());
+            _buffers[chan].append(message.take());
         }
     }
 }
@@ -67,11 +67,15 @@ void MuxLink::Channel::send(const IByteArray& data)
 Message* MuxLink::Channel::receive()
 {
     _mux.demux();
-    return _mux._buffers[_channel].get();
+    if(_mux._buffers[_channel].isEmpty())
+    {
+        return 0;
+    }
+    return _mux._buffers[_channel].takeFirst();
 }
 
 bool MuxLink::Channel::hasIncoming()
 {
     _mux.demux();
-    return !_mux._buffers[_channel].empty();
+    return !_mux._buffers[_channel].isEmpty();
 }

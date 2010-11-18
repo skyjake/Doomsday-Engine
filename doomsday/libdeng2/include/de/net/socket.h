@@ -23,8 +23,10 @@
 #include "../deng.h"
 #include "../IByteArray"
 #include "../Address"
-#include "../Lockable"
 #include "../Flag"
+
+#include <QTcpSocket>
+#include <QList>
 
 /**
  * @defgroup net Network
@@ -37,13 +39,16 @@ namespace de
     class Message;
 
     /**
-     * TCP/IP network socket. ListenSocket will construct Socket instances for 
-     * incoming connections.
+     * TCP/IP network socket.
+     *
+     * ListenSocket constructs Socket instances for incoming connections.
      *
      * @ingroup net
      */
-    class LIBDENG2_API Socket : public Lockable
+    class LIBDENG2_API Socket : public QObject
     {
+        Q_OBJECT
+
     public:
         /// Payload is in Huffman code.
         DEFINE_FLAG(HUFFMAN, 0); 
@@ -65,7 +70,7 @@ namespace de
 
         /// There is no peer connected. @ingroup errors
         DEFINE_SUB_ERROR(BrokenError, PeerError);
-    
+
     public:
         Socket(const Address& address);
         virtual ~Socket();
@@ -82,23 +87,55 @@ namespace de
         Socket& operator << (const IByteArray& data);
 
         /**
-         * Receives an array of bytes by reading from the socket until a full
-         * packet has been received.  Returns only after a full packet has been received. 
-         * The block is marked with the address where it was received from.
+         * Returns the next received message. If nothing has been received,
+         * returns @c NULL.
          *
-         * @return  Received bytes. Caller is responsible for deleting the data.
+         * @return  Received bytes. Caller gets ownership of the message.
          */
         Message* receive();
         
         /**
-         * Determines the IP address of the remote end of a connected socket.
+         * Determines the IP address and port of the remote end of a connected socket.
          *
          * @return  Address of the peer.
          */
         Address peerAddress() const;
         
+        /**
+         * Determines if the socket is open for communications.
+         */
+        bool isOpen() const;
+
+        /**
+         * Determines whether there are any incoming messages waiting.
+         */
+        bool hasIncoming() const;
+
+        /**
+         * Determines the amount of data waiting to be sent out.
+         */
+        dsize bytesBuffered() const;
+
+        /**
+         * Blocks until all outgoing data has been written to the socket.
+         */
+        void flush();
+
         void close();
-        
+
+    signals:
+        void gotMessages();
+        void disconnected();
+        void error(QAbstractSocket::SocketError error);
+
+    public slots:
+        void socketDisconnected();
+        void socketError(QAbstractSocket::SocketError socketError);
+        void readIncomingBytes();
+
+    protected slots:
+        void bytesWereWritten(qint64 bytes);
+
     protected:
         /// Values for the transmission block header.
         struct Header {
@@ -115,7 +152,7 @@ namespace de
         };
         
         /// Create a Socket object for a previously opened socket.  
-        Socket(void* existingSocket);
+        Socket(QTcpSocket* existingSocket);
 
         void initialize();
 
@@ -128,25 +165,36 @@ namespace de
 
         void send(const IByteArray& packet, duint channel);
         
-        void writeHeader(const Header& header, IByteArray::Byte* buffer);
+        duint32 packHeader(const Header& header);
 
-        void readHeader(duint headerBytes, Header& header);
+        void unpackHeader(duint32 headerBytes, Header& header);
         
-        inline void checkValid();
+        //inline void checkValid();
 
     public:
         /// Operating mode.
         Mode mode;
     
     private:
-        /// Pointer to the internal socket data.
-        void* _socket;
+        enum ReceptionState
+        {
+            RECEIVING_HEADER,
+            RECEIVING_PAYLOAD
+        };
 
-        /// Used for waiting on activity.
-        void* _socketSet;
-        
-        Address _peerAddress;
-        
+        ReceptionState _receptionState;
+
+        Header _incomingHeader;
+
+        /// Pointer to the internal socket data.
+        QTcpSocket* _socket;
+
+        /// Buffer for incoming received messages.
+        QList<Message*> _receivedMessages;
+
+        /// Number of bytes waiting to be written to the socket.
+        dsize _bytesToBeWritten;
+
         /** 
          * ListenSocket creates instances of Socket so it needs to use
          * the special private constructor that takes an existing

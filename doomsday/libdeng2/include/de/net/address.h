@@ -23,6 +23,9 @@
 #include "../deng.h"
 #include "../Log"
 
+#include <QHostAddress>
+#include <QTextStream>
+
 namespace de
 {
     class String;
@@ -35,19 +38,15 @@ namespace de
     class LIBDENG2_API Address : public LogEntry::Arg::Base
     {
     public:
-        /// The address cannot be resolved successfully. @ingroup errors
-        DEFINE_ERROR(ResolveError);
-    
-    public:
-        Address(duint32 ip = 0, duint16 port = 0);
-        
+        Address();
+
         /**
-         * Constructs an Address by resolving a textual network address.
+         * Constructs an Address.
          *
          * @param address  Network address. E.g., "localhost" or "127.0.0.1".
-         * @param port  Port number.
+         * @param port     Port number.
          */
-        Address(const String& address, duint16 port = 0);
+        Address(const QHostAddress& address, duint16 port = 0);
 
         /**
          * Checks two addresses for equality.
@@ -58,20 +57,9 @@ namespace de
          */
         bool operator == (const Address& other) const;
 
-        /**
-         * Resolve the given address.  If the address string contains a
-         * port (after a colon), it will always be used instead of
-         * the @a port parameter.  When creating an address for
-         * listening, set @a address to NULL.
-         *
-         * @param address  Address to resolve. E.g., "localhost" or "127.0.0.1".
-         * @param port  Port port.
-         */
-        void set(const String& address, duint16 port);
-
-        duint32 ip() const { return _ip; }
+        const QHostAddress& host() const { return _host; }
         
-        void setIp(duint32 ip) { _ip = ip; }
+        void setHost(const QHostAddress& host) { _host = host; }
         
         duint16 port() const { return _port; }
         
@@ -95,11 +83,11 @@ namespace de
         LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::STRING; }
 
     private:
-        duint32 _ip;
+        QHostAddress _host;
         duint16 _port;
     };
     
-    LIBDENG2_API std::ostream& operator << (std::ostream& os, const Address& address);
+    LIBDENG2_API QTextStream& operator << (QTextStream& os, const Address& address);
 }
 
 #endif /* LIBDENG2_ADDRESS_H */

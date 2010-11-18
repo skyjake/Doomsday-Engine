@@ -22,6 +22,10 @@
 
 #include "../deng.h"
 
+#include <QObject>
+#include <QTcpServer>
+#include <QList>
+
 namespace de
 {
     class Socket;
@@ -32,8 +36,10 @@ namespace de
      *
      * @ingroup net
      */
-    class LIBDENG2_API ListenSocket
+    class LIBDENG2_API ListenSocket : public QObject
     {
+        Q_OBJECT
+
     public:
         /// Opening the socket failed. @ingroup errors
         DEFINE_ERROR(OpenError);
@@ -52,12 +58,18 @@ namespace de
         
         /// Returns the port the socket is listening on.
         duint16 port() const;
-    
+
+    protected slots:
+        void acceptNewConnection();
+
     private:
         /// Pointer to the internal socket data.
-        void* _socket;
+        QTcpServer* _socket;
         
         duint16 _port;
+
+        /// Incoming connections.
+        QList<QTcpSocket*> _incoming;
     };
 }
 

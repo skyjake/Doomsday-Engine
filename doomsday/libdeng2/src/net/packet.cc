@@ -22,6 +22,8 @@
 #include "de/Reader"
 #include "de/String"
 
+#include <QByteArray>
+
 using namespace de;
 
 Packet::Packet(const Type& t)
@@ -31,13 +33,14 @@ Packet::Packet(const Type& t)
 
 void Packet::setType(const Type& t)
 {
-    assert(t.size() == TYPE_SIZE);
+    Q_ASSERT(t.size() == TYPE_SIZE);
     _type = t;
 }
 
 void Packet::operator >> (Writer& to) const
 {
-    to << _type[0] << _type[1] << _type[2] << _type[3];
+    QByteArray bytes = _type.toLatin1();
+    to << bytes[0] << bytes[1] << bytes[2] << bytes[3];
 }
 
 void Packet::operator << (Reader& from)

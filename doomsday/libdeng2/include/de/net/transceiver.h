@@ -44,7 +44,7 @@ namespace de
         DEFINE_ERROR(TimeOutError);
         
     public:
-        virtual ~Transceiver() {}
+        virtual ~Transceiver();
 
         /**
          * Sends an array of data.

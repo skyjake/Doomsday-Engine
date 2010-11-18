@@ -44,7 +44,7 @@ void World::loadMap(const String& name)
     LOG_AS("World::loadMap");
     LOG_VERBOSE("%s") << name;
     
-    assert(_map != NULL);
+    Q_ASSERT(_map != NULL);
     App::setCurrentMap(0);
     delete _map;
 

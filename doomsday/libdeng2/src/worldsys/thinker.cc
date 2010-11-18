@@ -28,8 +28,6 @@
 #include "de/NumberValue"
 #include "de/Map"
 
-#include <sstream>
-
 using namespace de;
 
 #define HAS_INFO 0x01
@@ -41,7 +39,7 @@ Thinker::Thinker(SerialId sid) : _serialId(sid), _id(0), _info(0), _map(0)
 
 Thinker::~Thinker()
 {
-    assert(_map == NULL); // By this time, it must be removed from the map.
+    Q_ASSERT(_map == NULL); // By this time, it must be removed from the map.
     delete _info;
 }
 
@@ -127,11 +125,10 @@ void Thinker::operator << (Reader& from)
     // Sanity check.
     if(readSerialId != _serialId)
     {
-        std::ostringstream os;
-        os << "Invalid serial ID (got " << duint(readSerialId) << " while " << 
-            duint(_serialId) << " was expected)";
         /// @throw InvalidTypeError  The read serial ID was unexpected.
-        throw InvalidTypeError("Thinker::operator <<", os.str());
+        throw InvalidTypeError("Thinker::operator <<",
+                               "Invalid serial ID (got " + QString::number(readSerialId) +
+                               " while " + QString::number(_serialId) + " was expected)");
     }
     
     from >> _id >> _bornAt;
