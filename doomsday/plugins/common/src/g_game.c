@@ -3286,11 +3286,10 @@ void G_PrintMapList(void)
         memset((void*) sourceList, 0, sizeof(sourceList));
 
         // Find the name of each map (not all may exist).
-        for(map = 0; map < maxMapsPerEpisode-1; ++map)
+        for(map = 0; map < maxMapsPerEpisode; ++map)
         {
             sourceList[map] = P_MapSourceFile(episode, map);
         }
-
         G_PrintFormattedMapList(episode, sourceList, 99);
     }
 }
