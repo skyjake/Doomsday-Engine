@@ -416,15 +416,6 @@ void G_PostInit(void)
         autoStart = true;
     }
 
-    if((p = ArgCheckWith("-playdemo", 1)) != 0 ||
-       (p = ArgCheckWith("-timedemo", 1)) != 0)
-    {
-        char file[256];
-        sprintf(file, "%s.lmp", Argv(p + 1));
-        DD_AddStartupWAD(file);
-        Con_Message("Playing demo %s.\n", file);
-    }
-
     // Check the -class argument.
     pClass = PCLASS_FIGHTER;
     if((p = ArgCheck("-class")) != 0)
