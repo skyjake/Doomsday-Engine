@@ -1058,15 +1058,15 @@ patchid_t R_PrecachePatch(const char* name, patchinfo_t* info)
     if(isDedicated)
         return 0;
 
-    {
-    patchid_t patch;
+    {patchid_t patch;
     if((patch = R_RegisterAsPatch(name)) != 0)
     {
         GL_PreparePatch(getPatchTex(patch));
         if(info)
             R_GetPatchInfo(patch, info);
     }
-    VERBOSE(Con_Message("R_GeR_PrecachePatch: Warning, unknown Patch %s.\n", name));
+    else
+        VERBOSE(Con_Message("R_PrecachePatch: Warning, unknown Patch %s.\n", name));
     return patch;
     }
 }
