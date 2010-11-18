@@ -244,9 +244,7 @@ void G_Display(int layer)
         }
         break;
     case GS_STARTUP:
-        DGL_Disable(DGL_TEXTURING);
         DGL_DrawRect(0, 0, vpWidth, vpHeight, 0, 0, 0, 1);
-        DGL_Enable(DGL_TEXTURING);
         break;
     default:
         break;
@@ -265,9 +263,7 @@ void G_Display2(void)
 
     if(G_GetGameAction() == GA_QUIT)
     {
-        DGL_Disable(DGL_TEXTURING);
         DGL_DrawRect(0, 0, 320, 200, 0, 0, 0, quitDarkenOpacity);
-        DGL_Enable(DGL_TEXTURING);
     }
 }
 

@@ -29,8 +29,8 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <ctype.h>
 #include <assert.h>
+#include <stdio.h>
 
 #include "jhexen.h"
 
@@ -357,6 +357,8 @@ static void drawDeathTally(void)
     int i, j, x, y;
     boolean bold;
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     DGL_Color4f(1, 1, 1, 1);
     GL_DrawPatch(dpTallyTop.id, TALLY_TOP_X, TALLY_TOP_Y);
     GL_DrawPatch(dpTallyLeft.id, TALLY_LEFT_X, TALLY_LEFT_Y);
@@ -427,6 +429,8 @@ static void drawDeathTally(void)
         yPos += yDelta;
         y = yPos >> FRACBITS;
     }
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 static void drawNumber(int val, int x, int y, int wrapThresh)

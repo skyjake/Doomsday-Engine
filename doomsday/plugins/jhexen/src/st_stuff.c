@@ -30,6 +30,8 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <assert.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "jhexen.h"
 #include "d_net.h"
@@ -272,8 +274,13 @@ void drawFlightWidget(int player, float textAlpha, float iconAlpha,
                 hud->hitCenterFrame = true;
             }
         }
+
+        DGL_Enable(DGL_TEXTURE_2D);
+
         DGL_Color4f(1, 1, 1, iconAlpha);
         GL_DrawPatch(dpSpinFly[frame].id, 16, 14);
+
+        DGL_Disable(DGL_TEXTURE_2D);
     }
     *drawnWidth = 32;
     *drawnHeight = 28;
@@ -291,8 +298,12 @@ void drawBootsWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(plr->powers[PT_SPEED] > BLINKTHRESHOLD || !(plr->powers[PT_SPEED] & 16))
     {
+        DGL_Enable(DGL_TEXTURE_2D);
+
         DGL_Color4f(1, 1, 1, iconAlpha);
         GL_DrawPatch(dpSpinSpeed[(mapTime / 3) & 15].id, 12, 14);
+
+        DGL_Disable(DGL_TEXTURE_2D);
     }
     *drawnWidth = 24;
     *drawnHeight = 28;
@@ -310,8 +321,12 @@ void drawDefenseWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(plr->powers[PT_INVULNERABILITY] > BLINKTHRESHOLD || !(plr->powers[PT_INVULNERABILITY] & 16))
     {
+        DGL_Enable(DGL_TEXTURE_2D);
+
         DGL_Color4f(1, 1, 1, iconAlpha);
         GL_DrawPatch(dpSpinDefense[(mapTime / 3) & 15].id, -13, 14);
+
+        DGL_Disable(DGL_TEXTURE_2D);
     }
     *drawnWidth = 26;
     *drawnHeight = 28;
@@ -329,8 +344,12 @@ void drawServantWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(plr->powers[PT_MINOTAUR] > BLINKTHRESHOLD || !(plr->powers[PT_MINOTAUR] & 16))
     {
+        DGL_Enable(DGL_TEXTURE_2D);
+
         DGL_Color4f(1, 1, 1, iconAlpha);
         GL_DrawPatch(dpSpinMinotaur[(mapTime / 3) & 15].id, -13, 17);
+
+        DGL_Disable(DGL_TEXTURE_2D);
     }
     *drawnWidth = 26;
     *drawnHeight = 29;
@@ -352,6 +371,8 @@ void drawWeaponPiecesWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
+
+    DGL_Enable(DGL_TEXTURE_2D);
 
     if(plr->pieces == 7)
     {
@@ -378,6 +399,8 @@ void drawWeaponPiecesWidget(int player, float textAlpha, float iconAlpha,
             GL_DrawPatch(dpWeaponPiece3[pClass].id, ORIGINX+PCLASS_INFO(pClass)->pieceX[2], ORIGINY);
         }
     }
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     *drawnWidth = 57;
     *drawnHeight = 30;
@@ -453,6 +476,7 @@ void drawHealthChainWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
 
     DGL_SetPatch(dpChain[pClass].id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, iconAlpha);
 
@@ -540,6 +564,8 @@ void drawHealthChainWidget(int player, float textAlpha, float iconAlpha,
     DGL_BlendMode(BM_NORMAL);
     DGL_Color4f(1, 1, 1, 1);
 
+    DGL_Disable(DGL_TEXTURE_2D);
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
@@ -576,8 +602,13 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
 
     if(!(iconAlpha < 1))
     {
+        DGL_Enable(DGL_TEXTURE_2D);
+
         DGL_Color4f(1, 1, 1, 1);
         GL_DrawPatch(dpStatusBar.id, ORIGINX, ORIGINY-28);
+
+        DGL_Disable(DGL_TEXTURE_2D);
+
         /**
          * \kludge The Hexen statusbar graphic has a chain already in the
          * image, which shows through the modified chain patches.
@@ -587,6 +618,9 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
         DGL_SetNoMaterial();
         DGL_DrawRect(ORIGINX+44, ORIGINY+31, 232, 7, .1f, .1f, .1f, 1);
         //// \kludge end
+
+        DGL_Enable(DGL_TEXTURE_2D);
+
         DGL_Color4f(1, 1, 1, 1);
         GL_DrawPatch(dpStatusBarTop.id, ORIGINX, ORIGINY-28);
 
@@ -613,9 +647,13 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
         {
             GL_DrawPatch(dpInventoryBar.id, ORIGINX+38, ORIGINY);
         }
+
+        DGL_Disable(DGL_TEXTURE_2D);
     }
     else
     {
+        DGL_Enable(DGL_TEXTURE_2D);
+
         DGL_Color4f(1, 1, 1, iconAlpha);
         DGL_SetPatch(dpStatusBar.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
 
@@ -679,6 +717,7 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
          * drawing a solid near-black rectangle to fill the hole.
          */
         DGL_DrawCutRectTiled(ORIGINX+38, ORIGINY+31, 244, 8, 320, 65, 38, 192-134, ORIGINX+44, ORIGINY+31, 232, 7);
+        DGL_Disable(DGL_TEXTURE_2D);
         DGL_SetNoMaterial();
         DGL_DrawRect(ORIGINX+44, ORIGINY+31, 232, 7, .1f, .1f, .1f, iconAlpha);
         DGL_Color4f(1, 1, 1, iconAlpha);
@@ -686,6 +725,8 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
 
         if(!Hu_InventoryIsOpen(player))
         {
+            DGL_Enable(DGL_TEXTURE_2D);
+
             // Main interface
             if(!AM_IsActive(AM_MapForPlayer(player)))
             {
@@ -704,12 +745,14 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
             {
                 GL_DrawPatch(dpKeyBar.id, ORIGINX+38, ORIGINY);
             }
+
+            DGL_Disable(DGL_TEXTURE_2D);
         }
         else
-        {
-            // INVBAR
+        {   // INVBAR
+            
             DGL_SetPatch(dpInventoryBar.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-            DGL_Begin(DGL_QUADS);
+            DGL_Enable(DGL_TEXTURE_2D);
 
             x = ORIGINX+38;
             y = ORIGINY;
@@ -717,16 +760,18 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha, int* 
             h = 30;
             ch = 0.96774193548387096774193548387097f;
 
-            DGL_TexCoord2f(0, 0, 0);
-            DGL_Vertex2f(x, y);
-            DGL_TexCoord2f(0, 1, 0);
-            DGL_Vertex2f(x + w, y);
-            DGL_TexCoord2f(0, 1, ch);
-            DGL_Vertex2f(x + w, y + h);
-            DGL_TexCoord2f(0, 0, ch);
-            DGL_Vertex2f(x, y + h);
-
+            DGL_Begin(DGL_QUADS);
+                DGL_TexCoord2f(0, 0, 0);
+                DGL_Vertex2f(x, y);
+                DGL_TexCoord2f(0, 1, 0);
+                DGL_Vertex2f(x + w, y);
+                DGL_TexCoord2f(0, 1, ch);
+                DGL_Vertex2f(x + w, y + h);
+                DGL_TexCoord2f(0, 0, ch);
+                DGL_Vertex2f(x, y + h);
             DGL_End();
+
+            DGL_Disable(DGL_TEXTURE_2D);
         }
     }
 
@@ -1224,8 +1269,12 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
             continue;
 
         patch = &dpKeySlot[i];
+
+        DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(1, 1, 1, iconAlpha);
         GL_DrawPatch(patch->id, ORIGINX + 46 + numDrawn * 20, ORIGINY + 1);
+
+        DGL_Disable(DGL_TEXTURE_2D);
 
         *drawnWidth += patch->width;
         if(patch->height > *drawnHeight)
@@ -1235,6 +1284,7 @@ void drawKeysWidget(int player, float textAlpha, float iconAlpha,
         if(numDrawn == 5)
             break;
     }
+
     if(numDrawn)
         *drawnWidth += (numDrawn-1)*20;
 
@@ -1279,8 +1329,12 @@ void drawSBarArmorIconsWidget(int player, float textAlpha, float iconAlpha,
         else
             alpha = 1;
 
+        DGL_Enable(DGL_TEXTURE_2D);
+
         DGL_Color4f(1, 1, 1, iconAlpha * alpha);
         GL_DrawPatch(patch->id, ORIGINX + 150 + 31 * i, ORIGINY + 2);
+
+        DGL_Disable(DGL_TEXTURE_2D);
 
         *drawnWidth += patch->width;
         if(patch->height > *drawnHeight)
@@ -1322,8 +1376,12 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     GL_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1366,8 +1424,12 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     GL_DrawTextFragment4(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1412,8 +1474,12 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     GL_DrawTextFragment4(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, TRACKING);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1456,8 +1522,12 @@ void drawSBarBlueManaWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     GL_DrawTextFragment3(buf, X, Y, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1499,8 +1569,12 @@ void drawSBarGreenManaWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     GL_DrawTextFragment3(buf, X, Y, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1556,6 +1630,8 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
         y = ST_INVITEMY;
     }
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     DGL_Color4f(1, 1, 1, iconAlpha);
     GL_DrawPatch(patch, ORIGINX+x, ORIGINY+y);
 
@@ -1570,6 +1646,8 @@ void drawSBarCurrentItemWidget(int player, float textAlpha, float iconAlpha,
             GL_DrawTextFragment3(buf, ORIGINX+ST_INVITEMCX, ORIGINY+ST_INVITEMCY, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
         }
     }
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1600,14 +1678,20 @@ void drawBlueManaIconWidget(int player, float textAlpha, float iconAlpha,
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(0, yOffset, 0);
-
     if(hud->manaAIcon >= 0)
+    {
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(0, yOffset, 0);
+
+        DGL_Enable(DGL_TEXTURE_2D);
+
         WI_DrawPatch4(dpManaAIcons[hud->manaAIcon].id, X, Y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(0, -yOffset, 0);
+        DGL_Disable(DGL_TEXTURE_2D);
+
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(0, -yOffset, 0);
+    }
 
     *drawnWidth = dpManaAIcons[hud->manaAIcon%2].width;
     *drawnHeight = dpManaAIcons[hud->manaAIcon%2].height;
@@ -1637,14 +1721,20 @@ void drawGreenManaIconWidget(int player, float textAlpha, float iconAlpha,
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(0, yOffset, 0);
-
     if(hud->manaBIcon >= 0)
+    {
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(0, yOffset, 0);
+
+        DGL_Enable(DGL_TEXTURE_2D);
+
         WI_DrawPatch4(dpManaBIcons[hud->manaBIcon].id, X, Y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(0, -yOffset, 0);
+        DGL_Disable(DGL_TEXTURE_2D);
+
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(0, -yOffset, 0);
+    }
 
     *drawnWidth = dpManaBIcons[hud->manaBIcon%2].width;
     *drawnHeight = dpManaBIcons[hud->manaBIcon%2].height;
@@ -1677,7 +1767,11 @@ void drawBlueManaVialWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, ORIGINY, 0);
 
     if(hud->manaAVial >= 0)
+    {
+        DGL_Enable(DGL_TEXTURE_2D);
         WI_DrawPatch4(dpManaAVials[hud->manaAVial].id, X, Y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
+        DGL_Disable(DGL_TEXTURE_2D);
+    }
 
     DGL_SetNoMaterial();
     DGL_DrawRect(ORIGINX+95, -ST_HEIGHT+3, 3, 22 - (22 * plr->ammo[AT_BLUEMANA].owned) / MAX_MANA, 0, 0, 0, iconAlpha);
@@ -1716,7 +1810,11 @@ void drawGreenManaVialWidget(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, ORIGINY, 0);
 
     if(hud->manaBVial >= 0)
+    {
+        DGL_Enable(DGL_TEXTURE_2D);
         WI_DrawPatch4(dpManaBVials[hud->manaBVial].id, X, Y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
+        DGL_Disable(DGL_TEXTURE_2D);
+    }
 
     DGL_SetNoMaterial();
     DGL_DrawRect(ORIGINX+103, -ST_HEIGHT+3, 3, 22 - (22 * plr->ammo[AT_GREENMANA].owned) / MAX_MANA, 0, 0, 0, iconAlpha);
@@ -1788,8 +1886,12 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
 
     dd_snprintf(buf, 20, "%i", health);
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
     GL_DrawTextFragment4(buf, -1, -1, GF_FONTB, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS, TRACKING);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     *drawnWidth = GL_TextFragmentWidth2(buf, GF_FONTB, TRACKING);
     *drawnHeight = GL_TextFragmentHeight(buf, GF_FONTB);
@@ -1841,11 +1943,15 @@ void drawBlueManaWidget(int player, float textAlpha, float iconAlpha,
 
     dd_snprintf(buf, 20, "%i", plr->ammo[AT_BLUEMANA].owned);
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     DGL_Color4f(1, 1, 1, iconAlpha);
     GL_DrawPatch(patch->id, 0, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     GL_DrawTextFragment4(buf, patch->width+2, 0, GF_STATUS, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     *drawnWidth = patch->width+2+GL_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
     *drawnHeight = MAX_OF(patch->height, GL_TextFragmentHeight(buf, GF_STATUS));
@@ -1897,11 +2003,15 @@ void drawGreenManaWidget(int player, float textAlpha, float iconAlpha,
 
     dd_snprintf(buf, 20, "%i", plr->ammo[AT_GREENMANA].owned);
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     DGL_Color4f(1, 1, 1, iconAlpha);
     GL_DrawPatch(patch->id, 0, 0);
 
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     GL_DrawTextFragment4(buf, patch->width+2, 0, GF_STATUS, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     *drawnWidth = patch->width+2+GL_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
     *drawnHeight = MAX_OF(patch->height, GL_TextFragmentHeight(buf, GF_STATUS));
@@ -1931,8 +2041,12 @@ void drawFragsWidget(int player, float textAlpha, float iconAlpha,
             numFrags += plr->frags[i];
     dd_snprintf(buf, 20, "%i", numFrags);
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     GL_DrawTextFragment4(buf, 0, -13, GF_STATUS, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS, TRACKING);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     *drawnWidth = GL_TextFragmentWidth2(buf, GF_STATUS, TRACKING);
     *drawnHeight = GL_TextFragmentHeight(buf, GF_STATUS);
@@ -1958,11 +2072,15 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
 
     if(hud->currentInvItemFlash > 0)
     {
+        DGL_Enable(DGL_TEXTURE_2D);
+
         DGL_Color4f(1, 1, 1, iconAlpha/2);
         GL_DrawPatch(dpInvItemBox, -30, -30);
 
         DGL_Color4f(1, 1, 1, iconAlpha);
         GL_DrawPatch(dpInvItemFlash[hud->currentInvItemFlash % 5].id, -27, -30);
+
+        DGL_Disable(DGL_TEXTURE_2D);
     }
     else
     {
@@ -1972,6 +2090,8 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
         {
             patchid_t patch = P_GetInvItem(readyItem-1)->patchId;
             uint count;
+
+            DGL_Enable(DGL_TEXTURE_2D);
 
             DGL_Color4f(1, 1, 1, iconAlpha/2);
             GL_DrawPatch(dpInvItemBox, -30, -30);
@@ -1985,6 +2105,8 @@ void drawCurrentItemWidget(int player, float textAlpha, float iconAlpha,
                 dd_snprintf(buf, 20, "%i", count);
                 GL_DrawTextFragment3(buf, -2, -7, GF_SMALLIN, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
             }
+
+            DGL_Disable(DGL_TEXTURE_2D);
         }
     }
     *drawnWidth = boxInfo.width;
@@ -2040,7 +2162,10 @@ void drawWorldTimerWidget(int player, float textAlpha, float iconAlpha,
             strncat(buf2, "\nYOU FREAK!!!", 20);
         strncat(buf, buf2, 60);
     }
+
+    DGL_Enable(DGL_TEXTURE_2D);
     GL_DrawText(buf, 0, 0, GF_FONTA, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS, .5f, 0, 1, 1, 1, textAlpha, 0, 0, false);
+    DGL_Disable(DGL_TEXTURE_2D);
 
     *drawnWidth = GL_TextWidth(buf, GF_FONTA);
     *drawnHeight = GL_TextHeight(buf, GF_FONTA);
@@ -2067,7 +2192,8 @@ static int __inline toGroupName(int player, int group)
     return player * NUM_UIWIDGET_GROUPS + group;
 }
 
-static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
+/*
+static void old_drawStatusbar(int player, int x, int y, int viewW, int viewH)
 {
     hudstate_t* hud = &hudStates[player];
     int needWidth;
@@ -2101,6 +2227,7 @@ static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 }
+*/
 
 void ST_Drawer(int player)
 {
