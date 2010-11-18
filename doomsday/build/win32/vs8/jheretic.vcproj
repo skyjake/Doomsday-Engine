@@ -1539,6 +1539,10 @@
 				</FileConfiguration>
 			</File>
 		</Filter>
+		<File
+			RelativePath="..\..\..\plugins\jheretic\api\jheretic.def"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

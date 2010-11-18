@@ -1604,6 +1604,10 @@
 				</FileConfiguration>
 			</File>
 		</Filter>
+		<File
+			RelativePath="..\..\..\plugins\jhexen\api\jhexen.def"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

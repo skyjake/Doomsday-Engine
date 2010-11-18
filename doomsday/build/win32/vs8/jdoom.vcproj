@@ -1528,6 +1528,10 @@
 				</FileConfiguration>
 			</File>
 		</Filter>
+		<File
+			RelativePath="..\..\..\plugins\jdoom\api\jdoom.def"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>
