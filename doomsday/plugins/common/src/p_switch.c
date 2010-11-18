@@ -211,9 +211,9 @@ void P_InitSwitchList(void)
  */
 void P_InitSwitchList(void)
 {
-    int         i, index, episode;
-    int         lump = W_CheckNumForName("SWITCHES");
-    switchlist_t *sList = switchInfo;
+    int i, index, episode;
+    lumpnum_t lumpNum = W_CheckNumForName("SWITCHES");
+    switchlist_t* sList = switchInfo;
 
 # if __JHERETIC__
     if(gameMode == shareware)
@@ -232,37 +232,41 @@ void P_InitSwitchList(void)
 # endif
 
     // Has a custom SWITCHES lump been loaded?
-    if(lump > 0)
+    if(lumpNum > 0)
     {
-        Con_Message("P_InitSwitchList: \"SWITCHES\" lump found. Reading switches...\n");
-        sList = (switchlist_t *) W_CacheLumpNum(lump, PU_STATIC);
+        VERBOSE( Con_Message("Processing lump %s::SWITCHES ...\n", M_PrettyPath(W_LumpSourceFile(lumpNum))) );
+        sList = (switchlist_t*) W_CacheLumpNum(lumpNum, PU_STATIC);
+    }
+    else
+    {
+        VERBOSE( Con_Message("Registering default switches ...\n") );
     }
 
     for(index = 0, i = 0; ; ++i)
     {
         if(index+1 >= max_numswitches)
         {
-            switchlist = realloc(switchlist, sizeof(*switchlist) *
-                (max_numswitches = max_numswitches ? max_numswitches*2 : 8));
+            switchlist = realloc(switchlist, sizeof(*switchlist) * (max_numswitches = max_numswitches ? max_numswitches*2 : 8));
         }
 
         if(SHORT(sList[i].episode) <= episode)
         {
             if(!SHORT(sList[i].episode))
                 break;
-
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL,
-                Materials_NumForName(sList[i].name1, MN_TEXTURES));
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL,
-                Materials_NumForName(sList[i].name2, MN_TEXTURES));
-            VERBOSE(Con_Message("P_InitSwitchList: ADD (\"%s\" | \"%s\" #%d)\n",
-                                sList[i].name1, sList[i].name2,
-                                SHORT(sList[i].episode)));
+            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_NumForName(sList[i].name1, MN_TEXTURES));
+            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_NumForName(sList[i].name2, MN_TEXTURES));
+            if(verbose > (lumpNum > 0? 1 : 2))
+            {
+                Con_Message("  %d: Epi:%d A:\"%s\" B:\"%s\"\n", i, SHORT(sList[i].episode), sList[i].name1, sList[i].name2);
+            }
         }
     }
 
+    if(lumpNum > 0)
+        W_ChangeCacheTag(lumpNum, PU_CACHE);
+
     numswitches = index / 2;
-    switchlist[index] = NULL;
+    switchlist[index] = 0;
 }
 #endif
 
