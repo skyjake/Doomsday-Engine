@@ -359,13 +359,13 @@ boolean GL_Grab(int x, int y, int width, int height, dgltexformat_t format, void
     return true;
 }
 
-void GL_EnableTexUnit(byte id)
+static __inline void enableTexUnit(byte id)
 {
     GL_ActiveTexture(GL_TEXTURE0 + id);
     glEnable(GL_TEXTURE_2D);
 }
 
-void GL_DisableTexUnit(byte id)
+static __inline void disableTexUnit(byte id)
 {
     GL_ActiveTexture(GL_TEXTURE0 + id);
     glDisable(GL_TEXTURE_2D);
@@ -382,19 +382,16 @@ void GL_DisableTexUnit(byte id)
  */
 void GL_SelectTexUnits(int count)
 {
-    int                 i;
-
-    // Disable extra units.
+    int i;
     for(i = numTexUnits - 1; i >= count; i--)
-        GL_DisableTexUnit(i);
+        disableTexUnit(i);
 
     // Enable the selected units.
     for(i = count - 1; i >= 0; i--)
     {
         if(i >= numTexUnits)
             continue;
-
-        GL_EnableTexUnit(i);
+        enableTexUnit(i);
     }
 }
 
@@ -592,21 +589,11 @@ boolean DGL_SetFloat(int name, float value)
     return true;
 }
 
-void DGL_EnableTexUnit(byte id)
-{
-    GL_EnableTexUnit(id);
-}
-
-void DGL_DisableTexUnit(byte id)
-{
-    GL_DisableTexUnit(id);
-}
-
 int DGL_Enable(int cap)
 {
     switch(cap)
     {
-    case DGL_TEXTURING:
+    case DGL_TEXTURE_2D:
 #ifndef DRMESA
         glEnable(GL_TEXTURE_2D);
 #endif
@@ -640,7 +627,7 @@ void DGL_Disable(int cap)
 {
     switch(cap)
     {
-    case DGL_TEXTURING:
+    case DGL_TEXTURE_2D:
         glDisable(GL_TEXTURE_2D);
         break;
 
@@ -861,6 +848,8 @@ void DGL_DrawRawScreen(lumpnum_t lump, int x, int y)
         return;
 
     GL_SetRawImage(lump, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+    glEnable(GL_TEXTURE_2D);
+
     {rawtex_t* raw;
     if((raw = R_GetRawTex(lump)))
     {
@@ -876,4 +865,6 @@ void DGL_DrawRawScreen(lumpnum_t lump, int x, int y)
             glVertex2f(x, y + raw->height);
         glEnd();
     }}
+
+    glDisable(GL_TEXTURE_2D);
 }

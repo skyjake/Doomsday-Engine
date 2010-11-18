@@ -345,6 +345,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
     if(renderTextures == 1)
     {
         GL_SetPSprite(params->mat);
+        glEnable(GL_TEXTURE_2D);
     }
     else if(renderTextures == 2)
     {   // For lighting debug, render all solid surfaces using the gray texture.
@@ -353,10 +354,7 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
 
         Materials_Prepare(&ms, mat, true, NULL);
         GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id, ms.units[MTU_PRIMARY].magMode);
-    }
-    else
-    {
-        glBindTexture(GL_TEXTURE_2D, 0);
+        glEnable(GL_TEXTURE_2D);
     }
 
     //  0---1
@@ -427,6 +425,9 @@ void Rend_DrawPSprite(const rendpspriteparams_t *params)
         glVertex2fv(v4);
     glEnd();
     }
+
+    if(renderTextures)
+        glDisable(GL_TEXTURE_2D);
 }
 
 /**
@@ -635,6 +636,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
                        params->vertices[2].pos[VZ],
                        params->vertices[2].pos[VY]);
         glEnd();
+
     }
 
     if(params->masked && renderTextures)
@@ -644,6 +646,7 @@ void Rend_RenderMaskedWall(rendmaskedwallparams_t *params)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     }
 
+    glDisable(GL_TEXTURE_2D);
     GL_BlendMode(BM_NORMAL);
 }
 
@@ -866,6 +869,7 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
 
         Materials_Prepare(&ms, mat, true, &mparams);
         GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id, ms.units[MTU_PRIMARY].magMode);
+        glEnable(GL_TEXTURE_2D);
     }
     else
     {
@@ -894,7 +898,6 @@ void Rend_RenderSprite(const rendspriteparams_t* params)
 
 /*#if _DEBUG
 // Draw the surface normal.
-glDisable(GL_TEXTURE2D);
 glBegin(GL_LINES);
 glColor4f(1, 0, 0, 1);
 glVertex3f(spriteCenter[VX], spriteCenter[VZ], spriteCenter[VY]);
@@ -903,7 +906,6 @@ glVertex3f(spriteCenter[VX] + surfaceNormal[VX] * 10,
            spriteCenter[VZ] + surfaceNormal[VZ] * 10,
            spriteCenter[VY] + surfaceNormal[VY] * 10);
 glEnd();
-glEnable(GL_TEXTURE2D);
 #endif*/
 
     // All sprite vertices are co-plannar, so just copy the surface normal.
@@ -1021,11 +1023,13 @@ glEnable(GL_TEXTURE2D);
     renderQuad(v, quadColors, tc);
     }
 
+    if(mat)
+        glDisable(GL_TEXTURE_2D);
+
     if(devMobjVLights && params->vLightListIdx)
     {   // Draw the vlight vectors, for debug.
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
-        glDisable(GL_TEXTURE_2D);
 
         glMatrixMode(GL_MODELVIEW);
         glPushMatrix();
@@ -1037,7 +1041,6 @@ glEnable(GL_TEXTURE2D);
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
 
-        glEnable(GL_TEXTURE_2D);
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
     }

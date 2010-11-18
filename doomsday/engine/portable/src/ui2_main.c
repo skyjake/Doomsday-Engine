@@ -605,9 +605,7 @@ void FIPage_Drawer(fi_page_t* p)
     // Filter on top of everything. Only draw if necessary.
     if(p->_filter[3].value > 0)
     {
-        DGL_Disable(DGL_TEXTURING);
         GL_DrawRect(0, 0, SCREENWIDTH, SCREENHEIGHT, p->_filter[0].value, p->_filter[1].value, p->_filter[2].value, p->_filter[3].value);
-        DGL_Enable(DGL_TEXTURING);
     }
 
     GL_SetMultisample(false);
@@ -909,12 +907,11 @@ static void drawGeometry(DGLuint tex, size_t numVerts, const rvertex_t* verts,
     glBindTexture(GL_TEXTURE_2D, tex);
     if(tex)
     {
+        glEnable(GL_TEXTURE_2D);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (filterUI ? GL_LINEAR : GL_NEAREST));
     }
-    else
-        DGL_Disable(DGL_TEXTURING);
 
     glBegin(GL_TRIANGLE_STRIP);
     {size_t i;
@@ -926,8 +923,8 @@ static void drawGeometry(DGLuint tex, size_t numVerts, const rvertex_t* verts,
     }}
     glEnd();
 
-    if(!tex)
-        DGL_Enable(DGL_TEXTURING);
+    if(tex)
+        glDisable(GL_TEXTURE_2D);
 }
 
 static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
@@ -1053,21 +1050,20 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
         glMatrixMode(GL_TEXTURE);
         glPushMatrix();
         glScalef(texScale[0], texScale[1], 1);
+        glEnable(GL_TEXTURE_2D);
     }
 
     drawGeometry(tex, numVerts, rvertices, rcolors, rcoords);
 
     if(tex)
     {
+        glDisable(GL_TEXTURE_2D);
         glMatrixMode(GL_TEXTURE);
         glPopMatrix();
     }
 
     if(showEdges)
     {
-        // The edges never have a texture.
-        DGL_Disable(DGL_TEXTURING);
-
         glBegin(GL_LINES);
             useColor(p->edgeColor, 4);
             glVertex2f(0, 0);
@@ -1083,8 +1079,6 @@ static void drawPicFrame(fidata_pic_t* p, uint frame, const float _origin[3],
             useColor(p->edgeColor, 4);
             glVertex2f(0, 0);
         glEnd();
-
-        DGL_Enable(DGL_TEXTURING);
     }
 
     // Restore original transformation.
@@ -1227,6 +1221,8 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
 
     glScalef(t->scale[0].value, t->scale[1].value, t->scale[2].value);
 
+    glEnable(GL_TEXTURE_2D);
+
     // Draw it.
     // Set color zero (the normal color).
     useColor(t->color, 4);
@@ -1300,6 +1296,8 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
 
         cnt++; // Actual character drawn.
     }
+
+    glDisable(GL_TEXTURE_2D);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();

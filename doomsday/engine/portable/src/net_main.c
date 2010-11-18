@@ -883,8 +883,12 @@ void Net_DrawDemoOverlay(void)
     glLoadIdentity();
     glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
 
+    glEnable(GL_TEXTURE_2D);
+
     glColor3f(1, 1, 1);
     FR_ShadowTextOut(buf, x, y);
+
+    glDisable(GL_TEXTURE_2D);
 
     // Restore original matrix.
     glMatrixMode(GL_PROJECTION);

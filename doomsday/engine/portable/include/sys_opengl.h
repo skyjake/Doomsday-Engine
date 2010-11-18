@@ -98,7 +98,7 @@ typedef struct rgba_s {
 } rgba_t;
 
 typedef struct gl_state_texture_s {
-    boolean  usePalTex, dumpTextures, useCompr;
+    boolean  usePalTex, dumpTextures, useCompr, haveCubeMap;
     float    grayMipmapFactor;
 } gl_state_texture_t;
 
@@ -112,6 +112,8 @@ typedef struct gl_state_ext_s {
     int         blendSub;
     int         s3TC;
     int         lockArray;
+    int         framebufferObject;
+    int         texEnvLODBias;
 #if WIN32
     int         wglSwapIntervalEXT;
     int         wglMultisampleARB;
@@ -123,6 +125,10 @@ extern int polyCounter;
 extern gl_state_t GL_state;
 extern gl_state_texture_t GL_state_texture;
 extern gl_state_ext_t GL_state_ext;
+
+#ifdef GL_EXT_framebuffer_object
+extern PFNGLGENERATEMIPMAPEXTPROC glGenerateMipmapEXT;
+#endif
 
 #ifdef WIN32
 extern PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;

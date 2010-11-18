@@ -530,6 +530,23 @@ void GL_ShutdownVarFont(void)
 }
 #endif
 
+static void printDGLConfiguration(void)
+{
+    static const char *yesNo[] = { "disabled", "enabled" };
+
+    Con_Message("DGL configuration:\n");
+#ifdef WIN32
+    Con_Message("  Multisampling: %s", yesNo[GL_state_ext.wglMultisampleARB? 1:0]);
+    if(GL_state_ext.wglMultisampleARB)
+        Con_Message(" (sf:%i)\n", GL_state.multisampleFormat);
+#endif
+    Con_Message("  Multitexturing: %s\n", numTexUnits > 1? (envModAdd? "full" : "partial") : "not available");
+    Con_Message("  Texture Anisotropy: %s\n", GL_state.useAnisotropic? "variable" : "fixed");
+    Con_Message("  Texture Compression: %s\n", yesNo[GL_state_texture.useCompr? 1:0]);
+    Con_Message("  Texture NPOT: %s\n", yesNo[GL_state.textureNonPow2? 1:0]);
+    Con_Message("  Utilized Texture Units: %i\n", GL_state.maxTexUnits);
+}
+
 /**
  * One-time initialization of DGL and the renderer. This is done very early
  * on during engine startup, and is supposed to be fast. All subsystems
@@ -545,37 +562,39 @@ boolean GL_EarlyInit(void)
     if(novideo)
         return true;
 
-    Con_Message("GL_Init: Initializing Doomsday Graphics Library.\n");
+    VERBOSE(Con_Message("GL_EarlyInit: Initializing Doomsday Graphics Library...\n"));
 
     // Get the original gamma ramp and check if ramps are supported.
     GL_GetGammaRamp(original_gamma_ramp);
+
+    // Does the graphics library support multitexturing?
+    numTexUnits = GL_state.maxTexUnits;
+    envModAdd = (DGL_GetInteger(DGL_MODULATE_ADD_COMBINE)? true : false);
 
     GL_InitDeferred();
 
     // Check the maximum texture size.
     if(GL_state.maxTexSize == 256)
     {
-        int             bpp;
+        int bpp;
 
         Con_Message("  Using restricted texture w/h ratio (1:8).\n");
         ratioLimit = 8;
         Sys_GetWindowBPP(windowIDX, &bpp);
         if(bpp == 32)
         {
-            Con_Message("  Warning: Are you sure your video card accelerates"
-                        " a 32 bit mode?\n");
+            Con_Message("  Warning: Are you sure your video card accelerates a 32 bit mode?\n");
         }
     }
     // Set a custom maximum size?
     if(ArgCheckWith("-maxtex", 1))
     {
-        int     customSize = M_CeilPow2(strtol(ArgNext(), 0, 0));
+        int customSize = M_CeilPow2(strtol(ArgNext(), 0, 0));
 
         if(GL_state.maxTexSize < customSize)
             customSize = GL_state.maxTexSize;
         GL_state.maxTexSize = customSize;
-        Con_Message("  Using maximum texture size of %i x %i.\n",
-                    GL_state.maxTexSize, GL_state.maxTexSize);
+        Con_Message("  Using maximum texture size of %i x %i.\n", GL_state.maxTexSize, GL_state.maxTexSize);
     }
     if(ArgCheck("-outlines"))
     {
@@ -583,19 +602,8 @@ boolean GL_EarlyInit(void)
         Con_Message("  Textures have outlines.\n");
     }
 
-    // Does the graphics library support multitexturing?
-    numTexUnits = GL_state.maxTexUnits;
-    envModAdd = (DGL_GetInteger(DGL_MODULATE_ADD_COMBINE)? true : false);
-    if(numTexUnits > 1)
-    {
-        Con_Printf("  Multitexturing enabled (%s).\n",
-                   envModAdd ? "full" : "partial");
-    }
-    else
-    {
-        // Can't use multitexturing...
-        Con_Printf("  Multitexturing not available.\n");
-    }
+
+    printDGLConfiguration();
 
     // Initialize the renderer into a 2D state.
     GL_Init2DState();
@@ -604,7 +612,7 @@ boolean GL_EarlyInit(void)
     FR_Init();
 
     // Render a few black frames before we continue. This will help to
-    // stableize things before we begin drawing for real and to avoid any
+    // stabilize things before we begin drawing for real and to avoid any
     // unwanted video artefacts.
     {
     int i = 0;
@@ -634,11 +642,10 @@ void GL_Init(void)
     // Initialize font renderer.
     GL_InitFont();
 
-    // Initialize palette management.
+    // Initialize paletted-texture-mode (if enabled).
     GL_InitPalettedTexture();
 
-    // Set the gamma in accordance with vid-gamma, vid-bright and
-    // vid-contrast.
+    // Set the gamma in accordance with vid-gamma, vid-bright and vid-contrast.
     GL_SetGamma();
 
     // Initialize one viewport.
@@ -704,7 +711,11 @@ void GL_Init2DState(void)
     // Here we configure the OpenGL state and set the projection matrix.
     glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
+
+    glDisable(GL_TEXTURE_1D);
+    glDisable(GL_TEXTURE_2D);
+    if(GL_state_texture.haveCubeMap)
+        glDisable(GL_TEXTURE_CUBE_MAP);
 
     // The projection matrix.
     glMatrixMode(GL_PROJECTION);

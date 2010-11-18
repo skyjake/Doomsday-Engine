@@ -1217,10 +1217,12 @@ void Sfx_DebugInfo(void)
     char                buf[200];
     uint                cachesize, ccnt;
 
+    glEnable(GL_TEXTURE_2D);
     glColor3f(1, 1, 0);
     if(!sfxAvail)
     {
         FR_ShadowTextOut("Sfx disabled", 0, 0);
+        glDisable(GL_TEXTURE_2D);
         return;
     }
 
@@ -1263,4 +1265,6 @@ void Sfx_DebugInfo(void)
                 ch->buffer->cursor, ch->buffer->written);
         FR_ShadowTextOut(buf, 5, lh * (2 + i * 2));
     }
+
+    glDisable(GL_TEXTURE_2D);
 }

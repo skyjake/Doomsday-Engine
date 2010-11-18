@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -396,13 +396,12 @@ static void Con_BusyLoop(void)
  * Draws the captured screenshot as a background, or just clears the screen if no
  * screenshot is available.
  */
-static void Con_DrawScreenshotBackground(float x, float y, float width,
-                                         float height)
+static void Con_DrawScreenshotBackground(float x, float y, float width, float height)
 {
     if(texScreenshot)
     {
-        glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, texScreenshot);
+        glEnable(GL_TEXTURE_2D);
 
         glColor3ub(255, 255, 255);
         glBegin(GL_QUADS);
@@ -415,6 +414,8 @@ static void Con_DrawScreenshotBackground(float x, float y, float width,
             glTexCoord2f(0, 0);
             glVertex2f(x, y + height);
         glEnd();
+
+        glDisable(GL_TEXTURE_2D);
     }
     else
     {
@@ -438,7 +439,6 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
     edgeCount = MAX_OF(1, pos * 30);
 
     // Draw a background.
-    glDisable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
     GL_BlendMode(BM_NORMAL);
 
@@ -498,6 +498,8 @@ static void Con_BusyDrawIndicator(float x, float y, float radius, float pos)
         glColor4f(1.f, 1.f, 1.f, .66f);
         FR_TextOut(busyTaskName, x+radius, y - busyFontHgt/2);
     }
+
+    glDisable(GL_TEXTURE_2D);
 }
 
 #define LINE_COUNT 4
@@ -579,7 +581,6 @@ void Con_BusyDrawConsoleOutput(void)
         }
     }
 
-    glDisable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
     GL_BlendMode(BM_NORMAL);
 
@@ -629,6 +630,8 @@ void Con_BusyDrawConsoleOutput(void)
             FR_TextOut(line->text, (theWindow->width - FR_TextWidth(line->text))/2, y);
         }
     }
+
+    glDisable(GL_TEXTURE_2D);
 
 #undef LINE_COUNT
 }
@@ -718,6 +721,7 @@ void Con_DrawTransition(void)
     glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
 
     glBindTexture(GL_TEXTURE_2D, texScreenshot);
+    glEnable(GL_TEXTURE_2D);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
@@ -781,211 +785,8 @@ void Con_DrawTransition(void)
         break;
     }
 
+    glDisable(GL_TEXTURE_2D);
+
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
 }
-
-#if 0
-/*
- * The startup screen mode is used during engine startup.  In startup
- * mode, the whole screen is used for console output.
- */
-void Con_StartupInit(void)
-{
-    static boolean firstTime = true;
-
-    if(novideo)
-        return;
-
-    GL_InitVarFont();
-    fontHgt = FR_SingleLineHeight("Doomsday!");
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, glScreenWidth, glScreenHeight, 0, -1, 1);
-
-    if(firstTime)
-    {
-        titleText = "Doomsday " DOOMSDAY_VERSION_TEXT " Startup";
-        firstTime = false;
-    }
-    else
-    {
-        titleText = "Doomsday " DOOMSDAY_VERSION_TEXT;
-    }
-
-    // Load graphics.
-    startupLogo = GL_PrepareExtTexture(DDRC_GRAPHICS, "Background", LGM_GRAYSCALE,
-        false, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/, GL_CLAMP_TO_EDGE,
-        GL_CLAMP_TO_EDGE, 0);
-}
-
-void Con_StartupDone(void)
-{
-    if(isDedicated)
-        return;
-    titleText = "Doomsday " DOOMSDAY_VERSION_TEXT;
-    glDeleteTextures(1, (const GLuint*) &startupLogo);
-    startupLogo = 0;
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    GL_ShutdownVarFont();
-
-    // Update the secondary title and the game status.
-    strncpy(secondaryTitleText, (char *) gx.GetVariable(DD_GAME_ID),
-            sizeof(secondaryTitleText) - 1);
-    strncpy(statusText, (char *) gx.GetVariable(DD_GAME_MODE),
-            sizeof(statusText) - 1);
-}
-
-/**
- * Background with the "The Doomsday Engine" text superimposed.
- *
- * @param alpha         Alpha level to use when drawing the background.
- */
-void Con_DrawStartupBackground(float alpha)
-{
-    float               mul = (startupLogo ? 1.5f : 1.0f);
-    ui_color_t*         dark = UI_COL(UIC_BG_DARK),
-                       *light = UI_COL(UIC_BG_LIGHT);
-
-    // Background gradient picture.
-    glBindTexture(GL_TEXTURE_2D, startupLogo);
-    if(alpha < 1.0)
-    {
-        glEnable(GL_BLEND);
-        GL_BlendMode(BM_NORMAL);
-    }
-    else
-    {
-        glDisable(GL_BLEND);
-    }
-    glBegin(GL_QUADS);
-        // Top color.
-        glColor4f(dark->red * mul, dark->green * mul, dark->blue * mul, alpha);
-        glTexCoord2f(0, 0);
-        glVertex2f(0, 0);
-        glTexCoord2f(1, 0);
-        glVertex2f(glScreenWidth, 0);
-        // Bottom color.
-        glColor4f(light->red * mul, light->green * mul, light->blue * mul, alpha);
-        glTexCoord2f(1, 1);
-        glVertex2f(glScreenWidth, glScreenHeight);
-        glTexCoord2f(0, 1);
-        glVertex2f(0, glScreenHeight);
-    glEnd();
-    glEnable(GL_BLEND);
-}
-
-/*
- * Draws the title bar of the console.
- *
- * @return  Title bar height.
- */
-int Con_DrawTitle(float alpha)
-{
-    int width = 0;
-    int height = UI_FontHeight();
-
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-
-    FR_SetFont(glFontVariable[GLFS_BOLD]);
-    height = FR_TextHeight("W") + UI_ScreenW(UI_BORDER);
-    UI_DrawTitleEx(titleText, height, alpha);
-    if(secondaryTitleText[0])
-    {
-        width = FR_TextWidth(titleText) + FR_TextWidth("  ");
-        FR_SetFont(glFontVariable[GLFS_LIGHT]);
-        UI_TextOutEx(secondaryTitleText, UI_ScreenW(UI_BORDER) + width, height / 2,
-                     false, true, UI_COL(UIC_TEXT), .75f * alpha);
-    }
-    if(statusText[0])
-    {
-        width = FR_TextWidth(statusText);
-        FR_SetFont(glFontVariable[GLFS_LIGHT]);
-        UI_TextOutEx(statusText, glScreenWidth - UI_ScreenW(UI_BORDER) - width, height / 2,
-                     false, true, UI_COL(UIC_TEXT), .75f * alpha);
-    }
-
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-
-    FR_SetFont(glFontFixed);
-    return height;
-}
-
-/*
- * Draw the background and the current console output.
- */
-void Con_DrawStartupScreen(int show)
-{
-    int         vislines, y, x;
-    int         topy;
-    uint        i, count;
-    cbuffer_t  *buffer;
-    static cbline_t **lines = NULL;
-    static int  bufferSize = 0;
-    cbline_t   *line;
-
-    // Print the messages in the console.
-    if(ui_active)
-        return;
-
-    //glMatrixMode(GL_PROJECTION);
-    //glLoadIdentity();
-    //glOrtho(0, glScreenWidth, glScreenHeight, 0, -1, 1);
-
-    Con_DrawStartupBackground(1.0);
-
-    // Draw the title.
-    topy = Con_DrawTitle(1.0);
-
-    topy += UI_ScreenW(UI_BORDER);
-    vislines = (glScreenHeight - topy + fontHgt / 2) / fontHgt;
-    y = topy;
-
-    buffer = Con_GetConsoleBuffer();
-    if(vislines > 0)
-    {
-        // Need to enlarge the buffer?
-        if(vislines > bufferSize)
-        {
-            lines = Z_Realloc(lines, sizeof(cbline_t *) * (vislines + 1),
-                              PU_STATIC);
-            bufferSize = vislines;
-        }
-
-        count = Con_BufferGetLines(buffer, vislines, -vislines, lines);
-        if(count > 0)
-        {
-            for(i = 0; i < count - 1; ++i)
-            {
-                line = lines[i];
-
-                if(!line)
-                    break;
-                if(line->flags & CBLF_RULER)
-                {
-                    Con_DrawRuler(y, fontHgt, 1);
-                }
-                else
-                {
-                    if(!line->text)
-                        continue;
-
-                    x = (line->flags & CBLF_CENTER ?
-                            (glScreenWidth - FR_TextWidth(line->text)) / 2 : 3);
-                    //glColor3f(0, 0, 0);
-                    //FR_TextOut(line->text, x + 1, y + 1);
-                    glColor3f(1, 1, 1);
-                    FR_CustomShadowTextOut(line->text, x, y, 1, 1, 1);
-                }
-                y += fontHgt;
-            }
-        }
-    }
-}
-#endif

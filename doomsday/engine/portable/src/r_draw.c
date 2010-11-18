@@ -179,6 +179,8 @@ void R_DrawViewBorder(void)
     if(viewwidth == port->width && viewheight == port->height)
         return;
 
+    glEnable(GL_TEXTURE_2D);
+
     glMatrixMode(GL_TEXTURE);
     glPushMatrix();
 
@@ -224,4 +226,6 @@ void R_DrawViewBorder(void)
         R_DrawPatch3(R_FindPatchTex(borderPatches[BG_BOTTOMRIGHT]), viewwindowx + viewwidth, viewwindowy + viewheight, border, border, false);
         R_DrawPatch3(R_FindPatchTex(borderPatches[BG_BOTTOMLEFT]), viewwindowx - border, viewwindowy + viewheight, border, border, false);
     }
+
+    glDisable(GL_TEXTURE_2D);
 }

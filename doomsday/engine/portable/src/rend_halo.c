@@ -353,6 +353,7 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
         }
 
         GL_BindTexture(renderTextures? tex : 0, GL_LINEAR);
+        glEnable(GL_TEXTURE_2D);
 
         // Don't wrap the texture. Evidently some drivers can't just
         // take a hint... (or then something's changing the wrapping
@@ -380,6 +381,8 @@ boolean H_RenderHalo(float x, float y, float z, float size, DGLuint tex,
                        haloPos[VY] - radY * rightOff[VY],
                        haloPos[VZ] - radX * rightOff[VZ]);
         glEnd();
+
+        glDisable(GL_TEXTURE_2D);
     }
 
     glMatrixMode(GL_TEXTURE);

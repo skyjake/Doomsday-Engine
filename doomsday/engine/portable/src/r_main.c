@@ -1046,7 +1046,7 @@ static void restoreDefaultGLState(void)
     // Here we use the DGL methods as this ensures it's state is kept in sync.
     DGL_Disable(DGL_FOG);
     DGL_Disable(DGL_SCISSOR_TEST);
-    DGL_Enable(DGL_TEXTURING);
+    DGL_Disable(DGL_TEXTURE_2D);
     DGL_Enable(DGL_LINE_SMOOTH);
     DGL_Enable(DGL_POINT_SMOOTH);
 }

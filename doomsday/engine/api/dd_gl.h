@@ -51,7 +51,7 @@ enum {
     DGL_TEXTURE,
 
     // Caps
-    DGL_TEXTURING = 0x5000,
+    DGL_TEXTURE_2D = 0x5000,
     DGL_SCISSOR_TEST,
     DGL_FOG,
     DGL_MODULATE_ADD_COMBINE,
@@ -251,6 +251,4 @@ void            DGL_DrawRawScreen(lumpnum_t lump, int x, int y);
  */
 int             DGL_Bind(DGLuint texture);
 void            DGL_DeleteTextures(int num, const DGLuint* names);
-void            DGL_EnableTexUnit(byte id);
-void            DGL_DisableTexUnit(byte id);
 #endif

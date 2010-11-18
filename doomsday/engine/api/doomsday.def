@@ -11,6 +11,8 @@ NAME            "DOOMSDAY"
 ; 326 formerly PO_Alloc
 ; 328 formerly FI_IsMenuTrigger
 ; 332 formerly P_ControlReset
+; 405 formerly DGL_EnableTexUnit
+; 406 formerly DGL_DisableTexUnit
 
 EXPORTS
 ; Plugins.
@@ -341,8 +343,6 @@ EXPORTS
     DGL_SetRawImage             @119 NONAME
     DGL_Enable                  @387 NONAME
     DGL_Disable                 @388 NONAME
-    DGL_EnableTexUnit           @405 NONAME
-    DGL_DisableTexUnit          @406 NONAME
     DGL_GetIntegerv             @392 NONAME
     DGL_GetInteger              @393 NONAME
     DGL_SetInteger              @394 NONAME

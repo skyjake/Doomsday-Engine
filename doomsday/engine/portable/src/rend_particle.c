@@ -524,12 +524,12 @@ static void renderParticles(int rtype, boolean withBlend)
         glDepthMask(GL_FALSE);
         glDisable(GL_CULL_FACE);
         glBindTexture(GL_TEXTURE_2D, tex);
+        glEnable(GL_TEXTURE_2D);
         glDepthFunc(GL_LEQUAL);
         glBegin(primType = GL_QUADS);
     }
     else
     {
-        glDisable(GL_TEXTURE_2D); // Lines don't use textures.
         glBegin(primType = GL_LINES);
     }
 
@@ -767,10 +767,8 @@ static void renderParticles(int rtype, boolean withBlend)
             glEnable(GL_CULL_FACE);
             glDepthMask(GL_TRUE);
             glDepthFunc(GL_LESS);
-        }
-        else
-        {
-            glEnable(GL_TEXTURE_2D);
+
+            glDisable(GL_TEXTURE_2D);
         }
     }
 
@@ -783,7 +781,9 @@ static void renderParticles(int rtype, boolean withBlend)
 
 static void renderPass(boolean useBlending)
 {
-    int i;
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
 
     // Set blending mode.
     if(useBlending)
@@ -798,15 +798,19 @@ static void renderPass(boolean useBlending)
     if(hasPoints)
         renderParticles(PTC_POINT, useBlending);
 
+    { int i;
     for(i = 0; i < NUM_TEX_NAMES; ++i)
         if(hasPointTexs[i])
-        {
             renderParticles(PTC_TEXTURE + i, useBlending);
-        }
+    }
 
     // Restore blending mode.
     if(useBlending)
         GL_BlendMode(BM_NORMAL);
+
+#ifdef _DEBUG
+    Sys_CheckGLError();
+#endif
 }
 
 /**
@@ -870,6 +874,8 @@ static boolean drawGeneratorOrigin(ptcgen_t* gen, void* context)
             float scale = dist / (theWindow->width / 2);
             char buf[80];
 
+            sprintf(buf, "%i", P_PtcGenToIndex(gen));
+
             glMatrixMode(GL_MODELVIEW);
             glPushMatrix();
 
@@ -878,8 +884,9 @@ static boolean drawGeneratorOrigin(ptcgen_t* gen, void* context)
             glRotatef(vpitch, 1, 0, 0);
             glScalef(-scale, -scale, 1);
 
-            sprintf(buf, "%i", P_PtcGenToIndex(gen));
+            glEnable(GL_TEXTURE_2D);
             UI_TextOutEx(buf, 2, 2, false, false, UI_Color(UIC_TITLE), alpha);
+            glDisable(GL_TEXTURE_2D);
 
             glMatrixMode(GL_MODELVIEW);
             glPopMatrix();
@@ -901,12 +908,11 @@ void Rend_RenderGenerators(void)
     if(!devDrawGenerators)
         return;
 
-    glDisable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
-
     eye[VX] = vx;
     eye[VY] = vz;
     eye[VZ] = vy;
+
+    glDisable(GL_DEPTH_TEST);
 
     P_IteratePtcGens(drawGeneratorOrigin, eye);
 

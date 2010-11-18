@@ -4181,7 +4181,6 @@ void Rend_RenderNormals(void)
     if(!devSurfaceNormals)
         return;
 
-    glDisable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
 
     for(i = 0; i < numSegs; ++i)
@@ -4271,7 +4270,6 @@ void Rend_RenderNormals(void)
     }
 
     glEnable(GL_CULL_FACE);
-    glEnable(GL_TEXTURE_2D);
 
 #undef NORM_TAIL_LENGTH
 }
@@ -4352,8 +4350,12 @@ static void drawVertexIndex(const vertex_t* vtx, float z, float scale, float alp
     glRotatef(vpitch, 1, 0, 0);
     glScalef(-scale, -scale, 1);
 
+    glEnable(GL_TEXTURE_2D);
+
     sprintf(buf, "%lu", (unsigned long) (vtx - vertexes));
     UI_TextOutEx(buf, 2, 2, false, false, UI_Color(UIC_TITLE), alpha);
+
+    glDisable(GL_TEXTURE_2D);
 
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
@@ -4377,14 +4379,10 @@ static boolean drawVertex1(linedef_t* li, void* context)
             float               bottom = po->subsector->sector->SP_floorvisheight;
             float               top = po->subsector->sector->SP_ceilvisheight;
 
-            glDisable(GL_TEXTURE_2D);
-
             if(devVertexBars)
                 drawVertexBar(vtx, bottom, top, MIN_OF(alpha, .15f));
 
             drawVertexPoint(vtx, bottom, alpha * 2);
-
-            glEnable(GL_TEXTURE_2D);
         }
     }
 
@@ -4435,7 +4433,6 @@ void Rend_Vertexes(void)
         glEnable(GL_LINE_SMOOTH);
         oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
         DGL_SetFloat(DGL_LINE_WIDTH, 2);
-        glDisable(GL_TEXTURE_2D);
 
         for(i = 0; i < numVertexes; ++i)
         {
@@ -4462,15 +4459,12 @@ void Rend_Vertexes(void)
                 drawVertexBar(vtx, bottom, top, alpha);
             }
         }
-
-        glEnable(GL_TEXTURE_2D);
     }
 
     // Always draw the vertex point nodes.
     glEnable(GL_POINT_SMOOTH);
     oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
     DGL_SetFloat(DGL_POINT_SIZE, 6);
-    glDisable(GL_TEXTURE_2D);
 
     for(i = 0; i < numVertexes; ++i)
     {
@@ -4495,7 +4489,6 @@ void Rend_Vertexes(void)
         }
     }
 
-    glEnable(GL_TEXTURE_2D);
 
     if(devVertexIndices)
     {
@@ -4760,8 +4753,6 @@ void R_DrawLightRange(void)
     color.green = 0;
     color.blue = 0.6f;
 
-    glDisable(GL_TEXTURE_2D);
-
     // Draw an outside border.
     glColor4f(1, 1, 0, 1);
     glBegin(GL_LINES);
@@ -4788,8 +4779,6 @@ void R_DrawLightRange(void)
         glVertex2f(i * bWidth, bHeight);
     }
     glEnd();
-
-    glEnable(GL_TEXTURE_2D);
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
@@ -5057,5 +5046,6 @@ static void Rend_RenderBoundingBoxes(void)
     GL_BlendMode(BM_NORMAL);
 
     glEnable(GL_CULL_FACE);
+    glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
 }

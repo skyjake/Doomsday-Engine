@@ -741,8 +741,6 @@ static void SBE_DrawLevelGauge(int x, int y, int height)
     if(sector->lightLevel > maxLevel)
         maxLevel = sector->lightLevel;
 
-    glDisable(GL_TEXTURE_2D);
-
     glBegin(GL_LINES);
     glColor4f(1, 1, 1, .5f);
     glVertex2f(x + off, y);
@@ -789,6 +787,8 @@ static void SBE_DrawLevelGauge(int x, int y, int height)
         sprintf(buf, "%03i", (short) (255.0f * minLevel));
         UI_TextOutEx(buf, x + 2*off, minY, true, true, UI_Color(UIC_TEXT), .7f);
     }
+
+    glDisable(GL_TEXTURE_2D);
 }
 
 void SBE_DrawHUD(void)
@@ -808,19 +808,18 @@ void SBE_DrawHUD(void)
     glLoadIdentity();
     glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
 
+    glEnable(GL_TEXTURE_2D);
+
     // Overall stats: numSources / MAX (left)
-    sprintf(buf, "%i / %i (%i free)", numSources, MAX_BIAS_LIGHTS,
-            MAX_BIAS_LIGHTS - numSources);
+    sprintf(buf, "%i / %i (%i free)", numSources, MAX_BIAS_LIGHTS, MAX_BIAS_LIGHTS - numSources);
     w = FR_TextWidth(buf) + 16;
     h = FR_TextHeight(buf) + 16;
     y = theWindow->height - 10 - h;
     SBE_DrawBox(10, y, w, h, 0);
-    UI_TextOutEx(buf, 18, y + h / 2, false, true,
-                 UI_Color(UIC_TITLE), alpha);
+    UI_TextOutEx(buf, 18, y + h / 2, false, true, UI_Color(UIC_TITLE), alpha);
 
     // The map ID.
-    UI_TextOutEx(P_GetUniqueMapID(map), 18, y - h/2, false, true,
-                 UI_Color(UIC_TITLE), alpha);
+    UI_TextOutEx(P_GetUniqueMapID(map), 18, y - h/2, false, true, UI_Color(UIC_TITLE), alpha);
 
     // Stats for nearest & grabbed:
     if(numSources)
@@ -838,6 +837,8 @@ void SBE_DrawHUD(void)
     {
         SBE_DrawLevelGauge(20, theWindow->height/2 - 255/2, 255);
     }
+
+    glDisable(GL_TEXTURE_2D);
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
@@ -949,7 +950,6 @@ static void SBE_DrawHue(void)
     eye[2] = vz;
 
     glDisable(GL_DEPTH_TEST);
-    glDisable(GL_TEXTURE_2D);
     glDisable(GL_CULL_FACE);
 
     glMatrixMode(GL_MODELVIEW);
@@ -1044,7 +1044,6 @@ static void SBE_DrawHue(void)
     glPopMatrix();
 
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
     glEnable(GL_CULL_FACE);
 }
 
@@ -1083,8 +1082,6 @@ void SBE_DrawCursor(void)
 
         s = SBE_GetNearest();
     }
-
-    glDisable(GL_TEXTURE_2D);
 
     SBE_GetHand(hand);
     if((distance = M_Distance(s->pos, hand)) > 2 * editDistance)
@@ -1152,7 +1149,6 @@ void SBE_DrawCursor(void)
         }
     }
 
-    glEnable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
 
 #undef SET_COL

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -240,7 +240,6 @@ void Rend_SkyRenderer(int hemi)
     // one is always faded.
     if(hemi & SKYHEMI_JUST_CAP)
     {
-        glDisable(GL_TEXTURE_2D);
         // Use the appropriate color.
         if(currentFO->use)
             glColor3fv(currentFO->rgb);
@@ -268,13 +267,12 @@ void Rend_SkyRenderer(int hemi)
             CapSideVertex(1, c);
             glEnd();
         }
-
-        glEnable(GL_TEXTURE_2D);
         return;
     }
 
     // The total number of triangles per hemisphere can be calculated
     // as follows: rows * columns * 2 + 2 (for the top cap).
+    glEnable(GL_TEXTURE_2D);
     for(r = 0; r < skyRows; ++r)
     {
         if(simpleSky)
@@ -302,6 +300,7 @@ void Rend_SkyRenderer(int hemi)
             glEnd();
         }
     }
+    glDisable(GL_TEXTURE_2D);
 }
 
 static void setupFadeout(skylayer_t* slayer)

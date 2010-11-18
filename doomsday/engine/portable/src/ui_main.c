@@ -550,6 +550,8 @@ void UI_Drawer(void)
     glLoadIdentity();
     glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
 
+    glEnable(GL_TEXTURE_2D);
+
     // Call the active page's drawer.
     uiCurrentPage->drawer(uiCurrentPage);
 
@@ -568,6 +570,8 @@ void UI_Drawer(void)
 
         UI_DrawMouse(uiCX - 1, uiCY - 1, width, height);
     }
+
+    glDisable(GL_TEXTURE_2D);
 
     // Restore the original matrices.
     glMatrixMode(GL_PROJECTION);
@@ -1821,14 +1825,12 @@ void UI_Line(int x1, int y1, int x2, int y2, ui_color_t* start, ui_color_t* end,
     startAlpha *= uiAlpha;
     endAlpha   *= uiAlpha;
 
-    glDisable(GL_TEXTURE_2D);
     glBegin(GL_LINES);
         UI_SetColorA(start, startAlpha);
         glVertex2f(x1, y1);
         UI_SetColorA(end ? end : start, endAlpha);
         glVertex2f(x2, y2);
     glEnd();
-    glEnable(GL_TEXTURE_2D);
 }
 
 void UI_TextOut(const char* text, int x, int y)
@@ -2057,7 +2059,6 @@ void UI_DrawTriangle(int x, int y, int radius, ui_color_t* hi, ui_color_t* med,
     alpha *= uiAlpha;
     if(alpha <= 0) return;
 
-    glDisable(GL_TEXTURE_2D);
     glBegin(GL_TRIANGLES);
 
     y += radius / 4;
@@ -2085,7 +2086,6 @@ void UI_DrawTriangle(int x, int y, int radius, ui_color_t* hi, ui_color_t* med,
     glVertex2f(x - xrad, y + yrad);
 
     glEnd();
-    glEnable(GL_TEXTURE_2D);
 }
 
 void UI_DrawHorizTriangle(int x, int y, int radius, ui_color_t* hi, ui_color_t* med,
@@ -2098,7 +2098,6 @@ void UI_DrawHorizTriangle(int x, int y, int radius, ui_color_t* hi, ui_color_t* 
     if(alpha <= 0)
         return;
 
-    glDisable(GL_TEXTURE_2D);
     glBegin(GL_TRIANGLES);
 
     x += radius / 4;
@@ -2129,7 +2128,6 @@ void UI_DrawHorizTriangle(int x, int y, int radius, ui_color_t* hi, ui_color_t* 
     glVertex2f(x + xrad, y + yrad);
 
     glEnd();
-    glEnable(GL_TEXTURE_2D);
 }
 
 void UI_DefaultButtonBackground(ui_color_t* col, boolean down)
@@ -2217,6 +2215,8 @@ void UI_DrawDDBackground(float x, float y, float w, float h, float alpha)
 
     // Background gradient picture.
     glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_BACKGROUND]);
+    glEnable(GL_TEXTURE_2D);
+
     if(alpha < 1.0)
     {
         glEnable(GL_BLEND);
@@ -2244,6 +2244,7 @@ void UI_DrawDDBackground(float x, float y, float w, float h, float alpha)
     glEnd();
 
     glEnable(GL_BLEND);
+    glDisable(GL_TEXTURE_2D);
 }
 
 /**

@@ -1674,6 +1674,7 @@ void Rend_DrawShadowOffsetVerts(void)
     glDisable(GL_DEPTH_TEST);
 
     GL_BindTexture(GL_PrepareLSTexture(LST_DYNAMIC), GL_LINEAR);
+    glEnable(GL_TEXTURE_2D);
 
     for(i = 0; i < numLineDefs; ++i)
     {
@@ -1699,6 +1700,7 @@ void Rend_DrawShadowOffsetVerts(void)
         }
     }
 
+    glDisable(GL_TEXTURE_2D);
     glDepthMask(GL_TRUE);
     glEnable(GL_DEPTH_TEST);
 }

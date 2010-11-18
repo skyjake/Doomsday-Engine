@@ -56,6 +56,10 @@
 gl_state_t GL_state;
 gl_state_ext_t GL_state_ext;
 
+#ifdef GL_EXT_framebuffer_object
+PFNGLGENERATEMIPMAPEXTPROC glGenerateMipmapEXT;
+#endif
+
 #ifdef WIN32
 PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
@@ -116,8 +120,8 @@ static void checkExtensions(void)
 
 static void printGLUInfo(void)
 {
-    GLint           iVal;
-    GLfloat         fVals[2];
+    GLint iVal;
+    GLfloat fVals[2];
 
     // Print some OpenGL information (console must be initialized by now).
     Con_Message("OpenGL information:\n");
@@ -126,52 +130,41 @@ static void printGLUInfo(void)
     Con_Message("  Version: %s\n", glGetString(GL_VERSION));
     Con_Message("  GLU Version: %s\n", gluGetString(GLU_VERSION));
 
-    glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iVal);
-    Con_Message("  Available Texture units: %i\n", iVal);
+    if(GL_state_ext.s3TC)
+    {
+        glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
+        Con_Message("  Available Compressed Texture Formats: %i\n", iVal);
+    }
 
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &iVal);
-    Con_Message("  Maximum Texture Size: %i\n", iVal);
+    glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iVal);
+    Con_Message("  Available Texture Units: %i\n", iVal);
+
     if(GL_state_ext.aniso)
     {
         glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &iVal);
-        Con_Message("  Maximum Anisotropy: %i\n", iVal);
+        Con_Message("  Maximum Texture Anisotropy: %i\n", iVal);
     }
     else
     {
         Con_Message("  Variable Texture Anisotropy Unavailable.\n");
     }
 
-    if(GL_state_ext.s3TC)
-    {
-        glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
-        Con_Message("  Num Texture Formats: %i\n", iVal);
-    }
+#if GL_EXT_texture_lod_bias
+    { float lodBiasMax = 0;
+    glGetFloatv(GL_MAX_TEXTURE_LOD_BIAS, &lodBiasMax);
+    Con_Message("  Maximum Texture LOD Bias: %3.1f\n", lodBiasMax); }
+#endif
+
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &iVal);
+    Con_Message("  Maximum Texture Size: %i\n", iVal);
 
     glGetFloatv(GL_LINE_WIDTH_GRANULARITY, fVals);
-    Con_Message("  Line Width Granularity: %3.1f\n",
-                fVals[0]);
+    Con_Message("  Line Width Granularity: %3.1f\n", fVals[0]);
+
     glGetFloatv(GL_LINE_WIDTH_RANGE, fVals);
-    Con_Message("  Line Width Range: %3.1f...%3.1f\n",
-                fVals[0], fVals[1]);
+    Con_Message("  Line Width Range: %3.1f...%3.1f\n", fVals[0], fVals[1]);
 
     Sys_PrintGLExtensions();
-}
-
-static void printDGLConfiguration(void)
-{
-    static const char *yesNo[] = {"Disabled", "Enabled"};
-
-    Con_Message("DGL Configuration:\n");
-
-    Con_Message("  NPOT Textures: %s\n", yesNo[GL_state.textureNonPow2? 1:0]);
-    Con_Message("  Texture Compression: %s\n", yesNo[GL_state_texture.useCompr? 1:0]);
-    Con_Message("  Variable Texture Anisotropy: %s\n", yesNo[GL_state.useAnisotropic? 1:0]);
-    Con_Message("  Utilized Texture Units: %i\n", GL_state.maxTexUnits);
-#ifdef WIN32
-    Con_Message("  Multisampling: %s", yesNo[GL_state_ext.wglMultisampleARB? 1:0]);
-    if(GL_state_ext.wglMultisampleARB)
-        Con_Message(" (%i)\n", GL_state.multisampleFormat);
-#endif
 }
 
 #ifdef WIN32
@@ -404,9 +397,7 @@ boolean Sys_InitGL(void)
     if(firstTimeInit)
     {
         checkExtensions();
-
         printGLUInfo();
-        printDGLConfiguration();
 
         firstTimeInit = false;
     }
@@ -424,7 +415,7 @@ void Sys_ShutdownGL(void)
 
 void Sys_InitGLState(void)
 {
-    GLfloat         fogcol[4] = { .54f, .54f, .54f, 1 };
+    GLfloat fogcol[4] = { .54f, .54f, .54f, 1 };
 
     GL_state.nearClip = 5;
     GL_state.farClip = 8000;
@@ -434,17 +425,21 @@ void Sys_InitGLState(void)
     GL_state_texture.dumpTextures = false;
     GL_state_texture.useCompr = false;
 
+    { double version = strtod((const char*) glGetString(GL_VERSION), 0);
+    // If older than 1.4, disable use of cube maps.
+    GL_state_texture.haveCubeMap = !(version < 1.4); }
+
     // Here we configure the OpenGL state and set projection matrix.
     glFrontFace(GL_CW);
     glDisable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glDisable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-#ifndef DRMESA
-    glEnable(GL_TEXTURE_2D);
-#else
+
+    glDisable(GL_TEXTURE_1D);
     glDisable(GL_TEXTURE_2D);
-#endif
+    if(GL_state_texture.haveCubeMap)
+        glDisable(GL_TEXTURE_CUBE_MAP);
 
     // The projection matrix.
     glMatrixMode(GL_PROJECTION);
@@ -640,14 +635,12 @@ void Sys_InitGLExtensions(void)
         query("GL_EXT_texture_env_combine", &GL_state_ext.texEnvComb);
     }
 
-    // NV_texture_env_combine4
     query("GL_NV_texture_env_combine4", &GL_state_ext.nvTexEnvComb);
 
-    // ATI_texture_env_combine3
     query("GL_ATI_texture_env_combine3", &GL_state_ext.atiTexEnvComb);
 
-    // Texture compression.
     query("GL_EXT_texture_compression_s3tc", &GL_state_ext.s3TC);
+
     // On by default if we have it.
     glGetError();
     glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
@@ -677,6 +670,17 @@ void Sys_InitGLExtensions(void)
         // Use nice quality, please.
         glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
     }
+
+    if(query("GL_EXT_framebuffer_object", &GL_state_ext.framebufferObject))
+    {
+        GETPROC(glGenerateMipmapEXT);
+    }
+
+    query("GL_SGIS_generate_mipmap", &GL_state_ext.genMip);
+
+#if GL_EXT_texture_lod_bias
+    query("GL_EXT_texture_lod_bias", &GL_state_ext.texEnvLODBias);
+#endif
 }
 
 /**

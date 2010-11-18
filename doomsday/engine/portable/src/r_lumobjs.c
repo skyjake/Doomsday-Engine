@@ -875,7 +875,6 @@ void LO_DrawLumobjs(void)
     if(!devDrawLums)
         return;
 
-    glDisable(GL_TEXTURE_2D);
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
 
@@ -971,5 +970,4 @@ void LO_DrawLumobjs(void)
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_TEXTURE_2D);
 }

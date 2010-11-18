@@ -80,9 +80,10 @@ void GL_DrawRect2(float x, float y, float width, float height, DGLuint tex,
         return;
 
     if(tex)
+    {
         glBindTexture(GL_TEXTURE_2D, tex);
-    else
-        glDisable(GL_TEXTURE_2D);
+        glEnable(GL_TEXTURE_2D);
+    }
 
     if(tex || topAlpha < 1.0 || bottomAlpha < 1.0)
     {
@@ -110,7 +111,9 @@ void GL_DrawRect2(float x, float y, float width, float height, DGLuint tex,
         glVertex2f(x, y + height);
     glEnd();
 
-    glEnable(GL_TEXTURE_2D);
+    if(tex)
+        glDisable(GL_TEXTURE_2D);
+
     glEnable(GL_BLEND);
 }
 
@@ -240,9 +243,6 @@ int GL_DrawFilter(void)
     if(!drawFilter)
         return 0; // No filter needed.
 
-    // No texture, please.
-    glDisable(GL_TEXTURE_2D);
-
     glColor4fv(filterColor);
 
     glBegin(GL_QUADS);
@@ -252,6 +252,5 @@ int GL_DrawFilter(void)
         glVertex2f(viewwindowx, viewwindowy + viewheight);
     glEnd();
 
-    glEnable(GL_TEXTURE_2D);
     return 1;
 }

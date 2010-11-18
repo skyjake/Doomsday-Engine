@@ -405,8 +405,8 @@ void Rend_ConsoleTicker(timespan_t time)
 
 void Rend_ConsoleFPS(int x, int y)
 {
-    int             w, h;
-    char            buf[160];
+    int w, h;
+    char buf[160];
 
     if(isDedicated)
         return;
@@ -422,11 +422,15 @@ void Rend_ConsoleFPS(int x, int y)
     w = FR_TextWidth(buf) + 16;
     h = FR_TextHeight(buf) + 16;
     x -= w;
-    UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM),
-                  UI_Color(UIC_BG_LIGHT), .5f, .5f);
+
+    glEnable(GL_TEXTURE_2D);
+
+    UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
     UI_DrawRectEx(x, y, w, h, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
     UI_SetColor(UI_Color(UIC_TEXT));
     UI_TextOutEx(buf, x + 8, y + h / 2, false, true, UI_Color(UIC_TITLE), 1);
+
+    glDisable(GL_TEXTURE_2D);
 }
 
 static void DrawConsoleTitleBar(float closeFade)
@@ -438,6 +442,8 @@ static void DrawConsoleTitleBar(float closeFade)
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
+
+    glEnable(GL_TEXTURE_2D);
 
     //FR_SetFont(glFontVariable[GLFS_BOLD]);
     height = GetConsoleTitleBarHeight(); //FR_TextHeight("W") + border;
@@ -462,6 +468,8 @@ static void DrawConsoleTitleBar(float closeFade)
         UI_TextOutEx(statusText, theWindow->width - UI_BORDER - width, height / 2,
                      false, true, UI_Color(UIC_TEXT), .75f * closeFade);
     }
+
+    glDisable(GL_TEXTURE_2D);
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
@@ -553,7 +561,6 @@ static void drawConsole(void)
                           theWindow->width, -theWindow->height - 4,
                           gtosMulY, consoleAlpha);
 
-    glDisable(GL_TEXTURE_2D);
     // The border.
     GL_DrawRect(0, (int) (ConsoleY * gtosMulY + 4), theWindow->width,
                 2, 0, 0, 0, consoleAlpha);
@@ -567,7 +574,6 @@ static void drawConsole(void)
         glVertex2f(theWindow->width, (int) (ConsoleY * gtosMulY + 13));
         glVertex2f(0, (int) (ConsoleY * gtosMulY + 13));
     glEnd();
-    glEnable(GL_TEXTURE_2D);
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -602,6 +608,8 @@ static void drawConsole(void)
             firstIdx -= (bLineOff - reqLines);
         if(bLineOff < reqLines)
             firstIdx -= bLineOff;
+
+        glEnable(GL_TEXTURE_2D);
 
         count = Con_BufferGetLines(buffer, reqLines, firstIdx, lines);
         for(i = 0; i < count; ++i)
@@ -649,6 +657,8 @@ static void drawConsole(void)
             // Move down.
             y += fontScaledY;
         }
+
+        glDisable(GL_TEXTURE_2D);
     }
 
     // The command line.
@@ -668,8 +678,12 @@ static void drawConsole(void)
         glColor4f(CcolYellow[0], CcolYellow[1], CcolYellow[2], consoleAlpha);
     else
         glColor4f(1, 1, 1, consoleAlpha);
-    Cfont.drawText(buff, 2, (ConsoleY * gtosMulY - fontScaledY - textOffsetY) /
-                   Cfont.sizeY);
+
+    glEnable(GL_TEXTURE_2D);
+
+    Cfont.drawText(buff, 2, (ConsoleY * gtosMulY - fontScaledY - textOffsetY) / Cfont.sizeY);
+
+    glDisable(GL_TEXTURE_2D);
 
     // Width of the current char.
     temp[0] = cmdLine[cmdCursor];
@@ -689,12 +703,10 @@ static void drawConsole(void)
         strncpy(temp, buff, MIN_OF(250, cmdCursor) + 1);
         i = Cfont.getWidth(temp);
 
-        glDisable(GL_TEXTURE_2D);
         GL_DrawRect(2 + i, (ConsoleY * gtosMulY - textOffsetY + curHeight) / Cfont.sizeY,
                     k, -(Con_InputMode()? fontScaledY + curHeight: curHeight) / Cfont.sizeY,
                     CcolYellow[0], CcolYellow[1], CcolYellow[2],
                     consoleAlpha * (((int) ConsoleBlink) & 0x10 ? .2f : .5f));
-        glEnable(GL_TEXTURE_2D);
     }
 
     // Restore the original matrices.
@@ -703,7 +715,6 @@ static void drawConsole(void)
 
     // Draw the console title bar.
     DrawConsoleTitleBar(consoleAlpha);
-
 }
 
 void Rend_Console(void)

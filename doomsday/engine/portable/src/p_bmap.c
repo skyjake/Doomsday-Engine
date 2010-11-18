@@ -1081,13 +1081,9 @@ void rendBlockLinedefs(void* blockPtr, void* param, float r, float g, float b, f
         args.param = param;
 
         glColor4f(r, g, b, a);
-        glDisable(GL_TEXTURE_2D);
-
         glBegin(GL_LINES);
             bmapBlockLinesIterator(block, &args);
         glEnd();
-
-        glEnable(GL_TEXTURE_2D);
     }
 
     // Polyobj lines?
@@ -1104,13 +1100,9 @@ void rendBlockLinedefs(void* blockPtr, void* param, float r, float g, float b, f
         args.param = &poargs;
 
         glColor4f(r, g, b, a);
-        glDisable(GL_TEXTURE_2D);
-
         glBegin(GL_LINES);
             bmapBlockPolyobjsIterator(block, &args);
         glEnd();
-
-        glEnable(GL_TEXTURE_2D);
     }
 }
 
@@ -1128,13 +1120,9 @@ void rendBlockMobjs(void* blockPtr, void* data, float r, float g, float b, float
         args.param = data;
 
         glColor4f(r, g, b, a);
-        glDisable(GL_TEXTURE_2D);
-
         glBegin(GL_QUADS);
             bmapBlockMobjsIterator(block, (void*) &args);
         glEnd();
-
-        glEnable(GL_TEXTURE_2D);
     }
 }
 
@@ -1322,8 +1310,6 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
                      -(bmap->blockSize[VY] * bmap->dimensions[VY] / 2), 0);
     }
 
-    glDisable(GL_TEXTURE_2D);
-
     // Draw a background.
     V2_Set(start, 0, 0);
     V2_Set(end, bmap->blockSize[VX] * bmap->dimensions[VX],
@@ -1412,8 +1398,6 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
     }
     glEnd();
 
-    glEnable(GL_TEXTURE_2D);
-
     /**
      * Draw the blockmap-linked data.
      */
@@ -1475,7 +1459,6 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
                followMobj->pos[VY] - bmap->bBox[0][VY] + radius);
 
         glColor4f(0, 1, 0, 1);
-        glDisable(GL_TEXTURE_2D);
 
         glBegin(GL_QUADS);
             glVertex2f(start[VX], start[VY]);
@@ -1483,8 +1466,6 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
             glVertex2f(end[VX], end[VY]);
             glVertex2f(start[VX], end[VY]);
         glEnd();
-
-        glEnable(GL_TEXTURE_2D);
     }
     else
     {   // Just draw the lot.
@@ -1508,7 +1489,6 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
            1 + bmap->blockSize[VY] * bmap->dimensions[VY]);
 
     glColor4f(1, .5f, .5f, 1);
-    glDisable(GL_TEXTURE_2D);
 
     glBegin(GL_LINES);
         glVertex2f(start[VX], start[VY]);
@@ -1525,7 +1505,6 @@ static void blockmapDebug(blockmap_t* blockmap, mobj_t* followMobj,
     glEnd();
 
     glPopMatrix();
-    glEnable(GL_TEXTURE_2D);
 }
 
 void P_BlockmapDebug(void)
@@ -1576,6 +1555,8 @@ void P_BlockmapDebug(void)
     glLoadIdentity();
     glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
 
+    glEnable(GL_TEXTURE_2D);
+
     // Draw info about the block mobj is in?
     { uint vBlock[2];
     if(followMobj && bmapShowDebug != 3 && P_ToBlockmapBlockIdx(blockmap, vBlock, followMobj->pos))
@@ -1587,6 +1568,8 @@ void P_BlockmapDebug(void)
                  bmap->bBox[1][VX], bmap->bBox[1][VY],
                  bmap->blockSize[VX], bmap->blockSize[VY],
                  bmap->dimensions[VX], bmap->dimensions[VY]);
+
+    glDisable(GL_TEXTURE_2D);
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();

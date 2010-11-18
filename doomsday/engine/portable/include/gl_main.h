@@ -88,8 +88,6 @@ void            GL_SelectTexUnits(int count);
 void            GL_SetTextureCompression(boolean on);
 void            GL_SetVSync(boolean on);
 void            GL_SetMultisample(boolean on);
-void            GL_EnableTexUnit(byte id);
-void            GL_DisableTexUnit(byte id);
 void            GL_BlendOp(int op);
 void            GL_SetGrayMipmap(int lev);
 boolean         GL_EnablePalTexExt(boolean enable);

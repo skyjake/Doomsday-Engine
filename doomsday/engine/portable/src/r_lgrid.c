@@ -1000,8 +1000,6 @@ void LG_Debug(void)
     glLoadIdentity();
     glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
 
-    glDisable(GL_TEXTURE_2D);
-
     for(y = 0; y < lgBlockHeight; ++y)
     {
         glBegin(GL_QUADS);
@@ -1031,7 +1029,6 @@ void LG_Debug(void)
         glEnd();
     }
 
-    glEnable(GL_TEXTURE_2D);
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
 }

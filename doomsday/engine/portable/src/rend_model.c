@@ -962,7 +962,6 @@ void Rend_RenderModel(const rendmodelparams_t* params)
 
     if(devMobjVLights && params->vLightListIdx)
     {   // Draw the vlight vectors, for debug.
-        glDisable(GL_TEXTURE_2D);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_CULL_FACE);
 
@@ -978,6 +977,5 @@ void Rend_RenderModel(const rendmodelparams_t* params)
 
         glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
-        glEnable(GL_TEXTURE_2D);
     }
 }
