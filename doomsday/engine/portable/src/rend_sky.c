@@ -400,6 +400,11 @@ void Rend_RenderSkyHemisphere(int whichHemi)
             Rend_SkyRenderer(whichHemi);
         }
     }
+
+    /// \kludge dj: addresses bug #2982101 - http://sourceforge.net/tracker/?func=detail&aid=2982101&group_id=74815&atid=542099
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glColor4f(1, 1, 1, 1);
+    /// < kludge end
 }
 
 void Rend_RenderSky(void)
