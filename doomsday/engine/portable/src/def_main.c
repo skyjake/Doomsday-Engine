@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -1142,28 +1142,6 @@ void Def_Read(void)
     // Init the base model search path (prepend).
     Dir_ValidDir(defs.modelPath, FILENAME_T_MAXLEN);
     R_AddClassDataPath(DDRC_MODEL, defs.modelPath, false);
-
-    // Model search path specified on the command line?
-    if(ArgCheckWith("-modeldir", 1))
-    {
-        filename_t          path;
-
-        strncpy(path, ArgNext(), FILENAME_T_MAXLEN);
-        Dir_ValidDir(path, FILENAME_T_MAXLEN);
-
-        // Prepend to the search list; takes precedence.
-        R_AddClassDataPath(DDRC_MODEL, path, false);
-    }
-    if(ArgCheckWith("-modeldir2", 1))
-    {
-        filename_t          path;
-
-        strncpy(path, ArgNext(), FILENAME_T_MAXLEN);
-        Dir_ValidDir(path, FILENAME_T_MAXLEN);
-
-        // Prepend to the search list; takes precedence.
-        R_AddClassDataPath(DDRC_MODEL, ArgNext(), false);
-    }
 
     defsInited = true;
 }
