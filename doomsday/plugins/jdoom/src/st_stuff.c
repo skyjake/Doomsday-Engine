@@ -320,6 +320,7 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha,
         return;
 
     DGL_SetPatch(statusbar.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, iconAlpha);
 
     if(!(iconAlpha < 1))
@@ -494,6 +495,8 @@ void drawStatusBarBackground(int player, float textAlpha, float iconAlpha,
             DGL_Vertex2f(x, y + h);
         DGL_End();
     }
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     *drawnWidth = WIDTH;
     *drawnHeight = HEIGHT;
@@ -911,8 +914,12 @@ void drawReadyAmmoWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+
     GL_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -958,6 +965,7 @@ void drawOwnedAmmoWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     for(i = 0; i < 4; ++i)
     {
@@ -968,6 +976,8 @@ void drawOwnedAmmoWidget(int player, float textAlpha, float iconAlpha,
             GL_DrawTextFragment3(buf, ORIGINX+ammoPos[i].x, ORIGINY+ammoPos[i].y, GF_INDEX, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
         }
     }
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1011,6 +1021,7 @@ void drawMaxAmmoWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(defFontRGB3[CR], defFontRGB3[CG], defFontRGB3[CB], textAlpha);
     for(i = 0; i < 4; ++i)
     {
@@ -1021,6 +1032,8 @@ void drawMaxAmmoWidget(int player, float textAlpha, float iconAlpha,
             GL_DrawTextFragment3(buf, ORIGINX+ammoMaxPos[i].x, ORIGINY+ammoMaxPos[i].y, GF_INDEX, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
         }
     }
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1060,9 +1073,12 @@ void drawSBarHealthWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
     GL_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
     GL_DrawChar2('%', X, Y, GF_STATUS);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1104,9 +1120,13 @@ void drawSBarArmorWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+
     GL_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
     GL_DrawChar2('%', X, Y, GF_STATUS);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1148,8 +1168,12 @@ void drawSBarFragsWidget(int player, float textAlpha, float iconAlpha,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
 
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], textAlpha);
+
     GL_DrawTextFragment3(buf, X, Y, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
@@ -1173,18 +1197,29 @@ void drawSBarFaceWidget(int player, float textAlpha, float iconAlpha,
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
+
     if(!hud->statusbarActive)
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(0, yOffset, 0);
+
     if(hud->faceIndex >= 0)
+    {
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(0, yOffset, 0);
+
+        DGL_Enable(DGL_TEXTURE_2D);
+
         WI_DrawPatch4(faces[hud->faceIndex].id, ORIGINX+ST_FACESX, ORIGINY+ST_FACESY, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, iconAlpha);
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(0, -yOffset, 0);
+
+        DGL_Disable(DGL_TEXTURE_2D);
+
+        DGL_MatrixMode(DGL_MODELVIEW);
+        DGL_Translatef(0, -yOffset, 0);
+    }
+
     {
     const patchinfo_t* facePatch = &faces[hud->faceIndex%ST_NUMFACES];
     *drawnWidth = facePatch->width;
@@ -1214,16 +1249,22 @@ void drawSBarKeysWidget(int player, float textAlpha, float iconAlpha,
     player_t* plr = &players[player];
     int i, numDrawnKeys = 0;
     float yOffset = ST_HEIGHT*(1-hud->showBar);
+
     if(!hud->statusbarActive)
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
+
     *drawnWidth = 0;
     *drawnHeight = 0;
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
+
+    DGL_Enable(DGL_TEXTURE_2D);
+
     for(i = 0; i < 3; ++i)
     {
         const loc_t* element = &elements[i];
@@ -1249,8 +1290,12 @@ void drawSBarKeysWidget(int player, float textAlpha, float iconAlpha,
                 *drawnHeight = patch->height + 2;
         }
     }
+
+    DGL_Disable(DGL_TEXTURE_2D);
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
+
     *drawnHeight += (numDrawnKeys-1) * 10;
 
 #undef ORIGINY
@@ -1293,14 +1338,19 @@ void drawOwnedWeaponWidget(int player, float textAlpha, float iconAlpha,
     player_t* plr = &players[player];
     float yOffset = ST_HEIGHT*(1-hud->showBar);
     int i;
+
     if(!hud->statusbarActive || deathmatch)
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, yOffset, 0);
+
+    DGL_Enable(DGL_TEXTURE_2D);
+
     for(i = 0; i < 6; ++i)
     {
         const loc_t* element = &elements[i];
@@ -1321,6 +1371,9 @@ void drawOwnedWeaponWidget(int player, float textAlpha, float iconAlpha,
 
         WI_DrawPatch4(arms[i][usedSlot?1:0].id, element->x, element->y, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, textAlpha);
     }
+
+    DGL_Disable(DGL_TEXTURE_2D);
+
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(0, -yOffset, 0);
 
@@ -1420,6 +1473,7 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
     }
 
     DGL_SetPSprite(info.material);
+    DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, alpha);
     DGL_Begin(DGL_QUADS);
@@ -1435,6 +1489,8 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
         DGL_TexCoord2f(0, flip * info.texCoord[0], info.texCoord[1]);
         DGL_Vertex2f(x, y + info.height * scale);
     DGL_End();
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void drawFragsWidget(int player, float textAlpha, float iconAlpha,
@@ -1443,15 +1499,23 @@ void drawFragsWidget(int player, float textAlpha, float iconAlpha,
     hudstate_t* hud = &hudStates[player];
     player_t* plr = &players[player];
     char buf[20];
+
     if(hud->statusbarActive || !deathmatch)
         return;
     if(AM_IsActive(AM_MapForPlayer(player)) && cfg.automapHudDisplay == 0)
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
+
     sprintf(buf, "FRAGS:%i", hud->currentFragsCount);
+
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+
     GL_DrawTextFragment3(buf, 0, 0, GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
+
+    DGL_Disable(DGL_TEXTURE_2D);
+
     *drawnWidth = GL_TextWidth(buf, GF_FONTA);
     *drawnHeight = GL_TextHeight(buf, GF_FONTA);
 }
@@ -1472,8 +1536,14 @@ void drawHealthWidget(int player, float textAlpha, float iconAlpha,
     ST_drawHUDSprite(SPR_STIM, 0, 0, HOT_BLEFT, 1, iconAlpha, false);
     ST_HUDSpriteSize(SPR_STIM, &w, &h);
     sprintf(buf, "%i%%", plr->health);
+
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+
     GL_DrawTextFragment3(buf, w + 2, 0, GF_FONTB, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+
+    DGL_Disable(DGL_TEXTURE_2D);
+
     *drawnWidth = w + 2 + GL_TextWidth(buf, GF_FONTB);
     *drawnHeight = MAX_OF(h, GL_TextHeight(buf, GF_FONTB));
 }
@@ -1517,8 +1587,14 @@ void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
         ST_drawHUDSprite(spr, 0, 0, HOT_BLEFT, scale, iconAlpha, false);
         ST_HUDSpriteSize(spr, &w, &h);
         sprintf(buf, "%i", plr->ammo[ammoType].owned);
+
+        DGL_Enable(DGL_TEXTURE_2D);
         DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+
         GL_DrawTextFragment3(buf, w+2, 0, GF_FONTB, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+
+        DGL_Disable(DGL_TEXTURE_2D);
+
         *drawnWidth += w+2+GL_TextWidth(buf, GF_FONTB);
         *drawnHeight += MAX_OF(h, GL_TextHeight(buf, GF_FONTB));
         break;
@@ -1539,10 +1615,16 @@ void drawFaceWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
+
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, iconAlpha);
+
     if(IS_NETGAME)
         GL_DrawPatch(bgPatch->id, x, -bgPatch->height + 1);
     GL_DrawPatch(facePatch->id, x, -bgPatch->height);
+
+    DGL_Disable(DGL_TEXTURE_2D);
+
     *drawnWidth = bgPatch->width;
     *drawnHeight = bgPatch->height;
 }
@@ -1569,8 +1651,13 @@ void drawArmorWidget(int player, float textAlpha, float iconAlpha,
 
     dd_snprintf(buf, 20, "%i%%", plr->armorPoints);
 
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+
     GL_DrawTextFragment3(buf, 0, 0, GF_FONTB, DTF_ALIGN_BOTTOMRIGHT|DTF_NO_EFFECTS);
+
+    DGL_Disable(DGL_TEXTURE_2D);
+
     spr = (plr->armorType == 2 ? SPR_ARM2 : SPR_ARM1);
     ST_drawHUDSprite(spr, -(armorOffset+2), 0, HOT_BRIGHT, 1, iconAlpha, false);
     ST_HUDSpriteSize(spr, &w, &h);
@@ -1655,6 +1742,7 @@ void drawKillsWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
+
     strcpy(buf, "Kills: ");
     if(cfg.counterCheat & CCH_KILLS)
     {
@@ -1669,10 +1757,15 @@ void drawKillsWidget(int player, float textAlpha, float iconAlpha,
         strcat(buf, tmp);
     }
 
-    *drawnHeight = GL_TextHeight(buf, GF_FONTA);
-    *drawnWidth = GL_TextWidth(buf, GF_FONTA);
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+
     GL_DrawTextFragment3(buf, 0, 0, GF_FONTA, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+
+    DGL_Disable(DGL_TEXTURE_2D);
+
+    *drawnHeight = GL_TextHeight(buf, GF_FONTA);
+    *drawnWidth  = GL_TextWidth(buf, GF_FONTA);
 }
 
 void drawItemsWidget(int player, float textAlpha, float iconAlpha,
@@ -1701,10 +1794,15 @@ void drawItemsWidget(int player, float textAlpha, float iconAlpha,
         strcat(buf, tmp);
     }
 
-    *drawnHeight = GL_TextHeight(buf, GF_FONTA);
-    *drawnWidth = GL_TextWidth(buf, GF_FONTA);
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+
     GL_DrawTextFragment3(buf, 0, 0, GF_FONTA, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+
+    DGL_Disable(DGL_TEXTURE_2D);
+
+    *drawnHeight = GL_TextHeight(buf, GF_FONTA);
+    *drawnWidth  = GL_TextWidth(buf, GF_FONTA);
 }
 
 void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
@@ -1719,6 +1817,7 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
         return;
     if(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))
         return;
+
     strcpy(buf, "Secret: ");
     if(cfg.counterCheat & CCH_SECRET)
     {
@@ -1733,10 +1832,15 @@ void drawSecretsWidget(int player, float textAlpha, float iconAlpha,
         strcat(buf, tmp);
     }
 
-    *drawnHeight = GL_TextHeight(buf, GF_FONTA);
-    *drawnWidth = GL_TextWidth(buf, GF_FONTA);
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textAlpha);
+
     GL_DrawTextFragment3(buf, 0, 0, GF_FONTA, DTF_ALIGN_BOTTOMLEFT|DTF_NO_EFFECTS);
+
+    DGL_Disable(DGL_TEXTURE_2D);
+
+    *drawnHeight = GL_TextHeight(buf, GF_FONTA);
+    *drawnWidth  = GL_TextWidth(buf, GF_FONTA);
 }
 
 typedef struct {

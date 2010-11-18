@@ -587,6 +587,8 @@ void WI_updateShowNextLoc(void)
 
 void WI_drawShowNextLoc(void)
 {
+    DGL_Enable(DGL_TEXTURE_2D);
+
     WI_slamBackground();
 
     // Draw animated background.
@@ -597,6 +599,7 @@ void WI_drawShowNextLoc(void)
         if(wbs->episode > 2)
         {
             WI_drawEL();
+            DGL_Disable(DGL_TEXTURE_2D);
             return;
         }
 
@@ -617,6 +620,8 @@ void WI_drawShowNextLoc(void)
     // Draws which map you are entering..
     if((gameMode != commercial) || wbs->nextMap != 30)
         WI_drawEL();
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void WI_drawNoState(void)
@@ -741,6 +746,8 @@ void WI_drawDeathmatchStats(void)
 
     lh = WI_SPACINGY;
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     WI_slamBackground();
 
     // Draw animated background.
@@ -825,6 +832,8 @@ void WI_drawDeathmatchStats(void)
 
         y += WI_SPACINGY;
     }
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void WI_initNetgameStats(void)
@@ -993,6 +1002,8 @@ void WI_drawNetgameStats(void)
     int i, x, y, starWidth, pwidth = GL_CharWidth('%', GF_SMALL);
     patchinfo_t info;
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     R_GetPatchInfo(star, &info);
     starWidth = info.width;
 
@@ -1064,6 +1075,8 @@ void WI_drawNetgameStats(void)
 
         y += WI_SPACINGY;
     }
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
 #undef ORIGINX
 }
@@ -1192,6 +1205,8 @@ void WI_drawStats(void)
 {
     int lh = (3 * GL_CharHeight('0', GF_SMALL)) / 2; // Line height.
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     WI_slamBackground();
 
     // Draw animated background.
@@ -1219,6 +1234,8 @@ void WI_drawStats(void)
         if(cntPar >= 0)
             WI_drawTime(SCREENWIDTH - SP_TIMEX, SP_TIMEY, cntPar / TICRATE);
     }
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void WI_checkForAccelerate(void)
