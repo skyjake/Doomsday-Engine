@@ -309,9 +309,14 @@ static void drawWidgets(hudstate_t* hud)
         char buf[20];
         if(hud->currentFragsCount == 1994)
             return;
+
+        DGL_Enable(DGL_TEXTURE_2D);
+
         dd_snprintf(buf, 20, "%i", hud->currentFragsCount);
         DGL_Color4f(1, 1, 1, hud->alpha);
         GL_DrawTextFragment3(buf, ST_FRAGSX, ST_FRAGSY, GF_STATUS, DTF_ALIGN_TOPRIGHT|DTF_NO_EFFECTS);
+
+        DGL_Disable(DGL_TEXTURE_2D);
     }
 
 #undef MAXDIGITS
@@ -367,6 +372,7 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
     }
 
     DGL_SetPSprite(info.material);
+    DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, alpha);
     DGL_Begin(DGL_QUADS);
@@ -382,6 +388,8 @@ void ST_drawHUDSprite(int sprite, float x, float y, hotloc_t hotspot,
         DGL_TexCoord2f(0, flip * info.texCoord[0], info.texCoord[1]);
         DGL_Vertex2f(x, y + info.height * scale);
     DGL_End();
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void ST_doFullscreenStuff(int player)
@@ -415,9 +423,14 @@ void ST_doFullscreenStuff(int player)
         {
             i -= 18 * cfg.hudScale;
         }
+
+        DGL_Enable(DGL_TEXTURE_2D);
+
         sprintf(buf, "FRAGS:%i", hud->currentFragsCount);
         DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
         GL_DrawTextFragment3(buf, HUDBORDERX, i, GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
+
+        DGL_Disable(DGL_TEXTURE_2D);
     }
 
     // Setup the scaling matrix.
@@ -428,6 +441,8 @@ void ST_doFullscreenStuff(int player)
     // Draw the visible HUD data, first health.
     if(cfg.hudShown[HUD_HEALTH])
     {
+        DGL_Enable(DGL_TEXTURE_2D);
+
         sprintf(buf, "HEALTH");
         pos = GL_TextWidth(buf, GF_FONTA)/2;
         DGL_Color4f(1, 1, 1, iconalpha);
@@ -436,6 +451,8 @@ void ST_doFullscreenStuff(int player)
         sprintf(buf, "%i", plr->health);
         DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
         GL_DrawTextFragment3(buf, HUDBORDERX + pos, h_height - HUDBORDERY, GF_FONTB, DTF_ALIGN_BOTTOM|DTF_NO_EFFECTS);
+
+        DGL_Disable(DGL_TEXTURE_2D);
 
         oldPos = pos;
         pos = HUDBORDERX * 2 + GL_TextWidth(buf, GF_FONTB);
@@ -491,8 +508,7 @@ Draw_EndZoom();
         {
             spr = SPR_ART3;
             ST_HUDSpriteSize(spr, &w, &h);
-            ST_drawHUDSprite(spr, HUDBORDERX + pos -w/2, h_height - 124,
-                             HOT_BLEFT, 1, iconalpha, false);
+            ST_drawHUDSprite(spr, HUDBORDERX + pos -w/2, h_height - 124, HOT_BLEFT, 1, iconalpha, false);
         }
     }
 
@@ -507,10 +523,14 @@ Draw_EndZoom();
             if(!weaponInfo[plr->readyWeapon][plr->class].mode[0].ammoType[ammotype])
                 continue;
 
+            DGL_Enable(DGL_TEXTURE_2D);
+
             sprintf(buf, "%i", plr->ammo[ammotype]);
             pos = h_width/2;
             DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
             GL_DrawTextFragment3(buf, pos, h_height - HUDBORDERY, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_EFFECTS);
+
+            DGL_Disable(DGL_TEXTURE_2D);
             break;
         }
     }
@@ -518,6 +538,8 @@ Draw_EndZoom();
     pos = h_width - 1;
     if(cfg.hudShown[HUD_ARMOR])
     {
+        DGL_Enable(DGL_TEXTURE_2D);
+
         sprintf(buf, "ARMOR");
         w = GL_TextWidth(buf, GF_FONTA);
         DGL_Color4f(1, 1, 1, iconalpha);
@@ -526,8 +548,11 @@ Draw_EndZoom();
         sprintf(buf, "%i", plr->armorPoints);
         DGL_Color4f(cfg.hudColor[0], cfg.hudColor[1], cfg.hudColor[2], textalpha);
         GL_DrawTextFragment3(buf, h_width - (w/2) - HUDBORDERX, h_height - HUDBORDERY, GF_FONTB, DTF_ALIGN_BOTTOMRIGHT|DTF_NO_EFFECTS);
+
+        DGL_Disable(DGL_TEXTURE_2D);
     }
 
+    DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 }

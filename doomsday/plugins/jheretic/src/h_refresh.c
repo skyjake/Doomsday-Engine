@@ -83,7 +83,6 @@ static void drawSpecialFilter(int pnum, int x, int y, int w, int h)
        !(player->powers[PT_INVULNERABILITY] & 8))
         return;
 
-    DGL_Disable(DGL_TEXTURING);
     if(cfg.ringFilter == 1)
     {
         DGL_BlendFunc(DGL_SRC_COLOR, DGL_SRC_COLOR);
@@ -97,7 +96,6 @@ static void drawSpecialFilter(int pnum, int x, int y, int w, int h)
 
     // Restore the normal rendering state.
     DGL_BlendMode(BM_NORMAL);
-    DGL_Enable(DGL_TEXTURING);
 }
 
 boolean R_GetFilterColor(float rgba[4], int filter)
@@ -283,9 +281,7 @@ void H_Display(int layer)
         }
         break;
     case GS_STARTUP:
-        DGL_Disable(DGL_TEXTURING);
         DGL_DrawRect(0, 0, vpWidth, vpHeight, 0, 0, 0, 1);
-        DGL_Enable(DGL_TEXTURING);
         break;
     default:
         break;
@@ -304,9 +300,7 @@ void H_Display2(void)
 
     if(G_GetGameAction() == GA_QUIT)
     {
-        DGL_Disable(DGL_TEXTURING);
         DGL_DrawRect(0, 0, 320, 200, 0, 0, 0, quitDarkenOpacity);
-        DGL_Enable(DGL_TEXTURING);
     }
 }
 
