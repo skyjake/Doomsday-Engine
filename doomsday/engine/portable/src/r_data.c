@@ -1676,7 +1676,7 @@ static void loadDoomTextureDefs(void)
  */
 void R_InitTextures(void)
 {
-    float startTime = Sys_GetSeconds();
+    uint startTime = Sys_GetRealTime();
 
     numDoomTextureDefs = 0;
     doomTextureDefs = NULL;
@@ -1696,12 +1696,8 @@ void R_InitTextures(void)
             Materials_New(MN_TEXTURES, texDef->name, texDef->width, texDef->height, ((texDef->flags & TXDF_NODRAW)? MATF_NO_DRAW : 0), tex->id, 0, 0);
         }
     }
-    else
-    {
-        Con_Message("R_InitTextures: Warning, no textures found.\n");
-    }
 
-    VERBOSE(Con_Message("R_InitTextures: Done in %.2f seconds.\n", Sys_GetSeconds() - startTime));
+    VERBOSE( Con_Message("R_InitTextures: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
 doomtexturedef_t* R_GetDoomTextureDef(int num)
