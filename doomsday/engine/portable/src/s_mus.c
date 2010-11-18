@@ -289,7 +289,7 @@ boolean Mus_IsMUSLump(int lump)
  */
 int Mus_GetExt(ded_music_t* def, filename_t retPath)
 {
-    filename_t          path;
+    filename_t path;
 
     if(!musAvail || !iMusic)
         return false;
@@ -300,31 +300,20 @@ int Mus_GetExt(ded_music_t* def, filename_t retPath)
         M_PrependBasePath(path, def->path.path, DED_PATH_LEN);
         if(F_Access(path))
         {
-            // Return the real file name if not just checking.
             if(retPath)
-            {
                 strncpy(retPath, path, FILENAME_T_MAXLEN);
-            }
-
             return true;
         }
-
-        Con_Message("Mus_GetExt: Song %s: %s not found.\n", def->id,
-                    def->path.path);
+        Con_Message("Mus_GetExt: Song %s: %s not found.\n", def->id, def->path.path);
     }
 
     // Try the resource locator.
-    if(R_FindResource(RT_MUSIC, path, def->lumpName, NULL,
-                      FILENAME_T_MAXLEN))
+    if(F_FindResource(RT_MUSIC, path, def->lumpName, 0, FILENAME_T_MAXLEN))
     {
         if(retPath)
-        {
             strncpy(retPath, path, FILENAME_T_MAXLEN);
-        }
-
         return true;
     }
-
     return false;
 }
 
@@ -482,29 +471,27 @@ int Mus_Start(ded_music_t* def, boolean looped)
         case MUSP_MUS:
             if(iMusic)
             {
-                lumpnum_t           lump;
-
-                if((lump = W_CheckNumForName(def->lumpName)) != -1)
+                lumpnum_t lump;
+                if(def->lumpName && (lump = W_CheckNumForName(def->lumpName)) != -1)
                 {
-                    filename_t          fname;
-                    const char*         srcFile = NULL;
+                    const char* srcFile = 0;
+                    filename_t fname;
 
                     if(Mus_IsMUSLump(lump))
                     {   // Lump is in DOOM's MUS format.
-                        void*               buf;
-                        size_t              len;
+                        void* buf;
+                        size_t len;
 
                         if(!canPlayMUS)
                             break;
 
-                        composeBufferedMusicFilename(fname, FILENAME_T_MAXLEN,
-                                                     currentBufFile ^= 1, ".mid");
+                        composeBufferedMusicFilename(fname, FILENAME_T_MAXLEN, currentBufFile ^= 1, ".mid");
                         srcFile = fname;
 
-                        // Read the lump, convert to MIDI and output to a
-                        // temp file in the working directory. Use a
-                        // filename with the .mid extension so that the
-                        // player knows the format.
+                        // Read the lump, convert to MIDI and output to a temp file in the
+                        // working directory. Use a filename with the .mid extension so that
+                        // any player which relies on the it for format recognition works as
+                        // expected.
 
                         len = W_LumpLength(lump);
                         buf = M_Malloc(len);
@@ -516,10 +503,8 @@ int Mus_Start(ded_music_t* def, boolean looped)
                     else if(!iMusic->Play)
                     {   // Music interface does not offer buffer playback.
                         // Write this lump to disk and play from there.
-                        composeBufferedMusicFilename(fname, FILENAME_T_MAXLEN,
-                                                     currentBufFile ^= 1, NULL);
+                        composeBufferedMusicFilename(fname, FILENAME_T_MAXLEN, currentBufFile ^= 1, 0);
                         srcFile = fname;
-
                         if(!W_DumpLump(lump, srcFile))
                             return false;
                     }
