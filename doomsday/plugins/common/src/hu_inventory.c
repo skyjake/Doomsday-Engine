@@ -31,8 +31,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <math.h>
 #include <assert.h>
+#include <math.h>
+#include <string.h>
 
 #if __JDOOM__
 #  include "jdoom.h"
@@ -357,6 +358,8 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
 
     x -= (numVisSlots * ST_INVSLOTWIDTH) / 2.f;
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     for(i = from; i < to; ++i)
     {
         float light, a;
@@ -424,6 +427,8 @@ Draw_BeginZoom(invScale, x, y + ST_INVENTORYHEIGHT);
 #undef ARROW_YOFFSET
     }
 
+    DGL_Disable(DGL_TEXTURE_2D);
+
 Draw_EndZoom();
 
 #undef TRACKING
@@ -462,6 +467,8 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
         to = endSlot - startSlot;
     if(inv->numUsedSlots - 1 < endSlot - startSlot)
         to = from + inv->numUsedSlots;
+
+    DGL_Enable(DGL_TEXTURE_2D);
 
     for(i = from; i < to; ++i)
     {
@@ -510,6 +517,8 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
             GL_DrawPatch(dpInvPageRight[!(mapTime & 4)? 1 : 0], x + NUMVISINVSLOTS * ST_INVSLOTWIDTH + (NUMVISINVSLOTS-1) * ST_INVSLOTOFFX - 2, y - 1);
         }
     }
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
 #undef TRACKING
 #undef BORDER

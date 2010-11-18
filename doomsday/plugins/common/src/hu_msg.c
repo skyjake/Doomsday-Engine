@@ -228,7 +228,9 @@ void Hu_MsgDrawer(void)
     DGL_Translatef(-(SCREENWIDTH/2), -(SCREENHEIGHT/2), 0);
 
     // Draw the message.
+    DGL_Enable(DGL_TEXTURE_2D);
     drawMessage();
+    DGL_Disable(DGL_TEXTURE_2D);
 
     // Restore original matrices.
     DGL_MatrixMode(DGL_MODELVIEW);

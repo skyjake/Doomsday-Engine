@@ -1782,8 +1782,12 @@ void Hu_MenuDrawer(void)
                 if(skull_angle)
                     DGL_Rotatef(skull_angle, 0, 0, 1);
 
+                DGL_Enable(DGL_TEXTURE_2D);
                 DGL_Color4f(1, 1, 1, mnAlpha);
+
                 GL_DrawPatch2(cursorst[whichSkull].id, 0, 0, DPF_NO_OFFSET);
+
+                DGL_Disable(DGL_TEXTURE_2D);
 
                 DGL_MatrixMode(DGL_MODELVIEW);
                 DGL_PopMatrix();
@@ -2294,26 +2298,39 @@ void M_DrawMainMenu(const mn_page_t* page, int x, int y)
 #if __JHEXEN__
     int frame = (mnTime / 5) % 7;
 
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnAlpha);
+
     GL_DrawPatch(m_htic.id, 88, 0);
     GL_DrawPatch(dpBullWithFire[(frame + 2) % 7].id, 37, 80);
     GL_DrawPatch(dpBullWithFire[frame].id, 278, 80);
 
-#elif __JHERETIC__
-    WI_DrawPatch4(m_htic.id, 88, 0, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, mnAlpha);
+    DGL_Disable(DGL_TEXTURE_2D);
 
+#elif __JHERETIC__
+    DGL_Enable(DGL_TEXTURE_2D);
+
+    WI_DrawPatch4(m_htic.id, 88, 0, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, mnAlpha);
     DGL_Color4f(1, 1, 1, mnAlpha);
     GL_DrawPatch(dpRotatingSkull[17 - frame].id, 40, 10);
     GL_DrawPatch(dpRotatingSkull[frame].id, 232, 10);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 #elif __JDOOM__ || __JDOOM64__
+    DGL_Enable(DGL_TEXTURE_2D);
     WI_DrawPatch4(m_doom.id, 94, 2, NULL, GF_FONTB, false, DPF_ALIGN_TOPLEFT, 1, 1, 1, mnAlpha);
+    DGL_Disable(DGL_TEXTURE_2D);
 #endif
 }
 
 void M_DrawNewGameMenu(const mn_page_t* page, int x, int y)
 {
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
+
     M_DrawMenuText3(GET_TXT(TXT_PICKGAMETYPE), SCREENWIDTH/2, y-30, GF_FONTB, DTF_ALIGN_TOP);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 #if __JHERETIC__
@@ -2357,6 +2374,8 @@ void M_DrawClassMenu(const mn_page_t* page, int x, int y)
     int pClass;
     spriteinfo_t sprInfo;
     int tmap = 1;
+
+    DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
     M_DrawMenuText2("Choose class:", 34, 24, GF_FONTB);
@@ -2402,6 +2421,8 @@ void M_DrawClassMenu(const mn_page_t* page, int x, int y)
         DGL_Vertex2f(x, y + h);
     DGL_End();
 
+    DGL_Disable(DGL_TEXTURE_2D);
+
 #undef BG_X
 #undef BG_Y
 }
@@ -2410,6 +2431,8 @@ void M_DrawClassMenu(const mn_page_t* page, int x, int y)
 #if __JDOOM__ || __JHERETIC__
 void M_DrawEpisode(const mn_page_t* page, int x, int y)
 {
+    DGL_Enable(DGL_TEXTURE_2D);
+
 #if __JHERETIC__
     DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
     M_DrawMenuText3("WHICH EPISODE?", SCREENWIDTH/2, y-4, GF_FONTB, DTF_ALIGN_TOP);
@@ -2427,11 +2450,15 @@ void M_DrawEpisode(const mn_page_t* page, int x, int y)
 #else // __JDOOM__
     WI_DrawPatch4(m_episod.id, 50, 40, "{case}Which Episode{scaley=1.25,y=-3}?", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
 #endif
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 #endif
 
 void M_DrawSkillMenu(const mn_page_t* page, int x, int y)
 {
+    DGL_Enable(DGL_TEXTURE_2D);
+
 #if __JDOOM__ || __JDOOM64__
     WI_DrawPatch4(m_newg.id, 96, 14, "{case}NEW GAME", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
     WI_DrawPatch4(m_skill.id, 54, 38, "{case}Choose Skill Level:", GF_FONTB, true, DPF_ALIGN_TOPLEFT, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
@@ -2439,6 +2466,8 @@ void M_DrawSkillMenu(const mn_page_t* page, int x, int y)
     DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
     M_DrawMenuText3("CHOOSE SKILL LEVEL:", SCREENWIDTH/2, y-8, GF_FONTB, DTF_ALIGN_TOP);
 #endif
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void M_DrawFilesMenu(const mn_page_t* page, int x, int y)
@@ -2518,12 +2547,18 @@ void MNText_Drawer(const mn_object_t* obj, int x, int y, float alpha)
 
     if(obj->patch)
     {
+        DGL_Enable(DGL_TEXTURE_2D);
         WI_DrawPatch4(*obj->patch, 0, 0, (obj->flags & MNF_NO_ALTTEXT)? NULL : obj->text, obj->font, true, DPF_ALIGN_TOPLEFT, color[CR], color[CG], color[CB], color[CA]);
+        DGL_Disable(DGL_TEXTURE_2D);
         return;
     }
 
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4fv(color);
+
     M_DrawMenuText2(obj->text, 0, 0, obj->font);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void MNText_Dimensions(const mn_object_t* obj, int* width, int* height)
@@ -2583,6 +2618,8 @@ void MNEdit_Drawer(const mn_object_t* obj, int x, int y, float alpha)
         }
     }
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     M_DrawSaveLoadBorder(x - 10, y, (edit->maxVisibleChars > 0? MIN_OF(edit->maxVisibleChars, MNDATA_EDIT_TEXT_MAX_LENGTH) : MNDATA_EDIT_TEXT_MAX_LENGTH) * GL_CharWidth('_', obj->font) + 20);
 
     color[CR] = cfg.menuColors[COLOR_IDX][CR];
@@ -2603,6 +2640,8 @@ void MNEdit_Drawer(const mn_object_t* obj, int x, int y, float alpha)
     DGL_Color4fv(color);
     if(string)
         M_DrawMenuText3(string, x, y, obj->font, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
 #undef OFFSET_Y
 #undef COLOR_IDX
@@ -2667,6 +2706,9 @@ void MNList_Drawer(const mn_object_t* obj, int x, int y, float alpha)
     const mndata_list_t* list = (const mndata_list_t*) obj->data;
     float color[4];
     int i;
+
+    DGL_Enable(DGL_TEXTURE_2D);
+
     color[CR] = cfg.menuColors[2][CR];
     color[CG] = cfg.menuColors[2][CG];
     color[CB] = cfg.menuColors[2][CB];
@@ -2678,6 +2720,8 @@ void MNList_Drawer(const mn_object_t* obj, int x, int y, float alpha)
         M_DrawMenuText2(item->text, x, y, GF_FONTA);
         y += GL_TextFragmentHeight(item->text, GF_FONTA) * (1+MNDATA_LIST_LEADING);
     }
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void MNList_InlineDrawer(const mn_object_t* obj, int x, int y, float alpha)
@@ -2685,12 +2729,17 @@ void MNList_InlineDrawer(const mn_object_t* obj, int x, int y, float alpha)
     const mndata_list_t* list = (const mndata_list_t*) obj->data;
     const mndata_listitem_t* item = ((const mndata_listitem_t*) list->items) + list->selection;
     float color[4];
+
+    DGL_Enable(DGL_TEXTURE_2D);
+
     color[CR] = cfg.menuColors[2][CR];
     color[CG] = cfg.menuColors[2][CG];
     color[CB] = cfg.menuColors[2][CB];
     color[CA] = alpha;
     DGL_Color4fv(color);
     M_DrawMenuText2(item->text, x, y, GF_FONTA);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void MNList_Dimensions(const mn_object_t* obj, int* width, int* height)
@@ -2766,12 +2815,18 @@ void MNButton_Drawer(const mn_object_t* obj, int x, int y, float alpha)
 
     if(obj->patch)
     {
+        DGL_Enable(DGL_TEXTURE_2D);
         WI_DrawPatch4(*obj->patch, 0, 0, (obj->flags & MNF_NO_ALTTEXT)? NULL : text, obj->font, true, DPF_ALIGN_TOPLEFT, color[CR], color[CG], color[CB], color[CA]);
+        DGL_Disable(DGL_TEXTURE_2D);
         return;
     }
 
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4fv(color);
+
     M_DrawMenuText2(text, x, y, obj->font);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void MNButton_Dimensions(const mn_object_t* obj, int* width, int* height)
@@ -2819,7 +2874,10 @@ void MNColorBox_Drawer(const mn_object_t* obj, int x, int y, float alpha)
     x += 3;
     y += 3;
 
+    DGL_Enable(DGL_TEXTURE_2D);
     M_DrawBackgroundBox(x, y, WIDTH, HEIGHT, true, 1, 1, 1, 1, alpha);
+    DGL_Disable(DGL_TEXTURE_2D);
+
     DGL_SetNoMaterial();
     DGL_DrawRect(x, y, WIDTH, HEIGHT, *color->r, *color->g, *color->b, color->a? *color->a : 1 * alpha);
 
@@ -2895,6 +2953,8 @@ void MNSlider_Drawer(const mn_object_t* obj, int inX, int inY, float alpha)
     DGL_Translatef(x, y, 0);
     DGL_Scalef(MNDATA_SLIDER_SCALE, MNDATA_SLIDER_SCALE, 1);
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     if(cfg.menuShadow > 0)
     {
         float from[2], to[2];
@@ -2915,6 +2975,8 @@ void MNSlider_Drawer(const mn_object_t* obj, int inX, int inY, float alpha)
 
     DGL_Color4f(1, 1, 1, alpha);
     GL_DrawPatch2(dpSliderHandle, MNSlider_ThumbPos(obj), 1, DPF_ALIGN_TOP|DPF_NO_OFFSET);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -3014,12 +3076,16 @@ void Hu_MenuCvarSlider(mn_object_t* obj, int option)
 
 void M_DrawLoad(const mn_page_t* page, int x, int y)
 {
+    DGL_Enable(DGL_TEXTURE_2D);
+
 #if __JHERETIC__ || __JHEXEN__
     DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
     M_DrawMenuText3("Load Game", SCREENWIDTH/2, y-20, GF_FONTB, DTF_ALIGN_TOP);
 #else
     WI_DrawPatch4(m_loadg.id, SCREENWIDTH/2, 24, "{case}Load game", GF_FONTB, true, DPF_ALIGN_TOP, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
 #endif
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 /**
@@ -3158,20 +3224,26 @@ void M_ReadThis(mn_object_t* obj, int option)
 
 void M_DrawOptions(const mn_page_t* page, int x, int y)
 {
+    DGL_Enable(DGL_TEXTURE_2D);
+
 #if __JHERETIC__ || __JHEXEN__
     DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
     M_DrawMenuText3("OPTIONS", SCREENWIDTH/2, y-32, GF_FONTB, DTF_ALIGN_TOP);
 #else
 # if __JDOOM64__
-    WI_DrawPatch4(-1, 160, y - 20, "{case}OPTIONS", GF_FONTB, true, DPF_ALIGN_TOP, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
+    WI_DrawPatch4(0, 160, y - 20, "{case}OPTIONS", GF_FONTB, true, DPF_ALIGN_TOP, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
 #else
     WI_DrawPatch4(m_optttl.id, 160, y - 20, "{case}OPTIONS", GF_FONTB, true, DPF_ALIGN_TOP, cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
 # endif
 #endif
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void M_DrawOptions2(const mn_page_t* page, int x, int y)
 {
+    DGL_Enable(DGL_TEXTURE_2D);
+
     DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
     M_DrawMenuText3("SOUND OPTIONS", SCREENWIDTH/2, y-20, GF_FONTB, DTF_ALIGN_TOP);
 #if __JDOOM__ || __JDOOM64__
@@ -3181,11 +3253,15 @@ void M_DrawOptions2(const mn_page_t* page, int x, int y)
     //MN_DrawSlider(page, 1, x, y, 16, SFXVOLUME);
     //MN_DrawSlider(page, 4, x, y, 16, MUSICVOLUME);
 #endif
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void M_DrawGameplay(const mn_page_t* page, int x, int y)
 {
     int idx = 0;
+
+    DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
     M_DrawMenuText3("GAMEPLAY", SCREENWIDTH/2, y-20, GF_FONTB, DTF_ALIGN_TOP);
@@ -3229,6 +3305,8 @@ void M_DrawGameplay(const mn_page_t* page, int x, int y)
     //M_WriteMenuText(page, idx++, x, y, yesno[cfg.fixStatusbarOwnedWeapons != 0]);
 # endif
 #endif
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void M_DrawWeaponMenu(const mn_page_t* page, int x, int y)
@@ -3237,6 +3315,8 @@ void M_DrawWeaponMenu(const mn_page_t* page, int x, int y)
 #if __JDOOM__ || __JDOOM64__
     char buf[1024];
 #endif
+
+    DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
     M_DrawMenuText3("WEAPONS", SCREENWIDTH/2, y-26, GF_FONTB, DTF_ALIGN_TOP);
@@ -3261,6 +3341,8 @@ void M_DrawWeaponMenu(const mn_page_t* page, int x, int y)
         DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], mnAlpha);
         M_DrawMenuText3(str, SCREENWIDTH/2, SCREENHEIGHT/2 + (95/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM);
     }
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void M_WeaponOrder(mn_object_t* obj, int option)
@@ -3295,6 +3377,8 @@ void M_WeaponOrder(mn_object_t* obj, int option)
 #if __JHERETIC__ || __JHEXEN__
 void M_DrawInventoryMenu(const mn_page_t* page, int x, int y)
 {
+    DGL_Enable(DGL_TEXTURE_2D);
+
     DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
     M_DrawMenuText3("Inventory Options", SCREENWIDTH/2, y-28, GF_FONTB, DTF_ALIGN_TOP);
 
@@ -3314,8 +3398,7 @@ void M_DrawInventoryMenu(const mn_page_t* page, int x, int y)
     //M_WriteMenuText(page, idx++, x, y, str);
     }
 
-    {
-    char buff[3];
+    { char buff[3];
     const char* str;
     uint val = MINMAX_OF(0, cfg.inventorySlotMaxVis, 16);
 
@@ -3329,6 +3412,8 @@ void M_DrawInventoryMenu(const mn_page_t* page, int x, int y)
         str = "Automatic";
     //M_WriteMenuText(page, idx++, x, y, str);
     }
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 #endif
 
@@ -3343,6 +3428,8 @@ void M_DrawHUDMenu(const mn_page_t* page, int x, int y)
 #if __JDOOM__ || __JDOOM64__
     char buf[1024];
 #endif
+
+    DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(cfg.menuColors[0][CR], cfg.menuColors[0][CG], cfg.menuColors[0][CB], mnAlpha);
     M_DrawMenuText3("HUD options", SCREENWIDTH/2, y-28, GF_FONTB, DTF_ALIGN_TOP);
@@ -3391,6 +3478,8 @@ void M_DrawHUDMenu(const mn_page_t* page, int x, int y)
     //M_WriteMenuText(page, 0, x, y, countnames[((cfg.counterCheat & 0x2) >> 1) | ((cfg.counterCheat & 0x10) >> 3)]);
     //M_WriteMenuText(page, 0, x, y, countnames[((cfg.counterCheat & 0x4) >> 2) | ((cfg.counterCheat & 0x20) >> 4)]);
 #endif
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void M_FloatMod10(float* variable, int option)

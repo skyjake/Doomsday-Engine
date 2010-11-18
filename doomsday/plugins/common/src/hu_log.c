@@ -35,6 +35,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <stdio.h>
 
 #if __JDOOM__
 #  include "jdoom.h"
@@ -367,6 +368,9 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
     DGL_Translatef(0, yOffset, 0);
 
     textFlags = DTF_ALIGN_TOP|DTF_NO_EFFECTS | ((cfg.msgAlign == 0)? DTF_ALIGN_LEFT : (cfg.msgAlign == 2)? DTF_ALIGN_RIGHT : 0);
+
+    DGL_Enable(DGL_TEXTURE_2D);
+
     y = 0;
     for(i = 0; i < numVisible; ++i)
     {
@@ -423,6 +427,8 @@ void Hu_LogDrawer(int player, float textAlpha, float iconAlpha,
         y += height + 1;
         n = (n < LOG_MAX_MESSAGES - 1)? n + 1 : 0;
     }
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_Translatef(0, -yOffset, 0);
@@ -852,7 +858,13 @@ void Chat_Drawer(int player, float textAlpha, float iconAlpha,
             xOffset = -GL_CharWidth('_', GF_FONTA);
     }
     textFlags = DTF_ALIGN_TOP|DTF_NO_EFFECTS | ((cfg.msgAlign == 0)? DTF_ALIGN_LEFT : (cfg.msgAlign == 2)? DTF_ALIGN_RIGHT : 0);
+
+    DGL_Enable(DGL_TEXTURE_2D);
+
     GL_DrawText(str, xOffset, 0, GF_FONTA, textFlags, .5f, 0, cfg.hudColor[CR], cfg.hudColor[CG], cfg.hudColor[CB], textAlpha, 0, 0, false);
+
+    DGL_Disable(DGL_TEXTURE_2D);
+
     *drawnWidth = GL_TextWidth(chat->buffer.l.l, GF_FONTA) + GL_CharWidth('_', GF_FONTA);
     *drawnHeight = MAX_OF(GL_TextHeight(chat->buffer.l.l, GF_FONTA), GL_CharHeight('_', GF_FONTA));
     }

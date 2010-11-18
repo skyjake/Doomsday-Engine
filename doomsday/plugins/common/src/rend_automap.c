@@ -35,6 +35,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #if __JDOOM__
@@ -1133,8 +1134,11 @@ static void drawMarks(const automap_t* map)
         DGL_Rotatef(angle, 0, 0, 1);
 
         DGL_SetPatch(info->id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-        DGL_DrawRect(-w/2, h/2, w, -h, 1, 1, 1, alpha);
+        DGL_Enable(DGL_TEXTURE_2D);
 
+        DGL_DrawRect(-w/2, h/2, w, -h, 1, 1, 1, alpha);
+        
+        DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PopMatrix();
     }
@@ -1170,7 +1174,7 @@ static void setupGLStateForMap(const automap_t* map,
     {
         // Apply the background texture onto a parallaxing layer which
         // follows the map view target (not player).
-        DGL_Enable(DGL_TEXTURING);
+        DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_MatrixMode(DGL_TEXTURE);
         DGL_PushMatrix();
@@ -1209,7 +1213,7 @@ static void setupGLStateForMap(const automap_t* map,
         DGL_MatrixMode(DGL_TEXTURE);
         DGL_PopMatrix();
 
-        DGL_MatrixMode(DGL_PROJECTION);
+        DGL_Disable(DGL_TEXTURE_2D);
     }
     else
     {
@@ -1257,6 +1261,7 @@ static void setupGLStateForMap(const automap_t* map,
                 {
                     R_GetSpriteInfo(invItemSprites[i], 0, &sprInfo);
                     DGL_SetPSprite(sprInfo.material);
+                    DGL_Enable(DGL_TEXTURE_2D);
 
                     scale = wh / (sprInfo.height * num);
                     x = ww - sprInfo.width * scale;
@@ -1277,6 +1282,8 @@ static void setupGLStateForMap(const automap_t* map,
                         DGL_TexCoord2f(0, 0, sprInfo.texCoord[1]);
                         DGL_Vertex2f(x, y + h * scale);
                     DGL_End();
+
+                    DGL_Disable(DGL_TEXTURE_2D);
 
                     y += spacing;
                 }
@@ -1377,7 +1384,11 @@ static void renderMapName(const automap_t* map)
         }
 #endif
 
+        DGL_Enable(DGL_TEXTURE_2D);
+
         drawMapName(x, y, scale/3, Automap_GetOpacity(map), patch, lname);
+
+        DGL_Disable(DGL_TEXTURE_2D);
     }
 }
 
@@ -1499,7 +1510,6 @@ void Rend_Automap(int player, const automap_t* map)
 { // Draw the rectangle described by the visible bounds.
 float topLeft[2], bottomRight[2], topRight[2], bottomLeft[2];
 Automap_VisibleBounds(map, topLeft, bottomRight, topRight, bottomLeft);
-DGL_Disable(DGL_TEXTURING);
 DGL_Color4f(1, 1, 1, 1);
 DGL_Begin(DGL_LINES);
     DGL_Vertex2f(topLeft[0], topLeft[1]);
@@ -1511,14 +1521,13 @@ DGL_Begin(DGL_LINES);
     DGL_Vertex2f(bottomLeft[0], bottomLeft[1]);
     DGL_Vertex2f(topLeft[0], topLeft[1]);
 DGL_End();
-DGL_Enable(DGL_TEXTURING);
 }
 #endif*/
 
     if(amMaskTexture)
     {
-        DGL_Enable(DGL_TEXTURING);
         DGL_Bind(amMaskTexture);
+        DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
 
@@ -1581,15 +1590,17 @@ DGL_Enable(DGL_TEXTURING);
 
     if(amMaskTexture)
     {
+        DGL_Disable(DGL_TEXTURE_2D);
         DGL_MatrixMode(DGL_TEXTURE);
         DGL_PopMatrix();
-        DGL_Bind(0);
     }
 
     // Draw glows?
     if(mcfg->glowingLineSpecials)
     {   // \optimize Hugely inefficent. Need a new approach.
+        DGL_Enable(DGL_TEXTURE_2D);
         renderWalls(map, mcfg, player, -1, false);
+        DGL_Disable(DGL_TEXTURE_2D);
     }
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__

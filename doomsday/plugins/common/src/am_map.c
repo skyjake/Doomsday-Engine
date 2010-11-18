@@ -1738,6 +1738,8 @@ mn_page_t AutomapMenu = {
  */
 void M_DrawMapMenu(const mn_page_t* page, int x, int y)
 {
+    DGL_Enable(DGL_TEXTURE_2D);
+
     DGL_Color4f(cfg.menuColors[0][0], cfg.menuColors[0][1], cfg.menuColors[0][2], Hu_MenuAlpha());
     M_DrawMenuText3("Automap OPTIONS", SCREENWIDTH/2, y-26, GF_FONTB, DTF_ALIGN_TOP);
 
@@ -1747,4 +1749,6 @@ void M_DrawMapMenu(const mn_page_t* page, int x, int y)
     GL_DrawPatch(dpInvPageLeft[!page->firstObject || (mnTime & 8)], x, y - 22);
     GL_DrawPatch(dpInvPageRight[page->firstObject + page->numVisObjects >= page->_size || (mnTime & 8)], 312 - x, y - 22);
 #endif
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }

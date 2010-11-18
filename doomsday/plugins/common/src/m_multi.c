@@ -269,8 +269,12 @@ static int plrClass;
 
 void DrawMultiplayerMenu(const mn_page_t* page, int x, int y)
 {
+    DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(cfg.menuColors[0][0], cfg.menuColors[0][1], cfg.menuColors[0][2], Hu_MenuAlpha());
+
     M_DrawMenuText3(GET_TXT(TXT_MULTIPLAYER), SCREENWIDTH/2, y-30, GF_FONTB, DTF_ALIGN_TOP);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void DrawGameSetupMenu(const mn_page_t* page, int x, int y)
@@ -280,6 +284,8 @@ void DrawGameSetupMenu(const mn_page_t* page, int x, int y)
 #if __JHEXEN__
     char* mapName = P_GetMapName(P_TranslateMap(cfg.netMap));
 #endif
+
+    DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(cfg.menuColors[0][0], cfg.menuColors[0][1], cfg.menuColors[0][2], Hu_MenuAlpha());
     M_DrawMenuText3(GET_TXT(TXT_GAMESETUP), SCREENWIDTH/2, y-20, GF_FONTB, DTF_ALIGN_TOP);
@@ -319,6 +325,8 @@ void DrawGameSetupMenu(const mn_page_t* page, int x, int y)
     else
         sprintf(buf, "MAP DEFAULT");
     //M_WriteMenuText(menu, idx++, x, y, buf);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void DrawPlayerSetupMenu(const mn_page_t* page, int inX, int inY)
@@ -340,6 +348,8 @@ void DrawPlayerSetupMenu(const mn_page_t* page, int inX, int inY)
 #endif
     float x = inX, y = inY, w, h;
     float s, t, scale;
+
+    DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(cfg.menuColors[0][0], cfg.menuColors[0][1], cfg.menuColors[0][2], mnAlpha);
     M_DrawMenuText3(GET_TXT(TXT_PLAYERSETUP), SCREENWIDTH/2, y-28, GF_FONTB, DTF_ALIGN_TOP);
@@ -412,6 +422,8 @@ void DrawPlayerSetupMenu(const mn_page_t* page, int inX, int inY)
         DGL_TexCoord2f(0, 0 * s, t);
         DGL_Vertex2f(x, y + h);
     DGL_End();
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
 #undef AVAILABLE_WIDTH
 #undef AVAILABLE_HEIGHT

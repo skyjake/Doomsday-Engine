@@ -610,6 +610,7 @@ static void drawTable(float x, float ly, float width, float height,
     }
 
     // Draw the table header:
+    DGL_Enable(DGL_TEXTURE_2D);
     for(n = 0; n < numCols; ++n)
     {
         if(columns[n].flags & CF_HIDE)
@@ -628,6 +629,7 @@ static void drawTable(float x, float ly, float width, float height,
             fontScale, 1.f, 1.f, 1.f, alpha, DTF_ALIGN_TOP|DTF_NO_TYPEIN|(columns[n].alignRight? DTF_ALIGN_RIGHT : 0));
     }
     ly += lineHeight;
+    DGL_Disable(DGL_TEXTURE_2D);
 
     // Draw the table from left to right, top to bottom:
     for(i = 0; i < inCount; ++i, ly += lineHeight)
@@ -645,12 +647,12 @@ static void drawTable(float x, float ly, float width, float height,
             else
                 val = .8f;
 
-            DGL_Disable(DGL_TEXTURING);
             DGL_DrawRect(x, ly, width, lineHeight, val + .2f, val + .2f, val, .5f * alpha);
-            DGL_Enable(DGL_TEXTURING);
         }
 
         // Now draw the fields:
+        DGL_Enable(DGL_TEXTURE_2D);
+
         for(n = 0; n < numCols; ++n)
         {
             if(columns[n].flags & CF_HIDE)
@@ -660,12 +662,12 @@ static void drawTable(float x, float ly, float width, float height,
             cY = ly;
 
 /*#if _DEBUG
-DGL_Disable(DGL_TEXTURING);
+DGL_Disable(DGL_TEXTURE_2D);
 GL_DrawRect(cX + CELL_PADDING, cY + CELL_PADDING,
             colW[n] - CELL_PADDING * 2,
             lineHeight - CELL_PADDING * 2,
             1, 1, 1, .1f * alpha);
-DGL_Enable(DGL_TEXTURING);
+DGL_Enable(DGL_TEXTURE_2D);
 #endif*/
 
             cY += CELL_PADDING;
@@ -743,6 +745,8 @@ DGL_Enable(DGL_TEXTURING);
                 break;
             }
         }
+
+        DGL_Disable(DGL_TEXTURE_2D);
     }
 
     free(colX);
@@ -777,6 +781,7 @@ static void drawMapMetaData(float x, float y, compositefontid_t font, float alph
         lname = unnamed;
 
     DGL_Color4f(1, 1, 1, alpha);
+
     // Map name:
     GL_DrawTextFragment2("map: ", x, y + 16, font);
     GL_DrawTextFragment2(lname, x += GL_TextWidth("map: ", font), y + 16, font);
@@ -842,9 +847,9 @@ void HU_DrawScoreBoard(int player)
     DGL_Translatef(16, 16, 0);
 
     // Draw a background around the whole thing.
-    DGL_Disable(DGL_TEXTURING);
     DGL_DrawRect(x, y, width, height, 0, 0, 0, .4f * hud->scoreAlpha);
-    DGL_Enable(DGL_TEXTURING);
+
+    DGL_Enable(DGL_TEXTURE_2D);
 
     // Title:
     DGL_Color4f(1, 0, 0, hud->scoreAlpha);
@@ -853,6 +858,8 @@ void HU_DrawScoreBoard(int player)
     drawMapMetaData(x, y + 16, GF_FONTA, hud->scoreAlpha);
 
     drawTable(x, y + 20, width, height - 20, columns, scoreBoard, inCount, hud->scoreAlpha, player);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -1159,7 +1166,7 @@ void WI_DrawPatch4(patchid_t patch, int x, int y, const char* altstring,
     if(IS_DEDICATED)
         return;
 
-    if(patch == -1)
+    if(patch == 0)
         return;
 
     if(altstring && altstring[0] && !builtin)
@@ -1348,14 +1355,15 @@ void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
 
     if(effectID == 2)
     {
-        DGL_Disable(DGL_TEXTURING);
         DGL_Color4f(alpha, alpha / 2, 0, alpha / 3);
         DGL_BlendMode(BM_INVERSE_MUL);
         DGL_DrawRectTiled(0, 0, 320, 200, 1, 1);
-        DGL_Enable(DGL_TEXTURING);
     }
 
     DGL_Bind(tex);
+    if(tex)
+        DGL_Enable(DGL_TEXTURE_2D);
+
     DGL_Color3f(alpha, alpha, alpha);
     DGL_MatrixMode(DGL_TEXTURE);
     DGL_LoadIdentity();
@@ -1437,6 +1445,8 @@ void Hu_DrawFogEffect(int effectID, DGLuint tex, float texOffset[2],
     DGL_MatrixMode(DGL_TEXTURE);
     DGL_PopMatrix();
 
+    if(tex)
+        DGL_Disable(DGL_TEXTURE_2D);
     DGL_BlendMode(BM_NORMAL);
 }
 
@@ -1512,7 +1522,11 @@ void Hu_Drawer(void)
         else
             DGL_Scalef((float)winWidth/SCREENWIDTH, (float)winWidth/SCREENWIDTH, 1);
 
+        DGL_Enable(DGL_TEXTURE_2D);
+
         WI_DrawPatch3(m_pause, 0, 0, NULL, GF_FONTB, false, DPF_ALIGN_TOP|DPF_NO_OFFSET);
+
+        DGL_Disable(DGL_TEXTURE_2D);
 
         DGL_MatrixMode(DGL_PROJECTION);
         DGL_PopMatrix();
@@ -1607,22 +1621,34 @@ static void drawMapTitle(void)
     mapnum = gameMap;
 # endif
 
-    WI_DrawPatch4(mapNamePatches[mapnum], 0, 0, lname, GF_FONTB, false, DPF_ALIGN_TOP, 1, 1, 1, alpha);
-    y += 14;
+    DGL_Enable(DGL_TEXTURE_2D);
 
+    WI_DrawPatch4(mapNamePatches[mapnum], 0, 0, lname, GF_FONTB, false, DPF_ALIGN_TOP, 1, 1, 1, alpha);
+
+    DGL_Disable(DGL_TEXTURE_2D);
+
+    y += 14;
 #elif __JHERETIC__ || __JHEXEN__
     if(lname)
     {
+        DGL_Enable(DGL_TEXTURE_2D);
+
         DGL_Color4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], alpha);
         GL_DrawTextFragment3(lname, 0, 0, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+
+        DGL_Disable(DGL_TEXTURE_2D);
         y += 20;
     }
 #endif
 
     if(lauthor)
     {
+        DGL_Enable(DGL_TEXTURE_2D);
+
         DGL_Color4f(.5f, .5f, .5f, alpha);
         GL_DrawTextFragment3(lauthor, 0, y, GF_FONTA, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+
+        DGL_Disable(DGL_TEXTURE_2D);
     }
 }
 

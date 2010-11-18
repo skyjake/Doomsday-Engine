@@ -105,7 +105,6 @@ void X_Drawer(int player)
 
     oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
     DGL_SetFloat(DGL_LINE_WIDTH, XHAIR_LINE_WIDTH);
-    DGL_Disable(DGL_TEXTURING);
 
     if(cfg.xhairVitality)
     {   // Color the crosshair according to how close the player is to death.
@@ -138,7 +137,6 @@ void X_Drawer(int player)
     GL_DrawVectorGraphic2(VG_XHAIR1 + (xhair-1), centerX, centerY, scale);
 
     // Restore the previous state.
-    DGL_Enable(DGL_TEXTURING);
     DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
 
 #undef XHAIR_LINE_WIDTH

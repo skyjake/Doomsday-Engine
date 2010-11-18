@@ -30,6 +30,7 @@
 
 #include <string.h>
 #include <ctype.h>
+#include <stdio.h>
 
 #if __JDOOM__
 #  include "jdoom.h"
@@ -445,7 +446,10 @@ static void drawBinding(bindingitertype_t type, int bid, const char* name, boole
 
         DGL_SetNoMaterial();
         DGL_DrawRect(d->x, d->y, width*SMALL_SCALE + 2, height, bgRGB[0], bgRGB[1], bgRGB[2], Hu_MenuAlpha() * .6f);
+
+        DGL_Enable(DGL_TEXTURE_2D);
         drawSmallText(name, d->x + 1, d->y);
+        DGL_Disable(DGL_TEXTURE_2D);
 
         d->x += width * SMALL_SCALE + 2 + BIND_GAP;
     }
@@ -458,7 +462,9 @@ static void drawBinding(bindingitertype_t type, int bid, const char* name, boole
         width = GL_TextWidth(temp, GF_FONTA);
         height = GL_TextHeight(temp, GF_FONTA);
 
+        DGL_Enable(DGL_TEXTURE_2D);
         drawSmallText(temp, d->x, d->y);
+        DGL_Disable(DGL_TEXTURE_2D);
 
         d->x += width * SMALL_SCALE + BIND_GAP;
     }
@@ -621,6 +627,8 @@ void M_DrawControlsMenu(const mn_page_t* page, int x, int y)
     char buf[1024];
 #endif
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     DGL_Color4f(cfg.menuColors[0][0], cfg.menuColors[0][1], cfg.menuColors[0][2], Hu_MenuAlpha());
     M_DrawMenuText3("CONTROLS", SCREENWIDTH/2, y-28, GF_FONTB, DTF_ALIGN_TOP);
 
@@ -637,6 +645,8 @@ void M_DrawControlsMenu(const mn_page_t* page, int x, int y)
 
     DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], Hu_MenuAlpha());
     M_DrawMenuText3("Select to assign new, [Del] to clear", SCREENWIDTH/2, (SCREENHEIGHT/2) + ((SCREENHEIGHT/2-5)/cfg.menuScale), GF_FONTA, DTF_ALIGN_BOTTOM);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 void M_ControlGrabDrawer(void)
@@ -654,11 +664,15 @@ void M_ControlGrabDrawer(void)
     DGL_Scalef(SMALL_SCALE, SMALL_SCALE, 1);
     DGL_Translatef(-(SCREENWIDTH/2), -(SCREENHEIGHT/2), 0);
 
+    DGL_Enable(DGL_TEXTURE_2D);
+
     DGL_Color4f(cfg.menuColors[1][CR], cfg.menuColors[1][CG], cfg.menuColors[1][CB], 1);
     M_DrawMenuText3("Press key or move controller for", SCREENWIDTH/2, SCREENHEIGHT/2-2, GF_FONTA, DTF_ALIGN_BOTTOM|DTF_NO_TYPEIN);
 
     DGL_Color4f(cfg.menuColors[2][CR], cfg.menuColors[2][CG], cfg.menuColors[2][CB], 1);
     M_DrawMenuText3(binds->text, SCREENWIDTH/2, SCREENHEIGHT/2+2, GF_FONTB, DTF_ALIGN_TOP|DTF_NO_TYPEIN);
+
+    DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
