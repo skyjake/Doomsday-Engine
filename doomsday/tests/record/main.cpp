@@ -59,9 +59,9 @@ int main(int argc, char** argv)
     }
     catch(const Error& err)
     {
-        qWarning() << err.asText() << "\n";
+        qWarning() << err.asText();
     }
 
-    qDebug() << "Exiting main()...\n";
+    qDebug() << "Exiting main()...";
     return 0;        
 }

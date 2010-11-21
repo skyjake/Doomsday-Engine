@@ -17,22 +17,20 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <dengmain.h>
 #include <de/data.h>
 #include <de/types.h>
 #include <de/fs.h>
 #include "../testapp.h"
 
-#include <iostream>
+#include <QDebug>
 
 using namespace de;
 
-int deng_Main(int argc, char** argv)
+int main(int argc, char** argv)
 {
     try
     {
-        CommandLine args(argc, argv);
-        TestApp app(args);
+        TestApp app(argc, argv);
 
         Block b;
         Writer(b, littleEndianByteOrder) << duint32(0x11223344);
@@ -49,14 +47,14 @@ int deng_Main(int argc, char** argv)
         File::Status stats = hello.status();
         LOG_MESSAGE("hello.txt size: %i bytes, modified at %s") << stats.size << Date(stats.modifiedAt);
         
-        String content(hello);
+        String content = String::fromUtf8(hello);
         LOG_MESSAGE("The contents: \"%s\"") << content;
 
         try
         {
             // Make a second entry.
             File& worldTxt = zip.newFile("world.txt");
-            Writer(worldTxt) << FixedByteArray(content);
+            Writer(worldTxt) << FixedByteArray(content.toUtf8());
         }
         catch(const File::IOError&)
         {
@@ -68,16 +66,16 @@ int deng_Main(int argc, char** argv)
         File& zip2 = app.homeFolder().replaceFile("test2.zip");
         zip2.setMode(File::WRITE | File::TRUNCATE);
         Archive arch;
-        arch.add("world.txt", content);
+        arch.add("world.txt", content.toUtf8());
         Writer(zip2) << arch;
         LOG_MESSAGE("Wrote ") << zip2.path();
         LOG_MESSAGE("") << zip2.info();
     }
     catch(const Error& err)
     {
-        std::cerr << err.asText() << "\n";
+        qWarning() << err.asText();
     }
 
-    std::cout << "Exiting deng_Main()...\n";
+    qDebug() << "Exiting main()...";
     return 0;        
 }

@@ -94,17 +94,20 @@ File* FS::interpret(File* sourceData)
 
 int FS::findAll(const String& path, FoundFiles& found) const
 {
+    LOG_AS("FS::findAll");
+
     found.clear();
     String baseName = path.fileName().lower();
     String dir = path.fileNamePath().lower();
-    if(!dir.beginsWith("/"))
+    if(!dir.empty() && !dir.beginsWith("/"))
     {
         // Always begin with a slash. We don't want to match partial folder names.
         dir = "/" + dir;
     }
+
     ConstIndexRange range = _index.equal_range(baseName);
     for(Index::const_iterator i = range.first; i != range.second; ++i)    
-    {
+    {       
         File* file = i->second;
         if(file->path().endsWith(dir))
         {
