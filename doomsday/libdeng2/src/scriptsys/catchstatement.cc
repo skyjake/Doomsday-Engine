@@ -61,8 +61,9 @@ bool CatchStatement::matches(const Error& err) const
     const NameExpression* name = dynamic_cast<const NameExpression*>(&_args->at(0));
     Q_ASSERT(name != NULL);
     
-    return (name->identifier() == err.name() ||
-        String(err.name()).endsWith("_" + name->identifier()));
+    return (name->identifier() == "Error" ||   // Generic catch-all.
+            name->identifier() == err.name() || // Exact match.
+            String(err.name()).endsWith("_" + name->identifier())); // Sub-error match.
 }
 
 void CatchStatement::executeCatch(Context& context, const Error& err) const

@@ -17,23 +17,21 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <dengmain.h>
 #include <de/data.h>
 #include <de/types.h>
 #include <de/fs.h>
 #include <de/script.h>
 #include "../testapp.h"
 
-#include <iostream>
+#include <QDebug>
 
 using namespace de;
 
-int deng_Main(int argc, char** argv)
+int main(int argc, char** argv)
 {
     try
     {
-        CommandLine args(argc, argv);
-        TestApp app(args);
+        TestApp app(argc, argv);
 
         Script testScript(app.fileSystem().find("kitchen_sink.de"));
         Process proc(testScript);
@@ -47,9 +45,9 @@ int deng_Main(int argc, char** argv)
     }
     catch(const Error& err)
     {
-        std::cerr << err.asText() << "\n";
+        qWarning() << err.asText();
     }
 
-    std::cout << "Exiting deng_Main()...\n";
+    qDebug("Exiting main()...");
     return 0;        
 }

@@ -212,7 +212,11 @@ z = 1
 print 'z =', z
 const z = 10
 print 'z has been consted to', z
-print 'Have to delete z before it\'s value can change.'
+try
+    z = 5
+catch ReadOnlyError
+    print 'Have to delete z before its value can change.'
+end
 del z
 z = 2
 print 'Now z =', 2
@@ -309,7 +313,7 @@ catch Error, er
     print 'Caught:', er
 end
 try: throw "OMG!"
-catch Error, er: print 'caught:', er
+catch Error, er: print 'Caught:', er
 
 sections.subsection('Nesting try/catch statements.')
 try
