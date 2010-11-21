@@ -308,7 +308,7 @@ int Mus_GetExt(ded_music_t* def, filename_t retPath)
     }
 
     // Try the resource locator.
-    if(F_FindResource(RT_MUSIC, path, def->lumpName, 0, FILENAME_T_MAXLEN))
+    if(R_FindResource(RT_MUSIC, path, def->lumpName, 0, FILENAME_T_MAXLEN))
     {
         if(retPath)
             strncpy(retPath, path, FILENAME_T_MAXLEN);

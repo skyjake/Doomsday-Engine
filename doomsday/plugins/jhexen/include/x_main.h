@@ -39,6 +39,7 @@ extern boolean randomClassParm; // checkparm of -randclass
 extern boolean devParm; // checkparm of -devparm
 extern float turboMul; // Multiplier for turbo.
 
+extern gamemode_t gameMode;
 extern int gameModeBits;
 extern char gameModeString[];
 
