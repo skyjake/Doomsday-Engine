@@ -32,11 +32,8 @@
 #include "dd_share.h"
 
 /**
- * The routines/data exported out of the Doomsday engine:
- *
- * This structure contains pointers to routines that can have alternative
- * handlers in the engine. Also, some select global variables are exported
- * using this structure (most importantly the map data).
+ * The data exported out of the Doomsday engine.
+ * \todo Refactor away - there should be no need for an ABI in this direction.
  */
 typedef struct game_import_s {
     size_t          apiSize; // sizeof(game_import_t)
@@ -63,7 +60,7 @@ typedef struct {
 
     // Base-level.
     void          (*PreInit) (void);
-    void          (*PostInit) (void);
+    void          (*PostInit) (int mode);
     void          (*Shutdown) (void);
     void          (*UpdateState) (int step);
     int           (*GetInteger) (int id);

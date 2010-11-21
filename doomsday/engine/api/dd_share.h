@@ -65,6 +65,10 @@ extern "C" {
 
 #define DDMAXPLAYERS        16
 
+// Base default paths for data and definition files.
+#define DD_BASEDATAPATH    "}data\\"
+#define DD_BASEDEFSPATH    "}defs\\"
+
 // The case-independent strcmps have different names.
 #if WIN32
 # define strcasecmp stricmp
@@ -214,8 +218,8 @@ enum {
     DD_COLOR_LIMIT,
     DD_PRE,
     DD_POST,
-    DD_VERSION_SHORT,
-    DD_VERSION_LONG,
+    DD_GAME_VERSION_SHORT,
+    DD_GAME_VERSION_LONG,
     DD_HORIZON,
     DD_GAME_ID,
     DD_DEF_MOBJ,
@@ -243,8 +247,6 @@ enum {
     DD_CD_TRACK,
     DD_SPRITE,
     DD_FRAME,
-    DD_GAME_MODE, // 16 chars max (e.g., swdoom, doom1, udoom, tnt, heretic..., suitable for use as a key/identifier)
-    DD_GAME_NICEMODE, // (e.g., DOOM Shareware, The Ultimate DOOM etc..., fancy name)
     DD_GAME_CONFIG, // String: dm/co-op, jumping, etc.
     DD_GAME_NAME, // (e.g., jdoom, jheretic etc..., suitable for use with filepaths)
     DD_GAME_NICENAME, // (e.g., jDoom, MyGame:Episode2 etc..., fancy name)
@@ -308,6 +310,19 @@ enum {
     BOXFLOOR    = 4,
     BOXCEILING  = 5
 };
+
+//------------------------------------------------------------------------
+//
+// Game Data
+//
+//------------------------------------------------------------------------
+
+typedef struct {
+    const char* title;
+    const char* author;
+    int mode;
+    const char* modeString;
+} ddgameinfo_t;
 
 //------------------------------------------------------------------------
 //
@@ -913,7 +928,8 @@ typedef struct {
 
 typedef enum {
     GLT_ANY = -1,
-    GLT_SYSTEM, // system texture e.g., the "missing" texture.
+    GLT_FIRST = 0,
+    GLT_SYSTEM = GLT_FIRST, // system texture e.g., the "missing" texture.
     GLT_FLAT,
     GLT_DOOMTEXTURE,
     GLT_DOOMPATCH,
@@ -934,27 +950,33 @@ typedef enum {
 typedef enum ddresourceclass_e {
     DDRC_NONE = -1,
     DDRC_FIRST = 0,
-    DDRC_TEXTURE = DDRC_FIRST,
+    DDRC_PACKAGE = DDRC_FIRST, // ZIP or WAD.
+    DDRC_TEXTURE,
     DDRC_FLAT,
-    DDRC_PATCH, // Not sprites, mind you. Names == lumpnames.
+    DDRC_PATCH,
     DDRC_LIGHTMAP,
     DDRC_FLAREMAP,
-    DDRC_MUSIC, // Names == lumpnames.
-    DDRC_SFX, // Names == lumpnames.
-    DDRC_GRAPHICS, // Doomsday graphics.
+    DDRC_MUSIC,
+    DDRC_SOUND,
+    DDRC_GRAPHIC, // Engine graphics.
     DDRC_MODEL,
     NUM_RESOURCE_CLASSES
 } ddresourceclass_t;
 
+#define VALID_RESOURCE_CLASS(n)             ((n) >= DDRC_FIRST && (n) < NUM_RESOURCE_CLASSES)
+
 typedef enum resourcetype_e {
     RT_UNKNOWN = -1,
     RT_FIRST = 0,
-    RT_GRAPHIC = RT_FIRST,
+    RT_ARCHIVE = RT_FIRST,
+    RT_GRAPHIC,
     RT_MODEL,
     RT_SOUND,
     RT_MUSIC,
     NUM_RESOURCE_TYPES
 } resourcetype_t;
+
+#define VALID_RESOURCE_TYPE(n)              ((n) >= RT_FIRST && (n) < NUM_RESOURCE_TYPES)
 
 /**
  * Processing modes for GL_LoadGraphics.
@@ -1087,7 +1109,8 @@ enum {
 #define DEFCC(name)         int name(byte src, int argc, char** argv)
 
 // Console command flags.
-#define CMDF_NO_DEDICATED   0x00000001 // Not available in dedicated server mode.
+#define CMDF_NO_NULLGAME    0x00000001 // Not available unless a game is loaded.
+#define CMDF_NO_DEDICATED   0x00000002 // Not available in dedicated server mode.
 
 // Console command usage flags.
 // (what method(s) CAN NOT be used to invoke a ccmd (used with the CMDS codes above)).

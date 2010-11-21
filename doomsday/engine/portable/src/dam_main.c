@@ -345,18 +345,18 @@ static void addArchivedMap(archivedmap_t* dam)
  */
 static uint collectMapLumps(listnode_t** headPtr, int startLump)
 {
-    int                 i;
-    uint                numCollectedLumps = 0;
+    uint numCollectedLumps = 0;
 
     VERBOSE(Con_Message("collectMapLumps: Locating lumps...\n"));
 
-    if(startLump > 0 && startLump < numLumps)
+    if(startLump > 0 && startLump < W_NumLumps())
     {
         // Keep checking lumps to see if its a map data lump.
-        for(i = startLump; i < numLumps; ++i)
+        int i;
+        for(i = startLump; i < W_NumLumps(); ++i)
         {
-            int                 lumpType;
-            const char*         lumpName;
+            const char* lumpName;
+            int lumpType;
 
             // Lookup the lump name in our list of known map lump names.
             lumpName = W_LumpName(i);
@@ -384,20 +384,19 @@ static uint collectMapLumps(listnode_t** headPtr, int startLump)
  */
 void DAM_GetCachedMapDir(char* dir,  int mainLump, size_t len)
 {
-    const char*         sourceFile = W_LumpSourceFile(mainLump);
-    filename_t          base;
-    ushort              identifier = 0;
-    int                 i;
+    const char* sourceFile = W_LumpSourceFile(mainLump);
+    ushort identifier = 0;
+    filename_t base;
 
     M_ExtractFileBase(base, sourceFile, FILENAME_T_MAXLEN);
 
+    { int i;
     for(i = 0; sourceFile[i]; ++i)
         identifier ^= sourceFile[i] << ((i * 3) % 11);
+    }
 
     // The cached map directory is relative to the runtime directory.
-    dd_snprintf(dir, len, "%s%s\\%s-%04X\\", mapCacheDir,
-            (char*) gx.GetVariable(DD_GAME_MODE),
-            base, identifier);
+    dd_snprintf(dir, len, "%s%s\\%s-%04X\\", mapCacheDir, Str_Text(GameInfo_ModeIdentifier(DD_GameInfo())), base, identifier);
 
     M_TranslatePath(dir, dir, len);
 }
@@ -555,13 +554,9 @@ boolean DAM_AttemptMapLoad(const char* mapID)
 
             R_InitSectorShadows();
 
-            {
-            uint                startTime = Sys_GetRealTime();
+            { uint startTime = Sys_GetRealTime();
             R_InitSkyFix();
-            // How much time did we spend?
-            VERBOSE(Con_Message
-                    ("  InitialSkyFix: Done in %.2f seconds.\n",
-                     (Sys_GetRealTime() - startTime) / 1000.0f));
+            VERBOSE( Con_Message("R_InitSkyFix: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
             }
         }
     }

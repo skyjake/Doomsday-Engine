@@ -68,16 +68,54 @@ extern          "C" {
 #include "dd_share.h"
 #include "dd_plugin.h"
 
-    // Base.
-    void            DD_AddIWAD(const char* path);
-    void            DD_AddStartupWAD(const char* file);
-    void            DD_SetConfigFile(const char* filename);
-    void            DD_SetDefsFile(const char* file);
+//------------------------------------------------------------------------
+//
+// Base.
+//
+//------------------------------------------------------------------------
+
+    /**
+     * Registers a new game.
+     *
+     * \note Game registration order defines the order of the automatic game identification/selection logic.
+     *
+     * @param mode          Unique game mode id.
+     * @param modeString    Unique game mode string key/identifier, 16 chars max (e.g., "doom1-ultimate").
+     *                      Sent out in netgames, and the PCL_HELLO2 packet contains it. A client can't connect unless mode strings match.
+     * @param dataPath      The base directory for all data-class resources.
+     * @param defaultTitle  Default game title. May be overridden later.
+     * @param defaultAuthor Default game author used for (e.g.) map author info if not specified. May be overridden later.
+     * @param cmdlineFlag   Command-line game selection override argument (e.g., "ultimate"). Can be @c NULL.
+     * @param cmdlineFlag2  Alternative override. Can be @c NULL.
+     * @param dataFileNames Vector of required original game data file names necessary to play this game.
+     *                      Note that the order also defines the order in which these data files are loaded.
+     * @param numDataFileNames Number of elements in @a dataFileNames.
+     * @param modeLumpNames Vector of expected original game data lump/file names. Used for automatic game selection.
+     * @param numModeLumpNames Number of elements in @a modeLumpNames.
+     */
+    void DD_AddGame(int mode, const char* modeString, const char* dataPath,
+        const char* defaultTitle, const char* defaultAuthor, const char* cmdlineFlag, const char* cmdlineFlag2,
+        const char** dataFileNames, size_t numDataFileNames, const char** modeLumpNames, size_t numModeLumpNames);
+
+    /**
+     * Retrieve info about the current game.
+     *
+     * @param info          Ptr to the info structure to be populated.
+     * @return              @c true if successful else @c false (e.g., no game currently active).
+     */
+    boolean         DD_GetGameInfo(ddgameinfo_t* info);
+
+    void            R_SetDefsPath(const char* path);
+
+    void            DD_SetConfigFile(const char* fileName);
+    void            DD_SetDefsFile(const char* fileName);
+
     int _DECALL     DD_GetInteger(int ddvalue);
     void            DD_SetInteger(int ddvalue, int parm);
     void            DD_SetVariable(int ddvalue, void* ptr);
     void*           DD_GetVariable(int ddvalue);
     ddplayer_t*     DD_GetPlayer(int number);
+
     material_namespace_t DD_MaterialNamespaceForTextureType(gltexture_type_t t);
     materialnum_t   DD_MaterialForTexture(uint ofTypeId, gltexture_type_t type);
 
@@ -92,6 +130,7 @@ extern          "C" {
 
     // Base: File system.
     lumpnum_t       W_CheckNumForName(const char* name);
+    lumpnum_t       W_CheckNumForName2(const char* name, boolean silent);
     lumpnum_t       W_GetNumForName(const char* name);
     size_t          W_LumpLength(lumpnum_t lump);
     const char*     W_LumpName(lumpnum_t lump);
@@ -102,7 +141,7 @@ extern          "C" {
     void            W_ChangeCacheTag(lumpnum_t lump, int tag);
     const char*     W_LumpSourceFile(lumpnum_t lump);
     uint            W_CRCNumber(void);
-    boolean         W_IsFromIWAD(lumpnum_t lump);
+    boolean         W_LumpFromIWAD(lumpnum_t lump);
     lumpnum_t       W_OpenAuxiliary(const char* fileName);
 
     // Base: Zone.
@@ -115,7 +154,12 @@ extern          "C" {
     void            Z_ChangeTag2(void* ptr, int tag);
     void            Z_CheckHeap(void);
 
-    // Console.
+//------------------------------------------------------------------------
+//
+// Console.
+//
+//------------------------------------------------------------------------
+
     int             Con_Busy(int flags, const char* taskName, int (*workerFunc)(void*), void* workerData);
     void            Con_BusyWorkerEnd(void);
     boolean         Con_IsBusy(void);
@@ -146,7 +190,12 @@ extern          "C" {
     int             B_BindingsForCommand(const char* cmd, char* buf, size_t bufSize);
     int             B_BindingsForControl(int localPlayer, const char* controlName, int inverse, char* buf, size_t bufSize);
 
-    // System.
+//------------------------------------------------------------------------
+//
+// System.
+//
+//------------------------------------------------------------------------
+
     void            Sys_TicksPerSecond(float num);
     int             Sys_GetTime(void);
     double          Sys_GetSeconds(void);
@@ -159,7 +208,12 @@ extern          "C" {
     int             F_Access(const char* path);
     unsigned int    F_LastModified(const char* fileName);
 
-    // Map building interface.
+//------------------------------------------------------------------------
+//
+// Map Edit.
+//
+//------------------------------------------------------------------------
+
     boolean         MPE_Begin(const char* name);
     boolean         MPE_End(void);
 
@@ -176,13 +230,23 @@ extern          "C" {
     boolean         P_RegisterMapObj(int identifier, const char* name);
     boolean         P_RegisterMapObjProperty(int identifier, int propIdentifier, const char* propName, valuetype_t type);
 
-    // Network.
+//------------------------------------------------------------------------
+//
+// Networking.
+//
+//------------------------------------------------------------------------
+
     void            Net_SendPacket(int to_player, int type, void* data, size_t length);
     int             Net_GetTicCmd(void* command, int player);
     const char*     Net_GetPlayerName(int player);
     ident_t         Net_GetPlayerID(int player);
 
-    // Play.
+//------------------------------------------------------------------------
+//
+// Playsim.
+//
+//------------------------------------------------------------------------
+
     float           P_AccurateDistance(float dx, float dy);
     float           P_ApproxDistance(float dx, float dy);
     float           P_ApproxDistance3(float dx, float dy, float dz);
@@ -346,9 +410,13 @@ extern          "C" {
 
     boolean         DD_IterateThinkers(think_t type, boolean (*func) (thinker_t *th, void*), void* data);
 
-    // Refresh.
+//------------------------------------------------------------------------
+//
+// Refresh.
+//
+//------------------------------------------------------------------------
+
     int             DD_GetFrameRate(void);
-    void            R_SetDataPath(const char* path);
     void            R_SetupMap(int mode, int flags);
     void            R_PrecacheMap(void);
     void            R_PrecacheMobjNum(int mobjtypeNum);
@@ -369,11 +437,21 @@ extern          "C" {
     const char*     R_GetColorPaletteNameForNum(colorpaletteid_t id);
     void            R_GetColorPaletteRGBf(colorpaletteid_t id, float rgb[3], int idx, boolean correctGamma);
 
-    // Renderer.
+//------------------------------------------------------------------------
+//
+// Renderer.
+//
+//------------------------------------------------------------------------
+
     void            Rend_Reset(void);
     void            Rend_SkyParams(int layer, int param, void* data);
 
-    // Graphics.
+//------------------------------------------------------------------------
+//
+// Graphics.
+//
+//------------------------------------------------------------------------
+
     void            GL_UseFog(int yes);
     byte*           GL_GrabScreen(void);
     DGLuint         GL_NewTextureWithParams3(int format, int width, int height, const void* pixels, int flags, int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT);
@@ -382,7 +460,12 @@ extern          "C" {
     uint            GL_TextureNumForName(const char* name, gltexture_type_t type);
     uint            GL_CheckTextureNumForName(const char* name, gltexture_type_t type);
 
-    // Audio.
+//------------------------------------------------------------------------
+//
+// Audio.
+//
+//------------------------------------------------------------------------
+
     void            S_MapChange(void);
     int             S_LocalSoundAtVolumeFrom(int sound_id, struct mobj_s* origin, float* pos, float volume);
     int             S_LocalSoundAtVolume(int soundID, struct mobj_s* origin, float volume);
@@ -399,7 +482,12 @@ extern          "C" {
     void            S_StopMusic(void);
     void            S_PauseMusic(boolean doPause);
 
-    // Miscellaneous.
+//------------------------------------------------------------------------
+//
+// Miscellaneous.
+//
+//------------------------------------------------------------------------
+
     size_t          M_ReadFile(const char* name, byte** buffer);
     size_t          M_ReadFileCLib(const char* name, byte** buffer);
     boolean         M_WriteFile(const char* name, void* source, size_t length);

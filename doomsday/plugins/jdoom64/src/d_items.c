@@ -30,6 +30,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <string.h>
+#include <stdio.h>
 
 #include "jdoom64.h"
 
@@ -257,8 +258,7 @@ void P_InitWeaponInfo(void)
     P_SetWeaponSlot(WT_EIGHTH, 1);
     P_SetWeaponSlot(WT_SECOND, 2);
     P_SetWeaponSlot(WT_THIRD, 3);
-    if(gameMode == commercial)
-        P_SetWeaponSlot(WT_NINETH, 3);
+    P_SetWeaponSlot(WT_NINETH, 3);
     P_SetWeaponSlot(WT_FOURTH, 4);
     P_SetWeaponSlot(WT_FIFTH, 5);
     P_SetWeaponSlot(WT_SIXTH, 6);

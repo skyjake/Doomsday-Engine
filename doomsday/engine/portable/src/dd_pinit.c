@@ -45,6 +45,9 @@
 #include "de_network.h"
 #include "de_misc.h"
 #include "de_ui.h"
+#include "de_audio.h"
+#include "de_bsp.h"
+#include "de_render.h"
 
 #include "def_main.h"
 
@@ -141,17 +144,16 @@ void SetGameImports(game_import_t* imp)
 
 void DD_InitAPI(void)
 {
-    GETGAMEAPI          GetGameAPI = app.GetGameAPI;
+    GETGAMEAPI GetGameAPI = app.GetGameAPI;
 
-    game_export_t*      gameExPtr;
+    game_export_t* gameExPtr;
 
     // Put the imported stuff into the imports.
     SetGameImports(&__gi);
 
     memset(&__gx, 0, sizeof(__gx));
     gameExPtr = GetGameAPI(&__gi);
-    memcpy(&__gx, gameExPtr,
-           MIN_OF(sizeof(__gx), gameExPtr->apiSize));
+    memcpy(&__gx, gameExPtr, MIN_OF(sizeof(__gx), gameExPtr->apiSize));
 }
 
 void DD_InitCommandLine(const char* cmdLine)
@@ -201,7 +203,7 @@ void DD_Verbosity(void)
  */
 boolean DD_EarlyInit(void)
 {
-    const char*         outFileName = "doomsday.out";
+    const char* outFileName = "doomsday.out";
 
     // We'll redirect stdout to a log file.
     DD_CheckArg("-out", &outFileName);
@@ -226,11 +228,32 @@ boolean DD_EarlyInit(void)
         {
             Con_Message("Executable: " DOOMSDAY_VERSIONTEXT ".\n");
 
+            // Register the engine commands and variables.
+            DD_RegisterLoop();
+            DD_RegisterInput();
+            DD_RegisterVFS();
+            B_Register(); // for control bindings
+            Con_Register();
+            DH_Register();
+            R_Register();
+            S_Register();
+            SBE_Register(); // for bias editor
+            Rend_Register();
+            GL_Register();
+            Net_Register();
+            I_Register();
+            H_Register();
+            DAM_Register();
+            BSP_Register();
+            UI_Register();
+            Demo_Register();
+            P_ControlRegister();
+            FI_Register();
+
             // Print the used command line.
             if(verbose)
             {
-                int         p;
-
+                int p;
                 Con_Message("Command line (%i strings):\n", Argc());
                 for(p = 0; p < Argc(); ++p)
                     Con_Message("  %i: %s\n", p, Argv(p));
@@ -270,6 +293,7 @@ void DD_ShutdownAll(void)
     Sv_Shutdown();
     R_Shutdown();
     Def_Destroy();
+    F_ShutdownResourceLocator();
     F_ShutdownDirec();
     ArgShutdown();
     Z_Shutdown();

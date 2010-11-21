@@ -1093,9 +1093,9 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     case MT_ARTISUPERHEAL:
     case MT_ARTITELEPORT:
     case MT_ITEMSHIELD2:
-        if(gameMode == shareware)
-        {   // Don't place on map in shareware version.
-            return NULL;
+        if(gameMode == heretic_shareware)
+        {   
+            return 0;// Don't place on map.
         }
         break;
 
@@ -1105,7 +1105,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
 
     // Don't spawn any monsters if -noMonstersParm.
     if(noMonstersParm && (info->flags & MF_COUNTKILL))
-        return NULL;
+        return 0;
 
     if(info->flags & MF_SOLID)
         ddflags |= DDMF_SOLID;

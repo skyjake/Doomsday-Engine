@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,20 +25,24 @@
  * d_api.c: Doomsday API setup and interaction - jDoom64 specific
  */
 
-#ifndef __D_API_H__
-#define __D_API_H__
+#ifndef LIBJDOOM64_API_H
+#define LIBJDOOM64_API_H
 
 #ifndef __JDOOM64__
 #  error "Using jDoom64 headers without __JDOOM64__"
 #endif
 
 #include "dd_api.h"
+#include "doomdef.h"
 
 extern game_import_t gi;
 extern game_export_t gx;
 
-int             G_GetInteger(int id);
-void           *G_GetVariable(int id);
-game_export_t  *GetGameAPI(game_import_t *imports);
+boolean G_SetGameMode(gamemode_t mode);
 
-#endif
+int G_GetInteger(int id);
+void* G_GetVariable(int id);
+
+game_export_t* GetGameAPI(game_import_t* imports);
+
+#endif /* LIBJDOOM64_API_H */

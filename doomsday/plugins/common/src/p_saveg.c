@@ -76,7 +76,7 @@
 #if __JDOOM__
 # define MY_SAVE_MAGIC         0x1DEAD666
 # define MY_CLIENT_SAVE_MAGIC  0x2DEAD666
-# define MY_SAVE_VERSION       8
+# define MY_SAVE_VERSION       9
 # define SAVESTRINGSIZE        24
 # define CONSISTENCY           0x2c
 # define SAVEGAMENAME          "DoomSav"
@@ -85,7 +85,7 @@
 #elif __JDOOM64__
 # define MY_SAVE_MAGIC         0x1D6420F4
 # define MY_CLIENT_SAVE_MAGIC  0x2D6420F4
-# define MY_SAVE_VERSION       7
+# define MY_SAVE_VERSION       8
 # define SAVESTRINGSIZE        24
 # define CONSISTENCY           0x2c
 # define SAVEGAMENAME          "D64Sav"
@@ -94,7 +94,7 @@
 #elif __JHERETIC__
 # define MY_SAVE_MAGIC         0x7D9A12C5
 # define MY_CLIENT_SAVE_MAGIC  0x1062AF43
-# define MY_SAVE_VERSION       7
+# define MY_SAVE_VERSION       8
 # define SAVESTRINGSIZE        24
 # define CONSISTENCY           0x9d
 # define SAVEGAMENAME          "HticSav"
@@ -104,7 +104,7 @@
 # define HXS_VERSION_TEXT      "HXS Ver " // Do not change me!
 # define HXS_VERSION_TEXT_LENGTH 16
 
-# define MY_SAVE_VERSION       8
+# define MY_SAVE_VERSION       9
 # define SAVESTRINGSIZE        24
 # define SAVEGAMENAME          "hex"
 # define CLIENTSAVEGAMENAME    "hexencl"
@@ -271,13 +271,8 @@ static void unarchiveMap(void);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 LZFILE* savefile;
-#if __JHEXEN__
-filename_t savePath;        /* = "hexndata\\"; */
-filename_t clientSavePath;  /* = "hexndata\\client\\"; */
-#else
-filename_t savePath;         /* = "savegame\\"; */
-filename_t clientSavePath;  /* = "savegame\\client\\"; */
-#endif
+filename_t savePath; // e.g., "savegame\\"
+filename_t clientSavePath; // e.g., "savegame\\client\\"
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -4596,7 +4591,7 @@ static void P_UnArchiveGlobalScriptData(void)
     else
     {   // Old format.
         acsstore_t tempStore[20];
-        
+
         ACSStoreSize = 0;
         for(i = 0; i < 20; ++i)
         {
@@ -4824,13 +4819,19 @@ void SV_Init(void)
             strcat(savePath, "\\");
     }
     else
-    {
-        // Use the default path.
+    {   // Use the default path.
+        ddgameinfo_t gameInfo;
+
+        if(DD_GetGameInfo(&gameInfo))
+        {
 #if __JHEXEN__
-        sprintf(savePath, "hexndata\\%s\\", (char *) G_GetVariable(DD_GAME_MODE));
+            sprintf(savePath, "hexndata\\%s\\", gameInfo.modeString);
 #else
-        sprintf(savePath, "savegame\\%s\\", (char *) G_GetVariable(DD_GAME_MODE));
+            sprintf(savePath, "savegame\\%s\\", gameInfo.modeString);
 #endif
+        }
+        else
+            Con_Error("SV_Init: Error, failed retrieving GameInfo.");
     }
 
     // Build the client save path.
@@ -5110,14 +5111,44 @@ static boolean readSaveHeader(saveheader_t *hdr, LZFILE *savefile)
         return false; // A future version.
     }
 
-# if __JDOOM__ || __JDOOM64__
-    if(hdr->gameMode != gameMode && !ArgExists("-nosavecheck"))
+#if __JDOOM__ || __JHERETIC__
+# if __JDOOM__ //|| __JHEXEN__
+    if(hdr->version < 9)
+# elif __JHERETIC__
+    if(hdr->version < 8)
+# endif
     {
-        Con_Message("SV_LoadGame: savegame not from gameMode %i.\n",
-                    gameMode);
+        static const gamemode_t oldGameModes[] = {
+# if __JDOOM__
+            doom_shareware,
+            doom,
+            doom2,
+            doom_ultimate,
+            indetermined
+# elif __JDOOM64__
+            doom64,
+            indetermined
+# elif __JHERETIC__
+            heretic_shareware,
+            heretic,
+            heretic_extended,
+            indetermined
+# elif __JHEXEN__
+            hexen_shareware,
+            hexen,
+            hexen_deathkings,
+            indetermined
+# endif
+        };
+        hdr->gameMode = oldGameModes[(int)hdr->gameMode];
+    }
+#endif
+
+    if(hdr->gameMode != gameMode)
+    {
+        Con_Message("SV_LoadGame: Game Mode missmatch (%i!=%i), aborting load.\n", (int)gameMode, (int)hdr->gameMode);
         return false;
     }
-# endif
 
     gameSkill = hdr->skill & 0x7f;
     fastParm = (hdr->skill & 0x80) != 0;
@@ -5174,7 +5205,7 @@ static boolean SV_LoadGame2(void)
     // Create and populate the MaterialArchive.
     materialArchive = P_CreateEmptyMaterialArchive();
 
-    
+
     P_UnArchivePlayerHeader();
     // Read the player structures
     SV_AssertSegment(ASEG_PLAYERS);

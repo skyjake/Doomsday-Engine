@@ -464,9 +464,7 @@ void P_MobjMoveZ(mobj_t* mo)
         //
         // So we need to check that this is either retail or commercial
         // (but not doom2)
-        int correctLostSoulBounce =
-            (gameMode == retail || gameMode == commercial) &&
-                    gameMission != GM_DOOM2;
+        int correctLostSoulBounce = (gameMode == GM_DOOM2_PLUT || gameMode == GM_DOOM2_TNT);
 
         if(correctLostSoulBounce && (mo->flags & MF_SKULLFLY))
         {
@@ -858,7 +856,7 @@ mobj_t* P_SpawnMobj3f(mobjtype_t type, float x, float y, float z,
     case MT_CHAINGUY: // 65, Former Human Commando
     case MT_UNDEAD: // 66, Revenant
     case MT_WOLFSS: // 84, Wolf SS
-        if(gameMode != commercial)
+        if(!(gameModeBits & GM_ANY_DOOM2))
             return NULL;
         break;
 

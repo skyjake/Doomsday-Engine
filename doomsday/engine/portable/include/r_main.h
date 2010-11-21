@@ -73,6 +73,7 @@ void            R_BeginWorldFrame(void);
 void            R_EndWorldFrame(void);
 void            R_RenderPlayerView(int num);
 void            R_RenderPlayerViewBorder(void);
+void            R_RenderBlankView(void);
 void            R_RenderViewPorts(void);
 
 const viewport_t* R_CurrentViewPort(void);

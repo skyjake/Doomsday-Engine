@@ -36,39 +36,21 @@
 
 #include "de_platform.h"
 
-#ifdef WIN32
-#  include <direct.h>
-#endif
-
 #ifdef UNIX
 #  include <ctype.h>
 #  include <SDL.h>
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <time.h>
-#include <string.h>
-
 #include "de_base.h"
-#include "de_system.h"
 #include "de_console.h"
 #include "de_network.h"
-#include "de_play.h"
 #include "de_refresh.h"
 #include "de_render.h"
-#include "de_graphics.h"
 #include "de_audio.h"
 #include "de_misc.h"
-#include "de_dam.h"
 #include "de_ui.h"
 
-#include "dd_pinit.h"
-
 // MACROS ------------------------------------------------------------------
-
-#define MAXWADFILES         (4096)
 
 // TYPES -------------------------------------------------------------------
 
@@ -84,27 +66,17 @@ typedef struct autoload_s {
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-void            G_CheckDemoStatus(void);
-void            F_Drawer(void);
-void            S_InitScript(void);
-void            Net_Drawer(void);
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static int      DD_StartupWorker(void* parm);
-static int      DD_StartupWorker2(void* parm);
-static void     HandleArgs(int state);
+static int DD_StartupWorker(void* parm);
+static int DD_DummyWorker(void* parm);
+static void DD_AutoLoad(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-#ifdef WIN32
-extern HINSTANCE hInstDGL;
-#endif
-
 extern int renderTextures;
-extern char skyFlatName[9];
 extern int gotFrame;
 extern int monochrome;
 extern int gameDataFormat;
@@ -113,108 +85,456 @@ extern int symbolicEchoMode;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+filename_t ddBasePath = ""; // Doomsday root directory is at...?
 directory_t ddRuntimeDir, ddBinDir;
-int verbose = 0; // For debug messages (-verbose).
-boolean cmdfrag; // true if a CMD_FRAG packet should be sent out
+
+/// The default main configuration file (will invariably be overridden by the game).
+ddstring_t configFileName = { "doomsday.cfg" };
+ddstring_t bindingsConfigFileName;
+
+/// The default game top-level definition file.
+ddstring_t topDefsFileName;
+
 int isDedicated = false;
-int maxZone = 0x2000000; // Default zone heap. (32meg)
-boolean autoStart;
+
+int verbose = 0; // For debug messages (-verbose).
 FILE* outFile; // Output file for console messages.
 
-char* iwadList[64];
-char* defaultWads = ""; // List of wad names, whitespace seperating(in .cfg).
-
-filename_t configFileName;
-filename_t bindingsConfigFileName;
-filename_t defsFileName, topDefsFileName;
-filename_t ddBasePath = "";     // Doomsday root directory is at...?
+/// List of file names, whitespace seperating (written to .cfg).
+char* autoloadFiles = "";
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static char *wadFiles[MAXWADFILES];
+// The base directory for all definition directories.
+static ddstring_t defsPath;
+
+/// List of game data files (specified via the command line or in a cfg, or
+/// found using the default search algorithm (e.g., /auto and DOOMWADDIR)).
+static ddstring_t** gameDataFileList = 0;
+static size_t numGameDataFileList = 0;
+
+/// GameInfo records and associated found-file lists.
+static gameinfo_t** gameInfo = 0;
+static uint numGameInfo = 0, currentGameInfoIndex = 0;
+static ddstring_t*** foundGameDataFileLists = 0;
 
 // CODE --------------------------------------------------------------------
 
-/**
- * Convert propertyType enum constant into a string for error/debug messages.
- */
-const char* value_Str(int val)
+static __inline size_t countElements(const ddstring_t* const* list)
 {
-    static char         valStr[40];
-    struct val_s {
-        int                 val;
-        const char*         str;
-    } valuetypes[] =
-    {
-        { DDVT_BOOL, "DDVT_BOOL" },
-        { DDVT_BYTE, "DDVT_BYTE" },
-        { DDVT_SHORT, "DDVT_SHORT" },
-        { DDVT_INT, "DDVT_INT" },
-        { DDVT_UINT, "DDVT_UINT" },
-        { DDVT_FIXED, "DDVT_FIXED" },
-        { DDVT_ANGLE, "DDVT_ANGLE" },
-        { DDVT_FLOAT, "DDVT_FLOAT" },
-        { DDVT_LONG, "DDVT_LONG" },
-        { DDVT_ULONG, "DDVT_ULONG" },
-        { DDVT_PTR, "DDVT_PTR" },
-        { DDVT_BLENDMODE, "DDVT_BLENDMODE" },
-        { 0, NULL }
-    };
-    uint                i;
-
-    for(i = 0; valuetypes[i].str; ++i)
-        if(valuetypes[i].val == val)
-            return valuetypes[i].str;
-
-    sprintf(valStr, "(unnamed %i)", val);
-    return valStr;
-}
-
-static __inline int iwadListSize(void)
-{
-    int n;
-    for(n = 0; iwadList[n]; ++n);
+    assert(list);
+    {size_t n;
+    for(n = 0; list[n]; ++n);
     return n;
+    }
 }
 
-/**
- * Adds the given IWAD to the list of IWADs.
- */
-void DD_AddIWAD(const char* path)
+static __inline uint gameInfoIndex(const gameinfo_t* info)
 {
-    int numIWADs = iwadListSize();
-    filename_t buf;
-
-    M_TranslatePath(buf, path, FILENAME_T_MAXLEN);
-    iwadList[numIWADs] = M_Calloc(strlen(buf) + 1);   // This mem is not freed?
-    strcpy(iwadList[numIWADs], buf);
+    assert(info);
+    { uint i;
+    for(i = 0; i < numGameInfo; ++i)
+    {
+        if(info == gameInfo[i])
+            return i+1;
+    }}
+    return 0;
 }
 
-static void AddToWadList(char* list)
+static gameinfo_t* findGameInfoForMode(pluginid_t pluginId, int mode)
+{
+    { uint i;
+    for(i = 0; i < numGameInfo; ++i)
+    {
+        gameinfo_t* info = gameInfo[i];
+        if(GameInfo_PluginId(info) == pluginId && GameInfo_Mode(info) == mode)
+            return info;
+    }}
+    return 0; // Not found.
+}
+
+static gameinfo_t* findGameInfoForModeIdentifier(const char* modeIdentifier)
+{
+    assert(modeIdentifier && modeIdentifier[0]);
+    { uint i;
+    for(i = 0; i < numGameInfo; ++i)
+    {
+        gameinfo_t* info = gameInfo[i];
+        if(!stricmp(Str_Text(GameInfo_ModeIdentifier(info)), modeIdentifier))
+            return info;
+    }}
+    return 0; // Not found.
+}
+
+static gameinfo_t* findGameInfoForCmdlineFlag(const char* cmdlineFlag)
+{
+    assert(cmdlineFlag && cmdlineFlag[0]);
+    { uint i;
+    for(i = 0; i < numGameInfo; ++i)
+    {
+        gameinfo_t* info = gameInfo[i];
+        if((GameInfo_CmdlineFlag (info) && !stricmp(Str_Text(GameInfo_CmdlineFlag (info)), cmdlineFlag)) ||
+           (GameInfo_CmdlineFlag2(info) && !stricmp(Str_Text(GameInfo_CmdlineFlag2(info)), cmdlineFlag)))
+            return info;
+    }}
+    return 0; // Not found.
+}
+
+static void addToPathList(ddstring_t*** list, size_t* listSize, const char* rawPath)
+{
+    assert(list && listSize && rawPath && rawPath[0]);
+    {
+    ddstring_t* newPath = Str_New();
+
+    { filename_t temp;
+    M_TranslatePath(temp, rawPath, FILENAME_T_MAXLEN);
+    Str_Set(newPath, temp); }
+
+    *list = M_Realloc(*list, sizeof(**list) * ++(*listSize)); /// \fixme This is never freed!
+    (*list)[(*listSize)-1] = newPath;
+    }
+}
+
+static boolean allValidLumpNames(const ddstring_t* const* list)
+{
+    for(; *list; list++)
+        if(W_CheckNumForName2(Str_Text(*list), true) == -1)
+            return false;
+    return true;
+}
+
+static void parseAutoloadFilePathsAndAddFiles(ddstring_t*** list, size_t* listSize, const char* pathString)
 {
 #define ATWSEPS                 ",; \t"
 
-    size_t len = strlen(list);
+    assert(list && listSize && pathString && pathString[0]);
+    {
+    size_t len = strlen(pathString);
     char* buffer = M_Malloc(len + 1), *token;
 
-    strcpy(buffer, list);
+    strcpy(buffer, pathString);
     token = strtok(buffer, ATWSEPS);
     while(token)
     {
-        DD_AddStartupWAD(token);
+        W_AddFile(token, false);
         token = strtok(NULL, ATWSEPS);
     }
     M_Free(buffer);
+    }
 
 #undef ATWSEPS
+}
+
+static void destroyPathList(ddstring_t*** list, size_t* listSize)
+{
+    assert(list && listSize);
+    if(*list)
+    {
+        size_t i;
+        for(i = 0; i < *listSize; ++i)
+            Str_Delete((*list)[i]);
+        M_Free(*list); *list = 0;
+    }
+    *listSize = 0;
+}
+
+static void printResourceClassPathSet(gameinfo_t* info)
+{
+    assert(info && !DD_IsNullGameInfo(info));
+    { int i;
+    Con_Message("Resource Search Paths for \"%s\":\n", Str_Text(GameInfo_ModeIdentifier(info)));
+    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
+    {
+        Con_Message("#%i %s:\n", i, F_ResourceClassStr((ddresourceclass_t)i));
+        M_PrintPathList(Str_Text(GameInfo_ResourceSearchPaths(info, (ddresourceclass_t)i)));
+    }}
+}
+
+static gameinfo_t* addGameInfoRecord(pluginid_t pluginId, int mode, const char* modeString, const char* dataPath,
+    const char* title, const char* author, const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2)
+{
+    gameInfo = M_Realloc(gameInfo, sizeof(*gameInfo) * (numGameInfo + 1));
+    gameInfo[numGameInfo] = P_CreateGameInfo(pluginId, mode, modeString, dataPath, title, author, cmdlineFlag, cmdlineFlag2);
+    return gameInfo[numGameInfo++];
+}
+
+static gameinfo_t* addGame(pluginid_t pluginId, int mode, const char* modeString, const char* dataPath,
+    const char* defaultTitle, const char* defaultAuthor, const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2)
+{
+    gameinfo_t* info = addGameInfoRecord(pluginId, mode, modeString, dataPath, defaultTitle, defaultAuthor, cmdlineFlag, cmdlineFlag2);
+    foundGameDataFileLists = M_Realloc(foundGameDataFileLists, sizeof(*foundGameDataFileLists) * numGameInfo);
+    foundGameDataFileLists[numGameInfo-1] = 0;
+    return info;
+}
+
+void DD_ShutdownResourceClassSearchPaths(void)
+{
+    GameInfo_ClearResourceSearchPaths(DD_GameInfo());
+}
+
+void DD_ClearResourceClassSearchPathList(ddresourceclass_t resClass)
+{
+    if(!VALID_RESOURCE_CLASS(resClass))
+        Con_Error("DD_ClearResourceClassSearchPathList: Invalid resource class %i.\n", resClass);
+    GameInfo_ClearResourceSearchPaths2(DD_GameInfo(), resClass);
+}
+
+gameinfo_t* DD_GameInfo(void)
+{
+    assert(currentGameInfoIndex != 0);
+    return gameInfo[currentGameInfoIndex-1];
+}
+
+boolean DD_IsNullGameInfo(gameinfo_t* info)
+{
+    assert(info);
+    return GameInfo_PluginId(info) == 0;
+}
+
+boolean DD_GetGameInfo(ddgameinfo_t* ex)
+{
+    if(!ex)
+        Con_Error("DD_GetGameInfo: Invalid info argument.");
+
+    memset(ex, 0, sizeof(ddgameinfo_t*));
+    { gameinfo_t* info = DD_GameInfo();
+    if(!DD_IsNullGameInfo(info))
+    {
+        ex->title = Str_Text(GameInfo_Title(info));
+        ex->author = Str_Text(GameInfo_Author(info));
+        ex->modeString = Str_Text(GameInfo_ModeIdentifier(info));
+        ex->mode = GameInfo_Mode(info);
+        return true;
+    }}
+
+#if _DEBUG
+Con_Message("DD_GetGameInfo: Warning, no game currently loaded - returning false.\n");
+#endif
+    return false;
+}
+
+void DD_AddGame(int mode, const char* modeString, const char* _dataPath, const char* defaultTitle, const char* defaultAuthor,
+    const char* _cmdlineFlag, const char* _cmdlineFlag2, const char** requiredFileNames, size_t numRequiredFileNames,
+    const char** modeLumpNames, size_t numModeLumpNames)
+{
+    assert(modeString && modeString[0] && _dataPath && _dataPath[0] && defaultTitle && defaultTitle[0] && defaultAuthor && defaultAuthor[0]);
+    {
+    gameinfo_t* info;
+    ddstring_t cmdlineFlag, cmdlineFlag2;
+    filename_t dataPath;
+    pluginid_t pluginId = Plug_PluginIdForActiveHook();
+
+    // Game mode must be unique among games registered by this plugin.
+    if((info = findGameInfoForMode(pluginId, mode)))
+        Con_Error("DD_AddGame: Failed adding game \"%s\", mode '%i' already in use.", defaultTitle, mode);
+
+    // Game mode identifiers must be unique. Ensure that is the case.
+    if((info = findGameInfoForModeIdentifier(modeString)))
+        Con_Error("DD_AddGame: Failed adding game \"%s\", mode identifier '%s' already in use.", defaultTitle, modeString);
+
+    M_TranslatePath(dataPath, _dataPath, FILENAME_T_MAXLEN);
+    Dir_ValidDir(dataPath, FILENAME_T_MAXLEN);
+
+    Str_Init(&cmdlineFlag);
+    Str_Init(&cmdlineFlag2);
+
+    // Command-line game selection override arguments must be unique. Ensure that is the case.
+    if(_cmdlineFlag)
+    {
+        Str_Appendf(&cmdlineFlag, "-%s", _cmdlineFlag);
+        if((info = findGameInfoForCmdlineFlag(Str_Text(&cmdlineFlag))))
+            Con_Error("DD_AddGame: Failed adding game \"%s\", cmdlineFlag '%s' already in use.", defaultTitle, Str_Text(&cmdlineFlag));
+    }
+    if(_cmdlineFlag2)
+    {
+        Str_Appendf(&cmdlineFlag2, "-%s", _cmdlineFlag2);
+        if((info = findGameInfoForCmdlineFlag(Str_Text(&cmdlineFlag2))))
+            Con_Error("DD_AddGame: Failed adding game \"%s\", cmdlineFlag '%s' already in use.", defaultTitle, Str_Text(&cmdlineFlag2));
+    }
+
+    /**
+     * Looking good. Add this game to our records.
+     */
+    info = addGame(pluginId, mode, modeString, dataPath, defaultTitle, defaultAuthor, _cmdlineFlag? &cmdlineFlag : 0, _cmdlineFlag2? &cmdlineFlag2 : 0);
+
+    Str_Free(&cmdlineFlag);
+    Str_Free(&cmdlineFlag2);
+
+    // Add a required file list to the info record?
+    if(requiredFileNames && numRequiredFileNames != 0)
+    {
+        ddstring_t temp;
+        size_t n = 0;
+        Str_Init(&temp);
+        do
+        {
+            Str_Set(&temp, requiredFileNames[n]);
+            GameInfo_AddRequiredFileName(info, &temp);
+        } while(++n < numRequiredFileNames);
+        Str_Free(&temp);
+    }
+
+    // Add an auto-identification file list to the info record?
+    if(modeLumpNames && numModeLumpNames != 0)
+    {
+        ddstring_t temp;
+        size_t n = 0;
+        Str_Init(&temp);
+        do
+        {
+            Str_Set(&temp, modeLumpNames[n]);
+            GameInfo_AddModeLumpName(info, &temp);
+        } while(++n < numModeLumpNames);
+        Str_Free(&temp);
+    }
+    }
+}
+
+void DD_DestroyGameInfo(void)
+{
+    Str_Free(&defsPath);
+    Str_Free(&configFileName);
+    Str_Free(&bindingsConfigFileName);
+    Str_Free(&topDefsFileName);
+
+    destroyPathList(&gameDataFileList, &numGameDataFileList);
+
+    if(gameInfo)
+    {
+        { uint i;
+        for(i = 0; i < numGameInfo; ++i)
+        {
+            gameinfo_t* info = gameInfo[i];
+
+            if(foundGameDataFileLists[i])
+            {
+                size_t numRequiredFileNames = countElements(GameInfo_RequiredFileNames(info));
+                size_t j;
+                for(j = 0; j < numRequiredFileNames; ++j)
+                {
+                    if(!foundGameDataFileLists[i][j])
+                        continue;
+                    Str_Delete(foundGameDataFileLists[i][j]); foundGameDataFileLists[i][j] = 0;
+                }
+                M_Free(foundGameDataFileLists[i]); foundGameDataFileLists[i] = 0;
+            }
+            P_DestroyGameInfo(info);
+        }}
+        M_Free(gameInfo); gameInfo = 0;
+        M_Free(foundGameDataFileLists); foundGameDataFileLists = 0;
+    }
+    numGameInfo = 0;
+    currentGameInfoIndex = 0;
+}
+
+static void locateGameDataFiles(gameinfo_t* info)
+{
+    assert(info);
+    {
+    ddstring_t** foundPaths;
+    size_t numRequiredFileNames;
+    uint oldGameInfoId = currentGameInfoIndex;
+
+    if(!GameInfo_RequiredFileNames(info) || foundGameDataFileLists[gameInfoIndex(info)-1])
+        return; // Nothing to do.
+
+    /// \kludge Temporarily switch GameInfo.
+    currentGameInfoIndex = gameInfoIndex(info);
+
+    // Re-init the resource locator using the search paths of this GameInfo.
+    F_InitResourceLocator();
+
+    numRequiredFileNames = countElements(GameInfo_RequiredFileNames(info));
+    foundPaths = M_Calloc(sizeof(*foundPaths) * numRequiredFileNames);
+
+    { size_t n;
+    for(n = 0; n < numRequiredFileNames; ++n)
+    {
+        filename_t foundPath;
+        if(!F_FindResource(RT_ARCHIVE, foundPath, Str_Text(GameInfo_RequiredFileNames(info)[n]), 0, FILENAME_T_MAXLEN))
+            continue;
+        foundPaths[n] = Str_New();
+        Str_Set(foundPaths[n], foundPath);
+    }}
+
+    foundGameDataFileLists[gameInfoIndex(info)-1] = foundPaths;
+
+    /// \kludge Restore the old GameInfo.
+    currentGameInfoIndex = oldGameInfoId;
+    }
+}
+
+static boolean allGameDataFilesFound(gameinfo_t* info)
+{
+    assert(info);
+    {
+    uint gameInfoIdx = gameInfoIndex(info);
+    if(foundGameDataFileLists[gameInfoIdx-1])
+    {
+        size_t i, numRequiredFiles = countElements(GameInfo_RequiredFileNames(info));
+        for(i = 0; i < numRequiredFiles; ++i)
+            if(!foundGameDataFileLists[gameInfoIdx-1][i])
+                return false;
+    }
+    return true;
+    }
+}
+
+static void loadGameDataFiles(gameinfo_t* info)
+{
+    assert(info);
+    {
+    uint gameInfoIdx = gameInfoIndex(info);
+    if(foundGameDataFileLists[gameInfoIdx-1])
+    {
+        size_t i, numRequiredFiles = countElements(GameInfo_RequiredFileNames(info));
+        for(i = 0; i < numRequiredFiles; ++i)
+            W_AddFile(Str_Text(foundGameDataFileLists[gameInfoIdx-1][i]), false);
+    }
+    }
+}
+
+static void printGameInfo(gameinfo_t* info)
+{
+    assert(info);
+
+    if(DD_IsNullGameInfo(info))
+        return;
+
+    Con_Printf("Game: %s - %s\n", Str_Text(GameInfo_Title(info)), Str_Text(GameInfo_Author(info)));
+#if _DEBUG
+    Con_Printf("  PluginId: %i\n", (int)GameInfo_PluginId(info));
+    Con_Printf("  Meta: mode:%i modeStr:\"%s\" data:\"%s\"\n", GameInfo_Mode(info), Str_Text(GameInfo_ModeIdentifier(info)), M_PrettyPath(Str_Text(GameInfo_DataPath(info))));
+#endif
+
+    {const ddstring_t* const* requiredFileNames;
+    if((requiredFileNames = GameInfo_RequiredFileNames(info)))
+    {
+        Con_Printf("  Required files:\n");
+        {size_t n = 0;
+        while(requiredFileNames[n])
+        {
+            Con_Printf("    %s %s\n", Str_Text(requiredFileNames[n]), !foundGameDataFileLists[gameInfoIndex(info)-1][n]? "--(!)missing" : M_PrettyPath(Str_Text(foundGameDataFileLists[gameInfoIndex(info)-1][n])));
+            n++;
+        }}
+    }}
+    Con_Printf("  Status: %s\n", DD_GameInfo() == info? "Loaded" : allGameDataFilesFound(info)? "Complete/Playable" : "Incomplete/Not playable");
+}
+
+D_CMD(ListGames)
+{
+    uint i;
+    for(i = 0; i < numGameInfo; ++i)
+        printGameInfo(gameInfo[i]);
+    return true;
 }
 
 /**
  * (f_forall_func_t)
  */
-static int autoDataAdder(const char *fileName, filetype_t type, void* ptr)
+static int autoDataAdder(const char* fileName, filetype_t type, void* ptr)
 {
-    autoload_t*         data = ptr;
+    autoload_t* data = ptr;
 
     // Skip directories.
     if(type == FT_DIRECTORY)
@@ -227,7 +547,7 @@ static int autoDataAdder(const char *fileName, filetype_t type, void* ptr)
     }
     else
     {
-        DD_AddStartupWAD(fileName);
+        addToPathList(&gameDataFileList, &numGameDataFileList, fileName);
     }
 
     // Continue searching.
@@ -236,118 +556,463 @@ static int autoDataAdder(const char *fileName, filetype_t type, void* ptr)
 
 /**
  * Files with the extensions wad, lmp, pk3, zip and deh in the automatical data
- * directory are added to the wadFiles list.
+ * directory are added to gameDataFileList.
  *
  * @return              Number of new files that were loaded.
  */
-int DD_AddAutoData(boolean loadFiles)
+static int addFilesFromAutoData(boolean loadFiles)
 {
-    autoload_t          data;
-    const char*         extensions[] = {
+    autoload_t data;
+    const char* extensions[] = {
         "wad", "lmp", "pk3", "zip", "deh",
 #ifdef UNIX
         "WAD", "LMP", "PK3", "ZIP", "DEH", // upper case alternatives
 #endif
-        NULL
+        0
     };
-    filename_t          pattern;
-    uint                i;
 
     data.loadFiles = loadFiles;
     data.count = 0;
 
+    { uint i;
     for(i = 0; extensions[i]; ++i)
     {
-        dd_snprintf(pattern, FILENAME_T_MAXLEN, "%sauto\\*.%s",
-                    R_GetDataPath(), extensions[i]);
+        filename_t pattern;
+        dd_snprintf(pattern, FILENAME_T_MAXLEN, "%sauto\\*.%s", Str_Text(GameInfo_DataPath(DD_GameInfo())), extensions[i]);
 
         Dir_FixSlashes(pattern, FILENAME_T_MAXLEN);
         F_ForAll(pattern, &data, autoDataAdder);
-    }
+    }}
 
     return data.count;
 }
 
-void DD_SetConfigFile(const char* file)
+/**
+ * \todo dj: This is clearly a platform service and therefore does not belong here.
+ */
+#ifdef WIN32
+static void* getEntryPoint(HINSTANCE* handle, const char* fn)
 {
-    strncpy(configFileName, file, FILENAME_T_MAXLEN);
-    configFileName[FILENAME_T_LASTINDEX] = '\0';
+    void* adr = (void*)GetProcAddress(*handle, fn);
+    if(!adr)
+    {
+        LPVOID lpMsgBuf;
+        DWORD dw = GetLastError(); 
+        FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                      0, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, 0);
+        if(lpMsgBuf)
+        {
+            Con_Printf("getEntryPoint: Error locating \"%s\" #%d: %s", fn, dw, (char*)lpMsgBuf);
+            LocalFree(lpMsgBuf); lpMsgBuf = 0;
+        }
+    }
+    return adr;
+}
+#elif UNIX
+static void* getEntryPoint(lt_dlhandle* handle, const char* fn)
+{
+    void* adr = (void*)lt_dlsym(*handle, fn);
+    if(!adr)
+    {
+        Con_Message("getEntryPoint: Error locating address of \"%s\".\n", fn);
+    }
+    return adr;
+}
+#endif
 
-    Dir_FixSlashes(configFileName, FILENAME_T_MAXLEN);
-
-    strncpy(bindingsConfigFileName, configFileName, FILENAME_T_MAXLEN);
-    bindingsConfigFileName[FILENAME_T_LASTINDEX] = '\0';
-
-    strncpy(bindingsConfigFileName + strlen(bindingsConfigFileName) - 4,
-            "-bindings.cfg", FILENAME_T_MAXLEN - strlen(bindingsConfigFileName) - 4);
-    bindingsConfigFileName[FILENAME_T_LASTINDEX] = '\0';
+static boolean exchangeEntryPoints(pluginid_t pluginId)
+{
+    if(!app.GetGameAPI)
+    {
+        // Do the API transfer.
+        if(!(app.GetGameAPI = (GETGAMEAPI) getEntryPoint(&app.hInstPlug[pluginId-1], "GetGameAPI")))
+            return false;
+        DD_InitAPI();
+        Def_GetGameClasses();
+    }
+    return true;
 }
 
-/**
- * Set the primary DED file, which is included immediately after
- * Doomsday.ded.
- */
-void DD_SetDefsFile(const char* file)
+static int DD_ChangeGameWorker(void* parm)
 {
-    dd_snprintf(topDefsFileName, FILENAME_T_MAXLEN, "%sdefs\\%s",
-                ddBasePath, file);
-    Dir_FixSlashes(topDefsFileName, FILENAME_T_MAXLEN);
-}
-
-/**
- * Define Auto mappings for the runtime directory.
- */
-void DD_DefineBuiltinVDM(void)
-{
-    filename_t          dest;
-
-    // Data files.
-    dd_snprintf(dest, FILENAME_T_MAXLEN, "%sauto", R_GetDataPath());
-    F_AddMapping("auto", dest);
-
-    // Definition files.
-    Def_GetAutoPath(dest, FILENAME_T_MAXLEN);
-    F_AddMapping("auto", dest);
-}
-
-/**
- * Looks for new files to autoload. Runs until there are no more files to
- * autoload.
- */
-void DD_AutoLoad(void)
-{
-    int                 p;
+    assert(parm);
+    {
+    gameinfo_t* info = (gameinfo_t*)parm;
+    uint startTime;
 
     /**
-     * Load files from the Auto directory.  (If already loaded, won't
-     * be loaded again.)  This is done again because virtual files may
-     * now exist in the Auto directory.  Repeated until no new files
-     * found.
+     * Parse all configuration files that should be read prior to init.
      */
-    while((p = DD_AddAutoData(true)) > 0)
+    Con_Message("Parsing configuration files:\n");
+    startTime = Sys_GetRealTime();
+
+    // If a custom config file is specified; let it override the default main config.
+    if(ArgCheckWith("-config", 1))
     {
-        VERBOSE(Con_Message("Autoload round completed with %i new files.\n",
-                            p));
+        Str_Set(&configFileName, ArgNext());
+        Dir_FixSlashes(Str_Text(&configFileName), Str_Length(&configFileName));
+    }
+
+    // Parse the main config file.
+    Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(Str_Text(&configFileName)));
+    Con_ParseCommands(Str_Text(&configFileName), true);
+
+    // Any additional config files?
+    if(ArgCheckWith("-cparse", 1))
+    {
+        for(;;)
+        {
+            const char* arg = ArgNext();
+            if(!arg || arg[0] == '-')
+                break;
+            Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(arg));
+            Con_ParseCommands(arg, false);
+        }
+    }
+    VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+
+    Con_SetProgress(20);
+
+    F_InitResourceLocator();
+
+    /**
+     * Create default Auto mappings in the runtime directory.
+     */
+    { ddstring_t temp;
+
+    Str_Init(&temp);
+    // Data class resources.
+    Str_Appendf(&temp, "%sauto", Str_Text(GameInfo_DataPath(info)));
+    F_AddMapping("auto", Str_Text(&temp));
+
+    Str_Clear(&temp);
+    // Definition class resources.
+    Str_Appendf(&temp, "%sauto", R_GetDefsPath());
+    F_AddMapping("auto", Str_Text(&temp));
+
+    Str_Free(&temp);
+    }
+
+    /**
+     * Open all the files, load headers, and count lumps.
+     */
+    Con_Message("Loading game data files:\n");
+    startTime = Sys_GetRealTime();
+
+    loadGameDataFiles(info);
+    if(GameInfo_ModeLumpNames(info))
+    {
+        if(!allValidLumpNames(GameInfo_ModeLumpNames(info)))
+            Con_Error("Failed\n");
+    }
+
+    // Add real files from the Auto directory to the gameDataFileList.
+    addFilesFromAutoData(false);
+
+    { byte* loaded = numGameDataFileList > 0? M_Calloc(numGameDataFileList) : 0;
+
+    // Before anything else, load PK3s (they may contain virtual WAD files).
+    // \todo Process DD_DIREC lumps here.
+    if(numGameDataFileList > 0)
+    {
+        { size_t i;
+        for(i = 0; i < numGameDataFileList; ++i)
+        {
+            if(!W_IsPK3(Str_Text(gameDataFileList[i])))
+                continue;
+            Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(Str_Text(gameDataFileList[i])));
+            W_AddFile(Str_Text(gameDataFileList[i]), false);
+            loaded[i] = true;
+        }}
+
+        // IWAD(s) must be loaded before other WADs.
+        { size_t i;
+        for(i = 0; i < numGameDataFileList; ++i)
+        {
+            if(loaded[i])
+                continue;
+            if(!W_IsIWAD(Str_Text(gameDataFileList[i])))
+                continue;
+            Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(Str_Text(gameDataFileList[i])));
+            W_AddFile(Str_Text(gameDataFileList[i]), false);
+            loaded[i] = true;
+        }}
+    }
+
+    // Do a full autoload round before loading any other WAD files.
+    DD_AutoLoad();
+
+    // Load the rest of the WADs.
+    if(numGameDataFileList > 0)
+    {
+        { size_t i;
+        for(i = 0; i < numGameDataFileList; ++i)
+        {
+            if(loaded[i])
+                continue;
+            Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(Str_Text(gameDataFileList[i])));
+            W_AddFile(Str_Text(gameDataFileList[i]), false);
+            loaded[i] = true;
+        }}
+
+        // Bookkeeping no longer needed.
+        M_Free(loaded); loaded = 0;
+    }}
+
+    Con_SetProgress(60);
+
+    F_InitDirec();
+
+    // Final autoload round.
+    DD_AutoLoad();
+
+    // No more WADs will be loaded in startup mode after this point.
+    W_EndStartup();
+
+    VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+
+    // Parse bindings for this game and merge with the working set.
+    Con_ParseCommands(Str_Text(&bindingsConfigFileName), false);
+
+    Con_SetProgress(100);
+
+    R_InitTextures();
+    R_InitFlats();
+    R_PreInitSprites();
+
+    Con_SetProgress(120);
+
+    // Now that we've generated the auto-materials we can initialize definitions.
+    Def_Read();
+
+    Con_SetProgress(160);
+
+    R_InitSprites(); // Fully initialize sprites.
+    R_InitModels();
+    Rend_ParticleLoadExtraTextures();
+    Cl_InitTranslations();
+
+    Def_PostInit();
+
+    DD_ReadGameHelp();
+    Con_InitUI(); // Update the console title display(s).
+
+    if(gx.PostInit)
+    {
+        Con_SetProgress(180);
+        gx.PostInit(GameInfo_Mode(info));
+    }
+
+    Con_SetProgress(200);
+    Con_BusyWorkerEnd();
+    return 0;
     }
 }
 
 /**
- * Engine and game initialization. When complete, starts the game loop.
+ * Switch to/activate the specified game.
+ */
+void DD_ChangeGame(gameinfo_t* info)
+{
+    assert(info);
+
+    Con_Message("DD_ChangeGame: Selecting \"%s\".\n", Str_Text(GameInfo_ModeIdentifier(info)));
+    if(!exchangeEntryPoints(GameInfo_PluginId(info)))
+    {
+        Con_Message("DD_ChangeGame: Warning, error exchanging entrypoints with plugin %i - aborting.\n", (int)GameInfo_PluginId(info));
+        return;
+    }
+
+    P_InitMapUpdate();
+    DAM_Init();
+
+    // This is now the current game.
+    currentGameInfoIndex = gameInfoIndex(info);
+
+    if(gx.PreInit)
+        gx.PreInit();
+
+    // The bulk of this we can do in busy mode.
+    Con_InitProgress(200);
+    Con_Busy(BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0), "Changing game...", DD_ChangeGameWorker, info);
+
+    /**
+     * Print a game mode banner with rulers.
+     * \todo dj: This has been deferred here so that strings like the game
+     * title and author can be overridden (e.g., via DEHACKED). Make it so!
+     */
+    Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER, Str_Text(GameInfo_Title(info))); Con_FPrintf(CBLF_WHITE | CBLF_CENTER, "\n");
+    Con_FPrintf(CBLF_RULER, "");
+}
+
+void R_PrependDataPath(char* newPath, const char* origPath, size_t len)
+{
+    assert(newPath && origPath && origPath[0] && len > 0);
+
+    if(Dir_IsAbsolute(origPath))
+    {   // origPath is already absolute; use as-is.
+        strncpy(newPath, origPath, len);
+        return;
+    }
+    dd_snprintf(newPath, len, "%s%s", Str_Text(GameInfo_DataPath(DD_GameInfo())), origPath);
+}
+
+static boolean setDefsPath(const char* newPath)
+{
+    if(!Str_CompareIgnoreCase(&defsPath, newPath))
+        return false; // No change.
+    { filename_t filePath;
+    M_TranslatePath(filePath, newPath, FILENAME_T_MAXLEN);
+    Dir_ValidDir(filePath, FILENAME_T_MAXLEN);
+    Str_Set(&defsPath, filePath);
+    }
+    return true;
+}
+
+void R_SetDefsPath(const char* newPath)
+{
+    setDefsPath(newPath);
+}
+
+const char* R_GetDefsPath(void)
+{
+    return Str_Text(&defsPath);
+}
+
+void R_PrependDefsPath(char* newPath, const char* origPath, size_t len)
+{
+    assert(newPath && origPath && origPath[0] && len > 0);
+
+    if(Dir_IsAbsolute(origPath))
+    {   // origPath is already absolute; use as-is.
+        strncpy(newPath, origPath, len);
+        return;
+    }
+    dd_snprintf(newPath, len, "%s%s", R_GetDefsPath(), origPath);
+}
+
+void DD_SetConfigFile(const char* file)
+{
+    if(!file || !file[0])
+        Con_Error("DD_SetConfigFile: Invalid file argument.");
+
+    Str_Set(&configFileName, file);
+    Dir_FixSlashes(Str_Text(&configFileName), Str_Length(&configFileName));
+
+    Str_Clear(&bindingsConfigFileName);
+    Str_PartAppend(&bindingsConfigFileName, Str_Text(&configFileName), 0, Str_Length(&configFileName)-4);
+    Str_Append(&bindingsConfigFileName, "-bindings.cfg");
+}
+
+/**
+ * Set the primary DED file, which is included immediately after Doomsday.ded.
+ */
+void DD_SetDefsFile(const char* file)
+{
+    if(!file || !file[0])
+        Con_Error("DD_SetDefsFile: Invalid file argument.");
+    Str_Clear(&topDefsFileName);
+    Str_Appendf(&topDefsFileName, "%s%s", R_GetDefsPath(), file);
+}
+
+/**
+ * Looks for new files to autoload from the auto-load data directory.
+ */
+static void DD_AutoLoad(void)
+{
+    /**
+     * Keep loading files if any are found because virtual files may now
+     * exist in the auto-load directory.
+     */
+    { int numNewFiles;
+    while((numNewFiles = addFilesFromAutoData(true)) > 0)
+    {
+        VERBOSE(Con_Message("Autoload round completed with %i new files.\n", numNewFiles));
+    }}
+}
+
+static uint countAvailableGames(void)
+{
+    uint i, numAvailableGames = 0;
+    for(i = 0; i < numGameInfo; ++i)
+    {
+        gameinfo_t* info = gameInfo[i];
+        if(DD_IsNullGameInfo(info) || !allGameDataFilesFound(info))
+            continue;
+        numAvailableGames++;
+    }
+    return numAvailableGames;
+}
+
+/**
+ * Attempt automatic game selection.
+ */
+void DD_AutoselectGame(void)
+{
+    uint numAvailableGames = countAvailableGames();
+
+    if(numAvailableGames == 0)
+        return;
+
+    if(numAvailableGames == 1)
+    {   // Find this game and select it.
+        uint i;
+        for(i = 0; i < numGameInfo; ++i)
+        {
+            gameinfo_t* info = gameInfo[i];
+            if(DD_IsNullGameInfo(info))
+                continue;
+            if(!allGameDataFilesFound(info))
+                continue;
+            DD_ChangeGame(info);
+            break;
+        }
+        return;
+    }
+
+    {
+    const char* expGame = ArgCheckWith("-game", 1)? ArgNext() : 0;
+    uint pass = expGame? 0 : 1;
+    do
+    {
+        uint infoIndex = 0;
+        do
+        {
+            gameinfo_t* info = gameInfo[infoIndex];
+
+            if(DD_IsNullGameInfo(info))
+                continue;
+            if(!allGameDataFilesFound(info))
+                continue;
+
+            switch(pass)
+            {
+            case 0: // Command line modestring match for-development/debug (e.g., "-game doom1-ultimate").
+                if(!Str_CompareIgnoreCase(GameInfo_ModeIdentifier(info), expGame))
+                    DD_ChangeGame(info);
+                break;
+
+            case 1: // Command line name flag match (e.g., "-doom2").
+                if((GameInfo_CmdlineFlag (info) && ArgCheck(Str_Text(GameInfo_CmdlineFlag (info)))) ||
+                   (GameInfo_CmdlineFlag2(info) && ArgCheck(Str_Text(GameInfo_CmdlineFlag2(info)))))
+                    DD_ChangeGame(info);
+                break;
+            }
+        } while(++infoIndex < numGameInfo && DD_IsNullGameInfo(DD_GameInfo()));
+    } while(++pass < 2 && DD_IsNullGameInfo(DD_GameInfo()));
+    }
+}
+
+/**
+ * Engine initialization. When complete, starts the "game loop".
  */
 int DD_Main(void)
 {
-    int             winWidth, winHeight, winBPP, winX, winY;
-    uint            winFlags = DDWF_VISIBLE | DDWF_CENTER;
-    boolean         noCenter = false;
-    int             exitCode;
-
     // By default, use the resolution defined in (default).cfg.
-    winX = 0;
-    winY = 0;
-    winWidth = defResX;
-    winHeight = defResY;
-    winBPP = defBPP;
-    winFlags |= (defFullscreen? DDWF_FULLSCREEN : 0);
+    int winWidth = defResX, winHeight = defResY, winBPP = defBPP, winX = 0, winY = 0;
+    uint winFlags = DDWF_VISIBLE | DDWF_CENTER | (defFullscreen? DDWF_FULLSCREEN : 0);
+    boolean noCenter = false;
+    int exitCode = 0;
 
     // Check for command line options modifying the defaults.
     if(ArgCheckWith("-width", 1))
@@ -382,8 +1047,7 @@ int DD_Main(void)
     if(ArgExists("-nofullscreen") || ArgExists("-window"))
         winFlags &= ~DDWF_FULLSCREEN;
 
-    if(!Sys_SetWindow(windowIDX, winX, winY, winWidth, winHeight, winBPP,
-                      winFlags, 0))
+    if(!Sys_SetWindow(windowIDX, winX, winY, winWidth, winHeight, winBPP, winFlags, 0))
         return -1;
 
     if(!isDedicated)
@@ -399,45 +1063,124 @@ int DD_Main(void)
      * \note This must be called from the main thread due to issues with
      * the devices we use via the WINAPI, MCI (cdaudio, mixer etc).
      */
-    Con_Message("Sys_Init: Setting up machine state.\n");
     Sys_Init();
 
     // Enter busy mode until startup complete.
     Con_InitProgress(200);
-    Con_Busy(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR
-             | (verbose? BUSYF_CONSOLE_OUTPUT : 0), "Starting up...",
-             DD_StartupWorker, NULL);
+    Con_Busy(BUSYF_NO_UPLOADS | BUSYF_STARTUP | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+            "Starting up...", DD_StartupWorker, 0);
 
     // Engine initialization is complete. Now finish up with the GL.
     if(!isDedicated)
     {
         GL_Init();
         GL_InitRefresh();
-
-        // \todo we could be loading these in busy mode.
         GL_LoadSystemTextures();
     }
 
     // Do deferred uploads.
-    Con_Busy(BUSYF_PROGRESS_BAR | BUSYF_STARTUP | BUSYF_ACTIVITY
-             | (verbose? BUSYF_CONSOLE_OUTPUT : 0), NULL, DD_StartupWorker2, NULL);
+    Con_Busy(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+             "Buffering...", DD_DummyWorker, 0);
 
-    // Client connection command.
-    if(ArgCheckWith("-connect", 1))
-        Con_Executef(CMDS_CMDLINE, false, "connect %s", ArgNext());
+    // Unless we reenter busy-mode due to automatic game selection, we won't be
+    // drawing anything further until DD_GameLoop; so lets clean up.
+    glClear(GL_COLOR_BUFFER_BIT);
+    GL_DoUpdate();
 
-    // Server start command.
-    // (shortcut for -command "net init tcpip; net server start").
-    if(ArgExists("-server"))
+    // Try to locate all required data files for all registered games.
+    { uint i;
+    for(i = 0; i < numGameInfo; ++i)
     {
-        if(!N_InitService(true))
-            Con_Message("Can't start server: network init failed.\n");
-        else
-            Con_Executef(CMDS_CMDLINE, false, "net server start");
+        gameinfo_t* info = gameInfo[i];
+        if(DD_IsNullGameInfo(info))
+            continue;
+        locateGameDataFiles(info);
+    }}
+    VERBOSE( Con_Execute(CMDS_DDAY, "listgames", false, false) );
+
+    // Attempt automatic game selection.
+    if(!ArgExists("-noautoselect"))
+    {
+        DD_AutoselectGame();
+        if(DD_IsNullGameInfo(DD_GameInfo()))
+            Con_Message("Automatic game selection failed.\n");
     }
 
-    // Final preparations for using the console UI.
-    Con_InitUI();
+    // One-time execution of various command line features available during startup.
+    if(ArgCheckWith("-dumplump", 1))
+    {
+        lumpnum_t lumpNum;
+        if((lumpNum = W_CheckNumForName(ArgNext())) != -1)
+            W_DumpLump(lumpNum, 0);
+    }
+    if(ArgCheck("-dumpwaddir"))
+        W_DumpLumpDir();
+
+    // Try to load the autoexec file. This is done here to make sure everything is
+    // initialized: the user can do here anything that s/he'd be able to do in-game.
+    Con_ParseCommands("autoexec.cfg", false);
+
+    // Parse additional config files that should be processed post init.
+    if(ArgCheckWith("-parse", 1))
+    {
+        float starttime;
+        Con_Message("Parsing additional (post-init) config files:\n");
+        starttime = Sys_GetSeconds();
+        for(;;)
+        {
+            const char* arg = ArgNext();
+            if(!arg || arg[0] == '-')
+                break;
+            Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(arg));
+            Con_ParseCommands(arg, false);
+        }
+        VERBOSE(Con_Message("  Done in %.2f seconds.\n", Sys_GetSeconds() - starttime));
+    }
+
+    // A console command on the command line?
+    { int p;
+    for(p = 1; p < Argc() - 1; p++)
+    {
+        if(stricmp(Argv(p), "-command") && stricmp(Argv(p), "-cmd"))
+            continue;
+
+        for(++p; p < Argc(); p++)
+        {
+            const char* arg = Argv(p);
+
+            if(arg[0] == '-')
+            {
+                p--;
+                break;
+            }
+            Con_Execute(CMDS_CMDLINE, arg, false, false);
+        }
+    }}
+
+    /**
+     * One-time execution of network commands on the command line.
+     * Commands are only executed if we have loaded a game during startup.
+     */
+    if(!DD_IsNullGameInfo(DD_GameInfo()))
+    {
+        // Client connection command.
+        if(ArgCheckWith("-connect", 1))
+            Con_Executef(CMDS_CMDLINE, false, "connect %s", ArgNext());
+
+        // Server start command.
+        // (shortcut for -command "net init tcpip; net server start").
+        if(ArgExists("-server"))
+        {
+            if(!N_InitService(true))
+                Con_Message("Can't start server: network init failed.\n");
+            else
+                Con_Executef(CMDS_CMDLINE, false, "net server start");
+        }
+    }
+    else
+    {   // For now we'll just open the console automatically.
+        Con_Execute(CMDS_DDAY, "conopen", true, false);
+    }
 
     // Start the game loop.
     exitCode = DD_GameLoop();
@@ -446,29 +1189,41 @@ int DD_Main(void)
 
     if(netGame)
     {   // Quit netGame if one is in progress.
-        Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect",
-                    true, false);
+        Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect", true, false);
     }
 
     Demo_StopPlayback();
-    Con_SaveDefaults();
-    Sys_Shutdown();
+
+    if(!DD_IsNullGameInfo(DD_GameInfo()))
+    {   // A game is still loaded; save state, user configs etc, etc...
+        Con_SaveDefaults();
+    }
+
     B_Shutdown();
+    DD_DestroyGameInfo();
+    Sys_Shutdown();
 
     return exitCode;
 }
 
-static int DD_StartupWorker(void *parm)
+static int DD_StartupWorker(void* parm)
 {
-    int                 p = 0;
-    float               starttime;
-
 #ifdef WIN32
     // Initialize COM for this thread (needed for DirectInput).
     CoInitialize(NULL);
 #endif
 
     F_InitMapping();
+    R_SetDefsPath(DD_BASEDEFSPATH);
+
+    /**
+     * One-time creation and initialization of the special "null-game" object (activated once created).
+     */
+    { filename_t dataPath;
+    M_TranslatePath(dataPath, DD_BASEDATAPATH, FILENAME_T_MAXLEN);
+    Dir_ValidDir(dataPath, FILENAME_T_MAXLEN);
+    currentGameInfoIndex = gameInfoIndex(addGame(0, -1, 0, dataPath, 0, 0, 0, 0));
+    }
 
     // Initialize the key mappings.
     DD_InitInput();
@@ -480,174 +1235,82 @@ static int DD_StartupWorker(void *parm)
 
     Con_SetProgress(20);
 
-    DD_AddStartupWAD("}data\\doomsday.pk3");
-    R_SetDataPath("}data\\");
-
-    // The name of the .cfg will invariably be overwritten by the Game.
-    strncpy(configFileName, "doomsday.cfg", FILENAME_T_MAXLEN);
-    dd_snprintf(defsFileName, FILENAME_T_MAXLEN, "%sdefs\\doomsday.ded",                    ddBasePath);
-
     // Was the change to userdir OK?
     if(!app.userDirOk)
-        Con_Message("--(!)-- User directory not found " "(check -userdir).\n");
+        Con_Message("--(!)-- User directory not found (check -userdir).\n");
 
-    bamsInit();                 // Binary angle calculations.
+    bamsInit(); // Binary angle calculations.
 
-    // Initialize the zip file database.
+    // Initialize the file system databases.
     Zip_Init();
+    W_Init();
+    F_InitResourceLocator();
 
+    // Initialize the definition databases.
     Def_Init();
-
-    autoStart = false;
-
-    HandleArgs(0);              // Everything but WADs.
-
-    novideo = ArgCheck("-novideo") || isDedicated;
-
-    DAM_Init();
-
-    if(gx.PreInit)
-        gx.PreInit();
 
     Con_SetProgress(40);
 
-    // We now accept no more custom properties.
-    //DAM_LockCustomPropertys();
-
-    // Automatically create an Auto mapping in the runtime directory.
-    DD_DefineBuiltinVDM();
-
-    // Initialize subsystems
-    Net_Init(); // Network before anything else.
-
+    Net_Init();
     // Now we can hide the mouse cursor for good.
     Sys_HideMouse();
 
-    // Load defaults before initing other systems
-    Con_Message("Parsing configuration files.\n");
-    // Check for a custom config file.
-    if(ArgCheckWith("-config", 1))
-    {
-        // This will override the default config file.
-        strcpy(configFileName, ArgNext());
-        Con_Message("Custom config file: %s\n", configFileName);
+    // Add required engine data files.
+    { filename_t foundPath;
+    if(F_FindResource(RT_ARCHIVE, foundPath, "doomsday.pk3", 0, FILENAME_T_MAXLEN))
+        W_AddFile(foundPath, false);
     }
 
-    // This'll be the default config file.
-    Con_ParseCommands(configFileName, true);
+    // Load engine help resources.
+    DD_InitHelp();
 
-    // Parse additional files (that should be parsed BEFORE init).
-    if(ArgCheckWith("-cparse", 1))
+    /**
+     * Process the files specified using "file-startup" in the game config.
+     * \note These must take precedence.
+     */
+    if(autoloadFiles && autoloadFiles[0])
+        parseAutoloadFilePathsAndAddFiles(&gameDataFileList, &numGameDataFileList, autoloadFiles);
+
+    /**
+     * Process all -iwad and -file options on the command line.
+     * \note -iwad options must be processed first.
+     */
+    { int order;
+    for(order = 0; order < 2; ++order)
     {
-        for(;;)
+        int p;
+        for(p = 0; p < Argc(); ++p)
         {
-            const char*         arg = ArgNext();
+            if((order == 1 && !ArgRecognize("-file", Argv(p))) ||
+               (order == 0 && !ArgRecognize("-iwad", Argv(p))))
+                continue;
 
-            if(!arg || arg[0] == '-')
-                break;
+            while(++p != Argc() && !ArgIsOption(p))
+                addToPathList(&gameDataFileList, &numGameDataFileList, Argv(p));
 
-            Con_Message("Parsing: %s\n", arg);
-            Con_ParseCommands(arg, false);
+            p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
         }
-    }
-
-    Con_SetProgress(50);
-
-    if(defaultWads && defaultWads[0])
-        AddToWadList(defaultWads);  // These must take precedence.
-    HandleArgs(1);              // Only the WADs.
-
-    Con_Message("W_Init: Init WADfiles.\n");
-    starttime = Sys_GetSeconds();
-
-    // Add real files from the Auto directory to the wadFiles list.
-    DD_AddAutoData(false);
+    }}
 
     Con_SetProgress(60);
-
-    W_InitMultipleFiles(wadFiles);
-
-    F_InitDirec();
-    VERBOSE(Con_Message("W_Init: Done in %.2f seconds.\n",
-                        Sys_GetSeconds() - starttime));
-
-    Con_SetProgress(70);
-
-    // Load help resources. Now virtual files are available as well.
-    if(!isDedicated)
-        DD_InitHelp();
-
-    // Final autoload round.
-    DD_AutoLoad();
-
-    Con_SetProgress(80);
-
-    // No more WADs will be loaded in startup mode after this point.
-    W_EndStartup();
 
     // Execute the startup script (Startup.cfg).
     Con_ParseCommands("startup.cfg", false);
 
-    // Now the game can identify the game mode.
-    gx.UpdateState(DD_GAME_MODE);
-
-    Con_SetProgress(90);
-
-    // We can now initialize the resource locator (game mode identified).
-    R_InitResourceLocator();
-
-    Con_SetProgress(100);
-
-    GL_EarlyInitTextureManager();
-
     // Get the material manager up and running.
+    Con_SetProgress(90);
+    GL_EarlyInitTextureManager();
     Materials_Initialize();
-    R_InitSystemTextures();
-    R_InitTextures();
-    R_InitFlats();
-    R_PreInitSprites();
-
-    Con_SetProgress(130);
-
-    // Now that we've generated the auto-materials we can initialize
-    // definitions.
-    Def_Read();
-
-#ifdef WIN32
-    if(ArgCheck("-nowsk"))      // No Windows system keys?
-    {
-        // Disable Alt-Tab, Alt-Esc, Ctrl-Alt-Del.
-        // A bit of a hack, I'm afraid...
-        SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, TRUE, 0, 0);
-        Con_Message("Windows system keys disabled.\n");
-    }
-#endif
-
-    if(ArgCheckWith("-dumplump", 1))
-    {
-        const char*         lumpName = ArgNext();
-        lumpnum_t           lump;
-
-        if((lump = W_CheckNumForName(lumpName)) != -1)
-            W_DumpLump(lump, NULL);
-    }
-
-    if(ArgCheck("-dumpwaddir"))
-        W_DumpLumpDir();
 
     Con_SetProgress(140);
-
-    Con_Message("B_Init: Init bindings.\n");
+    Con_Message("B_Init: Init binding system.\n");
     B_Init();
-    Con_ParseCommands(bindingsConfigFileName, false);
 
     Con_SetProgress(150);
-
     Con_Message("R_Init: Init the refresh daemon.\n");
     R_Init();
 
     Con_SetProgress(165);
-
     Con_Message("Net_InitGame: Initializing game data.\n");
     Net_InitGame();
     Demo_Init();
@@ -658,54 +1321,7 @@ static int DD_StartupWorker(void *parm)
     Con_Message("UI_PageInit: Initializing user interface.\n");
     UI_Init();
 
-    if(gx.PostInit)
-        gx.PostInit();
-
-    Con_SetProgress(175);
-
-    // Defs have been read; we can now init the map format info.
-    P_InitData();
-
     Con_SetProgress(190);
-
-    // Try to load the autoexec file. This is done here to make sure
-    // everything is initialized: the user can do here anything that
-    // s/he'd be able to do in the game.
-    Con_ParseCommands("autoexec.cfg", false);
-
-    // Parse additional files.
-    if(ArgCheckWith("-parse", 1))
-    {
-        for(;;)
-        {
-            const char*         arg = ArgNext();
-
-            if(!arg || arg[0] == '-')
-                break;
-
-            Con_Message("Parsing: %s\n", arg);
-            Con_ParseCommands(arg, false);
-        }
-    }
-
-    // A console command on the command line?
-    for(p = 1; p < Argc() - 1; p++)
-    {
-        if(stricmp(Argv(p), "-command") && stricmp(Argv(p), "-cmd"))
-            continue;
-
-        for(++p; p < Argc(); p++)
-        {
-            const char*         arg = Argv(p);
-
-            if(arg[0] == '-')
-            {
-                p--;
-                break;
-            }
-            Con_Execute(CMDS_CMDLINE, arg, false, false);
-        }
-    }
 
     // In dedicated mode the console must be opened, so all input events
     // will be handled by it.
@@ -714,8 +1330,8 @@ static int DD_StartupWorker(void *parm)
 
     Con_SetProgress(199);
 
-    Plug_DoHook(HOOK_INIT, 0, 0);   // Any initialization hooks?
-    Con_UpdateKnownWords();         // For word completion (with Tab).
+    Plug_DoHook(HOOK_INIT, 0, 0); // Any initialization hooks?
+    Con_UpdateKnownWords(); // For word completion (with Tab).
 
     Con_SetProgress(200);
 
@@ -732,41 +1348,11 @@ static int DD_StartupWorker(void *parm)
  * This only exists so we have something to call while the deferred uploads of the
  * startup are processed.
  */
-static int DD_StartupWorker2(void *parm)
+static int DD_DummyWorker(void *parm)
 {
     Con_SetProgress(200);
     Con_BusyWorkerEnd();
     return 0;
-}
-
-static void HandleArgs(int state)
-{
-    int             order, p;
-
-    if(state == 0)
-    {
-        renderTextures = !ArgExists("-notex");
-    }
-
-    // Process all -iwad and -file options. -iwad options are processed
-    // first so that the loading order remains correct.
-    if(state)
-    {
-        for(order = 0; order < 2; order++)
-        {
-            for(p = 0; p < Argc(); p++)
-            {
-                if((order == 1 && !ArgRecognize("-file", Argv(p))) ||
-                   (order == 0 && !ArgRecognize("-iwad", Argv(p))))
-                    continue;
-
-                while(++p != Argc() && !ArgIsOption(p))
-                    DD_AddStartupWAD(Argv(p));
-
-                p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
-            }
-        }
-    }
 }
 
 void DD_CheckTimeDemo(void)
@@ -787,27 +1373,6 @@ void DD_CheckTimeDemo(void)
     }
 }
 
-/**
- * This is a 'public' WAD file addition routine. The caller can put a
- * greater-than character (>) in front of the name to prepend the base
- * path to the file name (providing it's a relative path).
- */
-void DD_AddStartupWAD(const char* file)
-{
-    int                 i;
-    char*               new;
-    filename_t          temp;
-
-    i = 0;
-    while(wadFiles[i])
-        i++;
-
-    M_TranslatePath(temp, file, FILENAME_T_MAXLEN);
-    new = M_Calloc(strlen(temp) + 1);  // This is never freed?
-    strcat(new, temp);
-    wadFiles[i] = new;
-}
-
 static int DD_UpdateWorker(void* parm)
 {
     GL_InitRefresh();
@@ -819,7 +1384,7 @@ static int DD_UpdateWorker(void* parm)
 
 void DD_UpdateEngineState(void)
 {
-    boolean             hadFog;
+    boolean hadFog;
 
     // Update refresh.
     Con_Message("Updating state...\n");
@@ -833,13 +1398,6 @@ void DD_UpdateEngineState(void)
     Demo_StopPlayback();
     S_Reset();
 
-    //GL_InitVarFont();
-
-    /*glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-    glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);*/
-
     hadFog = usingFog;
     GL_TotalReset();
     GL_TotalRestore(); // Bring GL back online.
@@ -850,14 +1408,7 @@ void DD_UpdateEngineState(void)
 
     // Now that GL is back online, we can continue the update in busy mode.
     Con_InitProgress(200);
-    Con_Busy(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR
-             | (verbose? BUSYF_CONSOLE_OUTPUT : 0), "Updating engine state...",
-             DD_UpdateWorker, NULL);
-
-    //GL_ShutdownVarFont();
-
-    /*glMatrixMode(GL_PROJECTION);
-    glPopMatrix();*/
+    Con_Busy(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0), "Updating engine state...", DD_UpdateWorker, 0);
 
     gx.UpdateState(DD_POST);
 
@@ -893,7 +1444,7 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
     {&playback, 0},
     {&defs.count.sounds.num, 0},
     {&defs.count.music.num, 0},
-    {&numLumps, 0},
+    {0, 0},
     {&clientPaused, &clientPaused},
     {&weaponOffsetScaleY, &weaponOffsetScaleY},
     {&monochrome, &monochrome},
@@ -910,38 +1461,35 @@ ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
  */
 int DD_GetInteger(int ddvalue)
 {
-    if(ddvalue >= DD_LAST_VALUE || ddvalue <= DD_FIRST_VALUE)
+    switch(ddvalue)
     {
-        // How about some specials?
-        switch(ddvalue)
-        {
-        case DD_DYNLIGHT_TEXTURE:
-            return (int) GL_PrepareLSTexture(LST_DYNAMIC);
+    case DD_WINDOW_WIDTH:
+        return theWindow->width;
 
-        case DD_MAP_MUSIC:
-        {
-            gamemap_t *map = P_GetCurrentMap();
-            ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
+    case DD_WINDOW_HEIGHT:
+        return theWindow->height;
 
-            if(mapInfo)
-                return Def_GetMusicNum(mapInfo->music);
-            return -1;
+    case DD_DYNLIGHT_TEXTURE:
+        return (int) GL_PrepareLSTexture(LST_DYNAMIC);
+
+    case DD_NUMLUMPS:
+        return W_NumLumps();
+
+    case DD_MAP_MUSIC:
+        { gamemap_t *map = P_GetCurrentMap();
+        ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
+
+        if(mapInfo)
+            return Def_GetMusicNum(mapInfo->music);
+        return -1;
         }
-        case DD_WINDOW_WIDTH:
-            return theWindow->width;
-
-        case DD_WINDOW_HEIGHT:
-            return theWindow->height;
-
-        default:
-            break;
-        }
-        return 0;
+    default: break;
     }
 
-    if(ddValues[ddvalue].readPtr == NULL)
+    if(ddvalue >= DD_LAST_VALUE || ddvalue <= DD_FIRST_VALUE)
         return 0;
-
+    if(ddValues[ddvalue].readPtr == 0)
+        return 0;
     return *ddValues[ddvalue].readPtr;
 }
 
@@ -951,10 +1499,7 @@ int DD_GetInteger(int ddvalue)
 void DD_SetInteger(int ddvalue, int parm)
 {
     if(ddvalue <= DD_FIRST_VALUE || ddvalue >= DD_LAST_VALUE)
-    {
-        // How about some special values?
         return;
-    }
     if(ddValues[ddvalue].writePtr)
         *ddValues[ddvalue].writePtr = parm;
 }
@@ -965,182 +1510,183 @@ void DD_SetInteger(int ddvalue, int parm)
  */
 void* DD_GetVariable(int ddvalue)
 {
-    if(ddvalue >= DD_LAST_VALUE || ddvalue <= DD_FIRST_VALUE)
+    switch(ddvalue)
     {
-        // How about some specials?
-        switch(ddvalue)
+    case DD_GAME_EXPORTS:
+        return &gx;
+
+    case DD_VIEW_X:
+        return &viewX;
+
+    case DD_VIEW_Y:
+        return &viewY;
+
+    case DD_VIEW_Z:
+        return &viewZ;
+
+    case DD_VIEW_ANGLE:
+        return &viewAngle;
+
+    case DD_VIEW_PITCH:
+        return &viewPitch;
+
+    case DD_SECTOR_COUNT:
+        return &numSectors;
+
+    case DD_LINE_COUNT:
+        return &numLineDefs;
+
+    case DD_SIDE_COUNT:
+        return &numSideDefs;
+
+    case DD_VERTEX_COUNT:
+        return &numVertexes;
+
+    case DD_POLYOBJ_COUNT:
+        return &numPolyObjs;
+
+    case DD_SEG_COUNT:
+        return &numSegs;
+
+    case DD_SUBSECTOR_COUNT:
+        return &numSSectors;
+
+    case DD_NODE_COUNT:
+        return &numNodes;
+
+    case DD_MATERIAL_COUNT:
         {
-        case DD_GAME_EXPORTS:
-            return &gx;
+        static uint value;
+        value = Materials_Count();
+        return &value;
+        }
+    case DD_TRACE_ADDRESS:
+        return &traceLOS;
 
-        case DD_VIEW_X:
-            return &viewX;
+    case DD_TRANSLATIONTABLES_ADDRESS:
+        return translationTables;
 
-        case DD_VIEW_Y:
-            return &viewY;
+    case DD_MAP_NAME:
+    {
+        gamemap_t *map = P_GetCurrentMap();
+        ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
 
-        case DD_VIEW_Z:
-            return &viewZ;
+        if(mapInfo && mapInfo->name[0])
+        {
+            int id;
 
-        case DD_VIEW_ANGLE:
-            return &viewAngle;
-
-        case DD_VIEW_PITCH:
-            return &viewPitch;
-
-        case DD_SECTOR_COUNT:
-            return &numSectors;
-
-        case DD_LINE_COUNT:
-            return &numLineDefs;
-
-        case DD_SIDE_COUNT:
-            return &numSideDefs;
-
-        case DD_VERTEX_COUNT:
-            return &numVertexes;
-
-        case DD_POLYOBJ_COUNT:
-            return &numPolyObjs;
-
-        case DD_SEG_COUNT:
-            return &numSegs;
-
-        case DD_SUBSECTOR_COUNT:
-            return &numSSectors;
-
-        case DD_NODE_COUNT:
-            return &numNodes;
-
-        case DD_MATERIAL_COUNT:
+            if((id = Def_Get(DD_DEF_TEXT, mapInfo->name, NULL)) != -1)
             {
-            static uint value;
-            value = Materials_Count();
-            return &value;
+                return defs.text[id].text;
             }
-        case DD_TRACE_ADDRESS:
-            return &traceLOS;
 
-        case DD_TRANSLATIONTABLES_ADDRESS:
-            return translationTables;
-
-        case DD_MAP_NAME:
-        {
-            gamemap_t *map = P_GetCurrentMap();
-            ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
-
-            if(mapInfo && mapInfo->name[0])
-            {
-                int id;
-
-                if((id = Def_Get(DD_DEF_TEXT, mapInfo->name, NULL)) != -1)
-                {
-                    return defs.text[id].text;
-                }
-
-                return mapInfo->name;
-            }
-            break;
+            return mapInfo->name;
         }
-        case DD_MAP_AUTHOR:
-        {
-            gamemap_t *map = P_GetCurrentMap();
-            ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
+        break;
+    }
+    case DD_MAP_AUTHOR:
+    {
+        gamemap_t *map = P_GetCurrentMap();
+        ded_mapinfo_t *mapInfo = Def_GetMapInfo(P_GetMapID(map));
 
-            if(mapInfo && mapInfo->author[0])
-                return mapInfo->author;
-            break;
-        }
-        case DD_MAP_MIN_X:
-        {
-            gamemap_t  *map = P_GetCurrentMap();
-            if(map)
-                return &map->bBox[BOXLEFT];
-            else
-                return NULL;
-        }
-        case DD_MAP_MIN_Y:
-        {
-            gamemap_t  *map = P_GetCurrentMap();
-            if(map)
-                return &map->bBox[BOXBOTTOM];
-            else
-                return NULL;
-        }
-        case DD_MAP_MAX_X:
-        {
-            gamemap_t  *map = P_GetCurrentMap();
-            if(map)
-                return &map->bBox[BOXRIGHT];
-            else
-                return NULL;
-        }
-        case DD_MAP_MAX_Y:
-        {
-            gamemap_t  *map = P_GetCurrentMap();
-            if(map)
-                return &map->bBox[BOXTOP];
-            else
-                return NULL;
-        }
-        case DD_PSPRITE_OFFSET_X:
-            return &pspOffset[VX];
+        if(mapInfo && mapInfo->author[0])
+            return mapInfo->author;
+        break;
+    }
+    case DD_MAP_MIN_X:
+    {
+        gamemap_t  *map = P_GetCurrentMap();
+        if(map)
+            return &map->bBox[BOXLEFT];
+        else
+            return NULL;
+    }
+    case DD_MAP_MIN_Y:
+    {
+        gamemap_t  *map = P_GetCurrentMap();
+        if(map)
+            return &map->bBox[BOXBOTTOM];
+        else
+            return NULL;
+    }
+    case DD_MAP_MAX_X:
+    {
+        gamemap_t  *map = P_GetCurrentMap();
+        if(map)
+            return &map->bBox[BOXRIGHT];
+        else
+            return NULL;
+    }
+    case DD_MAP_MAX_Y:
+    {
+        gamemap_t  *map = P_GetCurrentMap();
+        if(map)
+            return &map->bBox[BOXTOP];
+        else
+            return NULL;
+    }
+    case DD_PSPRITE_OFFSET_X:
+        return &pspOffset[VX];
 
-        case DD_PSPRITE_OFFSET_Y:
-            return &pspOffset[VY];
+    case DD_PSPRITE_OFFSET_Y:
+        return &pspOffset[VY];
 
-        case DD_PSPRITE_LIGHTLEVEL_MULTIPLIER:
-            return &pspLightLevelMultiplier;
+    case DD_PSPRITE_LIGHTLEVEL_MULTIPLIER:
+        return &pspLightLevelMultiplier;
 
-        case DD_SHARED_FIXED_TRIGGER:
-            return &sharedFixedTrigger;
+    case DD_SHARED_FIXED_TRIGGER:
+        return &sharedFixedTrigger;
 
-        case DD_CPLAYER_THRUST_MUL:
-            return &cplrThrustMul;
+    case DD_CPLAYER_THRUST_MUL:
+        return &cplrThrustMul;
 
-        case DD_GRAVITY:
-            return &mapGravity;
+    case DD_GRAVITY:
+        return &mapGravity;
 
-        case DD_TORCH_RED:
-            return &torchColor[CR];
+    case DD_TORCH_RED:
+        return &torchColor[CR];
 
-        case DD_TORCH_GREEN:
-            return &torchColor[CG];
+    case DD_TORCH_GREEN:
+        return &torchColor[CG];
 
-        case DD_TORCH_BLUE:
-            return &torchColor[CB];
+    case DD_TORCH_BLUE:
+        return &torchColor[CB];
 
-        case DD_TORCH_ADDITIVE:
-            return &torchAdditive;
+    case DD_TORCH_ADDITIVE:
+        return &torchAdditive;
 #ifdef WIN32
-        case DD_WINDOW_HANDLE:
-            return Sys_GetWindowHandle(windowIDX);
+    case DD_WINDOW_HANDLE:
+        return Sys_GetWindowHandle(windowIDX);
 #endif
 
-        // We have to separately calculate the 35 Hz ticks.
-        case DD_GAMETIC:
-            {
-            static timespan_t       fracTic;
-            fracTic = gameTime * TICSPERSEC;
-            return &fracTic;
-            }
-        case DD_OPENRANGE:
-            return &openrange;
-
-        case DD_OPENTOP:
-            return &opentop;
-
-        case DD_OPENBOTTOM:
-            return &openbottom;
-
-        case DD_LOWFLOOR:
-            return &lowfloor;
-
-        default:
-            break;
+    // We have to separately calculate the 35 Hz ticks.
+    case DD_GAMETIC:
+        { static timespan_t       fracTic;
+        fracTic = gameTime * TICSPERSEC;
+        return &fracTic;
         }
-        return 0;
+    case DD_OPENRANGE:
+        return &openrange;
+
+    case DD_OPENTOP:
+        return &opentop;
+
+    case DD_OPENBOTTOM:
+        return &openbottom;
+
+    case DD_LOWFLOOR:
+        return &lowfloor;
+
+    case DD_NUMLUMPS:
+        { static int count;
+        count = W_NumLumps();
+        return &count;
+        }
+    default: break;
     }
+
+    if(ddvalue >= DD_LAST_VALUE || ddvalue <= DD_FIRST_VALUE)
+        return 0;
 
     // Other values not supported.
     return ddValues[ddvalue].writePtr;
@@ -1253,23 +1799,56 @@ ddplayer_t* DD_GetPlayer(int number)
     return (ddplayer_t *) &ddPlayers[number].shared;
 }
 
+/**
+ * Convert propertyType enum constant into a string for error/debug messages.
+ */
+const char* value_Str(int val)
+{
+    static char valStr[40];
+    struct val_s {
+        int                 val;
+        const char*         str;
+    } valuetypes[] =
+    {
+        { DDVT_BOOL, "DDVT_BOOL" },
+        { DDVT_BYTE, "DDVT_BYTE" },
+        { DDVT_SHORT, "DDVT_SHORT" },
+        { DDVT_INT, "DDVT_INT" },
+        { DDVT_UINT, "DDVT_UINT" },
+        { DDVT_FIXED, "DDVT_FIXED" },
+        { DDVT_ANGLE, "DDVT_ANGLE" },
+        { DDVT_FLOAT, "DDVT_FLOAT" },
+        { DDVT_LONG, "DDVT_LONG" },
+        { DDVT_ULONG, "DDVT_ULONG" },
+        { DDVT_PTR, "DDVT_PTR" },
+        { DDVT_BLENDMODE, "DDVT_BLENDMODE" },
+        { 0, NULL }
+    };
+    uint i;
+
+    for(i = 0; valuetypes[i].str; ++i)
+        if(valuetypes[i].val == val)
+            return valuetypes[i].str;
+
+    sprintf(valStr, "(unnamed %i)", val);
+    return valStr;
+}
+
 #ifdef UNIX
 /**
- * Some routines are not available on the *nix platform.
+ * Some routines not available on the *nix platform.
  */
-char *strupr(char *string)
+char* strupr(char* string)
 {
-    char   *ch = string;
-
+    char* ch = string;
     for(; *ch; ch++)
         *ch = toupper(*ch);
     return string;
 }
 
-char *strlwr(char *string)
+char* strlwr(char* string)
 {
-    char   *ch = string;
-
+    char* ch = string;
     for(; *ch; ch++)
         *ch = tolower(*ch);
     return string;
@@ -1292,7 +1871,7 @@ char *strlwr(char *string)
  */
 int dd_vsnprintf(char* str, size_t size, const char* format, va_list ap)
 {
-    int                 result = vsnprintf(str, size, format, ap);
+    int result = vsnprintf(str, size, format, ap);
 
 #ifdef WIN32
     // Always terminate.
@@ -1317,7 +1896,7 @@ int dd_vsnprintf(char* str, size_t size, const char* format, va_list ap)
  */
 int dd_snprintf(char* str, size_t size, const char* format, ...)
 {
-    int                 result = 0;
+    int result = 0;
 
     va_list args;
     va_start(args, format);

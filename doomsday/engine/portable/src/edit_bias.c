@@ -123,20 +123,20 @@ void SBE_Register(void)
     C_VAR_INT("edit-bias-show-indices", &editShowIndices, 0, 0, 1);
 
     // Commands for light editing.
-    C_CMD_FLAGS("bledit", "", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("blquit", "", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("blclear", "", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("blsave", NULL, BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("blnew", "", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("bldel", "", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("bllock", "", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("blunlock", "", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("blgrab", "", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("bldup", "", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("blc", "fff", BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("bli", NULL, BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("blhue", NULL, BLEditor, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("blmenu", "", BLEditor, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("bledit", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blquit", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blclear", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blsave", NULL, BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blnew", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("bldel", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("bllock", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blunlock", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blgrab", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("bldup", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blc", "fff", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("bli", NULL, BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blhue", NULL, BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("blmenu", "", BLEditor, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
 }
 
 /**
@@ -413,7 +413,7 @@ static boolean SBE_Save(const char *name)
 
     // Since there can be quite a lot of these, make sure we'll skip
     // the ones that are definitely not suitable.
-    fprintf(file, "SkipIf Not %s\n", (char *) gx.GetVariable(DD_GAME_MODE));
+    fprintf(file, "SkipIf Not %s\n", Str_Text(GameInfo_ModeIdentifier(DD_GameInfo())));
 
     s = SB_GetSource(0);
     for(i = 0; i < numSources; ++i, ++s)

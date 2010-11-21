@@ -38,9 +38,6 @@
 #pragma warning(disable:4244)
 #endif
 
-#include <stdio.h>
-#include <string.h>
-
 #include "doomsday.h"
 #include "dd_api.h"
 #include "version.h"
@@ -77,18 +74,19 @@
 #define MINLONG     ((long)0x80000000)
 #endif
 
+#define DATAPATH            DD_BASEDATAPATH GAMENAMETEXT "\\"
+#define DEFSPATH            DD_BASEDEFSPATH GAMENAMETEXT "\\"
+
+#define CONFIGFILE          GAMENAMETEXT ".cfg"
+#define DEFSFILE            GAMENAMETEXT ".ded"
+#define STARTUPPK3          GAMENAMETEXT ".pk3"
+
 #define Set                 DD_SetInteger
 #define Get                 DD_GetInteger
 
-#define CONFIGFILE          GAMENAMETEXT".cfg"
-#define DEFSFILE            GAMENAMETEXT"\\"GAMENAMETEXT".ded"
-#define DATAPATH            "}data\\"GAMENAMETEXT"\\"
-#define STARTUPWAD          "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".wad"
-#define STARTUPPK3          "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".pk3"
-
 // Verbose messages.
-#define VERBOSE(code)   { if(verbose >= 1) { code; } }
-#define VERBOSE2(code)  { if(verbose >= 2) { code; } }
+#define VERBOSE(code)       { if(verbose >= 1) { code; } }
+#define VERBOSE2(code)      { if(verbose >= 2) { code; } }
 
 extern game_import_t gi;
 extern game_export_t gx;
@@ -101,24 +99,21 @@ extern game_export_t gx;
 #define STATES              (*gi.states)
 #define VALIDCOUNT          (*gi.validCount)
 
-// Game mode handling - identify IWAD version to handle IWAD dependend
-// animations etc.
 typedef enum {
-    shareware, // 4 map demo
-    registered, // HEXEN registered
-    extended, // DeathKings
-    indetermined, // Well, no IWAD found.
+    indetermined, // \todo now meaningless refactor away.
+    hexen_shareware,
+    hexen,
+    hexen_deathkings,
     NUM_GAME_MODES
 } gamemode_t;
 
 // Game mode bits for the above.
-#define GM_SHAREWARE        0x1 // 4 map demo
-#define GM_REGISTERED       0x2 // HEXEN registered
-#define GM_EXTENDED         0x4 // DeathKings
-#define GM_INDETERMINED     0x8 // Well, no IWAD found.
+#define GM_INDETERMINED     0x0
+#define GM_HEXEN_SHAREWARE  0x1
+#define GM_HEXEN            0x2
+#define GM_HEXEN_DEATHKINGS 0x4
 
-#define GM_ANY              (GM_SHAREWARE|GM_REGISTERED|GM_EXTENDED)
-#define GM_NOTSHAREWARE     (GM_REGISTERED|GM_EXTENDED)
+#define GM_ANY              (GM_HEXEN_SHAREWARE|GM_HEXEN|GM_HEXEN_DEATHKINGS)
 
 #define SCREENWIDTH         320
 #define SCREENHEIGHT        200
@@ -145,14 +140,18 @@ typedef enum {
  * Player Classes
  */
 typedef enum {
-    PCLASS_FIGHTER,
+    PCLASS_NONE = -1,
+    PCLASS_FIRST = 0,
+    PCLASS_FIGHTER = PCLASS_FIRST,
     PCLASS_CLERIC,
     PCLASS_MAGE,
     PCLASS_PIG,
     NUM_PLAYER_CLASSES
 } playerclass_t;
 
-#define PCLASS_INFO(class)  (&classInfo[class])
+#define VALID_PLAYER_CLASS(c)       ((c) >= PCLASS_FIRST && (c) < NUM_PLAYER_CLASSES)
+
+#define PCLASS_INFO(c)              (&classInfo[c])
 
 typedef struct classinfo_s{
     const char* niceName;
@@ -378,7 +377,6 @@ extern boolean  modifiedgame;
 
 void            H2_Main(void);
 
-void            G_IdentifyVersion(void);
 void            G_CommonPreInit(void);
 void            G_CommonPostInit(void);
 

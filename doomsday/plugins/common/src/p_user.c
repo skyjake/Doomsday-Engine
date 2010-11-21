@@ -706,9 +706,6 @@ void P_MorphThink(player_t *player)
 # endif
 }
 
-/**
- * \todo Need to replace this as it comes straight from Hexen.
- */
 boolean P_UndoPlayerMorph(player_t *player)
 {
     mobj_t*             fog = 0, *mo = 0, *pmo = 0;
@@ -805,7 +802,6 @@ boolean P_UndoPlayerMorph(player_t *player)
     player->class = cfg.playerClass[playerNum];
 # endif
     an = angle >> ANGLETOFINESHIFT;
-// REWRITE ME - I MATCH HEXEN UNTIL HERE
 
     if((fog = P_SpawnMobj3f(MT_TFOG,
                             pos[VX] + 20 * FIX2FLT(finecosine[an]),

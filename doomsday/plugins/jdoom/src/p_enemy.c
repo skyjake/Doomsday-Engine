@@ -1573,7 +1573,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
     if(bossKilled)
         return;
 
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
     {
         if(gameMap != 6)
             return;
@@ -1668,7 +1668,7 @@ void C_DECL A_BossDeath(mobj_t* mo)
     }
 
     // Victory!
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
     {
         if(gameMap == 6)
         {
@@ -1745,7 +1745,7 @@ void C_DECL A_Hoof(mobj_t *mo)
      * \todo: Implement a MAPINFO option for this.
      */
     S_StartSound(SFX_HOOF |
-                 (gameMode != commercial &&
+                 (!(gameModeBits & GM_ANY_DOOM2) &&
                   gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
@@ -1757,7 +1757,7 @@ void C_DECL A_Metal(mobj_t *mo)
      * \todo: Implement a MAPINFO option for this.
      */
     S_StartSound(SFX_METAL |
-                 (gameMode != commercial &&
+                 (!(gameModeBits & GM_ANY_DOOM2) &&
                   gameMap == 7 ? DDSF_NO_ATTENUATION : 0), mo);
     A_Chase(mo);
 }
@@ -1928,9 +1928,9 @@ void C_DECL A_SpawnFly(mobj_t *mo)
 
 void C_DECL A_PlayerScream(mobj_t *mo)
 {
-    int                 sound = SFX_PLDETH; // Default death sound.
+    int sound = SFX_PLDETH; // Default death sound.
 
-    if((gameMode == commercial) && (mo->health < -50))
+    if((gameModeBits & GM_ANY_DOOM2) && (mo->health < -50))
     {
         // If the player dies less with less than -50% without gibbing.
         sound = SFX_PDIEHI;

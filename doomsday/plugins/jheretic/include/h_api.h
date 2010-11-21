@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,20 +23,27 @@
  */
 
 /**
- * h_api.h:
+ * h_api.h: Doomsday API setup and interaction - jHeretic specific
  */
 
-#ifndef __JHERETIC_API_H__
-#define __JHERETIC_API_H__
+#ifndef LIBJHERETIC_API_H
+#define LIBJHERETIC_API_H
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include "doomsday.h"
+#include "dd_api.h"
+#include "doomdef.h"
 
-int             G_GetInteger(int id);
-void           *G_GetVariable(int id);
-game_export_t  *GetGameAPI(game_import_t *imports);
+extern game_import_t gi;
+extern game_export_t gx;
 
-#endif
+boolean G_SetGameMode(gamemode_t mode);
+
+int G_GetInteger(int id);
+void* G_GetVariable(int id);
+
+game_export_t* GetGameAPI(game_import_t* imports);
+
+#endif /* LIBJHERETIC_API_H */

@@ -32,7 +32,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
+#include <string.h>
 
 #include "jheretic.h"
 
@@ -51,14 +51,10 @@
 #include "am_map.h"
 #include "p_inventory.h"
 #include "p_player.h"
+#include "g_update.h"
+#include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------
-
-#define MAXWADFILES         20
-
-// MAPDIR should be defined as the directory that holds development maps
-// for the -wart # # command
-#define MAPDIR              "\\data\\"
 
 // TYPES -------------------------------------------------------------------
 
@@ -77,132 +73,166 @@ int verbose;
 boolean devParm; // checkparm of -devparm
 boolean noMonstersParm; // checkparm of -nomonsters
 boolean respawnParm; // checkparm of -respawn
-boolean turboParm; // checkparm of -turbo
 boolean fastParm; // checkparm of -fast
+boolean turboParm; // checkparm of -turbo
+//boolean randomClassParm; // checkparm of -randclass
 
-float turboMul; // multiplier for turbo
+float turboMul; // Multiplier for turbo.
 
-skillmode_t startSkill;
-int startEpisode;
-int startMap;
-boolean autoStart;
-
-gamemode_t gameMode;
-int gameModeBits;
-
-// This is returned in D_Get(DD_GAME_MODE), max 16 chars.
-char gameModeString[17];
-
-boolean monsterInfight;
+gamemode_t gameMode = indetermined;
+int gameModeBits = 0;
 
 // Default font colours.
-const float defFontRGB[] = { .425f, .986f, .378f };
+const float defFontRGB[]  = { .425f, .986f, .378f };
 const float defFontRGB2[] = { 1.0f, 1.0f, 1.0f };
 const float defFontRGB3[] = { 1, .65f, .275f };
 
-char *borderLumps[] = {
-    "FLAT513", // background
-    "bordt", // top
-    "bordr", // right
-    "bordb", // bottom
-    "bordl", // left
-    "bordtl", // top left
-    "bordtr", // top right
-    "bordbr", // bottom right
-    "bordbl" // bottom left
+// The patches used in drawing the view border.
+char* borderLumps[] = {
+    "FLAT513", // Background.
+    "BORDT", // Top.
+    "BORDR", // Right.
+    "BORDB", // Bottom.
+    "BORDL", // Left.
+    "BORDTL", // Top left.
+    "BORDTR", // Top right.
+    "BORDBR", // Bottom right.
+    "BORDBL" // Bottom left.
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+// The interface to the Doomsday engine.
+game_import_t gi;
+game_export_t gx;
+
+static skillmode_t startSkill;
+static uint startEpisode;
+static uint startMap;
+static boolean autoStart;
+
 // CODE --------------------------------------------------------------------
 
 /**
+ * Get a 32-bit integer value.
+ */
+int G_GetInteger(int id)
+{
+    switch(id)
+    {
+    case DD_GAME_DMUAPI_VER:
+        return DMUAPI_VER;
+
+    default:
+        break;
+    }
+    // ID not recognized, return NULL.
+    return 0;
+}
+
+/**
+ * Get a pointer to the value of a variable. Added for 64-bit support.
+ */
+void* G_GetVariable(int id)
+{
+    static float bob[2];
+
+    switch(id)
+    {
+    case DD_GAME_NAME:
+        return GAMENAMETEXT;
+
+    case DD_GAME_NICENAME:
+        return GAME_NICENAME;
+
+    case DD_GAME_ID:
+        return GAMENAMETEXT " " GAME_VERSION_TEXT;
+
+    case DD_GAME_VERSION_SHORT:
+        return GAME_VERSION_TEXT;
+
+    case DD_GAME_VERSION_LONG:
+        return GAME_VERSION_TEXTLONG "\n" GAME_DETAILS;
+
+    case DD_GAME_CONFIG:
+        return gameConfigString;
+
+    case DD_ACTION_LINK:
+        return actionlinks;
+
+    case DD_XGFUNC_LINK:
+        return xgClasses;
+
+    case DD_PSPRITE_BOB_X:
+        R_GetWeaponBob(DISPLAYPLAYER, &bob[0], NULL);
+        return &bob[0];
+
+    case DD_PSPRITE_BOB_Y:
+        R_GetWeaponBob(DISPLAYPLAYER, NULL, &bob[1]);
+        return &bob[1];
+
+    default:
+        break;
+    }
+
+    // ID not recognized, return NULL.
+    return 0;
+}
+
+/**
  * Attempt to change the current game mode. Can only be done when not
- * actually in a level.
+ * actually in a map.
  *
  * \todo Doesn't actually do anything yet other than set the game mode
  * global vars.
  *
- * @param mode          The game mode to change to.
+ * @param mode          GameMode to change to.
  *
- * @return              @c true, if we changed game modes successfully.
+ * @return              @true, if we changed game modes successfully.
  */
-boolean G_SetGameMode(gamemode_t mode)
+boolean G_SetGameMode(int/*gamemode_t*/ mode)
 {
-    gameMode = mode;
-
     if(G_GetGameState() == GS_MAP)
         return false;
-
-    switch(mode)
-    {
-    case shareware: // shareware, E1, M9
-        gameModeBits = GM_SHAREWARE;
-        break;
-
-    case registered: // registered episodes
-        gameModeBits = GM_REGISTERED;
-        break;
-
-    case extended: // episodes 4 and 5 present
-        gameModeBits = GM_EXTENDED;
-        break;
-
-    case indetermined: // Well, no IWAD found.
-        gameModeBits = GM_INDETERMINED;
-        break;
-
-    default:
-        Con_Error("G_SetGameMode: Unknown gamemode %i", mode);
-    }
-
+    gameMode = mode;
+    gameModeBits = mode > 0? 1 << (mode-1) : 0;
     return true;
 }
 
-/**
- * Check which known IWADs are found. The purpose of this routine is to
- * find out which IWADs the user lets us to know about, but we don't
- * decide which one gets loaded or even see if the WADs are actually
- * there. The default location for IWADs is Data\GAMENAMETEXT\.
- */
-void G_DetectIWADs(void)
+int G_RegisterGames(int hookType, int parm, void* data)
 {
-    // Add a couple of probable locations for Heretic.wad.
-    DD_AddIWAD("}data\\"GAMENAMETEXT"\\heretic.wad");
-    DD_AddIWAD("}data\\heretic.wad");
-    DD_AddIWAD("}heretic.wad");
-    DD_AddIWAD("heretic.wad");
+#define DATAPATH        DD_BASEDATAPATH GAMENAMETEXT "\\"
+#define STARTUPPK3      GAMENAMETEXT ".pk3"
+#define NUMELEMENTS(v)  (sizeof(v)/sizeof((v)[0]))
+
+    /* Heretic (Extended) */
+    { const char* files[] = { STARTUPPK3, "heretic.wad" };
+    const char*   lumps[] = { "EXTENDED", "E5M2", "E5M7", "E6M2", "MUMSIT", "WIZACT",  "MUS_CPTD", "CHKNC5", "SPAXA1A5" };
+    DD_AddGame(heretic_extended, "heretic-ext", DATAPATH, "Heretic: Shadow of the Serpent Riders", "Raven Software", "hereticext", "xheretic", files, NUMELEMENTS(files), lumps, NUMELEMENTS(lumps)); }
+
+    /* Heretic */
+    { const char* files[] = { STARTUPPK3, "heretic.wad" };
+    const char*   lumps[] = { "E2M2", "E3M6", "MUMSIT", "WIZACT",  "MUS_CPTD", "CHKNC5", "SPAXA1A5" };
+    DD_AddGame(heretic, "heretic", DATAPATH, "Heretic Registered", "Raven Software", "heretic", 0, files, NUMELEMENTS(files), lumps, NUMELEMENTS(lumps)); }
+
+    /* Heretic (Shareware) */
+    { const char* files[] = { STARTUPPK3, "heretic1.wad" };
+    const char*   lumps[] = { "E1M1", "MUMSIT", "WIZACT",  "MUS_CPTD", "CHKNC5", "SPAXA1A5" };
+    DD_AddGame(heretic_shareware, "heretic-share", DATAPATH, "Heretic Shareware", "Raven Software", "sheretic", 0, files, NUMELEMENTS(files), lumps, NUMELEMENTS(lumps)); }
+
+    return true;
+
+#undef NUMELEMENTS
+#undef STARTUPPK3
+#undef DATAPATH
 }
 
 /**
- * gamemode, gamemission and the gameModeString are set.
- */
-void G_IdentifyVersion(void)
-{
-    // The game mode string is used in netgames.
-    strcpy(gameModeString, "heretic");
-
-    if(!P_MapExists(1, 0))
-    {   // Can't find episode 2 maps, must be the shareware WAD
-        strcpy(gameModeString, "heretic-share");
-    }
-    else if(W_CheckNumForName("EXTENDED") != -1)
-    {
-        // Found extended lump, must be the extended WAD
-        strcpy(gameModeString, "heretic-ext");
-    }
-}
-
-/**
- * Pre Engine Initialization routine.
+ * Pre Game Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
 void G_PreInit(void)
 {
-    int                 i;
-
-    G_SetGameMode(indetermined);
-
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
     memset(&cfg, 0, sizeof(cfg));
@@ -231,8 +261,10 @@ void G_PreInit(void)
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_CURRENTITEM] = true;
     cfg.hudShown[HUD_LOG] = true;
+    { int i;
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
         cfg.hudUnHide[i] = 1;
+    }
     cfg.hudScale = .7f;
     cfg.hudWideOffset = 1;
     cfg.hudColor[0] = .325f;
@@ -347,7 +379,7 @@ void G_PreInit(void)
     cfg.inventorySlotShowEmpty = true;
     cfg.inventorySelectMode = 0; // Cursor select.
 
-    cfg.chatBeep = 1;
+    cfg.chatBeep = true;
 
   //cfg.killMessages = true;
     cfg.bobView = 1;
@@ -374,10 +406,6 @@ void G_PreInit(void)
     cfg.tomeCounter = 10;
     cfg.tomeSound = 3;
 
-    // Shareware WAD has different border background
-    if(!P_MapExists(1, 0))
-        borderLumps[0] = "FLOOR04";
-
     // Do the common pre init routine;
     G_CommonPreInit();
 }
@@ -386,19 +414,16 @@ void G_PreInit(void)
  * Post Engine Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void G_PostInit(void)
+void G_PostInit(int mode)
 {
     filename_t file;
     int p;
 
-    if(!P_MapExists(1, 0))
-        // Can't find episode 2 maps, must be the shareware WAD.
-        G_SetGameMode(shareware);
-    else if(W_CheckNumForName("EXTENDED") != -1)
-        // Found extended lump, must be the extended WAD.
-        G_SetGameMode(extended);
-    else
-        G_SetGameMode(registered);
+    G_SetGameMode((gamemode_t)mode);
+
+    // Shareware WAD has different border background
+    if(gameMode == heretic_shareware)
+        borderLumps[0] = "FLOOR04";
 
     // Common post init routine.
     G_CommonPostInit();
@@ -522,7 +547,60 @@ void G_Shutdown(void)
     GUI_Shutdown();
 }
 
-void G_EndFrame(void)
+/**
+ * Takes a copy of the engine's entry points and exported data. Returns
+ * a pointer to the structure that contains our entry points and exports.
+ */
+game_export_t* GetGameAPI(game_import_t* imports)
 {
-    // Nothing to do.
+    // Take a copy of the imports, but only copy as much data as is
+    // allowed and legal.
+    memset(&gi, 0, sizeof(gi));
+    memcpy(&gi, imports, MIN_OF(sizeof(game_import_t), imports->apiSize));
+
+    // Clear all of our exports.
+    memset(&gx, 0, sizeof(gx));
+
+    // Fill in the data for the exports.
+    gx.apiSize = sizeof(gx);
+    gx.PreInit = G_PreInit;
+    gx.PostInit = G_PostInit;
+    gx.Shutdown = G_Shutdown;
+    gx.Ticker = G_Ticker;
+    gx.G_Drawer = H_Display;
+    gx.G_Drawer2 = H_Display2;
+    gx.PrivilegedResponder = (boolean (*)(event_t *)) G_PrivilegedResponder;
+    gx.FallbackResponder = NULL; //Hu_MenuResponder;
+    gx.FinaleResponder = FI_Responder;
+    gx.G_Responder = G_Responder;
+    gx.MobjThinker = P_MobjThinker;
+    gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
+    gx.ConsoleBackground = H_ConsoleBg;
+    gx.UpdateState = G_UpdateState;
+
+    gx.GetInteger = G_GetInteger;
+    gx.GetVariable = G_GetVariable;
+
+    gx.NetServerStart = D_NetServerStarted;
+    gx.NetServerStop = D_NetServerClose;
+    gx.NetConnect = D_NetConnect;
+    gx.NetDisconnect = D_NetDisconnect;
+    gx.NetPlayerEvent = D_NetPlayerEvent;
+    gx.NetWorldEvent = D_NetWorldEvent;
+    gx.HandlePacket = D_HandlePacket;
+    gx.NetWriteCommands = D_NetWriteCommands;
+    gx.NetReadCommands = D_NetReadCommands;
+
+    // Data structure sizes.
+    gx.ticcmdSize = sizeof(ticcmd_t);
+    gx.mobjSize = sizeof(mobj_t);
+    gx.polyobjSize = sizeof(polyobj_t);
+
+    gx.SetupForMapData = P_SetupForMapData;
+
+    // These really need better names. Ideas?
+    gx.HandleMapDataPropertyValue = P_HandleMapDataPropertyValue;
+    gx.HandleMapObjectStatusReport = P_HandleMapObjectStatusReport;
+
+    return &gx;
 }

@@ -228,8 +228,8 @@ void B_Init(void)
     B_BindControl("turn", "joy-x + key-shift-up + joy-hat-center + key-code123-down");
     */
 
-    // Bind all the defaults (of engine & game, everything).
-    Con_Executef(CMDS_DDAY, false, "defaultbindings");
+    // Bind all the defaults for the engine only.
+    B_BindDefaults();
 
     // Enable the contexts for the initial state.
     B_ActivateContext(B_ContextByName(DEFAULT_BINDING_CONTEXT_NAME), true);
@@ -524,16 +524,18 @@ D_CMD(DefaultBindings)
         return false;
 
     B_BindDefaults();
+    if(!DD_IsNullGameInfo(DD_GameInfo()))
+    {   // Set the game's default bindings.
+        Con_Executef(CMDS_DDAY, false, "defaultgamebindings");
+    }
 
-    // Set the game's default bindings.
-    Con_Executef(CMDS_DDAY, false, "defaultgamebindings");
     return true;
 }
 
 D_CMD(ActivateBindingContext)
 {
-    boolean             doActivate = !stricmp(argv[0], "activatebcontext");
-    bcontext_t*         bc = B_ContextByName(argv[1]);
+    boolean doActivate = !stricmp(argv[0], "activatebcontext");
+    bcontext_t* bc = B_ContextByName(argv[1]);
 
     if(!bc)
     {
@@ -543,8 +545,7 @@ D_CMD(ActivateBindingContext)
 
     if(bc->flags & BCF_PROTECTED)
     {
-        Con_Message("Binding Context '%s' is protected. "
-                    "It can not be manually %s.\n", bc->name,
+        Con_Message("Binding Context '%s' is protected. It can not be manually %s.\n", bc->name,
                     doActivate? "activated" : "deactivated");
         return false;
     }

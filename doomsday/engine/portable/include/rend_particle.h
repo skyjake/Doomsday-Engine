@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,24 +23,37 @@
  */
 
 /**
- * rend_particle.h: Particle Effects
+ * rend_particle.h: Particle effect renderer.
  */
 
-#ifndef __DOOMSDAY_RENDER_PARTICLES_H__
-#define __DOOMSDAY_RENDER_PARTICLES_H__
+#ifndef LIBDENG_REND_PARTICLE_H
+#define LIBDENG_REND_PARTICLE_H
 
 extern byte useParticles;
 extern int maxParticles;
 extern float particleSpawnRate;
 
-void            Rend_ParticleRegister(void);
-void            Rend_ParticleInitTextures(void);
-void            Rend_ParticleShutdownTextures(void);
+void Rend_ParticleRegister(void);
 
-void            Rend_ParticleInitForNewFrame(void);
-void            Rend_ParticleMarkInSectorVisible(sector_t* sector);
+/**
+ * Loads all system-level textures (i.e., those available by default)
+ * for a minimal resource set needed for particle rendering.
+ */
+void Rend_ParticleLoadSystemTextures(void);
+void Rend_ParticleClearSystemTextures(void);
 
-void            Rend_RenderParticles(void);
+/**
+ * Load any custom particle textures. They are loaded from the
+ * highres texture directory and are named "ParticleNN.(tga|png|pcx)".
+ * The first is "Particle00". (based on Leesz' textured particles mod)
+ */
+void Rend_ParticleLoadExtraTextures(void);
+void Rend_ParticleClearExtraTextures(void);
+
+void Rend_ParticleInitForNewFrame(void);
+void Rend_ParticleMarkInSectorVisible(sector_t* sector);
+
+void Rend_RenderParticles(void);
 // Debugging aid:
-void            Rend_RenderGenerators(void);
-#endif
+void Rend_RenderGenerators(void);
+#endif /* LIBDENG_REND_PARTICLE_H */

@@ -165,64 +165,6 @@ static lt_dlhandle *NextPluginHandle(void)
     return NULL;
 }
 
-/*
-#if 0
-int LoadPlugin(const char *pluginPath, lt_ptr data)
-{
-    filename_t name;
-    lt_dlhandle plugin, *handle;
-    void (*initializer)(void);
-
-    // What is the actual file name?
-    _splitpath(pluginPath, NULL, NULL, name, NULL);
-
-    printf("LP: %s => %s\n", pluginPath, name);
-
-    if(!strncmp(name, "libdp", 5))
-    {
-#if 0
-        filename_t fullPath;
-
-#ifdef DENG_LIBRARY_DIR
-        sprintf(fullPath, DENG_LIBRARY_DIR "/%s", name);
-#else
-        strcpy(fullPath, pluginPath);
-#endif
-        //if(strchr(name, '.'))
-            strcpy(name, pluginPath);
-        else
-        {
-            strcpy(name, pluginPath);
-            strcat(name, ".dylib");
-            }
-#endif
-        // Try loading this one as a Doomsday plugin.
-        if(NULL == (plugin = lt_dlopenext(pluginPath)))
-        {
-            printf("LoadPlugin: Failed to open %s!\n", pluginPath);
-            return 0;
-        }
-
-        if(NULL == (initializer = lt_dlsym(plugin, "DP_Initialize")) ||
-           NULL == (handle = NextPluginHandle()))
-        {
-            printf("LoadPlugin: Failed to load %s!\n", pluginPath);
-            lt_dlclose(plugin);
-            return 0;
-        }
-
-        // This seems to be a Doomsday plugin.
-        *handle = plugin;
-
-        printf("LoadPlugin: %s\n", pluginPath);
-        initializer();
-    }
-
-    return 0;
-}
-#endif
-*/
-
 int LoadPlugin(const char *pluginPath, lt_ptr data)
 {
 #ifndef MACOSX

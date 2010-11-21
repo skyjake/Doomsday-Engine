@@ -79,9 +79,152 @@ application_t app;
 
 // CODE --------------------------------------------------------------------
 
-BOOL InitApplication(application_t *app)
+/**
+ * \note GetLastError() should only be called when we *know* an error was thrown.
+ * The result of calling this any other time is undefined.
+
+ * @return              Ptr to a string containing a textual representation of
+ *                      the last error thrown in the current thread else @c NULL.
+ */
+static const char* getLastWINAPIErrorMessage(void)
 {
-    WNDCLASSEX          wcex;
+    static char* buffer = 0; /// \fixme Never free'd!
+    static size_t currentBufferSize = 0;
+
+    LPVOID lpMsgBuf;
+    DWORD dw = GetLastError(), lpMsgBufLen;
+    lpMsgBufLen = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                                0, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, 0);
+    if(!lpMsgBuf || lpMsgBufLen == 0)
+        return "";
+
+    if(!buffer || (size_t)(lpMsgBufLen+1+8) > currentBufferSize)
+    {
+        currentBufferSize = (size_t)(lpMsgBufLen+1+8);
+        buffer = M_Realloc(buffer, currentBufferSize);
+    }
+
+    dd_snprintf(buffer, currentBufferSize, "#%-5d: ", (int)dw);
+
+    // Continue splitting as long as there are parts.
+    { char* part, *cursor = (char*)lpMsgBuf;
+    while(*(part = M_StrTok(&cursor, "\n")))
+        strcat(buffer, part);
+    }
+
+    // We're done with the system-allocated message.
+    LocalFree(lpMsgBuf);
+    return buffer;
+}
+
+static HINSTANCE* findFirstUnusedPluginHandle(application_t* app)
+{
+    assert(app);
+    { size_t i;
+    for(i = 0; i < MAX_PLUGS; ++i)
+    {
+        if(!app->hInstPlug[i])
+            return &app->hInstPlug[i];
+    }}
+    return 0;
+}
+
+/**
+ * Atempts to load the specified plugin.
+ *
+ * @return              @c true, if the plugin was loaded succesfully.
+ */
+static BOOL loadPlugin(HINSTANCE* handle, const char* absolutePath)
+{
+    assert(handle && absolutePath && absolutePath[0]);
+    if(!(*handle = LoadLibrary(absolutePath)))
+        Con_Printf("loadPlugin: Error loading \"%s\" (%s)\n", absolutePath, getLastWINAPIErrorMessage());
+    return (*handle? TRUE : FALSE);
+}
+
+static BOOL unloadPlugin(HINSTANCE* handle)
+{
+    assert(handle);
+    {
+    BOOL result = FreeLibrary(*handle);
+    *handle = 0;
+    if(!result)
+        Con_Printf("unloadPlugin: Error unloading plugin (%s)\n", getLastWINAPIErrorMessage());
+    return result;
+    }
+}
+
+/**
+ * Loads all the plugins from the startup directory.
+ */
+static BOOL loadAllPlugins(application_t* app)
+{
+    struct _finddata_t fd;
+    filename_t pluginPath;
+    long hFile;
+
+    dd_snprintf(pluginPath, FILENAME_T_MAXLEN, "%sj*.dll", ddBinDir.path);
+    if((hFile = _findfirst(pluginPath, &fd)) != -1L)
+    {
+        do
+        {
+            HINSTANCE* handle = findFirstUnusedPluginHandle(app);
+            if(!handle)
+                return FALSE;
+
+            loadPlugin(handle, fd.name);
+        } while(!_findnext(hFile, &fd));
+    }
+
+    dd_snprintf(pluginPath, FILENAME_T_MAXLEN, "%sdp*.dll", ddBinDir.path);
+    if((hFile = _findfirst(pluginPath, &fd)) != -1L)
+    {
+        do
+        {
+            HINSTANCE* handle = findFirstUnusedPluginHandle(app);
+            if(!handle)
+                return FALSE;
+
+            loadPlugin(handle, fd.name);
+        } while(!_findnext(hFile, &fd));
+    }
+
+    return TRUE;
+}
+
+static BOOL unloadAllPlugins(application_t* app)
+{
+    assert(app);
+    { size_t i;
+    for(i = 0; i < MAX_PLUGS && app->hInstPlug[i]; ++i)
+    {
+        unloadPlugin(&app->hInstPlug[i]);
+    }}
+    return TRUE;
+}
+
+static BOOL initTimingSystem(void)
+{
+    // Nothing to do.
+    return TRUE;
+}
+
+static BOOL initPluginSystem(void)
+{
+    // Nothing to do.
+    return TRUE;
+}
+
+static BOOL initDGL(void)
+{
+    return (BOOL) Sys_PreInitGL();
+}
+
+static BOOL initApplication(application_t* app)
+{
+    assert(app);
+    {
+    WNDCLASSEX wcex;
 
     if(GetClassInfoEx(app->hInstance, app->className, &wcex))
         return TRUE; // Already registered a window class.
@@ -92,25 +235,21 @@ BOOL InitApplication(application_t *app)
     wcex.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
     wcex.lpfnWndProc = (WNDPROC) WndProc;
     wcex.hInstance = app->hInstance;
-    wcex.hIcon =
-        (HICON) LoadImage(app->hInstance, MAKEINTRESOURCE(IDI_DOOMSDAY_ICON),
-                          IMAGE_ICON, 0, 0, LR_DEFAULTSIZE);
-    wcex.hIconSm =
-        (HICON) LoadImage(app->hInstance, MAKEINTRESOURCE(IDI_DOOMSDAY_ICON),
-                          IMAGE_ICON, 16, 16, 0);
+    wcex.hIcon   = (HICON) LoadImage(app->hInstance, MAKEINTRESOURCE(IDI_DOOMSDAY_ICON), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE);
+    wcex.hIconSm = (HICON) LoadImage(app->hInstance, MAKEINTRESOURCE(IDI_DOOMSDAY_ICON), IMAGE_ICON, 16, 16, 0);
     wcex.hCursor = LoadCursor(app->hInstance, IDC_ARROW);
     wcex.hbrBackground = (HBRUSH) GetStockObject(BLACK_BRUSH);
     wcex.lpszClassName = app->className;
-    wcex.lpszMenuName = NULL;
+    wcex.lpszMenuName = 0;
 
     // Register our window class.
     return RegisterClassEx(&wcex);
+    }
 }
 
-static void determineGlobalPaths(application_t *app)
+static void determineGlobalPaths(application_t* app)
 {
-    if(!app)
-        return;
+    assert(app);
 
     // Where are we?
 #if defined(DENG_LIBRARY_DIR)
@@ -126,9 +265,8 @@ static void determineGlobalPaths(application_t *app)
     Dir_MakeAbsolute(ddBinDir.path);
     ddBinDir.drive = toupper(ddBinDir.path[0]) - 'A' + 1;
 #else
-    {
-    char                path[256];
-    GetModuleFileName(app->hInstance, path, 255);
+    { filename_t path;
+    GetModuleFileName(app->hInstance, path, FILENAME_T_MAXLEN);
     Dir_FileDir(path, &ddBinDir);
     }
 #endif
@@ -159,113 +297,24 @@ static void determineGlobalPaths(application_t *app)
     Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
 }
 
-static boolean loadGamePlugin(application_t *app, const char *libPath)
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-    if(!libPath || !app)
-        return false;
-
-    // Now, load the library and get the API/exports.
-    app->hInstGame = LoadLibrary(libPath);
-    if(!app->hInstGame)
-    {
-        DD_ErrorBox(true, "loadGamePlugin: Loading of %s failed (error %i).\n",
-                    libPath, (int) GetLastError());
-        return false;
-    }
-
-    // Get the function.
-    app->GetGameAPI = (GETGAMEAPI) GetProcAddress(app->hInstGame, "GetGameAPI");
-    if(!app->GetGameAPI)
-    {
-        DD_ErrorBox(true, "loadGamePlugin: Failed to get address of "
-                          "GetGameAPI (error %i).\n", (int) GetLastError());
-        return false;
-    }
-
-    // Do the API transfer.
-    DD_InitAPI();
-
-    // Everything seems to be working...
-    return true;
-}
-
-/**
- * Loads the given plugin.
- *
- * @return              @c true, if the plugin was loaded succesfully.
- */
-static int loadPlugin(application_t *app, const char *filename)
-{
-    int                 i;
-
-    // Find the first empty plugin instance.
-    for(i = 0; app->hInstPlug[i]; ++i);
-
-    // Try to load it.
-    if(!(app->hInstPlug[i] = LoadLibrary(filename)))
-        return FALSE;           // Failed!
-
-    // That was all; the plugin registered itself when it was loaded.
-    return TRUE;
-}
-
-/**
- * Loads all the plugins from the startup directory.
- */
-static int loadAllPlugins(application_t *app)
-{
-    long                hFile;
-    struct _finddata_t  fd;
-    char                plugfn[256];
-
-    sprintf(plugfn, "%sdp*.dll", ddBinDir.path);
-    if((hFile = _findfirst(plugfn, &fd)) == -1L)
-        return TRUE;
-
-    do
-        loadPlugin(app, fd.name);
-    while(!_findnext(hFile, &fd));
-
-    return TRUE;
-}
-
-static int initTimingSystem(void)
-{
-    // Nothing to do.
-    return TRUE;
-}
-
-static int initPluginSystem(void)
-{
-    // Nothing to do.
-    return TRUE;
-}
-
-static int initDGL(void)
-{
-    return Sys_PreInitGL();
-}
-
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                   LPSTR lpCmdLine, int nCmdShow)
-{
-    BOOL                doShutdown = TRUE;
-    int                 exitCode = 0;
-    int                 lnCmdShow = nCmdShow;
+    BOOL doShutdown = TRUE;
+    int exitCode = 0;
+    int lnCmdShow = nCmdShow;
 
     memset(&app, 0, sizeof(app));
     app.hInstance = hInstance;
     app.className = TEXT(MAINWCLASS);
     app.userDirOk = true;
 
-    if(!InitApplication(&app))
+    if(!initApplication(&app))
     {
-        DD_ErrorBox(true, "Couldn't initialize application.");
+        DD_ErrorBox(true, "Failed to initialize application.");
     }
     else
     {
-        char                buf[256];
-        const char*         libName = NULL;
+        char buf[256];
 
         // Initialize COM.
         CoInitialize(NULL);
@@ -279,82 +328,50 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
         DD_ComposeMainWindowTitle(buf);
 
-        // First we need to locate the game lib name among the command line
-        // arguments.
-        DD_CheckArg("-game", &libName);
+        // Determine our basedir and other global paths.
+        determineGlobalPaths(&app);
 
-        // Was a game library specified?
-        if(!libName)
+        if(!DD_EarlyInit())
         {
-            DD_ErrorBox(true, "loadGamePlugin: No game library was specified.\n");
+            DD_ErrorBox(true, "Error during early init.");
+        }
+        else if(!initTimingSystem())
+        {
+            DD_ErrorBox(true, "Error initalizing timing system.");
+        }
+        else if(!Z_Init())
+        {
+            DD_ErrorBox(true, "Error initializing memory zone.");
+        }
+        else if(!initPluginSystem())
+        {
+            DD_ErrorBox(true, "Error initializing plugin system.");
+        }
+        else if(!initDGL())
+        {
+            DD_ErrorBox(true, "Error initializing DGL.");
+        }
+        else if(!loadAllPlugins(&app))
+        {
+            DD_ErrorBox(true, "Error loading plugins.");
+        }
+        else if(!(windowIDX = Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, (isDedicated ? WT_CONSOLE : WT_NORMAL), buf, &lnCmdShow)))
+        {
+            DD_ErrorBox(true, "Error creating main window.");
+        }
+        else if(!Sys_InitGL())
+        {
+            DD_ErrorBox(true, "Error initializing OpenGL.");
         }
         else
-        {
-            char                libPath[256];
+        {   // All initialization complete.
+            doShutdown = FALSE;
 
-            // Determine our basedir and other global paths.
-            determineGlobalPaths(&app);
+            DD_ComposeMainWindowTitle(buf);
+            Sys_SetWindowTitle(windowIDX, buf);
 
-            // Compose the full path to the game library.
-            _snprintf(libPath, 255, "%s%s", ddBinDir.path, libName);
-
-            if(!DD_EarlyInit())
-            {
-                DD_ErrorBox(true, "Error during early init.");
-            }
-            else if(!initTimingSystem())
-            {
-                DD_ErrorBox(true, "Error initalizing timing system.");
-            }
-            else if(!initPluginSystem())
-            {
-                DD_ErrorBox(true, "Error initializing plugin system.");
-            }
-            else if(!initDGL())
-            {
-                DD_ErrorBox(true, "Error initializing DGL.");
-            }
-            // Load the game plugin.
-            else if(!loadGamePlugin(&app, libPath))
-            {
-                DD_ErrorBox(true, "Error loading game library.");
-            }
-            // Load all other plugins that are found.
-            else if(!loadAllPlugins(&app))
-            {
-                DD_ErrorBox(true, "Error loading plugins.");
-            }
-            // Initialize the memory zone.
-            else if(!Z_Init())
-            {
-                DD_ErrorBox(true, "Error initializing memory zone.");
-            }
-            else
-            {
-                if(0 == (windowIDX =
-                    Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0,
-                                     (isDedicated ? WT_CONSOLE : WT_NORMAL),
-                                     buf, &lnCmdShow)))
-                {
-                    DD_ErrorBox(true, "Error creating main window.");
-                }
-                else if(!Sys_InitGL())
-                {
-                    DD_ErrorBox(true, "Error initializing OpenGL.");
-                }
-                else
-                {   // All initialization complete.
-                    doShutdown = FALSE;
-
-                    // Append the main window title with the game name and ensure it
-                    // is the at the foreground, with focus.
-                    DD_ComposeMainWindowTitle(buf);
-                    Sys_SetWindowTitle(windowIDX, buf);
-
-                   // SetForegroundWindow(win->hWnd);
-                   // SetFocus(win->hWnd);
-                }
-            }
+           // SetForegroundWindow(win->hWnd);
+           // SetFocus(win->hWnd);
         }
     }
 
@@ -379,9 +396,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
  */
 LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    BOOL        forwardMsg = true;
-    LRESULT     result = 0;
     static PAINTSTRUCT ps;
+    BOOL forwardMsg = true;
+    LRESULT result = 0;
 
     switch(msg)
     {
@@ -391,8 +408,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             switch(wParam)
             {
             case SIZE_MAXIMIZED:
-                Sys_SetWindow(windowIDX, 0, 0, 0, 0, 0, DDWF_FULLSCREEN,
-                             DDSW_NOBPP|DDSW_NOSIZE|DDSW_NOMOVE|DDSW_NOCENTER);
+                Sys_SetWindow(windowIDX, 0, 0, 0, 0, 0, DDWF_FULLSCREEN, DDSW_NOBPP|DDSW_NOSIZE|DDSW_NOMOVE|DDSW_NOCENTER);
                 forwardMsg = FALSE;
                 break;
 
@@ -450,8 +466,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         forwardMsg = TRUE;
         break;
 
-    case WM_HOTKEY: // A hot-key combination we have registered has been used.
-        // Used to override alt+return and other easily misshit combinations,
+    case WM_HOTKEY:
+        // A hot-key combination we have registered has been used.
+        // Used to override alt+return and other easily miss-hit combinations,
         // at the user's request.
         forwardMsg = FALSE;
         break;
@@ -472,8 +489,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_ACTIVATE:
         if(!appShutdown)
         {
-            if(LOWORD(wParam) == WA_ACTIVE ||
-               (!HIWORD(wParam) && LOWORD(wParam) == WA_CLICKACTIVE))
+            if(LOWORD(wParam) == WA_ACTIVE || (!HIWORD(wParam) && LOWORD(wParam) == WA_CLICKACTIVE))
             {
                 SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
                 DD_ClearEvents(); // For good measure.
@@ -503,15 +519,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
  */
 void DD_Shutdown(void)
 {
-    int         i;
-
-    // Shutdown all subsystems.
-    DD_ShutdownAll();
-
-    FreeLibrary(app.hInstGame);
-    for(i = 0; app.hInstPlug[i]; ++i)
-        FreeLibrary(app.hInstPlug[i]);
-
-    app.hInstGame = NULL;
-    memset(app.hInstPlug, 0, sizeof(app.hInstPlug));
+    DD_ShutdownAll(); // Stop all engine subsystems.
+    unloadAllPlugins(&app);
 }

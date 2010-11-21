@@ -112,12 +112,11 @@ static int demoStartTic;
 
 void Demo_Register(void)
 {
-    // Ccmds
-    C_CMD("demolump", "ss", DemoLump);
-    C_CMD("pausedemo", NULL, PauseDemo);
-    C_CMD("playdemo", "s", PlayDemo);
-    C_CMD("recorddemo", NULL, RecordDemo);
-    C_CMD("stopdemo", NULL, StopDemo);
+    C_CMD_FLAGS("demolump", "ss", DemoLump, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("pausedemo", NULL, PauseDemo, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("playdemo", "s", PlayDemo, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("recorddemo", NULL, RecordDemo, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("stopdemo", NULL, StopDemo, CMDF_NO_NULLGAME);
 }
 
 void Demo_Init(void)

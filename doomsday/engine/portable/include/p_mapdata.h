@@ -266,8 +266,6 @@ typedef struct gamemap_s {
     int             ambientLightLevel; // Ambient lightlevel for the current map.
 } gamemap_t;
 
-void            P_InitData(void);
-
 gamemap_t*      P_GetCurrentMap(void);
 void            P_SetCurrentMap(gamemap_t* map);
 

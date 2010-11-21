@@ -307,7 +307,7 @@ void WI_drawLF(void)
     int y = WI_TITLEY, mapNum;
     char* mapName;
 
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
         mapNum = wbs->currentMap;
     else
         mapNum = (wbs->episode * 8) + wbs->currentMap;
@@ -414,7 +414,7 @@ void WI_initAnimatedBack(void)
     int i;
     wianim_t* a;
 
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
         return;
     if(wbs->episode > 2)
         return;
@@ -442,7 +442,7 @@ void WI_updateAnimatedBack(void)
     int                 i;
     wianim_t           *a;
 
-    if(gameMode == commercial)
+    if(gameMode & GM_ANY_DOOM2)
         return;
     if(wbs->episode > 2)
         return;
@@ -474,7 +474,7 @@ void WI_drawAnimatedBack(void)
     wianim_t* a;
     int i;
 
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
         return;
     if(wbs->episode > 2)
         return;
@@ -594,7 +594,7 @@ void WI_drawShowNextLoc(void)
     // Draw animated background.
     WI_drawAnimatedBack();
 
-    if(gameMode != commercial)
+    if(gameModeBits & GM_ANY_DOOM)
     {
         if(wbs->episode > 2)
         {
@@ -618,7 +618,7 @@ void WI_drawShowNextLoc(void)
     }
 
     // Draws which map you are entering..
-    if((gameMode != commercial) || wbs->nextMap != 30)
+    if((gameModeBits & GM_ANY_DOOM) || wbs->nextMap != 30)
         WI_drawEL();
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -724,7 +724,7 @@ void WI_updateDeathmatchStats(void)
         if(accelerateStage)
         {
             S_LocalSound(SFX_SLOP, 0);
-            if(gameMode == commercial)
+            if(gameModeBits & GM_ANY_DOOM2)
                 WI_initNoState();
             else
                 WI_initShowNextLoc();
@@ -979,7 +979,7 @@ void WI_updateNetgameStats(void)
         if(accelerateStage)
         {
             S_LocalSound(SFX_SGCOCK, 0);
-            if(gameMode == commercial)
+            if(gameModeBits & GM_ANY_DOOM2)
                 WI_initNoState();
             else
                 WI_initShowNextLoc();
@@ -1185,7 +1185,7 @@ void WI_updateStats(void)
         {
             S_LocalSound(SFX_SGCOCK, 0);
 
-            if(gameMode == commercial)
+            if(gameModeBits & GM_ANY_DOOM2)
                 WI_initNoState();
             else
                 WI_initShowNextLoc();
@@ -1311,7 +1311,7 @@ void WI_loadData(void)
     char name[9];
     wianim_t* a;
 
-    if(gameMode == commercial || (gameMode == retail && wbs->episode > 2))
+    if((gameModeBits & GM_ANY_DOOM2) || (gameMode == doom_ultimate && wbs->episode > 2))
     {
         bg = R_PrecachePatch("INTERPIC", NULL);
     }
@@ -1321,7 +1321,7 @@ void WI_loadData(void)
         bg = R_PrecachePatch(name, NULL);
     }
 
-    if(gameMode != commercial)
+    if(gameModeBits & GM_ANY_DOOM)
     {
         yah[0] = R_PrecachePatch("WIURH0", NULL); // You are here.
         yah[1] = R_PrecachePatch("WIURH1", NULL); // You are here (alt.)

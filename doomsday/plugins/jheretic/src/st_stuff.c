@@ -1233,10 +1233,8 @@ static boolean pickStatusbarScalingStrategy(int viewportWidth, int viewportHeigh
     return true;
 }
 
-/**
- * All drawing for the statusbar starts and ends here.
- */
-static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
+/*
+static void old_drawStatusbar(int player, int x, int y, int viewW, int viewH)
 {
     hudstate_t* hud = &hudStates[player];
     int needWidth;
@@ -1270,6 +1268,7 @@ static void drawStatusbar(int player, int x, int y, int viewW, int viewH)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 }
+*/
 
 void drawAmmoWidget(int player, float textAlpha, float iconAlpha,
     int* drawnWidth, int* drawnHeight)

@@ -121,17 +121,17 @@ static void DH_DeleteNode(helpnode_t* node)
  *
  * @return              Non-zero if the file was read successfully.
  */
-static int DH_ReadStrings(char* fileName)
+static int DH_ReadStrings(const char* fileName)
 {
-    DFILE*              file = F_Open(fileName, "rt");
-    char                line[2048], *ptr, *eol, *end;
-    helpnode_t*         node = NULL;
-    int                 count = 0, length;
+    DFILE* file = F_Open(fileName, "rt");
+    char line[2048], *ptr, *eol, *end;
+    helpnode_t* node = 0;
+    int count = 0, length;
 
     if(!file)
     {
-        Con_Message("DH_ReadStrings: %s not found.\n", fileName);
-        return false;           // The file was not found.
+        Con_Message("DH_ReadStrings: Warning, %s not found.\n", fileName);
+        return false;
     }
 
     while(!deof(file))
@@ -283,13 +283,12 @@ char* DH_GetString(void* foundNode, int type)
 }
 
 /**
- * Initializes the help string database. After which, attempts to read
- * help strings from both the engine and game-specific help string files.
+ * Initializes the help string database. After which, attempts to read the engine's
+ * own help string file.
  */
 void DD_InitHelp(void)
 {
-    filename_t          helpFileName;
-    float               starttime;
+    float starttime;
 
     if(helpInited)
         return; // Already inited.
@@ -299,21 +298,31 @@ void DD_InitHelp(void)
     // Init the links.
     helpRoot.next = helpRoot.prev = &helpRoot;
 
-    // Control Panel help.
-    M_TranslatePath(helpFileName, "}data\\cphelp.txt", FILENAME_T_MAXLEN);
+    // Parse the control panel help file.
+    { filename_t helpFileName;
+    M_TranslatePath(helpFileName, DD_BASEDATAPATH"cphelp.txt", FILENAME_T_MAXLEN);
     DH_ReadStrings(helpFileName);
-
-    // Ccmd help (game-specific).
-    sprintf(helpFileName, "}data\\%s\\conhelp.txt",
-            (char *) gx.GetVariable(DD_GAME_NAME));
-    M_TranslatePath(helpFileName, helpFileName, FILENAME_T_MAXLEN);
-    DH_ReadStrings(helpFileName);
+    }
 
     // Help is now available.
     helpInited = true;
 
-    VERBOSE(Con_Message("DD_InitHelp: Done in %.2f seconds.\n",
-                        Sys_GetSeconds() - starttime));
+    VERBOSE(Con_Message("DD_InitHelp: Done in %.2f seconds.\n", Sys_GetSeconds() - starttime));
+}
+
+/**
+ * Attempts to read help strings from the game-specific help file.
+ */
+void DD_ReadGameHelp(void)
+{
+    filename_t helpFileName;
+
+    if(!helpInited)
+        return; // Already inited.
+
+    dd_snprintf(helpFileName, FILENAME_T_MAXLEN, "%sconhelp.txt", Str_Text(GameInfo_DataPath(DD_GameInfo())));
+    M_TranslatePath(helpFileName, helpFileName, FILENAME_T_MAXLEN);
+    DH_ReadStrings(helpFileName);
 }
 
 /**

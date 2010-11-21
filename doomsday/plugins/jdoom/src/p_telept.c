@@ -141,7 +141,7 @@ int EV_Teleport(linedef_t* line, int side, mobj_t* mo, boolean spawnFog)
 
         // In Final Doom things teleported to their destination but the
         // height wasn't set to the floor.
-        if(gameMission != GM_TNT && gameMission != GM_PLUT)
+        if(gameMode != GM_DOOM2_TNT && gameMode != GM_DOOM2_PLUT)
             mo->pos[VZ] = mo->floorZ;
 
         if(spawnFog)

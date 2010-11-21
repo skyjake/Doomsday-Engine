@@ -49,6 +49,9 @@ enum {
     NUM_HOOK_TYPES
 };
 
+/// Unique identifier attributed to each plugin during initial startup.
+typedef int pluginid_t;
+
 // Paramaters for HOOK_FINALE_EVAL_IF
 typedef struct {
     const char* token;
@@ -67,5 +70,8 @@ int             Plug_RemoveHook(int hook_type, hookfunc_t hook);
 // Plug_DoHook is used by the engine to call all functions registered to a hook.
 int             Plug_DoHook(int hook_type, int parm, void *data);
 int             Plug_CheckForHook(int hookType);
+
+// Returns the unique identified of the plugin responding to the callback.
+pluginid_t      Plug_PluginIdForActiveHook(void);
 
 #endif /* LIBDENG_PLUGIN_H */

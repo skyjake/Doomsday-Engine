@@ -34,20 +34,17 @@
 #include <string.h>
 #include <math.h>
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #if __JDOOM__
-#  include <stdlib.h>
 #  include "jdoom.h"
 #elif __JDOOM64__
-#  include <stdlib.h>
 #  include "jdoom64.h"
 #elif __JHERETIC__
-#  include <stdio.h>
 #  include "jheretic.h"
-#  include "p_inventory.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#  include "p_inventory.h"
 #endif
 
 #include "dmu_lib.h"
@@ -76,6 +73,7 @@
 #include "p_start.h"
 #include "p_inventory.h"
 #if __JHERETIC__ || __JHEXEN__
+# include "p_inventory.h"
 # include "hu_inventory.h"
 #endif
 
@@ -191,6 +189,7 @@ uint mapHub = 0;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 boolean respawnMonsters;
 #endif
+boolean monsterInfight;
 
 boolean paused;
 boolean sendPause; // Send a pause event next tic.
@@ -261,9 +260,6 @@ cvar_t gamestatusCVars[] = {
    {"map-id", READONLYCVAR, CVT_INT, &gameMap, 0, 0},
    {"map-name", READONLYCVAR, CVT_CHARPTR, &gsvMapName, 0, 0},
    {"map-episode", READONLYCVAR, CVT_INT, &gameEpisode, 0, 0},
-#if __JDOOM__
-   {"map-mission", READONLYCVAR, CVT_INT, &gameMission, 0, 0},
-#endif
 #if __JHEXEN__
    {"map-hub", READONLYCVAR, CVT_INT, &mapHub, 0, 0},
 #endif
@@ -446,8 +442,6 @@ gameaction_t G_GetGameAction(void)
  */
 void G_CommonPreInit(void)
 {
-    filename_t file;
-
     // Make sure game.dll isn't newer than Doomsday...
     if(gi.version < DOOMSDAY_VERSION)
         Con_Error(GAME_NICENAME " requires at least Doomsday " DOOMSDAY_VERSION_TEXT "!\n");
@@ -465,13 +459,10 @@ void G_CommonPreInit(void)
         players[i].plr->extraData = (void*) &players[i];
     }}
 
-    dd_snprintf(file, FILENAME_T_MAXLEN, CONFIGFILE);
-    DD_SetConfigFile(file);
+    R_SetDefsPath(DEFSPATH);
 
-    dd_snprintf(file, FILENAME_T_MAXLEN, DEFSFILE);
-    DD_SetDefsFile(file);
-
-    R_SetDataPath( DATAPATH );
+    DD_SetConfigFile(CONFIGFILE);
+    DD_SetDefsFile(DEFSFILE);
 
     Con_SetString("map-name", NOTAMAPNAME, 1);
 
@@ -492,9 +483,6 @@ void G_CommonPreInit(void)
     ST_Register();              // For the hud/statusbar.
     X_Register();               // For the crosshair.
     FI_StackRegister();         // For the InFine lib.
-
-    DD_AddStartupWAD( STARTUPPK3 );
-    G_DetectIWADs();
 }
 
 #if __JHEXEN__
@@ -565,7 +553,7 @@ void R_LoadColorPalettes(void)
     byte data[PALENTRIES*3];
 
     // Record whether we are using a custom palette.
-    customPal = !W_IsFromIWAD(lump);
+    customPal = !W_LumpFromIWAD(lump);
 
     W_ReadLumpSection(lump, data, 0 + PALID * (PALENTRIES * 3), PALENTRIES * 3);
     R_CreateColorPalette("R8G8B8", PALLUMPNAME, data, PALENTRIES);
@@ -1261,8 +1249,7 @@ void R_InitRefresh(void)
     R_LoadCompositeFonts();
     R_LoadVectorGraphics();
 
-    {
-    float mul = 1.4f;
+    { float mul = 1.4f;
     DD_SetVariable(DD_PSPRITE_LIGHTLEVEL_MULTIPLIER, &mul);
     }
 }
@@ -1742,6 +1729,18 @@ static void runGameAction(void)
                 // Play an exit sound if it is enabled.
                 if(cfg.menuQuitSound)
                 {
+# if __JDOOM64__
+                    static int quitsounds[8] = {
+                        SFX_VILACT,
+                        SFX_GETPOW,
+                        SFX_PEPAIN,
+                        SFX_SLOP,
+                        SFX_SKESWG,
+                        SFX_KNTDTH,
+                        SFX_BSPACT,
+                        SFX_SGTATK
+                    };
+# else
                     static int quitsounds[8] = {
                         SFX_PLDETH,
                         SFX_DMPAIN,
@@ -1755,11 +1754,7 @@ static void runGameAction(void)
                     static int quitsounds2[8] = {
                         SFX_VILACT,
                         SFX_GETPOW,
-# if __JDOOM64__
-                        SFX_PEPAIN,
-# else
                         SFX_BOSCUB,
-# endif
                         SFX_SLOP,
                         SFX_SKESWG,
                         SFX_KNTDTH,
@@ -1767,10 +1762,11 @@ static void runGameAction(void)
                         SFX_SGTATK
                     };
 
-                    if(gameMode == commercial)
-                        S_LocalSound(quitsounds2[P_Random() & 7], NULL);
+                    if(gameModeBits & GM_ANY_DOOM2)
+                        S_LocalSound(quitsounds2[P_Random() & 7], 0);
                     else
-                        S_LocalSound(quitsounds[P_Random() & 7], NULL);
+# endif
+                        S_LocalSound(quitsounds[P_Random() & 7], 0);
                 }
 #endif
                 DD_Executef(true, "activatebcontext deui");
@@ -2345,7 +2341,7 @@ void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
         return;
 
 #if __JHEXEN__
-    if(shareware && newMap != DDMAXINT && newMap > 3)
+    if(gameMode == hexen_shareware && newMap != DDMAXINT && newMap > 3)
     {   // Not possible in the 4-map demo.
         P_SetMessage(&players[CONSOLEPLAYER], "PORTAL INACTIVE -- DEMO", false);
         return;
@@ -2359,7 +2355,7 @@ void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
     secretExit = _secretExit;
 # if __JDOOM__
       // If no Wolf3D maps, no secret exit!
-      if(secretExit && (gameMode == commercial) && !P_MapExists(0, 30))
+      if(secretExit && (gameModeBits & GM_ANY_DOOM2) && !P_MapExists(0, 30))
           secretExit = false;
 # endif
 #endif
@@ -2378,7 +2374,7 @@ boolean G_IfVictory(void)
         return true;
     }
 #elif __JDOOM__
-    if((gameMap == 7) && (gameMode != commercial))
+    if((gameMap == 7) && (gameModeBits & GM_ANY_DOOM))
     {
         return true;
     }
@@ -2490,7 +2486,7 @@ void G_DoMapCompleted(void)
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 # if __JDOOM__
-    if(gameMode != commercial && gameMap == 8)
+    if((gameModeBits & GM_ANY_DOOM) && gameMap == 8)
     {
         int i;
         for(i = 0; i < MAXPLAYERS; ++i)
@@ -2506,7 +2502,7 @@ void G_DoMapCompleted(void)
 #if __JDOOM64__
     S_StartMusic("dm2int", true);
 #elif __JDOOM__
-    S_StartMusic(gameMode == commercial? "dm2int" : "inter", true);
+    S_StartMusic((gameModeBits & GM_ANY_DOOM2)? "dm2int" : "inter", true);
 #elif __JHERETIC__
     S_StartMusic("intr", true);
 #elif __JHEXEN__
@@ -2871,7 +2867,7 @@ uint G_GetMapNumber(uint episode, uint map)
     return map;
 #else
   #if __JDOOM__
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
         return map;
     else
   #endif
@@ -2889,7 +2885,7 @@ void P_MapId(uint episode, uint map, char* lumpName)
 #if __JDOOM64__
     sprintf(lumpName, "MAP%02u", map+1);
 #elif __JDOOM__
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
         sprintf(lumpName, "MAP%02u", map+1);
     else
         sprintf(lumpName, "E%uM%u", episode+1, map+1);
@@ -2907,7 +2903,7 @@ boolean P_MapExists(uint episode, uint map)
 {
     char buf[9];
     P_MapId(episode, map, buf);
-    return W_CheckNumForName(buf) >= 0;
+    return W_CheckNumForName2(buf, true) >= 0;
 }
 
 /**
@@ -2918,7 +2914,7 @@ const char* P_MapSourceFile(uint episode, uint map)
     lumpnum_t lump;
     char buf[9];
     P_MapId(episode, map, buf);
-    if((lump = W_CheckNumForName(buf)) >= 0)
+    if((lump = W_CheckNumForName2(buf, true)) >= 0)
         return W_LumpSourceFile(lump);
     return 0;
 }
@@ -2938,9 +2934,8 @@ boolean G_ValidateMap(uint* episode, uint* map)
         ok = false;
     }
 #elif __JDOOM__
-    if(gameMode == shareware)
+    if(gameMode == doom_shareware)
     {
-        // only start episode 0 on shareware
         if(*episode != 0)
         {
             *episode = 0;
@@ -2949,7 +2944,6 @@ boolean G_ValidateMap(uint* episode, uint* map)
     }
     else
     {
-        // Allow episodes 0-8.
         if(*episode > 8)
         {
             *episode = 8;
@@ -2957,7 +2951,7 @@ boolean G_ValidateMap(uint* episode, uint* map)
         }
     }
 
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
     {
         if(*map > 98)
         {
@@ -2988,7 +2982,7 @@ boolean G_ValidateMap(uint* episode, uint* map)
         ok = false;
     }
 
-    if(gameMode == shareware) // Shareware version checks
+    if(gameMode == heretic_shareware)
     {
         if(*episode != 0)
         {
@@ -2996,7 +2990,7 @@ boolean G_ValidateMap(uint* episode, uint* map)
             ok = false;
         }
     }
-    else if(gameMode == extended) // Extended version checks
+    else if(gameMode == heretic_extended)
     {
         if(*episode == 5)
         {
@@ -3090,7 +3084,7 @@ uint G_GetNextMap(uint episode, uint map, boolean secretExit)
         return map + 1;
     }
 #elif __JDOOM__
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
     {
         if(secretExit)
         {
@@ -3253,14 +3247,14 @@ void G_PrintMapList(void)
     const char* sourceList[100];
 
 #if __JDOOM__
-    if(gameMode == registered)
-    {
-        numEpisodes = 3;
-        maxMapsPerEpisode = 9;
-    }
-    else if(gameMode == retail)
+    if(gameMode == doom_ultimate)
     {
         numEpisodes = 4;
+        maxMapsPerEpisode = 9;
+    }
+    else if(gameMode == doom)
+    {
+        numEpisodes = 3;
         maxMapsPerEpisode = 9;
     }
     else
@@ -3269,9 +3263,9 @@ void G_PrintMapList(void)
         maxMapsPerEpisode = 99;
     }
 #elif __JHERETIC__
-    if(gameMode == extended)
+    if(gameMode == heretic_extended)
         numEpisodes = 6;
-    else if(gameMode == registered)
+    else if(gameMode == heretic)
         numEpisodes = 3;
     else
         numEpisodes = 1;
@@ -3391,21 +3385,28 @@ void G_ScreenShot(void)
 
 void G_DoScreenShot(void)
 {
-    int                 i;
-    filename_t          name;
-    char*               numPos;
+    ddgameinfo_t gameInfo;
+    filename_t name;
+    char* numPos;
+
+    if(!DD_GetGameInfo(&gameInfo))
+    {
+        Con_Message("G_DoScreenShot: Failed retrieving GameInfo - screenshot not saved.\n");
+        return;
+    }
 
     // Use game mode as the file name base.
-    sprintf(name, "%s-", (char *) G_GetVariable(DD_GAME_MODE));
+    sprintf(name, "%s-", gameInfo.modeString);
     numPos = name + strlen(name);
 
     // Find an unused file name.
+    { int i;
     for(i = 0; i < 1e6; ++i) // Stop eventually...
     {
         sprintf(numPos, "%03i.tga", i);
         if(!M_FileExists(name))
             break;
-    }
+    }}
 
     M_ScreenShot(name, 24);
     Con_Message("Wrote %s.\n", name);

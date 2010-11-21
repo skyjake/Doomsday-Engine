@@ -855,9 +855,10 @@ void DD_ConvertEvent(const ddevent_t* ddEvent, event_t* ev)
  */
 static void dispatchEvents(timespan_t ticLength)
 {
+    boolean callGameResponders = !DD_IsNullGameInfo(DD_GameInfo());
     ddevent_t* ddev;
 
-    while((ddev = DD_GetEvent()) != NULL)
+    while((ddev = DD_GetEvent()))
     {
         event_t ev;
 
@@ -869,30 +870,32 @@ static void dispatchEvents(timespan_t ticLength)
 
         DD_ConvertEvent(ddev, &ev);
 
-        // Does the special responder use this event?
-        if(gx.PrivilegedResponder)
-            if(gx.PrivilegedResponder(&ev))
-                continue;
+        if(callGameResponders)
+        {
+            // Does the game's special responder use this event?
+            if(gx.PrivilegedResponder)
+                if(gx.PrivilegedResponder(&ev))
+                    continue;
 
-        if(gx.FinaleResponder && gx.FinaleResponder(ddev))
-            continue;
+            if(gx.FinaleResponder && gx.FinaleResponder(ddev))
+                continue;
+        }
+
         if(UI_Responder(ddev))
             continue;
         if(Con_Responder(ddev))
             continue;
 
-        // The game responder only returns true if the bindings
-        // can't be used (like when chatting).
-        if(gx.G_Responder(&ev))
+        // The game responder only returns true if the bindings can't be used (like when chatting).
+        if(callGameResponders && gx.G_Responder(&ev))
             continue;
 
         // The bindings responder.
         if(B_Responder(ddev))
             continue;
 
-        // The "fallback" responder. Gets the event if no one else is
-        // interested.
-        if(gx.FallbackResponder)
+        // The "fallback" responder. Gets the event if no one else is interested.
+        if(callGameResponders && gx.FallbackResponder)
             gx.FallbackResponder(&ev);
     }
 }

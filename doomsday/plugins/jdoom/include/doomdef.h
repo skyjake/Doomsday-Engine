@@ -47,14 +47,17 @@
 #include "version.h"
 #include "info.h"
 
+#define DEFSPATH            DD_BASEDEFSPATH GAMENAMETEXT "\\"
+
+#define CONFIGFILE          GAMENAMETEXT ".cfg"
+#define DEFSFILE            GAMENAMETEXT ".ded"
+
 #define Set                 DD_SetInteger
 #define Get                 DD_GetInteger
 
-#define CONFIGFILE          GAMENAMETEXT".cfg"
-#define DEFSFILE            GAMENAMETEXT"\\"GAMENAMETEXT".ded"
-#define DATAPATH            "}data\\"GAMENAMETEXT"\\"
-#define STARTUPWAD          "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".wad"
-#define STARTUPPK3          "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".pk3"
+// Verbose messages.
+#define VERBOSE(code)       { if(verbose >= 1) { code; } }
+#define VERBOSE2(code)      { if(verbose >= 2) { code; } }
 
 extern game_import_t gi;
 extern game_export_t gx;
@@ -67,44 +70,31 @@ extern game_export_t gx;
 #define STATES              (*gi.states)
 #define VALIDCOUNT          (*gi.validCount)
 
-// Verbose messages.
-#define VERBOSE(code)       { if(verbose >= 1) { code; } }
-#define VERBOSE2(code)      { if(verbose >= 2) { code; } }
-
-/**
- * Game mode handling - identify IWAD version to handle IWAD dependant
- * animations, game logic etc.
- * \note DOOM 2 german edition not detected.
- */
 typedef enum {
-    shareware, // DOOM 1 shareware, E1, M9
-    registered, // DOOM 1 registered, E3, M27
-    commercial, // DOOM 2 retail, E1 M34
-    retail, // DOOM 1 retail, E4, M36
-    indetermined, // Well, no IWAD found.
+    indetermined, // \todo now meaningless refactor away.
+    doom_shareware,
+    doom,
+    doom_ultimate,
+    doom2,
+    doom2_plut,
+    doom2_tnt,
+    doom2_hacx,
     NUM_GAME_MODES
 } gamemode_t;
 
 // Game mode bits for the above.
-#define GM_SHAREWARE        0x1 // DOOM 1 shareware, E1, M9
-#define GM_REGISTERED       0x2 // DOOM 1 registered, E3, M27
-#define GM_COMMERCIAL       0x4 // DOOM 2 retail, E1 M34
-// DOOM 2 german edition not handled.
-#define GM_RETAIL           0x8 // DOOM 1 retail, E4, M36
-#define GM_INDETERMINED     0x16 // Well, no IWAD found.
+#define GM_INDETERMINED     0x0
+#define GM_DOOM_SHAREWARE   0x1
+#define GM_DOOM             0x2
+#define GM_DOOM_ULTIMATE    0x4
+#define GM_DOOM2            0x8
+#define GM_DOOM2_PLUT       0x10
+#define GM_DOOM2_TNT        0x20
+#define GM_DOOM2_HACX       0x40
 
-#define GM_ANY              (GM_SHAREWARE|GM_REGISTERED|GM_COMMERCIAL|GM_RETAIL)
-#define GM_NOTSHAREWARE     (GM_REGISTERED|GM_COMMERCIAL|GM_RETAIL)
-
-// Mission packs - might be useful for TC stuff?
-typedef enum {
-    GM_DOOM, // DOOM 1
-    GM_DOOM2, // DOOM 2
-    GM_TNT, // TNT mission pack
-    GM_PLUT, // Plutonia pack
-    GM_NONE,
-    NUM_GAME_MISSIONS
-} gamemission_t;
+#define GM_ANY_DOOM         (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE)
+#define GM_ANY_DOOM2        (GM_DOOM2|GM_DOOM2_PLUT|GM_DOOM2_TNT|GM_DOOM2_HACX)
+#define GM_ANY              (GM_ANY_DOOM|GM_ANY_DOOM2)
 
 #define SCREENWIDTH         320
 #define SCREENHEIGHT        200

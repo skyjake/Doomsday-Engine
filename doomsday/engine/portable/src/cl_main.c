@@ -129,14 +129,14 @@ void Cl_CleanUp(void)
  */
 void Cl_SendHello(void)
 {
-    char                buf[256];
+    char buf[256];
 
     Msg_Begin(PCL_HELLO2);
     Msg_WriteLong(clientID);
 
     // The game mode is included in the hello packet.
     memset(buf, 0, sizeof(buf));
-    strncpy(buf, (char *) gx.GetVariable(DD_GAME_MODE), sizeof(buf) - 1);
+    strncpy(buf, Str_Text(GameInfo_ModeIdentifier(DD_GameInfo())), sizeof(buf) - 1);
 
 #ifdef _DEBUG
 Con_Message("Cl_SendHello: game mode = %s\n", buf);
@@ -181,6 +181,8 @@ void Cl_AnswerHandshake(handshake_packet_t* pShake)
     consolePlayer = displayPlayer = shake.yourConsole;
     clients[consolePlayer].numTics = 0;
     clients[consolePlayer].firstTic = 0;
+
+    Net_AllocClientBuffers(consolePlayer);
 
     isClient = true;
     isServer = false;

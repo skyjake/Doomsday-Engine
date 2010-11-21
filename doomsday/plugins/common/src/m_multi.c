@@ -296,7 +296,7 @@ void DrawGameSetupMenu(const mn_page_t* page, int x, int y)
 
 # if __JDOOM__ || __JHERETIC__
 #  if __JDOOM__
-    if(gameMode != commercial)
+    if(gameModeBits & GM_ANY_DOOM)
 #  endif
     {
         sprintf(buf, "%u", cfg.netEpisode+1);
@@ -438,7 +438,7 @@ void SCEnterMultiplayerMenu(mn_object_t* obj, int option)
 
     // Choose the correct items for the Game Setup menu.
 #if __JDOOM__
-    if(gameMode != commercial)
+    if(gameModeBits & GM_ANY_DOOM)
     {
         // Neutralize the Episode select objects.
         GameSetupItems[0].flags |= MNF_HIDDEN;
@@ -449,9 +449,9 @@ void SCEnterMultiplayerMenu(mn_object_t* obj, int option)
 #if __JDOOM__ || __JHERETIC__
     // Allocate and populate the episode list.
 # if __JHERETIC__
-    lst_net_episode.count = (gameMode == shareware? 1 : gameMode == extended? 6 : 3);
+    lst_net_episode.count = (gameMode == heretic_shareware? 1 : gameMode == heretic_extended? 6 : 3);
 # else // __JDOOM__
-    lst_net_episode.count = (gameMode == shareware? 1 : gameMode == retail ? 4 : 3);
+    lst_net_episode.count = (gameMode == doom_shareware? 1 : gameMode == doom_ultimate ? 4 : 3);
 # endif
     lst_net_episode.items = Z_Malloc(sizeof(mndata_listitem_t)*lst_net_episode.count, PU_STATIC, 0);
     for(i = 0; i < lst_net_episode.count; ++i)
@@ -513,29 +513,32 @@ void SCEnterGameSetup(mn_object_t* obj, int option)
     if(cfg.netMap > 31)
         cfg.netMap = 31;
 #elif __JDOOM__
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
     {
         cfg.netEpisode = 0;
     }
-    else if(gameMode == retail)
+    else // Any DOOM.
     {
-        if(cfg.netEpisode > 3)
-            cfg.netEpisode = 3;
-        if(cfg.netMap > 8)
-            cfg.netMap = 8;
-    }
-    else if(gameMode == registered)
-    {
-        if(cfg.netEpisode > 2)
-            cfg.netEpisode = 2;
-        if(cfg.netMap > 8)
-            cfg.netMap = 8;
-    }
-    else if(gameMode == shareware)
-    {
-        cfg.netEpisode = 0;
-        if(cfg.netMap > 8)
-            cfg.netMap = 8;
+        if(gameMode == doom_ultimate)
+        {
+            if(cfg.netEpisode > 3)
+                cfg.netEpisode = 3;
+            if(cfg.netMap > 8)
+                cfg.netMap = 8;
+        }
+        else if(gameMode == doom)
+        {
+            if(cfg.netEpisode > 2)
+                cfg.netEpisode = 2;
+            if(cfg.netMap > 8)
+                cfg.netMap = 8;
+        }
+        else if(gameMode == doom_shareware)
+        {
+            cfg.netEpisode = 0;
+            if(cfg.netMap > 8)
+                cfg.netMap = 8;
+        }
     }
 #elif __JHERETIC__
     if(cfg.netMap > 8)
@@ -559,7 +562,7 @@ void SCGameSetupMap(mn_object_t* obj, int option)
         if(cfg.netMap < 31)
             cfg.netMap++;
 #elif __JDOOM__
-        if(cfg.netMap < (gameMode == commercial ? 31 : 8))
+        if(cfg.netMap < ((gameModeBits & GM_ANY_DOOM2) ? 31 : 8))
             cfg.netMap++;
 #elif __JHERETIC__
         if(cfg.netMap < (cfg.netEpisode == 5? 2 : 8))

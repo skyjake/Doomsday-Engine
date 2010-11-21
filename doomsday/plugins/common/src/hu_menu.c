@@ -1316,15 +1316,14 @@ void M_InitEpisodeMenu(void)
     int i, maxw, w, numEpisodes;
 
 #if __JDOOM__
-    switch(gameMode)
-    {
-    case commercial:    numEpisodes = 0; break;
-    case retail:        numEpisodes = 4; break;
-    // In shareware, episodes 2 and 3 are handled, branching to an ad screen.
-    default:            numEpisodes = 3; break;
-    }
+    if(gameModeBits & GM_ANY_DOOM2)
+        numEpisodes = 0;
+    else if(gameMode == doom_ultimate)
+        numEpisodes = 4;
+    else
+        numEpisodes = 3;
 #else // __JHERETIC__
-    if(gameMode == extended)
+    if(gameMode == heretic_extended)
         numEpisodes = 6;
     else
         numEpisodes = 3;
@@ -1486,7 +1485,7 @@ void Hu_MenuInit(void)
     quickSaveSlot = -1;
 
 #if __JDOOM__
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
     {
         obj = &MainItems[4]; // Read This!
         obj->action = M_QuitDOOM;
@@ -2614,7 +2613,8 @@ void MNEdit_Drawer(const mn_object_t* obj, int x, int y, float alpha)
         else
         {
             string = edit->emptyString;
-            alpha *= .25f;
+            light *= .5f;
+            alpha *= .75f;
         }
     }
 
@@ -3570,7 +3570,7 @@ void M_NewGame(mn_object_t* obj, int option)
 #elif __JDOOM64__
     MN_GotoPage(&SkillLevelMenu);
 #else // __JDOOM__
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
         MN_GotoPage(&SkillLevelMenu);
     else
         MN_GotoPage(&EpisodeMenu);
@@ -3818,14 +3818,14 @@ void M_ChooseClass(mn_object_t* obj, int option)
 void M_Episode(mn_object_t* obj, int option)
 {
 #if __JHERETIC__
-    if(shareware && option)
+    if(heretic_shareware && option)
     {
         Hu_MsgStart(MSG_ANYKEY, SWSTRING, NULL, NULL);
         G_StartHelp();
         return;
     }
 #else
-    if(gameMode == shareware && option)
+    if(gameMode == doom_shareware && option)
     {
         Hu_MsgStart(MSG_ANYKEY, SWSTRING, NULL, NULL);
         G_StartHelp();

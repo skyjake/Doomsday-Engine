@@ -844,7 +844,7 @@ int DGL_Project(int num, dgl_fc3vertex_t *inVertices,
  */
 void DGL_DrawRawScreen(lumpnum_t lump, int x, int y)
 {
-    if(lump < 0 || lump >= numLumps)
+    if(lump < 0 || lump >= W_NumLumps())
         return;
 
     GL_SetRawImage(lump, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);

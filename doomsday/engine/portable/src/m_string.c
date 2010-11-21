@@ -360,7 +360,7 @@ const char *Str_GetLine(ddstring_t *ds, const char *src)
 /**
  * Performs a string comparison, ignoring differences in case.
  */
-int Str_CompareIgnoreCase(ddstring_t *ds, const char *text)
+int Str_CompareIgnoreCase(const ddstring_t* ds, const char* text)
 {
     return strcasecmp(Str_Text(ds), text);
 }

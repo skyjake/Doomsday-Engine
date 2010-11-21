@@ -74,8 +74,6 @@ static float cpMom[3][LOCALCAM_WRITE_TICS];
  */
 void Cl_InitPlayers(void)
 {
-    int                 i;
-
     fixTics = 0;
     pspY = 0;
     memset(&clPlayerStates, 0, sizeof(clPlayerStates));
@@ -83,12 +81,13 @@ void Cl_InitPlayers(void)
     memset(cpMom, 0, sizeof(cpMom));
 
     // Clear psprites. The server will send them.
+    { int i;
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        client_t           *cl = &clients[i];
-
-        memset(cl->lastCmd, 0, sizeof(*cl->lastCmd));
-    }
+        client_t* cl = &clients[i];
+        if(cl->lastCmd)
+            memset(cl->lastCmd, 0, sizeof(*cl->lastCmd));
+    }}
 }
 
 /**

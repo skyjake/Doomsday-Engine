@@ -330,7 +330,7 @@ void XG_ReadXGLump(char* name)
     sectortype_t*       sec;
     boolean             done = false;
 
-    if((lump = W_CheckNumForName(name)) < 0)
+    if((lump = W_CheckNumForName2(name, true)) < 0)
         return; // No such lump.
 
     xgDataLumps = true;

@@ -1347,7 +1347,7 @@ DEFFC(XImage)
     FIData_PicClearAnimation(obj);
 
     // Load the external resource.
-    if((tex = loadGraphics(DDRC_GRAPHICS, fileName, LGM_NORMAL, false, true, 0)))
+    if((tex = loadGraphics(DDRC_GRAPHIC, fileName, LGM_NORMAL, false, true, 0)))
     {
         FIData_PicAppendFrame(obj, PFT_XIMAGE, -1, &tex, 0, false);
     }

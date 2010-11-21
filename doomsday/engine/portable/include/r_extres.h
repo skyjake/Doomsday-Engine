@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,30 +23,43 @@
  */
 
 /**
- * r_extres.h: External Resources
+ * sys_extres.h: External resource file locator and associated name hash.
  */
 
-#ifndef __DOOMSDAY_REFRESH_EXT_RES_H__
-#define __DOOMSDAY_REFRESH_EXT_RES_H__
+#ifndef LIBDENG_FILESYS_EXTRES_H
+#define LIBDENG_FILESYS_EXTRES_H
 
-void            R_InitResourceLocator(void);
-void            R_ShutdownResourceLocator(void);
+/**
+ * \post Initial/default search paths registered.
+ */
+void F_InitResourceLocator(void);
 
-void            R_SetDataPath(const char* path);
-const char*     R_GetDataPath(void);
-void            R_PrependDataPath(char* newPath, const char* origPath,
-                                  size_t len);
+void F_ShutdownResourceLocator(void);
 
-void            R_AddClassDataPath(ddresourceclass_t resClass,
-                                   const char* addPath, boolean append);
-void            R_ClearClassDataPath(ddresourceclass_t resClass);
-const char*     R_GetClassDataPath(ddresourceclass_t resClass);
+/**
+ * Convert a ddresourceclass_t constant into a string for error/debug messages.
+ */
+const char* F_ResourceClassStr(ddresourceclass_t rc);
 
-boolean         R_FindResource(resourcetype_t resType, char* fileName,
-                               const char* name, const char* optionalSuffix,
-                               size_t len);
-boolean         R_FindResource2(resourcetype_t resType,
-                                ddresourceclass_t resClass, char* fileName,
-                                const char* name, const char*optionalSuffix,
-                                size_t len);
-#endif
+/**
+ * Attempt to locate an external file for the specified resource.
+ *
+ * @param resType       Type of resource being searched for (if known).
+ * @param resClass      Class specifier; alters search behavior including locations to be searched.
+ * @param foundPath     If a file is found, the fully qualified path will be written back to here.
+ *                      Can be @c NULL, which makes the routine just check for the existence of the file.
+ * @param searchPath    Path/name of the resource being searched for.
+ * @param optionalSuffix An optional name suffix. If not @c NULL, append to @p name and look for matches.
+ *                      If not found or not specified then search for matches to @p name.
+ * @param foundPathLen  Size of @p fileName in bytes.
+ *
+ * @return              @c true, iff a file was found.
+ */
+boolean F_FindResource2(resourcetype_t resType, ddresourceclass_t resClass, char* foundPath, const char* searchPath, const char* optionalSuffix, size_t foundPathLen);
+
+/**
+ * Same as F_FindResource2 except that the resource class is chosen automatically, using a set of logical defaults.
+ */
+boolean F_FindResource(resourcetype_t resType, char* foundPath, const char* searchPath, const char* optionalSuffix, size_t foundPathLen);
+
+#endif /* LIBDENG_FILESYS_EXTRES_H */

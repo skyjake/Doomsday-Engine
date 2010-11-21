@@ -32,6 +32,7 @@
  .\..\..\engine\portable\src\s_cache.c
  .\..\..\engine\portable\src\fi_main.c
  .\..\..\engine\portable\src\finaleinterpreter.c
+ .\..\..\engine\portable\src\gameinfo.c
  .\..\..\engine\portable\src\gl_defer.c
  .\..\..\engine\portable\src\gl_texmanager.c
  .\..\..\engine\portable\src\gl_tga.c

@@ -119,45 +119,43 @@ static float pointDist(fixed_t c[3])
 byte GL_LoadParticleTexture(image_t* image, const char* name)
 {
     filename_t fileName;
-
-    if(R_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, fileName, name, "-ck",
-                       FILENAME_T_MAXLEN) &&
+    if(F_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, fileName, name, "-ck", FILENAME_T_MAXLEN) &&
        GL_LoadImage(image, fileName))
     {
         return 2;
     }
-
     return 0;
 }
 
-/**
- * The particle texture is a modification of the dynlight texture.
- */
-void Rend_ParticleInitTextures(void)
+void Rend_ParticleLoadSystemTextures(void)
 {
-    boolean reported;
-    int i;
-
+    if(isDedicated)
+        return;
     if(pointTex)
         return; // Already been here.
 
-    // Load the zeroth texture (the default: a blurred point).
-    pointTex = GL_PrepareExtTexture(DDRC_GRAPHICS, "Zeroth",
+    // Load the default "zeroth" texture - a modification of the dynlight texture (a blurred point).
+    pointTex = GL_PrepareExtTexture(DDRC_GRAPHIC, "Zeroth",
         LGM_WHITE_ALPHA, true, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
 
     if(pointTex == 0)
     {
-        Con_Error("Rend_ParticleInitTextures: \"Zeroth\" not found.\n");
+        Con_Error("Rend_ParticleLoadSystemTextures: \"Zeroth\" not found.\n");
     }
+}
 
-    // Load any custom particle textures. They are loaded from the
-    // highres texture directory and are named "ParticleNN.(tga|png|pcx)".
-    // The first is "Particle00". (based on Leesz' textured particles mod)
+void Rend_ParticleLoadExtraTextures(void)
+{
+    boolean reported = false;
+
+    if(isDedicated)
+        return;
 
     // Clear the texture names array.
     memset(ptctexname, 0, sizeof(ptctexname));
-    reported = false;
+
+    { int i;
     for(i = 0; i < MAX_PTC_TEXTURES; ++i)
     {
         image_t image;
@@ -168,10 +166,8 @@ void Rend_ParticleInitTextures(void)
 
         if(GL_LoadParticleTexture(&image, name))
         {
-            VERBOSE(
-            Con_Message("Rend_ParticleInitTextures: Texture "
-                        "%02i: %i * %i * %i\n", i, image.width,
-                        image.height, image.pixelSize));
+            VERBOSE( Con_Message("Rend_ParticleLoadSystemTextures: Texture %02i: %i * %i * %i\n", i,
+                                 image.width, image.height, image.pixelSize) );
 
             // If 8-bit with no alpha, generate alpha automatically.
             if(image.originalBits == 8)
@@ -194,18 +190,21 @@ void Rend_ParticleInitTextures(void)
             // Just show the first 'not found'.
             if(verbose && !reported)
             {
-                Con_Message("Rend_ParticleInitTextures: %s not found.\n", name);
+                Con_Message("Rend_ParticleLoadSystemTextures: %s not found.\n", name);
                 reported = true;
             }
         }
-    }
+    }}
 }
 
-void Rend_ParticleShutdownTextures(void)
+void Rend_ParticleClearSystemTextures(void)
 {
     glDeleteTextures(1, (const GLuint*) &pointTex);
     pointTex = 0;
+}
 
+void Rend_ParticleClearExtraTextures(void)
+{
     glDeleteTextures(NUM_TEX_NAMES, (const GLuint*) ptctexname);
     memset(ptctexname, 0, sizeof(ptctexname));
 }

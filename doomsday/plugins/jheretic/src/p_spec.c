@@ -277,16 +277,15 @@ static animdef_t anims[] = {
  * The standard list of switches and animations is contained in the example
  * source text file DEFSWANI.DAT also in the BOOM util distribution.
  */
-static void loadAnimDefs(animdef_t* animDefs)
+static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
 {
-    int                 i;
+    int i;
 
     // Read structures until -1 is found
     for(i = 0; animDefs[i].istexture != -1 ; ++i)
     {
-        int                 groupNum, ticsPerFrame, numFrames;
-        material_namespace_t     mnamespace =
-            (animDefs[i].istexture? MN_TEXTURES : MN_FLATS);
+        int groupNum, ticsPerFrame, numFrames;
+        material_namespace_t mnamespace = (animDefs[i].istexture? MN_TEXTURES : MN_FLATS);
 
         switch(mnamespace)
         {
@@ -303,14 +302,16 @@ static void loadAnimDefs(animdef_t* animDefs)
 
             if(numFrames < 2)
             {
-                Con_Message("P_InitPicAnims: Warning, bad cycle from %s to %s.\n", animDefs[i].startname, animDefs[i].endname);
+                Con_Message("loadAnimDefs: Warning, bad cycle from %s to %s in sequence %i.\n", animDefs[i].startname, animDefs[i].endname, i);
                 continue;
             }
 
             if(startFrame && endFrame)
             {   // We have a valid animation.
-                // Create a new animation group for it.
-                groupNum = Materials_CreateAnimGroup(AGF_SMOOTH);
+                if(verbose > (isCustom? 1 : 2))
+                {
+                    Con_Message("  %d: From:\"%s\" To:\"%s\" Tics:%i\n", i, animDefs[i].startname, animDefs[i].endname, ticsPerFrame);
+                }
 
                 /**
                  * Doomsday's group animation needs to know the texture/flat
@@ -320,9 +321,8 @@ static void loadAnimDefs(animdef_t* animDefs)
                  * numbers and would animate all textures/flats inbetween).
                  */
 
-                VERBOSE(Con_Message("P_InitPicAnims: ADD (\"%s\" > \"%s\" %d)\n",
-                                    animDefs[i].startname, animDefs[i].endname,
-                                    ticsPerFrame));
+                // Create a new animation group for it.
+                groupNum = Materials_CreateAnimGroup(AGF_SMOOTH);
 
                 // Add all frames from start to end to the group.
                 if(endFrame > startFrame)
@@ -359,17 +359,18 @@ static void loadAnimDefs(animdef_t* animDefs)
 
             if(numFrames < 2)
             {
-                Con_Message("P_InitPicAnims: Warning, bad cycle from %s to %s.\n", animDefs[i].startname, animDefs[i].endname);
+                Con_Message("loadAnimDefs: Warning, bad cycle from %s to %s in sequence %i.\n", animDefs[i].startname, animDefs[i].endname, i);
                 continue;
             }
 
             if(startFrame && endFrame)
             {
+                if(verbose > (isCustom? 1 : 2))
+                {
+                    Con_Message("  %d: From:\"%s\" To:\"%s\" Tics:%i\n", i, animDefs[i].startname, animDefs[i].endname, ticsPerFrame);
+                } 
+                
                 groupNum = Materials_CreateAnimGroup(AGF_SMOOTH);
-
-                VERBOSE(Con_Message("P_InitPicAnims: ADD (\"%s\" > \"%s\" %d)\n",
-                                    animDefs[i].startname, animDefs[i].endname,
-                                    ticsPerFrame));
                 if(endFrame > startFrame)
                 {
                     for(n = startFrame; n <= endFrame; n++)
@@ -392,21 +393,16 @@ static void loadAnimDefs(animdef_t* animDefs)
             break;
             }
         default:
-            Con_Error("loadAnimDefs: Internal Error, invalid namespace %i.",
-                      (int) mnamespace);
+            Con_Error("loadAnimDefs: Internal Error, invalid namespace %i.", (int) mnamespace);
         }
     }
 }
 
 void P_InitPicAnims(void)
 {
-    int                 lump;
-
-    // Is there an ANIMATED lump?
-    if((lump = W_CheckNumForName("ANIMATED")) > 0)
+    { lumpnum_t lumpNum;
+    if((lumpNum = W_CheckNumForName2("ANIMATED", true)) > 0)
     {
-        animdef_t*          animDefs;
-
         /**
          * We'll support this BOOM extension by reading the data and then
          * registering the new animations into Doomsday using the animation
@@ -415,20 +411,14 @@ void P_InitPicAnims(void)
          * Support for this extension should be considered depreciated.
          * All new features should be added, accessed via DED.
          */
-        Con_Message("P_InitPicAnims: \"ANIMATED\" lump found. "
-                    "Reading animations...\n");
+        VERBOSE( Con_Message("Processing lump %s::ANIMATED ...\n", M_PrettyPath(W_LumpSourceFile(lumpNum))));
+        loadAnimDefs((animdef_t*)W_CacheLumpNum(lumpNum, PU_STATIC), true);
+        W_ChangeCacheTag(lumpNum, PU_CACHE);
+        return;
+    }}
 
-        animDefs = (animdef_t *)W_CacheLumpNum(lump, PU_STATIC);
-        loadAnimDefs(animDefs);
-        Z_Free(animDefs);
-    }
-    else
-    {
-        Con_Message("P_InitPicAnims: Registering default animations...\n");
-        loadAnimDefs(anims);
-    }
-
-    VERBOSE(Con_Message("P_InitPicAnims: Done.\n"));
+    VERBOSE( Con_Message("Registering default texture animations ...\n") );
+    loadAnimDefs(anims, false);
 }
 
 boolean P_ActivateLine(linedef_t *ld, mobj_t *mo, int side, int actType)

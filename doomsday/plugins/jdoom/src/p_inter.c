@@ -616,7 +616,7 @@ static boolean giveItem(player_t* plr, itemtype_t item, boolean dropped)
         break;
 
     case IT_MEGASPHERE:
-        if(gameMode != commercial)
+        if(!(gameModeBits & GM_ANY_DOOM2))
             return false;
         plr->health = megaSphereHealth;
         plr->plr->mo->health = plr->health;

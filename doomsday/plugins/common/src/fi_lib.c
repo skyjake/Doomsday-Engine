@@ -389,33 +389,36 @@ int Hook_FinaleScriptEvalIf(int hookType, int finaleId, void* paramaters)
     if(!stricmp(p->token, "shareware"))
     {
 #if __JDOOM__
-        p->returnVal = (gameMode == shareware);
+        p->returnVal = (gameMode == doom_shareware != false);
 #elif __JHERETIC__
-        p->returnVal = shareware != false;
+        p->returnVal = (gameMode == heretic_shareware != false);
+#elif __JHEXEN__
+        p->returnVal = (gameMode == hexen_shareware != false);
 #else
-        p->returnVal = false; // Hexen has no shareware.
+        p->returnVal = false;
 #endif
         return true;
     }
 
     // Generic game mode string check.
-    if(!strnicmp(p->token, "mode:", 5))
+    { ddgameinfo_t gameInfo;
+    if(DD_GetGameInfo(&gameInfo) && !strnicmp(p->token, "mode:", 5))
     {
-        p->returnVal = !stricmp(p->token + 5, (char*) G_GetVariable(DD_GAME_MODE));
+        p->returnVal = !stricmp(p->token + 5, gameInfo.modeString);
         return true;
-    }
+    }}
 
 #if __JDOOM__
     // Game modes.
     if(!stricmp(p->token, "ultimate"))
     {
-        p->returnVal = (gameMode == retail);
+        p->returnVal = (gameMode == doom_ultimate);
         return true;
     }
 
     if(!stricmp(p->token, "commercial"))
     {
-        p->returnVal = (gameMode == commercial);
+        p->returnVal = (gameModeBits & GM_ANY_DOOM2) != 0;
         return true;
     }
 #endif

@@ -242,6 +242,7 @@
 		<Unit filename="..\..\engine\portable\include\edit_map.h" />
 		<Unit filename="..\..\engine\portable\include\fi_main.h" />
 		<Unit filename="..\..\engine\portable\include\finaleinterpreter.h" />
+		<Unit filename="..\..\engine\portable\include\gameinfo.h" />
 		<Unit filename="..\..\engine\portable\include\gl_defer.h" />
 		<Unit filename="..\..\engine\portable\include\gl_draw.h" />
 		<Unit filename="..\..\engine\portable\include\gl_font.h" />
@@ -505,9 +506,8 @@
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\fi_main.c" />
 		<Unit filename="..\..\engine\portable\src\finaleinterpreter.c" />
-		<Unit filename="..\..\engine\portable\src\gl_defer.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="..\..\engine\portable\src\gameinfo.c" />
+		<Unit filename="..\..\engine\portable\src\gl_defer.c" />
 		<Unit filename="..\..\engine\portable\src\gl_draw.c" />
 		<Unit filename="..\..\engine\portable\src\gl_drawcompositefont.c" />
 		<Unit filename="..\..\engine\portable\src\gl_drawvectorgraphic.c" />

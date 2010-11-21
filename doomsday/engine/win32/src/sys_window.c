@@ -50,6 +50,8 @@
 #include "de_misc.h"
 #include "de_ui.h"
 
+#include "rend_particle.h" // \todo Should not be necessary at this level.
+
 // MACROS ------------------------------------------------------------------
 
 #define WINDOWEDSTYLE (WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | \
@@ -1196,6 +1198,7 @@ extern boolean usingFog;
 
             R_UnloadCompositeFonts();
             R_UnloadVectorGraphics();
+            Rend_ParticleClearExtraTextures();
             GL_ClearSystemTextures();
 
             wglMakeCurrent(NULL, NULL);
@@ -1219,6 +1222,7 @@ extern boolean usingFog;
             gx.UpdateState(DD_RENDER_RESTART_POST);
 
             GL_LoadSystemTextures();
+            Rend_ParticleLoadExtraTextures();
         }
     }
 

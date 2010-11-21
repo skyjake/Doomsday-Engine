@@ -1770,7 +1770,7 @@ boolean XL_ValidateMap(uint* map, int type)
     uint bMap = *map, episode;
 
 #if __JDOOM__
-    if(gameMode == commercial || gameMode == shareware)
+    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_SHAREWARE))
         episode = 0;
     else
         episode = gameEpisode;

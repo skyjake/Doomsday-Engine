@@ -136,11 +136,6 @@ void G_UpdateState(int step)
 {
     switch(step)
     {
-    case DD_GAME_MODE:
-        // Set the game mode string.
-        G_IdentifyVersion();
-        break;
-
     case DD_PRE:
         G_MangleState();
         break;

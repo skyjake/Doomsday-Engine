@@ -41,26 +41,24 @@
 #pragma warning(disable:4244)
 #endif
 
-#include <stdio.h>
-#include <string.h>
-
 #include "doomsday.h"
 #include "dd_api.h"
 #include "version.h"
 #include "info.h"
 
-#define Set             DD_SetInteger
-#define Get             DD_GetInteger
+#define DATAPATH            DD_BASEDATAPATH GAMENAMETEXT "\\"
+#define DEFSPATH            DD_BASEDEFSPATH GAMENAMETEXT "\\"
 
-#define CONFIGFILE      GAMENAMETEXT".cfg"
-#define DEFSFILE        GAMENAMETEXT"\\"GAMENAMETEXT".ded"
-#define DATAPATH        "}data\\"GAMENAMETEXT"\\"
-#define STARTUPWAD      "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".wad"
-#define STARTUPPK3      "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".pk3"
+#define CONFIGFILE          GAMENAMETEXT ".cfg"
+#define DEFSFILE            GAMENAMETEXT ".ded"
+#define STARTUPPK3          GAMENAMETEXT ".pk3"
+
+#define Set                 DD_SetInteger
+#define Get                 DD_GetInteger
 
 // Verbose messages.
-#define VERBOSE(code)   { if(verbose >= 1) { code; } }
-#define VERBOSE2(code)  { if(verbose >= 2) { code; } }
+#define VERBOSE(code)       { if(verbose >= 1) { code; } }
+#define VERBOSE2(code)      { if(verbose >= 2) { code; } }
 
 extern game_import_t gi;
 extern game_export_t gx;
@@ -73,24 +71,22 @@ extern game_export_t gx;
 #define STATES              (*gi.states)
 #define VALIDCOUNT          (*gi.validCount)
 
-// Game mode handling - identify IWAD version to handle IWAD dependend
-// animations etc.
 typedef enum {
-    shareware, // shareware, E1, M9
-    registered, // DOOM 1 registered, E3, M27
-    extended, // episodes 4 and 5 present
-    indetermined, // Well, no IWAD found.
+    indetermined, // \todo now meaningless refactor away.
+    heretic_shareware,
+    heretic,
+    heretic_extended,
     NUM_GAME_MODES
 } gamemode_t;
 
 // Game mode bits for the above.
-#define GM_SHAREWARE        0x1 // shareware, E1, M9
-#define GM_REGISTERED       0x2 // registered episodes
-#define GM_EXTENDED         0x4 // episodes 4 and 5 present
-#define GM_INDETERMINED     0x8 // Well, no IWAD found.
+#define GM_INDETERMINED     0x0
+#define GM_HERETIC_SHAREWARE 0x1
+#define GM_HERETIC          0x2
+#define GM_HERETIC_EXTENDED 0x4
 
-#define GM_ANY              (GM_SHAREWARE|GM_REGISTERED|GM_EXTENDED)
-#define GM_NOTSHAREWARE     (GM_REGISTERED|GM_EXTENDED)
+#define GM_ANY              (GM_HERETIC_SHAREWARE|GM_HERETIC|GM_HERETIC_EXTENDED)
+#define GM_NOT_SHAREWARE    (GM_HERETIC|GM_HERETIC_EXTENDED)
 
 #define SCREENWIDTH         320
 #define SCREENHEIGHT        200
@@ -283,7 +279,6 @@ enum { CR, CG, CB, CA }; // Color indices.
 #define SFXVOLUME       (Get(DD_SFX_VOLUME)/17)
 #define MUSICVOLUME     (Get(DD_MUSIC_VOLUME)/17)
 
-void        G_IdentifyVersion(void);
 int         G_GetInteger(int id);
 void       *G_GetVariable(int id);
 

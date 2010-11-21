@@ -268,8 +268,8 @@ extern client_t clients[DDMAXPLAYERS];
 void            Net_Register(void);
 void            Net_Init(void);
 void            Net_Shutdown(void);
-void            Net_AllocArrays(void);
 void            Net_DestroyArrays(void);
+void            Net_AllocClientBuffers(int clientId);
 void            Net_SendPacket(int to_player, int type, void *data,
                                size_t length);
 boolean         Net_GetPacket(void);

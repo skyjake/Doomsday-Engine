@@ -153,20 +153,20 @@ void Net_Register(void)
     C_VAR_INT("server-player-limit", &svMaxPlayers, 0, 0, DDMAXPLAYERS);
 
     // Ccmds
-    C_CMD("chat", NULL, Chat);
-    C_CMD("chatnum", NULL, Chat);
-    C_CMD("chatto", NULL, Chat);
-    C_CMD("conlocp", "i", MakeCamera);
-    C_CMD_FLAGS("connect", NULL, Connect, CMDF_NO_DEDICATED);
-    C_CMD("huffman", "", HuffmanStats);
-    C_CMD("kick", "i", Kick);
-    C_CMD("login", NULL, Login);
-    C_CMD("logout", "", Logout);
-    C_CMD("net", NULL, Net);
-    C_CMD("ping", NULL, Ping);
-    C_CMD("say", NULL, Chat);
-    C_CMD("saynum", NULL, Chat);
-    C_CMD("sayto", NULL, Chat);
+    C_CMD_FLAGS("chat", NULL, Chat, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("chatnum", NULL, Chat, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("chatto", NULL, Chat, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("conlocp", "i", MakeCamera, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("connect", NULL, Connect, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("huffman", "", HuffmanStats, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("kick", "i", Kick, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("login", NULL, Login, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("logout", "", Logout, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("net", NULL, Net, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("ping", NULL, Ping, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("say", NULL, Chat, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("saynum", NULL, Chat, CMDF_NO_NULLGAME);
+    C_CMD_FLAGS("sayto", NULL, Chat, CMDF_NO_NULLGAME);
     C_CMD("setname", "s", SetName);
     C_CMD("setcon", "i", SetConsole);
     C_CMD("settics", "i", SetTicks);
@@ -176,7 +176,20 @@ void Net_Register(void)
 
 void Net_Init(void)
 {
-    Net_AllocArrays();
+#if 0
+    // Local ticcmds are stored into this array before they're copied
+    // to netplayer[0]'s ticcmds buffer.
+    localticcmds = M_Calloc(LOCALTICS * TICCMD_SIZE);
+    numlocal = 0; // Nothing in the buffer.
+#endif
+
+    { int i;
+    for(i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        memset(clients + i, 0, sizeof(clients[i]));
+        clients[i].runTime = -1;
+    }}
+
     memset(&netBuffer, 0, sizeof(netBuffer));
     netBuffer.headerLength = netBuffer.msg.data - (byte *) &netBuffer.msg;
     // The game is always started in single-player mode.
@@ -359,6 +372,9 @@ void Net_SendCommands(void)
         if(!Net_IsLocalPlayer(i))
             continue;
 
+        if(!clients[i].aggregateCmd)
+            continue;
+
         /**
          * Clients send their ticcmds to the server at regular intervals,
          * but significantly less often than new ticcmds are built.
@@ -513,24 +529,24 @@ void Net_Update(void)
  */
 void Net_BuildLocalCommands(timespan_t time)
 {
-    uint        i;
-    ticcmd_t   *cmd;
-
     if(isDedicated)
         return;
 
     // Generate ticcmds for local players.
+    { int i;
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         if(!Net_IsLocalPlayer(i))
             continue;
 
-        cmd = clients[i].lastCmd;
+        if(!clients[i].lastCmd)
+            continue;
 
         // The command will stay 'empty' if no controls are active.
+        { ticcmd_t* cmd = clients[i].lastCmd;
         memset(cmd, 0, sizeof(*cmd));
-        // No actions can be undertaken during demo playback or when
-        // in UI mode.
+
+        // No actions can be undertaken during demo playback or when in UI mode.
         if(!(playback || UI_IsActive()))
         {
             P_BuildCommand(cmd, i);
@@ -539,54 +555,53 @@ void Net_BuildLocalCommands(timespan_t time)
         // Be sure to merge each built command into the aggregate that
         // will be sent periodically to the server.
         P_MergeCommand(clients[i].aggregateCmd, cmd);
-    }
+        }
+    }}
 }
 
-/**
- * Called from Net_Init to initialize the ticcmd arrays.
- */
-void Net_AllocArrays(void)
+static __inline client_t* clientInfoForClientId(int clientNum)
 {
-    int     i;
+    assert(clientNum >= 0 && clientNum < DDMAXPLAYERS);
+    return clients + clientNum;
+}
 
-#if 0
-    // Local ticcmds are stored into this array before they're copied
-    // to netplayer[0]'s ticcmds buffer.
-    localticcmds = M_Calloc(LOCALTICS * TICCMD_SIZE);
-    numlocal = 0;               // Nothing in the buffer.
-#endif
+void Net_AllocClientBuffers(int clientId)
+{
+    client_t* cl = clientInfoForClientId(clientId);
 
-    for(i = 0; i < DDMAXPLAYERS; ++i)
-    {
-        memset(clients + i, 0, sizeof(clients[i]));
-        // The server stores ticcmds sent by the clients to these
-        // buffers.
-        clients[i].ticCmds = M_Calloc(BACKUPTICS * TICCMD_SIZE);
-        // The last cmd that was executed is stored here.
-        clients[i].lastCmd = M_Calloc(TICCMD_SIZE);
-        clients[i].aggregateCmd = M_Calloc(TICCMD_SIZE);
-        clients[i].runTime = -1;
-    }
+    if(cl->ticCmds)
+        return; // Already done.
+
+    // The server stores ticcmds sent by the clients to these
+    // buffers.
+    cl->ticCmds = M_Calloc(BACKUPTICS * TICCMD_SIZE);
+    // The last cmd that was executed is stored here.
+    cl->lastCmd = M_Calloc(TICCMD_SIZE);
+    cl->aggregateCmd = M_Calloc(TICCMD_SIZE);
 }
 
 void Net_DestroyArrays(void)
 {
-    int     i;
-
 #if 0
     M_Free(localticcmds);
-    localticcmds = NULL;
+    localticcmds = 0;
 #endif
 
+    { int i;
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
-        M_Free(clients[i].ticCmds);
-        M_Free(clients[i].lastCmd);
-        M_Free(clients[i].aggregateCmd);
-        clients[i].ticCmds = NULL;
-        clients[i].lastCmd = NULL;
-        clients[i].aggregateCmd = NULL;
-    }
+        if(clients[i].ticCmds)
+            M_Free(clients[i].ticCmds);
+        clients[i].ticCmds = 0;
+
+        if(clients[i].lastCmd)
+            M_Free(clients[i].lastCmd);
+        clients[i].lastCmd = 0;
+
+        if(clients[i].aggregateCmd)
+            M_Free(clients[i].aggregateCmd);
+        clients[i].aggregateCmd = 0;
+    }}
 }
 
 /**
@@ -1303,6 +1318,7 @@ D_CMD(MakeCamera)
     clients[cp].ready = true;
     clients[cp].updateCount = UPDATECOUNT;
     ddPlayers[cp].shared.flags |= DDPF_LOCAL;
+    Net_AllocClientBuffers(cp);
     Sv_InitPoolForClient(cp);
 
     // Update the viewports.

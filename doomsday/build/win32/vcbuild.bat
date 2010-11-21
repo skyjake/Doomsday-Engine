@@ -143,6 +143,8 @@ ECHO Processing wadmapconverter.rc...
 rc /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" "%DENG_PLUGINS_DIR%\wadmapconverter\res\wadmapconverter.rc"
 ECHO Processing winmm.rc...
 rc /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" "%DENG_PLUGINS_DIR%\winmm\res\winmm.rc"
+ECHO Processing example.rc...
+rc /D "__EXAMPLE_PLUGIN__" /i "%PLATFORM_INC%" /i "%PLATFORM_INC%\mfc" "%DENG_PLUGINS_DIR%\exampleplugin\res\example.rc"
 
 
 ECHO ***************************************************************************
@@ -178,6 +180,9 @@ cvtres /out:"%OBJ_DIR%\dpwadmapconverter\dpwadmapconverter_res.obj" /MACHINE:X86
 ECHO Processing winmm.res...
 md %OBJ_DIR%\dswinmm
 cvtres /out:"%OBJ_DIR%\dswinmm\dswinmm_res.obj" /MACHINE:X86 "%DENG_PLUGINS_DIR%\winmm\res\winmm.res"
+ECHO Processing example.res...
+md %OBJ_DIR%\dpexample
+cvtres /out:"%OBJ_DIR%\exampleplugin\dpexample_res.obj" /MACHINE:X86 "%DENG_PLUGINS_DIR%\exampleplugin\res\example.res"
 
 
 IF %ERRORLEVEL% == 0 GOTO Done
@@ -342,7 +347,7 @@ ECHO ***************************************************************************
 ECHO **********   Compiling dpExample.dll (Doomsday Example Plugin)   **********
 ECHO ***************************************************************************
 md %OBJ_DIR%\dpExample
-cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" %DLLDEFINES% /D "EXAMPLE_PLUGIN" /D "DPEXAMPLE_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\dpExample\\" /Fd"%OBJ_DIR%\dpExample\\" /W3 /Gd  @dpexample_cl.rsp  /link /out:"%BIN_DIR%\dpExample.dll" %LFLAGS% /dll /implib:"%BIN_DIR%\dpExample.lib" %LIBS% %BIN_DIR%\Doomsday.lib
+cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" /I "%DENG_PLUGINS_DIR%\exampleplugin\include" /D "__EXAMPLE_PLUGIN__" %DLLDEFINES% /D "DPEXAMPLE_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\dpExample\\" /Fd"%OBJ_DIR%\dpExample\\" /W3 /Gd  @dpexample_cl.rsp  /link /out:"%BIN_DIR%\dpExample.dll" %LFLAGS% /dll /def:"%DENG_PLUGINS_DIR%\exampleplugin\api\dpExample.def" /implib:"%BIN_DIR%\dpExample.lib" %BIN_DIR%\Doomsday.lib %LIBS%
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 

@@ -212,19 +212,19 @@ void P_InitSwitchList(void)
 void P_InitSwitchList(void)
 {
     int i, index, episode;
-    lumpnum_t lumpNum = W_CheckNumForName("SWITCHES");
+    lumpnum_t lumpNum = W_CheckNumForName2("SWITCHES", true);
     switchlist_t* sList = switchInfo;
 
 # if __JHERETIC__
-    if(gameMode == shareware)
+    if(gameMode == heretic_shareware)
         episode = 1;
     else
         episode = 2;
 # else
 #  if __JDOOM__
-    if(gameMode == registered || gameMode == retail)
+    if(gameModeBits & (GM_ANY_DOOM^GM_DOOM_SHAREWARE))
         episode = 2;
-    else if(gameMode == commercial)
+    else if(gameModeBits & GM_DOOM)
         episode = 3;
     else
 #  endif

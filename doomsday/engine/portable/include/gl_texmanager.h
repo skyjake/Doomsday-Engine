@@ -211,7 +211,6 @@ const gltexture_t* GL_GetGLTextureByName(const char* name, gltexture_type_t type
 const gltexture_t* GL_GetGLTextureByTypeId(int ofTypeId, gltexture_type_t type);
 uint            GL_CheckTextureNumForName(const char* name, gltexture_type_t type);
 uint            GL_TextureNumForName(const char* name, gltexture_type_t type);
-gltextureid_t   GL_ToGLTextureId(const gltexture_t*);
 void            GL_SetAllGLTexturesMinMode(int minMode);
 void            GL_DeleteAllTexturesForGLTextures(gltexture_type_t);
 

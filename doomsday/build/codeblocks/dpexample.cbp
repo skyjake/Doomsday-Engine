@@ -18,7 +18,7 @@
 					<Add option="/MT" />
 					<Add option="/W3" />
 					<Add option="/Ob1" />
-					<Add option="/DEXAMPLE_PLUGIN" />
+					<Add option="/D__EXAMPLE_PLUGIN__" />
 					<Add option="/DWIN32" />
 					<Add option="/DNDEBUG" />
 					<Add option="/D_WINDOWS" />
@@ -27,6 +27,7 @@
 					<Add directory="..\..\engine\api" />
 				</Compiler>
 				<ResourceCompiler>
+					<Add directory="..\..\plugins\exampleplugin\include" />
 					<Add directory="..\..\engine\api" />
 				</ResourceCompiler>
 				<Linker>
@@ -48,12 +49,13 @@
 					<Add option="/W3" />
 					<Add option="/ZI" />
 					<Add option="/D_CRT_SECURE_NO_DEPRECATE" />
-					<Add option="/DEXAMPLE_PLUGIN" />
+					<Add option="/D__EXAMPLE_PLUGIN__" />
 					<Add option="/DWIN32" />
 					<Add option="/D_DEBUG" />
 					<Add option="/D_WINDOWS" />
 					<Add option="/D_USRDLL" />
 					<Add option="/DDPEXAMPLE_EXPORTS" />
+					<Add directory="..\..\plugins\exampleplugin\include" />
 					<Add directory="..\..\engine\api" />
 				</Compiler>
 				<ResourceCompiler>
@@ -69,9 +71,8 @@
 		<VirtualTargets>
 			<Add alias="All" targets="Release Win32;Debug Win32;" />
 		</VirtualTargets>
-		<Unit filename="..\..\plugins\exampleplugin\src\example.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="..\..\plugins\exampleplugin\src\example.c" />
+		<Unit filename="..\..\plugins\exampleplugin\include\version.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />

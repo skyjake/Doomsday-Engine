@@ -161,15 +161,8 @@ void WI_slamBackground(void)
  */
 void WI_drawLF(void)
 {
-    int y = WI_TITLEY, mapnum;
-    char* lname, *ptr;
-
-    lname = (char*) DD_GetVariable(DD_MAP_NAME);
-
-    if(gameMode == commercial)
-        mapnum = wbs->currentMap;
-    else
-        mapnum = (wbs->episode * 8) + wbs->currentMap;
+    int y = WI_TITLEY, mapnum = wbs->currentMap;
+    char*ptr, *lname = (char*) DD_GetVariable(DD_MAP_NAME);
 
     ptr = strchr(lname, ':'); // Skip the E#M# or Level #.
     if(ptr)

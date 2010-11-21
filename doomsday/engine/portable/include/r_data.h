@@ -288,8 +288,8 @@ void            R_UpdateTexturesAndFlats(void);
 void            R_InitSystemTextures(void);
 void            R_InitTextures(void);
 void            R_InitFlats(void);
+void            R_InitRawTexs(void);
 
-void            R_InitData(void);
 void            R_UpdateData(void);
 void            R_ShutdownData(void);
 

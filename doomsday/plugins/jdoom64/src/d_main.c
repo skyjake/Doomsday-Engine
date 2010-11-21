@@ -51,10 +51,18 @@
 #include "g_defs.h"
 #include "p_inventory.h"
 #include "p_player.h"
+#include "d_net.h"
+#include "g_update.h"
+#include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
+
+typedef struct {
+    char** lumps;
+    gamemode_t mode;
+} identify_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -73,185 +81,148 @@ boolean noMonstersParm; // checkparm of -nomonsters
 boolean respawnParm; // checkparm of -respawn
 boolean fastParm; // checkparm of -fast
 boolean turboParm; // checkparm of -turbo
+//boolean randomClassParm; // checkparm of -randclass
 
-float turboMul; // multiplier for turbo
-boolean monsterInfight;
+float turboMul; // Multiplier for turbo.
 
-skillmode_t startSkill;
-uint startEpisode;
-uint startMap;
-boolean autoStart;
-FILE *debugFile;
-
-gamemode_t gameMode;
-int gameModeBits;
-
-// This is returned in D_Get(DD_GAME_MODE), max 16 chars.
-char gameModeString[17];
-
-// Print title for every printed line.
-char title[128];
-
-// Demo loop.
-int demoSequence;
-int pageTic;
-char *pageName;
+gamemode_t gameMode = indetermined;
+int gameModeBits = 0;
 
 // Default font colours.
 const float defFontRGB2[] = { .85f, 0, 0 };
 
 // The patches used in drawing the view border.
-char *borderLumps[] = {
-    "FTILEABC",
-    "BRDR_T",
-    "BRDR_R",
-    "BRDR_B",
-    "BRDR_L",
-    "BRDR_TL",
-    "BRDR_TR",
-    "BRDR_BR",
-    "BRDR_BL"
+char* borderLumps[] = {
+    "FTILEABC", // Background.
+    "BRDR_T", // Top.
+    "BRDR_R", // Right.
+    "BRDR_B", // Bottom.
+    "BRDR_L", // Left.
+    "BRDR_TL", // Top left.
+    "BRDR_TR", // Top right.
+    "BRDR_BR", // Bottom right.
+    "BRDR_BL" // Bottom left.
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+// The interface to the Doomsday engine.
+game_import_t gi;
+game_export_t gx;
+
+static skillmode_t startSkill;
+static uint startEpisode;
+static uint startMap;
+static boolean autoStart;
+
 // CODE --------------------------------------------------------------------
 
 /**
- * Attempt to change the current game mode. Can only be done when not
- * actually in a level.
- *
- * \todo Doesn't actually do anything yet other than set the game mode
- *  global vars.
- *
- * @param mode          The game mode to change to.
- *
- * @return boolean      @c true, if we changed game modes successfully.
+ * Get a 32-bit integer value.
  */
-boolean G_SetGameMode(gamemode_t mode)
+int G_GetInteger(int id)
 {
-    gameMode = mode;
-
-    if(G_GetGameState() == GS_MAP)
-        return false;
-
-    switch(mode)
+    switch(id)
     {
-    case commercial:
-        gameModeBits = GM_COMMERCIAL;
-        break;
-
-    case indetermined: // Well, no IWAD found.
-        gameModeBits = GM_INDETERMINED;
-        break;
+    case DD_GAME_DMUAPI_VER:
+        return DMUAPI_VER;
 
     default:
-        Con_Error("G_SetGameMode: Unknown gamemode %i", mode);
+        break;
     }
+    // ID not recognized, return NULL.
+    return 0;
+}
 
+/**
+ * Get a pointer to the value of a named variable/constant.
+ */
+void* G_GetVariable(int id)
+{
+    static float bob[2];
+
+    switch(id)
+    {
+    case DD_GAME_NAME:
+        return GAMENAMETEXT;
+
+    case DD_GAME_NICENAME:
+        return GAME_NICENAME;
+
+    case DD_GAME_ID:
+        return GAMENAMETEXT " " GAME_VERSION_TEXT;
+
+    case DD_GAME_VERSION_SHORT:
+        return GAME_VERSION_TEXT;
+
+    case DD_GAME_VERSION_LONG:
+        return GAME_VERSION_TEXTLONG "\n" GAME_DETAILS;
+
+    case DD_GAME_CONFIG:
+        return gameConfigString;
+
+    case DD_ACTION_LINK:
+        return actionlinks;
+
+    case DD_XGFUNC_LINK:
+        return xgClasses;
+
+    case DD_PSPRITE_BOB_X:
+        R_GetWeaponBob(DISPLAYPLAYER, &bob[0], 0);
+        return &bob[0];
+
+    case DD_PSPRITE_BOB_Y:
+        R_GetWeaponBob(DISPLAYPLAYER, 0, &bob[1]);
+        return &bob[1];
+
+    default:
+        break;
+    }
+    return 0;
+}
+
+/**
+ * Attempt to change the current game mode. Can only be done when not
+ * actually in a map.
+ *
+ * \todo Doesn't actually do anything yet other than set the game mode
+ * global vars.
+ *
+ * @param mode          GameMode to change to.
+ *
+ * @return              @true, if we changed game modes successfully.
+ */
+boolean G_SetGameMode(int/*gamemode_t*/ mode)
+{
+    if(G_GetGameState() == GS_MAP)
+        return false;
+    gameMode = mode;
+    gameModeBits = mode > 0? 1 << (mode-1) : 0;
     return true;
 }
 
-/**
- * Check which known IWADs are found. The purpose of this routine is to
- * find out which IWADs the user lets us to know about, but we don't
- * decide which one gets loaded or even see if the WADs are actually
- * there. The default location for IWADs is Data\GAMENAMETEXT\.
- */
-void G_DetectIWADs(void)
+int G_RegisterGames(int hookType, int parm, void* data)
 {
-    int                 k;
-    char                fn[256];
-    // The '}' means the paths are affected by the base path.
-    char               *paths[] = {
-        "}data\\"GAMENAMETEXT"\\",
-        "}data\\",
-        "}",
-        "}iwads\\",
-        "",
-        0
-    };
+#define DATAPATH        DD_BASEDATAPATH GAMENAMETEXT "\\"
+#define STARTUPPK3      GAMENAMETEXT ".pk3"
+#define NUMELEMENTS(v)  (sizeof(v)/sizeof((v)[0]))
 
-    // Tell the engine about all the possible IWADs.
-    for(k = 0; paths[k]; ++k)
-    {
-        sprintf(fn, "%s%s", paths[k], "doom64.wad");
-        DD_AddIWAD(fn);
-    }
-}
-
-static boolean lumpsFound(char** list)
-{
-    for(; *list; list++)
-        if(W_CheckNumForName(*list) == -1)
-            return false;
-
+    const char* files[] = { STARTUPPK3, "doom64.wad" };
+    const char* lumps[] = { "map01", "map02", "map38", "f_suck" };
+    DD_AddGame(doom64, "doom64", DATAPATH, "Doom 64", "Midway Software", "doom64", 0, files, NUMELEMENTS(files), lumps, NUMELEMENTS(lumps));
     return true;
+
+#undef NUMELEMENTS
+#undef STARTUPPK3
+#undef DATAPATH
 }
 
 /**
- * Checks availability of IWAD files by name, to determine whether
- * registered/commercial features  should be executed (notably loading
- * PWAD's).
- */
-static void identifyFromData(void)
-{
-    typedef struct {
-        char** lumps;
-        gamemode_t mode;
-    } identify_t;
-    char* commercialLumps[] = {
-        // List of lumps to detect registered with.
-        "map01", "map02", "map38",
-        "f_suck", NULL
-    };
-    identify_t list[] = {
-        {commercialLumps, commercial},
-    };
-    int i, num = sizeof(list) / sizeof(identify_t);
-
-    // Now we must look at the lumps.
-    for(i = 0; i < num; ++i)
-    {
-        // If all the listed lumps are found, selection is made.
-        // All found?
-        if(lumpsFound(list[i].lumps))
-        {
-            G_SetGameMode(list[i].mode);
-            return;
-        }
-    }
-
-    // A detection couldn't be made.
-    G_SetGameMode(commercial); // Assume the minimum.
-    Con_Message("\nIdentifyVersion: Game version unknown.\n** Important data might be missing! **\n\n");
-}
-
-/**
- * gameMode, gameMission and the gameModeString are set.
- */
-void G_IdentifyVersion(void)
-{
-    identifyFromData();
-
-    // The game mode string is returned in DD_Get(DD_GAME_MODE).
-    // It is sent out in netgames, and the pcl_hello2 packet contains it.
-    // A client can't connect unless the same game mode is used.
-    memset(gameModeString, 0, sizeof(gameModeString));
-
-    strcpy(gameModeString, "doom64");
-}
-
-/**
- * Pre Engine Initialization routine.
+ * Pre Game Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
 void G_PreInit(void)
 {
-    int                 i;
-
-    G_SetGameMode(indetermined);
-
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
     memset(&cfg, 0, sizeof(cfg));
@@ -281,8 +252,10 @@ void G_PreInit(void)
     cfg.hudShown[HUD_FRAGS] = true;
     cfg.hudShown[HUD_INVENTORY] = false; // They will be visible when the automap is.
     cfg.hudShown[HUD_LOG] = true;
+    { int i;
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
         cfg.hudUnHide[i] = 1;
+    }
     cfg.hudScale = .6f;
     cfg.hudWideOffset = 1;
     cfg.hudColor[0] = 1;
@@ -383,7 +356,7 @@ void G_PreInit(void)
 
     cfg.msgColor[0] = cfg.msgColor[1] = cfg.msgColor[2] = 1;
 
-    cfg.chatBeep = 1;
+    cfg.chatBeep = true;
 
     cfg.killMessages = true;
     cfg.bobWeapon = 1;
@@ -414,10 +387,12 @@ void G_PreInit(void)
  * Post Engine Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void G_PostInit(void)
+void G_PostInit(int mode)
 {
     filename_t file;
     int p;
+
+    G_SetGameMode((gamemode_t)mode);
 
     // Common post init routine.
     G_CommonPostInit();
@@ -516,15 +491,6 @@ void G_PostInit(void)
         startMap = 0;
     }
 
-    // Print a string showing the state of the game parameters.
-    Con_Message("Game state parameters:%s%s%s%s%s\n",
-                noMonstersParm? " nomonsters" : "",
-                respawnParm? " respawn" : "",
-                fastParm? " fast" : "",
-                turboParm? " turbo" : "",
-                (cfg.netDeathmatch ==1)? " deathmatch" :
-                    (cfg.netDeathmatch ==2)? " altdeath" : "");
-
     if(G_GetGameAction() != GA_LOADGAME)
     {
         if(autoStart || IS_NETGAME)
@@ -555,7 +521,59 @@ void G_Shutdown(void)
     GUI_Shutdown();
 }
 
-void G_EndFrame(void)
+/**
+ * Takes a copy of the engine's entry points and exported data. Returns
+ * a pointer to the structure that contains our entry points and exports.
+ */
+game_export_t* GetGameAPI(game_import_t* imports)
 {
-    // Nothing to do.
+    // Take a copy of the imports, but only copy as much data as is
+    // allowed and legal.
+    memset(&gi, 0, sizeof(gi));
+    memcpy(&gi, imports, MIN_OF(sizeof(game_import_t), imports->apiSize));
+
+    // Clear all of our exports.
+    memset(&gx, 0, sizeof(gx));
+
+    // Fill in the data for the exports.
+    gx.apiSize = sizeof(gx);
+    gx.PreInit = G_PreInit;
+    gx.PostInit = G_PostInit;
+    gx.Shutdown = G_Shutdown;
+    gx.Ticker = G_Ticker;
+    gx.G_Drawer = D_Display;
+    gx.G_Drawer2 = D_Display2;
+    gx.PrivilegedResponder = (boolean (*)(event_t*)) G_PrivilegedResponder;
+    gx.FinaleResponder = FI_Responder;
+    gx.G_Responder = G_Responder;
+    gx.MobjThinker = P_MobjThinker;
+    gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
+    gx.ConsoleBackground = D_ConsoleBg;
+    gx.UpdateState = G_UpdateState;
+#undef Get
+    gx.GetInteger = G_GetInteger;
+    gx.GetVariable = G_GetVariable;
+
+    gx.NetServerStart = D_NetServerStarted;
+    gx.NetServerStop = D_NetServerClose;
+    gx.NetConnect = D_NetConnect;
+    gx.NetDisconnect = D_NetDisconnect;
+    gx.NetPlayerEvent = D_NetPlayerEvent;
+    gx.NetWorldEvent = D_NetWorldEvent;
+    gx.HandlePacket = D_HandlePacket;
+    gx.NetWriteCommands = D_NetWriteCommands;
+    gx.NetReadCommands = D_NetReadCommands;
+
+    // Data structure sizes.
+    gx.ticcmdSize = sizeof(ticcmd_t);
+    gx.mobjSize = sizeof(mobj_t);
+    gx.polyobjSize = sizeof(polyobj_t);
+
+    gx.SetupForMapData = P_SetupForMapData;
+
+    // These really need better names. Ideas?
+    gx.HandleMapDataPropertyValue = P_HandleMapDataPropertyValue;
+    gx.HandleMapObjectStatusReport = P_HandleMapObjectStatusReport;
+
+    return &gx;
 }

@@ -3,9 +3,8 @@ NAME            "DOOMSDAY"
 ; Highest ordinal is currently
 ; --> 460 <--
 ; Other free ordinals:
-; 45 formerly B_BindingsForCommand
-; 65 formerly P_GetBlockRootIdx
-; 238 formerly FI_Reset
+; 65 formerly
+; 234 formerly R_SetDataPath
 ; 244 formerly GL_LoadGraphics
 ; 255 formerly P_PointToBlock
 ; 326 formerly PO_Alloc
@@ -21,9 +20,10 @@ EXPORTS
     Plug_DoHook                 @3 NONAME
 
 ; Base.
-    DD_AddIWAD                  @4 NONAME
-    DD_AddStartupWAD            @5 NONAME
+    DD_AddGame                  @4 NONAME
+    DD_GetGameInfo              @5 NONAME
     DD_SetConfigFile            @6 NONAME
+    R_SetDefsPath               @238 NONAME
     DD_SetDefsFile              @7 NONAME
     DD_GetInteger               @8 NONAME
     DD_SetInteger               @9 NONAME
@@ -65,6 +65,7 @@ EXPORTS
 
 ; Base: WAD.
     W_CheckNumForName           @14 NONAME
+    W_CheckNumForName2          @45 NONAME
     W_GetNumForName             @15 NONAME
     W_LumpLength                @16 NONAME
     W_LumpName                  @17 NONAME
@@ -75,7 +76,7 @@ EXPORTS
     W_ChangeCacheTag            @21 NONAME
     W_LumpSourceFile            @22 NONAME
     W_CRCNumber                 @23 NONAME
-    W_IsFromIWAD                @239 NONAME
+    W_LumpFromIWAD              @239 NONAME
     W_OpenAuxiliary             @247 NONAME
 
 ; Base: Zone.
@@ -314,7 +315,6 @@ EXPORTS
 
 ; Refresh.
     DD_GetFrameRate             @88 NONAME
-    R_SetDataPath               @234 NONAME
     R_SetupMap                  @89 NONAME
     R_PrecacheMap               @90 NONAME
     R_PrecacheMobjNum           @427 NONAME

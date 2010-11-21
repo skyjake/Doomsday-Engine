@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -89,17 +89,33 @@ static void C_DECL handler(int s)
  */
 void Sys_Init(void)
 {
+    uint startTime;
+
+    Con_Message("Setting up machine state:\n");
+
+#ifdef WIN32
+    if(ArgCheck("-nowsk")) // No Windows system keys?
+    {
+        // Disable Alt-Tab, Alt-Esc, Ctrl-Alt-Del.  A bit of a hack, I'm afraid...
+        SystemParametersInfo(SPI_SETSCREENSAVERRUNNING, TRUE, 0, 0);
+        Con_Message("  Windows system keys disabled.\n");
+    }
+#endif
+
+    Con_Message("  Initializing timing system ...\n");
+    Sys_InitTimer();
+
+    startTime = Sys_GetRealTime();
     if(!isDedicated)
     {
-        Con_Message("Sys_Init: Initializing keyboard, mouse and joystick.\n");
-
+        Con_Message("  Initializing keyboard, mouse and joystick ...\n");
         if(!I_Init())
-            Con_Error("Sys_Init: Failed to initialize input.\n");
+            Con_Error("Error, failed to initialize input system.\n");
     }
 
     // Virtual devices need to be created even in dedicated mode.
     I_InitVirtualInputDevices();
-    Sys_InitTimer();
+
     S_Init();
     Huff_Init();
     N_Init();
@@ -119,6 +135,8 @@ void Sys_Init(void)
     // we prefer to receive an error code instead of a signal.
     signal(SIGPIPE, SIG_IGN);
 #endif
+
+    VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
 /**
@@ -142,19 +160,17 @@ void Sys_Shutdown(void)
     I_Shutdown();
 }
 
-int Sys_CriticalMessage(char *msg)
+int Sys_CriticalMessage(char* msg)
 {
 #ifdef WIN32
-    char        buf[256];
-    int         ret;
-    HWND        hWnd = Sys_GetWindowHandle(windowIDX);
+    char buf[256];
+    int ret;
+    HWND hWnd = Sys_GetWindowHandle(windowIDX);
 
     if(!hWnd)
     {
         suspendMsgPump = true;
-        MessageBox(HWND_DESKTOP,
-                   ("Sys_CriticalMessage: Main window not available."), NULL,
-                   MB_ICONERROR | MB_OK);
+        MessageBox(HWND_DESKTOP, ("Sys_CriticalMessage: Main window not available."), NULL, MB_ICONERROR | MB_OK);
         suspendMsgPump = false;
         return false;
     }
@@ -163,10 +179,7 @@ int Sys_CriticalMessage(char *msg)
     ShowCursor(TRUE);
     suspendMsgPump = true;
     GetWindowText(hWnd, buf, 255);
-    ret =
-        (MessageBox(hWnd, (msg), (buf),
-                    MB_OK | MB_ICONEXCLAMATION) ==
-         IDYES);
+    ret = (MessageBox(hWnd, (msg), (buf), MB_OK | MB_ICONEXCLAMATION) == IDYES);
     suspendMsgPump = false;
     ShowCursor(FALSE);
     ShowCursor(FALSE);

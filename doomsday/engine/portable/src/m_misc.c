@@ -65,10 +65,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-typedef struct file_identifier_s {
-    byte hash[16];
-} file_identifier_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -82,10 +78,6 @@ static size_t FileReader(char const *name, byte **buffer, int mallocType);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static uint numReadFiles = 0;
-static uint maxReadFiles = 0;
-static file_identifier_t *readFiles = NULL;
 
 // CODE --------------------------------------------------------------------
 
@@ -107,68 +99,6 @@ void *M_Realloc(void *ptr, size_t size)
 void M_Free(void *ptr)
 {
     free(ptr);
-}
-
-/**
- * Resets the array of known file IDs. The next time M_CheckFileID() is
- * called on a file, it passes.
- */
-void M_ResetFileIDs(void)
-{
-    numReadFiles = 0;
-}
-
-/**
- * Maintains a list of identifiers already seen.
- *
- * @return              @c true, if the given file can be read, or
- *                      @c false, if it has already been read.
- */
-boolean M_CheckFileID(const char *path)
-{
-    byte                id[16];
-    uint                i;
-    boolean             alreadySeen;
-
-    if(!F_Access(path))
-    {
-        if(verbose)
-            Con_Message("M_CheckFileID: Warning, \"%s\" not found!\n", path);
-        return false;
-    }
-
-    // Calculate the identifier.
-    Dir_FileID(path, id);
-
-    alreadySeen = false;
-    i = 0;
-    while(i < numReadFiles && !alreadySeen)
-    {
-        if(!memcmp(readFiles[i].hash, id, 16))
-        {
-            // This identifier has already been encountered.
-            alreadySeen = true;
-        }
-        i++;
-    }
-
-    if(alreadySeen)
-        return false;
-
-    // Allocate a new entry.
-    numReadFiles++;
-    if(numReadFiles > maxReadFiles)
-    {
-        if(!maxReadFiles)
-            maxReadFiles = 16;
-        else
-            maxReadFiles *= 2;
-
-        readFiles = M_Realloc(readFiles, sizeof(readFiles[0]) * maxReadFiles);
-    }
-
-    memcpy(readFiles[numReadFiles - 1].hash, id, 16);
-    return true;
 }
 
 char* M_SkipWhite(char* str)
@@ -286,6 +216,28 @@ void M_ReadLine(char* buffer, size_t len, DFILE *file)
                 buffer[p++] = ch;
         }
     }
+}
+
+void M_PrintPathList2(const char* pathList, boolean makePretty)
+{
+    assert(pathList && pathList[0]);
+    {
+    const char* p = pathList;
+    ddstring_t path;
+    int n = 0;
+
+    Str_Init(&path);   
+    while((p = Str_CopyDelim(&path, p, ';')))
+    {
+        Con_Message("  %i: \"%s\"\n", n++, makePretty? M_PrettyPath(Str_Text(&path)) : Str_Text(&path));
+    }
+    Str_Free(&path);
+    }
+}
+
+void M_PrintPathList(const char* pathList)
+{
+    M_PrintPathList2(pathList, true);
 }
 
 boolean M_IsComment(const char* buffer)
@@ -1220,8 +1172,8 @@ const char* M_PrettyPath(const char* path)
     static filename_t buffers[NUM_BUFS];
     static uint index = 0;
 
-    size_t len = path? MIN_OF(strlen(ddBasePath), strlen(path)) : 0;
-    if(len > 0 && !strnicmp(path, ddBasePath, len))
+    size_t basePathLen = strlen(ddBasePath), len = strlen(path);
+    if(len > basePathLen && !strnicmp(ddBasePath, path, basePathLen))
     {
         char* str = buffers[index++ % NUM_BUFS];
         M_RemoveBasePath(str, path, FILENAME_T_MAXLEN);

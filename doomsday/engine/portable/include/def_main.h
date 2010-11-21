@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@
  * def_main.h: Definitions Subsystem.
  */
 
-#ifndef __DOOMSDAY_DEFINITIONS_MAIN_H__
-#define __DOOMSDAY_DEFINITIONS_MAIN_H__
+#ifndef LIBDENG_DEFINITIONS_MAIN_H
+#define LIBDENG_DEFINITIONS_MAIN_H
 
 #include "def_data.h"
 
@@ -61,12 +61,11 @@ extern ded_count_t countSprNames;
 extern ded_count_t countStates;
 
 void            Def_Init(void);
+int             Def_GetGameClasses(void);
 void            Def_PostInit(void);
 
 // Destroy databases.
 void            Def_Destroy(void);
-
-void            Def_GetAutoPath(char* path, size_t len);
 
 // Reads the specified definition file, and creates the sprite name,
 // state, mobjinfo, sound, music and text databases accordingly.
@@ -95,4 +94,4 @@ int             Def_Get(int type, const char* id, void* out);
 boolean         Def_SameStateSequence(state_t* snew, state_t* sold);
 
 D_CMD(ListMobjs);
-#endif
+#endif /* LIBDENG_DEFINITIONS_MAIN_H */

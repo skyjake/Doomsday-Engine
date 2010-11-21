@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2008 Jaakko Kernen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@
  * dd_winit.h: Win32 Initialization.
  */
 
-#ifndef __DOOMSDAY_WINIT_H__
-#define __DOOMSDAY_WINIT_H__
+#ifndef LIBDENG_WINIT_H
+#define LIBDENG_WINIT_H
 
 #include "dd_pinit.h"
 #include <windows.h>
@@ -40,7 +40,6 @@ typedef struct {
     BOOL            suspendMsgPump; // Set to true to disable checking windows msgs.
     BOOL            userDirOk;
 
-    HINSTANCE       hInstGame; // Instance handle to the game DLL.
     HINSTANCE       hInstPlug[MAX_PLUGS]; // Instances to plugin DLLs.
     GETGAMEAPI      GetGameAPI;
 } application_t;
@@ -50,4 +49,4 @@ extern application_t app;
 
 void            DD_Shutdown(void);
 
-#endif
+#endif /* LIBDENG_WINIT_H */

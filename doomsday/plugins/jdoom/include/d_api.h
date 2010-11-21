@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,20 +26,12 @@
  * d_api.h: Doomsday API setup and interaction - jDoom specific.
  */
 
-#ifndef __D_API_H__
-#define __D_API_H__
+#ifndef LIBJDOOM_API_H
+#define LIBJDOOM_API_H
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-#include "dd_api.h"
 
-extern game_import_t gi;
-extern game_export_t gx;
-
-int             G_GetInteger(int id);
-void           *G_GetVariable(int id);
-game_export_t  *GetGameAPI(game_import_t *imports);
-
-#endif
+#endif /* LIBJDOOM_API_H */

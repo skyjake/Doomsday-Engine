@@ -410,7 +410,7 @@ void NetSv_CycleToMapNum(uint map)
 #if __JDOOM64__
     sprintf(cmd, "setmap 1 %u", map);
 #elif __JDOOM__
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
         sprintf(cmd, "setmap 1 %u", map);
     else
         sprintf(cmd, "setmap %c %c", tmp[0], tmp[1]);
@@ -531,7 +531,7 @@ int NetSv_ScanCycle(int index, maprule_t* rules)
                             tmp[1] ==
                             '*' ? M_Random() % 10 : tmp[1] - '0');
 #elif __JDOOM__
-                    if(gameMode == commercial)
+                    if(gameModeBits & GM_ANY_DOOM2)
                     {
                         sprintf(lump, "MAP%u%u", episode =
                                 tmp[0] == '*' ? M_Random() % 4 : tmp[0] - '0',

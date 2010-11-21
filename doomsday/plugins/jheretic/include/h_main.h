@@ -22,40 +22,37 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef JHERETIC_MAIN
-#define JHERETIC_MAIN
+#ifndef LIBJHERETIC_MAIN_H
+#define LIBJHERETIC_MAIN_H
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
 #endif
 
-#include "doomdef.h"
-
 extern int verbose;
 
-extern boolean devParm;
-extern boolean noMonstersParm;
-extern boolean respawnParm;
-extern boolean turboParm;
-extern boolean fastParm;
+extern boolean noMonstersParm; // checkparm of -nomonsters
+extern boolean respawnParm; // checkparm of -respawn
+extern boolean turboParm; // checkparm of -turbo
+//extern boolean randomClassParm; // checkparm of -randclass
+extern boolean devParm; // checkparm of -devparm
+extern boolean fastParm; // checkparm of -fast
 
-extern float turboMul;
-extern skillmode_t startSkill;
-extern int startEpisode;
-extern int startMap;
-extern boolean autoStart;
+extern float turboMul; // Multiplier for turbo.
+
 extern gamemode_t gameMode;
 extern int gameModeBits;
-extern char gameModeString[];
-extern boolean monsterInfight;
+
+extern char* borderLumps[];
+
 extern const float defFontRGB[];
 extern const float defFontRGB2[];
 extern const float defFontRGB3[];
-extern char *borderLumps[];
 
-void            G_Shutdown(void);
-void            G_EndFrame(void);
-boolean         G_SetGameMode(gamemode_t mode);
-void            G_DetectIWADs(void);
+extern boolean monsterInfight;
 
-#endif /* JHERETIC_MAIN */
+void G_PreInit(void);
+void G_PostInit(int mode);
+void G_Shutdown(void);
+
+#endif /* LIBJHERETIC_MAIN_H */

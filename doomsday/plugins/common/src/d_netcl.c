@@ -101,29 +101,9 @@ void NetCl_Read(byte *buf, int len)
     readbuffer += len;
 }
 
-#if __JDOOM__
-int NetCl_IsCompatible(int other, int us)
-{
-    char                comp[5][5] =        // [other][us]
-    {
-        {1, 1, 0, 1, 0},
-        {0, 1, 0, 1, 0},
-        {0, 0, 1, 0, 0},
-        {0, 0, 0, 1, 0},
-        {0, 0, 0, 0, 0}
-    };
-    /*  shareware,  // DOOM 1 shareware, E1, M9
-       registered,  // DOOM 1 registered, E3, M27
-       commercial,  // DOOM 2 retail, E1 M34
-       retail,      // DOOM 1 retail, E4, M36
-     */
-    return comp[other][us];
-}
-#endif
-
 void NetCl_UpdateGameState(byte *data)
 {
-    byte                gsGameMode = 0;
+    gamemode_t          gsGameMode = 0;
     byte                gsFlags = 0;
     byte                gsEpisode = 0;
     byte                gsMap = 0;
@@ -134,7 +114,7 @@ void NetCl_UpdateGameState(byte *data)
     byte                gsSkill = 0;
     float               gsGravity = 0;
 
-    gsGameMode = data[0];
+    gsGameMode = (gamemode_t)data[0];
     gsFlags = data[1];
     gsEpisode = data[2]-1;
     gsMap = data[3]-1;
@@ -153,16 +133,13 @@ void NetCl_UpdateGameState(byte *data)
     if(gsFlags & GSF_DEMO && !Get(DD_PLAYBACK))
         return;
 
-#if __JDOOM__
-    if(!NetCl_IsCompatible(gsGameMode, gameMode))
-    {
-        // Wrong game mode! This is highly irregular!
+    if(gsGameMode != gameMode)
+    {   // Wrong game mode! This is highly irregular!
         Con_Message("NetCl_UpdateGameState: Game mode mismatch!\n");
         // Stop the demo if one is being played.
         DD_Execute(false, "stopdemo");
         return;
     }
-#endif
 
     deathmatch = gsDeathmatch;
     noMonstersParm = !gsMonsters;
@@ -649,7 +626,7 @@ void NetCl_Intermission(byte* data)
 #if __JDOOM64__
         S_StartMusic("dm2int", true);
 #elif __JDOOM__
-        S_StartMusic(gameMode == commercial? "dm2int" : "inter", true);
+        S_StartMusic((gameModeBits & GM_ANY_DOOM2)? "dm2int" : "inter", true);
 #elif __JHERETIC__
         S_StartMusic("intr", true);
 #elif __JHEXEN__

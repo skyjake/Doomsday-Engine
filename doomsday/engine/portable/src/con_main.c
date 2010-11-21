@@ -51,16 +51,10 @@
 #include "de_render.h"
 #include "de_edit.h"
 #include "de_play.h"
-#include "de_audio.h"
 #include "de_ui.h"
 #include "de_misc.h"
-#include "de_bsp.h"
 #include "de_infine.h"
-
-#ifdef TextOut
-// Windows has its own TextOut.
-#  undef TextOut
-#endif
+#include "de_defs.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -123,7 +117,6 @@ D_CMD(Wait);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void Con_Register(void);
 static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd);
 static void Con_SplitIntoSubCommands(const char *command,
                                      timespan_t markerOffset, byte src,
@@ -186,7 +179,7 @@ static boolean finishCompletion; // An autocomplete has taken place that must
 
 // CODE --------------------------------------------------------------------
 
-static void Con_Register(void)
+void Con_Register(void)
 {
     C_CMD("add",            NULL,   AddSub);
     C_CMD("after",          "is",   Wait);
@@ -218,8 +211,11 @@ static void Con_Register(void)
     C_VAR_BYTE("con-var-silent", &conSilentCVars, 0, 0, 1);
     C_VAR_BYTE("con-snapback", &consoleSnapBackOnPrint, 0, 0, 1);
 
+    // Games
+    C_CMD("listgames",      "",     ListGames);
+
     // File
-    C_VAR_CHARPTR("file-startup", &defaultWads, 0, 0, 0);
+    C_VAR_CHARPTR("file-startup", &autoloadFiles, 0, 0, 0);
 
     C_VAR_INT("con-transition", &rTransition, 0, FIRST_TRANSITIONSTYLE, LAST_TRANSITIONSTYLE);
     C_VAR_INT("con-transition-tics", &rTransitionTics, 0, 0, 60);
@@ -370,13 +366,13 @@ void PrepareCmdArgs(cmdargs_t *cargs, const char *lpCmdLine)
 
 boolean Con_Init(void)
 {
+    Con_Message("Initializing the console...\n");
+
     histBuf = Con_NewBuffer(512, 70, 0);
     bLineOff = 0;
 
     oldCmds = Con_NewBuffer(0, CMDLINE_SIZE, CBF_ALWAYSFLUSH);
     ocPos = 0; // No commands yet.
-
-    //B_Init();
 
     ConsoleActive = false;
     ConsoleInited = true;
@@ -392,36 +388,12 @@ boolean Con_Init(void)
     exBuff = NULL;
     exBuffSize = 0;
 
-    // Register the engine commands and variables.
-    DD_RegisterLoop();
-    DD_RegisterInput();
-    DD_RegisterVFS();
-    B_Register(); // for control bindings
-    Con_Register();
-    DH_Register();
-    R_Register();
-    S_Register();
-    SBE_Register(); // for bias editor
-    Rend_Register();
-    GL_Register();
-    Net_Register();
-    I_Register();
-    H_Register();
-    DAM_Register();
-    BSP_Register();
-    UI_Register();
-    Demo_Register();
-    P_ControlRegister();
-    FI_Register();
-
-    Con_Message("Con_Init: Initializing the console.\n");
     return true;
 }
 
 void Con_Shutdown(void)
 {
-    // Announce
-    VERBOSE(Con_Printf("Con_Shutdown: Shuting down the console...\n"));
+    Con_Message("Shuting down the console...\n");
 
     Con_DestroyBuffer(histBuf); // The console history buffer.
     Con_DestroyBuffer(oldCmds); // The old commands buffer.
@@ -692,11 +664,18 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
         // Found a match. Are we allowed to execute?
         boolean canExecute = true;
 
+        // Trying to issue a command requiring a loaded game?
+        // dj: This should be considered a short-term solution. Ideally we want some namespacing mechanics.
+        if((ccmd->flags & CMDF_NO_NULLGAME) && DD_IsNullGameInfo(DD_GameInfo()))
+        {
+            Con_Printf("executeSubCmd: '%s' impossible with no game loaded.\n", ccmd->name);
+            return true;
+        }
+
         // A dedicated server, trying to execute a ccmd not available to us?
         if(isDedicated && (ccmd->flags & CMDF_NO_DEDICATED))
         {
-            Con_Printf("executeSubCmd: '%s' impossible in dedicated mode.\n",
-                        ccmd->name);
+            Con_Printf("executeSubCmd: '%s' impossible in dedicated mode.\n", ccmd->name);
             return true;
         }
 
@@ -706,10 +685,8 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
             // Is the command permitted for use by clients?
             if(ccmd->flags & CMDF_CLIENT)
             {
-                Con_Printf("executeSubCmd: Blocked command. A client"
-                           " attempted to use '%s'.\n"
-                           "This command is not permitted for use by clients\n",
-                           ccmd->name);
+                Con_Printf("executeSubCmd: Blocked command. A client attempted to use '%s'.\n"
+                           "This command is not permitted for use by clients\n", ccmd->name);
                 // \todo Tell the client!
                 return true;
             }
@@ -1873,6 +1850,7 @@ void Con_AbnormalShutdown(const char* message)
 {
     Sys_Shutdown();
     B_Shutdown();
+    DD_DestroyGameInfo();
 
 #ifdef WIN32
     ChangeDisplaySettings(0, 0); // Restore original mode, just in case.
@@ -1984,7 +1962,7 @@ D_CMD(Clear)
 D_CMD(Version)
 {
     Con_Printf("Doomsday Engine %s (" __TIME__ ")\n", DOOMSDAY_VERSIONTEXT);
-    Con_Printf("Game DLL: %s\n", (char *) gx.GetVariable(DD_VERSION_LONG));
+    Con_Printf("Game DLL: %s\n", (char *) gx.GetVariable(DD_GAME_VERSION_LONG));
     Con_Printf("%s\n", DOOMSDAY_PROJECTURL);
     return true;
 }

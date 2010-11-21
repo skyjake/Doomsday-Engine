@@ -32,12 +32,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#ifdef MACOSX
-#  include <SDL_net.h>
-#else
-#  include <SDL_net.h>
-#endif
-
+#include <SDL_net.h>
 #include <errno.h>
 
 #include "de_base.h"

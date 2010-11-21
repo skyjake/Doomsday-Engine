@@ -69,9 +69,6 @@ void Def_ReadProcessDED(const char* filename);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern filename_t defsFileName;
-extern filename_t topDefsFileName;
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 ded_t defs; // The main definitions database.
@@ -96,7 +93,6 @@ boolean firstDED;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean defsInited = false;
-static const char* dedFiles[MAX_READ];
 static mobjinfo_t* gettingFor;
 
 xgclass_t nullXgClassLinks; // Used when none defined.
@@ -109,9 +105,9 @@ xgclass_t* xgClassLinks;
  * XGFunc links are provided by the Game, who owns the actual
  * XG classes and their functions.
  */
-static int GetXGClasses(void)
+int Def_GetGameClasses(void)
 {
-    xgClassLinks = (xgclass_t *) gx.GetVariable(DD_XGFUNC_LINK);
+    xgClassLinks = (xgclass_t*) gx.GetVariable(DD_XGFUNC_LINK);
     if(!xgClassLinks)
     {
         memset(&nullXgClassLinks, 0, sizeof(nullXgClassLinks));
@@ -125,9 +121,7 @@ static int GetXGClasses(void)
  */
 void Def_Init(void)
 {
-    int                 i, c, p;
-
-    sprNames = NULL; // Sprite name list.
+    sprNames = NULL;
     mobjInfo = NULL;
     states = NULL;
     statePtcGens = NULL;
@@ -135,6 +129,7 @@ void Def_Init(void)
     sounds = NULL;
     texts = NULL;
     stateOwners = NULL;
+
     DED_ZCount(&countSprNames);
     DED_ZCount(&countMobjInfo);
     DED_ZCount(&countStates);
@@ -142,39 +137,7 @@ void Def_Init(void)
     DED_ZCount(&countTexts);
     DED_ZCount(&countStateOwners);
 
-    // Retrieve the XG Class links from the game .dll
-    GetXGClasses();
-
     DED_Init(&defs);
-
-    for(i = 0; i < MAX_READ; ++i)
-        dedFiles[i] = NULL;
-
-    // The engine defs.
-    c = 0;
-    dedFiles[c++] = defsFileName;
-
-    // Add the default ded. It will be overwritten by -defs.
-    dedFiles[c++] = topDefsFileName;
-
-    // See which .ded files are specified on the command line.
-    for(p = 0; p < Argc(); ++p)
-    {
-        const char*         arg = Argv(p);
-
-        if(!ArgRecognize("-def", arg) && !ArgRecognize("-defs", arg))
-            continue;
-
-        while(c < MAX_READ && ++p != Argc() && !ArgIsOption(p))
-        {
-            // Add it to the list.
-            dedFiles[c++] = Argv(p);
-
-            Con_Message("Def_Init: Added '%s' to dedFiles.\n", Argv(p));
-        }
-
-        p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
-    }
 }
 
 /**
@@ -203,26 +166,6 @@ void Def_Destroy(void)
     stateLights = NULL;
 
     defsInited = false;
-}
-
-/**
- * Guesses the location of the Defs Auto directory based on main DED
- * file.
- */
-void Def_GetAutoPath(char* path, size_t len)
-{
-    char*               lastSlash;
-
-    strncpy(path, topDefsFileName, len);
-    lastSlash = strrchr(path, DIR_SEP_CHAR);
-    if(!lastSlash)
-    {
-        strncpy(path, "", len); // Failure!
-        return;
-    }
-
-    strncpy(lastSlash + 1, "auto" DIR_SEP_STR,
-            len - ((lastSlash + 1) - path));
 }
 
 /**
@@ -675,17 +618,17 @@ int Def_ReadDEDFile(const char* fn, filetype_t type, void* parm)
     if(type == FT_DIRECTORY)
         return true;
 
-    if(M_CheckFileID(fn))
+    if(F_Access(fn))
     {
-        if(!DED_Read(&defs, fn))
+        if(F_CheckFileID(fn))
         {
-            // Damn.
-            Con_Error("Def_ReadDEDFile: %s\n", dedReadError);
+            if(!DED_Read(&defs, fn))
+                Con_Error("Def_ReadDEDFile: %s\n", dedReadError);
         }
-        else if(verbose)
-        {
-            Con_Message("DED done: %s\n", M_PrettyPath(fn));
-        }
+    }
+    else
+    {
+        Con_Message("Def_ReadDEDFile: Warning %s not found!\n", fn);
     }
 
     // Continue processing files.
@@ -694,8 +637,10 @@ int Def_ReadDEDFile(const char* fn, filetype_t type, void* parm)
 
 void Def_ReadProcessDED(const char* fileName)
 {
-    filename_t          fn, fullFn;
-    directory_t         dir;
+    assert(fileName && fileName[0]);
+    {
+    filename_t fn, fullFn;
+    directory_t dir;
 
     memset(&dir, 0, sizeof(dir));
 
@@ -713,13 +658,13 @@ void Def_ReadProcessDED(const char* fileName)
     }
 
     if(strchr(fn, '*') || strchr(fn, '?'))
-    {
-        // Wildcard search.
+    {   // Wildcard search.
         F_ForAll(fullFn, 0, Def_ReadDEDFile);
     }
     else
     {
         Def_ReadDEDFile(fullFn, FT_NORMAL, 0);
+    }
     }
 }
 
@@ -739,23 +684,22 @@ void Def_CountMsg(int count, const char* label)
  */
 void Def_ReadLumpDefs(void)
 {
-    int                 i, c;
-
-    for(i = 0, c = 0; i < numLumps; ++i)
-        if(!strnicmp(W_LumpName(i), "DD_DEFNS", 8))
-        {
-            c++;
-            if(!DED_ReadLump(&defs, i))
-            {
-                Con_Error("DD_ReadLumpDefs: Parse error when reading "
-                          "DD_DEFNS from\n  %s.\n", W_LumpSourceFile(i));
-            }
-        }
-
-    if(c || verbose)
+    int numProcessedLumps = 0;
+    int i, numLumps = W_NumLumps();
+    for(i = 0; i < numLumps; ++i)
     {
-        Con_Message("ReadLumpDefs: %i definition lump%s read.\n", c,
-                    c != 1 ? "s" : "");
+        if(strnicmp(W_LumpName(i), "DD_DEFNS", 8))
+            continue;
+        numProcessedLumps++;
+        if(!DED_ReadLump(&defs, i))
+        {
+            Con_Error("DD_ReadLumpDefs: Parse error when reading %s::DD_DEFNS.\n", W_LumpSourceFile(i));
+        }
+    }
+
+    if(verbose && numProcessedLumps > 0)
+    {
+        Con_Message("ReadLumpDefs: %i definition lump%s read.\n", numProcessedLumps, numProcessedLumps != 1 ? "s" : "");
     }
 }
 
@@ -802,22 +746,42 @@ int Def_GetIntValue(char* val, int* returned_val)
     return false;
 }
 
-static void readDefs(void)
+static __inline void readDefinitionFile(const char* fileName)
 {
-    int                 i;
-    float               starttime = Sys_GetSeconds();
+    if(!fileName || !fileName[0])
+        return;
+    Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(fileName));
+    Def_ReadProcessDED(fileName);
+}
 
-    for(i = 0; dedFiles[i]; ++i)
+static void readAllDefinitions(void)
+{
+    uint startTime = Sys_GetRealTime();
+
+    // Start with engine's own top-level definition file, it is always read first.
+    readDefinitionFile(DD_BASEDEFSPATH"doomsday.ded");
+
+    // Next the top-level game definition file.
+    readDefinitionFile(Str_Text(&topDefsFileName));
+
+    // Any definition files on the command line?
+    { int p;
+    for(p = 0; p < Argc(); ++p)
     {
-        Con_Message("Reading definition file: %s\n", M_PrettyPath(dedFiles[i]));
-        Def_ReadProcessDED(dedFiles[i]);
-    }
+        const char* arg = Argv(p);
+        if(!ArgRecognize("-def", arg) && !ArgRecognize("-defs", arg))
+            continue;
+        while(++p != Argc() && !ArgIsOption(p))
+        {
+            readDefinitionFile(Argv(p));
+        }
+        p--; /* For ArgIsOption(p) necessary, for p==Argc() harmless */
+    }}
 
-    // Read definitions from WAD files.
+    // Read definition files from WAD/ZIP archives.
     Def_ReadLumpDefs();
 
-    VERBOSE(Con_Message("Def_ReadDefs: Done in %.2f seconds.\n",
-                        Sys_GetSeconds() - starttime));
+    VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
 /**
@@ -826,13 +790,15 @@ static void readDefs(void)
  */
 void Def_Read(void)
 {
-    int                 i, k;
+    int i, k;
 
     if(defsInited)
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        R_ClearClassDataPath(DDRC_MODEL);
+        // \fixme dj: This is not correct. We do not want to clear all paths
+        // we should instead re-init to the default path set.
+        DD_ClearResourceClassSearchPathList(DDRC_MODEL);
         Def_Destroy();
     }
 
@@ -843,37 +809,30 @@ void Def_Read(void)
     DED_Init(&defs);
 
     // Reset file IDs so previously seen files can be processed again.
-    M_ResetFileIDs();
+    F_ResetFileIDs();
 
     // Read all definitions, files and lumps.
-    readDefs();
+    Con_Message("Parsing definition files:\n");
+    readAllDefinitions();
 
     // Any definition hooks?
     Plug_DoHook(HOOK_DEFS, 0, &defs);
 
-    // Check that enough defs were found.
-    if(!defs.count.states.num || !defs.count.mobjs.num)
-        Con_Error("DD_ReadDefs: No state or mobj definitions found!\n");
-
     Con_Message("Definitions:\n");
-
     // Sprite names.
-    DED_NewEntries((void **) &sprNames, &countSprNames, sizeof(*sprNames),
-                   defs.count.sprites.num);
+    DED_NewEntries((void **) &sprNames, &countSprNames, sizeof(*sprNames), defs.count.sprites.num);
     for(i = 0; i < countSprNames.num; ++i)
         strcpy(sprNames[i].name, defs.sprites[i].id);
     Def_CountMsg(countSprNames.num, "sprite names");
 
     // States.
-    DED_NewEntries((void **) &states, &countStates, sizeof(*states),
-                   defs.count.states.num);
+    DED_NewEntries((void **) &states, &countStates, sizeof(*states), defs.count.states.num);
+
     // Zero the parallel LUTs to the states array. These will be re-inited
     // anyway so there is no need to worry about updating any old values.
-    statePtcGens =
-        M_Realloc(statePtcGens, sizeof(*statePtcGens) * countStates.num);
+    statePtcGens = M_Realloc(statePtcGens, sizeof(*statePtcGens) * countStates.num);
     memset(statePtcGens, 0, sizeof(*statePtcGens) * countStates.num);
-    stateLights =
-        M_Realloc(stateLights, sizeof(*stateLights) * countStates.num);
+    stateLights = M_Realloc(stateLights, sizeof(*stateLights) * countStates.num);
     memset(stateLights, 0, sizeof(*stateLights) * countStates.num);
 
     for(i = 0; i < countStates.num; ++i)
@@ -993,7 +952,7 @@ void Def_Read(void)
 
         strcpy(si->id, snd->id);
         strcpy(si->lumpName, snd->lumpName);
-        si->lumpNum = W_CheckNumForName(snd->lumpName);
+        si->lumpNum = (strlen(snd->lumpName) > 0? W_CheckNumForName(snd->lumpName) : -1);
         strcpy(si->name, snd->name);
         k = Def_GetSoundNum(snd->link);
         si->link = (k >= 0 ? sounds + k : NULL);
@@ -1115,12 +1074,12 @@ void Def_Read(void)
     Def_CountMsg(defs.count.reflections.num, "surface reflections");
 
     // Materials.
-    Def_CountMsg(defs.count.materials.num, "surface materials");
+    Def_CountMsg(defs.count.materials.num, "materials");
 
     // Map infos.
     for(i = 0; i < defs.count.mapInfo.num; ++i)
     {
-        ded_mapinfo_t*      mi = &defs.mapInfo[i];
+        ded_mapinfo_t* mi = &defs.mapInfo[i];
 
         /**
          * Historically, the map info flags field was used for sky flags,
@@ -1140,8 +1099,7 @@ void Def_Read(void)
     Def_CountMsg(defs.count.sectorTypes.num, "sector types");
 
     // Init the base model search path (prepend).
-    Dir_ValidDir(defs.modelPath, FILENAME_T_MAXLEN);
-    R_AddClassDataPath(DDRC_MODEL, defs.modelPath, false);
+    GameInfo_AddResourceSearchPath(DD_GameInfo(), DDRC_MODEL, defs.modelPath, false);
 
     defsInited = true;
 }

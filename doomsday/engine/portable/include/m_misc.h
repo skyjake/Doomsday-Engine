@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,13 +26,12 @@
  * m_misc.h: Miscellanous Routines
  */
 
-#ifndef __DOOMSDAY_MISCELLAN_H__
-#define __DOOMSDAY_MISCELLAN_H__
+#ifndef LIBDENG_M_MISC_H
+#define LIBDENG_M_MISC_H
 
 #include "dd_types.h"
 #include "sys_file.h"
 
-#define MAX_READ    8192
 #define ISSPACE(c)  ((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' ||\
                      (c) == '\r')
 
@@ -42,9 +41,7 @@ void*           M_Calloc(size_t size);
 void*           M_Realloc(void* ptr, size_t size);
 void            M_Free(void* ptr);
 
-// File system routines.
-void            M_ResetFileIDs(void);
-boolean         M_CheckFileID(const char* path);
+// File system utility routines.
 size_t          M_ReadFile(char const* name, byte** buffer);
 size_t          M_ReadFileCLib(char const* name, byte** buffer);
 boolean         M_WriteFile(char const* name, void* source, size_t length);
@@ -64,6 +61,12 @@ void            M_RemoveBasePath(char* newPath, const char* absPath,
                                  size_t len);
 const char*     M_PrettyPath(const char* path);
 void            M_ReadLine(char* buffer, size_t len, DFILE* file);
+
+/**
+ * Prints the passed path list to the console.
+ */
+void M_PrintPathList2(const char* pathList, boolean makePretty);
+void M_PrintPathList(const char* pathList);
 
 // Bounding boxes.
 void            M_ClearBox(fixed_t* box);
@@ -136,4 +139,4 @@ boolean         M_CheckTrigger(const trigger_t* trigger, timespan_t advanceTime)
 // Other utilities.
 int             M_ScreenShot(const char* filename, int bits);
 
-#endif
+#endif /* LIBDENG_M_MISC_H */

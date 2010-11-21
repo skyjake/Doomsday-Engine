@@ -916,7 +916,7 @@ static void sendMessage(int player, const char* msg)
     }
 
 #if __JDOOM__
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
         S_LocalSound(SFX_RADIO, 0);
     else
         S_LocalSound(SFX_TINK, 0);

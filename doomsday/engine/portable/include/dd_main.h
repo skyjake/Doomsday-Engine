@@ -30,39 +30,92 @@
 #define LIBDENG_MAIN_H
 
 #include "dd_types.h"
+#include "m_string.h"
+#include "gameinfo.h"
 
 // Verbose messages.
 #define VERBOSE(code)   { if(verbose >= 1) { code; } }
 #define VERBOSE2(code)  { if(verbose >= 2) { code; } }
 
 extern int verbose;
-extern int maxZone;
 extern FILE* outFile; // Output file for console messages.
-extern int isDedicated;
-extern char ddBasePath[];
-extern char* defaultWads; // A list of wad names, whitespace in between (in .cfg).
+
+extern filename_t ddBasePath;
 extern directory_t ddRuntimeDir, ddBinDir;
-extern filename_t bindingsConfigFileName;
+
+extern ddstring_t configFileName, bindingsConfigFileName;
+extern ddstring_t topDefsFileName;
+
+extern char* autoloadFiles; // A list of wad names, whitespace in between (in .cfg).
+
+extern int isDedicated;
 
 #ifndef WIN32
 extern GETGAMEAPI GetGameAPI;
 #endif
 
-int             DD_Main(void);
-void            DD_UpdateEngineState(void);
-void            DD_GameUpdate(int flags);
-void            DD_AddStartupWAD(const char* file);
-void            DD_AddIWAD(const char* path);
-void            DD_AutoLoad(void);
-void            DD_SetConfigFile(const char* file);
-void            DD_SetDefsFile(const char* file);
-int             DD_GetInteger(int ddvalue);
-void            DD_SetInteger(int ddvalue, int parm);
-void            DD_SetVariable(int ddvalue, void* ptr);
-void*           DD_GetVariable(int ddvalue);
-ddplayer_t*     DD_GetPlayer(int number);
+int DD_Main(void);
+void DD_CheckTimeDemo(void);
+void DD_UpdateEngineState(void);
+
+/**
+ * @param origPath      If a relative path, the data path is added in front of it.
+ */
+void R_PrependDataPath(char* newPath, const char* origPath, size_t len);
+
+/**
+ * Set the defs path. The game module is responsible for calling this.
+ */
+void R_SetDefsPath(const char* path);
+
+/**
+ * @return              Ptr to a string containing the definition file path.
+ */
+const char* R_GetDefsPath(void);
+
+/**
+ * @param origPath      If a relative path, the defs path is added in front of it.
+ */
+void R_PrependDefsPath(char* newPath, const char* origPath, size_t len);
+
+/**
+ * Set the primary DED file, which is included immediately after Doomsday.ded.
+ */
+void DD_SetDefsFile(const char* file);
+
+void DD_SetConfigFile(const char* file);
+
+int DD_GetInteger(int ddvalue);
+void DD_SetInteger(int ddvalue, int parm);
+void DD_SetVariable(int ddvalue, void* ptr);
+void* DD_GetVariable(int ddvalue);
+
+ddplayer_t* DD_GetPlayer(int number);
+
 material_namespace_t DD_MaterialNamespaceForTextureType(gltexture_type_t t);
-materialnum_t   DD_MaterialForTexture(uint ofTypeId, gltexture_type_t type);
-void            DD_CheckTimeDemo(void);
-const char*     value_Str(int val);
+materialnum_t DD_MaterialForTexture(uint ofTypeId, gltexture_type_t type);
+
+const char* value_Str(int val);
+
+/**
+ * @return  Ptr to the currently active GameInfo structure (always succeeds).
+ */
+gameinfo_t* DD_GameInfo(void);
+
+/**
+ * Is this the special "null-game" object (not a real playable game).
+ * \todo Implement a proper null-gameinfo object for this.
+ */
+boolean DD_IsNullGameInfo(gameinfo_t* info);
+
+/**
+ * Frees the info structures for all registered games.
+ */
+void DD_DestroyGameInfo(void);
+
+void DD_ShutdownResourceClassSearchPaths(void);
+void DD_ClearResourceClassSearchPathList(ddresourceclass_t resClass);
+
+D_CMD(ListGames);
+
 #endif /* LIBDENG_MAIN_H */

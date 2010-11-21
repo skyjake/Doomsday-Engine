@@ -575,7 +575,7 @@ static void loadMapSpots(void)
             break;
 
         case 2002:
-            if(gameMode != shareware)
+            if(gameMode != heretic_shareware)
                 P_AddMaceSpot(i);
             break;
 #endif
@@ -755,8 +755,8 @@ int P_SetupMapWorker(void* ptr)
             { GM_ANY,   MT_TROOPSHOT },
             { GM_ANY,   MT_HEADSHOT },
             { GM_ANY,   MT_ROCKET },
-            { GM_NOTSHAREWARE, MT_PLASMA },
-            { GM_NOTSHAREWARE, MT_BFG },
+            { GM_ANY^GM_DOOM_SHAREWARE, MT_PLASMA },
+            { GM_ANY^GM_DOOM_SHAREWARE, MT_BFG },
             { GM_DOOM2, MT_ARACHPLAZ },
             { GM_DOOM2, MT_FATSHOT },
             // Potentially dropped weapons:
@@ -1000,7 +1000,7 @@ boolean P_IsMapFromIWAD(uint episode, uint map)
 {
     char lumpName[9];
     P_MapId(episode, map, lumpName);
-    return W_IsFromIWAD(W_GetNumForName(lumpName));
+    return W_LumpFromIWAD(W_GetNumForName(lumpName));
 }
 
 const char* P_GetMapAuthor(boolean surpressIWADAuthors)
@@ -1008,34 +1008,20 @@ const char* P_GetMapAuthor(boolean surpressIWADAuthors)
     const char* author = (const char*) DD_GetVariable(DD_MAP_AUTHOR);
 
     if(!author || !author[0])
-        return NULL;
+        return 0;
 
+    /// \kludge We need DED Reader 2.0 to handle this the Right Way...
     if(surpressIWADAuthors)
     {
         if(P_IsMapFromIWAD(gameEpisode, gameMap))
-            return NULL;
+            return 0;
 
-        // @kludge We need DED Reader 2.0 to handle this the Right Way...
-        {
-# if __JDOOM__
-        static const char* iwadAuthors[] = {
-            "id Software",
-            "id Software",
-            "Team TNT",
-            "Dario Casali and Milo Casali"
-        };
-
-        if(!stricmp(author, iwadAuthors[gameMission]))
-            return NULL;
-# elif __JDOOM64__
-        if(!stricmp(author, "Midway"))
-            return NULL;
-# else /* __JHERETIC__ || __JHEXEN__ */
-        if(!stricmp(author, "raven software"))
-            return NULL;
-# endif
+        { ddgameinfo_t gameInfo;
+        if(DD_GetGameInfo(&gameInfo) && !stricmp(author, gameInfo.author))
+            return 0;
         }
     }
+    /// << kludge end.
 
     return author;
 }

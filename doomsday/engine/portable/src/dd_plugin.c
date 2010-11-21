@@ -54,7 +54,8 @@ typedef struct {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-hookreg_t hooks[NUM_HOOK_TYPES];
+static hookreg_t hooks[NUM_HOOK_TYPES];
+static pluginid_t currentPlugin = 0;
 
 // CODE --------------------------------------------------------------------
 
@@ -65,7 +66,7 @@ hookreg_t hooks[NUM_HOOK_TYPES];
  */
 int Plug_AddHook(int hookType, hookfunc_t hook)
 {
-    int     i, type = HOOKMASK(hookType);
+    int i, type = HOOKMASK(hookType);
 
     // The type must be good.
     if(type < 0 || type >= NUM_HOOK_TYPES)
@@ -99,22 +100,25 @@ int Plug_AddHook(int hookType, hookfunc_t hook)
  */
 int Plug_RemoveHook(int hookType, hookfunc_t hook)
 {
-    int     i, type = HOOKMASK(hookType);
+    int i, type = HOOKMASK(hookType);
+
+    if(currentPlugin)
+        Con_Error("Plug_RemoveHook: Failed, already processing a hook.");
 
     // The type must be good.
     if(type < 0 || type >= NUM_HOOK_TYPES)
         return false;
-    for(i = 0; i < MAX_HOOKS; i++)
-        if(hooks[type].list[i] == hook)
-        {
-            hooks[type].list[i] = NULL;
-            if(hookType & HOOKF_EXCLUSIVE)
-            {
-                // Exclusive hook removed; allow normal hooks.
-                hooks[type].exclude = false;
-            }
-            return true;
+    for(i = 0; i < MAX_HOOKS; ++i)
+    {
+        if(hooks[type].list[i] != hook)
+            continue;
+        hooks[type].list[i] = 0;
+        if(hookType & HOOKF_EXCLUSIVE)
+        {   // Exclusive hook removed; allow normal hooks.
+            hooks[type].exclude = false;
         }
+        return true;
+    }
     return false;
 }
 
@@ -125,21 +129,26 @@ int Plug_RemoveHook(int hookType, hookfunc_t hook)
  */
 int Plug_DoHook(int hookType, int parm, void *data)
 {
-    int     i, ret = 0;
+    int ret = 0;
     boolean allGood = true;
 
     // Try all the hooks.
-    for(i = 0; i < MAX_HOOKS; i++)
-        if(hooks[hookType].list[i])
-        {
-            if(hooks[hookType].list[i] (hookType, parm, data))
-            {
-                // One hook executed; return nonzero from this routine.
-                ret = 1;
-            }
-            else
-                allGood = false;
+    { int i;
+    for(i = 0; i < MAX_HOOKS; ++i)
+    {
+        if(!hooks[hookType].list[i])
+            continue;
+
+        currentPlugin = i+1;
+        if(hooks[hookType].list[i] (hookType, parm, data))
+        {   // One hook executed; return nonzero from this routine.
+            ret = 1;
         }
+        else
+            allGood = false;
+    }}
+
+    currentPlugin = 0;
 
     if(ret && allGood)
         ret |= 2;
@@ -155,12 +164,14 @@ int Plug_DoHook(int hookType, int parm, void *data)
  */
 int Plug_CheckForHook(int hookType)
 {
-    int     i;
-
-    // Try all the hooks.
-    for(i = 0; i < MAX_HOOKS; i++)
+    size_t i;
+    for(i = 0; i < MAX_HOOKS; ++i)
         if(hooks[hookType].list[i])
             return true;
-
     return false;
+}
+
+pluginid_t Plug_PluginIdForActiveHook(void)
+{
+    return (pluginid_t)currentPlugin;
 }

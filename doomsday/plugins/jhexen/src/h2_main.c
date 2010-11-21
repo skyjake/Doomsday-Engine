@@ -30,11 +30,7 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
 #include <string.h>
-#include <ctype.h>
 
 #include "jhexen.h"
 
@@ -52,6 +48,7 @@
 #include "p_switch.h"
 #include "p_player.h"
 #include "p_inventory.h"
+#include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -72,144 +69,178 @@ extern void X_DestroyLUTs(void);
 
 int verbose;
 
+boolean devParm; // checkparm of -devparm
 boolean noMonstersParm; // checkparm of -nomonsters
 boolean respawnParm; // checkparm of -respawn
+//boolean fastParm; // checkparm of -fast
 boolean turboParm; // checkparm of -turbo
 boolean randomClassParm; // checkparm of -randclass
-boolean devParm; // checkparm of -devparm
 
 float turboMul; // Multiplier for turbo.
-boolean netCheatParm; // Allow cheating in netgames (-netcheat)
 
-skillmode_t startSkill;
-int startEpisode;
-int startMap;
-
-gamemode_t gameMode;
-int gameModeBits;
-
-// This is returned in D_Get(DD_GAME_MODE), max 16 chars.
-char gameModeString[17];
+gamemode_t gameMode = indetermined;
+int gameModeBits = 0;
 
 // Default font colours.
-const float defFontRGB[] = { .9f, .0f, .0f };
+const float defFontRGB[]  = { .9f, .0f, .0f };
 const float defFontRGB2[] = { .9f, .9f, .9f };
 const float defFontRGB3[] = { 1, .65f, .275f };
 
-boolean autoStart;
-
+// The patches used in drawing the view border.
 char* borderLumps[] = {
     "F_022", // Background.
-    "bordt", // Top.
-    "bordr", // Right.
-    "bordb", // Bottom.
-    "bordl", // Left.
-    "bordtl", // Top left.
-    "bordtr", // Top right.
-    "bordbr", // Bottom right.
-    "bordbl" // Bottom left.
+    "BORDT", // Top.
+    "BORDR", // Right.
+    "BORDB", // Bottom.
+    "BORDL", // Left.
+    "BORDTL", // Top left.
+    "BORDTR", // Top right.
+    "BORDBR", // Bottom right.
+    "BORDBL" // Bottom left.
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+// The interface to the Doomsday engine.
+game_export_t gx;
+game_import_t gi;
+
+static boolean autoStart = false;
+static uint startEpisode = 0;
+static uint startMap = 0;
+static playerclass_t startPlayerClass = PCLASS_NONE;
+static skillmode_t startSkill = SM_MEDIUM;
+
 // CODE --------------------------------------------------------------------
+
+/**
+ * Get a 32-bit integer value.
+ */
+int G_GetInteger(int id)
+{
+    switch(id)
+    {
+    case DD_GAME_DMUAPI_VER:
+        return DMUAPI_VER;
+
+    default:
+        break;
+    }
+    // ID not recognized, return NULL.
+    return 0;
+}
+
+/**
+ * Get a pointer to the value of a named variable/constant.
+ */
+void* G_GetVariable(int id)
+{
+    static float bob[2];
+
+    switch(id)
+    {
+    case DD_GAME_NAME:
+        return GAMENAMETEXT;
+
+    case DD_GAME_NICENAME:
+        return GAME_NICENAME;
+
+    case DD_GAME_ID:
+        return GAMENAMETEXT " " GAME_VERSION_TEXT;
+
+    case DD_GAME_VERSION_SHORT:
+        return GAME_VERSION_TEXT;
+
+    case DD_GAME_VERSION_LONG:
+        return GAME_VERSION_TEXTLONG "\n" GAME_DETAILS;
+
+    case DD_GAME_CONFIG:
+        return gameConfigString;
+
+    case DD_ACTION_LINK:
+        return actionlinks;
+
+    case DD_XGFUNC_LINK:
+        return 0;
+
+    case DD_PSPRITE_BOB_X:
+        R_GetWeaponBob(DISPLAYPLAYER, &bob[0], 0);
+        return &bob[0];
+
+    case DD_PSPRITE_BOB_Y:
+        R_GetWeaponBob(DISPLAYPLAYER, 0, &bob[1]);
+        return &bob[1];
+
+    default:
+        break;
+    }
+    return 0;
+}
 
 /**
  * Attempt to change the current game mode. Can only be done when not
  * actually in a map.
  *
  * \todo Doesn't actually do anything yet other than set the game mode
- *  global vars.
+ * global vars.
  *
- * @param mode          The game mode to change to.
+ * @param mode          GameMode to change to.
  *
- * @return              @c true, if we changed game modes successfully.
+ * @return              @true, if we changed game modes successfully.
  */
-boolean G_SetGameMode(gamemode_t mode)
+boolean G_SetGameMode(int/*gamemode_t*/ mode)
 {
-    gameMode = mode;
-
     if(G_GetGameState() == GS_MAP)
         return false;
-
-    switch(mode)
-    {
-    case shareware: // Shareware (4-map demo)
-        gameModeBits = GM_SHAREWARE;
-        break;
-
-    case registered: // HEXEN registered
-        gameModeBits = GM_REGISTERED;
-        break;
-
-    case extended: // Deathkings
-        gameModeBits = GM_REGISTERED|GM_EXTENDED;
-        break;
-
-    case indetermined: // Well, no IWAD found.
-        gameModeBits = GM_INDETERMINED;
-        break;
-
-    default:
-        Con_Error("G_SetGameMode: Unknown gamemode %i", mode);
-    }
-
+    gameMode = mode;
+    gameModeBits = mode > 0? 1 << (mode-1) : 0;
     return true;
 }
 
-/**
- * Set the game mode string.
- */
-void G_IdentifyVersion(void)
+int G_RegisterGames(int hookType, int parm, void* data)
 {
-    // Determine the game mode. Assume demo mode.
-    strcpy(gameModeString, "hexen-demo");
-    G_SetGameMode(shareware);
+#define DATAPATH        DD_BASEDATAPATH GAMENAMETEXT "\\"
+#define STARTUPPK3      GAMENAMETEXT ".pk3"
+#define NUMELEMENTS(v)  (sizeof(v)/sizeof((v)[0]))
 
-    if(P_MapExists(0, 4))
-    {   // Normal Hexen.
-        strcpy(gameModeString, "hexen");
-        G_SetGameMode(registered);
-    }
+    /* Hexen (Death Kings) */
+    { const char* files[] = { STARTUPPK3, "hexen.wad", "hexdd.wad" };
+    const char*   lumps[] = { "MAP59"/*dk*/, "MAP60"/*dk*/, "MAP08", "MAP22", "TINTTAB", "FOGMAP", "TRANTBLA", "DARTA1", "ARTIPORK", "SKYFOG", "TALLYTOP", "GROVER" };
+    DD_AddGame(hexen_deathkings, "hexen-dk", DATAPATH, "Hexen (Deathkings of the Dark Citadel)", "Raven Software", "deathkings", "dk", files, NUMELEMENTS(files), lumps, NUMELEMENTS(lumps)); }
 
-    // This is not a very accurate test...
-    if(P_MapExists(0, 58) && P_MapExists(0, 59))
-    {   // It must be Deathkings!
-        strcpy(gameModeString, "hexen-dk");
-        G_SetGameMode(extended);
-    }
+    /* Hexen */
+    { const char* files[] = { STARTUPPK3, "hexen.wad" };
+    const char*   lumps[] = { "MAP08", "MAP22", "TINTTAB", "FOGMAP", "TRANTBLA", "DARTA1", "ARTIPORK", "SKYFOG", "TALLYTOP", "GROVER" };
+    DD_AddGame(hexen, "hexen", DATAPATH, "Hexen", "Raven Software", "hexen", 0, files, NUMELEMENTS(files), lumps, NUMELEMENTS(lumps)); }
+
+    /* Hexen (Shareware) */
+    { const char* files[] = { STARTUPPK3, "hexen.wad" };
+    const char*   lumps[] = { "MAP01", "MAP04", "TINTTAB", "FOGMAP", "TRANTBLA", "DARTA1", "ARTIPORK", "SKYFOG", "TALLYTOP", "GROVER" };
+    DD_AddGame(hexen_shareware, "hexen-demo", DATAPATH, "Hexen 4-map Beta Demo", "Raven Software", "shexen", 0, files, NUMELEMENTS(files), lumps, NUMELEMENTS(lumps)); }
+
+    return true;
+
+#undef NUMELEMENTS
+#undef STARTUPPK3
+#undef DATAPATH
 }
 
 /**
- * Check which known IWADs are found. The purpose of this routine is to
- * find out which IWADs the user lets us to know about, but we don't
- * decide which one gets loaded or even see if the WADs are actually
- * there. The default location for IWADs is Data\GAMENAMETEXT\.
- */
-void G_DetectIWADs(void)
-{
-    DD_AddIWAD("}data\\"GAMENAMETEXT"\\hexen.wad");
-    DD_AddIWAD("}data\\hexen.wad");
-    DD_AddIWAD("}hexen.wad");
-    DD_AddIWAD("hexen.wad");
-}
-
-/**
- * Pre Engine Initialization routine.
+ * Pre Game Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
 void G_PreInit(void)
 {
-    int i;
-
-    G_SetGameMode(indetermined);
-
     // Calculate the various LUTs used by the playsim.
     X_CreateLUTs();
 
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
     memset(&cfg, 0, sizeof(cfg));
+    { int i;
+    for(i = 0; i < MAXPLAYERS; ++i)
+        cfg.playerClass[i] = PCLASS_FIGHTER;
+    }
     cfg.playerMoveSpeed = 1;
     cfg.statusbarScale = 1;
     cfg.dclickUse = false;
@@ -218,8 +249,10 @@ void G_PreInit(void)
     cfg.hudShown[HUD_HEALTH] = true;
     cfg.hudShown[HUD_CURRENTITEM] = true;
     cfg.hudShown[HUD_LOG] = true;
+    { int i;
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // When the hud/statusbar unhides.
         cfg.hudUnHide[i] = 1;
+    }
     cfg.lookSpeed = 3;
     cfg.turnSpeed = 1;
     cfg.xhairSize = .5f;
@@ -335,7 +368,7 @@ void G_PreInit(void)
     cfg.inventorySlotShowEmpty = true;
     cfg.inventorySelectMode = 0; // Cursor select.
 
-    cfg.chatBeep = 1;
+    cfg.chatBeep = true;
 
     cfg.weaponOrder[0] = WT_FOURTH;
     cfg.weaponOrder[1] = WT_THIRD;
@@ -349,12 +382,14 @@ void G_PreInit(void)
 }
 
 /**
- * Post Engine Initialization routine.
+ * Post Game Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void G_PostInit(void)
+void G_PostInit(int mode)
 {
-    int p, pClass, warpMap;
+    int p, warpMap;
+
+    G_SetGameMode((gamemode_t)mode);
 
     // Do this early as other systems need to know.
     P_InitPlayerClassInfo();
@@ -368,11 +403,6 @@ void G_PostInit(void)
     // Game parameters.
     /* None */
 
-    // Get skill / episode / map from parms.
-    startEpisode = 0;
-    startSkill = SM_MEDIUM;
-    startMap = 0;
-
     // Game mode specific settings.
     /* None */
 
@@ -381,7 +411,6 @@ void G_PostInit(void)
     respawnParm = ArgExists("-respawn");
     randomClassParm = ArgExists("-randclass");
     devParm = ArgExists("-devparm");
-    netCheatParm = ArgExists("-netcheat");
 
     cfg.netDeathmatch = ArgExists("-deathmatch");
 
@@ -400,7 +429,7 @@ void G_PostInit(void)
         if(scale > 400)
             scale = 400;
 
-        Con_Message("turbo scale: %i%%\n", scale);
+        Con_Message("Turbo scale: %i%%\n", scale);
         turboMul = scale / 100.f;
     }
 
@@ -416,28 +445,24 @@ void G_PostInit(void)
         autoStart = true;
     }
 
-    // Check the -class argument.
-    pClass = PCLASS_FIGHTER;
     if((p = ArgCheck("-class")) != 0)
     {
-        classinfo_t*            pClassInfo;
-
-        pClass = atoi(Argv(p + 1));
-        if(pClass < 0 || pClass > NUM_PLAYER_CLASSES)
+        playerclass_t pClass = (playerclass_t)atoi(Argv(p + 1));
+        if(!VALID_PLAYER_CLASS(pClass))
+            Con_Message("Warning, ignoring invalid player class id=%d specified with -class\n", (int)pClass);
+        else if(!PCLASS_INFO(pClass)->userSelectable)
+            Con_Message("Warning, ignoring non-user-selectable player class id=%d specified with -class.\n", (int)pClass);
+        else
         {
-            Con_Error("Invalid player class: %d\n", pClass);
+            startPlayerClass = pClass;
         }
-        pClassInfo = PCLASS_INFO(pClass);
-
-        if(pClassInfo->userSelectable)
-        {
-            Con_Error("Player class '%s' is not user-selectable.\n",
-                      pClassInfo->niceName);
-        }
-
-        Con_Message("\nPlayer Class: '%s'\n", pClassInfo->niceName);
     }
-    cfg.playerClass[CONSOLEPLAYER] = pClass;
+
+    if(startPlayerClass != PCLASS_NONE)
+    {
+        Con_Message("Player Class: '%s'\n", PCLASS_INFO(startPlayerClass)->niceName);
+        cfg.playerClass[CONSOLEPLAYER] = startPlayerClass;
+    }
 
     P_InitMapMusicInfo(); // Init music fields in mapinfo.
 
@@ -447,8 +472,7 @@ void G_PostInit(void)
     Con_Message("SN_InitSequenceScript: Registering sound sequences.\n");
     SN_InitSequenceScript();
 
-    // Check for command line warping. Follows P_Init() because the
-    // MAPINFO.TXT script must be already processed.
+    // Check for command line warping.
     p = ArgCheck("-warp");
     if(p && p < Argc() - 1)
     {
@@ -465,8 +489,7 @@ void G_PostInit(void)
     // Are we autostarting?
     if(autoStart)
     {
-        Con_Message("Warp to Map %d (\"%s\":%d), Skill %d\n", warpMap+1,
-                    P_GetMapName(startMap), startMap+1, startSkill + 1);
+        Con_Message("Warp to Map %d (\"%s\":%d), Skill %d\n", warpMap+1, P_GetMapName(startMap), startMap+1, startSkill + 1);
     }
 
     // Load a saved game?
@@ -516,4 +539,63 @@ void G_Shutdown(void)
 void G_EndFrame(void)
 {
     SN_UpdateActiveSequences();
+}
+
+/**
+ * Takes a copy of the engine's entry points and exported data. Returns
+ * a pointer to the structure that contains our entry points and exports.
+ */
+game_export_t *GetGameAPI(game_import_t *imports)
+{
+    // Take a copy of the imports, but only copy as much data as is
+    // allowed and legal.
+    memset(&gi, 0, sizeof(gi));
+    memcpy(&gi, imports, MIN_OF(sizeof(game_import_t), imports->apiSize));
+
+    // Clear all of our exports.
+    memset(&gx, 0, sizeof(gx));
+
+    // Fill in the data for the exports.
+    gx.apiSize = sizeof(gx);
+    gx.PreInit = G_PreInit;
+    gx.PostInit = G_PostInit;
+    gx.Shutdown = G_Shutdown;
+    gx.Ticker = G_Ticker;
+    gx.G_Drawer = G_Display;
+    gx.G_Drawer2 = G_Display2;
+    gx.PrivilegedResponder = (boolean (*)(event_t *)) G_PrivilegedResponder;
+    gx.FallbackResponder = NULL; //Hu_MenuResponder;
+    gx.FinaleResponder = FI_Responder;
+    gx.G_Responder = G_Responder;
+    gx.MobjThinker = P_MobjThinker;
+    gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
+    gx.EndFrame = G_EndFrame;
+    gx.ConsoleBackground = G_ConsoleBg;
+    gx.UpdateState = G_UpdateState;
+#undef Get
+    gx.GetInteger = G_GetInteger;
+    gx.GetVariable = G_GetVariable;
+
+    gx.NetServerStart = D_NetServerStarted;
+    gx.NetServerStop = D_NetServerClose;
+    gx.NetConnect = D_NetConnect;
+    gx.NetDisconnect = D_NetDisconnect;
+    gx.NetPlayerEvent = D_NetPlayerEvent;
+    gx.NetWorldEvent = D_NetWorldEvent;
+    gx.HandlePacket = D_HandlePacket;
+    gx.NetWriteCommands = D_NetWriteCommands;
+    gx.NetReadCommands = D_NetReadCommands;
+
+    // Data structure sizes.
+    gx.ticcmdSize = sizeof(ticcmd_t);
+    gx.mobjSize = sizeof(mobj_t);
+    gx.polyobjSize = sizeof(polyobj_t);
+
+    gx.SetupForMapData = P_SetupForMapData;
+
+    // These really need better names. Ideas?
+    gx.HandleMapDataPropertyValue = P_HandleMapDataPropertyValue;
+    gx.HandleMapObjectStatusReport = P_HandleMapObjectStatusReport;
+
+    return &gx;
 }

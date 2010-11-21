@@ -269,7 +269,7 @@ void Hu_LoadData(void)
         }
     }
 # else
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
     {
         int NUMCMAPS = 32;
         mapNamePatches = Z_Malloc(sizeof(patchid_t) * NUMCMAPS, PU_STATIC, 0);
@@ -1613,7 +1613,7 @@ static void drawMapTitle(void)
 #if __JDOOM__ || __JDOOM64__
     // Compose the mapnumber used to check the map name patches array.
 # if __JDOOM__
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
         mapnum = gameMap;
     else
         mapnum = (gameEpisode * 9) + gameMap;

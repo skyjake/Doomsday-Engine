@@ -810,7 +810,7 @@ void IN_DrawSingleStats(void)
         sounds++;
     }
 
-    if(gameMode != extended || wbs->episode < 3)
+    if(gameMode != heretic_extended || wbs->episode < 3)
     {
         DGL_Enable(DGL_TEXTURE_2D);
 

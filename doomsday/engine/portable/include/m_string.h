@@ -73,7 +73,7 @@ void            Str_StripRight(ddstring_t* ds);
 void            Str_Strip(ddstring_t* ds);
 const char*     Str_GetLine(ddstring_t* ds, const char* src);
 const char*     Str_CopyDelim(ddstring_t* dest, const char* src, char delim);
-int             Str_CompareIgnoreCase(ddstring_t* ds, const char* text);
+int             Str_CompareIgnoreCase(const ddstring_t* ds, const char* text);
 char            Str_At(ddstring_t* str, int index);
 char            Str_RAt(ddstring_t* str, int reverseIndex);
 

@@ -523,7 +523,7 @@ void D_ChatSound(void)
     S_LocalSound(SFX_CHAT, NULL);
 #else
 # if __JDOOM__
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
         S_LocalSound(SFX_RADIO, NULL);
     else
 # endif

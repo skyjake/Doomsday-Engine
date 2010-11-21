@@ -278,7 +278,7 @@ void GL_GetGammaRamp(unsigned short *ramp)
 #endif
 }
 
-void GL_SetGammaRamp(unsigned short *ramp)
+void GL_SetGammaRamp(unsigned short* ramp)
 {
     if(!gamma_support)
         return;
@@ -288,49 +288,43 @@ void GL_SetGammaRamp(unsigned short *ramp)
 #endif
 
 #if defined(WIN32) && defined(WIN32_GAMMA)
+    { HWND hWnd;
+    if((hWnd = Sys_GetWindowHandle(windowIDX)))
     {
-        HWND        hWnd = Sys_GetWindowHandle(windowIDX);
-
-        if(!hWnd)
+        HDC hDC;
+        if((hDC = GetDC(hWnd)))
         {
-            suspendMsgPump = true;
-            MessageBox(HWND_DESKTOP,
-                       "GL_SetGammaRamp: Main window not available.", NULL,
-                       MB_ICONERROR | MB_OK);
-            suspendMsgPump = false;
+            SetDeviceGammaRamp(hDC, (void*) ramp);
+            ReleaseDC(hWnd, hDC);
         }
         else
         {
-            HDC hDC = GetDC(hWnd);
-
-            if(!hDC)
-            {
-                Con_Message("GL_SetGammaRamp: Failed getting device context.");
-                gamma_support = false;
-            }
-            else
-            {
-                SetDeviceGammaRamp(hDC, (void*) ramp);
-                ReleaseDC(hWnd, hDC);
-            }
+            Con_Message("GL_SetGammaRamp: Failed getting device context.");
+            gamma_support = false;
         }
     }
+    else
+    {
+        suspendMsgPump = true;
+        MessageBox(HWND_DESKTOP, "GL_SetGammaRamp: Main window not available.", 0, MB_ICONERROR | MB_OK);
+        suspendMsgPump = false;
+    }}
 #endif
 
 #ifdef XFREE_GAMMA
+    { Display* dpy;
+    if((dpy = XOpenDisplay(0)))
     {
-        Display *dpy = XOpenDisplay(NULL);
         int screen = DefaultScreen(dpy);
-
-        if(!dpy)
-            return;
-
         // We assume that the gamme ramp size actually is 256.
-        XF86VidModeSetGammaRamp(dpy, screen, 256, ramp, ramp + 256,
-                                ramp + 512);
-
+        XF86VidModeSetGammaRamp(dpy, screen, 256, ramp, ramp + 256, ramp + 512);
         XCloseDisplay(dpy);
     }
+    else
+    {
+        Con_Message("GL_SetGammaRamp: Failed acquiring Display handle.");
+        gamma_support = false;
+    }}
 #endif
 }
 
@@ -394,7 +388,7 @@ void GL_MakeGammaRamp(unsigned short *ramp, float gamma, float contrast,
  */
 void GL_SetGamma(void)
 {
-    gramp_t     myramp;
+    gramp_t myramp;
 
     oldgamma = vid_gamma;
     oldcontrast = vid_contrast;
@@ -602,6 +596,8 @@ boolean GL_EarlyInit(void)
         Con_Message("  Textures have outlines.\n");
     }
 
+    renderTextures = !ArgExists("-notex");
+    novideo = ArgCheck("-novideo") || isDedicated;
 
     printDGLConfiguration();
 

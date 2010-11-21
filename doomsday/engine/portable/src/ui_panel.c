@@ -639,7 +639,7 @@ void CP_Register(void)
     C_VAR_BYTE("ui-panel-tips", &panel_show_tips, 0, 0, 1);
 
     // Ccmds
-    C_CMD_FLAGS("panel", NULL, OpenPanel, CMDF_NO_DEDICATED);
+    C_CMD_FLAGS("panel", NULL, OpenPanel, CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
 }
 
 void CP_ClosePanel(ui_object_t *ob)

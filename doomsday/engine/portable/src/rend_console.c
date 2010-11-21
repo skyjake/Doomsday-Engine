@@ -109,6 +109,9 @@ void Rend_ConsoleInit(void)
     fontSy = 9;
 
     funnyAng = 0;
+
+    memset(secondaryTitleText, 0, sizeof(secondaryTitleText));
+    memset(statusText, 0, sizeof(statusText));
 }
 
 void Rend_ConsoleCursorResetBlink(void)
@@ -212,7 +215,6 @@ void Con_DrawRuler(int y, int lineHeight, float alpha)
 {
     if(isDedicated)
         return;
-
     drawRuler2(y, lineHeight, alpha, theWindow->width);
 }
 
@@ -224,11 +226,19 @@ void Con_DrawRuler(int y, int lineHeight, float alpha)
  */
 void Con_InitUI(void)
 {
+    if(isDedicated)
+        return;
+
     // Update the secondary title and the game status.
-    strncpy(secondaryTitleText, (char *) gx.GetVariable(DD_GAME_ID),
-            sizeof(secondaryTitleText) - 1);
-    strncpy(statusText, (char *) gx.GetVariable(DD_GAME_MODE),
-            sizeof(statusText) - 1);
+    if(!DD_IsNullGameInfo(DD_GameInfo()))
+    {
+        strncpy(secondaryTitleText, (char*) gx.GetVariable(DD_GAME_ID), sizeof(secondaryTitleText) - 1);
+        strncpy(statusText, Str_Text(GameInfo_ModeIdentifier(DD_GameInfo())), sizeof(statusText) - 1);
+        return;
+    }
+    // No game currently loaded.
+    memset(secondaryTitleText, 0, sizeof(secondaryTitleText));
+    memset(statusText, 0, sizeof(statusText));
 }
 
 /**

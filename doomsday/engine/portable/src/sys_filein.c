@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -77,6 +77,10 @@ typedef struct foundentry_s {
     int             attrib;
 } foundentry_t;
 
+typedef struct file_identifier_s {
+    byte hash[16];
+} file_identifier_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -94,13 +98,75 @@ void F_ResetDirec(void);
 
 static lumpdirec_t direc[MAX_LUMPDIRS + 1];
 static filehandle_t* files;
-static unsigned int filesCount;
+static uint filesCount;
+
+static uint numReadFiles = 0;
+static uint maxReadFiles = 0;
+static file_identifier_t *readFiles = 0;
 
 static vdmapping_t* vdMappings;
-static unsigned int vdMappingsCount;
-static unsigned int vdMappingsMax;
+static uint vdMappingsCount;
+static uint vdMappingsMax;
 
 // CODE --------------------------------------------------------------------
+
+/**
+ * Resets the array of known file IDs. The next time F_CheckFileID() is
+ * called on a file, it passes.
+ */
+void F_ResetFileIDs(void)
+{
+    numReadFiles = 0;
+}
+
+/**
+ * Maintains a list of identifiers already seen.
+ *
+ * @return              @c true, if the given file can be read, or
+ *                      @c false, if it has already been read.
+ */
+boolean F_CheckFileID(const char* path)
+{
+    byte id[16];
+    uint i;
+    boolean alreadySeen;
+
+    if(!F_Access(path))
+        return false;
+
+    // Calculate the identifier.
+    Dir_FileID(path, id);
+
+    alreadySeen = false;
+    i = 0;
+    while(i < numReadFiles && !alreadySeen)
+    {
+        if(!memcmp(readFiles[i].hash, id, 16))
+        {
+            // This identifier has already been encountered.
+            alreadySeen = true;
+        }
+        i++;
+    }
+
+    if(alreadySeen)
+        return false;
+
+    // Allocate a new entry.
+    numReadFiles++;
+    if(numReadFiles > maxReadFiles)
+    {
+        if(!maxReadFiles)
+            maxReadFiles = 16;
+        else
+            maxReadFiles *= 2;
+
+        readFiles = M_Realloc(readFiles, sizeof(readFiles[0]) * maxReadFiles);
+    }
+
+    memcpy(readFiles[numReadFiles - 1].hash, id, 16);
+    return true;
+}
 
 /**
  * This is a case-insensitive test.
@@ -332,12 +398,12 @@ void F_ParseDirecData(char* buffer)
 
 void F_InitMapping(void)
 {
-    int                 i, argC = Argc();
+    int argC = Argc();
 
     F_ResetMapping();
 
-    // Create virtual directory mappings by processing all -vdmap
-    // options.
+    // Create virtual directory mappings by processing all -vdmap options.
+    { int i;
     for(i = 0; i < argC; ++i)
     {
         if(strnicmp("-vdmap", Argv(i), 6))
@@ -348,7 +414,7 @@ void F_InitMapping(void)
             F_AddMapping(Argv(i + 1), Argv(i + 2));
             i += 2;
         }
-    }
+    }}
 }
 
 /**
@@ -356,59 +422,53 @@ void F_InitMapping(void)
  */
 void F_InitDirec(void)
 {
-    static boolean      alreadyInited = false;
-    int                 i;
-    size_t              len;
-    char*               buf;
+    static boolean alreadyInited = false;
 
     if(alreadyInited)
-    {
-        // Free old paths, if any.
+    {   // Free old paths, if any.
         F_ResetDirec();
         memset(direc, 0, sizeof(direc));
     }
 
     // Add the contents of all DD_DIREC lumps.
-    for(i = 0; i < numLumps; ++i)
+    { int i;
+    for(i = 0; i < W_NumLumps(); ++i)
     {
-        if(!strnicmp(W_LumpName(i), "DD_DIREC", 8))
-        {
-            // Make a copy of it so we can make it end in a null.
-            len = W_LumpLength(i);
-            buf = M_Malloc(len + 1);
-            memcpy(buf, W_CacheLumpNum(i, PU_CACHE), len);
-            buf[len] = 0;
+        if(strnicmp(W_LumpName(i), "DD_DIREC", 8))
+            continue;
 
-            F_ParseDirecData(buf);
-            M_Free(buf);
+        // Make a copy of it so we can make it end in a null.
+        { size_t len = W_LumpLength(i);
+        char* buf = M_Malloc(len + 1);
+        memcpy(buf, W_CacheLumpNum(i, PU_CACHE), len);
+        buf[len] = 0;
+        F_ParseDirecData(buf);
+        M_Free(buf);
         }
-    }
+    }}
 
     alreadyInited = true;
 }
 
 void F_ResetMapping(void)
 {
-    uint                i;
-
     if(vdMappings)
     {
         // Free the allocated memory.
+        uint i;
         for(i = 0; i < vdMappingsCount; ++i)
         {
             M_Free(vdMappings[i].source);
             M_Free(vdMappings[i].target);
         }
-        M_Free(vdMappings);
+        M_Free(vdMappings); vdMappings = 0;
     }
-    vdMappings = NULL;
     vdMappingsCount = vdMappingsMax = 0;
 }
 
 void F_ResetDirec(void)
 {
-    size_t              i;
-
+    size_t i;
     for(i = 0; direc[i].path; ++i)
         if(direc[i].path)
             M_Free(direc[i].path); // Allocated by _fullpath.
@@ -416,19 +476,16 @@ void F_ResetDirec(void)
 
 void F_CloseAll(void)
 {
-    uint                i;
-
     if(files)
     {
+        uint i;
         for(i = 0; i < filesCount; ++i)
-            if(files[i].file != NULL)
-            {
+        {
+            if(files[i].file)
                 F_Close(files[i].file);
-            }
-
-        M_Free(files);
+        }
+        M_Free(files); files = 0;
     }
-    files = NULL;
     filesCount = 0;
 }
 
@@ -442,53 +499,59 @@ void F_ShutdownDirec(void)
 /**
  * Returns true if the file can be opened for reading.
  */
-int F_Access(const char *path)
+int F_Access(const char* path)
 {
     // Open for reading, but don't buffer anything.
-    DFILE              *file = F_Open(path, "rx");
-
-    if(!file)
-        return false;
-    F_Close(file);
-    return true;
+    DFILE* file;
+    if((file = F_Open(path, "rx")))
+    {
+        F_Close(file);
+        return true;
+    }
+    return false;
 }
 
-DFILE *F_GetFreeFile(void)
+static filehandle_t* findUsedFileHandle(void)
 {
-    uint                i, oldCount;
-    boolean             found;
-    filehandle_t       *fhdl;
-
-    for(i = 0, found = false, fhdl = files; i < filesCount && !found;
-        fhdl++, ++i)
+    uint i;
+    for(i = 0; i < filesCount; ++i)
     {
-        if(fhdl->file == NULL)
-            found = true;
+        filehandle_t* fhdl = &files[i];
+        if(!fhdl->file)
+            return fhdl;
     }
+    return 0;
+}
 
-    if(found)
+static filehandle_t* getFileHandle(void)
+{
+    filehandle_t* fhdl;
+    if(!(fhdl = findUsedFileHandle()))
     {
-        fhdl->file = M_Calloc(sizeof(DFILE));
-        return fhdl->file;
+        // Allocate more memory.
+        uint firstNewFile = filesCount;
+
+        filesCount *= 2;
+        if(filesCount < 16)
+            filesCount = 16;
+
+        files = M_Realloc(files, sizeof(filehandle_t) * filesCount);
+        // Clear the new handles.
+        { uint i;
+        for(i = firstNewFile; i < filesCount; ++i)
+        {
+            memset(&files[i], 0, sizeof(filehandle_t));
+        }}
+        fhdl = &files[firstNewFile];
     }
+    return fhdl;
+}
 
-    oldCount = filesCount;
-
-    // Allocate more memory.
-    filesCount *= 2;
-    if(filesCount < 16)
-        filesCount = 16;
-
-    files = M_Realloc(files, sizeof(filehandle_t) * filesCount);
-
-    // Clear the new handles.
-    for(i = oldCount; i < filesCount; ++i)
-    {
-        memset(&files[i], 0, sizeof(filehandle_t));
-    }
-
-    files[oldCount].file = M_Calloc(sizeof(DFILE));
-    return files[oldCount].file;
+DFILE* F_GetFreeFile(void)
+{
+    filehandle_t* fhdl = getFileHandle();
+    fhdl->file = M_Calloc(sizeof(DFILE));
+    return fhdl->file;
 }
 
 /**

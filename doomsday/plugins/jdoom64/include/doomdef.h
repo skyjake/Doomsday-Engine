@@ -46,14 +46,22 @@
 #include "version.h"
 #include "info.h"
 
+#define DATAPATH            DD_BASEDATAPATH GAMENAMETEXT "\\"
+#define DEFSPATH            DD_BASEDEFSPATH GAMENAMETEXT "\\"
+
+#define CONFIGFILE          GAMENAMETEXT ".cfg"
+#define DEFSFILE            GAMENAMETEXT ".ded"
+#define STARTUPPK3          GAMENAMETEXT ".pk3"
+
 #define Set                 DD_SetInteger
 #define Get                 DD_GetInteger
 
-#define CONFIGFILE          GAMENAMETEXT".cfg"
-#define DEFSFILE            GAMENAMETEXT"\\"GAMENAMETEXT".ded"
-#define DATAPATH            "}data\\"GAMENAMETEXT"\\"
-#define STARTUPWAD          "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".wad"
-#define STARTUPPK3          "}data\\"GAMENAMETEXT"\\"GAMENAMETEXT".pk3"
+// Verbose messages.
+#define VERBOSE(code)       { if(verbose >= 1) { code; } }
+#define VERBOSE2(code)      { if(verbose >= 2) { code; } }
+
+extern game_import_t gi;
+extern game_export_t gx;
 
 //
 // Global parameters/defines.
@@ -63,25 +71,17 @@
 #define STATES              (*gi.states)
 #define VALIDCOUNT          (*gi.validCount)
 
-// Verbose messages.
-#define VERBOSE(code)       { if(verbose >= 1) { code; } }
-#define VERBOSE2(code)      { if(verbose >= 2) { code; } }
-
-/**
- * Game mode handling - identify IWAD version to handle IWAD dependant
- * animations, game logic etc.
- */
 typedef enum {
-    commercial, // DOOM 2 retail, E1 M34
-    indetermined, // Well, no IWAD found.
+    indetermined, // \todo now meaningless refactor away.
+    doom64,
     NUM_GAME_MODES
 } gamemode_t;
 
 // Game mode bits for the above.
-#define GM_COMMERCIAL       0x1
-#define GM_INDETERMINED     0x16 // Well, no IWAD found.
+#define GM_INDETERMINED     0x0
+#define GM_DOOM64           0x1
 
-#define GM_ANY              (GM_COMMERCIAL)
+#define GM_ANY              (GM_DOOM64)
 
 #define SCREENWIDTH         320
 #define SCREENHEIGHT        200

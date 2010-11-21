@@ -357,7 +357,7 @@ static void copyStr(char* dest, const char* src, size_t num, size_t destSize)
  */
 static void mapPath(char* path, size_t len)
 {
-    filename_t          mapped;
+    filename_t mapped;
 
     if(strchr(path, DIR_SEP_CHAR) != NULL)
     {
@@ -376,8 +376,7 @@ static void mapPath(char* path, size_t len)
            !strnicmp("Sfx" DIR_SEP_STR, path, 4))
         {
             // Contents mapped to keyname folder.
-            dd_snprintf(mapped, FILENAME_T_MAXLEN, "%s%s", R_GetDataPath(),
-                     path);
+            dd_snprintf(mapped, FILENAME_T_MAXLEN, "%s%s", Str_Text(GameInfo_DataPath(DD_GameInfo())), path);
             strncpy(path, mapped, len);
             return;
         }
@@ -385,14 +384,12 @@ static void mapPath(char* path, size_t len)
 
     if(path[0] == '@') // Manually mapped to Defs.
     {
-        Def_GetAutoPath(mapped, FILENAME_T_MAXLEN);
-        strcat(mapped, path + 1);
+        sprintf(mapped, "%sauto" DIR_SEP_STR "%s", R_GetDefsPath(), path + 1);
         strcpy(path, mapped);
     }
     else if(path[0] == '#') // Manually mapped to Data.
     {
-        sprintf(mapped, "%sauto" DIR_SEP_STR "%s", R_GetDataPath(),
-                path + 1);
+        sprintf(mapped, "%sauto" DIR_SEP_STR "%s", Str_Text(GameInfo_DataPath(DD_GameInfo())), path + 1);
         strcpy(path, mapped);
     }
     else if(strchr(path, DIR_SEP_CHAR) == NULL)
@@ -410,11 +407,11 @@ static void mapPath(char* path, size_t len)
                !stricmp(ext, "wad") ||
                !stricmp(ext, "deh"))
             {   // Data files are mapped to the Data directory.
-                sprintf(mapped, "%sauto" DIR_SEP_STR, R_GetDataPath());
+                sprintf(mapped, "%sauto" DIR_SEP_STR, Str_Text(GameInfo_DataPath(DD_GameInfo())));
             }
             else if(!stricmp(ext, "ded"))
             {   // Definitions are mapped to the Defs directory.
-                Def_GetAutoPath(mapped, FILENAME_T_MAXLEN);
+                sprintf(mapped, "%sauto" DIR_SEP_STR, R_GetDefsPath());
             }
             else
             {
@@ -449,7 +446,7 @@ boolean Zip_Open(const char* fileName, DFILE* prevOpened)
     {   // Try to open the file.
         if((file = F_Open(fileName, "rb")) == NULL)
         {
-            Con_Message("Zip_Open: %s not found.\n", fileName);
+            Con_Message("Zip_Open: Warning, \"%s\" not found!\n", fileName);
             return false;
         }
     }
@@ -458,13 +455,12 @@ boolean Zip_Open(const char* fileName, DFILE* prevOpened)
         file = prevOpened;
     }
 
-    VERBOSE(Con_Message("Zip_Open: %s\n", M_PrettyPath(fileName)));
+    VERBOSE(Con_Message("Zip_Open: %s\n", fileName));
 
     // Scan the end of the file for the central directory end record.
     if(!locateCentralDirectory(file))
     {
-        Con_Error("Zip_Open: %s: Central directory not found.\n",
-                  M_PrettyPath(fileName));
+        Con_Error("Zip_Open: Error, central directory in \"%s\" not found!\n", fileName);
     }
 
     // Read the central directory end record.
@@ -473,8 +469,7 @@ boolean Zip_Open(const char* fileName, DFILE* prevOpened)
     // Does the summary say something we don't like?
     if(USHORT(summary.diskEntryCount) != USHORT(summary.totalEntryCount))
     {
-        Con_Error("Zip_Open: %s: Multipart Zip files are not supported.\n",
-                  M_PrettyPath(fileName));
+        Con_Error("Zip_Open: %s: Multipart Zip files are not supported.\n", fileName);
     }
 
     // Read the entire central directory into memory.
@@ -513,13 +508,11 @@ boolean Zip_Open(const char* fileName, DFILE* prevOpened)
         if(USHORT(header->compression) != ZFC_NO_COMPRESSION &&
            USHORT(header->compression) != ZFC_DEFLATED)
         {
-            Con_Error("Zip_Open: %s: '%s' uses an unsupported compression "
-                      "algorithm.\n", M_PrettyPath(fileName), buf);
+            Con_Error("Zip_Open: %s: '%s' uses an unsupported compression algorithm.\n", fileName, buf);
         }
         if(USHORT(header->flags) & ZFH_ENCRYPTED)
         {
-            Con_Error("Zip_Open: %s: '%s' is encrypted.\n  Encryption is "
-                      "not supported.\n", M_PrettyPath(fileName), buf);
+            Con_Error("Zip_Open: %s: '%s' is encrypted.\n  Encryption is not supported.\n", fileName, buf);
         }
 
         // Convert all slashes to the host OS's directory separator,
@@ -759,7 +752,7 @@ size_t Zip_Read(zipindex_t index, void *buffer)
     pack = entry->package;
 
     VERBOSE2(Con_Message
-             ("Zip_Read: %s: '%s' (%lu bytes%s)\n", M_PrettyPath(pack->name),
+             ("Zip_Read: %s::%s (%lu bytes%s)\n", M_PrettyPath(pack->name),
               M_PrettyPath(entry->name), (unsigned long) entry->size,
               (entry->deflatedSize? ", deflated" : "")));
 

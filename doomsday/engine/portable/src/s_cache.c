@@ -573,8 +573,8 @@ static sfxsample_t* cacheSample(int id, sfxinfo_t* info)
          * external resource (probably a custom sound).
          * \fixme should be a cvar.
          */
-        if((info->lumpNum < 0 || W_IsFromIWAD(info->lumpNum)) &&
-           R_FindResource(RT_SOUND, buf, info->lumpName, NULL,
+        if((info->lumpNum < 0 || W_LumpFromIWAD(info->lumpNum)) &&
+           F_FindResource(RT_SOUND, buf, info->lumpName, NULL,
                           FILENAME_T_MAXLEN) &&
            (data = WAV_Load(buf, &bytesPer, &rate, &numSamples)))
         {   // Loading was successful!

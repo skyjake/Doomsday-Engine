@@ -332,27 +332,26 @@ static void installSpriteLump(spriteframe_t* sprTemp, int* maxFrame,
  */
 void R_PreInitSprites(void)
 {
-    float               startTime = Sys_GetSeconds();
+    uint startTime = Sys_GetRealTime();
 
-    int                 i, numSpritePatches = 0;
-    ddstack_t*          stack = Stack_New();
+    int i, numSpritePatches = 0;
+    ddstack_t* stack = Stack_New();
 
     // Free all memory acquired for spritetex_t structures.
     Z_FreeTags(PU_SPRITE, PU_SPRITE);
 
     /**
-     * Step 1: Build database of lumps which may describe sprites.
+     * Step 1: Build database of lumps which *may* describe sprites.
      */
     numSpriteRecords = 0;
-    spriteRecords = NULL;
-    spriteRecordBlockSet = Z_BlockCreate(sizeof(spriterecord_t), 64,
-                                         PU_STATIC),
-    spriteRecordFrameBlockSet = Z_BlockCreate(sizeof(spriterecord_frame_t),
-                                              256, PU_STATIC);
-    for(i = 0; i < numLumps; ++i)
+    spriteRecords = 0;
+    spriteRecordBlockSet = Z_BlockCreate(sizeof(spriterecord_t), 64, PU_STATIC),
+    spriteRecordFrameBlockSet = Z_BlockCreate(sizeof(spriterecord_frame_t), 256, PU_STATIC);
+
+    for(i = 0; i < W_NumLumps(); ++i)
     {
-        const char*         name = W_LumpName(i);
-        spriterecord_t*     rec;
+        const char* name = W_LumpName(i);
+        spriterecord_t* rec;
 
         if(name[0] == 'S')
         {
@@ -418,13 +417,12 @@ void R_PreInitSprites(void)
         }
 
         // Add the frame(s).
-        {
-        spriterecord_frame_t* sprFrame = rec->frames;
-        boolean             link = false;
+        { spriterecord_frame_t* sprFrame = rec->frames;
+        boolean link = false;
 
         while(sprFrame)
         {
-            if(sprFrame->frame[0] == name[4] - 'A' + 1 &&
+            if(sprFrame->frame[0]    == name[4] - 'A' + 1 &&
                sprFrame->rotation[0] == name[5] - '0')
                 break;
             sprFrame = sprFrame->next;
@@ -437,11 +435,11 @@ void R_PreInitSprites(void)
         }
 
         sprFrame->lump = i;
-        sprFrame->frame[0] = name[4] - 'A' + 1;
+        sprFrame->frame[0]    = name[4] - 'A' + 1;
         sprFrame->rotation[0] = name[5] - '0';
         if(name[6])
         {
-            sprFrame->frame[1] = name[6] - 'A' + 1;
+            sprFrame->frame[1]    = name[6] - 'A' + 1;
             sprFrame->rotation[1] = name[7] - '0';
         }
         else
@@ -501,14 +499,23 @@ void R_PreInitSprites(void)
                 glTex = GL_CreateGLTexture(name, idx++, GLT_SPRITE);
 
                 // Create a new material for this sprite patch.
-                frame->mat = Materials_New(MN_SPRITES, name, sprTex->width, sprTex->height, 0, glTex->id, sprTex->offX, sprTex->offY);
+                frame->mat = Materials_New(DD_MaterialNamespaceForTextureType(GLT_SPRITE), name, sprTex->width, sprTex->height, 0, glTex->id, sprTex->offX, sprTex->offY);
             } while((frame = frame->next));
         } while((rec = rec->next));
     }
 
-    VERBOSE(Con_Message("R_InitSpriteRecords: Done in %.2f seconds.\n", Sys_GetSeconds() - startTime));
+    VERBOSE(Con_Message("R_InitSpriteRecords: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 
+/**
+ * Builds the sprite rotation matrixes to account for horizontally flipped
+ * sprites.  Will report an error if the lumps are inconsistant.
+ *
+ * Sprite lump names are 4 characters for the actor, a letter for the frame,
+ * and a number for the rotation, A sprite that is flippable will have an
+ * additional letter/number appended.  The rotation character can be 0 to
+ * signify no rotations.
+ */
 static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
 {
     numSprites = num;
@@ -603,29 +610,15 @@ static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
             strncpy(sprDef->name, rec->name, 4);
             sprDef->name[4] = '\0';
             sprDef->numFrames = maxFrame;
-            sprDef->spriteFrames =
-                Z_Malloc(maxFrame * sizeof(spriteframe_t), PU_SPRITE, NULL);
-            memcpy(sprDef->spriteFrames, sprTemp,
-                   maxFrame * sizeof(spriteframe_t));
+            sprDef->spriteFrames = Z_Malloc(maxFrame * sizeof(spriteframe_t), PU_SPRITE, NULL);
+            memcpy(sprDef->spriteFrames, sprTemp, maxFrame * sizeof(spriteframe_t));
         }
     }
 }
 
-/**
- * Builds the sprite rotation matrixes to account for horizontally flipped
- * sprites.  Will report an error if the lumps are inconsistant.
- *
- * Sprite lump names are 4 characters for the actor, a letter for the frame,
- * and a number for the rotation, A sprite that is flippable will have an
- * additional letter/number appended.  The rotation character can be 0 to
- * signify no rotations.
- */
 void R_InitSprites(void)
 {
-    float               startTime = Sys_GetSeconds();
-
-    int                 n, max;
-    spriterecord_t*     rec, **list;
+    uint startTime = Sys_GetRealTime();
 
     /**
      * \kludge
@@ -642,21 +635,23 @@ void R_InitSprites(void)
      * This unobvious requirement should be broken somehow and perhaps even
      * get rid of the sprite name definitions entirely.
      */
-    max = MAX_OF(numSpriteRecords, countSprNames.num);
-    n = max-1;
-    list = M_Calloc(sizeof(spriterecord_t*) * max);
-    rec = spriteRecords;
-    do
+    { int max = MAX_OF(numSpriteRecords, countSprNames.num);
+    if(max > 0)
     {
-        int                 idx = Def_GetSpriteNum(rec->name);
-        list[idx == -1? n-- : idx] = rec;
-    } while((rec = rec->next));
+        spriterecord_t* rec, **list = M_Calloc(sizeof(spriterecord_t*) * max);
+        int n = max-1;
+        rec = spriteRecords;
+        do
+        {
+            int idx = Def_GetSpriteNum(rec->name);
+            list[idx == -1? n-- : idx] = rec;
+        } while((rec = rec->next));
+
+        // Create sprite definitions from the located sprite patch lumps.
+        initSpriteDefs(list, max);
+        M_Free(list);
+    }}
     /// \kludge end
-
-    // Create sprite definitions from the located sprite patch lumps.
-    initSpriteDefs(list, max);
-
-    M_Free(list);
 
     // We are now done with the sprite records.
     Z_BlockDestroy(spriteRecordBlockSet);
@@ -665,13 +660,12 @@ void R_InitSprites(void)
     spriteRecordFrameBlockSet = NULL;
     numSpriteRecords = 0;
 
-    VERBOSE(Con_Message("R_InitSprites: Done in %.2f seconds.\n",
-                        Sys_GetSeconds() - startTime));
+    VERBOSE( Con_Message("R_InitSprites: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
 material_t* R_GetMaterialForSprite(int sprite, int frame)
 {
-    spritedef_t*        sprDef;
+    spritedef_t* sprDef;
 
     if((unsigned) sprite >= (unsigned) numSprites)
         return NULL;

@@ -42,8 +42,6 @@
 # include "jhexen.h"
 #endif
 
-#define OBSOLETE        CVF_HIDE|CVF_NO_ARCHIVE
-
 enum {
     JOYAXIS_NONE,
     JOYAXIS_MOVE,
@@ -55,8 +53,6 @@ enum {
 extern boolean singledemo;
 
 void            G_Register(void);
-void            G_PreInit(void);
-void            G_PostInit(void);
 void            G_StartTitle(void);
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
 void            G_StartHelp(void);

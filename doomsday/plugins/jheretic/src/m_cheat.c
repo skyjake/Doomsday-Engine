@@ -469,7 +469,7 @@ int Cht_InvItem3Func(const int* args, int player)
     count = args[1] - '0';
     if(type > IIT_NONE && type < NUM_INVENTORYITEM_TYPES && count > 0 && count < 10)
     {
-        if(gameMode == shareware && (type == IIT_SUPERHEALTH || type == IIT_TELEPORT))
+        if(gameMode == heretic_shareware && (type == IIT_SUPERHEALTH || type == IIT_TELEPORT))
         {
             P_SetMessage(plr, TXT_CHEATITEMSFAIL, false);
             return false;
@@ -922,7 +922,7 @@ DEFCC(CCmdCheatGive)
 
                 if(type >= IIT_FIRST && type < NUM_INVENTORYITEM_TYPES)
                 {   // Give one specific item.
-                    if(!(gameMode = shareware &&
+                    if(!(gameMode = heretic_shareware &&
                          (type == IIT_SUPERHEALTH || type == IIT_TELEPORT)))
                     {
                         int j;
@@ -946,7 +946,7 @@ DEFCC(CCmdCheatGive)
                 {
                     int i;
 
-                    if(gameMode == shareware &&
+                    if(gameMode == heretic_shareware &&
                        (type == IIT_SUPERHEALTH || type == IIT_TELEPORT))
                     {
                         continue;

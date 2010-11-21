@@ -658,17 +658,15 @@ static void DED_CloseReader(void)
  */
 static boolean DED_CheckCondition(const char* cond, boolean expected)
 {
-    boolean             value = false;
+    boolean value = false;
 
     if(cond[0] == '-')
-    {
-        // It's a command line option.
+    {   // A command line option.
         value = (ArgCheck(token) != 0);
     }
     else if(isalnum(cond[0]))
-    {
-        // Then it must be a game mode.
-        value = !stricmp(cond, (char *) gx.GetVariable(DD_GAME_MODE));
+    {   // A game mode.
+        value = !stricmp(cond, Str_Text(GameInfo_ModeIdentifier(DD_GameInfo())));
     }
 
     return value == expected;
@@ -786,9 +784,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
             // A new model path. Append to the list.
             READSTR(label);
             CHECKSC;
-
-            Dir_ValidDir(label, 128);
-            R_AddClassDataPath(DDRC_MODEL, label, true);
+            GameInfo_AddResourceSearchPath(DD_GameInfo(), DDRC_MODEL, label, true);
         }
 
         if(ISTOKEN("Header"))
@@ -1485,40 +1481,44 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
             }
         }
 
-        if(ISTOKEN("Texture")) // Environment
-        {   // A new texenv.
-            ded_tenviron_t*     tenv;
+        if(ISTOKEN("Texture"))
+        {
+            ReadToken();
+            if(ISTOKEN("Environment"))
+            {   // A new environment.
+                ded_tenviron_t*     tenv;
 
-            idx = DED_AddTextureEnv(ded, "");
-            tenv = &ded->textureEnv[idx];
+                idx = DED_AddTextureEnv(ded, "");
+                tenv = &ded->textureEnv[idx];
 
-            FINDBEGIN;
-            for(;;)
-            {
-                ded_materialid_t*   mn;
+                FINDBEGIN;
+                for(;;)
+                {
+                    ded_materialid_t*   mn;
 
-                READLABEL;
-                RV_STR("ID", tenv->id)
-                if(ISLABEL("Texture") || ISLABEL("Flat") ||
-                   ISLABEL("Sprite") || ISLABEL("System"))
-                {   // A new material name.
-                    mn = DED_NewEntry((void**)&tenv->materials,
-                                      &tenv->count, sizeof(*mn));
-                    mn->mnamespace = (ISLABEL("Texture")? MN_TEXTURES :
-                           ISLABEL("Flat")? MN_FLATS :
-                           ISLABEL("Sprite")? MN_SPRITES : MN_SYSTEM);
+                    READLABEL;
+                    RV_STR("ID", tenv->id)
+                    if(ISLABEL("Texture") || ISLABEL("Flat") ||
+                       ISLABEL("Sprite") || ISLABEL("System"))
+                    {   // A new material name.
+                        mn = DED_NewEntry((void**)&tenv->materials,
+                                          &tenv->count, sizeof(*mn));
+                        mn->mnamespace = (ISLABEL("Texture")? MN_TEXTURES :
+                               ISLABEL("Flat")? MN_FLATS :
+                               ISLABEL("Sprite")? MN_SPRITES : MN_SYSTEM);
 
-                    FINDBEGIN;
-                    for(;;)
-                    {
-                        READLABEL;
-                        RV_STR("ID", mn->name)
-                        RV_END
-                        CHECKSC;
+                        FINDBEGIN;
+                        for(;;)
+                        {
+                            READLABEL;
+                            RV_STR("ID", mn->name)
+                            RV_END
+                            CHECKSC;
+                        }
                     }
+                    else RV_END
+                    CHECKSC;
                 }
-                else RV_END
-                CHECKSC;
             }
         }
 
@@ -2426,7 +2426,7 @@ int DED_ReadLump(ded_t* ded, lumpnum_t lump)
 {
     size_t lumpLength;
 
-    if(lump < 0 || lump >= numLumps)
+    if(lump < 0 || lump >= W_NumLumps())
     {
         SetError("Bad lump number.");
         return false;

@@ -209,17 +209,30 @@ void DD_DrawAndBlit(void)
 
     if(drawGame)
     {
-        // Interpolate the world ready for drawing view(s) of it.
-        R_BeginWorldFrame();
+        if(!DD_IsNullGameInfo(DD_GameInfo()))
+        {   // Interpolate the world ready for drawing view(s) of it.
+            R_BeginWorldFrame();
+            R_RenderViewPorts();
+        }
+        else
+        {
+            glMatrixMode(GL_PROJECTION);
+            glPushMatrix();
+            glLoadIdentity();
+            glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
 
-        R_RenderViewPorts();
+            R_RenderBlankView();
+
+            glMatrixMode(GL_PROJECTION);
+            glPopMatrix();
+        }
 
         if(!(UI_IsActive() && UI_Alpha() >= 1.0))
         {
             UI2_Drawer();
 
             // Draw any over/outside view window game graphics (e.g. fullscreen menus and other displays).
-            if(gx.G_Drawer2)
+            if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.G_Drawer2)
                 gx.G_Drawer2();
         }
     }
@@ -326,7 +339,10 @@ void DD_Ticker(timespan_t time)
             FI_Ticker(time);
 
             // Game logic.
-            gx.Ticker(time);
+            if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.Ticker)
+            {
+                gx.Ticker(time);
+            }
 
             // Advance global fixed time (35Hz).
             if(M_RunTrigger(&sharedFixedTrigger, time))

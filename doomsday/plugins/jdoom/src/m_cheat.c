@@ -136,7 +136,7 @@ void Cht_Init(void)
     G_AddEventSequence(cheatAmmoNoKeySeq, sizeof(cheatAmmoNoKeySeq), Cht_GiveWeaponsAmmoArmor);
     G_AddEventSequence(cheatAmmoSeq, sizeof(cheatAmmoSeq), Cht_GiveWeaponsAmmoArmorKeys);
     G_AddEventSequence(cheatMusSeq, sizeof(cheatMusSeq), Cht_MusicFunc);
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
         G_AddEventSequence(cheatCommercialNoClipSeq, sizeof(cheatCommercialNoClipSeq), Cht_NoClipFunc);
     else
         G_AddEventSequence(cheatNoClipSeq, sizeof(cheatNoClipSeq), Cht_NoClipFunc);
@@ -277,10 +277,10 @@ int Cht_MusicFunc(const int* args, int player)
     if(plr->health <= 0)
         return false; // Dead players can't cheat.
 
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
         musnum = (args[0] - '0') * 10 + (args[1] - '0');
     else
-        musnum = (args[0] - '1') * 9 + (args[1] - '0');
+        musnum = (args[0] - '1') * 9  + (args[1] - '0');
 
     if(S_StartMusicNum(musnum, true))
     {
@@ -324,7 +324,7 @@ int Cht_WarpFunc(const int* args, int player)
     if(IS_NETGAME)
         return false;
 
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
     {
         epsd = 0;
         map = (args[0] - '0') * 10 + args[1] - '0';
@@ -655,7 +655,7 @@ DEFCC(CCmdCheatWarp)
     if(!cheatsEnabled())
         return false;
 
-    if(gameMode == commercial)
+    if(gameModeBits & GM_ANY_DOOM2)
     {
         int num;
 

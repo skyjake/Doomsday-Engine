@@ -1,6 +1,6 @@
 ## deng build scripts. 
+## Copyright © 2007 - 2010 Daniel Swanson <danij@dengine.net>
 ## Copyright © 2006 - 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
-## Copyright © 2007 Daniel Swanson <danij@dengine.net>
 ## This file is licensed under the GNU GPLv3 or any later versions,
 ##
 ## the deng build scripts is free software; you can redistribute it and/or
@@ -21,17 +21,38 @@
 ################################################################################
 ######################## Example Plugin  #######################################
 
-ADD_DEFINITIONS (-EXAMPLE_PLUGIN )
+ADD_DEFINITIONS (-D__EXAMPLE_PLUGIN__ )
+
+INCLUDE_DIRECTORIES ( include )
 
 FILE(GLOB EXAMPLE_SOURCES src/*.c)
 
 ADD_LIBRARY (dpexample SHARED ${EXAMPLE_SOURCES} )
 
-IF (APPLE)
-    SET_TARGET_PROPERTIES (dpexample PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
-ENDIF (APPLE)
+#IF (APPLE)
+#    SET_TARGET_PROPERTIES (dpexample PROPERTIES COMPILE_FLAGS "${CMAKE_C_FLAGS} -bundle -bundle_loader doomsday")
+#ENDIF (APPLE)
+
 ################################################################################
 ######################## Install Targets  ######################################
-INSTALL(TARGETS dpexample
-RUNTIME DESTINATION ${bindir}
-LIBRARY DESTINATION ${libdir} )
+IF (NOT APPLE)
+    INSTALL(TARGETS dpexample
+    RUNTIME DESTINATION ${bindir}
+    LIBRARY DESTINATION ${libdir} )
+ENDIF (NOT APPLE)
+
+IF (APPLE)
+    # Bundling.
+    SET (BUNDLE_BASE Example)
+    SET (BUNDLE ${CMAKE_BINARY_DIR}/${BUNDLE_BASE}.bundle)
+    ADD_CUSTOM_COMMAND( TARGET dpexample POST_BUILD
+        COMMAND rm -rf ${BUNDLE}
+        COMMAND mkdir -p ${BUNDLE}/Contents/MacOS
+        COMMAND cp libdpexample.dylib ${BUNDLE}/Contents/MacOS/${BUNDLE_BASE}
+        COMMAND cp ${CMAKE_SOURCE_DIR}/build/mac/${BUNDLE_BASE}-Info.plist ${BUNDLE}/Contents/Info.plist
+        COMMAND mkdir -p ${BUNDLE}/Contents/Resources
+        #COMMAND cp ${CMAKE_SOURCE_DIR}/build/mac/InfoPlist.strings ${BUNDLE}/Contents/Resources/English.lproj/
+        COMMAND echo 'APPL????' > ${BUNDLE}/Contents/PkgInfo
+        COMMAND cp ${CMAKE_BINARY_DIR}/${BUNDLE_BASE}.pk3 ${BUNDLE}/Contents/Resources/
+        )
+ENDIF (APPLE)

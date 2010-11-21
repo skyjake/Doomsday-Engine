@@ -114,6 +114,7 @@ void            Con_SetString(const char *name, char *text, byte override);
 
 boolean         Con_Init(void);
 void            Con_Shutdown(void);
+void            Con_Register(void);
 void            Con_AbnormalShutdown(const char* message);
 void            Con_WriteAliasesToFile(FILE * file);
 void            Con_SetMaxLineLength(void);

@@ -34,6 +34,8 @@
 
 #include "jdoom.h"
 
+#include "d_netsv.h"
+#include "d_net.h"
 #include "m_argv.h"
 #include "dmu_lib.h"
 #include "fi_lib.h"
@@ -43,16 +45,15 @@
 #include "hu_msg.h"
 #include "hu_lib.h"
 #include "p_saveg.h"
+#include "p_mapsetup.h"
 #include "p_mapspec.h"
 #include "p_switch.h"
 #include "am_map.h"
 #include "g_defs.h"
 #include "p_player.h"
+#include "g_update.h"
 
 // MACROS ------------------------------------------------------------------
-
-#define BGCOLOR                 (7)
-#define FGCOLOR                 (8)
 
 // TYPES -------------------------------------------------------------------
 
@@ -69,57 +70,108 @@
 int verbose;
 
 boolean devParm; // checkparm of -devparm
-boolean noMonstersParm; // checkparm of -noMonstersParm
+boolean noMonstersParm; // checkparm of -nomonsters
 boolean respawnParm; // checkparm of -respawn
 boolean fastParm; // checkparm of -fast
 boolean turboParm; // checkparm of -turbo
+//boolean randomClassParm; // checkparm of -randclass
 
-float turboMul; // multiplier for turbo
-boolean monsterInfight;
+float turboMul; // Multiplier for turbo.
 
-gamemode_t gameMode;
-int gameModeBits;
-gamemission_t gameMission = GM_DOOM;
-
-// This is returned in D_Get(DD_GAME_MODE), max 16 chars.
-char gameModeString[17];
+gamemode_t gameMode = indetermined;
+int gameModeBits = 0;
 
 // Default font colours.
 const float defFontRGB2[] = { .85f, 0, 0 };
 const float defFontRGB3[] = { 1, .9f, .4f };
 
 // The patches used in drawing the view border.
-char *borderLumps[] = {
-    "FLOOR7_2",
-    "brdr_t",
-    "brdr_r",
-    "brdr_b",
-    "brdr_l",
-    "brdr_tl",
-    "brdr_tr",
-    "brdr_br",
-    "brdr_bl"
+char* borderLumps[] = {
+    "FLOOR7_2", // Background.
+    "BRDR_T", // Top.
+    "BRDR_R", // Right.
+    "BRDR_B", // Bottom.
+    "BRDR_L", // Left.
+    "BRDR_TL", // Top left.
+    "BRDR_TR", // Top right.
+    "BRDR_BR", // Bottom right.
+    "BRDR_BL" // Bottom left.
 };
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+// The interface to the Doomsday engine.
+game_import_t gi;
+game_export_t gx;
+
 static skillmode_t startSkill;
-static int startEpisode;
-static int startMap;
+static uint startEpisode;
+static uint startMap;
 static boolean autoStart;
 
 // CODE --------------------------------------------------------------------
 
 /**
- * The game mode string is returned in DD_Get(DD_GAME_MODE).
- * It is sent out in netgames, and the PCL_HELLO2 packet contains it.
- * A client can't connect unless the same game mode is used.
+ * Get a 32-bit integer value.
  */
-static __inline void setGameModeString(const char* str)
+int G_GetInteger(int id)
 {
-    assert(str && str[0]);
-    memset(gameModeString, 0, sizeof(gameModeString));
-    dd_snprintf(gameModeString, sizeof(gameModeString), "%s", str);
+    switch(id)
+    {
+    case DD_GAME_DMUAPI_VER:
+        return DMUAPI_VER;
+
+    default:
+        break;
+    }
+    return 0;
+}
+
+/**
+ * Get a pointer to the value of a named variable/constant.
+ */
+void* G_GetVariable(int id)
+{
+    static float bob[2];
+
+    switch(id)
+    {
+    case DD_GAME_NAME:
+        return GAMENAMETEXT;
+
+    case DD_GAME_NICENAME:
+        return GAME_NICENAME;
+
+    case DD_GAME_ID:
+        return GAMENAMETEXT " " GAME_VERSION_TEXT;
+
+    case DD_GAME_VERSION_SHORT:
+        return GAME_VERSION_TEXT;
+
+    case DD_GAME_VERSION_LONG:
+        return GAME_VERSION_TEXTLONG "\n" GAME_DETAILS;
+
+    case DD_GAME_CONFIG:
+        return gameConfigString;
+
+    case DD_ACTION_LINK:
+        return actionlinks;
+
+    case DD_XGFUNC_LINK:
+        return xgClasses;
+
+    case DD_PSPRITE_BOB_X:
+        R_GetWeaponBob(DISPLAYPLAYER, &bob[0], 0);
+        return &bob[0];
+
+    case DD_PSPRITE_BOB_Y:
+        R_GetWeaponBob(DISPLAYPLAYER, 0, &bob[1]);
+        return &bob[1];
+
+    default:
+        break;
+    }
+    return 0;
 }
 
 /**
@@ -130,211 +182,72 @@ static __inline void setGameModeString(const char* str)
  * global vars.
  *
  * @param mode          GameMode to change to.
- * @param mission       Mission to change to.
- * @param name          Name of the new mode.
  *
  * @return              @true, if we changed game modes successfully.
  */
-boolean G_SetGameMode(gamemode_t mode, gamemission_t mission, const char* name)
+boolean G_SetGameMode(int/*gamemode_t*/ mode)
 {
-    assert(name && name[0]);
-
-    gameMode = mode;
-    gameMission = mission;
-    setGameModeString(name);
-
     if(G_GetGameState() == GS_MAP)
         return false;
-
-    switch(mode)
-    {
-    case shareware:     gameModeBits = GM_SHAREWARE;    break;
-    case registered:    gameModeBits = GM_REGISTERED;   break;
-    case commercial:    gameModeBits = GM_COMMERCIAL;   break;
-    case retail:        gameModeBits = GM_RETAIL;       break;
-    case indetermined:  gameModeBits = GM_INDETERMINED; break;
-    default:
-        Con_Error("G_SetGameMode: Unknown gameMode %i", mode);
-    }
-
+    gameMode = mode;
+    gameModeBits = mode > 0? 1 << (mode-1) : 0;
     return true;
 }
 
-/**
- * Check which known IWADs are found. The purpose of this routine is to
- * find out which IWADs the user lets us to know about, but we don't decide
- * which one gets loaded or even see if the WADs are actually there.
- *
- * The default location for IWADs is Data\GAMENAMETEXT\.
- */
-void G_DetectIWADs(void)
+int G_RegisterGames(int hookType, int parm, void* data)
 {
-    typedef struct {
-        char   *file;
-        char   *override;
-    } fspec_t;
+#define DATAPATH        DD_BASEDATAPATH GAMENAMETEXT "\\"
+#define STARTUPPK3      GAMENAMETEXT ".pk3"
+#define NUMELEMENTS(v)  (sizeof(v)/sizeof((v)[0]))
 
-    // The '}' means the paths are affected by the base path.
-    char   *paths[] = {
-        "}data\\"GAMENAMETEXT"\\",
-        "}data\\",
-        "}",
-        "}iwads\\",
-        "",
-        0
-    };
-    fspec_t iwads[] = {
-        { "hacx.wad",       "-hacx" },
-        { "tnt.wad",        "-tnt" },
-        { "plutonia.wad",   "-plutonia" },
-        { "doom2.wad",      "-doom2" },
-        { "doom1.wad",      "-sdoom" },
-        { "doom.wad",       "-doom" },
-        { "doom.wad",       "-ultimate" },
-        { "doomu.wad",      "-udoom" },
-        { 0, 0 }
-    };
-    int                 i, k;
-    boolean             overridden = false;
-    char                fn[256];
+    /* HacX */
+    { const char* files[] = { STARTUPPK3, "hacx.wad" };
+    const char*   lumps[] = { "hacx-r" };
+    DD_AddGame(doom2_hacx, "hacx", DATAPATH, "HACX - Twitch 'n Kill", "Banjo Software", "hacx", 0, files, NUMELEMENTS(files), lumps, NUMELEMENTS(lumps)); }
 
-    // First check if an overriding command line option is being used.
-    for(i = 0; iwads[i].file; ++i)
-        if(ArgExists(iwads[i].override))
-        {
-            overridden = true;
-            break;
-        }
+    /* DOOM2 (TNT) */
+    { const char* files[] = { STARTUPPK3, "tnt.wad" };
+    const char*   lumps[] = { "cavern5", "cavern7", "stonew1" };
+    DD_AddGame(doom2_tnt, "doom2-tnt", DATAPATH, "Final DOOM: TNT: Evilution", "Team TNT", "tnt", 0, files, NUMELEMENTS(files), lumps, NUMELEMENTS(lumps)); }
 
-    // Tell the engine about all the possible IWADs.
-    for(k = 0; paths[k]; k++)
-        for(i = 0; iwads[i].file; ++i)
-        {
-            // Are we allowed to use this?
-            if(overridden && !ArgExists(iwads[i].override))
-                continue;
-            sprintf(fn, "%s%s", paths[k], iwads[i].file);
-            DD_AddIWAD(fn);
-        }
-}
+    /* DOOM2 (Plutonia) */
+    { const char* files[] = { STARTUPPK3, "plutonia.wad" };
+    const char*   lumps[] = { "_deutex_", "mc5", "mc11", "mc16", "mc20" };
+    DD_AddGame(doom2_plut, "doom2-plut", DATAPATH, "Final DOOM: The Plutonia Experiment", "Dario Casali and Milo Casali", "plutonia", "plut", files, NUMELEMENTS(files), lumps, NUMELEMENTS(lumps)); }
 
-static boolean lumpsFound(char **list)
-{
-    for(; *list; list++)
-        if(W_CheckNumForName(*list) == -1)
-            return false;
+    /* DOOM2 */
+    { const char* files[] = { STARTUPPK3, "doom2.wad" };
+    const char*   lumps[] = { "map01", "map02", "map03", "map04", "map10", "map20", "map25", "map30", "vilen1", "vileo1", "vileq1", "grnrock" };
+    DD_AddGame(doom2, "doom2", DATAPATH, "DOOM 2: Hell on Earth", "id Software", "doom2", 0, files, NUMELEMENTS(files), lumps, NUMELEMENTS(lumps)); }
+
+    /* DOOM (Ultimate) */
+    { const char* files[] = { STARTUPPK3, "doomu.wad" };
+    const char*   lumps[] = { "e4m1", "e4m2", "e4m3", "e4m4", "e4m5", "e4m6", "e4m7", "e4m8", "e4m9", "m_epi4" };
+    DD_AddGame(doom_ultimate, "doom1-ultimate", DATAPATH, "The Ultimate DOOM", "id Software", "ultimatedoom", "udoom", files, NUMELEMENTS(files), lumps, NUMELEMENTS(lumps)); }
+
+    /* DOOM */
+    { const char* files[] = { STARTUPPK3, "doom.wad" };
+    const char*   lumps[] = { "e2m1", "e2m2", "e2m3", "e2m4", "e2m5", "e2m6", "e2m7", "e2m8", "e2m9", "e3m1", "e3m2", "e3m3", "e3m4", "e3m5", "e3m6", "e3m7", "e3m8", "e3m9", "cybre1", "cybrd8", "floor7_2" };
+    DD_AddGame(doom, "doom1", DATAPATH, "DOOM Registered", "id Software", "doom", 0, files, NUMELEMENTS(files), lumps, NUMELEMENTS(lumps)); }
+
+    /* DOOM (Shareware) */
+    { const char* files[] = { STARTUPPK3, "doom1.wad" };
+    const char*   lumps[] = { "e1m1", "e1m2", "e1m3", "e1m4", "e1m5", "e1m6", "e1m7", "e1m8", "e1m9", "d_e1m1", "floor4_8", "floor7_2" };
+    DD_AddGame(doom_shareware, "doom1-share", DATAPATH, "DOOM Shareware", "id Software", "sdoom", 0, files, NUMELEMENTS(files), lumps, NUMELEMENTS(lumps)); }
+
     return true;
+
+#undef NUMELEMENTS
+#undef STARTUPPK3
+#undef DATAPATH
 }
 
 /**
- * Checks availability of IWAD files by name, to determine whether
- * registered/commercial features  should be executed (notably loading
- * PWAD's).
- */
-static void identifyFromData(void)
-{
-    typedef struct {
-        char* modeString;
-        gamemode_t mode;
-        char** modeLumpNames;
-        gamemission_t mission;
-        char* cmdOverride, *cmdOverride2;
-    } identify_t;
-
-    char* shareware_lumps[] = {
-        // List of lumps to detect shareware with.
-        "e1m1", "e1m2", "e1m3", "e1m4", "e1m5", "e1m6",
-        "e1m7", "e1m8", "e1m9",
-        "d_e1m1", "floor4_8", "floor7_2", NULL
-    };
-    char* registered_lumps[] = {
-        // List of lumps to detect registered with.
-        "e2m1", "e2m2", "e2m3", "e2m4", "e2m5", "e2m6",
-        "e2m7", "e2m8", "e2m9",
-        "e3m1", "e3m2", "e3m3", "e3m4", "e3m5", "e3m6",
-        "e3m7", "e3m8", "e3m9",
-        "cybre1", "cybrd8", "floor7_2", NULL
-    };
-    char* retail_lumps[] = {
-        // List of lumps to detect Ultimate Doom with.
-        "e4m1", "e4m2", "e4m3", "e4m4", "e4m5", "e4m6",
-        "e4m7", "e4m8", "e4m9",
-        "m_epi4", NULL
-    };
-    char* commercial_lumps[] = {
-        // List of lumps to detect Doom II with.
-        "map01", "map02", "map03", "map04", "map10", "map20",
-        "map25", "map30",
-        "vilen1", "vileo1", "vileq1", "grnrock", NULL
-    };
-    char* plutonia_lumps[] = {
-        "_deutex_", "mc5", "mc11", "mc16", "mc20", NULL
-    };
-    char* tnt_lumps[] = {
-        "cavern5", "cavern7", "stonew1", NULL
-    };
-    char* hacx_lumps[] = {
-        "hacx-r", NULL
-    };
-    /// \note Order here is important - it specifies the order of identification tests.
-    identify_t list[] = {
-        /* HacX */             { "hacx",            commercial,  hacx_lumps,        GM_DOOM2,   "hacx", 0 },
-        /* Doom2 (TNT) */      { "doom2-tnt",       commercial,  tnt_lumps,         GM_TNT,     "tnt", 0 },
-        /* Doom2 (Plutonia) */ { "doom2-plut",      commercial,  plutonia_lumps,    GM_PLUT,    "plutonia", "plut" },
-        /* Doom2 */            { "doom2",           commercial,  commercial_lumps,  GM_DOOM2,   "doom2", 0 },
-        /* Doom (Ultimate) */  { "doom1-ultimate",  retail,      retail_lumps,      GM_DOOM,    "ultimate", "udoom" },
-        /* Doom */             { "doom1",           registered,  registered_lumps,  GM_DOOM,    "doom", 0 },
-        /* Doom (shareware) */ { "doom1-share",     shareware,   shareware_lumps,   GM_DOOM,    "sdoom", 0 }
-    };
-    int num = sizeof(list) / sizeof(identify_t);
-
-    // First check the command line.
-    { int i;
-    for(i = 0; i < num; ++i)
-    {
-        if(ArgCheck(list[i].cmdOverride) || ArgCheck(list[i].cmdOverride2))
-        {
-            G_SetGameMode(list[i].mode, list[i].mission, list[i].modeString);
-            return;
-        }
-    }}
-
-    /**
-     * Attempt auto-selection by looking at the lumps.
-     * If all the listed lumps are found a selection is made.
-     */
-    { int i;
-    for(i = 0; i < num; ++i)
-    {
-        if(!lumpsFound(list[i].modeLumpNames))
-            continue;
-        G_SetGameMode(list[i].mode, list[i].mission, list[i].modeString);
-        return;
-    }}
-
-    // A detection couldn't be made.
-    G_SetGameMode(shareware, GM_DOOM, "doom1-share"); // Assume the minimum.
-    Con_Message("\nIdentifyVersion: Game version unknown.\n** Important data might be missing! **\n\n");
-}
-
-/**
- * gameMode, gameMission and the gameModeString are set.
- */
-void G_IdentifyVersion(void)
-{
-    identifyFromData();
-}
-
-/**
- * Pre Engine Initialization routine.
+ * Pre Game Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
 void G_PreInit(void)
 {
-    int i;
-
-    G_SetGameMode(indetermined, GM_NONE, "-");
-
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
     memset(&cfg, 0, sizeof(cfg));
@@ -364,8 +277,10 @@ void G_PreInit(void)
     cfg.hudShown[HUD_FRAGS] = true;
     cfg.hudShown[HUD_FACE] = false;
     cfg.hudShown[HUD_LOG] = true;
+    { int i;
     for(i = 0; i < NUMHUDUNHIDEEVENTS; ++i) // when the hud/statusbar unhides.
         cfg.hudUnHide[i] = 1;
+    }
     cfg.hudScale = .6f;
     cfg.hudWideOffset = 1;
     cfg.hudColor[0] = .85f;
@@ -476,7 +391,7 @@ void G_PreInit(void)
     cfg.msgColor[0] = .85f;
     cfg.msgColor[1] = cfg.msgColor[2] = 0;
 
-    cfg.chatBeep = 1;
+    cfg.chatBeep = true;
 
     cfg.killMessages = true;
     cfg.bobWeapon = 1;
@@ -509,13 +424,15 @@ void G_PreInit(void)
  * Post Engine Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void G_PostInit(void)
+void G_PostInit(int mode)
 {
     filename_t file;
     int p;
 
+    G_SetGameMode((gamemode_t)mode);
+
     // Border background changes depending on mission.
-    if(gameMission == GM_DOOM2 || gameMission == GM_PLUT || gameMission == GM_TNT)
+    if(gameModeBits & GM_ANY_DOOM2)
         borderLumps[0] = "GRNROCK";
 
     // Common post init routine
@@ -575,7 +492,7 @@ void G_PostInit(void)
     p = ArgCheck("-warp");
     if(p && p < myargc - 1)
     {
-        if(gameMode == commercial)
+        if(gameModeBits & GM_ANY_DOOM2)
         {
             startMap = atoi(Argv(p + 1)) - 1;
             autoStart = true;
@@ -610,7 +527,7 @@ void G_PostInit(void)
     // Are we autostarting?
     if(autoStart)
     {
-        if(gameMode == commercial)
+        if(gameModeBits & GM_ANY_DOOM2)
             Con_Message("Warp to Map %d, Skill %d\n", startMap+1, startSkill + 1);
         else
             Con_Message("Warp to Episode %d, Map %d, Skill %d\n", startEpisode+1, startMap+1, startSkill + 1);
@@ -625,20 +542,11 @@ void G_PostInit(void)
     }
 
     // Check valid episode and map
-    if((autoStart || IS_NETGAME) && !P_MapExists((gameMode != commercial)? startEpisode : 0, startMap))
+    if((autoStart || IS_NETGAME) && !P_MapExists((gameModeBits & GM_ANY_DOOM)? startEpisode : 0, startMap))
     {
         startEpisode = 0;
         startMap = 0;
     }
-
-    // Print a string showing the state of the game parameters
-    Con_Message("Game state parameters:%s%s%s%s%s\n",
-                noMonstersParm? " nomonsters" : "",
-                respawnParm? " respawn" : "",
-                fastParm? " fast" : "",
-                turboParm? " turbo" : "",
-                (cfg.netDeathmatch ==1)? " deathmatch" :
-                    (cfg.netDeathmatch ==2)? " altdeath" : "");
 
     if(G_GetGameAction() != GA_LOADGAME)
     {
@@ -669,7 +577,59 @@ void G_Shutdown(void)
     GUI_Shutdown();
 }
 
-void G_EndFrame(void)
+/**
+ * Takes a copy of the engine's entry points and exported data. Returns
+ * a pointer to the structure that contains our entry points and exports.
+ */
+game_export_t* GetGameAPI(game_import_t* imports)
 {
-    // Nothing to do.
+    // Take a copy of the imports, but only copy as much data as is
+    // allowed and legal.
+    memset(&gi, 0, sizeof(gi));
+    memcpy(&gi, imports, MIN_OF(sizeof(game_import_t), imports->apiSize));
+
+    // Clear all of our exports.
+    memset(&gx, 0, sizeof(gx));
+
+    // Fill in the data for the exports.
+    gx.apiSize = sizeof(gx);
+    gx.PreInit = G_PreInit;
+    gx.PostInit = G_PostInit;
+    gx.Shutdown = G_Shutdown;
+    gx.Ticker = G_Ticker;
+    gx.G_Drawer = D_Display;
+    gx.G_Drawer2 = D_Display2;
+    gx.PrivilegedResponder = (boolean (*)(event_t*)) G_PrivilegedResponder;
+    gx.FinaleResponder = FI_Responder;
+    gx.G_Responder = G_Responder;
+    gx.MobjThinker = P_MobjThinker;
+    gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
+    gx.ConsoleBackground = D_ConsoleBg;
+    gx.UpdateState = G_UpdateState;
+#undef Get
+    gx.GetInteger = G_GetInteger;
+    gx.GetVariable = G_GetVariable;
+
+    gx.NetServerStart = D_NetServerStarted;
+    gx.NetServerStop = D_NetServerClose;
+    gx.NetConnect = D_NetConnect;
+    gx.NetDisconnect = D_NetDisconnect;
+    gx.NetPlayerEvent = D_NetPlayerEvent;
+    gx.NetWorldEvent = D_NetWorldEvent;
+    gx.HandlePacket = D_HandlePacket;
+    gx.NetWriteCommands = D_NetWriteCommands;
+    gx.NetReadCommands = D_NetReadCommands;
+
+    // Data structure sizes.
+    gx.ticcmdSize = sizeof(ticcmd_t);
+    gx.mobjSize = sizeof(mobj_t);
+    gx.polyobjSize = sizeof(polyobj_t);
+
+    gx.SetupForMapData = P_SetupForMapData;
+
+    // These really need better names. Ideas?
+    gx.HandleMapDataPropertyValue = P_HandleMapDataPropertyValue;
+    gx.HandleMapObjectStatusReport = P_HandleMapObjectStatusReport;
+
+    return &gx;
 }

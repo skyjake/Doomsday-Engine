@@ -368,27 +368,18 @@ boolean R_SetViewGrid(int numCols, int numRows)
 
 /**
  * One-time initialization of the refresh daemon. Called by DD_Main.
- * GL has not yet been inited.
  */
 void R_Init(void)
 {
-    R_InitData();
+    R_InitRawTexs();
     R_InitCompositeFonts();
     R_InitVectorGraphics();
-
-    // viewwidth / viewheight / detailLevel are set by the defaults
-    R_SetViewWindow(0, 0, 320, 200);
-    R_InitSprites(); // Fully initialize sprites.
+    R_InitViewBorder();
+    R_SetViewWindow(0, 0, SCREENWIDTH, SCREENHEIGHT);
     R_InitTranslationTables();
     Rend_Init();
     frameCount = 0;
-    R_InitViewBorder();
     P_PtcInit();
-
-    // Defs have been read; we can now init models.
-    R_InitModels();
-
-    Def_PostInit();
 }
 
 /**
@@ -399,7 +390,6 @@ void R_Update(void)
     uint i;
 
     R_UpdateTexturesAndFlats();
-    R_InitSystemTextures();
     R_InitTextures();
     R_InitFlats();
     R_PreInitSprites();
@@ -415,6 +405,7 @@ void R_Update(void)
 
     // Now that we've read the defs, we can load system textures.
     GL_LoadSystemTextures();
+    Rend_ParticleLoadExtraTextures();
 
     Def_PostInit();
     P_UpdateParticleGens(); // Defs might've changed.
@@ -478,8 +469,6 @@ void R_Shutdown(void)
     R_ShutdownCompositeFonts();
     R_ShutdownVectorGraphics();
     R_ShutdownData();
-    R_ShutdownResourceLocator();
-    // Most allocated memory goes down with the zone.
 }
 
 void R_ResetViewer(void)
@@ -490,7 +479,7 @@ void R_ResetViewer(void)
 void R_InterpolateViewer(viewer_t* start, viewer_t* end, float pos,
                          viewer_t* out)
 {
-    float               inv = 1 - pos;
+    float inv = 1 - pos;
 
     out->pos[VX] = inv * start->pos[VX] + pos * end->pos[VX];
     out->pos[VY] = inv * start->pos[VY] + pos * end->pos[VY];
@@ -985,7 +974,9 @@ void R_RenderPlayerView(int num)
 
     // GL is in 3D transformation state only during the frame.
     GL_SwitchTo3DState(true, currentPort);
+
     Rend_RenderMap();
+
     // Orthogonal projection to the view window.
     GL_Restore2DState(1, currentPort);
 

@@ -999,7 +999,7 @@ patchid_t R_RegisterAsPatch(const char* name)
     p->offY = -SHORT(patch->topOffset);
     p->width = SHORT(patch->width);
     p->height = SHORT(patch->height);
-    p->isCustom = !W_IsFromIWAD(lump);
+    p->isCustom = !W_LumpFromIWAD(lump);
 
     // Take a copy of the current patch loading state so that future texture
     // loads will produce the same results.
@@ -1106,18 +1106,20 @@ rawtex_t** R_CollectRawTexs(int* count)
 /**
  * Returns a rawtex_t* for the given lump, if one already exists.
  */
-rawtex_t *R_FindRawTex(lumpnum_t lump)
+rawtex_t* R_FindRawTex(lumpnum_t lump)
 {
-    rawtex_t*         i;
-    rawtexhash_t*     hash = RAWTEX_HASH(lump);
+    if(lump >= W_NumLumps())
+    {
+        Con_Error("R_FindRawTex: lump = %i out of bounds (%i).\n", lump, W_NumLumps());
+    }
 
-    for(i = hash->first; i; i = i->next)
+    { rawtex_t* i;
+    for(i = RAWTEX_HASH(lump)->first; i; i = i->next)
+    {
         if(i->lump == lump)
-        {
             return i;
-        }
-
-    return NULL;
+    }}
+    return 0;
 }
 
 /**
@@ -1126,13 +1128,12 @@ rawtex_t *R_FindRawTex(lumpnum_t lump)
  */
 rawtex_t* R_GetRawTex(lumpnum_t lump)
 {
-    rawtex_t*           r = 0;
-    rawtexhash_t*       hash = 0;
+    rawtex_t* r = 0;
+    rawtexhash_t* hash = 0;
 
-    if(lump >= numLumps)
+    if(lump >= W_NumLumps())
     {
-        Con_Error("R_GetRawTex: lump = %i out of bounds (%i).\n",
-                  lump, numLumps);
+        Con_Error("R_GetRawTex: lump = %i out of bounds (%i).\n", lump, W_NumLumps());
     }
 
     r = R_FindRawTex(lump);
@@ -1145,7 +1146,7 @@ rawtex_t* R_GetRawTex(lumpnum_t lump)
         return r;
 
     // Hmm, this is an entirely new rawtex.
-    r = Z_Calloc(sizeof(*r), PU_PATCH, NULL); // \todo Need a new cache tag?
+    r = Z_Calloc(sizeof(*r), PU_PATCH, 0);
     hash = RAWTEX_HASH(lump);
 
     // Link to the hash.
@@ -1482,7 +1483,7 @@ typedef struct {
             j = 0;
             while(j < texDef->patchCount && (texDef->flags & TXDF_IWAD))
             {
-                if(!W_IsFromIWAD(texDef->patches[j].lump))
+                if(!W_LumpFromIWAD(texDef->patches[j].lump))
                     texDef->flags &= ~TXDF_IWAD;
                 else
                     j++;
@@ -1509,13 +1510,13 @@ typedef struct {
 
 static void loadDoomTextureDefs(void)
 {
-    lumpnum_t           i, pnamesLump, *patchLumpList;
-    size_t              numPatches;
-    int                 count = 0, countCustom = 0, *eCount;
-    doomtexturedef_t**  list = NULL, **listCustom = NULL, ***eList;
-    boolean             firstNull;
+    lumpnum_t i, pnamesLump, *patchLumpList;
+    doomtexturedef_t** list = 0, **listCustom = 0, ***eList = 0;
+    int count = 0, countCustom = 0, *eCount = 0;
+    size_t numPatches;
+    boolean firstNull;
 
-    if((pnamesLump = W_CheckNumForName("PNAMES")) == -1)
+    if((pnamesLump = W_CheckNumForName2("PNAMES", true)) == -1)
         return;
 
     // Load the patch names from the PNAMES lump.
@@ -1532,9 +1533,9 @@ static void loadDoomTextureDefs(void)
      * definition does not come from an IWAD lump.
      */
     firstNull = true;
-    for(i = 0; i < numLumps; ++i)
+    for(i = 0; i < W_NumLumps(); ++i)
     {
-        char                name[9];
+        char name[9];
 
         memset(name, 0, sizeof(name));
         strncpy(name, W_LumpName(i), 8);
@@ -1542,25 +1543,23 @@ static void loadDoomTextureDefs(void)
 
         if(!strncmp(name, "TEXTURE1", 8) || !strncmp(name, "TEXTURE2", 8))
         {
-            boolean             isFromIWAD = W_IsFromIWAD(i);
-            int                 newNumTexDefs;
-            doomtexturedef_t**  newTexDefs;
+            boolean isFromIWAD = W_LumpFromIWAD(i);
+            int newNumTexDefs;
+            doomtexturedef_t** newTexDefs;
 
             // Read in the new texture defs.
-            newTexDefs = readDoomTextureDefLump(i, patchLumpList, numPatches,
-                                                firstNull, &newNumTexDefs);
+            newTexDefs = readDoomTextureDefLump(i, patchLumpList, numPatches, firstNull, &newNumTexDefs);
 
             eList = (isFromIWAD? &list : &listCustom);
             eCount = (isFromIWAD? &count : &countCustom);
             if(*eList)
             {
-                int                 i;
-                size_t              n;
-                doomtexturedef_t**  newList;
+                doomtexturedef_t** newList;
+                size_t n;
+                int i;
 
                 // Merge with the existing doomtexturedefs.
-                newList = Z_Malloc(sizeof(*newList) * ((*eCount) + newNumTexDefs),
-                                   PU_REFRESHTEX, 0);
+                newList = Z_Malloc(sizeof(*newList) * ((*eCount) + newNumTexDefs), PU_REFRESHTEX, 0);
                 n = 0;
                 for(i = 0; i < *eCount; ++i)
                     newList[n++] = (*eList)[i];
@@ -1587,35 +1586,34 @@ static void loadDoomTextureDefs(void)
     if(listCustom)
     {   // There are custom doomtexturedefs, cross compare with the IWAD
         // originals to see if they have been changed.
-        size_t          n;
         doomtexturedef_t** newList;
+        size_t n;
 
         i = 0;
         while(i < count)
         {
-            int                 j;
-            doomtexturedef_t*   orig = list[i];
-            boolean             hasReplacement = false;
+            doomtexturedef_t* orig = list[i];
+            boolean hasReplacement = false;
+            int j;
 
             for(j = 0; j < countCustom; ++j)
             {
-                doomtexturedef_t*   custom = listCustom[j];
+                doomtexturedef_t* custom = listCustom[j];
 
                 if(!strncmp(orig->name, custom->name, 8))
                 {   // This is a newer version of an IWAD doomtexturedef.
                     if(!(custom->flags & TXDF_IWAD))
                         hasReplacement = true; // Uses a non-IWAD patch.
-                    else if(custom->height == orig->height &&
-                            custom->width == orig->width &&
+                    else if(custom->height     == orig->height &&
+                            custom->width      == orig->width  &&
                             custom->patchCount == orig->patchCount)
                     {   // Check the patches.
-                        short               k = 0;
+                        short k = 0;
 
-                        while(k < orig->patchCount &&
-                              (custom->flags & TXDF_IWAD))
+                        while(k < orig->patchCount && (custom->flags & TXDF_IWAD))
                         {
-                            texpatch_t*         origP = orig->patches + k;
-                            texpatch_t*         customP = custom->patches + k;
+                            texpatch_t* origP   = orig->patches  + k;
+                            texpatch_t* customP = custom->patches + k;
 
                             if(origP->lump != customP->lump &&
                                origP->offX != customP->offX &&
@@ -1636,8 +1634,7 @@ static void loadDoomTextureDefs(void)
 
             if(hasReplacement)
             {   // Let the PWAD "copy" override the IWAD original.
-                int                 n;
-
+                int n;
                 for(n = i + 1; n < count; ++n)
                     list[n-1] = list[n];
                 count--;
@@ -1647,8 +1644,8 @@ static void loadDoomTextureDefs(void)
         }
 
         // List contains only non-replaced doomtexturedefs, merge them.
-        newList = Z_Malloc(sizeof(*newList) * (count + countCustom),
-                           PU_REFRESHTEX, 0);
+        newList = Z_Malloc(sizeof(*newList) * (count + countCustom), PU_REFRESHTEX, 0);
+
         n = 0;
         for(i = 0; i < count; ++i)
             newList[n++] = list[i];
@@ -1756,13 +1753,13 @@ static int R_NewFlat(lumpnum_t lump)
 
 void R_InitFlats(void)
 {
-    int i;
-    float starttime = Sys_GetSeconds();
+    uint startTime = Sys_GetRealTime();
     ddstack_t* stack = Stack_New();
+    int i;
 
     numFlats = 0;
 
-    for(i = 0; i < numLumps; ++i)
+    for(i = 0; i < W_NumLumps(); ++i)
     {
         const char* name = W_LumpName(i);
 
@@ -1806,8 +1803,7 @@ void R_InitFlats(void)
         Materials_New(MN_FLATS, W_LumpName(flat->lump), 64, 64, 0, tex->id, 0, 0);
     }
 
-    VERBOSE(Con_Message("R_InitFlats: Done in %.2f seconds.\n",
-                        Sys_GetSeconds() - starttime));
+    VERBOSE( Con_Message("R_InitFlats: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
 uint R_CreateSkinTex(const char* skin, boolean isShinySkin)
@@ -1877,11 +1873,11 @@ static boolean expandSkinName(char* expanded, const char* skin,
     Str_Append(&fn, skin);
 
     // Try the "first choice" directory first.
-    found = R_FindResource2(RT_GRAPHIC, DDRC_NONE, expanded, Str_Text(&fn),
+    found = F_FindResource2(RT_GRAPHIC, DDRC_NONE, expanded, Str_Text(&fn),
                             NULL, len);
 
     if(!found) // Try the model path(s).
-        found = R_FindResource2(RT_GRAPHIC, DDRC_MODEL, expanded, skin,
+        found = F_FindResource2(RT_GRAPHIC, DDRC_MODEL, expanded, skin,
                                 NULL, len);
 
     Str_Free(&fn);
@@ -1950,16 +1946,6 @@ void R_UpdateRawTexs(void)
     Z_FreeTags(PU_PATCH, PU_PATCH);
     memset(rawtexhash, 0, sizeof(rawtexhash));
     R_InitRawTexs();
-}
-
-/**
- * Locates all the lumps that will be used by all views.
- * Must be called after W_Init.
- */
-void R_InitData(void)
-{
-    R_InitRawTexs();
-    Cl_InitTranslations();
 }
 
 void R_UpdateData(void)

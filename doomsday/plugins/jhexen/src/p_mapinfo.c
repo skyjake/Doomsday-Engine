@@ -41,7 +41,6 @@
 #define MAPINFO_SCRIPT_NAME "MAPINFO"
 
 #define UNKNOWN_MAP_NAME "DEVELOPMENT MAP"
-#define DEFAULT_SKY_NAME "SKY1"
 #define DEFAULT_SONG_LUMP "DEFSONG"
 #define DEFAULT_FADE_TABLE "COLORMAP"
 
@@ -170,8 +169,7 @@ void P_InitMapInfo(void)
     defMapInfo.warpTrans = 0;
     defMapInfo.nextMap = 0; // Always go to map 0 if not specified.
     defMapInfo.cdTrack = 1;
-    defMapInfo.sky1Material =
-        Materials_NumForName(shareware ? "SKY2" : DEFAULT_SKY_NAME, MN_TEXTURES);
+    defMapInfo.sky1Material = Materials_NumForName(gameMode == hexen_shareware ? "SKY2" : "SKY1", MN_TEXTURES);
     defMapInfo.sky2Material = defMapInfo.sky1Material;
     defMapInfo.sky1ScrollDelta = 0;
     defMapInfo.sky2ScrollDelta = 0;

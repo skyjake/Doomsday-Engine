@@ -118,11 +118,6 @@ static gamemapobjdef_t* gameMapObjDefs;
 
 // CODE --------------------------------------------------------------------
 
-void P_InitData(void)
-{
-    P_InitMapUpdate();
-}
-
 void P_PolyobjChanged(polyobj_t* po)
 {
     uint                i;
@@ -150,17 +145,14 @@ void P_PolyobjChanged(polyobj_t* po)
  */
 const char* P_GenerateUniqueMapID(const char* mapID)
 {
-    static char         uid[255];
-    filename_t          base;
-    int                 lump = W_GetNumForName(mapID);
+    static char uid[255];
+    filename_t base;
+    int lump = W_GetNumForName(mapID);
 
     M_ExtractFileBase(base, W_LumpSourceFile(lump), FILENAME_T_MAXLEN);
-
-    dd_snprintf(uid, 255, "%s|%s|%s|%s", mapID,
-            base, (W_IsFromIWAD(lump) ? "iwad" : "pwad"),
-            (char *) gx.GetVariable(DD_GAME_MODE));
-
+    dd_snprintf(uid, 255, "%s|%s|%s|%s", mapID, base, (W_LumpFromIWAD(lump) ? "iwad" : "pwad"), Str_Text(GameInfo_ModeIdentifier(DD_GameInfo())));
     strlwr(uid);
+
     return uid;
 }
 
