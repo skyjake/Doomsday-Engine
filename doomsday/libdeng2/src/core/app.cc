@@ -228,7 +228,7 @@ void App::loadPlugins()
             /*
             else if(type == "deng-plugin/video")
             {
-                if(videoName != "none" && libFile.hasUnderscoreName(videoName) && !_video)
+                if(videoName != "none" &ls& libFile.hasUnderscoreName(videoName) && !_video)
                 {
                     _video = libFile.library().SYMBOL(deng_NewVideo)();
                     _subsystems.push_back(_video);

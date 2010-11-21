@@ -102,7 +102,8 @@ String LogEntry::asText(const Flags& formattingFlags) const
                 "(ERR)",
                 "(!!!)"        
             };
-            output << qSetPadChar(' ') << qSetFieldWidth(5) << levelNames[_level] << " ";
+            output << qSetPadChar(' ') << qSetFieldWidth(5) << levelNames[_level] <<
+                      qSetFieldWidth(0) << " ";
         }
         else
         {

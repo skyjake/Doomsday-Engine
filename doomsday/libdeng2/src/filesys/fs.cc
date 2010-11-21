@@ -26,6 +26,8 @@
 
 using namespace de;
 
+static const FS::Index emptyIndex;
+
 FS::FS()
 {}
 
@@ -162,8 +164,11 @@ const FS::Index& FS::indexFor(const String& typeName) const
     {
         return found->second;
     }
+    return emptyIndex;
+    /*
     /// @throw UnknownTypeError No files of type @a typeName have been indexed.
-    throw UnknownTypeError("FS::indexForType", "No files of type '" + typeName + "' have been indexed");
+    throw UnknownTypeError("FS::indexFor", "No files of type '" + typeName + "' have been indexed");
+    */
 }
 
 void FS::printIndex()

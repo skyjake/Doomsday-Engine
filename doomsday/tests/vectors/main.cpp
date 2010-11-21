@@ -72,9 +72,9 @@ int main(int, char**)
     }
     catch(const Error& err)
     {
-        qDebug() << err.asText() << "\n";
+        qWarning() << err.asText() << "\n";
     }
 
-    qDebug() << "Exiting deng_Main()...\n";
+    qDebug() << "Exiting main()...\n";
     return 0;        
 }

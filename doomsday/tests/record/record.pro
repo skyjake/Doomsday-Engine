@@ -1,6 +1,6 @@
 include(../tests.pri)
 
 TEMPLATE = app
-TARGET = test_vectors
+TARGET = test_record
 
 SOURCES += main.cpp

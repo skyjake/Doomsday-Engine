@@ -29,7 +29,7 @@
 using namespace de;
 
 const Time::Delta FLUSH_INTERVAL = .1;
-const duint SIMPLE_INDENT = 29;
+const duint SIMPLE_INDENT = 30;
 const duint RULER_LENGTH = 98 - SIMPLE_INDENT;
 
 LogBuffer::LogBuffer(duint maxEntryCount) 
@@ -139,7 +139,7 @@ void LogBuffer::flush()
             {
                 if(os)
                 {
-                    *os << qSetFieldWidth(SIMPLE_INDENT) << "";
+                    *os << qSetFieldWidth(SIMPLE_INDENT) << "" << qSetFieldWidth(0);
                 }
                 if(writer)
                 {

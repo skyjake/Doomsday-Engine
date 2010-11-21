@@ -17,20 +17,19 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <dengmain.h>
 #include <de/data.h>
 #include "../testapp.h"
 
-#include <iostream>
-#include <sstream>
+#include <QDebug>
+#include <QTextStream>
 
 using namespace de;
 
-int deng_Main(int argc, char** argv)
+int main(int argc, char** argv)
 {
     try
     {
-        TestApp app(CommandLine(argc, argv));
+        TestApp app(argc, argv);
         
         Record rec;
         
@@ -47,21 +46,22 @@ int deng_Main(int argc, char** argv)
         Writer(b) << rec;
         LOG_MESSAGE("Serialized record to ") << b.size() << " bytes.";
         
-        std::ostringstream str;
+        String str;
+        QTextStream os(&str);
         for(duint i = 0; i < b.size(); ++i)
         {
-            str << dint(b.data()[i]) << " ";
+            os << dint(b.data()[i]) << " ";
         }
-        LOG_MESSAGE("") << str.str();
+        LOG_MESSAGE("") << str;
         
         Reader(b) >> rec2;        
         LOG_MESSAGE("After being (de)serialized:\n") << rec2;
     }
     catch(const Error& err)
     {
-        std::cerr << err.asText() << "\n";
+        qWarning() << err.asText() << "\n";
     }
 
-    std::cout << "Exiting deng_Main()...\n";
+    qDebug() << "Exiting main()...\n";
     return 0;        
 }

@@ -271,7 +271,7 @@ String Record::asText(const String& prefix, List* lines) const
     for(List::iterator i = allLines.begin(); i != allLines.end(); ++i)
     {
         if(i != allLines.begin()) os << "\n";
-        os << qSetFieldWidth(maxLength.x) << i->first << ": ";
+        os << qSetFieldWidth(maxLength.x) << i->first << qSetFieldWidth(0) << ": ";
         // Print the value line by line.
         int pos = 0;
         while(pos >= 0)
@@ -279,7 +279,7 @@ String Record::asText(const String& prefix, List* lines) const
             int next = i->second.indexOf('\n', pos);
             if(pos > 0)
             {
-                os << qSetFieldWidth(maxLength.x) << "" << "  ";
+                os << qSetFieldWidth(maxLength.x) << "" << qSetFieldWidth(0) << "  ";
             }
             os << i->second.substr(pos, next != String::npos? next - pos + 1 : next);
             pos = next;
