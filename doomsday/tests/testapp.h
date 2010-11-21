@@ -20,13 +20,14 @@
 #ifndef TESTAPP_H
 #define TESTAPP_H
 
-#include <de/App>
+#include <de/ConsoleApp>
 #include <de/LogBuffer>
+#include <QDebug>
 
-class TestApp : public de::App
+class TestApp : public de::ConsoleApp
 {
 public:
-    TestApp(const de::CommandLine& args) : de::App(args, "/config/testapp.de", "testapp", de::Log::DEBUG) {
+    TestApp(int argc, char** argv) : de::ConsoleApp(argc, argv, "/config/testapp.de", "testapp", de::Log::DEBUG) {
         logBuffer().enableStandardOutput();
         LOG_MESSAGE("TestApp constructed.");
     }
@@ -35,7 +36,7 @@ public:
         LOG_MESSAGE("TestApp destroyed.");
     }
 
-    void iterate(const de::Time::Delta& elapsed) {}
+    void iterate(const de::Time::Delta& /*elapsed*/) {}
 };
 
 #endif /* TESTAPP_H */

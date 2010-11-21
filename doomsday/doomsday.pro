@@ -1,2 +1,3 @@
 TEMPLATE = subdirs
-SUBDIRS = deng2
+SUBDIRS = libdeng2 tests
+tests.depends = libdeng2
