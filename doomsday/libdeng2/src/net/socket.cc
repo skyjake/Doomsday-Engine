@@ -336,7 +336,8 @@ void Socket::socketDisconnected()
 
 void Socket::socketError(QAbstractSocket::SocketError socketError)
 {
-    qDebug() << "Socket: Error" << _socket->errorString();
+    LOG_AS("Socket::socketError");
+    LOG_WARNING(_socket->errorString());
 
     emit error(socketError);
 }

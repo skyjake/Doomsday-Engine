@@ -40,14 +40,14 @@ namespace de
             }
             catch(const std::exception& error)
             {
-                LOG_AS("ConsoleApp::notify");
+                LOG_AS("ConsoleApp");
                 LOG_ERROR(error.what());
                 LOG_INFO("Application will quit.");
                 quit();
             }
             catch(...)
             {
-                LOG_AS("ConsoleApp::notify");
+                LOG_AS("ConsoleApp");
                 LOG_ERROR("Uncaught exception.");
                 LOG_INFO("Application will quit.");
                 quit();

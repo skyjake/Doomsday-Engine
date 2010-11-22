@@ -89,13 +89,6 @@ Message* Link::receive()
         // A message was waiting.
         return b;
     }    
-    /*
-    if(!_socket->isOpen())
-    {
-        /// @throw DisconnectedError The receiver is no longer running, which indicates
-        /// that the remote end has closed the connection.
-        throw DisconnectedError("Link::receive", "Link has been closed");
-    }*/
     return 0;
 }
 
@@ -108,8 +101,6 @@ void Link::socketDisconnected()
 
 void Link::socketError(QAbstractSocket::SocketError /*error*/)
 {
-    /*
-    LOG_AS("Link::socketError");
-    LOG_INFO("Error %i") << error;
-    */
+    /// @throw DisconnectedError The socket has encountered an error.
+    throw DisconnectedError("Link::socketError", "Network failure");
 }
