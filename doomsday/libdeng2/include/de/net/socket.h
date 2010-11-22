@@ -124,7 +124,7 @@ namespace de
         void close();
 
     signals:
-        void gotMessages();
+        void messagesReady();
         void disconnected();
         void error(QAbstractSocket::SocketError error);
 

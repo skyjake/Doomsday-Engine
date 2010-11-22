@@ -32,6 +32,8 @@ ListenSocket::ListenSocket(duint16 port) : _socket(0), _port(port)
         throw OpenError("ListenSocket::ListenSocket", _socket->errorString());
     }
 
+    Q_ASSERT(_socket->isListening());
+
     connect(_socket, SIGNAL(newConnection()), this, SLOT(acceptNewConnection()));
 }
 
@@ -44,6 +46,8 @@ void ListenSocket::acceptNewConnection()
 {
     QTcpSocket* s = _socket->nextPendingConnection();
     _incoming.append(s);
+
+    emit incomingConnection();
 }
 
 Socket* ListenSocket::accept()

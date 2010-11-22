@@ -91,6 +91,9 @@ namespace de
         void send(const IByteArray& data);
         Message* receive();
 
+    signals:
+        void messagesReady();
+
     protected slots:
         void socketDisconnected();
         void socketError(QAbstractSocket::SocketError error);

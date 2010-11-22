@@ -32,17 +32,28 @@ using namespace de;
 Link::Link(const Address& address) : _socket(0)
 {
     _socket = new Socket(address);
+    initialize();
 }
 
 Link::Link(Socket* socket) : _socket(socket)
-{}
+{
+    initialize();
+}
+
+void Link::initialize()
+{
+    connect(_socket, SIGNAL(messagesReady()), this, SIGNAL(messagesReady()));
+    connect(_socket, SIGNAL(disconnected()), this, SLOT(socketDisconnected()));
+    connect(_socket, SIGNAL(error(QAbstractSocket::SocketError)),
+            this, SLOT(socketError(QAbstractSocket::SocketError)));
+}
 
 Link::~Link()
 {
     flush();
     
     FOR_AUDIENCE(Deletion, i) i->linkBeingDeleted(*this);
-    
+
     // Close the socket.
     _socket->close();
     
@@ -89,7 +100,16 @@ Message* Link::receive()
 }
 
 void Link::socketDisconnected()
-{}
+{
+    /// @throw DisconnectedError The receiver is no longer running, which indicates
+    /// that the remote end has closed the connection.
+    throw DisconnectedError("Link::socketDisconnected", "Link has been closed");
+}
 
 void Link::socketError(QAbstractSocket::SocketError /*error*/)
-{}
+{
+    /*
+    LOG_AS("Link::socketError");
+    LOG_INFO("Error %i") << error;
+    */
+}

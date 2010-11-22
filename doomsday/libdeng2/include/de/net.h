@@ -6,8 +6,6 @@
 #include "MuxLink"
 #include "Packet"
 #include "Protocol"
-#include "ReceiverThread"
 #include "RecordPacket"
-#include "SenderThread"
 #include "Socket"
 #include "Transceiver"

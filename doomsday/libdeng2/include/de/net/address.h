@@ -48,6 +48,10 @@ namespace de
          */
         Address(const QHostAddress& address, duint16 port = 0);
 
+        Address(const char* address, duint16 port = 0);
+
+        Address(const Address& other);
+
         /**
          * Checks two addresses for equality.
          *

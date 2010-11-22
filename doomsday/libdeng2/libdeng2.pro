@@ -9,10 +9,17 @@ LIBDENG2_MINOR_VERSION  = 0
 LIBDENG2_PATCHLEVEL     = 0
 
 LIBDENG2_HEADERS = \
+    include/de/core.h \
+    include/de/data.h \
     include/de/deng.h \
     include/de/error.h \
+    include/de/fs.h \
     include/de/math.h \
+    include/de/net.h \
+    include/de/script.h \
+    include/de/types.h \
     include/de/version.h \
+    include/de/world.h \
     $$files(include/de/core/*.h) \
     $$files(include/de/data/*.h) \
     $$files(include/de/filesys/*.h) \

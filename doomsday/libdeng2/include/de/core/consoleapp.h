@@ -26,10 +26,20 @@
 
 namespace de
 {
+    namespace internal
+    {
+        class CoreApplication : public QCoreApplication
+        {
+        public:
+            CoreApplication(int argc, char** argv);
+            bool notify(QObject* receiver, QEvent* event);
+        };
+    }
+
     /**
      * Console application.
      */
-    class ConsoleApp : public QCoreApplication, public App
+    class ConsoleApp : public internal::CoreApplication, public App
     {
     public:
         ConsoleApp(int argc, char** argv,

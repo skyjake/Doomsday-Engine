@@ -51,13 +51,19 @@ namespace de
         /// Close the listen socket.
         virtual ~ListenSocket();
 
-        /// Accept a new incoming connection.  @return A Socket object
-        /// that represents the new client, or NULL if there were no
-        /// pending connection requests.
-        Socket* accept();
-        
         /// Returns the port the socket is listening on.
         duint16 port() const;
+
+        /// Returns an incoming connection. Caller takes ownership of
+        /// the returned object.
+        Socket* accept();
+        
+    signals:
+        /**
+         * Notifies when a new incoming connection is available.
+         * Call accept() to get the Socket object.
+         */
+        void incomingConnection();
 
     protected slots:
         void acceptNewConnection();

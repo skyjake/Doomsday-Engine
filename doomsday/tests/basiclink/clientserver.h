@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project
  *
- * Copyright (c) 2009 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2010 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,19 +17,42 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef TESTAPP_H
-#define TESTAPP_H
+#ifndef CLIENTSERVER_H
+#define CLIENTSERVER_H
 
-#include <de/ConsoleApp>
-#include <QDebug>
+#include <de/data.h>
+#include <de/net.h>
 
-class TestApp : public de::ConsoleApp
+using namespace de;
+
+#define SERVER_PORT     23546
+
+class Server : public QObject
 {
-public:
-    TestApp(int argc, char** argv);
-    virtual ~TestApp();
+    Q_OBJECT
 
-    void iterate(const de::Time::Delta& elapsed);
+public:
+    Server();
+
+public slots:
+    void sendResponse();
+
+private:
+    ListenSocket _entry;
 };
 
-#endif /* TESTAPP_H */
+class Client : public QObject
+{
+    Q_OBJECT
+
+public:
+    Client(const Address& serverAddress);
+
+public slots:
+    void handleIncoming();
+
+private:
+    Link _link;
+};
+
+#endif // CLIENTSERVER_H

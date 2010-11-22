@@ -40,7 +40,7 @@ Socket::Socket(const Address& address)
 {
     _socket = new QTcpSocket(this);
     _socket->connectToHost(address.host(), address.port());
-
+    initialize();
 /*
     if(_socket == 0)
     {
@@ -54,11 +54,12 @@ Socket::Socket(const Address& address)
 Socket::Socket(QTcpSocket* existingSocket) : _socket(existingSocket)
 {
     _socket->setParent(this);
+    initialize();
 }
 
 Socket::~Socket()
 {
-    _socket->close();
+    close();
 }
 
 void Socket::initialize()
@@ -72,6 +73,9 @@ void Socket::initialize()
 
 void Socket::close()
 {
+    // Prevent emitting of any more signals.
+    _socket->disconnect();
+
     _socket->close();
 }
 
@@ -262,7 +266,7 @@ void Socket::readIncomingBytes()
     // Notification about available messages.
     if(!_receivedMessages.isEmpty())
     {
-        emit gotMessages();
+        emit messagesReady();
     }
 }
 
@@ -332,6 +336,8 @@ void Socket::socketDisconnected()
 
 void Socket::socketError(QAbstractSocket::SocketError socketError)
 {
+    qDebug() << "Socket: Error" << _socket->errorString();
+
     emit error(socketError);
 }
 

@@ -506,7 +506,7 @@ ddouble ScriptLex::tokenToNumber(const Token& token)
 
     if(token.beginsWith(String("0x")) || token.beginsWith(String("0X")))
     {
-        return ddouble(str.toInt(0, 16));
+        return ddouble(str.toLongLong(0, 16));
     }
     else
     {

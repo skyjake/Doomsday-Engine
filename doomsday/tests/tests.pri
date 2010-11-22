@@ -16,3 +16,9 @@ macx {
     TESTAPP_CFG_FILES.path = Contents/Resources/config
     QMAKE_BUNDLE_DATA += DENG2_CFG_FILES TESTAPP_CFG_FILES
 }
+
+HEADERS += \
+    ../testapp.h
+
+SOURCES += \
+    ../testapp.cpp

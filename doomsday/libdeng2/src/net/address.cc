@@ -25,7 +25,16 @@ using namespace de;
 Address::Address() : _port(0)
 {}
 
-Address::Address(const QHostAddress& host, duint16 port) : _host(host), _port(port)
+Address::Address(const char* address, duint16 port)
+    : _host(QHostAddress(address)), _port(port)
+{}
+
+Address::Address(const QHostAddress& host, duint16 port)
+    : _host(host), _port(port)
+{}
+
+Address::Address(const Address& other)
+    : LogEntry::Arg::Base(), _host(other._host), _port(other._port)
 {}
 
 bool Address::operator == (const Address& other) const
