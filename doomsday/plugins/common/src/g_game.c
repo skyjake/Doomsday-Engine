@@ -459,10 +459,7 @@ void G_CommonPreInit(void)
         players[i].plr->extraData = (void*) &players[i];
     }}
 
-    R_SetDefsPath(DEFSPATH);
-
     DD_SetConfigFile(CONFIGFILE);
-    DD_SetDefsFile(DEFSFILE);
 
     Con_SetString("map-name", NOTAMAPNAME, 1);
 
@@ -2341,7 +2338,7 @@ void G_LeaveMap(uint newMap, uint _entryPoint, boolean _secretExit)
         return;
 
 #if __JHEXEN__
-    if(gameMode == hexen_shareware && newMap != DDMAXINT && newMap > 3)
+    if(gameMode == hexen_demo && newMap != DDMAXINT && newMap > 3)
     {   // Not possible in the 4-map demo.
         P_SetMessage(&players[CONSOLEPLAYER], "PORTAL INACTIVE -- DEMO", false);
         return;

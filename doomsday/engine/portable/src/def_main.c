@@ -759,10 +759,33 @@ static void readAllDefinitions(void)
     uint startTime = Sys_GetRealTime();
 
     // Start with engine's own top-level definition file, it is always read first.
-    readDefinitionFile(DD_BASEDEFSPATH"doomsday.ded");
+    { filename_t foundPath;
+    if(F_FindResource(RT_DEFINITION, foundPath, "doomsday.ded", 0, FILENAME_T_MAXLEN))
+        readDefinitionFile(foundPath);
+    else
+        Con_Error("readAllDefinitions: Error, failed to locate main engine definition file \"doomsday.ded\".");
+    }
 
-    // Next the top-level game definition file.
-    readDefinitionFile(Str_Text(&topDefsFileName));
+    // Next the game's main/top-level definition file.
+    { const ddstring_t* mainDef;
+    if((mainDef = GameInfo_MainDef(DD_GameInfo())))
+    {
+        filename_t foundPath;
+        if(F_FindResource(RT_DEFINITION, foundPath, Str_Text(mainDef), 0, FILENAME_T_MAXLEN))
+            readDefinitionFile(foundPath);
+        else
+            Con_Error("readAllDefinitions: Error, failed to locate main game definition file \"%s\".", Str_Text(mainDef));
+    }}
+    
+    // Now any extra definition files required by the game.
+    { gameresource_record_t* const* records;
+    if((records = GameInfo_Resources(DD_GameInfo(), DDRC_DED, 0)))
+        do
+        {
+            if(Str_Length(&(*records)->path) != 0)
+                readDefinitionFile(Str_Text(&(*records)->path));
+        } while(records++);
+    }
 
     // Any definition files on the command line?
     { int p;
@@ -1098,8 +1121,8 @@ void Def_Read(void)
     Def_CountMsg(defs.count.lineTypes.num, "line types");
     Def_CountMsg(defs.count.sectorTypes.num, "sector types");
 
-    // Init the base model search path (prepend).
-    GameInfo_AddResourceSearchPath(DD_GameInfo(), DDRC_MODEL, defs.modelPath, false);
+    // Init the base model search path (append).
+    GameInfo_AddResourceSearchPath(DD_GameInfo(), DDRC_MODEL, defs.modelPath, true);
 
     defsInited = true;
 }

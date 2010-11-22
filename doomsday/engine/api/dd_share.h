@@ -66,8 +66,8 @@ extern "C" {
 #define DDMAXPLAYERS        16
 
 // Base default paths for data and definition files.
-#define DD_BASEDATAPATH    "}data\\"
-#define DD_BASEDEFSPATH    "}defs\\"
+#define DD_BASEPATH_DATA   "}data\\"
+#define DD_BASEPATH_DEFS   "}defs\\"
 
 // The case-independent strcmps have different names.
 #if WIN32
@@ -945,12 +945,14 @@ typedef enum {
 } gltexture_type_t;
 
 /**
- * Resource classes. Each has its own subdir under Data\Game\.
+ * Resource classes.
  */
 typedef enum ddresourceclass_e {
     DDRC_NONE = -1,
     DDRC_FIRST = 0,
-    DDRC_PACKAGE = DDRC_FIRST, // ZIP or WAD.
+    DDRC_ZIP = DDRC_FIRST,
+    DDRC_WAD,
+    DDRC_DED,
     DDRC_TEXTURE,
     DDRC_FLAT,
     DDRC_PATCH,
@@ -968,7 +970,8 @@ typedef enum ddresourceclass_e {
 typedef enum resourcetype_e {
     RT_UNKNOWN = -1,
     RT_FIRST = 0,
-    RT_ARCHIVE = RT_FIRST,
+    RT_PACKAGE = RT_FIRST,
+    RT_DEFINITION,
     RT_GRAPHIC,
     RT_MODEL,
     RT_SOUND,

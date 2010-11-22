@@ -300,7 +300,7 @@ void DD_InitHelp(void)
 
     // Parse the control panel help file.
     { filename_t helpFileName;
-    M_TranslatePath(helpFileName, DD_BASEDATAPATH"cphelp.txt", FILENAME_T_MAXLEN);
+    M_TranslatePath(helpFileName, DD_BASEPATH_DATA"cphelp.txt", FILENAME_T_MAXLEN);
     DH_ReadStrings(helpFileName);
     }
 

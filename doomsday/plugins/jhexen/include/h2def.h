@@ -74,12 +74,7 @@
 #define MINLONG     ((long)0x80000000)
 #endif
 
-#define DATAPATH            DD_BASEDATAPATH GAMENAMETEXT "\\"
-#define DEFSPATH            DD_BASEDEFSPATH GAMENAMETEXT "\\"
-
 #define CONFIGFILE          GAMENAMETEXT ".cfg"
-#define DEFSFILE            GAMENAMETEXT ".ded"
-#define STARTUPPK3          GAMENAMETEXT ".pk3"
 
 #define Set                 DD_SetInteger
 #define Get                 DD_GetInteger
@@ -101,7 +96,7 @@ extern game_export_t gx;
 
 typedef enum {
     indetermined, // \todo now meaningless refactor away.
-    hexen_shareware,
+    hexen_demo,
     hexen,
     hexen_deathkings,
     NUM_GAME_MODES
@@ -109,11 +104,11 @@ typedef enum {
 
 // Game mode bits for the above.
 #define GM_INDETERMINED     0x0
-#define GM_HEXEN_SHAREWARE  0x1
+#define GM_HEXEN_DEMO       0x1
 #define GM_HEXEN            0x2
 #define GM_HEXEN_DEATHKINGS 0x4
 
-#define GM_ANY              (GM_HEXEN_SHAREWARE|GM_HEXEN|GM_HEXEN_DEATHKINGS)
+#define GM_ANY              (GM_HEXEN_DEMO|GM_HEXEN|GM_HEXEN_DEATHKINGS)
 
 #define SCREENWIDTH         320
 #define SCREENHEIGHT        200

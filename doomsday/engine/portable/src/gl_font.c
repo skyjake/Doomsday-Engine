@@ -162,7 +162,7 @@ int FR_Init(void)
     }
     else
     {
-        M_TranslatePath(fontpath, DD_BASEDATAPATH"fonts\\", FILENAME_T_MAXLEN);
+        M_TranslatePath(fontpath, DD_BASEPATH_DATA"fonts\\", FILENAME_T_MAXLEN);
         Dir_ValidDir(fontpath, FILENAME_T_MAXLEN);
     }
     return 0;

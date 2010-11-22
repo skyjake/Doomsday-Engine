@@ -384,7 +384,7 @@ static void mapPath(char* path, size_t len)
 
     if(path[0] == '@') // Manually mapped to Defs.
     {
-        sprintf(mapped, "%sauto" DIR_SEP_STR "%s", R_GetDefsPath(), path + 1);
+        sprintf(mapped, "%sauto" DIR_SEP_STR "%s", Str_Text(GameInfo_DefsPath(DD_GameInfo())), path + 1);
         strcpy(path, mapped);
     }
     else if(path[0] == '#') // Manually mapped to Data.
@@ -395,7 +395,7 @@ static void mapPath(char* path, size_t len)
     else if(strchr(path, DIR_SEP_CHAR) == NULL)
     {   // The name contains no directory separators.
         // Check the extension.
-        char       *ext = strrchr(path, '.');
+        char* ext = strrchr(path, '.');
 
         if(ext != NULL)
         {
@@ -411,7 +411,7 @@ static void mapPath(char* path, size_t len)
             }
             else if(!stricmp(ext, "ded"))
             {   // Definitions are mapped to the Defs directory.
-                sprintf(mapped, "%sauto" DIR_SEP_STR, R_GetDefsPath());
+                sprintf(mapped, "%sauto" DIR_SEP_STR, Str_Text(GameInfo_DefsPath(DD_GameInfo())));
             }
             else
             {

@@ -44,9 +44,8 @@ extern filename_t ddBasePath;
 extern directory_t ddRuntimeDir, ddBinDir;
 
 extern ddstring_t configFileName, bindingsConfigFileName;
-extern ddstring_t topDefsFileName;
 
-extern char* autoloadFiles; // A list of wad names, whitespace in between (in .cfg).
+extern char* autoloadFiles; // A list of names of files to be autoloaded during startup, whitespace in between (in .cfg).
 
 extern int isDedicated;
 
@@ -64,24 +63,9 @@ void DD_UpdateEngineState(void);
 void R_PrependDataPath(char* newPath, const char* origPath, size_t len);
 
 /**
- * Set the defs path. The game module is responsible for calling this.
- */
-void R_SetDefsPath(const char* path);
-
-/**
- * @return              Ptr to a string containing the definition file path.
- */
-const char* R_GetDefsPath(void);
-
-/**
  * @param origPath      If a relative path, the defs path is added in front of it.
  */
 void R_PrependDefsPath(char* newPath, const char* origPath, size_t len);
-
-/**
- * Set the primary DED file, which is included immediately after Doomsday.ded.
- */
-void DD_SetDefsFile(const char* file);
 
 void DD_SetConfigFile(const char* file);
 

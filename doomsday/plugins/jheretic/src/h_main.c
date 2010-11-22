@@ -201,29 +201,38 @@ boolean G_SetGameMode(int/*gamemode_t*/ mode)
 
 int G_RegisterGames(int hookType, int parm, void* data)
 {
-#define DATAPATH        DD_BASEDATAPATH GAMENAMETEXT "\\"
+#define DATAPATH        DD_BASEPATH_DATA GAMENAMETEXT "\\"
+#define DEFSPATH        DD_BASEPATH_DEFS GAMENAMETEXT "\\"
 #define STARTUPPK3      GAMENAMETEXT ".pk3"
+#define STARTUPDED      GAMENAMETEXT ".ded"
 #define NUMELEMENTS(v)  (sizeof(v)/sizeof((v)[0]))
 
     /* Heretic (Extended) */
-    { const char* files[] = { STARTUPPK3, "heretic.wad" };
-    const char*   lumps[] = { "EXTENDED", "E5M2", "E5M7", "E6M2", "MUMSIT", "WIZACT",  "MUS_CPTD", "CHKNC5", "SPAXA1A5" };
-    DD_AddGame(heretic_extended, "heretic-ext", DATAPATH, "Heretic: Shadow of the Serpent Riders", "Raven Software", "hereticext", "xheretic", files, NUMELEMENTS(files), lumps, NUMELEMENTS(lumps)); }
+    { const char* lumps[] = { "EXTENDED", "E5M2", "E5M7", "E6M2", "MUMSIT", "WIZACT",  "MUS_CPTD", "CHKNC5", "SPAXA1A5" };
+    gameid_t gameId = DD_AddGame(heretic_extended, "heretic-ext", DATAPATH, DEFSPATH, STARTUPDED, "Heretic: Shadow of the Serpent Riders", "Raven Software", "hereticext", "xheretic", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "heretic.wad");
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3);
+    }
 
     /* Heretic */
-    { const char* files[] = { STARTUPPK3, "heretic.wad" };
-    const char*   lumps[] = { "E2M2", "E3M6", "MUMSIT", "WIZACT",  "MUS_CPTD", "CHKNC5", "SPAXA1A5" };
-    DD_AddGame(heretic, "heretic", DATAPATH, "Heretic Registered", "Raven Software", "heretic", 0, files, NUMELEMENTS(files), lumps, NUMELEMENTS(lumps)); }
+    { const char* lumps[] = { "E2M2", "E3M6", "MUMSIT", "WIZACT",  "MUS_CPTD", "CHKNC5", "SPAXA1A5" };
+    gameid_t gameId = DD_AddGame(heretic, "heretic", DATAPATH, DEFSPATH, STARTUPDED, "Heretic Registered", "Raven Software", "heretic", 0, lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "heretic.wad");
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3);
+    }
 
     /* Heretic (Shareware) */
-    { const char* files[] = { STARTUPPK3, "heretic1.wad" };
-    const char*   lumps[] = { "E1M1", "MUMSIT", "WIZACT",  "MUS_CPTD", "CHKNC5", "SPAXA1A5" };
-    DD_AddGame(heretic_shareware, "heretic-share", DATAPATH, "Heretic Shareware", "Raven Software", "sheretic", 0, files, NUMELEMENTS(files), lumps, NUMELEMENTS(lumps)); }
-
+    { const char* lumps[] = { "E1M1", "MUMSIT", "WIZACT",  "MUS_CPTD", "CHKNC5", "SPAXA1A5" };
+    gameid_t gameId = DD_AddGame(heretic_shareware, "heretic-share", DATAPATH, DEFSPATH, STARTUPDED, "Heretic Shareware", "Raven Software", "sheretic", 0, lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "heretic1.wad");
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3);
+    }
     return true;
 
 #undef NUMELEMENTS
+#undef STARTUPDED
 #undef STARTUPPK3
+#undef DEFSPATH
 #undef DATAPATH
 }
 

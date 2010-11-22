@@ -5134,7 +5134,7 @@ static boolean readSaveHeader(saveheader_t *hdr, LZFILE *savefile)
             heretic_extended,
             indetermined
 # elif __JHEXEN__
-            hexen_shareware,
+            hexen_demo,
             hexen,
             hexen_deathkings,
             indetermined

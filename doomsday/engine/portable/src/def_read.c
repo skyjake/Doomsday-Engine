@@ -781,10 +781,10 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
 
         if(ISTOKEN("ModelPath"))
         {
-            // A new model path. Append to the list.
+            // A new model path. Prepend to the list.
             READSTR(label);
             CHECKSC;
-            GameInfo_AddResourceSearchPath(DD_GameInfo(), DDRC_MODEL, label, true);
+            GameInfo_AddResourceSearchPath(DD_GameInfo(), DDRC_MODEL, label, false);
         }
 
         if(ISTOKEN("Header"))

@@ -3818,7 +3818,7 @@ void M_ChooseClass(mn_object_t* obj, int option)
 void M_Episode(mn_object_t* obj, int option)
 {
 #if __JHERETIC__
-    if(heretic_shareware && option)
+    if(gameMode == heretic_shareware && option)
     {
         Hu_MsgStart(MSG_ANYKEY, SWSTRING, NULL, NULL);
         G_StartHelp();

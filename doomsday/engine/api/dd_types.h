@@ -108,6 +108,7 @@ typedef uint16_t        ushort;
 
 #endif
 
+typedef uint32_t        gameid_t;
 typedef int             fixed_t;
 typedef unsigned int    angle_t;
 typedef int             spritenum_t;

@@ -392,8 +392,8 @@ int Hook_FinaleScriptEvalIf(int hookType, int finaleId, void* paramaters)
         p->returnVal = (gameMode == doom_shareware != false);
 #elif __JHERETIC__
         p->returnVal = (gameMode == heretic_shareware != false);
-#elif __JHEXEN__
-        p->returnVal = (gameMode == hexen_shareware != false);
+/*#elif __JHEXEN__
+        p->returnVal = (gameMode == hexen_demo != false);*/
 #else
         p->returnVal = false;
 #endif

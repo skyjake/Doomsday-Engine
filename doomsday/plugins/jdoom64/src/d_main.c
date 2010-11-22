@@ -203,17 +203,22 @@ boolean G_SetGameMode(int/*gamemode_t*/ mode)
 
 int G_RegisterGames(int hookType, int parm, void* data)
 {
-#define DATAPATH        DD_BASEDATAPATH GAMENAMETEXT "\\"
+#define DATAPATH        DD_BASEPATH_DATA GAMENAMETEXT "\\"
+#define DEFSPATH        DD_BASEPATH_DEFS GAMENAMETEXT "\\"
 #define STARTUPPK3      GAMENAMETEXT ".pk3"
+#define STARTUPDED      GAMENAMETEXT ".ded"
 #define NUMELEMENTS(v)  (sizeof(v)/sizeof((v)[0]))
 
-    const char* files[] = { STARTUPPK3, "doom64.wad" };
     const char* lumps[] = { "map01", "map02", "map38", "f_suck" };
-    DD_AddGame(doom64, "doom64", DATAPATH, "Doom 64", "Midway Software", "doom64", 0, files, NUMELEMENTS(files), lumps, NUMELEMENTS(lumps));
+    gameid_t gameId = DD_AddGame(doom64, "doom64", DATAPATH, DEFSPATH, STARTUPDED, "Doom 64", "Midway Software", "doom64", 0, lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "doom64.wad");
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3);
     return true;
 
 #undef NUMELEMENTS
+#undef STARTUPDED
 #undef STARTUPPK3
+#undef DEFSPATH
 #undef DATAPATH
 }
 

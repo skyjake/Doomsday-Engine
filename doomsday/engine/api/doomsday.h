@@ -30,8 +30,8 @@
  * features.
  */
 
-#ifndef __DOOMSDAY_EXPORTS_H__
-#define __DOOMSDAY_EXPORTS_H__
+#ifndef LIBDENG_EXPORTS_H
+#define LIBDENG_EXPORTS_H
 
 // The calling convention.
 #if defined(WIN32)
@@ -83,19 +83,32 @@ extern          "C" {
      * @param modeString    Unique game mode string key/identifier, 16 chars max (e.g., "doom1-ultimate").
      *                      Sent out in netgames, and the PCL_HELLO2 packet contains it. A client can't connect unless mode strings match.
      * @param dataPath      The base directory for all data-class resources.
+     * @param defsPath      The base directory for all defs-class resources.
+     * @param mainDef       The main/top-level definition file. Can be @c NULL.
      * @param defaultTitle  Default game title. May be overridden later.
      * @param defaultAuthor Default game author used for (e.g.) map author info if not specified. May be overridden later.
      * @param cmdlineFlag   Command-line game selection override argument (e.g., "ultimate"). Can be @c NULL.
      * @param cmdlineFlag2  Alternative override. Can be @c NULL.
-     * @param dataFileNames Vector of required original game data file names necessary to play this game.
-     *                      Note that the order also defines the order in which these data files are loaded.
-     * @param numDataFileNames Number of elements in @a dataFileNames.
      * @param modeLumpNames Vector of expected original game data lump/file names. Used for automatic game selection.
      * @param numModeLumpNames Number of elements in @a modeLumpNames.
+     *
+     * @return              Unique identifier/name assigned to the game.
      */
-    void DD_AddGame(int mode, const char* modeString, const char* dataPath,
-        const char* defaultTitle, const char* defaultAuthor, const char* cmdlineFlag, const char* cmdlineFlag2,
-        const char** dataFileNames, size_t numDataFileNames, const char** modeLumpNames, size_t numModeLumpNames);
+    gameid_t DD_AddGame(int mode, const char* modeString, const char* dataPath, const char* defsPath,
+        const char* mainDef, const char* defaultTitle, const char* defaultAuthor, const char* cmdlineFlag,
+        const char* cmdlineFlag2, const char** modeLumpNames, size_t numModeLumpNames);
+
+    /**
+     * Registers a new resource to the list of resources for the specified game.
+     *
+     * \note Resource registration order defines the order in which resources of each class are loaded.
+     *
+     * @param gameId        Unique identifier/name of the game we are adding a resource record to.
+     * @param resType       Type of resource being added.
+     * @param resClass      Class of resource being added.
+     * @param name          Name of resource being added
+     */
+    void DD_AddGameResource(gameid_t gameId, resourcetype_t resType, ddresourceclass_t resClass, const char* name);
 
     /**
      * Retrieve info about the current game.
@@ -105,10 +118,7 @@ extern          "C" {
      */
     boolean         DD_GetGameInfo(ddgameinfo_t* info);
 
-    void            R_SetDefsPath(const char* path);
-
     void            DD_SetConfigFile(const char* fileName);
-    void            DD_SetDefsFile(const char* fileName);
 
     int _DECALL     DD_GetInteger(int ddvalue);
     void            DD_SetInteger(int ddvalue, int parm);
@@ -536,4 +546,4 @@ extern          "C" {
 #ifdef __cplusplus
 }
 #endif
-#endif
+#endif /* LIBDENG_EXPORTS_H */

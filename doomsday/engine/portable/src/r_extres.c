@@ -58,6 +58,7 @@
 // Recognized extensions (in order of importance, left to right).
 static const char* resourceTypeFileExtensions[NUM_RESOURCE_TYPES][MAX_EXTENSIONS] = {
     { "pk3", "zip", "wad", 0 }, // Packages, favor ZIP over WAD.
+    { "ded", 0 }, // Definitions, only DED files.
     { "png", "tga", "pcx", 0 }, // Graphic, favor quality.
     { "dmd", "md2", 0 }, // Model, favour DMD over MD2.
     { "wav", 0 }, // Sound, only WAV files.
@@ -66,7 +67,8 @@ static const char* resourceTypeFileExtensions[NUM_RESOURCE_TYPES][MAX_EXTENSIONS
 
 // Default resource classes for resource types.
 static const ddresourceclass_t resourceTypeDefaultClasses[NUM_RESOURCE_TYPES] = {
-    DDRC_PACKAGE,
+    DDRC_ZIP,
+    DDRC_DED,
     DDRC_GRAPHIC,
     DDRC_MODEL,
     DDRC_SOUND,
@@ -78,9 +80,13 @@ static boolean inited = false;
 
 // CODE --------------------------------------------------------------------
 
+/**
+ * Given a resourcetype_t return the associated default ddresourceclass_t.
+ */
 static __inline ddresourceclass_t defaultResourceClassForType(resourcetype_t resType)
 {
-    assert(VALID_RESOURCE_TYPE(resType));
+    if(!VALID_RESOURCE_TYPE(resType))
+        Con_Error("defaultResourceClassForType: Invalid type %i.", (int)resType);
     return resourceTypeDefaultClasses[(int)resType];
 }
 
@@ -301,7 +307,9 @@ const char* F_ResourceClassStr(ddresourceclass_t rc)
     assert(VALID_RESOURCE_CLASS(rc));
     {
     static const char* resourceClassNames[NUM_RESOURCE_CLASSES] = {
-        { "DDRC_PACKAGE" },
+        { "DDRC_ZIP" },
+        { "DDRC_WAD" },
+        { "DDRC_DED" },
         { "DDRC_TEXTURE" },
         { "DDRC_FLAT" },
         { "DDRC_PATCH" },
@@ -313,6 +321,22 @@ const char* F_ResourceClassStr(ddresourceclass_t rc)
         { "DDRC_MODEL" }
     };
     return resourceClassNames[(int)rc];
+    }
+}
+
+const char* F_ResourceTypeStr(resourcetype_t rt)
+{
+    assert(VALID_RESOURCE_TYPE(rt));
+    {
+    static const char* resourceTypeNames[NUM_RESOURCE_TYPES] = {
+        { "RT_PACKAGE" },
+        { "RT_DEFINITION" },
+        { "RT_GRAPHIC" },
+        { "RT_MODEL" },
+        { "RT_SOUND" },
+        { "RT_MUSIC" }
+    };
+    return resourceTypeNames[(int)rt];
     }
 }
 

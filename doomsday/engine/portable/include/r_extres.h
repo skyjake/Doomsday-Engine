@@ -42,6 +42,11 @@ void F_ShutdownResourceLocator(void);
 const char* F_ResourceClassStr(ddresourceclass_t rc);
 
 /**
+ * Convert a resourcetype_t constant into a string for error/debug messages.
+ */
+const char* F_ResourceTypeStr(resourcetype_t rc);
+
+/**
  * Attempt to locate an external file for the specified resource.
  *
  * @param resType       Type of resource being searched for (if known).

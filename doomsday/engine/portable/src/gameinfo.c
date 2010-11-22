@@ -38,15 +38,20 @@ typedef enum {
     RCP_NONE = 0, // Not a real path.
     RCP_FIRST = 1,
     RCP_BASEPATH = RCP_FIRST, // i.e., "}"
-    RCP_BASEDATAPATH, // i.e., "}data/"
-    RCP_GAMEDATAPATH, // e.g., "}data/jdoom/"
-    RCP_GAMEDATAMODEPATH, // e.g., "}data/jdoom/doom2-plut/"
+    RCP_BASEPATH_DATA, // i.e., "}data/"
+    RCP_BASEPATH_DEFS, // i.e., "}defs/"
+    RCP_GAMEPATH_DATA, // e.g., "}data/jdoom/"
+    RCP_GAMEPATH_DEFS, // e.g., "}defs/jdoom/"
+    RCP_GAMEMODEPATH_DATA, // e.g., "}data/jdoom/doom2-plut/"
+    RCP_GAMEMODEPATH_DEFS, // e.g., "}defs/jdoom/doom2-plut/" 
     RCP_DOOMWADDIR // any valid absolute or relative path
 } resourceclasspath_t;
 
 // Command line options for setting the resource path explicitly.
 // Additional paths, take precendence.
 static const char* resourceClassPathOverrides[NUM_RESOURCE_CLASSES][2] = {
+    { 0,            0 },
+    { 0,            0 },
     { 0,            0 },
     { "-texdir",    "-texdir2" },
     { "-flatdir",   "-flatdir2" },
@@ -61,6 +66,8 @@ static const char* resourceClassPathOverrides[NUM_RESOURCE_CLASSES][2] = {
 
 static const char* resourceClassDefaultPaths[NUM_RESOURCE_CLASSES] = {
     { 0 },
+    { 0 },
+    { 0 },
     { "textures\\" },
     { "flats\\" },
     { "patches\\" },
@@ -74,19 +81,29 @@ static const char* resourceClassDefaultPaths[NUM_RESOURCE_CLASSES] = {
 
 // Resource locator search order (in order of least-importance, left to right).
 static const resourceclasspath_t resourceClassPathSearchOrder[NUM_RESOURCE_CLASSES][MAX_SEARCHPATHS] = {
-    { RCP_DOOMWADDIR, RCP_GAMEDATAPATH, 0 },
-    { RCP_GAMEDATAPATH, RCP_GAMEDATAMODEPATH, 0 },
-    { RCP_GAMEDATAPATH, RCP_GAMEDATAMODEPATH, 0 },
-    { RCP_GAMEDATAPATH, RCP_GAMEDATAMODEPATH, 0 },
-    { RCP_GAMEDATAPATH, RCP_GAMEDATAMODEPATH, 0 },
-    { RCP_GAMEDATAPATH, RCP_GAMEDATAMODEPATH, 0 },
-    { RCP_GAMEDATAPATH, RCP_GAMEDATAMODEPATH, 0 },
-    { RCP_GAMEDATAPATH, RCP_GAMEDATAMODEPATH, 0 },
-    { RCP_BASEDATAPATH, 0 },
-    { RCP_GAMEDATAPATH, RCP_GAMEDATAMODEPATH, 0 }
+    { RCP_DOOMWADDIR, RCP_GAMEPATH_DATA, 0 },
+    { RCP_DOOMWADDIR, RCP_GAMEPATH_DATA, 0 },
+    { RCP_BASEPATH_DEFS, RCP_GAMEPATH_DEFS, RCP_GAMEMODEPATH_DEFS, 0 },
+    { RCP_GAMEPATH_DATA, RCP_GAMEMODEPATH_DATA, 0 },
+    { RCP_GAMEPATH_DATA, RCP_GAMEMODEPATH_DATA, 0 },
+    { RCP_GAMEPATH_DATA, RCP_GAMEMODEPATH_DATA, 0 },
+    { RCP_GAMEPATH_DATA, RCP_GAMEMODEPATH_DATA, 0 },
+    { RCP_GAMEPATH_DATA, RCP_GAMEMODEPATH_DATA, 0 },
+    { RCP_GAMEPATH_DATA, RCP_GAMEMODEPATH_DATA, 0 },
+    { RCP_GAMEPATH_DATA, RCP_GAMEMODEPATH_DATA, 0 },
+    { RCP_BASEPATH_DATA, 0 },
+    { RCP_GAMEPATH_DATA, RCP_GAMEMODEPATH_DATA, 0 }
 };
 
 static __inline size_t countElements(const ddstring_t* const* list)
+{
+    size_t n = 0;
+    if(list)
+        while(list[n++]);
+    return n;
+}
+
+static __inline size_t countElements2(gameresource_record_t* const* list)
 {
     size_t n = 0;
     if(list)
@@ -99,7 +116,8 @@ static void buildResourceClassPathList(gameinfo_t* info, ddresourceclass_t rc)
     assert(info && VALID_RESOURCE_CLASS(rc));
     {
     ddstring_t* pathList = &info->_searchPathLists[rc];
-    boolean usingGameDataModePath = false;
+    boolean usingGameModePathData = false;
+    boolean usingGameModePathDefs = false;
 
     Str_Clear(pathList);
 
@@ -122,22 +140,37 @@ static void buildResourceClassPathList(gameinfo_t* info, ddresourceclass_t rc)
             GameInfo_AddResourceSearchPath(info, rc, newPath, false);
             break;
             }
-        case RCP_BASEDATAPATH:
+        case RCP_BASEPATH_DATA:
             { filename_t newPath;
             if(resourceClassDefaultPaths[(int)rc])
             {
                 filename_t other;
-                dd_snprintf(other, FILENAME_T_MAXLEN, DD_BASEDATAPATH"%s", resourceClassDefaultPaths[(int)rc]);
+                dd_snprintf(other, FILENAME_T_MAXLEN, DD_BASEPATH_DATA"%s", resourceClassDefaultPaths[(int)rc]);
                 M_TranslatePath(newPath, other, FILENAME_T_MAXLEN);
             }
             else
             {
-                M_TranslatePath(newPath, DD_BASEDATAPATH, FILENAME_T_MAXLEN);
+                M_TranslatePath(newPath, DD_BASEPATH_DATA, FILENAME_T_MAXLEN);
             }
             GameInfo_AddResourceSearchPath(info, rc, newPath, false);
             break;
             }
-        case RCP_GAMEDATAPATH:
+        case RCP_BASEPATH_DEFS:
+            { filename_t newPath;
+            if(resourceClassDefaultPaths[(int)rc])
+            {
+                filename_t other;
+                dd_snprintf(other, FILENAME_T_MAXLEN, DD_BASEPATH_DEFS"%s", resourceClassDefaultPaths[(int)rc]);
+                M_TranslatePath(newPath, other, FILENAME_T_MAXLEN);
+            }
+            else
+            {
+                M_TranslatePath(newPath, DD_BASEPATH_DEFS, FILENAME_T_MAXLEN);
+            }
+            GameInfo_AddResourceSearchPath(info, rc, newPath, false);
+            break;
+            }
+        case RCP_GAMEPATH_DATA:
             if(resourceClassDefaultPaths[(int)rc])
             {
                 filename_t newPath;
@@ -149,17 +182,36 @@ static void buildResourceClassPathList(gameinfo_t* info, ddresourceclass_t rc)
                 GameInfo_AddResourceSearchPath(info, rc, Str_Text(&info->_dataPath), false);
             }
             break;
-
-        case RCP_GAMEDATAMODEPATH:
-            usingGameDataModePath = true;
-            if(Str_Length(&info->_modeIdentifier))
+        case RCP_GAMEPATH_DEFS:
+            if(resourceClassDefaultPaths[(int)rc])
+            {
+                filename_t newPath;
+                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s", Str_Text(&info->_defsPath), resourceClassDefaultPaths[(int)rc]);
+                GameInfo_AddResourceSearchPath(info, rc, newPath, false);
+            }
+            else
+            {
+                GameInfo_AddResourceSearchPath(info, rc, Str_Text(&info->_defsPath), false);
+            }
+            break;
+        case RCP_GAMEMODEPATH_DATA:
+            usingGameModePathData = true;
+            if(resourceClassDefaultPaths[(int)rc] && Str_Length(&info->_modeIdentifier))
             {
                 filename_t newPath;
                 dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(&info->_dataPath), resourceClassDefaultPaths[(int)rc], Str_Text(&info->_modeIdentifier));
                 GameInfo_AddResourceSearchPath(info, rc, newPath, false);
             }
             break;
-
+        case RCP_GAMEMODEPATH_DEFS:
+            usingGameModePathDefs = true;
+            if(resourceClassDefaultPaths[(int)rc] && Str_Length(&info->_modeIdentifier))
+            {
+                filename_t newPath;
+                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(&info->_defsPath), resourceClassDefaultPaths[(int)rc], Str_Text(&info->_modeIdentifier));
+                GameInfo_AddResourceSearchPath(info, rc, newPath, false);
+            }
+            break;
         case RCP_DOOMWADDIR:
             if(!ArgCheck("-nowaddir") && getenv("DOOMWADDIR"))
             {
@@ -180,7 +232,7 @@ static void buildResourceClassPathList(gameinfo_t* info, ddresourceclass_t rc)
         M_TranslatePath(newPath, ArgNext(), FILENAME_T_MAXLEN);
         GameInfo_AddResourceSearchPath(info, rc, newPath, false);
 
-        if(usingGameDataModePath && Str_Length(&info->_modeIdentifier))
+        if((usingGameModePathData || usingGameModePathDefs) && Str_Length(&info->_modeIdentifier))
         {
             filename_t other;
             dd_snprintf(other, FILENAME_T_MAXLEN, "%s\\%s", newPath, Str_Text(&info->_modeIdentifier));
@@ -207,22 +259,14 @@ static __inline void clearResourceClassSearchPathList(gameinfo_t* info, ddresour
 }
 
 gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, int mode, const char* modeString, const char* dataPath,
-    const char* title, const char* author, const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2)
+    const char* defsPath, const ddstring_t* mainDef, const char* title, const char* author, const ddstring_t* cmdlineFlag,
+    const ddstring_t* cmdlineFlag2)
 {
     gameinfo_t* info = M_Malloc(sizeof(*info));
 
     info->_pluginId = pluginId;
     info->_mode = mode;
-    info->_requiredFileNames = 0;
     info->_modeLumpNames = 0;
-
-    Str_Init(&info->_title);
-    if(title)
-        Str_Set(&info->_title, title);
-
-    Str_Init(&info->_author);
-    if(author)
-        Str_Set(&info->_author, author);
 
     Str_Init(&info->_modeIdentifier);
     if(modeString)
@@ -231,6 +275,22 @@ gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, int mode, const char* modeStri
     Str_Init(&info->_dataPath);
     if(dataPath)
         Str_Set(&info->_dataPath, dataPath);
+
+    Str_Init(&info->_defsPath);
+    if(defsPath)
+        Str_Set(&info->_defsPath, defsPath);
+
+    Str_Init(&info->_mainDef);
+    if(mainDef)
+        Str_Copy(&info->_mainDef, mainDef);
+
+    Str_Init(&info->_title);
+    if(title)
+        Str_Set(&info->_title, title);
+
+    Str_Init(&info->_author);
+    if(author)
+        Str_Set(&info->_author, author);
 
     if(cmdlineFlag)
     {
@@ -248,10 +308,12 @@ gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, int mode, const char* modeStri
     else
         info->_cmdlineFlag2 = 0;
 
-    { int i;
+    { size_t i;
     for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
+    {
+        info->_requiredResources[i] = 0;
         Str_Init(&info->_searchPathLists[i]);
-    }
+    }}
 
     collateResourceClassPathSet(info);
     return info;
@@ -265,19 +327,29 @@ void P_DestroyGameInfo(gameinfo_t* info)
 
     Str_Free(&info->_modeIdentifier);
     Str_Free(&info->_dataPath);
+    Str_Free(&info->_defsPath);
+    Str_Free(&info->_mainDef);
     Str_Free(&info->_title);
     Str_Free(&info->_author);
 
     if(info->_cmdlineFlag) { Str_Delete(info->_cmdlineFlag);  info->_cmdlineFlag  = 0; }
     if(info->_cmdlineFlag2){ Str_Delete(info->_cmdlineFlag2); info->_cmdlineFlag2 = 0; }
 
-    if(info->_requiredFileNames)
+    { size_t i;
+    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
     {
-        size_t j;
-        for(j = 0; info->_requiredFileNames[j]; ++j)
-            Str_Delete(info->_requiredFileNames[j]);
-        M_Free(info->_requiredFileNames); info->_requiredFileNames = 0;
-    }
+        if(!info->_requiredResources[i])
+            continue;
+
+        { gameresource_record_t** rec;
+        for(rec = info->_requiredResources[i]; *rec; rec++)
+        {
+            Str_Free(&(*rec)->name);
+            Str_Free(&(*rec)->path);
+            M_Free(*rec);
+        }}
+        M_Free(info->_requiredResources[i]);
+    }}
 
     if(info->_modeLumpNames)
     {
@@ -290,16 +362,21 @@ void P_DestroyGameInfo(gameinfo_t* info)
     M_Free(info);
 }
 
-void GameInfo_AddRequiredFileName(gameinfo_t* info, const ddstring_t* fileName)
+void GameInfo_AddResource(gameinfo_t* info, resourcetype_t resType, ddresourceclass_t resClass, const char* name)
 {
-    assert(info && fileName);
+    assert(info && VALID_RESOURCE_TYPE(resType) && VALID_RESOURCE_CLASS(resClass) && name && name[0]);
     {
-    size_t num = countElements(info->_requiredFileNames);
-    info->_requiredFileNames = M_Realloc(info->_requiredFileNames, sizeof(*info->_requiredFileNames) * MAX_OF(num+1, 2));
-    if(num) num -= 1;
-    info->_requiredFileNames[num] = Str_New();
-    Str_Copy(info->_requiredFileNames[num], fileName);
-    info->_requiredFileNames[num+1] = 0; // Terminate.
+    size_t num = countElements2(info->_requiredResources[resClass]);
+    gameresource_record_t* rec;
+
+    info->_requiredResources[resClass] = M_Realloc(info->_requiredResources[resClass], sizeof(*info->_requiredResources[resClass]) * MAX_OF(num+1, 2));
+    rec = info->_requiredResources[resClass][num!=0?num-1:0] = M_Malloc(sizeof(*rec));
+    info->_requiredResources[resClass][num!=0?num:1] = 0; // Terminate.
+
+    rec->resType = resType;
+    rec->resClass = resClass;
+    Str_Init(&rec->name); Str_Set(&rec->name, name);
+    Str_Init(&rec->path);
     }
 }
 
@@ -417,6 +494,18 @@ const ddstring_t* GameInfo_DataPath(gameinfo_t* info)
     return &info->_dataPath;
 }
 
+const ddstring_t* GameInfo_DefsPath(gameinfo_t* info)
+{
+    assert(info);
+    return &info->_defsPath;
+}
+
+const ddstring_t* GameInfo_MainDef(gameinfo_t* info)
+{
+    assert(info);
+    return &info->_mainDef;
+}
+
 const ddstring_t* GameInfo_CmdlineFlag(gameinfo_t* info)
 {
     assert(info);
@@ -441,10 +530,12 @@ const ddstring_t* GameInfo_Author(gameinfo_t* info)
     return &info->_author;
 }
 
-const ddstring_t* const* GameInfo_RequiredFileNames(gameinfo_t* info)
+gameresource_record_t* const* GameInfo_Resources(gameinfo_t* info, ddresourceclass_t resClass, size_t* count)
 {
-    assert(info);
-    return info->_requiredFileNames;
+    assert(info && VALID_RESOURCE_CLASS(resClass));
+    if(count)
+        *count = countElements2(info->_requiredResources[resClass]);
+    return info->_requiredResources[resClass];
 }
 
 const ddstring_t* const* GameInfo_ModeLumpNames(gameinfo_t* info)

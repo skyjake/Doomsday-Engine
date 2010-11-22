@@ -46,12 +46,7 @@
 #include "version.h"
 #include "info.h"
 
-#define DATAPATH            DD_BASEDATAPATH GAMENAMETEXT "\\"
-#define DEFSPATH            DD_BASEDEFSPATH GAMENAMETEXT "\\"
-
 #define CONFIGFILE          GAMENAMETEXT ".cfg"
-#define DEFSFILE            GAMENAMETEXT ".ded"
-#define STARTUPPK3          GAMENAMETEXT ".pk3"
 
 #define Set                 DD_SetInteger
 #define Get                 DD_GetInteger
