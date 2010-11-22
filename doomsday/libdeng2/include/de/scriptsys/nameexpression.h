@@ -22,7 +22,8 @@
 
 #include "../Expression"
 #include "../String"
-#include "../Flag"
+
+#include <QFlags>
 
 namespace de
 {
@@ -45,42 +46,45 @@ namespace de
         DEFINE_ERROR(NotFoundError);
 
         // Note: the flags below are serialized as is, so don't change the existing values.
-        
-        /// Evaluates to a value. In conjunction with IMPORT, causes the imported
-        /// record to be copied to the local namespace.
-        DEFINE_FLAG(BY_VALUE, 0);
-        
-        /// Evaluates to a reference.
-        DEFINE_FLAG(BY_REFERENCE, 1);
-        
-        /// If missing, create a new variable.
-        DEFINE_FLAG(NEW_VARIABLE, 2);
+        enum Flag
+        {
+            /// Evaluates to a value. In conjunction with IMPORT, causes the imported
+            /// record to be copied to the local namespace.
+            ByValue = 0x1,
 
-        /// If missing, create a new record.
-        DEFINE_FLAG(NEW_RECORD, 3);
-        
-        /// Identifier must exist and will be deleted.
-        DEFINE_FLAG(DELETE, 4);
-        
-        /// Imports an external namespace into the local namespace (as a reference).
-        DEFINE_FLAG(IMPORT, 5);
+            /// Evaluates to a reference.
+            ByReference = 0x2,
 
-        /// Look for object in local namespace only. 
-        DEFINE_FLAG(LOCAL_ONLY, 6);
-        
-        /// If the identifier is in scope, returns a reference to the process's 
-        /// throwaway variable.
-        DEFINE_FLAG(THROWAWAY_IF_IN_SCOPE, 7);
+            /// If missing, create a new variable.
+            NewVariable = 0x4,
 
-        /// Identifier must not already exist in scope.
-        DEFINE_FLAG(NOT_IN_SCOPE, 8);
+            /// If missing, create a new record.
+            NewRecord = 0x8,
 
-        /// Variable will be set to read-only mode.
-        DEFINE_FINAL_FLAG(READ_ONLY, 9, Flags);
+            /// Identifier must exist and will be deleted.
+            Delete = 0x10,
+
+            /// Imports an external namespace into the local namespace (as a reference).
+            Import = 0x20,
+
+            /// Look for object in local namespace only.
+            LocalOnly = 0x40,
+
+            /// If the identifier is in scope, returns a reference to the process's
+            /// throwaway variable.
+            ThrowawayIfInScope = 0x80,
+
+            /// Identifier must not already exist in scope.
+            NotInScope = 0x100,
+
+            /// Variable will be set to read-only mode.
+            ReadOnly = 0x200
+        };
+        Q_DECLARE_FLAGS(Flags, Flag);
 
     public:
         NameExpression();
-        NameExpression(const String& identifier, const Flags& flags = BY_VALUE);
+        NameExpression(const String& identifier, const Flags& flags = ByValue);
         ~NameExpression();
 
         /// Returns the identifier in the name expression.
@@ -99,5 +103,7 @@ namespace de
         Flags _flags;
     };
 }
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(de::NameExpression::Flags);
 
 #endif /* LIBDENG2_NAMEEXPRESSION_H */

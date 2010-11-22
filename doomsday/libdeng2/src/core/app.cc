@@ -126,7 +126,7 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
         /// C:\\Documents and Settings\\..., ~/Library/Application Support/Doomsday2/)
         _fs->getFolder("/home").attach(new DirectoryFeed(
             String("home").concatenateNativePath(homeSubFolder), 
-            DirectoryFeed::ALLOW_WRITE | DirectoryFeed::CREATE_IF_MISSING));
+            DirectoryFeed::AllowWrite| DirectoryFeed::CreateIfMissing));
 
         _fs->refresh();
         

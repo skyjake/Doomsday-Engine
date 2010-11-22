@@ -22,7 +22,6 @@
 
 #include "../deng.h"
 #include "../File"
-#include "../Flag"
 #include "../String"
 
 #include <QFile>
@@ -64,7 +63,7 @@ namespace de
          */
         const String& nativePath() const { return _nativePath; }
 
-        void setMode(const Mode& newMode);
+        void setMode(const Flags& newMode);
 
         // Implements IByteArray.
         Size size() const;

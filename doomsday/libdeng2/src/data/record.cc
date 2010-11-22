@@ -119,35 +119,35 @@ Variable& Record::addNumber(const String& name, const Value::Number& number)
 {
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
-    return add(new Variable(name, new NumberValue(number), Variable::NUMBER));
+    return add(new Variable(name, new NumberValue(number), Variable::AllowNumber));
 }
 
 Variable& Record::addText(const String& name, const Value::Text& text)
 {
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
-    return add(new Variable(name, new TextValue(text), Variable::TEXT));
+    return add(new Variable(name, new TextValue(text), Variable::AllowText));
 }
 
 Variable& Record::addArray(const String& name)
 {
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
-    return add(new Variable(name, new ArrayValue(), Variable::ARRAY));
+    return add(new Variable(name, new ArrayValue(), Variable::AllowArray));
 }
 
 Variable& Record::addDictionary(const String& name)
 {
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
-    return add(new Variable(name, new DictionaryValue(), Variable::DICTIONARY));
+    return add(new Variable(name, new DictionaryValue(), Variable::AllowDictionary));
 }
 
 Variable& Record::addBlock(const String& name)
 {
     /// @throw Variable::NameError @a name is not a valid variable name.
     Variable::verifyName(name);
-    return add(new Variable(name, new BlockValue(), Variable::BLOCK));
+    return add(new Variable(name, new BlockValue(), Variable::AllowBlock));
 }
     
 Record& Record::add(const String& name, Record* subrecord)

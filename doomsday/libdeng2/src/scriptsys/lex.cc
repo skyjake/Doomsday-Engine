@@ -23,7 +23,7 @@
 
 using namespace de;
 
-Lex::Lex(const String& input) : _input(&input), _lineCommentChar('#')
+Lex::Lex(const String& input) : _input(&input), _lineCommentChar('#'), _mode(0)
 {}
 
 const String& Lex::input() const
@@ -46,7 +46,7 @@ QChar Lex::peek() const
     
     QChar c = _input->at(_state.pos);
 
-    if(!_mode[SKIP_COMMENTS_BIT] && (c == _lineCommentChar))
+    if(!_mode.testFlag(SkipComments) && (c == _lineCommentChar))
     {
         // This isn't considered part of the input stream. Skip it.
         duint p = _state.pos;

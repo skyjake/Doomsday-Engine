@@ -23,7 +23,8 @@
 #include "../Statement"
 #include "../ArrayExpression"
 #include "../Compound"
-#include "../Flag"
+
+#include <QFlags>
 
 namespace de
 {
@@ -33,9 +34,13 @@ namespace de
     class CatchStatement : public Statement
     {
     public:
-        /// The final catch compound in a sequence of catch compounds.
-        DEFINE_FINAL_FLAG(FINAL, 0, Flags);
-        
+        enum Flag
+        {
+            /// The final catch compound in a sequence of catch compounds.
+            FinalCompound = 0x1
+        };
+        Q_DECLARE_FLAGS(Flags, Flag);
+
         /// Flags.
         Flags flags;
         
@@ -76,5 +81,7 @@ namespace de
         Compound _compound;
     };
 }
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(de::CatchStatement::Flags);
 
 #endif /* LIBDENG2_CATCHSTATEMENT_H */

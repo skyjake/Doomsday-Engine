@@ -24,10 +24,10 @@
 #include "../Vector"
 #include "../Rectangle"
 #include "../IClock"
-#include "../Flag"
 #include "../ISerializable"
 
 #include <QTextStream>
+#include <QFlags>
 
 namespace de
 {
@@ -57,6 +57,12 @@ namespace de
 
         /// The animator is evaluated without an available time source. @ingroup errors
         DEFINE_ERROR(ClockMissingError);
+
+        enum StatusFlag
+        {
+            Animating = 0x1
+        };
+        Q_DECLARE_FLAGS(StatusFlags, StatusFlag);
 
     public:
         /**
@@ -175,8 +181,7 @@ namespace de
         Time::Delta _transitionTime;
         IObserver* _observer;
 
-        DEFINE_FINAL_FLAG(ANIMATING, 0, Status);
-        mutable Status _status;
+        mutable StatusFlags _status;
     };
 
     LIBDENG2_API QTextStream& operator << (QTextStream& os, const Animator& anim);
@@ -324,5 +329,7 @@ namespace de
         }
     };
 }
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(de::Animator::StatusFlags);
 
 #endif /* LIBDENG2_ANIMATOR_H */

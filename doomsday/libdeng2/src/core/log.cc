@@ -77,20 +77,20 @@ String LogEntry::asText(const Flags& formattingFlags) const
     QString result;
     QTextStream output(&result);
 
-    if(_defaultFlags[SIMPLE_BIT])
+    if(_defaultFlags & Simple)
     {
-        flags |= SIMPLE;
+        flags |= Simple;
     }
     
     // In simple mode, skip the metadata.
-    if(!flags[SIMPLE_BIT])
+    if(!flags.testFlag(Simple))
     {    
         // Begin with the timestamp.
-        if(flags[STYLED_BIT]) output << TEXT_STYLE_LOG_TIME;
+        if(flags & Styled) output << TEXT_STYLE_LOG_TIME;
     
         output << _when << " ";
 
-        if(!flags[STYLED_BIT])
+        if(!flags.testFlag(Styled))
         {
             const char* levelNames[Log::MAX_LOG_LEVELS] = {
                 "(...)",
@@ -126,7 +126,7 @@ String LogEntry::asText(const Flags& formattingFlags) const
     // Section name.
     if(!_section.empty())
     {
-        if(!flags[STYLED_BIT])
+        if(!flags.testFlag(Styled))
         {
             output << _section << ": ";
         }
@@ -136,7 +136,7 @@ String LogEntry::asText(const Flags& formattingFlags) const
         }
     }
 
-    if(flags[STYLED_BIT])
+    if(flags.testFlag(Styled))
     {
         output << TEXT_STYLE_MESSAGE;
     }
@@ -177,7 +177,7 @@ String LogEntry::asText(const Flags& formattingFlags) const
         }        
     }
     
-    if(flags[STYLED_BIT])
+    if(flags & Styled)
     {
         output << TEXT_STYLE_MESSAGE;
     }

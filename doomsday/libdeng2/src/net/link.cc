@@ -77,7 +77,14 @@ Address Link::peerAddress() const
 
 void Link::send(const IByteArray& data)
 {
-    _socket->mode.set(Socket::CHANNEL_1_BIT, mode[CHANNEL_1_BIT]);
+    if(mode & Channel1)
+    {
+        _socket->mode |= Socket::Channel1;
+    }
+    else
+    {
+        _socket->mode &= ~Socket::Channel1;
+    }
     *_socket << data;
 }
 

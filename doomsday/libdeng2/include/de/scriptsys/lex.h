@@ -22,7 +22,8 @@
 
 #include "../deng.h"
 #include "../String"
-#include "../Flag"
+
+#include <QFlags>
 
 namespace de
 {
@@ -37,8 +38,12 @@ namespace de
     public:
         /// Attempt to read characters when there are non left. @ingroup errors
         DEFINE_ERROR(OutOfInputError);
-        
-        DEFINE_FINAL_FLAG(SKIP_COMMENTS, 0, Mode);
+
+        enum ModeFlag
+        {
+            SkipComments = 0x1
+        };
+        Q_DECLARE_FLAGS(ModeFlags, ModeFlag);
         
         /**
          * Utility for setting flags in a Lex instance. The flags specified
@@ -49,7 +54,7 @@ namespace de
         class ModeSpan
         {
         public:
-            ModeSpan(Lex& lex, const Mode& m) : _lex(lex), _originalMode(lex._mode) {
+            ModeSpan(Lex& lex, const ModeFlags& m) : _lex(lex), _originalMode(lex._mode) {
                 lex._mode = m;
             }
             
@@ -59,7 +64,7 @@ namespace de
             
         private:
             Lex& _lex;
-            Mode _originalMode;
+            ModeFlags _originalMode;
         };
         
         // Constants.
@@ -151,8 +156,10 @@ namespace de
         /// Character that begins a line comment.
         duchar _lineCommentChar;
         
-        Mode _mode;
+        ModeFlags _mode;
     };
 }
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(de::Lex::ModeFlags);
 
 #endif /* LIBDENG2_LEX_H */

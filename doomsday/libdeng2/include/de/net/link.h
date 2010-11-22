@@ -22,8 +22,8 @@
 
 #include "../Transceiver"
 #include "../Observers"
-#include "../Flag"
 
+#include <QFlags>
 #include <QAbstractSocket>
 
 namespace de
@@ -45,8 +45,12 @@ namespace de
         /// The remote end has closed the link. @ingroup errors
         DEFINE_ERROR(DisconnectedError);
         
-        /// Sending on channel 1 instead of the default 0.
-        DEFINE_FINAL_FLAG(CHANNEL_1, 0, Mode);
+        enum Flag
+        {
+            /// Sending on channel 1 instead of the default 0.
+            Channel1 = 0x1
+        };
+        Q_DECLARE_FLAGS(Flags, Flag);
                
     public:
         /**
@@ -105,12 +109,14 @@ namespace de
         DEFINE_AUDIENCE(Deletion, void linkBeingDeleted(Link& link));
 
         /// Mode flags.
-        Mode mode;
+        Flags mode;
     
     private:
         /// Socket over which the link communicates.
         Socket* _socket; 
     };
 }
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(de::Link::Flags);
 
 #endif /* LIBDENG2_LINK_H */

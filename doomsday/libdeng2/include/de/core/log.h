@@ -21,7 +21,6 @@
 #define LIBDENG2_LOG_H
 
 #include "../Time"
-#include "../Flag"
 #include "../String"
 #include "../Lockable"
 
@@ -335,13 +334,17 @@ namespace de
         };
         
     public:
-        /// In simple mode, only print the actual message contents, 
-        /// without metadata.
-        DEFINE_FLAG(SIMPLE, 0);
-        
-        /// Use escape sequences to format the entry with text styles 
-        /// (for graphical output).
-        DEFINE_FINAL_FLAG(STYLED, 1, Flags);
+        enum Flag
+        {
+            /// In simple mode, only print the actual message contents,
+            /// without metadata.
+            Simple = 0x1,
+
+            /// Use escape sequences to format the entry with text styles
+            /// (for graphical output).
+            Styled = 0x2
+        };
+        Q_DECLARE_FLAGS(Flags, Flag);
 
         /// The format string has incorrect syntax. @ingroup errors
         DEFINE_ERROR(IllegalFormatError);
@@ -369,7 +372,7 @@ namespace de
 
         /// Make this entry print without metadata.
         LogEntry& simple() {
-            _defaultFlags |= SIMPLE;
+            _defaultFlags |= Simple;
             return *this;
         }
 
@@ -390,5 +393,7 @@ namespace de
     
     QTextStream& operator << (QTextStream& stream, const LogEntry::Arg& arg);
 }
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(de::LogEntry::Flags);
 
 #endif /* LIBDENG2_LOG_H */

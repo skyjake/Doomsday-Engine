@@ -72,11 +72,17 @@ void Config::read()
         }
     }
     catch(const Folder::NotFoundError&)
-    {}
+    {
+        // It is missing if the config hasn't been written yet.
+    }
+    catch(const Error& error)
+    {
+        LOG_WARNING(error.what());
+    }
             
     // The version of libdeng2 is automatically included.
     _config.globals().add(new Variable("__version__", version.release(), 
-        Variable::ARRAY | Variable::READ_ONLY));
+        Variable::AllowArray | Variable::ReadOnly));
 
     // Read the main configuration. 
     Script script(App::fileRoot().locate<File>(_configPath));

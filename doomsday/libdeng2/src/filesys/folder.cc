@@ -157,7 +157,7 @@ File& Folder::newFile(const String& newPath, bool replaceExisting)
         if(file)
         {
             // Allow writing to the new file.
-            file->setMode(WRITE);
+            file->setMode(Write);
             
             add(file);
             fileSystem().index(*file);

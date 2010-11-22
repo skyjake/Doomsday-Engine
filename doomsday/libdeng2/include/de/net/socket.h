@@ -23,10 +23,10 @@
 #include "../deng.h"
 #include "../IByteArray"
 #include "../Address"
-#include "../Flag"
 
 #include <QTcpSocket>
 #include <QList>
+#include <QFlags>
 
 /**
  * @defgroup net Network
@@ -50,11 +50,15 @@ namespace de
         Q_OBJECT
 
     public:
-        /// Payload is in Huffman code.
-        DEFINE_FLAG(HUFFMAN, 0); 
+        enum Flag
+        {
+            /// Payload is in Huffman code.
+            HuffmanPayload = 0x1,
 
-        /// Payload belongs to channel 1 instead of the default channel 0.
-        DEFINE_FINAL_FLAG(CHANNEL_1, 1, Mode);
+            /// Payload belongs to channel 1 instead of the default channel 0.
+            Channel1 = 0x2
+        };
+        Q_DECLARE_FLAGS(Flags, Flag);
         
         /// Creating the TCP/IP connection failed. @ingroup errors
         DEFINE_ERROR(ConnectionError);
@@ -173,7 +177,7 @@ namespace de
 
     public:
         /// Operating mode.
-        Mode mode;
+        Flags mode;
     
     private:
         enum ReceptionState
@@ -203,5 +207,7 @@ namespace de
         friend class ListenSocket;
     };
 }
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(de::Socket::Flags);
 
 #endif /* LIBDENG2_SOCKET_H */

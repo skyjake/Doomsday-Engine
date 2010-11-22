@@ -23,6 +23,8 @@
 #include "../Value"
 #include "../Record"
 
+#include <QFlags>
+
 namespace de
 {
     /**
@@ -43,8 +45,12 @@ namespace de
         /// The index used for accessing the record is of the wrong type. @ingroup errors
         DEFINE_ERROR(IllegalIndexError);
         
-        /// The value has ownership of the record.
-        DEFINE_FINAL_FLAG(OWNS_RECORD, 0, Ownership);
+        enum OwnershipFlag
+        {
+            /// The value has ownership of the record.
+            OwnsRecord = 0x1,
+        };
+        Q_DECLARE_FLAGS(OwnershipFlags, OwnershipFlag);
         
     public:
         /**
@@ -53,7 +59,7 @@ namespace de
          * @param record     Record.
          * @param ownership  OWNS_RECORD, if the value is given ownership of @a record.
          */
-        RecordValue(Record* record, const Ownership& ownership = 0);
+        RecordValue(Record* record, OwnershipFlags ownership = 0);
         
         virtual ~RecordValue();
         
@@ -83,8 +89,10 @@ namespace de
         
     public:
         Record* _record;
-        Ownership _ownership;
+        OwnershipFlags _ownership;
     };
 }
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(de::RecordValue::OwnershipFlags);
 
 #endif /* LIBDENG2_RECORDVALUE_H */

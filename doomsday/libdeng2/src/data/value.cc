@@ -198,7 +198,7 @@ Value* Value::constructFrom(Reader& reader)
         break;
 
     case RECORD:
-        result.reset(new RecordValue(new Record, RecordValue::OWNS_RECORD));
+        result.reset(new RecordValue(new Record, RecordValue::OwnsRecord));
         break;
         
     default:

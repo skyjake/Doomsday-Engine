@@ -30,7 +30,7 @@
 
 using namespace de;
 
-DirectoryFeed::DirectoryFeed(const String& nativePath, const Mode& mode) 
+DirectoryFeed::DirectoryFeed(const String& nativePath, const Flags& mode)
     : _nativePath(nativePath), _mode(mode) {}
 
 DirectoryFeed::~DirectoryFeed()
@@ -38,11 +38,11 @@ DirectoryFeed::~DirectoryFeed()
 
 void DirectoryFeed::populate(Folder& folder)
 {
-    if(_mode[ALLOW_WRITE_BIT])
+    if(_mode & AllowWrite)
     {
-        folder.setMode(File::WRITE);
+        folder.setMode(File::Write);
     }
-    if(_mode[CREATE_IF_MISSING_BIT] && !exists(_nativePath))
+    if(_mode.testFlag(CreateIfMissing) && !exists(_nativePath))
     {
         createDir(_nativePath);
     }
@@ -78,9 +78,9 @@ void DirectoryFeed::populateSubFolder(Folder& folder, const String& entryName)
         String subFeedPath = _nativePath.concatenateNativePath(entryName);
         Folder& subFolder = folder.fileSystem().getFolder(folder.path() / entryName);
 
-        if(_mode[ALLOW_WRITE_BIT])
+        if(_mode & AllowWrite)
         {
-            subFolder.setMode(File::WRITE);
+            subFolder.setMode(File::Write);
         }
 
         // It may already be fed by a DirectoryFeed.
@@ -114,9 +114,9 @@ void DirectoryFeed::populateFile(Folder& folder, const String& entryName)
     // Open the native file.
     std::auto_ptr<NativeFile> nativeFile(new NativeFile(entryName, entryPath));
     nativeFile->setStatus(fileStatus(entryPath));
-    if(_mode[ALLOW_WRITE_BIT])
+    if(_mode & AllowWrite)
     {
-        nativeFile->setMode(File::WRITE);
+        nativeFile->setMode(File::Write);
     }
 
     File* file = folder.fileSystem().interpret(nativeFile.release());

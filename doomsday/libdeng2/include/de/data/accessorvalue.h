@@ -34,8 +34,7 @@ namespace de
     {
     public:
         /// Mode to use for variables that have an accessor value.
-        static const Flag VARIABLE_MODE = Variable::TEXT | Variable::READ_ONLY | 
-            Variable::NO_SERIALIZE;
+        static const Variable::Flags VARIABLE_MODE;
         
     public:
         AccessorValue();

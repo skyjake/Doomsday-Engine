@@ -62,8 +62,8 @@ void NativeFile::clear()
 {
     File::clear();
     
-    Mode oldMode = mode();
-    setMode(WRITE | TRUNCATE);
+    Flags oldMode = mode();
+    setMode(Write | Truncate);
     output();
     File::setMode(oldMode);
 }
@@ -109,7 +109,7 @@ void NativeFile::set(Offset at, const Byte* values, Size count)
     setStatus(st);
 }
 
-void NativeFile::setMode(const Mode& newMode)
+void NativeFile::setMode(const Flags& newMode)
 {
     close();
     File::setMode(newMode);
@@ -140,7 +140,7 @@ QFile& NativeFile::output()
         verifyWriteAccess();
         
         QFile::OpenMode fileMode = QFile::ReadWrite;
-        if(mode()[TRUNCATE_BIT])
+        if(mode() & Truncate)
         {
             fileMode |= QFile::Truncate;
         }
@@ -152,7 +152,7 @@ QFile& NativeFile::output()
             /// @throw OutputError  Opening the output stream failed.
             throw OutputError("NativeFile::output", "Failed to write " + _nativePath);
         }
-        if(mode()[TRUNCATE_BIT])
+        if(mode() & Truncate)
         {
             Status st = status();
             st.size = 0;

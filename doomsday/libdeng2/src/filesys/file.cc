@@ -142,7 +142,7 @@ const File::Status& File::status() const
     return _status;
 }
 
-void File::setMode(const Mode& newMode)
+void File::setMode(const Flags& newMode)
 {
     if(this != _source)
     {
@@ -154,7 +154,7 @@ void File::setMode(const Mode& newMode)
     }
 }
 
-const File::Mode& File::mode() const 
+const File::Flags& File::mode() const
 {
     if(this != _source)
     {
@@ -165,7 +165,7 @@ const File::Mode& File::mode() const
 
 void File::verifyWriteAccess()
 {
-    if(!mode()[WRITE_BIT])
+    if(!mode().testFlag(Write))
     {
         /// @throw ReadOnlyError  File is in read-only mode.
         throw ReadOnlyError("File::verifyWriteAccess", path() + " is in read-only mode");

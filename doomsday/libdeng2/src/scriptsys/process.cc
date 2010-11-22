@@ -90,7 +90,7 @@ void Process::run(const Script& script)
     }
     else
     {
-        ns.add(new Variable("__file__", new TextValue(script.path()), Variable::TEXT));
+        ns.add(new Variable("__file__", new TextValue(script.path()), Variable::AllowText));
     }
 }
 

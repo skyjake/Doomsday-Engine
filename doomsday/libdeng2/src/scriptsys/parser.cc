@@ -205,7 +205,7 @@ IfStatement* Parser::parseIfStatement()
     statement->newBranch();
     statement->setBranchCondition(
         parseConditionalCompound(statement->branchCompound(), 
-            HAS_CONDITION | STAY_AT_CLOSING_STATEMENT));
+            HasCondition | StayAtClosingStatement));
     
     while(_statementRange.beginsWith(ScriptLex::ELSIF))
     {
@@ -213,13 +213,13 @@ IfStatement* Parser::parseIfStatement()
         statement->newBranch();
         statement->setBranchCondition(
             parseConditionalCompound(statement->branchCompound(), 
-                HAS_CONDITION | STAY_AT_CLOSING_STATEMENT));
+                HasCondition | StayAtClosingStatement));
     }
     
     if(_statementRange.beginsWith(ScriptLex::ELSE))
     {
         expectEnd = !_statementRange.has(Token::COLON);
-        parseConditionalCompound(statement->elseCompound(), STAY_AT_CLOSING_STATEMENT);
+        parseConditionalCompound(statement->elseCompound(), StayAtClosingStatement);
     }
     
     if(expectEnd) 
@@ -241,7 +241,7 @@ WhileStatement* Parser::parseWhileStatement()
     // "while" expr "\n" compound
     
     auto_ptr<WhileStatement> statement(new WhileStatement());
-    statement->setCondition(parseConditionalCompound(statement->compound(), HAS_CONDITION));
+    statement->setCondition(parseConditionalCompound(statement->compound(), HasCondition));
     return statement.release();
 }
 
@@ -259,13 +259,13 @@ ForStatement* Parser::parseForStatement()
     }
     
     auto_ptr<Expression> iter(parseExpression(_statementRange.between(1, inPos),
-        BY_REFERENCE | ALLOW_NEW_VARIABLES | LOCAL_NAMESPACE_ONLY));
+        ByReference | AllowNewVariables | LocalNamespaceOnly));
     Expression* iterable = parseExpression(_statementRange.between(inPos + 1, colonPos));
     
     auto_ptr<ForStatement> statement(new ForStatement(iter.release(), iterable));
 
     // Parse the statements of the method.
-    parseConditionalCompound(statement->compound(), IGNORE_EXTRA_BEFORE_COLON);
+    parseConditionalCompound(statement->compound(), IgnoreExtraBeforeColon);
     
     return statement.release();
 }
@@ -280,13 +280,13 @@ ExpressionStatement* Parser::parseImportStatement()
             "Expected identifier to follow " + _statementRange.firstToken().asText());
     }
     dint startAt = 1;
-    ExpressionFlags flags = IMPORT_NAMESPACE | ALLOW_NEW_RECORDS | 
-        REQUIRE_NEW_IDENTIFIER | LOCAL_NAMESPACE_ONLY;
+    ExpressionFlags flags = ImportNamespace | AllowNewRecords |
+        RequireNewIdentifier | LocalNamespaceOnly;
     if(_statementRange.size() >= 3 && _statementRange.token(1).equals(ScriptLex::RECORD))
     {
         // Take a copy of the imported record instead of referencing it.
-        flags |= BY_VALUE;
-        flags &= ~ALLOW_NEW_RECORDS; // don't create a variable referencing it
+        flags |= ByValue;
+        flags &= ~AllowNewRecords; // don't create a variable referencing it
         startAt = 2;
     }
     return new ExpressionStatement(parseList(_statementRange.startingFrom(startAt), Token::COMMA, flags));
@@ -301,7 +301,7 @@ ExpressionStatement* Parser::parseDeclarationStatement()
         throw MissingTokenError("Parser::parseDeclarationStatement",
             "Expected identifier to follow " + _statementRange.firstToken().asText());
     }    
-    ExpressionFlags flags = LOCAL_NAMESPACE_ONLY | ALLOW_NEW_RECORDS;
+    ExpressionFlags flags = LocalNamespaceOnly | AllowNewRecords;
     return new ExpressionStatement(parseList(_statementRange.startingFrom(1), Token::COMMA, flags));
 }
 
@@ -315,7 +315,7 @@ ExpressionStatement* Parser::parseDeleteStatement()
             "Expected identifier to follow " + _statementRange.firstToken().asText());
     }    
     return new ExpressionStatement(parseList(_statementRange.startingFrom(1), Token::COMMA,
-        DELETE_IDENTIFIER | LOCAL_NAMESPACE_ONLY));
+        DeleteIdentifier | LocalNamespaceOnly));
 }
 
 FunctionStatement* Parser::parseFunctionStatement()
@@ -330,7 +330,7 @@ FunctionStatement* Parser::parseFunctionStatement()
     // The function must have a name that is not already in use in the scope.
     auto_ptr<FunctionStatement> statement(new FunctionStatement(
         parseExpression(_statementRange.between(1, pos), 
-            LOCAL_NAMESPACE_ONLY | BY_REFERENCE | ALLOW_NEW_VARIABLES | REQUIRE_NEW_IDENTIFIER)));
+            LocalNamespaceOnly | ByReference | AllowNewVariables | RequireNewIdentifier)));
 
     // Collect the argument names.
     TokenRange argRange = _statementRange.between(pos + 1, _statementRange.closingBracket(pos));
@@ -363,7 +363,7 @@ FunctionStatement* Parser::parseFunctionStatement()
     }
 
     // Parse the statements of the function.
-    parseConditionalCompound(statement->compound(), IGNORE_EXTRA_BEFORE_COLON);
+    parseConditionalCompound(statement->compound(), IgnoreExtraBeforeColon);
     
     return statement.release();
 }
@@ -374,7 +374,7 @@ void Parser::parseTryCatchSequence(Compound& compound)
     // catch-compound: "catch" name-expr ["," ref-name-expr] cond-compound
     
     auto_ptr<TryStatement> tryStat(new TryStatement);
-    parseConditionalCompound(tryStat->compound(), STAY_AT_CLOSING_STATEMENT);
+    parseConditionalCompound(tryStat->compound(), StayAtClosingStatement);
     compound.add(tryStat.release());
 
     // One catch is required.
@@ -404,12 +404,12 @@ void Parser::parseTryCatchSequence(Compound& compound)
                 argRange = _statementRange.between(1, colon);
             }
             args.reset(parseList(argRange, Token::COMMA,
-                BY_REFERENCE | LOCAL_NAMESPACE_ONLY | ALLOW_NEW_VARIABLES));
+                ByReference | LocalNamespaceOnly | AllowNewVariables));
         }
 
         auto_ptr<CatchStatement> catchStat(new CatchStatement(args.release()));
         parseConditionalCompound(catchStat->compound(),
-            STAY_AT_CLOSING_STATEMENT | IGNORE_EXTRA_BEFORE_COLON);
+            StayAtClosingStatement | IgnoreExtraBeforeColon);
 
         // The final catch will be flagged.
         finalCatch = catchStat.get();
@@ -417,7 +417,7 @@ void Parser::parseTryCatchSequence(Compound& compound)
         // Add it to the compound.
         compound.add(catchStat.release());
     }    
-    finalCatch->flags.set(CatchStatement::FINAL_BIT);
+    finalCatch->flags |= CatchStatement::FinalCompound;
     if(expectEnd)
     {
         if(!_statementRange.firstToken().equals(ScriptLex::END))
@@ -446,24 +446,24 @@ PrintStatement* Parser::parsePrintStatement()
 
 AssignStatement* Parser::parseAssignStatement()
 {
-    ExpressionFlags flags = ALLOW_NEW_VARIABLES | BY_REFERENCE | LOCAL_NAMESPACE_ONLY;
+    ExpressionFlags flags = AllowNewVariables | ByReference | LocalNamespaceOnly;
     
     /// "const" makes read-only variables.
     if(_statementRange.firstToken().equals(ScriptLex::CONST))
     {
-        flags |= SET_READ_ONLY;
+        flags |= SetReadOnly;
         _statementRange = _statementRange.startingFrom(1);
     }
     
     dint pos = _statementRange.find(ScriptLex::ASSIGN);
     if(pos < 0)
     {
-        flags &= ~LOCAL_NAMESPACE_ONLY;
+        flags &= ~LocalNamespaceOnly;
         pos = _statementRange.find(ScriptLex::SCOPE_ASSIGN);
         if(pos < 0)
         {
             pos = _statementRange.find(ScriptLex::WEAK_ASSIGN);
-            flags |= THROWAWAY_IF_IN_SCOPE;
+            flags |= ThrowawayIfInScope;
         }
     }
     
@@ -483,7 +483,7 @@ AssignStatement* Parser::parseAssignStatement()
             bracketPos = nameEndPos - 1;
         }
         
-        if(indices.size() > 0 && flags[THROWAWAY_IF_IN_SCOPE_BIT])
+        if(indices.size() > 0 && (flags & ThrowawayIfInScope))
         {
             throw SyntaxError("Parser::parseAssignStatement",
                 "Weak assignment cannot be used with indices");
@@ -527,7 +527,7 @@ Expression* Parser::parseConditionalCompound(Compound& compound, const CompoundF
     dint colon = range.find(Token::COLON);
     
     auto_ptr<Expression> condition;
-    if(flags[HAS_CONDITION_BIT])
+    if(flags.testFlag(HasCondition))
     {
         TokenRange conditionRange = range.between(1, colon);
         if(conditionRange.empty())
@@ -537,7 +537,7 @@ Expression* Parser::parseConditionalCompound(Compound& compound, const CompoundF
         }
         condition = auto_ptr<Expression>(parseExpression(conditionRange));
     }
-    else if(colon > 0 && (colon > 1 && !flags[IGNORE_EXTRA_BEFORE_COLON_BIT]))
+    else if(colon > 0 && (colon > 1 && !flags.testFlag(IgnoreExtraBeforeColon)))
     {
         throw UnexpectedTokenError("Parser::parseConditionalCompound",
             range.token(1).asText() + " was unexpected");
@@ -554,7 +554,7 @@ Expression* Parser::parseConditionalCompound(Compound& compound, const CompoundF
     {
         nextStatement();
         parseCompound(compound);
-        if(!flags[STAY_AT_CLOSING_STATEMENT_BIT])
+        if(!flags.testFlag(StayAtClosingStatement))
         {
             nextStatement();
         }
@@ -731,7 +731,7 @@ Expression* Parser::parseCallExpression(const TokenRange& nameRange, const Token
             return new BuiltInExpression(builtIn, args.release());
         }
     }
-    auto_ptr<Expression> identifier(parseExpression(nameRange, BY_REFERENCE));
+    auto_ptr<Expression> identifier(parseExpression(nameRange, ByReference));
     return new OperatorExpression(CALL, identifier.release(), args.release());
 }
 
@@ -750,10 +750,10 @@ OperatorExpression* Parser::parseOperatorExpression(Operator op, const TokenRang
     }
     else
     {
-        ExpressionFlags leftFlags = BY_VALUE;
+        ExpressionFlags leftFlags = ByValue;
         if(leftOperandByReference(op))
         {
-            leftFlags = BY_REFERENCE;
+            leftFlags = ByReference;
         }
             
         // Binary operation.
@@ -805,16 +805,16 @@ Expression* Parser::parseTokenExpression(const TokenRange& range, const Expressi
         {
             NameExpression::Flags nameFlags;
 
-            if(flags[BY_VALUE_BIT]) nameFlags |= NameExpression::BY_VALUE;
-            if(flags[BY_REFERENCE_BIT]) nameFlags |= NameExpression::BY_REFERENCE;
-            if(flags[LOCAL_NAMESPACE_ONLY_BIT]) nameFlags |= NameExpression::LOCAL_ONLY;
-            if(flags[ALLOW_NEW_RECORDS_BIT]) nameFlags |= NameExpression::NEW_RECORD;
-            if(flags[ALLOW_NEW_VARIABLES_BIT]) nameFlags |= NameExpression::NEW_VARIABLE;
-            if(flags[REQUIRE_NEW_IDENTIFIER_BIT]) nameFlags |= NameExpression::NOT_IN_SCOPE;
-            if(flags[IMPORT_NAMESPACE_BIT]) nameFlags |= NameExpression::IMPORT;
-            if(flags[THROWAWAY_IF_IN_SCOPE_BIT]) nameFlags |= NameExpression::THROWAWAY_IF_IN_SCOPE;
-            if(flags[DELETE_IDENTIFIER_BIT]) nameFlags |= NameExpression::DELETE;
-            if(flags[SET_READ_ONLY_BIT]) nameFlags |= NameExpression::READ_ONLY;
+            if(flags & ByValue) nameFlags |= NameExpression::ByValue;
+            if(flags & ByReference) nameFlags |= NameExpression::ByReference;
+            if(flags & LocalNamespaceOnly) nameFlags |= NameExpression::LocalOnly;
+            if(flags & AllowNewRecords) nameFlags |= NameExpression::NewRecord;
+            if(flags & AllowNewVariables) nameFlags |= NameExpression::NewVariable;
+            if(flags & RequireNewIdentifier) nameFlags |= NameExpression::NotInScope;
+            if(flags & ImportNamespace) nameFlags |= NameExpression::Import;
+            if(flags & ThrowawayIfInScope) nameFlags |= NameExpression::ThrowawayIfInScope;
+            if(flags & DeleteIdentifier) nameFlags |= NameExpression::Delete;
+            if(flags & SetReadOnly) nameFlags |= NameExpression::ReadOnly;
             
             return new NameExpression(range.token(0).str(), nameFlags);
         }

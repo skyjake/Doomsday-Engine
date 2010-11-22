@@ -30,7 +30,7 @@
 
 using namespace de;
 
-Variable::Variable(const String& name, Value* initial, const Mode& m)
+Variable::Variable(const String& name, Value* initial, const Flags& m)
     : mode(m), _name(name), _value(0)
 {
     verifyName(_name);
@@ -95,12 +95,12 @@ Value& Variable::value()
 bool Variable::isValid(const Value& v) const
 {
     /// @todo  Make sure this actually works and add func, record, ref.
-    if((dynamic_cast<const NoneValue*>(&v) && !mode[NONE_BIT]) ||
-        (dynamic_cast<const NumberValue*>(&v) && !mode[NUMBER_BIT]) ||
-        (dynamic_cast<const TextValue*>(&v) && !mode[TEXT_BIT]) ||
-        (dynamic_cast<const ArrayValue*>(&v) && !mode[ARRAY_BIT]) ||
-        (dynamic_cast<const DictionaryValue*>(&v) && !mode[DICTIONARY_BIT]) ||
-        (dynamic_cast<const BlockValue*>(&v) && !mode[BLOCK_BIT]))
+    if((dynamic_cast<const NoneValue*>(&v) && !mode.testFlag(AllowNone)) ||
+        (dynamic_cast<const NumberValue*>(&v) && !mode.testFlag(AllowNumber)) ||
+        (dynamic_cast<const TextValue*>(&v) && !mode.testFlag(AllowText)) ||
+        (dynamic_cast<const ArrayValue*>(&v) && !mode.testFlag(AllowArray)) ||
+        (dynamic_cast<const DictionaryValue*>(&v) && !mode.testFlag(AllowDictionary)) ||
+        (dynamic_cast<const BlockValue*>(&v) && !mode.testFlag(AllowBlock)))
     {
         return false;
     }
@@ -120,7 +120,7 @@ void Variable::verifyValid(const Value& v) const
 
 void Variable::verifyWritable()
 {
-    if(mode[READ_ONLY_BIT])
+    if(mode & ReadOnly)
     {
         /// @throw ReadOnlyError  The variable is in read-only mode.
         throw ReadOnlyError("Variable::verifyWritable", 
@@ -139,9 +139,9 @@ void Variable::verifyName(const String& s)
 
 void Variable::operator >> (Writer& to) const
 {
-    if(!mode[NO_SERIALIZE_BIT])
+    if(!mode.testFlag(NoSerialize))
     {
-        to << _name << duint32(mode.to_ulong()) << *_value;
+        to << _name << duint32(mode) << *_value;
     }
 }
 
@@ -149,7 +149,7 @@ void Variable::operator << (Reader& from)
 {
     duint32 modeFlags = 0;
     from >> _name >> modeFlags;
-    mode = modeFlags;
+    mode = Flags(modeFlags);
     delete _value;
     try
     {

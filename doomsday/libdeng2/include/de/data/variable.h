@@ -23,7 +23,8 @@
 #include "../ISerializable"
 #include "../String"
 #include "../Audience"
-#include "../Flag"
+
+#include <QFlags>
 
 namespace de
 {
@@ -53,34 +54,48 @@ namespace de
         
         /** @name Mode Flags */
         //@{
-        /// Variable's value cannot change.
-        DEFINE_FLAG(READ_ONLY, 0);
-        /// Variable cannot be serialized.
-        DEFINE_FLAG(NO_SERIALIZE, 1);
-        /// NoneValue allowed as value.
-        DEFINE_FLAG(NONE, 2);
-        /// NumberValue allowed as value.
-        DEFINE_FLAG(NUMBER, 3);
-        /// TextValue allowed as value.
-        DEFINE_FLAG(TEXT, 4);
-        /// ArrayValue allowed as value.
-        DEFINE_FLAG(ARRAY, 5);
-        /// DictionaryValue allowed as value.
-        DEFINE_FLAG(DICTIONARY, 6);
-        /// BlockValue allowed as value.
-        DEFINE_FLAG(BLOCK, 7);
-        /// FunctionValue allowed as value.
-        DEFINE_FLAG(FUNCTION, 8);
-        /// RecordValue allowed as value.
-        DEFINE_FLAG(RECORD, 9);
-        /// RefValue allowed as value.
-        DEFINE_FINAL_FLAG(REF, 10, Mode);
+        enum Flag
+        {
+            /// Variable's value cannot change.
+            ReadOnly = 0x1,
+
+            /// Variable cannot be serialized.
+            NoSerialize = 0x2,
+
+            /// NoneValue allowed as value.
+            AllowNone = 0x4,
+
+            /// NumberValue allowed as value.
+            AllowNumber = 0x8,
+
+            /// TextValue allowed as value.
+            AllowText = 0x10,
+
+            /// ArrayValue allowed as value.
+            AllowArray = 0x20,
+
+            /// DictionaryValue allowed as value.
+            AllowDictionary = 0x40,
+
+            /// BlockValue allowed as value.
+            AllowBlock = 0x80,
+
+            /// FunctionValue allowed as value.
+            AllowFunction = 0x100,
+
+            /// RecordValue allowed as value.
+            AllowRecord = 0x200,
+
+            /// RefValue allowed as value.
+            AllowRef = 0x400,
+
+            /// The default mode allows reading and writing all types of values,
+            /// including NoneValue.
+            DefaultMode = AllowNone | AllowNumber | AllowText | AllowArray |
+                AllowDictionary | AllowBlock | AllowFunction | AllowRecord | AllowRef
+        };
         //@}
-        
-        /// The default mode allows reading and writing all types of values, 
-        /// including NoneValue.
-        static const Flag DEFAULT_MODE = NONE | NUMBER | TEXT | ARRAY | DICTIONARY | BLOCK |
-            FUNCTION | RECORD | REF;
+        Q_DECLARE_FLAGS(Flags, Flag);
         
     public:
         /**
@@ -91,7 +106,8 @@ namespace de
          *      a NoneValue will be created for the variable.
          * @param mode  Mode flags.
          */
-        Variable(const String& name = "", Value* initial = 0, const Mode& mode = DEFAULT_MODE);
+        Variable(const String& name = "", Value* initial = 0,
+                 const Flags& mode = DefaultMode);
             
         /**
          * Constructs a copy of another variable.
@@ -216,7 +232,7 @@ namespace de
         DEFINE_AUDIENCE(Change, void variableValueChanged(Variable& variable, const Value& newValue));
 
         /// Mode flags.        
-        Mode mode;
+        Flags mode;
         
     private:        
         String _name;
@@ -225,5 +241,7 @@ namespace de
         Value* _value;
     };
 }
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(de::Variable::Flags);
 
 #endif /* LIBDENG2_VARIABLE_H */

@@ -81,7 +81,7 @@ void Socket::close()
 
 Socket& Socket::operator << (const IByteArray& packet)
 {
-    send(packet, mode[CHANNEL_1_BIT]? 1 : 0);
+    send(packet, mode & Channel1? 1 : 0);
     return *this;
 }
 
@@ -110,8 +110,8 @@ void Socket::unpackHeader(duint32 headerBytes, Header& header)
     duint flags = (headerBytes >> 29) & 7;
     
     header.version = (headerBytes >> 27) & 3;
-    header.huffman = (flags & HUFFMAN) != 0;
-    header.channel = (flags & CHANNEL_1? 1 : 0);
+    header.huffman = (flags & HuffmanPayload) != 0;
+    header.channel = (flags & Channel1? 1 : 0);
     header.size = headerBytes & 0x7ffffff;
 }
 

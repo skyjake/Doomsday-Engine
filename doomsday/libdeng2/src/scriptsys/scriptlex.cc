@@ -242,7 +242,7 @@ ScriptLex::parseString(QChar startChar, duint startIndentation, TokenBuffer& out
     bool longString = false;
     duint charLineNumber = lineNumber();
     
-    ModeSpan readingMode(*this, SKIP_COMMENTS);
+    ModeSpan readingMode(*this, SkipComments);
     
     // The token already contains the startChar.
     QChar c = get();

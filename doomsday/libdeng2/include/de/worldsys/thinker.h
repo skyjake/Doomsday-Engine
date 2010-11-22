@@ -24,10 +24,10 @@
 #include "../Time"
 #include "../Enumerator"
 #include "../Id"
-#include "../Flag"
 #include "../Reader"
 
 #include <map>
+#include <QFlags>
 
 namespace de
 {
@@ -51,8 +51,12 @@ namespace de
         /// Invalid type when deserializing a thinker. @ingroup errors
         DEFINE_ERROR(InvalidTypeError);
 
-        /// The thinker is in statis and will not think.
-        DEFINE_FINAL_FLAG(IN_STASIS, 0, Mode);
+        enum ModeFlag
+        {
+            /// The thinker is in statis and will not think.
+            InStasis = 0x1
+        };
+        Q_DECLARE_FLAGS(ModeFlags, ModeFlag);
 
         /// Identifier used when serializing thinkers (0-255).
         typedef duint8 SerialId;
@@ -82,7 +86,7 @@ namespace de
         /**
          * Thinkers that are "alive" will think on every iteration of the main loop.
          */
-        bool isAlive() const { return !mode[IN_STASIS_BIT]; }
+        bool isAlive() const { return !mode.testFlag(InStasis); }
         
         /**
          * Returns the ID of the thinker.
@@ -163,7 +167,7 @@ namespace de
 
     public:
         /// Mode flags.
-        Mode mode;
+        ModeFlags mode;
 
     private:
         /// Identifier of the thinker class for serialization.
@@ -185,5 +189,7 @@ namespace de
         static Constructors _constructors;
     };
 }
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(de::Thinker::ModeFlags);
 
 #endif /* LIBDENG2_THINKER_H */

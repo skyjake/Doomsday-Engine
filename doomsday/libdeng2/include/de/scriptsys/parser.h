@@ -21,12 +21,13 @@
 #define LIBDENG2_PARSER_H
 
 #include "../deng.h"
-#include "../Flag"
 #include "../IParser"
 #include "../TokenBuffer"
 #include "../TokenRange"
 #include "../ScriptLex"
 #include "../Operator"
+
+#include <QFlags>
 
 namespace de
 {
@@ -67,21 +68,29 @@ namespace de
         DEFINE_SUB_ERROR(SyntaxError, MissingColonError);
         
         // Flags for parsing conditional compounds.
-        DEFINE_FLAG(HAS_CONDITION, 0);
-        DEFINE_FLAG(STAY_AT_CLOSING_STATEMENT, 1);
-        DEFINE_FINAL_FLAG(IGNORE_EXTRA_BEFORE_COLON, 2, CompoundFlags);
+        enum CompoundFlag
+        {
+            HasCondition = 0x1,
+            StayAtClosingStatement = 0x2,
+            IgnoreExtraBeforeColon = 0x4
+        };
+        Q_DECLARE_FLAGS(CompoundFlags, CompoundFlag);
 
-        // Flags for name expressions.
-        DEFINE_FLAG(BY_VALUE, 0);
-        DEFINE_FLAG(BY_REFERENCE, 1);
-        DEFINE_FLAG(LOCAL_NAMESPACE_ONLY, 2);
-        DEFINE_FLAG(REQUIRE_NEW_IDENTIFIER, 3);
-        DEFINE_FLAG(ALLOW_NEW_RECORDS, 4);
-        DEFINE_FLAG(ALLOW_NEW_VARIABLES, 5);
-        DEFINE_FLAG(DELETE_IDENTIFIER, 6);
-        DEFINE_FLAG(IMPORT_NAMESPACE, 7);
-        DEFINE_FLAG(THROWAWAY_IF_IN_SCOPE, 8);
-        DEFINE_FINAL_FLAG(SET_READ_ONLY, 9, ExpressionFlags);
+        // Flags for evaluating expressions.
+        enum ExpressionFlag
+        {
+            ByValue = 0x1,
+            ByReference = 0x2,
+            LocalNamespaceOnly = 0x4,
+            RequireNewIdentifier = 0x8,
+            AllowNewRecords = 0x10,
+            AllowNewVariables = 0x20,
+            DeleteIdentifier = 0x40,
+            ImportNamespace = 0x80,
+            ThrowawayIfInScope = 0x100,
+            SetReadOnly = 0x200
+        };
+        Q_DECLARE_FLAGS(ExpressionFlags, ExpressionFlag);
         
     public:
         Parser();
@@ -121,11 +130,11 @@ namespace de
         /// Parse a range of tokens as a comma-separated argument list:
         ArrayExpression* parseList(const TokenRange& range,
                                    const QChar* separator = Token::COMMA,
-                                   const ExpressionFlags& flags = BY_VALUE);
+                                   const ExpressionFlags& flags = ByValue);
 
         /// Parse a range of tokens as an operator-based expression.
         Expression* parseExpression(const TokenRange& range, 
-            const ExpressionFlags& flags = BY_VALUE);
+            const ExpressionFlags& flags = ByValue);
 
         ArrayExpression* parseArrayExpression(const TokenRange& range);
 
@@ -136,10 +145,10 @@ namespace de
 
         OperatorExpression* parseOperatorExpression(Operator op, 
             const TokenRange& leftSide, const TokenRange& rightSide, 
-            const ExpressionFlags& rightFlags = BY_VALUE);
+            const ExpressionFlags& rightFlags = ByValue);
 
         Expression* parseTokenExpression(const TokenRange& range, 
-            const ExpressionFlags& flags = BY_VALUE);
+            const ExpressionFlags& flags = ByValue);
 
         Operator findLowestOperator(const TokenRange& range, 
             TokenRange& leftSide, TokenRange& rightSide);
@@ -161,5 +170,8 @@ namespace de
         duint _currentIndent;
     };    
 }
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(de::Parser::CompoundFlags);
+Q_DECLARE_OPERATORS_FOR_FLAGS(de::Parser::ExpressionFlags);
 
 #endif /* LIBDENG2_PARSER_H */

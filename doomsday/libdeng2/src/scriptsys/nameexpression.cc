@@ -42,6 +42,8 @@ NameExpression::~NameExpression()
 
 Value* NameExpression::evaluate(Evaluator& evaluator) const
 {
+    LOG_AS("NameExpression::evaluate");
+
     //std::cout << "NameExpression::evaluator: " << _flags.to_string() << "\n";
     //LOG_DEBUG("path = %s, scope = %x") << _path << evaluator.names();
     
@@ -69,40 +71,40 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
             record = &ns.subrecord(_identifier);
             foundInNamespace = &ns;
         }
-        if(_flags[LOCAL_ONLY_BIT])
+        if(_flags & LocalOnly)
         {
             break;
         }
     }
 
-    if(variable && _flags[THROWAWAY_IF_IN_SCOPE_BIT])
+    if(variable && (_flags & ThrowawayIfInScope))
     {
         foundInNamespace = 0;
         variable = &evaluator.context().throwaway();
     }
 
     // If a new variable/record is required and one is in scope, we cannot continue.
-    if((variable || record) && _flags[NOT_IN_SCOPE_BIT])
+    if((variable || record) && (_flags & NotInScope))
     {
         throw AlreadyExistsError("NameExpression::evaluate", 
             "Identifier '" + _identifier + "' already exists");
     }
     
     // Should we import a namespace?
-    if(_flags[IMPORT_BIT])
+    if(_flags & Import)
     {
         record = &App::importModule(_identifier,
             evaluator.process().globals()["__file__"].value().asText());
             
         // Take a copy if requested.
-        if(_flags[BY_VALUE_BIT])
+        if(_flags & ByValue)
         {
             record = &spaces.front()->add(_identifier, new Record(*record));
         }
     }
     
     // Should we delete the identifier?
-    if(_flags[DELETE_BIT])
+    if(_flags & Delete)
     {
         if(!variable && !record)
         {
@@ -123,7 +125,7 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
 
     // If nothing is found and we are permitted to create new variables, do so.
     // Occurs when assigning into new variables.
-    if(!variable && !record && _flags[NEW_VARIABLE_BIT])
+    if(!variable && !record && (_flags & NewVariable))
     {
         variable = new Variable(_identifier);
         
@@ -133,7 +135,7 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
     if(variable)
     {
         // Variables can be referred to by reference or value.
-        if(_flags[BY_REFERENCE_BIT])
+        if(_flags & ByReference)
         {
             // Reference to the variable.
             return new RefValue(variable);
@@ -146,7 +148,7 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
     }
 
     // We may be permitted to create a new record.
-    if(_flags[NEW_RECORD_BIT])
+    if(_flags & NewRecord)
     {
         if(!record)
         {
@@ -171,7 +173,7 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
 
 void NameExpression::operator >> (Writer& to) const
 {
-    to << SerialId(NAME) << _identifier << duint16(_flags.to_ulong());
+    to << SerialId(NAME) << _identifier << duint16(_flags);
 }
 
 void NameExpression::operator << (Reader& from)
@@ -187,5 +189,5 @@ void NameExpression::operator << (Reader& from)
     from >> _identifier;
     duint16 f;
     from >> f;
-    _flags = f;
+    _flags = Flags(f);
 }

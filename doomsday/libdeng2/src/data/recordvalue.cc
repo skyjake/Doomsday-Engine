@@ -27,10 +27,10 @@
 
 using namespace de;
 
-RecordValue::RecordValue(Record* record, const Ownership& o) : _record(record), _ownership(o)
+RecordValue::RecordValue(Record* record, OwnershipFlags o) : _record(record), _ownership(o)
 {
     Q_ASSERT(_record != NULL);
-    if(!_ownership[OWNS_RECORD_BIT])
+    if(!_ownership.testFlag(OwnsRecord))
     {
         // If we don't own it, someone may delete the record.
         _record->audienceForDeletion.add(this);
@@ -39,7 +39,7 @@ RecordValue::RecordValue(Record* record, const Ownership& o) : _record(record), 
 
 RecordValue::~RecordValue()
 {
-    if(_ownership[OWNS_RECORD_BIT])
+    if(_ownership & OwnsRecord)
     {
         delete _record;
     }
@@ -158,6 +158,6 @@ void RecordValue::operator << (Reader& from)
 void RecordValue::recordBeingDeleted(Record& record)
 {
     Q_ASSERT(_record == &record);
-    Q_ASSERT(!_ownership[OWNS_RECORD_BIT]);
+    Q_ASSERT(!_ownership.testFlag(OwnsRecord));
     _record = 0;
 }

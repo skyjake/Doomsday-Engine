@@ -47,7 +47,7 @@ void CatchStatement::execute(Context& context) const
 
 bool CatchStatement::isFinal() const
 {
-    return flags[FINAL_BIT];
+    return flags.testFlag(FinalCompound);
 }
 
 bool CatchStatement::matches(const Error& err) const
@@ -81,7 +81,7 @@ void CatchStatement::executeCatch(Context& context, const Error& err) const
 
 void CatchStatement::operator >> (Writer& to) const
 {
-    to << SerialId(CATCH) << duint8(flags.to_ulong()) << *_args << _compound;
+    to << SerialId(CATCH) << duint8(flags) << *_args << _compound;
 }
 
 void CatchStatement::operator << (Reader& from)
@@ -96,6 +96,6 @@ void CatchStatement::operator << (Reader& from)
     }
     duint8 f;
     from >> f;
-    flags = f;
+    flags = Flags(f);
     from >> *_args >> _compound;
 }

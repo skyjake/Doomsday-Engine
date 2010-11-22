@@ -64,7 +64,7 @@ int main(int argc, char** argv)
         // This won't appear in the file system unless FS::refresh() is called.
         // newFile() doesn't interpret anything, just makes a plain file.
         File& zip2 = app.homeFolder().replaceFile("test2.zip");
-        zip2.setMode(File::WRITE | File::TRUNCATE);
+        zip2.setMode(File::Write | File::Truncate);
         Archive arch;
         arch.add("world.txt", content.toUtf8());
         Writer(zip2) << arch;

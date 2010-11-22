@@ -27,6 +27,8 @@
 #include "../AccessorValue"
 #include "../Audience"
 
+#include <QFlags>
+
 namespace de
 {
     class FS;
@@ -55,8 +57,12 @@ namespace de
         DEFINE_SUB_ERROR(IOError, ReadOnlyError);
         
         // Mode flags.
-        DEFINE_FLAG(WRITE, 0);
-        DEFINE_FINAL_FLAG(TRUNCATE, 1, Mode);
+        enum Flag
+        {
+            Write = 0x1,
+            Truncate = 0x2
+        };
+        Q_DECLARE_FLAGS(Flags, Flag);
 
         /**
          * The file object is about to be deleted. This may be, e.g., due to pruning or
@@ -244,7 +250,7 @@ namespace de
         /**
          * Returns the mode of the file.
          */
-        const Mode& mode() const;
+        const Flags& mode() const;
         
         /**
          * Changes the mode of the file. For example, using <code>WRITE|TRUNCATE</code> as the
@@ -252,7 +258,7 @@ namespace de
          *
          * @param newMode  Mode.
          */
-        virtual void setMode(const Mode& newMode);
+        virtual void setMode(const Flags& newMode);
 
         /// Returns the file information (const).
         const Record& info() const { return _info; }
@@ -296,11 +302,13 @@ namespace de
         Status _status;
         
         /// Mode flags.
-        Mode _mode;
+        Flags _mode;
         
         /// File information.
         Record _info;
     }; 
 }
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(de::File::Flags);
 
 #endif /* LIBDENG2_FILE_H */

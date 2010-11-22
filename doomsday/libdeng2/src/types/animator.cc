@@ -72,7 +72,7 @@ void Animator::set(ValueType targetValue, const Time::Delta& transition)
         _startTime = _clock->now();
         _transition = targetValue - _start;
         _transitionTime = transition;
-        _status.set(ANIMATING_BIT);
+        _status |= Animating;
     }
     else
     {
@@ -80,7 +80,7 @@ void Animator::set(ValueType targetValue, const Time::Delta& transition)
         _startTime = _clock->now();
         _transition = 0;
         _transitionTime = 0;
-        _status.set(ANIMATING_BIT, false);
+        _status &= ~Animating;
     }
 
     // Let the observer know.
@@ -98,7 +98,7 @@ Animator& Animator::operator = (const ValueType& immediatelyAssignedValue)
 
 Animator::ValueType Animator::now() const
 {
-    if(!_status[ANIMATING_BIT])
+    if(!_status.testFlag(Animating))
     {
         return _start;
     }
@@ -114,7 +114,7 @@ Animator::ValueType Animator::now() const
     if(t >= 1.0)
     {
         // The animation is complete.
-        _status.set(ANIMATING_BIT, false);
+        _status &= ~Animating;
         _start += _transition;
         return _start;
     }

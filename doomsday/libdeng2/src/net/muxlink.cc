@@ -60,7 +60,14 @@ void MuxLink::demux()
 
 void MuxLink::Channel::send(const IByteArray& data)
 {
-    _mux._link->mode.set(Link::CHANNEL_1_BIT, _channel == 1);
+    if(_channel == 1)
+    {
+        _mux._link->mode |= Link::Channel1;
+    }
+    else
+    {
+        _mux._link->mode &= ~Link::Channel1;
+    }
     *_mux._link << data;
 }
 

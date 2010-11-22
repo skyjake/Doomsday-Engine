@@ -24,6 +24,8 @@
 #include "../Feed"
 #include "../String"
 
+#include <QFlags>
+
 namespace de
 {
     /**
@@ -49,11 +51,15 @@ namespace de
         /// Failed to remove a file. @ingroup errors
         DEFINE_ERROR(RemoveError);
         
-        /// Opens all files and folders in write mode.
-        DEFINE_FLAG(ALLOW_WRITE, 0);
-        
-        /// Creates the native directory if not does not exist.
-        DEFINE_FINAL_FLAG(CREATE_IF_MISSING, 1, Mode);
+        enum Flag
+        {
+            /// Opens all files and folders in write mode.
+            AllowWrite = 0x1,
+
+            /// Creates the native directory if not does not exist.
+            CreateIfMissing = 0x2
+        };
+        Q_DECLARE_FLAGS(Flags, Flag);
         
     public:
         /**
@@ -62,7 +68,7 @@ namespace de
          * @param nativePath  Path of the native directory.
          * @param mode        Feed mode.
          */
-        DirectoryFeed(const String& nativePath, const Mode& mode = 0);
+        DirectoryFeed(const String& nativePath, const Flags& mode = 0);
         
         virtual ~DirectoryFeed();
         
@@ -112,8 +118,10 @@ namespace de
 
     private:
         const String _nativePath;
-        Mode _mode;
+        Flags _mode;
     };
 }
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(de::DirectoryFeed::Flags);
 
 #endif /* LIBDENG2_DIRECTORYFEED_H */
