@@ -35,5 +35,8 @@ TestApp::~TestApp()
     LOG_MESSAGE("TestApp destroyed.");
 }
 
-void TestApp::iterate(const de::Time::Delta& /*elapsed*/)
-{}
+void TestApp::iterate(const de::Time::Delta& elapsed)
+{
+    LOG_AS("TestApp::iterate");
+    LOG_VERBOSE("%f sec elapsed.") << elapsed;
+}

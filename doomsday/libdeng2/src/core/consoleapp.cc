@@ -19,7 +19,6 @@
 
 #include "de/ConsoleApp"
 #include "de/Error"
-#include "de/core/errorfilter.h"
 
 #include <QDebug>
 
@@ -62,7 +61,6 @@ ConsoleApp::ConsoleApp(int argc, char** argv,
                        const String& configPath,
                        const String& homeSubFolder,
                        Log::LogLevel defaultLogLevel)
-    : internal::CoreApplication(argc, argv),
-      App(CommandLine(argc, argv), configPath, homeSubFolder, defaultLogLevel)
+    : App(CommandLine(argc, argv), configPath, homeSubFolder, defaultLogLevel),
+      _coreApp(argc, argv)
 {}
-

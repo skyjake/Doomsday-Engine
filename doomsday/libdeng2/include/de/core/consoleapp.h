@@ -39,13 +39,16 @@ namespace de
     /**
      * Console application.
      */
-    class ConsoleApp : public internal::CoreApplication, public App
+    class ConsoleApp : public App
     {
     public:
         ConsoleApp(int argc, char** argv,
                    const String& configPath,
                    const String& homeSubFolder = "",
                    Log::LogLevel defaultLogLevel = Log::MESSAGE);
+
+    private:
+        internal::CoreApplication _coreApp;
     };
 }
 

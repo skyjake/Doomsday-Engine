@@ -31,9 +31,13 @@
 #include "de/Object"
 #include "de/Map"
 
+#include <QTimer>
+#include <QCoreApplication>
+
 using namespace de;
 
 const duint DEFAULT_LOG_BUFFER_MAX_ENTRY_COUNT = 1000;
+const duint ITERATION_TIMER_INTERVAL = 10;
 
 // This will be set when the app is constructed.
 App* App::_singleton = 0;
@@ -312,51 +316,47 @@ void App::unloadPlugins()
     }
 }
 
+void App::runIteration()
+{
+    QTimer::singleShot(ITERATION_TIMER_INTERVAL, this, SLOT(runIteration()));
+
+    // Determine elapsed time.
+    Time::Delta elapsed = 0;
+    _currentTime = Time();
+    if(_firstIteration)
+    {
+        _firstIteration = false;
+        elapsed = 0;
+    }
+    else
+    {
+        elapsed = _currentTime - _lastTime;
+    }
+    _lastTime = _currentTime;
+
+    // Do the loop iteration.
+    iterate(elapsed);
+
+    // Update subsystems (draw graphics, update sounds, etc.).
+    FOR_EACH(i, _subsystems, Subsystems::iterator)
+    {
+        (*i)->update(elapsed);
+    }
+}
+
 dint App::mainLoop()
 {
-    try
-    {
-        // Now running the main loop.
-        _runMainLoop = true;
-        _firstIteration = true;
-    
-        while(_runMainLoop)
-        {
-            // Determine elapsed time.
-            Time::Delta elapsed = 0;
-            _currentTime = Time();
-            if(_firstIteration)
-            {
-                _firstIteration = false;
-                elapsed = 0;
-            }
-            else
-            {
-                elapsed = _currentTime - _lastTime;
-            }
-            _lastTime = _currentTime;
+    _firstIteration = true;
 
-            // Do the loop iteration.
-            iterate(elapsed);
-        
-            // Update subsystems (draw graphics, update sounds, etc.).
-            FOR_EACH(i, _subsystems, Subsystems::iterator)
-            {
-                (*i)->update(elapsed);
-            }
-        }
-    }
-    catch(const Error& err)
-    {
-        LOG_ERROR("Main loop stopped: ") << err.what();        
-    }
-    return _exitCode;
+    // The iteration will be run periodically.
+    QTimer::singleShot(ITERATION_TIMER_INTERVAL, this, SLOT(runIteration()));
+
+    return qApp->exec();
 }
 
 void App::stop(dint code)
 {
-    _runMainLoop = false;
-    setExitCode(code);
+    qApp->exit(code);
 }
 
 App& App::app()

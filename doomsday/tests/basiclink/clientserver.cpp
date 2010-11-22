@@ -50,6 +50,8 @@ Client::Client(const Address& serverAddress) : _link(serverAddress)
 
 void Client::handleIncoming()
 {
+    LOG_AS("Client::handleIncoming");
+
     QScopedPointer<IByteArray> data(_link.receive());
     String str;
     Reader(*data) >> str;

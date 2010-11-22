@@ -39,7 +39,7 @@ int main(int argc, char** argv)
             LOG_MESSAGE("Waiting for incoming connections...");
 
             Server server;
-            app.exec();
+            app.mainLoop();
         }
         else
         {
@@ -48,7 +48,7 @@ int main(int argc, char** argv)
             LOG_MESSAGE("Waiting for data...");
 
             Client client(Address(QHostAddress::LocalHost, SERVER_PORT));
-            app.exec();
+            app.mainLoop();
         }
     }
     catch(const Error& err)

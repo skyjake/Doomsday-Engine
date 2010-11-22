@@ -27,6 +27,7 @@
 #include "../FS"
 #include "../Protocol"
 
+#include <QObject>
 #include <list>
 
 
@@ -63,8 +64,10 @@ namespace de
      *
      * @ingroup core
      */
-    class LIBDENG2_API App : public IClock
+    class LIBDENG2_API App : public QObject, public IClock
     {
+        Q_OBJECT
+
     public:
         /// Only one instance of App is allowed. @ingroup errors
         DEFINE_ERROR(TooManyInstancesError);
@@ -179,6 +182,9 @@ namespace de
         // Implements IClock.
         const Time& now() const { return _currentTime; }
         
+    public slots:
+        void runIteration();
+
     protected:
         /**
          * Delete all the subsystems currently in use.
