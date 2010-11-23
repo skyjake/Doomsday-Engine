@@ -334,7 +334,7 @@ void P_DestroyGameInfo(gameinfo_t* info)
         { gameresource_record_t** rec;
         for(rec = info->_requiredResources[i]; *rec; rec++)
         {
-            Str_Free(&(*rec)->name);
+            Str_Free(&(*rec)->names);
             Str_Free(&(*rec)->path);
             if((*rec)->lumpNames)
             {
@@ -351,9 +351,10 @@ void P_DestroyGameInfo(gameinfo_t* info)
     M_Free(info);
 }
 
-gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourcetype_t resType, ddresourceclass_t resClass, const char* name)
+gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourcetype_t resType,
+    ddresourceclass_t resClass, const ddstring_t* names)
 {
-    assert(info && VALID_RESOURCE_TYPE(resType) && VALID_RESOURCE_CLASS(resClass) && name && name[0]);
+    assert(info && VALID_RESOURCE_TYPE(resType) && VALID_RESOURCE_CLASS(resClass) && names);
     {
     size_t num = countElements(info->_requiredResources[resClass]);
     gameresource_record_t* rec;
@@ -365,7 +366,7 @@ gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourcetype_t res
     rec->resType = resType;
     rec->resClass = resClass;
     rec->lumpNames = 0;
-    Str_Init(&rec->name); Str_Set(&rec->name, name);
+    Str_Init(&rec->names); Str_Copy(&rec->names, names);
     Str_Init(&rec->path);
     return rec;
     }
@@ -399,7 +400,7 @@ boolean GameInfo_AddResourceSearchPath(gameinfo_t* info, ddresourceclass_t resCl
     ddstring_t* pathList;
     filename_t absNewPath;
 
-    if(!newPath || !newPath[0] || !stricmp(newPath, DIR_SEP_STR))
+    if(!newPath || !newPath[0] || !strcmp(newPath, DIR_SEP_STR))
         return false; // Not suitable.
 
     // Convert all slashes to the host OS's directory separator,
@@ -427,7 +428,7 @@ boolean GameInfo_AddResourceSearchPath(gameinfo_t* info, ddresourceclass_t resCl
         if(ignore) return true; // We don't want duplicates.
     }
     
-    // Append the new search path.
+    // Add the new search path.
     if(append)
     {
         Str_Append(pathList, absNewPath);

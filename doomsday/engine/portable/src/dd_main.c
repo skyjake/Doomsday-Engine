@@ -140,14 +140,14 @@ static gameinfo_t* findGameInfoForId(gameid_t gameId)
     return 0; // Not found.
 }
 
-static gameinfo_t* findGameInfoForIdentityKey(const char* modeIdentifier)
+static gameinfo_t* findGameInfoForIdentityKey(const char* identityKey)
 {
-    assert(modeIdentifier && modeIdentifier[0]);
+    assert(identityKey && identityKey[0]);
     { uint i;
     for(i = 0; i < numGameInfo; ++i)
     {
         gameinfo_t* info = gameInfo[i];
-        if(!stricmp(Str_Text(GameInfo_IdentityKey(info)), modeIdentifier))
+        if(!stricmp(Str_Text(GameInfo_IdentityKey(info)), identityKey))
             return info;
     }}
     return 0; // Not found.
@@ -284,10 +284,11 @@ static void addIdentLumpToGameResourceRecord(gameresource_record_t* rec, const d
     }
 }
 
-void DD_AddGameResource(gameid_t gameId, resourcetype_t resType, ddresourceclass_t resClass, const char* name,
+void DD_AddGameResource(gameid_t gameId, resourcetype_t resType, ddresourceclass_t resClass, const char* _names,
     const char** lumpNames, size_t numLumpNames)
 {
     gameinfo_t* info = findGameInfoForId(gameId);
+    ddstring_t names;
 
     if(!info || DD_IsNullGameInfo(info))
         Con_Error("DD_AddGameResource: Error, unknown game id %u.", gameId);
@@ -295,11 +296,17 @@ void DD_AddGameResource(gameid_t gameId, resourcetype_t resType, ddresourceclass
         Con_Error("DD_AddGameResource: Error, unknown resource type %i.", (int)resType);
     if(!VALID_RESOURCE_CLASS(resClass))
         Con_Error("DD_AddGameResource: Error, unknown resource class %i.", (int)resClass);
-    if(!name || !name[0])
+    if(!_names || !_names[0] || !strcmp(_names, ";"))
         Con_Error("DD_AddGameResource: Error, invalid name argument.");
 
+    Str_Init(&names);
+    Str_Set(&names, _names);
+    // Ensure the names list has the required terminating semicolon.
+    if(Str_RAt(&names, 0) != ';')
+        Str_Append(&names, ";");
+
     { gameresource_record_t* rec;
-    if((rec = GameInfo_AddResource(info, resType, resClass, name)))
+    if((rec = GameInfo_AddResource(info, resType, resClass, &names)))
     {
         // Add an auto-identification file list to the info record?
         if(rec->resClass == DDRC_WAD && lumpNames && numLumpNames != 0)
@@ -315,6 +322,8 @@ void DD_AddGameResource(gameid_t gameId, resourcetype_t resType, ddresourceclass
             Str_Free(&temp);
         }
     }}
+
+    Str_Free(&names);
 }
 
 gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* _defsPath, const char* _mainDef,
@@ -432,11 +441,30 @@ static boolean recognizeZIP(const char* filePath, void* data)
     return M_FileExists(filePath);
 }
 
+static boolean validateGameResource(gameresource_record_t* rec, const char* name)
+{
+    filename_t foundPath;
+    if(!F_FindResource2(rec->resType, rec->resClass, foundPath, name, 0, FILENAME_T_MAXLEN))
+        return false;
+    switch(rec->resClass)
+    {
+    case DDRC_WAD: if(!recognizeWAD(foundPath, (void*)rec->lumpNames)) return false;
+        break;
+    case DDRC_ZIP: if(!recognizeZIP(foundPath, 0)) return false;
+        break;
+    default: break;
+    }
+    // Passed.
+    Str_Set(&rec->path, foundPath);
+    return true;
+}
+
 static void locateGameResources(gameinfo_t* info)
 {
     assert(info);
     {
     uint oldGameInfoIndex = currentGameInfoIndex;
+    ddstring_t name;
 
     if(DD_GameInfo() != info)
     {
@@ -446,6 +474,7 @@ static void locateGameResources(gameinfo_t* info)
         F_InitResourceLocator();
     }
 
+    Str_Init(&name);
     { int i;
     for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
     {
@@ -453,23 +482,12 @@ static void locateGameResources(gameinfo_t* info)
         if((records = GameInfo_Resources(info, (ddresourceclass_t)i, 0)))
             do
             {
-                filename_t foundPath;
-                if(!F_FindResource2((*records)->resType, (*records)->resClass, foundPath, Str_Text(&(*records)->name), 0, FILENAME_T_MAXLEN))
-                    continue;
-
-                // Validation.
-                switch((*records)->resClass)
-                {
-                case DDRC_WAD: if(!recognizeWAD(foundPath, (void*)(*records)->lumpNames)) continue;
-                    break;
-                case DDRC_ZIP: if(!recognizeZIP(foundPath, 0)) continue;
-                    break;
-                default: break;
-                }
-                // Passed.
-                Str_Set(&(*records)->path, foundPath);
+                const char* p = Str_Text(&(*records)->names);
+                while((p = Str_CopyDelim(&name, p, ';')) &&
+                      !validateGameResource(*records, Str_Text(&name)));
             } while(*(++records));
     }}
+    Str_Free(&name);
 
     if(currentGameInfoIndex != oldGameInfoIndex)
     {
@@ -540,7 +558,7 @@ static void printGameInfo(gameinfo_t* info)
             Con_Printf("  %s:\n", F_ResourceClassStr((ddresourceclass_t)i));
             do
             {
-                Con_Printf("    %i: %s \"%s\" > %s\n", n++, F_ResourceTypeStr((*records)->resType), Str_Text(&(*records)->name), Str_Length(&(*records)->path) == 0? "--(!)missing" : M_PrettyPath(Str_Text(&(*records)->path)));
+                Con_Printf("    %i: %s \"%s\" > %s\n", n++, F_ResourceTypeStr((*records)->resType), Str_Text(&(*records)->names), Str_Length(&(*records)->path) == 0? "--(!)missing" : M_PrettyPath(Str_Text(&(*records)->path)));
             } while(*(++records));
         }
     }}

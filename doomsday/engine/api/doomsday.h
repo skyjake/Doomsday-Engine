@@ -103,11 +103,11 @@ extern          "C" {
      * @param gameId        Unique identifier/name of the game we are adding a resource record to.
      * @param resType       Type of resource being added.
      * @param resClass      Class of resource being added.
-     * @param name          Name of resource being added.
+     * @param names         List of one or more known potential names. Seperate with a semicolon e.g., "name1;name2".
      * @param lumpNames     Vector of expected original game data lump/file names. Used for automatic game selection.
      * @param numLumpNames  Number of elements in @a lumpNames.
      */
-    void DD_AddGameResource(gameid_t gameId, resourcetype_t resType, ddresourceclass_t resClass, const char* name,
+    void DD_AddGameResource(gameid_t gameId, resourcetype_t resType, ddresourceclass_t resClass, const char* names,
          const char** lumpNames, size_t numLumpNames);
 
     /**

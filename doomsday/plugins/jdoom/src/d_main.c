@@ -209,14 +209,14 @@ int G_RegisterGames(int hookType, int parm, void* data)
     /* DOOM2 */
     { const char* lumps[] = { "map01", "map02", "map03", "map04", "map10", "map20", "map25", "map30", "vilen1", "vileo1", "vileq1", "grnrock" };
     gameIds[doom2] = DD_AddGame("doom2", DATAPATH, DEFSPATH, STARTUPDED, "DOOM 2: Hell on Earth", "id Software", "doom2", 0);
-    DD_AddGameResource(gameIds[doom2], RT_PACKAGE, DDRC_WAD, "doom2.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameIds[doom2], RT_PACKAGE, DDRC_WAD, "doom2f.wad;doom2.wad", lumps, NUMELEMENTS(lumps));
     DD_AddGameResource(gameIds[doom2], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
 
     /* DOOM (Ultimate) */
     { const char* lumps[] = { "e4m1", "e4m2", "e4m3", "e4m4", "e4m5", "e4m6", "e4m7", "e4m8", "e4m9", "m_epi4" };
     gameIds[doom_ultimate] = DD_AddGame("doom1-ultimate", DATAPATH, DEFSPATH, STARTUPDED, "The Ultimate DOOM", "id Software", "ultimatedoom", "udoom");
-    DD_AddGameResource(gameIds[doom_ultimate], RT_PACKAGE, DDRC_WAD, "doomu.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameIds[doom_ultimate], RT_PACKAGE, DDRC_WAD, "doomu.wad;doom.wad", lumps, NUMELEMENTS(lumps));
     DD_AddGameResource(gameIds[doom_ultimate], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
 

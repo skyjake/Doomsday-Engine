@@ -40,8 +40,8 @@ typedef struct {
     /// Resource class.
     ddresourceclass_t resClass;
 
-    /// Name of this resource.
-    ddstring_t name;
+    /// List of known potential names. Seperated with a semicolon.
+    ddstring_t names;
 
     /// Path to this resource if found. Set during resource location.
     ddstring_t path;
@@ -96,8 +96,8 @@ typedef struct {
  * @param dataPath      The base directory for all data-class resources.
  * @param defsPath      The base directory for all defs-class resources.
  * @param mainDef       The main/top-level definition file. Can be @c NULL.
- * @param title         Default game title. May be overridden later.
- * @param author        Default game author used for (e.g.) map author info if not specified. May be overridden later.
+ * @param title         Default game title.
+ * @param author        Default game author.
  * @param cmdlineFlag   Command-line game selection override argument (e.g., "ultimate"). Can be @c NULL.
  * @param cmdlineFlag2  Alternative override. Can be @c NULL.
  */
@@ -114,9 +114,10 @@ void P_DestroyGameInfo(gameinfo_t* info);
  *
  * @param resType       Type of resource.
  * @param resClass      Class of resource.
- * @param name          Name of resource.
+ * @param name          List of one or more potential names. Seperate with a semicolon e.g., "name1;name2".
  */
-gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourcetype_t resType, ddresourceclass_t resClass, const char* name);
+gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourcetype_t resType,
+    ddresourceclass_t resClass, const ddstring_t* names);
 
 /**
  * Add a new file path to the list of resource-locator search paths.
