@@ -26,29 +26,7 @@
 
 #include "de_base.h"
 #include "m_string.h"
-
-/**
- * Game Resource Record.
- * Used to record information about a game resource (e.g., a file name).
- *
- * @ingroup core
- */
-typedef struct {
-    /// Resource type.
-    resourcetype_t resType;
-
-    /// Resource class.
-    ddresourceclass_t resClass;
-
-    /// List of known potential names. Seperated with a semicolon.
-    ddstring_t names;
-
-    /// Path to this resource if found. Set during resource location.
-    ddstring_t path;
-
-    /// Vector of lump names used for identification purposes.
-    ddstring_t** lumpNames;
-} gameresource_record_t;
+#include "sys_extres.h"
 
 /**
  * Game Info.
@@ -83,10 +61,10 @@ typedef struct {
     ddstring_t* _cmdlineFlag, *_cmdlineFlag2;
 
     /// Lists of relative search paths to use when locating file resources. Determined automatically at creation time.
-    ddstring_t _searchPathLists[NUM_RESOURCE_CLASSES];
+    ddstring_t _searchPathLists[NUM_RESOURCE_TYPES];
 
     /// Vector of records for required game resources (e.g., doomu.wad).
-    gameresource_record_t** _requiredResources[NUM_RESOURCE_CLASSES];
+    resourcenamespace_recordset_t _requiredResources[NUM_RESOURCE_TYPES];
 } gameinfo_t;
 
 /**
@@ -110,35 +88,33 @@ void P_DestroyGameInfo(gameinfo_t* info);
 /**
  * Add a new resource to the list of resources.
  *
- * \note Resource registration order defines the order in which resources of each class are loaded.
+ * \note Resource registration order defines the order in which resources of each type are loaded.
  *
- * @param resType       Type of resource.
- * @param resClass      Class of resource.
- * @param name          List of one or more potential names. Seperate with a semicolon e.g., "name1;name2".
+ * @param type          Type of resource.
+ * @param name          Potential resource name.
  */
-gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourcetype_t resType,
-    ddresourceclass_t resClass, const ddstring_t* names);
+resourcenamespace_record_t* GameInfo_AddResource(gameinfo_t* info, resourcetype_t type,
+    resourcenamespaceid_t rni, const ddstring_t* name);
 
 /**
  * Add a new file path to the list of resource-locator search paths.
  */
-boolean GameInfo_AddResourceSearchPath(gameinfo_t* info, ddresourceclass_t resClass,
-    const char* newPath, boolean append);
+boolean GameInfo_AddResourceSearchPath(gameinfo_t* info, resourcenamespaceid_t rni, const char* newPath, boolean append);
 
 /**
- * Clear resource-locator search paths for all resource classes.
+ * Clear resource-locator search paths for all namespaces.
  */
 void GameInfo_ClearResourceSearchPaths(gameinfo_t* info);
 
 /**
  * Clear resource-locator search paths for a specific resource class.
  */
-void GameInfo_ClearResourceSearchPaths2(gameinfo_t* info, ddresourceclass_t resClass);
+void GameInfo_ClearResourceSearchPaths2(gameinfo_t* info, resourcenamespaceid_t rni);
 
 /**
- * @return              Ptr to a string containing the resource class search path list.
+ * @return              Ptr to a string containing the resource search path list.
  */
-const ddstring_t* GameInfo_ResourceSearchPaths(gameinfo_t* info, ddresourceclass_t resClass);
+const ddstring_t* GameInfo_ResourceSearchPaths(gameinfo_t* info, resourcenamespaceid_t rni);
 
 /**
  * Accessor methods.
@@ -171,6 +147,6 @@ const ddstring_t* GameInfo_CmdlineFlag(gameinfo_t* info);
 const ddstring_t* GameInfo_CmdlineFlag2(gameinfo_t* info);
 
 /// @return             Ptr to a vector of required resource records.
-gameresource_record_t* const* GameInfo_Resources(gameinfo_t* info, ddresourceclass_t resClass, size_t* count);
+resourcenamespace_record_t* const* GameInfo_Resources(gameinfo_t* info, resourcenamespaceid_t rni, size_t* count);
 
 #endif /* LIBDENG_GAMEINFO_H */

@@ -34,7 +34,6 @@
 #include "p_think.h"
 #include "m_nodepile.h"
 #include "def_data.h"
-#include "r_extres.h"
 
 // Flags for material decorations.
 #define DCRF_NO_IWAD        0x1 // Don't use if from IWAD.

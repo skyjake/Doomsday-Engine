@@ -22,80 +22,31 @@
  */
 
 #include "de_base.h"
+#include "dd_main.h"
 #include "de_console.h"
 #include "de_misc.h"
 
 #include "gameinfo.h"
 
-#define MAX_SEARCHPATHS         (6)
-
 /**
- * Resource Class Path (RCP) identifiers.
+ * Search Path Identifiers.
  *
  * @ingroup fs
  */
 typedef enum {
-    RCP_NONE = 0, // Not a real path.
-    RCP_FIRST = 1,
-    RCP_BASEPATH = RCP_FIRST, // i.e., "}"
-    RCP_BASEPATH_DATA, // i.e., "}data/"
-    RCP_BASEPATH_DEFS, // i.e., "}defs/"
-    RCP_GAMEPATH_DATA, // e.g., "}data/jdoom/"
-    RCP_GAMEPATH_DEFS, // e.g., "}defs/jdoom/"
-    RCP_GAMEMODEPATH_DATA, // e.g., "}data/jdoom/doom2-plut/"
-    RCP_GAMEMODEPATH_DEFS, // e.g., "}defs/jdoom/doom2-plut/" 
-    RCP_DOOMWADDIR // any valid absolute or relative path
-} resourceclasspath_t;
+    SPI_NONE = 0, // Not a real path.
+    SPI_FIRST = 1,
+    SPI_BASEPATH = SPI_FIRST, // i.e., "}"
+    SPI_BASEPATH_DATA, // i.e., "}data/"
+    SPI_BASEPATH_DEFS, // i.e., "}defs/"
+    SPI_GAMEPATH_DATA, // e.g., "}data/jdoom/"
+    SPI_GAMEPATH_DEFS, // e.g., "}defs/jdoom/"
+    SPI_GAMEMODEPATH_DATA, // e.g., "}data/jdoom/doom2-plut/"
+    SPI_GAMEMODEPATH_DEFS, // e.g., "}defs/jdoom/doom2-plut/" 
+    SPI_DOOMWADDIR
+} searchpathid_t;
 
-// Command line options for setting the resource path explicitly.
-// Additional paths, take precendence.
-static const char* resourceClassPathOverrides[NUM_RESOURCE_CLASSES][2] = {
-    { 0,            0 },
-    { 0,            0 },
-    { 0,            0 },
-    { "-texdir",    "-texdir2" },
-    { "-flatdir",   "-flatdir2" },
-    { "-patdir",    "-patdir2" },
-    { "-lmdir",     "-lmdir2" },
-    { "-flaredir",  "-flaredir2" },
-    { "-musdir",    "-musdir2" },
-    { "-sfxdir",    "-sfxdir2" },
-    { "-gfxdir",    "-gfxdir2" },
-    { "-modeldir",  "-modeldir2" }
-};
-
-static const char* resourceClassDefaultPaths[NUM_RESOURCE_CLASSES] = {
-    { 0 },
-    { 0 },
-    { 0 },
-    { "textures\\" },
-    { "flats\\" },
-    { "patches\\" },
-    { "lightmaps\\" },
-    { "flares\\" },
-    { "music\\" },
-    { "sfx\\" },
-    { "graphics\\" },
-    { "models\\" }
-};
-
-// Resource locator search order (in order of least-importance, left to right).
-static const resourceclasspath_t resourceClassPathSearchOrder[NUM_RESOURCE_CLASSES][MAX_SEARCHPATHS] = {
-    { RCP_DOOMWADDIR, RCP_GAMEPATH_DATA, 0 },
-    { RCP_DOOMWADDIR, RCP_GAMEPATH_DATA, 0 },
-    { RCP_BASEPATH_DEFS, RCP_GAMEPATH_DEFS, RCP_GAMEMODEPATH_DEFS, 0 },
-    { RCP_GAMEPATH_DATA, RCP_GAMEMODEPATH_DATA, 0 },
-    { RCP_GAMEPATH_DATA, RCP_GAMEMODEPATH_DATA, 0 },
-    { RCP_GAMEPATH_DATA, RCP_GAMEMODEPATH_DATA, 0 },
-    { RCP_GAMEPATH_DATA, RCP_GAMEMODEPATH_DATA, 0 },
-    { RCP_GAMEPATH_DATA, RCP_GAMEMODEPATH_DATA, 0 },
-    { RCP_GAMEPATH_DATA, RCP_GAMEMODEPATH_DATA, 0 },
-    { RCP_GAMEPATH_DATA, RCP_GAMEMODEPATH_DATA, 0 },
-    { RCP_BASEPATH_DATA, 0 },
-    { RCP_GAMEPATH_DATA, RCP_GAMEMODEPATH_DATA, 0 }
-};
-
-static __inline size_t countElements(gameresource_record_t* const* list)
+static __inline size_t countElements(resourcenamespace_record_t* const* list)
 {
     size_t n = 0;
     if(list)
@@ -103,17 +54,23 @@ static __inline size_t countElements(gameresource_record_t* const* list)
     return n;
 }
 
-static void buildResourceClassPathList(gameinfo_t* info, ddresourceclass_t rc)
+/**
+ * @param searchOrder       Resource path search order (in order of least-importance, left to right).
+ * @param overrideFlag      Command line options for setting the resource path explicitly.
+ * @param overrideFlag2     Takes precendence.
+ */
+static void formResourceSearchPaths(gameinfo_t* info, resourcenamespaceid_t rni, ddstring_t* pathList,
+    searchpathid_t* searchOrder, const char* defaultNamespace, const char* overrideFlag,
+    const char* overrideFlag2)
 {
-    assert(info && VALID_RESOURCE_CLASS(rc));
+    assert(info && F_IsValidResourceNamespaceId(rni) && pathList && searchOrder);
     {
-    ddstring_t* pathList = &info->_searchPathLists[rc];
     boolean usingGameModePathData = false;
     boolean usingGameModePathDefs = false;
 
     Str_Clear(pathList);
 
-    if(resourceClassPathOverrides[(int)rc][0] && ArgCheckWith(resourceClassPathOverrides[(int)rc][0], 1))
+    if(overrideFlag && overrideFlag[0] && ArgCheckWith(overrideFlag, 1))
     {   // A command line override of the default path.
         filename_t newPath;
         M_TranslatePath(newPath, ArgNext(), FILENAME_T_MAXLEN);
@@ -121,138 +78,174 @@ static void buildResourceClassPathList(gameinfo_t* info, ddresourceclass_t rc)
         Str_Prepend(pathList, ";"); Str_Prepend(pathList, newPath);
     }
 
-    { int i;
-    for(i = 0; resourceClassPathSearchOrder[(int)rc][i] != RCP_NONE; ++i)
+    { size_t i;
+    for(i = 0; searchOrder[i] != SPI_NONE; ++i)
     {
-        switch(resourceClassPathSearchOrder[(int)rc][i])
+        switch(searchOrder[i])
         {
-        case RCP_BASEPATH:
+        case SPI_BASEPATH:
             { filename_t newPath;
             M_TranslatePath(newPath, "}", FILENAME_T_MAXLEN);
-            GameInfo_AddResourceSearchPath(info, rc, newPath, false);
+            GameInfo_AddResourceSearchPath(info, rni, newPath, false);
             break;
             }
-        case RCP_BASEPATH_DATA:
+        case SPI_BASEPATH_DATA:
             { filename_t newPath;
-            if(resourceClassDefaultPaths[(int)rc])
+            if(defaultNamespace && defaultNamespace[0])
             {
                 filename_t other;
-                dd_snprintf(other, FILENAME_T_MAXLEN, DD_BASEPATH_DATA"%s", resourceClassDefaultPaths[(int)rc]);
+                dd_snprintf(other, FILENAME_T_MAXLEN, DD_BASEPATH_DATA"%s", defaultNamespace);
                 M_TranslatePath(newPath, other, FILENAME_T_MAXLEN);
             }
             else
             {
                 M_TranslatePath(newPath, DD_BASEPATH_DATA, FILENAME_T_MAXLEN);
             }
-            GameInfo_AddResourceSearchPath(info, rc, newPath, false);
+            GameInfo_AddResourceSearchPath(info, rni, newPath, false);
             break;
             }
-        case RCP_BASEPATH_DEFS:
+        case SPI_BASEPATH_DEFS:
             { filename_t newPath;
-            if(resourceClassDefaultPaths[(int)rc])
+            if(defaultNamespace && defaultNamespace[0])
             {
                 filename_t other;
-                dd_snprintf(other, FILENAME_T_MAXLEN, DD_BASEPATH_DEFS"%s", resourceClassDefaultPaths[(int)rc]);
+                dd_snprintf(other, FILENAME_T_MAXLEN, DD_BASEPATH_DEFS"%s", defaultNamespace);
                 M_TranslatePath(newPath, other, FILENAME_T_MAXLEN);
             }
             else
             {
                 M_TranslatePath(newPath, DD_BASEPATH_DEFS, FILENAME_T_MAXLEN);
             }
-            GameInfo_AddResourceSearchPath(info, rc, newPath, false);
+            GameInfo_AddResourceSearchPath(info, rni, newPath, false);
             break;
             }
-        case RCP_GAMEPATH_DATA:
-            if(resourceClassDefaultPaths[(int)rc])
+        case SPI_GAMEPATH_DATA:
+            if(defaultNamespace && defaultNamespace[0])
             {
                 filename_t newPath;
-                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s", Str_Text(&info->_dataPath), resourceClassDefaultPaths[(int)rc]);
-                GameInfo_AddResourceSearchPath(info, rc, newPath, false);
+                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s", Str_Text(&info->_dataPath), defaultNamespace);
+                GameInfo_AddResourceSearchPath(info, rni, newPath, false);
             }
             else
             {
-                GameInfo_AddResourceSearchPath(info, rc, Str_Text(&info->_dataPath), false);
+                GameInfo_AddResourceSearchPath(info, rni, Str_Text(&info->_dataPath), false);
             }
             break;
-        case RCP_GAMEPATH_DEFS:
-            if(resourceClassDefaultPaths[(int)rc])
+        case SPI_GAMEPATH_DEFS:
+            if(defaultNamespace && defaultNamespace[0])
             {
                 filename_t newPath;
-                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s", Str_Text(&info->_defsPath), resourceClassDefaultPaths[(int)rc]);
-                GameInfo_AddResourceSearchPath(info, rc, newPath, false);
+                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s", Str_Text(&info->_defsPath), defaultNamespace);
+                GameInfo_AddResourceSearchPath(info, rni, newPath, false);
             }
             else
             {
-                GameInfo_AddResourceSearchPath(info, rc, Str_Text(&info->_defsPath), false);
+                GameInfo_AddResourceSearchPath(info, rni, Str_Text(&info->_defsPath), false);
             }
             break;
-        case RCP_GAMEMODEPATH_DATA:
+        case SPI_GAMEMODEPATH_DATA:
             usingGameModePathData = true;
-            if(resourceClassDefaultPaths[(int)rc] && Str_Length(&info->_identityKey))
+            if(defaultNamespace && defaultNamespace[0] && Str_Length(&info->_identityKey))
             {
                 filename_t newPath;
-                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(&info->_dataPath), resourceClassDefaultPaths[(int)rc], Str_Text(&info->_identityKey));
-                GameInfo_AddResourceSearchPath(info, rc, newPath, false);
+                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(&info->_dataPath), defaultNamespace, Str_Text(&info->_identityKey));
+                GameInfo_AddResourceSearchPath(info, rni, newPath, false);
             }
             break;
-        case RCP_GAMEMODEPATH_DEFS:
+        case SPI_GAMEMODEPATH_DEFS:
             usingGameModePathDefs = true;
-            if(resourceClassDefaultPaths[(int)rc] && Str_Length(&info->_identityKey))
+            if(Str_Length(&info->_identityKey))
             {
-                filename_t newPath;
-                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(&info->_defsPath), resourceClassDefaultPaths[(int)rc], Str_Text(&info->_identityKey));
-                GameInfo_AddResourceSearchPath(info, rc, newPath, false);
+                if(defaultNamespace && defaultNamespace[0])
+                {
+                    filename_t newPath;
+                    dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s", Str_Text(&info->_defsPath), Str_Text(&info->_identityKey));
+                    GameInfo_AddResourceSearchPath(info, rni, newPath, false);
+                }
+                else
+                {
+                    filename_t newPath;
+                    dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(&info->_defsPath), defaultNamespace, Str_Text(&info->_identityKey));
+                    GameInfo_AddResourceSearchPath(info, rni, newPath, false);
+                }
             }
             break;
-        case RCP_DOOMWADDIR:
+        case SPI_DOOMWADDIR:
             if(!ArgCheck("-nowaddir") && getenv("DOOMWADDIR"))
             {
                 filename_t newPath;
                 M_TranslatePath(newPath, getenv("DOOMWADDIR"), FILENAME_T_MAXLEN);
-                GameInfo_AddResourceSearchPath(info, rc, newPath, false);
+                GameInfo_AddResourceSearchPath(info, rni, newPath, false);
             }
             break;
 
-        default: Con_Error("collateResourceClassPathSet: Invalid path ident %(int)rc.", (int)resourceClassPathSearchOrder[(int)rc][i]);
+        default: Con_Error("collateResourceSearchPathSet: Invalid path ident %i.", searchOrder[i]);
         };
     }}
 
     // The overriding path.
-    if(resourceClassPathOverrides[(int)rc][1] && ArgCheckWith(resourceClassPathOverrides[(int)rc][1], 1))
+    if(overrideFlag2 && overrideFlag2[0] && ArgCheckWith(overrideFlag2, 1))
     {
         filename_t newPath;
         M_TranslatePath(newPath, ArgNext(), FILENAME_T_MAXLEN);
-        GameInfo_AddResourceSearchPath(info, rc, newPath, false);
+        GameInfo_AddResourceSearchPath(info, rni, newPath, false);
 
         if((usingGameModePathData || usingGameModePathDefs) && Str_Length(&info->_identityKey))
         {
             filename_t other;
-            dd_snprintf(other, FILENAME_T_MAXLEN, "%s\\%s", newPath, Str_Text(&info->_identityKey));
-            GameInfo_AddResourceSearchPath(info, rc, other, false);
+            dd_snprintf(other, FILENAME_T_MAXLEN, "%s/%s", newPath, Str_Text(&info->_identityKey));
+            GameInfo_AddResourceSearchPath(info, rni, other, false);
         }
     }
     }
 }
 
-static void collateResourceClassPathSet(gameinfo_t* info)
+static void collateResourceSearchPathSet(gameinfo_t* info)
 {
     assert(info);
-    { int i;
-    for(i = (int)DDRC_FIRST; i < NUM_RESOURCE_CLASSES; ++i)
-    {
-        buildResourceClassPathList(info, (ddresourceclass_t)i);
-    }}
+    { searchpathid_t searchOrder[] = { SPI_DOOMWADDIR, SPI_BASEPATH_DATA, SPI_GAMEPATH_DATA, 0 };
+    formResourceSearchPaths(info, 1+RT_PACKAGE,     &info->_searchPathLists[RT_PACKAGE], searchOrder, "", "", "");}
+
+    { searchpathid_t searchOrder[] = { SPI_BASEPATH_DEFS, SPI_GAMEPATH_DEFS, SPI_GAMEMODEPATH_DEFS, 0 };
+    formResourceSearchPaths(info, 1+RT_DEFINITION,  &info->_searchPathLists[RT_DEFINITION], searchOrder, "",         "-defdir",  "-defdir2");}
+
+    { searchpathid_t searchOrder[] = { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 };
+    formResourceSearchPaths(info, 1+RT_GRAPHIC,     &info->_searchPathLists[RT_GRAPHIC], searchOrder, "textures\\",  "-texdir",  "-texdir2");}
+
+    { searchpathid_t searchOrder[] = { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 };
+    formResourceSearchPaths(info, 1+RT_GRAPHIC,     &info->_searchPathLists[RT_GRAPHIC], searchOrder, "flats\\",     "-flatdir", "-flatdir2");}
+
+    { searchpathid_t searchOrder[] = { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 };
+    formResourceSearchPaths(info, 1+RT_GRAPHIC,     &info->_searchPathLists[RT_GRAPHIC], searchOrder, "patches\\",   "-patdir",  "-patdir2");}
+
+    { searchpathid_t searchOrder[] = { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 };
+    formResourceSearchPaths(info, 1+RT_GRAPHIC,     &info->_searchPathLists[RT_GRAPHIC], searchOrder, "lightmaps\\", "-lmdir",   "-lmdir2");}
+
+    { searchpathid_t searchOrder[] = { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 };
+    formResourceSearchPaths(info, 1+RT_GRAPHIC,     &info->_searchPathLists[RT_GRAPHIC], searchOrder, "flares\\",    "-flaredir", "-flaredir2");}
+
+    { searchpathid_t searchOrder[] = { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 };
+    formResourceSearchPaths(info, 1+RT_MUSIC,       &info->_searchPathLists[RT_MUSIC],   searchOrder, "music\\",     "-musdir",  "-musdir2");}
+
+    { searchpathid_t searchOrder[] = { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 };
+    formResourceSearchPaths(info, 1+RT_SOUND,       &info->_searchPathLists[RT_SOUND],   searchOrder, "sfx\\",       "-sfxdir",  "-sfxdir2");}
+
+    { searchpathid_t searchOrder[] = { SPI_BASEPATH_DATA, 0 };
+    formResourceSearchPaths(info, 1+RT_GRAPHIC,     &info->_searchPathLists[RT_GRAPHIC], searchOrder, "graphics\\",  "-gfxdir",  "-gfxdir2");}
+
+    { searchpathid_t searchOrder[] = { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 };
+    formResourceSearchPaths(info, 1+RT_MODEL,       &info->_searchPathLists[RT_MODEL],   searchOrder, "models\\",   "-modeldir", "-modeldir2");}
 }
 
-static __inline void clearResourceClassSearchPathList(gameinfo_t* info, ddresourceclass_t resClass)
+static __inline void clearResourceSearchPathList(gameinfo_t* info, resourcenamespaceid_t rni)
 {
-    assert(info && VALID_RESOURCE_CLASS(resClass));
-    Str_Free(&info->_searchPathLists[resClass]);
+    assert(info && F_IsValidResourceNamespaceId(rni));
+    Str_Free(&info->_searchPathLists[rni]);
 }
 
 gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey, const char* dataPath,
-    const char* defsPath, const ddstring_t* mainDef, const char* title, const char* author, const ddstring_t* cmdlineFlag,
-    const ddstring_t* cmdlineFlag2)
+    const char* defsPath, const ddstring_t* mainDef, const char* title, const char* author,
+    const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2)
 {
     gameinfo_t* info = M_Malloc(sizeof(*info));
 
@@ -299,13 +292,16 @@ gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey, const
         info->_cmdlineFlag2 = 0;
 
     { size_t i;
-    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
+    for(i = 0; i < NUM_RESOURCE_TYPES; ++i)
     {
-        info->_requiredResources[i] = 0;
+        resourcenamespace_recordset_t* rset = &info->_requiredResources[i];
+        rset->numRecords = 0;
+        rset->records = 0;
+
         Str_Init(&info->_searchPathLists[i]);
     }}
 
-    collateResourceClassPathSet(info);
+    collateResourceSearchPathSet(info);
     return info;
 }
 
@@ -326,76 +322,90 @@ void P_DestroyGameInfo(gameinfo_t* info)
     if(info->_cmdlineFlag2){ Str_Delete(info->_cmdlineFlag2); info->_cmdlineFlag2 = 0; }
 
     { size_t i;
-    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
+    for(i = 0; i < NUM_RESOURCE_TYPES; ++i)
     {
-        if(!info->_requiredResources[i])
-            continue;
+        resourcenamespace_recordset_t* rset = &info->_requiredResources[i];
 
-        { gameresource_record_t** rec;
-        for(rec = info->_requiredResources[i]; *rec; rec++)
+        if(!rset || rset->numRecords == 0)
+            continue;
+        
+        { resourcenamespace_record_t** rec;
+        for(rec = rset->records; *rec; rec++)
         {
             Str_Free(&(*rec)->names);
             Str_Free(&(*rec)->path);
-            if((*rec)->lumpNames)
+            if((*rec)->identityKeys)
             {
                 size_t j;
-                for(j = 0; (*rec)->lumpNames[j]; ++j)
-                    Str_Delete((*rec)->lumpNames[j]);
-                M_Free((*rec)->lumpNames); (*rec)->lumpNames = 0;
+                for(j = 0; (*rec)->identityKeys[j]; ++j)
+                    Str_Delete((*rec)->identityKeys[j]);
+                M_Free((*rec)->identityKeys); (*rec)->identityKeys = 0;
             }
             M_Free(*rec);
         }}
-        M_Free(info->_requiredResources[i]);
+        M_Free(rset->records);
+        rset->records = 0;
+        rset->numRecords = 0;
     }}
 
     M_Free(info);
 }
 
-gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourcetype_t resType,
-    ddresourceclass_t resClass, const ddstring_t* names)
+resourcenamespace_record_t* GameInfo_AddResource(gameinfo_t* info, resourcetype_t type,
+    resourcenamespaceid_t rni, const ddstring_t* names)
 {
-    assert(info && VALID_RESOURCE_TYPE(resType) && VALID_RESOURCE_CLASS(resClass) && names);
+    assert(info && VALID_RESOURCE_TYPE(type) && F_IsValidResourceNamespaceId(rni) && names);
     {
-    size_t num = countElements(info->_requiredResources[resClass]);
-    gameresource_record_t* rec;
+    resourcenamespace_recordset_t* rset = &info->_requiredResources[rni-1];
+    resourcenamespace_record_t* record;
 
-    info->_requiredResources[resClass] = M_Realloc(info->_requiredResources[resClass], sizeof(*info->_requiredResources[resClass]) * MAX_OF(num+1, 2));
-    rec = info->_requiredResources[resClass][num!=0?num-1:0] = M_Malloc(sizeof(*rec));
-    info->_requiredResources[resClass][num!=0?num:1] = 0; // Terminate.
+    rset->records = M_Realloc(rset->records, sizeof(*rset->records) * (rset->numRecords+2));
+    record = rset->records[rset->numRecords] = M_Malloc(sizeof(*record));
+    rset->records[rset->numRecords+1] = 0; // Terminate.
+    rset->numRecords++;
 
-    rec->resType = resType;
-    rec->resClass = resClass;
-    rec->lumpNames = 0;
-    Str_Init(&rec->names); Str_Copy(&rec->names, names);
-    Str_Init(&rec->path);
-    return rec;
+    Str_Init(&record->names); Str_Copy(&record->names, names);
+    Str_Init(&record->path);
+    record->type = type;
+    switch(record->type)
+    {
+    case RT_PACKAGE:
+        record->identityKeys = 0;
+        break;
+    default:
+        break;
+    }
+    return record;
     }
 }
 
-void GameInfo_ClearResourceSearchPaths2(gameinfo_t* info, ddresourceclass_t resClass)
+void GameInfo_ClearResourceSearchPaths2(gameinfo_t* info, resourcenamespaceid_t rni)
 {
     assert(info);
-    if(resClass == NUM_RESOURCE_CLASSES)
+    if(rni == 0)
     {
-        int i;
-        for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
+        if(F_NumResourceNamespaces() > 0)
         {
-            clearResourceClassSearchPathList(info, (ddresourceclass_t)i);
+            uint i, numResourceNamespaces = F_NumResourceNamespaces();
+            for(i = 1; i < numResourceNamespaces+1; ++i)
+            {
+                clearResourceSearchPathList(info, (resourcenamespaceid_t)i);
+            }
         }
         return;
     }
-    clearResourceClassSearchPathList(info, resClass);
+    clearResourceSearchPathList(info, rni);
 }
 
 void GameInfo_ClearResourceSearchPaths(gameinfo_t* info)
 {
-    GameInfo_ClearResourceSearchPaths2(info, NUM_RESOURCE_CLASSES);
+    GameInfo_ClearResourceSearchPaths2(info, 0);
 }
 
-boolean GameInfo_AddResourceSearchPath(gameinfo_t* info, ddresourceclass_t resClass,
+boolean GameInfo_AddResourceSearchPath(gameinfo_t* info, resourcenamespaceid_t rni,
     const char* newPath, boolean append)
 {
-    assert(info && VALID_RESOURCE_CLASS(resClass));
+    assert(info && F_IsValidResourceNamespaceId(rni));
     {
     ddstring_t* pathList;
     filename_t absNewPath;
@@ -410,7 +420,7 @@ boolean GameInfo_AddResourceSearchPath(gameinfo_t* info, ddresourceclass_t resCl
     M_PrependBasePath(absNewPath, absNewPath, FILENAME_T_MAXLEN);
 
     // Have we seen this path already?
-    pathList = &info->_searchPathLists[resClass];
+    pathList = &info->_searchPathLists[rni-1];
     if(Str_Length(pathList))
     {
         const char* p = Str_Text(pathList);
@@ -443,10 +453,12 @@ boolean GameInfo_AddResourceSearchPath(gameinfo_t* info, ddresourceclass_t resCl
     }
 }
 
-const ddstring_t* GameInfo_ResourceSearchPaths(gameinfo_t* info, ddresourceclass_t resClass)
+const ddstring_t* GameInfo_ResourceSearchPaths(gameinfo_t* info, resourcenamespaceid_t rni)
 {
-    assert(info && VALID_RESOURCE_CLASS(resClass));
-    return &info->_searchPathLists[resClass];
+    assert(info);
+    if(!F_IsValidResourceNamespaceId(rni))
+        Con_Error("GameInfo_ResourceSearchPaths: Internal error, invalid resource namespace id %i.", (int)rni);
+    return &info->_searchPathLists[rni-1];
 }
 
 pluginid_t GameInfo_PluginId(gameinfo_t* info)
@@ -503,10 +515,12 @@ const ddstring_t* GameInfo_Author(gameinfo_t* info)
     return &info->_author;
 }
 
-gameresource_record_t* const* GameInfo_Resources(gameinfo_t* info, ddresourceclass_t resClass, size_t* count)
+resourcenamespace_record_t* const* GameInfo_Resources(gameinfo_t* info, resourcenamespaceid_t rni, size_t* count)
 {
-    assert(info && VALID_RESOURCE_CLASS(resClass));
+    assert(info);
+    if(!F_IsValidResourceNamespaceId(rni))
+        Con_Error("GameInfo_Resources: Internal error, invalid resource namespace id %i.", (int)rni);
     if(count)
-        *count = countElements(info->_requiredResources[resClass]);
-    return info->_requiredResources[resClass];
+        *count = info->_requiredResources[rni-1].numRecords;
+    return info->_requiredResources[rni-1].records;
 }

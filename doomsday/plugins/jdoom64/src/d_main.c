@@ -190,15 +190,12 @@ int G_RegisterGames(int hookType, int parm, void* data)
 #define DEFSPATH        DD_BASEPATH_DEFS GAMENAMETEXT "\\"
 #define STARTUPPK3      GAMENAMETEXT ".pk3"
 #define STARTUPDED      GAMENAMETEXT ".ded"
-#define NUMELEMENTS(v)  (sizeof(v)/sizeof((v)[0]))
 
-    const char* lumps[] = { "map01", "map02", "map38", "f_suck" };
     gameIds[doom64] = DD_AddGame("doom64", DATAPATH, DEFSPATH, STARTUPDED, "Doom 64", "Midway Software", "doom64", 0);
-    DD_AddGameResource(gameIds[doom64], RT_PACKAGE, DDRC_WAD, "doom64.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameIds[doom64], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
+    DD_AddGameResource(gameIds[doom64], RT_PACKAGE, "doom64.wad", "MAP01;MAP020;MAP38;F_SUCK");
+    DD_AddGameResource(gameIds[doom64], RT_PACKAGE, STARTUPPK3, 0);
     return true;
 
-#undef NUMELEMENTS
 #undef STARTUPDED
 #undef STARTUPPK3
 #undef DEFSPATH

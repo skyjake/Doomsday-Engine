@@ -118,9 +118,9 @@ static float pointDist(fixed_t c[3])
 
 byte GL_LoadParticleTexture(image_t* image, const char* name)
 {
-    filename_t fileName;
-    if(F_FindResource2(RT_GRAPHIC, DDRC_TEXTURE, fileName, name, "-ck", FILENAME_T_MAXLEN) &&
-       GL_LoadImage(image, fileName))
+    filename_t foundPath;
+    if(F_FindResource(RT_GRAPHIC, foundPath, name, "-ck", FILENAME_T_MAXLEN) &&
+       GL_LoadImage(image, foundPath))
     {
         return 2;
     }
@@ -135,8 +135,7 @@ void Rend_ParticleLoadSystemTextures(void)
         return; // Already been here.
 
     // Load the default "zeroth" texture - a modification of the dynlight texture (a blurred point).
-    pointTex = GL_PrepareExtTexture(DDRC_GRAPHIC, "Zeroth",
-        LGM_WHITE_ALPHA, true, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
+    pointTex = GL_PrepareExtTexture("Zeroth", LGM_WHITE_ALPHA, true, GL_LINEAR, GL_LINEAR, 0 /*no anisotropy*/,
         GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 0);
 
     if(pointTex == 0)
@@ -162,11 +161,11 @@ void Rend_ParticleLoadExtraTextures(void)
         char name[80];
 
         // Try to load the texture.
-        sprintf(name, "Particle%02i", i);
+        sprintf(name, "textures:Particle%02i", i);
 
         if(GL_LoadParticleTexture(&image, name))
         {
-            VERBOSE( Con_Message("Rend_ParticleLoadSystemTextures: Texture %02i: %i * %i * %i\n", i,
+            VERBOSE( Con_Message("Rend_ParticleLoadExtraTextures: Texture %02i: %i * %i * %i\n", i,
                                  image.width, image.height, image.pixelSize) );
 
             // If 8-bit with no alpha, generate alpha automatically.
@@ -190,7 +189,7 @@ void Rend_ParticleLoadExtraTextures(void)
             // Just show the first 'not found'.
             if(verbose && !reported)
             {
-                Con_Message("Rend_ParticleLoadSystemTextures: %s not found.\n", name);
+                Con_Message("Rend_ParticleLoadExtraTextures: Warning, \"%s\" not found.\n", name);
                 reported = true;
             }
         }

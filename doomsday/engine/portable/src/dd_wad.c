@@ -52,8 +52,8 @@
 #include "de_misc.h"
 
 #include "sys_file.h"
+#include "sys_extres.h"
 #include "con_decl.h"
-#include "r_extres.h"
 #include "gl_draw.h" // for GL_SetFilter()
 
 // MACROS ------------------------------------------------------------------

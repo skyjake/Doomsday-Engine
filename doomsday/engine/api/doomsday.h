@@ -86,7 +86,8 @@ extern          "C" {
      * @param defsPath      The base directory for all defs-class resources.
      * @param mainDef       The main/top-level definition file. Can be @c NULL.
      * @param defaultTitle  Default game title. May be overridden later.
-     * @param defaultAuthor Default game author. Used for (e.g.) map author info if not specified. May be overridden later.
+     * @param defaultAuthor Default game author. May be overridden later. Used for (e.g.) the map author name
+     *                      if not specified in a Map Info definition.
      * @param cmdlineFlag   Command-line game selection override argument (e.g., "ultimate"). Can be @c NULL.
      * @param cmdlineFlag2  Alternative override. Can be @c NULL.
      *
@@ -96,27 +97,42 @@ extern          "C" {
         const char* defaultTitle, const char* defaultAuthor, const char* cmdlineFlag, const char* cmdlineFlag2);
 
     /**
-     * Registers a new resource to the list of resources for the specified game.
+     * Registers a new resource for the specified game.
      *
-     * \note Resource registration order defines the order in which resources of each class are loaded.
+     * \note Resource registration order defines the load order of resources (among those of the same class).
      *
-     * @param gameId        Unique identifier/name of the game we are adding a resource record to.
-     * @param resType       Type of resource being added.
-     * @param resClass      Class of resource being added.
-     * @param names         List of one or more known potential names. Seperate with a semicolon e.g., "name1;name2".
-     * @param lumpNames     Vector of expected original game data lump/file names. Used for automatic game selection.
-     * @param numLumpNames  Number of elements in @a lumpNames.
+     * @param game          Unique identifier/name of the game.
+     * @param type          Type of resource being added.
+     * @param names         One or more known potential names, seperated by semicolon e.g., "name1;name2".
+     *                      Names may include valid absolute, or relative file paths. These paths include
+     *                      valid symbolbolic escape tokens, predefined symbols into the virtual file system.
+     *
+     *                      Example:
+     *
+     *                          "fs.rnid($1)packages"
+     *                      
+     *                      The 'fs.rnid($1)' sequence of characters in the above string is both a text string
+     *                      and an entry into the engine's virtual file system. This includes the engines's
+     *                      view of the resources available to both the host system and those of any connected
+     *                      clients. If permited access, of course.                
      */
-    void DD_AddGameResource(gameid_t gameId, resourcetype_t resType, ddresourceclass_t resClass, const char* names,
-         const char** lumpNames, size_t numLumpNames);
+    void DD_AddGameResource(gameid_t game, resourcetype_t type, const char* names, void* params);
 
     /**
-     * Retrieve info about the current game.
+     * Retrieve extended info about the specified game.
      *
-     * @param info          Ptr to the info structure to be populated.
-     * @return              @c true if successful else @c false (e.g., no game currently active).
+     * @param game          Unique identifier/name of the game.
+     * @param info          Info structure to be populated.
      */
-    boolean         DD_GetGameInfo(ddgameinfo_t* info);
+    void DD_GetGameInfo2(gameid_t game, ddgameinfo_t* info);
+
+    /**
+     * Retrieve extended info about the current game.
+     *
+     * @param info          Info structure to be populated.
+     * @return              @c true if successful else @c false (i.e., no game loaded).
+     */
+    boolean DD_GetGameInfo(ddgameinfo_t* info);
 
     void            DD_SetConfigFile(const char* fileName);
 

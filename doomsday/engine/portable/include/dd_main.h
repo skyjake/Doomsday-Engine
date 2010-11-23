@@ -45,7 +45,7 @@ extern directory_t ddRuntimeDir, ddBinDir;
 
 extern ddstring_t configFileName, bindingsConfigFileName;
 
-extern char* autoloadFiles; // A list of names of files to be autoloaded during startup, whitespace in between (in .cfg).
+extern char* gameStartupFiles; // A list of names of files to be autoloaded during startup, whitespace in between (in .cfg).
 
 extern int isDedicated;
 
@@ -82,6 +82,14 @@ materialnum_t DD_MaterialForTexture(uint ofTypeId, gltexture_type_t type);
 const char* value_Str(int val);
 
 /**
+ * Convert a resource namespace id into a string for access into the file system,
+ * including console commands and error/debug messages.
+ */
+const ddstring_t* DD_ResourceNamespaceStr(resourcenamespaceid_t rni);
+
+resourcenamespace_t* DD_ResourceNamespace(resourcenamespaceid_t rni);
+
+/**
  * @return  Ptr to the currently active GameInfo structure (always succeeds).
  */
 gameinfo_t* DD_GameInfo(void);
@@ -97,8 +105,9 @@ boolean DD_IsNullGameInfo(gameinfo_t* info);
  */
 void DD_DestroyGameInfo(void);
 
-void DD_ShutdownResourceClassSearchPaths(void);
-void DD_ClearResourceClassSearchPathList(ddresourceclass_t resClass);
+void DD_ShutdownResourceSearchPaths(void);
+void DD_ClearResourceSearchPathList(resourcenamespaceid_t rni);
+const ddstring_t* DD_ResourceSearchPaths(resourcenamespaceid_t rni);
 
 D_CMD(ListGames);
 

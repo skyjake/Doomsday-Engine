@@ -313,7 +313,7 @@ enum {
 
 //------------------------------------------------------------------------
 //
-// Game Data
+// Games
 //
 //------------------------------------------------------------------------
 
@@ -948,43 +948,6 @@ typedef enum {
 } gltexture_type_t;
 
 /**
- * Resource classes.
- */
-typedef enum ddresourceclass_e {
-    DDRC_NONE = -1,
-    DDRC_FIRST = 0,
-    DDRC_ZIP = DDRC_FIRST,
-    DDRC_WAD,
-    DDRC_DED,
-    DDRC_TEXTURE,
-    DDRC_FLAT,
-    DDRC_PATCH,
-    DDRC_LIGHTMAP,
-    DDRC_FLAREMAP,
-    DDRC_MUSIC,
-    DDRC_SOUND,
-    DDRC_GRAPHIC, // Engine graphics.
-    DDRC_MODEL,
-    NUM_RESOURCE_CLASSES
-} ddresourceclass_t;
-
-#define VALID_RESOURCE_CLASS(n)             ((n) >= DDRC_FIRST && (n) < NUM_RESOURCE_CLASSES)
-
-typedef enum resourcetype_e {
-    RT_UNKNOWN = -1,
-    RT_FIRST = 0,
-    RT_PACKAGE = RT_FIRST,
-    RT_DEFINITION,
-    RT_GRAPHIC,
-    RT_MODEL,
-    RT_SOUND,
-    RT_MUSIC,
-    NUM_RESOURCE_TYPES
-} resourcetype_t;
-
-#define VALID_RESOURCE_TYPE(n)              ((n) >= RT_FIRST && (n) < NUM_RESOURCE_TYPES)
-
-/**
  * Processing modes for GL_LoadGraphics.
  */
 typedef enum gfxmode_e {
@@ -1158,6 +1121,31 @@ enum {
                                      (for ints and floats). */
         void          (*notifyChanged)(struct cvar_s* cvar);
     } cvar_t;
+
+    //------------------------------------------------------------------------
+    //
+    // File System
+    //
+    //------------------------------------------------------------------------
+
+/**
+ * Resource Type.
+ *
+ * @ingroup fs
+ */
+typedef enum resourcetype_e {
+    RT_UNKNOWN = -1,
+    RT_FIRST = 0,
+    RT_PACKAGE = RT_FIRST,
+    RT_DEFINITION,
+    RT_GRAPHIC,
+    RT_MODEL,
+    RT_SOUND,
+    RT_MUSIC,
+    NUM_RESOURCE_TYPES
+} resourcetype_t;
+
+#define VALID_RESOURCE_TYPE(n)              ((n) >= RT_FIRST && (n) < NUM_RESOURCE_TYPES)
 
     //------------------------------------------------------------------------
     //

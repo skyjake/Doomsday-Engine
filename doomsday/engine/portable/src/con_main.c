@@ -215,7 +215,7 @@ void Con_Register(void)
     C_CMD("listgames",      "",     ListGames);
 
     // File
-    C_VAR_CHARPTR("file-startup", &autoloadFiles, 0, 0, 0);
+    C_VAR_CHARPTR("file-startup", &gameStartupFiles, 0, 0, 0);
 
     C_VAR_INT("con-transition", &rTransition, 0, FIRST_TRANSITIONSTYLE, LAST_TRANSITIONSTYLE);
     C_VAR_INT("con-transition-tics", &rTransitionTics, 0, 0, 60);

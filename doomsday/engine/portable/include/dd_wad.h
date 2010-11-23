@@ -31,9 +31,6 @@
 
 #include "con_decl.h"
 
-/// A list of wad names, whitespace in between (in .cfg).
-extern char* autoloadFiles;
-
 void DD_RegisterVFS(void);
 
 /**

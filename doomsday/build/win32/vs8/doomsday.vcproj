@@ -3034,10 +3034,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\r_extres.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\r_lgrid.h"
 				>
 			</File>
@@ -3215,6 +3211,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\sys_direc.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\sys_extres.h"
 				>
 			</File>
 			<File

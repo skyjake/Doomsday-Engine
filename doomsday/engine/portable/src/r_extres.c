@@ -65,30 +65,27 @@ static const char* resourceTypeFileExtensions[NUM_RESOURCE_TYPES][MAX_EXTENSIONS
     { "ogg", "mp3", "wav", "mod", "mid", 0 } // Music
 };
 
-// Default resource classes for resource types.
-static const ddresourceclass_t resourceTypeDefaultClasses[NUM_RESOURCE_TYPES] = {
-    DDRC_ZIP,
-    DDRC_DED,
-    DDRC_GRAPHIC,
-    DDRC_MODEL,
-    DDRC_SOUND,
-    DDRC_MUSIC
+static const char* defaultResourceNamespaceForType[NUM_RESOURCE_TYPES] = {
+    { "packages:" },
+    { "defs:" },
+    { "graphics:" },
+    { "models:" },
+    { "sounds:" },
+    { "music:" },
 };
 
-static filehash_t* fileHashes[NUM_RESOURCE_CLASSES];
+static resourcenamespace_t resourceNamespaces[NUM_RESOURCE_TYPES] = {
+    { "packages:" },
+    { "defs:" },
+    { "graphics:" },
+    { "models:" },
+    { "sounds:" },
+    { "music:" }
+};
+
 static boolean inited = false;
 
 // CODE --------------------------------------------------------------------
-
-/**
- * Given a resourcetype_t return the associated default ddresourceclass_t.
- */
-static __inline ddresourceclass_t defaultResourceClassForType(resourcetype_t resType)
-{
-    if(!VALID_RESOURCE_TYPE(resType))
-        Con_Error("defaultResourceClassForType: Invalid type %i.", (int)resType);
-    return resourceTypeDefaultClasses[(int)resType];
-}
 
 static boolean tryFindFile(const char* searchPath, char* foundPath, size_t foundPathLen,
     filehash_t* fileHash)
@@ -123,10 +120,10 @@ static boolean tryFindFile(const char* searchPath, char* foundPath, size_t found
  *
  * @return              @c true, if it's found.
  */
-static boolean tryResourceFile(resourcetype_t resType, const char* searchPath,
+static boolean tryResourceFile(resourcetype_t type, const char* searchPath,
     char* foundPath, size_t foundPathLen, filehash_t* fileHash)
 {
-    assert(inited && VALID_RESOURCE_TYPE(resType) && searchPath && searchPath[0]);
+    assert(inited && VALID_RESOURCE_TYPE(type) && searchPath && searchPath[0]);
     {
     boolean found = false;
     char* ptr;
@@ -156,7 +153,7 @@ static boolean tryResourceFile(resourcetype_t resType, const char* searchPath,
         }
 
         { int i;
-        for(i = 0, ext = resourceTypeFileExtensions[resType]; *ext; ext++)
+        for(i = 0, ext = resourceTypeFileExtensions[type]; *ext; ext++)
         {
             Str_Copy(&tmp, &path2);
             Str_Appendf(&tmp, "%s", *ext);
@@ -173,10 +170,10 @@ static boolean tryResourceFile(resourcetype_t resType, const char* searchPath,
     }
 }
 
-static boolean findResource(resourcetype_t resType, const char* searchPath,
+static boolean findResource(resourcetype_t type, const char* searchPath,
     const char* optionalSuffix, char* foundPath, size_t foundPathLen, filehash_t* fileHash)
 {
-    assert(inited && VALID_RESOURCE_TYPE(resType) && searchPath && searchPath[0]);
+    assert(inited && VALID_RESOURCE_TYPE(type) && searchPath && searchPath[0]);
     {
     boolean found = false;
 
@@ -202,7 +199,7 @@ static boolean findResource(resourcetype_t resType, const char* searchPath,
             Str_Append(&fn, optionalSuffix);
         }}
 
-        if(tryResourceFile(resType, Str_Text(&fn), foundPath, foundPathLen, fileHash))
+        if(tryResourceFile(type, Str_Text(&fn), foundPath, foundPathLen, fileHash))
             found = true;
 
         Str_Free(&fn);
@@ -211,7 +208,7 @@ static boolean findResource(resourcetype_t resType, const char* searchPath,
     // Try without a suffix.
     if(!found)
     {
-        if(tryResourceFile(resType, searchPath, foundPath, foundPathLen, fileHash))
+        if(tryResourceFile(type, searchPath, foundPath, foundPathLen, fileHash))
             found = true;
     }
 
@@ -219,13 +216,32 @@ static boolean findResource(resourcetype_t resType, const char* searchPath,
     }
 }
 
-static boolean tryLocateResource(resourcetype_t resType, ddresourceclass_t resClass,
-    const char* searchPath, const char* optionalSuffix, char* foundPath, size_t foundPathLen)
+static void rebuildFileHash(resourcenamespace_t* rnamespace, const ddstring_t* searchPaths)
 {
-    assert(inited && VALID_RESOURCE_TYPE(resType) && searchPath && searchPath[0]);
+    if(rnamespace->_fileHash)
+        return;
+
+    { uint startTime = verbose >= 1? Sys_GetRealTime(): 0;
+    rnamespace->_fileHash = FileHash_Create(Str_Text(searchPaths));
+    if(verbose >= 1)
+    {
+        Con_Message("Rebuilt filehash \"%s\" (done in %.2f seconds).\n", rnamespace->_name, (Sys_GetRealTime() - startTime) / 1000.0f);
+        M_PrintPathList(FileHash_PathList(rnamespace->_fileHash));
+/*#if _DEBUG
+        FileHash_Print(rnamespace->_fileHash);
+#endif*/
+    }
+    }
+}
+
+static boolean tryLocateResource(resourcetype_t type, resourcenamespaceid_t rni, const char* searchPath,
+    const char* optionalSuffix, char* foundPath, size_t foundPathLen)
+{
+    assert(inited && VALID_RESOURCE_TYPE(type) && searchPath && searchPath[0]);
     {
     ddstring_t name;
     boolean found;
+    resourcenamespace_t* rnamespace = 0;
 
     // Fix directory seperators early.
     Str_Init(&name);
@@ -235,7 +251,7 @@ static boolean tryLocateResource(resourcetype_t resType, ddresourceclass_t resCl
     // If this is an absolute path, locate using it.
     if(Dir_IsAbsolute(Str_Text(&name)))
     {
-        found = findResource(resType, Str_Text(&name), optionalSuffix, foundPath, foundPathLen, 0);
+        found = findResource(type, Str_Text(&name), optionalSuffix, foundPath, foundPathLen, 0);
     }
     else
     {   // Else, prepend the base path and try that.
@@ -245,7 +261,8 @@ static boolean tryLocateResource(resourcetype_t resType, ddresourceclass_t resCl
         // Make this an absolute, base-relative path.
         // If only checking the base path and not the expected location
         // for the resource type (below); re-use the current string.
-        if(resClass != DDRC_NONE)
+        rnamespace = DD_ResourceNamespace(rni);
+        if(rnamespace)
         {
             Str_Init(&fn);
             Str_Copy(&fn, &name);
@@ -259,30 +276,18 @@ static boolean tryLocateResource(resourcetype_t resType, ddresourceclass_t resCl
         }
 
         // Try loading using the base path as the starting point.
-        found = findResource(resType, path, optionalSuffix, foundPath, foundPathLen, 0);
+        found = findResource(type, path, optionalSuffix, foundPath, foundPathLen, 0);
 
-        if(resClass != DDRC_NONE)
+        if(rnamespace)
             Str_Free(&fn);
     }
 
-    // Try expected location for this resource type and class?
-    if(!found && resClass != DDRC_NONE)
+    // Try expected location for this resource type.
+    if(!found && (rnamespace = DD_ResourceNamespace(rni)))
     {
-        // Do we need to (re)build a hash for this resource class?
-        if(!fileHashes[(int)resClass])
-        {
-            uint startTime = verbose >= 1? Sys_GetRealTime(): 0;
-            fileHashes[(int)resClass] = FileHash_Create(Str_Text(GameInfo_ResourceSearchPaths(DD_GameInfo(), resClass)));
-            if(verbose >= 1)
-            {
-                Con_Message("%s filehash rebuilt in %.2f seconds.\n", F_ResourceClassStr(resClass), (Sys_GetRealTime() - startTime) / 1000.0f);
-                M_PrintPathList(FileHash_PathList(fileHashes[(int)resClass]));
-/*#if _DEBUG
-                FileHash_Print(fileHashes[(int)resClass]);
-#endif*/
-            }
-        }
-        found = findResource(resType, Str_Text(&name), optionalSuffix, foundPath, foundPathLen, fileHashes[(int)resClass]);
+        // Do we need to (re)build a hash for this resource namespace?
+        rebuildFileHash(rnamespace, DD_ResourceSearchPaths(rni));
+        found = findResource(type, Str_Text(&name), optionalSuffix, foundPath, foundPathLen, rnamespace->_fileHash);
     }
 
     Str_Free(&name);
@@ -291,42 +296,64 @@ static boolean tryLocateResource(resourcetype_t resType, ddresourceclass_t resCl
     }
 }
 
-static void destroyFileHashes(void)
+static void resetResourceNamespace(resourcenamespaceid_t rni)
 {
-    { int i;
-    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
+    assert(F_IsValidResourceNamespaceId(rni));
     {
-        if(fileHashes[i])
-            FileHash_Destroy(fileHashes[i]);
-        fileHashes[i] = 0;
-    }}
-}
-
-const char* F_ResourceClassStr(ddresourceclass_t rc)
-{
-    assert(VALID_RESOURCE_CLASS(rc));
+    resourcenamespace_t* rnamespace = &resourceNamespaces[rni-1];
+    if(rnamespace->_fileHash)
     {
-    static const char* resourceClassNames[NUM_RESOURCE_CLASSES] = {
-        { "DDRC_ZIP" },
-        { "DDRC_WAD" },
-        { "DDRC_DED" },
-        { "DDRC_TEXTURE" },
-        { "DDRC_FLAT" },
-        { "DDRC_PATCH" },
-        { "DDRC_LIGHTMAP" },
-        { "DDRC_FLAREMAP" },
-        { "DDRC_MUSIC" },
-        { "DDRC_SOUND" },
-        { "DDRC_GRAPHIC" },
-        { "DDRC_MODEL" }
-    };
-    return resourceClassNames[(int)rc];
+        FileHash_Destroy(rnamespace->_fileHash); rnamespace->_fileHash = 0;
+    }
     }
 }
 
-const char* F_ResourceTypeStr(resourcetype_t rt)
+static void resetResourceNamespaces(void)
 {
-    assert(VALID_RESOURCE_TYPE(rt));
+    uint i, numResourceNamespaces = F_NumResourceNamespaces();
+    for(i = 1; i < numResourceNamespaces+1; ++i)
+        resetResourceNamespace((resourcenamespaceid_t)i);
+}
+
+resourcenamespace_t* F_ToResourceNamespace(resourcenamespaceid_t rni)
+{
+    if(!F_IsValidResourceNamespaceId(rni))
+        Con_Error("DD_ResourceNamespace: Invalid resource namespace id %i.", (int)rni);
+    return &resourceNamespaces[rni-1];
+}
+
+resourcenamespaceid_t F_SafeResourceNamespaceForName(const char* name)
+{
+    if(name && name)
+    {
+        uint i, numResourceNamespaces = F_NumResourceNamespaces();
+        for(i = 1; i < numResourceNamespaces+1; ++i)
+        {
+            resourcenamespace_t* rnamespace = &resourceNamespaces[i-1];
+            if(Str_Length(&rnamespace->_name) > 0 && !Str_CompareIgnoreCase(&rnamespace->_name, name))
+                return (resourcenamespaceid_t)i;
+        }
+    }
+    return 0;
+}
+
+resourcenamespaceid_t F_ResourceNamespaceForName(const char* name)
+{
+    resourcenamespaceid_t result;
+    if((result = F_SafeResourceNamespaceForName(name)) == 0)
+        Con_Error("resourceNamespaceForName: Failed to locate resource namespace \"%s\".", name);
+    return result;
+}
+
+resourcenamespaceid_t F_ParseResourceNamespace(const char* str)
+{
+    assert(str);
+    return F_SafeResourceNamespaceForName(str);
+}
+
+const char* F_ResourceTypeStr(resourcetype_t resType)
+{
+    assert(VALID_RESOURCE_TYPE(resType));
     {
     static const char* resourceTypeNames[NUM_RESOURCE_TYPES] = {
         { "RT_PACKAGE" },
@@ -336,13 +363,13 @@ const char* F_ResourceTypeStr(resourcetype_t rt)
         { "RT_SOUND" },
         { "RT_MUSIC" }
     };
-    return resourceTypeNames[(int)rt];
+    return resourceTypeNames[(int)resType];
     }
 }
 
 void F_InitResourceLocator(void)
 {
-    destroyFileHashes();
+    resetResourceNamespaces();
     inited = true;
 }
 
@@ -350,29 +377,35 @@ void F_ShutdownResourceLocator(void)
 {
     if(!inited)
         return;
-    destroyFileHashes();
+    resetResourceNamespaces();
     inited = false;
 }
 
-boolean F_FindResource2(resourcetype_t resType, ddresourceclass_t resClass,
-    char* foundPath, const char* searchPath, const char* optionalSuffix, size_t foundPathLen)
+uint F_NumResourceNamespaces(void)
 {
-    if(!searchPath || !searchPath[0])
-        return false;
-    if(!VALID_RESOURCE_TYPE(resType))
-        Con_Error("F_FindResource2: Invalid resource type %i.\n", resType);
-    // No resource class means use the base path.
-    if(resClass != DDRC_NONE && !VALID_RESOURCE_CLASS(resClass))
-        Con_Error("F_FindResource2: Invalid resource class %i.\n", resClass);
-    return tryLocateResource(resType, resClass, searchPath, optionalSuffix, foundPath, foundPathLen);
+    return NUM_RESOURCE_TYPES;
 }
 
-boolean F_FindResource(resourcetype_t resType, char* foundPath, const char* searchPath,
-    const char* optionalSuffix, size_t foundPathLen)
+boolean F_IsValidResourceNamespaceId(int val)
+{
+    return (boolean)(val>0 && (unsigned)val < (F_NumResourceNamespaces()+1)? 1 : 0);
+}
+
+resourcenamespaceid_t F_DefaultResourceNamespaceForType(resourcetype_t type)
+{
+    assert(VALID_RESOURCE_TYPE(type));
+    return F_ResourceNamespaceForName(defaultResourceNamespaceForType[type]);
+}
+
+boolean F_FindResource(resourcetype_t type, char* foundPath, const char* searchPath, const char* optionalSuffix, size_t foundPathLen)
 {
     if(!searchPath || !searchPath[0])
         return false;
-    if(!VALID_RESOURCE_TYPE(resType))
-        Con_Error("F_FindResource: Invalid resource type %i.\n", resType);
-    return tryLocateResource(resType, defaultResourceClassForType(resType), searchPath, optionalSuffix, foundPath, foundPathLen);
+    if(!VALID_RESOURCE_TYPE(type))
+        Con_Error("F_FindResource: Invalid resource type %i.\n", type);
+    { resourcenamespaceid_t rni;
+    if((rni = F_ParseResourceNamespace(searchPath)) != 0)
+        return tryLocateResource(type, rni, searchPath, optionalSuffix, foundPath, foundPathLen);
+    }
+    return tryLocateResource(type, F_ResourceNamespaceForName(defaultResourceNamespaceForType[type]), searchPath, optionalSuffix, foundPath, foundPathLen);
 }

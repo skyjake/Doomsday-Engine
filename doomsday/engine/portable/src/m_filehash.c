@@ -510,3 +510,12 @@ boolean FileHash_Find(filehash_t* fileHash, char* foundPath, const char* name, s
     return false;
     }
 }
+
+boolean FileHash_HasRecordSet(filehash_t* fileHash)
+{
+    assert(fileHash);
+    {
+    _filehash_t* fh = (_filehash_t*) fileHash;
+    return (fh->direcFirst != 0);
+    }
+}

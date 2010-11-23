@@ -183,59 +183,43 @@ int G_RegisterGames(int hookType, int parm, void* data)
 #define DEFSPATH        DD_BASEPATH_DEFS GAMENAMETEXT "\\"
 #define STARTUPPK3      GAMENAMETEXT ".pk3"
 #define STARTUPDED      GAMENAMETEXT ".ded"
-#define NUMELEMENTS(v)  (sizeof(v)/sizeof((v)[0]))
 
     /* HacX */
-    { const char* lumps[] = { "hacx-r" };
     gameIds[doom2_hacx] = DD_AddGame("hacx", DATAPATH, DEFSPATH, STARTUPDED, "HACX - Twitch 'n Kill", "Banjo Software", "hacx", 0);
-    DD_AddGameResource(gameIds[doom2_hacx], RT_PACKAGE, DDRC_WAD, "hacx.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameIds[doom2_hacx], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
-    }
+    DD_AddGameResource(gameIds[doom2_hacx], RT_PACKAGE, "hacx.wad", "HACX-R");
+    DD_AddGameResource(gameIds[doom2_hacx], RT_PACKAGE, STARTUPPK3, 0);
 
     /* DOOM2 (TNT) */
-    { const char* lumps[] = { "cavern5", "cavern7", "stonew1" };
     gameIds[doom2_tnt] = DD_AddGame("doom2-tnt", DATAPATH, DEFSPATH, STARTUPDED, "Final DOOM: TNT: Evilution", "Team TNT", "tnt", 0);
-    DD_AddGameResource(gameIds[doom2_tnt], RT_PACKAGE, DDRC_WAD, "tnt.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameIds[doom2_tnt], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
-    }
+    DD_AddGameResource(gameIds[doom2_tnt], RT_PACKAGE, "tnt.wad", "CAVERN5;CAVERN7;STONEW1");
+    DD_AddGameResource(gameIds[doom2_tnt], RT_PACKAGE, STARTUPPK3, 0);
 
     /* DOOM2 (Plutonia) */
-    { const char* lumps[] = { "_deutex_", "mc5", "mc11", "mc16", "mc20" };
     gameIds[doom2_plut] = DD_AddGame("doom2-plut", DATAPATH, DEFSPATH, STARTUPDED, "Final DOOM: The Plutonia Experiment", "Dario Casali and Milo Casali", "plutonia", "plut");
-    DD_AddGameResource(gameIds[doom2_plut], RT_PACKAGE, DDRC_WAD, "plutonia.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameIds[doom2_plut], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
-    }
+    DD_AddGameResource(gameIds[doom2_plut], RT_PACKAGE, "plutonia.wad", "_DEUTEX_;MC5;MC11;MC16;MC20");
+    DD_AddGameResource(gameIds[doom2_plut], RT_PACKAGE, STARTUPPK3, 0);
 
     /* DOOM2 */
-    { const char* lumps[] = { "map01", "map02", "map03", "map04", "map10", "map20", "map25", "map30", "vilen1", "vileo1", "vileq1", "grnrock" };
     gameIds[doom2] = DD_AddGame("doom2", DATAPATH, DEFSPATH, STARTUPDED, "DOOM 2: Hell on Earth", "id Software", "doom2", 0);
-    DD_AddGameResource(gameIds[doom2], RT_PACKAGE, DDRC_WAD, "doom2f.wad;doom2.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameIds[doom2], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
-    }
+    DD_AddGameResource(gameIds[doom2], RT_PACKAGE, "doom2f.wad;doom2.wad", "MAP01;MAP02;MAP03;MAP04;MAP10;MAP20;MAP25;MAP30;VILEN1;VILEO1;VILEQ1;GRNROCK");
+    DD_AddGameResource(gameIds[doom2], RT_PACKAGE, STARTUPPK3, 0);
 
     /* DOOM (Ultimate) */
-    { const char* lumps[] = { "e4m1", "e4m2", "e4m3", "e4m4", "e4m5", "e4m6", "e4m7", "e4m8", "e4m9", "m_epi4" };
     gameIds[doom_ultimate] = DD_AddGame("doom1-ultimate", DATAPATH, DEFSPATH, STARTUPDED, "The Ultimate DOOM", "id Software", "ultimatedoom", "udoom");
-    DD_AddGameResource(gameIds[doom_ultimate], RT_PACKAGE, DDRC_WAD, "doomu.wad;doom.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameIds[doom_ultimate], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
-    }
+    DD_AddGameResource(gameIds[doom_ultimate], RT_PACKAGE, "doomu.wad;doom.wad", "E4M1;E4M2;E4M3;E4M4;E4M5;E4M6;E4M7;E4M8;E4M9;M_EPI4");
+    DD_AddGameResource(gameIds[doom_ultimate], RT_PACKAGE, STARTUPPK3, 0);
 
     /* DOOM */
-    { const char* lumps[] = { "e2m1", "e2m2", "e2m3", "e2m4", "e2m5", "e2m6", "e2m7", "e2m8", "e2m9", "e3m1", "e3m2", "e3m3", "e3m4", "e3m5", "e3m6", "e3m7", "e3m8", "e3m9", "cybre1", "cybrd8", "floor7_2" };
     gameIds[doom] = DD_AddGame("doom1", DATAPATH, DEFSPATH, STARTUPDED, "DOOM Registered", "id Software", "doom", 0);
-    DD_AddGameResource(gameIds[doom], RT_PACKAGE, DDRC_WAD, "doom.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameIds[doom], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
-    }
+    DD_AddGameResource(gameIds[doom], RT_PACKAGE, "doom.wad", "E2M1;E2M2;E2M3;E2M4;E2M5;E2M6;E2M7;E2M8;E2M9;E3M1;E3M2;E3M3;E3M4;E3M5;E3M6;E3M7;E3M8;E3M9;CYBRE1;CYBRD8;FLOOR7_2");
+    DD_AddGameResource(gameIds[doom], RT_PACKAGE, STARTUPPK3, 0);
 
     /* DOOM (Shareware) */
-    { const char* lumps[] = { "e1m1", "e1m2", "e1m3", "e1m4", "e1m5", "e1m6", "e1m7", "e1m8", "e1m9", "d_e1m1", "floor4_8", "floor7_2" };
     gameIds[doom_shareware] = DD_AddGame("doom1-share", DATAPATH, DEFSPATH, STARTUPDED, "DOOM Shareware", "id Software", "sdoom", 0);
-    DD_AddGameResource(gameIds[doom_shareware], RT_PACKAGE, DDRC_WAD, "doom1.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameIds[doom_shareware], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
-    }
+    DD_AddGameResource(gameIds[doom_shareware], RT_PACKAGE, "doom1.wad", "E1M1;E1M2;E1M3;E1M4;E1M5;E1M6;E1M7;E1M8;E1M9;D_E1M1;FLOOR4_8;FLOOR7_2");
+    DD_AddGameResource(gameIds[doom_shareware], RT_PACKAGE, STARTUPPK3, 0);
     return true;
 
-#undef NUMELEMENTS
 #undef STARTUPDED
 #undef STARTUPPK3
 #undef DEFSPATH

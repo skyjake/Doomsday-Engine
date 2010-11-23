@@ -1857,44 +1857,45 @@ Con_Message("R_GetSkinTex: Too many model skins!\n");
     return 1 + (st - skinNames); // 1-based index.
 }
 
-static boolean expandSkinName(char* expanded, const char* skin,
-                              const char* modelfn, size_t len)
+static boolean expandSkinName(char* foundPath, const char* skin, const char* modelfn, size_t foundPathLength)
 {
-    directory_t         mydir;
-    ddstring_t          fn;
-    boolean             found;
+    assert(foundPath && skin && skin[0] && modelfn && modelfn[0]);
+    {
+    directory_t mydir;
+    ddstring_t searchPath;
+    boolean found;
 
     // The "first choice" directory.
     memset(&mydir, 0, sizeof(mydir));
     Dir_FileDir(modelfn, &mydir);
 
-    Str_Init(&fn);
-    Str_Set(&fn, mydir.path);
-    Str_Append(&fn, skin);
+    Str_Init(&searchPath);
+    Str_Set(&searchPath, mydir.path);
+    Str_Append(&searchPath, skin);
 
     // Try the "first choice" directory first.
-    found = F_FindResource2(RT_GRAPHIC, DDRC_NONE, expanded, Str_Text(&fn),
-                            NULL, len);
+    found = F_FindResource(RT_GRAPHIC, foundPath, Str_Text(&searchPath), 0, foundPathLength);
 
-    if(!found) // Try the model path(s).
-        found = F_FindResource2(RT_GRAPHIC, DDRC_MODEL, expanded, skin,
-                                NULL, len);
+    if(!found)
+    {   // Try the model path(s).
+        Str_Clear(&searchPath); Str_Appendf(&searchPath, "models:%s", skin);
+        found = F_FindResource(RT_GRAPHIC, foundPath, Str_Text(&searchPath), 0, foundPathLength);
+    }
 
-    Str_Free(&fn);
+    Str_Free(&searchPath);
     return found;
+    }
 }
 
 /**
  * Registers a new skin name.
  */
-uint R_RegisterSkin(char* fullpath, const char* skin, const char* modelfn,
-                    boolean isShinySkin, size_t len)
+uint R_RegisterSkin(char* fullpath, const char* skin, const char* modelfn, boolean isShinySkin, size_t len)
 {
     // Has a skin name been provided?
     if(skin && skin[0])
     {
-        filename_t          buf;
-
+        filename_t buf;
         if(expandSkinName(fullpath ? fullpath : buf, skin, modelfn, len))
             return R_CreateSkinTex(fullpath ? fullpath : buf, isShinySkin);
     }

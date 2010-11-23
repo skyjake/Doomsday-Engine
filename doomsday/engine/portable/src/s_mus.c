@@ -40,7 +40,7 @@
 #include "de_misc.h"
 
 #include "sys_audio.h"
-#include "r_extres.h"
+#include "sys_extres.h"
 #include "m_mus2midi.h"
 
 // MACROS ------------------------------------------------------------------

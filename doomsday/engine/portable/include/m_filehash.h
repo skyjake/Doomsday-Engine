@@ -59,6 +59,11 @@ const char* FileHash_PathList(filehash_t* fh);
  */
 boolean FileHash_Find(filehash_t* fh, char* foundPath, const char* name, size_t len);
 
+/**
+ * @return                  @c true iff the hash record set has been built, else @c false.
+ */
+boolean FileHash_HasRecordSet(filehash_t* fh);
+
 #if _DEBUG
 void FileHash_Print(filehash_t* fh);
 #endif

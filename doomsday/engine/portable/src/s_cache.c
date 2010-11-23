@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -574,8 +574,7 @@ static sfxsample_t* cacheSample(int id, sfxinfo_t* info)
          * \fixme should be a cvar.
          */
         if((info->lumpNum < 0 || W_LumpFromIWAD(info->lumpNum)) &&
-           F_FindResource(RT_SOUND, buf, info->lumpName, NULL,
-                          FILENAME_T_MAXLEN) &&
+           F_FindResource(RT_SOUND, buf, info->lumpName, NULL, FILENAME_T_MAXLEN) &&
            (data = WAV_Load(buf, &bytesPer, &rate, &numSamples)))
         {   // Loading was successful!
             bytesPer /= 8; // Was returned as bits.

@@ -3215,7 +3215,7 @@ void G_PrintFormattedMapList(uint episode, const char** files, uint count)
                 for(k = rangeStart; k < i; ++k)
                 {
                     P_MapId(episode, k, mapId);
-                    Con_Printf("%s%s", mapId, k != i ? "," : "");
+                    Con_Printf("%s%s", mapId, (k != i-1) ? "," : "");
                 }
             }
             else

@@ -98,7 +98,7 @@ int verbose = 0; // For debug messages (-verbose).
 FILE* outFile; // Output file for console messages.
 
 /// List of file names, whitespace seperating (written to .cfg).
-char* autoloadFiles = "";
+char* gameStartupFiles = "";
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -182,11 +182,11 @@ static void addToPathList(ddstring_t*** list, size_t* listSize, const char* rawP
     }
 }
 
-static void parseAutoloadFilePathsAndAddFiles(ddstring_t*** list, size_t* listSize, const char* pathString)
+static void parseStartupFilePathsAndAddFiles(const char* pathString)
 {
 #define ATWSEPS                 ",; \t"
 
-    assert(list && listSize && pathString && pathString[0]);
+    assert(pathString && pathString[0]);
     {
     size_t len = strlen(pathString);
     char* buffer = M_Malloc(len + 1), *token;
@@ -226,16 +226,29 @@ static gameinfo_t* addGameInfoRecord(pluginid_t pluginId, const char* identityKe
     return gameInfo[numGameInfo++];
 }
 
-void DD_ShutdownResourceClassSearchPaths(void)
+resourcenamespace_t* DD_ResourceNamespace(resourcenamespaceid_t rni)
+{
+    return F_ToResourceNamespace(rni);
+}
+
+void DD_ShutdownResourceSearchPaths(void)
 {
     GameInfo_ClearResourceSearchPaths(DD_GameInfo());
 }
 
-void DD_ClearResourceClassSearchPathList(ddresourceclass_t resClass)
+void DD_ClearResourceSearchPathList(resourcenamespaceid_t rni)
 {
-    if(!VALID_RESOURCE_CLASS(resClass))
-        Con_Error("DD_ClearResourceClassSearchPathList: Invalid resource class %i.\n", resClass);
-    GameInfo_ClearResourceSearchPaths2(DD_GameInfo(), resClass);
+    GameInfo_ClearResourceSearchPaths2(DD_GameInfo(), rni);
+}
+
+const ddstring_t* DD_ResourceSearchPaths(resourcenamespaceid_t rni)
+{
+    return GameInfo_ResourceSearchPaths(DD_GameInfo(), rni);
+}
+
+const ddstring_t* DD_ResourceNamespaceStr(resourcenamespaceid_t rni)
+{
+    return &DD_ResourceNamespace(rni)->_name;
 }
 
 gameinfo_t* DD_GameInfo(void)
@@ -250,20 +263,34 @@ boolean DD_IsNullGameInfo(gameinfo_t* info)
     return GameInfo_PluginId(info) == 0;
 }
 
+static void populateExtendedInfo(gameinfo_t* info, ddgameinfo_t* ex)
+{
+    ex->identityKey = Str_Text(GameInfo_IdentityKey(info));
+    ex->title = Str_Text(GameInfo_Title(info));
+    ex->author = Str_Text(GameInfo_Author(info));
+}
+
+void DD_GetGameInfo2(gameid_t gameId, ddgameinfo_t* ex)
+{
+    if(!ex)
+        Con_Error("DD_GetGameInfo2: Invalid info argument.");
+    { gameinfo_t* info;
+    if((info = findGameInfoForId(gameId)))
+        populateExtendedInfo(info, ex);
+    }
+    Con_Error("DD_GetGameInfo2: Unknown gameid %i.", (int)gameId);
+}
+
 boolean DD_GetGameInfo(ddgameinfo_t* ex)
 {
     if(!ex)
         Con_Error("DD_GetGameInfo: Invalid info argument.");
 
-    memset(ex, 0, sizeof(ddgameinfo_t*));
-    { gameinfo_t* info = DD_GameInfo();
-    if(!DD_IsNullGameInfo(info))
+    if(!DD_IsNullGameInfo(DD_GameInfo()))
     {
-        ex->identityKey = Str_Text(GameInfo_IdentityKey(info));
-        ex->title = Str_Text(GameInfo_Title(info));
-        ex->author = Str_Text(GameInfo_Author(info));
+        populateExtendedInfo(DD_GameInfo(), ex);
         return true;
-    }}
+    }
 
 #if _DEBUG
 Con_Message("DD_GetGameInfo: Warning, no game currently loaded - returning false.\n");
@@ -271,58 +298,73 @@ Con_Message("DD_GetGameInfo: Warning, no game currently loaded - returning false
     return false;
 }
 
-static void addIdentLumpToGameResourceRecord(gameresource_record_t* rec, const ddstring_t* lumpName)
+static void addIdentityKeyToResourceNamespaceRecord(resourcenamespace_record_t* rec, const ddstring_t* identityKey)
 {
-    assert(rec && lumpName);
+    assert(rec && identityKey);
     {
-    size_t num = countElements(rec->lumpNames);
-    rec->lumpNames = M_Realloc(rec->lumpNames, sizeof(*rec->lumpNames) * MAX_OF(num+1, 2));
+    size_t num = countElements(rec->identityKeys);
+    rec->identityKeys = M_Realloc(rec->identityKeys, sizeof(*rec->identityKeys) * MAX_OF(num+1, 2));
     if(num) num -= 1;
-    rec->lumpNames[num] = Str_New();
-    Str_Copy(rec->lumpNames[num], lumpName);
-    rec->lumpNames[num+1] = 0; // Terminate.
+    rec->identityKeys[num] = Str_New();
+    Str_Copy(rec->identityKeys[num], identityKey);
+    rec->identityKeys[num+1] = 0; // Terminate.
     }
 }
 
-void DD_AddGameResource(gameid_t gameId, resourcetype_t resType, ddresourceclass_t resClass, const char* _names,
-    const char** lumpNames, size_t numLumpNames)
+void DD_AddGameResource(gameid_t gameId, resourcetype_t type, const char* _names, void* params)
 {
     gameinfo_t* info = findGameInfoForId(gameId);
-    ddstring_t names;
+    resourcenamespaceid_t rni;
+    ddstring_t names, name;
 
     if(!info || DD_IsNullGameInfo(info))
         Con_Error("DD_AddGameResource: Error, unknown game id %u.", gameId);
-    if(!VALID_RESOURCE_TYPE(resType))
-        Con_Error("DD_AddGameResource: Error, unknown resource type %i.", (int)resType);
-    if(!VALID_RESOURCE_CLASS(resClass))
-        Con_Error("DD_AddGameResource: Error, unknown resource class %i.", (int)resClass);
+    if(!VALID_RESOURCE_TYPE(type))
+        Con_Error("DD_AddGameResource: Error, unknown resource type %i.", (int)type);
     if(!_names || !_names[0] || !strcmp(_names, ";"))
         Con_Error("DD_AddGameResource: Error, invalid name argument.");
 
     Str_Init(&names);
     Str_Set(&names, _names);
-    // Ensure the names list has the required terminating semicolon.
+    // Ensure the name list has the required terminating semicolon.
     if(Str_RAt(&names, 0) != ';')
         Str_Append(&names, ";");
 
-    { gameresource_record_t* rec;
-    if((rec = GameInfo_AddResource(info, resType, resClass, &names)))
+    if((rni = F_ParseResourceNamespace(Str_Text(&names))) == 0)
+        rni = F_DefaultResourceNamespaceForType(type);
+
+    Str_Init(&name);
+    { resourcenamespace_record_t* rec;
+    if((rec = GameInfo_AddResource(info, type, rni, &names)))
     {
-        // Add an auto-identification file list to the info record?
-        if(rec->resClass == DDRC_WAD && lumpNames && numLumpNames != 0)
+        if(params)
+        switch(rec->type)
         {
-            ddstring_t temp;
-            size_t n = 0;
-            Str_Init(&temp);
-            do
-            {
-                Str_Set(&temp, lumpNames[n]);
-                addIdentLumpToGameResourceRecord(rec, &temp);
-            } while(++n < numLumpNames);
-            Str_Free(&temp);
+        case RT_PACKAGE:
+            // Add an auto-identification file name list to the info record.
+            { ddstring_t fileNames, fileName;
+
+            // Ensure the name list has the required terminating semicolon.
+            Str_Init(&fileNames); Str_Set(&fileNames, (const char*) params);
+            if(Str_RAt(&fileNames, 0) != ';')
+                Str_Append(&fileNames, ";");
+
+            Str_Init(&fileName);
+            { const char* p = Str_Text(&fileNames);
+            while((p = Str_CopyDelim(&fileName, p, ';')))
+                  addIdentityKeyToResourceNamespaceRecord(rec, &fileName);
+            }
+
+            Str_Free(&fileName);
+            Str_Free(&fileNames);
+            break;
+            }
+        default:
+            break;
         }
     }}
 
+    Str_Free(&name);
     Str_Free(&names);
 }
 
@@ -441,17 +483,17 @@ static boolean recognizeZIP(const char* filePath, void* data)
     return M_FileExists(filePath);
 }
 
-static boolean validateGameResource(gameresource_record_t* rec, const char* name)
+static boolean validateGameResource(resourcenamespace_record_t* rec, const char* name)
 {
     filename_t foundPath;
-    if(!F_FindResource2(rec->resType, rec->resClass, foundPath, name, 0, FILENAME_T_MAXLEN))
+    if(!F_FindResource(rec->type, foundPath, name, 0, FILENAME_T_MAXLEN))
         return false;
-    switch(rec->resClass)
+    switch(rec->type)
     {
-    case DDRC_WAD: if(!recognizeWAD(foundPath, (void*)rec->lumpNames)) return false;
-        break;
-    case DDRC_ZIP: if(!recognizeZIP(foundPath, 0)) return false;
-        break;
+    case RT_PACKAGE:
+        if(recognizeWAD(foundPath, (void*)rec->identityKeys)) break;
+        if(recognizeZIP(foundPath, (void*)rec->identityKeys)) break;
+        return false;
     default: break;
     }
     // Passed.
@@ -475,11 +517,11 @@ static void locateGameResources(gameinfo_t* info)
     }
 
     Str_Init(&name);
-    { int i;
-    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
+    { uint i, numResourceNamespaces = F_NumResourceNamespaces();
+    for(i = 1; i < numResourceNamespaces+1; ++i)
     {
-        gameresource_record_t* const* records;
-        if((records = GameInfo_Resources(info, (ddresourceclass_t)i, 0)))
+        resourcenamespace_record_t* const* records;
+        if((records = GameInfo_Resources(info, (resourcenamespaceid_t)i, 0)))
             do
             {
                 const char* p = Str_Text(&(*records)->names);
@@ -502,11 +544,11 @@ static void locateGameResources(gameinfo_t* info)
 static boolean allGameResourcesFound(gameinfo_t* info)
 {
     assert(info);
-    { int i;
-    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
+    { uint i, numResourceNamespaces = F_NumResourceNamespaces();
+    for(i = 1; i < numResourceNamespaces+1; ++i)
     {
-        gameresource_record_t* const* records;
-        if((records = GameInfo_Resources(info, (ddresourceclass_t)i, 0)))
+        resourcenamespace_record_t* const* records;
+        if((records = GameInfo_Resources(info, (resourcenamespaceid_t)i, 0)))
             do
             {
                 if(Str_Length(&(*records)->path) == 0)
@@ -516,23 +558,27 @@ static boolean allGameResourcesFound(gameinfo_t* info)
     return true;
 }
 
-static void loadGameResources(gameinfo_t* info, ddresourceclass_t resClass)
+static void loadGameResources(gameinfo_t* info, resourcetype_t type, const char* searchPath)
 {
-    gameresource_record_t* const* records = GameInfo_Resources(info, resClass, 0);
+    assert(info && VALID_RESOURCE_TYPE(type) && searchPath && searchPath[0]);
+    {
+    resourcenamespaceid_t rni = F_ParseResourceNamespace(searchPath);
+    resourcenamespace_record_t* const* records = GameInfo_Resources(info, rni, 0);
     if(!records)
         return;
     do
     {
-        switch((*records)->resType)
+        switch((*records)->type)
         {
         case RT_PACKAGE:
             if(Str_Length(&(*records)->path) != 0)
                 W_AddFile(Str_Text(&(*records)->path), false);
             break;
         default:
-            Con_Error("loadGameResources: Error, no resource loader found for %s.", F_ResourceTypeStr((*records)->resType));
+            Con_Error("loadGameResources: Error, no resource loader found for %s.", F_ResourceTypeStr((*records)->type));
         };
     } while(*(++records));
+    }
 }
 
 static void printGameInfo(gameinfo_t* info)
@@ -544,21 +590,20 @@ static void printGameInfo(gameinfo_t* info)
 
     Con_Printf("Game: %s - %s\n", Str_Text(GameInfo_Title(info)), Str_Text(GameInfo_Author(info)));
 #if _DEBUG
-    Con_Printf("  PluginId: %i\n", (int)GameInfo_PluginId(info));
-    Con_Printf("  Meta: identitykey:\"%s\" data:\"%s\" defs:\"%s\"\n", Str_Text(GameInfo_IdentityKey(info)), M_PrettyPath(Str_Text(GameInfo_DataPath(info))), M_PrettyPath(Str_Text(GameInfo_DefsPath(info))));
+    Con_Printf("  Meta: pluginid:%i identitykey:\"%s\" data:\"%s\" defs:\"%s\"\n", (int)GameInfo_PluginId(info), Str_Text(GameInfo_IdentityKey(info)), M_PrettyPath(Str_Text(GameInfo_DataPath(info))), M_PrettyPath(Str_Text(GameInfo_DefsPath(info))));
 #endif
 
-    { int i;
-    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
+    { uint i, numResourceNamespaces = F_NumResourceNamespaces();
+    for(i = 1; i < numResourceNamespaces+1; ++i)
     {
-        gameresource_record_t* const* records;
-        if((records = GameInfo_Resources(info, (ddresourceclass_t)i, 0)))
+        resourcenamespace_record_t* const* records;
+        if((records = GameInfo_Resources(info, (resourcenamespaceid_t)i, 0)))
         {
             int n = 0;
-            Con_Printf("  %s:\n", F_ResourceClassStr((ddresourceclass_t)i));
+            Con_Printf("  Namespace: \"%s\"\n", Str_Text(DD_ResourceNamespaceStr((resourcenamespaceid_t)i)));
             do
             {
-                Con_Printf("    %i: %s \"%s\" > %s\n", n++, F_ResourceTypeStr((*records)->resType), Str_Text(&(*records)->names), Str_Length(&(*records)->path) == 0? "--(!)missing" : M_PrettyPath(Str_Text(&(*records)->path)));
+                Con_Printf("    %i:%s - \"%s\" > %s\n", n++, F_ResourceTypeStr((*records)->type), Str_Text(&(*records)->names), Str_Length(&(*records)->path) == 0? "--(!)missing" : M_PrettyPath(Str_Text(&(*records)->path)));
             } while(*(++records));
         }
     }}
@@ -683,6 +728,12 @@ static __inline boolean isZip(const char* fn)
     return (len > 4 && (!strnicmp(fn + len - 4, ".pk3", 4) || !strnicmp(fn + len - 4, ".zip", 4)));
 }
 
+static __inline boolean isWad(const char* fn)
+{
+    size_t len = strlen(fn);
+    return (len > 4 && !strnicmp(fn + len - 4, ".wad", 4));
+}
+
 static int DD_ChangeGameWorker(void* parm)
 {
     assert(parm);
@@ -691,37 +742,18 @@ static int DD_ChangeGameWorker(void* parm)
     uint startTime;
 
     /**
-     * Parse all configuration files that should be read prior to init.
+     * Parse the game's main config file.
+     * If a custom top-level config is specified; let it override.
      */
-    Con_Message("Parsing configuration files:\n");
-    startTime = Sys_GetRealTime();
-
-    // If a custom config file is specified; let it override the default main config.
     if(ArgCheckWith("-config", 1))
     {
         Str_Set(&configFileName, ArgNext());
         Dir_FixSlashes(Str_Text(&configFileName), Str_Length(&configFileName));
     }
-
-    // Parse the main config file.
-    Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(Str_Text(&configFileName)));
+    Con_Message("Parsing game config: \"%s\" ...\n", M_PrettyPath(Str_Text(&configFileName)));
     Con_ParseCommands(Str_Text(&configFileName), true);
 
-    // Any additional config files?
-    if(ArgCheckWith("-cparse", 1))
-    {
-        for(;;)
-        {
-            const char* arg = ArgNext();
-            if(!arg || arg[0] == '-')
-                break;
-            Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(arg));
-            Con_ParseCommands(arg, false);
-        }
-    }
-    VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
-
-    Con_SetProgress(20);
+    Con_SetProgress(10);
 
     F_InitResourceLocator();
 
@@ -744,76 +776,54 @@ static int DD_ChangeGameWorker(void* parm)
     }
 
     /**
-     * Open all the files, load headers, and count lumps.
+     * Open all the files, load headers, count lumps, etc, etc...
+     * \note duplicate processing of the same file is automatically guarded against by
+     * the virtual file system layer.
      */
     Con_Message("Loading game resources:\n");
     startTime = Sys_GetRealTime();
 
-    // Before anything else, load ZIPs (they may contain virtual WAD files).
-    loadGameResources(info, DDRC_ZIP);
-    loadGameResources(info, DDRC_WAD);
-    // \todo dj: now the rest.
-    /*{ int i;
-    for(i = (int)DDRC_DED; i < NUM_RESOURCE_CLASSES; ++i)
-        loadGameResources(info, (ddresourceclass_t)i);
-    }*/
+    /**
+     * Phase 1: Add game-resource files.
+     * First ZIPs then WADs (they may contain virtual WAD files).
+     */
+    loadGameResources(info, RT_PACKAGE, "packages:");
+    loadGameResources(info, RT_PACKAGE, "packages:");
 
-    // Add real files from the Auto directory to the gameResourceFileList.
+    /**
+     * Phase 2: Add additional game-startup files.
+     * \note These must take precedence over Auto but not game-resource files.
+     */
+    if(gameStartupFiles && gameStartupFiles[0])
+        parseStartupFilePathsAndAddFiles(gameStartupFiles);
+
+    /**
+     * Phase 3: Add real files from the Auto directory.
+     * First ZIPs then WADs (they may contain virtual WAD files).
+     */
     addFilesFromAutoData(false);
-
-    // Before anything else, load PK3s (they may contain virtual WAD files).
-    if(numGameResourceFileList > 0)
-    {
-        { size_t i;
-        for(i = 0; i < numGameResourceFileList; ++i)
-        {
-            if(!isZip(Str_Text(gameResourceFileList[i])))
-                continue;
-            //Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(Str_Text(gameResourceFileList[i])));
-            W_AddFile(Str_Text(gameResourceFileList[i]), false);
-        }}
-
-        // IWAD(s) must be loaded before other WADs.
-        { size_t i;
-        for(i = 0; i < numGameResourceFileList; ++i)
-        {
-            if(!W_IsIWAD(Str_Text(gameResourceFileList[i])))
-                continue;
-            //Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(Str_Text(gameResourceFileList[i])));
-            W_AddFile(Str_Text(gameResourceFileList[i]), false);
-        }}
-    }
-
-    // Do a full autoload round before loading any other WAD files.
-    DD_AutoLoad();
-
-    // Load the rest of the WADs.
     if(numGameResourceFileList > 0)
     {
         size_t i;
         for(i = 0; i < numGameResourceFileList; ++i)
-        {
-            //Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(Str_Text(gameResourceFileList[i])));
-            W_AddFile(Str_Text(gameResourceFileList[i]), false);
-        }
+            if(isZip(Str_Text(gameResourceFileList[i])))
+                W_AddFile(Str_Text(gameResourceFileList[i]), false);
+
+        for(i = 0; i < numGameResourceFileList; ++i)
+            if(isWad(Str_Text(gameResourceFileList[i])))
+                W_AddFile(Str_Text(gameResourceFileList[i]), false);
     }
-
-    Con_SetProgress(60);
-
-    F_InitDirec();
 
     // Final autoload round.
     DD_AutoLoad();
 
-    // No more WADs will be loaded in startup mode after this point.
-    W_EndStartup();
+    F_InitDirec();
 
+    Con_SetProgress(60);
     VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 
-    // Parse bindings for this game and merge with the working set.
+    // Read bindings for this game and merge with the working set.
     Con_ParseCommands(Str_Text(&bindingsConfigFileName), false);
-
-    Con_SetProgress(100);
 
     R_InitTextures();
     R_InitFlats();
@@ -1093,6 +1103,22 @@ int DD_Main(void)
     glClear(GL_COLOR_BUFFER_BIT);
     GL_DoUpdate();
 
+    // Add resources specified using -iwad options on the command line.
+#pragma message("!!!WARNING: Re-implement support for the -iwad option!!!")
+#if 0
+    {int p;
+    for(p = 0; p < Argc(); ++p)
+    {
+        if(!ArgRecognize("-iwad", Argv(p)))
+            continue;
+
+        while(++p != Argc() && !ArgIsOption(p))
+            addToPathList(&gameResourceFileList, &numGameResourceFileList, Argv(p));
+
+        p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
+    }}
+#endif
+
     // Try to locate all required data files for all registered games.
     { uint i;
     for(i = 0; i < numGameInfo; ++i)
@@ -1112,6 +1138,19 @@ int DD_Main(void)
             Con_Message("Automatic game selection failed.\n");
     }
 
+    // Load resources specified using -file options on the command line.
+    {int p;
+    for(p = 0; p < Argc(); ++p)
+    {
+        if(!ArgRecognize("-file", Argv(p)))
+            continue;
+
+        while(++p != Argc() && !ArgIsOption(p))
+            W_AddFile(Argv(p), false);
+
+        p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
+    }}
+
     // One-time execution of various command line features available during startup.
     if(ArgCheckWith("-dumplump", 1))
     {
@@ -1123,15 +1162,16 @@ int DD_Main(void)
         W_DumpLumpDir();
 
     // Try to load the autoexec file. This is done here to make sure everything is
-    // initialized: the user can do here anything that s/he'd be able to do in-game.
+    // initialized: the user can do here anything that s/he'd be able to do in-game
+    // provided a game was loaded during startup.
     Con_ParseCommands("autoexec.cfg", false);
 
-    // Parse additional config files that should be processed post init.
+    // Read additional config files that should be processed post engine init.
     if(ArgCheckWith("-parse", 1))
     {
-        float starttime;
-        Con_Message("Parsing additional (post-init) config files:\n");
-        starttime = Sys_GetSeconds();
+        uint startTime;
+        Con_Message("Parsing additional (pre-init) config files:\n");
+        startTime = Sys_GetRealTime();
         for(;;)
         {
             const char* arg = ArgNext();
@@ -1140,7 +1180,7 @@ int DD_Main(void)
             Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(arg));
             Con_ParseCommands(arg, false);
         }
-        VERBOSE(Con_Message("  Done in %.2f seconds.\n", Sys_GetSeconds() - starttime));
+        VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
     }
 
     // A console command on the command line?
@@ -1262,7 +1302,24 @@ static int DD_StartupWorker(void* parm)
     // Now we can hide the mouse cursor for good.
     Sys_HideMouse();
 
-    // Add required engine data files.
+    // Read config files that should be read BEFORE engine init.
+    if(ArgCheckWith("-cparse", 1))
+    {
+        uint startTime;
+        Con_Message("Parsing additional (pre-init) config files:\n");
+        startTime = Sys_GetRealTime();
+        for(;;)
+        {
+            const char* arg = ArgNext();
+            if(!arg || arg[0] == '-')
+                break;
+            Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(arg));
+            Con_ParseCommands(arg, false);
+        }
+        VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+    }
+
+    // Add required engine resource files.
     { filename_t foundPath;
     if(F_FindResource(RT_PACKAGE, foundPath, "doomsday.pk3", 0, FILENAME_T_MAXLEN))
         W_AddFile(foundPath, false);
@@ -1270,36 +1327,13 @@ static int DD_StartupWorker(void* parm)
         Con_Error("DD_StartupWorker: Failed to locate required resource \"doomsday.pk3\".");
     }
 
+    // No more WADs will be loaded in startup mode after this point.
+    W_EndStartup();
+
+    F_InitDirec();
+
     // Load engine help resources.
     DD_InitHelp();
-
-    /**
-     * Process the files specified using "file-startup" in the game config.
-     * \note These must take precedence.
-     */
-    if(autoloadFiles && autoloadFiles[0])
-        parseAutoloadFilePathsAndAddFiles(&gameResourceFileList, &numGameResourceFileList, autoloadFiles);
-
-    /**
-     * Process all -iwad and -file options on the command line.
-     * \note -iwad options must be processed first.
-     */
-    { int order;
-    for(order = 0; order < 2; ++order)
-    {
-        int p;
-        for(p = 0; p < Argc(); ++p)
-        {
-            if((order == 1 && !ArgRecognize("-file", Argv(p))) ||
-               (order == 0 && !ArgRecognize("-iwad", Argv(p))))
-                continue;
-
-            while(++p != Argc() && !ArgIsOption(p))
-                addToPathList(&gameResourceFileList, &numGameResourceFileList, Argv(p));
-
-            p--;/* For ArgIsOption(p) necessary, for p==Argc() harmless */
-        }
-    }}
 
     Con_SetProgress(60);
 

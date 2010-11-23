@@ -31,7 +31,6 @@
 
 #include "r_data.h"
 #include "r_model.h"
-#include "r_extres.h"
 #include "con_decl.h"
 #include "gl_model.h"
 #include "gl_defer.h"
@@ -178,11 +177,9 @@ byte            GL_LoadFlareTexture(image_t* image, const gltexture_inst_t* inst
 byte            GL_LoadDoomPatch(image_t* image, const gltexture_inst_t* inst, void* context);
 
 byte            GL_LoadRawTex(image_t* image, const rawtex_t* r);
-byte            GL_LoadExtTexture(image_t* image, ddresourceclass_t resClass,
-                                  const char* name, gfxmode_t mode);
+byte            GL_LoadExtTexture(image_t* image, const char* name, gfxmode_t mode);
 
-DGLuint         GL_PrepareExtTexture(ddresourceclass_t resClass,
-                                     const char* name, gfxmode_t mode,
+DGLuint         GL_PrepareExtTexture(const char* name, gfxmode_t mode,
                                      int useMipmap, int minFilter,
                                      int magFilter, int anisoFilter,
                                      int wrapS, int wrapT, int otherFlags);

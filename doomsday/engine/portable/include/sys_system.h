@@ -27,8 +27,8 @@
  * sys_system.h: OS Specific Services Subsystem
  */
 
-#ifndef LIBDENG_SYSTEM_H
-#define LIBDENG_SYSTEM_H
+#ifndef LIBDENG_FILESYS_SYSTEM_H
+#define LIBDENG_FILESYS_SYSTEM_H
 
 #include "dd_types.h"
 
@@ -65,4 +65,4 @@ void Sem_Destroy(sem_t semaphore);
 void Sem_P(sem_t semaphore);
 void Sem_V(sem_t semaphore);
 
-#endif /* LIBDENG_SYSTEM_H */
+#endif /* LIBDENG_FILESYS_SYSTEM_H */

@@ -39,7 +39,6 @@
 #include "r_shadow.h"
 #include "r_sky.h"
 #include "r_util.h"
-#include "r_extres.h"
 #include "r_shadow.h"
 #include "r_lgrid.h"
 #include "r_lumobjs.h"
