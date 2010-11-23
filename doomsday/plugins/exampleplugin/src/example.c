@@ -189,10 +189,9 @@ game_export_t* GetGameAPI(game_import_t* imports)
  */
 int ExampleHook(int hookType, int parm, void *data)
 {
-    DD_AddGame(1, "examplegame", DD_BASEPATH_DATA PLUGIN_NAMETEXT "\\", DD_BASEPATH_DEFS PLUGIN_NAMETEXT "\\", 0, "Example Game", "deng team", "examplegame", 0);
+    DD_AddGame("examplegame", DD_BASEPATH_DATA PLUGIN_NAMETEXT "\\", DD_BASEPATH_DEFS PLUGIN_NAMETEXT "\\", 0, "Example Game", "deng team", "examplegame", 0);
     return true;
 }
-
 
 /**
  * This function is called automatically when the plugin is loaded.

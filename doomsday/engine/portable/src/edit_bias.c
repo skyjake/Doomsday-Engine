@@ -413,7 +413,7 @@ static boolean SBE_Save(const char *name)
 
     // Since there can be quite a lot of these, make sure we'll skip
     // the ones that are definitely not suitable.
-    fprintf(file, "SkipIf Not %s\n", Str_Text(GameInfo_ModeIdentifier(DD_GameInfo())));
+    fprintf(file, "SkipIf Not %s\n", Str_Text(GameInfo_IdentityKey(DD_GameInfo())));
 
     s = SB_GetSource(0);
     for(i = 0; i < numSources; ++i, ++s)

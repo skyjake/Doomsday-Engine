@@ -188,19 +188,19 @@ static void buildResourceClassPathList(gameinfo_t* info, ddresourceclass_t rc)
             break;
         case RCP_GAMEMODEPATH_DATA:
             usingGameModePathData = true;
-            if(resourceClassDefaultPaths[(int)rc] && Str_Length(&info->_modeIdentifier))
+            if(resourceClassDefaultPaths[(int)rc] && Str_Length(&info->_identityKey))
             {
                 filename_t newPath;
-                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(&info->_dataPath), resourceClassDefaultPaths[(int)rc], Str_Text(&info->_modeIdentifier));
+                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(&info->_dataPath), resourceClassDefaultPaths[(int)rc], Str_Text(&info->_identityKey));
                 GameInfo_AddResourceSearchPath(info, rc, newPath, false);
             }
             break;
         case RCP_GAMEMODEPATH_DEFS:
             usingGameModePathDefs = true;
-            if(resourceClassDefaultPaths[(int)rc] && Str_Length(&info->_modeIdentifier))
+            if(resourceClassDefaultPaths[(int)rc] && Str_Length(&info->_identityKey))
             {
                 filename_t newPath;
-                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(&info->_defsPath), resourceClassDefaultPaths[(int)rc], Str_Text(&info->_modeIdentifier));
+                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(&info->_defsPath), resourceClassDefaultPaths[(int)rc], Str_Text(&info->_identityKey));
                 GameInfo_AddResourceSearchPath(info, rc, newPath, false);
             }
             break;
@@ -224,10 +224,10 @@ static void buildResourceClassPathList(gameinfo_t* info, ddresourceclass_t rc)
         M_TranslatePath(newPath, ArgNext(), FILENAME_T_MAXLEN);
         GameInfo_AddResourceSearchPath(info, rc, newPath, false);
 
-        if((usingGameModePathData || usingGameModePathDefs) && Str_Length(&info->_modeIdentifier))
+        if((usingGameModePathData || usingGameModePathDefs) && Str_Length(&info->_identityKey))
         {
             filename_t other;
-            dd_snprintf(other, FILENAME_T_MAXLEN, "%s\\%s", newPath, Str_Text(&info->_modeIdentifier));
+            dd_snprintf(other, FILENAME_T_MAXLEN, "%s\\%s", newPath, Str_Text(&info->_identityKey));
             GameInfo_AddResourceSearchPath(info, rc, other, false);
         }
     }
@@ -250,18 +250,17 @@ static __inline void clearResourceClassSearchPathList(gameinfo_t* info, ddresour
     Str_Free(&info->_searchPathLists[resClass]);
 }
 
-gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, int mode, const char* modeString, const char* dataPath,
+gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey, const char* dataPath,
     const char* defsPath, const ddstring_t* mainDef, const char* title, const char* author, const ddstring_t* cmdlineFlag,
     const ddstring_t* cmdlineFlag2)
 {
     gameinfo_t* info = M_Malloc(sizeof(*info));
 
     info->_pluginId = pluginId;
-    info->_mode = mode;
 
-    Str_Init(&info->_modeIdentifier);
-    if(modeString)
-        Str_Set(&info->_modeIdentifier, modeString);
+    Str_Init(&info->_identityKey);
+    if(identityKey)
+        Str_Set(&info->_identityKey, identityKey);
 
     Str_Init(&info->_dataPath);
     if(dataPath)
@@ -316,7 +315,7 @@ void P_DestroyGameInfo(gameinfo_t* info)
 
     GameInfo_ClearResourceSearchPaths(info);
 
-    Str_Free(&info->_modeIdentifier);
+    Str_Free(&info->_identityKey);
     Str_Free(&info->_dataPath);
     Str_Free(&info->_defsPath);
     Str_Free(&info->_mainDef);
@@ -455,16 +454,10 @@ pluginid_t GameInfo_PluginId(gameinfo_t* info)
     return info->_pluginId;
 }
 
-int GameInfo_Mode(gameinfo_t* info)
+const ddstring_t* GameInfo_IdentityKey(gameinfo_t* info)
 {
     assert(info);
-    return info->_mode;
-}
-
-const ddstring_t* GameInfo_ModeIdentifier(gameinfo_t* info)
-{
-    assert(info);
-    return &info->_modeIdentifier;
+    return &info->_identityKey;
 }
 
 const ddstring_t* GameInfo_DataPath(gameinfo_t* info)

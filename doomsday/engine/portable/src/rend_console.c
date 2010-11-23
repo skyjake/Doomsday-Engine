@@ -233,7 +233,7 @@ void Con_InitUI(void)
     if(!DD_IsNullGameInfo(DD_GameInfo()))
     {
         strncpy(secondaryTitleText, (char*) gx.GetVariable(DD_GAME_ID), sizeof(secondaryTitleText) - 1);
-        strncpy(statusText, Str_Text(GameInfo_ModeIdentifier(DD_GameInfo())), sizeof(statusText) - 1);
+        strncpy(statusText, Str_Text(GameInfo_IdentityKey(DD_GameInfo())), sizeof(statusText) - 1);
         return;
     }
     // No game currently loaded.

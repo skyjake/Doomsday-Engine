@@ -69,13 +69,11 @@ extern game_export_t gx;
 #define VALIDCOUNT          (*gi.validCount)
 
 typedef enum {
-    indetermined, // \todo now meaningless refactor away.
     doom64,
     NUM_GAME_MODES
 } gamemode_t;
 
 // Game mode bits for the above.
-#define GM_INDETERMINED     0x0
 #define GM_DOOM64           0x1
 
 #define GM_ANY              (GM_DOOM64)

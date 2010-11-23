@@ -95,7 +95,6 @@ extern game_export_t gx;
 #define VALIDCOUNT          (*gi.validCount)
 
 typedef enum {
-    indetermined, // \todo now meaningless refactor away.
     hexen_demo,
     hexen,
     hexen_deathkings,
@@ -103,7 +102,6 @@ typedef enum {
 } gamemode_t;
 
 // Game mode bits for the above.
-#define GM_INDETERMINED     0x0
 #define GM_HEXEN_DEMO       0x1
 #define GM_HEXEN            0x2
 #define GM_HEXEN_DEATHKINGS 0x4

@@ -140,26 +140,14 @@ static gameinfo_t* findGameInfoForId(gameid_t gameId)
     return 0; // Not found.
 }
 
-static gameinfo_t* findGameInfoForMode(pluginid_t pluginId, int mode)
-{
-    { uint i;
-    for(i = 0; i < numGameInfo; ++i)
-    {
-        gameinfo_t* info = gameInfo[i];
-        if(GameInfo_PluginId(info) == pluginId && GameInfo_Mode(info) == mode)
-            return info;
-    }}
-    return 0; // Not found.
-}
-
-static gameinfo_t* findGameInfoForModeIdentifier(const char* modeIdentifier)
+static gameinfo_t* findGameInfoForIdentityKey(const char* modeIdentifier)
 {
     assert(modeIdentifier && modeIdentifier[0]);
     { uint i;
     for(i = 0; i < numGameInfo; ++i)
     {
         gameinfo_t* info = gameInfo[i];
-        if(!stricmp(Str_Text(GameInfo_ModeIdentifier(info)), modeIdentifier))
+        if(!stricmp(Str_Text(GameInfo_IdentityKey(info)), modeIdentifier))
             return info;
     }}
     return 0; // Not found.
@@ -229,12 +217,12 @@ static void destroyPathList(ddstring_t*** list, size_t* listSize)
     *listSize = 0;
 }
 
-static gameinfo_t* addGameInfoRecord(pluginid_t pluginId, int mode, const char* modeString, const char* dataPath,
+static gameinfo_t* addGameInfoRecord(pluginid_t pluginId, const char* identityKey, const char* dataPath,
     const char* defsPath, const ddstring_t* mainDef, const char* title, const char* author, const ddstring_t* cmdlineFlag,
     const ddstring_t* cmdlineFlag2)
 {
     gameInfo = M_Realloc(gameInfo, sizeof(*gameInfo) * (numGameInfo + 1));
-    gameInfo[numGameInfo] = P_CreateGameInfo(pluginId, mode, modeString, dataPath, defsPath, mainDef, title, author, cmdlineFlag, cmdlineFlag2);
+    gameInfo[numGameInfo] = P_CreateGameInfo(pluginId, identityKey, dataPath, defsPath, mainDef, title, author, cmdlineFlag, cmdlineFlag2);
     return gameInfo[numGameInfo++];
 }
 
@@ -271,10 +259,9 @@ boolean DD_GetGameInfo(ddgameinfo_t* ex)
     { gameinfo_t* info = DD_GameInfo();
     if(!DD_IsNullGameInfo(info))
     {
+        ex->identityKey = Str_Text(GameInfo_IdentityKey(info));
         ex->title = Str_Text(GameInfo_Title(info));
         ex->author = Str_Text(GameInfo_Author(info));
-        ex->modeString = Str_Text(GameInfo_ModeIdentifier(info));
-        ex->mode = GameInfo_Mode(info);
         return true;
     }}
 
@@ -330,23 +317,19 @@ void DD_AddGameResource(gameid_t gameId, resourcetype_t resType, ddresourceclass
     }}
 }
 
-gameid_t DD_AddGame(int mode, const char* modeString, const char* _dataPath, const char* _defsPath, const char* _mainDef,
+gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* _defsPath, const char* _mainDef,
     const char* defaultTitle, const char* defaultAuthor, const char* _cmdlineFlag, const char* _cmdlineFlag2)
 {
-    assert(modeString && modeString[0] && _dataPath && _dataPath[0] && _defsPath && _defsPath[0] && defaultTitle && defaultTitle[0] && defaultAuthor && defaultAuthor[0]);
+    assert(identityKey && identityKey[0] && _dataPath && _dataPath[0] && _defsPath && _defsPath[0] && defaultTitle && defaultTitle[0] && defaultAuthor && defaultAuthor[0]);
     {
     gameinfo_t* info;
     ddstring_t mainDef, cmdlineFlag, cmdlineFlag2;
     filename_t dataPath, defsPath;
     pluginid_t pluginId = Plug_PluginIdForActiveHook();
 
-    // Game mode must be unique among games registered by this plugin.
-    if((info = findGameInfoForMode(pluginId, mode)))
-        Con_Error("DD_AddGame: Failed adding game \"%s\", mode '%i' already in use.", defaultTitle, mode);
-
-    // Game mode identifiers must be unique. Ensure that is the case.
-    if((info = findGameInfoForModeIdentifier(modeString)))
-        Con_Error("DD_AddGame: Failed adding game \"%s\", mode identifier '%s' already in use.", defaultTitle, modeString);
+    // Game mode identity keys must be unique. Ensure that is the case.
+    if((info = findGameInfoForIdentityKey(identityKey)))
+        Con_Error("DD_AddGame: Failed adding game \"%s\", identity key '%s' already in use.", defaultTitle, identityKey);
 
     M_TranslatePath(dataPath, _dataPath, FILENAME_T_MAXLEN);
     Dir_ValidDir(dataPath, FILENAME_T_MAXLEN);
@@ -378,7 +361,7 @@ gameid_t DD_AddGame(int mode, const char* modeString, const char* _dataPath, con
     /**
      * Looking good. Add this game to our records.
      */
-    info = addGameInfoRecord(pluginId, mode, modeString, dataPath, defsPath, &mainDef, defaultTitle, defaultAuthor, _cmdlineFlag? &cmdlineFlag : 0, _cmdlineFlag2? &cmdlineFlag2 : 0);
+    info = addGameInfoRecord(pluginId, identityKey, dataPath, defsPath, &mainDef, defaultTitle, defaultAuthor, _cmdlineFlag? &cmdlineFlag : 0, _cmdlineFlag2? &cmdlineFlag2 : 0);
 
     Str_Free(&mainDef);
     Str_Free(&cmdlineFlag);
@@ -544,7 +527,7 @@ static void printGameInfo(gameinfo_t* info)
     Con_Printf("Game: %s - %s\n", Str_Text(GameInfo_Title(info)), Str_Text(GameInfo_Author(info)));
 #if _DEBUG
     Con_Printf("  PluginId: %i\n", (int)GameInfo_PluginId(info));
-    Con_Printf("  Meta: mode:%i modeStr:\"%s\" data:\"%s\" defs:\"%s\"\n", GameInfo_Mode(info), Str_Text(GameInfo_ModeIdentifier(info)), M_PrettyPath(Str_Text(GameInfo_DataPath(info))), M_PrettyPath(Str_Text(GameInfo_DefsPath(info))));
+    Con_Printf("  Meta: identitykey:\"%s\" data:\"%s\" defs:\"%s\"\n", Str_Text(GameInfo_IdentityKey(info)), M_PrettyPath(Str_Text(GameInfo_DataPath(info))), M_PrettyPath(Str_Text(GameInfo_DefsPath(info))));
 #endif
 
     { int i;
@@ -838,7 +821,7 @@ static int DD_ChangeGameWorker(void* parm)
     if(gx.PostInit)
     {
         Con_SetProgress(180);
-        gx.PostInit(GameInfo_Mode(info));
+        gx.PostInit((gameid_t)gameInfoIndex(info));
     }
 
     Con_SetProgress(200);
@@ -854,7 +837,7 @@ void DD_ChangeGame(gameinfo_t* info)
 {
     assert(info);
 
-    Con_Message("DD_ChangeGame: Selecting \"%s\".\n", Str_Text(GameInfo_ModeIdentifier(info)));
+    Con_Message("DD_ChangeGame: Selecting \"%s\".\n", Str_Text(GameInfo_IdentityKey(info)));
     if(!exchangeEntryPoints(GameInfo_PluginId(info)))
     {
         Con_Message("DD_ChangeGame: Warning, error exchanging entrypoints with plugin %i - aborting.\n", (int)GameInfo_PluginId(info));
@@ -993,7 +976,7 @@ void DD_AutoselectGame(void)
             switch(pass)
             {
             case 0: // Command line modestring match for-development/debug (e.g., "-game doom1-ultimate").
-                if(!Str_CompareIgnoreCase(GameInfo_ModeIdentifier(info), expGame))
+                if(!Str_CompareIgnoreCase(GameInfo_IdentityKey(info), expGame))
                     DD_ChangeGame(info);
                 break;
 
@@ -1228,7 +1211,7 @@ static int DD_StartupWorker(void* parm)
     Dir_ValidDir(dataPath, FILENAME_T_MAXLEN);
     M_TranslatePath(defsPath, DD_BASEPATH_DEFS, FILENAME_T_MAXLEN);
     Dir_ValidDir(defsPath, FILENAME_T_MAXLEN);
-    currentGameInfoIndex = gameInfoIndex(addGameInfoRecord(0, -1, 0, dataPath, defsPath, 0, 0, 0, 0, 0));
+    currentGameInfoIndex = gameInfoIndex(addGameInfoRecord(0, 0, dataPath, defsPath, 0, 0, 0, 0, 0));
     }
 
     // Initialize the key mappings.

@@ -3393,7 +3393,7 @@ void G_DoScreenShot(void)
     }
 
     // Use game mode as the file name base.
-    sprintf(name, "%s-", gameInfo.modeString);
+    sprintf(name, "%s-", gameInfo.identityKey);
     numPos = name + strlen(name);
 
     // Find an unused file name.

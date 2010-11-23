@@ -61,11 +61,8 @@ typedef struct {
     /// Unique identifier of the plugin which registered this game.
     pluginid_t _pluginId;
 
-    /// Mode id supplied by the plugin which registered this game.
-    int _mode;
-
-    /// Unique mode identifier string (e.g., "doom1-ultimate").
-    ddstring_t _modeIdentifier;
+    /// Unique identifier string (e.g., "doom1-ultimate").
+    ddstring_t _identityKey;
 
     /// Formatted default title suitable for printing (e.g., "The Ultimate DOOM").
     ddstring_t _title;
@@ -95,9 +92,7 @@ typedef struct {
 /**
  * Create a new GameInfo.
  *
- * @param mode          Unique game mode id.
- * @param modeString    Unique game mode string key/identifier, 16 chars max (e.g., "doom1-ultimate").
- *                      Sent out in netgames, and the PCL_HELLO2 packet contains it. A client can't connect unless mode strings match.
+ * @param identityKey   Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
  * @param dataPath      The base directory for all data-class resources.
  * @param defsPath      The base directory for all defs-class resources.
  * @param mainDef       The main/top-level definition file. Can be @c NULL.
@@ -106,7 +101,7 @@ typedef struct {
  * @param cmdlineFlag   Command-line game selection override argument (e.g., "ultimate"). Can be @c NULL.
  * @param cmdlineFlag2  Alternative override. Can be @c NULL.
  */
-gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, int mode, const char* modeString, const char* dataPath,
+gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey, const char* dataPath,
     const char* defsPath, const ddstring_t* mainDef, const char* title, const char* author,
     const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2);
 
@@ -150,11 +145,8 @@ const ddstring_t* GameInfo_ResourceSearchPaths(gameinfo_t* info, ddresourceclass
 /// @return             Unique plugin identifier attributed to that which registered this.
 pluginid_t GameInfo_PluginId(gameinfo_t* info);
 
-/// @return             Integer mode id provided by the plugin which registered this.
-int GameInfo_Mode(gameinfo_t* info);
-
 /// @return             Ptr to a string containing the mode-identifier.
-const ddstring_t* GameInfo_ModeIdentifier(gameinfo_t* info);
+const ddstring_t* GameInfo_IdentityKey(gameinfo_t* info);
 
 /// @return             Ptr to a string containing the default title.
 const ddstring_t* GameInfo_Title(gameinfo_t* info);

@@ -60,7 +60,7 @@ typedef struct {
 
     // Base-level.
     void          (*PreInit) (void);
-    void          (*PostInit) (int mode);
+    void          (*PostInit) (gameid_t gameId);
     void          (*Shutdown) (void);
     void          (*UpdateState) (int step);
     int           (*GetInteger) (int id);

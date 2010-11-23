@@ -35,8 +35,6 @@
 extern game_import_t gi;
 extern game_export_t gx;
 
-boolean G_SetGameMode(gamemode_t mode);
-
 int G_GetInteger(int id);
 void* G_GetVariable(int id);
 
@@ -71,7 +69,7 @@ extern boolean monsterInfight;
 int G_RegisterGames(int hookType, int parm, void* data);
 
 void G_PreInit(void);
-void G_PostInit(int mode);
+void G_PostInit(gameid_t gameId);
 void G_Shutdown(void);
 
 #endif /* LIBJDOOM_MAIN_H */

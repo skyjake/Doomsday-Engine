@@ -51,7 +51,7 @@ extern const float defFontRGB2[];
 extern const float defFontRGB3[];
 
 void G_PreInit(void);
-void G_PostInit(int mode);
+void G_PostInit(gameid_t gameId);
 void G_Shutdown(void);
 
 void G_EndFrame(void);

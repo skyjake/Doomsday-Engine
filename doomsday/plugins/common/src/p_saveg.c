@@ -4821,13 +4821,12 @@ void SV_Init(void)
     else
     {   // Use the default path.
         ddgameinfo_t gameInfo;
-
         if(DD_GetGameInfo(&gameInfo))
         {
 #if __JHEXEN__
-            sprintf(savePath, "hexndata\\%s\\", gameInfo.modeString);
+            sprintf(savePath, "hexndata\\%s\\", gameInfo.identityKey);
 #else
-            sprintf(savePath, "savegame\\%s\\", gameInfo.modeString);
+            sprintf(savePath, "savegame\\%s\\", gameInfo.identityKey);
 #endif
         }
         else
@@ -5123,21 +5122,15 @@ static boolean readSaveHeader(saveheader_t *hdr, LZFILE *savefile)
             doom_shareware,
             doom,
             doom2,
-            doom_ultimate,
-            indetermined
-# elif __JDOOM64__
-            doom64,
-            indetermined
+            doom_ultimate
 # elif __JHERETIC__
             heretic_shareware,
             heretic,
-            heretic_extended,
-            indetermined
+            heretic_extended
 # elif __JHEXEN__
             hexen_demo,
             hexen,
-            hexen_deathkings,
-            indetermined
+            hexen_deathkings
 # endif
         };
         hdr->gameMode = oldGameModes[(int)hdr->gameMode];

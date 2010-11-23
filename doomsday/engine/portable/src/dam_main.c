@@ -396,7 +396,7 @@ void DAM_GetCachedMapDir(char* dir,  int mainLump, size_t len)
     }
 
     // The cached map directory is relative to the runtime directory.
-    dd_snprintf(dir, len, "%s%s\\%s-%04X\\", mapCacheDir, Str_Text(GameInfo_ModeIdentifier(DD_GameInfo())), base, identifier);
+    dd_snprintf(dir, len, "%s%s\\%s-%04X\\", mapCacheDir, Str_Text(GameInfo_IdentityKey(DD_GameInfo())), base, identifier);
 
     M_TranslatePath(dir, dir, len);
 }

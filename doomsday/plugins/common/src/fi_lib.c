@@ -404,7 +404,7 @@ int Hook_FinaleScriptEvalIf(int hookType, int finaleId, void* paramaters)
     { ddgameinfo_t gameInfo;
     if(DD_GetGameInfo(&gameInfo) && !strnicmp(p->token, "mode:", 5))
     {
-        p->returnVal = !stricmp(p->token + 5, gameInfo.modeString);
+        p->returnVal = !stricmp(p->token + 5, gameInfo.identityKey);
         return true;
     }}
 

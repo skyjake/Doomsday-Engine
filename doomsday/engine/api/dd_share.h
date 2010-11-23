@@ -317,11 +317,14 @@ enum {
 //
 //------------------------------------------------------------------------
 
+/**
+ * Extended info about a registered game component.
+ * Used with DD_GetGameInfo.
+ */
 typedef struct {
     const char* title;
     const char* author;
-    int mode;
-    const char* modeString;
+    const char* identityKey;
 } ddgameinfo_t;
 
 //------------------------------------------------------------------------

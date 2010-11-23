@@ -666,7 +666,7 @@ static boolean DED_CheckCondition(const char* cond, boolean expected)
     }
     else if(isalnum(cond[0]))
     {   // A game mode.
-        value = !stricmp(cond, Str_Text(GameInfo_ModeIdentifier(DD_GameInfo())));
+        value = !stricmp(cond, Str_Text(GameInfo_IdentityKey(DD_GameInfo())));
     }
 
     return value == expected;

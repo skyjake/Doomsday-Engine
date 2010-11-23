@@ -78,8 +78,8 @@ boolean randomClassParm; // checkparm of -randclass
 
 float turboMul; // Multiplier for turbo.
 
-gamemode_t gameMode = indetermined;
-int gameModeBits = 0;
+gamemode_t gameMode;
+int gameModeBits;
 
 // Default font colours.
 const float defFontRGB[]  = { .9f, .0f, .0f };
@@ -104,6 +104,9 @@ char* borderLumps[] = {
 // The interface to the Doomsday engine.
 game_export_t gx;
 game_import_t gi;
+
+// Identifiers given to the games we register during startup.
+gameid_t gameIds[NUM_GAME_MODES];
 
 static boolean autoStart = false;
 static uint startEpisode = 0;
@@ -177,26 +180,6 @@ void* G_GetVariable(int id)
     return 0;
 }
 
-/**
- * Attempt to change the current game mode. Can only be done when not
- * actually in a map.
- *
- * \todo Doesn't actually do anything yet other than set the game mode
- * global vars.
- *
- * @param mode          GameMode to change to.
- *
- * @return              @true, if we changed game modes successfully.
- */
-boolean G_SetGameMode(int/*gamemode_t*/ mode)
-{
-    if(G_GetGameState() == GS_MAP)
-        return false;
-    gameMode = mode;
-    gameModeBits = mode > 0? 1 << (mode-1) : 0;
-    return true;
-}
-
 int G_RegisterGames(int hookType, int parm, void* data)
 {
 #define DATAPATH        DD_BASEPATH_DATA GAMENAMETEXT "\\"
@@ -208,24 +191,24 @@ int G_RegisterGames(int hookType, int parm, void* data)
     /* Hexen (Death Kings) */
     { const char* lumps[] = { "MAP08", "MAP22", "TINTTAB", "FOGMAP", "TRANTBLA", "DARTA1", "ARTIPORK", "SKYFOG", "TALLYTOP", "GROVER" };
     const char* lumps2[] = { "MAP59", "MAP60" };
-    gameid_t gameId = DD_AddGame(hexen_deathkings, "hexen-dk", DATAPATH, DEFSPATH, STARTUPDED, "Hexen (Deathkings of the Dark Citadel)", "Raven Software", "deathkings", "dk");
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "hexen.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "hexdd.wad", lumps2, NUMELEMENTS(lumps2));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
+    gameIds[hexen_deathkings] = DD_AddGame("hexen-dk", DATAPATH, DEFSPATH, STARTUPDED, "Hexen (Deathkings of the Dark Citadel)", "Raven Software", "deathkings", "dk");
+    DD_AddGameResource(gameIds[hexen_deathkings], RT_PACKAGE, DDRC_WAD, "hexen.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameIds[hexen_deathkings], RT_PACKAGE, DDRC_WAD, "hexdd.wad", lumps2, NUMELEMENTS(lumps2));
+    DD_AddGameResource(gameIds[hexen_deathkings], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
 
     /* Hexen */
     { const char* lumps[] = { "MAP08", "MAP22", "TINTTAB", "FOGMAP", "TRANTBLA", "DARTA1", "ARTIPORK", "SKYFOG", "TALLYTOP", "GROVER" };
-    gameid_t gameId = DD_AddGame(hexen, "hexen", DATAPATH, DEFSPATH, STARTUPDED, "Hexen", "Raven Software", "hexen", 0);
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "hexen.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
+    gameIds[hexen] = DD_AddGame("hexen", DATAPATH, DEFSPATH, STARTUPDED, "Hexen", "Raven Software", "hexen", 0);
+    DD_AddGameResource(gameIds[hexen], RT_PACKAGE, DDRC_WAD, "hexen.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameIds[hexen], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
 
     /* Hexen (Demo) */
     { const char* lumps[] = { "MAP01", "MAP04", "TINTTAB", "FOGMAP", "TRANTBLA", "DARTA1", "ARTIPORK", "SKYFOG", "TALLYTOP", "GROVER" };
-    gameid_t gameId = DD_AddGame(hexen_demo, "hexen-demo", DATAPATH, DEFSPATH, STARTUPDED, "Hexen 4-map Beta Demo", "Raven Software", "dhexen", 0);
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "hexen.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
+    gameIds[hexen_demo] = DD_AddGame("hexen-demo", DATAPATH, DEFSPATH, STARTUPDED, "Hexen 4-map Beta Demo", "Raven Software", "dhexen", 0);
+    DD_AddGameResource(gameIds[hexen_demo], RT_PACKAGE, DDRC_WAD, "hexen.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameIds[hexen_demo], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
     return true;
 
@@ -396,11 +379,22 @@ void G_PreInit(void)
  * Post Game Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void G_PostInit(int mode)
+void G_PostInit(gameid_t gameId)
 {
     int p, warpMap;
 
-    G_SetGameMode((gamemode_t)mode);
+    /// \todo Refactor me away.
+    { size_t i;
+    for(i = 0; i < NUM_GAME_MODES; ++i)
+        if(gameIds[i] == gameId)
+        {
+            gameMode = (gamemode_t) i;
+            gameModeBits = 1 << gameMode;
+            break;
+        }
+    if(i == NUM_GAME_MODES)
+        Con_Error("Failed gamemode lookup for id %i.", (int)gameId);
+    }
 
     // Do this early as other systems need to know.
     P_InitPlayerClassInfo();

@@ -39,8 +39,6 @@
 extern game_import_t gi;
 extern game_export_t gx;
 
-boolean G_SetGameMode(gamemode_t mode);
-
 int G_GetInteger(int id);
 void* G_GetVariable(int id);
 

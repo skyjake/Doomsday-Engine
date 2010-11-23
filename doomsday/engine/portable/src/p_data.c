@@ -150,7 +150,7 @@ const char* P_GenerateUniqueMapID(const char* mapID)
     int lump = W_GetNumForName(mapID);
 
     M_ExtractFileBase(base, W_LumpSourceFile(lump), FILENAME_T_MAXLEN);
-    dd_snprintf(uid, 255, "%s|%s|%s|%s", mapID, base, (W_LumpFromIWAD(lump) ? "iwad" : "pwad"), Str_Text(GameInfo_ModeIdentifier(DD_GameInfo())));
+    dd_snprintf(uid, 255, "%s|%s|%s|%s", mapID, base, (W_LumpFromIWAD(lump) ? "iwad" : "pwad"), Str_Text(GameInfo_IdentityKey(DD_GameInfo())));
     strlwr(uid);
 
     return uid;

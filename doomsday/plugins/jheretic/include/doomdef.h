@@ -67,7 +67,6 @@ extern game_export_t gx;
 #define VALIDCOUNT          (*gi.validCount)
 
 typedef enum {
-    indetermined, // \todo now meaningless refactor away.
     heretic_shareware,
     heretic,
     heretic_extended,
@@ -75,7 +74,6 @@ typedef enum {
 } gamemode_t;
 
 // Game mode bits for the above.
-#define GM_INDETERMINED     0x0
 #define GM_HERETIC_SHAREWARE 0x1
 #define GM_HERETIC          0x2
 #define GM_HERETIC_EXTENDED 0x4

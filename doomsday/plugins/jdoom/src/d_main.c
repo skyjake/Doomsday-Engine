@@ -78,8 +78,8 @@ boolean turboParm; // checkparm of -turbo
 
 float turboMul; // Multiplier for turbo.
 
-gamemode_t gameMode = indetermined;
-int gameModeBits = 0;
+gamemode_t gameMode;
+int gameModeBits;
 
 // Default font colours.
 const float defFontRGB2[] = { .85f, 0, 0 };
@@ -103,6 +103,9 @@ char* borderLumps[] = {
 // The interface to the Doomsday engine.
 game_import_t gi;
 game_export_t gx;
+
+// Identifiers given to the games we register during startup.
+gameid_t gameIds[NUM_GAME_MODES];
 
 static skillmode_t startSkill;
 static uint startEpisode;
@@ -174,26 +177,6 @@ void* G_GetVariable(int id)
     return 0;
 }
 
-/**
- * Attempt to change the current game mode. Can only be done when not
- * actually in a map.
- *
- * \todo Doesn't actually do anything yet other than set the game mode
- * global vars.
- *
- * @param mode          GameMode to change to.
- *
- * @return              @true, if we changed game modes successfully.
- */
-boolean G_SetGameMode(int/*gamemode_t*/ mode)
-{
-    if(G_GetGameState() == GS_MAP)
-        return false;
-    gameMode = mode;
-    gameModeBits = mode > 0? 1 << (mode-1) : 0;
-    return true;
-}
-
 int G_RegisterGames(int hookType, int parm, void* data)
 {
 #define DATAPATH        DD_BASEPATH_DATA GAMENAMETEXT "\\"
@@ -204,51 +187,51 @@ int G_RegisterGames(int hookType, int parm, void* data)
 
     /* HacX */
     { const char* lumps[] = { "hacx-r" };
-    gameid_t gameId = DD_AddGame(doom2_hacx, "hacx", DATAPATH, DEFSPATH, STARTUPDED, "HACX - Twitch 'n Kill", "Banjo Software", "hacx", 0);
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "hacx.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
+    gameIds[doom2_hacx] = DD_AddGame("hacx", DATAPATH, DEFSPATH, STARTUPDED, "HACX - Twitch 'n Kill", "Banjo Software", "hacx", 0);
+    DD_AddGameResource(gameIds[doom2_hacx], RT_PACKAGE, DDRC_WAD, "hacx.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameIds[doom2_hacx], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
 
     /* DOOM2 (TNT) */
     { const char* lumps[] = { "cavern5", "cavern7", "stonew1" };
-    gameid_t gameId = DD_AddGame(doom2_tnt, "doom2-tnt", DATAPATH, DEFSPATH, STARTUPDED, "Final DOOM: TNT: Evilution", "Team TNT", "tnt", 0);
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "tnt.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
+    gameIds[doom2_tnt] = DD_AddGame("doom2-tnt", DATAPATH, DEFSPATH, STARTUPDED, "Final DOOM: TNT: Evilution", "Team TNT", "tnt", 0);
+    DD_AddGameResource(gameIds[doom2_tnt], RT_PACKAGE, DDRC_WAD, "tnt.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameIds[doom2_tnt], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
 
     /* DOOM2 (Plutonia) */
     { const char* lumps[] = { "_deutex_", "mc5", "mc11", "mc16", "mc20" };
-    gameid_t gameId = DD_AddGame(doom2_plut, "doom2-plut", DATAPATH, DEFSPATH, STARTUPDED, "Final DOOM: The Plutonia Experiment", "Dario Casali and Milo Casali", "plutonia", "plut");
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "plutonia.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
+    gameIds[doom2_plut] = DD_AddGame("doom2-plut", DATAPATH, DEFSPATH, STARTUPDED, "Final DOOM: The Plutonia Experiment", "Dario Casali and Milo Casali", "plutonia", "plut");
+    DD_AddGameResource(gameIds[doom2_plut], RT_PACKAGE, DDRC_WAD, "plutonia.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameIds[doom2_plut], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
 
     /* DOOM2 */
     { const char* lumps[] = { "map01", "map02", "map03", "map04", "map10", "map20", "map25", "map30", "vilen1", "vileo1", "vileq1", "grnrock" };
-    gameid_t gameId = DD_AddGame(doom2, "doom2", DATAPATH, DEFSPATH, STARTUPDED, "DOOM 2: Hell on Earth", "id Software", "doom2", 0);
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "doom2.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
+    gameIds[doom2] = DD_AddGame("doom2", DATAPATH, DEFSPATH, STARTUPDED, "DOOM 2: Hell on Earth", "id Software", "doom2", 0);
+    DD_AddGameResource(gameIds[doom2], RT_PACKAGE, DDRC_WAD, "doom2.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameIds[doom2], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
 
     /* DOOM (Ultimate) */
     { const char* lumps[] = { "e4m1", "e4m2", "e4m3", "e4m4", "e4m5", "e4m6", "e4m7", "e4m8", "e4m9", "m_epi4" };
-    gameid_t gameId = DD_AddGame(doom_ultimate, "doom1-ultimate", DATAPATH, DEFSPATH, STARTUPDED, "The Ultimate DOOM", "id Software", "ultimatedoom", "udoom");
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "doomu.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
+    gameIds[doom_ultimate] = DD_AddGame("doom1-ultimate", DATAPATH, DEFSPATH, STARTUPDED, "The Ultimate DOOM", "id Software", "ultimatedoom", "udoom");
+    DD_AddGameResource(gameIds[doom_ultimate], RT_PACKAGE, DDRC_WAD, "doomu.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameIds[doom_ultimate], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
 
     /* DOOM */
     { const char* lumps[] = { "e2m1", "e2m2", "e2m3", "e2m4", "e2m5", "e2m6", "e2m7", "e2m8", "e2m9", "e3m1", "e3m2", "e3m3", "e3m4", "e3m5", "e3m6", "e3m7", "e3m8", "e3m9", "cybre1", "cybrd8", "floor7_2" };
-    gameid_t gameId = DD_AddGame(doom, "doom1", DATAPATH, DEFSPATH, STARTUPDED, "DOOM Registered", "id Software", "doom", 0);
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "doom.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
+    gameIds[doom] = DD_AddGame("doom1", DATAPATH, DEFSPATH, STARTUPDED, "DOOM Registered", "id Software", "doom", 0);
+    DD_AddGameResource(gameIds[doom], RT_PACKAGE, DDRC_WAD, "doom.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameIds[doom], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
 
     /* DOOM (Shareware) */
     { const char* lumps[] = { "e1m1", "e1m2", "e1m3", "e1m4", "e1m5", "e1m6", "e1m7", "e1m8", "e1m9", "d_e1m1", "floor4_8", "floor7_2" };
-    gameid_t gameId = DD_AddGame(doom_shareware, "doom1-share", DATAPATH, DEFSPATH, STARTUPDED, "DOOM Shareware", "id Software", "sdoom", 0);
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "doom1.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
+    gameIds[doom_shareware] = DD_AddGame("doom1-share", DATAPATH, DEFSPATH, STARTUPDED, "DOOM Shareware", "id Software", "sdoom", 0);
+    DD_AddGameResource(gameIds[doom_shareware], RT_PACKAGE, DDRC_WAD, "doom1.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameIds[doom_shareware], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
     return true;
 
@@ -441,14 +424,25 @@ void G_PreInit(void)
  * Post Engine Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void G_PostInit(int mode)
+void G_PostInit(gameid_t gameId)
 {
     filename_t file;
     int p;
 
-    G_SetGameMode((gamemode_t)mode);
+    /// \todo Refactor me away.
+    { size_t i;
+    for(i = 0; i < NUM_GAME_MODES; ++i)
+        if(gameIds[i] == gameId)
+        {
+            gameMode = (gamemode_t) i;
+            gameModeBits = 1 << gameMode;
+            break;
+        }
+    if(i == NUM_GAME_MODES)
+        Con_Error("Failed gamemode lookup for id %i.", (int)gameId);
+    }
 
-    // Border background changes depending on mission.
+    // Border background is different in DOOM2.
     if(gameModeBits & GM_ANY_DOOM2)
         borderLumps[0] = "GRNROCK";
 

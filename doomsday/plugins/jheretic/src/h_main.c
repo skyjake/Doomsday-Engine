@@ -79,8 +79,8 @@ boolean turboParm; // checkparm of -turbo
 
 float turboMul; // Multiplier for turbo.
 
-gamemode_t gameMode = indetermined;
-int gameModeBits = 0;
+gamemode_t gameMode;
+int gameModeBits;
 
 // Default font colours.
 const float defFontRGB[]  = { .425f, .986f, .378f };
@@ -105,6 +105,9 @@ char* borderLumps[] = {
 // The interface to the Doomsday engine.
 game_import_t gi;
 game_export_t gx;
+
+// Identifiers given to the games we register during startup.
+gameid_t gameIds[NUM_GAME_MODES];
 
 static skillmode_t startSkill;
 static uint startEpisode;
@@ -179,26 +182,6 @@ void* G_GetVariable(int id)
     return 0;
 }
 
-/**
- * Attempt to change the current game mode. Can only be done when not
- * actually in a map.
- *
- * \todo Doesn't actually do anything yet other than set the game mode
- * global vars.
- *
- * @param mode          GameMode to change to.
- *
- * @return              @true, if we changed game modes successfully.
- */
-boolean G_SetGameMode(int/*gamemode_t*/ mode)
-{
-    if(G_GetGameState() == GS_MAP)
-        return false;
-    gameMode = mode;
-    gameModeBits = mode > 0? 1 << (mode-1) : 0;
-    return true;
-}
-
 int G_RegisterGames(int hookType, int parm, void* data)
 {
 #define DATAPATH        DD_BASEPATH_DATA GAMENAMETEXT "\\"
@@ -209,23 +192,23 @@ int G_RegisterGames(int hookType, int parm, void* data)
 
     /* Heretic (Extended) */
     { const char* lumps[] = { "EXTENDED", "E5M2", "E5M7", "E6M2", "MUMSIT", "WIZACT",  "MUS_CPTD", "CHKNC5", "SPAXA1A5" };
-    gameid_t gameId = DD_AddGame(heretic_extended, "heretic-ext", DATAPATH, DEFSPATH, STARTUPDED, "Heretic: Shadow of the Serpent Riders", "Raven Software", "hereticext", "xheretic");
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "heretic.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
+    gameIds[heretic_extended] = DD_AddGame("heretic-ext", DATAPATH, DEFSPATH, STARTUPDED, "Heretic: Shadow of the Serpent Riders", "Raven Software", "hereticext", "xheretic");
+    DD_AddGameResource(gameIds[heretic_extended], RT_PACKAGE, DDRC_WAD, "heretic.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameIds[heretic_extended], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
 
     /* Heretic */
     { const char* lumps[] = { "E2M2", "E3M6", "MUMSIT", "WIZACT",  "MUS_CPTD", "CHKNC5", "SPAXA1A5" };
-    gameid_t gameId = DD_AddGame(heretic, "heretic", DATAPATH, DEFSPATH, STARTUPDED, "Heretic Registered", "Raven Software", "heretic", 0);
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "heretic.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
+    gameIds[heretic] = DD_AddGame("heretic", DATAPATH, DEFSPATH, STARTUPDED, "Heretic Registered", "Raven Software", "heretic", 0);
+    DD_AddGameResource(gameIds[heretic], RT_PACKAGE, DDRC_WAD, "heretic.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameIds[heretic], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
 
     /* Heretic (Shareware) */
     { const char* lumps[] = { "E1M1", "MUMSIT", "WIZACT",  "MUS_CPTD", "CHKNC5", "SPAXA1A5" };
-    gameid_t gameId = DD_AddGame(heretic_shareware, "heretic-share", DATAPATH, DEFSPATH, STARTUPDED, "Heretic Shareware", "Raven Software", "sheretic", 0);
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "heretic1.wad", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
+    gameIds[heretic_shareware] = DD_AddGame("heretic-share", DATAPATH, DEFSPATH, STARTUPDED, "Heretic Shareware", "Raven Software", "sheretic", 0);
+    DD_AddGameResource(gameIds[heretic_shareware], RT_PACKAGE, DDRC_WAD, "heretic1.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameIds[heretic_shareware], RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
     return true;
 
@@ -423,12 +406,23 @@ void G_PreInit(void)
  * Post Engine Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void G_PostInit(int mode)
+void G_PostInit(gameid_t gameId)
 {
     filename_t file;
     int p;
 
-    G_SetGameMode((gamemode_t)mode);
+    /// \todo Refactor me away.
+    { size_t i;
+    for(i = 0; i < NUM_GAME_MODES; ++i)
+        if(gameIds[i] == gameId)
+        {
+            gameMode = (gamemode_t) i;
+            gameModeBits = 1 << gameMode;
+            break;
+        }
+    if(i == NUM_GAME_MODES)
+        Con_Error("Failed gamemode lookup for id %i.", (int)gameId);
+    }
 
     // Shareware WAD has different border background
     if(gameMode == heretic_shareware)

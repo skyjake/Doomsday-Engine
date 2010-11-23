@@ -79,22 +79,21 @@ extern          "C" {
      *
      * \note Game registration order defines the order of the automatic game identification/selection logic.
      *
-     * @param mode          Unique game mode id.
-     * @param modeString    Unique game mode string key/identifier, 16 chars max (e.g., "doom1-ultimate").
-     *                      Sent out in netgames, and the PCL_HELLO2 packet contains it. A client can't connect unless mode strings match.
+     * @param identityKey   Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
+     *                      - Used during resource location for mode-specific assets.
+     *                      - Sent out in netgames (a client can't connect unless mode strings match).
      * @param dataPath      The base directory for all data-class resources.
      * @param defsPath      The base directory for all defs-class resources.
      * @param mainDef       The main/top-level definition file. Can be @c NULL.
      * @param defaultTitle  Default game title. May be overridden later.
-     * @param defaultAuthor Default game author used for (e.g.) map author info if not specified. May be overridden later.
+     * @param defaultAuthor Default game author. Used for (e.g.) map author info if not specified. May be overridden later.
      * @param cmdlineFlag   Command-line game selection override argument (e.g., "ultimate"). Can be @c NULL.
      * @param cmdlineFlag2  Alternative override. Can be @c NULL.
      *
      * @return              Unique identifier/name assigned to the game.
      */
-    gameid_t DD_AddGame(int mode, const char* modeString, const char* dataPath, const char* defsPath,
-        const char* mainDef, const char* defaultTitle, const char* defaultAuthor, const char* cmdlineFlag,
-        const char* cmdlineFlag2);
+    gameid_t DD_AddGame(const char* identityKey, const char* dataPath, const char* defsPath, const char* mainDef,
+        const char* defaultTitle, const char* defaultAuthor, const char* cmdlineFlag, const char* cmdlineFlag2);
 
     /**
      * Registers a new resource to the list of resources for the specified game.

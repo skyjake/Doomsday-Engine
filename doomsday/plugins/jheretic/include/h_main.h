@@ -52,7 +52,7 @@ extern const float defFontRGB3[];
 extern boolean monsterInfight;
 
 void G_PreInit(void);
-void G_PostInit(int mode);
+void G_PostInit(gameid_t gameId);
 void G_Shutdown(void);
 
 #endif /* LIBJHERETIC_MAIN_H */
