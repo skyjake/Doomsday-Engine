@@ -115,11 +115,10 @@ static uint numGameInfo = 0, currentGameInfoIndex = 0;
 
 static __inline size_t countElements(const ddstring_t* const* list)
 {
-    assert(list);
-    {size_t n;
-    for(n = 0; list[n]; ++n);
+    size_t n = 0;
+    if(list)
+        while(list[n++]);
     return n;
-    }
 }
 
 static __inline uint gameInfoIndex(const gameinfo_t* info)
@@ -193,14 +192,6 @@ static void addToPathList(ddstring_t*** list, size_t* listSize, const char* rawP
     *list = M_Realloc(*list, sizeof(**list) * ++(*listSize)); /// \fixme This is never freed!
     (*list)[(*listSize)-1] = newPath;
     }
-}
-
-static boolean allValidLumpNames(const ddstring_t* const* list)
-{
-    for(; *list; list++)
-        if(W_CheckNumForName2(Str_Text(*list), true) == -1)
-            return false;
-    return true;
 }
 
 static void parseAutoloadFilePathsAndAddFiles(ddstring_t*** list, size_t* listSize, const char* pathString)
@@ -293,7 +284,21 @@ Con_Message("DD_GetGameInfo: Warning, no game currently loaded - returning false
     return false;
 }
 
-void DD_AddGameResource(gameid_t gameId, resourcetype_t resType, ddresourceclass_t resClass, const char* name)
+static void addIdentLumpToGameResourceRecord(gameresource_record_t* rec, const ddstring_t* lumpName)
+{
+    assert(rec && lumpName);
+    {
+    size_t num = countElements(rec->lumpNames);
+    rec->lumpNames = M_Realloc(rec->lumpNames, sizeof(*rec->lumpNames) * MAX_OF(num+1, 2));
+    if(num) num -= 1;
+    rec->lumpNames[num] = Str_New();
+    Str_Copy(rec->lumpNames[num], lumpName);
+    rec->lumpNames[num+1] = 0; // Terminate.
+    }
+}
+
+void DD_AddGameResource(gameid_t gameId, resourcetype_t resType, ddresourceclass_t resClass, const char* name,
+    const char** lumpNames, size_t numLumpNames)
 {
     gameinfo_t* info = findGameInfoForId(gameId);
 
@@ -306,12 +311,27 @@ void DD_AddGameResource(gameid_t gameId, resourcetype_t resType, ddresourceclass
     if(!name || !name[0])
         Con_Error("DD_AddGameResource: Error, invalid name argument.");
 
-    GameInfo_AddResource(info, resType, resClass, name);
+    { gameresource_record_t* rec;
+    if((rec = GameInfo_AddResource(info, resType, resClass, name)))
+    {
+        // Add an auto-identification file list to the info record?
+        if(rec->resClass == DDRC_WAD && lumpNames && numLumpNames != 0)
+        {
+            ddstring_t temp;
+            size_t n = 0;
+            Str_Init(&temp);
+            do
+            {
+                Str_Set(&temp, lumpNames[n]);
+                addIdentLumpToGameResourceRecord(rec, &temp);
+            } while(++n < numLumpNames);
+            Str_Free(&temp);
+        }
+    }}
 }
 
 gameid_t DD_AddGame(int mode, const char* modeString, const char* _dataPath, const char* _defsPath, const char* _mainDef,
-    const char* defaultTitle, const char* defaultAuthor, const char* _cmdlineFlag, const char* _cmdlineFlag2,
-    const char** modeLumpNames, size_t numModeLumpNames)
+    const char* defaultTitle, const char* defaultAuthor, const char* _cmdlineFlag, const char* _cmdlineFlag2)
 {
     assert(modeString && modeString[0] && _dataPath && _dataPath[0] && _defsPath && _defsPath[0] && defaultTitle && defaultTitle[0] && defaultAuthor && defaultAuthor[0]);
     {
@@ -364,19 +384,6 @@ gameid_t DD_AddGame(int mode, const char* modeString, const char* _dataPath, con
     Str_Free(&cmdlineFlag);
     Str_Free(&cmdlineFlag2);
 
-    // Add an auto-identification file list to the info record?
-    if(modeLumpNames && numModeLumpNames != 0)
-    {
-        ddstring_t temp;
-        size_t n = 0;
-        Str_Init(&temp);
-        do
-        {
-            Str_Set(&temp, modeLumpNames[n]);
-            GameInfo_AddModeLumpName(info, &temp);
-        } while(++n < numModeLumpNames);
-        Str_Free(&temp);
-    }
     return (gameid_t)gameInfoIndex(info);
     }
 }
@@ -398,6 +405,48 @@ void DD_DestroyGameInfo(void)
     }
     numGameInfo = 0;
     currentGameInfoIndex = 0;
+}
+
+/// @return              @c true, iff the resource appears to be what we think it is.
+static boolean recognizeWAD(const char* filePath, void* data)
+{
+    if(!M_FileExists(filePath))
+        return false;
+
+    { FILE* file;
+    if((file = fopen(filePath, "rb")))
+    {
+        char id[4];
+        if(fread(id, 4, 1, file) != 1)
+        {
+            fclose(file);
+            return false;
+        }
+        if(!(!strncmp(id, "IWAD", 4) || !strncmp(id, "PWAD", 4)))
+        {
+            fclose(file);
+            return false;
+        }
+        /*if(data)
+        {
+            /// \todo dj: Open this using the auxillary features of the WAD loader
+            /// and check all the specified lumps are present.
+            const ddstring_t* const* lumpNames = (const ddstring_t* const*) data;
+            for(; *lumpNames; lumpNames++)
+            {
+                if(W_CheckNumForName2(Str_Text(*lumpNames), true) == -1)
+                    return false;
+            }
+        }*/
+    }}
+    return true;
+}
+
+/// @return              @c true, iff the resource appears to be what we think it is.
+static boolean recognizeZIP(const char* filePath, void* data)
+{
+    /// \todo dj: write me.
+    return M_FileExists(filePath);
 }
 
 static void locateGameResources(gameinfo_t* info)
@@ -424,6 +473,17 @@ static void locateGameResources(gameinfo_t* info)
                 filename_t foundPath;
                 if(!F_FindResource2((*records)->resType, (*records)->resClass, foundPath, Str_Text(&(*records)->name), 0, FILENAME_T_MAXLEN))
                     continue;
+
+                // Validation.
+                switch((*records)->resClass)
+                {
+                case DDRC_WAD: if(!recognizeWAD(foundPath, (void*)(*records)->lumpNames)) continue;
+                    break;
+                case DDRC_ZIP: if(!recognizeZIP(foundPath, 0)) continue;
+                    break;
+                default: break;
+                }
+                // Passed.
                 Str_Set(&(*records)->path, foundPath);
             } while(*(++records));
     }}
@@ -616,6 +676,12 @@ static boolean exchangeEntryPoints(pluginid_t pluginId)
     return true;
 }
 
+static __inline boolean isZip(const char* fn)
+{
+    size_t len = strlen(fn);
+    return (len > 4 && (!strnicmp(fn + len - 4, ".pk3", 4) || !strnicmp(fn + len - 4, ".zip", 4)));
+}
+
 static int DD_ChangeGameWorker(void* parm)
 {
     assert(parm);
@@ -691,13 +757,6 @@ static int DD_ChangeGameWorker(void* parm)
         loadGameResources(info, (ddresourceclass_t)i);
     }*/
 
-    // \todo dj: move validation logic into a resource analyzer.
-    if(GameInfo_ModeLumpNames(info))
-    {
-        if(!allValidLumpNames(GameInfo_ModeLumpNames(info)))
-            Con_Error("Failed\n");
-    }
-
     // Add real files from the Auto directory to the gameResourceFileList.
     addFilesFromAutoData(false);
 
@@ -707,9 +766,9 @@ static int DD_ChangeGameWorker(void* parm)
         { size_t i;
         for(i = 0; i < numGameResourceFileList; ++i)
         {
-            if(!W_IsPK3(Str_Text(gameResourceFileList[i])))
+            if(!isZip(Str_Text(gameResourceFileList[i])))
                 continue;
-            Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(Str_Text(gameResourceFileList[i])));
+            //Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(Str_Text(gameResourceFileList[i])));
             W_AddFile(Str_Text(gameResourceFileList[i]), false);
         }}
 
@@ -719,7 +778,7 @@ static int DD_ChangeGameWorker(void* parm)
         {
             if(!W_IsIWAD(Str_Text(gameResourceFileList[i])))
                 continue;
-            Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(Str_Text(gameResourceFileList[i])));
+            //Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(Str_Text(gameResourceFileList[i])));
             W_AddFile(Str_Text(gameResourceFileList[i]), false);
         }}
     }
@@ -733,7 +792,7 @@ static int DD_ChangeGameWorker(void* parm)
         size_t i;
         for(i = 0; i < numGameResourceFileList; ++i)
         {
-            Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(Str_Text(gameResourceFileList[i])));
+            //Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(Str_Text(gameResourceFileList[i])));
             W_AddFile(Str_Text(gameResourceFileList[i]), false);
         }
     }

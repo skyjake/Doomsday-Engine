@@ -89,14 +89,12 @@ extern          "C" {
      * @param defaultAuthor Default game author used for (e.g.) map author info if not specified. May be overridden later.
      * @param cmdlineFlag   Command-line game selection override argument (e.g., "ultimate"). Can be @c NULL.
      * @param cmdlineFlag2  Alternative override. Can be @c NULL.
-     * @param modeLumpNames Vector of expected original game data lump/file names. Used for automatic game selection.
-     * @param numModeLumpNames Number of elements in @a modeLumpNames.
      *
      * @return              Unique identifier/name assigned to the game.
      */
     gameid_t DD_AddGame(int mode, const char* modeString, const char* dataPath, const char* defsPath,
         const char* mainDef, const char* defaultTitle, const char* defaultAuthor, const char* cmdlineFlag,
-        const char* cmdlineFlag2, const char** modeLumpNames, size_t numModeLumpNames);
+        const char* cmdlineFlag2);
 
     /**
      * Registers a new resource to the list of resources for the specified game.
@@ -106,9 +104,12 @@ extern          "C" {
      * @param gameId        Unique identifier/name of the game we are adding a resource record to.
      * @param resType       Type of resource being added.
      * @param resClass      Class of resource being added.
-     * @param name          Name of resource being added
+     * @param name          Name of resource being added.
+     * @param lumpNames     Vector of expected original game data lump/file names. Used for automatic game selection.
+     * @param numLumpNames  Number of elements in @a lumpNames.
      */
-    void DD_AddGameResource(gameid_t gameId, resourcetype_t resType, ddresourceclass_t resClass, const char* name);
+    void DD_AddGameResource(gameid_t gameId, resourcetype_t resType, ddresourceclass_t resClass, const char* name,
+         const char** lumpNames, size_t numLumpNames);
 
     /**
      * Retrieve info about the current game.

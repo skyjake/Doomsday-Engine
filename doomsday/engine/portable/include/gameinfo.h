@@ -45,6 +45,9 @@ typedef struct {
 
     /// Path to this resource if found. Set during resource location.
     ddstring_t path;
+
+    /// Vector of lump names used for identification purposes.
+    ddstring_t** lumpNames;
 } gameresource_record_t;
 
 /**
@@ -87,9 +90,6 @@ typedef struct {
 
     /// Vector of records for required game resources (e.g., doomu.wad).
     gameresource_record_t** _requiredResources[NUM_RESOURCE_CLASSES];
-
-    /// Vector of lump names used for automatic identification and/or selection.
-    ddstring_t** _modeLumpNames;
 } gameinfo_t;
 
 /**
@@ -121,12 +121,7 @@ void P_DestroyGameInfo(gameinfo_t* info);
  * @param resClass      Class of resource.
  * @param name          Name of resource.
  */
-void GameInfo_AddResource(gameinfo_t* info, resourcetype_t resType, ddresourceclass_t resClass, const char* name);
-
-/**
- * Add a new lump name to the list of identification lumps.
- */
-void GameInfo_AddModeLumpName(gameinfo_t* info, const ddstring_t* lumpName);
+gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourcetype_t resType, ddresourceclass_t resClass, const char* name);
 
 /**
  * Add a new file path to the list of resource-locator search paths.
@@ -184,8 +179,5 @@ const ddstring_t* GameInfo_CmdlineFlag2(gameinfo_t* info);
 
 /// @return             Ptr to a vector of required resource records.
 gameresource_record_t* const* GameInfo_Resources(gameinfo_t* info, ddresourceclass_t resClass, size_t* count);
-
-/// @return             Ptr to an array of strings containing the names of lumps (for identification purposes).
-const ddstring_t* const* GameInfo_ModeLumpNames(gameinfo_t* info);
 
 #endif /* LIBDENG_GAMEINFO_H */

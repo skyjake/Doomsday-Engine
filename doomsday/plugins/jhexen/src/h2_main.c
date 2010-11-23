@@ -206,26 +206,26 @@ int G_RegisterGames(int hookType, int parm, void* data)
 #define NUMELEMENTS(v)  (sizeof(v)/sizeof((v)[0]))
 
     /* Hexen (Death Kings) */
-    { const char* lumps[] = { "MAP59"/*dk*/, "MAP60"/*dk*/, "MAP08", "MAP22", "TINTTAB", "FOGMAP", "TRANTBLA", "DARTA1", "ARTIPORK", "SKYFOG", "TALLYTOP", "GROVER" };
-    gameid_t gameId = DD_AddGame(hexen_deathkings, "hexen-dk", DATAPATH, DEFSPATH, STARTUPDED, "Hexen (Deathkings of the Dark Citadel)", "Raven Software", "deathkings", "dk", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "hexen.wad");
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "hexdd.wad");
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3);
+    { const char* lumps[] = { "MAP08", "MAP22", "TINTTAB", "FOGMAP", "TRANTBLA", "DARTA1", "ARTIPORK", "SKYFOG", "TALLYTOP", "GROVER" };
+    const char* lumps2[] = { "MAP59", "MAP60" };
+    gameid_t gameId = DD_AddGame(hexen_deathkings, "hexen-dk", DATAPATH, DEFSPATH, STARTUPDED, "Hexen (Deathkings of the Dark Citadel)", "Raven Software", "deathkings", "dk");
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "hexen.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "hexdd.wad", lumps2, NUMELEMENTS(lumps2));
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
 
     /* Hexen */
     { const char* lumps[] = { "MAP08", "MAP22", "TINTTAB", "FOGMAP", "TRANTBLA", "DARTA1", "ARTIPORK", "SKYFOG", "TALLYTOP", "GROVER" };
-    gameid_t gameId = DD_AddGame(hexen, "hexen", DATAPATH, DEFSPATH, STARTUPDED, "Hexen", "Raven Software", "hexen", 0, lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "hexen.wad");
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3);
+    gameid_t gameId = DD_AddGame(hexen, "hexen", DATAPATH, DEFSPATH, STARTUPDED, "Hexen", "Raven Software", "hexen", 0);
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "hexen.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
 
     /* Hexen (Demo) */
-    { const char* files[] = { STARTUPPK3, "hexen.wad" };
-    const char* lumps[] = { "MAP01", "MAP04", "TINTTAB", "FOGMAP", "TRANTBLA", "DARTA1", "ARTIPORK", "SKYFOG", "TALLYTOP", "GROVER" };
-    gameid_t gameId = DD_AddGame(hexen_demo, "hexen-demo", DATAPATH, DEFSPATH, STARTUPDED, "Hexen 4-map Beta Demo", "Raven Software", "dhexen", 0, lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "hexen.wad");
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3);
+    { const char* lumps[] = { "MAP01", "MAP04", "TINTTAB", "FOGMAP", "TRANTBLA", "DARTA1", "ARTIPORK", "SKYFOG", "TALLYTOP", "GROVER" };
+    gameid_t gameId = DD_AddGame(hexen_demo, "hexen-demo", DATAPATH, DEFSPATH, STARTUPDED, "Hexen 4-map Beta Demo", "Raven Software", "dhexen", 0);
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "hexen.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
     return true;
 

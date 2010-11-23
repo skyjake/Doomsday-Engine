@@ -210,9 +210,9 @@ int G_RegisterGames(int hookType, int parm, void* data)
 #define NUMELEMENTS(v)  (sizeof(v)/sizeof((v)[0]))
 
     const char* lumps[] = { "map01", "map02", "map38", "f_suck" };
-    gameid_t gameId = DD_AddGame(doom64, "doom64", DATAPATH, DEFSPATH, STARTUPDED, "Doom 64", "Midway Software", "doom64", 0, lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "doom64.wad");
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3);
+    gameid_t gameId = DD_AddGame(doom64, "doom64", DATAPATH, DEFSPATH, STARTUPDED, "Doom 64", "Midway Software", "doom64", 0);
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "doom64.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     return true;
 
 #undef NUMELEMENTS

@@ -146,7 +146,6 @@ static filerecord_t* records = 0;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static boolean loadingForStartup = true;
-static boolean iwadLoaded = false;
 
 static grouping_t lumpGroups[] = {
     { "", "" },
@@ -201,11 +200,6 @@ static lumpnum_t W_Select(lumpnum_t lump)
         W_UsePrimary();
     }
     return lump;
-}
-
-boolean W_LoadedIWAD(void)
-{
-    return iwadLoaded;
 }
 
 int W_NumLumps(void)
@@ -668,9 +662,7 @@ boolean W_AddFile(const char* fileName, boolean allowDuplicate)
             }
         }
         else
-        {
-            // Found an IWAD.
-            iwadLoaded = true;
+        {   // Found an IWAD.
             if(!stricmp(extension, "wad"))
                 rec->iwad = true;
         }
@@ -778,14 +770,6 @@ int W_IsIWAD(const char* fn)
     return !stricmp(id, "IWAD");
 }
 
-boolean W_IsPK3(const char* fn)
-{
-    size_t              len = strlen(fn);
-
-    return (len > 4 && (!strnicmp(fn + len - 4, ".pk3", 4) ||
-                        !strnicmp(fn + len - 4, ".zip", 4)));
-}
-
 static void initLumpInfo(void)
 {
     numLumps = 0;
@@ -794,7 +778,6 @@ static void initLumpInfo(void)
 
 void W_Init(void)
 {
-    iwadLoaded = false;
     // This'll force the loader NOT the flag new records Runtime. (?)
     loadingForStartup = true;
 

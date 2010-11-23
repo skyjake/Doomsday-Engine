@@ -49,23 +49,9 @@ int W_NumLumps(void);
 uint W_CRCNumber(void);
 
 /**
- * Determines if a file name refers to a PK3 package.
- *
- * @param fn            Path of the file.
- *
- * @return              @c true, if the file is a PK3 package.
- */
-boolean W_IsPK3(const char* fn);
-
-/**
- * @return              @c true, iff the given filename exists and is an IWAD.
+ * @return              @c true, iff the file exists and appears to be an IWAD.
  */
 int W_IsIWAD(const char* fn);
-
-/**
- * @return              @c true iff an IWAD is loaded.
- */
-boolean W_LoadedIWAD(void);
 
 /**
  * \post No more WADs will be loaded in startup mode.

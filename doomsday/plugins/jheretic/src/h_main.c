@@ -209,23 +209,23 @@ int G_RegisterGames(int hookType, int parm, void* data)
 
     /* Heretic (Extended) */
     { const char* lumps[] = { "EXTENDED", "E5M2", "E5M7", "E6M2", "MUMSIT", "WIZACT",  "MUS_CPTD", "CHKNC5", "SPAXA1A5" };
-    gameid_t gameId = DD_AddGame(heretic_extended, "heretic-ext", DATAPATH, DEFSPATH, STARTUPDED, "Heretic: Shadow of the Serpent Riders", "Raven Software", "hereticext", "xheretic", lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "heretic.wad");
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3);
+    gameid_t gameId = DD_AddGame(heretic_extended, "heretic-ext", DATAPATH, DEFSPATH, STARTUPDED, "Heretic: Shadow of the Serpent Riders", "Raven Software", "hereticext", "xheretic");
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "heretic.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
 
     /* Heretic */
     { const char* lumps[] = { "E2M2", "E3M6", "MUMSIT", "WIZACT",  "MUS_CPTD", "CHKNC5", "SPAXA1A5" };
-    gameid_t gameId = DD_AddGame(heretic, "heretic", DATAPATH, DEFSPATH, STARTUPDED, "Heretic Registered", "Raven Software", "heretic", 0, lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "heretic.wad");
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3);
+    gameid_t gameId = DD_AddGame(heretic, "heretic", DATAPATH, DEFSPATH, STARTUPDED, "Heretic Registered", "Raven Software", "heretic", 0);
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "heretic.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
 
     /* Heretic (Shareware) */
     { const char* lumps[] = { "E1M1", "MUMSIT", "WIZACT",  "MUS_CPTD", "CHKNC5", "SPAXA1A5" };
-    gameid_t gameId = DD_AddGame(heretic_shareware, "heretic-share", DATAPATH, DEFSPATH, STARTUPDED, "Heretic Shareware", "Raven Software", "sheretic", 0, lumps, NUMELEMENTS(lumps));
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "heretic1.wad");
-    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3);
+    gameid_t gameId = DD_AddGame(heretic_shareware, "heretic-share", DATAPATH, DEFSPATH, STARTUPDED, "Heretic Shareware", "Raven Software", "sheretic", 0);
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_WAD, "heretic1.wad", lumps, NUMELEMENTS(lumps));
+    DD_AddGameResource(gameId, RT_PACKAGE, DDRC_ZIP, STARTUPPK3, 0, 0);
     }
     return true;
 

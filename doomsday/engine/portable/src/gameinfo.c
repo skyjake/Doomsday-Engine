@@ -95,15 +95,7 @@ static const resourceclasspath_t resourceClassPathSearchOrder[NUM_RESOURCE_CLASS
     { RCP_GAMEPATH_DATA, RCP_GAMEMODEPATH_DATA, 0 }
 };
 
-static __inline size_t countElements(const ddstring_t* const* list)
-{
-    size_t n = 0;
-    if(list)
-        while(list[n++]);
-    return n;
-}
-
-static __inline size_t countElements2(gameresource_record_t* const* list)
+static __inline size_t countElements(gameresource_record_t* const* list)
 {
     size_t n = 0;
     if(list)
@@ -266,7 +258,6 @@ gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, int mode, const char* modeStri
 
     info->_pluginId = pluginId;
     info->_mode = mode;
-    info->_modeLumpNames = 0;
 
     Str_Init(&info->_modeIdentifier);
     if(modeString)
@@ -346,27 +337,26 @@ void P_DestroyGameInfo(gameinfo_t* info)
         {
             Str_Free(&(*rec)->name);
             Str_Free(&(*rec)->path);
+            if((*rec)->lumpNames)
+            {
+                size_t j;
+                for(j = 0; (*rec)->lumpNames[j]; ++j)
+                    Str_Delete((*rec)->lumpNames[j]);
+                M_Free((*rec)->lumpNames); (*rec)->lumpNames = 0;
+            }
             M_Free(*rec);
         }}
         M_Free(info->_requiredResources[i]);
     }}
 
-    if(info->_modeLumpNames)
-    {
-        size_t j;
-        for(j = 0; info->_modeLumpNames[j]; ++j)
-            Str_Delete(info->_modeLumpNames[j]);
-        M_Free(info->_modeLumpNames); info->_modeLumpNames = 0;
-    }
-
     M_Free(info);
 }
 
-void GameInfo_AddResource(gameinfo_t* info, resourcetype_t resType, ddresourceclass_t resClass, const char* name)
+gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourcetype_t resType, ddresourceclass_t resClass, const char* name)
 {
     assert(info && VALID_RESOURCE_TYPE(resType) && VALID_RESOURCE_CLASS(resClass) && name && name[0]);
     {
-    size_t num = countElements2(info->_requiredResources[resClass]);
+    size_t num = countElements(info->_requiredResources[resClass]);
     gameresource_record_t* rec;
 
     info->_requiredResources[resClass] = M_Realloc(info->_requiredResources[resClass], sizeof(*info->_requiredResources[resClass]) * MAX_OF(num+1, 2));
@@ -375,21 +365,10 @@ void GameInfo_AddResource(gameinfo_t* info, resourcetype_t resType, ddresourcecl
 
     rec->resType = resType;
     rec->resClass = resClass;
+    rec->lumpNames = 0;
     Str_Init(&rec->name); Str_Set(&rec->name, name);
     Str_Init(&rec->path);
-    }
-}
-
-void GameInfo_AddModeLumpName(gameinfo_t* info, const ddstring_t* lumpName)
-{
-    assert(info && lumpName);
-    {
-    size_t num = countElements(info->_modeLumpNames);
-    info->_modeLumpNames = M_Realloc(info->_modeLumpNames, sizeof(*info->_modeLumpNames) * MAX_OF(num+1, 2));
-    if(num) num -= 1;
-    info->_modeLumpNames[num] = Str_New();
-    Str_Copy(info->_modeLumpNames[num], lumpName);
-    info->_modeLumpNames[num+1] = 0; // Terminate.
+    return rec;
     }
 }
 
@@ -534,12 +513,6 @@ gameresource_record_t* const* GameInfo_Resources(gameinfo_t* info, ddresourcecla
 {
     assert(info && VALID_RESOURCE_CLASS(resClass));
     if(count)
-        *count = countElements2(info->_requiredResources[resClass]);
+        *count = countElements(info->_requiredResources[resClass]);
     return info->_requiredResources[resClass];
-}
-
-const ddstring_t* const* GameInfo_ModeLumpNames(gameinfo_t* info)
-{
-    assert(info);
-    return info->_modeLumpNames;
 }
