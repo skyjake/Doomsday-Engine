@@ -23,11 +23,13 @@
 #include <de/core.h>
 #include <de/net.h>
 
+#include <QList>
+
 class Session;
 class Client;
 
 /**
- * @defgroup client Client
+ * @defgroup server Server
  * The server application.
  */
 
@@ -36,8 +38,10 @@ class Client;
  *
  * @ingroup server
  */
-class ServerApp : public de::App
+class ServerApp : public de::ConsoleApp
 {
+    Q_OBJECT
+
 public:
     /// No session is currently active. @ingroup errors
     DEFINE_ERROR(NoSessionError);
@@ -49,7 +53,7 @@ public:
     DEFINE_ERROR(RightsError);
     
 public:
-    ServerApp(const de::CommandLine& commandLine);
+    ServerApp(int argc, char** argv);
     ~ServerApp();
     
     void iterate(const de::Time::Delta& elapsed);
@@ -67,7 +71,7 @@ public:
      * Check if there are any incoming requests from connected clients.
      * Process any incoming packets.
      */
-    void tendClients();
+    //void tendClients();
 
     /**
      * Process a packet received from the network.
@@ -90,6 +94,9 @@ public:
      */
     void verifyAdmin(const de::Address& clientAddress) const;
 
+public slots:
+    void processIncomingMessage();
+
 public:
     /// Returns the singleton Server instance.
     static ServerApp& serverApp();
@@ -101,7 +108,7 @@ private:
     /// The active game session.
     Session* _session;
     
-    typedef std::list<Client*> Clients;
+    typedef QList<Client*> Clients;
     Clients _clients;
 };
 

@@ -38,14 +38,14 @@ Protocol::~Protocol()
 
 void Protocol::define(Constructor constructor)
 {
-    _constructors.push_back(constructor);
+    _constructors.append(constructor);
 }
 
 Packet* Protocol::interpret(const Block& block) const
 {
-    FOR_EACH(i, _constructors, Constructors::const_iterator)
+    foreach(Constructor constructor, _constructors)
     {
-        Packet* p = (*i)(block);
+        Packet* p = constructor(block);
         if(p)
         {
             return p;
@@ -54,13 +54,13 @@ Packet* Protocol::interpret(const Block& block) const
     return 0;
 }
 
-void Protocol::decree(Transceiver& to, const CommandPacket& command, RecordPacket** response)
+void Protocol::syncCommand(Transceiver& to, const CommandPacket& command, RecordPacket** response)
 {
-    LOG_AS("Protocol::decree");
-    LOG_DEBUG("Sending command: '%s' with args:\n%s") << command.command() << command.arguments();
+    LOG_AS("Protocol::syncCommand");
+    LOG_DEBUG("Sending: '%s' with args:\n%s") << command.command() << command.arguments();
     
     to << command;
-    std::auto_ptr<RecordPacket> rep(to.receivePacket<RecordPacket>());
+    QScopedPointer<RecordPacket> rep(to.receivePacket<RecordPacket>());
 
     // Check the answer.
     if(rep->label() == "failure")
@@ -76,12 +76,12 @@ void Protocol::decree(Transceiver& to, const CommandPacket& command, RecordPacke
             "' was denied: " + rep->valueAsText("message"));
     }
 
-    LOG_DEBUG("Reply to the decree '%s' was '%s':") << command.command() << rep->label();
+    LOG_DEBUG("Reply to the command '%s' was '%s':") << command.command() << rep->label();
     LOG_DEBUG("") << rep->record();
 
     if(response)
     {
-        *response = rep.release();
+        *response = rep.take();
     }
 }
 

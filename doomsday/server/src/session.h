@@ -27,7 +27,7 @@
 #include <de/types.h>
 #include <de/world.h>
 
-#include <map>
+#include <QMap>
 
 class RemoteUser;
 
@@ -60,7 +60,7 @@ public:
         /// Sends @a data to all users in the session.
         void send(const de::IByteArray& data);
         de::Message* receive() {
-            assert(false); // Not cool, dude.
+            Q_ASSERT(false); // Not cool, dude.
             return 0;
         }
     private:
@@ -127,7 +127,7 @@ private:
     de::World* _world;
     
     // The remote users.
-    typedef std::map<de::Id, RemoteUser*> Users;
+    typedef QMap<de::Id, RemoteUser*> Users;
     Users _users;
 };
 

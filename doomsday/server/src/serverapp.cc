@@ -17,8 +17,6 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <SDL.h>
-
 #include "serverapp.h"
 #include "client.h"
 #include "session.h"
@@ -26,19 +24,21 @@
 #include <de/types.h>
 #include <de/net.h>
 
-#include <sstream>
-
+/*
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
+*/
 
-#include "doomsday.h"
+//#include "doomsday.h"
 
 using namespace de;
 
-ServerApp::ServerApp(const de::CommandLine& arguments)
-    : App(arguments, "/config/server/server.de", "server"), _listenSocket(0), _session(0)
+ServerApp::ServerApp(int argc, char** argv)
+    : ConsoleApp(argc, argv, "/config/server/server.de", "server", de::Log::DEBUG),
+      _listenSocket(0),
+      _session(0)
 {
     CommandLine& args = commandLine();
 
@@ -49,12 +49,13 @@ ServerApp::ServerApp(const de::CommandLine& arguments)
     String param;
     if(args.getParameter("--port", param))
     {
-        std::istringstream(param) >> port;
+        port = param.toInt();
     }
     
     LOG_INFO("Server uses port ") << port;
     _listenSocket = new ListenSocket(port);
     
+    /*
     args.append("-dedicated");
     args.append("-nosound");
     
@@ -63,6 +64,7 @@ ServerApp::ServerApp(const de::CommandLine& arguments)
 
     // Initialize the engine.
     DD_Entry(0, NULL);
+    */
 }
 
 ServerApp::~ServerApp()
@@ -70,14 +72,14 @@ ServerApp::~ServerApp()
     delete _session;
 
     // Close all links.
-    for(Clients::iterator i = _clients.begin(); i != _clients.end(); ++i)
+    foreach(Client* c, _clients)
     {
-        delete *i;
+        delete c;
     }
     _clients.clear();
     
     // Shutdown the engine.
-    DD_Shutdown();
+    //DD_Shutdown();
 
     delete _listenSocket;
 }
@@ -89,14 +91,11 @@ void ServerApp::iterate(const Time::Delta& elapsed)
     if(incoming)
     {
         LOG_INFO("New client connected from %s.") << incoming->peerAddress();
-        _clients.push_back(new Client(incoming));
+        _clients.append(new Client(incoming));
     }
 
-    SDL_PumpEvents();
-
-    tendClients();
-
-    LOG_TRACE("Entering libdeng gameloop...");
+    //SDL_PumpEvents();
+    //tendClients();
 
     // Perform thinking for the current map.
     if(hasCurrentMap())
@@ -105,24 +104,25 @@ void ServerApp::iterate(const Time::Delta& elapsed)
     }
     
     // libdeng main loop tasks.
-    DD_GameLoop();
+    //LOG_TRACE("Entering libdeng gameloop...");
+    //DD_GameLoop();
 
-    LOG_TRACE("Finished iteration.");
+    //LOG_TRACE("Finished iteration.");
 }
 
 Client& ServerApp::clientByAddress(const de::Address& address) const
 {
-    for(Clients::const_iterator i = _clients.begin(); i != _clients.end(); ++i)
+    foreach(Client* c, _clients)
     {
-        if((*i)->peerAddress() == address)
+        if(c->peerAddress() == address)
         {
-            return **i;
+            return *c;
         }
     }
     throw UnknownAddressError("ServerApp::clientByAddress", "Address not in use by any client");
 }
 
-void ServerApp::tendClients()
+void ServerApp::processIncomingMessage()
 {
     for(Clients::iterator i = _clients.begin(); i != _clients.end(); )
     {
@@ -263,7 +263,7 @@ void ServerApp::replyStatus(const de::Address& to)
 
 void ServerApp::verifyAdmin(const de::Address& clientAddress) const
 {
-    if(!clientByAddress(clientAddress).rights[Client::ADMIN_BIT])
+    if(!clientByAddress(clientAddress).rights.testFlag(Client::AdminRight))
     {
         /// @throw RightsError Client does not have administration rights.
         throw RightsError("ServerApp::verifyAdmin", "Admin rights required");

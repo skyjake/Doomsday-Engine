@@ -29,7 +29,7 @@ using namespace de;
 Session::Session() : _world(0)
 {
     // Create a blank world.
-    _world = GAME_SYMBOL(deng_NewWorld)();
+    _world = new World();
 }
 
 Session::~Session()
@@ -39,19 +39,20 @@ Session::~Session()
     if(!_users.empty())
     {
         RecordPacket sessionEnded("session.ended");
-        for(Users::iterator i = _users.begin(); i != _users.end(); ++i)
+        foreach(RemoteUser* remoteUser, _users.values())
         {
-            i->second->client().link().audienceForDeletion.remove(this);
-            i->second->setSession(0);
+            remoteUser->client().link().audienceForDeletion.remove(this);
+            remoteUser->setSession(0);
             
             // Inform that the session has ended.
-            i->second->client().updates() << sessionEnded;
+            remoteUser->client().updates() << sessionEnded;
             
-            delete i->second;
+            delete remoteUser;
         }
         _users.clear();
     }
-    LOG_DEBUG("Deleting the world");
+
+    LOG_DEBUG("Deleting the world.");
     delete _world;
 }
 
@@ -132,8 +133,8 @@ RemoteUser& Session::promote(Client& client)
         Record& userStateRec = welcome.record().addRecord("users");
         for(Users::iterator i = _users.begin(); i != _users.end(); ++i)
         {
-            Writer(userStateRec.addBlock(i->second->user().id()).value<BlockValue>())
-                << i->second->user();
+            Writer(userStateRec.addBlock(i.value()->user().id()).value<BlockValue>())
+                << i.value()->user();
         }
         client.updates() << welcome;
 
@@ -151,7 +152,7 @@ RemoteUser& Session::promote(Client& client)
 
 void Session::demote(RemoteUser& remoteUser)
 {
-    _users.erase(remoteUser.id());
+    _users.remove(remoteUser.id());
     remoteUser.setSession(0);
     
     // Stop observing.
@@ -165,11 +166,11 @@ void Session::demote(RemoteUser& remoteUser)
 
 RemoteUser& Session::userByAddress(const de::Address& address) const
 {
-    for(Users::const_iterator i = _users.begin(); i != _users.end(); ++i)
+    foreach(RemoteUser* remoteUser, _users.values())
     {
-        if(i->second->address() == address)
+        if(remoteUser->address() == address)
         {
-            return *i->second;
+            return *remoteUser;
         }
     }
     /// @throw UnknownAddressError  No user has the address @a address.
@@ -179,14 +180,14 @@ RemoteUser& Session::userByAddress(const de::Address& address) const
 void Session::linkBeingDeleted(de::Link& link)
 {
     LOG_AS("Session::linkBeingDeleted");
-    
-    for(Users::iterator i = _users.begin(); i != _users.end(); ++i)
+
+    foreach(RemoteUser* remoteUser, _users.values())
     {
-        if(&i->second->client().link() == &link)
+        if(&remoteUser->client().link() == &link)
         {
             // This user's link has been closed. The remote user will disappear.
-            delete i->second;
-            _users.erase(i);
+            delete remoteUser;
+            _users.remove(remoteUser->id());
             return;
         }
     }
@@ -199,7 +200,7 @@ void Session::describe(de::Record& record) const
     DictionaryValue& dict = record.addDictionary("users").value<DictionaryValue>();
     for(Users::const_iterator i = _users.begin(); i != _users.end(); ++i)
     {
-        dict.add(new TextValue(i->first), new TextValue(i->second->user().name()));
+        dict.add(new TextValue(i.key()), new TextValue(i.value()->user().name()));
     }
 }
 
@@ -207,9 +208,9 @@ void Session::Broadcast::send(const de::IByteArray& data)
 {
     for(Users::iterator i = _session._users.begin(); i != _session._users.end(); ++i)
     {
-        if(i->second != _exclude)
+        if(i.value() != _exclude)
         {
-            i->second->client().updates() << data;
+            i.value()->client().updates() << data;
         }
     }
 }

@@ -36,6 +36,6 @@ void Client::grantRights()
     /// Local clients get the admin rights automatically.
     if(peerAddress().matches(Address("127.0.0.1")))
     {
-        rights.set(ADMIN_BIT);
+        rights |= AdminRight;
     }
 }

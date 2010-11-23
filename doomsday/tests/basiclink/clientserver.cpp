@@ -40,7 +40,7 @@ void Server::sendResponse()
 
     LOG_INFO("Quitting.");
 
-    qApp->quit();
+    App::app().stop();
 }
 
 Client::Client(const Address& serverAddress) : _link(serverAddress)
@@ -60,5 +60,5 @@ void Client::handleIncoming()
 
     LOG_INFO("Quitting.");
 
-    qApp->quit();
+    App::app().stop();
 }

@@ -17,22 +17,21 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <dengmain.h>
 #include "serverapp.h"
 
-#include <iostream>
+#include <QDebug>
 
 using namespace de;
 
-int deng_Main(int argc, char** argv)
+int main(int argc, char** argv)
 {
     try
     {
-        return ServerApp(CommandLine(argc, argv)).mainLoop();
+        return ServerApp(argc, argv).mainLoop();
     }
     catch(const Error& error)
     {
-        std::cerr << error.asText() << std::endl;
+        qWarning() << error.asText();
     }    
     return 0;
 }

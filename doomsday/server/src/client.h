@@ -23,14 +23,20 @@
 #include <de/types.h>
 #include <de/net.h>
 
+#include <QFlags>
+
 /**
  * Represents a network connection to a remote party.
  */
 class Client : public de::MuxLink
 {
 public:
-    /// Client has administration rights. Granted to local users automatically.
-    DEFINE_FINAL_FLAG(ADMIN, 0, Rights);
+    enum Right
+    {
+        /// Client has administration rights. Granted to local users automatically.
+        AdminRight = 0x1
+    };
+    Q_DECLARE_FLAGS(Rights, Right);
     
 public:
     Client(const de::Address& address);
@@ -45,5 +51,7 @@ public:
     /// Access rights of the client.
     Rights rights;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Client::Rights);
 
 #endif /* CLIENT_H */

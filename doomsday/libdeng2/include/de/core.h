@@ -1,6 +1,8 @@
 #include "App"
 #include "CommandLine"
 #include "Config"
+#include "ConsoleApp"
+#include "GUIApp"
 #include "ISubsystem"
 #include "Library"
 #include "Log"

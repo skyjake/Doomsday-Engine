@@ -40,7 +40,7 @@ RemoteUser::~RemoteUser()
 
 Client& RemoteUser::client() const
 {
-    assert(_client != NULL);
+    Q_ASSERT(_client != NULL);
     return *_client;
 }
 

@@ -22,7 +22,7 @@
 
 #include "../deng.h"
 
-#include <list>
+#include <QList>
 
 /**
  * @defgroup protocol Protocol
@@ -100,15 +100,14 @@ namespace de
 
         /**
          * Sends a command packet and waits for reply. This is intended for issuing
-         * commands that rarely fail and where the response is usually "ok"
-         * without any extra information attached.
+         * synchronous commands that can be responded to immediately.
          *
          * @param to        Transceiver over which to converse.
          * @param command   Packet to send.
          * @param response  If not NULL, the reponse packet is returned to caller here.
          *                  Otherwise the response packet is deleted.
          */
-        void decree(Transceiver& to, const CommandPacket& command, RecordPacket** response = 0);
+        void syncCommand(Transceiver& to, const CommandPacket& command, RecordPacket** response = 0);
 
         /**
          * Sends a reply over a link. This is used as a general response to 
@@ -132,7 +131,7 @@ namespace de
         void reply(Transceiver& to, Reply type, const String& message);
 
     private:
-        typedef std::list<Constructor> Constructors;
+        typedef QList<Constructor> Constructors;
         Constructors _constructors;
     };
 }
