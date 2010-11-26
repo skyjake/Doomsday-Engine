@@ -105,16 +105,7 @@ extern          "C" {
      * @param type          Type of resource being added.
      * @param names         One or more known potential names, seperated by semicolon e.g., "name1;name2".
      *                      Names may include valid absolute, or relative file paths. These paths include
-     *                      valid symbolbolic escape tokens, predefined symbols into the virtual file system.
-     *
-     *                      Example:
-     *
-     *                          "fs.rnid($1)packages"
-     *                      
-     *                      The 'fs.rnid($1)' sequence of characters in the above string is both a text string
-     *                      and an entry into the engine's virtual file system. This includes the engines's
-     *                      view of the resources available to both the host system and those of any connected
-     *                      clients. If permited access, of course.                
+     *                      valid symbolbolic escape tokens, predefined symbols into the virtual file system.            
      */
     void DD_AddGameResource(gameid_t game, resourcetype_t type, const char* names, void* params);
 
