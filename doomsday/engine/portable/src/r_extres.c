@@ -227,9 +227,6 @@ static void rebuildFileHash(resourcenamespace_t* rnamespace, const ddstring_t* s
     {
         Con_Message("Rebuilt filehash \"%s\" (done in %.2f seconds).\n", rnamespace->_name, (Sys_GetRealTime() - startTime) / 1000.0f);
         M_PrintPathList(FileHash_PathList(rnamespace->_fileHash));
-/*#if _DEBUG
-        FileHash_Print(rnamespace->_fileHash);
-#endif*/
     }
     }
 }

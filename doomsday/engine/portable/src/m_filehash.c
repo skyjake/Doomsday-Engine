@@ -248,6 +248,9 @@ static int addFile(const char* fn, filetype_t type, void* parm)
     strncpy(path, fn, FILENAME_T_MAXLEN);
     if((pos = strrchr(path, DIR_SEP_CHAR)))
         *pos = 0;
+
+    VERBOSE2( Con_Message(" File: %s\n", M_PrettyPath(fn)) );
+
     // Add a node for this file.
     addFileToDirec(fh, fn, buildDirecNodes(fh, path));
     return true;
@@ -437,32 +440,6 @@ const char* FileHash_PathList(filehash_t* fileHash)
     return fh->_pathList;
     }
 }
-
-#if _DEBUG
-void FileHash_Print(filehash_t* fileHash)
-{
-    assert(fileHash);
-    {
-    _filehash_t* fh = (_filehash_t*) fileHash;
-    filename_t filePath;
-    size_t i;
-    for(i = 0; i < HASH_SIZE; ++i)
-    {
-        hashentry_t* slot = &fh->hashTable[i];
-        hashnode_t* node;
-
-        // Paths in the hash are relative to their directory node.
-        // There is one direcnode per search path directory.
-        // Go through the candidates.
-        for(node = slot->first; node; node = node->next)
-        {
-            composePath(node, filePath, FILENAME_T_MAXLEN);
-            Con_Message("  File: %s\n", M_PrettyPath(filePath));
-        }
-    }
-    }
-}
-#endif
 
 boolean FileHash_Find(filehash_t* fileHash, char* foundPath, const char* name, size_t len)
 {

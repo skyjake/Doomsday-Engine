@@ -376,13 +376,10 @@ void GameInfo_ClearResourceSearchPaths2(gameinfo_t* info, resourcenamespaceid_t 
     assert(info);
     if(rni == 0)
     {
-        if(F_NumResourceNamespaces() > 0)
+        uint i, numResourceNamespaces = F_NumResourceNamespaces();
+        for(i = 1; i < numResourceNamespaces+1; ++i)
         {
-            uint i, numResourceNamespaces = F_NumResourceNamespaces();
-            for(i = 1; i < numResourceNamespaces+1; ++i)
-            {
-                clearResourceSearchPathList(info, (resourcenamespaceid_t)i);
-            }
+            clearResourceSearchPathList(info, (resourcenamespaceid_t)i);
         }
         return;
     }

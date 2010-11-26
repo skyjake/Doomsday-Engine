@@ -64,8 +64,4 @@ boolean FileHash_Find(filehash_t* fh, char* foundPath, const char* name, size_t 
  */
 boolean FileHash_HasRecordSet(filehash_t* fh);
 
-#if _DEBUG
-void FileHash_Print(filehash_t* fh);
-#endif
-
 #endif /* LIBDENG_FILEHASH_H */
