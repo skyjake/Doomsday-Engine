@@ -131,14 +131,14 @@ void ServerApp::processIncomingMessage()
         try
         {
             // Process incoming packets.
-            std::auto_ptr<Message> message((*i)->base().receive());
-            if(message.get())
+            QScopedPointer<Message> message((*i)->base().receive());
+            if(message)
             {
-                std::auto_ptr<Packet> packet(protocol().interpret(*message));
-                if(packet.get())
+                QScopedPointer<Packet> packet(protocol().interpret(*message));
+                if(packet)
                 {
-                    packet.get()->setFrom(message->address());
-                    processPacket(*packet.get());
+                    packet->setFrom(message->address());
+                    processPacket(*packet);
                 }            
             }
         }
