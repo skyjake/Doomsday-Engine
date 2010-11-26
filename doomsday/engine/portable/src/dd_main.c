@@ -555,24 +555,28 @@ static boolean allGameResourcesFound(gameinfo_t* info)
 
 static void loadGameResources(gameinfo_t* info, resourcetype_t type, const char* searchPath)
 {
-    assert(info && VALID_RESOURCE_TYPE(type) && searchPath && searchPath[0]);
+    assert(info && VALID_RESOURCE_TYPE(type) && searchPath);
     {
-    resourcenamespaceid_t rni = F_ParseResourceNamespace(searchPath);
-    gameresource_record_t* const* records = GameInfo_Resources(info, rni, 0);
-    if(!records)
-        return;
-    do
-    {
-        switch((*records)->type)
+    resourcenamespaceid_t rni;
+
+    if((rni = F_ParseResourceNamespace(searchPath)) == 0)
+        rni = F_DefaultResourceNamespaceForType(type);
+
+    {gameresource_record_t* const* records;
+    if((records = GameInfo_Resources(info, rni, 0)))
+        do
         {
-        case RT_PACKAGE:
-            if(Str_Length(&(*records)->path) != 0)
-                W_AddFile(Str_Text(&(*records)->path), false);
-            break;
-        default:
-            Con_Error("loadGameResources: Error, no resource loader found for %s.", F_ResourceTypeStr((*records)->type));
-        };
-    } while(*(++records));
+            switch((*records)->type)
+            {
+            case RT_PACKAGE:
+                if(Str_Length(&(*records)->path) != 0)
+                    W_AddFile(Str_Text(&(*records)->path), false);
+                break;
+            default:
+                Con_Error("loadGameResources: Error, no resource loader found for %s.", F_ResourceTypeStr((*records)->type));
+            };
+        } while(*(++records));
+    }
     }
 }
 
@@ -780,10 +784,10 @@ static int DD_ChangeGameWorker(void* parm)
 
     /**
      * Phase 1: Add game-resource files.
-     * First ZIPs then WADs (they may contain virtual WAD files).
+     * \fixme dj: First ZIPs then WADs (they may contain virtual WAD files).
      */
-    loadGameResources(info, RT_PACKAGE, "packages:");
-    loadGameResources(info, RT_PACKAGE, "packages:");
+#pragma message("!!!WARNING: Phase 1 of game resource loading does not presently prioritize ZIP!!!")
+    loadGameResources(info, RT_PACKAGE, "");
 
     /**
      * Phase 2: Add additional game-startup files.

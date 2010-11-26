@@ -99,7 +99,7 @@ extern          "C" {
     /**
      * Registers a new resource for the specified game.
      *
-     * \note Resource registration order defines the load order of resources (among those of the same class).
+     * \note Resource registration order defines the load order of resources (among those of the same type).
      *
      * @param game          Unique identifier/name of the game.
      * @param type          Type of resource being added.

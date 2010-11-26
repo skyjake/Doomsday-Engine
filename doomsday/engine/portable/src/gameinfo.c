@@ -52,7 +52,7 @@ typedef enum {
  * @param overrideFlag2     Takes precendence.
  */
 static void formResourceSearchPaths(gameinfo_t* info, resourcenamespaceid_t rni, ddstring_t* pathList,
-    searchpathid_t* searchOrder, const char* defaultNamespace, const char* overrideFlag,
+    searchpathid_t* searchOrder, const char* defaultPath, const char* overrideFlag,
     const char* overrideFlag2)
 {
     assert(info && F_IsValidResourceNamespaceId(rni) && pathList && searchOrder);
@@ -83,10 +83,10 @@ static void formResourceSearchPaths(gameinfo_t* info, resourcenamespaceid_t rni,
             }
         case SPI_BASEPATH_DATA:
             { filename_t newPath;
-            if(defaultNamespace && defaultNamespace[0])
+            if(defaultPath && defaultPath[0])
             {
                 filename_t other;
-                dd_snprintf(other, FILENAME_T_MAXLEN, DD_BASEPATH_DATA"%s", defaultNamespace);
+                dd_snprintf(other, FILENAME_T_MAXLEN, DD_BASEPATH_DATA"%s", defaultPath);
                 M_TranslatePath(newPath, other, FILENAME_T_MAXLEN);
             }
             else
@@ -98,10 +98,10 @@ static void formResourceSearchPaths(gameinfo_t* info, resourcenamespaceid_t rni,
             }
         case SPI_BASEPATH_DEFS:
             { filename_t newPath;
-            if(defaultNamespace && defaultNamespace[0])
+            if(defaultPath && defaultPath[0])
             {
                 filename_t other;
-                dd_snprintf(other, FILENAME_T_MAXLEN, DD_BASEPATH_DEFS"%s", defaultNamespace);
+                dd_snprintf(other, FILENAME_T_MAXLEN, DD_BASEPATH_DEFS"%s", defaultPath);
                 M_TranslatePath(newPath, other, FILENAME_T_MAXLEN);
             }
             else
@@ -112,10 +112,10 @@ static void formResourceSearchPaths(gameinfo_t* info, resourcenamespaceid_t rni,
             break;
             }
         case SPI_GAMEPATH_DATA:
-            if(defaultNamespace && defaultNamespace[0])
+            if(defaultPath && defaultPath[0])
             {
                 filename_t newPath;
-                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s", Str_Text(&info->_dataPath), defaultNamespace);
+                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s", Str_Text(&info->_dataPath), defaultPath);
                 GameInfo_AddResourceSearchPath(info, rni, newPath, false);
             }
             else
@@ -124,10 +124,10 @@ static void formResourceSearchPaths(gameinfo_t* info, resourcenamespaceid_t rni,
             }
             break;
         case SPI_GAMEPATH_DEFS:
-            if(defaultNamespace && defaultNamespace[0])
+            if(defaultPath && defaultPath[0])
             {
                 filename_t newPath;
-                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s", Str_Text(&info->_defsPath), defaultNamespace);
+                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s", Str_Text(&info->_defsPath), defaultPath);
                 GameInfo_AddResourceSearchPath(info, rni, newPath, false);
             }
             else
@@ -137,10 +137,10 @@ static void formResourceSearchPaths(gameinfo_t* info, resourcenamespaceid_t rni,
             break;
         case SPI_GAMEMODEPATH_DATA:
             usingGameModePathData = true;
-            if(defaultNamespace && defaultNamespace[0] && Str_Length(&info->_identityKey))
+            if(defaultPath && defaultPath[0] && Str_Length(&info->_identityKey))
             {
                 filename_t newPath;
-                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(&info->_dataPath), defaultNamespace, Str_Text(&info->_identityKey));
+                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(&info->_dataPath), defaultPath, Str_Text(&info->_identityKey));
                 GameInfo_AddResourceSearchPath(info, rni, newPath, false);
             }
             break;
@@ -148,7 +148,7 @@ static void formResourceSearchPaths(gameinfo_t* info, resourcenamespaceid_t rni,
             usingGameModePathDefs = true;
             if(Str_Length(&info->_identityKey))
             {
-                if(defaultNamespace && defaultNamespace[0])
+                if(defaultPath && defaultPath[0])
                 {
                     filename_t newPath;
                     dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s", Str_Text(&info->_defsPath), Str_Text(&info->_identityKey));
@@ -157,7 +157,7 @@ static void formResourceSearchPaths(gameinfo_t* info, resourcenamespaceid_t rni,
                 else
                 {
                     filename_t newPath;
-                    dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(&info->_defsPath), defaultNamespace, Str_Text(&info->_identityKey));
+                    dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(&info->_defsPath), defaultPath, Str_Text(&info->_identityKey));
                     GameInfo_AddResourceSearchPath(info, rni, newPath, false);
                 }
             }

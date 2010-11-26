@@ -324,7 +324,7 @@ resourcenamespace_t* F_ToResourceNamespace(resourcenamespaceid_t rni)
 
 resourcenamespaceid_t F_SafeResourceNamespaceForName(const char* name)
 {
-    if(name && name)
+    if(name && name[0])
     {
         uint i, numResourceNamespaces = F_NumResourceNamespaces();
         for(i = 1; i < numResourceNamespaces+1; ++i)

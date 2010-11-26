@@ -779,7 +779,7 @@ static void readAllDefinitions(void)
     
     // Now any extra definition files required by the game.
     { gameresource_record_t* const* records;
-    if((records = GameInfo_Resources(DD_GameInfo(), F_ParseResourceNamespace("defs:"), 0)))
+    if((records = GameInfo_Resources(DD_GameInfo(), F_ResourceNamespaceForName("defs:"), 0)))
         do
         {
             if(Str_Length(&(*records)->path) != 0)
@@ -821,7 +821,7 @@ void Def_Read(void)
         // Get rid of everything.
         // \fixme dj: This is not correct. We do not want to clear all paths
         // we should instead re-init to the default path set.
-        DD_ClearResourceSearchPathList(F_ParseResourceNamespace("models:"));
+        DD_ClearResourceSearchPathList(F_ResourceNamespaceForName("models:"));
         Def_Destroy();
     }
 
