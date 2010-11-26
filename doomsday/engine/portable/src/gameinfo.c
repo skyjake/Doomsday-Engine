@@ -286,7 +286,7 @@ gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey, const
     { size_t i;
     for(i = 0; i < NUM_RESOURCE_TYPES; ++i)
     {
-        resourcenamespace_recordset_t* rset = &info->_requiredResources[i];
+        gameresource_recordset_t* rset = &info->_requiredResources[i];
         rset->numRecords = 0;
         rset->records = 0;
 
@@ -316,12 +316,12 @@ void P_DestroyGameInfo(gameinfo_t* info)
     { size_t i;
     for(i = 0; i < NUM_RESOURCE_TYPES; ++i)
     {
-        resourcenamespace_recordset_t* rset = &info->_requiredResources[i];
+        gameresource_recordset_t* rset = &info->_requiredResources[i];
 
         if(!rset || rset->numRecords == 0)
             continue;
         
-        { resourcenamespace_record_t** rec;
+        { gameresource_record_t** rec;
         for(rec = rset->records; *rec; rec++)
         {
             Str_Free(&(*rec)->names);
@@ -343,13 +343,13 @@ void P_DestroyGameInfo(gameinfo_t* info)
     M_Free(info);
 }
 
-resourcenamespace_record_t* GameInfo_AddResource(gameinfo_t* info, resourcetype_t type,
+gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourcetype_t type,
     resourcenamespaceid_t rni, const ddstring_t* names)
 {
     assert(info && VALID_RESOURCE_TYPE(type) && F_IsValidResourceNamespaceId(rni) && names);
     {
-    resourcenamespace_recordset_t* rset = &info->_requiredResources[rni-1];
-    resourcenamespace_record_t* record;
+    gameresource_recordset_t* rset = &info->_requiredResources[rni-1];
+    gameresource_record_t* record;
 
     rset->records = M_Realloc(rset->records, sizeof(*rset->records) * (rset->numRecords+2));
     record = rset->records[rset->numRecords] = M_Malloc(sizeof(*record));
@@ -507,7 +507,7 @@ const ddstring_t* GameInfo_Author(gameinfo_t* info)
     return &info->_author;
 }
 
-resourcenamespace_record_t* const* GameInfo_Resources(gameinfo_t* info, resourcenamespaceid_t rni, size_t* count)
+gameresource_record_t* const* GameInfo_Resources(gameinfo_t* info, resourcenamespaceid_t rni, size_t* count)
 {
     assert(info);
     if(!F_IsValidResourceNamespaceId(rni))

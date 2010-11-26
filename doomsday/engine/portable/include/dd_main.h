@@ -81,12 +81,6 @@ materialnum_t DD_MaterialForTexture(uint ofTypeId, gltexture_type_t type);
 
 const char* value_Str(int val);
 
-/**
- * Convert a resource namespace id into a string for access into the file system,
- * including console commands and error/debug messages.
- */
-const ddstring_t* DD_ResourceNamespaceStr(resourcenamespaceid_t rni);
-
 resourcenamespace_t* DD_ResourceNamespace(resourcenamespaceid_t rni);
 
 /**

@@ -29,6 +29,31 @@
 #include "sys_extres.h"
 
 /**
+ * Game Resource Record.
+ * Used to record information about a resource (e.g., a file name).
+ *
+ * @ingroup core
+ */
+typedef struct {
+    /// Type of resource.
+    resourcetype_t type;
+
+    /// List of known potential names. Seperated with a semicolon.
+    ddstring_t names;
+
+    /// Vector of resource identify keys (e.g., file or lump names), used for identification purposes.
+    ddstring_t** identityKeys;
+
+    /// Path to this resource if found. Set during resource location.
+    ddstring_t path;
+} gameresource_record_t;
+
+typedef struct {
+    gameresource_record_t** records;
+    size_t numRecords;
+} gameresource_recordset_t;
+
+/**
  * Game Info.
  * Used to record top-level game configurations registered by the loaded game logic module(s).
  *
@@ -64,12 +89,13 @@ typedef struct {
     ddstring_t _searchPathLists[NUM_RESOURCE_TYPES];
 
     /// Vector of records for required game resources (e.g., doomu.wad).
-    resourcenamespace_recordset_t _requiredResources[NUM_RESOURCE_TYPES];
+    gameresource_recordset_t _requiredResources[NUM_RESOURCE_TYPES];
 } gameinfo_t;
 
 /**
  * Create a new GameInfo.
  *
+ * @param pluginId      Unique identifier of the plugin to associate with this game.
  * @param identityKey   Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
  * @param dataPath      The base directory for all data-class resources.
  * @param defsPath      The base directory for all defs-class resources.
@@ -93,7 +119,7 @@ void P_DestroyGameInfo(gameinfo_t* info);
  * @param type          Type of resource.
  * @param name          Potential resource name.
  */
-resourcenamespace_record_t* GameInfo_AddResource(gameinfo_t* info, resourcetype_t type,
+gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourcetype_t type,
     resourcenamespaceid_t rni, const ddstring_t* name);
 
 /**
@@ -147,6 +173,6 @@ const ddstring_t* GameInfo_CmdlineFlag(gameinfo_t* info);
 const ddstring_t* GameInfo_CmdlineFlag2(gameinfo_t* info);
 
 /// @return             Ptr to a vector of required resource records.
-resourcenamespace_record_t* const* GameInfo_Resources(gameinfo_t* info, resourcenamespaceid_t rni, size_t* count);
+gameresource_record_t* const* GameInfo_Resources(gameinfo_t* info, resourcenamespaceid_t rni, size_t* count);
 
 #endif /* LIBDENG_GAMEINFO_H */

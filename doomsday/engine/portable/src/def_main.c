@@ -778,7 +778,7 @@ static void readAllDefinitions(void)
     }}
     
     // Now any extra definition files required by the game.
-    { resourcenamespace_record_t* const* records;
+    { gameresource_record_t* const* records;
     if((records = GameInfo_Resources(DD_GameInfo(), F_ParseResourceNamespace("defs:"), 0)))
         do
         {

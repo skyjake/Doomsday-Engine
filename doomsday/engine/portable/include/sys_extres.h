@@ -36,34 +36,6 @@ typedef struct {
 } resourcenamespace_t;
 
 /**
- * Resource Namespace Record.
- * Used to record information about a resource (e.g., a file name).
- *
- * @ingroup core
- */
-typedef struct {
-    /// Type of resource.
-    resourcetype_t type;
-
-    /// The namespace itself.
-    resourcenamespace_t rnamespace;
-
-    /// List of known potential names. Seperated with a semicolon.
-    ddstring_t names;
-
-    /// Path to this resource if found. Set during resource location.
-    ddstring_t path;
-
-    /// Vector of resource identify keys (e.g., file or lump names), used for identification purposes.
-    ddstring_t** identityKeys;
-} resourcenamespace_record_t;
-
-typedef struct {
-    resourcenamespace_record_t**  records;
-    size_t  numRecords;
-} resourcenamespace_recordset_t;
-
-/**
  * Convert a resourcetype_t constant into a string for error/debug messages.
  */
 const char* F_ResourceTypeStr(resourcetype_t rc);

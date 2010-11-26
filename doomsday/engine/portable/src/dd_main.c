@@ -246,11 +246,6 @@ const ddstring_t* DD_ResourceSearchPaths(resourcenamespaceid_t rni)
     return GameInfo_ResourceSearchPaths(DD_GameInfo(), rni);
 }
 
-const ddstring_t* DD_ResourceNamespaceStr(resourcenamespaceid_t rni)
-{
-    return &DD_ResourceNamespace(rni)->_name;
-}
-
 gameinfo_t* DD_GameInfo(void)
 {
     assert(currentGameInfoIndex != 0);
@@ -298,7 +293,7 @@ Con_Message("DD_GetGameInfo: Warning, no game currently loaded - returning false
     return false;
 }
 
-static void addIdentityKeyToResourceNamespaceRecord(resourcenamespace_record_t* rec, const ddstring_t* identityKey)
+static void addIdentityKeyToResourceNamespaceRecord(gameresource_record_t* rec, const ddstring_t* identityKey)
 {
     assert(rec && identityKey);
     {
@@ -334,7 +329,7 @@ void DD_AddGameResource(gameid_t gameId, resourcetype_t type, const char* _names
         rni = F_DefaultResourceNamespaceForType(type);
 
     Str_Init(&name);
-    { resourcenamespace_record_t* rec;
+    { gameresource_record_t* rec;
     if((rec = GameInfo_AddResource(info, type, rni, &names)))
     {
         if(params)
@@ -483,7 +478,7 @@ static boolean recognizeZIP(const char* filePath, void* data)
     return M_FileExists(filePath);
 }
 
-static boolean validateGameResource(resourcenamespace_record_t* rec, const char* name)
+static boolean validateGameResource(gameresource_record_t* rec, const char* name)
 {
     filename_t foundPath;
     if(!F_FindResource(rec->type, foundPath, name, 0, FILENAME_T_MAXLEN))
@@ -520,7 +515,7 @@ static void locateGameResources(gameinfo_t* info)
     { uint i, numResourceNamespaces = F_NumResourceNamespaces();
     for(i = 1; i < numResourceNamespaces+1; ++i)
     {
-        resourcenamespace_record_t* const* records;
+        gameresource_record_t* const* records;
         if((records = GameInfo_Resources(info, (resourcenamespaceid_t)i, 0)))
             do
             {
@@ -547,7 +542,7 @@ static boolean allGameResourcesFound(gameinfo_t* info)
     { uint i, numResourceNamespaces = F_NumResourceNamespaces();
     for(i = 1; i < numResourceNamespaces+1; ++i)
     {
-        resourcenamespace_record_t* const* records;
+        gameresource_record_t* const* records;
         if((records = GameInfo_Resources(info, (resourcenamespaceid_t)i, 0)))
             do
             {
@@ -563,7 +558,7 @@ static void loadGameResources(gameinfo_t* info, resourcetype_t type, const char*
     assert(info && VALID_RESOURCE_TYPE(type) && searchPath && searchPath[0]);
     {
     resourcenamespaceid_t rni = F_ParseResourceNamespace(searchPath);
-    resourcenamespace_record_t* const* records = GameInfo_Resources(info, rni, 0);
+    gameresource_record_t* const* records = GameInfo_Resources(info, rni, 0);
     if(!records)
         return;
     do
@@ -596,11 +591,11 @@ static void printGameInfo(gameinfo_t* info)
     { uint i, numResourceNamespaces = F_NumResourceNamespaces();
     for(i = 1; i < numResourceNamespaces+1; ++i)
     {
-        resourcenamespace_record_t* const* records;
+        gameresource_record_t* const* records;
         if((records = GameInfo_Resources(info, (resourcenamespaceid_t)i, 0)))
         {
             int n = 0;
-            Con_Printf("  Namespace: \"%s\"\n", Str_Text(DD_ResourceNamespaceStr((resourcenamespaceid_t)i)));
+            Con_Printf("  Namespace: \"%s\"\n", Str_Text(&F_ToResourceNamespace((resourcenamespaceid_t)i)->_name));
             do
             {
                 Con_Printf("    %i:%s - \"%s\" > %s\n", n++, F_ResourceTypeStr((*records)->type), Str_Text(&(*records)->names), Str_Length(&(*records)->path) == 0? "--(!)missing" : M_PrettyPath(Str_Text(&(*records)->path)));
