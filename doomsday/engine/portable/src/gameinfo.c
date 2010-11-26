@@ -46,14 +46,6 @@ typedef enum {
     SPI_DOOMWADDIR
 } searchpathid_t;
 
-static __inline size_t countElements(resourcenamespace_record_t* const* list)
-{
-    size_t n = 0;
-    if(list)
-        while(list[n++]);
-    return n;
-}
-
 /**
  * @param searchOrder       Resource path search order (in order of least-importance, left to right).
  * @param overrideFlag      Command line options for setting the resource path explicitly.
