@@ -752,7 +752,7 @@ size_t Zip_Read(zipindex_t index, void *buffer)
     pack = entry->package;
 
     VERBOSE2(Con_Message
-             ("Zip_Read: %s::%s (%lu bytes%s)\n", M_PrettyPath(pack->name),
+             ("Zip_Read: %s:%s (%lu bytes%s)\n", M_PrettyPath(pack->name),
               M_PrettyPath(entry->name), (unsigned long) entry->size,
               (entry->deflatedSize? ", deflated" : "")));
 

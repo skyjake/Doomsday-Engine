@@ -1122,7 +1122,7 @@ void Def_Read(void)
     Def_CountMsg(defs.count.sectorTypes.num, "sector types");
 
     // Init the base model search path (append).
-    GameInfo_AddResourceSearchPath(DD_GameInfo(), RT_MODEL, defs.modelPath, true);
+    GameInfo_AddResourceSearchPath(DD_GameInfo(), F_ResourceNamespaceForName("models:"), defs.modelPath, true);
 
     defsInited = true;
 }
