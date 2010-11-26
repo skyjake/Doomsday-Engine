@@ -88,14 +88,20 @@ static boolean inited = false;
 // CODE --------------------------------------------------------------------
 
 static boolean tryFindFile(const char* searchPath, char* foundPath, size_t foundPathLen,
-    filehash_t* fileHash)
+    resourcenamespaceid_t rni)
 {
     assert(inited && searchPath && searchPath[0]);
 
-    if(fileHash)
+    { resourcenamespace_t* rnamespace;
+    if(rni != 0 && (rnamespace = DD_ResourceNamespace(rni)))
     {
-        return FileHash_Find(fileHash, foundPath, searchPath, foundPathLen);
-    }
+        if(!rnamespace->_fileHash)
+            rnamespace->_fileHash = FileHash_Create(Str_Text(DD_ResourceSearchPaths(rni)));
+#if _DEBUG
+        VERBOSE2( Con_Message("Using filehash for rnamespace \"%s\" ...\n", rnamespace->_name) );
+#endif
+        return FileHash_Find(rnamespace->_fileHash, foundPath, searchPath, foundPathLen);
+    }}
 
     if(F_Access(searchPath))
     {
@@ -114,14 +120,12 @@ static boolean tryFindFile(const char* searchPath, char* foundPath, size_t found
  * @param foundPath     Located path if found will be written back here.
  *                      Can be @c NULL, in which case this is just a boolean query.
  * @param foundPathLen  Length of the @a foundFileName buffer in bytes.
- * @param fileHash      Optional FileHash to use for faster searching.
- *                      Can be @c NULL, in which case the File Stream Abstraction Layer's
- *                      own search algorithm is used directly.
+ * @param rni           If non-zero, the namespace to use when searching.
  *
  * @return              @c true, if it's found.
  */
 static boolean tryResourceFile(resourcetype_t type, const char* searchPath,
-    char* foundPath, size_t foundPathLen, filehash_t* fileHash)
+    char* foundPath, size_t foundPathLen, resourcenamespaceid_t rni)
 {
     assert(inited && VALID_RESOURCE_TYPE(type) && searchPath && searchPath[0]);
     {
@@ -131,7 +135,7 @@ static boolean tryResourceFile(resourcetype_t type, const char* searchPath,
     // Has an extension been specified?
     ptr = M_FindFileExtension((char*)searchPath);
     if(ptr && *ptr != '*') // Try this first.
-        found = tryFindFile(searchPath, foundPath, foundPathLen, fileHash);
+        found = tryFindFile(searchPath, foundPath, foundPathLen, rni);
 
     if(!found)
     {
@@ -158,7 +162,7 @@ static boolean tryResourceFile(resourcetype_t type, const char* searchPath,
             Str_Copy(&tmp, &path2);
             Str_Appendf(&tmp, "%s", *ext);
 
-            if((found = tryFindFile(Str_Text(&tmp), foundPath, foundPathLen, fileHash)))
+            if((found = tryFindFile(Str_Text(&tmp), foundPath, foundPathLen, rni)))
                 break;
         }}
 
@@ -170,8 +174,8 @@ static boolean tryResourceFile(resourcetype_t type, const char* searchPath,
     }
 }
 
-static boolean findResource(resourcetype_t type, const char* searchPath,
-    const char* optionalSuffix, char* foundPath, size_t foundPathLen, filehash_t* fileHash)
+static boolean findResource(resourcetype_t type, const char* searchPath, const char* optionalSuffix,
+    char* foundPath, size_t foundPathLen, resourcenamespaceid_t rni)
 {
     assert(inited && VALID_RESOURCE_TYPE(type) && searchPath && searchPath[0]);
     {
@@ -199,7 +203,7 @@ static boolean findResource(resourcetype_t type, const char* searchPath,
             Str_Append(&fn, optionalSuffix);
         }}
 
-        if(tryResourceFile(type, Str_Text(&fn), foundPath, foundPathLen, fileHash))
+        if(tryResourceFile(type, Str_Text(&fn), foundPath, foundPathLen, rni))
             found = true;
 
         Str_Free(&fn);
@@ -208,26 +212,11 @@ static boolean findResource(resourcetype_t type, const char* searchPath,
     // Try without a suffix.
     if(!found)
     {
-        if(tryResourceFile(type, searchPath, foundPath, foundPathLen, fileHash))
+        if(tryResourceFile(type, searchPath, foundPath, foundPathLen, rni))
             found = true;
     }
 
     return found;
-    }
-}
-
-static void rebuildFileHash(resourcenamespace_t* rnamespace, const ddstring_t* searchPaths)
-{
-    if(rnamespace->_fileHash)
-        return;
-
-    { uint startTime = verbose >= 1? Sys_GetRealTime(): 0;
-    rnamespace->_fileHash = FileHash_Create(Str_Text(searchPaths));
-    if(verbose >= 1)
-    {
-        Con_Message("Rebuilt filehash \"%s\" (done in %.2f seconds).\n", rnamespace->_name, (Sys_GetRealTime() - startTime) / 1000.0f);
-        M_PrintPathList(FileHash_PathList(rnamespace->_fileHash));
-    }
     }
 }
 
@@ -238,7 +227,6 @@ static boolean tryLocateResource(resourcetype_t type, resourcenamespaceid_t rni,
     {
     ddstring_t name;
     boolean found;
-    resourcenamespace_t* rnamespace = 0;
 
     // Fix directory seperators early.
     Str_Init(&name);
@@ -258,8 +246,7 @@ static boolean tryLocateResource(resourcetype_t type, resourcenamespaceid_t rni,
         // Make this an absolute, base-relative path.
         // If only checking the base path and not the expected location
         // for the resource type (below); re-use the current string.
-        rnamespace = DD_ResourceNamespace(rni);
-        if(rnamespace)
+        if(rni != 0)
         {
             Str_Init(&fn);
             Str_Copy(&fn, &name);
@@ -275,16 +262,14 @@ static boolean tryLocateResource(resourcetype_t type, resourcenamespaceid_t rni,
         // Try loading using the base path as the starting point.
         found = findResource(type, path, optionalSuffix, foundPath, foundPathLen, 0);
 
-        if(rnamespace)
+        if(rni != 0)
             Str_Free(&fn);
     }
 
     // Try expected location for this resource type.
-    if(!found && (rnamespace = DD_ResourceNamespace(rni)))
+    if(!found && rni != 0)
     {
-        // Do we need to (re)build a hash for this resource namespace?
-        rebuildFileHash(rnamespace, DD_ResourceSearchPaths(rni));
-        found = findResource(type, Str_Text(&name), optionalSuffix, foundPath, foundPathLen, rnamespace->_fileHash);
+        found = findResource(type, Str_Text(&name), optionalSuffix, foundPath, foundPathLen, rni);
     }
 
     Str_Free(&name);

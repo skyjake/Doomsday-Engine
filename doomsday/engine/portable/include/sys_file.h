@@ -52,6 +52,8 @@ typedef enum filetype_e {
     FT_DIRECTORY
 } filetype_t;
 
+#define VALID_FILE_TYPE(t)          ((t) == FT_NORMAL || (t) == FT_DIRECTORY)
+
 typedef int     (*f_forall_func_t) (const char* fn, filetype_t type, void* parm);
 
 void F_ResetFileIDs(void);
