@@ -1245,6 +1245,13 @@ DEFFC(If)
     {
         val = netGame;
     }
+    else if(!strnicmp(token, "mode:", 5))
+    {
+        if(!DD_IsNullGameInfo(DD_GameInfo()))
+            val = !stricmp(token + 5, Str_Text(GameInfo_IdentityKey(DD_GameInfo())));
+        else
+            val = 0;
+    }
     // Any hooks?
     else if(Plug_CheckForHook(HOOK_FINALE_EVAL_IF))
     {

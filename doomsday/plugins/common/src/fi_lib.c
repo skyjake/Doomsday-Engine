@@ -386,43 +386,6 @@ int Hook_FinaleScriptEvalIf(int hookType, int finaleId, void* paramaters)
         return true;
     }
 
-    if(!stricmp(p->token, "shareware"))
-    {
-#if __JDOOM__
-        p->returnVal = (gameMode == doom_shareware != false);
-#elif __JHERETIC__
-        p->returnVal = (gameMode == heretic_shareware != false);
-/*#elif __JHEXEN__
-        p->returnVal = (gameMode == hexen_demo != false);*/
-#else
-        p->returnVal = false;
-#endif
-        return true;
-    }
-
-    // Generic game mode string check.
-    { ddgameinfo_t gameInfo;
-    if(DD_GetGameInfo(&gameInfo) && !strnicmp(p->token, "mode:", 5))
-    {
-        p->returnVal = !stricmp(p->token + 5, gameInfo.identityKey);
-        return true;
-    }}
-
-#if __JDOOM__
-    // Game modes.
-    if(!stricmp(p->token, "ultimate"))
-    {
-        p->returnVal = (gameMode == doom_ultimate);
-        return true;
-    }
-
-    if(!stricmp(p->token, "commercial"))
-    {
-        p->returnVal = (gameModeBits & GM_ANY_DOOM2) != 0;
-        return true;
-    }
-#endif
-
     if(!stricmp(p->token, "leavehub"))
     {   // Current hub has been completed?
         p->returnVal = s->conditions.leave_hub;
@@ -437,6 +400,36 @@ int Hook_FinaleScriptEvalIf(int hookType, int finaleId, void* paramaters)
         p->returnVal = pclass;
         return true;
     }}
+#endif 
+    
+    /**
+     * Game modes.
+     * \todo dj: the following conditions should be moved into the engine.
+     */
+    if(!stricmp(p->token, "shareware"))
+    {
+#if __JDOOM__
+        p->returnVal = (gameMode == doom_shareware != false);
+#elif __JHERETIC__
+        p->returnVal = (gameMode == heretic_shareware != false);
+/*#elif __JHEXEN__
+        p->returnVal = (gameMode == hexen_demo != false);*/
+#else
+        p->returnVal = false;
+#endif
+        return true;
+    }
+#if __JDOOM__
+    if(!stricmp(p->token, "ultimate"))
+    {
+        p->returnVal = (gameMode == doom_ultimate);
+        return true;
+    }
+    if(!stricmp(p->token, "commercial"))
+    {
+        p->returnVal = (gameModeBits & GM_ANY_DOOM2) != 0;
+        return true;
+    }
 #endif
 
     return false;
