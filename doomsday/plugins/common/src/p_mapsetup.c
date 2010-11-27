@@ -1003,7 +1003,7 @@ boolean P_IsMapFromIWAD(uint episode, uint map)
     return W_LumpFromIWAD(W_GetNumForName(lumpName));
 }
 
-const char* P_GetMapAuthor(boolean surpressIWADAuthors)
+const char* P_GetMapAuthor(boolean supressGameAuthor)
 {
     const char* author = (const char*) DD_GetVariable(DD_MAP_AUTHOR);
 
@@ -1011,7 +1011,8 @@ const char* P_GetMapAuthor(boolean surpressIWADAuthors)
         return 0;
 
     /// \kludge We need DED Reader 2.0 to handle this the Right Way...
-    if(surpressIWADAuthors)
+    /// \todo dj: this logic can now be handled engine-side.
+    if(supressGameAuthor)
     {
         if(P_IsMapFromIWAD(gameEpisode, gameMap))
             return 0;
