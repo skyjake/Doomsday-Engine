@@ -1962,7 +1962,8 @@ D_CMD(Clear)
 D_CMD(Version)
 {
     Con_Printf("Doomsday Engine %s (" __TIME__ ")\n", DOOMSDAY_VERSIONTEXT);
-    Con_Printf("Game DLL: %s\n", (char *) gx.GetVariable(DD_GAME_VERSION_LONG));
+    if(!DD_IsNullGameInfo(DD_GameInfo()))
+        Con_Printf("Game library: %s\n", (char*) gx.GetVariable(DD_GAME_VERSION_LONG));
     Con_Printf("%s\n", DOOMSDAY_PROJECTURL);
     return true;
 }
@@ -1980,8 +1981,7 @@ D_CMD(Alias)
     {
         Con_Printf("Usage: %s (alias) (cmd)\n", argv[0]);
         Con_Printf("Example: alias bigfont \"font size 3\".\n");
-        Con_Printf
-            ("Use %%1-%%9 to pass the alias arguments to the command.\n");
+        Con_Printf("Use %%1-%%9 to pass the alias arguments to the command.\n");
         return true;
     }
 

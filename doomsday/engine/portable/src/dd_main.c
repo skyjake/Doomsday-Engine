@@ -685,7 +685,7 @@ static void* getEntryPoint(HINSTANCE* handle, const char* fn)
     if(!adr)
     {
         LPVOID lpMsgBuf;
-        DWORD dw = GetLastError(); 
+        DWORD dw = GetLastError();
         FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
                       0, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, 0);
         if(lpMsgBuf)
@@ -1434,7 +1434,8 @@ void DD_UpdateEngineState(void)
     // Update the dir/WAD translations.
     F_InitDirec();
 
-    gx.UpdateState(DD_PRE);
+    if(!DD_IsNullGameInfo(DD_GameInfo()))
+        gx.UpdateState(DD_PRE);
 
     // Stop playing sounds and music.
     Demo_StopPlayback();
@@ -1452,7 +1453,8 @@ void DD_UpdateEngineState(void)
     Con_InitProgress(200);
     Con_Busy(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0), "Updating engine state...", DD_UpdateWorker, 0);
 
-    gx.UpdateState(DD_POST);
+    if(!DD_IsNullGameInfo(DD_GameInfo()))
+        gx.UpdateState(DD_POST);
 
     // Reset the anim groups (if in-game)
     Materials_ResetAnimGroups();

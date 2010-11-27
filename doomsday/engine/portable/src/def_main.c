@@ -107,7 +107,11 @@ xgclass_t* xgClassLinks;
  */
 int Def_GetGameClasses(void)
 {
-    xgClassLinks = (xgclass_t*) gx.GetVariable(DD_XGFUNC_LINK);
+    xgClassLinks = 0;
+
+    if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.GetVariable)
+        xgClassLinks = (xgclass_t*) gx.GetVariable(DD_XGFUNC_LINK);
+
     if(!xgClassLinks)
     {
         memset(&nullXgClassLinks, 0, sizeof(nullXgClassLinks));
@@ -290,37 +294,22 @@ int Def_GetMusicNum(const char* id)
     return -1;
 }
 
-/*// A simple action function that will be executed.
-   void A_ExecuteCommand(mobj_t *mobj)
-   {
-
-   } */
-
 acfnptr_t Def_GetActionPtr(const char* name)
 {
-    // Action links are provided by the Game, who owns the actual
-    // action functions.
-    actionlink_t*       link =
-        (actionlink_t *) gx.GetVariable(DD_ACTION_LINK);
-
     if(!name || !name[0])
         return 0;
 
-    if(!link)
+    if(DD_IsNullGameInfo(DD_GameInfo()))
+        return 0;
+
+    // Action links are provided by the game, who owns the actual action functions.
+    { actionlink_t* link;
+    if((link = (actionlink_t*) gx.GetVariable(DD_ACTION_LINK)))
     {
-        Con_Error("GetActionPtr: Game DLL doesn't have an action "
-                  "function link table.\n");
-    }
-    for(; link->name; link++)
-        if(!strcmp(name, link->name))
-            return link->func;
-
-    // The engine provides a couple of simple action functions.
-    /*if(!strcmp(name, "A_ExecuteCommand"))
-       return A_ExecuteCommand;
-       if(!strcmp(name, "A_ExecuteCommandPSpr"))
-       return A_ExecuteCommandPSpr; */
-
+        for(; link->name; link++)
+            if(!strcmp(name, link->name))
+                return link->func;
+    }}
     return 0;
 }
 
@@ -776,7 +765,7 @@ static void readAllDefinitions(void)
         else
             Con_Error("readAllDefinitions: Error, failed to locate main game definition file \"%s\".", Str_Text(mainDef));
     }}
-    
+
     // Now any extra definition files required by the game.
     { gameresource_record_t* const* records;
     if((records = GameInfo_Resources(DD_GameInfo(), F_ResourceNamespaceForName("defs:"), 0)))

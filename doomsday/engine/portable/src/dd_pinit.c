@@ -114,16 +114,13 @@ void DD_ErrorBox(boolean error, char* format, ...)
  */
 void DD_ComposeMainWindowTitle(char* title)
 {
-    if(__gx.GetVariable)
+    if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.GetVariable)
     {
-        char*               gameName = (char*) __gx.GetVariable(DD_GAME_ID);
-        sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT "%s : %s",
-                (isDedicated? " (Dedicated)" : ""), gameName);
+        sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT "%s : %s", (isDedicated? " (Dedicated)" : ""), (char*)gx.GetVariable(DD_GAME_ID));
     }
     else
     {
-        sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT "%s",
-                (isDedicated? " (Dedicated)" : ""));
+        sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT "%s", (isDedicated? " (Dedicated)" : ""));
     }
 }
 

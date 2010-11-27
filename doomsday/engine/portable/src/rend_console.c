@@ -498,7 +498,7 @@ static void drawConsoleBackground(int x, int y, int w, int h, float gtosMulY,
               closeFade * consoleBackgroundAlpha);
 
     // The background.
-    if(gx.ConsoleBackground)
+    if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.ConsoleBackground)
         gx.ConsoleBackground(&bgX, &bgY);
 
     // Let's make it a bit more interesting.
@@ -588,10 +588,6 @@ static void drawConsole(void)
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glScalef(Cfont.sizeX, Cfont.sizeY, 1);
-
-    // The game & version number.
-    //drawSideText(gx.Get(DD_GAME_ID), 2, consoleAlpha);
-    //drawSideText(gx.Get(DD_GAME_MODE), 1, consoleAlpha);
 
     glColor4f(1, 1, 1, consoleAlpha);
 

@@ -1194,7 +1194,9 @@ extern boolean usingFog;
             // Shut everything down, but remember our settings.
             hadFog = usingFog;
             GL_TotalReset();
-            gx.UpdateState(DD_RENDER_RESTART_PRE);
+
+            if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.UpdateState)
+                gx.UpdateState(DD_RENDER_RESTART_PRE);
 
             R_UnloadCompositeFonts();
             R_UnloadVectorGraphics();
@@ -1219,7 +1221,9 @@ extern boolean usingFog;
 
             if(hadFog)
                 GL_UseFog(true);
-            gx.UpdateState(DD_RENDER_RESTART_POST);
+
+            if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.UpdateState)
+                gx.UpdateState(DD_RENDER_RESTART_POST);
 
             GL_LoadSystemTextures();
             Rend_ParticleLoadExtraTextures();

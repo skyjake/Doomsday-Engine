@@ -146,7 +146,7 @@ void Sys_Shutdown(void)
 {
     Sys_ShutdownTimer();
 
-    if(gx.Shutdown)
+    if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.Shutdown)
         gx.Shutdown();
 
     Net_Shutdown();
