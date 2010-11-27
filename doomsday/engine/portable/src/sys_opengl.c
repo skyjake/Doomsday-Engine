@@ -673,7 +673,9 @@ void Sys_InitGLExtensions(void)
 
     if(query("GL_EXT_framebuffer_object", &GL_state_ext.framebufferObject))
     {
+#ifdef WIN32
         GETPROC(glGenerateMipmapEXT);
+#endif
     }
 
     query("GL_SGIS_generate_mipmap", &GL_state_ext.genMip);

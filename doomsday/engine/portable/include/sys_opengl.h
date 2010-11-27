@@ -126,11 +126,11 @@ extern gl_state_t GL_state;
 extern gl_state_texture_t GL_state_texture;
 extern gl_state_ext_t GL_state_ext;
 
-#ifdef GL_EXT_framebuffer_object
-extern PFNGLGENERATEMIPMAPEXTPROC glGenerateMipmapEXT;
-#endif
-
 #ifdef WIN32
+# ifdef GL_EXT_framebuffer_object
+extern PFNGLGENERATEMIPMAPEXTPROC glGenerateMipmapEXT;
+# endif
+
 extern PFNWGLSWAPINTERVALEXTPROC wglSwapIntervalEXT;
 extern PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB;
 
