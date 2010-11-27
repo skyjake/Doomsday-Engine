@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2008 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * dd_winit.h: Win32 Initialization
+ * dd_winit.h: WinAPI Initialization
  *
  * Create windows, load DLLs, setup APIs.
  */
@@ -155,10 +155,12 @@ static BOOL unloadPlugin(HINSTANCE* handle)
 }
 
 /**
- * Loads all the plugins from the startup directory.
+ * Loads all the plugins from the library directory.
  */
 static BOOL loadAllPlugins(application_t* app)
 {
+    assert(app);
+    {
     struct _finddata_t fd;
     filename_t pluginPath;
     long hFile;
@@ -190,6 +192,7 @@ static BOOL loadAllPlugins(application_t* app)
     }
 
     return TRUE;
+    }
 }
 
 static BOOL unloadAllPlugins(application_t* app)
@@ -355,7 +358,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         {
             DD_ErrorBox(true, "Error loading plugins.");
         }
-        else if(!(windowIDX = Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, (isDedicated ? WT_CONSOLE : WT_NORMAL), buf, &lnCmdShow)))
+        else if(0 == (windowIDX = Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, (isDedicated ? WT_CONSOLE : WT_NORMAL), buf, &lnCmdShow)))
         {
             DD_ErrorBox(true, "Error creating main window.");
         }
