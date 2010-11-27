@@ -379,15 +379,6 @@ static void clearHash(_filehash_t* fh)
 {
     assert(fh);
 
-    // Free the directory nodes.
-    while(fh->direcFirst)
-    {
-        direcnode_t* next = fh->direcFirst->next;
-        M_Free(fh->direcFirst->path);
-        M_Free(fh->direcFirst);
-        fh->direcFirst = next;
-    }
-
     // Free the hash table.
     if(fh->direcFirst)
     {
@@ -404,6 +395,16 @@ static void clearHash(_filehash_t* fh)
             }
         }
     }
+
+    // Free the directory nodes.
+    while(fh->direcFirst)
+    {
+        direcnode_t* next = fh->direcFirst->next;
+        M_Free(fh->direcFirst->path);
+        M_Free(fh->direcFirst);
+        fh->direcFirst = next;
+    }
+
     // Clear the entire table.
     memset(fh->hashTable, 0, sizeof(fh->hashTable));
 
