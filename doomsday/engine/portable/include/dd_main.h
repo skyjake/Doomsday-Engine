@@ -57,16 +57,6 @@ int DD_Main(void);
 void DD_CheckTimeDemo(void);
 void DD_UpdateEngineState(void);
 
-/**
- * @param origPath      If a relative path, the data path is added in front of it.
- */
-void R_PrependDataPath(char* newPath, const char* origPath, size_t len);
-
-/**
- * @param origPath      If a relative path, the defs path is added in front of it.
- */
-void R_PrependDefsPath(char* newPath, const char* origPath, size_t len);
-
 void DD_SetConfigFile(const char* file);
 
 int DD_GetInteger(int ddvalue);

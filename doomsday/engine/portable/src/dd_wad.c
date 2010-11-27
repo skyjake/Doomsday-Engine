@@ -576,11 +576,23 @@ boolean W_AddFile(const char* fileName, boolean allowDuplicate)
     if(!fileName || !fileName[0])
         return true;
 
-    if((handle = F_Open(fileName, "rb")) == NULL)
+    if(!(handle = F_Open(fileName, "rb")))
     {
-        // Didn't find file. Try reading from the data path.
-        R_PrependDataPath(alterFileName, fileName, FILENAME_T_MAXLEN);
-        if((handle = F_Open(alterFileName, "rb")) == NULL)
+        /**
+         * Didn't find file. Try reading from the data path?
+         *
+         * \fixme dj: We do not want to be trying alternative search paths
+         * for resources unless specified by the resource locator. Simply
+         * prepending the base game data path at this level circumvents
+         * the search logic. Question is - anything relying on this?
+         */
+        if(!Dir_IsAbsolute(fileName))
+        {
+            dd_snprintf(alterFileName, FILENAME_T_MAXLEN, "%s%s", Str_Text(GameInfo_DataPath(DD_GameInfo())), fileName);
+            handle = F_Open(alterFileName, "rb");
+        }
+
+        if(!handle)
         {
             Con_Message("W_AddFile: Warning \"%s\" not found.\n", fileName);
             return false;

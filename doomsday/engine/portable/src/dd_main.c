@@ -893,30 +893,6 @@ void DD_ChangeGame(gameinfo_t* info)
     Con_FPrintf(CBLF_RULER, "");
 }
 
-void R_PrependDataPath(char* newPath, const char* origPath, size_t len)
-{
-    assert(newPath && origPath && origPath[0] && len > 0);
-
-    if(Dir_IsAbsolute(origPath))
-    {   // origPath is already absolute; use as-is.
-        strncpy(newPath, origPath, len);
-        return;
-    }
-    dd_snprintf(newPath, len, "%s%s", Str_Text(GameInfo_DataPath(DD_GameInfo())), origPath);
-}
-
-void R_PrependDefsPath(char* newPath, const char* origPath, size_t len)
-{
-    assert(newPath && origPath && origPath[0] && len > 0);
-
-    if(Dir_IsAbsolute(origPath))
-    {   // origPath is already absolute; use as-is.
-        strncpy(newPath, origPath, len);
-        return;
-    }
-    dd_snprintf(newPath, len, "%s%s", Str_Text(GameInfo_DefsPath(DD_GameInfo())), origPath);
-}
-
 void DD_SetConfigFile(const char* file)
 {
     if(!file || !file[0])

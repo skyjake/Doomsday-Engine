@@ -157,12 +157,6 @@ const ddstring_t* GameInfo_Title(gameinfo_t* info);
 /// @return             Ptr to a string containing the default author.
 const ddstring_t* GameInfo_Author(gameinfo_t* info);
 
-/// @return             Ptr to a string containing the base data-class resource directory.
-const ddstring_t* GameInfo_DataPath(gameinfo_t* info);
-
-/// @return             Ptr to a string containing the base defs-class resource directory.
-const ddstring_t* GameInfo_DefsPath(gameinfo_t* info);
-
 /// @return             Ptr to a string containing the name of the main definition file.
 const ddstring_t* GameInfo_MainDef(gameinfo_t* info);
 
@@ -174,5 +168,19 @@ const ddstring_t* GameInfo_CmdlineFlag2(gameinfo_t* info);
 
 /// @return             Ptr to a vector of required resource records.
 gameresource_record_t* const* GameInfo_Resources(gameinfo_t* info, resourcenamespaceid_t rni, size_t* count);
+
+/**
+ * \note Unless caller is the resource locator then you probably shouldn't be calling.
+ * This is the base data path and shouldn't be used directly for resource location.
+ * @return              Ptr to a string containing the base data-class resource directory.
+ */
+const ddstring_t* GameInfo_DataPath(gameinfo_t* info);
+
+/**
+ * \note Unless caller is the resource locator then you probably shouldn't be calling.
+ * This is the base defs path and shouldn't be used directly for resource location.
+ * @return              Ptr to a string containing the base defs-class resource directory.
+ */
+const ddstring_t* GameInfo_DefsPath(gameinfo_t* info);
 
 #endif /* LIBDENG_GAMEINFO_H */

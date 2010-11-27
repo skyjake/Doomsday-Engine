@@ -340,20 +340,7 @@ static void copyStr(char* dest, const char* src, size_t num, size_t destSize)
  * Definition files (ded) in the root are mapped to Defs/Game/Auto.
  * Paths that begin with a '@' are mapped to Defs/Game/Auto.
  * Paths that begin with a '#' are mapped to Data/Game/Auto.
- *
- * DJS 05/05/05
- * The folder in the root is mapped to another location
- *
- * Location is one of the following keynames.
- * Folder 'Models' is mapped to Data/Game/Models
- * Floder 'Flares' is mapped to Data/Game/Flares
- * Folder 'LightMaps' is mapped to Data/Game/LightMaps
- * Folder 'Music' is mapped to Data/Game/Music
- * Folder 'Textures' is mapped to Data/Game/Textures
- * Folder 'Flats' is mapped to Data/Game/Flats
- * Folder 'DetailTextures' is mapped to Data/Game/DetailTextures
- * Folder 'Patches' is mapped to Data/Game/Patches
- * Folder 'Sfx' is mapped to Data/Game/Sfx
+ * Key-named directories in the root are mapped to another location.
  */
 static void mapPath(char* path, size_t len)
 {
@@ -361,10 +348,11 @@ static void mapPath(char* path, size_t len)
 
     if(strchr(path, DIR_SEP_CHAR) != NULL)
     {
-        // There is at least one level of directory structure inside
-        // the archive.
+        // There is at least one level of directory structure inside the archive.
 
-        // Check the beginning of the path.
+        // Is this directory subject to a data-class resource namespace mapping?
+        // \fixme dj: These names and associated default resource paths should
+        // be coming from the resource locator.
         if(!strnicmp("Models" DIR_SEP_STR, path, 7) ||
            !strnicmp("Flares" DIR_SEP_STR, path, 7) ||
            !strnicmp("LightMaps" DIR_SEP_STR, path, 10) ||
@@ -375,7 +363,7 @@ static void mapPath(char* path, size_t len)
            !strnicmp("Patches" DIR_SEP_STR, path, 8) ||
            !strnicmp("Sfx" DIR_SEP_STR, path, 4))
         {
-            // Contents mapped to keyname folder.
+            // Contents mapped to key-named directory.
             dd_snprintf(mapped, FILENAME_T_MAXLEN, "%s%s", Str_Text(GameInfo_DataPath(DD_GameInfo())), path);
             strncpy(path, mapped, len);
             return;
