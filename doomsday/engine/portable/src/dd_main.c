@@ -702,7 +702,7 @@ static void* getEntryPoint(lt_dlhandle* handle, const char* fn)
     void* adr = (void*)lt_dlsym(*handle, fn);
     if(!adr)
     {
-        Con_Message("getEntryPoint: Error locating address of \"%s\".\n", fn);
+        Con_Message("getEntryPoint: Error locating address of \"%s\" (%s).\n", fn, lt_dlerror());
     }
     return adr;
 }
