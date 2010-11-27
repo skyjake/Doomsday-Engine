@@ -68,7 +68,6 @@
  .\..\..\engine\portable\src\r_shadow.c
  .\..\..\engine\portable\src\r_model.c
  .\..\..\engine\portable\src\r_main.c
- .\..\..\engine\portable\src\r_extres.c
  .\..\..\engine\portable\src\r_draw.c
  .\..\..\engine\portable\src\r_data.c
  .\..\..\engine\portable\src\r_lgrid.c
@@ -142,6 +141,7 @@
  .\..\..\engine\portable\src\sys_filein.c
  .\..\..\engine\portable\src\sys_direc.c
  .\..\..\engine\win32\src\sys_console.c
+ .\..\..\engine\portable\src\sys_reslocator.c
  .\..\..\engine\portable\src\b_context.c
  .\..\..\engine\portable\src\b_command.c
  .\..\..\engine\portable\src\b_device.c

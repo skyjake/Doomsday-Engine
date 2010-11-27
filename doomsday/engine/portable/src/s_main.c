@@ -41,7 +41,7 @@
 #include "de_misc.h"
 #include "de_defs.h"
 
-#include "sys_extres.h"
+#include "sys_reslocator.h"
 #include "sys_audio.h"
 
 // MACROS ------------------------------------------------------------------

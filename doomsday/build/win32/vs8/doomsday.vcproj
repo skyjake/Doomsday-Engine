@@ -1329,10 +1329,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\r_extres.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\r_lgrid.c"
 				>
 			</File>
@@ -1603,6 +1599,10 @@
 						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\sys_reslocator.c"
+				>
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\sys_sock.c"
@@ -3214,7 +3214,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\sys_extres.h"
+				RelativePath="..\..\..\engine\portable\include\sys_reslocator.h"
 				>
 			</File>
 			<File

@@ -26,7 +26,7 @@
 
 #include "de_base.h"
 #include "m_string.h"
-#include "sys_extres.h"
+#include "sys_reslocator.h"
 
 /**
  * Game Resource Record.

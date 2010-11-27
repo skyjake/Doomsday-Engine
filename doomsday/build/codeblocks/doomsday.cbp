@@ -304,7 +304,6 @@
 		<Unit filename="..\..\engine\portable\include\p_vertex.h" />
 		<Unit filename="..\..\engine\portable\include\r_data.h" />
 		<Unit filename="..\..\engine\portable\include\r_draw.h" />
-		<Unit filename="..\..\engine\portable\include\r_extres.h" />
 		<Unit filename="..\..\engine\portable\include\r_lgrid.h" />
 		<Unit filename="..\..\engine\portable\include\r_lumobjs.h" />
 		<Unit filename="..\..\engine\portable\include\r_main.h" />
@@ -353,6 +352,7 @@
 		<Unit filename="..\..\engine\portable\include\sys_master.h" />
 		<Unit filename="..\..\engine\portable\include\sys_network.h" />
 		<Unit filename="..\..\engine\portable\include\sys_opengl.h" />
+		<Unit filename="..\..\engine\portable\include\sys_reslocator.h" />
 		<Unit filename="..\..\engine\portable\include\sys_sock.h" />
 		<Unit filename="..\..\engine\portable\include\sys_system.h" />
 		<Unit filename="..\..\engine\portable\include\sys_timer.h" />
@@ -679,9 +679,6 @@
 		<Unit filename="..\..\engine\portable\src\r_draw.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\r_extres.c">
-			<Option compilerVar="CC" />
-		</Unit>
 		<Unit filename="..\..\engine\portable\src\r_lgrid.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -807,6 +804,7 @@
 		<Unit filename="..\..\engine\portable\src\sys_opengl.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\sys_reslocator.c" />
 		<Unit filename="..\..\engine\portable\src\sys_sdl_window.c">
 			<Option compilerVar="CC" />
 			<Option target="&lt;{~None~}&gt;" />

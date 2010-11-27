@@ -52,7 +52,7 @@
 #include "de_misc.h"
 
 #include "sys_file.h"
-#include "sys_extres.h"
+#include "sys_reslocator.h"
 #include "con_decl.h"
 #include "gl_draw.h" // for GL_SetFilter()
 

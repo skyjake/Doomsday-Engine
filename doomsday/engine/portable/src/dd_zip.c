@@ -38,7 +38,7 @@
 #include "de_console.h"
 #include "de_misc.h"
 #include "sys_direc.h"
-#include "sys_extres.h"
+#include "sys_reslocator.h"
 
 #include <zlib.h>
 
