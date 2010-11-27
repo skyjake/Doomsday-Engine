@@ -91,8 +91,9 @@ static lt_dlhandle* findFirstUnusedPluginHandle(application_t* app)
  *
  * @return              @c true, if the plugin was loaded succesfully.
  */
-static boolean loadPlugin(const char* pluginPath, lt_ptr data)
+static int loadPlugin(const char* pluginPath, lt_ptr data)
 {
+    application_t* app = (application_t*) data;
 #ifndef MACOSX
     filename_t  name;
 #endif
@@ -110,9 +111,9 @@ static boolean loadPlugin(const char* pluginPath, lt_ptr data)
             return false;
 
         if(NULL == (initializer = lt_dlsym(plugin, "DP_Initialize")) ||
-           NULL == (handle = findFirstUnusedPluginHandle()))
+           NULL == (handle = findFirstUnusedPluginHandle(app)))
         {
-            Con_Printf("loadPlugin: Error loading \"%s\" (%s)!\n", pluginPath, dlerror());
+            Con_Printf("loadPlugin: Error loading \"%s\" (%s)!\n", pluginPath, lt_dlerror());
             lt_dlclose(plugin);
             return false;
         }
@@ -132,7 +133,7 @@ static boolean unloadPlugin(lt_dlhandle* handle)
     int result = lt_dlclose(*handle);
     *handle = 0;
     if(result != 0)
-        Con_Printf("unloadPlugin: Error unloading plugin (%s)\n", dlerror());
+        Con_Printf("unloadPlugin: Error unloading plugin (%s)\n", lt_dlerror());
     return result;
     }
 }
@@ -144,7 +145,7 @@ static boolean loadAllPlugins(application_t* app)
 {
     assert(app);
     // Try to load all libraries that begin with libdp.
-    lt_dlforeachfile(NULL, loadPlugin, NULL);
+    lt_dlforeachfile(NULL, loadPlugin, (lt_ptr) app);
     return true;
 }
 
