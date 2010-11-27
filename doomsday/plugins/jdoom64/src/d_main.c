@@ -192,8 +192,8 @@ int G_RegisterGames(int hookType, int parm, void* data)
 #define STARTUPDED      GAMENAMETEXT ".ded"
 
     gameIds[doom64] = DD_AddGame("doom64", DATAPATH, DEFSPATH, STARTUPDED, "Doom 64", "Midway Software", "doom64", 0);
-    DD_AddGameResource(gameIds[doom64], RT_PACKAGE, "doom64.wad", "MAP01;MAP020;MAP38;F_SUCK");
-    DD_AddGameResource(gameIds[doom64], RT_PACKAGE, STARTUPPK3, 0);
+    DD_AddGameResource(gameIds[doom64], RC_PACKAGE, "doom64.wad", "MAP01;MAP020;MAP38;F_SUCK");
+    DD_AddGameResource(gameIds[doom64], RC_PACKAGE, STARTUPPK3, 0);
     return true;
 
 #undef STARTUPDED

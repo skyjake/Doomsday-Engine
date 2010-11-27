@@ -107,7 +107,7 @@ extern          "C" {
      *                      Names may include valid absolute, or relative file paths. These paths include
      *                      valid symbolbolic escape tokens, predefined symbols into the virtual file system.            
      */
-    void DD_AddGameResource(gameid_t game, resourcetype_t type, const char* names, void* params);
+    void DD_AddGameResource(gameid_t game, resourceclass_t type, const char* names, void* params);
 
     /**
      * Retrieve extended info about the specified game.

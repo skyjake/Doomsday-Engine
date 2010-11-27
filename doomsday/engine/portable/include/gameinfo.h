@@ -36,7 +36,7 @@
  */
 typedef struct {
     /// Type of resource.
-    resourcetype_t type;
+    resourceclass_t type;
 
     /// List of known potential names. Seperated with a semicolon.
     ddstring_t names;
@@ -86,10 +86,10 @@ typedef struct {
     ddstring_t* _cmdlineFlag, *_cmdlineFlag2;
 
     /// Lists of relative search paths to use when locating file resources. Determined automatically at creation time.
-    ddstring_t _searchPathLists[NUM_RESOURCE_TYPES];
+    ddstring_t _searchPathLists[NUM_RESOURCE_CLASSES];
 
     /// Vector of records for required game resources (e.g., doomu.wad).
-    gameresource_recordset_t _requiredResources[NUM_RESOURCE_TYPES];
+    gameresource_recordset_t _requiredResources[NUM_RESOURCE_CLASSES];
 } gameinfo_t;
 
 /**
@@ -119,7 +119,7 @@ void P_DestroyGameInfo(gameinfo_t* info);
  * @param type          Type of resource.
  * @param name          Potential resource name.
  */
-gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourcetype_t type,
+gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourceclass_t type,
     resourcenamespaceid_t rni, const ddstring_t* name);
 
 /**

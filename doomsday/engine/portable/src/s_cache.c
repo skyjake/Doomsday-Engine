@@ -574,7 +574,7 @@ static sfxsample_t* cacheSample(int id, sfxinfo_t* info)
          * \fixme should be a cvar.
          */
         if((info->lumpNum < 0 || W_LumpFromIWAD(info->lumpNum)) &&
-           F_FindResource(RT_SOUND, buf, info->lumpName, NULL, FILENAME_T_MAXLEN) &&
+           F_FindResource(RC_SOUND, buf, info->lumpName, NULL, FILENAME_T_MAXLEN) &&
            (data = WAV_Load(buf, &bytesPer, &rate, &numSamples)))
         {   // Loading was successful!
             bytesPer /= 8; // Was returned as bits.

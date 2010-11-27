@@ -36,9 +36,9 @@ typedef struct {
 } resourcenamespace_t;
 
 /**
- * Convert a resourcetype_t constant into a string for error/debug messages.
+ * Convert a resourceclass_t constant into a string for error/debug messages.
  */
-const char* F_ResourceTypeStr(resourcetype_t rc);
+const char* F_ResourceTypeStr(resourceclass_t rc);
 
 /**
  * \post Initial/default search paths registered and queries may begin.
@@ -51,7 +51,7 @@ resourcenamespaceid_t F_ToResourceNamespaceId(int val);
 resourcenamespace_t*  F_ToResourceNamespace(resourcenamespaceid_t);
 uint F_NumResourceNamespaces(void);
 
-resourcenamespaceid_t F_DefaultResourceNamespaceForType(resourcetype_t type);
+resourcenamespaceid_t F_DefaultResourceNamespaceForType(resourceclass_t type);
 resourcenamespaceid_t F_ResourceNamespaceForName(const char* name);
 resourcenamespaceid_t F_SafeResourceNamespaceForName(const char* name);
 
@@ -80,7 +80,7 @@ resourcenamespaceid_t F_ParseResourceNamespace(const char* str);
  *
  * @return              @c true, iff a file was found.
  */
-boolean F_FindResource(resourcetype_t type, char* foundPath, const char* searchPath,
+boolean F_FindResource(resourceclass_t type, char* foundPath, const char* searchPath,
     const char* suffix, size_t foundPathLength);
 
 #endif /* LIBDENG_FILESYS_EXTRES_H */

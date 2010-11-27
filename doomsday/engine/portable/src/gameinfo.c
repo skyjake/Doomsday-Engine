@@ -196,37 +196,37 @@ static void collateResourceSearchPathSet(gameinfo_t* info)
 {
     assert(info);
     { searchpathid_t searchOrder[] = { SPI_DOOMWADDIR, SPI_BASEPATH_DATA, SPI_GAMEPATH_DATA, 0 };
-    formResourceSearchPaths(info, 1+RT_PACKAGE,     &info->_searchPathLists[RT_PACKAGE], searchOrder, "", "", "");}
+    formResourceSearchPaths(info, 1+RC_PACKAGE,     &info->_searchPathLists[RC_PACKAGE], searchOrder, "", "", "");}
 
     { searchpathid_t searchOrder[] = { SPI_BASEPATH_DEFS, SPI_GAMEPATH_DEFS, SPI_GAMEMODEPATH_DEFS, 0 };
-    formResourceSearchPaths(info, 1+RT_DEFINITION,  &info->_searchPathLists[RT_DEFINITION], searchOrder, "",         "-defdir",  "-defdir2");}
+    formResourceSearchPaths(info, 1+RC_DEFINITION,  &info->_searchPathLists[RC_DEFINITION], searchOrder, "",         "-defdir",  "-defdir2");}
 
     { searchpathid_t searchOrder[] = { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 };
-    formResourceSearchPaths(info, 1+RT_GRAPHIC,     &info->_searchPathLists[RT_GRAPHIC], searchOrder, "textures\\",  "-texdir",  "-texdir2");}
+    formResourceSearchPaths(info, 1+RC_GRAPHIC,     &info->_searchPathLists[RC_GRAPHIC], searchOrder, "textures\\",  "-texdir",  "-texdir2");}
 
     { searchpathid_t searchOrder[] = { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 };
-    formResourceSearchPaths(info, 1+RT_GRAPHIC,     &info->_searchPathLists[RT_GRAPHIC], searchOrder, "flats\\",     "-flatdir", "-flatdir2");}
+    formResourceSearchPaths(info, 1+RC_GRAPHIC,     &info->_searchPathLists[RC_GRAPHIC], searchOrder, "flats\\",     "-flatdir", "-flatdir2");}
 
     { searchpathid_t searchOrder[] = { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 };
-    formResourceSearchPaths(info, 1+RT_GRAPHIC,     &info->_searchPathLists[RT_GRAPHIC], searchOrder, "patches\\",   "-patdir",  "-patdir2");}
+    formResourceSearchPaths(info, 1+RC_GRAPHIC,     &info->_searchPathLists[RC_GRAPHIC], searchOrder, "patches\\",   "-patdir",  "-patdir2");}
 
     { searchpathid_t searchOrder[] = { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 };
-    formResourceSearchPaths(info, 1+RT_GRAPHIC,     &info->_searchPathLists[RT_GRAPHIC], searchOrder, "lightmaps\\", "-lmdir",   "-lmdir2");}
+    formResourceSearchPaths(info, 1+RC_GRAPHIC,     &info->_searchPathLists[RC_GRAPHIC], searchOrder, "lightmaps\\", "-lmdir",   "-lmdir2");}
 
     { searchpathid_t searchOrder[] = { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 };
-    formResourceSearchPaths(info, 1+RT_GRAPHIC,     &info->_searchPathLists[RT_GRAPHIC], searchOrder, "flares\\",    "-flaredir", "-flaredir2");}
+    formResourceSearchPaths(info, 1+RC_GRAPHIC,     &info->_searchPathLists[RC_GRAPHIC], searchOrder, "flares\\",    "-flaredir", "-flaredir2");}
 
     { searchpathid_t searchOrder[] = { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 };
-    formResourceSearchPaths(info, 1+RT_MUSIC,       &info->_searchPathLists[RT_MUSIC],   searchOrder, "music\\",     "-musdir",  "-musdir2");}
+    formResourceSearchPaths(info, 1+RC_MUSIC,       &info->_searchPathLists[RC_MUSIC],   searchOrder, "music\\",     "-musdir",  "-musdir2");}
 
     { searchpathid_t searchOrder[] = { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 };
-    formResourceSearchPaths(info, 1+RT_SOUND,       &info->_searchPathLists[RT_SOUND],   searchOrder, "sfx\\",       "-sfxdir",  "-sfxdir2");}
+    formResourceSearchPaths(info, 1+RC_SOUND,       &info->_searchPathLists[RC_SOUND],   searchOrder, "sfx\\",       "-sfxdir",  "-sfxdir2");}
 
     { searchpathid_t searchOrder[] = { SPI_BASEPATH_DATA, 0 };
-    formResourceSearchPaths(info, 1+RT_GRAPHIC,     &info->_searchPathLists[RT_GRAPHIC], searchOrder, "graphics\\",  "-gfxdir",  "-gfxdir2");}
+    formResourceSearchPaths(info, 1+RC_GRAPHIC,     &info->_searchPathLists[RC_GRAPHIC], searchOrder, "graphics\\",  "-gfxdir",  "-gfxdir2");}
 
     { searchpathid_t searchOrder[] = { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 };
-    formResourceSearchPaths(info, 1+RT_MODEL,       &info->_searchPathLists[RT_MODEL],   searchOrder, "models\\",   "-modeldir", "-modeldir2");}
+    formResourceSearchPaths(info, 1+RC_MODEL,       &info->_searchPathLists[RC_MODEL],   searchOrder, "models\\",   "-modeldir", "-modeldir2");}
 }
 
 static __inline void clearResourceSearchPathList(gameinfo_t* info, resourcenamespaceid_t rni)
@@ -284,7 +284,7 @@ gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey, const
         info->_cmdlineFlag2 = 0;
 
     { size_t i;
-    for(i = 0; i < NUM_RESOURCE_TYPES; ++i)
+    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
     {
         gameresource_recordset_t* rset = &info->_requiredResources[i];
         rset->numRecords = 0;
@@ -314,7 +314,7 @@ void P_DestroyGameInfo(gameinfo_t* info)
     if(info->_cmdlineFlag2){ Str_Delete(info->_cmdlineFlag2); info->_cmdlineFlag2 = 0; }
 
     { size_t i;
-    for(i = 0; i < NUM_RESOURCE_TYPES; ++i)
+    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
     {
         gameresource_recordset_t* rset = &info->_requiredResources[i];
 
@@ -343,10 +343,10 @@ void P_DestroyGameInfo(gameinfo_t* info)
     M_Free(info);
 }
 
-gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourcetype_t type,
+gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourceclass_t type,
     resourcenamespaceid_t rni, const ddstring_t* names)
 {
-    assert(info && VALID_RESOURCE_TYPE(type) && F_IsValidResourceNamespaceId(rni) && names);
+    assert(info && VALID_RESOURCE_CLASS(type) && F_IsValidResourceNamespaceId(rni) && names);
     {
     gameresource_recordset_t* rset = &info->_requiredResources[rni-1];
     gameresource_record_t* record;
@@ -361,7 +361,7 @@ gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourcetype_t typ
     record->type = type;
     switch(record->type)
     {
-    case RT_PACKAGE:
+    case RC_PACKAGE:
         record->identityKeys = 0;
         break;
     default:

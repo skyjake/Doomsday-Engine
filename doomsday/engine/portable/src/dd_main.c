@@ -306,7 +306,7 @@ static void addIdentityKeyToResourceNamespaceRecord(gameresource_record_t* rec, 
     }
 }
 
-void DD_AddGameResource(gameid_t gameId, resourcetype_t type, const char* _names, void* params)
+void DD_AddGameResource(gameid_t gameId, resourceclass_t type, const char* _names, void* params)
 {
     gameinfo_t* info = findGameInfoForId(gameId);
     resourcenamespaceid_t rni;
@@ -314,7 +314,7 @@ void DD_AddGameResource(gameid_t gameId, resourcetype_t type, const char* _names
 
     if(!info || DD_IsNullGameInfo(info))
         Con_Error("DD_AddGameResource: Error, unknown game id %u.", gameId);
-    if(!VALID_RESOURCE_TYPE(type))
+    if(!VALID_RESOURCE_CLASS(type))
         Con_Error("DD_AddGameResource: Error, unknown resource type %i.", (int)type);
     if(!_names || !_names[0] || !strcmp(_names, ";"))
         Con_Error("DD_AddGameResource: Error, invalid name argument.");
@@ -335,7 +335,7 @@ void DD_AddGameResource(gameid_t gameId, resourcetype_t type, const char* _names
         if(params)
         switch(rec->type)
         {
-        case RT_PACKAGE:
+        case RC_PACKAGE:
             // Add an auto-identification file name list to the info record.
             { ddstring_t fileNames, fileName;
 
@@ -485,7 +485,7 @@ static boolean validateGameResource(gameresource_record_t* rec, const char* name
         return false;
     switch(rec->type)
     {
-    case RT_PACKAGE:
+    case RC_PACKAGE:
         if(recognizeWAD(foundPath, (void*)rec->identityKeys)) break;
         if(recognizeZIP(foundPath, (void*)rec->identityKeys)) break;
         return false;
@@ -553,9 +553,9 @@ static boolean allGameResourcesFound(gameinfo_t* info)
     return true;
 }
 
-static void loadGameResources(gameinfo_t* info, resourcetype_t type, const char* searchPath)
+static void loadGameResources(gameinfo_t* info, resourceclass_t type, const char* searchPath)
 {
-    assert(info && VALID_RESOURCE_TYPE(type) && searchPath);
+    assert(info && VALID_RESOURCE_CLASS(type) && searchPath);
     {
     resourcenamespaceid_t rni;
 
@@ -568,7 +568,7 @@ static void loadGameResources(gameinfo_t* info, resourcetype_t type, const char*
         {
             switch((*records)->type)
             {
-            case RT_PACKAGE:
+            case RC_PACKAGE:
                 if(Str_Length(&(*records)->path) != 0)
                     W_AddFile(Str_Text(&(*records)->path), false);
                 break;
@@ -787,7 +787,7 @@ static int DD_ChangeGameWorker(void* parm)
      * \fixme dj: First ZIPs then WADs (they may contain virtual WAD files).
      */
 #pragma message("!!!WARNING: Phase 1 of game resource loading does not presently prioritize ZIP!!!")
-    loadGameResources(info, RT_PACKAGE, "");
+    loadGameResources(info, RC_PACKAGE, "");
 
     /**
      * Phase 2: Add additional game-startup files.
@@ -1296,7 +1296,7 @@ static int DD_StartupWorker(void* parm)
 
     // Add required engine resource files.
     { filename_t foundPath;
-    if(F_FindResource(RT_PACKAGE, foundPath, "doomsday.pk3", 0, FILENAME_T_MAXLEN))
+    if(F_FindResource(RC_PACKAGE, foundPath, "doomsday.pk3", 0, FILENAME_T_MAXLEN))
         W_AddFile(foundPath, false);
     else
         Con_Error("DD_StartupWorker: Failed to locate required resource \"doomsday.pk3\".");

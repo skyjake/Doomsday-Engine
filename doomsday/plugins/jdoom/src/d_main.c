@@ -186,38 +186,38 @@ int G_RegisterGames(int hookType, int parm, void* data)
 
     /* HacX */
     gameIds[doom2_hacx] = DD_AddGame("hacx", DATAPATH, DEFSPATH, STARTUPDED, "HACX - Twitch 'n Kill", "Banjo Software", "hacx", 0);
-    DD_AddGameResource(gameIds[doom2_hacx], RT_PACKAGE, "hacx.wad", "HACX-R");
-    DD_AddGameResource(gameIds[doom2_hacx], RT_PACKAGE, STARTUPPK3, 0);
+    DD_AddGameResource(gameIds[doom2_hacx], RC_PACKAGE, "hacx.wad", "HACX-R");
+    DD_AddGameResource(gameIds[doom2_hacx], RC_PACKAGE, STARTUPPK3, 0);
 
     /* DOOM2 (TNT) */
     gameIds[doom2_tnt] = DD_AddGame("doom2-tnt", DATAPATH, DEFSPATH, STARTUPDED, "Final DOOM: TNT: Evilution", "Team TNT", "tnt", 0);
-    DD_AddGameResource(gameIds[doom2_tnt], RT_PACKAGE, "tnt.wad", "CAVERN5;CAVERN7;STONEW1");
-    DD_AddGameResource(gameIds[doom2_tnt], RT_PACKAGE, STARTUPPK3, 0);
+    DD_AddGameResource(gameIds[doom2_tnt], RC_PACKAGE, "tnt.wad", "CAVERN5;CAVERN7;STONEW1");
+    DD_AddGameResource(gameIds[doom2_tnt], RC_PACKAGE, STARTUPPK3, 0);
 
     /* DOOM2 (Plutonia) */
     gameIds[doom2_plut] = DD_AddGame("doom2-plut", DATAPATH, DEFSPATH, STARTUPDED, "Final DOOM: The Plutonia Experiment", "Dario Casali and Milo Casali", "plutonia", "plut");
-    DD_AddGameResource(gameIds[doom2_plut], RT_PACKAGE, "plutonia.wad", "_DEUTEX_;MC5;MC11;MC16;MC20");
-    DD_AddGameResource(gameIds[doom2_plut], RT_PACKAGE, STARTUPPK3, 0);
+    DD_AddGameResource(gameIds[doom2_plut], RC_PACKAGE, "plutonia.wad", "_DEUTEX_;MC5;MC11;MC16;MC20");
+    DD_AddGameResource(gameIds[doom2_plut], RC_PACKAGE, STARTUPPK3, 0);
 
     /* DOOM2 */
     gameIds[doom2] = DD_AddGame("doom2", DATAPATH, DEFSPATH, STARTUPDED, "DOOM 2: Hell on Earth", "id Software", "doom2", 0);
-    DD_AddGameResource(gameIds[doom2], RT_PACKAGE, "doom2f.wad;doom2.wad", "MAP01;MAP02;MAP03;MAP04;MAP10;MAP20;MAP25;MAP30;VILEN1;VILEO1;VILEQ1;GRNROCK");
-    DD_AddGameResource(gameIds[doom2], RT_PACKAGE, STARTUPPK3, 0);
+    DD_AddGameResource(gameIds[doom2], RC_PACKAGE, "doom2f.wad;doom2.wad", "MAP01;MAP02;MAP03;MAP04;MAP10;MAP20;MAP25;MAP30;VILEN1;VILEO1;VILEQ1;GRNROCK");
+    DD_AddGameResource(gameIds[doom2], RC_PACKAGE, STARTUPPK3, 0);
 
     /* DOOM (Ultimate) */
     gameIds[doom_ultimate] = DD_AddGame("doom1-ultimate", DATAPATH, DEFSPATH, STARTUPDED, "The Ultimate DOOM", "id Software", "ultimatedoom", "udoom");
-    DD_AddGameResource(gameIds[doom_ultimate], RT_PACKAGE, "doomu.wad;doom.wad", "E4M1;E4M2;E4M3;E4M4;E4M5;E4M6;E4M7;E4M8;E4M9;M_EPI4");
-    DD_AddGameResource(gameIds[doom_ultimate], RT_PACKAGE, STARTUPPK3, 0);
+    DD_AddGameResource(gameIds[doom_ultimate], RC_PACKAGE, "doomu.wad;doom.wad", "E4M1;E4M2;E4M3;E4M4;E4M5;E4M6;E4M7;E4M8;E4M9;M_EPI4");
+    DD_AddGameResource(gameIds[doom_ultimate], RC_PACKAGE, STARTUPPK3, 0);
 
     /* DOOM */
     gameIds[doom] = DD_AddGame("doom1", DATAPATH, DEFSPATH, STARTUPDED, "DOOM Registered", "id Software", "doom", 0);
-    DD_AddGameResource(gameIds[doom], RT_PACKAGE, "doom.wad", "E2M1;E2M2;E2M3;E2M4;E2M5;E2M6;E2M7;E2M8;E2M9;E3M1;E3M2;E3M3;E3M4;E3M5;E3M6;E3M7;E3M8;E3M9;CYBRE1;CYBRD8;FLOOR7_2");
-    DD_AddGameResource(gameIds[doom], RT_PACKAGE, STARTUPPK3, 0);
+    DD_AddGameResource(gameIds[doom], RC_PACKAGE, "doom.wad", "E2M1;E2M2;E2M3;E2M4;E2M5;E2M6;E2M7;E2M8;E2M9;E3M1;E3M2;E3M3;E3M4;E3M5;E3M6;E3M7;E3M8;E3M9;CYBRE1;CYBRD8;FLOOR7_2");
+    DD_AddGameResource(gameIds[doom], RC_PACKAGE, STARTUPPK3, 0);
 
     /* DOOM (Shareware) */
     gameIds[doom_shareware] = DD_AddGame("doom1-share", DATAPATH, DEFSPATH, STARTUPDED, "DOOM Shareware", "id Software", "sdoom", 0);
-    DD_AddGameResource(gameIds[doom_shareware], RT_PACKAGE, "doom1.wad", "E1M1;E1M2;E1M3;E1M4;E1M5;E1M6;E1M7;E1M8;E1M9;D_E1M1;FLOOR4_8;FLOOR7_2");
-    DD_AddGameResource(gameIds[doom_shareware], RT_PACKAGE, STARTUPPK3, 0);
+    DD_AddGameResource(gameIds[doom_shareware], RC_PACKAGE, "doom1.wad", "E1M1;E1M2;E1M3;E1M4;E1M5;E1M6;E1M7;E1M8;E1M9;D_E1M1;FLOOR4_8;FLOOR7_2");
+    DD_AddGameResource(gameIds[doom_shareware], RC_PACKAGE, STARTUPPK3, 0);
     return true;
 
 #undef STARTUPDED

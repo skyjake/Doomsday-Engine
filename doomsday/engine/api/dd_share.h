@@ -1129,23 +1129,23 @@ enum {
     //------------------------------------------------------------------------
 
 /**
- * Resource Type.
+ * Resource Class.
  *
  * @ingroup fs
  */
-typedef enum resourcetype_e {
-    RT_UNKNOWN = -1,
-    RT_FIRST = 0,
-    RT_PACKAGE = RT_FIRST,
-    RT_DEFINITION,
-    RT_GRAPHIC,
-    RT_MODEL,
-    RT_SOUND,
-    RT_MUSIC,
-    NUM_RESOURCE_TYPES
-} resourcetype_t;
+typedef enum resourceclass_e {
+    RC_UNKNOWN = -1,
+    RC_FIRST = 0,
+    RC_PACKAGE = RC_FIRST,
+    RC_DEFINITION,
+    RC_GRAPHIC,
+    RC_MODEL,
+    RC_SOUND,
+    RC_MUSIC,
+    NUM_RESOURCE_CLASSES
+} resourceclass_t;
 
-#define VALID_RESOURCE_TYPE(n)              ((n) >= RT_FIRST && (n) < NUM_RESOURCE_TYPES)
+#define VALID_RESOURCE_CLASS(n)             ((n) >= RC_FIRST && (n) < NUM_RESOURCE_CLASSES)
 
     //------------------------------------------------------------------------
     //

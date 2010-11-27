@@ -56,7 +56,7 @@
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Recognized extensions (in order of importance, left to right).
-static const char* resourceTypeFileExtensions[NUM_RESOURCE_TYPES][MAX_EXTENSIONS] = {
+static const char* resourceTypeFileExtensions[NUM_RESOURCE_CLASSES][MAX_EXTENSIONS] = {
     { "pk3", "zip", "wad", 0 }, // Packages, favor ZIP over WAD.
     { "ded", 0 }, // Definitions, only DED files.
     { "png", "tga", "pcx", 0 }, // Graphic, favor quality.
@@ -65,7 +65,7 @@ static const char* resourceTypeFileExtensions[NUM_RESOURCE_TYPES][MAX_EXTENSIONS
     { "ogg", "mp3", "wav", "mod", "mid", 0 } // Music
 };
 
-static const char* defaultResourceNamespaceForType[NUM_RESOURCE_TYPES] = {
+static const char* defaultResourceNamespaceForType[NUM_RESOURCE_CLASSES] = {
     { "packages:" },
     { "defs:" },
     { "graphics:" },
@@ -74,7 +74,7 @@ static const char* defaultResourceNamespaceForType[NUM_RESOURCE_TYPES] = {
     { "music:" },
 };
 
-static resourcenamespace_t resourceNamespaces[NUM_RESOURCE_TYPES] = {
+static resourcenamespace_t resourceNamespaces[NUM_RESOURCE_CLASSES] = {
     { "packages:" },
     { "defs:" },
     { "graphics:" },
@@ -124,10 +124,10 @@ static boolean tryFindFile(const char* searchPath, char* foundPath, size_t found
  *
  * @return              @c true, if it's found.
  */
-static boolean tryResourceFile(resourcetype_t type, const char* searchPath,
+static boolean tryResourceFile(resourceclass_t type, const char* searchPath,
     char* foundPath, size_t foundPathLen, resourcenamespaceid_t rni)
 {
-    assert(inited && VALID_RESOURCE_TYPE(type) && searchPath && searchPath[0]);
+    assert(inited && VALID_RESOURCE_CLASS(type) && searchPath && searchPath[0]);
     {
     boolean found = false;
     char* ptr;
@@ -174,10 +174,10 @@ static boolean tryResourceFile(resourcetype_t type, const char* searchPath,
     }
 }
 
-static boolean findResource(resourcetype_t type, const char* searchPath, const char* optionalSuffix,
+static boolean findResource(resourceclass_t type, const char* searchPath, const char* optionalSuffix,
     char* foundPath, size_t foundPathLen, resourcenamespaceid_t rni)
 {
-    assert(inited && VALID_RESOURCE_TYPE(type) && searchPath && searchPath[0]);
+    assert(inited && VALID_RESOURCE_CLASS(type) && searchPath && searchPath[0]);
     {
     boolean found = false;
 
@@ -220,10 +220,10 @@ static boolean findResource(resourcetype_t type, const char* searchPath, const c
     }
 }
 
-static boolean tryLocateResource(resourcetype_t type, resourcenamespaceid_t rni, const char* searchPath,
+static boolean tryLocateResource(resourceclass_t type, resourcenamespaceid_t rni, const char* searchPath,
     const char* optionalSuffix, char* foundPath, size_t foundPathLen)
 {
-    assert(inited && VALID_RESOURCE_TYPE(type) && searchPath && searchPath[0]);
+    assert(inited && VALID_RESOURCE_CLASS(type) && searchPath && searchPath[0]);
     {
     ddstring_t name;
     boolean found;
@@ -333,17 +333,17 @@ resourcenamespaceid_t F_ParseResourceNamespace(const char* str)
     return F_SafeResourceNamespaceForName(str);
 }
 
-const char* F_ResourceTypeStr(resourcetype_t resType)
+const char* F_ResourceTypeStr(resourceclass_t resType)
 {
-    assert(VALID_RESOURCE_TYPE(resType));
+    assert(VALID_RESOURCE_CLASS(resType));
     {
-    static const char* resourceTypeNames[NUM_RESOURCE_TYPES] = {
-        { "RT_PACKAGE" },
-        { "RT_DEFINITION" },
-        { "RT_GRAPHIC" },
-        { "RT_MODEL" },
-        { "RT_SOUND" },
-        { "RT_MUSIC" }
+    static const char* resourceTypeNames[NUM_RESOURCE_CLASSES] = {
+        { "RC_PACKAGE" },
+        { "RC_DEFINITION" },
+        { "RC_GRAPHIC" },
+        { "RC_MODEL" },
+        { "RC_SOUND" },
+        { "RC_MUSIC" }
     };
     return resourceTypeNames[(int)resType];
     }
@@ -365,7 +365,7 @@ void F_ShutdownResourceLocator(void)
 
 uint F_NumResourceNamespaces(void)
 {
-    return NUM_RESOURCE_TYPES;
+    return NUM_RESOURCE_CLASSES;
 }
 
 boolean F_IsValidResourceNamespaceId(int val)
@@ -373,17 +373,17 @@ boolean F_IsValidResourceNamespaceId(int val)
     return (boolean)(val>0 && (unsigned)val < (F_NumResourceNamespaces()+1)? 1 : 0);
 }
 
-resourcenamespaceid_t F_DefaultResourceNamespaceForType(resourcetype_t type)
+resourcenamespaceid_t F_DefaultResourceNamespaceForType(resourceclass_t type)
 {
-    assert(VALID_RESOURCE_TYPE(type));
+    assert(VALID_RESOURCE_CLASS(type));
     return F_ResourceNamespaceForName(defaultResourceNamespaceForType[type]);
 }
 
-boolean F_FindResource(resourcetype_t type, char* foundPath, const char* searchPath, const char* optionalSuffix, size_t foundPathLen)
+boolean F_FindResource(resourceclass_t type, char* foundPath, const char* searchPath, const char* optionalSuffix, size_t foundPathLen)
 {
     if(!searchPath || !searchPath[0])
         return false;
-    if(!VALID_RESOURCE_TYPE(type))
+    if(!VALID_RESOURCE_CLASS(type))
         Con_Error("F_FindResource: Invalid resource type %i.\n", type);
     { resourcenamespaceid_t rni;
     if((rni = F_ParseResourceNamespace(searchPath)) != 0)

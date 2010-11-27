@@ -1874,12 +1874,12 @@ static boolean expandSkinName(char* foundPath, const char* skin, const char* mod
     Str_Append(&searchPath, skin);
 
     // Try the "first choice" directory first.
-    found = F_FindResource(RT_GRAPHIC, foundPath, Str_Text(&searchPath), 0, foundPathLength);
+    found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), 0, foundPathLength);
 
     if(!found)
     {   // Try the model path(s).
         Str_Clear(&searchPath); Str_Appendf(&searchPath, "models:%s", skin);
-        found = F_FindResource(RT_GRAPHIC, foundPath, Str_Text(&searchPath), 0, foundPathLength);
+        found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), 0, foundPathLength);
     }
 
     Str_Free(&searchPath);

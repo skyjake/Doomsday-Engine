@@ -749,7 +749,7 @@ static void readAllDefinitions(void)
 
     // Start with engine's own top-level definition file, it is always read first.
     { filename_t foundPath;
-    if(F_FindResource(RT_DEFINITION, foundPath, "doomsday.ded", 0, FILENAME_T_MAXLEN))
+    if(F_FindResource(RC_DEFINITION, foundPath, "doomsday.ded", 0, FILENAME_T_MAXLEN))
         readDefinitionFile(foundPath);
     else
         Con_Error("readAllDefinitions: Error, failed to locate main engine definition file \"doomsday.ded\".");
@@ -760,7 +760,7 @@ static void readAllDefinitions(void)
     if((mainDef = GameInfo_MainDef(DD_GameInfo())))
     {
         filename_t foundPath;
-        if(F_FindResource(RT_DEFINITION, foundPath, Str_Text(mainDef), 0, FILENAME_T_MAXLEN))
+        if(F_FindResource(RC_DEFINITION, foundPath, Str_Text(mainDef), 0, FILENAME_T_MAXLEN))
             readDefinitionFile(foundPath);
         else
             Con_Error("readAllDefinitions: Error, failed to locate main game definition file \"%s\".", Str_Text(mainDef));
