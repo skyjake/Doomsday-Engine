@@ -46,6 +46,10 @@ typedef struct {
     char* extensions[MAX_EXTENSIONS];
 } resourcetypeinfo_t;
 
+/**
+ * Resource Type.
+ * @ingroup fs
+ */
 typedef enum {
     RT_NONE = 0,
     RT_FIRST = 1,
@@ -68,6 +72,23 @@ typedef enum {
 #define NUM_RESOURCE_TYPES          (RT_LAST_INDEX-1)
 #define VALID_RESOURCE_TYPE(v)      ((v) >= RT_FIRST && (v) < RT_LAST_INDEX)
 
+/**
+ * Search Path Identifier.
+ * @ingroup fs
+ */
+typedef enum {
+    SPI_NONE = 0, // Not a real path.
+    SPI_FIRST = 1,
+    SPI_BASEPATH = SPI_FIRST, // i.e., "}"
+    SPI_BASEPATH_DATA, // i.e., "}data/"
+    SPI_BASEPATH_DEFS, // i.e., "}defs/"
+    SPI_GAMEPATH_DATA, // e.g., "}data/jdoom/"
+    SPI_GAMEPATH_DEFS, // e.g., "}defs/jdoom/"
+    SPI_GAMEMODEPATH_DATA, // e.g., "}data/jdoom/doom2-plut/"
+    SPI_GAMEMODEPATH_DEFS, // e.g., "}defs/jdoom/doom2-plut/" 
+    SPI_DOOMWADDIR
+} searchpathid_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -79,6 +100,8 @@ typedef enum {
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+static boolean inited = false;
 
 static const resourcetypeinfo_t typeInfo[NUM_RESOURCE_TYPES] = {
     /* RT_ZIP */ { {"pk3", "zip", 0} },
@@ -125,7 +148,8 @@ static resourcenamespace_t namespaces[NUM_RESOURCE_CLASSES] = {
     { "music:", 0 }
 };
 
-static boolean inited = false;
+/// Lists of search paths to use when locating file resources.
+static ddstring_t searchPathLists[NUM_RESOURCE_CLASSES];
 
 // CODE --------------------------------------------------------------------
 
@@ -135,19 +159,216 @@ static __inline const resourcetypeinfo_t* getInfoForResourceType(resourcetype_t 
     return &typeInfo[((uint)type)-1];
 }
 
-static boolean tryFindFile(const char* searchPath, char* foundPath, size_t foundPathLen,
-    resourcenamespaceid_t rni)
+static __inline void clearSearchPathList(resourceclass_t rclass)
+{
+    assert(VALID_RESOURCE_CLASS(rclass));
+    Str_Free(&searchPathLists[rclass]);
+}
+
+/**
+ * @param searchOrder       Resource path search order (in order of least-importance, left to right).
+ * @param overrideFlag      Command line options for setting the resource path explicitly.
+ * @param overrideFlag2     Takes precendence.
+ */
+static void formSearchPathList(resourceclass_t rclass, const ddstring_t* identityKey,
+    const ddstring_t* defsPath, const ddstring_t* dataPath, const searchpathid_t* searchOrder,
+    const char* defaultPath, const char* overrideFlag, const char* overrideFlag2)
+{
+    assert(VALID_RESOURCE_CLASS(rclass) && searchOrder);
+    {
+    ddstring_t* pathList = &searchPathLists[rclass];
+    boolean usingGameModePathData = false;
+    boolean usingGameModePathDefs = false;
+
+    Str_Clear(pathList);
+
+    if(overrideFlag && overrideFlag[0] && ArgCheckWith(overrideFlag, 1))
+    {   // A command line override of the default path.
+        filename_t newPath;
+        M_TranslatePath(newPath, ArgNext(), FILENAME_T_MAXLEN);
+        Dir_ValidDir(newPath, FILENAME_T_MAXLEN);
+        Str_Prepend(pathList, ";"); Str_Prepend(pathList, newPath);
+    }
+
+    { size_t i;
+    for(i = 0; searchOrder[i] != SPI_NONE; ++i)
+    {
+        switch(searchOrder[i])
+        {
+        case SPI_BASEPATH:
+            { filename_t newPath;
+            M_TranslatePath(newPath, "}", FILENAME_T_MAXLEN);
+            F_AddResourceSearchPath(rclass, newPath, false);
+            break;
+            }
+        case SPI_BASEPATH_DATA:
+            { filename_t newPath;
+            if(defaultPath && defaultPath[0])
+            {
+                filename_t other;
+                dd_snprintf(other, FILENAME_T_MAXLEN, DD_BASEPATH_DATA"%s", defaultPath);
+                M_TranslatePath(newPath, other, FILENAME_T_MAXLEN);
+            }
+            else
+            {
+                M_TranslatePath(newPath, DD_BASEPATH_DATA, FILENAME_T_MAXLEN);
+            }
+            F_AddResourceSearchPath(rclass, newPath, false);
+            break;
+            }
+        case SPI_BASEPATH_DEFS:
+            { filename_t newPath;
+            if(defaultPath && defaultPath[0])
+            {
+                filename_t other;
+                dd_snprintf(other, FILENAME_T_MAXLEN, DD_BASEPATH_DEFS"%s", defaultPath);
+                M_TranslatePath(newPath, other, FILENAME_T_MAXLEN);
+            }
+            else
+            {
+                M_TranslatePath(newPath, DD_BASEPATH_DEFS, FILENAME_T_MAXLEN);
+            }
+            F_AddResourceSearchPath(rclass, newPath, false);
+            break;
+            }
+        case SPI_GAMEPATH_DATA:
+            if(defaultPath && defaultPath[0])
+            {
+                filename_t newPath;
+                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s", Str_Text(dataPath), defaultPath);
+                F_AddResourceSearchPath(rclass, newPath, false);
+            }
+            else
+            {
+                F_AddResourceSearchPath(rclass, Str_Text(dataPath), false);
+            }
+            break;
+        case SPI_GAMEPATH_DEFS:
+            if(defaultPath && defaultPath[0])
+            {
+                filename_t newPath;
+                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s", Str_Text(defsPath), defaultPath);
+                F_AddResourceSearchPath(rclass, newPath, false);
+            }
+            else
+            {
+                F_AddResourceSearchPath(rclass, Str_Text(defsPath), false);
+            }
+            break;
+        case SPI_GAMEMODEPATH_DATA:
+            usingGameModePathData = true;
+            if(defaultPath && defaultPath[0] && Str_Length(identityKey))
+            {
+                filename_t newPath;
+                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(dataPath), defaultPath, Str_Text(identityKey));
+                F_AddResourceSearchPath(rclass, newPath, false);
+            }
+            break;
+        case SPI_GAMEMODEPATH_DEFS:
+            usingGameModePathDefs = true;
+            if(Str_Length(identityKey))
+            {
+                if(defaultPath && defaultPath[0])
+                {
+                    filename_t newPath;
+                    dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s", Str_Text(defsPath), Str_Text(identityKey));
+                    F_AddResourceSearchPath(rclass, newPath, false);
+                }
+                else
+                {
+                    filename_t newPath;
+                    dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(defsPath), defaultPath, Str_Text(identityKey));
+                    F_AddResourceSearchPath(rclass, newPath, false);
+                }
+            }
+            break;
+        case SPI_DOOMWADDIR:
+            if(!ArgCheck("-nowaddir") && getenv("DOOMWADDIR"))
+            {
+                filename_t newPath;
+                M_TranslatePath(newPath, getenv("DOOMWADDIR"), FILENAME_T_MAXLEN);
+                F_AddResourceSearchPath(rclass, newPath, false);
+            }
+            break;
+
+        default: Con_Error("formSearchPathList: Invalid path ident %i.", searchOrder[i]);
+        };
+    }}
+
+    // The overriding path.
+    if(overrideFlag2 && overrideFlag2[0] && ArgCheckWith(overrideFlag2, 1))
+    {
+        filename_t newPath;
+        M_TranslatePath(newPath, ArgNext(), FILENAME_T_MAXLEN);
+        F_AddResourceSearchPath(rclass, newPath, false);
+
+        if((usingGameModePathData || usingGameModePathDefs) && Str_Length(identityKey))
+        {
+            filename_t other;
+            dd_snprintf(other, FILENAME_T_MAXLEN, "%s/%s", newPath, Str_Text(identityKey));
+            F_AddResourceSearchPath(rclass, other, false);
+        }
+    }
+    }
+}
+
+static void collateSearchPathSet(gameinfo_t* info, resourceclass_t rclass)
+{
+#define MAX_PATHS                   4
+
+    assert(info && VALID_RESOURCE_CLASS(rclass));
+    {
+    struct searchpath_s {
+        resourceclass_t rclass;
+        searchpathid_t searchOrder[MAX_PATHS];
+        const char* defaultPath;
+        const char* overrideFlag, *overrideFlag2;
+    } static const paths[] = {
+        { RC_PACKAGE,    { SPI_DOOMWADDIR, SPI_BASEPATH_DATA, SPI_GAMEPATH_DATA, 0 }, "", "", "" },
+        { RC_DEFINITION, { SPI_BASEPATH_DEFS, SPI_GAMEPATH_DEFS, SPI_GAMEMODEPATH_DEFS, 0 }, "", "-defdir", "-defdir2" },
+        { RC_GRAPHIC,    { SPI_BASEPATH_DATA, 0 }, "graphics\\", "-gfxdir", "-gfxdir2" },
+        { RC_MODEL,      { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 }, "models\\", "-modeldir", "-modeldir2" },
+        { RC_SOUND,      { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 }, "sfx\\", "-sfxdir", "-sfxdir2" },
+        { RC_MUSIC,      { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 }, "music\\", "-musdir", "-musdir2" },
+        /*
+        { RC_GRAPHIC,   { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 }, "textures\\", "-texdir", "-texdir2" },
+        { RC_GRAPHIC,   { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 }, "flats\\", "-flatdir", "-flatdir2" },
+        { RC_GRAPHIC,   { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 }, "patches\\", "-patdir", "-patdir2" },
+        { RC_GRAPHIC,   { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 }, "lightmaps\\", "-lmdir", "-lmdir2" },
+        { RC_GRAPHIC,   { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 }, "flares\\", "-flaredir", "-flaredir2" },
+        */
+        { RC_UNKNOWN }
+    };
+    const ddstring_t* identityKey = GameInfo_IdentityKey(info);
+    const ddstring_t* defsPath = GameInfo_DefsPath(info);
+    const ddstring_t* dataPath = GameInfo_DataPath(info);
+    size_t i;
+    for(i = 0; paths[i].rclass != RC_UNKNOWN; ++i)
+    {
+        if(paths[i].rclass == rclass)
+            formSearchPathList(rclass, identityKey, defsPath, dataPath, paths[i].searchOrder, paths[i].defaultPath, paths[i].overrideFlag, paths[i].overrideFlag2);
+    }
+    }
+
+#undef MAX_PATHS
+}
+
+static boolean tryFindFile(resourceclass_t rclass, const char* searchPath,
+    char* foundPath, size_t foundPathLen, resourcenamespaceid_t rni)
 {
     assert(inited && searchPath && searchPath[0]);
 
     { resourcenamespace_t* rnamespace;
-    if(rni != 0 && (rnamespace = DD_ResourceNamespace(rni)))
+    if(rni != 0 && (rnamespace = F_ToResourceNamespace(rni)))
     {
-        if(!rnamespace->_fileHash)
-            rnamespace->_fileHash = FileHash_Create(Str_Text(DD_ResourceSearchPaths(rni)));
 #if _DEBUG
         VERBOSE2( Con_Message("Using filehash for rnamespace \"%s\" ...\n", rnamespace->_name) );
 #endif
+        if(!rnamespace->_fileHash)
+        {
+            collateSearchPathSet(DD_GameInfo(), rclass);
+            rnamespace->_fileHash = FileHash_Create(Str_Text(&searchPathLists[rclass]));
+        }
         return FileHash_Find(rnamespace->_fileHash, foundPath, searchPath, foundPathLen);
     }}
 
@@ -163,7 +384,7 @@ static boolean tryFindFile(const char* searchPath, char* foundPath, size_t found
 /**
  * Check all possible extensions to see if the resource exists.
  *
- * @param resType       Type of resource being searched for @see resourceType.
+ * @param rclass        Class of resource being searched for.
  * @param searchPath    File name/path to search for.
  * @param foundPath     Located path if found will be written back here.
  *                      Can be @c NULL, in which case this is just a boolean query.
@@ -183,7 +404,7 @@ static boolean tryResourceFile(resourceclass_t rclass, const char* searchPath,
     // Has an extension been specified?
     ptr = M_FindFileExtension((char*)searchPath);
     if(ptr && *ptr != '*') // Try this first.
-        found = tryFindFile(searchPath, foundPath, foundPathLen, rni);
+        found = tryFindFile(rclass, searchPath, foundPath, foundPathLen, rni);
 
     if(!found)
     {
@@ -216,7 +437,7 @@ static boolean tryResourceFile(resourceclass_t rclass, const char* searchPath,
                     {
                         Str_Copy(&tmp, &path2);
                         Str_Appendf(&tmp, "%s", *ext);
-                        found = tryFindFile(Str_Text(&tmp), foundPath, foundPathLen, rni);
+                        found = tryFindFile(rclass, Str_Text(&tmp), foundPath, foundPathLen, rni);
                     } while(!found && *(++ext));
                 }
             } while(!found && *(++type) != RT_NONE);
@@ -353,6 +574,102 @@ static void resetResourceNamespaces(void)
         resetResourceNamespace((resourcenamespaceid_t)i);
 }
 
+void F_InitResourceLocator(void)
+{
+    uint i;
+    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
+        Str_Init(&searchPathLists[i]);
+    resetResourceNamespaces();
+    inited = true;
+}
+
+void F_ShutdownResourceLocator(void)
+{
+    if(!inited)
+        return;
+    { uint i;
+    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
+        Str_Free(&searchPathLists[i]);
+    }
+    resetResourceNamespaces();
+    inited = false;
+}
+
+const ddstring_t* F_ResourceSearchPaths(resourceclass_t rclass)
+{
+    assert(VALID_RESOURCE_CLASS(rclass));
+    return &searchPathLists[rclass];
+}
+
+void F_ClearResourceSearchPaths2(resourceclass_t rclass)
+{
+    if(rclass == NUM_RESOURCE_CLASSES)
+    {
+        uint i;
+        for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
+        {
+            clearSearchPathList((resourceclass_t)i);
+        }
+        return;
+    }
+    clearSearchPathList(rclass);
+}
+
+void F_ClearResourceSearchPaths(void)
+{
+    F_ClearResourceSearchPaths2(0);
+}
+
+boolean F_AddResourceSearchPath(resourceclass_t rclass, const char* newPath, boolean append)
+{
+    assert(VALID_RESOURCE_CLASS(rclass));
+    {
+    ddstring_t* pathList;
+    filename_t absNewPath;
+
+    if(!newPath || !newPath[0] || !strcmp(newPath, DIR_SEP_STR))
+        return false; // Not suitable.
+
+    // Convert all slashes to the host OS's directory separator,
+    // for compatibility with the sys_filein routines.
+    strncpy(absNewPath, newPath, FILENAME_T_MAXLEN);
+    Dir_ValidDir(absNewPath, FILENAME_T_MAXLEN);
+    M_PrependBasePath(absNewPath, absNewPath, FILENAME_T_MAXLEN);
+
+    // Have we seen this path already?
+    pathList = &searchPathLists[rclass];
+    if(Str_Length(pathList))
+    {
+        const char* p = Str_Text(pathList);
+        ddstring_t curPath;
+        boolean ignore = false;
+
+        Str_Init(&curPath);
+        while(!ignore && (p = Str_CopyDelim(&curPath, p, ';')))
+        {
+            if(!Str_CompareIgnoreCase(&curPath, absNewPath))
+                ignore = true;
+        }
+        Str_Free(&curPath);
+
+        if(ignore) return true; // We don't want duplicates.
+    }
+
+    // Add the new search path.
+    if(append)
+    {
+        Str_Append(pathList, absNewPath);
+        Str_Append(pathList, ";");
+    }
+    else
+    {
+        Str_Prepend(pathList, ";");
+        Str_Prepend(pathList, absNewPath);
+    }
+    return true;
+    }
+}
+
 resourcenamespace_t* F_ToResourceNamespace(resourcenamespaceid_t rni)
 {
     if(!F_IsValidResourceNamespaceId(rni))
@@ -403,20 +720,6 @@ const char* F_ResourceClassStr(resourceclass_t rclass)
     };
     return resourceClassNames[(int)rclass];
     }
-}
-
-void F_InitResourceLocator(void)
-{
-    resetResourceNamespaces();
-    inited = true;
-}
-
-void F_ShutdownResourceLocator(void)
-{
-    if(!inited)
-        return;
-    resetResourceNamespaces();
-    inited = false;
 }
 
 uint F_NumResourceNamespaces(void)

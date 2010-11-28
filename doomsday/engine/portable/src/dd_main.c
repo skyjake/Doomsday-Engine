@@ -229,26 +229,6 @@ static gameinfo_t* addGameInfoRecord(pluginid_t pluginId, const char* identityKe
     return gameInfo[numGameInfo++];
 }
 
-resourcenamespace_t* DD_ResourceNamespace(resourcenamespaceid_t rni)
-{
-    return F_ToResourceNamespace(rni);
-}
-
-void DD_ShutdownResourceSearchPaths(void)
-{
-    GameInfo_ClearResourceSearchPaths(DD_GameInfo());
-}
-
-void DD_ClearResourceSearchPathList(resourcenamespaceid_t rni)
-{
-    GameInfo_ClearResourceSearchPaths2(DD_GameInfo(), rni);
-}
-
-const ddstring_t* DD_ResourceSearchPaths(resourcenamespaceid_t rni)
-{
-    return GameInfo_ResourceSearchPaths(DD_GameInfo(), rni);
-}
-
 gameinfo_t* DD_GameInfo(void)
 {
     assert(currentGameInfoIndex != 0);
@@ -312,7 +292,6 @@ static void addIdentityKeyToResourceNamespaceRecord(gameresource_record_t* rec, 
 void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, const char* _names, void* params)
 {
     gameinfo_t* info = findGameInfoForId(gameId);
-    resourcenamespaceid_t rni;
     ddstring_t names, name;
 
     if(!info || DD_IsNullGameInfo(info))
@@ -328,12 +307,9 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, const char* _na
     if(Str_RAt(&names, 0) != ';')
         Str_Append(&names, ";");
 
-    if((rni = F_ParseResourceNamespace(Str_Text(&names))) == 0)
-        rni = F_DefaultResourceNamespaceForClass(rclass);
-
     Str_Init(&name);
     { gameresource_record_t* rec;
-    if((rec = GameInfo_AddResource(info, rclass, rni, &names)))
+    if((rec = GameInfo_AddResource(info, rclass, &names)))
     {
         if(params)
         switch(rec->rclass)
@@ -515,11 +491,11 @@ static void locateGameResources(gameinfo_t* info)
     }
 
     Str_Init(&name);
-    { uint i, numResourceNamespaces = F_NumResourceNamespaces();
-    for(i = 1; i < numResourceNamespaces+1; ++i)
+    { uint i;
+    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
     {
         gameresource_record_t* const* records;
-        if((records = GameInfo_Resources(info, (resourcenamespaceid_t)i, 0)))
+        if((records = GameInfo_Resources(info, (resourceclass_t)i, 0)))
             do
             {
                 const char* p = Str_Text(&(*records)->names);
@@ -544,11 +520,11 @@ static boolean allGameResourcesFound(gameinfo_t* info)
     assert(info);
     if(!DD_IsNullGameInfo(info))
     {
-        uint i, numResourceNamespaces = F_NumResourceNamespaces();
-        for(i = 1; i < numResourceNamespaces+1; ++i)
+        uint i;
+        for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
         {
             gameresource_record_t* const* records;
-            if((records = GameInfo_Resources(info, (resourcenamespaceid_t)i, 0)))
+            if((records = GameInfo_Resources(info, (resourceclass_t)i, 0)))
                 do
                 {
                     if(Str_Length(&(*records)->path) == 0)
@@ -563,13 +539,13 @@ static void loadGameResources(gameinfo_t* info, resourceclass_t rclass, const ch
 {
     assert(info && VALID_RESOURCE_CLASS(rclass) && searchPath);
     {
-    resourcenamespaceid_t rni;
+    //resourcenamespaceid_t rni;
 
-    if((rni = F_ParseResourceNamespace(searchPath)) == 0)
-        rni = F_DefaultResourceNamespaceForClass(rclass);
+    //if((rni = F_ParseResourceNamespace(searchPath)) == 0)
+    //    rni = F_DefaultResourceNamespaceForClass(rclass);
 
     {gameresource_record_t* const* records;
-    if((records = GameInfo_Resources(info, rni, 0)))
+    if((records = GameInfo_Resources(info, rclass, 0)))
         do
         {
             switch((*records)->rclass)
@@ -595,17 +571,17 @@ static void printGameInfo(gameinfo_t* info)
     Con_Printf("  Meta: pluginid:%i identitykey:\"%s\" data:\"%s\" defs:\"%s\"\n", (int)GameInfo_PluginId(info), Str_Text(GameInfo_IdentityKey(info)), M_PrettyPath(Str_Text(GameInfo_DataPath(info))), M_PrettyPath(Str_Text(GameInfo_DefsPath(info))));
 #endif
 
-    { uint i, numResourceNamespaces = F_NumResourceNamespaces();
-    for(i = 1; i < numResourceNamespaces+1; ++i)
+    { uint i;
+    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
     {
         gameresource_record_t* const* records;
-        if((records = GameInfo_Resources(info, (resourcenamespaceid_t)i, 0)))
+        if((records = GameInfo_Resources(info, (resourceclass_t)i, 0)))
         {
             int n = 0;
-            Con_Printf("  Namespace: \"%s\"\n", Str_Text(&F_ToResourceNamespace((resourcenamespaceid_t)i)->_name));
+            Con_Printf("  %s:\n", F_ResourceClassStr((resourceclass_t)i));
             do
             {
-                Con_Printf("    %i:%s - \"%s\" > %s\n", n++, F_ResourceClassStr((*records)->rclass), Str_Text(&(*records)->names), Str_Length(&(*records)->path) == 0? "--(!)missing" : M_PrettyPath(Str_Text(&(*records)->path)));
+                Con_Printf("    %i: \"%s\" > %s\n", n++, Str_Text(&(*records)->names), Str_Length(&(*records)->path) == 0? "--(!)missing" : M_PrettyPath(Str_Text(&(*records)->path)));
             } while(*(++records));
         }
     }}

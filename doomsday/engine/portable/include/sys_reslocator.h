@@ -46,9 +46,19 @@ const char* F_ResourceClassStr(resourceclass_t rclass);
 void F_InitResourceLocator(void);
 void F_ShutdownResourceLocator(void);
 
-boolean               F_IsValidResourceNamespaceId(int val);
-resourcenamespaceid_t F_ToResourceNamespaceId(int val);
-resourcenamespace_t*  F_ToResourceNamespace(resourcenamespaceid_t);
+/**
+ * @return             @c true iff the value can be interpreted as a valid id.
+ */
+boolean F_IsValidResourceNamespaceId(int val);
+
+/**
+ * Given an id return the associated namespace object.
+ */
+resourcenamespace_t* F_ToResourceNamespace(resourcenamespaceid_t rni);
+
+/**
+ * @return             Number of resource namespaces.
+ */
 uint F_NumResourceNamespaces(void);
 
 resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass);
@@ -56,6 +66,26 @@ resourcenamespaceid_t F_ResourceNamespaceForName(const char* name);
 resourcenamespaceid_t F_SafeResourceNamespaceForName(const char* name);
 
 resourcenamespaceid_t F_ParseResourceNamespace(const char* str);
+
+/**
+ * Add a new file path to the list of resource-locator search paths.
+ */
+boolean F_AddResourceSearchPath(resourceclass_t rclass, const char* newPath, boolean append);
+
+/**
+ * Clear resource-locator search paths for all namespaces.
+ */
+void F_ClearResourceSearchPaths(void);
+
+/**
+ * Clear resource-locator search paths for a specific resource namespace.
+ */
+void F_ClearResourceSearchPaths2(resourceclass_t rclass);
+
+/**
+ * @return              Ptr to a string containing the resource search path list.
+ */
+const ddstring_t* F_ResourceSearchPaths(resourceclass_t rclass);
 
 /**
  * Attempt to locate an external file for the specified resource.

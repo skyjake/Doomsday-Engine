@@ -715,6 +715,17 @@ static __inline void readDefinitionFile(const char* fileName)
     Def_ReadProcessDED(fileName);
 }
 
+/**
+ * (f_forall_func_t)
+ */
+static int autoDefsReader(const char* fileName, filetype_t type, void* ptr)
+{
+    // Ignore directories.
+    if(type != FT_DIRECTORY)
+        readDefinitionFile(fileName);
+    return true; // Continue searching.
+}
+
 static void readAllDefinitions(void)
 {
     uint startTime = Sys_GetRealTime();
@@ -740,12 +751,21 @@ static void readAllDefinitions(void)
 
     // Now any extra definition files required by the game.
     { gameresource_record_t* const* records;
-    if((records = GameInfo_Resources(DD_GameInfo(), F_ResourceNamespaceForName("defs:"), 0)))
+    if((records = GameInfo_Resources(DD_GameInfo(), RC_DEFINITION, 0)))
         do
         {
             if(Str_Length(&(*records)->path) != 0)
                 readDefinitionFile(Str_Text(&(*records)->path));
         } while(records++);
+    }
+
+    // Next up are definition files in the /auto directory.
+    if(!ArgExists("-noauto"))
+    {
+        filename_t pattern;
+        dd_snprintf(pattern, FILENAME_T_MAXLEN, "%sauto\\*.ded", Str_Text(GameInfo_DefsPath(DD_GameInfo())));
+        Dir_FixSlashes(pattern, FILENAME_T_MAXLEN);
+        F_ForAll(pattern, 0, autoDefsReader);
     }
 
     // Any definition files on the command line?
@@ -800,7 +820,7 @@ void Def_Read(void)
         // Get rid of everything.
         // \fixme dj: This is not correct. We do not want to clear all paths
         // we should instead re-init to the default path set.
-        DD_ClearResourceSearchPathList(F_ResourceNamespaceForName("models:"));
+        F_ClearResourceSearchPaths2(RC_MODEL);
         Def_Destroy();
     }
 
@@ -1101,7 +1121,7 @@ void Def_Read(void)
     Def_CountMsg(defs.count.sectorTypes.num, "sector types");
 
     // Init the base model search path (append).
-    GameInfo_AddResourceSearchPath(DD_GameInfo(), F_ResourceNamespaceForName("models:"), defs.modelPath, true);
+    F_AddResourceSearchPath(RC_MODEL, defs.modelPath, true);
 
     defsInited = true;
 }

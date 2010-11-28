@@ -10,7 +10,6 @@
 Header {
   Version = 5;
   Default model scale = 1.2;
-  Model path = "data\jdoom\models";
 }
 
 Include "flags.ded";
@@ -26,7 +25,3 @@ Include "maps.ded";
 Include "finales.ded";
 Include "text.ded";
 Include "values.ded";
-Include "models.ded";
-Include "user.ded";
-
-IncludeIf Not -noauto "auto\*.ded";

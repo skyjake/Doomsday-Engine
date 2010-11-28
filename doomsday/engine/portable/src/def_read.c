@@ -784,7 +784,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
             // A new model path. Prepend to the list.
             READSTR(label);
             CHECKSC;
-            GameInfo_AddResourceSearchPath(DD_GameInfo(), F_ResourceNamespaceForName("models:"), label, false);
+            F_AddResourceSearchPath(RC_MODEL, label, false);
         }
 
         if(ISTOKEN("Header"))
