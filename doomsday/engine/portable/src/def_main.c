@@ -627,34 +627,7 @@ int Def_ReadDEDFile(const char* fn, filetype_t type, void* parm)
 void Def_ReadProcessDED(const char* fileName)
 {
     assert(fileName && fileName[0]);
-    {
-    filename_t fn, fullFn;
-    directory_t dir;
-
-    memset(&dir, 0, sizeof(dir));
-
-    Dir_FileName(fn, fileName, FILENAME_T_MAXLEN);
-
-    // We want an absolute path.
-    if(!Dir_IsAbsolute(fileName))
-    {
-        Dir_FileDir(fileName, &dir);
-        sprintf(fullFn, "%s%s", dir.path, fn);
-    }
-    else
-    {
-        strncpy(fullFn, fileName, FILENAME_T_MAXLEN);
-    }
-
-    if(strchr(fn, '*') || strchr(fn, '?'))
-    {   // Wildcard search.
-        F_ForAll(fullFn, 0, Def_ReadDEDFile);
-    }
-    else
-    {
-        Def_ReadDEDFile(fullFn, FT_NORMAL, 0);
-    }
-    }
+    Def_ReadDEDFile(fileName, FT_NORMAL, 0);
 }
 
 /**
@@ -739,7 +712,6 @@ static __inline void readDefinitionFile(const char* fileName)
 {
     if(!fileName || !fileName[0])
         return;
-    Con_Message("  Processing \"%s\" ...\n", M_PrettyPath(fileName));
     Def_ReadProcessDED(fileName);
 }
 
@@ -777,7 +749,7 @@ static void readAllDefinitions(void)
     }
 
     // Any definition files on the command line?
-    { int p;
+    { int p; filename_t fullFn;
     for(p = 0; p < Argc(); ++p)
     {
         const char* arg = Argv(p);
@@ -785,12 +757,34 @@ static void readAllDefinitions(void)
             continue;
         while(++p != Argc() && !ArgIsOption(p))
         {
-            readDefinitionFile(Argv(p));
+            const char* searchPath = Argv(p);
+            filename_t tmp, *fileName;
+
+            Con_Message("  Processing \"%s\" ...\n", searchPath);
+
+            // We want an absolute path.
+            M_TranslatePath(tmp, searchPath, FILENAME_T_MAXLEN);
+            if(!Dir_IsAbsolute(tmp))
+            {
+                filename_t fn;
+                directory_t dir;
+                memset(&dir, 0, sizeof(dir));
+                Dir_FileName(fn, tmp, FILENAME_T_MAXLEN);
+                Dir_FileDir(tmp, &dir);
+                sprintf(fullFn, "%s%s", dir.path, fn);
+                fileName = &fullFn;
+            }
+            else
+            {
+                fileName = &tmp;
+            }
+
+            readDefinitionFile(*fileName);
         }
         p--; /* For ArgIsOption(p) necessary, for p==Argc() harmless */
     }}
 
-    // Read definition files from WAD/ZIP archives.
+    // Read DD_DEFNS definition lumps.
     Def_ReadLumpDefs();
 
     VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
