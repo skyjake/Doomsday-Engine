@@ -135,16 +135,16 @@ static __inline const resourcetypeinfo_t* getInfoForResourceType(resourcetype_t 
     return &typeInfo[((uint)type)-1];
 }
 
-static boolean tryFindFile(const char* searchPath, char* foundPath, size_t foundPathLen,
-    resourcenamespaceid_t rni)
+static boolean tryFindFile(resourceclass_t rclass, const char* searchPath,
+    char* foundPath, size_t foundPathLen, resourcenamespaceid_t rni)
 {
     assert(inited && searchPath && searchPath[0]);
 
     { resourcenamespace_t* rnamespace;
-    if(rni != 0 && (rnamespace = DD_ResourceNamespace(rni)))
+    if(rni != 0 && (rnamespace = F_ToResourceNamespace(rni)))
     {
         if(!rnamespace->_fileHash)
-            rnamespace->_fileHash = FileHash_Create(Str_Text(DD_ResourceSearchPaths(rni)));
+            rnamespace->_fileHash = FileHash_Create(Str_Text(DD_ResourceSearchPaths(rclass)));
 #if _DEBUG
         VERBOSE2( Con_Message("Using filehash for rnamespace \"%s\" ...\n", rnamespace->_name) );
 #endif
@@ -163,7 +163,7 @@ static boolean tryFindFile(const char* searchPath, char* foundPath, size_t found
 /**
  * Check all possible extensions to see if the resource exists.
  *
- * @param resType       Type of resource being searched for @see resourceType.
+ * @param rclass        Class of resource being searched for.
  * @param searchPath    File name/path to search for.
  * @param foundPath     Located path if found will be written back here.
  *                      Can be @c NULL, in which case this is just a boolean query.
@@ -183,7 +183,7 @@ static boolean tryResourceFile(resourceclass_t rclass, const char* searchPath,
     // Has an extension been specified?
     ptr = M_FindFileExtension((char*)searchPath);
     if(ptr && *ptr != '*') // Try this first.
-        found = tryFindFile(searchPath, foundPath, foundPathLen, rni);
+        found = tryFindFile(rclass, searchPath, foundPath, foundPathLen, rni);
 
     if(!found)
     {
@@ -216,7 +216,7 @@ static boolean tryResourceFile(resourceclass_t rclass, const char* searchPath,
                     {
                         Str_Copy(&tmp, &path2);
                         Str_Appendf(&tmp, "%s", *ext);
-                        found = tryFindFile(Str_Text(&tmp), foundPath, foundPathLen, rni);
+                        found = tryFindFile(rclass, Str_Text(&tmp), foundPath, foundPathLen, rni);
                     } while(!found && *(++ext));
                 }
             } while(!found && *(++type) != RT_NONE);

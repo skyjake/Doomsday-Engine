@@ -116,17 +116,15 @@ void P_DestroyGameInfo(gameinfo_t* info);
  *
  * \note Resource registration order defines the order in which resources of each type are loaded.
  *
- * @param class         Class of resource being added.
- * @param rni           Namespace to associate the resource with.
+ * @param rclass        Class of resource being added.
  * @param name          Potential resource name.
  */
-gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourceclass_t rclass,
-    resourcenamespaceid_t rni, const ddstring_t* name);
+gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourceclass_t rclass, const ddstring_t* name);
 
 /**
  * Add a new file path to the list of resource-locator search paths.
  */
-boolean GameInfo_AddResourceSearchPath(gameinfo_t* info, resourcenamespaceid_t rni, const char* newPath, boolean append);
+boolean GameInfo_AddResourceSearchPath(gameinfo_t* info, resourceclass_t rclass, const char* newPath, boolean append);
 
 /**
  * Clear resource-locator search paths for all namespaces.
@@ -136,12 +134,12 @@ void GameInfo_ClearResourceSearchPaths(gameinfo_t* info);
 /**
  * Clear resource-locator search paths for a specific resource namespace.
  */
-void GameInfo_ClearResourceSearchPaths2(gameinfo_t* info, resourcenamespaceid_t rni);
+void GameInfo_ClearResourceSearchPaths2(gameinfo_t* info, resourceclass_t rclass);
 
 /**
  * @return              Ptr to a string containing the resource search path list.
  */
-const ddstring_t* GameInfo_ResourceSearchPaths(gameinfo_t* info, resourcenamespaceid_t rni);
+const ddstring_t* GameInfo_ResourceSearchPaths(gameinfo_t* info, resourceclass_t rclass);
 
 /**
  * Accessor methods.
@@ -168,7 +166,7 @@ const ddstring_t* GameInfo_CmdlineFlag(gameinfo_t* info);
 const ddstring_t* GameInfo_CmdlineFlag2(gameinfo_t* info);
 
 /// @return             Ptr to a vector of required resource records.
-gameresource_record_t* const* GameInfo_Resources(gameinfo_t* info, resourcenamespaceid_t rni, size_t* count);
+gameresource_record_t* const* GameInfo_Resources(gameinfo_t* info, resourceclass_t rclass, size_t* count);
 
 /**
  * \note Unless caller is the resource locator then you probably shouldn't be calling.

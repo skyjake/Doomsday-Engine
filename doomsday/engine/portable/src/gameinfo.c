@@ -229,10 +229,10 @@ static void collateResourceSearchPathSet(gameinfo_t* info)
     formResourceSearchPaths(info, 1+RC_MODEL,       &info->_searchPathLists[RC_MODEL],   searchOrder, "models\\",   "-modeldir", "-modeldir2");}
 }
 
-static __inline void clearResourceSearchPathList(gameinfo_t* info, resourcenamespaceid_t rni)
+static __inline void clearResourceSearchPathList(gameinfo_t* info, resourceclass_t rclass)
 {
-    assert(info && F_IsValidResourceNamespaceId(rni));
-    Str_Free(&info->_searchPathLists[rni]);
+    assert(info && VALID_RESOURCE_CLASS(rclass));
+    Str_Free(&info->_searchPathLists[rclass]);
 }
 
 gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey, const char* dataPath,
@@ -344,11 +344,11 @@ void P_DestroyGameInfo(gameinfo_t* info)
 }
 
 gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourceclass_t rclass,
-    resourcenamespaceid_t rni, const ddstring_t* names)
+    const ddstring_t* names)
 {
-    assert(info && VALID_RESOURCE_CLASS(rclass) && F_IsValidResourceNamespaceId(rni) && names);
+    assert(info && VALID_RESOURCE_CLASS(rclass) && names);
     {
-    gameresource_recordset_t* rset = &info->_requiredResources[rni-1];
+    gameresource_recordset_t* rset = &info->_requiredResources[rclass];
     gameresource_record_t* record;
 
     rset->records = M_Realloc(rset->records, sizeof(*rset->records) * (rset->numRecords+2));
@@ -371,19 +371,19 @@ gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourceclass_t rc
     }
 }
 
-void GameInfo_ClearResourceSearchPaths2(gameinfo_t* info, resourcenamespaceid_t rni)
+void GameInfo_ClearResourceSearchPaths2(gameinfo_t* info, resourceclass_t rclass)
 {
     assert(info);
-    if(rni == 0)
+    if(rclass == NUM_RESOURCE_CLASSES)
     {
-        uint i, numResourceNamespaces = F_NumResourceNamespaces();
-        for(i = 1; i < numResourceNamespaces+1; ++i)
+        uint i;
+        for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
         {
-            clearResourceSearchPathList(info, (resourcenamespaceid_t)i);
+            clearResourceSearchPathList(info, (resourceclass_t)i);
         }
         return;
     }
-    clearResourceSearchPathList(info, rni);
+    clearResourceSearchPathList(info, rclass);
 }
 
 void GameInfo_ClearResourceSearchPaths(gameinfo_t* info)
@@ -391,10 +391,10 @@ void GameInfo_ClearResourceSearchPaths(gameinfo_t* info)
     GameInfo_ClearResourceSearchPaths2(info, 0);
 }
 
-boolean GameInfo_AddResourceSearchPath(gameinfo_t* info, resourcenamespaceid_t rni,
+boolean GameInfo_AddResourceSearchPath(gameinfo_t* info, resourceclass_t rclass,
     const char* newPath, boolean append)
 {
-    assert(info && F_IsValidResourceNamespaceId(rni));
+    assert(info && VALID_RESOURCE_CLASS(rclass));
     {
     ddstring_t* pathList;
     filename_t absNewPath;
@@ -409,7 +409,7 @@ boolean GameInfo_AddResourceSearchPath(gameinfo_t* info, resourcenamespaceid_t r
     M_PrependBasePath(absNewPath, absNewPath, FILENAME_T_MAXLEN);
 
     // Have we seen this path already?
-    pathList = &info->_searchPathLists[rni-1];
+    pathList = &info->_searchPathLists[rclass];
     if(Str_Length(pathList))
     {
         const char* p = Str_Text(pathList);
@@ -442,12 +442,10 @@ boolean GameInfo_AddResourceSearchPath(gameinfo_t* info, resourcenamespaceid_t r
     }
 }
 
-const ddstring_t* GameInfo_ResourceSearchPaths(gameinfo_t* info, resourcenamespaceid_t rni)
+const ddstring_t* GameInfo_ResourceSearchPaths(gameinfo_t* info, resourceclass_t rclass)
 {
-    assert(info);
-    if(!F_IsValidResourceNamespaceId(rni))
-        Con_Error("GameInfo_ResourceSearchPaths: Internal error, invalid resource namespace id %i.", (int)rni);
-    return &info->_searchPathLists[rni-1];
+    assert(info && VALID_RESOURCE_CLASS(rclass));
+    return &info->_searchPathLists[rclass];
 }
 
 pluginid_t GameInfo_PluginId(gameinfo_t* info)
@@ -504,12 +502,10 @@ const ddstring_t* GameInfo_Author(gameinfo_t* info)
     return &info->_author;
 }
 
-gameresource_record_t* const* GameInfo_Resources(gameinfo_t* info, resourcenamespaceid_t rni, size_t* count)
+gameresource_record_t* const* GameInfo_Resources(gameinfo_t* info, resourceclass_t rclass, size_t* count)
 {
-    assert(info);
-    if(!F_IsValidResourceNamespaceId(rni))
-        Con_Error("GameInfo_Resources: Internal error, invalid resource namespace id %i.", (int)rni);
+    assert(info && VALID_RESOURCE_CLASS(rclass));
     if(count)
-        *count = info->_requiredResources[rni-1].numRecords;
-    return info->_requiredResources[rni-1].records;
+        *count = info->_requiredResources[rclass].numRecords;
+    return info->_requiredResources[rclass].records;
 }

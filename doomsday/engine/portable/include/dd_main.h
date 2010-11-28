@@ -74,8 +74,6 @@ materialnum_t DD_MaterialForTexture(uint ofTypeId, gltexture_type_t type);
 
 const char* value_Str(int val);
 
-resourcenamespace_t* DD_ResourceNamespace(resourcenamespaceid_t rni);
-
 /**
  * @return  Ptr to the currently active GameInfo structure (always succeeds).
  */
@@ -93,8 +91,8 @@ boolean DD_IsNullGameInfo(gameinfo_t* info);
 void DD_DestroyGameInfo(void);
 
 void DD_ShutdownResourceSearchPaths(void);
-void DD_ClearResourceSearchPathList(resourcenamespaceid_t rni);
-const ddstring_t* DD_ResourceSearchPaths(resourcenamespaceid_t rni);
+void DD_ClearResourceSearchPathList(resourceclass_t rclass);
+const ddstring_t* DD_ResourceSearchPaths(resourceclass_t rclass);
 
 D_CMD(ListGames);
 

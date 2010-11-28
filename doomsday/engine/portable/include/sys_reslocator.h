@@ -48,7 +48,7 @@ void F_ShutdownResourceLocator(void);
 
 boolean               F_IsValidResourceNamespaceId(int val);
 resourcenamespaceid_t F_ToResourceNamespaceId(int val);
-resourcenamespace_t*  F_ToResourceNamespace(resourcenamespaceid_t);
+resourcenamespace_t*  F_ToResourceNamespace(resourcenamespaceid_t rni);
 uint F_NumResourceNamespaces(void);
 
 resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass);
