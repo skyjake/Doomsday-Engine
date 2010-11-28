@@ -304,7 +304,7 @@ int main(int argc, char** argv)
         {
             DD_ErrorBox(true, "Error initializing DGL.");
         }
-        else if(!loadAllPlugins())
+        else if(!loadAllPlugins(&app))
         {
             DD_ErrorBox(true, "Error loading plugins.");
         }
