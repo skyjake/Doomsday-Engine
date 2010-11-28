@@ -35,8 +35,8 @@
  * @ingroup core
  */
 typedef struct {
-    /// Type of resource.
-    resourceclass_t type;
+    /// Class of resource.
+    resourceclass_t rclass;
 
     /// List of known potential names. Seperated with a semicolon.
     ddstring_t names;
@@ -116,10 +116,11 @@ void P_DestroyGameInfo(gameinfo_t* info);
  *
  * \note Resource registration order defines the order in which resources of each type are loaded.
  *
- * @param type          Type of resource.
+ * @param class         Class of resource being added.
+ * @param rni           Namespace to associate the resource with.
  * @param name          Potential resource name.
  */
-gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourceclass_t type,
+gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourceclass_t rclass,
     resourcenamespaceid_t rni, const ddstring_t* name);
 
 /**
@@ -133,7 +134,7 @@ boolean GameInfo_AddResourceSearchPath(gameinfo_t* info, resourcenamespaceid_t r
 void GameInfo_ClearResourceSearchPaths(gameinfo_t* info);
 
 /**
- * Clear resource-locator search paths for a specific resource class.
+ * Clear resource-locator search paths for a specific resource namespace.
  */
 void GameInfo_ClearResourceSearchPaths2(gameinfo_t* info, resourcenamespaceid_t rni);
 
@@ -148,7 +149,7 @@ const ddstring_t* GameInfo_ResourceSearchPaths(gameinfo_t* info, resourcenamespa
 /// @return             Unique plugin identifier attributed to that which registered this.
 pluginid_t GameInfo_PluginId(gameinfo_t* info);
 
-/// @return             Ptr to a string containing the mode-identifier.
+/// @return             Ptr to a string containing the identity key.
 const ddstring_t* GameInfo_IdentityKey(gameinfo_t* info);
 
 /// @return             Ptr to a string containing the default title.

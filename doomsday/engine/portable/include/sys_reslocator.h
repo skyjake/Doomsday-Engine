@@ -51,7 +51,7 @@ resourcenamespaceid_t F_ToResourceNamespaceId(int val);
 resourcenamespace_t*  F_ToResourceNamespace(resourcenamespaceid_t);
 uint F_NumResourceNamespaces(void);
 
-resourcenamespaceid_t F_DefaultResourceNamespaceForType(resourceclass_t type);
+resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass);
 resourcenamespaceid_t F_ResourceNamespaceForName(const char* name);
 resourcenamespaceid_t F_SafeResourceNamespaceForName(const char* name);
 
@@ -60,7 +60,7 @@ resourcenamespaceid_t F_ParseResourceNamespace(const char* str);
 /**
  * Attempt to locate an external file for the specified resource.
  *
- * @param type          Type of resource being searched for (if known).
+ * @param rclass        Class of resource being searched for (if known).
  *
  * @param foundPath     If found, the fully qualified path will be written back here.
  *                      Can be @c NULL, changing this routine to only check that file
@@ -80,7 +80,7 @@ resourcenamespaceid_t F_ParseResourceNamespace(const char* str);
  *
  * @return              @c true, iff a file was found.
  */
-boolean F_FindResource(resourceclass_t type, char* foundPath, const char* searchPath,
+boolean F_FindResource(resourceclass_t rclass, char* foundPath, const char* searchPath,
     const char* suffix, size_t foundPathLength);
 
 #endif /* LIBDENG_FILESYS_EXTRES_H */

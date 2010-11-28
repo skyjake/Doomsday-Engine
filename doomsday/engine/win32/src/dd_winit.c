@@ -300,6 +300,14 @@ static void determineGlobalPaths(application_t* app)
     Dir_ValidDir(ddBasePath, FILENAME_T_MAXLEN);
 }
 
+static BOOL createMainWindow(int lnCmdShow)
+{
+    char buf[256];
+    DD_ComposeMainWindowTitle(buf);
+    windowIDX = Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, (isDedicated ? WT_CONSOLE : WT_NORMAL), buf, &lnCmdShow);
+    return windowIDX != 0;
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
     BOOL doShutdown = TRUE;
@@ -317,8 +325,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
     else
     {
-        char buf[256];
-
         // Initialize COM.
         CoInitialize(NULL);
 
@@ -328,8 +334,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         // First order of business: are we running in dedicated mode?
         if(ArgCheck("-dedicated"))
             isDedicated = true;
-
-        DD_ComposeMainWindowTitle(buf);
 
         // Determine our basedir and other global paths.
         determineGlobalPaths(&app);
@@ -358,7 +362,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         {
             DD_ErrorBox(true, "Error loading plugins.");
         }
-        else if(0 == (windowIDX = Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, (isDedicated ? WT_CONSOLE : WT_NORMAL), buf, &lnCmdShow)))
+        else if(!createMainWindow(lnCmdShow))
         {
             DD_ErrorBox(true, "Error creating main window.");
         }
@@ -370,8 +374,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         {   // All initialization complete.
             doShutdown = FALSE;
 
+            { char buf[256];
             DD_ComposeMainWindowTitle(buf);
             Sys_SetWindowTitle(windowIDX, buf);
+            }
 
            // SetForegroundWindow(win->hWnd);
            // SetFocus(win->hWnd);

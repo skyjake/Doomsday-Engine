@@ -56,7 +56,7 @@
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Recognized extensions (in order of importance, left to right).
-static const char* resourceTypeFileExtensions[NUM_RESOURCE_CLASSES][MAX_EXTENSIONS] = {
+static const char* resourceClassFileExtensions[NUM_RESOURCE_CLASSES][MAX_EXTENSIONS] = {
     { "pk3", "zip", "wad", 0 }, // Packages, favor ZIP over WAD.
     { "ded", 0 }, // Definitions, only DED files.
     { "png", "tga", "pcx", 0 }, // Graphic, favor quality.
@@ -65,7 +65,7 @@ static const char* resourceTypeFileExtensions[NUM_RESOURCE_CLASSES][MAX_EXTENSIO
     { "ogg", "mp3", "wav", "mod", "mid", 0 } // Music
 };
 
-static const char* defaultResourceNamespaceForType[NUM_RESOURCE_CLASSES] = {
+static const char* defaultResourceNamespaceForClass[NUM_RESOURCE_CLASSES] = {
     "packages:",
     "defs:",
     "graphics:",
@@ -124,10 +124,10 @@ static boolean tryFindFile(const char* searchPath, char* foundPath, size_t found
  *
  * @return              @c true, if it's found.
  */
-static boolean tryResourceFile(resourceclass_t type, const char* searchPath,
+static boolean tryResourceFile(resourceclass_t rclass, const char* searchPath,
     char* foundPath, size_t foundPathLen, resourcenamespaceid_t rni)
 {
-    assert(inited && VALID_RESOURCE_CLASS(type) && searchPath && searchPath[0]);
+    assert(inited && VALID_RESOURCE_CLASS(rclass) && searchPath && searchPath[0]);
     {
     boolean found = false;
     char* ptr;
@@ -157,7 +157,7 @@ static boolean tryResourceFile(resourceclass_t type, const char* searchPath,
         }
 
         { int i;
-        for(i = 0, ext = resourceTypeFileExtensions[type]; *ext; ext++)
+        for(i = 0, ext = resourceClassFileExtensions[rclass]; *ext; ext++)
         {
             Str_Copy(&tmp, &path2);
             Str_Appendf(&tmp, "%s", *ext);
@@ -174,10 +174,10 @@ static boolean tryResourceFile(resourceclass_t type, const char* searchPath,
     }
 }
 
-static boolean findResource(resourceclass_t type, const char* searchPath, const char* optionalSuffix,
+static boolean findResource(resourceclass_t rclass, const char* searchPath, const char* optionalSuffix,
     char* foundPath, size_t foundPathLen, resourcenamespaceid_t rni)
 {
-    assert(inited && VALID_RESOURCE_CLASS(type) && searchPath && searchPath[0]);
+    assert(inited && VALID_RESOURCE_CLASS(rclass) && searchPath && searchPath[0]);
     {
     boolean found = false;
 
@@ -203,7 +203,7 @@ static boolean findResource(resourceclass_t type, const char* searchPath, const 
             Str_Append(&fn, optionalSuffix);
         }}
 
-        if(tryResourceFile(type, Str_Text(&fn), foundPath, foundPathLen, rni))
+        if(tryResourceFile(rclass, Str_Text(&fn), foundPath, foundPathLen, rni))
             found = true;
 
         Str_Free(&fn);
@@ -212,7 +212,7 @@ static boolean findResource(resourceclass_t type, const char* searchPath, const 
     // Try without a suffix.
     if(!found)
     {
-        if(tryResourceFile(type, searchPath, foundPath, foundPathLen, rni))
+        if(tryResourceFile(rclass, searchPath, foundPath, foundPathLen, rni))
             found = true;
     }
 
@@ -220,10 +220,10 @@ static boolean findResource(resourceclass_t type, const char* searchPath, const 
     }
 }
 
-static boolean tryLocateResource(resourceclass_t type, resourcenamespaceid_t rni, const char* searchPath,
+static boolean tryLocateResource(resourceclass_t rclass, resourcenamespaceid_t rni, const char* searchPath,
     const char* optionalSuffix, char* foundPath, size_t foundPathLen)
 {
-    assert(inited && VALID_RESOURCE_CLASS(type) && searchPath && searchPath[0]);
+    assert(inited && VALID_RESOURCE_CLASS(rclass) && searchPath && searchPath[0]);
     {
     ddstring_t name;
     boolean found;
@@ -236,7 +236,7 @@ static boolean tryLocateResource(resourceclass_t type, resourcenamespaceid_t rni
     // If this is an absolute path, locate using it.
     if(Dir_IsAbsolute(Str_Text(&name)))
     {
-        found = findResource(type, Str_Text(&name), optionalSuffix, foundPath, foundPathLen, 0);
+        found = findResource(rclass, Str_Text(&name), optionalSuffix, foundPath, foundPathLen, 0);
     }
     else
     {   // Else, prepend the base path and try that.
@@ -245,7 +245,7 @@ static boolean tryLocateResource(resourceclass_t type, resourcenamespaceid_t rni
 
         // Make this an absolute, base-relative path.
         // If only checking the base path and not the expected location
-        // for the resource type (below); re-use the current string.
+        // for the resource class (below); re-use the current string.
         if(rni != 0)
         {
             Str_Init(&fn);
@@ -260,16 +260,16 @@ static boolean tryLocateResource(resourceclass_t type, resourcenamespaceid_t rni
         }
 
         // Try loading using the base path as the starting point.
-        found = findResource(type, path, optionalSuffix, foundPath, foundPathLen, 0);
+        found = findResource(rclass, path, optionalSuffix, foundPath, foundPathLen, 0);
 
         if(rni != 0)
             Str_Free(&fn);
     }
 
-    // Try expected location for this resource type.
+    // Try expected location for this resource class.
     if(!found && rni != 0)
     {
-        found = findResource(type, Str_Text(&name), optionalSuffix, foundPath, foundPathLen, rni);
+        found = findResource(rclass, Str_Text(&name), optionalSuffix, foundPath, foundPathLen, rni);
     }
 
     Str_Free(&name);
@@ -373,21 +373,21 @@ boolean F_IsValidResourceNamespaceId(int val)
     return (boolean)(val>0 && (unsigned)val < (F_NumResourceNamespaces()+1)? 1 : 0);
 }
 
-resourcenamespaceid_t F_DefaultResourceNamespaceForType(resourceclass_t type)
+resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass)
 {
-    assert(VALID_RESOURCE_CLASS(type));
-    return F_ResourceNamespaceForName(defaultResourceNamespaceForType[type]);
+    assert(VALID_RESOURCE_CLASS(rclass));
+    return F_ResourceNamespaceForName(defaultResourceNamespaceForClass[rclass]);
 }
 
-boolean F_FindResource(resourceclass_t type, char* foundPath, const char* searchPath, const char* optionalSuffix, size_t foundPathLen)
+boolean F_FindResource(resourceclass_t rclass, char* foundPath, const char* searchPath, const char* optionalSuffix, size_t foundPathLen)
 {
     if(!searchPath || !searchPath[0])
         return false;
-    if(!VALID_RESOURCE_CLASS(type))
-        Con_Error("F_FindResource: Invalid resource type %i.\n", type);
+    if(!VALID_RESOURCE_CLASS(rclass))
+        Con_Error("F_FindResource: Invalid resource class %i.\n", rclass);
     { resourcenamespaceid_t rni;
     if((rni = F_ParseResourceNamespace(searchPath)) != 0)
-        return tryLocateResource(type, rni, searchPath, optionalSuffix, foundPath, foundPathLen);
+        return tryLocateResource(rclass, rni, searchPath, optionalSuffix, foundPath, foundPathLen);
     }
-    return tryLocateResource(type, F_ResourceNamespaceForName(defaultResourceNamespaceForType[type]), searchPath, optionalSuffix, foundPath, foundPathLen);
+    return tryLocateResource(rclass, F_ResourceNamespaceForName(defaultResourceNamespaceForClass[rclass]), searchPath, optionalSuffix, foundPath, foundPathLen);
 }

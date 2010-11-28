@@ -158,6 +158,8 @@ void Sys_Shutdown(void)
     DD_ClearEvents();
     I_ShutdownInputDevices();
     I_Shutdown();
+
+    DD_DestroyGameInfo();
 }
 
 int Sys_CriticalMessage(char* msg)

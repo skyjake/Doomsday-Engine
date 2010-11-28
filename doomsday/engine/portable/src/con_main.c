@@ -1848,9 +1848,8 @@ void Con_Error(const char *error, ...)
 
 void Con_AbnormalShutdown(const char* message)
 {
-    Sys_Shutdown();
     B_Shutdown();
-    DD_DestroyGameInfo();
+    Sys_Shutdown();
 
 #ifdef WIN32
     ChangeDisplaySettings(0, 0); // Restore original mode, just in case.

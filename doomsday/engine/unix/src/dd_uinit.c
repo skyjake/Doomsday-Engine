@@ -253,6 +253,14 @@ static char* buildCommandLineString(int argc, char** argv)
     return cmdLine;
 }
 
+static int createMainWindow(void)
+{
+    char buf[256];
+    DD_ComposeMainWindowTitle(buf);
+    windowIDX = Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, isDedicated, buf, 0);
+    return windowIDX != 0;
+}
+
 int main(int argc, char** argv)
 {
     boolean doShutdown = true;
@@ -267,8 +275,6 @@ int main(int argc, char** argv)
     }
     else*/
     {
-        char buf[256], libPath[PATH_MAX];
-
         // Prepare the command line arguments.
         { char* cmdLine = buildCommandLineString(argc, argv);
         DD_InitCommandLine(cmdLine);
@@ -278,8 +284,6 @@ int main(int argc, char** argv)
         // First order of business: are we running in dedicated mode?
         if(ArgCheck("-dedicated"))
             isDedicated = true;
-
-        DD_ComposeMainWindowTitle(buf);
 
         // Determine our basedir and other global paths.
         determineGlobalPaths(&app);
@@ -308,7 +312,7 @@ int main(int argc, char** argv)
         {
             DD_ErrorBox(true, "Error loading plugins.");
         }
-        else if(0 == (windowIDX = Sys_CreateWindow(&app, 0, 0, 0, 640, 480, 32, 0, isDedicated, buf, 0)))
+        else if(!createMainWindow())
         {
             DD_ErrorBox(true, "Error creating main window.");
         }
@@ -320,8 +324,10 @@ int main(int argc, char** argv)
         {   // All initialization complete.
             doShutdown = false;
 
+            { char buf[256];
             DD_ComposeMainWindowTitle(buf);
             Sys_SetWindowTitle(windowIDX, buf);
+            }
 
            // \todo Set foreground window and focus.
         }

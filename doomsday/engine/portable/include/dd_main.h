@@ -53,6 +53,7 @@ extern int isDedicated;
 extern GETGAMEAPI GetGameAPI;
 #endif
 
+boolean DD_EarlyInit(void);
 int DD_Main(void);
 void DD_CheckTimeDemo(void);
 void DD_UpdateEngineState(void);

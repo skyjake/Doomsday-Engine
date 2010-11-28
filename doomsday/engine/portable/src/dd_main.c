@@ -306,7 +306,7 @@ static void addIdentityKeyToResourceNamespaceRecord(gameresource_record_t* rec, 
     }
 }
 
-void DD_AddGameResource(gameid_t gameId, resourceclass_t type, const char* _names, void* params)
+void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, const char* _names, void* params)
 {
     gameinfo_t* info = findGameInfoForId(gameId);
     resourcenamespaceid_t rni;
@@ -314,8 +314,8 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t type, const char* _name
 
     if(!info || DD_IsNullGameInfo(info))
         Con_Error("DD_AddGameResource: Error, unknown game id %u.", gameId);
-    if(!VALID_RESOURCE_CLASS(type))
-        Con_Error("DD_AddGameResource: Error, unknown resource type %i.", (int)type);
+    if(!VALID_RESOURCE_CLASS(rclass))
+        Con_Error("DD_AddGameResource: Error, unknown resource class %i.", (int)rclass);
     if(!_names || !_names[0] || !strcmp(_names, ";"))
         Con_Error("DD_AddGameResource: Error, invalid name argument.");
 
@@ -326,14 +326,14 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t type, const char* _name
         Str_Append(&names, ";");
 
     if((rni = F_ParseResourceNamespace(Str_Text(&names))) == 0)
-        rni = F_DefaultResourceNamespaceForType(type);
+        rni = F_DefaultResourceNamespaceForClass(rclass);
 
     Str_Init(&name);
     { gameresource_record_t* rec;
-    if((rec = GameInfo_AddResource(info, type, rni, &names)))
+    if((rec = GameInfo_AddResource(info, rclass, rni, &names)))
     {
         if(params)
-        switch(rec->type)
+        switch(rec->rclass)
         {
         case RC_PACKAGE:
             // Add an auto-identification file name list to the info record.
@@ -481,9 +481,9 @@ static boolean recognizeZIP(const char* filePath, void* data)
 static boolean validateGameResource(gameresource_record_t* rec, const char* name)
 {
     filename_t foundPath;
-    if(!F_FindResource(rec->type, foundPath, name, 0, FILENAME_T_MAXLEN))
+    if(!F_FindResource(rec->rclass, foundPath, name, 0, FILENAME_T_MAXLEN))
         return false;
-    switch(rec->type)
+    switch(rec->rclass)
     {
     case RC_PACKAGE:
         if(recognizeWAD(foundPath, (void*)rec->identityKeys)) break;
@@ -553,27 +553,27 @@ static boolean allGameResourcesFound(gameinfo_t* info)
     return true;
 }
 
-static void loadGameResources(gameinfo_t* info, resourceclass_t type, const char* searchPath)
+static void loadGameResources(gameinfo_t* info, resourceclass_t rclass, const char* searchPath)
 {
-    assert(info && VALID_RESOURCE_CLASS(type) && searchPath);
+    assert(info && VALID_RESOURCE_CLASS(rclass) && searchPath);
     {
     resourcenamespaceid_t rni;
 
     if((rni = F_ParseResourceNamespace(searchPath)) == 0)
-        rni = F_DefaultResourceNamespaceForType(type);
+        rni = F_DefaultResourceNamespaceForClass(rclass);
 
     {gameresource_record_t* const* records;
     if((records = GameInfo_Resources(info, rni, 0)))
         do
         {
-            switch((*records)->type)
+            switch((*records)->rclass)
             {
             case RC_PACKAGE:
                 if(Str_Length(&(*records)->path) != 0)
                     W_AddFile(Str_Text(&(*records)->path), false);
                 break;
             default:
-                Con_Error("loadGameResources: Error, no resource loader found for %s.", F_ResourceTypeStr((*records)->type));
+                Con_Error("loadGameResources: Error, no resource loader found for %s.", F_ResourceTypeStr((*records)->rclass));
             };
         } while(*(++records));
     }
@@ -602,7 +602,7 @@ static void printGameInfo(gameinfo_t* info)
             Con_Printf("  Namespace: \"%s\"\n", Str_Text(&F_ToResourceNamespace((resourcenamespaceid_t)i)->_name));
             do
             {
-                Con_Printf("    %i:%s - \"%s\" > %s\n", n++, F_ResourceTypeStr((*records)->type), Str_Text(&(*records)->names), Str_Length(&(*records)->path) == 0? "--(!)missing" : M_PrettyPath(Str_Text(&(*records)->path)));
+                Con_Printf("    %i:%s - \"%s\" > %s\n", n++, F_ResourceTypeStr((*records)->rclass), Str_Text(&(*records)->names), Str_Length(&(*records)->path) == 0? "--(!)missing" : M_PrettyPath(Str_Text(&(*records)->path)));
             } while(*(++records));
         }
     }}
@@ -994,6 +994,27 @@ void DD_AutoselectGame(void)
     }
 }
 
+int DD_EarlyInit(void)
+{
+    // Bring the console online as soon as we can.
+    DD_ConsoleInit();
+
+    // Bring the window manager online.
+    Sys_InitWindowManager();
+
+    /**
+     * One-time creation and initialization of the special "null-game" object (activated once created).
+     */
+    { filename_t dataPath, defsPath;
+    M_TranslatePath(dataPath, DD_BASEPATH_DATA, FILENAME_T_MAXLEN);
+    Dir_ValidDir(dataPath, FILENAME_T_MAXLEN);
+    M_TranslatePath(defsPath, DD_BASEPATH_DEFS, FILENAME_T_MAXLEN);
+    Dir_ValidDir(defsPath, FILENAME_T_MAXLEN);
+    currentGameInfoIndex = gameInfoIndex(addGameInfoRecord(0, 0, dataPath, defsPath, 0, 0, 0, 0, 0));
+    }
+    return true;
+}
+
 /**
  * Engine initialization. When complete, starts the "game loop".
  */
@@ -1221,7 +1242,6 @@ int DD_Main(void)
     }
 
     B_Shutdown();
-    DD_DestroyGameInfo();
     Sys_Shutdown();
 
     return exitCode;
@@ -1235,17 +1255,6 @@ static int DD_StartupWorker(void* parm)
 #endif
 
     F_InitMapping();
-
-    /**
-     * One-time creation and initialization of the special "null-game" object (activated once created).
-     */
-    { filename_t dataPath, defsPath;
-    M_TranslatePath(dataPath, DD_BASEPATH_DATA, FILENAME_T_MAXLEN);
-    Dir_ValidDir(dataPath, FILENAME_T_MAXLEN);
-    M_TranslatePath(defsPath, DD_BASEPATH_DEFS, FILENAME_T_MAXLEN);
-    Dir_ValidDir(defsPath, FILENAME_T_MAXLEN);
-    currentGameInfoIndex = gameInfoIndex(addGameInfoRecord(0, 0, dataPath, defsPath, 0, 0, 0, 0, 0));
-    }
 
     // Initialize the key mappings.
     DD_InitInput();

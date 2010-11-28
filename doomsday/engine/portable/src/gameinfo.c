@@ -343,10 +343,10 @@ void P_DestroyGameInfo(gameinfo_t* info)
     M_Free(info);
 }
 
-gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourceclass_t type,
+gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourceclass_t rclass,
     resourcenamespaceid_t rni, const ddstring_t* names)
 {
-    assert(info && VALID_RESOURCE_CLASS(type) && F_IsValidResourceNamespaceId(rni) && names);
+    assert(info && VALID_RESOURCE_CLASS(rclass) && F_IsValidResourceNamespaceId(rni) && names);
     {
     gameresource_recordset_t* rset = &info->_requiredResources[rni-1];
     gameresource_record_t* record;
@@ -358,8 +358,8 @@ gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourceclass_t ty
 
     Str_Init(&record->names); Str_Copy(&record->names, names);
     Str_Init(&record->path);
-    record->type = type;
-    switch(record->type)
+    record->rclass = rclass;
+    switch(record->rclass)
     {
     case RC_PACKAGE:
         record->identityKeys = 0;

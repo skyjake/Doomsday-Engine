@@ -198,7 +198,7 @@ void DD_Verbosity(void)
  * Called early on during the startup process so that we can get the console
  * online ready for printing ASAP.
  */
-boolean DD_EarlyInit(void)
+void DD_ConsoleInit(void)
 {
     const char* outFileName = "doomsday.out";
 
@@ -257,11 +257,6 @@ boolean DD_EarlyInit(void)
             }
         }
     }
-
-    // Bring the window manager online.
-    Sys_InitWindowManager();
-
-    return true;
 }
 
 /**
