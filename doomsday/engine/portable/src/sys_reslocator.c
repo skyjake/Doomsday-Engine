@@ -66,21 +66,21 @@ static const char* resourceTypeFileExtensions[NUM_RESOURCE_CLASSES][MAX_EXTENSIO
 };
 
 static const char* defaultResourceNamespaceForType[NUM_RESOURCE_CLASSES] = {
-    { "packages:" },
-    { "defs:" },
-    { "graphics:" },
-    { "models:" },
-    { "sounds:" },
-    { "music:" },
+    "packages:",
+    "defs:",
+    "graphics:",
+    "models:",
+    "sounds:",
+    "music:"
 };
 
 static resourcenamespace_t resourceNamespaces[NUM_RESOURCE_CLASSES] = {
-    { "packages:" },
-    { "defs:" },
-    { "graphics:" },
-    { "models:" },
-    { "sounds:" },
-    { "music:" }
+    { "packages:", 0 },
+    { "defs:", 0 },
+    { "graphics:", 0 },
+    { "models:", 0 },
+    { "sounds:", 0 },
+    { "music:", 0 }
 };
 
 static boolean inited = false;
@@ -338,12 +338,12 @@ const char* F_ResourceTypeStr(resourceclass_t resType)
     assert(VALID_RESOURCE_CLASS(resType));
     {
     static const char* resourceTypeNames[NUM_RESOURCE_CLASSES] = {
-        { "RC_PACKAGE" },
-        { "RC_DEFINITION" },
-        { "RC_GRAPHIC" },
-        { "RC_MODEL" },
-        { "RC_SOUND" },
-        { "RC_MUSIC" }
+        "RC_PACKAGE",
+        "RC_DEFINITION",
+        "RC_GRAPHIC",
+        "RC_MODEL",
+        "RC_SOUND",
+        "RC_MUSIC"
     };
     return resourceTypeNames[(int)resType];
     }

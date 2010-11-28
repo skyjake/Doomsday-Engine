@@ -113,7 +113,7 @@ static uint numGameInfo = 0, currentGameInfoIndex = 0;
 
 // CODE --------------------------------------------------------------------
 
-static __inline size_t countElements(const ddstring_t* const* list)
+static __inline size_t countElements(ddstring_t** list)
 {
     size_t n = 0;
     if(list)
@@ -889,7 +889,7 @@ void DD_ChangeGame(gameinfo_t* info)
      * \todo dj: This has been deferred here so that strings like the game
      * title and author can be overridden (e.g., via DEHACKED). Make it so!
      */
-    Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER, Str_Text(GameInfo_Title(info))); Con_FPrintf(CBLF_WHITE | CBLF_CENTER, "\n");
+    Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER, "%s", Str_Text(GameInfo_Title(info))); Con_FPrintf(CBLF_WHITE | CBLF_CENTER, "\n");
     Con_FPrintf(CBLF_RULER, "");
 }
 
