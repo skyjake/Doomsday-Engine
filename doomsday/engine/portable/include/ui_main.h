@@ -31,21 +31,6 @@
 
 #include "con_decl.h"
 
-/// Colors.
-enum {
-    UIC_TEXT,
-    UIC_TITLE,
-    UIC_SHADOW,
-    UIC_BG_LIGHT,
-    UIC_BG_MEDIUM,
-    UIC_BG_DARK,
-    UIC_BRD_HI,
-    UIC_BRD_MED,
-    UIC_BRD_LOW,
-    UIC_HELP,
-    NUM_UI_COLORS
-};
-
 #define IS_ACTKEY(x)    (x == ' ' || x == DDKEY_RETURN)
 
 typedef enum {

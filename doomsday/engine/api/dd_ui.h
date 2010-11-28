@@ -29,6 +29,21 @@
  * @defgroup gui GUI System
  */
 
+/// Numeric identifiers of predefined colors.
+enum {
+    UIC_TEXT,
+    UIC_TITLE,
+    UIC_SHADOW,
+    UIC_BG_LIGHT,
+    UIC_BG_MEDIUM,
+    UIC_BG_DARK,
+    UIC_BRD_HI,
+    UIC_BRD_MED,
+    UIC_BRD_LOW,
+    UIC_HELP,
+    NUM_UI_COLORS
+};
+
 #include "dd_animator.h"
 #include "dd_compositefont.h"
 #include "dd_vectorgraphic.h"
@@ -82,6 +97,10 @@ typedef struct {
     uint size;
 } fi_object_collection_t;
 
+#define FIPAGE_NUM_PREDEFINED_COLORS        NUM_UI_COLORS
+
+#define VALID_FIPAGE_PREDEFINED_COLOR(v)    ((v) < FIPAGE_NUM_PREDEFINED_COLORS)
+
 typedef struct fi_page_s {
     struct fi_page_flags_s {
         char hidden:1; /// Currently hidden (not drawn).
@@ -110,7 +129,7 @@ typedef struct fi_page_s {
     } _bg;
 
     animatorvector4_t _filter;
-    animatorvector3_t _textColor[9];
+    animatorvector3_t _textColor[FIPAGE_NUM_PREDEFINED_COLORS];
 
     uint _timer;
 } fi_page_t;

@@ -852,6 +852,16 @@ void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, const char* script)
      */
     fi->_pages[PAGE_PICS] = FI_NewPage(0);
     fi->_pages[PAGE_TEXT] = FI_NewPage(0);
+
+    // Configure the predefined colors. We want the same for both pages.
+    { uint i;
+    for(i = 0; i < FIPAGE_NUM_PREDEFINED_COLORS; ++i)
+    {
+        ui_color_t* color = UI_Color(i);
+        FIPage_SetPredefinedColor(fi->_pages[PAGE_PICS], i, color->red, color->green, color->blue, 0);
+        FIPage_SetPredefinedColor(fi->_pages[PAGE_TEXT], i, color->red, color->green, color->blue, 0);
+    }}
+
     // Hide our pages until command interpretation begins.
     FIPage_MakeVisible(fi->_pages[PAGE_PICS], false);
     FIPage_MakeVisible(fi->_pages[PAGE_TEXT], false);

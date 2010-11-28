@@ -116,7 +116,7 @@ static void pageClear(fi_page_t* p)
     AnimatorVector4_Init(p->_bg.bottomColor, 1, 1, 1, 0);
     AnimatorVector4_Init(p->_filter, 0, 0, 0, 0);
     {uint i;
-    for(i = 0; i < 9; ++i)
+    for(i = 0; i < FIPAGE_NUM_PREDEFINED_COLORS; ++i)
     {
         AnimatorVector3_Init(p->_textColor[i], 1, 1, 1);
     }}
@@ -642,7 +642,7 @@ void FIPage_Ticker(fi_page_t* p, timespan_t ticLength)
     AnimatorVector4_Think(p->_bg.bottomColor);
     AnimatorVector4_Think(p->_filter);
     {uint i;
-    for(i = 0; i < 9; ++i)
+    for(i = 0; i < FIPAGE_NUM_PREDEFINED_COLORS; ++i)
         AnimatorVector3_Think(p->_textColor[i]);
     }
 }
@@ -742,6 +742,7 @@ void FIPage_SetFilterColorAndAlpha(fi_page_t* p, float red, float green, float b
 void FIPage_SetPredefinedColor(fi_page_t* p, uint idx, float red, float green, float blue, int steps)
 {
     if(!p) Con_Error("FIPage_SetPredefinedColor: Invalid page.");
+    if(!VALID_FIPAGE_PREDEFINED_COLOR(idx)) Con_Error("FIPage_SetPredefinedColor: Invalid color id %u.", idx);
     AnimatorVector3_Set(p->_textColor[idx], red, green, blue, steps);
 }
 

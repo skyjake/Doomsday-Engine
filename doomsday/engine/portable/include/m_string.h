@@ -65,7 +65,7 @@ void            Str_AppendChar(ddstring_t* ds, char ch);
 void            Str_Appendf(ddstring_t* ds, const char* format, ...) PRINTF_F(2,3);
 void            Str_PartAppend(ddstring_t* dest, const char* src, int start, size_t count);
 void            Str_Prepend(ddstring_t* ds, const char* prependText);
-size_t          Str_Length(ddstring_t* ds);
+size_t          Str_Length(const ddstring_t* ds);
 char*           Str_Text(const ddstring_t* ds);
 void            Str_Copy(ddstring_t* dest, const ddstring_t* src);
 void            Str_StripLeft(ddstring_t* ds);

@@ -237,7 +237,7 @@ char* Str_Text(const ddstring_t* ds)
 /**
  * This is safe for all strings.
  */
-size_t Str_Length(ddstring_t* ds)
+size_t Str_Length(const ddstring_t* ds)
 {
     if(ds->length)
         return ds->length;

@@ -49,6 +49,8 @@ extern char* gameStartupFiles; // A list of names of files to be autoloaded duri
 
 extern int isDedicated;
 
+extern finaleid_t titleFinale;
+
 #ifndef WIN32
 extern GETGAMEAPI GetGameAPI;
 #endif

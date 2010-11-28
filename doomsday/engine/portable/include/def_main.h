@@ -62,15 +62,21 @@ extern ded_count_t countStates;
 
 void            Def_Init(void);
 int             Def_GetGameClasses(void);
+
+/**
+ * Finish definition database initialization. Initialization is split into two
+ * phases either side of the texture manager, this being the post-phase.
+ */
 void            Def_PostInit(void);
 
 // Destroy databases.
 void            Def_Destroy(void);
 
-// Reads the specified definition file, and creates the sprite name,
-// state, mobjinfo, sound, music and text databases accordingly.
+/**
+ * Reads the specified definition files, and creates the sprite name,
+ * state, mobjinfo, sound, music, text and mapinfo databases accordingly.
+ */
 void            Def_Read(void);
-
 void            Def_ReadProcessDED(const char* fileName);
 
 int             Def_GetMobjNum(const char* id);

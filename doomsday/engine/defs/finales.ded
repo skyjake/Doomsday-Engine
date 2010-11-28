@@ -1,0 +1,22 @@
+#
+# Doomsday Engine 1.9
+# User interface and presentational elements.
+# (see Doc\InFine.txt)
+
+Header { Version = 5; }
+
+InFine 
+{
+  Id = "background";
+  Script {
+    # There is nothing to skip
+    NoSkip 
+    
+    Rect bg 0 0 320 200
+    XImage bg background
+
+    MARKER background_loop
+    Wait 1     
+    GOTO background_loop
+  };
+}

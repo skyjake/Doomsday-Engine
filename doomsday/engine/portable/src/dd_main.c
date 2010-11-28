@@ -100,6 +100,9 @@ FILE* outFile; // Output file for console messages.
 /// List of file names, whitespace seperating (written to .cfg).
 char* gameStartupFiles = "";
 
+/// Id of the currently running title finale if playing, else zero.
+finaleid_t titleFinale = 0;
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 /// List of game data files (specified via the command line or in a cfg, or
@@ -1220,7 +1223,31 @@ int DD_Main(void)
         }
     }
     else
-    {   // For now we'll just open the console automatically.
+    {   // No game loaded.
+        // Ok, lets get most of everything else initialized.
+        F_InitResourceLocator();
+        F_InitDirec();
+
+        R_InitTextures();
+        R_InitFlats();
+        R_PreInitSprites();
+
+        Def_Read();
+
+        R_InitSprites();
+        R_InitModels();
+        Rend_ParticleLoadExtraTextures();
+        Cl_InitTranslations();
+
+        Def_PostInit();
+
+        // Lets play a nice title animation.
+        { ddfinale_t fin;
+        if(Def_Get(DD_DEF_FINALE, "background", &fin))
+            titleFinale = FI_Execute(fin.script, FF_LOCAL);
+        }
+
+        // We'll open the console automatically too.
         Con_Execute(CMDS_DDAY, "conopen", true, false);
     }
 

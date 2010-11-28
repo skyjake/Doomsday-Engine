@@ -214,8 +214,8 @@ void DD_DrawAndBlit(void)
             R_BeginWorldFrame();
             R_RenderViewPorts();
         }
-        else
-        {
+        else if(titleFinale == 0)
+        {   // No loaded title finale. Lets do it manually.
             glMatrixMode(GL_PROJECTION);
             glPushMatrix();
             glLoadIdentity();

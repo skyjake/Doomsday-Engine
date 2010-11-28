@@ -757,7 +757,7 @@ static void readAllDefinitions(void)
 
     // Next the game's main/top-level definition file.
     { const ddstring_t* mainDef;
-    if((mainDef = GameInfo_MainDef(DD_GameInfo())))
+    if((mainDef = GameInfo_MainDef(DD_GameInfo())) && Str_Length(mainDef) != 0)
     {
         filename_t foundPath;
         if(F_FindResource(RC_DEFINITION, foundPath, Str_Text(mainDef), 0, FILENAME_T_MAXLEN))
@@ -796,10 +796,6 @@ static void readAllDefinitions(void)
     VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 }
 
-/**
- * Reads the specified definition files, and creates the sprite name,
- * state, mobjinfo, sound, music, text and mapinfo databases accordingly.
- */
 void Def_Read(void)
 {
     int i, k;
@@ -1116,10 +1112,6 @@ void Def_Read(void)
     defsInited = true;
 }
 
-/**
- * Initialize definitions that must be initialized when engine init is
- * complete (called from R_Init).
- */
 void Def_PostInit(void)
 {
     int                 i, k;
