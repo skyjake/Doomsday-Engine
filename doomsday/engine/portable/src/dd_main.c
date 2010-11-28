@@ -542,17 +542,20 @@ static void locateGameResources(gameinfo_t* info)
 static boolean allGameResourcesFound(gameinfo_t* info)
 {
     assert(info);
-    { uint i, numResourceNamespaces = F_NumResourceNamespaces();
-    for(i = 1; i < numResourceNamespaces+1; ++i)
+    if(!DD_IsNullGameInfo(info))
     {
-        gameresource_record_t* const* records;
-        if((records = GameInfo_Resources(info, (resourcenamespaceid_t)i, 0)))
-            do
-            {
-                if(Str_Length(&(*records)->path) == 0)
-                    return false;
-            } while(*(++records));
-    }}
+        uint i, numResourceNamespaces = F_NumResourceNamespaces();
+        for(i = 1; i < numResourceNamespaces+1; ++i)
+        {
+            gameresource_record_t* const* records;
+            if((records = GameInfo_Resources(info, (resourcenamespaceid_t)i, 0)))
+                do
+                {
+                    if(Str_Length(&(*records)->path) == 0)
+                        return false;
+                } while(*(++records));
+        }
+    }
     return true;
 }
 
@@ -587,9 +590,6 @@ static void printGameInfo(gameinfo_t* info)
 {
     assert(info);
 
-    if(DD_IsNullGameInfo(info))
-        return;
-
     Con_Printf("Game: %s - %s\n", Str_Text(GameInfo_Title(info)), Str_Text(GameInfo_Author(info)));
 #if _DEBUG
     Con_Printf("  Meta: pluginid:%i identitykey:\"%s\" data:\"%s\" defs:\"%s\"\n", (int)GameInfo_PluginId(info), Str_Text(GameInfo_IdentityKey(info)), M_PrettyPath(Str_Text(GameInfo_DataPath(info))), M_PrettyPath(Str_Text(GameInfo_DefsPath(info))));
@@ -614,9 +614,20 @@ static void printGameInfo(gameinfo_t* info)
 
 D_CMD(ListGames)
 {
-    uint i;
+    uint i, numAvailableGames = 0, numCompleteGames = 0;
     for(i = 0; i < numGameInfo; ++i)
-        printGameInfo(gameInfo[i]);
+    {
+        gameinfo_t* info = gameInfo[i];
+
+        if(DD_IsNullGameInfo(info))
+            continue;
+
+        numAvailableGames++;
+        printGameInfo(info);
+        if(allGameResourcesFound(info))
+            numCompleteGames++;
+    }
+    Con_Printf("%i of %i games playable.\n", numCompleteGames, numAvailableGames);
     return true;
 }
 
