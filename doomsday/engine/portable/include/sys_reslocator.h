@@ -38,7 +38,7 @@ typedef struct {
 /**
  * Convert a resourceclass_t constant into a string for error/debug messages.
  */
-const char* F_ResourceTypeStr(resourceclass_t rc);
+const char* F_ResourceClassStr(resourceclass_t rclass);
 
 /**
  * \post Initial/default search paths registered and queries may begin.

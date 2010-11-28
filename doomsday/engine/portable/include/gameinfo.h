@@ -85,7 +85,7 @@ typedef struct {
     /// Command-line selection flags.
     ddstring_t* _cmdlineFlag, *_cmdlineFlag2;
 
-    /// Lists of relative search paths to use when locating file resources. Determined automatically at creation time.
+    /// Lists of search paths to use when locating file resources. Determined automatically at creation time.
     ddstring_t _searchPathLists[NUM_RESOURCE_CLASSES];
 
     /// Vector of records for required game resources (e.g., doomu.wad).

@@ -39,9 +39,34 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAX_EXTENSIONS          (10)
-
 // TYPES -------------------------------------------------------------------
+
+#define MAX_EXTENSIONS          (3)
+typedef struct {
+    char* extensions[MAX_EXTENSIONS];
+} resourcetypeinfo_t;
+
+typedef enum {
+    RT_NONE = 0,
+    RT_FIRST = 1,
+    RT_ZIP = RT_FIRST,
+    RT_WAD,
+    RT_DED,
+    RT_PNG,
+    RT_TGA,
+    RT_PCX,
+    RT_DMD,
+    RT_MD2,
+    RT_WAV,
+    RT_OGG,
+    RT_MP3,
+    RT_MOD,
+    RT_MID,
+    RT_LAST_INDEX
+} resourcetype_t;
+
+#define NUM_RESOURCE_TYPES          (RT_LAST_INDEX-1)
+#define VALID_RESOURCE_TYPE(v)      ((v) >= RT_FIRST && (v) < RT_LAST_INDEX)
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -55,26 +80,43 @@
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-// Recognized extensions (in order of importance, left to right).
-static const char* resourceClassFileExtensions[NUM_RESOURCE_CLASSES][MAX_EXTENSIONS] = {
-    { "pk3", "zip", "wad", 0 }, // Packages, favor ZIP over WAD.
-    { "ded", 0 }, // Definitions, only DED files.
-    { "png", "tga", "pcx", 0 }, // Graphic, favor quality.
-    { "dmd", "md2", 0 }, // Model, favour DMD over MD2.
-    { "wav", 0 }, // Sound, only WAV files.
-    { "ogg", "mp3", "wav", "mod", "mid", 0 } // Music
+static const resourcetypeinfo_t typeInfo[NUM_RESOURCE_TYPES] = {
+    /* RT_ZIP */ { {"pk3", "zip", 0} },
+    /* RT_WAD */ { {"wad", 0} },
+    /* RT_DED */ { {"ded", 0} },
+    /* RT_PNG */ { {"png", 0} },
+    /* RT_TGA */ { {"tga", 0} },
+    /* RT_PCX */ { {"pcx", 0} },
+    /* RT_DMD */ { {"dmd", 0} },
+    /* RT_MD2 */ { {"md2", 0} },
+    /* RT_WAV */ { {"wav", 0} },
+    /* RT_OGG */ { {"ogg", 0} },
+    /* RT_MP3 */ { {"mp3", 0} },
+    /* RT_MOD */ { {"mod", 0} },
+    /* RT_MID */ { {"mid", 0} }
 };
 
-static const char* defaultResourceNamespaceForClass[NUM_RESOURCE_CLASSES] = {
-    "packages:",
-    "defs:",
-    "graphics:",
-    "models:",
-    "sounds:",
-    "music:"
+// Recognized resource types (in order of importance, left to right).
+#define MAX_TYPEORDER 6
+static const resourcetype_t searchTypeOrder[NUM_RESOURCE_CLASSES][MAX_TYPEORDER] = {
+    /* RC_PACKAGE */    { RT_ZIP, RT_WAD, 0 }, // Favor ZIP over WAD.
+    /* RC_DEFINITION */ { RT_DED, 0 }, // Only DED files.
+    /* RC_GRAPHIC */    { RT_PNG, RT_TGA, RT_PCX, 0 }, // Favour quality.
+    /* RC_MODEL */      { RT_DMD, RT_MD2, 0 }, // Favour DMD over MD2.
+    /* RC_SOUND */      { RT_WAV, 0 }, // Only WAV files.
+    /* RC_MUSIC */      { RT_OGG, RT_MP3, RT_WAV, RT_MOD, RT_MID, 0 }
 };
 
-static resourcenamespace_t resourceNamespaces[NUM_RESOURCE_CLASSES] = {
+static const char* defaultNamespaceForClass[NUM_RESOURCE_CLASSES] = {
+    /* RC_PACKAGE */    "packages:",
+    /* RC_DEFINITION */ "defs:",
+    /* RC_GRAPHIC */    "graphics:",
+    /* RC_MODEL */      "models:",
+    /* RC_SOUND */      "sounds:",
+    /* RC_MUSIC */      "music:"
+};
+
+static resourcenamespace_t namespaces[NUM_RESOURCE_CLASSES] = {
     { "packages:", 0 },
     { "defs:", 0 },
     { "graphics:", 0 },
@@ -86,6 +128,12 @@ static resourcenamespace_t resourceNamespaces[NUM_RESOURCE_CLASSES] = {
 static boolean inited = false;
 
 // CODE --------------------------------------------------------------------
+
+static __inline const resourcetypeinfo_t* getInfoForResourceType(resourcetype_t type)
+{
+    assert(VALID_RESOURCE_TYPE(type));
+    return &typeInfo[((uint)type)-1];
+}
 
 static boolean tryFindFile(const char* searchPath, char* foundPath, size_t foundPathLen,
     resourcenamespaceid_t rni)
@@ -140,7 +188,6 @@ static boolean tryResourceFile(resourceclass_t rclass, const char* searchPath,
     if(!found)
     {
         ddstring_t path2, tmp;
-        const char** ext;
 
         Str_Init(&path2);
         Str_Init(&tmp);
@@ -156,15 +203,24 @@ static boolean tryResourceFile(resourceclass_t rclass, const char* searchPath,
             Str_AppendChar(&path2, '.');
         }
 
-        { int i;
-        for(i = 0, ext = resourceClassFileExtensions[rclass]; *ext; ext++)
+        if(searchTypeOrder[rclass][0] != RT_NONE)
         {
-            Str_Copy(&tmp, &path2);
-            Str_Appendf(&tmp, "%s", *ext);
-
-            if((found = tryFindFile(Str_Text(&tmp), foundPath, foundPathLen, rni)))
-                break;
-        }}
+            const resourcetype_t* type = searchTypeOrder[rclass];
+            do
+            {
+                const resourcetypeinfo_t* info = getInfoForResourceType(*type);
+                if(info->extensions[0])
+                {
+                    char* const* ext = info->extensions;
+                    do
+                    {
+                        Str_Copy(&tmp, &path2);
+                        Str_Appendf(&tmp, "%s", *ext);
+                        found = tryFindFile(Str_Text(&tmp), foundPath, foundPathLen, rni);
+                    } while(!found && *(++ext));
+                }
+            } while(!found && *(++type) != RT_NONE);
+        }
 
         Str_Free(&path2);
         Str_Free(&tmp);
@@ -282,7 +338,7 @@ static void resetResourceNamespace(resourcenamespaceid_t rni)
 {
     assert(F_IsValidResourceNamespaceId(rni));
     {
-    resourcenamespace_t* rnamespace = &resourceNamespaces[rni-1];
+    resourcenamespace_t* rnamespace = &namespaces[rni-1];
     if(rnamespace->_fileHash)
     {
         FileHash_Destroy(rnamespace->_fileHash); rnamespace->_fileHash = 0;
@@ -301,7 +357,7 @@ resourcenamespace_t* F_ToResourceNamespace(resourcenamespaceid_t rni)
 {
     if(!F_IsValidResourceNamespaceId(rni))
         Con_Error("DD_ResourceNamespace: Invalid resource namespace id %i.", (int)rni);
-    return &resourceNamespaces[rni-1];
+    return &namespaces[rni-1];
 }
 
 resourcenamespaceid_t F_SafeResourceNamespaceForName(const char* name)
@@ -311,7 +367,7 @@ resourcenamespaceid_t F_SafeResourceNamespaceForName(const char* name)
         uint i, numResourceNamespaces = F_NumResourceNamespaces();
         for(i = 1; i < numResourceNamespaces+1; ++i)
         {
-            resourcenamespace_t* rnamespace = &resourceNamespaces[i-1];
+            resourcenamespace_t* rnamespace = &namespaces[i-1];
             if(Str_Length(&rnamespace->_name) > 0 && !Str_CompareIgnoreCase(&rnamespace->_name, name))
                 return (resourcenamespaceid_t)i;
         }
@@ -333,11 +389,11 @@ resourcenamespaceid_t F_ParseResourceNamespace(const char* str)
     return F_SafeResourceNamespaceForName(str);
 }
 
-const char* F_ResourceTypeStr(resourceclass_t resType)
+const char* F_ResourceClassStr(resourceclass_t rclass)
 {
-    assert(VALID_RESOURCE_CLASS(resType));
+    assert(VALID_RESOURCE_CLASS(rclass));
     {
-    static const char* resourceTypeNames[NUM_RESOURCE_CLASSES] = {
+    static const char* resourceClassNames[NUM_RESOURCE_CLASSES] = {
         "RC_PACKAGE",
         "RC_DEFINITION",
         "RC_GRAPHIC",
@@ -345,7 +401,7 @@ const char* F_ResourceTypeStr(resourceclass_t resType)
         "RC_SOUND",
         "RC_MUSIC"
     };
-    return resourceTypeNames[(int)resType];
+    return resourceClassNames[(int)rclass];
     }
 }
 
@@ -376,7 +432,7 @@ boolean F_IsValidResourceNamespaceId(int val)
 resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass)
 {
     assert(VALID_RESOURCE_CLASS(rclass));
-    return F_ResourceNamespaceForName(defaultResourceNamespaceForClass[rclass]);
+    return F_ResourceNamespaceForName(defaultNamespaceForClass[rclass]);
 }
 
 boolean F_FindResource(resourceclass_t rclass, char* foundPath, const char* searchPath, const char* optionalSuffix, size_t foundPathLen)
@@ -389,5 +445,5 @@ boolean F_FindResource(resourceclass_t rclass, char* foundPath, const char* sear
     if((rni = F_ParseResourceNamespace(searchPath)) != 0)
         return tryLocateResource(rclass, rni, searchPath, optionalSuffix, foundPath, foundPathLen);
     }
-    return tryLocateResource(rclass, F_ResourceNamespaceForName(defaultResourceNamespaceForClass[rclass]), searchPath, optionalSuffix, foundPath, foundPathLen);
+    return tryLocateResource(rclass, F_ResourceNamespaceForName(defaultNamespaceForClass[rclass]), searchPath, optionalSuffix, foundPath, foundPathLen);
 }

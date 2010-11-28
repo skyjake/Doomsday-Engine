@@ -579,7 +579,7 @@ static void loadGameResources(gameinfo_t* info, resourceclass_t rclass, const ch
                     W_AddFile(Str_Text(&(*records)->path), false);
                 break;
             default:
-                Con_Error("loadGameResources: Error, no resource loader found for %s.", F_ResourceTypeStr((*records)->rclass));
+                Con_Error("loadGameResources: Error, no resource loader found for %s.", F_ResourceClassStr((*records)->rclass));
             };
         } while(*(++records));
     }
@@ -605,7 +605,7 @@ static void printGameInfo(gameinfo_t* info)
             Con_Printf("  Namespace: \"%s\"\n", Str_Text(&F_ToResourceNamespace((resourcenamespaceid_t)i)->_name));
             do
             {
-                Con_Printf("    %i:%s - \"%s\" > %s\n", n++, F_ResourceTypeStr((*records)->rclass), Str_Text(&(*records)->names), Str_Length(&(*records)->path) == 0? "--(!)missing" : M_PrettyPath(Str_Text(&(*records)->path)));
+                Con_Printf("    %i:%s - \"%s\" > %s\n", n++, F_ResourceClassStr((*records)->rclass), Str_Text(&(*records)->names), Str_Length(&(*records)->path) == 0? "--(!)missing" : M_PrettyPath(Str_Text(&(*records)->path)));
             } while(*(++records));
         }
     }}
