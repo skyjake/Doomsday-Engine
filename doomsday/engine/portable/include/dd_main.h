@@ -43,8 +43,6 @@ extern FILE* outFile; // Output file for console messages.
 extern filename_t ddBasePath;
 extern directory_t ddRuntimeDir, ddBinDir;
 
-extern ddstring_t configFileName, bindingsConfigFileName;
-
 extern char* gameStartupFiles; // A list of names of files to be autoloaded during startup, whitespace in between (in .cfg).
 
 extern int isDedicated;
@@ -59,8 +57,6 @@ int DD_EarlyInit(void);
 int DD_Main(void);
 void DD_CheckTimeDemo(void);
 void DD_UpdateEngineState(void);
-
-void DD_SetConfigFile(const char* file);
 
 int DD_GetInteger(int ddvalue);
 void DD_SetInteger(int ddvalue, int parm);

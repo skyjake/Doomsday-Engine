@@ -29,8 +29,8 @@
 #include "gameinfo.h"
 
 gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey, const char* dataPath,
-    const char* defsPath, const ddstring_t* mainDef, const char* title, const char* author,
-    const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2)
+    const char* defsPath, const ddstring_t* mainDef, const ddstring_t* mainConfig, const char* title,
+    const char* author, const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2)
 {
     gameinfo_t* info = M_Malloc(sizeof(*info));
 
@@ -51,6 +51,16 @@ gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey, const
     Str_Init(&info->_mainDef);
     if(mainDef)
         Str_Copy(&info->_mainDef, mainDef);
+
+    Str_Init(&info->_mainConfig);
+    Str_Init(&info->_bindingConfig);
+    if(mainConfig)
+    {
+        Str_Copy(&info->_mainConfig, mainConfig);
+        Dir_FixSlashes(Str_Text(&info->_mainConfig), Str_Length(&info->_mainConfig));
+        Str_PartAppend(&info->_bindingConfig, Str_Text(&info->_mainConfig), 0, Str_Length(&info->_mainConfig)-4);
+        Str_Append(&info->_bindingConfig, "-bindings.cfg");
+    }
 
     Str_Init(&info->_title);
     if(title)
@@ -95,6 +105,8 @@ void P_DestroyGameInfo(gameinfo_t* info)
     Str_Free(&info->_dataPath);
     Str_Free(&info->_defsPath);
     Str_Free(&info->_mainDef);
+    Str_Free(&info->_mainConfig);
+    Str_Free(&info->_bindingConfig);
     Str_Free(&info->_title);
     Str_Free(&info->_author);
 
@@ -187,6 +199,18 @@ const ddstring_t* GameInfo_MainDef(gameinfo_t* info)
 {
     assert(info);
     return &info->_mainDef;
+}
+
+const ddstring_t* GameInfo_MainConfig(gameinfo_t* info)
+{
+    assert(info);
+    return &info->_mainConfig;
+}
+
+const ddstring_t* GameInfo_BindingConfig(gameinfo_t* info)
+{
+    assert(info);
+    return &info->_bindingConfig;
 }
 
 const ddstring_t* GameInfo_CmdlineFlag(gameinfo_t* info)

@@ -46,8 +46,6 @@
 #include "version.h"
 #include "info.h"
 
-#define CONFIGFILE          GAMENAMETEXT ".cfg"
-
 #define Set                 DD_SetInteger
 #define Get                 DD_GetInteger
 

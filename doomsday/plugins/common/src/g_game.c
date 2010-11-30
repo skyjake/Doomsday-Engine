@@ -459,8 +459,6 @@ void G_CommonPreInit(void)
         players[i].plr->extraData = (void*) &players[i];
     }}
 
-    DD_SetConfigFile(CONFIGFILE);
-
     Con_SetString("map-name", NOTAMAPNAME, 1);
 
     G_RegisterBindClasses();

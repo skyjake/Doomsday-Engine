@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
 ; Highest ordinal is currently: --> 460 <--
-; Other free ordinals: 234, 238, 244, 255, 326, 328, 332, 405, 406
+; Other free ordinals: 8, 238, 244, 249, 250, 255, 326, 328, 332, 405, 406
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -15,14 +15,13 @@ EXPORTS
     DD_AddGameResource          @5 NONAME
     DD_GetGameInfo              @6 NONAME
     DD_GetGameInfo2             @7 NONAME
-    DD_SetConfigFile            @8 NONAME
-    DD_GetInteger               @9 NONAME
-    DD_SetInteger               @10 NONAME
-    DD_SetVariable              @43 NONAME
-    DD_GetVariable              @44 NONAME
-    DD_GetPlayer                @65 NONAME
-    DD_MaterialNamespaceForTextureType @249 NONAME
-    DD_MaterialForTexture       @250 NONAME
+    DD_GetInteger               @8 NONAME
+    DD_SetInteger               @9 NONAME
+    DD_SetVariable              @10 NONAME
+    DD_GetVariable              @43 NONAME
+    DD_GetPlayer                @44 NONAME
+    DD_MaterialNamespaceForTextureType @65 NONAME
+    DD_MaterialForTexture       @234 NONAME
 
 ; Base: Types.
     ; Animator.

@@ -189,7 +189,7 @@ game_export_t* GetGameAPI(game_import_t* imports)
  */
 int ExampleHook(int hookType, int parm, void *data)
 {
-    DD_AddGame("examplegame", DD_BASEPATH_DATA PLUGIN_NAMETEXT "\\", DD_BASEPATH_DEFS PLUGIN_NAMETEXT "\\", 0, "Example Game", "deng team", "examplegame", 0);
+    DD_AddGame(PLUGIN_NAMETEXT, DD_BASEPATH_DATA PLUGIN_NAMETEXT "\\", DD_BASEPATH_DEFS PLUGIN_NAMETEXT "\\", 0, PLUGIN_NAMETEXT ".cfg", PLUGIN_NICENAME, PLUGIN_NICEAUTHOR, PLUGIN_NAMETEXT, 0);
     return true;
 }
 

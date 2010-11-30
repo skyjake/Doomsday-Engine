@@ -82,6 +82,12 @@ typedef struct {
     /// Name of the main/top-level definition file (e.g., "jdoom.ded").
     ddstring_t _mainDef;
 
+    /// Name of the main config file (e.g., "jdoom.cfg").
+    ddstring_t _mainConfig;
+
+    /// Name of the file used for control bindings, set automatically at creation time.
+    ddstring_t _bindingConfig;
+
     /// Command-line selection flags.
     ddstring_t* _cmdlineFlag, *_cmdlineFlag2;
 
@@ -97,14 +103,15 @@ typedef struct {
  * @param dataPath      The base directory for all data-class resources.
  * @param defsPath      The base directory for all defs-class resources.
  * @param mainDef       The main/top-level definition file. Can be @c NULL.
+ * @param mainConfig    The main config file. Can be @c NULL.
  * @param title         Default game title.
  * @param author        Default game author.
  * @param cmdlineFlag   Command-line game selection override argument (e.g., "ultimate"). Can be @c NULL.
  * @param cmdlineFlag2  Alternative override. Can be @c NULL.
  */
 gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey, const char* dataPath,
-    const char* defsPath, const ddstring_t* mainDef, const char* title, const char* author,
-    const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2);
+    const char* defsPath, const ddstring_t* mainDef, const ddstring_t* mainConfig, const char* title,
+    const char* author, const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2);
 
 void P_DestroyGameInfo(gameinfo_t* info);
 
@@ -135,6 +142,12 @@ const ddstring_t* GameInfo_Author(gameinfo_t* info);
 
 /// @return             Ptr to a string containing the name of the main definition file.
 const ddstring_t* GameInfo_MainDef(gameinfo_t* info);
+
+/// @return             Ptr to a string containing the name of the main config file.
+const ddstring_t* GameInfo_MainConfig(gameinfo_t* info);
+
+/// @return             Ptr to a string containing the name of the binding config file.
+const ddstring_t* GameInfo_BindingConfig(gameinfo_t* info);
 
 /// @return             Ptr to a string containing command line (name) flag.
 const ddstring_t* GameInfo_CmdlineFlag(gameinfo_t* info);

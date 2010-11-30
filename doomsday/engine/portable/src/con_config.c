@@ -58,7 +58,7 @@ static filename_t cfgFile;
 boolean Con_ParseCommands(const char* fileName, boolean setdefault)
 {
     DFILE* file;
-    char buff[512];
+    char buff[512];   
 
     // Is this supposed to be the default?
     if(setdefault)
@@ -195,7 +195,7 @@ boolean Con_WriteState(const char* fileName, const char* bindingsFileName)
  */
 void Con_SaveDefaults(void)
 {
-    Con_WriteState(cfgFile, (!isDedicated? Str_Text(&bindingsConfigFileName) : 0));
+    Con_WriteState(cfgFile, (!isDedicated? Str_Text(GameInfo_BindingConfig(DD_GameInfo())) : 0));
 }
 
 D_CMD(WriteConsole)

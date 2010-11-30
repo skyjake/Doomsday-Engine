@@ -88,10 +88,6 @@ extern int symbolicEchoMode;
 filename_t ddBasePath = ""; // Doomsday root directory is at...?
 directory_t ddRuntimeDir, ddBinDir;
 
-/// The default main configuration file (will invariably be overridden by the game).
-ddstring_t configFileName = { "doomsday.cfg" };
-ddstring_t bindingsConfigFileName;
-
 int isDedicated = false;
 
 int verbose = 0; // For debug messages (-verbose).
@@ -221,11 +217,11 @@ static void destroyPathList(ddstring_t*** list, size_t* listSize)
 }
 
 static gameinfo_t* addGameInfoRecord(pluginid_t pluginId, const char* identityKey, const char* dataPath,
-    const char* defsPath, const ddstring_t* mainDef, const char* title, const char* author, const ddstring_t* cmdlineFlag,
-    const ddstring_t* cmdlineFlag2)
+    const char* defsPath, const ddstring_t* mainDef, const ddstring_t* mainConfig, const char* title,
+    const char* author, const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2)
 {
     gameInfo = M_Realloc(gameInfo, sizeof(*gameInfo) * (numGameInfo + 1));
-    gameInfo[numGameInfo] = P_CreateGameInfo(pluginId, identityKey, dataPath, defsPath, mainDef, title, author, cmdlineFlag, cmdlineFlag2);
+    gameInfo[numGameInfo] = P_CreateGameInfo(pluginId, identityKey, dataPath, defsPath, mainDef, mainConfig, title, author, cmdlineFlag, cmdlineFlag2);
     return gameInfo[numGameInfo++];
 }
 
@@ -343,12 +339,13 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, const char* _na
 }
 
 gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* _defsPath, const char* _mainDef,
-    const char* defaultTitle, const char* defaultAuthor, const char* _cmdlineFlag, const char* _cmdlineFlag2)
+    const char* _mainConfig, const char* defaultTitle, const char* defaultAuthor, const char* _cmdlineFlag,
+    const char* _cmdlineFlag2)
 {
     assert(identityKey && identityKey[0] && _dataPath && _dataPath[0] && _defsPath && _defsPath[0] && defaultTitle && defaultTitle[0] && defaultAuthor && defaultAuthor[0]);
     {
     gameinfo_t* info;
-    ddstring_t mainDef, cmdlineFlag, cmdlineFlag2;
+    ddstring_t mainDef, mainConfig, cmdlineFlag, cmdlineFlag2;
     filename_t dataPath, defsPath;
     pluginid_t pluginId = Plug_PluginIdForActiveHook();
 
@@ -363,11 +360,15 @@ gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* 
     Dir_ValidDir(defsPath, FILENAME_T_MAXLEN);
 
     Str_Init(&mainDef);
-    Str_Init(&cmdlineFlag);
-    Str_Init(&cmdlineFlag2);
-
     if(_mainDef)
         Str_Set(&mainDef, _mainDef);
+
+    Str_Init(&mainConfig);
+    if(_mainConfig)
+        Str_Set(&mainConfig, _mainConfig);
+
+    Str_Init(&cmdlineFlag);
+    Str_Init(&cmdlineFlag2);
 
     // Command-line game selection override arguments must be unique. Ensure that is the case.
     if(_cmdlineFlag)
@@ -386,9 +387,10 @@ gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* 
     /**
      * Looking good. Add this game to our records.
      */
-    info = addGameInfoRecord(pluginId, identityKey, dataPath, defsPath, &mainDef, defaultTitle, defaultAuthor, _cmdlineFlag? &cmdlineFlag : 0, _cmdlineFlag2? &cmdlineFlag2 : 0);
+    info = addGameInfoRecord(pluginId, identityKey, dataPath, defsPath, &mainDef, &mainConfig, defaultTitle, defaultAuthor, _cmdlineFlag? &cmdlineFlag : 0, _cmdlineFlag2? &cmdlineFlag2 : 0);
 
     Str_Free(&mainDef);
+    Str_Free(&mainConfig);
     Str_Free(&cmdlineFlag);
     Str_Free(&cmdlineFlag2);
 
@@ -398,9 +400,6 @@ gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* 
 
 void DD_DestroyGameInfo(void)
 {
-    Str_Free(&configFileName);
-    Str_Free(&bindingsConfigFileName);
-
     destroyPathList(&gameResourceFileList, &numGameResourceFileList);
 
     if(gameInfo)
@@ -734,13 +733,24 @@ static int DD_ChangeGameWorker(void* parm)
      * Parse the game's main config file.
      * If a custom top-level config is specified; let it override.
      */
+    { const ddstring_t* configFileName = 0;
+    ddstring_t tmp;
     if(ArgCheckWith("-config", 1))
     {
-        Str_Set(&configFileName, ArgNext());
-        Dir_FixSlashes(Str_Text(&configFileName), Str_Length(&configFileName));
+        Str_Init(&tmp); Str_Set(&tmp, ArgNext());
+        Dir_FixSlashes(Str_Text(&tmp), Str_Length(&tmp));
+        configFileName = &tmp;
     }
-    Con_Message("Parsing game config: \"%s\" ...\n", M_PrettyPath(Str_Text(&configFileName)));
-    Con_ParseCommands(Str_Text(&configFileName), true);
+    else
+    {
+        configFileName = GameInfo_MainConfig(info);
+    }
+
+    Con_Message("Parsing game config: \"%s\" ...\n", M_PrettyPath(Str_Text(configFileName)));
+    Con_ParseCommands(Str_Text(configFileName), true);
+    if(configFileName == &tmp)
+        Str_Free(&tmp);
+    }
 
     Con_SetProgress(10);
 
@@ -812,7 +822,7 @@ static int DD_ChangeGameWorker(void* parm)
     VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 
     // Read bindings for this game and merge with the working set.
-    Con_ParseCommands(Str_Text(&bindingsConfigFileName), false);
+    Con_ParseCommands(Str_Text(GameInfo_BindingConfig(info)), false);
 
     R_InitTextures();
     R_InitFlats();
@@ -881,19 +891,6 @@ void DD_ChangeGame(gameinfo_t* info)
      */
     Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER, "%s", Str_Text(GameInfo_Title(info))); Con_FPrintf(CBLF_WHITE | CBLF_CENTER, "\n");
     Con_FPrintf(CBLF_RULER, "");
-}
-
-void DD_SetConfigFile(const char* file)
-{
-    if(!file || !file[0])
-        Con_Error("DD_SetConfigFile: Invalid file argument.");
-
-    Str_Set(&configFileName, file);
-    Dir_FixSlashes(Str_Text(&configFileName), Str_Length(&configFileName));
-
-    Str_Clear(&bindingsConfigFileName);
-    Str_PartAppend(&bindingsConfigFileName, Str_Text(&configFileName), 0, Str_Length(&configFileName)-4);
-    Str_Append(&bindingsConfigFileName, "-bindings.cfg");
 }
 
 /**
@@ -1000,7 +997,7 @@ int DD_EarlyInit(void)
     Dir_ValidDir(dataPath, FILENAME_T_MAXLEN);
     M_TranslatePath(defsPath, DD_BASEPATH_DEFS, FILENAME_T_MAXLEN);
     Dir_ValidDir(defsPath, FILENAME_T_MAXLEN);
-    currentGameInfoIndex = gameInfoIndex(addGameInfoRecord(0, 0, dataPath, defsPath, 0, 0, 0, 0, 0));
+    currentGameInfoIndex = gameInfoIndex(addGameInfoRecord(0, 0, dataPath, defsPath, 0, 0, 0, 0, 0, 0));
     }
     return true;
 }

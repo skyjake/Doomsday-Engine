@@ -184,28 +184,30 @@ int G_RegisterGames(int hookType, int parm, void* data)
 {
 #define DATAPATH        DD_BASEPATH_DATA GAMENAMETEXT "\\"
 #define DEFSPATH        DD_BASEPATH_DEFS GAMENAMETEXT "\\"
+#define MAINDEF         GAMENAMETEXT ".ded"
+#define MAINCONFIG      GAMENAMETEXT ".cfg"
 #define STARTUPPK3      GAMENAMETEXT ".pk3"
-#define STARTUPDED      GAMENAMETEXT ".ded"
 
     /* Hexen (Death Kings) */
-    gameIds[hexen_deathkings] = DD_AddGame("hexen-dk", DATAPATH, DEFSPATH, STARTUPDED, "Hexen (Deathkings of the Dark Citadel)", "Raven Software", "deathkings", "dk");
+    gameIds[hexen_deathkings] = DD_AddGame("hexen-dk", DATAPATH, DEFSPATH, MAINDEF, MAINCONFIG, "Hexen (Deathkings of the Dark Citadel)", "Raven Software", "deathkings", "dk");
     DD_AddGameResource(gameIds[hexen_deathkings], RC_PACKAGE, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
     DD_AddGameResource(gameIds[hexen_deathkings], RC_PACKAGE, "hexdd.wad", "MAP59;MAP60");
     DD_AddGameResource(gameIds[hexen_deathkings], RC_PACKAGE, STARTUPPK3, 0);
 
     /* Hexen */
-    gameIds[hexen] = DD_AddGame("hexen", DATAPATH, DEFSPATH, STARTUPDED, "Hexen", "Raven Software", "hexen", 0);
+    gameIds[hexen] = DD_AddGame("hexen", DATAPATH, DEFSPATH, MAINDEF, MAINCONFIG, "Hexen", "Raven Software", "hexen", 0);
     DD_AddGameResource(gameIds[hexen], RC_PACKAGE, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
     DD_AddGameResource(gameIds[hexen], RC_PACKAGE, STARTUPPK3, 0);
 
     /* Hexen (Demo) */
-    gameIds[hexen_demo] = DD_AddGame("hexen-demo", DATAPATH, DEFSPATH, STARTUPDED, "Hexen 4-map Beta Demo", "Raven Software", "dhexen", 0);
+    gameIds[hexen_demo] = DD_AddGame("hexen-demo", DATAPATH, DEFSPATH, MAINDEF, MAINCONFIG, "Hexen 4-map Beta Demo", "Raven Software", "dhexen", 0);
     DD_AddGameResource(gameIds[hexen_demo], RC_PACKAGE, "hexen.wad", "MAP01;MAP04;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
     DD_AddGameResource(gameIds[hexen_demo], RC_PACKAGE, STARTUPPK3, 0);
     return true;
 
-#undef STARTUPDED
 #undef STARTUPPK3
+#undef MAINCONFIG
+#undef MAINDEF
 #undef DEFSPATH
 #undef DATAPATH
 }

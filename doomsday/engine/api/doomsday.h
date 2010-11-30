@@ -84,7 +84,8 @@ extern          "C" {
      *                      - Sent out in netgames (a client can't connect unless mode strings match).
      * @param dataPath      The base directory for all data-class resources.
      * @param defsPath      The base directory for all defs-class resources.
-     * @param mainDef       The main/top-level definition file. Can be @c NULL.
+     * @param mainDef       The name of the main/top-level definition file. Can be @c NULL.
+     * @param mainConfig    The name of the main game config file. Can be @c NULL.
      * @param defaultTitle  Default game title. May be overridden later.
      * @param defaultAuthor Default game author. May be overridden later. Used for (e.g.) the map author name
      *                      if not specified in a Map Info definition.
@@ -94,7 +95,8 @@ extern          "C" {
      * @return              Unique identifier/name assigned to the game.
      */
     gameid_t DD_AddGame(const char* identityKey, const char* dataPath, const char* defsPath, const char* mainDef,
-        const char* defaultTitle, const char* defaultAuthor, const char* cmdlineFlag, const char* cmdlineFlag2);
+        const char* mainConfig, const char* defaultTitle, const char* defaultAuthor, const char* cmdlineFlag,
+        const char* cmdlineFlag2);
 
     /**
      * Registers a new resource for the specified game.
@@ -124,8 +126,6 @@ extern          "C" {
      * @return              @c true if successful else @c false (i.e., no game loaded).
      */
     boolean DD_GetGameInfo(ddgameinfo_t* info);
-
-    void            DD_SetConfigFile(const char* fileName);
 
     int _DECALL     DD_GetInteger(int ddvalue);
     void            DD_SetInteger(int ddvalue, int parm);
