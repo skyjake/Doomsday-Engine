@@ -272,7 +272,7 @@ Con_Message("DD_GetGameInfo: Warning, no game currently loaded - returning false
     return false;
 }
 
-static void addIdentityKeyToResourceNamespaceRecord(gameresource_record_t* rec, const ddstring_t* identityKey)
+static void addIdentityKeyToResourceRecord(gameresource_record_t* rec, const ddstring_t* identityKey)
 {
     assert(rec && identityKey);
     {
@@ -322,7 +322,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, const char* _na
             Str_Init(&fileName);
             { const char* p = Str_Text(&fileNames);
             while((p = Str_CopyDelim(&fileName, p, ';')))
-                  addIdentityKeyToResourceNamespaceRecord(rec, &fileName);
+                  addIdentityKeyToResourceRecord(rec, &fileName);
             }
 
             Str_Free(&fileName);
