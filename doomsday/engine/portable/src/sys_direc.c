@@ -225,22 +225,22 @@ void Dir_FixSlashes(char* path, size_t len)
  */
 void Dir_ExpandHome(char* str, size_t len)
 {
-    ddstring_t      *buf = NULL;
+    ddstring_t buf;
 
     if(str[0] != '~')
         return;
 
-    buf = Str_New();
+    Str_Init(&buf);
 
     if(str[1] == '/')
     {
         // Replace it with the HOME environment variable.
-        Str_Set(buf, getenv("HOME"));
-        if(Str_RAt(buf, 0) != '/')
-            Str_Append(buf, "/");
+        Str_Set(&buf, getenv("HOME"));
+        if(Str_RAt(&buf, 0) != '/')
+            Str_Append(&buf, "/");
 
         // Append the rest of the original path.
-        Str_Append(buf, str + 2);
+        Str_Append(&buf, str + 2);
     }
     else
     {
@@ -253,19 +253,19 @@ void Dir_ExpandHome(char* str, size_t len)
 
         if((pw = getpwnam(userName)) != NULL)
         {
-            Str_Set(buf, pw->pw_dir);
-            if(Str_RAt(buf, 0) != '/')
-                Str_Append(buf, "/");
+            Str_Set(&buf, pw->pw_dir);
+            if(Str_RAt(&buf, 0) != '/')
+                Str_Append(&buf, "/");
         }
 
-        Str_Append(buf, str + 1);
+        Str_Append(&buf, str + 1);
     }
 
     // Replace the original.
     str[len - 1] = 0;
-    strncpy(str, Str_Text(buf), len - 1);
+    strncpy(str, Str_Text(&buf), len - 1);
 
-    Str_Free(buf);
+    Str_Free(&buf);
 }
 #endif
 
