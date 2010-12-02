@@ -48,31 +48,9 @@ typedef struct direcnode_s {
 
 typedef struct hashnode_s {
     struct hashnode_s* next;
-    direcnode_t* directory;
+    struct direcnode_s* directory;
     char* fileName;
 } hashnode_t;
-
-typedef struct {
-    hashnode_t* first;
-    hashnode_t* last;
-} hashentry_t;
-
-// Number of entries in the hash table.
-#define HASH_SIZE           (512)
-
-typedef struct {
-    /// Copy of the path list specified at creation time.
-    char* _pathList;
-
-    /// @c true if the record set has been built.
-    boolean builtRecordSet;
-
-    /// First and last directory nodes in the hash.
-    direcnode_t* direcFirst, *direcLast;
-
-    /// File name hash table.
-    hashentry_t hashTable[HASH_SIZE];
-} _filehash_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -80,7 +58,7 @@ typedef struct {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void addDirectory(_filehash_t* fh, const char* path);
+static void addDirectory(filehash_t* fh, const char* path);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -94,14 +72,14 @@ static void addDirectory(_filehash_t* fh, const char* path);
  * @return                  [ a new | the ] directory node that matches the name
  *                          and has the specified parent node.
  */
-static direcnode_t* direcNode(_filehash_t* fh, const char* name, direcnode_t* parent)
+static direcnode_t* direcNode(filehash_t* fh, const char* name, direcnode_t* parent)
 {
     assert(fh && name && name[0]);
     {
     direcnode_t* node;
 
     // Have we already encountered this directory? Just iterate through all nodes.
-    for(node = fh->direcFirst; node; node = node->next)
+    for(node = fh->_direcFirst; node; node = node->next)
     {
         if(!stricmp(node->path, name) && node->parent == parent)
             return node;
@@ -114,11 +92,11 @@ static direcnode_t* direcNode(_filehash_t* fh, const char* name, direcnode_t* pa
 
     node->next = 0;
     node->parent = parent;
-    if(fh->direcLast)
-        fh->direcLast->next = node;
-    fh->direcLast = node;
-    if(!fh->direcFirst)
-        fh->direcFirst = node;
+    if(fh->_direcLast)
+        fh->_direcLast->next = node;
+    fh->_direcLast = node;
+    if(!fh->_direcFirst)
+        fh->_direcFirst = node;
 
     // Make a copy of the path. Freed in FileHash_Destroy().
     if((node->path = M_Malloc(strlen(name) + 1)) == 0)
@@ -141,7 +119,7 @@ static direcnode_t* direcNode(_filehash_t* fh, const char* name, direcnode_t* pa
  *
  * @return                  The node that identifies the given path.
  */
-static direcnode_t* buildDirecNodes(_filehash_t* fh, const char* path)
+static direcnode_t* buildDirecNodes(filehash_t* fh, const char* path)
 {
     assert(fh && path && path[0]);
     {
@@ -172,7 +150,7 @@ static direcnode_t* buildDirecNodes(_filehash_t* fh, const char* path)
 
 /**
  * This is a hash function. It uses the base part of the file name to generate a
- * somewhat-random number between 0 and HASH_SIZE.
+ * somewhat-random number between 0 and FILEHASH_SIZE.
  *
  * @return              The generated hash index.
  */
@@ -199,14 +177,14 @@ static uint hashFunction(const char* name)
         }
     }
 
-    return key % HASH_SIZE;
+    return key % FILEHASH_SIZE;
     }
 }
 
 /**
  * Creates a file node into a directory.
  */
-static void addFileToDirec(_filehash_t* fh, const char* filePath, direcnode_t* dir)
+static void addFileToDirec(filehash_t* fh, const char* filePath, direcnode_t* dir)
 {
     assert(fh && filePath && filePath[0] && dir);
     {
@@ -230,7 +208,7 @@ static void addFileToDirec(_filehash_t* fh, const char* filePath, direcnode_t* d
     node->next = 0;
 
     // Calculate the key.
-    slot = &fh->hashTable[hashFunction(name)];
+    slot = &fh->_hashTable[hashFunction(name)];
     if(slot->last)
         slot->last->next = node;
     slot->last = node;
@@ -253,7 +231,7 @@ static int addFile(const char* fn, filetype_t type, void* parm)
     {
     if(type == FT_NORMAL)
     {
-        _filehash_t* fh = (_filehash_t*) parm;
+        filehash_t* fh = (filehash_t*) parm;
         filename_t path;
         char* pos;
 
@@ -275,7 +253,7 @@ static int addFile(const char* fn, filetype_t type, void* parm)
  * Process a directory and add its contents to the file hash.
  * If the path is relative, it is relative to the base path.
  */
-static void addDirectory(_filehash_t* fh, const char* path)
+static void addDirectory(filehash_t* fh, const char* path)
 {
     assert(fh && path && path[0]);
     {
@@ -375,17 +353,17 @@ static void composePath(hashnode_t* node, char* foundPath, size_t len)
     }
 }
 
-static void clearHash(_filehash_t* fh)
+static void clearHash(filehash_t* fh)
 {
     assert(fh);
 
     // Free the hash table.
-    if(fh->direcFirst)
+    if(fh->_direcFirst)
     {
         uint i;
-        for(i = 0; i < HASH_SIZE; ++i)
+        for(i = 0; i < FILEHASH_SIZE; ++i)
         {
-            hashentry_t* entry = &fh->hashTable[i];
+            hashentry_t* entry = &fh->_hashTable[i];
             while(entry->first)
             {
                 hashnode_t* nextNode = entry->first->next;
@@ -397,22 +375,22 @@ static void clearHash(_filehash_t* fh)
     }
 
     // Free the directory nodes.
-    while(fh->direcFirst)
+    while(fh->_direcFirst)
     {
-        direcnode_t* next = fh->direcFirst->next;
-        M_Free(fh->direcFirst->path);
-        M_Free(fh->direcFirst);
-        fh->direcFirst = next;
+        direcnode_t* next = fh->_direcFirst->next;
+        M_Free(fh->_direcFirst->path);
+        M_Free(fh->_direcFirst);
+        fh->_direcFirst = next;
     }
 
     // Clear the entire table.
-    memset(fh->hashTable, 0, sizeof(fh->hashTable));
+    memset(fh->_hashTable, 0, sizeof(fh->_hashTable));
 
-    fh->direcFirst = fh->direcLast = 0;
-    fh->builtRecordSet = false;
+    fh->_direcFirst = fh->_direcLast = 0;
+    fh->_builtRecordSet = false;
 }
 
-static _filehash_t* buildFileHash(_filehash_t* fh)
+static filehash_t* buildFileHash(filehash_t* fh)
 {
     assert(fh);
     {
@@ -429,7 +407,7 @@ static _filehash_t* buildFileHash(_filehash_t* fh)
     }}
 
     Str_Free(&path);
-    fh->builtRecordSet = true;
+    fh->_builtRecordSet = true;
 
     if(verbose >= 1)
     {
@@ -445,31 +423,25 @@ filehash_t* FileHash_Create(const char* pathList)
     assert(pathList && pathList[0]);
     {
     size_t pathListLen = strlen(pathList);
-    _filehash_t* fh = M_Calloc(sizeof(*fh));
+    filehash_t* fh = M_Calloc(sizeof(*fh));
     fh->_pathList = M_Malloc(pathListLen+1);
     strcpy(fh->_pathList, pathList);
-    return (filehash_t*)fh;
+    return fh;
     }
 }
 
 void FileHash_Destroy(filehash_t* fileHash)
 {
     assert(fileHash);
-    {
-    _filehash_t* fh = (_filehash_t*) fileHash;
-    clearHash(fh);
-    M_Free(fh->_pathList);
-    M_Free(fh);
-    }
+    clearHash(fileHash);
+    M_Free(fileHash->_pathList);
+    M_Free(fileHash);
 }
 
 const char* FileHash_PathList(filehash_t* fileHash)
 {
     assert(fileHash);
-    {
-    _filehash_t* fh = (_filehash_t*) fileHash;
-    return fh->_pathList;
-    }
+    return fileHash->_pathList;
 }
 
 boolean FileHash_Find(filehash_t* fileHash, char* foundPath, const char* name, size_t len)
@@ -479,7 +451,6 @@ boolean FileHash_Find(filehash_t* fileHash, char* foundPath, const char* name, s
     filename_t validName, baseName;
     hashentry_t* slot;
     hashnode_t* node;
-    _filehash_t* fh = (_filehash_t*) fileHash;
 
     // Absolute paths are not in the hash (no need to put them there).
     if(Dir_IsAbsolute(name))
@@ -494,10 +465,10 @@ boolean FileHash_Find(filehash_t* fileHash, char* foundPath, const char* name, s
 
     // Time to build the record set?
     if(!FileHash_HasRecordSet(fileHash))
-        buildFileHash(fh);
+        buildFileHash(fileHash);
 
     // Which slot in the hash table?
-    slot = &fh->hashTable[hashFunction(baseName)];
+    slot = &fileHash->_hashTable[hashFunction(baseName)];
 
     // Paths in the hash are relative to their directory node.
     // There is one direcnode per search path directory.
@@ -526,8 +497,5 @@ boolean FileHash_Find(filehash_t* fileHash, char* foundPath, const char* name, s
 boolean FileHash_HasRecordSet(filehash_t* fileHash)
 {
     assert(fileHash);
-    {
-    _filehash_t* fh = (_filehash_t*) fileHash;
-    return fh->builtRecordSet;
-    }
+    return fileHash->_builtRecordSet;
 }

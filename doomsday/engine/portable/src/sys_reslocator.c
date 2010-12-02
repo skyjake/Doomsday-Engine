@@ -37,6 +37,9 @@
 #include "de_refresh.h"
 #include "de_misc.h"
 
+#include "m_string.h"
+#include "m_filehash.h"
+
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
@@ -72,14 +75,36 @@ typedef enum {
 #define NUM_RESOURCE_TYPES          (RT_LAST_INDEX-1)
 #define VALID_RESOURCE_TYPE(v)      ((v) >= RT_FIRST && (v) < RT_LAST_INDEX)
 
+/**
+ * Resource Namespace.
+ * @ingroup fs
+ */
+typedef struct resourcenamespace_s {
+    /// Unique symbolic name of this namespace (e.g., "packages:").
+    const char* _name;
+ 
+    /// Command line options for setting the resource path explicitly. Flag2 Takes precendence.
+    const char* _overrideFlag, *_overrideFlag2;
+
+    /// Resource search order (in order of greatest-importance, right to left) seperated by semicolon (e.g., "path1;path2;").
+    const char* _searchPaths;
+
+    /// Set of "extra" search paths (in order of greatest-importance, right to left) seperated by semicolon (e.g., "path1;path2;").
+    ddstring_t _extraSearchPaths;
+
+    /// Auto-inited:
+    filehash_t* _fileHash;
+} resourcenamespace_t;
+
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
 boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rnamespace, const char* newPath, boolean append);
 void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rnamespace);
+const ddstring_t* ResourceNamespace_ExtraSearchPaths(resourcenamespace_t* rnamespace);
+
+// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -139,9 +164,6 @@ static resourcenamespace_t namespaces[] = {
 };
 static uint numNamespaces = sizeof(namespaces)/sizeof(namespaces[0]);
 
-/// Lists of search paths to use when locating file resources.
-static ddstring_t searchPathLists[NUM_RESOURCE_CLASSES];
-
 // CODE --------------------------------------------------------------------
 
 static __inline const resourcetypeinfo_t* getInfoForResourceType(resourcetype_t type)
@@ -170,6 +192,35 @@ static resourcenamespaceid_t findNamespaceForName(const char* name)
         }
     }
     return 0;
+}
+
+static void resetNamespace(resourcenamespace_t* rnamespace)
+{
+    assert(rnamespace);
+    if(rnamespace->_fileHash)
+    {
+        FileHash_Destroy(rnamespace->_fileHash); rnamespace->_fileHash = 0;
+    }
+    Str_Free(&rnamespace->_extraSearchPaths);
+}
+
+static void resetAllNamespaces(void)
+{
+    uint i;
+    for(i = 0; i < numNamespaces; ++i)
+        resetNamespace(&namespaces[i]);
+}
+
+static void clearExtraSearchPaths(resourcenamespaceid_t rni)
+{
+    if(rni == 0)
+    {
+        uint i;
+        for(i = 0; i < numNamespaces; ++i)
+            ResourceNamespace_ClearSearchPaths(&namespaces[i]);
+        return;
+    }
+    ResourceNamespace_ClearSearchPaths(getNamespaceForId(rni));
 }
 
 static boolean translateBasePath(ddstring_t* dest, ddstring_t* src)
@@ -378,22 +429,8 @@ static boolean parseAndReplaceSymbols(ddstring_t* dest, const ddstring_t* src, g
         // Now grab everything up to the closing ')' (it *should* be present).
         while((p = Str_CopyDelim(&part, p, ')')))
         {
-            // First, try the built-in tokens.
-            if(!Str_CompareIgnoreCase(&part, "GameInfo.DataPath"))
-            {
-                // DataPath already has ending @c DIR_SEP_CHAR.
-                Str_PartAppend(dest, Str_Text(GameInfo_DataPath(info)), 0, Str_Length(GameInfo_DataPath(info))-1);
-            }
-            else if(!Str_CompareIgnoreCase(&part, "GameInfo.DefsPath"))
-            {
-                // DefsPath already has ending @c DIR_SEP_CHAR.
-                Str_PartAppend(dest, Str_Text(GameInfo_DefsPath(info)), 0, Str_Length(GameInfo_DefsPath(info))-1);
-            }
-            else if(!Str_CompareIgnoreCase(&part, "GameInfo.IdentityKey"))
-            {
-                Str_Append(dest, Str_Text(GameInfo_IdentityKey(info)));
-            }
-            else if(!Str_CompareIgnoreCase(&part, "DOOMWADDIR"))
+            // First, try external symbols like environment variable names - they are quick to reject.
+            if(!Str_CompareIgnoreCase(&part, "DOOMWADDIR"))
             {
                 if(!ArgCheck("-nowaddir") && getenv("DOOMWADDIR"))
                 {
@@ -404,9 +441,33 @@ static boolean parseAndReplaceSymbols(ddstring_t* dest, const ddstring_t* src, g
                     Str_Append(dest, newPath);
                 }
             }
+            // Now try internal symbols.
+            else if(!Str_CompareIgnoreCase(&part, "GameInfo.DataPath"))
+            {
+                if(DD_IsNullGameInfo(info))
+                    goto parseEnded;
+
+                // DataPath already has ending @c DIR_SEP_CHAR.
+                Str_PartAppend(dest, Str_Text(GameInfo_DataPath(info)), 0, Str_Length(GameInfo_DataPath(info))-1);
+            }
+            else if(!Str_CompareIgnoreCase(&part, "GameInfo.DefsPath"))
+            {
+                if(DD_IsNullGameInfo(info))
+                    goto parseEnded;
+
+                // DefsPath already has ending @c DIR_SEP_CHAR.
+                Str_PartAppend(dest, Str_Text(GameInfo_DefsPath(info)), 0, Str_Length(GameInfo_DefsPath(info))-1);
+            }
+            else if(!Str_CompareIgnoreCase(&part, "GameInfo.IdentityKey"))
+            {
+                if(DD_IsNullGameInfo(info))
+                    goto parseEnded;
+
+                Str_Append(dest, Str_Text(GameInfo_IdentityKey(info)));
+            }
             else
             {
-                Con_Message("Unknown variable identifier '%s' in \"%s\".\n", Str_Text(&part)+1, Str_Text(src));
+                Con_Message("Unknown identifier '%s' in \"%s\".\n", Str_Text(&part), Str_Text(src));
                 goto parseEnded;
             }
             depth--;
@@ -452,11 +513,11 @@ parseEnded:
  * \todo dj: We don't really want absolute paths output here, paths should stay relative
  * until search-time where possible.
  */
-static void formSearchPathList(resourcenamespace_t* rnamespace, gameinfo_t* info)
+static void formSearchPathList(ddstring_t* pathList, resourcenamespace_t* rnamespace, gameinfo_t* info)
 {
-    assert(rnamespace);
+    assert(pathList && rnamespace && info);
     {
-    ddstring_t pathTemplate, *pathList = &rnamespace->_searchPathList;
+    ddstring_t pathTemplate;
     boolean usingGameModePathData = false;
     boolean usingGameModePathDefs = false;
 
@@ -470,7 +531,7 @@ static void formSearchPathList(resourcenamespace_t* rnamespace, gameinfo_t* info
         Str_Prepend(pathList, ";"); Str_Prepend(pathList, newPath);
     }
 
-    Str_Init(&pathTemplate); Str_Set(&pathTemplate, rnamespace->_searchPathTemplate);
+    Str_Init(&pathTemplate); Str_Set(&pathTemplate, rnamespace->_searchPaths);
 
     // Convert all slashes to the host OS's directory separator, for compatibility with the sys_filein routines.
     Dir_FixSlashes(Str_Text(&pathTemplate), Str_Length(&pathTemplate));
@@ -525,10 +586,9 @@ static void formSearchPathList(resourcenamespace_t* rnamespace, gameinfo_t* info
     }
 }
 
-static void collateSearchPathSet(resourcenamespace_t* rnamespace, gameinfo_t* info)
+static void collateSearchPathSet(ddstring_t* pathList, resourcenamespace_t* rnamespace, gameinfo_t* info)
 {
-    assert(rnamespace && info);
-    formSearchPathList(rnamespace, info);
+    formSearchPathList(pathList, rnamespace, info);
 }
 
 static boolean tryFindFile(resourceclass_t rclass, const char* searchPath,
@@ -540,8 +600,11 @@ static boolean tryFindFile(resourceclass_t rclass, const char* searchPath,
     {
         if(!rnamespace->_fileHash)
         {
-            collateSearchPathSet(rnamespace, DD_GameInfo());
-            rnamespace->_fileHash = FileHash_Create(Str_Text(&rnamespace->_searchPathList));
+            ddstring_t tmp;
+            Str_Init(&tmp);
+            collateSearchPathSet(&tmp, rnamespace, DD_GameInfo());
+            rnamespace->_fileHash = FileHash_Create(Str_Text(&tmp));
+            Str_Free(&tmp);
         }
         return FileHash_Find(rnamespace->_fileHash, foundPath, searchPath, foundPathLen);
     }
@@ -755,26 +818,9 @@ static boolean tryLocateResource(resourceclass_t rclass, const char* searchPath,
     return tryLocateResource2(rclass, getNamespaceForId(F_ResourceNamespaceForName(defaultNamespaceForClass[rclass])), searchPath, optionalSuffix, foundPath, foundPathLen);
 }
 
-static void resetResourceNamespace(resourcenamespace_t* rnamespace)
-{
-    assert(rnamespace);
-    if(rnamespace->_fileHash)
-    {
-        FileHash_Destroy(rnamespace->_fileHash); rnamespace->_fileHash = 0;
-    }
-    Str_Free(&rnamespace->_searchPathList);
-}
-
-static void resetResourceNamespaces(void)
-{
-    uint i;
-    for(i = 0; i < numNamespaces; ++i)
-        resetResourceNamespace(&namespaces[i]);
-}
-
 void F_InitResourceLocator(void)
 {
-    resetResourceNamespaces();
+    resetAllNamespaces();
     inited = true;
 }
 
@@ -782,11 +828,11 @@ void F_ShutdownResourceLocator(void)
 {
     if(!inited)
         return;
-    resetResourceNamespaces();
+    resetAllNamespaces();
     inited = false;
 }
 
-resourcenamespace_t* F_ToResourceNamespace(resourcenamespaceid_t rni)
+struct resourcenamespace_s* F_ToResourceNamespace(resourcenamespaceid_t rni)
 {
     return getNamespaceForId(rni);
 }
@@ -836,6 +882,11 @@ resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass)
     return F_ResourceNamespaceForName(defaultNamespaceForClass[rclass]);
 }
 
+void F_ClearResourceSearchPaths(void)
+{
+    clearExtraSearchPaths(0);
+}
+
 boolean F_FindResource(resourceclass_t rclass, char* foundPath, const char* _searchPaths, const char* optionalSuffix, size_t foundPathLen)
 {
     if(!_searchPaths || !_searchPaths[0])
@@ -865,6 +916,9 @@ boolean F_FindResource(resourceclass_t rclass, char* foundPath, const char* _sea
     }
 }
 
+/**
+ * Add a new path to the list of "extra" search paths in this namespace.
+ */
 boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rnamespace, const char* newPath, boolean append)
 {
     assert(rnamespace);
@@ -882,7 +936,7 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rnamespace, const c
     M_PrependBasePath(absNewPath, absNewPath, FILENAME_T_MAXLEN);
 
     // Have we seen this path already?
-    pathList = &rnamespace->_searchPathList;
+    pathList = &rnamespace->_extraSearchPaths;
     if(Str_Length(pathList))
     {
         const char* p = Str_Text(pathList);
@@ -915,91 +969,20 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rnamespace, const c
     }
 }
 
+/**
+ * Clear "extra" resource search paths in this namespace.
+ */
 void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rnamespace)
 {
     assert(rnamespace);
-    Str_Free(&rnamespace->_searchPathList);
+    Str_Free(&rnamespace->_extraSearchPaths);
 }
 
-#if 1
-static __inline void clearSearchPathList(resourceclass_t rclass)
+/**
+ * @return              Ptr to a string containing the list of "extra" search paths.
+ */
+const ddstring_t* ResourceNamespace_ExtraSearchPaths(resourcenamespace_t* rnamespace)
 {
-    assert(VALID_RESOURCE_CLASS(rclass));
-    Str_Free(&searchPathLists[rclass]);
+    assert(rnamespace);
+    return &rnamespace->_extraSearchPaths;
 }
-
-const ddstring_t* F_ResourceSearchPaths(resourceclass_t rclass)
-{
-    assert(VALID_RESOURCE_CLASS(rclass));
-    return &searchPathLists[rclass];
-}
-
-void F_ClearResourceSearchPaths2(resourceclass_t rclass)
-{
-    if(rclass == NUM_RESOURCE_CLASSES)
-    {
-        uint i;
-        for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
-        {
-            clearSearchPathList((resourceclass_t)i);
-        }
-        return;
-    }
-    clearSearchPathList(rclass);
-}
-
-void F_ClearResourceSearchPaths(void)
-{
-    F_ClearResourceSearchPaths2(0);
-}
-
-boolean F_AddResourceSearchPath(resourceclass_t rclass, const char* newPath, boolean append)
-{
-    assert(VALID_RESOURCE_CLASS(rclass));
-    {
-    ddstring_t* pathList;
-    filename_t absNewPath;
-
-    if(!newPath || !newPath[0] || !strcmp(newPath, DIR_SEP_STR))
-        return false; // Not suitable.
-
-    // Convert all slashes to the host OS's directory separator,
-    // for compatibility with the sys_filein routines.
-    strncpy(absNewPath, newPath, FILENAME_T_MAXLEN);
-    Dir_ValidDir(absNewPath, FILENAME_T_MAXLEN);
-    M_PrependBasePath(absNewPath, absNewPath, FILENAME_T_MAXLEN);
-
-    // Have we seen this path already?
-    pathList = &searchPathLists[rclass];
-    if(Str_Length(pathList))
-    {
-        const char* p = Str_Text(pathList);
-        ddstring_t curPath;
-        boolean ignore = false;
-
-        Str_Init(&curPath);
-        while(!ignore && (p = Str_CopyDelim(&curPath, p, ';')))
-        {
-            if(!Str_CompareIgnoreCase(&curPath, absNewPath))
-                ignore = true;
-        }
-        Str_Free(&curPath);
-
-        if(ignore) return true; // We don't want duplicates.
-    }
-
-    // Add the new search path.
-    if(append)
-    {
-        Str_Append(pathList, absNewPath);
-        Str_Append(pathList, ";");
-    }
-    else
-    {
-        Str_Prepend(pathList, ";");
-        Str_Prepend(pathList, absNewPath);
-    }
-    return true;
-    }
-}
-#endif

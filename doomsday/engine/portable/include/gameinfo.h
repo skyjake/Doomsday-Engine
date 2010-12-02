@@ -24,9 +24,7 @@
 #ifndef LIBDENG_GAMEINFO_H
 #define LIBDENG_GAMEINFO_H
 
-#include "de_base.h"
 #include "m_string.h"
-#include "sys_reslocator.h"
 
 /**
  * Game Resource Record.

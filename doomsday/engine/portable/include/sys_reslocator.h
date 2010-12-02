@@ -3,7 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,78 +22,64 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDENG_FILESYS_EXTRES_H
-#define LIBDENG_FILESYS_EXTRES_H
+#ifndef LIBDENG_FILESYS_RESOURCE_LOCATOR_H
+#define LIBDENG_FILESYS_RESOURCE_LOCATOR_H
 
-#include "m_string.h"
-#include "m_filehash.h"
+struct resourcenamespace_s;
 
+/**
+ * Unique identifier associated with resource namespaces managed by the resource locator.
+ *
+ * @ingroup fs
+ * @see ResourceNamespace
+ */
 typedef uint resourcenamespaceid_t;
 
-typedef struct {
-    /// Unique symbolic name of this namespace (e.g., "packages:").
-    const char* _name;
- 
-    /// Command line options for setting the resource path explicitly. Flag2 Takes precendence.
-    const char* _overrideFlag, *_overrideFlag2;
-
-    /// Resource search order (in order of greatest-importance, right to left) seperated by semicolon (e.g., "path1;path2;").
-    const char* _searchPathTemplate;
-
-    /// Auto-inited:
-    ddstring_t _searchPathList;
-    filehash_t* _fileHash;
-} resourcenamespace_t;
-
 /**
- * Convert a resourceclass_t constant into a string for error/debug messages.
- */
-const char* F_ResourceClassStr(resourceclass_t rclass);
-
-/**
- * \post Initial/default search paths registered and queries may begin.
+ * \post Initial/default search paths registered, namespaces initialized and queries may begin.
  */
 void F_InitResourceLocator(void);
+
+/**
+ * \post All resource namespaces are emptied and search paths cleared. Queries no longer possible.
+ */
 void F_ShutdownResourceLocator(void);
 
 /**
- * @return             @c true iff the value can be interpreted as a valid id.
+ * @return              @c true iff the value can be interpreted as a valid id.
  */
 boolean F_IsValidResourceNamespaceId(int val);
 
 /**
  * Given an id return the associated namespace object.
  */
-resourcenamespace_t* F_ToResourceNamespace(resourcenamespaceid_t rni);
+struct resourcenamespace_s* F_ToResourceNamespace(resourcenamespaceid_t rni);
 
 /**
- * @return             Number of resource namespaces.
+ * @return              Number of resource namespaces.
  */
 uint F_NumResourceNamespaces(void);
 
+/**
+ * @return              Unique identifier of the default namespace associated with @a rclass.
+ */
 resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass);
-resourcenamespaceid_t F_ResourceNamespaceForName(const char* name);
+
+/**
+ * @return              Unique identifier of the resource namespace associated with @a name,
+ *                      else @c 0 if not found.
+ */
 resourcenamespaceid_t F_SafeResourceNamespaceForName(const char* name);
 
 /**
- * Add a new file path to the list of resource-locator search paths.
+ * Same as F_SafeResourceNamespaceForName except will throw a fatal error if not found and won't return.
  */
-boolean F_AddResourceSearchPath(resourceclass_t rclass, const char* newPath, boolean append);
+resourcenamespaceid_t F_ResourceNamespaceForName(const char* name);
 
 /**
- * Clear resource-locator search paths for all namespaces.
+ * Clear "extra" resource search paths for all namespaces.
  */
 void F_ClearResourceSearchPaths(void);
-
-/**
- * Clear resource-locator search paths for a specific resource namespace.
- */
-void F_ClearResourceSearchPaths2(resourceclass_t rclass);
-
-/**
- * @return              Ptr to a string containing the resource search path list.
- */
-const ddstring_t* F_ResourceSearchPaths(resourceclass_t rclass);
 
 /**
  * Attempt to locate an external file for the specified resource.
@@ -120,4 +107,9 @@ const ddstring_t* F_ResourceSearchPaths(resourceclass_t rclass);
 boolean F_FindResource(resourceclass_t rclass, char* foundPath, const char* searchPath,
     const char* suffix, size_t foundPathLength);
 
-#endif /* LIBDENG_FILESYS_EXTRES_H */
+/**
+ * Convert a resourceclass_t constant into a string for error/debug messages.
+ */
+const char* F_ResourceClassStr(resourceclass_t rclass);
+
+#endif /* LIBDENG_FILESYS_RESOURCE_LOCATOR_H */

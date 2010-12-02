@@ -25,12 +25,33 @@
 #ifndef LIBDENG_FILEHASH_H
 #define LIBDENG_FILEHASH_H
 
+struct hashnode_s;
+
+typedef struct {
+    struct hashnode_s* first;
+    struct hashnode_s* last;
+} hashentry_t;
+
 /**
  * File name/directory search hash.
  *
  * @ingroup fs
  */
-typedef void* filehash_t;
+// Number of entries in the hash table.
+#define FILEHASH_SIZE           (512)
+typedef struct filehash_s {
+    /// Copy of the path list specified at creation time.
+    char* _pathList;
+
+    /// @c true if the record set has been built.
+    boolean _builtRecordSet;
+
+    /// First and last directory nodes in the hash.
+    struct direcnode_s* _direcFirst, *_direcLast;
+
+    /// File name hash table.
+    hashentry_t _hashTable[FILEHASH_SIZE];
+} filehash_t;
 
 /**
  * Initialize the file hash using the given list of paths (separated with semicolons).

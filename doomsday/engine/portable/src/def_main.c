@@ -818,9 +818,7 @@ void Def_Read(void)
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        // \fixme dj: This is not correct. We do not want to clear all paths
-        // we should instead re-init to the default path set.
-        F_ClearResourceSearchPaths2(RC_MODEL);
+        ResourceNamespace_ClearSearchPaths(F_ToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL)));
         Def_Destroy();
     }
 
@@ -1121,7 +1119,7 @@ void Def_Read(void)
     Def_CountMsg(defs.count.sectorTypes.num, "sector types");
 
     // Init the base model search path (append).
-    F_AddResourceSearchPath(RC_MODEL, defs.modelPath, true);
+    ResourceNamespace_AddSearchPath(F_ToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL)), defs.modelPath, true);
 
     defsInited = true;
 }
