@@ -30,9 +30,18 @@
 typedef uint resourcenamespaceid_t;
 
 typedef struct {
-    /// Unique symbolic name of this namespace (e.g., "packages").
-    ddstring_t _name;
-    filehash_t* _fileHash;    
+    /// Unique symbolic name of this namespace (e.g., "packages:").
+    const char* _name;
+ 
+    /// Command line options for setting the resource path explicitly. Flag2 Takes precendence.
+    const char* _overrideFlag, *_overrideFlag2;
+
+    /// Resource search order (in order of greatest-importance, right to left) seperated by semicolon (e.g., "path1;path2;").
+    const char* _searchPathTemplate;
+
+    /// Auto-inited:
+    ddstring_t _searchPathList;
+    filehash_t* _fileHash;
 } resourcenamespace_t;
 
 /**
@@ -64,8 +73,6 @@ uint F_NumResourceNamespaces(void);
 resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass);
 resourcenamespaceid_t F_ResourceNamespaceForName(const char* name);
 resourcenamespaceid_t F_SafeResourceNamespaceForName(const char* name);
-
-resourcenamespaceid_t F_ParseResourceNamespace(const char* str);
 
 /**
  * Add a new file path to the list of resource-locator search paths.

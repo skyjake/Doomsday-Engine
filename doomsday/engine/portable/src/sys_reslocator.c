@@ -72,28 +72,14 @@ typedef enum {
 #define NUM_RESOURCE_TYPES          (RT_LAST_INDEX-1)
 #define VALID_RESOURCE_TYPE(v)      ((v) >= RT_FIRST && (v) < RT_LAST_INDEX)
 
-/**
- * Search Path Identifier.
- * @ingroup fs
- */
-typedef enum {
-    SPI_NONE = 0, // Not a real path.
-    SPI_FIRST = 1,
-    SPI_BASEPATH = SPI_FIRST, // i.e., "}"
-    SPI_BASEPATH_DATA, // i.e., "}data/"
-    SPI_BASEPATH_DEFS, // i.e., "}defs/"
-    SPI_GAMEPATH_DATA, // e.g., "}data/jdoom/"
-    SPI_GAMEPATH_DEFS, // e.g., "}defs/jdoom/"
-    SPI_GAMEMODEPATH_DATA, // e.g., "}data/jdoom/doom2-plut/"
-    SPI_GAMEMODEPATH_DEFS, // e.g., "}defs/jdoom/doom2-plut/" 
-    SPI_DOOMWADDIR
-} searchpathid_t;
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
+
+boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rnamespace, const char* newPath, boolean append);
+void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rnamespace);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -131,22 +117,27 @@ static const resourcetype_t searchTypeOrder[NUM_RESOURCE_CLASSES][MAX_TYPEORDER]
 };
 
 static const char* defaultNamespaceForClass[NUM_RESOURCE_CLASSES] = {
-    /* RC_PACKAGE */    "packages:",
-    /* RC_DEFINITION */ "defs:",
-    /* RC_GRAPHIC */    "graphics:",
-    /* RC_MODEL */      "models:",
-    /* RC_SOUND */      "sounds:",
-    /* RC_MUSIC */      "music:"
+    /* RC_PACKAGE */    "packages",
+    /* RC_DEFINITION */ "defs",
+    /* RC_GRAPHIC */    "graphics",
+    /* RC_MODEL */      "models",
+    /* RC_SOUND */      "sounds",
+    /* RC_MUSIC */      "music"
 };
 
-static resourcenamespace_t namespaces[NUM_RESOURCE_CLASSES] = {
-    { "packages:", 0 },
-    { "defs:", 0 },
-    { "graphics:", 0 },
-    { "models:", 0 },
-    { "sounds:", 0 },
-    { "music:", 0 }
+static resourcenamespace_t namespaces[] = {
+    { "packages",    "", "",                    "$(GameInfo.DataPath);}data\\;$(DOOMWADDIR)" },
+    { "defs",        "-defdir", "-defdir2",     "$(GameInfo.DefsPath)\\$(GameInfo.IdentityKey);$(GameInfo.DefsPath);"DD_BASEPATH_DEFS },
+    { "graphics",    "-gfxdir", "-gfxdir2",     "}data\\graphics" },
+    { "models",      "-modeldir", "-modeldir2", "$(GameInfo.DataPath)\\models\\$(GameInfo.IdentityKey);$(GameInfo.DataPath)\\models" },
+    { "sounds",      "-sfxdir",  "-sfxdir2",    "$(GameInfo.DataPath)\\sfx\\$(GameInfo.IdentityKey);$(GameInfo.DataPath)\\sfx" },
+    { "music",       "-musdir",  "-musdir2",    "$(GameInfo.DataPath)\\music\\$(GameInfo.IdentityKey);$(GameInfo.DataPath)\\music" },
+    { "textures",    "-texdir",  "-texdir2",    "$(GameInfo.DataPath)\\textures\\$(GameInfo.IdentityKey);$(GameInfo.DataPath)\\textures" },
+    { "flats",       "-flatdir", "-flatdir2",   "$(GameInfo.DataPath)\\flats\\$(GameInfo.IdentityKey);$(GameInfo.DataPath)\\flats" },
+    { "patches",     "-patdir",  "-patdir2",    "$(GameInfo.DataPath)\\patches\\$(GameInfo.IdentityKey);$(GameInfo.DataPath)\\patches" },
+    { "lightmaps",   "-lmdir",   "-lmdir2",     "$(GameInfo.DataPath)\\lightmaps\\$(GameInfo.IdentityKey);$(GameInfo.DataPath)\\lightmaps" },
 };
+static uint numNamespaces = sizeof(namespaces)/sizeof(namespaces[0]);
 
 /// Lists of search paths to use when locating file resources.
 static ddstring_t searchPathLists[NUM_RESOURCE_CLASSES];
@@ -159,126 +150,190 @@ static __inline const resourcetypeinfo_t* getInfoForResourceType(resourcetype_t 
     return &typeInfo[((uint)type)-1];
 }
 
-static __inline void clearSearchPathList(resourceclass_t rclass)
+static __inline resourcenamespace_t* getNamespaceForId(resourcenamespaceid_t rni)
 {
-    assert(VALID_RESOURCE_CLASS(rclass));
-    Str_Free(&searchPathLists[rclass]);
+    if(!F_IsValidResourceNamespaceId(rni))
+        Con_Error("getNamespaceForId: Invalid namespace id %i.", (int)rni);
+    return &namespaces[((uint)rni)-1];
 }
 
-/**
- * @param searchOrder       Resource path search order (in order of least-importance, left to right).
- * @param overrideFlag      Command line options for setting the resource path explicitly.
- * @param overrideFlag2     Takes precendence.
- */
-static void formSearchPathList(resourceclass_t rclass, const ddstring_t* identityKey,
-    const ddstring_t* defsPath, const ddstring_t* dataPath, const searchpathid_t* searchOrder,
-    const char* defaultPath, const char* overrideFlag, const char* overrideFlag2)
+static resourcenamespaceid_t findNamespaceForName(const char* name)
 {
-    assert(VALID_RESOURCE_CLASS(rclass) && searchOrder);
+    if(name && name[0])
     {
-    ddstring_t* pathList = &searchPathLists[rclass];
-    boolean usingGameModePathData = false;
-    boolean usingGameModePathDefs = false;
-
-    Str_Clear(pathList);
-
-    if(overrideFlag && overrideFlag[0] && ArgCheckWith(overrideFlag, 1))
-    {   // A command line override of the default path.
-        filename_t newPath;
-        M_TranslatePath(newPath, ArgNext(), FILENAME_T_MAXLEN);
-        Dir_ValidDir(newPath, FILENAME_T_MAXLEN);
-        Str_Prepend(pathList, ";"); Str_Prepend(pathList, newPath);
+        uint i;
+        for(i = 0; i < numNamespaces; ++i)
+        {
+            resourcenamespace_t* rnamespace = &namespaces[i];
+            if(!stricmp(rnamespace->_name, name))
+                return (resourcenamespaceid_t)(i+1);
+        }
     }
+    return 0;
+}
 
-    { size_t i;
-    for(i = 0; searchOrder[i] != SPI_NONE; ++i)
+static boolean translateBasePath(ddstring_t* dest, ddstring_t* src)
+{
+    assert(dest && src);
+    if(Str_At(src, 0) == '>' || Str_At(src, 0) == '}')
     {
-        switch(searchOrder[i])
+        boolean mustCopy = (dest == src);
+        if(mustCopy)
+        {
+            ddstring_t buf;
+            Str_Init(&buf); Str_Set(&buf, ddBasePath);
+            Str_PartAppend(&buf, Str_Text(src), 1, Str_Length(src)-1);
+            Str_Copy(dest, &buf);
+            Str_Free(&buf);
+            return true;
+        }
+
+        Str_Set(dest, ddBasePath);
+        Str_PartAppend(dest, Str_Text(src), 1, Str_Length(src)-1);
+        return true;
+    }
+#ifdef UNIX
+    else if(Str_At(src, 0) == '~')
+    {
+        if(Str_At(src, 1) == DIR_SEP_CHAR && getenv("HOME"))
+        {   // Replace it with the HOME environment variable.
+            ddstring_t buf;
+            Str_Init(&buf);
+
+            Str_Set(&buf, getenv("HOME"));
+            if(Str_RAt(&buf, 0) != '/')
+                Str_AppendChar(&buf, DIR_SEP_CHAR);
+
+            // Append the rest of the original path.
+            Str_PartAppend(&buf, Str_Text(&str), 2, Str_Length(src)-2);
+
+            Str_Copy(&dest, &buf);
+            Str_Free(&buf);
+            return true;
+        }
+
+        // Parse the user's home directory (from passwd).
+        { boolean result = false;
+        ddstring_t userName;
+        const char* p = Str_Text(src)+2;
+
+        Str_Init(&userName);
+        if((p = Str_CopyDelim(&userName, p, DIR_SEP_CHAR)))
+        {
+            ddstring_t buf;
+            struct passwd* pw;
+
+            Str_Init(&buf);
+            if((pw = getpwnam(Str_Text(&userName))) != 0)
+            {
+                Str_Set(&buf, pw->pw_dir);
+                if(Str_RAt(&buf, 0) != DIR_SEP_CHAR)
+                    Str_AppendChar(&buf, DIR_SEP_CHAR);
+                result = true;
+            }
+
+            Str_Append(&buf, Str_Text(src) + 1);
+            Str_Copy(&dest, &buf);
+            Str_Free(&buf);
+        }
+        Str_Free(&userName);
+        return result;
+        }
+    }
+#endif
+    return false;
+}
+
+#if 0
+    { size_t i;
+    for(i = 0; rnamespace->_searchOrder[i] != SPI_NONE; ++i)
+    {
+        switch(rnamespace->_searchOrder[i])
         {
         case SPI_BASEPATH:
             { filename_t newPath;
             M_TranslatePath(newPath, "}", FILENAME_T_MAXLEN);
-            F_AddResourceSearchPath(rclass, newPath, false);
+            ResourceNamespace_AddSearchPath(rnamespace, newPath, false);
             break;
             }
         case SPI_BASEPATH_DATA:
             { filename_t newPath;
-            if(defaultPath && defaultPath[0])
+            if(rnamespace->_defaultPath && rnamespace->_defaultPath[0])
             {
                 filename_t other;
-                dd_snprintf(other, FILENAME_T_MAXLEN, DD_BASEPATH_DATA"%s", defaultPath);
+                dd_snprintf(other, FILENAME_T_MAXLEN, DD_BASEPATH_DATA"%s", rnamespace->_defaultPath);
                 M_TranslatePath(newPath, other, FILENAME_T_MAXLEN);
             }
             else
             {
                 M_TranslatePath(newPath, DD_BASEPATH_DATA, FILENAME_T_MAXLEN);
             }
-            F_AddResourceSearchPath(rclass, newPath, false);
+            ResourceNamespace_AddSearchPath(rnamespace, newPath, false);
             break;
             }
         case SPI_BASEPATH_DEFS:
             { filename_t newPath;
-            if(defaultPath && defaultPath[0])
+            if(rnamespace->_defaultPath && rnamespace->_defaultPath[0])
             {
                 filename_t other;
-                dd_snprintf(other, FILENAME_T_MAXLEN, DD_BASEPATH_DEFS"%s", defaultPath);
+                dd_snprintf(other, FILENAME_T_MAXLEN, DD_BASEPATH_DEFS"%s", rnamespace->_defaultPath);
                 M_TranslatePath(newPath, other, FILENAME_T_MAXLEN);
             }
             else
             {
                 M_TranslatePath(newPath, DD_BASEPATH_DEFS, FILENAME_T_MAXLEN);
             }
-            F_AddResourceSearchPath(rclass, newPath, false);
+            ResourceNamespace_AddSearchPath(rnamespace, newPath, false);
             break;
             }
         case SPI_GAMEPATH_DATA:
-            if(defaultPath && defaultPath[0])
+            if(rnamespace->_defaultPath && rnamespace->_defaultPath[0])
             {
                 filename_t newPath;
-                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s", Str_Text(dataPath), defaultPath);
-                F_AddResourceSearchPath(rclass, newPath, false);
+                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s", Str_Text(dataPath), rnamespace->_defaultPath);
+                ResourceNamespace_AddSearchPath(rnamespace, newPath, false);
             }
             else
             {
-                F_AddResourceSearchPath(rclass, Str_Text(dataPath), false);
+                ResourceNamespace_AddSearchPath(rnamespace, Str_Text(dataPath), false);
             }
             break;
         case SPI_GAMEPATH_DEFS:
-            if(defaultPath && defaultPath[0])
+            if(rnamespace->_defaultPath && rnamespace->_defaultPath[0])
             {
                 filename_t newPath;
-                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s", Str_Text(defsPath), defaultPath);
-                F_AddResourceSearchPath(rclass, newPath, false);
+                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s", Str_Text(defsPath), rnamespace->_defaultPath);
+                ResourceNamespace_AddSearchPath(rnamespace, newPath, false);
             }
             else
             {
-                F_AddResourceSearchPath(rclass, Str_Text(defsPath), false);
+                ResourceNamespace_AddSearchPath(rnamespace, Str_Text(defsPath), false);
             }
             break;
         case SPI_GAMEMODEPATH_DATA:
             usingGameModePathData = true;
-            if(defaultPath && defaultPath[0] && Str_Length(identityKey))
+            if(rnamespace->_defaultPath && rnamespace->_defaultPath[0] && Str_Length(identityKey))
             {
                 filename_t newPath;
-                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(dataPath), defaultPath, Str_Text(identityKey));
-                F_AddResourceSearchPath(rclass, newPath, false);
+                dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(dataPath), rnamespace->_defaultPath, Str_Text(identityKey));
+                ResourceNamespace_AddSearchPath(rnamespace, newPath, false);
             }
             break;
         case SPI_GAMEMODEPATH_DEFS:
             usingGameModePathDefs = true;
             if(Str_Length(identityKey))
             {
-                if(defaultPath && defaultPath[0])
+                if(rnamespace->_defaultPath && rnamespace->_defaultPath[0])
                 {
                     filename_t newPath;
                     dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s", Str_Text(defsPath), Str_Text(identityKey));
-                    F_AddResourceSearchPath(rclass, newPath, false);
+                    ResourceNamespace_AddSearchPath(rnamespace, newPath, false);
                 }
                 else
                 {
                     filename_t newPath;
-                    dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(defsPath), defaultPath, Str_Text(identityKey));
-                    F_AddResourceSearchPath(rclass, newPath, false);
+                    dd_snprintf(newPath, FILENAME_T_MAXLEN, "%s%s%s", Str_Text(defsPath), rnamespace->_defaultPath, Str_Text(identityKey));
+                    ResourceNamespace_AddSearchPath(rnamespace, newPath, false);
                 }
             }
             break;
@@ -287,90 +342,194 @@ static void formSearchPathList(resourceclass_t rclass, const ddstring_t* identit
             {
                 filename_t newPath;
                 M_TranslatePath(newPath, getenv("DOOMWADDIR"), FILENAME_T_MAXLEN);
-                F_AddResourceSearchPath(rclass, newPath, false);
+                ResourceNamespace_AddSearchPath(rnamespace, newPath, false);
             }
             break;
 
-        default: Con_Error("formSearchPathList: Invalid path ident %i.", searchOrder[i]);
+        default: Con_Error("formSearchPathList: Invalid path ident %i.", rnamespace->_searchOrder[i]);
         };
     }}
+#endif
+
+/**
+ * \todo dj: We don't really want absolute paths output here, paths should stay relative
+ * until search-time where possible.
+ */
+static void formSearchPathList(resourcenamespace_t* rnamespace, const ddstring_t* identityKey,
+    const ddstring_t* dataPath, const ddstring_t* defsPath)
+{
+    assert(rnamespace && identityKey && defsPath && dataPath);
+    {
+    ddstring_t pathTemplate, *pathList = &rnamespace->_searchPathList;
+    boolean usingGameModePathData = false;
+    boolean usingGameModePathDefs = false;
+
+    Str_Clear(pathList);
+
+    if(rnamespace->_overrideFlag && rnamespace->_overrideFlag[0] && ArgCheckWith(rnamespace->_overrideFlag, 1))
+    {   // A command line override of the default path.
+        filename_t newPath;
+        M_TranslatePath(newPath, ArgNext(), FILENAME_T_MAXLEN);
+        Dir_ValidDir(newPath, FILENAME_T_MAXLEN);
+        Str_Prepend(pathList, ";"); Str_Prepend(pathList, newPath);
+    }
+
+    Str_Init(&pathTemplate); Str_Set(&pathTemplate, rnamespace->_searchPathTemplate);
+
+    // Convert all slashes to the host OS's directory separator, for compatibility with the sys_filein routines.
+    Dir_FixSlashes(Str_Text(&pathTemplate), Str_Length(&pathTemplate));
+
+    // Ensure we have the required terminating semicolon.
+    if(Str_RAt(&pathTemplate, 0) != ';')
+        Str_AppendChar(&pathTemplate, ';');
+
+    // Tokenize the template into discreet paths and process individually.
+    { const char* p = Str_Text(&pathTemplate);
+    ddstring_t path;
+    Str_Init(&path);
+    while((p = Str_CopyDelim(&path, p, ';')))
+    {
+        // Do we need to expand platform-specific path directives?
+        translateBasePath(&path, &path);
+
+        // Substitute known symbols in the template.
+        { ddstring_t part, tmp;
+        const char* p;
+        boolean successful = false;
+
+        Str_Init(&part);
+        Str_Init(&tmp);
+
+        // Copy the first part of the path as-is up to first '$' if present.
+        if((p = Str_CopyDelim(&tmp, Str_Text(&path), '$')))
+        {
+            int depth = 0;
+
+            if(*p != '(')
+            {
+                Con_Message("Invalid character '%c' in path \"%s\" at %u.\n", p, rnamespace->_searchPathTemplate, p - rnamespace->_searchPathTemplate);
+                goto parseEnded;
+            }
+            // Skip over the opening brace.
+            p++;
+            depth++;
+
+            // Now grab everything up to the closing ')' (it *should* be present).
+            while((p = Str_CopyDelim(&part, p, ')')))
+            {
+                // First, try the built-in tokens.
+                if(!Str_CompareIgnoreCase(&part, "GameInfo.DataPath"))
+                {
+                    // DataPath already has ending @c DIR_SEP_CHAR.
+                    Str_PartAppend(&tmp, Str_Text(dataPath), 0, Str_Length(dataPath)-1);
+                }
+                else if(!Str_CompareIgnoreCase(&part, "GameInfo.DefsPath"))
+                {
+                    // DefsPath already has ending @c DIR_SEP_CHAR.
+                    Str_PartAppend(&tmp, Str_Text(defsPath), 0, Str_Length(defsPath)-1);
+                }
+                else if(!Str_CompareIgnoreCase(&part, "GameInfo.IdentityKey"))
+                {
+                    Str_Append(&tmp, Str_Text(identityKey));
+                }
+                else if(!Str_CompareIgnoreCase(&part, "DOOMWADDIR"))
+                {
+                    if(!ArgCheck("-nowaddir") && getenv("DOOMWADDIR"))
+                    {
+                        filename_t newPath;
+                        /// \todo dj: This translation is not necessary at this point. It should be enough to
+                        /// fix slashes and ensure a well-formed path (potentially relative).
+                        M_TranslatePath(newPath, getenv("DOOMWADDIR"), FILENAME_T_MAXLEN);
+                        Str_Append(&tmp, newPath);
+                    }
+                }
+                else
+                {
+                    Con_Message("Unknown variable identifier '%s' in \"%s\".\n", Str_Text(&part)+1, rnamespace->_searchPathTemplate);
+                    goto parseEnded;
+                }
+                depth--;
+
+                // Is there another '$' present?
+                if(!(p = Str_CopyDelim(&part, p, '$')))
+                    break;
+                // Copy everything up to the next '$'.
+                Str_Append(&tmp, Str_Text(&part));
+                if(*p != '(')
+                {
+                    Con_Message("Invalid character '%c' in path \"%s\" at %u.\n", p, rnamespace->_searchPathTemplate, p - rnamespace->_searchPathTemplate);
+                    goto parseEnded;
+                }
+                // Skip over the opening brace.
+                p++;
+                depth++;
+            }
+
+            if(depth != 0)
+            {
+                goto parseEnded;
+            }
+
+            // Copy anything remaining.
+            Str_Append(&tmp, Str_Text(&part));
+        }
+
+        // Ensure we have a terminating DIR_SEP_CHAR
+        if(Str_RAt(&tmp, 0) != DIR_SEP_CHAR)
+            Str_AppendChar(&tmp, DIR_SEP_CHAR);
+
+        // No errors detected.
+        successful = true;
+
+parseEnded:
+        Str_Free(&part);
+
+        Str_Append(pathList, Str_Text(&tmp)); Str_Append(pathList, ";");
+        Str_Free(&tmp);
+        }
+    }
+    Str_Free(&path);
+    }
 
     // The overriding path.
-    if(overrideFlag2 && overrideFlag2[0] && ArgCheckWith(overrideFlag2, 1))
+#pragma message("!!!WARNING: Resource namespace default path override2 not presently implemented (e.g., -texdir2)!!!")
+    /*if(rnamespace->_overrideFlag2 && rnamespace->_overrideFlag2[0] && ArgCheckWith(rnamespace->_overrideFlag2, 1))
     {
         filename_t newPath;
         M_TranslatePath(newPath, ArgNext(), FILENAME_T_MAXLEN);
-        F_AddResourceSearchPath(rclass, newPath, false);
+        Dir_ValidDir(newPath, FILENAME_T_MAXLEN);
+        Str_Prepend(pathList, ";"); Str_Prepend(pathList, newPath);
 
         if((usingGameModePathData || usingGameModePathDefs) && Str_Length(identityKey))
         {
             filename_t other;
             dd_snprintf(other, FILENAME_T_MAXLEN, "%s/%s", newPath, Str_Text(identityKey));
-            F_AddResourceSearchPath(rclass, other, false);
+            ResourceNamespace_AddSearchPath(rnamespace, other, false);
         }
-    }
+    }*/
     }
 }
 
-static void collateSearchPathSet(gameinfo_t* info, resourceclass_t rclass)
+static void collateSearchPathSet(gameinfo_t* info, resourcenamespace_t* rnamespace)
 {
-#define MAX_PATHS                   4
-
-    assert(info && VALID_RESOURCE_CLASS(rclass));
-    {
-    struct searchpath_s {
-        resourceclass_t rclass;
-        searchpathid_t searchOrder[MAX_PATHS];
-        const char* defaultPath;
-        const char* overrideFlag, *overrideFlag2;
-    } static const paths[] = {
-        { RC_PACKAGE,    { SPI_DOOMWADDIR, SPI_BASEPATH_DATA, SPI_GAMEPATH_DATA, 0 }, "", "", "" },
-        { RC_DEFINITION, { SPI_BASEPATH_DEFS, SPI_GAMEPATH_DEFS, SPI_GAMEMODEPATH_DEFS, 0 }, "", "-defdir", "-defdir2" },
-        { RC_GRAPHIC,    { SPI_BASEPATH_DATA, 0 }, "graphics\\", "-gfxdir", "-gfxdir2" },
-        { RC_MODEL,      { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 }, "models\\", "-modeldir", "-modeldir2" },
-        { RC_SOUND,      { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 }, "sfx\\", "-sfxdir", "-sfxdir2" },
-        { RC_MUSIC,      { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 }, "music\\", "-musdir", "-musdir2" },
-        /*
-        { RC_GRAPHIC,   { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 }, "textures\\", "-texdir", "-texdir2" },
-        { RC_GRAPHIC,   { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 }, "flats\\", "-flatdir", "-flatdir2" },
-        { RC_GRAPHIC,   { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 }, "patches\\", "-patdir", "-patdir2" },
-        { RC_GRAPHIC,   { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 }, "lightmaps\\", "-lmdir", "-lmdir2" },
-        { RC_GRAPHIC,   { SPI_GAMEPATH_DATA, SPI_GAMEMODEPATH_DATA, 0 }, "flares\\", "-flaredir", "-flaredir2" },
-        */
-        { RC_UNKNOWN }
-    };
-    const ddstring_t* identityKey = GameInfo_IdentityKey(info);
-    const ddstring_t* defsPath = GameInfo_DefsPath(info);
-    const ddstring_t* dataPath = GameInfo_DataPath(info);
-    size_t i;
-    for(i = 0; paths[i].rclass != RC_UNKNOWN; ++i)
-    {
-        if(paths[i].rclass == rclass)
-            formSearchPathList(rclass, identityKey, defsPath, dataPath, paths[i].searchOrder, paths[i].defaultPath, paths[i].overrideFlag, paths[i].overrideFlag2);
-    }
-    }
-
-#undef MAX_PATHS
+    assert(info);
+    formSearchPathList(rnamespace, GameInfo_IdentityKey(info), GameInfo_DataPath(info), GameInfo_DefsPath(info));
 }
 
 static boolean tryFindFile(resourceclass_t rclass, const char* searchPath,
-    char* foundPath, size_t foundPathLen, resourcenamespaceid_t rni)
+    char* foundPath, size_t foundPathLen, resourcenamespace_t* rnamespace)
 {
     assert(inited && searchPath && searchPath[0]);
 
-    { resourcenamespace_t* rnamespace;
-    if(rni != 0 && (rnamespace = F_ToResourceNamespace(rni)))
+    if(rnamespace)
     {
-#if _DEBUG
-        VERBOSE2( Con_Message("Using filehash for rnamespace \"%s\" ...\n", rnamespace->_name) );
-#endif
         if(!rnamespace->_fileHash)
         {
-            collateSearchPathSet(DD_GameInfo(), rclass);
-            rnamespace->_fileHash = FileHash_Create(Str_Text(&searchPathLists[rclass]));
+            collateSearchPathSet(DD_GameInfo(), rnamespace);
+            rnamespace->_fileHash = FileHash_Create(Str_Text(&rnamespace->_searchPathList));
         }
         return FileHash_Find(rnamespace->_fileHash, foundPath, searchPath, foundPathLen);
-    }}
+    }
 
     if(F_Access(searchPath))
     {
@@ -389,12 +548,12 @@ static boolean tryFindFile(resourceclass_t rclass, const char* searchPath,
  * @param foundPath     Located path if found will be written back here.
  *                      Can be @c NULL, in which case this is just a boolean query.
  * @param foundPathLen  Length of the @a foundFileName buffer in bytes.
- * @param rni           If non-zero, the namespace to use when searching.
+ * @param rnamespace    The namespace to use when searching else @c NULL.
  *
  * @return              @c true, if it's found.
  */
 static boolean tryResourceFile(resourceclass_t rclass, const char* searchPath,
-    char* foundPath, size_t foundPathLen, resourcenamespaceid_t rni)
+    char* foundPath, size_t foundPathLen, resourcenamespace_t* rnamespace)
 {
     assert(inited && VALID_RESOURCE_CLASS(rclass) && searchPath && searchPath[0]);
     {
@@ -404,7 +563,7 @@ static boolean tryResourceFile(resourceclass_t rclass, const char* searchPath,
     // Has an extension been specified?
     ptr = M_FindFileExtension((char*)searchPath);
     if(ptr && *ptr != '*') // Try this first.
-        found = tryFindFile(rclass, searchPath, foundPath, foundPathLen, rni);
+        found = tryFindFile(rclass, searchPath, foundPath, foundPathLen, rnamespace);
 
     if(!found)
     {
@@ -437,7 +596,7 @@ static boolean tryResourceFile(resourceclass_t rclass, const char* searchPath,
                     {
                         Str_Copy(&tmp, &path2);
                         Str_Appendf(&tmp, "%s", *ext);
-                        found = tryFindFile(rclass, Str_Text(&tmp), foundPath, foundPathLen, rni);
+                        found = tryFindFile(rclass, Str_Text(&tmp), foundPath, foundPathLen, rnamespace);
                     } while(!found && *(++ext));
                 }
             } while(!found && *(++type) != RT_NONE);
@@ -452,7 +611,7 @@ static boolean tryResourceFile(resourceclass_t rclass, const char* searchPath,
 }
 
 static boolean findResource(resourceclass_t rclass, const char* searchPath, const char* optionalSuffix,
-    char* foundPath, size_t foundPathLen, resourcenamespaceid_t rni)
+    char* foundPath, size_t foundPathLen, resourcenamespace_t* rnamespace)
 {
     assert(inited && VALID_RESOURCE_CLASS(rclass) && searchPath && searchPath[0]);
     {
@@ -480,7 +639,7 @@ static boolean findResource(resourceclass_t rclass, const char* searchPath, cons
             Str_Append(&fn, optionalSuffix);
         }}
 
-        if(tryResourceFile(rclass, Str_Text(&fn), foundPath, foundPathLen, rni))
+        if(tryResourceFile(rclass, Str_Text(&fn), foundPath, foundPathLen, rnamespace))
             found = true;
 
         Str_Free(&fn);
@@ -489,7 +648,7 @@ static boolean findResource(resourceclass_t rclass, const char* searchPath, cons
     // Try without a suffix.
     if(!found)
     {
-        if(tryResourceFile(rclass, searchPath, foundPath, foundPathLen, rni))
+        if(tryResourceFile(rclass, searchPath, foundPath, foundPathLen, rnamespace))
             found = true;
     }
 
@@ -497,7 +656,7 @@ static boolean findResource(resourceclass_t rclass, const char* searchPath, cons
     }
 }
 
-static boolean tryLocateResource(resourceclass_t rclass, resourcenamespaceid_t rni, const char* searchPath,
+static boolean tryLocateResource2(resourceclass_t rclass, resourcenamespace_t* rnamespace, const char* searchPath,
     const char* optionalSuffix, char* foundPath, size_t foundPathLen)
 {
     assert(inited && VALID_RESOURCE_CLASS(rclass) && searchPath && searchPath[0]);
@@ -509,6 +668,11 @@ static boolean tryLocateResource(resourceclass_t rclass, resourcenamespaceid_t r
     Str_Init(&name);
     Str_Set(&name, searchPath);
     Dir_FixSlashes(Str_Text(&name), Str_Length(&name));
+
+#if _DEBUG
+    if(rnamespace)
+        VERBOSE2( Con_Message("Using rnamespace \"%s\" ...\n", rnamespace->_name) );
+#endif
 
     // If this is an absolute path, locate using it.
     if(Dir_IsAbsolute(Str_Text(&name)))
@@ -523,7 +687,7 @@ static boolean tryLocateResource(resourceclass_t rclass, resourcenamespaceid_t r
         // Make this an absolute, base-relative path.
         // If only checking the base path and not the expected location
         // for the resource class (below); re-use the current string.
-        if(rni != 0)
+        if(rnamespace)
         {
             Str_Init(&fn);
             Str_Copy(&fn, &name);
@@ -539,14 +703,14 @@ static boolean tryLocateResource(resourceclass_t rclass, resourcenamespaceid_t r
         // Try loading using the base path as the starting point.
         found = findResource(rclass, path, optionalSuffix, foundPath, foundPathLen, 0);
 
-        if(rni != 0)
+        if(rnamespace)
             Str_Free(&fn);
     }
 
     // Try expected location for this resource class.
-    if(!found && rni != 0)
+    if(!found && rnamespace)
     {
-        found = findResource(rclass, Str_Text(&name), optionalSuffix, foundPath, foundPathLen, rni);
+        found = findResource(rclass, Str_Text(&name), optionalSuffix, foundPath, foundPathLen, rnamespace);
     }
 
     Str_Free(&name);
@@ -555,30 +719,46 @@ static boolean tryLocateResource(resourceclass_t rclass, resourcenamespaceid_t r
     }
 }
 
-static void resetResourceNamespace(resourcenamespaceid_t rni)
+static boolean tryLocateResource(resourceclass_t rclass, const char* searchPath,
+    const char* optionalSuffix, char* foundPath, size_t foundPathLen)
 {
-    assert(F_IsValidResourceNamespaceId(rni));
+    // Has a namespace identifier been included?
+    resourcenamespaceid_t rni;
+    const char* p;
+    ddstring_t tmp;
+
+    Str_Init(&tmp);
+    p = Str_CopyDelim(&tmp, searchPath, ':');
+    if(p && (rni = F_SafeResourceNamespaceForName(Str_Text(&tmp)) != 0))
     {
-    resourcenamespace_t* rnamespace = &namespaces[rni-1];
+        boolean result = tryLocateResource2(rclass, getNamespaceForId(rni), Str_Text(&tmp), optionalSuffix, foundPath, foundPathLen);
+        Str_Free(&tmp);
+        return result;
+    }
+
+    // Use the default namespace for this resource class.
+    return tryLocateResource2(rclass, getNamespaceForId(F_ResourceNamespaceForName(defaultNamespaceForClass[rclass])), searchPath, optionalSuffix, foundPath, foundPathLen);
+}
+
+static void resetResourceNamespace(resourcenamespace_t* rnamespace)
+{
+    assert(rnamespace);
     if(rnamespace->_fileHash)
     {
         FileHash_Destroy(rnamespace->_fileHash); rnamespace->_fileHash = 0;
     }
-    }
+    Str_Free(&rnamespace->_searchPathList);
 }
 
 static void resetResourceNamespaces(void)
 {
-    uint i, numResourceNamespaces = F_NumResourceNamespaces();
-    for(i = 1; i < numResourceNamespaces+1; ++i)
-        resetResourceNamespace((resourcenamespaceid_t)i);
+    uint i;
+    for(i = 0; i < numNamespaces; ++i)
+        resetResourceNamespace(&namespaces[i]);
 }
 
 void F_InitResourceLocator(void)
 {
-    uint i;
-    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
-        Str_Init(&searchPathLists[i]);
     resetResourceNamespaces();
     inited = true;
 }
@@ -587,12 +767,150 @@ void F_ShutdownResourceLocator(void)
 {
     if(!inited)
         return;
-    { uint i;
-    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
-        Str_Free(&searchPathLists[i]);
-    }
     resetResourceNamespaces();
     inited = false;
+}
+
+resourcenamespace_t* F_ToResourceNamespace(resourcenamespaceid_t rni)
+{
+    return getNamespaceForId(rni);
+}
+
+resourcenamespaceid_t F_SafeResourceNamespaceForName(const char* name)
+{
+    return findNamespaceForName(name);
+}
+
+resourcenamespaceid_t F_ResourceNamespaceForName(const char* name)
+{
+    resourcenamespaceid_t result;
+    if((result = F_SafeResourceNamespaceForName(name)) == 0)
+        Con_Error("resourceNamespaceForName: Failed to locate resource namespace \"%s\".", name);
+    return result;
+}
+
+const char* F_ResourceClassStr(resourceclass_t rclass)
+{
+    assert(VALID_RESOURCE_CLASS(rclass));
+    {
+    static const char* resourceClassNames[NUM_RESOURCE_CLASSES] = {
+        "RC_PACKAGE",
+        "RC_DEFINITION",
+        "RC_GRAPHIC",
+        "RC_MODEL",
+        "RC_SOUND",
+        "RC_MUSIC"
+    };
+    return resourceClassNames[(int)rclass];
+    }
+}
+
+uint F_NumResourceNamespaces(void)
+{
+    return numNamespaces;
+}
+
+boolean F_IsValidResourceNamespaceId(int val)
+{
+    return (boolean)(val>0 && (unsigned)val < (F_NumResourceNamespaces()+1)? 1 : 0);
+}
+
+resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass)
+{
+    assert(VALID_RESOURCE_CLASS(rclass));
+    return F_ResourceNamespaceForName(defaultNamespaceForClass[rclass]);
+}
+
+boolean F_FindResource(resourceclass_t rclass, char* foundPath, const char* _searchPaths, const char* optionalSuffix, size_t foundPathLen)
+{
+    if(!_searchPaths || !_searchPaths[0])
+        return false;
+    if(!VALID_RESOURCE_CLASS(rclass))
+        Con_Error("F_FindResource: Invalid resource class %i.\n", rclass);
+
+    // Add an auto-identification file name list to the info record.
+    { ddstring_t searchPaths, path;
+    boolean found = false;
+
+    // Ensure the searchPath list has the required terminating semicolon.
+    Str_Init(&searchPaths); Str_Set(&searchPaths, _searchPaths);
+    if(Str_RAt(&searchPaths, 0) != ';')
+        Str_Append(&searchPaths, ";");
+
+    Str_Init(&path);
+    { const char* p = Str_Text(&searchPaths);
+    while((p = Str_CopyDelim(&path, p, ';')) &&
+          !(found = tryLocateResource(rclass, Str_Text(&path), optionalSuffix, foundPath, foundPathLen)));
+    }
+
+    Str_Free(&path);
+    Str_Free(&searchPaths);
+
+    return found;
+    }
+}
+
+boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rnamespace, const char* newPath, boolean append)
+{
+    assert(rnamespace);
+    {
+    ddstring_t* pathList;
+    filename_t absNewPath;
+
+    if(!newPath || !newPath[0] || !strcmp(newPath, DIR_SEP_STR))
+        return false; // Not suitable.
+
+    // Convert all slashes to the host OS's directory separator,
+    // for compatibility with the sys_filein routines.
+    strncpy(absNewPath, newPath, FILENAME_T_MAXLEN);
+    Dir_ValidDir(absNewPath, FILENAME_T_MAXLEN);
+    M_PrependBasePath(absNewPath, absNewPath, FILENAME_T_MAXLEN);
+
+    // Have we seen this path already?
+    pathList = &rnamespace->_searchPathList;
+    if(Str_Length(pathList))
+    {
+        const char* p = Str_Text(pathList);
+        ddstring_t curPath;
+        boolean ignore = false;
+
+        Str_Init(&curPath);
+        while(!ignore && (p = Str_CopyDelim(&curPath, p, ';')))
+        {
+            if(!Str_CompareIgnoreCase(&curPath, absNewPath))
+                ignore = true;
+        }
+        Str_Free(&curPath);
+
+        if(ignore) return true; // We don't want duplicates.
+    }
+
+    // Add the new search path.
+    if(append)
+    {
+        Str_Append(pathList, absNewPath);
+        Str_Append(pathList, ";");
+    }
+    else
+    {
+        Str_Prepend(pathList, ";");
+        Str_Prepend(pathList, absNewPath);
+    }
+    return true;
+    }
+}
+
+void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rnamespace)
+{
+    assert(rnamespace);
+    Str_Free(&rnamespace->_searchPathList);
+}
+
+#if 1
+static __inline void clearSearchPathList(resourceclass_t rclass)
+{
+    assert(VALID_RESOURCE_CLASS(rclass));
+    Str_Free(&searchPathLists[rclass]);
 }
 
 const ddstring_t* F_ResourceSearchPaths(resourceclass_t rclass)
@@ -669,84 +987,4 @@ boolean F_AddResourceSearchPath(resourceclass_t rclass, const char* newPath, boo
     return true;
     }
 }
-
-resourcenamespace_t* F_ToResourceNamespace(resourcenamespaceid_t rni)
-{
-    if(!F_IsValidResourceNamespaceId(rni))
-        Con_Error("DD_ResourceNamespace: Invalid resource namespace id %i.", (int)rni);
-    return &namespaces[rni-1];
-}
-
-resourcenamespaceid_t F_SafeResourceNamespaceForName(const char* name)
-{
-    if(name && name[0])
-    {
-        uint i, numResourceNamespaces = F_NumResourceNamespaces();
-        for(i = 1; i < numResourceNamespaces+1; ++i)
-        {
-            resourcenamespace_t* rnamespace = &namespaces[i-1];
-            if(Str_Length(&rnamespace->_name) > 0 && !Str_CompareIgnoreCase(&rnamespace->_name, name))
-                return (resourcenamespaceid_t)i;
-        }
-    }
-    return 0;
-}
-
-resourcenamespaceid_t F_ResourceNamespaceForName(const char* name)
-{
-    resourcenamespaceid_t result;
-    if((result = F_SafeResourceNamespaceForName(name)) == 0)
-        Con_Error("resourceNamespaceForName: Failed to locate resource namespace \"%s\".", name);
-    return result;
-}
-
-resourcenamespaceid_t F_ParseResourceNamespace(const char* str)
-{
-    assert(str);
-    return F_SafeResourceNamespaceForName(str);
-}
-
-const char* F_ResourceClassStr(resourceclass_t rclass)
-{
-    assert(VALID_RESOURCE_CLASS(rclass));
-    {
-    static const char* resourceClassNames[NUM_RESOURCE_CLASSES] = {
-        "RC_PACKAGE",
-        "RC_DEFINITION",
-        "RC_GRAPHIC",
-        "RC_MODEL",
-        "RC_SOUND",
-        "RC_MUSIC"
-    };
-    return resourceClassNames[(int)rclass];
-    }
-}
-
-uint F_NumResourceNamespaces(void)
-{
-    return NUM_RESOURCE_CLASSES;
-}
-
-boolean F_IsValidResourceNamespaceId(int val)
-{
-    return (boolean)(val>0 && (unsigned)val < (F_NumResourceNamespaces()+1)? 1 : 0);
-}
-
-resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass)
-{
-    assert(VALID_RESOURCE_CLASS(rclass));
-    return F_ResourceNamespaceForName(defaultNamespaceForClass[rclass]);
-}
-
-boolean F_FindResource(resourceclass_t rclass, char* foundPath, const char* searchPath, const char* optionalSuffix, size_t foundPathLen)
-{
-    if(!searchPath || !searchPath[0])
-        return false;
-    if(!VALID_RESOURCE_CLASS(rclass))
-        Con_Error("F_FindResource: Invalid resource class %i.\n", rclass);
-    { resourcenamespaceid_t rni;
-    if((rni = F_ParseResourceNamespace(searchPath)) != 0)
-        return tryLocateResource(rclass, rni, searchPath, optionalSuffix, foundPath, foundPathLen);
-    }
-    return tryLocateResource(rclass, F_ResourceNamespaceForName(defaultNamespaceForClass[rclass]), searchPath, optionalSuffix, foundPath, foundPathLen);
-}
+#endif

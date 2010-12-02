@@ -423,7 +423,7 @@ static _filehash_t* buildFileHash(_filehash_t* fh)
     { const char* p = fh->_pathList;
     while((p = Str_CopyDelim(&path, p, ';'))) // Get the next path.
     {
-        // Convert all slashes to backslashes (sys_file compatibility).
+        // Convert all slashes (sys_file compatibility).
         Dir_FixSlashes(Str_Text(&path), Str_Length(&path));
         addDirectory(fh, Str_Text(&path)); // Add this path to the hash.
     }}

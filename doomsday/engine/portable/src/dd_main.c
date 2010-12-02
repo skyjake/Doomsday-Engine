@@ -322,7 +322,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, const char* _na
             Str_Init(&fileName);
             { const char* p = Str_Text(&fileNames);
             while((p = Str_CopyDelim(&fileName, p, ';')))
-                  addIdentityKeyToResourceRecord(rec, &fileName);
+                addIdentityKeyToResourceRecord(rec, &fileName);
             }
 
             Str_Free(&fileName);
@@ -495,12 +495,10 @@ static void locateGameResources(gameinfo_t* info)
     {
         gameresource_record_t* const* records;
         if((records = GameInfo_Resources(info, (resourceclass_t)i, 0)))
-            do
-            {
-                const char* p = Str_Text(&(*records)->names);
-                while((p = Str_CopyDelim(&name, p, ';')) &&
-                      !validateGameResource(*records, Str_Text(&name)));
-            } while(*(++records));
+        {
+            for(; *records; records++)
+                validateGameResource(*records, Str_Text(&(*records)->names));
+        }
     }}
     Str_Free(&name);
 
@@ -755,6 +753,7 @@ static int DD_ChangeGameWorker(void* parm)
     Con_SetProgress(10);
 
     F_InitResourceLocator();
+    F_InitMapping();
 
     /**
      * Create default Auto mappings in the runtime directory.
@@ -1210,6 +1209,7 @@ int DD_Main(void)
     {   // No game loaded.
         // Ok, lets get most of everything else initialized.
         F_InitResourceLocator();
+        F_InitMapping();
         F_InitDirec();
 
         R_InitTextures();
@@ -1265,8 +1265,6 @@ static int DD_StartupWorker(void* parm)
     CoInitialize(NULL);
 #endif
 
-    F_InitMapping();
-
     // Initialize the key mappings.
     DD_InitInput();
 
@@ -1287,6 +1285,7 @@ static int DD_StartupWorker(void* parm)
     Zip_Init();
     W_Init();
     F_InitResourceLocator();
+    F_InitMapping();
 
     // Initialize the definition databases.
     Def_Init();

@@ -1049,20 +1049,12 @@ byte GL_LoadFlat(image_t* image, const gltexture_inst_t* inst, void* context)
         const char* lumpName = W_LumpName(flat->lump);
         ddstring_t searchPath;
         filename_t foundPath;
-        boolean found;
 
-        // First try the $flats namespace.
-        Str_Init(&searchPath); Str_Appendf(&searchPath, "flats:%s", lumpName);
-        found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), 0, FILENAME_T_MAXLEN);
+        // First try the flats namespace then the old-fashioned "flat-name" in the textures namespace?.
+        Str_Init(&searchPath); Str_Appendf(&searchPath, "flats:%s;textures:flat-%s", lumpName, lumpName);
 
-        // Try the old-fashioned "flat-name" in the $textures namespace?
-        if(!found)
-        {
-            Str_Clear(&searchPath); Str_Appendf(&searchPath, "textures:flat-%s", lumpName);
-            found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), 0, FILENAME_T_MAXLEN);
-        }
-
-        if(found && GL_LoadImage(image, foundPath))
+        if(F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), "-ck", FILENAME_T_MAXLEN) &&
+           GL_LoadImage(image, foundPath))
         {
             Str_Free(&searchPath);
             return 2;
@@ -1437,12 +1429,11 @@ byte GL_LoadDoomPatch(image_t* image, const gltexture_inst_t* inst,
     {
         ddstring_t searchPath;
         filename_t foundPath;
-        boolean found;
 
         Str_Init(&searchPath); Str_Appendf(&searchPath, "patches:%s", W_LumpName(p->lump));
-        found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), "-ck", FILENAME_T_MAXLEN);
 
-        if(found && GL_LoadImage(image, foundPath))
+        if(F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), "-ck", FILENAME_T_MAXLEN) &&
+           GL_LoadImage(image, foundPath))
         {
             Str_Free(&searchPath);
             return 2; // External replacement patch loaded.
@@ -1507,27 +1498,20 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
         const char* lumpName = W_LumpName(lumpNum);
         ddstring_t searchPath;
         filename_t foundPath;
-        boolean found = false;
 
-        // Compose a resource name.
+        // Compose resource names, prefer translated or psprite versions.
         Str_Init(&searchPath);
+        Str_Appendf(&searchPath, "patches:%s", lumpName);
         if(pSprite || tclass || tmap)
         {
             if(pSprite)
-                Str_Appendf(&searchPath, "patches:%s-hud", lumpName);
+                Str_Appendf(&searchPath, ";patches:%s-hud", lumpName);
             else // Translated.
-                Str_Appendf(&searchPath, "patches:%s-table%i%i", lumpName, tclass, tmap);
-            found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), "-ck", FILENAME_T_MAXLEN);
+                Str_Appendf(&searchPath, ";patches:%s-table%i%i", lumpName, tclass, tmap);
         }
 
-        // Try the normal resource?
-        if(!found)
-        {
-            Str_Clear(&searchPath); Str_Appendf(&searchPath, "patches:%s", lumpName);
-            found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), "-ck", FILENAME_T_MAXLEN);
-        }
-
-        if(found && GL_LoadImage(image, foundPath))
+        if(F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), "-ck", FILENAME_T_MAXLEN) &&
+           GL_LoadImage(image, foundPath))
         {
             Str_Free(&searchPath);
             return 2; // Loaded high resolution sprite.
@@ -1616,13 +1600,12 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
     byte result = 0;
     ddstring_t searchPath;
     filename_t foundPath;
-    boolean found;
 
     // First try to find an external resource.
     Str_Init(&searchPath); Str_Appendf(&searchPath, "patches:%s", W_LumpName(r->lump));
-    found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), 0, FILENAME_T_MAXLEN);
 
-    if(found && GL_LoadImage(image, foundPath))
+    if(F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), 0, FILENAME_T_MAXLEN) &&
+       GL_LoadImage(image, foundPath))
     {   // High resolution rawtex loaded.
         result = 2;
     }
