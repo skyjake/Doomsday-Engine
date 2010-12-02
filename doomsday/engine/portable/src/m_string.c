@@ -294,29 +294,19 @@ void Str_StripLeft(ddstring_t *ds)
 /**
  * Strip whitespace from end.
  */
-void Str_StripRight(ddstring_t *ds)
+void Str_StripRight(ddstring_t* ds)
 {
-    int             i;
-    boolean         isDone;
-
-    if(ds->length == 0)
-        return;
-
-    i = ds->length - 1;
-    isDone = false;
-    while(i >= 0 && !isDone)
+    assert(ds);
+    if(ds->length > 0)
     {
+        size_t i = ds->length - 1;
         if(isspace(ds->str[i]))
+        do
         {
             // Remove this char.
-            ds->str[i] = 0;
+            ds->str[i] = '\0';
             ds->length--;
-            i--;
-        }
-        else
-        {
-            isDone = true;
-        }
+        } while(i != 0 && isspace(ds->str[--i]));
     }
 }
 
