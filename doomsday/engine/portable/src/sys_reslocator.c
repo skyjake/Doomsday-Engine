@@ -205,7 +205,7 @@ static boolean translateBasePath(ddstring_t* dest, ddstring_t* src)
                 Str_AppendChar(&buf, DIR_SEP_CHAR);
 
             // Append the rest of the original path.
-            Str_PartAppend(&buf, Str_Text(&str), 2, Str_Length(src)-2);
+            Str_PartAppend(&buf, Str_Text(str), 2, Str_Length(src)-2);
 
             Str_Copy(&dest, &buf);
             Str_Free(&buf);
@@ -224,7 +224,7 @@ static boolean translateBasePath(ddstring_t* dest, ddstring_t* src)
             struct passwd* pw;
 
             Str_Init(&buf);
-            if((pw = getpwnam(Str_Text(&userName))) != 0)
+            if((pw = getpwnam(Str_Text(&userName))) != NULL)
             {
                 Str_Set(&buf, pw->pw_dir);
                 if(Str_RAt(&buf, 0) != DIR_SEP_CHAR)
@@ -233,7 +233,7 @@ static boolean translateBasePath(ddstring_t* dest, ddstring_t* src)
             }
 
             Str_Append(&buf, Str_Text(src) + 1);
-            Str_Copy(&dest, &buf);
+            Str_Copy(dest, &buf);
             Str_Free(&buf);
         }
         Str_Free(&userName);
@@ -351,14 +351,110 @@ static boolean translateBasePath(ddstring_t* dest, ddstring_t* src)
     }}
 #endif
 
+static boolean parseAndReplaceSymbols(ddstring_t* dest, const ddstring_t* src, gameinfo_t* info)
+{
+    assert(dest && src && info);
+    {
+    ddstring_t part;
+    const char* p;
+    boolean successful = false;
+
+    Str_Init(&part);
+
+    // Copy the first part of the string as-is up to first '$' if present.
+    if((p = Str_CopyDelim(dest, Str_Text(src), '$')))
+    {
+        int depth = 0;
+
+        if(*p != '(')
+        {
+            Con_Message("Invalid character '%c' in \"%s\" at %lu.\n", *p, Str_Text(src), p - Str_Text(src));
+            goto parseEnded;
+        }
+        // Skip over the opening brace.
+        p++;
+        depth++;
+
+        // Now grab everything up to the closing ')' (it *should* be present).
+        while((p = Str_CopyDelim(&part, p, ')')))
+        {
+            // First, try the built-in tokens.
+            if(!Str_CompareIgnoreCase(&part, "GameInfo.DataPath"))
+            {
+                // DataPath already has ending @c DIR_SEP_CHAR.
+                Str_PartAppend(dest, Str_Text(GameInfo_DataPath(info)), 0, Str_Length(GameInfo_DataPath(info))-1);
+            }
+            else if(!Str_CompareIgnoreCase(&part, "GameInfo.DefsPath"))
+            {
+                // DefsPath already has ending @c DIR_SEP_CHAR.
+                Str_PartAppend(dest, Str_Text(GameInfo_DefsPath(info)), 0, Str_Length(GameInfo_DefsPath(info))-1);
+            }
+            else if(!Str_CompareIgnoreCase(&part, "GameInfo.IdentityKey"))
+            {
+                Str_Append(dest, Str_Text(GameInfo_IdentityKey(info)));
+            }
+            else if(!Str_CompareIgnoreCase(&part, "DOOMWADDIR"))
+            {
+                if(!ArgCheck("-nowaddir") && getenv("DOOMWADDIR"))
+                {
+                    filename_t newPath;
+                    /// \todo dj: This translation is not necessary at this point. It should be enough to
+                    /// fix slashes and ensure a well-formed path (potentially relative).
+                    M_TranslatePath(newPath, getenv("DOOMWADDIR"), FILENAME_T_MAXLEN);
+                    Str_Append(dest, newPath);
+                }
+            }
+            else
+            {
+                Con_Message("Unknown variable identifier '%s' in \"%s\".\n", Str_Text(&part)+1, Str_Text(src));
+                goto parseEnded;
+            }
+            depth--;
+
+            // Is there another '$' present?
+            if(!(p = Str_CopyDelim(&part, p, '$')))
+                break;
+            // Copy everything up to the next '$'.
+            Str_Append(dest, Str_Text(&part));
+            if(*p != '(')
+            {
+                Con_Message("Invalid character '%c' in \"%s\" at %lu.\n", *p, Str_Text(src), p - Str_Text(src));
+                goto parseEnded;
+            }
+            // Skip over the opening brace.
+            p++;
+            depth++;
+        }
+
+        if(depth != 0)
+        {
+            goto parseEnded;
+        }
+
+        // Copy anything remaining.
+        Str_Append(dest, Str_Text(&part));
+    }
+
+    // Ensure we have a terminating DIR_SEP_CHAR
+    if(Str_RAt(dest, 0) != DIR_SEP_CHAR)
+        Str_AppendChar(dest, DIR_SEP_CHAR);
+
+    // No errors detected.
+    successful = true;
+
+parseEnded:
+    Str_Free(&part);
+    return successful;
+    }
+}
+
 /**
  * \todo dj: We don't really want absolute paths output here, paths should stay relative
  * until search-time where possible.
  */
-static void formSearchPathList(resourcenamespace_t* rnamespace, const ddstring_t* identityKey,
-    const ddstring_t* dataPath, const ddstring_t* defsPath)
+static void formSearchPathList(resourcenamespace_t* rnamespace, gameinfo_t* info)
 {
-    assert(rnamespace && identityKey && defsPath && dataPath);
+    assert(rnamespace);
     {
     ddstring_t pathTemplate, *pathList = &rnamespace->_searchPathList;
     boolean usingGameModePathData = false;
@@ -385,110 +481,29 @@ static void formSearchPathList(resourcenamespace_t* rnamespace, const ddstring_t
 
     // Tokenize the template into discreet paths and process individually.
     { const char* p = Str_Text(&pathTemplate);
-    ddstring_t path;
+    ddstring_t path, translatedPath;
     Str_Init(&path);
+    Str_Init(&translatedPath);
     while((p = Str_CopyDelim(&path, p, ';')))
     {
-        // Do we need to expand platform-specific path directives?
-        translateBasePath(&path, &path);
-
-        // Substitute known symbols in the template.
-        { ddstring_t part, tmp;
-        const char* p;
-        boolean successful = false;
-
-        Str_Init(&part);
-        Str_Init(&tmp);
-
-        // Copy the first part of the path as-is up to first '$' if present.
-        if((p = Str_CopyDelim(&tmp, Str_Text(&path), '$')))
+        // Substitute known symbols in the templated path.
+        if(!parseAndReplaceSymbols(&translatedPath, &path, info))
         {
-            int depth = 0;
-
-            if(*p != '(')
-            {
-                Con_Message("Invalid character '%c' in path \"%s\" at %u.\n", p, rnamespace->_searchPathTemplate, p - rnamespace->_searchPathTemplate);
-                goto parseEnded;
-            }
-            // Skip over the opening brace.
-            p++;
-            depth++;
-
-            // Now grab everything up to the closing ')' (it *should* be present).
-            while((p = Str_CopyDelim(&part, p, ')')))
-            {
-                // First, try the built-in tokens.
-                if(!Str_CompareIgnoreCase(&part, "GameInfo.DataPath"))
-                {
-                    // DataPath already has ending @c DIR_SEP_CHAR.
-                    Str_PartAppend(&tmp, Str_Text(dataPath), 0, Str_Length(dataPath)-1);
-                }
-                else if(!Str_CompareIgnoreCase(&part, "GameInfo.DefsPath"))
-                {
-                    // DefsPath already has ending @c DIR_SEP_CHAR.
-                    Str_PartAppend(&tmp, Str_Text(defsPath), 0, Str_Length(defsPath)-1);
-                }
-                else if(!Str_CompareIgnoreCase(&part, "GameInfo.IdentityKey"))
-                {
-                    Str_Append(&tmp, Str_Text(identityKey));
-                }
-                else if(!Str_CompareIgnoreCase(&part, "DOOMWADDIR"))
-                {
-                    if(!ArgCheck("-nowaddir") && getenv("DOOMWADDIR"))
-                    {
-                        filename_t newPath;
-                        /// \todo dj: This translation is not necessary at this point. It should be enough to
-                        /// fix slashes and ensure a well-formed path (potentially relative).
-                        M_TranslatePath(newPath, getenv("DOOMWADDIR"), FILENAME_T_MAXLEN);
-                        Str_Append(&tmp, newPath);
-                    }
-                }
-                else
-                {
-                    Con_Message("Unknown variable identifier '%s' in \"%s\".\n", Str_Text(&part)+1, rnamespace->_searchPathTemplate);
-                    goto parseEnded;
-                }
-                depth--;
-
-                // Is there another '$' present?
-                if(!(p = Str_CopyDelim(&part, p, '$')))
-                    break;
-                // Copy everything up to the next '$'.
-                Str_Append(&tmp, Str_Text(&part));
-                if(*p != '(')
-                {
-                    Con_Message("Invalid character '%c' in path \"%s\" at %u.\n", p, rnamespace->_searchPathTemplate, p - rnamespace->_searchPathTemplate);
-                    goto parseEnded;
-                }
-                // Skip over the opening brace.
-                p++;
-                depth++;
-            }
-
-            if(depth != 0)
-            {
-                goto parseEnded;
-            }
-
-            // Copy anything remaining.
-            Str_Append(&tmp, Str_Text(&part));
+            // Path cannot be completed due to incomplete symbol definitions. Ignore this path.
+#if _DEBUG
+            Con_Message("formSearchPathList: Ignoring incomplete path \"%s\" for rnamespace %s.\n", Str_Text(&path), rnamespace->_name);
+#endif
+            continue;
         }
 
-        // Ensure we have a terminating DIR_SEP_CHAR
-        if(Str_RAt(&tmp, 0) != DIR_SEP_CHAR)
-            Str_AppendChar(&tmp, DIR_SEP_CHAR);
+        // Do we need to expand platform-specific path directives?
+        translateBasePath(&translatedPath, &translatedPath);
 
-        // No errors detected.
-        successful = true;
-
-parseEnded:
-        Str_Free(&part);
-
-        Str_Append(pathList, Str_Text(&tmp)); Str_Append(pathList, ";");
-        Str_Free(&tmp);
-        }
+        // Add it to the list of paths.
+        Str_Append(pathList, Str_Text(&translatedPath)); Str_Append(pathList, ";");
     }
     Str_Free(&path);
+    Str_Free(&translatedPath);
     }
 
     // The overriding path.
@@ -510,10 +525,10 @@ parseEnded:
     }
 }
 
-static void collateSearchPathSet(gameinfo_t* info, resourcenamespace_t* rnamespace)
+static void collateSearchPathSet(resourcenamespace_t* rnamespace, gameinfo_t* info)
 {
-    assert(info);
-    formSearchPathList(rnamespace, GameInfo_IdentityKey(info), GameInfo_DataPath(info), GameInfo_DefsPath(info));
+    assert(rnamespace && info);
+    formSearchPathList(rnamespace, info);
 }
 
 static boolean tryFindFile(resourceclass_t rclass, const char* searchPath,
@@ -525,7 +540,7 @@ static boolean tryFindFile(resourceclass_t rclass, const char* searchPath,
     {
         if(!rnamespace->_fileHash)
         {
-            collateSearchPathSet(DD_GameInfo(), rnamespace);
+            collateSearchPathSet(rnamespace, DD_GameInfo());
             rnamespace->_fileHash = FileHash_Create(Str_Text(&rnamespace->_searchPathList));
         }
         return FileHash_Find(rnamespace->_fileHash, foundPath, searchPath, foundPathLen);
