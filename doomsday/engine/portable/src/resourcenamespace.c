@@ -221,7 +221,7 @@ void ResourceNamespace_Reset(resourcenamespace_t* rnamespace)
     rnamespace->_flags |= RNF_IS_DIRTY;
 }
 
-boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rnamespace, const char* newPath, boolean append)
+boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rnamespace, const char* newPath)
 {
     assert(rnamespace);
     {
@@ -257,17 +257,9 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rnamespace, const c
         if(ignore) return true; // We don't want duplicates.
     }
 
-    // Add the new search path.
-    if(append)
-    {
-        Str_Append(pathList, absNewPath);
-        Str_Append(pathList, ";");
-    }
-    else
-    {
-        Str_Prepend(pathList, ";");
-        Str_Prepend(pathList, absNewPath);
-    }
+    // Prepend to the path list - newer paths have priority.
+    Str_Prepend(pathList, ";");
+    Str_Prepend(pathList, absNewPath);
 
     rnamespace->_flags |= RNF_IS_DIRTY;
     return true;

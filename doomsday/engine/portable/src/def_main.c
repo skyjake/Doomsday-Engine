@@ -1120,9 +1120,6 @@ void Def_Read(void)
     Def_CountMsg(defs.count.lineTypes.num, "line types");
     Def_CountMsg(defs.count.sectorTypes.num, "sector types");
 
-    // Init the base model search path (append).
-    ResourceNamespace_AddSearchPath(F_ToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL)), defs.modelPath, true);
-
     defsInited = true;
 }
 

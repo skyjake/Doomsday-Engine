@@ -69,7 +69,7 @@ void ResourceNamespace_Reset(resourcenamespace_t* rnamespace);
 /**
  * Add a new raw path to the list of "extra" search paths in this namespace.
  */
-boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rnamespace, const char* newPath, boolean append);
+boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rnamespace, const char* newPath);
 
 /**
  * Clear "extra" resource search paths in this namespace.

@@ -784,10 +784,9 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
 
         if(ISTOKEN("ModelPath"))
         {
-            // A new model path. Prepend to the list.
             READSTR(label);
             CHECKSC;
-            ResourceNamespace_AddSearchPath(F_ToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL)), label, false);
+            ResourceNamespace_AddSearchPath(F_ToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL)), label);
         }
 
         if(ISTOKEN("Header"))
@@ -807,7 +806,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                 RV_STR("Sfx prefix", dummy)
                 RV_STR("Mus prefix", dummy)
                 RV_STR("Text prefix", dummy)
-                RV_STR("Model path", ded->modelPath)
+                RV_STR("Model path", dummy)
                 RV_FLAGS("Common model flags", ded->modelFlags, "df_")
                 RV_FLT("Default model scale", ded->modelScale)
                 RV_FLT("Default model offset", ded->modelOffset)
