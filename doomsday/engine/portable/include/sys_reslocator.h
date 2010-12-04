@@ -22,21 +22,52 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDENG_FILESYS_RESOURCE_LOCATOR_H
-#define LIBDENG_FILESYS_RESOURCE_LOCATOR_H
+#ifndef LIBDENG_SYSTEM_RESOURCE_LOCATOR_H
+#define LIBDENG_SYSTEM_RESOURCE_LOCATOR_H
+
+#include "m_string.h"
+
+/**
+ * Resource Type. Unique identifer attributable to resources (e.g., files).
+ *
+ * @ingroup core
+ */
+typedef enum {
+    RT_NONE = 0,
+    RT_FIRST = 1,
+    RT_ZIP = RT_FIRST,
+    RT_WAD,
+    RT_DED,
+    RT_PNG,
+    RT_TGA,
+    RT_PCX,
+    RT_DMD,
+    RT_MD2,
+    RT_WAV,
+    RT_OGG,
+    RT_MP3,
+    RT_MOD,
+    RT_MID,
+    RT_DEH,
+    RT_LAST_INDEX
+} resourcetype_t;
+
+#define NUM_RESOURCE_TYPES          (RT_LAST_INDEX-1)
+#define VALID_RESOURCE_TYPE(v)      ((v) >= RT_FIRST && (v) < RT_LAST_INDEX)
 
 struct resourcenamespace_s;
 
 /**
  * Unique identifier associated with resource namespaces managed by the resource locator.
  *
- * @ingroup fs
+ * @ingroup core
  * @see ResourceNamespace
  */
 typedef uint resourcenamespaceid_t;
 
 /**
  * \post Initial/default search paths registered, namespaces initialized and queries may begin.
+ * \note May be called to re-initialize the locator back to default state.
  */
 void F_InitResourceLocator(void);
 
@@ -46,40 +77,19 @@ void F_InitResourceLocator(void);
 void F_ShutdownResourceLocator(void);
 
 /**
- * @return              @c true iff the value can be interpreted as a valid id.
- */
-boolean F_IsValidResourceNamespaceId(int val);
-
-/**
- * Given an id return the associated namespace object.
- */
-struct resourcenamespace_s* F_ToResourceNamespace(resourcenamespaceid_t rni);
-
-/**
  * @return              Number of resource namespaces.
  */
 uint F_NumResourceNamespaces(void);
 
 /**
- * @return              Unique identifier of the default namespace associated with @a rclass.
+ * @return              @c true iff the value can be interpreted as a valid resource namespace id.
  */
-resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass);
+boolean F_IsValidResourceNamespaceId(int val);
 
 /**
- * @return              Unique identifier of the resource namespace associated with @a name,
- *                      else @c 0 if not found.
+ * Given an id return the associated resource namespace object.
  */
-resourcenamespaceid_t F_SafeResourceNamespaceForName(const char* name);
-
-/**
- * Same as F_SafeResourceNamespaceForName except will throw a fatal error if not found and won't return.
- */
-resourcenamespaceid_t F_ResourceNamespaceForName(const char* name);
-
-/**
- * Clear "extra" resource search paths for all namespaces.
- */
-void F_ClearResourceSearchPaths(void);
+struct resourcenamespace_s* F_ToResourceNamespace(resourcenamespaceid_t rni);
 
 /**
  * Attempt to locate an external file for the specified resource.
@@ -91,16 +101,16 @@ void F_ClearResourceSearchPaths(void);
  *                      exists on the physical file system and can be read.
  *
  * @param searchPath    Path/name of the resource being searched for. Note that
- *                      the resource @a type specified significantly alters search
- *                      behavior. This allows text replacements of symbolic escape
+ *                      the resource class (@a rclass) specified significantly alters
+ *                      search behavior. This allows text replacements of symbolic escape
  *                      sequences in the path, allowing access to the engine's view
- *                      of the virtual file systmem.
+ *                      of the virtual file system.
  *
- * @param suffix        Optional name suffix. If not @c NULL, append to @p name
+ * @param suffix        Optional name suffix. If not @c NULL, append to @a names
  *                      and look for matches. If not found or not specified then
- *                      search for matches to @p name.
+ *                      search for matches to @a names.
  *
- * @param foundPathLen  Size of @p foundPath in bytes.
+ * @param foundPathLen  Size of @a foundPath in bytes.
  *
  * @return              @c true, iff a file was found.
  */
@@ -108,8 +118,63 @@ boolean F_FindResource(resourceclass_t rclass, char* foundPath, const char* sear
     const char* suffix, size_t foundPathLength);
 
 /**
+ * @return              Default class associated with resources of type @a type.
+ */
+resourceclass_t F_DefaultResourceClassForType(resourcetype_t type);
+
+/**
+ * @return              Unique identifier of the default namespace associated with @a rclass.
+ */
+resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass);
+
+/**
+ * @return              Unique identifier of the resource namespace associated with @a name,
+ *                      else @c 0 (not found).
+ */
+resourcenamespaceid_t F_SafeResourceNamespaceForName(const char* name);
+
+/**
+ * Same as F_SafeResourceNamespaceForName except will throw a fatal error if not found and won't return.
+ */
+resourcenamespaceid_t F_ResourceNamespaceForName(const char* name);
+
+/**
+ * Attempts to determine which "type" should be attributed to a resource, solely
+ * by examining the name (e.g., a file name/path).
+ *
+ * @return              Type determined for this resource else @c RT_NONE.
+ */
+resourcetype_t F_GuessResourceTypeByName(const char* name);
+
+/**
+ * Apply all resource namespace mappings to the specified path.
+ *
+ * @return              @c true iff the path was mapped.
+ */
+boolean F_ApplyPathMapping(ddstring_t* path);
+
+// Utility routines:
+
+/**
  * Convert a resourceclass_t constant into a string for error/debug messages.
  */
 const char* F_ResourceClassStr(resourceclass_t rclass);
 
-#endif /* LIBDENG_FILESYS_RESOURCE_LOCATOR_H */
+/**
+ * Expands relative path directives like '>'.
+ *
+ * \note Despite appearances this function is *not* an alternative version
+ * of M_TranslatePath accepting ddstring_t arguments. Key differences:
+ *
+ * ! Handles '~' on UNIX-based platforms.
+ * ! No other transform applied to @a src path.
+ * ! No path length restrictions.
+ *
+ * @param dest          Expanded path written here.
+ * @param src           Original path.
+ *
+ * @return              @c true iff the path was expanded.
+ */
+boolean F_ExpandBasePath(ddstring_t* dest, const ddstring_t* src);
+
+#endif /* LIBDENG_SYSTEM_RESOURCE_LOCATOR_H */

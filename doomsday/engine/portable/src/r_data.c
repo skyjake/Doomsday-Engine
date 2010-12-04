@@ -1878,7 +1878,7 @@ static boolean expandSkinName(char* foundPath, const char* skin, const char* mod
 
     if(!found)
     {   // Try the model path(s).
-        Str_Clear(&searchPath); Str_Appendf(&searchPath, "models:%s", skin);
+        Str_Clear(&searchPath); Str_Appendf(&searchPath, "Models:%s", skin);
         found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), 0, foundPathLength);
     }
 

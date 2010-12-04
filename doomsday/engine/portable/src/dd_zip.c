@@ -334,81 +334,73 @@ static void copyStr(char* dest, const char* src, size_t num, size_t destSize)
 }
 
 /**
- * The path inside the pack is mapped to another virtual location.
+ * The path inside the pack might be mapped to another virtual location.
  *
  * Data files (pk3, zip, lmp, wad, deh) in the root are mapped to Data/Game/Auto.
  * Definition files (ded) in the root are mapped to Defs/Game/Auto.
  * Paths that begin with a '@' are mapped to Defs/Game/Auto.
  * Paths that begin with a '#' are mapped to Data/Game/Auto.
- * Key-named directories in the root are mapped to another location.
+ * Key-named directories at the root are mapped to another location.
  */
 static void mapPath(char* path, size_t len)
 {
-    filename_t mapped;
-
-    if(strchr(path, DIR_SEP_CHAR) != NULL)
+    if(path[0] == '@') // Manually mapped to Defs?
     {
-        // There is at least one level of directory structure inside the archive.
-
-        // Is this directory subject to a data-class resource namespace mapping?
-        // \fixme dj: These names and associated default resource paths should
-        // be coming from the resource locator.
-        if(!strnicmp("Models" DIR_SEP_STR, path, 7) ||
-           !strnicmp("Flares" DIR_SEP_STR, path, 7) ||
-           !strnicmp("LightMaps" DIR_SEP_STR, path, 10) ||
-           !strnicmp("Music" DIR_SEP_STR, path, 6) ||
-           !strnicmp("Textures" DIR_SEP_STR, path, 9) ||
-           !strnicmp("Flats" DIR_SEP_STR, path, 6) ||
-           !strnicmp("DetailTextures" DIR_SEP_STR, path, 15) ||
-           !strnicmp("Patches" DIR_SEP_STR, path, 8) ||
-           !strnicmp("Sfx" DIR_SEP_STR, path, 4))
-        {
-            // Contents mapped to key-named directory.
-            dd_snprintf(mapped, FILENAME_T_MAXLEN, "%s%s", Str_Text(GameInfo_DataPath(DD_GameInfo())), path);
-            strncpy(path, mapped, len);
-            return;
-        }
-    }
-
-    if(path[0] == '@') // Manually mapped to Defs.
-    {
+        filename_t mapped;
         sprintf(mapped, "%sauto" DIR_SEP_STR "%s", Str_Text(GameInfo_DefsPath(DD_GameInfo())), path + 1);
         strcpy(path, mapped);
+        return;
     }
-    else if(path[0] == '#') // Manually mapped to Data.
+
+    if(path[0] == '#') // Manually mapped to Data?
     {
+        filename_t mapped;
         sprintf(mapped, "%sauto" DIR_SEP_STR "%s", Str_Text(GameInfo_DataPath(DD_GameInfo())), path + 1);
         strcpy(path, mapped);
+        return;
     }
-    else if(strchr(path, DIR_SEP_CHAR) == NULL)
-    {   // The name contains no directory separators.
-        // Check the extension.
-        char* ext = strrchr(path, '.');
 
-        if(ext != NULL)
+    if(strchr(path, DIR_SEP_CHAR) == NULL)
+    {   // No directory separators; i.e., a root file.
+        resourcetype_t type = F_GuessResourceTypeByName(path);
+        resourceclass_t rclass;
+        filename_t mapped;
+
+        /// \kludge Treat DeHackEd patches as packages so they are mapped to Data.
+        rclass = (type == RT_DEH? RC_PACKAGE : F_DefaultResourceClassForType(type));
+        /// < kludge end
+
+        switch(rclass)
         {
-            ++ext;
-
-            if(!stricmp(ext, "pk3") ||
-               !stricmp(ext, "zip") ||
-               !stricmp(ext, "lmp") ||
-               !stricmp(ext, "wad") ||
-               !stricmp(ext, "deh"))
-            {   // Data files are mapped to the Data directory.
-                sprintf(mapped, "%sauto" DIR_SEP_STR, Str_Text(GameInfo_DataPath(DD_GameInfo())));
-            }
-            else if(!stricmp(ext, "ded"))
-            {   // Definitions are mapped to the Defs directory.
-                sprintf(mapped, "%sauto" DIR_SEP_STR, Str_Text(GameInfo_DefsPath(DD_GameInfo())));
-            }
-            else
-            {
-                strncpy(mapped, "", FILENAME_T_MAXLEN);
-            }
-
-            strncat(mapped, path, FILENAME_T_MAXLEN);
-            strncpy(path, mapped, len);
+        case RC_UNKNOWN: // Not mapped.
+            strncpy(mapped, "", FILENAME_T_MAXLEN);
+            break;
+        case RC_DEFINITION: // Mapped to the Defs directory.
+            sprintf(mapped, "%sauto" DIR_SEP_STR, Str_Text(GameInfo_DefsPath(DD_GameInfo())));
+            break;
+        default: // Some other type of known resource. Mapped to the Data directory.
+            sprintf(mapped, "%sauto" DIR_SEP_STR, Str_Text(GameInfo_DataPath(DD_GameInfo())));
+            break;
         }
+
+        strncat(mapped, path, FILENAME_T_MAXLEN);
+        strncpy(path, mapped, len);
+        return;
+    }
+
+    // There is at least one level of directory structure.
+    // Key-named directories in the root might be mapped to another location.
+    { ddstring_t str;
+    Str_Init(&str);
+    Str_Set(&str, path);
+
+    if(F_ApplyPathMapping(&str))
+    {
+        strncpy(path, Str_Text(&str), len);
+        if(Str_Length(&str) > len)
+            Con_Message("mapPath: Warning, forced to truncate long path \"%s\" to \"%s\" (max:%lu).\n", Str_Text(&str), path, len);
+    }
+    Str_Free(&str);
     }
 }
 

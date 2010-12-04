@@ -40,6 +40,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "resourcenamespace.h"
+
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
 

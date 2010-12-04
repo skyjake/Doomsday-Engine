@@ -74,7 +74,7 @@ void            Str_Strip(ddstring_t* ds);
 const char*     Str_GetLine(ddstring_t* ds, const char* src);
 const char*     Str_CopyDelim(ddstring_t* dest, const char* src, char delim);
 int             Str_CompareIgnoreCase(const ddstring_t* ds, const char* text);
-char            Str_At(ddstring_t* str, int index);
-char            Str_RAt(ddstring_t* str, int reverseIndex);
+char            Str_At(const ddstring_t* str, size_t index);
+char            Str_RAt(const ddstring_t* str, size_t reverseIndex);
 
 #endif /* LIBDENG_STRING_H */

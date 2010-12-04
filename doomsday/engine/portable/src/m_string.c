@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -261,8 +261,8 @@ void Str_Copy(ddstring_t* dest, const ddstring_t* src)
  */
 void Str_StripLeft(ddstring_t *ds)
 {
-    size_t      i, num;
-    boolean     isDone;
+    size_t i, num;
+    boolean isDone;
 
     if(!ds->length)
         return;
@@ -359,12 +359,12 @@ int Str_CompareIgnoreCase(const ddstring_t* ds, const char* text)
  * Copies characters from @c to @dest until a @c delim character is encountered.
  * Also ignores all whitespace characters.
  *
- * @param dest  Destination string.
- * @param src   Source string.
- * @param delim  Delimiter character, where copying will stop.
+ * @param dest          Destination string.
+ * @param src           Source string.
+ * @param delim         Delimiter character, where copying will stop.
  *
- * @return  Pointer to the character within @c src past the delimiter, or NULL if the
- *          source data ended.
+ * @return              Pointer to the character within @c src past the delimiter, or NULL if the
+ *                      source data ended.
  */
 const char* Str_CopyDelim(ddstring_t* dest, const char* src, char delim)
 {
@@ -389,14 +389,14 @@ const char* Str_CopyDelim(ddstring_t* dest, const char* src, char delim)
 /**
  * Retrieves a character in the string.
  *
- * @param str    String to get the character from.
- * @param index  Index of the character.
+ * @param str           String to get the character from.
+ * @param index         Index of the character.
  *
- * @return The character at @c index, or 0 if the index is not in range.
+ * @return              The character at @c index, or 0 if the index is not in range.
  */
-char Str_At(ddstring_t* str, int index)
+char Str_At(const ddstring_t* str, size_t index)
 {
-    if(index < 0 || index >= str->length)
+    if(index >= str->length)
     {
         return 0;
     }
@@ -406,14 +406,14 @@ char Str_At(ddstring_t* str, int index)
 /**
  * Retrieves a character in the string. Indices start from the end of the string.
  *
- * @param str    String to get the character from.
+ * @param str           String to get the character from.
  * @param reverseIndex  Index of the character, where 0 is the last character of the string.
  *
- * @return The character at @c index, or 0 if the index is not in range.
+ * @return              The character at @c index, or 0 if the index is not in range.
  */
-char Str_RAt(ddstring_t* str, int reverseIndex)
+char Str_RAt(const ddstring_t* str, size_t reverseIndex)
 {
-    if(reverseIndex < 0 || reverseIndex >= str->length)
+    if(reverseIndex >= str->length)
     {
         return 0;
     }

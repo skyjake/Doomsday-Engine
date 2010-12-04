@@ -161,7 +161,7 @@ void Rend_ParticleLoadExtraTextures(void)
         char name[80];
 
         // Try to load the texture.
-        sprintf(name, "textures:Particle%02i", i);
+        sprintf(name, "Textures:Particle%02i", i);
 
         if(GL_LoadParticleTexture(&image, name))
         {

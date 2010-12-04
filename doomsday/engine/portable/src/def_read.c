@@ -47,12 +47,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_system.h"
 #include "de_misc.h"
 #include "de_refresh.h"
 #include "de_defs.h"
+
+#include "resourcenamespace.h"
 
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"

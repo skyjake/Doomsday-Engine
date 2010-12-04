@@ -707,7 +707,7 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst, void* co
         filename_t foundPath;
         boolean found;
 
-        Str_Init(&searchPath); Str_Appendf(&searchPath, "textures:%s", dTex->external);
+        Str_Init(&searchPath); Str_Appendf(&searchPath, "Textures:%s", dTex->external);
 
         found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), NULL, FILENAME_T_MAXLEN);
         if(found && GL_LoadImage(image, foundPath))
@@ -785,7 +785,7 @@ byte GL_LoadLightMap(image_t* image, const gltexture_inst_t* inst, void* context
     filename_t foundPath;
     boolean found;
 
-    Str_Init(&searchPath);Str_Appendf(&searchPath, "lightmaps:%s", lmap->external);
+    Str_Init(&searchPath);Str_Appendf(&searchPath, "LightMaps:%s", lmap->external);
 
     found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), "-ck", FILENAME_T_MAXLEN);
     if(found && GL_LoadImage(image, foundPath))
@@ -843,7 +843,7 @@ byte GL_LoadShinyTexture(image_t* image, const gltexture_inst_t* inst, void* con
     filename_t foundPath;
     boolean found;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "lightmaps:%s", sTex->external);
+    Str_Init(&searchPath); Str_Appendf(&searchPath, "LightMaps:%s", sTex->external);
 
     found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), 0, FILENAME_T_MAXLEN);
     if(found && GL_LoadImage(image, foundPath))
@@ -872,7 +872,7 @@ byte GL_LoadMaskTexture(image_t* image, const gltexture_inst_t* inst, void* cont
     filename_t foundPath;
     boolean found;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "lightmaps:%s", mTex->external);
+    Str_Init(&searchPath); Str_Appendf(&searchPath, "LightMaps:%s", mTex->external);
 
     found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), 0, FILENAME_T_MAXLEN);
     if(found && GL_LoadImage(image, foundPath))
@@ -901,7 +901,7 @@ byte GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst, void* contex
     filename_t foundPath;
     boolean found;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "models:%s", sn->path);
+    Str_Init(&searchPath); Str_Appendf(&searchPath, "Models:%s", sn->path);
 
     found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), 0, FILENAME_T_MAXLEN);
     if(found && GL_LoadImage(image, foundPath))
@@ -930,7 +930,7 @@ byte GL_LoadModelShinySkin(image_t* image, const gltexture_inst_t* inst, void* c
     filename_t foundPath;
     boolean found;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "models:%s", sn->path);
+    Str_Init(&searchPath); Str_Appendf(&searchPath, "Models:%s", sn->path);
 
     found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), "-ck", FILENAME_T_MAXLEN);
     if(found && GL_LoadImage(image, foundPath))
@@ -1051,7 +1051,7 @@ byte GL_LoadFlat(image_t* image, const gltexture_inst_t* inst, void* context)
         filename_t foundPath;
 
         // First try the flats namespace then the old-fashioned "flat-name" in the textures namespace?.
-        Str_Init(&searchPath); Str_Appendf(&searchPath, "flats:%s;textures:flat-%s", lumpName, lumpName);
+        Str_Init(&searchPath); Str_Appendf(&searchPath, "Flats:%s;Textures:flat-%s", lumpName, lumpName);
 
         if(F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), "-ck", FILENAME_T_MAXLEN) &&
            GL_LoadImage(image, foundPath))
@@ -1354,7 +1354,7 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst, void* cont
         filename_t foundPath;
         boolean found;
 
-        Str_Init(&searchPath); Str_Appendf(&searchPath, "textures:%s", texDef->name);
+        Str_Init(&searchPath); Str_Appendf(&searchPath, "Textures:%s", texDef->name);
         found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), "-ck", FILENAME_T_MAXLEN);
 
         if(found && GL_LoadImage(image, foundPath))
@@ -1430,7 +1430,7 @@ byte GL_LoadDoomPatch(image_t* image, const gltexture_inst_t* inst,
         ddstring_t searchPath;
         filename_t foundPath;
 
-        Str_Init(&searchPath); Str_Appendf(&searchPath, "patches:%s", W_LumpName(p->lump));
+        Str_Init(&searchPath); Str_Appendf(&searchPath, "Patches:%s", W_LumpName(p->lump));
 
         if(F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), "-ck", FILENAME_T_MAXLEN) &&
            GL_LoadImage(image, foundPath))
@@ -1501,13 +1501,13 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
 
         // Compose resource names, prefer translated or psprite versions.
         Str_Init(&searchPath);
-        Str_Appendf(&searchPath, "patches:%s", lumpName);
+        Str_Appendf(&searchPath, "Patches:%s", lumpName);
         if(pSprite || tclass || tmap)
         {
             if(pSprite)
-                Str_Appendf(&searchPath, ";patches:%s-hud", lumpName);
+                Str_Appendf(&searchPath, ";Patches:%s-hud", lumpName);
             else // Translated.
-                Str_Appendf(&searchPath, ";patches:%s-table%i%i", lumpName, tclass, tmap);
+                Str_Appendf(&searchPath, ";Patches:%s-table%i%i", lumpName, tclass, tmap);
         }
 
         if(F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), "-ck", FILENAME_T_MAXLEN) &&
@@ -1602,7 +1602,7 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
     filename_t foundPath;
 
     // First try to find an external resource.
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "patches:%s", W_LumpName(r->lump));
+    Str_Init(&searchPath); Str_Appendf(&searchPath, "Patches:%s", W_LumpName(r->lump));
 
     if(F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), 0, FILENAME_T_MAXLEN) &&
        GL_LoadImage(image, foundPath))

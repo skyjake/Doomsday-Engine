@@ -543,8 +543,12 @@ void G_EndFrame(void)
  * Takes a copy of the engine's entry points and exported data. Returns
  * a pointer to the structure that contains our entry points and exports.
  */
-game_export_t *GetGameAPI(game_import_t *imports)
+game_export_t* GetGameAPI(game_import_t* imports)
 {
+    // Make sure this plugin isn't newer than Doomsday...
+    if(imports->version < DOOMSDAY_VERSION)
+        Con_Error(GAME_NICENAME " requires at least Doomsday " DOOMSDAY_VERSION_TEXT "!\n");
+
     // Take a copy of the imports, but only copy as much data as is
     // allowed and legal.
     memset(&gi, 0, sizeof(gi));

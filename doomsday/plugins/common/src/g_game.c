@@ -437,15 +437,11 @@ gameaction_t G_GetGameAction(void)
 }
 
 /**
- * Common Pre Engine Initialization routine.
+ * Common Pre Game Initialization routine.
  * Game-specfic pre init actions should be placed in eg D_PreInit() (for jDoom)
  */
 void G_CommonPreInit(void)
 {
-    // Make sure game.dll isn't newer than Doomsday...
-    if(gi.version < DOOMSDAY_VERSION)
-        Con_Error(GAME_NICENAME " requires at least Doomsday " DOOMSDAY_VERSION_TEXT "!\n");
-
     verbose = ArgExists("-verbose");
 
     // Register hooks.
@@ -458,8 +454,6 @@ void G_CommonPreInit(void)
         players[i].plr = DD_GetPlayer(i);
         players[i].plr->extraData = (void*) &players[i];
     }}
-
-    Con_SetString("map-name", NOTAMAPNAME, 1);
 
     G_RegisterBindClasses();
     G_RegisterPlayerControls();
@@ -478,6 +472,8 @@ void G_CommonPreInit(void)
     ST_Register();              // For the hud/statusbar.
     X_Register();               // For the crosshair.
     FI_StackRegister();         // For the InFine lib.
+
+    Con_SetString("map-name", NOTAMAPNAME, 1);
 }
 
 #if __JHEXEN__
@@ -1250,7 +1246,7 @@ void R_InitRefresh(void)
 }
 
 /**
- * Common Post Engine Initialization routine.
+ * Common Post Game Initialization routine.
  * Game-specific post init actions should be placed in eg D_PostInit()
  * (for jDoom) and NOT here.
  */

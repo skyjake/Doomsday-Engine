@@ -1421,6 +1421,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\resourcenamespace.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\s_cache.c"
 				>
 			</File>
@@ -1533,6 +1537,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\sys_reslocator.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\sys_sdl_window.c"
 				>
 				<FileConfiguration
@@ -1599,10 +1607,6 @@
 						Name="VCCLCompilerTool"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\src\sys_reslocator.c"
-				>
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\sys_sock.c"
@@ -3126,6 +3130,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\resourcenamespace.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\s_cache.h"
 				>
 			</File>
@@ -3214,10 +3222,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\sys_reslocator.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\sys_file.h"
 				>
 			</File>
@@ -3239,6 +3243,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\sys_opengl.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\sys_reslocator.h"
 				>
 			</File>
 			<File
