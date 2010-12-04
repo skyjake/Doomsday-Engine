@@ -244,6 +244,13 @@ void B_BindDefaults(void)
     // Bias editor.
 }
 
+void B_BindGameDefaults(void)
+{
+    if(DD_IsNullGameInfo(DD_GameInfo()))
+        return;
+    Con_Executef(CMDS_DDAY, false, "defaultgamebindings");
+}
+
 /**
  * Deallocates the memory for the commands and bindings.
  */
@@ -524,10 +531,7 @@ D_CMD(DefaultBindings)
         return false;
 
     B_BindDefaults();
-    if(!DD_IsNullGameInfo(DD_GameInfo()))
-    {   // Set the game's default bindings.
-        Con_Executef(CMDS_DDAY, false, "defaultgamebindings");
-    }
+    B_BindGameDefaults();
 
     return true;
 }

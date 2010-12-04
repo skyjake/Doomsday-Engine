@@ -41,6 +41,7 @@ boolean         B_Responder(ddevent_t* ev);
 void            B_WriteToFile(FILE* file);
 
 void B_BindDefaults(void);
+void B_BindGameDefaults(void);
 
 struct evbinding_s* B_BindCommand(const char* eventDesc, const char* command);
 struct dbinding_s* B_BindControl(const char* controlDesc, const char* device);

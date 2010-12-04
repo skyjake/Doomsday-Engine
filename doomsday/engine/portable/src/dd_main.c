@@ -820,6 +820,9 @@ static int DD_ChangeGameWorker(void* parm)
     Con_SetProgress(60);
     VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 
+    // Apply default control bindings for this game.
+    B_BindGameDefaults();
+
     // Read bindings for this game and merge with the working set.
     Con_ParseCommands(Str_Text(GameInfo_BindingConfig(info)), false);
 
