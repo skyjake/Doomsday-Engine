@@ -270,6 +270,7 @@ DEFCC( CCmdDefaultGameBinds )
         // Basic movement:
         "bindcontrol attack key-ctrl",
         "bindcontrol speed key-shift",
+        "bindevent key-capslock-down {toggle ctl-run}",
         "bindcontrol strafe key-alt",
         "bindcontrol walk key-up",
         "bindcontrol walk key-w",
@@ -327,7 +328,7 @@ DEFCC( CCmdDefaultGameBinds )
         "bindevent key-6 {impulse egg}",
 #endif
 
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
+#if __JHERETIC__ || __JHEXEN__
         "bindevent key-sqbracketleft {impulse previtem}",
         "bindevent key-sqbracketleft-repeat {impulse previtem}",
         "bindevent key-sqbracketright {impulse nextitem}",
