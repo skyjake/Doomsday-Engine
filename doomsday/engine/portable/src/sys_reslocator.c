@@ -563,9 +563,9 @@ boolean F_ExpandBasePath(ddstring_t* dest, const ddstring_t* src)
                 Str_AppendChar(&buf, DIR_SEP_CHAR);
 
             // Append the rest of the original path.
-            Str_PartAppend(&buf, Str_Text(str), 2, Str_Length(src)-2);
+            Str_PartAppend(&buf, Str_Text(src), 2, Str_Length(src)-2);
 
-            Str_Copy(&dest, &buf);
+            Str_Copy(dest, &buf);
             Str_Free(&buf);
             return true;
         }
