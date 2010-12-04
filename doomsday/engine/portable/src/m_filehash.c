@@ -130,13 +130,14 @@ static direcnode_t* buildDirecNodes(filehash_t* fh, const char* path)
     // Let's try to make it a relative path.
     M_RemoveBasePath(relPath, path, FILENAME_T_MAXLEN);
 
-    if((tokPath = cursor = M_Malloc(strlen(relPath) + 1)) == 0)
+    if((tokPath = M_Malloc(strlen(relPath) + 1)) == 0)
         Con_Error("buildDirecNodes: failed on allocation of %lu bytes.", (unsigned long) (strlen(relPath) + 1));
 
     strcpy(tokPath, relPath);
     parent = 0;
 
     // Continue splitting as long as there are parts.
+    cursor = tokPath;
     while(*(part = M_StrTok(&cursor, DIR_SEP_STR)))
     {
         node = direcNode(fh, part, parent);
@@ -260,6 +261,8 @@ static void addDirectory(filehash_t* fh, const char* path)
     direcnode_t* direc = buildDirecNodes(fh, path);
     filename_t searchPattern;
 
+    assert(direc);
+
     // This directory is now on the search path.
     direc->isOnPath = true;
 
@@ -371,6 +374,7 @@ static void clearHash(filehash_t* fh)
                 M_Free(entry->first);
                 entry->first = nextNode;
             }
+            entry->last = 0;
         }
     }
 
@@ -382,11 +386,8 @@ static void clearHash(filehash_t* fh)
         M_Free(fh->_direcFirst);
         fh->_direcFirst = next;
     }
+    fh->_direcLast = 0;
 
-    // Clear the entire table.
-    memset(fh->_hashTable, 0, sizeof(fh->_hashTable));
-
-    fh->_direcFirst = fh->_direcLast = 0;
     fh->_builtRecordSet = false;
 }
 
