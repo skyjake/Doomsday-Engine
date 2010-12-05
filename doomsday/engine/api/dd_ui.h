@@ -129,7 +129,7 @@ typedef struct fi_page_s {
     } _bg;
 
     animatorvector4_t _filter;
-    animatorvector3_t _textColor[FIPAGE_NUM_PREDEFINED_COLORS];
+    animatorvector3_t _preColor[FIPAGE_NUM_PREDEFINED_COLORS];
 
     uint _timer;
 } fi_page_t;

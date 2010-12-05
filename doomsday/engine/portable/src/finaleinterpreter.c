@@ -168,7 +168,7 @@ DEFFC(DeleteText);
 DEFFC(Font);
 DEFFC(FontA);
 DEFFC(FontB);
-DEFFC(PredefinedTextColor);
+DEFFC(PredefinedColor);
 DEFFC(TextRGB);
 DEFFC(TextAlpha);
 DEFFC(TextOffX);
@@ -299,7 +299,7 @@ static const command_t commands[] = {
     { "notrigger",  "", FIC_NoShowMenu },
 
     // Misc.
-    { "precolor",   "ifff", FIC_PredefinedTextColor }, // precolor (num) (r) (g) (b)
+    { "precolor",   "ifff", FIC_PredefinedColor }, // precolor (num) (r) (g) (b)
 
     // Deprecated Pic commands
     { "delpic",     "o", FIC_Delete }, // delpic (obj)
@@ -1862,9 +1862,10 @@ DEFFC(DeleteText)
         FI_DeleteObject(removeObjectInNamespace(&fi->_namespace, OP_OBJECT(0)));
 }
 
-DEFFC(PredefinedTextColor)
+DEFFC(PredefinedColor)
 {
     FIPage_SetPredefinedColor(fi->_pages[PAGE_TEXT], MINMAX_OF(1, OP_INT(0), 9)-1, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
+    FIPage_SetPredefinedColor(fi->_pages[PAGE_PICS], MINMAX_OF(1, OP_INT(0), 9)-1, OP_FLOAT(1), OP_FLOAT(2), OP_FLOAT(3), fi->_inTime);
 }
 
 DEFFC(TextRGB)

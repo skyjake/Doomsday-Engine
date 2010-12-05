@@ -118,7 +118,7 @@ static void pageClear(fi_page_t* p)
     {uint i;
     for(i = 0; i < FIPAGE_NUM_PREDEFINED_COLORS; ++i)
     {
-        AnimatorVector3_Init(p->_textColor[i], 1, 1, 1);
+        AnimatorVector3_Init(p->_preColor[i], 1, 1, 1);
     }}
 }
 
@@ -643,7 +643,7 @@ void FIPage_Ticker(fi_page_t* p, timespan_t ticLength)
     AnimatorVector4_Think(p->_filter);
     {uint i;
     for(i = 0; i < FIPAGE_NUM_PREDEFINED_COLORS; ++i)
-        AnimatorVector3_Think(p->_textColor[i]);
+        AnimatorVector3_Think(p->_preColor[i]);
     }
 }
 
@@ -743,7 +743,7 @@ void FIPage_SetPredefinedColor(fi_page_t* p, uint idx, float red, float green, f
 {
     if(!p) Con_Error("FIPage_SetPredefinedColor: Invalid page.");
     if(!VALID_FIPAGE_PREDEFINED_COLOR(idx)) Con_Error("FIPage_SetPredefinedColor: Invalid color id %u.", idx);
-    AnimatorVector3_Set(p->_textColor[idx], red, green, blue, steps);
+    AnimatorVector3_Set(p->_preColor[idx], red, green, blue, steps);
 }
 
 #if _DEBUG
@@ -1103,10 +1103,10 @@ void FIData_PicDraw(fi_object_t* obj, const float offset[3])
     V3_Set(origin, p->pos[VX].value, p->pos[VY].value, p->pos[VZ].value);
     V3_Set(scale, p->scale[VX].value, p->scale[VY].value, p->scale[VZ].value);
     V4_Set(rgba, p->color[CR].value, p->color[CG].value, p->color[CB].value, p->color[CA].value);
-    if(p->numFrames == 0)
+    if(p->numFrames <= 1)
         V4_Set(rgba2, p->otherColor[CR].value, p->otherColor[CG].value, p->otherColor[CB].value, p->otherColor[CA].value);
 
-    drawPicFrame(p, p->curFrame, origin, scale, rgba, (p->numFrames==0? rgba2 : rgba), p->angle.value, offset);
+    drawPicFrame(p, p->curFrame, origin, scale, rgba, (p->numFrames<=1? rgba2 : rgba), p->angle.value, offset);
     }
 }
 
@@ -1251,7 +1251,7 @@ void FIData_TextDraw(fi_object_t* obj, const float offset[3])
                 /*else
                 {   /// \fixme disabled for now as this violates our ownership model.
                     finale_t* f = finalesById(stackTop());
-                    color = &f->_interpreter->_pages[PAGE_TEXT]->_textColor[colorIdx-1];
+                    color = &f->_interpreter->_pages[PAGE_TEXT]->_preColor[colorIdx-1];
                 }*/
 
                 glColor4f((*color)[0].value, (*color)[1].value, (*color)[2].value, t->color[3].value);
