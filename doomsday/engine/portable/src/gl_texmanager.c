@@ -2115,8 +2115,7 @@ void GL_TexReset(void)
     if(useBusyMode)
     {
         Con_InitProgress(200);
-        Con_Busy(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                 "Reseting textures...", doTexReset, &useBusyMode);
+        Con_Busy(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0), "Reseting textures...", doTexReset, &useBusyMode);
     }
     else
     {

@@ -556,7 +556,7 @@ boolean GL_EarlyInit(void)
     if(novideo)
         return true;
 
-    VERBOSE(Con_Message("GL_EarlyInit: Initializing Doomsday Graphics Library...\n"));
+    VERBOSE( Con_Message("Initializing Doomsday Graphics Library...\n") );
 
     // Get the original gamma ramp and check if ramps are supported.
     GL_GetGammaRamp(original_gamma_ramp);
@@ -606,18 +606,6 @@ boolean GL_EarlyInit(void)
 
     // Allow font rendering.
     FR_Init();
-
-    // Render a few black frames before we continue. This will help to
-    // stabilize things before we begin drawing for real and to avoid any
-    // unwanted video artefacts.
-    {
-    int i = 0;
-    while(i++ < 3)
-    {
-        glClear(GL_COLOR_BUFFER_BIT);
-        GL_DoUpdate();
-    }
-    }
 
     initGLOk = true;
     return true;

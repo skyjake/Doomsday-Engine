@@ -563,7 +563,7 @@ boolean F_ExpandBasePath(ddstring_t* dest, const ddstring_t* src)
             Str_Init(&buf);
 
             Str_Set(&buf, getenv("HOME"));
-            if(Str_RAt(&buf, 0) != '/')
+            if(Str_RAt(&buf, 0) != DIR_SEP_CHAR)
                 Str_AppendChar(&buf, DIR_SEP_CHAR);
 
             // Append the rest of the original path.
@@ -580,7 +580,7 @@ boolean F_ExpandBasePath(ddstring_t* dest, const ddstring_t* src)
         const char* p = Str_Text(src)+2;
 
         Str_Init(&userName);
-        if((p = Str_CopyDelim(&userName, p, DIR_SEP_CHAR)))
+        if((p = Str_CopyDelim(&userName, p, '/')))
         {
             ddstring_t buf;
             struct passwd* pw;

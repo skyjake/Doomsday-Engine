@@ -1428,8 +1428,7 @@ D_CMD(Connect)
         param.port = strtol(argv[2], 0, 0);
     }
 
-    return Con_Busy(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
-                    NULL, Net_ConnectWorker, &param);
+    return Con_Busy(BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0), NULL, Net_ConnectWorker, &param);
 }
 
 /**

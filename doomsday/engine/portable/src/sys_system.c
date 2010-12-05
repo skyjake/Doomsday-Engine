@@ -86,6 +86,9 @@ static void C_DECL handler(int s)
 
 /**
  * Initialize machine state.
+ *
+ * \note This must be called from the main thread due to issues with the devices
+ * we use via the WINAPI, MCI (cdaudio, mixer etc) on the WIN32 platform.
  */
 void Sys_Init(void)
 {

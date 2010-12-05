@@ -1027,7 +1027,6 @@ int DD_Main(void)
     }
     if(ArgCheckWith("-bpp", 1))
         winBPP = atoi(ArgNext());
-    // Ensure a valid value.
     if(winBPP != 16 && winBPP != 32)
         winBPP = 32;
     if(ArgCheck("-nocenter"))
@@ -1058,12 +1057,21 @@ int DD_Main(void)
             Sys_CriticalMessage("GL_EarlyInit() failed.");
             return -1;
         }
+
+        // Render a few black frames before we continue. This will help to
+        // stabilize things before we begin drawing for real and to avoid any
+        // unwanted video artefacts.
+        if(!novideo)
+        {
+            int i = 0;
+            while(i++ < 3)
+            {
+                glClear(GL_COLOR_BUFFER_BIT);
+                GL_DoUpdate();
+            }
+        }
     }
 
-    /**
-     * \note This must be called from the main thread due to issues with
-     * the devices we use via the WINAPI, MCI (cdaudio, mixer etc).
-     */
     Sys_Init();
 
     // Enter busy mode until startup complete.
@@ -1080,13 +1088,17 @@ int DD_Main(void)
     }
 
     // Do deferred uploads.
+    Con_InitProgress(200);
     Con_Busy(BUSYF_STARTUP | BUSYF_PROGRESS_BAR | BUSYF_ACTIVITY | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
              "Buffering...", DD_DummyWorker, 0);
 
     // Unless we reenter busy-mode due to automatic game selection, we won't be
     // drawing anything further until DD_GameLoop; so lets clean up.
-    glClear(GL_COLOR_BUFFER_BIT);
-    GL_DoUpdate();
+    if(!novideo && !isDedicated)
+    {
+        glClear(GL_COLOR_BUFFER_BIT);
+        GL_DoUpdate();
+    }
 
     // Add resources specified using -iwad options on the command line.
 #pragma message("!!!WARNING: Re-implement support for the -iwad option!!!")
