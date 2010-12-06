@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,17 @@
  */
 
 /**
- * dd_version.h: Version Information
+ * Version Information
  */
 
-#ifndef __DOOMSDAY_VERSION_H__
-#define __DOOMSDAY_VERSION_H__
+#ifndef LIBDENG_VERSION_H
+#define LIBDENG_VERSION_H
+
+#define DOOMSDAY_NICENAME       "Doomsday Engine"
+
+#define DOOMSDAY_HOMEURL        "http://dengine.net"
+#define DOOMSDAY_MASTERURL      "http://dengine.net/master.php"
+#define DOOMSDAY_DOCSURL        "http://dengine.net/dew"
 
 /**
  * Version number rules: (major).(minor).(revision)-(release)
@@ -58,8 +64,6 @@
 #endif
 #define DOOMSDAY_VERSION_NUMBER 1,9,0,0 // For WIN32 version info.
 
-#define DOOMSDAY_PROJECTURL     "http://sourceforge.net/projects/deng/"
-
 /**
  * If DOOMSDAY_RELEASE_FULL is NOT defined, the Win32 version info
  * will be marked accordingly, indicating that this is a special build,
@@ -68,4 +72,4 @@
  */
 //#define DOOMSDAY_RELEASE_FULL   1
 
-#endif
+#endif /* LIBDENG_VERSION_H */

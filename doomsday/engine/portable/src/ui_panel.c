@@ -1039,8 +1039,8 @@ void CP_Drawer(ui_page_t *page)
 
     // Project home.
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
-    UI_TextOutEx(DOOMSDAY_PROJECTURL,
-                 UI_ScreenW(1000) - UI_BORDER - FR_TextWidth(DOOMSDAY_PROJECTURL),
+    UI_TextOutEx(DENGPROJECT_HOMEURL,
+                 UI_ScreenW(1000) - UI_BORDER - FR_TextWidth(DENGPROJECT_HOMEURL),
                  UI_ScreenY(25), false, true, UI_Color(UIC_TEXT), 0.4f);
 
     // Is the help box visible?

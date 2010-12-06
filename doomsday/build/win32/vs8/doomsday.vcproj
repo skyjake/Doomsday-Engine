@@ -2606,31 +2606,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\api\dd_animator.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\dd_api.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\dd_compositefont.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\dd_def.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\api\dd_gl.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\dd_help.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\dd_infine.h"
 				>
 			</File>
 			<File
@@ -2646,31 +2626,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\api\dd_maptypes.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\dd_pinit.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\dd_plugin.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\dd_share.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\dd_types.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\dd_ui.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\dd_vectorgraphic.h"
 				>
 			</File>
 			<File
@@ -2767,10 +2723,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\def_share.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\doomsday.h"
 				>
 			</File>
 			<File
@@ -3186,23 +3138,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\sys_audio.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\sys_audiod.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\sys_audiod_dummy.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\sys_audiod_loader.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\api\sys_audiod_mus.h"
 				>
 			</File>
 			<File
@@ -3863,10 +3803,82 @@
 				</FileConfiguration>
 			</File>
 		</Filter>
-		<File
-			RelativePath="..\..\..\engine\api\doomsday.def"
+		<Filter
+			Name="API"
 			>
-		</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_animator.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_api.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_compositefont.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_gl.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_infine.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_maptypes.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_plugin.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_share.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_types.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_ui.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_vectorgraphic.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dengproject.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\doomsday.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\sys_audio.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\sys_audiod.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\sys_audiod_mus.h"
+				>
+			</File>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\engine\api\doomsday.def"
+					>
+				</File>
+			</Filter>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

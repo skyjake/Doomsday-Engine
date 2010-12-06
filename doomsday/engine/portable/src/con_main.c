@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1931,7 +1931,7 @@ static void Con_Alias(char *aName, char *command)
 D_CMD(Help)
 {
     Con_FPrintf(CBLF_RULER | CBLF_YELLOW | CBLF_CENTER,
-                "-=- Doomsday " DOOMSDAY_VERSION_TEXT " Console -=-\n");
+                "-=- " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT " Console -=-\n");
     Con_Printf("Keys:\n");
     Con_Printf("Tilde          Open/close the console.\n");
     Con_Printf("Shift-Tilde    Switch between half and full screen mode.\n");
@@ -1960,10 +1960,13 @@ D_CMD(Clear)
 
 D_CMD(Version)
 {
-    Con_Printf("Doomsday Engine %s (" __TIME__ ")\n", DOOMSDAY_VERSIONTEXT);
+    Con_Printf("%s %s (" __TIME__ ") \n", DOOMSDAY_NICENAME, DOOMSDAY_VERSIONTEXT, DOOMSDAY_HOMEURL);
+    Con_Printf("%s\n", DENGPROJECT_HOMEURL);
+    // Print the version info of the current game if loaded.
     if(!DD_IsNullGameInfo(DD_GameInfo()))
-        Con_Printf("Game library: %s\n", (char*) gx.GetVariable(DD_GAME_VERSION_LONG));
-    Con_Printf("%s\n", DOOMSDAY_PROJECTURL);
+    {
+        Con_Printf("Game library: %s\n", (char*) gx.GetVariable(DD_PLUGIN_VERSION_LONG));
+    }
     return true;
 }
 

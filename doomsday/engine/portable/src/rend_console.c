@@ -78,7 +78,7 @@ static float fontFx, fontSy;    // Font x factor and y size.
 
 static float funnyAng;
 
-static char *consoleTitle = "Doomsday " DOOMSDAY_VERSION_TEXT;
+static char *consoleTitle = DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT;
 static char secondaryTitleText[256];
 static char statusText[256];
 
@@ -232,7 +232,7 @@ void Con_InitUI(void)
     // Update the secondary title and the game status.
     if(!DD_IsNullGameInfo(DD_GameInfo()))
     {
-        strncpy(secondaryTitleText, (char*) gx.GetVariable(DD_GAME_ID), sizeof(secondaryTitleText) - 1);
+        dd_snprintf(secondaryTitleText, sizeof(secondaryTitleText)-1, "%s %s", (char*) gx.GetVariable(DD_PLUGIN_NAME), (char*) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
         strncpy(statusText, Str_Text(GameInfo_IdentityKey(DD_GameInfo())), sizeof(statusText) - 1);
         return;
     }

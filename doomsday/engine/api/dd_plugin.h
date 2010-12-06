@@ -29,6 +29,10 @@
 #ifndef LIBDENG_PLUGIN_H
 #define LIBDENG_PLUGIN_H
 
+#include "../portable/include/dd_version.h"
+
+#define LIBDENG_PLUGINDESC      "(" DOOMSDAY_NICENAME " Plugin)"
+
 #define MAX_HOOKS           16
 #define HOOKF_EXCLUSIVE     0x01000000
 

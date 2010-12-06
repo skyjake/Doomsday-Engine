@@ -23,13 +23,13 @@
  */
 
 /**
- * dd_share.h: Shared Macros and Constants
+ * Shared Macros and Constants
  *
  * Macros and constants used by the engine and games.
  */
 
-#ifndef __DOOMSDAY_SHARED_H__
-#define __DOOMSDAY_SHARED_H__
+#ifndef LIBDENG_SHARED_H
+#define LIBDENG_SHARED_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,6 +48,8 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdarg.h>
+
+#include "dengproject.h"
 #include "../portable/include/dd_version.h"
 #include "dd_types.h"
 #include "dd_maptypes.h"
@@ -66,8 +68,8 @@ extern "C" {
 #define DDMAXPLAYERS        16
 
 // Base default paths for data and definition files.
-#define DD_BASEPATH_DATA   "}data\\"
-#define DD_BASEPATH_DEFS   "}defs\\"
+#define DD_BASEPATH_DATA    "}data\\"
+#define DD_BASEPATH_DEFS    "}defs\\"
 
 // The case-independent strcmps have different names.
 #if WIN32
@@ -218,10 +220,10 @@ enum {
     DD_COLOR_LIMIT,
     DD_PRE,
     DD_POST,
-    DD_GAME_VERSION_SHORT,
-    DD_GAME_VERSION_LONG,
+    DD_PLUGIN_VERSION_SHORT,
+    DD_PLUGIN_VERSION_LONG,
     DD_HORIZON,
-    DD_GAME_ID,
+    DD_OLD_GAME_ID,
     DD_DEF_MOBJ,
     DD_DEF_MOBJ_BY_NAME,
     DD_DEF_STATE,
@@ -248,9 +250,11 @@ enum {
     DD_SPRITE,
     DD_FRAME,
     DD_GAME_CONFIG, // String: dm/co-op, jumping, etc.
-    DD_GAME_NAME, // (e.g., jdoom, jheretic etc..., suitable for use with filepaths)
-    DD_GAME_NICENAME, // (e.g., jDoom, MyGame:Episode2 etc..., fancy name)
-    DD_GAME_DMUAPI_VER, // Version of the DMU API the game is using.
+    DD_PLUGIN_NAME, // (e.g., jdoom, jheretic etc..., suitable for use with filepaths)
+    DD_PLUGIN_NICENAME, // (e.g., jDoom, MyGame:Episode2 etc..., fancy name)
+    DD_PLUGIN_DMUAPI_VER, // Version of the DMU API the plugin is using.
+    DD_PLUGIN_HOMEURL,
+    DD_PLUGIN_DOCSURL,
 
     // Non-integer/special values for Set/Get
     DD_TRANSLATIONTABLES_ADDRESS,
@@ -1196,8 +1200,8 @@ typedef struct ticcmd_s {
         char            address[64];
         int             port;
         unsigned short  ping; // Milliseconds.
-        char            game[32]; // DLL and version.
-        char            gameMode[17];
+        char            plugin[32]; // DLL and version.
+        char            gameIdentityKey[17];
         char            gameConfig[40];
         char            map[20];
         char            clientNames[128];
@@ -1373,4 +1377,5 @@ typedef struct ticcmd_s {
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif /* LIBDENG_SHARED_H */

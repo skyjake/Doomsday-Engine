@@ -56,7 +56,7 @@ typedef struct serverstrings_s {
     char    desc[90];
     char    version[20];
     char    ping[20];
-    char    game[80];
+    char    plugin[80];
     char    names[256];
     char    pwads[256];
     char    warning[128];
@@ -180,7 +180,7 @@ static ui_object_t ob_client[] = {
      str_sinfo.desc},
     {UI_TEXT, 0, 0, 20, 570, 0, 70, "Game", UIText_Drawer},
     {UI_TEXT, 0, 0, 190, 570, 250, 70, "", MPIServerInfoDrawer, 0, 0, 0,
-     str_sinfo.game},
+     str_sinfo.plugin},
     {UI_TEXT, 0, 0, 460, 570, 0, 70, "Version", UIText_Drawer},
     {UI_TEXT, 0, 0, 560, 570, 200, 70, "", MPIServerInfoDrawer, 0, 0, 0,
      str_sinfo.version},
@@ -315,10 +315,10 @@ void MPIUpdateServerInfo(ui_object_t *ob)
     //      sprintf(str_sinfo.ping, "%i ms", info.ping);
     //  else
     //      strcpy(str_sinfo.ping, "?");
-    strcpy(str_sinfo.game, info.game);
+    strcpy(str_sinfo.plugin, info.plugin);
     MPITranslateString(str_sinfo.names, info.clientNames, ';', ", ");
     MPITranslateString(str, info.pwads, ';', ", ");
-    strcpy(str_sinfo.pwads, info.gameMode);
+    strcpy(str_sinfo.pwads, info.gameIdentityKey);
     if(info.gameConfig[0])
     {
         strcat(str_sinfo.pwads, " ");
@@ -484,11 +484,11 @@ void MPIUpdateServerList(void)
             N_MasterGet(i, &info);
 
             // Is this suitable?
-            if(info.version != DOOMSDAY_VERSION || stricmp(info.gameMode, Str_Text(GameInfo_IdentityKey(DD_GameInfo()))) || !info.canJoin)
+            if(info.version != DOOMSDAY_VERSION || stricmp(info.gameIdentityKey, Str_Text(GameInfo_IdentityKey(DD_GameInfo()))) || !info.canJoin)
             {
                 Con_Message("Server %s filtered out:\n", info.name);
                 Con_Message("  remote = %i, local = %i\n", info.version, DOOMSDAY_VERSION);
-                Con_Message("  remote = %s, local = %s\n", info.gameMode, Str_Text(GameInfo_IdentityKey(DD_GameInfo())));
+                Con_Message("  remote = %s, local = %s\n", info.gameIdentityKey, Str_Text(GameInfo_IdentityKey(DD_GameInfo())));
                 Con_Message("  can join = %i\n", info.canJoin);
                 continue;
             }

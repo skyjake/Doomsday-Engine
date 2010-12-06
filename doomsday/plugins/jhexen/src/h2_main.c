@@ -123,7 +123,7 @@ int G_GetInteger(int id)
 {
     switch(id)
     {
-    case DD_GAME_DMUAPI_VER:
+    case DD_PLUGIN_DMUAPI_VER:
         return DMUAPI_VER;
 
     default:
@@ -142,20 +142,23 @@ void* G_GetVariable(int id)
 
     switch(id)
     {
-    case DD_GAME_NAME:
-        return GAMENAMETEXT;
+    case DD_PLUGIN_NAME:
+        return PLUGIN_NAMETEXT;
 
-    case DD_GAME_NICENAME:
-        return GAME_NICENAME;
+    case DD_PLUGIN_NICENAME:
+        return PLUGIN_NICENAME;
 
-    case DD_GAME_ID:
-        return GAMENAMETEXT " " GAME_VERSION_TEXT;
+    case DD_PLUGIN_VERSION_SHORT:
+        return PLUGIN_VERSION_TEXT;
 
-    case DD_GAME_VERSION_SHORT:
-        return GAME_VERSION_TEXT;
+    case DD_PLUGIN_VERSION_LONG:
+        return PLUGIN_VERSION_TEXTLONG "\n" PLUGIN_DETAILS;
 
-    case DD_GAME_VERSION_LONG:
-        return GAME_VERSION_TEXTLONG "\n" GAME_DETAILS;
+    case DD_PLUGIN_HOMEURL:
+        return PLUGIN_HOMEURL;
+
+    case DD_PLUGIN_DOCSURL:
+        return PLUGIN_DOCSURL;
 
     case DD_GAME_CONFIG:
         return gameConfigString;
@@ -182,11 +185,11 @@ void* G_GetVariable(int id)
 
 int G_RegisterGames(int hookType, int parm, void* data)
 {
-#define DATAPATH        DD_BASEPATH_DATA GAMENAMETEXT "\\"
-#define DEFSPATH        DD_BASEPATH_DEFS GAMENAMETEXT "\\"
-#define MAINDEF         GAMENAMETEXT ".ded"
-#define MAINCONFIG      GAMENAMETEXT ".cfg"
-#define STARTUPPK3      GAMENAMETEXT ".pk3"
+#define DATAPATH        DD_BASEPATH_DATA PLUGIN_NAMETEXT "\\"
+#define DEFSPATH        DD_BASEPATH_DEFS PLUGIN_NAMETEXT "\\"
+#define MAINDEF         PLUGIN_NAMETEXT ".ded"
+#define MAINCONFIG      PLUGIN_NAMETEXT ".cfg"
+#define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
 
     /* Hexen (Death Kings) */
     gameIds[hexen_deathkings] = DD_AddGame("hexen-dk", DATAPATH, DEFSPATH, MAINDEF, MAINCONFIG, "Hexen (Deathkings of the Dark Citadel)", "Raven Software", "deathkings", "dk");
@@ -547,7 +550,7 @@ game_export_t* GetGameAPI(game_import_t* imports)
 {
     // Make sure this plugin isn't newer than Doomsday...
     if(imports->version < DOOMSDAY_VERSION)
-        Con_Error(GAME_NICENAME " requires at least Doomsday " DOOMSDAY_VERSION_TEXT "!\n");
+        Con_Error(PLUGIN_NICENAME " requires at least " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "!\n");
 
     // Take a copy of the imports, but only copy as much data as is
     // allowed and legal.

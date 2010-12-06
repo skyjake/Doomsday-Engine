@@ -76,6 +76,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
 				Culture="1033"
+				AdditionalIncludeDirectories="..\..\..\engine\api"
 				ResourceOutputFileName="$(IntDir)\$(TargetFileName).res"
 			/>
 			<Tool
@@ -276,6 +277,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="_DEBUG"
 				Culture="1033"
+				AdditionalIncludeDirectories="..\..\..\engine\api"
 				ResourceOutputFileName="$(IntDir)\$(TargetFileName).res"
 			/>
 			<Tool
@@ -457,6 +459,7 @@
 			<Tool
 				Name="VCResourceCompilerTool"
 				Culture="1033"
+				AdditionalIncludeDirectories="..\..\..\engine\api"
 				ResourceOutputFileName="$(IntDir)\$(TargetFileName).res"
 			/>
 			<Tool
@@ -652,6 +655,7 @@
 				Name="VCResourceCompilerTool"
 				PreprocessorDefinitions="NDEBUG"
 				Culture="1033"
+				AdditionalIncludeDirectories="..\..\..\engine\api"
 				ResourceOutputFileName="$(IntDir)\$(TargetFileName).res"
 			/>
 			<Tool

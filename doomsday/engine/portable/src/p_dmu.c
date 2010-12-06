@@ -212,15 +212,15 @@ static void initArgs(setargs_t* args, int type, uint prop)
 void P_InitMapUpdate(void)
 {
     // Request the DMU API version the game is expecting.
-    usingDMUAPIver = gx.GetInteger(DD_GAME_DMUAPI_VER);
+    usingDMUAPIver = gx.GetInteger(DD_PLUGIN_DMUAPI_VER);
     if(!usingDMUAPIver)
         Con_Error("P_InitMapUpdate: Game dll is not compatible with "
-                  "Doomsday " DOOMSDAY_VERSION_TEXT ".");
+                  DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT ".");
 
     if(usingDMUAPIver > DMUAPI_VER)
-        Con_Error("P_InitMapUpdate: Game dll expects a latter version of the\n"
-                  "DMU API then that defined by Doomsday " DOOMSDAY_VERSION_TEXT ".\n"
-                  "This game is for a newer version of Doomsday.");
+        Con_Error("P_InitMapUpdate: Game dll expects a later version of the\n"
+                  "DMU API then that defined by " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT ".\n"
+                  "This game is for a newer version of " DOOMSDAY_NICENAME ".");
 
     // A fixed number of dummies is allocated because:
     // - The number of dummies is mostly dependent on recursive depth of

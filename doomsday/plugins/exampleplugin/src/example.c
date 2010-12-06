@@ -90,7 +90,7 @@ int G_GetInteger(int id)
 {
     switch(id)
     {
-    case DD_GAME_DMUAPI_VER:
+    case DD_PLUGIN_DMUAPI_VER:
         return DMUAPI_VER;
 
     default:
@@ -108,20 +108,23 @@ void* G_GetVariable(int id)
 
     switch(id)
     {
-    case DD_GAME_NAME:
+    case DD_PLUGIN_NAME:
         return PLUGIN_NAMETEXT;
 
-    case DD_GAME_NICENAME:
+    case DD_PLUGIN_NICENAME:
         return PLUGIN_NICENAME;
 
-    case DD_GAME_ID:
-        return PLUGIN_NAMETEXT " " PLUGIN_VERSION_TEXT;
-
-    case DD_GAME_VERSION_SHORT:
+    case DD_PLUGIN_VERSION_SHORT:
         return PLUGIN_VERSION_TEXT;
 
-    case DD_GAME_VERSION_LONG:
+    case DD_PLUGIN_VERSION_LONG:
         return PLUGIN_VERSION_TEXTLONG "\n" PLUGIN_DETAILS;
+
+    case DD_PLUGIN_HOMEURL:
+        return PLUGIN_HOMEURL;
+
+    case DD_PLUGIN_DOCSURL:
+        return PLUGIN_DOCSURL;
 
     default:
         break;

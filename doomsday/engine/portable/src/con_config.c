@@ -97,9 +97,9 @@ boolean Con_ParseCommands(const char* fileName, boolean setdefault)
 static void Con_WriteHeaderComment(FILE* file)
 {
     if(DD_IsNullGameInfo(DD_GameInfo()))
-        fprintf(file, "# Doomsday Engine " DOOMSDAY_VERSION_TEXT "\n");
+        fprintf(file, "# " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n");
     else
-        fprintf(file, "# %s / Doomsday Engine " DOOMSDAY_VERSION_TEXT "\n", (char*) gx.GetVariable(DD_GAME_ID));
+        fprintf(file, "# %s %s / " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n", (char*) gx.GetVariable(DD_PLUGIN_NAME), (char*) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
 
     fprintf(file, "# This configuration file is generated automatically. Each line is a\n");
     fprintf(file, "# console command. Lines beginning with # are comments. Use autoexec.cfg\n");

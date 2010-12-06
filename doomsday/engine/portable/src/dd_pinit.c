@@ -89,8 +89,8 @@ int DD_CheckArg(char* tag, const char** value)
 
 void DD_ErrorBox(boolean error, char* format, ...)
 {
-    char                buff[200];
-    va_list             args;
+    char buff[200];
+    va_list args;
 
     va_start(args, format);
     dd_vsnprintf(buff, sizeof(buff), format, args);
@@ -99,7 +99,7 @@ void DD_ErrorBox(boolean error, char* format, ...)
 #ifdef WIN32
     suspendMsgPump = true;
     MessageBox(NULL, (LPCTSTR) buff,
-               (LPCTSTR) ("Doomsday " DOOMSDAY_VERSION_TEXT),
+               (LPCTSTR) (DOOMSDAY_NICENAME" " DOOMSDAY_VERSION_TEXT),
                (UINT) (MB_OK | (error ? MB_ICONERROR : MB_ICONWARNING)));
     suspendMsgPump = false;
 #endif
@@ -116,11 +116,11 @@ void DD_ComposeMainWindowTitle(char* title)
 {
     if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.GetVariable)
     {
-        sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT "%s : %s", (isDedicated? " (Dedicated)" : ""), (char*)gx.GetVariable(DD_GAME_ID));
+        sprintf(title, DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "%s %s : %s", (isDedicated? " (Dedicated)" : ""), (char*) gx.GetVariable(DD_PLUGIN_NAME), (char*) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
     }
     else
     {
-        sprintf(title, "Doomsday " DOOMSDAY_VERSION_TEXT "%s", (isDedicated? " (Dedicated)" : ""));
+        sprintf(title, DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "%s", (isDedicated? " (Dedicated)" : ""));
     }
 }
 

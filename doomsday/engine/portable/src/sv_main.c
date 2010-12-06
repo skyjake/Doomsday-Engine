@@ -84,15 +84,14 @@ int     svMaxPlayers = DDMAXPLAYERS;
  */
 void Sv_GetInfo(serverinfo_t *info)
 {
-    int                 i;
-    gamemap_t          *currentMap = P_GetCurrentMap();
+    gamemap_t* currentMap = P_GetCurrentMap();
 
     memset(info, 0, sizeof(*info));
 
     // Let's figure out what we want to tell about ourselves.
     info->version = DOOMSDAY_VERSION;
-    strncpy(info->game, gx.GetVariable(DD_GAME_ID), sizeof(info->game) - 1);
-    strncpy(info->gameMode, Str_Text(GameInfo_IdentityKey(DD_GameInfo())), sizeof(info->gameMode) - 1);
+    dd_snprintf(info->plugin, sizeof(info->plugin) - 1, "%s %s", (char*) gx.GetVariable(DD_PLUGIN_NAME), (char*) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
+    strncpy(info->gameIdentityKey, Str_Text(GameInfo_IdentityKey(DD_GameInfo())), sizeof(info->gameIdentityKey) - 1);
     strncpy(info->gameConfig, gx.GetVariable(DD_GAME_CONFIG), sizeof(info->gameConfig) - 1);
     strncpy(info->name, serverName, sizeof(info->name) - 1);
     strncpy(info->description, serverInfo, sizeof(info->description) - 1);
@@ -118,12 +117,11 @@ void Sv_GetInfo(serverinfo_t *info)
     info->port = nptIPPort;
 
     // Let's compile a list of client names.
+    { int i;
     for(i = 0; i < DDMAXPLAYERS; ++i)
         if(clients[i].connected)
-        {
-            M_LimitedStrCat(info->clientNames, clients[i].name, 15, ';',
-                            sizeof(info->clientNames));
-        }
+            M_LimitedStrCat(info->clientNames, clients[i].name, 15, ';', sizeof(info->clientNames));
+    }
 
     // Some WAD names.
     W_GetIWADFileName(info->iwad, sizeof(info->iwad) - 1);
@@ -144,8 +142,8 @@ size_t Sv_InfoToString(serverinfo_t *info, ddstring_t *msg)
     Str_Appendf(msg, "name:%s\n", info->name);
     Str_Appendf(msg, "info:%s\n", info->description);
     Str_Appendf(msg, "ver:%i\n", info->version);
-    Str_Appendf(msg, "game:%s\n", info->game);
-    Str_Appendf(msg, "mode:%s\n", info->gameMode);
+    Str_Appendf(msg, "game:%s\n", info->plugin);
+    Str_Appendf(msg, "mode:%s\n", info->gameIdentityKey);
     Str_Appendf(msg, "setup:%s\n", info->gameConfig);
     Str_Appendf(msg, "iwad:%s\n", info->iwad);
     Str_Appendf(msg, "wcrc:%i\n", info->wadNumber);
@@ -223,7 +221,7 @@ boolean Sv_StringToInfo(const char *valuePair, serverinfo_t *info)
     }
     else if(!strcmp(label, "game"))
     {
-        strncpy(info->game, value, sizeof(info->game) - 1);
+        strncpy(info->plugin, value, sizeof(info->plugin) - 1);
     }
     else if(!strcmp(label, "name"))
     {
@@ -247,7 +245,7 @@ boolean Sv_StringToInfo(const char *valuePair, serverinfo_t *info)
     }
     else if(!strcmp(label, "mode"))
     {
-        strncpy(info->gameMode, value, sizeof(info->gameMode) - 1);
+        strncpy(info->gameIdentityKey, value, sizeof(info->gameIdentityKey) - 1);
     }
     else if(!strcmp(label, "setup"))
     {
