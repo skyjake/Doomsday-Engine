@@ -1,0 +1,26 @@
+# jDoom: Intermissions and Finales (Chex)
+# (see Doc\InFine.txt)
+
+Header { Version = 5; }
+
+# I'm using "textdef" to allow compatibility with DeHackEd.
+# A better way would just be to use "text" and define the text
+# in the script, no need to go about modifying the Text defs.
+
+Finale
+{
+  After = "E1M5";
+  Script {
+    NoSkip
+    Music "victor"
+    Flat FLOOR4_8
+    Wait 0.5
+    TextDef msg 10 10 "E1TEXT"
+    WaitText msg
+    Wait 7 # The original TEXTWAIT is 250 tics.
+    
+    # Show credits.
+    NoFlat DelText msg
+    Patch back 0 0 CREDIT
+  };
+}
