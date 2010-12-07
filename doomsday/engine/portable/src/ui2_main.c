@@ -1103,10 +1103,10 @@ void FIData_PicDraw(fi_object_t* obj, const float offset[3])
     V3_Set(origin, p->pos[VX].value, p->pos[VY].value, p->pos[VZ].value);
     V3_Set(scale, p->scale[VX].value, p->scale[VY].value, p->scale[VZ].value);
     V4_Set(rgba, p->color[CR].value, p->color[CG].value, p->color[CB].value, p->color[CA].value);
-    if(p->numFrames <= 1)
+    if(p->numFrames == 0)
         V4_Set(rgba2, p->otherColor[CR].value, p->otherColor[CG].value, p->otherColor[CB].value, p->otherColor[CA].value);
 
-    drawPicFrame(p, p->curFrame, origin, scale, rgba, (p->numFrames<=1? rgba2 : rgba), p->angle.value, offset);
+    drawPicFrame(p, p->curFrame, origin, scale, rgba, (p->numFrames==0? rgba2 : rgba), p->angle.value, offset);
     }
 }
 
