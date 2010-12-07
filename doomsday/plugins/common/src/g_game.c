@@ -1786,7 +1786,7 @@ static void runGameAction(void)
     {
         switch(currentAction)
         {
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
         case GA_INITNEW:
             G_DoInitNew();
             break;
@@ -1998,7 +1998,7 @@ void G_PlayerLeaveMap(int player)
     player_t* p = &players[player];
     boolean newCluster;
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     newCluster = (P_GetMapCluster(gameMap) != P_GetMapCluster(nextMap));
 #else
     newCluster = true;
@@ -2157,7 +2157,7 @@ void G_PlayerReborn(int player)
 #if __JHERETIC__
     boolean         secret = false;
     int             spot;
-#elif __JHEXEN__ || __JSTRIFE__
+#elif __JHEXEN__
     uint            worldTimer;
 #endif
 
@@ -2170,7 +2170,7 @@ void G_PlayerReborn(int player)
     killcount = p->killCount;
     itemcount = p->itemCount;
     secretcount = p->secretCount;
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     worldTimer = p->worldTimer;
 #endif
 
@@ -2191,7 +2191,7 @@ void G_PlayerReborn(int player)
     p->killCount = killcount;
     p->itemCount = itemcount;
     p->secretCount = secretcount;
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     p->worldTimer = worldTimer;
     p->colorMap = cfg.playerColor[player];
 #endif
@@ -2365,24 +2365,25 @@ boolean G_IfVictory(void)
         return true;
     }
 #elif __JDOOM__
-    if((gameMap == 7) && (gameModeBits & GM_ANY_DOOM))
+    if(gameMode == doom_chex)
     {
-        return true;
+        if(gameMap == 4)
+            return true;
     }
-
+    else if((gameModeBits & GM_ANY_DOOM) && gameMap == 7)
+        return true;
 #elif __JHERETIC__
     if(gameMap == 7)
     {
         return true;
     }
 
-#elif __JHEXEN__ || __JSTRIFE__
+#elif __JHEXEN__
     if(nextMap == DDMAXINT && nextMapEntryPoint == DDMAXINT)
     {
         return true;
     }
 #endif
-
     return false;
 }
 
@@ -2477,7 +2478,7 @@ void G_DoMapCompleted(void)
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 # if __JDOOM__
-    if((gameModeBits & GM_ANY_DOOM) && gameMap == 8)
+    if((gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE)) && gameMap == 8)
     {
         int i;
         for(i = 0; i < MAXPLAYERS; ++i)
@@ -2606,7 +2607,7 @@ void G_DoSingleReborn(void)
 /**
  * Can be called by the startup code or the menu task.
  */
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
 void G_LoadGame(int slot)
 {
     gameLoadSlot = slot;
@@ -2672,7 +2673,7 @@ void G_DoSaveGame(void)
     P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED, false);
 }
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
 void G_DeferredNewGame(skillmode_t skill)
 {
     dSkill = skill;
@@ -2697,7 +2698,7 @@ void G_DeferedInitNew(skillmode_t skill, uint episode, uint map)
     dEpisode = episode;
     dMap = map;
 
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     G_SetGameAction(GA_INITNEW);
 #else
     G_SetGameAction(GA_NEWGAME);
@@ -2823,7 +2824,7 @@ void G_InitNew(skillmode_t skill, uint episode, uint map)
             player_t           *plr = &players[i];
 
             plr->playerState = PST_REBORN;
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
             plr->worldTimer = 0;
 #else
             plr->didSecret = false;
@@ -2852,16 +2853,16 @@ void G_InitNew(skillmode_t skill, uint episode, uint map)
  */
 uint G_GetMapNumber(uint episode, uint map)
 {
-#if __JHEXEN__ || __JSTRIFE__
+#if __JHEXEN__
     return P_TranslateMap(map);
 #elif __JDOOM64__
     return map;
 #else
-  #if __JDOOM__
-    if(gameModeBits & GM_ANY_DOOM2)
+# if __JDOOM__
+    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
         return map;
     else
-  #endif
+# endif
     {
         return map + episode * 9; // maps per episode.
     }
@@ -2925,7 +2926,7 @@ boolean G_ValidateMap(uint* episode, uint* map)
         ok = false;
     }
 #elif __JDOOM__
-    if(gameMode == doom_shareware)
+    if(gameModeBits & (GM_DOOM_SHAREWARE|GM_DOOM_CHEX))
     {
         if(*episode != 0)
         {
@@ -2942,7 +2943,7 @@ boolean G_ValidateMap(uint* episode, uint* map)
         }
     }
 
-    if(gameModeBits & GM_ANY_DOOM2)
+    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
     {
         if(*map > 98)
         {
@@ -3013,7 +3014,7 @@ boolean G_ValidateMap(uint* episode, uint* map)
             ok = false;
         }
     }
-#elif __JHEXEN__ || __JSTRIFE__
+#elif __JHEXEN__
     if(*map > 98)
     {
         *map = 98;
@@ -3096,6 +3097,10 @@ uint G_GetNextMap(uint episode, uint map, boolean secretExit)
         default:
             return map + 1;
         }
+    }
+    else if(gameMode == doom_chex)
+    {
+        return map + 1; // Go to next map.
     }
     else
     {
@@ -3251,7 +3256,7 @@ void G_PrintMapList(void)
     else
     {
         numEpisodes = 1;
-        maxMapsPerEpisode = 99;
+        maxMapsPerEpisode = gameMode == doom_chex? 5 : 99;
     }
 #elif __JHERETIC__
     if(gameMode == heretic_extended)
@@ -3405,7 +3410,7 @@ void G_DoScreenShot(void)
 
 DEFCC(CCmdListMaps)
 {
-    Con_Message("Loaded maps:\n");
+    Con_Message("Available maps:\n");
     G_PrintMapList();
     return true;
 }

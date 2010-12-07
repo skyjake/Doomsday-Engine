@@ -193,6 +193,11 @@ int G_RegisterGames(int hookType, int parm, void* data)
     DD_AddGameResource(gameIds[doom2_hacx], RC_PACKAGE, "hacx.wad", "HACX-R");
     DD_AddGameResource(gameIds[doom2_hacx], RC_PACKAGE, STARTUPPK3, 0);
 
+    /* Chex Quest */
+    gameIds[doom_chex] = DD_AddGame("chex", DATAPATH, DEFSPATH, MAINDEF, MAINCONFIG, "Chex(R) Quest", "Digital Cafe", "chex", 0);
+    DD_AddGameResource(gameIds[doom_chex], RC_PACKAGE, "chex.wad", "E1M1;E4M1;_DEUTEX_;POSSH0M0");
+    DD_AddGameResource(gameIds[doom_chex], RC_PACKAGE, STARTUPPK3, 0);
+
     /* DOOM2 (TNT) */
     gameIds[doom2_tnt] = DD_AddGame("doom2-tnt", DATAPATH, DEFSPATH, MAINDEF, MAINCONFIG, "Final DOOM: TNT: Evilution", "Team TNT", "tnt", 0);
     DD_AddGameResource(gameIds[doom2_tnt], RC_PACKAGE, "tnt.wad", "CAVERN5;CAVERN7;STONEW1");
@@ -200,7 +205,7 @@ int G_RegisterGames(int hookType, int parm, void* data)
 
     /* DOOM2 (Plutonia) */
     gameIds[doom2_plut] = DD_AddGame("doom2-plut", DATAPATH, DEFSPATH, MAINDEF, MAINCONFIG, "Final DOOM: The Plutonia Experiment", "Dario Casali and Milo Casali", "plutonia", "plut");
-    DD_AddGameResource(gameIds[doom2_plut], RC_PACKAGE, "plutonia.wad", "_DEUTEX_;MC5;MC11;MC16;MC20");
+    DD_AddGameResource(gameIds[doom2_plut], RC_PACKAGE, "plutonia.wad", "_DEUTEX_;MAP01;MAP25;MC5;MC11;MC16;MC20");
     DD_AddGameResource(gameIds[doom2_plut], RC_PACKAGE, STARTUPPK3, 0);
 
     /* DOOM2 */
@@ -492,7 +497,7 @@ void G_PostInit(gameid_t gameId)
     p = ArgCheck("-warp");
     if(p && p < myargc - 1)
     {
-        if(gameModeBits & GM_ANY_DOOM2)
+        if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
         {
             startMap = atoi(Argv(p + 1)) - 1;
             autoStart = true;
@@ -527,7 +532,7 @@ void G_PostInit(gameid_t gameId)
     // Are we autostarting?
     if(autoStart)
     {
-        if(gameModeBits & GM_ANY_DOOM2)
+        if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
             Con_Message("Warp to Map %d, Skill %d\n", startMap+1, startSkill + 1);
         else
             Con_Message("Warp to Episode %d, Map %d, Skill %d\n", startEpisode+1, startMap+1, startSkill + 1);
@@ -542,7 +547,7 @@ void G_PostInit(gameid_t gameId)
     }
 
     // Check valid episode and map
-    if((autoStart || IS_NETGAME) && !P_MapExists((gameModeBits & GM_ANY_DOOM)? startEpisode : 0, startMap))
+    if((autoStart || IS_NETGAME) && !P_MapExists((gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE))? startEpisode : 0, startMap))
     {
         startEpisode = 0;
         startMap = 0;

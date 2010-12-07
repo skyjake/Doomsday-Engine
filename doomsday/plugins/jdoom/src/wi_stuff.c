@@ -263,8 +263,8 @@ static wbstartstruct_t* wbs;
 static wbplayerstruct_t* plrs;  // wbs->plyr[]
 
 static patchid_t bg; // Background (map of maps).
-static patchid_t yah[2]; // You Are Here.
-static patchid_t splat; // Splat.
+static patchid_t yah[3]; // You Are Here.
+static patchid_t splat[2]; // Splat.
 static patchid_t finished; // "Finished!"
 static patchid_t entering; // "Entering"
 static patchid_t sp_secret; // "secret"
@@ -307,7 +307,7 @@ void WI_drawLF(void)
     int y = WI_TITLEY, mapNum;
     char* mapName;
 
-    if(gameModeBits & GM_ANY_DOOM2)
+    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
         mapNum = wbs->currentMap;
     else
         mapNum = (wbs->episode * 8) + wbs->currentMap;
@@ -397,7 +397,7 @@ void WI_DrawOnMapNode(int n, const patchid_t* c)
             fits = true;
         else
             i++;
-    } while(!fits && i != 2);
+    } while(!fits && i!=2 && c[i] != 0);
 
     if(fits && i < 2)
     {
@@ -606,11 +606,11 @@ void WI_drawShowNextLoc(void)
         // Draw a splat on taken cities.
         { int i, last = (wbs->currentMap == 8) ? wbs->nextMap-1 : wbs->currentMap;
         for(i = 0; i <= last; ++i)
-            WI_DrawOnMapNode(i, &splat); }
+            WI_DrawOnMapNode(i, splat); }
 
         // Splat the secret map?
         if(wbs->didSecret)
-            WI_DrawOnMapNode(8, &splat);
+            WI_DrawOnMapNode(8, splat);
 
         // Draw flashing ptr.
         if(snlPointerOn)
@@ -1323,9 +1323,9 @@ void WI_loadData(void)
 
     if(gameModeBits & GM_ANY_DOOM)
     {
-        yah[0] = R_PrecachePatch("WIURH0", NULL); // You are here.
-        yah[1] = R_PrecachePatch("WIURH1", NULL); // You are here (alt.)
-        splat = R_PrecachePatch("WISPLAT", NULL); // Splat.
+        yah[0]   = R_PrecachePatch("WIURH0", 0); // You are here.
+        yah[1]   = R_PrecachePatch("WIURH1", 0); // You are here (alt.)
+        splat[0] = R_PrecachePatch("WISPLAT", 0); // Splat.
 
         if(wbs->episode < 3)
         {

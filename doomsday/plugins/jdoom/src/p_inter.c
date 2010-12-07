@@ -958,6 +958,10 @@ void P_KillMobj(mobj_t *source, mobj_t *target, boolean stomping)
     if(target->tics < 1)
         target->tics = 1;
 
+    // Enemies in Chex Quest don't drop stuff.
+    if(gameMode == doom_chex)
+        return;
+
     // Drop stuff.
     // This determines the kind of object spawned during the death frame
     // of a thing.

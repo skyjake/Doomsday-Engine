@@ -9,12 +9,14 @@ SkipIf -nodefaultfx;
 IncludeIf doom1 "doom1lights.ded";
 IncludeIf doom1-share "doom1lights.ded";
 IncludeIf doom1-ultimate "doom1lights.ded";
+IncludeIf chex "chex/lights.ded";
 
 IncludeIf doom2 "doom2lights.ded";
 IncludeIf doom2-tnt "doom2-tntlights.ded";
 IncludeIf doom2-plut "doom2-plutlights.ded";
 
 SkipIf hacx;
+SkipIf chex;
 
 #####====--- LIGHT SOURCE PROPERTIES ---====#####
 

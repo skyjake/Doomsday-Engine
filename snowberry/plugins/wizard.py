@@ -123,7 +123,9 @@ def runWizard():
         'heretic': 'HERETIC.WAD',
         'hexen': 'HEXEN.WAD',
         'hexen-demo': 'HEXEN.WAD',
-        'hexen-dk': 'HEXEN.WAD'
+        'hexen-dk': 'HEXEN.WAD',
+        'hacx': 'HACX.WAD',
+        'chex': 'CHEX.WAD'
     }
     
     events.mute()
@@ -178,7 +180,7 @@ def runWizard():
     deathKingsWad = None
 
     # We'll do this dynamically.
-    checkedProfiles = ['doom1', 'doom2', 'heretic', 'hexen']
+    checkedProfiles = ['doom1', 'doom2', 'heretic', 'hexen', 'hacx', 'chex']
     # Only display the system profiles in the wizard (not any user
     # profiles).
     profiles = pr.getProfiles(lambda p: p.isSystemProfile())

@@ -53,7 +53,8 @@ InFine
       Wait 13 # Original was 11.
     ;
     ELSE DO
-      IF ultimate Set back "CREDIT" ELSE Set back "HELP2"
+      IF MODE:doom1-ultimate Set back "CREDIT"
+      IF MODE:chex           Set back "HELP1" ELSE Set back "HELP2"
       Wait 5.714 # 200 tics.
     ;
       
@@ -91,7 +92,7 @@ InFine {
       Patch cursor 298 160 M_SKULL1
     ;
 
-    # Configure the animating skull
+    # Configure the animating cursor
     Clranim cursor
     Anim cursor M_SKULL1 0.223857
     Anim cursor M_SKULL2 0.223857
@@ -103,17 +104,22 @@ InFine {
       Set back "CREDIT"
     ;
     ELSE DO
-      IF commercial DO
+      IF MODE:chex DO
         Set back "CREDIT"
       ;
       ELSE DO
-        IF shareware DO
-          Set back "HELP1"
-          X cursor 298
-          Y cursor 160
+        IF commercial DO
+          Set back "CREDIT"
         ;
         ELSE DO
-          Set back "HELP2"
+          IF shareware DO
+            Set back "HELP1"
+            X cursor 298
+            Y cursor 160
+          ;
+          ELSE DO
+            Set back "HELP2"
+          ;
         ;
       ;
     ;
@@ -240,6 +246,7 @@ InFine {
 IncludeIf doom1 "doom1finales.ded";
 IncludeIf doom1-share "doom1finales.ded";
 IncludeIf doom1-ultimate "doom1finales.ded";
+IncludeIf chex "chex/finales.ded";
 
 IncludeIf doom2 "doom2finales.ded";
 IncludeIf hacx "doom2finales.ded";

@@ -1613,7 +1613,7 @@ static void drawMapTitle(void)
 #if __JDOOM__ || __JDOOM64__
     // Compose the mapnumber used to check the map name patches array.
 # if __JDOOM__
-    if(gameModeBits & GM_ANY_DOOM2)
+    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
         mapnum = gameMap;
     else
         mapnum = (gameEpisode * 9) + gameMap;

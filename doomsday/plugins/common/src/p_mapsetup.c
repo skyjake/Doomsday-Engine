@@ -921,39 +921,39 @@ static void P_ResetWorldState(void)
  */
 static void P_FinalizeMap(void)
 {
-#if __JDOOM__ || __JDOOM64__
+#if __JDOOM__
     // Adjust slime lower wall textures (a hack!).
     // This will hide the ugly green bright line that would otherwise be
     // visible due to texture repeating and interpolation.
+    if(!(gameModeBits & (GM_DOOM2_HACX|GM_DOOM_CHEX)))
     {
-    uint                i, k;
-    material_t*         mat = P_ToPtr(DMU_MATERIAL, Materials_NumForName("NUKE24", MN_TEXTURES));
-    material_t*         bottomMat, *midMat;
-    float               yoff;
-    sidedef_t*          sidedef;
-    linedef_t*          line;
+        uint i, k;
+        material_t* mat = P_ToPtr(DMU_MATERIAL, Materials_NumForName("NUKE24", MN_TEXTURES));
+        material_t* bottomMat, *midMat;
+        float yoff;
+        sidedef_t* sidedef;
+        linedef_t* line;
 
-    for(i = 0; i < numlines; ++i)
-    {
-        line = P_ToPtr(DMU_LINEDEF, i);
-
-        for(k = 0; k < 2; ++k)
+        for(i = 0; i < numlines; ++i)
         {
-            sidedef = P_GetPtrp(line, k == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1);
+            line = P_ToPtr(DMU_LINEDEF, i);
 
-            if(sidedef)
+            for(k = 0; k < 2; ++k)
             {
-                bottomMat = P_GetPtrp(sidedef, DMU_BOTTOM_MATERIAL);
-                midMat = P_GetPtrp(sidedef, DMU_MIDDLE_MATERIAL);
-
-                if(bottomMat == mat && midMat == NULL)
+                sidedef = P_GetPtrp(line, k == 0? DMU_SIDEDEF0 : DMU_SIDEDEF1);
+                if(sidedef)
                 {
-                    yoff = P_GetFloatp(sidedef, DMU_BOTTOM_MATERIAL_OFFSET_Y);
-                    P_SetFloatp(sidedef, DMU_BOTTOM_MATERIAL_OFFSET_Y, yoff + 1.0f);
+                    bottomMat = P_GetPtrp(sidedef, DMU_BOTTOM_MATERIAL);
+                    midMat = P_GetPtrp(sidedef, DMU_MIDDLE_MATERIAL);
+
+                    if(bottomMat == mat && midMat == NULL)
+                    {
+                        yoff = P_GetFloatp(sidedef, DMU_BOTTOM_MATERIAL_OFFSET_Y);
+                        P_SetFloatp(sidedef, DMU_BOTTOM_MATERIAL_OFFSET_Y, yoff + 1.0f);
+                    }
                 }
             }
         }
-    }
     }
 
 #elif __JHEXEN__

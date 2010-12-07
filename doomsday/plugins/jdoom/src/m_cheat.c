@@ -63,6 +63,12 @@ int Cht_WarpFunc(const int* args, int player);
 int Cht_MusicFunc(const int* args, int player);
 int Cht_PowerupMessage(const int* args, int player);
 int Cht_PowerupFunc(const int* args, int player);
+int Cht_PowerupFunc1(const int* args, int player);
+int Cht_PowerupFunc2(const int* args, int player);
+int Cht_PowerupFunc3(const int* args, int player);
+int Cht_PowerupFunc4(const int* args, int player);
+int Cht_PowerupFunc5(const int* args, int player);
+int Cht_PowerupFunc6(const int* args, int player);
 int Cht_Reveal(const int* args, int player);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -73,54 +79,6 @@ int Cht_Reveal(const int* args, int player);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static unsigned char cheatMusSeq[] = {
-    'i', 'd', 'm', 'u', 's', 1, 0, 0
-};
-
-static unsigned char cheatChoppersSeq[] = {
-    'i', 'd', 'c', 'h', 'o', 'p', 'p', 'e', 'r', 's'
-};
-
-static unsigned char cheatGodSeq[] = {
-    'i', 'd', 'd', 'q', 'd'
-};
-
-static unsigned char cheatAmmoSeq[] = {
-    'i', 'd', 'k', 'f', 'a'
-};
-
-static unsigned char cheatAmmoNoKeySeq[] = {
-    'i', 'd', 'f', 'a'
-};
-
-static unsigned char cheatNoClipSeq[] = {
-    'i', 'd', 's', 'p', 'i', 's', 'p', 'o', 'p', 'd'
-};
-
-static unsigned char cheatCommercialNoClipSeq[] = {
-    'i', 'd', 'c', 'l', 'i', 'p'
-};
-
-static unsigned char cheatPowerupSeq[] = {
-    'i', 'd', 'b', 'e', 'h', 'o', 'l', 'd'
-};
-
-static unsigned char cheatPowerupSeq1[] = {
-    'i', 'd', 'b', 'e', 'h', 'o', 'l', 'd', 1, 0
-};
-
-static unsigned char cheatChangeMapSeq[] = {
-    'i', 'd', 'c', 'l', 'e', 'v', 1, 0, 0
-};
-
-static unsigned char cheatMyPosSeq[] = {
-    'i', 'd', 'm', 'y', 'p', 'o', 's'
-};
-
-static unsigned char cheatAutomapSeq[] = {
-    'i', 'd', 'd', 't'
-};
-
 // CODE --------------------------------------------------------------------
 
 static boolean cheatsEnabled(void)
@@ -130,20 +88,48 @@ static boolean cheatsEnabled(void)
 
 void Cht_Init(void)
 {
-    G_AddEventSequence(cheatAutomapSeq, sizeof(cheatAutomapSeq), Cht_Reveal);
-    G_AddEventSequence(cheatChangeMapSeq, sizeof(cheatChangeMapSeq), Cht_WarpFunc);
-    G_AddEventSequence(cheatGodSeq, sizeof(cheatGodSeq), Cht_GodFunc);
-    G_AddEventSequence(cheatAmmoNoKeySeq, sizeof(cheatAmmoNoKeySeq), Cht_GiveWeaponsAmmoArmor);
-    G_AddEventSequence(cheatAmmoSeq, sizeof(cheatAmmoSeq), Cht_GiveWeaponsAmmoArmorKeys);
-    G_AddEventSequence(cheatMusSeq, sizeof(cheatMusSeq), Cht_MusicFunc);
-    if(gameModeBits & GM_ANY_DOOM2)
-        G_AddEventSequence(cheatCommercialNoClipSeq, sizeof(cheatCommercialNoClipSeq), Cht_NoClipFunc);
+    { unsigned char seq[] = { 'i', 'd', 'm', 'u', 's', 1, 0, 0 };
+    G_AddEventSequence(seq, 8, Cht_MusicFunc); }
+
+    { unsigned char seq[] = { 'i', 'd', 'b', 'e', 'h', 'o', 'l', 'd' };
+    G_AddEventSequence(seq, 8, Cht_PowerupMessage); }
+
+    if(gameMode == doom_chex)
+    {
+        unsigned char seq[] = { 'l', 'e', 'e', 's', 'n', 'y', 'd', 'e', 'r', 1, 0, 0 };
+        G_AddEventSequence(seq, 12, Cht_WarpFunc);
+
+        G_AddEventSequence("joelkoenigs",   11, Cht_ChoppersFunc);
+        G_AddEventSequence("davidbrus",     9,  Cht_GodFunc);
+        G_AddEventSequence("scottholman",   11, Cht_GiveWeaponsAmmoArmorKeys);
+        G_AddEventSequence("mikekoenigs",   11, Cht_GiveWeaponsAmmoArmor);
+        G_AddEventSequence("charlesjacobi", 13, Cht_NoClipFunc);
+        G_AddEventSequence("kimhyers",      8,  Cht_MyPosFunc);
+        G_AddEventSequence("sherrill",      8,  Cht_Reveal);
+        G_AddEventSequence("andrewbenson",  12, Cht_PowerupFunc1);
+        G_AddEventSequence("deanhyers",     9,  Cht_PowerupFunc2);
+        G_AddEventSequence("marybregi",     9,  Cht_PowerupFunc3);
+        G_AddEventSequence("allen",         5,  Cht_PowerupFunc4);
+        G_AddEventSequence("digitalcafe",   11, Cht_PowerupFunc5);
+        G_AddEventSequence("joshuastorms",  12, Cht_PowerupFunc6);
+    }
     else
-        G_AddEventSequence(cheatNoClipSeq, sizeof(cheatNoClipSeq), Cht_NoClipFunc);
-    G_AddEventSequence(cheatPowerupSeq1, sizeof(cheatPowerupSeq1), Cht_PowerupFunc);
-    G_AddEventSequence(cheatPowerupSeq, sizeof(cheatPowerupSeq), Cht_PowerupMessage);
-    G_AddEventSequence(cheatChoppersSeq, sizeof(cheatChoppersSeq), Cht_ChoppersFunc);
-    G_AddEventSequence(cheatMyPosSeq, sizeof(cheatMyPosSeq), Cht_MyPosFunc);
+    {
+        { unsigned char seq[] = { 'i', 'd', 'c', 'l', 'e', 'v', 1, 0, 0 };
+        G_AddEventSequence(seq, 9, Cht_WarpFunc); }
+
+        { unsigned char seq[] = { 'i', 'd', 'b', 'e', 'h', 'o', 'l', 'd', 1, 0 };
+        G_AddEventSequence(seq, 10, Cht_PowerupFunc); }
+
+        G_AddEventSequence("iddt",          4,  Cht_Reveal);
+        G_AddEventSequence("iddqd",         5,  Cht_GodFunc);
+        G_AddEventSequence("idfa",          4,  Cht_GiveWeaponsAmmoArmor);
+        G_AddEventSequence("idkfa",         5,  Cht_GiveWeaponsAmmoArmorKeys);
+        G_AddEventSequence("idclip",        6,  Cht_NoClipFunc);
+        G_AddEventSequence("idspispopd",    10, Cht_NoClipFunc);
+        G_AddEventSequence("idchoppers",    10, Cht_ChoppersFunc);
+        G_AddEventSequence("idmypos",       7,  Cht_MyPosFunc);
+    }
 }
 
 /**
@@ -333,7 +319,7 @@ int Cht_WarpFunc(const int* args, int player)
     else
     {
         epsd = (args[0] > '0')? args[0] - '1' : 0;
-        map = (args[1] > '0')? args[1] - '1' : 0;
+        map  = (args[1] > '0')? args[1] - '1' : 0;
     }
 
     // Catch invalid maps.
@@ -434,6 +420,42 @@ int Cht_PowerupFunc(const int* args, int player)
     return false;
 }
 
+int Cht_PowerupFunc1(const int* args, int player)
+{
+    int _args[1] = {'v'};
+    return Cht_PowerupFunc(_args, player);
+}
+
+int Cht_PowerupFunc2(const int* args, int player)
+{
+    int _args[1] = {'s'};
+    return Cht_PowerupFunc(_args, player);
+}
+
+int Cht_PowerupFunc3(const int* args, int player)
+{
+    int _args[1] = {'i'};
+    return Cht_PowerupFunc(_args, player);
+}
+
+int Cht_PowerupFunc4(const int* args, int player)
+{
+    int _args[1] = {'r'};
+    return Cht_PowerupFunc(_args, player);
+}
+
+int Cht_PowerupFunc5(const int* args, int player)
+{
+    int _args[1] = {'a'};
+    return Cht_PowerupFunc(_args, player);
+}
+
+int Cht_PowerupFunc6(const int* args, int player)
+{
+    int _args[1] = {'l'};
+    return Cht_PowerupFunc(_args, player);
+}
+
 /**
  * 'choppers' invulnerability & chainsaw
  */
@@ -511,13 +533,13 @@ static void printDebugInfo(player_t* plr)
  */
 DEFCC(CCmdCheat)
 {
-    size_t i;
+    size_t i, len = strlen(argv[1]);
 
     // Give each of the characters in argument two to the ST event handler.
-    for(i = 0; i < strlen(argv[1]); ++i)
+    for(i = 0; i < len; ++i)
     {
         event_t ev;
-
+        memset(&ev, 0, sizeof(ev));
         ev.type = EV_KEY;
         ev.state = EVS_DOWN;
         ev.data1 = argv[1][i];
@@ -666,11 +688,17 @@ DEFCC(CCmdCheatWarp)
         args[0] = num / 10 + '0';
         args[1] = num % 10 + '0';
     }
+    else if(gameMode == doom_chex)
+    {
+        if(argc != 2)
+            return false;
+        args[0] = 0;
+        args[1] = (int) argv[1][0];
+    }
     else
     {
         if(argc != 3)
             return false;
-
         args[0] = (int) argv[1][0];
         args[1] = (int) argv[2][0];
     }

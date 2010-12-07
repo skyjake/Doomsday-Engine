@@ -14,6 +14,7 @@ Header {
 
 Include "flags.ded";
 Include "objects.ded";
+IncludeIf chex "chex/objects.ded";
 Include "sprites.ded";
 Include "materials.ded";
 Include "anim.ded";
@@ -23,5 +24,7 @@ Include "lights.ded";
 Include "skies.ded";
 Include "maps.ded";
 Include "finales.ded";
-Include "text.ded";
 Include "values.ded";
+
+IncludeIf Not chex "text.ded";
+IncludeIf chex "chex/text.ded";

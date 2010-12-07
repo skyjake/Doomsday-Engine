@@ -293,10 +293,9 @@ void DrawGameSetupMenu(const mn_page_t* page, int x, int y)
     idx = 0;
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-
 # if __JDOOM__ || __JHERETIC__
 #  if __JDOOM__
-    if(gameModeBits & GM_ANY_DOOM)
+    if(gameModeBits & (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE))
 #  endif
     {
         sprintf(buf, "%u", cfg.netEpisode+1);
@@ -451,7 +450,7 @@ void SCEnterMultiplayerMenu(mn_object_t* obj, int option)
 # if __JHERETIC__
     lst_net_episode.count = (gameMode == heretic_shareware? 1 : gameMode == heretic_extended? 6 : 3);
 # else // __JDOOM__
-    lst_net_episode.count = (gameMode == doom_shareware? 1 : gameMode == doom_ultimate ? 4 : 3);
+    lst_net_episode.count = ((gameMode == doom_shareware || gameMode == doom_chex)? 1 : gameMode == doom_ultimate ? 4 : 3);
 # endif
     lst_net_episode.items = Z_Malloc(sizeof(mndata_listitem_t)*lst_net_episode.count, PU_STATIC, 0);
     for(i = 0; i < lst_net_episode.count; ++i)
@@ -513,9 +512,11 @@ void SCEnterGameSetup(mn_object_t* obj, int option)
     if(cfg.netMap > 31)
         cfg.netMap = 31;
 #elif __JDOOM__
-    if(gameModeBits & GM_ANY_DOOM2)
+    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
     {
         cfg.netEpisode = 0;
+        if(gameMode == doom_chex && cfg.netMap > 4)
+            cfg.netMap = 4;
     }
     else // Any DOOM.
     {
@@ -562,7 +563,7 @@ void SCGameSetupMap(mn_object_t* obj, int option)
         if(cfg.netMap < 31)
             cfg.netMap++;
 #elif __JDOOM__
-        if(cfg.netMap < ((gameModeBits & GM_ANY_DOOM2) ? 31 : 8))
+        if(cfg.netMap < ((gameModeBits & GM_ANY_DOOM2) ? 31 : (gameMode == doom_chex? 4 : 8)))
             cfg.netMap++;
 #elif __JHERETIC__
         if(cfg.netMap < (cfg.netEpisode == 5? 2 : 8))

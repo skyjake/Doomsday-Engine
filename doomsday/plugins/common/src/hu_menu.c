@@ -1316,7 +1316,7 @@ void M_InitEpisodeMenu(void)
     int i, maxw, w, numEpisodes;
 
 #if __JDOOM__
-    if(gameModeBits & GM_ANY_DOOM2)
+    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
         numEpisodes = 0;
     else if(gameMode == doom_ultimate)
         numEpisodes = 4;
@@ -1493,6 +1493,10 @@ void Hu_MenuInit(void)
         obj->patch = &m_quitg.id;
         MainMenu._size = 5;
         MainMenu._offset[VY] += 8;
+    }
+
+    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
+    {
         SkillLevelMenu.previous = &GameTypeMenu;
     }
 #elif __JHERETIC__ || __JHEXEN__
@@ -3570,7 +3574,7 @@ void M_NewGame(mn_object_t* obj, int option)
 #elif __JDOOM64__
     MN_GotoPage(&SkillLevelMenu);
 #else // __JDOOM__
-    if(gameModeBits & GM_ANY_DOOM2)
+    if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
         MN_GotoPage(&SkillLevelMenu);
     else
         MN_GotoPage(&EpisodeMenu);

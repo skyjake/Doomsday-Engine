@@ -1361,7 +1361,7 @@ static void renderMapName(const automap_t* map)
         mapNum = gameMap;
         patch = mapNamePatches[mapNum];
 #elif __JDOOM__
-        if(gameModeBits & GM_ANY_DOOM2)
+        if(gameModeBits & (GM_ANY_DOOM2|GM_DOOM_CHEX))
             mapNum = gameMap;
         else
             mapNum = (gameEpisode * 9) + gameMap;
