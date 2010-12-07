@@ -123,7 +123,7 @@ int G_GetInteger(int id)
 {
     switch(id)
     {
-    case DD_PLUGIN_DMUAPI_VER:
+    case DD_DMU_VERSION:
         return DMUAPI_VER;
 
     default:

@@ -212,7 +212,7 @@ static void initArgs(setargs_t* args, int type, uint prop)
 void P_InitMapUpdate(void)
 {
     // Request the DMU API version the game is expecting.
-    usingDMUAPIver = gx.GetInteger(DD_PLUGIN_DMUAPI_VER);
+    usingDMUAPIver = gx.GetInteger(DD_DMU_VERSION);
     if(!usingDMUAPIver)
         Con_Error("P_InitMapUpdate: Game dll is not compatible with "
                   DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT ".");

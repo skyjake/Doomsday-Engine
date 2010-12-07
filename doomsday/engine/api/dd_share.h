@@ -252,9 +252,9 @@ enum {
     DD_GAME_CONFIG, // String: dm/co-op, jumping, etc.
     DD_PLUGIN_NAME, // (e.g., jdoom, jheretic etc..., suitable for use with filepaths)
     DD_PLUGIN_NICENAME, // (e.g., jDoom, MyGame:Episode2 etc..., fancy name)
-    DD_PLUGIN_DMUAPI_VER, // Version of the DMU API the plugin is using.
     DD_PLUGIN_HOMEURL,
     DD_PLUGIN_DOCSURL,
+    DD_DMU_VERSION, // Used in the exchange of DMU API versions.
 
     // Non-integer/special values for Set/Get
     DD_TRANSLATIONTABLES_ADDRESS,
