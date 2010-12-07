@@ -76,7 +76,7 @@ enum {
 };
 
 #define CMDTYPESTR(src) (src == CMDS_DDAY? "a direct call" \
-        : src == CMDS_GAME? "a dll call" \
+        : src == CMDS_GAME? "a game library call" \
         : src == CMDS_CONSOLE? "the console" \
         : src == CMDS_BIND? "a binding" \
         : src == CMDS_CONFIG? "a cfg file" \

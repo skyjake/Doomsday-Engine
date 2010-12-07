@@ -81,7 +81,7 @@ typedef struct calias_s {
 } calias_t;
 
 // Console commands can set this when they need to return a custom value
-// e.g. for the game dll.
+// e.g. for the game library.
 extern int      CmdReturnValue;
 extern ddfont_t Cfont;
 extern byte     consoleDump;

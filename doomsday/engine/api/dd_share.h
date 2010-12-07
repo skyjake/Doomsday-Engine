@@ -1069,7 +1069,7 @@ typedef struct ccmd_s {
 enum {
     CMDS_UNKNOWN,
     CMDS_DDAY, // Sent by the engine
-    CMDS_GAME, // Sent by the game dll
+    CMDS_GAME, // Sent by the game library
     CMDS_CONSOLE, // Sent via direct console input
     CMDS_BIND, // Sent from a binding/alias
     CMDS_CONFIG, // Sent via config file
