@@ -1,4 +1,9 @@
-# DOOM2 -  Particle Effects
+# DOOM2 - Default Particle Effects
+#
+# For further information on Generator definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Generator
+#
 
 Header { Version = 6; }
 
@@ -141,7 +146,7 @@ Copy Generator { State = "PAIN_DIE3"; }
 ######=====---- DAMAGE ----=====######
 # Gibbed blood spurt.
 Generator {
-  State = "SSWV_XDIE2";
+  State = "CPOS_XDIE2";
   Flags = "gnf_srcvel";
   Center { 0 0 30 };
   Speed = 6;
@@ -170,8 +175,8 @@ Generator {
   };
 }
 
-Copy Generator { State = "CPOS_XDIE2"; }
 Copy Generator { State = "FATT_DIE2"; }
+Copy Generator { State = "SSWV_XDIE2"; }
 
 # Arachnotron death.
 Copy Generator {

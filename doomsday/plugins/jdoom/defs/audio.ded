@@ -1,24 +1,8 @@
-# jDoom: Music and Sound Effects
+# jDoom: Sound Effects and Texture Environments
 
 Header { Version = 5; }
 
-IncludeIf doom1 "doom1music.ded";
-IncludeIf doom1-share "doom1music.ded";
-IncludeIf doom1-ultimate "doom1music.ded";
-IncludeIf chex "doom1music.ded";
-IncludeIf doom2 "doom2music.ded";
-IncludeIf doom2-plut "doom2music.ded";
-IncludeIf doom2-tnt "doom2music.ded";
-IncludeIf hacx "doom2music.ded";
-
 #####====--- SOUND EFFECTS ---====#####
-
-Sound {
-  ID = "None";
-  Link pitch = -1;
-  Link volume = -1;
-  Max channels = -1;
-}
 
 Sound {
   ID = "pistol";

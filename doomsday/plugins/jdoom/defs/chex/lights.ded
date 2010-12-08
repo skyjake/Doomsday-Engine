@@ -1,15 +1,18 @@
-# Chex Quest: Lights
+# Chex Quest - Lights and Light Decorations
+#
 
 Header { Version = 5; }
 
 SkipIf -nodefaultfx;
 
-#####====--- LIGHT DECORATIONS ---====#####
-
-#####====--- LIGHT SOURCE PROPERTIES ---====#####
-
+#####====--- LIGHT SOURCES ---====#####
+#
 # The default properties of all light-emitting objects are determined
-# automatically by the engine.
+# automatically by the engine. Here we make a couple of minor tweaks.
+#
+# For further information on Light definition syntax and semantics see:
+#
+#   http://dengine.net/dew/index.php?title=Light
 
 # Make the flashing yellow and blue light posts more dynamic.
 Light {

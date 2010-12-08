@@ -1,5 +1,10 @@
-# jDoom: Intermissions and Finales (DOOM)
-# (see Doc\InFine.txt)
+# DOOM - Intermissions and Finales (DOOM)
+#
+# For further information on the InFine system, script syntax
+# and semantics see:
+#
+#   http://dengine.net/dew/?title=InFine_script_reference
+#
 
 Header { Version = 5; }
 
@@ -7,7 +12,91 @@ Header { Version = 5; }
 # A better way would just be to use "text" and define the text
 # in the script, no need to go about modifying the Text defs.
 
-######======------ SHAREWARE/REG/ULTIMATE DOOM ------======######
+InFine 
+{
+  ID = "title";
+  Script {
+    # There is no skipping during the titlescreen loop.
+    NoSkip 
+    
+    # Any event shows the menu.
+    Trigger
+    
+    MARKER title_loop
+
+    # Step 1.
+    Patch back 0 0 "TITLEPIC"
+    MusicOnce "intro"
+    Wait 4.857 # Original wait is 170 tics.
+        
+    # Step 2.
+    IF MODE:doom1-share     PlayDemo "sdemo1.cdm"
+    IF MODE:doom1           PlayDemo "rdemo1.cdm"
+    IF MODE:doom1-ultimate  PlayDemo "udemo1.cdm"
+
+    # Step 3.
+    Set back "CREDIT"
+    Wait 5.714 # Original is 200 tics.
+      
+    # Step 4.
+    IF MODE:doom1-share     PlayDemo "sdemo2.cdm"
+    IF MODE:doom1           PlayDemo "rdemo2.cdm"
+    IF MODE:doom1-ultimate  PlayDemo "udemo2.cdm"
+    
+    # Step 5.
+    IF MODE:doom1-ultimate Set back "CREDIT" ELSE Set back "HELP2"
+    Wait 5.714 # 200 tics.
+      
+    # Step 6.
+    IF MODE:doom1-share     PlayDemo "sdemo3.cdm"
+    IF MODE:doom1           PlayDemo "rdemo3.cdm"
+    IF MODE:doom1-ultimate  PlayDemo "udemo3.cdm"
+
+    # Step 7.
+    IF MODE:doom1-ultimate  PlayDemo "udemo4.cdm"
+      
+    GOTO title_loop
+  };
+}
+
+InFine {
+  ID = "help";
+  Script {
+    NoTrigger; NoFlat;
+
+    IF MODE:doom1-share DO
+      Patch back 0 0 "HELP2"
+      Patch cursor 248 180 M_SKULL1
+    ;
+    ELSE DO
+      Patch back 0 0 "HELP1"
+      Patch cursor 298 160 M_SKULL1
+    ;
+
+    # Configure the animating cursor
+    Clranim cursor
+    Anim cursor M_SKULL1 0.223857
+    Anim cursor M_SKULL2 0.223857
+    Repeat cursor
+
+    Pause
+
+    IF MODE:doom1-ultimate DO
+      Set back "CREDIT"
+    ;
+    ELSE DO
+      IF MODE:doom1-share DO
+        Set back "HELP1"
+        X cursor 298
+        Y cursor 160
+      ;
+      ELSE DO
+        Set back "HELP2"
+      ;
+    ;
+    Pause
+  };
+}
 
 # Episode I: Knee-Deep In The Dead
 Finale

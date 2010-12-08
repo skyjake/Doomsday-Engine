@@ -5,7 +5,7 @@
 #
 # For further information on Sky definition syntax and semantics see:
 #
-#   http://dengine.net/dew/index.php?title=Sky
+#   http://dengine.net/dew/?title=Sky
 
 Header { Version = 6; }
 

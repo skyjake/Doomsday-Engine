@@ -1,0 +1,44 @@
+# DOOM2 - Music tracks
+#
+# For further information on Music definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Music
+#
+
+Header { Version = 5; }
+
+Music { ID = "runnin"; Lump = "D_RUNNIN"; }
+Music { ID = "stalks"; Lump = "D_STALKS"; }
+Music { ID = "countd"; Lump = "D_COUNTD"; }
+Music { ID = "betwee"; Lump = "D_BETWEE"; }
+Music { ID = "doom";   Lump = "D_DOOM";   }
+Music { ID = "the_da"; Lump = "D_THE_DA"; }
+Music { ID = "shawn";  Lump = "D_SHAWN";  }
+Music { ID = "ddtblu"; Lump = "D_DDTBLU"; }
+Music { ID = "in_cit"; Lump = "D_IN_CIT"; }
+Music { ID = "dead";   Lump = "D_DEAD";   }
+Music { ID = "stlks2"; Lump = "D_STLKS2"; }
+Music { ID = "theda2"; Lump = "D_THEDA2"; }
+Music { ID = "doom2";  Lump = "D_DOOM2";  }
+Music { ID = "ddtbl2"; Lump = "D_DDTBL2"; }
+Music { ID = "runni2"; Lump = "D_RUNNI2"; }
+Music { ID = "dead2";  Lump = "D_DEAD2";  }
+Music { ID = "stlks3"; Lump = "D_STLKS3"; }
+Music { ID = "romero"; Lump = "D_ROMERO"; }
+Music { ID = "shawn2"; Lump = "D_SHAWN2"; }
+Music { ID = "messag"; Lump = "D_MESSAG"; }
+Music { ID = "count2"; Lump = "D_COUNT2"; }
+Music { ID = "ddtbl3"; Lump = "D_DDTBL3"; }
+Music { ID = "ampie";  Lump = "D_AMPIE";  }
+Music { ID = "theda3"; Lump = "D_THEDA3"; }
+Music { ID = "adrian"; Lump = "D_ADRIAN"; }
+Music { ID = "messg2"; Lump = "D_MESSG2"; }
+Music { ID = "romer2"; Lump = "D_ROMER2"; }
+Music { ID = "tense";  Lump = "D_TENSE";  }
+Music { ID = "shawn3"; Lump = "D_SHAWN3"; }
+Music { ID = "openin"; Lump = "D_OPENIN"; }
+Music { ID = "evil";   Lump = "D_EVIL";   }
+Music { ID = "ultima"; Lump = "D_ULTIMA"; }
+Music { ID = "read_m"; Lump = "D_READ_M"; }
+Music { ID = "dm2ttl"; Lump = "D_DM2TTL"; }
+Music { ID = "dm2int"; Lump = "D_DM2INT"; }

@@ -1,6 +1,11 @@
+# Chex Quest - Map metadata
 #
-# jDoom: Chex Maps
+# For further information on Map Info definition syntax and semantics see:
 #
+#   http://dengine.net/dew/?title=Map_Info
+#
+
+Header { Version = 5; }
 
 # The default definition, used for any maps without a map info definition.
 Map Info {
