@@ -1,5 +1,8 @@
+# Heretic - Map metadata
 #
-# jHeretic: Maps
+# For further information on Map Info definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Map_Info
 #
 
 Header { Version = 5; }

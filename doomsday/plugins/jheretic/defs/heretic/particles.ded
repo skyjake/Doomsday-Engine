@@ -1,6 +1,13 @@
-# jHeretic: Special Effects (for both sprites and models)
+# Heretic - Default Particle Effects
+#
+# For further information on Generator definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Generator
+#
 
-Header { Version = 5; }
+Header { Version = 6; }
+
+SkipIf -nodefaultfx;
 
 # Sparks from Gold Wand hits.
 Generator {
@@ -40,34 +47,3 @@ Generator {
     Color { 1 0 0 0 };
   };
 }
-
-#> Generator {
-  Mobj = "BARREL";
-  Flags = "gnf_static gnf_blend";
-  # Room for 10 sources.
-  Particles = 200;
-  Center { 0 0 50 };
-  Speed = 5;
-  Speed rnd = 1;
-  Spawn radius = 10;
-  Spawn age = -1;
-  Max age = -1;
-  Spawn rate = 1;
-  Vector { 0 0 1 };
-  Vector rnd = 1;
-  Stage {
-    Type = "pt_point";
-    Flags = "ptf_bright";
-    Radius = 30;
-    Tics = 19;
-    Rnd = 0.3;
-    Color { 1 .9 .4 .5 };
-    Gravity = -0.3;
-    Resistance = 0.1;
-  };
-  Stage {
-    Type = "pt_point";
-    Radius = 10;
-    Color { 1 .1 .1 .1 };
-  };
-} <#

@@ -1,4 +1,4 @@
-# jHeretic: Additional Animation Sequences
+# Heretic - Animation Sequences
 #
 # Heretic has predefined texture animation sequences.
 # In order to remain compatible with existing WADs, jHeretic builds
@@ -7,6 +7,11 @@
 # "tgf_first_only" are set for each group.
 #
 # Additional sequences can be defined using Group definitions.
+#
+# For further information on Group definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Group
+#
 
 Header { Version = 6; }
 

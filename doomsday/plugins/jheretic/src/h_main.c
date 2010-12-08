@@ -189,29 +189,27 @@ int G_RegisterGames(int hookType, int parm, void* data)
 {
 #define DATAPATH        DD_BASEPATH_DATA PLUGIN_NAMETEXT "\\"
 #define DEFSPATH        DD_BASEPATH_DEFS PLUGIN_NAMETEXT "\\"
-#define MAINDEF         PLUGIN_NAMETEXT ".ded"
 #define MAINCONFIG      PLUGIN_NAMETEXT ".cfg"
 #define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
 
     /* Heretic (Extended) */
-    gameIds[heretic_extended] = DD_AddGame("heretic-ext", DATAPATH, DEFSPATH, MAINDEF, MAINCONFIG, "Heretic: Shadow of the Serpent Riders", "Raven Software", "hereticext", "xheretic");
+    gameIds[heretic_extended] = DD_AddGame("heretic-ext", DATAPATH, DEFSPATH, "heretic-ext.ded", MAINCONFIG, "Heretic: Shadow of the Serpent Riders", "Raven Software", "hereticext", "xheretic");
     DD_AddGameResource(gameIds[heretic_extended], RC_PACKAGE, "heretic.wad", "EXTENDED;E5M2;E5M7;E6M2;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
     DD_AddGameResource(gameIds[heretic_extended], RC_PACKAGE, STARTUPPK3, 0);
 
     /* Heretic */
-    gameIds[heretic] = DD_AddGame("heretic", DATAPATH, DEFSPATH, MAINDEF, MAINCONFIG, "Heretic Registered", "Raven Software", "heretic", 0);
+    gameIds[heretic] = DD_AddGame("heretic", DATAPATH, DEFSPATH, "heretic.ded", MAINCONFIG, "Heretic Registered", "Raven Software", "heretic", 0);
     DD_AddGameResource(gameIds[heretic], RC_PACKAGE, "heretic.wad", "E2M2;E3M6;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
     DD_AddGameResource(gameIds[heretic], RC_PACKAGE, STARTUPPK3, 0);
 
     /* Heretic (Shareware) */
-    gameIds[heretic_shareware] = DD_AddGame("heretic-share", DATAPATH, DEFSPATH, MAINDEF, MAINCONFIG, "Heretic Shareware", "Raven Software", "sheretic", 0);
+    gameIds[heretic_shareware] = DD_AddGame("heretic-share", DATAPATH, DEFSPATH, "heretic-share.ded", MAINCONFIG, "Heretic Shareware", "Raven Software", "sheretic", 0);
     DD_AddGameResource(gameIds[heretic_shareware], RC_PACKAGE, "heretic1.wad", "E1M1;MUMSIT;WIZACT;MUS_CPTD;CHKNC5;SPAXA1A5");
     DD_AddGameResource(gameIds[heretic_shareware], RC_PACKAGE, STARTUPPK3, 0);
     return true;
 
 #undef STARTUPPK3
 #undef MAINCONFIG
-#undef MAINDEF
 #undef DEFSPATH
 #undef DATAPATH
 }

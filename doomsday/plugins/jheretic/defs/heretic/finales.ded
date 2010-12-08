@@ -1,7 +1,16 @@
-# jHeretic: Intermissions and Finales
-# (see Doc\InFine.txt)
+# Heretic - Intermissions and Finales
+#
+# For further information on the InFine system, script syntax
+# and semantics see:
+#
+#   http://dengine.net/dew/?title=InFine_script_reference
+#
 
 Header { Version = 5; }
+
+# I'm using "textdef" to allow compatibility with DeHackEd.
+# A better way would just be to use "text" and define the text
+# in the script, no need to go about modifying the Text defs.
 
 InFine 
 {

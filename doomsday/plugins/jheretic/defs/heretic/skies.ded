@@ -1,6 +1,10 @@
+# Heretic - Sky Definitions
 #
-# jHeretic: Skies
+# For further information on Sky definition syntax and semantics see:
 #
+#   http://dengine.net/dew/?title=Sky
+
+Header { Version = 6; }
 
 Sky {
   ID = "sky1";
