@@ -1160,9 +1160,9 @@ rawtex_t* R_GetRawTex(lumpnum_t lump)
 
 static lumpnum_t* loadPatchList(lumpnum_t lump, size_t* num)
 {
-    char                name[9], *names;
-    lumpnum_t*          patchLumpList;
-    size_t              i, numPatches, lumpSize = W_LumpLength(lump);
+    char name[9], *names;
+    lumpnum_t* patchLumpList;
+    size_t i, numPatches, lumpSize = W_LumpLength(lump);
 
     names = M_Malloc(lumpSize);
     W_ReadLump(lump, names);
@@ -1182,13 +1182,7 @@ static lumpnum_t* loadPatchList(lumpnum_t lump, size_t* num)
     {
         memset(name, 0, sizeof(name));
         strncpy(name, names + 4 + i * 8, 8);
-
         patchLumpList[i] = W_CheckNumForName(name);
-        if(patchLumpList[i] == -1)
-        {
-            Con_Message("loadPatchList: Warning, missing patch '%s'.\n",
-                        name);
-        }
     }
 
     M_Free(names);
