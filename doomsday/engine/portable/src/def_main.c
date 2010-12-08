@@ -371,7 +371,7 @@ ded_decor_t* Def_GetDecoration(material_t* mat, boolean hasExt)
 
     for(i = defs.count.decorations.num - 1, def = defs.decorations + i; i >= 0; i--, def--)
     {
-        material_t* defMat = Materials_ToMaterial(Materials_NumForName(def->material.name, def->material.mnamespace));
+        material_t* defMat = Materials_ToMaterial(Materials_CheckNumForName(def->material.name, def->material.mnamespace));
         if(mat == defMat)
         {
             // Is this suitable?
@@ -390,7 +390,7 @@ ded_reflection_t* Def_GetReflection(material_t* mat, boolean hasExt)
 
     for(i = defs.count.reflections.num - 1, def = defs.reflections + i; i >= 0; i--, def--)
     {
-        material_t* defMat = Materials_ToMaterial(Materials_NumForName(def->material.name, def->material.mnamespace));
+        material_t* defMat = Materials_ToMaterial(Materials_CheckNumForName(def->material.name, def->material.mnamespace));
         if(mat == defMat)
         {
             // Is this suitable?
@@ -409,7 +409,7 @@ ded_detailtexture_t* Def_GetDetailTex(material_t* mat, boolean hasExt)
 
     for(i = defs.count.details.num - 1, def = defs.details + i; i >= 0; i--, def--)
     {
-        material_t* defMat = Materials_ToMaterial(Materials_NumForName(def->material1.name, def->material1.mnamespace));
+        material_t* defMat = Materials_ToMaterial(Materials_CheckNumForName(def->material1.name, def->material1.mnamespace));
         if(mat == defMat)
         {
             // Is this sutiable?
@@ -417,7 +417,7 @@ ded_detailtexture_t* Def_GetDetailTex(material_t* mat, boolean hasExt)
                 return def;
         }
 
-        defMat = Materials_ToMaterial(Materials_NumForName(def->material2.name, def->material2.mnamespace));
+        defMat = Materials_ToMaterial(Materials_CheckNumForName(def->material2.name, def->material2.mnamespace));
         if(mat == defMat)
         {
             // Is this sutiable?
@@ -439,7 +439,7 @@ ded_ptcgen_t* Def_GetGenerator(material_t* mat, boolean hasExt)
     {
         material_t* defMat;
 
-        if(!(defMat = Materials_ToMaterial(Materials_NumForName(def->material.name, def->material.mnamespace))))
+        if(!(defMat = Materials_ToMaterial(Materials_CheckNumForName(def->material.name, def->material.mnamespace))))
             continue;
 
         if(def->flags & PGF_GROUP)
