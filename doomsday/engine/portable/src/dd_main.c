@@ -1895,7 +1895,14 @@ D_CMD(Load)
 D_CMD(Unload)
 {
     if(argc == 1)
+    {
+        if(DD_IsNullGameInfo(DD_GameInfo()))
+        {
+            Con_Message("There is no game currently loaded.\n");
+            return false;
+        }
         return DD_ChangeGame(findGameInfoForIdentityKey("null-game"));
+    }
     return W_RemoveFiles(argv + 1, argc - 1);
 }
 
