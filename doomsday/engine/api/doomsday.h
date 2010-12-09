@@ -74,58 +74,59 @@ extern          "C" {
 //
 //------------------------------------------------------------------------
 
-    /**
-     * Registers a new game.
-     *
-     * \note Game registration order defines the order of the automatic game identification/selection logic.
-     *
-     * @param identityKey   Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
-     *                      - Used during resource location for mode-specific assets.
-     *                      - Sent out in netgames (a client can't connect unless mode strings match).
-     * @param dataPath      The base directory for all data-class resources.
-     * @param defsPath      The base directory for all defs-class resources.
-     * @param mainDef       The name of the main/top-level definition file. Can be @c NULL.
-     * @param mainConfig    The name of the main game config file. Can be @c NULL.
-     * @param defaultTitle  Default game title. May be overridden later.
-     * @param defaultAuthor Default game author. May be overridden later. Used for (e.g.) the map author name
-     *                      if not specified in a Map Info definition.
-     * @param cmdlineFlag   Command-line game selection override argument (e.g., "ultimate"). Can be @c NULL.
-     * @param cmdlineFlag2  Alternative override. Can be @c NULL.
-     *
-     * @return              Unique identifier/name assigned to the game.
-     */
-    gameid_t DD_AddGame(const char* identityKey, const char* dataPath, const char* defsPath, const char* mainDef,
-        const char* mainConfig, const char* defaultTitle, const char* defaultAuthor, const char* cmdlineFlag,
-        const char* cmdlineFlag2);
+/**
+ * Registers a new game.
+ *
+ * \note Game registration order defines the order of the automatic game identification/selection logic.
+ *
+ * @param identityKey   Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
+ *                      - Used during resource location for mode-specific assets.
+ *                      - Sent out in netgames (a client can't connect unless mode strings match).
+ * @param dataPath      The base directory for all data-class resources.
+ * @param defsPath      The base directory for all defs-class resources.
+ * @param mainDef       The name of the main/top-level definition file. Can be @c NULL.
+ * @param mainConfig    The name of the main game config file. Can be @c NULL.
+ * @param defaultTitle  Default game title. May be overridden later.
+ * @param defaultAuthor Default game author. May be overridden later. Used for (e.g.) the map author name
+ *                      if not specified in a Map Info definition.
+ * @param cmdlineFlag   Command-line game selection override argument (e.g., "ultimate"). Can be @c NULL.
+ * @param cmdlineFlag2  Alternative override. Can be @c NULL.
+ *
+ * @return              Unique identifier/name assigned to the game.
+ */
+gameid_t DD_AddGame(const char* identityKey, const char* dataPath, const char* defsPath, const char* mainDef,
+    const char* mainConfig, const char* defaultTitle, const char* defaultAuthor, const char* cmdlineFlag,
+    const char* cmdlineFlag2);
 
-    /**
-     * Registers a new resource for the specified game.
-     *
-     * \note Resource registration order defines the load order of resources (among those of the same type).
-     *
-     * @param game          Unique identifier/name of the game.
-     * @param rclass        Class of resource being added.
-     * @param names         One or more known potential names, seperated by semicolon e.g., "name1;name2".
-     *                      Names may include valid absolute, or relative file paths. These paths include
-     *                      valid symbolbolic escape tokens, predefined symbols into the virtual file system.            
-     */
-    void DD_AddGameResource(gameid_t game, resourceclass_t rclass, const char* names, void* params);
+/**
+ * Registers a new resource for the specified game.
+ *
+ * \note Resource registration order defines the load order of resources (among those of the same type).
+ *
+ * @param game          Unique identifier/name of the game.
+ * @param rclass        Class of resource being added.
+ * @param rflags        Presently unused. Reserved for future use.
+ * @param names         One or more known potential names, seperated by semicolon e.g., "name1;name2".
+ *                      Names may include valid absolute, or relative file paths. These paths include
+ *                      valid symbolbolic escape tokens, predefined symbols into the virtual file system.            
+ */
+void DD_AddGameResource(gameid_t game, resourceclass_t rclass, int rflags, const char* names, void* params);
 
-    /**
-     * Retrieve extended info about the specified game.
-     *
-     * @param game          Unique identifier/name of the game.
-     * @param info          Info structure to be populated.
-     */
-    void DD_GetGameInfo2(gameid_t game, ddgameinfo_t* info);
+/**
+ * Retrieve extended info about the specified game.
+ *
+ * @param game          Unique identifier/name of the game.
+ * @param info          Info structure to be populated.
+ */
+void DD_GetGameInfo2(gameid_t game, ddgameinfo_t* info);
 
-    /**
-     * Retrieve extended info about the current game.
-     *
-     * @param info          Info structure to be populated.
-     * @return              @c true if successful else @c false (i.e., no game loaded).
-     */
-    boolean DD_GetGameInfo(ddgameinfo_t* info);
+/**
+ * Retrieve extended info about the current game.
+ *
+ * @param info          Info structure to be populated.
+ * @return              @c true if successful else @c false (i.e., no game loaded).
+ */
+boolean DD_GetGameInfo(ddgameinfo_t* info);
 
     int _DECALL     DD_GetInteger(int ddvalue);
     void            DD_SetInteger(int ddvalue, int parm);

@@ -33,6 +33,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "jdoom64.h"
 
@@ -56,6 +57,8 @@
 #include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------
+
+#define GID(v)          (toGameId(v))
 
 // TYPES -------------------------------------------------------------------
 
@@ -119,6 +122,12 @@ static uint startMap;
 static boolean autoStart;
 
 // CODE --------------------------------------------------------------------
+
+static __inline gameid_t toGameId(int gamemode)
+{
+    assert(gamemode >= 0 && gamemode < NUM_GAME_MODES);
+    return gameIds[(gamemode_t) gamemode];
+}
 
 /**
  * Get a 32-bit integer value.
@@ -191,18 +200,16 @@ int G_RegisterGames(int hookType, int parm, void* data)
 {
 #define DATAPATH        DD_BASEPATH_DATA PLUGIN_NAMETEXT "\\"
 #define DEFSPATH        DD_BASEPATH_DEFS PLUGIN_NAMETEXT "\\"
-#define MAINDEF         PLUGIN_NAMETEXT ".ded"
 #define MAINCONFIG      PLUGIN_NAMETEXT ".cfg"
 #define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
 
-    gameIds[doom64] = DD_AddGame("doom64", DATAPATH, DEFSPATH, MAINDEF, MAINCONFIG, "Doom 64", "Midway Software", "doom64", 0);
-    DD_AddGameResource(gameIds[doom64], RC_PACKAGE, "doom64.wad", "MAP01;MAP020;MAP38;F_SUCK");
-    DD_AddGameResource(gameIds[doom64], RC_PACKAGE, STARTUPPK3, 0);
+    gameIds[doom64] = DD_AddGame("doom64", DATAPATH, DEFSPATH, PLUGIN_NAMETEXT ".ded", MAINCONFIG, "Doom 64", "Midway Software", "doom64", 0);
+    DD_AddGameResource(GID(doom64), RC_PACKAGE, 0, "doom64.wad", "MAP01;MAP020;MAP38;F_SUCK");
+    DD_AddGameResource(GID(doom64), RC_PACKAGE, 0, STARTUPPK3, 0);
     return true;
 
 #undef STARTUPPK3
 #undef MAINCONFIG
-#undef MAINDEF
 #undef DEFSPATH
 #undef DATAPATH
 }

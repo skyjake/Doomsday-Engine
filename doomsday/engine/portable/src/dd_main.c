@@ -285,7 +285,7 @@ static void addIdentityKeyToResourceRecord(gameresource_record_t* rec, const dds
     }
 }
 
-void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, const char* _names, void* params)
+void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags, const char* _names, void* params)
 {
     gameinfo_t* info = findGameInfoForId(gameId);
     ddstring_t names, name;
