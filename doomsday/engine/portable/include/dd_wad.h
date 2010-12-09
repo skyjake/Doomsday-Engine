@@ -82,8 +82,10 @@ void W_DumpLumpDir(void);
  * @return              @c true, if the operation is successful.
  */
 boolean W_AddFile(const char* fileName, boolean allowDuplicate);
+boolean W_AddFiles(const char* const* filenames, size_t num, boolean allowDuplicate);
 
 boolean W_RemoveFile(const char* fileName);
+boolean W_RemoveFiles(const char* const* filenames, size_t num);
 
 lumpnum_t W_OpenAuxiliary(const char* fileName);
 

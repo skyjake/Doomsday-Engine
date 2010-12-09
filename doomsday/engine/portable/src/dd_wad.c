@@ -117,9 +117,7 @@ typedef struct {
 D_CMD(Dir);
 D_CMD(Dump);
 D_CMD(ListFiles);
-D_CMD(LoadFile);
 D_CMD(ResetLumps);
-D_CMD(UnloadFile);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -169,10 +167,8 @@ void DD_RegisterVFS(void)
     C_CMD("dir", "s*", Dir);
     C_CMD("dump", "s", Dump);
     C_CMD("listfiles", "", ListFiles);
-    C_CMD("load", "ss", LoadFile);
     C_CMD("ls", "s*", Dir);
     C_CMD("reset", "", ResetLumps);
-    C_CMD("unload", "s*", UnloadFile);
 }
 
 static lumpnum_t W_Index(lumpnum_t lump)
@@ -608,7 +604,7 @@ boolean W_AddFile(const char* fileName, boolean allowDuplicate)
         return false;
     }
 
-    VERBOSE( Con_Message("W_AddFile: %s\n", fileName) );
+    VERBOSE( Con_Message("W_AddFile: Loading %s ...\n", fileName) );
 
     // Determine the file name extension.
     extension = strrchr(fileName, '.');
@@ -710,10 +706,12 @@ boolean W_AddFile(const char* fileName, boolean allowDuplicate)
     return true;
 }
 
-boolean W_RemoveFile(const char *fileName)
+boolean W_RemoveFile(const char* fileName)
 {
-    int                 idx = W_RecordGetIdx(fileName);
-    filerecord_t*       rec;
+    int idx = W_RecordGetIdx(fileName);
+    filerecord_t* rec;
+
+    VERBOSE( Con_Message("W_RemoveFile: Unloading %s ...\n", fileName) );
 
     if(idx == -1)
         return false; // No such file loaded.
@@ -738,6 +736,52 @@ boolean W_RemoveFile(const char *fileName)
 
     // Success!
     return true;
+}
+
+boolean W_AddFiles(const char* const* filenames, size_t num, boolean allowDuplicate)
+{
+    boolean succeeded = false;
+    { size_t i;
+    for(i = 0; i < num; ++i)
+    {
+        if(W_AddFile(filenames[i], allowDuplicate))
+        {
+            VERBOSE2( Con_Message("W_AddFiles: Done loading %s\n", M_PrettyPath(filenames[i])) );
+            succeeded = true; // At least one has been loaded.
+        }
+        else
+            Con_Message("W_AddFiles: Error loading %s\n", filenames[i]);
+    }}
+
+    // A changed file list may alter the main lump directory.
+    if(succeeded)
+    {
+        DD_UpdateEngineState();
+    }
+    return succeeded;
+}
+
+boolean W_RemoveFiles(const char* const* filenames, size_t num)
+{
+    boolean succeeded = false;
+    { size_t i;
+    for(i = 0; i < num; ++i)
+    {
+        if(W_RemoveFile(filenames[i]))
+        {
+            VERBOSE2( Con_Message("W_RemoveFiles: Done unloading %s\n", M_PrettyPath(filenames[i])) );
+            succeeded = true; // At least one has been unloaded.
+        }
+        else
+            Con_Message("W_RemoveFiles: Error unloading %s\n", filenames[i]);
+    }}
+
+    // A changed file list may alter the main lump directory.
+    if(succeeded)
+    {
+        DD_UpdateEngineState();
+    }
+    return succeeded;
 }
 
 void W_Reset(void)
@@ -1281,55 +1325,6 @@ boolean W_LumpFromIWAD(lumpnum_t lump)
     }
     }
     return false;
-}
-
-D_CMD(LoadFile)
-{
-    int i, succeeded = false;
-
-    for(i = 1; i < argc; ++i)
-    {
-        Con_Message("Loading %s...\n", argv[i]);
-        if(W_AddFile(argv[i], true))
-        {
-            Con_Message("OK\n");
-            succeeded = true;   // At least one has been loaded.
-        }
-        else
-            Con_Message("Failed!\n");
-    }
-
-    // We only need to update if something was actually loaded.
-    if(succeeded)
-    {
-        // The new wad may contain lumps that alter the current ones in use.
-        DD_UpdateEngineState();
-    }
-    return true;
-}
-
-D_CMD(UnloadFile)
-{
-    int i, succeeded = false;
-
-    for(i = 1; i < argc; ++i)
-    {
-        filename_t file;
-
-        strncpy(file, argv[i], FILENAME_T_MAXLEN);
-        Con_Message("Unloading %s...\n", file);
-        if(W_RemoveFile(file))
-        {
-            Con_Message("OK\n");
-            succeeded = true;
-        }
-        else
-            Con_Message("Failed!\n");
-    }
-
-    if(succeeded)
-        DD_UpdateEngineState();
-    return true;
 }
 
 D_CMD(Dump)

@@ -402,8 +402,6 @@ static filehash_t* buildFileHash(filehash_t* fh)
     { const char* p = fh->_pathList;
     while((p = Str_CopyDelim(&path, p, ';'))) // Get the next path.
     {
-        // Convert all slashes (sys_file compatibility).
-        Dir_FixSlashes(Str_Text(&path), Str_Length(&path));
         addDirectory(fh, Str_Text(&path)); // Add this path to the hash.
     }}
 
@@ -427,6 +425,8 @@ filehash_t* FileHash_Create(const char* pathList)
     filehash_t* fh = M_Calloc(sizeof(*fh));
     fh->_pathList = M_Malloc(pathListLen+1);
     strcpy(fh->_pathList, pathList);
+    // Convert all slashes (sys_file compatibility).
+    Dir_FixSlashes(fh->_pathList, pathListLen);
     return fh;
     }
 }

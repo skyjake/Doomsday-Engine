@@ -197,10 +197,12 @@ void Con_Register(void)
     C_CMD("if",             NULL,   If);
     C_CMD("inc",            NULL,   IncDec);
     C_CMD("listmobjtypes",  "",     ListMobjs);
+    C_CMD("load",           "s*",   Load);
     C_CMD("quit!",          "",     Quit);
     C_CMD("repeat",         "ifs",  Repeat);
     C_CMD("sub",            NULL,   AddSub);
     C_CMD("toggle",         "s",    Toggle);
+    C_CMD("unload",         "*",    Unload);
     C_CMD("version",        "",     Version);
     C_CMD("write",          "s",    WriteConsole);
 

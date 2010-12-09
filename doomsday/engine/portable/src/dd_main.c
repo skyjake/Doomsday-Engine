@@ -585,25 +585,6 @@ static void printGameInfo(gameinfo_t* info)
     Con_Printf("  Status: %s\n", DD_GameInfo() == info? "Loaded" : allGameResourcesFound(info)? "Complete/Playable" : "Incomplete/Not playable");
 }
 
-D_CMD(ListGames)
-{
-    uint i, numAvailableGames = 0, numCompleteGames = 0;
-    for(i = 0; i < numGameInfo; ++i)
-    {
-        gameinfo_t* info = gameInfo[i];
-
-        if(DD_IsNullGameInfo(info))
-            continue;
-
-        numAvailableGames++;
-        printGameInfo(info);
-        if(allGameResourcesFound(info))
-            numCompleteGames++;
-    }
-    Con_Printf("%i of %i games playable.\n", numCompleteGames, numAvailableGames);
-    return true;
-}
-
 /**
  * (f_forall_func_t)
  */
@@ -700,8 +681,10 @@ static boolean exchangeEntryPoints(pluginid_t pluginId)
     if(!app.GetGameAPI)
     {
         // Do the API transfer.
-        if(!(app.GetGameAPI = (GETGAMEAPI) getEntryPoint(&app.hInstPlug[pluginId-1], "GetGameAPI")))
+        GETGAMEAPI fptAdr;
+        if(!(fptAdr = (GETGAMEAPI) getEntryPoint(&app.hInstPlug[pluginId-1], "GetGameAPI")))
             return false;
+        app.GetGameAPI = fptAdr;
         DD_InitAPI();
         Def_GetGameClasses();
     }
@@ -862,15 +845,25 @@ static int DD_ChangeGameWorker(void* parm)
 /**
  * Switch to/activate the specified game.
  */
-void DD_ChangeGame(gameinfo_t* info)
+boolean DD_ChangeGame(gameinfo_t* info)
 {
     assert(info);
+
+    // Ignore attempts to re-load the current game.
+    if(DD_GameInfo() == info)
+        return false;
+
+    if(!DD_IsNullGameInfo(DD_GameInfo()))
+    {
+        Con_Error("DD_ChangeGame: Runtime game change not yet implemented.");
+        return false; // Unreachable.
+    }
 
     Con_Message("DD_ChangeGame: Selecting \"%s\".\n", Str_Text(GameInfo_IdentityKey(info)));
     if(!exchangeEntryPoints(GameInfo_PluginId(info)))
     {
         Con_Message("DD_ChangeGame: Warning, error exchanging entrypoints with plugin %i - aborting.\n", (int)GameInfo_PluginId(info));
-        return;
+        return false;
     }
 
     P_InitMapUpdate();
@@ -893,6 +886,8 @@ void DD_ChangeGame(gameinfo_t* info)
      */
     Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER, "%s", Str_Text(GameInfo_Title(info))); Con_FPrintf(CBLF_WHITE | CBLF_CENTER, "\n");
     Con_FPrintf(CBLF_RULER, "");
+
+    return true;
 }
 
 /**
@@ -999,7 +994,7 @@ int DD_EarlyInit(void)
     Dir_ValidDir(dataPath, FILENAME_T_MAXLEN);
     M_TranslatePath(defsPath, DD_BASEPATH_DEFS, FILENAME_T_MAXLEN);
     Dir_ValidDir(defsPath, FILENAME_T_MAXLEN);
-    currentGameInfoIndex = gameInfoIndex(addGameInfoRecord(0, 0, dataPath, defsPath, 0, 0, 0, 0, 0, 0));
+    currentGameInfoIndex = gameInfoIndex(addGameInfoRecord(0, "null-game", dataPath, defsPath, 0, 0, 0, 0, 0, 0));
     }
     return true;
 }
@@ -1886,6 +1881,41 @@ const char* value_Str(int val)
 
     sprintf(valStr, "(unnamed %i)", val);
     return valStr;
+}
+
+D_CMD(Load)
+{
+    { gameinfo_t* info;
+    if(argc == 2 && (info = findGameInfoForIdentityKey(argv[1])))
+        return DD_ChangeGame(info);}
+
+    return W_AddFiles(argv + 1, argc - 1, true);
+}
+
+D_CMD(Unload)
+{
+    if(argc == 1)
+        return DD_ChangeGame(findGameInfoForIdentityKey("null-game"));
+    return W_RemoveFiles(argv + 1, argc - 1);
+}
+
+D_CMD(ListGames)
+{
+    uint i, numAvailableGames = 0, numCompleteGames = 0;
+    for(i = 0; i < numGameInfo; ++i)
+    {
+        gameinfo_t* info = gameInfo[i];
+
+        if(DD_IsNullGameInfo(info))
+            continue;
+
+        numAvailableGames++;
+        printGameInfo(info);
+        if(allGameResourcesFound(info))
+            numCompleteGames++;
+    }
+    Con_Printf("%i of %i games playable.\n", numCompleteGames, numAvailableGames);
+    return true;
 }
 
 #ifdef UNIX
