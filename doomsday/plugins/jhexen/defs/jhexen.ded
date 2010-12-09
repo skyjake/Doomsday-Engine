@@ -1,10 +1,9 @@
+# jHexen - Doomsday Engine Definitions
 #
-# -=- jHexen Definitions -=-
+# Default set of definitions common to all games playable with jHexen.
+# For information about DED syntax and semantics, see
 #
-# This file is overwritten on every upgrade. Add custom definitions
-# to User.ded.
-#
-# For information about DED syntax and semantics, see Doc\DEDDoc.txt.
+#  http://dengine.net/dew/?title=DED
 #
 
 Header {
@@ -12,13 +11,26 @@ Header {
   Default model scale = 1.2;
 }
 
+Material {
+  ID = "F_SKY";
+  Namespace = flats;
+  Flags = skymask;
+}
+
+Sound {
+  ID = "NONE";
+  Link pitch = -1;
+  Link volume = -1;
+  Max channels = -1;
+}
+
+# The contents of the 'currentmap' definition change at runtime.
+Music {
+  ID = "currentmap";
+}
+
 Include "flags.ded";
 Include "objects.ded";
 Include "sprites.ded";
-Include "materials.ded";
-Include "audio.ded";
-Include "special.ded";
-Include "lights.ded";
-Include "maps.ded";
-Include "finales.ded";
 Include "text.ded";
+Include "audio.ded";

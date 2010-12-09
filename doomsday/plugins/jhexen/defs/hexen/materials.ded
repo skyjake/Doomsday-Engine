@@ -1,22 +1,18 @@
-# jHexen: Material Enhancements
+# Hexen - Material Enhancements
 #
-# Patch the Material definitions created automatically
-# by the engine, adding new effects to them.
+# Patch the Material definitions created automatically by the engine,
+# adding new effects to them.
+#
+# For further information on Material definition syntax and semantics see:
+#
+#   http://dengine.net/dew/?title=Ded_material
 
 Header { Version = 6; }
 
-#
-# Skymasked flats:
-#
-
-Material {
-  ID = "F_SKY";
-  Namespace = flats;
-  Flags = skymask;
-}
+SkipIf -nodefaultfx;
 
 #
-# Glowing materials:
+# Glowing flats:
 #
 
 Material {
