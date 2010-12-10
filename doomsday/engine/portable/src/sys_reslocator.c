@@ -164,25 +164,32 @@ static void clearNamespaceSearchPaths(resourcenamespaceid_t rni)
     ResourceNamespace_ClearSearchPaths(getNamespaceForId(rni));
 }
 
-/// Substitute known symbols in the templated path.
-static boolean resolveURI(ddstring_t* dest, const ddstring_t* src, gameinfo_t* info)
+/**
+ * Substitute known symbols in the possibly templated path.
+ * Resulting path is a well-formed, sys_filein-compatible file path (perhaps base-relative).
+ */
+static boolean resolveURI(ddstring_t* dest, const ddstring_t* rawSrc, gameinfo_t* info)
 {
-    assert(dest && src && info);
+    assert(dest && rawSrc && info);
     {
-    ddstring_t part;
+    ddstring_t part, src;
     const char* p;
     boolean successful = false;
 
     Str_Init(&part);
+    Str_Init(&src); Str_Copy(&src, rawSrc);
+
+    Str_StripLeft(&src);
+    Str_StripRight(&src);
 
     // Copy the first part of the string as-is up to first '$' if present.
-    if((p = Str_CopyDelim(dest, Str_Text(src), '$')))
+    if((p = Str_CopyDelim(dest, Str_Text(&src), '$')))
     {
         int depth = 0;
 
         if(*p != '(')
         {
-            Con_Message("Invalid character '%c' in \"%s\" at %lu.\n", *p, Str_Text(src), p - Str_Text(src));
+            Con_Message("Invalid character '%c' in \"%s\" at %lu.\n", *p, Str_Text(&src), p - Str_Text(&src));
             goto parseEnded;
         }
         // Skip over the opening brace.
@@ -197,11 +204,7 @@ static boolean resolveURI(ddstring_t* dest, const ddstring_t* src, gameinfo_t* i
             {
                 if(!ArgCheck("-nowaddir") && getenv("DOOMWADDIR"))
                 {
-                    filename_t newPath;
-                    /// \todo dj: This translation is not necessary at this point. It should be enough to
-                    /// fix slashes and ensure a well-formed path (potentially relative).
-                    M_TranslatePath(newPath, getenv("DOOMWADDIR"), FILENAME_T_MAXLEN);
-                    Str_Append(dest, newPath);
+                    Str_Append(dest, getenv("DOOMWADDIR"));
                 }
             }
             // Now try internal symbols.
@@ -230,7 +233,7 @@ static boolean resolveURI(ddstring_t* dest, const ddstring_t* src, gameinfo_t* i
             }
             else
             {
-                Con_Message("Unknown identifier '%s' in \"%s\".\n", Str_Text(&part), Str_Text(src));
+                Con_Message("Unknown identifier '%s' in \"%s\".\n", Str_Text(&part), Str_Text(&src));
                 goto parseEnded;
             }
             depth--;
@@ -242,7 +245,7 @@ static boolean resolveURI(ddstring_t* dest, const ddstring_t* src, gameinfo_t* i
             Str_Append(dest, Str_Text(&part));
             if(*p != '(')
             {
-                Con_Message("Invalid character '%c' in \"%s\" at %lu.\n", *p, Str_Text(src), p - Str_Text(src));
+                Con_Message("Invalid character '%c' in \"%s\" at %lu.\n", *p, Str_Text(&src), p - Str_Text(&src));
                 goto parseEnded;
             }
             // Skip over the opening brace.
@@ -259,6 +262,8 @@ static boolean resolveURI(ddstring_t* dest, const ddstring_t* src, gameinfo_t* i
         Str_Append(dest, Str_Text(&part));
     }
 
+    // Convert all slashes to the host OS's directory separator, for compatibility with the sys_filein routines.
+    Dir_FixSlashes(Str_Text(dest), Str_Length(dest));
     // Ensure we have a terminating DIR_SEP_CHAR
     if(Str_RAt(dest, 0) != DIR_SEP_CHAR)
         Str_AppendChar(dest, DIR_SEP_CHAR);

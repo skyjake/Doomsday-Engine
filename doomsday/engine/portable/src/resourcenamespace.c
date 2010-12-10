@@ -27,77 +27,43 @@
 #include "de_base.h"
 #include "m_args.h"
 #include "m_filehash.h"
-#include "m_misc.h" /// \todo dj: replace dep
 
 #include "resourcenamespace.h"
 
-/**
- * \todo dj: We don't really want absolute paths output here, paths should stay relative
- * until search-time where possible.
- */
-static void formSearchPathList(resourcenamespace_t* rnamespace, ddstring_t* pathList)
+static void formSearchPathList(ddstring_t* pathList, resourcenamespace_t* rnamespace)
 {
-    assert(pathList && rnamespace);
-    {
-    ddstring_t pathTemplate;
+    assert(rnamespace && pathList);
 
+    // A command line default path?
     if(rnamespace->_overrideFlag && rnamespace->_overrideFlag[0] && ArgCheckWith(rnamespace->_overrideFlag, 1))
-    {   // A command line override of the default path.
-        filename_t newPath;
-        M_TranslatePath(newPath, ArgNext(), FILENAME_T_MAXLEN);
-        Dir_ValidDir(newPath, FILENAME_T_MAXLEN);
-        Str_Prepend(pathList, ";"); Str_Prepend(pathList, newPath);
+    {
+        Str_Append(pathList, ArgNext()); Str_Append(pathList, ";");
     }
 
-    Str_Init(&pathTemplate); Str_Set(&pathTemplate, rnamespace->_searchPaths);
-
-    // Convert all slashes to the host OS's directory separator, for compatibility with the sys_filein routines.
-    Dir_FixSlashes(Str_Text(&pathTemplate), Str_Length(&pathTemplate));
-
+    // Join the pathlist from the resource namespace to the final pathlist.
+    Str_Append(pathList, rnamespace->_searchPaths);
     // Ensure we have the required terminating semicolon.
-    if(Str_RAt(&pathTemplate, 0) != ';')
-        Str_AppendChar(&pathTemplate, ';');
+    if(Str_RAt(pathList, 0) != ';')
+        Str_AppendChar(pathList, ';');
 
-    // Tokenize the template into discreet paths and process individually.
-    { const char* p = Str_Text(&pathTemplate);
-    ddstring_t path, translatedPath;
-    Str_Init(&path);
-    Str_Init(&translatedPath);
-    while((p = Str_CopyDelim(&path, p, ';')))
+    // Join the extra pathlist from the resource namespace to the final pathlist?
+    if(Str_Length(&rnamespace->_extraSearchPaths) > 0)
     {
-        if(!F_ResolveURI(&translatedPath, &path))
-        {   // Path cannot be completed due to incomplete symbol definitions. 
-#if _DEBUG
-            Con_Message("formSearchPathList: Ignoring incomplete path \"%s\" for rnamespace %s.\n", Str_Text(&path), rnamespace->_name);
-#endif
-            continue; // Ignore this path.
-        }
-        // Do we need to expand any path directives?
-        F_ExpandBasePath(&translatedPath, &translatedPath);
-
-        // Add it to the list of paths.
-        Str_Append(pathList, Str_Text(&translatedPath)); Str_Append(pathList, ";");
-    }
-    Str_Free(&path);
-    Str_Free(&translatedPath);
+        Str_Append(pathList, Str_Text(&rnamespace->_extraSearchPaths));
+        // Ensure we have the required terminating semicolon.
+        if(Str_RAt(pathList, 0) != ';')
+            Str_AppendChar(pathList, ';');
     }
 
-    // The overriding path.
-#pragma message("!!!WARNING: Resource namespace default path override2 not presently implemented (e.g., -texdir2)!!!")
-    /*if(rnamespace->_overrideFlag2 && rnamespace->_overrideFlag2[0] && ArgCheckWith(rnamespace->_overrideFlag2, 1))
+    // A command line override path?
+    if(rnamespace->_overrideFlag2 && rnamespace->_overrideFlag2[0] && ArgCheckWith(rnamespace->_overrideFlag2, 1))
     {
-        filename_t newPath;
-        M_TranslatePath(newPath, ArgNext(), FILENAME_T_MAXLEN);
-        Dir_ValidDir(newPath, FILENAME_T_MAXLEN);
+        const char* newPath = ArgNext();
         Str_Prepend(pathList, ";"); Str_Prepend(pathList, newPath);
 
-        if((usingGameModePathData || usingGameModePathDefs) && Str_Length(identityKey))
-        {
-            filename_t other;
-            dd_snprintf(other, FILENAME_T_MAXLEN, "%s/%s", newPath, Str_Text(identityKey));
-            ResourceNamespace_AddSearchPath(rnamespace, other, false);
-        }
-    }*/
+        Str_Prepend(pathList, ";");
+        Str_Prepend(pathList, "\\$(GameInfo.IdentityKey)");
+        Str_Prepend(pathList, newPath);
     }
 }
 
@@ -117,17 +83,9 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rnamespace, const c
     assert(rnamespace);
     {
     ddstring_t* pathList;
-    filename_t absNewPath;
 
     if(!newPath || !newPath[0] || !strcmp(newPath, DIR_SEP_STR))
         return false; // Not suitable.
-
-    // Convert all slashes to the host OS's directory separator, for compatibility
-    // with the sys_filein routines.
-    strncpy(absNewPath, newPath, FILENAME_T_MAXLEN);
-    // \todo dj: Do not make paths absolute at this time, defer until filehash construction.
-    Dir_ValidDir(absNewPath, FILENAME_T_MAXLEN);
-    M_PrependBasePath(absNewPath, absNewPath, FILENAME_T_MAXLEN);
 
     // Have we seen this path already?
     pathList = &rnamespace->_extraSearchPaths;
@@ -140,7 +98,7 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rnamespace, const c
         Str_Init(&curPath);
         while(!ignore && (p = Str_CopyDelim(&curPath, p, ';')))
         {
-            if(!Str_CompareIgnoreCase(&curPath, absNewPath))
+            if(!Str_CompareIgnoreCase(&curPath, newPath))
                 ignore = true;
         }
         Str_Free(&curPath);
@@ -150,7 +108,7 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rnamespace, const c
 
     // Prepend to the path list - newer paths have priority.
     Str_Prepend(pathList, ";");
-    Str_Prepend(pathList, absNewPath);
+    Str_Prepend(pathList, newPath);
 
     rnamespace->_flags |= RNF_IS_DIRTY;
     return true;
@@ -173,7 +131,7 @@ struct filehash_s* ResourceNamespace_Hash(resourcenamespace_t* rnamespace)
     {
         ddstring_t tmp;
         Str_Init(&tmp);
-        formSearchPathList(rnamespace, &tmp);
+        formSearchPathList(&tmp, rnamespace);
         if(Str_Length(&tmp) > 0)
         {
             rnamespace->_fileHash = FileHash_Create(Str_Text(&tmp));

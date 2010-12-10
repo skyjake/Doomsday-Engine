@@ -391,28 +391,59 @@ static void clearHash(filehash_t* fh)
     fh->_builtRecordSet = false;
 }
 
+static void printPathList(filehash_t* fh)
+{
+    assert(fh);
+    {
+    ddstring_t path, translatedPath;
+
+    Str_Init(&path);
+    Str_Init(&translatedPath);
+
+    // Tokenize the into discreet paths and process individually.
+    { const char* p = fh->_pathList; size_t n = 0;
+    while((p = Str_CopyDelim(&path, p, ';'))) // Get the next path.
+    {
+        boolean incomplete = !F_ResolveURI(&translatedPath, &path);
+        Con_Message("  %i: \"%s\" %s%s\n", n++, Str_Text(&path), (incomplete? "--(!)incomplete" : "> "), !incomplete? M_PrettyPath(Str_Text(&translatedPath)) : "");
+    }}
+
+    Str_Free(&path);
+    Str_Free(&translatedPath);
+    }
+}
+
 static filehash_t* buildFileHash(filehash_t* fh)
 {
     assert(fh);
     {
-    uint startTime = verbose >= 1? Sys_GetRealTime(): 0;
-    ddstring_t path;
-    Str_Init(&path);
+    uint startTime = verbose >= 2? Sys_GetRealTime(): 0;
+    ddstring_t path, translatedPath;
 
-    { const char* p = fh->_pathList;
+    Str_Init(&path);
+    Str_Init(&translatedPath);
+
+    VERBOSE( printPathList(fh); Con_Message("Rebuilding filehash ...\n") );
+
+    // Tokenize the into discreet paths and process individually.
+    { const char* p = fh->_pathList; size_t n = 0;
     while((p = Str_CopyDelim(&path, p, ';'))) // Get the next path.
     {
-        addDirectory(fh, Str_Text(&path)); // Add this path to the hash.
-    }}
+        if(!F_ResolveURI(&translatedPath, &path))
+            continue; // Incomplete path; ignore it.
 
-    Str_Free(&path);
+        // Expand any base-relative path directives.
+        F_ExpandBasePath(&translatedPath, &translatedPath);
+
+        // Add this path to the hash.
+        addDirectory(fh, Str_Text(&translatedPath));
+    }}
     fh->_builtRecordSet = true;
 
-    if(verbose >= 1)
-    {
-        Con_Message("Rebuilt filehash (done in %.2f seconds).\n", (Sys_GetRealTime() - startTime) / 1000.0f);
-        M_PrintPathList(fh->_pathList);
-    }
+    Str_Free(&path);
+    Str_Free(&translatedPath);
+
+    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
     return fh;
     }
 }
@@ -425,8 +456,7 @@ filehash_t* FileHash_Create(const char* pathList)
     filehash_t* fh = M_Calloc(sizeof(*fh));
     fh->_pathList = M_Malloc(pathListLen+1);
     strcpy(fh->_pathList, pathList);
-    // Convert all slashes (sys_file compatibility).
-    Dir_FixSlashes(fh->_pathList, pathListLen);
+
     return fh;
     }
 }
