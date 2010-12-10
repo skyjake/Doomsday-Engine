@@ -153,6 +153,12 @@ resourcetype_t F_GuessResourceTypeByName(const char* name);
  */
 boolean F_ApplyPathMapping(ddstring_t* path);
 
+/**
+ * @return                      @c false if the resource uri cannot be fully resolved
+ *                              (e.g., due to incomplete symbol definitions).
+ */
+boolean F_ResolveURI(ddstring_t* translatedPath, const ddstring_t* uri);
+
 // Utility routines:
 
 /**

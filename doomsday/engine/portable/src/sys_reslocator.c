@@ -164,7 +164,115 @@ static void clearNamespaceSearchPaths(resourcenamespaceid_t rni)
     ResourceNamespace_ClearSearchPaths(getNamespaceForId(rni));
 }
 
-static boolean tryFindFile(resourceclass_t rclass, const char* searchPath,
+/// Substitute known symbols in the templated path.
+static boolean resolveURI(ddstring_t* dest, const ddstring_t* src, gameinfo_t* info)
+{
+    assert(dest && src && info);
+    {
+    ddstring_t part;
+    const char* p;
+    boolean successful = false;
+
+    Str_Init(&part);
+
+    // Copy the first part of the string as-is up to first '$' if present.
+    if((p = Str_CopyDelim(dest, Str_Text(src), '$')))
+    {
+        int depth = 0;
+
+        if(*p != '(')
+        {
+            Con_Message("Invalid character '%c' in \"%s\" at %lu.\n", *p, Str_Text(src), p - Str_Text(src));
+            goto parseEnded;
+        }
+        // Skip over the opening brace.
+        p++;
+        depth++;
+
+        // Now grab everything up to the closing ')' (it *should* be present).
+        while((p = Str_CopyDelim(&part, p, ')')))
+        {
+            // First, try external symbols like environment variable names - they are quick to reject.
+            if(!Str_CompareIgnoreCase(&part, "DOOMWADDIR"))
+            {
+                if(!ArgCheck("-nowaddir") && getenv("DOOMWADDIR"))
+                {
+                    filename_t newPath;
+                    /// \todo dj: This translation is not necessary at this point. It should be enough to
+                    /// fix slashes and ensure a well-formed path (potentially relative).
+                    M_TranslatePath(newPath, getenv("DOOMWADDIR"), FILENAME_T_MAXLEN);
+                    Str_Append(dest, newPath);
+                }
+            }
+            // Now try internal symbols.
+            else if(!Str_CompareIgnoreCase(&part, "GameInfo.DataPath"))
+            {
+                if(DD_IsNullGameInfo(info))
+                    goto parseEnded;
+
+                // DataPath already has ending @c DIR_SEP_CHAR.
+                Str_PartAppend(dest, Str_Text(GameInfo_DataPath(info)), 0, Str_Length(GameInfo_DataPath(info))-1);
+            }
+            else if(!Str_CompareIgnoreCase(&part, "GameInfo.DefsPath"))
+            {
+                if(DD_IsNullGameInfo(info))
+                    goto parseEnded;
+
+                // DefsPath already has ending @c DIR_SEP_CHAR.
+                Str_PartAppend(dest, Str_Text(GameInfo_DefsPath(info)), 0, Str_Length(GameInfo_DefsPath(info))-1);
+            }
+            else if(!Str_CompareIgnoreCase(&part, "GameInfo.IdentityKey"))
+            {
+                if(DD_IsNullGameInfo(info))
+                    goto parseEnded;
+
+                Str_Append(dest, Str_Text(GameInfo_IdentityKey(info)));
+            }
+            else
+            {
+                Con_Message("Unknown identifier '%s' in \"%s\".\n", Str_Text(&part), Str_Text(src));
+                goto parseEnded;
+            }
+            depth--;
+
+            // Is there another '$' present?
+            if(!(p = Str_CopyDelim(&part, p, '$')))
+                break;
+            // Copy everything up to the next '$'.
+            Str_Append(dest, Str_Text(&part));
+            if(*p != '(')
+            {
+                Con_Message("Invalid character '%c' in \"%s\" at %lu.\n", *p, Str_Text(src), p - Str_Text(src));
+                goto parseEnded;
+            }
+            // Skip over the opening brace.
+            p++;
+            depth++;
+        }
+
+        if(depth != 0)
+        {
+            goto parseEnded;
+        }
+
+        // Copy anything remaining.
+        Str_Append(dest, Str_Text(&part));
+    }
+
+    // Ensure we have a terminating DIR_SEP_CHAR
+    if(Str_RAt(dest, 0) != DIR_SEP_CHAR)
+        Str_AppendChar(dest, DIR_SEP_CHAR);
+
+    // No errors detected.
+    successful = true;
+
+parseEnded:
+    Str_Free(&part);
+    return successful;
+    }
+}
+
+static boolean tryFindResource2(resourceclass_t rclass, const char* searchPath,
     char* foundPath, size_t foundPathLen, resourcenamespace_t* rnamespace)
 {
     assert(inited && searchPath && searchPath[0]);
@@ -177,7 +285,7 @@ static boolean tryFindFile(resourceclass_t rclass, const char* searchPath,
     }}
 
 #if _DEBUG
-    Con_Message("tryFindFile: Locating resource without name hash.\n");
+    Con_Message("tryFindResource2: Locating resource without name hash.\n");
 #endif
 
     if(F_Access(searchPath))
@@ -189,7 +297,7 @@ static boolean tryFindFile(resourceclass_t rclass, const char* searchPath,
     return false;
 }
 
-static boolean tryResourceFile(resourceclass_t rclass, const char* searchPath,
+static boolean tryFindResource(resourceclass_t rclass, const char* searchPath,
     char* foundPath, size_t foundPathLen, resourcenamespace_t* rnamespace)
 {
     assert(inited && VALID_RESOURCE_CLASS(rclass) && searchPath && searchPath[0]);
@@ -200,7 +308,7 @@ static boolean tryResourceFile(resourceclass_t rclass, const char* searchPath,
     // Has an extension been specified?
     ptr = M_FindFileExtension((char*)searchPath);
     if(ptr && *ptr != '*') // Try this first.
-        found = tryFindFile(rclass, searchPath, foundPath, foundPathLen, rnamespace);
+        found = tryFindResource2(rclass, searchPath, foundPath, foundPathLen, rnamespace);
 
     if(!found)
     {
@@ -233,7 +341,7 @@ static boolean tryResourceFile(resourceclass_t rclass, const char* searchPath,
                     {
                         Str_Copy(&tmp, &path2);
                         Str_Appendf(&tmp, "%s", *ext);
-                        found = tryFindFile(rclass, Str_Text(&tmp), foundPath, foundPathLen, rnamespace);
+                        found = tryFindResource2(rclass, Str_Text(&tmp), foundPath, foundPathLen, rnamespace);
                     } while(!found && *(++ext));
                 }
             } while(!found && *(++type) != RT_NONE);
@@ -275,7 +383,7 @@ static boolean findResource(resourceclass_t rclass, const char* searchPath, cons
             Str_Append(&fn, optionalSuffix);
         }}
 
-        if(tryResourceFile(rclass, Str_Text(&fn), foundPath, foundPathLen, rnamespace))
+        if(tryFindResource(rclass, Str_Text(&fn), foundPath, foundPathLen, rnamespace))
             found = true;
 
         Str_Free(&fn);
@@ -284,7 +392,7 @@ static boolean findResource(resourceclass_t rclass, const char* searchPath, cons
     // Try without a suffix.
     if(!found)
     {
-        if(tryResourceFile(rclass, searchPath, foundPath, foundPathLen, rnamespace))
+        if(tryFindResource(rclass, searchPath, foundPath, foundPathLen, rnamespace))
             found = true;
     }
 
@@ -505,6 +613,11 @@ resourcetype_t F_GuessResourceTypeByName(const char* path)
         }
     }}
     return RT_NONE; // Unrecognizable.
+}
+
+boolean F_ResolveURI(ddstring_t* translatedPath, const ddstring_t* uri)
+{
+    return resolveURI(translatedPath, uri, DD_GameInfo());
 }
 
 boolean F_ApplyPathMapping(ddstring_t* path)

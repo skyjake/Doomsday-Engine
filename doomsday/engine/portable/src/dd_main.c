@@ -856,8 +856,8 @@ boolean DD_ChangeGame(gameinfo_t* info)
 
     if(!DD_IsNullGameInfo(DD_GameInfo()))
     {
-        Con_Error("DD_ChangeGame: Runtime game change not yet implemented.");
-        return false; // Unreachable.
+        Con_Message("DD_ChangeGame: Runtime game change not yet implemented.");
+        return false;
     }
 
     Con_Message("DD_ChangeGame: Selecting \"%s\".\n", Str_Text(GameInfo_IdentityKey(info)));
