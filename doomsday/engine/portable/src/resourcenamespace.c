@@ -34,17 +34,14 @@ static void formSearchPathList(ddstring_t* pathList, resourcenamespace_t* rnames
 {
     assert(rnamespace && pathList);
 
-    // A command line default path?
-    if(rnamespace->_overrideFlag && rnamespace->_overrideFlag[0] && ArgCheckWith(rnamespace->_overrideFlag, 1))
+    // A command line override path?
+    if(rnamespace->_overrideFlag2 && rnamespace->_overrideFlag2[0] && ArgCheckWith(rnamespace->_overrideFlag2, 1))
     {
-        Str_Append(pathList, ArgNext()); Str_Append(pathList, ";");
-    }
+        const char* newPath = ArgNext();
+        Str_Append(pathList, newPath); Str_Append(pathList, ";");
 
-    // Join the pathlist from the resource namespace to the final pathlist.
-    Str_Append(pathList, rnamespace->_searchPaths);
-    // Ensure we have the required terminating semicolon.
-    if(Str_RAt(pathList, 0) != ';')
-        Str_AppendChar(pathList, ';');
+        Str_Append(pathList, newPath); Str_Append(pathList, "\\$(GameInfo.IdentityKey)"); Str_Append(pathList, ";");
+    }
 
     // Join the extra pathlist from the resource namespace to the final pathlist?
     if(Str_Length(&rnamespace->_extraSearchPaths) > 0)
@@ -55,15 +52,16 @@ static void formSearchPathList(ddstring_t* pathList, resourcenamespace_t* rnames
             Str_AppendChar(pathList, ';');
     }
 
-    // A command line override path?
-    if(rnamespace->_overrideFlag2 && rnamespace->_overrideFlag2[0] && ArgCheckWith(rnamespace->_overrideFlag2, 1))
-    {
-        const char* newPath = ArgNext();
-        Str_Prepend(pathList, ";"); Str_Prepend(pathList, newPath);
+    // Join the pathlist from the resource namespace to the final pathlist.
+    Str_Append(pathList, rnamespace->_searchPaths);
+    // Ensure we have the required terminating semicolon.
+    if(Str_RAt(pathList, 0) != ';')
+        Str_AppendChar(pathList, ';');
 
-        Str_Prepend(pathList, ";");
-        Str_Prepend(pathList, "\\$(GameInfo.IdentityKey)");
-        Str_Prepend(pathList, newPath);
+    // A command line default path?
+    if(rnamespace->_overrideFlag && rnamespace->_overrideFlag[0] && ArgCheckWith(rnamespace->_overrideFlag, 1))
+    {
+        Str_Append(pathList, ArgNext()); Str_Append(pathList, ";");
     }
 }
 
