@@ -29,8 +29,8 @@
 #include "gameinfo.h"
 
 gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey, const char* dataPath,
-    const char* defsPath, const ddstring_t* mainDef, const ddstring_t* mainConfig, const char* title,
-    const char* author, const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2)
+    const char* defsPath, const ddstring_t* mainConfig, const char* title, const char* author,
+    const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2)
 {
     gameinfo_t* info = M_Malloc(sizeof(*info));
 
@@ -47,10 +47,6 @@ gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey, const
     Str_Init(&info->_defsPath);
     if(defsPath)
         Str_Set(&info->_defsPath, defsPath);
-
-    Str_Init(&info->_mainDef);
-    if(mainDef)
-        Str_Copy(&info->_mainDef, mainDef);
 
     Str_Init(&info->_mainConfig);
     Str_Init(&info->_bindingConfig);
@@ -104,7 +100,6 @@ void P_DestroyGameInfo(gameinfo_t* info)
     Str_Free(&info->_identityKey);
     Str_Free(&info->_dataPath);
     Str_Free(&info->_defsPath);
-    Str_Free(&info->_mainDef);
     Str_Free(&info->_mainConfig);
     Str_Free(&info->_bindingConfig);
     Str_Free(&info->_title);
@@ -144,7 +139,7 @@ void P_DestroyGameInfo(gameinfo_t* info)
 }
 
 gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourceclass_t rclass,
-    const ddstring_t* names)
+    int rflags, const ddstring_t* names)
 {
     assert(info && VALID_RESOURCE_CLASS(rclass) && names);
     {
@@ -152,13 +147,13 @@ gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourceclass_t rc
     gameresource_record_t* record;
 
     rset->records = M_Realloc(rset->records, sizeof(*rset->records) * (rset->numRecords+2));
-    record = rset->records[rset->numRecords] = M_Malloc(sizeof(*record));
+    record = rset->records[rset->numRecords] = M_Calloc(sizeof(*record));
     rset->records[rset->numRecords+1] = 0; // Terminate.
     rset->numRecords++;
 
-    Str_Init(&record->names); Str_Copy(&record->names, names);
-    Str_Init(&record->path);
+    Str_Copy(&record->names, names);
     record->rclass = rclass;
+    record->rflags = rflags;
     switch(record->rclass)
     {
     case RC_PACKAGE:
@@ -193,12 +188,6 @@ const ddstring_t* GameInfo_DefsPath(gameinfo_t* info)
 {
     assert(info);
     return &info->_defsPath;
-}
-
-const ddstring_t* GameInfo_MainDef(gameinfo_t* info)
-{
-    assert(info);
-    return &info->_mainDef;
 }
 
 const ddstring_t* GameInfo_MainConfig(gameinfo_t* info)

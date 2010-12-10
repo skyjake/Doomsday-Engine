@@ -740,25 +740,27 @@ static void readAllDefinitions(void)
         Con_Error("readAllDefinitions: Error, failed to locate main engine definition file \"doomsday.ded\".");
     }
 
-    // Next the game's main/top-level definition file.
-    { const ddstring_t* mainDef;
-    if((mainDef = GameInfo_MainDef(DD_GameInfo())) && Str_Length(mainDef) != 0)
+    // Now any definition files required by the game on load.
+    if(!DD_IsNullGameInfo(DD_GameInfo()))
     {
-        filename_t foundPath;
-        if(F_FindResource(RC_DEFINITION, foundPath, Str_Text(mainDef), 0, FILENAME_T_MAXLEN))
-            readDefinitionFile(foundPath);
-        else
-            Con_Error("readAllDefinitions: Error, failed to locate main game definition file \"%s\".", Str_Text(mainDef));
-    }}
+        gameinfo_t* info = DD_GameInfo();
+        gameresource_record_t* const* records;
+        if((records = GameInfo_Resources(info, RC_DEFINITION, 0)))
+            do
+            {
+                gameresource_record_t* rec = *records;
+                if(Str_Length(&rec->path) == 0)
+                {
+                    filename_t foundPath;
+                    if(F_FindResource(rec->rclass, foundPath, Str_Text(&rec->names), 0, FILENAME_T_MAXLEN))
+                        Str_Set(&rec->path, foundPath);
+                }
 
-    // Now any extra definition files required by the game.
-    { gameresource_record_t* const* records;
-    if((records = GameInfo_Resources(DD_GameInfo(), RC_DEFINITION, 0)))
-        do
-        {
-            if(Str_Length(&(*records)->path) != 0)
-                readDefinitionFile(Str_Text(&(*records)->path));
-        } while(records++);
+                if(Str_Length(&rec->path) == 0)
+                    Con_Error("readAllDefinitions: Error, failed to locate required game definition file \"%s\".", Str_Text(&rec->names));
+
+                readDefinitionFile(Str_Text(&rec->path));
+            } while(*(++records));
     }
 
     // Next up are definition files in the /auto directory.

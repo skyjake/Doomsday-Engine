@@ -36,6 +36,9 @@ typedef struct {
     /// Class of resource.
     resourceclass_t rclass;
 
+    /// @see resourceFlags.
+    int rflags;
+
     /// List of known potential names. Seperated with a semicolon.
     ddstring_t names;
 
@@ -77,9 +80,6 @@ typedef struct {
     /// The base directory for all defs-class resources.
     ddstring_t _defsPath;
 
-    /// Name of the main/top-level definition file (e.g., "jdoom.ded").
-    ddstring_t _mainDef;
-
     /// Name of the main config file (e.g., "jdoom.cfg").
     ddstring_t _mainConfig;
 
@@ -100,7 +100,6 @@ typedef struct {
  * @param identityKey   Unique game mode key/identifier, 16 chars max (e.g., "doom1-ultimate").
  * @param dataPath      The base directory for all data-class resources.
  * @param defsPath      The base directory for all defs-class resources.
- * @param mainDef       The main/top-level definition file. Can be @c NULL.
  * @param mainConfig    The main config file. Can be @c NULL.
  * @param title         Default game title.
  * @param author        Default game author.
@@ -108,8 +107,8 @@ typedef struct {
  * @param cmdlineFlag2  Alternative override. Can be @c NULL.
  */
 gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey, const char* dataPath,
-    const char* defsPath, const ddstring_t* mainDef, const ddstring_t* mainConfig, const char* title,
-    const char* author, const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2);
+    const char* defsPath, const ddstring_t* mainConfig, const char* title, const char* author,
+    const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2);
 
 void P_DestroyGameInfo(gameinfo_t* info);
 
@@ -119,9 +118,11 @@ void P_DestroyGameInfo(gameinfo_t* info);
  * \note Resource registration order defines the order in which resources of each type are loaded.
  *
  * @param rclass        Class of resource being added.
+ * @param rflags        @see resourceFlags.
  * @param name          Potential resource name.
  */
-gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourceclass_t rclass, const ddstring_t* name);
+gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourceclass_t rclass, int rflags,
+    const ddstring_t* name);
 
 /**
  * Accessor methods.
@@ -137,9 +138,6 @@ const ddstring_t* GameInfo_Title(gameinfo_t* info);
 
 /// @return             Ptr to a string containing the default author.
 const ddstring_t* GameInfo_Author(gameinfo_t* info);
-
-/// @return             Ptr to a string containing the name of the main definition file.
-const ddstring_t* GameInfo_MainDef(gameinfo_t* info);
 
 /// @return             Ptr to a string containing the name of the main config file.
 const ddstring_t* GameInfo_MainConfig(gameinfo_t* info);

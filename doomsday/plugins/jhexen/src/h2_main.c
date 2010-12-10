@@ -200,20 +200,23 @@ int G_RegisterGames(int hookType, int parm, void* data)
 #define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
 
     /* Hexen (Death Kings) */
-    gameIds[hexen_deathkings] = DD_AddGame("hexen-dk", DATAPATH, DEFSPATH, "hexen-dk.ded", MAINCONFIG, "Hexen (Deathkings of the Dark Citadel)", "Raven Software", "deathkings", "dk");
-    DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, 0, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
-    DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, 0, "hexdd.wad", "MAP59;MAP60");
-    DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, 0, STARTUPPK3, 0);
+    gameIds[hexen_deathkings] = DD_AddGame("hexen-dk", DATAPATH, DEFSPATH, MAINCONFIG, "Hexen (Deathkings of the Dark Citadel)", "Raven Software", "deathkings", "dk");
+    DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, RF_STARTUP, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
+    DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, RF_STARTUP, "hexdd.wad", "MAP59;MAP60");
+    DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(hexen_deathkings), RC_DEFINITION, 0, "hexen-dk.ded", 0);
 
     /* Hexen */
-    gameIds[hexen] = DD_AddGame("hexen", DATAPATH, DEFSPATH, "hexen.ded", MAINCONFIG, "Hexen", "Raven Software", "hexen", 0);
-    DD_AddGameResource(GID(hexen), RC_PACKAGE, 0, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
-    DD_AddGameResource(GID(hexen), RC_PACKAGE, 0, STARTUPPK3, 0);
+    gameIds[hexen] = DD_AddGame("hexen", DATAPATH, DEFSPATH, MAINCONFIG, "Hexen", "Raven Software", "hexen", 0);
+    DD_AddGameResource(GID(hexen), RC_PACKAGE, RF_STARTUP, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
+    DD_AddGameResource(GID(hexen), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(hexen), RC_DEFINITION, 0, "hexen.ded", 0);
 
     /* Hexen (Demo) */
-    gameIds[hexen_demo] = DD_AddGame("hexen-demo", DATAPATH, DEFSPATH, "hexen-demo.ded", MAINCONFIG, "Hexen 4-map Beta Demo", "Raven Software", "dhexen", 0);
-    DD_AddGameResource(GID(hexen_demo), RC_PACKAGE, 0, "hexen.wad", "MAP01;MAP04;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
-    DD_AddGameResource(GID(hexen_demo), RC_PACKAGE, 0, STARTUPPK3, 0);
+    gameIds[hexen_demo] = DD_AddGame("hexen-demo", DATAPATH, DEFSPATH, MAINCONFIG, "Hexen 4-map Beta Demo", "Raven Software", "dhexen", 0);
+    DD_AddGameResource(GID(hexen_demo), RC_PACKAGE, RF_STARTUP, "hexen.wad", "MAP01;MAP04;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
+    DD_AddGameResource(GID(hexen_demo), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
+    DD_AddGameResource(GID(hexen_demo), RC_DEFINITION, 0, "hexen-demo.ded", 0);
     return true;
 
 #undef STARTUPPK3

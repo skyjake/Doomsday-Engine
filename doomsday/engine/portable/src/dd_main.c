@@ -217,11 +217,11 @@ static void destroyPathList(ddstring_t*** list, size_t* listSize)
 }
 
 static gameinfo_t* addGameInfoRecord(pluginid_t pluginId, const char* identityKey, const char* dataPath,
-    const char* defsPath, const ddstring_t* mainDef, const ddstring_t* mainConfig, const char* title,
-    const char* author, const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2)
+    const char* defsPath, const ddstring_t* mainConfig, const char* title, const char* author,
+    const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2)
 {
     gameInfo = M_Realloc(gameInfo, sizeof(*gameInfo) * (numGameInfo + 1));
-    gameInfo[numGameInfo] = P_CreateGameInfo(pluginId, identityKey, dataPath, defsPath, mainDef, mainConfig, title, author, cmdlineFlag, cmdlineFlag2);
+    gameInfo[numGameInfo] = P_CreateGameInfo(pluginId, identityKey, dataPath, defsPath, mainConfig, title, author, cmdlineFlag, cmdlineFlag2);
     return gameInfo[numGameInfo++];
 }
 
@@ -305,7 +305,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags, con
 
     Str_Init(&name);
     { gameresource_record_t* rec;
-    if((rec = GameInfo_AddResource(info, rclass, &names)))
+    if((rec = GameInfo_AddResource(info, rclass, rflags, &names)))
     {
         if(params)
         switch(rec->rclass)
@@ -338,14 +338,14 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags, con
     Str_Free(&names);
 }
 
-gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* _defsPath, const char* _mainDef,
+gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* _defsPath,
     const char* _mainConfig, const char* defaultTitle, const char* defaultAuthor, const char* _cmdlineFlag,
     const char* _cmdlineFlag2)
 {
     assert(identityKey && identityKey[0] && _dataPath && _dataPath[0] && _defsPath && _defsPath[0] && defaultTitle && defaultTitle[0] && defaultAuthor && defaultAuthor[0]);
     {
     gameinfo_t* info;
-    ddstring_t mainDef, mainConfig, cmdlineFlag, cmdlineFlag2;
+    ddstring_t mainConfig, cmdlineFlag, cmdlineFlag2;
     filename_t dataPath, defsPath;
     pluginid_t pluginId = Plug_PluginIdForActiveHook();
 
@@ -358,10 +358,6 @@ gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* 
 
     M_TranslatePath(defsPath, _defsPath, FILENAME_T_MAXLEN);
     Dir_ValidDir(defsPath, FILENAME_T_MAXLEN);
-
-    Str_Init(&mainDef);
-    if(_mainDef)
-        Str_Set(&mainDef, _mainDef);
 
     Str_Init(&mainConfig);
     if(_mainConfig)
@@ -387,9 +383,8 @@ gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* 
     /**
      * Looking good. Add this game to our records.
      */
-    info = addGameInfoRecord(pluginId, identityKey, dataPath, defsPath, &mainDef, &mainConfig, defaultTitle, defaultAuthor, _cmdlineFlag? &cmdlineFlag : 0, _cmdlineFlag2? &cmdlineFlag2 : 0);
+    info = addGameInfoRecord(pluginId, identityKey, dataPath, defsPath, &mainConfig, defaultTitle, defaultAuthor, _cmdlineFlag? &cmdlineFlag : 0, _cmdlineFlag2? &cmdlineFlag2 : 0);
 
-    Str_Free(&mainDef);
     Str_Free(&mainConfig);
     Str_Free(&cmdlineFlag);
     Str_Free(&cmdlineFlag2);
@@ -497,7 +492,12 @@ static void locateGameResources(gameinfo_t* info)
         if((records = GameInfo_Resources(info, (resourceclass_t)i, 0)))
         {
             for(; *records; records++)
-                validateGameResource(*records, Str_Text(&(*records)->names));
+            {
+                gameresource_record_t* rec = *records;
+                if(!(rec->rflags & RF_STARTUP))
+                    continue;
+                validateGameResource(rec, Str_Text(&rec->names));
+            }
         }
     }}
     Str_Free(&name);
@@ -524,7 +524,8 @@ static boolean allGameResourcesFound(gameinfo_t* info)
             if((records = GameInfo_Resources(info, (resourceclass_t)i, 0)))
                 do
                 {
-                    if(Str_Length(&(*records)->path) == 0)
+                    gameresource_record_t* rec = *records;
+                    if((rec->rflags & RF_STARTUP) && Str_Length(&rec->path) == 0)
                         return false;
                 } while(*(++records));
         }
@@ -578,7 +579,7 @@ static void printGameInfo(gameinfo_t* info)
             Con_Printf("  %s:\n", F_ResourceClassStr((resourceclass_t)i));
             do
             {
-                Con_Printf("    %i: \"%s\" > %s\n", n++, Str_Text(&(*records)->names), Str_Length(&(*records)->path) == 0? "--(!)missing" : M_PrettyPath(Str_Text(&(*records)->path)));
+                Con_Printf("    %i: %s\"%s\" %s%s\n", n++, ((*records)->rflags & RF_STARTUP)? "* ":"", Str_Text(&(*records)->names), Str_Length(&(*records)->path) == 0? "" : "> ", (((*records)->rflags & RF_STARTUP) && Str_Length(&(*records)->path) == 0)? "--(!)missing" : M_PrettyPath(Str_Text(&(*records)->path)));
             } while(*(++records));
         }
     }}
@@ -866,6 +867,12 @@ boolean DD_ChangeGame(gameinfo_t* info)
         return false;
     }
 
+    // If the title finale is in progress, stop it.
+    if(titleFinale != 0)
+    {
+        FI_ScriptTerminate(titleFinale); titleFinale = 0;
+    }
+
     P_InitMapUpdate();
     DAM_Init();
 
@@ -994,7 +1001,7 @@ int DD_EarlyInit(void)
     Dir_ValidDir(dataPath, FILENAME_T_MAXLEN);
     M_TranslatePath(defsPath, DD_BASEPATH_DEFS, FILENAME_T_MAXLEN);
     Dir_ValidDir(defsPath, FILENAME_T_MAXLEN);
-    currentGameInfoIndex = gameInfoIndex(addGameInfoRecord(0, "null-game", dataPath, defsPath, 0, 0, 0, 0, 0, 0));
+    currentGameInfoIndex = gameInfoIndex(addGameInfoRecord(0, "null-game", dataPath, defsPath, 0, 0, 0, 0, 0));
     }
     return true;
 }

@@ -84,7 +84,6 @@ extern          "C" {
  *                      - Sent out in netgames (a client can't connect unless mode strings match).
  * @param dataPath      The base directory for all data-class resources.
  * @param defsPath      The base directory for all defs-class resources.
- * @param mainDef       The name of the main/top-level definition file. Can be @c NULL.
  * @param mainConfig    The name of the main game config file. Can be @c NULL.
  * @param defaultTitle  Default game title. May be overridden later.
  * @param defaultAuthor Default game author. May be overridden later. Used for (e.g.) the map author name
@@ -94,7 +93,7 @@ extern          "C" {
  *
  * @return              Unique identifier/name assigned to the game.
  */
-gameid_t DD_AddGame(const char* identityKey, const char* dataPath, const char* defsPath, const char* mainDef,
+gameid_t DD_AddGame(const char* identityKey, const char* dataPath, const char* defsPath,
     const char* mainConfig, const char* defaultTitle, const char* defaultAuthor, const char* cmdlineFlag,
     const char* cmdlineFlag2);
 
@@ -105,7 +104,7 @@ gameid_t DD_AddGame(const char* identityKey, const char* dataPath, const char* d
  *
  * @param game          Unique identifier/name of the game.
  * @param rclass        Class of resource being added.
- * @param rflags        Presently unused. Reserved for future use.
+ * @param rflags        @see resourceFlags
  * @param names         One or more known potential names, seperated by semicolon e.g., "name1;name2".
  *                      Names may include valid absolute, or relative file paths. These paths include
  *                      valid symbolbolic escape tokens, predefined symbols into the virtual file system.            

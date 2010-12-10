@@ -331,6 +331,13 @@ typedef struct {
     const char* identityKey;
 } ddgameinfo_t;
 
+/**
+ * @defgroup resourceFlags ResourceFlags
+ */
+/*{@*/
+#define RF_STARTUP          0x1 // A required resource needed for and loaded during game start up (can't be a virtual file).
+/*}@*/
+
 //------------------------------------------------------------------------
 //
 // Fixed-Point Math
