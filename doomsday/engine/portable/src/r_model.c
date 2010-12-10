@@ -1097,16 +1097,16 @@ static void setupModel(ded_model_t *def)
  */
 void R_InitModels(void)
 {
-    int                 i, k, minsel;
-    float               minmark;
-    modeldef_t*         me, *other, *closest;
-    uint                usedTime;
+    int i, k, minsel;
+    float minmark;
+    modeldef_t* me, *other, *closest;
+    uint usedTime;
 
     // Dedicated servers do nothing with models.
     if(isDedicated || ArgCheck("-nomd2"))
         return;
 
-    Con_Message("R_InitModels: Initializing MD2 models.\n");
+    VERBOSE( Con_Message("Initializing Models ...\n") );
     usedTime = Sys_GetRealTime();
 
     if(modefs)
@@ -1181,8 +1181,7 @@ if(closest)
 #endif*/
     }
 
-    Con_Message("R_InitModels: Done in %.2f seconds.\n",
-                (Sys_GetRealTime() - usedTime) / 1000.0f);
+    VERBOSE2( Con_Message("R_InitModels: Done in %.2f seconds.\n", (Sys_GetRealTime() - usedTime) / 1000.0f) );
 }
 
 /**
