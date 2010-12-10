@@ -384,6 +384,9 @@ desc = List all console commands.
 [listfiles]
 desc = List all the loaded data files and show information about them.
 
+[listgames]
+desc = List all games.
+
 [listmaterials]
 desc = List all known surface materials.
 
@@ -394,8 +397,8 @@ desc = List all known mobj types.
 desc = List all console variables and their values.
 
 [load]
-desc = Load data file(s) (a WAD or a lump).
-inf = Params: load (file) ...\nFor example, 'load mylevel.wad'.
+desc = Load a complete game or one or more data files (e.g., a WAD or a lump).
+inf = Params: load (name) ...\nFor example, 'load (gamename)' or 'load mylevel.wad'.
 
 [login]
 desc = Log in to server console.
@@ -432,6 +435,9 @@ desc = Ping the server (or a player if you're the server).
 [playdemo]
 desc = Play a demo.
 inf = Params: playdemo (fileName)\nFor example, 'playdemo demo1.dmo'.
+
+[printinfo]
+desc = Print extended information for the named object.
 
 [playmusic]
 desc = Play a music track, music lump, external file or a CD track.
@@ -522,8 +528,8 @@ desc = Change Doomsday user interface colors.
 inf = Params: uicolor (object) (red) (green) (blue)\nFor example, 'uicolor text 1 1 1'.\nPossible objects are:\n text, shadow, bglight, bgmed, bgdark,\n borhigh, bormed, borlow, help
 
 [unload]
-desc = Unload a data file from memory.
-inf = Params: unload (file) ...\nFor example, 'unload mylevel.wad'.
+desc = Unload the current game or one or more data files.
+inf = Params: unload (name) ...\nFor example, 'unload mylevel.wad'.
 
 [version]
 desc = Show detailed version information.

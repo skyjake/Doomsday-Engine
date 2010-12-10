@@ -226,7 +226,7 @@ int G_RegisterGames(int hookType, int parm, void* data)
     DD_AddGameResource(GID(doom2), RC_DEFINITION, 0, "doom2.ded", 0);
 
     /* DOOM (Ultimate) */
-    gameIds[doom_ultimate] = DD_AddGame("doom1-ultimate", DATAPATH, DEFSPATH, MAINCONFIG, "The Ultimate DOOM", "id Software", "ultimatedoom", "udoom");
+    gameIds[doom_ultimate] = DD_AddGame("doom1-ultimate", DATAPATH, DEFSPATH, MAINCONFIG, "Ultimate DOOM", "id Software", "ultimatedoom", "udoom");
     DD_AddGameResource(GID(doom_ultimate), RC_PACKAGE, RF_STARTUP, "doomu.wad;doom.wad", "E4M1;E4M2;E4M3;E4M4;E4M5;E4M6;E4M7;E4M8;E4M9;M_EPI4");
     DD_AddGameResource(GID(doom_ultimate), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
     DD_AddGameResource(GID(doom_ultimate), RC_DEFINITION, 0, "doom1-ultimate.ded", 0);

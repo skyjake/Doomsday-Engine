@@ -215,6 +215,7 @@ void Con_Register(void)
 
     // Games
     C_CMD("listgames",      "",     ListGames);
+    C_CMD("printinfo",      "s",    PrintInfo);
 
     // File
     C_VAR_CHARPTR("file-startup", &gameStartupFiles, 0, 0, 0);

@@ -88,6 +88,7 @@ void DD_DestroyGameInfo(void);
 
 D_CMD(Load);
 D_CMD(Unload);
+D_CMD(PrintInfo);
 D_CMD(ListGames);
 
 #endif /* LIBDENG_MAIN_H */

@@ -349,6 +349,8 @@ gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* 
     filename_t dataPath, defsPath;
     pluginid_t pluginId = Plug_PluginIdForActiveHook();
 
+    if(strlen(identityKey) > 16)
+        Con_Error("DD_AddGame: Failed adding game \"s\", identity key '%s' is too long (max 16 characters).", defaultTitle, identityKey);
     // Game mode identity keys must be unique. Ensure that is the case.
     if((info = findGameInfoForIdentityKey(identityKey)))
         Con_Error("DD_AddGame: Failed adding game \"%s\", identity key '%s' already in use.", defaultTitle, identityKey);
@@ -566,24 +568,57 @@ static void printGameInfo(gameinfo_t* info)
 
     Con_Printf("Game: %s - %s\n", Str_Text(GameInfo_Title(info)), Str_Text(GameInfo_Author(info)));
 #if _DEBUG
-    Con_Printf("  Meta: pluginid:%i identitykey:\"%s\" data:\"%s\" defs:\"%s\"\n", (int)GameInfo_PluginId(info), Str_Text(GameInfo_IdentityKey(info)), M_PrettyPath(Str_Text(GameInfo_DataPath(info))), M_PrettyPath(Str_Text(GameInfo_DefsPath(info))));
+    Con_Printf("Meta: pluginid:%i identitykey:\"%s\" data:\"%s\" defs:\"%s\"\n", (int)GameInfo_PluginId(info), Str_Text(GameInfo_IdentityKey(info)), M_PrettyPath(Str_Text(GameInfo_DataPath(info))), M_PrettyPath(Str_Text(GameInfo_DefsPath(info))));
 #endif
 
-    { uint i;
+    // First output a list of startup resources.
+    Con_Printf("Startup resources:");
+    { uint i; size_t n = 0;
     for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
     {
         gameresource_record_t* const* records;
         if((records = GameInfo_Resources(info, (resourceclass_t)i, 0)))
         {
-            int n = 0;
-            Con_Printf("  %s:\n", F_ResourceClassStr((resourceclass_t)i));
             do
             {
-                Con_Printf("    %i: %s\"%s\" %s%s\n", n++, ((*records)->rflags & RF_STARTUP)? "* ":"", Str_Text(&(*records)->names), Str_Length(&(*records)->path) == 0? "" : "> ", (((*records)->rflags & RF_STARTUP) && Str_Length(&(*records)->path) == 0)? "--(!)missing" : M_PrettyPath(Str_Text(&(*records)->path)));
+                if((*records)->rflags & RF_STARTUP)
+                {
+                    if(n == 0)
+                        Con_Printf("\n");
+                    Con_Printf(" %s \"%s\" %s%s\n", Str_Length(&(*records)->path) == 0? "!":" ", Str_Text(&(*records)->names), Str_Length(&(*records)->path) == 0? "- missing" : "> ", Str_Length(&(*records)->path) == 0? "" : M_PrettyPath(Str_Text(&(*records)->path)));
+                    n++;
+                }
             } while(*(++records));
         }
-    }}
-    Con_Printf("  Status: %s\n", DD_GameInfo() == info? "Loaded" : allGameResourcesFound(info)? "Complete/Playable" : "Incomplete/Not playable");
+    }
+    if(n == 0)
+        Con_Printf(" None\n");
+    }
+
+    // Now output the rest of the known resources.
+    Con_Printf("Other resources:");
+    { uint i; size_t n = 0;
+    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
+    {
+        gameresource_record_t* const* records;
+        if((records = GameInfo_Resources(info, (resourceclass_t)i, 0)))
+        {
+            do
+            {
+                if(!((*records)->rflags & RF_STARTUP))
+                {
+                    if(n == 0)
+                        Con_Printf("\n");
+                    Con_Printf(" \"%s\" %s%s\n", Str_Text(&(*records)->names), Str_Length(&(*records)->path) == 0? "" : "> ", Str_Length(&(*records)->path) == 0? "" : M_PrettyPath(Str_Text(&(*records)->path)));
+                    n++;
+                }
+            } while(*(++records));
+        }
+    }
+    if(n == 0)
+        Con_Printf(" None\n");
+    }
+    Con_Printf("Status: %s\n", DD_GameInfo() == info? "Loaded" : allGameResourcesFound(info)? "Complete/Playable" : "Incomplete/Not playable");
 }
 
 /**
@@ -1126,15 +1161,13 @@ int DD_Main(void)
         if(DD_IsNullGameInfo(info))
             continue;
         locateGameResources(info);
+        VERBOSE2( Con_Executef(CMDS_DDAY, false, "printinfo %s", Str_Text(GameInfo_IdentityKey(info))) );
     }}
-    VERBOSE( Con_Execute(CMDS_DDAY, "listgames", false, false) );
 
     // Attempt automatic game selection.
     if(!ArgExists("-noautoselect"))
     {
         DD_AutoselectGame();
-        if(DD_IsNullGameInfo(DD_GameInfo()))
-            Con_Message("Automatic game selection failed.\n");
     }
 
     // Load resources specified using -file options on the command line.
@@ -1248,8 +1281,12 @@ int DD_Main(void)
             titleFinale = FI_Execute(fin.script, FF_LOCAL);
         }
 
-        // We'll open the console automatically too.
+        // We'll open the console and print a list of the known games too.
         Con_Execute(CMDS_DDAY, "conopen", true, false);
+        if(!ArgExists("-noautoselect"))
+            Con_Printf("Automatic game selection failed.\n");
+        Con_Execute(CMDS_DDAY, "listgames", false, false);
+        Con_Message("Use the 'load' command to load a game. For example: \"load gamename\".\n");
     }
 
     // Start the game loop.
@@ -1913,22 +1950,53 @@ D_CMD(Unload)
     return W_RemoveFiles(argv + 1, argc - 1);
 }
 
+D_CMD(PrintInfo)
+{
+    { gameinfo_t* info;
+    if((info = findGameInfoForIdentityKey(argv[1])))
+    {
+        printGameInfo(info);
+        return true;
+    }}
+    Con_Message("There is no extended info for \"%s\".\n", argv[1]);
+    return true;
+}
+
+static int C_DECL compareGameInfoByName(const void* a, const void* b)
+{
+    return stricmp(Str_Text(&(*(gameinfo_t**)a)->_title), Str_Text(&(*(gameinfo_t**)b)->_title));
+}
+
 D_CMD(ListGames)
 {
     uint i, numAvailableGames = 0, numCompleteGames = 0;
+    gameinfo_t** infoPtrs;
+
+    Con_FPrintf(CBLF_YELLOW, "Registered Games:\n");
+    Con_Printf("Key: '!'= Incomplete/Not playable '*'= Loaded\n");
+    Con_FPrintf(CBLF_RULER, "");
+
+    // Sort a copy of gameInfo so we get a nice alphabetical list.
+    infoPtrs = M_Malloc(sizeof(*infoPtrs) * numGameInfo);
+    memcpy(infoPtrs, gameInfo, sizeof(*infoPtrs) * numGameInfo);
+    qsort(infoPtrs, numGameInfo, sizeof(*infoPtrs), compareGameInfoByName);
+
     for(i = 0; i < numGameInfo; ++i)
     {
-        gameinfo_t* info = gameInfo[i];
-
+        gameinfo_t* info = infoPtrs[i];
         if(DD_IsNullGameInfo(info))
             continue;
 
+        Con_Printf(" %s %-16s %s (%s)\n", DD_GameInfo() == info? "*" : !allGameResourcesFound(info)? "!" : " ", Str_Text(GameInfo_IdentityKey(info)), Str_Text(GameInfo_Title(info)), Str_Text(GameInfo_Author(info)));
+
         numAvailableGames++;
-        printGameInfo(info);
         if(allGameResourcesFound(info))
             numCompleteGames++;
     }
-    Con_Printf("%i of %i games playable.\n", numCompleteGames, numAvailableGames);
+    Con_FPrintf(CBLF_RULER, "");
+    Con_Printf("%u of %u games playable.\n", numCompleteGames, numAvailableGames);
+
+    M_Free(infoPtrs);
     return true;
 }
 
