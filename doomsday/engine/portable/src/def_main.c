@@ -842,12 +842,10 @@ void Def_Read(void)
     // Any definition hooks?
     Plug_DoHook(HOOK_DEFS, 0, &defs);
 
-    Con_Message("Definitions:\n");
     // Sprite names.
     DED_NewEntries((void **) &sprNames, &countSprNames, sizeof(*sprNames), defs.count.sprites.num);
     for(i = 0; i < countSprNames.num; ++i)
         strcpy(sprNames[i].name, defs.sprites[i].id);
-    Def_CountMsg(countSprNames.num, "sprite names");
 
     // States.
     DED_NewEntries((void **) &states, &countStates, sizeof(*states), defs.count.states.num);
@@ -897,7 +895,6 @@ void Def_Read(void)
             dst->execute = NULL;
         }
     }
-    Def_CountMsg(countStates.num, "states");
 
     DED_NewEntries((void **) &stateOwners, &countStateOwners,
                    sizeof(mobjinfo_t *), defs.count.states.num);
@@ -936,8 +933,6 @@ void Def_Read(void)
         for(k = 0; k < NUM_MOBJ_MISC; ++k)
             mo->misc[k] = dmo->misc[k];
     }
-    Def_CountMsg(countMobjInfo.num, "things");
-    Def_CountMsg(defs.count.models.num, "models");
 
     // Materials.
     for(i = 0; i < defs.count.materials.num; ++i)
@@ -963,7 +958,6 @@ void Def_Read(void)
         }
         stateLights[k] = &defs.lights[i];
     }
-    Def_CountMsg(defs.count.lights.num, "lights");
 
     // Sound effects.
     DED_NewEntries((void **) &sounds, &countSounds, sizeof(*sounds),
@@ -988,7 +982,6 @@ void Def_Read(void)
         si->group = snd->group;
         strcpy(si->external, snd->ext.path);
     }
-    Def_CountMsg(countSounds.num, "sound effects");
 
     // Music.
     for(i = 0; i < defs.count.music.num; ++i)
@@ -1004,7 +997,6 @@ void Def_Read(void)
         strcpy(earliest->path.path, mus->path.path);
         earliest->cdTrack = mus->cdTrack;
     }
-    Def_CountMsg(defs.count.music.num, "songs");
 
     // Text.
     DED_NewEntries((void **) &texts, &countTexts, sizeof(*texts),
@@ -1032,7 +1024,6 @@ void Def_Read(void)
                 texts[k].text = 0;
             }
     }
-    Def_CountMsg(countTexts.num, "text strings");
 
     // Particle generators.
     for(i = 0; i < defs.count.ptcGens.num; ++i)
@@ -1083,22 +1074,6 @@ void Def_Read(void)
             pg->stateNext = NULL;
         }
     }
-    Def_CountMsg(defs.count.ptcGens.num, "particle generators");
-
-    // Detail textures. Initialize later...
-    Def_CountMsg(defs.count.details.num, "detail textures");
-
-    // Texture animation groups.
-    Def_CountMsg(defs.count.groups.num, "animation groups");
-
-    // Surface decorations.
-    Def_CountMsg(defs.count.decorations.num, "surface decorations");
-
-    // Surface reflections.
-    Def_CountMsg(defs.count.reflections.num, "surface reflections");
-
-    // Materials.
-    Def_CountMsg(defs.count.materials.num, "materials");
 
     // Map infos.
     for(i = 0; i < defs.count.mapInfo.num; ++i)
@@ -1113,12 +1088,26 @@ void Def_Read(void)
         if(mi->flags & MIF_DRAW_SPHERE)
             mi->sky.flags |= SIF_DRAW_SPHERE;
     }
-    Def_CountMsg(defs.count.mapInfo.num, "map infos");
 
-    // Other data:
+    // Log a summary of the definition database.
+    Con_Message("Definitions:\n");
+    Def_CountMsg(countSprNames.num, "sprite names");
+    Def_CountMsg(countStates.num, "states");
+    Def_CountMsg(countMobjInfo.num, "things");
+    Def_CountMsg(defs.count.models.num, "models");
+    Def_CountMsg(defs.count.lights.num, "lights");
+    Def_CountMsg(countSounds.num, "sound effects");
+    Def_CountMsg(defs.count.music.num, "songs");
+    Def_CountMsg(countTexts.num, "text strings");
+    Def_CountMsg(defs.count.ptcGens.num, "particle generators");
+    Def_CountMsg(defs.count.details.num, "detail textures");
+    Def_CountMsg(defs.count.groups.num, "animation groups");
+    Def_CountMsg(defs.count.decorations.num, "surface decorations");
+    Def_CountMsg(defs.count.reflections.num, "surface reflections");
+    Def_CountMsg(defs.count.materials.num, "materials");
+    Def_CountMsg(defs.count.mapInfo.num, "map infos");
     Def_CountMsg(defs.count.skies.num, "skies");
     Def_CountMsg(defs.count.finales.num, "finales");
-
     Def_CountMsg(defs.count.lineTypes.num, "line types");
     Def_CountMsg(defs.count.sectorTypes.num, "sector types");
 
