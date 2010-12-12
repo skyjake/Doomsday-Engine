@@ -24,7 +24,7 @@
 
 #include "de_base.h"
 #include "m_misc.h" /// @todo remove dependency
-#include "m_filehash.h"
+#include "filedirectory.h"
 
 /**
  * @return                  [ a new | the ] directory node that matches the name

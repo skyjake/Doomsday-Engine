@@ -25,7 +25,7 @@
 #define LIBDENG_SYSTEM_RESOURCENAMESPACE_H
 
 #include "m_string.h"
-#include "m_filehash.h"
+#include "filedirectory.h"
 
 typedef struct resourcenamespace_hashnode_s {
     struct resourcenamespace_hashnode_s* next;

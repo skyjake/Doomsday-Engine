@@ -241,6 +241,7 @@
 		<Unit filename="..\..\engine\portable\include\edit_bias.h" />
 		<Unit filename="..\..\engine\portable\include\edit_map.h" />
 		<Unit filename="..\..\engine\portable\include\fi_main.h" />
+		<Unit filename="..\..\engine\portable\include\filedirectory.h" />
 		<Unit filename="..\..\engine\portable\include\finaleinterpreter.h" />
 		<Unit filename="..\..\engine\portable\include\gameinfo.h" />
 		<Unit filename="..\..\engine\portable\include\gl_defer.h" />
@@ -258,7 +259,6 @@
 		<Unit filename="..\..\engine\portable\include\m_bams.h" />
 		<Unit filename="..\..\engine\portable\include\m_binarytree.h" />
 		<Unit filename="..\..\engine\portable\include\m_decomp64.h" />
-		<Unit filename="..\..\engine\portable\include\m_filehash.h" />
 		<Unit filename="..\..\engine\portable\include\m_gridmap.h" />
 		<Unit filename="..\..\engine\portable\include\m_huffman.h" />
 		<Unit filename="..\..\engine\portable\include\m_linkedlist.h" />
@@ -506,6 +506,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\fi_main.c" />
+		<Unit filename="..\..\engine\portable\src\filedirectory.c" />
 		<Unit filename="..\..\engine\portable\src\finaleinterpreter.c" />
 		<Unit filename="..\..\engine\portable\src\gameinfo.c" />
 		<Unit filename="..\..\engine\portable\src\gl_defer.c" />
@@ -546,9 +547,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\m_decomp64.c">
-			<Option compilerVar="CC" />
-		</Unit>
-		<Unit filename="..\..\engine\portable\src\m_filehash.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\m_gridmap.c">

@@ -26,7 +26,7 @@
 
 #include "de_base.h"
 #include "m_args.h"
-#include "m_filehash.h"
+#include "filedirectory.h"
 
 #include "resourcenamespace.h"
 

@@ -1077,6 +1077,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\filedirectory.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\finaleinterpreter.c"
 				>
 			</File>
@@ -1146,10 +1150,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\m_decomp64.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\src\m_filehash.c"
 				>
 			</File>
 			<File
@@ -2738,6 +2738,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\filedirectory.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\finaleinterpreter.h"
 				>
 			</File>
@@ -2803,10 +2807,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\m_decomp64.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\m_filehash.h"
 				>
 			</File>
 			<File

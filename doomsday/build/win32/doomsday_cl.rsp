@@ -10,7 +10,6 @@
  .\..\..\engine\portable\src\m_vector.c
  .\..\..\engine\portable\src\m_string.c
  .\..\..\engine\portable\src\m_nodepile.c
- .\..\..\engine\portable\src\m_filehash.c
  .\..\..\plugins\common\src\m_fixed.c
  .\..\..\engine\portable\src\m_gridmap.c
  .\..\..\engine\portable\src\m_huffman.c
@@ -31,6 +30,7 @@
  .\..\..\engine\portable\src\s_environ.c
  .\..\..\engine\portable\src\s_cache.c
  .\..\..\engine\portable\src\fi_main.c
+ .\..\..\engine\portable\src\filedirectory.c
  .\..\..\engine\portable\src\finaleinterpreter.c
  .\..\..\engine\portable\src\gameinfo.c
  .\..\..\engine\portable\src\gl_defer.c
