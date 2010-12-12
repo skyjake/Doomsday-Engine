@@ -289,14 +289,13 @@ boolean Mus_IsMUSLump(int lump)
  */
 int Mus_GetExt(ded_music_t* def, filename_t retPath)
 {
-    filename_t path;
-
     if(!musAvail || !iMusic)
         return false;
 
     // All external music files are specified relative to the base path.
     if(def->path.path[0])
     {
+        filename_t path;
         M_PrependBasePath(path, def->path.path, DED_PATH_LEN);
         if(F_Access(path))
         {
@@ -308,13 +307,25 @@ int Mus_GetExt(ded_music_t* def, filename_t retPath)
     }
 
     // Try the resource locator.
-    if(F_FindResource(RC_MUSIC, path, def->lumpName, 0, FILENAME_T_MAXLEN))
     {
-        if(retPath)
-            strncpy(retPath, path, FILENAME_T_MAXLEN);
-        return true;
+    ddstring_t foundPath, *foundPathPtr = 0;
+    boolean result;
+    
+    if(retPath)
+    {
+        Str_Init(&foundPath);
+        foundPathPtr = &foundPath;
     }
-    return false;
+
+    result = F_FindResource2(RC_MUSIC, def->lumpName, foundPathPtr);
+    if(foundPathPtr)
+    {
+        if(result)
+            strncpy(retPath, Str_Text(foundPathPtr), FILENAME_T_MAXLEN);
+        Str_Free(foundPathPtr);
+    }
+    return result;
+    }
 }
 
 /**

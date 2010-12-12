@@ -455,20 +455,30 @@ static boolean recognizeZIP(const char* filePath, void* data)
 
 static boolean validateGameResource(gameresource_record_t* rec, const char* name)
 {
-    filename_t foundPath;
-    if(!F_FindResource(rec->rclass, foundPath, name, 0, FILENAME_T_MAXLEN))
-        return false;
-    switch(rec->rclass)
+    byte result = 0;
+    ddstring_t foundPath; Str_Init(&foundPath);
+    if(F_FindResource2(rec->rclass, name, &foundPath))
     {
-    case RC_PACKAGE:
-        if(recognizeWAD(foundPath, (void*)rec->identityKeys)) break;
-        if(recognizeZIP(foundPath, (void*)rec->identityKeys)) break;
-        return false;
-    default: break;
+        switch(rec->rclass)
+        {
+        case RC_PACKAGE:
+            if(recognizeWAD(Str_Text(&foundPath), (void*)rec->identityKeys))
+            {
+                result = 2;
+                break;
+            }
+            if(recognizeZIP(Str_Text(&foundPath), (void*)rec->identityKeys))
+            {
+                result = 2;
+                break;
+            }
+        default: break;
+        }
     }
-    // Passed.
-    Str_Set(&rec->path, foundPath);
-    return true;
+    if(result != 0)
+        Str_Copy(&rec->path, &foundPath);
+    Str_Free(&foundPath);
+    return (result == 2? true : false);
 }
 
 static void locateGameResources(gameinfo_t* info)
@@ -891,7 +901,7 @@ boolean DD_ChangeGame(gameinfo_t* info)
 
     if(!DD_IsNullGameInfo(DD_GameInfo()))
     {
-        Con_Message("DD_ChangeGame: Runtime game change not yet implemented.");
+        Con_Message("DD_ChangeGame: Runtime game change not yet implemented.\n");
         return false;
     }
 
@@ -1368,11 +1378,12 @@ static int DD_StartupWorker(void* parm)
     }
 
     // Add required engine resource files.
-    { filename_t foundPath;
-    if(F_FindResource(RC_PACKAGE, foundPath, "doomsday.pk3", 0, FILENAME_T_MAXLEN))
-        W_AddFile(foundPath, false);
+    { ddstring_t foundPath; Str_Init(&foundPath);
+    if(F_FindResource2(RC_PACKAGE, "doomsday.pk3", &foundPath))
+        W_AddFile(Str_Text(&foundPath), false);
     else
         Con_Error("DD_StartupWorker: Failed to locate required resource \"doomsday.pk3\".");
+    Str_Free(&foundPath);
     }
 
     // No more WADs will be loaded in startup mode after this point.

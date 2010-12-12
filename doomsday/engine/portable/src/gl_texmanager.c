@@ -678,15 +678,24 @@ byte GL_LoadDDTexture(image_t* image, const gltexture_inst_t* inst, void* contex
         "gray"
     };
     int num = inst->tex->ofTypeID;
+    ddstring_t foundPath;
+    byte result = 0;
+
     if(num < 0 || num > NUM_DD_TEXTURES)
         Con_Error("GL_LoadDDTexture: Internal error, invalid ddtex id %i.", num);
 
-    { filename_t foundPath;
-    if(!(F_FindResource(RC_GRAPHIC, foundPath, ddTexNames[num], 0, FILENAME_T_MAXLEN) && GL_LoadImage(image, foundPath)))
+    Str_Init(&foundPath);
+    if(F_FindResource2(RC_GRAPHIC, ddTexNames[num], &foundPath) &&
+       GL_LoadImage(image, Str_Text(&foundPath)))
     {
+        result = 2;
+    }
+    Str_Free(&foundPath);
+
+    if(result == 0)
         Con_Error("GL_LoadDDTexture: Error, \"%s\" not found!\n", ddTexNames[num]);
-    }}
-    return 2; // Always external.
+
+    return result;
     }
 }
 
@@ -703,21 +712,24 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst, void* co
     detailtex_t* dTex = detailTextures[inst->tex->ofTypeID];
     if(dTex->external)
     {
-        ddstring_t searchPath;
-        filename_t foundPath;
-        boolean found;
+        ddstring_t searchPath, foundPath;
+        byte result = 0;
 
         Str_Init(&searchPath); Str_Appendf(&searchPath, "Textures:%s", dTex->external);
+        Str_Init(&foundPath);
 
-        found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), NULL, FILENAME_T_MAXLEN);
-        if(found && GL_LoadImage(image, foundPath))
+        if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) &&
+           GL_LoadImage(image, Str_Text(&foundPath)))
         {
-            Str_Free(&searchPath);
-            return 2;
+            result = 2;
         }
+
         Str_Free(&searchPath);
-        Con_Message("GL_LoadDetailTexture: Warning, failed to load \"%s\"\n", dTex->external);
-        return 0;
+        Str_Free(&foundPath);
+
+        if(result == 0)
+            Con_Message("GL_LoadDetailTexture: Warning, failed to load \"%s\"\n", dTex->external);
+        return result;
     }
     else
     {
@@ -781,21 +793,25 @@ byte GL_LoadLightMap(image_t* image, const gltexture_inst_t* inst, void* context
     assert(image && inst);
     {
     lightmap_t* lmap = lightMaps[inst->tex->ofTypeID];
-    ddstring_t searchPath;
-    filename_t foundPath;
-    boolean found;
+    ddstring_t searchPath, foundPath;
+    byte result = 0;
 
-    Str_Init(&searchPath);Str_Appendf(&searchPath, "LightMaps:%s", lmap->external);
+    Str_Init(&searchPath); Str_Appendf(&searchPath, "LightMaps:%s", lmap->external);
+    Str_Init(&foundPath);
 
-    found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), "-ck", FILENAME_T_MAXLEN);
-    if(found && GL_LoadImage(image, foundPath))
+    if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") &&
+       GL_LoadImage(image, Str_Text(&foundPath)))
     {
-        Str_Free(&searchPath);
-        return 2;
+        result = 2;
     }
+
     Str_Free(&searchPath);
-    VERBOSE(Con_Message("GL_LoadLightMap: Warning, failed to load \"%s\".\n", lmap->external));
-    return 0;
+    Str_Free(&foundPath);
+
+    if(result == 0)
+        Con_Message("GL_LoadLightMap: Warning, failed to load \"%s\".\n", lmap->external);
+
+    return result;
     }
 }
 
@@ -810,21 +826,25 @@ byte GL_LoadFlareTexture(image_t* image, const gltexture_inst_t* inst, void* con
     assert(image && inst);
     {
     flaretex_t* fTex = flareTextures[inst->tex->ofTypeID];
-    ddstring_t searchPath;
-    filename_t foundPath;
-    boolean found;
+    ddstring_t searchPath, foundPath;
+    byte result = 0;
 
     Str_Init(&searchPath); Str_Appendf(&searchPath, "flaremaps:%s", fTex->external);
+    Str_Init(&foundPath);
 
-    found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), "-ck", FILENAME_T_MAXLEN);
-    if(found && GL_LoadImage(image, foundPath))
+    if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") &&
+       GL_LoadImage(image, Str_Text(&foundPath)))
     {
-        Str_Free(&searchPath);
-        return 2;
+        result = 2;
     }
+
     Str_Free(&searchPath);
-    Con_Message("GL_LoadFlareTexture: Warning, failed to load \"%s\"\n", fTex->external);
-    return 0;
+    Str_Free(&foundPath);
+
+    if(result == 0)
+        Con_Message("GL_LoadFlareTexture: Warning, failed to load \"%s\"\n", fTex->external);
+
+    return result;
     }
 }
 
@@ -839,21 +859,25 @@ byte GL_LoadShinyTexture(image_t* image, const gltexture_inst_t* inst, void* con
     assert(image && inst);
     {
     shinytex_t* sTex = shinyTextures[inst->tex->ofTypeID];
-    ddstring_t searchPath;
-    filename_t foundPath;
-    boolean found;
+    ddstring_t searchPath, foundPath;
+    byte result = 0;
 
     Str_Init(&searchPath); Str_Appendf(&searchPath, "LightMaps:%s", sTex->external);
+    Str_Init(&foundPath);
 
-    found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), 0, FILENAME_T_MAXLEN);
-    if(found && GL_LoadImage(image, foundPath))
+    if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) &&
+       GL_LoadImage(image, Str_Text(&foundPath)))
     {
-        Str_Free(&searchPath);
-        return 2;
+        result = 2;
     }
+
     Str_Free(&searchPath);
-    Con_Message("GL_LoadShinyTexture: Warning, failed to load \"%s\"\n", sTex->external);
-    return 0;
+    Str_Free(&foundPath);
+
+    if(result == 0)
+        Con_Message("GL_LoadShinyTexture: Warning, failed to load \"%s\"\n", sTex->external);
+
+    return result;
     }
 }
 
@@ -868,21 +892,25 @@ byte GL_LoadMaskTexture(image_t* image, const gltexture_inst_t* inst, void* cont
     assert(image && inst);
     {
     masktex_t* mTex = maskTextures[inst->tex->ofTypeID];
-    ddstring_t searchPath;
-    filename_t foundPath;
-    boolean found;
+    ddstring_t searchPath, foundPath;
+    byte result = 0;
 
     Str_Init(&searchPath); Str_Appendf(&searchPath, "LightMaps:%s", mTex->external);
+    Str_Init(&foundPath);
 
-    found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), 0, FILENAME_T_MAXLEN);
-    if(found && GL_LoadImage(image, foundPath))
+    if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) &&
+       GL_LoadImage(image, Str_Text(&foundPath)))
     {
-        Str_Free(&searchPath);
-        return 2;
+        result = 2;
     }
+
     Str_Free(&searchPath);
-    Con_Message("GL_LoadMaskTexture: Warning, failed to load \"%s\"\n", mTex->external);
-    return 0;
+    Str_Free(&foundPath);
+
+    if(result == 0)
+        Con_Message("GL_LoadMaskTexture: Warning, failed to load \"%s\"\n", mTex->external);
+
+    return result;
     }
 }
 
@@ -897,21 +925,25 @@ byte GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst, void* contex
     assert(image && inst);
     {
     skinname_t* sn = &skinNames[inst->tex->ofTypeID];
-    ddstring_t searchPath;
-    filename_t foundPath;
-    boolean found;
+    ddstring_t searchPath, foundPath;
+    byte result = 0;
 
     Str_Init(&searchPath); Str_Appendf(&searchPath, "Models:%s", sn->path);
+    Str_Init(&foundPath);
 
-    found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), 0, FILENAME_T_MAXLEN);
-    if(found && GL_LoadImage(image, foundPath))
+    if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) &&
+       GL_LoadImage(image, Str_Text(&foundPath)))
     {
-        Str_Free(&searchPath);
-        return 2;
+        result = 2;
     }
+
     Str_Free(&searchPath);
-    Con_Message("GL_LoadModelSkin: Warning, failed to load \"%s\"\n", sn->path);
-    return 0;
+    Str_Free(&foundPath);
+
+    if(result == 0)
+        Con_Message("GL_LoadModelSkin: Warning, failed to load \"%s\"\n", sn->path);
+
+    return result;
     }
 }
 
@@ -926,21 +958,25 @@ byte GL_LoadModelShinySkin(image_t* image, const gltexture_inst_t* inst, void* c
     assert(image && inst);
     {
     skinname_t* sn = &skinNames[inst->tex->ofTypeID];
-    ddstring_t searchPath;
-    filename_t foundPath;
-    boolean found;
+    ddstring_t searchPath, foundPath;
+    byte result = 0;
 
     Str_Init(&searchPath); Str_Appendf(&searchPath, "Models:%s", sn->path);
+    Str_Init(&foundPath);
 
-    found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), "-ck", FILENAME_T_MAXLEN);
-    if(found && GL_LoadImage(image, foundPath))
+    if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") &&
+       GL_LoadImage(image, Str_Text(&foundPath)))
     {
-        Str_Free(&searchPath);
-        return 2;
+        result = 2;
     }
+
     Str_Free(&searchPath);
-    Con_Message("GL_LoadModelShinySkin: Warning, failed to load \"%s\"\n", sn->path);
-    return 0;
+    Str_Free(&foundPath);
+
+    if(result == 0)
+        Con_Message("GL_LoadModelShinySkin: Warning, failed to load \"%s\"\n", sn->path);
+ 
+    return result;
     }
 }
 
@@ -999,9 +1035,12 @@ DGLuint GL_PrepareSysFlareTexture(flaretexid_t flare)
  */
 byte GL_LoadExtTexture(image_t* image, const char* name, gfxmode_t mode)
 {
-    filename_t foundPath;
-    if(F_FindResource(RC_GRAPHIC, foundPath, name, 0, FILENAME_T_MAXLEN) &&
-       GL_LoadImage(image, foundPath))
+    ddstring_t foundPath;
+    byte result = 0;
+    
+    Str_Init(&foundPath);
+    if(F_FindResource2(RC_GRAPHIC, name, &foundPath) &&
+       GL_LoadImage(image, Str_Text(&foundPath)))
     {
         // Too big for us? \todo Should not be done here.
         if(image->width  > GL_state.maxTexSize || image->height > GL_state.maxTexSize)
@@ -1026,9 +1065,10 @@ byte GL_LoadExtTexture(image_t* image, const char* name, gfxmode_t mode)
         {
             GL_ConvertToLuminance(image);
         }
-        return 2; // Always external.
+        result = 2; // External.
     }
-    return 0;
+    Str_Free(&foundPath);
+    return result;
 }
 
 /**
@@ -1047,22 +1087,27 @@ byte GL_LoadFlat(image_t* image, const gltexture_inst_t* inst, void* context)
     if(!noHighResTex && (loadExtAlways || highResWithPWAD || GLTexture_IsFromIWAD(inst->tex)))
     {
         const char* lumpName = W_LumpName(flat->lump);
-        ddstring_t searchPath;
-        filename_t foundPath;
+        ddstring_t searchPath, foundPath;
+        byte result = 0;
 
         // First try the flats namespace then the old-fashioned "flat-name" in the textures namespace?.
         Str_Init(&searchPath); Str_Appendf(&searchPath, "Flats:%s;Textures:flat-%s", lumpName, lumpName);
+        Str_Init(&foundPath);
 
-        if(F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), "-ck", FILENAME_T_MAXLEN) &&
-           GL_LoadImage(image, foundPath))
+        if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") &&
+           GL_LoadImage(image, Str_Text(&foundPath)))
         {
-            Str_Free(&searchPath);
-            return 2;
+            result = 2;
         }
+
         Str_Free(&searchPath);
+        Str_Free(&foundPath);
+
+        if(result != 0)
+            return result;
     }
 
-    // Read in the flat.
+    // None found. Load the original version.
     { size_t lumpLength = W_LumpLength(flat->lump);
     image->pixels = M_Malloc(MAX_OF(lumpLength, 4096));
     if(lumpLength < 4096)
@@ -1350,22 +1395,26 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst, void* cont
     // Try to load a high resolution version of this texture?
     if(!noHighResTex && (loadExtAlways || highResWithPWAD || GLTexture_IsFromIWAD(inst->tex)))
     {
-        ddstring_t searchPath;
-        filename_t foundPath;
-        boolean found;
+        ddstring_t searchPath, foundPath;
+        byte result = 0;
 
         Str_Init(&searchPath); Str_Appendf(&searchPath, "Textures:%s", texDef->name);
-        found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), "-ck", FILENAME_T_MAXLEN);
+        Str_Init(&foundPath);
 
-        if(found && GL_LoadImage(image, foundPath))
+        if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") &&
+           GL_LoadImage(image, Str_Text(&foundPath)))
         {
-            Str_Free(&searchPath);
-            return 2; // High resolution texture loaded.
+            result = 2; // High resolution texture loaded.
         }
+
         Str_Free(&searchPath);
+        Str_Free(&foundPath);
+
+        if(result != 0)
+            return result;
     }
 
-    // None found. Load the lowres version.
+    // None found. Load the original version.
     image->width = texDef->width;
     image->height = texDef->height;
     image->pixelSize = 1;
@@ -1427,18 +1476,23 @@ byte GL_LoadDoomPatch(image_t* image, const gltexture_inst_t* inst,
     // Try to load an external replacement for this version of the patch?
     if(!noHighResTex && (loadExtAlways || highResWithPWAD || W_LumpFromIWAD(p->lump)))
     {
-        ddstring_t searchPath;
-        filename_t foundPath;
+        ddstring_t searchPath, foundPath;
+        byte result = 0;
 
         Str_Init(&searchPath); Str_Appendf(&searchPath, "Patches:%s", W_LumpName(p->lump));
+        Str_Init(&foundPath);
 
-        if(F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), "-ck", FILENAME_T_MAXLEN) &&
-           GL_LoadImage(image, foundPath))
+        if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") &&
+           GL_LoadImage(image, Str_Text(&foundPath)))
         {
-            Str_Free(&searchPath);
-            return 2; // External replacement patch loaded.
+            result = 2;
         }
+
         Str_Free(&searchPath);
+        Str_Free(&foundPath);
+
+        if(result != 0)
+            return result;
     }
 
     // Use data from the normal lump.
@@ -1496,8 +1550,8 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
     if(!noHighResPatches)
     {
         const char* lumpName = W_LumpName(lumpNum);
-        ddstring_t searchPath;
-        filename_t foundPath;
+        ddstring_t searchPath, foundPath;
+        byte result = 0;
 
         // Compose resource names, prefer translated or psprite versions.
         Str_Init(&searchPath);
@@ -1509,14 +1563,19 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
             else // Translated.
                 Str_Appendf(&searchPath, ";Patches:%s-table%i%i", lumpName, tclass, tmap);
         }
+        Str_Init(&foundPath);
 
-        if(F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), "-ck", FILENAME_T_MAXLEN) &&
-           GL_LoadImage(image, foundPath))
+        if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") &&
+           GL_LoadImage(image, Str_Text(&foundPath)))
         {
-            Str_Free(&searchPath);
-            return 2; // Loaded high resolution sprite.
+            result = 2;
         }
+
         Str_Free(&searchPath);
+        Str_Free(&foundPath);
+
+        if(result != 0)
+            return result;
     }
 
     {
@@ -1597,15 +1656,15 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
 {
     assert(image);
     {
+    ddstring_t searchPath, foundPath;
     byte result = 0;
-    ddstring_t searchPath;
-    filename_t foundPath;
 
     // First try to find an external resource.
     Str_Init(&searchPath); Str_Appendf(&searchPath, "Patches:%s", W_LumpName(r->lump));
+    Str_Init(&foundPath);
 
-    if(F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), 0, FILENAME_T_MAXLEN) &&
-       GL_LoadImage(image, foundPath))
+    if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) &&
+       GL_LoadImage(image, Str_Text(&foundPath)))
     {   // High resolution rawtex loaded.
         result = 2;
     }
@@ -1640,6 +1699,9 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
         M_Free(lumpdata);
         result = 1;
     }
+
+    Str_Free(&searchPath);
+    Str_Free(&foundPath);
 
     return result;
     }

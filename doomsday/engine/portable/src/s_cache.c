@@ -552,7 +552,7 @@ static sfxsample_t* cacheSample(int id, sfxinfo_t* info)
     // Has an external sound file been defined?
     if(info->external[0])
     {   // Yes.
-        filename_t          buf;
+        filename_t buf;
 
         // Try loading (note the file name is relative to the base path).
         M_PrependBasePath(buf, info->external, FILENAME_T_MAXLEN);
@@ -565,26 +565,30 @@ static sfxsample_t* cacheSample(int id, sfxinfo_t* info)
     // If external didn't succeed, let's try the default resource dir.
     if(!data)
     {
-        filename_t          buf;
-
         /**
          * If the sound has an invalid lumpname, search external anyway.
          * If the original sound is from a PWAD, we won't look for an
          * external resource (probably a custom sound).
          * \fixme should be a cvar.
          */
-        if((info->lumpNum < 0 || W_LumpFromIWAD(info->lumpNum)) &&
-           F_FindResource(RC_SOUND, buf, info->lumpName, NULL, FILENAME_T_MAXLEN) &&
-           (data = WAV_Load(buf, &bytesPer, &rate, &numSamples)))
-        {   // Loading was successful!
-            bytesPer /= 8; // Was returned as bits.
+        if(info->lumpNum < 0 || W_LumpFromIWAD(info->lumpNum))
+        {
+            ddstring_t foundPath; Str_Init(&foundPath);
+
+            if(F_FindResource2(RC_SOUND, info->lumpName, &foundPath) &&
+               (data = WAV_Load(Str_Text(&foundPath), &bytesPer, &rate, &numSamples)))
+            {   // Loading was successful!
+                bytesPer /= 8; // Was returned as bits.
+            }
+
+            Str_Free(&foundPath);
         }
     }
 
     // No sample loaded yet?
     if(!data)
     {
-        char                hdr[12];
+        char hdr[12];
 
         // Try loading from the lump.
         if(info->lumpNum < 0)

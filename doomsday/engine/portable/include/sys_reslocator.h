@@ -92,30 +92,29 @@ boolean F_IsValidResourceNamespaceId(int val);
 struct resourcenamespace_s* F_ToResourceNamespace(resourcenamespaceid_t rni);
 
 /**
- * Attempt to locate an external file for the specified resource.
+ * Attempt to locate a named resource.
  *
  * @param rclass        Class of resource being searched for (if known).
  *
- * @param foundPath     If found, the fully qualified path will be written back here.
- *                      Can be @c NULL, changing this routine to only check that file
- *                      exists on the physical file system and can be read.
- *
  * @param searchPath    Path/name of the resource being searched for. Note that
- *                      the resource class (@a rclass) specified significantly alters
- *                      search behavior. This allows text replacements of symbolic escape
- *                      sequences in the path, allowing access to the engine's view
- *                      of the virtual file system.
+ *                      the resource class (@a rclass) specified significantly
+ *                      alters search behavior. This allows text replacements of
+ *                      symbolic escape sequences in the path, allowing access to
+ *                      the engine's view of the virtual file system.
  *
- * @param suffix        Optional name suffix. If not @c NULL, append to @a names
- *                      and look for matches. If not found or not specified then
- *                      search for matches to @a names.
+ * @param foundPath     If found, the fully qualified path is written back here.
+ *                      Can be @c NULL, changing this routine to only check that
+ *                      resource exists is readable.
  *
- * @param foundPathLen  Size of @a foundPath in bytes.
+ * @param optionalSuffix If not @c NULL, append this suffix to search paths and
+ *                      look for matches. If not found or not specified then search
+ *                      for matches without a suffix.
  *
- * @return              @c true, iff a file was found.
+ * @return              @c true, iff a resource was found.
  */
-boolean F_FindResource(resourceclass_t rclass, char* foundPath, const char* searchPath,
-    const char* suffix, size_t foundPathLength);
+boolean F_FindResource3(resourceclass_t rclass, const char* searchPath, ddstring_t* foundPath, const char* optionalSuffix);
+boolean F_FindResource2(resourceclass_t rclass, const char* searchPath, ddstring_t* foundPath);
+boolean F_FindResource(resourceclass_t rclass, const char* searchPath);
 
 /**
  * @return              Default class associated with resources of type @a type.
@@ -128,8 +127,8 @@ resourceclass_t F_DefaultResourceClassForType(resourcetype_t type);
 resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass);
 
 /**
- * @return              Unique identifier of the resource namespace associated with @a name,
- *                      else @c 0 (not found).
+ * @return              Unique identifier of the resource namespace associated
+ *                      with @a name, else @c 0 (not found).
  */
 resourcenamespaceid_t F_SafeResourceNamespaceForName(const char* name);
 
@@ -174,7 +173,6 @@ const char* F_ResourceClassStr(resourceclass_t rclass);
  *
  * ! Handles '~' on UNIX-based platforms.
  * ! No other transform applied to @a src path.
- * ! No path length restrictions.
  *
  * @param dest          Expanded path written here.
  * @param src           Original path.
@@ -182,5 +180,15 @@ const char* F_ResourceClassStr(resourceclass_t rclass);
  * @return              @c true iff the path was expanded.
  */
 boolean F_ExpandBasePath(ddstring_t* dest, const ddstring_t* src);
+
+/**
+ * Attempt to prepend the base path. If @a src is already absolute this is a null-op.
+ *
+ * @param dest          Expanded path written here.
+ * @param src           Original path.
+ *
+ * @return              @c true iff the path was expanded.
+ */
+boolean F_PrependBasePath(ddstring_t* dest, const ddstring_t* src);
 
 #endif /* LIBDENG_SYSTEM_RESOURCE_LOCATOR_H */

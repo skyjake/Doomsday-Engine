@@ -25,8 +25,25 @@
 #define LIBDENG_SYSTEM_RESOURCENAMESPACE_H
 
 #include "m_string.h"
+#include "m_filehash.h"
 
-struct filehash_s;
+typedef struct resourcenamespace_hashnode_s {
+    struct resourcenamespace_hashnode_s* next;
+    char* name;
+    void* data;
+} resourcenamespace_hashnode_t;
+
+/**
+ * Name search hash.
+ */
+// Number of entries in the hash table.
+#define RESOURCENAMESPACE_HASHSIZE 512
+
+typedef struct {
+    resourcenamespace_hashnode_t* first;
+    resourcenamespace_hashnode_t* last;
+} resourcenamespace_hashentry_t;
+typedef resourcenamespace_hashentry_t resourcenamespace_namehash_t[RESOURCENAMESPACE_HASHSIZE];
 
 /**
  * @defGroup ResourceNamespaceFlags Resource Namespace Flags
@@ -49,8 +66,8 @@ typedef struct resourcenamespace_s {
     /// @see ResourceNamespaceFlags
     byte _flags;
 
-    /// Command line options for overriding resource paths explicitly. Flag2 Takes precendence.
-    const char* _overrideFlag, *_overrideFlag2;
+    /// Command line options for overriding resource paths explicitly. Name 2 has precendence.
+    const char* _overrideName, *_overrideName2;
 
     /// Resource search order (in order of greatest-importance, right to left) seperated by semicolon (e.g., "path1;path2;").
     const char* _searchPaths;
@@ -58,7 +75,11 @@ typedef struct resourcenamespace_s {
     /// Set of "extra" search paths (in order of greatest-importance, right to left) seperated by semicolon (e.g., "path1;path2;").
     ddstring_t _extraSearchPaths;
 
-    struct filehash_s* _fileHash;
+    /// Path hash table.
+    resourcenamespace_namehash_t _pathHash;
+
+    /// File system directories, resolved from paths.
+    filedirectory_t* _fileDirectory;
 } resourcenamespace_t;
 
 /**
@@ -77,10 +98,17 @@ boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rnamespace, const c
 void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rnamespace);
 
 /**
+ * Find a path to a named resource in the namespace.
+ *
  * \post Name hash may have been rebuilt.
+ *
+ * @param searchPath    Relative or absolute path.
+ * @param foundPath     If not @c NULL and a path is found, it is written back here.
+ *
  * @return              Ptr to the name hash to use when searching.
  */
-struct filehash_s* ResourceNamespace_Hash(resourcenamespace_t* rnamespace);
+boolean ResourceNamespace_Find2(resourcenamespace_t* rnamespace, const char* searchPath, ddstring_t* foundPath);
+boolean ResourceNamespace_Find(resourcenamespace_t* rnamespace, const char* searchPath);
 
 /**
  * Apply mapping for this namespace to the specified path (if enabled).

@@ -422,51 +422,55 @@ static void R_LoadModelDMD(DFILE *file, model_t *mo)
 
 static void R_RegisterModelSkin(model_t* mdl, int index)
 {
-    mdl->skins[index].id = R_RegisterSkin(NULL, mdl->skins[index].name,
-        mdl->fileName, false, FILENAME_T_MAXLEN);
+    mdl->skins[index].id = R_RegisterSkin(0, mdl->skins[index].name, mdl->fileName, false);
 
     if(!mdl->skins[index].id)
     {   // Not found!
-        VERBOSE(Con_Printf("  %s (#%i) not found.\n",
-                           mdl->skins[index].name, index));
+        VERBOSE(Con_Printf("  %s (#%i) not found.\n", mdl->skins[index].name, index));
     }
 }
 
 /**
  * Finds the existing model or loads in a new one.
  */
-static int R_LoadModel(char* origfn)
+static int R_LoadModel(char* searchPath)
 {
-    int                 i, index;
-    model_t*            mdl;
-    DFILE*              file = NULL;
-    filename_t          filename;
+    int i, index;
+    model_t* mdl;
+    DFILE* file = 0;
+    ddstring_t foundPath;
 
-    if(!origfn || !origfn[0])
+    if(!searchPath || !searchPath[0])
         return 0; // No model specified.
 
-    if(!F_FindResource(RC_MODEL, filename, origfn, NULL, FILENAME_T_MAXLEN))
+    Str_Init(&foundPath);
+    if(F_FindResource2(RC_MODEL, searchPath, &foundPath))
     {
-        R_MissingModel(origfn);
-        return 0;
+        // Has this been already loaded?
+        if((index = R_FindModelFor(Str_Text(&foundPath))) < 0)
+        {
+            // Not loaded yet, try to open the file.
+            if((file = F_Open(Str_Text(&foundPath), "rb")) == NULL)
+            {
+                R_MissingModel(Str_Text(&foundPath));
+                Str_Free(&foundPath);
+                return 0;
+            }
+
+            // Allocate a new model_t.
+            if((index = R_NewModelFor(/*Str_Text(&foundPath)*/)) < 0)
+            {
+                F_Close(file);
+                Str_Free(&foundPath);
+                return 0;
+            }
+        }
     }
-
-    // Has this been already loaded?
-    if((index = R_FindModelFor(filename)) < 0)
+    else
     {
-        // Not loaded yet, try to open the file.
-        if((file = F_Open(filename, "rb")) == NULL)
-        {
-            R_MissingModel(filename);
-            return 0;
-        }
-
-        // Allocate a new model_t.
-        if((index = R_NewModelFor(/*filename*/)) < 0)
-        {
-            F_Close(file);
-            return 0;
-        }
+        R_MissingModel(searchPath);
+        Str_Free(&foundPath);
+        return 0;
     }
 
     mdl = modellist[index];
@@ -474,6 +478,7 @@ static int R_LoadModel(char* origfn)
     {
         if(file)
             F_Close(file);
+        Str_Free(&foundPath);
         return index; // Already loaded.
     }
 
@@ -494,6 +499,7 @@ static int R_LoadModel(char* origfn)
         M_Free(mdl);
         modellist[index] = 0;
         F_Close(file);
+        Str_Free(&foundPath);
         return 0;
     }
 
@@ -501,7 +507,7 @@ static int R_LoadModel(char* origfn)
     mdl->loaded = true;
     mdl->allowTexComp = true;
     F_Close(file);
-    strncpy(mdl->fileName, filename, FILENAME_T_MAXLEN);
+    strncpy(mdl->fileName, Str_Text(&foundPath), FILENAME_T_MAXLEN);
 
     // Determine the actual (full) paths.
     for(i = 0; i < mdl->info.numSkins; ++i)
@@ -509,6 +515,7 @@ static int R_LoadModel(char* origfn)
         R_RegisterModelSkin(mdl, i);
     }
 
+    Str_Free(&foundPath);
     return index;
 }
 
@@ -1010,9 +1017,17 @@ static void setupModel(ded_model_t *def)
             sub->offset[k] = subdef->offset[k];
 
         sub->alpha = (byte) (subdef->alpha * 255);
-        sub->shinySkin = R_RegisterSkin(subdef->filename.path,
-            subdef->shinySkin, NULL, true, DED_PATH_LEN);
 
+        { ddstring_t foundPath; Str_Init(&foundPath);
+        sub->shinySkin = R_RegisterSkin(&foundPath, subdef->shinySkin, NULL, true);
+        if(sub->shinySkin != 0)
+        {
+            strncpy(subdef->filename.path, Str_Text(&foundPath), DED_PATH_LEN);
+            if(Str_Length(&foundPath) > DED_PATH_LEN-1)
+                Con_Message("setupModel: Warning, forced to truncate long path \"%s\" to \"%s\" (max:%lu).\n", Str_Text(&foundPath), subdef->filename.path, DED_PATH_LEN-1);
+        }
+        Str_Free(&foundPath);
+        }
         // Should we allow texture compression with this model?
         if(sub->flags & MFF_NO_TEXCOMP)
         {

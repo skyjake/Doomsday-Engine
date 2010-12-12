@@ -22,67 +22,82 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDENG_FILEHASH_H
-#define LIBDENG_FILEHASH_H
+#ifndef LIBDENG_FILEDIRECTORY_H
+#define LIBDENG_FILEDIRECTORY_H
 
-struct hashnode_s;
+#include "sys_file.h"
 
-typedef struct {
-    struct hashnode_s* first;
-    struct hashnode_s* last;
-} hashentry_t;
+typedef struct filedirectory_node_s {
+    struct filedirectory_node_s* next;
+    struct filedirectory_node_s* parent;
+    filetype_t type;
+    char* path;
+    uint count;
+    boolean processed;
+} filedirectory_node_t;
 
 /**
- * File name/directory search hash.
+ * File Directory. File system component representing a physical directory.
  *
  * @ingroup fs
  */
-// Number of entries in the hash table.
-#define FILEHASH_SIZE           (512)
-typedef struct filehash_s {
+typedef struct filedirectory_s {
     /// Copy of the path list specified at creation time.
     char* _pathList;
 
     /// @c true if the record set has been built.
     boolean _builtRecordSet;
 
-    /// First and last directory nodes in the hash.
-    struct direcnode_s* _direcFirst, *_direcLast;
+    /// First and last directory nodes.
+    struct filedirectory_node_s* _direcFirst, *_direcLast;
+} filedirectory_t;
 
-    /// File name hash table.
-    hashentry_t _hashTable[FILEHASH_SIZE];
-} filehash_t;
+filedirectory_t* FileDirectory_Create(const char* pathList);
 
-/**
- * Initialize the file hash using the given list of paths (separated with semicolons).
- * A copy of the path list is taken allowing the hash to be easily rebuilt.
- */
-filehash_t* FileHash_Create(const char* pathList);
+void FileDirectory_Destroy(filedirectory_t* fileDirectory);
 
 /**
- * Empty the contents of the file hash and destroy it.
- */
-void FileHash_Destroy(filehash_t* fh);
-
-/**
- * @return                  Ptr to a copy of the path list used to generate the hash.
- */
-const char* FileHash_PathList(filehash_t* fh);
-
-/**
- * Finds a file from the hash.
+ * Iterate over nodes in the directory making a callback for each.
+ * Iteration ends when all nodes have been visited or a callback returns non-zero.
  *
- * @param foundPath         The full path, returned.
- * @param name              Relative or an absolute path.
- * @param len               Size of @p foundPath in bytes.
+ * @param fileDirectory     File directory being traversed.
+ * @param type              If a valid file type only process nodes of this type.
+ * @param parent            If not @c NULL, only process child nodes of this node.
+ * @param callback          Callback function ptr.
+ * @param paramaters        Passed to the callback.
+ *
+ * @return                  @c 0 iff iteration completed wholly.
+ */
+int FileDirectory_Iterate(filedirectory_t* fileDirectory, filetype_t type, struct filedirectory_node_s* parent,
+    int (*callback) (const struct filedirectory_node_s* node, void* paramaters), void* paramaters);
+
+/**
+ * Clear the directory and destroy it.
+ */
+void FileDirectory_Clear(filedirectory_t* fileDirectory);
+
+/**
+ * Find a relative file path in the directory.
+ *
+ * @param searchPath        Relative or absolute path.
+ * @param foundPath         If not @c NULL, the relative path is written back here if found.
  *
  * @return                  @c true, iff successful.
  */
-boolean FileHash_Find(filehash_t* fh, char* foundPath, const char* name, size_t len);
+boolean FileDirectory_Find2(filedirectory_t* fileDirectory, const char* searchPath, ddstring_t* foundPath);
+boolean FileDirectory_Find(filedirectory_t* fileDirectory, const char* searchPath);
 
 /**
- * @return                  @c true iff the hash record set has been built, else @c false.
+ * @param name          A relative path.
+ *
+ * @return              @c true, if the path specified in the name begins
+ *                      from a directory in the search path.
  */
-boolean FileHash_HasRecordSet(filehash_t* fh);
+boolean FileDirectoryNode_MatchDirectory(const filedirectory_node_t* direc, const char* name);
 
-#endif /* LIBDENG_FILEHASH_H */
+/**
+ * Composes a relative path for the directory node.
+ */
+void FileDirectoryNode_ComposePath(const filedirectory_node_t* direc, ddstring_t* path);
+
+#endif /* LIBDENG_FILEDIRECTORY_H */

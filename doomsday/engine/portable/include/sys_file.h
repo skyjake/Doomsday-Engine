@@ -48,6 +48,7 @@ typedef struct {
 } DFILE;
 
 typedef enum filetype_e {
+    FT_NONE = -1,
     FT_NORMAL,
     FT_DIRECTORY
 } filetype_t;

@@ -1851,29 +1851,26 @@ Con_Message("R_GetSkinTex: Too many model skins!\n");
     return 1 + (st - skinNames); // 1-based index.
 }
 
-static boolean expandSkinName(char* foundPath, const char* skin, const char* modelfn, size_t foundPathLength)
+static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const char* modelfn)
 {
     assert(foundPath && skin && skin[0] && modelfn && modelfn[0]);
     {
-    directory_t mydir;
     ddstring_t searchPath;
+    directory_t mydir;
     boolean found;
 
-    // The "first choice" directory.
+    // The "first choice" directory is that in which the model file resides.
     memset(&mydir, 0, sizeof(mydir));
     Dir_FileDir(modelfn, &mydir);
 
-    Str_Init(&searchPath);
-    Str_Set(&searchPath, mydir.path);
-    Str_Append(&searchPath, skin);
-
     // Try the "first choice" directory first.
-    found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), 0, foundPathLength);
+    Str_Init(&searchPath); Str_Appendf(&searchPath, "%s%s", mydir.path, skin);
+    found = F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), foundPath);
 
     if(!found)
-    {   // Try the model path(s).
+    {   // Try the resource locator.
         Str_Clear(&searchPath); Str_Appendf(&searchPath, "Models:%s", skin);
-        found = F_FindResource(RC_GRAPHIC, foundPath, Str_Text(&searchPath), 0, foundPathLength);
+        found = F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), foundPath);
     }
 
     Str_Free(&searchPath);
@@ -1884,17 +1881,20 @@ static boolean expandSkinName(char* foundPath, const char* skin, const char* mod
 /**
  * Registers a new skin name.
  */
-uint R_RegisterSkin(char* fullpath, const char* skin, const char* modelfn, boolean isShinySkin, size_t len)
+uint R_RegisterSkin(ddstring_t* foundPath, const char* skin, const char* modelfn, boolean isShinySkin)
 {
-    // Has a skin name been provided?
-    if(skin && skin[0])
+    assert(skin && skin[0]);
     {
-        filename_t buf;
-        if(expandSkinName(fullpath ? fullpath : buf, skin, modelfn, len))
-            return R_CreateSkinTex(fullpath ? fullpath : buf, isShinySkin);
+    uint result = 0;
+    ddstring_t buf;
+    if(!foundPath)
+        Str_Init(&buf);
+    if(expandSkinName(foundPath ? foundPath : &buf, skin, modelfn))
+        result = R_CreateSkinTex(foundPath ? Str_Text(foundPath) : Str_Text(&buf), isShinySkin);
+    if(!foundPath)
+        Str_Free(&buf);
+    return result;
     }
-
-    return 0;
 }
 
 const skinname_t* R_GetSkinNameByIndex(uint id)

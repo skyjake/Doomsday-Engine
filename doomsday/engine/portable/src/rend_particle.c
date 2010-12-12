@@ -118,13 +118,14 @@ static float pointDist(fixed_t c[3])
 
 byte GL_LoadParticleTexture(image_t* image, const char* name)
 {
-    filename_t foundPath;
-    if(F_FindResource(RC_GRAPHIC, foundPath, name, "-ck", FILENAME_T_MAXLEN) &&
-       GL_LoadImage(image, foundPath))
+    byte result = 0;
+    ddstring_t foundPath; Str_Init(&foundPath);
+    if(F_FindResource3(RC_GRAPHIC, name, &foundPath, "-ck") && GL_LoadImage(image, Str_Text(&foundPath)))
     {
-        return 2;
+        result = 2;
     }
-    return 0;
+    Str_Free(&foundPath);
+    return result;
 }
 
 void Rend_ParticleLoadSystemTextures(void)
