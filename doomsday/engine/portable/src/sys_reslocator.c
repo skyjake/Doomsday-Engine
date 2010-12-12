@@ -694,7 +694,7 @@ boolean F_PrependBasePath(ddstring_t* dest, const ddstring_t* src)
         }
 
         Str_Set(dest, ddBasePath);
-        Str_PartAppend(dest, Str_Text(src), 1, Str_Length(src)-1);
+        Str_Append(dest, Str_Text(src));
         return true;
     }
 
