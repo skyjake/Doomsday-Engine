@@ -81,6 +81,36 @@ static void clearPathHash(resourcenamespace_t* rn)
     }}
 }
 
+#if _DEBUG
+static void printPathHash(resourcenamespace_t* rn)
+{
+    assert(rn);
+    {
+    ddstring_t path;
+    size_t n = 0;
+
+    Str_Init(&path);
+
+    { uint i;
+    for(i = 0; i < RESOURCENAMESPACE_HASHSIZE; ++i)
+    {
+        resourcenamespace_hashentry_t* entry = &rn->_pathHash[i];
+        resourcenamespace_hashnode_t* node = entry->first;
+        while(node)
+        {
+            Str_Clear(&path);
+            FileDirectoryNode_ComposePath((filedirectory_node_t*)node->data, &path);
+            Con_Printf("  %lu: %lu:\"%s\" > %s\n", (unsigned long)n, i, node->name, Str_Text(&path));
+            ++n;
+            node = node->next;
+        }
+    }}
+
+    Str_Free(&path);
+    }
+}
+#endif
+
 static void formSearchPathList(ddstring_t* pathList, resourcenamespace_t* rn)
 {
     assert(rn && pathList);
@@ -227,8 +257,17 @@ static void rebuild(resourcenamespace_t* rn)
         formSearchPathList(&tmp, rn);
         if(Str_Length(&tmp) > 0)
         {
+            uint startTime;
+
             rn->_fileDirectory = FileDirectory_Create(Str_Text(&tmp));
+
+            VERBOSE( Con_Message("Rebuilding rnamespace name hash ...\n") );
+            startTime = verbose >= 2? Sys_GetRealTime(): 0;
             FileDirectory_Iterate(rn->_fileDirectory, FT_NORMAL, 0, addFilePathToResourceNamespaceWorker, rn);
+#if _DEBUG
+            printPathHash(rn);
+#endif
+            VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
         }
         Str_Free(&tmp);
         }
