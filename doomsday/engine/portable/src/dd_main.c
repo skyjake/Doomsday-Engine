@@ -619,7 +619,7 @@ static void printGameInfo(gameinfo_t* info)
                 {
                     if(n == 0)
                         Con_Printf("\n");
-                    Con_Printf(" \"%s\" %s%s\n", Str_Text(&(*records)->names), Str_Length(&(*records)->path) == 0? "" : "> ", Str_Length(&(*records)->path) == 0? "" : M_PrettyPath(Str_Text(&(*records)->path)));
+                    Con_Printf("   \"%s\" %s%s\n", Str_Text(&(*records)->names), Str_Length(&(*records)->path) == 0? "" : "> ", Str_Length(&(*records)->path) == 0? "" : M_PrettyPath(Str_Text(&(*records)->path)));
                     n++;
                 }
             } while(*(++records));
