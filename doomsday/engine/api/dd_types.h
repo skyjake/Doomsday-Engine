@@ -108,23 +108,27 @@ typedef uint16_t        ushort;
 
 #endif
 
-typedef uint32_t        gameid_t;
 typedef int             fixed_t;
 typedef unsigned int    angle_t;
-typedef int             spritenum_t;
-typedef int             lumpnum_t;
+typedef unsigned char   byte;
+typedef uint32_t        ident_t;
+
+typedef uint32_t        gameid_t;
 typedef uint32_t        patchid_t;
 typedef uint32_t        materialnum_t;
-typedef uint32_t        ident_t;
+typedef int             lumpnum_t;
+typedef int             spritenum_t;
 typedef unsigned short  nodeindex_t;
 typedef unsigned short  thid_t;
-typedef unsigned char   byte;
 typedef double          timespan_t;
 
-#define FILENAME_T_MAXLEN 256
-typedef char            filename_t[FILENAME_T_MAXLEN];
+#define LUMPNAME_T_MAXLEN 9
+#define LUMPNAME_T_LASTINDEX 8
+typedef signed char     lumpname_t[LUMPNAME_T_MAXLEN];
 
+#define FILENAME_T_MAXLEN 256
 #define FILENAME_T_LASTINDEX 255
+typedef char            filename_t[FILENAME_T_MAXLEN];
 
 typedef struct directory_s {
     int             drive;
