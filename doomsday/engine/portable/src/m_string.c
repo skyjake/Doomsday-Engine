@@ -199,7 +199,7 @@ void Str_Appendf(ddstring_t *ds, const char *format, ...)
 /**
  * Appends a portion of a string.
  */
-void Str_PartAppend(ddstring_t *dest, const char *src, int start, size_t count)
+void Str_PartAppend(ddstring_t* dest, const char* src, size_t start, size_t count)
 {
     Str_Alloc(dest, dest->length + count + 1, true);
     memcpy(dest->str + dest->length, src + start, count);
