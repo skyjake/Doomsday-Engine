@@ -572,7 +572,7 @@ static void loadGameResources(gameinfo_t* info, resourceclass_t rclass, const ch
     }
 }
 
-/*static*/ void printGameResourceRecord(gameresource_record_t* rec, boolean printStatus)
+static void printGameResourceRecord(gameresource_record_t* rec, boolean printStatus)
 {
     assert(rec);
     if(printStatus)
@@ -595,7 +595,7 @@ void printGameInfoBanner(gameinfo_t* info)
     Con_FPrintf(CBLF_RULER, "");
 }
 
-/*static*/ void printGameInfoResources(gameinfo_t* info, boolean printStatus, int rflags)
+static void printGameInfoResources(gameinfo_t* info, boolean printStatus, int rflags)
 {
     assert(info);
     { uint i; size_t n = 0;
@@ -619,7 +619,7 @@ void printGameInfoBanner(gameinfo_t* info)
     }
 }
 
-/*static*/ void printGameInfo(gameinfo_t* info, boolean printBanner, boolean printStartupResources, boolean printOtherResources, boolean printStatus)
+static void printGameInfo(gameinfo_t* info, boolean printBanner, boolean printStartupResources, boolean printOtherResources, boolean printStatus)
 {
     assert(info);
 
