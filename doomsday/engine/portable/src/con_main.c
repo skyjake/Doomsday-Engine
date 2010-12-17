@@ -1729,17 +1729,37 @@ void Con_FPrintf(int flags, const char* format, ...)    // Flagged printf
     va_end(args);}
 }
 
-/**
- * Prints a file name to the console.
- * This is a f_forall_func_t.
- */
-int Con_PrintFileName(const char *fn, filetype_t type, void *dir)
+void Con_PrintPathList3(const char* pathList, const char* seperator, byte flags)
 {
-    // Exclude the path.
-    Con_Printf("  %s\n", fn + strlen(dir));
+    assert(pathList && pathList[0]);
+    {
+    const char* p = pathList;
+    ddstring_t path;
+    int n = 0;
 
-    // Continue the listing.
-    return true;
+    Str_Init(&path);   
+    while((p = Str_CopyDelim(&path, p, ';')))
+    {
+        if(flags & PPF_TRANSFORM_PATH_PRINTINDEX)
+            Con_Printf("%i: ", n++);
+        Con_Printf("%s", (flags & PPF_TRANSFORM_PATH_MAKEPRETTY)? M_PrettyPath(Str_Text(&path)) : Str_Text(&path));
+        if(seperator && strchr(p, ';') != 0)
+            Con_Printf("%s", seperator);
+        if(flags & PPF_MULTILINE)
+            Con_Printf("\n");
+    }
+    Str_Free(&path);
+    }
+}
+
+void Con_PrintPathList2(const char* pathList, const char* seperator)
+{
+    Con_PrintPathList3(pathList, seperator, PPF_MULTILINE|PPF_TRANSFORM_PATH_MAKEPRETTY|PPF_TRANSFORM_PATH_PRINTINDEX);
+}
+
+void Con_PrintPathList(const char* pathList)
+{
+    Con_PrintPathList2(pathList, " ");
 }
 
 /**

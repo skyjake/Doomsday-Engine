@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2004-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * sys_path.c: File Path Processing
+ * File Path Processing.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -33,7 +33,9 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_misc.h"
+
+#include "m_misc.h"
+#include "m_string.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -53,46 +55,10 @@
 
 // CODE --------------------------------------------------------------------
 
-/**
- * Removes references to the current (.) and parent (..) directories.
- * The given path should be an absolute path.
- */
-void DD_ResolvePath(char *path)
+char* _fullpath(char* full, const char* original, int maxLen)
 {
-    char       *ch = path;
-    char       *end = path + strlen(path);
-    char       *prev = path;        // Assume an absolute path.
-
-    for(; *ch; ch++)
-    {
-        if(ch[0] == '/' && ch[1] == '.')
-        {
-            if(ch[2] == '/')
-            {
-                memmove(ch, ch + 2, end - ch - 1);
-                ch--;
-            }
-            else if(ch[2] == '.' && ch[3] == '/')
-            {
-                memmove(prev, ch + 3, end - ch - 2);
-                // Must restart from the beginning.
-                // This is a tad inefficient, though.
-                ch = path - 1;
-                continue;
-            }
-        }
-        if(*ch == '/')
-            prev = ch;
-    }
-}
-
-/**
- * Convert the given path to an absolute path.
- */
-char *_fullpath(char *full, const char *original, int maxLen)
-{
-    ddstring_t  dir;
-    char        workDir[512];       // Fixed-size array...
+    ddstring_t dir;
+    char workDir[512]; // Fixed-size array...
 
     Str_Init(&dir);
 
@@ -111,7 +77,7 @@ char *_fullpath(char *full, const char *original, int maxLen)
     }
 
     // Remove "."s and ".."s.
-    DD_ResolvePath(Str_Text(&dir));
+    M_ResolvePath(Str_Text(&dir));
 
     // Clear the given buffer and copy the full path there.
     memset(full, 0, maxLen);
@@ -120,10 +86,10 @@ char *_fullpath(char *full, const char *original, int maxLen)
     return full;
 }
 
-void strzncpy(char *dest, const char *src, int count)
+void strzncpy(char* dest, const char* src, int count)
 {
-    char       *out = dest;
-    const char *in = src;
+    char* out = dest;
+    const char* in = src;
 
     while(count-- > 0)
     {
@@ -134,10 +100,9 @@ void strzncpy(char *dest, const char *src, int count)
     *out = 0;
 }
 
-void _splitpath(const char *path, char *drive, char *dir, char *name,
-                char *ext)
+void _splitpath(const char* path, char* drive, char* dir, char* name, char* ext)
 {
-    char       *lastPeriod, *lastSlash;
+    char* lastPeriod, *lastSlash;
 
     if(drive)
         strcpy(drive, ""); // There is never a drive letter.

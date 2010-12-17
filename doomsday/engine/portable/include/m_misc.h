@@ -42,31 +42,31 @@ void*           M_Realloc(void* ptr, size_t size);
 void            M_Free(void* ptr);
 
 // File system utility routines.
-size_t          M_ReadFile(char const* name, byte** buffer);
-size_t          M_ReadFileCLib(char const* name, byte** buffer);
-boolean         M_WriteFile(char const* name, void* source, size_t length);
-void            M_ExtractFileBase(char* dest, const char* path, size_t len);
-void            M_ExtractFileBase2(char* dest, const char* path, size_t len,
-                                   int ignore);
-char*           M_FindFileExtension(char* path);
-void            M_ReplaceFileExt(char* path, const char* newext,
-                                 size_t len);
-boolean         M_CheckPath(const char* path);
-int             M_FileExists(const char* file);
-void            M_TranslatePath(char* translated, const char* path,
-                                size_t len);
-void            M_PrependBasePath(char* newpath, const char* path,
-                                  size_t len);
-void            M_RemoveBasePath(char* newPath, const char* absPath,
-                                 size_t len);
-const char*     M_PrettyPath(const char* path);
-void            M_ReadLine(char* buffer, size_t len, DFILE* file);
+size_t M_ReadFile(char const* name, byte** buffer);
+size_t M_ReadFileCLib(char const* name, byte** buffer);
+boolean M_WriteFile(char const* name, void* source, size_t length);
+
+void M_ExtractFileBase(char* dest, const char* path, size_t len);
+void M_ExtractFileBase2(char* dest, const char* path, size_t len, int ignore);
+char* M_FindFileExtension(char* path);
+void M_ReplaceFileExt(char* path, const char* newext, size_t len);
+boolean M_CheckPath(const char* path);
+int M_FileExists(const char* file);
+
+void M_TranslatePath(char* translated, const char* path, size_t len);
+void M_PrependBasePath(char* newpath, const char* path, size_t len);
+void M_RemoveBasePath(char* newPath, const char* absPath, size_t len);
 
 /**
- * Prints the passed path list to the console.
+ * @return              A 'prettier' copy of the original path.
  */
-void M_PrintPathList2(const char* pathList, boolean makePretty);
-void M_PrintPathList(const char* pathList);
+const char* M_PrettyPath(const char* path);
+
+/**
+ * Removes references to the current (.) and parent (..) directories.
+ * The given path should be an absolute path.
+ */
+void M_ResolvePath(char* path);
 
 // Bounding boxes.
 void            M_ClearBox(fixed_t* box);
@@ -81,6 +81,8 @@ char*           M_FindWhite(char* str);
 char*           M_SkipLine(char* str);
 void            M_WriteCommented(FILE* file, const char* text);
 void            M_WriteTextEsc(FILE* file, const char* text);
+void            M_ReadLine(char* buffer, size_t len, DFILE* file);
+
 boolean         M_IsComment(const char* text);
 boolean         M_IsStringValidInt(const char* str);
 boolean         M_IsStringValidByte(const char* str);

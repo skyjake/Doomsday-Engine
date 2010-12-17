@@ -100,7 +100,7 @@ static void printPathHash(resourcenamespace_t* rn)
         {
             Str_Clear(&path);
             FileDirectoryNode_ComposePath((filedirectory_node_t*)node->data, &path);
-            Con_Printf("  %lu: %lu:\"%s\" > %s\n", (unsigned long)n, i, node->name, Str_Text(&path));
+            Con_Printf("  %lu: %lu:\"%s\" -> %s\n", (unsigned long)n, i, node->name, Str_Text(&path));
             ++n;
             node = node->next;
         }
@@ -263,7 +263,7 @@ static void rebuild(resourcenamespace_t* rn)
 
             VERBOSE( Con_Message("Rebuilding rnamespace name hash ...\n") );
             startTime = verbose >= 2? Sys_GetRealTime(): 0;
-            FileDirectory_Iterate(rn->_fileDirectory, FT_NORMAL, 0, addFilePathToResourceNamespaceWorker, rn);
+            FileDirectory_Iterate2(rn->_fileDirectory, FT_NORMAL, 0, addFilePathToResourceNamespaceWorker, rn);
 #if _DEBUG
             printPathHash(rn);
 #endif

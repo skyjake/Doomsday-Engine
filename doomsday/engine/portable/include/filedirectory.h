@@ -26,6 +26,7 @@
 #define LIBDENG_FILEDIRECTORY_H
 
 #include "sys_file.h"
+#include "m_string.h"
 
 typedef struct filedirectory_node_s {
     struct filedirectory_node_s* next;
@@ -43,7 +44,7 @@ typedef struct filedirectory_node_s {
  */
 typedef struct filedirectory_s {
     /// Copy of the path list specified at creation time.
-    char* _pathList;
+    ddstring_t _pathList;
 
     /// @c true if the record set has been built.
     boolean _builtRecordSet;
@@ -57,6 +58,25 @@ filedirectory_t* FileDirectory_Create(const char* pathList);
 void FileDirectory_Destroy(filedirectory_t* fileDirectory);
 
 /**
+ * Clear the directory contents.
+ */
+void FileDirectory_Clear(filedirectory_t* fileDirectory);
+
+/**
+ * Find a path in the directory.
+ *
+ * \note Poor performance: O(n)
+ * \todo Implement a special-case name search algorithm to improve performance.
+ *
+ * @param searchPath        Relative or absolute path.
+ * @param foundPath         If not @c NULL, the relative path is written back here if found.
+ *
+ * @return                  @c true, iff successful.
+ */
+boolean FileDirectory_Find2(filedirectory_t* fileDirectory, const char* searchPath, ddstring_t* foundPath);
+boolean FileDirectory_Find(filedirectory_t* fileDirectory, const char* searchPath);
+
+/**
  * Iterate over nodes in the directory making a callback for each.
  * Iteration ends when all nodes have been visited or a callback returns non-zero.
  *
@@ -68,24 +88,10 @@ void FileDirectory_Destroy(filedirectory_t* fileDirectory);
  *
  * @return                  @c 0 iff iteration completed wholly.
  */
-int FileDirectory_Iterate(filedirectory_t* fileDirectory, filetype_t type, struct filedirectory_node_s* parent,
-    int (*callback) (const struct filedirectory_node_s* node, void* paramaters), void* paramaters);
-
-/**
- * Clear the directory and destroy it.
- */
-void FileDirectory_Clear(filedirectory_t* fileDirectory);
-
-/**
- * Find a relative file path in the directory.
- *
- * @param searchPath        Relative or absolute path.
- * @param foundPath         If not @c NULL, the relative path is written back here if found.
- *
- * @return                  @c true, iff successful.
- */
-boolean FileDirectory_Find2(filedirectory_t* fileDirectory, const char* searchPath, ddstring_t* foundPath);
-boolean FileDirectory_Find(filedirectory_t* fileDirectory, const char* searchPath);
+int FileDirectory_Iterate2(filedirectory_t* fileDirectory, filetype_t type, filedirectory_node_t* parent,
+    int (*callback) (const filedirectory_node_t* node, void* paramaters), void* paramaters);
+int FileDirectory_Iterate(filedirectory_t* fileDirectory, filetype_t type, filedirectory_node_t* parent,
+    int (*callback) (const filedirectory_node_t* node, void* paramaters));
 
 /**
  * @param name          A relative path.

@@ -572,88 +572,114 @@ static void loadGameResources(gameinfo_t* info, resourceclass_t rclass, const ch
     }
 }
 
-static void printGameInfo(gameinfo_t* info)
+/*static*/ void printGameResourceRecord(gameresource_record_t* rec, boolean printStatus)
+{
+    assert(rec);
+    if(printStatus)
+        Con_Printf("%s", Str_Length(&rec->path) == 0? " ! ":"   ");
+    Con_PrintPathList3(Str_Text(&rec->names), " or ", PPF_TRANSFORM_PATH_MAKEPRETTY);
+    if(printStatus)
+        Con_Printf(" %s%s", Str_Length(&rec->path) == 0? "- missing" : "- found ", Str_Length(&rec->path) == 0? "" : M_PrettyPath(Str_Text(&rec->path)));
+    Con_Printf("\n");
+}
+
+/**
+ * Print a game mode banner with rulers.
+ * \todo dj: This has been moved here so that strings like the game
+ * title and author can be overridden (e.g., via DEHACKED). Make it so!
+ */
+void printGameInfoBanner(gameinfo_t* info)
+{
+    assert(info);
+    Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER, "%s", Str_Text(GameInfo_Title(info))); Con_FPrintf(CBLF_WHITE | CBLF_CENTER, "\n");
+    Con_FPrintf(CBLF_RULER, "");
+}
+
+/*static*/ void printGameInfoResources(gameinfo_t* info, boolean printStatus, int rflags)
+{
+    assert(info);
+    { uint i; size_t n = 0;
+    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
+    {
+        gameresource_record_t* const* records;
+        if((records = GameInfo_Resources(info, (resourceclass_t)i, 0)))
+        {
+            do
+            {
+                if((*records)->rflags == rflags)
+                {
+                    printGameResourceRecord(*records, printStatus);
+                    n++;
+                }
+            } while(*(++records));
+        }
+    }
+    if(n == 0)
+        Con_Printf(" None\n");
+    }
+}
+
+/*static*/ void printGameInfo(gameinfo_t* info, boolean printBanner, boolean printStartupResources, boolean printOtherResources, boolean printStatus)
 {
     assert(info);
 
-    Con_Printf("Game: %s - %s\n", Str_Text(GameInfo_Title(info)), Str_Text(GameInfo_Author(info)));
 #if _DEBUG
-    Con_Printf("Meta: pluginid:%i identitykey:\"%s\" data:\"%s\" defs:\"%s\"\n", (int)GameInfo_PluginId(info), Str_Text(GameInfo_IdentityKey(info)), M_PrettyPath(Str_Text(GameInfo_DataPath(info))), M_PrettyPath(Str_Text(GameInfo_DefsPath(info))));
+    Con_Printf("pluginid:%i data:\"%s\" defs:\"%s\"\n", (int)GameInfo_PluginId(info),
+               M_PrettyPath(Str_Text(GameInfo_DataPath(info))),
+               M_PrettyPath(Str_Text(GameInfo_DefsPath(info))));
 #endif
 
-    // First output a list of startup resources.
-    Con_Printf("Startup resources:");
-    { uint i; size_t n = 0;
-    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
+    if(printBanner)
+        printGameInfoBanner(info);
+
+    if(!printBanner)
+        Con_Printf("Game: %s - ", Str_Text(GameInfo_Title(info)));
+    else
+        Con_Printf("Author: ");
+    Con_Printf("%s\n", Str_Text(GameInfo_Author(info)));
+    Con_Printf("IdentityKey: %s\n", Str_Text(GameInfo_IdentityKey(info)));
+
+    if(printStartupResources)
     {
-        gameresource_record_t* const* records;
-        if((records = GameInfo_Resources(info, (resourceclass_t)i, 0)))
-        {
-            do
-            {
-                if((*records)->rflags & RF_STARTUP)
-                {
-                    if(n == 0)
-                        Con_Printf("\n");
-                    Con_Printf(" %s \"%s\" %s%s\n", Str_Length(&(*records)->path) == 0? "!":" ", Str_Text(&(*records)->names), Str_Length(&(*records)->path) == 0? "- missing" : "> ", Str_Length(&(*records)->path) == 0? "" : M_PrettyPath(Str_Text(&(*records)->path)));
-                    n++;
-                }
-            } while(*(++records));
-        }
-    }
-    if(n == 0)
-        Con_Printf(" None\n");
+        Con_Printf("Startup resources:\n");
+        printGameInfoResources(info, printStatus, RF_STARTUP);
     }
 
-    // Now output the rest of the known resources.
-    Con_Printf("Other resources:");
-    { uint i; size_t n = 0;
-    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
+    if(printOtherResources)
     {
-        gameresource_record_t* const* records;
-        if((records = GameInfo_Resources(info, (resourceclass_t)i, 0)))
-        {
-            do
-            {
-                if(!((*records)->rflags & RF_STARTUP))
-                {
-                    if(n == 0)
-                        Con_Printf("\n");
-                    Con_Printf("   \"%s\" %s%s\n", Str_Text(&(*records)->names), Str_Length(&(*records)->path) == 0? "" : "> ", Str_Length(&(*records)->path) == 0? "" : M_PrettyPath(Str_Text(&(*records)->path)));
-                    n++;
-                }
-            } while(*(++records));
-        }
+        Con_Printf("Other resources:\n");
+        /*@todo dj: we need a resource flag for "located"*/
+        Con_Printf("   ");
+        printGameInfoResources(info, /*printStatus*/false, 0);
     }
-    if(n == 0)
-        Con_Printf(" None\n");
-    }
-    Con_Printf("Status: %s\n", DD_GameInfo() == info? "Loaded" : allGameResourcesFound(info)? "Complete/Playable" : "Incomplete/Not playable");
+
+    if(printStatus)
+        Con_Printf("Status: %s\n",       DD_GameInfo() == info? "Loaded" :
+                                   allGameResourcesFound(info)? "Complete/Playable" :
+                                                                "Incomplete/Not playable");
 }
 
 /**
  * (f_forall_func_t)
  */
-static int autoDataAdder(const char* fileName, filetype_t type, void* ptr)
+static int autoDataAdder(const ddstring_t* fileName, filetype_t type, void* paramaters)
 {
-    autoload_t* data = ptr;
-
-    // Skip directories.
-    if(type == FT_DIRECTORY)
-        return true;
-
-    if(data->loadFiles)
+    assert(fileName && paramaters);
+    // We are only interested in files.
+    if(type == FT_NORMAL)
     {
-        if(W_AddFile(fileName, false))
-            ++data->count;
+        autoload_t* data = (autoload_t*)paramaters;
+        if(data->loadFiles)
+        {
+            if(W_AddFile(Str_Text(fileName), false))
+                ++data->count;
+        }
+        else
+        {
+            addToPathList(&gameResourceFileList, &numGameResourceFileList, Str_Text(fileName));
+        }
     }
-    else
-    {
-        addToPathList(&gameResourceFileList, &numGameResourceFileList, fileName);
-    }
-
-    // Continue searching.
-    return true;
+    return 0; // Continue searching.
 }
 
 /**
@@ -664,8 +690,7 @@ static int autoDataAdder(const char* fileName, filetype_t type, void* ptr)
  */
 static int addFilesFromAutoData(boolean loadFiles)
 {
-    autoload_t data;
-    const char* extensions[] = {
+    static const char* extensions[] = {
         "wad", "lmp", "pk3", "zip", "deh",
 #ifdef UNIX
         "WAD", "LMP", "PK3", "ZIP", "DEH", // upper case alternatives
@@ -673,19 +698,20 @@ static int addFilesFromAutoData(boolean loadFiles)
         0
     };
 
+    ddstring_t pattern;
+    autoload_t data;
     data.loadFiles = loadFiles;
     data.count = 0;
 
+    Str_Init(&pattern);
     { uint i;
     for(i = 0; extensions[i]; ++i)
     {
-        filename_t pattern;
-        dd_snprintf(pattern, FILENAME_T_MAXLEN, "%sauto\\*.%s", Str_Text(GameInfo_DataPath(DD_GameInfo())), extensions[i]);
-
-        Dir_FixSlashes(pattern, FILENAME_T_MAXLEN);
-        F_ForAll(pattern, &data, autoDataAdder);
+        Str_Clear(&pattern);
+        Str_Appendf(&pattern, "%sauto"DIR_SEP_STR"*.%s", Str_Text(GameInfo_DataPath(DD_GameInfo())), extensions[i]);
+        F_ForAll2(&pattern, autoDataAdder, (void*)&data);
     }}
-
+    Str_Free(&pattern);
     return data.count;
 }
 
@@ -897,15 +923,19 @@ boolean DD_ChangeGame(gameinfo_t* info)
 
     // Ignore attempts to re-load the current game.
     if(DD_GameInfo() == info)
-        return false;
+    {
+        if(!DD_IsNullGameInfo(DD_GameInfo()))
+            Con_Message("%s (%s) - already loaded.\n", Str_Text(GameInfo_Title(info)), Str_Text(GameInfo_IdentityKey(info)));
+        return true;
+    }
 
     if(!DD_IsNullGameInfo(DD_GameInfo()))
     {
-        Con_Message("DD_ChangeGame: Runtime game change not yet implemented.\n");
+        Con_Message("Runtime game change not yet implemented.\n");
         return false;
     }
 
-    Con_Message("DD_ChangeGame: Selecting \"%s\".\n", Str_Text(GameInfo_IdentityKey(info)));
+    VERBOSE( Con_Message("DD_ChangeGame: Selecting \"%s\".\n", Str_Text(GameInfo_IdentityKey(info))) );
     if(!exchangeEntryPoints(GameInfo_PluginId(info)))
     {
         Con_Message("DD_ChangeGame: Warning, error exchanging entrypoints with plugin %i - aborting.\n", (int)GameInfo_PluginId(info));
@@ -931,13 +961,7 @@ boolean DD_ChangeGame(gameinfo_t* info)
     Con_InitProgress(200);
     Con_Busy(BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0), "Changing game...", DD_ChangeGameWorker, info);
 
-    /**
-     * Print a game mode banner with rulers.
-     * \todo dj: This has been deferred here so that strings like the game
-     * title and author can be overridden (e.g., via DEHACKED). Make it so!
-     */
-    Con_FPrintf(CBLF_RULER | CBLF_WHITE | CBLF_CENTER, "%s", Str_Text(GameInfo_Title(info))); Con_FPrintf(CBLF_WHITE | CBLF_CENTER, "\n");
-    Con_FPrintf(CBLF_RULER, "");
+    printGameInfoBanner(info);
 
     return true;
 }
@@ -954,7 +978,7 @@ static void DD_AutoLoad(void)
     { int numNewFiles;
     while((numNewFiles = addFilesFromAutoData(true)) > 0)
     {
-        VERBOSE(Con_Message("Autoload round completed with %i new files.\n", numNewFiles));
+        VERBOSE( Con_Message("Autoload round completed with %i new files.\n", numNewFiles) );
     }}
 }
 
@@ -1170,8 +1194,9 @@ int DD_Main(void)
         gameinfo_t* info = gameInfo[i];
         if(DD_IsNullGameInfo(info))
             continue;
+        VERBOSE( Con_Printf("Locating resources for \"%s\" ...\n", Str_Text(GameInfo_Title(info))) );
         locateGameResources(info);
-        VERBOSE2( Con_Executef(CMDS_DDAY, false, "printinfo %s", Str_Text(GameInfo_IdentityKey(info))) );
+        VERBOSE( printGameInfo(info, false, true, false, true) );
     }}
 
     // Attempt automatic game selection.
@@ -1943,7 +1968,7 @@ D_CMD(Load)
     { gameinfo_t* info;
     if(argc == 2 && (info = findGameInfoForIdentityKey(argv[1])))
         return DD_ChangeGame(info);}
-
+    /// \todo dj: Use the resource locator.
     return W_AddFiles(argv + 1, argc - 1, true);
 }
 
@@ -1958,6 +1983,7 @@ D_CMD(Unload)
         }
         return DD_ChangeGame(findGameInfoForIdentityKey("null-game"));
     }
+    /// \todo dj: Use the resource locator.
     return W_RemoveFiles(argv + 1, argc - 1);
 }
 
@@ -1966,7 +1992,7 @@ D_CMD(PrintInfo)
     { gameinfo_t* info;
     if((info = findGameInfoForIdentityKey(argv[1])))
     {
-        printGameInfo(info);
+        printGameInfo(info, true, true, true, true);
         return true;
     }}
     Con_Message("There is no extended info for \"%s\".\n", argv[1]);

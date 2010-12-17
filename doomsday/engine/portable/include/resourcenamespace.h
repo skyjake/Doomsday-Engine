@@ -59,8 +59,10 @@ typedef resourcenamespace_hashentry_t resourcenamespace_namehash_t[RESOURCENAMES
  *
  * @ingroup core
  */
+#define RESOURCENAMESPACE_MINNAMELENGTH 2
 typedef struct resourcenamespace_s {
     /// Unique symbolic name of this namespace (e.g., "Models").
+    /// Must be at least @c RESOURCENAMESPACE_MINNAMELENGTH characters long.
     const char* _name;
 
     /// @see ResourceNamespaceFlags

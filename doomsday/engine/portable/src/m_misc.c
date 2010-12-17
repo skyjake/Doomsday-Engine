@@ -218,28 +218,6 @@ void M_ReadLine(char* buffer, size_t len, DFILE *file)
     }
 }
 
-void M_PrintPathList2(const char* pathList, boolean makePretty)
-{
-    assert(pathList && pathList[0]);
-    {
-    const char* p = pathList;
-    ddstring_t path;
-    int n = 0;
-
-    Str_Init(&path);   
-    while((p = Str_CopyDelim(&path, p, ';')))
-    {
-        Con_Message("  %i: \"%s\"\n", n++, makePretty? M_PrettyPath(Str_Text(&path)) : Str_Text(&path));
-    }
-    Str_Free(&path);
-    }
-}
-
-void M_PrintPathList(const char* pathList)
-{
-    M_PrintPathList2(pathList, true);
-}
-
 boolean M_IsComment(const char* buffer)
 {
     int                 i = 0;
@@ -1124,8 +1102,8 @@ char* M_FindFileExtension(char* path)
 {
     if(path && path[0])
     {
-        size_t              len = strlen(path);
-        char*               p = NULL;
+        size_t len = strlen(path);
+        char* p = NULL;
 
         p = path + len - 1;
         if(p - path > 1 && *p != DIR_SEP_CHAR && *p != DIR_WRONG_SEP_CHAR)
@@ -1140,7 +1118,6 @@ char* M_FindFileExtension(char* path)
             } while(--p > path);
         }
     }
-
     return NULL; // Not found.
 }
 
@@ -1149,7 +1126,7 @@ char* M_FindFileExtension(char* path)
  */
 void M_ReplaceFileExt(char* path, const char* newext, size_t len)
 {
-    char*               ptr = M_FindFileExtension(path);
+    char* ptr = M_FindFileExtension(path);
 
     if(!ptr)
     {
@@ -1162,9 +1139,6 @@ void M_ReplaceFileExt(char* path, const char* newext, size_t len)
     }
 }
 
-/**
- * Return a prettier copy of the original path.
- */
 const char* M_PrettyPath(const char* path)
 {
 #define NUM_BUFS            8
@@ -1188,6 +1162,38 @@ const char* M_PrettyPath(const char* path)
     return path; // We don't know how to make this prettier.
 
 #undef NUM_BUFS
+}
+
+void M_ResolvePath(char* path)
+{
+    assert(path);
+    {
+    char* ch = path;
+    char* end = path + strlen(path);
+    char* prev = path; // Assume an absolute path.
+
+    for(; *ch; ch++)
+    {
+        if(ch[0] == '/' && ch[1] == '.')
+        {
+            if(ch[2] == '/')
+            {
+                memmove(ch, ch + 2, end - ch - 1);
+                ch--;
+            }
+            else if(ch[2] == '.' && ch[3] == '/')
+            {
+                memmove(prev, ch + 3, end - ch - 2);
+                // Must restart from the beginning.
+                // This is a tad inefficient, though.
+                ch = path - 1;
+                continue;
+            }
+        }
+        if(*ch == '/')
+            prev = ch;
+    }
+    }
 }
 
 /**

@@ -598,7 +598,7 @@ boolean W_AddFile(const char* fileName, boolean allowDuplicate)
     }
 
     // Do not read files twice.
-    if(!allowDuplicate && !F_CheckFileID(fileName))
+    if(!allowDuplicate && !F_CheckFileId(fileName))
     {
         F_Close(handle); // The file is not used.
         return false;
@@ -1341,23 +1341,53 @@ D_CMD(Dump)
 }
 
 /**
+ * Prints a file name to the console.
+ * This is a f_forall_func_t.
+ */
+int printFileName(const ddstring_t* fileName, filetype_t type, void* paramaters)
+{
+    assert(fileName && VALID_FILE_TYPE(type) && paramaters);
+    {
+    const ddstring_t* dir = (const ddstring_t*) paramaters;
+    boolean makePretty = F_IsRelativeToBasePath(fileName);
+    Con_Printf("  %s\n", makePretty? Str_Text(F_PrettyPath(fileName)) : Str_Text(fileName));
+    return 0; // Continue the listing.
+    }
+}
+
+/**
  * Print contents of directories as Doomsday sees them.
  */
 D_CMD(Dir)
 {
-    filename_t dir, pattern;
-    int i;
+    ddstring_t dir, pattern;
+
+    Str_Init(&dir);
+    Str_Init(&pattern);
+
+    { int i;
     for(i = 1; i < argc; ++i)
     {
-        M_PrependBasePath(dir, argv[i], FILENAME_T_MAXLEN);
-        Dir_ValidDir(dir, FILENAME_T_MAXLEN);
-        Dir_MakeAbsolute(dir, FILENAME_T_MAXLEN);
-        Con_Printf("Directory: %s\n", dir);
+        Str_Set(&dir, argv[i]);
+        Str_Strip(&dir);
+        Dir_FixSlashes(Str_Text(&dir), Str_Length(&dir));
+        // Make sure it ends in a directory separator character.
+        if(Str_RAt(&dir, 0) != DIR_SEP_CHAR)
+            Str_AppendChar(&dir, DIR_SEP_CHAR);
+
+        if(!F_ExpandBasePath(&dir, &dir))
+            F_PrependBasePath(&dir, &dir);
+
+        Con_Printf("Directory: %s\n", Str_Text(&dir));
 
         // Make the pattern.
-        dd_snprintf(pattern, FILENAME_T_MAXLEN, "%s*", dir);
-        F_ForAll(pattern, dir, Con_PrintFileName);
-    }
+        Str_Copy(&pattern, &dir);
+        Str_AppendChar(&pattern, '*');
+        F_ForAll2(&pattern, printFileName, &dir);
+    }}
+
+    Str_Free(&dir);
+    Str_Free(&pattern);
     return true;
 }
 

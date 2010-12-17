@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,12 +22,12 @@
  * Boston, MA  02110-1301  USA
  */
 
-/*
- * con_main.h: Console Subsystem
+/**
+ * Console Subsystem.
  */
 
-#ifndef __DOOMSDAY_CONSOLE_MAIN_H__
-#define __DOOMSDAY_CONSOLE_MAIN_H__
+#ifndef LIBDENG_CONSOLE_MAIN_H
+#define LIBDENG_CONSOLE_MAIN_H
 
 #include <stdio.h>
 #include "dd_share.h"
@@ -134,7 +134,28 @@ void            Con_Ticker(timespan_t time);
 boolean         Con_Responder(ddevent_t *event);
 void            Con_Printf(const char *format, ...) PRINTF_F(1,2);
 void            Con_FPrintf(int flags, const char *format, ...) PRINTF_F(2,3);    // Flagged printf.
-int             Con_PrintFileName(const char *fn, filetype_t type, void *dir);
+
+/**
+ * @defgroup printPathFlags Print Path Flags
+ */
+/*{@*/
+#define PPF_MULTILINE           0x1 // Use multiple lines.
+#define PPF_TRANSFORM_PATH_MAKEPRETTY 0x2 // Make paths 'prettier'.
+#define PPF_TRANSFORM_PATH_PRINTINDEX 0x4 // Print an index for each path.
+/*}@*/
+
+/**
+ * Prints the passed path list to the console.
+ *
+ * \todo treat paths as URIs (i.e., resolve symbols).
+ *
+ * @param pathList      A series of textual file/resource names/paths separated by semicolons.
+ * @param flags         @see printPathFlags.
+ */
+void Con_PrintPathList3(const char* pathList, const char* seperator, byte flags);
+void Con_PrintPathList2(const char* pathList, const char* seperator);
+void Con_PrintPathList(const char* pathList);
+
 void            Con_SetFont(ddfont_t *cfont);
 float           Con_FontScaleY(void);
 cbline_t       *Con_GetBufferLine(cbuffer_t *buffer, int num);
@@ -147,4 +168,4 @@ void            Con_Error(const char *error, ...) PRINTF_F(1,2);
 
 char           *TrimmedFloat(float val);
 
-#endif
+#endif /* LIBDENG_CONSOLE_MAIN_H */

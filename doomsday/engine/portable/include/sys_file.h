@@ -23,15 +23,16 @@
  */
 
 /**
- * sys_file.h: File Stream Abstraction Layer
+ * File Stream Abstraction Layer
  *
  * Data can be read from memory, virtual files or actual files.
  */
 
-#ifndef LIBDENG_FILE_IO_H
-#define LIBDENG_FILE_IO_H
+#ifndef LIBDENG_FILESYS_FILE_IO_H
+#define LIBDENG_FILESYS_FILE_IO_H
 
 #include <stdio.h>
+#include "m_string.h"
 
 #define deof(file) ((file)->flags.eof != 0)
 
@@ -55,15 +56,6 @@ typedef enum filetype_e {
 
 #define VALID_FILE_TYPE(t)          ((t) == FT_NORMAL || (t) == FT_DIRECTORY)
 
-typedef int     (*f_forall_func_t) (const char* fn, filetype_t type, void* parm);
-
-void F_ResetFileIDs(void);
-boolean F_CheckFileID(const char* path);
-
-void F_InitMapping(void);
-void F_AddMapping(const char* source, const char* destination);
-void F_InitDirec(void);
-void F_ShutdownDirec(void);
 int F_Access(const char* path);
 DFILE* F_Open(const char* path, const char* mode);
 void F_Close(DFILE* file);
@@ -73,7 +65,34 @@ unsigned char F_GetC(DFILE* file);
 size_t F_Tell(DFILE* file);
 size_t F_Seek(DFILE* file, size_t offset, int whence);
 void F_Rewind(DFILE* file);
-int F_ForAll(const char* filespec, void* parm, f_forall_func_t func);
 unsigned int F_LastModified(const char* fileName);
 
-#endif
+void F_ResetFileIDs(void);
+boolean F_CheckFileId(const char* path);
+
+void F_InitMapping(void);
+
+/**
+ * The path names are converted to full paths before adding to the table.
+ * Files in the source directory are mapped to the target directory.
+ */
+void F_AddMapping(const char* source, const char* destination);
+
+/**
+ * Initialize the lump directory > vfs translations.
+ * \note Should be called after WADs have been processed.
+ */
+void F_InitDirec(void);
+
+void F_ShutdownDirec(void);
+
+/**
+ * Parm is passed on to the callback, which is called for each file
+ * matching the filespec. Absolute path names are given to the callback.
+ * Zip directory, DD_DIREC and the real files are scanned.
+ */
+typedef int     (*f_forall_func_t) (const ddstring_t* fn, filetype_t type, void* paramaters);
+int F_ForAll2(const ddstring_t* fileSpec, f_forall_func_t callback, void* paramaters);
+int F_ForAll(const ddstring_t* fileSpec, f_forall_func_t callback);
+
+#endif /* LIBDENG_FILESYS_FILE_IO_H */

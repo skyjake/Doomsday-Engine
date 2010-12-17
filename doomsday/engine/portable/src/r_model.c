@@ -1018,6 +1018,8 @@ static void setupModel(ded_model_t *def)
 
         sub->alpha = (byte) (subdef->alpha * 255);
 
+        //sub->shinySkin = R_RegisterSkin(subdef->filename.path, subdef->shinySkin, NULL, true, DED_PATH_LEN);
+
         { ddstring_t foundPath; Str_Init(&foundPath);
         sub->shinySkin = R_RegisterSkin(&foundPath, subdef->shinySkin, NULL, true);
         if(sub->shinySkin != 0)
@@ -1028,6 +1030,7 @@ static void setupModel(ded_model_t *def)
         }
         Str_Free(&foundPath);
         }
+
         // Should we allow texture compression with this model?
         if(sub->flags & MFF_NO_TEXCOMP)
         {

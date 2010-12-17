@@ -84,7 +84,7 @@ uint F_NumResourceNamespaces(void);
 /**
  * @return              @c true iff the value can be interpreted as a valid resource namespace id.
  */
-boolean F_IsValidResourceNamespaceId(int val);
+boolean F_IsValidResourceNamespaceId(int value);
 
 /**
  * Given an id return the associated resource namespace object.
@@ -153,17 +153,50 @@ resourcetype_t F_GuessResourceTypeByName(const char* name);
 boolean F_ApplyPathMapping(ddstring_t* path);
 
 /**
- * @return                      @c false if the resource uri cannot be fully resolved
- *                              (e.g., due to incomplete symbol definitions).
+ * @return              @c false if the resource uri cannot be fully resolved
+ *                      (e.g., due to incomplete symbol definitions).
  */
 boolean F_ResolveURI(ddstring_t* translatedPath, const ddstring_t* uri);
 
 // Utility routines:
 
+typedef struct directory2_s {
+    int drive;
+    ddstring_t path;
+} directory2_t;
+
+void F_FileDir(const ddstring_t* str, directory2_t* dir);
+
 /**
- * Convert a resourceclass_t constant into a string for error/debug messages.
+ * Convert the symbolic path into a real path.
+ * \todo dj: This seems rather redundant; refactor callers.
  */
-const char* F_ResourceClassStr(resourceclass_t rclass);
+void F_ResolveSymbolicPath(ddstring_t* dest, const ddstring_t* src);
+
+/**
+ * @return              @c true iff the path can be made into a relative path. 
+ */
+boolean F_IsRelativeToBasePath(const ddstring_t* path);
+
+/**
+ * Attempt to remove the base path if found at the beginning of the path.
+ *
+ * @param src           Possibly absolute path.
+ * @param dest          Potential base-relative path written here.
+ *
+ * @return              @c true iff the base path was found and removed.
+ */
+boolean F_RemoveBasePath(ddstring_t* dest, const ddstring_t* src);
+
+/**
+ * Attempt to prepend the base path. If @a src is already absolute do nothing.
+ *
+ * @param dest          Expanded path written here.
+ * @param src           Original path.
+ *
+ * @return              @c true iff the path was expanded.
+ */
+boolean F_PrependBasePath(ddstring_t* dest, const ddstring_t* src);
 
 /**
  * Expands relative path directives like '>'.
@@ -182,13 +215,13 @@ const char* F_ResourceClassStr(resourceclass_t rclass);
 boolean F_ExpandBasePath(ddstring_t* dest, const ddstring_t* src);
 
 /**
- * Attempt to prepend the base path. If @a src is already absolute this is a null-op.
- *
- * @param dest          Expanded path written here.
- * @param src           Original path.
- *
- * @return              @c true iff the path was expanded.
+ * @return              A prettier copy of the original path.
  */
-boolean F_PrependBasePath(ddstring_t* dest, const ddstring_t* src);
+const ddstring_t* F_PrettyPath(const ddstring_t* path);
+
+/**
+ * Convert a resourceclass_t constant into a string for error/debug messages.
+ */
+const char* F_ResourceClassStr(resourceclass_t rclass);
 
 #endif /* LIBDENG_SYSTEM_RESOURCE_LOCATOR_H */

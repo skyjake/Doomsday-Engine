@@ -611,7 +611,7 @@ int Def_ReadDEDFile(const char* fn, filetype_t type, void* parm)
 
     if(F_Access(fn))
     {
-        if(F_CheckFileID(fn))
+        if(F_CheckFileId(fn))
         {
             if(!DED_Read(&defs, fn))
                 Con_Error("Def_ReadDEDFile: %s\n", dedReadError);
@@ -696,7 +696,7 @@ int Def_StateForMobj(const char* state)
 
 int Def_GetIntValue(char* val, int* returned_val)
 {
-    char               *data;
+    char* data;
 
     // First look for a DED Value
     if(Def_Get(DD_DEF_VALUE, val, &data))
@@ -720,12 +720,12 @@ static __inline void readDefinitionFile(const char* fileName)
 /**
  * (f_forall_func_t)
  */
-static int autoDefsReader(const char* fileName, filetype_t type, void* ptr)
+static int autoDefsReader(const ddstring_t* fileName, filetype_t type, void* paramaters)
 {
     // Ignore directories.
     if(type != FT_DIRECTORY)
-        readDefinitionFile(fileName);
-    return true; // Continue searching.
+        readDefinitionFile(Str_Text(fileName));
+    return 0; // Continue searching.
 }
 
 static void readAllDefinitions(void)
@@ -764,10 +764,11 @@ static void readAllDefinitions(void)
     // Next up are definition files in the /auto directory.
     if(!ArgExists("-noauto"))
     {
-        filename_t pattern;
-        dd_snprintf(pattern, FILENAME_T_MAXLEN, "%sauto\\*.ded", Str_Text(GameInfo_DefsPath(DD_GameInfo())));
-        Dir_FixSlashes(pattern, FILENAME_T_MAXLEN);
-        F_ForAll(pattern, 0, autoDefsReader);
+        ddstring_t pattern;
+        Str_Init(&pattern);
+        Str_Appendf(&pattern, "%sauto\\*.ded", Str_Text(GameInfo_DefsPath(DD_GameInfo())));
+        F_ForAll(&pattern, autoDefsReader);
+        Str_Free(&pattern);
     }
 
     // Any definition files on the command line?

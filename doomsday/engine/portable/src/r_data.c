@@ -1802,11 +1802,10 @@ void R_InitFlats(void)
 
 uint R_CreateSkinTex(const char* skin, boolean isShinySkin)
 {
-    int                 id;
-    skinname_t*         st;
-    char                realPath[256];
-    char                name[9];
-    const gltexture_t*  glTex;
+    char realPath[256], name[9];
+    const gltexture_t* glTex;
+    skinname_t* st;
+    int id;
 
     if(!skin[0])
         return 0;
@@ -1834,8 +1833,7 @@ Con_Message("R_GetSkinTex: Too many model skins!\n");
     // Create a gltexture for it.
     dd_snprintf(name, 9, "%-*i", 8, numSkinNames + 1);
 
-    glTex = GL_CreateGLTexture(name, numSkinNames,
-        (isShinySkin? GLT_MODELSHINYSKIN : GLT_MODELSKIN));
+    glTex = GL_CreateGLTexture(name, numSkinNames, (isShinySkin? GLT_MODELSHINYSKIN : GLT_MODELSKIN));
 
     skinNames = M_Realloc(skinNames, sizeof(skinname_t) * ++numSkinNames);
     st = skinNames + (numSkinNames - 1);
@@ -1845,27 +1843,29 @@ Con_Message("R_GetSkinTex: Too many model skins!\n");
 
     if(verbose)
     {
-        Con_Message("SkinTex: %s => %li\n", M_PrettyPath(skin),
-                    (long) (1 + (st - skinNames)));
+        Con_Message("SkinTex: %s => %li\n", M_PrettyPath(skin), (long) (1 + (st - skinNames)));
     }
     return 1 + (st - skinNames); // 1-based index.
 }
 
 static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const char* modelfn)
 {
-    assert(foundPath && skin && skin[0] && modelfn && modelfn[0]);
+    assert(foundPath && skin && skin[0]);
     {
+    boolean found = false;
     ddstring_t searchPath;
-    directory_t mydir;
-    boolean found;
-
-    // The "first choice" directory is that in which the model file resides.
-    memset(&mydir, 0, sizeof(mydir));
-    Dir_FileDir(modelfn, &mydir);
+    Str_Init(&searchPath);
 
     // Try the "first choice" directory first.
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "%s%s", mydir.path, skin);
-    found = F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), foundPath);
+    if(modelfn)
+    {
+        // The "first choice" directory is that in which the model file resides.
+        directory_t mydir;
+        memset(&mydir, 0, sizeof(mydir));
+        Dir_FileDir(modelfn, &mydir);
+        Str_Appendf(&searchPath, "Models:%s%s", mydir.path, skin);
+        found = F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), foundPath);
+    }
 
     if(!found)
     {   // Try the resource locator.
@@ -1883,18 +1883,19 @@ static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const cha
  */
 uint R_RegisterSkin(ddstring_t* foundPath, const char* skin, const char* modelfn, boolean isShinySkin)
 {
-    assert(skin && skin[0]);
+    if(skin && skin[0])
     {
-    uint result = 0;
-    ddstring_t buf;
-    if(!foundPath)
-        Str_Init(&buf);
-    if(expandSkinName(foundPath ? foundPath : &buf, skin, modelfn))
-        result = R_CreateSkinTex(foundPath ? Str_Text(foundPath) : Str_Text(&buf), isShinySkin);
-    if(!foundPath)
-        Str_Free(&buf);
-    return result;
+        uint result = 0;
+        ddstring_t buf;
+        if(!foundPath)
+            Str_Init(&buf);
+        if(expandSkinName(foundPath ? foundPath : &buf, skin, modelfn))
+            result = R_CreateSkinTex(foundPath ? Str_Text(foundPath) : Str_Text(&buf), isShinySkin);
+        if(!foundPath)
+            Str_Free(&buf);
+        return result;
     }
+    return 0;
 }
 
 const skinname_t* R_GetSkinNameByIndex(uint id)

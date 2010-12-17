@@ -35,7 +35,8 @@
 
 #include "de_base.h"
 #include "de_console.h"
-#include "de_misc.h"
+#include "m_args.h"
+#include "m_misc.h"
 
 #include "resourcenamespace.h"
 
@@ -368,6 +369,11 @@ static boolean findResource(resourceclass_t rclass, const char* searchPath, cons
     {
     boolean found = false;
 
+#if _DEBUG
+    if(rnamespace)
+        VERBOSE2( Con_Message("Using rnamespace \"%s\" ...\n", ResourceNamespace_Name(rnamespace)) );
+#endif
+
     // First try with the optional suffix.
     if(optionalSuffix)
     {
@@ -407,95 +413,55 @@ static boolean findResource(resourceclass_t rclass, const char* searchPath, cons
     }
 }
 
-static boolean tryLocateResource2(resourceclass_t rclass, resourcenamespace_t* rnamespace,
-    const char* searchPath, const char* optionalSuffix, ddstring_t* foundPath)
-{
-    assert(inited && VALID_RESOURCE_CLASS(rclass) && searchPath && searchPath[0]);
-    {
-    ddstring_t name;
-    boolean found = false;
-
-    // Fix directory seperators early.
-    Str_Init(&name);
-    Str_Set(&name, searchPath);
-    Dir_FixSlashes(Str_Text(&name), Str_Length(&name));
-
-#if _DEBUG
-    if(rnamespace)
-        VERBOSE2( Con_Message("Using rnamespace \"%s\" ...\n", ResourceNamespace_Name(rnamespace)) );
-#endif
-
-    // If this is an absolute path, locate using it.
-    if(Dir_IsAbsolute(Str_Text(&name)))
-    {
-        found = findResource(rclass, Str_Text(&name), optionalSuffix, foundPath, 0);
-    }
-    /*else
-    {   // Else, prepend the base path and try that.
-        ddstring_t fn;
-        const char* path;
-
-        // Make this an absolute, base-relative path.
-        // If only checking the base path and not the expected location
-        // for the resource class (below); re-use the current string.
-        if(rnamespace)
-        {
-            Str_Init(&fn);
-            Str_Copy(&fn, &name);
-            Str_Prepend(&fn, ddBasePath);
-            path = Str_Text(&fn);
-        }
-        else
-        {
-            Str_Prepend(&name, ddBasePath);
-            path = Str_Text(&name);
-        }
-
-        // Try loading using the base path as the starting point.
-        found = findResource(rclass, path, optionalSuffix, foundPath, foundPathLen, 0);
-
-        if(rnamespace)
-            Str_Free(&fn);
-    }*/
-
-    // Try expected location for this resource class.
-    if(!found && rnamespace)
-    {
-        found = findResource(rclass, Str_Text(&name), optionalSuffix, foundPath, rnamespace);
-    }
-
-    Str_Free(&name);
-
-    return found;
-    }
-}
-
-static boolean tryLocateResource(resourceclass_t rclass, const char* searchPath,
+static boolean tryLocateResource(resourceclass_t rclass, const char* _searchPath,
     const char* optionalSuffix, ddstring_t* foundPath)
 {
-    ddstring_t tmp;
-    Str_Init(&tmp);
-
-    // Has a namespace identifier been included?
-    { const char* p;
-    if((p = Str_CopyDelim(&tmp, searchPath, ':')))
+    assert(inited && VALID_RESOURCE_CLASS(rclass) && _searchPath && _searchPath[0]);
     {
-        resourcenamespaceid_t rni;
-        if((rni = F_SafeResourceNamespaceForName(Str_Text(&tmp))) != 0)
-        {
-            boolean result = tryLocateResource2(rclass, getNamespaceForId(rni), p, optionalSuffix, foundPath);
-            Str_Free(&tmp);
-            return result;
-        }
-        else
-        {
-            Con_Message("tryLocateResource: Unknown namespace \"%s\" in searchPath \"%s\", using default for %s.\n", Str_Text(&tmp), searchPath, F_ResourceClassStr(rclass));
-        }
-    }}
-    Str_Free(&tmp);
+    ddstring_t searchPath, name;
+    boolean result = false;
 
-    // Use the default namespace for this resource class.
-    return tryLocateResource2(rclass, getNamespaceForId(F_ResourceNamespaceForName(defaultNamespaceForClass[rclass])), searchPath, optionalSuffix, foundPath);
+    // Fix directory seperators early.
+    Str_Init(&searchPath);
+    Str_Set(&searchPath, _searchPath);
+    Dir_FixSlashes(Str_Text(&searchPath), Str_Length(&searchPath));
+
+    // If this is an absolute path, locate using it.
+    if(Dir_IsAbsolute(Str_Text(&searchPath)))
+    {
+        result = findResource(rclass, Str_Text(&searchPath), optionalSuffix, foundPath, 0);
+    }
+    else
+    {   // Probably a relative path.
+        // Has a namespace identifier been included?
+        Str_Init(&name);
+        { const char* p;
+        if((p = Str_CopyDelim(&name, Str_Text(&searchPath), ':')) &&
+           p - Str_Text(&searchPath) > RESOURCENAMESPACE_MINNAMELENGTH)
+        {
+            resourcenamespaceid_t rni;
+            if((rni = F_SafeResourceNamespaceForName(Str_Text(&name))) != 0)
+            {
+                result = findResource(rclass, p, optionalSuffix, foundPath, getNamespaceForId(rni));
+            }
+            else
+                Con_Message("tryLocateResource: Unknown namespace \"%s\" in "
+                            "searchPath \"%s\", using default for %s.\n", Str_Text(&name),
+                            searchPath, F_ResourceClassStr(rclass));
+        }}
+        Str_Free(&name);
+
+        // Try the default namespace for this resource class?
+        if(!result)
+        {
+            resourcenamespaceid_t rni = F_ResourceNamespaceForName(defaultNamespaceForClass[rclass]);
+            result = findResource(rclass, Str_Text(&searchPath), optionalSuffix, foundPath, getNamespaceForId(rni));
+        }
+    }
+
+    Str_Free(&searchPath);
+    return result;
+    }
 }
 
 void F_InitResourceLocator(void)
@@ -675,6 +641,99 @@ const char* F_ResourceClassStr(resourceclass_t rclass)
     }
 }
 
+void F_FileDir(const ddstring_t* str, directory2_t* dir)
+{
+    assert(str && dir);
+    {
+    filename_t fullPath, pth, drive;
+
+    strncpy(pth, Str_Text(str), FILENAME_T_MAXLEN);
+    _fullpath(fullPath, pth, FILENAME_T_MAXLEN);
+    _splitpath(fullPath, drive, pth, 0, 0);
+
+    Str_Clear(&dir->path);
+    Str_Appendf(&dir->path, "%s%s", drive, pth);
+#ifdef WIN32
+    dir->drive = toupper(Str_At(&dir->path, 0)) - 'A' + 1;
+#else
+    dir->drive = 0;
+#endif
+    }
+}
+
+/// \todo dj: Find a suitable home for this.
+void F_ResolveSymbolicPath(ddstring_t* dest, const ddstring_t* src)
+{
+    assert(dest && src);
+
+    // Src path is base-relative?
+    if(Str_At(src, 0) == DIR_SEP_CHAR)
+    {
+        boolean mustCopy = (dest == src);
+        if(mustCopy)
+        {
+            ddstring_t buf;
+            Str_Init(&buf);
+            Str_Set(&buf, ddBasePath);
+            Str_PartAppend(&buf, Str_Text(src), 1, Str_Length(src)-1);
+            Str_Copy(dest, &buf);
+            return;
+        }
+
+        Str_Set(dest, ddBasePath);
+        Str_PartAppend(dest, Str_Text(src), 1, Str_Length(src)-1);
+        return;
+    }
+
+    // Src path is workdir-relative.
+
+    if(dest == src)
+    {
+        Str_Prepend(dest, ddRuntimeDir.path);
+        return;
+    }
+
+    Str_Appendf(dest, "%s%s", ddRuntimeDir.path, Str_Text(src));
+}
+
+/// \todo dj: Find a suitable home for this.
+boolean F_IsRelativeToBasePath(const ddstring_t* path)
+{
+    assert(path);
+    return !strnicmp(Str_Text(path), ddBasePath, strlen(ddBasePath));
+}
+
+/// \todo dj: Find a suitable home for this.
+boolean F_RemoveBasePath(ddstring_t* dest, const ddstring_t* absPath)
+{
+    assert(dest && absPath);
+
+    if(F_IsRelativeToBasePath(absPath))
+    {
+        boolean mustCopy = (dest == absPath);
+        if(mustCopy)
+        {
+            ddstring_t buf;
+            Str_Init(&buf);
+            Str_PartAppend(&buf, Str_Text(absPath), strlen(ddBasePath), Str_Length(absPath) - strlen(ddBasePath));
+            Str_Copy(dest, &buf);
+            Str_Free(&buf);
+            return true;
+        }
+
+        Str_Clear(dest);
+        Str_PartAppend(dest, Str_Text(absPath), strlen(ddBasePath), Str_Length(absPath) - strlen(ddBasePath));
+        return true;
+    }
+
+    // Do we need to copy anyway?
+    if(dest != absPath)
+        Str_Copy(dest, absPath);
+
+    // This doesn't appear to be the base path.
+    return false;
+}
+
 /// \todo dj: Find a suitable home for this.
 boolean F_PrependBasePath(ddstring_t* dest, const ddstring_t* src)
 {
@@ -682,19 +741,9 @@ boolean F_PrependBasePath(ddstring_t* dest, const ddstring_t* src)
 
     if(!Dir_IsAbsolute(Str_Text(src)))
     {
-        boolean mustCopy = (dest == src);
-        if(mustCopy)
-        {
-            ddstring_t buf;
-            Str_Init(&buf);
-            Str_Appendf(&buf, "%s%s", ddBasePath, Str_Text(src));
-            Str_Copy(dest, &buf);
-            Str_Free(&buf);
-            return true;
-        }
-
-        Str_Set(dest, ddBasePath);
-        Str_Append(dest, Str_Text(src));
+        if(dest != src)
+            Str_Copy(dest, src);
+        Str_Prepend(dest, ddBasePath);
         return true;
     }
 
@@ -783,4 +832,34 @@ boolean F_ExpandBasePath(ddstring_t* dest, const ddstring_t* src)
 
     // No expansion done.
     return false;
+}
+
+const ddstring_t* F_PrettyPath(const ddstring_t* path)
+{
+#define NUM_BUFS            8
+
+    static ddstring_t buffers[NUM_BUFS]; // \fixme: never free'd!
+    static uint index = 0;
+
+    size_t basePathLen = strlen(ddBasePath), len = Str_Length(path);
+    if(len > basePathLen && !strnicmp(ddBasePath, Str_Text(path), basePathLen))
+    {
+        ddstring_t* str = &buffers[index++ % NUM_BUFS];
+        Str_Free(str);
+        F_RemoveBasePath(str, path);
+        Dir_FixSlashes(Str_Text(str), Str_Length(str));
+        return str;
+    }
+    else if(len > 1 && (Str_At(path, 0) == '}' || Str_At(path, 0) == '>'))
+    {   // Skip over this special character.
+        ddstring_t* str = &buffers[index++ % NUM_BUFS];
+        Str_Free(str);
+        Str_PartAppend(str, Str_Text(path), 1, Str_Length(path)-1);
+        Dir_FixSlashes(Str_Text(str), Str_Length(str));
+        return str;
+    }
+
+    return path; // We don't know how to make this prettier.
+
+#undef NUM_BUFS
 }
