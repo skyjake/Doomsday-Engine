@@ -118,7 +118,7 @@ boolean ResourceNamespace_Find(resourcenamespace_t* rnamespace, const char* sear
  * This mapping will translate tokens like "<rnamespace::name>:" into their default paths,
  * which themselves are determined using the current GameInfo.
  *
- *  e.g.: "Models:my\\cool\\model.dmd" > "}data\\<gameinfo::identitykey>\\models\\my\\cool\\model.dmd"
+ *  e.g.: "Models:my\\cool\\model.dmd" -> "}data\\<GameInfo::IdentityKey>\\models\\my\\cool\\model.dmd"
  *
  * @param path          Ptr to the path to be mapped.
  * @return              @c true iff mapping was applied to the path.

@@ -993,10 +993,9 @@ static int forAllDescend(const ddstring_t* pattern, const ddstring_t* path,
         if(i >= 0)
         {
             filename_t mapped;
-
             // Possible virtual mapping.
             if(!F_MapPath(mapped, spec, &vdMappings[i], FILENAME_T_MAXLEN))
-            {   // The mapping didn't match this one.
+            {   // Not mapped.
                 continue;
             }
             strncpy(spec, mapped, FILENAME_T_MAXLEN);
@@ -1007,7 +1006,7 @@ static int forAllDescend(const ddstring_t* pattern, const ddstring_t* path,
             // The first file found!
             do
             {
-                // Ignore the relative directory names.
+                // Ignore relative directory symbolics.
                 if(strcmp(fd.name, ".") && strcmp(fd.name, ".."))
                 {
                     if(count >= max)
