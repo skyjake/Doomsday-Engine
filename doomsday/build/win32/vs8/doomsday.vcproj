@@ -2586,10 +2586,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\con_decl.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\con_main.h"
 				>
 			</File>

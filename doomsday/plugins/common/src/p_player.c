@@ -931,7 +931,7 @@ void P_PlayerThinkCamera(player_t *player)
     }
 }
 
-DEFCC(CCmdSetCamera)
+D_CMD(SetCamera)
 {
     int                 p;
     player_t           *player;
@@ -1020,7 +1020,7 @@ void P_PlayerSetArmorType(player_t* plr, int type)
 }
 #endif
 
-DEFCC(CCmdSetViewMode)
+D_CMD(SetViewMode)
 {
     int                 pl = CONSOLEPLAYER;
 
@@ -1040,7 +1040,7 @@ DEFCC(CCmdSetViewMode)
     return true;
 }
 
-DEFCC(CCmdSetViewLock)
+D_CMD(SetViewLock)
 {
     int                 pl = CONSOLEPLAYER, lock;
 
@@ -1073,7 +1073,7 @@ DEFCC(CCmdSetViewLock)
     return false;
 }
 
-DEFCC(CCmdMakeLocal)
+D_CMD(MakeLocal)
 {
     int                 p;
     char                buf[20];
@@ -1110,7 +1110,7 @@ DEFCC(CCmdMakeLocal)
 /**
  * Print the console player's coordinates.
  */
-DEFCC(CCmdPrintPlayerCoords)
+D_CMD(PrintPlayerCoords)
 {
     mobj_t* mo;
 
@@ -1126,7 +1126,7 @@ DEFCC(CCmdPrintPlayerCoords)
     return true;
 }
 
-DEFCC(CCmdCycleSpy)
+D_CMD(CycleSpy)
 {
     //// \fixme The engine should do this.
     Con_Printf("Spying not allowed.\n");
@@ -1147,7 +1147,7 @@ DEFCC(CCmdCycleSpy)
     return true;
 }
 
-DEFCC(CCmdSpawnMobj)
+D_CMD(SpawnMobj)
 {
     mobjtype_t type;
     float pos[3];

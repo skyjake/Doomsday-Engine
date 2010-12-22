@@ -289,7 +289,7 @@ static boolean loadBlockmap(tempmap_t *map, maplumpinfo_t *maplump)
         startTime = Sys_GetRealTime();
 
         blockmapLump =
-            (short *) W_CacheLumpNum(maplump->lumpNum, PU_STATIC);
+            (short *) W_CacheLumpNum(maplump->lumpNum, PU_GAMESTATIC);
 
         v[VX] = (float) SHORT(blockmapLump[0]);
         v[VY] = (float) SHORT(blockmapLump[1]);

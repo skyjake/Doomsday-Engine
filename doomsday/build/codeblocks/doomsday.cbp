@@ -201,7 +201,6 @@
 		<Unit filename="..\..\engine\portable\include\con_buffer.h" />
 		<Unit filename="..\..\engine\portable\include\con_busy.h" />
 		<Unit filename="..\..\engine\portable\include\con_config.h" />
-		<Unit filename="..\..\engine\portable\include\con_decl.h" />
 		<Unit filename="..\..\engine\portable\include\con_main.h" />
 		<Unit filename="..\..\engine\portable\include\dam_blockmap.h" />
 		<Unit filename="..\..\engine\portable\include\dam_file.h" />

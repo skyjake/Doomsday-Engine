@@ -572,7 +572,7 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
     }
 
     // Clear the buffer.
-    buf = (sfxbuffer_t*) Z_Calloc(sizeof(*buf), PU_STATIC, 0);
+    buf = (sfxbuffer_t*) Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0);
 
     buf->ptr = buf_object8;
     buf->ptr3D = buf_object3d;

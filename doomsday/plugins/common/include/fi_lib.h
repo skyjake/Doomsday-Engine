@@ -75,10 +75,14 @@ void FI_StackShutdown(void);
 void FI_StackExecute(const char* commands, int flags, finale_mode_t mode);
 
 /**
- * Clear the LIFO Finale stack (note that if called during demo playback
- * is actually a null-op).
+ * Clear the LIFO Finale stack of any active scripts.
  */
 void FI_StackClear(void);
+
+/**
+ * Completely clear the LIFO Finale stack including any suspended scripts.
+ */
+void FI_StackClearAll(void);
 
 /// @return  @c true if there is one or more active Finale on the stack.
 boolean FI_StackActive(void);

@@ -235,7 +235,7 @@ void P_InitSwitchList(void)
     if(lumpNum > 0)
     {
         VERBOSE( Con_Message("Processing lump %s::SWITCHES ...\n", M_PrettyPath(W_LumpSourceFile(lumpNum))) );
-        sList = (switchlist_t*) W_CacheLumpNum(lumpNum, PU_STATIC);
+        sList = (switchlist_t*) W_CacheLumpNum(lumpNum, PU_GAMESTATIC);
     }
     else
     {

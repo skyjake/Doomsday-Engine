@@ -799,7 +799,7 @@ static size_t FileReader(const char *name, byte **buffer, int mallocType)
             // Allocate more memory.
             if(mallocType == MALLOC_ZONE)
             {
-                byte   *newbuf = Z_Malloc(length + count, PU_STATIC, 0);
+                byte   *newbuf = Z_Malloc(length + count, PU_APPSTATIC, 0);
 
                 if(buf)
                 {
@@ -842,7 +842,7 @@ static size_t FileReader(const char *name, byte **buffer, int mallocType)
     length = fileinfo.st_size;
     if(mallocType == MALLOC_ZONE)
     {   // Use zone memory allocation
-        buf = Z_Malloc(length, PU_STATIC, NULL);
+        buf = Z_Malloc(length, PU_APPSTATIC, NULL);
     }
     else
     {   // Use c library memory allocation

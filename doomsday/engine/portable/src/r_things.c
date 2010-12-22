@@ -212,7 +212,7 @@ static vlightnode_t* newVLightNode(void)
     // Have we run out of nodes?
     if(vLightCursor == NULL)
     {
-        node = Z_Malloc(sizeof(vlightnode_t), PU_STATIC, NULL);
+        node = Z_Malloc(sizeof(vlightnode_t), PU_APPSTATIC, NULL);
 
         // Link the new node to the list.
         node->nextUsed = vLightFirst;
@@ -345,8 +345,8 @@ void R_PreInitSprites(void)
      */
     numSpriteRecords = 0;
     spriteRecords = 0;
-    spriteRecordBlockSet = Z_BlockCreate(sizeof(spriterecord_t), 64, PU_STATIC),
-    spriteRecordFrameBlockSet = Z_BlockCreate(sizeof(spriterecord_frame_t), 256, PU_STATIC);
+    spriteRecordBlockSet = Z_BlockCreate(sizeof(spriterecord_t), 64, PU_SPRITE),
+    spriteRecordFrameBlockSet = Z_BlockCreate(sizeof(spriterecord_frame_t), 256, PU_SPRITE);
 
     for(i = 0; i < W_NumLumps(); ++i)
     {
@@ -529,7 +529,7 @@ static void initSpriteDefs(spriterecord_t* const * sprRecords, int num)
         spriteframe_t       sprTemp[MAX_FRAMES];
         int                 maxFrame;
 
-        sprites = Z_Malloc(numSprites * sizeof(*sprites), PU_STATIC, NULL);
+        sprites = Z_Malloc(numSprites * sizeof(*sprites), PU_APPSTATIC, NULL);
 
         for(n = 0; n < num; ++n)
         {

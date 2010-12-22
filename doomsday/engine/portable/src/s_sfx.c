@@ -1008,7 +1008,7 @@ void Sfx_InitChannels(void)
     }
 
     // Allocate and init the channels.
-    channels = Z_Calloc(sizeof(*channels) * numChannels, PU_STATIC, 0);
+    channels = Z_Calloc(sizeof(*channels) * numChannels, PU_APPSTATIC, 0);
 
     // Create channels according to the current mode.
     Sfx_CreateChannels(sfx3D ? sfxDedicated2D : numChannels, sfxBits,

@@ -23,13 +23,11 @@
  */
 
 /**
- * Graphical User Interface
+ * Graphical User Interface.
  */
 
 #ifndef LIBDENG_UI_MAIN_H
 #define LIBDENG_UI_MAIN_H
-
-#include "con_decl.h"
 
 #define IS_ACTKEY(x)    (x == ' ' || x == DDKEY_RETURN)
 

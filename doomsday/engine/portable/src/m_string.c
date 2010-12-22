@@ -137,7 +137,7 @@ void Str_Alloc(ddstring_t *ds, size_t for_length, int preserve)
 
     while(ds->size < for_length)
         ds->size *= 2;
-    buf = Z_Calloc(ds->size, PU_STATIC, 0);
+    buf = Z_Calloc(ds->size, PU_APPSTATIC, 0);
 
     if(preserve && ds->str)
         strncpy(buf, ds->str, ds->size - 1);
@@ -252,20 +252,20 @@ void Str_Copy(ddstring_t* dest, const ddstring_t* src)
     Str_Free(dest);
     dest->size = src->size;
     dest->length = src->length;
-    dest->str = Z_Malloc(src->size, PU_STATIC, 0);
+    dest->str = Z_Malloc(src->size, PU_APPSTATIC, 0);
     memcpy(dest->str, src->str, src->size);
 }
 
 /**
  * Strip whitespace from beginning.
  */
-void Str_StripLeft(ddstring_t *ds)
+size_t Str_StripLeft(ddstring_t *ds)
 {
     size_t i, num;
     boolean isDone;
 
     if(!ds->length)
-        return;
+        return 0;
 
     // Find out how many whitespace chars are at the beginning.
     isDone = false;
@@ -289,24 +289,29 @@ void Str_StripLeft(ddstring_t *ds)
         ds->length -= num;
         ds->str[ds->length] = 0;
     }
+    return num;
 }
 
 /**
  * Strip whitespace from end.
  */
-void Str_StripRight(ddstring_t* ds)
+size_t Str_StripRight(ddstring_t* ds)
 {
     assert(ds);
-    if(ds->length > 0)
+
+    if(ds->length == 0)
+        return 0;
+
+    { size_t i = ds->length - 1, num = 0;
+    if(isspace(ds->str[i]))
+    do
     {
-        size_t i = ds->length - 1;
-        if(isspace(ds->str[i]))
-        do
-        {
-            // Remove this char.
-            ds->str[i] = '\0';
-            ds->length--;
-        } while(i != 0 && isspace(ds->str[--i]));
+        // Remove this char.
+        num++;
+        ds->str[i] = '\0';
+        ds->length--;
+    } while(i != 0 && isspace(ds->str[--i]));
+    return num;
     }
 }
 

@@ -123,8 +123,6 @@ static void Con_SplitIntoSubCommands(const char *command,
                                      boolean isNetCmd);
 
 static void Con_ClearExecBuffer(void);
-static void Con_DestroyMatchedWordList(void);
-
 static void updateDedicatedConsoleCmdLine(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -977,7 +975,7 @@ static void Con_SplitIntoSubCommands(const char *command,
 #undef BUFFSIZE
 }
 
-static void Con_DestroyMatchedWordList(void)
+void Con_DestroyMatchedWordList(void)
 {
     // Free the matched words array.
     if(matchedWordCount)
@@ -1871,7 +1869,6 @@ void Con_Error(const char *error, ...)
 
 void Con_AbnormalShutdown(const char* message)
 {
-    B_Shutdown();
     Sys_Shutdown();
 
 #ifdef WIN32

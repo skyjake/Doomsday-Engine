@@ -147,10 +147,12 @@ void Sys_Init(void)
  */
 void Sys_Shutdown(void)
 {
-    Sys_ShutdownTimer();
+    // Time to unload *everything*.
+    if(!DD_IsNullGameInfo(DD_GameInfo()))
+        Con_Execute(CMDS_DDAY, "unload", true, false);
 
-    if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.Shutdown)
-        gx.Shutdown();
+    B_Shutdown();
+    Sys_ShutdownTimer();
 
     Net_Shutdown();
     Huff_Shutdown();

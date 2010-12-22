@@ -24,7 +24,7 @@
  */
 
 /**
- * sys_opengl.c: OpenGL interface, low-level.
+ * OpenGL interface, low-level.
  *
  * Get OpenGL header files from:
  * http://oss.sgi.com/projects/ogl-sample/
@@ -34,8 +34,11 @@
 
 #include "de_platform.h"
 #include "de_base.h"
+#include "de_console.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+
+#include "sys_opengl.h"
 
 // MACROS ------------------------------------------------------------------
 

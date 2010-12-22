@@ -148,7 +148,7 @@ static void R_VertexNormals(model_t *mdl)
     if(!ArgCheck("-renorm"))
         return;
 
-    normals = Z_Malloc(sizeof(vector_t) * tris, PU_STATIC, 0);
+    normals = Z_Malloc(sizeof(vector_t) * tris, PU_APPSTATIC, 0);
 
     // Calculate the normal for each vertex.
     for(i = 0; i < mdl->info.numFrames; ++i)
@@ -435,16 +435,16 @@ static void R_RegisterModelSkin(model_t* mdl, int index)
  */
 static int R_LoadModel(char* searchPath)
 {
-    int i, index;
-    model_t* mdl;
-    DFILE* file = 0;
     ddstring_t foundPath;
+    DFILE* file = 0;
+    model_t* mdl;
+    int index;
 
     if(!searchPath || !searchPath[0])
         return 0; // No model specified.
 
     Str_Init(&foundPath);
-    if(F_FindResource2(RC_MODEL, searchPath, &foundPath))
+    if(F_FindResource2(RC_MODEL, searchPath, &foundPath) != 0)
     {
         // Has this been already loaded?
         if((index = R_FindModelFor(Str_Text(&foundPath))) < 0)
@@ -510,10 +510,11 @@ static int R_LoadModel(char* searchPath)
     strncpy(mdl->fileName, Str_Text(&foundPath), FILENAME_T_MAXLEN);
 
     // Determine the actual (full) paths.
+    { int i;
     for(i = 0; i < mdl->info.numSkins; ++i)
     {
         R_RegisterModelSkin(mdl, i);
-    }
+    }}
 
     Str_Free(&foundPath);
     return index;

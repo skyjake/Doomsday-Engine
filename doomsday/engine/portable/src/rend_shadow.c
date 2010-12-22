@@ -29,6 +29,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_refresh.h"
 #include "de_graphics.h"
 #include "de_render.h"

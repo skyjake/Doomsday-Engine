@@ -92,7 +92,7 @@ static surfacelistnode_t* unusedSurfaceListNodes = 0;
  */
 static surfacelistnode_t* allocListNode(void)
 {
-    surfacelistnode_t*      node = Z_Calloc(sizeof(*node), PU_STATIC, 0);
+    surfacelistnode_t*      node = Z_Calloc(sizeof(*node), PU_APPSTATIC, 0);
     return node;
 }
 

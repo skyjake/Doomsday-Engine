@@ -37,8 +37,6 @@
 #  include "jheretic.h"
 #elif __JHEXEN__
 #  include "jhexen.h"
-#elif __JSTRIFE__
-#  include "jstrife.h"
 #endif
 
 #include "dmu_lib.h"
@@ -89,78 +87,82 @@ static terraintype_t terrainTypes[] =
     {NULL, 0}
 };
 
-static materialterraintype_t* materialTTypes = NULL;
-static uint numMaterialTTypes = 0;
+static materialterraintype_t* materialTTypes = 0;
+static uint numMaterialTTypes = 0, maxMaterialTTypes = 0;
 
 // CODE --------------------------------------------------------------------
-
-static void createMaterialTerrainType(material_t* mat, uint idx)
-{
-    uint                i;
-    materialterraintype_t* mtt;
-
-    // If we've already assigned this material to a terrain type, override
-    // the previous assignation.
-    for(i = 0; i < numMaterialTTypes; ++i)
-        if(materialTTypes[i].material == mat)
-        {
-            materialTTypes[i].terrainNum = idx;
-            return;
-        }
-
-    // Its a new material.
-    materialTTypes =
-        Z_Realloc(materialTTypes, sizeof(*materialTTypes) * ++numMaterialTTypes,
-                  PU_STATIC);
-
-    mtt = &materialTTypes[numMaterialTTypes-1];
-
-    mtt->material = mat;
-    mtt->terrainNum = idx - 1;
-}
 
 /**
  * @param name          The symbolic terrain type name.
  */
-static uint getTerrainTypeNumForName(const char* name)
+static uint findTerrainTypeNumForName(const char* name)
 {
-    uint                i;
-
     if(name && name[0])
     {
+        uint i;
         for(i = 0; terrainTypes[i].name; ++i)
         {
-            terraintype_t*      tt = &terrainTypes[i];
-
+            terraintype_t* tt = &terrainTypes[i];
             if(!stricmp(tt->name, name))
                 return i + 1; // 1-based index.
         }
     }
-
     return 0;
 }
 
-static terraintype_t* getTerrainTypeForMaterial(material_t* mat)
+static materialterraintype_t* findMaterialTerrainType(material_t* mat)
 {
-    uint                i;
-
     if(mat)
     {
+        uint i;
         for(i = 0; i < numMaterialTTypes; ++i)
-        {
-            materialterraintype_t* mtt = &materialTTypes[i];
-
-            if(mtt->material == mat)
-                return &terrainTypes[mtt->terrainNum];
-        }
+            if(materialTTypes[i].material == mat)
+                return &materialTTypes[i];
     }
-
-    return NULL;
+    return 0;
 }
 
-/**
- * Called during (re)init.
- */
+static __inline terraintype_t* findTerrainTypeForMaterial(material_t* mat)
+{
+    materialterraintype_t* mtt;
+    if((mtt = findMaterialTerrainType(mat)))
+        return &terrainTypes[mtt->terrainNum];
+    return 0;
+}
+
+static materialterraintype_t* getMaterialTerrainType(material_t* mat, uint idx)
+{
+#define BATCH_SIZE       8
+
+    materialterraintype_t* mtt;
+
+    // If we've already assigned this material to a terrain type, override
+    // the previous assignation.
+    if((mtt = findMaterialTerrainType(mat)))
+    {
+        mtt->terrainNum = idx;
+        return mtt;
+    }
+
+    // Its a new material.
+    // Only allocate memory when it's needed.
+    if(++numMaterialTTypes > maxMaterialTTypes)
+    {
+        uint newMax = maxMaterialTTypes + BATCH_SIZE;
+
+        materialTTypes = Z_Realloc(materialTTypes, sizeof(*materialTTypes) * newMax, PU_GAMESTATIC);
+        memset(materialTTypes+maxMaterialTTypes, 0, sizeof(*materialTTypes) * (newMax - maxMaterialTTypes));
+        maxMaterialTTypes = newMax;
+    }
+
+    mtt = &materialTTypes[numMaterialTTypes-1];
+    mtt->material = mat;
+    mtt->terrainNum = idx - 1;
+    return mtt;
+
+#undef BATCH_SIZE
+}
+
 void P_InitTerrainTypes(void)
 {
     struct matttypedef_s {
@@ -191,32 +193,41 @@ void P_InitTerrainTypes(void)
 #endif
         {NULL, 0, NULL}
     };
-    uint                i;
 
     if(materialTTypes)
         Z_Free(materialTTypes);
-    materialTTypes = NULL;
-    numMaterialTTypes = 0;
+    materialTTypes = 0;
+    numMaterialTTypes = maxMaterialTTypes = 0;
 
+    { uint i;
     for(i = 0; matTTypeDefs[i].matName; ++i)
     {
-        uint                idx =
-            getTerrainTypeNumForName(matTTypeDefs[i].ttName);
+        uint idx = findTerrainTypeNumForName(matTTypeDefs[i].ttName);
 
         if(idx)
         {
-            material_t*         mat =
-                P_ToPtr(DMU_MATERIAL,
-                        Materials_CheckNumForName(matTTypeDefs[i].matName,
-                                                  matTTypeDefs[i].matGroup));
+            material_t* mat = P_ToPtr(DMU_MATERIAL, Materials_CheckNumForName(matTTypeDefs[i].matName, matTTypeDefs[i].matGroup));
             if(mat)
             {
                 Con_Message("P_InitTerrainTypes: Material '%s' linked to terrain type '%s'.\n",
                             matTTypeDefs[i].matName, matTTypeDefs[i].ttName);
-                createMaterialTerrainType(mat, idx);
+                getMaterialTerrainType(mat, idx);
             }
         }
-    }
+    }}
+}
+
+void P_ClearTerrainTypes(void)
+{
+    numMaterialTTypes = 0;
+}
+
+void P_ShutdownTerrainTypes(void)
+{
+    if(materialTTypes)
+        Z_Free(materialTTypes);
+    materialTTypes = 0;
+    numMaterialTTypes = maxMaterialTTypes = 0;
 }
 
 /**
@@ -226,10 +237,10 @@ void P_InitTerrainTypes(void)
  */
 const terraintype_t* P_TerrainTypeForMaterial(material_t* mat)
 {
-    const terraintype_t* tt = getTerrainTypeForMaterial(mat);
-
-    if(tt)
+    { const terraintype_t* tt;
+    if((tt = findTerrainTypeForMaterial(mat)))
         return tt; // Known, return it.
+    }
 
     // Return the default type.
     return &terrainTypes[0];

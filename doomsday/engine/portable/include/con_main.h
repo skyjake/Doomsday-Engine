@@ -87,7 +87,8 @@ extern ddfont_t Cfont;
 extern byte     consoleDump;
 
 void            Con_DataRegister(void);
-void            Con_DestroyDatabases(void);
+void Con_DestroyMatchedWordList(void);
+void Con_DestroyDatabases(void);
 
 ddccmd_t       *Con_GetCommand(cmdargs_t *args);
 void            Con_AddCommand(ccmd_t *cmd);

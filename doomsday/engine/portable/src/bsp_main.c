@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
@@ -26,7 +26,7 @@
  */
 
 /**
- * bsp_main.c: GL-friendly BSP node builder.
+ * GL-friendly BSP node builder.
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
  * SourceForge: http://sourceforge.net/projects/glbsp/
@@ -34,14 +34,15 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <math.h>
+
 #include "de_base.h"
+#include "de_console.h"
 #include "de_bsp.h"
 #include "de_play.h"
 #include "de_misc.h"
 
 #include "p_mapdata.h"
-
-#include <math.h>
 
 // MACROS ------------------------------------------------------------------
 

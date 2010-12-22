@@ -22,7 +22,9 @@
  */
 
 /**
- * gl_drawvectorgraphic.c: Vector graphics.
+ * SVG (Scalable Vector Graphics) management.
+ *
+ * \todo replace me with a fuller implementation with file IO et al.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -31,6 +33,7 @@
 #include <assert.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_refresh.h"
 
 // MACROS ------------------------------------------------------------------

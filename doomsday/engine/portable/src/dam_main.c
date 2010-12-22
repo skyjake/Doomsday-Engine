@@ -28,6 +28,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_dam.h"
 #include "de_misc.h"
 #include "de_refresh.h"
@@ -149,7 +150,7 @@ static int mapLumpTypeForName(const char* name)
  */
 static listnode_t* allocListNode(void)
 {
-    listnode_t         *node = Z_Calloc(sizeof(listnode_t), PU_STATIC, 0);
+    listnode_t         *node = Z_Calloc(sizeof(listnode_t), PU_APPSTATIC, 0);
     return node;
 }
 
@@ -167,7 +168,7 @@ static void freeListNode(listnode_t *node)
  */
 static maplumpinfo_t* allocMapLumpInfo(void)
 {
-    maplumpinfo_t *info = Z_Calloc(sizeof(maplumpinfo_t), PU_STATIC, 0);
+    maplumpinfo_t *info = Z_Calloc(sizeof(maplumpinfo_t), PU_APPSTATIC, 0);
     return info;
 }
 
@@ -234,7 +235,7 @@ static void addLumpInfoToList(listnode_t** headPtr, maplumpinfo_t* info)
  */
 static archivedmap_t* allocArchivedMap(void)
 {
-    archivedmap_t *dam = Z_Calloc(sizeof(archivedmap_t), PU_STATIC, 0);
+    archivedmap_t *dam = Z_Calloc(sizeof(archivedmap_t), PU_APPSTATIC, 0);
     return dam;
 }
 
@@ -282,7 +283,7 @@ static archivedmap_t* createArchivedMap(const char *mapID,
     }
 
     // Allocate an array of the lump indices.
-    dam->lumpList = Z_Malloc(sizeof(int) * dam->numLumps, PU_STATIC, 0);
+    dam->lumpList = Z_Malloc(sizeof(int) * dam->numLumps, PU_APPSTATIC, 0);
     ln = headPtr;
     i = 0;
     while(ln)
@@ -326,7 +327,7 @@ static void addArchivedMap(archivedmap_t* dam)
     archivedMaps =
         Z_Realloc(archivedMaps,
                   sizeof(archivedmap_t*) * (++numArchivedMaps + 1),
-                  PU_STATIC);
+                  PU_APPSTATIC);
     archivedMaps[numArchivedMaps - 1] = dam;
     archivedMaps[numArchivedMaps] = NULL; // Terminate.
 }
@@ -487,8 +488,10 @@ boolean DAM_AttemptMapLoad(const char* mapID)
     // Load it in.
     if(!dam->lastLoadAttemptFailed)
     {
-        gamemap_t      *map = NULL;
-        ded_mapinfo_t  *mapInfo;
+        gamemap_t* map = NULL;
+        ded_mapinfo_t* mapInfo;
+
+        Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
         if(mapCache && dam->cachedMapFound)
         {   // Attempt to load the cached map data.

@@ -32,6 +32,7 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_play.h"
 #include "de_refresh.h"
 #include "de_graphics.h"
@@ -378,7 +379,7 @@ static decorsource_t* addDecoration(void)
     if(!sourceCursor)
     {
         // Allocate a new entry.
-        src = Z_Calloc(sizeof(decorsource_t), PU_STATIC, NULL);
+        src = Z_Calloc(sizeof(decorsource_t), PU_APPSTATIC, NULL);
 
         if(!sourceFirst)
         {

@@ -35,8 +35,11 @@
 #include <stdlib.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+
+#include "sys_opengl.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -156,7 +159,7 @@ static void prepareColorPalette18To8(gl_colorpalette_t* pal)
 
         if(!pal->pal18To8)
         {
-            pal->pal18To8 = Z_Malloc(SIZEOF18TO8, PU_STATIC, 0);
+            pal->pal18To8 = Z_Malloc(SIZEOF18TO8, PU_APPSTATIC, 0);
         }
 
         for(r = 0; r < 64; ++r)
@@ -267,12 +270,12 @@ DGLuint GL_CreateColorPalette(const int compOrder[3],
 
     // Allocate a new color palette and data buffer.
     colorPalettes = Z_Realloc(colorPalettes,
-        ++numColorPalettes * sizeof(*pal), PU_STATIC);
+        ++numColorPalettes * sizeof(*pal), PU_APPSTATIC);
 
     pal = &colorPalettes[numColorPalettes-1];
 
     pal->num = num;
-    pal->data = Z_Malloc(pal->num * sizeof(DGLubyte) * 3, PU_STATIC, 0);
+    pal->data = Z_Malloc(pal->num * sizeof(DGLubyte) * 3, PU_APPSTATIC, 0);
 
     /**
      * Copy the source data and convert to R8G8B8 in the process.
@@ -387,7 +390,7 @@ void GL_DeleteColorPalettes(DGLsizei n, const DGLuint* palettes)
     if(numColorPalettes)
     {
         colorPalettes = Z_Realloc(colorPalettes,
-            numColorPalettes * sizeof(gl_colorpalette_t), PU_STATIC);
+            numColorPalettes * sizeof(gl_colorpalette_t), PU_APPSTATIC);
     }
     else
     {

@@ -23,14 +23,17 @@
  */
 
 /**
- * r_draw.c: Drawing Routines
+ * Misc Drawing Routines.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_graphics.h"
 #include "de_refresh.h"
+
+#include "sys_opengl.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -152,7 +155,7 @@ void R_DrawPatch(patchtex_t* p, int x, int y)
     R_DrawPatch2(p, x, y, p->width, p->height);
 }
 
-void R_DrawPatchTiled(patchtex_t* p, int x, int y, int w, int h, GLint wrapS, GLint wrapT)
+void R_DrawPatchTiled(patchtex_t* p, int x, int y, int w, int h, DGLint wrapS, DGLint wrapT)
 {
     assert(p);
 

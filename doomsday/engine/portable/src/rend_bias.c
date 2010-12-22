@@ -23,14 +23,17 @@
  */
 
 /**
- * rend_bias.c: Light/Shadow Bias
+ * Light/Shadow Bias.
  *
  * Calculating macro-scale lighting on the fly.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <math.h>
+
 #include "de_base.h"
+#include "de_console.h"
 #include "de_edit.h"
 #include "de_system.h"
 #include "de_graphics.h"
@@ -38,9 +41,8 @@
 #include "de_refresh.h"
 #include "de_defs.h"
 #include "de_misc.h"
-#include "p_sight.h"
 
-#include <math.h>
+#include "p_sight.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -334,7 +336,7 @@ void SB_InitForMap(const char* uniqueID)
     if(biasSurfaceBlockSet)
         Z_BlockDestroy(biasSurfaceBlockSet);
 
-    biasSurfaceBlockSet = Z_BlockCreate(sizeof(biassurface_t), 512, PU_STATIC);
+    biasSurfaceBlockSet = Z_BlockCreate(sizeof(biassurface_t), 512, PU_APPSTATIC);
     surfaces = NULL;
 
     // Check all the loaded Light definitions for any matches.

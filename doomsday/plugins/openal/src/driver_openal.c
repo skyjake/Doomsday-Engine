@@ -241,7 +241,7 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
     }
 
     // Create the buffer object.
-    buf = Z_Calloc(sizeof(*buf), PU_STATIC, 0);
+    buf = Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0);
 
     buf->ptr = (void *) bufName;
     buf->ptr3D = (void *) srcName;

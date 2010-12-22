@@ -120,7 +120,8 @@ byte GL_LoadParticleTexture(image_t* image, const char* name)
 {
     byte result = 0;
     ddstring_t foundPath; Str_Init(&foundPath);
-    if(F_FindResource3(RC_GRAPHIC, name, &foundPath, "-ck") && GL_LoadImage(image, Str_Text(&foundPath)))
+    if(F_FindResource3(RC_GRAPHIC, name, &foundPath, "-ck") != 0 &&
+       GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
     }
@@ -265,7 +266,7 @@ static void checkOrderBuffer(size_t max)
     }
 
     if(orderSize > currentSize)
-        order = Z_Realloc(order, sizeof(porder_t) * orderSize, PU_STATIC);
+        order = Z_Realloc(order, sizeof(porder_t) * orderSize, PU_APPSTATIC);
 }
 
 static boolean countParticles(ptcgen_t* gen, void* context)

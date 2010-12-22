@@ -531,23 +531,11 @@ typedef enum
 //
 //------------------------------------------------------------------------
 
-#define PU_STATIC           1 // Static entire execution time.
-#define PU_SOUND            2 // Static while playing.
-#define PU_MUSIC            3 // Static while playing.
+#define PU_APPSTATIC         1 // Static entire execution time.
 
-#define PU_USER1            40
-#define PU_USER2            41
-#define PU_USER3            42
-#define PU_USER4            43
-#define PU_USER5            44
-#define PU_USER6            45
-#define PU_USER7            46
-#define PU_USER8            47
-#define PU_USER9            48
-#define PU_USER10           49
+#define PU_GAMESTATIC       40 // Static until the game plugin which allocated it is unloaded.
 
-#define PU_MAP              50 // Static until map exited (may still be
-                               // freed during the map, though).
+#define PU_MAP              50 // Static until map exited (may still be freed during the map, though).
 #define PU_MAPSTATIC        52 // Not freed until map exited.
 
 // Tags >= 100 are purgable whenever needed.
@@ -1055,38 +1043,12 @@ typedef struct {
     void          (*filterText) (char* text); // Maybe alters text.
 } ddfont_t;
 
-
 /// Argument type for B_BindingsForControl().
 typedef enum bfcinverse_e {
     BFCI_BOTH,
     BFCI_ONLY_NON_INVERSE,
     BFCI_ONLY_INVERSE
 } bfcinverse_t;
-
-// Console command.
-typedef struct ccmd_s {
-    const char*     name;
-    const char*     params;
-    int           (*func) (byte src, int argc, char **argv);
-    int             flags;
-} ccmd_t;
-
-// Command sources (where the console command originated from)
-// These are sent with every (sub)ccmd so we can decide whether or not to execute.
-enum {
-    CMDS_UNKNOWN,
-    CMDS_DDAY, // Sent by the engine
-    CMDS_GAME, // Sent by the game library
-    CMDS_CONSOLE, // Sent via direct console input
-    CMDS_BIND, // Sent from a binding/alias
-    CMDS_CONFIG, // Sent via config file
-    CMDS_PROFILE, // Sent via player profile
-    CMDS_CMDLINE, // Sent via the command line
-    CMDS_SCRIPT // Sent based on a def in a DED file eg (state->execute)
-};
-
-// Helper macro for defining console command functions.
-#define DEFCC(name)         int name(byte src, int argc, char** argv)
 
 // Console command flags.
 #define CMDF_NO_NULLGAME    0x00000001 // Not available unless a game is loaded.
@@ -1103,6 +1065,40 @@ enum {
 #define CMDF_CMDLINE        0x20000000
 #define CMDF_DED            0x40000000
 #define CMDF_CLIENT         0x80000000 // sent over the net from a client.
+
+// Command sources (where the console command originated from)
+// These are sent with every (sub)ccmd so we can decide whether or not to execute.
+enum {
+    CMDS_UNKNOWN,
+    CMDS_DDAY, // Sent by the engine
+    CMDS_GAME, // Sent by the game library
+    CMDS_CONSOLE, // Sent via direct console input
+    CMDS_BIND, // Sent from a binding/alias
+    CMDS_CONFIG, // Sent via config file
+    CMDS_PROFILE, // Sent via player profile
+    CMDS_CMDLINE, // Sent via the command line
+    CMDS_SCRIPT // Sent based on a def in a DED file eg (state->execute)
+};
+
+// Console command.
+typedef struct ccmd_s {
+    const char*     name;
+    const char*     params;
+    int           (*func) (byte src, int argc, char **argv);
+    int             flags;
+} ccmd_t;
+
+// Helper macro for declaring console command functions.
+#define D_CMD(x)            int CCmd##x(byte src, int argc, char** argv)
+
+/**
+ * Helper macros for registering new console commands.
+ */
+#define C_CMD(name, params, fn) \
+    { ccmd_t _c = { name, params, CCmd##fn, 0 }; Con_AddCommand(&_c); }
+
+#define C_CMD_FLAGS(name, params, fn, flags) \
+    { ccmd_t _c = { name, params, CCmd##fn, flags }; Con_AddCommand(&_c); }
 
     // Console variable flags.
 #define CVF_NO_ARCHIVE      0x1 // Not written in/read from the defaults file.
@@ -1132,6 +1128,38 @@ enum {
                                      (for ints and floats). */
         void          (*notifyChanged)(struct cvar_s* cvar);
     } cvar_t;
+
+/**
+ * Helper macros for registering new console variables.
+ */
+#define C_VAR(name, ptr, type, flags, min, max, notifyChanged)            \
+    { cvar_t _v = { name, flags, type, ptr, min, max, notifyChanged };    \
+        Con_AddVariable(&_v); }
+
+#define C_VAR_BYTE(name, ptr, flags, min, max)    \
+    C_VAR(name, ptr, CVT_BYTE, flags, min, max, NULL)
+
+#define C_VAR_INT(name, ptr, flags, min, max)     \
+    C_VAR(name, ptr, CVT_INT, flags, min, max, NULL)
+
+#define C_VAR_FLOAT(name, ptr, flags, min, max) \
+    C_VAR(name, ptr, CVT_FLOAT, flags, min, max, NULL)
+
+#define C_VAR_CHARPTR(name, ptr, flags, min, max) \
+    C_VAR(name, ptr, CVT_CHARPTR, flags, min, max, NULL)
+
+// Same as above but allow for a change notification callback func
+#define C_VAR_BYTE2(name, ptr, flags, min, max, notifyChanged)    \
+    C_VAR(name, ptr, CVT_BYTE, flags, min, max, notifyChanged)
+
+#define C_VAR_INT2(name, ptr, flags, min, max, notifyChanged)     \
+    C_VAR(name, ptr, CVT_INT, flags, min, max, notifyChanged)
+
+#define C_VAR_FLOAT2(name, ptr, flags, min, max, notifyChanged) \
+    C_VAR(name, ptr, CVT_FLOAT, flags, min, max, notifyChanged)
+
+#define C_VAR_CHARPTR2(name, ptr, flags, min, max, notifyChanged) \
+    C_VAR(name, ptr, CVT_CHARPTR, flags, min, max, notifyChanged)
 
     //------------------------------------------------------------------------
     //

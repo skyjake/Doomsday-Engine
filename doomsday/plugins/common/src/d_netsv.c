@@ -1466,7 +1466,7 @@ void P_Telefrag(mobj_t *thing)
 /**
  * Handles the console commands "startcycle" and "endcycle".
  */
-DEFCC(CCmdMapCycle)
+D_CMD(MapCycle)
 {
     int         map;
 

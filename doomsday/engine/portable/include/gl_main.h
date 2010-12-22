@@ -23,13 +23,12 @@
  */
 
 /**
- * gl_main.h: Graphics Subsystem
+ * Graphics Subsystem.
  */
 
-#ifndef __DOOMSDAY_GRAPHICS_H__
-#define __DOOMSDAY_GRAPHICS_H__
+#ifndef LIBDENG_GRAPHICS_H
+#define LIBDENG_GRAPHICS_H
 
-#include "con_decl.h"
 #include "r_main.h"
 
 // This should be tweaked a bit.
@@ -69,7 +68,7 @@ void            GL_Init2DState(void);
 void            GL_SwitchTo3DState(boolean push_state, viewport_t* port);
 void            GL_Restore2DState(int step, viewport_t* port);
 void            GL_ProjectionMatrix(void);
-void            GL_InfinitePerspective(GLdouble fovy, GLdouble aspect, GLdouble znear);
+void            GL_InfinitePerspective(DGLdouble fovy, DGLdouble aspect, DGLdouble znear);
 void            GL_RuntimeMode(void);
 void            GL_DoUpdate(void);
 void            GL_BlendMode(blendmode_t mode);
@@ -82,7 +81,7 @@ void            GL_UseFog(int yes);
 const char*     GL_ChooseFixedFont(void);
 const char*     GL_ChooseVariableFont(glfontstyle_t style, int resX, int resY);
 void            GL_LowRes(void);
-void            GL_ActiveTexture(const GLenum texture);
+void            GL_ActiveTexture(const DGLenum texture);
 void            GL_ModulateTexture(int mode);
 void            GL_SelectTexUnits(int count);
 void            GL_SetTextureCompression(boolean on);
@@ -134,4 +133,4 @@ unsigned char*  GL_GrabScreen(void);
 // Console commands.
 D_CMD(UpdateGammaRamp);
 
-#endif
+#endif /* LIBDENG_GRAPHICS_H */

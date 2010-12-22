@@ -30,6 +30,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <string.h>
+#include <assert.h>
 
 #if __JDOOM__
 #  include "jdoom.h"
@@ -69,8 +70,8 @@ typedef struct {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-DEFCC(StartFinale);
-DEFCC(StopFinale);
+D_CMD(StartFinale);
+D_CMD(StopFinale);
 
 int Hook_FinaleScriptStop(int hookType, int finaleId, void* paramaters);
 int Hook_FinaleScriptTicker(int hookType, int finalId, void* paramaters);
@@ -91,10 +92,10 @@ static fi_state_t* finaleStack = 0;
 
 // Console commands for this library:
 static ccmd_t ccmds[] = {
-    { "startfinale",    "s",    StartFinale },
-    { "startinf",       "s",    StartFinale },
-    { "stopfinale",     "",     StopFinale },
-    { "stopinf",        "",     StopFinale },
+    { "startfinale",    "s",    CCmdStartFinale },
+    { "startinf",       "s",    CCmdStartFinale },
+    { "stopfinale",     "",     CCmdStopFinale },
+    { "stopinf",        "",     CCmdStopFinale },
     { NULL }
 };
 
@@ -152,7 +153,7 @@ static __inline fi_state_t* stackTop(void)
 static fi_state_t* stackPush(finaleid_t finaleId, finale_mode_t mode, gamestate_t prevGamestate)
 {
     fi_state_t* s;
-    finaleStack = Z_Realloc(finaleStack, sizeof(*finaleStack) * ++finaleStackSize, PU_STATIC);
+    finaleStack = Z_Realloc(finaleStack, sizeof(*finaleStack) * ++finaleStackSize, PU_GAMESTATIC);
     s = &finaleStack[finaleStackSize-1];
     s->finaleId = finaleId;
     s->mode = mode;
@@ -195,6 +196,10 @@ void FI_StackInit(void)
 void FI_StackShutdown(void)
 {
     if(!finaleStackInited) return;
+
+    // Terminate all scripts on the stack.
+    FI_StackClearAll();
+
     if(finaleStack)
         Z_Free(finaleStack);
     finaleStack = 0; finaleStackSize = 0;
@@ -246,16 +251,16 @@ boolean FI_StackActive(void)
     return false;
 }
 
-void FI_StackClear(void)
+static void stackClear(boolean ignoreSuspendedScripts)
 {
-    if(!finaleStackInited) Con_Error("FI_StackClear: Not initialized yet!");
+    assert(finaleStackInited);
     {fi_state_t* s;
     if((s = stackTop()) && FI_ScriptActive(s->finaleId))
     {
         // The state is suspended when the PlayDemo command is used.
         // Being suspended means that InFine is currently not active, but
         // will be restored at a later time.
-        if(FI_ScriptSuspended(s->finaleId))
+        if(ignoreSuspendedScripts && FI_ScriptSuspended(s->finaleId))
             return;
 
         // Pop all the states.
@@ -264,6 +269,18 @@ void FI_StackClear(void)
             FI_ScriptTerminate(s->finaleId);
         }
     }}
+}
+
+void FI_StackClear(void)
+{
+    if(!finaleStackInited) Con_Error("FI_StackClear: Not initialized yet!");
+    stackClear(true);
+}
+
+void FI_StackClearAll(void)
+{
+    if(!finaleStackInited) Con_Error("FI_StackClearAll: Not initialized yet!");
+    stackClear(false);
 }
 
 int Hook_FinaleScriptStop(int hookType, int finaleId, void* paramaters)
@@ -281,7 +298,7 @@ int Hook_FinaleScriptStop(int hookType, int finaleId, void* paramaters)
     // Should we go back to NULL?
     if(finaleStackSize > 1)
     {   // Resume the next script on the stack.
-        finaleStack = Z_Realloc(finaleStack, sizeof(*finaleStack) * --finaleStackSize, PU_STATIC);
+        finaleStack = Z_Realloc(finaleStack, sizeof(*finaleStack) * --finaleStackSize, PU_GAMESTATIC);
         FI_ScriptResume(stackTop()->finaleId);
         return true;
     }
@@ -468,7 +485,7 @@ boolean FI_RequestSkip(void)
     return false;
 }
 
-DEFCC(StartFinale)
+D_CMD(StartFinale)
 {
     ddfinale_t fin;
     // Only one active overlay allowed.
@@ -483,7 +500,7 @@ DEFCC(StartFinale)
     return true;
 }
 
-DEFCC(StopFinale)
+D_CMD(StopFinale)
 {
     fi_state_t* s;
     if(!FI_StackActive())

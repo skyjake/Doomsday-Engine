@@ -345,7 +345,7 @@ static spawnqueuenode_t* allocateNode(void)
     {   // We need to allocate more.
         size_t              i;
         spawnqueuenode_t*   storage =
-            Z_Malloc(sizeof(*n) * SPAWNQUEUENODE_BATCHSIZE, PU_STATIC, 0);
+            Z_Malloc(sizeof(*n) * SPAWNQUEUENODE_BATCHSIZE, PU_GAMESTATIC, 0);
 
         // Add all but one to the unused node list.
         for(i = 0; i < SPAWNQUEUENODE_BATCHSIZE-1; ++i)

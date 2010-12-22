@@ -52,6 +52,8 @@ extern boolean briefDisabled;
 
 extern int gsvMapMusic;
 
+void            G_CommonShutdown(void);
+
 void            R_InitRefresh(void);
 void            R_GetTranslation(int plrClass, int plrColor, int* tclass,
                                  int* tmap);

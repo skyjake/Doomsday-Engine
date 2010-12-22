@@ -605,7 +605,7 @@ static void drawConsole(void)
         if(reqLines > (uint) bufferSize)
         {
             lines = Z_Realloc((void*) lines, sizeof(cbline_t *) * (reqLines + 1),
-                              PU_STATIC);
+                              PU_APPSTATIC);
             bufferSize = reqLines;
         }
 

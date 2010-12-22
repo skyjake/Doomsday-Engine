@@ -317,7 +317,7 @@ int Mus_GetExt(ded_music_t* def, filename_t retPath)
         foundPathPtr = &foundPath;
     }
 
-    result = F_FindResource2(RC_MUSIC, def->lumpName, foundPathPtr);
+    result = F_FindResource2(RC_MUSIC, def->lumpName, foundPathPtr) != 0;
     if(foundPathPtr)
     {
         if(result)

@@ -112,9 +112,9 @@ struct resourcenamespace_s* F_ToResourceNamespace(resourcenamespaceid_t rni);
  *
  * @return              @c true, iff a resource was found.
  */
-boolean F_FindResource3(resourceclass_t rclass, const char* searchPath, ddstring_t* foundPath, const char* optionalSuffix);
-boolean F_FindResource2(resourceclass_t rclass, const char* searchPath, ddstring_t* foundPath);
-boolean F_FindResource(resourceclass_t rclass, const char* searchPath);
+const char* F_FindResource3(resourceclass_t rclass, const char* searchPath, ddstring_t* foundPath, const char* optionalSuffix);
+const char* F_FindResource2(resourceclass_t rclass, const char* searchPath, ddstring_t* foundPath);
+const char* F_FindResource(resourceclass_t rclass, const char* searchPath);
 
 /**
  * @return              Default class associated with resources of type @a type.

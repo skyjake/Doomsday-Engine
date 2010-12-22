@@ -68,9 +68,9 @@ int             P_CameraXYMovement(mobj_t* mo);
 int             P_CameraZMovement(mobj_t* mo);
 void            P_Thrust3D(struct player_s* player, angle_t angle, float lookdir, float forwardMove, float sideMove);
 
-DEFCC( CCmdMakeLocal );
-DEFCC( CCmdSetCamera );
-DEFCC( CCmdSetViewLock );
-DEFCC( CCmdLocalMessage );
-DEFCC( CCmdExitLevel );
+D_CMD( CCmdMakeLocal );
+D_CMD( CCmdSetCamera );
+D_CMD( CCmdSetViewLock );
+D_CMD( CCmdLocalMessage );
+D_CMD( CCmdExitLevel );
 #endif

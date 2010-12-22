@@ -187,6 +187,6 @@ void            SV_ReadXGSector(struct sector_s *sec);
 void            SV_WriteXGPlaneMover(thinker_t *th);
 int             SV_ReadXGPlaneMover(xgplanemover_t* mov);
 
-DEFCC(CCmdMovePlane);
+D_CMD(MovePlane);
 
 #endif

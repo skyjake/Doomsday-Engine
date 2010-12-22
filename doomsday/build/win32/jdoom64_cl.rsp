@@ -6,6 +6,7 @@
  .\..\..\plugins\common\src\fi_lib.c
  .\..\..\plugins\common\src\g_controls.c
  .\..\..\plugins\common\src\g_defs.c
+ .\..\..\plugins\common\src\g_eventsequence.c
  .\..\..\plugins\common\src\g_game.c
  .\..\..\plugins\common\src\g_update.c
  .\..\..\plugins\common\src\gl_drawpatch.c

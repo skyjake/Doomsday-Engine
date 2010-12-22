@@ -503,7 +503,7 @@ void RL_ClearLists(void)
 
 static rendlist_t* createList(listhash_t* hash)
 {
-    rendlist_t*         list = Z_Calloc(sizeof(rendlist_t), PU_STATIC, 0);
+    rendlist_t*         list = Z_Calloc(sizeof(rendlist_t), PU_APPSTATIC, 0);
 
     if(hash->last)
         hash->last->next = list;
@@ -668,7 +668,7 @@ static void* allocateData(rendlist_t* list, int bytes)
         while(list->size < required)
             list->size *= 2;
 
-        list->data = Z_Realloc(list->data, list->size, PU_STATIC);
+        list->data = Z_Realloc(list->data, list->size, PU_APPSTATIC);
 
         // Restore main pointers.
         list->cursor =

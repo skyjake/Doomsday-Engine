@@ -58,11 +58,11 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-DEFCC(CCmdSetColor);
-DEFCC(CCmdSetMap);
+D_CMD(SetColor);
+D_CMD(SetMap);
 
 #if __JHEXEN__
-DEFCC(CCmdSetClass);
+D_CMD(SetClass);
 #endif
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -625,7 +625,7 @@ Con_Message("P_DamageMobj2: Allowing normal damage in netgame.\n");
 /**
  * Console command to change the players' colors.
  */
-DEFCC(CCmdSetColor)
+D_CMD(SetColor)
 {
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     int     numColors = 4;
@@ -678,7 +678,7 @@ DEFCC(CCmdSetColor)
  * Console command to change the players' class.
  */
 #if __JHEXEN__
-DEFCC(CCmdSetClass)
+D_CMD(SetClass)
 {
     playerclass_t       newClass = atoi(argv[1]);
 
@@ -706,7 +706,7 @@ DEFCC(CCmdSetClass)
 /**
  * Console command to change the current map.
  */
-DEFCC(CCmdSetMap)
+D_CMD(SetMap)
 {
     uint ep, map;
 

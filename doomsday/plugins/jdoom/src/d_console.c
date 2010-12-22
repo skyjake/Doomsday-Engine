@@ -38,37 +38,37 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-DEFCC(CCmdCheat);
-DEFCC(CCmdCheatGod);
-DEFCC(CCmdCheatNoClip);
-DEFCC(CCmdCheatWarp);
-DEFCC(CCmdCheatReveal);
-DEFCC(CCmdCheatGive);
-DEFCC(CCmdCheatMassacre);
-DEFCC(CCmdCheatWhere);
-DEFCC(CCmdCheatLeaveMap);
-DEFCC(CCmdCheatSuicide);
+D_CMD(Cheat);
+D_CMD(CheatGod);
+D_CMD(CheatNoClip);
+D_CMD(CheatWarp);
+D_CMD(CheatReveal);
+D_CMD(CheatGive);
+D_CMD(CheatMassacre);
+D_CMD(CheatWhere);
+D_CMD(CheatLeaveMap);
+D_CMD(CheatSuicide);
 
-DEFCC(CCmdMakeLocal);
-DEFCC(CCmdSetCamera);
-DEFCC(CCmdSetViewLock);
-DEFCC(CCmdSetViewMode);
+D_CMD(MakeLocal);
+D_CMD(SetCamera);
+D_CMD(SetViewLock);
+D_CMD(SetViewMode);
 
-DEFCC(CCmdCycleSpy);
+D_CMD(CycleSpy);
 
-DEFCC(CCmdPlayDemo);
-DEFCC(CCmdRecordDemo);
-DEFCC(CCmdStopDemo);
+D_CMD(PlayDemo);
+D_CMD(RecordDemo);
+D_CMD(StopDemo);
 
-DEFCC(CCmdSpawnMobj);
+D_CMD(SpawnMobj);
 
-DEFCC(CCmdPrintPlayerCoords);
+D_CMD(PrintPlayerCoords);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-DEFCC(CCmdScreenShot);
-DEFCC(CCmdDoomFont);
-DEFCC(CCmdConBackground);
+D_CMD(ScreenShot);
+D_CMD(DoomFont);
+D_CMD(ConBackground);
 
 void G_UpdateEyeHeight(cvar_t* unused);
 
@@ -298,7 +298,7 @@ int ConTextWidth(const char* text)
 /**
  * Console command to take a screenshot (duh).
  */
-DEFCC(CCmdScreenShot)
+D_CMD(ScreenShot)
 {
     G_ScreenShot();
     return true;
@@ -307,7 +307,7 @@ DEFCC(CCmdScreenShot)
 /**
  * Configure the console to use the game's font.
  */
-DEFCC(CCmdDoomFont)
+D_CMD(DoomFont)
 {
     ddfont_t            cfont;
 
@@ -326,7 +326,7 @@ DEFCC(CCmdDoomFont)
 /**
  * Configure the console background.
  */
-DEFCC(CCmdConBackground)
+D_CMD(ConBackground)
 {
     material_t*         mat;
 

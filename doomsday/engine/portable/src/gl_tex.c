@@ -78,7 +78,7 @@ static byte *GetScratchBuffer(size_t size)
     // Need to enlarge?
     if(size > scratchBufferSize)
     {
-        scratchBuffer = Z_Realloc(scratchBuffer, size, PU_STATIC);
+        scratchBuffer = Z_Realloc(scratchBuffer, size, PU_APPSTATIC);
         scratchBufferSize = size;
     }
 

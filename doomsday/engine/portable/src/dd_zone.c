@@ -172,7 +172,7 @@ memvolume_t *Z_Create(size_t volumeSize)
 
     vol->zone->blockList.user = (void *) vol->zone;
     vol->zone->blockList.volume = vol;
-    vol->zone->blockList.tag = PU_STATIC;
+    vol->zone->blockList.tag = PU_APPSTATIC;
     vol->zone->rover = block;
 
     block->prev = block->next = &vol->zone->blockList;
@@ -332,7 +332,7 @@ void *Z_Malloc(size_t size, int tag, void *user)
     memvolume_t    *volume;
     boolean         gotoNextVolume;
 
-    if(tag < PU_STATIC || tag > PU_CACHE)
+    if(tag < PU_APPSTATIC || tag > PU_CACHE)
     {
         Con_Error("Z_Malloc: Invalid purgelevel %i.", tag);
     }
@@ -577,7 +577,7 @@ void Z_FreeTags(int lowTag, int highTag)
             block != &volume->zone->blockList;
             block = next)
         {
-            next = block->next;     // Get link before freeing.
+            next = block->next;
             if(block->user)
             {
                 if(block->tag >= lowTag && block->tag <= highTag)

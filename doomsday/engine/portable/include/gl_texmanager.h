@@ -26,12 +26,11 @@
  * gl_texmanager.h: Texture Management
  */
 
-#ifndef __DOOMSDAY_TEXTURE_MANAGER_H__
-#define __DOOMSDAY_TEXTURE_MANAGER_H__
+#ifndef LIBDENG_TEXTURE_MANAGER_H
+#define LIBDENG_TEXTURE_MANAGER_H
 
 #include "r_data.h"
 #include "r_model.h"
-#include "con_decl.h"
 #include "gl_model.h"
 #include "gl_defer.h"
 
@@ -130,6 +129,7 @@ void            GL_EarlyInitTextureManager(void);
 void            GL_InitTextureManager(void);
 void            GL_ResetTextureManager(void);
 void            GL_ShutdownTextureManager(void);
+void            GL_ClearTextures(void);
 
 void            GL_TexReset(void);
 void            GL_LoadSystemTextures(void);
@@ -217,4 +217,4 @@ float           GLTexture_GetWidth(const gltexture_t* tex);
 float           GLTexture_GetHeight(const gltexture_t* tex);
 boolean         GLTexture_IsFromIWAD(const gltexture_t* tex);
 
-#endif
+#endif /* LIBDENG_TEXTURE_MANAGER_H */

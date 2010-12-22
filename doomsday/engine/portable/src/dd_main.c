@@ -45,10 +45,13 @@
 #include "de_console.h"
 #include "de_network.h"
 #include "de_refresh.h"
+#include "de_graphics.h"
 #include "de_render.h"
 #include "de_audio.h"
-#include "de_misc.h"
 #include "de_ui.h"
+
+#include "m_misc.h" // \todo remove dependency
+#include "m_args.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -172,11 +175,11 @@ static void addToPathList(ddstring_t*** list, size_t* listSize, const char* rawP
     {
     ddstring_t* newPath = Str_New();
 
-    { filename_t temp;
-    M_TranslatePath(temp, rawPath, FILENAME_T_MAXLEN);
-    Str_Set(newPath, temp); }
+    Str_Set(newPath, rawPath);
+    Dir_FixSlashes(Str_Text(newPath), Str_Length(newPath));
+    F_ExpandBasePath(newPath, newPath);
 
-    *list = M_Realloc(*list, sizeof(**list) * ++(*listSize)); /// \fixme This is never freed!
+    *list = realloc(*list, sizeof(**list) * ++(*listSize)); /// \fixme This is never freed!
     (*list)[(*listSize)-1] = newPath;
     }
 }
@@ -188,7 +191,7 @@ static void parseStartupFilePathsAndAddFiles(const char* pathString)
     assert(pathString && pathString[0]);
     {
     size_t len = strlen(pathString);
-    char* buffer = M_Malloc(len + 1), *token;
+    char* buffer = malloc(len + 1), *token;
 
     strcpy(buffer, pathString);
     token = strtok(buffer, ATWSEPS);
@@ -197,7 +200,7 @@ static void parseStartupFilePathsAndAddFiles(const char* pathString)
         W_AddFile(token, false);
         token = strtok(NULL, ATWSEPS);
     }
-    M_Free(buffer);
+    free(buffer);
     }
 
 #undef ATWSEPS
@@ -211,16 +214,16 @@ static void destroyPathList(ddstring_t*** list, size_t* listSize)
         size_t i;
         for(i = 0; i < *listSize; ++i)
             Str_Delete((*list)[i]);
-        M_Free(*list); *list = 0;
+        free(*list); *list = 0;
     }
     *listSize = 0;
 }
 
 static gameinfo_t* addGameInfoRecord(pluginid_t pluginId, const char* identityKey, const char* dataPath,
-    const char* defsPath, const ddstring_t* mainConfig, const char* title, const char* author,
+    const char* defsPath, const char* mainConfig, const char* title, const char* author,
     const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2)
 {
-    gameInfo = M_Realloc(gameInfo, sizeof(*gameInfo) * (numGameInfo + 1));
+    gameInfo = realloc(gameInfo, sizeof(*gameInfo) * (numGameInfo + 1));
     gameInfo[numGameInfo] = P_CreateGameInfo(pluginId, identityKey, dataPath, defsPath, mainConfig, title, author, cmdlineFlag, cmdlineFlag2);
     return gameInfo[numGameInfo++];
 }
@@ -277,7 +280,7 @@ static void addIdentityKeyToResourceRecord(gameresource_record_t* rec, const dds
     assert(rec && identityKey);
     {
     size_t num = countElements(rec->identityKeys);
-    rec->identityKeys = M_Realloc(rec->identityKeys, sizeof(*rec->identityKeys) * MAX_OF(num+1, 2));
+    rec->identityKeys = realloc(rec->identityKeys, sizeof(*rec->identityKeys) * MAX_OF(num+1, 2));
     if(num) num -= 1;
     rec->identityKeys[num] = Str_New();
     Str_Copy(rec->identityKeys[num], identityKey);
@@ -339,13 +342,13 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags, con
 }
 
 gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* _defsPath,
-    const char* _mainConfig, const char* defaultTitle, const char* defaultAuthor, const char* _cmdlineFlag,
+    const char* mainConfig, const char* defaultTitle, const char* defaultAuthor, const char* _cmdlineFlag,
     const char* _cmdlineFlag2)
 {
     assert(identityKey && identityKey[0] && _dataPath && _dataPath[0] && _defsPath && _defsPath[0] && defaultTitle && defaultTitle[0] && defaultAuthor && defaultAuthor[0]);
     {
     gameinfo_t* info;
-    ddstring_t mainConfig, cmdlineFlag, cmdlineFlag2;
+    ddstring_t cmdlineFlag, cmdlineFlag2;
     filename_t dataPath, defsPath;
     pluginid_t pluginId = Plug_PluginIdForActiveHook();
 
@@ -360,10 +363,6 @@ gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* 
 
     M_TranslatePath(defsPath, _defsPath, FILENAME_T_MAXLEN);
     Dir_ValidDir(defsPath, FILENAME_T_MAXLEN);
-
-    Str_Init(&mainConfig);
-    if(_mainConfig)
-        Str_Set(&mainConfig, _mainConfig);
 
     Str_Init(&cmdlineFlag);
     Str_Init(&cmdlineFlag2);
@@ -385,9 +384,8 @@ gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* 
     /**
      * Looking good. Add this game to our records.
      */
-    info = addGameInfoRecord(pluginId, identityKey, dataPath, defsPath, &mainConfig, defaultTitle, defaultAuthor, _cmdlineFlag? &cmdlineFlag : 0, _cmdlineFlag2? &cmdlineFlag2 : 0);
+    info = addGameInfoRecord(pluginId, identityKey, dataPath, defsPath, mainConfig, defaultTitle, defaultAuthor, _cmdlineFlag? &cmdlineFlag : 0, _cmdlineFlag2? &cmdlineFlag2 : 0);
 
-    Str_Free(&mainConfig);
     Str_Free(&cmdlineFlag);
     Str_Free(&cmdlineFlag2);
 
@@ -405,7 +403,7 @@ void DD_DestroyGameInfo(void)
         for(i = 0; i < numGameInfo; ++i)
             P_DestroyGameInfo(gameInfo[i]);
         }
-        M_Free(gameInfo); gameInfo = 0;
+        free(gameInfo); gameInfo = 0;
     }
     numGameInfo = 0;
     currentGameInfoIndex = 0;
@@ -457,7 +455,7 @@ static boolean validateGameResource(gameresource_record_t* rec, const char* name
 {
     byte result = 0;
     ddstring_t foundPath; Str_Init(&foundPath);
-    if(F_FindResource2(rec->rclass, name, &foundPath))
+    if(F_FindResource2(rec->rclass, name, &foundPath) != 0)
     {
         switch(rec->rclass)
         {
@@ -579,7 +577,7 @@ static void printGameResourceRecord(gameresource_record_t* rec, boolean printSta
         Con_Printf("%s", Str_Length(&rec->path) == 0? " ! ":"   ");
     Con_PrintPathList3(Str_Text(&rec->names), " or ", PPF_TRANSFORM_PATH_MAKEPRETTY);
     if(printStatus)
-        Con_Printf(" %s%s", Str_Length(&rec->path) == 0? "- missing" : "- found ", Str_Length(&rec->path) == 0? "" : M_PrettyPath(Str_Text(&rec->path)));
+        Con_Printf(" %s%s", Str_Length(&rec->path) == 0? "- missing" : "- found ", Str_Length(&rec->path) == 0? "" : Str_Text(F_PrettyPath(&rec->path)));
     Con_Printf("\n");
 }
 
@@ -623,10 +621,13 @@ static void printGameInfo(gameinfo_t* info, boolean printBanner, boolean printSt
 {
     assert(info);
 
+    if(DD_IsNullGameInfo(info))
+        printBanner = false;
+
 #if _DEBUG
     Con_Printf("pluginid:%i data:\"%s\" defs:\"%s\"\n", (int)GameInfo_PluginId(info),
-               M_PrettyPath(Str_Text(GameInfo_DataPath(info))),
-               M_PrettyPath(Str_Text(GameInfo_DefsPath(info))));
+               Str_Text(F_PrettyPath(GameInfo_DataPath(info))),
+               Str_Text(F_PrettyPath(GameInfo_DefsPath(info))));
 #endif
 
     if(printBanner)
@@ -750,13 +751,19 @@ static void* getEntryPoint(lt_dlhandle* handle, const char* fn)
 
 static boolean exchangeEntryPoints(pluginid_t pluginId)
 {
-    if(!app.GetGameAPI)
+    if(pluginId != 0)
     {
         // Do the API transfer.
         GETGAMEAPI fptAdr;
         if(!(fptAdr = (GETGAMEAPI) getEntryPoint(&app.hInstPlug[pluginId-1], "GetGameAPI")))
             return false;
         app.GetGameAPI = fptAdr;
+        DD_InitAPI();
+        Def_GetGameClasses();
+    }
+    else
+    {
+        app.GetGameAPI = 0;
         DD_InitAPI();
         Def_GetGameClasses();
     }
@@ -775,11 +782,17 @@ static __inline boolean isWad(const char* fn)
     return (len > 4 && !strnicmp(fn + len - 4, ".wad", 4));
 }
 
-static int DD_ChangeGameWorker(void* parm)
+typedef struct {
+    gameinfo_t* info;
+    /// @c true iff caller (i.e., DD_ChangeGame) initiated busy mode.
+    boolean initiatedBusyMode;
+} ddchangegameworker_paramaters_t;
+
+static int DD_ChangeGameWorker(void* paramaters)
 {
-    assert(parm);
+    assert(paramaters);
     {
-    gameinfo_t* info = (gameinfo_t*)parm;
+    ddchangegameworker_paramaters_t* p = (ddchangegameworker_paramaters_t*)paramaters;
     uint startTime;
 
     /**
@@ -796,16 +809,17 @@ static int DD_ChangeGameWorker(void* parm)
     }
     else
     {
-        configFileName = GameInfo_MainConfig(info);
+        configFileName = GameInfo_MainConfig(p->info);
     }
 
-    Con_Message("Parsing game config: \"%s\" ...\n", M_PrettyPath(Str_Text(configFileName)));
+    Con_Message("Parsing game config: \"%s\" ...\n", Str_Text(F_PrettyPath(configFileName)));
     Con_ParseCommands(Str_Text(configFileName), true);
     if(configFileName == &tmp)
         Str_Free(&tmp);
     }
 
-    Con_SetProgress(10);
+    if(p->initiatedBusyMode)
+        Con_SetProgress(10);
 
     F_InitResourceLocator();
     F_InitMapping();
@@ -817,12 +831,12 @@ static int DD_ChangeGameWorker(void* parm)
 
     Str_Init(&temp);
     // Data class resources.
-    Str_Appendf(&temp, "%sauto", Str_Text(GameInfo_DataPath(info)));
+    Str_Appendf(&temp, "%sauto", Str_Text(GameInfo_DataPath(p->info)));
     F_AddMapping("auto", Str_Text(&temp));
 
     Str_Clear(&temp);
     // Definition class resources.
-    Str_Appendf(&temp, "%sauto", Str_Text(GameInfo_DefsPath(info)));
+    Str_Appendf(&temp, "%sauto", Str_Text(GameInfo_DefsPath(p->info)));
     F_AddMapping("auto", Str_Text(&temp));
 
     Str_Free(&temp);
@@ -841,7 +855,7 @@ static int DD_ChangeGameWorker(void* parm)
      * \fixme dj: First ZIPs then WADs (they may contain virtual WAD files).
      */
 #pragma message("!!!WARNING: Phase 1 of game resource loading does not presently prioritize ZIP!!!")
-    loadGameResources(info, RC_PACKAGE, "");
+    loadGameResources(p->info, RC_PACKAGE, "");
 
     /**
      * Phase 2: Add additional game-startup files.
@@ -879,18 +893,20 @@ static int DD_ChangeGameWorker(void* parm)
     B_BindGameDefaults();
 
     // Read bindings for this game and merge with the working set.
-    Con_ParseCommands(Str_Text(GameInfo_BindingConfig(info)), false);
+    Con_ParseCommands(Str_Text(GameInfo_BindingConfig(p->info)), false);
 
     R_InitTextures();
     R_InitFlats();
     R_PreInitSprites();
 
-    Con_SetProgress(120);
+    if(p->initiatedBusyMode)
+        Con_SetProgress(120);
 
     // Now that we've generated the auto-materials we can initialize definitions.
     Def_Read();
 
-    Con_SetProgress(160);
+    if(p->initiatedBusyMode)
+        Con_SetProgress(160);
 
     R_InitSprites(); // Fully initialize sprites.
     R_InitModels();
@@ -902,14 +918,34 @@ static int DD_ChangeGameWorker(void* parm)
     DD_ReadGameHelp();
     Con_InitUI(); // Update the console title display(s).
 
+    // Reset the tictimer so than any fractional accumulation is not added to
+    // the tic/game timer of the newly-loaded game.
+    DD_ResetTimer();
+
     if(gx.PostInit)
     {
-        Con_SetProgress(180);
-        gx.PostInit((gameid_t)gameInfoIndex(info));
+        if(p->initiatedBusyMode)
+            Con_SetProgress(180);
+        gx.PostInit((gameid_t)gameInfoIndex(p->info));
     }
 
-    Con_SetProgress(200);
-    Con_BusyWorkerEnd();
+    if(!DD_IsNullGameInfo(p->info))
+    {
+        printGameInfoBanner(p->info);
+    }
+    else
+    {
+        // Lets play a nice title animation.
+        ddfinale_t fin;
+        if(Def_Get(DD_DEF_FINALE, "background", &fin))
+            titleFinale = FI_Execute(fin.script, FF_LOCAL);
+    }
+
+    if(p->initiatedBusyMode)
+    {
+        Con_SetProgress(200);
+        Con_BusyWorkerEnd();
+    }
     return 0;
     }
 }
@@ -929,40 +965,110 @@ boolean DD_ChangeGame(gameinfo_t* info)
         return true;
     }
 
+    // Quit netGame if one is in progress.
+    if(netGame)
+        Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect", true, false);
+
+    GL_SetFilter(false);
+    S_Reset();
+    Demo_StopPlayback();
+
+    // If a game is presently loaded; unload it.
     if(!DD_IsNullGameInfo(DD_GameInfo()))
     {
-        Con_Message("Runtime game change not yet implemented.\n");
-        return false;
+        Con_SaveDefaults();
+
+        if(gx.Shutdown)
+            gx.Shutdown();
+        Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
+
+        // If a map was loaded; unload it.
+        P_SetCurrentMap(0);
+
+        R_ShutdownCompositeFonts();
+        R_ShutdownVectorGraphics();
+        R_ClearPatchTexs();
+        GL_ClearTextures();
+
+        Sfx_InitLogical();
+
+        P_InitThinkerLists(0x1|0x2);
+        P_ControlShutdown();
+
+        Con_DestroyDatabases();
+
+        // This is now the current game.
+        currentGameInfoIndex = gameInfoIndex(findGameInfoForIdentityKey("null-game"));
+
+        F_InitResourceLocator();
+        F_InitMapping();
+
+        R_InitCompositeFonts();
+        R_InitVectorGraphics();
+
+        R_InitViewBorder();
+        R_SetViewWindow(0, 0, SCREENWIDTH, SCREENHEIGHT);
+
+        DD_Register();
+        Con_UpdateKnownWords();
+
+        W_Reset();
     }
 
+    FI_Shutdown();
+    titleFinale = 0; // If the title finale was in progress it isn't now.
+    Materials_Shutdown();
+
     VERBOSE( Con_Message("DD_ChangeGame: Selecting \"%s\".\n", Str_Text(GameInfo_IdentityKey(info))) );
+
     if(!exchangeEntryPoints(GameInfo_PluginId(info)))
     {
+        Materials_Initialize();
+        FI_Init();
+
         Con_Message("DD_ChangeGame: Warning, error exchanging entrypoints with plugin %i - aborting.\n", (int)GameInfo_PluginId(info));
         return false;
     }
 
-    // If the title finale is in progress, stop it.
-    if(titleFinale != 0)
-    {
-        FI_ScriptTerminate(titleFinale); titleFinale = 0;
-    }
+    // This is now the current game.
+    currentGameInfoIndex = gameInfoIndex(info);
+
+    Materials_Initialize();
+    FI_Init();
 
     P_InitMapUpdate();
     DAM_Init();
 
-    // This is now the current game.
-    currentGameInfoIndex = gameInfoIndex(info);
-
-    if(gx.PreInit)
+    if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.PreInit)
         gx.PreInit();
 
-    // The bulk of this we can do in busy mode.
-    Con_InitProgress(200);
-    Con_Busy(BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0), "Changing game...", DD_ChangeGameWorker, info);
+    /**
+     * The bulk of this we can do in busy mode unless we are already busy
+     * (which can happen if a fatal error occurs during game load and we must
+     * shutdown immediately; Sys_Shutdown will call back to load the special
+     * "null-game" info).
+     */
+    { ddchangegameworker_paramaters_t p;
+    p.info = info;
+    p.initiatedBusyMode = !Con_IsBusy();
+    if(p.initiatedBusyMode)
+    {
+        Con_InitProgress(200);
+        Con_Busy(BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                 (DD_IsNullGameInfo(info)?"Unloading game...":"Changing game..."), DD_ChangeGameWorker, &p);
+    }
+    else
+    {   /// \todo Update the current task name and push progress.
+        DD_ChangeGameWorker(&p);
+    }
+    }
 
-    printGameInfoBanner(info);
-
+    /**
+     * Clear any input events we may have accumulated during this process.
+     * \note Only necessary here because we might not have been able to use
+     * busy mode (which would normally do this for us on end).
+     */
+    DD_ClearEvents();
     return true;
 }
 
@@ -1063,14 +1169,18 @@ int DD_EarlyInit(void)
     Sys_InitWindowManager();
 
     /**
-     * One-time creation and initialization of the special "null-game" object (activated once created).
+     * One-time creation and initialization of the special "null-game"
+     * object (activated once created).
+     *
+     * \note Ideally this would call DD_ChangeGame but not all required
+     * subsystems are online at this time.
      */
     { filename_t dataPath, defsPath;
     M_TranslatePath(dataPath, DD_BASEPATH_DATA, FILENAME_T_MAXLEN);
     Dir_ValidDir(dataPath, FILENAME_T_MAXLEN);
     M_TranslatePath(defsPath, DD_BASEPATH_DEFS, FILENAME_T_MAXLEN);
     Dir_ValidDir(defsPath, FILENAME_T_MAXLEN);
-    currentGameInfoIndex = gameInfoIndex(addGameInfoRecord(0, "null-game", dataPath, defsPath, 0, 0, 0, 0, 0));
+    currentGameInfoIndex = gameInfoIndex(addGameInfoRecord(0, "null-game", dataPath, defsPath, "doomsday.cfg", 0, 0, 0, 0));
     }
     return true;
 }
@@ -1328,22 +1438,9 @@ int DD_Main(void)
     exitCode = DD_GameLoop();
 
     // Time to shutdown.
-
-    if(netGame)
-    {   // Quit netGame if one is in progress.
-        Con_Execute(CMDS_DDAY, isServer ? "net server close" : "net disconnect", true, false);
-    }
-
-    Demo_StopPlayback();
-
-    if(!DD_IsNullGameInfo(DD_GameInfo()))
-    {   // A game is still loaded; save state, user configs etc, etc...
-        Con_SaveDefaults();
-    }
-
-    B_Shutdown();
     Sys_Shutdown();
 
+    // Bye!
     return exitCode;
 }
 
@@ -1404,7 +1501,7 @@ static int DD_StartupWorker(void* parm)
 
     // Add required engine resource files.
     { ddstring_t foundPath; Str_Init(&foundPath);
-    if(F_FindResource2(RC_PACKAGE, "doomsday.pk3", &foundPath))
+    if(F_FindResource2(RC_PACKAGE, "doomsday.pk3;", &foundPath) != 0)
         W_AddFile(Str_Text(&foundPath), false);
     else
         Con_Error("DD_StartupWorker: Failed to locate required resource \"doomsday.pk3\".");
@@ -1500,13 +1597,31 @@ void DD_CheckTimeDemo(void)
     }
 }
 
-static int DD_UpdateWorker(void* parm)
+typedef struct {
+    /// @c true iff caller (i.e., DD_UpdateEngineState) initiated busy mode.
+    boolean initiatedBusyMode;
+} ddupdateenginestateworker_paramaters_t;
+
+static int DD_UpdateEngineStateWorker(void* paramaters)
 {
+    assert(paramaters);
+    {
+    ddupdateenginestateworker_paramaters_t* p = (ddupdateenginestateworker_paramaters_t*) paramaters;
+
     GL_InitRefresh();
+
+    if(p->initiatedBusyMode)
+        Con_SetProgress(50);
+
     R_Update();
 
-    Con_BusyWorkerEnd();
+    if(p->initiatedBusyMode)
+    {
+        Con_SetProgress(200);
+        Con_BusyWorkerEnd();
+    }
     return 0;
+    }
 }
 
 void DD_UpdateEngineState(void)
@@ -1519,10 +1634,11 @@ void DD_UpdateEngineState(void)
     // Update the dir/WAD translations.
     F_InitDirec();
 
-    if(!DD_IsNullGameInfo(DD_GameInfo()))
+    if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.UpdateState)
         gx.UpdateState(DD_PRE);
 
     // Stop playing sounds and music.
+    GL_SetFilter(false);
     Demo_StopPlayback();
     S_Reset();
 
@@ -1534,11 +1650,25 @@ void DD_UpdateEngineState(void)
     if(hadFog)
         GL_UseFog(true);
 
-    // Now that GL is back online, we can continue the update in busy mode.
-    Con_InitProgress(200);
-    Con_Busy(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0), "Updating engine state...", DD_UpdateWorker, 0);
+    /**
+     * The bulk of this we can do in busy mode unless we are already busy
+     * (which can happen during a runtime game change).
+     */
+    { ddupdateenginestateworker_paramaters_t p;
+    p.initiatedBusyMode = !Con_IsBusy();
+    if(p.initiatedBusyMode)
+    {
+        Con_InitProgress(200);
+        Con_Busy(BUSYF_ACTIVITY | BUSYF_PROGRESS_BAR | (verbose? BUSYF_CONSOLE_OUTPUT : 0),
+                 "Updating engine state...", DD_UpdateEngineStateWorker, &p);
+    }
+    else
+    {   /// \todo Update the current task name and push progress.
+        DD_UpdateEngineStateWorker(&p);
+    }
+    }
 
-    if(!DD_IsNullGameInfo(DD_GameInfo()))
+    if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.UpdateState)
         gx.UpdateState(DD_POST);
 
     // Reset the anim groups (if in-game)
@@ -1965,15 +2095,36 @@ const char* value_Str(int val)
 
 D_CMD(Load)
 {
+    ddstring_t searchPath, foundPath;
+    int result = 0;
+
     { gameinfo_t* info;
     if(argc == 2 && (info = findGameInfoForIdentityKey(argv[1])))
         return DD_ChangeGame(info);}
-    /// \todo dj: Use the resource locator.
-    return W_AddFiles(argv + 1, argc - 1, true);
+
+    /// Try the resource locator.
+    Str_Init(&searchPath);
+    Str_Init(&foundPath);
+    { int i;
+    for(i = 1; i < argc; ++i)
+    {
+        Str_Clear(&searchPath);
+        Str_Appendf(&searchPath, "%s;", argv[i]);
+        if(F_FindResource2(RC_UNKNOWN, Str_Text(&searchPath), &foundPath) != 0 &&
+           W_AddFile(Str_Text(&foundPath), false))
+            result = 1;
+    }}
+    Str_Free(&foundPath);
+    Str_Free(&searchPath);
+    return result != 0;
 }
 
 D_CMD(Unload)
 {
+    ddstring_t searchPath, foundPath;
+    int result = 0;
+
+    // No arguments; unload the current game if loaded.
     if(argc == 1)
     {
         if(DD_IsNullGameInfo(DD_GameInfo()))
@@ -1983,8 +2134,33 @@ D_CMD(Unload)
         }
         return DD_ChangeGame(findGameInfoForIdentityKey("null-game"));
     }
-    /// \todo dj: Use the resource locator.
-    return W_RemoveFiles(argv + 1, argc - 1);
+
+    // Unload the current game if specified.
+    { gameinfo_t* info;
+    if(argc == 2 && (info = findGameInfoForIdentityKey(argv[1])) != 0)
+    {
+        if(!DD_IsNullGameInfo(DD_GameInfo()))
+            return DD_ChangeGame(findGameInfoForIdentityKey("null-game"));
+        
+        Con_Message("%s is not currently loaded.\n", Str_Text(GameInfo_IdentityKey(info)));
+        return false;
+    }}
+
+    /// Try the resource locator.
+    Str_Init(&searchPath);
+    Str_Init(&foundPath);
+    { int i;
+    for(i = 1; i < argc; ++i)
+    {
+        Str_Clear(&searchPath);
+        Str_Appendf(&searchPath, "%s;", argv[i]);
+        if(F_FindResource2(RC_UNKNOWN, Str_Text(&searchPath), &foundPath) != 0 &&
+           W_RemoveFile(Str_Text(&foundPath)))
+            result = 1;
+    }}
+    Str_Free(&foundPath);
+    Str_Free(&searchPath);
+    return result != 0;
 }
 
 D_CMD(PrintInfo)
@@ -2014,7 +2190,7 @@ D_CMD(ListGames)
     Con_FPrintf(CBLF_RULER, "");
 
     // Sort a copy of gameInfo so we get a nice alphabetical list.
-    infoPtrs = M_Malloc(sizeof(*infoPtrs) * numGameInfo);
+    infoPtrs = malloc(sizeof(*infoPtrs) * numGameInfo);
     memcpy(infoPtrs, gameInfo, sizeof(*infoPtrs) * numGameInfo);
     qsort(infoPtrs, numGameInfo, sizeof(*infoPtrs), compareGameInfoByName);
 
@@ -2033,7 +2209,7 @@ D_CMD(ListGames)
     Con_FPrintf(CBLF_RULER, "");
     Con_Printf("%u of %u games playable.\n", numCompleteGames, numAvailableGames);
 
-    M_Free(infoPtrs);
+    free(infoPtrs);
     return true;
 }
 

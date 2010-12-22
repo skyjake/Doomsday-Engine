@@ -1330,7 +1330,7 @@ void M_InitEpisodeMenu(void)
 #endif
 
     // Allocate the menu objects array.
-    EpisodeItems = Z_Calloc(sizeof(mn_object_t) * (numEpisodes+1), PU_STATIC, 0);
+    EpisodeItems = Z_Calloc(sizeof(mn_object_t) * (numEpisodes+1), PU_GAMESTATIC, 0);
 
     for(i = 0, maxw = 0; i < numEpisodes; ++i)
     {
@@ -1379,7 +1379,7 @@ void M_InitPlayerClassMenu(void)
     }
 
     // Allocate the menu objects array.
-    ClassItems = Z_Calloc(sizeof(mn_object_t) * (count + 1), PU_STATIC, 0);
+    ClassItems = Z_Calloc(sizeof(mn_object_t) * (count + 1), PU_GAMESTATIC, 0);
 
     // Add the selectable classes.
     n = i = 0;
@@ -3902,7 +3902,7 @@ void M_OpenDCP(mn_object_t* obj, int option)
 /**
  * Routes menu commands, actions and navigation.
  */
-DEFCC(CCmdMenuAction)
+D_CMD(MenuAction)
 {
     if(G_GetGameAction() == GA_QUIT)
         return false;
@@ -4158,7 +4158,7 @@ DEFCC(CCmdMenuAction)
     return true;
 }
 
-DEFCC(CCmdShortcut)
+D_CMD(Shortcut)
 {
     if(G_GetGameAction() == GA_QUIT)
         return false;

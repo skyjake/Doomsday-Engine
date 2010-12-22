@@ -65,6 +65,7 @@
 #include "hu_pspr.h"
 #include "g_common.h"
 #include "g_update.h"
+#include "g_eventsequence.h"
 #include "d_net.h"
 #include "x_hair.h"
 #include "p_player.h"
@@ -126,7 +127,7 @@ MonsterMissileInfo[] =
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-DEFCC(CCmdListMaps);
+D_CMD(ListMaps);
 
 void    G_PlayerReborn(int player);
 void    G_InitNew(skillmode_t skill, uint episode, uint map);
@@ -1252,7 +1253,7 @@ void R_InitRefresh(void)
  */
 void G_CommonPostInit(void)
 {
-    VERBOSE(G_PrintMapList());
+    VERBOSE( G_PrintMapList() );
 
     GUI_Init();
     R_InitRefresh();
@@ -1280,6 +1281,7 @@ void G_CommonPostInit(void)
     Con_Message("ST_Init: Init status bar.\n");
     ST_Init();
 
+    G_InitEventSequences();
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
     Cht_Init();
 #endif
@@ -1297,6 +1299,26 @@ void G_CommonPostInit(void)
     // Create the various line lists (spechits, anims, buttons etc).
     spechit = P_CreateIterList();
     linespecials = P_CreateIterList();
+}
+
+/**
+ * Common game shutdown routine.
+ * \note Game-specific actions should be placed in G_Shutdown rather than here.
+ */
+void G_CommonShutdown(void)
+{
+    Plug_RemoveHook(HOOK_DEMO_STOP, Hook_DemoStop);
+
+    Hu_MsgShutdown();
+    Hu_UnloadData();
+    Hu_LogShutdown();
+
+    P_Shutdown();
+    G_ShutdownEventSequences();
+
+    AM_Shutdown();
+    FI_StackShutdown();
+    GUI_Shutdown();
 }
 
 /**
@@ -3408,7 +3430,7 @@ void G_DoScreenShot(void)
     Con_Message("Wrote %s.\n", name);
 }
 
-DEFCC(CCmdListMaps)
+D_CMD(ListMaps)
 {
     Con_Message("Available maps:\n");
     G_PrintMapList();

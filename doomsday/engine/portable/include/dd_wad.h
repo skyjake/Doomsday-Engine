@@ -23,13 +23,11 @@
  */
 
 /**
- * dd_wad.h: WAD Files and Data Lump Cache
+ * WAD Files and Data Lump Cache.
  */
 
 #ifndef LIBDENG_WAD_H
 #define LIBDENG_WAD_H
-
-#include "con_decl.h"
 
 void DD_RegisterVFS(void);
 

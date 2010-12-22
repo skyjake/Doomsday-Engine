@@ -243,7 +243,7 @@ static clipnode_t *C_NewRange(binangle_t stAng, binangle_t endAng)
     if((node = C_RoverGet(&clipNodes)) == NULL)
     {
         // Allocate a new node and add it to head the list.
-        node = Z_Malloc(sizeof(clipnode_t), PU_STATIC, NULL);
+        node = Z_Malloc(sizeof(clipnode_t), PU_APPSTATIC, NULL);
         C_RoverAdd(&clipNodes, node);
     }
 
@@ -457,7 +457,7 @@ occnode_t *C_NewOcclusionRange(binangle_t stAng, binangle_t endAng,
     if((node = C_RoverGet(&occNodes)) == NULL)
     {
         // Allocate a new node.
-        node = Z_Malloc(sizeof(occnode_t), PU_STATIC, NULL);
+        node = Z_Malloc(sizeof(occnode_t), PU_APPSTATIC, NULL);
         C_RoverAdd(&occNodes, node);
     }
 
@@ -1288,7 +1288,7 @@ int C_CheckSubsector(subsector_t *ssec)
             anglistSize = 64;
 
         anglist =
-         Z_Realloc(anglist, sizeof(binangle_t) * anglistSize, PU_STATIC);
+         Z_Realloc(anglist, sizeof(binangle_t) * anglistSize, PU_APPSTATIC);
     }
 
     ptr = ssec->segs;

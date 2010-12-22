@@ -98,6 +98,7 @@
 		<Unit filename="..\..\plugins\common\include\g_defs.h" />
 		<Unit filename="..\..\plugins\common\include\g_common.h" />
 		<Unit filename="..\..\plugins\common\include\g_controls.h" />
+		<Unit filename="..\..\plugins\common\include\g_eventsequence.h" />
 		<Unit filename="..\..\plugins\common\include\g_update.h" />
 		<Unit filename="..\..\plugins\common\include\gl_drawpatch.h" />
 		<Unit filename="..\..\plugins\common\include\hu_lib.h" />
@@ -152,9 +153,8 @@
 		</Unit>
 		<Unit filename="..\..\plugins\common\src\fi_lib.c" />
 		<Unit filename="..\..\plugins\common\src\g_defs.c" />
-		<Unit filename="..\..\plugins\common\src\g_controls.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="..\..\plugins\common\src\g_controls.c" />
+		<Unit filename="..\..\plugins\common\src\g_eventsequence.c">
 		<Unit filename="..\..\plugins\common\src\g_game.c">
 			<Option compilerVar="CC" />
 		</Unit>

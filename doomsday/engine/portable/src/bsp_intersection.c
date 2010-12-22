@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -25,19 +25,20 @@
  */
 
 /**
- * bsp_intersection.c: Intersections and cutlists (lists of intersections).
+ * Intersections and cutlists (lists of intersections).
  */
 
 // HEADER FILES ------------------------------------------------------------
-
-#include "de_base.h"
-#include "de_bsp.h"
-#include "de_misc.h"
 
 #include <stdlib.h>
 #include <ctype.h>
 #include <math.h>
 #include <limits.h>
+
+#include "de_base.h"
+#include "de_console.h"
+#include "de_bsp.h"
+#include "de_misc.h"
 
 // MACROS ------------------------------------------------------------------
 

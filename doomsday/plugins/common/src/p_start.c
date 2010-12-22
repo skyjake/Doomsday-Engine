@@ -54,6 +54,7 @@
 #include "p_tick.h"
 #include "p_mapsetup.h"
 #include "p_user.h"
+#include "p_player.h"
 #include "d_net.h"
 #include "p_map.h"
 #include "am_map.h"
@@ -64,6 +65,8 @@
 #include "p_switch.h"
 #include "g_defs.h"
 #include "p_inventory.h"
+#include "p_mapspec.h"
+#include "dmu_lib.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -224,6 +227,22 @@ void P_Init(void)
     GetDefInt("SoulSphere|Give|Health", &soulSphereHealth);
     GetDefInt("SoulSphere|Give|Health Limit", &soulSphereLimit);
 #endif
+}
+
+void P_Shutdown(void)
+{
+    if(spechit)
+        P_DestroyIterList(spechit);
+    spechit = 0;
+
+    if(linespecials)
+        P_DestroyIterList(linespecials);
+    linespecials = 0;
+
+    P_DestroyLineTagLists();
+    P_DestroySectorTagLists();
+    P_FreeWeaponSlots();
+    P_ShutdownTerrainTypes();
 }
 
 void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, boolean deathmatch,

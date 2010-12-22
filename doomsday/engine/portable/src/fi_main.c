@@ -127,7 +127,7 @@ static finaleid_t finalesUniqueId(void)
 finale_t* P_CreateFinale(void)
 {
     finale_t* f;
-    finales = Z_Realloc(finales, sizeof(*finales) * ++finalesSize, PU_STATIC);
+    finales = Z_Realloc(finales, sizeof(*finales) * ++finalesSize, PU_APPSTATIC);
     f = &finales[finalesSize-1];
     f->id = finalesUniqueId();
     f->_interpreter = P_CreateFinaleInterpreter();
@@ -150,7 +150,7 @@ void P_DestroyFinale(finale_t* f)
 
         if(finalesSize > 1)
         {
-            finales = Z_Realloc(finales, sizeof(*finales) * --finalesSize, PU_STATIC);
+            finales = Z_Realloc(finales, sizeof(*finales) * --finalesSize, PU_APPSTATIC);
         }
         else
         {

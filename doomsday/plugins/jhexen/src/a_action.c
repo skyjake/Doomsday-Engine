@@ -69,15 +69,15 @@ void X_CreateLUTs(void)
 
     uint                i;
 
-    orbitTableX = Z_Malloc(sizeof(float) * ORBITRES, PU_STATIC, 0);
+    orbitTableX = Z_Malloc(sizeof(float) * ORBITRES, PU_GAMESTATIC, 0);
     for(i = 0; i < ORBITRES; ++i)
         orbitTableX[i] = cos(((float) i) / 40.74f) * 15;
 
-    orbitTableY = Z_Malloc(sizeof(float) * ORBITRES, PU_STATIC, 0);
+    orbitTableY = Z_Malloc(sizeof(float) * ORBITRES, PU_GAMESTATIC, 0);
     for(i = 0; i < ORBITRES; ++i)
         orbitTableY[i] = sin(((float) i) / 40.74f) * 15;
 
-    FloatBobOffset = Z_Malloc(sizeof(float) * FLOATBOBRES, PU_STATIC, 0);
+    FloatBobOffset = Z_Malloc(sizeof(float) * FLOATBOBRES, PU_GAMESTATIC, 0);
     for(i = 0; i < FLOATBOBRES; ++i)
         FloatBobOffset[i] = sin(((float) i) / 10.186f) * 8;
 

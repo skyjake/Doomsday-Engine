@@ -53,15 +53,17 @@
 
 #include "sys_file.h"
 #include "sys_reslocator.h"
-#include "con_decl.h"
-#include "gl_draw.h" // for GL_SetFilter()
 
 // MACROS ------------------------------------------------------------------
 
 #define RECORD_FILENAMELEN  FILENAME_T_MAXLEN
 
-// File record flags.
+/**
+ * @defgroup fileRecordFlags File record flags.
+ */
+/*@{*/
 #define FRF_RUNTIME         0x1 // Loaded at runtime (for reset).
+/*@}*/
 
 #define AUXILIARY_BASE      100000000
 
@@ -78,12 +80,10 @@ typedef enum {
 } lumpgrouptag_t;
 
 typedef struct {
-    char            name[9]; // End in \0.
+    lumpname_t      name; // End in '\0'.
     DFILE*          handle;
     int             position;
     size_t          size;
-    int             sent;
-    char            group; // Lump grouping tag (LGT_*).
 } lumpinfo_t;
 
 typedef struct {
@@ -101,7 +101,7 @@ typedef struct {
 typedef struct {
     filename_t      fileName; // Full filename.
     int             numLumps;
-    int             flags;
+    int             flags; /// @see fileRecordFlags
     DFILE*          handle;
     char            iwad;
 } filerecord_t;
@@ -143,9 +143,7 @@ static filerecord_t* records = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static boolean loadingForStartup = true;
-
-static grouping_t lumpGroups[] = {
+static const grouping_t lumpGroups[] = {
     { "", "" },
     { "F_START", "F_END" }, // Flats
     { "S_START", "S_END" } // Sprites
@@ -154,11 +152,14 @@ static grouping_t lumpGroups[] = {
 static lumpinfo_t* PrimaryLumpInfo;
 static int PrimaryNumLumps;
 static void** PrimaryLumpCache;
-static DFILE* AuxiliaryHandle;
+
 static lumpinfo_t* AuxiliaryLumpInfo;
 static int AuxiliaryNumLumps;
 static void** AuxiliaryLumpCache;
+
+static boolean loadingForStartup = true;
 boolean AuxiliaryOpened = false;
+static DFILE* AuxiliaryHandle;
 
 // CODE --------------------------------------------------------------------
 
@@ -309,7 +310,7 @@ lumpnum_t W_ScanForName(char* lumpname, int startfrom)
 /**
  * Writes the correct data into a lumpinfo_t entry.
  */
-static void populateLumpInfo(int liIndex, filelump_t* flump, filerecord_t* rec, int groupTag)
+static void populateLumpInfo(int liIndex, filelump_t* flump, filerecord_t* rec)
 {
     lumpinfo_t* lump = &lumpInfo[liIndex];
     lump->handle = rec->handle;
@@ -317,7 +318,6 @@ static void populateLumpInfo(int liIndex, filelump_t* flump, filerecord_t* rec, 
     lump->size = LONG(flump->size);
     memset(lump->name, 0, sizeof(lump->name));
     strncpy(lump->name, flump->name, 8);
-    lump->group = groupTag;
 }
 
 /**
@@ -356,8 +356,7 @@ static void moveLumps(int from, int count, int offset)
 /**
  * Moves the rest of the lumps forward.
  */
-static void insertAndFillLumpRange(int toIndex, filelump_t* lumps, int num,
-    filerecord_t* rec, int groupTag)
+static void insertAndFillLumpRange(int toIndex, filelump_t* lumps, int num, filerecord_t* rec)
 {
     // Move lumps if needed.
     if(toIndex < numLumps)
@@ -366,7 +365,7 @@ static void insertAndFillLumpRange(int toIndex, filelump_t* lumps, int num,
     // Now we can just fill in the lumps.
     { int i;
     for(i = 0; i < num; ++i)
-        populateLumpInfo(toIndex + i, lumps + i, rec, groupTag);
+        populateLumpInfo(toIndex + i, lumps + i, rec);
     }
 
     // Update the number of lumps.
@@ -485,7 +484,7 @@ static int markerForLumpGroup(char* name, boolean begin)
  * previously existing flat and sprite groups. All other lumps are just
  * appended to the end of the list.
  */
-void W_InsertLumps(filelump_t* fileinfo, filerecord_t* rec)
+static void insertLumps(filelump_t* fileinfo, filerecord_t* rec)
 {
     int i, to, num;
     filelump_t* flump = fileinfo;
@@ -520,8 +519,7 @@ void W_InsertLumps(filelump_t* fileinfo, filerecord_t* rec)
             }
 
             // This lump is very ordinary. Just append it to the lumpInfo.
-            //rec->indices[i] = numLumps;
-            populateLumpInfo(numLumps++, flump, rec, inside);
+            populateLumpInfo(numLumps++, flump, rec);
         }
         else
         {
@@ -540,8 +538,7 @@ void W_InsertLumps(filelump_t* fileinfo, filerecord_t* rec)
                     num += 2;
                     to = numLumps;
                 }
-                insertAndFillLumpRange(to, &fileinfo[groupFirst], num,
-                                         rec, inside);
+                insertAndFillLumpRange(to, &fileinfo[groupFirst], num, rec);
 
                 // We exit this group.
                 inside = LGT_NONE;
@@ -558,7 +555,7 @@ void W_InsertLumps(filelump_t* fileinfo, filerecord_t* rec)
     rec->numLumps -= maxNumLumps - numLumps;
 }
 
-boolean W_AddFile(const char* fileName, boolean allowDuplicate)
+static boolean addFile(const char* fileName, boolean allowDuplicate)
 {
     filename_t          alterFileName;
     wadinfo_t           header;
@@ -690,7 +687,7 @@ boolean W_AddFile(const char* fileName, boolean allowDuplicate)
     }
 
     // Insert the lumps to lumpInfo, into their rightful places.
-    W_InsertLumps(fileInfo, rec);
+    insertLumps(fileInfo, rec);
 
     if(freeFileInfo)
         M_Free(freeFileInfo);
@@ -706,7 +703,12 @@ boolean W_AddFile(const char* fileName, boolean allowDuplicate)
     return true;
 }
 
-boolean W_RemoveFile(const char* fileName)
+boolean W_AddFile(const char* fileName, boolean allowDuplicate)
+{
+    return addFile(fileName, allowDuplicate);
+}
+
+static boolean removeFile(const char* fileName)
 {
     int idx = W_RecordGetIdx(fileName);
     filerecord_t* rec;
@@ -726,6 +728,7 @@ boolean W_RemoveFile(const char* fileName)
 
     // Close the file, we don't need it any more.
     F_Close(rec->handle);
+    F_ReleaseFileId(rec->fileName);
 
     // Destroy the file record.
     W_RecordDestroy(idx);
@@ -738,13 +741,21 @@ boolean W_RemoveFile(const char* fileName)
     return true;
 }
 
+boolean W_RemoveFile(const char* fileName)
+{
+    boolean unloadedResources = removeFile(fileName);
+    if(unloadedResources)
+        DD_UpdateEngineState();
+    return unloadedResources;
+}
+
 boolean W_AddFiles(const char* const* filenames, size_t num, boolean allowDuplicate)
 {
     boolean succeeded = false;
     { size_t i;
     for(i = 0; i < num; ++i)
     {
-        if(W_AddFile(filenames[i], allowDuplicate))
+        if(addFile(filenames[i], allowDuplicate))
         {
             VERBOSE2( Con_Message("W_AddFiles: Done loading %s\n", M_PrettyPath(filenames[i])) );
             succeeded = true; // At least one has been loaded.
@@ -767,7 +778,7 @@ boolean W_RemoveFiles(const char* const* filenames, size_t num)
     { size_t i;
     for(i = 0; i < num; ++i)
     {
-        if(W_RemoveFile(filenames[i]))
+        if(removeFile(filenames[i]))
         {
             VERBOSE2( Con_Message("W_RemoveFiles: Done unloading %s\n", M_PrettyPath(filenames[i])) );
             succeeded = true; // At least one has been unloaded.
@@ -786,10 +797,17 @@ boolean W_RemoveFiles(const char* const* filenames, size_t num)
 
 void W_Reset(void)
 {
-    int i;
+    boolean unloadedResources = false;
+    { int i;
     for(i = 0; i < numRecords; ++i)
-        if(records[i].flags & FRF_RUNTIME)
-            W_RemoveFile(records[i].fileName);
+    {
+        if(!(records[i].flags & FRF_RUNTIME))
+            continue;
+        if(removeFile(records[i].fileName))
+            unloadedResources = true;
+    }}
+    if(unloadedResources)
+        DD_UpdateEngineState();
 }
 
 /**
@@ -886,7 +904,7 @@ lumpnum_t W_OpenAuxiliary(const char *fileName)
     numLumps = header.numLumps;
 
     // Init the auxiliary lumpInfo array
-    lumpInfo = Z_Malloc(numLumps * sizeof(lumpinfo_t), PU_STATIC, 0);
+    lumpInfo = Z_Malloc(numLumps * sizeof(lumpinfo_t), PU_APPSTATIC, 0);
     sourceLump = fileInfo;
     destLump = lumpInfo;
     for(i = 0; i < numLumps; ++i, destLump++, sourceLump++)
@@ -900,7 +918,7 @@ lumpnum_t W_OpenAuxiliary(const char *fileName)
 
     // Allocate the auxiliary lumpcache array
     size = numLumps * sizeof(*lumpCache);
-    lumpCache = Z_Malloc(size, PU_STATIC, 0);
+    lumpCache = Z_Malloc(size, PU_APPSTATIC, 0);
     memset(lumpCache, 0, size);
 
     AuxiliaryLumpInfo = lumpInfo;
@@ -1126,7 +1144,7 @@ boolean W_DumpLump(lumpnum_t lump, const char* fileName)
     if(lump >= numLumps)
         return false;
 
-    lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
+    lumpPtr = W_CacheLumpNum(lump, PU_APPSTATIC);
 
     if(fileName && fileName[0])
     {
@@ -1409,9 +1427,7 @@ D_CMD(ListFiles)
 
 D_CMD(ResetLumps)
 {
-    GL_SetFilter(false);
     W_Reset();
     Con_Message("Only startup files remain.\n");
-    DD_UpdateEngineState();
     return true;
 }

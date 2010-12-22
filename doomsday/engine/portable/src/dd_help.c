@@ -317,8 +317,8 @@ void DD_ReadGameHelp(void)
 {
     filename_t helpFileName;
 
-    if(!helpInited)
-        return; // Already inited.
+    if(!helpInited || DD_IsNullGameInfo(DD_GameInfo()))
+        return; // Nothing to do.
 
     dd_snprintf(helpFileName, FILENAME_T_MAXLEN, "%sconhelp.txt", Str_Text(GameInfo_DataPath(DD_GameInfo())));
     M_TranslatePath(helpFileName, helpFileName, FILENAME_T_MAXLEN);

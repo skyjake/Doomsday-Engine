@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,13 +23,11 @@
  */
 
 /**
- * net_buf.h: Network Message Handling and Buffering
+ * Network Message Handling and Buffering.
  */
 
-#ifndef __DOOMSDAY_NETWORK_BUFFER_H__
-#define __DOOMSDAY_NETWORK_BUFFER_H__
-
-#include "con_decl.h"
+#ifndef LIBDENG_NETWORK_BUFFER_H
+#define LIBDENG_NETWORK_BUFFER_H
 
 // Send Packet flags:
 #define SPF_REBOUND     0x00020000 // Write only to local loopback
@@ -92,4 +90,4 @@ void            N_PrintBufferInfo(void);
 void            N_PrintHuffmanStats(void);
 void            N_PostMessage(netmessage_t *msg);
 
-#endif
+#endif /* LIBDENG_NETWORK_BUFFER_H */

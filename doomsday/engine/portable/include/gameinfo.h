@@ -107,7 +107,7 @@ typedef struct {
  * @param cmdlineFlag2  Alternative override. Can be @c NULL.
  */
 gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey, const char* dataPath,
-    const char* defsPath, const ddstring_t* mainConfig, const char* title, const char* author,
+    const char* defsPath, const char* mainConfig, const char* title, const char* author,
     const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2);
 
 void P_DestroyGameInfo(gameinfo_t* info);

@@ -209,7 +209,7 @@ static void newMaterialNameBinding(material_t* mat, const char* name,
         maxMaterialBinds += MATERIALS_BLOCK_ALLOC;
         materialBinds =
             Z_Realloc(materialBinds, sizeof(*materialBinds) * maxMaterialBinds,
-                      PU_STATIC);
+                      PU_APPSTATIC);
     }
 
     // Add the new material to the end.
@@ -265,7 +265,7 @@ void Materials_Initialize(void)
         return; // Already been here.
 
     materialsBlockSet = Z_BlockCreate(sizeof(material_t),
-                                      MATERIALS_BLOCK_ALLOC, PU_STATIC);
+                                      MATERIALS_BLOCK_ALLOC, PU_APPSTATIC);
     materialsHead = NULL;
 
     materialBinds = NULL;
@@ -1319,7 +1319,7 @@ int Materials_CreateAnimGroup(int flags)
     animgroup_t* group;
 
     // Allocating one by one is inefficient, but it doesn't really matter.
-    groups = Z_Realloc(groups, sizeof(animgroup_t) * (numgroups + 1), PU_STATIC);
+    groups = Z_Realloc(groups, sizeof(animgroup_t) * (numgroups + 1), PU_APPSTATIC);
 
     // Init the new group.
     group = &groups[numgroups];
@@ -1379,7 +1379,7 @@ void Materials_AddAnimGroupFrame(int groupNum, materialnum_t num, int tics,
     // Allocate a new animframe.
     group->frames =
         Z_Realloc(group->frames, sizeof(animframe_t) * ++group->count,
-                  PU_STATIC);
+                  PU_APPSTATIC);
 
     frame = &group->frames[group->count - 1];
 

@@ -138,7 +138,9 @@ extern mapspotid_t* bossSpots;
 extern uint bossSpotCount;
 #endif
 
-void            P_Init(void);
+void P_Init(void);
+void P_Shutdown(void);
+
 mobjtype_t      P_DoomEdNumToMobjType(int doomEdNum);
 void            P_SpawnPlayers(void);
 void            P_MoveThingsOutOfWalls();

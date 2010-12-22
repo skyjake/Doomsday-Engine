@@ -542,19 +542,8 @@ void G_PostInit(gameid_t gameId)
 
 void G_Shutdown(void)
 {
-    Hu_MsgShutdown();
-    Hu_UnloadData();
-    Hu_LogShutdown();
-
-    P_DestroyIterList(spechit);
-    P_DestroyIterList(linespecials);
-    P_DestroyLineTagLists();
-    P_DestroySectorTagLists();
     P_ShutdownInventory();
-    AM_Shutdown();
-    P_FreeWeaponSlots();
-    FI_StackShutdown();
-    GUI_Shutdown();
+    G_CommonShutdown();
 }
 
 /**

@@ -261,7 +261,7 @@ void Hu_LoadData(void)
 # if __JDOOM64__
     {
         int NUMCMAPS = 32;
-        mapNamePatches = Z_Malloc(sizeof(patchid_t) * NUMCMAPS, PU_STATIC, 0);
+        mapNamePatches = Z_Malloc(sizeof(patchid_t) * NUMCMAPS, PU_GAMESTATIC, 0);
         for(i = 0; i < NUMCMAPS; ++i)
         {
             sprintf(name, "WILV%2.2d", i);
@@ -272,7 +272,7 @@ void Hu_LoadData(void)
     if(gameModeBits & GM_ANY_DOOM2)
     {
         int NUMCMAPS = 32;
-        mapNamePatches = Z_Malloc(sizeof(patchid_t) * NUMCMAPS, PU_STATIC, 0);
+        mapNamePatches = Z_Malloc(sizeof(patchid_t) * NUMCMAPS, PU_GAMESTATIC, 0);
         for(i = 0; i < NUMCMAPS; ++i)
         {
             sprintf(name, "CWILV%2.2d", i);
@@ -285,7 +285,7 @@ void Hu_LoadData(void)
 
         // Don't waste space - patches are loaded back to back
         // ie no space in the array is left for E1M10
-        mapNamePatches = Z_Malloc(sizeof(patchid_t) * (9*4), PU_STATIC, 0);
+        mapNamePatches = Z_Malloc(sizeof(patchid_t) * (9*4), PU_GAMESTATIC, 0);
         for(i = 0; i < 4; ++i) // Number of episodes.
         {
             for(j = 0; j < 9; ++j) // Number of maps per episode.
@@ -295,7 +295,7 @@ void Hu_LoadData(void)
             }
         }
 
-        episodeNamePatches = Z_Malloc(sizeof(patchid_t) * 4, PU_STATIC, 0);
+        episodeNamePatches = Z_Malloc(sizeof(patchid_t) * 4, PU_GAMESTATIC, 0);
         for(i = 0; i < 4; ++i)
             episodeNamePatches[i] = R_PrecachePatch(episodePatchNames[i], NULL);
     }
@@ -319,6 +319,13 @@ void Hu_UnloadData(void)
 #if __JDOOM__ || __JDOOM64__
     if(mapNamePatches)
         Z_Free(mapNamePatches);
+    mapNamePatches = 0;
+#endif
+
+#if __JDOOM__
+    if(episodeNamePatches)
+        Z_Free(episodeNamePatches);
+    episodeNamePatches = 0;
 #endif
 
     if(!Get(DD_NOVIDEO))

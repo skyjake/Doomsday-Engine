@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
  *
@@ -24,7 +24,7 @@
  */
 
 /**
- * dam_blockmap.c: BlockMap generation.
+ * BlockMap generation.
  *
  * Generate valid blockmap data from the already loaded map data.
  * Adapted from algorithm used in prBoom 2.2.6 -DJS
@@ -34,15 +34,16 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <stdlib.h>
+#include <ctype.h>
+#include <math.h>
+
 #include "de_base.h"
+#include "de_console.h"
 #include "de_misc.h"
 #include "de_play.h"
 
 #include "p_mapdata.h"
-
-#include <stdlib.h>
-#include <ctype.h>
-#include <math.h>
 
 // MACROS ------------------------------------------------------------------
 

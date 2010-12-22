@@ -24,11 +24,11 @@
  */
 
 /**
- * dd_gl.h: Doomsday graphics library.
+ * Doomsday graphics library.
  */
 
-#ifndef __DOOMSDAY_GL_H__
-#define __DOOMSDAY_GL_H__
+#ifndef LIBDENG_DGL_H
+#define LIBDENG_DGL_H
 
 enum {
     // Values
@@ -94,8 +94,11 @@ enum {
 
 // Types.
 typedef unsigned char DGLubyte;
+typedef int DGLint;
 typedef unsigned int DGLuint;
 typedef int DGLsizei;
+typedef double DGLdouble;
+typedef unsigned int DGLenum;
 
 // Texture formats:
 typedef enum dgltexformat_e {
@@ -251,4 +254,5 @@ void            DGL_DrawRawScreen(lumpnum_t lump, int x, int y);
  */
 int             DGL_Bind(DGLuint texture);
 void            DGL_DeleteTextures(int num, const DGLuint* names);
-#endif
+
+#endif /* LIBDENG_DGL_H */

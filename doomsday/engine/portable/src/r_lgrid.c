@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * r_lgrid.c: Light Grid (Large-Scale FakeRadio)
+ * Light Grid (Large-Scale FakeRadio).
  *
  * Very simple global illumination method utilizing a 2D grid of light
  * levels.
@@ -32,15 +32,18 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <math.h>
+#include <assert.h>
+
 #include "de_base.h"
+#include "de_console.h"
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_play.h"
 
-#include <math.h>
-#include <assert.h>
+#include "sys_opengl.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -146,7 +149,7 @@ static void AddIndexBit(int x, int y, uint *bitfield, int *count)
 /**
  * Initialize the light grid for the current map.
  */
-void LG_Init(void)
+void LG_InitForMap(void)
 {
     uint        startTime = Sys_GetRealTime();
 
@@ -377,9 +380,9 @@ void LG_Init(void)
 
     // Allocate memory for the entire grid.
     grid = Z_Calloc(sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight,
-                    PU_MAP, NULL);
+                    PU_MAPSTATIC, NULL);
 
-    Con_Message("LG_Init: %i x %i grid (%lu bytes).\n",
+    Con_Message("LG_InitForMap: %i x %i grid (%lu bytes).\n",
                 lgBlockWidth, lgBlockHeight,
                 (unsigned long) (sizeof(gridblock_t) * lgBlockWidth * lgBlockHeight));
 
@@ -547,7 +550,7 @@ Con_Message("  Sector %i: %i / %i\n", s, changedCount, count);
 
     // How much time did we spend?
     VERBOSE(Con_Message
-            ("LG_Init: Done in %.2f seconds.\n",
+            ("LG_InitForMap: Done in %.2f seconds.\n",
              (Sys_GetRealTime() - startTime) / 1000.0f));
 }
 

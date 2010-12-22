@@ -355,7 +355,7 @@ void M_InitControlsMenu(void)
     count += 1; // For the terminator.
 
     // Allocate the menu items array.
-    ControlsItems = Z_Calloc(sizeof(mn_object_t) * count, PU_STATIC, 0);
+    ControlsItems = Z_Calloc(sizeof(mn_object_t) * count, PU_GAMESTATIC, 0);
 
     for(i = 0, n = 0; i < configCount; ++i)
     {

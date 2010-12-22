@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,13 @@
  */
 
 /**
- * con_buffer.h: Console history buffer.
+ * Console history buffer.
  */
 
-#ifndef __DOOMSDAY_CONSOLE_BUFFER_H__
-#define __DOOMSDAY_CONSOLE_BUFFER_H__
+#ifndef LIBDENG_CONSOLE_BUFFER_H
+#define LIBDENG_CONSOLE_BUFFER_H
+
+#include "sys_system.h"
 
 // A console buffer line.
 typedef struct cbline_s {
@@ -72,4 +74,4 @@ const cbline_t* Con_BufferGetLine(cbuffer_t* buf, uint idx);
 uint            Con_BufferGetLines(cbuffer_t* buf, uint reqCount,
                                    int firstIdx, cbline_t const** list);
 uint            Con_BufferNumLines(cbuffer_t* buf);
-#endif
+#endif /* LIBDENG_CONSOLE_BUFFER_H */

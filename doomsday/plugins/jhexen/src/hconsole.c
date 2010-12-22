@@ -46,43 +46,43 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-DEFCC(CCmdCheat);
-DEFCC(CCmdCheatGod);
-DEFCC(CCmdCheatNoClip);
-DEFCC(CCmdCheatGive);
-DEFCC(CCmdCheatWarp);
-DEFCC(CCmdCheatPig);
-DEFCC(CCmdCheatMassacre);
-DEFCC(CCmdCheatShadowcaster);
-DEFCC(CCmdCheatWhere);
-DEFCC(CCmdCheatRunScript);
-DEFCC(CCmdCheatReveal);
-DEFCC(CCmdCheatSuicide);
+D_CMD(Cheat);
+D_CMD(CheatGod);
+D_CMD(CheatNoClip);
+D_CMD(CheatGive);
+D_CMD(CheatWarp);
+D_CMD(CheatPig);
+D_CMD(CheatMassacre);
+D_CMD(CheatShadowcaster);
+D_CMD(CheatWhere);
+D_CMD(CheatRunScript);
+D_CMD(CheatReveal);
+D_CMD(CheatSuicide);
 
-DEFCC(CCmdMakeLocal);
-DEFCC(CCmdSetCamera);
-DEFCC(CCmdSetViewLock);
-DEFCC(CCmdSetViewMode);
+D_CMD(MakeLocal);
+D_CMD(SetCamera);
+D_CMD(SetViewLock);
+D_CMD(SetViewMode);
 
-DEFCC(CCmdCycleSpy);
+D_CMD(CycleSpy);
 
-DEFCC(CCmdSetDemoMode);
+D_CMD(SetDemoMode);
 
-DEFCC(CCmdSpawnMobj);
+D_CMD(SpawnMobj);
 
-DEFCC(CCmdPrintPlayerCoords);
+D_CMD(PrintPlayerCoords);
 
-DEFCC(CCmdScriptInfo);
-DEFCC(CCmdTest);
-DEFCC(CCmdMovePlane);
+D_CMD(ScriptInfo);
+D_CMD(Test);
+D_CMD(MovePlane);
 
 void G_UpdateEyeHeight(cvar_t* unused);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-DEFCC(CCmdScreenShot);
-DEFCC(CCmdHexenFont);
-DEFCC(CCmdConBackground);
+D_CMD(ScreenShot);
+D_CMD(HexenFont);
+D_CMD(ConBackground);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -277,7 +277,7 @@ int ConTextWidth(const char* string)
 /**
  * Console command to take a screenshot (duh).
  */
-DEFCC(CCmdScreenShot)
+D_CMD(ScreenShot)
 {
     G_ScreenShot();
     return true;
@@ -286,7 +286,7 @@ DEFCC(CCmdScreenShot)
 /**
  * Configure the console to use the game's font.
  */
-DEFCC(CCmdHexenFont)
+D_CMD(HexenFont)
 {
     ddfont_t            cfont;
 
@@ -305,7 +305,7 @@ DEFCC(CCmdHexenFont)
 /**
  * Configure the console background.
  */
-DEFCC(CCmdConBackground)
+D_CMD(ConBackground)
 {
     material_t*         mat;
 

@@ -507,6 +507,8 @@ void R_ShutdownCompositeFonts(void)
     if(!inited)
         return;
 
+    R_UnloadCompositeFonts();
+
     if(numFonts != 0)
     {
         uint i;

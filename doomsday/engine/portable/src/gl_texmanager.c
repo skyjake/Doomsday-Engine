@@ -257,6 +257,40 @@ void GL_ResetTextureManager(void)
     texInited = false;
 }
 
+void GL_ClearTextures(void)
+{
+    if(!texInited) return;
+
+    // gltexture-wrapped GL textures; textures, flats, sprites, system...
+    GL_DeleteAllTexturesForGLTextures(GLT_ANY);
+
+    if(numGLTextures)
+    {
+        uint i;
+        for(i = 0; i < numGLTextures; ++i)
+        {
+            gltexture_t* mTex = glTextures[i];
+            gltexture_inst_node_t* node = (gltexture_inst_node_t*) mTex->instances;
+            while(node)
+            {
+                gltexture_inst_node_t* next = node->next;
+                Z_Free(node);
+                node = next;
+            }
+            Z_Free(mTex);
+        }
+
+        Z_Free(glTextures);
+    }
+    glTextures = 0;
+    numGLTextures = 0;
+
+    { uint i;
+    for(i = 0; i < NUM_GLTEXTURE_TYPES; ++i)
+        memset(glTextureTypeData[i].hashTable, 0, sizeof(glTextureTypeData[i].hashTable));
+    }
+}
+
 /**
  * Called once during engine shutdown.
  */
@@ -265,30 +299,7 @@ void GL_ShutdownTextureManager(void)
     if(!texInited)
         return; // Already been here?
 
-    if(glTextures)
-    {
-        uint                i;
-
-        for(i = 0; i < numGLTextures; ++i)
-        {
-            gltexture_t*         mTex = glTextures[i];
-            gltexture_inst_node_t*  node, *next;
-
-            node = (gltexture_inst_node_t*) mTex->instances;
-            while(node)
-            {
-                next = node->next;
-                Z_Free(node);
-                node = next;
-            }
-            Z_Free(mTex);
-        }
-
-        Z_Free(glTextures);
-        glTextures = NULL;
-        numGLTextures = 0;
-    }
-
+    GL_ClearTextures();
     texInited = false;
 }
 
@@ -685,7 +696,7 @@ byte GL_LoadDDTexture(image_t* image, const gltexture_inst_t* inst, void* contex
         Con_Error("GL_LoadDDTexture: Internal error, invalid ddtex id %i.", num);
 
     Str_Init(&foundPath);
-    if(F_FindResource2(RC_GRAPHIC, ddTexNames[num], &foundPath) &&
+    if(F_FindResource2(RC_GRAPHIC, ddTexNames[num], &foundPath) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
@@ -715,10 +726,10 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst, void* co
         ddstring_t searchPath, foundPath;
         byte result = 0;
 
-        Str_Init(&searchPath); Str_Appendf(&searchPath, "Textures:%s", dTex->external);
+        Str_Init(&searchPath); Str_Appendf(&searchPath, "Textures:%s;", dTex->external);
         Str_Init(&foundPath);
 
-        if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) &&
+        if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) != 0 &&
            GL_LoadImage(image, Str_Text(&foundPath)))
         {
             result = 2;
@@ -733,7 +744,7 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst, void* co
     }
     else
     {
-        const byte* data = W_CacheLumpNum(dTex->lump, PU_STATIC);
+        const byte* data = W_CacheLumpNum(dTex->lump, PU_APPSTATIC);
 
         // First try loading it as a PCX image.
         if(PCX_MemoryGetSize(data, &image->width, &image->height))
@@ -796,10 +807,10 @@ byte GL_LoadLightMap(image_t* image, const gltexture_inst_t* inst, void* context
     ddstring_t searchPath, foundPath;
     byte result = 0;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "LightMaps:%s", lmap->external);
+    Str_Init(&searchPath); Str_Appendf(&searchPath, "LightMaps:%s;", lmap->external);
     Str_Init(&foundPath);
 
-    if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") &&
+    if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
@@ -829,10 +840,10 @@ byte GL_LoadFlareTexture(image_t* image, const gltexture_inst_t* inst, void* con
     ddstring_t searchPath, foundPath;
     byte result = 0;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "flaremaps:%s", fTex->external);
+    Str_Init(&searchPath); Str_Appendf(&searchPath, "flaremaps:%s;", fTex->external);
     Str_Init(&foundPath);
 
-    if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") &&
+    if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
@@ -862,10 +873,10 @@ byte GL_LoadShinyTexture(image_t* image, const gltexture_inst_t* inst, void* con
     ddstring_t searchPath, foundPath;
     byte result = 0;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "LightMaps:%s", sTex->external);
+    Str_Init(&searchPath); Str_Appendf(&searchPath, "LightMaps:%s;", sTex->external);
     Str_Init(&foundPath);
 
-    if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) &&
+    if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
@@ -895,10 +906,10 @@ byte GL_LoadMaskTexture(image_t* image, const gltexture_inst_t* inst, void* cont
     ddstring_t searchPath, foundPath;
     byte result = 0;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "LightMaps:%s", mTex->external);
+    Str_Init(&searchPath); Str_Appendf(&searchPath, "LightMaps:%s;", mTex->external);
     Str_Init(&foundPath);
 
-    if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) &&
+    if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
@@ -928,10 +939,10 @@ byte GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst, void* contex
     ddstring_t searchPath, foundPath;
     byte result = 0;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "Models:%s", sn->path);
+    Str_Init(&searchPath); Str_Appendf(&searchPath, "%s;", sn->path);
     Str_Init(&foundPath);
 
-    if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) &&
+    if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
@@ -961,10 +972,10 @@ byte GL_LoadModelShinySkin(image_t* image, const gltexture_inst_t* inst, void* c
     ddstring_t searchPath, foundPath;
     byte result = 0;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "Models:%s", sn->path);
+    Str_Init(&searchPath); Str_Appendf(&searchPath, "%s;", sn->path);
     Str_Init(&foundPath);
 
-    if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") &&
+    if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
@@ -1039,7 +1050,7 @@ byte GL_LoadExtTexture(image_t* image, const char* name, gfxmode_t mode)
     byte result = 0;
     
     Str_Init(&foundPath);
-    if(F_FindResource2(RC_GRAPHIC, name, &foundPath) &&
+    if(F_FindResource2(RC_GRAPHIC, name, &foundPath) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         // Too big for us? \todo Should not be done here.
@@ -1091,10 +1102,10 @@ byte GL_LoadFlat(image_t* image, const gltexture_inst_t* inst, void* context)
         byte result = 0;
 
         // First try the flats namespace then the old-fashioned "flat-name" in the textures namespace?.
-        Str_Init(&searchPath); Str_Appendf(&searchPath, "Flats:%s;Textures:flat-%s", lumpName, lumpName);
+        Str_Init(&searchPath); Str_Appendf(&searchPath, "Flats:%s;Textures:flat-%s;", lumpName, lumpName);
         Str_Init(&foundPath);
 
-        if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") &&
+        if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") != 0 &&
            GL_LoadImage(image, Str_Text(&foundPath)))
         {
             result = 2;
@@ -1216,11 +1227,9 @@ byte* GL_LoadImage(image_t* img, const char* imagefn)
     {
         // Clear any old values.
         memset(img, 0, sizeof(*img));
-
         if(imagefn && imagefn[0])
         {
             strncpy(img->fileName, imagefn, FILENAME_T_MAXLEN);
-
             return loadImage(img, imagefn);
         }
     }
@@ -1398,10 +1407,10 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst, void* cont
         ddstring_t searchPath, foundPath;
         byte result = 0;
 
-        Str_Init(&searchPath); Str_Appendf(&searchPath, "Textures:%s", texDef->name);
+        Str_Init(&searchPath); Str_Appendf(&searchPath, "Textures:%s;", texDef->name);
         Str_Init(&foundPath);
 
-        if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") &&
+        if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") != 0 &&
            GL_LoadImage(image, Str_Text(&foundPath)))
         {
             result = 2; // High resolution texture loaded.
@@ -1479,10 +1488,10 @@ byte GL_LoadDoomPatch(image_t* image, const gltexture_inst_t* inst,
         ddstring_t searchPath, foundPath;
         byte result = 0;
 
-        Str_Init(&searchPath); Str_Appendf(&searchPath, "Patches:%s", W_LumpName(p->lump));
+        Str_Init(&searchPath); Str_Appendf(&searchPath, "Patches:%s;", W_LumpName(p->lump));
         Str_Init(&foundPath);
 
-        if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") &&
+        if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") != 0 &&
            GL_LoadImage(image, Str_Text(&foundPath)))
         {
             result = 2;
@@ -1498,7 +1507,7 @@ byte GL_LoadDoomPatch(image_t* image, const gltexture_inst_t* inst,
     // Use data from the normal lump.
     if(p->width * p->height)
     {
-        const lumppatch_t* patch = W_CacheLumpNum(p->lump, PU_STATIC);
+        const lumppatch_t* patch = W_CacheLumpNum(p->lump, PU_APPSTATIC);
         image->pixelSize = 1;
         image->width = SHORT(p->width);
         image->height = SHORT(p->height);
@@ -1555,17 +1564,17 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
 
         // Compose resource names, prefer translated or psprite versions.
         Str_Init(&searchPath);
-        Str_Appendf(&searchPath, "Patches:%s", lumpName);
+        Str_Appendf(&searchPath, "Patches:%s;", lumpName);
         if(pSprite || tclass || tmap)
         {
             if(pSprite)
-                Str_Appendf(&searchPath, ";Patches:%s-hud", lumpName);
+                Str_Appendf(&searchPath, "Patches:%s-hud;", lumpName);
             else // Translated.
-                Str_Appendf(&searchPath, ";Patches:%s-table%i%i", lumpName, tclass, tmap);
+                Str_Appendf(&searchPath, "Patches:%s-table%i%i;", lumpName, tclass, tmap);
         }
         Str_Init(&foundPath);
 
-        if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") &&
+        if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") != 0 &&
            GL_LoadImage(image, Str_Text(&foundPath)))
         {
             result = 2;
@@ -1602,7 +1611,7 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
     }
     else
     {
-        patch = W_CacheLumpNum(lumpNum, PU_STATIC);
+        patch = W_CacheLumpNum(lumpNum, PU_APPSTATIC);
     }
 
     image->isMasked = DrawRealPatch(image->pixels, image->width, image->height, patch, border, border, false, true);
@@ -1660,10 +1669,10 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
     byte result = 0;
 
     // First try to find an external resource.
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "Patches:%s", W_LumpName(r->lump));
+    Str_Init(&searchPath); Str_Appendf(&searchPath, "Patches:%s;", W_LumpName(r->lump));
     Str_Init(&foundPath);
 
-    if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) &&
+    if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {   // High resolution rawtex loaded.
         result = 2;
@@ -2377,7 +2386,7 @@ if(type < GLT_FIRST || !(type < NUM_GLTEXTURE_TYPES))
      * A new gltexture.
      */
 
-    tex = Z_Malloc(sizeof(*tex), PU_STATIC, 0);
+    tex = Z_Malloc(sizeof(*tex), PU_APPSTATIC, 0);
     tex->type = type;
     tex->ofTypeID = ofTypeID;
     tex->instances = NULL;
@@ -2401,7 +2410,7 @@ if(type < GLT_FIRST || !(type < NUM_GLTEXTURE_TYPES))
     // Resize the existing list.
     glTextures =
         Z_Realloc(glTextures, sizeof(gltexture_t*) * ++numGLTextures,
-                  PU_STATIC);
+                  PU_APPSTATIC);
     // Add the new gltexture;
     glTextures[numGLTextures - 1] = tex;
 
@@ -2960,7 +2969,7 @@ if(!didDefer)
             }
 
             // Add it to the list of intances for this gltexture.
-            node = Z_Malloc(sizeof(*node), PU_STATIC, 0);
+            node = Z_Malloc(sizeof(*node), PU_APPSTATIC, 0);
             memcpy(&node->inst, &localInst, sizeof(gltexture_inst_t));
             node->flags = flags;
             node->next = (gltexture_inst_node_t*) tex->instances;

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
  */
 
 /**
- * net_main.h: Network Subsystem
+ * Network Subsystem.
  */
 
-#ifndef __DOOMSDAY_NETWORK_H__
-#define __DOOMSDAY_NETWORK_H__
+#ifndef LIBDENG_NETWORK_H
+#define LIBDENG_NETWORK_H
 
 #include <stdio.h>
 #include "lzss.h"
@@ -35,7 +35,6 @@
 #include "sys_network.h"
 #include "net_msg.h"
 #include "p_mapdata.h"
-#include "con_decl.h"
 
 #define BIT(x)              (1 << (x))
 
@@ -129,10 +128,6 @@ enum {
 // The consolePlayer's camera position is written to the demo file
 // every 3rd tic.
 #define LOCALCAM_WRITE_TICS 3
-
-//---------------------------------------------------------------------------
-// Types
-//---------------------------------------------------------------------------
 
 typedef struct {
     // High tics when ping was sent (0 if pinger not used).
@@ -246,9 +241,6 @@ typedef struct {
     char            name[PLAYERNAMELEN];
 } playerinfo_packet_t;
 
-//---------------------------------------------------------------------------
-// Variables
-//---------------------------------------------------------------------------
 extern boolean  firstNetUpdate;
 extern int      resendStart;      // set when server needs our tics
 extern int      resendCount;
@@ -262,9 +254,6 @@ extern boolean  allowNetTraffic; // Should net traffic be allowed?
 extern byte     netDontSleep, netTicSync;
 extern client_t clients[DDMAXPLAYERS];
 
-//---------------------------------------------------------------------------
-// Functions
-//---------------------------------------------------------------------------
 void            Net_Register(void);
 void            Net_Init(void);
 void            Net_Shutdown(void);
@@ -300,4 +289,4 @@ ident_t         Net_GetPlayerID(int player);
 
 void            Net_PrintServerInfo(int index, serverinfo_t *info);
 
-#endif
+#endif /* LIBDENG_NETWORK_H */

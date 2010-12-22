@@ -27,15 +27,16 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <stdlib.h>
+#include <math.h>
+
 #include "de_base.h"
+#include "de_console.h"
 #include "de_bsp.h"
 #include "de_misc.h"
 #include "de_play.h"
 #include "de_edit.h"
 #include "de_refresh.h"
-
-#include <stdlib.h>
-#include <math.h>
 
 // MACROS ------------------------------------------------------------------
 

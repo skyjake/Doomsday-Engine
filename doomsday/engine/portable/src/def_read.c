@@ -2436,7 +2436,7 @@ int DED_ReadLump(ded_t* ded, lumpnum_t lump)
 
     if((lumpLength = W_LumpLength(lump)) > 0)
     {
-        const void* lumpPtr = W_CacheLumpNum(lump, PU_STATIC);
+        const void* lumpPtr = W_CacheLumpNum(lump, PU_APPSTATIC);
         int result = DED_ReadData(ded, lumpPtr, W_LumpSourceFile(lump));
         W_ChangeCacheTag(lump, PU_CACHE);
         return result;

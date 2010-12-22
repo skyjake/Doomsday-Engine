@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2010 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +24,13 @@
  */
 
 #include "de_base.h"
+#include "de_console.h"
+
 #include "m_misc.h" /// @todo remove dependency
+#include "sys_direc.h" /// @todo remove dependency
+#include "sys_reslocator.h"
+#include "sys_timer.h"
+
 #include "filedirectory.h"
 
 /**
@@ -177,7 +184,7 @@ static void addDirectory(filedirectory_t* fd, const ddstring_t* path)
     }
 }
 
-static void clear(filedirectory_t* fd)
+static void clearDirectory(filedirectory_t* fd)
 {
     assert(fd);
     // Free the directory nodes.
@@ -269,7 +276,7 @@ filedirectory_t* FileDirectory_Create(const char* pathList)
 void FileDirectory_Destroy(filedirectory_t* fd)
 {
     assert(fd);
-    clear(fd);
+    clearDirectory(fd);
     Str_Free(&fd->_pathList);
     free(fd);
 }
@@ -277,7 +284,7 @@ void FileDirectory_Destroy(filedirectory_t* fd)
 void FileDirectory_Clear(filedirectory_t* fd)
 {
     assert(fd);
-    clear(fd);
+    clearDirectory(fd);
 }
 
 int FileDirectory_Iterate2(filedirectory_t* fd, filetype_t type, filedirectory_node_t* parent,

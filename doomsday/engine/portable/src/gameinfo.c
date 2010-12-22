@@ -29,7 +29,7 @@
 #include "gameinfo.h"
 
 gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey, const char* dataPath,
-    const char* defsPath, const ddstring_t* mainConfig, const char* title, const char* author,
+    const char* defsPath, const char* mainConfig, const char* title, const char* author,
     const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2)
 {
     gameinfo_t* info = M_Malloc(sizeof(*info));
@@ -52,7 +52,7 @@ gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey, const
     Str_Init(&info->_bindingConfig);
     if(mainConfig)
     {
-        Str_Copy(&info->_mainConfig, mainConfig);
+        Str_Set(&info->_mainConfig, mainConfig);
         Dir_FixSlashes(Str_Text(&info->_mainConfig), Str_Length(&info->_mainConfig));
         Str_PartAppend(&info->_bindingConfig, Str_Text(&info->_mainConfig), 0, Str_Length(&info->_mainConfig)-4);
         Str_Append(&info->_bindingConfig, "-bindings.cfg");
@@ -231,5 +231,5 @@ gameresource_record_t* const* GameInfo_Resources(gameinfo_t* info, resourceclass
     assert(info && VALID_RESOURCE_CLASS(rclass));
     if(count)
         *count = info->_requiredResources[rclass].numRecords;
-    return info->_requiredResources[rclass].records;
+    return info->_requiredResources[rclass].records? info->_requiredResources[rclass].records : 0;
 }

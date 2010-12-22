@@ -69,6 +69,7 @@ unsigned int F_LastModified(const char* fileName);
 
 void F_ResetFileIDs(void);
 boolean F_CheckFileId(const char* path);
+boolean F_ReleaseFileId(const char* path);
 
 void F_InitMapping(void);
 

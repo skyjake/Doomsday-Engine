@@ -22,18 +22,17 @@
  * Boston, MA  02110-1301  USA
  */
 
-/**
- * dgl_common.c:
- */
-
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
 #include <math.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+
+#include "sys_opengl.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -59,7 +58,7 @@ void GL_SetGrayMipmap(int lev)
  *
  * @param texture       GL texture unit ident to make active.
  */
-void GL_ActiveTexture(const GLenum texture)
+void GL_ActiveTexture(const DGLenum texture)
 {
 #ifdef WIN32
     if(!glActiveTextureARB)

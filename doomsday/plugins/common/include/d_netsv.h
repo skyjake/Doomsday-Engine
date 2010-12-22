@@ -68,6 +68,6 @@ void            NetSv_DoCheat(int player, const char* data);
 void            NetSv_DoAction(int player, const char* data);
 void            NetSv_SendJumpPower(int target, float power);
 
-DEFCC(CCmdMapCycle);
+D_CMD(MapCycle);
 
 #endif /* LIBCOMMON_NETSV_H */

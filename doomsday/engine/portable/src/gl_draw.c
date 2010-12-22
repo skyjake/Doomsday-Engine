@@ -38,6 +38,8 @@
 #include "de_render.h"
 #include "de_misc.h"
 
+#include "sys_opengl.h"
+
 // MACROS ------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------

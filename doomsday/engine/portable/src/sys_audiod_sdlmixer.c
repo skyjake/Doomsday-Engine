@@ -257,7 +257,7 @@ sfxbuffer_t* DS_SDLMixer_SFX_CreateBuffer(int flags, int bits, int rate)
     sfxbuffer_t*        buf;
 
     // Create the buffer.
-    buf = Z_Calloc(sizeof(*buf), PU_STATIC, 0);
+    buf = Z_Calloc(sizeof(*buf), PU_APPSTATIC, 0);
 
     buf->bytes = bits / 8;
     buf->rate = rate;

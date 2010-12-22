@@ -79,7 +79,7 @@ static uint numSectorTagLists = 0;
 
 linedef_t* P_AllocDummyLine(void)
 {
-    xline_t* extra = Z_Calloc(sizeof(xline_t), PU_STATIC, 0);
+    xline_t* extra = Z_Calloc(sizeof(xline_t), PU_GAMESTATIC, 0);
     return P_AllocDummy(DMU_LINEDEF, extra);
 }
 

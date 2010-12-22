@@ -215,8 +215,8 @@ boolean R_SetDefaultColorPalette(colorpaletteid_t id)
  * flexibility. Within the engine we can create new palettes and manipulate
  * them directly via the DGL interface. The underlying implementation is
  * wrapped in a similar way to the materials so that publically, there is a
- * set of (eternal) names and unique identifiers that survive engine and
- * GL resets.
+ * set of (eternal) names and unique identifiers that survive game and GL
+ * resets.
  *
  * @param fmt           Format string describes the format of @p data.
  *                      Expected form: "C#C#C"
@@ -337,13 +337,13 @@ colorpaletteid_t R_CreateColorPalette(const char* fmt, const char* name,
         if(!numColorPalettes)
         {
             colorPalettes = Z_Malloc(
-                ++numColorPalettes * sizeof(colorpalettebind_t), PU_STATIC, 0);
+                ++numColorPalettes * sizeof(colorpalettebind_t), PU_APPSTATIC, 0);
 
             defaultColorPalette = numColorPalettes;
         }
         else
             colorPalettes = Z_Realloc(&colorPalettes,
-                ++numColorPalettes * sizeof(colorpalettebind_t), PU_STATIC);
+                ++numColorPalettes * sizeof(colorpalettebind_t), PU_APPSTATIC);
 
         pal = &colorPalettes[numColorPalettes-1];
         memset(pal, 0, sizeof(*pal));
@@ -962,6 +962,13 @@ patchtex_t* R_FindPatchTex(patchid_t id)
     return patchTex;
 }
 
+void R_ClearPatchTexs(void)
+{
+    Z_FreeTags(PU_PATCH, PU_PATCH);
+    doomPatchDefs = 0;
+    numDoomPatchDefs = 0;
+}
+
 /**
  * Get a patchtex_t data structure for a patch specified with a WAD lump
  * number. Allocates a new patchtex_t if it hasn't been loaded yet.
@@ -986,10 +993,10 @@ patchid_t R_RegisterAsPatch(const char* name)
         return 0;
 
     /// \fixme What about min lump size?
-    patch = (const lumppatch_t*) W_CacheLumpNum(lump, PU_STATIC);
+    patch = (const lumppatch_t*) W_CacheLumpNum(lump, PU_APPSTATIC);
 
     // An entirely new patch.
-    p = Z_Calloc(sizeof(*p), PU_STATIC, NULL);
+    p = Z_Calloc(sizeof(*p), PU_PATCH, NULL);
     p->lump = lump;
     /**
      * \fixme: Cannot be sure this is in Patch format until a load attempt
@@ -1015,7 +1022,7 @@ patchid_t R_RegisterAsPatch(const char* name)
     }
 
     // Add it to the pointer array.
-    doomPatchDefs = Z_Realloc(doomPatchDefs, sizeof(patchtex_t*) * numDoomPatchDefs, PU_STATIC);
+    doomPatchDefs = Z_Realloc(doomPatchDefs, sizeof(patchtex_t*) * numDoomPatchDefs, PU_PATCH);
     doomPatchDefs[numDoomPatchDefs-1] = p;
 
     W_ChangeCacheTag(lump, PU_CACHE);
@@ -1090,7 +1097,7 @@ rawtex_t** R_CollectRawTexs(int* count)
         *count = num;
 
     // Allocate the array, plus one for the terminator.
-    list = Z_Malloc(sizeof(r) * (num + 1), PU_STATIC, NULL);
+    list = Z_Malloc(sizeof(r) * (num + 1), PU_APPSTATIC, NULL);
 
     // Collect the pointers.
     for(num = 0, i = 0; i < RAWTEX_HASH_SIZE; ++i)
@@ -1146,7 +1153,7 @@ rawtex_t* R_GetRawTex(lumpnum_t lump)
         return r;
 
     // Hmm, this is an entirely new rawtex.
-    r = Z_Calloc(sizeof(*r), PU_PATCH, 0);
+    r = Z_Calloc(sizeof(*r), PU_REFRESHRAW, 0);
     hash = RAWTEX_HASH(lump);
 
     // Link to the hash.
@@ -1156,6 +1163,17 @@ rawtex_t* R_GetRawTex(lumpnum_t lump)
     // Init the new one.
     r->lump = lump;
     return r;
+}
+
+void R_InitRawTexs(void)
+{
+    memset(rawtexhash, 0, sizeof(rawtexhash));
+}
+
+void R_UpdateRawTexs(void)
+{
+    Z_FreeTags(PU_REFRESHRAW, PU_REFRESHRAW);
+    R_InitRawTexs();
 }
 
 static lumpnum_t* loadPatchList(lumpnum_t lump, size_t* num)
@@ -1863,14 +1881,14 @@ static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const cha
         directory_t mydir;
         memset(&mydir, 0, sizeof(mydir));
         Dir_FileDir(modelfn, &mydir);
-        Str_Appendf(&searchPath, "Models:%s%s", mydir.path, skin);
-        found = F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), foundPath);
+        Str_Appendf(&searchPath, "%s%s;", mydir.path, skin);
+        found = F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), foundPath) != 0;
     }
 
     if(!found)
     {   // Try the resource locator.
-        Str_Clear(&searchPath); Str_Appendf(&searchPath, "Models:%s", skin);
-        found = F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), foundPath);
+        Str_Clear(&searchPath); Str_Appendf(&searchPath, "Models:%s;", skin);
+        found = F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), foundPath) != 0;
     }
 
     Str_Free(&searchPath);
@@ -1930,18 +1948,6 @@ void R_DestroySkins(void)
 void R_UpdateTexturesAndFlats(void)
 {
     Z_FreeTags(PU_REFRESHTEX, PU_REFRESHTEX);
-}
-
-void R_InitRawTexs(void)
-{
-    memset(rawtexhash, 0, sizeof(rawtexhash));
-}
-
-void R_UpdateRawTexs(void)
-{
-    Z_FreeTags(PU_PATCH, PU_PATCH);
-    memset(rawtexhash, 0, sizeof(rawtexhash));
-    R_InitRawTexs();
 }
 
 void R_UpdateData(void)

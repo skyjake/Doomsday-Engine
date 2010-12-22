@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * dgl_draw.c: Drawing Operations and Vertex Arrays.
+ * Drawing Operations and Vertex Arrays.
  *
  * Get OpenGL header files from:
  * http://oss.sgi.com/projects/ogl-sample/
@@ -35,8 +35,11 @@
 #include <stdlib.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_graphics.h"
 #include "de_misc.h"
+
+#include "sys_opengl.h"
 
 // MACROS ------------------------------------------------------------------
 

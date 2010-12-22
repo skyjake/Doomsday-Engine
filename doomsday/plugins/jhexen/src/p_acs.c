@@ -344,7 +344,7 @@ void P_CheckACSStore(uint map)
     if(ACSStoreSize != origSize)
     {
         if(ACSStoreSize)
-            ACSStore = Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_STATIC);
+            ACSStore = Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC);
         else
             Z_Free(ACSStore); ACSStore = NULL;
     }
@@ -424,11 +424,11 @@ static boolean AddToACSStore(uint map, int number, const byte* args)
                 return false;
         }
 
-        ACSStore = Z_Realloc(ACSStore, ++ACSStoreSize * sizeof(acsstore_t), PU_STATIC);
+        ACSStore = Z_Realloc(ACSStore, ++ACSStoreSize * sizeof(acsstore_t), PU_GAMESTATIC);
     }
     else
     {
-        ACSStore = Z_Malloc(sizeof(acsstore_t), PU_STATIC, 0);
+        ACSStore = Z_Malloc(sizeof(acsstore_t), PU_GAMESTATIC, 0);
         ACSStoreSize = 1;
     }
 
@@ -1783,7 +1783,7 @@ static int CmdSetLineSpecial(void)
 }
 
 // Console commands.
-DEFCC(CCmdScriptInfo)
+D_CMD(ScriptInfo)
 {
     int                 i, whichOne = -1;
     char*               scriptStates[] = {

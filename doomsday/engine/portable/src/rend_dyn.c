@@ -169,7 +169,7 @@ static dynnode_t* newDynNode(void)
     // Have we run out of nodes?
     if(dynCursor == NULL)
     {
-        node = Z_Malloc(sizeof(dynnode_t), PU_STATIC, NULL);
+        node = Z_Malloc(sizeof(dynnode_t), PU_APPSTATIC, NULL);
 
         // Link the new node to the list.
         node->nextUsed = dynFirst;

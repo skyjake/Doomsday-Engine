@@ -387,12 +387,11 @@ void R_Init(void)
  */
 void R_Update(void)
 {
-    uint i;
-
     R_UpdateTexturesAndFlats();
     R_InitTextures();
     R_InitFlats();
     R_PreInitSprites();
+    GL_LoadSystemTextures();
 
     // Re-read definitions.
     Def_Read();
@@ -400,53 +399,55 @@ void R_Update(void)
     R_UpdateData();
     R_InitSprites(); // Fully reinitialize sprites.
     R_UpdateTranslationTables();
+    Cl_InitTranslations();
 
     R_InitModels(); // Defs might've changed.
 
-    // Now that we've read the defs, we can load system textures.
-    GL_LoadSystemTextures();
     Rend_ParticleLoadExtraTextures();
 
     Def_PostInit();
     P_UpdateParticleGens(); // Defs might've changed.
 
+    { uint i;
     for(i = 0; i < DDMAXPLAYERS; ++i)
     {
         player_t* plr = &ddPlayers[i];
         ddplayer_t* ddpl = &plr->shared;
         // States have changed, the states are unknown.
         ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = NULL;
-    }
+    }}
 
     // Update all world surfaces.
+    { uint i;
     for(i = 0; i < numSectors; ++i)
     {
         sector_t* sec = &sectors[i];
         uint j;
         for(j = 0; j < sec->planeCount; ++j)
             Surface_Update(&sec->SP_planesurface(j));
-    }
+    }}
 
+    { uint i;
     for(i = 0; i < numSideDefs; ++i)
     {
         sidedef_t* side = &sideDefs[i];
         Surface_Update(&side->SW_topsurface);
         Surface_Update(&side->SW_middlesurface);
         Surface_Update(&side->SW_bottomsurface);
-    }
+    }}
 
+    { uint i;
     for(i = 0; i < numPolyObjs; ++i)
     {
         polyobj_t* po = polyObjs[i];
         seg_t** segPtr = po->segs;
-
         while(*segPtr)
         {
             sidedef_t* side = SEG_SIDEDEF(*segPtr);
             Surface_Update(&side->SW_middlesurface);
             segPtr++;
         }
-    }
+    }}
 
     // The rendering lists have persistent data that has changed during
     // the re-initialization.

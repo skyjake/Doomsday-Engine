@@ -25,6 +25,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_ui.h"
 #include "de_render.h"
 #include "de_graphics.h"
@@ -64,7 +65,7 @@ static fi_object_collection_t objects;
 
 static fi_page_t* pagesAdd(fi_page_t* p)
 {
-    pages = Z_Realloc(pages, sizeof(*pages) * ++numPages, PU_STATIC);
+    pages = Z_Realloc(pages, sizeof(*pages) * ++numPages, PU_APPSTATIC);
     pages[numPages-1] = p;
     return p;
 }
@@ -82,7 +83,7 @@ static fi_page_t* pagesRemove(fi_page_t* p)
 
         if(numPages > 1)
         {
-            pages = Z_Realloc(pages, sizeof(*pages) * --numPages, PU_STATIC);
+            pages = Z_Realloc(pages, sizeof(*pages) * --numPages, PU_APPSTATIC);
         }
         else
         {
@@ -124,7 +125,7 @@ static void pageClear(fi_page_t* p)
 
 static fi_page_t* newPage(fi_page_t* prevPage)
 {
-    fi_page_t* p = Z_Calloc(sizeof(*p), PU_STATIC, 0);
+    fi_page_t* p = Z_Calloc(sizeof(*p), PU_APPSTATIC, 0);
     p->drawer = FIPage_Drawer;
     p->ticker = FIPage_Ticker;
     p->previous = prevPage;
@@ -180,7 +181,7 @@ static __inline boolean objectsIsPresent(fi_object_collection_t* c, fi_object_t*
  */
 static fi_object_t* objectsAdd(fi_object_collection_t* c, fi_object_t* obj)
 {
-    c->vector = Z_Realloc(c->vector, sizeof(*c->vector) * ++c->size, PU_STATIC);
+    c->vector = Z_Realloc(c->vector, sizeof(*c->vector) * ++c->size, PU_APPSTATIC);
     c->vector[c->size-1] = obj;
     return obj;
 }
@@ -200,7 +201,7 @@ static fi_object_t* objectsRemove(fi_object_collection_t* c, fi_object_t* obj)
 
         if(c->size > 1)
         {
-            c->vector = Z_Realloc(c->vector, sizeof(*c->vector) * --c->size, PU_STATIC);
+            c->vector = Z_Realloc(c->vector, sizeof(*c->vector) * --c->size, PU_APPSTATIC);
         }
         else
         {
@@ -266,7 +267,7 @@ static void picFrameDeleteXImage(fidata_pic_frame_t* f)
 
 static fidata_pic_frame_t* createPicFrame(int type, int tics, void* texRef, short sound, boolean flagFlipH)
 {
-    fidata_pic_frame_t* f = (fidata_pic_frame_t*) Z_Malloc(sizeof(*f), PU_STATIC, 0);
+    fidata_pic_frame_t* f = (fidata_pic_frame_t*) Z_Malloc(sizeof(*f), PU_APPSTATIC, 0);
     f->flags.flip = flagFlipH;
     f->type = type;
     f->tics = tics;
@@ -292,7 +293,7 @@ static void destroyPicFrame(fidata_pic_frame_t* f)
 
 static fidata_pic_frame_t* picAddFrame(fidata_pic_t* p, fidata_pic_frame_t* f)
 {
-    p->frames = Z_Realloc(p->frames, sizeof(*p->frames) * ++p->numFrames, PU_STATIC);
+    p->frames = Z_Realloc(p->frames, sizeof(*p->frames) * ++p->numFrames, PU_APPSTATIC);
     p->frames[p->numFrames-1] = f;
     return f;
 }
@@ -366,7 +367,7 @@ void FIObject_Destructor(fi_object_t* obj)
 
 fidata_pic_t* P_CreatePic(fi_objectid_t id, const char* name)
 {
-    fidata_pic_t* p = Z_Calloc(sizeof(*p), PU_STATIC, 0);
+    fidata_pic_t* p = Z_Calloc(sizeof(*p), PU_APPSTATIC, 0);
 
     p->type = FI_PIC;
     p->drawer = FIData_PicDraw;
@@ -394,7 +395,7 @@ fidata_text_t* P_CreateText(fi_objectid_t id, const char* name)
 {
 #define LEADING             (11.f/7-1)
 
-    fidata_text_t* t = Z_Calloc(sizeof(*t), PU_STATIC, 0);
+    fidata_text_t* t = Z_Calloc(sizeof(*t), PU_APPSTATIC, 0);
 
     t->type = FI_TEXT;
     t->drawer = FIData_TextDraw;
@@ -1353,7 +1354,7 @@ void FIData_TextCopy(fi_object_t* obj, const char* str)
     if(str && str[0])
     {
         size_t len = strlen(str) + 1;
-        t->text = Z_Malloc(len, PU_STATIC, 0);
+        t->text = Z_Malloc(len, PU_APPSTATIC, 0);
         memcpy(t->text, str, len);
     }
 }

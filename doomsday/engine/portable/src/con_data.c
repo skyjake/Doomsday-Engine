@@ -294,7 +294,7 @@ void Con_AddVariable(cvar_t* var)
     
     // Make a static copy of the variable name in the zone.
     // This allows the source data to change (in case of dynamic registrations).
-    nameCopy = Z_Malloc(strlen(var->name) + 1, PU_STATIC, NULL);
+    nameCopy = Z_Malloc(strlen(var->name) + 1, PU_APPSTATIC, NULL);
     strcpy(nameCopy, var->name);
     cvars[numCVars - 1].name = nameCopy;
 
@@ -959,35 +959,40 @@ knownword_t** Con_CollectKnownWordsMatchingWord(const char* word, uint* count)
 
 void Con_DestroyDatabases(void)
 {
-    uint                i, k;
-    char*               ptr;
-
     // Free the data of the data cvars.
+    { uint i;
     for(i = 0; i < numCVars; ++i)
-        if(cvars[i].flags & CVF_CAN_FREE && cvars[i].type == CVT_CHARPTR)
+    {
+        if(cvars[i].type != CVT_CHARPTR)
+            continue;
+
+        if(cvars[i].flags & CVF_CAN_FREE)
         {
-            ptr = *(char **) cvars[i].ptr;
+            char** ptr = (char**) cvars[i].ptr;
 
             // Multiple vars could be using the same pointer,
             // make sure it gets freed only once.
+            { uint k;
             for(k = i; k < numCVars; ++k)
-                if(cvars[k].type == CVT_CHARPTR &&
-                   ptr == *(char **) cvars[k].ptr)
+                if(cvars[k].type == CVT_CHARPTR && *ptr == *(char**) cvars[k].ptr)
                 {
                     cvars[k].flags &= ~CVF_CAN_FREE;
                 }
-            M_Free(ptr);
+            }
+            M_Free(*ptr);
+            *ptr = "";
         }
+    }}
 
     if(cvars)
         M_Free(cvars);
     cvars = NULL;
-    numCVars = 0;
+    numCVars = maxCVars = 0;
 
     if(ccmds)
         M_Free(ccmds);
     ccmds = NULL;
-    numCCmds = 0;
+    numCCmds = maxCCmds = 0;
 
     if(knownWords)
         M_Free(knownWords);
@@ -997,6 +1002,7 @@ void Con_DestroyDatabases(void)
     if(caliases)
     {
         // Free the alias data.
+        uint i;
         for(i = 0; i < numCAliases; ++i)
         {
             M_Free(caliases[i].command);

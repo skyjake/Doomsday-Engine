@@ -837,7 +837,7 @@ void GL_Restore2DState(int step, viewport_t* port)
  * Like gluPerspective but with a far clip plane at infinity.
  * Borrowed from texel3d by Grégory Smialek.
  */
-void GL_InfinitePerspective(GLdouble fovy, GLdouble aspect, GLdouble znear)
+void GL_InfinitePerspective(DGLdouble fovy, DGLdouble aspect, DGLdouble znear)
 {
 #define OFFSET (1 - 1.0 / (1 << 23));
 

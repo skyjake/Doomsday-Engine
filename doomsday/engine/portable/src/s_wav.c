@@ -185,7 +185,7 @@ void* WAV_MemoryLoad(const byte* data, size_t datalength, int* bits,
             // Read data chunk.
             *samples = riff_chunk->len / wave_format->wBlockAlign;
             // Allocate the sample buffer.
-            sampledata = Z_Malloc(riff_chunk->len, PU_STATIC, 0);
+            sampledata = Z_Malloc(riff_chunk->len, PU_APPSTATIC, 0);
             memcpy(sampledata, data, riff_chunk->len);
 #ifdef __BIG_ENDIAN__
             // Correct endianness.

@@ -166,6 +166,56 @@ gamemap_t *P_GetCurrentMap(void)
 
 void P_SetCurrentMap(gamemap_t* map)
 {
+    if(!map)
+    {
+        // \todo dj: Merge in explicit map unload from branch beta6-mapcache.
+
+        // All memory is allocated from the zone.
+        Z_FreeTags(PU_MAP, PU_PURGELEVEL-1);
+
+        memset(mapID, 0, sizeof(mapID));
+        numVertexes = 0;
+        vertexes = 0;
+
+        numSegs = 0;
+        segs = 0;
+
+        numSectors = 0;
+        sectors = 0;
+
+        numSSectors = 0;
+        ssectors = 0;
+
+        numNodes = 0;
+        nodes = 0;
+
+        numLineDefs = 0;
+        lineDefs = 0;
+
+        numSideDefs = 0;
+        sideDefs = 0;
+
+        watchedPlaneList = 0;
+        movingSurfaceList = 0;
+        decoratedSurfaceList = 0;
+        glowingSurfaceList = 0;
+
+        numPolyObjs = 0;
+        polyObjs = 0;
+
+        mobjNodes = 0;
+        lineNodes = 0;
+        linelinks = 0;
+
+        BlockMap = 0;
+        SSecBlockMap = 0;
+
+        mapGravity = 0;
+
+        currentMap = map;
+        return;
+    }
+
     strncpy(mapID, map->mapID, sizeof(mapID));
 
     numVertexes = map->numVertexes;
@@ -339,7 +389,7 @@ boolean P_LoadMap(const char *mapID)
         P_PtcInitForMap();
 
         // Initialize the lighting grid.
-        LG_Init();
+        LG_InitForMap();
 
         if(!isDedicated)
             R_InitRendVerticesPool();

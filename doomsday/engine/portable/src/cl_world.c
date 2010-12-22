@@ -95,7 +95,7 @@ static short* xlat_lump;
  */
 void Cl_InitTranslations(void)
 {
-    xlat_lump = Z_Malloc(sizeof(short) * MAX_TRANSLATIONS, PU_REFRESHTEX, 0);
+    xlat_lump = Z_Malloc(sizeof(short) * MAX_TRANSLATIONS, PU_APPSTATIC, 0);
     memset(xlat_lump, 0, sizeof(short) * MAX_TRANSLATIONS);
     { int i, numLumps = W_NumLumps();
     for(i = 0; i < numLumps; ++i)

@@ -25,7 +25,9 @@
 #include <assert.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "m_args.h"
+#include "sys_direc.h"
 #include "filedirectory.h"
 
 #include "resourcenamespace.h"

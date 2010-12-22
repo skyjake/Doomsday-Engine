@@ -34,6 +34,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_play.h"
 #include "de_refresh.h"
 #include "de_audio.h"
@@ -211,16 +212,21 @@ static void initArgs(setargs_t* args, int type, uint prop)
  */
 void P_InitMapUpdate(void)
 {
-    // Request the DMU API version the game is expecting.
-    usingDMUAPIver = gx.GetInteger(DD_DMU_VERSION);
-    if(!usingDMUAPIver)
-        Con_Error("P_InitMapUpdate: Game library is not compatible with "
-                  DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT ".");
+    if(!DD_IsNullGameInfo(DD_GameInfo()))
+    {
+        // Request the DMU API version the game is expecting.
+        usingDMUAPIver = gx.GetInteger(DD_DMU_VERSION);
+        if(!usingDMUAPIver)
+            Con_Error("P_InitMapUpdate: Game library is not compatible with "
+                      DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT ".");
 
-    if(usingDMUAPIver > DMUAPI_VER)
-        Con_Error("P_InitMapUpdate: Game library expects a later version of the\n"
-                  "DMU API then that defined by " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT ".\n"
-                  "This game is for a newer version of " DOOMSDAY_NICENAME ".");
+        if(usingDMUAPIver > DMUAPI_VER)
+            Con_Error("P_InitMapUpdate: Game library expects a later version of the\n"
+                      "DMU API then that defined by " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT ".\n"
+                      "This game is for a newer version of " DOOMSDAY_NICENAME ".");
+    }
+    else
+        usingDMUAPIver = DMUAPI_VER;
 
     // A fixed number of dummies is allocated because:
     // - The number of dummies is mostly dependent on recursive depth of
@@ -228,8 +234,8 @@ void P_InitMapUpdate(void)
     // - To test whether a pointer refers to a dummy is based on pointer
     //   comparisons; if the array is reallocated, its address may change
     //   and all existing dummies are invalidated.
-    dummyLines = Z_Calloc(dummyCount * sizeof(dummyline_t), PU_STATIC, NULL);
-    dummySectors = Z_Calloc(dummyCount * sizeof(dummysector_t), PU_STATIC, NULL);
+    dummyLines = Z_Calloc(dummyCount * sizeof(dummyline_t), PU_APPSTATIC, NULL);
+    dummySectors = Z_Calloc(dummyCount * sizeof(dummysector_t), PU_APPSTATIC, NULL);
 }
 
 /**

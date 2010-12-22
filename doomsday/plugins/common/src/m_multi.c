@@ -452,7 +452,7 @@ void SCEnterMultiplayerMenu(mn_object_t* obj, int option)
 # else // __JDOOM__
     lst_net_episode.count = ((gameMode == doom_shareware || gameMode == doom_chex)? 1 : gameMode == doom_ultimate ? 4 : 3);
 # endif
-    lst_net_episode.items = Z_Malloc(sizeof(mndata_listitem_t)*lst_net_episode.count, PU_STATIC, 0);
+    lst_net_episode.items = Z_Malloc(sizeof(mndata_listitem_t)*lst_net_episode.count, PU_GAMESTATIC, 0);
     for(i = 0; i < lst_net_episode.count; ++i)
     {
         mndata_listitem_t* item = &((mndata_listitem_t*)lst_net_episode.items)[i];

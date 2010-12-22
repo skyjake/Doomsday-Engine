@@ -43,6 +43,7 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
@@ -50,6 +51,7 @@
 #include "de_play.h"
 
 #include "m_vector.h"
+#include "sys_opengl.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -1560,7 +1562,7 @@ static void radioSubsectorEdges(const subsector_t* subsector)
         else
             doPlaneSize *= 2;
 
-        doPlanes = Z_Realloc(doPlanes, doPlaneSize, PU_STATIC);
+        doPlanes = Z_Realloc(doPlanes, doPlaneSize, PU_APPSTATIC);
     }
 
     memset(doPlanes, 0, doPlaneSize);

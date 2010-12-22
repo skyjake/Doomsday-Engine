@@ -119,7 +119,7 @@ void            M_ActivateEditField(mn_object_t* obj, int option);
 // @todo Remove this placeholder.
 void            MN_DrawSlider(const mn_page_t* page, int index, int x, int y, int range, int pos);
 
-DEFCC(CCmdMenuAction);
-DEFCC(CCmdShortcut);
+D_CMD(MenuAction);
+D_CMD(Shortcut);
 
 #endif

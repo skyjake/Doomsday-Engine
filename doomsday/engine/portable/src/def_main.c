@@ -609,13 +609,10 @@ int Def_ReadDEDFile(const char* fn, filetype_t type, void* parm)
     if(type == FT_DIRECTORY)
         return true;
 
-    if(F_Access(fn))
+    if(F_CheckFileId(fn))
     {
-        if(F_CheckFileId(fn))
-        {
-            if(!DED_Read(&defs, fn))
-                Con_Error("Def_ReadDEDFile: %s\n", dedReadError);
-        }
+        if(!DED_Read(&defs, fn))
+            Con_Error("Def_ReadDEDFile: %s\n", dedReadError);
     }
     else
     {
@@ -734,7 +731,7 @@ static void readAllDefinitions(void)
 
     // Start with engine's own top-level definition file, it is always read first.
     { ddstring_t foundPath; Str_Init(&foundPath);
-    if(F_FindResource2(RC_DEFINITION, "doomsday.ded", &foundPath))
+    if(F_FindResource2(RC_DEFINITION, "doomsday.ded;", &foundPath) != 0)
         readDefinitionFile(Str_Text(&foundPath));
     else
         Con_Error("readAllDefinitions: Error, failed to locate main engine definition file \"doomsday.ded\".");
@@ -1153,7 +1150,6 @@ void Def_PostInit(void)
     }
 
     // Detail textures.
-    GL_DeleteAllTexturesForGLTextures(GLT_DETAIL);
     R_DestroyDetailTextures();
     for(i = 0; i < defs.count.details.num; ++i)
     {
@@ -1161,8 +1157,6 @@ void Def_PostInit(void)
     }
 
     // Lightmaps and flare textures.
-    GL_DeleteAllTexturesForGLTextures(GLT_LIGHTMAP);
-    GL_DeleteAllTexturesForGLTextures(GLT_FLARE);
     R_DestroyLightMaps();
     R_DestroyFlareTextures();
     for(i = 0; i < defs.count.lights.num; ++i)
@@ -1196,8 +1190,6 @@ void Def_PostInit(void)
     }
 
     // Surface reflections.
-    GL_DeleteAllTexturesForGLTextures(GLT_SHINY);
-    GL_DeleteAllTexturesForGLTextures(GLT_MASK);
     R_DestroyShinyTextures();
     R_DestroyMaskTextures();
     for(i = 0; i < defs.count.reflections.num; ++i)

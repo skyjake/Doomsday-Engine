@@ -531,7 +531,7 @@ static void printDebugInfo(player_t* plr)
 /**
  * This is the multipurpose cheat ccmd.
  */
-DEFCC(CCmdCheat)
+D_CMD(Cheat)
 {
     size_t i, len = strlen(argv[1]);
 
@@ -549,7 +549,7 @@ DEFCC(CCmdCheat)
     return true;
 }
 
-DEFCC(CCmdCheatGod)
+D_CMD(CheatGod)
 {
     if(G_GetGameState() == GS_MAP)
     {
@@ -580,7 +580,7 @@ DEFCC(CCmdCheatGod)
     return true;
 }
 
-DEFCC(CCmdCheatNoClip)
+D_CMD(CheatNoClip)
 {
     if(G_GetGameState() == GS_MAP)
     {
@@ -628,7 +628,7 @@ static int suicideResponse(msgresponse_t response, void* context)
     return true;
 }
 
-DEFCC(CCmdCheatSuicide)
+D_CMD(CheatSuicide)
 {
     if(G_GetGameState() == GS_MAP)
     {
@@ -670,7 +670,7 @@ DEFCC(CCmdCheatSuicide)
     return true;
 }
 
-DEFCC(CCmdCheatWarp)
+D_CMD(CheatWarp)
 {
     int args[2];
 
@@ -707,7 +707,7 @@ DEFCC(CCmdCheatWarp)
     return true;
 }
 
-DEFCC(CCmdCheatReveal)
+D_CMD(CheatReveal)
 {
     int option;
     automapid_t map;
@@ -731,7 +731,7 @@ DEFCC(CCmdCheatReveal)
     return true;
 }
 
-DEFCC(CCmdCheatGive)
+D_CMD(CheatGive)
 {
     char buf[100];
     int player = CONSOLEPLAYER;
@@ -920,13 +920,13 @@ DEFCC(CCmdCheatGive)
     return true;
 }
 
-DEFCC(CCmdCheatMassacre)
+D_CMD(CheatMassacre)
 {
     Con_Printf("%i monsters killed.\n", P_Massacre());
     return true;
 }
 
-DEFCC(CCmdCheatWhere)
+D_CMD(CheatWhere)
 {
     printDebugInfo(&players[CONSOLEPLAYER]);
     return true;
@@ -935,7 +935,7 @@ DEFCC(CCmdCheatWhere)
 /**
  * Exit the current map and go to the intermission.
  */
-DEFCC(CCmdCheatLeaveMap)
+D_CMD(CheatLeaveMap)
 {
     if(!cheatsEnabled())
         return false;

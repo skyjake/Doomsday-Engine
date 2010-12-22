@@ -4572,9 +4572,9 @@ static void P_UnArchiveGlobalScriptData(void)
         if(ACSStoreSize)
         {
             if(ACSStore)
-                ACSStore = Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_STATIC);
+                ACSStore = Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC);
             else
-                ACSStore = Z_Malloc(sizeof(acsstore_t) * ACSStoreSize, PU_STATIC, 0);
+                ACSStore = Z_Malloc(sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC, 0);
 
             for(i = 0; i < ACSStoreSize; ++i)
             {
@@ -4611,9 +4611,9 @@ static void P_UnArchiveGlobalScriptData(void)
         if(ACSStoreSize)
         {
             if(ACSStore)
-                ACSStore = Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_STATIC);
+                ACSStore = Z_Realloc(ACSStore, sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC);
             else
-                ACSStore = Z_Malloc(sizeof(acsstore_t) * ACSStoreSize, PU_STATIC, 0);
+                ACSStore = Z_Malloc(sizeof(acsstore_t) * ACSStoreSize, PU_GAMESTATIC, 0);
             memcpy(ACSStore, tempStore, sizeof(acsstore_t) * ACSStoreSize);
         }
     }

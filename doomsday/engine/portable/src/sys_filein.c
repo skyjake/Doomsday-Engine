@@ -5,6 +5,7 @@
  *
  *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
  *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2010 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -102,13 +103,11 @@ typedef struct foundentry_s {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void clearLumpDirectory(void);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static lumpdirectory_record_t* lumpDirectoryRecordForId(lumpdirectoryid_t id);
-
 static void resetVDirectoryMappings(void);
+static void clearLumpDirectory(void);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -338,12 +337,31 @@ boolean F_CheckFileId(const char* path)
         else
             maxReadFiles *= 2;
 
-        readFiles = realloc(readFiles, sizeof(readFiles[0]) * maxReadFiles);
+        readFiles = realloc(readFiles, sizeof(*readFiles) * maxReadFiles);
+        memset(readFiles + numReadFiles, 0, sizeof(*readFiles) * (maxReadFiles - numReadFiles));
     }
 
     memcpy(readFiles[numReadFiles - 1].hash, id, 16);
     return true;
     }
+}
+
+boolean F_ReleaseFileId(const char* path)
+{
+    fileidentifierid_t id;
+    fileidentifier_t* fileIdentifier;
+    // Calculate the identifier.
+    Dir_FileID(path, id);
+    if((fileIdentifier = findFileIdentifierForId(id)) != 0)
+    {
+        size_t index = fileIdentifier - readFiles;
+        if(index < numReadFiles)
+            memmove(readFiles + index, readFiles + index + 1, numReadFiles - index - 1);
+        memset(readFiles + numReadFiles, 0, sizeof(*readFiles));
+        --numReadFiles;
+        return true;
+    }
+    return false;
 }
 
 /**
@@ -677,18 +695,21 @@ static unsigned int F_GetLastModified(const char* path)
 /**
  * @return              @c true, if the mapping matched the path.
  */
-boolean F_MapPath(char* mapped, const char* path, vdmapping_t* vd, size_t len)
+boolean F_MapPath(ddstring_t* path, vdmapping_t* vd)
 {
     size_t targetLen = strlen(vd->target);
 
-    if(!strnicmp(path, vd->target, targetLen))
+    if(!strnicmp(Str_Text(path), vd->target, targetLen))
     {
         // Replace the beginning with the source path.
-        strncpy(mapped, vd->source, len);
-        strncat(mapped, path + targetLen, len);
+        ddstring_t temp;
+        Str_Init(&temp);
+        Str_Set(&temp, vd->source);
+        Str_PartAppend(&temp, Str_Text(path), targetLen, Str_Length(path) - targetLen);
+        Str_Copy(path, &temp);
+        Str_Free(&temp);
         return true;
     }
-
     return false;
 }
 
@@ -696,7 +717,6 @@ DFILE* F_OpenFile(const char* path, const char* mymode)
 {
     DFILE* file = F_GetFreeFile();
     char mode[8];
-    filename_t mapped;
 
     if(!file)
         return NULL;
@@ -711,27 +731,31 @@ DFILE* F_OpenFile(const char* path, const char* mymode)
     file->data = fopen(path, mode);
     if(!file->data)
     {
-        // Any applicable virtual directory mappings?
-        { uint i;
-        for(i = 0; i < vdMappingsCount; ++i)
+        if(vdMappingsCount > 0)
         {
-            if(!F_MapPath(mapped, path, &vdMappings[i], FILENAME_T_MAXLEN))
-                continue;
-
-            // The mapping was successful.
-            if((file->data = fopen(mapped, mode)) != NULL)
+            ddstring_t mapped;
+            Str_Init(&mapped);
+            // Any applicable virtual directory mappings?
+            { uint i;
+            for(i = 0; i < vdMappingsCount; ++i)
             {
-                // Success!
-                VERBOSE( Con_Message("F_OpenFile: %s opened as %s.\n", mapped, path) );
-                break;
-            }
-        }}
+                Str_Set(&mapped, path);
+                if(!F_MapPath(&mapped, &vdMappings[i]))
+                    continue;
+                // The mapping was successful.
+                if((file->data = fopen(Str_Text(&mapped), mode)) != NULL)
+                {
+                    VERBOSE( Con_Message("F_OpenFile: \"%s\" opened as %s.\n", Str_Text(F_PrettyPath(&mapped)), path) );
+                    break;
+                }
+            }}
+            Str_Free(&mapped);
+        }
 
         if(!file->data)
-        {
-            // Still can't find it.
+        {   // Still can't find it.
             F_Release(file);
-            return NULL; // Can't find the file.
+            return NULL;
         }
     }
 
@@ -970,38 +994,33 @@ static int forAllDescend(const ddstring_t* pattern, const ddstring_t* path,
 {
     assert(pattern && path && callback);
     {
-    int count, max, result = 0;
+    ddstring_t localPattern, wildPath, origWildPath, filename;
+    int result = 0, count, max;
     foundentry_t* found;
-    filename_t localPattern;
-    ddstring_t filename;
     finddata_t fd;
-
-    dd_snprintf(localPattern, FILENAME_T_MAXLEN, "%s%s", Str_Text(path), Str_Text(pattern));
 
     // Collect a list of file paths including those which have been mapped.
     count = 0;
     max = 16;
     found = malloc(max * sizeof(*found));
 
+    Str_Init(&origWildPath);
+    Str_Clear(&origWildPath);
+    Str_Appendf(&origWildPath, "%s*", Str_Text(path));
+
+    Str_Init(&wildPath);
     { int i;
     for(i = -1; i < (int)vdMappingsCount; ++i)
     {
-        filename_t spec;
+        Str_Copy(&wildPath, &origWildPath);
 
-        dd_snprintf(spec, FILENAME_T_MAXLEN, "%s*", Str_Text(path));
-
-        if(i >= 0)
+        // Possible virtual mapping?
+        if(i >= 0 && !F_MapPath(&wildPath, &vdMappings[i]))
         {
-            filename_t mapped;
-            // Possible virtual mapping.
-            if(!F_MapPath(mapped, spec, &vdMappings[i], FILENAME_T_MAXLEN))
-            {   // Not mapped.
-                continue;
-            }
-            strncpy(spec, mapped, FILENAME_T_MAXLEN);
+            continue; // Not mapped.
         }
 
-        if(!myfindfirst(spec, &fd))
+        if(!myfindfirst(Str_Text(&wildPath), &fd))
         {
             // The first file found!
             do
@@ -1024,8 +1043,14 @@ static int forAllDescend(const ddstring_t* pattern, const ddstring_t* path,
         myfindend(&fd);
     }}
 
+    Str_Free(&wildPath);
+    Str_Free(&origWildPath);
+
     // Sort all the found entries.
     qsort(found, count, sizeof(foundentry_t), F_CompareFoundEntryByName);
+
+    Str_Init(&localPattern);
+    Str_Appendf(&localPattern, "%s%s", Str_Text(path), Str_Text(pattern));
 
     Str_Init(&filename);
     { int i;
@@ -1047,7 +1072,7 @@ static int forAllDescend(const ddstring_t* pattern, const ddstring_t* path,
         else
         {
             // Does this match the pattern?
-            if(F_MatchName(Str_Text(&filename), localPattern))
+            if(F_MatchName(Str_Text(&filename), Str_Text(&localPattern)))
             {
                 // If the callback returns false, stop immediately.
                 if((result = callback(&filename, FT_NORMAL, paramaters)) != 0)
@@ -1058,9 +1083,12 @@ static int forAllDescend(const ddstring_t* pattern, const ddstring_t* path,
         }
     }}
 
+    Str_Free(&filename);
+    Str_Free(&localPattern);
+
     // Free the memory allocate for the list of found entries.
     free(found);
-    Str_Free(&filename);
+
     return result;
     }
 }
@@ -1086,7 +1114,7 @@ int F_ForAll2(const ddstring_t* fileSpec, f_forall_func_t callback, void* parama
 
     memset(&specdir, 0, sizeof(specdir));
     Str_Init(&specdir.path);
-    
+
     Str_Init(&temp);
     F_ExpandBasePath(&temp, fileSpec);
     F_FileDir(&temp, &specdir);

@@ -33,6 +33,7 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_play.h"
 #include "de_bsp.h"
 #include "de_refresh.h"
@@ -676,7 +677,7 @@ static void buildSectorLineLists(gamemap_t* map)
     Con_Message(" Build line tables...\n");
 
     // build line tables for each sector.
-    lineLinksBlockSet = Z_BlockCreate(sizeof(linelink_t), 512, PU_STATIC);
+    lineLinksBlockSet = Z_BlockCreate(sizeof(linelink_t), 512, PU_APPSTATIC);
     sectorLineLinks = M_Calloc(sizeof(linelink_t*) * map->numSectors);
     totallinks = 0;
     for(i = 0, li = map->lineDefs; i < map->numLineDefs; ++i, li++)

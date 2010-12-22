@@ -575,7 +575,7 @@ static sfxsample_t* cacheSample(int id, sfxinfo_t* info)
         {
             ddstring_t foundPath; Str_Init(&foundPath);
 
-            if(F_FindResource2(RC_SOUND, info->lumpName, &foundPath) &&
+            if(F_FindResource2(RC_SOUND, info->lumpName, &foundPath) != 0 &&
                (data = WAV_Load(Str_Text(&foundPath), &bytesPer, &rate, &numSamples)))
             {   // Loading was successful!
                 bytesPer /= 8; // Was returned as bits.
@@ -613,7 +613,7 @@ static sfxsample_t* cacheSample(int id, sfxinfo_t* info)
         if(WAV_CheckFormat(hdr))
         {
             const void*         sp =
-                W_CacheLumpNum(info->lumpNum, PU_STATIC);
+                W_CacheLumpNum(info->lumpNum, PU_APPSTATIC);
 
             // Load as WAV, then.
             if(!(data = WAV_MemoryLoad((const byte*) sp,
@@ -651,7 +651,7 @@ static sfxsample_t* cacheSample(int id, sfxinfo_t* info)
          */
         sfxcache_t*         node;
         const void*         data, *sp =
-            W_CacheLumpNum(info->lumpNum, PU_STATIC);
+            W_CacheLumpNum(info->lumpNum, PU_APPSTATIC);
 
         data = ((const char*) sp) + 8; // Eight byte header.
         bytesPer = 1; // 8-bit.

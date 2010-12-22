@@ -23,7 +23,7 @@
  */
 
 /**
- * r_util.c: Refresh Utility Routines
+ * Refresh Utility Routines.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_refresh.h"
 #include "de_play.h"
 

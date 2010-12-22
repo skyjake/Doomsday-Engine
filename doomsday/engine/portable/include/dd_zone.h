@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 1999-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,11 +22,11 @@
  */
 
 /**
- * dd_zone.h: Memory Zone
+ * Memory Zone
  */
 
-#ifndef __DOOMSDAY_ZONE_H__
-#define __DOOMSDAY_ZONE_H__
+#ifndef LIBDENG_ZONE_H
+#define LIBDENG_ZONE_H
 
 /**
  * Define this to force all memory blocks to be allocated from
@@ -34,13 +34,14 @@
  */
 //#define FAKE_MEMORY_ZONE 1
 
-#define PU_REFRESHTEX   11 // Textures/Flats/refresh.
-#define PU_REFRESHCM    12 // Colormap.
-#define PU_REFRESHTRANS 13
-#define PU_REFRESHSPR   14
-#define PU_PATCH        15
-#define PU_MODEL        16
-#define PU_SPRITE       20
+#define PU_REFRESHTEX       11 // Textures and Flats
+//#define PU_REFRESHCM        12 // Colormap.
+#define PU_REFRESHTRANS     13
+//#define PU_REFRESHSPR       14
+#define PU_PATCH            15
+//#define PU_MODEL            16
+#define PU_REFRESHRAW       17
+#define PU_SPRITE           20
 
 int             Z_Init(void);
 void            Z_Shutdown(void);
@@ -108,4 +109,4 @@ Z_ChangeTag2(p,t); \
 #endif
 
 
-#endif
+#endif /* LIBDENG_ZONE_H */

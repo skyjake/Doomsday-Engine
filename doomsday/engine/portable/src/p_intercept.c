@@ -81,7 +81,7 @@ void P_ClearIntercepts(void)
     {
         maxIntercepts = MININTERCEPTS;
         intercepts =
-            Z_Malloc(sizeof(*intercepts) * maxIntercepts, PU_STATIC, 0);
+            Z_Malloc(sizeof(*intercepts) * maxIntercepts, PU_APPSTATIC, 0);
     }
 
     intercept_p = intercepts;
@@ -101,7 +101,7 @@ intercept_t* P_AddIntercept(float frac, intercepttype_t type, void* ptr)
     {
         // Allocate more memory.
         maxIntercepts *= 2;
-        intercepts = Z_Realloc(intercepts, sizeof(*intercepts) * maxIntercepts, PU_STATIC);
+        intercepts = Z_Realloc(intercepts, sizeof(*intercepts) * maxIntercepts, PU_APPSTATIC);
         intercept_p = intercepts + count;
     }
 

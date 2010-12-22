@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * p_objlink.c: Objlink management.
+ * Objlink management.
  *
  * Object>surface contacts and object>subsector spreading.
  */
@@ -33,6 +33,7 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
@@ -149,7 +150,7 @@ static objcontact_t* allocObjContact(void)
 
     if(contCursor == NULL)
     {
-        con = Z_Malloc(sizeof(*con), PU_STATIC, NULL);
+        con = Z_Malloc(sizeof(*con), PU_APPSTATIC, NULL);
 
         // Link to the list of objcontact nodes.
         con->nextUsed = contFirst;
@@ -172,7 +173,7 @@ static objlink_t* allocObjLink(void)
 
     if(objLinkCursor == NULL)
     {
-        oLink = Z_Malloc(sizeof(*oLink), PU_STATIC, NULL);
+        oLink = Z_Malloc(sizeof(*oLink), PU_APPSTATIC, NULL);
 
         // Link to the list of objlink nodes.
         oLink->nextUsed = objLinkFirst;

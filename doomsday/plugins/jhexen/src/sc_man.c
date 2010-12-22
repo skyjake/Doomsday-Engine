@@ -90,7 +90,7 @@ static void openScriptLump(lumpnum_t lump)
 
     strcpy(ScriptName, W_LumpName(lump));
 
-    ScriptBuffer = (char *) W_CacheLumpNum(lump, PU_STATIC);
+    ScriptBuffer = (char *) W_CacheLumpNum(lump, PU_GAMESTATIC);
     ScriptSize = W_LumpLength(lump);
 
     ScriptFreeCLib = false; // De-allocate using Z_Free()
@@ -189,13 +189,10 @@ void SC_Close(void)
     if(ScriptOpen)
     {
         if(ScriptFreeCLib == true)
-        {
             free(ScriptBuffer);
-        }
         else
-        {
             Z_Free(ScriptBuffer);
-        }
+        ScriptBuffer = 0;
 
         ScriptOpen = false;
     }

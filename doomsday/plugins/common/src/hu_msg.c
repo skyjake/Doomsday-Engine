@@ -55,7 +55,7 @@
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-DEFCC(CCmdMsgResponse);
+D_CMD(MsgResponse);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -312,7 +312,7 @@ void Hu_MsgStart(msgtype_t type, const char* msg, msgfunc_t callback, void* cont
 /**
  * Handles responses to messages requiring input.
  */
-DEFCC(CCmdMsgResponse)
+D_CMD(MsgResponse)
 {
     if(messageToPrint)
     {

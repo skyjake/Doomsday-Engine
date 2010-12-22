@@ -656,8 +656,8 @@ typedef struct {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-DEFCC(CCmdMsgAction);
-DEFCC(CCmdLocalMessage);
+D_CMD(MsgAction);
+D_CMD(LocalMessage);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -954,7 +954,7 @@ static boolean sendMacro(int player, int num)
 /**
  * Display a local game message.
  */
-DEFCC(CCmdLocalMessage)
+D_CMD(LocalMessage)
 {
     D_NetMessageNoSound(CONSOLEPLAYER, argv[1]);
     return true;
@@ -963,7 +963,7 @@ DEFCC(CCmdLocalMessage)
 /**
  * Handles controls (console commands) for the chat widget.
  */
-DEFCC(CCmdMsgAction)
+D_CMD(MsgAction)
 {
     int player = CONSOLEPLAYER;
     uiwidget_chat_t* chat = &chatWidgets[player];

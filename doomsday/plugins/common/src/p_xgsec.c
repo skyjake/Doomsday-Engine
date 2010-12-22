@@ -3066,7 +3066,7 @@ void XS_Update(void)
 /*
  * Write XG types into a binary file.
  */
-DEFCC(CCmdDumpXG)
+D_CMD(DumpXG)
 {
     FILE   *file;
 
@@ -3092,7 +3092,7 @@ DEFCC(CCmdDumpXG)
 /**
  * $moveplane: Command line interface to the plane mover.
  */
-DEFCC(CCmdMovePlane)
+D_CMD(MovePlane)
 {
     boolean     isCeiling = !stricmp(argv[0], "moveceil");
     boolean     isBoth = !stricmp(argv[0], "movesec");

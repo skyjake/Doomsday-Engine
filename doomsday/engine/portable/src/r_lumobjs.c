@@ -23,7 +23,7 @@
  */
 
 /**
- * r_lumobjs.c: Lumobj (luminous object) management.
+ * Lumobj (luminous object) management.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -31,12 +31,15 @@
 #include <math.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_refresh.h"
 #include "de_render.h"
 #include "de_graphics.h"
 #include "de_misc.h"
 #include "de_play.h"
 #include "de_defs.h"
+
+#include "sys_opengl.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -116,7 +119,7 @@ static lumlistnode_t* allocListNode(void)
 
     if(listNodeCursor == NULL)
     {
-        ln = Z_Malloc(sizeof(*ln), PU_STATIC, 0);
+        ln = Z_Malloc(sizeof(*ln), PU_APPSTATIC, 0);
 
         // Link to the list of list nodes.
         ln->nextUsed = listNodeFirst;
@@ -164,32 +167,34 @@ void LO_InitForMap(void)
         Z_Calloc(sizeof(*subLumObjList) * numSSectors, PU_MAPSTATIC, 0);
 
     maxLuminous = 0;
-    luminousBlockSet = NULL; // Will have already been free'd.
+    luminousBlockSet = 0; // Will have already been free'd.
 }
 
 /**
- * Called once during engine shutdown by Rend_Reset(). Releases any system
- * resources acquired by the objlink + obj contact management subsystem.
+ * Release any system resources acquired by the objlink + obj contact
+ * management subsystem.
  */
 void LO_Clear(void)
 {
-    Z_BlockDestroy(luminousBlockSet);
+    if(luminousBlockSet)
+        Z_BlockDestroy(luminousBlockSet);
+    luminousBlockSet = 0;
 
     if(luminousList)
         M_Free(luminousList);
-    luminousList = NULL;
+    luminousList = 0;
 
     if(luminousDist)
         M_Free(luminousDist);
-    luminousDist = NULL;
+    luminousDist = 0;
 
     if(luminousClipped)
         M_Free(luminousClipped);
-    luminousClipped = NULL;
+    luminousClipped = 0;
 
     if(luminousOrder)
         M_Free(luminousOrder);
-    luminousOrder = NULL;
+    luminousOrder = 0;
 
     maxLuminous = numLuminous = 0;
 }

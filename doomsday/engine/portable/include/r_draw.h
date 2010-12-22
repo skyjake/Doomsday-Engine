@@ -41,6 +41,6 @@ void            R_DrawPatch(patchtex_t* p, int x, int y);
 void            R_DrawPatch2(patchtex_t* p, int x, int y, int w, int h);
 void            R_DrawPatch3(patchtex_t* p, int x, int y, int w, int h, boolean useOffsets);
 
-void            R_DrawPatchTiled(patchtex_t* p, int x, int y, int w, int h, GLint wrapS, GLint wrapT);
+void            R_DrawPatchTiled(patchtex_t* p, int x, int y, int w, int h, DGLint wrapS, DGLint wrapT);
 
 #endif /* LIBDENG_REFRESH_DRAW_H */

@@ -143,14 +143,15 @@ void DD_InitAPI(void)
 {
     GETGAMEAPI GetGameAPI = app.GetGameAPI;
 
-    game_export_t* gameExPtr;
-
     // Put the imported stuff into the imports.
     SetGameImports(&__gi);
 
     memset(&__gx, 0, sizeof(__gx));
-    gameExPtr = GetGameAPI(&__gi);
-    memcpy(&__gx, gameExPtr, MIN_OF(sizeof(__gx), gameExPtr->apiSize));
+    if(GetGameAPI)
+    {
+        game_export_t* gameExPtr = GetGameAPI(&__gi);
+        memcpy(&__gx, gameExPtr, MIN_OF(sizeof(__gx), gameExPtr->apiSize));
+    }
 }
 
 void DD_InitCommandLine(const char* cmdLine)
@@ -195,6 +196,33 @@ void DD_Verbosity(void)
 }
 
 /**
+ * Register the engine commands and variables.
+ */
+void DD_Register(void)
+{
+    DD_RegisterLoop();
+    DD_RegisterInput();
+    DD_RegisterVFS();
+    B_Register(); // for control bindings
+    Con_Register();
+    DH_Register();
+    R_Register();
+    S_Register();
+    SBE_Register(); // for bias editor
+    Rend_Register();
+    GL_Register();
+    Net_Register();
+    I_Register();
+    H_Register();
+    DAM_Register();
+    BSP_Register();
+    UI_Register();
+    Demo_Register();
+    P_ControlRegister();
+    FI_Register();
+}
+
+/**
  * Called early on during the startup process so that we can get the console
  * online ready for printing ASAP.
  */
@@ -226,26 +254,7 @@ void DD_ConsoleInit(void)
             Con_Message("Executable: " DOOMSDAY_VERSIONTEXT ".\n");
 
             // Register the engine commands and variables.
-            DD_RegisterLoop();
-            DD_RegisterInput();
-            DD_RegisterVFS();
-            B_Register(); // for control bindings
-            Con_Register();
-            DH_Register();
-            R_Register();
-            S_Register();
-            SBE_Register(); // for bias editor
-            Rend_Register();
-            GL_Register();
-            Net_Register();
-            I_Register();
-            H_Register();
-            DAM_Register();
-            BSP_Register();
-            UI_Register();
-            Demo_Register();
-            P_ControlRegister();
-            FI_Register();
+            DD_Register();
 
             // Print the used command line.
             if(verbose)

@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  */
 
 /**
- * dam_file.c: Doomsday Archived Map (DAM) reader/writer.
+ * Doomsday Archived Map (DAM) reader/writer.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -31,6 +31,7 @@
 #include <stdlib.h>
 
 #include "de_base.h"
+#include "de_console.h"
 #include "de_dam.h"
 #include "de_defs.h"
 #include "de_misc.h"

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,11 @@
  */
 
 /**
- * sys_opengl.h: OpenGL interface, low-level.
+ * OpenGL interface, low-level.
  */
 
-#ifndef __DOOMSDAY_SYSTEM_OPENGL_H__
-#define __DOOMSDAY_SYSTEM_OPENGL_H__
+#ifndef LIBDENG_SYSTEM_OPENGL_H
+#define LIBDENG_SYSTEM_OPENGL_H
 
 #ifdef WIN32
 #  define WIN32_LEAN_AND_MEAN
@@ -53,6 +53,8 @@
 #endif
 
 #include <string.h>
+
+#include "sys_window.h"
 
 #define USE_MULTITEXTURE    1
 #define MAX_TEX_UNITS       2      // More won't be used.
@@ -166,4 +168,4 @@ void            Sys_InitWGLExtensions(void);
 void            Sys_PrintGLExtensions(void);
 boolean         Sys_QueryGLExtension(const char* name, const GLubyte* extensions);
 void            Sys_CheckGLError(void);
-#endif
+#endif /* LIBDENG_SYSTEM_OPENGL_H */
