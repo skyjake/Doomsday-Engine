@@ -1505,8 +1505,8 @@ int PatchState(int stateNum)
     ded_state_t *info, dummy;
 
     // C doesn't allow non-constant initializers.
-    keys[4].offset = myoffsetof(ded_state_t, misc[0], 0);
-    keys[5].offset = myoffsetof(ded_state_t, misc[1], 0);
+    keys[2].offset = myoffsetof(ded_state_t, misc[0], 0);
+    keys[3].offset = myoffsetof(ded_state_t, misc[1], 0);
 
     if(stateNum >= 0 && stateNum < ded->count.states.num)
     {
