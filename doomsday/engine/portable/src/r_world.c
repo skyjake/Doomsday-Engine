@@ -1460,26 +1460,22 @@ void R_SetupMap(int mode, int flags)
 
         P_MapInitPolyobjs();
 
+        // Map setup has been completed.
+
         // Run any commands specified in Map Info.
-        {
-        ded_mapinfo_t*      mapInfo = Def_GetMapInfo(P_GetMapID(map));
-
+        { ded_mapinfo_t* mapInfo = Def_GetMapInfo(P_GetMapID(map));
         if(mapInfo && mapInfo->execute)
-            Con_Execute(CMDS_SCRIPT, mapInfo->execute, true, false);
-        }
-
-        // The map setup has been completed. Run the special map setup
-        // command, which the user may alias to do something useful.
-        if(mapID && mapID[0])
         {
-            char                cmd[80];
+            Con_Execute(CMDS_SCRIPT, mapInfo->execute, true, false);
+        }}
 
-            sprintf(cmd, "init-%s", mapID);
-            if(Con_IsValidCommand(cmd))
-            {
-                Con_Executef(CMDS_SCRIPT, false, cmd);
-            }
-        }
+        // Run the special map setup command, which the user may alias to do something useful.
+        { char cmd[80];
+        sprintf(cmd, "init-%s", P_GetMapID(map));
+        if(Con_IsValidCommand(cmd))
+        {
+            Con_Executef(CMDS_SCRIPT, false, cmd);
+        }}
 
         // Clear any input events that might have accumulated during the
         // setup period.
