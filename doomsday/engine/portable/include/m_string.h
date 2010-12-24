@@ -82,15 +82,15 @@ const char*     Str_GetLine(ddstring_t* ds, const char* src);
 /*@}*/
 
 /**
- * Copies characters from @c to @dest until a @c delim character is encountered.
+ * Copies characters from @a src to @a dest until a @a delimiter character is encountered.
  *
  * @param dest          Destination string.
  * @param src           Source string.
  * @param delimiter     Delimiter character.
  * @param flags         @see copyDelimiterFlags.
  *
- * @return              Pointer to the character within @c src where copy stopped
- *                      else @c NULL if at the end.
+ * @return              Pointer to the character within @a src where copy stopped
+ *                      else @c NULL if the end was reached.
  */
 const char* Str_CopyDelim2(ddstring_t* dest, const char* src, char delimiter, int cdflags);
 const char* Str_CopyDelim(ddstring_t* dest, const char* src, char delimiter);
