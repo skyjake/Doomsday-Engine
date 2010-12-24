@@ -72,7 +72,29 @@ size_t          Str_StripLeft(ddstring_t* ds);
 size_t          Str_StripRight(ddstring_t* ds);
 void            Str_Strip(ddstring_t* ds);
 const char*     Str_GetLine(ddstring_t* ds, const char* src);
-const char*     Str_CopyDelim(ddstring_t* dest, const char* src, char delim);
+
+/**
+ * @defGroup copyDelimiterFlags Copy Delimiter Flags.
+ */
+/*@{*/
+#define CDF_OMIT_DELIMITER      0x1 // Do not copy delimiters into the dest path.
+#define CDF_OMIT_WHITESPACE     0x2 // Do not copy whitespace into the dest path.
+/*@}*/
+
+/**
+ * Copies characters from @c to @dest until a @c delim character is encountered.
+ *
+ * @param dest          Destination string.
+ * @param src           Source string.
+ * @param delimiter     Delimiter character.
+ * @param flags         @see copyDelimiterFlags.
+ *
+ * @return              Pointer to the character within @c src where copy stopped
+ *                      else @c NULL if at the end.
+ */
+const char* Str_CopyDelim2(ddstring_t* dest, const char* src, char delimiter, int cdflags);
+const char* Str_CopyDelim(ddstring_t* dest, const char* src, char delimiter);
+
 int             Str_CompareIgnoreCase(const ddstring_t* ds, const char* text);
 char            Str_At(const ddstring_t* str, size_t index);
 char            Str_RAt(const ddstring_t* str, size_t reverseIndex);

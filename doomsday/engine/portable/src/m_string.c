@@ -360,35 +360,37 @@ int Str_CompareIgnoreCase(const ddstring_t* ds, const char* text)
     return strcasecmp(Str_Text(ds), text);
 }
 
-/**
- * Copies characters from @c to @dest until a @c delim character is encountered.
- * Also ignores all whitespace characters.
- *
- * @param dest          Destination string.
- * @param src           Source string.
- * @param delim         Delimiter character, where copying will stop.
- *
- * @return              Pointer to the character within @c src past the delimiter, or NULL if the
- *                      source data ended.
- */
-const char* Str_CopyDelim(ddstring_t* dest, const char* src, char delim)
+const char* Str_CopyDelim2(ddstring_t* dest, const char* src, char delimiter, int cdflags)
 {
+    assert(dest);
+    {
+    const char* cursor;
     Str_Clear(dest);
 
     if(!src)
         return NULL;
 
-    for(; *src && *src != delim; ++src)
+    for(cursor = src; *cursor && *cursor != delimiter; ++cursor)
     {
-        if(!isspace(*src))
-            Str_PartAppend(dest, src, 0, 1);
+        if((cdflags & CDF_OMIT_WHITESPACE) && isspace(*cursor))
+            continue;
+        Str_PartAppend(dest, cursor, 0, 1);
     }
 
-    if(!*src)
+    if(!*cursor)
         return NULL; // It ended.
 
+    if(!(cdflags & CDF_OMIT_DELIMITER))
+        Str_PartAppend(dest, cursor, 0, 1);
+
     // Skip past the delimiter.
-    return src + 1;
+    return cursor + 1;
+    }
+}
+
+const char* Str_CopyDelim(ddstring_t* dest, const char* src, char delimiter)
+{
+    return Str_CopyDelim2(dest, src, delimiter, CDF_OMIT_DELIMITER|CDF_OMIT_WHITESPACE);
 }
 
 /**

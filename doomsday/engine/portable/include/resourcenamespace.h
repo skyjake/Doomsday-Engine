@@ -25,7 +25,6 @@
 #define LIBDENG_SYSTEM_RESOURCENAMESPACE_H
 
 #include "m_string.h"
-#include "filedirectory.h"
 
 typedef struct resourcenamespace_hashnode_s {
     struct resourcenamespace_hashnode_s* next;
@@ -79,9 +78,6 @@ typedef struct resourcenamespace_s {
 
     /// Path hash table.
     resourcenamespace_namehash_t _pathHash;
-
-    /// File system directories, resolved from paths.
-    filedirectory_t* _fileDirectory;
 } resourcenamespace_t;
 
 /**

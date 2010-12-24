@@ -161,15 +161,9 @@ void M_ExtractFileBase(char* dest, const char* path, size_t len)
     M_ExtractFileBase2(dest, path, len, 0);
 }
 
-/**
- * This has been modified to work with filenames of all sizes.
- */
-void M_ExtractFileBase2(char* dest, const char* path, size_t max,
-                        int ignore)
+void M_ExtractFileBase2(char* dest, const char* path, size_t max, int ignore)
 {
-    const char*         src;
-
-    src = path + strlen(path) - 1;
+    const char* src = path + strlen(path) - 1;
 
     // Back up until a \ or the start.
     while(src != path && *(src - 1) != '\\' && *(src - 1) != '/')
@@ -177,7 +171,6 @@ void M_ExtractFileBase2(char* dest, const char* path, size_t max,
         src--;
     }
 
-    // Copy up to eight characters.
     while(*src && *src != '.' && max-- > 0)
     {
         if(ignore-- > 0)

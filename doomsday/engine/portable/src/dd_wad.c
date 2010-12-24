@@ -1317,7 +1317,7 @@ void W_GetPWADFileNames(char* buf, size_t bufSize, char separator)
         filerecord_t* rec = &records[i];
         if(rec->iwad)
             continue;
-    
+
         { filename_t temp;
         Dir_FileName(temp, rec->fileName, FILENAME_T_MAXLEN);
         if(stricmp(temp + strlen(temp) - 3, "lmp"))
@@ -1388,7 +1388,7 @@ D_CMD(Dir)
     {
         Str_Set(&dir, argv[i]);
         Str_Strip(&dir);
-        Dir_FixSlashes(Str_Text(&dir), Str_Length(&dir));
+        F_FixSlashes(&dir);
         // Make sure it ends in a directory separator character.
         if(Str_RAt(&dir, 0) != DIR_SEP_CHAR)
             Str_AppendChar(&dir, DIR_SEP_CHAR);

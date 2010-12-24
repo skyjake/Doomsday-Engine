@@ -33,7 +33,6 @@ typedef struct filedirectory_node_s {
     struct filedirectory_node_s* parent;
     filetype_t type;
     char* path;
-    uint count;
     boolean processed;
 } filedirectory_node_t;
 
@@ -43,7 +42,7 @@ typedef struct filedirectory_node_s {
  * @ingroup fs
  */
 typedef struct filedirectory_s {
-    /// Copy of the path list specified at creation time.
+    /// Copy of the entire path list.
     ddstring_t _pathList;
 
     /// @c true if the record set has been built.
@@ -53,7 +52,8 @@ typedef struct filedirectory_s {
     struct filedirectory_node_s* _direcFirst, *_direcLast;
 } filedirectory_t;
 
-filedirectory_t* FileDirectory_Create(const char* pathList);
+filedirectory_t* FileDirectory_Create2(const char* pathList);
+filedirectory_t* FileDirectory_Create(void);
 
 void FileDirectory_Destroy(filedirectory_t* fileDirectory);
 
@@ -61,6 +61,34 @@ void FileDirectory_Destroy(filedirectory_t* fileDirectory);
  * Clear the directory contents.
  */
 void FileDirectory_Clear(filedirectory_t* fileDirectory);
+
+/**
+ * Resolve and collate all file paths in the directory into a list.
+ *
+ * @param type              If a valid file type only process nodes of this type.
+ * @param count             Number of files in the list is written back here.
+ * @return                  Ptr to the allocated list; it is the responsibility
+ *                          of the caller to Str_Free each string in the list and
+ *                          Z_Free the list itself.
+ */
+ddstring_t* FileDirectory_CollectFilePaths(filedirectory_t* fd, filetype_t type, size_t* count);
+
+#if _DEBUG
+void FileDirectory_PrintFileList(filedirectory_t* fileDirectory);
+#endif
+
+/**
+ * Add a new set of file paths. Duplicates are automatically pruned.
+ *
+ * @param pathList          One or more paths separated by semicolons.
+ * @param callback          Callback function ptr.
+ * @param paramaters        Passed to the callback.
+ */
+void FileDirectory_AddPaths3(filedirectory_t* fileDirectory, const char* pathList,
+    int (*callback) (const filedirectory_node_t* node, void* paramaters), void* paramaters);
+void FileDirectory_AddPaths2(filedirectory_t* fileDirectory, const char* pathList,
+    int (*callback) (const filedirectory_node_t* node, void* paramaters));
+void FileDirectory_AddPaths(filedirectory_t* fileDirectory, const char* pathList);
 
 /**
  * Find a path in the directory.
@@ -80,7 +108,6 @@ boolean FileDirectory_Find(filedirectory_t* fileDirectory, const char* searchPat
  * Iterate over nodes in the directory making a callback for each.
  * Iteration ends when all nodes have been visited or a callback returns non-zero.
  *
- * @param fileDirectory     File directory being traversed.
  * @param type              If a valid file type only process nodes of this type.
  * @param parent            If not @c NULL, only process child nodes of this node.
  * @param callback          Callback function ptr.

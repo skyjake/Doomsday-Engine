@@ -27,6 +27,9 @@
 
 #include "m_string.h"
 
+struct resourcenamespace_s;
+struct filedirectory_s;
+
 /**
  * Resource Type. Unique identifer attributable to resources (e.g., files).
  *
@@ -55,8 +58,6 @@ typedef enum {
 #define NUM_RESOURCE_TYPES          (RT_LAST_INDEX-1)
 #define VALID_RESOURCE_TYPE(v)      ((v) >= RT_FIRST && (v) < RT_LAST_INDEX)
 
-struct resourcenamespace_s;
-
 /**
  * Unique identifier associated with resource namespaces managed by the resource locator.
  *
@@ -76,14 +77,13 @@ void F_InitResourceLocator(void);
  */
 void F_ShutdownResourceLocator(void);
 
-/**
- * @return              Number of resource namespaces.
- */
+/// @return             Ptr to the global (singleton) FileDirectory instance.
+struct filedirectory_s* F_FileDirectory(void);
+
+/// @return              Number of resource namespaces.
 uint F_NumResourceNamespaces(void);
 
-/**
- * @return              @c true iff the value can be interpreted as a valid resource namespace id.
- */
+/// @return              @c true iff the value can be interpreted as a valid resource namespace id.
 boolean F_IsValidResourceNamespaceId(int value);
 
 /**
@@ -166,6 +166,12 @@ typedef struct directory2_s {
 } directory2_t;
 
 void F_FileDir(const ddstring_t* str, directory2_t* dir);
+
+/**
+ * Converts directory slashes to the correct type of slash.
+ * @return              @c true iff the path was modified.
+ */
+boolean F_FixSlashes(ddstring_t* path);
 
 /**
  * Convert the symbolic path into a real path.

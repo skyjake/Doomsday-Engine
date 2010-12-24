@@ -176,7 +176,7 @@ static void addToPathList(ddstring_t*** list, size_t* listSize, const char* rawP
     ddstring_t* newPath = Str_New();
 
     Str_Set(newPath, rawPath);
-    Dir_FixSlashes(Str_Text(newPath), Str_Length(newPath));
+    F_FixSlashes(newPath);
     F_ExpandBasePath(newPath, newPath);
 
     *list = realloc(*list, sizeof(**list) * ++(*listSize)); /// \fixme This is never freed!
@@ -324,7 +324,7 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags, con
 
             Str_Init(&fileName);
             { const char* p = Str_Text(&fileNames);
-            while((p = Str_CopyDelim(&fileName, p, ';')))
+            while((p = Str_CopyDelim2(&fileName, p, ';', CDF_OMIT_DELIMITER)))
                 addIdentityKeyToResourceRecord(rec, &fileName);
             }
 
@@ -804,7 +804,7 @@ static int DD_ChangeGameWorker(void* paramaters)
     if(ArgCheckWith("-config", 1))
     {
         Str_Init(&tmp); Str_Set(&tmp, ArgNext());
-        Dir_FixSlashes(Str_Text(&tmp), Str_Length(&tmp));
+        F_FixSlashes(&tmp);
         configFileName = &tmp;
     }
     else
@@ -977,6 +977,8 @@ boolean DD_ChangeGame(gameinfo_t* info)
     if(!DD_IsNullGameInfo(DD_GameInfo()))
     {
         Con_SaveDefaults();
+
+        LO_Clear();
 
         if(gx.Shutdown)
             gx.Shutdown();
@@ -2141,7 +2143,7 @@ D_CMD(Unload)
     {
         if(!DD_IsNullGameInfo(DD_GameInfo()))
             return DD_ChangeGame(findGameInfoForIdentityKey("null-game"));
-        
+
         Con_Message("%s is not currently loaded.\n", Str_Text(GameInfo_IdentityKey(info)));
         return false;
     }}

@@ -1736,11 +1736,11 @@ void Con_PrintPathList3(const char* pathList, const char* seperator, byte flags)
     int n = 0;
 
     Str_Init(&path);   
-    while((p = Str_CopyDelim(&path, p, ';')))
+    while((p = Str_CopyDelim2(&path, p, ';', CDF_OMIT_DELIMITER)))
     {
         if(flags & PPF_TRANSFORM_PATH_PRINTINDEX)
             Con_Printf("%i: ", n++);
-        Con_Printf("%s", (flags & PPF_TRANSFORM_PATH_MAKEPRETTY)? M_PrettyPath(Str_Text(&path)) : Str_Text(&path));
+        Con_Printf("%s", (flags & PPF_TRANSFORM_PATH_MAKEPRETTY)? Str_Text(F_PrettyPath(&path)) : Str_Text(&path));
         if(seperator && strchr(p, ';') != 0)
             Con_Printf("%s", seperator);
         if(flags & PPF_MULTILINE)

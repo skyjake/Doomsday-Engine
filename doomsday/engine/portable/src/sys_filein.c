@@ -516,7 +516,7 @@ static boolean parseLumpDirectoryMap(const char* buffer)
         else
         {
             strupr(lpm.lumpName);
-            Dir_FixSlashes(Str_Text(&lpm.path), Str_Length(&lpm.path));
+            F_FixSlashes(&lpm.path);
             addLumpDirectoryMapping(lpm.lumpName, &lpm.path);
         }
     } while(*ch);

@@ -38,6 +38,7 @@
 #include "m_args.h"
 #include "m_misc.h"
 
+#include "filedirectory.h"
 #include "resourcenamespace.h"
 
 // MACROS ------------------------------------------------------------------
@@ -116,6 +117,9 @@ static resourcenamespace_t namespaces[] = {
 };
 static uint numNamespaces = sizeof(namespaces)/sizeof(namespaces[0]);
 
+/// File system directories on the host system.
+static filedirectory_t* fileDirectory;
+
 // CODE --------------------------------------------------------------------
 
 static __inline const resourcetypeinfo_t* getInfoForResourceType(resourcetype_t type)
@@ -184,7 +188,7 @@ static boolean resolveURI(ddstring_t* dest, const ddstring_t* rawSrc, gameinfo_t
     Str_StripRight(&src);
 
     // Copy the first part of the string as-is up to first '$' if present.
-    if((p = Str_CopyDelim(dest, Str_Text(&src), '$')))
+    if((p = Str_CopyDelim2(dest, Str_Text(&src), '$', CDF_OMIT_DELIMITER)))
     {
         int depth = 0;
 
@@ -198,7 +202,7 @@ static boolean resolveURI(ddstring_t* dest, const ddstring_t* rawSrc, gameinfo_t
         depth++;
 
         // Now grab everything up to the closing ')' (it *should* be present).
-        while((p = Str_CopyDelim(&part, p, ')')))
+        while((p = Str_CopyDelim2(&part, p, ')', CDF_OMIT_DELIMITER)))
         {
             // First, try external symbols like environment variable names - they are quick to reject.
             if(!Str_CompareIgnoreCase(&part, "DOOMWADDIR"))
@@ -240,7 +244,7 @@ static boolean resolveURI(ddstring_t* dest, const ddstring_t* rawSrc, gameinfo_t
             depth--;
 
             // Is there another '$' present?
-            if(!(p = Str_CopyDelim(&part, p, '$')))
+            if(!(p = Str_CopyDelim2(&part, p, '$', CDF_OMIT_DELIMITER)))
                 break;
             // Copy everything up to the next '$'.
             Str_Append(dest, Str_Text(&part));
@@ -264,7 +268,7 @@ static boolean resolveURI(ddstring_t* dest, const ddstring_t* rawSrc, gameinfo_t
     }
 
     // Convert all slashes to the host OS's directory separator, for compatibility with the sys_filein routines.
-    Dir_FixSlashes(Str_Text(dest), Str_Length(dest));
+    F_FixSlashes(dest);
     // Ensure we have a terminating DIR_SEP_CHAR
     if(Str_RAt(dest, 0) != DIR_SEP_CHAR)
         Str_AppendChar(dest, DIR_SEP_CHAR);
@@ -419,7 +423,7 @@ static boolean tryLocateResource(resourceclass_t rclass, const char* _searchPath
     // Fix directory seperators early.
     Str_Init(&searchPath);
     Str_Set(&searchPath, _searchPath);
-    Dir_FixSlashes(Str_Text(&searchPath), Str_Length(&searchPath));
+    F_FixSlashes(&searchPath);
     F_ExpandBasePath(&searchPath, &searchPath);
 
     // If this is an absolute path, locate using it.
@@ -432,7 +436,7 @@ static boolean tryLocateResource(resourceclass_t rclass, const char* _searchPath
         // Has a namespace identifier been included?
         Str_Init(&name);
         { const char* p;
-        if((p = Str_CopyDelim(&name, Str_Text(&searchPath), ':')) &&
+        if((p = Str_CopyDelim2(&name, Str_Text(&searchPath), ':', CDF_OMIT_DELIMITER)) &&
            p - Str_Text(&searchPath) > RESOURCENAMESPACE_MINNAMELENGTH)
         {
             resourcenamespaceid_t rni;
@@ -471,6 +475,9 @@ void F_InitResourceLocator(void)
             Str_Init(&rnamespace->_extraSearchPaths);
             memset(rnamespace->_pathHash, 0, sizeof(rnamespace->_pathHash));
         }
+
+        // Create the initial (empty) FileDirectory now.
+        fileDirectory = FileDirectory_Create();
     }
 
     // Allow re-init.
@@ -483,7 +490,14 @@ void F_ShutdownResourceLocator(void)
     if(!inited)
         return;
     resetAllNamespaces();
+    FileDirectory_Destroy(fileDirectory); fileDirectory = 0;
     inited = false;
+}
+
+filedirectory_t* F_FileDirectory(void)
+{
+    assert(inited);
+    return fileDirectory;
 }
 
 struct resourcenamespace_s* F_ToResourceNamespace(resourcenamespaceid_t rni)
@@ -530,8 +544,7 @@ const char* F_ParseSearchPath(ddstring_t* dest, const char* src, char delim)
 
     for(; *src && *src != delim; ++src)
     {
-        if(!isspace(*src))
-            Str_PartAppend(dest, src, 0, 1);
+        Str_PartAppend(dest, src, 0, 1);
     }
 
     if(!*src)
@@ -685,6 +698,29 @@ void F_FileDir(const ddstring_t* str, directory2_t* dir)
 }
 
 /// \todo dj: Find a suitable home for this.
+boolean F_FixSlashes(ddstring_t* str)
+{
+    assert(str);
+    {
+    boolean result = false;
+    size_t len = Str_Length(str);
+    if(len != 0)
+    {
+        char* path = Str_Text(str);
+        size_t i;
+        for(i = 0; i < len && path[i]; ++i)
+        {
+            if(path[i] != DIR_WRONG_SEP_CHAR)
+                continue;
+            path[i] = DIR_SEP_CHAR;
+            result = true;
+        }
+    }
+    return result;
+    }
+}
+
+/// \todo dj: Find a suitable home for this.
 void F_ResolveSymbolicPath(ddstring_t* dest, const ddstring_t* src)
 {
     assert(dest && src);
@@ -824,7 +860,7 @@ boolean F_ExpandBasePath(ddstring_t* dest, const ddstring_t* src)
         const char* p = Str_Text(src)+2;
 
         Str_Init(&userName);
-        if((p = Str_CopyDelim(&userName, p, '/')))
+        if((p = Str_CopyDelim2(&userName, p, '/', CDF_OMIT_DELIMITER)))
         {
             ddstring_t buf;
             struct passwd* pw;
@@ -870,7 +906,7 @@ const ddstring_t* F_PrettyPath(const ddstring_t* path)
         ddstring_t* str = &buffers[index++ % NUM_BUFS];
         Str_Free(str);
         F_RemoveBasePath(str, path);
-        Dir_FixSlashes(Str_Text(str), Str_Length(str));
+        F_FixSlashes(str);
         return str;
     }
     else if(len > 1 && (Str_At(path, 0) == '}' || Str_At(path, 0) == '>'))
@@ -878,7 +914,7 @@ const ddstring_t* F_PrettyPath(const ddstring_t* path)
         ddstring_t* str = &buffers[index++ % NUM_BUFS];
         Str_Free(str);
         Str_PartAppend(str, Str_Text(path), 1, Str_Length(path)-1);
-        Dir_FixSlashes(Str_Text(str), Str_Length(str));
+        F_FixSlashes(str);
         return str;
     }
 
