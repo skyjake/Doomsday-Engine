@@ -86,6 +86,7 @@ ServerApp::~ServerApp()
 
 void ServerApp::iterate(const Time::Delta& elapsed)
 {
+    /*
     // Check for incoming connections.
     Socket* incoming = _listenSocket->accept();
     if(incoming)
@@ -93,6 +94,7 @@ void ServerApp::iterate(const Time::Delta& elapsed)
         LOG_INFO("New client connected from %s.") << incoming->peerAddress();
         _clients.append(new Client(incoming));
     }
+    */
 
     //SDL_PumpEvents();
     //tendClients();

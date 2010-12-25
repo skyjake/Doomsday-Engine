@@ -23,8 +23,9 @@
 #include "../Log"
 #include "../File"
 
-#include <vector>
-#include <list>
+#include <QObject>
+#include <QTimer>
+#include <QList>
 
 namespace de
 {
@@ -35,10 +36,12 @@ namespace de
      *
      * @ingroup core
      */
-    class LogBuffer : OBSERVES(File, Deletion)
+    class LogBuffer : public QObject, OBSERVES(File, Deletion)
     {
+        Q_OBJECT
+
     public:
-        typedef std::vector<const LogEntry*> Entries;
+        typedef QList<const LogEntry*> Entries;
         
     public:
         LogBuffer(duint maxEntryCount);
@@ -71,7 +74,7 @@ namespace de
          * @param count    Number of entries to get. If zero, all entries are 
          *                 returned.
          */
-        void latestEntries(Entries& entries, dsize count = 0) const;
+        void latestEntries(Entries& entries, int count = 0) const;
 
         /**
          * Enables log entries at or over a level. When a level is disabled, the 
@@ -105,25 +108,27 @@ namespace de
          * @param path  Path of the file.
          */
         void setOutputFile(const String& path);
-        
+
+        // Observes File deletion.
+        void fileBeingDeleted(const File& file);
+
+    public slots:
         /**
          * Flushes all unflushed entries to the defined outputs.
          */
         void flush();
 
-        // Observes File deletion.
-        void fileBeingDeleted(const File& file);
-        
     private:
-        typedef std::list<LogEntry*> EntryList;
+        typedef QList<LogEntry*> EntryList;
 
         dint _enabledOverLevel;
-        duint _maxEntryCount;
+        dint _maxEntryCount;
         bool _standardOutput;
         File* _outputFile;
         EntryList _entries;
         EntryList _toBeFlushed;
         Time _lastFlushedAt;
+        QTimer* _autoFlushTimer;
     };    
 }
 

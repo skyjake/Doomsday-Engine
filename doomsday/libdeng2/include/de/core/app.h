@@ -46,7 +46,6 @@ namespace de
     class LogBuffer;
     class Map;
     class Module;
-    class Zone;
     
     /**
      * Convenience macro for accessing symbols exported from the game plugin.
@@ -213,11 +212,6 @@ namespace de
          */
         static LogBuffer& logBuffer();
 
-        /**
-         * Returns the memory zone.
-         */
-        static Zone& memory();
-
 #if 0
         /**
          * Returns the video subsystem.
@@ -303,10 +297,7 @@ namespace de
         Time _initializedAt;
         
         /// Buffer for recent log entries.
-        LogBuffer* _logBuffer;
-        
-        /// The memory zone.
-        Zone* _memory;
+        LogBuffer* _logBuffer;       
         
         /// The file system.
         FS* _fs;

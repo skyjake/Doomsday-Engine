@@ -44,8 +44,7 @@ NameExpression::~NameExpression()
 
 Value* NameExpression::evaluate(Evaluator& evaluator) const
 {
-    LOG_AS("NameExpression::evaluate");
-
+    //LOG_AS("NameExpression::evaluate");
     //std::cout << "NameExpression::evaluator: " << _flags.to_string() << "\n";
     //LOG_DEBUG("path = %s, scope = %x") << _path << evaluator.names();
     

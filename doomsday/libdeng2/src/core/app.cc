@@ -26,7 +26,6 @@
 #include "de/LogBuffer"
 #include "de/Module"
 #include "de/ISubsystem"
-#include "de/Zone"
 #include "de/Thinker"
 #include "de/Object"
 #include "de/Map"
@@ -46,7 +45,6 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
          Log::LogLevel defaultLogLevel)
     : _commandLine(commandLine), 
       _logBuffer(0),
-      _memory(0), 
       _fs(0), 
       _config(0),
       _gameLib(0),
@@ -82,10 +80,6 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
         // Define built-in constructors.
         Thinker::define(Thinker::THINKER, Thinker::construct);
         Thinker::define(Thinker::OBJECT, Object::construct);
-        
-        // The memory zone.
-        std::auto_ptr<Zone> memoryPtr(new Zone);
-        _memory = memoryPtr.get();
 
 #ifdef Q_OS_MAC
         // When the application is started through Finder, we get a special command
@@ -148,7 +142,6 @@ App::App(const CommandLine& commandLine, const String& configPath, const String&
         loadPlugins();
 
         // Successful construction without errors, so drop our guard.
-        memoryPtr.release();
         fsPtr.release();
         configPtr.release();
         
@@ -176,9 +169,6 @@ App::~App()
     delete _fs;
     _fs = 0;
     
-    delete _memory;
-    _memory = 0;
-
     delete _logBuffer;
     _logBuffer = 0;
 
@@ -391,12 +381,14 @@ LogBuffer& App::logBuffer()
     return *self._logBuffer;
 }
 
+/*
 Zone& App::memory()
 {
     App& self = app();
     Q_ASSERT(self._memory != 0);
     return *self._memory;
 }
+*/
 
 FS& App::fileSystem() 
 { 
