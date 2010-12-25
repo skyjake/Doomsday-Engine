@@ -208,7 +208,11 @@ Value* BuiltInExpression::evaluate(Evaluator& evaluator) const
 
 void BuiltInExpression::operator >> (Writer& to) const
 {
-    to << SerialId(BUILT_IN) << duint8(_type) << *_arg;
+    to << SerialId(BUILT_IN);
+
+    Expression::operator >> (to);
+
+    to << duint8(_type) << *_arg;
 }
 
 void BuiltInExpression::operator << (Reader& from)
@@ -221,6 +225,9 @@ void BuiltInExpression::operator << (Reader& from)
         /// serialized expression was invalid.
         throw DeserializationError("BuiltInExpression::operator <<", "Invalid ID");
     }
+
+    Expression::operator << (from);
+
     duint8 t;
     from >> t;
     _type = Type(t);

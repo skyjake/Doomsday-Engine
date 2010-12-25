@@ -227,13 +227,13 @@ Log::~Log()
 
 void Log::beginSection(const char* name)
 {
-    _sectionStack.push_back(name);
+    _sectionStack.append(name);
 }
 
 void Log::endSection(const char* name)
 {
     Q_ASSERT(_sectionStack.back() == name);
-    _sectionStack.pop_back();
+    _sectionStack.takeLast();
 }
 
 LogEntry& Log::enter(const String& format)
@@ -252,9 +252,9 @@ LogEntry& Log::enter(Log::LogLevel level, const String& format)
     // Collect the sections.
     String context;
     String latest;
-    FOR_EACH(i, _sectionStack, SectionStack::const_iterator)
+    foreach(const char* i, _sectionStack)
     {
-        if(*i == latest)
+        if(i == latest)
         {
             // Don't repeat if it has the exact same name (due to recursive calls).
             continue;
@@ -263,8 +263,8 @@ LogEntry& Log::enter(Log::LogLevel level, const String& format)
         {
             context += " > ";
         }
-        latest = *i;
-        context += *i;
+        latest = i;
+        context += i;
     }
 
     // Make a new entry.

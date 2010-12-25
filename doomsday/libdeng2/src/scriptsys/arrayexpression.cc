@@ -78,7 +78,11 @@ Value* ArrayExpression::evaluate(Evaluator& evaluator) const
 
 void ArrayExpression::operator >> (Writer& to) const
 {
-    to << SerialId(ARRAY) << duint16(_arguments.size());
+    to << SerialId(ARRAY);
+
+    Expression::operator >> (to);
+
+    to << duint16(_arguments.size());
     for(Arguments::const_iterator i = _arguments.begin(); i != _arguments.end(); ++i)
     {
         to << **i;
@@ -95,6 +99,9 @@ void ArrayExpression::operator << (Reader& from)
         /// serialized expression was invalid.
         throw DeserializationError("ArrayExpression::operator <<", "Invalid ID");
     }
+
+    Expression::operator << (from);
+
     duint16 count;
     from >> count;
     clear();

@@ -22,6 +22,8 @@
 
 #include "../ISerializable"
 
+#include <QFlags>
+
 namespace de
 {
     class Evaluator;
@@ -31,6 +33,9 @@ namespace de
     /**
      * Base class for expressions.
      *
+     * @note  All expression classes must call the serialization methods of this class
+     *        so that the expression flags are properly serialized.
+     *
      * @ingroup script
      */
     class Expression : public ISerializable
@@ -38,7 +43,56 @@ namespace de
     public:
         /// Deserialization of an expression failed. @ingroup errors
         DEFINE_ERROR(DeserializationError);
-                
+
+        // Flags for evaluating expressions.
+        // Note: these are serialized as is, so don't change the existing values.
+        enum Flag
+        {
+            /*ByValue = 0x1,
+            ByReference = 0x2,
+            LocalNamespaceOnly = 0x4,
+            RequireNewIdentifier = 0x8,
+            AllowNewRecords = 0x10,
+            AllowNewVariables = 0x20,
+            DeleteIdentifier = 0x40,
+            ImportNamespace = 0x80,
+            ThrowawayIfInScope = 0x100,
+            SetReadOnly = 0x200*/
+
+            /// Evaluates to a value. In conjunction with IMPORT, causes the imported
+            /// record to be copied to the local namespace.
+            ByValue = 0x1,
+
+            /// Evaluates to a reference.
+            ByReference = 0x2,
+
+            /// If missing, create a new variable.
+            NewVariable = 0x4,
+
+            /// If missing, create a new record.
+            NewRecord = 0x8,
+
+            /// Identifier must exist and will be deleted.
+            Delete = 0x10,
+
+            /// Imports an external namespace into the local namespace (as a reference).
+            Import = 0x20,
+
+            /// Look for object in local namespace only.
+            LocalOnly = 0x40,
+
+            /// If the identifier is in scope, returns a reference to the process's
+            /// throwaway variable.
+            ThrowawayIfInScope = 0x80,
+
+            /// Identifier must not already exist in scope.
+            NotInScope = 0x100,
+
+            /// Variable will be set to read-only mode.
+            ReadOnly = 0x200
+        };
+        Q_DECLARE_FLAGS(Flags, Flag);
+
     public:
         virtual ~Expression();
 
@@ -46,6 +100,26 @@ namespace de
         
         virtual Value* evaluate(Evaluator& evaluator) const = 0;
         
+        /**
+         * Returns the flags of the expression.
+         */
+        const Flags& flags () const;
+
+        /**
+         * Sets the flags of the expression.
+         */
+        void setFlags(Flags f);
+
+        /**
+         * Subclasses must call this in their serialization method.
+         */
+        void operator >> (Writer& to) const;
+
+        /**
+         * Subclasses must call this in their deserialization method.
+         */
+        void operator << (Reader& from);
+
     public:
         /**
          * Constructs an expression by deserializing one from a reader.
@@ -67,6 +141,9 @@ namespace de
             NAME,
             OPERATOR
         };
+
+    private:
+        Flags _flags;
     };
 }
 

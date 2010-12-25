@@ -31,7 +31,7 @@
 using namespace de;
 
 Variable::Variable(const String& name, Value* initial, const Flags& m)
-    : mode(m), _name(name), _value(0)
+    : _name(name), _value(0), _mode(m)
 {
     verifyName(_name);
     if(!initial)
@@ -44,7 +44,7 @@ Variable::Variable(const String& name, Value* initial, const Flags& m)
 }
 
 Variable::Variable(const Variable& other) 
-    : ISerializable(), mode(other.mode), _name(other._name), _value(other._value->duplicate())
+    : ISerializable(), _name(other._name), _value(other._value->duplicate()), _mode(other._mode)
 {}
 
 Variable::~Variable()
@@ -92,15 +92,25 @@ Value& Variable::value()
     return *_value;
 }
 
+Variable::Flags Variable::mode() const
+{
+    return _mode;
+}
+
+void Variable::setMode(const Flags& flags)
+{
+    _mode = flags;
+}
+
 bool Variable::isValid(const Value& v) const
 {
     /// @todo  Make sure this actually works and add func, record, ref.
-    if((dynamic_cast<const NoneValue*>(&v) && !mode.testFlag(AllowNone)) ||
-        (dynamic_cast<const NumberValue*>(&v) && !mode.testFlag(AllowNumber)) ||
-        (dynamic_cast<const TextValue*>(&v) && !mode.testFlag(AllowText)) ||
-        (dynamic_cast<const ArrayValue*>(&v) && !mode.testFlag(AllowArray)) ||
-        (dynamic_cast<const DictionaryValue*>(&v) && !mode.testFlag(AllowDictionary)) ||
-        (dynamic_cast<const BlockValue*>(&v) && !mode.testFlag(AllowBlock)))
+    if((dynamic_cast<const NoneValue*>(&v) && !_mode.testFlag(AllowNone)) ||
+        (dynamic_cast<const NumberValue*>(&v) && !_mode.testFlag(AllowNumber)) ||
+        (dynamic_cast<const TextValue*>(&v) && !_mode.testFlag(AllowText)) ||
+        (dynamic_cast<const ArrayValue*>(&v) && !_mode.testFlag(AllowArray)) ||
+        (dynamic_cast<const DictionaryValue*>(&v) && !_mode.testFlag(AllowDictionary)) ||
+        (dynamic_cast<const BlockValue*>(&v) && !_mode.testFlag(AllowBlock)))
     {
         return false;
     }
@@ -120,7 +130,7 @@ void Variable::verifyValid(const Value& v) const
 
 void Variable::verifyWritable()
 {
-    if(mode & ReadOnly)
+    if(_mode & ReadOnly)
     {
         /// @throw ReadOnlyError  The variable is in read-only mode.
         throw ReadOnlyError("Variable::verifyWritable", 
@@ -139,9 +149,9 @@ void Variable::verifyName(const String& s)
 
 void Variable::operator >> (Writer& to) const
 {
-    if(!mode.testFlag(NoSerialize))
+    if(!_mode.testFlag(NoSerialize))
     {
-        to << _name << duint32(mode) << *_value;
+        to << _name << duint32(_mode) << *_value;
     }
 }
 
@@ -149,7 +159,7 @@ void Variable::operator << (Reader& from)
 {
     duint32 modeFlags = 0;
     from >> _name >> modeFlags;
-    mode = Flags(modeFlags);
+    _mode = Flags(modeFlags);
     delete _value;
     try
     {

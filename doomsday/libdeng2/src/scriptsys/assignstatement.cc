@@ -92,12 +92,11 @@ void AssignStatement::execute(Context& context) const
         ref->assign(value.release());
     }
     
-    // Should be set the variable to read-only mode?
-    const NameExpression* name = static_cast<const NameExpression*>(&_args.back());
-    if(name->flags() & NameExpression::ReadOnly)
+    // Should we set the variable to read-only mode?
+    if(_args.back().flags() & Expression::ReadOnly)
     {
         Q_ASSERT(ref->variable() != NULL);
-        ref->variable()->mode |= Variable::ReadOnly;
+        ref->variable()->setMode(Variable::ReadOnly | ref->variable()->mode());
     }
 
     context.proceed();

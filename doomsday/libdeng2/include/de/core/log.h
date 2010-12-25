@@ -24,8 +24,9 @@
 #include "../String"
 #include "../Lockable"
 
-#include <list>
+#include <QList>
 #include <vector>
+#include <list>
 #include <string>
 #include <cstdlib>
 
@@ -203,7 +204,7 @@ namespace de
         static void disposeThreadLog();        
 
     private:
-        typedef std::vector<const char*> SectionStack;
+        typedef QList<const char*> SectionStack;
         SectionStack _sectionStack;
         
         LogEntry* _throwawayEntry;

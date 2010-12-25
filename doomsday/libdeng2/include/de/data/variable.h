@@ -107,7 +107,7 @@ namespace de
          * @param mode  Mode flags.
          */
         Variable(const String& name = "", Value* initial = 0,
-                 const Flags& mode = DefaultMode);
+                 const Flags& _mode = DefaultMode);
             
         /**
          * Constructs a copy of another variable.
@@ -181,6 +181,18 @@ namespace de
         }
         
         /**
+         * Returns the current mode flags of the variable.
+         */
+        Flags mode() const;
+
+        /**
+         * Sets the mode flags of the variable.
+         *
+         * @param flags  New mode flags that will replace the current ones.
+         */
+        void setMode(const Flags& flags);
+
+        /**
          * Checks that a value is valid, checking what is allowed in the mode
          * flags.
          *
@@ -231,14 +243,14 @@ namespace de
          */
         DEFINE_AUDIENCE(Change, void variableValueChanged(Variable& variable, const Value& newValue));
 
-        /// Mode flags.        
-        Flags mode;
-        
     private:        
         String _name;
 
         /// Value of the variable.
         Value* _value;
+
+        /// Mode flags.
+        Flags _mode;
     };
 }
 

@@ -423,7 +423,14 @@ print myrec
 sections.subsection('Creating a subrecord.')
 record myrec.subrec
 print len(myrec), len(myrec.subrec)
-myrec.subrec.something = 200
+const myrec.subrec.something = 200
+try
+    myrec.subrec.something = 201
+    print 'THIS IS AN ERROR -- EXCEPTION SHOULD HAVE BEEN THROWN! --'
+catch ReadOnlyError, er
+    print 'Cannot change const member.'
+    print er
+end 
 print 'myrec.subrec.something =', myrec.subrec.something
 print "Here's the record:"
 print myrec

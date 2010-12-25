@@ -34,8 +34,10 @@ NameExpression::NameExpression()
 {}
 
 NameExpression::NameExpression(const String& identifier, const Flags& flags) 
-    : _identifier(identifier), _flags(flags)
-{}
+    : _identifier(identifier)
+{
+    setFlags(flags);
+}
 
 NameExpression::~NameExpression()
 {}
@@ -71,40 +73,40 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
             record = &ns.subrecord(_identifier);
             foundInNamespace = &ns;
         }
-        if(_flags & LocalOnly)
+        if(flags() & LocalOnly)
         {
             break;
         }
     }
 
-    if(variable && (_flags & ThrowawayIfInScope))
+    if(variable && (flags() & ThrowawayIfInScope))
     {
         foundInNamespace = 0;
         variable = &evaluator.context().throwaway();
     }
 
     // If a new variable/record is required and one is in scope, we cannot continue.
-    if((variable || record) && (_flags & NotInScope))
+    if((variable || record) && (flags() & NotInScope))
     {
         throw AlreadyExistsError("NameExpression::evaluate", 
             "Identifier '" + _identifier + "' already exists");
     }
     
     // Should we import a namespace?
-    if(_flags & Import)
+    if(flags() & Import)
     {
         record = &App::importModule(_identifier,
             evaluator.process().globals()["__file__"].value().asText());
             
         // Take a copy if requested.
-        if(_flags & ByValue)
+        if(flags() & ByValue)
         {
             record = &spaces.front()->add(_identifier, new Record(*record));
         }
     }
     
     // Should we delete the identifier?
-    if(_flags & Delete)
+    if(flags() & Delete)
     {
         if(!variable && !record)
         {
@@ -125,7 +127,7 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
 
     // If nothing is found and we are permitted to create new variables, do so.
     // Occurs when assigning into new variables.
-    if(!variable && !record && (_flags & NewVariable))
+    if(!variable && !record && (flags() & NewVariable))
     {
         variable = new Variable(_identifier);
         
@@ -135,7 +137,7 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
     if(variable)
     {
         // Variables can be referred to by reference or value.
-        if(_flags & ByReference)
+        if(flags() & ByReference)
         {
             // Reference to the variable.
             return new RefValue(variable);
@@ -148,7 +150,7 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
     }
 
     // We may be permitted to create a new record.
-    if(_flags & NewRecord)
+    if(flags() & NewRecord)
     {
         if(!record)
         {
@@ -173,7 +175,11 @@ Value* NameExpression::evaluate(Evaluator& evaluator) const
 
 void NameExpression::operator >> (Writer& to) const
 {
-    to << SerialId(NAME) << _identifier << duint16(_flags);
+    to << SerialId(NAME);
+
+    Expression::operator >> (to);
+
+    to << _identifier;
 }
 
 void NameExpression::operator << (Reader& from)
@@ -186,8 +192,8 @@ void NameExpression::operator << (Reader& from)
         /// serialized expression was invalid.
         throw DeserializationError("NameExpression::operator <<", "Invalid ID");
     }
+
+    Expression::operator << (from);
+
     from >> _identifier;
-    duint16 f;
-    from >> f;
-    _flags = Flags(f);
 }

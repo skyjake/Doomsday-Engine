@@ -81,3 +81,27 @@ Expression* Expression::constructFrom(Reader& reader)
     reader >> *result.get();
     return result.release();    
 }
+
+const Expression::Flags& Expression::flags () const
+{
+    return _flags;
+}
+
+void Expression::setFlags(Flags f)
+{
+    _flags = f;
+}
+
+void Expression::operator >> (Writer& to) const
+{
+    // Save the flags.
+    to << duint16(_flags);
+}
+
+void Expression::operator << (Reader& from)
+{
+    // Restore the flags.
+    duint16 f;
+    from >> f;
+    _flags = Flags(f);
+}

@@ -45,43 +45,6 @@ namespace de
         /// The identifier does not specify an existing variable. @ingroup errors
         DEFINE_ERROR(NotFoundError);
 
-        // Note: the flags below are serialized as is, so don't change the existing values.
-        enum Flag
-        {
-            /// Evaluates to a value. In conjunction with IMPORT, causes the imported
-            /// record to be copied to the local namespace.
-            ByValue = 0x1,
-
-            /// Evaluates to a reference.
-            ByReference = 0x2,
-
-            /// If missing, create a new variable.
-            NewVariable = 0x4,
-
-            /// If missing, create a new record.
-            NewRecord = 0x8,
-
-            /// Identifier must exist and will be deleted.
-            Delete = 0x10,
-
-            /// Imports an external namespace into the local namespace (as a reference).
-            Import = 0x20,
-
-            /// Look for object in local namespace only.
-            LocalOnly = 0x40,
-
-            /// If the identifier is in scope, returns a reference to the process's
-            /// throwaway variable.
-            ThrowawayIfInScope = 0x80,
-
-            /// Identifier must not already exist in scope.
-            NotInScope = 0x100,
-
-            /// Variable will be set to read-only mode.
-            ReadOnly = 0x200
-        };
-        Q_DECLARE_FLAGS(Flags, Flag);
-
     public:
         NameExpression();
         NameExpression(const String& identifier, const Flags& flags = ByValue);
@@ -89,8 +52,6 @@ namespace de
 
         /// Returns the identifier in the name expression.
         const String& identifier() const { return _identifier; }
-
-        const Flags& flags() const { return _flags; }
 
         Value* evaluate(Evaluator& evaluator) const;
 
@@ -100,7 +61,6 @@ namespace de
         
     private:
         String _identifier;
-        Flags _flags;
     };
 }
 

@@ -65,7 +65,11 @@ ConstantExpression* ConstantExpression::Pi()
 
 void ConstantExpression::operator >> (Writer& to) const
 {
-    to << SerialId(CONSTANT) << *_value;
+    to << SerialId(CONSTANT);
+
+    Expression::operator >> (to);
+
+    to << *_value;
 }
 
 void ConstantExpression::operator << (Reader& from)
@@ -78,6 +82,9 @@ void ConstantExpression::operator << (Reader& from)
         /// serialized expression was invalid.
         throw DeserializationError("ConstantExpression::operator <<", "Invalid ID");
     }
+
+    Expression::operator << (from);
+
     delete _value;
     _value = 0;
     _value = Value::constructFrom(from);

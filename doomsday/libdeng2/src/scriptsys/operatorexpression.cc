@@ -259,6 +259,9 @@ Value* OperatorExpression::evaluate(Evaluator& evaluator) const
 void OperatorExpression::operator >> (Writer& to) const
 {
     to << SerialId(OPERATOR);
+
+    Expression::operator >> (to);
+
     duint8 header = _op;
     if(_leftOperand)
     {
@@ -281,6 +284,9 @@ void OperatorExpression::operator << (Reader& from)
         /// serialized expression was invalid.
         throw DeserializationError("OperatorExpression::operator <<", "Invalid ID");
     }
+
+    Expression::operator << (from);
+
     duint8 header;
     from >> header;
     _op = Operator(header & OPERATOR_MASK);

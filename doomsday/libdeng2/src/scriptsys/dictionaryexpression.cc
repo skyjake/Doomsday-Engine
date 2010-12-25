@@ -94,7 +94,11 @@ Value* DictionaryExpression::evaluate(Evaluator& evaluator) const
 
 void DictionaryExpression::operator >> (Writer& to) const
 {
-    to << SerialId(DICTIONARY) << duint16(_arguments.size());
+    to << SerialId(DICTIONARY);
+
+    Expression::operator >> (to);
+
+    to << duint16(_arguments.size());
     for(Arguments::const_iterator i = _arguments.begin(); i != _arguments.end(); ++i)
     {
         to << *i->first << *i->second;
@@ -111,6 +115,9 @@ void DictionaryExpression::operator << (Reader& from)
         /// serialized expression was invalid.
         throw DeserializationError("DictionaryExpression::operator <<", "Invalid ID");
     }
+
+    Expression::operator << (from);
+
     duint16 count;
     from >> count;
     clear();

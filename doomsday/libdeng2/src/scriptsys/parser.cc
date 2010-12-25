@@ -259,7 +259,7 @@ ForStatement* Parser::parseForStatement()
     }
     
     auto_ptr<Expression> iter(parseExpression(_statementRange.between(1, inPos),
-        ByReference | AllowNewVariables | LocalNamespaceOnly));
+        Expression::ByReference | Expression::NewVariable | Expression::LocalOnly));
     Expression* iterable = parseExpression(_statementRange.between(inPos + 1, colonPos));
     
     auto_ptr<ForStatement> statement(new ForStatement(iter.release(), iterable));
@@ -280,13 +280,15 @@ ExpressionStatement* Parser::parseImportStatement()
             "Expected identifier to follow " + _statementRange.firstToken().asText());
     }
     dint startAt = 1;
-    ExpressionFlags flags = ImportNamespace | AllowNewRecords |
-        RequireNewIdentifier | LocalNamespaceOnly;
+    Expression::Flags flags = Expression::Import
+            | Expression::NewRecord
+            | Expression::NotInScope
+            | Expression::LocalOnly;
     if(_statementRange.size() >= 3 && _statementRange.token(1).equals(ScriptLex::RECORD))
     {
         // Take a copy of the imported record instead of referencing it.
-        flags |= ByValue;
-        flags &= ~AllowNewRecords; // don't create a variable referencing it
+        flags |= Expression::ByValue;
+        flags &= ~Expression::NewRecord; // don't create a variable referencing it
         startAt = 2;
     }
     return new ExpressionStatement(parseList(_statementRange.startingFrom(startAt), Token::COMMA, flags));
@@ -301,7 +303,7 @@ ExpressionStatement* Parser::parseDeclarationStatement()
         throw MissingTokenError("Parser::parseDeclarationStatement",
             "Expected identifier to follow " + _statementRange.firstToken().asText());
     }    
-    ExpressionFlags flags = LocalNamespaceOnly | AllowNewRecords;
+    Expression::Flags flags = Expression::LocalOnly | Expression::NewRecord;
     return new ExpressionStatement(parseList(_statementRange.startingFrom(1), Token::COMMA, flags));
 }
 
@@ -315,7 +317,7 @@ ExpressionStatement* Parser::parseDeleteStatement()
             "Expected identifier to follow " + _statementRange.firstToken().asText());
     }    
     return new ExpressionStatement(parseList(_statementRange.startingFrom(1), Token::COMMA,
-        DeleteIdentifier | LocalNamespaceOnly));
+        Expression::Delete | Expression::LocalOnly));
 }
 
 FunctionStatement* Parser::parseFunctionStatement()
@@ -330,7 +332,7 @@ FunctionStatement* Parser::parseFunctionStatement()
     // The function must have a name that is not already in use in the scope.
     auto_ptr<FunctionStatement> statement(new FunctionStatement(
         parseExpression(_statementRange.between(1, pos), 
-            LocalNamespaceOnly | ByReference | AllowNewVariables | RequireNewIdentifier)));
+            Expression::LocalOnly | Expression::ByReference | Expression::NewVariable | Expression::NotInScope)));
 
     // Collect the argument names.
     TokenRange argRange = _statementRange.between(pos + 1, _statementRange.closingBracket(pos));
@@ -404,7 +406,7 @@ void Parser::parseTryCatchSequence(Compound& compound)
                 argRange = _statementRange.between(1, colon);
             }
             args.reset(parseList(argRange, Token::COMMA,
-                ByReference | LocalNamespaceOnly | AllowNewVariables));
+                Expression::ByReference | Expression::LocalOnly | Expression::NewVariable));
         }
 
         auto_ptr<CatchStatement> catchStat(new CatchStatement(args.release()));
@@ -446,24 +448,24 @@ PrintStatement* Parser::parsePrintStatement()
 
 AssignStatement* Parser::parseAssignStatement()
 {
-    ExpressionFlags flags = AllowNewVariables | ByReference | LocalNamespaceOnly;
+    Expression::Flags flags = Expression::NewVariable | Expression::ByReference | Expression::LocalOnly;
     
     /// "const" makes read-only variables.
     if(_statementRange.firstToken().equals(ScriptLex::CONST))
     {
-        flags |= SetReadOnly;
+        flags |= Expression::ReadOnly;
         _statementRange = _statementRange.startingFrom(1);
     }
     
     dint pos = _statementRange.find(ScriptLex::ASSIGN);
     if(pos < 0)
     {
-        flags &= ~LocalNamespaceOnly;
+        flags &= ~Expression::LocalOnly;
         pos = _statementRange.find(ScriptLex::SCOPE_ASSIGN);
         if(pos < 0)
         {
             pos = _statementRange.find(ScriptLex::WEAK_ASSIGN);
-            flags |= ThrowawayIfInScope;
+            flags |= Expression::ThrowawayIfInScope;
         }
     }
     
@@ -483,7 +485,7 @@ AssignStatement* Parser::parseAssignStatement()
             bracketPos = nameEndPos - 1;
         }
         
-        if(indices.size() > 0 && (flags & ThrowawayIfInScope))
+        if(indices.size() > 0 && (flags & Expression::ThrowawayIfInScope))
         {
             throw SyntaxError("Parser::parseAssignStatement",
                 "Weak assignment cannot be used with indices");
@@ -563,7 +565,7 @@ Expression* Parser::parseConditionalCompound(Compound& compound, const CompoundF
 }
 
 ArrayExpression* Parser::parseList(const TokenRange& range, const QChar* separator,
-    const ExpressionFlags& flags)
+    const Expression::Flags& flags)
 {
     auto_ptr<ArrayExpression> exp(new ArrayExpression);
     if(range.size() > 0)
@@ -578,7 +580,7 @@ ArrayExpression* Parser::parseList(const TokenRange& range, const QChar* separat
     return exp.release();
 }
 
-Expression* Parser::parseExpression(const TokenRange& fullRange, const ExpressionFlags& flags)
+Expression* Parser::parseExpression(const TokenRange& fullRange, const Expression::Flags& flags)
 {
     TokenRange range = fullRange;
     
@@ -618,9 +620,7 @@ Expression* Parser::parseExpression(const TokenRange& fullRange, const Expressio
         return parseCallExpression(leftSide, rightSide);
     }
     else
-    {
-        //std::cout << "parsing operator expression: " << operatorToText(op) << "\n";
-        
+    {       
         // Left side is empty with unary operators.
         // The right side inherits the flags of the expression (e.g., name-by-reference).
         return parseOperatorExpression(op, leftSide, rightSide, flags);
@@ -731,12 +731,12 @@ Expression* Parser::parseCallExpression(const TokenRange& nameRange, const Token
             return new BuiltInExpression(builtIn, args.release());
         }
     }
-    auto_ptr<Expression> identifier(parseExpression(nameRange, ByReference));
+    auto_ptr<Expression> identifier(parseExpression(nameRange, Expression::ByReference));
     return new OperatorExpression(CALL, identifier.release(), args.release());
 }
 
 OperatorExpression* Parser::parseOperatorExpression(Operator op, const TokenRange& leftSide, 
-    const TokenRange& rightSide, const ExpressionFlags& rightFlags)
+    const TokenRange& rightSide, const Expression::Flags& rightFlags)
 {
     //std::cerr << "left: " << leftSide.asText() << ", right: " << rightSide.asText() << "\n";
     
@@ -750,24 +750,21 @@ OperatorExpression* Parser::parseOperatorExpression(Operator op, const TokenRang
     }
     else
     {
-        ExpressionFlags leftFlags = ByValue;
-        if(leftOperandByReference(op))
-        {
-            leftFlags = ByReference;
-        }
+        Expression::Flags leftFlags = (leftOperandByReference(op)? Expression::ByReference : Expression::ByValue);
             
         // Binary operation.
         auto_ptr<Expression> leftOperand(parseExpression(leftSide, leftFlags));
         auto_ptr<Expression> rightOperand(op == SLICE? parseList(rightSide, Token::COLON) :
             parseExpression(rightSide, rightFlags));
         OperatorExpression* x = new OperatorExpression(op, leftOperand.get(), rightOperand.get());
+        x->setFlags(rightFlags);
         rightOperand.release();
         leftOperand.release();
         return x;
     }
 }
 
-Expression* Parser::parseTokenExpression(const TokenRange& range, const ExpressionFlags& flags)
+Expression* Parser::parseTokenExpression(const TokenRange& range, const Expression::Flags& flags)
 {
     if(!range.size())
     {
@@ -803,20 +800,7 @@ Expression* Parser::parseTokenExpression(const TokenRange& range, const Expressi
     case Token::IDENTIFIER:
         if(range.size() == 1)
         {
-            NameExpression::Flags nameFlags;
-
-            if(flags & ByValue) nameFlags |= NameExpression::ByValue;
-            if(flags & ByReference) nameFlags |= NameExpression::ByReference;
-            if(flags & LocalNamespaceOnly) nameFlags |= NameExpression::LocalOnly;
-            if(flags & AllowNewRecords) nameFlags |= NameExpression::NewRecord;
-            if(flags & AllowNewVariables) nameFlags |= NameExpression::NewVariable;
-            if(flags & RequireNewIdentifier) nameFlags |= NameExpression::NotInScope;
-            if(flags & ImportNamespace) nameFlags |= NameExpression::Import;
-            if(flags & ThrowawayIfInScope) nameFlags |= NameExpression::ThrowawayIfInScope;
-            if(flags & DeleteIdentifier) nameFlags |= NameExpression::Delete;
-            if(flags & SetReadOnly) nameFlags |= NameExpression::ReadOnly;
-            
-            return new NameExpression(range.token(0).str(), nameFlags);
+            return new NameExpression(range.token(0).str(), flags);
         }
         else
         {
