@@ -27,6 +27,7 @@
 #include <de/types.h>
 #include <de/world.h>
 
+#include <QObject>
 #include <QMap>
 
 class RemoteUser;
@@ -37,7 +38,7 @@ class RemoteUser;
  *
  * @ingroup server
  */
-class Session : OBSERVES(de::Link, Deletion)
+class Session : public QObject
 {
 public:
     /// Given address is not in use by anyone. @ingroup errors
@@ -50,7 +51,7 @@ public:
      * Utility for sending a message to all remote users. Reception is not
      * supported.
      */
-    class Broadcast : public de::Transceiver {
+    class Broadcast : public de::Transmitter {
     public:
         Broadcast(Session& session) : _session(session), _exclude(0) {}
         Broadcast& exclude(RemoteUser* user) { 
@@ -59,10 +60,6 @@ public:
         }
         /// Sends @a data to all users in the session.
         void send(const de::IByteArray& data);
-        de::Message* receive() {
-            Q_ASSERT(false); // Not cool, dude.
-            return 0;
-        }
     private:
         Session& _session;
         RemoteUser* _exclude;
@@ -117,8 +114,8 @@ public:
      */
     void describe(de::Record& record) const;
 
-    // Observes Link deletion.
-    void linkBeingDeleted(de::Link& link);
+protected slots:
+    void remoteUserDisconnected(RemoteUser* remoteUser);
 
 private:
     de::Id _id;

@@ -30,29 +30,29 @@ void Server::sendResponse()
 {
     LOG_AS("Server::sendResponse");
 
-    Link link(_entry.accept());
+    QScopedPointer<Socket> socket(_entry.accept());
     Block packet;
     Writer(packet) << "Hello world!";
 
     LOG_MESSAGE("Sending...");
 
-    link << packet;
+    *socket << packet;
 
     LOG_INFO("Quitting.");
 
     App::app().stop();
 }
 
-Client::Client(const Address& serverAddress) : _link(serverAddress)
+Client::Client(const Address& serverAddress) : _socket(serverAddress)
 {
-    connect(&_link, SIGNAL(messagesReady()), this, SLOT(handleIncoming()));
+    connect(&_socket, SIGNAL(messageReady()), this, SLOT(handleIncoming()));
 }
 
 void Client::handleIncoming()
 {
     LOG_AS("Client::handleIncoming");
 
-    QScopedPointer<IByteArray> data(_link.receive());
+    QScopedPointer<IByteArray> data(_socket.receive());
     String str;
     Reader(*data) >> str;
 

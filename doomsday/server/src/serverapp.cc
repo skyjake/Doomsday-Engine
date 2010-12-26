@@ -54,17 +54,7 @@ ServerApp::ServerApp(int argc, char** argv)
     
     LOG_INFO("Server uses port ") << port;
     _listenSocket = new ListenSocket(port);
-    
-    /*
-    args.append("-dedicated");
-    args.append("-nosound");
-    
-    args.append("-userdir");
-    args.append("serverdir");
-
-    // Initialize the engine.
-    DD_Entry(0, NULL);
-    */
+    connect(_listenSocket, SIGNAL(incomingConnection()), this, SLOT(acceptIncomingConnection()));
 }
 
 ServerApp::~ServerApp()
@@ -78,27 +68,20 @@ ServerApp::~ServerApp()
     }
     _clients.clear();
     
-    // Shutdown the engine.
-    //DD_Shutdown();
-
     delete _listenSocket;
+}
+
+void ServerApp::acceptIncomingConnection()
+{
+    Socket* incoming = _listenSocket->accept();
+    Q_ASSERT(incoming != 0);
+
+    LOG_INFO("New client connected from %s.") << incoming->peerAddress();
+    _clients.append(new Client(incoming));
 }
 
 void ServerApp::iterate(const Time::Delta& elapsed)
 {
-    /*
-    // Check for incoming connections.
-    Socket* incoming = _listenSocket->accept();
-    if(incoming)
-    {
-        LOG_INFO("New client connected from %s.") << incoming->peerAddress();
-        _clients.append(new Client(incoming));
-    }
-    */
-
-    //SDL_PumpEvents();
-    //tendClients();
-
     // Perform thinking for the current map.
     if(hasCurrentMap())
     {
@@ -116,7 +99,7 @@ Client& ServerApp::clientByAddress(const de::Address& address) const
 {
     foreach(Client* c, _clients)
     {
-        if(c->peerAddress() == address)
+        if(c->socket().peerAddress() == address)
         {
             return *c;
         }
@@ -152,20 +135,20 @@ void ServerApp::processIncomingMessage()
         catch(const ISerializable::DeserializationError&)
         {
             // Malformed packet!
-            LOG_WARNING("Client from ") << (*i)->peerAddress() << " sent nonsense.";
+            LOG_WARNING("Client from ") << (*i)->socket().peerAddress() << " sent nonsense.";
             deleteClient = true;
         }
         catch(const NoSessionError&)
         {
-            LOG_WARNING("Client from ") << (*i)->peerAddress() << " tried to access nonexistent session.";
+            LOG_WARNING("Client from ") << (*i)->socket().peerAddress() << " tried to access nonexistent session.";
             deleteClient = true;
         }
         catch(const UnknownAddressError&)
         {}
-        catch(const Link::DisconnectedError&)
+        catch(const Socket::DisconnectedError&)
         {
             // The client was disconnected.
-            LOG_INFO("Client from ") << (*i)->peerAddress() << " disconnected.";
+            LOG_INFO("Client from ") << (*i)->socket().peerAddress() << " disconnected.";
             deleteClient = true;
         }
 

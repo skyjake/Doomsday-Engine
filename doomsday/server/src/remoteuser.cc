@@ -66,5 +66,5 @@ de::User& RemoteUser::user()
 
 de::Address RemoteUser::address() const
 {
-    return client().peerAddress();
+    return client().socket().peerAddress();
 }

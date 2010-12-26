@@ -27,6 +27,7 @@ using namespace de;
 
 #define SERVER_PORT     23546
 
+// Server object.
 class Server : public QObject
 {
     Q_OBJECT
@@ -41,6 +42,7 @@ private:
     ListenSocket _entry;
 };
 
+// Client object.
 class Client : public QObject
 {
     Q_OBJECT
@@ -52,7 +54,7 @@ public slots:
     void handleIncoming();
 
 private:
-    Link _link;
+    Socket _socket;
 };
 
 #endif // CLIENTSERVER_H

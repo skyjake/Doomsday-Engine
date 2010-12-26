@@ -95,6 +95,7 @@ public:
     void verifyAdmin(const de::Address& clientAddress) const;
 
 public slots:
+    void acceptIncomingConnection();
     void processIncomingMessage();
 
 public:

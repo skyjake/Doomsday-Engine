@@ -23,12 +23,13 @@
 #include <de/types.h>
 #include <de/net.h>
 
+#include <QObject>
 #include <QFlags>
 
 /**
  * Represents a network connection to a remote party.
  */
-class Client : public de::MuxLink
+class Client : public QObject, public de::Transmitter
 {
 public:
     enum Right
@@ -46,10 +47,29 @@ public:
      * Grants the client whatever rights it should have.
      */
     void grantRights();
+
+    de::Socket& socket();
+    de::Channel& base();
+    de::Channel& updates();
+
+    // Implements de::Transmitter.
+    virtual void send(const de::IByteArray &data);
     
+protected:
+    void initialize();
+
 public:
     /// Access rights of the client.
     Rights rights;
+
+signals:
+    void messageReady();
+    void disconnected();
+
+private:
+    de::Socket* _socket;
+    de::Channel* _base;
+    de::Channel* _updates;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Client::Rights);
