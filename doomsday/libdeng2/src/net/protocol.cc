@@ -22,7 +22,7 @@
 #include "de/RecordPacket"
 #include "de/TextValue"
 #include "de/Record"
-#include "de/Transceiver"
+#include "de/Transmitter"
 #include "de/Log"
 
 using namespace de;
@@ -54,7 +54,8 @@ Packet* Protocol::interpret(const Block& block) const
     return 0;
 }
 
-void Protocol::syncCommand(Transceiver& to, const CommandPacket& command, RecordPacket** response)
+/*
+void Protocol::syncCommand(Transmitter& to, const CommandPacket& command, RecordPacket** response)
 {
     LOG_AS("Protocol::syncCommand");
     LOG_DEBUG("Sending: '%s' with args:\n%s") << command.command() << command.arguments();
@@ -84,8 +85,9 @@ void Protocol::syncCommand(Transceiver& to, const CommandPacket& command, Record
         *response = rep.take();
     }
 }
+*/
 
-void Protocol::reply(Transceiver& to, Reply type, Record* record)
+void Protocol::reply(Transmitter& to, Reply type, Record* record)
 {
     String label;
     switch(type)
@@ -110,7 +112,7 @@ void Protocol::reply(Transceiver& to, Reply type, Record* record)
     to << packet;
 }
 
-void Protocol::reply(Transceiver& to, Reply type, const String& message)
+void Protocol::reply(Transmitter& to, Reply type, const String& message)
 {
     Record* rec = new Record();
     if(!message.empty())

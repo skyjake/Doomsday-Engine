@@ -32,26 +32,29 @@ static const duint PROTOCOL_VERSION = 0;
 /// Size of the message header in bytes.
 static const duint HEADER_SIZE = 4;
 
+/// Maximum number of channels.
+static const duint MAX_CHANNELS = 2;
+
 Socket::Header::Header() : version(PROTOCOL_VERSION), huffman(false), channel(0), size(0) {}
 
 Socket::Socket(const Address& address)
     : _receptionState(RECEIVING_HEADER),
+      _useHuffman(false),
+      _activeChannel(0),
+      _socket(0),
       _bytesToBeWritten(0)
 {
     _socket = new QTcpSocket(this);
     _socket->connectToHost(address.host(), address.port());
     initialize();
-/*
-    if(_socket == 0)
-    {
-        /// @throw ConnectionError Opening the socket to @a address failed.
-        throw ConnectionError("Socket::Socket", "Failed to connect: " +
-            String(SDLNet_GetError()));
-    }
-*/
 }
 
-Socket::Socket(QTcpSocket* existingSocket) : _socket(existingSocket)
+Socket::Socket(QTcpSocket* existingSocket)
+    : _receptionState(RECEIVING_HEADER),
+      _useHuffman(false),
+      _activeChannel(0),
+      _socket(existingSocket),
+      _bytesToBeWritten(0)
 {
     _socket->setParent(this);
     initialize();
@@ -79,9 +82,25 @@ void Socket::close()
     _socket->close();
 }
 
+duint Socket::channel() const
+{
+    return _activeChannel;
+}
+
+void Socket::setChannel(duint number)
+{
+    Q_ASSERT(number < MAX_CHANNELS);
+    _activeChannel = number;
+}
+
+void Socket::send(const IByteArray &packet)
+{
+    send(packet, _activeChannel);
+}
+
 Socket& Socket::operator << (const IByteArray& packet)
 {
-    send(packet, mode & Channel1? 1 : 0);
+    send(packet, _activeChannel);
     return *this;
 }
 
@@ -110,8 +129,8 @@ void Socket::unpackHeader(duint32 headerBytes, Header& header)
     duint flags = (headerBytes >> 29) & 7;
     
     header.version = (headerBytes >> 27) & 3;
-    header.huffman = (flags & HuffmanPayload) != 0;
-    header.channel = (flags & Channel1? 1 : 0);
+    header.huffman = ((flags & Header::HUFFMAN) != 0);
+    header.channel = (flags & Header::CHANNEL_1? 1 : 0);
     header.size = headerBytes & 0x7ffffff;
 }
 
@@ -137,89 +156,7 @@ void Socket::send(const IByteArray& packet, duint channel)
 
     // Write the data itself.
     _socket->write(Block(packet));
-
-/*    // Did the transmission fail?
-    if(sentBytes != packetSize)
-    {
-        /// @throw DisconnectedError All the data was not sent successfully.
-        throw DisconnectedError("Socket::operator << ", String(SDLNet_GetError()));
-    }*/
 }
-
-/*
-void Socket::checkValid()
-{
-    if(!_socket)
-    {
-        /// @throw DisconnectedError The socket has been closed.
-        throw DisconnectedError("Socket::receive", "Socket was closed");
-    }
-}*/
-
-/*
-void Socket::receiveBytes(duint count, dbyte* buffer)
-{
-    duint received = 0;
-
-    try
-    {
-        // We make sure that the socket is valid while we're locked.
-        lock();
-        checkValid();
-        
-        // Wait indefinitely until there is something to receive.
-        while(received < count)
-        {
-            unlock();
-
-            int result = SDLNet_CheckSockets(
-                static_cast<SDLNet_SocketSet>(_socketSet), LIBDENG2_SOCKET_RECV_TIMEOUT);
-
-            lock();
-            checkValid();
-
-            if(result < 0)
-            {
-                /// @throw DisconnectedError There was an error in the socket while waiting 
-                /// for incoming data.
-                throw DisconnectedError("Socket::receive", "Socket broken while waiting");
-            }
-            else if(!result)
-            {
-                // Nothing yet.
-                continue;
-            }
-
-            // There is something to receive.
-            int recvResult = SDLNet_TCP_Recv(static_cast<TCPsocket>(_socket), 
-                buffer + received, count - received);
-
-            if(recvResult <= 0)
-            {
-                /// @throw DisconnectedError An error occurred in the socket while receiving
-                /// data. Only part of the data was received (or none of it).
-                throw DisconnectedError("Socket::receive", "Socket broken while receiving data");
-            }
-        
-            received += recvResult;
-        }
-
-        unlock();
-    }
-    catch(const DisconnectedError& err)
-    {
-        // We leave here unlocked.
-        unlock();
-        throw err;
-    }
-    catch(const Error& err)
-    {
-        // We leave here unlocked.
-        unlock();
-        throw err;
-    }
-}
-*/
 
 void Socket::readIncomingBytes()
 {
@@ -233,6 +170,15 @@ void Socket::readIncomingBytes()
                 duint32 bits = 0;
                 Reader(Block(_socket->read(HEADER_SIZE))) >> bits;
                 unpackHeader(bits, _incomingHeader);
+
+                // Check for valid protocols.
+                if(_incomingHeader.version > PROTOCOL_VERSION)
+                {
+                    /// @throw UnknownProtocolError The received data block's protocol version number
+                    /// was not recognized. This is probably because the remote end is not a libdeng2
+                    /// application.
+                    throw UnknownProtocolError("Socket::readIncomingBytes", "Incoming packet has unknown protocol");
+                }
 
                 _receptionState = RECEIVING_PAYLOAD;
             }
@@ -266,7 +212,7 @@ void Socket::readIncomingBytes()
     // Notification about available messages.
     if(!_receivedMessages.isEmpty())
     {
-        emit messagesReady();
+        emit messageReady();
     }
 }
 
@@ -277,34 +223,15 @@ Message* Socket::receive()
         return 0;
     }
     return _receivedMessages.takeFirst();
+}
 
-/*
-    if(!_socket) 
+Message* Socket::peek()
+{
+    if(_receivedMessages.isEmpty())
     {
-        /// @throw DisconnectedError Receiving data is not possible because the socket is closed.
-        throw DisconnectedError("Socket::receive", "Socket is closed");
+        return 0;
     }
-
-    // First read the header.
-    duint headerBytes = 0;
-    receiveBytes(4, reinterpret_cast<dbyte*>(&headerBytes));
-
-    Header incoming;
-    readHeader(headerBytes, incoming);
-    
-    // Check for valid protocols.
-    if(incoming.version != PROTOCOL_VERSION)
-    {
-        /// @throw UnknownProtocolError The received data block's protocol version number
-        /// was not recognized. This is probably because the remote end is not a libdeng2
-        /// application.
-        throw UnknownProtocolError("Socket::receive", "Incoming packet has unknown protocol");
-    }
-    
-    std::auto_ptr<Message> data(new Message(_peerAddress, incoming.channel, incoming.size)); 
-    receiveBytes(incoming.size, const_cast<dbyte*>(data.get()->data()));
-    return data.release();
-    */
+    return _receivedMessages.first();
 }
 
 void Socket::flush()

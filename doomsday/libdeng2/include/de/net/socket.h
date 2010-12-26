@@ -23,6 +23,7 @@
 #include "../deng.h"
 #include "../IByteArray"
 #include "../Address"
+#include "../Transmitter"
 
 #include <QTcpSocket>
 #include <QList>
@@ -45,21 +46,11 @@ namespace de
      *
      * @ingroup net
      */
-    class LIBDENG2_API Socket : public QObject
+    class LIBDENG2_API Socket : public QObject, public Transmitter
     {
         Q_OBJECT
 
-    public:
-        enum Flag
-        {
-            /// Payload is in Huffman code.
-            HuffmanPayload = 0x1,
-
-            /// Payload belongs to channel 1 instead of the default channel 0.
-            Channel1 = 0x2
-        };
-        Q_DECLARE_FLAGS(Flags, Flag);
-        
+    public:       
         /// Creating the TCP/IP connection failed. @ingroup errors
         DEFINE_ERROR(ConnectionError);
 
@@ -80,6 +71,28 @@ namespace de
         virtual ~Socket();
 
         /**
+         * Returns the currently active channel.
+         */
+        duint channel() const;
+
+        /**
+         * Sets the active channel.
+         *
+         * @param number  Channel number.
+         */
+        void setChannel(duint number);
+
+        // Implements Transmitter.
+        /**
+         * Sends the given data over the socket.  Copies the data into
+         * a temporary buffer before sending. The data is sent on the current
+         * sending channel.
+         *
+         * @param data  Data to send.
+         */
+        void send(const IByteArray &packet);
+
+        /**
          * Sends the given data over the socket.  Copies the data into
          * a temporary buffer before sending. The data is sent on the current
          * sending channel.
@@ -97,6 +110,13 @@ namespace de
          * @return  Received bytes. Caller gets ownership of the message.
          */
         Message* receive();
+
+        /**
+         * Returns a pointer to the next received message, if one is available.
+         *
+         * @return  Message. Socket retains ownership.
+         */
+        Message* peek();
         
         /**
          * Determines the IP address and port of the remote end of a connected socket.
@@ -125,10 +145,13 @@ namespace de
          */
         void flush();
 
+        /**
+         * Close the socket.
+         */
         void close();
 
     signals:
-        void messagesReady();
+        void messageReady();
         void disconnected();
         void error(QAbstractSocket::SocketError error);
 
@@ -148,10 +171,12 @@ namespace de
                 HUFFMAN = 0x1,
                 CHANNEL_1 = 0x2
             };
+
             duint version;
             bool huffman;
             duint channel;
             duint size;
+
             Header();
         };
         
@@ -172,21 +197,20 @@ namespace de
         duint32 packHeader(const Header& header);
 
         void unpackHeader(duint32 headerBytes, Header& header);
-        
-        //inline void checkValid();
 
-    public:
-        /// Operating mode.
-        Flags mode;
-    
     private:
         enum ReceptionState
         {
             RECEIVING_HEADER,
             RECEIVING_PAYLOAD
         };
-
         ReceptionState _receptionState;
+
+        /// Apply Huffman encoding to payload data.
+        bool _useHuffman;
+
+        /// Number of the active channel.
+        duint _activeChannel;
 
         Header _incomingHeader;
 
@@ -207,7 +231,5 @@ namespace de
         friend class ListenSocket;
     };
 }
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(de::Socket::Flags);
 
 #endif /* LIBDENG2_SOCKET_H */

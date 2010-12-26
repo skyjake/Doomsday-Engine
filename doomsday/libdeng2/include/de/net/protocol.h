@@ -36,7 +36,7 @@ namespace de
 {
     class Block;
     class CommandPacket;
-    class Transceiver;
+    class Transmitter;
     class Packet;
     class Record;
     class RecordPacket;
@@ -107,7 +107,7 @@ namespace de
          * @param response  If not NULL, the reponse packet is returned to caller here.
          *                  Otherwise the response packet is deleted.
          */
-        void syncCommand(Transceiver& to, const CommandPacket& command, RecordPacket** response = 0);
+        //void syncCommand(Transmitter& to, const CommandPacket& command, RecordPacket** response = 0);
 
         /**
          * Sends a reply over a link. This is used as a general response to 
@@ -118,7 +118,7 @@ namespace de
          * @param record  Optional data to send along the reply. Protocol takes
          *                ownership of the record.
          */
-        void reply(Transceiver& to, Reply type = OK, Record* record = 0);
+        void reply(Transmitter& to, Reply type = OK, Record* record = 0);
 
         /**
          * Sends a reply over a link. This is used as a general response to 
@@ -128,7 +128,7 @@ namespace de
          * @param type     Type of reply.
          * @param message  Optional message (human readable).
          */
-        void reply(Transceiver& to, Reply type, const String& message);
+        void reply(Transmitter& to, Reply type, const String& message);
 
     private:
         typedef QList<Constructor> Constructors;
