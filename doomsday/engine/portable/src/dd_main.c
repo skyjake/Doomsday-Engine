@@ -1028,6 +1028,7 @@ boolean DD_ChangeGame(gameinfo_t* info)
     {
         Materials_Initialize();
         FI_Init();
+        P_PtcInit();
 
         Con_Message("DD_ChangeGame: Warning, error exchanging entrypoints with plugin %i - aborting.\n", (int)GameInfo_PluginId(info));
         return false;
@@ -1038,6 +1039,7 @@ boolean DD_ChangeGame(gameinfo_t* info)
 
     Materials_Initialize();
     FI_Init();
+    P_PtcInit();
 
     P_InitMapUpdate();
     DAM_Init();

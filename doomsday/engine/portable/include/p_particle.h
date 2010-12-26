@@ -128,7 +128,7 @@ typedef struct ptcgen_s {
 typedef short ptcgenid_t;
 
 void            P_PtcInit(void);
-
+void            P_PtcShutdown(void);
 void            P_PtcInitForMap(void);
 
 void            P_CreatePtcGenLinks(void);

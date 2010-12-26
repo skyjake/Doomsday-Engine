@@ -80,6 +80,7 @@ float particleSpawnRate = 1; // Unmodified.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
+static boolean inited = false;
 static ptcgen_t* activePtcGens[MAX_ACTIVE_PTCGENS];
 
 static pglink_t** pgLinks = NULL; // Array of pointers to pgLinks in pgStore.
@@ -93,10 +94,15 @@ static linedef_t* ptcHitLine;
 
 // CODE --------------------------------------------------------------------
 
-static void freePtcGen(ptcgen_t* gen)
+static boolean destroyPtcGenParticles(ptcgen_t* gen, void* paramaters)
 {
-    Z_Free(gen->ptcs);
-    gen->ptcs = NULL;
+    assert(gen);
+    if(gen->ptcs)
+    {
+        Z_Free(gen->ptcs);
+        gen->ptcs = 0;
+    }
+    return true; // Can be used as an iterator, so continue.
 }
 
 static void unlinkPtcGen(ptcgen_t* gen)
@@ -183,7 +189,7 @@ static void P_PtcGenDestroy(ptcgen_t* gen)
     P_ThinkerRemove(&gen->thinker);
 
     unlinkPtcGen(gen);
-    freePtcGen(gen);
+    destroyPtcGenParticles(gen, 0);
 }
 
 /**
@@ -214,12 +220,24 @@ static ptcgen_t* P_NewPtcGen(void)
     return 0; // Creation failed.
 }
 
-/**
- * Called once during startup.
- */
 void P_PtcInit(void)
 {
-    memset(activePtcGens, 0, sizeof(activePtcGens));
+    if(!inited)
+    {   // First init.
+        memset(activePtcGens, 0, sizeof(activePtcGens));
+    }
+    else // Allow re-init.
+    {
+        P_UpdateParticleGens();
+    }
+    inited = true;
+}
+
+void P_PtcShutdown(void)
+{
+    if(!inited) return;
+    P_IteratePtcGens(destroyPtcGenParticles, 0);
+    inited = false;
 }
 
 void P_PtcInitForMap(void)
@@ -313,12 +331,19 @@ static void PG_LinkPtcGen(ptcgen_t* gen, uint secIDX)
     pgLinks[secIDX] = link;
 }
 
+void P_ClearPtcGenLinks(void)
+{
+    if(pgLinks == 0)
+        return;
+    memset(pgLinks, 0, sizeof(*pgLinks) * numSectors);
+    pgCursor = 0;
+}
+
 /**
  * Link all active particle generators into the world.
  */
 void P_CreatePtcGenLinks(void)
 {
-    ptcgenid_t          i;
 #ifdef DD_PROFILE
     static int p;
 
@@ -331,28 +356,25 @@ void P_CreatePtcGenLinks(void)
 
 BEGIN_PROF(PROF_PTCGEN_LINK);
 
-    if(pgLinks)
-    {   // Clear the PG links.
-        memset(pgLinks, 0, sizeof(pglink_t *) * numSectors);
-        pgCursor = 0;
-    }
+    P_ClearPtcGenLinks();
 
+    // Link all active generators to sectors?
     if(useParticles)
     {
-        // Link all active generators to sectors.
+        ptcgenid_t i;
         for(i = 0; i < MAX_ACTIVE_PTCGENS; ++i)
         {
-            ptcgen_t*           gen;
+            ptcgen_t* gen;
+            if((gen = activePtcGens[i]) == 0)
+                continue;
 
-            if((gen = activePtcGens[i]) != NULL)
+            // \fixme Overkill?
+            { int k;
+            for(k = 0; k < gen->count; ++k)
             {
-                int                 k;
-
-                // \fixme Overkill?
-                for(k = 0; k < gen->count; ++k)
-                    if(gen->ptcs[k].stage >= 0)
-                        PG_LinkPtcGen(gen, GET_SECTOR_IDX(gen->ptcs[k].sector));
-            }
+                if(gen->ptcs[k].stage >= 0)
+                    PG_LinkPtcGen(gen, GET_SECTOR_IDX(gen->ptcs[k].sector));
+            }}
         }
     }
 
