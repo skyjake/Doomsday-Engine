@@ -1159,25 +1159,25 @@ linedef_t *R_FindLineAlignNeighbor(const sector_t *sec,
 
 void R_InitLinks(gamemap_t *map)
 {
-    uint                i;
-    uint                starttime;
+    uint starttime;
 
-    Con_Message("R_InitLinks: Initializing\n");
+    VERBOSE( Con_Message("R_InitLinks: Initializing ...\n") );
+    VERBOSE2( starttime = Sys_GetRealTime() );
 
     // Initialize node piles and line rings.
     NP_Init(&map->mobjNodes, 256);  // Allocate a small pile.
     NP_Init(&map->lineNodes, map->numLineDefs + 1000);
 
     // Allocate the rings.
-    starttime = Sys_GetRealTime();
-    map->lineLinks =
-        Z_Malloc(sizeof(*map->lineLinks) * map->numLineDefs, PU_MAPSTATIC, 0);
+    map->lineLinks = Z_Malloc(sizeof(*map->lineLinks) * map->numLineDefs, PU_MAPSTATIC, 0);
+
+    { uint i;
     for(i = 0; i < map->numLineDefs; ++i)
         map->lineLinks[i] = NP_New(&map->lineNodes, NP_ROOT_NODE);
+    }
+
     // How much time did we spend?
-    VERBOSE(Con_Message
-            ("R_InitLinks: Allocating line link rings. Done in %.2f seconds.\n",
-             (Sys_GetRealTime() - starttime) / 1000.0f));
+    VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - starttime) / 1000.0f) );
 }
 
 /**

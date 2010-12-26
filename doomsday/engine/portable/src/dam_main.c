@@ -414,25 +414,25 @@ static boolean loadMap(gamemap_t **map, archivedmap_t *dam)
 
 static boolean convertMap(gamemap_t **map, archivedmap_t *dam)
 {
-    boolean             converted = false;
+    boolean converted = false;
 
-    Con_Message("convertMap: Attempting conversion of \"%s\".\n",
-                dam->identifier);
+    VERBOSE( Con_Message("convertMap: Attempting conversion of \"%s\".\n", dam->identifier) );
 
     // Nope. See if there is a converter available.
     if(Plug_CheckForHook(HOOK_MAP_CONVERT))
     {
         // Pass the lump list around the map converters, hopefully
         // one of them will recognise the format and convert it.
-        if(Plug_DoHook(HOOK_MAP_CONVERT,
-                       dam->numLumps, (void*) dam->lumpList))
+        if(Plug_DoHook(HOOK_MAP_CONVERT, dam->numLumps, (void*) dam->lumpList))
         {
             converted = true;
             *map = MPE_GetLastBuiltMap();
         }
     }
 
-    Con_Message("convertMap: %s.\n", (converted? "Successful" : "Failed"));
+    if(!converted || verbose >= 2)
+        Con_Message("convertMap: %s.\n", (converted? "Successful" : "Failed"));
+
     return converted;
 }
 

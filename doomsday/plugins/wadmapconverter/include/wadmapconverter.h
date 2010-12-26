@@ -40,7 +40,8 @@ enum { VX, VY, VZ };
 #define RIGHT                   0
 #define LEFT                    1
 
-#define VERBOSE(code)   { if(verbose) { code; } }
+#define VERBOSE(code)   { if(verbose >= 1) { code; } }
+#define VERBOSE2(code)  { if(verbose >= 2) { code; } }
 
 typedef struct materialref_s {
     char            name[9];

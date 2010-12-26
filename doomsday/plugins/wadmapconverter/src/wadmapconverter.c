@@ -107,11 +107,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
  */
 int ConvertMapHook(int hookType, int param, void *data)
 {
-    int                *lumpList = (int*) data;
+    int* lumpList = (int*) data;
 
     verbose = ArgExists("-verbose");
 
-    Con_Message("WadMapConverter::Convert: Attempting map conversion...\n");
+    VERBOSE2( Con_Message("WadMapConverter::Convert: Attempting map conversion...\n") );
     memset(map, 0, sizeof(*map));
 
     if(!IsSupportedFormat(lumpList, param))
@@ -121,9 +121,9 @@ int ConvertMapHook(int hookType, int param, void *data)
     }
 
     // A supported format.
-    Con_Message("WadMapConverter::Convert: %s map format.\n",
-                (map->format == MF_DOOM64? "DOOM64" :
-                 map->format == MF_HEXEN? "Hexen" : "DOOM"));
+    VERBOSE( Con_Message("WadMapConverter::Convert: %s map format.\n",
+                         (map->format == MF_DOOM64? "DOOM64" :
+                          map->format == MF_HEXEN?  "Hexen"  : "DOOM") ));
 
     // Load it in.
     if(!LoadMap(lumpList, param))
