@@ -47,7 +47,7 @@ public:
     DEFINE_ERROR(NoSessionError);
     
     /// Specified address was not in use by any client. @ingroup errors
-    DEFINE_ERROR(UnknownAddressError);
+    DEFINE_ERROR(UnknownError);
     
     /// Client does not have access rights to perform the operation. @ingroup errors
     DEFINE_ERROR(RightsError);
@@ -56,6 +56,13 @@ public:
     ServerApp(int argc, char** argv);
     ~ServerApp();
     
+    /**
+     * Destroys a client. The client object will be deleted later.
+     *
+     * @param client  Client to destroy.
+     */
+    void destroyClient(Client& client);
+
     void iterate(const de::Time::Delta& elapsed);
 
     /**
@@ -66,6 +73,15 @@ public:
      * @return  Client using the address.
      */
     Client& clientByAddress(const de::Address& address) const;
+
+    /**
+     *  Returns the client with the given channel.
+     *
+     * @param channel  Channel of client.
+     *
+     * @return  Client using the channel.
+     */
+    Client& clientByChannel(de::Channel* channel) const;
 
     /**
      * Check if there are any incoming requests from connected clients.
@@ -97,6 +113,9 @@ public:
 public slots:
     void acceptIncomingConnection();
     void processIncomingMessage();
+
+protected slots:
+    void clientDisconnected();
 
 public:
     /// Returns the singleton Server instance.

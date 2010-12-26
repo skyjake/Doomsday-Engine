@@ -115,7 +115,7 @@ public:
     void describe(de::Record& record) const;
 
 protected slots:
-    void remoteUserDisconnected(RemoteUser* remoteUser);
+    void remoteUserDisconnected();
 
 private:
     de::Id _id;

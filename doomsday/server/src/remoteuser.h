@@ -24,6 +24,8 @@
 #include "session.h"
 #include <de/net.h>
 
+#include <QObject>
+
 class Client;
 
 /**
@@ -31,7 +33,7 @@ class Client;
  *
  * @ingroup server
  */
-class RemoteUser
+class RemoteUser : public QObject
 {
 public:
     /// No session specified for the remote user. @ingroup errors
@@ -84,7 +86,10 @@ public:
      * Returns the User instance of the remote user.
      */
     const de::User& user() const;
-    
+
+signals:
+    void disconnected();
+
 private:
     Client* _client;
     

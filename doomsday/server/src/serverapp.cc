@@ -77,7 +77,13 @@ void ServerApp::acceptIncomingConnection()
     Q_ASSERT(incoming != 0);
 
     LOG_INFO("New client connected from %s.") << incoming->peerAddress();
-    _clients.append(new Client(incoming));
+
+    Client* newClient = new Client(incoming);
+    _clients.append(newClient);
+
+    // Listen to the client's notifications.
+    connect(newClient, SIGNAL(disconnected()), this, SLOT(clientDisconnected()));
+    connect(&newClient->base(), SIGNAL(messageReady()), this, SLOT(processIncomingMessage()));
 }
 
 void ServerApp::iterate(const Time::Delta& elapsed)
@@ -104,65 +110,75 @@ Client& ServerApp::clientByAddress(const de::Address& address) const
             return *c;
         }
     }
-    throw UnknownAddressError("ServerApp::clientByAddress", "Address not in use by any client");
+    throw UnknownError("ServerApp::clientByAddress", "Address not in use by any client");
+}
+
+Client& ServerApp::clientByChannel(de::Channel* channel) const
+{
+    foreach(Client* c, _clients)
+    {
+        if(&c->base() == channel || &c->updates() == channel)
+        {
+            return *c;
+        }
+    }
+    throw UnknownError("ServerApp::clientByChannel", "Channel not in use by any client");
+}
+
+void ServerApp::destroyClient(Client& client)
+{
+    _clients.removeOne(&client);
+    client.deleteLater();
+}
+
+void ServerApp::clientDisconnected()
+{
+    Client* client = static_cast<Client*>(sender());
+
+    LOG_INFO("Client from ") << client->socket().peerAddress() << " disconnected.";
+
+    // Remove from the clients list.
+    destroyClient(*client);
 }
 
 void ServerApp::processIncomingMessage()
 {
-    for(Clients::iterator i = _clients.begin(); i != _clients.end(); )
+    Channel* channel = static_cast<Channel*>(sender());
+
+    try
     {
-        bool deleteClient = false;
-        
-        try
+        Client& client = clientByChannel(channel);
+
+        // Process incoming packets.
+        QScopedPointer<Message> message(channel->receive());
+        if(message)
         {
-            // Process incoming packets.
-            QScopedPointer<Message> message((*i)->base().receive());
-            if(message)
+            QScopedPointer<Packet> packet(protocol().interpret(*message));
+            if(packet)
             {
-                QScopedPointer<Packet> packet(protocol().interpret(*message));
-                if(packet)
-                {
-                    packet->setFrom(message->address());
-                    processPacket(*packet);
-                }            
+                packet->setFrom(message->address());
+                processPacket(*packet);
             }
         }
-        catch(const RightsError& err)
-        {
-            // Reply that required rights are missing.
-            protocol().reply(**i, Protocol::DENY, err.asText());
-        }
-        catch(const ISerializable::DeserializationError&)
-        {
-            // Malformed packet!
-            LOG_WARNING("Client from ") << (*i)->socket().peerAddress() << " sent nonsense.";
-            deleteClient = true;
-        }
-        catch(const NoSessionError&)
-        {
-            LOG_WARNING("Client from ") << (*i)->socket().peerAddress() << " tried to access nonexistent session.";
-            deleteClient = true;
-        }
-        catch(const UnknownAddressError&)
-        {}
-        catch(const Socket::DisconnectedError&)
-        {
-            // The client was disconnected.
-            LOG_INFO("Client from ") << (*i)->socket().peerAddress() << " disconnected.";
-            deleteClient = true;
-        }
-
-        // Move on.
-        if(deleteClient)
-        {
-            delete *i;
-            _clients.erase(i++);
-        }
-        else
-        {
-            ++i;
-        }
     }
+    catch(const RightsError& err)
+    {
+        // Reply that required rights are missing.
+        protocol().reply(*channel, Protocol::DENY, err.asText());
+    }
+    catch(const ISerializable::DeserializationError&)
+    {
+        // Malformed packet!
+        LOG_WARNING("Client from ") << channel->socket().peerAddress() << " sent nonsense.";
+        destroyClient(clientByChannel(channel));
+    }
+    catch(const NoSessionError&)
+    {
+        LOG_WARNING("Client from ") << channel->socket().peerAddress() << " tried to access nonexistent session.";
+        destroyClient(clientByChannel(channel));
+    }
+    catch(const UnknownError&)
+    {}
 }
 
 void ServerApp::processPacket(const de::Packet& packet)

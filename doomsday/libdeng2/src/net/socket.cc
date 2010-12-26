@@ -76,6 +76,8 @@ void Socket::initialize()
 
 void Socket::close()
 {
+    flush();
+
     // Prevent emitting of any more signals.
     _socket->disconnect();
 

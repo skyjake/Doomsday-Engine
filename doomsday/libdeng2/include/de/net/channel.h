@@ -24,6 +24,7 @@
 #include "../Socket"
 
 #include <QObject>
+#include <QList>
 
 namespace de
 {
@@ -49,6 +50,14 @@ namespace de
          */
         explicit Channel(duint channelNumber, Socket& socket, QObject *parent = 0);
 
+        ~Channel();
+
+        /// Returns the socket of the channel.
+        Socket& socket();
+
+        Message* receive();
+        Message* peek();
+
         // Implements Transmitter.
         virtual void send(const IByteArray &data);
 
@@ -62,6 +71,7 @@ namespace de
     private:
         duint _channelNumber;
         Socket* _socket;
+        QList<Message*> _receivedMessages;
     };
 }
 

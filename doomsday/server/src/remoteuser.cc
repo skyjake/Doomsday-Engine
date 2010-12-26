@@ -25,6 +25,8 @@ using namespace de;
 RemoteUser::RemoteUser(Client& client, Session* session) 
     : _client(&client), _session(session), _user(0)
 {
+    connect(_client, SIGNAL(disconnected()), this, SIGNAL(disconnected()));
+
     _user = GAME_SYMBOL(deng_NewUser)();
 }
 

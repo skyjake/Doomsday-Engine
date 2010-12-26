@@ -41,7 +41,6 @@ Session::~Session()
         RecordPacket sessionEnded("session.ended");
         foreach(RemoteUser* remoteUser, _users.values())
         {
-            remoteUser->client().link().audienceForDeletion.remove(this);
             remoteUser->setSession(0);
             
             // Inform that the session has ended.
@@ -54,6 +53,16 @@ Session::~Session()
 
     LOG_DEBUG("Deleting the world.");
     delete _world;
+}
+
+void Session::remoteUserDisconnected()
+{
+    RemoteUser* user = dynamic_cast<RemoteUser*>(sender());
+    Q_ASSERT(user != 0);
+
+    // The remote user will disappear.
+    _users.remove(user->id());
+    user->deleteLater();
 }
 
 void Session::processCommand(Client& sender, const de::CommandPacket& packet)
@@ -120,10 +129,10 @@ RemoteUser& Session::promote(Client& client)
     
     try
     {
-        userByAddress(client.peerAddress());
+        userByAddress(client.socket().peerAddress());
         /// @throw AlreadyPromotedError  The client already is a user in the session.
         throw AlreadyPromotedError("Session::promote", "Client from " + 
-            client.peerAddress().asText() + " already is a user");
+            client.socket().peerAddress().asText() + " already is a user");
     }
     catch(const UnknownAddressError&)
     {
@@ -144,7 +153,7 @@ RemoteUser& Session::promote(Client& client)
         LOG_VERBOSE("Id of new remote user: ") << remote->id();
 
         // Start observing when this link closes.
-        client.link().audienceForDeletion.add(this);
+        connect(remote, SIGNAL(disconnected()), this, SLOT(remoteUserDisconnected()));
 
         return *remote;
     }
@@ -156,7 +165,7 @@ void Session::demote(RemoteUser& remoteUser)
     remoteUser.setSession(0);
     
     // Stop observing.
-    remoteUser.client().link().audienceForDeletion.remove(this);
+    remoteUser.disconnect(this, SLOT(remoteUserDisconnected()));
 
     // Update the others.
     RecordPacket userLeft("user.left");
@@ -175,23 +184,6 @@ RemoteUser& Session::userByAddress(const de::Address& address) const
     }
     /// @throw UnknownAddressError  No user has the address @a address.
     throw UnknownAddressError("Session::userByAddress", "No one has address " + address.asText());
-}
-
-void Session::linkBeingDeleted(de::Link& link)
-{
-    LOG_AS("Session::linkBeingDeleted");
-
-    foreach(RemoteUser* remoteUser, _users.values())
-    {
-        if(&remoteUser->client().link() == &link)
-        {
-            // This user's link has been closed. The remote user will disappear.
-            delete remoteUser;
-            _users.remove(remoteUser->id());
-            return;
-        }
-    }
-    LOG_DEBUG("%s not used by any user") << link.peerAddress();
 }
 
 void Session::describe(de::Record& record) const

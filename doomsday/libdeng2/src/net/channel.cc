@@ -31,9 +31,35 @@ Channel::Channel(duint channelNumber, Socket& socket, QObject *parent)
     connect(_socket, SIGNAL(destroyed()), this, SLOT(socketDestroyed()));
 }
 
+Channel::~Channel()
+{
+    while(!_receivedMessages.isEmpty())
+    {
+        delete _receivedMessages.takeLast();
+    }
+}
+
 void Channel::socketDestroyed()
 {
     _socket = 0;
+}
+
+Message* Channel::receive()
+{
+    if(_receivedMessages.isEmpty())
+    {
+        return 0;
+    }
+    return _receivedMessages.takeFirst();
+}
+
+Message* Channel::peek()
+{
+    if(_receivedMessages.isEmpty())
+    {
+        return 0;
+    }
+    return _receivedMessages.first();
 }
 
 void Channel::send(const IByteArray &data)
@@ -53,6 +79,14 @@ void Channel::checkMessageReady()
     Message* msg = _socket->peek();
     if(msg->channel() == _channelNumber)
     {
+        // It's on this channel, take the message.
+        _receivedMessages.append(_socket->receive());
         emit messageReady();
     }
+}
+
+Socket& Channel::socket()
+{
+    Q_ASSERT(_socket != 0);
+    return *_socket;
 }
