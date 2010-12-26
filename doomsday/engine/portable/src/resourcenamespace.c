@@ -27,7 +27,6 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "m_args.h"
-#include "sys_direc.h"
 #include "filedirectory.h"
 
 #include "resourcenamespace.h"
@@ -38,30 +37,24 @@
  *
  * @return              The generated hash index.
  */
-static uint hashFunction(const char* name)
+static resourcenamespace_namehash_hash_t hashFunction(const char* name)
 {
     assert(name);
     {
-    unsigned short key = 0;
-    int i, ch;
+    resourcenamespace_namehash_hash_t hash = 0;
+    byte op = 0;
 
     // We stop when the name ends or the extension begins.
-    for(i = 0; *name && *name != '.'; i++, name++)
+    for(; *name && *name != '.'; name++)
     {
-        ch = tolower(*name);
-
-        if(i == 0)
-            key ^= ch;
-        else if(i == 1)
-            key *= ch;
-        else if(i == 2)
+        switch(op)
         {
-            key -= ch;
-            i = -1;
+        case 0: hash ^= tolower(*name); ++op;   break;
+        case 1: hash *= tolower(*name); ++op;   break;
+        case 2: hash -= tolower(*name);   op=0; break;
         }
     }
-
-    return key % RESOURCENAMESPACE_HASHSIZE;
+    return hash % RESOURCENAMESPACE_HASHSIZE;
     }
 }
 
@@ -75,7 +68,7 @@ static void clearPathHash(resourcenamespace_t* rn)
         while(entry->first)
         {
             resourcenamespace_hashnode_t* nextNode = entry->first->next;
-            free(entry->first->name);
+            Str_Free(&entry->first->name);
             free(entry->first);
             entry->first = nextNode;
         }
@@ -102,7 +95,7 @@ static void printPathHash(resourcenamespace_t* rn)
         {
             Str_Clear(&path);
             FileDirectoryNode_ComposePath((filedirectory_node_t*)node->data, &path);
-            Con_Printf("  %lu: %lu:\"%s\" -> %s\n", (unsigned long)n, i, node->name, Str_Text(&path));
+            Con_Printf("  %lu: %lu:\"%s\" -> %s\n", (unsigned long)n, i, Str_Text(&node->name), Str_Text(&path));
             ++n;
             node = node->next;
         }
@@ -152,84 +145,77 @@ static boolean findPath(resourcenamespace_t* rn, const char* _searchPath, ddstri
 {
     assert(rn && _searchPath && _searchPath[0]);
     {
+    resourcenamespace_namehash_hash_t hash;
     resourcenamespace_hashnode_t* node;
-    ddstring_t searchPath;
-    filename_t baseName;
-    byte result = 0;
+    ddstring_t searchPath, fileName;
 
     // Convert the search path into one we can process.
     Str_Init(&searchPath); Str_Set(&searchPath, _searchPath);
     F_FixSlashes(&searchPath);
 
-    // Extract the base name.
-    Dir_FileName(baseName, Str_Text(&searchPath), FILENAME_T_MAXLEN);
+    // Extract the file name and hash it.
+    Str_Init(&fileName);
+    F_FileName(&fileName, &searchPath);
+    hash = hashFunction(Str_Text(&fileName));
+    Str_Free(&fileName);
 
     // Go through the candidates.
-    { resourcenamespace_hashentry_t* slot = &rn->_pathHash[hashFunction(baseName)];
-    for(node = slot->first; node; node = node->next)
-    {
-        filedirectory_node_t* fdNode = (filedirectory_node_t*)node->data;
+    node = rn->_pathHash[hash].first;
+    while(node && !FileDirectoryNode_MatchDirectory((filedirectory_node_t*)node->data, Str_Text(&searchPath)))
+        node = node->next;
 
-        // If the directory compare passes, this is the match.
-        // The directory must be on the search path for the test to pass.
-        if(FileDirectoryNode_MatchDirectory(fdNode, Str_Text(&searchPath)))
-        {
-            if(foundPath)
-            {
-                FileDirectoryNode_ComposePath(fdNode, foundPath);
-            }
-            result = 1;
-            break;
-        }
-    }}
+    // Does the caller want to know the matched path?
+    if(node && foundPath)
+        FileDirectoryNode_ComposePath((filedirectory_node_t*)node->data, foundPath);
 
     Str_Free(&searchPath);
-
-    return (result == 0? false : true);
+    return (node == 0? false : true);
     }
 }
 
-static int addFilePathToResourceNamespaceWorker(const filedirectory_node_t* node, void* paramaters)
+static int addFilePathToResourceNamespaceWorker(const filedirectory_node_t* fdNode, void* paramaters)
 {
-    assert(node && paramaters);
+    assert(fdNode && paramaters);
     {
     resourcenamespace_t* rn = (resourcenamespace_t*) paramaters;
     ddstring_t filePath;
 
-    if(node->type != FT_NORMAL)
+    if(fdNode->type != FT_NORMAL)
         return 0; // Continue adding.
 
     Str_Init(&filePath);
-    FileDirectoryNode_ComposePath(node, &filePath);
+    FileDirectoryNode_ComposePath(fdNode, &filePath);
 
     // Is this a new path?
     if(!findPath(rn, Str_Text(&filePath), 0))
     {
-        resourcenamespace_hashnode_t* hashNode;
-        filename_t name;
+        resourcenamespace_namehash_hash_t hash;
+        resourcenamespace_hashnode_t* node;
+        ddstring_t fileName;
 
-        // Extract the file name.
-        Dir_FileName(name, Str_Text(&filePath), FILENAME_T_MAXLEN);
+        // Extract the file name and hash it.
+        Str_Init(&fileName);
+        F_FileName(&fileName, &filePath);
+        hash = hashFunction(Str_Text(&fileName));
 
-        // Create a new hashNode and link it to the hash table.
-        if((hashNode = malloc(sizeof(*hashNode))) == 0)
-            Con_Error("addFilePathToResourceNamespaceWorker: failed on allocation of %lu bytes for hashNode.", (unsigned long) sizeof(*hashNode));
+        // Create a new hash node.
+        if((node = malloc(sizeof(*node))) == 0)
+            Con_Error("addFilePathToResourceNamespaceWorker: failed on allocation of %lu bytes for node.", (unsigned long) sizeof(*node));
+        Str_Init(&node->name);
+        Str_Copy(&node->name, &fileName);
+        node->data = (void*) fdNode;
+        node->next = 0;
 
-        hashNode->data = (void*) node;
+        Str_Free(&fileName);
 
-        // Calculate the name key and add to the hash.
-        { resourcenamespace_hashentry_t* slot = &rn->_pathHash[hashFunction(name)];
+        // Link it to the list for this bucket.
+        { resourcenamespace_hashentry_t* slot = &rn->_pathHash[hash];
         if(slot->last)
-            slot->last->next = hashNode;
-        slot->last = hashNode;
+            slot->last->next = node;
+        slot->last = node;
         if(!slot->first)
-            slot->first = hashNode;}
-
-        if((hashNode->name = malloc(strlen(name) + 1)) == 0)
-            Con_Error("addFilePathToResourceNamespaceWorker: failed on allocation of %lu bytes for name.", (unsigned long) (strlen(name) + 1));
-
-        strcpy(hashNode->name, name);
-        hashNode->next = 0;
+            slot->first = node;
+        }
     }
 
     Str_Free(&filePath);

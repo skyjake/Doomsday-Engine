@@ -979,6 +979,7 @@ boolean DD_ChangeGame(gameinfo_t* info)
         Con_SaveDefaults();
 
         LO_Clear();
+        P_PtcShutdown();
 
         if(gx.Shutdown)
             gx.Shutdown();

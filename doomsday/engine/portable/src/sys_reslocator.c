@@ -697,6 +697,18 @@ void F_FileDir(const ddstring_t* str, directory2_t* dir)
     }
 }
 
+void F_FileName(ddstring_t* dest, const ddstring_t* src)
+{
+#ifdef WIN32
+    char name[_MAX_FNAME], ext[_MAX_EXT];
+#else
+    char name[NAME_MAX], ext[NAME_MAX];
+#endif
+    _splitpath(Str_Text(src), 0, 0, name, ext);
+    Str_Clear(dest);
+    Str_Appendf(dest, "%s%s", name, ext);
+}
+
 /// \todo dj: Find a suitable home for this.
 boolean F_FixSlashes(ddstring_t* str)
 {

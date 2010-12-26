@@ -28,7 +28,7 @@
 
 typedef struct resourcenamespace_hashnode_s {
     struct resourcenamespace_hashnode_s* next;
-    char* name;
+    ddstring_t name;
     void* data;
 } resourcenamespace_hashnode_t;
 
@@ -37,6 +37,7 @@ typedef struct resourcenamespace_hashnode_s {
  */
 // Number of entries in the hash table.
 #define RESOURCENAMESPACE_HASHSIZE 512
+typedef unsigned short resourcenamespace_namehash_hash_t;
 
 typedef struct {
     resourcenamespace_hashnode_t* first;

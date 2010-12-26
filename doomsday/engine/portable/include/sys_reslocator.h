@@ -167,6 +167,8 @@ typedef struct directory2_s {
 
 void F_FileDir(const ddstring_t* str, directory2_t* dir);
 
+void F_FileName(ddstring_t* dest, const ddstring_t* src);
+
 /**
  * Converts directory slashes to the correct type of slash.
  * @return              @c true iff the path was modified.
