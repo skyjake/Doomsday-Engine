@@ -24,15 +24,6 @@
 #include <de/types.h>
 #include <de/net.h>
 
-/*
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
-*/
-
-//#include "doomsday.h"
-
 using namespace de;
 
 ServerApp::ServerApp(int argc, char** argv)
@@ -93,12 +84,6 @@ void ServerApp::iterate(const Time::Delta& elapsed)
     {
         currentMap().think(elapsed);
     }
-    
-    // libdeng main loop tasks.
-    //LOG_TRACE("Entering libdeng gameloop...");
-    //DD_GameLoop();
-
-    //LOG_TRACE("Finished iteration.");
 }
 
 Client& ServerApp::clientByAddress(const de::Address& address) const

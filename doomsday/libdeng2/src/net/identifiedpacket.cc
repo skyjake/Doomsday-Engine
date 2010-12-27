@@ -1,7 +1,7 @@
 /*
- * The Doomsday Engine Project -- libdeng2
+ * The Doomsday Engine Project
  *
- * Copyright (c) 2009, 2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2010 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,33 +16,37 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
- 
-#include "de/CommandPacket"
-#include "de/Value"
+
+#include "de/IdentifiedPacket"
 #include "de/Writer"
 #include "de/Reader"
-#include "de/Block"
 
 using namespace de;
 
-static const char* COMMAND_PACKET_TYPE = "CMND";
+static IdentifiedPacket::Id idGen = 0;
 
-CommandPacket::CommandPacket(const String& cmd) : RecordPacket(cmd)
-{
-    setType(COMMAND_PACKET_TYPE);
-}
-
-CommandPacket::~CommandPacket()
+IdentifiedPacket::IdentifiedPacket(const Type& type, Id i)
+    : Packet(type), _id(i)
 {}
 
-Packet* CommandPacket::fromBlock(const Block& block)
+void IdentifiedPacket::operator >> (Writer& to) const
 {
-    Reader from(block);
-    if(checkType(from, COMMAND_PACKET_TYPE))
-    {    
-        std::auto_ptr<CommandPacket> p(new CommandPacket);
-        from >> *p.get();
-        return p.release();
+    Packet::operator >> (to);
+    to << id();
+}
+
+void IdentifiedPacket::operator << (Reader& from)
+{
+    Packet::operator << (from);
+    from >> _id;
+}
+
+IdentifiedPacket::Id IdentifiedPacket::id() const
+{
+    if(!_id)
+    {
+        // Late assignment of the id. If the id is never asked, one is never set.
+        _id = ++idGen;
     }
-    return 0;
+    return _id;
 }

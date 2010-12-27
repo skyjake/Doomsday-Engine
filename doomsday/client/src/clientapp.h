@@ -20,10 +20,12 @@
 #ifndef CLIENTAPP_H
 #define CLIENTAPP_H
 
-#include "usersession.h"
 #include <de/core.h>
 
+#include "usersession.h"
+
 class LocalServer;
+class Video;
 
 /**
  * @defgroup client Client
@@ -35,19 +37,29 @@ class LocalServer;
  *
  * @ingroup client
  */
-class ClientApp : public de::App
+class ClientApp : public de::GUIApp
 {
 public:
-    ClientApp(const de::CommandLine& arguments);
+    ClientApp(int argc, char** argv);
     ~ClientApp();
     
     void iterate(const de::Time::Delta& elapsed);
+
+    /**
+     * Returns the video subsystem.
+     */
+    Video& video();
     
 private:
     LocalServer* _localServer;
     
     /// The game session.
     UserSession* _session;
+
+    Video* _video;
 };
+
+/// Returns the client app instance.
+ClientApp& theApp();
 
 #endif /* CLIENTAPP_H */

@@ -20,7 +20,7 @@
 #ifndef LIBDENG2_RECORDPACKET_H
 #define LIBDENG2_RECORDPACKET_H
 
-#include "../Packet"
+#include "../IdentifiedPacket"
 #include "../Record"
 #include "../String"
 
@@ -30,21 +30,21 @@ namespace de
     class Variable;
 
     /**
-     * A packet that contains a Record. A label string can be attached.
+     * An identified packet that contains a Record. The record itself can have a name.
      *
      * @ingroup protocol
      */
-    class LIBDENG2_API RecordPacket : public Packet
+    class LIBDENG2_API RecordPacket : public IdentifiedPacket
     {
     public:
-        RecordPacket(const String& label = "");
+        RecordPacket(const String& name = "", Id id = 0);
         virtual ~RecordPacket();
 
         /// Returns the caption of the packet.
-        const String& label() const { return _label; }
+        const String& name() const { return _name; }
         
         /// Sets the command of the packet.
-        void setLabel(const String& s) { _label = s; }
+        void setName(const String& n) { _name = n; }
 
         /// Returns the arguments of the packet (non-modifiable).
         const Record& record() const { return *_record; }
@@ -95,7 +95,7 @@ namespace de
         static Packet* fromBlock(const Block& block);
 
     private:
-        String _label;
+        String _name;
 
         /// The record.
         Record* _record;

@@ -24,7 +24,7 @@
 #include <de/net.h>
 #include <de/world.h>
 
-#include <map>
+#include <QMap>
 
 /**
  * Maintains the game session on the clientside.
@@ -41,11 +41,11 @@ public:
     /**
      * Constructs a new user session.
      *
-     * @param link  Open connection to the server. Ownership given to UserSession.
-     * @param id  Session to join. Ongoing sessions on a server can be queried with
-     *      the "status" command.
+     * @param socket  Open connection to the server. Ownership given to UserSession.
+     * @param id      Session to join. Ongoing sessions on a server can be queried with
+     *                the "status" command.
      */
-    UserSession(de::MuxLink* link, const de::Id& id = 0);
+    UserSession(de::Socket* socket, const de::Id& id = 0);
     
     virtual ~UserSession();
     
@@ -69,7 +69,7 @@ protected:
     
 private:
     /// Link to the server.
-    de::MuxLink* _link;
+    de::Socket* _link;
     
     /// Id of the session on the server.
     de::Id _sessionId;
@@ -81,7 +81,7 @@ private:
     de::User* _user;
 
     /// The others.
-    typedef std::map<de::Id, de::User*> Others;
+    typedef QMap<de::Id, de::User*> Others;
     Others _others;
 };
 

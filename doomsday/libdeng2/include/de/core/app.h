@@ -110,6 +110,14 @@ namespace de
         virtual ~App();
 
         /**
+         * Adds a subsystem to the application.
+         * The application takes ownership of the subsystem.
+         *
+         * @param subsystem  Subsystem.
+         */
+        void addSubsystem(ISubsystem* subsystem);
+
+        /**
          * Loads the basic plugins (named "dengplugin_").
          */
         void loadPlugins();

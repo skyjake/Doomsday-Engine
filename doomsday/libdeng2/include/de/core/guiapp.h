@@ -26,16 +26,29 @@
 
 namespace de
 {
+    namespace internal
+    {
+        class Application : public QApplication
+        {
+        public:
+            Application(int argc, char** argv);
+            bool notify(QObject* receiver, QEvent* event);
+        };
+    }
+
     /**
      * Application with a graphical user interface.
      */
-    class GUIApp : public QApplication, public App
+    class GUIApp : public App
     {
     public:
         GUIApp(int argc, char** argv,
                const String& configPath,
                const String& homeSubFolder = "",
                Log::LogLevel defaultLogLevel = Log::MESSAGE);
+
+    private:
+        internal::Application _app;
     };
 }
 

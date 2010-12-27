@@ -17,7 +17,9 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "de/Video"
+#include "video.h"
+#include "surface.h"
+#include "clientapp.h"
 
 using namespace de;
 
@@ -35,14 +37,14 @@ Video::~Video()
 
 Window& Video::mainWindow() const
 {
-    assert(_mainWindow != 0);
+    Q_ASSERT(_mainWindow != 0);
     return *_mainWindow;
 }
     
 void Video::setMainWindow(Window* window)
 {
-    assert(window != 0);
-    assert(_windows.find(window) != _windows.end());
+    Q_ASSERT(window != 0);
+    Q_ASSERT(_windows.find(window) != _windows.end());
     _mainWindow = window;
 }
 
@@ -54,9 +56,17 @@ Surface* Video::target() const
 void Video::setTarget(Surface& surface)
 {
     _target = &surface;
+    _target->activate();
 }
 
 void Video::releaseTarget()
 {
+    Q_ASSERT(_target != 0);
+    _target->deactivate();
     _target = 0;
+}
+
+Video& theVideo()
+{
+    return theApp().video();
 }

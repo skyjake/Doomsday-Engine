@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- libdeng2
+ * The Doomsday Engine Project
  *
  * Copyright (c) 2009, 2010 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,60 +17,43 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "de/Window"
-#include "de/Surface"
-#include "de/Video"
+#include "window.h"
+#include "surface.h"
+#include "video.h"
 
 using namespace de;
 
-Window::Window(Video& v, const Placement& p, const Mode& m, Surface* surf) 
-    : _video(v), _place(p), _mode(m), _surface(surf)
+Window::Window()
 {}
 
 Window::~Window()
-{
-    delete _surface;
-}
+{}
 
-void Window::setPlace(const Placement& p)
+void Window::setSelectedFlags(Flag selectedFlags, bool set)
 {
-    _place = p;
-    
-    // Update surface size.
-    _surface->setSize(p.size());
-}
-
-Surface& Window::surface() const
-{
-    assert(_surface != 0);
-    return *_surface;
-}
-
-void Window::setSurface(Surface* surf)
-{
-    _surface = surf;
-}
-
-void Window::setMode(Flag modeFlags, bool set)
-{
-    Mode flags(modeFlags);
+    Flags flags = _flags;
     if(set)
     {
-        _mode = _mode | flags;
+        flags |= selectedFlags;
     }
     else
     {
-        _mode = _mode & ~flags;
+        flags &= ~selectedFlags;
     }
+    setFlags(flags);
+}
+
+void Window::setFlags(Flags allFlags)
+{
+    _flags = allFlags;
 }
 
 void Window::draw()
 {
-    // Use this window as the rendering target.
-    _video.setTarget(surface());
+    theVideo().setTarget(*this);
 
     // Draw all the visuals.
     _root.draw();
     
-    _video.releaseTarget();
+    theVideo().releaseTarget();
 }

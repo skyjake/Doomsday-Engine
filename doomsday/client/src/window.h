@@ -20,123 +20,77 @@
 #ifndef LIBDENG2_WINDOW_H
 #define LIBDENG2_WINDOW_H
 
-#include "../Rectangle"
-#include "../Visual"
+#include <de/Rectangle>
+#include <QWidget>
+#include <QFlags>
 
-namespace de
+#include "glwindowsurface.h"
+#include "visual.h"
+
+class Video;
+
+/**
+ * The abstract base class for windows in the operating system's windowing system.
+ *
+ * @ingroup video
+ */
+class Window : public GLWindowSurface
 {
-    class Video;
-    class Surface;
-    
-    /**
-     * The abstract base class for windows in the operating system's windowing system.
-     *
-     * @ingroup video
-     */ 
-    class LIBDENG2_API Window
+public:
+    /// Window is in fullscreen mode.
+    enum Flag
     {
-    public:
-        typedef Rectangleui Placement;
-
-        /// Window is in fullscreen mode.
-        DEFINE_FINAL_FLAG(FULLSCREEN, 0, Mode);
-        
-    public:
-        virtual ~Window();
-
-        /**
-         * Returns the video subsystem that governs the window.
-         */
-        Video& video() const { return _video; }
-
-        /**
-         * Returns the drawing surface of the window.
-         */
-        Surface& surface() const;
-        
-        /**
-         * Returns the root visual of the window.
-         */
-        const Visual& root() const { return _root; }
-
-        /**
-         * Returns the root visual of the window.
-         */
-        Visual& root() { return _root; }
-
-        virtual void setPlace(const Placement& p);
-
-        /**
-         * Returns the placement of the window.
-         */
-        const Placement& place() const { return _place; }
-        
-        duint width() const { return _place.width(); }
-
-        duint height() const { return _place.height(); }
-        
-        /**
-         * Returns the mode of the window.
-         */
-        const Mode& mode() const { return _mode; }
-
-        /**
-         * Changes the value of the mode flags. Subclass should override to
-         * update the state of the concrete window.
-         *
-         * @param modeFlags  Mode flag(s).
-         * @param yes  @c true, if the flag(s) should be set. @c false to unset.
-         */
-        virtual void setMode(Flag modeFlags, bool yes = true);
-
-        /**
-         * Sets the title of the window.
-         *
-         * @param title  Title text.
-         */
-        virtual void setTitle(const String& title) = 0;
-
-        /**
-         * Draws the contents of the window.
-         */
-        virtual void draw();
-        
-    protected:
-        /**
-         * Constructs the window and its drawing surface. 
-         *
-         * @param video  Video subsystem that constructed the window.
-         * @param place  Placemenet of the window.
-         * @param mode  Initial mode of the window.
-         * @param surface  Drawing surface. Window gets ownership.
-         *      All windows are required to have a drawing surface.
-         */
-        Window(Video& video, const Placement& place, const Mode& mode, Surface* surface = 0);
-        
-        /**
-         * Sets the drawing surface of the window. It will automatically resized
-         * when the window size changes. 
-         *
-         * @param surface  Window gets ownership.
-         */
-        void setSurface(Surface* surface);
-        
-    private:
-        /// Video subsystem that governs the window.
-        Video& _video;
-        
-        /// Window rectangle.
-        Placement _place;
-        
-        /// Window mode.
-        Mode _mode;
-        
-        /// Drawing surface of the window.
-        Surface* _surface;
-        
-        /// Root visual of the window.
-        Visual _root;
+        Fullscreen = 0x1
     };
+    Q_DECLARE_FLAGS(Flags, Flag);
+        
+public:
+    Window();
+
+    virtual ~Window();
+        
+    /**
+     * Returns the root visual of the window.
+     */
+    const Visual& root() const { return _root; }
+
+    /**
+     * Returns the root visual of the window.
+     */
+    Visual& root() { return _root; }
+
+    /**
+     * Returns the mode of the window.
+     */
+    const Flags& flags() const { return _flags; }
+
+    /**
+     * Changes the value of the mode flags. Subclass should override to
+     * update the state of the concrete window.
+     *
+     * @param modeFlags  Mode flag(s).
+     * @param yes  @c true, if the flag(s) should be set. @c false to unset.
+     */
+    void setSelectedFlags(Flags selectedFlags, bool yes = true);
+
+    /**
+     * Sets the flags of the window.
+     */
+    virtual void setFlags(Flags allFlags);
+
+    /**
+     * Draws the contents of the window.
+     */
+    virtual void draw();
+
+private:
+    /// Window mode.
+    Flags _flags;
+
+    /// Root visual of the window.
+    Visual _root;
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(Window::Flags);
 
 #endif /* LIBDENG2_WINDOW_H */

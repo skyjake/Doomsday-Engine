@@ -27,7 +27,8 @@ using namespace de;
 
 static const char* RECORD_PACKET_TYPE = "RECO";
 
-RecordPacket::RecordPacket(const String& label) : Packet(RECORD_PACKET_TYPE), _label(label), _record(0)
+RecordPacket::RecordPacket(const String& name, Id i)
+    : IdentifiedPacket(RECORD_PACKET_TYPE, i), _name(name), _record(0)
 {
     _record = new Record();
 }
@@ -62,14 +63,14 @@ String RecordPacket::valueAsText(const String& variableName) const
 
 void RecordPacket::operator >> (Writer& to) const
 {
-    Packet::operator >> (to);
-    to << _label << *_record;
+    IdentifiedPacket::operator >> (to);
+    to << _name << *_record;
 }
 
 void RecordPacket::operator << (Reader& from)
 {
-    Packet::operator << (from);
-    from >> _label >> *_record;
+    IdentifiedPacket::operator << (from);
+    from >> _name >> *_record;
 }
 
 Packet* RecordPacket::fromBlock(const Block& block)

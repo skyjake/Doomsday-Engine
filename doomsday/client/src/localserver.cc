@@ -27,8 +27,9 @@ using namespace de;
 
 LocalServer::LocalServer(de::duint16 listenOnPort) : _listenOnPort(listenOnPort)
 {
+    /*
     CommandLine svArgs = App::app().commandLine();
-    
+
 #if defined(WIN32)
     svArgs.insert(0, "bin\\dengsv.exe");
 #elif defined(MACOSX)
@@ -43,12 +44,14 @@ LocalServer::LocalServer(de::duint16 listenOnPort) : _listenOnPort(listenOnPort)
     svArgs.remove(1);
     extern char** environ;
     svArgs.execute(environ);
+    */
 }
 
 LocalServer::~LocalServer()
 {
     LOG_AS("LocalServer::~LocalServer");
     
+    /*
     try
     {
         LOG_MESSAGE("Stopping...");
@@ -59,4 +62,5 @@ LocalServer::~LocalServer()
     {
         LOG_ERROR("Failed to connect!");
     }
+    */
 }

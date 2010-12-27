@@ -21,18 +21,10 @@
 
 using namespace de;
 
-Surface::Surface(const Size& s) : _size(s) 
-{}
-
 Surface::~Surface()
 {}
 
-void Surface::setSize(const Size& s)
+QImage Surface::captureImage() const
 {
-    _size = s;
-}
-
-Image* Surface::toImage() const
-{
-    throw ImageError("Surface::toImage", "Surface cannot be converted to image");
+    throw CaptureError("Surface::captureImage", "Surface cannot be converted to image");
 }

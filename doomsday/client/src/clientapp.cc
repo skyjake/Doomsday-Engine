@@ -20,23 +20,24 @@
 #include "clientapp.h"
 #include "localserver.h"
 #include "usersession.h"
+#include "video.h"
 #include <de/net.h>
 #include <de/data.h>
 
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#endif
-
-#include "doomsday.h"
-
 using namespace de;
 
-ClientApp::ClientApp(const de::CommandLine& arguments)
-    : App(arguments, "/config/client/client.de", "client"), _localServer(0), _session(0)
+ClientApp::ClientApp(int argc, char** argv)
+    : GUIApp(argc, argv, "/config/client/client.de", "client"),
+      _localServer(0), _session(0), _video(0)
 {        
-    CommandLine& args = commandLine();
+    // Create the video subsystem.
+    _video = new Video();
+
+    addSubsystem(_video);
+
+    //CommandLine& args = commandLine();
     
+    /*
 #ifdef MACOSX
     args.append("-iwad");
     args.append("/Users/jaakko/IWADs/Doom.wad");
@@ -53,29 +54,27 @@ ClientApp::ClientApp(const de::CommandLine& arguments)
     args.append("../../data/doomsday.pk3");
     args.append("../../data/doom.pk3");
 #endif
+    */
 
-    const duint16 SERVER_PORT = duint16(config().getui("net.localServer.listenPort"));
-
-    std::auto_ptr<LocalServer> svPtr(new LocalServer(SERVER_PORT));
-    _localServer = svPtr.get();
+    //const duint16 SERVER_PORT = duint16(config().getui("net.localServer.listenPort"));
+    //_localServer = new LocalServer(SERVER_PORT);
 
     /*
-    args.append("-cmd");
-    args.append("net-port-control 13211; net-port-data 13212; after 30 \"net init\"; after 50 \"connect localhost:13209\"");
-    */
-    
     args.append("-userdir");
     args.append("clientdir");
+    */
 
+    /*
     // Initialize the engine.
     DD_SetInteger(DD_DENG2_CLIENT, true);
     DD_Entry(0, NULL);
+    */
     
-    LOG_MESSAGE("Opening link to server.");
+    //LOG_MESSAGE("Opening link to server.");
 
     // DEVEL: Join the game session.
     // Query the on-going sessions.
-    MuxLink* link = new MuxLink(Address("localhost", SERVER_PORT));
+    /*MuxLink* link = new MuxLink(Address("localhost", SERVER_PORT));
 
     LOG_MESSAGE("Creating new session.");
 
@@ -94,9 +93,7 @@ ClientApp::ClientApp(const de::CommandLine& arguments)
     _session = new UserSession(link, sessionToJoin);
 
     //Link(Address("localhost", SERVER_PORT)) << CommandPacket("quit");
-    
-    // Good to go.
-    svPtr.release();
+    */
 }
 
 ClientApp::~ClientApp()
@@ -105,24 +102,18 @@ ClientApp::~ClientApp()
     delete _localServer;
     
     // Shutdown the engine.
-    DD_Shutdown();
+    //DD_Shutdown();
 }
 
 void ClientApp::iterate(const Time::Delta& elapsed)
 {
-    try
+    // Perform thinking for the current map.
+    if(hasCurrentMap())
     {
-        if(_session)
-        {
-            _session->listen();
-        }
-        
-        // Perform thinking for the current map.
-        if(hasCurrentMap())
-        {
-            currentMap().think(elapsed);
-        }
+        currentMap().think(elapsed);
     }
+
+    /*
     catch(const UserSession::SessionEndedError& err)
     {
         LOG_INFO("Session ended: ") << err.asText();
@@ -138,4 +129,16 @@ void ClientApp::iterate(const Time::Delta& elapsed)
     
     // libdeng main loop tasks.
     DD_GameLoop();
+    */
+}
+
+Video& ClientApp::video()
+{
+    Q_ASSERT(_video != 0);
+    return *_video;
+}
+
+ClientApp& theApp()
+{
+    return static_cast<ClientApp&>(App::app());
 }

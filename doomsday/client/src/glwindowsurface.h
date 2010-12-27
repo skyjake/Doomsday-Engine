@@ -1,7 +1,7 @@
 /*
- * The Doomsday Engine Project -- dengcl
+ * The Doomsday Engine Project
  *
- * Copyright (c) 2009, 2010 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2010 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,21 +17,29 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "clientapp.h"
+#ifndef GLWINDOWSURFACE_H
+#define GLWINDOWSURFACE_H
 
-#include <QDebug>
+#include <QGLWidget>
+#include "surface.h"
 
-using namespace de;
-
-int main(int argc, char** argv)
+/**
+ * Drawing surface that is also a window with an OpenGL surface and context.
+ */
+class GLWindowSurface : public QGLWidget, public Surface
 {
-    try
-    {
-        return ClientApp(argc, argv).mainLoop();
-    }
-    catch(const Error& error)
-    {
-        qWarning() << error.asText();
-    }    
-    return 0;
-}
+    Q_OBJECT
+
+public:
+    explicit GLWindowSurface(const QGLFormat& format, QWidget *parent = 0, const QGLWidget* shareWidget = 0);
+
+    void initializeGL();
+    void resizeGL(int w, int h);
+    void paintGL();
+
+signals:
+
+public slots:
+};
+
+#endif // GLWINDOWSURFACE_H

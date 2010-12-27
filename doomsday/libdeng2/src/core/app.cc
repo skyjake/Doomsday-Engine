@@ -175,6 +175,11 @@ App::~App()
     _singleton = 0;
 }
 
+void App::addSubsystem(ISubsystem* subsystem)
+{
+    _subsystems.push_back(subsystem);
+}
+
 void App::loadPlugins()
 {
     LOG_AS("App::loadPlugins");

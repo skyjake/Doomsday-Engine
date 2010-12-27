@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- libdeng2
+ * The Doomsday Engine Project
  *
  * Copyright (c) 2009, 2010 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -17,7 +17,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "de/Visual"
+#include "visual.h"
 
 using namespace de;
 

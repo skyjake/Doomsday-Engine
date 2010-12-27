@@ -1,6 +1,5 @@
 #include "Address"
 #include "Channel"
-#include "CommandPacket"
 #include "ListenSocket"
 #include "Message"
 #include "Packet"

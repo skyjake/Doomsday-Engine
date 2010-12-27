@@ -20,10 +20,10 @@
 #ifndef LIBDENG2_VIDEO_H
 #define LIBDENG2_VIDEO_H
 
-#include "../ISubsystem"
-#include "../Window"
+#include <de/ISubsystem>
+#include "window.h"
 
-#include <set>
+#include <QSet>
 
 /**
  * @defgroup video Video Subsystem
@@ -32,94 +32,94 @@
  * These also define the interface of the video subsystem.
  */
 
-namespace de
+/**
+ * The abstract base class for a video subsystem. The video subsystem
+ * is responsible for graphical presentation of the UI.
+ *
+ * @ingroup video
+ */
+class Video : public de::ISubsystem
 {
+public:
+    typedef QSet<Window*> Windows;
+        
+public:
     /**
-     * The abstract base class for a video subsystem. The video subsystem
-     * is responsible for graphical presentation of the UI.
-     * 
-     * @ingroup video
+     * Initializes the video subsystem so that it's ready for use.
+     * This include the main window, which is created using configuration provided
+     * by the App.
      */
-    class LIBDENG2_API Video : public ISubsystem
-    {
-    public:
-        typedef std::set<Window*> Windows;
-        
-    public:
-        /**
-         * Initializes the video subsystem so that it's ready for use.
-         * This include the main window, which is created using configuration provided 
-         * by the App.
-         */
-        Video();
-        
-        /**
-         * Shuts down the video subsystem.
-         */
-        virtual ~Video();
-        
-        /** 
-         * The main window is the primary outlet for presentation. When the video
-         * subsystem exists, there is always a main window as well.
-         */
-        Window& mainWindow() const;
-        
-        /**
-         * Sets the main window.
-         *
-         * @param window  Window to become the main window. The subsystem gets ownership
-         *      of the window.
-         */ 
-        virtual void setMainWindow(Window* window);
-        
-        /**
-         * Sets the drawing surface used for drawing operations.
-         * A target must be set before performing any drawing.
-         *
-         * @param surface  Surface to draw on.
-         */
-        virtual void setTarget(Surface& surface);
-        
-        /**
-         * Releases the current drawing target. This should be called once all 
-         * the drawing operations are done.
-         */
-        virtual void releaseTarget();
-        
-        /**
-         * Returns the current target drawing surface.
-         *
-         * @return Surface or NULL.
-         */
-        Surface* target() const;
+    Video();
 
-        /// Returns the window list (read access only).
-        const Windows& windows() const { return _windows; }
+    /**
+     * Shuts down the video subsystem.
+     */
+    virtual ~Video();
         
-        /**
-         * Constructs a new Window.
-         *
-         * @param where  Initial placement of the window.
-         * @param mode  Initial mode.
-         *
-         * @return  Window. The video subsystem retains ownership. The window will
-         *      be destroyed when the video subsystem is deleted.
-         */
-        virtual Window* newWindow(const Window::Placement& where, const Window::Mode& mode) = 0;
+    /**
+     * The main window is the primary outlet for presentation. When the video
+     * subsystem exists, there is always a main window as well.
+     */
+    Window& mainWindow() const;
+        
+    /**
+     * Sets the main window.
+     *
+     * @param window  Window to become the main window. The subsystem gets ownership
+     *      of the window.
+     */
+    virtual void setMainWindow(Window* window);
+        
+    /**
+     * Sets the drawing surface used for drawing operations.
+     * A target must be set before performing any drawing.
+     *
+     * @param surface  Surface to draw on.
+     */
+    virtual void setTarget(Surface& surface);
+        
+    /**
+     * Releases the current drawing target. This should be called once all
+     * the drawing operations are done.
+     */
+    virtual void releaseTarget();
+        
+    /**
+     * Returns the current target drawing surface.
+     *
+     * @return Surface or NULL.
+     */
+    Surface* target() const;
 
-    protected:        
-        /// Returns the window list.
-        Windows& windows() { return _windows; }
+    /// Returns the window list (read access only).
+    const Windows& windows() const { return _windows; }
+        
+    /**
+     * Constructs a new Window.
+     *
+     * @param where  Initial placement of the window.
+     * @param mode  Initial mode.
+     *
+     * @return  Window. The video subsystem retains ownership. The window will
+     *          be destroyed when the video subsystem is deleted.
+     */
+    virtual Window* newWindow(const QRect& where, const Window::Flags& flags) = 0;
+
+protected:
+    /// Returns the window list.
+    Windows& windows() { return _windows; }
                 
-    private:
-        Window* _mainWindow;
+private:
+    Window* _mainWindow;
 
-        /// List of all windows owned by the video subsystem. The main window is one of these.
-        Windows _windows;
+    /// List of all windows owned by the video subsystem. The main window is one of these.
+    Windows _windows;
 
-        /// Current target drawing surface.
-        Surface* _target;
-    };      
+    /// Current target drawing surface.
+    Surface* _target;
 };
+
+/// Returns the client app's video subsystem.
+Video& theVideo();
 
 #endif /* LIBDENG2_VIDEO_H */

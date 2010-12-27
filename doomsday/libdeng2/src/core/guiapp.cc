@@ -18,13 +18,49 @@
  */
 
 #include "de/GUIApp"
+#include "de/Error"
+
+#include <QDebug>
 
 using namespace de;
+
+namespace de
+{
+    namespace internal
+    {
+        Application::Application(int argc, char** argv)
+            : QApplication(argc, argv)
+        {}
+
+        bool Application::notify(QObject* receiver, QEvent* event)
+        {
+            try
+            {
+                return QApplication::notify(receiver, event);
+            }
+            catch(const std::exception& error)
+            {
+                LOG_AS("GUIApp");
+                LOG_ERROR(error.what());
+                LOG_INFO("Application will quit.");
+                quit();
+            }
+            catch(...)
+            {
+                LOG_AS("GUIApp");
+                LOG_ERROR("Uncaught exception.");
+                LOG_INFO("Application will quit.");
+                quit();
+            }
+            return false;
+        }
+    }
+}
 
 GUIApp::GUIApp(int argc, char** argv,
                const String& configPath,
                const String& homeSubFolder,
                Log::LogLevel defaultLogLevel)
-    : QApplication(argc, argv),
-      App(CommandLine(argc, argv), configPath, homeSubFolder, defaultLogLevel)
+    : App(CommandLine(argc, argv), configPath, homeSubFolder, defaultLogLevel),
+      _app(argc, argv)
 {}

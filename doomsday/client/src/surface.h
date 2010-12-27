@@ -1,5 +1,5 @@
 /*
- * The Doomsday Engine Project -- libdeng2
+ * The Doomsday Engine Project
  *
  * Copyright (c) 2009, 2010 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -22,56 +22,49 @@
 
 #include "../Vector"
 
-namespace de
+#include <QImage>
+
+/**
+ * Graphics surface. The video subsystem will define its own drawing surfaces
+ * based on this.
+ *
+ * @ingroup video
+ */
+class Surface
 {
-    class Image;
-    
+public:
+    /// Conversion of the drawing surface to an image failed. @ingroup errors
+    DEFINE_ERROR(CaptureError);
+
+public:
+    virtual ~Surface();
+
     /**
-     * Graphics surface. The video subsystem will define its own drawing surfaces
-     * based on this.
-     *
-     * @ingroup video
+     * Returns the size of the drawing surface.
      */
-    class LIBDENG2_API Surface
-    {
-    public:
-        typedef Vector2ui Size;
-        
-        /// Conversion of the drawing surface to an image failed. @ingroup errors
-        DEFINE_ERROR(ImageError);
-        
-    public:
-        Surface(const Size& size);
-        
-        virtual ~Surface();
+    virtual QSize size() const = 0;
 
-        /**
-         * Returns the size of the drawing surface.
-         */
-        const Size& size() const { return _size; }
-        
-        /**
-         * Sets the size of the drawing surface.
-         */
-        virtual void setSize(const Size& size);
+    /**
+     * Sets the size of the drawing surface.
+     */
+    virtual void setSize(const QSize& size) = 0;
 
-        /**
-         * Determines the color depth of the surface.
-         *
-         * @return  Bits per pixel.
-         */
-        virtual duint colorDepth() const = 0;
+    /**
+     * Activates the surface as the current rendering target of the video subsystem.
+     */
+    virtual void activate() = 0;
 
-        /**
-         * Captures the contents of the drawing surface and stores them into an image.
-         *
-         * @return  Captured image. Caller gets ownership.
-         */ 
-        Image* toImage() const;
-        
-    private:
-        Size _size;
-    };
-}
+    /**
+     * Deactivates the surface.
+     */
+    virtual void deactivate() = 0;
+
+    /**
+     * Captures the contents of the drawing surface and stores them into an image.
+     *
+     * @return  Captured image. Caller gets ownership.
+     */
+    virtual QImage captureImage() const;
+};
 
 #endif /* LIBDENG2_SURFACE_H */

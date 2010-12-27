@@ -38,7 +38,6 @@ namespace de
     class Map;
     class Object;
     class User;
-    class Video;
     class World;
     
     /**
@@ -49,7 +48,6 @@ namespace de
      * - <code>library/generic</code>: A shared library with no special function.
      * - <code>deng-plugin/generic</code>: Generic libdeng2 plugin. Loaded always.
      * - <code>deng-plugin/game</code>: The game plugin. Only one of these can be loaded.
-     * - <code>deng-plugin/video</code>: Video subsystem. Optional. One of these can be loaded.
      * - <code>deng-plugin/audio</code>: Audio subsystem. Optional. One of these can be loaded.
      *
      * @ingroup core
@@ -88,13 +86,6 @@ namespace de
          */
         typedef void (*deng_ShutdownPlugin)(void);
         
-        /**
-         * Constructs a new instance of a video subsystem.
-         *
-         * @return  Video subsystem. 
-         */
-        typedef Video* (*deng_NewVideo)(void);
-
         /**
          * Constructs a new instance of an audio subsystem.
          *

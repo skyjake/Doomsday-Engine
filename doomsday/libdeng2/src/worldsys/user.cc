@@ -43,6 +43,16 @@ void User::setName(const String& name)
     _info["name"] = new TextValue(name);
 }
 
+const Variable& User::info(const String& infoMember) const
+{
+    return _info[infoMember];
+}
+
+Variable& User::info(const String& infoMember)
+{
+    return _info[infoMember];
+}
+
 void User::operator >> (Writer& to) const
 {
     to << duint32(_id) << _info;

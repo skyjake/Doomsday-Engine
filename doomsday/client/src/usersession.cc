@@ -26,8 +26,8 @@
 
 using namespace de;
 
-UserSession::UserSession(de::MuxLink* link, const de::Id& id)
-    : _link(link), _sessionId(id), _world(0), _user(0)
+UserSession::UserSession(de::Socket* socket, const de::Id& id)
+    : _socket(socket), _sessionId(id), _world(0), _user(0)
 {
     // Create a blank user and world. The user is configured jointly
     // from configuration and by the game. The world is mirrored from
@@ -36,7 +36,7 @@ UserSession::UserSession(de::MuxLink* link, const de::Id& id)
     _world = GAME_SYMBOL(deng_NewWorld)();
     
     // The user name is in the configuration.
-    _user->info()["name"].set(TextValue(App::config().gets("user.name")));
+    _user->info("name").set(TextValue(App::config().gets("user.name")));
     
     // The server will tell our id.
     _user->setId(Id::NONE);

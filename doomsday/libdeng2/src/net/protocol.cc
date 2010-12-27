@@ -18,7 +18,6 @@
  */
 
 #include "de/Protocol"
-#include "de/CommandPacket"
 #include "de/RecordPacket"
 #include "de/TextValue"
 #include "de/Record"
@@ -29,7 +28,6 @@ using namespace de;
 
 Protocol::Protocol()
 {
-    define(CommandPacket::fromBlock);
     define(RecordPacket::fromBlock);
 }
 

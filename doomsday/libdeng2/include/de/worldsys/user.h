@@ -57,6 +57,10 @@ namespace de
 
         Record& info() { return _info; }
 
+        const Variable& info(const String& member) const;
+
+        Variable& info(const String& member);
+
         /**
          * Returns the name of the player.
          */
