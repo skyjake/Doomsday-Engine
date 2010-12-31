@@ -239,10 +239,11 @@ void P_Shutdown(void)
         P_DestroyIterList(linespecials);
     linespecials = 0;
 
+    P_DestroyPlayerStarts();
     P_DestroyLineTagLists();
     P_DestroySectorTagLists();
-    P_FreeWeaponSlots();
     P_ShutdownTerrainTypes();
+    P_FreeWeaponSlots();
 }
 
 void P_CreatePlayerStart(int defaultPlrNum, uint entryPoint, boolean deathmatch,
