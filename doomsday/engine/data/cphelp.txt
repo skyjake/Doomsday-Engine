@@ -456,7 +456,7 @@ desc = Repeat a command at given intervals.
 inf = Params: repeat (count) (interval) (cmd)\nFor example, 'repeat 10 35 "screenshot"'.
 
 [reset]
-desc = Reset the data files into what they were at startup.
+desc = Reset the current game (if loaded) or the engine itself.
 
 [safebind]
 desc = Bind a command to an  unless the event is already bound.

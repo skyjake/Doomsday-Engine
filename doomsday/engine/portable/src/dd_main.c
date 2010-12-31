@@ -956,12 +956,12 @@ static int DD_ChangeGameWorker(void* paramaters)
 /**
  * Switch to/activate the specified game.
  */
-boolean DD_ChangeGame(gameinfo_t* info)
+boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
 {
     assert(info);
 
     // Ignore attempts to re-load the current game.
-    if(DD_GameInfo() == info)
+    if(!allowReload && DD_GameInfo() == info)
     {
         if(!DD_IsNullGameInfo(DD_GameInfo()))
             Con_Message("%s (%s) - already loaded.\n", Str_Text(GameInfo_Title(info)), Str_Text(GameInfo_IdentityKey(info)));
@@ -1081,6 +1081,11 @@ boolean DD_ChangeGame(gameinfo_t* info)
      */
     DD_ClearEvents();
     return true;
+}
+
+boolean DD_ChangeGame(gameinfo_t* info)
+{
+    return DD_ChangeGame2(info, false);
 }
 
 /**
@@ -2175,6 +2180,12 @@ D_CMD(Unload)
     Str_Free(&foundPath);
     Str_Free(&searchPath);
     return result != 0;
+}
+
+D_CMD(Reset)
+{
+    DD_ChangeGame2(DD_GameInfo(), true);
+    return true;
 }
 
 D_CMD(PrintInfo)

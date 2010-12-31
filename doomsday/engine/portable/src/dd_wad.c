@@ -117,7 +117,6 @@ typedef struct {
 D_CMD(Dir);
 D_CMD(Dump);
 D_CMD(ListFiles);
-D_CMD(ResetLumps);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -169,7 +168,6 @@ void DD_RegisterVFS(void)
     C_CMD("dump", "s", Dump);
     C_CMD("listfiles", "", ListFiles);
     C_CMD("ls", "s*", Dir);
-    C_CMD("reset", "", ResetLumps);
 }
 
 static lumpnum_t W_Index(lumpnum_t lump)
@@ -1432,12 +1430,5 @@ D_CMD(ListFiles)
         Con_Printf("\n");
     }
     Con_Printf("Total: %d lumps in %d files.\n", numLumps, numRecords);
-    return true;
-}
-
-D_CMD(ResetLumps)
-{
-    W_Reset();
-    Con_Message("Only startup files remain.\n");
     return true;
 }

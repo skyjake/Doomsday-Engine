@@ -198,6 +198,7 @@ void Con_Register(void)
     C_CMD("load",           "s*",   Load);
     C_CMD("quit!",          "",     Quit);
     C_CMD("repeat",         "ifs",  Repeat);
+    C_CMD("reset",          "",     Reset);
     C_CMD("sub",            NULL,   AddSub);
     C_CMD("toggle",         "s",    Toggle);
     C_CMD("unload",         "*",    Unload);
