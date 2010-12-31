@@ -107,16 +107,24 @@ static boolean destroyPtcGenParticles(ptcgen_t* gen, void* paramaters)
 
 static void unlinkPtcGen(ptcgen_t* gen)
 {
-    ptcgenid_t          i;
-
+    ptcgenid_t i;
     for(i = 0; i < MAX_ACTIVE_PTCGENS; ++i)
     {
         if(activePtcGens[i] == gen)
         {
-            activePtcGens[i] = NULL;
+            activePtcGens[i] = 0;
             break;
         }
     }
+}
+
+static boolean destroyPtcGen(ptcgen_t* gen, void* paramaters)
+{
+    assert(gen);
+    P_ThinkerRemove(&gen->thinker);
+    unlinkPtcGen(gen);
+    destroyPtcGenParticles(gen, 0);
+    return true; // Can be used as an iterator, so continue.
 }
 
 static void linkPtcGen(ptcgenid_t slot, ptcgen_t* gen)
@@ -184,14 +192,6 @@ static ptcgen_t* P_PtcGenCreate(void)
     return gen;
 }
 
-static void P_PtcGenDestroy(ptcgen_t* gen)
-{
-    P_ThinkerRemove(&gen->thinker);
-
-    unlinkPtcGen(gen);
-    destroyPtcGenParticles(gen, 0);
-}
-
 /**
  * Allocates a new active ptcgen and adds it to the list of active ptcgens.
  *
@@ -208,7 +208,7 @@ static ptcgen_t* P_NewPtcGen(void)
 
         // If there is already a generator here, destroy it.
         if(activePtcGens[slot-1])
-            P_PtcGenDestroy(activePtcGens[slot-1]);
+            destroyPtcGen(activePtcGens[slot-1], 0);
 
         // Allocate a new generator.
         gen = P_PtcGenCreate();
@@ -236,7 +236,7 @@ void P_PtcInit(void)
 void P_PtcShutdown(void)
 {
     if(!inited) return;
-    P_IteratePtcGens(destroyPtcGenParticles, 0);
+    P_IteratePtcGens(destroyPtcGen, 0);
     inited = false;
 }
 
@@ -1328,7 +1328,7 @@ void P_PtcGenThinker(ptcgen_t* gen)
     // Time to die?
     if(++gen->age > def->maxAge && def->maxAge >= 0)
     {
-        P_PtcGenDestroy(gen);
+        destroyPtcGen(gen, 0);
         return;
     }
 
@@ -1600,7 +1600,7 @@ void P_UpdateParticleGens(void)
         // just destroy those too.
         if((gen->flags & PGF_UNTRIGGERED) || gen->sector)
         {
-            P_PtcGenDestroy(gen);
+            destroyPtcGen(gen, 0);
             continue;
         }
 
@@ -1640,7 +1640,7 @@ void P_UpdateParticleGens(void)
         }
         else
         {   // Nothing else we can do, destroy it.
-            P_PtcGenDestroy(gen);
+            destroyPtcGen(gen, 0);
         }
     }
 
@@ -1652,20 +1652,17 @@ void P_UpdateParticleGens(void)
  * Walk the entire list of particle generators.
  */
 boolean P_IteratePtcGens(boolean (*callback) (ptcgen_t*, void*),
-                         void* context)
+    void* paramaters)
 {
-    ptcgenid_t          i;
-    boolean             result = true;
-
+    boolean result = true;
+    ptcgenid_t i;
     for(i = 0; i < MAX_ACTIVE_PTCGENS; ++i)
     {
         if(!activePtcGens[i])
             continue;
-
-        if((result = callback(activePtcGens[i], context)) == 0)
+        if((result = callback(activePtcGens[i], paramaters)) == 0)
             break;
     }
-
     return result;
 }
 
@@ -1673,8 +1670,7 @@ boolean P_IteratePtcGens(boolean (*callback) (ptcgen_t*, void*),
  * Walk the list of sector-linked particle generators.
  */
 boolean P_IterateSectorLinkedPtcGens(sector_t* sector,
-                                     boolean (*callback) (ptcgen_t*, void*),
-                         void* context)
+    boolean (*callback) (ptcgen_t*, void*), void* paramaters)
 {
-    return iterateSectorLinkedPtcGens(sector, callback, context);
+    return iterateSectorLinkedPtcGens(sector, callback, paramaters);
 }
