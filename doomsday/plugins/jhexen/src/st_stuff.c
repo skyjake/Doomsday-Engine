@@ -953,6 +953,16 @@ void ST_Init(void)
     ST_loadData();
 }
 
+void ST_Shutdown(void)
+{
+    int i;
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        hudstate_t* hud = &hudStates[i];
+        hud->inited = false;
+    }
+}
+
 void ST_FlashCurrentItem(int player)
 {
     player_t*           plr;

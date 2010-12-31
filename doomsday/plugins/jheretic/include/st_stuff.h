@@ -1,4 +1,4 @@
-/**\file
+/**\file st_stuff.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,14 +23,14 @@
  */
 
 /**
- * st_stuff.h: Statusbar code jHeretic - specific.
+ * Statusbar code jHeretic - specific.
  *
  * Does the face/direction indicator animatin.
  * Does palette indicators as well (red pain/berserk, bright pickup)
  */
 
-#ifndef __ST_STUFF_H__
-#define __ST_STUFF_H__
+#ifndef LIBHERETIC_STUFF_H
+#define LIBHERETIC_STUFF_H
 
 #ifndef __JHERETIC__
 #  error "Using jHeretic headers without __JHERETIC__"
@@ -42,20 +42,21 @@
 #define ST_Y                (SCREENHEIGHT - ST_HEIGHT)
 
 // Called by startup code.
-void            ST_Register(void);
-void            ST_Init(void);
+void ST_Register(void);
+void ST_Init(void);
+void ST_Shutdown(void);
 
-void            ST_Ticker(timespan_t ticLength);
-void            ST_Drawer(int player);
+void ST_Ticker(timespan_t ticLength);
+void ST_Drawer(int player);
 
-void            ST_Start(int player);
-void            ST_Stop(int player);
+void ST_Start(int player);
+void ST_Stop(int player);
 
-void            ST_doPaletteStuff(int player);
+void ST_doPaletteStuff(int player);
 
-// Called when it might be neccessary for the hud to unhide.
-void            ST_HUDUnHide(int player, hueevent_t ev);
+/// Call when it might be neccessary for the hud to unhide.
+void ST_HUDUnHide(int player, hueevent_t ev);
 
-void            ST_FlashCurrentItem(int player);
+void ST_FlashCurrentItem(int player);
 
-#endif
+#endif /* LIBHERETIC_STUFF_H */

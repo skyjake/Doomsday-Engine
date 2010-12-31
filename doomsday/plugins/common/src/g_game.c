@@ -1317,8 +1317,9 @@ void G_CommonShutdown(void)
     G_ShutdownEventSequences();
 
     AM_Shutdown();
-    FI_StackShutdown();
+    ST_Shutdown();
     GUI_Shutdown();
+    FI_StackShutdown();
 }
 
 /**

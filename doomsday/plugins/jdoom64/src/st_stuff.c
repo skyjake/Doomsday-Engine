@@ -634,6 +634,16 @@ void ST_Init(void)
     ST_loadData();
 }
 
+void ST_Shutdown(void)
+{
+    /*int i;
+    for(i = 0; i < MAXPLAYERS; ++i)
+    {
+        hudstate_t* hud = &hudStates[i];
+        hud->inited = false;
+    }*/
+}
+
 /**
  * Called when a cvar changes that affects the look/behavior of the HUD in order to unhide it.
  */
