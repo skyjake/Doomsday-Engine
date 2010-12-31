@@ -147,6 +147,7 @@
 		<Unit filename="..\..\engine\api\dd_maptypes.h" />
 		<Unit filename="..\..\engine\api\dd_plugin.h" />
 		<Unit filename="..\..\engine\api\dd_share.h" />
+		<Unit filename="..\..\engine\api\dd_string.h" />
 		<Unit filename="..\..\engine\api\dd_types.h" />
 		<Unit filename="..\..\engine\api\dd_ui.h" />
 		<Unit filename="..\..\engine\api\dd_vectorgraphic.h" />
@@ -267,7 +268,6 @@
 		<Unit filename="..\..\engine\portable\include\m_nodepile.h" />
 		<Unit filename="..\..\engine\portable\include\m_profiler.h" />
 		<Unit filename="..\..\engine\portable\include\m_stack.h" />
-		<Unit filename="..\..\engine\portable\include\m_string.h" />
 		<Unit filename="..\..\engine\portable\include\m_vector.h" />
 		<Unit filename="..\..\engine\portable\include\mapdata.hs" />
 		<Unit filename="..\..\engine\portable\include\net_buf.h" />
@@ -830,6 +830,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\ui2_main.c" />
+		<Unit filename="..\..\engine\portable\src\uri.c" />
 		<Unit filename="..\..\engine\unix\include\dd_uinit.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>

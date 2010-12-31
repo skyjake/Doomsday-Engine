@@ -24,7 +24,7 @@
 #ifndef LIBDENG_GAMEINFO_H
 #define LIBDENG_GAMEINFO_H
 
-#include "m_string.h"
+#include "dd_string.h"
 
 /**
  * Game Resource Record.

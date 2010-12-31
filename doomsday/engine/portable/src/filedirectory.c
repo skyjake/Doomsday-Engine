@@ -141,20 +141,25 @@ static void printPathList(const char* pathList)
 {
     assert(pathList);
     {
-    ddstring_t path, translatedPath;
+    dduri_t* uri;
     if(strlen(pathList) == 0)
         return;
-    Str_Init(&path);
-    Str_Init(&translatedPath);
+
+    uri = Uri_ConstructDefault();
     // Tokenize into discrete paths and process individually.
     { const char* p = pathList;
-    while((p = Str_CopyDelim2(&path, p, ';', CDF_OMIT_DELIMITER))) // Get the next path.
+    while((p = F_ParseSearchPath(uri, p, ';'))) // Get the next path.
     {
-        boolean incomplete = !F_ResolveURI(&translatedPath, &path);
-        Con_Printf("  \"%s\" %s%s\n", Str_Text(&path), (incomplete? "--(!)incomplete" : "-> "), !incomplete? Str_Text(F_PrettyPath(&translatedPath)) : "");
+        ddstring_t* rawPath = Uri_ToString(uri);
+        ddstring_t* resolvedPath = Uri_Resolved(uri);
+
+        Con_Printf("  \"%s\" %s%s\n", Str_Text(rawPath), (resolvedPath != 0? "-> " : "--(!)incomplete"), resolvedPath != 0? Str_Text(F_PrettyPath(resolvedPath)) : "");
+
+        Str_Delete(rawPath);
+        if(resolvedPath)
+            Str_Delete(resolvedPath);
     }}
-    Str_Free(&path);
-    Str_Free(&translatedPath);
+    Uri_Destruct(uri);
     }
 }
 
@@ -210,37 +215,39 @@ static filedirectory_t* parsePathsAndBuildNodes(filedirectory_t* fd, const char*
     {
     const char* pathList = _pathList? _pathList : Str_Text(&fd->_pathList);
     uint startTime = verbose >= 2? Sys_GetRealTime(): 0;
-    ddstring_t path, translatedPath, searchPattern;
-    filedirectory_node_t* direc;
+    ddstring_t searchPattern;
+    dduri_t* searchPath;
 
     VERBOSE( Con_Message("Adding paths to file directory ...\n") );
     VERBOSE2( printPathList(pathList) );
 
-    Str_Init(&path);
-    Str_Init(&translatedPath);
     Str_Init(&searchPattern);
+
+    searchPath = Uri_ConstructDefault();
 
     // Tokenize into discrete paths and process individually.
     { const char* p = pathList; size_t n = 0;
-    while((p = Str_CopyDelim2(&path, p, ';', CDF_OMIT_DELIMITER))) // Get the next path.
+    while((p = F_ParseSearchPath(searchPath, p, ';'))) // Get the next path.
     {
-        if(!F_ResolveURI(&translatedPath, &path))
+        filedirectory_node_t* direc;
+        ddstring_t* resolvedPath;
+
+        if((resolvedPath = Uri_Resolved(searchPath)) == 0)
             continue; // Incomplete path; ignore it.
 
-        // Expand any base-relative path directives.
-        F_ExpandBasePath(&translatedPath, &translatedPath);
-
         // Build direc nodes for this path.
-        direc = buildDirecNodes(fd, &translatedPath);
+        direc = buildDirecNodes(fd, resolvedPath);
         assert(direc);
 
         // Ignore duplicate paths (already processed).
         if(!direc->processed && pathList != _pathList)
         {
             // Add this new path to the list.
-            Str_Append(&fd->_pathList, Str_Text(&path));
+            ddstring_t* path = Uri_ComposePath(searchPath);
+            Str_Append(&fd->_pathList, Str_Text(path));
             if(Str_RAt(&fd->_pathList, 0) != ';')
                 Str_AppendChar(&fd->_pathList, ';');
+            Str_Delete(path);
         }
 
         // Has this directory already been processed?
@@ -249,29 +256,31 @@ static filedirectory_t* parsePathsAndBuildNodes(filedirectory_t* fd, const char*
             // Does caller want to process it again?
             if(callback)
                 FileDirectory_Iterate2(fd, FT_NORMAL, direc, callback, paramaters);
-            continue;
+        }
+        else
+        {
+            // Compose the search pattern. We're interested in *everything*.
+            addpathworker_paramaters_t p;
+ 
+            Str_Clear(&searchPattern); Str_Appendf(&searchPattern, "%s*", Str_Text(resolvedPath));
+            F_PrependBasePath(&searchPattern, &searchPattern);
+
+            // Process this search.
+            p.fd = fd;
+            p.type = FT_NORMAL;
+            p.callback = callback;
+            p.paramaters = paramaters;
+            F_ForAll2(&searchPattern, addPathWorker, (void*)&p);
+            direc->processed = true;
         }
 
-        // Compose the search pattern. We're interested in *everything*.
-        Str_Clear(&searchPattern); Str_Appendf(&searchPattern, "%s*", Str_Text(&translatedPath));
-        F_PrependBasePath(&searchPattern, &searchPattern);
-
-        // Process this search.
-        { addpathworker_paramaters_t p;
-        p.fd = fd;
-        p.type = FT_NORMAL;
-        p.callback = callback;
-        p.paramaters = paramaters;
-        F_ForAll2(&searchPattern, addPathWorker, (void*)&p);
-        }
-
-        direc->processed = true;
+        Str_Free(resolvedPath);
     }}
     fd->_builtRecordSet = true;
 
     Str_Free(&searchPattern);
-    Str_Free(&translatedPath);
-    Str_Free(&path);
+    if(searchPath)
+        Uri_Destruct(searchPath);
 
 /*#if _DEBUG
     FileDirectory_PrintFileList(fd);
@@ -393,7 +402,7 @@ boolean FileDirectory_Find(filedirectory_t* fd, const char* searchPath)
     return FileDirectory_Find2(fd, searchPath, 0);
 }
 
-ddstring_t* FileDirectory_CollectPaths(filedirectory_t* fd, filetype_t type, size_t* count)
+ddstring_t* FileDirectory_AllPaths(filedirectory_t* fd, filetype_t type, size_t* count)
 {
     assert(fd && count);
     {
@@ -402,7 +411,7 @@ ddstring_t* FileDirectory_CollectPaths(filedirectory_t* fd, filetype_t type, siz
     if(*count != 0)
     {
         if((filePaths = Z_Malloc(sizeof(*filePaths) * (*count), PU_APPSTATIC, 0)) == 0)
-            Con_Error("FileDirectory_CollectFilePaths: failed on allocation of %lu bytes for list.", (unsigned long) sizeof(*filePaths));
+            Con_Error("FileDirectory_AllPaths: failed on allocation of %lu bytes for list.", (unsigned long) sizeof(*filePaths));
 
         { filedirectory_node_t* node;
         ddstring_t* path = filePaths;
@@ -433,7 +442,7 @@ void FileDirectory_PrintFileList(filedirectory_t* fd)
     ddstring_t* filePaths;
 
     Con_Printf("FileDirectory:\n");
-    if((filePaths = FileDirectory_CollectPaths(fd, FT_NORMAL, &numFilePaths)) != 0)
+    if((filePaths = FileDirectory_AllPaths(fd, FT_NORMAL, &numFilePaths)) != 0)
     {
         qsort(filePaths, numFilePaths, sizeof(*filePaths), compareFilePaths);
         do

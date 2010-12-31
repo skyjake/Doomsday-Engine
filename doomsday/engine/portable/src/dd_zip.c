@@ -39,7 +39,6 @@
 #include "de_defs.h"
 #include "de_console.h"
 
-#include "m_string.h"
 #include "sys_direc.h"
 #include "sys_reslocator.h"
 

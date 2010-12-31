@@ -24,7 +24,8 @@
 #ifndef LIBDENG_SYSTEM_RESOURCENAMESPACE_H
 #define LIBDENG_SYSTEM_RESOURCENAMESPACE_H
 
-#include "m_string.h"
+#include "dd_string.h"
+#include "dd_uri.h"
 
 typedef struct resourcenamespace_hashnode_s {
     struct resourcenamespace_hashnode_s* next;
@@ -59,7 +60,7 @@ typedef resourcenamespace_hashentry_t resourcenamespace_namehash_t[RESOURCENAMES
  *
  * @ingroup core
  */
-#define RESOURCENAMESPACE_MINNAMELENGTH 2
+#define RESOURCENAMESPACE_MINNAMELENGTH URI_MINSCHEMELENGTH
 typedef struct resourcenamespace_s {
     /// Unique symbolic name of this namespace (e.g., "Models").
     /// Must be at least @c RESOURCENAMESPACE_MINNAMELENGTH characters long.

@@ -824,6 +824,9 @@ static int DD_ChangeGameWorker(void* paramaters)
     F_InitResourceLocator();
     F_InitMapping();
 
+    // Reset file IDs so previously seen files can be processed again.
+    F_ResetFileIDs();
+
     /**
      * Create default Auto mappings in the runtime directory.
      */
@@ -1005,6 +1008,9 @@ boolean DD_ChangeGame(gameinfo_t* info)
 
         F_InitResourceLocator();
         F_InitMapping();
+
+        // Reset file IDs so previously seen files can be processed again.
+        F_ResetFileIDs();
 
         R_InitCompositeFonts();
         R_InitVectorGraphics();
@@ -1411,6 +1417,9 @@ int DD_Main(void)
         F_InitResourceLocator();
         F_InitMapping();
         F_InitDirec();
+
+        // Reset file IDs so previously seen files can be processed again.
+        F_ResetFileIDs();
 
         R_InitTextures();
         R_InitFlats();

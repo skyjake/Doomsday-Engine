@@ -239,9 +239,9 @@ static fileidentifier_t* findFileIdentifierForId(fileidentifierid_t id)
     uint i = 0;
     while(i < numReadFiles)
     {
-        if(!memcmp(readFiles[i].hash, id, 16))
+        if(!memcmp(readFiles[i].hash, id, FILEIDENTIFIERID_T_LASTINDEX))
             return &readFiles[i];
-        i++;
+        ++i;
     }
     return 0;
 }
@@ -341,7 +341,7 @@ boolean F_CheckFileId(const char* path)
         memset(readFiles + numReadFiles, 0, sizeof(*readFiles) * (maxReadFiles - numReadFiles));
     }
 
-    memcpy(readFiles[numReadFiles - 1].hash, id, 16);
+    memcpy(readFiles[numReadFiles - 1].hash, id, sizeof(id));
     return true;
     }
 }
@@ -743,7 +743,7 @@ DFILE* F_OpenFile(const char* path, const char* mymode)
                 if(!F_MapPath(&mapped, &vdMappings[i]))
                     continue;
                 // The mapping was successful.
-                if((file->data = fopen(Str_Text(&mapped), mode)) != NULL)
+                if((file->data = fopen(Str_Text(&mapped), mode)) != 0)
                 {
                     VERBOSE( Con_Message("F_OpenFile: \"%s\" opened as %s.\n", Str_Text(F_PrettyPath(&mapped)), path) );
                     break;
@@ -755,7 +755,7 @@ DFILE* F_OpenFile(const char* path, const char* mymode)
         if(!file->data)
         {   // Still can't find it.
             F_Release(file);
-            return NULL;
+            return 0;
         }
     }
 

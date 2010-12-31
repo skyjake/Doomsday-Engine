@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 460 <--
-; Other free ordinals: 8, 238, 244, 249, 250, 255, 326, 328, 332, 405, 406
+; Highest ordinal is currently: --> 487 <--
+; Other free ordinals: 8
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -43,6 +43,47 @@ EXPORTS
 	AnimatorVector4_Init        @458 NONAME
 	AnimatorVector4_Set         @459 NONAME
 	AnimatorVector4_Think       @460 NONAME
+
+    ; String.
+    Str_New                     @461 NONAME
+    Str_Init                    @462 NONAME
+    Str_Free                    @463 NONAME
+    Str_Delete                  @464 NONAME
+    Str_Clear                   @465 NONAME
+    Str_Reserve                 @466 NONAME
+    Str_Set                     @467 NONAME
+    Str_Append                  @468 NONAME
+    Str_AppendChar              @469 NONAME
+    Str_Appendf                 @470 NONAME
+    Str_PartAppend              @471 NONAME
+    Str_Prepend                 @472 NONAME
+    Str_Length                  @473 NONAME
+    Str_IsEmpty                 @474 NONAME
+    Str_Text                    @475 NONAME
+    Str_Copy                    @476 NONAME
+    Str_StripLeft               @477 NONAME
+    Str_StripRight              @478 NONAME
+    Str_Strip                   @479 NONAME
+    Str_GetLine                 @480 NONAME
+    Str_CopyDelim2              @481 NONAME
+    Str_CopyDelim               @482 NONAME
+    Str_CompareIgnoreCase       @483 NONAME
+    Str_At                      @484 NONAME
+    Str_RAt                     @485 NONAME
+
+    ; Uri.
+    Uri_ConstructDefault        @244 NONAME
+    Uri_Construct               @249 NONAME
+    Uri_Destruct                @250 NONAME
+    Uri_SetUri                  @255 NONAME
+    Uri_SetUri2                 @326 NONAME
+    Uri_SetUri3                 @487 NONAME
+    Uri_Resolved                @238 NONAME
+    Uri_Clear                   @328 NONAME
+    Uri_Scheme                  @332 NONAME
+    Uri_Path                    @405 NONAME
+    Uri_ComposePath             @406 NONAME
+    Uri_ToString                @486 NONAME
 
 ; Base: Definitions.
     Def_Get                     @11 NONAME

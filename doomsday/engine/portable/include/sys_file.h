@@ -32,7 +32,7 @@
 #define LIBDENG_FILESYS_FILE_IO_H
 
 #include <stdio.h>
-#include "m_string.h"
+#include "dd_string.h"
 
 #define deof(file) ((file)->flags.eof != 0)
 

@@ -168,3 +168,4 @@
  .\..\..\engine\portable\src\dgl_draw.c
  .\..\..\engine\portable\src\dgl_texture.c
  .\..\..\engine\portable\src\resourcenamespace.c
+ .\..\..\engine\portable\src\uri.c

@@ -35,7 +35,6 @@
 #include "de_console.h"
 
 #include "m_misc.h"
-#include "m_string.h"
 
 // MACROS ------------------------------------------------------------------
 

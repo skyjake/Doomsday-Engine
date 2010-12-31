@@ -56,6 +56,7 @@ extern "C" {
 #include "dd_gl.h"
 #include "dd_ui.h"
 #include "dd_infine.h"
+#include "dd_uri.h"
 #include "../portable/include/p_think.h" // \todo Not officially a public header file!
 #include "../portable/include/def_share.h" // \todo Not officially a public header file!
 
@@ -1160,31 +1161,6 @@ typedef struct ccmd_s {
 
 #define C_VAR_CHARPTR2(name, ptr, flags, min, max, notifyChanged) \
     C_VAR(name, ptr, CVT_CHARPTR, flags, min, max, notifyChanged)
-
-    //------------------------------------------------------------------------
-    //
-    // File System
-    //
-    //------------------------------------------------------------------------
-
-/**
- * Resource Class.
- *
- * @ingroup fs
- */
-typedef enum resourceclass_e {
-    RC_UNKNOWN = -1,
-    RC_FIRST = 0,
-    RC_PACKAGE = RC_FIRST,
-    RC_DEFINITION,
-    RC_GRAPHIC,
-    RC_MODEL,
-    RC_SOUND,
-    RC_MUSIC,
-    NUM_RESOURCE_CLASSES
-} resourceclass_t;
-
-#define VALID_RESOURCE_CLASS(n)             ((n) >= RC_FIRST && (n) < NUM_RESOURCE_CLASSES)
 
     //------------------------------------------------------------------------
     //

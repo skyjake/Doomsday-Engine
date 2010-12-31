@@ -1640,6 +1640,10 @@
 				RelativePath="..\..\..\engine\portable\src\ui_panel.c"
 				>
 			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\uri.c"
+				>
+			</File>
 			<Filter
 				Name="Win32"
 				>
@@ -2842,10 +2846,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\include\m_string.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\include\m_vector.h"
 				>
 			</File>
@@ -3835,11 +3835,19 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\api\dd_string.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\api\dd_types.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\..\engine\api\dd_ui.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\api\dd_uri.h"
 				>
 			</File>
 			<File

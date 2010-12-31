@@ -374,8 +374,9 @@ static void insertAndFillLumpRange(int toIndex, filelump_t* lumps, int num, file
 
 static void removeLumpsWithHandle(DFILE* handle)
 {
+#if 0
+    /// \fixme dj: Algorithm does not work as expected (numLumps goes out of sync).
     int i, k, first, len;
-
     for(i = 0, first = -1; i < numLumps; ++i)
     {
         if(first < 0 && lumpInfo[i].handle == handle)
@@ -418,6 +419,30 @@ static void removeLumpsWithHandle(DFILE* handle)
                 first = -1;
             }
     }
+#endif
+
+    // Do this one lump at a time...
+    { int i;
+    for(i = 0; i < numLumps; ++i)
+    {
+        if(lumpInfo[i].handle != handle)
+            continue;
+
+        // Free the memory allocated for the lump.
+        if(lumpCache[i])
+        {
+            // If the block has a user, it must be explicitly freed.
+            if(Z_GetTag(lumpCache[i]) < PU_MAP)
+                Z_ChangeTag(lumpCache[i], PU_MAP);
+            // Mark the memory pointer in use, but unowned.
+            Z_ChangeUser(lumpCache[i], (void*) 0x2);
+        }
+
+        // Move the data in the lump storage.
+        moveLumps(i+1, 1, -1);
+        --numLumps;
+        --i;
+    }}
 }
 
 /**
@@ -557,7 +582,6 @@ static void insertLumps(filelump_t* fileinfo, filerecord_t* rec)
 
 static boolean addFile(const char* fileName, boolean allowDuplicate)
 {
-    filename_t          alterFileName;
     wadinfo_t           header;
     DFILE*              handle;
     unsigned int        length;
@@ -571,37 +595,19 @@ static boolean addFile(const char* fileName, boolean allowDuplicate)
 
     if(!(handle = F_Open(fileName, "rb")))
     {
-        /**
-         * Didn't find file. Try reading from the data path?
-         *
-         * \fixme dj: We do not want to be trying alternative search paths
-         * for resources unless specified by the resource locator. Simply
-         * prepending the base game data path at this level circumvents
-         * the search logic. Question is - anything relying on this?
-         */
-        if(!Dir_IsAbsolute(fileName))
-        {
-            dd_snprintf(alterFileName, FILENAME_T_MAXLEN, "%s%s", Str_Text(GameInfo_DataPath(DD_GameInfo())), fileName);
-            handle = F_Open(alterFileName, "rb");
-        }
-
-        if(!handle)
-        {
-            Con_Message("W_AddFile: Warning \"%s\" not found.\n", fileName);
-            return false;
-        }
-        // We'll use this instead.
-        fileName = alterFileName;
+        Con_Message("Warning \"%s\" not found.\n", fileName);
+        return false;
     }
 
     // Do not read files twice.
     if(!allowDuplicate && !F_CheckFileId(fileName))
     {
+        Con_Message("%s (0) already loaded.\n", M_PrettyPath(fileName));
         F_Close(handle); // The file is not used.
         return false;
     }
 
-    VERBOSE( Con_Message("W_AddFile: Loading %s ...\n", fileName) );
+    VERBOSE( Con_Message("Loading %s ...\n", M_PrettyPath(fileName)) );
 
     // Determine the file name extension.
     extension = strrchr(fileName, '.');
@@ -798,13 +804,17 @@ boolean W_RemoveFiles(const char* const* filenames, size_t num)
 void W_Reset(void)
 {
     boolean unloadedResources = false;
+    Z_FreeTags(PU_CACHE, PU_CACHE);
     { int i;
     for(i = 0; i < numRecords; ++i)
     {
         if(!(records[i].flags & FRF_RUNTIME))
             continue;
         if(removeFile(records[i].fileName))
+        {
+            i = -1;
             unloadedResources = true;
+        }
     }}
     if(unloadedResources)
         DD_UpdateEngineState();

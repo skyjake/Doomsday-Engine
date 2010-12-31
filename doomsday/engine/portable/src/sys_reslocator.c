@@ -94,13 +94,13 @@ static const resourcetype_t searchTypeOrder[NUM_RESOURCE_CLASSES][MAX_TYPEORDER]
     /* RC_MUSIC */      { RT_OGG, RT_MP3, RT_WAV, RT_MOD, RT_MID, 0 }
 };
 
-static const char* defaultNamespaceForClass[NUM_RESOURCE_CLASSES] = {
-    /* RC_PACKAGE */    "Packages",
-    /* RC_DEFINITION */ "Defs",
-    /* RC_GRAPHIC */    "Graphics",
-    /* RC_MODEL */      "Models",
-    /* RC_SOUND */      "Sfx",
-    /* RC_MUSIC */      "Music"
+static const ddstring_t defaultNamespaceForClass[NUM_RESOURCE_CLASSES] = {
+    /* RC_PACKAGE */    { "Packages" },
+    /* RC_DEFINITION */ { "Defs" },
+    /* RC_GRAPHIC */    { "Graphics" },
+    /* RC_MODEL */      { "Models" },
+    /* RC_SOUND */      { "Sfx" },
+    /* RC_MUSIC */      { "Music" }
 };
 
 static resourcenamespace_t namespaces[] = {
@@ -167,119 +167,6 @@ static void clearNamespaceSearchPaths(resourcenamespaceid_t rni)
         return;
     }
     ResourceNamespace_ClearSearchPaths(getNamespaceForId(rni));
-}
-
-/**
- * Substitute known symbols in the possibly templated path.
- * Resulting path is a well-formed, sys_filein-compatible file path (perhaps base-relative).
- */
-static boolean resolveURI(ddstring_t* dest, const ddstring_t* rawSrc, gameinfo_t* info)
-{
-    assert(dest && rawSrc && info);
-    {
-    ddstring_t part, src;
-    const char* p;
-    boolean successful = false;
-
-    Str_Init(&part);
-    Str_Init(&src); Str_Copy(&src, rawSrc);
-
-    Str_StripLeft(&src);
-    Str_StripRight(&src);
-
-    // Copy the first part of the string as-is up to first '$' if present.
-    if((p = Str_CopyDelim2(dest, Str_Text(&src), '$', CDF_OMIT_DELIMITER)))
-    {
-        int depth = 0;
-
-        if(*p != '(')
-        {
-            Con_Message("Invalid character '%c' in \"%s\" at %lu.\n", *p, Str_Text(&src), p - Str_Text(&src));
-            goto parseEnded;
-        }
-        // Skip over the opening brace.
-        p++;
-        depth++;
-
-        // Now grab everything up to the closing ')' (it *should* be present).
-        while((p = Str_CopyDelim2(&part, p, ')', CDF_OMIT_DELIMITER)))
-        {
-            // First, try external symbols like environment variable names - they are quick to reject.
-            if(!Str_CompareIgnoreCase(&part, "DOOMWADDIR"))
-            {
-                if(!ArgCheck("-nowaddir") && getenv("DOOMWADDIR"))
-                {
-                    Str_Append(dest, getenv("DOOMWADDIR"));
-                }
-            }
-            // Now try internal symbols.
-            else if(!Str_CompareIgnoreCase(&part, "GameInfo.DataPath"))
-            {
-                if(DD_IsNullGameInfo(info))
-                    goto parseEnded;
-
-                // DataPath already has ending @c DIR_SEP_CHAR.
-                Str_PartAppend(dest, Str_Text(GameInfo_DataPath(info)), 0, Str_Length(GameInfo_DataPath(info))-1);
-            }
-            else if(!Str_CompareIgnoreCase(&part, "GameInfo.DefsPath"))
-            {
-                if(DD_IsNullGameInfo(info))
-                    goto parseEnded;
-
-                // DefsPath already has ending @c DIR_SEP_CHAR.
-                Str_PartAppend(dest, Str_Text(GameInfo_DefsPath(info)), 0, Str_Length(GameInfo_DefsPath(info))-1);
-            }
-            else if(!Str_CompareIgnoreCase(&part, "GameInfo.IdentityKey"))
-            {
-                if(DD_IsNullGameInfo(info))
-                    goto parseEnded;
-
-                Str_Append(dest, Str_Text(GameInfo_IdentityKey(info)));
-            }
-            else
-            {
-                Con_Message("Unknown identifier '%s' in \"%s\".\n", Str_Text(&part), Str_Text(&src));
-                goto parseEnded;
-            }
-            depth--;
-
-            // Is there another '$' present?
-            if(!(p = Str_CopyDelim2(&part, p, '$', CDF_OMIT_DELIMITER)))
-                break;
-            // Copy everything up to the next '$'.
-            Str_Append(dest, Str_Text(&part));
-            if(*p != '(')
-            {
-                Con_Message("Invalid character '%c' in \"%s\" at %lu.\n", *p, Str_Text(&src), p - Str_Text(&src));
-                goto parseEnded;
-            }
-            // Skip over the opening brace.
-            p++;
-            depth++;
-        }
-
-        if(depth != 0)
-        {
-            goto parseEnded;
-        }
-
-        // Copy anything remaining.
-        Str_Append(dest, Str_Text(&part));
-    }
-
-    // Convert all slashes to the host OS's directory separator, for compatibility with the sys_filein routines.
-    F_FixSlashes(dest);
-    // Ensure we have a terminating DIR_SEP_CHAR
-    if(Str_RAt(dest, 0) != DIR_SEP_CHAR)
-        Str_AppendChar(dest, DIR_SEP_CHAR);
-
-    // No errors detected.
-    successful = true;
-
-parseEnded:
-    Str_Free(&part);
-    return successful;
-    }
 }
 
 static boolean tryFindResource2(resourceclass_t rclass, const char* searchPath,
@@ -412,58 +299,6 @@ static boolean findResource(resourceclass_t rclass, const char* searchPath, cons
     }
 }
 
-static boolean tryLocateResource(resourceclass_t rclass, const char* _searchPath,
-    const char* optionalSuffix, ddstring_t* foundPath)
-{
-    assert(inited && _searchPath && _searchPath[0]);
-    {
-    ddstring_t searchPath, name;
-    boolean result = false;
-
-    // Fix directory seperators early.
-    Str_Init(&searchPath);
-    Str_Set(&searchPath, _searchPath);
-    F_FixSlashes(&searchPath);
-    F_ExpandBasePath(&searchPath, &searchPath);
-
-    // If this is an absolute path, locate using it.
-    if(Dir_IsAbsolute(Str_Text(&searchPath)))
-    {
-        result = findResource(rclass, Str_Text(&searchPath), optionalSuffix, foundPath, 0);
-    }
-    else
-    {   // Probably a relative path.
-        // Has a namespace identifier been included?
-        Str_Init(&name);
-        { const char* p;
-        if((p = Str_CopyDelim2(&name, Str_Text(&searchPath), ':', CDF_OMIT_DELIMITER)) &&
-           p - Str_Text(&searchPath) > RESOURCENAMESPACE_MINNAMELENGTH)
-        {
-            resourcenamespaceid_t rni;
-            if((rni = F_SafeResourceNamespaceForName(Str_Text(&name))) != 0)
-            {
-                result = findResource(rclass, p, optionalSuffix, foundPath, getNamespaceForId(rni));
-            }
-            else
-                Con_Message("tryLocateResource: Unknown namespace \"%s\" in "
-                            "searchPath \"%s\", using default for %s.\n", Str_Text(&name),
-                            searchPath, F_ResourceClassStr(rclass));
-        }}
-        Str_Free(&name);
-
-        // Try the default namespace for this resource class?
-        if(!result && VALID_RESOURCE_CLASS(rclass))
-        {
-            resourcenamespaceid_t rni = F_ResourceNamespaceForName(defaultNamespaceForClass[rclass]);
-            result = findResource(rclass, Str_Text(&searchPath), optionalSuffix, foundPath, getNamespaceForId(rni));
-        }
-    }
-
-    Str_Free(&searchPath);
-    return result;
-    }
-}
-
 void F_InitResourceLocator(void)
 {
     if(!inited)
@@ -535,31 +370,13 @@ boolean F_IsValidResourceNamespaceId(int val)
     return (boolean)(val>0 && (unsigned)val < (F_NumResourceNamespaces()+1)? 1 : 0);
 }
 
-const char* F_ParseSearchPath(ddstring_t* dest, const char* src, char delim)
-{
-    Str_Clear(dest);
-
-    if(!src)
-        return NULL;
-
-    for(; *src && *src != delim; ++src)
-    {
-        Str_PartAppend(dest, src, 0, 1);
-    }
-
-    if(!*src)
-        return NULL; // It ended.
-
-    // Skip past the delimiter.
-    return src + 1;
-}
-
 const char* F_FindResource3(resourceclass_t rclass, const char* _searchPaths, ddstring_t* foundPath,
     const char* optionalSuffix)
 {
     assert(inited);
     {
-    ddstring_t searchPaths, path;
+    ddstring_t searchPaths;
+    dduri_t* searchPath;
     const char* result = 0;
 
     if(!_searchPaths || !_searchPaths[0])
@@ -573,19 +390,55 @@ const char* F_FindResource3(resourceclass_t rclass, const char* _searchPaths, dd
         Str_AppendChar(&searchPaths, ';');
     Str_StripLeft(&searchPaths);
 
-    Str_Init(&path);
+    searchPath = Uri_ConstructDefault();
+
     { const char* p = Str_Text(&searchPaths);
     size_t numParsedCharacters = 0;
-    while((p = F_ParseSearchPath(&path, p, ';')))
+    while((p = F_ParseSearchPath2(searchPath, p, ';', rclass)))
     {
-        if(tryLocateResource(rclass, Str_Text(&path), optionalSuffix, foundPath))
+        ddstring_t* resolvedPath;
+        boolean found = false;
+
+        if((resolvedPath = Uri_Resolved(searchPath)) == 0)
+            continue; // Incomplete path; ignore it.
+
+        // If this is an absolute path, locate using it.
+        if(F_IsAbsolute(resolvedPath))
+        {
+            found = findResource(rclass, Str_Text(resolvedPath), optionalSuffix, foundPath, 0);
+        }
+        else
+        {   // Probably a relative path.
+            // Has a namespace identifier been included?
+            if(!Str_IsEmpty(Uri_Scheme(searchPath)))
+            {
+                resourcenamespaceid_t rni;
+                if((rni = F_SafeResourceNamespaceForName(Str_Text(Uri_Scheme(searchPath)))) != 0)
+                {
+                    found = findResource(rclass, Str_Text(resolvedPath), optionalSuffix, foundPath, getNamespaceForId(rni));
+                }
+                else
+                {
+                    ddstring_t* rawPath = Uri_ToString(searchPath);
+                    Con_Message("tryLocateResource: Unknown rnamespace in searchPath \"%s\", "
+                                "using default for %s.\n", Str_Text(rawPath), F_ResourceClassStr(rclass));
+                    Str_Delete(rawPath);
+                }
+            }
+        }
+
+        Str_Delete(resolvedPath);
+
+        if(found)
         {
             result = _searchPaths + numParsedCharacters;
             break;
         }
         numParsedCharacters = (p - Str_Text(&searchPaths));
     }}
-    Str_Free(&path);
+
+    if(searchPath)
+        Uri_Destruct(searchPath);
 
     Str_Free(&searchPaths);
     return result;
@@ -613,7 +466,7 @@ resourceclass_t F_DefaultResourceClassForType(resourcetype_t type)
 resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass)
 {
     assert(inited && VALID_RESOURCE_CLASS(rclass));
-    return F_ResourceNamespaceForName(defaultNamespaceForClass[rclass]);
+    return F_ResourceNamespaceForName(Str_Text(&defaultNamespaceForClass[rclass]));
 }
 
 resourcetype_t F_GuessResourceTypeByName(const char* path)
@@ -628,6 +481,7 @@ resourcetype_t F_GuessResourceTypeByName(const char* path)
     if((ext = strrchr(path, '.')))
     {
         uint i;
+        ++ext;
         for(i = RT_FIRST; i < NUM_RESOURCE_TYPES; ++i)
         {
             const resourcetypeinfo_t* info = getInfoForResourceType((resourcetype_t)i);
@@ -644,11 +498,6 @@ resourcetype_t F_GuessResourceTypeByName(const char* path)
         }
     }}
     return RT_NONE; // Unrecognizable.
-}
-
-boolean F_ResolveURI(ddstring_t* translatedPath, const ddstring_t* uri)
-{
-    return resolveURI(translatedPath, uri, DD_GameInfo());
 }
 
 boolean F_ApplyPathMapping(ddstring_t* path)
@@ -707,6 +556,32 @@ void F_FileName(ddstring_t* dest, const ddstring_t* src)
     _splitpath(Str_Text(src), 0, 0, name, ext);
     Str_Clear(dest);
     Str_Appendf(dest, "%s%s", name, ext);
+}
+
+/// \todo dj: Find a suitable home for this.
+const char* F_ParseSearchPath2(dduri_t* dest, const char* src, char delim,
+    resourceclass_t defaultResourceClass)
+{
+    Uri_Clear(dest);
+    if(src)
+    {
+        ddstring_t buf; Str_Init(&buf);
+        for(; *src && *src != delim; ++src)
+        {
+            Str_PartAppend(&buf, src, 0, 1);
+        }
+        Uri_SetUri3(dest, Str_Text(&buf), defaultResourceClass);
+        Str_Free(&buf);
+    }
+    if(!*src)
+        return 0; // It ended.
+    // Skip past the delimiter.
+    return src + 1;
+}
+
+const char* F_ParseSearchPath(dduri_t* dest, const char* src, char delim)
+{
+    return F_ParseSearchPath2(dest, src, delim, RC_UNKNOWN);
 }
 
 /// \todo dj: Find a suitable home for this.
@@ -806,11 +681,26 @@ boolean F_RemoveBasePath(ddstring_t* dest, const ddstring_t* absPath)
 }
 
 /// \todo dj: Find a suitable home for this.
+boolean F_IsAbsolute(const ddstring_t* str)
+{
+    if(!str)
+        return false;
+
+    if(Str_At(str, 0) == '\\' || Str_At(str, 0) == '/' || Str_At(str, 1) == ':')
+        return true;
+#ifdef UNIX
+    if(Str_At(str, 0) == '~')
+        return true;
+#endif
+    return false;
+}
+
+/// \todo dj: Find a suitable home for this.
 boolean F_PrependBasePath(ddstring_t* dest, const ddstring_t* src)
 {
     assert(dest && src);
 
-    if(!Dir_IsAbsolute(Str_Text(src)))
+    if(!F_IsAbsolute(src))
     {
         if(dest != src)
             Str_Copy(dest, src);
@@ -912,7 +802,7 @@ const ddstring_t* F_PrettyPath(const ddstring_t* path)
     static ddstring_t buffers[NUM_BUFS]; // \fixme: never free'd!
     static uint index = 0;
 
-    size_t basePathLen = strlen(ddBasePath), len = Str_Length(path);
+    size_t basePathLen = strlen(ddBasePath), len = path != 0? Str_Length(path) : 0;
     if(len > basePathLen && !strnicmp(ddBasePath, Str_Text(path), basePathLen))
     {
         ddstring_t* str = &buffers[index++ % NUM_BUFS];

@@ -393,6 +393,8 @@ void R_Update(void)
     R_PreInitSprites();
     GL_LoadSystemTextures();
 
+    // Reset file IDs so previously seen files can be processed again.
+    F_ResetFileIDs();
     // Re-read definitions.
     Def_Read();
 

@@ -130,6 +130,25 @@ typedef signed char     lumpname_t[LUMPNAME_T_MAXLEN];
 #define FILENAME_T_LASTINDEX 255
 typedef char            filename_t[FILENAME_T_MAXLEN];
 
+/**
+ * Resource Class.
+ *
+ * @ingroup fs
+ */
+typedef enum resourceclass_e {
+    RC_UNKNOWN = -1,
+    RC_FIRST = 0,
+    RC_PACKAGE = RC_FIRST,
+    RC_DEFINITION,
+    RC_GRAPHIC,
+    RC_MODEL,
+    RC_SOUND,
+    RC_MUSIC,
+    NUM_RESOURCE_CLASSES
+} resourceclass_t;
+
+#define VALID_RESOURCE_CLASS(n)             ((n) >= RC_FIRST && (n) < NUM_RESOURCE_CLASSES)
+
 typedef struct directory_s {
     int             drive;
     filename_t      path;
@@ -186,5 +205,7 @@ struct polyobj_s;
 struct plane_s;
 struct surface_s;
 struct material_s;
+
+#include "dd_string.h"
 
 #endif

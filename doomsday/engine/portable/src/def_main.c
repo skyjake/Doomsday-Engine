@@ -828,9 +828,6 @@ void Def_Read(void)
     DED_Destroy(&defs);
     DED_Init(&defs);
 
-    // Reset file IDs so previously seen files can be processed again.
-    F_ResetFileIDs();
-
     // Read all definitions, files and lumps.
     Con_Message("Parsing definition files:\n");
     readAllDefinitions();

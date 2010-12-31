@@ -144,7 +144,8 @@ static boolean writeConsoleState(const char* fileName)
             if(var->type == CVT_CHARPTR)
             {
                 fprintf(file, "\"");
-                M_WriteTextEsc(file, *(char**) var->ptr);
+                if(*(char**) var->ptr)
+                    M_WriteTextEsc(file, *(char**) var->ptr);
                 fprintf(file, "\"");
             }
             fprintf(file, "\n\n");

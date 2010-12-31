@@ -25,10 +25,11 @@
 #ifndef LIBDENG_SYSTEM_RESOURCE_LOCATOR_H
 #define LIBDENG_SYSTEM_RESOURCE_LOCATOR_H
 
-#include "m_string.h"
+#include "dd_string.h"
 
 struct resourcenamespace_s;
 struct filedirectory_s;
+struct dduri_s;
 
 /**
  * Resource Type. Unique identifer attributable to resources (e.g., files).
@@ -152,12 +153,6 @@ resourcetype_t F_GuessResourceTypeByName(const char* name);
  */
 boolean F_ApplyPathMapping(ddstring_t* path);
 
-/**
- * @return              @c false if the resource uri cannot be fully resolved
- *                      (e.g., due to incomplete symbol definitions).
- */
-boolean F_ResolveURI(ddstring_t* translatedPath, const ddstring_t* uri);
-
 // Utility routines:
 
 typedef struct directory2_s {
@@ -168,6 +163,9 @@ typedef struct directory2_s {
 void F_FileDir(const ddstring_t* str, directory2_t* dir);
 
 void F_FileName(ddstring_t* dest, const ddstring_t* src);
+
+const char* F_ParseSearchPath2(struct dduri_s* dest, const char* src, char delim, resourceclass_t defaultResourceClass);
+const char* F_ParseSearchPath(struct dduri_s* dest, const char* src, char delim);
 
 /**
  * Converts directory slashes to the correct type of slash.
@@ -180,6 +178,13 @@ boolean F_FixSlashes(ddstring_t* path);
  * \todo dj: This seems rather redundant; refactor callers.
  */
 void F_ResolveSymbolicPath(ddstring_t* dest, const ddstring_t* src);
+
+/**
+ * @return              @c true, if the given path is absolute
+ *                      (starts with \ or / or the second character is
+ *                      a ':' (drive).
+ */
+boolean F_IsAbsolute(const ddstring_t* str);
 
 /**
  * @return              @c true iff the path can be made into a relative path. 

@@ -897,14 +897,19 @@ void M_WriteCommented(FILE *file, const char* text)
  */
 void M_WriteTextEsc(FILE* file, const char* text)
 {
-    size_t              i;
+    if(!file || !text)
+    {
+        Con_Error("Attempted M_WriteTextEsc with invalid reference (%s==0).", !file? "file":"text");
+        return; // Unreachable.
+    }
 
+    { size_t i;
     for(i = 0; i < strlen(text) && text[i]; ++i)
     {
         if(text[i] == '"' || text[i] == '\\')
             fprintf(file, "\\");
         fprintf(file, "%c", text[i]);
-    }
+    }}
 }
 
 /**

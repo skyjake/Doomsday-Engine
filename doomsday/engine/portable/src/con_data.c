@@ -959,6 +959,8 @@ knownword_t** Con_CollectKnownWordsMatchingWord(const char* word, uint* count)
 
 void Con_DestroyDatabases(void)
 {
+    static char* emptyString = "";
+
     // Free the data of the data cvars.
     { uint i;
     for(i = 0; i < numCVars; ++i)
@@ -980,7 +982,7 @@ void Con_DestroyDatabases(void)
                 }
             }
             M_Free(*ptr);
-            *ptr = "";
+            *ptr = emptyString;
         }
     }}
 

@@ -30,7 +30,6 @@
 #define __DOOMSDAY_SERVER_H__
 
 #include "dd_def.h"
-#include "m_string.h"
 
 #define SV_VERSION          7
 #define SV_WELCOME_STRING   "Doomsday "DOOMSDAY_VERSION_TEXT" Server (R7)"

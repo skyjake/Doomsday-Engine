@@ -25,8 +25,8 @@
 #ifndef LIBDENG_FILEDIRECTORY_H
 #define LIBDENG_FILEDIRECTORY_H
 
+#include "dd_string.h"
 #include "sys_file.h"
-#include "m_string.h"
 
 typedef struct filedirectory_node_s {
     struct filedirectory_node_s* next;
@@ -42,7 +42,7 @@ typedef struct filedirectory_node_s {
  * @ingroup fs
  */
 typedef struct filedirectory_s {
-    /// Copy of the entire path list.
+    /// Current path list.
     ddstring_t _pathList;
 
     /// @c true if the record set has been built.
@@ -71,7 +71,7 @@ void FileDirectory_Clear(filedirectory_t* fileDirectory);
  *                          of the caller to Str_Free each string in the list and
  *                          Z_Free the list itself.
  */
-ddstring_t* FileDirectory_CollectFilePaths(filedirectory_t* fd, filetype_t type, size_t* count);
+ddstring_t* FileDirectory_AllPaths(filedirectory_t* fd, filetype_t type, size_t* count);
 
 #if _DEBUG
 void FileDirectory_PrintFileList(filedirectory_t* fileDirectory);

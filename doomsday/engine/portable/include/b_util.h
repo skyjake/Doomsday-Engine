@@ -30,7 +30,6 @@
 #define __DOOMSDAY_BIND_UTIL_H__
 
 #include "de_base.h"
-#include "m_string.h"
 
 // Event Binding Toggle State
 typedef enum ebstate_e {

@@ -30,7 +30,6 @@
 #define LIBDENG_MAIN_H
 
 #include "dd_types.h"
-#include "m_string.h"
 #include "gameinfo.h"
 
 // Verbose messages.
