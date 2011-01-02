@@ -550,8 +550,6 @@ void UI_Drawer(void)
     glLoadIdentity();
     glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
 
-    glEnable(GL_TEXTURE_2D);
-
     // Call the active page's drawer.
     uiCurrentPage->drawer(uiCurrentPage);
 
@@ -570,8 +568,6 @@ void UI_Drawer(void)
 
         UI_DrawMouse(uiCX - 1, uiCY - 1, width, height);
     }
-
-    glDisable(GL_TEXTURE_2D);
 
     // Restore the original matrices.
     glMatrixMode(GL_PROJECTION);
@@ -866,11 +862,13 @@ void UIPage_Drawer(ui_page_t* page)
         {
             t = (1 + sin(page->_timer / (float) TICSPERSEC * 1.5f * PI)) / 2;
             UI_MixColors(UI_Color(UIC_BRD_LOW), UI_Color(UIC_BRD_HI), &focuscol, t);
+            glEnable(GL_TEXTURE_2D);
             UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_BRD_LOW), UI_Color(UIC_BRD_LOW), .2f + t * .3f, -1);
             GL_BlendMode(BM_ADD);
             // Draw a focus rectangle.
             UI_DrawRect(ob->x - 1, ob->y - 1, ob->w + 2, ob->h + 2, UI_BORDER, &focuscol, 1);
             GL_BlendMode(BM_NORMAL);
+            glDisable(GL_TEXTURE_2D);
         }
 
         // Restore the correct UI alpha.
@@ -881,21 +879,26 @@ void UIPage_Drawer(ui_page_t* page)
 void UIFrame_Drawer(ui_object_t* ob)
 {
     int b = UI_BORDER;
-
+    glEnable(GL_TEXTURE_2D);
     UI_GradientEx(ob->x, ob->y, ob->w, ob->h, b, UI_Color(UIC_BG_MEDIUM), 0, .6f, 0);
     UI_DrawRect(ob->x, ob->y, ob->w, ob->h, b, UI_Color(UIC_BRD_HI), 1);
+    glDisable(GL_TEXTURE_2D);
 }
 
 void UIText_Drawer(ui_object_t* ob)
 {
+    glEnable(GL_TEXTURE_2D);
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
     UI_TextOutEx(ob->text, ob->x, ob->y + ob->h / 2, false, true, UI_Color(UIC_TEXT), ob->flags & UIF_DISABLED ? .2f : 1);
+    glDisable(GL_TEXTURE_2D);
 }
 
 void UIText_BrightDrawer(ui_object_t* ob)
 {
+    glEnable(GL_TEXTURE_2D);
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
     UI_TextOutEx(ob->text, ob->x, ob->y + ob->h / 2, false, true, UI_Color(UIC_TITLE), ob->flags & UIF_DISABLED ? .2f : 1);
+    glDisable(GL_TEXTURE_2D);
 }
 
 int UIButton_Responder(ui_object_t* ob, ddevent_t* ev)
@@ -983,12 +986,14 @@ void UIButton_Drawer(ui_object_t* ob)
     if(act && t > .1f)
         t = .1f;
 
+    glEnable(GL_TEXTURE_2D);
     UI_MixColors(UI_Color(UIC_TEXT), UI_Color(UIC_SHADOW), &back, t);
     UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER, &back, 0, alpha, 0);
     UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER * (down ? -1 : 1), UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BUTTON_BORDER * (down ? -1 : 1), false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
     UI_TextOutEx(text, down + ob->x + (ob->flags & UIF_LEFT_ALIGN ? UI_BUTTON_BORDER * 2 : ob->w / 2), down + ob->y + ob->h / 2, !(ob->flags & UIF_LEFT_ALIGN), true, UI_Color(UIC_TITLE), alpha);
+    glDisable(GL_TEXTURE_2D);
 }
 
 int UIEdit_Responder(ui_object_t* ob, ddevent_t* ev)
@@ -1086,6 +1091,7 @@ void UIEdit_Drawer(ui_object_t* ob)
     if(!act || t > 1)
         t = 1;
     UI_MixColors(UI_Color(UIC_TEXT), UI_Color(UIC_SHADOW), &back, t);
+    glEnable(GL_TEXTURE_2D);
     UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER, &back, 0, alpha, 0);
     UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER * (act ? -1 : 1), false, UI_Color(UIC_BRD_HI), NULL, dis ? .2f : 1, -1);
@@ -1124,6 +1130,7 @@ void UIEdit_Drawer(ui_object_t* ob)
             curx += FR_CharWidth(ob->text[i]);
         UI_Gradient(ob->x + UI_BORDER * 2 + curx - 1, ob->y + ob->h / 2 - uiFontHgt / 2, 2, uiFontHgt, UI_Color(UIC_TEXT), 0, 1, 1);
     }
+    glDisable(GL_TEXTURE_2D);
 }
 
 int UIList_Responder(ui_object_t* ob, ddevent_t* ev)
@@ -1297,12 +1304,15 @@ void UIList_Drawer(ui_object_t* ob)
     int barw;
 
     // The background.
+    glEnable(GL_TEXTURE_2D);
     UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_SHADOW), 0, alpha / 2, 0);
     // The borders.
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, -UI_BORDER, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
     // The title.
     FR_SetFont(glFontVariable[GLFS_NORMAL]);
     UI_TextOutEx(ob->text, ob->x, ob->y - UI_BORDER - uiFontHgt, false, false, UI_Color(UIC_TEXT), alpha);
+    glDisable(GL_TEXTURE_2D);
+
     // Is a scroll bar necessary?
     ihgt = listItemHeight(dat);
     if(dat->numvis < dat->count)
@@ -1312,7 +1322,11 @@ void UIList_Drawer(ui_object_t* ob)
         buth = listButtonHeight(ob);
         x = ob->x + ob->w - UI_BORDER - barw;
         y = ob->y + UI_BORDER;
+
+        glEnable(GL_TEXTURE_2D);
         UI_GradientEx(x, y, barw, maxh, UI_BAR_BUTTON_BORDER, UI_Color(UIC_TEXT), 0, alpha * .2f, alpha * .2f);
+        glDisable(GL_TEXTURE_2D);
+
         // Up Button.
         UI_DrawButton(x, y, barw, buth, UI_BAR_BUTTON_BORDER, !dat->first ? alpha * .2f : alpha, NULL, dat->button[0], dis, UIBA_UP);
         // Thumb Button.
@@ -1323,6 +1337,7 @@ void UIList_Drawer(ui_object_t* ob)
     x = ob->x + UI_BORDER;
     y = ob->y + UI_BORDER;
     // Draw columns?
+    glEnable(GL_TEXTURE_2D);
     for(c = 0; c < UI_MAX_COLUMNS; ++c)
     {
         if(!dat->column[c] || dat->column[c] > maxw - 2 * UI_BORDER)
@@ -1355,6 +1370,7 @@ void UIList_Drawer(ui_object_t* ob)
             ptr = endptr + 1;
         }
     }
+    glDisable(GL_TEXTURE_2D);
 }
 
 int UI_SliderButtonWidth(ui_object_t* ob)
@@ -1553,10 +1569,11 @@ void UISlider_Drawer(ui_object_t* ob)
     char buf[80];
 
     // The background.
+    glEnable(GL_TEXTURE_2D);
     UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BAR_BORDER, UI_Color(UIC_SHADOW), 0, alpha / 2, 0);
-
     // The borders.
     UI_DrawRectEx(ob->x, ob->y, ob->w, ob->h, -UI_BAR_BORDER, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
+    glDisable(GL_TEXTURE_2D);
 
     x = ob->x + UI_BAR_BORDER;
     y = ob->y + UI_BAR_BORDER;
@@ -1586,8 +1603,10 @@ void UISlider_Drawer(ui_object_t* ob)
         sprintf(buf, "%i", (int) dat->value);
     if(dat->zerotext && dat->value == dat->min)
         strcpy(buf, dat->zerotext);
+    glEnable(GL_TEXTURE_2D);
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     UI_TextOutEx(buf, x + (dat->value < (dat->min + dat->max) / 2 ? inwidth - butw - UI_BAR_BORDER - FR_TextWidth(buf) : butw + UI_BAR_BORDER), y + inheight / 2, false, true, UI_Color(UIC_TEXT), alpha);
+    glDisable(GL_TEXTURE_2D);
 }
 
 //---------------------------------------------------------------------------
@@ -2149,9 +2168,11 @@ void UI_DrawButton(int x, int y, int w, int h, int brd, float alpha,
         background = &back;
     }
 
+    glEnable(GL_TEXTURE_2D);
     UI_GradientEx(x, y, w, h, brd, background, 0, disabled ? .2f : 1, 0);
     UI_Shade(x, y, w, h, UI_BUTTON_BORDER * (down ? -1 : 1), UI_Color(UIC_BRD_HI), UI_Color(UIC_BRD_LOW), alpha / 3, -1);
     UI_DrawRectEx(x, y, w, h, brd * (down ? -1 : 1), false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
+    glDisable(GL_TEXTURE_2D);
 
     switch(arrow)
     {
@@ -2174,21 +2195,24 @@ void UI_DrawHelpBox(int x, int y, int w, int h, float alpha, char* text)
 {
     int bor = UI_BUTTON_BORDER;
 
+    glEnable(GL_TEXTURE_2D);
     UI_GradientEx(x, y, w, h, bor, UI_Color(UIC_HELP), UI_Color(UIC_HELP), alpha / 4, alpha / 2);
     UI_DrawRectEx(x, y, w, h, bor, false, UI_Color(UIC_BRD_HI), NULL, alpha, -1);
 
-    if(!text)
-        return;
-
-    bor = 2 * UI_BORDER / 3;
-    FR_SetFont(glFontVariable[GLFS_LIGHT]);
-    UI_TextOutWrapEx(text, x + 2 * bor, y + 2 * bor, w - 4 * bor, h - 4 * bor, UI_Color(UIC_TEXT), alpha);
+    if(text)
+    {
+        bor = 2 * UI_BORDER / 3;
+        FR_SetFont(glFontVariable[GLFS_LIGHT]);
+        UI_TextOutWrapEx(text, x + 2 * bor, y + 2 * bor, w - 4 * bor, h - 4 * bor, UI_Color(UIC_TEXT), alpha);
+    }
+    glDisable(GL_TEXTURE_2D);
 }
 
 void UI_DrawMouse(int x, int y, int w, int h)
 {
     glColor3f(1, 1, 1);
     glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_MOUSE]);
+    glEnable(GL_TEXTURE_2D);
     glBegin(GL_QUADS);
         glTexCoord2f(0, 0);
         glVertex2f(x, y);
@@ -2199,12 +2223,15 @@ void UI_DrawMouse(int x, int y, int w, int h)
         glTexCoord2f(0, 1);
         glVertex2f(x, y + h);
     glEnd();
+    glDisable(GL_TEXTURE_2D);
 }
 
 void UI_DrawLogo(int x, int y, int w, int h)
 {
     glBindTexture(GL_TEXTURE_2D, uiTextures[UITEX_LOGO]);
+    glEnable(GL_TEXTURE_2D);
     GL_DrawRect(x, y, w, h, 1, 1, 1, uiAlpha);
+    glDisable(GL_TEXTURE_2D);
 }
 
 void UI_DrawDDBackground(float x, float y, float w, float h, float alpha)

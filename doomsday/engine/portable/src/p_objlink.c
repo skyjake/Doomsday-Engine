@@ -232,8 +232,28 @@ void R_InitObjLinksForMap(void)
     objBlockmap = R_ObjBlockmapCreate(min[0], min[1], width, height);
 
     // Initialize obj -> subsector contact lists.
-    subContacts =
-        Z_Calloc(sizeof(*subContacts) * numSSectors, PU_MAPSTATIC, 0);
+    subContacts = Z_Calloc(sizeof(*subContacts) * numSSectors, PU_MAPSTATIC, 0);
+}
+
+void R_DestroyObjLinks(void)
+{
+    if(objBlockmap)
+    {
+        Z_Free(objBlockmap->blocks);
+        Z_Free(objBlockmap);
+        objBlockmap = 0;
+    }
+    // Start reusing nodes from the first one in the list.
+    objLinkCursor = objLinkFirst;
+    objLinks = NULL;
+
+    if(subContacts)
+    {
+        Z_Free(subContacts);
+        subContacts = 0;
+    }
+    // Start reusing nodes from the first one in the list.
+    contCursor = contFirst;
 }
 
 void R_ObjBlockmapClear(objblockmap_t* obm)

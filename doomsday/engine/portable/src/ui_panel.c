@@ -678,6 +678,7 @@ void CP_DrawBorder(ui_object_t *ob)
     if(panel_show_tips)
     {
         GL_BlendMode(BM_ADD);
+        glEnable(GL_TEXTURE_2D);
         for(it = ob_panel; it->type; it++)
         {
             if(it->flags & UIF_HIDDEN || it->group < 2 || it->type != UI_TEXT)
@@ -691,6 +692,7 @@ void CP_DrawBorder(ui_object_t *ob)
                                  UI_Color(UIC_BRD_HI), 0, shown ? .8f : .2f, 0);
             }
         }
+        glDisable(GL_TEXTURE_2D);
         GL_BlendMode(BM_NORMAL);
     }
 }
@@ -809,6 +811,7 @@ void CP_KeyGrabDrawer(ui_object_t *ob)
     byte        key = Con_GetByte(ob->text);
     const char *name;
 
+    glEnable(GL_TEXTURE_2D);
     UI_GradientEx(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_SHADOW), 0,
                   1, 0);
     UI_Shade(ob->x, ob->y, ob->w, ob->h, UI_BORDER, UI_Color(UIC_BRD_HI),
@@ -824,6 +827,7 @@ void CP_KeyGrabDrawer(ui_object_t *ob)
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     UI_TextOutEx(buf, ob->x + ob->w / 2, ob->y + ob->h / 2, true, true,
                  UI_Color(UIC_TEXT), alpha);
+    glDisable(GL_TEXTURE_2D);
 }
 
 void CP_QuickFOV(ui_object_t *ob)
@@ -851,9 +855,11 @@ void CP_VideoModeInfo(ui_object_t *ob)
                 (fullscreen? "fullscreen" : "windowed"));
     }
 
+    glEnable(GL_TEXTURE_2D);
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     UI_TextOutEx(buf, ob->x, ob->y + ob->h / 2, false, true,
                  UI_Color(UIC_TEXT), 1);
+    glDisable(GL_TEXTURE_2D);
 }
 
 void CP_UpdateSetVidModeButton(int w, int h, int bpp, boolean fullscreen)
@@ -1038,6 +1044,7 @@ void CP_Drawer(ui_page_t *page)
     UIPage_Drawer(page);
 
     // Project home.
+    glEnable(GL_TEXTURE_2D);
     FR_SetFont(glFontVariable[GLFS_LIGHT]);
     UI_TextOutEx(DENGPROJECT_HOMEURL,
                  UI_ScreenW(1000) - UI_BORDER - FR_TextWidth(DENGPROJECT_HOMEURL),
@@ -1045,7 +1052,10 @@ void CP_Drawer(ui_page_t *page)
 
     // Is the help box visible?
     if(panel_help_offset <= 0 || !panel_help_source)
+    {
+        glDisable(GL_TEXTURE_2D);
         return;
+    }
 
     // Help box placement.
     bor = 2 * UI_BORDER / 3;
@@ -1085,6 +1095,7 @@ void CP_Drawer(ui_page_t *page)
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
         UI_TextOutWrapEx(str, x, y, w, h, UI_Color(UIC_TEXT), alpha);
     }
+    glDisable(GL_TEXTURE_2D);
 }
 
 /**

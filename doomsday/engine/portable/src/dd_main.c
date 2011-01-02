@@ -888,6 +888,7 @@ static int DD_ChangeGameWorker(void* paramaters)
     DD_AutoLoad();
 
     F_InitDirec();
+    Cl_InitTranslations();
 
     Con_SetProgress(60);
     VERBOSE( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
@@ -913,8 +914,10 @@ static int DD_ChangeGameWorker(void* paramaters)
 
     R_InitSprites(); // Fully initialize sprites.
     R_InitModels();
+
+    UI_LoadTextures();
+    //GL_InitFont();
     Rend_ParticleLoadExtraTextures();
-    Cl_InitTranslations();
 
     Def_PostInit();
 
@@ -923,7 +926,26 @@ static int DD_ChangeGameWorker(void* paramaters)
 
     // Reset the tictimer so than any fractional accumulation is not added to
     // the tic/game timer of the newly-loaded game.
+    gameTime = 0;
     DD_ResetTimer();
+
+    // Make sure that the next frame does not use a filtered viewer.
+    R_ResetViewer();
+
+    // Invalidate old cmds and init player values.
+    { uint i;
+    for(i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        player_t* plr = &ddPlayers[i];
+        ddplayer_t* ddpl = &plr->shared;
+
+        plr->extraLight = plr->targetExtraLight = 0;
+        plr->extraLightCounter = 0;
+
+        if(isServer && plr->shared.inGame)
+            clients[i].runTime = SECONDS_TO_TICKS(gameTime);
+        clients[i].numTics = 0;
+    }}
 
     if(gx.PostInit)
     {
@@ -976,13 +998,31 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
     S_Reset();
     Demo_StopPlayback();
 
+    GL_ClearRuntimeTextures();
+    //GL_ShutdownFont();
+    UI_ClearTextures();
+
     // If a game is presently loaded; unload it.
     if(!DD_IsNullGameInfo(DD_GameInfo()))
     {
         Con_SaveDefaults();
 
-        LO_Clear();
+        Cl_Reset();
+
         P_PtcShutdown();
+        LO_Clear();
+        R_DestroyObjLinks();
+
+        { uint i;
+        for(i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            player_t* plr = &ddPlayers[i];
+            ddplayer_t* ddpl = &plr->shared;
+            // Mobjs go down with the map.
+            ddpl->mo = 0;
+            // States have changed, the states are unknown.
+            ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = 0;
+        }}
 
         if(gx.Shutdown)
             gx.Shutdown();
@@ -994,7 +1034,9 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         R_ShutdownCompositeFonts();
         R_ShutdownVectorGraphics();
         R_ClearPatchTexs();
-        GL_ClearTextures();
+
+        /// \fixme dj: We do not want to destroy *everything*!
+        GL_DestroyTextures();
 
         Sfx_InitLogical();
 
@@ -1281,7 +1323,6 @@ int DD_Main(void)
     {
         GL_Init();
         GL_InitRefresh();
-        GL_LoadSystemTextures();
     }
 
     // Do deferred uploads.

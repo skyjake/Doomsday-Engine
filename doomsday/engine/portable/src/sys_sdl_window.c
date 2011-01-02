@@ -761,9 +761,6 @@ extern boolean usingFog;
 
             if(!DD_IsNullGameInfo(DD_GameInfo()) && gx.UpdateState)
                 gx.UpdateState(DD_RENDER_RESTART_POST);
-
-            GL_LoadSystemTextures();
-            Rend_ParticleLoadExtraTextures();
         }
     }
     /*else

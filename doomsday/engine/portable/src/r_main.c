@@ -391,7 +391,6 @@ void R_Update(void)
     R_InitTextures();
     R_InitFlats();
     R_PreInitSprites();
-    GL_LoadSystemTextures();
 
     // Reset file IDs so previously seen files can be processed again.
     F_ResetFileIDs();

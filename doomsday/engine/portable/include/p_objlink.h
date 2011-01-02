@@ -36,6 +36,7 @@ typedef enum {
 } objtype_t;
 
 void            R_InitObjLinksForMap(void);
+void R_DestroyObjLinks(void);
 void            R_ClearObjLinksForFrame(void);
 
 void            R_ObjLinkCreate(void* obj, objtype_t type);

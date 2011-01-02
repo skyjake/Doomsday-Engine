@@ -234,8 +234,8 @@ static boolean tryFindResource(resourceclass_t rclass, const char* searchPath,
                     char* const* ext = info->knownFileNameExtensions;
                     do
                     {
-                        Str_Copy(&tmp, &path2);
-                        Str_Appendf(&tmp, "%s", *ext);
+                        Str_Clear(&tmp);
+                        Str_Appendf(&tmp, "%s%s", Str_Text(&path2), *ext);
                         found = tryFindResource2(rclass, Str_Text(&tmp), foundPath, rnamespace);
                     } while(!found && *(++ext));
                 }

@@ -257,16 +257,14 @@ void GL_ResetTextureManager(void)
     texInited = false;
 }
 
-void GL_ClearTextures(void)
+void GL_DestroyTextures(void)
 {
     if(!texInited) return;
 
-    // gltexture-wrapped GL textures; textures, flats, sprites, system...
-    GL_DeleteAllTexturesForGLTextures(GLT_ANY);
-
     if(numGLTextures)
     {
-        uint i;
+        GL_ClearTextures();
+        { uint i;
         for(i = 0; i < numGLTextures; ++i)
         {
             gltexture_t* mTex = glTextures[i];
@@ -278,7 +276,7 @@ void GL_ClearTextures(void)
                 node = next;
             }
             Z_Free(mTex);
-        }
+        }}
 
         Z_Free(glTextures);
     }
@@ -291,6 +289,14 @@ void GL_ClearTextures(void)
     }
 }
 
+void GL_ClearTextures(void)
+{
+    if(!texInited) return;
+
+    // gltexture-wrapped GL textures; textures, flats, sprites, system...
+    GL_DeleteAllTexturesForGLTextures(GLT_ANY);
+}
+
 /**
  * Called once during engine shutdown.
  */
@@ -299,7 +305,7 @@ void GL_ShutdownTextureManager(void)
     if(!texInited)
         return; // Already been here?
 
-    GL_ClearTextures();
+    GL_DestroyTextures();
     texInited = false;
 }
 
@@ -405,24 +411,29 @@ void GL_ClearRuntimeTextures(void)
     // Which, obviously, can't persist any longer...
     RL_DeleteLists();
 
-    // gltexture-wrapped GL textures; textures, flats, sprites, system...
-    GL_DeleteAllTexturesForGLTextures(GLT_ANY);
-
+    // gltexture-wrapped GL textures; textures, flats, sprites...
+    GL_DeleteAllTexturesForGLTextures(GLT_FLAT);
+    GL_DeleteAllTexturesForGLTextures(GLT_DOOMTEXTURE);
+    GL_DeleteAllTexturesForGLTextures(GLT_DOOMPATCH);
+    GL_DeleteAllTexturesForGLTextures(GLT_SPRITE);
+    GL_DeleteAllTexturesForGLTextures(GLT_DETAIL);
+    GL_DeleteAllTexturesForGLTextures(GLT_SHINY);
+    GL_DeleteAllTexturesForGLTextures(GLT_MASK);
+    GL_DeleteAllTexturesForGLTextures(GLT_MODELSKIN);
+    GL_DeleteAllTexturesForGLTextures(GLT_MODELSHINYSKIN);
+    GL_DeleteAllTexturesForGLTextures(GLT_LIGHTMAP);
+    GL_DeleteAllTexturesForGLTextures(GLT_FLARE);
     GL_DeleteRawImages();
+
+    Rend_ParticleClearExtraTextures();
 }
 
 void GL_ClearTextureMemory(void)
 {
     if(!texInited)
         return;
-
     // Delete runtime textures (textures, flats, ...)
     GL_ClearRuntimeTextures();
-
-    Rend_ParticleClearExtraTextures();
-
-    // Delete system textures.
-    GL_ClearSystemTextures();
 }
 
 /**

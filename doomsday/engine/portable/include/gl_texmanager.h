@@ -130,6 +130,7 @@ void            GL_InitTextureManager(void);
 void            GL_ResetTextureManager(void);
 void            GL_ShutdownTextureManager(void);
 void            GL_ClearTextures(void);
+void            GL_DestroyTextures(void);
 
 void            GL_TexReset(void);
 void            GL_LoadSystemTextures(void);

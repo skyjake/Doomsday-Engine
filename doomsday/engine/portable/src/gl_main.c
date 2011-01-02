@@ -434,6 +434,7 @@ const char* GL_ChooseVariableFont(glfontstyle_t style, int resX, int resY)
 void GL_InitFont(void)
 {
     FR_Init();
+
     FR_PrepareFont(GL_ChooseFixedFont());
     glFontFixed = FR_GetCurrent();
 
@@ -623,9 +624,6 @@ void GL_Init(void)
         Con_Error("GL_Init: GL_EarlyInit has not been done yet.\n");
     }
 
-    // Initialize font renderer.
-    GL_InitFont();
-
     // Initialize paletted-texture-mode (if enabled).
     GL_InitPalettedTexture();
 
@@ -634,6 +632,9 @@ void GL_Init(void)
 
     // Initialize one viewport.
     R_SetViewGrid(1, 1);
+
+    // Initialize font renderer.
+    GL_InitFont();
 }
 
 /**
@@ -642,6 +643,7 @@ void GL_Init(void)
 void GL_InitRefresh(void)
 {
     GL_InitTextureManager();
+    GL_LoadSystemTextures();
 }
 
 /**

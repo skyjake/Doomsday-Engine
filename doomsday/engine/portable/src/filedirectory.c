@@ -235,6 +235,9 @@ static filedirectory_t* parsePathsAndBuildNodes(filedirectory_t* fd, const char*
         if((resolvedPath = Uri_Resolved(searchPath)) == 0)
             continue; // Incomplete path; ignore it.
 
+        if(Str_RAt(resolvedPath, 0) != DIR_SEP_CHAR)
+            Str_AppendChar(resolvedPath, DIR_SEP_CHAR);
+
         // Build direc nodes for this path.
         direc = buildDirecNodes(fd, resolvedPath);
         assert(direc);
