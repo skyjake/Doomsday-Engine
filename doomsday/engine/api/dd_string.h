@@ -25,6 +25,8 @@
 #ifndef LIBDENG_API_STRING_H
 #define LIBDENG_API_STRING_H
 
+#include <stddef.h>
+
 /**
  * Dynamic String. Simple dynamic string management.
  *
