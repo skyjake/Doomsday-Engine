@@ -117,7 +117,8 @@ static ddstring_t* resolveUri(const dduri_t* uri, gameinfo_t* info)
                 {
                     Str_Set(&doomWadDir, getenv("DOOMWADDIR"));
                     F_FixSlashes(&doomWadDir);
-
+                    if(Str_RAt(&doomWadDir, 0) != DIR_SEP_CHAR)
+                        Str_AppendChar(&doomWadDir, DIR_SEP_CHAR);
                     Str_Append(dest, Str_Text(&doomWadDir));
                 }
             }
