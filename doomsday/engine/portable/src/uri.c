@@ -121,6 +121,8 @@ static ddstring_t* resolveUri(const dduri_t* uri, gameinfo_t* info)
                         Str_AppendChar(&doomWadDir, DIR_SEP_CHAR);
                     Str_Append(dest, Str_Text(&doomWadDir));
                 }
+                else
+                    goto parseEnded;
             }
             // Now try internal symbols.
             else if(!Str_CompareIgnoreCase(&part, "GameInfo.DataPath"))
