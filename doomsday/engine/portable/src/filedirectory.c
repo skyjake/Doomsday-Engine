@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2010 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -108,7 +108,7 @@ static filedirectory_node_t* buildDirecNodes(filedirectory_t* fd, const ddstring
     // Continue splitting as long as there are parts.
     Str_Init(&part);
     p = Str_Text(&relPath);
-    while((p = Str_CopyDelim2(&part, p, DIR_SEP_CHAR, CDF_OMIT_DELIMITER))) // Get the next part.
+    while((p = Str_CopyDelim2(&part, p, DIR_SEP_CHAR, 0))) // Get the next part.
     {
         node = direcNode(fd, Str_Text(&part), parent);
         parent = node;
@@ -472,7 +472,7 @@ boolean FileDirectoryNode_MatchDirectory(const filedirectory_node_t* direc, cons
     while((pos = strrchr(dir, DIR_SEP_CHAR)) != 0)
     {
         // Does this match?
-        if(stricmp(direc->path, pos + 1))
+        if(strnicmp(direc->path, pos + 1, strlen(direc->path) - (direc->type == FT_DIRECTORY? 1:0)))
             return false;
 
         // Are there no more parent directories?
@@ -485,11 +485,11 @@ boolean FileDirectoryNode_MatchDirectory(const filedirectory_node_t* direc, cons
         *pos = 0;
     }}
 
-    // Anything remaining is the root directory name - does it match?
-    if(stricmp(direc->path, dir))
+    // Anything remaining is the root directory or file name - does it match?
+    if(strnicmp(direc->path, dir, strlen(direc->path) - (direc->type == FT_DIRECTORY? 1:0)))
         return false;
 
-    // We must have now arrived at a directory on the search path.
+    // We must have now arrived at the search target.
     return true;
     }
 }
@@ -501,7 +501,6 @@ void FileDirectoryNode_ComposePath(const filedirectory_node_t* direc, ddstring_t
     direc = direc->parent;
     while(direc)
     {
-        Str_Prepend(foundPath, DIR_SEP_STR);
         Str_Prepend(foundPath, direc->path);
         direc = direc->parent;
     }
