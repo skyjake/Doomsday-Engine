@@ -33,7 +33,7 @@
 #include <glob.h>
 #include <sys/stat.h>
 
-#include "../include/sys_findfile.h"
+#include "sys_findfile.h"
 #include "../include/sys_path.h"
 
 // MACROS ------------------------------------------------------------------

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2004-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,9 +37,15 @@
 
 typedef struct finddata_s {
     void* finddata;
+#if defined(UNIX)
+    long date;
+    long time;
+    long size;
+#else
     time_t date;
     time_t time;
     size_t size;
+#endif
     char* name;
     long attrib;
 } finddata_t;
