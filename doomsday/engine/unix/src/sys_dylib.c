@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_dylib.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * sys_dylib.c: Dynamic Libraries
+ * Dynamic Libraries
  *
  * These functions provide roughly the same functionality as the ltdl
  * library.  Since the ltdl library appears to be broken on Mac OS X,
@@ -108,12 +108,11 @@ static void getBundlePath(char *path)
     }
 }
 
-int lt_dlforeachfile(const char *searchPath,
-                     int (*func) (const char *fileName, lt_ptr data),
-                     lt_ptr data)
+int lt_dlforeachfile(const char* searchPath,
+    int (*func) (const char* fileName, lt_ptr data), lt_ptr data)
 {
-    DIR        *dir = NULL;
-    struct dirent *entry = NULL;
+    DIR* dir = 0;
+    struct dirent* entry = 0;
     filename_t  bundlePath;
 
     // This is the default location where bundles are.
@@ -125,21 +124,11 @@ int lt_dlforeachfile(const char *searchPath,
     dir = opendir(searchPath);
     while((entry = readdir(dir)) != NULL)
     {
-#ifndef MACOSX
-        if(entry->d_type != DT_DIR &&
-           !strncmp(entry->d_name, "libdp", 5))
-#endif
-#ifdef MACOSX
-        if(entry->d_type == DT_DIR &&
-           !strncmp(entry->d_name, "dp", 2))
-#endif
-
+        if(entry->d_type != DT_DIR)
         {
-
             if(func(entry->d_name, data))
                 break;
         }
-
     }
     closedir(dir);
     return 0;

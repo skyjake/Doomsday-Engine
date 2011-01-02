@@ -100,30 +100,31 @@ static int loadPlugin(const char* pluginPath, lt_ptr data)
     lt_dlhandle plugin, *handle;
     void (*initializer)(void);
 
+    Con_Printf("try plugin: (%s)\n", pluginPath);
+
 #ifndef MACOSX
     // What is the actual file name?
     _splitpath(pluginPath, NULL, NULL, name, NULL);
-    if(!strncmp(name, "libdp", 5))
+    if(!strncmp(name, "libdp", 5) || !strncmp(name, "libj", 4))
 #endif
     {
         // Try loading this one as a Doomsday plugin.
-        if(NULL == (plugin = lt_dlopenext(pluginPath)))
-            return false;
-
-        if(NULL == (initializer = lt_dlsym(plugin, "DP_Initialize")) ||
-           NULL == (handle = findFirstUnusedPluginHandle(app)))
+        if(0 != (plugin = lt_dlopenext(pluginPath)) &&
+           0 != (initializer = lt_dlsym(plugin, "DP_Initialize")) &&
+           0 != (handle = findFirstUnusedPluginHandle(app)))
+        {
+            // This seems to be a Doomsday plugin.
+            *handle = plugin;
+            initializer();
+        }
+        else
         {
             Con_Printf("loadPlugin: Error loading \"%s\" (%s)!\n", pluginPath, lt_dlerror());
-            lt_dlclose(plugin);
-            return false;
+            if(plugin)
+                lt_dlclose(plugin);
         }
-
-        // This seems to be a Doomsday plugin.
-        *handle = plugin;
-        initializer();
-        return true;
     }
-    return false;
+    return 0; // Continue search.
 }
 
 static boolean unloadPlugin(lt_dlhandle* handle)
