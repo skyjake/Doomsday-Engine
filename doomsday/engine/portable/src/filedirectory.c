@@ -58,7 +58,8 @@ static filedirectory_node_t* direcNode(filedirectory_t* fd, const char* name,
     // Have we already encountered this directory? Just iterate through all nodes.
     for(node = fd->_direcFirst; node; node = node->next)
     {
-        if(!stricmp(node->path, name) && node->parent == parent)
+        if(node->parent == parent &&
+           !strnicmp(node->path, name, strlen(node->path) - (node->type == FT_DIRECTORY? 1:0)))
             return node;
     }
 
