@@ -154,11 +154,9 @@ int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
        rTransitionTics > 0 && (busyMode & BUSYF_TRANSITION))
     {
         transitionStyle = rTransition;
-        transitionStartTime = Sys_GetTime();
-        transitionPosition = 0;
-        transitionInProgress = true;
         if(transitionStyle == TS_DOOM || transitionStyle == TS_DOOMSMOOTH)
             seedDoomWipeSine();
+        transitionInProgress = true;
     }
 
     // Wait for the busy thread to stop.
@@ -169,6 +167,11 @@ int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
         // Clear any input events that might have accumulated whilst busy.
         DD_ClearEvents();
         B_ActivateContext(B_ContextByName(UI_BINDING_CONTEXT_NAME), false);
+    }
+    else
+    {
+        transitionStartTime = Sys_GetTime();
+        transitionPosition = 0;
     }
 
     // Free resources.
