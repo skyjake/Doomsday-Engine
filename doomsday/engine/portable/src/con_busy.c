@@ -520,7 +520,7 @@ static int GetBufLines(cbuffer_t* buffer, cbline_t const **oldLines)
     int                 newCount = 0;
     int                 i, k;
 
-    count = Con_BufferGetLines(buffer, LINE_COUNT, -LINE_COUNT, bufLines);
+    count = Con_BufferGetLines2(buffer, LINE_COUNT, -LINE_COUNT, bufLines, BLF_OMIT_RULER|BLF_OMIT_EMPTYLINE);
     for(i = 0; i < count; ++i)
     {
         for(k = 0; k < 2 * LINE_COUNT - newCount; ++k)
@@ -615,8 +615,8 @@ void Con_BusyDrawConsoleOutput(void)
 
     for(i = 0; i < 2 * LINE_COUNT; ++i, y += busyFontHgt)
     {
-        float               color = 1;//lineAlpha[i];
-        const cbline_t*     line = visibleBusyLines[i];
+        float color = 1;//lineAlpha[i];
+        const cbline_t* line = visibleBusyLines[i];
 
         if(!line)
             continue;
@@ -627,14 +627,8 @@ void Con_BusyDrawConsoleOutput(void)
         else
             color = 1 - (color - LINE_COUNT);
 
-        if(!(line->flags & CBLF_RULER)) // ignore rulers.
-        {
-            if(!line->text)
-                continue;
-
-            glColor4f(1.f, 1.f, 1.f, color);
-            FR_TextOut(line->text, (theWindow->width - FR_TextWidth(line->text))/2, y);
-        }
+        glColor4f(1.f, 1.f, 1.f, color);
+        FR_TextOut(line->text, (theWindow->width - FR_TextWidth(line->text))/2, y);
     }
 
     glDisable(GL_TEXTURE_2D);

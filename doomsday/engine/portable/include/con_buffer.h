@@ -1,10 +1,10 @@
-/**\file
+/**\file con_buffer.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,17 +61,39 @@ typedef struct {
     int             wbFlags; // write buffer line flags.
 } cbuffer_t;
 
-cbuffer_t*      Con_NewBuffer(uint maxNumLines, uint maxLineLength,
-                              int flags);
-void            Con_DestroyBuffer(cbuffer_t* buf);
+cbuffer_t* Con_NewBuffer(uint maxNumLines, uint maxLineLength, int cbflags);
+void Con_DestroyBuffer(cbuffer_t* buf);
 
-void            Con_BufferWrite(cbuffer_t* buf, int flags, const char* txt);
-void            Con_BufferFlush(cbuffer_t* buf);
-void            Con_BufferClear(cbuffer_t* buf);
-void            Con_BufferSetMaxLineLength(cbuffer_t* buf, uint length);
+void Con_BufferWrite(cbuffer_t* buf, int flags, const char* txt);
+void Con_BufferFlush(cbuffer_t* buf);
+void Con_BufferClear(cbuffer_t* buf);
+void Con_BufferSetMaxLineLength(cbuffer_t* buf, uint length);
+uint Con_BufferNumLines(cbuffer_t* buf);
 
 const cbline_t* Con_BufferGetLine(cbuffer_t* buf, uint idx);
-uint            Con_BufferGetLines(cbuffer_t* buf, uint reqCount,
-                                   int firstIdx, cbline_t const** list);
-uint            Con_BufferNumLines(cbuffer_t* buf);
+
+/**
+ * @defgroup bufferLineFlags Buffer Line Flags.
+ */ 
+/*@{*/
+#define BLF_OMIT_RULER      0x1 // Ignore rulers.
+#define BLF_OMIT_EMPTYLINE  0x2 // Ignore empty lines.
+/*@}*/
+
+/**
+ * Collate an array of ptrs to the immutable @c cbline_t objects owned by
+ * the cbuffer. Caller retains ownership of @a list.
+ *
+ * @param reqCount      Number of lines requested from the buffer, zero means
+ *                      use the current number of lines as the limit.
+ * @param firstIdx      Line index of the first line to be retrieved. If
+ *                      negative, the index is from the end of list.
+ * @param list          Ptr to an array of console buffer ptrs which we'll
+ *                      write to and terminate with @c NULL.
+ * @param blflags       @see bufferLineFlags
+ *
+ * @return              The number of elements written back to the buffer.
+ */
+uint Con_BufferGetLines2(cbuffer_t* buf, uint reqCount, int firstIdx, cbline_t const** list, int blflags);
+uint Con_BufferGetLines(cbuffer_t* buf, uint reqCount, int firstIdx, cbline_t const** list);
 #endif /* LIBDENG_CONSOLE_BUFFER_H */

@@ -353,16 +353,15 @@ static cbline_t const* bufferGetLine(cbuffer_t* buf, uint idx)
 }
 
 static uint bufferGetLines(cbuffer_t* buf, uint reqCount, int firstIdx,
-                           cbline_t const** list)
+    cbline_t const** list, int blflags)
 {
     if((long) firstIdx <= (long) buf->numLines)
     {
-        uint                i, n, idx, count = reqCount;
+        uint n, idx, count = reqCount;
 
         if(firstIdx < 0)
         {
-            long                other = -((long) firstIdx);
-
+            long other = -((long) firstIdx);
             if(other > (long) buf->numLines)
                 firstIdx = 0;
             else
@@ -374,54 +373,47 @@ static uint bufferGetLines(cbuffer_t* buf, uint reqCount, int firstIdx,
             count = buf->numLines - idx;
 
         // Collect the ptrs.
-        for(i = 0, n = idx; i < count; ++i)
-            list[i] = bufferGetLine(buf, n++);
-
+        n = 0;
+        { uint i;
+        for(i = 0; i < count; ++i)
+        {
+            const cbline_t* line = bufferGetLine(buf, idx++);
+            if((blflags & BLF_OMIT_RULER) && (line->flags & CBLF_RULER))
+                continue;
+            if((blflags & BLF_OMIT_EMPTYLINE) && (!line->text || line->len == 0))
+                continue;
+            list[n++] = line;
+        }}
         // Terminate.
-        list[i] = NULL;
-
-        return count; // index + 1
+        list[n] = 0;
+        return n;
     }
 
     if(*list)
-        list[0] = NULL;
+        list[0] = 0;
     return 0;
 }
 
-/**
- * Retrive an array of un-mutable ptrs to console buffer lines from the
- * given cbuffer.
- *
- * NOTE: The array must be free'd with M_Free().
- *
- * @param buf           Ptr to the buffer to retrieve the lines from.
- * @param reqCount      Number of lines requested from the buffer, zero means
- *                      use the current number of lines as the limit.
- * @param firstIdx      Line index of the first line to be retrieved. If
- *                      negative, the index is from the end of list.
- * @param list          Ptr to an array of console buffer ptrs which we'll
- *                      write to and terminate with @c NULL,
- *
- * @return              The number of elements written back to the buffer.
- */
-uint Con_BufferGetLines(cbuffer_t* buf, uint reqCount, int firstIdx,
-                        cbline_t const** list)
+uint Con_BufferGetLines2(cbuffer_t* buf, uint reqCount, int firstIdx,
+    cbline_t const** list, int blflags)
 {
     if(buf)
     {
-        uint                result;
-
+        uint result;
         Sys_Lock(buf->mutex);
-        result = bufferGetLines(buf, reqCount, firstIdx, list);
+        result = bufferGetLines(buf, reqCount, firstIdx, list, blflags);
         Sys_Unlock(buf->mutex);
-
         return result;
     }
-
     if(*list)
-        list[0] = NULL;
-
+        list[0] = 0;
     return 0;
+}
+
+uint Con_BufferGetLines(cbuffer_t* buf, uint reqCount, int firstIdx,
+    cbline_t const** list)
+{
+    return Con_BufferGetLines2(buf, reqCount, firstIdx, list, 0);
 }
 
 /**
