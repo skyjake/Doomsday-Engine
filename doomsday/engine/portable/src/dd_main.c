@@ -910,7 +910,7 @@ static int DD_ChangeGameWorker(void* paramaters)
     Def_Read();
 
     if(p->initiatedBusyMode)
-        Con_SetProgress(160);
+        Con_SetProgress(140);
 
     R_InitSprites(); // Fully initialize sprites.
     R_InitModels();
@@ -920,6 +920,9 @@ static int DD_ChangeGameWorker(void* paramaters)
     Rend_ParticleLoadExtraTextures();
 
     Def_PostInit();
+
+    if(p->initiatedBusyMode)
+        Con_SetProgress(150);
 
     DD_ReadGameHelp();
     Con_InitUI(); // Update the console title display(s).
@@ -931,6 +934,9 @@ static int DD_ChangeGameWorker(void* paramaters)
 
     // Make sure that the next frame does not use a filtered viewer.
     R_ResetViewer();
+
+    if(p->initiatedBusyMode)
+        Con_SetProgress(170);
 
     // Invalidate old cmds and init player values.
     { uint i;
@@ -949,9 +955,9 @@ static int DD_ChangeGameWorker(void* paramaters)
 
     if(gx.PostInit)
     {
-        if(p->initiatedBusyMode)
-            Con_SetProgress(180);
         gx.PostInit((gameid_t)gameInfoIndex(p->info));
+        if(p->initiatedBusyMode)
+            Con_SetProgress(190);
     }
 
     if(!DD_IsNullGameInfo(p->info))
