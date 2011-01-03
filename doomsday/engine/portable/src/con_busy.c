@@ -90,6 +90,7 @@ static DGLuint texLoading[2];
 static DGLuint texScreenshot; // Captured screenshot of the latest frame.
 
 static boolean transitionInProgress = false;
+static transitionstyle_t transitionStyle = 0;
 static uint transitionStartTime = 0;
 static float transitionPosition;
 
@@ -148,20 +149,22 @@ int Con_Busy(int flags, const char* taskName, busyworkerfunc_t worker,
     // background while we keep the user occupied with nice animations.
     busyThread = Sys_StartThread(worker, workerData);
 
-    // Wait for the busy thread to stop.
-    Con_BusyLoop();
-
     // Are we doing a transition effect?
     if(!isDedicated && !netGame && !(busyMode & BUSYF_STARTUP) &&
        rTransitionTics > 0 && (busyMode & BUSYF_TRANSITION))
     {
-        if(rTransition == TS_DOOM || rTransition == TS_DOOMSMOOTH)
-            seedDoomWipeSine();
+        transitionStyle = rTransition;
         transitionStartTime = Sys_GetTime();
         transitionPosition = 0;
         transitionInProgress = true;
+        if(transitionStyle == TS_DOOM || transitionStyle == TS_DOOMSMOOTH)
+            seedDoomWipeSine();
     }
-    else
+
+    // Wait for the busy thread to stop.
+    Con_BusyLoop();
+
+    if(!transitionInProgress)
     {
         // Clear any input events that might have accumulated whilst busy.
         DD_ClearEvents();
@@ -725,7 +728,7 @@ void Con_DrawTransition(void)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
-    switch(rTransition)
+    switch(transitionStyle)
     {
     case TS_DOOMSMOOTH:
         {
