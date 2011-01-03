@@ -48,42 +48,39 @@ static size_t countNodes(filedirectory_t* fd, filetype_t type)
  * @return                  [ a new | the ] directory node that matches the name
  *                          and has the specified parent node.
  */
-static filedirectory_node_t* direcNode(filedirectory_t* fd, const char* name,
+static filedirectory_node_t* direcNode(filedirectory_t* fd, const ddstring_t* name,
     filedirectory_node_t* parent)
 {
-    assert(fd && name && name[0]);
+    assert(fd && name && !Str_IsEmpty(name));
     {
     filedirectory_node_t* node;
 
     // Have we already encountered this directory? Just iterate through all nodes.
     for(node = fd->_direcFirst; node; node = node->next)
     {
-        if(node->parent == parent &&
-           !strnicmp(node->path, name, strlen(node->path) - (node->type == FT_DIRECTORY? 1:0)))
+        if(node->parent != parent)
+            continue;
+        if(Str_Length(&node->path) < Str_Length(name))
+            continue;
+        if(!strnicmp(Str_Text(&node->path), Str_Text(name), Str_Length(&node->path) - (node->type == FT_DIRECTORY? 1:0)))
             return node;
     }
 
     // Add a new node.
     if((node = malloc(sizeof(*node))) == 0)
         Con_Error("direcNode: failed on allocation of %lu bytes for new node.", (unsigned long) sizeof(*node));
-
-    node->next = 0;
-    node->parent = parent;
+    
     if(fd->_direcLast)
         fd->_direcLast->next = node;
     fd->_direcLast = node;
     if(!fd->_direcFirst)
         fd->_direcFirst = node;
 
-    // Make a copy of the path. Freed in FileDirectory_Clear().
-    if((node->path = malloc(strlen(name) + 1)) == 0)
-        Con_Error("direcNode: failed on allocation of %lu bytes for path.", (unsigned long) (strlen(name) + 1));
-
-    strcpy(node->path, name);
-
-    // No files yet.
     node->type = FT_DIRECTORY;
-    node->processed = false;
+    Str_Init(&node->path); Str_Copy(&node->path, name);
+    node->parent = parent;
+    node->next = 0;
+    node->processed = false; // No files yet.
 
     return node;
     }
@@ -111,11 +108,11 @@ static filedirectory_node_t* buildDirecNodes(filedirectory_t* fd, const ddstring
     p = Str_Text(&relPath);
     while((p = Str_CopyDelim2(&part, p, DIR_SEP_CHAR, 0))) // Get the next part.
     {
-        node = direcNode(fd, Str_Text(&part), parent);
+        node = direcNode(fd, &part, parent);
         parent = node;
     }
     if(Str_Length(&part) != 0)
-        node = direcNode(fd, Str_Text(&part), parent);
+        node = direcNode(fd, &part, parent);
 
     Str_Free(&part);
     Str_Free(&relPath);
@@ -130,7 +127,7 @@ static void clearDirectory(filedirectory_t* fd)
     while(fd->_direcFirst)
     {
         filedirectory_node_t* next = fd->_direcFirst->next;
-        free(fd->_direcFirst->path);
+        Str_Free(&fd->_direcFirst->path);
         free(fd->_direcFirst);
         fd->_direcFirst = next;
     }
@@ -461,9 +458,9 @@ void FileDirectory_PrintFileList(filedirectory_t* fd)
 }
 #endif
 
-boolean FileDirectoryNode_MatchDirectory(const filedirectory_node_t* direc, const char* name)
+boolean FileDirectoryNode_MatchDirectory(const filedirectory_node_t* node, const char* name)
 {
-    assert(direc && name && name[0]);
+    assert(node && name && name[0]);
     {
     filename_t dir;
 
@@ -473,21 +470,23 @@ boolean FileDirectoryNode_MatchDirectory(const filedirectory_node_t* direc, cons
     while((pos = strrchr(dir, DIR_SEP_CHAR)) != 0)
     {
         // Does this match?
-        if(strnicmp(direc->path, pos + 1, strlen(direc->path) - (direc->type == FT_DIRECTORY? 1:0)))
-            return false;
+        if(Str_Length(&node->path) < strlen(name) ||
+           strnicmp(Str_Text(&node->path), name, Str_Length(&node->path) - (node->type == FT_DIRECTORY? 1:0)))
+           return false;
 
         // Are there no more parent directories?
-        if(!direc->parent)
+        if(!node->parent)
             return false;
 
         // So far so good. Move one directory level upwards.
-        direc = direc->parent;
+        node = node->parent;
         // The string now ends here.
         *pos = 0;
     }}
 
     // Anything remaining is the root directory or file name - does it match?
-    if(strnicmp(direc->path, dir, strlen(direc->path) - (direc->type == FT_DIRECTORY? 1:0)))
+    if(Str_Length(&node->path) < strlen(name) ||
+       strnicmp(Str_Text(&node->path), name, Str_Length(&node->path) - (node->type == FT_DIRECTORY? 1:0)))
         return false;
 
     // We must have now arrived at the search target.
@@ -498,11 +497,11 @@ boolean FileDirectoryNode_MatchDirectory(const filedirectory_node_t* direc, cons
 void FileDirectoryNode_ComposePath(const filedirectory_node_t* direc, ddstring_t* foundPath)
 {
     assert(direc && foundPath);
-    Str_Prepend(foundPath, direc->path);
+    Str_Prepend(foundPath, Str_Text(&direc->path));
     direc = direc->parent;
     while(direc)
     {
-        Str_Prepend(foundPath, direc->path);
+        Str_Prepend(foundPath, Str_Text(&direc->path));
         direc = direc->parent;
     }
 }
