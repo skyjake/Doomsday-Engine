@@ -196,7 +196,7 @@ static int findPathWorker(const filedirectory_node_t* direc, void* paramaters)
     assert(direc && paramaters);
     {
     findpathworker_paramaters_t* p = (findpathworker_paramaters_t*)paramaters;
-    if(FileDirectoryNode_MatchDirectory(direc, Str_Text(p->searchPath)))
+    if(FileDirectoryNode_MatchDirectory(direc, p->searchPath))
     {
         if(p->foundPath)
             FileDirectoryNode_ComposePath(direc, p->foundPath);
@@ -292,31 +292,48 @@ static filedirectory_t* parsePathsAndBuildNodes(filedirectory_t* fd, const char*
     }
 }
 
-filedirectory_t* FileDirectory_Create2(const char* pathList)
+filedirectory_t* FileDirectory_Construct2(const ddstring_t* pathList)
 {
     filedirectory_t* fd;
 
     if((fd = malloc(sizeof(*fd))) == 0)
-        Con_Error("FileDirectory_Create: Failed on allocation of %lu bytes for new FileDirectory.", (unsigned long) sizeof(*fd));
+        Con_Error("FileDirectory_ConstructDefault: Failed on allocation of %lu bytes for new FileDirectory.", (unsigned long) sizeof(*fd));
 
     fd->_builtRecordSet = false;
     fd->_direcFirst = fd->_direcLast = 0;
     Str_Init(&fd->_pathList);
     if(pathList)
     {
-        Str_Set(&fd->_pathList, pathList);
+        Str_Copy(&fd->_pathList, pathList);
         if(Str_RAt(&fd->_pathList, 0) != ';')
             Str_AppendChar(&fd->_pathList, ';');
     }
     return fd;
 }
 
-filedirectory_t* FileDirectory_Create(void)
+filedirectory_t* FileDirectory_Construct(const char* pathList)
 {
-    return FileDirectory_Create2(0);
+    filedirectory_t* fd;
+    ddstring_t _pathList, *paths = 0;
+    size_t len = pathList? strlen(pathList) : 0;
+    if(len != 0)
+    {
+        Str_Init(&_pathList);
+        Str_Set(&_pathList, pathList);
+        paths = &_pathList;
+    }
+    fd = FileDirectory_Construct2(paths);
+    if(len != 0)
+        Str_Free(paths);
+    return fd;
 }
 
-void FileDirectory_Destroy(filedirectory_t* fd)
+filedirectory_t* FileDirectory_ConstructDefault(void)
+{
+    return FileDirectory_Construct(0);
+}
+
+void FileDirectory_Destruct(filedirectory_t* fd)
 {
     assert(fd);
     clearDirectory(fd);
@@ -458,21 +475,21 @@ void FileDirectory_PrintFileList(filedirectory_t* fd)
 }
 #endif
 
-boolean FileDirectoryNode_MatchDirectory(const filedirectory_node_t* node, const char* name)
+boolean FileDirectoryNode_MatchDirectory(const filedirectory_node_t* node, const ddstring_t* searchPath)
 {
-    assert(node && name && name[0]);
+    assert(node && searchPath);
     {
     filename_t dir;
 
-    // Where does the directory name begin? We'll do this in reverse order.
-    strncpy(dir, name, FILENAME_T_MAXLEN);
+    // Where does the directory searchPath begin? We'll do this in reverse order.
+    strncpy(dir, Str_Text(searchPath), FILENAME_T_MAXLEN);
     { char* pos;
     while((pos = strrchr(dir, DIR_SEP_CHAR)) != 0)
     {
         // Does this match?
-        if(Str_Length(&node->path) < strlen(name) ||
-           strnicmp(Str_Text(&node->path), name, Str_Length(&node->path) - (node->type == FT_DIRECTORY? 1:0)))
-           return false;
+        if(Str_Length(&node->path) < Str_Length(searchPath) ||
+           strnicmp(Str_Text(&node->path), Str_Text(searchPath), Str_Length(&node->path) - (node->type == FT_DIRECTORY? 1:0)))
+            return false;
 
         // Are there no more parent directories?
         if(!node->parent)
@@ -484,9 +501,9 @@ boolean FileDirectoryNode_MatchDirectory(const filedirectory_node_t* node, const
         *pos = 0;
     }}
 
-    // Anything remaining is the root directory or file name - does it match?
-    if(Str_Length(&node->path) < strlen(name) ||
-       strnicmp(Str_Text(&node->path), name, Str_Length(&node->path) - (node->type == FT_DIRECTORY? 1:0)))
+    // Anything remaining is the root directory or file searchPath - does it match?
+    if(Str_Length(&node->path) < Str_Length(searchPath) ||
+       strnicmp(Str_Text(&node->path), Str_Text(searchPath), Str_Length(&node->path) - (node->type == FT_DIRECTORY? 1:0)))
         return false;
 
     // We must have now arrived at the search target.

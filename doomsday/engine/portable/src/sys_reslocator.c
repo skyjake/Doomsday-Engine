@@ -59,6 +59,9 @@ typedef struct {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
+static resourcenamespace_namehash_key_t hashVarLengthNameIgnoreCase(const ddstring_t* name);
+static ddstring_t* composeHashNameForFilePath(const ddstring_t* filePath);
+
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -68,20 +71,20 @@ typedef struct {
 static boolean inited = false;
 
 static const resourcetypeinfo_t typeInfo[NUM_RESOURCE_TYPES] = {
-    /* RT_ZIP */ { RC_PACKAGE,      {"pk3", "zip", 0} },
-    /* RT_WAD */ { RC_PACKAGE,      {"wad", 0} },
-    /* RT_DED */ { RC_DEFINITION,   {"ded", 0} },
-    /* RT_PNG */ { RC_GRAPHIC,      {"png", 0} },
-    /* RT_TGA */ { RC_GRAPHIC,      {"tga", 0} },
-    /* RT_PCX */ { RC_GRAPHIC,      {"pcx", 0} },
-    /* RT_DMD */ { RC_MODEL,        {"dmd", 0} },
-    /* RT_MD2 */ { RC_MODEL,        {"md2", 0} },
-    /* RT_WAV */ { RC_SOUND,        {"wav", 0} },
-    /* RT_OGG */ { RC_MUSIC,        {"ogg", 0} },
-    /* RT_MP3 */ { RC_MUSIC,        {"mp3", 0} },
-    /* RT_MOD */ { RC_MUSIC,        {"mod", 0} },
-    /* RT_MID */ { RC_MUSIC,        {"mid", 0} },
-    /* RT_DEH */ { RC_UNKNOWN,      {"deh", 0} }
+    /* RT_ZIP */        { RC_PACKAGE,      {"pk3", "zip", 0} },
+    /* RT_WAD */        { RC_PACKAGE,      {"wad", 0} },
+    /* RT_DED */        { RC_DEFINITION,   {"ded", 0} },
+    /* RT_PNG */        { RC_GRAPHIC,      {"png", 0} },
+    /* RT_TGA */        { RC_GRAPHIC,      {"tga", 0} },
+    /* RT_PCX */        { RC_GRAPHIC,      {"pcx", 0} },
+    /* RT_DMD */        { RC_MODEL,        {"dmd", 0} },
+    /* RT_MD2 */        { RC_MODEL,        {"md2", 0} },
+    /* RT_WAV */        { RC_SOUND,        {"wav", 0} },
+    /* RT_OGG */        { RC_MUSIC,        {"ogg", 0} },
+    /* RT_MP3 */        { RC_MUSIC,        {"mp3", 0} },
+    /* RT_MOD */        { RC_MUSIC,        {"mod", 0} },
+    /* RT_MID */        { RC_MUSIC,        {"mid", 0} },
+    /* RT_DEH */        { RC_UNKNOWN,      {"deh", 0} }
 };
 
 // Recognized resource types (in order of importance, left to right).
@@ -105,16 +108,16 @@ static const ddstring_t defaultNamespaceForClass[NUM_RESOURCE_CLASSES] = {
 };
 
 static resourcenamespace_t namespaces[] = {
-    { "Packages",    0,             "",         "",             "$(GameInfo.DataPath);}data\\;$(DOOMWADDIR)" },
-    { "Defs",        0,             "",         "",             "$(GameInfo.DefsPath)\\$(GameInfo.IdentityKey);$(GameInfo.DefsPath);}defs\\" },
-    { "Graphics",    0,             "-gfxdir",  "-gfxdir2",     "}data\\graphics" },
-    { "Models",      RNF_USE_VMAP,  "-modeldir","-modeldir2",   "$(GameInfo.DataPath)\\models\\$(GameInfo.IdentityKey);$(GameInfo.DataPath)\\models" },
-    { "Sfx",         RNF_USE_VMAP,  "-sfxdir",  "-sfxdir2",     "$(GameInfo.DataPath)\\sfx\\$(GameInfo.IdentityKey);$(GameInfo.DataPath)\\sfx" },
-    { "Music",       RNF_USE_VMAP,  "-musdir",  "-musdir2",     "$(GameInfo.DataPath)\\music\\$(GameInfo.IdentityKey);$(GameInfo.DataPath)\\music" },
-    { "Textures",    RNF_USE_VMAP,  "-texdir",  "-texdir2",     "$(GameInfo.DataPath)\\textures\\$(GameInfo.IdentityKey);$(GameInfo.DataPath)\\textures" },
-    { "Flats",       RNF_USE_VMAP,  "-flatdir", "-flatdir2",    "$(GameInfo.DataPath)\\flats\\$(GameInfo.IdentityKey);$(GameInfo.DataPath)\\flats" },
-    { "Patches",     RNF_USE_VMAP,  "-patdir",  "-patdir2",     "$(GameInfo.DataPath)\\patches\\$(GameInfo.IdentityKey);$(GameInfo.DataPath)\\patches" },
-    { "LightMaps",   RNF_USE_VMAP,  "-lmdir",   "-lmdir2",      "$(GameInfo.DataPath)\\lightmaps\\$(GameInfo.IdentityKey);$(GameInfo.DataPath)\\lightmaps" }
+    { "Packages",    0,             "",         "",             "$(GameInfo.DataPath);}data/;$(DOOMWADDIR)", composeHashNameForFilePath, hashVarLengthNameIgnoreCase },
+    { "Defs",        0,             "",         "",             "$(GameInfo.DefsPath)/$(GameInfo.IdentityKey);$(GameInfo.DefsPath);}defs/", composeHashNameForFilePath, hashVarLengthNameIgnoreCase },
+    { "Graphics",    0,             "-gfxdir",  "-gfxdir2",     "}data/graphics", composeHashNameForFilePath, hashVarLengthNameIgnoreCase },
+    { "Models",      RNF_USE_VMAP,  "-modeldir","-modeldir2",   "$(GameInfo.DataPath)/models/$(GameInfo.IdentityKey);$(GameInfo.DataPath)/models", composeHashNameForFilePath, hashVarLengthNameIgnoreCase },
+    { "Sfx",         RNF_USE_VMAP,  "-sfxdir",  "-sfxdir2",     "$(GameInfo.DataPath)/sfx/$(GameInfo.IdentityKey);$(GameInfo.DataPath)/sfx", composeHashNameForFilePath, hashVarLengthNameIgnoreCase },
+    { "Music",       RNF_USE_VMAP,  "-musdir",  "-musdir2",     "$(GameInfo.DataPath)/music/$(GameInfo.IdentityKey);$(GameInfo.DataPath)/music", composeHashNameForFilePath, hashVarLengthNameIgnoreCase },
+    { "Textures",    RNF_USE_VMAP,  "-texdir",  "-texdir2",     "$(GameInfo.DataPath)/textures/$(GameInfo.IdentityKey);$(GameInfo.DataPath)/textures", composeHashNameForFilePath, hashVarLengthNameIgnoreCase },
+    { "Flats",       RNF_USE_VMAP,  "-flatdir", "-flatdir2",    "$(GameInfo.DataPath)/flats/$(GameInfo.IdentityKey);$(GameInfo.DataPath)/flats", composeHashNameForFilePath, hashVarLengthNameIgnoreCase },
+    { "Patches",     RNF_USE_VMAP,  "-patdir",  "-patdir2",     "$(GameInfo.DataPath)/patches/$(GameInfo.IdentityKey);$(GameInfo.DataPath)/patches", composeHashNameForFilePath, hashVarLengthNameIgnoreCase },
+    { "LightMaps",   RNF_USE_VMAP,  "-lmdir",   "-lmdir2",      "$(GameInfo.DataPath)/lightmaps/$(GameInfo.IdentityKey);$(GameInfo.DataPath)/lightmaps", composeHashNameForFilePath, hashVarLengthNameIgnoreCase }
 };
 static uint numNamespaces = sizeof(namespaces)/sizeof(namespaces[0]);
 
@@ -122,6 +125,39 @@ static uint numNamespaces = sizeof(namespaces)/sizeof(namespaces[0]);
 static filedirectory_t* fileDirectory;
 
 // CODE --------------------------------------------------------------------
+
+static ddstring_t* composeHashNameForFilePath(const ddstring_t* filePath)
+{
+    ddstring_t* hashName = Str_New(); Str_Init(hashName);
+    F_FileName(hashName, filePath);
+    return hashName;
+}
+
+/**
+ * This is a hash function. It uses the resource name to generate a
+ * somewhat-random number between 0 and RESOURCENAMESPACE_HASHSIZE.
+ *
+ * @return              The generated hash key.
+ */
+static resourcenamespace_namehash_key_t hashVarLengthNameIgnoreCase(const ddstring_t* name)
+{
+    assert(name);
+    {
+    resourcenamespace_namehash_key_t key = 0;
+    byte op = 0;
+    const char* c;
+    for(c = Str_Text(name); *c; c++)
+    {
+        switch(op)
+        {
+        case 0: key ^= tolower(*c); ++op;   break;
+        case 1: key *= tolower(*c); ++op;   break;
+        case 2: key -= tolower(*c);   op=0; break;
+        }
+    }
+    return key % RESOURCENAMESPACE_HASHSIZE;
+    }
+}
 
 static __inline const resourcetypeinfo_t* getInfoForResourceType(resourcetype_t type)
 {
@@ -170,10 +206,10 @@ static void clearNamespaceSearchPaths(resourcenamespaceid_t rni)
     ResourceNamespace_ClearSearchPaths(getNamespaceForId(rni));
 }
 
-static boolean tryFindResource2(resourceclass_t rclass, const char* searchPath,
+static boolean tryFindResource2(resourceclass_t rclass, const ddstring_t* searchPath,
     ddstring_t* foundPath, resourcenamespace_t* rnamespace)
 {
-    assert(inited && searchPath && searchPath[0]);
+    assert(inited && searchPath && !Str_IsEmpty(searchPath));
 
     // Is there a namespace we should use?
     if(rnamespace)
@@ -184,25 +220,25 @@ static boolean tryFindResource2(resourceclass_t rclass, const char* searchPath,
         return result;
     }
 
-    if(F_Access(searchPath))
+    if(F_Access(Str_Text(searchPath)))
     {
         if(foundPath)
-            Str_Set(foundPath, searchPath);
+            Str_Copy(foundPath, searchPath);
         return true;
     }
     return false;
 }
 
-static boolean tryFindResource(resourceclass_t rclass, const char* searchPath,
+static boolean tryFindResource(resourceclass_t rclass, const ddstring_t* searchPath,
     ddstring_t* foundPath, resourcenamespace_t* rnamespace)
 {
-    assert(inited && searchPath && searchPath[0]);
+    assert(inited && searchPath && !Str_IsEmpty(searchPath));
     {
     boolean found = false;
     char* ptr;
 
     // Has an extension been specified?
-    ptr = M_FindFileExtension((char*)searchPath);
+    ptr = M_FindFileExtension(Str_Text(searchPath));
     if(ptr && *ptr != '*') // Try this first.
         found = tryFindResource2(rclass, searchPath, foundPath, rnamespace);
 
@@ -214,11 +250,11 @@ static boolean tryFindResource(resourceclass_t rclass, const char* searchPath,
         // Create a copy of the searchPath minus file extension.
         if(ptr)
         {
-            Str_PartAppend(&path2, searchPath, 0, ptr - searchPath);
+            Str_PartAppend(&path2, Str_Text(searchPath), 0, ptr - Str_Text(searchPath));
         }
         else
         {
-            Str_Set(&path2, searchPath);
+            Str_Copy(&path2, searchPath);
             Str_AppendChar(&path2, '.');
         }
 
@@ -237,7 +273,7 @@ static boolean tryFindResource(resourceclass_t rclass, const char* searchPath,
                     {
                         Str_Clear(&tmp);
                         Str_Appendf(&tmp, "%s%s", Str_Text(&path2), *ext);
-                        found = tryFindResource2(rclass, Str_Text(&tmp), foundPath, rnamespace);
+                        found = tryFindResource2(rclass, &tmp, foundPath, rnamespace);
                     } while(!found && *(++ext));
                 }
             } while(!found && *(++type) != RT_NONE);
@@ -250,10 +286,10 @@ static boolean tryFindResource(resourceclass_t rclass, const char* searchPath,
     }
 }
 
-static boolean findResource(resourceclass_t rclass, const char* searchPath, const char* optionalSuffix,
-    ddstring_t* foundPath, resourcenamespace_t* rnamespace)
+static boolean findResource2(resourceclass_t rclass, const ddstring_t* searchPath,
+    const ddstring_t* optionalSuffix, ddstring_t* foundPath, resourcenamespace_t* rnamespace)
 {
-    assert(inited && searchPath && searchPath[0]);
+    assert(inited && searchPath && !Str_IsEmpty(searchPath));
     {
     boolean found = false;
 
@@ -265,38 +301,96 @@ static boolean findResource(resourceclass_t rclass, const char* searchPath, cons
     if(optionalSuffix)
     {
         ddstring_t fn;
+
         Str_Init(&fn);
 
         // Has an extension been specified?
-        { char* ptr = M_FindFileExtension((char*)searchPath);
+        { char* ptr = M_FindFileExtension(Str_Text(searchPath));
         if(ptr && *ptr != '*')
         {
             char ext[10];
             strncpy(ext, ptr, 10);
-            Str_PartAppend(&fn, searchPath, 0, ptr - 1 - searchPath);
-            Str_Append(&fn, optionalSuffix);
-            Str_Append(&fn, ext);
+            Str_PartAppend(&fn, Str_Text(searchPath), 0, ptr - 1 - Str_Text(searchPath));
+            Str_Appendf(&fn, "%s%s", Str_Text(optionalSuffix), ext);
         }
         else
         {
-            Str_Set(&fn, searchPath);
-            Str_Append(&fn, optionalSuffix);
+            Str_Appendf(&fn, "%s%s", Str_Text(searchPath), Str_Text(optionalSuffix));
         }}
 
-        if(tryFindResource(rclass, Str_Text(&fn), foundPath, rnamespace))
-            found = true;
-
+        found = tryFindResource(rclass, &fn, foundPath, rnamespace);
         Str_Free(&fn);
     }
 
     // Try without a suffix.
     if(!found)
-    {
-        if(tryFindResource(rclass, searchPath, foundPath, rnamespace))
-            found = true;
-    }
+        found = tryFindResource(rclass, searchPath, foundPath, rnamespace);
 
     return found;
+    }
+}
+
+static const char* findResource(resourceclass_t rclass, const ddstring_t* searchPaths,
+    const ddstring_t* optionalSuffix, ddstring_t* foundPath)
+{
+    assert(inited && (rclass == RC_UNKNOWN || VALID_RESOURCE_CLASS(rclass)));
+    assert(searchPaths && !Str_IsEmpty(searchPaths));
+    {
+    dduri_t* searchPath;
+    const char* result = 0;
+
+    // Ensure the searchPath list has the required terminating semicolon.
+    searchPath = Uri_ConstructDefault();
+
+    { const char* p = Str_Text(searchPaths);
+    size_t numParsedCharacters = 0;
+    while((p = F_ParseSearchPath2(searchPath, p, ';', rclass)))
+    {
+        ddstring_t* resolvedPath;
+        boolean found = false;
+
+        if((resolvedPath = Uri_Resolved(searchPath)) == 0)
+            continue; // Incomplete path; ignore it.
+
+        // If this is an absolute path, locate using it.
+        if(F_IsAbsolute(resolvedPath))
+        {
+            found = findResource2(rclass, resolvedPath, optionalSuffix, foundPath, 0);
+        }
+        else
+        {   // Probably a relative path.
+            // Has a namespace identifier been included?
+            if(!Str_IsEmpty(Uri_Scheme(searchPath)))
+            {
+                resourcenamespaceid_t rni;
+                if((rni = F_SafeResourceNamespaceForName(Str_Text(Uri_Scheme(searchPath)))) != 0)
+                {
+                    found = findResource2(rclass, resolvedPath, optionalSuffix, foundPath, getNamespaceForId(rni));
+                }
+                else
+                {
+                    ddstring_t* rawPath = Uri_ToString(searchPath);
+                    Con_Message("tryLocateResource: Unknown rnamespace in searchPath \"%s\", "
+                                "using default for %s.\n", Str_Text(rawPath), F_ResourceClassStr(rclass));
+                    Str_Delete(rawPath);
+                }
+            }
+        }
+
+        Str_Delete(resolvedPath);
+
+        if(found)
+        {
+            result = Str_Text(searchPaths) + numParsedCharacters;
+            break;
+        }
+        numParsedCharacters = (p - Str_Text(searchPaths));
+    }}
+
+    if(searchPath)
+        Uri_Destruct(searchPath);
+
+    return result;
     }
 }
 
@@ -313,7 +407,7 @@ void F_InitResourceLocator(void)
         }
 
         // Create the initial (empty) FileDirectory now.
-        fileDirectory = FileDirectory_Create();
+        fileDirectory = FileDirectory_ConstructDefault();
     }
 
     // Allow re-init.
@@ -326,7 +420,7 @@ void F_ShutdownResourceLocator(void)
     if(!inited)
         return;
     resetAllNamespaces();
-    FileDirectory_Destroy(fileDirectory); fileDirectory = 0;
+    FileDirectory_Destruct(fileDirectory); fileDirectory = 0;
     inited = false;
 }
 
@@ -371,79 +465,70 @@ boolean F_IsValidResourceNamespaceId(int val)
     return (boolean)(val>0 && (unsigned)val < (F_NumResourceNamespaces()+1)? 1 : 0);
 }
 
-const char* F_FindResource3(resourceclass_t rclass, const char* _searchPaths, ddstring_t* foundPath,
-    const char* optionalSuffix)
+const char* F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* _searchPaths,
+    ddstring_t* foundPath, const ddstring_t* optionalSuffix)
 {
     assert(inited);
     {
     ddstring_t searchPaths;
-    dduri_t* searchPath;
-    const char* result = 0;
+    const char* result;
 
-    if(!_searchPaths || !_searchPaths[0])
-        return result;
     if(rclass != RC_UNKNOWN && !VALID_RESOURCE_CLASS(rclass))
-        Con_Error("F_FindResource2: Invalid resource class %i.\n", rclass);
+        Con_Error("F_FindResource: Invalid resource class %i.\n", rclass);
+
+    if(!_searchPaths || Str_IsEmpty(_searchPaths))
+    {
+#if _DEBUG
+        Con_Message("F_FindResource: Invalid (NULL) search path, returning not-found.\n");
+#endif
+        return 0;
+    }
 
     // Ensure the searchPath list has the required terminating semicolon.
-    Str_Init(&searchPaths); Str_Set(&searchPaths, _searchPaths);
+    Str_Init(&searchPaths); Str_Copy(&searchPaths, _searchPaths);
     if(Str_RAt(&searchPaths, 0) != ';')
         Str_AppendChar(&searchPaths, ';');
-    Str_StripLeft(&searchPaths);
 
-    searchPath = Uri_ConstructDefault();
-
-    { const char* p = Str_Text(&searchPaths);
-    size_t numParsedCharacters = 0;
-    while((p = F_ParseSearchPath2(searchPath, p, ';', rclass)))
+    if(0 != (result = findResource(rclass, &searchPaths, optionalSuffix, foundPath)))
     {
-        ddstring_t* resolvedPath;
-        boolean found = false;
-
-        if((resolvedPath = Uri_Resolved(searchPath)) == 0)
-            continue; // Incomplete path; ignore it.
-
-        // If this is an absolute path, locate using it.
-        if(F_IsAbsolute(resolvedPath))
-        {
-            found = findResource(rclass, Str_Text(resolvedPath), optionalSuffix, foundPath, 0);
-        }
-        else
-        {   // Probably a relative path.
-            // Has a namespace identifier been included?
-            if(!Str_IsEmpty(Uri_Scheme(searchPath)))
-            {
-                resourcenamespaceid_t rni;
-                if((rni = F_SafeResourceNamespaceForName(Str_Text(Uri_Scheme(searchPath)))) != 0)
-                {
-                    found = findResource(rclass, Str_Text(resolvedPath), optionalSuffix, foundPath, getNamespaceForId(rni));
-                }
-                else
-                {
-                    ddstring_t* rawPath = Uri_ToString(searchPath);
-                    Con_Message("tryLocateResource: Unknown rnamespace in searchPath \"%s\", "
-                                "using default for %s.\n", Str_Text(rawPath), F_ResourceClassStr(rclass));
-                    Str_Delete(rawPath);
-                }
-            }
-        }
-
-        Str_Delete(resolvedPath);
-
-        if(found)
-        {
-            result = _searchPaths + numParsedCharacters;
-            break;
-        }
-        numParsedCharacters = (p - Str_Text(&searchPaths));
-    }}
-
-    if(searchPath)
-        Uri_Destruct(searchPath);
-
+        result = Str_Text(_searchPaths) + (result - Str_Text(&searchPaths));
+    }
     Str_Free(&searchPaths);
     return result;
     }
+}
+
+const char* F_FindResourceStr2(resourceclass_t rclass, const ddstring_t* searchPath,
+    ddstring_t* foundPath)
+{
+    return F_FindResourceStr3(rclass, searchPath, foundPath, 0);
+}
+
+const char* F_FindResourceStr(resourceclass_t rclass, const ddstring_t* searchPath)
+{
+    return F_FindResourceStr2(rclass, searchPath, 0);
+}
+
+const char* F_FindResource3(resourceclass_t rclass, const char* _searchPaths,
+    ddstring_t* foundPath, const char* _optionalSuffix)
+{
+    ddstring_t searchPaths, optionalSuffix;
+    boolean hasOptionalSuffix = false;
+    const char* result;
+    Str_Init(&searchPaths); Str_Set(&searchPaths, _searchPaths);
+    if(_optionalSuffix && _optionalSuffix[0])
+    {
+        Str_Init(&optionalSuffix); Str_Set(&optionalSuffix, _optionalSuffix);
+        hasOptionalSuffix = true;
+    }
+    if(0 != (result = F_FindResourceStr3(rclass, &searchPaths, foundPath, hasOptionalSuffix? &optionalSuffix : 0)))
+    {
+        result = _searchPaths + (result - Str_Text(&searchPaths));
+    }
+    if(hasOptionalSuffix)
+        Str_Free(&optionalSuffix);
+    Str_Free(&searchPaths);
+    return result;
 }
 
 const char* F_FindResource2(resourceclass_t rclass, const char* searchPaths, ddstring_t* foundPath)
@@ -548,6 +633,17 @@ void F_FileDir(const ddstring_t* str, directory2_t* dir)
 }
 
 void F_FileName(ddstring_t* dest, const ddstring_t* src)
+{
+#ifdef WIN32
+    char name[_MAX_FNAME];
+#else
+    char name[NAME_MAX];
+#endif
+    _splitpath(Str_Text(src), 0, 0, name, 0);
+    Str_Set(dest, name);
+}
+
+void F_FileNameAndExtension(ddstring_t* dest, const ddstring_t* src)
 {
 #ifdef WIN32
     char name[_MAX_FNAME], ext[_MAX_EXT];

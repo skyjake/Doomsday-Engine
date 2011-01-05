@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -815,13 +815,13 @@ byte GL_LoadLightMap(image_t* image, const gltexture_inst_t* inst, void* context
     assert(image && inst);
     {
     lightmap_t* lmap = lightMaps[inst->tex->ofTypeID];
-    ddstring_t searchPath, foundPath;
+    ddstring_t searchPath, foundPath, suffix = { "-ck" };
     byte result = 0;
 
     Str_Init(&searchPath); Str_Appendf(&searchPath, "LightMaps:%s;", lmap->external);
     Str_Init(&foundPath);
 
-    if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") != 0 &&
+    if(F_FindResourceStr3(RC_GRAPHIC, &searchPath, &foundPath, &suffix) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
@@ -848,13 +848,13 @@ byte GL_LoadFlareTexture(image_t* image, const gltexture_inst_t* inst, void* con
     assert(image && inst);
     {
     flaretex_t* fTex = flareTextures[inst->tex->ofTypeID];
-    ddstring_t searchPath, foundPath;
+    ddstring_t searchPath, foundPath, suffix = { "-ck" };
     byte result = 0;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "flaremaps:%s;", fTex->external);
+    Str_Init(&searchPath); Str_Appendf(&searchPath, "FlareMaps:%s;", fTex->external);
     Str_Init(&foundPath);
 
-    if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") != 0 &&
+    if(F_FindResourceStr3(RC_GRAPHIC, &searchPath, &foundPath, &suffix) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
@@ -980,13 +980,13 @@ byte GL_LoadModelShinySkin(image_t* image, const gltexture_inst_t* inst, void* c
     assert(image && inst);
     {
     skinname_t* sn = &skinNames[inst->tex->ofTypeID];
-    ddstring_t searchPath, foundPath;
+    ddstring_t searchPath, foundPath, suffix = { "-ck" };
     byte result = 0;
 
     Str_Init(&searchPath); Str_Appendf(&searchPath, "%s;", sn->path);
     Str_Init(&foundPath);
 
-    if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") != 0 &&
+    if(F_FindResourceStr3(RC_GRAPHIC, &searchPath, &foundPath, &suffix) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
@@ -1109,14 +1109,14 @@ byte GL_LoadFlat(image_t* image, const gltexture_inst_t* inst, void* context)
     if(!noHighResTex && (loadExtAlways || highResWithPWAD || GLTexture_IsFromIWAD(inst->tex)))
     {
         const char* lumpName = W_LumpName(flat->lump);
-        ddstring_t searchPath, foundPath;
+        ddstring_t searchPath, foundPath, suffix = { "-ck" };
         byte result = 0;
 
         // First try the flats namespace then the old-fashioned "flat-name" in the textures namespace?.
         Str_Init(&searchPath); Str_Appendf(&searchPath, "Flats:%s;Textures:flat-%s;", lumpName, lumpName);
         Str_Init(&foundPath);
 
-        if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") != 0 &&
+        if(F_FindResourceStr3(RC_GRAPHIC, &searchPath, &foundPath, &suffix) != 0 &&
            GL_LoadImage(image, Str_Text(&foundPath)))
         {
             result = 2;
@@ -1415,13 +1415,13 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst, void* cont
     // Try to load a high resolution version of this texture?
     if(!noHighResTex && (loadExtAlways || highResWithPWAD || GLTexture_IsFromIWAD(inst->tex)))
     {
-        ddstring_t searchPath, foundPath;
+        ddstring_t searchPath, foundPath, suffix = { "-ck" };
         byte result = 0;
 
         Str_Init(&searchPath); Str_Appendf(&searchPath, "Textures:%s;", texDef->name);
         Str_Init(&foundPath);
 
-        if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") != 0 &&
+        if(F_FindResourceStr3(RC_GRAPHIC, &searchPath, &foundPath, &suffix) != 0 &&
            GL_LoadImage(image, Str_Text(&foundPath)))
         {
             result = 2; // High resolution texture loaded.
@@ -1496,13 +1496,13 @@ byte GL_LoadDoomPatch(image_t* image, const gltexture_inst_t* inst,
     // Try to load an external replacement for this version of the patch?
     if(!noHighResTex && (loadExtAlways || highResWithPWAD || W_LumpFromIWAD(p->lump)))
     {
-        ddstring_t searchPath, foundPath;
+        ddstring_t searchPath, foundPath, suffix = { "-ck" };
         byte result = 0;
 
         Str_Init(&searchPath); Str_Appendf(&searchPath, "Patches:%s;", W_LumpName(p->lump));
         Str_Init(&foundPath);
 
-        if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") != 0 &&
+        if(F_FindResourceStr3(RC_GRAPHIC, &searchPath, &foundPath, &suffix) != 0 &&
            GL_LoadImage(image, Str_Text(&foundPath)))
         {
             result = 2;
@@ -1570,7 +1570,7 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
     if(!noHighResPatches)
     {
         const char* lumpName = W_LumpName(lumpNum);
-        ddstring_t searchPath, foundPath;
+        ddstring_t searchPath, foundPath, suffix = { "-ck" };
         byte result = 0;
 
         // Compose resource names, prefer translated or psprite versions.
@@ -1585,7 +1585,7 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
         }
         Str_Init(&foundPath);
 
-        if(F_FindResource3(RC_GRAPHIC, Str_Text(&searchPath), &foundPath, "-ck") != 0 &&
+        if(F_FindResourceStr3(RC_GRAPHIC, &searchPath, &foundPath, &suffix) != 0 &&
            GL_LoadImage(image, Str_Text(&foundPath)))
         {
             result = 2;

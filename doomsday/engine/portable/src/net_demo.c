@@ -90,7 +90,7 @@ extern float netConnectTime;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-char demoPath[128] = "demo\\";
+char demoPath[128] = "demo/";
 
 //int demotic = 0;
 LZFILE *playdemo = 0;

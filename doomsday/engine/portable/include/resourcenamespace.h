@@ -3,7 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,22 +28,21 @@
 #include "dd_string.h"
 #include "dd_uri.h"
 
-typedef struct resourcenamespace_hashnode_s {
-    struct resourcenamespace_hashnode_s* next;
-    ddstring_t name;
+typedef struct resourcenamespace_namehash_node_s {
+    struct resourcenamespace_namehash_node_s* next;
     void* data;
-} resourcenamespace_hashnode_t;
+} resourcenamespace_namehash_node_t;
 
 /**
  * Name search hash.
  */
 // Number of entries in the hash table.
 #define RESOURCENAMESPACE_HASHSIZE 512
-typedef unsigned short resourcenamespace_namehash_hash_t;
+typedef unsigned short resourcenamespace_namehash_key_t;
 
 typedef struct {
-    resourcenamespace_hashnode_t* first;
-    resourcenamespace_hashnode_t* last;
+    resourcenamespace_namehash_node_t* first;
+    resourcenamespace_namehash_node_t* last;
 } resourcenamespace_hashentry_t;
 typedef resourcenamespace_hashentry_t resourcenamespace_namehash_t[RESOURCENAMESPACE_HASHSIZE];
 
@@ -75,11 +75,13 @@ typedef struct resourcenamespace_s {
     /// Resource search order (in order of greatest-importance, right to left) seperated by semicolon (e.g., "path1;path2;").
     const char* _searchPaths;
 
+    /// Path hash table.
+    ddstring_t* (*_composeHashName) (const ddstring_t* path);
+    resourcenamespace_namehash_key_t (*_hashName) (const ddstring_t* name);
+    resourcenamespace_namehash_t _pathHash;
+
     /// Set of "extra" search paths (in order of greatest-importance, right to left) seperated by semicolon (e.g., "path1;path2;").
     ddstring_t _extraSearchPaths;
-
-    /// Path hash table.
-    resourcenamespace_namehash_t _pathHash;
 } resourcenamespace_t;
 
 /**
@@ -107,8 +109,8 @@ void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rnamespace);
  *
  * @return              Ptr to the name hash to use when searching.
  */
-boolean ResourceNamespace_Find2(resourcenamespace_t* rnamespace, const char* searchPath, ddstring_t* foundPath);
-boolean ResourceNamespace_Find(resourcenamespace_t* rnamespace, const char* searchPath);
+boolean ResourceNamespace_Find2(resourcenamespace_t* rnamespace, const ddstring_t* searchPath, ddstring_t* foundPath);
+boolean ResourceNamespace_Find(resourcenamespace_t* rnamespace, const ddstring_t* searchPath);
 
 /**
  * Apply mapping for this namespace to the specified path (if enabled).
@@ -116,7 +118,7 @@ boolean ResourceNamespace_Find(resourcenamespace_t* rnamespace, const char* sear
  * This mapping will translate tokens like "<rnamespace::name>:" into their default paths,
  * which themselves are determined using the current GameInfo.
  *
- *  e.g.: "Models:my\\cool\\model.dmd" -> "}data\\<GameInfo::IdentityKey>\\models\\my\\cool\\model.dmd"
+ *  e.g.: "Models:my/cool/model.dmd" -> "}data/<GameInfo::IdentityKey>/models/my/cool/model.dmd"
  *
  * @param path          Ptr to the path to be mapped.
  * @return              @c true iff mapping was applied to the path.

@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -113,6 +113,10 @@ struct resourcenamespace_s* F_ToResourceNamespace(resourcenamespaceid_t rni);
  *
  * @return              @c true, iff a resource was found.
  */
+const char* F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPath, ddstring_t* foundPath, const ddstring_t* optionalSuffix);
+const char* F_FindResourceStr2(resourceclass_t rclass, const ddstring_t* searchPath, ddstring_t* foundPath);
+const char* F_FindResourceStr(resourceclass_t rclass, const ddstring_t* searchPath);
+
 const char* F_FindResource3(resourceclass_t rclass, const char* searchPath, ddstring_t* foundPath, const char* optionalSuffix);
 const char* F_FindResource2(resourceclass_t rclass, const char* searchPath, ddstring_t* foundPath);
 const char* F_FindResource(resourceclass_t rclass, const char* searchPath);
@@ -161,8 +165,8 @@ typedef struct directory2_s {
 } directory2_t;
 
 void F_FileDir(const ddstring_t* str, directory2_t* dir);
-
 void F_FileName(ddstring_t* dest, const ddstring_t* src);
+void F_FileNameAndExtension(ddstring_t* dest, const ddstring_t* src);
 
 const char* F_ParseSearchPath2(struct dduri_s* dest, const char* src, char delim, resourceclass_t defaultResourceClass);
 const char* F_ParseSearchPath(struct dduri_s* dest, const char* src, char delim);

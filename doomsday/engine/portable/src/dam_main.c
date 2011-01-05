@@ -1,9 +1,9 @@
-/**\file
+/**\file dam_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ byte mapCache = true;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static const char *mapCacheDir = "mapcache\\";
+static const char *mapCacheDir = "mapcache/";
 
 static archivedmap_t **archivedMaps;
 static uint numArchivedMaps;
@@ -397,7 +397,7 @@ void DAM_GetCachedMapDir(char* dir,  int mainLump, size_t len)
     }
 
     // The cached map directory is relative to the runtime directory.
-    dd_snprintf(dir, len, "%s%s\\%s-%04X\\", mapCacheDir, Str_Text(GameInfo_IdentityKey(DD_GameInfo())), base, identifier);
+    dd_snprintf(dir, len, "%s%s/%s-%04X/", mapCacheDir, Str_Text(GameInfo_IdentityKey(DD_GameInfo())), base, identifier);
 
     M_TranslatePath(dir, dir, len);
 }

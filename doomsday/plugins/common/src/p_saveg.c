@@ -1,10 +1,10 @@
-/**\file
+/**\file p_saveg.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * p_saveg.c: Save Game I/O
+ * Save Game I/O
  *
  * \bug Not 64bit clean: In function 'SV_ReadPlayer': cast from pointer to integer of different size
  * \bug Not 64bit clean: In function 'SV_WriteMobj': cast from pointer to integer of different size
@@ -271,8 +271,8 @@ static void unarchiveMap(void);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 LZFILE* savefile;
-filename_t savePath; // e.g., "savegame\\"
-filename_t clientSavePath; // e.g., "savegame\\client\\"
+filename_t savePath; // e.g., "savegame/"
+filename_t clientSavePath; // e.g., "savegame/client/"
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -4815,8 +4815,8 @@ void SV_Init(void)
     {
         strcpy(savePath, ArgNext());
         // Add a trailing backslash is necessary.
-        if(savePath[strlen(savePath) - 1] != '\\')
-            strcat(savePath, "\\");
+        if(savePath[strlen(savePath) - 1] != '/')
+            strcat(savePath, "/");
     }
     else
     {   // Use the default path.
@@ -4824,9 +4824,9 @@ void SV_Init(void)
         if(DD_GetGameInfo(&gameInfo))
         {
 #if __JHEXEN__
-            sprintf(savePath, "hexndata\\%s\\", gameInfo.identityKey);
+            sprintf(savePath, "hexndata/%s/", gameInfo.identityKey);
 #else
-            sprintf(savePath, "savegame\\%s\\", gameInfo.identityKey);
+            sprintf(savePath, "savegame/%s/", gameInfo.identityKey);
 #endif
         }
         else
@@ -4835,7 +4835,7 @@ void SV_Init(void)
 
     // Build the client save path.
     strcpy(clientSavePath, savePath);
-    strcat(clientSavePath, "client\\");
+    strcat(clientSavePath, "client/");
 
     // Check that the save paths exist.
     M_CheckPath(savePath);

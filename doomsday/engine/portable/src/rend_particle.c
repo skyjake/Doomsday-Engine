@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_particle.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * rend_particle.c: Particle Effects
+ * Particle Effect Rendering.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -116,17 +116,51 @@ static float pointDist(fixed_t c[3])
     return dist;
 }
 
-byte GL_LoadParticleTexture(image_t* image, const char* name)
+// Try to load the texture.
+static byte loadParticleTexture(uint particleTex, boolean silent)
 {
+    assert(particleTex < MAX_PTC_TEXTURES);
+    {
+        ddstring_t foundPath, searchPath, suffix = { "-ck" };
+    image_t image;
     byte result = 0;
-    ddstring_t foundPath; Str_Init(&foundPath);
-    if(F_FindResource3(RC_GRAPHIC, name, &foundPath, "-ck") != 0 &&
-       GL_LoadImage(image, Str_Text(&foundPath)))
+
+    Str_Init(&foundPath);
+
+    Str_Init(&searchPath);
+    Str_Appendf(&searchPath, "Textures:Particle%02i", particleTex);
+
+    if(F_FindResourceStr3(RC_GRAPHIC, &searchPath, &foundPath, &suffix) != 0 &&
+       GL_LoadImage(&image, Str_Text(&foundPath)))
     {
         result = 2;
     }
+
+    Str_Free(&searchPath);
     Str_Free(&foundPath);
+
+    if(result != 0)
+    {
+        // If 8-bit with no alpha, generate alpha automatically.
+        if(image.originalBits == 8)
+            GL_ConvertToAlpha(&image, true);
+
+        // Create a new texture and upload the image.
+        ptctexname[particleTex] = GL_NewTextureWithParams(
+            image.pixelSize == 4 ? DGL_RGBA :
+            image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : DGL_RGB,
+            image.width, image.height, image.pixels,
+            TXCF_NO_COMPRESSION);
+
+        // Free the buffer.
+        GL_DestroyImage(&image);
+    }
+    else if(!silent)
+    {
+        Con_Message("Warning: Texture \"Particle%02i\" not found.\n", particleTex);
+    }
     return result;
+    }
 }
 
 void Rend_ParticleLoadSystemTextures(void)
@@ -158,44 +192,9 @@ void Rend_ParticleLoadExtraTextures(void)
 
     { int i;
     for(i = 0; i < MAX_PTC_TEXTURES; ++i)
-    {
-        image_t image;
-        char name[80];
-
-        // Try to load the texture.
-        sprintf(name, "Textures:Particle%02i", i);
-
-        if(GL_LoadParticleTexture(&image, name))
-        {
-            VERBOSE( Con_Message("Rend_ParticleLoadExtraTextures: Texture %02i: %i * %i * %i\n", i,
-                                 image.width, image.height, image.pixelSize) );
-
-            // If 8-bit with no alpha, generate alpha automatically.
-            if(image.originalBits == 8)
-            {
-                GL_ConvertToAlpha(&image, true);
-            }
-
-            // Create a new texture and upload the image.
-            ptctexname[i] = GL_NewTextureWithParams(
-                image.pixelSize == 4 ? DGL_RGBA :
-                image.pixelSize == 2 ? DGL_LUMINANCE_PLUS_A8 : DGL_RGB,
-                image.width, image.height, image.pixels,
-                TXCF_NO_COMPRESSION);
-
-            // Free the buffer.
-            GL_DestroyImage(&image);
-        }
-        else
-        {
-            // Just show the first 'not found'.
-            if(verbose && !reported)
-            {
-                Con_Message("Rend_ParticleLoadExtraTextures: Warning, \"%s\" not found.\n", name);
-                reported = true;
-            }
-        }
-    }}
+        if(!loadParticleTexture(i, reported))
+            reported = true;
+    }
 }
 
 void Rend_ParticleClearSystemTextures(void)

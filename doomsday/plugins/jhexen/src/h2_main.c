@@ -1,10 +1,10 @@
-/**\file
+/**\file h2_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 1999 Activision
  *
@@ -194,8 +194,8 @@ void* G_GetVariable(int id)
 
 int G_RegisterGames(int hookType, int parm, void* data)
 {
-#define DATAPATH        DD_BASEPATH_DATA PLUGIN_NAMETEXT "\\"
-#define DEFSPATH        DD_BASEPATH_DEFS PLUGIN_NAMETEXT "\\"
+#define DATAPATH        DD_BASEPATH_DATA PLUGIN_NAMETEXT "/"
+#define DEFSPATH        DD_BASEPATH_DEFS PLUGIN_NAMETEXT "/"
 #define MAINCONFIG      PLUGIN_NAMETEXT ".cfg"
 #define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
 

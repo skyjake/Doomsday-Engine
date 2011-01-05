@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_winit.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * dd_winit.h: WinAPI Initialization
+ * WinAPI Initialization
  *
  * Create windows, load DLLs, setup APIs.
  */
@@ -263,8 +263,8 @@ static void determineGlobalPaths(application_t* app)
 
 #if defined(DENG_LIBRARY_DIR)
     _snprintf(ddBinDir.path, 254, "%s", DENG_LIBRARY_DIR);
-    if(ddBinDir.path[strlen(ddBinDir.path)] != '\\')
-        sprintf(ddBinDir.path, "%s\\", ddBinDir.path);
+    if(ddBinDir.path[strlen(ddBinDir.path)] != DIR_SEP_CHAR)
+        strncat(ddBinDir.path, DIR_SEP_STR, FILENAME_T_MAXLEN);
     Dir_MakeAbsolute(ddBinDir.path);
     ddBinDir.drive = toupper(ddBinDir.path[0]) - 'A' + 1;
 #else
@@ -287,7 +287,7 @@ static void determineGlobalPaths(application_t* app)
     // The standard base directory is two levels upwards.
     if(ArgCheck("-stdbasedir"))
     {
-        strncpy(ddBasePath, "..\\..\\", FILENAME_T_MAXLEN);
+        strncpy(ddBasePath, ".."DIR_SEP_STR".."DIR_SEP_STR, FILENAME_T_MAXLEN);
     }
 
     if(ArgCheckWith("-basedir", 1))

@@ -52,10 +52,11 @@ typedef struct filedirectory_s {
     struct filedirectory_node_s* _direcFirst, *_direcLast;
 } filedirectory_t;
 
-filedirectory_t* FileDirectory_Create2(const char* pathList);
-filedirectory_t* FileDirectory_Create(void);
+filedirectory_t* FileDirectory_Construct2(const ddstring_t* pathList);
+filedirectory_t* FileDirectory_Construct(const char* pathList);
+filedirectory_t* FileDirectory_ConstructDefault(void);
 
-void FileDirectory_Destroy(filedirectory_t* fileDirectory);
+void FileDirectory_Destruct(filedirectory_t* fileDirectory);
 
 /**
  * Clear the directory contents.
@@ -126,11 +127,11 @@ int FileDirectory_Iterate(filedirectory_t* fileDirectory, filetype_t type, filed
  * @return              @c true, if the path specified in the name begins
  *                      from a directory in the search path.
  */
-boolean FileDirectoryNode_MatchDirectory(const filedirectory_node_t* direc, const char* name);
+boolean FileDirectoryNode_MatchDirectory(const filedirectory_node_t* node, const ddstring_t* searchPath);
 
 /**
  * Composes a relative path for the directory node.
  */
-void FileDirectoryNode_ComposePath(const filedirectory_node_t* direc, ddstring_t* path);
+void FileDirectoryNode_ComposePath(const filedirectory_node_t* node, ddstring_t* path);
 
 #endif /* LIBDENG_FILEDIRECTORY_H */

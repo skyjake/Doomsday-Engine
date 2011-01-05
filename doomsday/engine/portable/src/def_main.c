@@ -1,10 +1,10 @@
-/**\file
+/**\file def_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * def_main.c: Definitions Subsystem
+ * Definitions Subsystem
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -763,7 +763,7 @@ static void readAllDefinitions(void)
     {
         ddstring_t pattern;
         Str_Init(&pattern);
-        Str_Appendf(&pattern, "%sauto\\*.ded", Str_Text(GameInfo_DefsPath(DD_GameInfo())));
+        Str_Appendf(&pattern, "%sauto/*.ded", Str_Text(GameInfo_DefsPath(DD_GameInfo())));
         F_ForAll(&pattern, autoDefsReader);
         Str_Free(&pattern);
     }
