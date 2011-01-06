@@ -30,7 +30,6 @@
  .\..\..\engine\portable\src\s_environ.c
  .\..\..\engine\portable\src\s_cache.c
  .\..\..\engine\portable\src\fi_main.c
- .\..\..\engine\portable\src\filedirectory.c
  .\..\..\engine\portable\src\finaleinterpreter.c
  .\..\..\engine\portable\src\gameinfo.c
  .\..\..\engine\portable\src\gl_defer.c
@@ -45,6 +44,7 @@
  .\..\..\engine\portable\src\gl_draw.c
  .\..\..\engine\portable\src\gl_drawcompositefont.c
  .\..\..\engine\portable\src\gl_drawvectorgraphic.c
+ .\..\..\engine\portable\src\pathdirectory.c
  .\..\..\engine\portable\src\rend_console.c
  .\..\..\engine\portable\src\rend_bias.c
  .\..\..\engine\portable\src\edit_bias.c

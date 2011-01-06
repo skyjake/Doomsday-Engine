@@ -1077,10 +1077,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\engine\portable\src\filedirectory.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\engine\portable\src\finaleinterpreter.c"
 				>
 			</File>
@@ -1318,6 +1314,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\src\p_vertex.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\src\pathdirectory.c"
 				>
 			</File>
 			<File
@@ -2975,6 +2975,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\p_vertex.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\pathdirectory.h"
 				>
 			</File>
 			<File

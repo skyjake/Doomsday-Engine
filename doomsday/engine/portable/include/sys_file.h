@@ -32,7 +32,9 @@
 #define LIBDENG_FILESYS_FILE_IO_H
 
 #include <stdio.h>
+
 #include "dd_string.h"
+#include "pathdirectory.h"
 
 #define deof(file) ((file)->flags.eof != 0)
 
@@ -47,14 +49,6 @@ typedef struct {
     char* pos;
     unsigned int lastModified;
 } DFILE;
-
-typedef enum filetype_e {
-    FT_NONE = -1,
-    FT_NORMAL,
-    FT_DIRECTORY
-} filetype_t;
-
-#define VALID_FILE_TYPE(t)          ((t) == FT_NORMAL || (t) == FT_DIRECTORY)
 
 int F_Access(const char* path);
 DFILE* F_Open(const char* path, const char* mode);
@@ -71,13 +65,21 @@ void F_ResetFileIDs(void);
 boolean F_CheckFileId(const char* path);
 boolean F_ReleaseFileId(const char* path);
 
-void F_InitMapping(void);
+/**
+ * This is a case-insensitive test.
+ * I do hope this algorithm works like it should...
+ *
+ * @return              @c true, if the string matches the pattern.
+ */
+int F_MatchName(const char* string, const char* pattern);
+
+void F_InitializeResourcePathMap(void);
 
 /**
  * The path names are converted to full paths before adding to the table.
  * Files in the source directory are mapped to the target directory.
  */
-void F_AddMapping(const char* source, const char* destination);
+void F_AddResourcePathMapping(const char* source, const char* destination);
 
 /**
  * Initialize the lump directory > vfs translations.
@@ -92,8 +94,8 @@ void F_ShutdownDirec(void);
  * matching the filespec. Absolute path names are given to the callback.
  * Zip directory, DD_DIREC and the real files are scanned.
  */
-typedef int     (*f_forall_func_t) (const ddstring_t* fn, filetype_t type, void* paramaters);
-int F_ForAll2(const ddstring_t* fileSpec, f_forall_func_t callback, void* paramaters);
-int F_ForAll(const ddstring_t* fileSpec, f_forall_func_t callback);
+typedef int (*f_allresourcepaths_callback_t) (const ddstring_t* path, pathdirectory_pathtype_t type, void* paramaters);
+int F_AllResourcePaths2(const ddstring_t* searchPath, f_allresourcepaths_callback_t callback, void* paramaters);
+int F_AllResourcePaths(const ddstring_t* searchPath, f_allresourcepaths_callback_t callback);
 
 #endif /* LIBDENG_FILESYS_FILE_IO_H */

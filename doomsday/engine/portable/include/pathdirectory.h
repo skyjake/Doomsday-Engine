@@ -22,61 +22,67 @@
  * Boston, MA  02110-1301  USA
  */
 
-#ifndef LIBDENG_FILEDIRECTORY_H
-#define LIBDENG_FILEDIRECTORY_H
+#ifndef LIBDENG_PATHDIRECTORY_H
+#define LIBDENG_PATHDIRECTORY_H
 
 #include "dd_string.h"
-#include "sys_file.h"
 
-typedef struct filedirectory_node_s {
-    struct filedirectory_node_s* next;
-    struct filedirectory_node_s* parent;
-    filetype_t type;
+typedef enum {
+    PT_INVALID = -1,
+    PATHDIRECTORY_PATHTYPES_FIRST = 0,
+    PT_DIRECTORY = PATHDIRECTORY_PATHTYPES_FIRST,
+    PT_FILE,
+    PATHDIRECTORY_PATHTYPES_COUNT
+} pathdirectory_pathtype_t;
+
+#define VALID_PATHDIRECTORY_PATHTYPE(t)     ((t) >= PATHDIRECTORY_PATHTYPES_FIRST || (t) < PATHDIRECTORY_PATHTYPES_COUNT)
+
+typedef struct pathdirectory_node_s {
+    struct pathdirectory_node_s* next;
+    struct pathdirectory_node_s* parent;
+    pathdirectory_pathtype_t type;
     ddstring_t path;
     boolean processed;
-} filedirectory_node_t;
+} pathdirectory_node_t;
 
 /**
- * File Directory. File system component representing a physical directory.
+ * Path Directory. Virtual file system component representing a
+ * hierarchical path structure.
  *
  * @ingroup fs
  */
-typedef struct filedirectory_s {
+typedef struct pathdirectory_s {
     /// Current path list.
     ddstring_t _pathList;
 
     /// @c true if the record set has been built.
     boolean _builtRecordSet;
 
-    /// First and last directory nodes.
-    struct filedirectory_node_s* _direcFirst, *_direcLast;
-} filedirectory_t;
+    /// First and last nodes.
+    struct pathdirectory_node_s* _head, *_tail;
+} pathdirectory_t;
 
-filedirectory_t* FileDirectory_Construct2(const ddstring_t* pathList);
-filedirectory_t* FileDirectory_Construct(const char* pathList);
-filedirectory_t* FileDirectory_ConstructDefault(void);
+pathdirectory_t* PathDirectory_Construct2(const ddstring_t* pathList);
+pathdirectory_t* PathDirectory_Construct(const char* pathList);
+pathdirectory_t* PathDirectory_ConstructDefault(void);
 
-void FileDirectory_Destruct(filedirectory_t* fileDirectory);
+void PathDirectory_Destruct(pathdirectory_t* pathDirectory);
 
 /**
  * Clear the directory contents.
  */
-void FileDirectory_Clear(filedirectory_t* fileDirectory);
+void PathDirectory_Clear(pathdirectory_t* pathDirectory);
 
 /**
- * Resolve and collate all file paths in the directory into a list.
+ * Resolve and collate all paths in the directory into a list.
  *
- * @param type              If a valid file type only process nodes of this type.
+ * @param type              If a valid path, only paths of this type will be visited.
  * @param count             Number of files in the list is written back here.
  * @return                  Ptr to the allocated list; it is the responsibility
  *                          of the caller to Str_Free each string in the list and
  *                          Z_Free the list itself.
  */
-ddstring_t* FileDirectory_AllPaths(filedirectory_t* fd, filetype_t type, size_t* count);
-
-#if _DEBUG
-void FileDirectory_PrintFileList(filedirectory_t* fileDirectory);
-#endif
+ddstring_t* PathDirectory_AllPaths2(pathdirectory_t* fd, pathdirectory_pathtype_t type, size_t* count);
 
 /**
  * Add a new set of file paths. Duplicates are automatically pruned.
@@ -85,11 +91,11 @@ void FileDirectory_PrintFileList(filedirectory_t* fileDirectory);
  * @param callback          Callback function ptr.
  * @param paramaters        Passed to the callback.
  */
-void FileDirectory_AddPaths3(filedirectory_t* fileDirectory, const char* pathList,
-    int (*callback) (const filedirectory_node_t* node, void* paramaters), void* paramaters);
-void FileDirectory_AddPaths2(filedirectory_t* fileDirectory, const char* pathList,
-    int (*callback) (const filedirectory_node_t* node, void* paramaters));
-void FileDirectory_AddPaths(filedirectory_t* fileDirectory, const char* pathList);
+void PathDirectory_AddPaths3(pathdirectory_t* pathDirectory, const char* pathList,
+    int (*callback) (const pathdirectory_node_t* node, void* paramaters), void* paramaters);
+void PathDirectory_AddPaths2(pathdirectory_t* pathDirectory, const char* pathList,
+    int (*callback) (const pathdirectory_node_t* node, void* paramaters));
+void PathDirectory_AddPaths(pathdirectory_t* pathDirectory, const char* pathList);
 
 /**
  * Find a path in the directory.
@@ -102,8 +108,8 @@ void FileDirectory_AddPaths(filedirectory_t* fileDirectory, const char* pathList
  *
  * @return                  @c true, iff successful.
  */
-boolean FileDirectory_Find2(filedirectory_t* fileDirectory, const char* searchPath, ddstring_t* foundPath);
-boolean FileDirectory_Find(filedirectory_t* fileDirectory, const char* searchPath);
+boolean PathDirectory_Find2(pathdirectory_t* pathDirectory, const char* searchPath, ddstring_t* foundPath);
+boolean PathDirectory_Find(pathdirectory_t* pathDirectory, const char* searchPath);
 
 /**
  * Iterate over nodes in the directory making a callback for each.
@@ -116,10 +122,10 @@ boolean FileDirectory_Find(filedirectory_t* fileDirectory, const char* searchPat
  *
  * @return                  @c 0 iff iteration completed wholly.
  */
-int FileDirectory_Iterate2(filedirectory_t* fileDirectory, filetype_t type, filedirectory_node_t* parent,
-    int (*callback) (const filedirectory_node_t* node, void* paramaters), void* paramaters);
-int FileDirectory_Iterate(filedirectory_t* fileDirectory, filetype_t type, filedirectory_node_t* parent,
-    int (*callback) (const filedirectory_node_t* node, void* paramaters));
+int PathDirectory_Iterate2(pathdirectory_t* pathDirectory, pathdirectory_pathtype_t type, pathdirectory_node_t* parent,
+    int (*callback) (const pathdirectory_node_t* node, void* paramaters), void* paramaters);
+int PathDirectory_Iterate(pathdirectory_t* pathDirectory, pathdirectory_pathtype_t type, pathdirectory_node_t* parent,
+    int (*callback) (const pathdirectory_node_t* node, void* paramaters));
 
 /**
  * @param name          A relative path.
@@ -127,11 +133,15 @@ int FileDirectory_Iterate(filedirectory_t* fileDirectory, filetype_t type, filed
  * @return              @c true, if the path specified in the name begins
  *                      from a directory in the search path.
  */
-boolean FileDirectoryNode_MatchDirectory(const filedirectory_node_t* node, const ddstring_t* searchPath);
+boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node, const ddstring_t* searchPath);
 
 /**
  * Composes a relative path for the directory node.
  */
-void FileDirectoryNode_ComposePath(const filedirectory_node_t* node, ddstring_t* path);
+void PathDirectoryNode_ComposePath(const pathdirectory_node_t* node, ddstring_t* path);
 
-#endif /* LIBDENG_FILEDIRECTORY_H */
+#if _DEBUG
+void PathDirectory_Print(pathdirectory_t* fd);
+#endif
+
+#endif /* LIBDENG_PATHDIRECTORY_H */

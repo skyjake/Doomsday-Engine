@@ -40,6 +40,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "pathdirectory.h"
 #include "resourcenamespace.h"
 
 // XGClass.h is actually a part of the engine.
@@ -603,10 +604,10 @@ void Def_InitTextDef(ddtext_t* txt, char* str)
 /**
  * Callback for DD_ReadProcessDED.
  */
-int Def_ReadDEDFile(const char* fn, filetype_t type, void* parm)
+int Def_ReadDEDFile(const char* fn, pathdirectory_pathtype_t type, void* parm)
 {
     // Skip directories.
-    if(type == FT_DIRECTORY)
+    if(type == PT_DIRECTORY)
         return true;
 
     if(F_CheckFileId(fn))
@@ -626,7 +627,7 @@ int Def_ReadDEDFile(const char* fn, filetype_t type, void* parm)
 void Def_ReadProcessDED(const char* fileName)
 {
     assert(fileName && fileName[0]);
-    Def_ReadDEDFile(fileName, FT_NORMAL, 0);
+    Def_ReadDEDFile(fileName, PT_FILE, 0);
 }
 
 /**
@@ -715,12 +716,12 @@ static __inline void readDefinitionFile(const char* fileName)
 }
 
 /**
- * (f_forall_func_t)
+ * (f_allresourcepaths_callback_t)
  */
-static int autoDefsReader(const ddstring_t* fileName, filetype_t type, void* paramaters)
+static int autoDefsReader(const ddstring_t* fileName, pathdirectory_pathtype_t type, void* paramaters)
 {
     // Ignore directories.
-    if(type != FT_DIRECTORY)
+    if(type != PT_DIRECTORY)
         readDefinitionFile(Str_Text(fileName));
     return 0; // Continue searching.
 }
@@ -764,7 +765,7 @@ static void readAllDefinitions(void)
         ddstring_t pattern;
         Str_Init(&pattern);
         Str_Appendf(&pattern, "%sauto/*.ded", Str_Text(GameInfo_DefsPath(DD_GameInfo())));
-        F_ForAll(&pattern, autoDefsReader);
+        F_AllResourcePaths(&pattern, autoDefsReader);
         Str_Free(&pattern);
     }
 

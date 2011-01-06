@@ -241,7 +241,6 @@
 		<Unit filename="..\..\engine\portable\include\edit_bias.h" />
 		<Unit filename="..\..\engine\portable\include\edit_map.h" />
 		<Unit filename="..\..\engine\portable\include\fi_main.h" />
-		<Unit filename="..\..\engine\portable\include\filedirectory.h" />
 		<Unit filename="..\..\engine\portable\include\finaleinterpreter.h" />
 		<Unit filename="..\..\engine\portable\include\gameinfo.h" />
 		<Unit filename="..\..\engine\portable\include\gl_defer.h" />
@@ -301,6 +300,7 @@
 		<Unit filename="..\..\engine\portable\include\p_think.h" />
 		<Unit filename="..\..\engine\portable\include\p_ticker.h" />
 		<Unit filename="..\..\engine\portable\include\p_vertex.h" />
+		<Unit filename="..\..\engine\portable\include\pathdirectory.h" />
 		<Unit filename="..\..\engine\portable\include\r_data.h" />
 		<Unit filename="..\..\engine\portable\include\r_draw.h" />
 		<Unit filename="..\..\engine\portable\include\r_lgrid.h" />
@@ -505,7 +505,6 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\fi_main.c" />
-		<Unit filename="..\..\engine\portable\src\filedirectory.c" />
 		<Unit filename="..\..\engine\portable\src\finaleinterpreter.c" />
 		<Unit filename="..\..\engine\portable\src\gameinfo.c" />
 		<Unit filename="..\..\engine\portable\src\gl_defer.c" />
@@ -668,9 +667,8 @@
 		<Unit filename="..\..\engine\portable\src\p_ticker.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="..\..\engine\portable\src\p_vertex.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="..\..\engine\portable\src\p_vertex.c"/>
+		<Unit filename="..\..\engine\portable\src\pathdirectory.c" />
 		<Unit filename="..\..\engine\portable\src\r_data.c">
 			<Option compilerVar="CC" />
 		</Unit>

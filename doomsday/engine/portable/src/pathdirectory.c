@@ -28,17 +28,18 @@
 
 #include "sys_reslocator.h"
 #include "sys_timer.h"
+#include "sys_file.h"
+#include "sys_findfile.h"
+#include "pathdirectory.h"
 
-#include "filedirectory.h"
-
-static size_t countNodes(filedirectory_t* fd, filetype_t type)
+static size_t countNodes(pathdirectory_t* fd, pathdirectory_pathtype_t type)
 {
     assert(fd);
     {
-    filedirectory_node_t* node;
+    pathdirectory_node_t* node;
     size_t n = 0;
-    for(node = fd->_direcFirst; node; node = node->next)
-        if(!VALID_FILE_TYPE(type) || node->type == type)
+    for(node = fd->_head; node; node = node->next)
+        if(!VALID_PATHDIRECTORY_PATHTYPE(type) || node->type == type)
             ++n;
     return n;
     }
@@ -48,21 +49,21 @@ static size_t countNodes(filedirectory_t* fd, filetype_t type)
  * @return                  [ a new | the ] directory node that matches the name
  *                          and has the specified parent node.
  */
-static filedirectory_node_t* direcNode(filedirectory_t* fd, const ddstring_t* name,
-    filedirectory_node_t* parent)
+static pathdirectory_node_t* direcNode(pathdirectory_t* fd, const ddstring_t* name,
+    pathdirectory_node_t* parent)
 {
     assert(fd && name && !Str_IsEmpty(name));
     {
-    filedirectory_node_t* node;
+    pathdirectory_node_t* node;
 
     // Have we already encountered this directory? Just iterate through all nodes.
-    for(node = fd->_direcFirst; node; node = node->next)
+    for(node = fd->_head; node; node = node->next)
     {
         if(node->parent != parent)
             continue;
         if(Str_Length(&node->path) < Str_Length(name))
             continue;
-        if(!strnicmp(Str_Text(&node->path), Str_Text(name), Str_Length(&node->path) - (node->type == FT_DIRECTORY? 1:0)))
+        if(!strnicmp(Str_Text(&node->path), Str_Text(name), Str_Length(&node->path) - (node->type == PT_DIRECTORY? 1:0)))
             return node;
     }
 
@@ -70,13 +71,13 @@ static filedirectory_node_t* direcNode(filedirectory_t* fd, const ddstring_t* na
     if((node = malloc(sizeof(*node))) == 0)
         Con_Error("direcNode: failed on allocation of %lu bytes for new node.", (unsigned long) sizeof(*node));
     
-    if(fd->_direcLast)
-        fd->_direcLast->next = node;
-    fd->_direcLast = node;
-    if(!fd->_direcFirst)
-        fd->_direcFirst = node;
+    if(fd->_tail)
+        fd->_tail->next = node;
+    fd->_tail = node;
+    if(!fd->_head)
+        fd->_head = node;
 
-    node->type = FT_DIRECTORY;
+    node->type = PT_DIRECTORY;
     Str_Init(&node->path); Str_Copy(&node->path, name);
     node->parent = parent;
     node->next = 0;
@@ -91,11 +92,11 @@ static filedirectory_node_t* direcNode(filedirectory_t* fd, const ddstring_t* na
  *
  * @return                  The node that identifies the given path.
  */
-static filedirectory_node_t* buildDirecNodes(filedirectory_t* fd, const ddstring_t* path)
+static pathdirectory_node_t* buildDirecNodes(pathdirectory_t* fd, const ddstring_t* path)
 {
     assert(fd && path);
     {
-    filedirectory_node_t* node = 0, *parent = 0;
+    pathdirectory_node_t* node = 0, *parent = 0;
     ddstring_t relPath, part;
     const char* p;
 
@@ -120,18 +121,18 @@ static filedirectory_node_t* buildDirecNodes(filedirectory_t* fd, const ddstring
     }
 }
 
-static void clearDirectory(filedirectory_t* fd)
+static void clearDirectory(pathdirectory_t* fd)
 {
     assert(fd);
     // Free the directory nodes.
-    while(fd->_direcFirst)
+    while(fd->_head)
     {
-        filedirectory_node_t* next = fd->_direcFirst->next;
-        Str_Free(&fd->_direcFirst->path);
-        free(fd->_direcFirst);
-        fd->_direcFirst = next;
+        pathdirectory_node_t* next = fd->_head->next;
+        Str_Free(&fd->_head->path);
+        free(fd->_head);
+        fd->_head = next;
     }
-    fd->_direcLast = 0;
+    fd->_tail = 0;
     fd->_builtRecordSet = false;
 }
 
@@ -162,23 +163,23 @@ static void printPathList(const char* pathList)
 }
 
 typedef struct {
-    filedirectory_t* fd;
-    filetype_t type;
-    int (*callback) (const filedirectory_node_t* node, void* paramaters);
+    pathdirectory_t* fd;
+    pathdirectory_pathtype_t type;
+    int (*callback) (const pathdirectory_node_t* node, void* paramaters);
     void* paramaters;
 } addpathworker_paramaters_t;
 
-static int addPathWorker(const ddstring_t* filePath, filetype_t type, void* paramaters)
+static int addPathWorker(const ddstring_t* filePath, pathdirectory_pathtype_t type, void* paramaters)
 {
-    assert(filePath && VALID_FILE_TYPE(type) && paramaters);
+    assert(filePath && VALID_PATHDIRECTORY_PATHTYPE(type) && paramaters);
     {
     addpathworker_paramaters_t* p = (addpathworker_paramaters_t*)paramaters;
     int result = 0; // Continue adding.
-    if(p->type == FT_NORMAL)
+    if(p->type == PT_FILE)
     {
-        filedirectory_node_t* node = buildDirecNodes(p->fd, filePath);
-        if(type == FT_NORMAL)
-            node->type = FT_NORMAL;
+        pathdirectory_node_t* node = buildDirecNodes(p->fd, filePath);
+        if(type == PT_FILE)
+            node->type = PT_FILE;
         if(p->callback)
             result = p->callback(node, p->paramaters);
     }
@@ -191,23 +192,23 @@ typedef struct {
     ddstring_t* foundPath;
 } findpathworker_paramaters_t;
 
-static int findPathWorker(const filedirectory_node_t* direc, void* paramaters)
+static int findPathWorker(const pathdirectory_node_t* direc, void* paramaters)
 {
     assert(direc && paramaters);
     {
     findpathworker_paramaters_t* p = (findpathworker_paramaters_t*)paramaters;
-    if(FileDirectoryNode_MatchDirectory(direc, p->searchPath))
+    if(PathDirectoryNode_MatchDirectory(direc, p->searchPath))
     {
         if(p->foundPath)
-            FileDirectoryNode_ComposePath(direc, p->foundPath);
+            PathDirectoryNode_ComposePath(direc, p->foundPath);
         return 1; // A match; stop!
     }
     return 0; // Continue searching.
     }
 }
 
-static filedirectory_t* parsePathsAndBuildNodes(filedirectory_t* fd, const char* _pathList,
-    int (*callback) (const filedirectory_node_t* node, void* paramaters), void* paramaters)
+static pathdirectory_t* parsePathsAndBuildNodes(pathdirectory_t* fd, const char* _pathList,
+    int (*callback) (const pathdirectory_node_t* node, void* paramaters), void* paramaters)
 {
     assert(fd);
     {
@@ -216,7 +217,7 @@ static filedirectory_t* parsePathsAndBuildNodes(filedirectory_t* fd, const char*
     ddstring_t searchPattern;
     dduri_t* searchPath;
 
-    VERBOSE( Con_Message("Adding paths to file directory ...\n") );
+    VERBOSE( Con_Message("Adding paths to directory ...\n") );
     VERBOSE2( printPathList(pathList) );
 
     Str_Init(&searchPattern);
@@ -227,7 +228,7 @@ static filedirectory_t* parsePathsAndBuildNodes(filedirectory_t* fd, const char*
     { const char* p = pathList; size_t n = 0;
     while((p = F_ParseSearchPath(searchPath, p, ';'))) // Get the next path.
     {
-        filedirectory_node_t* direc;
+        pathdirectory_node_t* direc;
         ddstring_t* resolvedPath;
 
         if((resolvedPath = Uri_Resolved(searchPath)) == 0)
@@ -256,7 +257,7 @@ static filedirectory_t* parsePathsAndBuildNodes(filedirectory_t* fd, const char*
         {
             // Does caller want to process it again?
             if(callback)
-                FileDirectory_Iterate2(fd, FT_NORMAL, direc, callback, paramaters);
+                PathDirectory_Iterate2(fd, PT_FILE, direc, callback, paramaters);
         }
         else
         {
@@ -268,10 +269,10 @@ static filedirectory_t* parsePathsAndBuildNodes(filedirectory_t* fd, const char*
 
             // Process this search.
             p.fd = fd;
-            p.type = FT_NORMAL;
+            p.type = PT_FILE;
             p.callback = callback;
             p.paramaters = paramaters;
-            F_ForAll2(&searchPattern, addPathWorker, (void*)&p);
+            F_AllResourcePaths2(&searchPattern, addPathWorker, (void*)&p);
             direc->processed = true;
         }
 
@@ -284,7 +285,7 @@ static filedirectory_t* parsePathsAndBuildNodes(filedirectory_t* fd, const char*
         Uri_Destruct(searchPath);
 
 /*#if _DEBUG
-    FileDirectory_PrintFileList(fd);
+    PathDirectory_Print(fd);
 #endif*/
     VERBOSE2( Con_Message("  Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 
@@ -292,15 +293,15 @@ static filedirectory_t* parsePathsAndBuildNodes(filedirectory_t* fd, const char*
     }
 }
 
-filedirectory_t* FileDirectory_Construct2(const ddstring_t* pathList)
+pathdirectory_t* PathDirectory_Construct2(const ddstring_t* pathList)
 {
-    filedirectory_t* fd;
+    pathdirectory_t* fd;
 
     if((fd = malloc(sizeof(*fd))) == 0)
-        Con_Error("FileDirectory_ConstructDefault: Failed on allocation of %lu bytes for new FileDirectory.", (unsigned long) sizeof(*fd));
+        Con_Error("PathDirectory_ConstructDefault: Failed on allocation of %lu bytes for new PathDirectory.", (unsigned long) sizeof(*fd));
 
     fd->_builtRecordSet = false;
-    fd->_direcFirst = fd->_direcLast = 0;
+    fd->_head = fd->_tail = 0;
     Str_Init(&fd->_pathList);
     if(pathList)
     {
@@ -311,9 +312,9 @@ filedirectory_t* FileDirectory_Construct2(const ddstring_t* pathList)
     return fd;
 }
 
-filedirectory_t* FileDirectory_Construct(const char* pathList)
+pathdirectory_t* PathDirectory_Construct(const char* pathList)
 {
-    filedirectory_t* fd;
+    pathdirectory_t* fd;
     ddstring_t _pathList, *paths = 0;
     size_t len = pathList? strlen(pathList) : 0;
     if(len != 0)
@@ -322,18 +323,18 @@ filedirectory_t* FileDirectory_Construct(const char* pathList)
         Str_Set(&_pathList, pathList);
         paths = &_pathList;
     }
-    fd = FileDirectory_Construct2(paths);
+    fd = PathDirectory_Construct2(paths);
     if(len != 0)
         Str_Free(paths);
     return fd;
 }
 
-filedirectory_t* FileDirectory_ConstructDefault(void)
+pathdirectory_t* PathDirectory_ConstructDefault(void)
 {
-    return FileDirectory_Construct(0);
+    return PathDirectory_Construct(0);
 }
 
-void FileDirectory_Destruct(filedirectory_t* fd)
+void PathDirectory_Destruct(pathdirectory_t* fd)
 {
     assert(fd);
     clearDirectory(fd);
@@ -341,46 +342,46 @@ void FileDirectory_Destruct(filedirectory_t* fd)
     free(fd);
 }
 
-void FileDirectory_Clear(filedirectory_t* fd)
+void PathDirectory_Clear(pathdirectory_t* fd)
 {
     assert(fd);
     clearDirectory(fd);
 }
 
-void FileDirectory_AddPaths3(filedirectory_t* fd, const char* pathList,
-    int (*callback) (const filedirectory_node_t* node, void* paramaters), void* paramaters)
+void PathDirectory_AddPaths3(pathdirectory_t* fd, const char* pathList,
+    int (*callback) (const pathdirectory_node_t* node, void* paramaters), void* paramaters)
 {
     parsePathsAndBuildNodes(fd, pathList, callback, paramaters);
 }
 
-void FileDirectory_AddPaths2(filedirectory_t* fd, const char* pathList,
-    int (*callback) (const filedirectory_node_t* node, void* paramaters))
+void PathDirectory_AddPaths2(pathdirectory_t* fd, const char* pathList,
+    int (*callback) (const pathdirectory_node_t* node, void* paramaters))
 {
-    FileDirectory_AddPaths3(fd, pathList, callback, 0);
+    PathDirectory_AddPaths3(fd, pathList, callback, 0);
 }
 
-void FileDirectory_AddPaths(filedirectory_t* fd, const char* pathList)
+void PathDirectory_AddPaths(pathdirectory_t* fd, const char* pathList)
 {
-    FileDirectory_AddPaths2(fd, pathList, 0);
+    PathDirectory_AddPaths2(fd, pathList, 0);
 }
 
-int FileDirectory_Iterate2(filedirectory_t* fd, filetype_t type, filedirectory_node_t* parent,
-    int (*callback) (const filedirectory_node_t* node, void* paramaters), void* paramaters)
+int PathDirectory_Iterate2(pathdirectory_t* fd, pathdirectory_pathtype_t type, pathdirectory_node_t* parent,
+    int (*callback) (const pathdirectory_node_t* node, void* paramaters), void* paramaters)
 {
     assert(fd && callback);
     {
     int result = 0;
-    filedirectory_node_t* node;
+    pathdirectory_node_t* node;
 
     // Time to build the record set?
     if(!fd->_builtRecordSet)
         parsePathsAndBuildNodes(fd, 0, 0, 0);
 
-    for(node = fd->_direcFirst; node; node = node->next)
+    for(node = fd->_head; node; node = node->next)
     {
         if(parent && node->parent != parent)
             continue;
-        if(VALID_FILE_TYPE(type) && node->type != type)
+        if(VALID_PATHDIRECTORY_PATHTYPE(type) && node->type != type)
             continue;
         if((result = callback(node, paramaters)) != 0)
             break;
@@ -389,13 +390,13 @@ int FileDirectory_Iterate2(filedirectory_t* fd, filetype_t type, filedirectory_n
     }
 }
 
-int FileDirectory_Iterate(filedirectory_t* fd, filetype_t type, filedirectory_node_t* parent,
-    int (*callback) (const filedirectory_node_t* node, void* paramaters))
+int PathDirectory_Iterate(pathdirectory_t* fd, pathdirectory_pathtype_t type, pathdirectory_node_t* parent,
+    int (*callback) (const pathdirectory_node_t* node, void* paramaters))
 {
-    return FileDirectory_Iterate2(fd, type, parent, callback, 0);
+    return PathDirectory_Iterate2(fd, type, parent, callback, 0);
 }
 
-boolean FileDirectory_Find2(filedirectory_t* fd, const char* _searchPath, ddstring_t* foundPath)
+boolean PathDirectory_Find2(pathdirectory_t* fd, const char* _searchPath, ddstring_t* foundPath)
 {
     assert(fd && _searchPath && _searchPath[0]);
     {
@@ -409,18 +410,18 @@ boolean FileDirectory_Find2(filedirectory_t* fd, const char* _searchPath, ddstri
 
     p.foundPath = foundPath;
     p.searchPath = &searchPath;
-    result = FileDirectory_Iterate2(fd, FT_NORMAL, 0, findPathWorker, (void*)&p);
+    result = PathDirectory_Iterate2(fd, PT_FILE, 0, findPathWorker, (void*)&p);
     Str_Free(&searchPath);
     return result;
     }
 }
 
-boolean FileDirectory_Find(filedirectory_t* fd, const char* searchPath)
+boolean PathDirectory_Find(pathdirectory_t* fd, const char* searchPath)
 {
-    return FileDirectory_Find2(fd, searchPath, 0);
+    return PathDirectory_Find2(fd, searchPath, 0);
 }
 
-ddstring_t* FileDirectory_AllPaths(filedirectory_t* fd, filetype_t type, size_t* count)
+ddstring_t* PathDirectory_AllPaths2(pathdirectory_t* fd, pathdirectory_pathtype_t type, size_t* count)
 {
     assert(fd && count);
     {
@@ -429,16 +430,16 @@ ddstring_t* FileDirectory_AllPaths(filedirectory_t* fd, filetype_t type, size_t*
     if(*count != 0)
     {
         if((filePaths = Z_Malloc(sizeof(*filePaths) * (*count), PU_APPSTATIC, 0)) == 0)
-            Con_Error("FileDirectory_AllPaths: failed on allocation of %lu bytes for list.", (unsigned long) sizeof(*filePaths));
+            Con_Error("PathDirectory_AllPaths2: failed on allocation of %lu bytes for list.", (unsigned long) sizeof(*filePaths));
 
-        { filedirectory_node_t* node;
+        { pathdirectory_node_t* node;
         ddstring_t* path = filePaths;
-        for(node = fd->_direcFirst; node; node = node->next)
+        for(node = fd->_head; node; node = node->next)
         {
-            if(VALID_FILE_TYPE(type) && node->type != type)
+            if(VALID_PATHDIRECTORY_PATHTYPE(type) && node->type != type)
                 continue;
             Str_Init(path);
-            FileDirectoryNode_ComposePath(node, path);
+            PathDirectoryNode_ComposePath(node, path);
             path++;
         }}
     }
@@ -452,15 +453,15 @@ static int C_DECL compareFilePaths(const void* a, const void* b)
     return stricmp(Str_Text((ddstring_t*)a), Str_Text((ddstring_t*)b));
 }
 
-void FileDirectory_PrintFileList(filedirectory_t* fd)
+void PathDirectory_Print(pathdirectory_t* fd)
 {
     assert(fd);
     {
     size_t numFilePaths, n = 0;
     ddstring_t* filePaths;
 
-    Con_Printf("FileDirectory:\n");
-    if((filePaths = FileDirectory_AllPaths(fd, FT_NORMAL, &numFilePaths)) != 0)
+    Con_Printf("PathDirectory:\n");
+    if((filePaths = PathDirectory_AllPaths2(fd, PT_FILE, &numFilePaths)) != 0)
     {
         qsort(filePaths, numFilePaths, sizeof(*filePaths), compareFilePaths);
         do
@@ -475,7 +476,7 @@ void FileDirectory_PrintFileList(filedirectory_t* fd)
 }
 #endif
 
-boolean FileDirectoryNode_MatchDirectory(const filedirectory_node_t* node, const ddstring_t* searchPath)
+boolean PathDirectoryNode_MatchDirectory(const pathdirectory_node_t* node, const ddstring_t* searchPath)
 {
     assert(node && searchPath);
     {
@@ -488,7 +489,7 @@ boolean FileDirectoryNode_MatchDirectory(const filedirectory_node_t* node, const
     {
         // Does this match?
         if(Str_Length(&node->path) < Str_Length(searchPath) ||
-           strnicmp(Str_Text(&node->path), Str_Text(searchPath), Str_Length(&node->path) - (node->type == FT_DIRECTORY? 1:0)))
+           strnicmp(Str_Text(&node->path), Str_Text(searchPath), Str_Length(&node->path) - (node->type == PT_DIRECTORY? 1:0)))
             return false;
 
         // Are there no more parent directories?
@@ -503,7 +504,7 @@ boolean FileDirectoryNode_MatchDirectory(const filedirectory_node_t* node, const
 
     // Anything remaining is the root directory or file searchPath - does it match?
     if(Str_Length(&node->path) < Str_Length(searchPath) ||
-       strnicmp(Str_Text(&node->path), Str_Text(searchPath), Str_Length(&node->path) - (node->type == FT_DIRECTORY? 1:0)))
+       strnicmp(Str_Text(&node->path), Str_Text(searchPath), Str_Length(&node->path) - (node->type == PT_DIRECTORY? 1:0)))
         return false;
 
     // We must have now arrived at the search target.
@@ -511,7 +512,7 @@ boolean FileDirectoryNode_MatchDirectory(const filedirectory_node_t* node, const
     }
 }
 
-void FileDirectoryNode_ComposePath(const filedirectory_node_t* direc, ddstring_t* foundPath)
+void PathDirectoryNode_ComposePath(const pathdirectory_node_t* direc, ddstring_t* foundPath)
 {
     assert(direc && foundPath);
     Str_Prepend(foundPath, Str_Text(&direc->path));

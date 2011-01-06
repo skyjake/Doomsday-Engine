@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * dd_main.c: Engine Core
+ * Engine Core
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -50,6 +50,7 @@
 #include "de_audio.h"
 #include "de_ui.h"
 
+#include "pathdirectory.h"
 #include "m_misc.h" // \todo remove dependency
 #include "m_args.h"
 
@@ -661,13 +662,13 @@ static void printGameInfo(gameinfo_t* info, boolean printBanner, boolean printSt
 }
 
 /**
- * (f_forall_func_t)
+ * (f_allresourcepaths_callback_t)
  */
-static int autoDataAdder(const ddstring_t* fileName, filetype_t type, void* paramaters)
+static int autoDataAdder(const ddstring_t* fileName, pathdirectory_pathtype_t type, void* paramaters)
 {
     assert(fileName && paramaters);
     // We are only interested in files.
-    if(type == FT_NORMAL)
+    if(type == PT_FILE)
     {
         autoload_t* data = (autoload_t*)paramaters;
         if(data->loadFiles)
@@ -710,7 +711,7 @@ static int addFilesFromAutoData(boolean loadFiles)
     {
         Str_Clear(&pattern);
         Str_Appendf(&pattern, "%sauto"DIR_SEP_STR"*.%s", Str_Text(GameInfo_DataPath(DD_GameInfo())), extensions[i]);
-        F_ForAll2(&pattern, autoDataAdder, (void*)&data);
+        F_AllResourcePaths2(&pattern, autoDataAdder, (void*)&data);
     }}
     Str_Free(&pattern);
     return data.count;
@@ -822,7 +823,7 @@ static int DD_ChangeGameWorker(void* paramaters)
         Con_SetProgress(10);
 
     F_InitResourceLocator();
-    F_InitMapping();
+    F_InitializeResourcePathMap();
 
     // Reset file IDs so previously seen files can be processed again.
     F_ResetFileIDs();
@@ -835,12 +836,12 @@ static int DD_ChangeGameWorker(void* paramaters)
     Str_Init(&temp);
     // Data class resources.
     Str_Appendf(&temp, "%sauto", Str_Text(GameInfo_DataPath(p->info)));
-    F_AddMapping("auto", Str_Text(&temp));
+    F_AddResourcePathMapping("auto", Str_Text(&temp));
 
     Str_Clear(&temp);
     // Definition class resources.
     Str_Appendf(&temp, "%sauto", Str_Text(GameInfo_DefsPath(p->info)));
-    F_AddMapping("auto", Str_Text(&temp));
+    F_AddResourcePathMapping("auto", Str_Text(&temp));
 
     Str_Free(&temp);
     }
@@ -1055,7 +1056,7 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         currentGameInfoIndex = gameInfoIndex(findGameInfoForIdentityKey("null-game"));
 
         F_InitResourceLocator();
-        F_InitMapping();
+        F_InitializeResourcePathMap();
 
         // Reset file IDs so previously seen files can be processed again.
         F_ResetFileIDs();
@@ -1467,7 +1468,7 @@ int DD_Main(void)
     {   // No game loaded.
         // Ok, lets get most of everything else initialized.
         F_InitResourceLocator();
-        F_InitMapping();
+        F_InitializeResourcePathMap();
         F_InitDirec();
 
         // Reset file IDs so previously seen files can be processed again.
@@ -1537,7 +1538,7 @@ static int DD_StartupWorker(void* parm)
     Zip_Init();
     W_Init();
     F_InitResourceLocator();
-    F_InitMapping();
+    F_InitializeResourcePathMap();
 
     // Initialize the definition databases.
     Def_Init();

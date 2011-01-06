@@ -39,7 +39,7 @@
 #include "m_args.h"
 #include "m_misc.h"
 
-#include "filedirectory.h"
+#include "pathdirectory.h"
 #include "resourcenamespace.h"
 
 // MACROS ------------------------------------------------------------------
@@ -121,8 +121,8 @@ static resourcenamespace_t namespaces[] = {
 };
 static uint numNamespaces = sizeof(namespaces)/sizeof(namespaces[0]);
 
-/// File system directories on the host system.
-static filedirectory_t* fileDirectory;
+/// Local virtual file system paths on the host system.
+static pathdirectory_t* fsLocalPaths;
 
 // CODE --------------------------------------------------------------------
 
@@ -406,8 +406,8 @@ void F_InitResourceLocator(void)
             memset(rnamespace->_pathHash, 0, sizeof(rnamespace->_pathHash));
         }
 
-        // Create the initial (empty) FileDirectory now.
-        fileDirectory = FileDirectory_ConstructDefault();
+        // Create the initial (empty) local file system path directory now.
+        fsLocalPaths = PathDirectory_ConstructDefault();
     }
 
     // Allow re-init.
@@ -420,14 +420,14 @@ void F_ShutdownResourceLocator(void)
     if(!inited)
         return;
     resetAllNamespaces();
-    FileDirectory_Destruct(fileDirectory); fileDirectory = 0;
+    PathDirectory_Destruct(fsLocalPaths); fsLocalPaths = 0;
     inited = false;
 }
 
-filedirectory_t* F_FileDirectory(void)
+pathdirectory_t* F_LocalPaths(void)
 {
     assert(inited);
-    return fileDirectory;
+    return fsLocalPaths;
 }
 
 struct resourcenamespace_s* F_ToResourceNamespace(resourcenamespaceid_t rni)

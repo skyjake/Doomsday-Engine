@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -52,6 +52,7 @@
 #include "de_misc.h"
 
 #include "sys_file.h"
+#include "pathdirectory.h"
 #include "sys_reslocator.h"
 
 // MACROS ------------------------------------------------------------------
@@ -1368,11 +1369,11 @@ D_CMD(Dump)
 
 /**
  * Prints a file name to the console.
- * This is a f_forall_func_t.
+ * This is a f_allresourcepaths_callback_t.
  */
-int printFileName(const ddstring_t* fileName, filetype_t type, void* paramaters)
+int printFileName(const ddstring_t* fileName, pathdirectory_pathtype_t type, void* paramaters)
 {
-    assert(fileName && VALID_FILE_TYPE(type) && paramaters);
+    assert(fileName && VALID_PATHDIRECTORY_PATHTYPE(type) && paramaters);
     {
     const ddstring_t* dir = (const ddstring_t*) paramaters;
     boolean makePretty = F_IsRelativeToBasePath(fileName);
@@ -1409,7 +1410,7 @@ D_CMD(Dir)
         // Make the pattern.
         Str_Copy(&pattern, &dir);
         Str_AppendChar(&pattern, '*');
-        F_ForAll2(&pattern, printFileName, &dir);
+        F_AllResourcePaths2(&pattern, printFileName, &dir);
     }}
 
     Str_Free(&dir);

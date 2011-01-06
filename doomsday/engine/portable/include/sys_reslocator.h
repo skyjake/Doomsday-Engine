@@ -28,7 +28,7 @@
 #include "dd_string.h"
 
 struct resourcenamespace_s;
-struct filedirectory_s;
+struct pathdirectory_s;
 struct dduri_s;
 
 /**
@@ -78,8 +78,8 @@ void F_InitResourceLocator(void);
  */
 void F_ShutdownResourceLocator(void);
 
-/// @return             Ptr to the global (singleton) FileDirectory instance.
-struct filedirectory_s* F_FileDirectory(void);
+/// @return             Ptr to the global (singleton) PathDirectory instance.
+struct pathdirectory_s* F_LocalPaths(void);
 
 /// @return              Number of resource namespaces.
 uint F_NumResourceNamespaces(void);

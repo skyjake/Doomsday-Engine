@@ -27,7 +27,7 @@
 #include "de_base.h"
 #include "de_console.h"
 #include "m_args.h"
-#include "filedirectory.h"
+#include "pathdirectory.h"
 
 #include "resourcenamespace.h"
 
@@ -66,7 +66,7 @@ static void printPathHash(resourcenamespace_t* rn)
         while(node)
         {
             Str_Clear(&path);
-            FileDirectoryNode_ComposePath((filedirectory_node_t*)node->data, &path);
+            PathDirectoryNode_ComposePath((pathdirectory_node_t*)node->data, &path);
             { ddstring_t* hashName = rn->_composeHashName(&path);
             Con_Printf("  %lu: %lu:\"%s\" -> %s\n", (unsigned long)n, i, Str_Text(hashName), Str_Text(&path));
             Str_Delete(hashName);
@@ -126,30 +126,30 @@ static boolean findPath(resourcenamespace_t* rn, const ddstring_t* hashName,
 
     // Go through the candidates.
     node = rn->_pathHash[key].first;
-    while(node && !FileDirectoryNode_MatchDirectory((filedirectory_node_t*)node->data, searchPath))
+    while(node && !PathDirectoryNode_MatchDirectory((pathdirectory_node_t*)node->data, searchPath))
         node = node->next;
 
     // Does the caller want to know the matched path?
     if(node && foundPath)
-        FileDirectoryNode_ComposePath((filedirectory_node_t*)node->data, foundPath);
+        PathDirectoryNode_ComposePath((pathdirectory_node_t*)node->data, foundPath);
 
     return (node == 0? false : true);
     }
 }
 
-static int addFilePathToResourceNamespaceWorker(const filedirectory_node_t* fdNode, void* paramaters)
+static int addFilePathToResourceNamespaceWorker(const pathdirectory_node_t* fdNode, void* paramaters)
 {
     assert(fdNode && paramaters);
     {
     resourcenamespace_t* rn = (resourcenamespace_t*) paramaters;
     ddstring_t* hashName, filePath;
 
-    if(fdNode->type != FT_NORMAL)
+    if(fdNode->type != PT_FILE)
         return 0; // Continue adding.
 
     // Extract the file name and hash it.
     Str_Init(&filePath);
-    FileDirectoryNode_ComposePath(fdNode, &filePath);
+    PathDirectoryNode_ComposePath(fdNode, &filePath);
     hashName = rn->_composeHashName(&filePath);
 
     // Is this a new resource?
@@ -193,7 +193,7 @@ static void rebuild(resourcenamespace_t* rn)
             uint startTime;
             VERBOSE( Con_Message("Rebuilding rnamespace name hash ...\n") );
             startTime = verbose >= 2? Sys_GetRealTime(): 0;
-            FileDirectory_AddPaths3(F_FileDirectory(), Str_Text(&tmp), addFilePathToResourceNamespaceWorker, rn);
+            PathDirectory_AddPaths3(F_LocalPaths(), Str_Text(&tmp), addFilePathToResourceNamespaceWorker, rn);
 /*#if _DEBUG
             printPathHash(rn);
 #endif*/

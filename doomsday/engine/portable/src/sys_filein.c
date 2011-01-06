@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_filein.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2010 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -46,6 +46,7 @@
 #include "m_args.h"
 #include "m_misc.h" // \todo remove dependency
 
+#include "pathdirectory.h"
 #include "sys_findfile.h"
 
 // MACROS ------------------------------------------------------------------
@@ -79,25 +80,6 @@ typedef byte fileidentifierid_t[FILEIDENTIFIERID_T_MAXLEN];
 typedef struct fileidentifier_s {
     fileidentifierid_t hash;
 } fileidentifier_t;
-
-typedef struct {
-    /// Callback to make for each processed node.
-    f_forall_func_t callback;
-
-    /// Data passed to the callback.
-    void* paramaters;
-
-    /// Current path being searched.
-    const ddstring_t* searchPath;
-
-    /// Current search pattern.
-    const ddstring_t* pattern;
-} findzipfileworker_paramaters_t;
-
-typedef struct foundentry_s {
-    filename_t name;
-    int attrib;
-} foundentry_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -364,12 +346,6 @@ boolean F_ReleaseFileId(const char* path)
     return false;
 }
 
-/**
- * This is a case-insensitive test.
- * I do hope this algorithm works like it should...
- *
- * @return              @c true, if the string matches the pattern.
- */
 int F_MatchName(const char* string, const char* pattern)
 {
     const char* in = string, *st = pattern;
@@ -404,7 +380,7 @@ int F_MatchName(const char* string, const char* pattern)
     return *st == 0;
 }
 
-void F_AddMapping(const char* source, const char* destination)
+void F_AddResourcePathMapping(const char* source, const char* destination)
 {
     filename_t src, dst;
     vdmapping_t* vd;
@@ -433,7 +409,7 @@ void F_AddMapping(const char* source, const char* destination)
     vd->source = strdup(src);
     vd->target = strdup(dst);
 
-    VERBOSE( Con_Message("F_AddMapping: %s mapped to %s.\n", vd->source, vd->target) );
+    VERBOSE( Con_Message("Resources in \"%s\" now mapped to \"%s\"\n", vd->source, vd->target) );
 }
 
 /// Skip all whitespace except newlines.
@@ -531,7 +507,7 @@ static boolean parseLumpDirectoryMap(const char* buffer)
     }
 }
 
-void F_InitMapping(void)
+void F_InitializeResourcePathMap(void)
 {
     int argC = Argc();
 
@@ -546,7 +522,7 @@ void F_InitMapping(void)
 
         if(i < argC - 1 && !ArgIsOption(i + 1) && !ArgIsOption(i + 2))
         {
-            F_AddMapping(Argv(i + 1), Argv(i + 2));
+            F_AddResourcePathMapping(Argv(i + 1), Argv(i + 2));
             i += 2;
         }
     }}
@@ -981,32 +957,51 @@ unsigned int F_LastModified(const char* fileName)
     return modified;
 }
 
-int C_DECL F_CompareFoundEntryByName(const void* a, const void* b)
+typedef struct {
+    /// Callback to make for each processed node.
+    f_allresourcepaths_callback_t callback;
+
+    /// Data passed to the callback.
+    void* paramaters;
+
+    /// Current path being searched.
+    const ddstring_t* searchPath;
+
+    /// Current search pattern.
+    const ddstring_t* pattern;
+} findzipfileworker_paramaters_t;
+
+typedef struct foundentry_s {
+    filename_t name;
+    int attrib;
+} foundentry_t;
+
+static int C_DECL compareFoundEntryByName(const void* a, const void* b)
 {
     return stricmp(((const foundentry_t*)a)->name, ((const foundentry_t*)b)->name);
 }
 
 /**
- * Descends into 'physical' subdirectories.
+ * Descends into subdirectories.
  */
-static int forAllDescend(const ddstring_t* pattern, const ddstring_t* path,
-    f_forall_func_t callback, void* paramaters)
+static int forAllDescend(const ddstring_t* pattern, const ddstring_t* name,
+    f_allresourcepaths_callback_t callback, void* paramaters)
 {
-    assert(pattern && path && callback);
+    assert(pattern && name && !Str_IsEmpty(name) && callback);
     {
-    ddstring_t localPattern, wildPath, origWildPath, filename;
+    ddstring_t wildPath, origWildPath;
     int result = 0, count, max;
     foundentry_t* found;
     finddata_t fd;
 
-    // Collect a list of file paths including those which have been mapped.
+    // Collect a list of paths including those which have been mapped.
     count = 0;
     max = 16;
     found = malloc(max * sizeof(*found));
 
     Str_Init(&origWildPath);
     Str_Clear(&origWildPath);
-    Str_Appendf(&origWildPath, "%s*", Str_Text(path));
+    Str_Appendf(&origWildPath, "%s*", Str_Text(name));
 
     Str_Init(&wildPath);
     { int i;
@@ -1014,15 +1009,12 @@ static int forAllDescend(const ddstring_t* pattern, const ddstring_t* path,
     {
         Str_Copy(&wildPath, &origWildPath);
 
-        // Possible virtual mapping?
+        // Possible mapping?
         if(i >= 0 && !F_MapPath(&wildPath, &vdMappings[i]))
-        {
             continue; // Not mapped.
-        }
 
         if(!myfindfirst(Str_Text(&wildPath), &fd))
-        {
-            // The first file found!
+        {   // First path found.           
             do
             {
                 // Ignore relative directory symbolics.
@@ -1047,24 +1039,27 @@ static int forAllDescend(const ddstring_t* pattern, const ddstring_t* path,
     Str_Free(&origWildPath);
 
     // Sort all the found entries.
-    qsort(found, count, sizeof(foundentry_t), F_CompareFoundEntryByName);
+    qsort(found, count, sizeof(foundentry_t), compareFoundEntryByName);
+
+    { ddstring_t path, localPattern;
 
     Str_Init(&localPattern);
-    Str_Appendf(&localPattern, "%s%s", Str_Text(path), Str_Text(pattern));
+    Str_Appendf(&localPattern, "%s%s", Str_Text(name), Str_Text(pattern));
 
-    Str_Init(&filename);
-    { int i;
+    Str_Init(&path);
+
+    {int i;
     for(i = 0; i < count; ++i)
     {
         // Compile the full pathname of the found file.
-        Str_Clear(&filename);
-        Str_Appendf(&filename, "%s%s", Str_Text(path), found[i].name);
+        Str_Clear(&path);
+        Str_Appendf(&path, "%s%s", Str_Text(name), found[i].name);
 
         // Descend recursively into subdirectories.
         if(found[i].attrib & A_SUBDIR)
         {
-            Str_AppendChar(&filename, DIR_SEP_CHAR);
-            if((result = forAllDescend(pattern, &filename, callback, paramaters)) != 0)
+            Str_AppendChar(&path, DIR_SEP_CHAR);
+            if((result = forAllDescend(pattern, &path, callback, paramaters)) != 0)
             {
                 break;
             }
@@ -1072,10 +1067,10 @@ static int forAllDescend(const ddstring_t* pattern, const ddstring_t* path,
         else
         {
             // Does this match the pattern?
-            if(F_MatchName(Str_Text(&filename), Str_Text(&localPattern)))
+            if(F_MatchName(Str_Text(&path), Str_Text(&localPattern)))
             {
                 // If the callback returns false, stop immediately.
-                if((result = callback(&filename, FT_NORMAL, paramaters)) != 0)
+                if((result = callback(&path, PT_FILE, paramaters)) != 0)
                 {
                     break;
                 }
@@ -1083,8 +1078,9 @@ static int forAllDescend(const ddstring_t* pattern, const ddstring_t* path,
         }
     }}
 
-    Str_Free(&filename);
+    Str_Free(&path);
     Str_Free(&localPattern);
+    }
 
     // Free the memory allocate for the list of found entries.
     free(found);
@@ -1093,44 +1089,45 @@ static int forAllDescend(const ddstring_t* pattern, const ddstring_t* path,
     }
 }
 
-int F_FindZipFileWorker(const ddstring_t* zipFileName, void* paramaters)
+static int findZipFileWorker(const ddstring_t* zipFileName, void* paramaters)
 {
     assert(zipFileName && paramaters);
     {
     findzipfileworker_paramaters_t* info = (findzipfileworker_paramaters_t*)paramaters;
     if(F_MatchName(Str_Text(zipFileName), Str_Text(info->pattern)))
     {
-        return info->callback(zipFileName, FT_NORMAL, info->paramaters);
+        return info->callback(zipFileName, PT_FILE, info->paramaters);
     }
     return 0; // Continue search.
     }
 }
 
-int F_ForAll2(const ddstring_t* fileSpec, f_forall_func_t callback, void* paramaters)
+int F_AllResourcePaths2(const ddstring_t* searchPath,
+    f_allresourcepaths_callback_t callback, void* paramaters)
 {
-    directory2_t specdir;
-    ddstring_t temp, filename;
+    directory2_t searchPathDirectory;
+    ddstring_t temp, searchPathName;
     int result = 0;
 
-    memset(&specdir, 0, sizeof(specdir));
-    Str_Init(&specdir.path);
+    memset(&searchPathDirectory, 0, sizeof(searchPathDirectory));
+    Str_Init(&searchPathDirectory.path);
 
     Str_Init(&temp);
-    F_ExpandBasePath(&temp, fileSpec);
-    F_FileDir(&temp, &specdir);
+    F_ExpandBasePath(&temp, searchPath);
+    F_FileDir(&temp, &searchPathDirectory);
 
-    { filename_t fn;
-    _fullpath(fn, Str_Text(&temp), FILENAME_T_MAXLEN);
-    Str_Init(&filename); Str_Set(&filename, fn);
+    { filename_t absPath;
+    _fullpath(absPath, Str_Text(&temp), FILENAME_T_MAXLEN);
+    Str_Init(&searchPathName); Str_Set(&searchPathName, absPath);
     }
 
     // First the Zip directory.
     { findzipfileworker_paramaters_t p;
     p.callback = callback;
     p.paramaters = paramaters;
-    p.searchPath = &specdir.path;
-    p.pattern = &filename;
-    if((result = Zip_Iterate2(F_FindZipFileWorker, (void*)&p)) != 0)
+    p.searchPath = &searchPathDirectory.path;
+    p.pattern = &searchPathName;
+    if((result = Zip_Iterate2(findZipFileWorker, (void*)&p)) != 0)
     {   // Find didn't finish.
         goto searchEnded;
     }}
@@ -1140,28 +1137,28 @@ int F_ForAll2(const ddstring_t* fileSpec, f_forall_func_t callback, void* parama
     for(i = 0; Str_Length(&lumpDirectory[i].path) != 0; ++i)
     {
         lumpdirectory_record_t* rec = &lumpDirectory[i];
-        if(!F_MatchName(Str_Text(&rec->path), Str_Text(&filename)))
+        if(!F_MatchName(Str_Text(&rec->path), Str_Text(&searchPathName)))
             continue;
-        if((result = callback(&rec->path, FT_NORMAL, paramaters)) != 0)
+        if((result = callback(&rec->path, PT_FILE, paramaters)) != 0)
             goto searchEnded;
     }}
 
     { char ext[100];
-    _splitpath(Str_Text(&temp), 0, 0, Str_Text(&filename), ext);
-    Str_Append(&filename, ext);
+    _splitpath(Str_Text(&temp), 0, 0, Str_Text(&searchPathName), ext);
+    Str_Append(&searchPathName, ext);
     }
 
     // Finally, check real files on the search path.
-    result = forAllDescend(&filename, &specdir.path, callback, paramaters);
+    result = forAllDescend(&searchPathName, &searchPathDirectory.path, callback, paramaters);
 
 searchEnded:
-    Str_Free(&specdir.path);
+    Str_Free(&searchPathDirectory.path);
+    Str_Free(&searchPathName);
     Str_Free(&temp);
-    Str_Free(&filename);
     return result;
 }
 
-int F_ForAll(const ddstring_t* fileSpec, f_forall_func_t callback)
+int F_AllResourcePaths(const ddstring_t* searchPath, f_allresourcepaths_callback_t callback)
 {
-    return F_ForAll2(fileSpec, callback, 0);
+    return F_AllResourcePaths2(searchPath, callback, 0);
 }
