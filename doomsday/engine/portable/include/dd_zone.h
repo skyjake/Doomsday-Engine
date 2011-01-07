@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_zone.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 1999-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -79,17 +79,56 @@ typedef struct {
     memblock_t*     rover;
 } memzone_t;
 
+struct zblockset_block_s;
+
+/**
+ * ZBlockSet. Block memory allocator.
+ *
+ * These are used instead of many calls to Z_Malloc when the number of
+ * required elements is unknown and when linear allocation would be too
+ * slow.
+ *
+ * Memory is allocated as needed in blocks of "batchSize" elements. When
+ * a new element is required we simply reserve a ptr in the previously
+ * allocated block of elements or create a new block just in time.
+ *
+ * The internal state of a blockset is managed automatically.
+ */
 typedef struct zblockset_s {
-    unsigned int    elementsPerBlock;
-    size_t          elementSize;
-    int             tag; // All blocks in a blockset have the same tag.
-    unsigned int    count;
-    struct zblock_s* blocks;
+    unsigned int _elementsPerBlock;
+    size_t _elementSize;
+    int _tag; /// All blocks in a blockset have the same tag.
+    unsigned int _blockCount;
+    struct zblockset_block_s* _blocks;
 } zblockset_t;
 
-zblockset_t*    Z_BlockCreate(size_t sizeOfElement, uint batchSize, int tag);
-void            Z_BlockDestroy(zblockset_t* set);
-void*           Z_BlockNewElement(zblockset_t* set);
+/**
+ * Creates a new block memory allocator in the Zone.
+ *
+ * @param sizeOfElement  Required size of each element.
+ * @param batchSize  Number of elements in each block of the set.
+ *
+ * @return  Ptr to the newly created blockset.
+ */
+zblockset_t* ZBlockSet_Construct(size_t sizeOfElement, uint batchSize, int tag);
+
+/**
+ * Free an entire blockset.
+ * All memory allocated is released for all elements in all blocks and any
+ * used for the blockset itself.
+ *
+ * @param set  The blockset to be freed.
+ */
+void ZBlockSet_Destruct(zblockset_t* set);
+
+/**
+ * Return a ptr to the next unused element in the blockset.
+ *
+ * @param blockset  The blockset to return the next element from.
+ *
+ * @return  Ptr to the next unused element in the blockset.
+ */
+void* ZBlockSet_Allocate(zblockset_t* set);
 
 #ifdef FAKE_MEMORY_ZONE
 // Fake memory zone allocates memory from the real heap.

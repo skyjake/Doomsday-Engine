@@ -73,7 +73,7 @@ static int initFROk = 0;
 static int numFonts = 0;
 static jfrfont_t* fonts = NULL; // The list of fonts.
 static int currentFontIndex; // Index of the current font.
-static filename_t fontpath = "";
+static ddstring_t fontpath = { "" };
 
 // CODE --------------------------------------------------------------------
 
@@ -156,20 +156,30 @@ int FR_Init(void)
     // Check the font path.
     if(ArgCheckWith("-fontdir", 1))
     {
-        M_TranslatePath(fontpath, ArgNext(), FILENAME_T_MAXLEN);
-        Dir_ValidDir(fontpath, FILENAME_T_MAXLEN);
-        M_CheckPath(fontpath);
+        Str_Set(&fontpath, ArgNext());
+        Str_Strip(&fontpath);
+        F_FixSlashes(&fontpath);
+        F_ExpandBasePath(&fontpath, &fontpath);
+        if(Str_RAt(&fontpath, 0) != DIR_SEP_CHAR)
+            Str_AppendChar(&fontpath, DIR_SEP_CHAR);
+
+        M_CheckPath(Str_Text(&fontpath));
     }
     else
     {
-        M_TranslatePath(fontpath, DD_BASEPATH_DATA"fonts/", FILENAME_T_MAXLEN);
-        Dir_ValidDir(fontpath, FILENAME_T_MAXLEN);
+        Str_Set(&fontpath, DD_BASEPATH_DATA"fonts/");
+        F_FixSlashes(&fontpath);
+        F_ExpandBasePath(&fontpath, &fontpath);
+        if(Str_RAt(&fontpath, 0) != DIR_SEP_CHAR)
+            Str_AppendChar(&fontpath, DIR_SEP_CHAR);
     }
     return 0;
 }
 
 void FR_Shutdown(void)
 {
+    Str_Free(&fontpath);
+
     // Destroy all fonts.
     while(numFonts)
         destroyFontIdx(0);
@@ -314,7 +324,7 @@ int FR_PrepareFont(const char* name)
         {NULL, 0}
     };
 #endif
-    filename_t          buf;
+    ddstring_t path;
     DFILE*              file;
     int                 idx, version;
     jfrfont_t*          font;
@@ -328,10 +338,9 @@ int FR_PrepareFont(const char* name)
         return true;
     }
 
-    strcpy(buf, fontpath);
-    strcat(buf, name);
-    strcat(buf, ".dfn");
-    if(ArgCheck("-gdifonts") || (file = F_Open(buf, "rb")) == NULL)
+    Str_Init(&path);
+    Str_Appendf(&path, "%s%s.dfn", Str_Text(&fontpath), name);
+    if(ArgCheck("-gdifonts") || (file = F_Open(Str_Text(&path), "rb")) == NULL)
     {
         boolean             retVal = false;
 #ifdef WIN32
@@ -383,14 +392,13 @@ int FR_PrepareFont(const char* name)
             ReleaseDC(hWnd, hDC);
 #endif
         // The font was not found.
+        Str_Free(&path);
         return retVal;
     }
 
-    VERBOSE2(Con_Printf("FR_PrepareFont: %s\n", M_PrettyPath(buf)));
-
     version = inByte(file);
 
-    VERBOSE2(Con_Printf("FR_PrepareFont: Version %i.\n", version));
+    VERBOSE2( Con_Printf("FR_PrepareFont: \"%s\" (version %i).\n", Str_Text(F_PrettyPath(&path)), version) );
 
     // Load the font from the file.
     createFont();
@@ -398,8 +406,7 @@ int FR_PrepareFont(const char* name)
     strncpy(font->name, name, 255);
     font->name[255] = '\0';
 
-    VERBOSE(Con_Printf("FR_PrepareFont: New font %i: %s.\n", currentFontIndex,
-                       font->name));
+    VERBOSE( Con_Printf("FR_PrepareFont: New font %i: %s.\n", currentFontIndex, font->name) );
 
     // Font glyph map.
     image = 0;
@@ -437,6 +444,7 @@ int FR_PrepareFont(const char* name)
     }
 
     VERBOSE2(Con_Printf("FR_PrepareFont: Loaded %s.\n", name));
+    Str_Free(&path);
     return true;
 }
 

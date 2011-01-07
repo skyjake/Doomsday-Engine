@@ -64,25 +64,50 @@ typedef resourcenamespace_hashentry_t resourcenamespace_namehash_t[RESOURCENAMES
 typedef struct resourcenamespace_s {
     /// Unique symbolic name of this namespace (e.g., "Models").
     /// Must be at least @c RESOURCENAMESPACE_MINNAMELENGTH characters long.
-    const char* _name;
+    ddstring_t _name;
 
     /// @see ResourceNamespaceFlags
     byte _flags;
 
-    /// Command line options for overriding resource paths explicitly. Name 2 has precendence.
-    const char* _overrideName, *_overrideName2;
+    /// Set of "normal" search paths (in order of greatest-importance, right to left).
+    dduri_t** _searchPaths;
+    uint _searchPathsCount;
 
-    /// Resource search order (in order of greatest-importance, right to left) seperated by semicolon (e.g., "path1;path2;").
-    const char* _searchPaths;
+    /// Set of "extra" search paths (in order of greatest-importance, right to left).
+    dduri_t** _extraSearchPaths;
+    uint _extraSearchPathsCount;
 
     /// Path hash table.
     ddstring_t* (*_composeHashName) (const ddstring_t* path);
     resourcenamespace_namehash_key_t (*_hashName) (const ddstring_t* name);
     resourcenamespace_namehash_t _pathHash;
 
-    /// Set of "extra" search paths (in order of greatest-importance, right to left) seperated by semicolon (e.g., "path1;path2;").
-    ddstring_t _extraSearchPaths;
+    /// Command line options for overriding resource paths explicitly. Name 2 has precendence.
+    ddstring_t* _overrideName, *_overrideName2;
 } resourcenamespace_t;
+
+resourcenamespace_t* ResourceNamespace_Construct(const char* name,
+    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name));
+resourcenamespace_t* ResourceNamespace_Construct2(const char* name,
+    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
+    const dduri_t** searchPaths, uint searchPathsCount);
+resourcenamespace_t* ResourceNamespace_Construct3(const char* name,
+    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
+    const dduri_t** searchPaths, uint searchPathsCount, byte flags);
+resourcenamespace_t* ResourceNamespace_Construct4(const char* name,
+    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
+    const dduri_t** searchPaths, uint searchPathsCount, byte flags, const char* overrideName);
+resourcenamespace_t* ResourceNamespace_Construct5(const char* name,
+    ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
+    resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
+    const dduri_t** searchPaths, uint searchPathsCount, byte flags, const char* overrideName,
+    const char* overrideName2);
+
+void ResourceNamespace_Destruct(resourcenamespace_t* rn);
 
 /**
  * Reset the namespace back to it's "empty" state (i.e., no known symbols).
@@ -92,12 +117,17 @@ void ResourceNamespace_Reset(resourcenamespace_t* rnamespace);
 /**
  * Add a new raw path to the list of "extra" search paths in this namespace.
  */
-boolean ResourceNamespace_AddSearchPath(resourcenamespace_t* rnamespace, const char* newPath);
+boolean ResourceNamespace_AddExtraSearchPath(resourcenamespace_t* rnamespace, const dduri_t* newUri);
+
+/**
+ * Clear "normal" search paths in this namespace.
+ */
+void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rnamespace);
 
 /**
  * Clear "extra" resource search paths in this namespace.
  */
-void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rnamespace);
+void ResourceNamespace_ClearExtraSearchPaths(resourcenamespace_t* rnamespace);
 
 /**
  * Find a path to a named resource in the namespace.
@@ -107,7 +137,7 @@ void ResourceNamespace_ClearSearchPaths(resourcenamespace_t* rnamespace);
  * @param searchPath    Relative or absolute path.
  * @param foundPath     If not @c NULL and a path is found, it is written back here.
  *
- * @return              Ptr to the name hash to use when searching.
+ * @return  Ptr to the name hash to use when searching.
  */
 boolean ResourceNamespace_Find2(resourcenamespace_t* rnamespace, const ddstring_t* searchPath, ddstring_t* foundPath);
 boolean ResourceNamespace_Find(resourcenamespace_t* rnamespace, const ddstring_t* searchPath);
@@ -115,23 +145,20 @@ boolean ResourceNamespace_Find(resourcenamespace_t* rnamespace, const ddstring_t
 /**
  * Apply mapping for this namespace to the specified path (if enabled).
  *
- * This mapping will translate tokens like "<rnamespace::name>:" into their default paths,
+ * This mapping will translate directives and symbolic identifiers into their default paths,
  * which themselves are determined using the current GameInfo.
  *
  *  e.g.: "Models:my/cool/model.dmd" -> "}data/<GameInfo::IdentityKey>/models/my/cool/model.dmd"
  *
  * @param path          Ptr to the path to be mapped.
- * @return              @c true iff mapping was applied to the path.
+ * @return  @c true iff mapping was applied to the path.
  */
 boolean ResourceNamespace_MapPath(resourcenamespace_t* rnamespace, ddstring_t* path);
 
 /**
  * Accessor methods.
  */
-/// @return             Ptr to a cstring containing the symbolic name.
-const char* ResourceNamespace_Name(const resourcenamespace_t* rnamespace);
-
-/// @return             Ptr to a string containing the list of "extra" (raw) search paths.
-const ddstring_t* ResourceNamespace_ExtraSearchPaths(resourcenamespace_t* rnamespace);
+/// @return  Ptr to a string containing the symbolic name.
+const ddstring_t* ResourceNamespace_Name(const resourcenamespace_t* rnamespace);
 
 #endif /* LIBDENG_SYSTEM_RESOURCENAMESPACE_H */

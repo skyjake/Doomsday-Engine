@@ -12,8 +12,7 @@ Header {
 }
 
 Material {
-  ID = "F_SKY";
-  Namespace = flats;
+  ID = "flats:F_SKY";
   Flags = skymask;
 }
 

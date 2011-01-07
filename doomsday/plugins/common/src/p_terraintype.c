@@ -1,9 +1,9 @@
-/**\file
+/**\file p_terraintype.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
  */
 
 /**
- * p_terraintype.c:
+ * Terrain Types.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -166,32 +166,31 @@ static materialterraintype_t* getMaterialTerrainType(material_t* mat, uint idx)
 void P_InitTerrainTypes(void)
 {
     struct matttypedef_s {
-        const char*     matName;
-        material_namespace_t matGroup;
-        const char*     ttName;
+        const char* matPath;
+        const char* ttName;
     } matTTypeDefs[] =
     {
 #if __JDOOM__ || __JDOOM64__
-        {"FWATER1",  MN_FLATS, "Water"},
-        {"LAVA1",    MN_FLATS, "Lava"},
-        {"BLOOD1",   MN_FLATS, "Blood"},
-        {"NUKAGE1",  MN_FLATS, "Nukage"},
-        {"SLIME01",  MN_FLATS, "Slime"},
+        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":FWATER1",  "Water" },
+        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":LAVA1",    "Lava" },
+        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":BLOOD1",   "Blood" },
+        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":NUKAGE1",  "Nukage" },
+        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":SLIME01",  "Slime" },
 #endif
 #if __JHERETIC__
-        {"FLTWAWA1", MN_FLATS, "Water"},
-        {"FLTFLWW1", MN_FLATS, "Water"},
-        {"FLTLAVA1", MN_FLATS, "Lava"},
-        {"FLATHUH1", MN_FLATS, "Lava"},
-        {"FLTSLUD1", MN_FLATS, "Sludge"},
+        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":FLTWAWA1", "Water" },
+        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":FLTFLWW1", "Water" },
+        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":FLTLAVA1", "Lava" },
+        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":FLATHUH1", "Lava" },
+        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":FLTSLUD1", "Sludge" },
 #endif
 #if __JHEXEN__
-        {"X_005",    MN_FLATS, "Water"},
-        {"X_001",    MN_FLATS, "Lava"},
-        {"X_009",    MN_FLATS, "Sludge"},
-        {"F_033",    MN_FLATS, "Ice"},
+        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":X_005",    "Water" },
+        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":X_001",    "Lava" },
+        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":X_009",    "Sludge" },
+        { MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":F_033",    "Ice" },
 #endif
-        {NULL, 0, NULL}
+        { 0, 0 }
     };
 
     if(materialTTypes)
@@ -200,17 +199,16 @@ void P_InitTerrainTypes(void)
     numMaterialTTypes = maxMaterialTTypes = 0;
 
     { uint i;
-    for(i = 0; matTTypeDefs[i].matName; ++i)
+    for(i = 0; matTTypeDefs[i].matPath; ++i)
     {
         uint idx = findTerrainTypeNumForName(matTTypeDefs[i].ttName);
-
         if(idx)
         {
-            material_t* mat = P_ToPtr(DMU_MATERIAL, Materials_CheckNumForName(matTTypeDefs[i].matName, matTTypeDefs[i].matGroup));
+            material_t* mat = P_ToPtr(DMU_MATERIAL, Materials_CheckNumForName(matTTypeDefs[i].matPath));
             if(mat)
             {
                 Con_Message("P_InitTerrainTypes: Material '%s' linked to terrain type '%s'.\n",
-                            matTTypeDefs[i].matName, matTTypeDefs[i].ttName);
+                            matTTypeDefs[i].matPath, matTTypeDefs[i].ttName);
                 getMaterialTerrainType(mat, idx);
             }
         }
@@ -245,3 +243,4 @@ const terraintype_t* P_TerrainTypeForMaterial(material_t* mat)
     // Return the default type.
     return &terrainTypes[0];
 }
+

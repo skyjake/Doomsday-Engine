@@ -88,8 +88,8 @@ const float defFontRGB2[] = { .85f, 0, 0 };
 const float defFontRGB3[] = { 1, .9f, .4f };
 
 // The patches used in drawing the view border.
-char* borderLumps[] = {
-    "FLOOR7_2", // Background.
+char* borderGraphics[] = {
+    "Flats:FLOOR7_2", // Background.
     "BRDR_T", // Top.
     "BRDR_R", // Right.
     "BRDR_B", // Bottom.
@@ -422,7 +422,7 @@ void G_PreInit(void)
     cfg.berserkAutoSwitch = true;
 
     // Use the DOOM transition by default.
-    Con_SetInteger("con-transition", 1, 0);
+    Con_SetInteger("con-transition", 1);
 
     // Do the common pre init routine;
     G_CommonPreInit();
@@ -452,7 +452,7 @@ void G_PostInit(gameid_t gameId)
 
     // Border background is different in DOOM2.
     if(gameModeBits & GM_ANY_DOOM2)
-        borderLumps[0] = "GRNROCK";
+        borderGraphics[0] = "Flats:GRNROCK";
 
     // Common post init routine
     G_CommonPostInit();

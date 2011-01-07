@@ -959,15 +959,11 @@ typedef enum gfxmode_e {
 
 #define DDMAX_MATERIAL_LAYERS   1
 
-typedef enum material_namespace_e {
-    MN_ANY = -1,
-    MN_FIRST,
-    MN_TEXTURES = MN_FIRST,
-    MN_FLATS,
-    MN_SPRITES,
-    MN_SYSTEM,
-    NUM_MATERIAL_NAMESPACES
-} material_namespace_t;
+// Material Namespaces
+#define MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME  "Textures"
+#define MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME     "Flats"
+#define MATERIALS_SPRITES_RESOURCE_NAMESPACE_NAME   "Sprites"
+#define MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME    "System"
 
 // Material flags:
 #define MATF_CUSTOM             0x0001 // Material is not derived from an IWAD resource (directly, at least).
@@ -1018,6 +1014,10 @@ typedef unsigned int colorpaletteid_t;
 #define BUSYF_STARTUP       0x20 // Startup mode: normal fonts, texman not available.
 #define BUSYF_TRANSITION    0x40 // Do a transition effect when busy mode ends.
 
+/**
+ * @defgroup consoleBufferLineFlags Console Buffer Line Flags.
+ */
+/*@{*/
 // These correspond the good old text mode VGA colors.
 #define CBLF_BLACK          0x00000001
 #define CBLF_BLUE           0x00000002
@@ -1030,10 +1030,11 @@ typedef unsigned int colorpaletteid_t;
 #define CBLF_LIGHT          0x00000100
 #define CBLF_RULER          0x00000200
 #define CBLF_CENTER         0x00000400
-#define CBLF_TRANSMIT       0x80000000 // If server, sent to all clients.
+#define CBLF_TRANSMIT       0x80000000 /// If server, sent to all clients.
+/*@}*/
 
 // Font flags.
-#define DDFONT_WHITE            0x1 // The font data is white, can be colored.
+#define DDFONT_WHITE        0x1 // The font data is white, can be colored.
 
 typedef struct {
     int             flags;
@@ -1051,9 +1052,13 @@ typedef enum bfcinverse_e {
     BFCI_ONLY_INVERSE
 } bfcinverse_t;
 
-// Console command flags.
+/**
+ * @defgroup consoleCommandFlags Console command flags.
+ */
+/*@{*/
 #define CMDF_NO_NULLGAME    0x00000001 // Not available unless a game is loaded.
 #define CMDF_NO_DEDICATED   0x00000002 // Not available in dedicated server mode.
+/*@}*/
 
 // Console command usage flags.
 // (what method(s) CAN NOT be used to invoke a ccmd (used with the CMDS codes above)).
@@ -1067,26 +1072,36 @@ typedef enum bfcinverse_e {
 #define CMDF_DED            0x40000000
 #define CMDF_CLIENT         0x80000000 // sent over the net from a client.
 
-// Command sources (where the console command originated from)
-// These are sent with every (sub)ccmd so we can decide whether or not to execute.
-enum {
-    CMDS_UNKNOWN,
-    CMDS_DDAY, // Sent by the engine
-    CMDS_GAME, // Sent by the game library
-    CMDS_CONSOLE, // Sent via direct console input
-    CMDS_BIND, // Sent from a binding/alias
-    CMDS_CONFIG, // Sent via config file
-    CMDS_PROFILE, // Sent via player profile
-    CMDS_CMDLINE, // Sent via the command line
-    CMDS_SCRIPT // Sent based on a def in a DED file eg (state->execute)
-};
+/**
+ * @defgroup commandSource Command Sources
+ *
+ * Where a console command originated.
+ */
+/*@{*/
+#define CMDS_UNKNOWN        0
+#define CMDS_DDAY           1 /// Sent by the engine.
+#define CMDS_GAME           2 /// Sent by a game library.
+#define CMDS_CONSOLE        3 /// Sent via direct console input.
+#define CMDS_BIND           4 /// Sent from a binding/alias.
+#define CMDS_CONFIG         5 /// Sent via config file.
+#define CMDS_PROFILE        6 /// Sent via player profile.
+#define CMDS_CMDLINE        7 /// Sent via the command line.
+#define CMDS_SCRIPT         8 /// Sent based on a def in a DED file eg (state->execute).
+/*@}*/
 
 // Console command.
 typedef struct ccmd_s {
-    const char*     name;
-    const char*     params;
-    int           (*func) (byte src, int argc, char **argv);
-    int             flags;
+    /// Name of the command.
+    const char* name;
+
+    /// Argument template.
+    const char* argTemplate;
+
+    /// Execute function.
+    int (*execFunc) (byte src, int argc, char** argv);
+
+    /// @see consoleCommandFlags
+    int flags;
 } ccmd_t;
 
 // Helper macro for declaring console command functions.
@@ -1095,40 +1110,65 @@ typedef struct ccmd_s {
 /**
  * Helper macros for registering new console commands.
  */
-#define C_CMD(name, params, fn) \
-    { ccmd_t _c = { name, params, CCmd##fn, 0 }; Con_AddCommand(&_c); }
+#define C_CMD(name, argTemplate, fn) \
+    { ccmd_t _c = { name, argTemplate, CCmd##fn, 0 }; Con_AddCommand(&_c); }
 
-#define C_CMD_FLAGS(name, params, fn, flags) \
-    { ccmd_t _c = { name, params, CCmd##fn, flags }; Con_AddCommand(&_c); }
+#define C_CMD_FLAGS(name, argTemplate, fn, flags) \
+    { ccmd_t _c = { name, argTemplate, CCmd##fn, flags }; Con_AddCommand(&_c); }
 
-    // Console variable flags.
+/**
+ * @defgroup consoleVariableFlags Console Variable flags.
+ */
+/*@{*/
 #define CVF_NO_ARCHIVE      0x1 // Not written in/read from the defaults file.
 #define CVF_PROTECTED       0x2 // Can't be changed unless forced.
-#define CVF_NO_MIN          0x4 // Don't use the minimum.
-#define CVF_NO_MAX          0x8 // Don't use the maximum.
+#define CVF_NO_MIN          0x4 // Minimum is not in affect.
+#define CVF_NO_MAX          0x8 // Maximum is not in affect.
 #define CVF_CAN_FREE        0x10 // The string can be freed.
-#define CVF_HIDE            0x20
-#define CVF_READ_ONLY       0x40 // Can't be changed manually at all
+#define CVF_HIDE            0x20 // Do not include in listings or add to known words.
+#define CVF_READ_ONLY       0x40 // Can't be changed manually at all.
+/*@}*/
 
-    // Console variable types.
-    typedef enum {
-        CVT_NULL,
-        CVT_BYTE,
-        CVT_INT,
-        CVT_FLOAT,
-        CVT_CHARPTR // ptr points to a char*, which points to the string.
-    } cvartype_t;
+/**
+ * @defgroup setVariableFlags Set Variable Flags.
+ *
+ * Use with the various Con_Set* routines (e.g., Con_SetInteger2).
+ */
+/*@{*/
+#define SVF_WRITE_OVERRIDE  0x1 /// Override a read-only restriction.
+/*@}*/
 
-    // Console variable.
-    typedef struct cvar_s {
-        char*           name;
-        int             flags;
-        cvartype_t      type;
-        void*           ptr; // Pointer to the data.
-        float           min, max; /* Minimum and maximum values
-                                     (for ints and floats). */
-        void          (*notifyChanged)(struct cvar_s* cvar);
-    } cvar_t;
+// Console variable types.
+typedef enum {
+    CVT_NULL,
+    CVT_BYTE,
+    CVT_INT,
+    CVT_FLOAT,
+    CVT_CHARPTR // ptr points to a char*, which points to the string.
+} cvartype_t;
+
+/**
+ * Console variable template. Used with Con_AddVariable.
+ */
+typedef struct cvar_s {
+    /// Name of the cvar.
+    char* name;
+
+    /// @see consoleVariableFlags
+    int flags;
+
+    /// Type of this variable.
+    cvartype_t type;
+
+    /// Pointer to the user data.
+    void* ptr;
+
+    /// Minimum and maximum values (for ints and floats).
+    float min, max;
+
+    /// On-change notification callback.
+    void (*notifyChanged)(struct cvar_s* cvar);
+} cvar_t;
 
 /**
  * Helper macros for registering new console variables.

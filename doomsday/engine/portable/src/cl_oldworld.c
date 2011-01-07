@@ -84,17 +84,18 @@ int Cl_ReadSectorDelta(void)
 
     if(df & SDF_FLOOR_MATERIAL)
     {
-        lumpnum_t           lumpNum;
-
+        lumpnum_t lumpNum;
         // A bit convoluted; the delta is a server-side (flat) lump number.
         if((lumpNum = Cl_TranslateLump(Msg_ReadPackedShort())) != 0)
         {
-            material_t*         mat = Materials_ToMaterial(
-                Materials_NumForName(W_LumpName(lumpNum), MN_FLATS));
+            material_t* mat;
+            ddstring_t path; Str_Init(&path);
+            Str_Appendf(&path, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":%s", W_LumpName(lumpNum));
+            mat = Materials_ToMaterial(Materials_NumForName(Str_Text(&path)));
+            Str_Free(&path);
 #if _DEBUG
 if(!mat)
-    Con_Message("Cl_ReadSectorDelta: No material for flat %i.",
-                (int) lumpNum);
+    Con_Message("Cl_ReadSectorDelta: No material for flat %i.", (int) lumpNum);
 #endif
 
             Surface_SetMaterial(&sec->SP_floorsurface, mat);
@@ -102,17 +103,19 @@ if(!mat)
     }
     if(df & SDF_CEILING_MATERIAL)
     {
-        lumpnum_t           lumpNum;
+        lumpnum_t lumpNum;
 
         // A bit convoluted; the delta is a server-side (flat) lump number.
         if((lumpNum = Cl_TranslateLump(Msg_ReadPackedShort())) != 0)
         {
-            material_t*         mat = Materials_ToMaterial(
-                Materials_NumForName(W_LumpName(lumpNum), MN_FLATS));
+            material_t* mat;
+            ddstring_t path; Str_Init(&path);
+            Str_Appendf(&path, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":%s", W_LumpName(lumpNum));
+            mat = Materials_ToMaterial(Materials_NumForName(Str_Text(&path)));
+            Str_Free(&path);
 #if _DEBUG
 if(!mat)
-    Con_Message("Cl_ReadSectorDelta: No material for flat %i.",
-                (int) lumpNum);
+    Con_Message("Cl_ReadSectorDelta: No material for flat %i.", (int) lumpNum);
 #endif
 
             Surface_SetMaterial(&sec->SP_ceilsurface, mat);

@@ -49,6 +49,8 @@
 #include "de_render.h"
 #include "de_audio.h"
 #include "de_ui.h"
+#include "de_bsp.h"
+#include "de_edit.h"
 
 #include "pathdirectory.h"
 #include "m_misc.h" // \todo remove dependency
@@ -116,12 +118,31 @@ static uint numGameInfo = 0, currentGameInfoIndex = 0;
 
 // CODE --------------------------------------------------------------------
 
-static __inline size_t countElements(ddstring_t** list)
+/**
+ * Register the engine commands and variables.
+ */
+void DD_Register(void)
 {
-    size_t n = 0;
-    if(list)
-        while(list[n++]);
-    return n;
+    DD_RegisterLoop();
+    DD_RegisterInput();
+    DD_RegisterVFS();
+    B_Register(); // for control bindings
+    Con_Register();
+    DH_Register();
+    R_Register();
+    S_Register();
+    SBE_Register(); // for bias editor
+    Rend_Register();
+    GL_Register();
+    Net_Register();
+    I_Register();
+    H_Register();
+    DAM_Register();
+    BSP_Register();
+    UI_Register();
+    Demo_Register();
+    P_ControlRegister();
+    FI_Register();
 }
 
 static __inline uint gameInfoIndex(const gameinfo_t* info)
@@ -220,8 +241,8 @@ static void destroyPathList(ddstring_t*** list, size_t* listSize)
     *listSize = 0;
 }
 
-static gameinfo_t* addGameInfoRecord(pluginid_t pluginId, const char* identityKey, const char* dataPath,
-    const char* defsPath, const char* mainConfig, const char* title, const char* author,
+static gameinfo_t* addGameInfoRecord(pluginid_t pluginId, const char* identityKey, const ddstring_t* dataPath,
+    const ddstring_t* defsPath, const char* mainConfig, const char* title, const char* author,
     const ddstring_t* cmdlineFlag, const ddstring_t* cmdlineFlag2)
 {
     gameInfo = realloc(gameInfo, sizeof(*gameInfo) * (numGameInfo + 1));
@@ -276,23 +297,11 @@ Con_Message("DD_GetGameInfo: Warning, no game currently loaded - returning false
     return false;
 }
 
-static void addIdentityKeyToResourceRecord(gameresource_record_t* rec, const ddstring_t* identityKey)
-{
-    assert(rec && identityKey);
-    {
-    size_t num = countElements(rec->identityKeys);
-    rec->identityKeys = realloc(rec->identityKeys, sizeof(*rec->identityKeys) * MAX_OF(num+1, 2));
-    if(num) num -= 1;
-    rec->identityKeys[num] = Str_New();
-    Str_Copy(rec->identityKeys[num], identityKey);
-    rec->identityKeys[num+1] = 0; // Terminate.
-    }
-}
-
 void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags, const char* _names, void* params)
 {
     gameinfo_t* info = findGameInfoForId(gameId);
-    ddstring_t names, name;
+    gameresource_record_t* rec;
+    ddstring_t str;
 
     if(!info || DD_IsNullGameInfo(info))
         Con_Error("DD_AddGameResource: Error, unknown game id %u.", gameId);
@@ -301,45 +310,52 @@ void DD_AddGameResource(gameid_t gameId, resourceclass_t rclass, int rflags, con
     if(!_names || !_names[0] || !strcmp(_names, ";"))
         Con_Error("DD_AddGameResource: Error, invalid name argument.");
 
-    Str_Init(&names);
-    Str_Set(&names, _names);
+    if(0 == (rec = GameResourceRecord_Construct(rclass, rflags)))
+        Con_Error("Error:DD_AddGameResource: Unknown error occured during GameResourceRecord::Construct.");
+
+    // Add a name list to the info record.
+    Str_Init(&str);
+    Str_Set(&str, _names);
     // Ensure the name list has the required terminating semicolon.
-    if(Str_RAt(&names, 0) != ';')
-        Str_Append(&names, ";");
+    if(Str_RAt(&str, 0) != ';')
+        Str_Append(&str, ";");
 
+    { ddstring_t name;
+    const char* p = Str_Text(&str);
     Str_Init(&name);
-    { gameresource_record_t* rec;
-    if((rec = GameInfo_AddResource(info, rclass, rflags, &names)))
-    {
-        if(params)
-        switch(rec->rclass)
-        {
-        case RC_PACKAGE:
-            // Add an auto-identification file name list to the info record.
-            { ddstring_t fileNames, fileName;
-
-            // Ensure the name list has the required terminating semicolon.
-            Str_Init(&fileNames); Str_Set(&fileNames, (const char*) params);
-            if(Str_RAt(&fileNames, 0) != ';')
-                Str_Append(&fileNames, ";");
-
-            Str_Init(&fileName);
-            { const char* p = Str_Text(&fileNames);
-            while((p = Str_CopyDelim2(&fileName, p, ';', CDF_OMIT_DELIMITER)))
-                addIdentityKeyToResourceRecord(rec, &fileName);
-            }
-
-            Str_Free(&fileName);
-            Str_Free(&fileNames);
-            break;
-            }
-        default:
-            break;
-        }
-    }}
-
+    while((p = Str_CopyDelim2(&name, p, ';', CDF_OMIT_DELIMITER)))
+        GameResourceRecord_AddName(rec, &name);
     Str_Free(&name);
-    Str_Free(&names);
+    }
+
+    if(params)
+    switch(rclass)
+    {
+    case RC_PACKAGE:
+        // Add an auto-identification file identityKey list to the info record.
+        { ddstring_t identityKey;
+
+        // Ensure the identityKey list has the required terminating semicolon.
+        Str_Set(&str, (const char*) params);
+        if(Str_RAt(&str, 0) != ';')
+            Str_Append(&str, ";");
+
+        Str_Init(&identityKey);
+        { const char* p = Str_Text(&str);
+        while((p = Str_CopyDelim2(&identityKey, p, ';', CDF_OMIT_DELIMITER)))
+            GameResourceRecord_AddIdentityKey(rec, &identityKey);
+        }
+
+        Str_Free(&identityKey);
+        break;
+        }
+    default:
+        break;
+    }
+    
+    GameInfo_AddResource(info, rclass, rec);
+
+    Str_Free(&str);
 }
 
 gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* _defsPath,
@@ -350,7 +366,7 @@ gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* 
     {
     gameinfo_t* info;
     ddstring_t cmdlineFlag, cmdlineFlag2;
-    filename_t dataPath, defsPath;
+    ddstring_t dataPath, defsPath;
     pluginid_t pluginId = Plug_PluginIdForActiveHook();
 
     if(strlen(identityKey) > 16)
@@ -359,11 +375,21 @@ gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* 
     if((info = findGameInfoForIdentityKey(identityKey)))
         Con_Error("DD_AddGame: Failed adding game \"%s\", identity key '%s' already in use.", defaultTitle, identityKey);
 
-    M_TranslatePath(dataPath, _dataPath, FILENAME_T_MAXLEN);
-    Dir_ValidDir(dataPath, FILENAME_T_MAXLEN);
+    Str_Init(&dataPath);
+    Str_Set(&dataPath, _dataPath);
+    Str_Strip(&dataPath);
+    F_FixSlashes(&dataPath);
+    F_ExpandBasePath(&dataPath, &dataPath);
+    if(Str_RAt(&dataPath, 0) != DIR_SEP_CHAR)
+        Str_AppendChar(&dataPath, DIR_SEP_CHAR);
 
-    M_TranslatePath(defsPath, _defsPath, FILENAME_T_MAXLEN);
-    Dir_ValidDir(defsPath, FILENAME_T_MAXLEN);
+    Str_Init(&defsPath);
+    Str_Set(&defsPath, _defsPath);
+    Str_Strip(&defsPath);
+    F_FixSlashes(&defsPath);
+    F_ExpandBasePath(&defsPath, &defsPath);
+    if(Str_RAt(&defsPath, 0) != DIR_SEP_CHAR)
+        Str_AppendChar(&defsPath, DIR_SEP_CHAR);
 
     Str_Init(&cmdlineFlag);
     Str_Init(&cmdlineFlag2);
@@ -385,11 +411,13 @@ gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* 
     /**
      * Looking good. Add this game to our records.
      */
-    info = addGameInfoRecord(pluginId, identityKey, dataPath, defsPath, mainConfig, defaultTitle, defaultAuthor, _cmdlineFlag? &cmdlineFlag : 0, _cmdlineFlag2? &cmdlineFlag2 : 0);
+    info = addGameInfoRecord(pluginId, identityKey, &dataPath, &defsPath, mainConfig, defaultTitle, defaultAuthor, _cmdlineFlag? &cmdlineFlag : 0, _cmdlineFlag2? &cmdlineFlag2 : 0);
 
-    Str_Free(&cmdlineFlag);
     Str_Free(&cmdlineFlag2);
-
+    Str_Free(&cmdlineFlag);
+    Str_Free(&defsPath);
+    Str_Free(&dataPath);
+    
     return (gameid_t)gameInfoIndex(info);
     }
 }
@@ -410,7 +438,7 @@ void DD_DestroyGameInfo(void)
     currentGameInfoIndex = 0;
 }
 
-/// @return              @c true, iff the resource appears to be what we think it is.
+/// @return  @c true, iff the resource appears to be what we think it is.
 static boolean recognizeWAD(const char* filePath, void* data)
 {
     if(!M_FileExists(filePath))
@@ -445,39 +473,36 @@ static boolean recognizeWAD(const char* filePath, void* data)
     return true;
 }
 
-/// @return              @c true, iff the resource appears to be what we think it is.
+/// @return  @c true, iff the resource appears to be what we think it is.
 static boolean recognizeZIP(const char* filePath, void* data)
 {
     /// \todo dj: write me.
     return M_FileExists(filePath);
 }
 
-static boolean validateGameResource(gameresource_record_t* rec, const char* name)
+static int validateResource(gameresource_record_t* rec, void* paramaters)
 {
-    byte result = 0;
-    ddstring_t foundPath; Str_Init(&foundPath);
-    if(F_FindResource2(rec->rclass, name, &foundPath) != 0)
+    assert(rec);
     {
-        switch(rec->rclass)
+    int result = 0;
+    const ddstring_t* path;
+    if((path = GameResourceRecord_ResolvedPath(rec, true)) != 0)
+    switch(GameResourceRecord_ResourceClass(rec))
+    {
+    case RC_PACKAGE:
+        if(recognizeWAD(Str_Text(path), (void*)GameResourceRecord_IdentityKeys(rec)))
         {
-        case RC_PACKAGE:
-            if(recognizeWAD(Str_Text(&foundPath), (void*)rec->identityKeys))
-            {
-                result = 2;
-                break;
-            }
-            if(recognizeZIP(Str_Text(&foundPath), (void*)rec->identityKeys))
-            {
-                result = 2;
-                break;
-            }
-        default: break;
+            result = 1;
         }
+        else if(recognizeZIP(Str_Text(path), (void*)GameResourceRecord_IdentityKeys(rec)))
+        {
+            result = 1;
+        }
+        break;
+    default: break;
     }
-    if(result != 0)
-        Str_Copy(&rec->path, &foundPath);
-    Str_Free(&foundPath);
-    return (result == 2? true : false);
+    return result;
+    }
 }
 
 static void locateGameResources(gameinfo_t* info)
@@ -485,7 +510,6 @@ static void locateGameResources(gameinfo_t* info)
     assert(info);
     {
     uint oldGameInfoIndex = currentGameInfoIndex;
-    ddstring_t name;
 
     if(DD_GameInfo() != info)
     {
@@ -495,23 +519,21 @@ static void locateGameResources(gameinfo_t* info)
         F_InitResourceLocator();
     }
 
-    Str_Init(&name);
     { uint i;
-    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
+    for(i = RESOURCECLASS_FIRST; i < RESOURCECLASS_COUNT; ++i)
     {
         gameresource_record_t* const* records;
         if((records = GameInfo_Resources(info, (resourceclass_t)i, 0)))
         {
-            for(; *records; records++)
+            do
             {
                 gameresource_record_t* rec = *records;
-                if(!(rec->rflags & RF_STARTUP))
+                if(!(GameResourceRecord_ResourceFlags(rec) & RF_STARTUP))
                     continue;
-                validateGameResource(rec, Str_Text(&rec->names));
-            }
+                validateResource(rec, 0);
+            } while(*(++records));
         }
     }}
-    Str_Free(&name);
 
     if(currentGameInfoIndex != oldGameInfoIndex)
     {
@@ -529,14 +551,15 @@ static boolean allGameResourcesFound(gameinfo_t* info)
     if(!DD_IsNullGameInfo(info))
     {
         uint i;
-        for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
+        for(i = 0; i < RESOURCECLASS_COUNT; ++i)
         {
             gameresource_record_t* const* records;
             if((records = GameInfo_Resources(info, (resourceclass_t)i, 0)))
                 do
                 {
                     gameresource_record_t* rec = *records;
-                    if((rec->rflags & RF_STARTUP) && Str_Length(&rec->path) == 0)
+                    if((GameResourceRecord_ResourceFlags(rec) & RF_STARTUP) &&
+                       !GameResourceRecord_ResolvedPath(rec, false))
                         return false;
                 } while(*(++records));
         }
@@ -557,29 +580,22 @@ static void loadGameResources(gameinfo_t* info, resourceclass_t rclass, const ch
     if((records = GameInfo_Resources(info, rclass, 0)))
         do
         {
-            switch((*records)->rclass)
+            switch(GameResourceRecord_ResourceClass(*records))
             {
             case RC_PACKAGE:
-                if(Str_Length(&(*records)->path) != 0)
-                    W_AddFile(Str_Text(&(*records)->path), false);
+                { const ddstring_t* path;
+                if(0 != (path = GameResourceRecord_ResolvedPath(*records, false)))
+                {
+                    W_AddFile(Str_Text(path), false);
+                }}
                 break;
             default:
-                Con_Error("loadGameResources: Error, no resource loader found for %s.", F_ResourceClassStr((*records)->rclass));
+                Con_Error("loadGameResources: No resource loader found for %s.",
+                          F_ResourceClassStr(GameResourceRecord_ResourceClass(*records)));
             };
         } while(*(++records));
     }
     }
-}
-
-static void printGameResourceRecord(gameresource_record_t* rec, boolean printStatus)
-{
-    assert(rec);
-    if(printStatus)
-        Con_Printf("%s", Str_Length(&rec->path) == 0? " ! ":"   ");
-    Con_PrintPathList3(Str_Text(&rec->names), " or ", PPF_TRANSFORM_PATH_MAKEPRETTY);
-    if(printStatus)
-        Con_Printf(" %s%s", Str_Length(&rec->path) == 0? "- missing" : "- found ", Str_Length(&rec->path) == 0? "" : Str_Text(F_PrettyPath(&rec->path)));
-    Con_Printf("\n");
 }
 
 /**
@@ -598,16 +614,16 @@ static void printGameInfoResources(gameinfo_t* info, boolean printStatus, int rf
 {
     assert(info);
     { uint i; size_t n = 0;
-    for(i = 0; i < NUM_RESOURCE_CLASSES; ++i)
+    for(i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
         gameresource_record_t* const* records;
         if((records = GameInfo_Resources(info, (resourceclass_t)i, 0)))
         {
             do
             {
-                if((*records)->rflags == rflags)
+                if(GameResourceRecord_ResourceFlags(*records) == rflags)
                 {
-                    printGameResourceRecord(*records, printStatus);
+                    GameResourceRecord_Print(*records, printStatus);
                     n++;
                 }
             } while(*(++records));
@@ -1012,31 +1028,39 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
     // If a game is presently loaded; unload it.
     if(!DD_IsNullGameInfo(DD_GameInfo()))
     {
+        if(gx.Shutdown)
+            gx.Shutdown();
         Con_SaveDefaults();
 
-        Cl_Reset();
-
-        P_PtcShutdown();
         LO_Clear();
         R_DestroyObjLinks();
+
+        P_PtcShutdown();
+        P_ControlShutdown();
+        Con_Execute(CMDS_DDAY, "clearbindings", true, false); 
 
         { uint i;
         for(i = 0; i < DDMAXPLAYERS; ++i)
         {
             player_t* plr = &ddPlayers[i];
             ddplayer_t* ddpl = &plr->shared;
+
             // Mobjs go down with the map.
             ddpl->mo = 0;
             // States have changed, the states are unknown.
             ddpl->pSprites[0].statePtr = ddpl->pSprites[1].statePtr = 0;
+
+            ddpl->inGame = false;
+            ddpl->flags &= ~DDPF_CAMERA;
+
+            ddpl->fixedColorMap = 0;
+            ddpl->extraLight = 0;
         }}
 
-        if(gx.Shutdown)
-            gx.Shutdown();
         Z_FreeTags(PU_GAMESTATIC, PU_PURGELEVEL - 1);
-
         // If a map was loaded; unload it.
         P_SetCurrentMap(0);
+        Cl_Reset();
 
         R_ShutdownCompositeFonts();
         R_ShutdownVectorGraphics();
@@ -1046,14 +1070,14 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         GL_DestroyTextures();
 
         Sfx_InitLogical();
-
         P_InitThinkerLists(0x1|0x2);
-        P_ControlShutdown();
 
         Con_DestroyDatabases();
 
         // This is now the current game.
         currentGameInfoIndex = gameInfoIndex(findGameInfoForIdentityKey("null-game"));
+
+        DD_Register();
 
         F_InitResourceLocator();
         F_InitializeResourcePathMap();
@@ -1066,9 +1090,6 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
 
         R_InitViewBorder();
         R_SetViewWindow(0, 0, SCREENWIDTH, SCREENHEIGHT);
-
-        DD_Register();
-        Con_UpdateKnownWords();
 
         W_Reset();
     }
@@ -1227,8 +1248,20 @@ void DD_AutoselectGame(void)
 
 int DD_EarlyInit(void)
 {
+    ddstring_t dataPath, defsPath;
+
     // Bring the console online as soon as we can.
     DD_ConsoleInit();
+
+    // The memory zone must be online before attempting to populate the
+    // console command, variable (etc...) databases.
+    if(!Z_Init())
+    {
+        DD_ErrorBox(true, "Error initializing memory zone.");
+    }
+
+    // Register the engine's console commands and variables.
+    DD_Register();
 
     // Bring the window manager online.
     Sys_InitWindowManager();
@@ -1240,13 +1273,26 @@ int DD_EarlyInit(void)
      * \note Ideally this would call DD_ChangeGame but not all required
      * subsystems are online at this time.
      */
-    { filename_t dataPath, defsPath;
-    M_TranslatePath(dataPath, DD_BASEPATH_DATA, FILENAME_T_MAXLEN);
-    Dir_ValidDir(dataPath, FILENAME_T_MAXLEN);
-    M_TranslatePath(defsPath, DD_BASEPATH_DEFS, FILENAME_T_MAXLEN);
-    Dir_ValidDir(defsPath, FILENAME_T_MAXLEN);
-    currentGameInfoIndex = gameInfoIndex(addGameInfoRecord(0, "null-game", dataPath, defsPath, "doomsday.cfg", 0, 0, 0, 0));
-    }
+    Str_Init(&dataPath);
+    Str_Set(&dataPath, DD_BASEPATH_DATA);
+    Str_Strip(&dataPath);
+    F_FixSlashes(&dataPath);
+    F_ExpandBasePath(&dataPath, &dataPath);
+    if(Str_RAt(&dataPath, 0) != DIR_SEP_CHAR)
+        Str_AppendChar(&dataPath, DIR_SEP_CHAR);
+
+    Str_Init(&defsPath);
+    Str_Set(&defsPath, DD_BASEPATH_DEFS);
+    Str_Strip(&defsPath);
+    F_FixSlashes(&defsPath);
+    F_ExpandBasePath(&defsPath, &defsPath);
+    if(Str_RAt(&defsPath, 0) != DIR_SEP_CHAR)
+        Str_AppendChar(&defsPath, DIR_SEP_CHAR);
+
+    currentGameInfoIndex = gameInfoIndex(addGameInfoRecord(0, "null-game", &dataPath, &defsPath, "doomsday.cfg", 0, 0, 0, 0));
+
+    Str_Free(&defsPath);
+    Str_Free(&dataPath);
     return true;
 }
 
@@ -1622,7 +1668,6 @@ static int DD_StartupWorker(void* parm)
     Con_SetProgress(199);
 
     Plug_DoHook(HOOK_INIT, 0, 0); // Any initialization hooks?
-    Con_UpdateKnownWords(); // For word completion (with Tab).
 
     Con_SetProgress(200);
 
@@ -2090,30 +2135,18 @@ void DD_SetVariable(int ddvalue, void *parm)
     }
 }
 
-material_namespace_t DD_MaterialNamespaceForTextureType(gltexture_type_t t)
-{
-    if(t < GLT_ANY || t >= NUM_GLTEXTURE_TYPES)
-        Con_Error("DD_MaterialNamespaceForTextureType: Internal error, invalid type %i.", (int) t);
-    switch(t)
-    {
-    case GLT_ANY:           return MN_ANY;
-    case GLT_DOOMTEXTURE:   return MN_TEXTURES;
-    case GLT_FLAT:          return MN_FLATS;
-    case GLT_SPRITE:        return MN_SPRITES;
-    case GLT_SYSTEM:        return MN_SYSTEM;
-    default:
-#if _DEBUG
-        Con_Message("DD_MaterialNamespaceForTextureType: No namespace for type %i:%s.", (int)t, GLTEXTURE_TYPE_STRING(t));
-#endif
-        return 0;
-    }
-}
-
 materialnum_t DD_MaterialForTexture(uint ofTypeId, gltexture_type_t type)
 {
     const gltexture_t* tex;
     if(ofTypeId != 0 && (tex = GL_GetGLTextureByTypeId(ofTypeId-1, type)))
-        return Materials_CheckNumForName(GLTexture_Name(tex), DD_MaterialNamespaceForTextureType(type));
+    {
+        materialnum_t result;
+        ddstring_t path; Str_Init(&path);
+        Str_Appendf(&path, "%s%s", Str_Text(Materials_NamespaceNameForTextureType(type)), GLTexture_Name(tex));
+        result = Materials_CheckNumForName(Str_Text(&path));
+        Str_Free(&path);
+        return result;
+    }
     return 0;
 }
 
@@ -2162,28 +2195,37 @@ const char* value_Str(int val)
 
 D_CMD(Load)
 {
+    boolean didLoadGame = false, didLoadResource = false;
     ddstring_t searchPath, foundPath;
-    int result = 0;
+    int arg = 1;
 
     { gameinfo_t* info;
-    if(argc == 2 && (info = findGameInfoForIdentityKey(argv[1])))
-        return DD_ChangeGame(info);}
+    if((info = findGameInfoForIdentityKey(argv[arg])))
+    {
+        if(!DD_ChangeGame(info))
+            return false;
+        didLoadGame = true;
+        ++arg;
+    }}
 
-    /// Try the resource locator.
     Str_Init(&searchPath);
     Str_Init(&foundPath);
-    { int i;
-    for(i = 1; i < argc; ++i)
+    for(; arg < argc; ++arg)
     {
+        // Try the resource locator.
         Str_Clear(&searchPath);
-        Str_Appendf(&searchPath, "%s;", argv[i]);
+        Str_Appendf(&searchPath, "%s;", argv[arg]);
         if(F_FindResource2(RC_UNKNOWN, Str_Text(&searchPath), &foundPath) != 0 &&
            W_AddFile(Str_Text(&foundPath), false))
-            result = 1;
-    }}
+            didLoadResource = true;
+    }
     Str_Free(&foundPath);
     Str_Free(&searchPath);
-    return result != 0;
+
+    if(didLoadResource)
+        DD_UpdateEngineState();
+
+    return (didLoadGame || didLoadResource);
 }
 
 D_CMD(Unload)

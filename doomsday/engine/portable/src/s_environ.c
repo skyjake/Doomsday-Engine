@@ -1,10 +1,10 @@
-/**\file
+/**\file s_environ.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -84,33 +84,30 @@ static ownernode_t *unusedNodeList = NULL;
  * @return              If found; material type associated to the texture,
  *                      else @c MEC_UNKNOWN.
  */
-material_env_class_t S_MaterialClassForName(const char* name, material_namespace_t mnamespace)
+material_env_class_t S_MaterialClassForName(const dduri_t* path)
 {
     ded_tenviron_t* env;
     int i;
-
     for(i = 0, env = defs.textureEnv; i < defs.count.textureEnv.num; ++i, env++)
     {
         int j;
-
         for(j = 0; j < env->count.num; ++j)
         {
-            ded_materialid_t*   mid = &env->materials[j];
+            dduri_t* ref = env->materials[j];
 
-            if(mid->mnamespace == mnamespace && !stricmp(mid->name, name))
+            if(!ref) continue;
+
+            if(Uri_Equality(ref, path))
             {   // A match!
-                material_env_class_t k;
-
                 // See if we recognise the material name.
+                material_env_class_t k;
                 for(k = 0; k < NUM_MATERIAL_ENV_CLASSES; ++k)
                     if(!stricmp(env->id, matInfo[k].name))
                         return k;
-
                 return MEC_UNKNOWN;
             }
         }
     }
-
     return MEC_UNKNOWN;
 }
 
@@ -432,3 +429,4 @@ Con_Message("sector %i: secsp:%i\n", c, sectorSpace);
     if(sec->reverb[SRD_VOLUME] > 1)
         sec->reverb[SRD_VOLUME] = 1;
 }
+

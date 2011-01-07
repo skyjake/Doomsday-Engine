@@ -1,10 +1,10 @@
-/**\file
+/**\file con_config.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * con_config.c: Config Files
+ * Config Files.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -54,6 +54,120 @@ static filename_t cfgFile;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
+
+static void writeHeaderComment(FILE* file)
+{
+    if(DD_IsNullGameInfo(DD_GameInfo()))
+        fprintf(file, "# " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n");
+    else
+        fprintf(file, "# %s %s / " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n",
+                (char*) gx.GetVariable(DD_PLUGIN_NAME),
+                (char*) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
+
+    fprintf(file, "# This configuration file is generated automatically. Each line is a\n");
+    fprintf(file, "# console command. Lines beginning with # are comments. Use autoexec.cfg\n");
+    fprintf(file, "# for your own startup commands.\n\n");
+}
+
+static int writeVariableToFileWorker(const knownword_t* word, void* paramaters)
+{
+    assert(word && paramaters);
+    {
+    FILE* file = (FILE*)paramaters;
+    ddcvar_t* cvar = (ddcvar_t*)word->data;
+
+    if(cvar->shared.type == CVT_NULL || (cvar->shared.flags & CVF_NO_ARCHIVE))
+        return 0; // Continue iteration.
+
+    // First print the comment (help text).
+    { const char* str;
+    if((str = DH_GetString(DH_Find(cvar->shared.name), HST_DESCRIPTION)))
+        M_WriteCommented(file, str);
+    }
+
+    fprintf(file, "%s ", cvar->shared.name);
+    if(cvar->shared.flags & CVF_PROTECTED)
+        fprintf(file, "force ");
+    if(cvar->shared.type == CVT_BYTE)
+        fprintf(file, "%d", *(byte*) cvar->shared.ptr);
+    if(cvar->shared.type == CVT_INT)
+        fprintf(file, "%d", *(int*) cvar->shared.ptr);
+    if(cvar->shared.type == CVT_FLOAT)
+        fprintf(file, "%s", M_TrimmedFloat(*(float*) cvar->shared.ptr));
+    if(cvar->shared.type == CVT_CHARPTR)
+    {
+        fprintf(file, "\"");
+        if(*(char**) cvar->shared.ptr)
+            M_WriteTextEsc(file, *(char**) cvar->shared.ptr);
+        fprintf(file, "\"");
+    }
+    fprintf(file, "\n\n");
+    return 0; // Continue iteration.
+    }
+}
+
+static __inline void writeVariablesToFile(FILE* file)
+{
+    Con_IterateKnownWords(0, WT_CVAR, writeVariableToFileWorker, file);
+}
+
+static int writeAliasToFileWorker(const knownword_t* word, void* paramaters)
+{
+    assert(word && paramaters);
+    {
+    FILE* file = (FILE*) paramaters;
+    calias_t* cal = (calias_t*) word->data;
+
+    fprintf(file, "alias \"");
+    M_WriteTextEsc(file, cal->name);
+    fprintf(file, "\" \"");
+    M_WriteTextEsc(file, cal->command);
+    fprintf(file, "\"\n");
+    return 0; // Continue iteration.
+    }
+}
+
+static __inline void writeAliasesToFile(FILE* file)
+{
+    Con_IterateKnownWords(0, WT_CALIAS, writeAliasToFileWorker, file);
+}
+
+static boolean writeConsoleState(const char* fileName)
+{
+    if(!fileName || !fileName[0])
+        return false;
+
+    { FILE* file;
+    if((file = fopen(fileName, "wt")))
+    {
+        writeHeaderComment(file);
+        fprintf(file, "#\n# CONSOLE VARIABLES\n#\n\n");
+        writeVariablesToFile(file);
+
+        fprintf(file, "\n#\n# ALIASES\n#\n\n");
+        writeAliasesToFile(file);
+        fclose(file);
+        return true;
+    }}
+    Con_Message("writeConsoleState: Can't open %s for writing.\n", fileName);
+    return false;
+}
+
+static boolean writeBindingsState(const char* fileName)
+{
+    if(!fileName || !fileName[0])
+        return false;
+    { FILE* file;
+    if((file = fopen(fileName, "wt")))
+    {
+        writeHeaderComment(file);
+        B_WriteToFile(file);
+        fclose(file);
+        return true;
+    }}
+    Con_Message("Con_WriteState: Can't open %s for writing.\n", fileName);
+    return false;
+}
 
 boolean Con_ParseCommands(const char* fileName, boolean setdefault)
 {
@@ -92,88 +206,6 @@ boolean Con_ParseCommands(const char* fileName, boolean setdefault)
 
     F_Close(file);
     return true;
-}
-
-static void Con_WriteHeaderComment(FILE* file)
-{
-    if(DD_IsNullGameInfo(DD_GameInfo()))
-        fprintf(file, "# " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n");
-    else
-        fprintf(file, "# %s %s / " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n", (char*) gx.GetVariable(DD_PLUGIN_NAME), (char*) gx.GetVariable(DD_PLUGIN_VERSION_SHORT));
-
-    fprintf(file, "# This configuration file is generated automatically. Each line is a\n");
-    fprintf(file, "# console command. Lines beginning with # are comments. Use autoexec.cfg\n");
-    fprintf(file, "# for your own startup commands.\n\n");
-}
-
-static boolean writeConsoleState(const char* fileName)
-{
-    if(!fileName || !fileName[0])
-        return false;
-
-    { FILE* file;
-    if((file = fopen(fileName, "wt")))
-    {
-        Con_WriteHeaderComment(file);
-        fprintf(file, "#\n# CONSOLE VARIABLES\n#\n\n");
-
-        // We'll write all the console variables that are flagged for archiving.
-        { uint i, numCVars = Con_CVarCount();
-        for(i = 0; i < numCVars; ++i)
-        {
-            const cvar_t* var = Con_GetVariableIDX(i);
-
-            if(var->type == CVT_NULL || (var->flags & CVF_NO_ARCHIVE))
-                continue;
-
-            // First print the comment (help text).
-            { const char* str;
-            if((str = DH_GetString(DH_Find(var->name), HST_DESCRIPTION)))
-                M_WriteCommented(file, str);
-            }
-
-            fprintf(file, "%s ", var->name);
-            if(var->flags & CVF_PROTECTED)
-                fprintf(file, "force ");
-            if(var->type == CVT_BYTE)
-                fprintf(file, "%d", *(byte*) var->ptr);
-            if(var->type == CVT_INT)
-                fprintf(file, "%d", *(int*) var->ptr);
-            if(var->type == CVT_FLOAT)
-                fprintf(file, "%s", TrimmedFloat(*(float*) var->ptr));
-            if(var->type == CVT_CHARPTR)
-            {
-                fprintf(file, "\"");
-                if(*(char**) var->ptr)
-                    M_WriteTextEsc(file, *(char**) var->ptr);
-                fprintf(file, "\"");
-            }
-            fprintf(file, "\n\n");
-        }}
-
-        fprintf(file, "\n#\n# ALIASES\n#\n\n");
-        Con_WriteAliasesToFile(file);
-        fclose(file);
-        return true;
-    }}
-    Con_Message("writeConsoleState: Can't open %s for writing.\n", fileName);
-    return false;
-}
-
-static boolean writeBindingsState(const char* fileName)
-{
-    if(!fileName || !fileName[0])
-        return false;
-    { FILE* file;
-    if((file = fopen(fileName, "wt")))
-    {
-        Con_WriteHeaderComment(file);
-        B_WriteToFile(file);
-        fclose(file);
-        return true;
-    }}
-    Con_Message("Con_WriteState: Can't open %s for writing.\n", fileName);
-    return false;
 }
 
 /**

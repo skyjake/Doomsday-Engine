@@ -1,10 +1,10 @@
-/**\file
+/**\file r_data.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,27 +53,27 @@
 typedef struct detailtex_s {
     gltextureid_t   id;
     lumpnum_t       lump;
-    const char*     external;
+    const dduri_t*  external;
 } detailtex_t;
 
 typedef struct lightmap_s {
     gltextureid_t   id;
-    const char*     external;
+    const dduri_t*  external;
 } lightmap_t;
 
 typedef struct flaretex_s {
     gltextureid_t   id;
-    const char*     external;
+    const dduri_t*  external;
 } flaretex_t;
 
 typedef struct shinytex_s {
     gltextureid_t   id;
-    const char*     external;
+    const dduri_t*  external;
 } shinytex_t;
 
 typedef struct masktex_s {
     gltextureid_t   id;
-    const char*     external;
+    const dduri_t*  external;
     short           width, height;
 } masktex_t;
 
@@ -323,23 +323,23 @@ boolean         R_DrawVLightVector(const vlight_t* light, void* context);
 void            R_InitAnimGroup(ded_group_t* def);
 
 detailtex_t*    R_CreateDetailTexture(const ded_detailtexture_t* def);
-detailtex_t*    R_GetDetailTexture(lumpnum_t lump, const char* external);
+detailtex_t*    R_GetDetailTexture(lumpnum_t lump, const dduri_t* external);
 void            R_DestroyDetailTextures(void); // Called at shutdown.
 
-lightmap_t*     R_CreateLightMap(const ded_lightmap_t* def);
-lightmap_t*     R_GetLightMap(const char* external);
+lightmap_t*     R_CreateLightMap(const dduri_t* uri);
+lightmap_t*     R_GetLightMap(const dduri_t* uri);
 void            R_DestroyLightMaps(void); // Called at shutdown.
 
-flaretex_t*     R_CreateFlareTexture(const ded_flaremap_t* def);
-flaretex_t*     R_GetFlareTexture(const char* external);
+flaretex_t*     R_CreateFlareTexture(const dduri_t* uri);
+flaretex_t*     R_GetFlareTexture(const dduri_t* uri);
 void            R_DestroyFlareTextures(void); // Called at shutdown.
 
-shinytex_t*     R_CreateShinyTexture(const ded_reflection_t* def);
-shinytex_t*     R_GetShinyTexture(const char* external);
+shinytex_t*     R_CreateShinyTexture(const dduri_t* uri);
+shinytex_t*     R_GetShinyTexture(const dduri_t* uri);
 void            R_DestroyShinyTextures(void); // Called at shutdown.
 
-masktex_t*      R_CreateMaskTexture(const ded_reflection_t* def);
-masktex_t*      R_GetMaskTexture(const char* external);
+masktex_t*      R_CreateMaskTexture(const dduri_t* uri, short width, short height);
+masktex_t*      R_GetMaskTexture(const dduri_t* uri);
 void            R_DestroyMaskTextures(void); // Called at shutdown.
 
 patchid_t       R_PrecachePatch(const char* name, patchinfo_t* info);
@@ -374,3 +374,4 @@ void            R_ShutdownCompositeFonts(void);
 void            R_SetCompositeFontChar(compositefontid_t fontId, unsigned char ch, const char* lumpname);
 
 #endif /* LIBDENG_REFRESH_DATA_H */
+

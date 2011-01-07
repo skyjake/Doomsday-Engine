@@ -227,11 +227,15 @@ const materialref_t* RegisterMaterial(const char* name, boolean isFlat)
         }
         else
         {
+            ddstring_t path; Str_Init(&path);
             memcpy(m->name, name, 8);
             m->name[8] = '\0';
             // First try the prefered namespace, then any.
-            if(!(m->num = Materials_CheckNumForName(m->name, (isFlat? MN_FLATS : MN_TEXTURES))))
-                m->num = Materials_CheckNumForName(m->name, MN_ANY);
+            Str_Appendf(&path, "%s%s", isFlat? MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":" : MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":", m->name);
+            m->num = Materials_CheckNumForName(Str_Text(&path));
+            if(m->num == 0)
+                m->num = Materials_CheckNumForName(name);
+            Str_Free(&path);
         }
 
         // Add it to the list of known materials.

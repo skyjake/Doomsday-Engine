@@ -1,10 +1,10 @@
-/**\file
+/**\file net_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * net_main.c: Client/server networking.
+ * Client/server networking.
  *
  * Player number zero is always the server.
  * In single-player games there is only the server present.
@@ -1250,7 +1250,7 @@ D_CMD(SetName)
 {
     playerinfo_packet_t info;
 
-    Con_SetString("net-name", argv[1], false);
+    Con_SetString("net-name", argv[1]);
     if(!netGame)
         return true;
 

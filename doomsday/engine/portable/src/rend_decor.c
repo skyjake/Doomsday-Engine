@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_decor.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -234,9 +234,9 @@ static void projectDecoration(decorsource_t* src)
             vis->data.flare.size = 0;
         }
 
-        if(!(def->flare.id && def->flare.id[0] == '-'))
+        if(def->flare && !stricmp(Str_Text(Uri_Path(def->flare)), "-"))
         {
-            vis->data.flare.tex = GL_GetFlareTexture(def->flare.id, def->flareTexture);
+            vis->data.flare.tex = GL_GetFlareTexture(def->flare, def->flareTexture);
         }
         else
         {   // Primary halo disabled.
@@ -332,9 +332,9 @@ static void addLuminousDecoration(decorsource_t* src)
     l->decorSource = src;
 
     LUM_OMNI(l)->zOff = 0;
-    LUM_OMNI(l)->tex = GL_GetLightMapTexture(def->sides.id);
-    LUM_OMNI(l)->ceilTex = GL_GetLightMapTexture(def->up.id);
-    LUM_OMNI(l)->floorTex = GL_GetLightMapTexture(def->down.id);
+    LUM_OMNI(l)->tex = GL_GetLightMapTexture(def->sides);
+    LUM_OMNI(l)->ceilTex = GL_GetLightMapTexture(def->up);
+    LUM_OMNI(l)->floorTex = GL_GetLightMapTexture(def->down);
 
     // These are the same rules as in DL_MobjRadius().
     LUM_OMNI(l)->radius = def->radius * 40 * loRadiusFactor;
@@ -871,3 +871,4 @@ BEGIN_PROF( PROF_DECOR_PROJECT );
 END_PROF( PROF_DECOR_PROJECT );
     }
 }
+

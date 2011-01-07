@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_zone.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 1999-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -84,12 +84,19 @@ typedef struct memvolume_s {
 } memvolume_t;
 
 // Used for block allocation of memory from the zone.
-typedef struct zblock_s {
-    unsigned int    max;            // maximum number of elements
-    unsigned int    count;          // number of used elements
-    size_t          elementSize;    // size of a single element
-    void*           elements;       // block of memory where elements are
-} zblock_t;
+typedef struct zblockset_block_s {
+    /// Maximum number of elements.
+    unsigned int max;
+
+    /// Number of used elements.
+    unsigned int count;
+
+    /// Size of a single element.
+    size_t elementSize;
+
+    /// Block of memory where elements are.
+    void* elements;
+} zblockset_block_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -786,34 +793,31 @@ size_t Z_FreeMemory(void)
  *
  * @param zblockset_t*  Block set into which the new block is added.
  */
-static void Z_AddBlockToSet(zblockset_t *set)
+static void addBlockToSet(zblockset_t* set)
 {
-    zblock_t       *block = 0;
+    assert(set);
+    {
+    zblockset_block_t* block = 0;
 
     // Get a new block by resizing the blocks array. This is done relatively
     // seldom, since there is a large number of elements per each block.
-    set->count++;
-    set->blocks = Z_Recalloc(set->blocks, sizeof(zblock_t) * set->count,
-                             set->tag);
+    set->_blockCount++;
+    set->_blocks = Z_Recalloc(set->_blocks, sizeof(zblockset_block_t) * set->_blockCount, set->_tag);
 
     // Initialize the block's data.
-    block = &set->blocks[set->count - 1];
-    block->max = set->elementsPerBlock;
-    block->elementSize = set->elementSize;
-    block->elements = Z_Malloc(block->elementSize * block->max, set->tag, NULL);
+    block = &set->_blocks[set->_blockCount - 1];
+    block->max = set->_elementsPerBlock;
+    block->elementSize = set->_elementSize;
+    block->elements = Z_Malloc(block->elementSize * block->max, set->_tag, NULL);
     block->count = 0;
+    }
 }
 
-/**
- * Return a ptr to the next unused element in the blockset.
- *
- * @param blockset      The blockset to return the next element from.
- *
- * @return              Ptr to the next unused element in the blockset.
- */
-void *Z_BlockNewElement(zblockset_t* set)
+void* ZBlockSet_Allocate(zblockset_t* set)
 {
-    zblock_t* block = &set->blocks[set->count - 1];
+    assert(set);
+    {
+    zblockset_block_t* block = &set->_blocks[set->_blockCount - 1];
 
     // When this is called, there is always an available element in the topmost
     // block. We will return it.
@@ -829,63 +833,45 @@ void *Z_BlockNewElement(zblockset_t* set)
         // pointers to the blocks.
         block = 0;
 
-        Z_AddBlockToSet(set);
+        addBlockToSet(set);
     }
 
     return element;
+    }
 }
 
-/**
- * Creates a new block memory allocator. These are used instead of many
- * calls to Z_Malloc when the number of required elements is unknown and
- * when linear allocation would be too slow.
- *
- * Memory is allocated as needed in blocks of "batchSize" elements. When
- * a new element is required we simply reserve a ptr in the previously
- * allocated block of elements or create a new block just in time.
- *
- * The internal state of a blockset is managed automatically.
- *
- * @param sizeOfElement Required size of each element.
- * @param batchSize     Number of elements in each zblock of the set.
- *
- * @return              Ptr to the newly created blockset.
- */
-zblockset_t *Z_BlockCreate(size_t sizeOfElement, unsigned int batchSize,
-                           int tag)
+zblockset_t* ZBlockSet_Construct(size_t sizeOfElement, unsigned int batchSize, int tag)
 {
-    zblockset_t *set;
+    zblockset_t* set;
+
+    if(sizeOfElement == 0)
+        Con_Error("Attempted ZBlockSet_Construct with invalid sizeOfElement (==0).");
+
+    if(batchSize == 0)
+        Con_Error("Attempted ZBlockSet_Construct with invalid batchSize (==0).");
 
     // Allocate the blockset.
     set = Z_Calloc(sizeof(*set), tag, NULL);
-    set->elementsPerBlock = batchSize;
-    set->elementSize = sizeOfElement;
-    set->tag = tag;
+    set->_elementsPerBlock = batchSize;
+    set->_elementSize = sizeOfElement;
+    set->_tag = tag;
 
     // Allocate the first block right away.
-    Z_AddBlockToSet(set);
+    addBlockToSet(set);
 
     return set;
 }
 
-/**
- * Free an entire blockset.
- * All memory allocated is released for all elements in all blocks and any
- * used for the blockset itself.
- *
- * @param set           The blockset to be freed.
- */
-void Z_BlockDestroy(zblockset_t *set)
+void ZBlockSet_Destruct(zblockset_t* set)
 {
-    uint            i;
-
-    if(!set)
-        return;
+    assert(set);
 
     // Free the elements from each block.
-    for(i = 0; i < set->count; ++i)
-        Z_Free(set->blocks[i].elements);
+    { uint i;
+    for(i = 0; i < set->_blockCount; ++i)
+        Z_Free(set->_blocks[i].elements);
+    }
 
-    Z_Free(set->blocks);
+    Z_Free(set->_blocks);
     Z_Free(set);
 }

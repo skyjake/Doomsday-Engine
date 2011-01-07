@@ -1,10 +1,10 @@
-/**\file
+/**\file doomdef.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <yagisan@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
@@ -23,11 +23,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- */
-
-/**
- * doomdef.h: Internally used data structures for virtually everything,
- * key definitions, lots of other stuff.
  */
 
 #ifndef __DOOMDEF_H__
@@ -242,7 +237,7 @@ enum { CR, CG, CB, CA }; // Color indices.
 #define IS_NETGAME          (Get(DD_NETGAME))
 #define IS_DEDICATED        (Get(DD_DEDICATED))
 
-#define CVAR(typ, x)        (*((typ)*) Con_GetVariable(x)->ptr)
+#define CVAR(typ, x)        (*((typ)*) Con_FindVariable(x)->ptr)
 
 #define CONSOLEPLAYER       (Get(DD_CONSOLEPLAYER))
 #define DISPLAYPLAYER       (Get(DD_DISPLAYPLAYER))

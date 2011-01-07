@@ -1,9 +1,9 @@
-/**\file
+/**\file dam_file.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -72,8 +72,7 @@ typedef enum damsegment_e {
 } damsegment_t;
 
 typedef struct {
-    char            name[9];
-    material_namespace_t mnamespace;
+    ddstring_t path;
 } dictentry_t;
 
 typedef struct {
@@ -108,25 +107,22 @@ static materialdict_t *materialDict;
 static void addMaterialToDict(materialdict_t* dict, material_t* mat)
 {
 #if 0
-    int                 c;
-    dictentry_t*        e;
+    dictentry_t* e;
 
     // Has this already been registered?
+    { int c;
     for(c = 0; c < dict->count; c++)
     {
         if(dict->table[c].mnamespace == mat->mnamespace &&
-           !stricmp(dict->table[c].name, mat->name))
+           !stricmp(Str_Text(&dict->table[c].path), mat->name))
         {   // Yes. skip it...
             return;
         }
-    }
+    }}
 
-    e = &dict->table[dict->count];
-    dict->count++;
+    e = &dict->table[dict->count]; dict->count++;
 
-    strncpy(e->name, mat->name, 8);
-    e->name[8] = '\0';
-    e->mnamespace = mat->mnamespace;
+    Str_Init(&e->path); Str_Set(&e->path, mat->name);
 #endif
 }
 
@@ -180,12 +176,10 @@ static uint getMaterialDictID(materialdict_t* dict, const material_t* mat)
 
 static material_t* lookupMaterialFromDict(materialdict_t* dict, int idx)
 {
-    dictentry_t*        e = &dict->table[idx];
-
-    if(!strncmp(e->name, BADTEXNAME, 8))
+    dictentry_t*e = &dict->table[idx];
+//    if(!strncmp(Str_Text(&e->path), BADTEXNAME, 8))
         return NULL;
-
-    return Materials_ToMaterial(Materials_NumForName(e->name, e->mnamespace));
+//    return Materials_ToMaterial(Materials_NumForName(Str_Text(&e->path), e->mnamespace));
 }
 
 static boolean openMapFile(char* path, boolean write)
@@ -1148,14 +1142,15 @@ static void archiveMap(gamemap_t *map, boolean write)
 
 static void archiveMaterialDict(materialdict_t *dict, boolean write)
 {
-    int                 i;
+    int i;
 
     if(write)
     {
         writeLong((long) dict->count);
         for(i = 0; i < dict->count; ++i)
         {
-            writeNBytes(dict->table[i].name, 8);
+            writeLong(Str_Length(&dict->table[i].path));
+            writeNBytes(Str_Text(&dict->table[i].path), Str_Length(&dict->table[i].path));
         }
     }
     else
@@ -1163,8 +1158,10 @@ static void archiveMaterialDict(materialdict_t *dict, boolean write)
         dict->count = readLong();
         for(i = 0; i < dict->count; ++i)
         {
-            readNBytes(dict->table[i].name, 8);
-            dict->table[i].name[8] = 0;
+            size_t len = readLong();
+            Str_Clear(&dict->table[i].path);
+            Str_Reserve(&dict->table[i].path, len);
+            readNBytes(Str_Text(&dict->table[i].path), len);
         }
     }
 }

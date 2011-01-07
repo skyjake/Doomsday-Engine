@@ -153,10 +153,10 @@ static void drawQuad(float x, float y, float w, float h)
 
 static DGLuint constructDisplayList(DGLuint name, unsigned char ch, compositefont_t* font)
 {
-    if(DGL_NewList(name, DGL_COMPILE))
+    if(GL_NewList(name, DGL_COMPILE))
     {
         drawQuad(font->chars[ch].offset, font->chars[ch].topOffset, font->chars[ch].width, font->chars[ch].height);
-        return DGL_EndList();
+        return GL_EndList();
     }
     return 0;
 }
@@ -164,12 +164,12 @@ static DGLuint constructDisplayList(DGLuint name, unsigned char ch, compositefon
 static void unloadCompositeFont(compositefont_t* font)
 {
     uint i;
-    if(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED))
+    if(novideo || isDedicated)
         return;
     for(i = 0; i < 256; ++i)
     {
         if(font->chars[i].dlist)
-            DGL_DeleteLists(font->chars[i].dlist, 1);
+            GL_DeleteLists(font->chars[i].dlist, 1);
         font->chars[i].dlist = 0;
     }
     font->needsUpdate = true;
@@ -177,11 +177,10 @@ static void unloadCompositeFont(compositefont_t* font)
 
 static void prepareCompositeFont(compositefont_t* font)
 {
-    uint i;
-
     if(!font->needsUpdate)
         return;
 
+    { uint i;
     for(i = 0; i < 256; ++i)
     {
         patchid_t patch;
@@ -190,23 +189,25 @@ static void prepareCompositeFont(compositefont_t* font)
         if(!(patch = font->chars[i].patch))
             continue;
 
-        font->chars[i].tex = GL_PreparePatch(R_FindPatchTex(patch));
         R_GetPatchInfo(patch, &info);
         font->chars[i].width = info.width;
         font->chars[i].height = info.height;
         font->chars[i].offset = info.offset;
         font->chars[i].topOffset = info.topOffset;
 
-        if(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED))
-            continue;
-        if(font->chars[i].dlist || Con_IsBusy()) // Cannot do this while in busy mode.
+        if(novideo || isDedicated)
             continue;
 
-        font->chars[i].dlist = constructDisplayList(0, i, font);
-    }
+        font->chars[i].tex = GL_PreparePatch(R_FindPatchTex(patch));
+
+        if(Con_IsBusy()) // Cannot do this while in busy mode.
+            continue;
+        if(font->chars[i].dlist == 0)
+            font->chars[i].dlist = constructDisplayList(0, i, font);
+    }}
 
     // Could not complete all tasks in busy mode.
-    if(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED) || !Con_IsBusy())
+    if(novideo || isDedicated || !Con_IsBusy())
         font->needsUpdate = false;
 }
 
@@ -380,23 +381,24 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state)
 
 static void setFontCharacterPatch(compositefont_t* font, unsigned char ch, const char* lumpname)
 {
-    // Instruct Doomsday to load the patch in monochrome mode.
-    // (2 = weighted average).
-    DD_SetInteger(DD_MONOCHROME_PATCHES, 2);
-    DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, true);
+    // Load the patches in monochrome mode. (2 = weighted average).
+    monochrome = 2;
+    upscaleAndSharpenPatches = true;
 
-    font->chars[ch].patch = R_RegisterAsPatch(lumpname);
-    font->chars[ch].tex = 0;
-    if(!(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED)))
+    font->chars[ch].patch =  R_RegisterAsPatch(lumpname);
+    if(!novideo && !isDedicated)
     {
+        if(font->chars[ch].tex)
+            glDeleteTextures(1, &font->chars[ch].tex);
+        font->chars[ch].tex = 0;
         if(font->chars[ch].dlist)
-            DGL_DeleteLists(font->chars[ch].dlist, 1);
+            glDeleteLists(font->chars[ch].dlist, 1);
         font->chars[ch].dlist = 0;
     }
     font->needsUpdate = true;
 
-    DD_SetInteger(DD_UPSCALE_AND_SHARPEN_PATCHES, false);
-    DD_SetInteger(DD_MONOCHROME_PATCHES, 0);
+    upscaleAndSharpenPatches = false;
+    monochrome = 0;
 }
 
 void R_SetCompositeFontChar(compositefontid_t fontId, unsigned char ch, const char* lumpname)
@@ -1228,8 +1230,8 @@ static void drawChar(unsigned char ch, int posX, int posY, compositefont_t* font
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(x, y, 0);
+    glMatrixMode(GL_MODELVIEW);
+    glTranslatef(x, y, 0);
 
     if(font->chars[ch].dlist)
     {
@@ -1240,8 +1242,8 @@ static void drawChar(unsigned char ch, int posX, int posY, compositefont_t* font
         drawQuad(font->chars[ch].offset, font->chars[ch].topOffset, font->chars[ch].width, font->chars[ch].height);
     }
 
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_Translatef(-x, -y, 0);
+    glMatrixMode(GL_MODELVIEW);
+    glTranslatef(-x, -y, 0);
 }
 
 static void drawFlash(int x, int y, int w, int h, int bright)
@@ -1260,7 +1262,7 @@ static void drawFlash(int x, int y, int w, int h, int bright)
     glBindTexture(GL_TEXTURE_2D, GL_PrepareLSTexture(LST_DYNAMIC));
 
     if(bright)
-        DGL_BlendMode(BM_ADD);
+        GL_BlendMode(BM_ADD);
     else
         glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -1275,5 +1277,5 @@ static void drawFlash(int x, int y, int w, int h, int bright)
         glVertex2f(x, y + h);
     glEnd();
 
-    DGL_BlendMode(BM_NORMAL);
+    GL_BlendMode(BM_NORMAL);
 }

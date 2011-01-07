@@ -1,10 +1,10 @@
-/**\file
+/**\file s_environ.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,17 +23,17 @@
  */
 
 /**
- * s_environ.h: Environmental Sound Effects
+ * Environmental Sound Effects
  */
 
-#ifndef __DOOMSDAY_SOUND_ENVIRON_H__
-#define __DOOMSDAY_SOUND_ENVIRON_H__
+#ifndef LIBDENG_SOUND_ENVIRON_H
+#define LIBDENG_SOUND_ENVIRON_H
 
 #include "p_mapdata.h"
 
 void            S_CalcSectorReverb(sector_t* sec);
 void            S_DetermineSubSecsAffectingSectorReverb(gamemap_t* map);
-material_env_class_t S_MaterialClassForName(const char* name,
-                                            material_namespace_t mnamespace);
+material_env_class_t S_MaterialClassForName(const dduri_t* path);
 
-#endif
+#endif /* LIBDENG_SOUND_ENVIRON_H */
+

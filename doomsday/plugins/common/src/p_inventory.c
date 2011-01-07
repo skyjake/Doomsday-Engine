@@ -317,7 +317,7 @@ static acfnptr_t getActionPtr(const char* name)
 }
 
 /**
- * Called during (post-engine) init and after updating game/engine state.
+ * Called during (post-game) init and after updating game/engine state.
  */
 void P_InitInventory(void)
 {

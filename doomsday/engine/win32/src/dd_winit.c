@@ -1,4 +1,4 @@
-/**\file dd_winit.h
+/**\file dd_winit.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,7 +23,7 @@
  */
 
 /**
- * WinAPI Initialization
+ * Engine Initialization - Windows.
  *
  * Create windows, load DLLs, setup APIs.
  */
@@ -345,10 +345,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         else if(!initTimingSystem())
         {
             DD_ErrorBox(true, "Error initalizing timing system.");
-        }
-        else if(!Z_Init())
-        {
-            DD_ErrorBox(true, "Error initializing memory zone.");
         }
         else if(!initPluginSystem())
         {

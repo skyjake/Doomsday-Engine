@@ -8,8 +8,7 @@
 # Used to render surfaces which do not specify a material.
 #
 Material {
-  Id = "unknown";
-  Namespace = system;
+  Id = "system:unknown";
   Width = 64;
   Height = 64;
   Layer {
@@ -23,8 +22,7 @@ Material {
 # Used to render surfaces which specify a material but which cannot be found.
 #
 Material {
-  Id = "missing";
-  Namespace = system;
+  Id = "system:missing";
   Width = 64;
   Height = 64;
   Layer {
@@ -37,8 +35,7 @@ Material {
 # Used when drawing bounding boxes, selection areas and more.
 #
 Material {
-  Id = "bbox";
-  Namespace = system;
+  Id = "system:bbox";
   Width = 64;
   Height = 64;
   Layer {
@@ -50,8 +47,7 @@ Material {
 # Basic mid-gray material used to render surfaces for various lighting debug displays.
 #
 Material {
-  Id = "gray";
-  Namespace = system;
+  Id = "system:gray";
   Width = 64;
   Height = 64;
   Layer {

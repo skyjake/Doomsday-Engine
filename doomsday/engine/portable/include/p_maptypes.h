@@ -113,6 +113,18 @@ typedef struct subsector_s {
     struct biassurface_s** bsuf;       // [sector->planeCount] size.
 } subsector_t;
 
+typedef enum {
+    MN_ANY = -1,
+    MATERIALNAMESPACEID_FIRST,
+    MN_TEXTURES = MATERIALNAMESPACEID_FIRST,
+    MN_FLATS,
+    MN_SPRITES,
+    MN_SYSTEM,
+    MATERIALNAMESPACEID_COUNT
+} materialnamespaceid_t;
+
+#define VALID_MATERIALNAMESPACEID(id)   ((id) >= MATERIALNAMESPACEID_FIRST && (id) < MATERIALNAMESPACEID_COUNT)
+
 typedef struct materiallayer_s {
     int             stage; // -1 => layer not in use.
     short           tics;
@@ -134,7 +146,7 @@ typedef enum {
 
 typedef struct material_s {
     runtime_mapdata_header_t header;
-    material_namespace_t mnamespace;
+    materialnamespaceid_t mnamespace;
     struct ded_material_s* def;        // Can be NULL (was generated automatically).
     short               flags;         // MATF_* flags
     byte                inFlags;       // MATIF_* flags

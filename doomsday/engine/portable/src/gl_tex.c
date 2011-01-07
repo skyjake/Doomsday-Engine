@@ -1062,20 +1062,19 @@ void GL_CalcLuminance(byte* buffer, int width, int height, int pixelSize,
             (*color)[c] = average[c] / avgCnt;
     }
 
-#ifdef _DEBUG
-    VERBOSE2(Con_Message("GL_CalcLuminance: "
-                        "  width %dpx, height %dpx, bits %d\n"
-                        "  cell region X[%d, %d] Y[%d, %d]\n"
-                        "  flare X= %g Y=%g %s\n"
-                        "  flare RGB[%g, %g, %g] %s\n",
-                        width, height, pixelSize,
-                        region[0], region[1], region[2], region[3],
-                        (*brightX), (*brightY),
-                        (posCnt? "(average)" : "(center)"),
-                        (*color)[0], (*color)[1], (*color)[2],
-                        (avgCnt? "(hi-intensity avg)" :
-                         lowCnt? "(low-intensity avg)" : "(white light)")));
-#endif
+/*#ifdef _DEBUG
+    Con_Message("GL_CalcLuminance: width %dpx, height %dpx, bits %d\n"
+                "  cell region X[%d, %d] Y[%d, %d]\n"
+                "  flare X= %g Y=%g %s\n"
+                "  flare RGB[%g, %g, %g] %s\n",
+                width, height, pixelSize,
+                region[0], region[1], region[2], region[3],
+                (*brightX), (*brightY),
+                (posCnt? "(average)" : "(center)"),
+                (*color)[0], (*color)[1], (*color)[2],
+                (avgCnt? "(hi-intensity avg)" :
+                 lowCnt? "(low-intensity avg)" : "(white light)"));
+#endif*/
 
     // Amplify color.
     amplify(*color);

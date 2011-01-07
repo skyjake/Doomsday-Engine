@@ -1,10 +1,10 @@
-/**\file
+/**\file g_update.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * g_update.c: Routines to call when updating the state of the engine
+ * Routines to call when updating the state of the engine
  *
  * \bug Not 64bit clean: In function 'G_RestoreState': cast from pointer to integer of different size
  */
@@ -47,6 +47,7 @@
 #include "hu_menu.h"
 #include "rend_automap.h"
 #include "p_inventory.h"
+#include "p_start.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -143,7 +144,7 @@ void G_UpdateState(int step)
     case DD_POST:
         G_RestoreState();
         R_InitRefresh();
-        P_Init();
+        P_Update();
         //// \fixme Detect gameMode changes (GM_DOOM -> GM_DOOM2, for instance).
 #if !__JHEXEN__
         XG_Update();

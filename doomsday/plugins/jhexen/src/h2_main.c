@@ -59,9 +59,6 @@
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
-extern void X_CreateLUTs(void);
-extern void X_DestroyLUTs(void);
-
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
@@ -90,8 +87,8 @@ const float defFontRGB2[] = { .9f, .9f, .9f };
 const float defFontRGB3[] = { 1, .65f, .275f };
 
 // The patches used in drawing the view border.
-char* borderLumps[] = {
-    "F_022", // Background.
+char* borderGraphics[] = {
+    "Flats:F_022", // Background.
     "BORDT", // Top.
     "BORDR", // Right.
     "BORDB", // Bottom.
@@ -231,9 +228,6 @@ int G_RegisterGames(int hookType, int parm, void* data)
  */
 void G_PreInit(void)
 {
-    // Calculate the various LUTs used by the playsim.
-    X_CreateLUTs();
-
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
     memset(&cfg, 0, sizeof(cfg));
@@ -376,6 +370,9 @@ void G_PreInit(void)
     cfg.weaponOrder[3] = WT_FIRST;
 
     cfg.weaponCycleSequential = true;
+
+    // Use the crossfade transition by default.
+    Con_SetInteger("con-transition", 0);
 
     // Do the common pre init routine.
     G_CommonPreInit();

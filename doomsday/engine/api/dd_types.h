@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_types.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2008 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,11 @@
  */
 
 /**
- * dd_types.h: Type Definitions
+ * Type Definitions
  */
 
-#ifndef __DOOMSDAY_TYPES_H__
-#define __DOOMSDAY_TYPES_H__
+#ifndef LIBDENG_TYPES_H
+#define LIBDENG_TYPES_H
 
 /** In Win32 TCHAR and related macros change size depending on if they are
  using wide characters (unicode utf-16le) or ansi for functions and strings.
@@ -135,19 +135,20 @@ typedef char            filename_t[FILENAME_T_MAXLEN];
  *
  * @ingroup fs
  */
-typedef enum resourceclass_e {
-    RC_UNKNOWN = -1,
-    RC_FIRST = 0,
-    RC_PACKAGE = RC_FIRST,
+typedef enum {
+    RC_NULL = -2,           /// Not a real class, used internally during resource locator init.
+    RC_UNKNOWN = -1,        /// Attempt to guess the class using heuristic evaluation of the path.
+    RESOURCECLASS_FIRST = 0,
+    RC_PACKAGE = RESOURCECLASS_FIRST,
     RC_DEFINITION,
     RC_GRAPHIC,
     RC_MODEL,
     RC_SOUND,
     RC_MUSIC,
-    NUM_RESOURCE_CLASSES
+    RESOURCECLASS_COUNT
 } resourceclass_t;
 
-#define VALID_RESOURCE_CLASS(n)             ((n) >= RC_FIRST && (n) < NUM_RESOURCE_CLASSES)
+#define VALID_RESOURCE_CLASS(n)     ((n) >= RESOURCECLASS_FIRST && (n) < RESOURCECLASS_COUNT)
 
 typedef struct directory_s {
     int             drive;
@@ -208,4 +209,5 @@ struct material_s;
 
 #include "dd_string.h"
 
-#endif
+#endif /* LIBDENG_TYPES_H */
+

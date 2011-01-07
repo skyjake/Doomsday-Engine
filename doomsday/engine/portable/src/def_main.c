@@ -75,23 +75,31 @@ void Def_ReadProcessDED(const char* filename);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 ded_t defs; // The main definitions database.
+boolean firstDED;
+
 sprname_t* sprNames; // Sprite name list.
+ded_count_t countSprNames;
+
 state_t* states; // State list.
-ded_light_t** stateLights;
-ded_ptcgen_t** statePtcGens;
+ded_count_t countStates;
+
 mobjinfo_t* mobjInfo; // Map object info database.
+ded_count_t countMobjInfo;
+
 sfxinfo_t* sounds; // Sound effect list.
+ded_count_t countSounds;
 
 ddtext_t* texts; // Text list.
-mobjinfo_t** stateOwners; // A pointer for each state.
-ded_count_t countSprNames;
-ded_count_t countStates;
-ded_count_t countMobjInfo;
-ded_count_t countSounds;
 ded_count_t countTexts;
+
+mobjinfo_t** stateOwners; // A pointer for each State.
 ded_count_t countStateOwners;
 
-boolean firstDED;
+ded_light_t** stateLights; // A pointer for each State.
+ded_count_t countStateLights;
+
+ded_ptcgen_t** statePtcGens; // A pointer for each State.
+ded_count_t countStatePtcGens;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -128,49 +136,48 @@ int Def_GetGameClasses(void)
  */
 void Def_Init(void)
 {
-    sprNames = NULL;
-    mobjInfo = NULL;
-    states = NULL;
-    statePtcGens = NULL;
-    stateLights = NULL;
-    sounds = NULL;
-    texts = NULL;
-    stateOwners = NULL;
-
+    sprNames = 0;
     DED_ZCount(&countSprNames);
+
+    mobjInfo = 0;
     DED_ZCount(&countMobjInfo);
+
+    states = 0;
     DED_ZCount(&countStates);
+
+    sounds = 0;
     DED_ZCount(&countSounds);
+
+    texts = 0;
     DED_ZCount(&countTexts);
+
+    stateOwners = 0;
     DED_ZCount(&countStateOwners);
+
+    statePtcGens = 0;
+    DED_ZCount(&countStatePtcGens);
+
+    stateLights = 0;
+    DED_ZCount(&countStateLights);
 
     DED_Init(&defs);
 }
 
-/**
- * Destroy databases.
- */
 void Def_Destroy(void)
 {
     // To make sure...
-    DED_Destroy(&defs);
+    DED_Clear(&defs);
     DED_Init(&defs);
 
     // Destroy the databases.
-    DED_DelArray((void **) &sprNames, &countSprNames);
-    DED_DelArray((void **) &states, &countStates);
-    DED_DelArray((void **) &mobjInfo, &countMobjInfo);
-    DED_DelArray((void **) &sounds, &countSounds);
-    DED_DelArray((void **) &texts, &countTexts);
-    DED_DelArray((void **) &stateOwners, &countStateOwners);
-
-    // Destroy the state array, parallel LUTs.
-    if(statePtcGens)
-        M_Free(statePtcGens);
-    statePtcGens = NULL;
-    if(stateLights)
-        M_Free(stateLights);
-    stateLights = NULL;
+    DED_DelArray((void**) &sprNames, &countSprNames);
+    DED_DelArray((void**) &states, &countStates);
+    DED_DelArray((void**) &mobjInfo, &countMobjInfo);
+    DED_DelArray((void**) &sounds, &countSounds);
+    DED_DelArray((void**) &texts, &countTexts);
+    DED_DelArray((void**) &stateOwners, &countStateOwners);
+    DED_DelArray((void**) &statePtcGens, &countStatePtcGens);
+    DED_DelArray((void**) &stateLights, &countStateLights);
 
     defsInited = false;
 }
@@ -344,43 +351,41 @@ ded_sky_t* Def_GetSky(const char* id)
     return NULL;
 }
 
-ded_material_t* Def_GetMaterial(const char* name, material_namespace_t mnamespace)
+ded_material_t* Def_GetMaterial(const dduri_t* uri)
 {
-    int                 i;
-
-    if(!name || !name[0])
-        return NULL;
-
-    for(i = defs.count.materials.num - 1; i >= 0; i--)
+    if(uri && !Str_IsEmpty(Uri_Path(uri)))
     {
-        ded_material_t*     def = &defs.materials[i];
+        int i;
+        for(i = defs.count.materials.num - 1; i >= 0; i--)
+        {
+            ded_material_t* def = &defs.materials[i];
 
-        if(mnamespace != MN_ANY && def->id.mnamespace != mnamespace)
-            continue;
+            if(!def->id) continue;
 
-        if(!stricmp(def->id.name, name))
-            return def;
+            if((Str_IsEmpty(Uri_Scheme(uri)) || !stricmp(Str_Text(Uri_Scheme(def->id)), Str_Text(Uri_Scheme(uri)))) &&
+               !stricmp(Str_Text(Uri_Path(def->id)),   Str_Text(Uri_Path(uri))))
+                return def;
+        }
     }
-
     return 0;
 }
 
 ded_decor_t* Def_GetDecoration(material_t* mat, boolean hasExt)
 {
-    int i;
     ded_decor_t* def;
-
+    int i;
     for(i = defs.count.decorations.num - 1, def = defs.decorations + i; i >= 0; i--, def--)
     {
-        material_t* defMat = Materials_ToMaterial(Materials_CheckNumForName(def->material.name, def->material.mnamespace));
-        if(mat == defMat)
-        {
-            // Is this suitable?
-            if(R_IsAllowedDecoration(def, mat, hasExt))
-                return def;
-        }
-    }
+        material_t* defMat;
 
+        if(!def->material)
+            continue;
+
+        defMat = Materials_ToMaterial(Materials_CheckNumForName2(def->material));
+        // Is this suitable?
+        if(mat == defMat && R_IsAllowedDecoration(def, mat, hasExt))
+            return def;
+    }
     return 0;
 }
 
@@ -388,61 +393,61 @@ ded_reflection_t* Def_GetReflection(material_t* mat, boolean hasExt)
 {
     ded_reflection_t* def;
     int i;
-
     for(i = defs.count.reflections.num - 1, def = defs.reflections + i; i >= 0; i--, def--)
     {
-        material_t* defMat = Materials_ToMaterial(Materials_CheckNumForName(def->material.name, def->material.mnamespace));
-        if(mat == defMat)
-        {
-            // Is this suitable?
-            if(R_IsAllowedReflection(def, mat, hasExt))
-                return def;
-        }
-    }
+        material_t* defMat;
 
-    return NULL;
+        if(!def->material)
+            continue;
+
+        defMat = Materials_ToMaterial(Materials_CheckNumForName2(def->material));
+        // Is this suitable?
+        if(mat == defMat && R_IsAllowedReflection(def, mat, hasExt))
+            return def;
+    }
+    return 0;
 }
 
 ded_detailtexture_t* Def_GetDetailTex(material_t* mat, boolean hasExt)
 {
     ded_detailtexture_t* def;
     int i;
-
     for(i = defs.count.details.num - 1, def = defs.details + i; i >= 0; i--, def--)
     {
-        material_t* defMat = Materials_ToMaterial(Materials_CheckNumForName(def->material1.name, def->material1.mnamespace));
-        if(mat == defMat)
+        if(def->material1)
         {
-            // Is this sutiable?
-            if(R_IsAllowedDetailTex(def, mat, hasExt))
+            material_t* defMat = Materials_ToMaterial(Materials_CheckNumForName2(def->material1));
+            // Is this suitable?
+            if(mat == defMat && R_IsAllowedDetailTex(def, mat, hasExt))
                 return def;
         }
 
-        defMat = Materials_ToMaterial(Materials_CheckNumForName(def->material2.name, def->material2.mnamespace));
-        if(mat == defMat)
+        if(def->material2)
         {
-            // Is this sutiable?
-            if(R_IsAllowedDetailTex(def, mat, hasExt))
+            material_t* defMat = Materials_ToMaterial(Materials_CheckNumForName2(def->material2));
+            // Is this suitable?
+            if(mat == defMat && R_IsAllowedDetailTex(def, mat, hasExt))
                 return def;
         }
     }
-
-    return NULL;
+    return 0;
 }
 
 ded_ptcgen_t* Def_GetGenerator(material_t* mat, boolean hasExt)
 {
     ded_ptcgen_t* def;
     int i;
-
-    // The generator will be determined now.
     for(i = 0, def = defs.ptcGens; i < defs.count.ptcGens.num; ++i, def++)
     {
         material_t* defMat;
 
-        if(!(defMat = Materials_ToMaterial(Materials_CheckNumForName(def->material.name, def->material.mnamespace))))
+        if(!def->material)
             continue;
 
+        if(!(defMat = Materials_ToMaterial(Materials_CheckNumForName2(def->material))))
+            continue;
+
+        // Is this suitable?
         if(def->flags & PGF_GROUP)
         {   // Generator triggered by all materials in the (animation) group.
             /**
@@ -470,8 +475,7 @@ ded_ptcgen_t* Def_GetGenerator(material_t* mat, boolean hasExt)
         if(mat == defMat)
             return def;
     }
-
-    return NULL; // Not found.
+    return 0; // Not found.
 }
 
 ded_ptcgen_t* Def_GetDamageGenerator(int mobjType)
@@ -748,14 +752,16 @@ static void readAllDefinitions(void)
             do
             {
                 gameresource_record_t* rec = *records;
-
-                if(Str_Length(&rec->path) == 0)
-                    F_FindResource2(rec->rclass, Str_Text(&rec->names), &rec->path);
-
-                if(Str_Length(&rec->path) == 0)
-                    Con_Error("readAllDefinitions: Error, failed to locate required game definition file \"%s\".", Str_Text(&rec->names));
-
-                readDefinitionFile(Str_Text(&rec->path));
+                const ddstring_t* resolvedPath = GameResourceRecord_ResolvedPath(rec, true);
+                if(!resolvedPath)
+                {
+                    ddstring_t* searchPaths = GameResourceRecord_SearchPaths(rec);
+                    Con_Error("readAllDefinitions: Error, failed to locate required game definition \"%s\".",
+                              Str_Text(searchPaths));
+                    // Unreachable.
+                    Str_Delete(searchPaths);
+                }
+                readDefinitionFile(Str_Text(resolvedPath));
             } while(*(++records));
     }
 
@@ -819,14 +825,14 @@ void Def_Read(void)
     {
         // We've already initialized the definitions once.
         // Get rid of everything.
-        ResourceNamespace_ClearSearchPaths(F_ToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL)));
+        ResourceNamespace_ClearExtraSearchPaths(F_ToResourceNamespace(F_DefaultResourceNamespaceForClass(RC_MODEL)));
         Def_Destroy();
     }
 
     firstDED = true;
 
     // Clear all existing definitions.
-    DED_Destroy(&defs);
+    DED_Clear(&defs);
     DED_Init(&defs);
 
     // Read all definitions, files and lumps.
@@ -837,19 +843,12 @@ void Def_Read(void)
     Plug_DoHook(HOOK_DEFS, 0, &defs);
 
     // Sprite names.
-    DED_NewEntries((void **) &sprNames, &countSprNames, sizeof(*sprNames), defs.count.sprites.num);
+    DED_NewEntries((void**) &sprNames, &countSprNames, sizeof(*sprNames), defs.count.sprites.num);
     for(i = 0; i < countSprNames.num; ++i)
         strcpy(sprNames[i].name, defs.sprites[i].id);
 
     // States.
-    DED_NewEntries((void **) &states, &countStates, sizeof(*states), defs.count.states.num);
-
-    // Zero the parallel LUTs to the states array. These will be re-inited
-    // anyway so there is no need to worry about updating any old values.
-    statePtcGens = M_Realloc(statePtcGens, sizeof(*statePtcGens) * countStates.num);
-    memset(statePtcGens, 0, sizeof(*statePtcGens) * countStates.num);
-    stateLights = M_Realloc(stateLights, sizeof(*stateLights) * countStates.num);
-    memset(stateLights, 0, sizeof(*stateLights) * countStates.num);
+    DED_NewEntries((void**) &states, &countStates, sizeof(*states), defs.count.states.num);
 
     for(i = 0; i < countStates.num; ++i)
     {
@@ -890,12 +889,10 @@ void Def_Read(void)
         }
     }
 
-    DED_NewEntries((void **) &stateOwners, &countStateOwners,
-                   sizeof(mobjinfo_t *), defs.count.states.num);
+    DED_NewEntries((void**) &stateOwners, &countStateOwners, sizeof(mobjinfo_t *), defs.count.states.num);
 
     // Mobj info.
-    DED_NewEntries((void **) &mobjInfo, &countMobjInfo, sizeof(*mobjInfo),
-                   defs.count.mobjs.num);
+    DED_NewEntries((void**) &mobjInfo, &countMobjInfo, sizeof(*mobjInfo), defs.count.mobjs.num);
     for(i = 0; i < countMobjInfo.num; ++i)
     {
         ded_mobj_t*         dmo = &defs.mobjs[i];
@@ -936,6 +933,8 @@ void Def_Read(void)
     }
     Materials_LinkAssociatedDefinitions();
 
+    DED_NewEntries((void**) &stateLights, &countStateLights, sizeof(*stateLights), defs.count.states.num);
+
     // Dynamic lights. Update the sprite numbers.
     for(i = 0; i < defs.count.lights.num; ++i)
     {
@@ -958,23 +957,26 @@ void Def_Read(void)
                    defs.count.sounds.num);
     for(i = 0; i < countSounds.num; ++i)
     {
-        ded_sound_t*        snd = defs.sounds + i;
+        ded_sound_t* snd = defs.sounds + i;
         // Make sure duplicate defs overwrite the earliest.
-        sfxinfo_t*          si = sounds + Def_GetSoundNum(snd->id);
+        sfxinfo_t* si = sounds + Def_GetSoundNum(snd->id);
 
         strcpy(si->id, snd->id);
         strcpy(si->lumpName, snd->lumpName);
         si->lumpNum = (strlen(snd->lumpName) > 0? W_CheckNumForName(snd->lumpName) : -1);
         strcpy(si->name, snd->name);
         k = Def_GetSoundNum(snd->link);
-        si->link = (k >= 0 ? sounds + k : NULL);
+        si->link = (k >= 0 ? sounds + k : 0);
         si->linkPitch = snd->linkPitch;
         si->linkVolume = snd->linkVolume;
         si->priority = snd->priority;
         si->channels = snd->channels;
         si->flags = snd->flags;
         si->group = snd->group;
-        strcpy(si->external, snd->ext.path);
+        if(snd->ext)
+            strncpy(si->external, Str_Text(Uri_Path(snd->ext)), SFXINFO_EXTERNAL_MAXLENGTH);
+        else
+            memset(si->external, 0, sizeof(si->external));
     }
 
     // Music.
@@ -988,7 +990,7 @@ void Def_Read(void)
             continue;
 
         strcpy(earliest->lumpName, mus->lumpName);
-        strcpy(earliest->path.path, mus->path.path);
+        Uri_Copy(earliest->path, mus->path);
         earliest->cdTrack = mus->cdTrack;
     }
 
@@ -1018,6 +1020,8 @@ void Def_Read(void)
                 texts[k].text = 0;
             }
     }
+
+    DED_NewEntries((void**) &statePtcGens, &countStatePtcGens, sizeof(*statePtcGens), defs.count.states.num);
 
     // Particle generators.
     for(i = 0; i < defs.count.ptcGens.num; ++i)
@@ -1159,13 +1163,13 @@ void Def_PostInit(void)
     R_DestroyFlareTextures();
     for(i = 0; i < defs.count.lights.num; ++i)
     {
-        ded_light_t*        lig = &defs.lights[i];
+        ded_light_t* lig = &defs.lights[i];
 
-        R_CreateLightMap(&lig->up);
-        R_CreateLightMap(&lig->down);
-        R_CreateLightMap(&lig->sides);
+        R_CreateLightMap(lig->up);
+        R_CreateLightMap(lig->down);
+        R_CreateLightMap(lig->sides);
 
-        R_CreateFlareTexture(&lig->flare);
+        R_CreateFlareTexture(lig->flare);
     }
 
     for(i = 0; i < defs.count.decorations.num; ++i)
@@ -1179,11 +1183,11 @@ void Def_PostInit(void)
             if(!R_IsValidLightDecoration(lig))
                 break;
 
-            R_CreateLightMap(&lig->up);
-            R_CreateLightMap(&lig->down);
-            R_CreateLightMap(&lig->sides);
+            R_CreateLightMap(lig->up);
+            R_CreateLightMap(lig->down);
+            R_CreateLightMap(lig->sides);
 
-            R_CreateFlareTexture(&lig->flare);
+            R_CreateFlareTexture(lig->flare);
         }
     }
 
@@ -1194,11 +1198,8 @@ void Def_PostInit(void)
     {
         ded_reflection_t* ref = &defs.reflections[i];
 
-        if(ref->shinyMap.path[0])
-            R_CreateShinyTexture(ref);
-
-        if(ref->maskMap.path[0])
-            R_CreateMaskTexture(ref);
+        R_CreateShinyTexture(ref->shinyMap);
+        R_CreateMaskTexture(ref->maskMap, ref->maskWidth, ref->maskHeight);
     }
 
     // Animation groups.
@@ -1280,10 +1281,17 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
     l->actLineType = def->actLineType;
     l->deactLineType = def->deactLineType;
     l->wallSection = def->wallSection;
-    l->actMaterial = Materials_CheckNumForName(def->actMaterial.name,
-                                               def->actMaterial.mnamespace);
-    l->deactMaterial = Materials_CheckNumForName(def->deactMaterial.name,
-                                                 def->deactMaterial.mnamespace);
+
+    if(def->actMaterial)
+        l->actMaterial = Materials_CheckNumForName2(def->actMaterial);
+    else
+        l->actMaterial = 0;
+
+    if(def->deactMaterial)
+        l->deactMaterial = Materials_CheckNumForName2(def->deactMaterial);
+    else
+        l->deactMaterial = 0;
+
     l->actMsg = def->actMsg;
     l->deactMsg = def->deactMsg;
     l->materialMoveAngle = def->materialMoveAngle;
@@ -1312,8 +1320,7 @@ void Def_CopyLineType(linetype_t* l, ded_linetype_t* def)
                 if(!stricmp(def->iparmStr[k], "-1"))
                     l->iparm[k] = -1;
                 else
-                    l->iparm[k] =
-                        Materials_CheckNumForName(def->iparmStr[k], MN_ANY);
+                    l->iparm[k] = Materials_CheckNumForName(def->iparmStr[k]);
             }
         }
         else if(a & MAP_MUS)

@@ -363,7 +363,7 @@ void Rend_RenderSkyHemisphere(int whichHemi)
     {
         if(slayer->flags & SLF_ENABLED)
         {
-            material_t* mat = (renderTextures? (renderTextures == 2? Materials_ToMaterial(Materials_NumForName("gray", MN_SYSTEM)) : (slayer->mat? slayer->mat : Materials_ToMaterial(Materials_NumForName("missing", MN_SYSTEM)))) : 0);
+            material_t* mat = (renderTextures? (renderTextures == 2? Materials_ToMaterial(Materials_NumForName(MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME":gray")) : (slayer->mat? slayer->mat : Materials_ToMaterial(Materials_NumForName(MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME":missing")))) : 0);
             byte result = 0;
  
             // The texture is actually loaded when an update is done.

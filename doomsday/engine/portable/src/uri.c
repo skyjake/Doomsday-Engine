@@ -3,7 +3,7 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2010-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 
 #include "de_base.h"
 #include "de_console.h"
+#include "de_play.h"
 
 #include "m_args.h"
 #include "sys_reslocator.h"
@@ -44,7 +45,8 @@ static __inline dduri_t* allocUri(const char* path, resourceclass_t defaultResou
     return uri;
 }
 
-static void parseScheme(dduri_t* uri, resourceclass_t defaultResourceClass)
+static void parseScheme(dduri_t* uri, resourceclass_t defaultResourceClass,
+    materialnamespaceid_t defaultMaterialNamespace)
 {
     Str_Clear(&uri->_scheme);
 
@@ -53,11 +55,11 @@ static void parseScheme(dduri_t* uri, resourceclass_t defaultResourceClass)
     {
         Str_Clear(&uri->_scheme);
     }
-    else if(F_SafeResourceNamespaceForName(Str_Text(Uri_Scheme(uri))) == 0)
+    else if(defaultResourceClass != RC_NULL && F_SafeResourceNamespaceForName(Str_Text(Uri_Scheme(uri))) == 0)
     {
-        Con_Message("Uri::ParseScheme Unknown namespace \"%s\" in path \"%s\", using default.\n",
-                    Str_Text(&uri->_scheme), Str_Text(&uri->_path));
-        Str_Clear(&uri->_scheme);
+        Con_Message("Warning: Unknown scheme in path \"%s\", using default.\n", Str_Text(&uri->_path));
+        //Str_Clear(&uri->_scheme);
+        Str_Set(&uri->_path, p);
     }
     else
     {
@@ -72,9 +74,10 @@ static void parseScheme(dduri_t* uri, resourceclass_t defaultResourceClass)
     if(VALID_RESOURCE_CLASS(defaultResourceClass))
     {
         resourcenamespace_t* rn = F_ToResourceNamespace(F_DefaultResourceNamespaceForClass(defaultResourceClass));
-        Str_Set(&uri->_scheme, ResourceNamespace_Name(rn));
+        Str_Copy(&uri->_scheme, ResourceNamespace_Name(rn));
     }
 }
+
 
 /**
  * Substitute known symbols in the possibly templated path.
@@ -100,7 +103,7 @@ static ddstring_t* resolveUri(const dduri_t* uri, gameinfo_t* info)
 
         if(*p != '(')
         {
-            Con_Message("Invalid character '%c' in \"%s\" at %lu.\n", *p, Str_Text(&src), p - Str_Text(&src));
+            Con_Message("Invalid character '%c' in \"%s\" at %lu (Uri::resolveUri).\n", *p, Str_Text(&src), p - Str_Text(&src));
             goto parseEnded;
         }
         // Skip over the opening brace.
@@ -125,12 +128,20 @@ static ddstring_t* resolveUri(const dduri_t* uri, gameinfo_t* info)
                     goto parseEnded;
             }
             // Now try internal symbols.
+            else if(!Str_CompareIgnoreCase(&part, "App.DataPath"))
+            {
+                Str_Append(dest, "data");
+            }
+            else if(!Str_CompareIgnoreCase(&part, "App.DefsPath"))
+            {
+                Str_Append(dest, "defs");
+            }
             else if(!Str_CompareIgnoreCase(&part, "GameInfo.DataPath"))
             {
                 if(DD_IsNullGameInfo(info))
                     goto parseEnded;
 
-                // DataPath already has ending @c DIR_SEP_CHAR.
+                /// DataPath already has ending @c DIR_SEP_CHAR.
                 Str_PartAppend(dest, Str_Text(GameInfo_DataPath(info)), 0, Str_Length(GameInfo_DataPath(info))-1);
             }
             else if(!Str_CompareIgnoreCase(&part, "GameInfo.DefsPath"))
@@ -138,7 +149,7 @@ static ddstring_t* resolveUri(const dduri_t* uri, gameinfo_t* info)
                 if(DD_IsNullGameInfo(info))
                     goto parseEnded;
 
-                // DefsPath already has ending @c DIR_SEP_CHAR.
+                /// DefsPath already has ending @c DIR_SEP_CHAR.
                 Str_PartAppend(dest, Str_Text(GameInfo_DefsPath(info)), 0, Str_Length(GameInfo_DefsPath(info))-1);
             }
             else if(!Str_CompareIgnoreCase(&part, "GameInfo.IdentityKey"))
@@ -150,7 +161,7 @@ static ddstring_t* resolveUri(const dduri_t* uri, gameinfo_t* info)
             }
             else
             {
-                Con_Message("Unknown identifier '%s' in \"%s\".\n", Str_Text(&part), Str_Text(&src));
+                Con_Message("Unknown identifier '%s' in \"%s\" (Uri::resolveUri).\n", Str_Text(&part), Str_Text(&src));
                 goto parseEnded;
             }
             depth--;
@@ -162,7 +173,7 @@ static ddstring_t* resolveUri(const dduri_t* uri, gameinfo_t* info)
             Str_Append(dest, Str_Text(&part));
             if(*p != '(')
             {
-                Con_Message("Invalid character '%c' in \"%s\" at %lu.\n", *p, Str_Text(&src), p - Str_Text(&src));
+                Con_Message("Invalid character '%c' in \"%s\" at %lu (Uri::resolveUri).\n", *p, Str_Text(&src), p - Str_Text(&src));
                 goto parseEnded;
             }
             // Skip over the opening brace.
@@ -179,7 +190,7 @@ static ddstring_t* resolveUri(const dduri_t* uri, gameinfo_t* info)
         Str_Append(dest, Str_Text(&part));
     }
 
-    // Expand any base-relative path directives.
+    // Expand any old-style base-relative path directives.
     F_ExpandBasePath(dest, dest);
 
     // No errors detected.
@@ -224,6 +235,20 @@ dduri_t* Uri_ConstructDefault(void)
     return allocUri(0, RC_UNKNOWN);
 }
 
+dduri_t* Uri_ConstructCopy(const dduri_t* other)
+{
+    if(!other)
+    {
+        Con_Error("Attempted Uri::ConstructCopy with invalid reference (other==0).");
+        return 0; // Unreachable.
+    }
+    { dduri_t* uri = allocUri(0, RC_NULL);
+    Str_Copy(&uri->_scheme, Uri_Scheme(other));
+    Str_Copy(&uri->_path, Uri_Path(other));
+    return uri;
+    }
+}
+
 void Uri_Destruct(dduri_t* uri)
 {
     if(!uri)
@@ -233,6 +258,23 @@ void Uri_Destruct(dduri_t* uri)
     }
     Str_Free(&uri->_scheme);
     Str_Free(&uri->_path);
+}
+
+dduri_t* Uri_Copy(dduri_t* uri, const dduri_t* other)
+{
+    if(!uri)
+    {
+        Con_Error("Attempted Uri::Copy with invalid reference (this==0).");
+        return 0; // Unreachable.
+    }
+    if(!other)
+    {
+        Con_Error("Attempted Uri::Copy with invalid reference (other==0).");
+        return 0; // Unreachable.
+    }
+    Str_Copy(&uri->_scheme, Uri_Scheme(other));
+    Str_Copy(&uri->_path, Uri_Path(other));
+    return uri;
 }
 
 const ddstring_t* Uri_Scheme(const dduri_t* uri)
@@ -265,6 +307,16 @@ ddstring_t* Uri_Resolved(const dduri_t* uri)
     return resolveUri(uri, DD_GameInfo());
 }
 
+void Uri_SetScheme(dduri_t* uri, const char* scheme)
+{
+    if(!uri)
+    {
+        Con_Error("Attempted Uri::SetScheme with invalid reference (this==0).");
+        return; // Unreachable.
+    }
+    Str_Set(&uri->_scheme, scheme);
+}
+
 void Uri_SetUri3(dduri_t* uri, const char* path, resourceclass_t defaultResourceClass)
 {
     if(!uri)
@@ -285,7 +337,7 @@ void Uri_SetUri3(dduri_t* uri, const char* path, resourceclass_t defaultResource
     // Convert all slashes to the host OS's directory separator,
     // for compatibility with the sys_filein routines.
     F_FixSlashes(&uri->_path);
-    parseScheme(uri, defaultResourceClass);
+    parseScheme(uri, defaultResourceClass, 0);
 }
 
 void Uri_SetUri2(dduri_t* uri, const char* path)
@@ -317,4 +369,14 @@ ddstring_t* Uri_ToString(const dduri_t* uri)
 {
     // Just compose it for now, we can worry about making it 'pretty' later.
     return Uri_ComposePath(uri);
+}
+
+boolean Uri_Equality(const dduri_t* uri, const dduri_t* other)
+{
+    assert(uri && other);
+    if(stricmp(Str_Text(&uri->_scheme), Str_Text(Uri_Scheme(other))))
+        return false;
+    if(stricmp(Str_Text(&uri->_path), Str_Text(Uri_Path(other))))
+        return false;
+    return true;
 }

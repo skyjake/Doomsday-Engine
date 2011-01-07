@@ -1,10 +1,10 @@
-/**\file
+/**\file hu_pspr.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * hu_pspr.c: Common HUD psprite handling.
+ * Common HUD psprite handling.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -125,7 +125,7 @@ void HU_UpdatePlayerSprite(int pnum)
     int         i;
     pspdef_t   *psp;
     ddpsprite_t *ddpsp;
-    float       fov = 90; //*(float*) Con_GetVariable("r_fov")->ptr;
+    float       fov = 90; //*(float*) Con_FindVariable("r_fov")->ptr;
     player_t   *pl = players + pnum;
 
     for(i = 0; i < NUMPSPRITES; ++i)

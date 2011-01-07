@@ -1,10 +1,10 @@
-/**\file
+/**\file b_context.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2009-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * b_context.c: Bindings Contexts.
+ * Bindings Contexts.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -332,9 +332,14 @@ void B_ActivateContext(bcontext_t* bc, boolean doActivate)
     if(!bc)
         return;
 
-    VERBOSE( Con_Message("B_ActivateContext: %s context \"%s\".\n",
-                         doActivate? "Activating" : "Deactivating",
-                         bc->name) );
+#if !defined(_DEBUG)
+    if(!(bc->flags & BCF_PROTECTED) && verbose >= 1)
+#endif
+    {
+        Con_Message("B_ActivateContext: %s context \"%s\".\n",
+                    doActivate? "Activating" : "Deactivating",
+                    bc->name);
+    }
 
     bc->flags &= ~BCF_ACTIVE;
     if(doActivate)

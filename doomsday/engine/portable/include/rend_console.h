@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_console.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,27 +23,27 @@
  */
 
 /*
- * rend_console.h: Console Rendering.
+ * Console Rendering.
  */
 
-#ifndef __DOOMSDAY_CONSOLE_RENDER_H__
-#define __DOOMSDAY_CONSOLE_RENDER_H__
+#ifndef LIBDENG_CONSOLE_RENDER_H
+#define LIBDENG_CONSOLE_RENDER_H
 
 extern byte consoleShowFPS, consoleShadowText;
 
-void    Rend_ConsoleRegister(void);
+void Con_InitUI(void);
 
-void    Rend_ConsoleInit(void);
-void    Rend_ConsoleTicker(timespan_t time);
-void    Rend_Console(void);
+void Rend_ConsoleRegister(void);
 
-void    Rend_ConsoleFPS(int x, int y);
-void    Rend_ConsoleOpen(int yes);
-void    Rend_ConsoleMove(int numLines);
-void    Con_DrawRuler(int y, int lineHeight, float alpha);
-void    Con_InitUI(void);
+void Rend_ConsoleInit(void);
+void Rend_ConsoleTicker(timespan_t time);
+void Rend_Console(void);
 
-void    Rend_ConsoleToggleFullscreen(void);
-void    Rend_ConsoleCursorResetBlink(void);
+void Rend_ConsoleFPS(int x, int y);
+void Rend_ConsoleOpen(int yes);
+void Rend_ConsoleMove(int numLines);
 
-#endif
+void Rend_ConsoleToggleFullscreen(void);
+void Rend_ConsoleCursorResetBlink(void);
+
+#endif /* LIBDENG_CONSOLE_RENDER_H */

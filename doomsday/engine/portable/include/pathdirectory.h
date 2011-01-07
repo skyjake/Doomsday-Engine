@@ -100,7 +100,7 @@ void PathDirectory_AddPaths(pathdirectory_t* pathDirectory, const char* pathList
 /**
  * Find a path in the directory.
  *
- * \note Poor performance: O(n)
+ * \note Poor worst-case performance: O(n)
  * \todo Implement a special-case name search algorithm to improve performance.
  *
  * @param searchPath        Relative or absolute path.

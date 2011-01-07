@@ -1,10 +1,10 @@
-/**\file
+/**\file m_misc.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * m_misc.c: Miscellanous Routines
+ * Miscellanous Routines.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -1242,6 +1242,28 @@ char* M_StrTok(char** cursor, char* delimiters)
     }
 
     return begin;
+}
+
+char* M_TrimmedFloat(float val)
+{
+    static char trimmedFloatBuffer[32];
+    char* ptr = trimmedFloatBuffer;
+
+    sprintf(ptr, "%f", val);
+    // Get rid of the extra zeros.
+    for(ptr += strlen(ptr) - 1; ptr >= trimmedFloatBuffer; ptr--)
+    {
+        if(*ptr == '0')
+            *ptr = 0;
+        else if(*ptr == '.')
+        {
+            *ptr = 0;
+            break;
+        }
+        else
+            break;
+    }
+    return trimmedFloatBuffer;
 }
 
 /**

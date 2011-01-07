@@ -1,10 +1,10 @@
-/**\file
+/**\file doomsday.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * doomsday.h: Doomsday Engine API (Routines exported from Doomsday.exe).
+ * Doomsday Engine API (Routines exported from Doomsday.exe).
  *
  * Games and plugins need to include this to gain access to the engine's
  * features.
@@ -133,7 +133,6 @@ boolean DD_GetGameInfo(ddgameinfo_t* info);
     void*           DD_GetVariable(int ddvalue);
     ddplayer_t*     DD_GetPlayer(int number);
 
-    material_namespace_t DD_MaterialNamespaceForTextureType(gltexture_type_t t);
     materialnum_t   DD_MaterialForTexture(uint ofTypeId, gltexture_type_t type);
 
     // Base: Definitions.
@@ -182,18 +181,23 @@ boolean DD_GetGameInfo(ddgameinfo_t* info);
     boolean         Con_IsBusy(void);
     void            Con_Open(int yes);
     void            Con_SetFont(ddfont_t* cfont);
-    void            Con_AddCommand(ccmd_t* cmd);
-    void            Con_AddVariable(cvar_t* var);
-    void            Con_AddCommandList(ccmd_t* cmdlist);
-    void            Con_AddVariableList(cvar_t* varlist);
-    cvar_t*         Con_GetVariable(const char* name);
+    void            Con_AddCommand(const ccmd_t* cmd);
+    void            Con_AddVariable(const cvar_t* var);
+    void            Con_AddCommandList(const ccmd_t* cmdList);
+    void            Con_AddVariableList(const cvar_t* varList);
+    cvar_t*         Con_FindVariable(const char* name);
     byte            Con_GetByte(const char* name);
     int             Con_GetInteger(const char* name);
     float           Con_GetFloat(const char* name);
     char*           Con_GetString(const char* name);
-    void            Con_SetInteger(const char* name, int value, byte override);
-    void            Con_SetFloat(const char* name, float value, byte override);
-    void            Con_SetString(const char* name, char* text, byte override);
+void Con_SetInteger2(const char* name, int value, int svflags);
+void Con_SetInteger(const char* name, int value);
+
+void Con_SetFloat2(const char* name, float value, int svflags);
+void Con_SetFloat(const char* name, float value);
+
+void Con_SetString2(const char* name, char* text, int svflags);
+void Con_SetString(const char* name, char* text);
     void            Con_Printf(const char* format, ...) PRINTF_F(1,2);
     void            Con_FPrintf(int flags, const char* format, ...) PRINTF_F(2,3);
     void            Con_Message(const char* message, ...) PRINTF_F(1,2);
@@ -411,8 +415,12 @@ boolean DD_GetGameInfo(ddgameinfo_t* info);
     void            P_SetPolyobjCallback(void (*func)(struct mobj_s*, void*, void*));
 
     // Play: Materials.
-    materialnum_t   Materials_CheckNumForName(const char* name, material_namespace_t mnamespace);
-    materialnum_t   Materials_NumForName(const char* name, material_namespace_t mnamespace);
+    materialnum_t   Materials_CheckNumForName2(const dduri_t* path);
+    materialnum_t   Materials_CheckNumForName(const char* path);
+    materialnum_t   Materials_NumForName2(const dduri_t* path);
+    materialnum_t   Materials_NumForName(const char* path);
+    dduri_t*        Materials_GetPath(material_t* mat);
+
     const char*     Materials_GetName(material_t* mat);
     void            Materials_Precache(material_t* mat, boolean yes);
     int             Materials_CreateAnimGroup(int flags);
@@ -442,7 +450,7 @@ boolean DD_GetGameInfo(ddgameinfo_t* info);
     void            R_RenderPlayerView(int num);
     void            R_SetViewWindow(int x, int y, int w, int h);
     int             R_GetViewPort(int player, int* x, int* y, int* w, int* h);
-    void            R_SetBorderGfx(char* const* lumps);
+    void            R_SetBorderGfx(const dduri_t* paths[9]);
     boolean         R_GetSpriteInfo(int sprite, int frame, spriteinfo_t* sprinfo);
     boolean         R_GetPatchInfo(patchid_t id, patchinfo_t* info);
     void            R_HSVToRGB(float* rgb, float h, float s, float v);

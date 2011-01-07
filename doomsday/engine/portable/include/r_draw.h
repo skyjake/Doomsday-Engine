@@ -1,10 +1,10 @@
-/**\file
+/**\file r_draw.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,7 +34,9 @@ extern byte* translationTables;
 void            R_InitTranslationTables(void);
 void            R_UpdateTranslationTables(void);
 void            R_InitViewBorder(void);
-void            R_SetBorderGfx(char* const* gfx);
+void R_ShutdownViewBorder(void);
+
+void            R_SetBorderGfx(const dduri_t* paths[9]);
 void            R_DrawViewBorder(void);
 
 void            R_DrawPatch(patchtex_t* p, int x, int y);

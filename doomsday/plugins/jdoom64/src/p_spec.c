@@ -1,10 +1,10 @@
-/**\file
+/**\file p_spec.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -136,12 +136,9 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
     for(i = 0; animDefs[i].istexture != -1 ; ++i)
     {
         int groupNum, ticsPerFrame, numFrames;
-        material_namespace_t mnamespace = (animDefs[i].istexture? MN_TEXTURES : MN_FLATS);
 
-        switch(mnamespace)
+        if(!animDefs[i].istexture)
         {
-        case MN_FLATS:
-            {
             uint startFrame, endFrame, n;
 
             if((startFrame = GL_CheckTextureNumForName(animDefs[i].startname, GLT_FLAT)) == 0 ||
@@ -195,10 +192,9 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
                     }
                 }
             }
-            break;
-            }
-        case MN_TEXTURES:
-            {   // Same as above but for texture groups.
+        }
+        else
+        {   // Same as above but for texture groups.
             uint startFrame, endFrame, n;
 
             if((startFrame = GL_CheckTextureNumForName(animDefs[i].startname, GLT_DOOMTEXTURE)) == 0 ||
@@ -241,10 +237,6 @@ static void loadAnimDefs(animdef_t* animDefs, boolean isCustom)
                     }
                 }
             }
-            break;
-            }
-        default:
-            Con_Error("loadAnimDefs: Internal Error, invalid namespace %i.", (int) mnamespace);
         }
     }
 }
@@ -1804,3 +1796,4 @@ boolean P_UseSpecialLine2(mobj_t* mo, linedef_t* line, int side)
 
     return true;
 }
+

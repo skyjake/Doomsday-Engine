@@ -1,9 +1,9 @@
-/**\file
+/**\file edit_map.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
  *\author Copyright © 1998-2000 Lee Killough <killough@rsn.hp.com>
@@ -22,10 +22,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- */
-
-/**
- * edit_map.c:
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -675,7 +671,7 @@ static void buildSectorLineLists(gamemap_t* map)
     VERBOSE( Con_Message(" Build line tables ...\n") );
 
     // build line tables for each sector.
-    lineLinksBlockSet = Z_BlockCreate(sizeof(linelink_t), 512, PU_APPSTATIC);
+    lineLinksBlockSet = ZBlockSet_Construct(sizeof(linelink_t), 512, PU_APPSTATIC);
     sectorLineLinks = M_Calloc(sizeof(linelink_t*) * map->numSectors);
     totallinks = 0;
     for(i = 0, li = map->lineDefs; i < map->numLineDefs; ++i, li++)
@@ -685,7 +681,7 @@ static void buildSectorLineLists(gamemap_t* map)
 
         if(li->L_frontside)
         {
-            link = Z_BlockNewElement(lineLinksBlockSet);
+            link = ZBlockSet_Allocate(lineLinksBlockSet);
 
             secIDX = li->L_frontsector - map->sectors;
             link->line = li;
@@ -698,7 +694,7 @@ static void buildSectorLineLists(gamemap_t* map)
 
         if(li->L_backside && li->L_backsector != li->L_frontsector)
         {
-            link = Z_BlockNewElement(lineLinksBlockSet);
+            link = ZBlockSet_Allocate(lineLinksBlockSet);
 
             secIDX = li->L_backsector - map->sectors;
             link->line = li;
@@ -762,7 +758,7 @@ static void buildSectorLineLists(gamemap_t* map)
     }
 
     // Free temporary storage.
-    Z_BlockDestroy(lineLinksBlockSet);
+    ZBlockSet_Destruct(lineLinksBlockSet);
     M_Free(sectorLineLinks);
 }
 

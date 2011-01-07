@@ -10,33 +10,31 @@ Header { Version = 6; }
 #
 
 Material {
-  ID = "F_SKYA";
-  Namespace = textures;
+  ID = "textures:F_SKYA";
   Flags = skymask;
 }
 
-* Material { ID = "F_SKYB"; }
-* Material { ID = "F_SKYC"; }
-* Material { ID = "F_SKYD"; }
-* Material { ID = "F_SKYE"; }
-* Material { ID = "F_SKYF"; }
-* Material { ID = "F_SKYG"; }
-* Material { ID = "F_SKYH"; }
-* Material { ID = "F_SKYI"; }
-* Material { ID = "F_SKYJ"; }
-* Material { ID = "F_SKYK"; }
+* Material { ID = "textures:F_SKYB"; }
+* Material { ID = "textures:F_SKYC"; }
+* Material { ID = "textures:F_SKYD"; }
+* Material { ID = "textures:F_SKYE"; }
+* Material { ID = "textures:F_SKYF"; }
+* Material { ID = "textures:F_SKYG"; }
+* Material { ID = "textures:F_SKYH"; }
+* Material { ID = "textures:F_SKYI"; }
+* Material { ID = "textures:F_SKYJ"; }
+* Material { ID = "textures:F_SKYK"; }
 
 #
 # Glowing textures:
 #
 
 Material {
-  ID = "CBTRAKA";
-  Namespace = textures;
+  ID = "textures:CBTRAKA";
   Layer { Stage { Glow = .9; } }
 }
 
-* Material { ID = "CRTRAKA"; }
-* Material { ID = "CYTRAKA"; }
-* Material { ID = "SEXIT"; }
-* Material { ID = "SEXITA"; }
+* Material { ID = "textures:CRTRAKA"; }
+* Material { ID = "textures:CYTRAKA"; }
+* Material { ID = "textures:SEXIT"; }
+* Material { ID = "textures:SEXITA"; }

@@ -1,7 +1,7 @@
 ; Doomsday Engine API (Routines exported from Doomsday.exe).
 ;
-; Highest ordinal is currently: --> 487 <--
-; Other free ordinals: 8
+; Highest ordinal is currently: --> 497 <--
+; Other free ordinals: 8 65 97
 
 NAME                            "DOOMSDAY"
 EXPORTS
@@ -20,7 +20,6 @@ EXPORTS
     DD_SetVariable              @10 NONAME
     DD_GetVariable              @43 NONAME
     DD_GetPlayer                @44 NONAME
-    DD_MaterialNamespaceForTextureType @65 NONAME
     DD_MaterialForTexture       @234 NONAME
 
 ; Base: Types.
@@ -72,18 +71,22 @@ EXPORTS
     Str_RAt                     @485 NONAME
 
     ; Uri.
-    Uri_ConstructDefault        @244 NONAME
-    Uri_Construct               @249 NONAME
-    Uri_Destruct                @250 NONAME
-    Uri_SetUri                  @255 NONAME
-    Uri_SetUri2                 @326 NONAME
-    Uri_SetUri3                 @487 NONAME
-    Uri_Resolved                @238 NONAME
-    Uri_Clear                   @328 NONAME
-    Uri_Scheme                  @332 NONAME
-    Uri_Path                    @405 NONAME
-    Uri_ComposePath             @406 NONAME
-    Uri_ToString                @486 NONAME
+    Uri_ConstructDefault        @238 NONAME
+    Uri_Construct2              @497 NONAME
+    Uri_Construct               @244 NONAME
+    Uri_ConstructCopy           @249 NONAME
+    Uri_Copy                    @250 NONAME
+    Uri_Destruct                @255 NONAME
+    Uri_SetUri                  @326 NONAME
+    Uri_SetUri2                 @328 NONAME
+    Uri_SetUri3                 @332 NONAME
+    Uri_Resolved                @405 NONAME
+    Uri_Clear                   @406 NONAME
+    Uri_Scheme                  @486 NONAME
+    Uri_Path                    @487 NONAME
+    Uri_ComposePath             @488 NONAME
+    Uri_ToString                @489 NONAME
+    Uri_Equality                @493 NONAME
 
 ; Base: Definitions.
     Def_Get                     @11 NONAME
@@ -131,14 +134,17 @@ EXPORTS
     Con_AddVariable             @32 NONAME
     Con_AddCommandList          @33 NONAME
     Con_AddVariableList         @34 NONAME
-    Con_GetVariable             @35 NONAME
+    Con_FindVariable            @35 NONAME
     Con_GetInteger              @226 NONAME
     Con_GetFloat                @227 NONAME
     Con_GetByte                 @228 NONAME
     Con_GetString               @229 NONAME
     Con_SetInteger              @230 NONAME
+    Con_SetInteger2             @490 NONAME
     Con_SetFloat                @231 NONAME
+    Con_SetFloat2               @491 NONAME
     Con_SetString               @36 NONAME
+    Con_SetString2              @492 NONAME
     Con_Printf                  @37 NONAME
     Con_FPrintf                 @38 NONAME
     DD_Execute                  @39 NONAME
@@ -328,9 +334,11 @@ EXPORTS
     P_SetPolyobjCallback        @83 NONAME
 
 ; Play: Materials.
-    Materials_CheckNumForName   @336 NONAME
     Materials_GetName           @337 NONAME
-    Materials_NumForName        @97 NONAME
+    Materials_GetPath           @494 NONAME
+    Materials_CheckNumForName   @495 NONAME
+    Materials_NumForName2       @336 NONAME
+    Materials_NumForName        @496 NONAME
     Materials_Precache          @436 NONAME
     Materials_CreateAnimGroup   @241 NONAME
     Materials_AddAnimGroupFrame @242 NONAME
@@ -555,7 +563,7 @@ EXPORTS
 
 ; Doomsday Engine Definitions.
     DED_Init                    @155 NONAME
-    DED_Destroy                 @156 NONAME
+    DED_Clear                   @156 NONAME
     DED_Read                    @157 NONAME
     DED_AddFlag                 @159 NONAME
     DED_AddMobj                 @160 NONAME

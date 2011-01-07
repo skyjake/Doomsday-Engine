@@ -267,8 +267,10 @@ int SV_ReadXGPlaneMover(xgplanemover_t* mov)
     }
     else
     {
-        const char* lumpName = W_LumpName(SV_ReadLong());
-        mov->setMaterial = P_ToPtr(DMU_MATERIAL, Materials_NumForName(lumpName, MN_FLATS));
+        ddstring_t path; Str_Init(&path);
+        Str_Appendf(&path, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":%s", W_LumpName(SV_ReadLong()));
+        mov->setMaterial = P_ToPtr(DMU_MATERIAL, Materials_NumForName(Str_Text(&path)));
+        Str_Free(&path);
     }
 
     mov->setSectorType = SV_ReadLong();

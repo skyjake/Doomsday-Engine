@@ -1,4 +1,4 @@
-/**\file
+/**\file gl_texmanager.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -23,7 +23,7 @@
  */
 
 /**
- * gl_texman.c: Texture management routines.
+ * Texture management routines.
  *
  * Much of this stuff actually belongs in Refresh.
  * This file needs to be split into smaller portions.
@@ -737,7 +737,7 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst, void* co
         ddstring_t searchPath, foundPath;
         byte result = 0;
 
-        Str_Init(&searchPath); Str_Appendf(&searchPath, "Textures:%s;", dTex->external);
+        Str_Init(&searchPath); Str_Appendf(&searchPath, TEXTURES_RESOURCE_NAMESPACE_NAME":%s;", dTex->external);
         Str_Init(&foundPath);
 
         if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) != 0 &&
@@ -818,7 +818,7 @@ byte GL_LoadLightMap(image_t* image, const gltexture_inst_t* inst, void* context
     ddstring_t searchPath, foundPath, suffix = { "-ck" };
     byte result = 0;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "LightMaps:%s;", lmap->external);
+    Str_Init(&searchPath); Str_Appendf(&searchPath, LIGHTMAPS_RESOURCE_NAMESPACE_NAME":%s;", lmap->external);
     Str_Init(&foundPath);
 
     if(F_FindResourceStr3(RC_GRAPHIC, &searchPath, &foundPath, &suffix) != 0 &&
@@ -884,7 +884,7 @@ byte GL_LoadShinyTexture(image_t* image, const gltexture_inst_t* inst, void* con
     ddstring_t searchPath, foundPath;
     byte result = 0;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "LightMaps:%s;", sTex->external);
+    Str_Init(&searchPath); Str_Appendf(&searchPath, LIGHTMAPS_RESOURCE_NAMESPACE_NAME":%s;", sTex->external);
     Str_Init(&foundPath);
 
     if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) != 0 &&
@@ -917,7 +917,7 @@ byte GL_LoadMaskTexture(image_t* image, const gltexture_inst_t* inst, void* cont
     ddstring_t searchPath, foundPath;
     byte result = 0;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "LightMaps:%s;", mTex->external);
+    Str_Init(&searchPath); Str_Appendf(&searchPath, LIGHTMAPS_RESOURCE_NAMESPACE_NAME":%s;", mTex->external);
     Str_Init(&foundPath);
 
     if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) != 0 &&
@@ -1113,7 +1113,7 @@ byte GL_LoadFlat(image_t* image, const gltexture_inst_t* inst, void* context)
         byte result = 0;
 
         // First try the flats namespace then the old-fashioned "flat-name" in the textures namespace?.
-        Str_Init(&searchPath); Str_Appendf(&searchPath, "Flats:%s;Textures:flat-%s;", lumpName, lumpName);
+        Str_Init(&searchPath); Str_Appendf(&searchPath, FLATS_RESOURCE_NAMESPACE_NAME":%s;" TEXTURES_RESOURCE_NAMESPACE_NAME":flat-%s;", lumpName, lumpName);
         Str_Init(&foundPath);
 
         if(F_FindResourceStr3(RC_GRAPHIC, &searchPath, &foundPath, &suffix) != 0 &&
@@ -1418,7 +1418,7 @@ byte GL_LoadDoomTexture(image_t* image, const gltexture_inst_t* inst, void* cont
         ddstring_t searchPath, foundPath, suffix = { "-ck" };
         byte result = 0;
 
-        Str_Init(&searchPath); Str_Appendf(&searchPath, "Textures:%s;", texDef->name);
+        Str_Init(&searchPath); Str_Appendf(&searchPath, TEXTURES_RESOURCE_NAMESPACE_NAME":%s;", texDef->name);
         Str_Init(&foundPath);
 
         if(F_FindResourceStr3(RC_GRAPHIC, &searchPath, &foundPath, &suffix) != 0 &&
@@ -1499,7 +1499,7 @@ byte GL_LoadDoomPatch(image_t* image, const gltexture_inst_t* inst,
         ddstring_t searchPath, foundPath, suffix = { "-ck" };
         byte result = 0;
 
-        Str_Init(&searchPath); Str_Appendf(&searchPath, "Patches:%s;", W_LumpName(p->lump));
+        Str_Init(&searchPath); Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", W_LumpName(p->lump));
         Str_Init(&foundPath);
 
         if(F_FindResourceStr3(RC_GRAPHIC, &searchPath, &foundPath, &suffix) != 0 &&
@@ -1575,13 +1575,13 @@ byte GL_LoadSprite(image_t* image, const gltexture_inst_t* inst,
 
         // Compose resource names, prefer translated or psprite versions.
         Str_Init(&searchPath);
-        Str_Appendf(&searchPath, "Patches:%s;", lumpName);
+        Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", lumpName);
         if(pSprite || tclass || tmap)
         {
             if(pSprite)
-                Str_Appendf(&searchPath, "Patches:%s-hud;", lumpName);
+                Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-hud;", lumpName);
             else // Translated.
-                Str_Appendf(&searchPath, "Patches:%s-table%i%i;", lumpName, tclass, tmap);
+                Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s-table%i%i;", lumpName, tclass, tmap);
         }
         Str_Init(&foundPath);
 
@@ -1680,7 +1680,7 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
     byte result = 0;
 
     // First try to find an external resource.
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "Patches:%s;", W_LumpName(r->lump));
+    Str_Init(&searchPath); Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", W_LumpName(r->lump));
     Str_Init(&foundPath);
 
     if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) != 0 &&
@@ -1822,20 +1822,19 @@ void GL_SetRawImage(lumpnum_t lump, int wrapS, int wrapT)
     }
 }
 
-DGLuint GL_GetLightMapTexture(const char* name)
+DGLuint GL_GetLightMapTexture(const dduri_t* uri)
 {
-    lightmap_t*         lmap;
+    lightmap_t* lmap;
 
-    if(name && name[0])
+    if(uri)
     {
-        if(name[0] == '-')
+        if(!stricmp(Str_Text(Uri_Path(uri)), "-"))
             return 0;
 
-        if((lmap = R_GetLightMap(name)))
+        if((lmap = R_GetLightMap(uri)) != 0)
         {
             const gltexture_inst_t* texInst;
-
-            if((texInst = GL_PrepareGLTexture(lmap->id, NULL, NULL)))
+            if((texInst = GL_PrepareGLTexture(lmap->id, 0, 0)))
                 return texInst->id;
         }
     }
@@ -1852,23 +1851,23 @@ DGLuint GL_GetLightMapTexture(const char* name)
  * @param name          Name of a flare texture or "0" to "4".
  * @param oldIdx        Old method of flare texture selection, by id.
  */
-DGLuint GL_GetFlareTexture(const char* name, int oldIdx)
+DGLuint GL_GetFlareTexture(const dduri_t* uri, int oldIdx)
 {
-    if(name && name[0])
+    if(uri)
     {
-        flaretex_t*         fTex;
+        const ddstring_t* path = Uri_Path(uri);
+        flaretex_t* fTex;
 
-        if(name[0] == '-' || (name[0] == '0' && !name[1]))
+        if(Str_At(path, 0) == '-' || (Str_At(path, 0) == '0' && !Str_At(path, 1)))
             return 0; // Use the automatic selection logic.
 
-        if(name[0] >= '1' && name[0] <= '4' && !name[1])
-            return GL_PrepareSysFlareTexture(name[0] - '1');
+        if(Str_At(path, 0) >= '1' && Str_At(path, 0) <= '4' && !Str_At(path, 1))
+            return GL_PrepareSysFlareTexture(Str_At(path, 0) - '1');
 
-        if((fTex = R_GetFlareTexture(name)))
+        if((fTex = R_GetFlareTexture(uri)))
         {
             const gltexture_inst_t* texInst;
-
-            if((texInst = GL_PrepareGLTexture(fTex->id, NULL, NULL)))
+            if((texInst = GL_PrepareGLTexture(fTex->id, 0, 0)))
                 return texInst->id;
         }
     }
@@ -1876,7 +1875,6 @@ DGLuint GL_GetFlareTexture(const char* name, int oldIdx)
     {
         return GL_PrepareSysFlareTexture(oldIdx-1);
     }
-
     return 0; // Use the automatic selection logic.
 }
 
@@ -3251,3 +3249,4 @@ D_CMD(MipMap)
     GL_UpdateTexParams(strtol(argv[1], NULL, 0));
     return true;
 }
+

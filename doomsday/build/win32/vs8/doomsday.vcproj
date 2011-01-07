@@ -877,6 +877,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\blockset.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\bsp_edge.c"
 				>
 			</File>
@@ -2518,6 +2522,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\include\blockset.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\include\bsp_edge.h"
 				>
 			</File>
@@ -2735,10 +2743,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\fi_main.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\engine\portable\include\filedirectory.h"
 				>
 			</File>
 			<File

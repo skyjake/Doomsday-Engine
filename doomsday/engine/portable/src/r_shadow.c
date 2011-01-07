@@ -1,10 +1,10 @@
-/**\file
+/**\file r_shadow.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * r_shadow.c: Runtime Map Shadowing (FakeRadio)
+ * Runtime Map Shadowing (FakeRadio)
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -199,7 +199,7 @@ for(i = subsector->shadows; i; i = i->next)
 #endif
 
     // We'll need to allocate a new link.
-    link = Z_BlockNewElement(shadowLinksBlockSet);
+    link = ZBlockSet_Allocate(shadowLinksBlockSet);
 
     // The links are stored into a linked list.
     link->next = subsector->shadows;
@@ -274,7 +274,7 @@ void R_InitSectorShadows(void)
      *    shadow edges cross one of the subsector's edges (not parallel),
      *    link the linedef to the subsector.
      */
-    shadowLinksBlockSet = Z_BlockCreate(sizeof(shadowlink_t), 1024, PU_MAP);
+    shadowLinksBlockSet = ZBlockSet_Construct(sizeof(shadowlink_t), 1024, PU_MAP);
 
     for(i = 0; i < numLineDefs; ++i)
     {

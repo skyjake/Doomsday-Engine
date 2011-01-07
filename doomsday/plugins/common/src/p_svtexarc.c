@@ -1,10 +1,10 @@
-/**\file
+/**\file p_svtexarc.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,14 +43,13 @@
 #include "p_svtexarc.h"
 
 // For identifying the archived format version. Written to disk.
-#define MATERIAL_ARCHIVE_VERSION (1)
+#define MATERIAL_ARCHIVE_VERSION (2)
 
 // Used to denote unknown Material references in records. Written to disk.
 #define UNKNOWN_MATERIAL_NAME   "DD_BADTX"  
 
 typedef struct materialarchive_record_s {
-    char            name[9];
-    material_namespace_t mnamespace;
+    dduri_t* path;
 } materialarchive_record_t;
 
 static materialarchive_t* create(void)
@@ -61,7 +60,12 @@ static materialarchive_t* create(void)
 static void destroy(materialarchive_t* mArc)
 {
     if(mArc->table)
+    {
+        uint i;
+        for(i = 0; i < mArc->count; ++i)
+            Uri_Destruct(mArc->table[i].path);
         free(mArc->table);
+    }
     free(mArc);
 }
 
@@ -74,18 +78,16 @@ static void init(materialarchive_t* mArc)
 }
 
 static void insertSerialId(materialarchive_t* mArc, materialarchive_serialid_t serialId,
-    const char* name, material_namespace_t mnamespace)
+    const dduri_t* path)
 {
-    assert(name);
+    assert(path);
     {
     materialarchive_record_t* rec;
 
     mArc->table = realloc(mArc->table, ++mArc->count * sizeof(materialarchive_record_t));
     rec = &mArc->table[mArc->count-1];
 
-    memset(rec->name, 0, 9);
-    dd_snprintf(rec->name, 9, "%s", name);
-    rec->mnamespace = mnamespace;
+    rec->path = Uri_ConstructCopy(path);
     }
 }
 
@@ -94,27 +96,33 @@ static materialarchive_serialid_t serialIdForMaterial(materialarchive_t* mArc,
 {
     assert(mat);
     {
-    static const char* unknownMaterialName = UNKNOWN_MATERIAL_NAME;
-    material_namespace_t mnamespace = P_GetIntp(mat, DMU_NAMESPACE);
-    const char* name = Materials_GetName(mat);
+    dduri_t* path = Materials_GetPath(mat);
+    materialarchive_serialid_t id = 0;
 
-    if(!name)
-        name = unknownMaterialName;
+    if(!path)
+        path = Uri_Construct2(UNKNOWN_MATERIAL_NAME, RC_NULL);
 
     // Has this already been registered? 
     {uint i;
     for(i = 0; i < mArc->count; ++i)
     {
         const materialarchive_record_t* rec = &mArc->table[i];
-        if(rec->mnamespace == mnamespace && !stricmp(rec->name, name))
-            return i + 1; // Yes. Return existing serial.
+        if(Uri_Equality(rec->path, path))
+        {
+            id = i + 1; // Yes. Return existing serial.
+            break;
+        }
     }}
 
-    if(!canCreate)
-        return 0; // Not found.
+    if(id != 0 || !canCreate)
+    {
+        Uri_Destruct(path);
+        return id;
+    }
 
     // Insert a new element in the index.
-    insertSerialId(mArc, mArc->count+1, name, mnamespace);
+    insertSerialId(mArc, mArc->count+1, path);
+    Uri_Destruct(path);
     return mArc->count; // 1-based index.
     }
 }
@@ -124,11 +132,10 @@ static materialarchive_record_t* getRecord(const materialarchive_t* mArc,
 {
     materialarchive_record_t* rec;
 
-    if(mArc->version < 1 && group == MN_FLATS)
+    if(mArc->version < 1 && group == 1) // Group 1 = Flats:
         serialId += mArc->numFlats;
-
     rec = &mArc->table[serialId];
-    if(!strncmp(rec->name, UNKNOWN_MATERIAL_NAME, 8))
+    if(!Str_CompareIgnoreCase(Uri_Path(rec->path), UNKNOWN_MATERIAL_NAME))
         return 0;
     return rec;
 }
@@ -140,7 +147,9 @@ static materialnum_t materialForSerialId(const materialarchive_t* mArc,
     {
     materialarchive_record_t* rec;
     if(serialId != 0 && (rec = getRecord(mArc, serialId-1, group)))
-        return Materials_NumForName(rec->name, rec->mnamespace);
+    {
+        return Materials_NumForName2(rec->path);
+    }
     return 0;
     }
 }
@@ -157,18 +166,51 @@ static void populate(materialarchive_t* mArc)
     }
 }
 
-static int writeRecord(materialarchive_record_t* rec)
+static int writeRecord(const materialarchive_t* mArc, materialarchive_record_t* rec)
 {
-    SV_Write(rec->name, 8);
-    SV_WriteByte(rec->mnamespace);
+    ddstring_t* path = Uri_ComposePath(rec->path);
+    int length = (int) Str_Length(path);
+    SV_WriteLong(length);
+    SV_Write(Str_Text(path), length);
+    Str_Delete(path);
     return true; // Continue iteration.
 }
 
-static int readRecord(materialarchive_record_t* rec)
+static int readRecord(materialarchive_t* mArc, materialarchive_record_t* rec)
 {
-    SV_Read(rec->name, 8);
-    rec->name[8] = 0;
-    rec->mnamespace = SV_ReadByte();
+    if(mArc->version >= 2)
+    {
+        int length = SV_ReadLong();
+        char* buf = malloc(length + 1);
+        buf[length] = 0;
+        SV_Read(buf, length);
+        if(!rec->path)
+            rec->path = Uri_ConstructDefault();
+        Uri_SetUri2(rec->path, buf);
+        free(buf);
+    }
+    else
+    {
+        char name[9];
+        ddstring_t path;
+        byte oldMNI;
+
+        SV_Read(name, 8);
+        name[8] = 0;
+        oldMNI = SV_ReadByte();
+        if(!rec->path)
+            rec->path = Uri_ConstructDefault();
+        Str_Init(&path);
+        switch(oldMNI % 4)
+        {
+        case 0: Str_Appendf(&path, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":%s", name); break;
+        case 1: Str_Appendf(&path, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":%s",    name); break;
+        case 2: Str_Appendf(&path, MATERIALS_SPRITES_RESOURCE_NAMESPACE_NAME":%s",  name); break;
+        case 3: Str_Appendf(&path, MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME":%s",   name); break;
+        }
+        Uri_SetUri(rec->path, &path);
+        Str_Free(&path);
+    }
     return true; // Continue iteration.
 }
 
@@ -176,15 +218,22 @@ static int readRecord(materialarchive_record_t* rec)
  * Same as readRecord except we are reading the old record format used
  * by Doomsday 1.8.6 and earlier.
  */
-static int readRecord_v186(materialarchive_record_t* rec, material_namespace_t mnamespace)
+static int readRecord_v186(materialarchive_record_t* rec, const char* mnamespace)
 {
-    SV_Read(rec->name, 8);
-    rec->name[8] = 0;
-    rec->mnamespace = mnamespace;
+    char buf[9];
+    ddstring_t path;
+    SV_Read(buf, 8);
+    buf[8] = 0;
+    if(!rec->path)
+        rec->path = Uri_ConstructDefault();
+    Str_Init(&path);
+    Str_Appendf(&path, "%s:%s", mnamespace, buf);
+    Uri_SetUri(rec->path, &path);
+    Str_Free(&path);
     return true; // Continue iteration.
 }
 
-static void readMaterialGroup(materialarchive_t* mArc, material_namespace_t defaultNamespace)
+static void readMaterialGroup(materialarchive_t* mArc, const char* defaultNamespace)
 {
     // Read the group header.
     uint num = SV_ReadShort();
@@ -196,11 +245,13 @@ static void readMaterialGroup(materialarchive_t* mArc, material_namespace_t defa
         memset(&temp, 0, sizeof(temp));
 
         if(mArc->version >= 1)
-            readRecord(&temp);
+            readRecord(mArc, &temp);
         else
-            readRecord_v186(&temp, defaultNamespace);
+            readRecord_v186(&temp, mArc->version <= 1? defaultNamespace : 0);
 
-        insertSerialId(mArc, mArc->count+1, temp.name, temp.mnamespace);
+        insertSerialId(mArc, mArc->count+1, temp.path);
+        if(temp.path)
+            Uri_Destruct(temp.path);
     }}
 }
 
@@ -212,7 +263,7 @@ static void writeMaterialGroup(const materialarchive_t* mArc)
     {uint i;
     for(i = 0; i < mArc->count; ++i)
     {
-        writeRecord(&mArc->table[i]);
+        writeRecord(mArc, &mArc->table[i]);
     }}
 }
 
@@ -298,12 +349,12 @@ void MaterialArchive_Read(materialarchive_t* materialArchive, int version)
     }
 
     materialArchive->count = 0;
-    readMaterialGroup(materialArchive, (version >= 1? MN_ANY : MN_FLATS));
+    readMaterialGroup(materialArchive, (version >= 1? "" : MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":"));
 
     if(materialArchive->version == 0)
     {   // The old format saved flats and textures in seperate groups.
         materialArchive->numFlats = materialArchive->count;
-        readMaterialGroup(materialArchive, (version >= 1? MN_ANY : MN_TEXTURES));
+        readMaterialGroup(materialArchive, (version >= 1? "" : MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":"));
     }
 }
 
@@ -317,9 +368,12 @@ void MaterialArchive_Print(const materialarchive_t* materialArchive)
     for(i = 0; i < materialArchive->count; ++i)
     {
         materialarchive_record_t* rec = &materialArchive->table[i];
-        Con_Printf("%i [%u]: %s\n", (int)rec->mnamespace, i, rec->name);
+        ddstring_t* path = rec->path? Uri_ToString(rec->path) : 0;
+        Con_Printf("[%u]: %s\n", i, path? Str_Text(path) : "");
+        Str_Delete(path);
     }
     Con_Printf("End");
     }
 }
 #endif
+

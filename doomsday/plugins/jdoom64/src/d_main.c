@@ -95,8 +95,8 @@ int gameModeBits;
 const float defFontRGB2[] = { .85f, 0, 0 };
 
 // The patches used in drawing the view border.
-char* borderLumps[] = {
-    "FTILEABC", // Background.
+char* borderGraphics[] = {
+    "Flats:FTILEABC", // Background.
     "BRDR_T", // Top.
     "BRDR_R", // Right.
     "BRDR_B", // Bottom.
@@ -376,6 +376,9 @@ void G_PreInit(void)
 
     cfg.weaponCycleSequential = true;
     cfg.berserkAutoSwitch = true;
+
+    // Use the crossfade transition by default.
+    Con_SetInteger("con-transition", 0);
 
     // Do the common pre init routine.
     G_CommonPreInit();

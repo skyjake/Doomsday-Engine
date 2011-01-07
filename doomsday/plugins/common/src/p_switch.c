@@ -163,9 +163,9 @@ static int numswitches;
 #if __JHEXEN__
 void P_InitSwitchList(void)
 {
-    int     i;
-    int     index;
-
+    int i, index;
+    ddstring_t path;
+    Str_Init(&path);
     for(index = 0, i = 0; ; ++i)
     {
         if(index+1 >= max_numswitches)
@@ -177,14 +177,18 @@ void P_InitSwitchList(void)
         if(!switchInfo[i].soundID)
             break;
 
-        switchlist[index++] = P_ToPtr(DMU_MATERIAL,
-            Materials_CheckNumForName(switchInfo[i].name1, MN_TEXTURES));
-        switchlist[index++] = P_ToPtr(DMU_MATERIAL,
-            Materials_CheckNumForName(switchInfo[i].name2, MN_TEXTURES));
+        Str_Clear(&path);
+        Str_Appendf(&path, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":%s", switchInfo[i].name1);
+        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_CheckNumForName(Str_Text(&path)));
+
+        Str_Clear(&path);
+        Str_Appendf(&path, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":%s", switchInfo[i].name2);
+        switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_CheckNumForName(Str_Text(&path)));
     }
+    Str_Free(&path);
 
     numswitches = index / 2;
-    switchlist[index] = NULL;
+    switchlist[index] = 0;
 }
 #else
 
@@ -214,6 +218,7 @@ void P_InitSwitchList(void)
     int i, index, episode;
     lumpnum_t lumpNum = W_CheckNumForName2("SWITCHES", true);
     switchlist_t* sList = switchInfo;
+    ddstring_t path; Str_Init(&path);
 
 # if __JHERETIC__
     if(gameMode == heretic_shareware)
@@ -253,14 +258,20 @@ void P_InitSwitchList(void)
         {
             if(!SHORT(sList[i].episode))
                 break;
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_NumForName(sList[i].name1, MN_TEXTURES));
-            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_NumForName(sList[i].name2, MN_TEXTURES));
+            Str_Clear(&path);
+            Str_Appendf(&path, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":%s", sList[i].name1);
+            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_NumForName(Str_Text(&path)));
+            Str_Clear(&path);
+            Str_Appendf(&path, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":%s", sList[i].name2);
+            switchlist[index++] = P_ToPtr(DMU_MATERIAL, Materials_NumForName(Str_Text(&path)));
             if(verbose > (lumpNum > 0? 1 : 2))
             {
                 Con_Message("  %d: Epi:%d A:\"%s\" B:\"%s\"\n", i, SHORT(sList[i].episode), sList[i].name1, sList[i].name2);
             }
         }
     }
+
+    Str_Free(&path);
 
     if(lumpNum > 0)
         W_ChangeCacheTag(lumpNum, PU_CACHE);

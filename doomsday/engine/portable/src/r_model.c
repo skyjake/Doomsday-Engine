@@ -1,10 +1,10 @@
-/**\file
+/**\file r_model.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * r_model.c: 3D Model Resources
+ * 3D Model Resources
  *
  * MD2/DMD2 loading and setup.
  * My variable naming convention is a bit incoherent.
@@ -983,8 +983,10 @@ static void setupModel(ded_model_t *def)
     for(i = 0, subdef = def->sub, sub = modef->sub; i < MAX_FRAME_MODELS;
         ++i, subdef++, sub++)
     {
-        sub->model = R_LoadModel(subdef->filename.path);
+        if(!subdef->filename)
+            continue;
 
+        sub->model = R_LoadModel(Str_Text(Uri_Path(subdef->filename)));
         if(!sub->model)
             continue;
 
@@ -996,12 +998,10 @@ static void setupModel(ded_model_t *def)
 
         // Submodel-specific flags cancel out model-scope flags!
         sub->flags = modelScopeFlags ^ subdef->flags;
-        if(subdef->skinFilename.path[0])
+        if(subdef->skinFilename && !Str_IsEmpty(Uri_Path(subdef->skinFilename)))
         {
             // A specific file name has been given for the skin.
-            sub->skin =
-                R_NewModelSkin(modellist[sub->model],
-                               subdef->skinFilename.path);
+            sub->skin = R_NewModelSkin(modellist[sub->model], Str_Text(Uri_Path(subdef->skinFilename)));
         }
         else
         {
@@ -1019,16 +1019,10 @@ static void setupModel(ded_model_t *def)
 
         sub->alpha = (byte) (subdef->alpha * 255);
 
-        //sub->shinySkin = R_RegisterSkin(subdef->filename.path, subdef->shinySkin, NULL, true, DED_PATH_LEN);
-
         { ddstring_t foundPath; Str_Init(&foundPath);
         sub->shinySkin = R_RegisterSkin(&foundPath, subdef->shinySkin, NULL, true);
         if(sub->shinySkin != 0)
-        {
-            strncpy(subdef->filename.path, Str_Text(&foundPath), DED_PATH_LEN);
-            if(Str_Length(&foundPath) > DED_PATH_LEN-1)
-                Con_Message("setupModel: Warning, forced to truncate long path \"%s\" to \"%s\" (max:%lu).\n", Str_Text(&foundPath), subdef->filename.path, DED_PATH_LEN-1);
-        }
+            Uri_SetUri(subdef->filename, &foundPath);
         Str_Free(&foundPath);
         }
 
@@ -1333,3 +1327,4 @@ boolean R_PrecacheSkinsForMobj(thinker_t* th, void* context)
 
     return true; // Used as iterator.
 }
+

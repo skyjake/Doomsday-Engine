@@ -1,10 +1,10 @@
-/**\file
+/**\file p_start.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -173,26 +173,33 @@ mobjtype_t P_DoomEdNumToMobjType(int doomEdNum)
     return MT_NONE;
 }
 
-/**
- * Initializes various playsim related data
- */
 void P_Init(void)
+{
+    // Create the various line lists (spechits, anims, buttons etc).
+    spechit = P_CreateIterList();
+    linespecials = P_CreateIterList();
+
+#if __JHEXEN__
+    X_CreateLUTs();
+#endif
+#if __JHERETIC__ || __JHEXEN__
+    P_InitLava();
+#endif
+
+    P_Update();
+}
+
+void P_Update(void)
 {
 #if __JHERETIC__ || __JHEXEN__ || __JDOOM64__
     P_InitInventory();
 #endif
-
 #if __JHEXEN__
     P_InitMapInfo();
 #endif
-
     P_InitSwitchList();
     P_InitPicAnims();
-
     P_InitTerrainTypes();
-#if __JHERETIC__ || __JHEXEN__ || __JSTRIFE__
-    P_InitLava();
-#endif
 
     maxHealth = 100;
     GetDefInt("Player|Max Health", &maxHealth);

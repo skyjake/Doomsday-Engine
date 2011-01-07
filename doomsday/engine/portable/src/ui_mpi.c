@@ -1,10 +1,10 @@
-/**\file
+/**\file ui_mpi.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -383,14 +383,14 @@ void MPIGoBack(ui_object_t* ob)
 void MPIStartServer(ui_object_t* ob)
 {
     N_ShutdownService();
-    Con_SetInteger("net-port-control", strtol(str_ipport, 0, 0), true);
-    Con_SetInteger("net-port-data", strtol(str_myudp, 0, 0), true);
+    Con_SetInteger2("net-port-control", strtol(str_ipport, 0, 0), SVF_WRITE_OVERRIDE);
+    Con_SetInteger2("net-port-data", strtol(str_myudp, 0, 0), SVF_WRITE_OVERRIDE);
     N_InitService(true);
 
     // Update the variables.
-    Con_SetString("server-name", str_server, true);
-    Con_SetString("server-info", str_desc, true);
-    Con_SetString("net-master-address", str_masterip, true);
+    Con_SetString2("server-name", str_server, SVF_WRITE_OVERRIDE);
+    Con_SetString2("server-info", str_desc, SVF_WRITE_OVERRIDE);
+    Con_SetString2("net-master-address", str_masterip, SVF_WRITE_OVERRIDE);
 
     // Start the server.
     Con_Execute(CMDS_DDAY,"net server start", false, false);
@@ -550,7 +550,7 @@ void MPIRetrieve(ui_object_t *ob)
     UI_InitColumns(list);
 
     // Update master settings.
-    Con_SetString("net-master-address", str_masterip, true);
+    Con_SetString2("net-master-address", str_masterip, SVF_WRITE_OVERRIDE);
 
     // Get the list.
     N_MAPost(MAC_REQUEST);
@@ -564,7 +564,7 @@ void MPIConnect(ui_object_t *ob)
     N_ShutdownService();
 
     // Update my UDP port.
-    Con_SetInteger("net-port-data", strtol(str_myudp, 0, 0), true);
+    Con_SetInteger2("net-port-data", strtol(str_myudp, 0, 0), SVF_WRITE_OVERRIDE);
 
     N_InitService(false);
 

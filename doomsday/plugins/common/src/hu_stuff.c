@@ -243,7 +243,7 @@ void Hu_LoadData(void)
 
     // Load the border patches
     for(i = 1; i < 9; ++i)
-        R_PrecachePatch(borderLumps[i], &borderPatches[i-1]);
+        R_PrecachePatch(borderGraphics[i], &borderPatches[i-1]);
 
 #if __JDOOM__ || __JDOOM64__
     m_pause = R_PrecachePatch("M_PAUSE", NULL);
@@ -1290,7 +1290,7 @@ void M_DrawBackgroundBox(float x, float y, float w, float h, boolean background,
 
     if(background)
     {
-        DGL_SetMaterial(P_ToPtr(DMU_MATERIAL, Materials_NumForName(borderLumps[0], MN_FLATS)));
+        DGL_SetMaterial(P_ToPtr(DMU_MATERIAL, Materials_NumForName(borderGraphics[0])));
         DGL_DrawRectTiled(x, y, w, h, 64, 64);
     }
 

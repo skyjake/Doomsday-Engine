@@ -1,10 +1,10 @@
-/**\file
+/**\file p_start.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@
  */
 
 /**
- * p_start.h: Common playsim code relating to the (re)spawn of map objects.
+ * Common playsim code relating to the (re)spawn of map objects.
  */
 
-#ifndef __COMMON_PLAYSTART_H__
-#define __COMMON_PLAYSTART_H__
+#ifndef LIBCOMMON_PLAYSTART_H
+#define LIBCOMMON_PLAYSTART_H
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
 # include "r_defs.h"
@@ -138,7 +138,17 @@ extern mapspotid_t* bossSpots;
 extern uint bossSpotCount;
 #endif
 
+/**
+ * Initialize various playsim related data and structures.
+ */
 void P_Init(void);
+
+/**
+ * Update playsim related data and structures. Should be called after
+ * an engine/renderer reset.
+ */
+void P_Update(void);
+
 void P_Shutdown(void);
 
 mobjtype_t      P_DoomEdNumToMobjType(int doomEdNum);
@@ -169,4 +179,4 @@ void            G_DeathMatchSpawnPlayer(int playernum);
 void            P_RebornPlayer(int plrNum);
 
 boolean         P_CheckSpot(float x, float y);
-#endif
+#endif /* LIBCOMMON_PLAYSTART_H */

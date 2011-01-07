@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_pinit.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,14 +41,10 @@
 #include "de_console.h"
 #include "de_system.h"
 #include "de_play.h"
-#include "de_refresh.h"
 #include "de_network.h"
-#include "de_misc.h"
 #include "de_ui.h"
-#include "de_audio.h"
-#include "de_bsp.h"
-#include "de_render.h"
 
+#include "m_args.h"
 #include "def_main.h"
 
 // MACROS ------------------------------------------------------------------
@@ -196,33 +192,6 @@ void DD_Verbosity(void)
 }
 
 /**
- * Register the engine commands and variables.
- */
-void DD_Register(void)
-{
-    DD_RegisterLoop();
-    DD_RegisterInput();
-    DD_RegisterVFS();
-    B_Register(); // for control bindings
-    Con_Register();
-    DH_Register();
-    R_Register();
-    S_Register();
-    SBE_Register(); // for bias editor
-    Rend_Register();
-    GL_Register();
-    Net_Register();
-    I_Register();
-    H_Register();
-    DAM_Register();
-    BSP_Register();
-    UI_Register();
-    Demo_Register();
-    P_ControlRegister();
-    FI_Register();
-}
-
-/**
  * Called early on during the startup process so that we can get the console
  * online ready for printing ASAP.
  */
@@ -252,9 +221,6 @@ void DD_ConsoleInit(void)
         else
         {
             Con_Message("Executable: " DOOMSDAY_VERSIONTEXT ".\n");
-
-            // Register the engine commands and variables.
-            DD_Register();
 
             // Print the used command line.
             if(verbose)

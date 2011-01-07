@@ -471,6 +471,7 @@ void R_Shutdown(void)
     R_ShutdownCompositeFonts();
     R_ShutdownVectorGraphics();
     R_ShutdownData();
+    R_ShutdownViewBorder();
 }
 
 void R_ResetViewer(void)

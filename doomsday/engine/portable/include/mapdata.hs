@@ -121,6 +121,18 @@ struct subsector
 end
 
 internal
+typedef enum {
+    MN_ANY = -1,
+    MATERIALNAMESPACEID_FIRST,
+    MN_TEXTURES = MATERIALNAMESPACEID_FIRST,
+    MN_FLATS,
+    MN_SPRITES,
+    MN_SYSTEM,
+    MATERIALNAMESPACEID_COUNT
+} materialnamespaceid_t;
+
+#define VALID_MATERIALNAMESPACEID(id)   ((id) >= MATERIALNAMESPACEID_FIRST && (id) < MATERIALNAMESPACEID_COUNT)
+
 typedef struct materiallayer_s {
     int             stage; // -1 => layer not in use.
     short           tics;
@@ -142,7 +154,7 @@ typedef enum {
 end
 
 struct material
-    INT     material_namespace_t mnamespace
+    INT     materialnamespaceid_t mnamespace
     -       ded_material_s* def // Can be NULL (was generated automatically).
     SHORT   short           flags // MATF_* flags
     -       byte            inFlags // MATIF_* flags

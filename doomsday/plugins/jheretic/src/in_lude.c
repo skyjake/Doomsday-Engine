@@ -629,7 +629,7 @@ void IN_Drawer(void)
 
 void IN_DrawStatBack(void)
 {
-    DGL_SetMaterial(P_ToPtr(DMU_MATERIAL, Materials_NumForName("FLOOR16", MN_FLATS)));
+    DGL_SetMaterial(P_ToPtr(DMU_MATERIAL, Materials_NumForName(MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":FLOOR16")));
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Color4f(1, 1, 1, 1);

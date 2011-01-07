@@ -1,10 +1,10 @@
-/**\file
+/**\file g_game.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 1999-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 1999-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1999 Activision
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -25,7 +25,7 @@
  */
 
 /**
- * g_game.c: Top-level (common) game routines.
+ * Top-level (common) game routines.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -460,7 +460,7 @@ void G_CommonPreInit(void)
     G_RegisterPlayerControls();
     P_RegisterMapObjs();
 
-    // Add the cvars and ccmds to the console databases.
+    // Add our cvars and ccmds to the console databases.
     G_ConsoleRegistration();    // Main command list.
     D_NetConsoleRegistration(); // For network.
     G_Register();               // Read-only game status cvars (for playsim).
@@ -473,8 +473,11 @@ void G_CommonPreInit(void)
     ST_Register();              // For the hud/statusbar.
     X_Register();               // For the crosshair.
     FI_StackRegister();         // For the InFine lib.
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
+    XG_Register();
+#endif
 
-    Con_SetString("map-name", NOTAMAPNAME, 1);
+    Con_SetString2("map-name", NOTAMAPNAME, SVF_WRITE_OVERRIDE);
 }
 
 #if __JHEXEN__
@@ -1237,6 +1240,17 @@ void R_InitRefresh(void)
 {
     VERBOSE(Con_Message("R_InitRefresh: Loading data for referesh.\n"))
 
+    // Setup the view border.
+    { dduri_t* paths[9];
+    uint i;
+    for(i = 0; i < 9; ++i)
+        paths[i] = ((borderGraphics[i] && borderGraphics[i][0])? Uri_Construct2(borderGraphics[i], RC_NULL) : 0);
+    R_SetBorderGfx(paths);
+    for(i = 0; i < 9; ++i)
+        if(paths[i])
+            Uri_Destruct(paths[i]);
+    }
+
     R_LoadColorPalettes();
     R_LoadCompositeFonts();
     R_LoadVectorGraphics();
@@ -1253,8 +1267,6 @@ void R_InitRefresh(void)
  */
 void G_CommonPostInit(void)
 {
-    VERBOSE( G_PrintMapList() );
-
     GUI_Init();
     R_InitRefresh();
     FI_StackInit();
@@ -1264,10 +1276,7 @@ void G_CommonPostInit(void)
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     XG_ReadTypes();
-    XG_Register(); // Register XG classnames.
 #endif
-
-    R_SetBorderGfx(borderLumps);
 
     Con_Message("P_Init: Init Playloop state.\n");
     P_Init();
@@ -1277,6 +1286,8 @@ void G_CommonPostInit(void)
 #if __JHERETIC__ || __JHEXEN__
     Hu_InventoryInit();
 #endif
+    Con_Message("AM_Init: Init automap.\n");
+    AM_Init();
 
     Con_Message("ST_Init: Init status bar.\n");
     ST_Init();
@@ -1293,12 +1304,8 @@ void G_CommonPostInit(void)
     // From this point on, the shortcuts are always active.
     DD_Execute(true, "activatebcontext shortcut");
 
-    Con_Message("AM_Init: Init automap.\n");
-    AM_Init();
-
-    // Create the various line lists (spechits, anims, buttons etc).
-    spechit = P_CreateIterList();
-    linespecials = P_CreateIterList();
+    // Display a breakdown of the available maps.
+    DD_Execute(true, "listmaps");
 }
 
 /**
@@ -1600,11 +1607,11 @@ void G_DoLoadMap(void)
     // If still no name, call it unnamed.
     if(!lname)
     {
-        Con_SetString("map-name", UNNAMEDMAP, 1);
+        Con_SetString2("map-name", UNNAMEDMAP, SVF_WRITE_OVERRIDE);
     }
     else
     {
-        Con_SetString("map-name", lname, 1);
+        Con_SetString2("map-name", lname, SVF_WRITE_OVERRIDE);
     }
 
     // Start a briefing, if there is one.
@@ -1986,7 +1993,7 @@ Con_Message("G_Ticker: Removing player %i's mobj.\n", i);
             {
                 // Update game status cvars.
                 gsvInMap = 0;
-                Con_SetString("map-name", NOTAMAPNAME, 1);
+                Con_SetString2("map-name", NOTAMAPNAME, SVF_WRITE_OVERRIDE);
                 gsvMapMusic = -1;
             }
             break;

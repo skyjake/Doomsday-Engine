@@ -1,10 +1,10 @@
-/**\file
+/**\file def_data.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,13 +23,13 @@
  */
 
 /**
- * def_data.h: Doomsday Engine Definition Files
+ * Engine Definition Files
  *
  * \fixme Needs to be redesigned.
  */
 
-#ifndef __DOOMSDAY_DED_FILES_H__
-#define __DOOMSDAY_DED_FILES_H__
+#ifndef LIBDENG_DEFINITION_FILE_H
+#define LIBDENG_DEFINITION_FILE_H
 
 #ifdef __cplusplus
 extern          "C" {
@@ -43,7 +43,6 @@ extern          "C" {
 
 #define DED_SPRITEID_LEN    4
 #define DED_STRINGID_LEN    31
-#define DED_PATH_LEN        FILENAME_T_MAXLEN
 #define DED_FUNC_LEN        255
 
 #define DED_MAX_SUB_MODELS  8
@@ -66,21 +65,12 @@ typedef struct ded_count_s {
 } ded_count_t;
 
 typedef struct {
-    char            path[DED_PATH_LEN + 1];
-} ded_path_t;
-
-typedef struct {
     char            id[DED_SPRITEID_LEN + 1];
 } ded_sprid_t;
 
 typedef struct {
     char            str[DED_STRINGID_LEN + 1];
 } ded_str_t;
-
-typedef struct {
-    ded_string_t    name;
-    material_namespace_t mnamespace;
-} ded_materialid_t;
 
 typedef struct {
     ded_flags_t     id; // ID of this property
@@ -149,14 +139,6 @@ typedef struct {
     ded_anystring_t execute; // Console command.
 } ded_state_t;
 
-typedef struct ded_lightmap_s {
-    ded_stringid_t  id;
-} ded_lightmap_t;
-
-typedef struct ded_flaremap_s {
-    ded_stringid_t  id;
-} ded_flaremap_t;
-
 typedef struct {
     ded_stateid_t   state;
     char            uniqueMapID[64];
@@ -166,14 +148,14 @@ typedef struct {
     float           color[3]; // Red Green Blue (0,1)
     float           lightLevel[2]; // Min/max lightlevel for bias
     ded_flags_t     flags;
-    ded_lightmap_t  up, down, sides;
-    ded_flaremap_t  flare;
+    dduri_t*        up, *down, *sides;
+    dduri_t*        flare;
     float           haloRadius; // Halo radius (zero = no halo).
 } ded_light_t;
 
 typedef struct {
-    ded_path_t      filename;
-    ded_path_t      skinFilename; // Optional; override model's skin.
+    dduri_t*        filename;
+    dduri_t*        skinFilename; // Optional; override model's skin.
     ded_string_t    frame;
     int             frameRange;
     ded_flags_t     flags; // ASCII string of the flags.
@@ -222,19 +204,19 @@ typedef struct {
     int             channels; // Max number of channels to occupy.
     int             group; // Exclusion group.
     ded_flags_t     flags; // Flags (like chg_pitch).
-    ded_path_t      ext; // External sound file (WAV).
+    dduri_t*        ext; // External sound file (WAV).
 } ded_sound_t;
 
 typedef struct {
     ded_musicid_t   id; // ID of this piece of music.
     ded_string_t    lumpName; // Lump name.
-    ded_path_t      path; // External file (not a normal MUS file).
+    dduri_t*        path; // External file (not a normal MUS file).
     int             cdTrack; // 0 = no track.
 } ded_music_t;
 
 typedef struct {
     ded_flags_t     flags;
-    ded_materialid_t material;
+    dduri_t*        material;
     float           offset;
     float           colorLimit;
 } ded_skylayer_t;
@@ -290,7 +272,7 @@ typedef struct {
 typedef struct {
     ded_stringid_t  id;
     ded_count_t     count;
-    ded_materialid_t* materials;
+    dduri_t**       materials;
 } ded_tenviron_t;
 
 typedef struct {
@@ -328,8 +310,8 @@ typedef struct {
     int             actLineType;
     int             deactLineType;
     ded_flags_t     wallSection;
-    ded_materialid_t actMaterial;
-    ded_materialid_t deactMaterial;
+    dduri_t*        actMaterial;
+    dduri_t*        deactMaterial;
     char            actMsg[128];
     char            deactMsg[128];
     float           materialMoveAngle;
@@ -373,10 +355,10 @@ typedef struct {
 } ded_sectortype_t;
 
 typedef struct ded_detailtexture_s {
-    ded_materialid_t material1;
-    ded_materialid_t material2;
+    dduri_t*        material1;
+    dduri_t*        material2;
     ded_flags_t     flags;
-    ded_path_t      detailLump; // The lump with the detail texture.
+    dduri_t*        detailLump; // The lump with the detail texture.
     boolean         isExternal; // True, if detailLump is external.
     float           scale;
     float           strength;
@@ -414,7 +396,7 @@ typedef struct {
 typedef struct ded_ptcgen_s {
     struct ded_ptcgen_s* stateNext; // List of generators for a state.
     ded_stateid_t   state; // Triggered by this state (if mobj-gen).
-    ded_materialid_t material;
+    dduri_t*        material;
     ded_mobjid_t    type; // Triggered by this type of mobjs.
     ded_mobjid_t    type2; // Also triggered by this type.
     int             typeNum;
@@ -460,8 +442,8 @@ typedef struct ded_decorlight_s {
     int             patternSkip[2];
     float           lightLevels[2]; // Fade by sector lightlevel.
     int             flareTexture;
-    ded_lightmap_t  up, down, sides;
-    ded_flaremap_t  flare; // Overrides flare_texture
+    dduri_t*        up, *down, *sides;
+    dduri_t*        flare; // Overrides flare_texture
 } ded_decorlight_t;
 
 // There is a fixed number of light decorations in each decoration.
@@ -481,26 +463,26 @@ typedef struct ded_decormodel_s {
 #define DED_DECOR_NUM_MODELS    8
 
 typedef struct ded_decor_s {
-    ded_materialid_t material;
+    dduri_t*        material;
     ded_flags_t     flags;
     ded_decorlight_t lights[DED_DECOR_NUM_LIGHTS];
     ded_decormodel_t models[DED_DECOR_NUM_MODELS];
 } ded_decor_t;
 
 typedef struct ded_reflection_s {
-    ded_materialid_t material;
+    dduri_t*        material;
     ded_flags_t     flags;
     blendmode_t     blendMode; // Blend mode flags (bm_*).
     float           shininess;
     float           minColor[3];
-    ded_path_t      shinyMap;
-    ded_path_t      maskMap;
+    dduri_t*        shinyMap;
+    dduri_t*        maskMap;
     float           maskWidth;
     float           maskHeight;
 } ded_reflection_t;
 
 typedef struct ded_group_member_s {
-    ded_materialid_t material;
+    dduri_t*        material;
     float           tics;
     float           randomTics;
 } ded_group_member_t;
@@ -512,8 +494,8 @@ typedef struct ded_group_s {
 } ded_group_t;
 
 typedef struct ded_material_layer_stage_s {
-    ded_string_t    name; // Material tex name.
-    int             type; // Material tex type, @see gltexture_type_t.
+    ded_string_t    name; // Tex name.
+    int             type; // Tex type, @see gltexture_type_t.
     int             tics;
     float           variance; // Stage variance (time).
     float           glow;
@@ -526,7 +508,7 @@ typedef struct ded_material_layer_s {
 } ded_material_layer_t;
 
 typedef struct ded_material_s {
-    ded_materialid_t id;
+    dduri_t*        id;
     ded_flags_t     flags;
     float           width, height; // In world units.
     ded_material_layer_t layers[DED_MAX_MATERIAL_LAYERS];
@@ -645,7 +627,7 @@ typedef struct ded_s {
 
 // Routines for managing DED files.
 void            DED_Init(ded_t* ded);
-void            DED_Destroy(ded_t* ded);
+void            DED_Clear(ded_t* ded);
 int             DED_Read(ded_t* ded, const char* sPathName);
 int             DED_ReadLump(ded_t* ded, lumpnum_t lump);
 
@@ -714,4 +696,5 @@ extern char dedReadError[];
 #ifdef __cplusplus
 }
 #endif
-#endif
+#endif /* LIBDENG_DEFINITION_FILE_H */
+

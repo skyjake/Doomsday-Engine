@@ -1,10 +1,10 @@
-/**\file
+/**\file h_console.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * h_console.c: Console stuff - jHeretic specific.
+ * Heretic specific console stuff.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -274,7 +274,7 @@ void G_UpdateEyeHeight(cvar_t* unused)
  */
 int ConTextOut(const char* string, int x, int y)
 {
-    GL_DrawTextFragment3(string, x, y, GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
+    GL_DrawTextFragment3(string, x, y + 1, GF_FONTA, DTF_ALIGN_TOPLEFT|DTF_NO_EFFECTS);
     return 0;
 }
 
@@ -300,10 +300,10 @@ D_CMD(ScreenShot)
  */
 D_CMD(HereticFont)
 {
-    ddfont_t    cfont;
+    ddfont_t cfont;
 
     cfont.flags = DDFONT_WHITE;
-    cfont.height = 9;
+    cfont.height = GL_CharHeight('Q', GF_FONTA);
     cfont.sizeX = 1.2f;
     cfont.sizeY = 2;
     cfont.drawText = ConTextOut;
@@ -319,7 +319,7 @@ D_CMD(HereticFont)
  */
 D_CMD(ConBackground)
 {
-    material_t*         mat;
+    material_t* mat;
 
     if(!stricmp(argv[1], "off") || !stricmp(argv[1], "none"))
     {
@@ -327,8 +327,7 @@ D_CMD(ConBackground)
         return true;
     }
 
-    if((mat = P_ToPtr(DMU_MATERIAL,
-            Materials_CheckNumForName(argv[1], MN_ANY))))
+    if((mat = P_ToPtr(DMU_MATERIAL, Materials_CheckNumForName(argv[1]))))
         consoleBG = mat;
 
     return true;

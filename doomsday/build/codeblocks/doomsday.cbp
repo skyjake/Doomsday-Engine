@@ -185,6 +185,7 @@
 		<Unit filename="..\..\engine\portable\include\b_context.h" />
 		<Unit filename="..\..\engine\portable\include\b_device.h" />
 		<Unit filename="..\..\engine\portable\include\b_main.h" />
+		<Unit filename="..\..\engine\portable\include\blockset.h" />
 		<Unit filename="..\..\engine\portable\include\bsp_edge.h" />
 		<Unit filename="..\..\engine\portable\include\bsp_intersection.h" />
 		<Unit filename="..\..\engine\portable\include\bsp_map.h" />
@@ -378,6 +379,7 @@
 		<Unit filename="..\..\engine\portable\src\b_util.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="..\..\engine\portable\src\blockset.c" />
 		<Unit filename="..\..\engine\portable\src\bsp_edge.c">
 			<Option compilerVar="CC" />
 		</Unit>

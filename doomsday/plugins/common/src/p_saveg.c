@@ -3041,7 +3041,12 @@ static int SV_ReadFloor(floor_t* floor)
         if(ver >= 2)
             floor->material = SV_GetArchiveMaterial(SV_ReadShort(), 0);
         else
-            floor->material = P_ToPtr(DMU_MATERIAL, Materials_NumForName(W_LumpName(SV_ReadShort()), MN_FLATS));
+        {
+            ddstring_t path; Str_Init(&path);
+            Str_Appendf(&path, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":%s", W_LumpName(SV_ReadShort()));
+            floor->material = P_ToPtr(DMU_MATERIAL, Materials_NumForName(Str_Text(&path)));
+            Str_Free(&path);
+        }
 
         floor->floorDestHeight = (float) SV_ReadShort();
         floor->speed = FIX2FLT(SV_ReadLong());
@@ -3086,8 +3091,11 @@ static int SV_ReadFloor(floor_t* floor)
 #endif
         floor->state = (int) SV_ReadLong();
         floor->newSpecial = SV_ReadLong();
-        floor->material = P_ToPtr(DMU_MATERIAL,
-            Materials_NumForName(W_LumpName(SV_ReadShort()), MN_FLATS));
+        { ddstring_t path; Str_Init(&path);
+        Str_Appendf(&path, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":%s", W_LumpName(SV_ReadShort()));
+        floor->material = P_ToPtr(DMU_MATERIAL, Materials_NumForName(Str_Text(&path)));
+        Str_Free(&path);
+        }
 
         floor->floorDestHeight = FIX2FLT((fixed_t) SV_ReadLong());
         floor->speed = FIX2FLT((fixed_t) SV_ReadLong());
@@ -4930,10 +4938,8 @@ int SV_SaveGameWorker(void* ptr)
     // Write the header.
     hdr.magic = MY_SAVE_MAGIC;
     hdr.version = MY_SAVE_VERSION;
-# if __JDOOM__ || __JDOOM64__
+# if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     hdr.gameMode = gameMode;
-# elif __JHERETIC__
-    hdr.gameMode = 0;
 # endif
 
     dd_snprintf(hdr.description, SAVESTRINGSIZE, "%s", param->description);

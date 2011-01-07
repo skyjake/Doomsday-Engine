@@ -1,10 +1,10 @@
-/**\file
+/**\file p_materialmanager.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,20 +36,25 @@ void            Materials_Shutdown(void);
 
 void            Materials_Ticker(timespan_t elapsed);
 
-void            Materials_DeleteTextures(material_namespace_t mnamespace);
+void            Materials_DeleteTextures(materialnamespaceid_t mnamespace);
 void            Materials_LinkAssociatedDefinitions(void);
 
-material_t*     Materials_New(material_namespace_t mnamespace, const char* name, short width, short height, byte flags, gltextureid_t tex, short texOriginX, short texOriginY);
+const ddstring_t* Materials_NamespaceNameForTextureType(gltexture_type_t t);
+
+material_t*     Materials_New(const dduri_t* name, short width, short height, byte flags, gltextureid_t tex, short texOriginX, short texOriginY);
 material_t*     Materials_NewFromDef(ded_material_t* def);
 
 material_t*     Materials_ToMaterial(materialnum_t num);
 
 materialnum_t   Materials_ToMaterialNum(const material_t* mat);
 
-materialnum_t   Materials_CheckNumForName(const char* name, material_namespace_t mnamespace);
-materialnum_t   Materials_NumForName(const char* name, material_namespace_t mnamespace);
+materialnum_t   Materials_CheckNumForName2(const dduri_t* path);
+materialnum_t   Materials_CheckNumForName(const char* path);
+materialnum_t   Materials_NumForName2(const dduri_t* path);
+materialnum_t   Materials_NumForName(const char* path);
 
-const char*     Materials_GetName(material_t* mat);
+const char* Materials_GetName(material_t* mat);
+dduri_t* Materials_GetPath(material_t* mat);
 
 void            Materials_Precache(material_t* mat, boolean yes);
 
@@ -76,3 +81,4 @@ boolean         Materials_IsPrecacheAnimGroup(int groupNum);
 // @todo Refactor away.
 void            Materials_PrecacheAnimGroup(material_t* mat, boolean yes);
 #endif /* LIBDENG2_MATERIALS_H */
+

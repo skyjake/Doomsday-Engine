@@ -568,6 +568,9 @@ desc = Speed of console opening/closing.
 [con-text-shadow]
 desc = 1=Text in the console has a shadow (might be slow).
 
+[con-snapback]
+desc = 1=Automatically reset the position of the console history buffer when a new message is printed.
+
 [con-transition]
 desc = Transition effect used when leaving busy mode: 0=Crossfade, 1=DOOM (smooth), 2=DOOM
 

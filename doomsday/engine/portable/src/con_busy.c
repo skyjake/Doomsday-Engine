@@ -1,10 +1,10 @@
-/**\file
+/**\file con_busy.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2007-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2007-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * con_busy.c: Console Busy Mode
+ * Console Busy Mode
  *
  * Draws the screen while the main engine thread is working a long
  * operation. The busy mode can be configured to be displaying a progress
@@ -561,7 +561,7 @@ void Con_BusyDrawConsoleOutput(void)
     float               y, topY;
     uint                i, newCount;
 
-    buffer = Con_GetConsoleBuffer();
+    buffer = Con_ConsoleBuffer();
     newCount = GetBufLines(buffer, visibleBusyLines);
     nowTime = Sys_GetRealSeconds();
     if(newCount > 0)

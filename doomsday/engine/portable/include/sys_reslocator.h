@@ -31,6 +31,17 @@ struct resourcenamespace_s;
 struct pathdirectory_s;
 struct dduri_s;
 
+#define PACKAGES_RESOURCE_NAMESPACE_NAME    "Packages"
+#define DEFINITIONS_RESOURCE_NAMESPACE_NAME "Defs"
+#define GRAPHICS_RESOURCE_NAMESPACE_NAME    "Graphics"
+#define MODELS_RESOURCE_NAMESPACE_NAME      "Models"
+#define SOUNDS_RESOURCE_NAMESPACE_NAME      "Sfx"
+#define MUSIC_RESOURCE_NAMESPACE_NAME       "Music"
+#define TEXTURES_RESOURCE_NAMESPACE_NAME    "Textures"
+#define FLATS_RESOURCE_NAMESPACE_NAME       "Flats"
+#define PATCHES_RESOURCE_NAMESPACE_NAME     "Patches"
+#define LIGHTMAPS_RESOURCE_NAMESPACE_NAME   "LightMaps"
+
 /**
  * Resource Type. Unique identifer attributable to resources (e.g., files).
  *
@@ -60,7 +71,8 @@ typedef enum {
 #define VALID_RESOURCE_TYPE(v)      ((v) >= RT_FIRST && (v) < RT_LAST_INDEX)
 
 /**
- * Unique identifier associated with resource namespaces managed by the resource locator.
+ * Unique identifier associated with resource namespaces managed by the
+ * resource locator.
  *
  * @ingroup core
  * @see ResourceNamespace
@@ -68,23 +80,25 @@ typedef enum {
 typedef uint resourcenamespaceid_t;
 
 /**
- * \post Initial/default search paths registered, namespaces initialized and queries may begin.
+ * \post Initial/default search paths registered, namespaces initialized and
+ * queries may begin.
  * \note May be called to re-initialize the locator back to default state.
  */
 void F_InitResourceLocator(void);
 
 /**
- * \post All resource namespaces are emptied and search paths cleared. Queries no longer possible.
+ * \post All resource namespaces are emptied, search paths are cleared and
+ * queries are no longer possible.
  */
 void F_ShutdownResourceLocator(void);
 
-/// @return             Ptr to the global (singleton) PathDirectory instance.
+/// @return  Ptr to the global (singleton) PathDirectory instance.
 struct pathdirectory_s* F_LocalPaths(void);
 
-/// @return              Number of resource namespaces.
+/// @return  Number of resource namespaces.
 uint F_NumResourceNamespaces(void);
 
-/// @return              @c true iff the value can be interpreted as a valid resource namespace id.
+/// @return  @c true iff @a value can be interpreted as a valid resource namespace id.
 boolean F_IsValidResourceNamespaceId(int value);
 
 /**
@@ -107,38 +121,43 @@ struct resourcenamespace_s* F_ToResourceNamespace(resourcenamespaceid_t rni);
  *                      Can be @c NULL, changing this routine to only check that
  *                      resource exists is readable.
  *
- * @param optionalSuffix If not @c NULL, append this suffix to search paths and
+ * @param optionalSuffix  If not @c NULL, append this suffix to search paths and
  *                      look for matches. If not found or not specified then search
  *                      for matches without a suffix.
  *
- * @return              @c true, iff a resource was found.
+ * @return  @c true, iff a resource was found.
  */
-const char* F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPath, ddstring_t* foundPath, const ddstring_t* optionalSuffix);
-const char* F_FindResourceStr2(resourceclass_t rclass, const ddstring_t* searchPath, ddstring_t* foundPath);
+const char* F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPath,
+    ddstring_t* foundPath, const ddstring_t* optionalSuffix);
+const char* F_FindResourceStr2(resourceclass_t rclass, const ddstring_t* searchPath,
+    ddstring_t* foundPath);
 const char* F_FindResourceStr(resourceclass_t rclass, const ddstring_t* searchPath);
 
-const char* F_FindResource3(resourceclass_t rclass, const char* searchPath, ddstring_t* foundPath, const char* optionalSuffix);
-const char* F_FindResource2(resourceclass_t rclass, const char* searchPath, ddstring_t* foundPath);
+const char* F_FindResource3(resourceclass_t rclass, const char* searchPath,
+    ddstring_t* foundPath, const char* optionalSuffix);
+const char* F_FindResource2(resourceclass_t rclass, const char* searchPath,
+    ddstring_t* foundPath);
 const char* F_FindResource(resourceclass_t rclass, const char* searchPath);
 
 /**
- * @return              Default class associated with resources of type @a type.
+ * @return  Default class associated with resources of type @a type.
  */
 resourceclass_t F_DefaultResourceClassForType(resourcetype_t type);
 
 /**
- * @return              Unique identifier of the default namespace associated with @a rclass.
+ * @return  Unique identifier of the default namespace associated with @a rclass.
  */
 resourcenamespaceid_t F_DefaultResourceNamespaceForClass(resourceclass_t rclass);
 
 /**
- * @return              Unique identifier of the resource namespace associated
- *                      with @a name, else @c 0 (not found).
+ * @return  Unique identifier of the resource namespace associated with @a name,
+ *          else @c 0 (not found).
  */
 resourcenamespaceid_t F_SafeResourceNamespaceForName(const char* name);
 
 /**
- * Same as F_SafeResourceNamespaceForName except will throw a fatal error if not found and won't return.
+ * Same as F_SafeResourceNamespaceForName except will throw a fatal error if not
+ * found and won't return.
  */
 resourcenamespaceid_t F_ResourceNamespaceForName(const char* name);
 
@@ -146,14 +165,14 @@ resourcenamespaceid_t F_ResourceNamespaceForName(const char* name);
  * Attempts to determine which "type" should be attributed to a resource, solely
  * by examining the name (e.g., a file name/path).
  *
- * @return              Type determined for this resource else @c RT_NONE.
+ * @return  Type determined for this resource else @c RT_NONE.
  */
 resourcetype_t F_GuessResourceTypeByName(const char* name);
 
 /**
  * Apply all resource namespace mappings to the specified path.
  *
- * @return              @c true iff the path was mapped.
+ * @return  @c true iff the path was mapped.
  */
 boolean F_ApplyPathMapping(ddstring_t* path);
 
@@ -168,12 +187,13 @@ void F_FileDir(const ddstring_t* str, directory2_t* dir);
 void F_FileName(ddstring_t* dest, const ddstring_t* src);
 void F_FileNameAndExtension(ddstring_t* dest, const ddstring_t* src);
 
-const char* F_ParseSearchPath2(struct dduri_s* dest, const char* src, char delim, resourceclass_t defaultResourceClass);
+const char* F_ParseSearchPath2(struct dduri_s* dest, const char* src, char delim,
+    resourceclass_t defaultResourceClass);
 const char* F_ParseSearchPath(struct dduri_s* dest, const char* src, char delim);
 
 /**
  * Converts directory slashes to the correct type of slash.
- * @return              @c true iff the path was modified.
+ * @return  @c true iff the path was modified.
  */
 boolean F_FixSlashes(ddstring_t* path);
 
@@ -184,14 +204,13 @@ boolean F_FixSlashes(ddstring_t* path);
 void F_ResolveSymbolicPath(ddstring_t* dest, const ddstring_t* src);
 
 /**
- * @return              @c true, if the given path is absolute
- *                      (starts with \ or / or the second character is
- *                      a ':' (drive).
+ * @return  @c true, if the given path is absolute (starts with \ or / or the
+ *          second character is a ':' (drive).
  */
 boolean F_IsAbsolute(const ddstring_t* str);
 
 /**
- * @return              @c true iff the path can be made into a relative path. 
+ * @return  @c true iff the path can be made into a relative path. 
  */
 boolean F_IsRelativeToBasePath(const ddstring_t* path);
 
@@ -201,7 +220,7 @@ boolean F_IsRelativeToBasePath(const ddstring_t* path);
  * @param src           Possibly absolute path.
  * @param dest          Potential base-relative path written here.
  *
- * @return              @c true iff the base path was found and removed.
+ * @return  @c true iff the base path was found and removed.
  */
 boolean F_RemoveBasePath(ddstring_t* dest, const ddstring_t* src);
 
@@ -211,7 +230,7 @@ boolean F_RemoveBasePath(ddstring_t* dest, const ddstring_t* src);
  * @param dest          Expanded path written here.
  * @param src           Original path.
  *
- * @return              @c true iff the path was expanded.
+ * @return  @c true iff the path was expanded.
  */
 boolean F_PrependBasePath(ddstring_t* dest, const ddstring_t* src);
 
@@ -227,12 +246,12 @@ boolean F_PrependBasePath(ddstring_t* dest, const ddstring_t* src);
  * @param dest          Expanded path written here.
  * @param src           Original path.
  *
- * @return              @c true iff the path was expanded.
+ * @return  @c true iff the path was expanded.
  */
 boolean F_ExpandBasePath(ddstring_t* dest, const ddstring_t* src);
 
 /**
- * @return              A prettier copy of the original path.
+ * @return  A prettier copy of the original path.
  */
 const ddstring_t* F_PrettyPath(const ddstring_t* path);
 

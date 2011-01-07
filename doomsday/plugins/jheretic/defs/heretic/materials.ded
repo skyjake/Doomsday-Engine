@@ -16,24 +16,22 @@ SkipIf -nodefaultfx;
 #
 
 Material {
-  ID = "FLATHUH1";
-  Namespace = flats;
+  ID = "flats:FLATHUH1";
   Layer { Stage { Glow = .9; } }
 }
 
-* Material { ID = "FLATHUH2"; }
-* Material { ID = "FLATHUH3"; }
-* Material { ID = "FLATHUH4"; }
+* Material { ID = "flats:FLATHUH2"; }
+* Material { ID = "flats:FLATHUH3"; }
+* Material { ID = "flats:FLATHUH4"; }
 
 #
 # Glowing textures:
 #
 
 Material {
-  ID = "LAVAFL1";
-  Namespace = textures;
+  ID = "textures:LAVAFL1";
   Layer { Stage { Glow = .9; } }
 }
 
-* Material { ID = "LAVAFL2"; }
-* Material { ID = "LAVAFL3"; }
+* Material { ID = "textures:LAVAFL2"; }
+* Material { ID = "textures:LAVAFL3"; }

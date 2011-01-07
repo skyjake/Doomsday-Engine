@@ -1274,9 +1274,13 @@ static int CmdChangeFloor(void)
     material_t*         mat;
     sector_t*           sec = NULL;
     iterlist_t*         list;
+    ddstring_t path;
 
-    mat = P_ToPtr(DMU_MATERIAL, Materials_NumForName(GetACString(Pop()),
-                                                     MN_FLATS));
+    Str_Init(&path);
+    Str_Appendf(&path, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":%s", GetACString(Pop()));
+    mat = P_ToPtr(DMU_MATERIAL, Materials_NumForName(Str_Text(&path)));
+    Str_Free(&path);
+
     tag = Pop();
 
     list = P_GetSectorIterListForTag(tag, false);
@@ -1298,10 +1302,13 @@ static int CmdChangeFloorDirect(void)
     material_t*         mat;
     sector_t*           sec = NULL;
     iterlist_t*         list;
+    ddstring_t path;
 
     tag = LONG(*PCodePtr++);
-    mat = P_ToPtr(DMU_MATERIAL, Materials_NumForName(
-        GetACString(LONG(*PCodePtr++)), MN_FLATS));
+    Str_Init(&path);
+    Str_Appendf(&path, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":%s", GetACString(LONG(*PCodePtr++)));
+    mat = P_ToPtr(DMU_MATERIAL, Materials_NumForName(Str_Text(&path)));
+    Str_Free(&path);
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
@@ -1322,9 +1329,12 @@ static int CmdChangeCeiling(void)
     material_t*         mat;
     sector_t*           sec = NULL;
     iterlist_t*         list;
+    ddstring_t path;
 
-    mat = P_ToPtr(DMU_MATERIAL,
-        Materials_NumForName(GetACString(Pop()), MN_FLATS));
+    Str_Init(&path);
+    Str_Appendf(&path, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":%s", GetACString(Pop()));
+    mat = P_ToPtr(DMU_MATERIAL, Materials_NumForName(Str_Text(&path)));
+    Str_Free(&path);
     tag = Pop();
 
     list = P_GetSectorIterListForTag(tag, false);
@@ -1346,10 +1356,13 @@ static int CmdChangeCeilingDirect(void)
     material_t*         mat;
     sector_t*           sec = NULL;
     iterlist_t*         list;
+    ddstring_t path;
 
     tag = LONG(*PCodePtr++);
-    mat = P_ToPtr(DMU_MATERIAL,
-        Materials_NumForName(GetACString(LONG(*PCodePtr++)), MN_FLATS));
+    Str_Init(&path);
+    Str_Appendf(&path, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":%s", GetACString(LONG(*PCodePtr++)));
+    mat = P_ToPtr(DMU_MATERIAL, Materials_NumForName(Str_Text(&path)));
+    Str_Free(&path);
 
     list = P_GetSectorIterListForTag(tag, false);
     if(list)
@@ -1691,8 +1704,13 @@ static int CmdSetLineTexture(void)
     material_t*         mat;
     linedef_t*          line;
     iterlist_t*         list;
+    ddstring_t path;
 
-    mat = P_ToPtr(DMU_MATERIAL, Materials_NumForName(GetACString(Pop()), MN_TEXTURES));
+    Str_Init(&path);
+    Str_Appendf(&path, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":%s", GetACString(Pop()));
+    mat = P_ToPtr(DMU_MATERIAL, Materials_NumForName(Str_Text(&path)));
+    Str_Free(&path);
+
     position = Pop();
     side = Pop();
     lineTag = Pop();

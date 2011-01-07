@@ -1,10 +1,10 @@
-/**\file
+/**\file ui_panel.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * ui_panel.c: Control Panel
+ * Control Panel.
  *
  * Doomsday Control Panel (opened with the "panel" command).
  * During netgames the game is NOT PAUSED while the UI is active.
@@ -700,7 +700,7 @@ void CP_DrawBorder(ui_object_t *ob)
 void CP_CvarButton(ui_object_t *ob)
 {
     cvarbutton_t *cb = ob->data;
-    cvar_t     *var = Con_GetVariable(cb->cvarname);
+    ddcvar_t     *var = Con_FindVariable(cb->cvarname);
     int         value;
 
     strcpy(ob->text, cb->active? cb->yes : cb->no);
@@ -725,13 +725,13 @@ void CP_CvarButton(ui_object_t *ob)
         value = cb->active;
     }
 
-    Con_SetInteger(cb->cvarname, value, true);
+    Con_SetInteger2(cb->cvarname, value, SVF_WRITE_OVERRIDE);
 }
 
 void CP_CvarList(ui_object_t *ob)
 {
     uidata_list_t *list = ob->data;
-    cvar_t     *var = Con_GetVariable(list->data);
+    ddcvar_t     *var = Con_FindVariable(list->data);
     int         value = ((uidata_listitem_t *) list->items)[list->selection].data;
 
     if(list->selection < 0)
@@ -739,20 +739,20 @@ void CP_CvarList(ui_object_t *ob)
     if(!var)
         return;
 
-    Con_SetInteger(var->name, value, true);
+    Con_SetInteger2(var->shared.name, value, SVF_WRITE_OVERRIDE);
 }
 
 void CP_CvarEdit(ui_object_t *ob)
 {
     uidata_edit_t *ed = ob->data;
 
-    Con_SetString(ed->data, ed->ptr, true);
+    Con_SetString2(ed->data, ed->ptr, SVF_WRITE_OVERRIDE);
 }
 
 void CP_CvarSlider(ui_object_t *ob)
 {
     uidata_slider_t *slid = ob->data;
-    cvar_t     *var = Con_GetVariable(slid->data);
+    ddcvar_t     *var = Con_FindVariable(slid->data);
     float       value = slid->value;
 
     if(!var)
@@ -763,21 +763,27 @@ void CP_CvarSlider(ui_object_t *ob)
         value += (slid->value < 0? -.5f : .5f);
     }
 
-    if(var->type == CVT_FLOAT)
+    switch(var->shared.type)
     {
+    case CVT_FLOAT:
         if(slid->step >= .01f)
         {
-            Con_SetFloat(var->name, (int) (100 * value) / 100.0f, true);
+            Con_SetFloat2(var->shared.name, (int) (100 * value) / 100.0f, SVF_WRITE_OVERRIDE);
         }
         else
         {
-            Con_SetFloat(var->name, value, true);
+            Con_SetFloat2(var->shared.name, value, SVF_WRITE_OVERRIDE);
         }
+        break;
+    case CVT_INT:
+        Con_SetInteger2(var->shared.name, (int) value, SVF_WRITE_OVERRIDE);
+        break;
+    case CVT_BYTE:
+        Con_SetInteger2(var->shared.name, (byte) value, SVF_WRITE_OVERRIDE);
+        break;
+    default:
+        break;
     }
-    else if(var->type == CVT_INT)
-        Con_SetInteger(var->name, (int) value, true);
-    else if(var->type == CVT_BYTE)
-        Con_SetInteger(var->name, (byte) value, true);
 }
 
 int CP_KeyGrabResponder(ui_object_t *ob, ddevent_t *ev)
@@ -795,7 +801,7 @@ int CP_KeyGrabResponder(ui_object_t *ob, ddevent_t *ev)
 
     if(IS_KEY_DOWN(ev))
     {
-        Con_SetInteger(ob->text, ev->toggle.id, true);
+        Con_SetInteger2(ob->text, ev->toggle.id, SVF_WRITE_OVERRIDE);
         // All keydown events are eaten.
         // Note that the UI responder eats all Tabs!
         return true;
@@ -832,7 +838,7 @@ void CP_KeyGrabDrawer(ui_object_t *ob)
 
 void CP_QuickFOV(ui_object_t *ob)
 {
-    Con_SetFloat("rend-camera-fov", sld_fov.value = atoi(ob->text), true);
+    Con_SetFloat2("rend-camera-fov", sld_fov.value = atoi(ob->text), SVF_WRITE_OVERRIDE);
 }
 
 void CP_VideoModeInfo(ui_object_t *ob)

@@ -1,10 +1,10 @@
-/**\file
+/**\file hu_menu.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
   *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,8 +23,8 @@
  */
 
 /**
- * hu_menu.c: Common selection menu, options, episode etc.
- *            Sliders and icons. Kinda widget stuff.
+ * Common interactive menu: options, episode etc.
+ * Sliders and icons. Kinda widget stuff.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -3005,7 +3005,7 @@ void MNSlider_Dimensions(const mn_object_t* obj, int* width, int* height)
 void Hu_MenuCvarButton(mn_object_t* obj, int option)
 {
     cvarbutton_t* cb = obj->data;
-    cvar_t* var = Con_GetVariable(cb->cvarname);
+    cvar_t* var = Con_FindVariable(cb->cvarname);
     int value;
 
     //strcpy(obj->text, cb->active? cb->yes : cb->no);
@@ -3031,26 +3031,26 @@ void Hu_MenuCvarButton(mn_object_t* obj, int option)
         value = cb->active;
     }
 
-    Con_SetInteger(cb->cvarname, value, true);
+    Con_SetInteger2(cb->cvarname, value, SVF_WRITE_OVERRIDE);
 }
 
 void Hu_MenuCvarList(mn_object_t* obj, int option)
 {
     mndata_list_t* list = obj->data;
-    cvar_t* var = Con_GetVariable(list->data);
+    cvar_t* var = Con_FindVariable(list->data);
     int value = ((mndata_listitem_t*) list->items)[list->selection].data;
 
     if(list->selection < 0)
         return; // Hmm?
     if(!var)
         return;
-    Con_SetInteger(var->name, value, true);
+    Con_SetInteger2(var->name, value, SVF_WRITE_OVERRIDE);
 }
 
 void Hu_MenuCvarSlider(mn_object_t* obj, int option)
 {
     mndata_slider_t* slider = obj->data;
-    cvar_t* var = Con_GetVariable(slider->data);
+    cvar_t* var = Con_FindVariable(slider->data);
     float value = slider->value;
 
     if(!var)
@@ -3065,17 +3065,17 @@ void Hu_MenuCvarSlider(mn_object_t* obj, int option)
     {
         if(slider->step >= .01f)
         {
-            Con_SetFloat(var->name, (int) (100 * value) / 100.0f, true);
+            Con_SetFloat2(var->name, (int) (100 * value) / 100.0f, SVF_WRITE_OVERRIDE);
         }
         else
         {
-            Con_SetFloat(var->name, value, true);
+            Con_SetFloat2(var->name, value, SVF_WRITE_OVERRIDE);
         }
     }
     else if(var->type == CVT_INT)
-        Con_SetInteger(var->name, (int) value, true);
+        Con_SetInteger2(var->name, (int) value, SVF_WRITE_OVERRIDE);
     else if(var->type == CVT_BYTE)
-        Con_SetInteger(var->name, (byte) value, true);
+        Con_SetInteger2(var->name, (byte) value, SVF_WRITE_OVERRIDE);
 }
 
 void M_DrawLoad(const mn_page_t* page, int x, int y)
@@ -3700,7 +3700,7 @@ void M_InventorySlotMaxVis(mn_object_t* obj, int option)
         return;
     cvarname = (char*) obj->data;
 
-    Con_SetInteger(cvarname, val, false);
+    Con_SetInteger(cvarname, val);
 }
 #endif
 

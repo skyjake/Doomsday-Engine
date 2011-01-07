@@ -594,7 +594,7 @@ static boolean addFile(const char* fileName, boolean allowDuplicate)
 
     if(!(handle = F_Open(fileName, "rb")))
     {
-        Con_Message("Warning \"%s\" not found.\n", fileName);
+        Con_Message("Warning:W_AddFile: Resource \"%s\" not found, aborting.\n", fileName);
         return false;
     }
 
@@ -668,7 +668,7 @@ static boolean addFile(const char* fileName, boolean allowDuplicate)
         {
             if(strncmp(header.identification, "PWAD", 4))
             {   // Bad file id
-                Con_Error("Wad file %s doesn't have IWAD or PWAD id\n", fileName);
+                Con_Error("Error:W_AddFile: Wad file %s does not have IWAD or PWAD id.\n", fileName);
             }
         }
         else
@@ -682,7 +682,7 @@ static boolean addFile(const char* fileName, boolean allowDuplicate)
         length = header.numLumps * sizeof(filelump_t);
         if(!(fileInfo = M_Malloc(length)))
         {
-            Con_Error("W_AddFile: fileinfo malloc failed\n");
+            Con_Error("Error:W_AddFile: Fileinfo allocation failed.\n");
         }
 
         freeFileInfo = fileInfo;
@@ -718,7 +718,7 @@ static boolean removeFile(const char* fileName)
     int idx = W_RecordGetIdx(fileName);
     filerecord_t* rec;
 
-    VERBOSE( Con_Message("W_RemoveFile: Unloading %s ...\n", fileName) );
+    VERBOSE( Con_Message("Unloading %s ...\n", M_PrettyPath(fileName)) );
 
     if(idx == -1)
         return false; // No such file loaded.
@@ -762,11 +762,11 @@ boolean W_AddFiles(const char* const* filenames, size_t num, boolean allowDuplic
     {
         if(addFile(filenames[i], allowDuplicate))
         {
-            VERBOSE2( Con_Message("W_AddFiles: Done loading %s\n", M_PrettyPath(filenames[i])) );
+            VERBOSE2( Con_Message("Done loading %s\n", M_PrettyPath(filenames[i])) );
             succeeded = true; // At least one has been loaded.
         }
         else
-            Con_Message("W_AddFiles: Error loading %s\n", filenames[i]);
+            Con_Message("Warning: Errors occured while loading %s\n", filenames[i]);
     }}
 
     // A changed file list may alter the main lump directory.
@@ -785,11 +785,11 @@ boolean W_RemoveFiles(const char* const* filenames, size_t num)
     {
         if(removeFile(filenames[i]))
         {
-            VERBOSE2( Con_Message("W_RemoveFiles: Done unloading %s\n", M_PrettyPath(filenames[i])) );
+            VERBOSE2( Con_Message("Done unloading %s\n", M_PrettyPath(filenames[i])) );
             succeeded = true; // At least one has been unloaded.
         }
         else
-            Con_Message("W_RemoveFiles: Error unloading %s\n", filenames[i]);
+            Con_Message("Warning: Errors occured while unloading %s\n", filenames[i]);
     }}
 
     // A changed file list may alter the main lump directory.
@@ -890,8 +890,8 @@ lumpnum_t W_OpenAuxiliary(const char *fileName)
 
     if((handle = F_Open(fileName, "rb")) == NULL)
     {
-        Con_Error("W_OpenAuxiliary: Error %s not found!", fileName);
-        return -1;
+        Con_Error("Error:W_OpenAuxiliary: Failed to open %s", fileName);
+        return -1; // Unreachable.
     }
 
     AuxiliaryHandle = handle;
@@ -899,8 +899,8 @@ lumpnum_t W_OpenAuxiliary(const char *fileName)
     if(strncmp(header.identification, "IWAD", 4))
     {
         if(strncmp(header.identification, "PWAD", 4))
-        {                       // Bad file id
-            Con_Error("Wad file %s doesn't have IWAD or PWAD id\n", fileName);
+        {   // Bad file id
+            Con_Error("Error:W_OpenAuxiliary: Wad file %s doesn't have IWAD or PWAD id.", fileName);
         }
     }
 
@@ -1024,7 +1024,7 @@ lumpnum_t W_CheckNumForName2(const char* name, boolean silent)
     if(!name || !name[0])
     {
         if(!silent)
-            VERBOSE2(Con_Message("W_CheckNumForName: Empty name.\n"));
+            VERBOSE2( Con_Message("Warning:W_CheckNumForName: Empty name, returning invalid lumpnum.\n") );
         return -1;
     }
 
@@ -1052,7 +1052,7 @@ lumpnum_t W_CheckNumForName2(const char* name, boolean silent)
         return idx;
 
     if(!silent)
-        VERBOSE2(Con_Message("W_CheckNumForName: Warning, \"%s\" not found!\n", name8));
+        VERBOSE2( Con_Message("Warning: Lump \"%s\" not found.\n", name8) );
     return -1;
 }
 
@@ -1061,7 +1061,7 @@ lumpnum_t W_CheckNumForName(const char* name)
     return W_CheckNumForName2(name, false);
 }
 
-lumpnum_t W_GetNumForName(const char *name)
+lumpnum_t W_GetNumForName(const char* name)
 {
     lumpnum_t           i;
 
@@ -1071,7 +1071,7 @@ lumpnum_t W_GetNumForName(const char *name)
         return i;
     }
 
-    Con_Error("W_GetNumForName: Warning, \"%s\" not found!", name);
+    Con_Error("Error:W_GetNumForName: Lump \"%s\" not found.", name);
     return -1;
 }
 
@@ -1081,7 +1081,7 @@ size_t W_LumpLength(lumpnum_t lump)
 
     if(lump >= numLumps)
     {
-        Con_Error("W_LumpLength: %i >= numLumps", lump);
+        Con_Error("Error:W_LumpLength: Lumpnum %i >= numLumps.", lump);
     }
 
     return lumpInfo[lump].size;
@@ -1094,7 +1094,7 @@ const char* W_LumpName(lumpnum_t lump)
     if(lump >= numLumps || lump < 0)
     {
         return NULL; // The caller must be able to handle this...
-        //Con_Error("W_LumpName: %i >= numLumps", lump);
+        //Con_Error("Error:W_LumpName: Lumpnum %i >= numLumps.", lump);
     }
 
     return lumpInfo[lump].name;
@@ -1107,7 +1107,7 @@ void W_ReadLump(lumpnum_t lump, void *dest)
 
     if(lump >= numLumps)
     {
-        Con_Error("W_ReadLump: %i >= numLumps", lump);
+        Con_Error("Error:W_ReadLump: Lumpnum %i >= numLumps.", lump);
     }
 
     l = &lumpInfo[lump];
@@ -1115,7 +1115,7 @@ void W_ReadLump(lumpnum_t lump, void *dest)
     c = F_Read(dest, l->size, l->handle);
     if(c < l->size)
     {
-        Con_Error("W_ReadLump: only read %lu of %lu on lump %i",
+        Con_Error("Error:W_ReadLump: Only read %lu of %lu bytes of lump %i.",
                   (unsigned long) c, (unsigned long) l->size, lump);
     }
 }
@@ -1129,7 +1129,7 @@ void W_ReadLumpSection(lumpnum_t lump, void *dest, size_t startOffset,
     lump = W_Select(lump);
     if(lump >= numLumps)
     {
-        Con_Error("W_ReadLumpSection: %i >= numLumps", lump);
+        Con_Error("Error:W_ReadLumpSection: Lumpnum %i >= numLumps.", lump);
     }
 
     l = &lumpInfo[lump];
@@ -1137,7 +1137,7 @@ void W_ReadLumpSection(lumpnum_t lump, void *dest, size_t startOffset,
     c = F_Read(dest, length, l->handle);
     if(c < length)
     {
-        Con_Error("W_ReadLumpSection: only read %lu of %lu on lump %i",
+        Con_Error("Error:W_ReadLumpSection: Only read %lu of %lu bytes of lump %i.",
                   (unsigned long) c, (unsigned long) length, lump);
     }
 }
@@ -1168,8 +1168,7 @@ boolean W_DumpLump(lumpnum_t lump, const char* fileName)
 
     if(!(file = fopen(fname, "wb")))
     {
-        Con_Printf("Couldn't open %s for writing. %s\n", fname,
-                   strerror(errno));
+        Con_Printf("Warning: Failed to open %s for writing (%s), aborting.\n", fname, strerror(errno));
         W_ChangeCacheTag(lump, PU_CACHE);
         return false;
     }
@@ -1208,7 +1207,7 @@ const void* W_CacheLumpNum(lumpnum_t absoluteLump, int tag)
 
     if((unsigned) lump >= (unsigned) numLumps)
     {
-        Con_Error("W_CacheLumpNum: %i >= numLumps", lump);
+        Con_Error("Error:W_CacheLumpNum: Lumpnum %i >= numLumps.", lump);
     }
 
     // Return the name instead of data?
@@ -1241,7 +1240,7 @@ void W_ChangeCacheTag(lumpnum_t lump, int tag)
 {
     lump = W_Select(lump);
     if(lump < 0 || lump >= numLumps)
-        Con_Error("W_ChangeCacheTag: Bad lump number: %i.", lump);
+        Con_Error("Error:W_ChangeCacheTag: Bad lump number %i.", lump);
     if(!lumpCache[lump])
         return;
     //if(Z_GetBlock(lumpCache[lump])->id == 0x1d4a11)
@@ -1254,7 +1253,7 @@ const char* W_LumpSourceFile(lumpnum_t lump)
 {
     lump = W_Select(lump);
     if(lump < 0 || lump >= numLumps)
-        Con_Error("W_LumpSourceFile: Bad lump number: %i.", lump);
+        Con_Error("Error:W_LumpSourceFile: Bad lump number %i.", lump);
 
     { filerecord_t* rec;
     if((rec = findFileRecordForLump(lump)))

@@ -1,10 +1,10 @@
-/**\file
+/**\filem_multi.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * m_multi.c: Multiplayer Menu (for jDoom, jHeretic and jHexen).
+ * Multiplayer Menu (for jDoom, jHeretic and jHexen).
  *
  * Contains an extension for edit fields.
  * \todo Remove unnecessary SC* declarations and other unused code.
@@ -608,7 +608,7 @@ void SCCloseServer(mn_object_t* obj, int option)
 
 void SCEnterPlayerSetupMenu(mn_object_t* obj, int option)
 {
-    M_SetEditFieldText(&plrNameEd, *(char**) Con_GetVariable("net-name")->ptr);
+    M_SetEditFieldText(&plrNameEd, *(char**) Con_FindVariable("net-name")->ptr);
     plrColor = cfg.netColor;
 #if __JHEXEN__
     plrClass = cfg.netClass;

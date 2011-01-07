@@ -1,10 +1,10 @@
-/**\file
+/**\file def_main.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * def_main.h: Definitions Subsystem.
+ * Definitions Subsystem.
  */
 
 #ifndef LIBDENG_DEFINITIONS_MAIN_H
@@ -31,6 +31,8 @@
 
 #include "def_data.h"
 
+#define SFXINFO_EXTERNAL_MAXLENGTH  256
+#define SFXINFO_EXTERNAL_LASTINDEX  255
 typedef struct sfxinfo_s {
     void*           data; // Pointer to sound data.
     int             lumpNum;
@@ -45,18 +47,18 @@ typedef struct sfxinfo_s {
     int             usefulness; // Used to determine when to cache out.
     int             flags;
     int             group;
-    char            external[256]; // Path to external file.
+    char            external[SFXINFO_EXTERNAL_MAXLENGTH]; // Path to external file.
 } sfxinfo_t;
 
 extern ded_t defs; // The main definitions database.
 extern sprname_t* sprNames; // Sprite name list.
 extern state_t* states; // State list.
-extern ded_light_t** stateLights;
-extern ded_ptcgen_t** statePtcGens;
 extern mobjinfo_t* mobjInfo; // Map object info database.
 extern sfxinfo_t* sounds; // Sound effect list.
 extern ddtext_t* texts; // Text list.
 extern mobjinfo_t** stateOwners;
+extern ded_light_t** stateLights;
+extern ded_ptcgen_t** statePtcGens;
 extern ded_count_t countSprNames;
 extern ded_count_t countStates;
 
@@ -69,7 +71,9 @@ int             Def_GetGameClasses(void);
  */
 void            Def_PostInit(void);
 
-// Destroy databases.
+/**
+ * Destroy databases.
+ */
 void            Def_Destroy(void);
 
 /**
@@ -89,7 +93,7 @@ int             Def_GetSoundNum(const char* id);
 int             Def_EvalFlags(char* ptr);
 ded_mapinfo_t*  Def_GetMapInfo(const char* mapID);
 ded_sky_t*      Def_GetSky(const char* id);
-ded_material_t* Def_GetMaterial(const char* name, material_namespace_t group);
+ded_material_t* Def_GetMaterial(const dduri_t* uri);
 ded_light_t*    Def_GetLightDef(int spr, int frame);
 ded_decor_t*    Def_GetDecoration(material_t* mat, boolean hasExt);
 ded_reflection_t* Def_GetReflection(material_t* mat, boolean hasExt);

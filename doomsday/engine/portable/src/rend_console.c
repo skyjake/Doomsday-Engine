@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_console.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * rend_console.c: Console rendering.
+ * Console rendering.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -65,7 +65,7 @@ float   consoleLight = .14f;
 float   consoleBackgroundAlpha = .75f;
 byte    consoleShowFPS = false;
 byte    consoleShadowText = true;
-float   consoleMoveSpeed = .2f; // Speed of console opening/closing
+float   consoleMoveSpeed = .5f; // Speed of console opening/closing
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -100,7 +100,7 @@ void Rend_ConsoleInit(void)
     ConsoleY = 0;
     ConsoleOpenY = 90;
     ConsoleDestY = 0;
-    openingOrClosing = true;
+    openingOrClosing = false;
     consoleAlpha = 0;
     consoleAlphaTarget = 0;
 
@@ -198,24 +198,14 @@ static void consoleSetColor(int fl, float alpha)
     glColor4f(r, g, b, alpha);
 }
 
-static void drawRuler2(int y, int lineHeight, float alpha, int scrWidth)
+static void drawRuler(int x, int y, int lineWidth, int lineHeight, float alpha)
 {
-    int     xoff = 5;
-    int     rh = 6;
+    int xoff = 3, yoff = lineHeight / 4, rh = lineHeight / 2;
 
-    UI_GradientEx(xoff, y + (lineHeight - rh) / 2 + 1, scrWidth - 2 * xoff, rh,
-                  rh / 2, UI_Color(UIC_SHADOW), UI_Color(UIC_BG_DARK), alpha / 3,
-                  alpha);
-    UI_DrawRectEx(xoff, y + (lineHeight - rh) / 2 + 1, scrWidth - 2 * xoff, rh,
-                  rh / 2, false, UI_Color(UIC_TEXT), NULL, /*UI_Color(UIC_BG_DARK), UI_Color(UIC_BG_LIGHT), */
-                  alpha, -1);
-}
-
-void Con_DrawRuler(int y, int lineHeight, float alpha)
-{
-    if(isDedicated)
-        return;
-    drawRuler2(y, lineHeight, alpha, theWindow->width);
+    UI_GradientEx(x + xoff, y + yoff + (lineHeight - rh) / 2, lineWidth - 2 * xoff, rh,
+                  rh / 3, UI_Color(UIC_SHADOW), UI_Color(UIC_BG_DARK), alpha / 2, alpha);
+    UI_DrawRectEx(x + xoff, y + yoff + (lineHeight - rh) / 2, lineWidth - 2 * xoff, rh,
+                  -rh / 3, false, UI_Color(UIC_BRD_HI), 0, 0, alpha / 3);
 }
 
 /**
@@ -312,7 +302,6 @@ void Rend_ConsoleOpen(int yes)
     if(isDedicated)
         return;
 
-    openingOrClosing = true;
     if(yes)
     {
         consoleAlphaTarget = 1;
@@ -389,14 +378,14 @@ void Rend_ConsoleTicker(timespan_t time)
     // Move the console alpha to the target.
     if(consoleAlphaTarget > consoleAlpha)
     {
-        float diff = (consoleAlphaTarget - consoleAlpha) * consoleMoveSpeed;
+        float diff = MAX_OF(consoleAlphaTarget - consoleAlpha, .0001f) * consoleMoveSpeed;
         consoleAlpha += diff * step;
         if(consoleAlpha > consoleAlphaTarget)
             consoleAlpha = consoleAlphaTarget;
     }
     else if(consoleAlphaTarget < consoleAlpha)
     {
-        float diff = (consoleAlpha - consoleAlphaTarget) * consoleMoveSpeed;
+        float diff = MAX_OF(consoleAlpha - consoleAlphaTarget, .0001f) * consoleMoveSpeed;
         consoleAlpha -= diff * step;
         if(consoleAlpha < consoleAlphaTarget)
             consoleAlpha = consoleAlphaTarget;
@@ -435,20 +424,23 @@ void Rend_ConsoleFPS(int x, int y)
 
     glEnable(GL_TEXTURE_2D);
 
-    UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
-    UI_DrawRectEx(x, y, w, h, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
+    UI_GradientEx(x, y, w, h, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .8f);
+    UI_DrawRectEx(x, y, w, h, 6, false, UI_Color(UIC_BRD_HI), UI_Color(UIC_BG_MEDIUM), .2f, -1);
     UI_SetColor(UI_Color(UIC_TEXT));
     UI_TextOutEx(buf, x + 8, y + h / 2, false, true, UI_Color(UIC_TITLE), 1);
 
     glDisable(GL_TEXTURE_2D);
 }
 
-static void DrawConsoleTitleBar(float closeFade)
+static void drawConsoleTitleBar(float alpha)
 {
-    int             width = 0;
-    int             height;
-    int             oldFont = FR_GetCurrent();
-    int             border = theWindow->width / 120;
+    int width = 0, height, oldFont, border;
+
+    if(alpha < .0001f)
+        return;
+
+    oldFont = FR_GetCurrent();
+    border = theWindow->width / 120;
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -459,24 +451,24 @@ static void DrawConsoleTitleBar(float closeFade)
     height = GetConsoleTitleBarHeight(); //FR_TextHeight("W") + border;
     FR_SetFont(glFontVariable[GLFS_BOLD]);
     UI_Gradient(0, 0, theWindow->width, height, UI_Color(UIC_BG_MEDIUM),
-                UI_Color(UIC_BG_LIGHT), .8f * closeFade, closeFade);
+                UI_Color(UIC_BG_LIGHT), .8f * alpha, alpha);
     UI_Gradient(0, height, theWindow->width, border, UI_Color(UIC_SHADOW),
-                UI_Color(UIC_BG_DARK), closeFade, 0);
+                UI_Color(UIC_BG_DARK), .8f * alpha, 0);
     UI_TextOutEx(consoleTitle, border, height / 2, false, true, UI_Color(UIC_TITLE),
-                 closeFade);
+                 alpha);
     if(secondaryTitleText[0])
     {
         width = FR_TextWidth(consoleTitle) + FR_TextWidth("  ");
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
         UI_TextOutEx(secondaryTitleText, border + width, height / 2,
-                     false, true, UI_Color(UIC_TEXT), .75f * closeFade);
+                     false, true, UI_Color(UIC_TEXT), .75f * alpha);
     }
     if(statusText[0])
     {
         width = FR_TextWidth(statusText);
         FR_SetFont(glFontVariable[GLFS_LIGHT]);
         UI_TextOutEx(statusText, theWindow->width - UI_BORDER - width, height / 2,
-                     false, true, UI_Color(UIC_TEXT), .75f * closeFade);
+                     false, true, UI_Color(UIC_TEXT), .75f * alpha);
     }
 
     glDisable(GL_TEXTURE_2D);
@@ -528,26 +520,24 @@ static void drawConsoleBackground(int x, int y, int w, int h, float gtosMulY,
 /**
  * NOTE: Slightly messy...
  */
-static void drawConsole(void)
+static void drawConsole(float consoleAlpha)
 {
+#define XORIGIN             (0)
+#define YORIGIN             (0)
+#define PADDING             (2)
+
     extern uint bLineOff;
 
-    int         k;               // Line and buffer cursor.
-    float       x, y;
-    float       gtosMulY;
-    char        buff[CMDLINE_SIZE + 1], temp[CMDLINE_SIZE + 1], *cmdLine;
-    float       fontScaledY;
-    int         textOffsetY = 0;
-    uint        cmdCursor;
-    cbuffer_t  *buffer;
-    static const cbline_t **lines = NULL;
+    static const cbline_t** lines = 0;
     static int bufferSize = 0;
 
-    gtosMulY = theWindow->height / 200.0f;
-
-    cmdLine = Con_GetCommandLine();
-    cmdCursor = Con_CursorPosition();
-    buffer = Con_GetConsoleBuffer();
+    cbuffer_t* buffer = Con_ConsoleBuffer();
+    uint cmdCursor = Con_CursorPosition();
+    char* cmdLine = Con_CommandLine();
+    float y, fontScaledY, gtosMulY = theWindow->height / 200.0f;
+    char buff[CMDLINE_SIZE + 1];
+    int textOffsetY = 0;
+    uint reqLines;
 
     // Do we have a font?
     if(Cfont.drawText == NULL)
@@ -567,23 +557,27 @@ static void drawConsole(void)
     fontSy = fontScaledY / gtosMulY;
     textOffsetY = fontScaledY / 4;
 
-    drawConsoleBackground(0, (int) (ConsoleY * gtosMulY + 4),
+    drawConsoleBackground(XORIGIN, YORIGIN + (int) (ConsoleY * gtosMulY + 4),
                           theWindow->width, -theWindow->height - 4,
                           gtosMulY, consoleAlpha);
 
     // The border.
-    GL_DrawRect(0, (int) (ConsoleY * gtosMulY + 4), theWindow->width,
-                2, 0, 0, 0, consoleAlpha);
+    GL_DrawRect(XORIGIN, YORIGIN + (int) (ConsoleY * gtosMulY + 4),
+                theWindow->width, 2, 0, 0, 0, consoleAlpha * consoleAlpha * .75f);
 
-    // Subtle shadow.
-    glBegin(GL_QUADS);
-        glColor4f(.1f, .1f, .1f, consoleAlpha * consoleBackgroundAlpha * .75f);
-        glVertex2f(0, (int) (ConsoleY * gtosMulY + 5));
-        glVertex2f(theWindow->width, (int) (ConsoleY * gtosMulY + 5));
-        glColor4f(0, 0, 0, 0);
-        glVertex2f(theWindow->width, (int) (ConsoleY * gtosMulY + 13));
-        glVertex2f(0, (int) (ConsoleY * gtosMulY + 13));
-    glEnd();
+    // Subtle shadow?
+    { float shadowAlpha = consoleAlpha * consoleAlpha * consoleBackgroundAlpha * .66f;
+    if(shadowAlpha > .0001f)
+    {
+        glBegin(GL_QUADS);
+            glColor4f(.1f, .1f, .1f, shadowAlpha);
+            glVertex2f(XORIGIN, YORIGIN + (int) (ConsoleY * gtosMulY + 5));
+            glVertex2f(XORIGIN + theWindow->width, YORIGIN + (int) (ConsoleY * gtosMulY + 5));
+            glColor4f(0, 0, 0, 0);
+            glVertex2f(XORIGIN + theWindow->width, YORIGIN + (int) (ConsoleY * gtosMulY + 13));
+            glVertex2f(XORIGIN, YORIGIN + (int) (ConsoleY * gtosMulY + 13));
+        glEnd();
+    }}
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -591,80 +585,75 @@ static void drawConsole(void)
 
     glColor4f(1, 1, 1, consoleAlpha);
 
-    // The console history log is drawn from top to bottom.
+    // The console history log is drawn from bottom to top.
     y = ConsoleY * gtosMulY - fontScaledY * 2 - textOffsetY;
 
-    if(ceil(y / fontScaledY) > 0)
+    reqLines = MAX_OF(0, ceil(y / fontScaledY)+1);
+    if(reqLines != 0)
     {
-        int                 firstIdx = 0;
-        uint                i, count, reqLines = ceil(y / fontScaledY);
+        uint count, totalLines = Con_BufferNumLines(buffer);
+        int firstIdx;
 
-        y -= (reqLines - 1) * fontScaledY;
+        firstIdx = -((long)(reqLines + bLineOff));
+        if(firstIdx < -((long)totalLines))
+            firstIdx = -((long)totalLines);
 
         // Need to enlarge the buffer?
         if(reqLines > (uint) bufferSize)
         {
-            lines = Z_Realloc((void*) lines, sizeof(cbline_t *) * (reqLines + 1),
-                              PU_APPSTATIC);
+            lines = Z_Realloc((void*) lines, sizeof(cbline_t *) * (reqLines + 1), PU_APPSTATIC);
             bufferSize = reqLines;
         }
 
-        firstIdx -= reqLines;
-        if(bLineOff > reqLines)
-            firstIdx -= (bLineOff - reqLines);
-        if(bLineOff < reqLines)
-            firstIdx -= bLineOff;
-
-        glEnable(GL_TEXTURE_2D);
-
-        count = Con_BufferGetLines(buffer, reqLines, firstIdx, lines);
-        for(i = 0; i < count; ++i)
+        count = Con_BufferGetLines2(buffer, reqLines, firstIdx, lines, BLF_OMIT_EMPTYLINE);
+        if(count != 0)
         {
-            const cbline_t*         line = lines[i];
+            glEnable(GL_TEXTURE_2D);
 
-            if(!line)
-                continue;
-
-            if(line->flags & CBLF_RULER)
+            { uint i;
+            for(i = count; i-- > 0;)
             {
-                // Draw a ruler here, and nothing else.
-                drawRuler2(y / Cfont.sizeY, Cfont.height, consoleAlpha,
-                           theWindow->width / Cfont.sizeX);
-            }
-            else
-            {
-                if(!line->text)
-                    continue;
+                const cbline_t* line = lines[i];
 
-                memset(buff, 0, sizeof(buff));
-                strncpy(buff, line->text, 255);
-
-                if(line->flags & CBLF_CENTER)
-                    x = (theWindow->width /
-                        Cfont.sizeX - Cfont.getWidth(buff)) / 2;
+                if(line->flags & CBLF_RULER)
+                {   // Draw a ruler here, and nothing else.
+                    drawRuler(XORIGIN + PADDING, (YORIGIN + y) / Cfont.sizeY,
+                               theWindow->width / Cfont.sizeX - PADDING*2, Cfont.height,
+                               consoleAlpha);
+                }
                 else
-                    x = 2;
-
-                if(Cfont.filterText)
-                    Cfont.filterText(buff);
-                /*else if(consoleShadowText)
                 {
-                    // Draw a shadow.
-                    glColor3f(0, 0, 0);
-                    Cfont.drawText(buff, x + 2, y / Cfont.sizeY + 2);
-                }*/
+                    float xOffset;
 
-                // Set the color.
-                if(Cfont.flags & DDFONT_WHITE)  // Can it be colored?
-                    consoleSetColor(line->flags, consoleAlpha);
-                Cfont.drawText(buff, x, y / Cfont.sizeY);
-            }
+                    memset(buff, 0, sizeof(buff));
+                    strncpy(buff, line->text, 255);
 
-            // Move down.
-            y += fontScaledY;
+                    if(line->flags & CBLF_CENTER)
+                        xOffset = (theWindow->width / Cfont.sizeX - Cfont.getWidth(buff)) / 2;
+                    else
+                        xOffset = 0;
+
+                    if(Cfont.filterText)
+                        Cfont.filterText(buff);
+                    /*else if(consoleShadowText)
+                    {
+                        // Draw a shadow.
+                        glColor3f(0, 0, 0);
+                        Cfont.drawText(buff, XORIGIN + PADDING + xOffset + 2, y / Cfont.sizeY + 2);
+                    }*/
+
+                    // Set the color.
+                    if(Cfont.flags & DDFONT_WHITE)  // Can it be colored?
+                        consoleSetColor(line->flags, consoleAlpha);
+                    Cfont.drawText(buff, XORIGIN + PADDING + xOffset, YORIGIN + y / Cfont.sizeY);
+                }
+
+                // Move up.
+                y -= fontScaledY;
+            }}
+
+            glDisable(GL_TEXTURE_2D);
         }
-
-        glDisable(GL_TEXTURE_2D);
     }
 
     // The command line.
@@ -687,30 +676,42 @@ static void drawConsole(void)
 
     glEnable(GL_TEXTURE_2D);
 
-    Cfont.drawText(buff, 2, (ConsoleY * gtosMulY - fontScaledY - textOffsetY) / Cfont.sizeY);
+    y = ConsoleY * gtosMulY - fontScaledY - textOffsetY;
+    Cfont.drawText(buff, XORIGIN + PADDING, YORIGIN + y / Cfont.sizeY);
 
     glDisable(GL_TEXTURE_2D);
-
-    // Width of the current char.
-    temp[0] = cmdLine[cmdCursor];
-    temp[1] = 0;
-    k = Cfont.getWidth(temp);
-    if(!k)
-        k = Cfont.getWidth(" ");
 
     // Draw the cursor in the appropriate place.
     if(!Con_IsLocked())
     {
-        int                 i;
-        float               curHeight = fontScaledY / 4;
+        float halfInterlineHeight = (float)textOffsetY / 2;
+        float width, height, xOffset, yOffset;
+        char temp[CMDLINE_SIZE + 1];
 
-        // What is the width?
+        // Width of the current character.
+        temp[0] = cmdLine[cmdCursor];
+        temp[1] = 0;
+        width = Cfont.getWidth(temp);
+        if(width == 0)
+            width = Cfont.getWidth(" ");
+
+        // Where is the cursor?
         memset(temp, 0, sizeof(temp));
         strncpy(temp, buff, MIN_OF(250, cmdCursor) + 1);
-        i = Cfont.getWidth(temp);
+        xOffset = Cfont.getWidth(temp);
+        if(Con_InputMode())
+        {
+            height = fontScaledY;
+            yOffset = halfInterlineHeight;
+        }
+        else
+        {
+            height = halfInterlineHeight;
+            yOffset = fontScaledY;
+        }
 
-        GL_DrawRect(2 + i, (ConsoleY * gtosMulY - textOffsetY + curHeight) / Cfont.sizeY,
-                    k, -(Con_InputMode()? fontScaledY + curHeight: curHeight) / Cfont.sizeY,
+        GL_DrawRect(XORIGIN + PADDING + (int)xOffset, (int)((YORIGIN + y + yOffset) / Cfont.sizeY),
+                    (int)width, (int)(height / Cfont.sizeY),
                     CcolYellow[0], CcolYellow[1], CcolYellow[2],
                     consoleAlpha * (((int) ConsoleBlink) & 0x10 ? .2f : .5f));
     }
@@ -719,16 +720,20 @@ static void drawConsole(void)
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 
-    // Draw the console title bar.
-    DrawConsoleTitleBar(consoleAlpha);
+#undef PADDING
+#undef YORIGIN
+#undef XORIGIN
 }
 
 void Rend_Console(void)
 {
+    boolean consoleShow;
+
     if(isDedicated)
         return;
 
-    if(ConsoleY <= 0 && !consoleShowFPS)
+    consoleShow = (ConsoleY > 0 || openingOrClosing);
+    if(!consoleShow && !consoleShowFPS)
         return;
 
     // Go into screen projection mode.
@@ -737,9 +742,9 @@ void Rend_Console(void)
     glLoadIdentity();
     glOrtho(0, theWindow->width, theWindow->height, 0, -1, 1);
 
-    if(ConsoleY > 0)
-        drawConsole();
-
+    if(consoleShow)
+    {
+        drawConsole(consoleAlpha);        drawConsoleTitleBar(consoleAlpha);    }
     if(consoleShowFPS && !UI_IsActive())
         Rend_ConsoleFPS(theWindow->width - 10, 10 + (ConsoleY > 0? consoleAlpha * GetConsoleTitleBarHeight() : 0));
 

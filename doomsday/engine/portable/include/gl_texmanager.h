@@ -1,10 +1,10 @@
-/**\file
+/**\file gl_texmanager.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * gl_texmanager.h: Texture Management
+ * Texture Management
  */
 
 #ifndef LIBDENG_TEXTURE_MANAGER_H
@@ -190,8 +190,8 @@ DGLuint         GL_PrepareSysFlareTexture(flaretexid_t flare);
 DGLuint         GL_PreparePatch(patchtex_t* patch);
 DGLuint         GL_PrepareRawTex(rawtex_t* rawTex);
 
-DGLuint         GL_GetLightMapTexture(const char* name);
-DGLuint         GL_GetFlareTexture(const char* name, int oldIdx);
+DGLuint         GL_GetLightMapTexture(const dduri_t* path);
+DGLuint         GL_GetFlareTexture(const dduri_t* path, int oldIdx);
 
 void            GL_SetMaterial(material_t* mat);
 void            GL_SetPSprite(material_t* mat);
@@ -219,3 +219,4 @@ float           GLTexture_GetHeight(const gltexture_t* tex);
 boolean         GLTexture_IsFromIWAD(const gltexture_t* tex);
 
 #endif /* LIBDENG_TEXTURE_MANAGER_H */
+

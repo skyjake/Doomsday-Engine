@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_bias.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2005-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2005-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -129,7 +129,7 @@ static __inline biassurface_t* allocBiasSurface(void)
 {
     if(biasSurfaceBlockSet)
     {   // Use the block allocator.
-        biassurface_t*      bsuf = Z_BlockNewElement(biasSurfaceBlockSet);
+        biassurface_t*      bsuf = ZBlockSet_Allocate(biasSurfaceBlockSet);
         memset(bsuf, 0, sizeof(*bsuf));
         return bsuf;
     }
@@ -334,9 +334,9 @@ void SB_InitForMap(const char* uniqueID)
     numSources = 0;
 
     if(biasSurfaceBlockSet)
-        Z_BlockDestroy(biasSurfaceBlockSet);
+        ZBlockSet_Destruct(biasSurfaceBlockSet);
 
-    biasSurfaceBlockSet = Z_BlockCreate(sizeof(biassurface_t), 512, PU_APPSTATIC);
+    biasSurfaceBlockSet = ZBlockSet_Construct(sizeof(biassurface_t), 512, PU_APPSTATIC);
     surfaces = NULL;
 
     // Check all the loaded Light definitions for any matches.

@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_uinit.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2004-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2004-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * dd_uinit.c: Unix Initialization
+ * Engine Initialization - Unix.
  *
  * Load libraries and set up APIs.
  */
@@ -296,10 +296,6 @@ int main(int argc, char** argv)
         else if(!initTimingSystem())
         {
             DD_ErrorBox(true, "Error initalizing timing system.");
-        }
-        else if(!Z_Init())
-        {
-            DD_ErrorBox(true, "Error initializing memory zone.");
         }
         else if(!initPluginSystem())
         {

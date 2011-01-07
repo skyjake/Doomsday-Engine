@@ -299,9 +299,14 @@ void DD_InitHelp(void)
     helpRoot.next = helpRoot.prev = &helpRoot;
 
     // Parse the control panel help file.
-    { filename_t helpFileName;
-    M_TranslatePath(helpFileName, DD_BASEPATH_DATA"cphelp.txt", FILENAME_T_MAXLEN);
-    DH_ReadStrings(helpFileName);
+    { ddstring_t helpFileName; Str_Init(&helpFileName);
+    Str_Set(&helpFileName, DD_BASEPATH_DATA"cphelp.txt");
+    F_FixSlashes(&helpFileName);
+    F_ExpandBasePath(&helpFileName, &helpFileName);
+
+    DH_ReadStrings(Str_Text(&helpFileName));
+
+    Str_Free(&helpFileName);
     }
 
     // Help is now available.

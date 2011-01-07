@@ -43,7 +43,7 @@ extern float turboMul; // Multiplier for turbo.
 extern gamemode_t gameMode;
 extern int gameModeBits;
 
-extern char* borderLumps[];
+extern char* borderGraphics[];
 
 // Default font colours.
 extern const float defFontRGB[];

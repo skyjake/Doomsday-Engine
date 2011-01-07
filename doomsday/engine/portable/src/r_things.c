@@ -1,10 +1,10 @@
-/**\file
+/**\file r_things.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -345,8 +345,8 @@ void R_PreInitSprites(void)
      */
     numSpriteRecords = 0;
     spriteRecords = 0;
-    spriteRecordBlockSet = Z_BlockCreate(sizeof(spriterecord_t), 64, PU_SPRITE),
-    spriteRecordFrameBlockSet = Z_BlockCreate(sizeof(spriterecord_frame_t), 256, PU_SPRITE);
+    spriteRecordBlockSet = ZBlockSet_Construct(sizeof(spriterecord_t), 64, PU_SPRITE),
+    spriteRecordFrameBlockSet = ZBlockSet_Construct(sizeof(spriterecord_frame_t), 256, PU_SPRITE);
 
     for(i = 0; i < W_NumLumps(); ++i)
     {
@@ -405,7 +405,7 @@ void R_PreInitSprites(void)
 
         if(!rec)
         {   // An entirely new sprite.
-            rec = Z_BlockNewElement(spriteRecordBlockSet);
+            rec = ZBlockSet_Allocate(spriteRecordBlockSet);
             strncpy(rec->name, name, 4);
             rec->name[4] = '\0';
             rec->numFrames = 0;
@@ -430,7 +430,7 @@ void R_PreInitSprites(void)
 
         if(!sprFrame)
         {   // A new frame.
-            sprFrame = Z_BlockNewElement(spriteRecordFrameBlockSet);
+            sprFrame = ZBlockSet_Allocate(spriteRecordFrameBlockSet);
             link = true;
         }
 
@@ -499,7 +499,14 @@ void R_PreInitSprites(void)
                 glTex = GL_CreateGLTexture(name, idx++, GLT_SPRITE);
 
                 // Create a new material for this sprite patch.
-                frame->mat = Materials_New(DD_MaterialNamespaceForTextureType(GLT_SPRITE), name, sprTex->width, sprTex->height, 0, glTex->id, sprTex->offX, sprTex->offY);
+                { dduri_t* uri;
+                ddstring_t path; Str_Init(&path);
+                Str_Appendf(&path, MATERIALS_SPRITES_RESOURCE_NAMESPACE_NAME":%s", name);
+                uri = Uri_Construct2(Str_Text(&path), RC_NULL);
+                frame->mat = Materials_New(uri, sprTex->width, sprTex->height, 0, glTex->id, sprTex->offX, sprTex->offY);
+                Uri_Destruct(uri);
+                Str_Free(&path);
+                }
             } while((frame = frame->next));
         } while((rec = rec->next));
     }
@@ -654,9 +661,9 @@ void R_InitSprites(void)
     /// \kludge end
 
     // We are now done with the sprite records.
-    Z_BlockDestroy(spriteRecordBlockSet);
+    ZBlockSet_Destruct(spriteRecordBlockSet);
     spriteRecordBlockSet = NULL;
-    Z_BlockDestroy(spriteRecordFrameBlockSet);
+    ZBlockSet_Destruct(spriteRecordFrameBlockSet);
     spriteRecordFrameBlockSet = NULL;
     numSpriteRecords = 0;
 
@@ -1576,10 +1583,9 @@ if(!mat)
 
         if(def)
         {
-            if(!(def->flare.id && def->flare.id[0] == '-'))
+            if(def->flare && !stricmp(Str_Text(Uri_Path(def->flare)), "-"))
             {
-                vis->data.flare.tex =
-                    GL_GetFlareTexture(def->flare.id, -1);
+                vis->data.flare.tex = GL_GetFlareTexture(def->flare, -1);
             }
             else
             {
@@ -1957,3 +1963,4 @@ float R_GetBobOffset(mobj_t* mo)
 
     return 0;
 }
+

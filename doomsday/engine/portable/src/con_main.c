@@ -1,10 +1,10 @@
-/**\file
+/**\file con_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * con_main.c: Console Subsystem
+ * Console Subsystem
  *
  * Should be completely redesigned.
  */
@@ -141,7 +141,6 @@ byte    consoleDump = true;
 int     consoleActiveKey = '`'; // Tilde.
 byte    consoleSnapBackOnPrint = false;
 
-char    trimmedFloatBuffer[32]; // Returned by TrimmedFloat().
 char   *prbuff = NULL;          // Print buffer, used by conPrintf.
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -165,15 +164,9 @@ static execbuff_t *exBuff;
 static int exBuffSize;
 static execbuff_t *curExec;
 
-static uint complPos;            // Where is the completion cursor?
+static uint complPos; // Where is the completion cursor?
 
-static knownword_t **matchedWords;
-static unsigned int matchedWordCount;
-static unsigned int lastCompletion;  // The last completed known word match.
-static boolean matchedWordListGood;
-
-static boolean finishCompletion; // An autocomplete has taken place that must
-                                 // be completed ASAP.
+static uint lastCompletion; // The last completed known word match.
 
 // CODE --------------------------------------------------------------------
 
@@ -240,12 +233,12 @@ boolean Con_InputMode(void)
     return cmdInsMode;
 }
 
-char *Con_GetCommandLine(void)
+char* Con_CommandLine(void)
 {
     return cmdLine;
 }
 
-cbuffer_t *Con_GetConsoleBuffer(void)
+cbuffer_t* Con_ConsoleBuffer(void)
 {
     return histBuf;
 }
@@ -383,7 +376,7 @@ boolean Con_Init(void)
     Rend_ConsoleInit();
 
     complPos = 0;
-    matchedWordListGood = false;
+    lastCompletion = 0;
 
     cmdCursor = 0;
 
@@ -403,21 +396,14 @@ void Con_Shutdown(void)
     if(prbuff)
         M_Free(prbuff); // Free the print buffer.
 
-    Con_DestroyMatchedWordList();
-    Con_DestroyDatabases();
-
     Con_ClearExecBuffer();
+    Con_DestroyDatabases();
 }
 
-/**
- * Changes the console font.
- * Part of the Doomsday public API.
- */
 void Con_SetFont(ddfont_t* cfont)
 {
     if(!cfont)
         return;
-
     memcpy(&Cfont, cfont, sizeof(Cfont));
 }
 
@@ -524,23 +510,6 @@ static boolean Con_CheckExecBuffer(void)
 
 void Con_Ticker(timespan_t time)
 {
-    if(!conInputLock && finishCompletion)
-    {
-        knownword_t *word = matchedWords[lastCompletion];
-
-        // Add a trailing space if the word is NOT a cmd or alias.
-        if(matchedWordListGood &&
-           !(word->type == WT_ALIAS || word->type == WT_CCMD) &&
-           cmdCursor < CMDLINE_SIZE)
-        {
-            strcat(cmdLine, " ");
-            cmdCursor++;
-        }
-
-        matchedWordListGood = false;
-        finishCompletion = false;
-    }
-
     Con_CheckExecBuffer();
     if(tickFrame)
         Con_TransitionTicker(time);
@@ -632,7 +601,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
 {
     cmdargs_t   args;
     ddccmd_t   *ccmd;
-    cvar_t     *cvar;
+    ddcvar_t   *cvar;
     calias_t   *cal;
 
     PrepareCmdArgs(&args, subCmd);
@@ -660,7 +629,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
     }
 
     // Try to find a matching console command.
-    ccmd = Con_GetCommand(&args);
+    ccmd = Con_FindCommandMatchArgs(&args);
     if(ccmd != NULL)
     {
         // Found a match. Are we allowed to execute?
@@ -668,16 +637,16 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
 
         // Trying to issue a command requiring a loaded game?
         // dj: This should be considered a short-term solution. Ideally we want some namespacing mechanics.
-        if((ccmd->flags & CMDF_NO_NULLGAME) && DD_IsNullGameInfo(DD_GameInfo()))
+        if((ccmd->shared.flags & CMDF_NO_NULLGAME) && DD_IsNullGameInfo(DD_GameInfo()))
         {
-            Con_Printf("executeSubCmd: '%s' impossible with no game loaded.\n", ccmd->name);
+            Con_Printf("executeSubCmd: '%s' impossible with no game loaded.\n", ccmd->shared.name);
             return true;
         }
 
         // A dedicated server, trying to execute a ccmd not available to us?
-        if(isDedicated && (ccmd->flags & CMDF_NO_DEDICATED))
+        if(isDedicated && (ccmd->shared.flags & CMDF_NO_DEDICATED))
         {
-            Con_Printf("executeSubCmd: '%s' impossible in dedicated mode.\n", ccmd->name);
+            Con_Printf("executeSubCmd: '%s' impossible in dedicated mode.\n", ccmd->shared.name);
             return true;
         }
 
@@ -685,10 +654,10 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
         if(isServer && isNetCmd)
         {
             // Is the command permitted for use by clients?
-            if(ccmd->flags & CMDF_CLIENT)
+            if(ccmd->shared.flags & CMDF_CLIENT)
             {
                 Con_Printf("executeSubCmd: Blocked command. A client attempted to use '%s'.\n"
-                           "This command is not permitted for use by clients\n", ccmd->name);
+                           "This command is not permitted for use by clients\n", ccmd->shared.name);
                 // \todo Tell the client!
                 return true;
             }
@@ -715,7 +684,7 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
                 Con_Printf("executeSubCmd: Blocked command. A client"
                            " attempted to use '%s' via %s.\n"
                            "This invocation method is not permitted "
-                           "by clients\n", ccmd->name, CMDTYPESTR(src));
+                           "by clients\n", ccmd->shared.name, CMDTYPESTR(src));
                 // \todo Tell the client!
                 return true;
 
@@ -732,42 +701,42 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
             break;
 
         case CMDS_DDAY:
-            if(ccmd->flags & CMDF_DDAY)
+            if(ccmd->shared.flags & CMDF_DDAY)
                 canExecute = false;
             break;
 
         case CMDS_GAME:
-            if(ccmd->flags & CMDF_GAME)
+            if(ccmd->shared.flags & CMDF_GAME)
                 canExecute = false;
             break;
 
         case CMDS_CONSOLE:
-            if(ccmd->flags & CMDF_CONSOLE)
+            if(ccmd->shared.flags & CMDF_CONSOLE)
                 canExecute = false;
             break;
 
         case CMDS_BIND:
-            if(ccmd->flags & CMDF_BIND)
+            if(ccmd->shared.flags & CMDF_BIND)
                 canExecute = false;
             break;
 
         case CMDS_CONFIG:
-            if(ccmd->flags & CMDF_CONFIG)
+            if(ccmd->shared.flags & CMDF_CONFIG)
                 canExecute = false;
             break;
 
         case CMDS_PROFILE:
-            if(ccmd->flags & CMDF_PROFILE)
+            if(ccmd->shared.flags & CMDF_PROFILE)
                 canExecute = false;
             break;
 
         case CMDS_CMDLINE:
-            if(ccmd->flags & CMDF_CMDLINE)
+            if(ccmd->shared.flags & CMDF_CMDLINE)
                 canExecute = false;
             break;
 
         case CMDS_SCRIPT:
-            if(ccmd->flags & CMDF_DED)
+            if(ccmd->shared.flags & CMDF_DED)
                 canExecute = false;
             break;
 
@@ -778,30 +747,40 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
         if(!canExecute)
         {
             Con_Printf("Error: '%s' cannot be executed via %s.\n",
-                       ccmd->name, CMDTYPESTR(src));
+                       ccmd->shared.name, CMDTYPESTR(src));
             return true;
         }
 
         if(canExecute)
-        {   // Execute the command!
-            int     cret = ccmd->func(src, args.argc, args.argv);
-
-            if(cret == false)
-                Con_Printf("Error: '%s' failed.\n", ccmd->name);
-            // We're quite done.
-            return cret;
-        }
-        else
         {
-            return true;
+            /**
+             * Execute the command!
+             * \note Console command execution may invoke a full update of the
+             * console databases; thus the @c ccmd pointer may be invalid after
+             * this call.
+             */
+            int result;
+            if((result = ccmd->shared.execFunc(src, args.argc, args.argv)) == false)
+            {
+                Con_Printf("Error: '%s' failed.\n", args.argv[0]);
+            }
+            return result;
         }
+        return true;
     }
 
     // Then try the cvars?
-    cvar = Con_GetVariable(args.argv[0]);
+    cvar = Con_FindVariable(args.argv[0]);
     if(cvar != NULL)
     {
-        boolean out_of_range = false, setting = false;
+        boolean out_of_range = false, setting = false, hasCallback;
+
+        /**
+         * \note Change notification callback execution may invoke
+         * a full update of the console databases; thus the @c cvar
+         * pointer may be invalid once a callback executes.
+         */
+        hasCallback = (cvar->shared.notifyChanged != 0);
 
         if(args.argc == 2 ||
            (args.argc == 3 && !stricmp(args.argv[1], "force")))
@@ -810,92 +789,98 @@ static int executeSubCmd(const char *subCmd, byte src, boolean isNetCmd)
             boolean forced = args.argc == 3;
 
             setting = true;
-            if(cvar->flags & CVF_READ_ONLY)
+            if(cvar->shared.flags & CVF_READ_ONLY)
             {
                 Con_Printf("%s is read-only. It can't be changed (not even "
-                           "with force)\n", cvar->name);
+                           "with force)\n", cvar->shared.name);
             }
-            else if(cvar->flags & CVF_PROTECTED && !forced)
+            else if((cvar->shared.flags & CVF_PROTECTED) && !forced)
             {
-                Con_Printf
-                    ("%s is protected. You shouldn't change its value.\n",
-                     cvar->name);
-                Con_Printf
-                    ("Use the command: '%s force %s' to modify it anyway.\n",
-                     cvar->name, argptr);
+                Con_Printf("%s is protected. You shouldn't change its value.\n"
+                           "Use the command: '%s force %s' to modify it anyway.\n",
+                           cvar->shared.name, cvar->shared.name, argptr);
             }
-            else if(cvar->type == CVT_BYTE)
+            else if(cvar->shared.type == CVT_BYTE)
             {
                 byte    val = (byte) strtol(argptr, NULL, 0);
 
                 if(!forced &&
-                   ((!(cvar->flags & CVF_NO_MIN) && val < cvar->min) ||
-                    (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
+                   ((!(cvar->shared.flags & CVF_NO_MIN) && val < cvar->shared.min) ||
+                    (!(cvar->shared.flags & CVF_NO_MAX) && val > cvar->shared.max)))
                     out_of_range = true;
                 else
-                    Con_SetInteger(cvar->name, val, false);
+                    Con_SetInteger(cvar->shared.name, val);
             }
-            else if(cvar->type == CVT_INT)
+            else if(cvar->shared.type == CVT_INT)
             {
                 int     val = strtol(argptr, NULL, 0);
 
                 if(!forced &&
-                   ((!(cvar->flags & CVF_NO_MIN) && val < cvar->min) ||
-                    (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
+                   ((!(cvar->shared.flags & CVF_NO_MIN) && val < cvar->shared.min) ||
+                    (!(cvar->shared.flags & CVF_NO_MAX) && val > cvar->shared.max)))
                     out_of_range = true;
                 else
-                    Con_SetInteger(cvar->name, val, false);
+                    Con_SetInteger(cvar->shared.name, val);
             }
-            else if(cvar->type == CVT_FLOAT)
+            else if(cvar->shared.type == CVT_FLOAT)
             {
                 float   val = strtod(argptr, NULL);
 
                 if(!forced &&
-                   ((!(cvar->flags & CVF_NO_MIN) && val < cvar->min) ||
-                    (!(cvar->flags & CVF_NO_MAX) && val > cvar->max)))
+                   ((!(cvar->shared.flags & CVF_NO_MIN) && val < cvar->shared.min) ||
+                    (!(cvar->shared.flags & CVF_NO_MAX) && val > cvar->shared.max)))
                     out_of_range = true;
                 else
-                    Con_SetFloat(cvar->name, val, false);
+                    Con_SetFloat(cvar->shared.name, val);
             }
-            else if(cvar->type == CVT_CHARPTR)
+            else if(cvar->shared.type == CVT_CHARPTR)
             {
-                Con_SetString(cvar->name, argptr, false);
+                Con_SetString(cvar->shared.name, argptr);
             }
         }
 
         if(out_of_range)
         {
-            if(!(cvar->flags & (CVF_NO_MIN | CVF_NO_MAX)))
+            if(!(cvar->shared.flags & (CVF_NO_MIN | CVF_NO_MAX)))
             {
                 char    temp[20];
 
-                strcpy(temp, TrimmedFloat(cvar->min));
-                Con_Printf("Error: %s <= %s <= %s\n", temp, cvar->name,
-                           TrimmedFloat(cvar->max));
+                strcpy(temp, M_TrimmedFloat(cvar->shared.min));
+                Con_Printf("Error: %s <= %s <= %s\n", temp, cvar->shared.name,
+                           M_TrimmedFloat(cvar->shared.max));
             }
-            else if(cvar->flags & CVF_NO_MAX)
+            else if(cvar->shared.flags & CVF_NO_MAX)
             {
-                Con_Printf("Error: %s >= %s\n", cvar->name,
-                           TrimmedFloat(cvar->min));
+                Con_Printf("Error: %s >= %s\n", cvar->shared.name,
+                           M_TrimmedFloat(cvar->shared.min));
             }
             else
             {
-                Con_Printf("Error: %s <= %s\n", cvar->name,
-                           TrimmedFloat(cvar->max));
+                Con_Printf("Error: %s <= %s\n", cvar->shared.name,
+                           M_TrimmedFloat(cvar->shared.max));
             }
         }
-        else if(!setting || !conSilentCVars)    // Show the value.
+        else if(!setting || !conSilentCVars) // Show the value.
         {
-            Con_PrintCVar(cvar, "");
+            if(setting && hasCallback)
+            {
+                // Lookup the cvar again - our pointer may have been invalidated.
+                cvar = Con_FindVariable(args.argv[0]);
+            }
+
+            if(cvar)
+            {   // It still exists.
+                Con_PrintCVar(cvar, "");
+            }
         }
         return true;
     }
 
     // How about an alias then?
-    cal = Con_GetAlias(args.argv[0]);
+    cal = Con_FindAlias(args.argv[0]);
     if(cal != NULL)
     {
-        char   *expCommand;
+        char* expCommand;
 
         // Expand the command with arguments.
         expCommand = M_Malloc(strlen(cal->command) + 1);
@@ -976,13 +961,6 @@ static void Con_SplitIntoSubCommands(const char *command,
 #undef BUFFSIZE
 }
 
-void Con_DestroyMatchedWordList(void)
-{
-    // Free the matched words array.
-    if(matchedWordCount)
-        M_Free(matchedWords);
-}
-
 /**
  * Ambiguous string check. 'amb' is cut at the first character that
  * differs when compared to 'str' (case ignored).
@@ -1005,12 +983,14 @@ static void stramb(char *amb, const char *str)
  */
 static int completeWord(int mode)
 {
-    int             cp = (int) strlen(cmdLine) - 1;
-    char            word[100], *wordBegin;
-    char            unambiguous[256];
-    char           *completion = 0; // Pointer to the completed word.
-    cvar_t         *cvar;
-    boolean         justUpdated;
+    static char lastWord[100];
+
+    int cp = (int) strlen(cmdLine) - 1;
+    char word[100], *wordBegin;
+    char unambiguous[256];
+    const knownword_t* completeWord = 0;
+    const knownword_t** matches;
+    uint numMatches;
 
     if(mode == 1)
         cp = complPos - 1;
@@ -1034,106 +1014,105 @@ static int completeWord(int mode)
     strcpy(word, wordBegin = cmdLine + cp);
 
     if(mode == 1)
-        word[complPos - cp] = 0;    // Only check a partial word.
+        word[complPos - cp] = 0; // Only check a partial word.
 
-    // Can we use the previous valid matched word list?
-    // If yes we will use it, else perform a new search.
-    justUpdated = false;
-    if(!matchedWordListGood)
+    if(strlen(word) != 0)
     {
-        Con_DestroyMatchedWordList();
-
-        matchedWords =
-            Con_CollectKnownWordsMatchingWord(word, &matchedWordCount);
-
-        matchedWordListGood = true;
-        lastCompletion = 0;
-        justUpdated = true;
+        matches = Con_CollectKnownWordsMatchingWord(word, WT_ANY, &numMatches);
     }
 
-    if(!matchedWordCount)
+    // If this a new word; reset the matches iterator.
+    if(stricmp(word, lastWord))
+    {
+        lastCompletion = 0;
+        memcpy(lastWord, word, sizeof(lastWord));
+    }
+
+    if(!numMatches)
         return 0;
 
     // At this point we have at least one completion for the word.
-    // What happens next depends on the completion mode.
     if(mode == 1)
     {
         // Completion Mode 1: Cycle through the possible completions.
-        uint            idx;
+        uint idx;
 
-        // fix me: signed/unsigned mismatch
-        // use another var to note when lastCompletion is not valid.
-        if(justUpdated || lastCompletion + 1 >= matchedWordCount)
+        if(lastCompletion + 1 >= numMatches)
             idx = 0;
         else
             idx = lastCompletion + 1;
-
-        completion = matchedWords[idx]->word;
         lastCompletion = idx;
+
+        completeWord = matches[idx];
     }
     else
     {
         // Completion Mode 2: Print the possible completions
-        knownword_t **foundWord;
+        boolean printCompletions = (numMatches > 1? true : false);
+        const knownword_t** match;
         boolean updated = false;
-        boolean printCompletions = (matchedWordCount > 1? true : false);
 
         if(printCompletions)
             Con_Printf("Completions:\n");
 
-        // Look through the known words.
-        for(foundWord = matchedWords; *foundWord; foundWord++)
+        for(match = matches; *match; ++match)
         {
-            if(printCompletions)
+            const char* foundWord;
+
+            switch((*match)->type)
             {
-                switch((*foundWord)->type)
-                {
-                case WT_CVAR:
-                    if((cvar = Con_GetVariable((*foundWord)->word)) != NULL)
-                        Con_PrintCVar(cvar, "  ");
-                    break;
-
-                case WT_CCMD:
-                case WT_ALIAS:
-                    Con_FPrintf(CBLF_LIGHT | CBLF_YELLOW, "  %s\n",
-                                (*foundWord)->word);
-                    break;
-
-                default:
-                    Con_Printf("  %s\n", (*foundWord)->word);
-                    break;
-                }
+            case WT_CVAR:
+                foundWord = ((ddcvar_t*)(*match)->data)->shared.name;
+                if(printCompletions)
+                    Con_PrintCVar((ddcvar_t*)(*match)->data, "  ");
+                break;
+            case WT_CCMD:
+                foundWord = ((ddccmd_t*)(*match)->data)->shared.name;
+                if(printCompletions)
+                    Con_FPrintf(CBLF_LIGHT | CBLF_YELLOW, "  %s\n", foundWord);
+                break;
+            case WT_CALIAS:
+                foundWord = ((calias_t*)(*match)->data)->name;
+                if(printCompletions)
+                    Con_FPrintf(CBLF_LIGHT | CBLF_YELLOW, "  %s\n", foundWord);
+                break;
             }
 
-            // This matches!
             if(!unambiguous[0])
-                strcpy(unambiguous, (*foundWord)->word);
+                strcpy(unambiguous, foundWord);
             else
-                stramb(unambiguous, (*foundWord)->word);
+                stramb(unambiguous, foundWord);
 
             if(!updated)
             {
-                // Update completion.
-                completion = (*foundWord)->word;
-                lastCompletion = foundWord - matchedWords;
-
+                completeWord = *match;
+                lastCompletion = match - matches;
                 updated = true;
             }
         }
     }
 
-    // Was a single completion found?
-    if(matchedWordCount == 1 || (mode == 1 && matchedWordCount > 1))
+    // Was a single match found?
+    if(numMatches == 1 || (mode == 1 && numMatches > 1))
     {
-        if(wordBegin - cmdLine + strlen(completion) < CMDLINE_SIZE)
+        const char* str;
+        
+        switch(completeWord->type)
         {
-            strcpy(wordBegin, completion);
+        case WT_CCMD:   str = ((ddccmd_t*)completeWord->data)->shared.name; break;
+        case WT_CVAR:   str = ((ddcvar_t*)completeWord->data)->shared.name; break;
+        case WT_CALIAS: str = ((calias_t*)completeWord->data)->name; break;
+        }
+
+        if(wordBegin - cmdLine + strlen(str) < CMDLINE_SIZE)
+        {
+            strcpy(wordBegin, str);
             cmdCursor = (uint) strlen(cmdLine);
         }
     }
-    else if(matchedWordCount > 1)
+    else if(numMatches > 1)
     {
-        // More than one completion; only complete the unambiguous part.
+        // More than one match; only complete the unambiguous part.
         if(wordBegin - cmdLine + strlen(unambiguous) < CMDLINE_SIZE)
         {
             strcpy(wordBegin, unambiguous);
@@ -1141,28 +1120,19 @@ static int completeWord(int mode)
         }
     }
 
-    return matchedWordCount;
+    free((void*)matches);
+    return numMatches;
 }
 
 /**
  * Wrapper for Con_Execute
- * Allows plugin dlls to execute a console command
+ * Public method for plugins to execute console commands.
  */
-int DD_Execute(int silent, const char *command)
+int DD_Execute(int silent, const char* command)
 {
     return Con_Execute(CMDS_GAME, command, silent, false);
 }
 
-/**
- * Returns false if a command fails.
- *
- * @param   src     The source of the command (e.g. DDay internal, DED etc).
- * @param   command The command to be executed.
- * @param   silent  Non-zero indicates not to log execution of the command.
- * @param   netCmd  If @c true, command was sent over the net.
- *
- * @return          Non-zero if command was executed successfully.
- */
 int Con_Execute(byte src, const char *command, int silent, boolean netCmd)
 {
     int             ret;
@@ -1226,12 +1196,11 @@ static void updateCmdLine(void)
         strncpy(cmdLine, Con_BufferGetLine(oldCmds, ocPos)->text, sizeof(cmdLine));
 
     cmdCursor = complPos = (uint) strlen(cmdLine);
-    matchedWordListGood = false;
 }
 
 static void updateDedicatedConsoleCmdLine(void)
 {
-    int         flags = 0;
+    int flags = 0;
 
     if(!isDedicated)
         return;
@@ -1244,51 +1213,55 @@ static void updateDedicatedConsoleCmdLine(void)
 
 void Con_Open(int yes)
 {
-    // The console cannot be closed in dedicated mode.
     if(isDedicated)
         yes = true;
 
-    // Clear all action keys, keyup events won't go to bindings processing
-    // when the console is open.
-    //P_ControlReset(-1);
     Rend_ConsoleOpen(yes);
     if(yes)
     {
         ConsoleActive = true;
         ConsoleTime = 0;
-
-        B_ActivateContext(B_ContextByName(CONSOLE_BINDING_CONTEXT_NAME), true);
     }
     else
     {
         memset(cmdLine, 0, sizeof(cmdLine));
         cmdCursor = 0;
         ConsoleActive = false;
-
-        B_ActivateContext(B_ContextByName(CONSOLE_BINDING_CONTEXT_NAME), false);
     }
+
+    B_ActivateContext(B_ContextByName(CONSOLE_BINDING_CONTEXT_NAME), yes);
 }
 
-/**
- * @return      @c true, if the event is eaten.
- */
 boolean Con_Responder(ddevent_t* ev)
 {
     // The console is only interested in keyboard toggle events.
     if(!IS_KEY_TOGGLE(ev))
         return false;
 
-    // Special console key: Shift-Escape opens the Control Panel.
-    if(!conInputLock && shiftDown && IS_TOGGLE_DOWN_ID(ev, DDKEY_ESCAPE))
+    if(!DD_IsNullGameInfo(DD_GameInfo()))
     {
-        Con_Execute(CMDS_DDAY, "panel", true, false);
-        return true;
-    }
+        // Special console key: Shift-Escape opens the Control Panel.
+        if(!conInputLock && shiftDown && IS_TOGGLE_DOWN_ID(ev, DDKEY_ESCAPE))
+        {
+            Con_Execute(CMDS_DDAY, "panel", true, false);
+            return true;
+        }
 
-    if(!ConsoleActive)
+        if(!ConsoleActive)
+        {
+            // We are only interested in the activation key.
+            if(IS_TOGGLE_DOWN_ID(ev, consoleActiveKey))
+            {
+                Con_Open(true);
+                return true;
+            }
+            return false;
+        }
+    }
+    else if(!ConsoleActive)
     {
-        // In this case we are only interested in the activation key.
-        if(IS_TOGGLE_DOWN_ID(ev, consoleActiveKey))
+        // Any key will open the console.
+        if(DD_IsNullGameInfo(DD_GameInfo()) && IS_TOGGLE_DOWN(ev))
         {
             Con_Open(true);
             return true;
@@ -1300,7 +1273,7 @@ boolean Con_Responder(ddevent_t* ev)
     if(IS_TOGGLE_UP(ev))
     {
         if(!shiftDown && conInputLock)
-            conInputLock = false; // release the lock
+            conInputLock = false; // Release the lock.
         return true;
     }
 
@@ -1430,7 +1403,6 @@ boolean Con_Responder(ddevent_t* ev)
         memset(cmdLine, 0, sizeof(cmdLine));
         cmdCursor = 0;
         complPos = 0;
-        matchedWordListGood = false;
         Rend_ConsoleCursorResetBlink();
         updateDedicatedConsoleCmdLine();
         return true;
@@ -1452,7 +1424,6 @@ boolean Con_Responder(ddevent_t* ev)
             memmove(cmdLine + cmdCursor, cmdLine + cmdCursor + 1,
                     sizeof(cmdLine) - cmdCursor + 1);
             complPos = cmdCursor;
-            matchedWordListGood = false;
             Rend_ConsoleCursorResetBlink();
             updateDedicatedConsoleCmdLine();
         }
@@ -1464,11 +1435,9 @@ boolean Con_Responder(ddevent_t* ev)
 
         if(cmdCursor > 0)
         {
-            memmove(cmdLine + cmdCursor - 1, cmdLine + cmdCursor,
-                    sizeof(cmdLine) - cmdCursor);
+            memmove(cmdLine + cmdCursor - 1, cmdLine + cmdCursor, sizeof(cmdLine) - cmdCursor);
             cmdCursor--;
             complPos = cmdCursor;
-            matchedWordListGood = false;
             Rend_ConsoleCursorResetBlink();
             updateDedicatedConsoleCmdLine();
         }
@@ -1476,7 +1445,6 @@ boolean Con_Responder(ddevent_t* ev)
 
     case DDKEY_TAB:
         {
-        int completions;
         int mode;
 
         if(shiftDown) // one time toggle of completion mode.
@@ -1487,15 +1455,8 @@ boolean Con_Responder(ddevent_t* ev)
         else
             mode = conCompMode;
 
-        // Attempt to complete the word and return the number of possibilites.
-        completions = completeWord(mode);
-
-        if((completions == 1 || (mode == 1 && completions >= 1)) &&
-           matchedWordListGood)
-        {
-            // Finish the completion ASAP.
-            finishCompletion = true;
-        }
+        // Attempt to complete the word.
+        completeWord(mode);
 
         Rend_ConsoleCursorResetBlink();
         updateDedicatedConsoleCmdLine();
@@ -1537,7 +1498,6 @@ boolean Con_Responder(ddevent_t* ev)
                     {
                         cmdLine[cmdCursor] = line->text[cmdCursor];
                         cmdCursor++;
-                        matchedWordListGood = false;
                         updateDedicatedConsoleCmdLine();
                     }
                 }
@@ -1580,7 +1540,6 @@ boolean Con_Responder(ddevent_t* ev)
             memset(cmdLine, 0, sizeof(cmdLine));
             cmdCursor = 0;
             complPos = 0;
-            matchedWordListGood = false;
             Rend_ConsoleCursorResetBlink();
             updateDedicatedConsoleCmdLine();
             return true;
@@ -1612,7 +1571,6 @@ boolean Con_Responder(ddevent_t* ev)
         if(cmdCursor < CMDLINE_SIZE)
             cmdCursor++;
         complPos = cmdCursor;   //strlen(cmdLine);
-        matchedWordListGood = false;
         Rend_ConsoleCursorResetBlink();
         updateDedicatedConsoleCmdLine();
         return true;
@@ -1646,7 +1604,7 @@ void Con_AddRuler(void)
     }
 }
 
-void conPrintf(int flags, const char* format, va_list args)
+static void conPrintf(int flags, const char* format, va_list args)
 {
     const char* text = 0;
 
@@ -1696,9 +1654,6 @@ void conPrintf(int flags, const char* format, va_list args)
     }
 }
 
-/**
- * Print into the buffer.
- */
 void Con_Printf(const char* format, ...)
 {
     va_list args;
@@ -1711,7 +1666,7 @@ void Con_Printf(const char* format, ...)
     va_end(args);
 }
 
-void Con_FPrintf(int flags, const char* format, ...)    // Flagged printf
+void Con_FPrintf(int flags, const char* format, ...)
 {
     if(!ConsoleInited || ConsoleSilent)
         return;
@@ -1728,7 +1683,7 @@ void Con_FPrintf(int flags, const char* format, ...)    // Flagged printf
     va_end(args);}
 }
 
-void Con_PrintPathList3(const char* pathList, const char* seperator, byte flags)
+void Con_PrintPathList3(const char* pathList, const char* seperator, int flags)
 {
     assert(pathList && pathList[0]);
     {
@@ -1761,9 +1716,6 @@ void Con_PrintPathList(const char* pathList)
     Con_PrintPathList2(pathList, " ");
 }
 
-/**
- * Print a 'global' message (to stdout and the console).
- */
 void Con_Message(const char *message, ...)
 {
     va_list argptr;
@@ -1796,9 +1748,6 @@ void Con_Message(const char *message, ...)
     }
 }
 
-/**
- * Print an error message and quit.
- */
 void Con_Error(const char *error, ...)
 {
     static boolean errorInProgress = false;
@@ -1894,33 +1843,12 @@ void Con_AbnormalShutdown(const char* message)
     exit(1);
 }
 
-char* TrimmedFloat(float val)
-{
-    char*               ptr = trimmedFloatBuffer;
-
-    sprintf(ptr, "%f", val);
-    // Get rid of the extra zeros.
-    for(ptr += strlen(ptr) - 1; ptr >= trimmedFloatBuffer; ptr--)
-    {
-        if(*ptr == '0')
-            *ptr = 0;
-        else if(*ptr == '.')
-        {
-            *ptr = 0;
-            break;
-        }
-        else
-            break;
-    }
-    return trimmedFloatBuffer;
-}
-
 /**
  * Create an alias.
  */
 static void Con_Alias(char *aName, char *command)
 {
-    calias_t *cal = Con_GetAlias(aName);
+    calias_t *cal = Con_FindAlias(aName);
     boolean remove = false;
 
     // Will we remove this alias?
@@ -1945,8 +1873,6 @@ static void Con_Alias(char *aName, char *command)
 
     // We need to create a new alias.
     Con_AddAlias(aName, command);
-
-    Con_UpdateKnownWords();
 }
 
 D_CMD(Help)
@@ -2070,30 +1996,27 @@ D_CMD(Echo)
 
 static boolean cvarAddSub(const char* name, float delta, boolean force)
 {
-    float               val;
-    cvar_t*             cvar = Con_GetVariable(name);
+    ddcvar_t* cvar = Con_FindVariable(name);
+    float val;
 
     if(!cvar)
         return false;
 
-    if(cvar->flags & CVF_READ_ONLY)
+    if(cvar->shared.flags & CVF_READ_ONLY)
     {
-        Con_Printf("%s (cvar) is read-only. "
-                   "It can't be changed (not even with force)\n", name);
+        Con_Printf("%s (cvar) is read-only. It can not be changed (not even with force)\n", name);
         return false;
     }
 
     val = Con_GetFloat(name) + delta;
-
     if(!force)
     {
-        if(!(cvar->flags & CVF_NO_MAX) && val > cvar->max)
-            val = cvar->max;
-        if(!(cvar->flags & CVF_NO_MIN) && val < cvar->min)
-            val = cvar->min;
+        if(!(cvar->shared.flags & CVF_NO_MAX) && val > cvar->shared.max)
+            val = cvar->shared.max;
+        if(!(cvar->shared.flags & CVF_NO_MIN) && val < cvar->shared.min)
+            val = cvar->shared.min;
     }
-
-    Con_SetFloat(name, val, false);
+    Con_SetFloat(name, val);
     return true;
 }
 
@@ -2128,9 +2051,9 @@ D_CMD(AddSub)
  */
 D_CMD(IncDec)
 {
-    boolean             force = false;
-    float               val;
-    cvar_t*             cvar;
+    boolean force = false;
+    ddcvar_t* cvar;
+    float val;
 
     if(argc == 1)
     {
@@ -2142,11 +2065,11 @@ D_CMD(IncDec)
     {
         force = !stricmp(argv[2], "force");
     }
-    cvar = Con_GetVariable(argv[1]);
+    cvar = Con_FindVariable(argv[1]);
     if(!cvar)
         return false;
 
-    if(cvar->flags & CVF_READ_ONLY)
+    if(cvar->shared.flags & CVF_READ_ONLY)
     {
         Con_Printf("%s (cvar) is read-only. It can't be changed (not even with force)\n", argv[1]);
         return false;
@@ -2157,13 +2080,13 @@ D_CMD(IncDec)
 
     if(!force)
     {
-        if(!(cvar->flags & CVF_NO_MAX) && val > cvar->max)
-            val = cvar->max;
-        if(!(cvar->flags & CVF_NO_MIN) && val < cvar->min)
-            val = cvar->min;
+        if(!(cvar->shared.flags & CVF_NO_MAX) && val > cvar->shared.max)
+            val = cvar->shared.max;
+        if(!(cvar->shared.flags & CVF_NO_MIN) && val < cvar->shared.min)
+            val = cvar->shared.min;
     }
 
-    Con_SetFloat(argv[1], val, false);
+    Con_SetFloat(argv[1], val);
     return true;
 }
 
@@ -2172,7 +2095,7 @@ D_CMD(IncDec)
  */
 D_CMD(Toggle)
 {
-    Con_SetInteger(argv[1], Con_GetInteger(argv[1]) ? 0 : 1, false);
+    Con_SetInteger(argv[1], Con_GetInteger(argv[1]) ? 0 : 1);
     return true;
 }
 
@@ -2195,7 +2118,7 @@ D_CMD(If)
         {NULL,  0}
     };
     uint        i, oper;
-    cvar_t     *var;
+    ddcvar_t     *var;
     boolean     isTrue = false;
 
     if(argc != 5 && argc != 6)
@@ -2207,7 +2130,7 @@ D_CMD(If)
         return true;
     }
 
-    var = Con_GetVariable(argv[1]);
+    var = Con_FindVariable(argv[1]);
     if(!var)
         return false;
 
@@ -2222,36 +2145,47 @@ D_CMD(If)
         return false;           // Bad operator.
 
     // Value comparison depends on the type of the variable.
-    if(var->type == CVT_BYTE || var->type == CVT_INT)
+    switch(var->shared.type)
     {
-        int     value = (var->type == CVT_INT ? CV_INT(var) : CV_BYTE(var));
-        int     test = strtol(argv[3], 0, 0);
+    case CVT_BYTE:
+    case CVT_INT:
+        {
+        int value = (var->shared.type == CVT_INT ? CV_INT(var) : CV_BYTE(var));
+        int test = strtol(argv[3], 0, 0);
 
-        isTrue =
-            (oper == IF_EQUAL ? value == test : oper == IF_NOT_EQUAL ? value !=
-             test : oper == IF_GREATER ? value > test : oper ==
-             IF_LESS ? value < test : oper == IF_GEQUAL ? value >=
-             test : value <= test);
-    }
-    else if(var->type == CVT_FLOAT)
-    {
-        float   value = CV_FLOAT(var);
-        float   test = strtod(argv[3], 0);
+        isTrue = (oper == IF_EQUAL     ? value == test :
+                  oper == IF_NOT_EQUAL ? value != test :
+                  oper == IF_GREATER   ? value >  test :
+                  oper == IF_LESS      ? value <  test :
+                  oper == IF_GEQUAL    ? value >= test :
+                                         value <= test);           
+        break;
+        }
+    case CVT_FLOAT:
+        {
+        float value = CV_FLOAT(var);
+        float test = strtod(argv[3], 0);
 
-        isTrue =
-            (oper == IF_EQUAL ? value == test : oper == IF_NOT_EQUAL ? value !=
-             test : oper == IF_GREATER ? value > test : oper ==
-             IF_LESS ? value < test : oper == IF_GEQUAL ? value >=
-             test : value <= test);
-    }
-    else if(var->type == CVT_CHARPTR)
-    {
-        int     comp = stricmp(CV_CHARPTR(var), argv[3]);
+        isTrue = (oper == IF_EQUAL     ? value == test :
+                  oper == IF_NOT_EQUAL ? value != test :
+                  oper == IF_GREATER   ? value >  test :
+                  oper == IF_LESS      ? value <  test :
+                  oper == IF_GEQUAL    ? value >= test :
+                                         value <= test);
+        break;
+        }
+    case CVT_CHARPTR:
+        {
+        int comp = stricmp(CV_CHARPTR(var), argv[3]);
 
-        isTrue =
-            (oper == IF_EQUAL ? comp == 0 : oper == IF_NOT_EQUAL ? comp !=
-             0 : oper == IF_GREATER ? comp > 0 : oper == IF_LESS ? comp <
-             0 : oper == IF_GEQUAL ? comp >= 0 : comp <= 0);
+        isTrue = (oper == IF_EQUAL     ? comp == 0 :
+                  oper == IF_NOT_EQUAL ? comp != 0 :
+                  oper == IF_GREATER   ? comp >  0 :
+                  oper == IF_LESS      ? comp <  0 :
+                  oper == IF_GEQUAL    ? comp >= 0 :
+                                         comp <= 0);
+        }
+        break;
     }
 
     // Should the command be executed?

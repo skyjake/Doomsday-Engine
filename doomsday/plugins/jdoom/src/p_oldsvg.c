@@ -592,8 +592,11 @@ typedef struct {
 
     floor->state = (int) SV_ReadLong();
     floor->newSpecial = SV_ReadLong();
-    floor->material = P_ToPtr(DMU_MATERIAL,
-        Materials_NumForName(W_LumpName(SV_ReadShort()), MN_FLATS));
+    { ddstring_t path; Str_Init(&path);
+    Str_Appendf(&path, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":%s", W_LumpName(SV_ReadShort()));
+    floor->material = P_ToPtr(DMU_MATERIAL, Materials_NumForName(Str_Text(&path)));
+    Str_Free(&path);
+    }
     floor->floorDestHeight = FIX2FLT(SV_ReadLong());
     floor->speed = FIX2FLT(SV_ReadLong());
 

@@ -1,10 +1,10 @@
-/**\file
+/**\file s_mus.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * s_mus.c: Music Subsystem.
+ * Music Subsystem.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -287,23 +287,28 @@ boolean Mus_IsMUSLump(int lump)
  *
  * @return              Non-zero if an external file of that name exists.
  */
-int Mus_GetExt(ded_music_t* def, filename_t retPath)
+int Mus_GetExt(ded_music_t* def, filename_t _foundPath)
 {
     if(!musAvail || !iMusic)
         return false;
 
     // All external music files are specified relative to the base path.
-    if(def->path.path[0])
+    if(def->path && !Str_IsEmpty(Uri_Path(def->path)))
     {
-        filename_t path;
-        M_PrependBasePath(path, def->path.path, DED_PATH_LEN);
-        if(F_Access(path))
+        filename_t relPath;
+        ddstring_t* path;
+
+        M_PrependBasePath(relPath, Str_Text(Uri_Path(def->path)), FILENAME_T_MAXLEN);
+        if(F_Access(relPath))
         {
-            if(retPath)
-                strncpy(retPath, path, FILENAME_T_MAXLEN);
+            if(_foundPath)
+                strncpy(_foundPath, relPath, FILENAME_T_MAXLEN);
             return true;
         }
-        Con_Message("Mus_GetExt: Song %s: %s not found.\n", def->id, def->path.path);
+
+        path = Uri_ToString(def->path);
+        Con_Message("Warning \"%s\" for id %s not found.\n", Str_Text(path), def->id);
+        Str_Delete(path);
     }
 
     // Try the resource locator.
@@ -311,7 +316,7 @@ int Mus_GetExt(ded_music_t* def, filename_t retPath)
     ddstring_t foundPath, *foundPathPtr = 0;
     boolean result;
     
-    if(retPath)
+    if(_foundPath)
     {
         Str_Init(&foundPath);
         foundPathPtr = &foundPath;
@@ -321,7 +326,7 @@ int Mus_GetExt(ded_music_t* def, filename_t retPath)
     if(foundPathPtr)
     {
         if(result)
-            strncpy(retPath, Str_Text(foundPathPtr), FILENAME_T_MAXLEN);
+            strncpy(_foundPath, Str_Text(foundPathPtr), FILENAME_T_MAXLEN);
         Str_Free(foundPathPtr);
     }
     return result;
@@ -333,14 +338,14 @@ int Mus_GetExt(ded_music_t* def, filename_t retPath)
  */
 int Mus_GetCD(ded_music_t* def)
 {
-    if(!musAvail || !iCD)
+    if(!musAvail || !iCD || !def)
         return 0;
 
     if(def->cdTrack)
         return def->cdTrack;
 
-    if(!strnicmp(def->path.path, "cd:", 3))
-        return atoi(def->path.path + 3);
+    if(def->path && !stricmp(Str_Text(Uri_Scheme(def->path)), "cd"))
+        return atoi(Str_Text(Uri_Path(def->path)));
 
     return 0;
 }
@@ -639,3 +644,4 @@ D_CMD(PauseMusic)
     Mus_Pause(musicPaused);
     return true;
 }
+

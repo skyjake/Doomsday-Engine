@@ -1,10 +1,10 @@
-/**\file
+/**\file r_lumobjs.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -177,7 +177,7 @@ void LO_InitForMap(void)
 void LO_Clear(void)
 {
     if(luminousBlockSet)
-        Z_BlockDestroy(luminousBlockSet);
+        ZBlockSet_Destruct(luminousBlockSet);
     luminousBlockSet = 0;
 
     if(luminousList)
@@ -246,7 +246,7 @@ static lumobj_t* allocLumobj(void)
         if(!luminousBlockSet)
         {
             luminousBlockSet =
-                Z_BlockCreate(sizeof(lumobj_t), LUMOBJ_BATCH_SIZE, PU_MAP);
+                ZBlockSet_Construct(sizeof(lumobj_t), LUMOBJ_BATCH_SIZE, PU_MAP);
         }
 
         luminousList =
@@ -254,7 +254,7 @@ static lumobj_t* allocLumobj(void)
 
         // Add the new lums to the end of the list.
         for(i = maxLuminous; i < newMax; ++i)
-            luminousList[i] = Z_BlockNewElement(luminousBlockSet);
+            luminousList[i] = ZBlockSet_Allocate(luminousBlockSet);
 
         maxLuminous = newMax;
 
@@ -483,9 +483,9 @@ if(!mat)
 
         if(def)
         {
-            LUM_OMNI(l)->tex = GL_GetLightMapTexture(def->sides.id);
-            LUM_OMNI(l)->ceilTex = GL_GetLightMapTexture(def->up.id);
-            LUM_OMNI(l)->floorTex = GL_GetLightMapTexture(def->down.id);
+            LUM_OMNI(l)->tex = GL_GetLightMapTexture(def->sides);
+            LUM_OMNI(l)->ceilTex = GL_GetLightMapTexture(def->up);
+            LUM_OMNI(l)->floorTex = GL_GetLightMapTexture(def->down);
         }
         else
         {
@@ -976,3 +976,4 @@ void LO_DrawLumobjs(void)
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 }
+

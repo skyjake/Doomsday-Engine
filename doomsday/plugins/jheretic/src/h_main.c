@@ -91,8 +91,8 @@ const float defFontRGB2[] = { 1.0f, 1.0f, 1.0f };
 const float defFontRGB3[] = { 1, .65f, .275f };
 
 // The patches used in drawing the view border.
-char* borderLumps[] = {
-    "FLAT513", // Background.
+char* borderGraphics[] = {
+    "Flats:FLAT513", // Background.
     "BORDT", // Top.
     "BORDR", // Right.
     "BORDB", // Bottom.
@@ -405,6 +405,9 @@ void G_PreInit(void)
     cfg.tomeCounter = 10;
     cfg.tomeSound = 3;
 
+    // Use the crossfade transition by default.
+    Con_SetInteger("con-transition", 0);
+
     // Do the common pre init routine;
     G_CommonPreInit();
 }
@@ -433,7 +436,7 @@ void G_PostInit(gameid_t gameId)
 
     // Shareware WAD has different border background
     if(gameMode == heretic_shareware)
-        borderLumps[0] = "FLOOR04";
+        borderGraphics[0] = "Flats:FLOOR04";
 
     // Common post init routine.
     G_CommonPostInit();

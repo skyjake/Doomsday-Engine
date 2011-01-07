@@ -71,7 +71,8 @@ byte* translationTables;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static char borderPatchNames[9][9];
+static boolean inited = false;
+static dduri_t* borderGraphicsNames[9];
 static patchid_t borderPatches[9];
 
 // CODE --------------------------------------------------------------------
@@ -84,7 +85,7 @@ static void loadViewBorderPatches(void)
     borderPatches[0] = 0;
     for(i = 1; i < 9; ++i)
     {
-        R_PrecachePatch(borderPatchNames[i], &info);
+        R_PrecachePatch(Str_Text(Uri_Path(borderGraphicsNames[i])), &info);
         borderPatches[i] = info.id;
     }
 
@@ -99,32 +100,60 @@ static void loadViewBorderPatches(void)
     bwidth = info.height;
 }
 
-void R_SetBorderGfx(char* const* lumpNames)
+void R_SetBorderGfx(const dduri_t* paths[9])
 {
-    if(!lumpNames)
+    assert(inited);
+    {
+    if(!paths)
         Con_Error("R_SetBorderGfx: Missing argument.");
 
     {uint i;
     for(i = 0; i < 9; ++i)
     {
-        if(lumpNames[i] && lumpNames[i][0])
+        if(paths[i])
         {
-            dd_snprintf(borderPatchNames[i], 9, "%s", lumpNames[i]);
+            if(!borderGraphicsNames[i])
+                borderGraphicsNames[i] = Uri_ConstructCopy(paths[i]);
+            else
+                Uri_Copy(borderGraphicsNames[i], paths[i]);
         }
         else
         {
-            borderPatchNames[i][0] = 0;
+            if(borderGraphicsNames[i])
+                Uri_Destruct(borderGraphicsNames[i]);
+            borderGraphicsNames[i] = 0;
         }
     }}
 
     loadViewBorderPatches();
+    }
 }
 
 void R_InitViewBorder(void)
 {
-    memset(borderPatchNames, 0, sizeof(borderPatchNames));
+    if(inited)
+    {
+        uint i;
+        for(i = 0; i < 9; ++i)
+            if(borderGraphicsNames[i])
+                Uri_Destruct(borderGraphicsNames[i]);
+    }
+    memset(borderGraphicsNames, 0, sizeof(borderGraphicsNames));
     memset(borderPatches, 0, sizeof(borderPatches));
     bwidth = 0;
+    inited = true;
+}
+
+void R_ShutdownViewBorder(void)
+{
+    if(!inited) return;
+    { uint i;
+    for(i = 0; i < 9; ++i)
+        if(borderGraphicsNames[i])
+            Uri_Destruct(borderGraphicsNames[i]);
+    }
+    memset(borderGraphicsNames, 0, sizeof(borderGraphicsNames));
+    inited = false;
 }
 
 void R_DrawPatch3(patchtex_t* p, int x, int y, int w, int h, boolean useOffsets)
@@ -172,6 +201,8 @@ void R_DrawPatchTiled(patchtex_t* p, int x, int y, int w, int h, DGLint wrapS, D
  */
 void R_DrawViewBorder(void)
 {
+    assert(inited);
+    {
     int border;
     const viewport_t* port;
     material_t* mat;
@@ -202,7 +233,7 @@ void R_DrawViewBorder(void)
     glColor4f(1, 1, 1, 1);
 
     // View background.
-    mat = Materials_ToMaterial(Materials_NumForName(borderPatchNames[BG_BACKGROUND], MN_FLATS));
+    mat = Materials_ToMaterial(Materials_NumForName2(borderGraphicsNames[BG_BACKGROUND]));
     if(mat)
     {
         GL_SetMaterial(mat);
@@ -231,4 +262,5 @@ void R_DrawViewBorder(void)
     }
 
     glDisable(GL_TEXTURE_2D);
+    }
 }

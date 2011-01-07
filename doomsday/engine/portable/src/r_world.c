@@ -1,10 +1,10 @@
-/**\file
+/**\file r_world.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -911,7 +911,7 @@ void R_SetupSky(ded_sky_t* sky)
         Rend_SkyParams(DD_SKY, DD_HEIGHT, &fval);
         Rend_SkyParams(DD_SKY, DD_HORIZON, &ival);
         Rend_SkyParams(0, DD_ENABLE, NULL);
-        ival = Materials_NumForName("SKY1", MN_TEXTURES);
+        ival = Materials_NumForName(MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":SKY1");
         Rend_SkyParams(0, DD_MATERIAL, &ival);
         ival = DD_NO;
         Rend_SkyParams(0, DD_MASK, &ival);
@@ -929,13 +929,20 @@ void R_SetupSky(ded_sky_t* sky)
 
         if(layer->flags & SLF_ENABLED)
         {
-            skyTex = Materials_NumForName(layer->material.name,
-                                          layer->material.mnamespace);
-            if(!skyTex)
+            if(layer->material)
             {
-                Con_Message("R_SetupSky: Invalid/missing texture \"%s\"\n",
-                            layer->material.name);
-                skyTex = Materials_NumForName("SKY1", MN_TEXTURES);
+                skyTex = Materials_NumForName2(layer->material);
+            }
+
+            if(skyTex == 0)
+            {
+                if(layer->material)
+                {
+                    ddstring_t* path = Uri_ToString(layer->material);
+                    Con_Message("Warning, unknown material \"%s\" in sky layer %i, using default.\n", Str_Text(path), i);
+                    Str_Delete(path);
+                }
+                skyTex = Materials_NumForName(MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":SKY1");
             }
 
             Rend_SkyParams(i, DD_ENABLE, NULL);
@@ -1925,3 +1932,4 @@ const float* R_GetSectorLightColor(const sector_t* sector)
     return sector->rgb; // The sector's ambient light color.
     }
 }
+

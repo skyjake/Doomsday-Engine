@@ -1128,12 +1128,18 @@ DEFFC(End)
 
 DEFFC(BGFlat)
 {
-    changePageBackground(fi->_pages[PAGE_PICS], Materials_ToMaterial(Materials_CheckNumForName(OP_CSTRING(0), MN_FLATS)));
+    ddstring_t path; Str_Init(&path);
+    Str_Appendf(&path, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME":%s", OP_CSTRING(0));
+    changePageBackground(fi->_pages[PAGE_PICS], Materials_ToMaterial(Materials_CheckNumForName(Str_Text(&path))));
+    Str_Free(&path);
 }
 
 DEFFC(BGTexture)
 {
-    changePageBackground(fi->_pages[PAGE_PICS], Materials_ToMaterial(Materials_CheckNumForName(OP_CSTRING(0), MN_TEXTURES)));
+    ddstring_t path; Str_Init(&path);
+    Str_Appendf(&path, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":%s", OP_CSTRING(0));
+    changePageBackground(fi->_pages[PAGE_PICS], Materials_ToMaterial(Materials_CheckNumForName(Str_Text(&path))));
+    Str_Free(&path);
 }
 
 DEFFC(NoBGMaterial)
