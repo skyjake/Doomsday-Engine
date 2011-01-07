@@ -1,9 +1,9 @@
-/**\file
+/**\file bsp_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2009 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *\author Copyright © 2000-2007 Andrew Apted <ajapted@gmail.com>
  *\author Copyright © 1998-2000 Colin Reed <cph@moria.org.uk>
@@ -26,7 +26,7 @@
  */
 
 /**
- * bsp_main.c: GL-friendly BSP node builder.
+ * GL-friendly BSP node builder.
  *
  * Based on glBSP 2.24 (in turn, based on BSP 2.3), which is hosted on
  * SourceForge: http://sourceforge.net/projects/glbsp/
@@ -318,26 +318,24 @@ boolean BSP_Build(gamemap_t* map, vertex_t*** vertexes, uint* numVertexes)
 
     if(builtOK)
     {   // Success!
+        long rHeight, lHeight;
+
         // Wind the BSP tree and link to the map.
         ClockwiseBspTree(rootNode);
         SaveMap(map, rootNode, vertexes, numVertexes);
 
-        Con_Message("BSP_Build: Built %d Nodes, %d Subsectors, %d Segs, %d Vertexes\n",
-                    map->numNodes, map->numSSectors, map->numSegs,
-                    map->numVertexes);
-
         if(rootNode && !BinaryTree_IsLeaf(rootNode))
         {
-            long            rHeight, lHeight;
-
-            rHeight = (long)
-                BinaryTree_GetHeight(BinaryTree_GetChild(rootNode, RIGHT));
-            lHeight = (long)
-                BinaryTree_GetHeight(BinaryTree_GetChild(rootNode, LEFT));
-
-            Con_Message("  Balance %+ld (l%ld - r%ld).\n", lHeight - rHeight,
-                        lHeight, rHeight);
+            rHeight = (long) BinaryTree_GetHeight(BinaryTree_GetChild(rootNode, RIGHT));
+            lHeight = (long) BinaryTree_GetHeight(BinaryTree_GetChild(rootNode, LEFT));
         }
+        else
+            rHeight = lHeight = 0;
+
+        Con_Printf("BSP built: %d Nodes, %d Subsectors, %d Segs, %d Vertexes\n"
+                   "  Balance %+ld (l%ld - r%ld).\n",
+                   map->numNodes, map->numSSectors, map->numSegs, map->numVertexes,
+                   lHeight - rHeight, lHeight, rHeight);
     }
 
     // We are finished with the BSP build data.
