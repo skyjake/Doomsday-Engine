@@ -32,3 +32,24 @@ void GLWindowSurface::resizeGL(int /*w*/, int /*h*/)
 
 void GLWindowSurface::paintGL()
 {}
+
+QSize GLWindowSurface::size() const
+{
+    return QGLWidget::size();
+}
+
+void GLWindowSurface::setSize(const QSize& size)
+{
+    QGLWidget::resize(size);
+}
+
+void GLWindowSurface::activate()
+{
+    // Tell the video subsystem to use this surface as the rendering target.
+}
+
+void GLWindowSurface::deactivate()
+{
+    // Tell the video subsystem that this surface is no longer the rendering target.
+
+}

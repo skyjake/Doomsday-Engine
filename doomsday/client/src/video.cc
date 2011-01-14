@@ -27,13 +27,7 @@ Video::Video() : _mainWindow(0), _target(0)
 {}
 
 Video::~Video()
-{
-    // Delete all windows.
-    for(Windows::iterator i = _windows.begin(); i != _windows.end(); ++i)
-    {
-        delete *i;
-    }
-}
+{}
 
 Window& Video::mainWindow() const
 {
@@ -41,6 +35,27 @@ Window& Video::mainWindow() const
     return *_mainWindow;
 }
     
+void Video::addWindow(Window* window)
+{
+    Q_ASSERT(window != 0);
+    Q_ASSERT(!_windows.contains(window));
+    _windows.insert(window);
+
+    connect(window, SIGNAL(destroyed(QObject*)), this, SLOT(windowDestroyed(QObject*)));
+}
+
+void Video::windowDestroyed(QObject* window)
+{
+    removeWindow(static_cast<Window*>(window));
+}
+
+void Video::removeWindow(Window* window)
+{
+    Q_ASSERT(window != 0);
+    Q_ASSERT(_windows.contains(window));
+    _windows.remove(window);
+}
+
 void Video::setMainWindow(Window* window)
 {
     Q_ASSERT(window != 0);
@@ -65,6 +80,9 @@ void Video::releaseTarget()
     _target->deactivate();
     _target = 0;
 }
+
+void Video::update(const Time::Delta& /*elapsed*/)
+{}
 
 Video& theVideo()
 {

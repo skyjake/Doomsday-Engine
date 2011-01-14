@@ -37,6 +37,11 @@ public:
     void resizeGL(int w, int h);
     void paintGL();
 
+    QSize size() const;
+    void setSize(const QSize& size);
+    void activate();
+    void deactivate();
+
 signals:
 
 public slots:

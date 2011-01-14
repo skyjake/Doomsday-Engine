@@ -68,8 +68,8 @@ protected:
     void clearOthers();
     
 private:
-    /// Link to the server.
-    de::Socket* _link;
+    /// Connection to the server.
+    de::Socket* _socket;
     
     /// Id of the session on the server.
     de::Id _sessionId;

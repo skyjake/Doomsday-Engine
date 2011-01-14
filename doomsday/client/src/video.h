@@ -23,6 +23,7 @@
 #include <de/ISubsystem>
 #include "window.h"
 
+#include <QObject>
 #include <QSet>
 
 /**
@@ -38,8 +39,10 @@
  *
  * @ingroup video
  */
-class Video : public de::ISubsystem
+class Video : public QObject, public de::ISubsystem
 {
+    Q_OBJECT
+
 public:
     typedef QSet<Window*> Windows;
         
@@ -56,6 +59,12 @@ public:
      */
     virtual ~Video();
         
+    void update(const de::Time::Delta &elapsed);
+
+    void addWindow(Window* window);
+
+    void removeWindow(Window* window);
+
     /**
      * The main window is the primary outlet for presentation. When the video
      * subsystem exists, there is always a main window as well.
@@ -65,8 +74,7 @@ public:
     /**
      * Sets the main window.
      *
-     * @param window  Window to become the main window. The subsystem gets ownership
-     *      of the window.
+     * @param window  Window to become the main window.
      */
     virtual void setMainWindow(Window* window);
         
@@ -93,17 +101,9 @@ public:
 
     /// Returns the window list (read access only).
     const Windows& windows() const { return _windows; }
-        
-    /**
-     * Constructs a new Window.
-     *
-     * @param where  Initial placement of the window.
-     * @param mode  Initial mode.
-     *
-     * @return  Window. The video subsystem retains ownership. The window will
-     *          be destroyed when the video subsystem is deleted.
-     */
-    virtual Window* newWindow(const QRect& where, const Window::Flags& flags) = 0;
+
+public slots:
+    void windowDestroyed(QObject* window);
 
 protected:
     /// Returns the window list.

@@ -23,13 +23,14 @@
 
 using namespace de;
 
-Window::Window()
+Window::Window(const QGLFormat& format, QWidget* parent, const QGLWidget* shareWidget)
+    : GLWindowSurface(format, parent, shareWidget)
 {}
 
 Window::~Window()
 {}
 
-void Window::setSelectedFlags(Flag selectedFlags, bool set)
+void Window::setSelectedFlags(Flags selectedFlags, bool set)
 {
     Flags flags = _flags;
     if(set)

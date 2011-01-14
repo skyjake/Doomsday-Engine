@@ -27,13 +27,26 @@
 using namespace de;
 
 ClientApp::ClientApp(int argc, char** argv)
-    : GUIApp(argc, argv, "/config/client/client.de", "client"),
+    : GUIApp(argc, argv, "/config/client/client.de", "client", Log::DEBUG),
       _localServer(0), _session(0), _video(0)
 {        
     // Create the video subsystem.
     _video = new Video();
 
     addSubsystem(_video);
+
+    // Create the main window.
+    QGLFormat glFormat;
+    glFormat.setDoubleBuffer(true);
+    glFormat.setDepth(true);
+    glFormat.setDepthBufferSize(32);
+    Window* window = new Window(glFormat);
+
+    // Assign it the main window status.
+    _video->addWindow(window);
+    _video->setMainWindow(window);
+
+    window->show();
 
     //CommandLine& args = commandLine();
     

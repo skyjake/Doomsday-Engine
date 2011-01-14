@@ -45,7 +45,7 @@ public:
     Q_DECLARE_FLAGS(Flags, Flag);
         
 public:
-    Window();
+    Window(const QGLFormat& format, QWidget* parent = 0, const QGLWidget* shareWidget = 0);
 
     virtual ~Window();
         

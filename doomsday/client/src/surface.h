@@ -20,7 +20,8 @@
 #ifndef LIBDENG2_SURFACE_H
 #define LIBDENG2_SURFACE_H
 
-#include "../Vector"
+#include <de/deng.h>
+#include <de/Vector>
 
 #include <QImage>
 

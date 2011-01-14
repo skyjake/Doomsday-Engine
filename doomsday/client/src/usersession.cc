@@ -41,6 +41,7 @@ UserSession::UserSession(de::Socket* socket, const de::Id& id)
     // The server will tell our id.
     _user->setId(Id::NONE);
     
+    /*
     // Ask to join the session.
     CommandPacket join("session.join");
     join.arguments().addText("id", id);
@@ -50,9 +51,10 @@ UserSession::UserSession(de::Socket* socket, const de::Id& id)
 
     RecordPacket* response;
     App::app().protocol().decree(*_link, join, &response);
+    */
 
     // Get the user id.
-    _user->setId(response->valueAsText("userId"));
+    //_user->setId(response->valueAsText("userId"));
 }   
 
 UserSession::~UserSession()
@@ -60,19 +62,20 @@ UserSession::~UserSession()
     if(_sessionId)
     {
         // Inform that we are leaving.
-        _link->base() << CommandPacket("session.leave");
+        //_socket->base() << CommandPacket("session.leave");
     }
     clearOthers();
 
     delete _user;
     delete _world;    
-    delete _link;
+    delete _socket;
 }
 
 void UserSession::processPacket(const de::Packet& packet)
 {
     LOG_AS("processPacket");
     
+    /*
     const RecordPacket* record = dynamic_cast<const RecordPacket*>(&packet);
     if(record)
     {
@@ -122,13 +125,15 @@ void UserSession::processPacket(const de::Packet& packet)
                 "Serverside session ended");
         }
     }
+    */
 }
 
 void UserSession::listenForUpdates()
 {
-    FOREVER
+    /*
+    forever
     {
-        std::auto_ptr<Message> message(_link->updates().receive());
+        std::auto_ptr<Message> message(_socket->updates().receive());
         if(!message.get())
         {
             // That was all.
@@ -142,6 +147,7 @@ void UserSession::listenForUpdates()
             processPacket(*packet.get());
         }
     }
+    */
 }
 
 void UserSession::listen()
@@ -159,9 +165,9 @@ void UserSession::listen()
 
 void UserSession::clearOthers()
 {
-    FOR_EACH(i, _others, Others::iterator)
+    foreach(User* user, _others.values())
     {
-        delete i->second;
+        delete user;
     }
     _others.clear();
 }
