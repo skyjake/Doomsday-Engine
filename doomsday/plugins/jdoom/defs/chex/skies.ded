@@ -15,6 +15,6 @@ Sky {
   Horizon offset = -0.105;
   Layer 1 {
     Flags = enable;
-    Texture = "SKY1";
+    Material = "textures:SKY1";
   }
 }

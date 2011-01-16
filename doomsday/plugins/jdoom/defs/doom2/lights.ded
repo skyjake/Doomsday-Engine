@@ -21,7 +21,7 @@ SkipIf -nodefaultfx;
 #   http://dengine.net/dew/?title=Decoration
 
 Decoration {
-  Texture = "BSTONE3";
+  Material = "textures:BSTONE3";
   Light {
     Color { 1 .98 .9 }
     Offset { 33 40 }
@@ -31,5 +31,5 @@ Decoration {
 }
 
 Copy Decoration {
-  Texture = "BRICKLIT";
+  Material = "textures:BRICKLIT";
 }

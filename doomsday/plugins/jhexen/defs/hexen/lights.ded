@@ -116,7 +116,7 @@ Light {
 # (based on Isegrim's definitions)
 
 Decoration {
-  Texture = "MONK22";
+  Material = "textures:MONK22";
   Light {
     Color { 1 0 0 }
     Offset { 74 48 }
@@ -126,7 +126,7 @@ Decoration {
 }
 
 Decoration {
-  Texture = "PLANET2";
+  Material = "textures:PLANET2";
   Light {
     Color { 1 0 0 };
     Offset { 28 88 }
@@ -136,7 +136,7 @@ Decoration {
 }
 
 Decoration {
-  Texture = "PLANET1";
+  Material = "textures:PLANET1";
   Light {
     Color { 1 0 0 }
     Offset { 28 88 }
@@ -176,7 +176,7 @@ Decoration {
 }
 
 Decoration {
-  Texture = "SW_1_DN";
+  Material = "textures:SW_1_DN";
   Light {
     Color { 0 0 1 }
     Offset { 11 13 }
@@ -192,23 +192,23 @@ Decoration {
 }
 
 Copy Decoration {
-  Texture = "SW_2_MD";
+  Material = "textures:SW_2_MD";
 }
 
 Copy Decoration {
-  Texture = "SW_1_MD";
+  Material = "textures:SW_1_MD";
   Light { Color { 0 1 0 } }
   Light { Color { 0 1 0 } }
 }
 
 Copy Decoration {
-  Texture = "SW_2_DN";
+  Material = "textures:SW_2_DN";
   Light { Color { 1 0 0 } }
   Light { Color { 1 0 0 } }
 }
 
 Decoration {
-  Texture = "SW52_ON";
+  Material = "textures:SW52_ON";
   Light {
     Color { .8 .7 0 }
     Offset { 9 15 }
@@ -218,7 +218,7 @@ Decoration {
 }
 
 Decoration {
-  Texture = "SW51_ON";
+  Material = "textures:SW51_ON";
   Light {
     Color { 1 .8 0 }
     Offset { 9 11 }
@@ -246,7 +246,7 @@ Decoration {
 }
 
 Decoration {
-  Texture = "SPAWN03";
+  Material = "textures:SPAWN03";
   Light {
     Color { 1 .5 0 }
     Offset { 32 42 }
@@ -256,7 +256,7 @@ Decoration {
 }
 
 Decoration {
-  Texture = "SPAWN12";
+  Material = "textures:SPAWN12";
   Light {
     Color { 1 .7 0 }
     Offset { 16.5 13 }
@@ -266,7 +266,7 @@ Decoration {
 }
 
 Decoration {
-  Texture = "SPAWN09";
+  Material = "textures:SPAWN09";
   Light {
     Color { .5 0 0 }
     Offset { 54 57 }
@@ -288,7 +288,7 @@ Decoration {
 }
 
 Decoration {
-  Texture = "SPAWN10";
+  Material = "textures:SPAWN10";
   Light {
     Color { 1 .3 0 }
     Offset { 54 57 }

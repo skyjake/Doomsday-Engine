@@ -52,7 +52,7 @@ Copy Light { State = "CKYY9"; }
 #   http://dengine.net/dew/?title=Decoration
 
 Decoration {
-  Texture = "GRSKULL3";
+  Material = "textures:GRSKULL3";
   Light {
     Color { .7 0 0 }
     Offset { 54 32 }
@@ -68,7 +68,7 @@ Decoration {
 }
 
 Decoration {
-  Texture = "SW1ON";
+  Material = "textures:SW1ON";
   Light {
     Color { .6 .6 1 }
     Offset { 32 64 }
@@ -78,7 +78,7 @@ Decoration {
 }
 
 Decoration {
-  Texture = "SW2ON";
+  Material = "textures:SW2ON";
   Light {
     Color { 0 0 .6 }
     Offset { 31.5 64 }
@@ -89,7 +89,7 @@ Decoration {
 }
 
 Decoration {
-  Texture = "GRSTNPBW";
+  Material = "textures:GRSTNPBW";
   Light {
     Color { .72 .5 .11 }
     Offset { 31.5 74 }

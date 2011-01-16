@@ -15,20 +15,20 @@ Sky {
   Horizon offset = -0.105;
   Layer 1 {
     Flags = enable;
-    Texture = "SKY1";
+    Material = "textures:SKY1";
   };
 }
 
 Copy Sky {
   ID = "sky2";
   Layer 1 {
-    Texture = "SKY2";
+    Material = "textures:SKY2";
   };
 }
 
 Copy Sky {
   ID = "sky3";
   Layer 1 {
-    Texture = "SKY3";
+    Material = "textures:SKY3";
   };
 }
