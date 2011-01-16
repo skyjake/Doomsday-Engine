@@ -96,7 +96,6 @@ Sprite { ID = "FDTH"; }
 Sprite { ID = "BSKL"; }
 Sprite { ID = "CHKN"; }
 Sprite { ID = "MUMM"; }
-Sprite { ID = "SHRD"; }
 Sprite { ID = "FX15"; }
 Sprite { ID = "BEAS"; }
 Sprite { ID = "FRB1"; }
