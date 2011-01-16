@@ -1,9 +1,9 @@
-/**\file
+/**\file bsp_map.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,10 +19,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor,
  * Boston, MA  02110-1301  USA
- */
-
-/**
- * bsp_map.c:
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -415,23 +411,29 @@ static void hardenBSP(gamemap_t* dest, binarytree_t* rootNode)
 {
     dest->numNodes = 0;
     BinaryTree_PostOrder(rootNode, countNode, &dest->numNodes);
-    dest->nodes =
-        Z_Calloc(dest->numNodes * sizeof(node_t), PU_MAPSTATIC, 0);
+    if(dest->numNodes != 0)
+        dest->nodes = Z_Calloc(dest->numNodes * sizeof(node_t), PU_MAPSTATIC, 0);
+    else
+        dest->nodes = 0;
 
     dest->numSSectors = 0;
     BinaryTree_PostOrder(rootNode, countSSec, &dest->numSSectors);
-    dest->ssectors =
-        Z_Calloc(dest->numSSectors * sizeof(subsector_t), PU_MAPSTATIC, 0);
+    dest->ssectors = Z_Calloc(dest->numSSectors * sizeof(subsector_t), PU_MAPSTATIC, 0);
 
-    if(rootNode)
+    if(!rootNode)
+        return;
+
+    if(BinaryTree_IsLeaf(rootNode))
     {
-        hardenbspparams_t params;
+        hardenLeaf(dest, &dest->ssectors[0], (bspleafdata_t*) BinaryTree_GetData(rootNode));
+        return;
+    }
 
-        params.dest = dest;
-        params.ssecCurIndex = 0;
-        params.nodeCurIndex = 0;
-
-        BinaryTree_PostOrder(rootNode, hardenNode, &params);
+    { hardenbspparams_t p;
+    p.dest = dest;
+    p.ssecCurIndex = 0;
+    p.nodeCurIndex = 0;
+    BinaryTree_PostOrder(rootNode, hardenNode, &p);
     }
 }
 

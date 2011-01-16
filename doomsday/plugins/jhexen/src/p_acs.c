@@ -61,11 +61,13 @@
 
 // TYPES -------------------------------------------------------------------
 
+#pragma pack(1)
 typedef struct acsheader_s {
-    int     marker;
-    int     infoOffset;
-    int     code;
+    int32_t marker;
+    int32_t infoOffset;
+    int32_t code;
 } acsheader_t;
+#pragma pack()
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -252,18 +254,29 @@ const char* GetACString(int id)
 
 void P_LoadACScripts(int lump)
 {
-    int                 i;
-    const int*          buffer;
-    const acsheader_t*  header;
-    acsinfo_t*          info;
+    size_t lumpLength = (lump >= 0? W_LumpLength(lump) : 0);
+    const acsheader_t* header;
+    const int* buffer;
+    acsinfo_t* info;
+    int i;
 
-    header = W_CacheLumpNum(lump, PU_MAP);
-    ActionCodeBase = (const byte*) header;
-    buffer = (int*) ((const byte*) header + LONG(header->infoOffset));
-    ACScriptCount = LONG(*buffer++);
+    ACScriptCount = 0;
+
+    if(lumpLength >= sizeof(acsheader_t))
+    {
+        header = W_CacheLumpNum(lump, PU_MAP);
+        ActionCodeBase = (const byte*) header;
+
+        if(LONG(header->infoOffset) < (int)lumpLength)
+        {
+            buffer = (int*) ((const byte*) header + LONG(header->infoOffset));
+            ACScriptCount = LONG(*buffer++);
+        }
+    }
+
     if(ACScriptCount == 0 || IS_CLIENT)
-    {                           // Empty behavior lump
-        ACScriptCount = 0;
+    {   // Empty/Invalid lump.
+        Con_Message("Warning:P_LoadACSScripts: lumpnum %i does not appear to be valid ACS bytecode, ignoring.\n", lump);
         return;
     }
 
