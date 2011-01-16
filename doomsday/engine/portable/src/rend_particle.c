@@ -190,6 +190,9 @@ void Rend_ParticleLoadExtraTextures(void)
     // Clear the texture names array.
     memset(ptctexname, 0, sizeof(ptctexname));
 
+    if(DD_IsNullGameInfo(DD_GameInfo()))
+        return;
+
     { int i;
     for(i = 0; i < MAX_PTC_TEXTURES; ++i)
         if(!loadParticleTexture(i, reported))
