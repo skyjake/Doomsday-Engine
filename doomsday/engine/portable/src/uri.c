@@ -374,9 +374,38 @@ ddstring_t* Uri_ToString(const dduri_t* uri)
 boolean Uri_Equality(const dduri_t* uri, const dduri_t* other)
 {
     assert(uri && other);
-    if(stricmp(Str_Text(&uri->_scheme), Str_Text(Uri_Scheme(other))))
+    { ddstring_t* thisPath, *otherPath;
+    int result;
+
+    // First, lets check if the scheme differs.
+    if(Str_Length(&uri->_scheme) != Str_Length(Uri_Scheme(other)))
         return false;
-    if(stricmp(Str_Text(&uri->_path), Str_Text(Uri_Path(other))))
+    if(Str_CompareIgnoreCase(&uri->_scheme, Str_Text(Uri_Scheme(other))))
         return false;
-    return true;
+
+    // For comparison purposes we must be able to resolve both paths.
+    if((thisPath = Uri_Resolved(uri)) == 0)
+        return false;
+
+    if((otherPath = Uri_Resolved(other)) == 0)
+    {
+        Str_Delete(thisPath);
+        return false;
+    }
+
+    // Do not match on partial paths.
+    if(Str_Length(thisPath) != Str_Length(otherPath))
+    {
+        Str_Delete(thisPath);
+        Str_Delete(otherPath);
+        return false;
+    }
+
+    result = Str_CompareIgnoreCase(thisPath, Str_Text(otherPath));
+
+    Str_Delete(thisPath);
+    Str_Delete(otherPath);
+
+    return (result == 0);
+    }
 }
