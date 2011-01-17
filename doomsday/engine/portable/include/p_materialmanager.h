@@ -29,18 +29,6 @@
 #include "def_data.h"
 #include "p_material.h"
 
-typedef enum {
-    MN_ANY = -1,
-    MATERIALNAMESPACEID_FIRST,
-    MN_TEXTURES = MATERIALNAMESPACEID_FIRST,
-    MN_FLATS,
-    MN_SPRITES,
-    MN_SYSTEM,
-    MATERIALNAMESPACEID_COUNT
-} materialnamespaceid_t;
-
-#define VALID_MATERIALNAMESPACEID(id)   ((id) >= MATERIALNAMESPACEID_FIRST && (id) < MATERIALNAMESPACEID_COUNT)
-
 void            P_MaterialsRegister(void);
 
 void            Materials_Initialize(void);
@@ -48,7 +36,7 @@ void            Materials_Shutdown(void);
 
 void            Materials_Ticker(timespan_t elapsed);
 
-void            Materials_DeleteTextures(materialnamespaceid_t mnamespace);
+void            Materials_DeleteTextures(const char* namespaceName);
 void            Materials_LinkAssociatedDefinitions(void);
 
 const ddstring_t* Materials_NamespaceNameForTextureType(gltexture_type_t t);

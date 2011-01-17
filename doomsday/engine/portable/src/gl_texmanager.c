@@ -392,7 +392,7 @@ void GL_ClearSystemTextures(void)
     }
     memset(sysFlareTextures, 0, sizeof(sysFlareTextures));
 
-    Materials_DeleteTextures(MN_SYSTEM);
+    Materials_DeleteTextures(MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME);
     UI_ClearTextures();
 
     Rend_ParticleClearSystemTextures();

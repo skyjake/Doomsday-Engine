@@ -23,7 +23,7 @@
  */
 
 /**
- * Materials manager.
+ * Materials collection, namespaces, bindings and other management.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -46,6 +46,18 @@
 #define MATERIAL_NAME_HASH_SIZE (512)
 
 // TYPES -------------------------------------------------------------------
+
+typedef enum {
+    MN_ANY = -1,
+    MATERIALNAMESPACEID_FIRST,
+    MN_TEXTURES = MATERIALNAMESPACEID_FIRST,
+    MN_FLATS,
+    MN_SPRITES,
+    MN_SYSTEM,
+    MATERIALNAMESPACEID_COUNT
+} materialnamespaceid_t;
+
+#define VALID_MATERIALNAMESPACEID(id)   ((id) >= MATERIALNAMESPACEID_FIRST && (id) < MATERIALNAMESPACEID_COUNT)
 
 typedef struct materialbind_s {
     char            name[9];
@@ -319,8 +331,22 @@ void Materials_Shutdown(void)
  *                      Only delete those currently in use by materials
  *                      in the specified namespace.
  */
-void Materials_DeleteTextures(materialnamespaceid_t mnamespace)
+void Materials_DeleteTextures(const char* namespaceName)
 {
+    materialnamespaceid_t mnamespace = MN_ANY;
+
+    if(namespaceName && namespaceName[0])
+    {
+        if((mnamespace = parseMaterialNamespaceIdent(namespaceName)) == MN_ANY)
+        {
+#if _DEBUG
+            Con_Message("Warning:Materials_DeleteTextures: Attempt to delete in unknown namespace (%s), ignoring.\n",
+                        namespaceName);
+#endif
+            return;
+        }
+    }
+
     if(mnamespace == MN_ANY)
     {   // Delete the lot.
         GL_DeleteAllTexturesForGLTextures(GLT_ANY);
@@ -333,8 +359,7 @@ void Materials_DeleteTextures(materialnamespaceid_t mnamespace)
 
     if(materialBinds)
     {
-        uint                i;
-
+        uint i;
         for(i = 0; i < MATERIAL_NAME_HASH_SIZE; ++i)
             if(hashTable[mnamespace][i])
             {
