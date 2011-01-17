@@ -2340,10 +2340,8 @@ detailtex_t* R_GetDetailTexture(lumpnum_t lump, const dduri_t* external)
     {
         detailtex_t* dTex = detailTextures[i];
         if(dTex->lump == lump &&
-           ((dTex->external == 0 && external == 0) ||
-             (dTex->external && external &&
-              !stricmp(Str_Text(Uri_Scheme(dTex->external)), Str_Text(Uri_Scheme(external))) &&
-              !stricmp(Str_Text(Uri_Path(dTex->external)), Str_Text(Uri_Path(external))) )))
+           ((!dTex->external && !external) ||
+             (dTex->external && external && Uri_Equality(dTex->external, external)) ) )
             return dTex;
     }
     return 0;
@@ -2417,8 +2415,7 @@ lightmap_t* R_GetLightMap(const dduri_t* uri)
 
             if(!lmap->external) continue;
 
-            if(!stricmp(Str_Text(Uri_Scheme(lmap->external)), Str_Text(Uri_Scheme(uri))) &&
-               !stricmp(Str_Text(Uri_Path(lmap->external)),   Str_Text(Uri_Path(uri))))
+            if(Uri_Equality(lmap->external, uri))
                 return lmap;
         }
     }
@@ -2497,8 +2494,7 @@ flaretex_t* R_GetFlareTexture(const dduri_t* uri)
 
             if(!fTex->external) continue;
 
-            if(!stricmp(Str_Text(Uri_Scheme(fTex->external)), Str_Text(Uri_Scheme(uri))) &&
-               !stricmp(Str_Text(Uri_Path(fTex->external)),   Str_Text(Uri_Path(uri))))
+            if(Uri_Equality(fTex->external, uri))
                 return fTex;
         }
     }
@@ -2570,8 +2566,7 @@ shinytex_t* R_GetShinyTexture(const dduri_t* uri)
 
             if(!sTex->external) continue;
 
-            if(!stricmp(Str_Text(Uri_Scheme(sTex->external)), Str_Text(Uri_Scheme(uri))) &&
-               !stricmp(Str_Text(Uri_Path(sTex->external)),   Str_Text(Uri_Path(uri))))
+            if(Uri_Equality(sTex->external, uri))
                 return sTex;
         }
     }
@@ -2645,8 +2640,7 @@ masktex_t* R_GetMaskTexture(const dduri_t* uri)
 
             if(!mTex->external) continue;
 
-            if(!stricmp(Str_Text(Uri_Scheme(mTex->external)), Str_Text(Uri_Scheme(uri))) &&
-               !stricmp(Str_Text(Uri_Path(mTex->external)),   Str_Text(Uri_Path(uri))))
+            if(Uri_Equality(mTex->external, uri))
                 return mTex;
         }
     }
