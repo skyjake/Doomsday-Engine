@@ -744,7 +744,10 @@ void Rend_Console(void)
 
     if(consoleShow)
     {
-        drawConsole(consoleAlpha);        drawConsoleTitleBar(consoleAlpha);    }
+        drawConsole(consoleAlpha);
+        drawConsoleTitleBar(consoleAlpha);
+    }
+
     if(consoleShowFPS && !UI_IsActive())
         Rend_ConsoleFPS(theWindow->width - 10, 10 + (ConsoleY > 0? consoleAlpha * GetConsoleTitleBarHeight() : 0));
 

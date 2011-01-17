@@ -380,7 +380,8 @@ static uint bufferGetLines(cbuffer_t* buf, uint reqCount, int firstIdx,
             const cbline_t* line = bufferGetLine(buf, idx++);
             if((blflags & BLF_OMIT_RULER) && (line->flags & CBLF_RULER))
                 continue;
-            if((blflags & BLF_OMIT_EMPTYLINE) && (!line->text || line->len == 0))
+            if((blflags & BLF_OMIT_EMPTYLINE) && !(line->flags & CBLF_RULER) &&
+               (!line->text || line->len == 0))
                 continue;
             list[n++] = line;
         }}
