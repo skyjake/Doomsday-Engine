@@ -50,6 +50,7 @@
 typedef struct materialbind_s {
     char            name[9];
     material_t*     mat;
+    materialnamespaceid_t mnamespace;
     byte            prepared;
     struct ded_detailtexture_s* detail[2];
     struct ded_decor_s* decoration[2];
@@ -211,17 +212,14 @@ static materialnum_t getMaterialNumForName(const char* name, uint hash,
 }
 
 static void newMaterialNameBinding(material_t* mat, const char* name,
-                                   materialnamespaceid_t mnamespace,
-                                   uint hash)
+    materialnamespaceid_t mnamespace, uint hash)
 {
-    materialbind_t*     mb;
+    materialbind_t* mb;
 
     if(++numMaterialBinds > maxMaterialBinds)
     {   // Allocate more memory.
         maxMaterialBinds += MATERIALS_BLOCK_ALLOC;
-        materialBinds =
-            Z_Realloc(materialBinds, sizeof(*materialBinds) * maxMaterialBinds,
-                      PU_APPSTATIC);
+        materialBinds = Z_Realloc(materialBinds, sizeof(*materialBinds) * maxMaterialBinds, PU_APPSTATIC);
     }
 
     // Add the new material to the end.
@@ -230,6 +228,7 @@ static void newMaterialNameBinding(material_t* mat, const char* name,
     strncpy(mb->name, name, 8);
     mb->name[8] = '\0';
     mb->mat = mat;
+    mb->mnamespace = mnamespace;
     mat->_bindId = (mb - materialBinds) + 1;
     mb->prepared = 0;
 
@@ -247,7 +246,7 @@ void Materials_LinkAssociatedDefinitions(void)
     for(i = 0; i < numMaterialBinds; ++i)
     {
         materialbind_t* mb = &materialBinds[i];
-        if(mb->mat->mnamespace == MN_SYSTEM)
+        if(mb->mnamespace == MN_SYSTEM)
             continue;
 
         // Surface decorations (lights and models).
@@ -393,13 +392,12 @@ static void materialUpdateCustomStatus(material_t* mat)
     }
 }
 
-static material_t* createMaterial(materialnamespaceid_t mnamespace, short width,
-    short height, byte flags, material_env_class_t envClass, gltextureid_t tex,
-    short texOriginX, short texOriginY)
+static material_t* createMaterial(short width, short height, byte flags,
+    material_env_class_t envClass, gltextureid_t tex, short texOriginX,
+    short texOriginY)
 {
     material_t* mat = linkMaterialToGlobalList(allocMaterial());
     
-    mat->mnamespace = mnamespace;
     mat->width = width;
     mat->height = height;
     mat->flags = flags;
@@ -415,15 +413,13 @@ static material_t* createMaterial(materialnamespaceid_t mnamespace, short width,
     return mat;
 }
 
-static material_t* createMaterialFromDef(materialnamespaceid_t mnamespace,
-    short width, short height, byte flags, material_env_class_t envClass,
-    const gltexture_t* tex, ded_material_t* def)
+static material_t* createMaterialFromDef(short width, short height, byte flags,
+    material_env_class_t envClass, const gltexture_t* tex, ded_material_t* def)
 {
     assert(def);
     {
     material_t* mat = linkMaterialToGlobalList(allocMaterial());
 
-    mat->mnamespace = mnamespace;
     mat->width = width;
     mat->height = height;
     mat->flags = flags;
@@ -613,7 +609,6 @@ Con_Message("Materials_New: Warning, attempted to create material in "
         //mat->def = 0;
         mat->inter = 0;
         mat->envClass = envClass;
-        mat->mnamespace = mnamespace;
 
         materialUpdateCustomStatus(mat);
         return mat;
@@ -637,7 +632,7 @@ Con_Message("Materials_New: Warning, attempted to create material "
     if(tex == 0 || !(width > 0) || !(height > 0))
         return NULL;
 
-    mat = createMaterial(mnamespace, width, height, flags, envClass, tex, texOriginX, texOriginY);
+    mat = createMaterial(width, height, flags, envClass, tex, texOriginX, texOriginY);
 
     // Now create a name binding for it.
     newMaterialNameBinding(mat, name, mnamespace, hash);
@@ -759,8 +754,6 @@ Con_Message("Warning: Attempted to create/update Material in unknown Namespace '
         mat->def = def;
         mat->inter = 0;
         mat->envClass = envClass;
-        if(mnamespace != MN_ANY)
-            mat->mnamespace = mnamespace;
 
         materialUpdateCustomStatus(mat);
         return mat;
@@ -784,7 +777,7 @@ Con_Message("Warning: Attempted to create Material in unknown Namespace '%i', ig
     if(tex == 0 || !(width > 0) || !(height > 0))
         return 0;
 
-    mat = createMaterialFromDef(mnamespace, width, height, flags, envClass, tex, def);
+    mat = createMaterialFromDef(width, height, flags, envClass, tex, def);
 
     // Now create a name binding for it.
     newMaterialNameBinding(mat, name, mnamespace, hash);
@@ -938,9 +931,21 @@ const char* Materials_GetName(material_t* mat)
 
 dduri_t* Materials_GetPath(material_t* mat)
 {
+    materialbind_t* mb;
     dduri_t* uri;
-    ddstring_t path; Str_Init(&path);
-    Str_Appendf(&path, "%s%s", Str_Text(nameForNamespaceId(mat->mnamespace)), Materials_GetName(mat));
+    ddstring_t path;
+    
+    if(!mat)
+    {
+#if _DEBUG
+        Con_Message("Warning:Materials_GetPath: Attempted with invalid reference (mat==0), returning 0.\n");
+#endif
+        return 0;
+    }
+
+    mb = bindForMaterial(mat);
+    Str_Init(&path);
+    Str_Appendf(&path, "%s%s", mb? Str_Text(nameForNamespaceId(mb->mnamespace)) : "", Materials_GetName(mat));
     uri = Uri_Construct2(Str_Text(&path), RC_NULL);
     Str_Free(&path);
     return uri;
@@ -1265,7 +1270,7 @@ static void printMaterialInfo(const materialbind_t* mb, boolean printNamespace)
     int numDigits = M_NumDigits(numMaterialBinds);
 
     Con_Printf(" %*u: \"%s%s\" [%i, %i]", numDigits, (unsigned int) mb->mat->_bindId,
-               printNamespace? Str_Text(nameForNamespaceId(mb->mat->mnamespace)) : "", mb->name,
+               printNamespace? Str_Text(nameForNamespaceId(mb->mnamespace)) : "", mb->name,
                mb->mat->width, mb->mat->height);
 
     /*{ uint i;

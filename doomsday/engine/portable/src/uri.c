@@ -45,8 +45,7 @@ static __inline dduri_t* allocUri(const char* path, resourceclass_t defaultResou
     return uri;
 }
 
-static void parseScheme(dduri_t* uri, resourceclass_t defaultResourceClass,
-    materialnamespaceid_t defaultMaterialNamespace)
+static void parseScheme(dduri_t* uri, resourceclass_t defaultResourceClass)
 {
     Str_Clear(&uri->_scheme);
 
@@ -337,7 +336,7 @@ void Uri_SetUri3(dduri_t* uri, const char* path, resourceclass_t defaultResource
     // Convert all slashes to the host OS's directory separator,
     // for compatibility with the sys_filein routines.
     F_FixSlashes(&uri->_path);
-    parseScheme(uri, defaultResourceClass, 0);
+    parseScheme(uri, defaultResourceClass);
 }
 
 void Uri_SetUri2(dduri_t* uri, const char* path)

@@ -634,8 +634,7 @@ enum /* Do not change the numerical values of the constants! */
     DMU_HEIGHT,
     DMU_TARGET_HEIGHT,
     DMU_SPEED,
-    DMU_SEG_COUNT,
-    DMU_NAMESPACE
+    DMU_SEG_COUNT
 };
 
 // Linedef flags:

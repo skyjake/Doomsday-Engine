@@ -173,9 +173,6 @@ boolean Material_GetProperty(const material_t* mat, setargs_t* args)
     case DMU_HEIGHT:
         DMU_GetValue(DMT_MATERIAL_HEIGHT, &mat->height, args, 0);
         break;
-    case DMU_NAMESPACE:
-        DMU_GetValue(DMT_MATERIAL_MNAMESPACE, &mat->mnamespace, args, 0);
-        break;
     default:
         Con_Error("Sector_GetProperty: No property %s.\n", DMU_Str(args->prop));
     }

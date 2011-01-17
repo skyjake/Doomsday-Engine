@@ -29,6 +29,18 @@
 #include "def_data.h"
 #include "p_material.h"
 
+typedef enum {
+    MN_ANY = -1,
+    MATERIALNAMESPACEID_FIRST,
+    MN_TEXTURES = MATERIALNAMESPACEID_FIRST,
+    MN_FLATS,
+    MN_SPRITES,
+    MN_SYSTEM,
+    MATERIALNAMESPACEID_COUNT
+} materialnamespaceid_t;
+
+#define VALID_MATERIALNAMESPACEID(id)   ((id) >= MATERIALNAMESPACEID_FIRST && (id) < MATERIALNAMESPACEID_COUNT)
+
 void            P_MaterialsRegister(void);
 
 void            Materials_Initialize(void);
