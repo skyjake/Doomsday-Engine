@@ -125,17 +125,22 @@ static __inline materialbind_t* bindForMaterial(const material_t* mat)
     return 0;
 }
 
-static materialnamespaceid_t parseMaterialNamespaceIdent(const dduri_t* path)
+static int compareMaterialBindByName(const void* e1, const void* e2)
 {
-    const char* p = Str_Text(Uri_Scheme(path));
+    return stricmp((*(const materialbind_t**)e1)->name, (*(const materialbind_t**)e2)->name);
+}
+
+static materialnamespaceid_t parseMaterialNamespaceIdent(const char* name)
+{
+    const char* p = name;
     materialnamespaceid_t mni = MN_ANY;
-    if(!Str_CompareIgnoreCase(Uri_Scheme(path), MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME))
+    if(!stricmp(name, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME))
         mni = MN_TEXTURES;
-    else if(!Str_CompareIgnoreCase(Uri_Scheme(path), MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME))
+    else if(!stricmp(name, MATERIALS_FLATS_RESOURCE_NAMESPACE_NAME))
         mni = MN_FLATS;
-    else if(!Str_CompareIgnoreCase(Uri_Scheme(path), MATERIALS_SPRITES_RESOURCE_NAMESPACE_NAME))
+    else if(!stricmp(name, MATERIALS_SPRITES_RESOURCE_NAMESPACE_NAME))
         mni = MN_SPRITES;
-    else if(!Str_CompareIgnoreCase(Uri_Scheme(path), MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME))
+    else if(!stricmp(name, MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME))
         mni = MN_SYSTEM;
     return mni;
 }
@@ -562,8 +567,7 @@ Con_Message("Materials_New: Warning, attempted to create material with "
     name[n] = '\0';
     hash = hashForName(name);
 
-    mnamespace = parseMaterialNamespaceIdent(rawName);
-
+    mnamespace = parseMaterialNamespaceIdent(Str_Text(Uri_Scheme(rawName)));
     // Check if we've already created a material for this.
     if(mnamespace == MN_ANY)
     {   // Caller doesn't care which namespace. This is only valid if we
@@ -709,7 +713,7 @@ Str_Delete(path);
     }
     hash = hashForName(name);
 
-    mnamespace = parseMaterialNamespaceIdent(rawName);
+    mnamespace = parseMaterialNamespaceIdent(Str_Text(Uri_Scheme(rawName)));
     // Check if we've already created a material for this.
     if(mnamespace == MN_ANY)
     {   // Caller doesn't care which namespace. This is only valid if we
@@ -804,7 +808,7 @@ static materialnum_t Materials_CheckNumForPath2(const dduri_t* uri)
     if(Str_IsEmpty(Uri_Path(uri)) || !Str_CompareIgnoreCase(Uri_Path(uri), "-"))
         return 0;
 
-    mnamespace = parseMaterialNamespaceIdent(uri);
+    mnamespace = parseMaterialNamespaceIdent(Str_Text(Uri_Scheme(uri)));
     if(mnamespace != MN_ANY && !VALID_MATERIALNAMESPACEID(mnamespace))
     {
 #if _DEBUG
@@ -1256,75 +1260,146 @@ uint Materials_Count(void)
     return 0;
 }
 
-static void printMaterialInfo(materialnum_t num, boolean printNamespace)
+static void printMaterialInfo(const materialbind_t* mb, boolean printNamespace)
 {
-    const materialbind_t* mb = &materialBinds[num];
     int numDigits = M_NumDigits(numMaterialBinds);
-    uint i;
 
-    Con_Printf(" %*u - \"%s\"", numDigits, (unsigned int) num, mb->name);
-    if(printNamespace)
-        Con_Printf(" (%i)", mb->mat->mnamespace);
-    Con_Printf(" [%i, %i]", mb->mat->width, mb->mat->height);
+    Con_Printf(" %*u: \"%s%s\" [%i, %i]", numDigits, (unsigned int) mb->mat->_bindId,
+               printNamespace? Str_Text(nameForNamespaceId(mb->mat->mnamespace)) : "", mb->name,
+               mb->mat->width, mb->mat->height);
 
+    /*{ uint i;
     for(i = 0; i < mb->mat->numLayers; ++i)
     {
         Con_Printf(" %i:%s", i, GL_GetGLTexture(mb->mat->layers[i].tex)->name);
-    }
+    }}*/
     Con_Printf("\n");
 }
 
-static void printMaterials(materialnamespaceid_t mnamespace, const char* like)
+static materialbind_t** collectMaterials(materialnamespaceid_t mnamespace, const char* like,
+    size_t* count, materialbind_t** storage)
 {
-    materialnum_t       i;
+    size_t n = 0;
 
-    if(!(mnamespace < MATERIALNAMESPACEID_COUNT))
-        return;
-
-    if(mnamespace == MN_ANY)
+    if(VALID_MATERIALNAMESPACEID(mnamespace))
     {
-        Con_Printf("Known Materials (IDX - Name (Namespace) [width, height]):\n");
-
-        for(i = 0; i < numMaterialBinds; ++i)
-        {
-            materialbind_t*     mb = &materialBinds[i];
-
-            if(like && like[0] && strnicmp(mb->name, like, strlen(like)))
-                continue;
-
-            printMaterialInfo(i, true);
-        }
-    }
-    else
-    {
-        Con_Printf("Known Materials in Namespace %i (IDX - Name "
-                   "[width, height]):\n", mnamespace);
-
         if(materialBinds)
         {
-            uint                i;
-
+            uint i;
             for(i = 0; i < MATERIAL_NAME_HASH_SIZE; ++i)
                 if(hashTable[mnamespace][i])
                 {
-                    materialnum_t       num = hashTable[mnamespace][i] - 1;
-                    materialbind_t*     mb = &materialBinds[num];
+                    materialnum_t num = hashTable[mnamespace][i] - 1;
+                    materialbind_t* mb = &materialBinds[num];
 
                     for(;;)
                     {
-                        if(like && like[0] && strnicmp(mb->name, like, strlen(like)))
-                            continue;
-
-                        printMaterialInfo(num, false);
+                        if(!(like && like[0] && strnicmp(mb->name, like, strlen(like))))
+                        {
+                            if(storage)
+                                storage[n++] = mb;
+                            else
+                                ++n;
+                        }
 
                         if(!mb->hashNext)
                             break;
-
                         mb = &materialBinds[mb->hashNext - 1];
                     }
                 }
         }
     }
+    else
+    {   // Any.
+        materialnum_t i;
+        for(i = 0; i < numMaterialBinds; ++i)
+        {
+            materialbind_t* mb = &materialBinds[i];
+            if(like && like[0] && strnicmp(mb->name, like, strlen(like)))
+                continue;
+            if(storage)
+                storage[n++] = mb;
+            else
+                ++n;
+        }
+    }
+
+    if(storage)
+    {
+        storage[n] = 0; // Terminate.
+        if(count)
+            *count = n;
+        return storage;
+    }
+
+    if(n == 0)
+    {
+        if(count)
+            *count = 0;
+        return 0;
+    }
+
+    storage = malloc(sizeof(materialbind_t*) * (n+1));
+    return collectMaterials(mnamespace, like, count, storage);
+}
+
+static size_t printMaterials2(materialnamespaceid_t mnamespace, const char* like)
+{
+    size_t count = 0;
+    materialbind_t** foundMaterials = collectMaterials(mnamespace, like, &count, 0);
+
+    if(VALID_MATERIALNAMESPACEID(mnamespace))
+        Con_FPrintf(CBLF_YELLOW, "Known Materials in \"%s\":\n", Str_Text(nameForNamespaceId(mnamespace)));
+    else // Any namespace.
+        Con_FPrintf(CBLF_YELLOW, "Known Materials:\n");
+
+    if(!foundMaterials)
+    {
+        Con_Printf(" None found.\n");
+        return 0;
+    }
+
+    // Print the result index key.
+    if(VALID_MATERIALNAMESPACEID(mnamespace))
+    {
+        Con_Printf(" uid: \"name\" [width, height]\n");
+        Con_FPrintf(CBLF_RULER, "");
+    }
+    else
+    {   // Any namespace.
+        Con_Printf(" uid: \"(namespace:)name\" [width, height]\n");
+        Con_FPrintf(CBLF_RULER, "");
+    }
+
+    // Sort and print the index.
+    qsort(foundMaterials, count, sizeof(*foundMaterials), compareMaterialBindByName);
+
+    { const materialbind_t** ptr;
+    for(ptr = foundMaterials; *ptr; ++ptr)
+    {
+        printMaterialInfo(*ptr, mnamespace == MN_ANY);
+    }}
+
+    free(foundMaterials);
+    return count;
+}
+
+static void printMaterials(materialnamespaceid_t mnamespace, const char* like)
+{
+    // Only one namespace to print?
+    if(VALID_MATERIALNAMESPACEID(mnamespace))
+    {
+        printMaterials2(mnamespace, like);
+        return;
+    }
+
+    // Collect and sort in each namespace separately.
+    { int i;
+    for(i = MATERIALNAMESPACEID_FIRST; i < MATERIALNAMESPACEID_COUNT; ++i)
+    {
+        if(printMaterials2((materialnamespaceid_t)i, like) != 0)
+            Con_FPrintf(CBLF_RULER, "");
+    }}
 }
 
 typedef struct animframe_s {
@@ -1607,22 +1682,12 @@ void Materials_PrecacheAnimGroup(material_t* mat, boolean yes)
 
 D_CMD(ListMaterials)
 {
-    materialnamespaceid_t mnamespace = MN_ANY;
-
-    if(argc > 1)
+    materialnamespaceid_t mnamespace = (argc > 1? parseMaterialNamespaceIdent(argv[1]) : MN_ANY);
+    if(argc > 2 && mnamespace == MN_ANY)
     {
-        mnamespace = atoi(argv[1]);
-        if(mnamespace < MATERIALNAMESPACEID_FIRST)
-        {
-            mnamespace = MN_ANY;
-        }
-        else if(!(mnamespace < MATERIALNAMESPACEID_COUNT))
-        {
-            Con_Printf("Invalid namespace \"%s\".\n", argv[1]);
-            return false;
-        }
+        Con_Printf("Invalid namespace \"%s\".\n", argv[1]);
+        return false;
     }
-
-    printMaterials(mnamespace, argc > 2? argv[2] : NULL);
+    printMaterials(mnamespace, (argc > 2? argv[2] : (argc > 1 && mnamespace == MN_ANY? argv[1] : NULL)));
     return true;
 }
