@@ -1436,8 +1436,8 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                     for(;;)
                     {
                         READLABEL;
-                        RV_URI("Material", &sl->material, 0);
-                        RV_URI("Texture", &sl->material, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME);
+                        RV_URI("Material", &sl->material, 0)
+                        RV_URI("Texture", &sl->material, MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME)
                         RV_FLAGS("Flags", sl->flags, "slf_")
                         RV_FLT("Offset", sl->offset)
                         RV_FLT("Color limit", sl->colorLimit)
