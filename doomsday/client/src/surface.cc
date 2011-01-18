@@ -18,6 +18,7 @@
  */
 
 #include "surface.h"
+#include "video.h"
 
 using namespace de;
 
@@ -27,4 +28,15 @@ Surface::~Surface()
 QImage Surface::captureImage() const
 {
     throw CaptureError("Surface::captureImage", "Surface cannot be converted to image");
+}
+
+void Surface::activate()
+{
+    // Tell the video subsystem to use this surface as the rendering target.
+    theVideo().setTarget(*this);
+}
+
+void Surface::deactivate()
+{
+    theVideo().releaseTarget(*this);
 }

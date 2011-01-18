@@ -90,7 +90,7 @@ public:
      * Releases the current drawing target. This should be called once all
      * the drawing operations are done.
      */
-    virtual void releaseTarget();
+    virtual void releaseTarget(Surface& surface);
         
     /**
      * Returns the current target drawing surface.

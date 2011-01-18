@@ -39,7 +39,7 @@ ClientApp::ClientApp(int argc, char** argv)
     QGLFormat glFormat;
     glFormat.setDoubleBuffer(true);
     glFormat.setDepth(true);
-    glFormat.setDepthBufferSize(32);
+    glFormat.setDepthBufferSize(16);
     Window* window = new Window(glFormat);
 
     // Assign it the main window status.

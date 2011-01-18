@@ -49,12 +49,14 @@ void Window::setFlags(Flags allFlags)
     _flags = allFlags;
 }
 
+void Window::surfaceResized(const QSize& /*size*/)
+{
+    // Resize visuals.
+    _root.update();
+}
+
 void Window::draw()
 {
-    theVideo().setTarget(*this);
-
     // Draw all the visuals.
     _root.draw();
-    
-    theVideo().releaseTarget();
 }

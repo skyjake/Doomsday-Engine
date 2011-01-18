@@ -18,6 +18,7 @@
  */
 
 #include "glwindowsurface.h"
+#include <QDebug>
 
 GLWindowSurface::GLWindowSurface(const QGLFormat& format, QWidget* parent, const QGLWidget* shareWidget)
     : QGLWidget(format, parent, shareWidget)
@@ -27,11 +28,17 @@ GLWindowSurface::GLWindowSurface(const QGLFormat& format, QWidget* parent, const
 void GLWindowSurface::initializeGL()
 {}
 
-void GLWindowSurface::resizeGL(int /*w*/, int /*h*/)
-{}
+void GLWindowSurface::resizeGL(int w, int h)
+{
+    surfaceResized(QSize(w, h));
+}
 
 void GLWindowSurface::paintGL()
-{}
+{
+    activate();
+    draw();
+    deactivate();
+}
 
 QSize GLWindowSurface::size() const
 {
@@ -41,15 +48,4 @@ QSize GLWindowSurface::size() const
 void GLWindowSurface::setSize(const QSize& size)
 {
     QGLWidget::resize(size);
-}
-
-void GLWindowSurface::activate()
-{
-    // Tell the video subsystem to use this surface as the rendering target.
-}
-
-void GLWindowSurface::deactivate()
-{
-    // Tell the video subsystem that this surface is no longer the rendering target.
-
 }

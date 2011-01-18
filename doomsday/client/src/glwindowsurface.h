@@ -39,8 +39,8 @@ public:
 
     QSize size() const;
     void setSize(const QSize& size);
-    void activate();
-    void deactivate();
+
+    virtual void draw() = 0;
 
 signals:
 

@@ -70,14 +70,15 @@ Surface* Video::target() const
 
 void Video::setTarget(Surface& surface)
 {
+    // TODO: Stack needed?
+
+    Q_ASSERT(_target == 0);
     _target = &surface;
-    _target->activate();
 }
 
-void Video::releaseTarget()
+void Video::releaseTarget(Surface& surface)
 {
-    Q_ASSERT(_target != 0);
-    _target->deactivate();
+    Q_ASSERT(_target == &surface);
     _target = 0;
 }
 

@@ -53,12 +53,12 @@ public:
     /**
      * Activates the surface as the current rendering target of the video subsystem.
      */
-    virtual void activate() = 0;
+    virtual void activate();
 
     /**
      * Deactivates the surface.
      */
-    virtual void deactivate() = 0;
+    virtual void deactivate();
 
     /**
      * Captures the contents of the drawing surface and stores them into an image.
@@ -66,6 +66,11 @@ public:
      * @return  Captured image. Caller gets ownership.
      */
     virtual QImage captureImage() const;
+
+    /**
+     * Called to notify that the surface size has changed.
+     */
+    virtual void surfaceResized(const QSize& size) = 0;
 };
 
 #endif /* LIBDENG2_SURFACE_H */
