@@ -1429,6 +1429,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\resourcerecord.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\s_cache.c"
 				>
 			</File>
@@ -3087,6 +3091,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\resourcenamespace.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\resourcerecord.h"
 				>
 			</File>
 			<File

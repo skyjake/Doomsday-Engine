@@ -328,6 +328,7 @@
 		<Unit filename="..\..\engine\portable\include\rend_sky.h" />
 		<Unit filename="..\..\engine\portable\include\rend_sprite.h" />
 		<Unit filename="..\..\engine\portable\include\resourcenamespace.h" />
+		<Unit filename="..\..\engine\portable\include\resourcerecord.h" />
 		<Unit filename="..\..\engine\portable\include\s_cache.h" />
 		<Unit filename="..\..\engine\portable\include\s_environ.h" />
 		<Unit filename="..\..\engine\portable\include\s_logic.h" />
@@ -747,6 +748,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="..\..\engine\portable\src\resourcenamespace.c" />
+		<Unit filename="..\..\engine\portable\src\resourcerecord.c" />
 		<Unit filename="..\..\engine\portable\src\s_cache.c">
 			<Option compilerVar="CC" />
 		</Unit>

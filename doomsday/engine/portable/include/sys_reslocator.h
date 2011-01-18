@@ -28,6 +28,7 @@
 #include "dd_string.h"
 
 struct resourcenamespace_s;
+struct resourcerecord_s;
 struct pathdirectory_s;
 struct dduri_s;
 
@@ -107,6 +108,19 @@ boolean F_IsValidResourceNamespaceId(int value);
 struct resourcenamespace_s* F_ToResourceNamespace(resourcenamespaceid_t rni);
 
 /**
+ * Attempt to locate a known resource.
+ *
+ * @param record        Record of the resource being searched for.
+ *
+ * @param foundPath     If found, the fully qualified path is written back here.
+ *                      Can be @c NULL, changing this routine to only check that
+ *                      resource exists is readable.
+ *
+ * @return  Non-zero iff a resource was found.
+ */
+uint F_FindResourceForRecord(struct resourcerecord_s* rec, ddstring_t* foundPath);
+
+/**
  * Attempt to locate a named resource.
  *
  * @param rclass        Class of resource being searched for (if known).
@@ -125,19 +139,19 @@ struct resourcenamespace_s* F_ToResourceNamespace(resourcenamespaceid_t rni);
  *                      look for matches. If not found or not specified then search
  *                      for matches without a suffix.
  *
- * @return  @c true, iff a resource was found.
+ * @return  @c Non-zero iff a resource was found.
  */
-const char* F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPath,
+uint F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPath,
     ddstring_t* foundPath, const ddstring_t* optionalSuffix);
-const char* F_FindResourceStr2(resourceclass_t rclass, const ddstring_t* searchPath,
+uint F_FindResourceStr2(resourceclass_t rclass, const ddstring_t* searchPath,
     ddstring_t* foundPath);
-const char* F_FindResourceStr(resourceclass_t rclass, const ddstring_t* searchPath);
+uint F_FindResourceStr(resourceclass_t rclass, const ddstring_t* searchPath);
 
-const char* F_FindResource3(resourceclass_t rclass, const char* searchPath,
+uint F_FindResource3(resourceclass_t rclass, const char* searchPath,
     ddstring_t* foundPath, const char* optionalSuffix);
-const char* F_FindResource2(resourceclass_t rclass, const char* searchPath,
+uint F_FindResource2(resourceclass_t rclass, const char* searchPath,
     ddstring_t* foundPath);
-const char* F_FindResource(resourceclass_t rclass, const char* searchPath);
+uint F_FindResource(resourceclass_t rclass, const char* searchPath);
 
 /**
  * @return  Default class associated with resources of type @a type.
@@ -259,5 +273,12 @@ const ddstring_t* F_PrettyPath(const ddstring_t* path);
  * Convert a resourceclass_t constant into a string for error/debug messages.
  */
 const char* F_ResourceClassStr(resourceclass_t rclass);
+
+/**
+ * Construct a new Uri list from the specified search path string list.
+ */
+dduri_t** F_CreateUriList(resourceclass_t rclass, const ddstring_t* _searchPaths);
+
+void F_DestroyUriList(dduri_t** list);
 
 #endif /* LIBDENG_SYSTEM_RESOURCE_LOCATOR_H */

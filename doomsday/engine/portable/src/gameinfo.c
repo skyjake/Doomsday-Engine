@@ -26,165 +26,7 @@
 #include "de_console.h"
 
 #include "gameinfo.h"
-
-static __inline size_t countElements(ddstring_t** list)
-{
-    size_t n = 0;
-    if(list)
-        while(list[n++]);
-    return n;
-}
-
-gameresource_record_t* GameResourceRecord_Construct2(resourceclass_t rclass, int rflags,
-    const ddstring_t* name)
-{
-    gameresource_record_t* rec = malloc(sizeof(*rec));
-    rec->_rclass = rclass;
-    rec->_rflags = rflags;
-    rec->_names = 0;
-    rec->_namesCount = 0;
-    rec->_identityKeys = 0;
-    Str_Init(&rec->_path);
-    GameResourceRecord_AddName(rec, name);
-    return rec;
-}
-
-gameresource_record_t* GameResourceRecord_Construct(resourceclass_t rclass, int rflags)
-{
-    return GameResourceRecord_Construct2(rclass, rflags, 0);
-}
-
-void GameResourceRecord_Destruct(gameresource_record_t* rec)
-{
-    assert(rec);
-    if(rec->_namesCount != 0)
-    {
-        int j;
-        for(j = 0; j < rec->_namesCount; ++j)
-            Str_Delete(rec->_names[j]);
-        free(rec->_names);
-    }
-    Str_Free(&rec->_path);
-    if(rec->_identityKeys)
-    {
-        size_t i;
-        for(i = 0; rec->_identityKeys[i]; ++i)
-            Str_Delete(rec->_identityKeys[i]);
-        free(rec->_identityKeys);
-    }
-    free(rec);
-}
-
-void GameResourceRecord_AddName(gameresource_record_t* rec, const ddstring_t* name)
-{
-    assert(rec);
-    if(name == 0 || Str_IsEmpty(name))
-        return;
-
-    // Is this name unique? We don't want duplicates.
-    { int i;
-    for(i = 0; i < rec->_namesCount; ++i)
-        if(!Str_CompareIgnoreCase(rec->_names[i], Str_Text(name)))
-            return;
-    }
-
-    // Add the new name.
-    rec->_names = realloc(rec->_names, sizeof(*rec->_names) * ++rec->_namesCount);
-    rec->_names[rec->_namesCount-1] = Str_New();
-    Str_Copy(rec->_names[rec->_namesCount-1], name);
-}
-
-void GameResourceRecord_AddIdentityKey(gameresource_record_t* rec, const ddstring_t* identityKey)
-{
-    assert(rec && identityKey);
-    {
-    size_t num = countElements(rec->_identityKeys);
-    rec->_identityKeys = realloc(rec->_identityKeys, sizeof(*rec->_identityKeys) * MAX_OF(num+1, 2));
-    if(num) num -= 1;
-    rec->_identityKeys[num] = Str_New();
-    Str_Copy(rec->_identityKeys[num], identityKey);
-    rec->_identityKeys[num+1] = 0; // Terminate.
-    }
-}
-
-ddstring_t* GameResourceRecord_SearchPaths(gameresource_record_t* rec)
-{
-    assert(rec);
-    {
-    ddstring_t* paths;
-    size_t requiredLength = 0;
-
-    { int i;
-    for(i = 0; i < rec->_namesCount; ++i)
-        requiredLength += Str_Length(rec->_names[i]);
-    }
-    requiredLength += rec->_namesCount;
-
-    if(requiredLength == 0)
-        return 0;
-
-    // Build path list in reverse; newer paths have precedence.
-    paths = Str_New();
-    Str_Reserve(paths, requiredLength);
-    { int i;
-    for(i = rec->_namesCount-1; i >= 0; i--)
-        Str_Appendf(paths, "%s;", Str_Text(rec->_names[i]));
-    }
-    return paths;
-    }
-}
-
-const ddstring_t* GameResourceRecord_ResolvedPath(gameresource_record_t* rec, boolean canLocate)
-{
-    assert(rec);
-    if(Str_IsEmpty(&rec->_path) && canLocate)
-    {
-        ddstring_t* searchPaths = GameResourceRecord_SearchPaths(rec);
-        const char* result = F_FindResource2(rec->_rclass, Str_Text(searchPaths), &rec->_path);
-        Str_Delete(searchPaths);
-    }
-    if(!Str_IsEmpty(&rec->_path))
-        return &rec->_path;
-    return 0;
-}
-
-resourceclass_t GameResourceRecord_ResourceClass(gameresource_record_t* rec)
-{
-    assert(rec);
-    return rec->_rclass;
-}
-
-int GameResourceRecord_ResourceFlags(gameresource_record_t* rec)
-{
-    assert(rec);
-    return rec->_rflags;
-}
-
-const ddstring_t** GameResourceRecord_IdentityKeys(gameresource_record_t* rec)
-{
-    assert(rec);
-    return rec->_identityKeys;
-}
-
-void GameResourceRecord_Print(gameresource_record_t* rec, boolean printStatus)
-{
-    assert(rec);
-    {
-    ddstring_t* searchPaths;
-
-    if(printStatus)
-        Con_Printf("%s", Str_Length(&rec->_path) == 0? " ! ":"   ");
-
-    searchPaths = GameResourceRecord_SearchPaths(rec);
-    Con_PrintPathList3(Str_Text(searchPaths), " or ", PPF_TRANSFORM_PATH_MAKEPRETTY);
-    Str_Delete(searchPaths);
-
-    if(printStatus)
-        Con_Printf(" %s%s", Str_Length(&rec->_path) == 0? "- missing" : "- found ",
-                   Str_Length(&rec->_path) == 0? "" : Str_Text(F_PrettyPath(&rec->_path)));
-    Con_Printf("\n");
-    }
-}
+#include "resourcerecord.h"
 
 gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey,
     const ddstring_t* dataPath, const ddstring_t* defsPath, const char* mainConfig,
@@ -245,7 +87,7 @@ gameinfo_t* P_CreateGameInfo(pluginid_t pluginId, const char* identityKey,
     { size_t i;
     for(i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
-        gameresource_recordset_t* rset = &info->_requiredResources[i];
+        resourcerecordset_t* rset = &info->_requiredResources[i];
         rset->numRecords = 0;
         rset->records = 0;
     }}
@@ -271,14 +113,14 @@ void P_DestroyGameInfo(gameinfo_t* info)
     { int i;
     for(i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
-        gameresource_recordset_t* rset = &info->_requiredResources[i];
+        resourcerecordset_t* rset = &info->_requiredResources[i];
 
         if(!rset || rset->numRecords == 0)
             continue;
 
-        { gameresource_record_t** rec;
+        { resourcerecord_t** rec;
         for(rec = rset->records; *rec; rec++)
-            GameResourceRecord_Destruct(*rec);
+            ResourceRecord_Destruct(*rec);
         }
         free(rset->records);
         rset->records = 0;
@@ -288,12 +130,12 @@ void P_DestroyGameInfo(gameinfo_t* info)
     free(info);
 }
 
-gameresource_record_t* GameInfo_AddResource(gameinfo_t* info, resourceclass_t rclass,
-    gameresource_record_t* record)
+resourcerecord_t* GameInfo_AddResource(gameinfo_t* info, resourceclass_t rclass,
+    resourcerecord_t* record)
 {
     assert(info && VALID_RESOURCE_CLASS(rclass) && record);
     {
-    gameresource_recordset_t* rset = &info->_requiredResources[rclass];
+    resourcerecordset_t* rset = &info->_requiredResources[rclass];
     rset->records = realloc(rset->records, sizeof(*rset->records) * (rset->numRecords+2));
     rset->records[rset->numRecords] = record;
     rset->records[rset->numRecords+1] = 0; // Terminate.
@@ -362,7 +204,7 @@ const ddstring_t* GameInfo_Author(gameinfo_t* info)
     return &info->_author;
 }
 
-gameresource_record_t* const* GameInfo_Resources(gameinfo_t* info, resourceclass_t rclass, size_t* count)
+resourcerecord_t* const* GameInfo_Resources(gameinfo_t* info, resourceclass_t rclass, size_t* count)
 {
     assert(info && VALID_RESOURCE_CLASS(rclass));
     if(count)

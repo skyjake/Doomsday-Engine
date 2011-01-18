@@ -325,7 +325,7 @@ boolean ResourceNamespace_AddExtraSearchPath(resourcenamespace_t* rn, const ddur
 {
     assert(rn && newUri);
 
-    if(Str_IsEmpty(Uri_Path(newUri)) || !stricmp(Str_Text(Uri_Path(newUri)), DIR_SEP_STR))
+    if(Str_IsEmpty(Uri_Path(newUri)) || !Str_CompareIgnoreCase(Uri_Path(newUri), DIR_SEP_STR))
         return false; // Not suitable.
 
     // Have we seen this path already (we don't want duplicates)?

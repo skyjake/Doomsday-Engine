@@ -740,7 +740,7 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst, void* co
         Str_Init(&searchPath); Str_Appendf(&searchPath, TEXTURES_RESOURCE_NAMESPACE_NAME":%s;", dTex->external);
         Str_Init(&foundPath);
 
-        if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) != 0 &&
+        if(F_FindResourceStr2(RC_GRAPHIC, &searchPath, &foundPath) != 0 &&
            GL_LoadImage(image, Str_Text(&foundPath)))
         {
             result = 2;
@@ -887,7 +887,7 @@ byte GL_LoadShinyTexture(image_t* image, const gltexture_inst_t* inst, void* con
     Str_Init(&searchPath); Str_Appendf(&searchPath, LIGHTMAPS_RESOURCE_NAMESPACE_NAME":%s;", sTex->external);
     Str_Init(&foundPath);
 
-    if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) != 0 &&
+    if(F_FindResourceStr2(RC_GRAPHIC, &searchPath, &foundPath) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
@@ -920,7 +920,7 @@ byte GL_LoadMaskTexture(image_t* image, const gltexture_inst_t* inst, void* cont
     Str_Init(&searchPath); Str_Appendf(&searchPath, LIGHTMAPS_RESOURCE_NAMESPACE_NAME":%s;", mTex->external);
     Str_Init(&foundPath);
 
-    if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) != 0 &&
+    if(F_FindResourceStr2(RC_GRAPHIC, &searchPath, &foundPath) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
@@ -953,7 +953,7 @@ byte GL_LoadModelSkin(image_t* image, const gltexture_inst_t* inst, void* contex
     Str_Init(&searchPath); Str_Appendf(&searchPath, "%s;", sn->path);
     Str_Init(&foundPath);
 
-    if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) != 0 &&
+    if(F_FindResourceStr2(RC_GRAPHIC, &searchPath, &foundPath) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
@@ -1683,7 +1683,7 @@ byte GL_LoadRawTex(image_t* image, const rawtex_t* r)
     Str_Init(&searchPath); Str_Appendf(&searchPath, PATCHES_RESOURCE_NAMESPACE_NAME":%s;", W_LumpName(r->lump));
     Str_Init(&foundPath);
 
-    if(F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), &foundPath) != 0 &&
+    if(F_FindResourceStr2(RC_GRAPHIC, &searchPath, &foundPath) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {   // High resolution rawtex loaded.
         result = 2;
@@ -1828,7 +1828,7 @@ DGLuint GL_GetLightMapTexture(const dduri_t* uri)
 
     if(uri)
     {
-        if(!stricmp(Str_Text(Uri_Path(uri)), "-"))
+        if(!Str_CompareIgnoreCase(Uri_Path(uri), "-"))
             return 0;
 
         if((lmap = R_GetLightMap(uri)) != 0)

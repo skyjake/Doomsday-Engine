@@ -1223,7 +1223,7 @@ static int DED_ReadData(ded_t* ded, const char* buffer, const char* sourceFile)
                 for(i = 0; i < DED_MAX_SUB_MODELS; ++i)
                 {
                     if(mdl->sub[i].filename &&
-                       !stricmp(Str_Text(Uri_Path(mdl->sub[i].filename)), "-") &&
+                       !Str_CompareIgnoreCase(Uri_Path(mdl->sub[i].filename), "-") &&
                        prevModel->sub[i].filename)
                         mdl->sub[i].filename = Uri_ConstructCopy(prevModel->sub[i].filename);
 

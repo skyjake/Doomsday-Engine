@@ -64,11 +64,12 @@ typedef struct decorsource_s {
     union decorsource_data_s {
         struct decorsource_data_light_s {
             const ded_decorlight_t* def;
+            DGLuint flareTex;
         } light;
         struct decorsource_data_model_s {
             const ded_decormodel_t* def;
             struct modeldef_s* mf;
-            float          pitch, yaw;
+            float pitch, yaw;
         } model;
     } data;
     struct decorsource_s* next;
@@ -226,18 +227,12 @@ static void projectDecoration(decorsource_t* src)
         V3_Copy(vis->data.flare.color, LUM_OMNI(lum)->color);
 
         if(def->haloRadius > 0)
-        {
             vis->data.flare.size = MAX_OF(1, def->haloRadius * 60 * (50 + haloSize) / 100.0f);
-        }
         else
-        {
             vis->data.flare.size = 0;
-        }
 
-        if(def->flare && !stricmp(Str_Text(Uri_Path(def->flare)), "-"))
-        {
-            vis->data.flare.tex = GL_GetFlareTexture(def->flare, def->flareTexture);
-        }
+        if(src->data.light.flareTex != 0)
+            vis->data.flare.tex = src->data.light.flareTex;
         else
         {   // Primary halo disabled.
             vis->data.flare.flags |= RFF_NO_PRIMARY;
@@ -442,6 +437,14 @@ static void createDecorSource(const surface_t* suf, const surfacedecor_t* dec, c
     default: Con_Error("createDecorSource: Unsupported type %i.", (int) src->type);
     case DT_LIGHT:
         src->data.light.def = DEC_LIGHT(dec)->def;
+        if(DEC_LIGHT(dec)->def)
+        {
+            const ded_decorlight_t* def = DEC_LIGHT(dec)->def;
+            if(!def->flare || Str_CompareIgnoreCase(Uri_Path(def->flare), "-"))
+            {
+                src->data.light.flareTex = GL_GetFlareTexture(def->flare, def->flareTexture);
+            }
+        }
         break;
 
     case DT_MODEL:

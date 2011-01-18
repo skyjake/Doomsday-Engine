@@ -1583,7 +1583,7 @@ if(!mat)
 
         if(def)
         {
-            if(def->flare && !stricmp(Str_Text(Uri_Path(def->flare)), "-"))
+            if(!def->flare || Str_CompareIgnoreCase(Uri_Path(def->flare), "-"))
             {
                 vis->data.flare.tex = GL_GetFlareTexture(def->flare, -1);
             }

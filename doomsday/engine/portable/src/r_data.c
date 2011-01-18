@@ -1900,13 +1900,13 @@ static boolean expandSkinName(ddstring_t* foundPath, const char* skin, const cha
         memset(&mydir, 0, sizeof(mydir));
         Dir_FileDir(modelfn, &mydir);
         Str_Appendf(&searchPath, "%s%s;", mydir.path, skin);
-        found = F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), foundPath) != 0;
+        found = F_FindResourceStr2(RC_GRAPHIC, &searchPath, foundPath) != 0;
     }
 
     if(!found)
     {   // Try the resource locator.
         Str_Clear(&searchPath); Str_Appendf(&searchPath, MODELS_RESOURCE_NAMESPACE_NAME":%s;", skin);
-        found = F_FindResource2(RC_GRAPHIC, Str_Text(&searchPath), foundPath) != 0;
+        found = F_FindResourceStr2(RC_GRAPHIC, &searchPath, foundPath) != 0;
     }
 
     Str_Free(&searchPath);
@@ -2371,7 +2371,7 @@ lightmap_t* R_CreateLightMap(const dduri_t* path)
     lightmap_t* lmap;
     char name[9];
 
-    if(!path || !stricmp(Str_Text(Uri_Path(path)), "-"))
+    if(!path || !Str_CompareIgnoreCase(Uri_Path(path), "-"))
         return 0; // Not a lightmap
 
     // Have we already created one for this?
@@ -2406,7 +2406,7 @@ lightmap_t* R_CreateLightMap(const dduri_t* path)
 
 lightmap_t* R_GetLightMap(const dduri_t* uri)
 {
-    if(uri && stricmp(Str_Text(Uri_Path(uri)), "-"))
+    if(uri && Str_CompareIgnoreCase(Uri_Path(uri), "-"))
     {
         int i;
         for(i = 0; i < numLightMaps; ++i)
@@ -2446,7 +2446,7 @@ flaretex_t* R_CreateFlareTexture(const dduri_t* path)
     flaretex_t* fTex;
     char name[9];
 
-    if(!path || !stricmp(Str_Text(Uri_Path(path)), "-"))
+    if(!path || !Str_CompareIgnoreCase(Uri_Path(path), "-"))
         return 0; // Not a flare texture.
 
     // Perhaps a "built-in" flare texture id?
@@ -2485,7 +2485,7 @@ flaretex_t* R_CreateFlareTexture(const dduri_t* path)
 
 flaretex_t* R_GetFlareTexture(const dduri_t* uri)
 {
-    if(uri && stricmp(Str_Text(Uri_Path(uri)), "-"))
+    if(uri && Str_CompareIgnoreCase(Uri_Path(uri), "-"))
     {
         int i;
         for(i = 0; i < numFlareTextures; ++i)

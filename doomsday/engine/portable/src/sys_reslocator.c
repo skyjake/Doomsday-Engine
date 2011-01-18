@@ -41,6 +41,7 @@
 
 #include "pathdirectory.h"
 #include "resourcenamespace.h"
+#include "resourcerecord.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -213,12 +214,11 @@ static boolean tryFindResource2(resourceclass_t rclass, const ddstring_t* search
     assert(inited && searchPath && !Str_IsEmpty(searchPath));
 
     // Is there a namespace we should use?
-    if(rnamespace)
+    if(rnamespace && ResourceNamespace_Find2(rnamespace, searchPath, foundPath))
     {
-        boolean result;
-        if((result = ResourceNamespace_Find2(rnamespace, searchPath, foundPath)))
+        if(foundPath)
             F_PrependBasePath(foundPath, foundPath);
-        return result;
+        return true;
     }
 
     if(F_Access(Str_Text(searchPath)))
@@ -331,24 +331,18 @@ static boolean findResource2(resourceclass_t rclass, const ddstring_t* searchPat
     }
 }
 
-static const char* findResource(resourceclass_t rclass, const ddstring_t* searchPaths,
+static int findResource(resourceclass_t rclass, const dduri_t** list,
     const ddstring_t* optionalSuffix, ddstring_t* foundPath)
 {
-    assert(inited && (rclass == RC_UNKNOWN || VALID_RESOURCE_CLASS(rclass)));
-    assert(searchPaths && !Str_IsEmpty(searchPaths));
+    assert(inited && list && (rclass == RC_UNKNOWN || VALID_RESOURCE_CLASS(rclass)));
     {
-    dduri_t* searchPath;
-    const char* result = 0;
+    uint result = 0, n = 1;
+    const dduri_t** ptr;
 
-    // Ensure the searchPath list has the required terminating semicolon.
-    searchPath = Uri_ConstructDefault();
-
-    { const char* p = Str_Text(searchPaths);
-    size_t numParsedCharacters = 0;
-    while((p = F_ParseSearchPath2(searchPath, p, ';', rclass)))
+    for(ptr = list; *ptr; ptr++, n++)
     {
+        const dduri_t* searchPath = *ptr;
         ddstring_t* resolvedPath;
-        boolean found = false;
 
         if((resolvedPath = Uri_Resolved(searchPath)) == 0)
             continue; // Incomplete path; ignore it.
@@ -356,7 +350,8 @@ static const char* findResource(resourceclass_t rclass, const ddstring_t* search
         // If this is an absolute path, locate using it.
         if(F_IsAbsolute(resolvedPath))
         {
-            found = findResource2(rclass, resolvedPath, optionalSuffix, foundPath, 0);
+            if(findResource2(rclass, resolvedPath, optionalSuffix, foundPath, 0))
+                result = n;
         }
         else
         {   // Probably a relative path.
@@ -366,7 +361,8 @@ static const char* findResource(resourceclass_t rclass, const ddstring_t* search
                 resourcenamespaceid_t rni;
                 if((rni = F_SafeResourceNamespaceForName(Str_Text(Uri_Scheme(searchPath)))) != 0)
                 {
-                    found = findResource2(rclass, resolvedPath, optionalSuffix, foundPath, getNamespaceForId(rni));
+                    if(findResource2(rclass, resolvedPath, optionalSuffix, foundPath, getNamespaceForId(rni)))
+                        result = n;
                 }
                 else
                 {
@@ -377,20 +373,11 @@ static const char* findResource(resourceclass_t rclass, const ddstring_t* search
                 }
             }
         }
-
         Str_Delete(resolvedPath);
 
-        if(found)
-        {
-            result = Str_Text(searchPaths) + numParsedCharacters;
+        if(result != 0)
             break;
-        }
-        numParsedCharacters = (p - Str_Text(searchPaths));
-    }}
-
-    if(searchPath)
-        Uri_Destruct(searchPath);
-
+    }
     return result;
     }
 }
@@ -529,18 +516,83 @@ boolean F_IsValidResourceNamespaceId(int val)
     return (boolean)(val>0 && (unsigned)val < (F_NumResourceNamespaces()+1)? 1 : 0);
 }
 
-const char* F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* _searchPaths,
+dduri_t** F_CreateUriList(resourceclass_t rclass, const ddstring_t* _searchPaths)
+{
+    assert(rclass == RC_UNKNOWN || VALID_RESOURCE_CLASS(rclass));
+    {
+    const ddstring_t* searchPaths = _searchPaths;
+    dduri_t* path, **list;
+    const char* result = 0, *p;
+    size_t numPaths, n;
+    ddstring_t temp;
+
+    if(!_searchPaths || Str_IsEmpty(_searchPaths))
+        return 0;
+
+    // Ensure the path list has the required terminating semicolon.
+    if(Str_RAt(_searchPaths, 0) != ';')
+    {
+        Str_Init(&temp);
+        Str_Appendf(&temp, "%s;", Str_Text(_searchPaths));
+        searchPaths = &temp;
+    }
+
+    path = Uri_ConstructDefault();
+
+    numPaths = 0;
+    p = Str_Text(searchPaths);
+    while((p = F_ParseSearchPath2(path, p, ';', rclass))) { ++numPaths; }
+
+    n = 0;
+    p = Str_Text(searchPaths);
+    list = malloc((numPaths+1) * sizeof(*list));
+    while((p = F_ParseSearchPath2(path, p, ';', rclass)))
+    {
+        list[n++] = Uri_ConstructCopy(path);
+    }
+    list[n] = 0; // Terminate.
+
+    Uri_Destruct(path);
+    if(searchPaths != _searchPaths)
+        Str_Free(&temp);
+    return list;
+    }
+}
+
+void F_DestroyUriList(dduri_t** list)
+{
+    if(list)
+    {
+        dduri_t** ptr;
+        for(ptr = list; *ptr; ptr++)
+            Uri_Destruct(*ptr);
+        free(list);
+    }
+}
+
+uint F_FindResource4(resourceclass_t rclass, const dduri_t** searchPaths,
+    ddstring_t* foundPath, const ddstring_t* optionalSuffix)
+{
+    assert(inited);
+    if(rclass != RC_UNKNOWN && !VALID_RESOURCE_CLASS(rclass))
+        Con_Error("F_FindResource: Invalid resource class %i.\n", rclass);
+    if(!searchPaths)
+        return 0;
+    return findResource(rclass, searchPaths, optionalSuffix, foundPath);
+}
+
+uint F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPaths,
     ddstring_t* foundPath, const ddstring_t* optionalSuffix)
 {
     assert(inited);
     {
-    ddstring_t searchPaths;
-    const char* result;
+    dduri_t** list;
+    int result = 0;
 
     if(rclass != RC_UNKNOWN && !VALID_RESOURCE_CLASS(rclass))
         Con_Error("F_FindResource: Invalid resource class %i.\n", rclass);
 
-    if(!_searchPaths || Str_IsEmpty(_searchPaths))
+    if(!searchPaths || Str_IsEmpty(searchPaths))
     {
 #if _DEBUG
         Con_Message("F_FindResource: Invalid (NULL) search path, returning not-found.\n");
@@ -548,59 +600,56 @@ const char* F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* _search
         return 0;
     }
 
-    // Ensure the searchPath list has the required terminating semicolon.
-    Str_Init(&searchPaths); Str_Copy(&searchPaths, _searchPaths);
-    if(Str_RAt(&searchPaths, 0) != ';')
-        Str_AppendChar(&searchPaths, ';');
-
-    if(0 != (result = findResource(rclass, &searchPaths, optionalSuffix, foundPath)))
+    if((list = F_CreateUriList(rclass, searchPaths)) != 0)
     {
-        result = Str_Text(_searchPaths) + (result - Str_Text(&searchPaths));
+        result = findResource(rclass, list, optionalSuffix, foundPath);
+        F_DestroyUriList(list);
     }
-    Str_Free(&searchPaths);
     return result;
     }
 }
 
-const char* F_FindResourceStr2(resourceclass_t rclass, const ddstring_t* searchPath,
+uint F_FindResourceForRecord(resourcerecord_t* rec, ddstring_t* foundPath)
+{
+    return findResource(ResourceRecord_ResourceClass(rec), ResourceRecord_SearchPaths(rec), 0, foundPath);
+}
+
+uint F_FindResourceStr2(resourceclass_t rclass, const ddstring_t* searchPath,
     ddstring_t* foundPath)
 {
     return F_FindResourceStr3(rclass, searchPath, foundPath, 0);
 }
 
-const char* F_FindResourceStr(resourceclass_t rclass, const ddstring_t* searchPath)
+uint F_FindResourceStr(resourceclass_t rclass, const ddstring_t* searchPath)
 {
     return F_FindResourceStr2(rclass, searchPath, 0);
 }
 
-const char* F_FindResource3(resourceclass_t rclass, const char* _searchPaths,
+uint F_FindResource3(resourceclass_t rclass, const char* _searchPaths,
     ddstring_t* foundPath, const char* _optionalSuffix)
 {
     ddstring_t searchPaths, optionalSuffix;
     boolean hasOptionalSuffix = false;
-    const char* result;
+    uint result;
     Str_Init(&searchPaths); Str_Set(&searchPaths, _searchPaths);
     if(_optionalSuffix && _optionalSuffix[0])
     {
         Str_Init(&optionalSuffix); Str_Set(&optionalSuffix, _optionalSuffix);
         hasOptionalSuffix = true;
     }
-    if(0 != (result = F_FindResourceStr3(rclass, &searchPaths, foundPath, hasOptionalSuffix? &optionalSuffix : 0)))
-    {
-        result = _searchPaths + (result - Str_Text(&searchPaths));
-    }
+    result = F_FindResourceStr3(rclass, &searchPaths, foundPath, hasOptionalSuffix? &optionalSuffix : 0);
     if(hasOptionalSuffix)
         Str_Free(&optionalSuffix);
     Str_Free(&searchPaths);
     return result;
 }
 
-const char* F_FindResource2(resourceclass_t rclass, const char* searchPaths, ddstring_t* foundPath)
+uint F_FindResource2(resourceclass_t rclass, const char* searchPaths, ddstring_t* foundPath)
 {
     return F_FindResource3(rclass, searchPaths, foundPath, 0);
 }
 
-const char* F_FindResource(resourceclass_t rclass, const char* searchPaths)
+uint F_FindResource(resourceclass_t rclass, const char* searchPaths)
 {
     return F_FindResource2(rclass, searchPaths, 0);
 }

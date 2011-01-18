@@ -29,6 +29,9 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#include <string.h>
+#include <ctype.h>
+
 #include "de_base.h"
 #include "de_system.h"
 #include "de_platform.h"
@@ -37,11 +40,9 @@
 #include "de_audio.h"
 #include "de_misc.h"
 
-#include <string.h>
-#include <ctype.h>
-
 #include "pathdirectory.h"
 #include "resourcenamespace.h"
+#include "resourcerecord.h"
 
 // XGClass.h is actually a part of the engine.
 #include "../../../plugins/common/include/xgclass.h"
@@ -747,15 +748,15 @@ static void readAllDefinitions(void)
     if(!DD_IsNullGameInfo(DD_GameInfo()))
     {
         gameinfo_t* info = DD_GameInfo();
-        gameresource_record_t* const* records;
+        resourcerecord_t* const* records;
         if((records = GameInfo_Resources(info, RC_DEFINITION, 0)))
             do
             {
-                gameresource_record_t* rec = *records;
-                const ddstring_t* resolvedPath = GameResourceRecord_ResolvedPath(rec, true);
+                resourcerecord_t* rec = *records;
+                const ddstring_t* resolvedPath = ResourceRecord_ResolvedPath(rec, true);
                 if(!resolvedPath)
                 {
-                    ddstring_t* searchPaths = GameResourceRecord_SearchPaths(rec);
+                    ddstring_t* searchPaths = ResourceRecord_SearchPathsAsStringList(rec);
                     Con_Error("readAllDefinitions: Error, failed to locate required game definition \"%s\".",
                               Str_Text(searchPaths));
                     // Unreachable.
