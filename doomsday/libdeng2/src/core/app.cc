@@ -329,6 +329,8 @@ void App::runIteration()
     }
     _lastTime = _currentTime;
 
+    emit currentTimeChanged();
+
     // Do the loop iteration.
     iterate(elapsed);
 

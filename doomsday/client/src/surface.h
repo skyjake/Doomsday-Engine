@@ -22,7 +22,6 @@
 
 #include <de/deng.h>
 #include <de/Vector>
-
 #include <QImage>
 
 /**
@@ -68,9 +67,9 @@ public:
     virtual QImage captureImage() const;
 
     /**
-     * Called to notify that the surface size has changed.
+     * Called to notify that the surface size has been changed.
      */
-    virtual void surfaceResized(const QSize& size) = 0;
+    virtual void surfaceResized(const QSize& size);
 };
 
 #endif /* LIBDENG2_SURFACE_H */

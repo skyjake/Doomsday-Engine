@@ -1,7 +1,7 @@
 /*
- * The Doomsday Engine Project -- libdeng2
+ * The Doomsday Engine Project
  *
- * Copyright (c) 2009, 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,29 +17,7 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "surface.h"
-#include "video.h"
-
-using namespace de;
-
-Surface::~Surface()
-{}
-
-QImage Surface::captureImage() const
-{
-    throw CaptureError("Surface::captureImage", "Surface cannot be converted to image");
-}
-
-void Surface::activate()
-{
-    // Tell the video subsystem to use this surface as the rendering target.
-    theVideo().setTarget(*this);
-}
-
-void Surface::deactivate()
-{
-    theVideo().releaseTarget(*this);
-}
-
-void Surface::surfaceResized(const QSize& /*size*/)
-{}
+#include "rule.h"
+#include "constantrule.h"
+#include "scalarrule.h"
+#include "operatorrule.h"

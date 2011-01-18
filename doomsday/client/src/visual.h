@@ -21,20 +21,37 @@
 #define LIBDEN2_VISUAL_H
 
 #include <de/AnimatorVector>
+#include <de/Rectangle>
 
+#include <QObject>
 #include <QList>
+
+class Rule;
 
 /**
  * A visual is a graphical object that is drawn onto a drawing surface.
  *
  * @ingroup video
  */
-class Visual
+class Visual : public QObject
 {
+    Q_OBJECT
+
 public:
     enum DrawingStage {
-        BEFORE_CHILDREN,
-        AFTER_CHILDREN
+        BeforeChildren,
+        AfterChildren
+    };
+
+    enum PlacementRule {
+        Left,
+        Top,
+        Right,
+        Bottom,
+        Width,
+        Height,
+        AnchorX,
+        AnchorY
     };
 
 public:
@@ -66,9 +83,35 @@ public:
     Visual* remove(Visual* visual);
 
     /**
-     * Updates the layout of the visual tree.
+     * Sets a placement rule for the visual. If the particular rule has previously been
+     * defined, the old one is destroyed first.
+     *
+     * @param rule  Visual takes ownership of the rule object.
      */
-    virtual void update();
+    void setRule(PlacementRule placementRule, Rule* rule);
+
+    Rule* rule(PlacementRule placementRule);
+
+    template <class RuleType>
+    RuleType& ruleAs(PlacementRule placementRule) {
+        RuleType* r = dynamic_cast<RuleType*>(rule(placementRule));
+        Q_ASSERT(r != 0);
+        return *r;
+    }
+
+    /**
+     * Sets the anchor reference point within the visual rectangle for the anchor X and
+     * anchor Y rules.
+     *
+     * @param normalizedPoint  (0, 0) refers to the top left corner within the visual,
+     *                         (1, 1) to the bottom right.
+     */
+    void setAnchorPoint(const de::Vector2f& normalizedPoint);
+
+    /**
+     * Calculates the rectangle of the visual.
+     */
+    de::Rectanglef rect() const;
 
     /**
      * Draws the visual tree.
@@ -81,6 +124,8 @@ public:
     virtual void drawSelf(DrawingStage stage) const;
 
 private:
+    Rule** ruleRef(PlacementRule placementRule);
+
     /// Parent visual (NULL for the root visual).
     Visual* _parent;
 
@@ -88,11 +133,15 @@ private:
     typedef std::list<Visual*> Children;
     Children _children;
 
-    /// Position of the visual (within its parent).
-    de::AnimatorVector2 _pos;
-
-    /// Size of the visual.
-    de::AnimatorVector2 _size;
+    de::Vector2f _normalizedAnchorPoint;
+    Rule* _anchorXRule;
+    Rule* _anchorYRule;
+    Rule* _leftRule;
+    Rule* _topRule;
+    Rule* _rightRule;
+    Rule* _bottomRule;
+    Rule* _widthRule;
+    Rule* _heightRule;
 };
 
 #endif /* LIBDEN2_VISUAL_H */

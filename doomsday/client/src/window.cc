@@ -20,12 +20,20 @@
 #include "window.h"
 #include "surface.h"
 #include "video.h"
+#include "rules.h"
+#include <QDebug>
 
 using namespace de;
 
 Window::Window(const QGLFormat& format, QWidget* parent, const QGLWidget* shareWidget)
     : GLWindowSurface(format, parent, shareWidget)
-{}
+{
+    // Define rules for the root visual's placement.
+    _root.setRule(Visual::Left, new ConstantRule(0));
+    _root.setRule(Visual::Top, new ConstantRule(0));
+    _root.setRule(Visual::Width, new ConstantRule(width()));
+    _root.setRule(Visual::Height, new ConstantRule(height()));
+}
 
 Window::~Window()
 {}
@@ -49,10 +57,13 @@ void Window::setFlags(Flags allFlags)
     _flags = allFlags;
 }
 
-void Window::surfaceResized(const QSize& /*size*/)
+void Window::surfaceResized(const QSize& size)
 {
-    // Resize visuals.
-    _root.update();
+    qDebug() << "Window: Surface resized" << size;
+
+    // Update the root visual's dimensions.
+    _root.ruleAs<ConstantRule>(Visual::Width).set(size.width());
+    _root.ruleAs<ConstantRule>(Visual::Height).set(size.height());
 }
 
 void Window::draw()

@@ -78,7 +78,7 @@ public:
      */
     virtual void setFlags(Flags allFlags);
 
-    virtual void surfaceResized(const QSize& size);
+    void surfaceResized(const QSize& size);
 
     /**
      * Draws the contents of the window.

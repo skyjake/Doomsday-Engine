@@ -123,6 +123,11 @@ namespace de
         ValueType target() const;
 
         /**
+         * Determines whether the animator has finished the animation.
+         */
+        bool done() const;
+
+        /**
          * Gives the animator a new value immediately, without animation.
          *
          * @param immediatelyAssignedValue  New value.
@@ -164,9 +169,9 @@ namespace de
             return !(*this < offset);
         }
 
-        void setObserver(IObserver* observer) { _observer = observer; }
+        //void setObserver(IObserver* observer) { _observer = observer; }
 
-        IObserver* observer() const { return _observer; }
+        //IObserver* observer() const { return _observer; }
         
         // Implements ISerializable.
         void operator >> (Writer& to) const;
@@ -179,7 +184,7 @@ namespace de
         Time _startTime;
         ValueType _transition;
         Time::Delta _transitionTime;
-        IObserver* _observer;
+        //IObserver* _observer;
 
         mutable StatusFlags _status;
     };
@@ -228,7 +233,7 @@ namespace de
 
         AnimatorVector2 operator - (const Vector2<Animator::ValueType>& offset) const;
 
-        void setObserver(Animator::IObserver* observer);
+        //void setObserver(Animator::IObserver* observer);
     };
 
     /**

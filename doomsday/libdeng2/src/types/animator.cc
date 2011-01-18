@@ -29,12 +29,12 @@ using namespace de;
 
 Animator::Animator(ValueType initialValue)
     : _clock(0), _motion(EASE_OUT), _start(initialValue),
-      _transition(0), _transitionTime(0), _observer(0)
+      _transition(0), _transitionTime(0)
 {}
 
 Animator::Animator(const IClock& clock, ValueType initialValue)
     : _clock(&clock), _motion(EASE_OUT), _start(initialValue),
-      _transition(0), _transitionTime(0), _observer(0)
+      _transition(0), _transitionTime(0)
 {}
 
 Animator::Animator(const Animator& other)
@@ -44,7 +44,6 @@ Animator::Animator(const Animator& other)
       _startTime(other._startTime), 
       _transition(other._transition), 
       _transitionTime(other._transitionTime),
-      _observer(0),
       _status(other._status)
 {}
 
@@ -58,8 +57,6 @@ void Animator::setClock(const IClock& clock)
 
 void Animator::set(ValueType targetValue, const Time::Delta& transition)
 {
-    ValueType oldTarget = target();
-    
     if(!_clock)
     {
         // Default to the application.        
@@ -82,12 +79,11 @@ void Animator::set(ValueType targetValue, const Time::Delta& transition)
         _transitionTime = 0;
         _status &= ~Animating;
     }
+}
 
-    // Let the observer know.
-    if(_observer)
-    {
-        _observer->animatorValueSet(*this, oldTarget);
-    }
+bool Animator::done() const
+{
+    return !_status.testFlag(Animating);
 }
 
 Animator& Animator::operator = (const ValueType& immediatelyAssignedValue)
@@ -98,7 +94,7 @@ Animator& Animator::operator = (const ValueType& immediatelyAssignedValue)
 
 Animator::ValueType Animator::now() const
 {
-    if(!_status.testFlag(Animating))
+    if(done())
     {
         return _start;
     }
@@ -226,11 +222,13 @@ AnimatorVector2 AnimatorVector2::operator - (const Vector2<Animator::ValueType>&
     return AnimatorVector2(shiftedX, shiftedY);
 }
 
+/*
 void AnimatorVector2::setObserver(Animator::IObserver* observer)
 {
     x.setObserver(observer);
     y.setObserver(observer);
 }
+*/
 
 QTextStream& de::operator << (QTextStream& os, const Animator& anim)
 {

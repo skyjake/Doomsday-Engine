@@ -32,7 +32,12 @@ HEADERS += \
     src/video.h \
     src/visual.h \
     src/window.h \
-    src/glwindowsurface.h
+    src/glwindowsurface.h \
+    src/rule.h \
+    src/scalarrule.h \
+    src/operatorrule.h \
+    src/constantrule.h \
+    src/rules.h
 
 SOURCES += \
     src/clientapp.cc \
@@ -43,5 +48,9 @@ SOURCES += \
     src/video.cc \
     src/visual.cc \
     src/window.cc \
-    src/glwindowsurface.cc
+    src/glwindowsurface.cc \
+    src/rule.cc \
+    src/scalarrule.cc \
+    src/operatorrule.cc \
+    src/constantrule.cc
     

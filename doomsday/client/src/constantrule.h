@@ -1,7 +1,7 @@
 /*
- * The Doomsday Engine Project -- libdeng2
+ * The Doomsday Engine Project
  *
- * Copyright (c) 2009, 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright (c) 2011 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,29 +17,33 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "surface.h"
-#include "video.h"
+#ifndef CONSTANTRULE_H
+#define CONSTANTRULE_H
 
-using namespace de;
+#include "rule.h"
 
-Surface::~Surface()
-{}
-
-QImage Surface::captureImage() const
+/**
+ * The value of a constant rule never changes unless manually changed.
+ *
+ * @see ScalarRule
+ */
+class ConstantRule : public Rule
 {
-    throw CaptureError("Surface::captureImage", "Surface cannot be converted to image");
-}
+    Q_OBJECT
 
-void Surface::activate()
-{
-    // Tell the video subsystem to use this surface as the rendering target.
-    theVideo().setTarget(*this);
-}
+public:
+    explicit ConstantRule(float constantValue, QObject *parent = 0);
 
-void Surface::deactivate()
-{
-    theVideo().releaseTarget(*this);
-}
+    /**
+     * Changes the value of the constant in the rule.
+     */
+    void set(float newValue);
 
-void Surface::surfaceResized(const QSize& /*size*/)
-{}
+protected:
+    void update();
+
+private:
+    float _newValue;
+};
+
+#endif // CONSTANTRULE_H

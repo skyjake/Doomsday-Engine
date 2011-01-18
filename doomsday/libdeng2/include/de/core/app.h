@@ -192,6 +192,9 @@ namespace de
     public slots:
         void runIteration();
 
+    signals:
+        void currentTimeChanged();
+
     protected:
         /**
          * Delete all the subsystems currently in use.
