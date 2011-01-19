@@ -59,7 +59,7 @@ void Window::setFlags(Flags allFlags)
 
 void Window::surfaceResized(const QSize& size)
 {
-    qDebug() << "Window: Surface resized" << size;
+    qDebug() << "Window: Surface resized to" << size;
 
     // Update the visual layout.
     _widthRule->set(size.width());
@@ -68,8 +68,6 @@ void Window::surfaceResized(const QSize& size)
 
 void Window::draw()
 {
-    qDebug() << "Window: Drawing, root placement:" << _root.rect().asText();
-
     // Draw all the visuals.
     _root.draw();
 }
