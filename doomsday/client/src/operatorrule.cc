@@ -19,12 +19,31 @@
 
 #include "operatorrule.h"
 
+OperatorRule::OperatorRule(Operator op, const Rule* unary, QObject* parent)
+    : Rule(parent), _operator(op), _leftOperand(unary), _rightOperand(0)
+{
+    Q_ASSERT(_leftOperand != 0);
+
+    dependsOn(_leftOperand);
+}
+
 OperatorRule::OperatorRule(Operator op, Rule* unary, QObject* parent)
     : Rule(parent), _operator(op), _leftOperand(unary), _rightOperand(0)
 {
     Q_ASSERT(_leftOperand != 0);
 
-    setup();
+    claim(unary);
+    dependsOn(_leftOperand);
+}
+
+OperatorRule::OperatorRule(Operator op, const Rule* left, const Rule* right, QObject* parent)
+    : Rule(parent), _operator(op), _leftOperand(left), _rightOperand(right)
+{
+    Q_ASSERT(_leftOperand != 0);
+    Q_ASSERT(_rightOperand != 0);
+
+    dependsOn(_leftOperand);
+    dependsOn(_rightOperand);
 }
 
 OperatorRule::OperatorRule(Operator op, Rule* left, Rule* right, QObject* parent)
@@ -33,25 +52,10 @@ OperatorRule::OperatorRule(Operator op, Rule* left, Rule* right, QObject* parent
     Q_ASSERT(_leftOperand != 0);
     Q_ASSERT(_rightOperand != 0);
 
-    setup();
-}
-
-void OperatorRule::setup()
-{
-    if(!_leftOperand->parent())
-    {
-        _leftOperand->setParent(this);
-    }
+    claim(left);
+    claim(right);
     dependsOn(_leftOperand);
-
-    if(_rightOperand)
-    {
-        if(!_rightOperand->parent())
-        {
-            _rightOperand->setParent(this);
-        }
-        dependsOn(_rightOperand);
-    }
+    dependsOn(_rightOperand);
 }
 
 void OperatorRule::update()
@@ -97,7 +101,7 @@ void OperatorRule::update()
     setValue(v);
 }
 
-void OperatorRule::dependencyReplaced(Rule* oldRule, Rule* newRule)
+void OperatorRule::dependencyReplaced(const Rule* oldRule, const Rule* newRule)
 {
     if(_leftOperand == oldRule)
     {
@@ -107,5 +111,4 @@ void OperatorRule::dependencyReplaced(Rule* oldRule, Rule* newRule)
     {
         _rightOperand = newRule;
     }
-    invalidate();
 }

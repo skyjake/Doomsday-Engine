@@ -203,6 +203,8 @@ namespace de
     };
     
     LIBDENG2_API QTextStream& operator << (QTextStream& os, const Time& t);
+
+    typedef Time::Delta TimeDelta;
 }
 
 #endif /* LIBDENG2_TIME_H */

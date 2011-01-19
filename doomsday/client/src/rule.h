@@ -46,8 +46,16 @@ public:
     explicit Rule(float initialValue, QObject* parent = 0);
     ~Rule();
 
-    Visual* visual() const;
     float value() const;
+
+    /**
+     * Updates the rule with a valid value. Derived classes must call setValue()
+     * in their implementation of this method, because it sets the new valid value
+     * for the rule.
+     *
+     * This is called automatically when needed.
+     */
+    virtual void update();
 
     /**
      * Replaces this rule with @a newRule. The dependent rules are updated
@@ -59,7 +67,7 @@ protected:
     /**
      * Links rules together. This rule will depend on @a dependency.
      */
-    void dependsOn(Rule* dependency);
+    void dependsOn(const Rule* dependency);
 
     void addDependent(Rule* rule);
     void removeDependent(Rule* rule);
@@ -67,17 +75,12 @@ protected:
 
     float cachedValue() const;
 
-    /**
-     * Updates the rule with a valid value. Derived classes must call setValue()
-     * in their implementation of this method, because it sets the new valid value
-     * for the rule.
-     */
-    virtual void update();
+    void claim(Rule* child);
 
     /**
      * Called to notify the rule that a dependency has been replaced with another rule.
      */
-    virtual void dependencyReplaced(Rule* oldRule, Rule* newRule);
+    virtual void dependencyReplaced(const Rule* oldRule, const Rule* newRule);
 
 public slots:
     void invalidate();

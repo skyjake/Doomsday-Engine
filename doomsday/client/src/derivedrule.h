@@ -17,9 +17,27 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "rule.h"
+#ifndef DERIVEDRULE_H
+#define DERIVEDRULE_H
+
 #include "constantrule.h"
-#include "derivedrule.h"
-#include "scalarrule.h"
-#include "operatorrule.h"
-#include "rectanglerule.h"
+
+/**
+ * The value of a derived rule is defined by some other rule.
+ */
+class DerivedRule : public ConstantRule
+{
+    Q_OBJECT
+
+public:
+    explicit DerivedRule(const Rule* source, QObject *parent = 0);
+
+protected:
+    void update();
+    void dependencyReplaced(const Rule* oldRule, const Rule* newRule);
+
+private:
+    const Rule* _source;
+};
+
+#endif // DERIVEDRULE_H

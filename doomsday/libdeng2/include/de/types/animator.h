@@ -229,6 +229,10 @@ namespace de
             return Vector2f(dfloat(x.target()), dfloat(y.target()));
         }
 
+        bool done() const {
+            return x.done() && y.done();
+        }
+
         AnimatorVector2 operator + (const Vector2<Animator::ValueType>& offset) const;
 
         AnimatorVector2 operator - (const Vector2<Animator::ValueType>& offset) const;

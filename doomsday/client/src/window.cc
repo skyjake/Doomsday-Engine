@@ -28,11 +28,11 @@ using namespace de;
 Window::Window(const QGLFormat& format, QWidget* parent, const QGLWidget* shareWidget)
     : GLWindowSurface(format, parent, shareWidget)
 {
+    _widthRule = new ConstantRule(width(), this);
+    _heightRule = new ConstantRule(height(), this);
+
     // Define rules for the root visual's placement.
-    _root.setRule(Visual::Left, new ConstantRule(0));
-    _root.setRule(Visual::Top, new ConstantRule(0));
-    _root.setRule(Visual::Width, new ConstantRule(width()));
-    _root.setRule(Visual::Height, new ConstantRule(height()));
+    _root.setRect(new RectangleRule(new Rule(), new Rule(), _widthRule, _heightRule));
 }
 
 Window::~Window()
@@ -61,13 +61,15 @@ void Window::surfaceResized(const QSize& size)
 {
     qDebug() << "Window: Surface resized" << size;
 
-    // Update the root visual's dimensions.
-    _root.ruleAs<ConstantRule>(Visual::Width).set(size.width());
-    _root.ruleAs<ConstantRule>(Visual::Height).set(size.height());
+    // Update the visual layout.
+    _widthRule->set(size.width());
+    _heightRule->set(size.height());
 }
 
 void Window::draw()
 {
+    qDebug() << "Window: Drawing, root placement:" << _root.rect().asText();
+
     // Draw all the visuals.
     _root.draw();
 }

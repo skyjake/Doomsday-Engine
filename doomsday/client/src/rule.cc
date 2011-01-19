@@ -50,10 +50,12 @@ float Rule::value() const
     return _value;
 }
 
+/*
 Visual* Rule::visual() const
 {
     return dynamic_cast<Visual*>(parent());
 }
+*/
 
 void Rule::update()
 {
@@ -61,7 +63,7 @@ void Rule::update()
     _isValid = true;
 }
 
-void Rule::dependencyReplaced(Rule* /*oldRule*/, Rule* /*newRule*/)
+void Rule::dependencyReplaced(const Rule* /*oldRule*/, const Rule* /*newRule*/)
 {
     // No dependencies.
 }
@@ -88,14 +90,17 @@ void Rule::replace(Rule* newRule)
         newRule->addDependent(rule);
 
         rule->dependencyReplaced(this, newRule);
+        rule->invalidate();
     }
 
     Q_ASSERT(_dependentRules.isEmpty());
 }
 
-void Rule::dependsOn(Rule* dependency)
+void Rule::dependsOn(const Rule* dependency)
 {
-    dependency->addDependent(this);
+    Q_ASSERT(dependency != 0);
+
+    const_cast<Rule*>(dependency)->addDependent(this);
 }
 
 void Rule::addDependent(Rule* rule)
@@ -130,4 +135,12 @@ void Rule::invalidate()
 void Rule::ruleDestroyed(QObject *rule)
 {
     removeDependent(static_cast<Rule*>(rule));
+}
+
+void Rule::claim(Rule* child)
+{
+    if(!child->parent())
+    {
+        child->setParent(this);
+    }
 }

@@ -39,21 +39,28 @@ public:
     };
 
 public:
+    explicit OperatorRule(Operator op, const Rule* unary, QObject *parent = 0);
+
     /**
      *  The operator rule takes ownership of the operands that have no parent.
      */
     explicit OperatorRule(Operator op, Rule* unary, QObject *parent = 0);
+
+    explicit OperatorRule(Operator op, const Rule* left, const Rule* right, QObject *parent = 0);
+
+    /**
+     *  The operator rule takes ownership of the operands that have no parent.
+     */
     explicit OperatorRule(Operator op, Rule* left, Rule* right, QObject *parent = 0);
 
 protected:
-    void setup();
     void update();
-    void dependencyReplaced(Rule* oldRule, Rule* newRule);
+    void dependencyReplaced(const Rule* oldRule, const Rule* newRule);
 
 private:
     Operator _operator;
-    Rule* _leftOperand;
-    Rule* _rightOperand;
+    const Rule* _leftOperand;
+    const Rule* _rightOperand;
 };
 
 #endif // OPERATORRULE_H

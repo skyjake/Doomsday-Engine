@@ -37,7 +37,9 @@ HEADERS += \
     src/scalarrule.h \
     src/operatorrule.h \
     src/constantrule.h \
-    src/rules.h
+    src/rules.h \
+    src/rectanglerule.h \
+    src/derivedrule.h
 
 SOURCES += \
     src/clientapp.cc \
@@ -52,5 +54,7 @@ SOURCES += \
     src/rule.cc \
     src/scalarrule.cc \
     src/operatorrule.cc \
-    src/constantrule.cc
+    src/constantrule.cc \
+    src/rectanglerule.cc \
+    src/derivedrule.cc
     

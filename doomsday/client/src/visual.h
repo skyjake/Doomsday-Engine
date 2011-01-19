@@ -26,7 +26,7 @@
 #include <QObject>
 #include <QList>
 
-class Rule;
+#include "rules.h"
 
 /**
  * A visual is a graphical object that is drawn onto a drawing surface.
@@ -41,17 +41,6 @@ public:
     enum DrawingStage {
         BeforeChildren,
         AfterChildren
-    };
-
-    enum PlacementRule {
-        Left,
-        Top,
-        Right,
-        Bottom,
-        Width,
-        Height,
-        AnchorX,
-        AnchorY
     };
 
 public:
@@ -82,34 +71,14 @@ public:
      */
     Visual* remove(Visual* visual);
 
-    /**
-     * Sets a placement rule for the visual. If the particular rule has previously been
-     * defined, the old one is destroyed first.
-     *
-     * @param rule  Visual takes ownership of the rule object.
-     */
-    void setRule(PlacementRule placementRule, Rule* rule);
+    void setRect(RectangleRule* rule);
 
-    Rule* rule(PlacementRule placementRule);
+    RectangleRule* rule();
 
-    template <class RuleType>
-    RuleType& ruleAs(PlacementRule placementRule) {
-        RuleType* r = dynamic_cast<RuleType*>(rule(placementRule));
-        Q_ASSERT(r != 0);
-        return *r;
-    }
+    const RectangleRule* rule() const;
 
     /**
-     * Sets the anchor reference point within the visual rectangle for the anchor X and
-     * anchor Y rules.
-     *
-     * @param normalizedPoint  (0, 0) refers to the top left corner within the visual,
-     *                         (1, 1) to the bottom right.
-     */
-    void setAnchorPoint(const de::Vector2f& normalizedPoint);
-
-    /**
-     * Calculates the rectangle of the visual.
+     * Returns the visual's current placement.
      */
     de::Rectanglef rect() const;
 
@@ -123,9 +92,10 @@ public:
      */
     virtual void drawSelf(DrawingStage stage) const;
 
-private:
-    Rule** ruleRef(PlacementRule placementRule);
+protected:
+    void checkRect();
 
+private:
     /// Parent visual (NULL for the root visual).
     Visual* _parent;
 
@@ -133,15 +103,7 @@ private:
     typedef std::list<Visual*> Children;
     Children _children;
 
-    de::Vector2f _normalizedAnchorPoint;
-    Rule* _anchorXRule;
-    Rule* _anchorYRule;
-    Rule* _leftRule;
-    Rule* _topRule;
-    Rule* _rightRule;
-    Rule* _bottomRule;
-    Rule* _widthRule;
-    Rule* _heightRule;
+    RectangleRule* _rect;
 };
 
 #endif /* LIBDEN2_VISUAL_H */

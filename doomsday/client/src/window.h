@@ -26,6 +26,7 @@
 
 #include "glwindowsurface.h"
 #include "visual.h"
+#include "rules.h"
 
 class Video;
 
@@ -91,6 +92,9 @@ private:
 
     /// Root visual of the window.
     Visual _root;
+
+    ConstantRule* _widthRule;
+    ConstantRule* _heightRule;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(Window::Flags);

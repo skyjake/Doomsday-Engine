@@ -17,9 +17,32 @@
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "rule.h"
-#include "constantrule.h"
 #include "derivedrule.h"
-#include "scalarrule.h"
-#include "operatorrule.h"
-#include "rectanglerule.h"
+#include <QDebug>
+
+DerivedRule::DerivedRule(const Rule* source, QObject *parent)
+    : ConstantRule(0, parent), _source(source)
+{
+    Q_ASSERT(source != 0);
+
+    dependsOn(source);
+    invalidate();
+}
+
+void DerivedRule::update()
+{
+    Q_ASSERT(_source != 0);
+
+    // The value gets updated by the source.
+    const_cast<Rule*>(_source)->update();
+
+    ConstantRule::update();
+}
+
+void DerivedRule::dependencyReplaced(const Rule* oldRule, const Rule* newRule)
+{
+    if(_source == oldRule)
+    {
+        _source = newRule;
+    }
+}

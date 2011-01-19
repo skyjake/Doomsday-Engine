@@ -22,16 +22,7 @@
 
 using namespace de;
 
-Visual::Visual()
-    : _parent(0),
-      _anchorXRule(0),
-      _anchorYRule(0),
-      _leftRule(0),
-      _topRule(0),
-      _rightRule(0),
-      _bottomRule(0),
-      _widthRule(0),
-      _heightRule(0)
+Visual::Visual() : _parent(0), _rect(0)
 {}
 
 Visual::~Visual()
@@ -67,138 +58,42 @@ Visual* Visual::remove(Visual* visual)
     return visual;
 }
 
-Rule** Visual::ruleRef(PlacementRule placementRule)
+void Visual::setRect(RectangleRule* rule)
 {
-    switch(placementRule)
+    Q_ASSERT(_rect == 0 /* Changing the rule is not supported. */);
+
+    _rect = rule;
+}
+
+void Visual::checkRect()
+{
+    if(!_rect)
     {
-    case Left:
-        return &_leftRule;
+        // Must have a parent.
+        Q_ASSERT(_parent != 0);
 
-    case Right:
-        return &_rightRule;
-
-    case Top:
-        return &_topRule;
-
-    case Bottom:
-        return &_bottomRule;
-
-    case Width:
-        return &_widthRule;
-
-    case Height:
-        return &_heightRule;
-
-    case AnchorX:
-        return &_anchorXRule;
-
-    default:
-        return &_anchorYRule;
+        // No rect has been defined yet, so make a default one.
+        // Just use the parent's rectangle.
+        _rect = new RectangleRule(_parent->rule(), this);
     }
 }
 
-void Visual::setRule(PlacementRule placementRule, Rule* rule)
+RectangleRule* Visual::rule()
 {
-    Q_ASSERT(rule->parent() == 0);
-
-    // Take ownership.
-    rule->setParent(this);
-
-    Rule** oldRule = ruleRef(placementRule);
-    if(*oldRule)
-    {
-        (*oldRule)->replace(rule);
-        delete *oldRule;
-    }
-    *oldRule = rule;
+    checkRect();
+    return _rect;
 }
 
-Rule* Visual::rule(PlacementRule placementRule)
+const RectangleRule* Visual::rule() const
 {
-    return *ruleRef(placementRule);
-}
-
-void Visual::setAnchorPoint(const de::Vector2f& normalizedPoint)
-{
-    _normalizedAnchorPoint = normalizedPoint;
+    const_cast<Visual*>(this)->checkRect();
+    return _rect;
 }
 
 de::Rectanglef Visual::rect() const
 {
-    // All the edges must be defined, otherwise the visual's position is ambiguous.
-    bool leftDefined = false;
-    bool topDefined = false;
-    bool rightDefined = false;
-    bool bottomDefined = false;
-
-    de::Rectanglef r;
-
-    if(_anchorXRule && _widthRule)
-    {
-        r.topLeft.x = _anchorXRule->value() - _normalizedAnchorPoint.x * _widthRule->value();
-        r.setWidth(_widthRule->value());
-        leftDefined = rightDefined = true;
-    }
-
-    if(_anchorYRule && _heightRule)
-    {
-        r.topLeft.y = _anchorYRule->value() - _normalizedAnchorPoint.y * _heightRule->value();
-        r.setHeight(_heightRule->value());
-        topDefined = bottomDefined = true;
-    }
-
-    if(_leftRule)
-    {
-        r.topLeft.x = _leftRule->value();
-        leftDefined = true;
-    }
-    if(_topRule)
-    {
-        r.topLeft.y = _topRule->value();
-        topDefined = true;
-    }
-    if(_rightRule)
-    {
-        r.bottomRight.x = _rightRule->value();
-        rightDefined = true;
-    }
-    if(_bottomRule)
-    {
-        r.bottomRight.y = _rightRule->value();
-        bottomDefined = true;
-    }
-
-    if(_widthRule && leftDefined && !rightDefined)
-    {
-        r.setWidth(_widthRule->value());
-        rightDefined = true;
-    }
-    if(_widthRule && !leftDefined && rightDefined)
-    {
-        r.topLeft.x = r.bottomRight.x - _widthRule->value();
-        leftDefined = true;
-    }
-
-    if(_heightRule && topDefined && !bottomDefined)
-    {
-        r.setHeight(_heightRule->value());
-        bottomDefined = true;
-    }
-    if(_heightRule && !topDefined && bottomDefined)
-    {
-        r.topLeft.y = r.bottomRight.y - _heightRule->value();
-        topDefined = true;
-    }
-
-    if(!leftDefined || !rightDefined || !topDefined || !bottomDefined)
-    {
-        // As a fallback, use the parent's rectangle.
-        Q_ASSERT(_parent != 0);
-
-        r = _parent->rect();
-    }
-
-    return r;
+    const_cast<Visual*>(this)->checkRect();
+    return _rect->rect();
 }
 
 void Visual::draw() const
