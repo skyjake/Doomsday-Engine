@@ -82,9 +82,9 @@ static void parseScheme(dduri_t* uri, resourceclass_t defaultResourceClass)
  * Substitute known symbols in the possibly templated path.
  * Resulting path is a well-formed, sys_filein-compatible file path (perhaps base-relative).
  */
-static ddstring_t* resolveUri(const dduri_t* uri, gameinfo_t* info)
+static ddstring_t* resolveUri(const dduri_t* uri)
 {
-    assert(uri && info);
+    assert(uri);
     {
     ddstring_t part, src, doomWadDir, *dest = Str_New();
     boolean successful = false;
@@ -137,25 +137,21 @@ static ddstring_t* resolveUri(const dduri_t* uri, gameinfo_t* info)
             }
             else if(!Str_CompareIgnoreCase(&part, "GameInfo.DataPath"))
             {
-                if(DD_IsNullGameInfo(info))
-                    goto parseEnded;
-
-                /// DataPath already has ending @c DIR_SEP_CHAR.
+                /// \note DataPath already has ending @c DIR_SEP_CHAR.
+                gameinfo_t* info = DD_GameInfo();
                 Str_PartAppend(dest, Str_Text(GameInfo_DataPath(info)), 0, Str_Length(GameInfo_DataPath(info))-1);
             }
             else if(!Str_CompareIgnoreCase(&part, "GameInfo.DefsPath"))
             {
-                if(DD_IsNullGameInfo(info))
-                    goto parseEnded;
-
-                /// DefsPath already has ending @c DIR_SEP_CHAR.
+                /// \note DefsPath already has ending @c DIR_SEP_CHAR.
+                gameinfo_t* info = DD_GameInfo();
                 Str_PartAppend(dest, Str_Text(GameInfo_DefsPath(info)), 0, Str_Length(GameInfo_DefsPath(info))-1);
             }
             else if(!Str_CompareIgnoreCase(&part, "GameInfo.IdentityKey"))
             {
+                gameinfo_t* info = DD_GameInfo();
                 if(DD_IsNullGameInfo(info))
                     goto parseEnded;
-
                 Str_Append(dest, Str_Text(GameInfo_IdentityKey(info)));
             }
             else
@@ -303,7 +299,7 @@ ddstring_t* Uri_Resolved(const dduri_t* uri)
         Con_Error("Attempted Uri::Resolved with invalid reference (this==0).");
         return 0; // Unreachable.
     }
-    return resolveUri(uri, DD_GameInfo());
+    return resolveUri(uri);
 }
 
 void Uri_SetScheme(dduri_t* uri, const char* scheme)
