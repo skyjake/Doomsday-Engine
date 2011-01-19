@@ -323,6 +323,7 @@ void DD_Ticker(timespan_t time)
         // Demo ticker. Does stuff like smoothing of view angles.
         Net_BuildLocalCommands(time);
         Demo_Ticker(time);
+        P_ControlTicker(time);
         P_Ticker(time);
 
         if(tickFrame || netGame)
@@ -333,6 +334,7 @@ void DD_Ticker(timespan_t time)
              */
             realFrameTimePos += time * TICSPERSEC;
 
+            Materials_Ticker(time);
             UI2_Ticker(time);
 
             // InFine ticks whenever it's active.
