@@ -39,6 +39,7 @@
 #include "m_args.h"
 #include "m_misc.h"
 #include "blockset.h"
+//#include "pathdirectory.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -61,25 +62,28 @@ D_CMD(ListVars);
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-/// \todo Replace with a derivative of de::PathDirectory
+static boolean inited = false;
+
+/// Console variable database and search directory.
 static uint numCVars = 0;
 static ddcvar_t** cvars = 0;
+//static pathdirectory_t* cvarDirectory;
 
-static ddccmd_t* ccmdListHead = 0;
+static ddccmd_t* ccmdListHead;
 /// \todo Replace with a data structure that allows for deletion of elements.
-static blockset_t* ccmdBlockSet = 0;
+static blockset_t* ccmdBlockSet;
 /// Running total of the number of uniquely-named commands.
-static uint numUniqueNamedCCmds = 0;
+static uint numUniqueNamedCCmds;
 
 /// \todo Replace with a BST.
-static uint numCAliases = 0;
-static calias_t** caliases = 0;
+static uint numCAliases;
+static calias_t** caliases;
 
 /// The list of known words (for completion).
 /// \todo Replace with a persistent self-balancing BST (Treap?)?
-static knownword_t* knownWords = 0;
-static uint numKnownWords = 0;
-static boolean knownWordsNeedUpdate = false;
+static knownword_t* knownWords;
+static uint numKnownWords;
+static boolean knownWordsNeedUpdate;
 
 // CODE --------------------------------------------------------------------
 
@@ -89,6 +93,111 @@ void Con_DataRegister(void)
     C_CMD("listaliases",    NULL,   ListAliases);
     C_CMD("listcmds",       NULL,   ListCmds);
     C_CMD("listvars",       NULL,   ListVars);
+}
+
+static void clearVariables(void)
+{
+    static char* emptyString = "";
+
+    // Free the data of the data cvars.
+    { uint i;
+    ddcvar_t** cvar;
+    for(i = 0, cvar = cvars; i < numCVars; ++i, ++cvar)
+    {
+        if(((*cvar)->shared.flags & CVF_CAN_FREE) &&
+           (*cvar)->shared.type == CVT_CHARPTR)
+        {
+            char** ptr = (char**) (*cvar)->shared.ptr;
+
+            // \note Multiple vars could be using the same pointer (so ensure
+            // that we attempt to free only once).
+            { uint k;
+            for(k = i; k < numCVars; ++k)
+                if(cvars[k]->shared.type == CVT_CHARPTR &&
+                   *(char**) cvars[k]->shared.ptr == *ptr)
+                {
+                    cvars[k]->shared.flags &= ~CVF_CAN_FREE;
+                }
+            }
+            free(*ptr);
+            *ptr = emptyString;
+        }
+        free(*cvar);
+    }}
+
+    //PathDirectory_Destruct(cvarDirectory); cvarDirectory = 0;
+}
+
+/// Construct a new variable from the specified template and add it to the database.
+static ddcvar_t* addVariable(const cvar_t* tpl)
+{
+    ddcvar_t* newVar;
+    uint idx;
+
+    cvars = realloc(cvars, sizeof(*cvars) * ++numCVars);
+
+    // Find the insertion point.
+    for(idx = 0; idx < numCVars-1; ++idx)
+        if(stricmp(cvars[idx]->shared.name, tpl->name) > 0)
+            break;
+
+    // Make room for the new variable.
+    if(idx != numCVars-1)
+        memmove(cvars + idx + 1, cvars + idx, sizeof(*cvars) * (numCVars - 1 - idx));
+
+    // Add the new variable, making a static copy of the name in the zone (this allows
+    // the source data to change in case of dynamic registrations).
+    newVar = cvars[idx] = malloc(sizeof(*newVar));
+    memcpy(&newVar->shared, tpl, sizeof(newVar->shared));
+    { char* nameCopy = Z_Malloc(strlen(tpl->name) + 1, PU_APPSTATIC, NULL);
+    strcpy(nameCopy, tpl->name);
+    newVar->shared.name = nameCopy;
+    }
+
+    /*{ ddstring_t path; Str_Init(&path); Str_Set(&path, newVar->shared.name);
+    PathDirectory_Insert(cvarDirectory, &path, newVar, '-');
+    Str_Free(&path);
+    }*/
+
+    knownWordsNeedUpdate = true;
+    return newVar;
+}
+
+static void clearAliases(void)
+{
+    if(caliases)
+    {
+        // Free the alias data.
+        calias_t** cal;
+        uint i;
+        for(i = 0, cal = caliases; i < numCAliases; ++i, ++cal)
+        {
+            free((*cal)->name);
+            free((*cal)->command);
+            free(*cal);
+        }
+        free(caliases);
+    }
+    caliases = 0;
+    numCAliases = 0;
+}
+
+static void clearCommands(void)
+{
+    if(ccmdBlockSet)
+        BlockSet_Destruct(ccmdBlockSet);
+    ccmdBlockSet = 0;
+    ccmdListHead = 0;
+    numUniqueNamedCCmds = 0;
+}
+
+static void clearKnownWords(void)
+{
+    if(knownWords)
+        free(knownWords);
+    knownWords = 0;
+    numKnownWords = 0;
+    knownWordsNeedUpdate = false;
 }
 
 static const char* getKnownWordName(const knownword_t* word)
@@ -224,6 +333,8 @@ static void updateKnownWords(void)
 
 void Con_SetString2(const char* name, char* text, int svflags)
 {
+    assert(inited);
+    {
     ddcvar_t* cvar = Con_FindVariable(name);
     boolean changed = false;
 
@@ -256,6 +367,7 @@ void Con_SetString2(const char* name, char* text, int svflags)
     }
     else
         Con_Error("Con_SetString: cvar is not of type char*.\n");
+    }
 }
 
 void Con_SetString(const char* name, char* text)
@@ -265,6 +377,8 @@ void Con_SetString(const char* name, char* text)
 
 void Con_SetInteger2(const char* name, int value, int svflags)
 {
+    assert(inited);
+    {
     ddcvar_t* var = Con_FindVariable(name);
     boolean changed = false;
 
@@ -304,6 +418,7 @@ void Con_SetInteger2(const char* name, int value, int svflags)
     // Make a change notification callback?
     if(var->shared.notifyChanged != 0 && changed)
         var->shared.notifyChanged(&var->shared);
+    }
 }
 
 void Con_SetInteger(const char* name, int value)
@@ -313,6 +428,8 @@ void Con_SetInteger(const char* name, int value)
 
 void Con_SetFloat2(const char* name, float value, int svflags)
 {
+    assert(inited);
+    {
     ddcvar_t* var = Con_FindVariable(name);
     boolean changed = false;
 
@@ -352,6 +469,7 @@ void Con_SetFloat2(const char* name, float value, int svflags)
     // Make a change notification callback?
     if(var->shared.notifyChanged != 0 && changed)
         var->shared.notifyChanged(&var->shared);
+    }
 }
 
 void Con_SetFloat(const char* name, float value)
@@ -361,6 +479,8 @@ void Con_SetFloat(const char* name, float value)
 
 int Con_GetInteger(const char* name)
 {
+    assert(inited);
+    {
     ddcvar_t* var;
     if((var = Con_FindVariable(name)) != 0)
         switch(var->shared.type)
@@ -371,11 +491,13 @@ int Con_GetInteger(const char* name)
         case CVT_CHARPTR:   return strtol(CV_CHARPTR(var), 0, 0);
         }
     return 0;
+    }
 }
 
 float Con_GetFloat(const char* name)
 {
-    ddcvar_t* var;
+    assert(inited);
+    { ddcvar_t* var;
     if((var = Con_FindVariable(name)) != 0)
         switch(var->shared.type)
         {
@@ -384,12 +506,14 @@ float Con_GetFloat(const char* name)
         case CVT_FLOAT:     return CV_FLOAT(var);
         case CVT_CHARPTR:   return strtod(CV_CHARPTR(var), 0);
         }
+    }
     return 0;
 }
 
 byte Con_GetByte(const char* name)
 {
-    ddcvar_t* var;
+    assert(inited);
+    { ddcvar_t* var;
     if((var = Con_FindVariable(name)) != 0)
         switch(var->shared.type)
         {
@@ -398,6 +522,7 @@ byte Con_GetByte(const char* name)
         case CVT_FLOAT:     return CV_FLOAT(var);
         case CVT_CHARPTR:   return strtol(CV_CHARPTR(var), 0, 0);
         }
+    }
     return 0;
 }
 
@@ -409,38 +534,9 @@ char* Con_GetString(const char* name)
     return CV_CHARPTR(var);
 }
 
-/// Construct a new variable from the specified template and add it to the database.
-static ddcvar_t* addVariable(const cvar_t* tpl)
-{
-    ddcvar_t* newVar;
-    uint idx;
-
-    cvars = realloc(cvars, sizeof(*cvars) * ++numCVars);
-
-    // Find the insertion point.
-    for(idx = 0; idx < numCVars-1; ++idx)
-        if(stricmp(cvars[idx]->shared.name, tpl->name) > 0)
-            break;
-
-    // Make room for the new variable.
-    if(idx != numCVars-1)
-        memmove(cvars + idx + 1, cvars + idx, sizeof(*cvars) * (numCVars - 1 - idx));
-
-    // Add the new variable, making a static copy of the name in the zone (this allows
-    // the source data to change in case of dynamic registrations).
-    newVar = cvars[idx] = malloc(sizeof(*newVar));
-    memcpy(&newVar->shared, tpl, sizeof(newVar->shared));
-    { char* nameCopy = Z_Malloc(strlen(tpl->name) + 1, PU_APPSTATIC, NULL);
-    strcpy(nameCopy, tpl->name);
-    newVar->shared.name = nameCopy;
-    }
-
-    knownWordsNeedUpdate = true;
-    return newVar;
-}
-
 void Con_AddVariable(const cvar_t* tpl)
 {   
+    assert(inited);
     if(!tpl)
     {
         Con_Message("Warning:Con_AddVariable: Passed invalid value for argument "
@@ -455,13 +551,13 @@ void Con_AddVariable(const cvar_t* tpl)
 
 void Con_AddVariableList(const cvar_t* tplList)
 {
+    assert(inited);
     if(!tplList)
     {
         Con_Message("Warning:Con_AddVariableList: Passed invalid value for "
                     "argument 'tplList', ignoring.\n");
         return;
     }
-
     for(; tplList->name; ++tplList)
     {
         if(Con_FindVariable(tplList->name))
@@ -473,6 +569,8 @@ void Con_AddVariableList(const cvar_t* tplList)
 
 ddcvar_t* Con_FindVariable(const char* name)
 {
+    assert(inited);
+    {
     int result;
     uint bottomIdx, topIdx, pivot;
     ddcvar_t* var;
@@ -514,10 +612,13 @@ ddcvar_t* Con_FindVariable(const char* name)
     }
 
     return var;
+    }
 }
 
 void Con_PrintCVar(ddcvar_t* var, char* prefix)
 {
+    assert(inited);
+    {
     char equals = '=';
 
     if(!var)
@@ -551,10 +652,13 @@ void Con_PrintCVar(ddcvar_t* var, char* prefix)
         break;
     }
     Con_Printf("\n");
+    }
 }
 
 void Con_AddCommand(const ccmd_t* ccmd)
 {
+    assert(inited);
+    {
     int minArgs, maxArgs;
     cvartype_t args[MAX_ARGS];
     ddccmd_t* newCCmd, *overloaded = 0;
@@ -573,10 +677,10 @@ Con_Message("Con_AddCommand: \"%s\" \"%s\" (%i).\n", ccmd->name,
     // Decode the usage string if present.
     if(ccmd->argTemplate != 0)
     {
-        char                c;
-        size_t              l, len;
-        cvartype_t          type = CVT_NULL;
-        boolean             unlimitedArgs;
+        size_t l, len;
+        cvartype_t type = CVT_NULL;
+        boolean unlimitedArgs;
+        char c;
 
         len = strlen(ccmd->argTemplate);
         minArgs = 0;
@@ -738,6 +842,7 @@ if(ccmd->args == NULL)
     // Link it to the head of the overload list.
     newCCmd->nextOverload = overloaded;
     overloaded->prevOverload = newCCmd;
+    }
 }
 
 void Con_AddCommandList(const ccmd_t* cmdList)
@@ -751,6 +856,7 @@ void Con_AddCommandList(const ccmd_t* cmdList)
 
 ddccmd_t* Con_FindCommand(const char* name)
 {
+    assert(inited);
     // \todo Use a faster than O(n) linear search.
     if(name && name[0])
     {
@@ -768,6 +874,8 @@ ddccmd_t* Con_FindCommand(const char* name)
 
 ddccmd_t* Con_FindCommandMatchArgs(cmdargs_t* args)
 {
+    assert(inited);
+
     if(!args)
         return 0;
 
@@ -842,6 +950,8 @@ boolean Con_IsValidCommand(const char* name)
 
 void Con_PrintCCmdUsage(ddccmd_t* ccmd, boolean showExtra)
 {
+    assert(inited);
+
     if(!ccmd || (ccmd->minArgs == -1 && ccmd->maxArgs == -1))
         return;
 
@@ -874,10 +984,12 @@ void Con_PrintCCmdUsage(ddccmd_t* ccmd, boolean showExtra)
 
 calias_t* Con_FindAlias(const char* name)
 {
-    int                 result;
-    uint                bottomIdx, topIdx, pivot;
-    calias_t*           cal;
-    boolean             isDone;
+    assert(inited);
+    {
+    uint bottomIdx, topIdx, pivot;
+    calias_t* cal;
+    boolean isDone;
+    int result;
 
     if(numCAliases == 0)
         return 0;
@@ -917,10 +1029,13 @@ calias_t* Con_FindAlias(const char* name)
     }
 
     return cal;
+    }
 }
 
 calias_t* Con_AddAlias(const char* name, const char* command)
 {
+    assert(inited);
+    {
     calias_t* newAlias;
     uint idx;
 
@@ -948,11 +1063,12 @@ calias_t* Con_AddAlias(const char* name, const char* command)
 
     knownWordsNeedUpdate = true;
     return newAlias;
+    }
 }
 
 void Con_DeleteAlias(calias_t* cal)
 {
-    assert(cal);
+    assert(inited && cal);
     {
     uint idx;
 
@@ -979,7 +1095,7 @@ void Con_DeleteAlias(calias_t* cal)
 int Con_IterateKnownWords(const char* pattern, knownwordtype_t type,
     int (*callback) (const knownword_t* word, void* paramaters), void* paramaters)
 {
-    assert(callback);
+    assert(inited && callback);
     {
     knownwordtype_t matchType = (VALID_KNOWNWORDTYPE(type)? type : WT_ANY);
     size_t patternLength = (pattern? strlen(pattern) : 0);
@@ -1031,6 +1147,8 @@ static int collectMatchedWordWorker(const knownword_t* word, void* paramaters)
 const knownword_t** Con_CollectKnownWordsMatchingWord(const char* word,
     knownwordtype_t type, uint* count)
 {
+    assert(inited);
+    {
     uint localCount = 0;
 
     Con_IterateKnownWords(word, type, countMatchedWordWorker, &localCount);
@@ -1055,70 +1173,43 @@ const knownword_t** Con_CollectKnownWordsMatchingWord(const char* word,
         return p.matches;
     }
     return 0; // No matches.
+    }
 }
 
-void Con_DestroyDatabases(void)
+void Con_InitDatabases(void)
 {
-    static char* emptyString = "";
+    if(inited) return;
 
-    // Free the data of the data cvars.
-    { uint i;
-    ddcvar_t** cvar;
-    for(i = 0, cvar = cvars; i < numCVars; ++i, ++cvar)
-    {
-        if(((*cvar)->shared.flags & CVF_CAN_FREE) &&
-           (*cvar)->shared.type == CVT_CHARPTR)
-        {
-            char** ptr = (char**) (*cvar)->shared.ptr;
-
-            // \note Multiple vars could be using the same pointer (so ensure
-            // that we attempt to free only once).
-            { uint k;
-            for(k = i; k < numCVars; ++k)
-                if(cvars[k]->shared.type == CVT_CHARPTR &&
-                   *(char**) cvars[k]->shared.ptr == *ptr)
-                {
-                    cvars[k]->shared.flags &= ~CVF_CAN_FREE;
-                }
-            }
-            free(*ptr);
-            *ptr = emptyString;
-        }
-        free(*cvar);
-    }}
-
-    if(cvars)
-        free(cvars);
-    cvars = 0;
+    // Create the empty variable directory now.
+    //cvarDirectory = PathDirectory_ConstructDefault();
     numCVars = 0;
+    cvars = 0;
 
-    if(ccmdBlockSet)
-        BlockSet_Destruct(ccmdBlockSet);
-    ccmdBlockSet = 0;
     ccmdListHead = 0;
+    ccmdBlockSet = 0;
     numUniqueNamedCCmds = 0;
 
-    if(caliases)
-    {
-        // Free the alias data.
-        calias_t** cal;
-        uint i;
-        for(i = 0, cal = caliases; i < numCAliases; ++i, ++cal)
-        {
-            free((*cal)->name);
-            free((*cal)->command);
-            free(*cal);
-        }
-        free(caliases);
-    }
-    caliases = 0;
     numCAliases = 0;
+    caliases = 0;
 
-    if(knownWords)
-        free(knownWords);
     knownWords = 0;
     numKnownWords = 0;
     knownWordsNeedUpdate = false;
+
+    inited = true;
+}
+
+void Con_ShutdownDatabases(void)
+{
+    if(!inited)
+        return;
+
+    clearKnownWords();
+    clearAliases();
+    clearCommands();
+    clearVariables();
+
+    inited = false;
 }
 
 D_CMD(HelpWhat)

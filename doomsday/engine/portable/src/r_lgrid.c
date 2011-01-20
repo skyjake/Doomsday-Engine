@@ -1,10 +1,10 @@
-/**\file
+/**\file r_lgrid.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2006-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2006-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,8 +26,7 @@
 /**
  * Light Grid (Large-Scale FakeRadio).
  *
- * Very simple global illumination method utilizing a 2D grid of light
- * levels.
+ * Very simple global illumination method utilizing a 2D grid of light levels.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -630,18 +629,17 @@ void LG_SectorChanged(sector_t *sector)
 /**
  * Called when a setting is changed which affects the lightgrid.
  */
-void LG_MarkAllForUpdate(cvar_t *unused)
+void LG_MarkAllForUpdate(const cvar_t* cvar)
 {
-    uint                i;
-
     if(!lgInited)
         return;
 
     // Mark all blocks and contributors.
+    { uint i;
     for(i = 0; i < numSectors; ++i)
     {
         LG_SectorChanged(&sectors[i]);
-    }
+    }}
 }
 
 #if 0

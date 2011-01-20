@@ -38,7 +38,7 @@ static void allocateString(ddstring_t *str, size_t for_length, int preserve)
     for_length++;
 
     if(str->size >= for_length)
-        return;                 // We're OK.
+        return; // We're OK.
 
     // Already some memory allocated?
     if(str->size)
@@ -111,13 +111,15 @@ void Str_Clear(ddstring_t* str)
     Str_Set(str, "");
 }
 
-void Str_Reserve(ddstring_t* str, size_t length)
+void Str_Reserve(ddstring_t* str, int length)
 {
     if(!str)
     {
         Con_Error("Attempted String::Reserve with invalid reference (this==0).");
         return; // Unreachable.
     }
+    if(length <= 0)
+        return;
     allocateString(str, length, true);
 }
 
@@ -129,9 +131,17 @@ void Str_Set(ddstring_t* str, const char* text)
         return; // Unreachable.
     }
     { size_t incoming = strlen(text);
+    if(incoming > DDSTRING_MAX_LENGTH)
+    {
+#if _DEBUG
+        Con_Message("Warning: Resultant string would be longer than String::MAX_LENGTH "
+                    "(%ul), truncating.\n", (unsigned long) DDSTRING_MAX_LENGTH);
+#endif
+        incoming = DDSTRING_MAX_LENGTH;
+    }   
     allocateString(str, incoming, false);
     strcpy(str->str, text);
-    str->length = incoming;
+    str->length = (int)incoming;
     }
 }
 
@@ -147,16 +157,19 @@ void Str_Append(ddstring_t* str, const char* append)
     incoming = strlen(append);
     if(incoming == 0)
         return;
-    if(str->length + incoming > DDSTRING_MAX_LENGTH)
+    if((unsigned)str->length + incoming > DDSTRING_MAX_LENGTH)
     {
 #if _DEBUG
-        Con_Message("Resultant string would be longer than String::MAX_LENGTH (%ul).\n", (unsigned long) DDSTRING_MAX_LENGTH);
+        Con_Message("Warning: Resultant string would be longer than String::MAX_LENGTH "
+                    "(%ul), truncating.\n", (unsigned long) DDSTRING_MAX_LENGTH);
 #endif
-        return;
+        incoming = DDSTRING_MAX_LENGTH - str->length;
+        if(incoming == 0)
+            return;
     }   
-    allocateString(str, str->length + incoming, true);
+    allocateString(str, (unsigned)str->length + incoming, true);
     strcpy(str->str + str->length, append);
-    str->length += incoming;
+    str->length += (int)incoming;
 }
 
 void Str_AppendChar(ddstring_t* str, char ch)
@@ -183,7 +196,7 @@ void Str_Appendf(ddstring_t* str, const char* format, ...)
     }
 }
 
-void Str_PartAppend(ddstring_t* str, const char* append, size_t start, size_t count)
+void Str_PartAppend(ddstring_t* str, const char* append, int start, int count)
 {
     if(!str)
     {
@@ -197,8 +210,9 @@ void Str_PartAppend(ddstring_t* str, const char* append, size_t start, size_t co
 #endif
         return;
     }
-    if(count == 0)
+    if(start < 0 || count <= 0)
         return;
+
     allocateString(str, str->length + count + 1, true);
     memcpy(str->str + str->length, append + start, count);
     str->length += count;
@@ -226,17 +240,17 @@ void Str_Prepend(ddstring_t* str, const char* prepend)
     if(incoming == 0)
         return;
     // Don't allow extremely long strings.
-    if(str->length + incoming > DDSTRING_MAX_LENGTH)
+    if((unsigned)str->length + incoming > DDSTRING_MAX_LENGTH)
     {
 #if _DEBUG
         Con_Message("Resultant string would be longer than String::MAX_LENGTH (%ul).\n", (unsigned long) DDSTRING_MAX_LENGTH);
 #endif
         return;
     }
-    allocateString(str, str->length + incoming, true);
+    allocateString(str, (unsigned)str->length + incoming, true);
     memmove(str->str + incoming, str->str, str->length + 1);
     memcpy(str->str, prepend, incoming);
-    str->length += incoming;
+    str->length += (int)incoming;
 }
 
 char* Str_Text(const ddstring_t* str)
@@ -249,7 +263,7 @@ char* Str_Text(const ddstring_t* str)
     return str->str ? str->str : "";
 }
 
-size_t Str_Length(const ddstring_t* str)
+int Str_Length(const ddstring_t* str)
 {
     if(!str)
     {
@@ -258,7 +272,7 @@ size_t Str_Length(const ddstring_t* str)
     }
     if(str->length)
         return str->length;
-    return strlen(Str_Text(str));
+    return (int)strlen(Str_Text(str));
 }
 
 boolean Str_IsEmpty(const ddstring_t* str)
@@ -287,9 +301,9 @@ void Str_Copy(ddstring_t* str, const ddstring_t* other)
     memcpy(str->str, other->str, other->size);
 }
 
-size_t Str_StripLeft(ddstring_t* str)
+int Str_StripLeft(ddstring_t* str)
 {
-    size_t i, num;
+    int i, num;
     boolean isDone;
 
     if(!str)
@@ -326,7 +340,7 @@ size_t Str_StripLeft(ddstring_t* str)
     return num;
 }
 
-size_t Str_StripRight(ddstring_t* str)
+int Str_StripRight(ddstring_t* str)
 {
     if(!str)
     {
@@ -337,7 +351,7 @@ size_t Str_StripRight(ddstring_t* str)
     if(str->length == 0)
         return 0;
 
-    { size_t i = str->length - 1, num = 0;
+    { int i = str->length - 1, num = 0;
     if(isspace(str->str[i]))
     do
     {
@@ -350,10 +364,9 @@ size_t Str_StripRight(ddstring_t* str)
     }
 }
 
-void Str_Strip(ddstring_t* str)
+int Str_Strip(ddstring_t* str)
 {
-    Str_StripLeft(str);
-    Str_StripRight(str);
+    return Str_StripLeft(str) + Str_StripRight(str);
 }
 
 const char* Str_GetLine(ddstring_t* str, const char* src)
@@ -431,30 +444,36 @@ const char* Str_CopyDelim(ddstring_t* dest, const char* src, char delimiter)
     return Str_CopyDelim2(dest, src, delimiter, CDF_OMIT_DELIMITER|CDF_OMIT_WHITESPACE);
 }
 
-char Str_At(const ddstring_t* str, size_t index)
+char Str_At(const ddstring_t* str, int index)
 {
     if(!str)
     {
         Con_Error("Attempted String::At with invalid reference (this==0).");
         return 0; // Unreachable.
     }
-    if(index >= str->length)
-    {
+    if(index < 0 || index >= str->length)
         return 0;
-    }
     return str->str[index];
 }
 
-char Str_RAt(const ddstring_t* str, size_t reverseIndex)
+char Str_RAt(const ddstring_t* str, int reverseIndex)
 {
     if(!str)
     {
         Con_Error("Attempted String::RAt with invalid reference (this==0).");
         return 0; // Unreachable.
     }
-    if(reverseIndex >= str->length)
-    {
+    if(reverseIndex < 0 || reverseIndex >= str->length)
         return 0;
-    }
     return str->str[str->length - 1 - reverseIndex];
+}
+
+void Str_Truncate(ddstring_t* str, int position)
+{
+    if(position < 0)
+        position = 0;
+    if(!(position < Str_Length(str)))
+        return;
+    str->length = position;
+    str->str[str->length] = '\0';
 }

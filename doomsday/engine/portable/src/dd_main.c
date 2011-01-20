@@ -52,7 +52,7 @@
 #include "de_bsp.h"
 #include "de_edit.h"
 
-#include "pathdirectory.h"
+#include "filedirectory.h"
 #include "resourcerecord.h"
 #include "m_misc.h" // \todo remove dependency
 #include "m_args.h"
@@ -684,11 +684,11 @@ static void printGameInfo(gameinfo_t* info, boolean printBanner, boolean printSt
 /**
  * (f_allresourcepaths_callback_t)
  */
-static int autoDataAdder(const ddstring_t* fileName, pathdirectory_pathtype_t type, void* paramaters)
+static int autoDataAdder(const ddstring_t* fileName, filedirectory_pathtype_t type, void* paramaters)
 {
     assert(fileName && paramaters);
     // We are only interested in files.
-    if(type == PT_FILE)
+    if(type == FDT_FILE)
     {
         autoload_t* data = (autoload_t*)paramaters;
         if(data->loadFiles)
@@ -833,7 +833,7 @@ static int DD_ChangeGameWorker(void* paramaters)
         configFileName = GameInfo_MainConfig(p->info);
     }
 
-    Con_Message("Parsing game config: \"%s\" ...\n", Str_Text(F_PrettyPath(configFileName)));
+    Con_Message("Parsing primary config: \"%s\" ...\n", Str_Text(F_PrettyPath(configFileName)));
     Con_ParseCommands(Str_Text(configFileName), true);
     if(configFileName == &tmp)
         Str_Free(&tmp);
@@ -876,7 +876,7 @@ static int DD_ChangeGameWorker(void* paramaters)
 
     /**
      * Phase 1: Add game-resource files.
-     * \fixme dj: First ZIPs then WADs (they may contain virtual WAD files).
+     * \fixme dj: First ZIPs then WADs (they may contain WAD files).
      */
 #pragma message("!!!WARNING: Phase 1 of game resource loading does not presently prioritize ZIP!!!")
     loadGameResources(p->info, RC_PACKAGE, "");
@@ -890,7 +890,7 @@ static int DD_ChangeGameWorker(void* paramaters)
 
     /**
      * Phase 3: Add real files from the Auto directory.
-     * First ZIPs then WADs (they may contain virtual WAD files).
+     * First ZIPs then WADs (they may contain WAD files).
      */
     addFilesFromAutoData(false);
     if(numGameResourceFileList > 0)
@@ -1076,11 +1076,12 @@ boolean DD_ChangeGame2(gameinfo_t* info, boolean allowReload)
         Sfx_InitLogical();
         P_InitThinkerLists(0x1|0x2);
 
-        Con_DestroyDatabases();
+        Con_ShutdownDatabases();
 
         // This is now the current game.
         currentGameInfoIndex = gameInfoIndex(findGameInfoForIdentityKey("null-game"));
 
+        Con_InitDatabases();
         DD_Register();
 
         F_InitResourceLocator();
@@ -1263,6 +1264,8 @@ int DD_EarlyInit(void)
     {
         DD_ErrorBox(true, "Error initializing memory zone.");
     }
+
+    Con_InitDatabases();
 
     // Register the engine's console commands and variables.
     DD_Register();

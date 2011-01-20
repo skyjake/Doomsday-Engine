@@ -85,7 +85,7 @@ void            LO_InitForNewFrame(void);
 void            LO_AddLuminousMobjs(void);
 void            LO_BeginFrame(void);
 
-void            LO_UnlinkMobjLumobjs(cvar_t* var);
+void            LO_UnlinkMobjLumobjs(const cvar_t* var);
 
 uint            LO_NewLuminous(lumtype_t type, subsector_t* ssec);
 lumobj_t*       LO_GetLuminous(uint idx);

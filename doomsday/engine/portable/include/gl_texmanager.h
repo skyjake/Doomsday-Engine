@@ -140,9 +140,9 @@ void            GL_ClearSystemTextures(void);
 void            GL_DeleteRawImages(void);
 int             GL_InitPalettedTexture(void);
 
-void            GL_DoTexReset(cvar_t* unused);
-void            GL_DoUpdateTexGamma(cvar_t* unused);
-void            GL_DoUpdateTexParams(cvar_t* unused);
+void            GL_DoTexReset(const cvar_t* cvar);
+void            GL_DoUpdateTexGamma(const cvar_t* cvar);
+void            GL_DoUpdateTexParams(const cvar_t* cvar);
 void            GL_UpdateTexParams(int mipmode);
 
 void            GL_BindTexture(DGLuint texname, int magMode);

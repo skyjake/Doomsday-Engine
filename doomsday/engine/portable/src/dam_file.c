@@ -1158,7 +1158,7 @@ static void archiveMaterialDict(materialdict_t *dict, boolean write)
         dict->count = readLong();
         for(i = 0; i < dict->count; ++i)
         {
-            size_t len = readLong();
+            int len = readLong();
             Str_Clear(&dict->table[i].path);
             Str_Reserve(&dict->table[i].path, len);
             readNBytes(Str_Text(&dict->table[i].path), len);

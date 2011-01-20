@@ -152,7 +152,7 @@ static size_t C_DECL N_MasterReadCallback(void *ptr, size_t size, size_t nmemb, 
     size_t bytes = size * nmemb;
 
     // Don't copy too much.
-    bytes = MIN_OF(bytes, Str_Length(msg));
+    bytes = MIN_OF(bytes, (unsigned)Str_Length(msg));
     memcpy(ptr, msg->str, bytes);
 
     // Remove the sent portion from the buffer.
@@ -169,7 +169,6 @@ static size_t C_DECL N_MasterWriteCallback(void *ptr, size_t size, size_t nmemb,
 {
 	ddstring_t* response = stream;
 	size_t bytes = size * nmemb;
-	//size_t pos = Str_Length(response);
 
 	// Append the new data to the response.
 	Str_Reserve(response, Str_Length(response) + bytes);

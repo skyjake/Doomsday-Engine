@@ -39,11 +39,14 @@
 #include "m_args.h"
 #include "m_misc.h"
 
-#include "pathdirectory.h"
+#include "filedirectory.h"
 #include "resourcenamespace.h"
 #include "resourcerecord.h"
 
 // MACROS ------------------------------------------------------------------
+
+#define PATH_DELIMIT_CHAR       ';'
+#define PATH_DELIMIT_STR        ";"
 
 // TYPES -------------------------------------------------------------------
 
@@ -112,7 +115,7 @@ static resourcenamespace_t** namespaces = 0;
 static uint numNamespaces = 0;
 
 /// Local virtual file system paths on the host system.
-static pathdirectory_t* fsLocalPaths;
+static filedirectory_t* fsLocalPaths;
 
 // CODE --------------------------------------------------------------------
 
@@ -408,18 +411,17 @@ static void createResourceNamespaces(void)
         byte flags;
         const char* overrideName;
         const char* overrideName2;
-    } defs[] =
-    {
-        { PACKAGES_RESOURCE_NAMESPACE_NAME,    { "$(GameInfo.DataPath)", "$(App.DataPath)", "$(DOOMWADDIR)" } },
-        { DEFINITIONS_RESOURCE_NAMESPACE_NAME, { "$(GameInfo.DefsPath)/$(GameInfo.IdentityKey)", "$(GameInfo.DefsPath)", "$(App.DefsPath)" } },
-        { GRAPHICS_RESOURCE_NAMESPACE_NAME,    { "$(App.DataPath)/graphics" }, 0, "-gfxdir",  "-gfxdir2" },
-        { MODELS_RESOURCE_NAMESPACE_NAME,      { "$(GameInfo.DataPath)/models/$(GameInfo.IdentityKey)", "$(GameInfo.DataPath)/models" },        RNF_USE_VMAP,  "-modeldir", "-modeldir2" },
-        { SOUNDS_RESOURCE_NAMESPACE_NAME,      { "$(GameInfo.DataPath)/sfx/$(GameInfo.IdentityKey)", "$(GameInfo.DataPath)/sfx" },              RNF_USE_VMAP,  "-sfxdir",   "-sfxdir2" },
-        { MUSIC_RESOURCE_NAMESPACE_NAME,       { "$(GameInfo.DataPath)/music/$(GameInfo.IdentityKey)", "$(GameInfo.DataPath)/music" },          RNF_USE_VMAP,  "-musdir",   "-musdir2" },
-        { TEXTURES_RESOURCE_NAMESPACE_NAME,    { "$(GameInfo.DataPath)/textures/$(GameInfo.IdentityKey)", "$(GameInfo.DataPath)/textures" },    RNF_USE_VMAP,  "-texdir",   "-texdir2" },
-        { FLATS_RESOURCE_NAMESPACE_NAME,       { "$(GameInfo.DataPath)/flats/$(GameInfo.IdentityKey)", "$(GameInfo.DataPath)/flats" },          RNF_USE_VMAP,  "-flatdir",  "-flatdir2" },
-        { PATCHES_RESOURCE_NAMESPACE_NAME,     { "$(GameInfo.DataPath)/patches/$(GameInfo.IdentityKey)", "$(GameInfo.DataPath)/patches" },      RNF_USE_VMAP,  "-patdir",   "-patdir2" },
-        { LIGHTMAPS_RESOURCE_NAMESPACE_NAME,   { "$(GameInfo.DataPath)/lightmaps/$(GameInfo.IdentityKey)", "$(GameInfo.DataPath)/lightmaps" },  RNF_USE_VMAP,  "-lmdir",    "-lmdir2" },
+    } defs[] = {
+        { PACKAGES_RESOURCE_NAMESPACE_NAME,    { "$(GameInfo.DataPath)/", "$(App.DataPath)/", "$(DOOMWADDIR)/" } },
+        { DEFINITIONS_RESOURCE_NAMESPACE_NAME, { "$(GameInfo.DefsPath)/$(GameInfo.IdentityKey)/", "$(GameInfo.DefsPath)/", "$(App.DefsPath)/" } },
+        { GRAPHICS_RESOURCE_NAMESPACE_NAME,    { "$(App.DataPath)/graphics/" }, 0, "-gfxdir",  "-gfxdir2" },
+        { MODELS_RESOURCE_NAMESPACE_NAME,      { "$(GameInfo.DataPath)/models/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/models/" },       RNF_USE_VMAP,  "-modeldir", "-modeldir2" },
+        { SOUNDS_RESOURCE_NAMESPACE_NAME,      { "$(GameInfo.DataPath)/sfx/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/sfx/" },             RNF_USE_VMAP,  "-sfxdir",   "-sfxdir2" },
+        { MUSIC_RESOURCE_NAMESPACE_NAME,       { "$(GameInfo.DataPath)/music/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/music/" },         RNF_USE_VMAP,  "-musdir",   "-musdir2" },
+        { TEXTURES_RESOURCE_NAMESPACE_NAME,    { "$(GameInfo.DataPath)/textures/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/textures/" },   RNF_USE_VMAP,  "-texdir",   "-texdir2" },
+        { FLATS_RESOURCE_NAMESPACE_NAME,       { "$(GameInfo.DataPath)/flats/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/flats/" },         RNF_USE_VMAP,  "-flatdir",  "-flatdir2" },
+        { PATCHES_RESOURCE_NAMESPACE_NAME,     { "$(GameInfo.DataPath)/patches/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/patches/" },     RNF_USE_VMAP,  "-patdir",   "-patdir2" },
+        { LIGHTMAPS_RESOURCE_NAMESPACE_NAME,   { "$(GameInfo.DataPath)/lightmaps/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/lightmaps/" }, RNF_USE_VMAP,  "-lmdir",    "-lmdir2" },
         { NULL }
     };
     size_t i;
@@ -458,7 +460,7 @@ void F_InitResourceLocator(void)
         createResourceNamespaces();
 
         // Create the initial (empty) local file system path directory now.
-        fsLocalPaths = PathDirectory_ConstructDefault();
+        fsLocalPaths = FileDirectory_ConstructDefault();
     }
 
     // Allow re-init.
@@ -471,11 +473,11 @@ void F_ShutdownResourceLocator(void)
     if(!inited)
         return;
     destroyAllNamespaces();
-    PathDirectory_Destruct(fsLocalPaths); fsLocalPaths = 0;
+    FileDirectory_Destruct(fsLocalPaths); fsLocalPaths = 0;
     inited = false;
 }
 
-pathdirectory_t* F_LocalPaths(void)
+filedirectory_t* F_LocalPaths(void)
 {
     assert(inited);
     return fsLocalPaths;
@@ -516,10 +518,9 @@ boolean F_IsValidResourceNamespaceId(int val)
     return (boolean)(val>0 && (unsigned)val < (F_NumResourceNamespaces()+1)? 1 : 0);
 }
 
-dduri_t** F_CreateUriList(resourceclass_t rclass, const ddstring_t* _searchPaths)
+dduri_t** F_CreateUriListStr2(resourceclass_t rclass, const ddstring_t* _searchPaths,
+    size_t* count)
 {
-    assert(rclass == RC_UNKNOWN || VALID_RESOURCE_CLASS(rclass));
-    {
     const ddstring_t* searchPaths = _searchPaths;
     dduri_t* path, **list;
     const char* result = 0, *p;
@@ -527,13 +528,17 @@ dduri_t** F_CreateUriList(resourceclass_t rclass, const ddstring_t* _searchPaths
     ddstring_t temp;
 
     if(!_searchPaths || Str_IsEmpty(_searchPaths))
+    {
+        if(count)
+            *count = 0;
         return 0;
+    }
 
-    // Ensure the path list has the required terminating semicolon.
-    if(Str_RAt(_searchPaths, 0) != ';')
+    // Ensure the path list has the required terminator.
+    if(Str_RAt(_searchPaths, 0) != PATH_DELIMIT_CHAR)
     {
         Str_Init(&temp);
-        Str_Appendf(&temp, "%s;", Str_Text(_searchPaths));
+        Str_Appendf(&temp, "%s"PATH_DELIMIT_STR, Str_Text(_searchPaths));
         searchPaths = &temp;
     }
 
@@ -541,12 +546,12 @@ dduri_t** F_CreateUriList(resourceclass_t rclass, const ddstring_t* _searchPaths
 
     numPaths = 0;
     p = Str_Text(searchPaths);
-    while((p = F_ParseSearchPath2(path, p, ';', rclass))) { ++numPaths; }
+    while((p = F_ParseSearchPath2(path, p, PATH_DELIMIT_CHAR, rclass))) { ++numPaths; }
 
     n = 0;
     p = Str_Text(searchPaths);
     list = malloc((numPaths+1) * sizeof(*list));
-    while((p = F_ParseSearchPath2(path, p, ';', rclass)))
+    while((p = F_ParseSearchPath2(path, p, PATH_DELIMIT_CHAR, rclass)))
     {
         list[n++] = Uri_ConstructCopy(path);
     }
@@ -555,8 +560,43 @@ dduri_t** F_CreateUriList(resourceclass_t rclass, const ddstring_t* _searchPaths
     Uri_Destruct(path);
     if(searchPaths != _searchPaths)
         Str_Free(&temp);
+    if(count)
+        *count = numPaths;
     return list;
+}
+
+dduri_t** F_CreateUriListStr(resourceclass_t rclass, const ddstring_t* searchPaths)
+{
+    return F_CreateUriListStr2(rclass, searchPaths, 0);
+}
+
+dduri_t** F_CreateUriList2(resourceclass_t rclass, const char* _searchPaths,
+    size_t* count)
+{
+    ddstring_t searchPaths;
+    dduri_t** list;
+
+    if(!_searchPaths || !_searchPaths[0])
+    {
+        if(count)
+            *count = 0;
+        return 0;
     }
+
+    Str_Init(&searchPaths);
+    Str_Set(&searchPaths, _searchPaths);
+    // Ensure the path list has the required terminating semicolon.
+    if(Str_RAt(&searchPaths, 0) != PATH_DELIMIT_CHAR)
+        Str_AppendChar(&searchPaths, PATH_DELIMIT_CHAR);
+
+    list = F_CreateUriListStr2(rclass, &searchPaths, count);
+    Str_Free(&searchPaths);
+    return list;
+}
+
+dduri_t** F_CreateUriList(resourceclass_t rclass, const char* searchPaths)
+{
+    return F_CreateUriList2(rclass, searchPaths, 0);
 }
 
 void F_DestroyUriList(dduri_t** list)
@@ -569,6 +609,79 @@ void F_DestroyUriList(dduri_t** list)
         free(list);
     }
 }
+
+ddstring_t** F_ResolvePathList2(resourceclass_t defaultResourceClass,
+    const ddstring_t* pathList, size_t* count, char delimiter)
+{
+    {dduri_t** uris;
+    if((uris = F_CreateUriListStr(RC_NULL, pathList)) != 0)
+    {
+        ddstring_t** paths = 0;
+        size_t numResolvedPaths = 0;
+
+        { dduri_t** ptr;
+        for(ptr = uris; *ptr; ++ptr)
+        {
+            if(Uri_Resolved(*ptr) != 0) // Ignore incomplete paths.
+                ++numResolvedPaths;
+        }}
+    
+        if(numResolvedPaths != 0)
+        {
+            uint n = 0;
+            paths = malloc(sizeof(*paths) * (numResolvedPaths+1));
+            { dduri_t** ptr;
+            for(ptr = uris; *ptr; ++ptr)
+            {
+                ddstring_t* resolvedPath;
+                if((resolvedPath = Uri_Resolved(*ptr)) == 0)
+                    continue; // Incomplete path; ignore it.
+                // Let's try to make it a relative path.
+                F_RemoveBasePath(resolvedPath, resolvedPath);
+                paths[n++] = resolvedPath;
+            }}
+            paths[n] = 0; // Terminate.
+        }
+        F_DestroyUriList(uris);
+        if(count)
+            *count = numResolvedPaths;
+        return paths;
+    }}
+    if(count)
+        *count = 0;
+    return 0;
+}
+
+ddstring_t** F_ResolvePathList(resourceclass_t defaultResourceClass,
+    const ddstring_t* pathList, size_t* count)
+{
+    return F_ResolvePathList2(defaultResourceClass, pathList, count, PATH_DELIMIT_CHAR);
+}
+
+void F_DestroyStringList(ddstring_t** list)
+{
+    if(list)
+    {
+        ddstring_t** ptr;
+        for(ptr = list; *ptr; ptr++)
+            Str_Delete(*ptr);
+        free(list);
+    }
+}
+
+#if _DEBUG
+void F_PrintStringList(const ddstring_t** strings, size_t stringsCount)
+{
+    if(!strings || stringsCount == 0)
+        return;
+
+    { const ddstring_t** ptr = strings;
+    size_t i;
+    for(i = 0; i < stringsCount && *ptr; ++i, ptr++)
+        Con_Printf("  \"%s\"\n", Str_Text(*ptr));
+    }
+}
+#endif
 
 uint F_FindResource4(resourceclass_t rclass, const dduri_t** searchPaths,
     ddstring_t* foundPath, const ddstring_t* optionalSuffix)
@@ -600,7 +713,7 @@ uint F_FindResourceStr3(resourceclass_t rclass, const ddstring_t* searchPaths,
         return 0;
     }
 
-    if((list = F_CreateUriList(rclass, searchPaths)) != 0)
+    if((list = F_CreateUriListStr(rclass, searchPaths)) != 0)
     {
         result = findResource(rclass, list, optionalSuffix, foundPath);
         F_DestroyUriList(list);
@@ -871,14 +984,16 @@ boolean F_RemoveBasePath(ddstring_t* dest, const ddstring_t* absPath)
         {
             ddstring_t buf;
             Str_Init(&buf);
-            Str_PartAppend(&buf, Str_Text(absPath), strlen(ddBasePath), Str_Length(absPath) - strlen(ddBasePath));
+            Str_PartAppend(&buf, Str_Text(absPath), strlen(ddBasePath),
+                           Str_Length(absPath) - strlen(ddBasePath));
             Str_Copy(dest, &buf);
             Str_Free(&buf);
             return true;
         }
 
         Str_Clear(dest);
-        Str_PartAppend(dest, Str_Text(absPath), strlen(ddBasePath), Str_Length(absPath) - strlen(ddBasePath));
+        Str_PartAppend(dest, Str_Text(absPath), strlen(ddBasePath),
+                       Str_Length(absPath) - strlen(ddBasePath));
         return true;
     }
 

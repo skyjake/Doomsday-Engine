@@ -86,23 +86,21 @@ static ddstring_t* resolveUri(const dduri_t* uri)
 {
     assert(uri);
     {
-    ddstring_t part, src, doomWadDir, *dest = Str_New();
+    ddstring_t part, *doomWadDir = 0, *dest = Str_New();
     boolean successful = false;
     const char* p;
 
-    Str_Init(dest);
     Str_Init(&part);
-    Str_Init(&doomWadDir);
-    Str_Init(&src); Str_Copy(&src, &uri->_path);
 
     // Copy the first part of the string as-is up to first '$' if present.
-    if((p = Str_CopyDelim2(dest, Str_Text(&src), '$', CDF_OMIT_DELIMITER)))
+    if((p = Str_CopyDelim2(dest, Str_Text(&uri->_path), '$', CDF_OMIT_DELIMITER)))
     {
         int depth = 0;
 
         if(*p != '(')
         {
-            Con_Message("Invalid character '%c' in \"%s\" at %lu (Uri::resolveUri).\n", *p, Str_Text(&src), p - Str_Text(&src));
+            Con_Message("Invalid character '%c' in \"%s\" at %lu (Uri::resolveUri).\n", *p,
+                        Str_Text(&uri->_path), p - Str_Text(&uri->_path));
             goto parseEnded;
         }
         // Skip over the opening brace.
@@ -115,13 +113,18 @@ static ddstring_t* resolveUri(const dduri_t* uri)
             // First, try external symbols like environment variable names - they are quick to reject.
             if(!Str_CompareIgnoreCase(&part, "DOOMWADDIR"))
             {
-                if(!ArgCheck("-nowaddir") && getenv("DOOMWADDIR"))
+                if(!ArgCheck("-nowaddir") && (doomWadDir || getenv("DOOMWADDIR")))
                 {
-                    Str_Set(&doomWadDir, getenv("DOOMWADDIR"));
-                    F_FixSlashes(&doomWadDir);
-                    if(Str_RAt(&doomWadDir, 0) != DIR_SEP_CHAR)
-                        Str_AppendChar(&doomWadDir, DIR_SEP_CHAR);
-                    Str_Append(dest, Str_Text(&doomWadDir));
+                    if(!doomWadDir)
+                    {
+                        doomWadDir = Str_New();
+                        Str_Set(doomWadDir, getenv("DOOMWADDIR"));
+                        F_FixSlashes(doomWadDir);
+                        if(Str_RAt(doomWadDir, 0) == DIR_SEP_CHAR)
+                            Str_Truncate(doomWadDir, Str_Length(doomWadDir)-1);
+                    }
+
+                    Str_Append(dest, Str_Text(doomWadDir));
                 }
                 else
                     goto parseEnded;
@@ -139,12 +142,16 @@ static ddstring_t* resolveUri(const dduri_t* uri)
             {
                 /// \note DataPath already has ending @c DIR_SEP_CHAR.
                 gameinfo_t* info = DD_GameInfo();
+                if(DD_IsNullGameInfo(info))
+                    goto parseEnded;
                 Str_PartAppend(dest, Str_Text(GameInfo_DataPath(info)), 0, Str_Length(GameInfo_DataPath(info))-1);
             }
             else if(!Str_CompareIgnoreCase(&part, "GameInfo.DefsPath"))
             {
                 /// \note DefsPath already has ending @c DIR_SEP_CHAR.
                 gameinfo_t* info = DD_GameInfo();
+                if(DD_IsNullGameInfo(info))
+                    goto parseEnded;
                 Str_PartAppend(dest, Str_Text(GameInfo_DefsPath(info)), 0, Str_Length(GameInfo_DefsPath(info))-1);
             }
             else if(!Str_CompareIgnoreCase(&part, "GameInfo.IdentityKey"))
@@ -156,7 +163,8 @@ static ddstring_t* resolveUri(const dduri_t* uri)
             }
             else
             {
-                Con_Message("Unknown identifier '%s' in \"%s\" (Uri::resolveUri).\n", Str_Text(&part), Str_Text(&src));
+                Con_Message("Unknown identifier '%s' in \"%s\" (Uri::resolveUri).\n",
+                            Str_Text(&part), Str_Text(&uri->_path));
                 goto parseEnded;
             }
             depth--;
@@ -168,7 +176,8 @@ static ddstring_t* resolveUri(const dduri_t* uri)
             Str_Append(dest, Str_Text(&part));
             if(*p != '(')
             {
-                Con_Message("Invalid character '%c' in \"%s\" at %lu (Uri::resolveUri).\n", *p, Str_Text(&src), p - Str_Text(&src));
+                Con_Message("Invalid character '%c' in \"%s\" at %lu (Uri::resolveUri).\n",
+                            *p, Str_Text(&uri->_path), p - Str_Text(&uri->_path));
                 goto parseEnded;
             }
             // Skip over the opening brace.
@@ -192,9 +201,9 @@ static ddstring_t* resolveUri(const dduri_t* uri)
     successful = true;
 
 parseEnded:
-    Str_Free(&doomWadDir);
     Str_Free(&part);
-    Str_Free(&src);
+    if(doomWadDir)
+        Str_Free(doomWadDir);
     if(!successful && dest)
     {
         Str_Delete(dest);

@@ -1,10 +1,10 @@
-/**\file
+/**\file hu_inventory.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -100,7 +100,7 @@ typedef struct {
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void        ST_ResizeInventory(struct cvar_s* cvar);
+void        ST_ResizeInventory(const struct cvar_s* cvar);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -744,10 +744,10 @@ void Hu_InventoryTicker(void)
     }
 }
 
-void ST_ResizeInventory(cvar_t* unused)
+void ST_ResizeInventory(const cvar_t* cvar)
 {
-    int                 i;
-    uint                maxVisSlots;
+    int i;
+    uint maxVisSlots;
 
     if(cfg.inventorySlotMaxVis)
         maxVisSlots = cfg.inventorySlotMaxVis;

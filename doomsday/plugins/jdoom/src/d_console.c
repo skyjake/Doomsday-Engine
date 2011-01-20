@@ -70,7 +70,7 @@ D_CMD(ScreenShot);
 D_CMD(DoomFont);
 D_CMD(ConBackground);
 
-void G_UpdateEyeHeight(cvar_t* unused);
+void G_UpdateEyeHeight(const cvar_t* cvar);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
@@ -269,7 +269,7 @@ void D_ConsoleBg(int *width, int *height)
 /**
  * Called when the player-eyeheight cvar is changed.
  */
-void G_UpdateEyeHeight(cvar_t* unused)
+void G_UpdateEyeHeight(const cvar_t* cvar)
 {
     player_t* plr = &players[CONSOLEPLAYER];
 

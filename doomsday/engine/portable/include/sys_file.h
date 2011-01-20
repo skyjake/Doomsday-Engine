@@ -34,7 +34,7 @@
 #include <stdio.h>
 
 #include "dd_string.h"
-#include "pathdirectory.h"
+#include "filedirectory.h"
 
 #define deof(file) ((file)->flags.eof != 0)
 
@@ -94,7 +94,7 @@ void F_ShutdownDirec(void);
  * matching the filespec. Absolute path names are given to the callback.
  * Zip directory, DD_DIREC and the real files are scanned.
  */
-typedef int (*f_allresourcepaths_callback_t) (const ddstring_t* path, pathdirectory_pathtype_t type, void* paramaters);
+typedef int (*f_allresourcepaths_callback_t) (const ddstring_t* path, filedirectory_pathtype_t type, void* paramaters);
 int F_AllResourcePaths2(const ddstring_t* searchPath, f_allresourcepaths_callback_t callback, void* paramaters);
 int F_AllResourcePaths(const ddstring_t* searchPath, f_allresourcepaths_callback_t callback);
 

@@ -1,10 +1,10 @@
-/**\file
+/**\file st_stuff.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2003-2005 Samuel Villarreal <svkaiser@gmail.com>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
@@ -25,7 +25,7 @@
  */
 
 /**
- * st_stuff.c: Fullscreen HUD code.
+ * Fullscreen HUD code.
  *
  * Does palette indicators as well (red pain/berserk, bright pickup)
  */
@@ -87,7 +87,7 @@ typedef enum hotloc_e {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void unhideHUD(cvar_t* cvar);
+static void unhideHUD(const cvar_t* cvar);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -647,7 +647,7 @@ void ST_Shutdown(void)
 /**
  * Called when a cvar changes that affects the look/behavior of the HUD in order to unhide it.
  */
-static void unhideHUD(cvar_t* unused)
+static void unhideHUD(const cvar_t* unused)
 {
     int i;
     for(i = 0; i < MAXPLAYERS; ++i)

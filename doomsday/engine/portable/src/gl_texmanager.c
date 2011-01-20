@@ -79,7 +79,7 @@ D_CMD(MipMap);
 D_CMD(TranslateFont);
 #endif
 
-void GL_DoResetDetailTextures(cvar_t* unused);
+void GL_DoResetDetailTextures(const cvar_t* cvar);
 
 /// gltexture_t abstract interface:
 gltexture_inst_t* GLTexture_Prepare(gltexture_t* tex,
@@ -2164,7 +2164,7 @@ void GL_UpdateTexParams(int mipmode)
  *
  * @param unused        Unused, must be signature compatible.
  */
-void GL_DoUpdateTexParams(cvar_t *unused)
+void GL_DoUpdateTexParams(const cvar_t* cvar)
 {
     GL_SetTextureParams(glmode[mipmapping], true, true);
 }
@@ -2206,7 +2206,7 @@ void GL_TexReset(void)
 /**
  * Called when changing the value of the texture gamma cvar.
  */
-void GL_DoUpdateTexGamma(cvar_t *unused)
+void GL_DoUpdateTexGamma(const cvar_t* cvar)
 {
     if(texInited)
     {
@@ -2224,12 +2224,12 @@ void GL_DoUpdateTexGamma(cvar_t *unused)
  *
  * @param   unused      Unused. Must be signature compatible.
  */
-void GL_DoTexReset(cvar_t* unused)
+void GL_DoTexReset(const cvar_t* cvar)
 {
     GL_TexReset();
 }
 
-void GL_DoResetDetailTextures(cvar_t* unused)
+void GL_DoResetDetailTextures(const cvar_t* cvar)
 {
     GL_DeleteAllTexturesForGLTextures(GLT_DETAIL);
 }

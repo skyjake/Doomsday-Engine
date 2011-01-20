@@ -38,7 +38,7 @@ static ddstring_t* buildSearchPathList(resourcerecord_t* rec)
 {
     assert(rec);
     {
-    size_t requiredLength = 0;
+    int requiredLength = 0;
     ddstring_t* pathList;
 
     { int i;
@@ -151,7 +151,7 @@ const dduri_t** ResourceRecord_SearchPaths(resourcerecord_t* rec)
     if(rec->_searchPaths)
         return rec->_searchPaths;
     { ddstring_t* searchPaths = ResourceRecord_SearchPathsAsStringList(rec);
-    rec->_searchPaths = F_CreateUriList(rec->_rclass, searchPaths);
+    rec->_searchPaths = F_CreateUriListStr(rec->_rclass, searchPaths);
     if(searchPaths)
         Str_Delete(searchPaths);
     }

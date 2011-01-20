@@ -112,7 +112,9 @@ void Con_DataRegister(void);
 boolean Con_Init(void);
 void Con_Shutdown(void);
 
-void Con_DestroyDatabases(void);
+void Con_InitDatabases(void);
+void Con_ShutdownDatabases(void);
+
 void Con_Ticker(timespan_t time);
 
 /// @return  @c true iff the event is 'eaten'.

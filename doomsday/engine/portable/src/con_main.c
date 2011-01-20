@@ -397,7 +397,7 @@ void Con_Shutdown(void)
         M_Free(prbuff); // Free the print buffer.
 
     Con_ClearExecBuffer();
-    Con_DestroyDatabases();
+    Con_ShutdownDatabases();
 }
 
 void Con_SetFont(ddfont_t* cfont)

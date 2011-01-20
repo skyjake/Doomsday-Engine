@@ -29,7 +29,7 @@
 
 struct resourcenamespace_s;
 struct resourcerecord_s;
-struct pathdirectory_s;
+struct filedirectory_s;
 struct dduri_s;
 
 #define PACKAGES_RESOURCE_NAMESPACE_NAME    "Packages"
@@ -93,8 +93,8 @@ void F_InitResourceLocator(void);
  */
 void F_ShutdownResourceLocator(void);
 
-/// @return  Ptr to the global (singleton) PathDirectory instance.
-struct pathdirectory_s* F_LocalPaths(void);
+/// @return  Ptr to the global FileDirectory (singleton) instance used for file system paths.
+struct filedirectory_s* F_LocalPaths(void);
 
 /// @return  Number of resource namespaces.
 uint F_NumResourceNamespaces(void);
@@ -275,10 +275,25 @@ const ddstring_t* F_PrettyPath(const ddstring_t* path);
 const char* F_ResourceClassStr(resourceclass_t rclass);
 
 /**
- * Construct a new Uri list from the specified search path string list.
+ * Construct a new NULL terminated Uri list from the specified search path list.
  */
-dduri_t** F_CreateUriList(resourceclass_t rclass, const ddstring_t* _searchPaths);
+dduri_t** F_CreateUriListStr2(resourceclass_t rclass, const ddstring_t* searchPaths, size_t* count);
+dduri_t** F_CreateUriListStr(resourceclass_t rclass, const ddstring_t* searchPaths);
+
+dduri_t** F_CreateUriList2(resourceclass_t rclass, const char* searchPaths, size_t* count);
+dduri_t** F_CreateUriList(resourceclass_t rclass, const char* searchPaths);
 
 void F_DestroyUriList(dduri_t** list);
+
+ddstring_t** F_ResolvePathList2(resourceclass_t defaultResourceClass,
+    const ddstring_t* pathList, size_t* count, char delimiter);
+ddstring_t** F_ResolvePathList(resourceclass_t defaultResourceClass,
+    const ddstring_t* pathList, size_t* count);
+
+void F_DestroyStringList(ddstring_t** list);
+
+#if _DEBUG
+void F_PrintStringList(const ddstring_t** strings, size_t stringsCount);
+#endif
 
 #endif /* LIBDENG_SYSTEM_RESOURCE_LOCATOR_H */

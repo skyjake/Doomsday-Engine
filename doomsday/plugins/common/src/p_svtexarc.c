@@ -50,6 +50,7 @@
 
 typedef struct materialarchive_record_s {
     dduri_t* path;
+    material_t* material;
 } materialarchive_record_t;
 
 static materialarchive_t* create(void)
@@ -78,7 +79,7 @@ static void init(materialarchive_t* mArc)
 }
 
 static void insertSerialId(materialarchive_t* mArc, materialarchive_serialid_t serialId,
-    const dduri_t* path)
+    const dduri_t* path, material_t* material)
 {
     assert(path);
     {
@@ -88,42 +89,49 @@ static void insertSerialId(materialarchive_t* mArc, materialarchive_serialid_t s
     rec = &mArc->table[mArc->count-1];
 
     rec->path = Uri_ConstructCopy(path);
+    rec->material = material;
     }
 }
 
-static materialarchive_serialid_t serialIdForMaterial(materialarchive_t* mArc,
-    material_t* mat, boolean canCreate)
+static materialarchive_serialid_t insertSerialIdForMaterial(materialarchive_t* mArc,
+    material_t* mat)
 {
     assert(mat);
     {
-    dduri_t* path = Materials_GetPath(mat);
-    materialarchive_serialid_t id = 0;
-
-    if(!path)
-        path = Uri_Construct2(UNKNOWN_MATERIAL_NAME, RC_NULL);
-
-    // Has this already been registered? 
-    {uint i;
-    for(i = 0; i < mArc->count; ++i)
+    dduri_t* path;
+    if((path = Materials_GetPath(mat)))
     {
-        const materialarchive_record_t* rec = &mArc->table[i];
-        if(Uri_Equality(rec->path, path))
-        {
-            id = i + 1; // Yes. Return existing serial.
-            break;
-        }
-    }}
-
-    if(id != 0 || !canCreate)
-    {
+        // Insert a new element in the index.
+        insertSerialId(mArc, mArc->count+1, path, mat);
         Uri_Destruct(path);
-        return id;
+        return mArc->count; // 1-based index.
     }
+    return 0; // Should never happen.
+    }
+}
 
-    // Insert a new element in the index.
-    insertSerialId(mArc, mArc->count+1, path);
-    Uri_Destruct(path);
-    return mArc->count; // 1-based index.
+static materialarchive_serialid_t getSerialIdForMaterial(materialarchive_t* mArc,
+    material_t* mat)
+{
+    assert(mat);
+    {
+    materialarchive_serialid_t id = 0;
+    dduri_t* path;
+    if((path = Materials_GetPath(mat)))
+    {
+        uint i;
+        for(i = 0; i < mArc->count; ++i)
+        {
+            const materialarchive_record_t* rec = &mArc->table[i];
+            if(rec->material == mat)
+            {
+                id = i + 1; // Yes. Return existing serial.
+                break;
+            }
+        }
+        Uri_Destruct(path);
+    }
+    return id;
     }
 }
 
@@ -140,7 +148,7 @@ static materialarchive_record_t* getRecord(const materialarchive_t* mArc,
     return rec;
 }
 
-static materialnum_t materialForSerialId(const materialarchive_t* mArc,
+static material_t* materialForSerialId(const materialarchive_t* mArc,
     materialarchive_serialid_t serialId, int group)
 {
     assert(serialId <= mArc->count+1);
@@ -148,7 +156,9 @@ static materialnum_t materialForSerialId(const materialarchive_t* mArc,
     materialarchive_record_t* rec;
     if(serialId != 0 && (rec = getRecord(mArc, serialId-1, group)))
     {
-        return Materials_NumForName2(rec->path);
+        if(rec->material == 0)
+            rec->material = P_ToPtr(DMU_MATERIAL, Materials_NumForName2(rec->path));
+        return rec->material;
     }
     return 0;
     }
@@ -159,11 +169,15 @@ static materialnum_t materialForSerialId(const materialarchive_t* mArc,
  */
 static void populate(materialarchive_t* mArc)
 {
-    uint i, num = nummaterials;
+    dduri_t* unknownMaterial = Uri_Construct2(UNKNOWN_MATERIAL_NAME, RC_NULL);
+    insertSerialId(mArc, 1, unknownMaterial, 0);
+    Uri_Destruct(unknownMaterial);
+
+    { uint i, num = nummaterials;
     for(i = 1; i < num+1; ++i)
     {
-        serialIdForMaterial(mArc, P_ToPtr(DMU_MATERIAL, i), true);
-    }
+        insertSerialIdForMaterial(mArc, P_ToPtr(DMU_MATERIAL, i));
+    }}
 }
 
 static int writeRecord(const materialarchive_t* mArc, materialarchive_record_t* rec)
@@ -249,7 +263,7 @@ static void readMaterialGroup(materialarchive_t* mArc, const char* defaultNamesp
         else
             readRecord_v186(&temp, mArc->version <= 1? defaultNamespace : 0);
 
-        insertSerialId(mArc, mArc->count+1, temp.path);
+        insertSerialId(mArc, mArc->count+1, temp.path, 0);
         if(temp.path)
             Uri_Destruct(temp.path);
     }}
@@ -301,12 +315,6 @@ void P_DestroyMaterialArchive(materialarchive_t* materialArchive)
     destroy(materialArchive);
 }
 
-materialarchive_serialid_t MaterialArchive_Add(materialarchive_t* materialArchive, material_t* material)
-{
-    assert(materialArchive);
-    return serialIdForMaterial(materialArchive, material, true);
-}
-
 /**
  * @return                  A new (unused) SerialId for the specified material.
  */
@@ -315,11 +323,11 @@ materialarchive_serialid_t MaterialArchive_FindUniqueSerialId(materialarchive_t*
 {
     assert(materialArchive);
     if(material)
-        return serialIdForMaterial(materialArchive, material, false);
+        return getSerialIdForMaterial(materialArchive, material);
     return 0; // Invalid.   
 }
 
-materialnum_t MaterialArchive_Find(materialarchive_t* materialArchive,
+material_t* MaterialArchive_Find(materialarchive_t* materialArchive,
     materialarchive_serialid_t serialId, int group)
 {
     assert(materialArchive);

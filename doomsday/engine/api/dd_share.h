@@ -1151,7 +1151,7 @@ typedef enum {
  */
 typedef struct cvar_s {
     /// Name of the cvar.
-    char* name;
+    const char* name;
 
     /// @see consoleVariableFlags
     int flags;
@@ -1166,7 +1166,7 @@ typedef struct cvar_s {
     float min, max;
 
     /// On-change notification callback.
-    void (*notifyChanged)(struct cvar_s* cvar);
+    void (*notifyChanged)(const struct cvar_s* cvar);
 } cvar_t;
 
 /**

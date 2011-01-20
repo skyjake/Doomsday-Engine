@@ -46,7 +46,7 @@
 #include "m_args.h"
 #include "m_misc.h" // \todo remove dependency
 
-#include "pathdirectory.h"
+#include "filedirectory.h"
 #include "sys_findfile.h"
 
 // MACROS ------------------------------------------------------------------
@@ -1070,7 +1070,7 @@ static int forAllDescend(const ddstring_t* pattern, const ddstring_t* name,
             if(F_MatchName(Str_Text(&path), Str_Text(&localPattern)))
             {
                 // If the callback returns false, stop immediately.
-                if((result = callback(&path, PT_FILE, paramaters)) != 0)
+                if((result = callback(&path, FDT_FILE, paramaters)) != 0)
                 {
                     break;
                 }
@@ -1096,7 +1096,7 @@ static int findZipFileWorker(const ddstring_t* zipFileName, void* paramaters)
     findzipfileworker_paramaters_t* info = (findzipfileworker_paramaters_t*)paramaters;
     if(F_MatchName(Str_Text(zipFileName), Str_Text(info->pattern)))
     {
-        return info->callback(zipFileName, PT_FILE, info->paramaters);
+        return info->callback(zipFileName, FDT_FILE, info->paramaters);
     }
     return 0; // Continue search.
     }
@@ -1139,7 +1139,7 @@ int F_AllResourcePaths2(const ddstring_t* searchPath,
         lumpdirectory_record_t* rec = &lumpDirectory[i];
         if(!F_MatchName(Str_Text(&rec->path), Str_Text(&searchPathName)))
             continue;
-        if((result = callback(&rec->path, PT_FILE, paramaters)) != 0)
+        if((result = callback(&rec->path, FDT_FILE, paramaters)) != 0)
             goto searchEnded;
     }}
 

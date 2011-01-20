@@ -1081,6 +1081,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\engine\portable\src\filedirectory.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\engine\portable\src\finaleinterpreter.c"
 				>
 			</File>
@@ -2747,6 +2751,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\engine\portable\include\fi_main.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\engine\portable\include\filedirectory.h"
 				>
 			</File>
 			<File

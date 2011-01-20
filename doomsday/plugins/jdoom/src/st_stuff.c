@@ -1,10 +1,10 @@
-/**\file
+/**\file st_stuff.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * st_stuff.c: Status bar code - jDoom specific.
+ * Status bar code - jDoom specific.
  *
  * Does the face/direction indicator animation and the palette indicators as
  * well (red pain/berserk, bright pickup)
@@ -208,8 +208,8 @@ typedef struct {
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void updateViewWindow(cvar_t* cvar);
-static void unhideHUD(cvar_t* cvar);
+static void updateViewWindow(const cvar_t* cvar);
+static void unhideHUD(const cvar_t* cvar);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -2177,7 +2177,7 @@ void ST_Shutdown(void)
 /**
  * Called when the statusbar scale cvar changes.
  */
-static void updateViewWindow(cvar_t* cvar)
+static void updateViewWindow(const cvar_t* cvar)
 {
     int i;
     R_UpdateViewWindow(true);
@@ -2188,7 +2188,7 @@ static void updateViewWindow(cvar_t* cvar)
 /**
  * Called when a cvar changes that affects the look/behavior of the HUD in order to unhide it.
  */
-static void unhideHUD(cvar_t* unused)
+static void unhideHUD(const cvar_t* cvar)
 {
     int i;
     for(i = 0; i < MAXPLAYERS; ++i)

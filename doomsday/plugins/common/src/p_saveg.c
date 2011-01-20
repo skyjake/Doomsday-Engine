@@ -659,7 +659,7 @@ unsigned short SV_ThingArchiveNum(mobj_t* mo)
 material_t* SV_GetArchiveMaterial(materialarchive_serialid_t serialId, int group)
 {
     assert(materialArchive);
-    return P_ToPtr(DMU_MATERIAL, MaterialArchive_Find(materialArchive, serialId, group));
+    return MaterialArchive_Find(materialArchive, serialId, group);
 }
 
 #if __JHEXEN__

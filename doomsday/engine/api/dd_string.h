@@ -43,7 +43,7 @@ typedef struct ddstring_s {
 	char* str;
 
     /// String length (no terminating nulls).
-    size_t length;
+    int length;
 
     /// Allocated buffer size (note: not necessarily equal to ddstring_t::length).
     size_t size;
@@ -92,7 +92,7 @@ void Str_Delete(ddstring_t* ds);
  */
 void Str_Clear(ddstring_t* ds);
 
-void Str_Reserve(ddstring_t* ds, size_t length);
+void Str_Reserve(ddstring_t* ds, int length);
 void Str_Set(ddstring_t* ds, const char* text);
 void Str_Append(ddstring_t* ds, const char* appendText);
 void Str_AppendChar(ddstring_t* ds, char ch);
@@ -105,7 +105,7 @@ void Str_Appendf(ddstring_t* ds, const char* format, ...) PRINTF_F(2,3);
 /**
  * Appends a portion of a string.
  */
-void Str_PartAppend(ddstring_t* dest, const char* src, size_t start, size_t count);
+void Str_PartAppend(ddstring_t* dest, const char* src, int start, int count);
 
 /**
  * Prepend is not even a word, is it? It should be 'prefix'?
@@ -115,7 +115,7 @@ void Str_Prepend(ddstring_t* ds, const char* prependText);
 /**
  * This is safe for all strings.
  */
-size_t Str_Length(const ddstring_t* ds);
+int Str_Length(const ddstring_t* ds);
 
 boolean Str_IsEmpty(const ddstring_t* ds);
 
@@ -132,17 +132,17 @@ void Str_Copy(ddstring_t* dest, const ddstring_t* src);
 /**
  * Strip whitespace from beginning.
  */
-size_t Str_StripLeft(ddstring_t* ds);
+int Str_StripLeft(ddstring_t* ds);
 
 /**
  * Strip whitespace from end.
  */
-size_t Str_StripRight(ddstring_t* ds);
+int Str_StripRight(ddstring_t* ds);
 
 /**
  * Strip whitespace from beginning and end.
  */
-void Str_Strip(ddstring_t* ds);
+int Str_Strip(ddstring_t* ds);
 
 /**
  * Extract a line of text from the source.
@@ -184,7 +184,7 @@ int Str_CompareIgnoreCase(const ddstring_t* ds, const char* text);
  *
  * @return              The character at @c index, or 0 if the index is not in range.
  */
-char Str_At(const ddstring_t* str, size_t index);
+char Str_At(const ddstring_t* str, int index);
 
 /**
  * Retrieves a character in the string. Indices start from the end of the string.
@@ -194,6 +194,8 @@ char Str_At(const ddstring_t* str, size_t index);
  *
  * @return              The character at @c index, or 0 if the index is not in range.
  */
-char Str_RAt(const ddstring_t* str, size_t reverseIndex);
+char Str_RAt(const ddstring_t* str, int reverseIndex);
+
+void Str_Truncate(ddstring_t* str, int position);
 
 #endif /* LIBDENG_API_STRING_H */

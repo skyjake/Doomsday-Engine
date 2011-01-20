@@ -861,7 +861,7 @@ boolean LOIT_UnlinkMobjLumobj(thinker_t* th, void* context)
     return true; // Continue iteration.
 }
 
-void LO_UnlinkMobjLumobjs(cvar_t* var)
+void LO_UnlinkMobjLumobjs(const cvar_t* var)
 {
     if(!useDynLights)
     {
