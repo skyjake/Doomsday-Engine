@@ -44,7 +44,12 @@ public:
     };
 
 public:
-    Visual();
+    /**
+     * Constructs a visual.
+     *
+     * @param parent  If defined, the visual is automatically made a child of @a parent.
+     */
+    Visual(Visual* parent = 0);
 
     virtual ~Visual();
 
@@ -71,14 +76,30 @@ public:
      */
     Visual* remove(Visual* visual);
 
+    /**
+     * Sets the rules for determining the visual's placement. If not set manually,
+     * the visual uses the default placement where it covers the parent rectangle.
+     *
+     * @param rule  Rectangle rule.
+     */
     void setRect(RectangleRule* rule);
 
+    /**
+     * Returns the rules for determining the visual's placement. If called before
+     * Visual::setRect(), the default rules are used.
+     */
     RectangleRule* rule();
 
+    /**
+     * Returns the rules for determining the visual's placement. If called before
+     * Visual::setRect(), the default rules are used.
+     */
     const RectangleRule* rule() const;
 
     /**
      * Returns the visual's current placement.
+     *
+     * @return  Coordinates in surface space.
      */
     de::Rectanglef rect() const;
 
@@ -100,9 +121,10 @@ private:
     Visual* _parent;
 
     /// Child visuals. Owned by the visual.
-    typedef std::list<Visual*> Children;
+    typedef QList<Visual*> Children;
     Children _children;
 
+    /// Rules for determining the placement of the visual.
     RectangleRule* _rect;
 };
 

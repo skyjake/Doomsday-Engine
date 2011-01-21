@@ -39,7 +39,8 @@ HEADERS += \
     src/constantrule.h \
     src/rules.h \
     src/rectanglerule.h \
-    src/derivedrule.h
+    src/derivedrule.h \
+    src/clearvisual.h
 
 SOURCES += \
     src/clientapp.cc \
@@ -56,5 +57,6 @@ SOURCES += \
     src/operatorrule.cc \
     src/constantrule.cc \
     src/rectanglerule.cc \
-    src/derivedrule.cc
+    src/derivedrule.cc \
+    src/clearvisual.cc
     

@@ -37,6 +37,8 @@ class Video;
  */
 class Window : public GLWindowSurface
 {
+    Q_OBJECT
+
 public:
     /// Window is in fullscreen mode.
     enum Flag
@@ -53,12 +55,12 @@ public:
     /**
      * Returns the root visual of the window.
      */
-    const Visual& root() const { return _root; }
+    const Visual& root() const { return *_root; }
 
     /**
      * Returns the root visual of the window.
      */
-    Visual& root() { return _root; }
+    Visual& root() { return *_root; }
 
     /**
      * Returns the mode of the window.
@@ -91,7 +93,7 @@ private:
     Flags _flags;
 
     /// Root visual of the window.
-    Visual _root;
+    Visual* _root;
 
     ConstantRule* _widthRule;
     ConstantRule* _heightRule;

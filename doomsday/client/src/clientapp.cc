@@ -42,7 +42,7 @@ ClientApp::ClientApp(int argc, char** argv)
     glFormat.setDepthBufferSize(16);
     Window* window = new Window(glFormat);
 
-    // Assign it the main window status.
+    // Give it the main window status.
     _video->addWindow(window);
     _video->setMainWindow(window);
 
@@ -111,6 +111,8 @@ ClientApp::ClientApp(int argc, char** argv)
 
 ClientApp::~ClientApp()
 {
+    qDebug("ClientApp: Destroying.");
+
     delete _session;
     delete _localServer;
     

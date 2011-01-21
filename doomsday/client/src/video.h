@@ -61,8 +61,17 @@ public:
         
     void update(const de::Time::Delta &elapsed);
 
+    /**
+     * Adds a window to the video subsystem.
+     *
+     * @param window  Ownership of the window is given to Video.
+     */
     void addWindow(Window* window);
 
+    /**
+     * Removes a window from the subsystem.
+     * The Video subsystem will no longer be the window's owner.
+     */
     void removeWindow(Window* window);
 
     /**

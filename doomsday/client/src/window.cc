@@ -21,6 +21,7 @@
 #include "surface.h"
 #include "video.h"
 #include "rules.h"
+#include "clearvisual.h"
 #include <QDebug>
 
 using namespace de;
@@ -32,11 +33,19 @@ Window::Window(const QGLFormat& format, QWidget* parent, const QGLWidget* shareW
     _heightRule = new ConstantRule(height(), this);
 
     // Define rules for the root visual's placement.
-    _root.setRect(new RectangleRule(new Rule(), new Rule(), _widthRule, _heightRule));
+    _root = new Visual;
+    _root->setRect(new RectangleRule(new Rule(), new Rule(), _widthRule, _heightRule));
+
+    // Clear it.
+    _root->add(new ClearVisual);
 }
 
 Window::~Window()
-{}
+{
+    //qDebug() << this << "destroyed.";
+
+    delete _root;
+}
 
 void Window::setSelectedFlags(Flags selectedFlags, bool set)
 {
@@ -69,5 +78,5 @@ void Window::surfaceResized(const QSize& size)
 void Window::draw()
 {
     // Draw all the visuals.
-    _root.draw();
+    _root->draw();
 }

@@ -27,7 +27,13 @@ Video::Video() : _mainWindow(0), _target(0)
 {}
 
 Video::~Video()
-{}
+{
+    // Delete all windows.
+    foreach(Window* win, _windows)
+    {
+        delete win;
+    }
+}
 
 Window& Video::mainWindow() const
 {
@@ -53,6 +59,7 @@ void Video::removeWindow(Window* window)
 {
     Q_ASSERT(window != 0);
     Q_ASSERT(_windows.contains(window));
+
     _windows.remove(window);
 }
 

@@ -19,14 +19,22 @@
 
 #include "visual.h"
 #include "rule.h"
+#include <QDebug>
 
 using namespace de;
 
-Visual::Visual() : _parent(0), _rect(0)
-{}
+Visual::Visual(Visual* p) : QObject(), _parent(0), _rect(0)
+{
+    if(p)
+    {
+        p->add(this);
+    }
+}
 
 Visual::~Visual()
 {
+    //qDebug() << this << "destroyed.";
+
     if(_parent)
     {
         _parent->remove(this);
@@ -46,7 +54,7 @@ void Visual::clear()
 
 Visual* Visual::add(Visual* visual)
 {
-    _children.push_back(visual);
+    _children.append(visual);
     visual->_parent = this;
     return visual;
 }
@@ -54,7 +62,7 @@ Visual* Visual::add(Visual* visual)
 Visual* Visual::remove(Visual* visual)
 {
     visual->_parent = 0;
-    _children.remove(visual);
+    _children.removeOne(visual);
     return visual;
 }
 
