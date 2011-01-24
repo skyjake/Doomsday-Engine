@@ -57,15 +57,15 @@ static size_t countNodes(filedirectory_t* fd, filedirectory_pathtype_t type)
  * @return  [ a new | the ] directory node that matches the name and type and
  * which has the specified parent node.
  */
-static filedirectory_node_t* direcNode(filedirectory_t* pd, filedirectory_node_t* parent,
+static filedirectory_node_t* direcNode(filedirectory_t* fd, filedirectory_node_t* parent,
     filedirectory_pathtype_t type, const ddstring_t* name, void* leafData)
 {
-    assert(pd && name && !Str_IsEmpty(name));
+    assert(fd && name && !Str_IsEmpty(name));
     {
     filedirectory_node_t* node;
 
     // Have we already encountered this? Just iterate through all nodes.
-    for(node = pd->_head; node; node = node->next)
+    for(node = fd->_head; node; node = node->next)
     {
         if(node->parent != parent)
             continue;
@@ -81,11 +81,11 @@ static filedirectory_node_t* direcNode(filedirectory_t* pd, filedirectory_node_t
     if((node = malloc(sizeof(*node))) == 0)
         Con_Error("direcNode: failed on allocation of %lu bytes for new node.", (unsigned long) sizeof(*node));
 
-    if(pd->_tail)
-        pd->_tail->next = node;
-    pd->_tail = node;
-    if(!pd->_head)
-        pd->_head = node;
+    if(fd->_tail)
+        fd->_tail->next = node;
+    fd->_tail = node;
+    if(!fd->_head)
+        fd->_head = node;
 
     node->type = type;
     Str_Init(&node->path); Str_Copy(&node->path, name);
@@ -102,10 +102,10 @@ static filedirectory_node_t* direcNode(filedirectory_t* pd, filedirectory_node_t
  *
  * @return  The node that identifies the given path.
  */
-static filedirectory_node_t* buildDirecNodes(filedirectory_t* pd,
+static filedirectory_node_t* buildDirecNodes(filedirectory_t* fd,
     const ddstring_t* path, void* leafData)
 {
-    assert(pd && path);
+    assert(fd && path);
     {
     filedirectory_node_t* node = 0, *parent = 0;
     ddstring_t part;
@@ -116,14 +116,14 @@ static filedirectory_node_t* buildDirecNodes(filedirectory_t* pd,
     p = Str_Text(path);
     while((p = Str_CopyDelim2(&part, p, DIR_SEP_CHAR, 0))) // Get the next part.
     {
-        node = direcNode(pd, parent, FDT_DIRECTORY, &part, 0);
+        node = direcNode(fd, parent, FDT_DIRECTORY, &part, 0);
         parent = node;
     }
 
     if(Str_Length(&part) != 0)
     {
         filedirectory_pathtype_t type = (Str_RAt(&part, 0) != DIR_SEP_CHAR? FDT_FILE : FDT_DIRECTORY);
-        node = direcNode(pd, parent, type, &part, leafData);
+        node = direcNode(fd, parent, type, &part, leafData);
     }
 
     Str_Free(&part);
@@ -131,22 +131,22 @@ static filedirectory_node_t* buildDirecNodes(filedirectory_t* pd,
     }
 }
 
-static void clearDirectory(filedirectory_t* pd)
+static void clearDirectory(filedirectory_t* fd)
 {
-    assert(pd);
+    assert(fd);
     // Free the directory nodes.
-    while(pd->_head)
+    while(fd->_head)
     {
-        filedirectory_node_t* next = pd->_head->next;
-        Str_Free(&pd->_head->path);
-        free(pd->_head);
-        pd->_head = next;
+        filedirectory_node_t* next = fd->_head->next;
+        Str_Free(&fd->_head->path);
+        free(fd->_head);
+        fd->_head = next;
     }
-    pd->_tail = 0;
+    fd->_tail = 0;
 }
 
 typedef struct {
-    filedirectory_t* pathDirectory;
+    filedirectory_t* fileDirectory;
     int (*callback) (const filedirectory_node_t* node, void* paramaters);
     void* paramaters;
 } addpathworker_paramaters_t;
@@ -166,7 +166,7 @@ static int addPathWorker(const ddstring_t* filePath, filedirectory_pathtype_t ty
         Str_Init(&relPath);
         F_RemoveBasePath(&relPath, filePath);
 
-        node = buildDirecNodes(p->pathDirectory, &relPath, 0);
+        node = buildDirecNodes(p->fileDirectory, &relPath, 0);
         assert(node->type == FDT_FILE);
 
         if(p->callback)
@@ -197,15 +197,15 @@ static int findPathWorker(filedirectory_node_t* node, void* paramaters)
     }
 }
 
-static int iteratePaths(filedirectory_t* pd, filedirectory_pathtype_t type,
+static int iteratePaths(filedirectory_t* fd, filedirectory_pathtype_t type,
     filedirectory_node_t* parent, int (*callback) (filedirectory_node_t* node, void* paramaters),
     void* paramaters)
 {
-    assert(pd && callback);
+    assert(fd && callback);
     {
     int result = 0;
     filedirectory_node_t* node;
-    for(node = pd->_head; node; node = node->next)
+    for(node = fd->_head; node; node = node->next)
     {
         if(parent && node->parent != parent)
             continue;
@@ -218,11 +218,11 @@ static int iteratePaths(filedirectory_t* pd, filedirectory_pathtype_t type,
     }
 }
 
-static filedirectory_t* addPaths(filedirectory_t* pd, const ddstring_t** paths,
+static filedirectory_t* addPaths(filedirectory_t* fd, const ddstring_t** paths,
     size_t pathsCount, int (*callback) (const filedirectory_node_t* node, void* paramaters),
     void* paramaters)
 {
-    assert(pd && paths && pathsCount != 0);
+    assert(fd && paths && pathsCount != 0);
     {
 //    uint startTime = verbose >= 2? Sys_GetRealTime(): 0;
     const ddstring_t** ptr = paths;
@@ -233,7 +233,7 @@ static filedirectory_t* addPaths(filedirectory_t* pd, const ddstring_t** paths,
         filedirectory_node_t* leaf;
 
         // Build direc nodes for this path.
-        leaf = buildDirecNodes(pd, searchPath, 0);
+        leaf = buildDirecNodes(fd, searchPath, 0);
         assert(leaf);
 
         // Has this directory already been processed?
@@ -244,7 +244,7 @@ static filedirectory_t* addPaths(filedirectory_t* pd, const ddstring_t** paths,
             {
                 if(leaf->type == FDT_DIRECTORY)
                 {
-                    iteratePaths(pd, FDT_FILE, leaf, callback, paramaters);
+                    iteratePaths(fd, FDT_FILE, leaf, callback, paramaters);
                 }
                 else
                 {
@@ -264,7 +264,7 @@ static filedirectory_t* addPaths(filedirectory_t* pd, const ddstring_t** paths,
                 F_PrependBasePath(&searchPattern, &searchPattern);
 
                 // Process this search.
-                p.pathDirectory = pd;
+                p.fileDirectory = fd;
                 p.callback = callback;
                 p.paramaters = paramaters;
                 F_AllResourcePaths2(&searchPattern, addPathWorker, (void*)&p);
@@ -281,11 +281,11 @@ static filedirectory_t* addPaths(filedirectory_t* pd, const ddstring_t** paths,
     }}
 
 /*#if _DEBUG
-    OLD_Print(pd);
+    FileDirectory_Print(fd);
 #endif*/
-//    VERBOSE2( Con_Message("PathDirectory::addPaths: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
+//    VERBOSE2( Con_Message("FileDirectory::addPaths: Done in %.2f seconds.\n", (Sys_GetRealTime() - startTime) / 1000.0f) );
 
-    return pd;
+    return fd;
     }
 }
 
