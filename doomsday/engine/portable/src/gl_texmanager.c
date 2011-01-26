@@ -734,23 +734,25 @@ byte GL_LoadDetailTexture(image_t* image, const gltexture_inst_t* inst, void* co
     detailtex_t* dTex = detailTextures[inst->tex->ofTypeID];
     if(dTex->external)
     {
-        ddstring_t searchPath, foundPath;
+        ddstring_t* searchPath, foundPath;
         byte result = 0;
 
-        Str_Init(&searchPath); Str_Appendf(&searchPath, TEXTURES_RESOURCE_NAMESPACE_NAME":%s;", dTex->external);
-        Str_Init(&foundPath);
+        searchPath = Uri_ComposePath(dTex->external);
+        Str_AppendChar(searchPath, ';');
 
-        if(F_FindResourceStr2(RC_GRAPHIC, &searchPath, &foundPath) != 0 &&
+        Str_Init(&foundPath);
+        if(F_FindResourceStr2(RC_GRAPHIC, searchPath, &foundPath) != 0 &&
            GL_LoadImage(image, Str_Text(&foundPath)))
         {
             result = 2;
         }
 
-        Str_Free(&searchPath);
+        if(result == 0)
+            Con_Message("GL_LoadDetailTexture: Warning, failed to load \"%s\"\n", Str_Text(searchPath));
+
+        Str_Delete(searchPath);
         Str_Free(&foundPath);
 
-        if(result == 0)
-            Con_Message("GL_LoadDetailTexture: Warning, failed to load \"%s\"\n", dTex->external);
         return result;
     }
     else
@@ -815,23 +817,24 @@ byte GL_LoadLightMap(image_t* image, const gltexture_inst_t* inst, void* context
     assert(image && inst);
     {
     lightmap_t* lmap = lightMaps[inst->tex->ofTypeID];
-    ddstring_t searchPath, foundPath, suffix = { "-ck" };
+    ddstring_t* searchPath, foundPath, suffix = { "-ck" };
     byte result = 0;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, LIGHTMAPS_RESOURCE_NAMESPACE_NAME":%s;", lmap->external);
-    Str_Init(&foundPath);
+    searchPath = Uri_ComposePath(lmap->external);
+    Str_AppendChar(searchPath, ';');
 
-    if(F_FindResourceStr3(RC_GRAPHIC, &searchPath, &foundPath, &suffix) != 0 &&
+    Str_Init(&foundPath);
+    if(F_FindResourceStr3(RC_GRAPHIC, searchPath, &foundPath, &suffix) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
     }
 
-    Str_Free(&searchPath);
-    Str_Free(&foundPath);
-
     if(result == 0)
-        Con_Message("GL_LoadLightMap: Warning, failed to load \"%s\".\n", lmap->external);
+        Con_Message("GL_LoadLightMap: Warning, failed to load \"%s\".\n", Str_Text(searchPath));
+
+    Str_Delete(searchPath);
+    Str_Free(&foundPath);
 
     return result;
     }
@@ -848,23 +851,24 @@ byte GL_LoadFlareTexture(image_t* image, const gltexture_inst_t* inst, void* con
     assert(image && inst);
     {
     flaretex_t* fTex = flareTextures[inst->tex->ofTypeID];
-    ddstring_t searchPath, foundPath, suffix = { "-ck" };
+    ddstring_t* searchPath, foundPath, suffix = { "-ck" };
     byte result = 0;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, "FlareMaps:%s;", fTex->external);
-    Str_Init(&foundPath);
+    searchPath = Uri_ComposePath(fTex->external);
+    Str_AppendChar(searchPath, ';');
 
-    if(F_FindResourceStr3(RC_GRAPHIC, &searchPath, &foundPath, &suffix) != 0 &&
+    Str_Init(&foundPath);
+    if(F_FindResourceStr3(RC_GRAPHIC, searchPath, &foundPath, &suffix) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
     }
 
-    Str_Free(&searchPath);
-    Str_Free(&foundPath);
-
     if(result == 0)
-        Con_Message("GL_LoadFlareTexture: Warning, failed to load \"%s\"\n", fTex->external);
+        Con_Message("GL_LoadFlareTexture: Warning, failed to load \"%s\"\n", Str_Text(searchPath));
+
+    Str_Delete(searchPath);
+    Str_Free(&foundPath);
 
     return result;
     }
@@ -881,23 +885,24 @@ byte GL_LoadShinyTexture(image_t* image, const gltexture_inst_t* inst, void* con
     assert(image && inst);
     {
     shinytex_t* sTex = shinyTextures[inst->tex->ofTypeID];
-    ddstring_t searchPath, foundPath;
+    ddstring_t* searchPath, foundPath;
     byte result = 0;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, LIGHTMAPS_RESOURCE_NAMESPACE_NAME":%s;", sTex->external);
-    Str_Init(&foundPath);
+    searchPath = Uri_ComposePath(sTex->external);
+    Str_AppendChar(searchPath, ';');
 
-    if(F_FindResourceStr2(RC_GRAPHIC, &searchPath, &foundPath) != 0 &&
+    Str_Init(&foundPath);
+    if(F_FindResourceStr2(RC_GRAPHIC, searchPath, &foundPath) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
     }
 
-    Str_Free(&searchPath);
-    Str_Free(&foundPath);
-
     if(result == 0)
-        Con_Message("GL_LoadShinyTexture: Warning, failed to load \"%s\"\n", sTex->external);
+        Con_Message("GL_LoadShinyTexture: Warning, failed to load \"%s\"\n", Str_Text(searchPath));
+
+    Str_Delete(searchPath);
+    Str_Free(&foundPath);
 
     return result;
     }
@@ -914,23 +919,24 @@ byte GL_LoadMaskTexture(image_t* image, const gltexture_inst_t* inst, void* cont
     assert(image && inst);
     {
     masktex_t* mTex = maskTextures[inst->tex->ofTypeID];
-    ddstring_t searchPath, foundPath;
+    ddstring_t* searchPath, foundPath;
     byte result = 0;
 
-    Str_Init(&searchPath); Str_Appendf(&searchPath, LIGHTMAPS_RESOURCE_NAMESPACE_NAME":%s;", mTex->external);
-    Str_Init(&foundPath);
+    searchPath = Uri_ComposePath(mTex->external);
+    Str_AppendChar(searchPath, ';');
 
-    if(F_FindResourceStr2(RC_GRAPHIC, &searchPath, &foundPath) != 0 &&
+    Str_Init(&foundPath);
+    if(F_FindResourceStr2(RC_GRAPHIC, searchPath, &foundPath) != 0 &&
        GL_LoadImage(image, Str_Text(&foundPath)))
     {
         result = 2;
     }
 
-    Str_Free(&searchPath);
-    Str_Free(&foundPath);
-
     if(result == 0)
-        Con_Message("GL_LoadMaskTexture: Warning, failed to load \"%s\"\n", mTex->external);
+        Con_Message("GL_LoadMaskTexture: Warning, failed to load \"%s\"\n", Str_Text(searchPath));
+
+    Str_Delete(searchPath);
+    Str_Free(&foundPath);
 
     return result;
     }
