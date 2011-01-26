@@ -410,6 +410,12 @@ static void createPackagesResourceNamespace(void)
     // Is the DOOMWADPATH environment variable in use?
     if(!ArgCheck("-nodoomwadpath") && getenv("DOOMWADPATH"))
     {
+#if WIN32
+# define PATH_DELIMITER_CHAR    ';'
+#else
+# define PATH_DELIMITER_CHAR    ':'
+#endif
+
 #define ADDDOOMWADPATH(path) \
 { \
     Str_Strip(path); \
@@ -439,7 +445,7 @@ static void createPackagesResourceNamespace(void)
             // Split into paths.
             Str_Init(&path);
             { const char* c = Str_Text(&fullString);
-            while((c = Str_CopyDelim2(&path, c, DIR_SEP_CHAR, CDF_OMIT_DELIMITER))) // Get the next path.
+            while((c = Str_CopyDelim2(&path, c, PATH_DELIMITER_CHAR, CDF_OMIT_DELIMITER))) // Get the next path.
             {
                 ADDDOOMWADPATH(&path)
             }}
