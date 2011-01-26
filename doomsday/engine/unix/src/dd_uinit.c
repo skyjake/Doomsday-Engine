@@ -100,8 +100,6 @@ static int loadPlugin(const char* pluginPath, lt_ptr data)
     lt_dlhandle plugin, *handle;
     void (*initializer)(void);
 
-    Con_Printf("try plugin: (%s)\n", pluginPath);
-
 #ifndef MACOSX
     // What is the actual file name?
     _splitpath(pluginPath, NULL, NULL, name, NULL);
