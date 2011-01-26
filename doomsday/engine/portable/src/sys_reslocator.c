@@ -438,12 +438,8 @@ static void createPackagesResourceNamespace(void)
         Str_Strip(&fullString);
         if(!Str_IsEmpty(&fullString))
         {
-            ddstring_t path;
-
-            F_FixSlashes(&fullString);
-
+            ddstring_t path; Str_Init(&path);
             // Split into paths.
-            Str_Init(&path);
             { const char* c = Str_Text(&fullString);
             while((c = Str_CopyDelim2(&path, c, PATH_DELIMITER_CHAR, CDF_OMIT_DELIMITER))) // Get the next path.
             {
@@ -460,6 +456,7 @@ static void createPackagesResourceNamespace(void)
         Str_Free(&fullString);
 
 #undef ADDDOOMWADPATH
+#undef PATH_DELIMITER_CHAR
     }
 
     // Is the DOOMWADDIR environment variable in use?
