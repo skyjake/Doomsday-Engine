@@ -96,8 +96,8 @@ resourceclass_t ResourceRecord_ResourceClass(resourcerecord_t* rec);
 int ResourceRecord_ResourceFlags(resourcerecord_t* rec);
 
 /// @return  Array of IdentityKey(s) associated with subrecords of this resource.
-const ddstring_t** ResourceRecord_IdentityKeys(resourcerecord_t* rec);
+const ddstring_t* const* ResourceRecord_IdentityKeys(resourcerecord_t* rec);
 
-const dduri_t** ResourceRecord_SearchPaths(resourcerecord_t* rec);
+const dduri_t* const* ResourceRecord_SearchPaths(resourcerecord_t* rec);
 
 #endif /* LIBDENG_RESOURCERECORD_H */

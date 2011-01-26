@@ -92,19 +92,19 @@ resourcenamespace_t* ResourceNamespace_Construct(const char* name,
 resourcenamespace_t* ResourceNamespace_Construct2(const char* name,
     ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t** searchPaths, uint searchPathsCount);
+    const dduri_t* const* searchPaths, uint searchPathsCount);
 resourcenamespace_t* ResourceNamespace_Construct3(const char* name,
     ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t** searchPaths, uint searchPathsCount, byte flags);
+    const dduri_t* const* searchPaths, uint searchPathsCount, byte flags);
 resourcenamespace_t* ResourceNamespace_Construct4(const char* name,
     ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t** searchPaths, uint searchPathsCount, byte flags, const char* overrideName);
+    const dduri_t* const* searchPaths, uint searchPathsCount, byte flags, const char* overrideName);
 resourcenamespace_t* ResourceNamespace_Construct5(const char* name,
     ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t** searchPaths, uint searchPathsCount, byte flags, const char* overrideName,
+    const dduri_t* const* searchPaths, uint searchPathsCount, byte flags, const char* overrideName,
     const char* overrideName2);
 
 void ResourceNamespace_Destruct(resourcenamespace_t* rn);

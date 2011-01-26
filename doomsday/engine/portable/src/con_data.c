@@ -462,7 +462,7 @@ void Con_SetFloat2(const char* name, float value, int svflags)
         break;
     default:
         Con_Message("Warning:Con_SetFloat: Attempt to set incompatible cvar "
-                    "%s to %i, ignoring.\n", name, value);
+                    "%s to %g, ignoring.\n", name, value);
         return;
     }
 

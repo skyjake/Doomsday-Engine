@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_file.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -94,8 +94,10 @@ void F_ShutdownDirec(void);
  * matching the filespec. Absolute path names are given to the callback.
  * Zip directory, DD_DIREC and the real files are scanned.
  */
-typedef int (*f_allresourcepaths_callback_t) (const ddstring_t* path, filedirectory_pathtype_t type, void* paramaters);
-int F_AllResourcePaths2(const ddstring_t* searchPath, f_allresourcepaths_callback_t callback, void* paramaters);
-int F_AllResourcePaths(const ddstring_t* searchPath, f_allresourcepaths_callback_t callback);
+int F_AllResourcePaths2(const ddstring_t* searchPath,
+    int (*callback) (const ddstring_t* path, filedirectory_pathtype_t type, void* paramaters),
+    void* paramaters);
+int F_AllResourcePaths(const ddstring_t* searchPath,
+    int (*callback) (const ddstring_t* path, filedirectory_pathtype_t type, void* paramaters));
 
 #endif /* LIBDENG_FILESYS_FILE_IO_H */

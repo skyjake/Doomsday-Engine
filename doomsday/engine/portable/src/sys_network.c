@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_network.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * sys_network.c: Low-Level Sockets Networking
+ * Low-Level Sockets Networking.
  *
  * TCP sockets are periodically polled for activity (Net_Update ->
  * N_Listen).
@@ -510,7 +510,7 @@ void N_SendDataBufferReliably(void *data, size_t size, nodeid_t destination)
 
     result = SDLNet_TCP_Send(node->sock, transmissionBuffer, (int) size + 2);
 #ifdef _DEBUG
-    VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %lu bytes, result=%lu\n",
+    VERBOSE2( Con_Message("N_SendDataBufferReliably: Sent %lu bytes, result=%i\n",
                           (unsigned long) (size + 2), result) );
 #endif
     if(result != size + 2)

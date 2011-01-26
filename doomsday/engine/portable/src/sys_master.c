@@ -1,10 +1,10 @@
-/**\file
+/**\file sys_master.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2009 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /*
- * sys_master.c: Communication with the Master Server
+ * Communication with the Master Server.
  *
  * Communication with the master server, using TCP and HTTP.
  * The HTTP requests run in their own threads.
@@ -276,7 +276,7 @@ static int C_DECL N_MasterSendRequest(void *parm)
 	if(!curl_easy_perform(session))
 	{
 #ifdef _DEBUG
-		printf(Str_Text(&response));
+		printf("%s", Str_Text(&response));
 #endif
 
 		// Let's parse the message.

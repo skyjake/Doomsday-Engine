@@ -334,13 +334,13 @@ static boolean findResource2(resourceclass_t rclass, const ddstring_t* searchPat
     }
 }
 
-static int findResource(resourceclass_t rclass, const dduri_t** list,
+static int findResource(resourceclass_t rclass, const dduri_t* const* list,
     const ddstring_t* optionalSuffix, ddstring_t* foundPath)
 {
     assert(inited && list && (rclass == RC_UNKNOWN || VALID_RESOURCE_CLASS(rclass)));
     {
     uint result = 0, n = 1;
-    const dduri_t** ptr;
+    const dduri_t* const* ptr;
 
     for(ptr = list; *ptr; ptr++, n++)
     {
@@ -388,7 +388,7 @@ static int findResource(resourceclass_t rclass, const dduri_t** list,
 static resourcenamespace_t* createResourceNamespace(const char* name,
     ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t** searchPaths, int numSearchPaths, byte flags, const char* overrideName,
+    const dduri_t* const* searchPaths, int numSearchPaths, byte flags, const char* overrideName,
     const char* overrideName2)
 {
     assert(name);

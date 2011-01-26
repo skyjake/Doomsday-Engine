@@ -135,7 +135,7 @@ void Str_Set(ddstring_t* str, const char* text)
     {
 #if _DEBUG
         Con_Message("Warning: Resultant string would be longer than String::MAX_LENGTH "
-                    "(%ul), truncating.\n", (unsigned long) DDSTRING_MAX_LENGTH);
+                    "(%lu), truncating.\n", (unsigned long) DDSTRING_MAX_LENGTH);
 #endif
         incoming = DDSTRING_MAX_LENGTH;
     }   
@@ -161,7 +161,7 @@ void Str_Append(ddstring_t* str, const char* append)
     {
 #if _DEBUG
         Con_Message("Warning: Resultant string would be longer than String::MAX_LENGTH "
-                    "(%ul), truncating.\n", (unsigned long) DDSTRING_MAX_LENGTH);
+                    "(%lu), truncating.\n", (unsigned long) DDSTRING_MAX_LENGTH);
 #endif
         incoming = DDSTRING_MAX_LENGTH - str->length;
         if(incoming == 0)
@@ -243,7 +243,8 @@ void Str_Prepend(ddstring_t* str, const char* prepend)
     if((unsigned)str->length + incoming > DDSTRING_MAX_LENGTH)
     {
 #if _DEBUG
-        Con_Message("Resultant string would be longer than String::MAX_LENGTH (%ul).\n", (unsigned long) DDSTRING_MAX_LENGTH);
+        Con_Message("Resultant string would be longer than String::MAX_LENGTH (%lu).\n",
+                    (unsigned long) DDSTRING_MAX_LENGTH);
 #endif
         return;
     }

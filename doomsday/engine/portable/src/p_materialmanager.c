@@ -706,8 +706,12 @@ material_t* Materials_NewFromDef(ded_material_t* def)
         if(l->stages[0].type != -1) // Not unused.
         {
             if(!(tex = GL_GetGLTextureByName(l->stages[0].name, l->stages[0].type)))
+            {
+                ddstring_t* path = Uri_ComposePath(def->id);
                 VERBOSE( Con_Message("Warning: Unknown %s '%s' in Material '%s' (layer %i stage %i).\n",
-                GLTEXTURE_TYPE_STRING(l->stages[0].type), l->stages[0].name, def->id, 0, 0) );
+                         GLTEXTURE_TYPE_STRING(l->stages[0].type), l->stages[0].name, Str_Text(path), 0, 0) );
+                Str_Delete(path);
+            }
         }
     }
 
@@ -874,7 +878,7 @@ static materialnum_t Materials_NumForPath2(const dduri_t* path)
     if(verbose && result == 0 && !ddMapSetup) // Don't announce during map setup.
     {
         ddstring_t* nicePath = Uri_ToString(path);
-        Con_Message("Materials_NumForName: \"%s\" in namespace %i not found!\n", Str_Text(nicePath));
+        Con_Message("Materials::NumForName: \"%s\" not found!\n", Str_Text(nicePath));
         Str_Delete(nicePath);
     }
     return result;
@@ -1407,7 +1411,7 @@ static size_t printMaterials2(materialnamespaceid_t mnamespace, const char* like
     { const materialbind_t** ptr;
     for(ptr = foundMaterials; *ptr; ++ptr)
     {
-        printMaterialInfo(*ptr, mnamespace == MN_ANY);
+        printMaterialInfo(*ptr, (mnamespace == MN_ANY));
     }}
 
     free(foundMaterials);

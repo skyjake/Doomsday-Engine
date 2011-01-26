@@ -1,4 +1,4 @@
-/**\file
+/**\file pathdirectory.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -192,6 +192,27 @@ static int iteratePaths(pathdirectory_t* pd, pathdirectory_pathtype_t type,
     }
 }
 
+static int const_iteratePaths(pathdirectory_t* pd, pathdirectory_pathtype_t type,
+    pathdirectory_node_t* parent, int (*callback) (const pathdirectory_node_t* node, void* paramaters),
+    void* paramaters)
+{
+    assert(pd && callback);
+    {
+    int result = 0;
+    pathdirectory_node_t* node;
+    for(node = pd->_head; node; node = node->next)
+    {
+        if(parent && node->parent != parent)
+            continue;
+        if(VALID_PATHDIRECTORY_PATHTYPE(type) && node->type != type)
+            continue;
+        if((result = callback(node, paramaters)) != 0)
+            break;
+    }
+    return result;
+    }
+}
+
 pathdirectory_t* PathDirectory_ConstructDefault(void)
 {
     pathdirectory_t* pd;
@@ -266,7 +287,7 @@ int PathDirectory_Iterate2(pathdirectory_t* pd, pathdirectory_pathtype_t type,
     void* paramaters)
 {
     assert(pd && (type == PT_ANY || VALID_PATHDIRECTORY_PATHTYPE(type)));
-    return iteratePaths(pd, type, parent, callback, paramaters);
+    return const_iteratePaths(pd, type, parent, callback, paramaters);
 }
 
 int PathDirectory_Iterate(pathdirectory_t* pd, pathdirectory_pathtype_t type,

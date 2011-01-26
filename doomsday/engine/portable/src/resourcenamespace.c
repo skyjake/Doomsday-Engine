@@ -68,7 +68,8 @@ static void printPathHash(resourcenamespace_t* rn)
             Str_Clear(&path);
             FileDirectoryNode_ComposePath(node->data, &path);
             { ddstring_t* hashName = rn->_composeHashName(&path);
-            Con_Printf("  %lu: %lu:\"%s\" -> %s\n", (unsigned long)n, i, Str_Text(hashName), Str_Text(&path));
+            Con_Printf("  %lu: %lu:\"%s\" -> %s\n", (unsigned long)n, (unsigned long)i,
+                       Str_Text(hashName), Str_Text(&path));
             Str_Delete(hashName);
             }
             ++n;
@@ -207,8 +208,8 @@ static void rebuild(resourcenamespace_t* rn)
 resourcenamespace_t* ResourceNamespace_Construct5(const char* name,
     ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t** searchPaths, uint searchPathsCount, byte flags, const char* overrideName,
-    const char* overrideName2)
+    const dduri_t* const* searchPaths, uint searchPathsCount, byte flags,
+    const char* overrideName, const char* overrideName2)
 {
     assert(name && composeHashNameFunc && hashNameFunc);
     {
@@ -270,7 +271,8 @@ resourcenamespace_t* ResourceNamespace_Construct5(const char* name,
 resourcenamespace_t* ResourceNamespace_Construct4(const char* name,
     ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t** searchPaths, uint searchPathsCount, byte flags, const char* overrideName)
+    const dduri_t* const* searchPaths, uint searchPathsCount, byte flags,
+    const char* overrideName)
 {
     return ResourceNamespace_Construct5(name, composeHashNameFunc, hashNameFunc,
         searchPaths, searchPathsCount, flags, overrideName, 0);
@@ -279,7 +281,7 @@ resourcenamespace_t* ResourceNamespace_Construct4(const char* name,
 resourcenamespace_t* ResourceNamespace_Construct3(const char* name,
     ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t** searchPaths, uint searchPathsCount, byte flags)
+    const dduri_t* const* searchPaths, uint searchPathsCount, byte flags)
 {
     return ResourceNamespace_Construct4(name, composeHashNameFunc, hashNameFunc,
         searchPaths, searchPathsCount, flags, 0);
@@ -288,7 +290,7 @@ resourcenamespace_t* ResourceNamespace_Construct3(const char* name,
 resourcenamespace_t* ResourceNamespace_Construct2(const char* name,
     ddstring_t* (*composeHashNameFunc) (const ddstring_t* path),
     resourcenamespace_namehash_key_t (*hashNameFunc) (const ddstring_t* name),
-    const dduri_t** searchPaths, uint searchPathsCount)
+    const dduri_t* const* searchPaths, uint searchPathsCount)
 {
     return ResourceNamespace_Construct3(name, composeHashNameFunc, hashNameFunc,
         searchPaths, searchPathsCount, 0);

@@ -102,11 +102,11 @@ ddstring_t* FileDirectory_AllPaths(filedirectory_t* pd, filedirectory_pathtype_t
  * @param callback          Callback function ptr.
  * @param paramaters        Passed to the callback.
  */
-void FileDirectory_AddPaths3(filedirectory_t* pd, const dduri_t** paths, uint pathsCount,
+void FileDirectory_AddPaths3(filedirectory_t* pd, const dduri_t* const* paths, uint pathsCount,
     int (*callback) (const struct filedirectory_node_s* node, void* paramaters), void* paramaters);
-void FileDirectory_AddPaths2(filedirectory_t* pd, const dduri_t** paths, uint pathsCount,
+void FileDirectory_AddPaths2(filedirectory_t* pd, const dduri_t* const* paths, uint pathsCount,
     int (*callback) (const struct filedirectory_node_s* node, void* paramaters));
-void FileDirectory_AddPaths(filedirectory_t* pd, const dduri_t** paths, uint pathsCount);
+void FileDirectory_AddPaths(filedirectory_t* pd, const dduri_t* const* paths, uint pathsCount);
 
 /**
  * Add a new set of paths from a path list. Duplicates are automatically pruned.

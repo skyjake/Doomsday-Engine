@@ -218,14 +218,35 @@ static int iteratePaths(filedirectory_t* fd, filedirectory_pathtype_t type,
     }
 }
 
-static filedirectory_t* addPaths(filedirectory_t* fd, const ddstring_t** paths,
+static int const_iteratePaths(filedirectory_t* fd, filedirectory_pathtype_t type,
+    filedirectory_node_t* parent, int (*callback) (const filedirectory_node_t* node, void* paramaters),
+    void* paramaters)
+{
+    assert(fd && callback);
+    {
+    int result = 0;
+    filedirectory_node_t* node;
+    for(node = fd->_head; node; node = node->next)
+    {
+        if(parent && node->parent != parent)
+            continue;
+        if(VALID_FILEDIRECTORY_PATHTYPE(type) && node->type != type)
+            continue;
+        if((result = callback(node, paramaters)) != 0)
+            break;
+    }
+    return result;
+    }
+}
+
+static filedirectory_t* addPaths(filedirectory_t* fd, const ddstring_t* const* paths,
     size_t pathsCount, int (*callback) (const filedirectory_node_t* node, void* paramaters),
     void* paramaters)
 {
     assert(fd && paths && pathsCount != 0);
     {
 //    uint startTime = verbose >= 2? Sys_GetRealTime(): 0;
-    const ddstring_t** ptr = paths;
+    const ddstring_t* const* ptr = paths;
     { size_t i;
     for(i = 0; i < pathsCount && *ptr; ++i, ptr++)
     {
@@ -244,7 +265,7 @@ static filedirectory_t* addPaths(filedirectory_t* fd, const ddstring_t** paths,
             {
                 if(leaf->type == FDT_DIRECTORY)
                 {
-                    iteratePaths(fd, FDT_FILE, leaf, callback, paramaters);
+                    const_iteratePaths(fd, FDT_FILE, leaf, callback, paramaters);
                 }
                 else
                 {
@@ -308,7 +329,7 @@ static void addPathToSearchPaths(filedirectory_t* fd, const dduri_t* path)
     fd->_searchPaths[fd->_searchPathsCount-1] = Uri_ConstructCopy(path);
 }
 
-static void addPathsToSearchPaths(filedirectory_t* fd, const dduri_t** paths, uint pathsCount)
+static void addPathsToSearchPaths(filedirectory_t* fd, const dduri_t* const* paths, uint pathsCount)
 {
     assert(fd && paths && pathsCount != 0);
     { uint i;
@@ -343,11 +364,11 @@ static void resolveAndAddSearchPathsToDirectory(filedirectory_t* fd,
     fd->_builtRecordSet = true;
 }
 
-static void printPaths(const dduri_t** paths, size_t pathsCount)
+static void printPaths(const dduri_t* const* paths, size_t pathsCount)
 {
     assert(paths);
     {
-    const dduri_t** ptr = paths;
+    const dduri_t* const* ptr = paths;
     size_t i;
     for(i = 0; i < pathsCount && *ptr; ++i, ptr++)
     {
@@ -377,9 +398,9 @@ filedirectory_t* FileDirectory_ConstructStr2(const ddstring_t* pathList, char de
     fd->_builtRecordSet = false;
     if(pathList)
     {
-        uint count;
+        size_t count;
         dduri_t** uris = F_CreateUriListStr2(RC_NULL, pathList, &count);
-        addPathsToSearchPaths(fd, uris, count);
+        addPathsToSearchPaths(fd, uris, (uint)count);
         resolveAndAddSearchPathsToDirectory(fd, 0, 0);
         F_DestroyUriList(uris);
     }
@@ -454,7 +475,7 @@ void FileDirectory_Clear(filedirectory_t* fd)
     fd->_builtRecordSet = false;
 }
 
-void FileDirectory_AddPaths3(filedirectory_t* fd, const dduri_t** paths, uint pathsCount,
+void FileDirectory_AddPaths3(filedirectory_t* fd, const dduri_t* const* paths, uint pathsCount,
     int (*callback) (const filedirectory_node_t* node, void* paramaters), void* paramaters)
 {
     assert(fd);
@@ -472,13 +493,13 @@ void FileDirectory_AddPaths3(filedirectory_t* fd, const dduri_t** paths, uint pa
     resolveAndAddSearchPathsToDirectory(fd, callback, paramaters);
 }
 
-void FileDirectory_AddPaths2(filedirectory_t* fd, const dduri_t** paths, uint pathsCount,
+void FileDirectory_AddPaths2(filedirectory_t* fd, const dduri_t* const* paths, uint pathsCount,
     int (*callback) (const filedirectory_node_t* node, void* paramaters))
 {
     FileDirectory_AddPaths3(fd, paths, pathsCount, callback, 0);
 }
 
-void FileDirectory_AddPaths(filedirectory_t* fd, const dduri_t** paths, uint pathsCount)
+void FileDirectory_AddPaths(filedirectory_t* fd, const dduri_t* const* paths, uint pathsCount)
 {
     FileDirectory_AddPaths2(fd, paths, pathsCount, 0);
 }
@@ -489,10 +510,10 @@ void FileDirectory_AddPathList3(filedirectory_t* fd, const char* pathList,
     assert(fd);
     {
     dduri_t** paths = 0;
-    uint pathsCount = 0;
+    size_t pathsCount = 0;
     if(pathList && pathList[0])
         paths = F_CreateUriList2(RC_UNKNOWN, pathList, &pathsCount);
-    FileDirectory_AddPaths3(fd, paths, pathsCount, callback, paramaters);
+    FileDirectory_AddPaths3(fd, paths, (uint)pathsCount, callback, paramaters);
     if(paths)
         F_DestroyUriList(paths);
     }
@@ -519,7 +540,7 @@ int FileDirectory_Iterate2(filedirectory_t* fd, filedirectory_pathtype_t type,
     {
         resolveAndAddSearchPathsToDirectory(fd, 0, 0);
     }
-    return iteratePaths(fd, type, parent, callback, paramaters);
+    return const_iteratePaths(fd, type, parent, callback, paramaters);
 }
 
 int FileDirectory_Iterate(filedirectory_t* fd, filedirectory_pathtype_t type,

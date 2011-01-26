@@ -959,7 +959,7 @@ unsigned int F_LastModified(const char* fileName)
 
 typedef struct {
     /// Callback to make for each processed node.
-    f_allresourcepaths_callback_t callback;
+    int (*callback) (const ddstring_t* path, filedirectory_pathtype_t type, void* paramaters);
 
     /// Data passed to the callback.
     void* paramaters;
@@ -985,7 +985,8 @@ static int C_DECL compareFoundEntryByName(const void* a, const void* b)
  * Descends into subdirectories.
  */
 static int forAllDescend(const ddstring_t* pattern, const ddstring_t* name,
-    f_allresourcepaths_callback_t callback, void* paramaters)
+    int (*callback) (const ddstring_t* path, filedirectory_pathtype_t type, void* paramaters),
+    void* paramaters)
 {
     assert(pattern && name && !Str_IsEmpty(name) && callback);
     {
@@ -1103,7 +1104,8 @@ static int findZipFileWorker(const ddstring_t* zipFileName, void* paramaters)
 }
 
 int F_AllResourcePaths2(const ddstring_t* searchPath,
-    f_allresourcepaths_callback_t callback, void* paramaters)
+    int (*callback) (const ddstring_t* path, filedirectory_pathtype_t type, void* paramaters),
+    void* paramaters)
 {
     directory2_t searchPathDirectory;
     ddstring_t temp, searchPathName;
@@ -1158,7 +1160,8 @@ searchEnded:
     return result;
 }
 
-int F_AllResourcePaths(const ddstring_t* searchPath, f_allresourcepaths_callback_t callback)
+int F_AllResourcePaths(const ddstring_t* searchPath,
+    int (*callback) (const ddstring_t* path, filedirectory_pathtype_t type, void* paramaters))
 {
     return F_AllResourcePaths2(searchPath, callback, 0);
 }
