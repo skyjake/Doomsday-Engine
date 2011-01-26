@@ -401,6 +401,119 @@ static resourcenamespace_t* createResourceNamespace(const char* name,
     }
 }
 
+static void createPackagesResourceNamespace(void)
+{
+    ddstring_t** doomWadPaths = 0, *doomWadDir = 0;
+    uint doomWadPathsCount = 0, searchPathsCount, idx;
+    dduri_t** searchPaths;
+
+    // Is the DOOMWADPATH environment variable in use?
+    if(!ArgCheck("-nodoomwadpath") && getenv("DOOMWADPATH"))
+    {
+#define ADDDOOMWADPATH(path) \
+{ \
+    Str_Strip(path); \
+    if(!Str_IsEmpty(path) && F_IsAbsolute(path)) \
+    { \
+        char last = Str_RAt(path, 0); \
+        ddstring_t* pathCopy = Str_New(); \
+        if(last != DIR_SEP_CHAR && last != DIR_WRONG_SEP_CHAR) \
+            Str_Appendf(doomWadDir, "%s"DIR_SEP_STR, (path)); \
+        else \
+            Str_Copy(pathCopy, (path)); \
+        doomWadPaths = realloc(doomWadPaths, sizeof(*doomWadPaths) * ++doomWadPathsCount); \
+        doomWadPaths[doomWadPathsCount-1] = pathCopy; \
+    } \
+}
+
+        ddstring_t fullString; Str_Init(&fullString);
+        
+        Str_Set(&fullString, getenv("DOOMWADPATH"));
+        Str_Strip(&fullString);
+        if(!Str_IsEmpty(&fullString))
+        {
+            ddstring_t path;
+
+            F_FixSlashes(&fullString);
+
+            // Split into paths.
+            Str_Init(&path);
+            { const char* c = Str_Text(&fullString);
+            while((c = Str_CopyDelim2(&path, c, DIR_SEP_CHAR, CDF_OMIT_DELIMITER))) // Get the next path.
+            {
+                ADDDOOMWADPATH(&path)
+            }}
+            // Add the last path.
+            if(!Str_IsEmpty(&path))
+            {
+                ADDDOOMWADPATH(&path)
+            }
+            Str_Free(&path);
+        }
+
+        Str_Free(&fullString);
+
+#undef ADDDOOMWADPATH
+    }
+
+    // Is the DOOMWADDIR environment variable in use?
+    if(!ArgCheck("-nodoomwaddir") && getenv("DOOMWADDIR"))
+    {
+        boolean pathIsGood = false;
+
+        doomWadDir = Str_New(); Str_Set(doomWadDir, getenv("DOOMWADDIR"));
+        Str_Strip(doomWadDir);
+        if(Str_IsEmpty(doomWadDir) || !F_IsAbsolute(doomWadDir))
+        {
+            Str_Delete(doomWadDir);
+            doomWadDir = 0;
+        }
+        else
+        {
+            char last = Str_RAt(doomWadDir, 0);
+            if(last != DIR_SEP_CHAR && last != DIR_WRONG_SEP_CHAR)
+                Str_AppendChar(doomWadDir, DIR_SEP_CHAR);
+        }
+    }
+
+    // Construct the search path list.
+    searchPathsCount = 2 + doomWadPathsCount + (doomWadDir != 0? 1 : 0);
+    if((searchPaths = malloc(sizeof(*searchPaths) * searchPathsCount)) == 0)
+        Con_Error("createPackagesResourceNamespace: Failed on allocation of %lu bytes.",
+                  (unsigned long) (sizeof(*searchPaths) * searchPathsCount)); 
+
+    idx = 0;
+    // Add the default paths.
+    searchPaths[idx++] = Uri_Construct2("$(GameInfo.DataPath)/", RC_NULL);
+    searchPaths[idx++] = Uri_Construct2("$(App.DataPath)/", RC_NULL);
+
+    // Add any paths from the DOOMWADPATH environment variable.
+    if(doomWadPaths != 0)
+    {
+        uint i;
+        for(i = 0; i < doomWadPathsCount; ++i)
+        {
+            searchPaths[idx++] = Uri_Construct2(Str_Text(doomWadPaths[i]), RC_NULL);
+            Str_Delete(doomWadPaths[i]);
+        }
+        free(doomWadPaths);
+    }
+
+    // Add the path from the DOOMWADDIR environment variable.
+    if(doomWadDir != 0)
+    {
+        searchPaths[idx++] = Uri_Construct2(Str_Text(doomWadDir), RC_NULL);
+        Str_Delete(doomWadDir);
+    }
+
+    createResourceNamespace(PACKAGES_RESOURCE_NAMESPACE_NAME, composeHashNameForFilePath,
+        hashVarLengthNameIgnoreCase, searchPaths, searchPathsCount, 0, 0, 0);
+
+    for(idx = 0; idx < searchPathsCount; ++idx)
+        Uri_Destruct(searchPaths[idx]);
+    free(searchPaths);
+}
+
 static void createResourceNamespaces(void)
 {
 #define NAMESPACEDEF_MAX_SEARCHPATHS        5
@@ -412,7 +525,6 @@ static void createResourceNamespaces(void)
         const char* overrideName;
         const char* overrideName2;
     } defs[] = {
-        { PACKAGES_RESOURCE_NAMESPACE_NAME,    { "$(GameInfo.DataPath)/", "$(App.DataPath)/", "$(DOOMWADDIR)/" } },
         { DEFINITIONS_RESOURCE_NAMESPACE_NAME, { "$(GameInfo.DefsPath)/$(GameInfo.IdentityKey)/", "$(GameInfo.DefsPath)/", "$(App.DefsPath)/" } },
         { GRAPHICS_RESOURCE_NAMESPACE_NAME,    { "$(App.DataPath)/graphics/" }, 0, "-gfxdir",  "-gfxdir2" },
         { MODELS_RESOURCE_NAMESPACE_NAME,      { "$(GameInfo.DataPath)/models/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/models/" },       RNF_USE_VMAP,  "-modeldir", "-modeldir2" },
@@ -424,7 +536,12 @@ static void createResourceNamespaces(void)
         { LIGHTMAPS_RESOURCE_NAMESPACE_NAME,   { "$(GameInfo.DataPath)/lightmaps/$(GameInfo.IdentityKey)/", "$(GameInfo.DataPath)/lightmaps/" }, RNF_USE_VMAP,  "-lmdir",    "-lmdir2" },
         { NULL }
     };
-    size_t i;
+
+    // Setup of the Packages namespace is somewhat more involved...
+    createPackagesResourceNamespace();
+
+    // Setup the rest...
+    { size_t i;
     for(i = 0; defs[i].name; ++i)
     {
         struct namespacedef_s* def = &defs[i];
@@ -436,7 +553,7 @@ static void createResourceNamespaces(void)
                 break;
 
         if((searchPaths = malloc(sizeof(*searchPaths) * searchPathsCount)) == 0)
-            Con_Error("Error:createResourceNamespaces: Failed on allocation of %lu bytes.",
+            Con_Error("createResourceNamespaces: Failed on allocation of %lu bytes.",
                       (unsigned long) (sizeof(*searchPaths) * searchPathsCount)); 
 
         for(j = 0; j < searchPathsCount; ++j)
@@ -448,7 +565,7 @@ static void createResourceNamespaces(void)
         for(j = 0; j < searchPathsCount; ++j)
             Uri_Destruct(searchPaths[j]);
         free(searchPaths);
-    }
+    }}
 
 #undef NAMESPACEDEF_MAX_SEARCHPATHS
 }

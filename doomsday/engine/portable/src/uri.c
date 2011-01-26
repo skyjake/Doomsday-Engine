@@ -50,7 +50,7 @@ static void parseScheme(dduri_t* uri, resourceclass_t defaultResourceClass)
     Str_Clear(&uri->_scheme);
 
     { const char* p = Str_CopyDelim2(&uri->_scheme, Str_Text(&uri->_path), ':', CDF_OMIT_DELIMITER);
-    if(!p || p - Str_Text(&uri->_path) < URI_MINSCHEMELENGTH)
+    if(!p || p - Str_Text(&uri->_path) < URI_MINSCHEMELENGTH+1) // +1 for ':' delimiter.
     {
         Str_Clear(&uri->_scheme);
     }
@@ -86,7 +86,7 @@ static ddstring_t* resolveUri(const dduri_t* uri)
 {
     assert(uri);
     {
-    ddstring_t part, *doomWadDir = 0, *dest = Str_New();
+    ddstring_t part, *dest = Str_New();
     boolean successful = false;
     const char* p;
 
@@ -110,27 +110,7 @@ static ddstring_t* resolveUri(const dduri_t* uri)
         // Now grab everything up to the closing ')' (it *should* be present).
         while((p = Str_CopyDelim2(&part, p, ')', CDF_OMIT_DELIMITER)))
         {
-            // First, try external symbols like environment variable names - they are quick to reject.
-            if(!Str_CompareIgnoreCase(&part, "DOOMWADDIR"))
-            {
-                if(!ArgCheck("-nowaddir") && (doomWadDir || getenv("DOOMWADDIR")))
-                {
-                    if(!doomWadDir)
-                    {
-                        doomWadDir = Str_New();
-                        Str_Set(doomWadDir, getenv("DOOMWADDIR"));
-                        F_FixSlashes(doomWadDir);
-                        if(Str_RAt(doomWadDir, 0) == DIR_SEP_CHAR)
-                            Str_Truncate(doomWadDir, Str_Length(doomWadDir)-1);
-                    }
-
-                    Str_Append(dest, Str_Text(doomWadDir));
-                }
-                else
-                    goto parseEnded;
-            }
-            // Now try internal symbols.
-            else if(!Str_CompareIgnoreCase(&part, "App.DataPath"))
+            if(!Str_CompareIgnoreCase(&part, "App.DataPath"))
             {
                 Str_Append(dest, "data");
             }
@@ -202,8 +182,6 @@ static ddstring_t* resolveUri(const dduri_t* uri)
 
 parseEnded:
     Str_Free(&part);
-    if(doomWadDir)
-        Str_Free(doomWadDir);
     if(!successful && dest)
     {
         Str_Delete(dest);
