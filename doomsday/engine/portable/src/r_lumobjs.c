@@ -137,12 +137,12 @@ static lumlistnode_t* allocListNode(void)
     return ln;
 }
 
-static void linkLumObjToSSec(lumobj_t* lum)
+static void linkLumObjToSSec(lumobj_t* lum, subsector_t* ssec)
 {
-    lumlistnode_t*         ln = allocListNode();
-    lumlistnode_t**        root;
+    lumlistnode_t* ln = allocListNode();
+    lumlistnode_t** root;
 
-    root = &subLumObjList[GET_SUBSECTOR_IDX(lum->subsector)];
+    root = &subLumObjList[GET_SUBSECTOR_IDX(ssec)];
     ln->next = *root;
     ln->data = lum;
     *root = ln;
@@ -275,6 +275,20 @@ static lumobj_t* allocLumobj(void)
 #undef LUMOBJ_BATCH_SIZE
 }
 
+static lumobj_t* createLuminous(lumtype_t type, subsector_t* ssec)
+{
+    lumobj_t* lum = allocLumobj();
+
+    lum->type = type;
+    lum->subsector = ssec;
+    linkLumObjToSSec(lum, ssec);
+
+    if(type != LT_PLANE)
+        R_ObjLinkCreate(lum, OT_LUMOBJ); // For spreading purposes.
+
+    return lum;
+}
+
 /**
  * Allocate a new lumobj.
  *
@@ -282,15 +296,7 @@ static lumobj_t* allocLumobj(void)
  */
 uint LO_NewLuminous(lumtype_t type, subsector_t* ssec)
 {
-    lumobj_t*           lum = allocLumobj();
-
-    lum->type = type;
-    lum->subsector = ssec;
-
-    linkLumObjToSSec(lum);
-
-    R_ObjLinkCreate(lum, OT_LUMOBJ); // For spreading purposes.
-
+    createLuminous(type, ssec);
     return numLuminous; // == index + 1
 }
 
@@ -603,25 +609,26 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
         {
         plane_t* pln = (plane_t*)suf->owner;
         sector_t* sec = pln->sector;
+        linkobjtossecparams_t params;
+        lumobj_t* lum;
 
         // Only produce a light for sectors with open space.
         if(sec->SP_floorvisheight >= sec->SP_ceilvisheight)
             return true; // Continue iteration.
 
+        // \note Plane lights do not spread so simply link to all subsectors of this sector.
+        lum = createLuminous(LT_PLANE, sec->ssectors[0]);
+        V3_Set(lum->pos, pln->soundOrg.pos[VX], pln->soundOrg.pos[VY], pln->visHeight);
+        setGlowLightProps(lum, suf);
+
+        params.obj = lum;
+        params.type = OT_LUMOBJ;
+        RIT_LinkObjToSubSector(sec->ssectors[0], &params);
         { uint i;
-        for(i = 0; i < sec->ssectorCount; ++i)
+        for(i = 1; i < sec->ssectorCount; ++i)
         {
-            subsector_t* ssec = pln->sector->ssectors[i];
-            lumobj_t* l = LO_GetLuminous(LO_NewLuminous(LT_PLANE, ssec));
-
-            setGlowLightProps(l, suf);
-            V3_Set(l->pos, ssec->midPoint.pos[VX], ssec->midPoint.pos[VY], pln->visHeight);
-
-            // Planar lights don't spread, so just link the lum to its own ssec.
-            { linkobjtossecparams_t params;
-            params.obj = l;
-            params.type = OT_LUMOBJ;
-            RIT_LinkObjToSubSector(l->subsector, &params); }
+            linkLumObjToSSec(lum, sec->ssectors[i]);
+            RIT_LinkObjToSubSector(sec->ssectors[i], &params);
         }}
         break;
         }
@@ -629,7 +636,8 @@ static boolean createGlowLightForSurface(surface_t* suf, void* paramaters)
         return true; // Not yet supported by this algorithm.
 
     default:
-        Con_Error("createGlowLightForSurface: Internal error, unknown type %s.", DMU_Str(DMU_GetType(suf->owner)));
+        Con_Error("createGlowLightForSurface: Internal error, unknown type %s.",
+                  DMU_Str(DMU_GetType(suf->owner)));
     }
     return true;
 }
