@@ -67,6 +67,7 @@ float rendLightWallAngle = 1.2f; // Intensity of angle-based wall lighting.
 byte rendLightWallAngleSmooth = true;
 
 byte rendSkyLight = true;
+byte rendSkyLightAuto = true;
 byte rendSkyLightBalance = true;
 
 boolean firstFrameAfterLoad;
@@ -77,11 +78,6 @@ nodeindex_t* linelinks; // Indices to roots.
 skyfix_t skyFix[2];
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-static boolean skyColorDefined;
-/// \fixme Not updated after a texture reset.
-static float skyColorRGB[3];
-static float skyColorBalance;
 
 static surfacelistnode_t* unusedSurfaceListNodes = 0;
 
@@ -878,104 +874,6 @@ void R_SetupFogDefaults(void)
 {
     // Go with the defaults.
     Con_Execute(CMDS_DDAY,"fog off", true, false);
-}
-
-static __inline const float* selectSkyColor(void)
-{
-    static float white[] = { 1, 1, 1 };
-    if(skyColorDefined)
-    {
-        return skyColorRGB;
-    }
-    { const fadeout_t* fade;
-    if((fade = Rend_GetCurrentSkyFadeout()))
-    {
-        return fade->rgb;
-    }}
-    /// \todo This *should* be unreachable...
-    return white;
-}
-
-void R_SetupSky(ded_sky_t* sky)
-{
-    int i, skyTex, ival = 0;
-    float fval = 0;
-
-    // There is no sky color defined.
-    skyColorDefined = false;
-    skyColorBalance = 1;
-
-    if(!sky)
-    {   // Go with the defaults.
-        fval = .666667f;
-        Rend_SkyParams(DD_SKY, DD_HEIGHT, &fval);
-        Rend_SkyParams(DD_SKY, DD_HORIZON, &ival);
-        Rend_SkyParams(0, DD_ENABLE, NULL);
-        ival = Materials_NumForName(MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":SKY1");
-        Rend_SkyParams(0, DD_MATERIAL, &ival);
-        ival = DD_NO;
-        Rend_SkyParams(0, DD_MASK, &ival);
-        fval = 0;
-        Rend_SkyParams(0, DD_OFFSET, &fval);
-        Rend_SkyParams(1, DD_DISABLE, NULL);
-        return;
-    }
-
-    Rend_SkyParams(DD_SKY, DD_HEIGHT, &sky->height);
-    Rend_SkyParams(DD_SKY, DD_HORIZON, &sky->horizonOffset);
-    for(i = 0; i < 2; ++i)
-    {
-        ded_skylayer_t*     layer = &sky->layers[i];
-
-        if(layer->flags & SLF_ENABLED)
-        {
-            if(layer->material)
-            {
-                skyTex = Materials_NumForName2(layer->material);
-            }
-
-            if(skyTex == 0)
-            {
-                if(layer->material)
-                {
-                    ddstring_t* path = Uri_ToString(layer->material);
-                    Con_Message("Warning, unknown material \"%s\" in sky layer %i, using default.\n", Str_Text(path), i);
-                    Str_Delete(path);
-                }
-                skyTex = Materials_NumForName(MATERIALS_TEXTURES_RESOURCE_NAMESPACE_NAME":SKY1");
-            }
-
-            Rend_SkyParams(i, DD_ENABLE, NULL);
-            Rend_SkyParams(i, DD_MATERIAL, &skyTex);
-            ival = ((layer->flags & SLF_MASKED)? DD_YES : DD_NO);
-            Rend_SkyParams(i, DD_MASK, &ival);
-            Rend_SkyParams(i, DD_OFFSET, &layer->offset);
-            Rend_SkyParams(i, DD_COLOR_LIMIT, &layer->colorLimit);
-        }
-        else
-        {
-            Rend_SkyParams(i, DD_DISABLE, NULL);
-        }
-    }
-
-    // Any sky models to setup? Models will override the normal
-    // sphere.
-    R_SetupSkyModels(sky);
-
-    // How about the sky color?
-    for(i = 0; i < 3; ++i)
-    {
-        skyColorRGB[i] = sky->color[i];
-        if(sky->color[i] > 0)
-            skyColorDefined = true;
-    }
-
-    // Calculate a balancing factor so the light won't appear too bright.
-    { const float* color = selectSkyColor();
-    if(color[0] > 0 || color[1] > 0 || color[2] > 0)
-    {
-        skyColorBalance = (0 + (color[0]*2 + color[1]*3 + color[2]*2) / 7) / 1;
-    }}
 }
 
 /**
@@ -1916,16 +1814,16 @@ const float* R_GetSectorLightColor(const sector_t* sector)
     {
         if(R_SectorContainsSkySurfaces(sector))
         {
-            return selectSkyColor();
+            return R_SkyAmbientColor();
         }
         // else A non-skylight sector (i.e., everything else!)
 
         // Balancing - darken this sector so the skylight won't appear too bright.
-        if(rendSkyLightBalance && skyColorBalance < 1)
+        if(rendSkyLightBalance && skyLightBalance < 1)
         {
-            balancedRGB[0] = sector->rgb[0] * skyColorBalance;
-            balancedRGB[1] = sector->rgb[1] * skyColorBalance;
-            balancedRGB[2] = sector->rgb[2] * skyColorBalance;
+            balancedRGB[0] = sector->rgb[0] * skyLightBalance;
+            balancedRGB[1] = sector->rgb[1] * skyLightBalance;
+            balancedRGB[2] = sector->rgb[2] * skyLightBalance;
             return balancedRGB;
         }
     }

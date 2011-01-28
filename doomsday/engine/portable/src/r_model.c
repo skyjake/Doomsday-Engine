@@ -1259,9 +1259,6 @@ void R_PrecacheModelSkins(modeldef_t* modef)
     int                 k, sub;
     model_t*            mdl;
 
-    if(!(useModels && precacheSkins))
-        return;
-
     // Precache this.
     for(sub = 0; sub < MAX_FRAME_MODELS; ++sub)
     {
@@ -1299,7 +1296,8 @@ void R_PrecacheSkinsForState(int stateIndex)
        !stateModefs[stateIndex])
         return;
 
-    R_PrecacheModelSkins(stateModefs[stateIndex]);
+    if(useModels)
+        R_PrecacheModelSkins(stateModefs[stateIndex]);
 }
 
 /**
@@ -1311,6 +1309,9 @@ boolean R_PrecacheSkinsForMobj(thinker_t* th, void* context)
     int                 i;
     mobj_t*             mo = (mobj_t*) th;
     modeldef_t*         modef;
+
+    if(!(useModels && precacheSkins))
+        return true;
 
     // Check through all the model definitions.
     for(i = 0, modef = modefs; i < numModelDefs; ++i, modef++)
@@ -1327,4 +1328,3 @@ boolean R_PrecacheSkinsForMobj(thinker_t* th, void* context)
 
     return true; // Used as iterator.
 }
-

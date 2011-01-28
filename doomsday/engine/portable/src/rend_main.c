@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 2006 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,7 +24,7 @@
  */
 
 /**
- * rend_main.c: Rendering Subsystem
+ * Rendering Subsystem.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -129,7 +129,8 @@ void Rend_Register(void)
     C_VAR_FLOAT2("rend-light-compression", &lightRangeCompression, 0, -1, 1, Rend_CalcLightModRange);
     C_VAR_INT2("rend-light-ambient", &ambientLight, 0, 0, 255, Rend_CalcLightModRange);
     C_VAR_BYTE2("rend-light-sky", &rendSkyLight, 0, 0, 1, LG_MarkAllForUpdate);
-    C_VAR_BYTE("rend-light-sky-balance", &rendSkyLightBalance, 0, 0, 1);
+    C_VAR_BYTE2("rend-light-sky-auto", &rendSkyLightAuto, 0, 0, 1, LG_MarkAllForUpdate);
+    C_VAR_BYTE2("rend-light-sky-balance", &rendSkyLightBalance, 0, 0, 1, LG_MarkAllForUpdate);
     C_VAR_FLOAT("rend-light-wall-angle", &rendLightWallAngle, CVF_NO_MAX, 0, 0);
     C_VAR_BYTE("rend-light-wall-angle-smooth", &rendLightWallAngleSmooth, 0, 0, 1);
     C_VAR_FLOAT("rend-light-attenuation", &rendLightDistanceAttentuation, CVF_NO_MAX, 0, 0);
@@ -157,7 +158,7 @@ void Rend_Register(void)
     Rend_ParticleRegister();
     Rend_RadioRegister();
     Rend_ShadowRegister();
-    Rend_SkyRegister();
+    R_SkyRegister();
     Rend_SpriteRegister();
     Rend_ConsoleRegister();
 }

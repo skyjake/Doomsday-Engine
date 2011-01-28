@@ -2167,8 +2167,6 @@ void GL_UpdateTexParams(int mipmode)
  * Called when changing the value of any cvar affecting texture quality which
  * can be actioned by simply changing texture paramaters i.e. does not require
  * flushing GL textures).
- *
- * @param unused        Unused, must be signature compatible.
  */
 void GL_DoUpdateTexParams(const cvar_t* cvar)
 {
@@ -2182,6 +2180,7 @@ static int doTexReset(void* parm)
     /// \todo re-upload ALL textures currently in use.
     GL_LoadSystemTextures();
     Rend_ParticleLoadExtraTextures();
+    R_SkyUpdate();
 
     if(usingBusyMode)
     {

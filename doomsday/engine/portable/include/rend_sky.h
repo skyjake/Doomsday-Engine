@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_sky.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2007-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2007-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,34 +29,14 @@
 #ifndef LIBDENG_RENDER_SKY_H
 #define LIBDENG_RENDER_SKY_H
 
-typedef struct {
-    float rgb[3];
-    short set, use; /// Is this set? Should it be used?
-    float limit; /// .3 by default.
-} fadeout_t;
-
-// Sky layer flags.
-#define SLF_ENABLED         0x1 // Layer enabled.
-#define SLF_MASKED          0x2 // Mask the layer texture.
-
-typedef struct {
-    int flags;
-    material_t* mat;
-    float offset;
-    fadeout_t fadeout;
-} skylayer_t;
+#include "r_sky.h"
 
 extern int skyDetail;
-
-// Initialization:
-void Rend_SkyRegister(void);
 
 void Rend_InitSky(void);
 void Rend_ShutdownSky(void);
 void Rend_SkyDetail(int quarterDivs, int rows);
 void Rend_SkyParams(int layer, int param, void* data);
 void Rend_RenderSky(void);
-
-const fadeout_t* Rend_GetCurrentSkyFadeout(void);
 
 #endif /* LIBDENG_RENDER_SKY_H */

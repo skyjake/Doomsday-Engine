@@ -2193,7 +2193,8 @@ void R_PrecacheMap(void)
         }
     }
 
-    // \fixme Precache sky materials!
+     // Sky models usually have big skins.
+    R_SkyPrecache();
 
     for(i = 0; i < Materials_Count(); ++i)
     {
@@ -2261,9 +2262,6 @@ void R_PrecacheMap(void)
         // All mobjs are public.
         P_IterateThinkers(gx.MobjThinker, 0x1, R_PrecacheSkinsForMobj, NULL);
     }
-
-    // Sky models usually have big skins.
-    R_PrecacheSky();
 
     VERBOSE(Con_Message("Precaching took %.2f seconds.\n", Sys_GetSeconds() - startTime))
 }

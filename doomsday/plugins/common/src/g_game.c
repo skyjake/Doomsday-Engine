@@ -2871,11 +2871,6 @@ void G_InitNew(skillmode_t skill, uint episode, uint map)
     NetSv_UpdateGameConfig();
 
     G_DoLoadMap();
-
-#if __JHEXEN__
-    // Initialize the sky.
-    P_InitSky(map);
-#endif
 }
 
 /**

@@ -1,10 +1,10 @@
-/**\file
+/**\file r_main.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * r_main.c: Refresh Subsystem
+ * Refresh Subsystem.
  *
  * The refresh daemon has the highest-level rendering code.
  * The view window is handled by refresh. The more specialized
@@ -377,6 +377,7 @@ void R_Init(void)
     R_InitViewBorder();
     R_SetViewWindow(0, 0, SCREENWIDTH, SCREENHEIGHT);
     R_InitTranslationTables();
+    R_SkyInit();
     Rend_Init();
     frameCount = 0;
     P_PtcInit();

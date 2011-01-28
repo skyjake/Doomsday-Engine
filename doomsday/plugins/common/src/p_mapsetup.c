@@ -744,6 +744,11 @@ int P_SetupMapWorker(void* ptr)
     // Set up world state.
     P_SpawnSpecials();
 
+#if __JHEXEN__
+    // Initialize the sky.
+    P_InitSky(param->map);
+#endif
+
     // Preload graphics.
     if(precache)
     {

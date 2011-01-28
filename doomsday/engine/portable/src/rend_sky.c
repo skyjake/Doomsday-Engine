@@ -1,10 +1,10 @@
-/**\file
+/**\file rend_sky.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * rend_sky.c: Sky Sphere and 3D Models
+ * Sky Sphere and 3D Models.
  *
  * This version supports only two sky layers.
  * (More would be a waste of resources?)
@@ -43,8 +43,6 @@
 
 // MACROS ------------------------------------------------------------------
 
-#define MAXSKYLAYERS        2
-
 #define SKYVTX_IDX(c, r)    ( (r)*skyColumns + (c)%skyColumns )
 
 // Sky hemispheres.
@@ -56,58 +54,35 @@
 // TYPES -------------------------------------------------------------------
 
 typedef struct skyvertex_s {
-    float           pos[3];
+    float pos[3];
 } skyvertex_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-D_CMD(SkyDetail);
-
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern float vx, vy, vz;
-extern byte topLineRGB[3];
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-skylayer_t skyLayers[MAXSKYLAYERS];
-int firstLayer, activeLayers;
-
-skyvertex_t *skyVerts = NULL; // Vertices for the upper hemisphere.
+skyvertex_t* skyVerts = 0; // Vertices for the upper hemisphere.
 int numSkyVerts = 0;
-
-int skyDetail = 6, simpleSky;
-int skyColumns, skyRows = 3;
-float skyDist = 1600;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // The texture offset to be applied to the texture coordinates in SkyVertex().
 static float maxSideAngle = (float) PI / 3;
 static float horizonOffset = 0;
-static float skyTexOff;
+static float skyTexOffset;
 static int skyTexWidth, skyTexHeight;
 static boolean yflip;
-static fadeout_t *currentFO;
+static const fadeout_t* currentFO;
 
 // CODE --------------------------------------------------------------------
-
-void Rend_SkyRegister(void)
-{
-    // Cvars
-    C_VAR_INT("rend-sky-detail", &skyDetail, CVF_PROTECTED, 3, 7);
-    C_VAR_INT("rend-sky-rows", &skyRows, CVF_PROTECTED, 1, 8);
-    C_VAR_FLOAT("rend-sky-distance", &skyDist, CVF_NO_MAX, 1, 0);
-    C_VAR_INT("rend-sky-simple", &simpleSky, 0, 0, 2);
-
-    // Ccmds
-    C_CMD_FLAGS("skydetail", "i", SkyDetail, CMDF_NO_DEDICATED);
-    C_CMD_FLAGS("skyrows", "i", SkyDetail, CMDF_NO_DEDICATED);
-}
 
 void Rend_RenderSkyModels(void)
 {
@@ -128,8 +103,7 @@ void Rend_RenderSkyModels(void)
         if(!sky->def)
             continue;
 
-        if(sky->def->layer > 0 && sky->def->layer <= MAXSKYLAYERS &&
-           !(skyLayers[sky->def->layer - 1].flags & SLF_ENABLED))
+        if(!R_SkyLayerIsEnabled(sky->def->layer))
         {
             // The model has been assigned to a layer, but the layer is
             // not visible.
@@ -179,18 +153,18 @@ void Rend_RenderSkyModels(void)
 static void SkyVertex(int r, int c)
 {
     // The direction must be clockwise.
-    skyvertex_t *svtx = skyVerts + SKYVTX_IDX(c, r);
+    skyvertex_t* svtx = skyVerts + SKYVTX_IDX(c, r);
 
     // And the texture coordinates.
-    if(!yflip)                  // Flipped Y is for the lower hemisphere.
+    if(!yflip) // Flipped Y is for the lower hemisphere.
     {
         glTexCoord2f((1024 / skyTexWidth) * c / (float) skyColumns +
-                     skyTexOff / skyTexWidth, r / (float) skyRows);
+                     skyTexOffset / skyTexWidth, r / (float) skyRows);
     }
     else
     {
         glTexCoord2f((1024 / skyTexWidth) * c / (float) skyColumns +
-                     skyTexOff / skyTexWidth, (skyRows - r) / (float) skyRows);
+                     skyTexOffset / skyTexWidth, (skyRows - r) / (float) skyRows);
     }
 
     // Also the color.
@@ -221,13 +195,12 @@ static void CapSideVertex(int r, int c)
 }
 
 /**
- * \note                    The current texture is used.
-* @param hemi               Upper or Lower. Zero is not acceptable.
+ * @param hemi              Upper or Lower. Zero is not acceptable.
  *                          SKYHEMI_JUST_CAP can be used.
  */
-void Rend_SkyRenderer(int hemi)
+void Rend_SkyRenderer(int hemi, const rendskysphereparams_t* params)
 {
-    int                 r, c;
+    int r, c;
 
     if(hemi & SKYHEMI_LOWER)
         yflip = true;
@@ -270,12 +243,59 @@ void Rend_SkyRenderer(int hemi)
         return;
     }
 
+    assert(params != 0);
+
+    if(renderTextures != 0)
+    {
+        int magMode;
+        DGLuint tex;
+        
+        skyTexOffset = params->offset;
+
+        if(renderTextures == 1 && params->tex)
+        {
+            tex = params->tex;
+            magMode = params->texMagMode;
+            skyTexWidth  = params->texWidth;
+            skyTexHeight = params->texHeight;
+        }
+        else
+        {
+            material_load_params_t p;
+            material_snapshot_t ms;
+            material_t* material;
+            
+            if(renderTextures == 2)
+                material = Materials_ToMaterial(Materials_NumForName(
+                    MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME":gray" ));
+            else
+                material = Materials_ToMaterial(Materials_NumForName(
+                    MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME":missing" ));
+
+            memset(&p, 0, sizeof(p));
+            p.flags = MLF_LOAD_AS_SKY;
+            p.tex.flags = GLTF_NO_COMPRESSION | GLTF_ZEROMASK;
+
+            Materials_Prepare(&ms, material, true, &p);
+            tex = ms.units[MTU_PRIMARY].texInst->id;
+            magMode = ms.units[MTU_PRIMARY].magMode;
+            skyTexWidth = GLTexture_GetWidth(ms.units[MTU_PRIMARY].texInst->tex);
+            skyTexHeight = GLTexture_GetHeight(ms.units[MTU_PRIMARY].texInst->tex);
+        }
+
+        GL_BindTexture(tex, magMode);
+    }
+    else
+    {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
     // The total number of triangles per hemisphere can be calculated
     // as follows: rows * columns * 2 + 2 (for the top cap).
     glEnable(GL_TEXTURE_2D);
     for(r = 0; r < skyRows; ++r)
     {
-        if(simpleSky)
+        if(skySimple)
         {
             glBegin(GL_QUADS);
             for(c = 0; c < skyColumns; ++c)
@@ -303,103 +323,25 @@ void Rend_SkyRenderer(int hemi)
     glDisable(GL_TEXTURE_2D);
 }
 
-static void setupFadeout(skylayer_t* slayer)
-{
-    if(slayer->mat)
-    {
-        int             i;
-        material_load_params_t params;
-        material_snapshot_t ms;
-
-        // Ensure we have up to date info on the material.
-        memset(&params, 0, sizeof(params));
-        params.flags = MLF_LOAD_AS_SKY;
-        params.tex.flags = GLTF_NO_COMPRESSION;
-        if(slayer->flags & SLF_MASKED)
-            params.tex.flags |= GLTF_ZEROMASK;
-
-        Materials_Prepare(&ms, slayer->mat, true, &params);
-        slayer->fadeout.rgb[CR] = ms.topColor[CR];
-        slayer->fadeout.rgb[CG] = ms.topColor[CG];
-        slayer->fadeout.rgb[CB] = ms.topColor[CB];
-
-        // Determine if it should be used.
-        for(slayer->fadeout.use = false, i = 0; i < 3; ++i)
-            if(slayer->fadeout.rgb[i] > slayer->fadeout.limit)
-            {
-                // Colored fadeout is needed.
-                slayer->fadeout.use = true;
-                break;
-            }
-
-        return;
-    }
-
-    // An invalid texture, default to black.
-    slayer->fadeout.rgb[CR] = slayer->fadeout.rgb[CG] =
-        slayer->fadeout.rgb[CB] = 0;
-    slayer->fadeout.use = true;
-}
-
-const fadeout_t* Rend_GetCurrentSkyFadeout(void)
-{
-    // The current fadeout is the first layer's fadeout.
-    return &skyLayers[firstLayer].fadeout;
-}
-
 void Rend_RenderSkyHemisphere(int whichHemi)
 {
-    skylayer_t* slayer;
-    int i;
-
     // The current fadeout is the first layer's fadeout.
-    currentFO = &skyLayers[firstLayer].fadeout;
+    currentFO = R_SkyFadeout();
 
     // First render the cap and the background for fadeouts, if needed.
     // The color for both is the current fadeout color.
-    Rend_SkyRenderer(whichHemi | SKYHEMI_JUST_CAP | (currentFO->use ? SKYHEMI_FADEOUT_BG : 0));
+    Rend_SkyRenderer(whichHemi | SKYHEMI_JUST_CAP | (currentFO->use ? SKYHEMI_FADEOUT_BG : 0), 0);
 
-    for(i = firstLayer, slayer = &skyLayers[firstLayer]; i < MAXSKYLAYERS; ++i, slayer++)
+    { int i;
+    for(i = firstSkyLayer; i < MAXSKYLAYERS; ++i)
     {
-        if(slayer->flags & SLF_ENABLED)
+        if(R_SkyLayerIsEnabled(i+1))
         {
-            material_t* mat = (renderTextures? (renderTextures == 2? Materials_ToMaterial(Materials_NumForName(MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME":gray")) : (slayer->mat? slayer->mat : Materials_ToMaterial(Materials_NumForName(MATERIALS_SYSTEM_RESOURCE_NAMESPACE_NAME":missing")))) : 0);
-            byte result = 0;
- 
-            // The texture is actually loaded when an update is done.
-            if(mat)
-            {
-                material_load_params_t params;
-                material_snapshot_t ms;
-
-                memset(&params, 0, sizeof(params));
-                params.flags = MLF_LOAD_AS_SKY;
-                params.tex.flags = GLTF_NO_COMPRESSION;
-                if(slayer->flags & SLF_MASKED)
-                    params.tex.flags |= GLTF_ZEROMASK;
-
-                result = Materials_Prepare(&ms, mat, true, &params);
-                skyTexWidth = GLTexture_GetWidth(ms.units[MTU_PRIMARY].texInst->tex);
-                skyTexHeight = GLTexture_GetHeight(ms.units[MTU_PRIMARY].texInst->tex);
-
-                if(result)
-                {   // Texture was reloaded.
-                    setupFadeout(slayer);
-                }
-
-                GL_BindTexture(ms.units[MTU_PRIMARY].texInst->id, ms.units[MTU_PRIMARY].magMode);
-            }
-            else
-            {
-                glBindTexture(GL_TEXTURE_2D, 0);
-                skyTexWidth = skyTexHeight = 64;
-            }
-
-            skyTexOff = slayer->offset;
-
-            Rend_SkyRenderer(whichHemi);
+            rendskysphereparams_t params;
+            R_SetupSkySphereParamsForSkyLayer(&params, i+1);
+            Rend_SkyRenderer(whichHemi, &params);
         }
-    }
+    }}
 
     /// \kludge dj: addresses bug #2982101 - http://sourceforge.net/tracker/?func=detail&aid=2982101&group_id=74815&atid=542099
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -410,7 +352,7 @@ void Rend_RenderSkyHemisphere(int whichHemi)
 void Rend_RenderSky(void)
 {
     // IS there a sky to be rendered?
-    if(firstLayer == -1)
+    if(firstSkyLayer == -1)
         return;
 
     // If sky models have been inited, they will be used.
@@ -459,20 +401,7 @@ void Rend_RenderSky(void)
  */
 void Rend_InitSky(void)
 {
-    int                 i;
-
-    firstLayer = 0;
-
     Rend_SkyDetail(skyDetail, skyRows);
-
-    // Initialize the layers.
-    for(i = 0; i < MAXSKYLAYERS; ++i)
-    {
-        skylayer_t*         slayer = &skyLayers[i];
-
-        slayer->mat = NULL; // No material.
-        slayer->fadeout.limit = .3f;
-    }
 }
 
 void Rend_ShutdownSky(void)
@@ -520,83 +449,49 @@ void Rend_SkyDetail(int quarterDivs, int rows)
 
 static void updateLayerStats(void)
 {
-    int                 i = 0;
-
     // -1 denotes 'no active layers'.
-    firstLayer = -1;
-    activeLayers = 0;
-    for(i = 0; i < MAXSKYLAYERS; ++i)
+    firstSkyLayer = -1;
+    activeSkyLayers = 0;
+
+    { int i;
+    for(i = 1; i <= MAXSKYLAYERS; ++i)
     {
-        if(skyLayers[i].flags & SLF_ENABLED)
-        {
-            activeLayers++;
-            if(firstLayer == -1)
-                firstLayer = i;
-        }
-    }
+        if(!R_SkyLayerIsEnabled(i))
+            continue;
+        ++activeSkyLayers;
+        if(firstSkyLayer == -1)
+            firstSkyLayer = i-1;
+    }}
 }
 
-static void internalSkyParams(skylayer_t* slayer, int param, void* data)
+static void internalSkyParams(int layer, int param, void* data)
 {
     switch(param)
     {
     case DD_ENABLE:
-        slayer->flags |= SLF_ENABLED;
+        R_SkyLayerEnable(layer, true);
         updateLayerStats();
         break;
 
     case DD_DISABLE:
-        slayer->flags &= ~SLF_ENABLED;
+        R_SkyLayerEnable(layer, false);
         updateLayerStats();
         break;
 
     case DD_MASK:
-        {
-        boolean             deleteTextures = false;
-        if(*((int*)data) == DD_YES)
-        {
-            // Invalidate the loaded texture, if necessary.
-            if(slayer->mat && !(slayer->flags & SLF_MASKED))
-                deleteTextures = true;
-            slayer->flags |= SLF_MASKED;
-        }
-        else
-        {
-            // Invalidate the loaded texture, if necessary.
-            if(slayer->mat && (slayer->flags & SLF_MASKED))
-                deleteTextures = true;
-            slayer->flags &= ~SLF_MASKED;
-        }
-
-        if(deleteTextures)
-            Material_DeleteTextures(slayer->mat);
-        }
+        R_SkyLayerMasked(layer, *((int*)data) == DD_YES);
         break;
 
     case DD_MATERIAL:
-        if((slayer->mat = Materials_ToMaterial(*(materialnum_t*) data)))
-        {
-            material_load_params_t params;
-
-            memset(&params, 0, sizeof(params));
-            params.flags = MLF_LOAD_AS_SKY;
-            params.tex.flags = GLTF_NO_COMPRESSION;
-            if(slayer->flags & SLF_MASKED)
-                params.tex.flags |= GLTF_ZEROMASK;
-
-            Materials_Prepare(NULL, slayer->mat, true, &params);
-        }
-
-        setupFadeout(slayer);
+        R_SkyLayerSetMaterial(layer, *((materialnum_t*) data));
         break;
 
     case DD_OFFSET:
-        slayer->offset = *((float*) data);
+        R_SkyLayerSetOffset(layer, *((float*) data));
         break;
 
     case DD_COLOR_LIMIT:
-        slayer->fadeout.limit = *((float*) data);
-        setupFadeout(slayer);
+        R_SkyLayerSetFadeoutLimit(layer, *((float*) data));
         break;
 
     default:
@@ -607,8 +502,6 @@ static void internalSkyParams(skylayer_t* slayer, int param, void* data)
 
 void Rend_SkyParams(int layer, int param, void* data)
 {
-    int                 i;
-
     if(isDedicated)
         return;
 
@@ -636,26 +529,14 @@ void Rend_SkyParams(int layer, int param, void* data)
             Rend_SkyDetail(skyDetail, skyRows);
             break;
 
-        default:
-            // Operate on all layers.
-            for(i = 0; i < MAXSKYLAYERS; ++i)
-                internalSkyParams(&skyLayers[i], param, data);
+        default: // Operate on all layers.
+            { int i;
+            for(i = 1; i <= MAXSKYLAYERS; ++i)
+                internalSkyParams(i, param, data);
+            }
         }
     }
     // This is for a specific layer.
     else if(layer >= 0 && layer < MAXSKYLAYERS)
-        internalSkyParams(&skyLayers[layer], param, data);
-}
-
-D_CMD(SkyDetail)
-{
-    if(!stricmp(argv[0], "skydetail"))
-    {
-        Rend_SkyDetail(strtol(argv[1], NULL, 0), skyRows);
-    }
-    else if(!stricmp(argv[0], "skyrows"))
-    {
-        Rend_SkyDetail(skyDetail, strtol(argv[1], NULL, 0));
-    }
-    return true;
+        internalSkyParams(layer+1, param, data);
 }
