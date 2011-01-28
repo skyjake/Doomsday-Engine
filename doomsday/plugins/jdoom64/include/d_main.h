@@ -1,4 +1,4 @@
-/**\file
+/**\file d_main.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
@@ -29,16 +29,7 @@
 #  error "Using jDoom64 headers without __JDOOM64__"
 #endif
 
-#include "dd_api.h"
 #include "doomdef.h"
-
-extern game_import_t gi;
-extern game_export_t gx;
-
-int G_GetInteger(int id);
-void* G_GetVariable(int id);
-
-game_export_t* GetGameAPI(game_import_t* imports);
 
 extern int verbose;
 
@@ -62,14 +53,10 @@ extern const float defFontRGB3[];
 
 extern boolean monsterInfight;
 
-/**
- * Register the various game modes supported by this module.
- * Will be called ASAP after Doomsday has completed startup.
- */
-int G_RegisterGames(int hookType, int parm, void* data);
-
-void G_PreInit(void);
-void G_PostInit(gameid_t gameId);
-void G_Shutdown(void);
+void D_PreInit(void);
+void D_PostInit(void);
+void D_Shutdown(void);
+int D_GetInteger(int id);
+void* D_GetVariable(int id);
 
 #endif /* LIBJDOOM64_MAIN_H */

@@ -26,46 +26,24 @@
  */
 
 /**
- * Initialization - DOOM64 specifc.
+ * Initialization - Doom64 specifc.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <stdio.h>
-#include <string.h>
 #include <assert.h>
 
 #include "jdoom64.h"
 
+#include "d_netsv.h"
 #include "m_argv.h"
-#include "dmu_lib.h"
-#include "fi_lib.h"
-#include "hu_stuff.h"
-#include "hu_menu.h"
-#include "hu_log.h"
-#include "hu_msg.h"
-#include "hu_lib.h"
 #include "p_saveg.h"
-#include "p_mapspec.h"
-#include "p_switch.h"
 #include "am_map.h"
 #include "g_defs.h"
-#include "p_inventory.h"
-#include "p_player.h"
-#include "d_net.h"
-#include "g_update.h"
-#include "p_mapsetup.h"
 
 // MACROS ------------------------------------------------------------------
 
-#define GID(v)          (toGameId(v))
-
 // TYPES -------------------------------------------------------------------
-
-typedef struct {
-    char** lumps;
-    gamemode_t mode;
-} identify_t;
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
@@ -109,13 +87,6 @@ char* borderGraphics[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-// The interface to the Doomsday engine.
-game_import_t gi;
-game_export_t gx;
-
-// Identifiers given to the games we register during startup.
-gameid_t gameIds[NUM_GAME_MODES];
-
 static skillmode_t startSkill;
 static uint startEpisode;
 static uint startMap;
@@ -123,16 +94,10 @@ static boolean autoStart;
 
 // CODE --------------------------------------------------------------------
 
-static __inline gameid_t toGameId(int gamemode)
-{
-    assert(gamemode >= 0 && gamemode < NUM_GAME_MODES);
-    return gameIds[(gamemode_t) gamemode];
-}
-
 /**
  * Get a 32-bit integer value.
  */
-int G_GetInteger(int id)
+int D_GetInteger(int id)
 {
     switch(id)
     {
@@ -149,7 +114,7 @@ int G_GetInteger(int id)
 /**
  * Get a pointer to the value of a named variable/constant.
  */
-void* G_GetVariable(int id)
+void* D_GetVariable(int id)
 {
     static float bob[2];
 
@@ -196,30 +161,11 @@ void* G_GetVariable(int id)
     return 0;
 }
 
-int G_RegisterGames(int hookType, int parm, void* data)
-{
-#define DATAPATH        DD_BASEPATH_DATA PLUGIN_NAMETEXT "/"
-#define DEFSPATH        DD_BASEPATH_DEFS PLUGIN_NAMETEXT "/"
-#define MAINCONFIG      PLUGIN_NAMETEXT ".cfg"
-#define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
-
-    gameIds[doom64] = DD_AddGame("doom64", DATAPATH, DEFSPATH, MAINCONFIG, "Doom 64", "Midway Software", "doom64", 0);
-    DD_AddGameResource(GID(doom64), RC_PACKAGE, RF_STARTUP, "doom64.wad", "MAP01;MAP020;MAP38;F_SUCK");
-    DD_AddGameResource(GID(doom64), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(doom64), RC_DEFINITION, 0, PLUGIN_NAMETEXT ".ded", 0);
-    return true;
-
-#undef STARTUPPK3
-#undef MAINCONFIG
-#undef DEFSPATH
-#undef DATAPATH
-}
-
 /**
  * Pre Game Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void G_PreInit(void)
+void D_PreInit(void)
 {
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
@@ -388,23 +334,10 @@ void G_PreInit(void)
  * Post Game Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void G_PostInit(gameid_t gameId)
+void D_PostInit(void)
 {
     filename_t file;
     int p;
-
-    /// \todo Refactor me away.
-    { size_t i;
-    for(i = 0; i < NUM_GAME_MODES; ++i)
-        if(gameIds[i] == gameId)
-        {
-            gameMode = (gamemode_t) i;
-            gameModeBits = 1 << gameMode;
-            break;
-        }
-    if(i == NUM_GAME_MODES)
-        Con_Error("Failed gamemode lookup for id %i.", (int)gameId);
-    }
 
     // Common post init routine.
     G_CommonPostInit();
@@ -516,69 +449,8 @@ void G_PostInit(gameid_t gameId)
     }
 }
 
-void G_Shutdown(void)
+void D_Shutdown(void)
 {
     P_ShutdownInventory();
     G_CommonShutdown();
-}
-
-/**
- * Takes a copy of the engine's entry points and exported data. Returns
- * a pointer to the structure that contains our entry points and exports.
- */
-game_export_t* GetGameAPI(game_import_t* imports)
-{
-    // Make sure this plugin isn't newer than Doomsday...
-    if(imports->version < DOOMSDAY_VERSION)
-        Con_Error(PLUGIN_NICENAME " requires at least " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "!\n");
-
-    // Take a copy of the imports, but only copy as much data as is
-    // allowed and legal.
-    memset(&gi, 0, sizeof(gi));
-    memcpy(&gi, imports, MIN_OF(sizeof(game_import_t), imports->apiSize));
-
-    // Clear all of our exports.
-    memset(&gx, 0, sizeof(gx));
-
-    // Fill in the data for the exports.
-    gx.apiSize = sizeof(gx);
-    gx.PreInit = G_PreInit;
-    gx.PostInit = G_PostInit;
-    gx.Shutdown = G_Shutdown;
-    gx.Ticker = G_Ticker;
-    gx.G_Drawer = D_Display;
-    gx.G_Drawer2 = D_Display2;
-    gx.PrivilegedResponder = (boolean (*)(event_t*)) G_PrivilegedResponder;
-    gx.FinaleResponder = FI_Responder;
-    gx.G_Responder = G_Responder;
-    gx.MobjThinker = P_MobjThinker;
-    gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
-    gx.ConsoleBackground = D_ConsoleBg;
-    gx.UpdateState = G_UpdateState;
-#undef Get
-    gx.GetInteger = G_GetInteger;
-    gx.GetVariable = G_GetVariable;
-
-    gx.NetServerStart = D_NetServerStarted;
-    gx.NetServerStop = D_NetServerClose;
-    gx.NetConnect = D_NetConnect;
-    gx.NetDisconnect = D_NetDisconnect;
-    gx.NetPlayerEvent = D_NetPlayerEvent;
-    gx.NetWorldEvent = D_NetWorldEvent;
-    gx.HandlePacket = D_HandlePacket;
-    gx.NetWriteCommands = D_NetWriteCommands;
-    gx.NetReadCommands = D_NetReadCommands;
-
-    // Data structure sizes.
-    gx.ticcmdSize = sizeof(ticcmd_t);
-    gx.mobjSize = sizeof(mobj_t);
-    gx.polyobjSize = sizeof(polyobj_t);
-
-    gx.SetupForMapData = P_SetupForMapData;
-
-    // These really need better names. Ideas?
-    gx.HandleMapDataPropertyValue = P_HandleMapDataPropertyValue;
-    gx.HandleMapObjectStatusReport = P_HandleMapObjectStatusReport;
-
-    return &gx;
 }
