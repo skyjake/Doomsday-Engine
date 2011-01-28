@@ -204,6 +204,16 @@ static void prepareSkySphere(void)
         skyAmbientColor[CG] = avgMaterialColor[CG];
         skyAmbientColor[CB] = avgMaterialColor[CB];
         
+        // The cap covers a large amount of the sky sphere, so factor it in too.
+        if(skyLayers[firstSkyLayer].fadeout.use)
+        {
+            const fadeout_t* fadeout = &skyLayers[firstSkyLayer].fadeout;
+            skyAmbientColor[CR] += fadeout->rgb[CR];
+            skyAmbientColor[CG] += fadeout->rgb[CG];
+            skyAmbientColor[CB] += fadeout->rgb[CB];
+            ++avgCount;
+        }
+
         if(avgCount != 1)
         {
             skyAmbientColor[CR] /= avgCount;
