@@ -1,10 +1,10 @@
-/**\file
+/**\file d_main.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,16 +29,7 @@
 #  error "Using jDoom headers without __JDOOM__"
 #endif
 
-#include "dd_api.h"
 #include "doomdef.h"
-
-extern game_import_t gi;
-extern game_export_t gx;
-
-int G_GetInteger(int id);
-void* G_GetVariable(int id);
-
-game_export_t* GetGameAPI(game_import_t* imports);
 
 extern int verbose;
 
@@ -62,14 +53,10 @@ extern const float defFontRGB3[];
 
 extern boolean monsterInfight;
 
-/**
- * Register the various game modes supported by this module.
- * Will be called ASAP after Doomsday has completed startup.
- */
-int G_RegisterGames(int hookType, int parm, void* data);
-
-void G_PreInit(void);
-void G_PostInit(gameid_t gameId);
-void G_Shutdown(void);
+void D_PreInit(void);
+void D_PostInit(void);
+void D_Shutdown(void);
+int D_GetInteger(int id);
+void* D_GetVariable(int id);
 
 #endif /* LIBJDOOM_MAIN_H */
