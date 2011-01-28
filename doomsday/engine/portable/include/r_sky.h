@@ -105,6 +105,12 @@ void R_SkyPrecache(void);
 void R_SkyTicker(void);
 
 /**
+ * Configure the sky based on the specified definition if not @c NULL, otherwise,
+ * setup using suitable defaults.
+ */
+void R_SetupSky(ded_sky_t* sky);
+
+/**
  * Mark all skies as requiring a full update. Called during engine/renderer reset.
  */
 void R_SkyUpdate(void);

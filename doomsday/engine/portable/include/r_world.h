@@ -62,7 +62,6 @@ void            R_InitLinks(gamemap_t* map);
 void            R_PolygonizeMap(gamemap_t* map);
 void            R_SetupFog(float start, float end, float density, float* rgb);
 void            R_SetupFogDefaults(void);
-void            R_SetupSky(ded_sky_t* sky);
 
 const float*    R_GetSectorLightColor(const sector_t* sector);
 float           R_DistAttenuateLightLevel(float distToViewer, float lightLevel);
