@@ -424,7 +424,7 @@ static void createPackagesResourceNamespace(void)
         char last = Str_RAt(path, 0); \
         ddstring_t* pathCopy = Str_New(); \
         if(last != DIR_SEP_CHAR && last != DIR_WRONG_SEP_CHAR) \
-            Str_Appendf(doomWadDir, "%s"DIR_SEP_STR, (path)); \
+            Str_Appendf(doomWadDir, "%s"DIR_SEP_STR, Str_Text(path)); \
         else \
             Str_Copy(pathCopy, (path)); \
         doomWadPaths = realloc(doomWadPaths, sizeof(*doomWadPaths) * ++doomWadPathsCount); \

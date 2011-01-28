@@ -1408,10 +1408,11 @@ static size_t printMaterials2(materialnamespaceid_t mnamespace, const char* like
     // Sort and print the index.
     qsort(foundMaterials, count, sizeof(*foundMaterials), compareMaterialBindByName);
 
-    { const materialbind_t** ptr;
+    { materialbind_t* const* ptr;
     for(ptr = foundMaterials; *ptr; ++ptr)
     {
-        printMaterialInfo(*ptr, (mnamespace == MN_ANY));
+        const materialbind_t* mb = *ptr;
+        printMaterialInfo(mb, (mnamespace == MN_ANY));
     }}
 
     free(foundMaterials);
