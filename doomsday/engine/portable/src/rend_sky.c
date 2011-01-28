@@ -396,26 +396,19 @@ void Rend_RenderSky(void)
     }
 }
 
-/**
- * Calculate sky vertices.
- */
-void Rend_InitSky(void)
+void Rend_DestroySkySphere(void)
 {
-    Rend_SkyDetail(skyDetail, skyRows);
-}
-
-void Rend_ShutdownSky(void)
-{
-    M_Free(skyVerts);
-    skyVerts = NULL;
+    if(skyVerts)
+        M_Free(skyVerts);
+    skyVerts = 0;
     numSkyVerts = 0;
 }
 
-void Rend_SkyDetail(int quarterDivs, int rows)
+void Rend_CreateSkySphere(int quarterDivs, int rows)
 {
-    float               topAngle, sideAngle, realRadius, scale = 1 /*32 */ ;
-    int                 c, r;
-    skyvertex_t        *svtx;
+    float topAngle, sideAngle, realRadius, scale = 1 /*32 */ ;
+    skyvertex_t* svtx;
+    int c, r;
 
     if(quarterDivs < 1)
         quarterDivs = 1;
@@ -510,23 +503,23 @@ void Rend_SkyParams(int layer, int param, void* data)
         switch(param)
         {
         case DD_COLUMNS:
-            Rend_SkyDetail(*((int*) data), skyRows);
+            Rend_CreateSkySphere(*((int*) data), skyRows);
             break;
 
         case DD_ROWS:
-            Rend_SkyDetail(skyDetail, *((int*) data));
+            Rend_CreateSkySphere(skyDetail, *((int*) data));
             break;
 
         case DD_HEIGHT:
             maxSideAngle = PI / 2 * *((float*) data);
             // Recalculate the vertices.
-            Rend_SkyDetail(skyDetail, skyRows);
+            Rend_CreateSkySphere(skyDetail, skyRows);
             break;
 
         case DD_HORIZON:        // horizon offset angle
             horizonOffset = PI / 2 * *((float*) data);
             // Recalculate the vertices.
-            Rend_SkyDetail(skyDetail, skyRows);
+            Rend_CreateSkySphere(skyDetail, skyRows);
             break;
 
         default: // Operate on all layers.

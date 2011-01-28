@@ -670,7 +670,7 @@ void GL_Shutdown(void)
 
     GL_ShutdownDeferred();
     GL_ShutdownFont();
-    Rend_ShutdownSky();
+    Rend_DestroySkySphere();
     Rend_Reset();
     GL_ShutdownRefresh();
 

@@ -239,6 +239,8 @@ static void prepareSkySphere(void)
 void R_SkyInit(void)
 {
     firstSkyLayer = 0;
+    // Calculate sky vertices.
+    Rend_CreateSkySphere(skyDetail, skyRows);
 }
 
 void R_SetupSky(ded_sky_t* sky)
@@ -503,11 +505,11 @@ D_CMD(SkyDetail)
 {
     if(!stricmp(argv[0], "skydetail"))
     {
-        Rend_SkyDetail(strtol(argv[1], NULL, 0), skyRows);
+        Rend_CreateSkySphere(strtol(argv[1], NULL, 0), skyRows);
     }
     else if(!stricmp(argv[0], "skyrows"))
     {
-        Rend_SkyDetail(skyDetail, strtol(argv[1], NULL, 0));
+        Rend_CreateSkySphere(skyDetail, strtol(argv[1], NULL, 0));
     }
     return true;
 }

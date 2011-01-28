@@ -154,11 +154,11 @@ void Rend_Register(void)
     DL_Register();
     SB_Register();
     LG_Register();
+    R_SkyRegister();
     Rend_ModelRegister();
     Rend_ParticleRegister();
     Rend_RadioRegister();
     Rend_ShadowRegister();
-    R_SkyRegister();
     Rend_SpriteRegister();
     Rend_ConsoleRegister();
 }
@@ -187,7 +187,6 @@ void Rend_Init(void)
 {
     C_Init(); // Clipper.
     RL_Init(); // Rendering lists.
-    Rend_InitSky(); // The sky.
 }
 
 /**

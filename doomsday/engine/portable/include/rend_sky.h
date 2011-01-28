@@ -33,9 +33,8 @@
 
 extern int skyDetail;
 
-void Rend_InitSky(void);
-void Rend_ShutdownSky(void);
-void Rend_SkyDetail(int quarterDivs, int rows);
+void Rend_CreateSkySphere(int quarterDivs, int rows);
+void Rend_DestroySkySphere(void);
 void Rend_SkyParams(int layer, int param, void* data);
 void Rend_RenderSky(void);
 
