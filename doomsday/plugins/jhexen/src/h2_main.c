@@ -25,35 +25,26 @@
  */
 
 /**
- * Hexen specifc Initialization.
+ * Game initialization - Hexen specifc.
  */
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <string.h>
 #include <assert.h>
+#include <string.h>
 
 #include "jhexen.h"
 
-#include "dmu_lib.h"
-#include "fi_lib.h"
-#include "hu_log.h"
-#include "hu_menu.h"
-#include "hu_msg.h"
-#include "hu_lib.h"
-#include "d_net.h"
-#include "g_update.h"
-#include "g_common.h"
-#include "p_mapspec.h"
 #include "am_map.h"
-#include "p_switch.h"
-#include "p_player.h"
+#include "d_netsv.h"
+#include "g_common.h"
+#include "g_defs.h"
+#include "m_argv.h"
 #include "p_inventory.h"
-#include "p_mapsetup.h"
+#include "p_player.h"
+#include "p_saveg.h"
 
 // MACROS ------------------------------------------------------------------
-
-#define GID(v)          (toGameId(v))
 
 // TYPES -------------------------------------------------------------------
 
@@ -101,13 +92,6 @@ char* borderGraphics[] = {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-// The interface to the Doomsday engine.
-game_export_t gx;
-game_import_t gi;
-
-// Identifiers given to the games we register during startup.
-gameid_t gameIds[NUM_GAME_MODES];
-
 static boolean autoStart = false;
 static uint startEpisode = 0;
 static uint startMap = 0;
@@ -116,16 +100,10 @@ static skillmode_t startSkill = SM_MEDIUM;
 
 // CODE --------------------------------------------------------------------
 
-static __inline gameid_t toGameId(int gamemode)
-{
-    assert(gamemode >= 0 && gamemode < NUM_GAME_MODES);
-    return gameIds[(gamemode_t) gamemode];
-}
-
 /**
  * Get a 32-bit integer value.
  */
-int G_GetInteger(int id)
+int X_GetInteger(int id)
 {
     switch(id)
     {
@@ -142,7 +120,7 @@ int G_GetInteger(int id)
 /**
  * Get a pointer to the value of a named variable/constant.
  */
-void* G_GetVariable(int id)
+void* X_GetVariable(int id)
 {
     static float bob[2];
 
@@ -189,44 +167,11 @@ void* G_GetVariable(int id)
     return 0;
 }
 
-int G_RegisterGames(int hookType, int parm, void* data)
-{
-#define DATAPATH        DD_BASEPATH_DATA PLUGIN_NAMETEXT "/"
-#define DEFSPATH        DD_BASEPATH_DEFS PLUGIN_NAMETEXT "/"
-#define MAINCONFIG      PLUGIN_NAMETEXT ".cfg"
-#define STARTUPPK3      PLUGIN_NAMETEXT ".pk3"
-
-    /* Hexen (Death Kings) */
-    gameIds[hexen_deathkings] = DD_AddGame("hexen-dk", DATAPATH, DEFSPATH, MAINCONFIG, "Hexen (Deathkings of the Dark Citadel)", "Raven Software", "deathkings", "dk");
-    DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, RF_STARTUP, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
-    DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, RF_STARTUP, "hexdd.wad", "MAP59;MAP60");
-    DD_AddGameResource(GID(hexen_deathkings), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(hexen_deathkings), RC_DEFINITION, 0, "hexen-dk.ded", 0);
-
-    /* Hexen */
-    gameIds[hexen] = DD_AddGame("hexen", DATAPATH, DEFSPATH, MAINCONFIG, "Hexen", "Raven Software", "hexen", 0);
-    DD_AddGameResource(GID(hexen), RC_PACKAGE, RF_STARTUP, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
-    DD_AddGameResource(GID(hexen), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(hexen), RC_DEFINITION, 0, "hexen.ded", 0);
-
-    /* Hexen (Demo) */
-    gameIds[hexen_demo] = DD_AddGame("hexen-demo", DATAPATH, DEFSPATH, MAINCONFIG, "Hexen 4-map Beta Demo", "Raven Software", "dhexen", 0);
-    DD_AddGameResource(GID(hexen_demo), RC_PACKAGE, RF_STARTUP, "hexen.wad", "MAP01;MAP04;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
-    DD_AddGameResource(GID(hexen_demo), RC_PACKAGE, RF_STARTUP, STARTUPPK3, 0);
-    DD_AddGameResource(GID(hexen_demo), RC_DEFINITION, 0, "hexen-demo.ded", 0);
-    return true;
-
-#undef STARTUPPK3
-#undef MAINCONFIG
-#undef DEFSPATH
-#undef DATAPATH
-}
-
 /**
  * Pre Game Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void G_PreInit(void)
+void X_PreInit(void)
 {
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
@@ -382,22 +327,9 @@ void G_PreInit(void)
  * Post Game Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void G_PostInit(gameid_t gameId)
+void X_PostInit(void)
 {
     int p, warpMap;
-
-    /// \todo Refactor me away.
-    { size_t i;
-    for(i = 0; i < NUM_GAME_MODES; ++i)
-        if(gameIds[i] == gameId)
-        {
-            gameMode = (gamemode_t) i;
-            gameModeBits = 1 << gameMode;
-            break;
-        }
-    if(i == NUM_GAME_MODES)
-        Con_Error("Failed gamemode lookup for id %i.", (int)gameId);
-    }
 
     // Do this early as other systems need to know.
     P_InitPlayerClassInfo();
@@ -526,77 +458,14 @@ void G_PostInit(gameid_t gameId)
     }
 }
 
-void G_Shutdown(void)
+void X_Shutdown(void)
 {
     P_ShutdownInventory();
     X_DestroyLUTs();
     G_CommonShutdown();
 }
 
-void G_EndFrame(void)
+void X_EndFrame(void)
 {
     SN_UpdateActiveSequences();
-}
-
-/**
- * Takes a copy of the engine's entry points and exported data. Returns
- * a pointer to the structure that contains our entry points and exports.
- */
-game_export_t* GetGameAPI(game_import_t* imports)
-{
-    // Make sure this plugin isn't newer than Doomsday...
-    if(imports->version < DOOMSDAY_VERSION)
-        Con_Error(PLUGIN_NICENAME " requires at least " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "!\n");
-
-    // Take a copy of the imports, but only copy as much data as is
-    // allowed and legal.
-    memset(&gi, 0, sizeof(gi));
-    memcpy(&gi, imports, MIN_OF(sizeof(game_import_t), imports->apiSize));
-
-    // Clear all of our exports.
-    memset(&gx, 0, sizeof(gx));
-
-    // Fill in the data for the exports.
-    gx.apiSize = sizeof(gx);
-    gx.PreInit = G_PreInit;
-    gx.PostInit = G_PostInit;
-    gx.Shutdown = G_Shutdown;
-    gx.Ticker = G_Ticker;
-    gx.G_Drawer = G_Display;
-    gx.G_Drawer2 = G_Display2;
-    gx.PrivilegedResponder = (boolean (*)(event_t *)) G_PrivilegedResponder;
-    gx.FallbackResponder = NULL; //Hu_MenuResponder;
-    gx.FinaleResponder = FI_Responder;
-    gx.G_Responder = G_Responder;
-    gx.MobjThinker = P_MobjThinker;
-    gx.MobjFriction = (float (*)(void *)) P_MobjGetFriction;
-    gx.EndFrame = G_EndFrame;
-    gx.ConsoleBackground = G_ConsoleBg;
-    gx.UpdateState = G_UpdateState;
-#undef Get
-    gx.GetInteger = G_GetInteger;
-    gx.GetVariable = G_GetVariable;
-
-    gx.NetServerStart = D_NetServerStarted;
-    gx.NetServerStop = D_NetServerClose;
-    gx.NetConnect = D_NetConnect;
-    gx.NetDisconnect = D_NetDisconnect;
-    gx.NetPlayerEvent = D_NetPlayerEvent;
-    gx.NetWorldEvent = D_NetWorldEvent;
-    gx.HandlePacket = D_HandlePacket;
-    gx.NetWriteCommands = D_NetWriteCommands;
-    gx.NetReadCommands = D_NetReadCommands;
-
-    // Data structure sizes.
-    gx.ticcmdSize = sizeof(ticcmd_t);
-    gx.mobjSize = sizeof(mobj_t);
-    gx.polyobjSize = sizeof(polyobj_t);
-
-    gx.SetupForMapData = P_SetupForMapData;
-
-    // These really need better names. Ideas?
-    gx.HandleMapDataPropertyValue = P_HandleMapDataPropertyValue;
-    gx.HandleMapObjectStatusReport = P_HandleMapObjectStatusReport;
-
-    return &gx;
 }
