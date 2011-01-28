@@ -86,14 +86,19 @@ static lt_dlhandle* findFirstUnusedPluginHandle(application_t* app)
     return 0;
 }
 
+typedef struct {
+    boolean loadingGames;
+    application_t* app;
+} loadpluginparamaters_t;
+
 /**
  * Atempts to load the specified plugin.
  *
- * @return              @c true, if the plugin was loaded succesfully.
+ * @return  @c true, if the plugin was loaded succesfully.
  */
 static int loadPlugin(const char* pluginPath, lt_ptr data)
 {
-    application_t* app = (application_t*) data;
+    loadpluginparamaters_t* params = (loadpluginparamaters_t*) data;
 #ifndef MACOSX
     filename_t  name;
 #endif
@@ -103,13 +108,14 @@ static int loadPlugin(const char* pluginPath, lt_ptr data)
 #ifndef MACOSX
     // What is the actual file name?
     _splitpath(pluginPath, NULL, NULL, name, NULL);
-    if(!strncmp(name, "libdp", 5) || !strncmp(name, "libj", 4))
+    if((params->loadingGames  && !strncmp(name, "libj", 4)) ||
+       (!params->loadingGames && !strncmp(name, "libdp", 5)))
 #endif
     {
         // Try loading this one as a Doomsday plugin.
         if(0 != (plugin = lt_dlopenext(pluginPath)) &&
            0 != (initializer = lt_dlsym(plugin, "DP_Initialize")) &&
-           0 != (handle = findFirstUnusedPluginHandle(app)))
+           0 != (handle = findFirstUnusedPluginHandle(params->app)))
         {
             // This seems to be a Doomsday plugin.
             *handle = plugin;
@@ -143,8 +149,20 @@ static boolean unloadPlugin(lt_dlhandle* handle)
 static boolean loadAllPlugins(application_t* app)
 {
     assert(app);
+
+    // Try to load all libraries that begin with libj.
+    { loadpluginparamaters_t params;
+    params.app = app;
+    params.loadingGames = true;
+    lt_dlforeachfile(NULL, loadPlugin, (lt_ptr) &params);
+    }
+
     // Try to load all libraries that begin with libdp.
-    lt_dlforeachfile(NULL, loadPlugin, (lt_ptr) app);
+    { loadpluginparamaters_t params;
+    params.app = app;
+    params.loadingGames = false;
+    lt_dlforeachfile(NULL, loadPlugin, (lt_ptr) &params);
+    }
     return true;
 }
 
