@@ -87,6 +87,7 @@
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;"
 				GenerateManifest="false"
 				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
+				ModuleDefinitionFile="..\..\..\plugins\wadmapconverter\api\dpwadmapconverter.def"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
 				RandomizedBaseAddress="1"
@@ -280,6 +281,7 @@
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;"
 				GenerateManifest="false"
 				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
+				ModuleDefinitionFile="..\..\..\plugins\wadmapconverter\api\dpwadmapconverter.def"
 				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -447,6 +449,7 @@
 				OutputFile="$(OutDir)$(ProjectName).dll"
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;"
 				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
+				ModuleDefinitionFile="..\..\..\plugins\wadmapconverter\api\dpwadmapconverter.def"
 				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
 			/>
 			<Tool
@@ -635,6 +638,7 @@
 				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;;"
 				GenerateManifest="false"
 				ManifestFile="$(IntDir)\$(TargetFileName).manifest"
+				ModuleDefinitionFile="..\..\..\plugins\wadmapconverter\api\dpwadmapconverter.def"
 				ProgramDatabaseFile="$(IntDir)\$(TargetFileName).pdb"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -803,6 +807,18 @@
 				RelativePath="..\..\..\plugins\wadmapconverter\res\wadmapconverter.rc"
 				>
 			</File>
+		</Filter>
+		<Filter
+			Name="API"
+			>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\plugins\wadmapconverter\api\dpwadmapconverter.def"
+					>
+				</File>
+			</Filter>
 		</Filter>
 	</Files>
 	<Globals>

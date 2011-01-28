@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_plugin.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,43 +28,25 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#ifdef UNIX
+#  include <SDL.h>
+#  include "sys_dylib.h"
+#endif
+
 #include "de_base.h"
 #include "de_console.h"
 #include "de_defs.h"
 
-// MACROS ------------------------------------------------------------------
-
-#define HOOKMASK(x)     ((x) & 0xffffff)
-
-// TYPES -------------------------------------------------------------------
+#define HOOKMASK(x)         ((x) & 0xffffff)
 
 typedef struct {
-    int     exclude;
+    int exclude;
     hookfunc_t list[MAX_HOOKS];
 } hookreg_t;
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static hookreg_t hooks[NUM_HOOK_TYPES];
 static pluginid_t currentPlugin = 0;
 
-// CODE --------------------------------------------------------------------
-
-/**
- * This routine is called by plugin DLLs who want to register hooks.
- *
- * @return              @c true, iff the hook was successfully registered.
- */
 int Plug_AddHook(int hookType, hookfunc_t hook)
 {
     int i, type = HOOKMASK(hookType);
@@ -85,20 +67,15 @@ int Plug_AddHook(int hookType, hookfunc_t hook)
         return false;
     }
 
-    for(i = 0; i < MAX_HOOKS && hooks[type].list[i]; i++);
+    for(i = 0; i < MAX_HOOKS && hooks[type].list[i]; ++i) {};
     if(i == MAX_HOOKS)
-        return false;           // No more hooks allowed!
+        return false; // No more hooks allowed!
 
     // Add the hook.
     hooks[type].list[i] = hook;
     return true;
 }
 
-/**
- * Removes the given hook.
- *
- * @return              @c true iff it was found.
- */
 int Plug_RemoveHook(int hookType, hookfunc_t hook)
 {
     int i, type = HOOKMASK(hookType);
@@ -123,12 +100,16 @@ int Plug_RemoveHook(int hookType, hookfunc_t hook)
     return false;
 }
 
-/**
- * Executes all the hooks of the given type. Bit zero of the return value
- * is set if a hook was executed successfully (returned true). Bit one is
- * set if all the hooks that were executed returned true.
- */
-int Plug_DoHook(int hookType, int parm, void *data)
+int Plug_CheckForHook(int hookType)
+{
+    size_t i;
+    for(i = 0; i < MAX_HOOKS; ++i)
+        if(hooks[hookType].list[i])
+            return true;
+    return false;
+}
+
+int DD_CallHooks(int hookType, int parm, void *data)
 {
     int ret = 0;
     boolean allGood = true;
@@ -157,22 +138,36 @@ int Plug_DoHook(int hookType, int parm, void *data)
     return ret;
 }
 
-/**
- * Check if a plugin is available of the specified type.
- *
- * @param hookType      Type of hook to check we have a plugin for.
- * @return              @c true, if a plugin is available for this hook type.
- */
-int Plug_CheckForHook(int hookType)
-{
-    size_t i;
-    for(i = 0; i < MAX_HOOKS; ++i)
-        if(hooks[hookType].list[i])
-            return true;
-    return false;
-}
-
-pluginid_t Plug_PluginIdForActiveHook(void)
+pluginid_t DD_PluginIdForActiveHook(void)
 {
     return (pluginid_t)currentPlugin;
+}
+
+void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn)
+{
+#if WIN32
+    HINSTANCE* handle = &app.hInstPlug[pluginId-1];
+    void* adr = (void*)GetProcAddress(*handle, fn);
+    if(!adr)
+    {
+        LPVOID lpMsgBuf;
+        DWORD dw = GetLastError();
+        FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                      0, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, 0);
+        if(lpMsgBuf)
+        {
+            Con_Printf("DD_FindEntryPoint: Error locating \"%s\" #%d: %s", fn, dw, (char*)lpMsgBuf);
+            LocalFree(lpMsgBuf); lpMsgBuf = 0;
+        }
+    }
+    return adr;
+#elif UNIX
+    lt_dlhandle* handle = &app.hInstPlug[pluginId-1];
+    void* adr = (void*)lt_dlsym(*handle, fn);
+    if(!adr)
+    {
+        Con_Message("DD_FindEntryPoint: Error locating address of \"%s\" (%s).\n", fn, lt_dlerror());
+    }
+    return adr;
+#endif
 }

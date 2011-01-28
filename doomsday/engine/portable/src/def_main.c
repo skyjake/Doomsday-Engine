@@ -841,7 +841,7 @@ void Def_Read(void)
     readAllDefinitions();
 
     // Any definition hooks?
-    Plug_DoHook(HOOK_DEFS, 0, &defs);
+    DD_CallHooks(HOOK_DEFS, 0, &defs);
 
     // Sprite names.
     DED_NewEntries((void**) &sprNames, &countSprNames, sizeof(*sprNames), defs.count.sprites.num);

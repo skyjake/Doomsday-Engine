@@ -8,7 +8,7 @@ EXPORTS
 ; Plugins.
     Plug_AddHook                @1 NONAME
     Plug_RemoveHook             @2 NONAME
-    Plug_DoHook                 @3 NONAME
+    Plug_CheckForHook           @3 NONAME
 
 ; Base.
     DD_AddGame                  @4 NONAME

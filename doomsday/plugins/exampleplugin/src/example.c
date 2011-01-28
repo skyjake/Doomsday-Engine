@@ -1,10 +1,10 @@
-/**\file
+/**\file example.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2009-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2009-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,15 +23,8 @@
  */
 
 /**
- * example.c: Example of Doomsday plugin which is called at startup.
+ * Example of Doomsday plugin which is called at startup.
  */
-
-// HEADER FILES ------------------------------------------------------------
-
-#ifdef WIN32
-#  define WIN32_LEAN_AND_MEAN
-#  include <windows.h>
-#endif
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -42,31 +35,13 @@
 
 #include "version.h"
 
-// MACROS ------------------------------------------------------------------
-
 #define DLLEXPORT __declspec( dllexport )
 
-// TYPES -------------------------------------------------------------------
-
-// EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
-
-// PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
-
 DLLEXPORT game_export_t* GetGameAPI(game_import_t* imports);
-
-// PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
-
-// EXTERNAL DATA DECLARATIONS ----------------------------------------------
-
-// PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // The interface to the Doomsday engine.
 game_import_t gi;
 game_export_t gx;
-
-// PRIVATE DATA DEFINITIONS ------------------------------------------------
-
-// CODE --------------------------------------------------------------------
 
 void ExampleTicker(timespan_t ticLength)
 {
@@ -204,24 +179,3 @@ void DP_Initialize(void)
 {
     Plug_AddHook(HOOK_STARTUP, ExampleHook);
 }
-
-#ifdef WIN32
-/**
- * Windows calls this when the DLL is loaded.
- */
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    switch(fdwReason)
-    {
-    case DLL_PROCESS_ATTACH:
-        // Register our hooks.
-        DP_Initialize();
-        break;
-
-    default:
-        break;
-    }
-
-    return TRUE;
-}
-#endif

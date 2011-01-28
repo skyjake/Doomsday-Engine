@@ -423,7 +423,7 @@ static boolean convertMap(gamemap_t **map, archivedmap_t *dam)
     {
         // Pass the lump list around the map converters, hopefully
         // one of them will recognise the format and convert it.
-        if(Plug_DoHook(HOOK_MAP_CONVERT, dam->numLumps, (void*) dam->lumpList))
+        if(DD_CallHooks(HOOK_MAP_CONVERT, dam->numLumps, (void*) dam->lumpList))
         {
             converted = true;
             *map = MPE_GetLastBuiltMap();

@@ -1532,10 +1532,18 @@
 				</FileConfiguration>
 			</File>
 		</Filter>
-		<File
-			RelativePath="..\..\..\plugins\jdoom\api\jdoom.def"
+		<Filter
+			Name="API"
 			>
-		</File>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\plugins\jdoom\api\jdoom.def"
+					>
+				</File>
+			</Filter>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

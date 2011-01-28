@@ -368,7 +368,7 @@ gameid_t DD_AddGame(const char* identityKey, const char* _dataPath, const char* 
     gameinfo_t* info;
     ddstring_t cmdlineFlag, cmdlineFlag2;
     ddstring_t dataPath, defsPath;
-    pluginid_t pluginId = Plug_PluginIdForActiveHook();
+    pluginid_t pluginId = DD_PluginIdForActiveHook();
 
     if(strlen(identityKey) > 16)
         Con_Error("DD_AddGame: Failed adding game \"s\", identity key '%s' is too long (max 16 characters).", defaultTitle, identityKey);
@@ -737,46 +737,13 @@ static int addFilesFromAutoData(boolean loadFiles)
     return data.count;
 }
 
-/**
- * \todo dj: This is clearly a platform service and therefore does not belong here.
- */
-#ifdef WIN32
-static void* getEntryPoint(HINSTANCE* handle, const char* fn)
-{
-    void* adr = (void*)GetProcAddress(*handle, fn);
-    if(!adr)
-    {
-        LPVOID lpMsgBuf;
-        DWORD dw = GetLastError();
-        FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                      0, dw, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, 0);
-        if(lpMsgBuf)
-        {
-            Con_Printf("getEntryPoint: Error locating \"%s\" #%d: %s", fn, dw, (char*)lpMsgBuf);
-            LocalFree(lpMsgBuf); lpMsgBuf = 0;
-        }
-    }
-    return adr;
-}
-#elif UNIX
-static void* getEntryPoint(lt_dlhandle* handle, const char* fn)
-{
-    void* adr = (void*)lt_dlsym(*handle, fn);
-    if(!adr)
-    {
-        Con_Message("getEntryPoint: Error locating address of \"%s\" (%s).\n", fn, lt_dlerror());
-    }
-    return adr;
-}
-#endif
-
 static boolean exchangeEntryPoints(pluginid_t pluginId)
 {
     if(pluginId != 0)
     {
         // Do the API transfer.
         GETGAMEAPI fptAdr;
-        if(!(fptAdr = (GETGAMEAPI) getEntryPoint(&app.hInstPlug[pluginId-1], "GetGameAPI")))
+        if(!(fptAdr = (GETGAMEAPI) DD_FindEntryPoint(pluginId, "GetGameAPI")))
             return false;
         app.GetGameAPI = fptAdr;
         DD_InitAPI();
@@ -1577,7 +1544,7 @@ static int DD_StartupWorker(void* parm)
     Con_SetProgress(10);
 
     // Any startup hooks?
-    Plug_DoHook(HOOK_STARTUP, 0, 0);
+    DD_CallHooks(HOOK_STARTUP, 0, 0);
 
     Con_SetProgress(20);
 
@@ -1674,7 +1641,7 @@ static int DD_StartupWorker(void* parm)
 
     Con_SetProgress(199);
 
-    Plug_DoHook(HOOK_INIT, 0, 0); // Any initialization hooks?
+    DD_CallHooks(HOOK_INIT, 0, 0); // Any initialization hooks?
 
     Con_SetProgress(200);
 

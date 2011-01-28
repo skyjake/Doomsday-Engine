@@ -1,10 +1,10 @@
-/**\file
+/**\file net_demo.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -397,7 +397,7 @@ boolean Demo_ReadPacket(void)
     {
         Demo_StopPlayback();
         // Any interested parties?
-        Plug_DoHook(HOOK_DEMO_STOP, false, 0);
+        DD_CallHooks(HOOK_DEMO_STOP, false, 0);
         return false;
     }
 
@@ -705,7 +705,7 @@ D_CMD(StopDemo)
     {   // Aborted.
         Demo_StopPlayback();
         // Any interested parties?
-        Plug_DoHook(HOOK_DEMO_STOP, true, 0);
+        DD_CallHooks(HOOK_DEMO_STOP, true, 0);
     }
     else
         Demo_StopRecording(plnum);

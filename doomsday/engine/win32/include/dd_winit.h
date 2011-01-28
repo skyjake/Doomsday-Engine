@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_winit.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Kernen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Kernen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * dd_winit.h: Win32 Initialization.
+ * Win32 Initialization.
  */
 
 #ifndef LIBDENG_WINIT_H
@@ -47,6 +47,6 @@ typedef struct {
 extern uint windowIDX; // Main window.
 extern application_t app;
 
-void            DD_Shutdown(void);
+void DD_Shutdown(void);
 
 #endif /* LIBDENG_WINIT_H */

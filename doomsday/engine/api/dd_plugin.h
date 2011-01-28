@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_plugin.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,18 +64,30 @@ typedef struct {
 
 // Paramaters for HOOK_FINALE_SCRIPT_TICKER
 typedef struct {
-    boolean     runTick;
-    boolean     canSkip;
+    boolean runTick;
+    boolean canSkip;
 } ddhook_finale_script_ticker_paramaters_t;
 
-int             Plug_AddHook(int hook_type, hookfunc_t hook);
-int             Plug_RemoveHook(int hook_type, hookfunc_t hook);
+/**
+ * This routine is called by plugins who want to register hooks.
+ *
+ * @return  @c true, iff the hook was successfully registered.
+ */
+int Plug_AddHook(int hook_type, hookfunc_t hook);
 
-// Plug_DoHook is used by the engine to call all functions registered to a hook.
-int             Plug_DoHook(int hook_type, int parm, void *data);
-int             Plug_CheckForHook(int hookType);
+/**
+ * Removes the given hook.
+ *
+ * @return  @c true iff it was found.
+ */
+int Plug_RemoveHook(int hook_type, hookfunc_t hook);
 
-// Returns the unique identified of the plugin responding to the callback.
-pluginid_t      Plug_PluginIdForActiveHook(void);
+/**
+ * Check if a plugin is available of the specified type.
+ *
+ * @param hookType      Type of hook to check we have a plugin for.
+ * @return  @c true, if a plugin is available for this hook type.
+ */
+int Plug_CheckForHook(int hookType);
 
 #endif /* LIBDENG_PLUGIN_H */

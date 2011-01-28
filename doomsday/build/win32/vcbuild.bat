@@ -248,7 +248,7 @@ ECHO ***************************************************************************
 ECHO ***********   Compiling dpDehRead.dll (Dehacked Reader Plugin)   **********
 ECHO ***************************************************************************
 md %OBJ_DIR%\dpDehRead
-cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" %DLLDEFINES% /D "DPDEHREAD_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\dpDehRead\\" /Fd"%OBJ_DIR%\dpDehRead\\" /W3 /Gd "%OBJ_DIR%\dpdehread\dpdehread_res.obj" @dpdehread_cl.rsp   /link /out:"%BIN_DIR%\dpDehRead.dll" %LFLAGS% /dll /implib:"%BIN_DIR%\dpDehRead.lib" %LIBS% %BIN_DIR%\Doomsday.lib
+cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" %DLLDEFINES% /D "DPDEHREAD_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\dpDehRead\\" /Fd"%OBJ_DIR%\dpDehRead\\" /W3 /Gd "%OBJ_DIR%\dpdehread\dpdehread_res.obj" @dpdehread_cl.rsp   /link /out:"%BIN_DIR%\dpDehRead.dll" %LFLAGS% /dll /def:"%DENG_PLUGINS_DIR%\dehread\api\dpdehread.def" /implib:"%BIN_DIR%\dpDehRead.lib" %LIBS% %BIN_DIR%\Doomsday.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 
@@ -292,7 +292,7 @@ ECHO ***************************************************************************
 ECHO *****   Compiling dpWadMapConverter.dll (WAD Map converter plugin)   ******
 ECHO ***************************************************************************
 md %OBJ_DIR%\dpWadMapConverter
-cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" /I "%DENG_PLUGINS_DIR%\wadmapconverter\include" %DLLDEFINES% /D "DPWADMAPCONVERTER_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\dpwadmapconverter\\" /Fd"%OBJ_DIR%\dpWadMapConverter\\" /W3 /Gd "%OBJ_DIR%\dpwadmapconverter\dpwadmapconverter_res.obj" @dpwadmapconverter_cl.rsp  /link /out:"%BIN_DIR%\dpWadMapConverter.dll" %LFLAGS% /dll /implib:"%BIN_DIR%\dpwadmapconverter.lib" %LIBS% %BIN_DIR%\doomsday.lib
+cl /O2 /Ob1 /I "%INCS_ENGINE_API%\\" /I "%DENG_PLUGINS_DIR%\wadmapconverter\include" %DLLDEFINES% /D "DPWADMAPCONVERTER_EXPORTS" /GF /FD /EHsc /MT /Gy /Fo"%OBJ_DIR%\dpwadmapconverter\\" /Fd"%OBJ_DIR%\dpWadMapConverter\\" /W3 /Gd "%OBJ_DIR%\dpwadmapconverter\dpwadmapconverter_res.obj" @dpwadmapconverter_cl.rsp  /link /out:"%BIN_DIR%\dpWadMapConverter.dll" %LFLAGS% /dll /def:"%DENG_PLUGINS_DIR%\wadmapconverter\api\dpwadmapconverter.def" /implib:"%BIN_DIR%\dpwadmapconverter.lib" %LIBS% %BIN_DIR%\doomsday.lib
 IF %ERRORLEVEL% == 0 GOTO Done
 GOTO Failure
 

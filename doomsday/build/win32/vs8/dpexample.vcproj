@@ -866,10 +866,18 @@
 				</FileConfiguration>
 			</File>
 		</Filter>
-		<File
-			RelativePath="..\..\..\plugins\exampleplugin\api\dpexample.def"
+		<Filter
+			Name="API"
 			>
-		</File>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\plugins\exampleplugin\api\dpexample.def"
+					>
+				</File>
+			</Filter>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

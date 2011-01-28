@@ -803,7 +803,7 @@ static void stopScript(finaleinterpreter_t* fi)
         Sv_Finale(FINF_END, 0);
     }
     // Any hooks?
-    Plug_DoHook(HOOK_FINALE_SCRIPT_STOP, fi->_id, 0);
+    DD_CallHooks(HOOK_FINALE_SCRIPT_STOP, fi->_id, 0);
 }
 
 static void changePageBackground(fi_page_t* p, material_t* mat)
@@ -892,7 +892,7 @@ void FinaleInterpreter_LoadScript(finaleinterpreter_t* fi, const char* script)
     clearEventHandlers(fi);
 
     // Any hooks?
-    Plug_DoHook(HOOK_FINALE_SCRIPT_BEGIN, fi->_id, 0);
+    DD_CallHooks(HOOK_FINALE_SCRIPT_BEGIN, fi->_id, 0);
     }
 }
 
@@ -972,7 +972,7 @@ static boolean runTic(finaleinterpreter_t* fi)
     memset(&params, 0, sizeof(params));
     params.runTick = true;
     params.canSkip = FinaleInterpreter_CanSkip(fi);
-    Plug_DoHook(HOOK_FINALE_SCRIPT_TICKER, fi->_id, &params);
+    DD_CallHooks(HOOK_FINALE_SCRIPT_TICKER, fi->_id, &params);
     return params.runTick;
 }
 
@@ -1275,7 +1275,7 @@ DEFFC(If)
         memset(&p, 0, sizeof(p));
         p.token = token;
         p.returnVal = 0;
-        if(Plug_DoHook(HOOK_FINALE_EVAL_IF, fi->_id, (void*) &p))
+        if(DD_CallHooks(HOOK_FINALE_EVAL_IF, fi->_id, (void*) &p))
             val = p.returnVal;
     }
     else

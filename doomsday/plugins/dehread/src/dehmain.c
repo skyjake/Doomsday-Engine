@@ -1,10 +1,10 @@
-/**\file
+/**\file dehmain.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1998-2003 Randy Heit <rheit@iastate.edu> (Zdoom)
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,7 @@
 
 
 /**
- * dehmain.c: Dehacked Reader Plugin for Doomsday
+ * Dehacked Reader Plugin for Doomsday.
  *
  * Much of this has been taken from or is based on ZDoom's DEH reader.
  * Unsupported Dehacked features have been commented out.
@@ -39,11 +39,6 @@
  */
 
 // HEADER FILES ------------------------------------------------------------
-
-#ifdef WIN32
-#  define WIN32_LEAN_AND_MEAN
-#  include <windows.h>
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -2441,23 +2436,6 @@ void DP_Initialize(void)
 {
     Plug_AddHook(HOOK_DEFS, DefsHook);
 }
-
-#ifdef WIN32
-/**
- * Windows calls this when the DLL is loaded.
- */
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    switch (fdwReason)
-    {
-    case DLL_PROCESS_ATTACH:
-        // Register our hooks.
-        DP_Initialize();
-        break;
-    }
-    return TRUE;
-}
-#endif
 
 #if 0
 /**

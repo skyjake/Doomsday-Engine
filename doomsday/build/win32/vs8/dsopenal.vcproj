@@ -871,10 +871,18 @@
 				>
 			</File>
 		</Filter>
-		<File
-			RelativePath="..\..\..\plugins\openal\api\dsopenal.def"
+		<Filter
+			Name="API"
 			>
-		</File>
+			<Filter
+				Name="Win32"
+				>
+				<File
+					RelativePath="..\..\..\plugins\openal\api\dsopenal.def"
+					>
+				</File>
+			</Filter>
+		</Filter>
 	</Files>
 	<Globals>
 	</Globals>

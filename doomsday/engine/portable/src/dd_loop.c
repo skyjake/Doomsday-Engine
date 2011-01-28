@@ -1,10 +1,10 @@
-/**\file
+/**\file dd_loop.c
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2005-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2005-2011 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  */
 
 /**
- * dd_loop.c: Main Loop
+ * Main Loop.
  */
 
 // HEADER FILES ------------------------------------------------------------
@@ -398,7 +398,7 @@ void DD_Ticker(timespan_t time)
     }
 
     // Plugins tick always.
-    Plug_DoHook(HOOK_TICKER, 0, &time);
+    DD_CallHooks(HOOK_TICKER, 0, &time);
 }
 
 /**

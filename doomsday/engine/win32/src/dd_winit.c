@@ -40,6 +40,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <tchar.h>
 
 #include "resource.h"
 
@@ -134,12 +135,28 @@ static HINSTANCE* findFirstUnusedPluginHandle(application_t* app)
  *
  * @return              @c true, if the plugin was loaded succesfully.
  */
-static BOOL loadPlugin(HINSTANCE* handle, const char* absolutePath)
+static BOOL loadPlugin(const char* absolutePath)
 {
-    assert(handle && absolutePath && absolutePath[0]);
-    if(!(*handle = LoadLibrary(absolutePath)))
-        Con_Printf("loadPlugin: Error loading \"%s\" (%s)\n", absolutePath, getLastWINAPIErrorMessage());
-    return (*handle? TRUE : FALSE);
+    assert(absolutePath && absolutePath[0]);
+    {
+    void (*initializer)(void);
+    HINSTANCE plugin, *handle;
+
+    if(0 != (plugin = LoadLibrary(absolutePath)) &&
+       0 != (initializer = (void*)GetProcAddress(plugin, _T("DP_Initialize"))) &&
+       0 != (handle = findFirstUnusedPluginHandle(&app)))
+    {
+        // This seems to be a Doomsday plugin.
+        *handle = plugin;
+        initializer();
+        return TRUE;
+    }
+
+    Con_Printf("loadPlugin: Error loading \"%s\" (%s)\n", absolutePath, getLastWINAPIErrorMessage());
+    if(plugin)
+        FreeLibrary(plugin);
+    return FALSE;
+    }
 }
 
 static BOOL unloadPlugin(HINSTANCE* handle)
@@ -161,33 +178,27 @@ static BOOL loadAllPlugins(application_t* app)
 {
     assert(app);
     {
+    filename_t searchPattern, absolutePath;
     struct _finddata_t fd;
-    filename_t pluginPath;
     long hFile;
 
-    dd_snprintf(pluginPath, FILENAME_T_MAXLEN, "%sj*.dll", ddBinDir.path);
-    if((hFile = _findfirst(pluginPath, &fd)) != -1L)
+    dd_snprintf(searchPattern, FILENAME_T_MAXLEN, "%sj*.dll", ddBinDir.path);
+    if((hFile = _findfirst(searchPattern, &fd)) != -1L)
     {
         do
         {
-            HINSTANCE* handle = findFirstUnusedPluginHandle(app);
-            if(!handle)
-                return FALSE;
-
-            loadPlugin(handle, fd.name);
+            dd_snprintf(absolutePath, FILENAME_T_MAXLEN, "%s%s", ddBinDir.path, fd.name);
+            loadPlugin(absolutePath);
         } while(!_findnext(hFile, &fd));
     }
 
-    dd_snprintf(pluginPath, FILENAME_T_MAXLEN, "%sdp*.dll", ddBinDir.path);
-    if((hFile = _findfirst(pluginPath, &fd)) != -1L)
+    dd_snprintf(searchPattern, FILENAME_T_MAXLEN, "%sdp*.dll", ddBinDir.path);
+    if((hFile = _findfirst(searchPattern, &fd)) != -1L)
     {
         do
         {
-            HINSTANCE* handle = findFirstUnusedPluginHandle(app);
-            if(!handle)
-                return FALSE;
-
-            loadPlugin(handle, fd.name);
+            dd_snprintf(absolutePath, FILENAME_T_MAXLEN, "%s%s", ddBinDir.path, fd.name);
+            loadPlugin(absolutePath);
         } while(!_findnext(hFile, &fd));
     }
 

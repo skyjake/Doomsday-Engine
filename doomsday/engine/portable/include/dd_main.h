@@ -57,6 +57,21 @@ int DD_Main(void);
 void DD_CheckTimeDemo(void);
 void DD_UpdateEngineState(void);
 
+/**
+ * Executes all the hooks of the given type. Bit zero of the return value
+ * is set if a hook was executed successfully (returned true). Bit one is
+ * set if all the hooks that were executed returned true.
+ */
+int DD_CallHooks(int hook_type, int parm, void* data);
+
+/// @return  Unique identified of the plugin responding to active hook callback.
+pluginid_t DD_PluginIdForActiveHook(void);
+
+/**
+ * Locate the address of the named, exported procedure in the plugin.
+ */
+void* DD_FindEntryPoint(pluginid_t pluginId, const char* fn);
+
 int DD_GetInteger(int ddvalue);
 void DD_SetInteger(int ddvalue, int parm);
 void DD_SetVariable(int ddvalue, void* ptr);
@@ -91,4 +106,3 @@ D_CMD(PrintInfo);
 D_CMD(ListGames);
 
 #endif /* LIBDENG_MAIN_H */
-
