@@ -189,6 +189,7 @@ void Con_Register(void)
     C_CMD("inc",            NULL,   IncDec);
     C_CMD("listmobjtypes",  "",     ListMobjs);
     C_CMD("load",           "s*",   Load);
+    C_CMD("quit",           "",     Quit);
     C_CMD("quit!",          "",     Quit);
     C_CMD("repeat",         "ifs",  Repeat);
     C_CMD("reset",          "",     Reset);
@@ -1919,9 +1920,15 @@ D_CMD(Version)
 
 D_CMD(Quit)
 {
-    // No questions asked.
-    Sys_Quit();
-    return true;
+    if(argv[0][4] == '!' || isDedicated || DD_IsNullGameInfo(DD_GameInfo()) ||
+       gx.TryShutdown == 0)
+    {   // No questions asked.
+        Sys_Quit();
+        return true; // Never reached.
+    }
+
+    // Defer this decision to the loaded game.
+    return gx.TryShutdown();
 }
 
 D_CMD(Alias)

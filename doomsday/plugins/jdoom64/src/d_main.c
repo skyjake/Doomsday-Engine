@@ -32,14 +32,16 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <assert.h>
+#include <string.h>
 
 #include "jdoom64.h"
 
-#include "d_netsv.h"
-#include "m_argv.h"
-#include "p_saveg.h"
 #include "am_map.h"
+#include "d_netsv.h"
 #include "g_defs.h"
+#include "m_argv.h"
+#include "p_inventory.h"
+#include "p_saveg.h"
 
 // MACROS ------------------------------------------------------------------
 

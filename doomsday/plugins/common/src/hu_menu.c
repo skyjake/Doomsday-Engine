@@ -99,7 +99,6 @@ void M_EndGame(mn_object_t* obj, int option);
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
 void M_ReadThis(mn_object_t* obj, int option);
 #endif
-void M_QuitDOOM(mn_object_t* obj, int option);
 
 void M_OpenDCP(mn_object_t* obj, int option);
 void M_ChangeMessages(mn_object_t* obj, int option);
@@ -1152,7 +1151,6 @@ ccmd_t menuCCmds[] = {
     { "endgame",        "",     CCmdMenuAction },
     { "togglemsgs",     "",     CCmdMenuAction },
     { "quickload",      "",     CCmdMenuAction },
-    { "quit",           "",     CCmdMenuAction },
     { "helpscreen",     "",     CCmdShortcut   },
     { "togglegamma",    "",     CCmdShortcut   },
     { NULL }
@@ -4143,16 +4141,6 @@ D_CMD(MenuAction)
     else if(!stricmp(argv[0], "QuickLoad"))
     {
         M_QuickLoad();
-    }
-    else if(!stricmp(argv[0], "quit"))
-    {
-        if(IS_DEDICATED)
-            DD_Execute(true, "quit!");
-        else
-        {
-            S_LocalSound(SFX_MENU_CANCEL, NULL);
-            M_QuitDOOM(0, 0);
-        }
     }
 
     return true;

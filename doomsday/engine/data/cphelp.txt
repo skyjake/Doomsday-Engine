@@ -445,8 +445,11 @@ desc = Play a music track, music lump, external file or a CD track.
 [playsound]
 desc = Play a sound effect.
 
+[quit]
+desc = If a game is loaded execute a quit request, otherwise, exit immediately.
+
 [quit!]
-desc = Exit the game immediately.
+desc = Exit immediately and return to the OS.
 
 [recorddemo]
 desc = Start recording a demo.

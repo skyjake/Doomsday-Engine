@@ -37,7 +37,9 @@
 #include "d_netsv.h"
 #include "d_net.h"
 #include "fi_lib.h"
+#include "g_common.h"
 #include "g_update.h"
+#include "m_defs.h"
 #include "p_mapsetup.h"
 
 #define GID(v)          (toGameId(v))
@@ -109,6 +111,18 @@ void G_PostInit(gameid_t gameId)
 }
 
 /**
+ * Called by the engine to initiate a soft-shutdown request.
+ */
+boolean G_TryShutdown(void)
+{
+    if(G_GetGameAction() == GA_QUIT)
+        return false; // Already in progress.
+    S_LocalSound(SFX_SWITCH, NULL);
+    M_QuitDOOM(0, 0);
+    return true;
+}
+
+/**
  * Takes a copy of the engine's entry points and exported data. Returns
  * a pointer to the structure that contains our entry points and exports.
  */
@@ -130,6 +144,7 @@ game_export_t* GetGameAPI(game_import_t* imports)
     gx.apiSize = sizeof(gx);
     gx.PreInit = H_PreInit;
     gx.PostInit = G_PostInit;
+    gx.TryShutdown = G_TryShutdown;
     gx.Shutdown = H_Shutdown;
     gx.Ticker = G_Ticker;
     gx.G_Drawer = H_Display;

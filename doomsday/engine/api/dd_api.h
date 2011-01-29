@@ -61,6 +61,7 @@ typedef struct {
     // Base-level.
     void          (*PreInit) (void);
     void          (*PostInit) (gameid_t gameId);
+    boolean       (*TryShutdown) (void);
     void          (*Shutdown) (void);
     void          (*UpdateState) (int step);
     int           (*GetInteger) (int id);

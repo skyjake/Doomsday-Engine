@@ -72,9 +72,6 @@ desc = Messages on/off.
 [quickload]
 desc = Load the quicksaved game.
 
-[quit]
-desc = Quit the game and return to the OS.
-
 [togglegamma]
 desc = Cycle gamma correction levels.
 

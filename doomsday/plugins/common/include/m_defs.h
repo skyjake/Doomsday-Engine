@@ -259,6 +259,8 @@ void            M_DrawSaveLoadBorder(int x, int y, int width);
 void            MN_GotoPage(mn_page_t* page);
 
 void            M_StartControlPanel(void);
+void            M_QuitDOOM(mn_object_t* obj, int option);
+
 void            M_FloatMod10(float* variable, int option);
 
 void            SCEnterMultiplayerMenu(mn_object_t* obj, int option);

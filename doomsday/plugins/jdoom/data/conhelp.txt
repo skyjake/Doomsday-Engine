@@ -128,9 +128,6 @@ desc = Load the quicksaved game.
 [quicksave]
 desc = Quicksave the game.
 
-[quit]
-desc = Quit the game and return to the OS.
-
 [reveal]
 desc = Map cheat.
 inf = Params: reveal (0-4)\nModes:\n 0=nothing\n 1=show unseen\n 2=full map\n 3=map+things\n 4=show subsectors

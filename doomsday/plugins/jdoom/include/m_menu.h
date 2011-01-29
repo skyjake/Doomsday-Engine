@@ -1,10 +1,10 @@
-/**\file
+/**\file m_menu.h
  *\section License
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2003-2010 Jaakko Keränen <jaakko.keranen@iki.fi>
- *\author Copyright © 2006-2010 Daniel Swanson <danij@dengine.net>
+ *\author Copyright © 2003-2011 Jaakko Keränen <jaakko.keranen@iki.fi>
+ *\author Copyright © 2006-2011 Daniel Swanson <danij@dengine.net>
  *\author Copyright © 1993-1996 by id Software, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -24,11 +24,11 @@
  */
 
 /**
- * m_menu.h: Menu widget stuff, episode selection and such.
+ * Menu widget stuff, episode selection and such.
  */
 
-#ifndef __M_MENU_H__
-#define __M_MENU_H__
+#ifndef LIBDOOM_M_MENU_H
+#define LIBDOOM_M_MENU_H
 
 #ifndef __JDOOM__
 #  error "Using jDoom headers without __JDOOM__"
@@ -37,6 +37,6 @@
 #include "hu_stuff.h"
 #include "d_event.h"
 
-void            M_LoadData(void);
+void M_LoadData(void);
 
-#endif
+#endif /* LIBDOOM_M_MENU_H */
