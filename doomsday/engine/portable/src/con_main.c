@@ -1227,6 +1227,8 @@ void Con_Open(int yes)
     {
         memset(cmdLine, 0, sizeof(cmdLine));
         cmdCursor = 0;
+        complPos = 0;
+        lastCompletion = 0;
         ConsoleActive = false;
     }
 
