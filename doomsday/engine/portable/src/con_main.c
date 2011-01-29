@@ -155,7 +155,7 @@ static boolean ConsoleInited;   // Has Con_Init() been called?
 static boolean ConsoleActive;   // Is the console active?
 static timespan_t ConsoleTime;  // How many seconds has the console been open?
 
-static char cmdLine[CMDLINE_SIZE]; // The command line.
+static char cmdLine[CMDLINE_SIZE+1]; // The command line.
 static uint cmdCursor;          // Position of the cursor on the command line.
 static boolean cmdInsMode;      // Are we in insert input mode.
 static boolean conInputLock;    // While locked, most user input is disabled.
@@ -1194,7 +1194,7 @@ static void updateCmdLine(void)
     if(ocPos >= Con_BufferNumLines(oldCmds))
         memset(cmdLine, 0, sizeof(cmdLine));
     else
-        strncpy(cmdLine, Con_BufferGetLine(oldCmds, ocPos)->text, sizeof(cmdLine));
+        strncpy(cmdLine, Con_BufferGetLine(oldCmds, ocPos)->text, CMDLINE_SIZE);
 
     cmdCursor = complPos = (uint) strlen(cmdLine);
 }
@@ -1425,7 +1425,7 @@ boolean Con_Responder(ddevent_t* ev)
         if(cmdLine[cmdCursor] != 0)
         {
             memmove(cmdLine + cmdCursor, cmdLine + cmdCursor + 1,
-                    sizeof(cmdLine) - cmdCursor + 1);
+                    CMDLINE_SIZE - cmdCursor + 1);
             complPos = cmdCursor;
             Rend_ConsoleCursorResetBlink();
             updateDedicatedConsoleCmdLine();
@@ -1438,7 +1438,7 @@ boolean Con_Responder(ddevent_t* ev)
 
         if(cmdCursor > 0)
         {
-            memmove(cmdLine + cmdCursor - 1, cmdLine + cmdCursor, sizeof(cmdLine) - cmdCursor);
+            memmove(cmdLine + cmdCursor - 1, cmdLine + cmdCursor, CMDLINE_SIZE + 1 - cmdCursor);
             cmdCursor--;
             complPos = cmdCursor;
             Rend_ConsoleCursorResetBlink();
@@ -1551,28 +1551,24 @@ boolean Con_Responder(ddevent_t* ev)
         // If not in insert mode, push the rest of the command-line forward.
         if(!cmdInsMode)
         {
-            size_t              len = strlen(cmdLine);
+            size_t len = strlen(cmdLine);
+
+            if(!(len < CMDLINE_SIZE))
+                return true; // Can't place character.
 
             if(cmdCursor < len)
             {
-                if(len < CMDLINE_SIZE - 1)
-                {
-                    memmove(cmdLine + cmdCursor + 1, cmdLine + cmdCursor,
-                            sizeof(cmdLine) - cmdCursor - 1);
+                memmove(cmdLine + cmdCursor + 1, cmdLine + cmdCursor,
+                        CMDLINE_SIZE - cmdCursor);
 
-                    // The last char is always zero, though.
-                    cmdLine[sizeof(cmdLine) - 1] = 0;
-                }
-                else
-                {
-                    return true; // Can't place character.
-                }
+                // The last char is always zero, though.
+                cmdLine[CMDLINE_SIZE] = 0;
             }
         }
 
         cmdLine[cmdCursor] = ch;
         if(cmdCursor < CMDLINE_SIZE)
-            cmdCursor++;
+            ++cmdCursor;
         complPos = cmdCursor;   //strlen(cmdLine);
         Rend_ConsoleCursorResetBlink();
         updateDedicatedConsoleCmdLine();

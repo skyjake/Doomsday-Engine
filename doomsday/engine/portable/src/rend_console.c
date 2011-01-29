@@ -525,6 +525,7 @@ static void drawConsole(float consoleAlpha)
 #define XORIGIN             (0)
 #define YORIGIN             (0)
 #define PADDING             (2)
+#define LOCALBUFFSIZE       (CMDLINE_SIZE +1/*prompt length*/ +1/*terminator*/)
 
     extern uint bLineOff;
 
@@ -535,7 +536,7 @@ static void drawConsole(float consoleAlpha)
     uint cmdCursor = Con_CursorPosition();
     char* cmdLine = Con_CommandLine();
     float y, fontScaledY, gtosMulY = theWindow->height / 200.0f;
-    char buff[CMDLINE_SIZE + 1];
+    char buff[LOCALBUFFSIZE];
     int textOffsetY = 0;
     uint reqLines;
 
@@ -626,7 +627,7 @@ static void drawConsole(float consoleAlpha)
                     float xOffset;
 
                     memset(buff, 0, sizeof(buff));
-                    strncpy(buff, line->text, 255);
+                    strncpy(buff, line->text, LOCALBUFFSIZE-1);
 
                     if(line->flags & CBLF_CENTER)
                         xOffset = (theWindow->width / Cfont.sizeX - Cfont.getWidth(buff)) / 2;
@@ -658,7 +659,7 @@ static void drawConsole(float consoleAlpha)
 
     // The command line.
     strcpy(buff, ">");
-    strncat(buff, cmdLine, 255);
+    strncat(buff, cmdLine, LOCALBUFFSIZE -1/*prompt length*/ -1/*terminator*/);
 
     if(Cfont.filterText)
         Cfont.filterText(buff);
@@ -686,7 +687,7 @@ static void drawConsole(float consoleAlpha)
     {
         float halfInterlineHeight = (float)textOffsetY / 2;
         float width, height, xOffset, yOffset;
-        char temp[CMDLINE_SIZE + 1];
+        char temp[LOCALBUFFSIZE];
 
         // Width of the current character.
         temp[0] = cmdLine[cmdCursor];
@@ -697,7 +698,7 @@ static void drawConsole(float consoleAlpha)
 
         // Where is the cursor?
         memset(temp, 0, sizeof(temp));
-        strncpy(temp, buff, MIN_OF(250, cmdCursor) + 1);
+        strncpy(temp, buff, MIN_OF(LOCALBUFFSIZE -1/*prompt length*/ -1/*vis clamp*/, cmdCursor+1));
         xOffset = Cfont.getWidth(temp);
         if(Con_InputMode())
         {
@@ -720,6 +721,7 @@ static void drawConsole(float consoleAlpha)
     glMatrixMode(GL_MODELVIEW);
     glPopMatrix();
 
+#undef LOCALBUFFSIZE
 #undef PADDING
 #undef YORIGIN
 #undef XORIGIN
